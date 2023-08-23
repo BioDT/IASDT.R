@@ -1,0 +1,70 @@
+url: ~
+template:
+  bootstrap: 5
+
+authors:
+  Ahmed El-Gabbas:
+  href: https://elgabbas.netlify.app/
+
+home:
+  title: IASDT.R
+  links:
+  - text: BioDT project
+    href: https://biodt.eu
+  - text: Community ecology department @ UFZ
+    href: https://www.ufz.de/index.php?en=36737
+  - text: Git repo
+    href: https://git.ufz.de/biodt/IASDT.R
+
+development:
+  mode: auto
+
+reference:
+- title: General information
+  desc:
+  contents:
+  - IASDT.R-package
+
+- title: General functions
+  desc: Data management / utility functions
+  contents:
+  - AssignIfNotExist
+  - CatPipe
+  - catSep
+  - CatTime
+  - cc
+  - CurrOS
+  - getmode
+  - DirCreate
+  - lapply_
+  - sapply_
+  - NDecimals
+  - ReplaceSpace
+  - SaveAs
+  - SaveMultiple
+  - scraplinks
+  - sort_
+  - SplitDF2Chunks
+  - SplitVector
+  - System
+  - valid_url
+  - List2RData
+  - LoadAs
+  - LoadMultiple
+  - LoadPackages
+
+- title: Spatial functions
+  desc:
+  contents:
+  - CheckTiff
+  - DownBoundary
+  - Polygon_Centroid
+  - rename_geometry
+  - SplitRaster
+
+- title: IAS-functions
+  desc:
+  contents:
+  - ChangeClass
+  - match_to_gbif.fn
+  - Get_EASIN_Data

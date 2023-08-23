@@ -1,0 +1,9 @@
+^renv$
+^renv\.lock$
+^.*\.Rproj$
+^\.Rproj\.user$
+^data-raw$
+^Ignore$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

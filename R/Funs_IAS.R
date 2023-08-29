@@ -199,7 +199,9 @@ Get_EASIN_Data <- function(SpKey, NSearch = 500) {
 #' A function to extract EASIN data for a given EASIN_ID
 
 ChangeClass <- function(DF) {
-  VarsInt <- cc(year, month, day, coordinateUncertaintyInMeters, acceptedNameUsageID, taxonKey, acceptedTaxonKey, kingdomKey, phylumKey, classKey, orderKey, familyKey, genusKey, speciesKey)
+  VarsInt <- cc(year, month, day, coordinateUncertaintyInMeters,
+                acceptedNameUsageID, taxonKey, acceptedTaxonKey, kingdomKey,
+                phylumKey, classKey, orderKey, familyKey, genusKey, speciesKey)
   VarsInt64 <- cc(gbifID, catalogNumber, recordNumber, taxonID, identificationID)
   VarsDbl <- cc(decimalLatitude, decimalLongitude)
   VarsLgl <- cc(hasCoordinate, hasGeospatialIssues, repatriated)
@@ -210,7 +212,7 @@ ChangeClass <- function(DF) {
     dplyr::mutate_at(VarsInt64, bit64::as.integer64) %>%
     dplyr::mutate_at(VarsDbl, as.double)  %>%
     dplyr::mutate_at(VarsLgl, as.logical)  %>%
-    dplyr::mutate_at(VarsDte,lubridate::as_date) %>%
+    dplyr::mutate_at(VarsDte, lubridate::as_date) %>%
     return()
 }
 

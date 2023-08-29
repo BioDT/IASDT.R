@@ -34,6 +34,7 @@ reference:
   - CatTime
   - cc
   - CurrOS
+  - ht
   - getmode
   - DirCreate
   - lapply_

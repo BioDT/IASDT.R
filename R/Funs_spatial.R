@@ -132,6 +132,7 @@ DownBoundary <- function(L = Bound_L, R = Bound_R, B = Bound_B, T = Bound_T) {
 
 rename_geometry <- function(g, name) {
   # Source: https://gis.stackexchange.com/a/386589/30390
+  # https://gis.stackexchange.com/questions/386584/sf-geometry-column-naming-differences-r
   current <- attr(g, "sf_column")
   names(g)[names(g) == current] <- name
   sf::st_geometry(g) <- name

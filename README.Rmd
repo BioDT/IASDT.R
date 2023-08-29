@@ -1,0 +1,36 @@
+---
+output: github_document
+#title: "IASDT.R"
+#published-title: ""
+#date: last-modified
+#date-format: "[Last Updated on] DD, MMMM, YYYY"
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# IASDT.R R-package
+
+<!-- badges: start -->
+<!-- badges: end -->
+
+The `IASDT.R` is an R package that aims at supporting the invasive alien species (IAS) prototype digital twin, as part of the EU-funded BioDT project. These functions help in the the preparation of IAS data and the modelling the distribution of IAS across Europe.
+
+This function is currently hosted at [https://git.ufz.de/biodt/IASDT.R](https://git.ufz.de/biodt/IASDT.R).
+
+More information on the BioDT project can be found at this [link](https://biodt.eu/)
+<br/>
+<br/>
+
+```{r, echo=FALSE, out.width="60%", fig.align='center'}
+knitr::include_graphics("https://git.ufz.de/uploads/-/system/group/avatar/4444/biodt.png")
+```

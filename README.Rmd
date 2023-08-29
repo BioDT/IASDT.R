@@ -31,6 +31,5 @@ More information on the BioDT project can be found at this [link](https://biodt.
 <br/>
 <br/>
 
-```{r, echo=FALSE, out.width="60%", fig.align='center'}
-knitr::include_graphics("https://git.ufz.de/uploads/-/system/group/avatar/4444/biodt.png")
-```
+![](https://git.ufz.de/uploads/-/system/group/avatar/4444/biodt.png){width=500 fig-align="center"}
+

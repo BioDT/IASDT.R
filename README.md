@@ -16,4 +16,6 @@ This function is currently hosted at <https://git.ufz.de/biodt/IASDT.R>.
 More information on the BioDT project can be found at this
 [link](https://biodt.eu/) <br/> <br/>
 
-<img src="https://git.ufz.de/uploads/-/system/group/avatar/4444/biodt.png" width="60%" style="display: block; margin: auto;" />
+<img
+src="https://git.ufz.de/uploads/-/system/group/avatar/4444/biodt.png"
+data-fig-align="center" width="500" />

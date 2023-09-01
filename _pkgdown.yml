@@ -62,6 +62,7 @@ reference:
   - Polygon_Centroid
   - rename_geometry
   - SplitRaster
+  - Set_geometry
 
 - title: IAS-functions
   desc:

@@ -129,6 +129,7 @@ DownBoundary <- function(L = Bound_L, R = Bound_R, B = Bound_B, T = Bound_T) {
 #' @name rename_geometry
 #' @author Ahmed El-Gabbas
 #' @return NULL
+#' @export
 
 rename_geometry <- function(g, name) {
   # Source: https://gis.stackexchange.com/a/386589/30390
@@ -156,6 +157,7 @@ rename_geometry <- function(g, name) {
 #' @name Polygon_Centroid
 #' @author Ahmed El-Gabbas
 #' @return NULL
+#' @export
 
 Polygon_Centroid <- function(x, Rename = FALSE, NewName = "") {
   # https://github.com/r-spatial/sf/issues/480
@@ -186,6 +188,7 @@ Polygon_Centroid <- function(x, Rename = FALSE, NewName = "") {
 #' @name Set_geometry
 #' @author Ahmed El-Gabbas
 #' @return NULL
+#' @export
 
 Set_geometry <- function(x, Name) {
   sf::st_geometry(x) <- Name

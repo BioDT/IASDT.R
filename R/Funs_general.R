@@ -309,9 +309,15 @@ DirCreate <- function(Path) {
 #' @return NULL
 #' @export
 
-CatTime <- function(Text, NLines = 1, ...) {
-  cat(paste0(Text, " - ", format(Sys.time(), "%X")), ...)
-  cat(rep("\n", NLines))
+CatTime <- function(Text = NULL, NLines = 1, ...) {
+  if (inherits(Text, "NULL")) {
+    cat(format(Sys.time(), "%X"), ...)
+    cat(rep("\n", NLines))
+  } else {
+    Text <- rlang::quo_name(rlang::enquo(Text))
+    cat(paste0(Text, " - ", format(Sys.time(), "%X")), ...)
+    cat(rep("\n", NLines))
+  }
 }
 
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -669,11 +675,13 @@ LoadPackages <- function(Package) {
 #' @export
 
 NDecimals <- function(x) {
-  Split <- stringr::str_split(
-    x, pattern = "\\.", n = Inf, simplify = TRUE)
+  Split <- x %>% 
+    format(scientific = FALSE) %>% 
+    stringr::str_split(pattern = "\\.", n = Inf, simplify = TRUE)
+  
   if (length(Split) == 2) {
-    Split[, 2] %>%
-      nchar() %>%
+    Split[, 2] %>% 
+      nchar() %>% 
       return()
   } else {
     return(0)

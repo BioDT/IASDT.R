@@ -4,7 +4,7 @@
 \alias{CatTime}
 \title{Print text and a time stamp}
 \usage{
-CatTime(Text, NLines = 1, ...)
+CatTime(Text = NULL, NLines = 1, ...)
 }
 \arguments{
 \item{Text}{the text to print}

@@ -889,10 +889,15 @@ ht <- function(DF, NRows = 5) {
 #' @param FillVal value to be used: default: NA_character
 #' @param ... list of column names to add
 #' @examples
-#' AddMissingCols(A, B, C, DT = mtcars, FillVal = NA_real_)
+#' mtcars %>%
+#'  dplyr::select(1:3) %>%
+#'  AddMissingCols(A, B, C, DT = ., FillVal = NA_character_) %>%
+#'  AddMissingCols(D, DT = ., FillVal = as.integer(10))
 #'
 #' AddCols <- c("Add1", "Add2")
-#' AddMissingCols(AddCols, DT = mtcars, FillVal = NA_real_)
+#' mtcars %>%
+#'  dplyr::select(1:3) %>%
+#'  AddMissingCols(AddCols, DT = ., FillVal = NA_real_)
 #' @export
 
 AddMissingCols <- function(..., DT, FillVal = NA_character_) {
@@ -910,4 +915,30 @@ AddMissingCols <- function(..., DT, FillVal = NA_character_) {
   }
   tibble::tibble(DT) %>%
     return()
+}
+
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+# |---------------------------------------------------| #
+# FileExt ----
+# |---------------------------------------------------| #
+
+#' Get file extension
+#'
+#' Get file extension
+#' @name FileExt
+#' @author Ahmed El-Gabbas
+#' @return NULL
+#' @param Path File path
+#' @examples
+#' FileExt("File.doc")
+#' FileExt("D:/File.doc")
+#' @export
+
+FileExt <- function(Path) {
+  Path %>%
+    basename() %>%
+    stringr::str_split("\\.", simplify = TRUE) %>%
+    "["(length(.))
 }

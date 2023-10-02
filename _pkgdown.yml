@@ -54,6 +54,7 @@ reference:
   - LoadMultiple
   - LoadPackages
   - AddMissingCols
+  - FileExt
 
 - title: Spatial functions
   desc:

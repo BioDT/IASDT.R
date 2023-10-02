@@ -9,3 +9,5 @@
 ^pkgdown$
 ^README\.Rmd$
 ^\.gitlab-ci\.yml$
+.lintr
+^LICENSE\.md$

@@ -4,13 +4,19 @@
 \alias{LoadPackages}
 \title{Load package silently and print version}
 \usage{
-LoadPackages(Package)
+LoadPackages(Package = NULL, Verbose = FALSE)
 }
 \arguments{
 \item{Package}{package name}
+
+\item{Verbose}{print a message of the package name and version}
 }
 \description{
 Load package silently and print version
+}
+\examples{
+LoadPackages(raster)
+LoadPackages(terra, Verbose = TRUE)
 }
 \author{
 Ahmed El-Gabbas

@@ -107,12 +107,11 @@ SplitRaster <- function(
 #' @description `rgbif::pred_within()` function used to download GBIF data only accepts a WKT string. This function takes the values of the boundary and converts it to a WKT string. Default values are determined by the variables: Bound_L, R = Bound_R, Bound_B, Bound_T...
 #' @export
 
-DownBoundary <- function(L = Bound_L, R = Bound_R, B = Bound_B, T = Bound_T) {
+DownBoundary <- function(L, R, B, T) {
   "POLYGON(({L} {B},{R} {B},{R} {T},{L} {T},{L} {B}))" %>%
     stringr::str_glue() %>%
     as.character()
 }
-
 
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -139,7 +138,6 @@ rename_geometry <- function(g, name) {
   sf::st_geometry(g) <- name
   return(g)
 }
-
 
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -171,8 +169,6 @@ Polygon_Centroid <- function(x, Rename = FALSE, NewName = "") {
   }
 }
 
-
-
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -194,3 +190,39 @@ Set_geometry <- function(x, Name) {
   sf::st_geometry(x) <- Name
   return(x)
 }
+
+
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+# |---------------------------------------------------| #
+# Text2Coords ----
+# |---------------------------------------------------| #
+
+#' Extract longitude / latitude from text
+#'
+#' Extract longitude / latitude from text
+#' @param x string of coordinate
+#' @name Text2Coords
+#' @author Ahmed El-Gabbas
+#' @return NULL
+#' @examples
+#' c("POINT (11.761 46.286)",
+#'  "POINT (14.8336 42.0422)",
+#'  "POINT (16.179999 38.427214)") %>%
+#'  lapply(Text2Coords)
+#'
+#' @export
+
+Text2Coords <- function(x) {
+  x %>%
+    # convert string to 2-columns data frame
+    stringr::str_remove_all("POINT \\(|\\)") %>%
+    stringr::str_split(" ", simplify = TRUE) %>%
+    as.numeric() %>%
+    matrix(nrow = 1, ncol = 2) %>%
+    as.data.frame() %>%
+    stats::setNames(c("Longitude", "Latitude")) %>%
+    tibble::tibble()
+}
+

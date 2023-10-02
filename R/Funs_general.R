@@ -43,6 +43,7 @@ catSep <- function(Rep = 1, Extra1 = 0, Extra2 = 0, Char = "-", CharReps = 50) {
 #' Assign a value to a variable, only if not existing in the global environment
 #' @param Variable Variable name
 #' @param Value Value to be assigned
+#' @param Env environment to assign value to
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @examples
@@ -54,11 +55,11 @@ catSep <- function(Rep = 1, Extra1 = 0, Extra2 = 0, Char = "-", CharReps = 50) {
 #' print(y)
 #' @export
 
-AssignIfNotExist <- function(Variable, Value) {
+AssignIfNotExist <- function(Variable, Value, Env = globalenv()) {
   Variable <- rlang::ensyms(Variable) %>%
     as.character()
-  if (!Variable %in% ls(envir = globalenv())) {
-    assign(x = Variable, value = Value, envir = globalenv())
+  if (!Variable %in% ls(envir = Env)) {
+    assign(x = Variable, value = Value, envir = Env)
   }
 }
 
@@ -308,9 +309,12 @@ DirCreate <- function(Path) {
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
+#' @examples
+#' CatTime()
+#' CatTime("Time now")
 
 CatTime <- function(Text = NULL, NLines = 1, ...) {
-  if (inherits(Text, "NULL")) {
+  if (is.null(Text)) {
     cat(format(Sys.time(), "%X"), ...)
     cat(rep("\n", NLines))
   } else {
@@ -433,17 +437,21 @@ List2RData <- function(List, Prefix = "", Dir = getwd(), Overwrite = FALSE) {
 #' Split a vector into smaller chunks
 #' @param Vector vector to split
 #' @param NSplit number of splits
+#' @param Prefix prefix string for the name of the resulted list
 #' @name SplitVector
 #' @author Ahmed El-Gabbas
 #' @return NULL
+#' @examples
+#' SplitVector(1:100, 3)
+#' SplitVector(1:100, 2, "T")
 #' @export
 
-SplitVector <- function(Vector = NULL, NSplit = NULL) {
+SplitVector <- function(Vector = NULL, NSplit = NULL, Prefix = "Chunk") {
   rep(1:NSplit, length.out = length(Vector)) %>%
     sort() %>%
     as.factor() %>%
     split(x = Vector) %>%
-    stats::setNames(paste0("Chunk", "_", 1:NSplit))
+    stats::setNames(paste0(Prefix, "_", 1:NSplit))
 }
 
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -458,12 +466,16 @@ SplitVector <- function(Vector = NULL, NSplit = NULL) {
 #' Split data.frame into smaller chunks
 #' @param DF dataframe to split
 #' @param ChunkSize number of rows per chunk
-#' @param NChunks number of chunks
+#' @param NChunks number of chunks (only if `ChunkSize` not provided)
 #' @param Prefix prefix
 #' @name SplitDF2Chunks
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
+#' @examples
+#' SplitDF2Chunks(mtcars, ChunkSize = 16)
+#' SplitDF2Chunks(mtcars, NChunks = 3)
+#' SplitDF2Chunks(mtcars, NChunks = 3, Prefix = "T")
 
 SplitDF2Chunks <- function(
     DF = NULL, ChunkSize = NULL,
@@ -505,9 +517,10 @@ SplitDF2Chunks <- function(
     on.exit(options(opt))
     stop()
   }
+
   DF <- tibble::as_tibble(DF)
   Out <- split(DF, (seq_len(nrow(DF)) - 1) %/% ChunkSize)
-  names(Out) <- paste0(Prefix, "_", seq_len(Out))
+  names(Out) <- paste0(Prefix, "_", seq_along(Out))
   Out
 }
 
@@ -627,6 +640,8 @@ SaveMultiple <- function(
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
+#' @examples
+#' cc(A, B, C)
 
 cc <- function(...) {
   rlang::ensyms(...) %>% as.character()
@@ -643,17 +658,21 @@ cc <- function(...) {
 #'
 #' Load package silently and print version
 #' @param Package package name
+#' @param Verbose print a message of the package name and version
 #' @name LoadPackages
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
+#' @examples
+#' LoadPackages(raster)
+#' LoadPackages(terra, Verbose = TRUE)
 
-LoadPackages <- function(Package) {
+LoadPackages <- function(Package = NULL, Verbose = FALSE) {
   PG <- rlang::quo_name(rlang::enquo(Package))
   suppressWarnings(suppressMessages(library(PG, character.only = TRUE)))
-
   Ver <- eval(parse(text = stringr::str_glue('packageVersion("{PG}")')))
-  cat(stringr::str_glue(">>> {PG} - v {Ver}\n\n"))
+
+  if(Verbose) cat(stringr::str_glue(">>> {PG} - v {Ver}\n\n"))
 
   return(invisible(NULL))
 }
@@ -675,13 +694,13 @@ LoadPackages <- function(Package) {
 #' @export
 
 NDecimals <- function(x) {
-  Split <- x %>% 
-    format(scientific = FALSE) %>% 
+  Split <- x %>%
+    format(scientific = FALSE) %>%
     stringr::str_split(pattern = "\\.", n = Inf, simplify = TRUE)
-  
+
   if (length(Split) == 2) {
-    Split[, 2] %>% 
-      nchar() %>% 
+    Split[, 2] %>%
+      nchar() %>%
       return()
   } else {
     return(0)
@@ -792,7 +811,6 @@ sapply_ <- function(X, FUN, simplify = TRUE, ...) {
   )
 }
 
-
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -840,11 +858,10 @@ sort_ <- function(
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
+
 CurrOS <- function() {
   as.character(Sys.info()["sysname"])
 }
-
-
 
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -873,3 +890,228 @@ ht <- function(DF, NRows = 5) {
   data.table::data.table(DF) %>%
     print(topn = NRows)
 }
+
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+# |---------------------------------------------------| #
+# AddMissingCols ----
+# |---------------------------------------------------| #
+
+#' Add missing columns to data frame
+#'
+#' Add missing columns to data frame
+#' @name AddMissingCols
+#' @author Ahmed El-Gabbas
+#' @return NULL
+#' @param DT data frame
+#' @param FillVal value to be used: default: NA_character
+#' @param ... list of column names to add
+#' @examples
+#' mtcars %>%
+#'  dplyr::select(1:3) %>%
+#'  AddMissingCols(A, B, C, DT = ., FillVal = NA_character_) %>%
+#'  AddMissingCols(D, DT = ., FillVal = as.integer(10))
+#'
+#' AddCols <- c("Add1", "Add2")
+#' mtcars %>%
+#'  dplyr::select(1:3) %>%
+#'  AddMissingCols(AddCols, DT = ., FillVal = NA_real_)
+#'
+#' @export
+
+AddMissingCols <- function(..., DT, FillVal = NA_character_) {
+  Cols <- rlang::ensyms(...) %>%
+    as.character()
+  ArgInEnv <- Cols %in% ls(envir = globalenv())
+
+  if(any(ArgInEnv)) {
+    Cols <- get(Cols, envir = globalenv())
+  }
+
+  Cols2Add <- setdiff(Cols, names(DT))
+  if (length(Cols2Add) != 0) {
+    DT[Cols2Add] <- FillVal
+  }
+  tibble::tibble(DT) %>%
+    return()
+}
+
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+# |---------------------------------------------------| #
+# FileExt ----
+# |---------------------------------------------------| #
+
+#' Get file extension
+#'
+#' Get file extension
+#' @name FileExt
+#' @author Ahmed El-Gabbas
+#' @return NULL
+#' @param Path File path
+#' @examples
+#' FileExt("File.doc")
+#' FileExt("D:/File.doc")
+#' @export
+
+FileExt <- function(Path) {
+  Ext <- Path %>%
+    basename() %>%
+    stringr::str_split("\\.", simplify = TRUE)
+  Ext[length(Ext)]
+}
+
+
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+# |---------------------------------------------------| #
+# FunctionsInPackage ----
+# |---------------------------------------------------| #
+
+#' List of functions in a package
+#'
+#' List of functions in a package
+#' @name FunctionsInPackage
+#' @author Ahmed El-Gabbas
+#' @return NULL
+#' @param Package name of the package
+#' @examples
+#' FunctionsInPackage("raster")
+#' @export
+
+FunctionsInPackage <- function(Package){
+  library(package = Package, character.only = TRUE)
+  ls(paste0("package:", Package))
+}
+
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+# |---------------------------------------------------| #
+# LoadedPackages ----
+# |---------------------------------------------------| #
+
+#' List of loaded packages
+#'
+#' List of loaded packages
+#' @examples
+#' LoadedPackages()
+#' @export
+
+LoadedPackages <- function(){
+  (.packages())
+}
+
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+# |---------------------------------------------------| #
+# ReloadPackage ----
+# |---------------------------------------------------| #
+
+#' Reload an R package
+#'
+#' Reload an R package
+#' @export
+#' @param Package The name of packages to reload
+#' @examples
+#' library(sf)
+#' ReloadPackage("sf")
+
+ReloadPackage <- function(Package = NULL) {
+  if (is.null(Package)) {
+    stop()
+  }
+
+  if (!Package %in% LoadedPackages()) {
+    library(package = Package, character.only = TRUE)
+  } else {
+    PackagesFolders <- paste0(.libPaths(), "/")
+    PackagesFolders <- c(outer(PackagesFolders, Package, FUN = "paste0"))
+    PackagesFolders <- PackagesFolders[file.exists(PackagesFolders)]
+    PackagesFolders <- gsub(pattern = "/", replacement = "//", x = PackagesFolders)
+    lapply(PackagesFolders, function(x){ devtools::reload(x, quiet = FALSE) })
+  }
+
+  invisible(NULL)
+}
+
+
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+# |---------------------------------------------------| #
+# SaveXToDisk ----
+# |---------------------------------------------------| #
+
+#' Save many R objects at once to their respective `.RData` files
+#'
+#' Save many R objects at once to their respective `.RData` files
+#' @param Vars The name of variables to be saved
+#' @param OutFolder The output directory. Default: the working directory
+#' @param Overwrite overwrite available .RData files. Default: FALSE
+#' @author Ahmed El-Gabbas
+#' @export
+#' @examples
+#' \dontrun{
+#' x1 = 10; x2 = 20
+#' TMP_Folder <- tempdir()
+#' print(TMP_Folder)
+#'
+#' SaveXToDisk(Vars = c("x1", "x2"), OutFolder = TMP_Folder)
+#' list.files(path = TMP_Folder, pattern = "^.+.RData")
+#'
+#' SaveXToDisk(Vars = c("x1", "x2"), OutFolder = TMP_Folder, Overwrite = TRUE)
+#' }
+
+SaveXToDisk <- function(
+    Vars = NULL, OutFolder = getwd(), Overwrite = FALSE) {
+
+  if (is.null(Vars) | !is.character(Vars) | any(!Vars %in% ls(envir = globalenv()))) {
+    cat(paste0(crayon::red("Vars should be a character vector for names of objects available in the global environment"), "\n"))
+    opt <- options(show.error.messages = FALSE)
+    on.exit(options(opt))
+    stop()
+  } else {
+    if (!all(sapply(Vars, function(x){exists(x, envir = globalenv())}))) {
+      # if (!all(exists(Vars, envir = globalenv()))) {
+      cat(paste0(crayon::red("Please check that all variables to be saved exist at your global environment"), "\n"))
+      MissedVars <- Vars[!exists(Vars, envir = globalenv())]
+      cat(crayon::red(paste0("Variable ", MissedVars, " does not exist.\n")))
+      opt <- options(show.error.messages = FALSE)
+      on.exit(options(opt))
+      stop()
+    } else {
+      ID <- length(Vars)
+      if (is.null(OutFolder)) {
+        OutFolder <- getwd()
+      }
+    }
+
+    if (Overwrite == FALSE & any(file.exists(paste0(
+      OutFolder, "/", Vars, ".RData")))) {
+      cat(paste0(crayon::red("Some files already exist.\nNo files are saved. Please use overwrite = TRUE"), "\n"))
+      opt <- options(show.error.messages = FALSE)
+      on.exit(options(opt))
+      stop()
+    }
+
+    invisible(sapply(1:ID, function(x) {
+      save(
+        list = paste0(Vars[x]),
+        file = paste0(OutFolder, "/", Vars[x], ".RData"))
+    }))
+
+    if (all(file.exists(paste0(OutFolder, "/", Vars, ".RData")))) {
+      cat(paste0(crayon::blue("All files are saved to disk", crayon::red(OutFolder), "successfully."), "\n"))
+    } else {
+      cat(paste0(crayon::red("Some files were not saved to disk!\nplease check again"), "\n"))
+    }
+  }
+}
+
+
+

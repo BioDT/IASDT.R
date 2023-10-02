@@ -4,7 +4,7 @@
 \alias{DownBoundary}
 \title{Determine the boundaries of the requested GBIF data}
 \usage{
-DownBoundary(L = Bound_L, R = Bound_R, B = Bound_B, T = Bound_T)
+DownBoundary(L, R, B, T)
 }
 \arguments{
 \item{L}{left boundary}

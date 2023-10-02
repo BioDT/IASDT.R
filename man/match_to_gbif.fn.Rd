@@ -4,12 +4,14 @@
 \alias{match_to_gbif.fn}
 \title{Match taxonomy with GBIF; may return >1 match}
 \usage{
-match_to_gbif.fn(taxonName, taxonID)
+match_to_gbif.fn(taxon_name, taxon_id, include_genus = FALSE)
 }
 \arguments{
-\item{taxonName}{taxonomy name}
+\item{taxon_name}{taxonomy name}
 
-\item{taxonID}{taxonomy ID}
+\item{taxon_id}{taxonomy ID}
+
+\item{include_genus}{include matches at genus level; default: \code{FALSE}}
 }
 \description{
 Match taxonomy with GBIF; may return >1 match

@@ -886,19 +886,19 @@ ht <- function(DF, NRows = 5) {
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @param DF data frame
-#' @param NAVal NA value to be used: default: NA_character
+#' @param FillVal value to be used: default: NA_character
 #' @param ... list of column names to add
 #' @examples
 #' AddMissingCols(mtcars, NA_real_, A, B, C)
 #' @export
 
-AddMissingCols <- function(DT, NAVal = NA_character_, ...) {
+AddMissingCols <- function(DT, FillVal = NA_character_, ...) {
   Cols <- rlang::ensyms(...) %>%
     as.character()
   Cols2Add <- setdiff(Cols, names(DT))
   if (length(Cols2Add) != 0) {
     Cols2Add
-    DT[Cols2Add] <- NAVal
+    DT[Cols2Add] <- FillVal
   }
   tibble::tibble(DT) %>%
     return()

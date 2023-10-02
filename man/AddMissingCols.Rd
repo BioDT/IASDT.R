@@ -17,7 +17,7 @@ AddMissingCols(..., DT, FillVal = NA_character_)
 Add missing columns to data frame
 }
 \examples{
-AddMissingCols(mtcars, NA_real_, A, B, C)
+AddMissingCols(DT = mtcars, FillVal = NA_real_, A, B, C)
 }
 \author{
 Ahmed El-Gabbas

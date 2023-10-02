@@ -889,23 +889,22 @@ ht <- function(DF, NRows = 5) {
 #' @param FillVal value to be used: default: NA_character
 #' @param ... list of column names to add
 #' @examples
-#' AddMissingCols(mtcars, NA_real_, A, B, C)
+#' AddMissingCols(A, B, C, DT = mtcars, FillVal = NA_real_)
+#'
+#' AddCols <- c("Add1", "Add2")
+#' AddMissingCols(AddCols, DT = mtcars, FillVal = NA_real_)
 #' @export
 
 AddMissingCols <- function(..., DT, FillVal = NA_character_) {
   Cols <- rlang::ensyms(...) %>%
     as.character()
-
   ArgInEnv <- (Cols %in% ls(envir = parent.env(environment())))
 
-  if(ArgInEnv) {
+  if(any(ArgInEnv)) {
     Cols <- get(Cols, envir = parent.env(environment()))
   }
 
   Cols2Add <- setdiff(Cols, names(DT))
-  print(Cols2Add)
-
-
   if (length(Cols2Add) != 0) {
     Cols2Add
     DT[Cols2Add] <- FillVal
@@ -913,3 +912,4 @@ AddMissingCols <- function(..., DT, FillVal = NA_character_) {
   tibble::tibble(DT) %>%
     return()
 }
+

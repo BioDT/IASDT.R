@@ -4,12 +4,12 @@
 \alias{AddMissingCols}
 \title{Add missing columns to data frame}
 \usage{
-AddMissingCols(DT, FillVal = NA_character_, ...)
+AddMissingCols(..., DT, FillVal = NA_character_)
 }
 \arguments{
-\item{FillVal}{value to be used: default: NA_character}
-
 \item{...}{list of column names to add}
+
+\item{FillVal}{value to be used: default: NA_character}
 
 \item{DF}{data frame}
 }

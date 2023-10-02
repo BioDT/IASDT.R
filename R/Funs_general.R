@@ -892,10 +892,20 @@ ht <- function(DF, NRows = 5) {
 #' AddMissingCols(mtcars, NA_real_, A, B, C)
 #' @export
 
-AddMissingCols <- function(DT, FillVal = NA_character_, ...) {
+AddMissingCols <- function(..., DT, FillVal = NA_character_) {
   Cols <- rlang::ensyms(...) %>%
     as.character()
+
+  ArgInEnv <- (Cols %in% ls(envir = parent.env(environment())))
+
+  if(ArgInEnv) {
+    Cols <- get(Cols, envir = parent.env(environment()))
+  }
+
   Cols2Add <- setdiff(Cols, names(DT))
+  print(Cols2Add)
+
+
   if (length(Cols2Add) != 0) {
     Cols2Add
     DT[Cols2Add] <- FillVal

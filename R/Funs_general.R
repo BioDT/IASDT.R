@@ -898,10 +898,10 @@ ht <- function(DF, NRows = 5) {
 AddMissingCols <- function(..., DT, FillVal = NA_character_) {
   Cols <- rlang::ensyms(...) %>%
     as.character()
-  ArgInEnv <- (Cols %in% ls(envir = parent.env(environment())))
+  ArgInEnv <- Cols %in% ls(envir = globalenv())
 
   if(any(ArgInEnv)) {
-    Cols <- get(Cols, envir = parent.env(environment()))
+    Cols <- get(Cols, envir = globalenv())
   }
 
   Cols2Add <- setdiff(Cols, names(DT))

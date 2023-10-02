@@ -906,10 +906,8 @@ AddMissingCols <- function(..., DT, FillVal = NA_character_) {
 
   Cols2Add <- setdiff(Cols, names(DT))
   if (length(Cols2Add) != 0) {
-    Cols2Add
     DT[Cols2Add] <- FillVal
   }
   tibble::tibble(DT) %>%
     return()
 }
-

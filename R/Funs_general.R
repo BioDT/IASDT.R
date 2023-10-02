@@ -675,13 +675,13 @@ LoadPackages <- function(Package) {
 #' @export
 
 NDecimals <- function(x) {
-  Split <- x %>% 
-    format(scientific = FALSE) %>% 
+  Split <- x %>%
+    format(scientific = FALSE) %>%
     stringr::str_split(pattern = "\\.", n = Inf, simplify = TRUE)
-  
+
   if (length(Split) == 2) {
-    Split[, 2] %>% 
-      nchar() %>% 
+    Split[, 2] %>%
+      nchar() %>%
       return()
   } else {
     return(0)
@@ -844,8 +844,6 @@ CurrOS <- function() {
   as.character(Sys.info()["sysname"])
 }
 
-
-
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -872,4 +870,36 @@ CurrOS <- function() {
 ht <- function(DF, NRows = 5) {
   data.table::data.table(DF) %>%
     print(topn = NRows)
+}
+
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+# |---------------------------------------------------| #
+# AddMissingCols ----
+# |---------------------------------------------------| #
+
+#' Add missing columns to data frame
+#'
+#' Add missing columns to data frame
+#' @name AddMissingCols
+#' @author Ahmed El-Gabbas
+#' @return NULL
+#' @param DF data frame
+#' @param NAVal NA value to be used: default: NA_character
+#' @param ... list of column names to add
+#' @examples
+#' AddMissingCols(mtcars, NA_real_, A, B, C)
+#' @export
+
+AddMissingCols <- function(DT, NAVal = NA_character_, ...) {
+  Cols <- rlang::ensyms(...) %>%
+    as.character()
+  Cols2Add <- setdiff(Cols, names(DT))
+  if (length(Cols2Add) != 0) {
+    Cols2Add
+    DT[Cols2Add] <- NAVal
+  }
+  tibble::tibble(DT) %>%
+    return()
 }

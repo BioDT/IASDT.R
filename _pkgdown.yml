@@ -53,6 +53,7 @@ reference:
   - LoadAs
   - LoadMultiple
   - LoadPackages
+  - AddMissingCols
 
 - title: Spatial functions
   desc:
@@ -63,6 +64,7 @@ reference:
   - rename_geometry
   - SplitRaster
   - Set_geometry
+  - Text2Coords
 
 - title: IAS-functions
   desc:
@@ -70,3 +72,4 @@ reference:
   - ChangeClass
   - match_to_gbif.fn
   - Get_EASIN_Data
+  - GetAcceptedName

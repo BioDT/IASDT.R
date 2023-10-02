@@ -7,6 +7,7 @@
 #'  Match taxonomy with GBIF; may return >1 match
 #' @param taxonName taxonomy name
 #' @param taxonID taxonomy ID
+#' @param include_genus include matches at genus level
 #' @name match_to_gbif.fn
 #' @author Marina Golivets
 #' @return NULL
@@ -14,13 +15,13 @@
 #' @details
 #' as input, provide a vector of verbatim taxon names (preferably with authorship) and a vector of existing local identifiers for those names
 
-match_to_gbif.fn <- function(taxonName, taxonID) {
+match_to_gbif.fn00 <- function(taxon_name, taxon_id, include_genus = FALSE) {
 
   # perform initial matching in parallel
   no_cores <- parallel::detectCores()
   cl <- parallel::makeCluster(no_cores)
   all_matches <- pbapply::pblapply(
-    taxonName,
+    taxon_name,
     rgbif::name_backbone_verbose,
     kingdom = "plants", strict = TRUE, cl = cl
   )
@@ -42,80 +43,83 @@ match_to_gbif.fn <- function(taxonName, taxonID) {
   ) %>%
     mapply(
       cbind, .,
-      taxonName = taxonName, taxonID = taxonID,
+      taxon_name = taxon_name, taxon_id = taxon_id,
       stringsAsFactors = FALSE, SIMPLIFY = FALSE
     ) %>%
     data.table::rbindlist(fill = TRUE) %>%
-    dplyr::filter(!is.na(usageKey)) %>%
-    dplyr::distinct()
+    filter(!is.na(usageKey)) %>%
+    distinct() %>%
+    filter(phylum == "Tracheophyta")
 
   # retrieve best matches
   best_matches <- lapply(all_matches, function(x) x$data) %>%
     mapply(
       cbind, .,
-      taxonName = taxonName, taxonID = taxonID,
+      taxon_name = taxon_name, taxon_id = taxon_id,
       stringsAsFactors = FALSE, SIMPLIFY = FALSE
     ) %>%
     data.table::rbindlist(fill = TRUE) %>%
-    dplyr::distinct()
+    distinct() %>%
+    filter(phylum == "Tracheophyta")
 
   matched <- best_matches %>%
-    dplyr::filter(!(matchType %in% c("NONE", "HIGHERRANK")))
+    filter(!(matchType %in% c("NONE", "HIGHERRANK")))
 
   nonmatched <- best_matches %>%
-    dplyr::filter(matchType %in% c("NONE", "HIGHERRANK"))
+    filter(matchType %in% c("NONE", "HIGHERRANK"))
 
   matched_alternative <- try(
     alternative_matches %>%
-      dplyr::filter(phylum == "Tracheophyta") %>% # use only vascular plants
-      dplyr::filter(confidence >= 0) %>%
-      dplyr::filter(taxonID %in% nonmatched$taxonID)
+      filter(phylum == "Tracheophyta") %>% # use only vascular plants
+      filter(confidence >= 0) %>%
+      # filter(taxon_id %in% nonmatched$taxon_id)
+      filter(!taxon_id %in% matched$taxon_id)
   )
   if (class(matched_alternative)[1] == "try-error") {
-    taxon_list <- matched %>%
-      dplyr::filter(rank != "GENUS") # use only species or lower ranks
+    taxon_list <- matched
   } else {
-    taxon_list <- dplyr::bind_rows(matched, matched_alternative) %>%
-      dplyr::filter(rank != "GENUS")
+    taxon_list <- bind_rows(matched, matched_alternative)
   }
+  if (include_genus == FALSE) taxon_list %<>% filter(rank != "GENUS")
+
 
   # get names that were matched as accepted
   accepted <- taxon_list %>%
-    dplyr::group_by(taxonID) %>%
-    dplyr::filter(status == "ACCEPTED") %>%
-    dplyr::filter(confidence == max(confidence)) %>%
-    dplyr::ungroup()
+    group_by(taxon_id) %>%
+    filter(status == "ACCEPTED") %>%
+    filter(confidence == max(confidence)) %>%
+    ungroup()
 
   # get names that were matched as synonyms only
   synonyms <- taxon_list %>%
-    dplyr::group_by(taxonID) %>%
-    dplyr::summarise(has_accepted = dplyr::n_distinct(status == "ACCEPTED") > 1) %>%
-    dplyr::full_join(taxon_list) %>%
-    dplyr::filter(has_accepted == FALSE) %>%
-    dplyr::filter(status == "SYNONYM") %>%
-    dplyr::group_by(taxonID) %>%
-    dplyr::filter(confidence == max(confidence)) %>%
-    dplyr::ungroup()
+    group_by(taxon_id) %>%
+    summarise(has_accepted = n_distinct(status == "ACCEPTED") > 1) %>%
+    full_join(taxon_list) %>%
+    filter(has_accepted == FALSE) %>%
+    filter(status == "SYNONYM") %>%
+    group_by(taxon_id) %>%
+    filter(confidence == max(confidence)) %>%
+    ungroup()
 
   # get names that were matched as doubtful only
   doubtful <- taxon_list %>%
-    dplyr::group_by(taxonID) %>%
-    dplyr::summarise(has_accepted = dplyr::n_distinct(status == "ACCEPTED") > 1) %>%
-    dplyr::full_join(taxon_list) %>%
-    dplyr::filter(has_accepted == FALSE) %>%
-    dplyr::group_by(taxonID) %>%
-    dplyr::filter(status == "DOUBTFUL") %>%
-    dplyr::filter(confidence == max(confidence)) %>%
-    dplyr::ungroup()
+    group_by(taxon_id) %>%
+    summarise(has_accepted = n_distinct(status == "ACCEPTED") > 1) %>%
+    full_join(taxon_list) %>%
+    filter(has_accepted == FALSE) %>%
+    group_by(taxon_id) %>%
+    filter(status == "DOUBTFUL") %>%
+    filter(confidence == max(confidence)) %>%
+    ungroup()
 
   # combine all names
-  taxon_list_final <- dplyr::bind_rows(accepted, synonyms, doubtful) %>%
-    dplyr::group_by(taxonID) %>%
-    dplyr::filter(confidence == max(confidence)) %>%
-    dplyr::filter(status != "NONE") %>% # exclude non-matched names
+  taxon_list_final <- bind_rows(accepted, synonyms, doubtful) %>%
+    group_by(taxon_id) %>%
+    filter(confidence == max(confidence)) %>%
+    filter(status != "NONE") %>% # exclude non-matched names
     dplyr::select(-has_accepted) %>%
-    dplyr::ungroup() %>%
-    dplyr::relocate(taxonName, taxonID)
+    ungroup() %>%
+    relocate(taxon_name, taxon_id)
 
   return(taxon_list_final)
 }
@@ -218,3 +222,29 @@ ChangeClass <- function(DF) {
 
 # ****************************************************
 # ****************************************************
+
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+# |---------------------------------------------------| #
+# GetAcceptedName ----
+# |---------------------------------------------------| #
+
+#' Get accepted name of a taxa
+#'
+#' Get accepted name of a taxa
+#' @name GetAcceptedName
+#' @param ID GBIF id
+#' @author Ahmed El-Gabbas
+#' @return Scientific name of the accepted taxa
+#' @export
+#' @details
+#' Get accepted name of a taxa
+
+GetAcceptedName <- function(ID) {
+  if(!is.na(ID)) {
+    rgbif::name_usage(ID)$data$scientificName
+  } else {
+    NA_character_
+  }
+}

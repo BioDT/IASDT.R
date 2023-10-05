@@ -15,7 +15,7 @@
 #' @details
 #' as input, provide a vector of verbatim taxon names (preferably with authorship) and a vector of existing local identifiers for those names
 
-match_to_gbif.fn00 <- function(taxon_name, taxon_id, include_genus = FALSE) {
+match_to_gbif.fn <- function(taxon_name, taxon_id, include_genus = FALSE) {
 
   # perform initial matching in parallel
   no_cores <- parallel::detectCores()
@@ -47,9 +47,9 @@ match_to_gbif.fn00 <- function(taxon_name, taxon_id, include_genus = FALSE) {
       stringsAsFactors = FALSE, SIMPLIFY = FALSE
     ) %>%
     data.table::rbindlist(fill = TRUE) %>%
-    filter(!is.na(usageKey)) %>%
-    distinct() %>%
-    filter(phylum == "Tracheophyta")
+    dplyr::filter(!is.na(usageKey)) %>%
+    dplyr::distinct() %>%
+    dplyr::filter(phylum == "Tracheophyta")
 
   # retrieve best matches
   best_matches <- lapply(all_matches, function(x) x$data) %>%
@@ -59,67 +59,67 @@ match_to_gbif.fn00 <- function(taxon_name, taxon_id, include_genus = FALSE) {
       stringsAsFactors = FALSE, SIMPLIFY = FALSE
     ) %>%
     data.table::rbindlist(fill = TRUE) %>%
-    distinct() %>%
-    filter(phylum == "Tracheophyta")
+    dplyr::distinct() %>%
+    dplyr::filter(phylum == "Tracheophyta")
 
   matched <- best_matches %>%
-    filter(!(matchType %in% c("NONE", "HIGHERRANK")))
+    dplyr::filter(!(matchType %in% c("NONE", "HIGHERRANK")))
 
   nonmatched <- best_matches %>%
-    filter(matchType %in% c("NONE", "HIGHERRANK"))
+    dplyr::filter(matchType %in% c("NONE", "HIGHERRANK"))
 
   matched_alternative <- try(
     alternative_matches %>%
-      filter(phylum == "Tracheophyta") %>% # use only vascular plants
-      filter(confidence >= 0) %>%
-      # filter(taxon_id %in% nonmatched$taxon_id)
-      filter(!taxon_id %in% matched$taxon_id)
+      dplyr::filter(phylum == "Tracheophyta") %>% # use only vascular plants
+      dplyr::filter(confidence >= 0) %>%
+      # dplyr::filter(taxon_id %in% nonmatched$taxon_id)
+      dplyr::filter(!taxon_id %in% matched$taxon_id)
   )
   if (class(matched_alternative)[1] == "try-error") {
     taxon_list <- matched
   } else {
-    taxon_list <- bind_rows(matched, matched_alternative)
+    taxon_list <- dplyr::bind_rows(matched, matched_alternative)
   }
-  if (include_genus == FALSE) taxon_list %<>% filter(rank != "GENUS")
+  if (include_genus == FALSE) taxon_list %<>% dplyr::filter(rank != "GENUS")
 
 
   # get names that were matched as accepted
   accepted <- taxon_list %>%
-    group_by(taxon_id) %>%
-    filter(status == "ACCEPTED") %>%
-    filter(confidence == max(confidence)) %>%
-    ungroup()
+    dplyr::group_by(taxon_id) %>%
+    dplyr::filter(status == "ACCEPTED") %>%
+    dplyr::filter(confidence == max(confidence)) %>%
+    dplyr::ungroup()
 
   # get names that were matched as synonyms only
   synonyms <- taxon_list %>%
-    group_by(taxon_id) %>%
-    summarise(has_accepted = n_distinct(status == "ACCEPTED") > 1) %>%
-    full_join(taxon_list) %>%
-    filter(has_accepted == FALSE) %>%
-    filter(status == "SYNONYM") %>%
-    group_by(taxon_id) %>%
-    filter(confidence == max(confidence)) %>%
-    ungroup()
+    dplyr::group_by(taxon_id) %>%
+    dplyr::summarise(has_accepted = dplyr::n_distinct(status == "ACCEPTED") > 1) %>%
+    dplyr::full_join(taxon_list) %>%
+    dplyr::filter(has_accepted == FALSE) %>%
+    dplyr::filter(status == "SYNONYM") %>%
+    dplyr::group_by(taxon_id) %>%
+    dplyr::filter(confidence == max(confidence)) %>%
+    dplyr::ungroup()
 
   # get names that were matched as doubtful only
   doubtful <- taxon_list %>%
-    group_by(taxon_id) %>%
-    summarise(has_accepted = n_distinct(status == "ACCEPTED") > 1) %>%
-    full_join(taxon_list) %>%
-    filter(has_accepted == FALSE) %>%
-    group_by(taxon_id) %>%
-    filter(status == "DOUBTFUL") %>%
-    filter(confidence == max(confidence)) %>%
+    dplyr::group_by(taxon_id) %>%
+    dplyr::summarise(has_accepted = dplyr::n_distinct(status == "ACCEPTED") > 1) %>%
+    dplyr::full_join(taxon_list) %>%
+    dplyr::filter(has_accepted == FALSE) %>%
+    dplyr::group_by(taxon_id) %>%
+    dplyr::filter(status == "DOUBTFUL") %>%
+    dplyr::filter(confidence == max(confidence)) %>%
     ungroup()
 
   # combine all names
-  taxon_list_final <- bind_rows(accepted, synonyms, doubtful) %>%
-    group_by(taxon_id) %>%
-    filter(confidence == max(confidence)) %>%
-    filter(status != "NONE") %>% # exclude non-matched names
+  taxon_list_final <- dplyr::bind_rows(accepted, synonyms, doubtful) %>%
+    dplyr::group_by(taxon_id) %>%
+    dplyr::filter(confidence == max(confidence)) %>%
+    dplyr::filter(status != "NONE") %>% # exclude non-matched names
     dplyr::select(-has_accepted) %>%
-    ungroup() %>%
-    relocate(taxon_name, taxon_id)
+    dplyr::ungroup() %>%
+    dplyr::relocate(taxon_name, taxon_id)
 
   return(taxon_list_final)
 }

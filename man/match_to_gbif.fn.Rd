@@ -2,10 +2,9 @@
 % Please edit documentation in R/Funs_IAS.R
 \name{match_to_gbif.fn}
 \alias{match_to_gbif.fn}
-\alias{match_to_gbif.fn00}
 \title{Match taxonomy with GBIF; may return >1 match}
 \usage{
-match_to_gbif.fn00(taxon_name, taxon_id, include_genus = FALSE)
+match_to_gbif.fn(taxon_name, taxon_id, include_genus = FALSE)
 }
 \arguments{
 \item{include_genus}{include matches at genus level}

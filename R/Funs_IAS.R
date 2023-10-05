@@ -21,10 +21,8 @@ match_to_gbif.fn <- function(taxon_name, taxon_id, include_genus = FALSE) {
   no_cores <- parallel::detectCores()
   cl <- parallel::makeCluster(no_cores)
   all_matches <- pbapply::pblapply(
-    taxon_name,
-    rgbif::name_backbone_verbose,
-    kingdom = "plants", strict = TRUE, cl = cl
-  )
+    taxon_name, rgbif::name_backbone_verbose,
+    kingdom = "plants", strict = TRUE, cl = cl)
   parallel::stopCluster(cl)
 
   # retrieve alternative matches
@@ -86,9 +84,15 @@ match_to_gbif.fn <- function(taxon_name, taxon_id, include_genus = FALSE) {
   # get names that were matched as accepted
   accepted <- taxon_list %>%
     dplyr::group_by(taxon_id) %>%
-    dplyr::filter(status == "ACCEPTED") %>%
-    dplyr::filter(confidence == max(confidence)) %>%
-    dplyr::ungroup()
+    dplyr::filter(status == "ACCEPTED")
+  if(nrow(accepted) > 0) {
+    accepted %<>%
+      dplyr::filter(confidence == max(confidence)) %>%
+      dplyr::ungroup()
+  } else {
+    accepted %<>%
+      dplyr::ungroup()
+  }
 
   # get names that were matched as synonyms only
   synonyms <- taxon_list %>%
@@ -96,10 +100,16 @@ match_to_gbif.fn <- function(taxon_name, taxon_id, include_genus = FALSE) {
     dplyr::summarise(has_accepted = dplyr::n_distinct(status == "ACCEPTED") > 1) %>%
     dplyr::full_join(taxon_list) %>%
     dplyr::filter(has_accepted == FALSE) %>%
-    dplyr::filter(status == "SYNONYM") %>%
-    dplyr::group_by(taxon_id) %>%
-    dplyr::filter(confidence == max(confidence)) %>%
-    dplyr::ungroup()
+    dplyr::filter(status == "SYNONYM")
+  if(nrow(synonyms) > 0) {
+    synonyms %<>%
+      dplyr::group_by(taxon_id) %>%
+      dplyr::filter(confidence == max(confidence)) %>%
+      dplyr::ungroup()
+  } else {
+    synonyms %<>%
+      dplyr::ungroup()
+  }
 
   # get names that were matched as doubtful only
   doubtful <- taxon_list %>%
@@ -108,9 +118,15 @@ match_to_gbif.fn <- function(taxon_name, taxon_id, include_genus = FALSE) {
     dplyr::full_join(taxon_list) %>%
     dplyr::filter(has_accepted == FALSE) %>%
     dplyr::group_by(taxon_id) %>%
-    dplyr::filter(status == "DOUBTFUL") %>%
-    dplyr::filter(confidence == max(confidence)) %>%
-    ungroup()
+    dplyr::filter(status == "DOUBTFUL")
+  if(nrow(doubtful) > 0) {
+    doubtful %<>%
+      dplyr::filter(confidence == max(confidence)) %>%
+      dplyr::ungroup()
+  } else {
+    doubtful %<>%
+      dplyr::ungroup()
+  }
 
   # combine all names
   taxon_list_final <- dplyr::bind_rows(accepted, synonyms, doubtful) %>%

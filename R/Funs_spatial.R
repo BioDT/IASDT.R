@@ -107,7 +107,7 @@ SplitRaster <- function(
 #' @description `rgbif::pred_within()` function used to download GBIF data only accepts a WKT string. This function takes the values of the boundary and converts it to a WKT string. Default values are determined by the variables: Bound_L, R = Bound_R, Bound_B, Bound_T...
 #' @export
 
-DownBoundary <- function(L = Bound_L, R = Bound_R, B = Bound_B, T = Bound_T) {
+DownBoundary <- function(L, R, B, T) {
   "POLYGON(({L} {B},{R} {B},{R} {T},{L} {T},{L} {B}))" %>%
     stringr::str_glue() %>%
     as.character()
@@ -222,7 +222,7 @@ Text2Coords <- function(x) {
     as.numeric() %>%
     matrix(nrow = 1, ncol = 2) %>%
     as.data.frame() %>%
-    setNames(c("Longitude", "Latitude")) %>%
-    tibble()
+    stats::setNames(c("Longitude", "Latitude")) %>%
+    tibble::tibble()
 }
 

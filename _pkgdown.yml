@@ -55,6 +55,11 @@ reference:
   - LoadPackages
   - AddMissingCols
   - FileExt
+  - FunctionsInPackage
+  - ReloadPackage
+  - LoadedPackages
+  - SaveXToDisk
+  - FunctionsInPackage
 
 - title: Spatial functions
   desc:

@@ -4,15 +4,21 @@
 \alias{SplitVector}
 \title{Split a vector into smaller chunks}
 \usage{
-SplitVector(Vector = NULL, NSplit = NULL)
+SplitVector(Vector = NULL, NSplit = NULL, Prefix = "Chunk")
 }
 \arguments{
 \item{Vector}{vector to split}
 
 \item{NSplit}{number of splits}
+
+\item{Prefix}{prefix string for the name of the resulted list}
 }
 \description{
 Split a vector into smaller chunks
+}
+\examples{
+SplitVector(1:100, 3)
+SplitVector(1:100, 2, "T")
 }
 \author{
 Ahmed El-Gabbas

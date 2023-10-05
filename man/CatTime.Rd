@@ -16,6 +16,10 @@ CatTime(Text = NULL, NLines = 1, ...)
 \description{
 Print text and a time stamp
 }
+\examples{
+CatTime()
+CatTime("Time now")
+}
 \author{
 Ahmed El-Gabbas
 }

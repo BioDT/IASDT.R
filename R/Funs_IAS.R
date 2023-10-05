@@ -5,10 +5,11 @@
 #' Match taxonomy with GBIF; may return >1 match
 #'
 #'  Match taxonomy with GBIF; may return >1 match
-#' @param taxonName taxonomy name
-#' @param taxonID taxonomy ID
-#' @param include_genus include matches at genus level
+#' @param taxon_name taxonomy name
+#' @param taxon_id taxonomy ID
+#' @param include_genus include matches at genus level; default: `FALSE`
 #' @name match_to_gbif.fn
+#' @importFrom rlang .data
 #' @author Marina Golivets
 #' @return NULL
 #' @export
@@ -40,36 +41,36 @@ match_to_gbif.fn <- function(taxon_name, taxon_id, include_genus = FALSE) {
     }
   ) %>%
     mapply(
-      cbind, .,
+      cbind, .data,
       taxon_name = taxon_name, taxon_id = taxon_id,
       stringsAsFactors = FALSE, SIMPLIFY = FALSE
     ) %>%
     data.table::rbindlist(fill = TRUE) %>%
-    dplyr::filter(!is.na(usageKey)) %>%
+    dplyr::filter(!is.na(.data$usageKey)) %>%
     dplyr::distinct() %>%
-    dplyr::filter(phylum == "Tracheophyta")
+    dplyr::filter(.data$phylum == "Tracheophyta")
 
   # retrieve best matches
   best_matches <- lapply(all_matches, function(x) x$data) %>%
     mapply(
-      cbind, .,
+      cbind, .data,
       taxon_name = taxon_name, taxon_id = taxon_id,
       stringsAsFactors = FALSE, SIMPLIFY = FALSE
     ) %>%
     data.table::rbindlist(fill = TRUE) %>%
     dplyr::distinct() %>%
-    dplyr::filter(phylum == "Tracheophyta")
+    dplyr::filter(.data$phylum == "Tracheophyta")
 
   matched <- best_matches %>%
-    dplyr::filter(!(matchType %in% c("NONE", "HIGHERRANK")))
+    dplyr::filter(!(.data$matchType %in% c("NONE", "HIGHERRANK")))
 
   nonmatched <- best_matches %>%
-    dplyr::filter(matchType %in% c("NONE", "HIGHERRANK"))
+    dplyr::filter(.data$matchType %in% c("NONE", "HIGHERRANK"))
 
   matched_alternative <- try(
     alternative_matches %>%
-      dplyr::filter(phylum == "Tracheophyta") %>% # use only vascular plants
-      dplyr::filter(confidence >= 0) %>%
+      dplyr::filter(.data$phylum == "Tracheophyta") %>% # use only vascular plants
+      dplyr::filter(.data$confidence >= 0) %>%
       # dplyr::filter(taxon_id %in% nonmatched$taxon_id)
       dplyr::filter(!taxon_id %in% matched$taxon_id)
   )
@@ -78,62 +79,63 @@ match_to_gbif.fn <- function(taxon_name, taxon_id, include_genus = FALSE) {
   } else {
     taxon_list <- dplyr::bind_rows(matched, matched_alternative)
   }
-  if (include_genus == FALSE) taxon_list %<>% dplyr::filter(rank != "GENUS")
+
+  if (include_genus == FALSE) {
+    taxon_list <- taxon_list %>%
+      dplyr::filter(rank != "GENUS")
+  }
 
 
   # get names that were matched as accepted
   accepted <- taxon_list %>%
     dplyr::group_by(taxon_id) %>%
-    dplyr::filter(status == "ACCEPTED")
+    dplyr::filter(.data$status == "ACCEPTED")
   if(nrow(accepted) > 0) {
-    accepted %<>%
-      dplyr::filter(confidence == max(confidence)) %>%
+    accepted <- accepted %>%
+      dplyr::filter(.data$confidence == max(.data$confidence)) %>%
       dplyr::ungroup()
   } else {
-    accepted %<>%
-      dplyr::ungroup()
+    accepted <- dplyr::ungroup(accepted)
   }
 
   # get names that were matched as synonyms only
   synonyms <- taxon_list %>%
-    dplyr::group_by(taxon_id) %>%
-    dplyr::summarise(has_accepted = dplyr::n_distinct(status == "ACCEPTED") > 1) %>%
+    dplyr::group_by(.data$taxon_id) %>%
+    dplyr::summarise(has_accepted = dplyr::n_distinct(.data$status == "ACCEPTED") > 1) %>%
     dplyr::full_join(taxon_list) %>%
-    dplyr::filter(has_accepted == FALSE) %>%
-    dplyr::filter(status == "SYNONYM")
+    dplyr::filter(.data$has_accepted == FALSE) %>%
+    dplyr::filter(.data$status == "SYNONYM")
   if(nrow(synonyms) > 0) {
-    synonyms %<>%
+    synonyms <- synonyms %>%
       dplyr::group_by(taxon_id) %>%
-      dplyr::filter(confidence == max(confidence)) %>%
+      dplyr::filter(.data$confidence == max(.data$confidence)) %>%
       dplyr::ungroup()
   } else {
-    synonyms %<>%
-      dplyr::ungroup()
+    synonyms <- dplyr::ungroup(synonyms)
   }
 
   # get names that were matched as doubtful only
   doubtful <- taxon_list %>%
     dplyr::group_by(taxon_id) %>%
-    dplyr::summarise(has_accepted = dplyr::n_distinct(status == "ACCEPTED") > 1) %>%
+    dplyr::summarise(has_accepted = dplyr::n_distinct(.data$status == "ACCEPTED") > 1) %>%
     dplyr::full_join(taxon_list) %>%
-    dplyr::filter(has_accepted == FALSE) %>%
+    dplyr::filter(.data$has_accepted == FALSE) %>%
     dplyr::group_by(taxon_id) %>%
-    dplyr::filter(status == "DOUBTFUL")
+    dplyr::filter(.data$status == "DOUBTFUL")
   if(nrow(doubtful) > 0) {
-    doubtful %<>%
-      dplyr::filter(confidence == max(confidence)) %>%
+    doubtful <- doubtful %>%
+      dplyr::filter(.data$confidence == max(.data$confidence)) %>%
       dplyr::ungroup()
   } else {
-    doubtful %<>%
-      dplyr::ungroup()
+    doubtful <- dplyr::ungroup(doubtful)
   }
 
   # combine all names
   taxon_list_final <- dplyr::bind_rows(accepted, synonyms, doubtful) %>%
     dplyr::group_by(taxon_id) %>%
-    dplyr::filter(confidence == max(confidence)) %>%
-    dplyr::filter(status != "NONE") %>% # exclude non-matched names
-    dplyr::select(-has_accepted) %>%
+    dplyr::filter(.data$confidence == max(.data$confidence)) %>%
+    dplyr::filter(.data$status != "NONE") %>% # exclude non-matched names
+    dplyr::select(-.data$has_accepted) %>%
     dplyr::ungroup() %>%
     dplyr::relocate(taxon_name, taxon_id)
 
@@ -219,13 +221,14 @@ Get_EASIN_Data <- function(SpKey, NSearch = 500) {
 #' A function to extract EASIN data for a given EASIN_ID
 
 ChangeClass <- function(DF) {
-  VarsInt <- cc(year, month, day, coordinateUncertaintyInMeters,
-                acceptedNameUsageID, taxonKey, acceptedTaxonKey, kingdomKey,
-                phylumKey, classKey, orderKey, familyKey, genusKey, speciesKey)
-  VarsInt64 <- cc(gbifID, catalogNumber, recordNumber, taxonID, identificationID)
-  VarsDbl <- cc(decimalLatitude, decimalLongitude)
-  VarsLgl <- cc(hasCoordinate, hasGeospatialIssues, repatriated)
-  VarsDte <- cc(modified, eventDate, dateIdentified, lastInterpreted, lastParsed, lastCrawled)
+  VarsInt <- c(
+    "year", "month", "day", "coordinateUncertaintyInMeters", "acceptedNameUsageID",
+    "taxonKey", "acceptedTaxonKey", "kingdomKey", "phylumKey", "classKey",
+    "orderKey", "familyKey", "genusKey", "speciesKey")
+  VarsInt64 <- c("gbifID", "catalogNumber", "recordNumber", "taxonID", "identificationID")
+  VarsDbl <- c("decimalLatitude", "decimalLongitude")
+  VarsLgl <- c("hasCoordinate", "hasGeospatialIssues", "repatriated")
+  VarsDte <- c("modified", "eventDate", "dateIdentified", "lastInterpreted", "lastParsed", "lastCrawled")
 
   DF %>%
     dplyr::mutate_at(VarsInt, as.integer) %>%

@@ -4,12 +4,14 @@
 \alias{AssignIfNotExist}
 \title{Assign a value to a variable, only if not existing in the global environment}
 \usage{
-AssignIfNotExist(Variable, Value)
+AssignIfNotExist(Variable, Value, Env = globalenv())
 }
 \arguments{
 \item{Variable}{Variable name}
 
 \item{Value}{Value to be assigned}
+
+\item{Env}{environment to assign value to}
 }
 \description{
 Assign a value to a variable, only if not existing in the global environment

@@ -12,6 +12,9 @@ cc(...)
 \description{
 Concatenate without quotes
 }
+\examples{
+cc(A, B, C)
+}
 \author{
 Ahmed El-Gabbas
 }

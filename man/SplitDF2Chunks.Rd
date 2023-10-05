@@ -11,12 +11,17 @@ SplitDF2Chunks(DF = NULL, ChunkSize = NULL, NChunks = NULL, Prefix = "Chunk")
 
 \item{ChunkSize}{number of rows per chunk}
 
-\item{NChunks}{number of chunks}
+\item{NChunks}{number of chunks (only if \code{ChunkSize} not provided)}
 
 \item{Prefix}{prefix}
 }
 \description{
 Split data.frame into smaller chunks
+}
+\examples{
+SplitDF2Chunks(mtcars, ChunkSize = 16)
+SplitDF2Chunks(mtcars, NChunks = 3)
+SplitDF2Chunks(mtcars, NChunks = 3, Prefix = "T")
 }
 \author{
 Ahmed El-Gabbas

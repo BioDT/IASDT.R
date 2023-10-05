@@ -9,9 +9,9 @@ AddMissingCols(..., DT, FillVal = NA_character_)
 \arguments{
 \item{...}{list of column names to add}
 
-\item{FillVal}{value to be used: default: NA_character}
+\item{DT}{data frame}
 
-\item{DF}{data frame}
+\item{FillVal}{value to be used: default: NA_character}
 }
 \description{
 Add missing columns to data frame
@@ -26,6 +26,7 @@ AddCols <- c("Add1", "Add2")
 mtcars \%>\%
  dplyr::select(1:3) \%>\%
  AddMissingCols(AddCols, DT = ., FillVal = NA_real_)
+
 }
 \author{
 Ahmed El-Gabbas

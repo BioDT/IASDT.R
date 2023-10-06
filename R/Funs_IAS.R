@@ -41,7 +41,7 @@ match_to_gbif.fn <- function(taxon_name, taxon_id, include_genus = FALSE) {
     }
   ) %>%
     mapply(
-      cbind, .data,
+      cbind, .,
       taxon_name = taxon_name, taxon_id = taxon_id,
       stringsAsFactors = FALSE, SIMPLIFY = FALSE
     ) %>%
@@ -53,7 +53,7 @@ match_to_gbif.fn <- function(taxon_name, taxon_id, include_genus = FALSE) {
   # retrieve best matches
   best_matches <- lapply(all_matches, function(x) x$data) %>%
     mapply(
-      cbind, .data,
+      cbind, .,
       taxon_name = taxon_name, taxon_id = taxon_id,
       stringsAsFactors = FALSE, SIMPLIFY = FALSE
     ) %>%
@@ -102,7 +102,7 @@ match_to_gbif.fn <- function(taxon_name, taxon_id, include_genus = FALSE) {
   synonyms <- taxon_list %>%
     dplyr::group_by(.data$taxon_id) %>%
     dplyr::summarise(has_accepted = dplyr::n_distinct(.data$status == "ACCEPTED") > 1) %>%
-    dplyr::full_join(taxon_list) %>%
+    dplyr::full_join(taxon_list, by = dplyr::join_by(taxon_id)) %>%
     dplyr::filter(.data$has_accepted == FALSE) %>%
     dplyr::filter(.data$status == "SYNONYM")
   if(nrow(synonyms) > 0) {
@@ -118,7 +118,7 @@ match_to_gbif.fn <- function(taxon_name, taxon_id, include_genus = FALSE) {
   doubtful <- taxon_list %>%
     dplyr::group_by(taxon_id) %>%
     dplyr::summarise(has_accepted = dplyr::n_distinct(.data$status == "ACCEPTED") > 1) %>%
-    dplyr::full_join(taxon_list) %>%
+    dplyr::full_join(taxon_list, by = dplyr::join_by(taxon_id)) %>%
     dplyr::filter(.data$has_accepted == FALSE) %>%
     dplyr::group_by(taxon_id) %>%
     dplyr::filter(.data$status == "DOUBTFUL")
@@ -135,7 +135,7 @@ match_to_gbif.fn <- function(taxon_name, taxon_id, include_genus = FALSE) {
     dplyr::group_by(taxon_id) %>%
     dplyr::filter(.data$confidence == max(.data$confidence)) %>%
     dplyr::filter(.data$status != "NONE") %>% # exclude non-matched names
-    dplyr::select(-.data$has_accepted) %>%
+    dplyr::select(-"has_accepted") %>%
     dplyr::ungroup() %>%
     dplyr::relocate(taxon_name, taxon_id)
 

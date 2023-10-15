@@ -20,8 +20,12 @@ Assign a value to a variable, only if not existing in the global environment
 AssignIfNotExist(x, TRUE)
 print(x)
 
+# --------------------------------------------------
+
 y <- 10
-AssignIfNotExist(y, TRUE) # y exists and thus its value was not changed
+
+# y exists and thus its value was not changed
+AssignIfNotExist(y, TRUE)
 print(y)
 }
 \author{

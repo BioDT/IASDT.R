@@ -15,11 +15,17 @@ DownBoundary(L, R, B, T)
 
 \item{T}{top boundary}
 }
+\value{
+WKT string
+}
 \description{
 \code{rgbif::pred_within()} function used to download GBIF data only accepts a WKT string. This function takes the values of the boundary and converts it to a WKT string. Default values are determined by the variables: Bound_L, R = Bound_R, Bound_B, Bound_T...
 }
 \details{
 Determine the boundaries of the requested GBIF data
+}
+\examples{
+IASDT.R::DownBoundary(20, 30, 40, 50)
 }
 \author{
 Ahmed El-Gabbas

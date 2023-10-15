@@ -12,6 +12,15 @@ DirCreate(Path)
 \description{
 Create directory if not existed
 }
+\examples{
+# create new folder (random name) in the temporary folder
+Path2Create <- file.path(tempdir(), stringi::stri_rand_strings(1, 5))
+file.exists(Path2Create)
+
+DirCreate(Path2Create)
+file.exists(Path2Create)
+
+}
 \author{
 Ahmed El-Gabbas
 }

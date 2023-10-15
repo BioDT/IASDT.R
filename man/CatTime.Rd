@@ -4,12 +4,14 @@
 \alias{CatTime}
 \title{Print text and a time stamp}
 \usage{
-CatTime(Text = NULL, NLines = 1, ...)
+CatTime(Text = "", NLines = 1, Date = FALSE, ...)
 }
 \arguments{
-\item{Text}{the text to print}
+\item{Text}{the text to print: default empty string (print time only)}
 
 \item{NLines}{number of empty lines after the printing; default: 1}
+
+\item{Date}{Also print date? Default value \code{FALSE}}
 
 \item{...}{other arguments passed to \code{cat}}
 }
@@ -18,7 +20,10 @@ Print text and a time stamp
 }
 \examples{
 CatTime()
+CatTime(Date = TRUE)
+
 CatTime("Time now")
+CatTime("Time now", Date = TRUE)
 }
 \author{
 Ahmed El-Gabbas

@@ -18,6 +18,19 @@ lapply_(X, FUN, Silent = TRUE, ...)
 \description{
 Apply a Function over a List or Vector (with no return value)
 }
+\examples{
+par(mfrow = c(1,2), oma = c(0.25, 0.25, 0.25, 0.25), mar = c(3,3,3,1))
+lapply(list(x = 100:110, y = 110:120), function(V) {
+    plot(V, las = 1, main = "lapply")
+})
+
+# -------------------------------------------
+
+par(mfrow = c(1,2), oma = c(0.25, 0.25, 0.25, 0.25), mar = c(3,3,3,1))
+lapply_(list(x = 100:110, y = 110:120), function(V) {
+    plot(V, las = 1, main = "lapply_")
+})
+}
 \author{
 Ahmed El-Gabbas
 }

@@ -6,7 +6,7 @@
 \alias{IASDT.R-package}
 \title{IASDT.R: Helper R functions for IAS-DT project}
 \description{
-Helper functions to be used in the Invasive Alien Species Digital Twin.
+Helper functions to be used in the Invasive Alien Species (IAS) Digital Twin.
 }
 \seealso{
 Useful links:

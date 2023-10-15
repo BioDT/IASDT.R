@@ -18,7 +18,16 @@ Split a vector into smaller chunks
 }
 \examples{
 SplitVector(1:100, 3)
+
+# -------------------------------------------
+
 SplitVector(1:100, 2, "T")
+
+# -------------------------------------------
+
+\dontrun{
+SplitVector(1:100)
+}
 }
 \author{
 Ahmed El-Gabbas

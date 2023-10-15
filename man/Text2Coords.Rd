@@ -9,15 +9,15 @@ Text2Coords(x)
 \arguments{
 \item{x}{string of coordinate}
 }
+\value{
+two column tibble for Longitude & Latitude
+}
 \description{
 Extract longitude / latitude from text
 }
 \examples{
-c("POINT (11.761 46.286)",
- "POINT (14.8336 42.0422)",
- "POINT (16.179999 38.427214)") \%>\%
+c("POINT (11.761 46.286)", "POINT (14.8336 42.0422)", "POINT (16.179999 38.427214)") \%>\%
  lapply(Text2Coords)
-
 }
 \author{
 Ahmed El-Gabbas

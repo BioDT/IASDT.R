@@ -12,8 +12,12 @@
 #' @param x tiff file path
 #' @name CheckTiff
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return logical: `TRUE` when the tiff file is corrupted; `FALSE` when not corrupted
 #' @export
+#' @examples
+#' (f <- system.file("ex/elev.tif", package="terra"))
+#'
+#' CheckTiff(f)
 
 CheckTiff <- function(x) {
   x %>%
@@ -35,7 +39,7 @@ CheckTiff <- function(x) {
 #' Split a raster object into a list of smaller rasters
 #' @param raster raster object to split
 #' @param Ncol number of columns
-#' @param NRow number of rows
+#' @param Nrow number of rows
 #' @param save save output to disk?
 #' @param SplitPath file path
 #' @param plot plot the results
@@ -43,19 +47,45 @@ CheckTiff <- function(x) {
 #' @name SplitRaster
 #' @author Ahmed El-Gabbas
 #' @return NULL
+#' @export
 #' @details
 #' #' References:
 #' https://stackoverflow.com/questions/29784829/
 #' https://stackoverflow.com/questions/22109774/r-raster-mosaic-from-list-of-rasters
+#' @examples
+#' require(raster)
+#' logo <- raster(system.file("external/rlogo.grd", package = "raster"))
+#' plot(logo, axes = F, legend = F, bty = "n", box = FALSE, main = "Original raster layer")
+#' # --------------------------------------------------
 #'
-#' @export
+#' # Split into 3 rows and 3 columns
+#' logoSplit <- SplitRaster(logo, Ncol = 3, Nrow = 3, plot = TRUE)
+#'
+#' print(logoSplit) # a list object of 9 items
+#'
+#' # --------------------------------------------------
+#'
+#' # Merging split maps again
+#' logoSplit$fun <- mean
+#' logoSplit$na.rm <- TRUE
+#' logoSplit2 <- do.call(mosaic, logoSplit)
+#' par(mfrow = c(1, 1))
+#' plot(logoSplit2, axes = F, legend = F, bty = "n", box = FALSE, main = "Merged raster layers")
+#'
+#' print({logoSplit2 - logo}) # No value difference!
+#'
+#' # --------------------------------------------------
+#'
+#' logoSplit <- SplitRaster(logo, Ncol = 3, Nrow = 3, Extent = TRUE)
+#' print(logoSplit)
+#'
 
 SplitRaster <- function(
-    raster, Ncol = 4, NRow = 4, save = FALSE,
+    raster, Ncol = 4, Nrow = 4, save = FALSE,
     SplitPath = "", plot = FALSE, Extent = FALSE) {
 
   h <- ceiling(ncol(raster) / Ncol)
-  v <- ceiling(nrow(raster) / NRow)
+  v <- ceiling(nrow(raster) / Nrow)
   agg <- raster::aggregate(raster, fact = c(h, v))
   agg[] <- 1:raster::ncell(agg)
   agg_poly <- raster::rasterToPolygons(agg)
@@ -71,7 +101,7 @@ SplitRaster <- function(
   }
 
   if (save == TRUE) {
-    for (i in seq_len(r_list)) {
+    for (i in seq_along(r_list)) {
       raster::writeRaster(
         x = r_list[[i]], filename = paste(SplitPath, "/SplitRas", i, sep = ""),
         format = "GTiff", datatype = "FLT4S", overwrite = TRUE)
@@ -79,8 +109,8 @@ SplitRaster <- function(
   }
 
   if (plot == TRUE) {
-    graphics::par(mfrow = c(NRow, Ncol))
-    for (i in seq_len(r_list)) {
+    graphics::par(mfrow = c(Nrow, Ncol))
+    for (i in seq_along(r_list)) {
       raster::plot(r_list[[i]], axes = FALSE, legend = FALSE, bty = "n", box = FALSE)
     }
   }
@@ -103,9 +133,11 @@ SplitRaster <- function(
 #' @param T top boundary
 #' @name DownBoundary
 #' @author Ahmed El-Gabbas
-#' @return NULL
-#' @description `rgbif::pred_within()` function used to download GBIF data only accepts a WKT string. This function takes the values of the boundary and converts it to a WKT string. Default values are determined by the variables: Bound_L, R = Bound_R, Bound_B, Bound_T...
+#' @return WKT string
 #' @export
+#' @description `rgbif::pred_within()` function used to download GBIF data only accepts a WKT string. This function takes the values of the boundary and converts it to a WKT string. Default values are determined by the variables: Bound_L, R = Bound_R, Bound_B, Bound_T...
+#' @examples
+#' IASDT.R::DownBoundary(20, 30, 40, 50)
 
 DownBoundary <- function(L, R, B, T) {
   "POLYGON(({L} {B},{R} {B},{R} {T},{L} {T},{L} {B}))" %>%
@@ -117,7 +149,7 @@ DownBoundary <- function(L, R, B, T) {
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 # |---------------------------------------------------| #
-# rename_geometry ----
+# Rename_geometry ----
 # |---------------------------------------------------| #
 
 #' Rename active geometry column of an sf object
@@ -125,12 +157,12 @@ DownBoundary <- function(L, R, B, T) {
 #' Rename active geometry column of an sf object
 #' @param g simple feature object
 #' @param name the new name of geometry
-#' @name rename_geometry
+#' @name Rename_geometry
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
-rename_geometry <- function(g, name) {
+Rename_geometry <- function(g, name) {
   # Source: https://gis.stackexchange.com/a/386589/30390
   # https://gis.stackexchange.com/questions/386584/sf-geometry-column-naming-differences-r
   current <- attr(g, "sf_column")
@@ -162,7 +194,7 @@ Polygon_Centroid <- function(x, Rename = FALSE, NewName = "") {
   suppressWarnings(sf::st_geometry(x) <- sf::st_geometry(sf::st_centroid(x)))
   if (Rename) {
     x %>%
-      rename_geometry(name = NewName) %>%
+      Rename_geometry(name = NewName) %>%
       return()
   } else {
     return(x)
@@ -205,14 +237,11 @@ Set_geometry <- function(x, Name) {
 #' @param x string of coordinate
 #' @name Text2Coords
 #' @author Ahmed El-Gabbas
-#' @return NULL
-#' @examples
-#' c("POINT (11.761 46.286)",
-#'  "POINT (14.8336 42.0422)",
-#'  "POINT (16.179999 38.427214)") %>%
-#'  lapply(Text2Coords)
-#'
+#' @return two column tibble for Longitude & Latitude
 #' @export
+#' @examples
+#' c("POINT (11.761 46.286)", "POINT (14.8336 42.0422)", "POINT (16.179999 38.427214)") %>%
+#'  lapply(Text2Coords)
 
 Text2Coords <- function(x) {
   x %>%
@@ -226,3 +255,108 @@ Text2Coords <- function(x) {
     tibble::tibble()
 }
 
+
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+# |---------------------------------------------------| #
+# ClipRasterByPolygon ------
+# |---------------------------------------------------| #
+
+#' Clip raster by a spatial polygon
+#'
+#' Clip raster by a spatial polygon
+#' @param raster raster layer
+#' @param shape Polygon
+#' @export
+#' @examples
+#' require(sp)
+#' require(raster)
+#'
+#' # Example Polygon
+#' data(wrld_simpl, package = "maptools")
+#' SPDF <- subset(wrld_simpl, NAME == "Germany")
+#'
+#' # Example RasterLayer
+#' r <- raster::raster(nrow = 1e3, ncol = 1e3, crs = sp::proj4string(SPDF))
+#' r[] <- 1:length(r)
+#' plot(r)
+#' plot(SPDF, add = T)
+#'
+#' # ----------------------------------
+#'
+#' SPDF_DE <- ClipRasterByPolygon(r, SPDF)
+#' plot(raster::extent(SPDF_DE), axes = F, xlab = "", ylab = "")
+#' plot(SPDF_DE, add = T)
+#' plot(SPDF, add = T)
+
+ClipRasterByPolygon <- function(raster = NULL, shape = NULL) {
+  a1_crop <- raster::crop(raster, shape)
+  step1 <- raster::rasterize(shape, a1_crop)
+  ClippedRaster <- a1_crop * step1
+  names(ClippedRaster) <- names(raster)
+  return(ClippedRaster)
+}
+
+
+
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+# |---------------------------------------------------| #
+# CheckStackInMemory ------
+# |---------------------------------------------------| #
+
+#' Check if the raster stack reads from disk or memory
+#'
+#' Check if the raster stack reads from disk or memory
+#' @author Ahmed El-Gabbas
+#' @export
+#' @param Stack Stack
+#' @examples
+#' require(raster, warn.conflicts = F, quietly = T)
+#' logo <- raster(system.file("external/rlogo.grd", package = "raster"))
+#' logo@data@inmemory
+#' logo@data@fromdisk
+#' logo@file@name
+#'
+#' # -------------------------------------------
+#'
+#' # A raster stack reading from files
+#' ST2 <- raster::stack(logo, logo)
+#' CheckStackInMemory(ST2)
+#' c(ST2[[1]]@data@inmemory, ST2[[2]]@data@inmemory)
+#' c(ST2[[1]]@data@fromdisk, ST2[[2]]@data@fromdisk)
+#' c(ST2[[1]]@file@name, ST2[[2]]@file@name)
+#'
+#' # -------------------------------------------
+#'
+#' logo2 <- raster::readAll(logo)
+#' ST3 <- raster::stack(logo, logo2)
+#' CheckStackInMemory(ST3)
+#' c(ST3[[1]]@data@inmemory, ST3[[2]]@data@inmemory)
+#' c(ST3[[1]]@data@fromdisk, ST3[[2]]@data@fromdisk)
+#' c(ST3[[1]]@file@name, ST3[[2]]@file@name)
+
+CheckStackInMemory <- function(Stack = NULL) {
+
+  if (class(Stack) != "RasterStack") {
+    message("The object should be a Raster stack object")
+    opt <- options(show.error.messages = FALSE)
+    on.exit(options(opt))
+    invisible(stop())
+  }
+
+  InMem <- sapply(raster::unstack(Stack), raster::inMemory)
+  if (all(InMem)) {
+    message(paste0("All stack layers reads from ", crayon::bold("disk")))
+  }
+  if (all(!InMem)) {
+    message(paste0("All stack layers reads from ", crayon::bold("memory")))
+  }
+
+  if (sum(InMem) > 0 & sum(InMem) < raster::nlayers(Stack)) {
+    paste0("Layers numbered (", paste0(which(!InMem), collapse = "-"),
+           ") reads from disk" )
+  }
+}

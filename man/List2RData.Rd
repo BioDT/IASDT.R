@@ -18,6 +18,20 @@ List2RData(List, Prefix = "", Dir = getwd(), Overwrite = FALSE)
 \description{
 Split list items to separate RData files
 }
+\examples{
+# split iris data by species name
+iris2 <- iris \%>\%
+  tibble::tibble() \%>\%
+  split(~Species)
+
+str(iris2, 1)
+
+(TMP_Folder <- file.path(tempdir(), stringi::stri_rand_strings(1, 5)))
+list.files(TMP_Folder)
+
+List2RData(iris2, Dir = TMP_Folder)
+list.files(TMP_Folder)
+}
 \author{
 Ahmed El-Gabbas
 }

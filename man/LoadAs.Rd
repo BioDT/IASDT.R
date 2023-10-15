@@ -12,6 +12,29 @@ LoadAs(File = NA)
 \description{
 Load RData file as specific object; i.e. rename loaded object
 }
+\examples{
+File <- system.file("testdata", "culcita_dat.RData", package = "lme4")
+
+# ---------------------------------------------------------
+# loading RData using base library
+# ---------------------------------------------------------
+(load(File))
+
+ls()
+
+tibble::tibble(culcita_dat)
+
+rm(culcita_dat)
+
+# ---------------------------------------------------------
+# Loading as custom object name
+# ---------------------------------------------------------
+NewObj <- LoadAs(File = File)
+
+ls()
+
+print(tibble::tibble(NewObj))
+}
 \author{
 Ahmed El-Gabbas
 }

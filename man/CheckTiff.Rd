@@ -9,8 +9,16 @@ CheckTiff(x)
 \arguments{
 \item{x}{tiff file path}
 }
+\value{
+logical: \code{TRUE} when the tiff file is corrupted; \code{FALSE} when not corrupted
+}
 \description{
 Check if tiff file corrupted
+}
+\examples{
+(f <- system.file("ex/elev.tif", package="terra"))
+
+CheckTiff(f)
 }
 \author{
 Ahmed El-Gabbas

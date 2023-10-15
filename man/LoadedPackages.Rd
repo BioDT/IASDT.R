@@ -11,4 +11,9 @@ List of loaded packages
 }
 \examples{
 LoadedPackages()
+
+require(sf)
+
+LoadedPackages()
+
 }

@@ -16,6 +16,7 @@ Load package silently and print version
 }
 \examples{
 LoadPackages(raster)
+
 LoadPackages(terra, Verbose = TRUE)
 }
 \author{

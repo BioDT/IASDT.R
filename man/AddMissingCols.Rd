@@ -22,11 +22,12 @@ mtcars \%>\%
  AddMissingCols(A, B, C, DT = ., FillVal = NA_character_) \%>\%
  AddMissingCols(D, DT = ., FillVal = as.integer(10))
 
+# -------------------------------------------
+
 AddCols <- c("Add1", "Add2")
 mtcars \%>\%
  dplyr::select(1:3) \%>\%
  AddMissingCols(AddCols, DT = ., FillVal = NA_real_)
-
 }
 \author{
 Ahmed El-Gabbas

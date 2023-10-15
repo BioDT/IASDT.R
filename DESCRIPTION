@@ -7,7 +7,7 @@ Authors@R:
            comment = c(ORCID = "0000-0003-2225-088X"))
 Maintainer: Ahmed El-Gabbas <ahmed.el-gabbas@ufz.de>
 Description: Helper functions to be used in the Invasive Alien Species
-    Digital Twin.
+    (IAS) Digital Twin.
 License: MIT + file LICENSE
 URL: https://biodt.eu, https://www.ufz.de/index.php?en=36737
 BugReports: https://git.ufz.de/biodt/IASDT.R

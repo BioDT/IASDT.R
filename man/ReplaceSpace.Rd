@@ -12,6 +12,11 @@ ReplaceSpace(x)
 \description{
 Replace space with underscore
 }
+\examples{
+ReplaceSpace("Genus species")
+
+ReplaceSpace("Genus species subspecies")
+}
 \author{
 Ahmed El-Gabbas
 }

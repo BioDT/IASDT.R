@@ -11,10 +11,45 @@ SaveMultiple(Vars = NULL, OutFolder = getwd(), Overwrite = FALSE)
 
 \item{OutFolder}{output path}
 
-\item{Overwrite}{overwrite existing files}
+\item{Overwrite}{overwrite existing files? If file already exist, no files are saved unless \code{Overwrite} argument is set as \code{TRUE}}
 }
 \description{
 Save multiple objects to their respective \code{.RData} files
+}
+\examples{
+TMP_Folder <- file.path(tempdir(), stringi::stri_rand_strings(1, 5))
+DirCreate(TMP_Folder)
+
+# ----------------------------------------------
+# Save x1 and x2 to disk
+# ----------------------------------------------
+x1 = 10; x2 = 20
+
+SaveMultiple(Vars = cc(x1, x2), OutFolder = TMP_Folder)
+
+list.files(path = TMP_Folder, pattern = "^.+.RData")
+
+(x1Contents <- LoadAs(file.path(TMP_Folder, "x1.RData")))
+
+(x2Contents <- LoadAs(file.path(TMP_Folder, "x2.RData")))
+
+# ----------------------------------------------
+# File exists, no save
+# ----------------------------------------------
+try(SaveMultiple(Vars = c("x1", "x2"), OutFolder = TMP_Folder))
+
+# ----------------------------------------------
+# overwrite existing file
+# ----------------------------------------------
+x1 = 100; x2 = 200; x3 = 300
+
+SaveMultiple(Vars = cc(x1, x2, x3), OutFolder = TMP_Folder, Overwrite = TRUE)
+
+(x1Contents <- LoadAs(file.path(TMP_Folder, "x1.RData")))
+
+(x2Contents <- LoadAs(file.path(TMP_Folder, "x2.RData")))
+
+(x3Contents <- LoadAs(file.path(TMP_Folder, "x3.RData")))
 }
 \author{
 Ahmed El-Gabbas

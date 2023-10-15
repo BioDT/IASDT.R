@@ -4,7 +4,7 @@
 
 #' Match taxonomy with GBIF; may return >1 match
 #'
-#'  Match taxonomy with GBIF; may return >1 match
+#' Match taxonomy with GBIF; may return >1 match
 #' @param taxon_name taxonomy name
 #' @param taxon_id taxonomy ID
 #' @param include_genus include matches at genus level; default: `FALSE`
@@ -160,6 +160,10 @@ match_to_gbif.fn <- function(taxon_name, taxon_id, include_genus = FALSE) {
 #' @export
 #' @details
 #' A function to extract EASIN data for a given EASIN_ID
+#' @examples
+#' c("R00006", "R18689", "R00008") %>%
+#'   purrr::map(Get_EASIN_Data)
+#'
 
 Get_EASIN_Data <- function(SpKey, NSearch = 500) {
   Skip <- 0         # Skip = 0; start at the first presence grid
@@ -169,8 +173,7 @@ Get_EASIN_Data <- function(SpKey, NSearch = 500) {
   # Looping over data chunks
   while (TRUE) {
     ID <- ID + 1
-    URL <- "https://alien.jrc.ec.europa.eu/apixg/geoxg/speciesid/{SpKey}/layertype/grid/skip/{Skip}/take/{NSearch}" %>%
-      stringr::str_glue()
+    URL <- stringr::str_glue("https://alien.jrc.ec.europa.eu/apixg/geoxg/speciesid/{SpKey}/layertype/grid/skip/{Skip}/take/{NSearch}")
 
     # Extract data from JSON
     Data <- jsonlite::fromJSON(URL)
@@ -194,8 +197,7 @@ Get_EASIN_Data <- function(SpKey, NSearch = 500) {
 
   # merge the list items together
   if (length(DT) > 0) {
-    do.call(DT, what = "rbind") %>%
-      return()
+    return(dplyr::bind_rows(DT))
   } else {
     return(NULL)
   }
@@ -215,10 +217,11 @@ Get_EASIN_Data <- function(SpKey, NSearch = 500) {
 #' @param DF Data frame
 #' @name ChangeClass
 #' @author Ahmed El-Gabbas
-#' @return NULL
-#' @export
 #' @details
-#' A function to extract EASIN data for a given EASIN_ID
+#' A function to change the class of some of GBIF columns
+#' @return NULL
+#' @keywords internal
+#' @noRd
 
 ChangeClass <- function(DF) {
   VarsInt <- c(
@@ -259,6 +262,9 @@ ChangeClass <- function(DF) {
 #' @export
 #' @details
 #' Get accepted name of a taxa
+#' @examples
+#' # https://www.gbif.org/species/5372559
+#' GetAcceptedName(5372559)
 
 GetAcceptedName <- function(ID) {
   if(!is.na(ID)) {

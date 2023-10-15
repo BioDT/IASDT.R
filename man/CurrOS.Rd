@@ -6,8 +6,15 @@
 \usage{
 CurrOS()
 }
+\value{
+String for the current operating system
+}
 \description{
 Current operating system
+}
+\examples{
+CurrOS()
+
 }
 \author{
 Ahmed El-Gabbas

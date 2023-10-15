@@ -16,6 +16,19 @@ SaveAs(InObj, OutObj, OutPath)
 \description{
 Save an object with a different name
 }
+\examples{
+TMP_Folder <- file.path(tempdir(), stringi::stri_rand_strings(1, 5))
+DirCreate(TMP_Folder)
+
+# save iris data in `iris2.RData` with `iris2` object name
+SaveAs(iris, iris2, file.path(TMP_Folder, "iris2.RData"))
+
+list.files(TMP_Folder, pattern = "^.+.RData")
+
+(load(file.path(TMP_Folder, "iris2.RData")))
+
+tibble::tibble(iris2)
+}
 \author{
 Ahmed El-Gabbas
 }

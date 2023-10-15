@@ -15,6 +15,7 @@ Get file extension
 \examples{
 FileExt("File.doc")
 FileExt("D:/File.doc")
+
 }
 \author{
 Ahmed El-Gabbas

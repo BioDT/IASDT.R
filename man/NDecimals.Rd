@@ -12,6 +12,19 @@ NDecimals(x)
 \description{
 Number of decimal places in a vector
 }
+\examples{
+NDecimals("13.45554545")
+
+# -------------------------------------------
+
+IASDT.R::NDecimals(15.01500)
+
+IASDT.R::NDecimals('15.01500')
+
+# -------------------------------------------
+
+NDecimals(13.45554545)
+}
 \author{
 Ahmed El-Gabbas
 }

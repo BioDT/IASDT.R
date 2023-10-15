@@ -18,6 +18,16 @@ sapply_(X, FUN, simplify = TRUE, ...)
 \description{
 Apply a Function over a List or Vector (with no return value)
 }
+\examples{
+par(mfrow = c(1,2), oma = c(0.25, 0.25, 0.25, 0.25), mar = c(3,3,3,1))
+sapply(list(x = 100:110, y = 110:120), function(V){plot(V, las = 1, main = "sapply")})
+
+# -------------------------------------------
+
+# nothing returned or printed, only the plotting
+par(mfrow = c(1,2), oma = c(0.25, 0.25, 0.25, 0.25), mar = c(3,3,3,1))
+sapply_(list(x = 100:110, y = 110:120), function(V){plot(V, las = 1, main = "sapply_")})
+}
 \author{
 Ahmed El-Gabbas
 }

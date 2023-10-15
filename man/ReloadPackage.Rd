@@ -14,5 +14,7 @@ Reload an R package
 }
 \examples{
 library(sf)
+
 ReloadPackage("sf")
+
 }

@@ -14,6 +14,10 @@ Concatenate without quotes
 }
 \examples{
 cc(A, B, C)
+
+# -------------------------------------------
+
+cc(A, B, "A and B")
 }
 \author{
 Ahmed El-Gabbas

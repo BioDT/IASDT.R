@@ -7,7 +7,7 @@
 SplitRaster(
   raster,
   Ncol = 4,
-  NRow = 4,
+  Nrow = 4,
   save = FALSE,
   SplitPath = "",
   plot = FALSE,
@@ -19,7 +19,7 @@ SplitRaster(
 
 \item{Ncol}{number of columns}
 
-\item{NRow}{number of rows}
+\item{Nrow}{number of rows}
 
 \item{save}{save output to disk?}
 
@@ -36,6 +36,34 @@ Split a raster object into a list of smaller rasters
 #' References:
 https://stackoverflow.com/questions/29784829/
 https://stackoverflow.com/questions/22109774/r-raster-mosaic-from-list-of-rasters
+}
+\examples{
+require(raster)
+logo <- raster(system.file("external/rlogo.grd", package = "raster"))
+plot(logo, axes = F, legend = F, bty = "n", box = FALSE, main = "Original raster layer")
+# --------------------------------------------------
+
+# Split into 3 rows and 3 columns
+logoSplit <- SplitRaster(logo, Ncol = 3, Nrow = 3, plot = TRUE)
+
+print(logoSplit) # a list object of 9 items
+
+# --------------------------------------------------
+
+# Merging split maps again
+logoSplit$fun <- mean
+logoSplit$na.rm <- TRUE
+logoSplit2 <- do.call(mosaic, logoSplit)
+par(mfrow = c(1, 1))
+plot(logoSplit2, axes = F, legend = F, bty = "n", box = FALSE, main = "Merged raster layers")
+
+print({logoSplit2 - logo}) # No value difference!
+
+# --------------------------------------------------
+
+logoSplit <- SplitRaster(logo, Ncol = 3, Nrow = 3, Extent = TRUE)
+print(logoSplit)
+
 }
 \author{
 Ahmed El-Gabbas

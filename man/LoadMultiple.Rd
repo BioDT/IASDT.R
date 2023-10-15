@@ -24,35 +24,43 @@ LoadMultiple(
 Load multiple RData files together
 }
 \examples{
-\dontrun{
 (Files <- system.file("testdata", c("culcita_dat.RData", "gopherdat2.RData"), package = "lme4"))
 
 # ---------------------------------------------------
-
 # Load multiple *.rd files to one list object
-print(Files)
+# ---------------------------------------------------
 file.exists(Files)
+ls()
+
 MultiObj <- LoadMultiple(Files = Files, OneObject = TRUE)
-MultiObj
+ls()
+
+str(MultiObj, 1)
 
 # ---------------------------------------------------
-
 # Load multiple *.rd files current environment
+# ---------------------------------------------------
 rm("MultiObj")
+ls()
+
 LoadMultiple(Files = Files, OneObject = FALSE)
 
-print(c("culcita_dat", "Gdat") \%in\% ls(globalenv()))
-print(Gdat)
-print(culcita_dat)
+print(c("culcita_dat", "Gdat") \%in\% ls())
+
+str(Gdat, 1)
+
+str(culcita_dat, 1)
 
 # ---------------------------------------------------
-
 # Load multiple *.rd files, one object already exists
+# ---------------------------------------------------
 rm("culcita_dat")
 ls()
-print(c("culcita_dat", "Gdat") \%in\% ls(globalenv()))
-LoadMultiple(Files = Files, OneObject = FALSE)
-}
+
+print(c("culcita_dat", "Gdat") \%in\% ls())
+
+try(LoadMultiple(Files = Files, OneObject = FALSE))
+
 }
 \author{
 Ahmed El-Gabbas

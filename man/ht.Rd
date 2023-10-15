@@ -17,7 +17,11 @@ Print head and tail of data frame
 \examples{
 ht(mtcars)
 
+# -------------------------------------------
+
 ht(mtcars, 2)
+
+# -------------------------------------------
 
 ht(mtcars, 6)
 }

@@ -29,6 +29,15 @@ sort_(
 \description{
 Sort alphanumeric strings
 }
+\examples{
+# example code
+(AA <- paste0("V", 1:12))
+
+sort(AA)
+
+sort_(AA)
+
+}
 \author{
 Ahmed El-Gabbas
 }

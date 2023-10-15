@@ -1,12 +1,10 @@
 ## quiets concerns of R CMD check re: the .'s that appear in pipelines
 if(getRversion() >= "2.15.1")  utils::globalVariables(c("."))
 
-
-
 # |---------------------------------------------------| #
-# catSep ----
+# CatSep ----
 # |---------------------------------------------------| #
-
+#
 #' Print separator(s) to the console
 #'
 #' Print separator(s) to the console
@@ -18,12 +16,18 @@ if(getRversion() >= "2.15.1")  utils::globalVariables(c("."))
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @examples
-#' catSep()
-#' catSep(2)
-#' catSep(2,2,3)
+#' CatSep()
+#'
+#' CatSep(2)
+#'
+#' CatSep(2,2,3)
+#'
+#' CatSep(2,2,3, Char = "*")
+#'
+#' CatSep(2,2,3, Char = "*", CharReps = 20)
 #' @export
 
-catSep <- function(Rep = 1, Extra1 = 0, Extra2 = 0, Char = "-", CharReps = 50) {
+CatSep <- function(Rep = 1, Extra1 = 0, Extra2 = 0, Char = "-", CharReps = 50) {
   if (Extra1 > 0) {
     replicate(n = Extra1, expr = cat("\n"))
   }
@@ -42,7 +46,7 @@ catSep <- function(Rep = 1, Extra1 = 0, Extra2 = 0, Char = "-", CharReps = 50) {
 # |---------------------------------------------------| #
 # AssignIfNotExist ----
 # |---------------------------------------------------| #
-
+#
 #' Assign a value to a variable, only if not existing in the global environment
 #'
 #' Assign a value to a variable, only if not existing in the global environment
@@ -51,20 +55,32 @@ catSep <- function(Rep = 1, Extra1 = 0, Extra2 = 0, Char = "-", CharReps = 50) {
 #' @param Env environment to assign value to
 #' @author Ahmed El-Gabbas
 #' @return NULL
+#' @export
 #' @examples
 #' AssignIfNotExist(x, TRUE)
 #' print(x)
 #'
+#' # --------------------------------------------------
+#'
 #' y <- 10
-#' AssignIfNotExist(y, TRUE) # y exists and thus its value was not changed
+#'
+#' # y exists and thus its value was not changed
+#' AssignIfNotExist(y, TRUE)
 #' print(y)
-#' @export
 
 AssignIfNotExist <- function(Variable, Value, Env = globalenv()) {
-  Variable <- rlang::ensyms(Variable) %>%
-    as.character()
+
+  Variable <- as.character(rlang::ensyms(Variable))
+
   if (!Variable %in% ls(envir = Env)) {
     assign(x = Variable, value = Value, envir = Env)
+  } else {
+    "The `{Variable}` object already exists in the environment. Current value is:" %>%
+      stringr::str_glue() %>%
+      crayon::blue() %>%
+      cat()
+
+    print(rlang::env_get(Env, paste0(Variable)))
   }
 }
 
@@ -74,7 +90,7 @@ AssignIfNotExist <- function(Variable, Value, Env = globalenv()) {
 # |---------------------------------------------------| #
 # LoadAs ----
 # |---------------------------------------------------| #
-
+#
 #' Load RData file as specific object; i.e. rename loaded object
 #'
 #' Load RData file as specific object; i.e. rename loaded object
@@ -82,6 +98,28 @@ AssignIfNotExist <- function(Variable, Value, Env = globalenv()) {
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
+#' @examples
+#' File <- system.file("testdata", "culcita_dat.RData", package = "lme4")
+#'
+#' # ---------------------------------------------------------
+#' # loading RData using base library
+#' # ---------------------------------------------------------
+#' (load(File))
+#'
+#' ls()
+#'
+#' tibble::tibble(culcita_dat)
+#'
+#' rm(culcita_dat)
+#'
+#' # ---------------------------------------------------------
+#' # Loading as custom object name
+#' # ---------------------------------------------------------
+#' NewObj <- LoadAs(File = File)
+#'
+#' ls()
+#'
+#' print(tibble::tibble(NewObj))
 
 LoadAs <- function(File = NA) {
   InFile0 <- load(File)
@@ -102,7 +140,7 @@ LoadAs <- function(File = NA) {
 # |---------------------------------------------------| #
 # LoadMultiple ----
 # |---------------------------------------------------| #
-
+#
 #' Load multiple RData files together
 #'
 #' Load multiple RData files together
@@ -113,41 +151,49 @@ LoadAs <- function(File = NA) {
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @examples
-#' \dontrun{
 #' (Files <- system.file("testdata", c("culcita_dat.RData", "gopherdat2.RData"), package = "lme4"))
 #'
 #' # ---------------------------------------------------
-#'
 #' # Load multiple *.rd files to one list object
-#' print(Files)
+#' # ---------------------------------------------------
 #' file.exists(Files)
+#' ls()
+#'
 #' MultiObj <- LoadMultiple(Files = Files, OneObject = TRUE)
-#' MultiObj
+#' ls()
+#'
+#' str(MultiObj, 1)
 #'
 #' # ---------------------------------------------------
-#'
 #' # Load multiple *.rd files current environment
+#' # ---------------------------------------------------
 #' rm("MultiObj")
+#' ls()
+#'
 #' LoadMultiple(Files = Files, OneObject = FALSE)
 #'
-#' print(c("culcita_dat", "Gdat") %in% ls(globalenv()))
-#' print(Gdat)
-#' print(culcita_dat)
+#' print(c("culcita_dat", "Gdat") %in% ls())
+#'
+#' str(Gdat, 1)
+#'
+#' str(culcita_dat, 1)
 #'
 #' # ---------------------------------------------------
-#'
 #' # Load multiple *.rd files, one object already exists
+#' # ---------------------------------------------------
 #' rm("culcita_dat")
 #' ls()
-#' print(c("culcita_dat", "Gdat") %in% ls(globalenv()))
-#' LoadMultiple(Files = Files, OneObject = FALSE)
-#'}
+#'
+#' print(c("culcita_dat", "Gdat") %in% ls())
+#'
+#' try(LoadMultiple(Files = Files, OneObject = FALSE))
+#'
 #' @export
 
 LoadMultiple <- function(
     Files = NULL, Verbose = TRUE, OneObject = TRUE, ReturnNames = TRUE) {
 
-  if (!methods::is(Files, "character")) {
+  if (!inherits(Files, "character")) {
     cat(paste0(crayon::red("Files should be character object"), "\n"))
     opt <- options(show.error.messages = FALSE)
     on.exit(options(opt))
@@ -188,15 +234,14 @@ LoadMultiple <- function(
         ObjectsLoaded <- lapply(
           X = seq_along(Files),
           FUN = function(y) {
-            load(file = Files[y], envir = .GlobalEnv)
+            load(file = Files[y], envir = parent.frame(3))
           }) %>%
           do.call(what = c)
 
         if (Verbose) {
           cat(
             paste0(crayon::blue(
-              "Object:", crayon::red(ObjectsLoaded),
-              "was loaded successfully.")),
+              "Object:", crayon::red(ObjectsLoaded), "was loaded successfully.")),
             sep = "\n")
         }
         if (ReturnNames) {
@@ -222,7 +267,7 @@ LoadMultiple <- function(
 # |---------------------------------------------------| #
 # ReplaceSpace ----
 # |---------------------------------------------------| #
-
+#
 #' Replace space with underscore
 #'
 #' Replace space with underscore
@@ -230,45 +275,57 @@ LoadMultiple <- function(
 #' @name ReplaceSpace
 #' @author Ahmed El-Gabbas
 #' @return NULL
+#' @examples
+#' ReplaceSpace("Genus species")
+#'
+#' ReplaceSpace("Genus species subspecies")
 #' @export
 
 ReplaceSpace <- function(x) {
-  stringr::str_replace(x, " ", "_")
+  stringr::str_replace_all(x, " ", "_")
 }
 
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 # |---------------------------------------------------| #
-# scraplinks ----
+# ScrapLinks ----
 # |---------------------------------------------------| #
-
+#
 #' Extract link texts and urls from a web page
 #'
 #' Extract link texts and urls from a web page
 #' @param url the url
-#' @name scraplinks
-#' @author Ahmed El-Gabbas
+#' @name ScrapLinks
 #' @return NULL
-#' @description
-#' source: https://gist.github.com/paulrougieux/e1ee769577b40cd9ed9db7f75e9a2cc2
+#' @references https://gist.github.com/paulrougieux/e1ee769577b40cd9ed9db7f75e9a2cc2
 #' @examples
-#' head(scraplinks("https://github.com/"))
-#'
+#' ScrapLinks("https://github.com/")
 #' @export
 
-scraplinks <- function(url) {
+ScrapLinks <- function(url) {
   # Create an html document from the url
-  webpage <- xml2::read_html(url)
+  webpage <- xml2::read_html(url) %>%
+    rvest::html_nodes("a")
+
   # Extract the URLs
   url_ <- webpage %>%
-    rvest::html_nodes("a") %>%
-    rvest::html_attr("href")
+    rvest::html_attr("href") %>%
+    stringr::str_c(url, ., sep = "") %>%
+    stringr::str_replace_all(paste0(url,url), url) %>%
+    stringr::str_replace_all("//", "/")
+
   # Extract the link text
   link_ <- webpage %>%
-    rvest::html_nodes("a") %>%
-    rvest::html_text()
-  return(tibble::tibble(link = link_, url = url_))
+    rvest::html_text() %>%
+    stringr::str_replace_all("\n", "") %>%
+    stringr::str_replace_all("\\s+", " ") %>%
+    stringr::str_trim()
+
+  tibble::tibble(link_text = link_, url = url_) %>%
+    dplyr::arrange(url, link_text) %>%
+    dplyr::distinct() %>%
+    return()
 }
 
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -277,7 +334,7 @@ scraplinks <- function(url) {
 # |---------------------------------------------------| #
 # DirCreate ----
 # |---------------------------------------------------| #
-
+#
 #' Create directory if not existed
 #'
 #' Create directory if not existed
@@ -285,21 +342,31 @@ scraplinks <- function(url) {
 #' @name DirCreate
 #' @author Ahmed El-Gabbas
 #' @return NULL
+#' @examples
+#' # create new folder (random name) in the temporary folder
+#' Path2Create <- file.path(tempdir(), stringi::stri_rand_strings(1, 5))
+#' file.exists(Path2Create)
+#'
+#' DirCreate(Path2Create)
+#' file.exists(Path2Create)
+#'
 #' @export
 
 DirCreate <- function(Path) {
+  Path2 <- gsub("\\\\", "/", Path)
   if (dir.exists(Path)) {
-    CatTime(stringr::str_glue("Path: {crayon::bold(Path)} - already exists"))
+    CatTime(stringr::str_glue("Path: {crayon::bold(Path2)} - already exists"))
   } else {
     dir.create(Path, recursive = TRUE, showWarnings = FALSE)
-    CatTime(stringr::str_glue("Path: {crayon::bold(Path)} created"))
+    "Path: {crayon::bold(Path2)} created" %>%
+      stringr::str_glue() %>%
+      CatTime(Date = TRUE)
   }
 }
 
-
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
+#
 # |---------------------------------------------------| #
 # CatTime ----
 # |---------------------------------------------------| #
@@ -307,8 +374,9 @@ DirCreate <- function(Path) {
 #' Print text and a time stamp
 #'
 #' Print text and a time stamp
-#' @param Text the text to print
+#' @param Text the text to print: default empty string (print time only)
 #' @param NLines number of empty lines after the printing; default: 1
+#' @param Date Also print date? Default value `FALSE`
 #' @param ... other arguments passed to `cat`
 #' @name CatTime
 #' @author Ahmed El-Gabbas
@@ -316,15 +384,19 @@ DirCreate <- function(Path) {
 #' @export
 #' @examples
 #' CatTime()
+#' CatTime(Date = TRUE)
+#'
 #' CatTime("Time now")
+#' CatTime("Time now", Date = TRUE)
 
-CatTime <- function(Text = NULL, NLines = 1, ...) {
-  if (is.null(Text)) {
-    cat(format(Sys.time(), "%X"), ...)
+CatTime <- function(Text = "", NLines = 1, Date = FALSE,...) {
+  DateFormat <- dplyr::if_else(Date, "%d/%m/%Y %X", "%X")
+  if (Text == "") {
+    cat(format(Sys.time(), DateFormat), ...)
     cat(rep("\n", NLines))
   } else {
     Text <- rlang::quo_name(rlang::enquo(Text))
-    cat(paste0(Text, " - ", format(Sys.time(), "%X")), ...)
+    cat(paste0(Text, " - ", format(Sys.time(), DateFormat)), ...)
     cat(rep("\n", NLines))
   }
 }
@@ -333,20 +405,23 @@ CatTime <- function(Text = NULL, NLines = 1, ...) {
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 # |---------------------------------------------------| #
-# valid_url ----
+# Valid_URL ----
 # |---------------------------------------------------| #
-
+#
 #' Check the validity of a URL
 #'
 #' Check the validity of a URL
 #' @param url_in URL path
 #' @param t timeout
-#' @name valid_url
-#' @author Ahmed El-Gabbas
+#' @name Valid_URL
+#' @references https://stackoverflow.com/questions/52911812/check-if-url-exists-in-r
 #' @return NULL
+#' @examples
+#' urls <- c("http://www.amazon.com", "http://this.isafakelink.biz", "https://stackoverflow.com")
+#' sapply(urls, Valid_URL)
 #' @export
 
-valid_url <- function(url_in, t = 2) {
+Valid_URL <- function(url_in, t = 2) {
   con <- url(url_in)
   check <- suppressWarnings(try(open.connection(con, open = "rt", timeout = t), silent = TRUE)[1])
   suppressWarnings(try(close.connection(con), silent = TRUE))
@@ -357,19 +432,21 @@ valid_url <- function(url_in, t = 2) {
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 # |---------------------------------------------------| #
-# getmode ----
+# GetMode ----
 # |---------------------------------------------------| #
 
 #' Calculate the mode of numbers
 #'
 #' Calculate the mode of numbers
 #' @param v vector
-#' @name getmode
-#' @author Ahmed El-Gabbas
+#' @name GetMode
+#' @references https://www.tutorialspoint.com/r/r_mean_median_mode.htm
 #' @return NULL
+#' @examples
+#' GetMode(c(1:10,1,1,3,3,3,3))
 #' @export
 
-getmode <- function(v) {
+GetMode <- function(v) {
   unique_vals <- unique(v)
   unique_vals[which.max(tabulate(match(v, unique_vals)))]
 }
@@ -393,21 +470,36 @@ getmode <- function(v) {
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
+#' @examples
+#' # split iris data by species name
+#' iris2 <- iris %>%
+#'   tibble::tibble() %>%
+#'   split(~Species)
+#'
+#' str(iris2, 1)
+#'
+#' (TMP_Folder <- file.path(tempdir(), stringi::stri_rand_strings(1, 5)))
+#' list.files(TMP_Folder)
+#'
+#' List2RData(iris2, Dir = TMP_Folder)
+#' list.files(TMP_Folder)
 
 List2RData <- function(List, Prefix = "", Dir = getwd(), Overwrite = FALSE) {
   if (is.null(names(List))) {
     stop()
   } else {
 
-    seq_len(List) %>%
+    seq_along(List) %>%
       lapply(
         function(x) {
 
           if (Prefix != "") {
             Prefix <- paste0(Prefix, "_")
           }
-
           Name <- names(List[x])
+          if(!dir.exists(Dir)) {
+            DirCreate(Dir)
+          }
           File <- paste0(Dir, "/", Prefix, Name, ".RData")
 
           if (file.exists(File)) {
@@ -448,10 +540,22 @@ List2RData <- function(List, Prefix = "", Dir = getwd(), Overwrite = FALSE) {
 #' @return NULL
 #' @examples
 #' SplitVector(1:100, 3)
+#'
+#' # -------------------------------------------
+#'
 #' SplitVector(1:100, 2, "T")
+#'
+#' # -------------------------------------------
+#'
+#' \dontrun{
+#' SplitVector(1:100)
+#' }
 #' @export
 
 SplitVector <- function(Vector = NULL, NSplit = NULL, Prefix = "Chunk") {
+  if(inherits(Vector, "NULL") | inherits(NSplit, "NULL")) {
+    stop("Vector and NSplit parameters can not be NULL")
+  }
   rep(1:NSplit, length.out = length(Vector)) %>%
     sort() %>%
     as.factor() %>%
@@ -479,7 +583,13 @@ SplitVector <- function(Vector = NULL, NSplit = NULL, Prefix = "Chunk") {
 #' @export
 #' @examples
 #' SplitDF2Chunks(mtcars, ChunkSize = 16)
+#'
+#' # -------------------------------------------
+#'
 #' SplitDF2Chunks(mtcars, NChunks = 3)
+#'
+#' # -------------------------------------------
+#'
 #' SplitDF2Chunks(mtcars, NChunks = 3, Prefix = "T")
 
 SplitDF2Chunks <- function(
@@ -547,12 +657,24 @@ SplitDF2Chunks <- function(
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
+#' @examples
+#' TMP_Folder <- file.path(tempdir(), stringi::stri_rand_strings(1, 5))
+#' DirCreate(TMP_Folder)
+#'
+#' # save iris data in `iris2.RData` with `iris2` object name
+#' SaveAs(iris, iris2, file.path(TMP_Folder, "iris2.RData"))
+#'
+#' list.files(TMP_Folder, pattern = "^.+.RData")
+#'
+#' (load(file.path(TMP_Folder, "iris2.RData")))
+#'
+#' tibble::tibble(iris2)
 
 SaveAs <- function(InObj, OutObj, OutPath) {
-  if (methods::is(InObj, "character")) {
+  if (inherits(InObj, "character")) {
     InObj <- get(InObj)
   }
-
+  OutObj <- as.character(rlang::ensyms(OutObj))
   assign(OutObj, InObj)
   save(list = OutObj, file = OutPath)
 }
@@ -569,64 +691,111 @@ SaveAs <- function(InObj, OutObj, OutPath) {
 #' Save multiple objects to their respective `.RData` files
 #' @param Vars variables to save
 #' @param OutFolder output path
-#' @param Overwrite overwrite existing files
+#' @param Overwrite overwrite existing files? If file already exist, no files are saved unless `Overwrite` argument is set as `TRUE`
 #' @name SaveMultiple
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
+#' @examples
+#' TMP_Folder <- file.path(tempdir(), stringi::stri_rand_strings(1, 5))
+#' DirCreate(TMP_Folder)
+#'
+#' # ----------------------------------------------
+#' # Save x1 and x2 to disk
+#' # ----------------------------------------------
+#' x1 = 10; x2 = 20
+#'
+#' SaveMultiple(Vars = cc(x1, x2), OutFolder = TMP_Folder)
+#'
+#' list.files(path = TMP_Folder, pattern = "^.+.RData")
+#'
+#' (x1Contents <- LoadAs(file.path(TMP_Folder, "x1.RData")))
+#'
+#' (x2Contents <- LoadAs(file.path(TMP_Folder, "x2.RData")))
+#'
+#' # ----------------------------------------------
+#' # File exists, no save
+#' # ----------------------------------------------
+#' try(SaveMultiple(Vars = c("x1", "x2"), OutFolder = TMP_Folder))
+#'
+#' # ----------------------------------------------
+#' # overwrite existing file
+#' # ----------------------------------------------
+#' x1 = 100; x2 = 200; x3 = 300
+#'
+#' SaveMultiple(Vars = cc(x1, x2, x3), OutFolder = TMP_Folder, Overwrite = TRUE)
+#'
+#' (x1Contents <- LoadAs(file.path(TMP_Folder, "x1.RData")))
+#'
+#' (x2Contents <- LoadAs(file.path(TMP_Folder, "x2.RData")))
+#'
+#' (x3Contents <- LoadAs(file.path(TMP_Folder, "x3.RData")))
 
 SaveMultiple <- function(
     Vars = NULL, OutFolder = getwd(), Overwrite = FALSE) {
 
-  if (any(is.null(Vars), !is.character(Vars),
-          any(!Vars %in% ls(envir = globalenv())))) {
+  SkipFun <- any(
+    is.null(Vars), !inherits(Vars, "character"),
+    any(!Vars %in% ls(envir = rlang::caller_env())))
+
+  if (SkipFun) {
     cat(paste0(crayon::red("Vars should be a character vector for names of objects available in the global environment"), "\n"))
     opt <- options(show.error.messages = FALSE)
     on.exit(options(opt))
     stop()
+  }
+
+  GlobalVars <- ls(rlang::caller_env())
+  VarsInGlobal <- Vars %>%
+    purrr::map_lgl(~.x %in% GlobalVars) %>%
+    all() %>%
+    magrittr::not()
+
+  if(VarsInGlobal) {
+    "Please check that all variables to be saved exist at your global environment" %>%
+      crayon::red() %>%
+      cat(sep = "\n")
+
+    MissedVars <- setdiff(Vars, GlobalVars)
+    cat(crayon::red(paste0("Variable ", MissedVars, " does not exist.\n")))
+    opt <- options(show.error.messages = FALSE)
+    on.exit(options(opt))
+    stop()
   } else {
-    if (!all(sapply(Vars, function(x) {
-      exists(x, envir = globalenv())
-    }))) {
-      # if (!all(exists(Vars, envir = globalenv()))) {
-      "Please check that all variables to be saved exist at your global environment" %>%
-        crayon::red() %>%
-        cat(sep = "\n")
-      MissedVars <- Vars[!exists(Vars, envir = globalenv())]
-      cat(crayon::red(paste0("Variable ", MissedVars, " does not exist.\n")))
-      opt <- options(show.error.messages = FALSE)
-      on.exit(options(opt))
-      stop()
-    } else {
-      ID <- length(Vars)
-      if (is.null(OutFolder)) {
-        OutFolder <- getwd()
-      }
+    if (is.null(OutFolder)) {
+      OutFolder <- getwd()
     }
-
-    FilesExist <- paste0(OutFolder, "/", Vars, ".RData") %>%
-      file.exists()
-
-    if (any(!Overwrite, FilesExist)) {
-      "Some files already exist.\nNo files are saved. Please use overwrite = TRUE" %>%
-        crayon::red() %>%
-        cat(sep = "\n")
-      opt <- options(show.error.messages = FALSE)
-      on.exit(options(opt))
-      stop()
+    if(!dir.exists(OutFolder)) {
+      DirCreate(OutFolder)
     }
+  }
 
-    invisible(sapply(1:ID, function(x) {
-      save(
-        list = paste0(Vars[x]),
-        file = paste0(OutFolder, "/", Vars[x], ".RData"))
-    }))
+  FilesExist <- paste0(OutFolder, "/", Vars, ".RData") %>%
+    file.exists() %>%
+    any()
 
-    if (all(file.exists(paste0(OutFolder, "/", Vars, ".RData")))) {
-      cat(paste0(crayon::blue("All files are saved to disk", crayon::red(OutFolder), "successfully."), "\n"))
-    } else {
-      cat(paste0(crayon::red("Some files were not saved to disk!\nplease check again"), "\n"))
-    }
+  if (FilesExist & !Overwrite) {
+    "Some files already exist.\nNo files are saved. Please use overwrite = TRUE" %>%
+      crayon::red() %>%
+      cat(sep = "\n")
+    opt <- options(show.error.messages = FALSE)
+    on.exit(options(opt))
+    stop()
+  }
+
+  sapply(Vars, function(x) {
+    Val <- get(x, envir = parent.frame(n = 4))
+    assign(rlang::eval_tidy(x), Val)
+    save(
+      list = paste0(x),
+      file = paste0(OutFolder, "/", x, ".RData"))
+  }) %>%
+    invisible()
+
+  if (all(file.exists(paste0(OutFolder, "/", Vars, ".RData")))) {
+    cat(paste0(crayon::blue("All files are saved to disk", crayon::red(OutFolder), "successfully."), "\n"))
+  } else {
+    cat(paste0(crayon::red("Some files were not saved to disk!\nplease check again"), "\n"))
   }
 }
 
@@ -647,9 +816,15 @@ SaveMultiple <- function(
 #' @export
 #' @examples
 #' cc(A, B, C)
+#'
+#' # -------------------------------------------
+#'
+#' cc(A, B, "A and B")
 
 cc <- function(...) {
-  rlang::ensyms(...) %>% as.character()
+  rlang::ensyms(...) %>%
+    as.character() %>%
+    stringr::str_remove_all("`|`")
 }
 
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -670,6 +845,7 @@ cc <- function(...) {
 #' @export
 #' @examples
 #' LoadPackages(raster)
+#'
 #' LoadPackages(terra, Verbose = TRUE)
 
 LoadPackages <- function(Package = NULL, Verbose = FALSE) {
@@ -696,6 +872,18 @@ LoadPackages <- function(Package = NULL, Verbose = FALSE) {
 #' @name NDecimals
 #' @author Ahmed El-Gabbas
 #' @return NULL
+#' @examples
+#' NDecimals("13.45554545")
+#'
+#' # -------------------------------------------
+#'
+#' IASDT.R::NDecimals(15.01500)
+#'
+#' IASDT.R::NDecimals('15.01500')
+#'
+#' # -------------------------------------------
+#'
+#' NDecimals(13.45554545)
 #' @export
 
 NDecimals <- function(x) {
@@ -728,11 +916,18 @@ NDecimals <- function(x) {
 #' @name System
 #' @author Ahmed El-Gabbas
 #' @return NULL
+#' @examples
+#' # print working directory
+#' System("pwd")
+#'
+#' # first 5 files on the working directory
+#' (A <- System("ls | head -n 5"))
+#'
+#' (A <- System("ls | head -n 5", intern = FALSE))
 #' @export
 
 System <- function(command, intern = TRUE, ...) {
   # Use shell() in windows OS; system() for linux OS
-
   # The running operating system (make also available in the global environment outside of the function)
   # CurrOS <- as.character(Sys.info()["sysname"])
   if (CurrOS() == "Windows") {
@@ -757,7 +952,8 @@ System <- function(command, intern = TRUE, ...) {
 #' @name CatPipe
 #' @author Ahmed El-Gabbas
 #' @return NULL
-#' @export
+#' @keywords internal
+#' @noRd
 
 CatPipe <- function(x, message = NULL) {
   CatTime(message)
@@ -781,6 +977,18 @@ CatPipe <- function(x, message = NULL) {
 #' @name lapply_
 #' @author Ahmed El-Gabbas
 #' @return NULL
+#' @examples
+#' par(mfrow = c(1,2), oma = c(0.25, 0.25, 0.25, 0.25), mar = c(3,3,3,1))
+#' lapply(list(x = 100:110, y = 110:120), function(V) {
+#'     plot(V, las = 1, main = "lapply")
+#' })
+#'
+#' # -------------------------------------------
+#'
+#' par(mfrow = c(1,2), oma = c(0.25, 0.25, 0.25, 0.25), mar = c(3,3,3,1))
+#' lapply_(list(x = 100:110, y = 110:120), function(V) {
+#'     plot(V, las = 1, main = "lapply_")
+#' })
 #' @export
 
 lapply_ <- function(X, FUN, Silent = TRUE, ...) {
@@ -808,6 +1016,15 @@ lapply_ <- function(X, FUN, Silent = TRUE, ...) {
 #' @name sapply_
 #' @author Ahmed El-Gabbas
 #' @return NULL
+#' @examples
+#' par(mfrow = c(1,2), oma = c(0.25, 0.25, 0.25, 0.25), mar = c(3,3,3,1))
+#' sapply(list(x = 100:110, y = 110:120), function(V){plot(V, las = 1, main = "sapply")})
+#'
+#' # -------------------------------------------
+#'
+#' # nothing returned or printed, only the plotting
+#' par(mfrow = c(1,2), oma = c(0.25, 0.25, 0.25, 0.25), mar = c(3,3,3,1))
+#' sapply_(list(x = 100:110, y = 110:120), function(V){plot(V, las = 1, main = "sapply_")})
 #' @export
 
 sapply_ <- function(X, FUN, simplify = TRUE, ...) {
@@ -835,6 +1052,14 @@ sapply_ <- function(X, FUN, simplify = TRUE, ...) {
 #' @name sort_
 #' @author Ahmed El-Gabbas
 #' @return NULL
+#' @examples
+#' # example code
+#' (AA <- paste0("V", 1:12))
+#'
+#' sort(AA)
+#'
+#' sort_(AA)
+#'
 #' @export
 
 sort_ <- function(
@@ -861,7 +1086,10 @@ sort_ <- function(
 #' Current operating system
 #' @name CurrOS
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return String for the current operating system
+#' @examples
+#' CurrOS()
+#'
 #' @export
 
 CurrOS <- function() {
@@ -886,13 +1114,18 @@ CurrOS <- function() {
 #' @examples
 #' ht(mtcars)
 #'
+#' # -------------------------------------------
+#'
 #' ht(mtcars, 2)
+#'
+#' # -------------------------------------------
 #'
 #' ht(mtcars, 6)
 #' @export
 
 ht <- function(DF, NRows = 5) {
-  data.table::data.table(DF) %>%
+  DF %>%
+    data.table::data.table() %>%
     print(topn = NRows)
 }
 
@@ -912,29 +1145,28 @@ ht <- function(DF, NRows = 5) {
 #' @param DT data frame
 #' @param FillVal value to be used: default: NA_character
 #' @param ... list of column names to add
+#' @export
 #' @examples
 #' mtcars %>%
 #'  dplyr::select(1:3) %>%
 #'  AddMissingCols(A, B, C, DT = ., FillVal = NA_character_) %>%
 #'  AddMissingCols(D, DT = ., FillVal = as.integer(10))
 #'
+#' # -------------------------------------------
+#'
 #' AddCols <- c("Add1", "Add2")
 #' mtcars %>%
 #'  dplyr::select(1:3) %>%
 #'  AddMissingCols(AddCols, DT = ., FillVal = NA_real_)
-#'
-#' @export
 
 AddMissingCols <- function(..., DT, FillVal = NA_character_) {
-  Cols <- rlang::ensyms(...) %>%
-    as.character()
-  ArgInEnv <- Cols %in% ls(envir = globalenv())
-
-  if(any(ArgInEnv)) {
-    Cols <- get(Cols, envir = globalenv())
+  Cols <- as.character(rlang::ensyms(...))
+  if(any(Cols %in% ls(envir = parent.env(rlang::caller_env())))) {
+    Cols <- get(Cols, envir = parent.env(rlang::caller_env()))
   }
 
   Cols2Add <- setdiff(Cols, names(DT))
+
   if (length(Cols2Add) != 0) {
     DT[Cols2Add] <- FillVal
   }
@@ -944,11 +1176,11 @@ AddMissingCols <- function(..., DT, FillVal = NA_character_) {
 
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
+#
 # |---------------------------------------------------| #
 # FileExt ----
 # |---------------------------------------------------| #
-
+#
 #' Get file extension
 #'
 #' Get file extension
@@ -959,6 +1191,7 @@ AddMissingCols <- function(..., DT, FillVal = NA_character_) {
 #' @examples
 #' FileExt("File.doc")
 #' FileExt("D:/File.doc")
+#'
 #' @export
 
 FileExt <- function(Path) {
@@ -968,14 +1201,13 @@ FileExt <- function(Path) {
   Ext[length(Ext)]
 }
 
-
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
+#
 # |---------------------------------------------------| #
 # FunctionsInPackage ----
 # |---------------------------------------------------| #
-
+#
 #' List of functions in a package
 #'
 #' List of functions in a package
@@ -983,48 +1215,57 @@ FileExt <- function(Path) {
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @param Package name of the package
+#' @export
 #' @examples
 #' FunctionsInPackage("raster")
-#' @export
 
-FunctionsInPackage <- function(Package){
+FunctionsInPackage <- function(Package) {
   library(package = Package, character.only = TRUE)
   ls(paste0("package:", Package))
 }
 
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
+#
 # |---------------------------------------------------| #
 # LoadedPackages ----
 # |---------------------------------------------------| #
-
+#
 #' List of loaded packages
 #'
 #' List of loaded packages
+#' @name LoadedPackages
 #' @examples
 #' LoadedPackages()
+#'
+#' require(sf)
+#'
+#' LoadedPackages()
+#'
 #' @export
 
-LoadedPackages <- function(){
+LoadedPackages <- function() {
   (.packages())
 }
 
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
+#
 # |---------------------------------------------------| #
 # ReloadPackage ----
 # |---------------------------------------------------| #
-
+#
 #' Reload an R package
 #'
 #' Reload an R package
-#' @export
+#' @name ReloadPackage
 #' @param Package The name of packages to reload
 #' @examples
 #' library(sf)
+#'
 #' ReloadPackage("sf")
+#'
+#' @export
 
 ReloadPackage <- function(Package = NULL) {
   if (is.null(Package)) {
@@ -1047,76 +1288,100 @@ ReloadPackage <- function(Package = NULL) {
 
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
+#
 # |---------------------------------------------------| #
-# SaveXToDisk ----
+# AddImg2Plot ----
 # |---------------------------------------------------| #
-
-#' Save many R objects at once to their respective `.RData` files
+#
+#' Add image to plot
 #'
-#' Save many R objects at once to their respective `.RData` files
-#' @param Vars The name of variables to be saved
-#' @param OutFolder The output directory. Default: the working directory
-#' @param Overwrite overwrite available .RData files. Default: FALSE
-#' @author Ahmed El-Gabbas
+#' Add image to plot
+#'
+#' @name AddImg2Plot
+#' @references [Click here](https://stackoverflow.com/questions/27800307/)
 #' @export
+#' @param obj an image file imported as an array (e.g. `png::readPNG`, `jpeg::readJPEG`)
+#' @param x mid x coordinate for image
+#' @param y mid y coordinate for image
+#' @param width width of image (in x coordinate units)
+#' @param interpolate (passed to `graphics::rasterImage`) A logical vector (or scalar) indicating whether to apply linear interpolation to the image when drawing. Default = `TRUE`.
 #' @examples
-#' \dontrun{
-#' x1 = 10; x2 = 20
-#' TMP_Folder <- tempdir()
-#' print(TMP_Folder)
+#' library(png)
+#' myurl <- "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Jupiter_%28transparent%29.png/242px-Jupiter_%28transparent%29.png"
+#' z <- tempfile()
+#' download.file(myurl, z, mode="wb")
+#' pic <- readPNG(z)
+#' file.remove(z) # cleanup
 #'
-#' SaveXToDisk(Vars = c("x1", "x2"), OutFolder = TMP_Folder)
-#' list.files(path = TMP_Folder, pattern = "^.+.RData")
-#'
-#' SaveXToDisk(Vars = c("x1", "x2"), OutFolder = TMP_Folder, Overwrite = TRUE)
-#' }
+#' image(volcano)
+#' AddImg2Plot(pic, x = 0.3, y = 0.5, width = 0.2)
+#' AddImg2Plot(pic, x = 0.7, y = 0.7, width = 0.2)
+#' AddImg2Plot(pic, x = 0.7, y = 0.2, width = 0.1)
 
-SaveXToDisk <- function(
-    Vars = NULL, OutFolder = getwd(), Overwrite = FALSE) {
+AddImg2Plot <- function(
+    obj, x = NULL, y = NULL, width = NULL, interpolate = TRUE){
 
-  if (is.null(Vars) | !is.character(Vars) | any(!Vars %in% ls(envir = globalenv()))) {
-    cat(paste0(crayon::red("Vars should be a character vector for names of objects available in the global environment"), "\n"))
-    opt <- options(show.error.messages = FALSE)
-    on.exit(options(opt))
-    stop()
-  } else {
-    if (!all(sapply(Vars, function(x){exists(x, envir = globalenv())}))) {
-      # if (!all(exists(Vars, envir = globalenv()))) {
-      cat(paste0(crayon::red("Please check that all variables to be saved exist at your global environment"), "\n"))
-      MissedVars <- Vars[!exists(Vars, envir = globalenv())]
-      cat(crayon::red(paste0("Variable ", MissedVars, " does not exist.\n")))
-      opt <- options(show.error.messages = FALSE)
-      on.exit(options(opt))
-      stop()
-    } else {
-      ID <- length(Vars)
-      if (is.null(OutFolder)) {
-        OutFolder <- getwd()
-      }
-    }
-
-    if (Overwrite == FALSE & any(file.exists(paste0(
-      OutFolder, "/", Vars, ".RData")))) {
-      cat(paste0(crayon::red("Some files already exist.\nNo files are saved. Please use overwrite = TRUE"), "\n"))
-      opt <- options(show.error.messages = FALSE)
-      on.exit(options(opt))
-      stop()
-    }
-
-    invisible(sapply(1:ID, function(x) {
-      save(
-        list = paste0(Vars[x]),
-        file = paste0(OutFolder, "/", Vars[x], ".RData"))
-    }))
-
-    if (all(file.exists(paste0(OutFolder, "/", Vars, ".RData")))) {
-      cat(paste0(crayon::blue("All files are saved to disk", crayon::red(OutFolder), "successfully."), "\n"))
-    } else {
-      cat(paste0(crayon::red("Some files were not saved to disk!\nplease check again"), "\n"))
-    }
+  if (is.null(x) | is.null(y) | is.null(width)) {
+    stop("Must provide args 'x', 'y', and 'width'")
   }
+
+  USR <- par()$usr # A vector of the form c(x1, x2, y1, y2) giving the extremes of the user coordinates of the plotting region
+  PIN <- par()$pin # The current plot dimensions, (width, height), in inches
+  DIM <- dim(obj) # number of x-y pixels for the image
+  ARp <- DIM[1]/DIM[2] # pixel aspect ratio (y/x)
+  WIDi <- width/(USR[2] - USR[1])*PIN[1] # convert width units to inches
+  HEIi <- WIDi * ARp # height in inches
+  HEIu <- HEIi/PIN[2]*(USR[4] - USR[3]) # height in units
+  graphics::rasterImage(
+    image = obj, xleft = x - (width/2), xright = x + (width/2),
+    ybottom = y - (HEIu/2), ytop = y + (HEIu/2), interpolate = interpolate)
 }
 
 
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+#
+# |---------------------------------------------------| #
+# AddLine ----
+# |---------------------------------------------------| #
+#
+#' Add a line to the current plot
+#'
+#' Add a line to the current plot
+#'
+#' @name AddLine
+#' @references [Click here](https://stackoverflow.com/questions/27800307/)
+#' @export
+#' @param at relative location of where the line should be plotted
+#' @param Outer plot the line out of plotting area. Default: `FALSE`
+#' @param H Horizontal line? if H == FALSE, vertical line will be added. Default: `TRUE`
+#' @param ... Other arguments
+#' @examples
+#' # Hotizontal line
+#' par(oma = c(1, 1, 1, 1), mar = c(3, 3, 1, 1))
+#' plot(1:100)
+#' AddLine(at = 0.75)
+#' AddLine(at = 0.25, Outer = TRUE, lwd = 2)
+#' AddLine(at = 0.5, Outer = TRUE, lwd = 2, col = "red")
+#'
+#' # ---------------------------------------------
+#'
+#' # Vertical line
+#' plot(1:100)
+#' AddLine(H = FALSE, at = 0.75)
+#' AddLine(H = FALSE, at = 0.25, Outer = TRUE, lwd = 2)
+#' AddLine(H = FALSE, at = 0.5, Outer = TRUE, lwd = 2, col = "red")
 
+AddLine <- function(at = NULL, Outer = FALSE, H = TRUE, ...) {
+  if (Outer) { par(xpd = TRUE) }
+
+  if (H) {
+    graphics::abline(h = graphics::grconvertX(at, "npc"), ...)
+  } else {
+    graphics::abline(v = graphics::grconvertX(at, "npc"), ...)
+  }
+
+  if (Outer) {
+    par(xpd = FALSE)
+  }
+}

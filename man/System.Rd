@@ -16,6 +16,15 @@ System(command, intern = TRUE, ...)
 \description{
 Run bash script depending on the operating system
 }
+\examples{
+# print working directory
+System("pwd")
+
+# first 5 files on the working directory
+(A <- System("ls | head -n 5"))
+
+(A <- System("ls | head -n 5", intern = FALSE))
+}
 \author{
 Ahmed El-Gabbas
 }

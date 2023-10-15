@@ -20,7 +20,7 @@ development:
   mode: auto
 
 reference:
-- title: General information
+- title: Package info
   desc:
   contents:
   - IASDT.R-package
@@ -29,13 +29,12 @@ reference:
   desc: Data management / utility functions
   contents:
   - AssignIfNotExist
-  - CatPipe
-  - catSep
+  - CatSep
   - CatTime
   - cc
   - CurrOS
   - ht
-  - getmode
+  - GetMode
   - DirCreate
   - lapply_
   - sapply_
@@ -43,12 +42,12 @@ reference:
   - ReplaceSpace
   - SaveAs
   - SaveMultiple
-  - scraplinks
+  - ScrapLinks
   - sort_
   - SplitDF2Chunks
   - SplitVector
   - System
-  - valid_url
+  - Valid_URL
   - List2RData
   - LoadAs
   - LoadMultiple
@@ -58,8 +57,8 @@ reference:
   - FunctionsInPackage
   - ReloadPackage
   - LoadedPackages
-  - SaveXToDisk
-  - FunctionsInPackage
+  - AddImg2Plot
+  - AddLine
 
 - title: Spatial functions
   desc:
@@ -67,15 +66,16 @@ reference:
   - CheckTiff
   - DownBoundary
   - Polygon_Centroid
-  - rename_geometry
+  - Rename_geometry
   - SplitRaster
   - Set_geometry
   - Text2Coords
+  - ClipRasterByPolygon
+  - CheckStackInMemory
 
 - title: IAS-functions
   desc:
   contents:
-  - ChangeClass
   - match_to_gbif.fn
   - Get_EASIN_Data
   - GetAcceptedName

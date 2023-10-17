@@ -15,23 +15,24 @@ ClipRasterByPolygon(raster = NULL, shape = NULL)
 Clip raster by a spatial polygon
 }
 \examples{
-require(sp)
-require(raster)
+LoadPackages(sp)
+LoadPackages(raster)
+LoadPackages(rworldmap)
 
 # Example Polygon
-data(wrld_simpl, package = "maptools")
-SPDF <- subset(wrld_simpl, NAME == "Germany")
+SPDF <- getMap(resolution = "low") \%>\%
+   subset(NAME == "Germany")
 
 # Example RasterLayer
-r <- raster::raster(nrow = 1e3, ncol = 1e3, crs = sp::proj4string(SPDF))
+r <- raster::raster(nrow = 1e3, ncol = 1e3, crs = proj4string(SPDF))
 r[] <- 1:length(r)
 plot(r)
-plot(SPDF, add = T)
+plot(SPDF, add = TRUE)
 
 # ----------------------------------
 
 SPDF_DE <- ClipRasterByPolygon(r, SPDF)
-plot(raster::extent(SPDF_DE), axes = F, xlab = "", ylab = "")
-plot(SPDF_DE, add = T)
-plot(SPDF, add = T)
+plot(raster::extent(SPDF_DE), axes = FALSE, xlab = "", ylab = "")
+plot(SPDF_DE, add = TRUE)
+plot(SPDF, add = TRUE)
 }

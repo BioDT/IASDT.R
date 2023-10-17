@@ -1,5 +1,5 @@
 ## quiets concerns of R CMD check re: the .'s that appear in pipelines
-if(getRversion() >= "2.15.1")  utils::globalVariables(c("."))
+if (getRversion() >= "2.15.1")  utils::globalVariables(c("."))
 
 # |---------------------------------------------------| #
 # CatSep ----
@@ -99,6 +99,7 @@ AssignIfNotExist <- function(Variable, Value, Env = globalenv()) {
 #' @return NULL
 #' @export
 #' @examples
+#' LoadPackages(tibble)
 #' File <- system.file("testdata", "culcita_dat.RData", package = "lme4")
 #'
 #' # ---------------------------------------------------------
@@ -108,7 +109,7 @@ AssignIfNotExist <- function(Variable, Value, Env = globalenv()) {
 #'
 #' ls()
 #'
-#' tibble::tibble(culcita_dat)
+#' tibble(culcita_dat)
 #'
 #' rm(culcita_dat)
 #'
@@ -119,7 +120,7 @@ AssignIfNotExist <- function(Variable, Value, Env = globalenv()) {
 #'
 #' ls()
 #'
-#' print(tibble::tibble(NewObj))
+#' print(tibble(NewObj))
 
 LoadAs <- function(File = NA) {
   InFile0 <- load(File)
@@ -298,6 +299,7 @@ ReplaceSpace <- function(x) {
 #' @param url the url
 #' @name ScrapLinks
 #' @return NULL
+#' @importFrom rlang .data
 #' @references https://gist.github.com/paulrougieux/e1ee769577b40cd9ed9db7f75e9a2cc2
 #' @examples
 #' ScrapLinks("https://github.com/")
@@ -312,7 +314,7 @@ ScrapLinks <- function(url) {
   url_ <- webpage %>%
     rvest::html_attr("href") %>%
     stringr::str_c(url, ., sep = "") %>%
-    stringr::str_replace_all(paste0(url,url), url) %>%
+    stringr::str_replace_all(paste0(url, url), url) %>%
     stringr::str_replace_all("//", "/")
 
   # Extract the link text
@@ -323,7 +325,7 @@ ScrapLinks <- function(url) {
     stringr::str_trim()
 
   tibble::tibble(link_text = link_, url = url_) %>%
-    dplyr::arrange(url, link_text) %>%
+    dplyr::arrange(.data$url, .data$link_text) %>%
     dplyr::distinct() %>%
     return()
 }
@@ -344,7 +346,8 @@ ScrapLinks <- function(url) {
 #' @return NULL
 #' @examples
 #' # create new folder (random name) in the temporary folder
-#' Path2Create <- file.path(tempdir(), stringi::stri_rand_strings(1, 5))
+#' LoadPackages(stringi)
+#' Path2Create <- file.path(tempdir(), stri_rand_strings(1, 5))
 #' file.exists(Path2Create)
 #'
 #' DirCreate(Path2Create)
@@ -389,7 +392,7 @@ DirCreate <- function(Path) {
 #' CatTime("Time now")
 #' CatTime("Time now", Date = TRUE)
 
-CatTime <- function(Text = "", NLines = 1, Date = FALSE,...) {
+CatTime <- function(Text = "", NLines = 1, Date = FALSE, ...) {
   DateFormat <- dplyr::if_else(Date, "%d/%m/%Y %X", "%X")
   if (Text == "") {
     cat(format(Sys.time(), DateFormat), ...)
@@ -472,13 +475,15 @@ GetMode <- function(v) {
 #' @export
 #' @examples
 #' # split iris data by species name
+#' LoadPackages(tibble)
+#' LoadPackages(stringi)
 #' iris2 <- iris %>%
-#'   tibble::tibble() %>%
+#'   tibble() %>%
 #'   split(~Species)
 #'
 #' str(iris2, 1)
 #'
-#' (TMP_Folder <- file.path(tempdir(), stringi::stri_rand_strings(1, 5)))
+#' (TMP_Folder <- file.path(tempdir(), stri_rand_strings(1, 5)))
 #' list.files(TMP_Folder)
 #'
 #' List2RData(iris2, Dir = TMP_Folder)
@@ -497,7 +502,7 @@ List2RData <- function(List, Prefix = "", Dir = getwd(), Overwrite = FALSE) {
             Prefix <- paste0(Prefix, "_")
           }
           Name <- names(List[x])
-          if(!dir.exists(Dir)) {
+          if (!dir.exists(Dir)) {
             DirCreate(Dir)
           }
           File <- paste0(Dir, "/", Prefix, Name, ".RData")
@@ -553,7 +558,7 @@ List2RData <- function(List, Prefix = "", Dir = getwd(), Overwrite = FALSE) {
 #' @export
 
 SplitVector <- function(Vector = NULL, NSplit = NULL, Prefix = "Chunk") {
-  if(inherits(Vector, "NULL") | inherits(NSplit, "NULL")) {
+  if (inherits(Vector, "NULL") || inherits(NSplit, "NULL")) {
     stop("Vector and NSplit parameters can not be NULL")
   }
   rep(1:NSplit, length.out = length(Vector)) %>%
@@ -658,7 +663,9 @@ SplitDF2Chunks <- function(
 #' @return NULL
 #' @export
 #' @examples
-#' TMP_Folder <- file.path(tempdir(), stringi::stri_rand_strings(1, 5))
+#' LoadPackages(stringi)
+#' LoadPackages(tibble)
+#' TMP_Folder <- file.path(tempdir(), stri_rand_strings(1, 5))
 #' DirCreate(TMP_Folder)
 #'
 #' # save iris data in `iris2.RData` with `iris2` object name
@@ -668,7 +675,7 @@ SplitDF2Chunks <- function(
 #'
 #' (load(file.path(TMP_Folder, "iris2.RData")))
 #'
-#' tibble::tibble(iris2)
+#' tibble(iris2)
 
 SaveAs <- function(InObj, OutObj, OutPath) {
   if (inherits(InObj, "character")) {
@@ -697,7 +704,8 @@ SaveAs <- function(InObj, OutObj, OutPath) {
 #' @return NULL
 #' @export
 #' @examples
-#' TMP_Folder <- file.path(tempdir(), stringi::stri_rand_strings(1, 5))
+#' LoadPackages(stringi)
+#' TMP_Folder <- file.path(tempdir(), stri_rand_strings(1, 5))
 #' DirCreate(TMP_Folder)
 #'
 #' # ----------------------------------------------
@@ -751,7 +759,7 @@ SaveMultiple <- function(
     all() %>%
     magrittr::not()
 
-  if(VarsInGlobal) {
+  if (VarsInGlobal) {
     "Please check that all variables to be saved exist at your global environment" %>%
       crayon::red() %>%
       cat(sep = "\n")
@@ -765,7 +773,7 @@ SaveMultiple <- function(
     if (is.null(OutFolder)) {
       OutFolder <- getwd()
     }
-    if(!dir.exists(OutFolder)) {
+    if (!dir.exists(OutFolder)) {
       DirCreate(OutFolder)
     }
   }
@@ -774,7 +782,7 @@ SaveMultiple <- function(
     file.exists() %>%
     any()
 
-  if (FilesExist & !Overwrite) {
+  if (FilesExist && !Overwrite) {
     "Some files already exist.\nNo files are saved. Please use overwrite = TRUE" %>%
       crayon::red() %>%
       cat(sep = "\n")
@@ -853,7 +861,7 @@ LoadPackages <- function(Package = NULL, Verbose = FALSE) {
   suppressWarnings(suppressMessages(library(PG, character.only = TRUE)))
   Ver <- eval(parse(text = stringr::str_glue('packageVersion("{PG}")')))
 
-  if(Verbose) cat(stringr::str_glue(">>> {PG} - v {Ver}\n\n"))
+  if (Verbose) cat(stringr::str_glue(">>> {PG} - v {Ver}\n\n"))
 
   return(invisible(NULL))
 }
@@ -877,9 +885,9 @@ LoadPackages <- function(Package = NULL, Verbose = FALSE) {
 #'
 #' # -------------------------------------------
 #'
-#' IASDT.R::NDecimals(15.01500)
+#' NDecimals(15.01500)
 #'
-#' IASDT.R::NDecimals('15.01500')
+#' NDecimals('15.01500')
 #'
 #' # -------------------------------------------
 #'
@@ -1147,6 +1155,7 @@ ht <- function(DF, NRows = 5) {
 #' @param ... list of column names to add
 #' @export
 #' @examples
+#' LoadPackages(dplyr)
 #' mtcars %>%
 #'  dplyr::select(1:3) %>%
 #'  AddMissingCols(A, B, C, DT = ., FillVal = NA_character_) %>%
@@ -1161,7 +1170,7 @@ ht <- function(DF, NRows = 5) {
 
 AddMissingCols <- function(..., DT, FillVal = NA_character_) {
   Cols <- as.character(rlang::ensyms(...))
-  if(any(Cols %in% ls(envir = parent.env(rlang::caller_env())))) {
+  if (any(Cols %in% ls(envir = parent.env(rlang::caller_env())))) {
     Cols <- get(Cols, envir = parent.env(rlang::caller_env()))
   }
 
@@ -1238,7 +1247,7 @@ FunctionsInPackage <- function(Package) {
 #' @examples
 #' LoadedPackages()
 #'
-#' require(sf)
+#' LoadPackages(sf)
 #'
 #' LoadedPackages()
 #'
@@ -1261,7 +1270,7 @@ LoadedPackages <- function() {
 #' @name ReloadPackage
 #' @param Package The name of packages to reload
 #' @examples
-#' library(sf)
+#' LoadPackages(sf)
 #'
 #' ReloadPackage("sf")
 #'
@@ -1279,7 +1288,9 @@ ReloadPackage <- function(Package = NULL) {
     PackagesFolders <- c(outer(PackagesFolders, Package, FUN = "paste0"))
     PackagesFolders <- PackagesFolders[file.exists(PackagesFolders)]
     PackagesFolders <- gsub(pattern = "/", replacement = "//", x = PackagesFolders)
-    lapply(PackagesFolders, function(x){ devtools::reload(x, quiet = FALSE) })
+    lapply(PackagesFolders, function(x) {
+      devtools::reload(x, quiet = FALSE)
+    })
   }
 
   invisible(NULL)
@@ -1306,8 +1317,8 @@ ReloadPackage <- function(Package = NULL) {
 #' @param width width of image (in x coordinate units)
 #' @param interpolate (passed to `graphics::rasterImage`) A logical vector (or scalar) indicating whether to apply linear interpolation to the image when drawing. Default = `TRUE`.
 #' @examples
-#' library(png)
-#' myurl <- "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Jupiter_%28transparent%29.png/242px-Jupiter_%28transparent%29.png"
+#' LoadPackages(png)
+#' myurl <- "https://upload.wikimedia.org/wikipedia/commons/e/e1/Jupiter_%28transparent%29.png"
 #' z <- tempfile()
 #' download.file(myurl, z, mode="wb")
 #' pic <- readPNG(z)
@@ -1319,22 +1330,22 @@ ReloadPackage <- function(Package = NULL) {
 #' AddImg2Plot(pic, x = 0.7, y = 0.2, width = 0.1)
 
 AddImg2Plot <- function(
-    obj, x = NULL, y = NULL, width = NULL, interpolate = TRUE){
+    obj, x = NULL, y = NULL, width = NULL, interpolate = TRUE) {
 
-  if (is.null(x) | is.null(y) | is.null(width)) {
+  if (any(is.null(x), is.null(y), is.null(width))) {
     stop("Must provide args 'x', 'y', and 'width'")
   }
 
-  USR <- par()$usr # A vector of the form c(x1, x2, y1, y2) giving the extremes of the user coordinates of the plotting region
-  PIN <- par()$pin # The current plot dimensions, (width, height), in inches
+  USR <- graphics::par()$usr # A vector of the form c(x1, x2, y1, y2) giving the extremes of the user coordinates of the plotting region
+  PIN <- graphics::par()$pin # The current plot dimensions, (width, height), in inches
   DIM <- dim(obj) # number of x-y pixels for the image
-  ARp <- DIM[1]/DIM[2] # pixel aspect ratio (y/x)
-  WIDi <- width/(USR[2] - USR[1])*PIN[1] # convert width units to inches
+  ARp <- DIM[1] / DIM[2] # pixel aspect ratio (y/x)
+  WIDi <- width / (USR[2] - USR[1]) * PIN[1] # convert width units to inches
   HEIi <- WIDi * ARp # height in inches
-  HEIu <- HEIi/PIN[2]*(USR[4] - USR[3]) # height in units
+  HEIu <- HEIi / PIN[2] * (USR[4] - USR[3]) # height in units
   graphics::rasterImage(
-    image = obj, xleft = x - (width/2), xright = x + (width/2),
-    ybottom = y - (HEIu/2), ytop = y + (HEIu/2), interpolate = interpolate)
+    image = obj, xleft = x - (width / 2), xright = x + (width / 2),
+    ybottom = y - (HEIu / 2), ytop = y + (HEIu / 2), interpolate = interpolate)
 }
 
 
@@ -1373,7 +1384,7 @@ AddImg2Plot <- function(
 #' AddLine(H = FALSE, at = 0.5, Outer = TRUE, lwd = 2, col = "red")
 
 AddLine <- function(at = NULL, Outer = FALSE, H = TRUE, ...) {
-  if (Outer) { par(xpd = TRUE) }
+  if (Outer) graphics::par(xpd = TRUE)
 
   if (H) {
     graphics::abline(h = graphics::grconvertX(at, "npc"), ...)
@@ -1382,7 +1393,7 @@ AddLine <- function(at = NULL, Outer = FALSE, H = TRUE, ...) {
   }
 
   if (Outer) {
-    par(xpd = FALSE)
+    graphics::par(xpd = FALSE)
   }
 }
 
@@ -1400,19 +1411,20 @@ AddLine <- function(at = NULL, Outer = FALSE, H = TRUE, ...) {
 #'
 #' @name ScriptLocation
 #' @references [Click here](https://stackoverflow.com/questions/47044068/)
+#' @importFrom rlang .data
 #' @export
 #' @examples
 #'  \dontrun{
 #' ScriptLocation()
 #' }
 
-ScriptLocation <-  function(){
+ScriptLocation <-  function() {
   this_file <- commandArgs() %>%
     tibble::enframe(name = NULL) %>%
-    tidyr::separate(col=value, into=c("key", "value"), sep="=", fill='right') %>%
-    dplyr::filter(key == "--file") %>%
-    dplyr::pull(value)
-  if (length(this_file)==0) {
+    tidyr::separate(col = .data$value, into = c("key", "value"), sep = "=", fill = "right") %>%
+    dplyr::filter(.data$key == "--file") %>%
+    dplyr::pull(.data$value)
+  if (length(this_file) == 0) {
     this_file <- rstudioapi::getSourceEditorContext()$path
   }
   return(this_file)
@@ -1441,9 +1453,8 @@ ScriptLocation <-  function(){
 #'
 #' @export
 #' @examples
-#' library(dplyr, warn.conflicts = FALSE)
-#' library(raster, warn.conflicts = FALSE)
-#'
+#' LoadPackages(dplyr)
+#' LoadPackages(raster)
 #' # ---------------------------------------------
 #'
 #' # Vector
@@ -1473,19 +1484,19 @@ ScriptLocation <-  function(){
 #'
 #' # raster
 #'
-#' require(raster)
+#' LoadPackages(raster)
 #'
 #' RRR <- system.file("external/test.grd", package = "raster") %>%
-#'     raster::raster()
+#'     raster()
 #'
 #' RRR2 <- Range2NewVal(x = RRR, LessThan = 500, NewVal = NA)
 #' RRR3 <- Range2NewVal(x = RRR, MoreThan = 500, NewVal = NA)
 #' par(mar = c(0.5, 0.5, 3, 3))
-#' plot(raster::stack(RRR, RRR2, RRR3), nr = 1, main = c("Original", "<500 to NA", ">500 to NA"))
+#' plot(stack(RRR, RRR2, RRR3), nr = 1, main = c("Original", "<500 to NA", ">500 to NA"))
 #'
 #' RRR2 <- Range2NewVal(x = RRR, Between = c(1000, 1800), NewVal = 1800, InvertSelection = FALSE)
 #' RRR3 <- Range2NewVal(x = RRR, Between = c(1000, 1800), NewVal = 1800, InvertSelection = TRUE)
-#' plot(raster::stack(RRR>=1000, RRR2, RRR3), nr = 1, main = c(">1000 ?", "<500 to NA", ">500 to NA"))
+#' plot(stack(RRR>=1000, RRR2, RRR3), nr = 1, main = c(">1000 ?", "<500 to NA", ">500 to NA"))
 
 Range2NewVal <- function(
     x = NULL, Between = NULL,
@@ -1493,16 +1504,16 @@ Range2NewVal <- function(
     NewVal = NA, InvertSelection = FALSE) {
 
   if (!is.null(Between)) {
-    if (length(Between) != 2) { stop() }
+    if (length(Between) != 2) stop()
     Min <- Between[1]
     Max <- Between[2]
-    if (class(x) == "RasterLayer") {
+    if (inherits(x, "RasterLayer")) {
       X1 <- X2 <- x
       X1[X1 >= Max] <- NA
       X1[!is.na(X1)] <- 1
       X2[X2 <= Min] <- NA
       X2[!is.na(X2)] <- 1
-      X3 <- sum(X1, X2, na.rm = T)
+      X3 <- sum(X1, X2, na.rm = TRUE)
 
       if (InvertSelection) {
         x[X3 == 1] <- NewVal
@@ -1511,8 +1522,8 @@ Range2NewVal <- function(
       }
     } else {
 
-      if (is.null(Max)) { Max <- max(x) }
-      if (is.null(Min)) { Min <- min(x) }
+      if (is.null(Max)) Max <- max(x)
+      if (is.null(Min)) Min <- min(x)
       if (Max <= Min) stop()
 
       if (InvertSelection) {
@@ -1526,7 +1537,7 @@ Range2NewVal <- function(
     if (!is.null(MoreThan)) {
       x[x > MoreThan] <- NewVal
     } else {
-      if (!is.null(LessThan)) { x[x < LessThan] <- NewVal }
+      if (!is.null(LessThan)) x[x < LessThan] <- NewVal
     }
   }
   x
@@ -1552,7 +1563,7 @@ Range2NewVal <- function(
 #' ClearConsole()
 #' }
 
-ClearConsole <- function(){
+ClearConsole <- function() {
   cat("\014")
 }
 
@@ -1584,15 +1595,15 @@ ClearConsole <- function(){
 #' # Which pacakages were loaded?
 #' setdiff(P2, P1)
 
-RequireMultiple <- function(..., Reload = FALSE, InstallMissing = TRUE){
+RequireMultiple <- function(..., Reload = FALSE, InstallMissing = TRUE) {
   options(warnings = -1)
 
   varnames <- sapply(substitute(list(...))[-1], deparse) %>%
     stringr::str_replace_all(pattern = '\"', "")
 
-  sapply(varnames, function(x){
+  sapply(varnames, function(x) {
 
-    if (x %in% {installed.packages() %>% rownames()}) {
+    if (x %in% rownames(utils::installed.packages())) {
 
       if (!x %in% LoadedPackages()) {
         suppressPackageStartupMessages(suppressMessages(suppressWarnings(
@@ -1601,24 +1612,27 @@ RequireMultiple <- function(..., Reload = FALSE, InstallMissing = TRUE){
 
       } else {
 
-        if (Reload == T) {
+        if (Reload == TRUE) {
           suppressPackageStartupMessages(suppressMessages(suppressWarnings({
             ReloadPackage(Package = x)
             cat(crayon::red(">>"), "Library", crayon::blue(x), "was already loaded (re-loaded).\n")
 
-          }))) } else {
-            cat(crayon::red(">>"), "Library", crayon::blue(x), "was already loaded (not re-loaded).\n")
+          })))
+        } else {
+          cat(crayon::red(">>"), "Library", crayon::blue(x), "was already loaded (not re-loaded).\n")
 
-          }
+        }
       }
     } else {
 
       if (InstallMissing) {
         suppressPackageStartupMessages(suppressMessages(suppressWarnings({
-          install.packages(x, quiet = TRUE, verbose = FALSE)
+          utils::install.packages(
+            x, quiet = TRUE, verbose = FALSE,
+            repos = "https://cloud.r-project.org")
         })))
 
-        if (x %in% {installed.packages() %>% rownames()}) {
+        if (x %in% rownames(utils::installed.packages())) {
           suppressPackageStartupMessages(suppressMessages(suppressWarnings({
             require(x, character.only = TRUE)
           })))
@@ -1667,7 +1681,7 @@ CheckRStudioVersion <- function() {
     "[["("long_version") %>%
     stringr::str_replace_all("\\+", "\\.")
 
-  if (identical(OnlineVersion, InstalledVersion) == F) {
+  if (identical(OnlineVersion, InstalledVersion) == FALSE) {
     cat(
       crayon::blue(
         "R-Studio version:",
@@ -1708,12 +1722,12 @@ CheckQuartoVersion <- function() {
     rvest::html_nodes(".Link--primary") %>%
     rvest::html_text2() %>%
     stringr::str_remove_all("v") %>%
-    gtools::mixedsort(decreasing = T) %>%
+    gtools::mixedsort(decreasing = TRUE) %>%
     "["(1)
 
   InstalledVersion <- system("quarto --version", intern = TRUE)
 
-  if (identical(OnlineVersion, InstalledVersion) == F) {
+  if (identical(OnlineVersion, InstalledVersion) == FALSE) {
     cat(
       crayon::blue(
         "Quarto version:",
@@ -1744,10 +1758,7 @@ CheckQuartoVersion <- function() {
 #' @name AllObjSizes
 #' @param GreaterThan Only show objects with size > specified value in MB. Default: 0, which means show all variables size
 #' @author Ahmed El-Gabbas
-#' @importFrom pryr object_size
-#' @importFrom dplyr tibble mutate arrange select desc
-#' @importFrom crayon yellow bold blue
-#' @importFrom stats setNames
+#' @importFrom rlang .data
 #' @export
 #' @examples
 #' AA1 <<- rep(1:1000, 10000)
@@ -1771,19 +1782,19 @@ AllObjSizes <- function(GreaterThan = 0) {
           pryr::object_size(get(x)) / (1024 * 1024)
         }) %>%
       dplyr::tibble() %>%
-      setNames("Size") %>%
+      stats::setNames("Size") %>%
       dplyr::mutate(
-        AllVars = AllVars,
-        Size = as.numeric(Size),
-        Size = round(Size, 4),
-        Percent = 100*(Size / sum(Size)),
-        Percent = round(Percent, 2),
-        Percent = paste0(Percent, " %")) %>%
-      dplyr::arrange(desc(Size)) %>%
-      dplyr::select(AllVars, Size, Percent)
+        Vars = AllVars,
+        Size = as.numeric(.data$Size),
+        Size = round(.data$Size, 4),
+        Percent = 100 * (.data$Size / sum(.data$Size)),
+        Percent = round(.data$Percent, 2),
+        Percent = paste0(.data$Percent, " %")) %>%
+      dplyr::arrange(dplyr::desc(.data$Size)) %>%
+      dplyr::select(tidyselect::all_of(c("Vars", "Size", "Percent")))
 
     if (!is.na(GreaterThan)) {
-      AllVarsSize <- AllVarsSize %>% dplyr::filter(Size >= GreaterThan)
+      AllVarsSize <- dplyr::filter(AllVarsSize, .data$Size >= GreaterThan)
       if (nrow(AllVarsSize) > 0) {
         cat(crayon::blue(
           "---------------------------------------------\n",
@@ -1792,7 +1803,7 @@ AllObjSizes <- function(GreaterThan = 0) {
           "---------------------------------------------\n",
           sep = ""),
           sep = "")
-        print(AllVarsSize, row.names = F, n = Inf)
+        print(AllVarsSize, row.names = FALSE, n = Inf)
         cat(crayon::blue(
           "Object sizes are in MB.\n",
           "---------------------------------------------\n", sep = ""),
@@ -1803,7 +1814,7 @@ AllObjSizes <- function(GreaterThan = 0) {
                  GreaterThan, " MB\n")), sep = "")
       }
     } else {
-      print(AllVarsSize, row.names = F, n = Inf)
+      print(AllVarsSize, row.names = FALSE, n = Inf)
       cat(crayon::green("Object sizes are in MB"), sep = "")
     }
   }
@@ -1826,7 +1837,6 @@ AllObjSizes <- function(GreaterThan = 0) {
 #' @param Verbose Should the names of kept and removed variables printed? Default: `TRUE`.
 #' @author Ahmed El-Gabbas
 #' @export
-#' @importFrom crayon red blue
 #' @examples
 #' A <- B <- C <- 15
 #' ls()
@@ -1842,16 +1852,16 @@ AllObjSizes <- function(GreaterThan = 0) {
 #' ls()
 
 KeepOnly <- function(Obj = NULL, Verbose = TRUE) {
-  if (is.null(Obj) | length(Obj) == 0) {
+  if (is.null(Obj) || length(Obj) == 0) {
     stop()
   }
   AllObjects <- ls(pos = parent.frame())
   RemObjects <- setdiff(AllObjects, Obj)
   if (Verbose) {
-    cat(crayon::red(paste0("Removed Variables (", length(RemObjects), "): ")), crayon::blue(paste0(1:length(RemObjects), ":", RemObjects, collapse = " ||  ")), sep = "")
+    cat(crayon::red(paste0("Removed Variables (", length(RemObjects), "): ")), crayon::blue(paste0(seq_along(RemObjects), ":", RemObjects, collapse = " ||  ")), sep = "")
   }
   rm(list = RemObjects, pos = parent.frame())
   if (Verbose) {
-    cat(crayon::red(paste0("\nKept Variables (", length(Obj), "): ")), crayon::blue(paste0(1:length(Obj), ":", Obj, collapse = " ||  ")), "\n", sep = "")
+    cat(crayon::red(paste0("\nKept Variables (", length(Obj), "): ")), crayon::blue(paste0(seq_along(Obj), ":", Obj, collapse = " ||  ")), "\n", sep = "")
   }
 }

@@ -12,7 +12,7 @@ List of loaded packages
 \examples{
 LoadedPackages()
 
-require(sf)
+LoadPackages(sf)
 
 LoadedPackages()
 

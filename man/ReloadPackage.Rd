@@ -13,7 +13,7 @@ ReloadPackage(Package = NULL)
 Reload an R package
 }
 \examples{
-library(sf)
+LoadPackages(sf)
 
 ReloadPackage("sf")
 

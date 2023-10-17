@@ -21,8 +21,8 @@ AddImg2Plot(obj, x = NULL, y = NULL, width = NULL, interpolate = TRUE)
 Add image to plot
 }
 \examples{
-library(png)
-myurl <- "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Jupiter_\%28transparent\%29.png/242px-Jupiter_\%28transparent\%29.png"
+LoadPackages(png)
+myurl <- "https://upload.wikimedia.org/wikipedia/commons/e/e1/Jupiter_\%28transparent\%29.png"
 z <- tempfile()
 download.file(myurl, z, mode="wb")
 pic <- readPNG(z)

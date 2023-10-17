@@ -13,6 +13,7 @@ LoadAs(File = NA)
 Load RData file as specific object; i.e. rename loaded object
 }
 \examples{
+LoadPackages(tibble)
 File <- system.file("testdata", "culcita_dat.RData", package = "lme4")
 
 # ---------------------------------------------------------
@@ -22,7 +23,7 @@ File <- system.file("testdata", "culcita_dat.RData", package = "lme4")
 
 ls()
 
-tibble::tibble(culcita_dat)
+tibble(culcita_dat)
 
 rm(culcita_dat)
 
@@ -33,7 +34,7 @@ NewObj <- LoadAs(File = File)
 
 ls()
 
-print(tibble::tibble(NewObj))
+print(tibble(NewObj))
 }
 \author{
 Ahmed El-Gabbas

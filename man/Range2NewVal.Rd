@@ -30,9 +30,8 @@ Range2NewVal(
 Change values of \code{vector}/\code{data.frame}/\code{raster} within/outside a certain range to another value
 }
 \examples{
-library(dplyr, warn.conflicts = FALSE)
-library(raster, warn.conflicts = FALSE)
-
+LoadPackages(dplyr)
+LoadPackages(raster)
 # ---------------------------------------------
 
 # Vector
@@ -62,19 +61,19 @@ iris \%>\% as_tibble() \%>\%
 
 # raster
 
-require(raster)
+LoadPackages(raster)
 
 RRR <- system.file("external/test.grd", package = "raster") \%>\%
-    raster::raster()
+    raster()
 
 RRR2 <- Range2NewVal(x = RRR, LessThan = 500, NewVal = NA)
 RRR3 <- Range2NewVal(x = RRR, MoreThan = 500, NewVal = NA)
 par(mar = c(0.5, 0.5, 3, 3))
-plot(raster::stack(RRR, RRR2, RRR3), nr = 1, main = c("Original", "<500 to NA", ">500 to NA"))
+plot(stack(RRR, RRR2, RRR3), nr = 1, main = c("Original", "<500 to NA", ">500 to NA"))
 
 RRR2 <- Range2NewVal(x = RRR, Between = c(1000, 1800), NewVal = 1800, InvertSelection = FALSE)
 RRR3 <- Range2NewVal(x = RRR, Between = c(1000, 1800), NewVal = 1800, InvertSelection = TRUE)
-plot(raster::stack(RRR>=1000, RRR2, RRR3), nr = 1, main = c(">1000 ?", "<500 to NA", ">500 to NA"))
+plot(stack(RRR>=1000, RRR2, RRR3), nr = 1, main = c(">1000 ?", "<500 to NA", ">500 to NA"))
 }
 \author{
 Ahmed El-Gabbas

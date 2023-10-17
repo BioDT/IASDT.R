@@ -53,9 +53,10 @@ CheckTiff <- function(x) {
 #' https://stackoverflow.com/questions/29784829/
 #' https://stackoverflow.com/questions/22109774/r-raster-mosaic-from-list-of-rasters
 #' @examples
-#' require(raster)
+#' LoadPackages(raster)
 #' logo <- raster(system.file("external/rlogo.grd", package = "raster"))
-#' plot(logo, axes = F, legend = F, bty = "n", box = FALSE, main = "Original raster layer")
+#' plot(logo, axes = FALSE, legend = FALSE, bty = "n",
+#'      box = FALSE, main = "Original raster layer")
 #' # --------------------------------------------------
 #'
 #' # Split into 3 rows and 3 columns
@@ -70,7 +71,8 @@ CheckTiff <- function(x) {
 #' logoSplit$na.rm <- TRUE
 #' logoSplit2 <- do.call(mosaic, logoSplit)
 #' par(mfrow = c(1, 1))
-#' plot(logoSplit2, axes = F, legend = F, bty = "n", box = FALSE, main = "Merged raster layers")
+#' plot(logoSplit2, axes = FALSE, legend = FALSE, bty = "n",
+#'      box = FALSE, main = "Merged raster layers")
 #'
 #' print({logoSplit2 - logo}) # No value difference!
 #'
@@ -270,25 +272,26 @@ Text2Coords <- function(x) {
 #' @param shape Polygon
 #' @export
 #' @examples
-#' require(sp)
-#' require(raster)
+#' LoadPackages(sp)
+#' LoadPackages(raster)
+#' LoadPackages(rworldmap)
 #'
 #' # Example Polygon
-#' data(wrld_simpl, package = "maptools")
-#' SPDF <- subset(wrld_simpl, NAME == "Germany")
+#' SPDF <- getMap(resolution = "low") %>%
+#'    subset(NAME == "Germany")
 #'
 #' # Example RasterLayer
-#' r <- raster::raster(nrow = 1e3, ncol = 1e3, crs = sp::proj4string(SPDF))
+#' r <- raster::raster(nrow = 1e3, ncol = 1e3, crs = proj4string(SPDF))
 #' r[] <- 1:length(r)
 #' plot(r)
-#' plot(SPDF, add = T)
+#' plot(SPDF, add = TRUE)
 #'
 #' # ----------------------------------
 #'
 #' SPDF_DE <- ClipRasterByPolygon(r, SPDF)
-#' plot(raster::extent(SPDF_DE), axes = F, xlab = "", ylab = "")
-#' plot(SPDF_DE, add = T)
-#' plot(SPDF, add = T)
+#' plot(raster::extent(SPDF_DE), axes = FALSE, xlab = "", ylab = "")
+#' plot(SPDF_DE, add = TRUE)
+#' plot(SPDF, add = TRUE)
 
 ClipRasterByPolygon <- function(raster = NULL, shape = NULL) {
   a1_crop <- raster::crop(raster, shape)
@@ -314,7 +317,7 @@ ClipRasterByPolygon <- function(raster = NULL, shape = NULL) {
 #' @export
 #' @param Stack Stack
 #' @examples
-#' require(raster, warn.conflicts = F, quietly = T)
+#' LoadPackages(raster)
 #' logo <- raster(system.file("external/rlogo.grd", package = "raster"))
 #' logo@data@inmemory
 #' logo@data@fromdisk
@@ -340,7 +343,7 @@ ClipRasterByPolygon <- function(raster = NULL, shape = NULL) {
 
 CheckStackInMemory <- function(Stack = NULL) {
 
-  if (class(Stack) != "RasterStack") {
+  if (!inherits(Stack, "RasterStack")) {
     message("The object should be a Raster stack object")
     opt <- options(show.error.messages = FALSE)
     on.exit(options(opt))
@@ -355,8 +358,8 @@ CheckStackInMemory <- function(Stack = NULL) {
     message(paste0("All stack layers reads from ", crayon::bold("memory")))
   }
 
-  if (sum(InMem) > 0 & sum(InMem) < raster::nlayers(Stack)) {
+  if (sum(InMem) > 0 && sum(InMem) < raster::nlayers(Stack)) {
     paste0("Layers numbered (", paste0(which(!InMem), collapse = "-"),
-           ") reads from disk" )
+           ") reads from disk")
   }
 }

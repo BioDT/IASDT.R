@@ -14,7 +14,8 @@ Create directory if not existed
 }
 \examples{
 # create new folder (random name) in the temporary folder
-Path2Create <- file.path(tempdir(), stringi::stri_rand_strings(1, 5))
+LoadPackages(stringi)
+Path2Create <- file.path(tempdir(), stri_rand_strings(1, 5))
 file.exists(Path2Create)
 
 DirCreate(Path2Create)

@@ -13,7 +13,7 @@ CheckStackInMemory(Stack = NULL)
 Check if the raster stack reads from disk or memory
 }
 \examples{
-require(raster, warn.conflicts = F, quietly = T)
+LoadPackages(raster)
 logo <- raster(system.file("external/rlogo.grd", package = "raster"))
 logo@data@inmemory
 logo@data@fromdisk

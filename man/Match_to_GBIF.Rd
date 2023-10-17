@@ -4,7 +4,13 @@
 \alias{Match_to_GBIF}
 \title{Match taxonomy with GBIF; may return >1 match}
 \usage{
-Match_to_GBIF(taxon_name, taxon_id, include_genus = FALSE, Parallel = FALSE)
+Match_to_GBIF(
+  taxon_name,
+  taxon_id,
+  include_genus = FALSE,
+  Parallel = FALSE,
+  Progress = FALSE
+)
 }
 \arguments{
 \item{taxon_name}{taxonomy name}
@@ -14,6 +20,8 @@ Match_to_GBIF(taxon_name, taxon_id, include_genus = FALSE, Parallel = FALSE)
 \item{include_genus}{include matches at genus level; default: \code{FALSE}}
 
 \item{Parallel}{logical; whether to implement standardization on parallel; default: \code{FALSE}}
+
+\item{Progress}{logical; whether to print progress bar; default: \code{FALSE}}
 }
 \value{
 a tibble for the standardization results

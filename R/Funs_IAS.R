@@ -9,6 +9,7 @@
 #' @param taxon_id taxonomy ID
 #' @param include_genus include matches at genus level; default: `FALSE`
 #' @param Parallel logical; whether to implement standardization on parallel; default: `FALSE`
+#' @param Progress logical; whether to print progress bar; default: `FALSE`
 #' @name Match_to_GBIF
 #' @importFrom rlang .data
 #' @author Marina Golivets
@@ -17,17 +18,23 @@
 #' @details
 #' as input, provide a vector of verbatim taxon names (preferably with authorship) and a vector of existing local identifiers for those names
 
-Match_to_GBIF <- function(taxon_name, taxon_id, include_genus = FALSE, Parallel = FALSE) {
+Match_to_GBIF <- function(taxon_name, taxon_id, include_genus = FALSE,
+                          Parallel = FALSE, Progress = FALSE) {
 
   if (Parallel) {
     all_matches <- furrr::future_map(
       taxon_name, rgbif::name_backbone_verbose,
       kingdom = "plants", strict = TRUE,
-      .progress = TRUE, .options = furrr::furrr_options(seed = TRUE))
+      .progress = Progress, .options = furrr::furrr_options(seed = TRUE))
   } else {
-    ProgrOptns <- list(
-      type = "iterator", clear = TRUE,
-      format = "{cli::pb_bar} {cli::pb_percent} [{cli::pb_elapsed}]")
+    if (Progress) {
+      ProgrOptns <- list(
+        type = "iterator", clear = TRUE,
+        format = "{cli::pb_bar} {cli::pb_percent} [{cli::pb_elapsed}]")
+    } else {
+      ProgrOptns <- FALSE
+    }
+
     all_matches <- purrr::map(
       taxon_name, rgbif::name_backbone_verbose,
       kingdom = "plants", strict = TRUE, .progress = ProgrOptns)

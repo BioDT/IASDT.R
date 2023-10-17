@@ -38,9 +38,10 @@ https://stackoverflow.com/questions/29784829/
 https://stackoverflow.com/questions/22109774/r-raster-mosaic-from-list-of-rasters
 }
 \examples{
-require(raster)
+LoadPackages(raster)
 logo <- raster(system.file("external/rlogo.grd", package = "raster"))
-plot(logo, axes = F, legend = F, bty = "n", box = FALSE, main = "Original raster layer")
+plot(logo, axes = FALSE, legend = FALSE, bty = "n",
+     box = FALSE, main = "Original raster layer")
 # --------------------------------------------------
 
 # Split into 3 rows and 3 columns
@@ -55,7 +56,8 @@ logoSplit$fun <- mean
 logoSplit$na.rm <- TRUE
 logoSplit2 <- do.call(mosaic, logoSplit)
 par(mfrow = c(1, 1))
-plot(logoSplit2, axes = F, legend = F, bty = "n", box = FALSE, main = "Merged raster layers")
+plot(logoSplit2, axes = FALSE, legend = FALSE, bty = "n",
+     box = FALSE, main = "Merged raster layers")
 
 print({logoSplit2 - logo}) # No value difference!
 

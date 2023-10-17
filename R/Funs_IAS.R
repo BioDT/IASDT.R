@@ -1,5 +1,5 @@
 # |---------------------------------------------------| #
-# match_to_gbif.fn ----
+# Match_to_GBIF ----
 # |---------------------------------------------------| #
 
 #' Match taxonomy with GBIF; may return >1 match
@@ -8,23 +8,30 @@
 #' @param taxon_name taxonomy name
 #' @param taxon_id taxonomy ID
 #' @param include_genus include matches at genus level; default: `FALSE`
-#' @name match_to_gbif.fn
+#' @param Parallel logical; whether to implement standardization on parallel; default: `FALSE`
+#' @name Match_to_GBIF
 #' @importFrom rlang .data
 #' @author Marina Golivets
-#' @return NULL
+#' @return a tibble for the standardization results
 #' @export
 #' @details
 #' as input, provide a vector of verbatim taxon names (preferably with authorship) and a vector of existing local identifiers for those names
 
-match_to_gbif.fn <- function(taxon_name, taxon_id, include_genus = FALSE) {
+Match_to_GBIF <- function(taxon_name, taxon_id, include_genus = FALSE, Parallel = FALSE) {
 
-  # perform initial matching in parallel
-  no_cores <- parallel::detectCores()
-  cl <- parallel::makeCluster(no_cores)
-  all_matches <- pbapply::pblapply(
-    taxon_name, rgbif::name_backbone_verbose,
-    kingdom = "plants", strict = TRUE, cl = cl)
-  parallel::stopCluster(cl)
+  if (Parallel) {
+    all_matches <- furrr::future_map(
+      taxon_name, rgbif::name_backbone_verbose,
+      kingdom = "plants", strict = TRUE,
+      .progress = TRUE, .options = furrr::furrr_options(seed = TRUE))
+  } else {
+    ProgrOptns <- list(
+      type = "iterator", clear = TRUE,
+      format = "{cli::pb_bar} {cli::pb_percent} [{cli::pb_elapsed}]")
+    all_matches <- purrr::map(
+      taxon_name, rgbif::name_backbone_verbose,
+      kingdom = "plants", strict = TRUE, .progress = ProgrOptns)
+  }
 
   # retrieve alternative matches
   alternative_matches <- lapply(
@@ -90,7 +97,7 @@ match_to_gbif.fn <- function(taxon_name, taxon_id, include_genus = FALSE) {
   accepted <- taxon_list %>%
     dplyr::group_by(taxon_id) %>%
     dplyr::filter(.data$status == "ACCEPTED")
-  if(nrow(accepted) > 0) {
+  if (nrow(accepted) > 0) {
     accepted <- accepted %>%
       dplyr::filter(.data$confidence == max(.data$confidence)) %>%
       dplyr::ungroup()
@@ -105,7 +112,7 @@ match_to_gbif.fn <- function(taxon_name, taxon_id, include_genus = FALSE) {
     dplyr::full_join(taxon_list, by = dplyr::join_by(taxon_id)) %>%
     dplyr::filter(.data$has_accepted == FALSE) %>%
     dplyr::filter(.data$status == "SYNONYM")
-  if(nrow(synonyms) > 0) {
+  if (nrow(synonyms) > 0) {
     synonyms <- synonyms %>%
       dplyr::group_by(taxon_id) %>%
       dplyr::filter(.data$confidence == max(.data$confidence)) %>%
@@ -122,7 +129,7 @@ match_to_gbif.fn <- function(taxon_name, taxon_id, include_genus = FALSE) {
     dplyr::filter(.data$has_accepted == FALSE) %>%
     dplyr::group_by(taxon_id) %>%
     dplyr::filter(.data$status == "DOUBTFUL")
-  if(nrow(doubtful) > 0) {
+  if (nrow(doubtful) > 0) {
     doubtful <- doubtful %>%
       dplyr::filter(.data$confidence == max(.data$confidence)) %>%
       dplyr::ungroup()
@@ -267,7 +274,7 @@ ChangeClass <- function(DF) {
 #' GetAcceptedName(5372559)
 
 GetAcceptedName <- function(ID) {
-  if(!is.na(ID)) {
+  if (!is.na(ID)) {
     rgbif::name_usage(ID)$data$scientificName
   } else {
     NA_character_

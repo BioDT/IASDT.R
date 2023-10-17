@@ -1385,3 +1385,473 @@ AddLine <- function(at = NULL, Outer = FALSE, H = TRUE, ...) {
     par(xpd = FALSE)
   }
 }
+
+
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+#
+# |---------------------------------------------------| #
+# ScriptLocation ----
+# |---------------------------------------------------| #
+#
+#' The location of current script
+#'
+#' The location of current script
+#'
+#' @name ScriptLocation
+#' @references [Click here](https://stackoverflow.com/questions/47044068/)
+#' @export
+#' @examples
+#'  \dontrun{
+#' ScriptLocation()
+#' }
+
+ScriptLocation <-  function(){
+  this_file <- commandArgs() %>%
+    tibble::enframe(name = NULL) %>%
+    tidyr::separate(col=value, into=c("key", "value"), sep="=", fill='right') %>%
+    dplyr::filter(key == "--file") %>%
+    dplyr::pull(value)
+  if (length(this_file)==0) {
+    this_file <- rstudioapi::getSourceEditorContext()$path
+  }
+  return(this_file)
+}
+
+
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+#
+# |---------------------------------------------------| #
+# Range2NewVal ----
+# |---------------------------------------------------| #
+#
+#' Change values of `vector`/`data.frame`/`raster` within/outside a certain range to another value
+#'
+#' Change values of `vector`/`data.frame`/`raster` within/outside a certain range to another value
+#'
+#' @name Range2NewVal
+#' @author Ahmed El-Gabbas
+#' @param x vector / data.frame / raster object.
+#' @param Between Range of values to be changed or kept.
+#' @param MoreThan The value above which the original values will be changed. Only applied if `Between` is not used.
+#' @param LessThan The value below which the original values will be changed. Only applied if `Between` and `MoreThan` are not used.
+#' @param NewVal The new value to be assigned. Default: `NA`.
+#' @param InvertSelection Should the selection be inverted? Only valid if `Between` used. If `InvertSelection = TRUE`, then the values not in the range of `Between` argument will be changed. Default: `FALSE`.
+#'
+#' @export
+#' @examples
+#' library(dplyr, warn.conflicts = FALSE)
+#' library(raster, warn.conflicts = FALSE)
+#'
+#' # ---------------------------------------------
+#'
+#' # Vector
+#'
+#' Range2NewVal(x =  1:10, Between = c(5, 8), NewVal = NA)
+#'
+#' Range2NewVal(x =  1:10, Between = c(5, 8), NewVal = NA, InvertSelection = TRUE)
+#'
+#' # ---------------------------------------------
+#'
+#' # tibble
+#'
+#' iris %>% as_tibble() %>%
+#'  slice_head(n = 50) %>%
+#'  dplyr::select(-Sepal.Length, -Petal.Length, -Petal.Width) %>%
+#'  mutate(
+#'    Sepal.Width.New = Range2NewVal(
+#'        x = Sepal.Width, Between = c(3, 3.5),
+#'        NewVal = NA, InvertSelection = FALSE),
+#'    Sepal.Width.Rev = Range2NewVal(
+#'        x = Sepal.Width, Between = c(3, 3.5),
+#'        NewVal = NA, InvertSelection = TRUE)) %>%
+#'  arrange(-Sepal.Width) %>%
+#'  print(n = 50)
+#'
+#' # ---------------------------------------------
+#'
+#' # raster
+#'
+#' require(raster)
+#'
+#' RRR <- system.file("external/test.grd", package = "raster") %>%
+#'     raster::raster()
+#'
+#' RRR2 <- Range2NewVal(x = RRR, LessThan = 500, NewVal = NA)
+#' RRR3 <- Range2NewVal(x = RRR, MoreThan = 500, NewVal = NA)
+#' par(mar = c(0.5, 0.5, 3, 3))
+#' plot(raster::stack(RRR, RRR2, RRR3), nr = 1, main = c("Original", "<500 to NA", ">500 to NA"))
+#'
+#' RRR2 <- Range2NewVal(x = RRR, Between = c(1000, 1800), NewVal = 1800, InvertSelection = FALSE)
+#' RRR3 <- Range2NewVal(x = RRR, Between = c(1000, 1800), NewVal = 1800, InvertSelection = TRUE)
+#' plot(raster::stack(RRR>=1000, RRR2, RRR3), nr = 1, main = c(">1000 ?", "<500 to NA", ">500 to NA"))
+
+Range2NewVal <- function(
+    x = NULL, Between = NULL,
+    MoreThan = NULL, LessThan = NULL,
+    NewVal = NA, InvertSelection = FALSE) {
+
+  if (!is.null(Between)) {
+    if (length(Between) != 2) { stop() }
+    Min <- Between[1]
+    Max <- Between[2]
+    if (class(x) == "RasterLayer") {
+      X1 <- X2 <- x
+      X1[X1 >= Max] <- NA
+      X1[!is.na(X1)] <- 1
+      X2[X2 <= Min] <- NA
+      X2[!is.na(X2)] <- 1
+      X3 <- sum(X1, X2, na.rm = T)
+
+      if (InvertSelection) {
+        x[X3 == 1] <- NewVal
+      } else {
+        x[X3 == 2] <- NewVal
+      }
+    } else {
+
+      if (is.null(Max)) { Max <- max(x) }
+      if (is.null(Min)) { Min <- min(x) }
+      if (Max <= Min) stop()
+
+      if (InvertSelection) {
+        x[!(x >= Min & x <= Max)] <- NewVal
+      } else {
+        x[x >= Min & x <= Max] <- NewVal
+      }
+    }
+  } else {
+
+    if (!is.null(MoreThan)) {
+      x[x > MoreThan] <- NewVal
+    } else {
+      if (!is.null(LessThan)) { x[x < LessThan] <- NewVal }
+    }
+  }
+  x
+}
+
+
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+#
+# |---------------------------------------------------| #
+# ClearConsole ----
+# |---------------------------------------------------| #
+#
+#' Clear the console
+#'
+#' Clear the console
+#' This function is a lazy equivalent of `cat("\014")`
+#'
+#' @name ClearConsole
+#' @export
+#' @examples
+#' \dontrun{
+#' ClearConsole()
+#' }
+
+ClearConsole <- function(){
+  cat("\014")
+}
+
+
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+#
+# |---------------------------------------------------| #
+# RequireMultiple ----
+# |---------------------------------------------------| #
+
+#' Load (or install) multiple packages at once
+#'
+#' @name RequireMultiple
+#' @param ... Packages to load or install
+#' @param Reload Should the already loaded packages re-loaded? Default: `FALSE`
+#' @param InstallMissing Should the missing packages be installed and loaded? Default: `TRUE`
+#' @author Ahmed El-Gabbas
+#' @export
+#' @examples
+#' # Currently loaded packages
+#' (P1 <- LoadedPackages())
+#'
+#' RequireMultiple(dismo, MASS, mgcv)
+#'
+#' # Loaded packages after implementing the function
+#' (P2 <- LoadedPackages())
+#'
+#' # Which pacakages were loaded?
+#' setdiff(P2, P1)
+
+RequireMultiple <- function(..., Reload = FALSE, InstallMissing = TRUE){
+  options(warnings = -1)
+
+  varnames <- sapply(substitute(list(...))[-1], deparse) %>%
+    stringr::str_replace_all(pattern = '\"', "")
+
+  sapply(varnames, function(x){
+
+    if (x %in% {installed.packages() %>% rownames()}) {
+
+      if (!x %in% LoadedPackages()) {
+        suppressPackageStartupMessages(suppressMessages(suppressWarnings(
+          require(x, character.only = TRUE))))
+        cat(crayon::red(">>"), "Library", crayon::blue(x), "was loaded successfully.\n")
+
+      } else {
+
+        if (Reload == T) {
+          suppressPackageStartupMessages(suppressMessages(suppressWarnings({
+            ReloadPackage(Package = x)
+            cat(crayon::red(">>"), "Library", crayon::blue(x), "was already loaded (re-loaded).\n")
+
+          }))) } else {
+            cat(crayon::red(">>"), "Library", crayon::blue(x), "was already loaded (not re-loaded).\n")
+
+          }
+      }
+    } else {
+
+      if (InstallMissing) {
+        suppressPackageStartupMessages(suppressMessages(suppressWarnings({
+          install.packages(x, quiet = TRUE, verbose = FALSE)
+        })))
+
+        if (x %in% {installed.packages() %>% rownames()}) {
+          suppressPackageStartupMessages(suppressMessages(suppressWarnings({
+            require(x, character.only = TRUE)
+          })))
+          cat(crayon::yellow(">>>>>>"), "Library", crayon::blue(x), "was installed and loaded. \n")
+        } else {
+          cat(crayon::yellow(">>>>>>"), "Library", crayon::blue(x), "can not be installed. \n")
+        }
+      } else {
+        cat(crayon::red(">>"), "Library", crayon::blue(x), "is not installed. ")
+      }
+    }
+  })
+  return(invisible(NULL))
+}
+
+
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+#
+# |---------------------------------------------------| #
+# CheckRStudioVersion ----
+# |---------------------------------------------------| #
+
+#' Check if `RStudio` should be updated
+#'
+#' Check if `RStudio` should be updated
+#'
+#' @name CheckRStudioVersion
+#' @author Ahmed El-Gabbas
+#' @export
+#' @examples
+#' \dontrun{
+#' CheckRStudioVersion()
+#' }
+
+CheckRStudioVersion <- function() {
+  XPath <- ".flex-inhe:nth-child(8)"
+  OnlineVersion <- "https://posit.co/download/rstudio-desktop/" %>%
+    xml2::read_html() %>%
+    rvest::html_node(XPath) %>%
+    rvest::html_text2() %>%
+    stringr::str_remove_all("RStudio-|.exe") %>%
+    stringr::str_replace_all("-", ".")
+
+  InstalledVersion <- rstudioapi::versionInfo() %>%
+    "[["("long_version") %>%
+    stringr::str_replace_all("\\+", "\\.")
+
+  if (identical(OnlineVersion, InstalledVersion) == F) {
+    cat(
+      crayon::blue(
+        "R-Studio version:",
+        crayon::red(crayon::bold(OnlineVersion)),
+        "is available.\nInstalled R-studio version:",
+        crayon::red(crayon::bold(InstalledVersion)),
+        "\nPlease consider updating R-Studio.\n"))
+  } else {
+    cat(
+      crayon::blue(
+        "You are using the most recent version of R-Studio: v",
+        crayon::red(crayon::bold(InstalledVersion)), ".",
+        sep = ""))
+  }
+}
+
+
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+#
+# |---------------------------------------------------| #
+# CheckQuartoVersion ----
+# |---------------------------------------------------| #
+
+#' Check if `Quarto` should be updated
+#'
+#' Check if `Quarto` should be updated
+#' @name CheckQuartoVersion
+#' @author Ahmed El-Gabbas
+#' @export
+#' @examples
+#' CheckQuartoVersion()
+
+CheckQuartoVersion <- function() {
+
+  OnlineVersion <- "https://github.com/quarto-dev/quarto-cli/releases/" %>%
+    xml2::read_html() %>%
+    rvest::html_nodes(".Link--primary") %>%
+    rvest::html_text2() %>%
+    stringr::str_remove_all("v") %>%
+    gtools::mixedsort(decreasing = T) %>%
+    "["(1)
+
+  InstalledVersion <- system("quarto --version", intern = TRUE)
+
+  if (identical(OnlineVersion, InstalledVersion) == F) {
+    cat(
+      crayon::blue(
+        "Quarto version:",
+        crayon::red(crayon::bold(OnlineVersion)),
+        "is available.\nInstalled Quarto version:",
+        crayon::red(crayon::bold(InstalledVersion)),
+        "\nPlease consider updating Quarto.\n"))
+  } else {
+    cat(
+      crayon::blue(
+        "You are using the most recent version of Quarto: v",
+        crayon::red(crayon::bold(InstalledVersion)), ".",
+        sep = ""))
+  }
+}
+
+
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+#
+# |---------------------------------------------------| #
+# AllObjSizes ----
+# |---------------------------------------------------| #
+
+#' Size of objects in memory
+#'
+#' This function print the size allocated by any of loaded objects into `R`
+#' @name AllObjSizes
+#' @param GreaterThan Only show objects with size > specified value in MB. Default: 0, which means show all variables size
+#' @author Ahmed El-Gabbas
+#' @importFrom pryr object_size
+#' @importFrom dplyr tibble mutate arrange select desc
+#' @importFrom crayon yellow bold blue
+#' @importFrom stats setNames
+#' @export
+#' @examples
+#' AA1 <<- rep(1:1000, 10000)
+#' AA2 <<- rep(1:1000, 100)
+#'
+#' AllObjSizes()
+#'
+#' AllObjSizes(GreaterThan = 1)
+#'
+#' AllObjSizes(GreaterThan = 50)
+
+AllObjSizes <- function(GreaterThan = 0) {
+  AllVars <- ls(envir = .GlobalEnv)
+
+  if (length(AllVars) == 0) {
+    cat("No Objects are available in the global environment!\n")
+  } else {
+    AllVarsSize <- AllVars %>%
+      sapply(
+        FUN = function(x) {
+          pryr::object_size(get(x)) / (1024 * 1024)
+        }) %>%
+      dplyr::tibble() %>%
+      setNames("Size") %>%
+      dplyr::mutate(
+        AllVars = AllVars,
+        Size = as.numeric(Size),
+        Size = round(Size, 4),
+        Percent = 100*(Size / sum(Size)),
+        Percent = round(Percent, 2),
+        Percent = paste0(Percent, " %")) %>%
+      dplyr::arrange(desc(Size)) %>%
+      dplyr::select(AllVars, Size, Percent)
+
+    if (!is.na(GreaterThan)) {
+      AllVarsSize <- AllVarsSize %>% dplyr::filter(Size >= GreaterThan)
+      if (nrow(AllVarsSize) > 0) {
+        cat(crayon::blue(
+          "---------------------------------------------\n",
+          crayon::bold(nrow(AllVarsSize)),
+          " Object(s) fulfill the criteria.\n",
+          "---------------------------------------------\n",
+          sep = ""),
+          sep = "")
+        print(AllVarsSize, row.names = F, n = Inf)
+        cat(crayon::blue(
+          "Object sizes are in MB.\n",
+          "---------------------------------------------\n", sep = ""),
+          sep = "")
+      } else {
+        cat(crayon::red(
+          paste0("No variables have Size > ",
+                 GreaterThan, " MB\n")), sep = "")
+      }
+    } else {
+      print(AllVarsSize, row.names = F, n = Inf)
+      cat(crayon::green("Object sizes are in MB"), sep = "")
+    }
+  }
+}
+
+
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+#
+# |---------------------------------------------------| #
+# KeepOnly ----
+# |---------------------------------------------------| #
+
+#' Keep only certain objects in memory, all other objects will be removed
+#'
+#' Keep only certain objects in memory, all other objects will be removed
+#'
+#' @name KeepOnly
+#' @param Obj character vector for objects to be kept in memory
+#' @param Verbose Should the names of kept and removed variables printed? Default: `TRUE`.
+#' @author Ahmed El-Gabbas
+#' @export
+#' @importFrom crayon red blue
+#' @examples
+#' A <- B <- C <- 15
+#' ls()
+#'
+#' KeepOnly("A")
+#'
+#' ls()
+#' rm(list = ls())
+#'
+#'
+#' A <- B <- C <- 15
+#' KeepOnly(c("A","B"))
+#' ls()
+
+KeepOnly <- function(Obj = NULL, Verbose = TRUE) {
+  if (is.null(Obj) | length(Obj) == 0) {
+    stop()
+  }
+  AllObjects <- ls(pos = parent.frame())
+  RemObjects <- setdiff(AllObjects, Obj)
+  if (Verbose) {
+    cat(crayon::red(paste0("Removed Variables (", length(RemObjects), "): ")), crayon::blue(paste0(1:length(RemObjects), ":", RemObjects, collapse = " ||  ")), sep = "")
+  }
+  rm(list = RemObjects, pos = parent.frame())
+  if (Verbose) {
+    cat(crayon::red(paste0("\nKept Variables (", length(Obj), "): ")), crayon::blue(paste0(1:length(Obj), ":", Obj, collapse = " ||  ")), "\n", sep = "")
+  }
+}

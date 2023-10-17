@@ -59,6 +59,14 @@ reference:
   - LoadedPackages
   - AddImg2Plot
   - AddLine
+  - ScriptLocation
+  - Range2NewVal
+  - ClearConsole
+  - RequireMultiple
+  - CheckRStudioVersion
+  - CheckQuartoVersion
+  - AllObjSizes
+  - KeepOnly
 
 - title: Spatial functions
   desc:
@@ -76,6 +84,6 @@ reference:
 - title: IAS-functions
   desc:
   contents:
-  - match_to_gbif.fn
+  - Match_to_GBIF
   - Get_EASIN_Data
   - GetAcceptedName

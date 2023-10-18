@@ -4,9 +4,13 @@
 \alias{Text2Coords}
 \title{Extract longitude / latitude from text}
 \usage{
-Text2Coords(x)
+Text2Coords(String, Long_Name = "Longitude", Lat_Name = "Latitude")
 }
 \arguments{
+\item{Long_Name}{Column name for the longitude information; default: "Longitude"}
+
+\item{Lat_Name}{Column name for the latitude information; default: "Latitude"}
+
 \item{x}{string of coordinate}
 }
 \value{
@@ -18,6 +22,9 @@ Extract longitude / latitude from text
 \examples{
 c("POINT (11.761 46.286)", "POINT (14.8336 42.0422)", "POINT (16.179999 38.427214)") \%>\%
  lapply(Text2Coords)
+
+c("POINT (11.761 46.286)", "POINT (14.8336 42.0422)", "POINT (16.179999 38.427214)") \%>\%
+ lapply(Text2Coords, Long_Name = "Long", Lat_Name = "Lat")
 }
 \author{
 Ahmed El-Gabbas

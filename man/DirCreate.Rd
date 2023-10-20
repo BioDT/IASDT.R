@@ -4,10 +4,12 @@
 \alias{DirCreate}
 \title{Create directory if not existed}
 \usage{
-DirCreate(Path)
+DirCreate(Path, Verbose = TRUE)
 }
 \arguments{
 \item{Path}{Path of the folder}
+
+\item{Verbose}{logical; print a message whether the folder was created or already available. Default: \code{TRUE}}
 }
 \description{
 Create directory if not existed
@@ -19,6 +21,8 @@ Path2Create <- file.path(tempdir(), stri_rand_strings(1, 5))
 file.exists(Path2Create)
 
 DirCreate(Path2Create)
+DirCreate(Path2Create)
+DirCreate(Path2Create, Verbose = FALSE)
 file.exists(Path2Create)
 
 }

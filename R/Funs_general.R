@@ -341,6 +341,7 @@ ScrapLinks <- function(url) {
 #'
 #' Create directory if not existed
 #' @param Path Path of the folder
+#' @param Verbose logical; print a message whether the folder was created or already available. Default: `TRUE`
 #' @name DirCreate
 #' @author Ahmed El-Gabbas
 #' @return NULL
@@ -351,19 +352,23 @@ ScrapLinks <- function(url) {
 #' file.exists(Path2Create)
 #'
 #' DirCreate(Path2Create)
+#' DirCreate(Path2Create)
+#' DirCreate(Path2Create, Verbose = FALSE)
 #' file.exists(Path2Create)
 #'
 #' @export
 
-DirCreate <- function(Path) {
+DirCreate <- function(Path, Verbose = TRUE) {
   Path2 <- gsub("\\\\", "/", Path)
-  if (dir.exists(Path)) {
+  if (dir.exists(Path) && Verbose) {
     CatTime(stringr::str_glue("Path: {crayon::bold(Path2)} - already exists"))
   } else {
     dir.create(Path, recursive = TRUE, showWarnings = FALSE)
-    "Path: {crayon::bold(Path2)} created" %>%
-      stringr::str_glue() %>%
-      CatTime(Date = TRUE)
+    if (Verbose) {
+      "Path: {crayon::bold(Path2)} created" %>%
+        stringr::str_glue() %>%
+        CatTime(Date = TRUE)
+    }
   }
 }
 

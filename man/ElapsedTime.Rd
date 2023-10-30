@@ -4,10 +4,16 @@
 \alias{ElapsedTime}
 \title{Elapsed time for running an R command}
 \usage{
-ElapsedTime(x, Unit = c("M", "S", "H"))
+ElapsedTime(x, Unit = c("M", "S", "H"), ReturnVal = FALSE, Verbose = FALSE)
 }
 \arguments{
 \item{x}{R command}
+
+\item{Unit}{unit of time: one of these: "M" for minutes (default), "S" for seconds, "H" for hours}
+
+\item{ReturnVal}{Return the output of the command; default: \code{FALSE}}
+
+\item{Verbose}{verbose the running command}
 }
 \value{
 nothing is returned; the elapsed time is printed to the console
@@ -17,16 +23,20 @@ Elapsed time for running an R command
 }
 \examples{
 # unit in minutes by default
-ElapsedTime(Sys.sleep(3))
+ElapsedTime(Sys.sleep(1))
 
-# elapsed time in minutes
-ElapsedTime(Sys.sleep(3), "S")
+# elapsed time in seconds
+ElapsedTime(Sys.sleep(1), "S")
+ElapsedTime(Sys.sleep(1), "s")     # the same (case insensitive)
+ElapsedTime(Sys.sleep(1), "Sec")     # the same (only first letter is used)
 
-ElapsedTime(Sys.sleep(3), "Sec")     # the same (only first letter is used)
+try(ElapsedTime(Sys.sleep(1), "0s")) # this will give an error
 
-ElapsedTime(Sys.sleep(3), "s")     # the same (case insensitive)
+ElapsedTime(System('pwd'))
 
-try(ElapsedTime(Sys.sleep(3), "0s")) # this will give an error
+ElapsedTime(System('pwd'), ReturnVal = TRUE)
+
+ElapsedTime(System('pwd'), ReturnVal = TRUE, Verbose = TRUE)
 }
 \author{
 Ahmed El-Gabbas

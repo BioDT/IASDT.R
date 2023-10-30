@@ -1884,49 +1884,73 @@ KeepOnly <- function(Obj = NULL, Verbose = TRUE) {
 #'
 #' Elapsed time for running an R command
 #' @param x R command
+#' @param Unit unit of time: one of these: "M" for minutes (default), "S" for seconds, "H" for hours
+#' @param ReturnVal Return the output of the command; default: `FALSE`
+#' @param Verbose verbose the running command
 #' @name ElapsedTime
 #' @author Ahmed El-Gabbas
 #' @return nothing is returned; the elapsed time is printed to the console
 #' @export
 #' @examples
 #' # unit in minutes by default
-#' ElapsedTime(Sys.sleep(3))
+#' ElapsedTime(Sys.sleep(1))
 #'
-#' # elapsed time in minutes
-#' ElapsedTime(Sys.sleep(3), "S")
+#' # elapsed time in seconds
+#' ElapsedTime(Sys.sleep(1), "S")
+#' ElapsedTime(Sys.sleep(1), "s")     # the same (case insensitive)
+#' ElapsedTime(Sys.sleep(1), "Sec")     # the same (only first letter is used)
 #'
-#' ElapsedTime(Sys.sleep(3), "Sec")     # the same (only first letter is used)
+#' try(ElapsedTime(Sys.sleep(1), "0s")) # this will give an error
 #'
-#' ElapsedTime(Sys.sleep(3), "s")     # the same (case insensitive)
+#' ElapsedTime(System('pwd'))
 #'
-#' try(ElapsedTime(Sys.sleep(3), "0s")) # this will give an error
+#' ElapsedTime(System('pwd'), ReturnVal = TRUE)
+#'
+#' ElapsedTime(System('pwd'), ReturnVal = TRUE, Verbose = TRUE)
 
-ElapsedTime <- function(x, Unit = c("M", "S", "H")) {
+ElapsedTime <- function(
+    x, Unit = c("M", "S", "H"), ReturnVal = FALSE, Verbose = FALSE) {
 
-  if (length(Unit) > 1) {
-    Unit <- Unit[1]
-  }
   Unit <- Unit %>%
-    stringr::str_sub(1, 1) %>%
-    stringr::str_to_lower()
+    "["(1) %>%
+    stringr::str_to_lower() %>%
+    stringr::str_sub(1, 1)
 
   Factor <- dplyr::case_when(
     Unit == "s" ~ 1, Unit == "m" ~ 60,
-    Unit == "h" ~ 60*60, .default = NA_real_)
+    Unit == "h" ~ 60 * 60, .default = NA_real_)
 
-  if (is.na(Factor)) stop("Unit has to start with any of M, S, or H (case insensitive)")
+  if (is.na(Factor)) {
+    stop("Unit has to start with any of M, S, or H (case insensitive)")
+  }
 
-  Unit <- dplyr::case_when(
+
+  UnitText <- dplyr::case_when(
     Unit == "s" ~ " seconds", Unit == "m" ~ " minutes",
     Unit == "h" ~ " hours", .default = NA_character_)
 
-  x %>%
-    system.time() %>%
-    "["(3) %>%
-    "/"(Factor) %>%
-    "["("elapsed") %>%
+  if (Verbose) {
+    Command <- deparse(substitute(x))
+    if (magrittr::not(Command == ".")) {
+      IASDT.R::CatSep(CharReps = 75)
+      cat("Running the following command: ", sep = "\n")
+      cat(paste0("  >>>>  ", Command, "\n"))
+      IASDT.R::CatSep(CharReps = 75)
+    }
+  }
+
+  T1 <- lubridate::now()
+  xx <- x
+  T2 <- lubridate::now()
+
+  (T2 - T1) %>%
     as.vector() %>%
+    "/"(Factor) %>%
     round(2) %>%
-    paste0("Elapsed time: ", ., Unit) %>%
-    CatTime(NLines = 1)
+    paste0("\nElapsed time: ", ., UnitText) %>%
+    CatTime(NLines = 2)
+
+  if (ReturnVal) {
+    return(xx)
+  }
 }

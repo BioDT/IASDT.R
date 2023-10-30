@@ -9,6 +9,9 @@ NDecimals(x)
 \arguments{
 \item{x}{vector}
 }
+\value{
+integer; number of decimal places
+}
 \description{
 Number of decimal places in a vector
 }

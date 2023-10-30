@@ -884,7 +884,7 @@ LoadPackages <- function(Package = NULL, Verbose = FALSE) {
 #' @param x vector
 #' @name NDecimals
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return integer; number of decimal places
 #' @examples
 #' NDecimals("13.45554545")
 #'
@@ -907,6 +907,7 @@ NDecimals <- function(x) {
   if (length(Split) == 2) {
     Split[, 2] %>%
       nchar() %>%
+      as.integer() %>%
       return()
   } else {
     return(0)
@@ -1869,4 +1870,63 @@ KeepOnly <- function(Obj = NULL, Verbose = TRUE) {
   if (Verbose) {
     cat(crayon::red(paste0("\nKept Variables (", length(Obj), "): ")), crayon::blue(paste0(seq_along(Obj), ":", Obj, collapse = " ||  ")), "\n", sep = "")
   }
+}
+
+
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+# |---------------------------------------------------| #
+# ElapsedTime ----
+# |---------------------------------------------------| #
+
+#' Elapsed time for running an R command
+#'
+#' Elapsed time for running an R command
+#' @param x R command
+#' @name ElapsedTime
+#' @author Ahmed El-Gabbas
+#' @return nothing is returned; the elapsed time is printed to the console
+#' @export
+#' @examples
+#' # unit in minutes by default
+#' ElapsedTime(Sys.sleep(3))
+#'
+#' # elapsed time in minutes
+#' ElapsedTime(Sys.sleep(3), "S")
+#'
+#' ElapsedTime(Sys.sleep(3), "Sec")     # the same (only first letter is used)
+#'
+#' ElapsedTime(Sys.sleep(3), "s")     # the same (case insensitive)
+#'
+#' try(ElapsedTime(Sys.sleep(3), "0s")) # this will give an error
+
+ElapsedTime <- function(x, Unit = c("M", "S", "H")) {
+
+  if (length(Unit) > 1) {
+    Unit <- Unit[1]
+  }
+  Unit <- Unit %>%
+    stringr::str_sub(1, 1) %>%
+    stringr::str_to_lower()
+
+  Factor <- dplyr::case_when(
+    Unit == "s" ~ 1, Unit == "m" ~ 60,
+    Unit == "h" ~ 60*60, .default = NA_real_)
+
+  if (is.na(Factor)) stop("Unit has to start with any of M, S, or H (case insensitive)")
+
+  Unit <- dplyr::case_when(
+    Unit == "s" ~ " seconds", Unit == "m" ~ " minutes",
+    Unit == "h" ~ " hours", .default = NA_character_)
+
+  x %>%
+    system.time() %>%
+    "["(3) %>%
+    "/"(Factor) %>%
+    "["("elapsed") %>%
+    as.vector() %>%
+    round(2) %>%
+    paste0("Elapsed time: ", ., Unit) %>%
+    CatTime(NLines = 1)
 }

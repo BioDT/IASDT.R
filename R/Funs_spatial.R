@@ -236,7 +236,7 @@ Set_geometry <- function(x, Name) {
 #' Extract longitude / latitude from text
 #'
 #' Extract longitude / latitude from text
-#' @param x string of coordinate
+#' @param String string of coordinate
 #' @param Long_Name Column name for the longitude information; default: "Longitude"
 #' @param Lat_Name Column name for the latitude information; default: "Latitude"
 #' @name Text2Coords

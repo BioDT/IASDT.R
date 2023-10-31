@@ -67,7 +67,6 @@ reference:
   - CheckQuartoVersion
   - AllObjSizes
   - KeepOnly
-  - ElapsedTime
 
 - title: Spatial functions
   desc:

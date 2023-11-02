@@ -81,9 +81,10 @@ reference:
   - ClipRasterByPolygon
   - CheckStackInMemory
 
-- title: IAS-functions
+- title: IAS helper functions
   desc:
   contents:
   - Match_to_GBIF
   - Get_EASIN_Data
   - GetAcceptedName
+  - Extract_BB

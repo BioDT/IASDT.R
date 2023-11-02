@@ -7,11 +7,11 @@
 Text2Coords(String, Long_Name = "Longitude", Lat_Name = "Latitude")
 }
 \arguments{
+\item{String}{string of coordinate}
+
 \item{Long_Name}{Column name for the longitude information; default: "Longitude"}
 
 \item{Lat_Name}{Column name for the latitude information; default: "Latitude"}
-
-\item{x}{string of coordinate}
 }
 \value{
 two column tibble for Longitude & Latitude

@@ -62,7 +62,8 @@ Match_to_GBIF <- function(taxon_name, taxon_id, include_genus = FALSE,
     data.table::rbindlist(fill = TRUE) %>%
     dplyr::filter(!is.na(.data$usageKey)) %>%
     dplyr::distinct() %>%
-    dplyr::filter(.data$phylum == "Tracheophyta")
+    # filter only if phylum column exists
+    dplyr::filter({if ("phylum" %in% names(.)) phylum else NULL} == "Tracheophyta")
 
   # retrieve best matches
   best_matches <- lapply(all_matches, function(x) x$data) %>%
@@ -78,14 +79,15 @@ Match_to_GBIF <- function(taxon_name, taxon_id, include_genus = FALSE,
   matched <- best_matches %>%
     dplyr::filter(!(.data$matchType %in% c("NONE", "HIGHERRANK")))
 
-  nonmatched <- best_matches %>%
-    dplyr::filter(.data$matchType %in% c("NONE", "HIGHERRANK"))
+  # nonmatched <- best_matches %>%
+  #   dplyr::filter(.data$matchType %in% c("NONE", "HIGHERRANK"))
 
   matched_alternative <- try(
     alternative_matches %>%
-      dplyr::filter(.data$phylum == "Tracheophyta") %>% # use only vascular plants
+      # use only vascular plants
+      # filter only if phylum column exists
+      dplyr::filter({if ("phylum" %in% names(.)) phylum else NULL} == "Tracheophyta"),
       dplyr::filter(.data$confidence >= 0) %>%
-      # dplyr::filter(taxon_id %in% nonmatched$taxon_id)
       dplyr::filter(!taxon_id %in% matched$taxon_id)
   )
   if (class(matched_alternative)[1] == "try-error") {

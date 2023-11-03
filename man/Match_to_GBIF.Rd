@@ -6,7 +6,7 @@
 \usage{
 Match_to_GBIF(
   taxon_name,
-  taxon_id,
+  taxon_id = NULL,
   include_genus = FALSE,
   Parallel = FALSE,
   Progress = FALSE

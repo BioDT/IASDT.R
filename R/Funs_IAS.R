@@ -18,8 +18,11 @@
 #' @details
 #' as input, provide a vector of verbatim taxon names (preferably with authorship) and a vector of existing local identifiers for those names
 
-Match_to_GBIF <- function(taxon_name, taxon_id, include_genus = FALSE,
-                          Parallel = FALSE, Progress = FALSE) {
+Match_to_GBIF <- function(
+    taxon_name, taxon_id = NULL, include_genus = FALSE,
+    Parallel = FALSE, Progress = FALSE) {
+
+  if (is.null(taxon_id)) taxon_id <- seq_along(taxon_name)
 
   if (Parallel) {
     all_matches <- furrr::future_map(

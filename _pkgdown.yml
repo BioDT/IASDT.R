@@ -67,6 +67,7 @@ reference:
   - CheckQuartoVersion
   - AllObjSizes
   - KeepOnly
+  - SourceSilent
 
 - title: Spatial functions
   desc:

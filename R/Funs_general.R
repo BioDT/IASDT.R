@@ -1875,3 +1875,25 @@ KeepOnly <- function(Obj = NULL, Verbose = TRUE) {
 
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+#
+# |---------------------------------------------------| #
+# SourceSilent ----
+# |---------------------------------------------------| #
+
+#' Silently source R script
+#'
+#' Silently source R script
+#'
+#' @name SourceSilent
+#' @param File path of the file to be sourced
+#' @param ... additional arguments passed to `source` function
+#' @author Ahmed El-Gabbas
+#' @export
+
+SourceSilent <- function(File, ...) {
+  File %>%
+    source(...) %>%
+    utils::capture.output(file = nullfile()) %>%
+    suppressMessages() %>%
+    suppressWarnings()
+}

@@ -153,8 +153,7 @@ Match_to_GBIF <- function(taxon_name, taxon_id, include_genus = FALSE,
     dplyr::filter(.data$status != "NONE") %>% # exclude non-matched names
     dplyr::select(-"has_accepted") %>%
     dplyr::ungroup() %>%
-    dplyr::relocate(taxon_name, taxon_id)  %>%
-    dplyr::mutate_at(stringr::str_subset(., "Key$"), as.integer)
+    dplyr::relocate(taxon_name, taxon_id)
 
   return(taxon_list_final)
 }

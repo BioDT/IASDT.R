@@ -86,7 +86,7 @@ Match_to_GBIF <- function(taxon_name, taxon_id, include_genus = FALSE,
     alternative_matches %>%
       # use only vascular plants
       # filter only if phylum column exists
-      dplyr::filter({if ("phylum" %in% names(.)) phylum else NULL} == "Tracheophyta"),
+      dplyr::filter({if ("phylum" %in% names(.)) phylum else NULL} == "Tracheophyta") %>%
       dplyr::filter(.data$confidence >= 0) %>%
       dplyr::filter(!taxon_id %in% matched$taxon_id)
   )
@@ -153,7 +153,8 @@ Match_to_GBIF <- function(taxon_name, taxon_id, include_genus = FALSE,
     dplyr::filter(.data$status != "NONE") %>% # exclude non-matched names
     dplyr::select(-"has_accepted") %>%
     dplyr::ungroup() %>%
-    dplyr::relocate(taxon_name, taxon_id)
+    dplyr::relocate(taxon_name, taxon_id)  %>%
+    dplyr::mutate_at(stringr::str_subset(., "Key$"), as.integer)
 
   return(taxon_list_final)
 }

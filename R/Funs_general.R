@@ -686,7 +686,7 @@ SaveAs <- function(InObj, OutObj, OutPath) {
   if (inherits(InObj, "character")) {
     InObj <- get(InObj)
   }
-  OutObj <- as.character(rlang::ensyms(OutObj))
+  OutObj <- eval(OutObj)
   assign(OutObj, InObj)
   save(list = OutObj, file = OutPath)
 }

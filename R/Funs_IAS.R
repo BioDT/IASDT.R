@@ -185,6 +185,9 @@ Match_to_GBIF <- function(
 #'
 
 Get_EASIN_Data <- function(SpKey, NSearch = 500) {
+
+  withr::local_options(list(scipen = 999))
+
   Skip <- 0         # Skip = 0; start at the first presence grid
   ID <- 0           # iteration ID
   DT <- list()      # List object to save the data

@@ -4,12 +4,12 @@
 \alias{System}
 \title{Run bash script depending on the operating system}
 \usage{
-System(command, intern = TRUE, ...)
+System(command, RObj = TRUE, ...)
 }
 \arguments{
 \item{command}{bash command to implement}
 
-\item{intern}{whether to make the output of the command an R object}
+\item{RObj}{whether to make the output of the command an R object}
 
 \item{...}{additional arguments to \code{shell} pr \code{system} functions}
 }
@@ -23,7 +23,7 @@ System("pwd")
 # first 5 files on the working directory
 (A <- System("ls | head -n 5"))
 
-(A <- System("ls | head -n 5", intern = FALSE))
+(A <- System("ls | head -n 5", RObj = FALSE))
 }
 \author{
 Ahmed El-Gabbas

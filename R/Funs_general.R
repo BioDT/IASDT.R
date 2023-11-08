@@ -925,7 +925,7 @@ NDecimals <- function(x) {
 #'
 #' Run bash script depending on the operating system
 #' @param command bash command to implement
-#' @param intern whether to make the output of the command an R object
+#' @param RObj whether to make the output of the command an R object
 #' @param ... additional arguments to `shell` pr `system` functions
 #' @name System
 #' @author Ahmed El-Gabbas
@@ -937,18 +937,18 @@ NDecimals <- function(x) {
 #' # first 5 files on the working directory
 #' (A <- System("ls | head -n 5"))
 #'
-#' (A <- System("ls | head -n 5", intern = FALSE))
+#' (A <- System("ls | head -n 5", RObj = FALSE))
 #' @export
 
-System <- function(command, intern = TRUE, ...) {
+System <- function(command, RObj = TRUE, ...) {
   # Use shell() in windows OS; system() for linux OS
   # The running operating system (make also available in the global environment outside of the function)
 
-  if (CurrOS() == "Windows") {
-    Out <- shell(cmd = command, intern = intern, ...)
+  if (IASDT.R::CurrOS() == "Windows") {
+    Out <- shell(cmd = command, intern = RObj, ...)
   }
-  if (CurrOS() == "Linux") {
-    Out <- system(command = command, intern = intern, ...)
+  if (IASDT.R::CurrOS() == "Linux") {
+    Out <- system(command = command, intern = RObj, ...)
   }
   return(Out)
 }

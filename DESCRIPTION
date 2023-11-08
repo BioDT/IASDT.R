@@ -1,7 +1,7 @@
 Type: Package
 Package: IASDT.R
 Title: Helper R functions for IAS-DT project
-Version: 0.0.2
+Version: 0.0.3
 Authors@R: 
     person("Ahmed", "El-Gabbas", , "ahmed.el-gabbas@ufz.de", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-2225-088X"))
@@ -13,7 +13,7 @@ URL: https://biodt.eu, https://www.ufz.de/index.php?en=36737
 BugReports: https://git.ufz.de/biodt/IASDT.R
 Depends: 
     magrittr,
-    R (>= 4.3.0)
+    R (>= 4.2.2)
 Imports: 
     rlang
 Suggests: 

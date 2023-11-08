@@ -945,11 +945,12 @@ System <- function(command, intern = TRUE, ...) {
   # The running operating system (make also available in the global environment outside of the function)
 
   if (CurrOS() == "Windows") {
-    shell(cmd = command, intern = intern, ...)
+    Out <- shell(cmd = command, intern = intern, ...)
   }
   if (CurrOS() == "Linux") {
-    system(command = command, intern = intern, ...)
+    Out <- system(command = command, intern = intern, ...)
   }
+  return(Out)
 }
 
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

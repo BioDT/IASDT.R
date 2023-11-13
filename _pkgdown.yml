@@ -68,6 +68,7 @@ reference:
   - AllObjSizes
   - KeepOnly
   - SourceSilent
+  - NUnique
 
 - title: Spatial functions
   desc:
@@ -81,6 +82,7 @@ reference:
   - Text2Coords
   - ClipRasterByPolygon
   - CheckStackInMemory
+  - sf_add_coords
 
 - title: IAS helper functions
   desc:

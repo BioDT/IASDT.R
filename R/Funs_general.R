@@ -1925,6 +1925,6 @@ NUnique <- function(Data) {
     dplyr::summarise(
       dplyr::across(tidyselect::everything(), dplyr::n_distinct)) %>%
     tidyr::pivot_longer(tidyselect::everything()) %>%
-    setNames(c("Variable", "NUnique")) %>%
+    stats::setNames(c("Variable", "NUnique")) %>%
     dplyr::arrange(NUnique)
 }

@@ -410,7 +410,7 @@ sf_add_coords <- function(Sf_Obj, NameX = "Long", NameY = "Lat", Overwrite = FAL
   Coords <- Sf_Obj %>%
     sf::st_coordinates() %>%
     tibble::as_tibble() %>%
-    setNames(c(NameX, NameY))
+    stats::setNames(c(NameX, NameY))
 
   if (any(NameX %in% ColNames || NameY %in% ColNames)) {
     if (Overwrite) {
@@ -419,10 +419,10 @@ sf_add_coords <- function(Sf_Obj, NameX = "Long", NameY = "Lat", Overwrite = FAL
     } else {
       warning('Provided column names for longitude and Latitude already exist in the data; "_NEW" is used as suffix')
       Coords <- Coords %>%
-        setNames(c(paste0(NameX, "_NEW"), paste0(NameY, "_NEW")))
+        stats::setNames(c(paste0(NameX, "_NEW"), paste0(NameY, "_NEW")))
     }
   } else {
-    Coords <- setNames(Coords, c(NameX, NameY))
+    Coords <- stats::setNames(Coords, c(NameX, NameY))
   }
   return(dplyr::bind_cols(Sf_Obj, Coords))
 }

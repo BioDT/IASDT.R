@@ -27,7 +27,7 @@ rgbif::name_backbone(name = "Helianthus annuus", kingdom = "plants") \%>\%
 # ------------------------
 
 c("Helianthus annuus", "Tagetes patula L.") \%>\%
-   tibble(Taxa = .) \%>\%
+   tibble::tibble(Taxa = .) \%>\%
    dplyr::mutate(
       BB = purrr::map(Taxa, rgbif::name_backbone),
       status = purrr::map_chr(BB, Extract_BB, status),

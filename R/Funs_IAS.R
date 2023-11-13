@@ -77,7 +77,7 @@ Match_to_GBIF <- function(
     ) %>%
     data.table::rbindlist(fill = TRUE) %>%
     dplyr::distinct() %>%
-    dplyr::filter(.data$phylum == "Tracheophyta")
+    dplyr::filter({if ("phylum" %in% names(.)) phylum else NULL} == "Tracheophyta")
 
   matched <- best_matches %>%
     dplyr::filter(!(.data$matchType %in% c("NONE", "HIGHERRANK")))
@@ -324,7 +324,7 @@ GetAcceptedName <- function(ID) {
 #' # ------------------------
 #'
 #' c("Helianthus annuus", "Tagetes patula L.") %>%
-#'    tibble(Taxa = .) %>%
+#'    tibble::tibble(Taxa = .) %>%
 #'    dplyr::mutate(
 #'       BB = purrr::map(Taxa, rgbif::name_backbone),
 #'       status = purrr::map_chr(BB, Extract_BB, status),

@@ -13,7 +13,7 @@ URL: https://biodt.eu, https://www.ufz.de/index.php?en=36737
 BugReports: https://git.ufz.de/biodt/IASDT.R
 Depends: 
     magrittr,
-    R (>= 4.2.2)
+    R (>= 4.0.4)
 Imports: 
     rlang
 Suggests: 

@@ -886,7 +886,7 @@ LoadPackages <- function(..., Verbose = FALSE) {
 
   # load packages
   PG %>%
-    purrr::walk(library, character.only = TRUE) %>%
+    purrr::walk(IASDT.R::ReloadPackage) %>%
     suppressMessages() %>%
     suppressWarnings()
 
@@ -900,6 +900,7 @@ LoadPackages <- function(..., Verbose = FALSE) {
       }) %>%
       stringr::str_c(collapse = "\n") %>%
       cat()
+    cat("\n")
   }
   return(invisible(NULL))
 }

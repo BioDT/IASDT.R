@@ -844,6 +844,7 @@ cc <- function(...) {
 #'
 #' Load package silently (+ install missing packages)
 #' @param ... packages to load / install
+#' @param List vector for the name of packages to be loaded
 #' @param Verbose print a message of the package name and version
 #' @name LoadPackages
 #' @author Ahmed El-Gabbas
@@ -854,20 +855,13 @@ cc <- function(...) {
 #'
 #' LoadPackages(terra, Verbose = TRUE)
 
-LoadPackages <- function(..., Verbose = FALSE) {
-
-  # list of objects in the parent environment
-  VarsGlobal <- ls(envir = parent.env(environment()))
-
+LoadPackages <- function(..., List = NULL, Verbose = FALSE) {
   # Packages to load
   PG <- rlang::ensyms(...) %>%
     as.character() %>%
-    sort()
-
-  if (any(PG %in% VarsGlobal)) {
-    PG <- get(PG, envir = parent.env(environment()))
-  }
-  PG <- setdiff(PG, as.character(.packages()))
+    c(List) %>%
+    sort() %>%
+    setdiff(as.character(.packages()))
 
   # packages to install
   InstPack <- installed.packages() %>%
@@ -916,6 +910,13 @@ LoadPackages <- function(..., Verbose = FALSE) {
   }
   return(invisible(NULL))
 }
+#
+# require(dplyr)
+# IASDT.R::cc(
+#   IASDT.R, magrittr, crayon, data.table, dplyr, furrr, future.apply, glue,
+#   parallel, pbapply, purrr, raster, readr, readxl, rgbif, rlang, lubridate,
+#   rvest, sf, snow, stringr, terra, tidyr, vroom, writexl, xml2) %>%
+#   LoadPackages(List = ., Verbose = T)
 
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

@@ -4,10 +4,12 @@
 \alias{LoadPackages}
 \title{Load package silently (+ install missing packages)}
 \usage{
-LoadPackages(..., Verbose = FALSE)
+LoadPackages(..., List = NULL, Verbose = FALSE)
 }
 \arguments{
 \item{...}{packages to load / install}
+
+\item{List}{vector for the name of packages to be loaded}
 
 \item{Verbose}{print a message of the package name and version}
 }

@@ -855,17 +855,26 @@ cc <- function(...) {
 #' LoadPackages(terra, Verbose = TRUE)
 
 LoadPackages <- function(..., Verbose = FALSE) {
+
+  # list of objects in the parent environment
+  VarsGlobal <- ls(envir = parent.env(environment()))
+
   # Packages to load
   PG <- rlang::ensyms(...) %>%
     as.character() %>%
     sort()
 
+  if (any(PG %in% VarsGlobal)) {
+    PG <- get(PG, envir = parent.env(environment()))
+  }
+  PG <- setdiff(PG, as.character(.packages()))
+
   # packages to install
   InstPack <- installed.packages() %>%
-    tibble::as_tibble() %>%
-    dplyr::pull(Package) %>%
+    as.data.frame() %>%
+    "["("Package") %>%
+    unlist() %>%
     setdiff(x = PG)
-
   if (length(InstPack) > 0) {
     cat("The following packages will be installed\n")
     InstPack %>%
@@ -886,15 +895,18 @@ LoadPackages <- function(..., Verbose = FALSE) {
 
   # load packages
   PG %>%
-    purrr::walk(IASDT.R::ReloadPackage) %>%
-    suppressMessages() %>%
-    suppressWarnings()
+    sapply(library, character.only = TRUE, quietly = TRUE) %>%
+    invisible() %>%
+    suppressWarnings() %>%
+    suppressMessages()
 
-  if (Verbose) {
+  if (Verbose & length(PG) > 0) {
     cat("\nThe following packages were loaded:\n")
     PG %>%
       purrr::map_chr(~{
-        utils::packageVersion(.x) %>%
+        .x %>%
+          utils::packageDescription() %>%
+          "$"("Version") %>%
           as.character() %>%
           paste0("  >>>>>  ", .x, ": ", .)
       }) %>%

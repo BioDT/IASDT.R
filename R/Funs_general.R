@@ -99,7 +99,6 @@ AssignIfNotExist <- function(Variable, Value, Env = globalenv()) {
 #' @return NULL
 #' @export
 #' @examples
-#' LoadPackages(tibble)
 #' File <- system.file("testdata", "culcita_dat.RData", package = "lme4")
 #'
 #' # ---------------------------------------------------------
@@ -109,7 +108,7 @@ AssignIfNotExist <- function(Variable, Value, Env = globalenv()) {
 #'
 #' ls()
 #'
-#' tibble(culcita_dat)
+#' tibble::tibble(culcita_dat)
 #'
 #' rm(culcita_dat)
 #'
@@ -120,7 +119,7 @@ AssignIfNotExist <- function(Variable, Value, Env = globalenv()) {
 #'
 #' ls()
 #'
-#' print(tibble(NewObj))
+#' print(tibble::tibble(NewObj))
 
 LoadAs <- function(File = NA) {
   InFile0 <- load(File)
@@ -347,8 +346,7 @@ ScrapLinks <- function(url) {
 #' @return NULL
 #' @examples
 #' # create new folder (random name) in the temporary folder
-#' LoadPackages(stringi)
-#' Path2Create <- file.path(tempdir(), stri_rand_strings(1, 5))
+#' Path2Create <- file.path(tempdir(), stringi::stri_rand_strings(1, 5))
 #' file.exists(Path2Create)
 #'
 #' DirCreate(Path2Create)
@@ -480,15 +478,13 @@ GetMode <- function(v) {
 #' @export
 #' @examples
 #' # split iris data by species name
-#' LoadPackages(tibble)
-#' LoadPackages(stringi)
 #' iris2 <- iris %>%
-#'   tibble() %>%
+#'   tibble::tibble() %>%
 #'   split(~Species)
 #'
 #' str(iris2, 1)
 #'
-#' (TMP_Folder <- file.path(tempdir(), stri_rand_strings(1, 5)))
+#' (TMP_Folder <- file.path(tempdir(), stringi::stri_rand_strings(1, 5)))
 #' list.files(TMP_Folder)
 #'
 #' List2RData(iris2, Dir = TMP_Folder)
@@ -668,9 +664,7 @@ SplitDF2Chunks <- function(
 #' @return NULL
 #' @export
 #' @examples
-#' LoadPackages(stringi)
-#' LoadPackages(tibble)
-#' TMP_Folder <- file.path(tempdir(), stri_rand_strings(1, 5))
+#' TMP_Folder <- file.path(tempdir(), stringi::stri_rand_strings(1, 5))
 #' DirCreate(TMP_Folder)
 #'
 #' # save iris data in `iris2.RData` with `iris2` object name
@@ -680,7 +674,7 @@ SplitDF2Chunks <- function(
 #'
 #' (load(file.path(TMP_Folder, "iris2.RData")))
 #'
-#' tibble(iris2)
+#' tibble::tibble(iris2)
 
 SaveAs <- function(InObj, OutObj, OutPath) {
   if (inherits(InObj, "character")) {
@@ -709,8 +703,7 @@ SaveAs <- function(InObj, OutObj, OutPath) {
 #' @return NULL
 #' @export
 #' @examples
-#' LoadPackages(stringi)
-#' TMP_Folder <- file.path(tempdir(), stri_rand_strings(1, 5))
+#' TMP_Folder <- file.path(tempdir(), stringi::stri_rand_strings(1, 5))
 #' DirCreate(TMP_Folder)
 #'
 #' # ----------------------------------------------
@@ -847,10 +840,10 @@ cc <- function(...) {
 # LoadPackages ----
 # |---------------------------------------------------| #
 
-#' Load package silently and print version
+#' Load package silently (+ install missing packages)
 #'
-#' Load package silently and print version
-#' @param Package package name
+#' Load package silently (+ install missing packages)
+#' @param ... packages to load / install
 #' @param Verbose print a message of the package name and version
 #' @name LoadPackages
 #' @author Ahmed El-Gabbas
@@ -861,13 +854,53 @@ cc <- function(...) {
 #'
 #' LoadPackages(terra, Verbose = TRUE)
 
-LoadPackages <- function(Package = NULL, Verbose = FALSE) {
-  PG <- rlang::quo_name(rlang::enquo(Package))
-  suppressWarnings(suppressMessages(library(PG, character.only = TRUE)))
-  Ver <- eval(parse(text = stringr::str_glue('packageVersion("{PG}")')))
+LoadPackages <- function(..., Verbose = FALSE) {
+  # Packages to load
+  PG <- rlang::ensyms(...) %>%
+    as.character() %>%
+    sort()
 
-  if (Verbose) cat(stringr::str_glue(">>> {PG} - v {Ver}\n\n"))
+  # packages to install
+  InstPack <- installed.packages() %>%
+    tibble::as_tibble() %>%
+    dplyr::pull(Package) %>%
+    setdiff(x = PG)
 
+  if (length(InstPack) > 0) {
+    cat("The following packages will be installed\n")
+    InstPack %>%
+      stringr::str_c("  >>>>>  ", .) %>%
+      stringr::str_c("", collapse = "\n") %>%
+      cat()
+
+    InstPack %>%
+      purrr::map(
+        install.packages, repos = "http://cran.us.r-project.org",
+        dependencies = TRUE, quiet = TRUE) %>%
+      utils::capture.output(file = nullfile()) %>%
+      suppressMessages() %>%
+      suppressWarnings()
+
+    cat("\n")
+  }
+
+  # load packages
+  PG %>%
+    purrr::walk(library, character.only = TRUE) %>%
+    suppressMessages() %>%
+    suppressWarnings()
+
+  if (Verbose) {
+    cat("\nThe following packages were loaded:\n")
+    PG %>%
+      purrr::map_chr(~{
+        utils::packageVersion(.x) %>%
+          as.character() %>%
+          paste0("  >>>>>  ", .x, ": ", .)
+      }) %>%
+      stringr::str_c(collapse = "\n") %>%
+      cat()
+  }
   return(invisible(NULL))
 }
 
@@ -1163,7 +1196,6 @@ ht <- function(DF, NRows = 5) {
 #' @param ... list of column names to add
 #' @export
 #' @examples
-#' LoadPackages(dplyr)
 #' mtcars %>%
 #'  dplyr::select(1:3) %>%
 #'  AddMissingCols(A, B, C, DT = ., FillVal = NA_character_) %>%
@@ -1461,10 +1493,6 @@ ScriptLocation <-  function() {
 #'
 #' @export
 #' @examples
-#' LoadPackages(dplyr)
-#' LoadPackages(raster)
-#' # ---------------------------------------------
-#'
 #' # Vector
 #'
 #' Range2NewVal(x =  1:10, Between = c(5, 8), NewVal = NA)
@@ -1475,17 +1503,16 @@ ScriptLocation <-  function() {
 #'
 #' # tibble
 #'
-#' iris %>% as_tibble() %>%
-#'  slice_head(n = 50) %>%
+#' iris %>%
+#'  tibble::as_tibble() %>%
+#'  dplyr::slice_head(n = 50) %>%
 #'  dplyr::select(-Sepal.Length, -Petal.Length, -Petal.Width) %>%
-#'  mutate(
+#'  dplyr::mutate(
 #'    Sepal.Width.New = Range2NewVal(
-#'        x = Sepal.Width, Between = c(3, 3.5),
-#'        NewVal = NA, InvertSelection = FALSE),
+#'        x = Sepal.Width, Between = c(3, 3.5), NewVal = NA, InvertSelection = FALSE),
 #'    Sepal.Width.Rev = Range2NewVal(
-#'        x = Sepal.Width, Between = c(3, 3.5),
-#'        NewVal = NA, InvertSelection = TRUE)) %>%
-#'  arrange(-Sepal.Width) %>%
+#'        x = Sepal.Width, Between = c(3, 3.5), NewVal = NA, InvertSelection = TRUE)) %>%
+#'  dplyr::arrange(-Sepal.Width) %>%
 #'  print(n = 50)
 #'
 #' # ---------------------------------------------
@@ -1495,12 +1522,12 @@ ScriptLocation <-  function() {
 #' LoadPackages(raster)
 #'
 #' RRR <- system.file("external/test.grd", package = "raster") %>%
-#'     raster()
+#'     raster::raster()
 #'
 #' RRR2 <- Range2NewVal(x = RRR, LessThan = 500, NewVal = NA)
 #' RRR3 <- Range2NewVal(x = RRR, MoreThan = 500, NewVal = NA)
 #' par(mar = c(0.5, 0.5, 3, 3))
-#' plot(stack(RRR, RRR2, RRR3), nr = 1, main = c("Original", "<500 to NA", ">500 to NA"))
+#' plot(raster::stack(RRR, RRR2, RRR3), nr = 1, main = c("Original", "<500 to NA", ">500 to NA"))
 #'
 #' RRR2 <- Range2NewVal(x = RRR, Between = c(1000, 1800), NewVal = 1800, InvertSelection = FALSE)
 #' RRR3 <- Range2NewVal(x = RRR, Between = c(1000, 1800), NewVal = 1800, InvertSelection = TRUE)

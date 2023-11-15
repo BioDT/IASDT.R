@@ -17,7 +17,6 @@ AddMissingCols(..., DT, FillVal = NA_character_)
 Add missing columns to data frame
 }
 \examples{
-LoadPackages(dplyr)
 mtcars \%>\%
  dplyr::select(1:3) \%>\%
  AddMissingCols(A, B, C, DT = ., FillVal = NA_character_) \%>\%

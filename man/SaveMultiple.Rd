@@ -17,8 +17,7 @@ SaveMultiple(Vars = NULL, OutFolder = getwd(), Overwrite = FALSE)
 Save multiple objects to their respective \code{.RData} files
 }
 \examples{
-LoadPackages(stringi)
-TMP_Folder <- file.path(tempdir(), stri_rand_strings(1, 5))
+TMP_Folder <- file.path(tempdir(), stringi::stri_rand_strings(1, 5))
 DirCreate(TMP_Folder)
 
 # ----------------------------------------------

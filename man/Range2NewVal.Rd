@@ -30,10 +30,6 @@ Range2NewVal(
 Change values of \code{vector}/\code{data.frame}/\code{raster} within/outside a certain range to another value
 }
 \examples{
-LoadPackages(dplyr)
-LoadPackages(raster)
-# ---------------------------------------------
-
 # Vector
 
 Range2NewVal(x =  1:10, Between = c(5, 8), NewVal = NA)
@@ -44,17 +40,16 @@ Range2NewVal(x =  1:10, Between = c(5, 8), NewVal = NA, InvertSelection = TRUE)
 
 # tibble
 
-iris \%>\% as_tibble() \%>\%
- slice_head(n = 50) \%>\%
+iris \%>\%
+ tibble::as_tibble() \%>\%
+ dplyr::slice_head(n = 50) \%>\%
  dplyr::select(-Sepal.Length, -Petal.Length, -Petal.Width) \%>\%
- mutate(
+ dplyr::mutate(
    Sepal.Width.New = Range2NewVal(
-       x = Sepal.Width, Between = c(3, 3.5),
-       NewVal = NA, InvertSelection = FALSE),
+       x = Sepal.Width, Between = c(3, 3.5), NewVal = NA, InvertSelection = FALSE),
    Sepal.Width.Rev = Range2NewVal(
-       x = Sepal.Width, Between = c(3, 3.5),
-       NewVal = NA, InvertSelection = TRUE)) \%>\%
- arrange(-Sepal.Width) \%>\%
+       x = Sepal.Width, Between = c(3, 3.5), NewVal = NA, InvertSelection = TRUE)) \%>\%
+ dplyr::arrange(-Sepal.Width) \%>\%
  print(n = 50)
 
 # ---------------------------------------------
@@ -64,12 +59,12 @@ iris \%>\% as_tibble() \%>\%
 LoadPackages(raster)
 
 RRR <- system.file("external/test.grd", package = "raster") \%>\%
-    raster()
+    raster::raster()
 
 RRR2 <- Range2NewVal(x = RRR, LessThan = 500, NewVal = NA)
 RRR3 <- Range2NewVal(x = RRR, MoreThan = 500, NewVal = NA)
 par(mar = c(0.5, 0.5, 3, 3))
-plot(stack(RRR, RRR2, RRR3), nr = 1, main = c("Original", "<500 to NA", ">500 to NA"))
+plot(raster::stack(RRR, RRR2, RRR3), nr = 1, main = c("Original", "<500 to NA", ">500 to NA"))
 
 RRR2 <- Range2NewVal(x = RRR, Between = c(1000, 1800), NewVal = 1800, InvertSelection = FALSE)
 RRR3 <- Range2NewVal(x = RRR, Between = c(1000, 1800), NewVal = 1800, InvertSelection = TRUE)

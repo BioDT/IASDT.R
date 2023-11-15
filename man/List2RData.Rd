@@ -20,15 +20,13 @@ Split list items to separate RData files
 }
 \examples{
 # split iris data by species name
-LoadPackages(tibble)
-LoadPackages(stringi)
 iris2 <- iris \%>\%
-  tibble() \%>\%
+  tibble::tibble() \%>\%
   split(~Species)
 
 str(iris2, 1)
 
-(TMP_Folder <- file.path(tempdir(), stri_rand_strings(1, 5)))
+(TMP_Folder <- file.path(tempdir(), stringi::stri_rand_strings(1, 5)))
 list.files(TMP_Folder)
 
 List2RData(iris2, Dir = TMP_Folder)

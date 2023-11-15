@@ -2,17 +2,17 @@
 % Please edit documentation in R/Funs_general.R
 \name{LoadPackages}
 \alias{LoadPackages}
-\title{Load package silently and print version}
+\title{Load package silently (+ install missing packages)}
 \usage{
-LoadPackages(Package = NULL, Verbose = FALSE)
+LoadPackages(..., Verbose = FALSE)
 }
 \arguments{
-\item{Package}{package name}
+\item{...}{packages to load / install}
 
 \item{Verbose}{print a message of the package name and version}
 }
 \description{
-Load package silently and print version
+Load package silently (+ install missing packages)
 }
 \examples{
 LoadPackages(raster)

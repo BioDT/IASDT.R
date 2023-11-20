@@ -863,14 +863,13 @@ LoadPackages <- function(..., List = NULL, Verbose = FALSE) {
     sort() %>%
     setdiff(as.character(.packages()))
 
-  print(PG)
-
   # packages to install
   InstPack <- utils::installed.packages() %>%
     as.data.frame() %>%
     "["("Package") %>%
     unlist() %>%
     setdiff(x = PG)
+
   if (length(InstPack) > 0) {
     cat("The following packages will be installed\n")
     InstPack %>%

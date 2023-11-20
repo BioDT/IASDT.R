@@ -18,9 +18,10 @@ Extract EASIN data using EASIN ID
 A function to extract EASIN data for a given EASIN_ID
 }
 \examples{
+\dontrun{
 c("R00006", "R18689", "R00008") \%>\%
   purrr::map(Get_EASIN_Data)
-
+}
 }
 \author{
 Ahmed El-Gabbas

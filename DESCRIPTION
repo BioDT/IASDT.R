@@ -23,8 +23,10 @@ Suggests:
     devtools,
     dplyr,
     furrr,
+    ggplot2,
     gtools,
     jsonlite,
+    kableExtra,
     lme4,
     lubridate,
     methods,
@@ -47,6 +49,7 @@ Suggests:
     tibble,
     tidyr,
     tidyselect,
+    tidyterra,
     tidyverse,
     withr,
     xml2

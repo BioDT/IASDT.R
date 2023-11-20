@@ -83,6 +83,9 @@ reference:
   - ClipRasterByPolygon
   - CheckStackInMemory
   - sf_add_coords
+  - GridCross
+  - GridDiagOff
+  - RastPA
 
 - title: IAS helper functions
   desc:

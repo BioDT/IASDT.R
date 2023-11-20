@@ -82,9 +82,6 @@ Match_to_GBIF <- function(
   matched <- best_matches %>%
     dplyr::filter(!(.data$matchType %in% c("NONE", "HIGHERRANK")))
 
-  # nonmatched <- best_matches %>%
-  #   dplyr::filter(.data$matchType %in% c("NONE", "HIGHERRANK"))
-
   matched_alternative <- try(
     alternative_matches %>%
       # use only vascular plants
@@ -180,9 +177,10 @@ Match_to_GBIF <- function(
 #' @details
 #' A function to extract EASIN data for a given EASIN_ID
 #' @examples
+#' \dontrun{
 #' c("R00006", "R18689", "R00008") %>%
 #'   purrr::map(Get_EASIN_Data)
-#'
+#'}
 
 Get_EASIN_Data <- function(SpKey, NSearch = 500) {
 

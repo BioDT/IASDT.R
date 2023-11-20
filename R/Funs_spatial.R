@@ -367,14 +367,6 @@ CheckStackInMemory <- function(Stack = NULL) {
   }
 }
 
-
-
-
-
-
-
-
-
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -425,4 +417,208 @@ sf_add_coords <- function(Sf_Obj, NameX = "Long", NameY = "Lat", Overwrite = FAL
     Coords <- stats::setNames(Coords, c(NameX, NameY))
   }
   return(dplyr::bind_cols(Sf_Obj, Coords))
+}
+
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+# |---------------------------------------------------| #
+# GridDiagOff ------
+# |---------------------------------------------------| #
+
+#' Create a `multilinestring` (diagonal and off-diagonal lines) sf object from each grid cell
+#'
+#' Create a `multilinestring` (diagonal and off-diagonal lines) sf object from each grid cell
+#'
+#' @name GridDiagOff
+#' @param DT input sf tibble
+#' @author Ahmed El-Gabbas
+#' @export
+#' @examples
+#' IASDT.R::LoadPackages(dplyr, sf, raster, ggplot2)
+#'
+#' Grid <- raster::raster(nrows = 10, ncols = 10, xmn = 0, xmx = 10,
+#'                        ymn = 0, ymx = 10, crs = 4326) %>%
+#'   setNames("Grid") %>%
+#'   raster::setValues(1) %>%
+#'   raster::rasterToPolygons() %>%
+#'   sf::st_as_sf()
+#'
+#' ggplot2::ggplot() +
+#'   ggplot2::geom_sf(Grid, mapping = ggplot2::aes(), color = "black",
+#'                    linewidth = 0.5, fill = "transparent") +
+#'   ggplot2::scale_x_continuous(expand = c(0, 0, 0, 0), limits = c(0, 10)) +
+#'   ggplot2::scale_y_continuous(expand = c(0, 0, 0, 0), limits = c(0, 10)) +
+#'   ggplot2::theme_minimal()
+#'
+#' Grid_X <- GridDiagOff(Grid)
+#'
+#' ggplot2::ggplot() +
+#'   ggplot2::geom_sf(Grid, mapping = ggplot2::aes(), color = "black",
+#'                    linewidth = 0.5, fill = "transparent") +
+#'   ggplot2::geom_sf(Grid_X, mapping = ggplot2::aes(), color = "red",
+#'                    linewidth = 0.5, inherit.aes = TRUE) +
+#'   ggplot2::scale_x_continuous(expand = c(0, 0, 0, 0), limits = c(0, 10)) +
+#'   ggplot2::scale_y_continuous(expand = c(0, 0, 0, 0), limits = c(0, 10)) +
+#'   ggplot2::theme_minimal()
+
+GridDiagOff <- function(DT) {
+
+  InputCRS <- sf::st_crs(DT)
+
+  DT %>%
+    dplyr::pull("geometry") %>%
+    purrr::map(
+      .f = ~{
+        SS2 <- .x %>%
+          sf::st_coordinates() %>%
+          tibble::as_tibble() %>%
+          dplyr::select(X, Y)
+
+        OffDiag <- dplyr::bind_rows(
+          dplyr::filter(SS2, X == min(X), Y == max(Y)),
+          dplyr::filter(SS2, X == max(X), Y == min(Y))) %>%
+          as.matrix() %>%
+          sf::st_linestring()
+
+        Diag <- dplyr::bind_rows(
+          dplyr::filter(SS2, X == min(X), Y == min(Y)),
+          dplyr::filter(SS2, X == max(X), Y == max(Y))) %>%
+          as.matrix() %>%
+          sf::st_linestring()
+
+        list(OffDiag, Diag) %>%
+          sf::st_multilinestring() %>%
+          sf::st_geometry()  %>%
+          sf::st_set_crs(InputCRS) %>%
+          sf::st_sfc() %>%
+          return()
+
+      }) %>%
+    tibble::tibble(geometry = .) %>%
+    tidyr::unnest("geometry") %>%
+    sf::st_as_sf()
+}
+
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+# |---------------------------------------------------| #
+# GridCross ------
+# |---------------------------------------------------| #
+
+#' Create a `multilinestring` (cross in the middle of the grid) sf object from each grid cell
+#'
+#' Create a `multilinestring` (cross in the middle of the grid) sf object from each grid cell
+#'
+#' @name GridCross
+#' @param DT input sf tibble
+#' @author Ahmed El-Gabbas
+#' @export
+#' @examples
+#' IASDT.R::LoadPackages(dplyr, sf, raster, ggplot2)
+#'
+#' Grid <- raster::raster(nrows = 10, ncols = 10, xmn = 0, xmx = 10, ymn = 0, ymx = 10, crs = 4326) %>%
+#'   setNames("Grid") %>%
+#'   raster::setValues(1) %>%
+#'   raster::rasterToPolygons() %>%
+#'   sf::st_as_sf()
+#'
+#' ggplot2::ggplot() +
+#'   ggplot2::geom_sf(Grid, mapping = ggplot2::aes(), color = "black",
+#'                    linewidth = 0.5, fill = "transparent") +
+#'   ggplot2::scale_x_continuous(expand = c(0, 0, 0, 0), limits = c(0, 10)) +
+#'   ggplot2::scale_y_continuous(expand = c(0, 0, 0, 0), limits = c(0, 10)) +
+#'   ggplot2::theme_minimal()
+#'
+#' Grid_X <- GridCross(Grid)
+#'
+#' ggplot2::ggplot() +
+#'   ggplot2::geom_sf(Grid, mapping = ggplot2::aes(), color = "black",
+#'                    linewidth = 0.5, fill = "transparent") +
+#'   ggplot2::geom_sf(Grid_X, mapping = ggplot2::aes(), color = "red",
+#'                    linewidth = 0.5, inherit.aes = TRUE) +
+#'   ggplot2::scale_x_continuous(expand = c(0, 0, 0, 0), limits = c(0, 10)) +
+#'   ggplot2::scale_y_continuous(expand = c(0, 0, 0, 0), limits = c(0, 10)) +
+#'   ggplot2::theme_minimal()
+
+GridCross <- function(DT) {
+
+  InputCRS <- sf::st_crs(DT)
+
+  DT %>%
+    dplyr::pull("geometry") %>%
+    purrr::map(
+      .f = ~{
+        SS2 <- .x %>%
+          sf::st_coordinates() %>%
+          tibble::as_tibble() %>%
+          dplyr::select(X, Y)
+
+        Horiz <- SS2 %>%
+          dplyr::reframe(X = X, Y = { min(Y) + (max(Y) - min(Y)) / 2 }) %>%
+          dplyr::distinct() %>%
+          as.matrix() %>%
+          sf::st_linestring()
+        Vert <- SS2 %>%
+          dplyr::reframe(X = { min(X) + (max(X) - min(X)) / 2 }, Y = Y) %>%
+          dplyr::distinct() %>%
+          as.matrix() %>%
+          sf::st_linestring()
+
+        list(Horiz, Vert) %>%
+          sf::st_multilinestring() %>%
+          sf::st_geometry()  %>%
+          sf::st_set_crs(InputCRS) %>%
+          sf::st_sfc() %>%
+          return()
+      }) %>%
+    tibble::tibble(geometry = .) %>%
+    tidyr::unnest("geometry") %>%
+    sf::st_as_sf()
+}
+
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+# |---------------------------------------------------| #
+# RastPA ------
+# |---------------------------------------------------| #
+
+#' convert raster map into binary (1/0)
+#'
+#' convert raster map into binary (1/0)
+#'
+#' @name RastPA
+#' @param x input raster map
+#' @param NA_to_0 logical (default: `TRUE`); should NA be replaced with 0
+#' @param Zero_to_NA logical (default: `FALSE`); should 0 be replaced with NA
+#' @author Ahmed El-Gabbas
+#' @export
+#' @examples
+#' IASDT.R::LoadPackages(dplyr, raster, ggplot2, tidyterra)
+#'
+#' r <- raster::raster(system.file("external/test.grd", package = "raster"))
+#'
+#' ggplot2::ggplot() +
+#'   tidyterra::geom_spatraster(data = terra::rast(r), maxcell = Inf) +
+#'   ggplot2::theme_minimal()
+#'
+#' R2 <- raster::stack(
+#'   RastPA(r),                            # NA replaced with 0
+#'   RastPA(r, NA_to_0 = FALSE),           # NA is kept as NA
+#'   RastPA(RastPA(r), Zero_to_NA = TRUE)) # 0 replaced with NA in the second map
+#'
+#' ggplot2::ggplot() +
+#'   tidyterra::geom_spatraster(data = terra::as.factor(terra::rast(R2)), maxcell = Inf) +
+#'   ggplot2::facet_wrap(~lyr) +
+#'   ggplot2::scale_fill_manual(values = c("grey30", "red"), na.value = "transparent") +
+#'   ggplot2::theme_minimal()
+
+RastPA <- function(x, NA_to_0 = TRUE, Zero_to_NA = FALSE) {
+  MaxVal <- raster::cellStats(x, max)
+  if (MaxVal > 0) x[x > 0] <- 1
+  if (NA_to_0) x <- raster::reclassify(x, cbind(NA, 0))
+  if (Zero_to_NA) x <- raster::reclassify(x, cbind(0, NA))
+  x
 }

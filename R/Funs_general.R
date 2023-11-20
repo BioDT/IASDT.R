@@ -665,10 +665,10 @@ SplitDF2Chunks <- function(
 #' @export
 #' @examples
 #' TMP_Folder <- file.path(tempdir(), stringi::stri_rand_strings(1, 5))
-#' DirCreate(TMP_Folder)
+#' DirCreate(TMP_Folder, Verbose = FALSE)
 #'
 #' # save iris data in `iris2.RData` with `iris2` object name
-#' SaveAs(iris, iris2, file.path(TMP_Folder, "iris2.RData"))
+#' SaveAs(iris, "iris2", file.path(TMP_Folder, "iris2.RData"))
 #'
 #' list.files(TMP_Folder, pattern = "^.+.RData")
 #'
@@ -863,8 +863,10 @@ LoadPackages <- function(..., List = NULL, Verbose = FALSE) {
     sort() %>%
     setdiff(as.character(.packages()))
 
+  print(PG)
+
   # packages to install
-  InstPack <- installed.packages() %>%
+  InstPack <- utils::installed.packages() %>%
     as.data.frame() %>%
     "["("Package") %>%
     unlist() %>%
@@ -878,7 +880,7 @@ LoadPackages <- function(..., List = NULL, Verbose = FALSE) {
 
     InstPack %>%
       purrr::map(
-        install.packages, repos = "http://cran.us.r-project.org",
+        utils::install.packages, repos = "http://cran.us.r-project.org",
         dependencies = TRUE, quiet = TRUE) %>%
       utils::capture.output(file = nullfile()) %>%
       suppressMessages() %>%
@@ -889,7 +891,7 @@ LoadPackages <- function(..., List = NULL, Verbose = FALSE) {
 
   # load packages
   PG %>%
-    sapply(library, character.only = TRUE, quietly = TRUE) %>%
+    sapply(library, character.only = TRUE, quietly = TRUE, verbose = FALSE) %>%
     invisible() %>%
     suppressWarnings() %>%
     suppressMessages()
@@ -910,13 +912,7 @@ LoadPackages <- function(..., List = NULL, Verbose = FALSE) {
   }
   return(invisible(NULL))
 }
-#
-# require(dplyr)
-# IASDT.R::cc(
-#   IASDT.R, magrittr, crayon, data.table, dplyr, furrr, future.apply, glue,
-#   parallel, pbapply, purrr, raster, readr, readxl, rgbif, rlang, lubridate,
-#   rvest, sf, snow, stringr, terra, tidyr, vroom, writexl, xml2) %>%
-#   LoadPackages(List = ., Verbose = T)
+
 
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

@@ -4,12 +4,12 @@
 \alias{Chelsa_Process}
 \title{Processing Chelsa data}
 \usage{
-Chelsa_Process(InputPath, OutPath, GridFile, Verbose = FALSE)
+Chelsa_Process(InputFile, OutFile, GridFile, Verbose = FALSE)
 }
 \arguments{
-\item{InputPath}{Input path (all \verb{*.tif} files in this path will be processed)}
+\item{InputFile}{Input tif file}
 
-\item{OutPath}{Output path. Processed objects will be saved to this path (with the same original file name)}
+\item{OutFile}{Output tif file}
 
 \item{GridFile}{Path for the \verb{*.RData} file containing the reference grid. This grid will be used as reference grid for projection and the resulted file will be masked to it}
 

@@ -337,3 +337,311 @@ Extract_BB <- function(x = ., var) {
     NA
   }
 }
+
+# ****************************************************
+# ****************************************************
+
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+# |---------------------------------------------------| #
+# Chelsa_Extract_Matching ----
+# |---------------------------------------------------| #
+
+#' Extract time / climate models & scenarios from Chelsa URL
+#'
+#' A function to extract which climate model and scenario each file represent
+#' @name Chelsa_Extract_Matching
+#' @param String URL string
+#' @param Time Time period to match
+#' @param Matches further string to match
+#' @author Ahmed El-Gabbas
+#' @export
+#' @details
+#' A function to extract which climate model and scenario each file represent
+
+Chelsa_Extract_Matching <- function(String, Time, Matches) {
+  # assign "Current" for files represent current climates
+  if (Time == "1981-2010") return("Current")
+
+  # Index of matched text
+  Which <- sapply(
+    Matches,
+    function(x) {
+      grepl(x, String, ignore.case = "True")
+    }) %>%
+    which()
+
+  if (length(Which) > 0) {
+    return(Matches[Which])
+  } else {
+    return(NA_character_)
+  }
+}
+
+# ****************************************************
+# ****************************************************
+
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+# |---------------------------------------------------| #
+# Chelsa_Prepare_List ----
+# |---------------------------------------------------| #
+
+#' Prepare list of potential variables
+#'
+#' Prepare list of potential variables
+#' @name Chelsa_Prepare_List
+#' @param Down Should the Chelsa files be downloaed
+#' @param DownParallel if `Down` was set as `TRUE`, should the download be on parallel
+#' @param DwnPath Path for download
+#' @author Ahmed El-Gabbas
+#' @export
+#' @details
+#' list of variables exist under current and future climates
+#' 46 variables available at 46 options (current and 45 future scenarios)
+
+Chelsa_Prepare_List <- function(Down = FALSE, DownParallel = TRUE, DwnPath = NULL) {
+
+  IASDT.R::CatTime("Preparing Chelsa climatology data")
+
+  BaseURL <- "https://os.zhdk.cloud.switch.ch/envicloud/chelsa/chelsa_V2/GLOBAL/"
+  ClimateModels <- c(
+    "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL")
+  ClimateScenarios <- c("ssp126", "ssp370", "ssp585")
+
+  # Variables to exclude
+  Exclude <- c(
+    "ai", "hurs", "clt", "sfcWind", "vpd", "rsds", "pet", "cmi", "swb",
+    "pr_", "tasmax_", "tasmin_", "tas_") %>%
+    stringr::str_c(collapse = "|")
+
+  # List of Chelsa Vars we are interested in (available in current/future)
+  Chelsa_Vars <- file.path(Path_Chelsa, "Chelsa_Vars.txt") %>%
+    read_delim(delim = "\t", show_col_types = FALSE) %>%
+    dplyr::select(-scale, -offset)
+
+  ChelsaClimData <- file.path(Path_Chelsa, "DwnLinks") %>%
+    # files containing download links for climatology data
+    list.files(
+      pattern = "DwnLinks_Climatologies_.+txt$", recursive = TRUE,
+      full.names = TRUE) %>%
+    dplyr::tibble(URL_File = .) %>%
+    dplyr::group_by(URL_File) %>%
+
+    # Add download links
+    dplyr::mutate(
+      URL = purrr::map(
+        .x = URL_File,
+        .f = ~{
+          .x %>%
+            readr::read_lines() %>%
+            trimws() # remove trailing spaces
+        }),
+      URL_File = basename(URL_File)) %>%
+    tidyr::unnest(cols = c(URL)) %>%
+    dplyr::ungroup() %>%
+
+    dplyr::mutate(
+      # The name of the downloaded file and folder
+      Folder = stringr::str_remove_all(string = URL, pattern = BaseURL),
+      File = basename(Folder),
+      Folder = dirname(Folder),
+
+      # Extract time period
+      TimePeriod = stringr::str_remove_all(
+        string = URL_File, pattern = "DwnLinks_Climatologies_|.txt"),
+
+      # File extension
+      Ext = tools::file_ext(URL),
+
+      # which climate model
+      ClimModel = purrr::map2_chr(
+        .x = Folder, .y = TimePeriod, .f = Chelsa_Extract_Matching,
+        Matches = ClimateModels),
+
+      # which climate scenario
+      ClimScenario = purrr::map2_chr(
+        .x = Folder, .y = TimePeriod, .f = Chelsa_Extract_Matching,
+        Matches = ClimateScenarios),
+
+      URL_File = NULL) %>%
+
+    # Extract variable name from the file name
+    dplyr::rowwise() %>%
+
+    dplyr::mutate(
+      Var = purrr::map_chr(
+        .x = File,
+        .f = stringr::str_remove_all,
+        pattern = glue("_r1i1p1f1_w5e5_|_norm|CHELSA_|V.2.1|_V\\.2\\.1|{TimePeriod}|.{Ext}|{ClimScenario}")),
+
+      Var = purrr::map2_chr(
+        .x = Var, .y = ClimModel,
+        .f = ~{
+          .x %>%
+            stringr::str_remove_all(
+              pattern = stringr::str_glue("{.y}|{tolower(.y)}"))
+        }),
+
+      Var = purrr::map2_chr(
+        .x = Var, .y = TimePeriod,
+        .f = ~{
+          .x %>%
+            stringr::str_remove_all(
+              pattern = stringr::str_glue('{.y}|{stringr::str_replace(.y, "-", "_")}'))
+        }),
+      Var = purrr::map_chr(
+        .x = Var, .f = stringr::str_remove_all, pattern = "__|___"),
+      Var = purrr::map_chr(
+        .x = Var, .f = stringr::str_remove_all, pattern = "^_|_$"),
+
+      DownPath = file.path(DwnPath, File),
+      DownCommand = stringr::str_glue('curl "{URL}" -o "{DownPath}" --silent'),
+
+      # Unique name for variable / time combination
+      OutName = paste0(
+        Var, "_", TimePeriod, "_", ClimModel, "_", ClimScenario),
+
+      OutName = stringr::str_replace(
+        string = OutName,
+        pattern = "1981-2010_Current_Current",
+        replacement = "1981-2010_Current")) %>%
+
+    dplyr::ungroup() %>%
+    dplyr::filter(
+      # Only tif files
+      Ext == "tif",
+
+      # Exclude previously determined list of variables
+      stringr::str_detect(string = Var, pattern = Exclude, negate = TRUE),
+
+      # Exclude duplicated files on the Chelsa server
+      Folder != "climatologies/2011-2040/UKESM1-0-LL/ssp126") %>%
+    dplyr::select(-Folder) %>%
+    dplyr::left_join(Chelsa_Vars, by = dplyr::join_by(Var))
+
+
+  # Download in parallel
+  if (Down && DownParallel) {
+    ChelsaClimData %>%
+      dplyr::pull(DownCommand) %>%
+      furrr::future_walk(
+        IASDT.R::System, RObj = FALSE,
+        .options = furrr::furrr_options(seed = TRUE), .progress = FALSE)
+  }
+
+  # Download sequentially
+  if (Down && !DownParallel) {
+    ChelsaClimData %>%
+      dplyr::pull(DownCommand) %>%
+      purrr::walk(IASDT.R::System, RObj = FALSE, .progress = FALSE)
+  }
+
+  # Save to disk
+  save(ChelsaClimData, file = file.path(Path_Chelsa, "ChelsaClimData.RData"))
+  readr::write_csv(ChelsaClimData, file = file.path(Path_Chelsa, "ChelsaClimData.csv"))
+}
+
+# ****************************************************
+# ****************************************************
+
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+# |---------------------------------------------------| #
+# Chelsa_Process ----
+# |---------------------------------------------------| #
+
+#' Processing Chelsa data
+#'
+#' Processing Chelsa data
+#' @name Chelsa_Process
+#' @param InputPath Input path (all `*.tif` files in this path will be processed)
+#' @param OutPath Output path. Processed objects will be saved to this path (with the same original file name)
+#' @param GridFile Path for the `*.RData` file containing the reference grid. This grid will be used as reference grid for projection and the resulted file will be masked to it
+#' @param Verbose should the name of the processed file be printed to the console
+#' @author Ahmed El-Gabbas
+#' @export
+
+Chelsa_Process <- function(InputPath, OutPath, GridFile, Verbose = FALSE) {
+  # reference grid layer
+  IASDT.R::CatTime("  >>> Loading reference gird")
+  GridR <- GridFile %>%
+    IASDT.R::LoadAs() %>%
+    terra::rast()
+
+  # List of input and output files
+  InOut <- InputPath %>%
+    list.files(pattern = ".tif$", full.names = TRUE) %>%
+    tibble::tibble(In = .) %>%
+    dplyr::mutate(
+      Out = purrr::map_chr(
+        .x = In, stringr::str_replace, pattern = InputPath, replacement = OutPath))
+
+  if (Verbose) IASDT.R::CatTime("  >>> Processing Chelsa files sequentially")
+
+  InOut %>%
+    dplyr::mutate(
+      Down = purrr::walk2(
+        .x = In, .y = Out,
+        .f = purrr::safely(~{
+
+          if (Verbose)  CatTime(glue::glue("     --> {basename(.x)}"))
+
+          IASDT.R::LoadPackages(dplyr, raster, terra)
+
+          Rstr <- .x %>%
+            # read tif file as terra rast object
+            terra::rast() %>%
+            # project to reference grid
+            terra::project(GridR, method = "average", threads = TRUE) %>%
+            # convert back to raster object
+            raster::raster() %>%
+            raster::mask(IASDT.R::LoadAs(GridFile))
+
+          # Ensure that the object is located in memory, not reading from temporary file
+          # This may not be necessary as we save the file as .tif file not .RData
+          if (raster::fromDisk(Rstr)) {
+            Rstr <- raster::readAll(Rstr)
+          }
+
+          invisible(gc())
+
+          # Write file to disk
+          terra::writeRaster(x = terra::rast(Rstr), filename = .y, overwrite = TRUE)
+        }), .progress = FALSE))
+
+  # Check if all files were processed successfully
+
+  OutFilesExist <- all(file.exists(InOut$Out))
+  OutFilesOkay <- InOut$Out %>%
+    purrr::map_lgl(CheckTiff) %>%
+    all()
+
+  if (all(OutFilesExist, OutFilesOkay)) {
+    IASDT.R::CatTime(stringr::str_glue("  >>>  All CHELSA files ({nrow(InOut)} files) were processed successfully"))
+  }
+
+  if (!OutFilesExist) {
+    MissingFiles <- InOut$Out %>%
+      purrr::discard(~file.exists(.x)) %>%
+      basename()
+    IASDT.R::CatTime(stringr::str_glue("  >>>  {length(MissingFiles)} files were not processed"))
+    cat(stringr::str_glue("     --> {MissingFiles}"), sep = "\n")
+  }
+
+  if (!OutFilesOkay) {
+    CorruptFiles <- InOut$Out %>%
+      purrr::map_lgl(CheckTiff) %>%
+      which() %>%
+      magrittr::not()
+    CorruptFiles <- InOut$Out[CorruptFiles] %>%
+      basename()
+    IASDT.R::CatTime(stringr::str_glue("  >>>  {length(CorruptFiles)} files are corrupted"))
+    cat(stringr::str_glue("     --> {CorruptFiles}"), sep = "\n")
+  }
+
+  return(invisible(NULL))
+}

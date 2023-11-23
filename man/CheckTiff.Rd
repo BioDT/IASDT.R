@@ -10,7 +10,7 @@ CheckTiff(x)
 \item{x}{tiff file path}
 }
 \value{
-logical: \code{TRUE} when the tiff file is corrupted; \code{FALSE} when not corrupted
+logical: \code{TRUE} when the tiff file is okay; \code{FALSE} when corrupted
 }
 \description{
 Check if tiff file corrupted

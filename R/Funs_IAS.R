@@ -396,13 +396,16 @@ Chelsa_Extract_Matching <- function(String, Time, Matches) {
 #' @param Down Should the Chelsa files be downloaed
 #' @param DownParallel if `Down` was set as `TRUE`, should the download be on parallel
 #' @param DwnPath Path for download
+#' @param Path_Chelsa Path for Chelsa files
 #' @author Ahmed El-Gabbas
 #' @export
 #' @details
-#' list of variables exist under current and future climates
+#' list of variables exist under current and future climates.
+#'
 #' 46 variables available at 46 options (current and 45 future scenarios)
 
-Chelsa_Prepare_List <- function(Down = FALSE, DownParallel = TRUE, DwnPath = NULL) {
+Chelsa_Prepare_List <- function(Down = FALSE, DownParallel = TRUE, DwnPath = NULL,
+                                Path_Chelsa = "Data/Chelsa") {
 
   IASDT.R::CatTime("Preparing Chelsa climatology data")
 

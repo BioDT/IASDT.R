@@ -4,7 +4,12 @@
 \alias{Chelsa_Prepare_List}
 \title{Prepare list of potential variables}
 \usage{
-Chelsa_Prepare_List(Down = FALSE, DownParallel = TRUE, DwnPath = NULL)
+Chelsa_Prepare_List(
+  Down = FALSE,
+  DownParallel = TRUE,
+  DwnPath = NULL,
+  Path_Chelsa = "Data/Chelsa"
+)
 }
 \arguments{
 \item{Down}{Should the Chelsa files be downloaed}
@@ -12,12 +17,15 @@ Chelsa_Prepare_List(Down = FALSE, DownParallel = TRUE, DwnPath = NULL)
 \item{DownParallel}{if \code{Down} was set as \code{TRUE}, should the download be on parallel}
 
 \item{DwnPath}{Path for download}
+
+\item{Path_Chelsa}{Path for Chelsa files}
 }
 \description{
 Prepare list of potential variables
 }
 \details{
-list of variables exist under current and future climates
+list of variables exist under current and future climates.
+
 46 variables available at 46 options (current and 45 future scenarios)
 }
 \author{

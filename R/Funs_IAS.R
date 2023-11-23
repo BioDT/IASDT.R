@@ -425,7 +425,7 @@ Chelsa_Prepare_List <- function(
   # List of Chelsa Vars we are interested in (available in current/future)
   Chelsa_Vars <- file.path(Path_Chelsa, "Chelsa_Vars.txt") %>%
     readr::read_delim(delim = "\t", show_col_types = FALSE) %>%
-    dplyr::select(-scale, -offset)
+    dplyr::select(-"scale", -"offset")
 
   ChelsaClimData <- file.path(Path_Chelsa, "DwnLinks") %>%
     # files containing download links for climatology data
@@ -525,7 +525,7 @@ Chelsa_Prepare_List <- function(
 
       # Exclude duplicated files on the Chelsa server
       .data$Folder != "climatologies/2011-2040/UKESM1-0-LL/ssp126") %>%
-    dplyr::select(-Folder) %>%
+    dplyr::select(-"Folder") %>%
     dplyr::left_join(Chelsa_Vars, by = dplyr::join_by("Var"))
 
 
@@ -577,7 +577,7 @@ Chelsa_Process <- function(InputFile, OutFile, GridFile, Verbose = FALSE) {
     IASDT.R::LoadAs() %>%
     terra::rast()
 
-  IASDT.R::LoadPackages(dplyr, raster, terra)
+  IASDT.R::LoadPackages(List = c("dplyr", "raster", "terra"))
 
   if (Verbose) cat(stringr::str_glue("{basename(InputFile)}"))
 

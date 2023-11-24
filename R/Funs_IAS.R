@@ -590,8 +590,6 @@ Chelsa_Process <- function(
     IASDT.R::LoadAs() %>%
     terra::rast()
 
-  if (Verbose) cat(stringr::str_glue("{basename(InputFile)}"))
-
   Rstr <- InputFile %>%
     # read tif file as terra rast object
     terra::rast() %>%
@@ -609,10 +607,24 @@ Chelsa_Process <- function(
   terra::writeRaster(x = terra::rast(Rstr), filename = OutFile, overwrite = TRUE)
 
   if (file.exists(OutFile) && IASDT.R::CheckTiff(OutFile)) {
-    if (Verbose) IASDT.R::CatTime(stringr::str_glue("  >>>> processed successfully"))
+    if (Verbose) {
+      "  <<>> {basename(InputFile)}: processed successfully" %>%
+        stringr::str_glue() %>%
+        IASDT.R::CatTime()
+    }
   } else {
-    if (!file.exists(OutFile)) IASDT.R::CatTime(stringr::str_glue("  >>>> file was not processed"))
-    if (!IASDT.R::CheckTiff(OutFile)) IASDT.R::CatTime(stringr::str_glue("  >>>> written file is corrupted"))
+    if (!file.exists(OutFile)) {
+      "  <<XXXX>> {basename(InputFile)}: not processed/saved" %>%
+        stringr::str_glue() %>%
+        IASDT.R::CatTime()
+    }
+
+    if (!IASDT.R::CheckTiff(OutFile)) {
+      "  <<XXXX>> {basename(InputFile)}: written file is corrupted and removed" %>%
+        stringr::str_glue() %>%
+        IASDT.R::CatTime()
+      invisible(file.remove(OutFile))
+    }
   }
 
   if (ReturnMap) {

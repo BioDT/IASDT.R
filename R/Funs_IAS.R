@@ -548,6 +548,8 @@ Chelsa_Prepare_List <- function(
   # Save to disk
   save(ChelsaClimData, file = file.path(Path_Chelsa, "ChelsaClimData.RData"))
   readr::write_csv(ChelsaClimData, file = file.path(Path_Chelsa, "ChelsaClimData.csv"))
+
+  return(ChelsaClimData)
 }
 
 # ****************************************************

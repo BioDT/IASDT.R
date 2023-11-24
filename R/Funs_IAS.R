@@ -406,10 +406,8 @@ Chelsa_Extract_Matching <- function(String, Time, Matches) {
 #' 46 variables available at 46 options (current and 45 future scenarios)
 
 Chelsa_Prepare_List <- function(
-    Down = FALSE, DownParallel = TRUE, DwnPath = NULL,
+    Down = FALSE, DownParallel = TRUE, DwnPath = NULL, OutPath = NULL,
     Path_Chelsa = "Data/Chelsa") {
-
-  IASDT.R::CatTime("Preparing Chelsa climatology data")
 
   BaseURL <- "https://os.zhdk.cloud.switch.ch/envicloud/chelsa/chelsa_V2/GLOBAL/"
   ClimateModels <- c(
@@ -502,8 +500,13 @@ Chelsa_Prepare_List <- function(
       Var = purrr::map_chr(
         .x = .data$Var, .f = stringr::str_remove_all, pattern = "^_|_$"),
 
-      DownPath = file.path(DwnPath, .data$File),
-      DownCommand = stringr::str_glue('curl "{URL}" -o "{DownPath}" --silent'),
+      DownFile = file.path(DwnPath, .data$File),
+
+      OutFile = purrr::map_chr(
+        .x = .data$DownFile, stringr::str_replace,
+        pattern = DwnPath, replacement = OutPath),
+
+      DownCommand = stringr::str_glue('curl "{URL}" -o "{DownFile}" --silent'),
 
       # Unique name for variable / time combination
       OutName = paste0(
@@ -569,12 +572,15 @@ Chelsa_Prepare_List <- function(
 #' @param InputFile Input tif file
 #' @param OutFile Output tif file
 #' @param GridFile Path for the `*.RData` file containing the reference grid. This grid will be used as reference grid for projection and the resulted file will be masked to it
+#' @param ReturnMap logical; should the processed map be returned by the end of the function?
 #' @param Verbose should the name of the processed file be printed to the console
 #' @returns A map projected to `EPSG:3035` and cropped to the study area (masked by the `GridFile`)
 #' @author Ahmed El-Gabbas
 #' @export
 
-Chelsa_Process <- function(InputFile, OutFile, GridFile, Verbose = FALSE) {
+Chelsa_Process <- function(
+    InputFile = NULL, OutFile = NULL, GridFile = NULL,
+    ReturnMap = FALSE, Verbose = FALSE) {
 
   suppressWarnings(suppressMessages(library(dplyr)))
   suppressWarnings(suppressMessages(library(raster)))
@@ -609,5 +615,9 @@ Chelsa_Process <- function(InputFile, OutFile, GridFile, Verbose = FALSE) {
     if (!IASDT.R::CheckTiff(OutFile)) IASDT.R::CatTime(stringr::str_glue("  >>>> written file is corrupted"))
   }
 
-  return(Rstr)
+  if (ReturnMap) {
+    return(Rstr)
+  } else {
+    return(invisible(NULL))
+  }
 }

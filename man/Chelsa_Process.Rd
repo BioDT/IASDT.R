@@ -4,7 +4,13 @@
 \alias{Chelsa_Process}
 \title{Processing Chelsa data}
 \usage{
-Chelsa_Process(InputFile, OutFile, GridFile, Verbose = FALSE)
+Chelsa_Process(
+  InputFile = NULL,
+  OutFile = NULL,
+  GridFile = NULL,
+  ReturnMap = FALSE,
+  Verbose = FALSE
+)
 }
 \arguments{
 \item{InputFile}{Input tif file}
@@ -12,6 +18,8 @@ Chelsa_Process(InputFile, OutFile, GridFile, Verbose = FALSE)
 \item{OutFile}{Output tif file}
 
 \item{GridFile}{Path for the \verb{*.RData} file containing the reference grid. This grid will be used as reference grid for projection and the resulted file will be masked to it}
+
+\item{ReturnMap}{logical; should the processed map be returned by the end of the function?}
 
 \item{Verbose}{should the name of the processed file be printed to the console}
 }

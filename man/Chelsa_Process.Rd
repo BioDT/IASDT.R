@@ -15,6 +15,9 @@ Chelsa_Process(InputFile, OutFile, GridFile, Verbose = FALSE)
 
 \item{Verbose}{should the name of the processed file be printed to the console}
 }
+\value{
+A map projected to \code{EPSG:3035} and cropped to the study area (masked by the \code{GridFile})
+}
 \description{
 Processing Chelsa data
 }

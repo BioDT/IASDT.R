@@ -568,10 +568,15 @@ Chelsa_Prepare_List <- function(
 #' @param OutFile Output tif file
 #' @param GridFile Path for the `*.RData` file containing the reference grid. This grid will be used as reference grid for projection and the resulted file will be masked to it
 #' @param Verbose should the name of the processed file be printed to the console
+#' @returns A map projected to `EPSG:3035` and cropped to the study area (masked by the `GridFile`)
 #' @author Ahmed El-Gabbas
 #' @export
 
 Chelsa_Process <- function(InputFile, OutFile, GridFile, Verbose = FALSE) {
+
+  suppressWarnings(suppressMessages(library(dplyr)))
+  suppressWarnings(suppressMessages(library(raster)))
+  suppressWarnings(suppressMessages(library(terra)))
 
   GridR <- GridFile %>%
     IASDT.R::LoadAs() %>%
@@ -601,4 +606,6 @@ Chelsa_Process <- function(InputFile, OutFile, GridFile, Verbose = FALSE) {
     if (!file.exists(OutFile)) IASDT.R::CatTime(stringr::str_glue("  >>>> file was not processed"))
     if (!IASDT.R::CheckTiff(OutFile)) IASDT.R::CatTime(stringr::str_glue("  >>>> written file is corrupted"))
   }
+
+  return(Rstr)
 }

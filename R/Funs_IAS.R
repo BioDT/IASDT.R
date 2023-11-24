@@ -577,7 +577,7 @@ Chelsa_Process <- function(InputFile, OutFile, GridFile, Verbose = FALSE) {
     IASDT.R::LoadAs() %>%
     terra::rast()
 
-  IASDT.R::LoadPackages(List = c("dplyr", "raster", "terra"))
+  # IASDT.R::LoadPackages(List = c("dplyr", "raster", "terra"))
 
   if (Verbose) cat(stringr::str_glue("{basename(InputFile)}"))
 

@@ -407,7 +407,7 @@ Chelsa_Extract_Matching <- function(String, Time, Matches) {
 
 Chelsa_Prepare_List <- function(
     Down = FALSE, DownParallel = TRUE, DwnPath = NULL, OutPath = NULL,
-    Path_Chelsa = "Data/Chelsa") {
+    UpdateExisting = FALSE, Path_Chelsa = "Data/Chelsa") {
 
   BaseURL <- "https://os.zhdk.cloud.switch.ch/envicloud/chelsa/chelsa_V2/GLOBAL/"
   ClimateModels <- c(
@@ -506,7 +506,7 @@ Chelsa_Prepare_List <- function(
         .x = .data$DownFile, stringr::str_replace,
         pattern = DwnPath, replacement = OutPath),
 
-      DownCommand = stringr::str_glue('curl "{URL}" -o "{DownFile}" --silent'),
+      DownCommand = stringr::str_glue('curl -k -L "{URL}" -o "{DownFile}" --silent --data-binary --data-binary'),
 
       # Unique name for variable / time combination
       OutName = paste0(
@@ -532,20 +532,30 @@ Chelsa_Prepare_List <- function(
     dplyr::left_join(Chelsa_Vars, by = dplyr::join_by("Var"))
 
 
-  # Download in parallel
-  if (Down && DownParallel) {
-    ChelsaClimData %>%
-      dplyr::pull(.data$DownCommand) %>%
-      furrr::future_walk(
-        IASDT.R::System, RObj = FALSE,
-        .options = furrr::furrr_options(seed = TRUE), .progress = FALSE)
-  }
+  if (Down) {
 
-  # Download sequentially
-  if (Down && !DownParallel) {
-    ChelsaClimData %>%
-      dplyr::pull(.data$DownCommand) %>%
-      purrr::walk(IASDT.R::System, RObj = FALSE, .progress = FALSE)
+    if (UpdateExisting) {
+      Data2Down <- ChelsaClimData
+    } else {
+      Data2Down <- dplyr::filter(ChelsaClimData, magrittr::not(file.exists(DownFile)))
+    }
+
+    # Download in parallel
+    if (DownParallel && nrow(Data2Down) > 0) {
+      Data2Down %>%
+        dplyr::pull(.data$DownCommand) %>%
+        furrr::future_walk(
+          IASDT.R::System, RObj = FALSE,
+          .options = furrr::furrr_options(seed = TRUE), .progress = FALSE)
+    }
+
+    # Download sequentially
+    if (!DownParallel && nrow(Data2Down) > 0) {
+      Data2Down %>%
+        dplyr::pull(.data$DownCommand) %>%
+        purrr::walk(IASDT.R::System, RObj = FALSE, .progress = FALSE)
+    }
+
   }
 
   # Save to disk

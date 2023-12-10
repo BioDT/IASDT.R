@@ -720,6 +720,14 @@ SaveAs <- function(InObj, OutObj, OutPath) {
 #' (x2Contents <- LoadAs(file.path(TMP_Folder, "x2.RData")))
 #'
 #' # ----------------------------------------------
+#' # Use Prefix
+#' # ----------------------------------------------
+#'
+#' SaveMultiple(Vars = cc(x1, x2), OutFolder = TMP_Folder, Prefix = "A_")
+#'
+#' list.files(path = TMP_Folder, pattern = "^.+.RData")
+#'
+#' # ----------------------------------------------
 #' # File exists, no save
 #' # ----------------------------------------------
 #' try(SaveMultiple(Vars = c("x1", "x2"), OutFolder = TMP_Folder))
@@ -738,7 +746,7 @@ SaveAs <- function(InObj, OutObj, OutPath) {
 #' (x3Contents <- LoadAs(file.path(TMP_Folder, "x3.RData")))
 
 SaveMultiple <- function(
-    Vars = NULL, OutFolder = getwd(), Overwrite = FALSE) {
+    Vars = NULL, OutFolder = getwd(), Overwrite = FALSE, Prefix = "") {
 
   SkipFun <- any(
     is.null(Vars), !inherits(Vars, "character"),
@@ -772,13 +780,14 @@ SaveMultiple <- function(
       OutFolder <- getwd()
     }
     if (!dir.exists(OutFolder)) {
-      DirCreate(OutFolder)
+      IASDT.R::DirCreate(OutFolder, Verbose = FALSE)
     }
   }
 
-  FilesExist <- paste0(OutFolder, "/", Vars, ".RData") %>%
+  FilesExist <- file.path(OutFolder, paste0(Prefix, Vars, ".RData")) %>%
     file.exists() %>%
     any()
+
 
   if (FilesExist && !Overwrite) {
     "Some files already exist.\nNo files are saved. Please use overwrite = TRUE" %>%
@@ -789,16 +798,19 @@ SaveMultiple <- function(
     stop()
   }
 
-  sapply(Vars, function(x) {
-    Val <- get(x, envir = parent.frame(n = 4))
-    assign(rlang::eval_tidy(x), Val)
-    save(
-      list = paste0(x),
-      file = paste0(OutFolder, "/", x, ".RData"))
-  }) %>%
-    invisible()
+  purrr::walk(
+    .x = Vars,
+    .f = ~{
+      Val <- get(.x, envir = parent.frame(n = 4))
+      assign(rlang::eval_tidy(.x), Val)
+      save(
+        list = paste0(.x),
+        #file = paste0(OutFolder, "/", .x, ".RData")),
+        file = file.path(OutFolder, paste0(Prefix, .x, ".RData")))
+    })
 
-  if (all(file.exists(paste0(OutFolder, "/", Vars, ".RData")))) {
+
+  if (all(file.exists(file.path(OutFolder, paste0(Prefix, Vars, ".RData"))))) {
     cat(paste0(crayon::blue("All files are saved to disk", crayon::red(OutFolder), "successfully."), "\n"))
   } else {
     cat(paste0(crayon::red("Some files were not saved to disk!\nplease check again"), "\n"))

@@ -4,7 +4,7 @@
 \alias{SaveMultiple}
 \title{Save multiple objects to their respective \code{.RData} files}
 \usage{
-SaveMultiple(Vars = NULL, OutFolder = getwd(), Overwrite = FALSE)
+SaveMultiple(Vars = NULL, OutFolder = getwd(), Overwrite = FALSE, Prefix = "")
 }
 \arguments{
 \item{Vars}{variables to save}
@@ -32,6 +32,14 @@ list.files(path = TMP_Folder, pattern = "^.+.RData")
 (x1Contents <- LoadAs(file.path(TMP_Folder, "x1.RData")))
 
 (x2Contents <- LoadAs(file.path(TMP_Folder, "x2.RData")))
+
+# ----------------------------------------------
+# Use Prefix
+# ----------------------------------------------
+
+SaveMultiple(Vars = cc(x1, x2), OutFolder = TMP_Folder, Prefix = "A_")
+
+list.files(path = TMP_Folder, pattern = "^.+.RData")
 
 # ----------------------------------------------
 # File exists, no save

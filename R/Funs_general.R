@@ -1974,7 +1974,7 @@ SourceSilent <- function(File, Messages = TRUE, Warnings = TRUE, ...) {
 
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-#
+
 # |---------------------------------------------------| #
 # NUnique ----
 # |---------------------------------------------------| #
@@ -1999,4 +1999,55 @@ NUnique <- function(Data) {
     tidyr::pivot_longer(tidyselect::everything()) %>%
     stats::setNames(c("Variable", "NUnique")) %>%
     dplyr::arrange(NUnique)
+}
+
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+# |---------------------------------------------------| #
+# Package_RemoteSha ----
+# |---------------------------------------------------| #
+
+#' get remote sha of R packages
+#'
+#' get remote sha of R packages
+#'
+#' @name Package_RemoteSha
+#' @param ... name of one or more R packages
+#' @export
+#' @examples
+#' Package_RemoteSha(IASDT.R, devtools)
+
+Package_RemoteSha <- function(...) {
+  Pk <- rlang::ensyms(...) %>%
+    as.character()
+  Pk %>%
+    purrr::map_chr(~{
+      pak::lib_status() %>%
+        dplyr::filter(package == .x) %>%
+        dplyr::pull("remotesha")
+    }) %>%
+    setNames(Pk)
+}
+
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+# |---------------------------------------------------| #
+# git_log ----
+# |---------------------------------------------------| #
+
+#' print detailed `git log` of the git repo located in the current working directory
+#'
+#' print detailed `git log` of the git repo located in the current working directory
+#'
+#' @name git_log
+#' @export
+#' @examples
+#' git_log()
+
+git_log <- function() {
+  'git log --graph --pretty=format:"%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset" --abbrev-commit' %>%
+    IASDT.R::System() %>%
+    cat(sep = "\n")
 }

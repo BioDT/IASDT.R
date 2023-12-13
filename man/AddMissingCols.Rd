@@ -4,14 +4,14 @@
 \alias{AddMissingCols}
 \title{Add missing columns to data frame}
 \usage{
-AddMissingCols(..., DT, FillVal = NA_character_)
+AddMissingCols(DT, FillVal = NA_character_, ...)
 }
 \arguments{
-\item{...}{list of column names to add}
-
 \item{DT}{data frame}
 
 \item{FillVal}{value to be used: default: NA_character}
+
+\item{...}{list of column names to add}
 }
 \description{
 Add missing columns to data frame
@@ -19,15 +19,15 @@ Add missing columns to data frame
 \examples{
 mtcars \%>\%
  dplyr::select(1:3) \%>\%
- AddMissingCols(A, B, C, DT = ., FillVal = NA_character_) \%>\%
- AddMissingCols(D, DT = ., FillVal = as.integer(10))
+ AddMissingCols(FillVal = NA_character_, A, B, C) \%>\%
+ AddMissingCols(FillVal = as.integer(10), D)
 
 # -------------------------------------------
 
 AddCols <- c("Add1", "Add2")
 mtcars \%>\%
  dplyr::select(1:3) \%>\%
- AddMissingCols(AddCols, DT = ., FillVal = NA_real_)
+ AddMissingCols(FillVal = NA_real_, AddCols)
 }
 \author{
 Ahmed El-Gabbas

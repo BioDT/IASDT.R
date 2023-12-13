@@ -1219,29 +1219,35 @@ ht <- function(DF, NRows = 5) {
 #' @examples
 #' mtcars %>%
 #'  dplyr::select(1:3) %>%
-#'  AddMissingCols(A, B, C, DT = ., FillVal = NA_character_) %>%
-#'  AddMissingCols(D, DT = ., FillVal = as.integer(10))
+#'  AddMissingCols(FillVal = NA_character_, A, B, C) %>%
+#'  AddMissingCols(FillVal = as.integer(10), D)
 #'
 #' # -------------------------------------------
 #'
 #' AddCols <- c("Add1", "Add2")
 #' mtcars %>%
 #'  dplyr::select(1:3) %>%
-#'  AddMissingCols(AddCols, DT = ., FillVal = NA_real_)
+#'  AddMissingCols(FillVal = NA_real_, AddCols)
 
-AddMissingCols <- function(..., DT, FillVal = NA_character_) {
+AddMissingCols <- function(DT, FillVal = NA_character_, ...) {
   Cols <- as.character(rlang::ensyms(...))
+
   if (any(Cols %in% ls(envir = parent.env(rlang::caller_env())))) {
     Cols <- get(Cols, envir = parent.env(rlang::caller_env()))
   }
 
   Cols2Add <- setdiff(Cols, names(DT))
 
+  Add_DF <- rep(FillVal, length(Cols2Add)) %>%
+    matrix(nrow = 1) %>%
+    as.data.frame() %>%
+    stats::setNames(Cols2Add) %>%
+    tibble::as_tibble()
+
   if (length(Cols2Add) != 0) {
-    DT[Cols2Add] <- FillVal
+    DT <- tibble::add_column(DT, !!!Add_DF)
   }
-  tibble::tibble(DT) %>%
-    return()
+  return(tibble::tibble(DT))
 }
 
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

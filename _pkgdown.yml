@@ -71,6 +71,7 @@ reference:
   - NUnique
   - git_log
   - Package_RemoteSha
+  - integer_breaks
 
 - title: Spatial functions
   desc:

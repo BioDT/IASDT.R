@@ -393,10 +393,12 @@ Chelsa_Extract_Matching <- function(String, Time, Matches) {
 #'
 #' Prepare list of potential variables
 #' @name Chelsa_Prepare_List
-#' @param Down Should the Chelsa files be downloaed
+#' @param Down Should the Chelsa files be downloaded
 #' @param DownParallel if `Down` was set as `TRUE`, should the download be on parallel
 #' @param DwnPath Path for download
 #' @param Path_Chelsa Path for Chelsa files
+#' @param OutPath Out path
+#' @param UpdateExisting reprocess existing file
 #' @author Ahmed El-Gabbas
 #' @importFrom rlang .data
 #' @export

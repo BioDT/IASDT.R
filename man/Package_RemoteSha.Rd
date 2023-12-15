@@ -13,5 +13,5 @@ Package_RemoteSha(...)
 get remote sha of R packages
 }
 \examples{
-Package_RemoteSha(IASDT.R, devtools)
+# Package_RemoteSha(IASDT.R, devtools)
 }

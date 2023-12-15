@@ -14,11 +14,15 @@ Chelsa_Prepare_List(
 )
 }
 \arguments{
-\item{Down}{Should the Chelsa files be downloaed}
+\item{Down}{Should the Chelsa files be downloaded}
 
 \item{DownParallel}{if \code{Down} was set as \code{TRUE}, should the download be on parallel}
 
 \item{DwnPath}{Path for download}
+
+\item{OutPath}{Out path}
+
+\item{UpdateExisting}{reprocess existing file}
 
 \item{Path_Chelsa}{Path for Chelsa files}
 }

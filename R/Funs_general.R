@@ -698,6 +698,7 @@ SaveAs <- function(InObj, OutObj, OutPath) {
 #' @param Vars variables to save
 #' @param OutFolder output path
 #' @param Overwrite overwrite existing files? If file already exist, no files are saved unless `Overwrite` argument is set as `TRUE`
+#' @param Prefix String prefix of the output file
 #' @name SaveMultiple
 #' @author Ahmed El-Gabbas
 #' @return NULL
@@ -2022,7 +2023,7 @@ NUnique <- function(Data) {
 #' @param ... name of one or more R packages
 #' @export
 #' @examples
-#' Package_RemoteSha(IASDT.R, devtools)
+#' # Package_RemoteSha(IASDT.R, devtools)
 
 Package_RemoteSha <- function(...) {
   Pk <- rlang::ensyms(...) %>%
@@ -2033,7 +2034,7 @@ Package_RemoteSha <- function(...) {
         dplyr::filter(package == .x) %>%
         dplyr::pull("remotesha")
     }) %>%
-    setNames(Pk)
+    stats::setNames(Pk)
 }
 
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

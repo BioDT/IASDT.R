@@ -8,6 +8,7 @@
 #'
 #' @param n Desired number of breaks. You may get slightly more or fewer breaks that requested.
 #' @param ... other arguments passed on to `scales::pretty()`
+#' @export
 #' @source https://joshuacook.netlify.app/post/integer-values-ggplot-axis/
 
 integer_breaks <- function(n = 5, ...) {

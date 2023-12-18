@@ -615,7 +615,7 @@ Chelsa_Process <- function(
     # mask to the reference grid
     terra::mask(GridR) %>%
     # convert back to raster object
-    raster::raster() %>%
+    raster::raster()
 
   # Ensure that the object is located in memory, not reading from temporary file
   # This may not be necessary as we save the file as .tif file not .RData

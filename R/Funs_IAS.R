@@ -508,7 +508,7 @@ Chelsa_Prepare_List <- function(
         .x = .data$DownFile, stringr::str_replace,
         pattern = DwnPath, replacement = OutPath),
 
-      DownCommand = stringr::str_glue('curl -k -L "{URL}" -o "{DownFile}" --silent --data-binary --data-binary'),
+      DownCommand = stringr::str_glue('curl -k -L "{URL}" -o "{DownFile}" --silent'),
 
       # Unique name for variable / time combination
       OutName = paste0(

@@ -586,7 +586,7 @@ Chelsa_Prepare_List <- function(
 #' @param GridFile Path for the `*.RData` file containing the reference grid. This grid will be used as reference grid for projection and the resulted file will be masked to it
 #' @param ReturnMap logical; should the processed map be returned by the end of the function?
 #' @param Verbose should the name of the processed file be printed to the console
-#' @returns A map projected to `EPSG:3035` and cropped to the study area (masked by the `GridFile`)
+#' @returns if `ReturnMap = TRUE`, the output raster object is returned; otherwise nothing is returned. The `*.tif` files are saved to disk anyway.
 #' @author Ahmed El-Gabbas
 #' @export
 
@@ -602,14 +602,20 @@ Chelsa_Process <- function(
     IASDT.R::LoadAs() %>%
     terra::rast()
 
+  # although it is not necessary to crop the input maps into the European boundaries, we will crop the data prior to projection. Cropping will make the values of the raster read from memory not from the file. This is a workaround to avoid wrong extreme values in the output file because of a bug in terra package (see this issue: https://github.com/rspatial/terra/issues/1356) [18.02.2023]
+  CropExtent <- terra::ext(-30, 50, 25, 75)
+
   Rstr <- InputFile %>%
-    # read tif file as terra rast object
+    # read tif file as terra SpatRaster object
     terra::rast() %>%
+    # crop to European boundaries, see above
+    terra::crop(CropExtent) %>%
     # project to reference grid
     terra::project(GridR, method = "average", threads = TRUE) %>%
+    # mask to the reference grid
+    terra::mask(GridR) %>%
     # convert back to raster object
     raster::raster() %>%
-    raster::mask(IASDT.R::LoadAs(GridFile))
 
   # Ensure that the object is located in memory, not reading from temporary file
   # This may not be necessary as we save the file as .tif file not .RData

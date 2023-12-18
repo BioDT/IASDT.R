@@ -24,7 +24,7 @@ Chelsa_Process(
 \item{Verbose}{should the name of the processed file be printed to the console}
 }
 \value{
-A map projected to \code{EPSG:3035} and cropped to the study area (masked by the \code{GridFile})
+if \code{ReturnMap = TRUE}, the output raster object is returned; otherwise nothing is returned. The \verb{*.tif} files are saved to disk anyway.
 }
 \description{
 Processing Chelsa data

@@ -64,7 +64,6 @@ InfoChunk <- function(Message = "", ...) {
   IASDT.R::CatSep(..., Extra2 = 1)
 }
 
-
 # |---------------------------------------------------| #
 # SaveSession ----
 # |---------------------------------------------------| #
@@ -115,6 +114,41 @@ SaveSession <- function(Path = getwd()) {
     OutPath = file.path(Path, paste0(FF2, ".RData")))
   NULL
 }
+
+
+# |---------------------------------------------------| #
+# SaveSessionInfo ----
+# |---------------------------------------------------| #
+#
+#' Save all objects (except functions) of the global environment as list items
+#'
+#' Save all objects (except functions) of the global environment as list items
+#'
+#' @param Path Path of where to save the output RData file
+#' @author Ahmed El-Gabbas
+#' @return NULL
+#' @export
+
+SaveSessionInfo <- function(Path = getwd()) {
+
+  FileName <- lubridate::now() %>%
+    purrr::map_chr(
+    .f = ~{
+      c(lubridate::year(.x), lubridate::month(.x),
+        lubridate::day(.x), "__",
+        lubridate::hour(.x), lubridate::minute(.x)) %>%
+        sapply(stringr::str_pad, width = 2, pad = "0") %>%
+        stringr::str_c(collapse = "") %>%
+        stringr::str_replace_all("__", "_") %>%
+        stringr::str_c("SessionInfo_", ., collapse = "_")
+    }) %>%
+    stringr::str_c(Path, "/", ., ".txt")
+
+  capture.output(sessioninfo::session_info(), file = FileName)
+
+  return(invisible(NULL))
+}
+
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

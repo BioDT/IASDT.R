@@ -130,6 +130,10 @@ SaveSession <- function(Path = getwd()) {
 #' @export
 
 SaveSessionInfo <- function(Path = getwd()) {
+  FF <- parent.frame(3)$ofile %>%
+    as.character() %>%
+    basename() %>%
+    fs::path_ext_remove()
 
   FileName <- lubridate::now() %>%
     purrr::map_chr(
@@ -140,7 +144,7 @@ SaveSessionInfo <- function(Path = getwd()) {
         sapply(stringr::str_pad, width = 2, pad = "0") %>%
         stringr::str_c(collapse = "") %>%
         stringr::str_replace_all("__", "_") %>%
-        stringr::str_c("SessionInfo_", ., collapse = "_")
+        stringr::str_c("SessionInfo_", FF, "_", ., collapse = "_")
     }) %>%
     stringr::str_c(Path, "/", ., ".txt")
 

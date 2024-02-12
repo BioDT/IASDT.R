@@ -91,30 +91,22 @@ SaveSession <- function(Path = getwd()) {
     purrr::map(get, envir = .GlobalEnv) %>%
     setNames(AllObjs)
 
-  FF <- parent.frame(3)$ofile %>%
-    as.character() %>%
-    basename() %>%
-    fs::path_ext_remove()
-
-  Now <- lubridate::now()
-  FF2 <- purrr::map_chr(
-    .x = Now,
-    .f = ~{
-      c(lubridate::year(.x), lubridate::month(.x),
-        lubridate::day(.x), "__",
-        lubridate::hour(.x), lubridate::minute(.x)) %>%
-        sapply(stringr::str_pad, width = 2, pad = "0") %>%
-        stringr::str_c(collapse = "") %>%
-        stringr::str_replace_all("__", "_") %>%
-        stringr::str_c("Session_", FF, "_", ., collapse = "_")
-    })
-
+  FF2 <- lubridate::now(tzone = "CET") %>%
+    purrr::map_chr(
+      .f = ~{
+        c(lubridate::year(.x), lubridate::month(.x),
+          lubridate::day(.x), "__",
+          lubridate::hour(.x), lubridate::minute(.x)) %>%
+          sapply(stringr::str_pad, width = 2, pad = "0") %>%
+          stringr::str_c(collapse = "") %>%
+          stringr::str_replace_all("__", "_") %>%
+          stringr::str_c("S_", ., collapse = "_")
+      })
   IASDT.R::SaveAs(
     InObj = AllObjs, OutObj = FF2,
     OutPath = file.path(Path, paste0(FF2, ".RData")))
-  NULL
+  return(invisible(NULL))
 }
-
 
 # |---------------------------------------------------| #
 # SaveSessionInfo ----
@@ -130,28 +122,24 @@ SaveSession <- function(Path = getwd()) {
 #' @export
 
 SaveSessionInfo <- function(Path = getwd()) {
-  FF <- parent.frame(3)$ofile %>%
-    as.character() %>%
-    basename() %>%
-    fs::path_ext_remove()
-
-  FileName <- lubridate::now() %>%
+  FileName <- lubridate::now(tzone = "CET") %>%
     purrr::map_chr(
-    .f = ~{
-      c(lubridate::year(.x), lubridate::month(.x),
-        lubridate::day(.x), "__",
-        lubridate::hour(.x), lubridate::minute(.x)) %>%
-        sapply(stringr::str_pad, width = 2, pad = "0") %>%
-        stringr::str_c(collapse = "") %>%
-        stringr::str_replace_all("__", "_") %>%
-        stringr::str_c("SessionInfo_", FF, "_", ., collapse = "_")
-    }) %>%
+      .f = ~{
+        c(lubridate::year(.x), lubridate::month(.x),
+          lubridate::day(.x), "__",
+          lubridate::hour(.x), lubridate::minute(.x)) %>%
+          sapply(stringr::str_pad, width = 2, pad = "0") %>%
+          stringr::str_c(collapse = "") %>%
+          stringr::str_replace_all("__", "_") %>%
+          stringr::str_c("S_", ., collapse = "_")
+      }) %>%
     stringr::str_c(Path, "/", ., ".txt")
 
   capture.output(sessioninfo::session_info(), file = FileName)
 
   return(invisible(NULL))
 }
+
 
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

@@ -4,7 +4,13 @@
 \alias{SaveMultiple}
 \title{Save multiple objects to their respective \code{.RData} files}
 \usage{
-SaveMultiple(Vars = NULL, OutFolder = getwd(), Overwrite = FALSE, Prefix = "")
+SaveMultiple(
+  Vars = NULL,
+  OutFolder = getwd(),
+  Overwrite = FALSE,
+  Prefix = "",
+  Verbose = FALSE
+)
 }
 \arguments{
 \item{Vars}{variables to save}

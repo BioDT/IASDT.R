@@ -40,6 +40,81 @@ CatSep <- function(Rep = 1, Extra1 = 0, Extra2 = 0, Char = "-", CharReps = 50) {
   return(invisible(NULL))
 }
 
+
+# |---------------------------------------------------| #
+# InfoChunk ----
+# |---------------------------------------------------| #
+#
+#' Print Information chunk
+#'
+#' Print Information chunk
+#' @param Message String passed to the `IASDT.R::CatTime` function
+#' @param ... additional arguments for the `IASDT.R::CatSep` function
+#' @author Ahmed El-Gabbas
+#' @return NULL
+#' @examples
+#' InfoChunk(Message = "Started")
+#'
+#' InfoChunk(Message = "finished", Char = "*", CharReps = 60)
+#' @export
+
+InfoChunk <- function(Message = "", ...) {
+  IASDT.R::CatSep(..., Extra1 = 1)
+  IASDT.R::CatTime(Message)
+  IASDT.R::CatSep(..., Extra2 = 1)
+}
+
+
+# |---------------------------------------------------| #
+# SaveSession ----
+# |---------------------------------------------------| #
+#
+#' Save all objects (except functions) of the global environment as list items
+#'
+#' Save all objects (except functions) of the global environment as list items
+#'
+#' @param Path Path of where to save the output RData file
+#' @author Ahmed El-Gabbas
+#' @return NULL
+#' @export
+
+SaveSession <- function(Path = getwd()) {
+  AllObjs <- ls(envir = .GlobalEnv) %>%
+    tibble::tibble(Object = .) %>%
+    dplyr::mutate(Class = purrr::map_chr(
+      .x = Object, .f = ~class(get(.x, envir = .GlobalEnv)))) %>%
+    dplyr::filter(Class != "function") %>%
+    dplyr::pull(Object)
+
+  IASDT.R::DirCreate(Path, Verbose = FALSE)
+
+  AllObjs <- AllObjs %>%
+    purrr::map(get, envir = .GlobalEnv) %>%
+    setNames(AllObjs)
+
+  FF <- parent.frame(3)$ofile %>%
+    as.character() %>%
+    basename() %>%
+    fs::path_ext_remove()
+
+  Now <- lubridate::now()
+  FF2 <- purrr::map_chr(
+    .x = Now,
+    .f = ~{
+      c(lubridate::year(.x), lubridate::month(.x),
+        lubridate::day(.x), "__",
+        lubridate::hour(.x), lubridate::minute(.x)) %>%
+        sapply(stringr::str_pad, width = 2, pad = "0") %>%
+        stringr::str_c(collapse = "") %>%
+        stringr::str_replace_all("__", "_") %>%
+        stringr::str_c("Session_", FF, "_", ., collapse = "_")
+    })
+
+  IASDT.R::SaveAs(
+    InObj = AllObjs, OutObj = FF2,
+    OutPath = file.path(Path, paste0(FF2, ".RData")))
+  NULL
+}
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -747,7 +822,7 @@ SaveAs <- function(InObj, OutObj, OutPath) {
 #' (x3Contents <- LoadAs(file.path(TMP_Folder, "x3.RData")))
 
 SaveMultiple <- function(
-    Vars = NULL, OutFolder = getwd(), Overwrite = FALSE, Prefix = "") {
+    Vars = NULL, OutFolder = getwd(), Overwrite = FALSE, Prefix = "", Verbose = FALSE) {
 
   SkipFun <- any(
     is.null(Vars), !inherits(Vars, "character"),
@@ -806,13 +881,14 @@ SaveMultiple <- function(
       assign(rlang::eval_tidy(.x), Val)
       save(
         list = paste0(.x),
-        #file = paste0(OutFolder, "/", .x, ".RData")),
         file = file.path(OutFolder, paste0(Prefix, .x, ".RData")))
     })
 
 
   if (all(file.exists(file.path(OutFolder, paste0(Prefix, Vars, ".RData"))))) {
-    cat(paste0(crayon::blue("All files are saved to disk", crayon::red(OutFolder), "successfully."), "\n"))
+    if (Verbose) {
+      cat(paste0(crayon::blue("All files are saved to disk", crayon::red(OutFolder), "successfully."), "\n"))
+    }
   } else {
     cat(paste0(crayon::red("Some files were not saved to disk!\nplease check again"), "\n"))
   }

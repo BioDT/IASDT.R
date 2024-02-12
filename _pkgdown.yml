@@ -72,6 +72,8 @@ reference:
   - git_log
   - Package_RemoteSha
   - integer_breaks
+  - InfoChunk
+  - SaveSession
 
 - title: Spatial functions
   desc:

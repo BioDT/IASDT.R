@@ -78,14 +78,23 @@ InfoChunk <- function(Message = "", ...) {
 #' @export
 
 SaveSession <- function(Path = getwd()) {
+
+  IASDT.R::DirCreate(Path, Verbose = FALSE)
+
   AllObjs <- ls(envir = .GlobalEnv) %>%
     tibble::tibble(Object = .) %>%
-    dplyr::mutate(Class = purrr::map_chr(
-      .x = Object, .f = ~class(get(.x, envir = .GlobalEnv)))) %>%
+    dplyr::mutate(
+      Class = purrr::map_chr(
+        .x = Object,
+        .f = ~{
+          get(.x, envir = .GlobalEnv) %>%
+            class() %>%
+            stringr::str_c(sep = "_")
+        }
+        )) %>%
     dplyr::filter(Class != "function") %>%
     dplyr::pull(Object)
 
-  IASDT.R::DirCreate(Path, Verbose = FALSE)
 
   AllObjs <- AllObjs %>%
     purrr::map(get, envir = .GlobalEnv) %>%

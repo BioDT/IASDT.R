@@ -4,7 +4,7 @@
 \alias{SaveSessionInfo}
 \title{Save all objects (except functions) of the global environment as list items}
 \usage{
-SaveSessionInfo(Path = getwd())
+SaveSessionInfo(Path = getwd(), SessionObj = NULL)
 }
 \arguments{
 \item{Path}{Path of where to save the output RData file}

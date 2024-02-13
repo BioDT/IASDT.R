@@ -4,7 +4,7 @@
 \alias{CatTime}
 \title{Print text and a time stamp}
 \usage{
-CatTime(Text = "", NLines = 1, Date = FALSE, ...)
+CatTime(Text = "", NLines = 1, Date = FALSE, TZ = "CET", ...)
 }
 \arguments{
 \item{Text}{the text to print: default empty string (print time only)}
@@ -12,6 +12,8 @@ CatTime(Text = "", NLines = 1, Date = FALSE, ...)
 \item{NLines}{number of empty lines after the printing; default: 1}
 
 \item{Date}{Also print date? Default value \code{FALSE}}
+
+\item{TZ}{time zone (default: CET)}
 
 \item{...}{other arguments passed to \code{cat}}
 }

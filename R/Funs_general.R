@@ -77,9 +77,10 @@ InfoChunk <- function(Message = "", ...) {
 #' @return NULL
 #' @export
 
-SaveSession <- function(Path = getwd()) {
+SaveSession <- function(Path = getwd(), ExcludeObs = NULL) {
 
   IASDT.R::DirCreate(Path, Verbose = FALSE)
+  ExcludeObs <- c(ExcludeObs, "Grid_10_sf_s", "Grid_10_Raster", "Bound_sf_Eur_s", "Bound_sf_Eur")
 
   AllObjs <- ls(envir = .GlobalEnv) %>%
     tibble::tibble(Object = .) %>%
@@ -92,7 +93,9 @@ SaveSession <- function(Path = getwd()) {
             stringr::str_c(collapse = "_")
         }
       )) %>%
-    dplyr::filter(Class != "function") %>%
+    dplyr::filter(
+      Class != "function",
+      magrittr::not(Object %in% ExcludeObs)) %>%
     dplyr::pull(Object)
 
   AllObjs <- AllObjs %>%
@@ -121,7 +124,14 @@ SaveSession <- function(Path = getwd()) {
   IASDT.R::SaveAs(
     InObj = AllObjs, OutObj = FF2,
     OutPath = file.path(Path, paste0(FF2, ".RData")))
-  return(invisible(NULL))
+
+  AllObjs %>%
+    lapply(pryr::object_size) %>%
+    tibble::tibble(Obj = names(.), Size = as.numeric(.)) %>%
+    dplyr::mutate(Size = Size / (1024 * 1024), Size = round(Size, 1)) %>%
+    dplyr::select(Obj, Size) %>%
+    dplyr::arrange(dplyr::desc(Size)) %>%
+    return()
 }
 
 # |---------------------------------------------------| #
@@ -137,7 +147,7 @@ SaveSession <- function(Path = getwd()) {
 #' @return NULL
 #' @export
 
-SaveSessionInfo <- function(Path = getwd()) {
+SaveSessionInfo <- function(Path = getwd(), SessionObj = NULL) {
   FileName <- lubridate::now(tzone = "CET") %>%
     purrr::map_chr(
       .f = ~{
@@ -153,9 +163,15 @@ SaveSessionInfo <- function(Path = getwd()) {
 
   capture.output(sessioninfo::session_info(), file = FileName)
 
+  if (magrittr::not(is.null(SessionObj))) {
+    capture.output(
+      IASDT.R::InfoChunk("Objects in the current session"),
+      file = FileName, append = TRUE)
+    capture.output(SessionObj, file = FileName, append = TRUE)
+  }
+
   return(invisible(NULL))
 }
-
 
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

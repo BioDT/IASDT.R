@@ -73,6 +73,7 @@ InfoChunk <- function(Message = "", ...) {
 #' Save all objects (except functions) of the global environment as list items
 #'
 #' @param Path Path of where to save the output RData file
+#' @param ExcludeObs objects not to save
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
@@ -143,6 +144,7 @@ SaveSession <- function(Path = getwd(), ExcludeObs = NULL) {
 #' Save all objects (except functions) of the global environment as list items
 #'
 #' @param Path Path of where to save the output RData file
+#' @param SessionObj List of objects and their sizes (typically a a result of `IASDT::SaveSession` function)
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export

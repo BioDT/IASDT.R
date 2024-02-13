@@ -90,13 +90,21 @@ SaveSession <- function(Path = getwd()) {
           get(.x, envir = .GlobalEnv) %>%
             class() %>%
             stringr::str_c(collapse = "_")
-          }
-        )) %>%
+        }
+      )) %>%
     dplyr::filter(Class != "function") %>%
     dplyr::pull(Object)
 
   AllObjs <- AllObjs %>%
-    purrr::map(get, envir = .GlobalEnv) %>%
+    purrr::map(
+      .f = ~{
+        Obj <- get(.x, envir = .GlobalEnv)
+        if(class(Obj)[1] == "SpatRaster") {
+          suppressWarnings(terra::wrap(Obj))
+        } else {
+          Obj
+        }
+      }) %>%
     setNames(AllObjs)
 
   FF2 <- lubridate::now(tzone = "CET") %>%

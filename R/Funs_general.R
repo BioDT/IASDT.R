@@ -89,12 +89,11 @@ SaveSession <- function(Path = getwd()) {
         .f = ~{
           get(.x, envir = .GlobalEnv) %>%
             class() %>%
-            stringr::str_c(sep = "_")
-        }
+            stringr::str_c(collapse = "_")
+          }
         )) %>%
     dplyr::filter(Class != "function") %>%
     dplyr::pull(Object)
-
 
   AllObjs <- AllObjs %>%
     purrr::map(get, envir = .GlobalEnv) %>%

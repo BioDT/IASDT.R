@@ -8,6 +8,8 @@ SaveSession(Path = getwd(), ExcludeObs = NULL)
 }
 \arguments{
 \item{Path}{Path of where to save the output RData file}
+
+\item{ExcludeObs}{objects not to save}
 }
 \description{
 Save all objects (except functions) of the global environment as list items

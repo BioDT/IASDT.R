@@ -145,12 +145,17 @@ SaveSession <- function(Path = getwd(), ExcludeObs = NULL) {
 #'
 #' @param Path Path of where to save the output RData file
 #' @param SessionObj List of objects and their sizes (typically a a result of `IASDT::SaveSession` function)
+#' @param Time time to be assigned to file name
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
-SaveSessionInfo <- function(Path = getwd(), SessionObj = NULL) {
-  FileName <- lubridate::now(tzone = "CET") %>%
+SaveSessionInfo <- function(
+    Path = getwd(),
+    Time = lubridate::now(tzone = "CET"),
+    SessionObj = NULL) {
+
+  FileName <- Time %>%
     purrr::map_chr(
       .f = ~{
         c(lubridate::year(.x), lubridate::month(.x),
@@ -163,15 +168,19 @@ SaveSessionInfo <- function(Path = getwd(), SessionObj = NULL) {
       }) %>%
     stringr::str_c(Path, "/", ., ".txt")
 
+  capture.output(IASDT.R::InfoChunk("Time saved: "), file = FileName, append = TRUE)
+  capture.output(IASDT.R::InfoChunk("Session Info"), file = FileName, append = TRUE)
+
   capture.output(sessioninfo::session_info(), file = FileName)
 
   if (magrittr::not(is.null(SessionObj))) {
     capture.output(
       IASDT.R::InfoChunk("Objects in the current session"),
       file = FileName, append = TRUE)
-    SessionObj %>%
-      print(n = Inf) %>%
-      capture.output(file = FileName, append = TRUE, type = "output")
+
+    sink(FileName, append = TRUE)
+    print.data.frame(tibble::tibble(SessionObj), row.names = FALSE)
+    sink()
   }
 
   return(invisible(NULL))

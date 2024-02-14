@@ -4,10 +4,18 @@
 \alias{SaveSessionInfo}
 \title{Save all objects (except functions) of the global environment as list items}
 \usage{
-SaveSessionInfo(Path = getwd(), SessionObj = NULL)
+SaveSessionInfo(
+  Path = getwd(),
+  Time = lubridate::now(tzone = "CET"),
+  SessionObj = NULL
+)
 }
 \arguments{
 \item{Path}{Path of where to save the output RData file}
+
+\item{Time}{time to be assigned to file name}
+
+\item{SessionObj}{List of objects and their sizes (typically a a result of \code{IASDT::SaveSession} function)}
 }
 \description{
 Save all objects (except functions) of the global environment as list items

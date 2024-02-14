@@ -103,7 +103,7 @@ SaveSession <- function(Path = getwd(), ExcludeObs = NULL) {
     purrr::map(
       .f = ~{
         Obj <- get(.x, envir = .GlobalEnv)
-        if(class(Obj)[1] == "SpatRaster") {
+        if (class(Obj)[1] == "SpatRaster") {
           suppressWarnings(terra::wrap(Obj))
         } else {
           Obj
@@ -170,12 +170,11 @@ SaveSessionInfo <- function(
 
   capture.output(IASDT.R::InfoChunk("Time saved: "), file = FileName, append = TRUE)
   capture.output(IASDT.R::InfoChunk("Session Info"), file = FileName, append = TRUE)
-
-  capture.output(sessioninfo::session_info(), file = FileName)
+  capture.output(sessioninfo::session_info(), file = FileName, append = TRUE)
 
   if (magrittr::not(is.null(SessionObj))) {
     capture.output(
-      IASDT.R::InfoChunk("Objects in the current session"),
+      IASDT.R::InfoChunk("Objects in the current session (Size in megabytes)"),
       file = FileName, append = TRUE)
 
     sink(FileName, append = TRUE)
@@ -1057,7 +1056,7 @@ LoadPackages <- function(..., List = NULL, Verbose = FALSE) {
     suppressWarnings() %>%
     suppressMessages()
 
-  if (Verbose & length(PG) > 0) {
+  if (Verbose && length(PG) > 0) {
     cat("\nThe following packages were loaded:\n")
     PG %>%
       purrr::map_chr(~{

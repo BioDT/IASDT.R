@@ -66,7 +66,7 @@ Match_to_GBIF <- function(
     dplyr::filter(!is.na(.data$usageKey)) %>%
     dplyr::distinct() %>%
     # filter only if phylum column exists
-    dplyr::filter({if ("phylum" %in% names(.)) phylum else NULL} == "Tracheophyta")
+    dplyr::filter((if ("phylum" %in% names(.)) phylum else NULL) == "Tracheophyta")
 
   # retrieve best matches
   best_matches <- lapply(all_matches, function(x) x$data) %>%
@@ -77,7 +77,7 @@ Match_to_GBIF <- function(
     ) %>%
     data.table::rbindlist(fill = TRUE) %>%
     dplyr::distinct() %>%
-    dplyr::filter({if ("phylum" %in% names(.)) phylum else NULL} == "Tracheophyta")
+    dplyr::filter((if ("phylum" %in% names(.)) phylum else NULL) == "Tracheophyta")
 
   matched <- best_matches %>%
     dplyr::filter(!(.data$matchType %in% c("NONE", "HIGHERRANK")))
@@ -86,7 +86,7 @@ Match_to_GBIF <- function(
     alternative_matches %>%
       # use only vascular plants
       # filter only if phylum column exists
-      dplyr::filter({if ("phylum" %in% names(.)) phylum else NULL} == "Tracheophyta") %>%
+      dplyr::filter((if ("phylum" %in% names(.)) phylum else NULL) == "Tracheophyta") %>%
       dplyr::filter(.data$confidence >= 0) %>%
       dplyr::filter(!taxon_id %in% matched$taxon_id)
   )

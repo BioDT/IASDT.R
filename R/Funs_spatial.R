@@ -405,7 +405,7 @@ sf_add_coords <- function(Sf_Obj, NameX = "Long", NameY = "Lat", Overwrite = FAL
 
   if (any(NameX %in% ColNames || NameY %in% ColNames)) {
     if (Overwrite) {
-      warning('Provided column names for longitude and Latitude already exist in the data; these columns were overwritten')
+      warning("Provided column names for longitude and Latitude already exist in the data; these columns were overwritten")
       Sf_Obj <- dplyr::select(Sf_Obj, -dplyr::all_of(c(NameX, NameY)))
     } else {
       warning('Provided column names for longitude and Latitude already exist in the data; "_NEW" is used as suffix')
@@ -555,12 +555,16 @@ GridCross <- function(DT) {
           dplyr::select(X, Y)
 
         Horiz <- SS2 %>%
-          dplyr::reframe(X = X, Y = { min(Y) + (max(Y) - min(Y)) / 2 }) %>%
+          dplyr::reframe(
+            X = X,
+            Y = (min(Y) + (max(Y) - min(Y)) / 2)) %>%
           dplyr::distinct() %>%
           as.matrix() %>%
           sf::st_linestring()
         Vert <- SS2 %>%
-          dplyr::reframe(X = { min(X) + (max(X) - min(X)) / 2 }, Y = Y) %>%
+          dplyr::reframe(
+            X = (min(X) + (max(X) - min(X)) / 2),
+            Y = Y) %>%
           dplyr::distinct() %>%
           as.matrix() %>%
           sf::st_linestring()

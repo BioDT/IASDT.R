@@ -169,7 +169,9 @@ SaveSessionInfo <- function(Path = getwd(), SessionObj = NULL) {
     capture.output(
       IASDT.R::InfoChunk("Objects in the current session"),
       file = FileName, append = TRUE)
-    capture.output(SessionObj, file = FileName, append = TRUE)
+    SessionObj %>%
+      print(n = Inf) %>%
+      capture.output(file = FileName, append = TRUE, type = "output")
   }
 
   return(invisible(NULL))

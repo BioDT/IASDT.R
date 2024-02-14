@@ -170,8 +170,7 @@ SaveSessionInfo <- function(
 
   capture.output(IASDT.R::InfoChunk("Time saved: "), file = FileName, append = TRUE)
   capture.output(IASDT.R::InfoChunk("Session Info"), file = FileName, append = TRUE)
-
-  capture.output(sessioninfo::session_info(), file = FileName)
+  capture.output(sessioninfo::session_info(), file = FileName, append = TRUE)
 
   if (magrittr::not(is.null(SessionObj))) {
     capture.output(

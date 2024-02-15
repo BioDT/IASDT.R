@@ -81,6 +81,7 @@ InfoChunk <- function(Message = "", ...) {
 SaveSession <- function(Path = getwd(), ExcludeObs = NULL) {
 
   IASDT.R::DirCreate(Path, Verbose = FALSE)
+
   ExcludeObs <- c(ExcludeObs, "Grid_10_sf_s", "Grid_10_Raster", "Bound_sf_Eur_s", "Bound_sf_Eur")
 
   AllObjs <- ls(envir = .GlobalEnv) %>%
@@ -145,17 +146,13 @@ SaveSession <- function(Path = getwd(), ExcludeObs = NULL) {
 #'
 #' @param Path Path of where to save the output RData file
 #' @param SessionObj List of objects and their sizes (typically a a result of `IASDT::SaveSession` function)
-#' @param Time time to be assigned to file name
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
-SaveSessionInfo <- function(
-    Path = getwd(),
-    Time = lubridate::now(tzone = "CET"),
-    SessionObj = NULL) {
+SaveSessionInfo <- function(Path = getwd(), SessionObj = NULL) {
 
-  FileName <- Time %>%
+  FileName <- lubridate::now(tzone = "CET") %>%
     purrr::map_chr(
       .f = ~{
         c(lubridate::year(.x), lubridate::month(.x),
@@ -168,13 +165,12 @@ SaveSessionInfo <- function(
       }) %>%
     stringr::str_c(Path, "/", ., ".txt")
 
-  capture.output(IASDT.R::InfoChunk("Time saved: "), file = FileName, append = TRUE)
   capture.output(IASDT.R::InfoChunk("Session Info"), file = FileName, append = TRUE)
   capture.output(sessioninfo::session_info(), file = FileName, append = TRUE)
 
   if (magrittr::not(is.null(SessionObj))) {
     capture.output(
-      IASDT.R::InfoChunk("Objects in the current session (Size in megabytes)"),
+      IASDT.R::InfoChunk("Objects in the current session (except functions and\npre-selected objects; Size in megabytes)"),
       file = FileName, append = TRUE)
 
     sink(FileName, append = TRUE)

@@ -74,11 +74,12 @@ InfoChunk <- function(Message = "", ...) {
 #'
 #' @param Path Path of where to save the output RData file
 #' @param ExcludeObs objects not to save
+#' @param Prefix file prefix
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
-SaveSession <- function(Path = getwd(), ExcludeObs = NULL) {
+SaveSession <- function(Path = getwd(), ExcludeObs = NULL, Prefix = "S") {
 
   IASDT.R::DirCreate(Path, Verbose = FALSE)
 
@@ -110,7 +111,7 @@ SaveSession <- function(Path = getwd(), ExcludeObs = NULL) {
           Obj
         }
       }) %>%
-    setNames(AllObjs)
+    stats::setNames(AllObjs)
 
   FF2 <- lubridate::now(tzone = "CET") %>%
     purrr::map_chr(
@@ -121,8 +122,9 @@ SaveSession <- function(Path = getwd(), ExcludeObs = NULL) {
           sapply(stringr::str_pad, width = 2, pad = "0") %>%
           stringr::str_c(collapse = "") %>%
           stringr::str_replace_all("__", "_") %>%
-          stringr::str_c("S_", ., collapse = "_")
+          stringr::str_c(Prefix, "_", ., collapse = "_")
       })
+
   IASDT.R::SaveAs(
     InObj = AllObjs, OutObj = FF2,
     OutPath = file.path(Path, paste0(FF2, ".RData")))
@@ -146,11 +148,12 @@ SaveSession <- function(Path = getwd(), ExcludeObs = NULL) {
 #'
 #' @param Path Path of where to save the output RData file
 #' @param SessionObj List of objects and their sizes (typically a a result of `IASDT::SaveSession` function)
+#' @param Prefix file prefix
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
-SaveSessionInfo <- function(Path = getwd(), SessionObj = NULL) {
+SaveSessionInfo <- function(Path = getwd(), SessionObj = NULL, Prefix = "S") {
 
   FileName <- lubridate::now(tzone = "CET") %>%
     purrr::map_chr(
@@ -161,15 +164,17 @@ SaveSessionInfo <- function(Path = getwd(), SessionObj = NULL) {
           sapply(stringr::str_pad, width = 2, pad = "0") %>%
           stringr::str_c(collapse = "") %>%
           stringr::str_replace_all("__", "_") %>%
-          stringr::str_c("S_", ., collapse = "_")
+          stringr::str_c(Prefix, "_", ., collapse = "_")
       }) %>%
     stringr::str_c(Path, "/", ., ".txt")
 
-  capture.output(IASDT.R::InfoChunk("Session Info"), file = FileName, append = TRUE)
-  capture.output(sessioninfo::session_info(), file = FileName, append = TRUE)
+  IASDT.R::InfoChunk("Session Info") %>%
+    utils::capture.output(file = FileName, append = TRUE)
+  sessioninfo::session_info() %>%
+    utils::capture.output(file = FileName, append = TRUE)
 
   if (magrittr::not(is.null(SessionObj))) {
-    capture.output(
+    utils::capture.output(
       IASDT.R::InfoChunk("Objects in the current session (except functions and\npre-selected objects; Size in megabytes)"),
       file = FileName, append = TRUE)
 
@@ -842,6 +847,7 @@ SaveAs <- function(InObj, OutObj, OutPath) {
 #' @param OutFolder output path
 #' @param Overwrite overwrite existing files? If file already exist, no files are saved unless `Overwrite` argument is set as `TRUE`
 #' @param Prefix String prefix of the output file
+#' @param Verbose Show message after saving files
 #' @name SaveMultiple
 #' @author Ahmed El-Gabbas
 #' @return NULL
@@ -890,7 +896,8 @@ SaveAs <- function(InObj, OutObj, OutPath) {
 #' (x3Contents <- LoadAs(file.path(TMP_Folder, "x3.RData")))
 
 SaveMultiple <- function(
-    Vars = NULL, OutFolder = getwd(), Overwrite = FALSE, Prefix = "", Verbose = FALSE) {
+    Vars = NULL, OutFolder = getwd(),
+    Overwrite = FALSE, Prefix = "", Verbose = FALSE) {
 
   SkipFun <- any(
     is.null(Vars), !inherits(Vars, "character"),

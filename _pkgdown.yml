@@ -74,6 +74,7 @@ reference:
   - integer_breaks
   - InfoChunk
   - SaveSession
+  - SaveSessionInfo
 
 - title: Spatial functions
   desc:

@@ -4,12 +4,14 @@
 \alias{SaveSessionInfo}
 \title{Save all objects (except functions) of the global environment as list items}
 \usage{
-SaveSessionInfo(Path = getwd(), SessionObj = NULL)
+SaveSessionInfo(Path = getwd(), SessionObj = NULL, Prefix = "S")
 }
 \arguments{
 \item{Path}{Path of where to save the output RData file}
 
 \item{SessionObj}{List of objects and their sizes (typically a a result of \code{IASDT::SaveSession} function)}
+
+\item{Prefix}{file prefix}
 }
 \description{
 Save all objects (except functions) of the global environment as list items

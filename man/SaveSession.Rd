@@ -4,12 +4,14 @@
 \alias{SaveSession}
 \title{Save all objects (except functions) of the global environment as list items}
 \usage{
-SaveSession(Path = getwd(), ExcludeObs = NULL)
+SaveSession(Path = getwd(), ExcludeObs = NULL, Prefix = "S")
 }
 \arguments{
 \item{Path}{Path of where to save the output RData file}
 
 \item{ExcludeObs}{objects not to save}
+
+\item{Prefix}{file prefix}
 }
 \description{
 Save all objects (except functions) of the global environment as list items

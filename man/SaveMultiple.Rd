@@ -20,6 +20,8 @@ SaveMultiple(
 \item{Overwrite}{overwrite existing files? If file already exist, no files are saved unless \code{Overwrite} argument is set as \code{TRUE}}
 
 \item{Prefix}{String prefix of the output file}
+
+\item{Verbose}{Show message after saving files}
 }
 \description{
 Save multiple objects to their respective \code{.RData} files

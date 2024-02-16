@@ -1,7 +1,7 @@
 Type: Package
 Package: IASDT.R
 Title: Helper R functions for IAS-DT project
-Version: 0.0.3
+Version: 0.0.4
 Authors@R: 
     person("Ahmed", "El-Gabbas", , "ahmed.el-gabbas@ufz.de", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-2225-088X"))
@@ -41,6 +41,7 @@ Suggests:
     rstudioapi,
     rvest,
     rworldmap,
+    sessioninfo,
     sf,
     sp,
     stats,

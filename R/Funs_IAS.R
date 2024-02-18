@@ -574,23 +574,23 @@ Chelsa_Prepare_List <- function(
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 # |---------------------------------------------------| #
-# Chelsa_Process ----
+# Chelsa_Project ----
 # |---------------------------------------------------| #
 
-#' Processing Chelsa data
+#' Project Chelsa data
 #'
-#' Processing Chelsa data
-#' @name Chelsa_Process
-#' @param InputFile Input tif file
-#' @param OutFile Output tif file
-#' @param GridFile Path for the `*.RData` file containing the reference grid. This grid will be used as reference grid for projection and the resulted file will be masked to it
+#' Project Chelsa data
+#' @name Chelsa_Project
+#' @param InputFile Path for input tif file
+#' @param OutFile Path for output tif file
+#' @param GridFile `raster` or `SpatRaster` for the reference grid. This grid will be used as reference grid for projection and the resulted file will be masked to it
 #' @param ReturnMap logical; should the processed map be returned by the end of the function?
 #' @param Verbose should the name of the processed file be printed to the console
 #' @returns if `ReturnMap = TRUE`, the output raster object is returned; otherwise nothing is returned. The `*.tif` files are saved to disk anyway.
 #' @author Ahmed El-Gabbas
 #' @export
 
-Chelsa_Process <- function(
+Chelsa_Project <- function(
     InputFile = NULL, OutFile = NULL, GridFile = NULL,
     ReturnMap = FALSE, Verbose = FALSE) {
 
@@ -598,9 +598,11 @@ Chelsa_Process <- function(
   suppressWarnings(suppressMessages(library(raster)))
   suppressWarnings(suppressMessages(library(terra)))
 
-  GridR <- GridFile %>%
-    IASDT.R::LoadAs() %>%
-    terra::rast()
+  if (inherits(GridFile, "RasterLayer")) {
+    GridR <- terra::rast(GridFile)
+  } else {
+    GridR <- GridFile
+  }
 
   # although it is not necessary to crop the input maps into the European boundaries, we will crop the data prior to projection. Cropping will make the values of the raster read from memory not from the file. This is a workaround to avoid wrong extreme values in the output file because of a bug in terra package (see this issue: https://github.com/rspatial/terra/issues/1356) [18.02.2023]
   CropExtent <- terra::ext(-30, 50, 25, 75)

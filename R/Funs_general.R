@@ -73,17 +73,17 @@ InfoChunk <- function(Message = "", ...) {
 #' Save all objects (except functions) of the global environment as list items
 #'
 #' @param Path Path of where to save the output RData file
-#' @param ExcludeObs objects not to save
+#' @param ExcludeObj objects not to save
 #' @param Prefix file prefix
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
-SaveSession <- function(Path = getwd(), ExcludeObs = NULL, Prefix = "S") {
+SaveSession <- function(Path = getwd(), ExcludeObj = NULL, Prefix = "S") {
 
   IASDT.R::DirCreate(Path, Verbose = FALSE)
 
-  ExcludeObs <- c(ExcludeObs, "Grid_10_sf_s", "Grid_10_Raster", "Bound_sf_Eur_s", "Bound_sf_Eur")
+  ExcludeObj <- c(ExcludeObj, "Grid_10_sf_s", "Grid_10_Raster", "Bound_sf_Eur_s", "Bound_sf_Eur")
 
   AllObjs <- ls(envir = .GlobalEnv) %>%
     tibble::tibble(Object = .) %>%
@@ -98,7 +98,7 @@ SaveSession <- function(Path = getwd(), ExcludeObs = NULL, Prefix = "S") {
       )) %>%
     dplyr::filter(
       Class != "function",
-      magrittr::not(Object %in% ExcludeObs)) %>%
+      magrittr::not(Object %in% ExcludeObj)) %>%
     dplyr::pull(Object)
 
   AllObjs <- AllObjs %>%

@@ -10,7 +10,8 @@ Chelsa_Project(
   GridFile = NULL,
   ReturnMap = FALSE,
   Verbose = FALSE,
-  KeepDownloaded = TRUE
+  KeepDownloaded = TRUE,
+  DownPath = NULL
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ Chelsa_Project(
 \item{Verbose}{should the name of the processed file be printed to the console}
 
 \item{KeepDownloaded}{if URL is provided as input file, the file will be downloaded to disk first before processing. Should the downloaded file be kept in disk.}
+
+\item{DownPath}{Where to save downloaded files}
 }
 \value{
 if \code{ReturnMap = TRUE}, the output raster object is returned; otherwise nothing is returned. The \verb{*.tif} files are saved to disk anyway.

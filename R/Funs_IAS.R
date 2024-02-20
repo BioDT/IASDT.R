@@ -587,13 +587,16 @@ Chelsa_Prepare_List <- function(
 #' @param ReturnMap logical; should the processed map be returned by the end of the function?
 #' @param Verbose should the name of the processed file be printed to the console
 #' @param KeepDownloaded if URL is provided as input file, the file will be downloaded to disk first before processing. Should the downloaded file be kept in disk.
+#' @param DownPath Where to save downloaded files
 #' @returns if `ReturnMap = TRUE`, the output raster object is returned; otherwise nothing is returned. The `*.tif` files are saved to disk anyway.
 #' @author Ahmed El-Gabbas
 #' @export
 
+
+
 Chelsa_Project <- function(
-    InputFile = NULL, OutFile = NULL, GridFile = NULL,
-    ReturnMap = FALSE, Verbose = FALSE, KeepDownloaded = TRUE) {
+    InputFile = NULL, OutFile = NULL, GridFile = NULL, ReturnMap = FALSE,
+    Verbose = FALSE, KeepDownloaded = TRUE, DownPath = NULL) {
 
   suppressWarnings(suppressMessages(library(dplyr)))
   suppressWarnings(suppressMessages(library(raster)))
@@ -608,15 +611,20 @@ Chelsa_Project <- function(
   Remote <- dplyr::if_else(stringr::str_detect(InputFile, "^http"), TRUE, FALSE)
   if (Remote) {
     options(timeout = max(300, getOption("timeout")))
-    TifFilePath <- stringr::str_replace(OutFile, "Tif_Output", "Tif_Input")
-    download.file(url = InputFile, destfile = TifFilePath, quiet = TRUE, mode = "wb")
+
+    DownPath <- dplyr::if_else(
+      is.null(DownPath),
+      stringr::str_replace(OutFile, "Tif_Output", "Tif_Input"),
+      DownPath)
+    IASDT.R::DirCreate(DownPath, Verbose = FALSE)
+    download.file(url = InputFile, destfile = DownPath, quiet = TRUE, mode = "wb")
   } else {
-    TifFilePath <- InputFile
+    DownPath <- InputFile
   }
 
 
   # read tif file as terra SpatRaster object
-  Rstr <- terra::rast(TifFilePath) %>%
+  Rstr <- terra::rast(DownPath) %>%
     # crop to European boundaries
     # although it is not necessary to crop the input maps into the European boundaries, we will crop the data prior to projection. Cropping will make the values of the raster read from memory not from the file. This is a workaround to avoid wrong extreme values in the output file because of a bug in terra package (see this issue: https://github.com/rspatial/terra/issues/1356) [18.02.2023]
     terra::crop(terra::ext(-30, 50, 25, 75))
@@ -670,8 +678,8 @@ Chelsa_Project <- function(
     }
   }
 
-  if (!KeepDownloaded) {
-    file.remove(TifFilePath)
+  if (Remote && !KeepDownloaded) {
+    file.remove(DownPath)
   }
 
   if (ReturnMap) {

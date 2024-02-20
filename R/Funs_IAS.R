@@ -605,21 +605,20 @@ Chelsa_Project <- function(
     GridR <- GridFile
   }
 
-  # although it is not necessary to crop the input maps into the European boundaries, we will crop the data prior to projection. Cropping will make the values of the raster read from memory not from the file. This is a workaround to avoid wrong extreme values in the output file because of a bug in terra package (see this issue: https://github.com/rspatial/terra/issues/1356) [18.02.2023]
-  CropExtent <- terra::ext(-30, 50, 25, 75)
-
-  Rstr <- InputFile %>%
-    # read tif file as terra SpatRaster object
-    terra::rast()
+  # read tif file as terra SpatRaster object
+  Rstr <- terra::rast(InputFile) %>%
+    # crop to European boundaries
+    # although it is not necessary to crop the input maps into the European boundaries, we will crop the data prior to projection. Cropping will make the values of the raster read from memory not from the file. This is a workaround to avoid wrong extreme values in the output file because of a bug in terra package (see this issue: https://github.com/rspatial/terra/issues/1356) [18.02.2023]
+    terra::crop(terra::ext(-30, 50, 25, 75))
 
   Method <- dplyr::if_else(
     stringr::str_detect(names(Rstr), "kg[0-5]"), "mode", "average")
 
+  # gsp layer contains extremely high values instead of NA; the following replace extreme values with NA
+  Rstr[Rstr > 420000000] <- NA
+
   Rstr <- Rstr %>%
-    # crop to European boundaries, see above
-    terra::crop(CropExtent) %>%
-    # gsp layer contains extremely high values instead of NA; the following replace extreme values with NA
-    terra::classify(cbind(429496720, Inf, NA)) %>%
+    # terra::classify(cbind(429496720, Inf, NA)) %>%
     # project to reference grid
     terra::project(GridR, method = Method, threads = TRUE) %>%
     # mask to the reference grid
@@ -628,7 +627,7 @@ Chelsa_Project <- function(
     raster::raster()
 
   # For npp layers, all tiff maps except for current climate does have a scaling factor
-  npp_Pattern <- stringr::str_c("npp_2011_2040_.+", "npp_2041_2070_.+", "npp_2071_2100_.+", sep = "|")
+  npp_Pattern <- stringr::str_c("CHELSA_npp_2011", "CHELSA_npp_2041", "CHELSA_npp_2071", sep = "|")
   if (stringr::str_detect(names(Rstr), npp_Pattern)) {
     Rstr <- Rstr * 0.1
   }

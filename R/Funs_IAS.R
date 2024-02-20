@@ -586,6 +586,7 @@ Chelsa_Prepare_List <- function(
 #' @param GridFile `raster` or `SpatRaster` for the reference grid. This grid will be used as reference grid for projection and the resulted file will be masked to it
 #' @param ReturnMap logical; should the processed map be returned by the end of the function?
 #' @param Verbose should the name of the processed file be printed to the console
+#' @param Method Method used for estimating the new cell values
 #' @returns if `ReturnMap = TRUE`, the output raster object is returned; otherwise nothing is returned. The `*.tif` files are saved to disk anyway.
 #' @author Ahmed El-Gabbas
 #' @export
@@ -609,11 +610,16 @@ Chelsa_Project <- function(
 
   Rstr <- InputFile %>%
     # read tif file as terra SpatRaster object
-    terra::rast() %>%
+    terra::rast()
+
+  Method <- dplyr::if_else(
+    stringr::str_detect(names(Rstr), "kg[0-5]"), "mode", "average")
+
+  Rstr <- Rstr %>%
     # crop to European boundaries, see above
     terra::crop(CropExtent) %>%
     # project to reference grid
-    terra::project(GridR, method = "average", threads = TRUE) %>%
+    terra::project(GridR, method = Method, threads = TRUE) %>%
     # mask to the reference grid
     terra::mask(GridR) %>%
     # convert back to raster object

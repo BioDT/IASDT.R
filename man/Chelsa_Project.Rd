@@ -22,6 +22,8 @@ Chelsa_Project(
 \item{ReturnMap}{logical; should the processed map be returned by the end of the function?}
 
 \item{Verbose}{should the name of the processed file be printed to the console}
+
+\item{Method}{Method used for estimating the new cell values}
 }
 \value{
 if \code{ReturnMap = TRUE}, the output raster object is returned; otherwise nothing is returned. The \verb{*.tif} files are saved to disk anyway.

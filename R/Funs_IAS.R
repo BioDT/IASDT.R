@@ -629,9 +629,9 @@ Chelsa_Project <- function(
 
   # For npp layers, all tiff maps except for current climate does have a scaling factor
   npp_Pattern <- stringr::str_c("npp_2011_2040_.+", "npp_2041_2070_.+", "npp_2071_2100_.+", sep = "|")
-  Rstr <- dplyr::if_else(
-    stringr::str_detect(names(Rstr), npp_Pattern),
-    Rstr * 0.1, Rstr)
+  if (stringr::str_detect(names(Rstr), npp_Pattern)) {
+    Rstr <- Rstr * 0.1
+  }
 
   # Ensure that the object is located in memory, not reading from temporary file
   # This may not be necessary as we save the file as .tif file not .RData

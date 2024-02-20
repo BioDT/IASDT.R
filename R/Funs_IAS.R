@@ -618,12 +618,20 @@ Chelsa_Project <- function(
   Rstr <- Rstr %>%
     # crop to European boundaries, see above
     terra::crop(CropExtent) %>%
+    # gsp layer contains extremely high values instead of NA; the following replace extreme values with NA
+    terra::classify(cbind(429496720, Inf, NA)) %>%
     # project to reference grid
     terra::project(GridR, method = Method, threads = TRUE) %>%
     # mask to the reference grid
     terra::mask(GridR) %>%
     # convert back to raster object
     raster::raster()
+
+  # For npp layers, all tiff maps except for current climate does have a scaling factor
+  npp_Pattern <- stringr::str_c("npp_2011_2040_.+", "npp_2041_2070_.+", "npp_2071_2100_.+", sep = "|")
+  Rstr <- dplyr::if_else(
+    stringr::str_detect(names(Rstr), npp_Pattern),
+    Rstr * 0.1, Rstr)
 
   # Ensure that the object is located in memory, not reading from temporary file
   # This may not be necessary as we save the file as .tif file not .RData

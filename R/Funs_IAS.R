@@ -615,9 +615,11 @@ Chelsa_Project <- function(
     DownPath <- dplyr::if_else(
       is.null(DownPath),
       stringr::str_replace(OutFile, "Tif_Output", "Tif_Input"),
-      DownPath)
-    IASDT.R::DirCreate(DownPath, Verbose = FALSE)
+      file.path(DownPath, basename(InputFile)))
+
+    IASDT.R::DirCreate(dirname(DownPath), Verbose = FALSE)
     download.file(url = InputFile, destfile = DownPath, quiet = TRUE, mode = "wb")
+
   } else {
     DownPath <- InputFile
   }

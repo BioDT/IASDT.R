@@ -608,7 +608,7 @@ Chelsa_Project <- function(
   Remote <- dplyr::if_else(stringr::str_detect(InputFile, "^http"), TRUE, FALSE)
   if (Remote) {
     options(timeout = max(300, getOption("timeout")))
-    TifFilePath <- stringr::str_replace(OutFile, "Tif_Output", "Tif_input")
+    TifFilePath <- stringr::str_replace(OutFile, "Tif_Output", "Tif_Input")
     download.file(url = InputFile, destfile = TifFilePath, quiet = TRUE, mode = "wb")
   } else {
     TifFilePath <- InputFile

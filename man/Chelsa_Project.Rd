@@ -9,11 +9,12 @@ Chelsa_Project(
   OutFile = NULL,
   GridFile = NULL,
   ReturnMap = FALSE,
-  Verbose = FALSE
+  Verbose = FALSE,
+  KeepDownloaded = TRUE
 )
 }
 \arguments{
-\item{InputFile}{Path for input tif file}
+\item{InputFile}{Path or URL for input tif file}
 
 \item{OutFile}{Path for output tif file}
 
@@ -23,7 +24,7 @@ Chelsa_Project(
 
 \item{Verbose}{should the name of the processed file be printed to the console}
 
-\item{Method}{Method used for estimating the new cell values}
+\item{KeepDownloaded}{if URL is provided as input file, the file will be downloaded to disk first before processing. Should the downloaded file be kept in disk.}
 }
 \value{
 if \code{ReturnMap = TRUE}, the output raster object is returned; otherwise nothing is returned. The \verb{*.tif} files are saved to disk anyway.

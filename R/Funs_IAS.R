@@ -592,8 +592,6 @@ Chelsa_Prepare_List <- function(
 #' @author Ahmed El-Gabbas
 #' @export
 
-
-
 Chelsa_Project <- function(
     InputFile = NULL, OutFile = NULL, GridFile = NULL, ReturnMap = FALSE,
     Verbose = FALSE, KeepDownloaded = TRUE, DownPath = NULL) {
@@ -647,7 +645,8 @@ Chelsa_Project <- function(
     raster::raster()
 
   # For npp layers, all tiff maps except for current climate does have a scaling factor
-  npp_Pattern <- stringr::str_c("CHELSA_npp_2011", "CHELSA_npp_2041", "CHELSA_npp_2071", sep = "|")
+  npp_Pattern <- stringr::str_c(
+    "CHELSA_npp_2011", "CHELSA_npp_2041", "CHELSA_npp_2071", sep = "|")
   if (stringr::str_detect(names(Rstr), npp_Pattern)) {
     Rstr <- Rstr * 0.1
   }

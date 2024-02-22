@@ -622,22 +622,25 @@ Chelsa_Project <- function(
     DownPath <- InputFile
   }
 
+
+
+
   CropExtent <- terra::ext(-30, 50, 30, 75)
 
   # Land mask
   LandMaskL <- system.file(
     "extdata", "LandMask.nc", package = "IASDT.R", mustWork = TRUE) %>%
     terra::rast() %>%
-    terra::crop(CropExtent)
+    terra::crop(CropExtent) %>%
+    terra::classify(cbind(0, NA))
 
   # read tif file as terra SpatRaster object
   Rstr <- terra::rast(DownPath) %>%
     # crop to European boundaries
     # although it is not necessary to crop the input maps into the European boundaries, we will crop the data prior to projection. Cropping will make the values of the raster read from memory not from the file. This is a workaround to avoid wrong extreme values in the output file because of a bug in terra package (see this issue: https://github.com/rspatial/terra/issues/1356) [18.02.2023]
-    terra::crop(CropExtent)
-
-  # mask by land mask
-  Rstr[LandMaskL == 0] <- NA
+    terra::crop(CropExtent) %>%
+    # mask by land mask
+    terra::mask(LandMaskL)
 
   Method <- dplyr::if_else(
     stringr::str_detect(names(Rstr), "kg[0-5]"), "mode", "average")
@@ -646,7 +649,6 @@ Chelsa_Project <- function(
   Rstr[Rstr > 420000000] <- NA
 
   Rstr <- Rstr %>%
-    # terra::classify(cbind(429496720, Inf, NA)) %>%
     # project to reference grid
     terra::project(GridR, method = Method, threads = TRUE) %>%
     # mask to the reference grid

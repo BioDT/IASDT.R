@@ -13,7 +13,7 @@ sf_add_coords(Sf_Obj, NameX = "Long", NameY = "Lat", Overwrite = FALSE)
 
 \item{NameY}{Name of the latitude column to be added}
 
-\item{Overwrite}{Should columns \code{NameX} or \code{NameY} be overwriten if these columns exist in the original data}
+\item{Overwrite}{Should columns \code{NameX} or \code{NameY} be overwritten if these columns exist in the original data}
 }
 \description{
 Add coordinates of the current sf object as columns

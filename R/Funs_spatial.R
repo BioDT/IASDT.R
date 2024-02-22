@@ -380,7 +380,7 @@ CheckStackInMemory <- function(Stack = NULL) {
 #' @param Sf_Obj input sf object
 #' @param NameX Name of the longitude column to be added
 #' @param NameY Name of the latitude column to be added
-#' @param Overwrite Should columns `NameX` or `NameY` be overwriten if these columns exist in the original data
+#' @param Overwrite Should columns `NameX` or `NameY` be overwritten if these columns exist in the original data
 #' @author Ahmed El-Gabbas
 #' @export
 #' @examples

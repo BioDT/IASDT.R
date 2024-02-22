@@ -7,7 +7,7 @@
 SplitDF2Chunks(DF = NULL, ChunkSize = NULL, NChunks = NULL, Prefix = "Chunk")
 }
 \arguments{
-\item{DF}{dataframe to split}
+\item{DF}{the data frame to split}
 
 \item{ChunkSize}{number of rows per chunk}
 

@@ -727,7 +727,7 @@ SplitVector <- function(Vector = NULL, NSplit = NULL, Prefix = "Chunk") {
 #' Split data.frame into smaller chunks
 #'
 #' Split data.frame into smaller chunks
-#' @param DF dataframe to split
+#' @param DF the data frame to split
 #' @param ChunkSize number of rows per chunk
 #' @param NChunks number of chunks (only if `ChunkSize` not provided)
 #' @param Prefix prefix
@@ -1587,7 +1587,7 @@ AddImg2Plot <- function(
 #' @param H Horizontal line? if H == FALSE, vertical line will be added. Default: `TRUE`
 #' @param ... Other arguments
 #' @examples
-#' # Hotizontal line
+#' # Horizontal line
 #' par(oma = c(1, 1, 1, 1), mar = c(3, 3, 1, 1))
 #' plot(1:100)
 #' AddLine(at = 0.75)

@@ -19,7 +19,7 @@ AddLine(at = NULL, Outer = FALSE, H = TRUE, ...)
 Add a line to the current plot
 }
 \examples{
-# Hotizontal line
+# Horizontal line
 par(oma = c(1, 1, 1, 1), mar = c(3, 3, 1, 1))
 plot(1:100)
 AddLine(at = 0.75)

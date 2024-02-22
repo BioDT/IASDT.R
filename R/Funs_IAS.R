@@ -596,18 +596,35 @@ Chelsa_Project <- function(
     InputFile = NULL, OutFile = NULL, GridFile = NULL, ReturnMap = FALSE,
     Verbose = FALSE, KeepDownloaded = TRUE, DownPath = NULL) {
 
-  suppressWarnings(suppressMessages(library(dplyr)))
-  suppressWarnings(suppressMessages(library(raster)))
-  suppressWarnings(suppressMessages(library(terra)))
+  # ||||||||||||||||||||||||||||||||||||||||
+  # Ensure that some packages are loaded
+  # ||||||||||||||||||||||||||||||||||||||||
 
+  IASDT.R::LoadPackages("dplyr", "raster", "terra") %>%
+    suppressMessages() %>%
+    suppressWarnings()
+
+  # ||||||||||||||||||||||||||||||||||||||||
+  # Loading reference grid
+  # ||||||||||||||||||||||||||||||||||||||||
   if (inherits(GridFile, "RasterLayer")) {
     GridR <- terra::rast(GridFile)
   } else {
-    GridR <- GridFile
+
+    if (inherits(GridFile, "PackedSpatRaster")) {
+      GridR <- terra::unwrap(GridFile)
+    } else {
+      GridR <- GridFile
+    }
   }
+
+  # ||||||||||||||||||||||||||||||||||||||||
+  # Remote or local
+  # ||||||||||||||||||||||||||||||||||||||||
 
   Remote <- dplyr::if_else(stringr::str_detect(InputFile, "^http"), TRUE, FALSE)
   if (Remote) {
+    # increase time out to allow more time to download the input file
     options(timeout = max(300, getOption("timeout")))
 
     DownPath <- dplyr::if_else(
@@ -616,59 +633,154 @@ Chelsa_Project <- function(
       file.path(DownPath, basename(InputFile)))
 
     IASDT.R::DirCreate(dirname(DownPath), Verbose = FALSE)
-    download.file(url = InputFile, destfile = DownPath, quiet = TRUE, mode = "wb")
+    utils::download.file(url = InputFile, destfile = DownPath, quiet = TRUE, mode = "wb")
 
   } else {
     DownPath <- InputFile
   }
 
-
-
-
-  CropExtent <- terra::ext(-30, 50, 30, 75)
-
+  # ||||||||||||||||||||||||||||||||||||||||
   # Land mask
+  # ||||||||||||||||||||||||||||||||||||||||
+
+  # Extent to crop the maps prior to processing.
+  # This ensures that the object reads from the memory. See below
+  CropExtent <- terra::ext(-30, 50, 35, 75)
+
+  # source: CHELSA-W5E5 v1.0: W5E5 v1.0 downscaled with CHELSA v2.0
+  # https://data.isimip.org/10.48364/ISIMIP.836809.3
+  # Version: 1.0.3
+  # this file is copied to the package data to make it easier to use it
   LandMaskL <- system.file(
     "extdata", "LandMask.nc", package = "IASDT.R", mustWork = TRUE) %>%
     terra::rast() %>%
     terra::crop(CropExtent) %>%
     terra::classify(cbind(0, NA))
 
+  # ||||||||||||||||||||||||||||||||||||||||
+  # Extract scale and offset value
+  # ||||||||||||||||||||||||||||||||||||||||
+
+  ScaleOffset_F <- function(x) {
+    VarsScaleOffSet <- tibble::tribble(
+      ~Var, ~scale, ~offset,
+      "bio1", 0.1, -273.15,
+      "bio2", 0.1, 0,
+      "bio3", 0.1, 0,
+      "bio4", 0.1, 0,
+      "bio5", 0.1, -273.15,
+      "bio6", 0.1, -273.15,
+      "bio7", 0.1, 0,
+      "bio8", 0.1, -273.15,
+      "bio9", 0.1, -273.15,
+      "bio10", 0.1, -273.15,
+      "bio11", 0.1, -273.15,
+      "bio12", 0.1, 0,
+      "bio13", 0.1, 0,
+      "bio14", 0.1, 0,
+      "bio15", 0.1, 0,
+      "bio16", 0.1, 0,
+      "bio17", 0.1, 0,
+      "bio18", 0.1, 0,
+      "bio19", 0.1, 0,
+      "gdgfgd0", 1, 0,
+      "gdgfgd5", 1, 0,
+      "gdgfgd10", 1, 0,
+      "gddlgd0", 1, 0,
+      "gddlgd5", 1, 0,
+      "gddlgd10", 1, 0,
+      "gdd0", 0.1, 0,
+      "gdd5", 0.1, 0,
+      "gdd10", 0.1, 0,
+      "ngd0", 1, 0,
+      "ngd5", 1, 0,
+      "ngd10", 1, 0,
+      "gsl", 1, 0,
+      "gst", 0.1, -273.15,
+      "lgd", 1, 0,
+      "fgd", 1, 0,
+      "gsp", 0.1, 0,
+      "fcf", 1, 0,
+      "scd", 1, 0,
+      "swe", 0.1, 0,
+      "kg0", 1, 0,
+      "kg1", 1, 0,
+      "kg2", 1, 0,
+      "kg3", 1, 0,
+      "kg4", 1, 0,
+      "kg5", 1, 0,
+      "npp", 0.1, 0)
+
+    basename(x) %>%
+      stringr::str_detect(pattern = paste0("_", VarsScaleOffSet$Var, "_")) %>%
+      which() %>%
+      dplyr::slice(.data = VarsScaleOffSet, .) %>%
+      dplyr::mutate(File = basename(x))
+  }
+
+  ScaleOffset <- ScaleOffset_F(DownPath)
+
+  # ||||||||||||||||||||||||||||||||||||||||
   # read tif file as terra SpatRaster object
-  Rstr <- terra::rast(DownPath) %>%
+  # ||||||||||||||||||||||||||||||||||||||||
+
+  # terra package by default considers the scale and offset information stored in the tiff files. Here I disable this to read the raw values as it is and later consider the scale and offset information manually. This is more safe as I found that some of the future projections do not include such information in the tiff files.
+  Rstr <- terra::rast(DownPath, raw = TRUE) %>%
     # crop to European boundaries
     # although it is not necessary to crop the input maps into the European boundaries, we will crop the data prior to projection. Cropping will make the values of the raster read from memory not from the file. This is a workaround to avoid wrong extreme values in the output file because of a bug in terra package (see this issue: https://github.com/rspatial/terra/issues/1356) [18.02.2023]
     terra::crop(CropExtent) %>%
     # mask by land mask
-    terra::mask(LandMaskL)
+    terra::mask(LandMaskL) %>%
+    # gsp layer contains extremely high values instead of NA; the following replace extreme values with NA
+    terra::classify(cbind(420000000, Inf, NA))
 
+  # ||||||||||||||||||||||||||||||||||||||||
+  # Manually considering offset and scale
+  # ||||||||||||||||||||||||||||||||||||||||
+
+  if (ScaleOffset$scale != 1) {
+    Rstr <- Rstr * ScaleOffset$scale
+  }
+  if (ScaleOffset$offset != 0) {
+    Rstr <- Rstr + ScaleOffset$offset
+  }
+
+  # For npp layers, all tiff maps except for current climate does have a scaling factor
+  # this is not necessary as all scale and offset information were set manually
+  # npp_Pattern <- stringr::str_c(
+  #   "CHELSA_npp_2011", "CHELSA_npp_2041", "CHELSA_npp_2071", sep = "|")
+  # if (stringr::str_detect(names(Rstr), npp_Pattern)) {
+  #   Rstr <- Rstr * 0.1
+  # }
+
+  # ||||||||||||||||||||||||||||||||||||||||
+  # Projecting to reference grid EPSG 3035
+  # ||||||||||||||||||||||||||||||||||||||||
+
+  # projection method
   Method <- dplyr::if_else(
     stringr::str_detect(names(Rstr), "kg[0-5]"), "mode", "average")
-
-  # gsp layer contains extremely high values instead of NA; the following replace extreme values with NA
-  Rstr[Rstr > 420000000] <- NA
 
   Rstr <- Rstr %>%
     # project to reference grid
     terra::project(GridR, method = Method, threads = TRUE) %>%
     # mask to the reference grid
-    terra::mask(GridR) %>%
-    # convert back to raster object
-    raster::raster()
-
-  # For npp layers, all tiff maps except for current climate does have a scaling factor
-  npp_Pattern <- stringr::str_c(
-    "CHELSA_npp_2011", "CHELSA_npp_2041", "CHELSA_npp_2071", sep = "|")
-  if (stringr::str_detect(names(Rstr), npp_Pattern)) {
-    Rstr <- Rstr * 0.1
-  }
+    terra::mask(GridR)
 
   # Ensure that the object is located in memory, not reading from temporary file
   # This may not be necessary as we save the file as .tif file not .RData
-  if (raster::fromDisk(Rstr)) Rstr <- raster::readAll(Rstr)
+  if (magrittr::not(terra::inMemory(Rstr))) {
+    terra::values(Rstr) <- terra::values(Rstr)
+  }
 
-  # Write file to disk
-  terra::writeRaster(x = terra::rast(Rstr), filename = OutFile, overwrite = TRUE)
+  # ||||||||||||||||||||||||||||||||||||||||
+  # Write file to disk --- tiff
+  # ||||||||||||||||||||||||||||||||||||||||
+  terra::writeRaster(x = Rstr, filename = OutFile, overwrite = TRUE)
+
+  # ||||||||||||||||||||||||||||||||||||||||
+  # Checking and verbose
+  # ||||||||||||||||||||||||||||||||||||||||
 
   if (file.exists(OutFile) && IASDT.R::CheckTiff(OutFile)) {
     if (Verbose) {
@@ -691,13 +803,25 @@ Chelsa_Project <- function(
     }
   }
 
-  if (Remote && !KeepDownloaded) {
+  # ||||||||||||||||||||||||||||||||||||||||
+  # Remove downloaded file?
+  # ||||||||||||||||||||||||||||||||||||||||
+
+  if (Remote && magrittr::not(KeepDownloaded)) {
     file.remove(DownPath)
   }
 
+  # ||||||||||||||||||||||||||||||||||||||||
+  # Return map?
+  # ||||||||||||||||||||||||||||||||||||||||
+
   if (ReturnMap) {
-    return(Rstr)
+    invisible(gc())
+    Rstr %>%
+      terra::wrap() %>%
+      return()
   } else {
+    invisible(gc())
     return(invisible(NULL))
   }
 }

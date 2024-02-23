@@ -645,16 +645,18 @@ Chelsa_Project <- function(
 
   # Extent to crop the maps prior to processing.
   # This ensures that the object reads from the memory. See below
-  CropExtent <- terra::ext(-30, 50, 35, 75)
+  CropExtent <- terra::ext(-26, 37.5, 34, 72)
+
 
   # source: CHELSA-W5E5 v1.0: W5E5 v1.0 downscaled with CHELSA v2.0
   # https://data.isimip.org/10.48364/ISIMIP.836809.3
   # Version: 1.0.3
-  # this file is copied to the package data to make it easier to use it
+  # This file was copied to the package data to make it easier to use it
   LandMaskL <- system.file(
     "extdata", "LandMask.nc", package = "IASDT.R", mustWork = TRUE) %>%
     terra::rast() %>%
     terra::crop(CropExtent) %>%
+    suppressWarnings() %>%  # suppress warning on LUMI while cropping
     terra::classify(cbind(0, NA))
 
   # ||||||||||||||||||||||||||||||||||||||||
@@ -712,7 +714,8 @@ Chelsa_Project <- function(
       "npp", 0.1, 0)
 
     basename(x) %>%
-      stringr::str_detect(pattern = paste0("_", VarsScaleOffSet$Var, "_")) %>%
+      stringr::str_detect(
+        pattern = paste0("_", VarsScaleOffSet$Var, "_")) %>%
       which() %>%
       dplyr::slice(.data = VarsScaleOffSet, .) %>%
       dplyr::mutate(File = basename(x))

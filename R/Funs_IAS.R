@@ -193,7 +193,7 @@ Get_EASIN_Data <- function(SpKey, NSearch = 500) {
   # Looping over data chunks
   while (TRUE) {
     ID <- ID + 1
-    URL <- stringr::str_glue("https://alien.jrc.ec.europa.eu/apixg/geoxg/speciesid/{SpKey}/layertype/grid/skip/{Skip}/take/{NSearch}")
+    URL <- stringr::str_glue("https://easin.jrc.ec.europa.eu/apixg/geoxg/speciesid/{SpKey}/layertype/grid/skip/{Skip}/take/{NSearch}")
 
     # Extract data from JSON
     Data <- jsonlite::fromJSON(URL)
@@ -595,6 +595,9 @@ Chelsa_Prepare_List <- function(
 Chelsa_Project <- function(
     InputFile = NULL, OutFile = NULL, GridFile = NULL, ReturnMap = FALSE,
     Verbose = FALSE, KeepDownloaded = TRUE, DownPath = NULL) {
+
+  # Set GTIFF_SRS_SOURCE configuration option to EPSG to use official parameters (overriding the ones from GeoTIFF keys)
+  terra::setGDALconfig("GTIFF_SRS_SOURCE", "EPSG")
 
   # ||||||||||||||||||||||||||||||||||||||||
   # Ensure that some packages are loaded

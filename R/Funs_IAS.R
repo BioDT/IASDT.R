@@ -782,6 +782,7 @@ Chelsa_Project <- function(
   # ||||||||||||||||||||||||||||||||||||||||
   # Write file to disk --- tiff
   # ||||||||||||||||||||||||||||||||||||||||
+  terra::crs(Rstr) <- "epsg:3035"
   terra::writeRaster(x = Rstr, filename = OutFile, overwrite = TRUE)
 
   # ||||||||||||||||||||||||||||||||||||||||

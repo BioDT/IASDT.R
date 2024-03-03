@@ -393,12 +393,12 @@ Chelsa_Extract_Matching <- function(String, Time, Matches) {
 #'
 #' Prepare list of potential variables
 #' @name Chelsa_Prepare_List
-#' @param Down Should the Chelsa files be downloaded
-#' @param DownParallel if `Down` was set as `TRUE`, should the download be on parallel
-#' @param DwnPath Path for download
-#' @param Path_Chelsa Path for Chelsa files
-#' @param OutPath Out path
-#' @param UpdateExisting reprocess existing file
+#' @param Down logical; Download Chelsa files?
+#' @param DownParallel logical; Download input files on parallel (if `Down` = `TRUE`)
+#' @param DwnPath Download path
+#' @param OutPath Output path
+#' @param UpdateExisting logical; Reprocess existing file?
+#' @param Path_Chelsa Path for Chelsa analyses (including `Chelsa_Vars.txt` file)
 #' @author Ahmed El-Gabbas
 #' @importFrom rlang .data
 #' @export
@@ -574,30 +574,199 @@ Chelsa_Prepare_List <- function(
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 # |---------------------------------------------------| #
+# Chelsa_Vars ----
+# |---------------------------------------------------| #
+
+#' Detailed information on Chelsa data
+#'
+#' Detailed information on Chelsa data
+#' @name Chelsa_Vars
+#' @author Ahmed El-Gabbas
+#' @examples
+#' print(Chelsa_Vars(), n = Inf)
+#' @export
+#' @details
+#' https://chelsa-climate.org/bioclim/
+
+Chelsa_Vars <- function() {
+  tibble::tribble(
+    ~Variable, ~Long_name, ~unit, ~scale, ~offset, ~explanation,
+    "bio1", "mean annual air temperature", "deg C", 0.1, -273.15, "mean annual daily mean air temperatures averaged over 1 year",
+    "bio2", "mean diurnal air temperature range", "deg C", 0.1, 0, "mean diurnal range of temperatures averaged over 1 year",
+    "bio3", "isothermality", "deg C", 0.1, 0, "ratio of diurnal variation to annual variation in temperatures",
+    "bio4", "temperature seasonality", "deg C/100", 0.1, 0, "standard deviation of the monthly mean temperatures",
+    "bio5", "mean daily maximum air temperature of the warmest month", "deg C", 0.1, -273.15, "The highest temperature of any monthly daily mean maximum temperature",
+    "bio6", "mean daily minimum air temperature of the coldest month", "deg C", 0.1, -273.15, "The lowest temperature of any monthly daily mean maximum temperature",
+    "bio7", "annual range of air temperature", "deg C", 0.1, 0, "Difference between the Maximum Temperature of Warmest month and the Minimum Temperature of Coldest month (bio5-bio6)",
+    "bio8", "mean daily mean air temperatures of the wettest quarter", "deg C", 0.1, -273.15, "The wettest quarter of the year is determined (to the nearest month)",
+    "bio9", "mean daily mean air temperatures of the driest quarter", "deg C", 0.1, -273.15, "The driest quarter of the year is determined (to the nearest month)",
+    "bio10", "mean daily mean air temperatures of the warmest quarter", "deg C", 0.1, -273.15, "The warmest quarter of the year is determined (to the nearest month)",
+    "bio11", "mean daily mean air temperatures of the coldest quarter", "deg C", 0.1, -273.15, "The coldest quarter of the year is determined (to the nearest month)",
+    "bio12", "annual precipitation amount", "kg m-2", 0.1, 0, "Accumulated precipitation amount over 1 year",
+    "bio13", "precipitation amount of the wettest month", "kg m-2", 0.1, 0, "The precipitation of the wettest month.",
+    "bio14", "precipitation amount of the driest month", "kg m-2", 0.1, 0, "The precipitation of the driest month.",
+    "bio15", "precipitation seasonality", "kg m-2", 0.1, 0, "The Coefficient of Variation = 100*standard deviation of the monthly precipitation / mean ",
+    "bio16", "mean monthly precipitation amount of the wettest quarter", "kg m-2", 0.1, 0, "The wettest quarter of the year is determined (to the nearest month)",
+    "bio17", "mean monthly precipitation amount of the driest quarter", "kg m-2", 0.1, 0, "The driest quarter of the year is determined (to the nearest month)",
+    "bio18", "mean monthly precipitation amount of the warmest quarter", "kg m-2", 0.1, 0, "The warmest quarter of the year is determined (to the nearest month)",
+    "bio19", "mean monthly precipitation amount of the coldest quarter", "kg m-2", 0.1, 0, "The coldest quarter of the year is determined (to the nearest month)",
+    "gdgfgd0", "First growing degree day above 0 deg C", "julian day", 1, 0, "First day of the year above 0 deg C",
+    "gdgfgd5", "First growing degree day above 5 deg C", "julian day", 1, 0, "First day of the year above 5 deg C",
+    "gdgfgd10", "First growing degree day above 10 deg C", "julian day", 1, 0, "First day of the year above 10 deg C",
+    "gddlgd0", "Last growing degree day above 0 deg C", "julian day", 1, 0, "Last day of the year above 0 deg C",
+    "gddlgd5", "Last growing degree day above 5 deg C", "julian day", 1, 0, "Last day of the year above 5 deg C",
+    "gddlgd10", "Last growing degree day above 10 deg C", "julian day", 1, 0, "Last day of the year above 10 deg C",
+    "gdd0", "Growing degree days heat sum above 0 deg C", "deg C", 0.1, 0, "heat sum of all days above the 0 deg C temperature accumulated over 1 year.",
+    "gdd5", "Growing degree days heat sum above 5 deg C", "deg C", 0.1, 0, "heat sum of all days above the 5 deg C temperature accumulated over 1 year.",
+    "gdd10", "Growing degree days heat sum above 10 deg C", "deg C", 0.1, 0, "heat sum of all days above the 10 deg C temperature accumulated over 1 year.",
+    "ngd0", "Number of growing degree days", "# days", 1, 0, "Number of days at which tas > 0 deg C",
+    "ngd5", "Number of growing degree days", "# days", 1, 0, "Number of days at which tas > 5 deg C",
+    "ngd10", "Number of growing degree days", "# days", 1, 0, "Number of days at which tas > 10 deg C",
+    "gsl", "growing season length TREELIM", "# days", 1, 0, "Length of the growing season",
+    "gst", "Mean temperature of the growing season TREELIM", "deg C", 0.1, -273.15, "Mean temperature of all growing season days based on TREELIM",
+    "lgd", "last day of the growing season TREELIM", "julian day", 1, 0, "Last day of the growing season according to TREELIM",
+    "fgd", "first day of the growing season TREELIM", "julian day", 1, 0, "first day of the growing season according to TREELIM",
+    "gsp", "Accumulated precipiation amount on growing season days TREELIM", "kg m-2", 0.1, 0, "precipitation sum accumulated on all days during the growing season based on TREELIM",
+    "fcf", "Frost change frequency", "count", 1, 0, "Number of events in which tmin or tmax go above, or below 0 deg C",
+    "scd", "Snow cover days", "count", 1, 0, "Number of days with snowcover calculated using the snowpack model implementation in from TREELIM",
+    "swe", "Snow water equivalent", "kg m-2", 0.1, 0, "Amount of luquid water if snow is melted",
+    "kg0", "Koeppen-Geiger climate classification", "category", 1, 0, "Koeppen Geiger - Koeppen&Geiger (1936)",
+    "kg1", "Koeppen-Geiger climate classification", "category", 1, 0, "Koeppen Geiger without As/Aw differentiation - Koeppen&Geiger (1936)",
+    "kg2", "Koeppen-Geiger climate classification", "category", 1, 0, "Koeppen Geiger after Peel et al. 2007",
+    "kg3", "Koeppen-Geiger climate classification", "category", 1, 0, "Wissmann 1939",
+    "kg4", "Koeppen-Geiger climate classification", "category", 1, 0, "Thornthwaite 1931",
+    "kg5", "Koeppen-Geiger climate classification", "category", 1, 0, "Troll-Pfaffen - Troll&Paffen (1964)",
+    "npp", "Net primary productivity", "g C m-2 yr-1", 0.1, 0, "Calculated based on the `Miami model`, Lieth, H., 1972."
+  )
+}
+
+
+# ****************************************************
+# ****************************************************
+
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+# |---------------------------------------------------| #
+# Chelsa_Info ----
+# |---------------------------------------------------| #
+
+#' Extract info from Chelsa file name
+#'
+#' Extract info from Chelsa file name
+#' @name Chelsa_Info
+#' @param FileName character; URL, file path or file name
+#' @author Ahmed El-Gabbas
+#' @examples
+#' LFiles <- c(
+#'   "https://os.zhdk.cloud.switch.ch/envicloud/chelsa/chelsa_V2/GLOBAL/climatologies/2041-2070/MPI-ESM1-2-HR/ssp126/bio/CHELSA_bio14_2041-2070_mpi-esm1-2-hr_ssp126_V.2.1.tif",
+#'   "https://os.zhdk.cloud.switch.ch/envicloud/chelsa/chelsa_V2/GLOBAL/climatologies/2011-2040/MRI-ESM2-0/ssp126/bio/CHELSA_bio1_2011-2040_mri-esm2-0_ssp126_V.2.1.tif",
+#'   "https://os.zhdk.cloud.switch.ch/envicloud/chelsa/chelsa_V2/GLOBAL/climatologies/2011-2040/IPSL-CM6A-LR/ssp370/bio/CHELSA_lgd_2011-2040_ipsl-cm6a-lr_ssp370_V.2.1.tif",
+#'   "https://os.zhdk.cloud.switch.ch/envicloud/chelsa/chelsa_V2/GLOBAL/climatologies/2041-2070/MRI-ESM2-0/ssp370/bio/CHELSA_bio5_2041-2070_mri-esm2-0_ssp370_V.2.1.tif",
+#'   "https://os.zhdk.cloud.switch.ch/envicloud/chelsa/chelsa_V2/GLOBAL/climatologies/2011-2040/MRI-ESM2-0/ssp585/bio/CHELSA_scd_2011-2040_mri-esm2-0_ssp585_V.2.1.tif")
+#'
+#' Chelsa_Info(LFiles[1])
+#'
+#' Chelsa_Info(LFiles)
+#' @export
+
+Chelsa_Info <- function(FileName) {
+
+  FileName %>%
+    basename() %>%
+    purrr::map_dfr(
+      .f = ~{
+        TimePeriod <- dplyr::case_when(
+          stringr::str_detect( .x, "1981-2010") ~ "Current",
+          stringr::str_detect( .x, "2011-2040") ~ "2011_2040",
+          stringr::str_detect( .x, "2041-2070") ~ "2041_2070",
+          stringr::str_detect( .x, "2071-2100") ~ "2071_2100",
+          .default = NA_character_)
+
+        ClimModel <- dplyr::case_when(
+          stringr::str_detect( .x, "1981-2010") ~ "Current",
+          # National Oceanic and Atmospheric Administration, Geophysical Fluid Dynamics Laboratory, Princeton, NJ 08540, USA
+          stringr::str_detect( .x, "GFDL-ESM4|gfdl-esm4") ~ "GFDL_ESM4",
+          # Institut Pierre Simon Laplace, Paris 75252, France
+          stringr::str_detect( .x, "IPSL-CM6A-LR|ipsl-cm6a-lr") ~ "IPSL_CM6A",
+          # Max Planck Institute for Meteorology, Hamburg 20146, Germany
+          stringr::str_detect( .x, "MPI-ESM1-2-HR|mpi-esm1-2-hr") ~ "MPI_ESM",
+          # Met Office Hadley Centre, Fitzroy Road, Exeter, Devon, EX1 3PB, UK
+          stringr::str_detect( .x, "UKESM1-0-LL|ukesm1-0-ll") ~ "UKESM",
+          # Meteorological Research Institute, Tsukuba, Ibaraki 305-0052, Japan
+          stringr::str_detect( .x, "MRI-ESM2-0|mri-esm2-0") ~ "MRI_ESM2",
+          .default = NA_character_)
+
+        ClimScenario <- dplyr::case_when(
+          stringr::str_detect( .x, "1981-2010") ~ "Current",
+          # SSP1-RCP2.6 climate as simulated by the GCMs
+          stringr::str_detect( .x, "ssp126") ~ "ssp126",
+          # ssp370 SSP3-RCP7 climate as simulated by the GCMs
+          stringr::str_detect( .x, "ssp370") ~ "ssp370",
+          # ssp585 SSP5-RCP8.5 climate as simulated by the GCMs
+          stringr::str_detect( .x, "ssp585") ~ "ssp585",
+          .default = NA_character_)
+
+        CurrVar <-  .x %>%
+          stringr::str_remove_all(
+            c("1981-2010", "2011-2040", "2041-2070", "2071-2100", "GFDL-ESM4|gfdl-esm4",
+              "IPSL-CM6A-LR|ipsl-cm6a-lr", "MPI-ESM1-2-HR|mpi-esm1-2-hr",
+              "UKESM1-0-LL|ukesm1-0-ll", "MRI-ESM2-0|mri-esm2-0",
+              "ssp126", "ssp370", "ssp585", "CHELSA") %>%
+              paste0(collapse = "|", sep = "_") %>%
+              paste0("|V.2.1.tif")) %>%
+          stringr::str_remove_all("_")
+
+        tibble::tibble(
+          FileName =  .x, Variable = CurrVar, TimePeriod = TimePeriod,
+          ClimModel = ClimModel, ClimScenario = ClimScenario)
+      }) %>%
+    dplyr::left_join(IASDT.R::Chelsa_Vars(), by = "Variable")
+}
+
+# ****************************************************
+# ****************************************************
+
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+# |---------------------------------------------------| #
 # Chelsa_Project ----
 # |---------------------------------------------------| #
 
-#' Project Chelsa data
+#' Project Chelsa data to the study area
 #'
-#' Project Chelsa data
+#' Project Chelsa data to the study area
 #' @name Chelsa_Project
 #' @param InputFile Path or URL for input tif file
 #' @param OutFile Path for output tif file
 #' @param GridFile `raster` or `SpatRaster` for the reference grid. This grid will be used as reference grid for projection and the resulted file will be masked to it
 #' @param ReturnMap logical; should the processed map be returned by the end of the function?
 #' @param Verbose should the name of the processed file be printed to the console
-#' @param KeepDownloaded if URL is provided as input file, the file will be downloaded to disk first before processing. Should the downloaded file be kept in disk.
 #' @param DownPath Where to save downloaded files
-#' @returns if `ReturnMap = TRUE`, the output raster object is returned; otherwise nothing is returned. The `*.tif` files are saved to disk anyway.
+#' @param KeepDownloaded if URL is provided as input file, the file will be downloaded to disk first before processing. Should the downloaded file be kept in disk.
+#' @param SaveTiff Also save output map as *.tif file
+#' @returns if `ReturnMap = TRUE`, the a wrapped SpatRaster object is returned (`PackedSpatRaster`); otherwise nothing is returned. By default the function exports a NetCDF file. If `SaveTiff` is set as `TRUE`, additional tiff file will be saved to disk.
 #' @author Ahmed El-Gabbas
 #' @export
 
 Chelsa_Project <- function(
     InputFile = NULL, OutFile = NULL, GridFile = NULL, ReturnMap = FALSE,
-    Verbose = FALSE, KeepDownloaded = TRUE, DownPath = NULL) {
+    Verbose = FALSE, DownPath = NULL, KeepDownloaded = TRUE,
+    SaveTiff = FALSE) {
+
+  # Ensure that the reference grid is not null
+  if (is.null(GridFile)) stop("GridFile can not be empty")
 
   # Set GTIFF_SRS_SOURCE configuration option to EPSG to use official parameters (overriding the ones from GeoTIFF keys)
   terra::setGDALconfig("GTIFF_SRS_SOURCE", "EPSG")
+
+  # Input file name
+  InputName <- basename(InputFile)
+
+  VarDesc <- IASDT.R::Chelsa_Info(InputFile)
+  VarScale <- VarDesc$scale
+  VarOffset <- VarDesc$offset
 
   # ||||||||||||||||||||||||||||||||||||||||
   # Ensure that some packages are loaded
@@ -610,6 +779,7 @@ Chelsa_Project <- function(
   # ||||||||||||||||||||||||||||||||||||||||
   # Loading reference grid
   # ||||||||||||||||||||||||||||||||||||||||
+
   if (inherits(GridFile, "RasterLayer")) {
     GridR <- terra::rast(GridFile)
   } else {
@@ -625,20 +795,38 @@ Chelsa_Project <- function(
   # Remote or local
   # ||||||||||||||||||||||||||||||||||||||||
 
-  Remote <- dplyr::if_else(stringr::str_detect(InputFile, "^http"), TRUE, FALSE)
+  Remote <- dplyr::if_else(
+    stringr::str_detect(InputFile, "^http"), TRUE, FALSE)
+
+
   if (Remote) {
-    # increase time out to allow more time to download the input file
+
+    if (is.null(OutFile)) stop("OutFile can not be empty if the input file is an URL")
+
+    # Folder to download the file
+    if (is.null(DownPath)) {
+      # download as temporary file
+      DownPath <- tempfile(fileext = ".tif")
+      # delete the temporary file after processing
+      KeepDownloaded <- FALSE
+    } else {
+      DownPath <- file.path(DownPath, InputName)
+    }
+
+    # Ensure that output dir exists
+    IASDT.R::DirCreate(dirname(DownPath), Verbose = FALSE)
+
+    # increase time out to allow more time to download input file
+    # This may not be necessary for LUMI HPC
+    # EVE has a maximum download limit of c.a. 10 Mbit/sec. This allows more time for download
     options(timeout = max(300, getOption("timeout")))
 
-    DownPath <- dplyr::if_else(
-      is.null(DownPath),
-      stringr::str_replace(OutFile, "Tif_Output", "Tif_Input"),
-      file.path(DownPath, basename(InputFile)))
-
-    IASDT.R::DirCreate(dirname(DownPath), Verbose = FALSE)
-    utils::download.file(url = InputFile, destfile = DownPath, quiet = TRUE, mode = "wb")
+    # Download file to disk
+    utils::download.file(
+      url = InputFile, destfile = DownPath, quiet = TRUE, mode = "wb")
 
   } else {
+    # if input file is located locally,
     DownPath <- InputFile
   }
 
@@ -649,7 +837,6 @@ Chelsa_Project <- function(
   # Extent to crop the maps prior to processing.
   # This ensures that the object reads from the memory. See below
   CropExtent <- terra::ext(-26, 37.5, 34, 72)
-
 
   # source: CHELSA-W5E5 v1.0: W5E5 v1.0 downscaled with CHELSA v2.0
   # https://data.isimip.org/10.48364/ISIMIP.836809.3
@@ -663,107 +850,35 @@ Chelsa_Project <- function(
     terra::classify(cbind(0, NA))
 
   # ||||||||||||||||||||||||||||||||||||||||
-  # Extract scale and offset value
-  # ||||||||||||||||||||||||||||||||||||||||
-
-  ScaleOffset_F <- function(x) {
-    VarsScaleOffSet <- tibble::tribble(
-      ~Var, ~scale, ~offset,
-      "bio1", 0.1, -273.15,
-      "bio2", 0.1, 0,
-      "bio3", 0.1, 0,
-      "bio4", 0.1, 0,
-      "bio5", 0.1, -273.15,
-      "bio6", 0.1, -273.15,
-      "bio7", 0.1, 0,
-      "bio8", 0.1, -273.15,
-      "bio9", 0.1, -273.15,
-      "bio10", 0.1, -273.15,
-      "bio11", 0.1, -273.15,
-      "bio12", 0.1, 0,
-      "bio13", 0.1, 0,
-      "bio14", 0.1, 0,
-      "bio15", 0.1, 0,
-      "bio16", 0.1, 0,
-      "bio17", 0.1, 0,
-      "bio18", 0.1, 0,
-      "bio19", 0.1, 0,
-      "gdgfgd0", 1, 0,
-      "gdgfgd5", 1, 0,
-      "gdgfgd10", 1, 0,
-      "gddlgd0", 1, 0,
-      "gddlgd5", 1, 0,
-      "gddlgd10", 1, 0,
-      "gdd0", 0.1, 0,
-      "gdd5", 0.1, 0,
-      "gdd10", 0.1, 0,
-      "ngd0", 1, 0,
-      "ngd5", 1, 0,
-      "ngd10", 1, 0,
-      "gsl", 1, 0,
-      "gst", 0.1, -273.15,
-      "lgd", 1, 0,
-      "fgd", 1, 0,
-      "gsp", 0.1, 0,
-      "fcf", 1, 0,
-      "scd", 1, 0,
-      "swe", 0.1, 0,
-      "kg0", 1, 0,
-      "kg1", 1, 0,
-      "kg2", 1, 0,
-      "kg3", 1, 0,
-      "kg4", 1, 0,
-      "kg5", 1, 0,
-      "npp", 0.1, 0)
-
-    basename(x) %>%
-      stringr::str_detect(
-        pattern = paste0("_", VarsScaleOffSet$Var, "_")) %>%
-      which() %>%
-      dplyr::slice(.data = VarsScaleOffSet, .) %>%
-      dplyr::mutate(File = basename(x))
-  }
-
-  ScaleOffset <- ScaleOffset_F(DownPath)
-
-  # ||||||||||||||||||||||||||||||||||||||||
   # read tif file as terra SpatRaster object
   # ||||||||||||||||||||||||||||||||||||||||
 
   # terra package by default considers the scale and offset information stored in the tiff files. Here I disable this to read the raw values as it is and later consider the scale and offset information manually. This is more safe as I found that some of the future projections do not include such information in the tiff files.
   Rstr <- terra::rast(DownPath, raw = TRUE) %>%
+    stats::setNames(stringr::str_remove_all(InputName, ".tif$")) %>%
     # crop to European boundaries
     # although it is not necessary to crop the input maps into the European boundaries, we will crop the data prior to projection. Cropping will make the values of the raster read from memory not from the file. This is a workaround to avoid wrong extreme values in the output file because of a bug in terra package (see this issue: https://github.com/rspatial/terra/issues/1356) [18.02.2023]
     terra::crop(CropExtent) %>%
     # mask by land mask
     terra::mask(LandMaskL) %>%
-    # gsp layer contains extremely high values instead of NA; the following replace extreme values with NA
+    # `gsp` maps contains extremely high values instead of NA; the following replace extreme values with NA
     terra::classify(cbind(420000000, Inf, NA))
 
   # ||||||||||||||||||||||||||||||||||||||||
   # Manually considering offset and scale
   # ||||||||||||||||||||||||||||||||||||||||
 
-  if (ScaleOffset$scale != 1) {
-    Rstr <- Rstr * ScaleOffset$scale
-  }
-  if (ScaleOffset$offset != 0) {
-    Rstr <- Rstr + ScaleOffset$offset
-  }
-
   # For npp layers, all tiff maps except for current climate does have a scaling factor
-  # this is not necessary as all scale and offset information were set manually
-  # npp_Pattern <- stringr::str_c(
-  #   "CHELSA_npp_2011", "CHELSA_npp_2041", "CHELSA_npp_2071", sep = "|")
-  # if (stringr::str_detect(names(Rstr), npp_Pattern)) {
-  #   Rstr <- Rstr * 0.1
-  # }
+  # all scale and offset information were set manually
+  if (VarScale != 1) Rstr <- Rstr * VarScale
+  if (VarOffset != 0) Rstr <- Rstr + VarOffset
 
   # ||||||||||||||||||||||||||||||||||||||||
   # Projecting to reference grid EPSG 3035
   # ||||||||||||||||||||||||||||||||||||||||
 
   # projection method
+  # Use `mode` for `kg` variables (categorical variables)
   Method <- dplyr::if_else(
     stringr::str_detect(names(Rstr), "kg[0-5]"), "mode", "average")
 
@@ -779,11 +894,43 @@ Chelsa_Project <- function(
     terra::values(Rstr) <- terra::values(Rstr)
   }
 
+  terra::crs(Rstr) <- "epsg:3035"
+
   # ||||||||||||||||||||||||||||||||||||||||
   # Write file to disk --- tiff
   # ||||||||||||||||||||||||||||||||||||||||
-  terra::crs(Rstr) <- "epsg:3035"
-  terra::writeRaster(x = Rstr, filename = OutFile, overwrite = TRUE)
+  if (SaveTiff) {
+    terra::writeRaster(
+      x = Rstr, filename = paste0(basename(OutFile), ".tif"),
+      overwrite = TRUE)
+  }
+
+  # ||||||||||||||||||||||||||||||||||||||||
+  # Write file to disk --- nc
+  # ||||||||||||||||||||||||||||||||||||||||
+
+  # Variable name of the output *.nc file
+  VarName4NC <- c(
+    VarDesc$TimePeriod, VarDesc$ClimModel, VarDesc$ClimScenario) %>%
+    unique() %>%
+    paste0(collapse = "__") %>%
+    paste0(VarDesc$Variable, "__", .)
+
+  # global attributes to be added to the *.nc file
+  Attrs <- c(
+    paste0("Var=", VarDesc$Variable),
+    paste0("TimePeriod=", VarDesc$TimePeriod),
+    paste0("ClimModel=", VarDesc$ClimModel),
+    paste0("ClimScenario=", VarDesc$ClimScenario),
+    paste0("Long_name=", VarDesc$Long_name),
+    paste0("unit=", VarDesc$unit),
+    paste0("explanation=", VarDesc$explanation))
+
+  # save as *.nc file
+  terra::writeCDF(
+    Rstr, filename = paste0(basename(OutFile), ".nc"),
+    varname = VarName4NC, unit = VarDesc$unit,
+    zname = VarDesc$TimePeriod, atts = Attrs, overwrite = TRUE)
 
   # ||||||||||||||||||||||||||||||||||||||||
   # Checking and verbose
@@ -791,19 +938,19 @@ Chelsa_Project <- function(
 
   if (file.exists(OutFile) && IASDT.R::CheckTiff(OutFile)) {
     if (Verbose) {
-      "  <<>> {basename(InputFile)}: processed successfully" %>%
+      "  <<>> {InputName}: processed successfully" %>%
         stringr::str_glue() %>%
         IASDT.R::CatTime()
     }
   } else {
     if (!file.exists(OutFile)) {
-      "  <<XXXX>> {basename(InputFile)}: not processed/saved" %>%
+      "  <<XXXX>> {InputName}: not processed/saved" %>%
         stringr::str_glue() %>%
         IASDT.R::CatTime()
     }
 
     if (!IASDT.R::CheckTiff(OutFile)) {
-      "  <<XXXX>> {basename(InputFile)}: written file is corrupted and removed" %>%
+      "  <<XXXX>> {InputName}: written file is corrupted and removed" %>%
         stringr::str_glue() %>%
         IASDT.R::CatTime()
       invisible(file.remove(OutFile))

@@ -2,7 +2,7 @@
 % Please edit documentation in R/Funs_IAS.R
 \name{Chelsa_Project}
 \alias{Chelsa_Project}
-\title{Project Chelsa data}
+\title{Project Chelsa data to the study area}
 \usage{
 Chelsa_Project(
   InputFile = NULL,
@@ -10,8 +10,9 @@ Chelsa_Project(
   GridFile = NULL,
   ReturnMap = FALSE,
   Verbose = FALSE,
+  DownPath = NULL,
   KeepDownloaded = TRUE,
-  DownPath = NULL
+  SaveTiff = FALSE
 )
 }
 \arguments{
@@ -25,15 +26,17 @@ Chelsa_Project(
 
 \item{Verbose}{should the name of the processed file be printed to the console}
 
+\item{DownPath}{Where to save downloaded files}
+
 \item{KeepDownloaded}{if URL is provided as input file, the file will be downloaded to disk first before processing. Should the downloaded file be kept in disk.}
 
-\item{DownPath}{Where to save downloaded files}
+\item{SaveTiff}{Also save output map as *.tif file}
 }
 \value{
-if \code{ReturnMap = TRUE}, the output raster object is returned; otherwise nothing is returned. The \verb{*.tif} files are saved to disk anyway.
+if \code{ReturnMap = TRUE}, the a wrapped SpatRaster object is returned (\code{PackedSpatRaster}); otherwise nothing is returned. By default the function exports a NetCDF file. If \code{SaveTiff} is set as \code{TRUE}, additional tiff file will be saved to disk.
 }
 \description{
-Project Chelsa data
+Project Chelsa data to the study area
 }
 \author{
 Ahmed El-Gabbas

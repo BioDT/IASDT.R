@@ -92,6 +92,7 @@ reference:
   - GridCross
   - GridDiagOff
   - RastPA
+  - NetCDFGlobalAttrs
 
 - title: IAS helper functions
   desc:
@@ -102,4 +103,6 @@ reference:
   - Extract_BB
   - Chelsa_Extract_Matching
   - Chelsa_Prepare_List
+  - Chelsa_Vars
+  - Chelsa_Info
   - Chelsa_Project

@@ -742,7 +742,6 @@ Chelsa_Info <- function(FileName) {
 #' @param OutFile Path for output tif file
 #' @param GridFile `raster` or `SpatRaster` for the reference grid. This grid will be used as reference grid for projection and the resulted file will be masked to it
 #' @param ReturnMap logical; should the processed map be returned by the end of the function?
-#' @param Verbose should the name of the processed file be printed to the console
 #' @param DownPath Where to save downloaded files
 #' @param KeepDownloaded if URL is provided as input file, the file will be downloaded to disk first before processing. Should the downloaded file be kept in disk.
 #' @param SaveTiff Also save output map as *.tif file
@@ -752,19 +751,20 @@ Chelsa_Info <- function(FileName) {
 
 Chelsa_Project <- function(
     InputFile = NULL, OutFile = NULL, GridFile = NULL, ReturnMap = FALSE,
-    Verbose = FALSE, DownPath = NULL, KeepDownloaded = TRUE,
-    SaveTiff = FALSE) {
+    DownPath = NULL, KeepDownloaded = TRUE, SaveTiff = FALSE) {
 
   # Ensure that the reference grid is not null
   if (is.null(GridFile)) stop("GridFile can not be empty")
 
-  # Set GTIFF_SRS_SOURCE configuration option to EPSG to use official parameters (overriding the ones from GeoTIFF keys)
+  # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use official parameters (overriding the ones from GeoTIFF keys)
   terra::setGDALconfig("GTIFF_SRS_SOURCE", "EPSG")
 
   # Input file name
   InputName <- basename(InputFile)
 
+  # Variable description
   VarDesc <- IASDT.R::Chelsa_Info(InputFile)
+  # Scale and offset information
   VarScale <- VarDesc$scale
   VarOffset <- VarDesc$offset
 
@@ -783,7 +783,6 @@ Chelsa_Project <- function(
   if (inherits(GridFile, "RasterLayer")) {
     GridR <- terra::rast(GridFile)
   } else {
-
     if (inherits(GridFile, "PackedSpatRaster")) {
       GridR <- terra::unwrap(GridFile)
     } else {
@@ -795,9 +794,7 @@ Chelsa_Project <- function(
   # Remote or local
   # ||||||||||||||||||||||||||||||||||||||||
 
-  Remote <- dplyr::if_else(
-    stringr::str_detect(InputFile, "^http"), TRUE, FALSE)
-
+  Remote <- dplyr::if_else(stringr::str_detect(InputFile, "^http"), TRUE, FALSE)
 
   if (Remote) {
 
@@ -818,7 +815,7 @@ Chelsa_Project <- function(
 
     # increase time out to allow more time to download input file
     # This may not be necessary for LUMI HPC
-    # EVE has a maximum download limit of c.a. 10 Mbit/sec. This allows more time for download
+    # EVE has a download limit. This allows more time for download
     options(timeout = max(300, getOption("timeout")))
 
     # Download file to disk
@@ -855,7 +852,7 @@ Chelsa_Project <- function(
 
   # terra package by default considers the scale and offset information stored in the tiff files. Here I disable this to read the raw values as it is and later consider the scale and offset information manually. This is more safe as I found that some of the future projections do not include such information in the tiff files.
   Rstr <- terra::rast(DownPath, raw = TRUE) %>%
-    stats::setNames(stringr::str_remove_all(InputName, ".tif$")) %>%
+    stats::setNames(paste0(tools::file_path_sans_ext(InputName), ".tif")) %>%
     # crop to European boundaries
     # although it is not necessary to crop the input maps into the European boundaries, we will crop the data prior to projection. Cropping will make the values of the raster read from memory not from the file. This is a workaround to avoid wrong extreme values in the output file because of a bug in terra package (see this issue: https://github.com/rspatial/terra/issues/1356) [18.02.2023]
     terra::crop(CropExtent) %>%
@@ -868,7 +865,7 @@ Chelsa_Project <- function(
   # Manually considering offset and scale
   # ||||||||||||||||||||||||||||||||||||||||
 
-  # For npp layers, all tiff maps except for current climate does have a scaling factor
+  # For `npp` layers, all tiff maps except for current climate does have a scaling factor
   # all scale and offset information were set manually
   if (VarScale != 1) Rstr <- Rstr * VarScale
   if (VarOffset != 0) Rstr <- Rstr + VarOffset
@@ -899,15 +896,26 @@ Chelsa_Project <- function(
   # ||||||||||||||||||||||||||||||||||||||||
   # Write file to disk --- tiff
   # ||||||||||||||||||||||||||||||||||||||||
+
+  OutFileTif <- dplyr::if_else(
+    stringr::str_detect(OutFile, ".tif$"),
+    OutFile,
+    file.path(dirname(OutFile), paste0(
+      tools::file_path_sans_ext(InputName), ".tif")))
+
   if (SaveTiff) {
-    terra::writeRaster(
-      x = Rstr, filename = paste0(basename(OutFile), ".tif"),
-      overwrite = TRUE)
+    terra::writeRaster(x = Rstr, filename = OutFileTif, overwrite = TRUE)
+    if (Remote && magrittr::not(KeepDownloaded)) file.remove(DownPath)
   }
 
   # ||||||||||||||||||||||||||||||||||||||||
   # Write file to disk --- nc
   # ||||||||||||||||||||||||||||||||||||||||
+
+  OutFileNC <- dplyr::if_else(
+    stringr::str_detect(OutFile, ".nc$"),
+    OutFile,
+    file.path(dirname(OutFile), paste0(tools::file_path_sans_ext(InputName), ".nc")))
 
   # Variable name of the output *.nc file
   VarName4NC <- c(
@@ -928,54 +936,16 @@ Chelsa_Project <- function(
 
   # save as *.nc file
   terra::writeCDF(
-    Rstr, filename = paste0(basename(OutFile), ".nc"),
-    varname = VarName4NC, unit = VarDesc$unit,
+    Rstr, filename = OutFileNC, varname = VarName4NC, unit = VarDesc$unit,
     zname = VarDesc$TimePeriod, atts = Attrs, overwrite = TRUE)
-
-  # ||||||||||||||||||||||||||||||||||||||||
-  # Checking and verbose
-  # ||||||||||||||||||||||||||||||||||||||||
-
-  if (file.exists(OutFile) && IASDT.R::CheckTiff(OutFile)) {
-    if (Verbose) {
-      "  <<>> {InputName}: processed successfully" %>%
-        stringr::str_glue() %>%
-        IASDT.R::CatTime()
-    }
-  } else {
-    if (!file.exists(OutFile)) {
-      "  <<XXXX>> {InputName}: not processed/saved" %>%
-        stringr::str_glue() %>%
-        IASDT.R::CatTime()
-    }
-
-    if (!IASDT.R::CheckTiff(OutFile)) {
-      "  <<XXXX>> {InputName}: written file is corrupted and removed" %>%
-        stringr::str_glue() %>%
-        IASDT.R::CatTime()
-      invisible(file.remove(OutFile))
-    }
-  }
-
-  # ||||||||||||||||||||||||||||||||||||||||
-  # Remove downloaded file?
-  # ||||||||||||||||||||||||||||||||||||||||
-
-  if (Remote && magrittr::not(KeepDownloaded)) {
-    file.remove(DownPath)
-  }
 
   # ||||||||||||||||||||||||||||||||||||||||
   # Return map?
   # ||||||||||||||||||||||||||||||||||||||||
 
   if (ReturnMap) {
-    invisible(gc())
-    Rstr %>%
-      terra::wrap() %>%
-      return()
+    return(terra::wrap(Rstr))
   } else {
-    invisible(gc())
     return(invisible(NULL))
   }
 }

@@ -9,7 +9,6 @@ Chelsa_Project(
   OutFile = NULL,
   GridFile = NULL,
   ReturnMap = FALSE,
-  Verbose = FALSE,
   DownPath = NULL,
   KeepDownloaded = TRUE,
   SaveTiff = FALSE
@@ -23,8 +22,6 @@ Chelsa_Project(
 \item{GridFile}{\code{raster} or \code{SpatRaster} for the reference grid. This grid will be used as reference grid for projection and the resulted file will be masked to it}
 
 \item{ReturnMap}{logical; should the processed map be returned by the end of the function?}
-
-\item{Verbose}{should the name of the processed file be printed to the console}
 
 \item{DownPath}{Where to save downloaded files}
 

@@ -861,6 +861,8 @@ Chelsa_Project <- function(
     # `gsp` maps contains extremely high values instead of NA; the following replace extreme values with NA
     terra::classify(cbind(420000000, Inf, NA))
 
+  rm(LandMaskL, CropExtent)
+
   # ||||||||||||||||||||||||||||||||||||||||
   # Manually considering offset and scale
   # ||||||||||||||||||||||||||||||||||||||||
@@ -897,14 +899,16 @@ Chelsa_Project <- function(
   # Write file to disk --- tiff
   # ||||||||||||||||||||||||||||||||||||||||
 
-  OutFileTif <- dplyr::if_else(
-    stringr::str_detect(OutFile, ".tif$"),
-    OutFile,
-    file.path(dirname(OutFile), paste0(
-      tools::file_path_sans_ext(InputName), ".tif")))
-
   if (SaveTiff) {
+
+    OutFileTif <- dplyr::if_else(
+      stringr::str_detect(OutFile, ".tif$"),
+      OutFile,
+      file.path(dirname(OutFile), paste0(
+        tools::file_path_sans_ext(InputName), ".tif")))
+
     terra::writeRaster(x = Rstr, filename = OutFileTif, overwrite = TRUE)
+
     if (Remote && magrittr::not(KeepDownloaded)) file.remove(DownPath)
   }
 
@@ -942,6 +946,8 @@ Chelsa_Project <- function(
   # ||||||||||||||||||||||||||||||||||||||||
   # Return map?
   # ||||||||||||||||||||||||||||||||||||||||
+
+  invisible(gc())
 
   if (ReturnMap) {
     return(terra::wrap(Rstr))

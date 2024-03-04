@@ -24,7 +24,7 @@ Chelsa_Prepare_List(
 
 \item{UpdateExisting}{logical; Reprocess existing file?}
 
-\item{Path_Chelsa}{Path for Chelsa analyses (including \code{Chelsa_Vars.txt} file)}
+\item{Path_Chelsa}{Path for Chelsa analyses}
 }
 \description{
 Prepare list of potential variables

@@ -101,7 +101,6 @@ Match_to_GBIF <- function(
       dplyr::filter(rank != "GENUS")
   }
 
-
   # get names that were matched as accepted
   accepted <- taxon_list %>%
     dplyr::group_by(taxon_id) %>%
@@ -118,7 +117,7 @@ Match_to_GBIF <- function(
   synonyms <- taxon_list %>%
     dplyr::group_by(.data$taxon_id) %>%
     dplyr::summarise(has_accepted = dplyr::n_distinct(.data$status == "ACCEPTED") > 1) %>%
-    dplyr::full_join(taxon_list, by = dplyr::join_by(taxon_id)) %>%
+    dplyr::full_join(taxon_list, by = "taxon_id") %>%
     dplyr::filter(.data$has_accepted == FALSE) %>%
     dplyr::filter(.data$status == "SYNONYM")
   if (nrow(synonyms) > 0) {
@@ -134,7 +133,7 @@ Match_to_GBIF <- function(
   doubtful <- taxon_list %>%
     dplyr::group_by(taxon_id) %>%
     dplyr::summarise(has_accepted = dplyr::n_distinct(.data$status == "ACCEPTED") > 1) %>%
-    dplyr::full_join(taxon_list, by = dplyr::join_by(taxon_id)) %>%
+    dplyr::full_join(taxon_list, by = "taxon_id") %>%
     dplyr::filter(.data$has_accepted == FALSE) %>%
     dplyr::group_by(taxon_id) %>%
     dplyr::filter(.data$status == "DOUBTFUL")
@@ -398,7 +397,7 @@ Chelsa_Extract_Matching <- function(String, Time, Matches) {
 #' @param DwnPath Download path
 #' @param OutPath Output path
 #' @param UpdateExisting logical; Reprocess existing file?
-#' @param Path_Chelsa Path for Chelsa analyses (including `Chelsa_Vars.txt` file)
+#' @param Path_Chelsa Path for Chelsa analyses
 #' @author Ahmed El-Gabbas
 #' @importFrom rlang .data
 #' @export
@@ -423,9 +422,9 @@ Chelsa_Prepare_List <- function(
     stringr::str_c(collapse = "|")
 
   # List of Chelsa Vars we are interested in (available in current/future)
-  Chelsa_Vars <- file.path(Path_Chelsa, "Chelsa_Vars.txt") %>%
-    readr::read_delim(delim = "\t", show_col_types = FALSE) %>%
-    dplyr::select(-"scale", -"offset")
+  ChelsaVars <- IASDT.R::Chelsa_Vars() %>%
+    dplyr::select(-"scale", -"offset") %>%
+    dplyr::rename(Var = Variable)
 
   ChelsaClimData <- file.path(Path_Chelsa, "DwnLinks") %>%
     # files containing download links for climatology data
@@ -531,7 +530,7 @@ Chelsa_Prepare_List <- function(
       # Exclude duplicated files on the Chelsa server
       .data$Folder != "climatologies/2011-2040/UKESM1-0-LL/ssp126") %>%
     dplyr::select(-"Folder") %>%
-    dplyr::left_join(Chelsa_Vars, by = dplyr::join_by("Var"))
+    dplyr::left_join(ChelsaVars, by = "Var")
 
 
   if (Down) {

@@ -2,17 +2,17 @@
 % Please edit documentation in R/Funs_general.R
 \name{InfoChunk}
 \alias{InfoChunk}
-\title{Print Information chunk}
+\title{Print Information chunk with time stamp}
 \usage{
 InfoChunk(Message = "", ...)
 }
 \arguments{
-\item{Message}{String passed to the \code{IASDT.R::CatTime} function}
+\item{Message}{A character string passed to \code{IASDT.R::CatTime}}
 
-\item{...}{additional arguments for the \code{IASDT.R::CatSep} function}
+\item{...}{additional arguments for the \code{IASDT.R::CatSep}}
 }
 \description{
-Print Information chunk
+Print Information chunk time stamp
 }
 \examples{
 InfoChunk(Message = "Started")

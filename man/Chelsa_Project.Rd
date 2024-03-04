@@ -15,22 +15,22 @@ Chelsa_Project(
 )
 }
 \arguments{
-\item{InputFile}{Path or URL for input tif file}
+\item{InputFile}{character; file path or URL for input tif file}
 
-\item{OutFile}{Path for output tif file}
+\item{OutFile}{character; file path for output nc/tif file. File extension will be replaced when needed.}
 
-\item{GridFile}{\code{raster} or \code{SpatRaster} for the reference grid. This grid will be used as reference grid for projection and the resulted file will be masked to it}
+\item{GridFile}{reference grid; either as \code{RasterLayer}, \code{SpatRaster}, or \code{PackedSpatRaster}. The reference grid will be used for projection and the resulted maps will be masked to it}
 
-\item{ReturnMap}{logical; should the processed map be returned by the end of the function?}
+\item{ReturnMap}{logical; should the processed map be returned by the end of the function? Default: \code{FALSE}}
 
-\item{DownPath}{Where to save downloaded files}
+\item{DownPath}{character; Where to save downloaded files (if the \code{InputFile} is a URL)}
 
-\item{KeepDownloaded}{if URL is provided as input file, the file will be downloaded to disk first before processing. Should the downloaded file be kept in disk.}
+\item{KeepDownloaded}{logical; if URL is provided as input file, the file will be downloaded to disk first before processing. Should the downloaded file be kept in disk. Default: \code{FALSE}}
 
-\item{SaveTiff}{Also save output map as *.tif file}
+\item{SaveTiff}{logical; also save output map as *.tif file. Default: \code{FALSE}}
 }
 \value{
-if \code{ReturnMap = TRUE}, the a wrapped SpatRaster object is returned (\code{PackedSpatRaster}); otherwise nothing is returned. By default the function exports a NetCDF file. If \code{SaveTiff} is set as \code{TRUE}, additional tiff file will be saved to disk.
+If \code{ReturnMap = TRUE}, a wrapped SpatRaster object (\code{PackedSpatRaster}) is returned; otherwise nothing is returned. By default the function exports a NetCDF file. If \code{SaveTiff} is set as \code{TRUE}, additional tiff file will be saved to disk.
 }
 \description{
 Project Chelsa data to the study area

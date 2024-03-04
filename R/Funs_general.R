@@ -8,11 +8,11 @@ if (getRversion() >= "2.15.1")  utils::globalVariables(c("."))
 #' Print separator(s) to the console
 #'
 #' Print separator(s) to the console
-#' @param Rep number of separator lines; default 1 row
-#' @param Extra1 number of extra empty lines before the separator; default: 0
-#' @param Extra2 number of extra empty lines after the separator; default: 0
-#' @param Char The character to be used as a separator; default "-"
-#' @param CharReps Number of times the character is repeated; default: 50
+#' @param Rep integer; number of separator lines; default `1` row
+#' @param Extra1 integer; number of extra empty lines before the separator; default: `0`
+#' @param Extra2 integer; number of extra empty lines after the separator; default: `0`
+#' @param Char character; the character to be used as a separator; default "-"
+#' @param CharReps integer; number of times the character is repeated; default: 50
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @examples
@@ -45,11 +45,11 @@ CatSep <- function(Rep = 1, Extra1 = 0, Extra2 = 0, Char = "-", CharReps = 50) {
 # InfoChunk ----
 # |---------------------------------------------------| #
 #
-#' Print Information chunk
+#' Print Information chunk with time stamp
 #'
-#' Print Information chunk
-#' @param Message String passed to the `IASDT.R::CatTime` function
-#' @param ... additional arguments for the `IASDT.R::CatSep` function
+#' Print Information chunk time stamp
+#' @param Message A character string passed to `IASDT.R::CatTime`
+#' @param ... additional arguments for the `IASDT.R::CatSep`
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @examples
@@ -237,10 +237,10 @@ AssignIfNotExist <- function(Variable, Value, Env = globalenv()) {
 # LoadAs ----
 # |---------------------------------------------------| #
 #
-#' Load RData file as specific object; i.e. rename loaded object
+#' Load RData file, ignoring original object name
 #'
-#' Load RData file as specific object; i.e. rename loaded object
-#' @param File path of file
+#' Load RData file, ignoring original object name
+#' @param File character; path of `.RData` file
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
@@ -266,6 +266,24 @@ AssignIfNotExist <- function(Variable, Value, Env = globalenv()) {
 #' ls()
 #'
 #' print(tibble::tibble(NewObj))
+#'
+#' # ---------------------------------------------------------
+#' # Loading multiple objects stored in single RData file
+#' # ---------------------------------------------------------
+#' # store three objects to single RData file
+#' mtcars2 <- mtcars3 <- mtcars
+#' TempFile <- tempfile(pattern = "mtcars_", fileext = ".RData")
+#'
+#' save(mtcars2, mtcars3, mtcars, file = TempFile)
+#' mtcars_all <- LoadAs(TempFile)
+#'
+#' # overwrite the file with different order of objects
+#' save(mtcars, mtcars2, mtcars3, file = TempFile)
+#' mtcars_all2 <- LoadAs(TempFile)
+#'
+#' # single list object with three items, keeping original object names and order
+#' names(mtcars_all)
+#' names(mtcars_all2)
 
 LoadAs <- function(File = NA) {
   InFile0 <- load(File)
@@ -482,16 +500,16 @@ ScrapLinks <- function(url) {
 # DirCreate ----
 # |---------------------------------------------------| #
 #
-#' Create directory if not existed
+#' Create directory if not existed (recursively)
 #'
-#' Create directory if not existed
-#' @param Path Path of the folder
-#' @param Verbose logical; print a message whether the folder was created or already available. Default: `TRUE`
+#' Create directory if not existed (recursively)
+#' @param Path character; folder path
+#' @param Verbose logical; print a message of whether the folder was created or already available. Default: `TRUE`
 #' @name DirCreate
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @examples
-#' # create new folder (random name) in the temporary folder
+#' # create a new folder (random name) in the temporary folder
 #' Path2Create <- file.path(tempdir(), stringi::stri_rand_strings(1, 5))
 #' file.exists(Path2Create)
 #'
@@ -505,7 +523,7 @@ ScrapLinks <- function(url) {
 DirCreate <- function(Path, Verbose = TRUE) {
   Path2 <- gsub("\\\\", "/", Path)
   if (dir.exists(Path) && Verbose) {
-    CatTime(stringr::str_glue("Path: {crayon::bold(Path2)} - already exists"))
+    CatTime(stringr::str_glue("Path: {crayon::bold(Path2)} - already exists"), Date = TRUE)
   } else {
     dir.create(Path, recursive = TRUE, showWarnings = FALSE)
     if (Verbose) {
@@ -523,10 +541,10 @@ DirCreate <- function(Path, Verbose = TRUE) {
 # CatTime ----
 # |---------------------------------------------------| #
 
-#' Print text and a time stamp
+#' Print text with time stamp
 #'
-#' Print text and a time stamp
-#' @param Text the text to print: default empty string (print time only)
+#' Print text with time stamp
+#' @param Text character; the text to print: default empty string (print time only)
 #' @param NLines number of empty lines after the printing; default: 1
 #' @param Date Also print date? Default value `FALSE`
 #' @param TZ time zone (default: CET)
@@ -990,6 +1008,12 @@ SaveMultiple <- function(
 #' # -------------------------------------------
 #'
 #' cc(A, B, "A and B")
+#' \dontrun{
+#' # this does not work
+#' cc(A, B, "A and B", 10)
+#' # this works
+#' cc(A, B, "A and B", "10")
+#' }
 
 cc <- function(...) {
   rlang::ensyms(...) %>%

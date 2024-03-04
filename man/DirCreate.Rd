@@ -2,20 +2,20 @@
 % Please edit documentation in R/Funs_general.R
 \name{DirCreate}
 \alias{DirCreate}
-\title{Create directory if not existed}
+\title{Create directory if not existed (recursively)}
 \usage{
 DirCreate(Path, Verbose = TRUE)
 }
 \arguments{
-\item{Path}{Path of the folder}
+\item{Path}{character; folder path}
 
-\item{Verbose}{logical; print a message whether the folder was created or already available. Default: \code{TRUE}}
+\item{Verbose}{logical; print a message of whether the folder was created or already available. Default: \code{TRUE}}
 }
 \description{
-Create directory if not existed
+Create directory if not existed (recursively)
 }
 \examples{
-# create new folder (random name) in the temporary folder
+# create a new folder (random name) in the temporary folder
 Path2Create <- file.path(tempdir(), stringi::stri_rand_strings(1, 5))
 file.exists(Path2Create)
 

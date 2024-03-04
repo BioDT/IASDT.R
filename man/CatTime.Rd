@@ -2,12 +2,12 @@
 % Please edit documentation in R/Funs_general.R
 \name{CatTime}
 \alias{CatTime}
-\title{Print text and a time stamp}
+\title{Print text with time stamp}
 \usage{
 CatTime(Text = "", NLines = 1, Date = FALSE, TZ = "CET", ...)
 }
 \arguments{
-\item{Text}{the text to print: default empty string (print time only)}
+\item{Text}{character; the text to print: default empty string (print time only)}
 
 \item{NLines}{number of empty lines after the printing; default: 1}
 
@@ -18,7 +18,7 @@ CatTime(Text = "", NLines = 1, Date = FALSE, TZ = "CET", ...)
 \item{...}{other arguments passed to \code{cat}}
 }
 \description{
-Print text and a time stamp
+Print text with time stamp
 }
 \examples{
 CatTime()

@@ -2,15 +2,15 @@
 % Please edit documentation in R/Funs_general.R
 \name{LoadAs}
 \alias{LoadAs}
-\title{Load RData file as specific object; i.e. rename loaded object}
+\title{Load RData file, ignoring original object name}
 \usage{
 LoadAs(File = NA)
 }
 \arguments{
-\item{File}{path of file}
+\item{File}{character; path of \code{.RData} file}
 }
 \description{
-Load RData file as specific object; i.e. rename loaded object
+Load RData file, ignoring original object name
 }
 \examples{
 File <- system.file("testdata", "culcita_dat.RData", package = "lme4")
@@ -34,6 +34,24 @@ NewObj <- LoadAs(File = File)
 ls()
 
 print(tibble::tibble(NewObj))
+
+# ---------------------------------------------------------
+# Loading multiple objects stored in single RData file
+# ---------------------------------------------------------
+# store three objects to single RData file
+mtcars2 <- mtcars3 <- mtcars
+TempFile <- tempfile(pattern = "mtcars_", fileext = ".RData")
+
+save(mtcars2, mtcars3, mtcars, file = TempFile)
+mtcars_all <- LoadAs(TempFile)
+
+# overwrite the file with different order of objects
+save(mtcars, mtcars2, mtcars3, file = TempFile)
+mtcars_all2 <- LoadAs(TempFile)
+
+# single list object with three items, keeping original object names and order
+names(mtcars_all)
+names(mtcars_all2)
 }
 \author{
 Ahmed El-Gabbas

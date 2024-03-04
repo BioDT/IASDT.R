@@ -626,7 +626,7 @@ Chelsa_Vars <- function() {
     "gst", "Mean temperature of the growing season TREELIM", "deg C", 0.1, -273.15, "Mean temperature of all growing season days based on TREELIM",
     "lgd", "last day of the growing season TREELIM", "julian day", 1, 0, "Last day of the growing season according to TREELIM",
     "fgd", "first day of the growing season TREELIM", "julian day", 1, 0, "first day of the growing season according to TREELIM",
-    "gsp", "Accumulated precipiation amount on growing season days TREELIM", "kg m-2", 0.1, 0, "precipitation sum accumulated on all days during the growing season based on TREELIM",
+    "gsp", "Accumulated precipitation amount on growing season days TREELIM", "kg m-2", 0.1, 0, "precipitation sum accumulated on all days during the growing season based on TREELIM",
     "fcf", "Frost change frequency", "count", 1, 0, "Number of events in which tmin or tmax go above, or below 0 deg C",
     "scd", "Snow cover days", "count", 1, 0, "Number of days with snowcover calculated using the snowpack model implementation in from TREELIM",
     "swe", "Snow water equivalent", "kg m-2", 0.1, 0, "Amount of luquid water if snow is melted",
@@ -738,14 +738,14 @@ Chelsa_Info <- function(FileName) {
 #'
 #' Project Chelsa data to the study area
 #' @name Chelsa_Project
-#' @param InputFile Path or URL for input tif file
-#' @param OutFile Path for output tif file
-#' @param GridFile `raster` or `SpatRaster` for the reference grid. This grid will be used as reference grid for projection and the resulted file will be masked to it
-#' @param ReturnMap logical; should the processed map be returned by the end of the function?
-#' @param DownPath Where to save downloaded files
-#' @param KeepDownloaded if URL is provided as input file, the file will be downloaded to disk first before processing. Should the downloaded file be kept in disk.
-#' @param SaveTiff Also save output map as *.tif file
-#' @returns if `ReturnMap = TRUE`, the a wrapped SpatRaster object is returned (`PackedSpatRaster`); otherwise nothing is returned. By default the function exports a NetCDF file. If `SaveTiff` is set as `TRUE`, additional tiff file will be saved to disk.
+#' @param InputFile character; file path or URL for input tif file
+#' @param OutFile character; file path for output nc/tif file. File extension will be replaced when needed.
+#' @param GridFile reference grid; either as `RasterLayer`, `SpatRaster`, or `PackedSpatRaster`. The reference grid will be used for projection and the resulted maps will be masked to it
+#' @param ReturnMap logical; should the processed map be returned by the end of the function? Default: `FALSE`
+#' @param DownPath character; Where to save downloaded files (if the `InputFile` is a URL)
+#' @param KeepDownloaded logical; if URL is provided as input file, the file will be downloaded to disk first before processing. Should the downloaded file be kept in disk. Default: `FALSE`
+#' @param SaveTiff logical; also save output map as *.tif file. Default: `FALSE`
+#' @returns If `ReturnMap = TRUE`, a wrapped SpatRaster object (`PackedSpatRaster`) is returned; otherwise nothing is returned. By default the function exports a NetCDF file. If `SaveTiff` is set as `TRUE`, additional tiff file will be saved to disk.
 #' @author Ahmed El-Gabbas
 #' @export
 

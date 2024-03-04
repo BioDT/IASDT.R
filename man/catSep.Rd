@@ -7,15 +7,15 @@
 CatSep(Rep = 1, Extra1 = 0, Extra2 = 0, Char = "-", CharReps = 50)
 }
 \arguments{
-\item{Rep}{number of separator lines; default 1 row}
+\item{Rep}{integer; number of separator lines; default \code{1} row}
 
-\item{Extra1}{number of extra empty lines before the separator; default: 0}
+\item{Extra1}{integer; number of extra empty lines before the separator; default: \code{0}}
 
-\item{Extra2}{number of extra empty lines after the separator; default: 0}
+\item{Extra2}{integer; number of extra empty lines after the separator; default: \code{0}}
 
-\item{Char}{The character to be used as a separator; default "-"}
+\item{Char}{character; the character to be used as a separator; default "-"}
 
-\item{CharReps}{Number of times the character is repeated; default: 50}
+\item{CharReps}{integer; number of times the character is repeated; default: 50}
 }
 \description{
 Print separator(s) to the console

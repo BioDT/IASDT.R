@@ -11,7 +11,8 @@ Chelsa_Project(
   ReturnMap = FALSE,
   DownPath = NULL,
   KeepDownloaded = TRUE,
-  SaveTiff = FALSE
+  SaveTiff = FALSE,
+  CompressLevel = 5
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ Chelsa_Project(
 \item{KeepDownloaded}{logical; if URL is provided as input file, the file will be downloaded to disk first before processing. Should the downloaded file be kept in disk. Default: \code{FALSE}}
 
 \item{SaveTiff}{logical; also save output map as *.tif file. Default: \code{FALSE}}
+
+\item{CompressLevel}{integer; compression level of the exported NetCDF file (see: \code{terra::writeCDF} for more information). Can be set to an integer between 1 (least compression) and 9 (most compression). Default: \code{5}.}
 }
 \value{
 If \code{ReturnMap = TRUE}, a wrapped SpatRaster object (\code{PackedSpatRaster}) is returned; otherwise nothing is returned. By default the function exports a NetCDF file. If \code{SaveTiff} is set as \code{TRUE}, additional tiff file will be saved to disk.

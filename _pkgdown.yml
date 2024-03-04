@@ -75,6 +75,7 @@ reference:
   - InfoChunk
   - SaveSession
   - SaveSessionInfo
+  - FileSize
 
 - title: Spatial functions
   desc:

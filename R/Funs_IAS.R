@@ -744,13 +744,15 @@ Chelsa_Info <- function(FileName) {
 #' @param DownPath character; Where to save downloaded files (if the `InputFile` is a URL)
 #' @param KeepDownloaded logical; if URL is provided as input file, the file will be downloaded to disk first before processing. Should the downloaded file be kept in disk. Default: `FALSE`
 #' @param SaveTiff logical; also save output map as *.tif file. Default: `FALSE`
+#' @param CompressLevel integer; compression level of the exported NetCDF file (see: `terra::writeCDF` for more information). Can be set to an integer between 1 (least compression) and 9 (most compression). Default: `5`.
 #' @returns If `ReturnMap = TRUE`, a wrapped SpatRaster object (`PackedSpatRaster`) is returned; otherwise nothing is returned. By default the function exports a NetCDF file. If `SaveTiff` is set as `TRUE`, additional tiff file will be saved to disk.
 #' @author Ahmed El-Gabbas
 #' @export
 
 Chelsa_Project <- function(
     InputFile = NULL, OutFile = NULL, GridFile = NULL, ReturnMap = FALSE,
-    DownPath = NULL, KeepDownloaded = TRUE, SaveTiff = FALSE) {
+    DownPath = NULL, KeepDownloaded = TRUE, SaveTiff = FALSE,
+    CompressLevel = 5) {
 
   # Ensure that the reference grid is not null
   if (is.null(GridFile)) stop("GridFile can not be empty")
@@ -939,8 +941,9 @@ Chelsa_Project <- function(
 
   # save as *.nc file
   terra::writeCDF(
-    Rstr, filename = OutFileNC, varname = VarName4NC, unit = VarDesc$unit,
-    zname = VarDesc$TimePeriod, atts = Attrs, overwrite = TRUE)
+    Rstr, filename = OutFileNC, varname = VarName4NC,
+    unit = VarDesc$unit, zname = VarDesc$TimePeriod,
+    atts = Attrs, overwrite = TRUE, compression = CompressLevel)
 
   # ||||||||||||||||||||||||||||||||||||||||
   # Return map?

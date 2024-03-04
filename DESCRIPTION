@@ -23,6 +23,7 @@ Suggests:
     devtools,
     dplyr,
     furrr,
+    gdata,
     ggplot2,
     gtools,
     jsonlite,

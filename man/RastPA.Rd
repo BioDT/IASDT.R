@@ -7,7 +7,7 @@
 RastPA(x, NA_to_0 = TRUE, Zero_to_NA = FALSE)
 }
 \arguments{
-\item{x}{input raster map}
+\item{x}{input map; either \code{PackedSpatRaster}, \code{RasterLayer}, or \code{SpatRaster}}
 
 \item{NA_to_0}{logical (default: \code{TRUE}); should NA be replaced with 0}
 

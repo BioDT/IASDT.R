@@ -192,7 +192,17 @@ Get_EASIN_Data <- function(SpKey, NSearch = 500) {
   # Looping over data chunks
   while (TRUE) {
     ID <- ID + 1
-    URL <- stringr::str_glue("https://easin.jrc.ec.europa.eu/apixg/geoxg/speciesid/{SpKey}/layertype/grid/skip/{Skip}/take/{NSearch}")
+
+    # Update 08.03.2024
+    # The following does not work as of 08.03.2024 due to changes in the EASIN API
+    # URL <- stringr::str_glue("https://easin.jrc.ec.europa.eu/apixg/geoxg/speciesid/{SpKey}/layertype/grid/skip/{Skip}/take/{NSearch}")
+    # See https://easin.jrc.ec.europa.eu/apixg/home/geoqueries/ for help on how to formulate the URL
+    # `exclude/dps/1/` excludes GBIF data
+    BaseURL <- "https://easin.jrc.ec.europa.eu/apixg/geoxg/"
+    URL <- stringr::str_glue("{SpKey}/exclude/dps/1/{Skip}/{NSearch}")
+
+    # options(download.file.method = "wininet")
+    options(timeout = 200)
 
     # Extract data from JSON
     Data <- jsonlite::fromJSON(URL)

@@ -237,14 +237,15 @@ Get_EASIN_Data <- function(
       dplyr::rename(EASINID = SpeciesId) %>%
       dplyr::left_join(TaxaList, by = "EASINID") %>%
       dplyr::mutate(Year = as.integer(Year), SpeciesName = NULL) %>%
-      tidyr::unnest(GeoJSON) %>%
-      tidyr::unnest_wider(coordinates, names_sep = "") %>%
-      dplyr::rename(
-        GeoJSON_type = type, Long = coordinates1, Lat = coordinates2) %>%
-      dplyr::filter(magrittr::not(is.na(GeoJSON_type)), Year >= MinYear)
+      dplyr::filter(Year >= MinYear)
 
-    if (nrow(DT) > 0) {
+    if (nrow(DT) > 0 && "GeoJSON" %in% names(DT)) {
       DT <- DT %>%
+        tidyr::unnest(GeoJSON) %>%
+        tidyr::unnest_wider(coordinates, names_sep = "") %>%
+        dplyr::rename(
+          GeoJSON_type = type, Long = coordinates1, Lat = coordinates2) %>%
+        dplyr::filter(magrittr::not(is.na(GeoJSON_type))) %>%
         sf::st_as_sf(coords = c("Long", "Lat"), crs = 4326, remove = FALSE) %>%
         sf::st_transform(3035) %>%
         sf::st_join(Grid_sf)
@@ -713,34 +714,34 @@ Chelsa_Info <- function(FileName) {
     purrr::map_dfr(
       .f = ~{
         TimePeriod <- dplyr::case_when(
-          stringr::str_detect( .x, "1981-2010") ~ "Current",
-          stringr::str_detect( .x, "2011-2040") ~ "2011_2040",
-          stringr::str_detect( .x, "2041-2070") ~ "2041_2070",
-          stringr::str_detect( .x, "2071-2100") ~ "2071_2100",
+          stringr::str_detect(.x, "1981-2010") ~ "Current",
+          stringr::str_detect(.x, "2011-2040") ~ "2011_2040",
+          stringr::str_detect(.x, "2041-2070") ~ "2041_2070",
+          stringr::str_detect(.x, "2071-2100") ~ "2071_2100",
           .default = NA_character_)
 
         ClimModel <- dplyr::case_when(
-          stringr::str_detect( .x, "1981-2010") ~ "Current",
+          stringr::str_detect(.x, "1981-2010") ~ "Current",
           # National Oceanic and Atmospheric Administration, Geophysical Fluid Dynamics Laboratory, Princeton, NJ 08540, USA
-          stringr::str_detect( .x, "GFDL-ESM4|gfdl-esm4") ~ "GFDL_ESM4",
+          stringr::str_detect(.x, "GFDL-ESM4|gfdl-esm4") ~ "GFDL_ESM4",
           # Institut Pierre Simon Laplace, Paris 75252, France
-          stringr::str_detect( .x, "IPSL-CM6A-LR|ipsl-cm6a-lr") ~ "IPSL_CM6A",
+          stringr::str_detect(.x, "IPSL-CM6A-LR|ipsl-cm6a-lr") ~ "IPSL_CM6A",
           # Max Planck Institute for Meteorology, Hamburg 20146, Germany
-          stringr::str_detect( .x, "MPI-ESM1-2-HR|mpi-esm1-2-hr") ~ "MPI_ESM",
+          stringr::str_detect(.x, "MPI-ESM1-2-HR|mpi-esm1-2-hr") ~ "MPI_ESM",
           # Met Office Hadley Centre, Fitzroy Road, Exeter, Devon, EX1 3PB, UK
-          stringr::str_detect( .x, "UKESM1-0-LL|ukesm1-0-ll") ~ "UKESM",
+          stringr::str_detect(.x, "UKESM1-0-LL|ukesm1-0-ll") ~ "UKESM",
           # Meteorological Research Institute, Tsukuba, Ibaraki 305-0052, Japan
-          stringr::str_detect( .x, "MRI-ESM2-0|mri-esm2-0") ~ "MRI_ESM2",
+          stringr::str_detect(.x, "MRI-ESM2-0|mri-esm2-0") ~ "MRI_ESM2",
           .default = NA_character_)
 
         ClimScenario <- dplyr::case_when(
-          stringr::str_detect( .x, "1981-2010") ~ "Current",
+          stringr::str_detect(.x, "1981-2010") ~ "Current",
           # SSP1-RCP2.6 climate as simulated by the GCMs
-          stringr::str_detect( .x, "ssp126") ~ "ssp126",
+          stringr::str_detect(.x, "ssp126") ~ "ssp126",
           # ssp370 SSP3-RCP7 climate as simulated by the GCMs
-          stringr::str_detect( .x, "ssp370") ~ "ssp370",
+          stringr::str_detect(.x, "ssp370") ~ "ssp370",
           # ssp585 SSP5-RCP8.5 climate as simulated by the GCMs
-          stringr::str_detect( .x, "ssp585") ~ "ssp585",
+          stringr::str_detect(.x, "ssp585") ~ "ssp585",
           .default = NA_character_)
 
         CurrVar <-  .x %>%

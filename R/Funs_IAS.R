@@ -172,6 +172,7 @@ Match_to_GBIF <- function(
 #' @param Grid_sf Reference grid as simple feature object
 #' @param Grid_R Reference grid as `SpatRaster` object
 #' @param MinYear exclude points before this year
+#' @param PathSave location to store the output data. Default: `NULL`; i.e. do not save the output
 #' @name Get_EASIN_Data
 #' @author Ahmed El-Gabbas
 #' @return NULL
@@ -187,7 +188,7 @@ Match_to_GBIF <- function(
 Get_EASIN_Data <- function(
     SpKey, NSearch = 500, Grid_sf = Grid_10_sf_s,
     Grid_R = terra::unwrap(Grid_10_Land_Crop),
-    TaxaList = EASIN_Taxa, MinYear = 1981) {
+    TaxaList = EASIN_Taxa, MinYear = 1981, PathSave = NULL) {
 
   withr::local_options(list(scipen = 999, timeout = 200))
 
@@ -248,6 +249,11 @@ Get_EASIN_Data <- function(
         sf::st_as_sf(coords = c("Long", "Lat"), crs = 4326, remove = FALSE) %>%
         sf::st_transform(3035) %>%
         sf::st_join(Grid_sf)
+
+      if (magrittr::not(inherits(PathSave, "NULL"))) {
+        IASDT.R::SaveAs(InObj = DT, OutObj = SpKey, OutPath = PathSave)
+      }
+
       invisible(gc())
       return(DT)
     } else {

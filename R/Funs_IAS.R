@@ -214,7 +214,7 @@ Get_EASIN_Data <- function(
 
     if (all(names(Data) == "Empty")) {
       # If there is no data for this EASIN ID, quit the loop and return a value of NULL
-      DT[[ID]] <- NULL
+      DT <- tibble::tibble()
       break()
     } else {
       # Add data on the current chunk to the list
@@ -229,20 +229,13 @@ Get_EASIN_Data <- function(
     }
   }
 
-  # merge the list items together
-  if (length(DT) > 0) {
+  DT <- dplyr::bind_rows(DT)
+  if (magrittr::not(inherits(PathSave, "NULL"))) {
+    IASDT.R::SaveAs(InObj = DT, OutObj = SpKey, OutPath = PathSave)
+  }
 
-    DT <- dplyr::bind_rows(DT)
-
-    if (magrittr::not(inherits(PathSave, "NULL"))) {
-      IASDT.R::SaveAs(InObj = DT, OutObj = SpKey, OutPath = PathSave)
-    }
-
-    if (ReturnVal) {
-      return(DT)
-    } else {
-      return(invisible(NULL))
-    }
+  if (ReturnVal) {
+    return(DT)
   } else {
     return(invisible(NULL))
   }

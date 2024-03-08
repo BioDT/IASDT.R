@@ -187,9 +187,8 @@ Match_to_GBIF <- function(
 
 Get_EASIN_Data <- function(
     SpKey, NSearch = 500, Grid_sf = Grid_10_sf_s,
-    Grid_R = terra::unwrap(Grid_10_Land_Crop),
-    # TaxaList = EASIN_Taxa, MinYear = 1981,
-    ReturnVal = TRUE, PathSave = NULL) {
+    Grid_R = terra::unwrap(Grid_10_Land_Crop), ReturnVal = TRUE,
+    PathSave = NULL) {
 
   withr::local_options(list(scipen = 999, timeout = 200))
 
@@ -228,25 +227,24 @@ Get_EASIN_Data <- function(
     } else {
       Skip <- Skip + NSearch
     }
-    invisible(gc())
   }
-
-  invisible(gc())
 
   # merge the list items together
   if (length(DT) > 0) {
+
+    DT <- dplyr::bind_rows(DT)
 
     if (magrittr::not(inherits(PathSave, "NULL"))) {
       IASDT.R::SaveAs(InObj = DT, OutObj = SpKey, OutPath = PathSave)
     }
 
     if (ReturnVal) {
-      return(dplyr::bind_rows(DT))
+      return(DT)
     } else {
-      return(NULL)
+      return(invisible(NULL))
     }
   } else {
-    return(NULL)
+    return(invisible(NULL))
   }
 }
 

@@ -171,7 +171,7 @@ Match_to_GBIF <- function(
 #' @param NSearch number of grid cells to extract each time
 #' @param Grid_sf Reference grid as simple feature object
 #' @param Grid_R Reference grid as `SpatRaster` object
-#' @param MinYear exclude points before this year
+#' @param ReturnVal Should the data be returned or only saved to disk
 #' @param PathSave location to store the output data. Default: `NULL`; i.e. do not save the output
 #' @name Get_EASIN_Data
 #' @author Ahmed El-Gabbas
@@ -188,7 +188,8 @@ Match_to_GBIF <- function(
 Get_EASIN_Data <- function(
     SpKey, NSearch = 500, Grid_sf = Grid_10_sf_s,
     Grid_R = terra::unwrap(Grid_10_Land_Crop),
-    TaxaList = EASIN_Taxa, MinYear = 1981, PathSave = NULL) {
+    # TaxaList = EASIN_Taxa, MinYear = 1981,
+    ReturnVal = TRUE, PathSave = NULL) {
 
   withr::local_options(list(scipen = 999, timeout = 200))
 
@@ -205,12 +206,12 @@ Get_EASIN_Data <- function(
     # URL <- stringr::str_glue("https://easin.jrc.ec.europa.eu/apixg/geoxg/speciesid/{SpKey}/layertype/grid/skip/{Skip}/take/{NSearch}")
     # See https://easin.jrc.ec.europa.eu/apixg/home/geoqueries/ for help on how to formulate the URL
     # `exclude/dps/1/` excludes GBIF data
-    BaseURL <- "https://easin.jrc.ec.europa.eu/apixg/geoxg/"
-    URL <- "{BaseURL}/{SpKey}/exclude/dps/1/{Skip}/{NSearch}" %>%
-      stringr::str_glue()
+    BaseURL <- "https://easin.jrc.ec.europa.eu/apixg/geoxg"
 
     # Extract data from JSON
-    Data <- jsonlite::fromJSON(URL)
+    Data <- "{BaseURL}/{SpKey}/exclude/dps/1/{Skip}/{NSearch}" %>%
+      stringr::str_glue() %>%
+      jsonlite::fromJSON()
 
     if (all(names(Data) == "Empty")) {
       # If there is no data for this EASIN ID, quit the loop and return a value of NULL
@@ -227,41 +228,24 @@ Get_EASIN_Data <- function(
     } else {
       Skip <- Skip + NSearch
     }
+    invisible(gc())
   }
+
+  invisible(gc())
 
   # merge the list items together
   if (length(DT) > 0) {
 
-    DT <- DT %>%
-      dplyr::bind_rows() %>%
-      dplyr::rename(EASINID = SpeciesId) %>%
-      # dplyr::left_join(TaxaList, by = "EASINID") %>%
-      dplyr::mutate(Year = as.integer(Year), SpeciesName = NULL) %>%
-      dplyr::filter(Year >= MinYear)
+    if (magrittr::not(inherits(PathSave, "NULL"))) {
+      IASDT.R::SaveAs(InObj = DT, OutObj = SpKey, OutPath = PathSave)
+    }
 
-    if (nrow(DT) > 0 && "GeoJSON" %in% names(DT)) {
-      DT <- DT %>%
-        tidyr::unnest(GeoJSON) %>%
-        tidyr::unnest_wider(coordinates, names_sep = "") %>%
-        dplyr::rename(
-          GeoJSON_type = type, Long = coordinates1, Lat = coordinates2) %>%
-        dplyr::filter(magrittr::not(is.na(GeoJSON_type))) %>%
-        sf::st_as_sf(coords = c("Long", "Lat"), crs = 4326, remove = FALSE) %>%
-        sf::st_transform(3035) %>%
-        sf::st_join(Grid_sf)
-
-      if (magrittr::not(inherits(PathSave, "NULL"))) {
-        IASDT.R::SaveAs(InObj = DT, OutObj = SpKey, OutPath = PathSave)
-      }
-
-      invisible(gc())
-      return(DT)
+    if (ReturnVal) {
+      return(dplyr::bind_rows(DT))
     } else {
       return(NULL)
     }
-
   } else {
-    invisible(gc())
     return(NULL)
   }
 }

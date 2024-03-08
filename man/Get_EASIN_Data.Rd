@@ -9,8 +9,7 @@ Get_EASIN_Data(
   NSearch = 500,
   Grid_sf = Grid_10_sf_s,
   Grid_R = terra::unwrap(Grid_10_Land_Crop),
-  TaxaList = EASIN_Taxa,
-  MinYear = 1981,
+  ReturnVal = TRUE,
   PathSave = NULL
 )
 }
@@ -23,7 +22,7 @@ Get_EASIN_Data(
 
 \item{Grid_R}{Reference grid as \code{SpatRaster} object}
 
-\item{MinYear}{exclude points before this year}
+\item{ReturnVal}{Should the data be returned or only saved to disk}
 
 \item{PathSave}{location to store the output data. Default: \code{NULL}; i.e. do not save the output}
 }

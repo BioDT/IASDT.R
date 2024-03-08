@@ -171,7 +171,6 @@ Match_to_GBIF <- function(
 #' @param NSearch number of grid cells to extract each time
 #' @param Grid_sf Reference grid as simple feature object
 #' @param Grid_R Reference grid as `SpatRaster` object
-#' @param TaxaList EASIN standardized data
 #' @param MinYear exclude points before this year
 #' @name Get_EASIN_Data
 #' @author Ahmed El-Gabbas
@@ -235,7 +234,7 @@ Get_EASIN_Data <- function(
     DT <- DT %>%
       dplyr::bind_rows() %>%
       dplyr::rename(EASINID = SpeciesId) %>%
-      dplyr::left_join(TaxaList, by = "EASINID") %>%
+      # dplyr::left_join(TaxaList, by = "EASINID") %>%
       dplyr::mutate(Year = as.integer(Year), SpeciesName = NULL) %>%
       dplyr::filter(Year >= MinYear)
 

@@ -22,8 +22,6 @@ Get_EASIN_Data(
 
 \item{Grid_R}{Reference grid as \code{SpatRaster} object}
 
-\item{TaxaList}{EASIN standardized data}
-
 \item{MinYear}{exclude points before this year}
 }
 \description{

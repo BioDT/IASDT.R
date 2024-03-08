@@ -169,6 +169,9 @@ Match_to_GBIF <- function(
 #' Extract EASIN data using EASIN ID
 #' @param SpKey EASIN ID
 #' @param NSearch number of grid cells to extract each time
+#' @param Grid_sf Reference grid as simple feature object
+#' @param Grid_R Reference grid as `SpatRaster` object
+#' @param TaxaList EASIN standardized data
 #' @name Get_EASIN_Data
 #' @author Ahmed El-Gabbas
 #' @return NULL
@@ -181,9 +184,12 @@ Match_to_GBIF <- function(
 #'   purrr::map(Get_EASIN_Data)
 #'}
 
-Get_EASIN_Data <- function(SpKey, NSearch = 500) {
+Get_EASIN_Data <- function(
+    SpKey, NSearch = 500, Grid_sf = Grid_10_sf_s,
+    Grid_R = terra::unwrap(Grid_10_Land_Crop),
+    TaxaList = EASIN_Taxa) {
 
-  withr::local_options(list(scipen = 999))
+  withr::local_options(list(scipen = 999, timeout = 200))
 
   Skip <- 0         # Skip = 0; start at the first presence grid
   ID <- 0           # iteration ID
@@ -199,10 +205,8 @@ Get_EASIN_Data <- function(SpKey, NSearch = 500) {
     # See https://easin.jrc.ec.europa.eu/apixg/home/geoqueries/ for help on how to formulate the URL
     # `exclude/dps/1/` excludes GBIF data
     BaseURL <- "https://easin.jrc.ec.europa.eu/apixg/geoxg/"
-    URL <- stringr::str_glue("{SpKey}/exclude/dps/1/{Skip}/{NSearch}")
-
-    # options(download.file.method = "wininet")
-    options(timeout = 200)
+    URL <- "{BaseURL}/{SpKey}/exclude/dps/1/{Skip}/{NSearch}" %>%
+      stringr::str_glue()
 
     # Extract data from JSON
     Data <- jsonlite::fromJSON(URL)
@@ -226,12 +230,34 @@ Get_EASIN_Data <- function(SpKey, NSearch = 500) {
 
   # merge the list items together
   if (length(DT) > 0) {
-    return(dplyr::bind_rows(DT))
+
+    DT <- DT %>%
+      dplyr::bind_rows() %>%
+      dplyr::rename(EASINID = SpeciesId) %>%
+      dplyr::left_join(TaxaList, by = "EASINID") %>%
+      dplyr::mutate(Year = as.integer(Year), SpeciesName = NULL) %>%
+      tidyr::unnest(GeoJSON) %>%
+      tidyr::unnest_wider(coordinates, names_sep = "") %>%
+      dplyr::rename(
+        GeoJSON_type = type, Long = coordinates1, Lat = coordinates2) %>%
+      dplyr::filter(magrittr::not(is.na(GeoJSON_type)), Year >= MinYear)
+
+    if (nrow(DT) > 0) {
+      DT <- DT %>%
+        sf::st_as_sf(coords = c("Long", "Lat"), crs = 4326, remove = FALSE) %>%
+        sf::st_transform(3035) %>%
+        sf::st_join(Grid_sf)
+      invisible(gc())
+      return(DT)
+    } else {
+      return(NULL)
+    }
+
   } else {
+    invisible(gc())
     return(NULL)
   }
 }
-
 
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

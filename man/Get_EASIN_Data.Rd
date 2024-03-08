@@ -4,12 +4,24 @@
 \alias{Get_EASIN_Data}
 \title{Extract EASIN data using EASIN ID}
 \usage{
-Get_EASIN_Data(SpKey, NSearch = 500)
+Get_EASIN_Data(
+  SpKey,
+  NSearch = 500,
+  Grid_sf = Grid_10_sf_s,
+  Grid_R = terra::unwrap(Grid_10_Land_Crop),
+  TaxaList = EASIN_Taxa
+)
 }
 \arguments{
 \item{SpKey}{EASIN ID}
 
 \item{NSearch}{number of grid cells to extract each time}
+
+\item{Grid_sf}{Reference grid as simple feature object}
+
+\item{Grid_R}{Reference grid as \code{SpatRaster} object}
+
+\item{TaxaList}{EASIN standardized data}
 }
 \description{
 Extract EASIN data using EASIN ID

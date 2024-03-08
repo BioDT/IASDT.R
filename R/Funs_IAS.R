@@ -172,6 +172,7 @@ Match_to_GBIF <- function(
 #' @param Grid_sf Reference grid as simple feature object
 #' @param Grid_R Reference grid as `SpatRaster` object
 #' @param TaxaList EASIN standardized data
+#' @param MinYear exclude points before this year
 #' @name Get_EASIN_Data
 #' @author Ahmed El-Gabbas
 #' @return NULL
@@ -187,7 +188,7 @@ Match_to_GBIF <- function(
 Get_EASIN_Data <- function(
     SpKey, NSearch = 500, Grid_sf = Grid_10_sf_s,
     Grid_R = terra::unwrap(Grid_10_Land_Crop),
-    TaxaList = EASIN_Taxa) {
+    TaxaList = EASIN_Taxa, MinYear = 1981) {
 
   withr::local_options(list(scipen = 999, timeout = 200))
 

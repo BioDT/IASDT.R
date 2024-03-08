@@ -9,7 +9,8 @@ Get_EASIN_Data(
   NSearch = 500,
   Grid_sf = Grid_10_sf_s,
   Grid_R = terra::unwrap(Grid_10_Land_Crop),
-  TaxaList = EASIN_Taxa
+  TaxaList = EASIN_Taxa,
+  MinYear = 1981
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ Get_EASIN_Data(
 \item{Grid_R}{Reference grid as \code{SpatRaster} object}
 
 \item{TaxaList}{EASIN standardized data}
+
+\item{MinYear}{exclude points before this year}
 }
 \description{
 Extract EASIN data using EASIN ID

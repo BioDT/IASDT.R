@@ -39,6 +39,7 @@ Suggests:
     pryr,
     purrr,
     raster,
+    RCurl,
     readr,
     rgbif,
     RNetCDF,

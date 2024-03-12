@@ -6,37 +6,31 @@
 \usage{
 Get_EASIN_Data(
   SpKey,
-  NSearch = 500,
-  Grid_sf = Grid_10_sf_s,
-  Grid_R = terra::unwrap(Grid_10_Land_Crop),
-  ReturnVal = TRUE,
-  PathSave = NULL
+  NSearch = 1000,
+  SleepPart = 1,
+  Path_Raw = "Data/EASIN/Raw",
+  ReturnVal = FALSE,
+  SleepAfter = 5
 )
 }
 \arguments{
-\item{SpKey}{EASIN ID}
+\item{SpKey}{character; EASIN taxon ID}
 
-\item{NSearch}{number of grid cells to extract each time}
+\item{NSearch}{number of observations to extract each time; default: 1000 (the current maximum per request)}
 
-\item{Grid_sf}{Reference grid as simple feature object}
+\item{SleepPart}{integer; time in seconds to wait between each request. Default: 1.}
 
-\item{Grid_R}{Reference grid as \code{SpatRaster} object}
+\item{Path_Raw}{character; a valid path for the location to store the output data. A subfolder named \code{FileParts} will be created for temporary files for individual requests.}
 
-\item{ReturnVal}{Should the data be returned or only saved to disk}
+\item{ReturnVal}{logical; should the data be returned or only saved to disk. Default: \code{FALSE}}
 
-\item{PathSave}{location to store the output data. Default: \code{NULL}; i.e. do not save the output}
+\item{SleepAfter}{integer; time in seconds to wait after finishing with downloading taxon data. Default: 10.}
 }
 \description{
 Extract EASIN data using EASIN ID
 }
 \details{
 A function to extract EASIN data for a given EASIN_ID
-}
-\examples{
-\dontrun{
-c("R00006", "R18689", "R00008") \%>\%
-  purrr::map(Get_EASIN_Data)
-}
 }
 \author{
 Ahmed El-Gabbas

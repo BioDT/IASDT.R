@@ -573,6 +573,44 @@ CatTime <- function(Text = "", NLines = 1, Date = FALSE, TZ = "CET", ...) {
   }
 }
 
+
+
+
+
+
+
+
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+#
+# |---------------------------------------------------| #
+# CatTimeSince ----
+# |---------------------------------------------------| #
+
+#' Print time since a time event
+#'
+#' Print time since a time event
+#'
+#' @param InitTime day and time of the time event
+#' @param CatInfoChunk logical; also print `IASDT.R::InfoChunk("Session summary")`
+#' @name CatTimeSince
+#' @author Ahmed El-Gabbas
+#' @return NULL
+#' @export
+
+CatTimeSince <- function(InitTime, CatInfoChunk = TRUE) {
+  if (CatInfoChunk) {
+    IASDT.R::InfoChunk("Session summary")
+  }
+
+  lubridate::now(tzone = "CET") %>%
+    difftime(InitTime, units = "mins") %>%
+    as.numeric() %>%
+    round(2) %>%
+    stringr::str_c("\nSourcing file was completed  in ", ., " minutes") %>%
+    IASDT.R::CatTime(... = "\n")
+}
+
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

@@ -31,6 +31,7 @@ reference:
   - AssignIfNotExist
   - CatSep
   - CatTime
+  - CatTimeSince
   - cc
   - CurrOS
   - ht

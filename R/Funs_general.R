@@ -580,10 +580,9 @@ CatTime <- function(Text = "", NLines = 1, Date = FALSE, TZ = "CET", ...) {
 # CatTimeSince ----
 # |---------------------------------------------------| #
 
-#' Print time since a time event
+#' Print time difference
 #'
-#' Print time since a time event
-#'
+#' Print time difference
 #' @param InitTime day and time of the time event
 #' @param Prefix Prefix character to print
 #' @param CatInfoChunk logical; also print `IASDT.R::InfoChunk("Session summary")`
@@ -599,15 +598,13 @@ CatTimeSince <- function(
     IASDT.R::InfoChunk("Session summary")
   }
 
-  lubridate::now(tzone = "CET") %>%
-    difftime(InitTime, units = "mins") %>%
-    as.numeric() %>%
+  (lubridate::now(tzone = "CET") - InitTime) %>%
+    lubridate::time_length(unit = "min") %>%
     round(2) %>%
     stringr::str_c(Prefix, ., " minutes") %>%
     IASDT.R::CatTime(... = "\n")
 
   return(invisible(NULL))
-
 }
 
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

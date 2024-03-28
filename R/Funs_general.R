@@ -577,7 +577,7 @@ CatTime <- function(Text = "", NLines = 1, Date = FALSE, TZ = "CET", ...) {
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 #
 # |---------------------------------------------------| #
-# CatTimeSince ----
+# CatDiff ----
 # |---------------------------------------------------| #
 
 #' Print time difference
@@ -586,12 +586,12 @@ CatTime <- function(Text = "", NLines = 1, Date = FALSE, TZ = "CET", ...) {
 #' @param InitTime day and time of the time event
 #' @param Prefix Prefix character to print
 #' @param CatInfoChunk logical; also print `IASDT.R::InfoChunk("Session summary")`
-#' @name CatTimeSince
+#' @name CatDiff
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
-CatTimeSince <- function(
+CatDiff <- function(
     InitTime, Prefix = "Completed  in ", CatInfoChunk = TRUE) {
 
   if (CatInfoChunk) {

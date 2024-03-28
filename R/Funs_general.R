@@ -607,6 +607,7 @@ CatTimeSince <- function(
     IASDT.R::CatTime(... = "\n")
 
   return(invisible(NULL))
+
 }
 
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -1572,7 +1573,7 @@ ReloadPackage <- function(Package = NULL) {
     })
   }
 
-  invisible(NULL)
+  return(invisible(NULL))
 }
 
 

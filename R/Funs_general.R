@@ -594,6 +594,7 @@ CatTime <- function(Text = "", NLines = 1, Date = FALSE, TZ = "CET", ...) {
 
 CatTimeSince <- function(
     InitTime, Prefix = "Completed  in ", CatInfoChunk = TRUE) {
+
   if (CatInfoChunk) {
     IASDT.R::InfoChunk("Session summary")
   }
@@ -604,6 +605,8 @@ CatTimeSince <- function(
     round(2) %>%
     stringr::str_c(Prefix, ., " minutes") %>%
     IASDT.R::CatTime(... = "\n")
+
+  return(invisible(NULL))
 }
 
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

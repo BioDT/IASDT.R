@@ -4,14 +4,14 @@
 \alias{CatDiff}
 \title{Print time difference}
 \usage{
-CatDiff(InitTime, Prefix = "Completed  in ", CatInfoChunk = TRUE)
+CatDiff(InitTime, Prefix = "Completed in ", CatInfo = TRUE)
 }
 \arguments{
 \item{InitTime}{day and time of the time event}
 
 \item{Prefix}{Prefix character to print}
 
-\item{CatInfoChunk}{logical; also print \code{IASDT.R::InfoChunk("Session summary")}}
+\item{CatInfo}{logical; also print \code{IASDT.R::InfoChunk("Session summary")}}
 }
 \description{
 Print time difference

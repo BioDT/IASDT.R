@@ -588,20 +588,19 @@ CatTime <- function(Text = "", NLines = 1, Date = FALSE, TZ = "CET", ...) {
 #' @return NULL
 #' @param InitTime day and time of the time event
 #' @param Prefix Prefix character to print
-#' @param CatInfoChunk logical; also print `IASDT.R::InfoChunk("Session summary")`
+#' @param CatInfo logical; also print `IASDT.R::InfoChunk("Session summary")`
 #' @export
 
-CatDiff <- function(
-    InitTime, Prefix = "Completed  in ", CatInfoChunk = TRUE) {
+CatDiff <- function(InitTime, Prefix = "Completed in ", CatInfo = TRUE) {
 
-  if (CatInfoChunk) {
+  if (CatInfo) {
     IASDT.R::InfoChunk("Session summary")
   }
 
   (lubridate::now(tzone = "CET") - InitTime) %>%
     lubridate::time_length(unit = "min") %>%
     round(2) %>%
-    stringr::str_c(Prefix, ., " minutes") %>%
+    paste0(Prefix, ., " minutes") %>%
     IASDT.R::CatTime(... = "\n")
 
   return(invisible(NULL))

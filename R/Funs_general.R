@@ -573,13 +573,6 @@ CatTime <- function(Text = "", NLines = 1, Date = FALSE, TZ = "CET", ...) {
   }
 }
 
-
-
-
-
-
-
-
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 #
@@ -592,13 +585,15 @@ CatTime <- function(Text = "", NLines = 1, Date = FALSE, TZ = "CET", ...) {
 #' Print time since a time event
 #'
 #' @param InitTime day and time of the time event
+#' @param Prefix Prefix character to print
 #' @param CatInfoChunk logical; also print `IASDT.R::InfoChunk("Session summary")`
 #' @name CatTimeSince
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
-CatTimeSince <- function(InitTime, CatInfoChunk = TRUE) {
+CatTimeSince <- function(
+    InitTime, Prefix = "Completed  in ", CatInfoChunk = TRUE) {
   if (CatInfoChunk) {
     IASDT.R::InfoChunk("Session summary")
   }
@@ -607,7 +602,7 @@ CatTimeSince <- function(InitTime, CatInfoChunk = TRUE) {
     difftime(InitTime, units = "mins") %>%
     as.numeric() %>%
     round(2) %>%
-    stringr::str_c("\nSourcing file was completed  in ", ., " minutes") %>%
+    stringr::str_c(Prefix, ., " minutes") %>%
     IASDT.R::CatTime(... = "\n")
 }
 

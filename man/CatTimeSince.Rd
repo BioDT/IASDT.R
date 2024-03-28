@@ -4,10 +4,12 @@
 \alias{CatTimeSince}
 \title{Print time since a time event}
 \usage{
-CatTimeSince(InitTime, CatInfoChunk = TRUE)
+CatTimeSince(InitTime, Prefix = "Completed  in ", CatInfoChunk = TRUE)
 }
 \arguments{
 \item{InitTime}{day and time of the time event}
+
+\item{Prefix}{Prefix character to print}
 
 \item{CatInfoChunk}{logical; also print \code{IASDT.R::InfoChunk("Session summary")}}
 }

@@ -1,7 +1,8 @@
 Type: Package
 Package: IASDT.R
 Title: Helper R functions for IAS-DT project
-Version: 0.0.4
+Version: 0.0.5
+Date: 15.05.2024
 Authors@R: 
     person("Ahmed", "El-Gabbas", , "ahmed.el-gabbas@ufz.de", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-2225-088X"))
@@ -17,16 +18,22 @@ Depends:
 Imports: 
     rlang
 Suggests: 
+    ape,
     bit64,
+    blockCV,
+    coda,
     crayon,
     data.table,
     devtools,
     dplyr,
     fs,
     furrr,
+    future,
     gdata,
     ggplot2,
     gtools,
+    Hmsc,
+    jsonify,
     jsonlite,
     kableExtra,
     lme4,
@@ -38,6 +45,7 @@ Suggests:
     png,
     pryr,
     purrr,
+    R.utils,
     raster,
     RCurl,
     readr,
@@ -48,6 +56,7 @@ Suggests:
     rworldmap,
     sessioninfo,
     sf,
+    snow,
     sp,
     stats,
     stringi,

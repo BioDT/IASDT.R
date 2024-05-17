@@ -4,7 +4,7 @@
 \name{IASDT.R-package}
 \alias{IASDT.R}
 \alias{IASDT.R-package}
-\title{IASDT.R: Helper R functions for IAS-DT project}
+\title{IASDT.R: Helper R functions for IAS pDT project}
 \description{
 Helper functions to be used in the Invasive Alien Species (IAS) Digital Twin.
 }

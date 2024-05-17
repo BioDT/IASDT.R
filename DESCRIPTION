@@ -1,8 +1,8 @@
 Type: Package
 Package: IASDT.R
-Title: Helper R functions for IAS-DT project
+Title: Helper R functions for IAS pDT project
 Version: 0.0.5
-Date: 15.05.2024
+Date: 2024-05-17
 Authors@R: 
     person("Ahmed", "El-Gabbas", , "ahmed.el-gabbas@ufz.de", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-2225-088X"))

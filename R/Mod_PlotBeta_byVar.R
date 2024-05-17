@@ -65,7 +65,7 @@ PlotBeta_byVar <- function(
                 dplyr::pull(Species_name)
 
               if (VerboseSp) {
-                cat(paste0("  >>>  " , .x$Sp[Y], " (", SpName, ")\n"))
+                cat(paste0("  >>>  ", .x$Sp[Y], " (", SpName, ")\n"))
               }
 
               Title <- paste0(as.numeric(SpNum), " (", SpName, ")")
@@ -85,7 +85,7 @@ PlotBeta_byVar <- function(
                   show.obs = TRUE, lwd = 0.75, main = NA, cex.axis = 1.25,
                   cex.lab = 1.25)
 
-              if( PlotIndex %in% TitleIDs) {
+              if (PlotIndex %in% TitleIDs) {
                 mtext(
                   paste0(.x$Var[1], "  "), cex = 1.75, adj = 1, col = "blue",
                   outer = TRUE, line = -0.75, font = 2, padj = 1)

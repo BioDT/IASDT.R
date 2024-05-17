@@ -2,15 +2,15 @@
 % Please edit documentation in R/Mod_GetPosts.R
 \name{GetPosts}
 \alias{GetPosts}
-\title{Combining posteriors into Hmsc object}
+\title{Combining posteriors exported by \code{Hmsc-HPC} into Hmsc object}
 \usage{
 GetPosts(FilePath)
 }
 \arguments{
-\item{FilePath}{vector of \code{rds} files created by Hmsc-HPC}
+\item{FilePath}{String. Vector of the file paths of the \code{rds} files created by \code{Hmsc-HPC}}
 }
 \description{
-Combining posteriors into Hmsc object
+Combining posteriors exported by \code{Hmsc-HPC} into Hmsc object
 }
 \author{
 Ahmed El-Gabbas

@@ -2,19 +2,19 @@
 % Please edit documentation in R/Mod_PrepKnots.R
 \name{PrepKnots}
 \alias{PrepKnots}
-\title{PrepKnots}
+\title{Prepare knot locations for GPP models.}
 \usage{
 PrepKnots(Coords = DT_xy, MinDist, JitterDist = 100)
 }
 \arguments{
-\item{Coords}{Coords}
+\item{Coords}{A matrix or data frame for the coordinates of the sampling units.}
 
-\item{MinDist}{MinDist}
+\item{MinDist}{Numeric. Minimum distance in meters for the \code{knotDist} and \code{minKnotDist} arguments of the \code{Hmsc::constructKnots} function.}
 
-\item{JitterDist}{JitterDist}
+\item{JitterDist}{Numeric. Distance in meter to be used in the \code{sf::st_jitter} function.}
 }
 \description{
-PrepKnots
+Prepare knot locations for GPP models.
 }
 \author{
 Ahmed El-Gabbas

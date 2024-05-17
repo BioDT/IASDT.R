@@ -2,21 +2,21 @@
 % Please edit documentation in R/Mod_GetCV.R
 \name{GetCV}
 \alias{GetCV}
-\title{GetCV}
+\title{Prepare cross-validation data}
 \usage{
 GetCV(DT, NR = 4, NC = 3, Path_Grid)
 }
 \arguments{
-\item{DT}{DT}
+\item{DT}{Input data set}
 
-\item{NR}{NR}
+\item{NR}{Integer. Number of rows}
 
-\item{NC}{NC}
+\item{NC}{Integer. Number of columns}
 
-\item{Path_Grid}{Path_Grid}
+\item{Path_Grid}{String. Path of the reference grid.}
 }
 \description{
-GetCV
+Prepare cross-validation data
 }
 \author{
 Ahmed El-Gabbas

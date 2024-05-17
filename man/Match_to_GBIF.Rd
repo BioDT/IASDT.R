@@ -13,15 +13,15 @@ Match_to_GBIF(
 )
 }
 \arguments{
-\item{taxon_name}{taxonomy name}
+\item{taxon_name}{Taxonomy name}
 
-\item{taxon_id}{taxonomy ID}
+\item{taxon_id}{Taxonomy ID}
 
-\item{include_genus}{include matches at genus level; default: \code{FALSE}}
+\item{include_genus}{Include matches at genus level; default: \code{FALSE}}
 
-\item{Parallel}{logical; whether to implement standardization on parallel; default: \code{FALSE}}
+\item{Parallel}{Logical. Whether to implement standardization on parallel; default: \code{FALSE}}
 
-\item{Progress}{logical; whether to print progress bar; default: \code{FALSE}}
+\item{Progress}{Logical. Whether to print progress bar; default: \code{FALSE}}
 }
 \value{
 a tibble for the standardization results

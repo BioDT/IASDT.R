@@ -9,7 +9,7 @@ Valid_URL(url_in, t = 2)
 \arguments{
 \item{url_in}{URL path}
 
-\item{t}{timeout}
+\item{t}{Timeout}
 }
 \description{
 Check the validity of a URL

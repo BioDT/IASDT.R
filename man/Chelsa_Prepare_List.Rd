@@ -14,17 +14,17 @@ Chelsa_Prepare_List(
 )
 }
 \arguments{
-\item{Down}{logical; Download Chelsa files?}
+\item{Down}{Logical. Download Chelsa files?}
 
-\item{DownParallel}{logical; Download input files on parallel (if \code{Down} = \code{TRUE})}
+\item{DownParallel}{Logical. Download input files on parallel (if \code{Down} = \code{TRUE})}
 
-\item{DwnPath}{Download path}
+\item{DwnPath}{String. Download path}
 
-\item{OutPath}{Output path}
+\item{OutPath}{String. Output path}
 
-\item{UpdateExisting}{logical; Reprocess existing file?}
+\item{UpdateExisting}{Logical. Reprocess existing file?}
 
-\item{Path_Chelsa}{Path for Chelsa analyses}
+\item{Path_Chelsa}{String. Path for Chelsa analyses}
 }
 \description{
 Prepare list of potential variables

@@ -6,9 +6,11 @@
 \usage{
 PrepSLURM(
   Path_Model = NULL,
-  CommandFile = "Commands_All.txt",
+  CommandsFile = "Commands_All.txt",
+  SlurmFile = "BashCommand.slurm",
   JobName = NULL,
   CatJobInfo = TRUE,
+  MaxJobCounts = Inf,
   ntasks = 1,
   CpusPerTask = 1,
   GpusPerNode = 1,
@@ -21,25 +23,29 @@ PrepSLURM(
 \arguments{
 \item{Path_Model}{String. Path to the model files (without trailing slash)}
 
-\item{CommandFile}{CommandFile}
+\item{CommandsFile}{String. File name of model fitting commands. This file should be exported from the \code{IASDT.R::PrepMod4HPC} function.Default: \code{Commands_All.txt}}
 
-\item{JobName}{JobName}
+\item{SlurmFile}{String. File name of the SLURM file. Default: \code{BashCommand.slurm}}
 
-\item{CatJobInfo}{CatJobInfo}
+\item{JobName}{String. The name of the submitted jobs}
 
-\item{ntasks}{ntasks}
+\item{CatJobInfo}{Logical. Add bash lines to report some job information. Default: \code{TRUE}}
 
-\item{CpusPerTask}{CpusPerTask}
+\item{MaxJobCounts}{Maximum number of possible jobs in the SLURM array. Default: \code{Inf} which means use all commands in the \code{CommandsFile}. If the number of lines in \code{CommandsFile} exceeds this number, no file is created.}
 
-\item{GpusPerNode}{GpusPerNode}
+\item{ntasks}{Integer. The value for the \verb{#SBATCH --ntasks=} SLURM argument. Default: 1}
 
-\item{MemPerCpu}{MemPerCpu}
+\item{CpusPerTask}{Integer. The value for the \verb{#SBATCH --cpus-per-task=} SLURM argument. Default: 1}
 
-\item{Time}{Time}
+\item{GpusPerNode}{Integer. The value for the \verb{#SBATCH --gpus-per-node=} SLURM argument. Default: 1}
 
-\item{Partition}{Partition}
+\item{MemPerCpu}{String. The value for the \verb{#SBATCH --mem-per-cpu=} SLURM argument. Example: "32G" to request 32 gigabyte}
 
-\item{Path_EnvFile}{Path_EnvFile}
+\item{Time}{String. The value for the requested time for each job in the bash arrays. Example: "01:00:00" to request an hour.}
+
+\item{Partition}{String. The name of the partition. Default: \code{small-g}}
+
+\item{Path_EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
 }
 \description{
 Prepare SLURM file for model fitting on HPC

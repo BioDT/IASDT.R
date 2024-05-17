@@ -9,7 +9,7 @@ Extract_BB(x = ., var)
 \arguments{
 \item{x}{GBIF results of GBIF standardization \code{rgbif::name_backbone}}
 
-\item{var}{column name to extract}
+\item{var}{Column name to extract}
 }
 \value{
 Scientific name of the accepted taxa

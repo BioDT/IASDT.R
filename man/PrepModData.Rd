@@ -14,17 +14,17 @@ PrepModData(
 )
 }
 \arguments{
-\item{Hab_Abb}{Habitat type. This has to be one of the following: c("0", "1", "2", "3", "4a", "4b", "5", "6", "8", "10", "12a", "12b"). "0" means prepare data irrespective of the habitat type}
+\item{Hab_Abb}{String. Habitat type. This has to be one of the following: c("0", "1", "2", "3", "4a", "4b", "5", "6", "8", "10", "12a", "12b"). "0" means prepare data irrespective of the habitat type}
 
-\item{MinPresGrids}{Minimum number of presence grid cells per species. Only species with ≥ this number will be considered}
+\item{MinPresGrids}{Integer. Minimum number of presence grid cells per species. Only species with ≥ this number will be considered}
 
-\item{Path_EnvFile}{Path to read the environment variables. Default value: \code{.env}}
+\item{Path_EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
 
-\item{BioVars}{The bioclimatic variables to get from CHELSA. Default value: \code{c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18")}}
+\item{BioVars}{String. The bioclimatic variables to get from CHELSA. Default value: \code{c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18")}}
 
-\item{ReturnData}{Should the resulted data be returned as an R object? Default: \code{FALSE}}
+\item{ReturnData}{Logical. Should the resulted data be returned as an R object? Default: \code{FALSE}}
 
-\item{OutputPath}{Path for the directory to save the output file.}
+\item{OutputPath}{String. Path to save the output file.}
 }
 \description{
 Prepare habitat-specific data for the models

@@ -10,6 +10,7 @@
 #' @param CommandsFile String. File name of model fitting commands. This file should be exported from the `IASDT.R::PrepMod4HPC` function.Default: `Commands_All.txt`
 #' @param SlurmFile String. File name of the SLURM file. Default: `BashCommand.slurm`
 #' @param JobName String. The name of the submitted jobs
+#' @param MaxJobCounts Maximum number of possible jobs in the SLURM array. Default: `Inf` which means use all commands in the `CommandsFile`. If the number of lines in `CommandsFile` exceeds this number, no file is created.
 #' @param CatJobInfo Logical. Add bash lines to report some job information. Default: `TRUE`
 #' @param ntasks Integer. The value for the `#SBATCH --ntasks=` SLURM argument. Default: 1
 #' @param CpusPerTask Integer. The value for the `#SBATCH --cpus-per-task=` SLURM argument. Default: 1

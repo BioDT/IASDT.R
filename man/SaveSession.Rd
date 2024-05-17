@@ -7,11 +7,11 @@
 SaveSession(Path = getwd(), ExcludeObj = NULL, Prefix = "S")
 }
 \arguments{
-\item{Path}{Path of where to save the output RData file}
+\item{Path}{String. Path of where to save the output RData file}
 
-\item{ExcludeObj}{objects not to save}
+\item{ExcludeObj}{Objects not to save}
 
-\item{Prefix}{file prefix}
+\item{Prefix}{String. File prefix}
 }
 \description{
 Save all objects (except functions) of the global environment as list items

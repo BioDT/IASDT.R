@@ -2,7 +2,7 @@
 % Please edit documentation in R/Mod_PrepMod4HPC.R
 \name{PrepMod4HPC}
 \alias{PrepMod4HPC}
-\title{PrepMod4HPC}
+\title{Prepare initial models in R to be used by the Hmsc-HPC}
 \usage{
 PrepMod4HPC(
   Hab_Abb = NULL,
@@ -16,7 +16,7 @@ PrepMod4HPC(
   XVars = NULL,
   PhyloTree = TRUE,
   NoPhyloTree = TRUE,
-  Npararallel = 8,
+  NParallel = 8,
   nChains = 4,
   thin = c(5, 10, 20),
   samples = c(1000, 2000, 3000),
@@ -49,7 +49,7 @@ PrepMod4HPC(
 
 \item{NoPhyloTree}{Logical. Fit model variants without phylogenetic trees. Default: \code{TRUE}. At least one of \code{PhyloTree} and \code{NoPhyloTree} can not be \code{FALSE}.}
 
-\item{Npararallel}{Number of parallel cores for parallelization}
+\item{NParallel}{Number of parallel cores for palatalization}
 
 \item{nChains}{Integer. Number of model chains}
 
@@ -63,10 +63,10 @@ PrepMod4HPC(
 
 \item{ModelCountry}{String. Filter observations to the following country list. Default: \code{NULL}, which means prepare data for the whole Europe}
 
-\item{MinPresPerCountry}{Integer. Minimum of grid cells for the selected countrie(s) for species to be considered in the models. Effective only if a valid \code{ModelCountry} is provided.}
+\item{MinPresPerCountry}{Integer. Minimum of grid cells for the selected country/countries for species to be considered in the models. Effective only if a valid \code{ModelCountry} is provided.}
 }
 \description{
-PrepMod4HPC
+Prepare initial models in R to be used by the Hmsc-HPC
 }
 \author{
 Ahmed El-Gabbas

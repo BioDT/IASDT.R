@@ -7,11 +7,11 @@
 System(command, RObj = TRUE, ...)
 }
 \arguments{
-\item{command}{bash command to implement}
+\item{command}{Bash command to implement}
 
-\item{RObj}{whether to make the output of the command an R object}
+\item{RObj}{Whether to make the output of the command an R object}
 
-\item{...}{additional arguments to \code{shell} pr \code{system} functions}
+\item{...}{Additional arguments to \code{shell} pr \code{system} functions}
 }
 \description{
 Run bash script depending on the operating system

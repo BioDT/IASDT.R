@@ -11,7 +11,7 @@ Chelsa_Extract_Matching(String, Time, Matches)
 
 \item{Time}{Time period to match}
 
-\item{Matches}{further string to match}
+\item{Matches}{Further string to match}
 }
 \description{
 A function to extract which climate model and scenario each file represent

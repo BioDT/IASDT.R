@@ -7,13 +7,13 @@
 SourceSilent(File, Messages = TRUE, Warnings = TRUE, ...)
 }
 \arguments{
-\item{File}{path of the file to be sourced}
+\item{File}{String. Path of the file to be sourced}
 
 \item{Messages}{Show messages; default: \code{TRUE}}
 
 \item{Warnings}{Show warnings; default: \code{TRUE}}
 
-\item{...}{additional arguments passed to \code{source} function}
+\item{...}{Additional arguments passed to \code{source} function}
 }
 \description{
 Silently source R script

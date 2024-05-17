@@ -2,17 +2,17 @@
 % Please edit documentation in R/Mod_SetChainName.R
 \name{SetChainName}
 \alias{SetChainName}
-\title{SetChainName}
+\title{Set name of the chain to a vector of strings}
 \usage{
 SetChainName(Obj, Chain)
 }
 \arguments{
-\item{Obj}{Obj}
+\item{Obj}{Input object name}
 
-\item{Chain}{Chain}
+\item{Chain}{Integer. Chain number}
 }
 \description{
-SetChainName
+Set name of the chain to a vector of strings
 }
 \author{
 Ahmed El-Gabbas

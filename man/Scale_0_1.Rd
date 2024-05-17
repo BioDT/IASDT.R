@@ -2,7 +2,7 @@
 % Please edit documentation in R/Spat_Scale_0_1.R
 \name{Scale_0_1}
 \alias{Scale_0_1}
-\title{Scale_0_1}
+\title{Scale a spatRaster object between 0 and 1}
 \usage{
 Scale_0_1(x)
 }
@@ -10,7 +10,7 @@ Scale_0_1(x)
 \item{x}{x}
 }
 \description{
-Scale_0_1
+Scale a spatRaster object between 0 and 1
 }
 \author{
 Ahmed El-Gabbas

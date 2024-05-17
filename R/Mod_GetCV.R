@@ -2,13 +2,13 @@
 # GetCV ----
 # |---------------------------------------------------| #
 
-#' GetCV
+#' Prepare cross-validation data
 #'
-#' GetCV
-#' @param DT DT
-#' @param NR NR
-#' @param NC NC
-#' @param Path_Grid Path_Grid
+#' Prepare cross-validation data
+#' @param DT Input data set
+#' @param NR Integer. Number of rows
+#' @param NC Integer. Number of columns
+#' @param Path_Grid String. Path of the reference grid.
 #' @name GetCV
 #' @author Ahmed El-Gabbas
 #' @return NULL

@@ -2,12 +2,13 @@
 # PrepKnots ----
 # |---------------------------------------------------| #
 
-#' PrepKnots
+#' Prepare knot locations for GPP models.
 #'
-#' PrepKnots
-#' @param Coords Coords
-#' @param MinDist MinDist
-#' @param JitterDist JitterDist
+#' Prepare knot locations for GPP models.
+#' 
+#' @param Coords A matrix or data frame for the coordinates of the sampling units.
+#' @param MinDist Numeric. Minimum distance in meters for the `knotDist` and `minKnotDist` arguments of the `Hmsc::constructKnots` function.
+#' @param JitterDist Numeric. Distance in meter to be used in the `sf::st_jitter` function.
 #' @name PrepKnots
 #' @author Ahmed El-Gabbas
 #' @return NULL

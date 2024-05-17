@@ -2,28 +2,31 @@
 # PrepSLURM ----
 # |---------------------------------------------------| #
 
-#' PrepSLURM
+#' Prepare SLURM file for model fitting on HPC
 #'
-#' PrepSLURM
-#' @param Path_Model Path_Model
-#' @param CommandFile CommandFile
-#' @param JobName JobName
-#' @param CatJobInfo CatJobInfo
-#' @param ntasks ntasks
-#' @param CpusPerTask CpusPerTask
-#' @param GpusPerNode GpusPerNode
-#' @param MemPerCpu MemPerCpu
-#' @param Time Time
-#' @param Partition Partition
-#' @param Path_EnvFile Path_EnvFile
+#' Prepare SLURM file for model fitting on HPC
+#'
+#' @param Path_Model String. Path to the model files (without trailing slash)
+#' @param CommandsFile String. File name of model fitting commands. This file should be exported from the `IASDT.R::PrepMod4HPC` function.Default: `Commands_All.txt`
+#' @param SlurmFile String. File name of the SLURM file. Default: `BashCommand.slurm`
+#' @param JobName String. The name of the submitted jobs
+#' @param CatJobInfo Logical. Add bash lines to report some job information. Default: `TRUE`
+#' @param ntasks Integer. The value for the `#SBATCH --ntasks=` SLURM argument. Default: 1
+#' @param CpusPerTask Integer. The value for the `#SBATCH --cpus-per-task=` SLURM argument. Default: 1
+#' @param GpusPerNode Integer. The value for the `#SBATCH --gpus-per-node=` SLURM argument. Default: 1
+#' @param MemPerCpu String. The value for the `#SBATCH --mem-per-cpu=` SLURM argument. Example: "32G" to request 32 gigabyte
+#' @param Time String. The value for the requested time for each job in the bash arrays. Example: "01:00:00" to request an hour.
+#' @param Partition String. The name of the partition. Default: `small-g`
+#' @param Path_EnvFile String. Path to read the environment variables. Default value: `.env`
 #' @name PrepSLURM
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
 PrepSLURM <- function(
-    Path_Model = NULL, CommandFile = "Commands_All.txt",
-    JobName = NULL, CatJobInfo = TRUE,
+    Path_Model = NULL, CommandsFile = "Commands_All.txt",
+    SlurmFile = "BashCommand.slurm",
+    JobName = NULL, CatJobInfo = TRUE, MaxJobCounts = Inf,
     ntasks = 1, CpusPerTask = 1, GpusPerNode = 1, MemPerCpu = NULL,
     Time = NULL, Partition = "small-g", Path_EnvFile = ".env") {
 
@@ -87,14 +90,21 @@ PrepSLURM <- function(
     stop(MSG)
   }
 
-  CommandFile <- file.path(Path_Model, CommandFile)
-  if (file.exists(CommandFile)) {
-    NJobs <- R.utils::countLines(CommandFile)[1]
+  CommandsFile <- file.path(Path_Model, CommandsFile)
+  if (file.exists(CommandsFile)) {
+    NJobs <- R.utils::countLines(CommandsFile)[1]
+    if (NJobs > MaxJobCounts) {
+      MSG <- paste0("The number of lines in the CommandsFile exceeds the MaxJobCounts: ",  NJobs, " > ", MaxJobCounts)
+      stop(MSG)
+    }
+    if (NJobs == 0) {
+      stop("The CommandsFile can not be empty")
+    }
   } else {
     stop("The file containing the bas commands does not exist")
   }
 
-  sink(file = file.path(Path_Model, "BashCommand.slurm"))
+  sink(file = file.path(Path_Model, SlurmFile))
 
 
   cat2("#!/bin/bash\n")
@@ -149,7 +159,7 @@ PrepSLURM <- function(
   cat2("# -----------------------------------------------")
   cat2("# File contains bash commands for model fitting")
   cat2("# -----------------------------------------------")
-  cat2(paste0("File=", CommandFile, "\n"))
+  cat2(paste0("File=", CommandsFile, "\n"))
 
   cat2("# -----------------------------------------------")
   cat2("# Loading modules")
@@ -177,7 +187,7 @@ PrepSLURM <- function(
   cat2("# -----------------------------------------------")
   cat2("# Some checking")
   cat2("# -----------------------------------------------")
-  cat2('echo -e "Some Checing:\\n  >>  Time now:          $(date -u)\\n  >>  Working directory: $PWD\\n  >>  Python path:       $Path_Python\\n  >>  Checking GPU:      $(python3 $PythonCheckGPU)\\n"')
+  cat2('echo -e "Some Checking:\\n  >>  Time now:          $(date -u)\\n  >>  Working directory: $PWD\\n  >>  Python path:       $Path_Python\\n  >>  Checking GPU:      $(python3 $PythonCheckGPU)\\n"')
   cat("\n")
 
   cat2("# -----------------------------------------------")

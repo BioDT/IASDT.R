@@ -8,7 +8,7 @@
 #' @name Chelsa_Extract_Matching
 #' @param String URL string
 #' @param Time Time period to match
-#' @param Matches further string to match
+#' @param Matches Further string to match
 #' @author Ahmed El-Gabbas
 #' @export
 #' @details

@@ -2,9 +2,10 @@
 # Scale_0_1 ----
 # |---------------------------------------------------| #
 
-#' Scale_0_1
+#' Scale a spatRaster object between 0 and 1
 #'
-#' Scale_0_1
+#' Scale a spatRaster object between 0 and 1
+#' 
 #' @param x x
 #' @name Scale_0_1
 #' @author Ahmed El-Gabbas

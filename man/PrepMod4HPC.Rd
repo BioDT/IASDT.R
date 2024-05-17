@@ -8,6 +8,7 @@ PrepMod4HPC(
   Hab_Abb = NULL,
   Path_Data = NULL,
   Path_Model = NULL,
+  MinPresGrids = NULL,
   Path_EnvFile = ".env",
   GPP_Dists = c(20, 30, 40, 50, 60),
   GPP_Save = TRUE,
@@ -26,41 +27,43 @@ PrepMod4HPC(
 )
 }
 \arguments{
-\item{Hab_Abb}{Hab_Abb}
+\item{Hab_Abb}{String. Habitat type. This has to be one of the following: c("0", "1", "2", "3", "4a", "4b", "5", "6", "8", "10", "12a", "12b"). "0" means prepare data irrespective of the habitat type}
 
-\item{Path_Data}{Path_Data}
+\item{Path_Data}{String. Path to read modelling data (without trailing slash)}
 
-\item{Path_Model}{Path_Model}
+\item{Path_Model}{String. Path to save all the output, including the to be fitted models (without trailing slash)}
 
-\item{Path_EnvFile}{Path_EnvFile}
+\item{MinPresGrids}{Integer. Minimum number of presence grid cells per species. Only species with ≥ this number will be considered}
 
-\item{GPP_Dists}{GPP_Dists}
+\item{Path_EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
 
-\item{GPP_Save}{GPP_Save}
+\item{GPP_Dists}{Integer. Distance in kilometer for the distance between the knots and the minimum distance of a knot to the nearest data point. The same value will be used for the \code{knotDist}    and \code{minKnotDist}    arguments of the \code{Hmsc::constructKnots} function.}
 
-\item{GPP_Plot}{GPP_Plot}
+\item{GPP_Save}{Logical. Save the resulted knots as RData. Default: \code{TRUE}}
 
-\item{XVars}{XVars}
+\item{GPP_Plot}{Logical. Plot the coordinates of the sampling units and the knots. Default: \code{TRUE}}
 
-\item{PhyloTree}{PhyloTree}
+\item{XVars}{String. Variables to be used in the model. Default value: \code{NULL}, which means to use the following variables: bio4, bio6, bio8, bio12, bio15, bio18, RoadRailLog, BiasLog}
 
-\item{NoPhyloTree}{NoPhyloTree}
+\item{PhyloTree}{Logical. Fit model variants with phylogenetic trees. Default: \code{TRUE}. At least one of \code{PhyloTree} and \code{NoPhyloTree} can not be \code{FALSE}.}
 
-\item{Npararallel}{Npararallel}
+\item{NoPhyloTree}{Logical. Fit model variants without phylogenetic trees. Default: \code{TRUE}. At least one of \code{PhyloTree} and \code{NoPhyloTree} can not be \code{FALSE}.}
 
-\item{nChains}{nChains}
+\item{Npararallel}{Number of parallel cores for parallelization}
 
-\item{thin}{thin}
+\item{nChains}{Integer. Number of model chains}
 
-\item{samples}{samples}
+\item{thin}{Integer. Value(s) for thinning}
 
-\item{transientFactor}{transientFactor}
+\item{samples}{Integer. Value(s) for the number of MCMC samples}
 
-\item{verbose}{verbose}
+\item{transientFactor}{Integer. Transient multiplication factor. The value of transient = \code{transientFactor * thin}.}
 
-\item{ModelCountry}{ModelCountry}
+\item{verbose}{Integer. How often the results of the MCMC sampling be reported}
 
-\item{MinPresPerCountry}{MinPresPerCountry}
+\item{ModelCountry}{String. Filter observations to the following country list. Default: \code{NULL}, which means prepare data for the whole Europe}
+
+\item{MinPresPerCountry}{Integer. Minimum of grid cells for the selected countrie(s) for species to be considered in the models. Effective only if a valid \code{ModelCountry} is provided.}
 }
 \description{
 PrepMod4HPC

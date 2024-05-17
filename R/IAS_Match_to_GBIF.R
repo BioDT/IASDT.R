@@ -5,11 +5,11 @@
 #' Match taxonomy with GBIF; may return >1 match
 #'
 #' Match taxonomy with GBIF; may return >1 match
-#' @param taxon_name taxonomy name
-#' @param taxon_id taxonomy ID
-#' @param include_genus include matches at genus level; default: `FALSE`
-#' @param Parallel logical; whether to implement standardization on parallel; default: `FALSE`
-#' @param Progress logical; whether to print progress bar; default: `FALSE`
+#' @param taxon_name Taxonomy name
+#' @param taxon_id Taxonomy ID
+#' @param include_genus Include matches at genus level; default: `FALSE`
+#' @param Parallel Logical. Whether to implement standardization on parallel; default: `FALSE`
+#' @param Progress Logical. Whether to print progress bar; default: `FALSE`
 #' @name Match_to_GBIF
 #' @importFrom rlang .data
 #' @author Marina Golivets

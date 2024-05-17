@@ -5,6 +5,7 @@
 #' Loading arguments passed to Rscript bash command
 #'
 #' Loading arguments passed to Rscript bash command
+#' 
 #' @name GetBashVars
 #' @author Ahmed El-Gabbas
 #' @return NULL

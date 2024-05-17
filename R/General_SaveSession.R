@@ -6,9 +6,9 @@
 #'
 #' Save all objects (except functions) of the global environment as list items
 #'
-#' @param Path Path of where to save the output RData file
-#' @param ExcludeObj objects not to save
-#' @param Prefix file prefix
+#' @param Path String. Path of where to save the output RData file
+#' @param ExcludeObj Objects not to save
+#' @param Prefix String. File prefix
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export

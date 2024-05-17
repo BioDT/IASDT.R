@@ -5,9 +5,9 @@
 #' Split a vector into smaller chunks
 #'
 #' Split a vector into smaller chunks
-#' @param Vector vector to split
-#' @param NSplit number of splits
-#' @param Prefix prefix string for the name of the resulted list
+#' @param Vector Vector to split
+#' @param NSplit Integer. Number of splits
+#' @param Prefix String. Prefix string for the name of the resulted list
 #' @name SplitVector
 #' @author Ahmed El-Gabbas
 #' @return NULL

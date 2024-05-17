@@ -6,12 +6,12 @@
 #'
 #' Prepare list of potential variables
 #' @name Chelsa_Prepare_List
-#' @param Down logical; Download Chelsa files?
-#' @param DownParallel logical; Download input files on parallel (if `Down` = `TRUE`)
-#' @param DwnPath Download path
-#' @param OutPath Output path
-#' @param UpdateExisting logical; Reprocess existing file?
-#' @param Path_Chelsa Path for Chelsa analyses
+#' @param Down Logical. Download Chelsa files?
+#' @param DownParallel Logical. Download input files on parallel (if `Down` = `TRUE`)
+#' @param DwnPath String. Download path
+#' @param OutPath String. Output path
+#' @param UpdateExisting Logical. Reprocess existing file?
+#' @param Path_Chelsa String. Path for Chelsa analyses
 #' @author Ahmed El-Gabbas
 #' @importFrom rlang .data
 #' @export

@@ -5,12 +5,13 @@
 #' Prepare habitat-specific data for the models
 #'
 #' Prepare habitat-specific data for the models
-#' @param Hab_Abb Habitat type. This has to be one of the following: c("0", "1", "2", "3", "4a", "4b", "5", "6", "8", "10", "12a", "12b"). "0" means prepare data irrespective of the habitat type
-#' @param MinPresGrids Minimum number of presence grid cells per species. Only species with >= this number will be considered
-#' @param Path_EnvFile Path to read the environment variables. Default value: `.env`
-#' @param BioVars The bioclimatic variables to get from CHELSA. Default value: `c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18")`
-#' @param ReturnData Should the resulted data be returned as an R object? Default: `FALSE`
-#' @param OutputPath Path for the directory to save the output file.
+#'
+#' @param Hab_Abb String. Habitat type. This has to be one of the following: c("0", "1", "2", "3", "4a", "4b", "5", "6", "8", "10", "12a", "12b"). "0" means prepare data irrespective of the habitat type
+#' @param MinPresGrids Integer. Minimum number of presence grid cells per species. Only species with ≥ this number will be considered
+#' @param Path_EnvFile String. Path to read the environment variables. Default value: `.env`
+#' @param BioVars String. The bioclimatic variables to get from CHELSA. Default value: `c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18")`
+#' @param ReturnData Logical. Should the resulted data be returned as an R object? Default: `FALSE`
+#' @param OutputPath String. Path to save the output file.
 #' @name PrepModData
 #' @author Ahmed El-Gabbas
 #' @return NULL
@@ -21,6 +22,7 @@ PrepModData <- function(
     BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
     ReturnData = FALSE, OutputPath = NULL) {
 
+  Hab_Abb <- as.character(Hab_Abb)
 
   MissingArgs <- list(
     Path_EnvFile = Path_EnvFile, Hab_Abb = Hab_Abb, OutputPath = OutputPath) %>%

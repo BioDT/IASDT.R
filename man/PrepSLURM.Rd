@@ -2,7 +2,7 @@
 % Please edit documentation in R/Mod_PrepSLURM.R
 \name{PrepSLURM}
 \alias{PrepSLURM}
-\title{PrepSLURM}
+\title{Prepare SLURM file for model fitting on HPC}
 \usage{
 PrepSLURM(
   Path_Model = NULL,
@@ -19,7 +19,7 @@ PrepSLURM(
 )
 }
 \arguments{
-\item{Path_Model}{Path_Model}
+\item{Path_Model}{String. Path to the model files (without trailing slash)}
 
 \item{CommandFile}{CommandFile}
 
@@ -42,7 +42,7 @@ PrepSLURM(
 \item{Path_EnvFile}{Path_EnvFile}
 }
 \description{
-PrepSLURM
+Prepare SLURM file for model fitting on HPC
 }
 \author{
 Ahmed El-Gabbas

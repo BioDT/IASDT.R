@@ -6,7 +6,7 @@
 #'
 #' Check the validity of a URL
 #' @param url_in URL path
-#' @param t timeout
+#' @param t Timeout
 #' @name Valid_URL
 #' @references https://stackoverflow.com/questions/52911812/check-if-url-exists-in-r
 #' @return NULL

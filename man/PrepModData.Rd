@@ -16,7 +16,7 @@ PrepModData(
 \arguments{
 \item{Hab_Abb}{Habitat type. This has to be one of the following: c("0", "1", "2", "3", "4a", "4b", "5", "6", "8", "10", "12a", "12b"). "0" means prepare data irrespective of the habitat type}
 
-\item{MinPresGrids}{Minimum number of presence grid cells per species. Only species with >= this number will be considered}
+\item{MinPresGrids}{Minimum number of presence grid cells per species. Only species with ≥ this number will be considered}
 
 \item{Path_EnvFile}{Path to read the environment variables. Default value: \code{.env}}
 

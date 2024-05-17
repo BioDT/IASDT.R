@@ -7,8 +7,8 @@
 #' Silently source R script
 #'
 #' @name SourceSilent
-#' @param File path of the file to be sourced
-#' @param ... additional arguments passed to `source` function
+#' @param File String. Path of the file to be sourced
+#' @param ... Additional arguments passed to `source` function
 #' @param Messages Show messages; default: `TRUE`
 #' @param Warnings Show warnings; default: `TRUE`
 #' @author Ahmed El-Gabbas

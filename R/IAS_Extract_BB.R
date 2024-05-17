@@ -7,7 +7,7 @@
 #' Extract a specific column from the output of GBIF standardization
 #' @name Extract_BB
 #' @param x GBIF results of GBIF standardization `rgbif::name_backbone`
-#' @param var column name to extract
+#' @param var Column name to extract
 #' @author Ahmed El-Gabbas
 #' @return Scientific name of the accepted taxa
 #' @export

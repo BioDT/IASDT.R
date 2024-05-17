@@ -19,7 +19,7 @@
 #' # Loaded packages after implementing the function
 #' (P2 <- LoadedPackages())
 #'
-#' # Which pacakages were loaded?
+#' # Which packages were loaded?
 #' setdiff(P2, P1)
 
 RequireMultiple <- function(..., Reload = FALSE, InstallMissing = TRUE) {

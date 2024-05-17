@@ -5,10 +5,10 @@
 #' Split data.frame into smaller chunks
 #'
 #' Split data.frame into smaller chunks
-#' @param DF the data frame to split
-#' @param ChunkSize number of rows per chunk
-#' @param NChunks number of chunks (only if `ChunkSize` not provided)
-#' @param Prefix prefix
+#' @param DF The data frame to split
+#' @param ChunkSize Integer. Number of rows per chunk
+#' @param NChunks Integer. Number of chunks (only if `ChunkSize` not provided)
+#' @param Prefix Prefix
 #' @name SplitDF2Chunks
 #' @author Ahmed El-Gabbas
 #' @return NULL

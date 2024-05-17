@@ -75,7 +75,7 @@ Get_EASIN_Data <- function(
         }
 
         if (magrittr::not(SpeciesOkay)) {
-          "data for {SpKey} can not be downloaded. Download failed after {DownTry} tials. Check server status." %>%
+          "data for {SpKey} can not be downloaded. Download failed after {DownTry} trials. Check server status." %>%
             stringr::str_glue() %>%
             IASDT.R::CatTime()
           break()
@@ -83,7 +83,7 @@ Get_EASIN_Data <- function(
 
         if (stringr::str_detect(
           string = ChunkDT,
-          pattern = "There are no results based on your search critieria")) {
+          pattern = "There are no results based on your search criteria")) {
           IASDT.R::SaveAs(
             InObj = tibble::tibble(), OutObj = SpKey, OutPath = Path_Out)
           break()

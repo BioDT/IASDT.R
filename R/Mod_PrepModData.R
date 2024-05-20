@@ -306,9 +306,9 @@ PrepModData <- function(
 
   if (Hab_Abb == "0") {
     DT_All$Hab <- NA_real_
-    OutObjName <- paste0("ModelDT_NGrid", MinPresGrids, "_0_All")
+    OutObjName <- paste0("ModelDT_", MinPresGrids, "Grids_0_All")
   } else {
-    OutObjName <- paste0("ModelDT_NGrid", MinPresGrids, "_",
+    OutObjName <- paste0("ModelDT_", MinPresGrids, "Grids_",
                          stringr::str_remove(Hab_column, "Hab_"))
   }
 

@@ -71,41 +71,9 @@ PrepSLURM <- function(
     "Path_Hmsc", "Path_Python", "ProjNum", "Path_Scratch", "Path_GPU_Check")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = CharArgs, Type = "character")
 
-  #   MissingArgs <- list(
-  #     Path_Model = Path_Model, JobName = JobName,
-  #     Path_EnvFile = Path_EnvFile,
-  #     Time = Time, MemPerCpu = MemPerCpu, Partition = Partition,
-  #     Path_Hmsc = Path_Hmsc, Path_Python = Path_Python,
-  #     ProjNum = ProjNum, Path_Scratch = Path_Scratch,
-  #     Path_GPU_Check = Path_GPU_Check
-  #   ) %>%
-  #     purrr::map(~inherits(.x, "character") && nchar(.x) > 0) %>%
-  #     purrr::discard(.p = isTRUE) %>%
-  #     names() %>%
-  #     sort()
-  #   if (length(MissingArgs) > 0) {
-  #     MSG <- paste0("The following argument(s) must be provided\n  >>  ",
-  #                   paste0(MissingArgs, collapse = " | "))
-  #     stop(MSG)
-  #   }
-
   # numeric arguments
   NumericArgs <- c("GpusPerNode", "CpusPerTask", "ntasks")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = NumericArgs, Type = "numeric")
-
-  # ArgsInt <- list(
-  #   GpusPerNode = GpusPerNode, CpusPerTask = CpusPerTask, ntasks = ntasks) %>%
-  #   purrr::map(~inherits(.x, "numeric")) %>%
-  #   purrr::discard(.p = isTRUE) %>%
-  #   names() %>%
-  #   sort()
-  # if (length(ArgsInt) > 0) {
-  #   MSG <- paste0(
-  #     "The following argument(s) must be numeric (integer)\n  >>  ", ArgsInt)
-  #   stop(MSG)
-  # }
-
-
 
   CommandsFile <- file.path(Path_Model, CommandsFile)
   if (file.exists(CommandsFile)) {

@@ -245,6 +245,13 @@ PrepModData <- function(
     as.data.frame(na.rm = TRUE, xy = TRUE, cells = TRUE) %>%
     tibble::tibble()
 
+  CV_Folds <- DT_All %>%
+    dplyr::select(c("x", "y")) %>%
+    IASDT.R::GetCV(NR = 3, NC = 4, Path_Grid = Path_Grid)
+
+  DT_All <- dplyr::left_join(DT_All, CV_Folds, by = c("x", "y"))
+
+
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # get country and grid cell ID

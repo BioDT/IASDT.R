@@ -71,48 +71,61 @@ PrepMod4HPC <- function(
 
   Hab_Abb <- as.character(Hab_Abb)
 
-  # character arguments
-  MissingArgs <- list(
-    Path_Data = Path_Data, Hab_Abb = Hab_Abb, Path_Model = Path_Model,
-    Path_TaxaList = Path_TaxaList,
-    Path_Hmsc = Path_Hmsc, Path_Python = Path_Python) %>%
-    purrr::map(~inherits(.x, "character") && nchar(.x) > 0) %>%
-    purrr::discard(.p = isTRUE) %>%
-    names() %>%
-    sort()
-  if (length(MissingArgs) > 0) {
-    MSG <- paste0("The following argument(s) must be provided\n  >>  ",
-                  paste0(MissingArgs, collapse = " | "))
-    stop(MSG)
-  }
+  CharArgs <- c(
+    "Path_Data", "Hab_Abb" , "Path_Model", "Path_TaxaList",
+    "Path_Hmsc", "Path_Python")
+  IASDT.R::CheckArgs(AllArgs = formals(), Args = CharArgs, Type = "character")
 
-  # logical arguments
-  ArgsLgl <- list(
-    GPP_Save = GPP_Save, GPP_Plot = GPP_Plot,
-    PhyloTree = PhyloTree, NoPhyloTree = NoPhyloTree) %>%
-    purrr::map(~inherits(.x, "logical")) %>%
-    purrr::discard(.p = isTRUE) %>%
-    names() %>%
-    sort()
-  if (length(ArgsLgl) > 0) {
-    MSG <- paste0("The following argument(s) must be logical\n  >>  ", ArgsLgl)
-    stop(MSG)
-  }
+  LogicArgs <- c("GPP_Save", "GPP_Plot", "PhyloTree", "NoPhyloTree")
+  IASDT.R::CheckArgs(AllArgs = formals(), Args = LogicArgs, Type = "logical")
 
-  # numeric arguments
-  ArgsInt <- list(
-    GPP_Dists = GPP_Dists, NParallel = NParallel, nChains = nChains,
-    thin = thin, samples = samples, verbose = verbose,
-    MinPresGrids = MinPresGrids, transientFactor = transientFactor) %>%
-    purrr::map(~inherits(.x, "numeric")) %>%
-    purrr::discard(.p = isTRUE) %>%
-    names() %>%
-    sort()
-  if (length(ArgsInt) > 0) {
-    MSG <- paste0(
-      "The following argument(s) must be numeric (integer)\n  >>  ", ArgsInt)
-    stop(MSG)
-  }
+  NumericArgs <- c(
+    "GPP_Dists", "NParallel", "nChains", "thin", "samples", "verbose",
+    "MinPresGrids", "transientFactor")
+  IASDT.R::CheckArgs(AllArgs = formals(), Args = NumericArgs, Type = "numeric")
+
+  # # character arguments
+  # MissingArgs <- list(
+  #   Path_Data = Path_Data, Hab_Abb = Hab_Abb, Path_Model = Path_Model,
+  #   Path_TaxaList = Path_TaxaList,
+  #   Path_Hmsc = Path_Hmsc, Path_Python = Path_Python) %>%
+  #   purrr::map(~inherits(.x, "character") && nchar(.x) > 0) %>%
+  #   purrr::discard(.p = isTRUE) %>%
+  #   names() %>%
+  #   sort()
+  # if (length(MissingArgs) > 0) {
+  #   MSG <- paste0("The following argument(s) must be provided\n  >>  ",
+  #                 paste0(MissingArgs, collapse = " | "))
+  #   stop(MSG)
+  # }
+  #
+  # # logical arguments
+  # ArgsLgl <- list(
+  #   GPP_Save = GPP_Save, GPP_Plot = GPP_Plot,
+  #   PhyloTree = PhyloTree, NoPhyloTree = NoPhyloTree) %>%
+  #   purrr::map(~inherits(.x, "logical")) %>%
+  #   purrr::discard(.p = isTRUE) %>%
+  #   names() %>%
+  #   sort()
+  # if (length(ArgsLgl) > 0) {
+  #   MSG <- paste0("The following argument(s) must be logical\n  >>  ", ArgsLgl)
+  #   stop(MSG)
+  # }
+  #
+  # # numeric arguments
+  # ArgsInt <- list(
+  #   GPP_Dists = GPP_Dists, NParallel = NParallel, nChains = nChains,
+  #   thin = thin, samples = samples, verbose = verbose,
+  #   MinPresGrids = MinPresGrids, transientFactor = transientFactor) %>%
+  #   purrr::map(~inherits(.x, "numeric")) %>%
+  #   purrr::discard(.p = isTRUE) %>%
+  #   names() %>%
+  #   sort()
+  # if (length(ArgsInt) > 0) {
+  #   MSG <- paste0(
+  #     "The following argument(s) must be numeric (integer)\n  >>  ", ArgsInt)
+  #   stop(MSG)
+  # }
 
   # Phylogenetic tree options
   if (PhyloTree == FALSE && NoPhyloTree == FALSE) {

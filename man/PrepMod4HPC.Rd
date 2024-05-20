@@ -23,7 +23,8 @@ PrepMod4HPC(
   transientFactor = 300,
   verbose = 1000,
   ModelCountry = NULL,
-  MinPresPerCountry = 50
+  MinPresPerCountry = 50,
+  VerboseProgress = FALSE
 )
 }
 \arguments{
@@ -64,6 +65,8 @@ PrepMod4HPC(
 \item{ModelCountry}{String. Filter observations to the following country list. Default: \code{NULL}, which means prepare data for the whole Europe}
 
 \item{MinPresPerCountry}{Integer. Minimum of grid cells for the selected country/countries for species to be considered in the models. Effective only if a valid \code{ModelCountry} is provided.}
+
+\item{VerboseProgress}{Logical. Show messages for the progress of creating files}
 }
 \description{
 Prepare initial models in R to be used by the Hmsc-HPC

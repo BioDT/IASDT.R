@@ -25,6 +25,7 @@
 #' @param verbose Integer. How often the results of the MCMC sampling be reported
 #' @param ModelCountry String. Filter observations to the following country list. Default: `NULL`, which means prepare data for the whole Europe
 #' @param MinPresPerCountry Integer. Minimum of grid cells for the selected country/countries for species to be considered in the models. Effective only if a valid `ModelCountry` is provided.
+#' @param VerboseProgress Logical. Show messages for the progress of creating files
 #' @name PrepMod4HPC
 #' @author Ahmed El-Gabbas
 #' @return NULL
@@ -37,10 +38,14 @@ PrepMod4HPC <- function(
     XVars = NULL, PhyloTree = TRUE, NoPhyloTree = TRUE, NParallel = 8,
     nChains = 4, thin = c(5, 10, 20), samples = c(1000, 2000, 3000),
     transientFactor = 300, verbose = 1000,
-    ModelCountry = NULL, MinPresPerCountry = 50) {
+    ModelCountry = NULL, MinPresPerCountry = 50, VerboseProgress = FALSE) {
 
   # https://github.com/hmsc-r/HMSC/issues/180
   # https://github.com/hmsc-r/HMSC/issues/139
+
+  if (magrittr::not(VerboseProgress)) {
+    sink(file = nullfile())
+  }
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -82,7 +87,8 @@ PrepMod4HPC <- function(
     "Path_Hmsc", "Path_Python")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = CharArgs, Type = "character")
 
-  LogicArgs <- c("GPP_Save", "GPP_Plot", "PhyloTree", "NoPhyloTree")
+  LogicArgs <- c("GPP_Save", "GPP_Plot", "PhyloTree",
+                 "NoPhyloTree", "VerboseProgress")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = LogicArgs, Type = "logical")
 
   NumericArgs <- c(
@@ -524,5 +530,10 @@ PrepMod4HPC <- function(
   save(Model_Info, file = Path_ModelDT)
 
   IASDT.R::CatDiff(.StartTime, CatInfo = FALSE)
+
+  if (magrittr::not(VerboseProgress)) {
+    sink()
+  }
+
   return(invisible(NULL))
 }

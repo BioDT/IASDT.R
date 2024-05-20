@@ -44,6 +44,8 @@ PrepMod4HPC <- function(
 
   .StartTime <- lubridate::now(tzone = "CET")
 
+  Hab_Abb <- as.character(Hab_Abb)
+
   # # |||||||||||||||||||||||||||||||||||
   # # Load environment variables
   # # |||||||||||||||||||||||||||||||||||
@@ -69,20 +71,24 @@ PrepMod4HPC <- function(
 
   IASDT.R::CatTime("Checking input values")
 
-  Hab_Abb <- as.character(Hab_Abb)
+  AllArgs <- ls()
+  AllArgs <- purrr::map(
+    AllArgs,
+    function(x) get(x, envir = parent.env(env = environment()))) %>%
+    stats::setNames(AllArgs)
 
   CharArgs <- c(
     "Path_Data", "Hab_Abb" , "Path_Model", "Path_TaxaList",
     "Path_Hmsc", "Path_Python")
-  IASDT.R::CheckArgs(AllArgs = formals(), Args = CharArgs, Type = "character")
+  IASDT.R::CheckArgs(AllArgs = AllArgs, Args = CharArgs, Type = "character")
 
   LogicArgs <- c("GPP_Save", "GPP_Plot", "PhyloTree", "NoPhyloTree")
-  IASDT.R::CheckArgs(AllArgs = formals(), Args = LogicArgs, Type = "logical")
+  IASDT.R::CheckArgs(AllArgs = AllArgs, Args = LogicArgs, Type = "logical")
 
   NumericArgs <- c(
     "GPP_Dists", "NParallel", "nChains", "thin", "samples", "verbose",
     "MinPresGrids", "transientFactor")
-  IASDT.R::CheckArgs(AllArgs = formals(), Args = NumericArgs, Type = "numeric")
+  IASDT.R::CheckArgs(AllArgs = AllArgs, Args = NumericArgs, Type = "numeric")
 
 
   # # character arguments

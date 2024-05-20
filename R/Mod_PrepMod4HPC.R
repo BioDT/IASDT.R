@@ -67,6 +67,7 @@ PrepMod4HPC <- function(
   Path_Hmsc <- Sys.getenv("DP_R_Mod_Path_Hmsc")
   Path_Python <- Sys.getenv("DP_R_Mod_Path_Python")
   Path_TaxaList <- Sys.getenv("DP_R_Mod_Path_TaxaList")
+  Path_Grid <- Sys.getenv("DP_R_Mod_Path_Grid")
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -83,7 +84,7 @@ PrepMod4HPC <- function(
     stats::setNames(AllArgs)
 
   CharArgs <- c(
-    "Path_Data", "Hab_Abb", "Path_Model", "Path_TaxaList",
+    "Path_Data", "Hab_Abb", "Path_Model", "Path_TaxaList", "Path_Grid",
     "Path_Hmsc", "Path_Python")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = CharArgs, Type = "character")
 
@@ -95,51 +96,7 @@ PrepMod4HPC <- function(
     "GPP_Dists", "NParallel", "nChains", "thin", "samples", "verbose",
     "MinPresGrids", "transientFactor")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = NumericArgs, Type = "numeric")
-
   rm(AllArgs, CharArgs, LogicArgs, NumericArgs)
-
-  # # character arguments
-  # MissingArgs <- list(
-  #   Path_Data = Path_Data, Hab_Abb = Hab_Abb, Path_Model = Path_Model,
-  #   Path_TaxaList = Path_TaxaList,
-  #   Path_Hmsc = Path_Hmsc, Path_Python = Path_Python) %>%
-  #   purrr::map(~inherits(.x, "character") && nchar(.x) > 0) %>%
-  #   purrr::discard(.p = isTRUE) %>%
-  #   names() %>%
-  #   sort()
-  # if (length(MissingArgs) > 0) {
-  #   MSG <- paste0("The following argument(s) must be provided\n  >>  ",
-  #                 paste0(MissingArgs, collapse = " | "))
-  #   stop(MSG)
-  # }
-  #
-  # # logical arguments
-  # ArgsLgl <- list(
-  #   GPP_Save = GPP_Save, GPP_Plot = GPP_Plot,
-  #   PhyloTree = PhyloTree, NoPhyloTree = NoPhyloTree) %>%
-  #   purrr::map(~inherits(.x, "logical")) %>%
-  #   purrr::discard(.p = isTRUE) %>%
-  #   names() %>%
-  #   sort()
-  # if (length(ArgsLgl) > 0) {
-  #   MSG <- paste0("The following argument(s) must be logical\n  >>  ", ArgsLgl)
-  #   stop(MSG)
-  # }
-  #
-  # # numeric arguments
-  # ArgsInt <- list(
-  #   GPP_Dists = GPP_Dists, NParallel = NParallel, nChains = nChains,
-  #   thin = thin, samples = samples, verbose = verbose,
-  #   MinPresGrids = MinPresGrids, transientFactor = transientFactor) %>%
-  #   purrr::map(~inherits(.x, "numeric")) %>%
-  #   purrr::discard(.p = isTRUE) %>%
-  #   names() %>%
-  #   sort()
-  # if (length(ArgsInt) > 0) {
-  #   MSG <- paste0(
-  #     "The following argument(s) must be numeric (integer)\n  >>  ", ArgsInt)
-  #   stop(MSG)
-  # }
 
   # Phylogenetic tree options
   if (PhyloTree == FALSE && NoPhyloTree == FALSE) {
@@ -212,15 +169,13 @@ PrepMod4HPC <- function(
 
     DT_All <- DT_All %>%
       dplyr::filter(Country %in% ModelCountry) %>%
-      dplyr::select(-tidyselect::all_of(Sample_ExclSp), -CellCode, -Country)
+      dplyr::select(-tidyselect::all_of(Sample_ExclSp), -CellCode, -Country) %>%
+      # Cross-validation
+      IASDT.R::GetCV(NR = 4, NC = 3, Path_Grid = Path_Grid)
+
   } else {
     IASDT.R::CatTime("  >>  No data subsetting was implemented")
   }
-
-  ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-  # Cross-validation
-  # IASDT.R::GetCV(NR = 4, NC = 3)
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -253,7 +208,7 @@ PrepMod4HPC <- function(
     stats::as.formula(env = baseenv())
 
   DT_x <- DT_All %>%
-    dplyr::select(tidyselect::all_of(XVars)) %>%
+    dplyr::select(tidyselect::all_of(XVars), CV) %>%
     as.data.frame()
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -327,7 +282,8 @@ PrepMod4HPC <- function(
 
   if (GPP_Plot) {
     IASDT.R::CatTime("  >>  Plotting GPP knots")
-    grDevices::pdf(file.path(Path_Model, "knot_Locations.pdf"), width = 16, height = 20)
+    grDevices::pdf(file.path(Path_Model, "knot_Locations.pdf"),
+                   width = 16, height = 20)
     graphics::par(oma = c(0.5, 0.5, 0.5, 0.5), mar = c(0.5, 0.5, 2, 0.5))
     purrr::map(
       .x = GPP_Dists,
@@ -436,8 +392,6 @@ PrepMod4HPC <- function(
         .f = purrr::safely(.f = ExportModel, otherwise = NULL, quiet = FALSE),
         .options = furrr::furrr_options(seed = TRUE, scheduling = Inf),
         .progress = FALSE)
-    save(Export_Results,
-         file = file.path(Path_Model, "Export_Results.RData"))
 
     FailedExports <- DT2Export %>%
       dplyr::filter(magrittr::not(file.exists(M4HPC_Path)))
@@ -446,7 +400,8 @@ PrepMod4HPC <- function(
       paste0("  >>  ", nrow(FailedExports),
              "model variants failed to be exported to rds files.") %>%
         IASDT.R::CatTime()
-      save(FailedExports, file = file.path(Path_Model, "FailedExports.RData"))
+      readr::write_tsv(
+        x = FailedExports, file = file.path(Path_Model, "FailedExports.txt"))
     }
   }
 

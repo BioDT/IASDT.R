@@ -34,19 +34,6 @@ PrepModData <- function(
   CharArgs <- c("Path_EnvFile", "Hab_Abb", "OutputPath")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = CharArgs, Type = "character")
 
-  # MissingArgs <- list(
-  #   Path_EnvFile = Path_EnvFile, Hab_Abb = Hab_Abb, OutputPath = OutputPath) %>%
-  #   purrr::map(~inherits(.x, "character") && nchar(.x) > 0) %>%
-  #   purrr::discard(.p = isTRUE) %>%
-  #   names() %>%
-  #   sort()
-  # if (length(MissingArgs) > 0) {
-  #   stop(
-  #     paste0("The following argument(s) must be provided as ",
-  #            "an string with nchar > 0:\n >> ",
-  #            paste0(MissingArgs, collapse = " | ")))
-  # }
-
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Input data paths - these are read from the .env file
@@ -64,17 +51,6 @@ PrepModData <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Paths checking
-
-  # NonCharPaths <- Path_List %>%
-  #   purrr::map(~inherits(.x, "character") && nchar(.x) > 0) %>%
-  #   purrr::discard(.p = isTRUE) %>%
-  #   names() %>%
-  #   sort()
-  # if (length(NonCharPaths) > 0) {
-  #   stop(
-  #     paste0("The following path(s) must be provided in the .env file > 0:\n >> ",
-  #            paste0(NonCharPaths, collapse = " | ")))
-  # }
 
   IASDT.R::CatTime("Checking paths")
 

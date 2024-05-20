@@ -69,7 +69,7 @@ PrepMod4HPC <- function(
   # # CHECK input arguments
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatTime("Checking input values")
+  IASDT.R::CatTime("Checking input arguments")
 
   AllArgs <- ls()
   AllArgs <- purrr::map(
@@ -90,6 +90,7 @@ PrepMod4HPC <- function(
     "MinPresGrids", "transientFactor")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = NumericArgs, Type = "numeric")
 
+  rm(AllArgs, CharArgs, LogicArgs, NumericArgs)
 
   # # character arguments
   # MissingArgs <- list(

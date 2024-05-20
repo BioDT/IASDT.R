@@ -171,7 +171,7 @@ PrepMod4HPC <- function(
 
   Path_Data2 <- file.path(
     Path_Data,
-    paste0("ModelDT_NGrid", MinPresGrids, "_",
+    paste0("ModelDT_", MinPresGrids, "Grids_",
            stringr::str_remove(HabVal, "Hab_"), ".RData"))
 
   DT_All <- IASDT.R::LoadAs(Path_Data2)

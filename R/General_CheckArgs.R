@@ -15,7 +15,7 @@
 
 CheckArgs <- function(AllArgs, Args, Type) {
 
-  match.arg(arg = "Type", choices = c("character", "logical", "numeric"))
+  match.arg(arg = Type, choices = c("character", "logical", "numeric"))
 
   if (Type == "character") {
     MissingArgs <- AllArgs[Args] %>%

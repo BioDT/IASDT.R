@@ -119,10 +119,10 @@ PrepMod4HPC <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # # |||||||||||||||||||||||||||||||||||
-  # # Loading input data
+  # # Loading/preparing input data
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatTime("Loading input data")
+  IASDT.R::CatTime("Loading/preparing input data")
   ValidHabAbbs <- c(0:3, "4a", "4b", 5, 6, 8, 10, "12a", "12b")
   if (magrittr::not(as.character(Hab_Abb) %in% ValidHabAbbs)) {
     MSG <- paste0("Hab_Abb has to be one of the following:\n >> ",

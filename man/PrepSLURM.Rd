@@ -6,11 +6,8 @@
 \usage{
 PrepSLURM(
   Path_Model = NULL,
-  CommandsFile = "Commands_All.txt",
-  SlurmFile = "BashCommand.slurm",
   JobName = NULL,
   CatJobInfo = TRUE,
-  MaxJobCounts = 210,
   ntasks = 1,
   CpusPerTask = 1,
   GpusPerNode = 1,
@@ -23,15 +20,9 @@ PrepSLURM(
 \arguments{
 \item{Path_Model}{String. Path to the model files (without trailing slash)}
 
-\item{CommandsFile}{String. File name of model fitting commands. This file should be exported from the \code{IASDT.R::PrepMod4HPC} function.Default: \code{Commands_All.txt}}
-
-\item{SlurmFile}{String. File name of the SLURM file. Default: \code{BashCommand.slurm}}
-
 \item{JobName}{String. The name of the submitted jobs}
 
 \item{CatJobInfo}{Logical. Add bash lines to report some job information. Default: \code{TRUE}}
-
-\item{MaxJobCounts}{Maximum number of possible jobs in the SLURM array. Default: \code{Inf} which means use all commands in the \code{CommandsFile}. If the number of lines in \code{CommandsFile} exceeds this number, no file is created.}
 
 \item{ntasks}{Integer. The value for the \verb{#SBATCH --ntasks=} SLURM argument. Default: 1}
 

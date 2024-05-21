@@ -11,6 +11,7 @@
 #' @param Path_Model String. Path to save all the output, including the to be fitted models (without trailing slash)
 #' @param MinPresGrids Integer. Minimum number of presence grid cells per species. Only species with ≥ this number will be considered
 #' @param Path_EnvFile String. Path to read the environment variables. Default value: `.env`
+#' @param PrepareData Logical. Should the input data be prepared or loaded from disk?
 #' @param GPP_Dists Integer. Distance in kilometer for the distance between the knots and the minimum distance of a knot to the nearest data point. The same value will be used for the `knotDist`	and `minKnotDist`	arguments of the `Hmsc::constructKnots` function.
 #' @param GPP_Save Logical. Save the resulted knots as RData. Default: `TRUE`
 #' @param GPP_Plot Logical. Plot the coordinates of the sampling units and the knots. Default: `TRUE`
@@ -34,7 +35,7 @@
 
 PrepMod4HPC <- function(
     Hab_Abb = NULL, Path_Data = NULL, Path_Model = NULL, MinPresGrids = NULL,
-    Path_EnvFile = ".env",
+    Path_EnvFile = ".env", PrepareData = TRUE,
     GPP_Dists = c(20, 30, 40, 50, 60), GPP_Save = TRUE, GPP_Plot = TRUE,
     XVars = NULL, PhyloTree = TRUE, NoPhyloTree = TRUE, NParallel = 8,
     nChains = 4, thin = c(5, 10, 20), samples = c(1000, 2000, 3000),
@@ -133,12 +134,18 @@ PrepMod4HPC <- function(
     "12a_Ruderal_habitats", "12b_Agricultural_habitats") %>%
     stringr::str_subset(paste0("^", as.character(Hab_Abb), "_"))
 
-  Path_Data2 <- file.path(
-    Path_Data,
-    paste0("ModelDT_", MinPresGrids, "Grids_",
-           stringr::str_remove(HabVal, "Hab_"), ".RData"))
 
-  DT_All <- IASDT.R::LoadAs(Path_Data2)
+  if (PrepareData) {
+    DT_All <- IASDT.R::PrepModData(
+      Hab_Abb = Hab_Abb, MinPresGrids = MinPresGrids, OutputPath = Path_Model,
+      Path_EnvFile = Path_EnvFile, ReturnData = TRUE)
+  } else {
+    Path_Data2 <- file.path(
+      Path_Data,
+      paste0("ModelDT_", MinPresGrids, "Grids_",
+             stringr::str_remove(HabVal, "Hab_"), ".RData"))
+    DT_All <- IASDT.R::LoadAs(Path_Data2)
+  }
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

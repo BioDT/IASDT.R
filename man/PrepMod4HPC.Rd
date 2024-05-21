@@ -10,6 +10,7 @@ PrepMod4HPC(
   Path_Model = NULL,
   MinPresGrids = NULL,
   Path_EnvFile = ".env",
+  PrepareData = TRUE,
   GPP_Dists = c(20, 30, 40, 50, 60),
   GPP_Save = TRUE,
   GPP_Plot = TRUE,
@@ -38,6 +39,8 @@ PrepMod4HPC(
 \item{MinPresGrids}{Integer. Minimum number of presence grid cells per species. Only species with ≥ this number will be considered}
 
 \item{Path_EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
+
+\item{PrepareData}{Logical. Should the input data be prepared or loaded from disk?}
 
 \item{GPP_Dists}{Integer. Distance in kilometer for the distance between the knots and the minimum distance of a knot to the nearest data point. The same value will be used for the \code{knotDist}    and \code{minKnotDist}    arguments of the \code{Hmsc::constructKnots} function.}
 

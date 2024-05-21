@@ -10,7 +10,8 @@ PrepModData(
   Path_EnvFile = ".env",
   BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
   ReturnData = FALSE,
-  OutputPath = NULL
+  OutputPath = NULL,
+  VerboseProgress = FALSE
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ PrepModData(
 \item{ReturnData}{Logical. Should the resulted data be returned as an R object? Default: \code{FALSE}}
 
 \item{OutputPath}{String. Path to save the output file.}
+
+\item{VerboseProgress}{Logical. Show messages for the progress of creating files}
 }
 \description{
 Prepare habitat-specific data for the models

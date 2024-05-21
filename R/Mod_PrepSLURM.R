@@ -70,11 +70,6 @@ PrepSLURM <- function(
   NumericArgs <- c("GpusPerNode", "CpusPerTask", "ntasks")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = NumericArgs, Type = "numeric")
 
-
-  # CommandsFilePrefix = "Commands_All",
-  # SlurmFilePrefix = "BashCommand",
-
-
   ListCommands <- list.files(
     Path_Model, pattern = "Commands_All", full.names = TRUE)
   NCommandFiles <- length(ListCommands)
@@ -86,9 +81,9 @@ PrepSLURM <- function(
   lapply(seq_len(NCommandFiles), function(x) {
 
     if (NCommandFiles == 1) {
-      OutFile <- paste0(SlurmFilePrefix,".slurm")
+      OutFile <- "BashCommand.slurm"
     } else {
-      OutFile <- paste0(SlurmFilePrefix, "_", x, ".slurm")
+      OutFile <- paste0("BashCommand_", x, ".slurm")
     }
 
     sink(file = file.path(Path_Model, OutFile))

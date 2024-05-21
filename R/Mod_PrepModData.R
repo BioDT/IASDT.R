@@ -12,6 +12,7 @@
 #' @param BioVars String. The bioclimatic variables to get from CHELSA. Default value: `c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18")`
 #' @param ReturnData Logical. Should the resulted data be returned as an R object? Default: `FALSE`
 #' @param OutputPath String. Path to save the output file.
+#' @param VerboseProgress Logical. Show messages for the progress of creating files
 #' @name PrepModData
 #' @author Ahmed El-Gabbas
 #' @return NULL
@@ -20,7 +21,12 @@
 PrepModData <- function(
     Hab_Abb = NULL, MinPresGrids = 50, Path_EnvFile = ".env",
     BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
-    ReturnData = FALSE, OutputPath = NULL) {
+    ReturnData = FALSE, OutputPath = NULL, VerboseProgress = FALSE) {
+
+
+  if (magrittr::not(VerboseProgress)) {
+    sink(file = nullfile())
+  }
 
   Hab_Abb <- as.character(Hab_Abb)
 
@@ -63,6 +69,9 @@ PrepModData <- function(
     "Path_Grid", "Path_Bound", "Path_PA", "Path_CLC_Summ",
     "Path_Chelsa_Time_CC", "Path_Roads", "Path_Rail", "Path_Bias")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = CharArgs, Type = "character")
+  IASDT.R::CheckArgs(
+    AllArgs = AllArgs, Args = c("ReturnData", "VerboseProgress"),
+    Type = "logical")
 
   Path_List <- list(
     Path_Grid = Path_Grid, Path_Bound = Path_Bound, Path_PA = Path_PA,
@@ -291,6 +300,10 @@ PrepModData <- function(
   IASDT.R::SaveAs(
     InObj = DT_All, OutObj = OutObjName,
     OutPath = file.path(OutputPath, paste0(OutObjName, ".RData")))
+
+  if (magrittr::not(VerboseProgress)) {
+    sink()
+  }
 
   if (ReturnData) {
     return(DT_All)

@@ -24,6 +24,7 @@ PrepMod4HPC(
   transientFactor = 300,
   verbose = 1000,
   SkipFitted = TRUE,
+  MaxJobCounts = 210,
   ModelCountry = NULL,
   MinPresPerCountry = 50,
   VerboseProgress = FALSE
@@ -67,6 +68,8 @@ PrepMod4HPC(
 \item{verbose}{Integer. How often the results of the MCMC sampling be reported}
 
 \item{SkipFitted}{Logic. Should the already fitted models be skipped.}
+
+\item{MaxJobCounts}{Integer. Maximum number of jobs per slurm file}
 
 \item{ModelCountry}{String. Filter observations to the following country list. Default: \code{NULL}, which means prepare data for the whole Europe}
 

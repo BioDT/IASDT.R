@@ -27,7 +27,7 @@
 PrepSLURM <- function(
     Path_Model = NULL, CommandsFile = "Commands_All.txt",
     SlurmFile = "BashCommand.slurm",
-    JobName = NULL, CatJobInfo = TRUE, MaxJobCounts = Inf,
+    JobName = NULL, CatJobInfo = TRUE, MaxJobCounts = 210,
     ntasks = 1, CpusPerTask = 1, GpusPerNode = 1, MemPerCpu = NULL,
     Time = NULL, Partition = "small-g", Path_EnvFile = ".env") {
 

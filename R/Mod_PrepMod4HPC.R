@@ -25,6 +25,7 @@
 #' @param transientFactor Integer. Transient multiplication factor. The value of transient = `transientFactor * thin`.
 #' @param verbose Integer. How often the results of the MCMC sampling be reported
 #' @param SkipFitted Logic. Should the already fitted models be skipped.
+#' @param MaxJobCounts Integer. Maximum number of jobs per slurm file
 #' @param ModelCountry String. Filter observations to the following country list. Default: `NULL`, which means prepare data for the whole Europe
 #' @param MinPresPerCountry Integer. Minimum of grid cells for the selected country/countries for species to be considered in the models. Effective only if a valid `ModelCountry` is provided.
 #' @param VerboseProgress Logical. Show messages for the progress of creating files
@@ -40,6 +41,7 @@ PrepMod4HPC <- function(
     XVars = NULL, PhyloTree = TRUE, NoPhyloTree = TRUE, NParallel = 8,
     nChains = 4, thin = c(5, 10, 20), samples = c(1000, 2000, 3000),
     transientFactor = 300, verbose = 1000, SkipFitted = TRUE,
+    MaxJobCounts = 210,
     ModelCountry = NULL, MinPresPerCountry = 50, VerboseProgress = FALSE) {
 
   # https://github.com/hmsc-r/HMSC/issues/180
@@ -494,8 +496,21 @@ PrepMod4HPC <- function(
 
   IASDT.R::CatTime("Save commands in a text file")
 
-  cat(Models2Fit, sep = "\n", append = FALSE,
-      file = file.path(Path_Model, "Commands_All.txt"))
+  NJobs <- length(Models2Fit)
+  if (NJobs > MaxJobCounts) {
+    NSplits <- ceiling(NJobs / MaxJobCounts)
+    IDs <- IASDT.R::SplitVector(Vector = seq_len(NJobs), NSplit = NSplits)
+  } else {
+    NSplits <- 1
+    IDs <- list(seq_len(NJobs))
+  }
+
+  lapply(seq_len(NSplits), function(x) {
+    CurrIDs <- IDs[[x]]
+    Models2Fit[CurrIDs] %>%
+      cat(sep = "\n", append = FALSE,
+          file = file.path(Path_Model, paste0("Commands_All", x, ".txt")))
+  })
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

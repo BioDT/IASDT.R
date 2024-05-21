@@ -10,7 +10,7 @@ PrepSLURM(
   SlurmFile = "BashCommand.slurm",
   JobName = NULL,
   CatJobInfo = TRUE,
-  MaxJobCounts = Inf,
+  MaxJobCounts = 210,
   ntasks = 1,
   CpusPerTask = 1,
   GpusPerNode = 1,

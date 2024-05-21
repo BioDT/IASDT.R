@@ -23,6 +23,7 @@
 #' @param samples Integer. Value(s) for the number of MCMC samples
 #' @param transientFactor Integer. Transient multiplication factor. The value of transient = `transientFactor * thin`.
 #' @param verbose Integer. How often the results of the MCMC sampling be reported
+#' @param SkipFitted Logic. Should the already fitted models be skipped.
 #' @param ModelCountry String. Filter observations to the following country list. Default: `NULL`, which means prepare data for the whole Europe
 #' @param MinPresPerCountry Integer. Minimum of grid cells for the selected country/countries for species to be considered in the models. Effective only if a valid `ModelCountry` is provided.
 #' @param VerboseProgress Logical. Show messages for the progress of creating files
@@ -37,7 +38,7 @@ PrepMod4HPC <- function(
     GPP_Dists = c(20, 30, 40, 50, 60), GPP_Save = TRUE, GPP_Plot = TRUE,
     XVars = NULL, PhyloTree = TRUE, NoPhyloTree = TRUE, NParallel = 8,
     nChains = 4, thin = c(5, 10, 20), samples = c(1000, 2000, 3000),
-    transientFactor = 300, verbose = 1000,
+    transientFactor = 300, verbose = 1000, SkipFitted = TRUE,
     ModelCountry = NULL, MinPresPerCountry = 50, VerboseProgress = FALSE) {
 
   # https://github.com/hmsc-r/HMSC/issues/180
@@ -348,22 +349,25 @@ PrepMod4HPC <- function(
       M_HPC = purrr::pmap(
         .l = list(M_Name_init, M_thin, M_samples),
         .f = function(M_Name_init, M_thin, M_samples) {
+
           M_Name_Fit <- paste0(M_Name_init, "_samp", M_samples, "_th", M_thin)
+
           M4HPC_Path <- file.path(
-            Path_Model, "InitMod_HPC",
-            paste0("InitMod_HPC_", M_Name_Fit, ".rds"))
+            Path_Model, "InitMod_HPC", paste0("InitMod_HPC_", M_Name_Fit, ".rds"))
+
           return(list(M_Name_Fit = M_Name_Fit, M4HPC_Path = M4HPC_Path))
+
         })) %>%
     tidyr::unnest_wider("M_HPC")
 
+
   rm(GPP_Knots)
-  # invisible(snow::clusterEvalQ(c1, gc()))
 
   # # |||||||||||||||||||||||||||||||||||
-  # # Save unfitted models
+  # # Save missing unfitted models
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatTime("Save unfitted models")
+  IASDT.R::CatTime("Save missing unfitted models")
   DT2Export <- Model_Info %>%
     dplyr::filter(magrittr::not(file.exists(M4HPC_Path))) %>%
     dplyr::select(M4HPC_Path, M_samples, M_thin, M_transient, M_Init_Path)
@@ -400,6 +404,8 @@ PrepMod4HPC <- function(
       paste0("  >>  ", nrow(FailedExports),
              "model variants failed to be exported to rds files.") %>%
         IASDT.R::CatTime()
+
+      save(FailedExports, file = file.path(Path_Model, "FailedExports.RData"))
       readr::write_tsv(
         x = FailedExports, file = file.path(Path_Model, "FailedExports.txt"))
     }
@@ -426,13 +432,10 @@ PrepMod4HPC <- function(
 
     dplyr::mutate(
       M_Chain = purrr::pmap(
-        .l = list(M_Name_Fit, M4HPC_Path, Chain,
-                  M_transient, M_samples, M_thin),
-        .f = function(M_Name_Fit, M4HPC_Path, Chain,
-                      M_transient, M_samples, M_thin) {
+        .l = list(M_Name_Fit, M4HPC_Path, Chain, M_transient, M_samples, M_thin),
+        .f = function(M_Name_Fit, M4HPC_Path, Chain, M_transient, M_samples, M_thin) {
 
-          M4HPC_Path2 <- file.path(
-            Path_Model, "InitMod_HPC", basename(M4HPC_Path))
+          M4HPC_Path2 <- file.path(Path_Model, "InitMod_HPC", basename(M4HPC_Path))
           Post_Path <- file.path(
             Path_Model, paste0(M_Name_Fit, "_Chain", Chain, "_post.rds"))
           Path_ModPorg <- file.path(
@@ -460,9 +463,31 @@ PrepMod4HPC <- function(
         })) %>%
     tidyr::unnest_wider("M_Chain")
 
+
+  # # |||||||||||||||||||||||||||||||||||
+  # # Skip fitted models
+  # # |||||||||||||||||||||||||||||||||||
+
+  IASDT.R::CatTime("Skip fitted models")
+
+  if (SkipFitted) {
+    Models2Fit <- Model_Info %>%
+      dplyr::filter(Post_Missing) %>%
+      dplyr::pull(Command) %>%
+      unlist()
+  } else {
+    Models2Fit <- Model_Info %>%
+      dplyr::pull(Command) %>%
+      unlist()
+  }
+
+  # # |||||||||||||||||||||||||||||||||||
+  # # Prepare commands for running on HPC
+  # # |||||||||||||||||||||||||||||||||||
+
   IASDT.R::CatTime("Save commands in a text file")
 
-  cat(Model_Info$Command, sep = "\n", append = FALSE,
+  cat(Models2Fit, sep = "\n", append = FALSE,
       file = file.path(Path_Model, "Commands_All.txt"))
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -472,6 +497,7 @@ PrepMod4HPC <- function(
   # # |||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Save data to disk")
+
   Model_Info <- Model_Info %>%
     tidyr::nest(
       Post_Path = Post_Path, Path_ModPorg = Path_ModPorg,
@@ -481,14 +507,13 @@ PrepMod4HPC <- function(
       Chain = purrr::map2(Chain, Chain, IASDT.R::SetChainName),
       Command = purrr::map2(Command, Chain, IASDT.R::SetChainName),
       Path_ModPorg = purrr::map2(Path_ModPorg, Chain, IASDT.R::SetChainName))
-
   save(Model_Info, file = Path_ModelDT)
-
-  IASDT.R::CatDiff(.StartTime, CatInfo = FALSE)
 
   if (magrittr::not(VerboseProgress)) {
     sink()
   }
+
+  IASDT.R::CatDiff(.StartTime, CatInfo = FALSE)
 
   return(invisible(NULL))
 }

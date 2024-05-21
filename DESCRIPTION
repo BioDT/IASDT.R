@@ -8,10 +8,10 @@ Authors@R:
            comment = c(ORCID = "0000-0003-2225-088X"))
 Maintainer: Ahmed El-Gabbas <ahmed.el-gabbas@ufz.de>
 Description: Helper functions to be used in the Invasive Alien Species
-    (IAS) Digital Twin.
+    (IAS) prototype Digital Twin (IAS pDT).
 License: MIT + file LICENSE
 URL: https://biodt.eu, https://www.ufz.de/index.php?en=36737
-BugReports: https://git.ufz.de/biodt/IASDT.R
+BugReports: https://git.ufz.de/biodt/IASDT.R/-/issues
 Depends: 
     magrittr,
     R (>= 4.0.4)
@@ -32,7 +32,7 @@ Suggests:
     gdata,
     ggplot2,
     gtools,
-    Hmsc,
+    Hmsc (>= 3.1-2),
     jsonify,
     jsonlite,
     kableExtra,

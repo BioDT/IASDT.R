@@ -6,14 +6,14 @@
 \alias{IASDT.R-package}
 \title{IASDT.R: Helper R functions for IAS pDT project}
 \description{
-Helper functions to be used in the Invasive Alien Species (IAS) Digital Twin.
+Helper functions to be used in the Invasive Alien Species (IAS) prototype Digital Twin (IAS pDT).
 }
 \seealso{
 Useful links:
 \itemize{
   \item \url{https://biodt.eu}
   \item \url{https://www.ufz.de/index.php?en=36737}
-  \item Report bugs at \url{https://git.ufz.de/biodt/IASDT.R}
+  \item Report bugs at \url{https://git.ufz.de/biodt/IASDT.R/-/issues}
 }
 
 }

@@ -183,3 +183,27 @@ PrepSLURM <- function(
   cat2('echo "End of program at `date`"')
   sink()
 }
+
+
+
+
+
+
+
+
+
+# PrepSLURM_Missing
+#
+# Commands <- readLines("Y:/Home/elgabbas/BioDT_IAS/IASDT_Model_Test--/1_Forests_DE/Commands_All.txt")
+# OutRds <- Commands %>%
+#   stringr::str_extract("--output.+rds") %>%
+#   stringr::str_remove_all('^--output|\\"| ')
+#
+# OutRdsExists <- file.path("Y:/Home/elgabbas/BioDT_IAS/IASDT_Model_Test--/1_Forests_DE/InitMod_HPC",
+#                           basename(OutRds)) %>%
+#   file.exists() %>%
+#   which()
+#
+# if (length(OutRdsExists) > 0) {
+#   Commands2Repeat <- Commands[-OutRdsExists]
+# }

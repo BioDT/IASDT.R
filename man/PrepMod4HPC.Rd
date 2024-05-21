@@ -22,6 +22,7 @@ PrepMod4HPC(
   samples = c(1000, 2000, 3000),
   transientFactor = 300,
   verbose = 1000,
+  SkipFitted = TRUE,
   ModelCountry = NULL,
   MinPresPerCountry = 50,
   VerboseProgress = FALSE
@@ -61,6 +62,8 @@ PrepMod4HPC(
 \item{transientFactor}{Integer. Transient multiplication factor. The value of transient = \code{transientFactor * thin}.}
 
 \item{verbose}{Integer. How often the results of the MCMC sampling be reported}
+
+\item{SkipFitted}{Logic. Should the already fitted models be skipped.}
 
 \item{ModelCountry}{String. Filter observations to the following country list. Default: \code{NULL}, which means prepare data for the whole Europe}
 

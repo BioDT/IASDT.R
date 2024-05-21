@@ -85,6 +85,8 @@ PrepSLURM <- function(
     } else {
       OutFile <- paste0("BashCommand_", x, ".slurm")
     }
+    NJobs <- R.utils::countLines(ListCommands[x])[1]
+
 
     sink(file = file.path(Path_Model, OutFile))
 

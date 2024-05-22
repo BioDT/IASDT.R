@@ -20,6 +20,10 @@ PlotBeta_byVar <- function(
     Beta, NRC = c(3, 2), PdfPath = getwd(), FilePrefix = "Posterior_Sp",
     Verbose = TRUE, VerboseSp = FALSE) {
 
+  # Avoid "no visible binding for global variable" message
+  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
+  Var <- Sp <- NULL
+
   fs::dir_create(PdfPath)
 
   PostID <- dimnames(Beta[[1]])[[2]] %>%

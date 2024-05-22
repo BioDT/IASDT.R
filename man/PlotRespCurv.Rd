@@ -8,7 +8,8 @@ PlotRespCurv(
   Model,
   ResCurvePath = getwd(),
   ResCurvePrefix = "ResCurv_",
-  Verbose = TRUE
+  Verbose = TRUE,
+  NCores = NULL
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ PlotRespCurv(
 \item{ResCurvePrefix}{ResCurvePrefix}
 
 \item{Verbose}{Verbose}
+
+\item{NCores}{Number of cores to use}
 }
 \description{
 PlotRespCurv

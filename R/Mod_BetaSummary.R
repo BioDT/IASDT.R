@@ -12,6 +12,12 @@
 #' @export
 
 BetaSummary <- function(Beta) {
+
+  # Avoid "no visible binding for global variable" message
+  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
+  'Naive SE' <- 'Time-series SE' <- '2.5%' <- '25%' <- '50%' <-
+    '75%' <- '97.5%' <- rowname <- Var <- Sp <- NULL
+
   Stats <- summary(Beta)$statistics %>%
     round(3) %>%
     as.data.frame() %>%

@@ -15,8 +15,11 @@
 
 SaveSession <- function(Path = getwd(), ExcludeObj = NULL, Prefix = "S") {
 
-  fs::dir_create(Path)
+  # Avoid "no visible binding for global variable" message
+  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
+  Object <- Class <- Size <- Obj <- NULL
 
+  fs::dir_create(Path)
   ExcludeObj <- c(ExcludeObj, "Grid_10_sf_s", "Grid_10_Raster", "Bound_sf_Eur_s", "Bound_sf_Eur")
 
   AllObjs <- ls(envir = .GlobalEnv) %>%

@@ -9,13 +9,23 @@
 #' @param ResCurvePath ResCurvePath
 #' @param ResCurvePrefix ResCurvePrefix
 #' @param Verbose Verbose
+#' @param NCores Number of cores to use
 #' @name PlotRespCurv
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
 PlotRespCurv <- function(
-    Model, ResCurvePath = getwd(), ResCurvePrefix = "ResCurv_", Verbose = TRUE) {
+    Model, ResCurvePath = getwd(), ResCurvePrefix = "ResCurv_", Verbose = TRUE, NCores = NULL) {
+
+
+  # Avoid "no visible binding for global variable" message
+  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
+  Var <- NFV <- NULL
+
+  if (is.null(NCores)) {
+    Cores <- get(".NCores", envir = parent.env(environment()))
+  }
 
   IASDT.R::CatTime("Extract names of the variables")
   ModelVars <- stringr::str_split(
@@ -23,8 +33,8 @@ PlotRespCurv <- function(
     stringr::str_trim()
 
   IASDT.R::CatTime("Prepare working on parallel")
-  c1 <- snow::makeSOCKcluster(min(.NCores, nrow(ResCurvDT)))
-  future::plan(cluster, workers = c1, gc = TRUE)
+  c1 <- snow::makeSOCKcluster(min(NCores, nrow(ResCurvDT)))
+  future::plan(future::cluster, workers = c1, gc = TRUE)
 
   IASDT.R::CatTime("Prepare response curve data on parallel - coordinates = i")
   ResCurvDT <- tidyr::expand_grid(Var = ModelVars, NFV = 1:2)

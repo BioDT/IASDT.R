@@ -47,6 +47,14 @@ PrepMod4HPC <- function(
   # https://github.com/hmsc-r/HMSC/issues/180
   # https://github.com/hmsc-r/HMSC/issues/139
 
+  # Avoid "no visible binding for global variable" message
+  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
+  Country <- NCells <- Sp <- CellCode <- bio4 <- bio6 <- bio8 <- bio12 <-
+    bio15 <- bio18 <- RoadRailLog <- BiasLog <- CV <- IAS_ID <- x <- y <-
+    dplyr <- sf <- Hmsc <- jsonify <- magrittr <- M_thin <- rL <- M_Name_init <-
+    rL2 <- M_samples <- M4HPC_Path <- M_transient <- M_Init_Path <- M_Name_Fit <-
+    Chain <- Post_Missing <- Command <- Post_Path <- Path_ModPorg <- NULL
+
   if (magrittr::not(VerboseProgress)) {
     sink(file = nullfile())
   }
@@ -497,6 +505,7 @@ PrepMod4HPC <- function(
   IASDT.R::CatTime("Save commands in a text file")
 
   NJobs <- length(Models2Fit)
+
   if (NJobs > MaxJobCounts) {
     NSplits <- ceiling(NJobs / MaxJobCounts)
     IDs <- IASDT.R::SplitVector(Vector = seq_len(NJobs), NSplit = NSplits)

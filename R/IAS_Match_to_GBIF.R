@@ -22,6 +22,10 @@ Match_to_GBIF <- function(
     taxon_name, taxon_id = NULL, include_genus = FALSE,
     Parallel = FALSE, Progress = FALSE) {
 
+  # Avoid "no visible binding for global variable" message
+  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
+  phylum <- NULL
+
   if (is.null(taxon_id)) taxon_id <- seq_along(taxon_name)
 
   if (Parallel) {

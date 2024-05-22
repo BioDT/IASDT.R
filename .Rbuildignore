@@ -11,3 +11,5 @@
 ^\.gitlab-ci\.yml$
 .lintr
 ^LICENSE\.md$
+IASDT.R.code-workspace
+

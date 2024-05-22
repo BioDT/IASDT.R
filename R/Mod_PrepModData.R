@@ -24,6 +24,13 @@ PrepModData <- function(
     ReturnData = FALSE, OutputPath = NULL, VerboseProgress = FALSE) {
 
 
+  # Avoid "no visible binding for global variable" message
+  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
+  NCells <- SpeciesID <- Species_name <- Species_File <- PA <- NAME_ENGL <-
+    cell <- geometry <- Country <- Country2 <- NULL
+
+
+
   if (magrittr::not(VerboseProgress)) {
     sink(file = nullfile())
   }

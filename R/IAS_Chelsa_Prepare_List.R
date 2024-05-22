@@ -24,6 +24,11 @@ Chelsa_Prepare_List <- function(
     Down = FALSE, DownParallel = TRUE, DwnPath = NULL, OutPath = NULL,
     UpdateExisting = FALSE, Path_Chelsa = "Data/Chelsa") {
 
+  # Avoid "no visible binding for global variable" message
+  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
+  Variable <- DownFile <- NULL
+
+
   BaseURL <- "https://os.zhdk.cloud.switch.ch/envicloud/chelsa/chelsa_V2/GLOBAL/"
   ClimateModels <- c(
     "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL")

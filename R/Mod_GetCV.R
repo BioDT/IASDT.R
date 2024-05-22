@@ -15,6 +15,12 @@
 #' @export
 
 GetCV <- function(DT, NR = 4, NC = 3, Path_Grid) {
+
+  # Avoid "no visible binding for global variable" message
+  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
+  x <- y <- folds <- NULL
+
+
   Grid10 <- Path_Grid %>%
     file.path("Grid_10_Land_Crop.RData") %>%
     IASDT.R::LoadAs() %>%

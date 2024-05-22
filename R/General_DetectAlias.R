@@ -11,23 +11,27 @@
 #' @name DetectAlias
 #' @export
 #' @examples
-#' require(car)
-#' x1 <- rnorm(100)
-#' x2 <- 2 * x1
-#' x3 <- rnorm(100)
-#' y <- rnorm( 100 )
-#' model <- lm(y ~ x1 + x2 + x3)
-#' summary(model)
-#' try(car::vif(model))
-#' DetectAlias(DT = cbind(x1, x2, x3))
-#' DetectAlias(DT = cbind(x1, x2, x3), Verbose = TRUE)
+#' if (require("car")) {
+#'   x1 <- rnorm(100)
+#'   x2 <- 2 * x1
+#'   x3 <- rnorm(100)
+#'   y <- rnorm(100)
 #'
-#' # excluding x2
-#' model <- lm(y ~ x1 + x3)
-#' summary(model)
-#' try(car::vif(model))
+#'   model <- lm(y ~ x1 + x2 + x3)
+#'   summary(model)
+#'
+#'   try(vif(model))
+#'   DetectAlias(DT = cbind(x1, x2, x3))
+#'   DetectAlias(DT = cbind(x1, x2, x3), Verbose = TRUE)
+#'
+#'   # excluding x2
+#'   model <- lm(y ~ x1 + x3)
+#'   summary(model)
+#'   try(vif(model))
+#' }
 
 DetectAlias <- function(DT, Verbose = FALSE) {
+
   DT <- cbind.data.frame(XX = rep(1, nrow(DT)), DT)
   form <- paste(names(DT)[-c(1)], collapse = " + ")
   form <- stats::formula(paste("XX", "~", form))

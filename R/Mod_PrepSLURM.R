@@ -16,6 +16,7 @@
 #' @param Time String. The value for the requested time for each job in the bash arrays. Example: "01:00:00" to request an hour.
 #' @param Partition String. The name of the partition. Default: `small-g`
 #' @param Path_EnvFile String. Path to read the environment variables. Default value: `.env`
+#' @param CommandPrefix String. Prefix for the exported SLURM files
 #' @name PrepSLURM
 #' @author Ahmed El-Gabbas
 #' @return NULL
@@ -23,8 +24,8 @@
 
 PrepSLURM <- function(
     Path_Model = NULL, JobName = NULL, CatJobInfo = TRUE, ntasks = 1,
-    CpusPerTask = 1, GpusPerNode = 1, MemPerCpu = NULL,
-    Time = NULL, Partition = "small-g", Path_EnvFile = ".env") {
+    CpusPerTask = 1, GpusPerNode = 1, MemPerCpu = NULL, Time = NULL,
+    Partition = "small-g", Path_EnvFile = ".env", CommandPrefix = "Commands_All") {
 
   # # |||||||||||||||||||||||||||||||||||
   # # cat2
@@ -63,144 +64,128 @@ PrepSLURM <- function(
   # character arguments
   CharArgs <- c(
     "Path_Model", "JobName", "Path_EnvFile", "Time", "MemPerCpu", "Partition",
-    "Path_Hmsc", "Path_Python", "ProjNum", "Path_Scratch", "Path_GPU_Check")
+    "Path_Hmsc", "Path_Python", "ProjNum", "Path_Scratch", "Path_GPU_Check",
+    "CommandPrefix")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = CharArgs, Type = "character")
 
   # numeric arguments
   NumericArgs <- c("GpusPerNode", "CpusPerTask", "ntasks")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = NumericArgs, Type = "numeric")
 
+  rm(AllArgs)
+  invisible(gc())
+
   ListCommands <- list.files(
-    Path_Model, pattern = "Commands_All", full.names = TRUE)
+    Path_Model, pattern = CommandPrefix, full.names = TRUE)
   NCommandFiles <- length(ListCommands)
 
   if (NCommandFiles == 0) {
     stop("The file containing the bash commands does not exist")
   }
 
-  lapply(seq_len(NCommandFiles), function(x) {
+  purrr::walk(
+    .x = seq_len(NCommandFiles),
+    .f = function(x) {
 
-    if (NCommandFiles == 1) {
-      OutFile <- "BashCommand.slurm"
-    } else {
-      OutFile <- paste0("BashCommand_", x, ".slurm")
-    }
-    NJobs <- R.utils::countLines(ListCommands[x])[1]
+      if (NCommandFiles == 1) {
+        OutFile <- "BashCommand.slurm"
+      } else {
+        OutFile <- paste0("BashCommand_", x, ".slurm")
+      }
+      NJobs <- R.utils::countLines(ListCommands[x])[1]
 
 
-    sink(file = file.path(Path_Model, OutFile))
+      sink(file = file.path(Path_Model, OutFile))
+      Path_Model_Fit <- file.path(Path_Model, "ModelFitting")
 
-    cat2("#!/bin/bash\n")
+      cat2("#!/bin/bash\n")
 
-    cat2("# -----------------------------------------------")
-    cat2("# Job array configuration")
-    cat2("# -----------------------------------------------")
-    cat2(paste0("#SBATCH --job-name=", paste0(JobName, x)))
-    cat2(paste0("#SBATCH --ntasks=", ntasks))
-    cat2(paste0("#SBATCH --output=", file.path(Path_Model, "Job_%x-%A-%a.out")))
-    cat2(paste0("#SBATCH --error=", file.path(Path_Model, "Job_%x-%A-%a.out")))
-    cat2(paste0("#SBATCH --account=", ProjNum))
-    cat2(paste0("#SBATCH --cpus-per-task=", CpusPerTask))
-    cat2(paste0("#SBATCH --mem-per-cpu=", MemPerCpu))
-    cat2(paste0("#SBATCH --gpus-per-node=", GpusPerNode))
-    cat2(paste0("#SBATCH --time=", Time))
-    cat2(paste0("#SBATCH --partition=", Partition))
-    cat2(paste0("#SBATCH --array=1-", NJobs, "\n"))
-
-    if (CatJobInfo) {
       cat2("# -----------------------------------------------")
-      cat2("# Job info")
+      cat2("# Job array configuration")
       cat2("# -----------------------------------------------")
-      cat2('echo "Start date = $(date)"')
-      cat2('echo "working directory = "$SLURM_SUBMIT_DIR')
-      cat2('echo "Account name = "$SLURM_JOB_ACCOUNT')
-      cat2('echo "Job id = "$SLURM_JOB_ID')
-      cat2('echo "Job name = "$SLURM_JOB_NAME')
-      cat2('echo "--mem-per-cpu = "$SLURM_MEM_PER_CPU')
-      cat2('echo "GPU IDs allocated to the job = "$SLURM_JOB_GPUS')
-      cat2('echo "Node running the job script = "$SLURMD_NODENAME')
-      cat2('echo "Process ID of the task = "$SLURM_TASK_PID')
-      cat2('echo "Dependency = "$SLURM_JOB_DEPENDENCY')
-      cat2('echo "Number of nodes allocated = "$SLURM_NNODES')
-      cat2('echo "Number of tasks allocated = "$SLURM_NTASKS')
-      cat2('echo "Number of cpus per task = "$SLURM_CPUS_PER_TASK')
-      cat2('echo "# tasks in a job array = "$SLURM_ARRAY_TASK_COUNT')
-      cat2('echo "Array\'s master job ID number = "$SLURM_ARRAY_JOB_ID')
-      cat2('echo "Array\'s maximum ID (index) number = "$SLURM_ARRAY_TASK_MIN')
-      cat2('echo "Array\'s minimum ID (index) number = "$SLURM_ARRAY_TASK_MAX')
+      cat2(paste0("#SBATCH --job-name=", paste0(JobName, x)))
+      cat2(paste0("#SBATCH --ntasks=", ntasks))
+      cat2(paste0("#SBATCH --output=", file.path(Path_Model_Fit, "Job_%x-%A-%a.out")))
+      cat2(paste0("#SBATCH --error=", file.path(Path_Model_Fit, "Job_%x-%A-%a.out")))
+      cat2(paste0("#SBATCH --account=", ProjNum))
+      cat2(paste0("#SBATCH --cpus-per-task=", CpusPerTask))
+      cat2(paste0("#SBATCH --mem-per-cpu=", MemPerCpu))
+      cat2(paste0("#SBATCH --gpus-per-node=", GpusPerNode))
+      cat2(paste0("#SBATCH --time=", Time))
+      cat2(paste0("#SBATCH --partition=", Partition))
+      cat2(paste0("#SBATCH --array=1-", NJobs, "\n"))
 
-      cat("\n\n\n")
-    }
+      if (CatJobInfo) {
+        cat2("# -----------------------------------------------")
+        cat2("# Job info")
+        cat2("# -----------------------------------------------")
+        cat2('echo "Start date = $(date)"')
+        cat2('echo "working directory = "$SLURM_SUBMIT_DIR')
+        cat2('echo "Account name = "$SLURM_JOB_ACCOUNT')
+        cat2('echo "Job id = "$SLURM_JOB_ID')
+        cat2('echo "Job name = "$SLURM_JOB_NAME')
+        cat2('echo "--mem-per-cpu = "$SLURM_MEM_PER_CPU')
+        cat2('echo "GPU IDs allocated to the job = "$SLURM_JOB_GPUS')
+        cat2('echo "Node running the job script = "$SLURMD_NODENAME')
+        cat2('echo "Process ID of the task = "$SLURM_TASK_PID')
+        cat2('echo "Dependency = "$SLURM_JOB_DEPENDENCY')
+        cat2('echo "Number of nodes allocated = "$SLURM_NNODES')
+        cat2('echo "Number of tasks allocated = "$SLURM_NTASKS')
+        cat2('echo "Number of cpus per task = "$SLURM_CPUS_PER_TASK')
+        cat2('echo "# tasks in a job array = "$SLURM_ARRAY_TASK_COUNT')
+        cat2('echo "Array\'s master job ID number = "$SLURM_ARRAY_JOB_ID')
+        cat2('echo "Array\'s maximum ID (index) number = "$SLURM_ARRAY_TASK_MIN')
+        cat2('echo "Array\'s minimum ID (index) number = "$SLURM_ARRAY_TASK_MAX')
 
-    cat2("# -----------------------------------------------")
-    cat2("# Change working directory to scratch")
-    cat2("# -----------------------------------------------")
-    cat2(paste0("cd ", Path_Scratch, "\n"))
+        cat("\n\n")
+      }
 
-    cat2("# -----------------------------------------------")
-    cat2("# File contains bash commands for model fitting")
-    cat2("# -----------------------------------------------")
-    cat2(paste0("File=", ListCommands[x], "\n"))
+      cat2("# -----------------------------------------------")
+      cat2("# Change working directory to scratch")
+      cat2("# -----------------------------------------------")
+      cat2(paste0("cd ", Path_Scratch, "\n"))
 
-    cat2("# -----------------------------------------------")
-    cat2("# Loading modules")
-    cat2("# -----------------------------------------------")
-    cat2("module use /appl/local/csc/modulefiles/")
-    cat2("module load tensorflow/2.12\n")
+      cat2("# -----------------------------------------------")
+      cat2("# File contains bash commands for model fitting")
+      cat2("# -----------------------------------------------")
+      cat2(paste0("File=", ListCommands[x], "\n"))
 
-    cat2("# -----------------------------------------------")
-    cat2("# HMSC-HPC path")
-    cat2("# -----------------------------------------------")
-    cat2(paste0("Path_Hmsc=", Path_Hmsc, "\n"))
+      cat2("# -----------------------------------------------")
+      cat2("# Loading modules")
+      cat2("# -----------------------------------------------")
+      cat2("module use /appl/local/csc/modulefiles/")
+      cat2("module load tensorflow/2.12\n")
 
-    cat2("# -----------------------------------------------")
-    cat2("# Python path")
-    cat2("# -----------------------------------------------")
-    cat2("export PYTHONPATH=$Path_Hmsc:$PYTHONPATH")
-    cat2("Path_Python=$(which python3)\n")
+      cat2("# -----------------------------------------------")
+      cat2("# HMSC-HPC path")
+      cat2("# -----------------------------------------------")
+      cat2(paste0("Path_Hmsc=", Path_Hmsc, "\n"))
 
-    cat2("# -----------------------------------------------")
-    cat2("# CHECK GPU")
-    cat2("# -----------------------------------------------")
-    cat2("export TF_CPP_MIN_LOG_LEVEL=3")
-    cat2(paste0("PythonCheckGPU=", Path_GPU_Check, "\n"))
+      cat2("# -----------------------------------------------")
+      cat2("# Python path")
+      cat2("# -----------------------------------------------")
+      cat2("export PYTHONPATH=$Path_Hmsc:$PYTHONPATH")
+      cat2("Path_Python=$(which python3)\n")
 
-    cat2("# -----------------------------------------------")
-    cat2("# Some checking")
-    cat2("# -----------------------------------------------")
-    cat2('echo -e "Some Checking:\\n>>  Working directory: $PWD\\n  >>  Python path:       $Path_Python\\n  >>  Checking GPU:      $(python3 $PythonCheckGPU)\\n"')
-    cat("\n")
+      cat2("# -----------------------------------------------")
+      cat2("# CHECK GPU")
+      cat2("# -----------------------------------------------")
+      cat2("export TF_CPP_MIN_LOG_LEVEL=3")
+      cat2(paste0("PythonCheckGPU=", Path_GPU_Check, "\n"))
 
-    cat2("# -----------------------------------------------")
-    cat2("# Run array job")
-    cat2("# -----------------------------------------------")
-    cat2("head -n $SLURM_ARRAY_TASK_ID $File | tail -n 1 | bash\n")
+      cat2("# -----------------------------------------------")
+      cat2("# Some checking")
+      cat2("# -----------------------------------------------")
+      cat2('echo -e "Some Checking:\\n>>  Working directory: $PWD\\n  >>  Python path:       $Path_Python\\n  >>  Checking GPU:      $(python3 $PythonCheckGPU)\\n"')
+      cat("\n")
 
-    cat2('echo "End of program at `date`"')
-    sink()
-  })
+      cat2("# -----------------------------------------------")
+      cat2("# Run array job")
+      cat2("# -----------------------------------------------")
+      cat2("head -n $SLURM_ARRAY_TASK_ID $File | tail -n 1 | bash\n")
+
+      cat2('echo "End of program at `date`"')
+      sink()
+    })
+  return(invisible(NULL))
 }
-
-
-
-
-
-
-
-
-
-# PrepSLURM_Missing
-#
-# Commands <- readLines("Y:/Home/elgabbas/BioDT_IAS/IASDT_Model_Test--/1_Forests_DE/Commands_All.txt")
-# OutRds <- Commands %>%
-#   stringr::str_extract("--output.+rds") %>%
-#   stringr::str_remove_all('^--output|\\"| ')
-#
-# OutRdsExists <- file.path("Y:/Home/elgabbas/BioDT_IAS/IASDT_Model_Test--/1_Forests_DE/InitMod_HPC",
-#                           basename(OutRds)) %>%
-#   file.exists() %>%
-#   which()
-#
-# if (length(OutRdsExists) > 0) {
-#   Commands2Repeat <- Commands[-OutRdsExists]
-# }

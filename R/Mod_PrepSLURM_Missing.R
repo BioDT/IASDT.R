@@ -1,0 +1,117 @@
+# |---------------------------------------------------| #
+# PrepSLURM_Missing ----
+# |---------------------------------------------------| #
+
+#' Prepare SLURM file for unfitted models on HPC
+#'
+#' Prepare SLURM file for unfitted models on HPC
+#'
+#' @param Path_Model String. Path to the model files (without trailing slash)
+#' @param MaxJobCounts Integer. Maximum number of jobs per slurm file
+#' @param JobName String. The name of the submitted jobs
+#' @param MemPerCpu String. The value for the `#SBATCH --mem-per-cpu=` SLURM argument. Example: "32G" to request 32 gigabyte
+#' @param Time String. The value for the requested time for each job in the bash arrays. Example: "01:00:00" to request an hour.
+#' @param Partition String. The name of the partition. Default: `small-g`
+#' @param Path_EnvFile String. Path to read the environment variables. Default value: `.env`
+#' @param CatJobInfo Logical. Add bash lines to report some job information. Default: `TRUE`
+#' @param ntasks Integer. The value for the `#SBATCH --ntasks=` SLURM argument. Default: 1
+#' @param CpusPerTask Integer. The value for the `#SBATCH --cpus-per-task=` SLURM argument. Default: 1
+#' @param GpusPerNode Integer. The value for the `#SBATCH --gpus-per-node=` SLURM argument. Default: 1
+#' @param CommandPrefix String. The prefix for all model commands
+#' @param RefitPrefix String. The prefix for commands to be re-fitted
+#' @name PrepSLURM_Missing
+#' @author Ahmed El-Gabbas
+#' @return NULL
+#' @export
+
+PrepSLURM_Missing <- function(
+    Path_Model = NULL, MaxJobCounts = 210, JobName = NULL, MemPerCpu = NULL,
+    Time = NULL, Partition = "small-g", Path_EnvFile = ".env", CatJobInfo = TRUE,
+    ntasks = 1, CpusPerTask = 1, GpusPerNode = 1,
+    CommandPrefix = "Commands_All", RefitPrefix = "Commands2Refit") {
+
+  # Avoid "no visible binding for global variable" message
+  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
+  Command <- Post_Path <- NULL
+
+  if (file.exists(Path_EnvFile)) {
+    readRenviron(Path_EnvFile)
+  } else {
+    MSG <- paste0(
+      "Path for environment variables: ", Path_EnvFile, " was not found")
+    stop(MSG)
+  }
+
+  if (is.null(JobName)) {
+    JobName <- paste0(basename(Path_Model), "_RF")
+  }
+
+  # checking arguments
+  AllArgs <- ls()
+  AllArgs <- purrr::map(
+    AllArgs,
+    function(x) get(x, envir = parent.env(env = environment()))) %>%
+    stats::setNames(AllArgs)
+
+  IASDT.R::CheckArgs(
+    AllArgs = AllArgs, Type = "character",
+    Args = c("Partition", "Path_EnvFile", "Time", "JobName",
+             "MemPerCpu", "Path_Model", "CommandPrefix", "RefitPrefix"))
+  IASDT.R::CheckArgs(
+    AllArgs = AllArgs, Type = "numeric",
+    Args = c("MaxJobCounts", "ntasks", "CpusPerTask", "GpusPerNode"))
+  IASDT.R::CheckArgs(AllArgs = AllArgs, Args = c("CatJobInfo"), Type = "logical")
+
+  rm(AllArgs)
+  invisible(gc())
+
+
+  Commands2Refit <- file.path(Path_Model, "Model_Info.RData") %>%
+    IASDT.R::LoadAs() %>%
+    tidyr::unnest_longer(c(Post_Path, Command)) %>%
+    dplyr::select(Post_Path, Command) %>%
+    dplyr::filter(magrittr::not(file.exists(Post_Path))) %>%
+    dplyr::pull("Command") %>%
+    purrr::set_names(NULL)
+  NJobs <- length(Commands2Refit)
+
+  if (NJobs > 0) {
+    if (NJobs > MaxJobCounts) {
+      NSplits <- ceiling(NJobs / MaxJobCounts)
+      IDs <- IASDT.R::SplitVector(Vector = seq_len(NJobs), NSplit = NSplits)
+    } else {
+      NSplits <- 1
+      IDs <- list(seq_len(NJobs))
+    }
+
+    purrr::walk(
+      .x = seq_len(NSplits),
+      .f = function(x) {
+        CurrIDs <- IDs[[x]]
+
+        if (NSplits == 1) {
+          OutCommandFile <- paste0(RefitPrefix, ".txt")
+        } else {
+          OutCommandFile <- paste0(RefitPrefix, "_", x, ".txt")
+        }
+        cat(Commands2Refit[CurrIDs], sep = "\n", append = FALSE,
+            file = file.path(Path_Model, OutCommandFile))
+      })
+
+    IASDT.R::PrepSLURM(
+      Path_Model = Path_Model, JobName = paste0(basename(Path_Model), "_RF"),
+      MemPerCpu = MemPerCpu, Time = Time, Partition = Partition,
+      Path_EnvFile = Path_EnvFile, CommandPrefix = RefitPrefix,
+      CatJobInfo = CatJobInfo, ntasks = ntasks, CpusPerTask = CpusPerTask,
+      GpusPerNode = GpusPerNode)
+
+    IASDT.R::CatTime(
+      paste0(NJobs, " model variants (in ", NSplits,
+             " slurm files) need to be re-fitted"))
+
+  } else {
+    IASDT.R::CatTime("All models were already fitted!")
+  }
+
+  return(invisible(NULL))
+}

@@ -14,7 +14,8 @@ PrepSLURM(
   MemPerCpu = NULL,
   Time = NULL,
   Partition = "small-g",
-  Path_EnvFile = ".env"
+  Path_EnvFile = ".env",
+  CommandPrefix = "Commands_All"
 )
 }
 \arguments{
@@ -37,6 +38,8 @@ PrepSLURM(
 \item{Partition}{String. The name of the partition. Default: \code{small-g}}
 
 \item{Path_EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
+
+\item{CommandPrefix}{String. Prefix for the exported SLURM files}
 }
 \description{
 Prepare SLURM file for model fitting on HPC

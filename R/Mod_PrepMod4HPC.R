@@ -53,7 +53,8 @@ PrepMod4HPC <- function(
     bio15 <- bio18 <- RoadRailLog <- BiasLog <- CV <- IAS_ID <- x <- y <-
     dplyr <- sf <- Hmsc <- jsonify <- magrittr <- M_thin <- rL <- M_Name_init <-
     rL2 <- M_samples <- M4HPC_Path <- M_transient <- M_Init_Path <- M_Name_Fit <-
-    Chain <- Post_Missing <- Command <- Post_Path <- Path_ModPorg <- NULL
+    Chain <- Post_Missing <- Command_HPC <- Command_WS <- Post_Path <-
+    Path_ModPorg <- NULL
 
   if (magrittr::not(VerboseProgress)) {
     sink(file = nullfile())
@@ -454,16 +455,18 @@ PrepMod4HPC <- function(
         .l = list(M_Name_Fit, M4HPC_Path, Chain, M_transient, M_samples, M_thin),
         .f = function(M_Name_Fit, M4HPC_Path, Chain, M_transient, M_samples, M_thin) {
 
-          M4HPC_Path2 <- file.path(Path_Model, "InitMod_HPC", basename(M4HPC_Path))
+          M4HPC_Path2 <- file.path(
+            Path_Model, "InitMod_HPC", basename(M4HPC_Path))
           Post_Path <- file.path(
             Path_Model, "ModelFitting",
             paste0(M_Name_Fit, "_Chain", Chain, "_post.rds"))
           Path_ModPorg <- file.path(
             Path_Model, "ModelFitting",
             paste0(M_Name_Fit, "_Chain", Chain, "_Progress.txt"))
+
           Post_Missing <- magrittr::not(file.exists(Post_Path))
 
-          Command <- paste0(
+          Command_HPC <- paste0(
             "export TF_CPP_MIN_LOG_LEVEL=3; export PYTHONPATH=", Path_Hmsc,
             ":$PYTHONPATH; /usr/bin/time -v ", Path_Python,
             " -m hmsc.run_gibbs_sampler",
@@ -476,10 +479,21 @@ PrepMod4HPC <- function(
             " --chain ", Chain - 1,
             " >& ", shQuote(Path_ModPorg))
 
+          Command_WS <- paste0(
+            "-m hmsc.run_gibbs_sampler",
+            " --input ", shQuote(M4HPC_Path2),
+            " --output ", shQuote(Post_Path),
+            " --samples ", M_samples,
+            " --transient ", M_transient,
+            " --thin ", M_thin,
+            " --verbose ", verbose,
+            " --chain ", Chain - 1)
+
           list(
             M4HPC_Path_LUMI = M4HPC_Path2,
             Post_Path = Post_Path, Post_Missing = Post_Missing,
-            Path_ModPorg = Path_ModPorg, Command = Command) %>%
+            Path_ModPorg = Path_ModPorg, Command_HPC = Command_HPC,
+            Command_WS = Command_WS) %>%
             return()
         })) %>%
     tidyr::unnest_wider("M_Chain")
@@ -492,13 +506,20 @@ PrepMod4HPC <- function(
   IASDT.R::CatTime("Skip fitted models")
 
   if (SkipFitted) {
-    Models2Fit <- Model_Info %>%
+    Models2Fit_HPC <- Model_Info %>%
       dplyr::filter(Post_Missing) %>%
-      dplyr::pull(Command) %>%
+      dplyr::pull(Command_HPC) %>%
+      unlist()
+    Models2Fit_WS <- Model_Info %>%
+      dplyr::filter(Post_Missing) %>%
+      dplyr::pull(Command_WS) %>%
       unlist()
   } else {
-    Models2Fit <- Model_Info %>%
-      dplyr::pull(Command) %>%
+    Models2Fit_HPC <- Model_Info %>%
+      dplyr::pull(Command_HPC) %>%
+      unlist()
+    Models2Fit_WS <- Model_Info %>%
+      dplyr::pull(Command_WS) %>%
       unlist()
   }
 
@@ -508,8 +529,7 @@ PrepMod4HPC <- function(
 
   IASDT.R::CatTime("Save commands in a text file")
 
-  NJobs <- length(Models2Fit)
-
+  NJobs <- length(Models2Fit_HPC)
   if (NJobs > MaxJobCounts) {
     NSplits <- ceiling(NJobs / MaxJobCounts)
     IDs <- IASDT.R::SplitVector(Vector = seq_len(NJobs), NSplit = NSplits)
@@ -520,7 +540,7 @@ PrepMod4HPC <- function(
 
   lapply(seq_len(NSplits), function(x) {
     CurrIDs <- IDs[[x]]
-    Models2Fit[CurrIDs] %>%
+    Models2Fit_HPC[CurrIDs] %>%
       cat(sep = "\n", append = FALSE,
           file = file.path(Path_Model, paste0("Commands_All_", x, ".txt")))
   })
@@ -536,11 +556,12 @@ PrepMod4HPC <- function(
   Model_Info <- Model_Info %>%
     tidyr::nest(
       Post_Path = Post_Path, Path_ModPorg = Path_ModPorg,
-      Chain = Chain, Command = Command) %>%
+      Chain = Chain, Command_HPC = Command_HPC, Command_WS = Command_WS) %>%
     dplyr::mutate(
       Post_Path = purrr::map2(Post_Path, Chain, IASDT.R::SetChainName),
       Chain = purrr::map2(Chain, Chain, IASDT.R::SetChainName),
-      Command = purrr::map2(Command, Chain, IASDT.R::SetChainName),
+      Command_HPC = purrr::map2(Command_HPC, Chain, IASDT.R::SetChainName),
+      Command_WS = purrr::map2(Command_WS, Chain, IASDT.R::SetChainName),
       Path_ModPorg = purrr::map2(Path_ModPorg, Chain, IASDT.R::SetChainName))
   save(Model_Info, file = Path_ModelDT)
 
@@ -552,3 +573,4 @@ PrepMod4HPC <- function(
 
   return(invisible(NULL))
 }
+

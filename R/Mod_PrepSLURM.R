@@ -96,7 +96,7 @@ PrepSLURM <- function(
 
 
       sink(file = file.path(Path_Model, OutFile))
-      Path_Model_Fit <- file.path(Path_Model, "ModelFitting")
+      Path_Model_Fit <- file.path(Path_Scratch, Path_Model, "ModelFitting")
 
       cat2("#!/bin/bash\n")
 

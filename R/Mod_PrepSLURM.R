@@ -41,17 +41,16 @@ PrepSLURM <- function(
 
   if (file.exists(Path_EnvFile)) {
     readRenviron(Path_EnvFile)
+    Path_Hmsc <- Sys.getenv("DP_R_Mod_Path_Hmsc")
+    Path_Python <- Sys.getenv("DP_R_Mod_Path_Python")
+    ProjNum <- Sys.getenv("IASDT_Proj_Number")
+    Path_Scratch <- Sys.getenv("Path_LUMI_Scratch")
+    Path_GPU_Check <- Sys.getenv("DP_R_Mod_Path_GPU_Check")
   } else {
     MSG <- paste0(
       "Path for environment variables: ", Path_EnvFile, " was not found")
     stop(MSG)
   }
-
-  Path_Hmsc <- Sys.getenv("DP_R_Mod_Path_Hmsc")
-  Path_Python <- Sys.getenv("DP_R_Mod_Path_Python")
-  ProjNum <- Sys.getenv("IASDT_Proj_Number")
-  Path_Scratch <- Sys.getenv("Path_LUMI_Scratch")
-  Path_GPU_Check <- Sys.getenv("DP_R_Mod_Path_GPU_Check")
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

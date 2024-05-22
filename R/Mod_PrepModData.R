@@ -30,7 +30,6 @@ PrepModData <- function(
     cell <- geometry <- Country <- Country2 <- NULL
 
 
-
   if (magrittr::not(VerboseProgress)) {
     sink(file = nullfile())
   }
@@ -51,15 +50,21 @@ PrepModData <- function(
 
   # Input data paths - these are read from the .env file
 
-  readRenviron(Path_EnvFile)
-  Path_Grid <- Sys.getenv("DP_R_Mod_Path_Grid")
-  Path_Bound <- Sys.getenv("DP_R_Mod_Path_Bound")
-  Path_PA <- Sys.getenv("DP_R_Mod_Path_PA")
-  Path_CLC_Summ <- Sys.getenv("DP_R_Mod_Path_CLC_Summ")
-  Path_Chelsa_Time_CC <- Sys.getenv("DP_R_Mod_Path_Chelsa_Time_CC")
-  Path_Roads <- Sys.getenv("DP_R_Mod_Path_Roads")
-  Path_Rail <- Sys.getenv("DP_R_Mod_Path_Rail")
-  Path_Bias <- Sys.getenv("DP_R_Mod_Path_Bias")
+  if (file.exists(Path_EnvFile)) {
+    readRenviron(Path_EnvFile)
+    Path_Grid <- Sys.getenv("DP_R_Mod_Path_Grid")
+    Path_Bound <- Sys.getenv("DP_R_Mod_Path_Bound")
+    Path_PA <- Sys.getenv("DP_R_Mod_Path_PA")
+    Path_CLC_Summ <- Sys.getenv("DP_R_Mod_Path_CLC_Summ")
+    Path_Chelsa_Time_CC <- Sys.getenv("DP_R_Mod_Path_Chelsa_Time_CC")
+    Path_Roads <- Sys.getenv("DP_R_Mod_Path_Roads")
+    Path_Rail <- Sys.getenv("DP_R_Mod_Path_Rail")
+    Path_Bias <- Sys.getenv("DP_R_Mod_Path_Bias")
+  } else {
+    MSG <- paste0(
+      "Path for environment variables: ", Path_EnvFile, " was not found")
+    stop(MSG)
+  }
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

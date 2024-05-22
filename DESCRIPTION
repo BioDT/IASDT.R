@@ -30,6 +30,7 @@ Suggests:
     fs,
     furrr,
     future,
+    future.apply,
     gdata,
     ggplot2,
     gtools,

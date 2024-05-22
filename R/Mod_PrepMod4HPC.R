@@ -71,16 +71,15 @@ PrepMod4HPC <- function(
   IASDT.R::CatTime("\nLoad environment variables")
   if (file.exists(Path_EnvFile)) {
     readRenviron(Path_EnvFile)
+    Path_Hmsc <- Sys.getenv("DP_R_Mod_Path_Hmsc")
+    Path_Python <- Sys.getenv("DP_R_Mod_Path_Python")
+    Path_TaxaList <- Sys.getenv("DP_R_Mod_Path_TaxaList")
+    Path_Grid <- Sys.getenv("DP_R_Mod_Path_Grid")
   } else {
     MSG <- paste0(
       "Path for environment variables: ", Path_EnvFile, " was not found")
     stop(MSG)
   }
-
-  Path_Hmsc <- Sys.getenv("DP_R_Mod_Path_Hmsc")
-  Path_Python <- Sys.getenv("DP_R_Mod_Path_Python")
-  Path_TaxaList <- Sys.getenv("DP_R_Mod_Path_TaxaList")
-  Path_Grid <- Sys.getenv("DP_R_Mod_Path_Grid")
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -573,4 +572,3 @@ PrepMod4HPC <- function(
 
   return(invisible(NULL))
 }
-

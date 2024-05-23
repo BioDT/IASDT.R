@@ -46,7 +46,7 @@ Mod_MergeChains <- function(
       ModelPosts = furrr::future_pmap(
         .l = list(Post_Missing, Post_Path, M_Init_Path, M_samples,
                   M_thin, M_transient, M_Name_Fit),
-        .f = Mod_MergeChains_Int, .progress = FALSE,
+        .f = Mod_MergeChains_Int(Path_Model = Path_Model), .progress = FALSE,
         .options = furrr::furrr_options(seed = TRUE, scheduling = Inf)))
 
   if (is.null(ModInfoName)) {
@@ -83,9 +83,7 @@ Mod_MergeChains <- function(
 
 Mod_MergeChains_Int <- function(
     Post_Missing, Post_Path, M_Init_Path, M_samples,
-    M_thin, M_transient, M_Name_Fit) {
-
-  Path_Model <- get("Path_Model", envir = parent.env(env = environment()))
+    M_thin, M_transient, M_Name_Fit, Path_Model) {
 
   if (Post_Missing) {
     return(list(FittedMod_Path = NULL, Post_Aligned = NULL))

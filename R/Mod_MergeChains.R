@@ -129,7 +129,7 @@ Mod_MergeChains <- function(
         .x = Mod_PostExist, .y = Path_ModPorg,
         .f = ~{
           if (.x) {
-            purrr::map_dbl(.y, function(File) {
+            purrr::map(.y, function(File) {
               File %>%
                 readr::read_lines() %>%
                 stringr::str_subset("Whole Gibbs sampler elapsed") %>%

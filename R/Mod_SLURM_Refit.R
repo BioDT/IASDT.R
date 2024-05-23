@@ -1,5 +1,5 @@
 # |---------------------------------------------------| #
-# PrepSLURM_Missing ----
+# Mod_SLURM_Refit ----
 # |---------------------------------------------------| #
 
 #' Prepare SLURM file for unfitted models on HPC
@@ -19,12 +19,12 @@
 #' @param GpusPerNode Integer. The value for the `#SBATCH --gpus-per-node=` SLURM argument. Default: 1
 #' @param CommandPrefix String. The prefix for all model commands
 #' @param RefitPrefix String. The prefix for commands to be re-fitted
-#' @name PrepSLURM_Missing
+#' @name Mod_SLURM_Refit
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
-PrepSLURM_Missing <- function(
+Mod_SLURM_Refit <- function(
     Path_Model = NULL, MaxJobCounts = 210, JobName = NULL, MemPerCpu = NULL,
     Time = NULL, Partition = "small-g", Path_EnvFile = ".env", CatJobInfo = TRUE,
     ntasks = 1, CpusPerTask = 1, GpusPerNode = 1,
@@ -32,10 +32,11 @@ PrepSLURM_Missing <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Command <- Post_Path <- NULL
+  Command_HPC <- Post_Path <- NULL
 
   if (file.exists(Path_EnvFile)) {
     readRenviron(Path_EnvFile)
+    Path_Scratch <- Sys.getenv("Path_LUMI_Scratch")
   } else {
     MSG <- paste0(
       "Path for environment variables: ", Path_EnvFile, " was not found")
@@ -65,13 +66,28 @@ PrepSLURM_Missing <- function(
   rm(AllArgs)
   invisible(gc())
 
+  # remove temp files and incomplete RDs files
+  Path_Model_Fit <- file.path(Path_Model, "ModelFitting")
+  tempFiles <- list.files(
+    path = Path_Model_Fit, pattern = ".rds_temp$", full.names = TRUE)
+  if (length(tempFiles) > 0) {
+    IASDT.R::CatTime(
+      paste0("There are ", length(tempFiles),
+             " unsuccessful model variants to be removed"))
+    tempFilesRDs <- stringr::str_replace_all(tempFiles, ".rds_temp$", ".rds")
+    purrr::walk(
+      .x = c(tempFilesRDs, tempFiles),
+      .f = ~if(file.exists(.x)) file.remove(.x) )
+  }
 
+  # List of unfitted model variants
   Commands2Refit <- file.path(Path_Model, "Model_Info.RData") %>%
     IASDT.R::LoadAs() %>%
-    tidyr::unnest_longer(c(Post_Path, Command)) %>%
-    dplyr::select(Post_Path, Command) %>%
-    dplyr::filter(magrittr::not(file.exists(Post_Path))) %>%
-    dplyr::pull("Command") %>%
+    tidyr::unnest_longer(c(Post_Path, Command_HPC)) %>%
+    dplyr::select(Post_Path, Command_HPC) %>%
+    dplyr::filter(
+      magrittr::not(file.exists(file.path(Path_Scratch, Post_Path)))) %>%
+    dplyr::pull(Command_HPC) %>%
     purrr::set_names(NULL)
   NJobs <- length(Commands2Refit)
 
@@ -103,15 +119,14 @@ PrepSLURM_Missing <- function(
       MemPerCpu = MemPerCpu, Time = Time, Partition = Partition,
       Path_EnvFile = Path_EnvFile, CommandPrefix = RefitPrefix,
       CatJobInfo = CatJobInfo, ntasks = ntasks, CpusPerTask = CpusPerTask,
-      GpusPerNode = GpusPerNode)
+      GpusPerNode = GpusPerNode, SLURM_Prefix = "BashRefit")
 
     IASDT.R::CatTime(
       paste0(NJobs, " model variants (in ", NSplits,
              " slurm files) need to be re-fitted"))
-
   } else {
     IASDT.R::CatTime("All models were already fitted!")
   }
-
   return(invisible(NULL))
 }
+

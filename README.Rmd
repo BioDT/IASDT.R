@@ -77,7 +77,8 @@ remotes::install_gitlab(repo = "BioDT/IASDT.R", host = "git.ufz.de")
 Alternatively, you can provide the PAT directly to the `remotes::install_gitlab` function; however, this is not recommended.
 
 ```{r, eval=FALSE}
-remotes::install_gitlab(repo = "BioDT/IASDT.R", host = "git.ufz.de", auth_token = "ZZZZZZZZZZZZZZZZ")
+remotes::install_gitlab(
+      repo = "BioDT/IASDT.R", host = "git.ufz.de", auth_token = "ZZZZZZZZZZZZZZZZ")
 ```
 
 ### Update the package

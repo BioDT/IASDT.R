@@ -84,7 +84,8 @@ Alternatively, you can provide the PAT directly to the
 `remotes::install_gitlab` function; however, this is not recommended.
 
 ``` r
-remotes::install_gitlab(repo = "BioDT/IASDT.R", host = "git.ufz.de", auth_token = "ZZZZZZZZZZZZZZZZ")
+remotes::install_gitlab(
+      repo = "BioDT/IASDT.R", host = "git.ufz.de", auth_token = "ZZZZZZZZZZZZZZZZ")
 ```
 
 ### Update the package
@@ -114,6 +115,6 @@ For questions, please contact [me](https://elgabbas.netlify.app/) at:
 `ahmed.el-gabbas[at]ufz[dot]de`
 
 <span style="     color: grey !important;">Last update:
-2024-05-22</span>
+2024-05-23</span>
 
 </center>

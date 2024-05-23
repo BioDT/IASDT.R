@@ -78,6 +78,7 @@ reference:
   - FileSize
   - DetectAlias
   - GetBashVars
+  - CheckArgs
 
 - title: Modelling functions
   desc:
@@ -91,8 +92,10 @@ reference:
   - PrepKnots
   - PrepModData
   - PrepMod4HPC
-  - PrepSLURM
+  - Mod_SLURM
+  - Mod_SLURM_Refit
   - SetChainName
+  - Mod_Fit_WS
 
 - title: Spatial functions
   desc:

@@ -16,7 +16,8 @@
 #' @param Time String. The value for the requested time for each job in the bash arrays. Example: "01:00:00" to request an hour.
 #' @param Partition String. The name of the partition. Default: `small-g`
 #' @param Path_EnvFile String. Path to read the environment variables. Default value: `.env`
-#' @param CommandPrefix String. Prefix for the exported SLURM files
+#' @param CommandPrefix String. Prefix for the bash commands to be executed
+#' @param SLURM_Prefix String. Prefix for the exported SLURM file.
 #' @name PrepSLURM
 #' @author Ahmed El-Gabbas
 #' @return NULL
@@ -25,7 +26,8 @@
 PrepSLURM <- function(
     Path_Model = NULL, JobName = NULL, CatJobInfo = TRUE, ntasks = 1,
     CpusPerTask = 1, GpusPerNode = 1, MemPerCpu = NULL, Time = NULL,
-    Partition = "small-g", Path_EnvFile = ".env", CommandPrefix = "Commands_All") {
+    Partition = "small-g", Path_EnvFile = ".env",
+    CommandPrefix = "Commands_All", SLURM_Prefix = "Commands_All") {
 
   # # |||||||||||||||||||||||||||||||||||
   # # cat2
@@ -64,7 +66,7 @@ PrepSLURM <- function(
   CharArgs <- c(
     "Path_Model", "JobName", "Path_EnvFile", "Time", "MemPerCpu", "Partition",
     "Path_Hmsc", "Path_Python", "ProjNum", "Path_Scratch", "Path_GPU_Check",
-    "CommandPrefix")
+    "CommandPrefix", "SLURM_Prefix")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = CharArgs, Type = "character")
 
   # numeric arguments
@@ -87,9 +89,9 @@ PrepSLURM <- function(
     .f = function(x) {
 
       if (NCommandFiles == 1) {
-        OutFile <- "BashCommand.slurm"
+        OutFile <- paste0(SLURM_Prefix, ".slurm")
       } else {
-        OutFile <- paste0("BashCommand_", x, ".slurm")
+        OutFile <- paste0(SLURM_Prefix, "_", x, ".slurm")
       }
       NJobs <- R.utils::countLines(ListCommands[x])[1]
 

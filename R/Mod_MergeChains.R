@@ -45,7 +45,7 @@ Mod_MergeChains <- function(
         .f = ~magrittr::not(all(file.exists(.x)))),
       ModelPosts = furrr::future_pmap(
         .l = list(Post_Missing, Post_Path, M_Init_Path, M_samples,
-                  M_thin, M_transient, M_Name_Fit),
+                  M_thin, M_transient, M_Name_Fit, Path_Model),
         .f = Mod_MergeChains_Int(Path_Model = Path_Model), .progress = FALSE,
         .options = furrr::furrr_options(seed = TRUE, scheduling = Inf)))
 

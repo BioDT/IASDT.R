@@ -119,7 +119,7 @@ Mod_SLURM_Refit <- function(
       MemPerCpu = MemPerCpu, Time = Time, Partition = Partition,
       Path_EnvFile = Path_EnvFile, CommandPrefix = RefitPrefix,
       CatJobInfo = CatJobInfo, ntasks = ntasks, CpusPerTask = CpusPerTask,
-      GpusPerNode = GpusPerNode, SLURM_Prefix = "BashRefit")
+      GpusPerNode = GpusPerNode, SLURM_Prefix = "Bash_Refit")
 
     IASDT.R::CatTime(
       paste0(NJobs, " model variants (in ", NSplits,

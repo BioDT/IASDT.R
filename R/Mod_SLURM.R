@@ -27,7 +27,7 @@ PrepSLURM <- function(
     Path_Model = NULL, JobName = NULL, CatJobInfo = TRUE, ntasks = 1,
     CpusPerTask = 1, GpusPerNode = 1, MemPerCpu = NULL, Time = NULL,
     Partition = "small-g", Path_EnvFile = ".env",
-    CommandPrefix = "Commands_All", SLURM_Prefix = "Commands_All") {
+    CommandPrefix = "Commands_All", SLURM_Prefix = "Bash_Fit") {
 
   # # |||||||||||||||||||||||||||||||||||
   # # cat2
@@ -98,6 +98,8 @@ PrepSLURM <- function(
 
       sink(file = file.path(Path_Model, OutFile))
       Path_Model_Fit <- file.path(Path_Scratch, Path_Model, "ModelFitting")
+      Path_SLURM_Out <- file.path(Path_Model_Fit, "SLURM_Results")
+      fs::dir_create(Path_SLURM_Out)
 
       cat2("#!/bin/bash\n")
 
@@ -106,8 +108,10 @@ PrepSLURM <- function(
       cat2("# -----------------------------------------------")
       cat2(paste0("#SBATCH --job-name=", paste0(JobName, x)))
       cat2(paste0("#SBATCH --ntasks=", ntasks))
-      cat2(paste0("#SBATCH --output=", file.path(Path_Model_Fit, "Job_%x-%A-%a.out")))
-      cat2(paste0("#SBATCH --error=", file.path(Path_Model_Fit, "Job_%x-%A-%a.out")))
+      cat2(paste0("#SBATCH --output=",
+                  file.path(Path_SLURM_Out, "Job_%x-%A-%a.out")))
+      cat2(paste0("#SBATCH --error=",
+                  file.path(Path_SLURM_Out, "Job_%x-%A-%a.out")))
       cat2(paste0("#SBATCH --account=", ProjNum))
       cat2(paste0("#SBATCH --cpus-per-task=", CpusPerTask))
       cat2(paste0("#SBATCH --mem-per-cpu=", MemPerCpu))

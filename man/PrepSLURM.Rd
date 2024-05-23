@@ -16,7 +16,7 @@ PrepSLURM(
   Partition = "small-g",
   Path_EnvFile = ".env",
   CommandPrefix = "Commands_All",
-  SLURM_Prefix = "Commands_All"
+  SLURM_Prefix = "Bash_Fit"
 )
 }
 \arguments{

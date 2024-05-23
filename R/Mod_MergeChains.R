@@ -50,15 +50,20 @@ Mod_MergeChains <- function(
                       M_thin, M_transient, M_Name_Fit) {
 
           if (Post_Missing) {
-            return(list(Path_FittedMod = NULL, Path_Coda = NULL, Post_Aligned = NULL))
+            list(Path_FittedMod = NULL, Path_Coda = NULL,
+                 Post_Aligned = NULL) %>%
+              return()
           } else {
 
-            Path_FittedMod <- file.path(
-              Path_Model, "ModelFitting", paste0(M_Name_Fit, "_Fitted.RData"))
-            ModFitMissing <- magrittr::not(file.exists(Path_FittedMod))
+            Path_Fitted_Models <- file.path(Path_Model, "ModelFitted")
+            fs::dir_create(Path_Fitted_Models)
 
+            Path_FittedMod <- file.path(
+              Path_Fitted_Models, paste0(M_Name_Fit, "_Fitted.RData"))
             Path_Coda <- file.path(
-              Path_Model, "ModelFitting", paste0(M_Name_Fit, "_Coda.RData"))
+              Path_Fitted_Models, paste0(M_Name_Fit, "_Coda.RData"))
+
+            ModFitMissing <- magrittr::not(file.exists(Path_FittedMod))
             CodaMissing <- magrittr::not(file.exists(Path_Coda))
 
             if (ModFitMissing) {

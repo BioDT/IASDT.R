@@ -45,16 +45,9 @@ Mod_MergeChains <- function(
         .f = ~magrittr::not(all(file.exists(.x)))),
       ModelPosts = furrr::future_pmap(
         .l = list(Post_Missing, Post_Path, M_Init_Path, M_samples,
-                  M_thin, M_transient, M_Name_Fit, Path_Model),
-        # .f = Mod_MergeChains_Int(
-        #   Post_Missing = Post_Missing, Post_Path = Post_Path,
-        #   M_Init_Path = M_Init_Path, M_samples = M_samples, M_thin = M_thin,
-        #   M_transient = M_transient, M_Name_Fit = M_Name_Fit,
-        #   Path_Model = Path_Model),
+                  M_thin, M_transient, M_Name_Fit),
         .f = function(Post_Missing, Post_Path, M_Init_Path, M_samples,
                       M_thin, M_transient, M_Name_Fit) {
-
-
           if (Post_Missing) {
             return(list(FittedMod_Path = NULL, Post_Aligned = NULL))
           } else {

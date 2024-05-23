@@ -125,18 +125,20 @@ Mod_MergeChains <- function(
       Mod_PostExist = purrr::map2_lgl(
         .x = Path_FittedMod, .y = Path_Coda,
         .f = ~all(file.exists(c(.x, .y)))),
-      FittingTime = purrr::map_dbl(
+      FittingTime = purrr::map(
         .x = Mod_PostExist, .y = Path_ModPorg,
         .f = ~{
           if (.x) {
-            .y %>%
-              readr::read_lines() %>%
-              stringr::str_subset("Whole Gibbs sampler elapsed") %>%
-              stringr::str_remove("Whole Gibbs sampler elapsed") %>%
-              stringr::str_trim() %>%
-              as.numeric() %>%
-              magrittr::divide_by(60) %>%
-              round(1)
+            purrr::map_dbl(.y, function(File) {
+              .y %>%
+                readr::read_lines() %>%
+                stringr::str_subset("Whole Gibbs sampler elapsed") %>%
+                stringr::str_remove("Whole Gibbs sampler elapsed") %>%
+                stringr::str_trim() %>%
+                as.numeric() %>%
+                magrittr::divide_by(60) %>%
+                round(1)
+            })
           } else {
             NA_real_
           }

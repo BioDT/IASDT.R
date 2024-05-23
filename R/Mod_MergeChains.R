@@ -9,20 +9,24 @@
 #' @param Path_Model String. Path to save all the output, including the to be fitted models (without trailing slash)
 #' @param NCores Integer. Number of parallel cores to use
 #' @param ModInfoName String. Default: `NULL` which means overwrite the `Model_Info.RData` file. If `ModInfoName` is provided, a new `.RData` file will be created with this prefix for file name (excluding extension)
+#' @param PrintIncomplete Logical. Print to the console the name of unfitted models
 #' @name Mod_MergeChains
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
 Mod_MergeChains <- function(
-    Path_Model = NULL, NCores = NULL, ModInfoName = NULL) {
+    Path_Model = NULL, NCores = NULL, ModInfoName = NULL,
+    PrintIncomplete = TRUE) {
 
   # Overwrite_ModInfo = TRUE,
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Post_Path <- Post_Missing <- Post_Path <- M_Init_Path <- M_samples <-
-    M_thin <- M_transient <- M_Name_Fit <- NULL
+    M_thin <- M_transient <- M_Name_Fit <- Path_FittedMod <-
+    Path_Coda <- NMissingChains <- MissingModels <- Mod_PostExist <-
+    Path_ModPorg <- NULL
 
   AllArgs <- ls()
   AllArgs <- purrr::map(
@@ -31,6 +35,7 @@ Mod_MergeChains <- function(
     stats::setNames(AllArgs)
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = "Path_Model", Type = "character")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = "NCores", Type = "numeric")
+  IASDT.R::CheckArgs(AllArgs = AllArgs, Args = "PrintIncomplete", Type = "logical")
 
   Path_ModInfo <- file.path(Path_Model, "Model_Info.RData")
 
@@ -114,6 +119,43 @@ Mod_MergeChains <- function(
         .progress = FALSE,
         .options = furrr::furrr_options(seed = TRUE, scheduling = Inf))) %>%
     tidyr::unnest_wider("ModelPosts")
+
+  Model_Info2 <- Model_Info2 %>%
+    dplyr::mutate(
+      Mod_PostExist = purrr::map2_lgl(
+        .x = Path_FittedMod, .y = Path_Coda,
+        .f = ~all(file.exists(c(.x, .y)))),
+      FittingTime = purrr::map_dbl(
+        .x = Mod_PostExist, .y = Path_ModPorg,
+        .f = ~{
+          if (.x) {
+            .y %>%
+              readr::read_lines() %>%
+              stringr::str_subset("Whole Gibbs sampler elapsed") %>%
+              stringr::str_remove("Whole Gibbs sampler elapsed") %>%
+              stringr::str_trim() %>%
+              as.numeric() %>%
+              magrittr::divide_by(60) %>%
+              round(1)
+          } else {
+            NA_real_
+          }
+        }))
+
+  if (PrintIncomplete) {
+    IASDT.R::InfoChunk("unsuccessful models")
+    Model_Info2 %>%
+      dplyr::filter(magrittr::not(Mod_PostExist)) %>%
+      dplyr::mutate(
+        NMissingChains = purrr::map_int(
+          .x = Post_Path, .f = ~sum(magrittr::not(file.exists(.x)))),
+        MissingModels = paste0(M_Name_Fit, " (", NMissingChains, " chains)")
+      ) %>%
+      dplyr::pull(MissingModels) %>%
+      IASDT.R::sort_() %>%
+      paste0("   >>  ", ., collapse = "\n") %>%
+      cat()
+  }
 
   if (is.null(ModInfoName)) {
     IASDT.R::SaveAs(

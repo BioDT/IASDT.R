@@ -4,7 +4,12 @@
 \alias{Mod_MergeChains}
 \title{Prepare habitat-specific data for the models}
 \usage{
-Mod_MergeChains(Path_Model = NULL, NCores = NULL, ModInfoName = NULL)
+Mod_MergeChains(
+  Path_Model = NULL,
+  NCores = NULL,
+  ModInfoName = NULL,
+  PrintIncomplete = TRUE
+)
 }
 \arguments{
 \item{Path_Model}{String. Path to save all the output, including the to be fitted models (without trailing slash)}
@@ -12,6 +17,8 @@ Mod_MergeChains(Path_Model = NULL, NCores = NULL, ModInfoName = NULL)
 \item{NCores}{Integer. Number of parallel cores to use}
 
 \item{ModInfoName}{String. Default: \code{NULL} which means overwrite the \code{Model_Info.RData} file. If \code{ModInfoName} is provided, a new \code{.RData} file will be created with this prefix for file name (excluding extension)}
+
+\item{PrintIncomplete}{Logical. Print to the console the name of unfitted models}
 }
 \description{
 Prepare habitat-specific data for the models

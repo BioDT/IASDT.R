@@ -126,22 +126,25 @@ Mod_MergeChains <- function(
         .x = Path_FittedMod, .y = Path_Coda,
         .f = ~all(file.exists(c(.x, .y)))),
       FittingTime = purrr::map(
-        .x = Mod_PostExist, .y = Path_ModPorg,
+        .x = Path_ModPorg,
         .f = ~{
-          if (.x) {
-            purrr::map(.y, function(File) {
-              File %>%
-                readr::read_lines() %>%
-                stringr::str_subset("Whole Gibbs sampler elapsed") %>%
-                stringr::str_remove("Whole Gibbs sampler elapsed") %>%
-                stringr::str_trim() %>%
-                as.numeric() %>%
-                magrittr::divide_by(60) %>%
-                round(1)
-            })
-          } else {
-            NA_real_
-          }
+          purrr::map(
+            .x = .x,
+            .f = function(File) {
+              if (file.exists(File)) {
+                File %>%
+                  readr::read_lines() %>%
+                  stringr::str_subset("Whole Gibbs sampler elapsed") %>%
+                  stringr::str_remove("Whole Gibbs sampler elapsed") %>%
+                  stringr::str_trim() %>%
+                  as.numeric() %>%
+                  magrittr::divide_by(60) %>%
+                  round(1)
+              } else {
+                NA_real_
+              }
+            }) %>%
+            unlist()
         }))
 
   if (PrintIncomplete) {

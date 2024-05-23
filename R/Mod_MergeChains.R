@@ -148,7 +148,7 @@ Mod_MergeChains <- function(
         }))
 
   if (PrintIncomplete) {
-    IASDT.R::InfoChunk("unsuccessful models")
+    IASDT.R::InfoChunk("Unsuccessful models")
     Model_Info2 %>%
       dplyr::filter(magrittr::not(Mod_PostExist)) %>%
       dplyr::mutate(

@@ -25,7 +25,7 @@ Mod_MergeChains <- function(
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Post_Path <- Post_Missing <- Post_Path <- M_Init_Path <- M_samples <-
     M_thin <- M_transient <- M_Name_Fit <- Path_FittedMod <-
-    Path_Coda <- NMissingChains <- MissingModels <- Mod_PostExist <-
+    Path_Coda <- NMissingChains <- MissingModels <- Model_Finished <-
     Path_ModPorg <- NULL
 
   AllArgs <- ls()
@@ -122,7 +122,7 @@ Mod_MergeChains <- function(
 
   Model_Info2 <- Model_Info2 %>%
     dplyr::mutate(
-      Mod_PostExist = purrr::map2_lgl(
+      Model_Finished = purrr::map2_lgl(
         .x = Path_FittedMod, .y = Path_Coda,
         .f = ~all(file.exists(c(.x, .y)))),
       FittingTime = purrr::map(
@@ -150,7 +150,7 @@ Mod_MergeChains <- function(
   if (PrintIncomplete) {
     IASDT.R::InfoChunk("Unsuccessful models")
     Model_Info2 %>%
-      dplyr::filter(magrittr::not(Mod_PostExist)) %>%
+      dplyr::filter(magrittr::not(Model_Finished)) %>%
       dplyr::mutate(
         NMissingChains = purrr::map_int(
           .x = Post_Path, .f = ~sum(magrittr::not(file.exists(.x)))),

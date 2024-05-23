@@ -83,7 +83,7 @@ Mod_MergeChains <- function(
             }}},
         .progress = FALSE,
         .options = furrr::furrr_options(seed = TRUE, scheduling = Inf))) %>%
-    tidyr::unnest("ModelPosts")
+    tidyr::unnest_wider("ModelPosts")
 
   if (is.null(ModInfoName)) {
     IASDT.R::SaveAs(

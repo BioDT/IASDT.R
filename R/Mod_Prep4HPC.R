@@ -36,12 +36,10 @@
 
 Mod_Prep4HPC <- function(
     Hab_Abb = NULL, Path_Data = NULL, Path_Model = NULL, MinPresGrids = NULL,
-    Path_EnvFile = ".env", PrepareData = TRUE,
-    GPP_Dists = c(20, 30, 40, 50, 60), GPP_Save = TRUE, GPP_Plot = TRUE,
-    XVars = NULL, PhyloTree = TRUE, NoPhyloTree = TRUE, NParallel = 8,
-    nChains = 4, thin = c(5, 10, 20), samples = c(1000, 2000, 3000),
-    transientFactor = 300, verbose = 1000, SkipFitted = TRUE,
-    MaxJobCounts = 210,
+    Path_EnvFile = ".env", PrepareData = TRUE, GPP_Dists = NULL, GPP_Save = TRUE,
+    GPP_Plot = TRUE, XVars = NULL, PhyloTree = TRUE, NoPhyloTree = TRUE,
+    NParallel = 8, nChains = 4, thin = NULL, samples = NULL,
+    transientFactor = 300, verbose = 1000, SkipFitted = TRUE, MaxJobCounts = 210,
     ModelCountry = NULL, MinPresPerCountry = 50, VerboseProgress = FALSE) {
 
   # https://github.com/hmsc-r/HMSC/issues/180

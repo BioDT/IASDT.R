@@ -1,5 +1,5 @@
 # |---------------------------------------------------| #
-# PrepSLURM ----
+# Mod_SLURM ----
 # |---------------------------------------------------| #
 
 #' Prepare SLURM file for model fitting on HPC
@@ -16,18 +16,18 @@
 #' @param Time String. The value for the requested time for each job in the bash arrays. Example: "01:00:00" to request an hour.
 #' @param Partition String. The name of the partition. Default: `small-g`
 #' @param Path_EnvFile String. Path to read the environment variables. Default value: `.env`
-#' @param CommandPrefix String. Prefix for the bash commands to be executed
+#' @param Command_Prefix String. Prefix for the bash commands to be executed
 #' @param SLURM_Prefix String. Prefix for the exported SLURM file.
-#' @name PrepSLURM
+#' @name Mod_SLURM
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
-PrepSLURM <- function(
+Mod_SLURM <- function(
     Path_Model = NULL, JobName = NULL, CatJobInfo = TRUE, ntasks = 1,
     CpusPerTask = 1, GpusPerNode = 1, MemPerCpu = NULL, Time = NULL,
     Partition = "small-g", Path_EnvFile = ".env",
-    CommandPrefix = "Commands_All", SLURM_Prefix = "Bash_Fit") {
+    Command_Prefix = "Commands_All", SLURM_Prefix = "Bash_Fit") {
 
   # # |||||||||||||||||||||||||||||||||||
   # # cat2
@@ -66,7 +66,7 @@ PrepSLURM <- function(
   CharArgs <- c(
     "Path_Model", "JobName", "Path_EnvFile", "Time", "MemPerCpu", "Partition",
     "Path_Hmsc", "Path_Python", "ProjNum", "Path_Scratch", "Path_GPU_Check",
-    "CommandPrefix", "SLURM_Prefix")
+    "Command_Prefix", "SLURM_Prefix")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = CharArgs, Type = "character")
 
   # numeric arguments
@@ -77,7 +77,7 @@ PrepSLURM <- function(
   invisible(gc())
 
   ListCommands <- list.files(
-    Path_Model, pattern = CommandPrefix, full.names = TRUE)
+    Path_Model, pattern = Command_Prefix, full.names = TRUE)
   NCommandFiles <- length(ListCommands)
 
   if (NCommandFiles == 0) {

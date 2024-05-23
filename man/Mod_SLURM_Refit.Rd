@@ -16,8 +16,8 @@ Mod_SLURM_Refit(
   ntasks = 1,
   CpusPerTask = 1,
   GpusPerNode = 1,
-  CommandPrefix = "Commands_All",
-  RefitPrefix = "Commands2Refit"
+  Refit_Prefix = "Commands2Refit",
+  SLURM_Prefix = "Bash_Refit"
 )
 }
 \arguments{
@@ -43,9 +43,9 @@ Mod_SLURM_Refit(
 
 \item{GpusPerNode}{Integer. The value for the \verb{#SBATCH --gpus-per-node=} SLURM argument. Default: 1}
 
-\item{CommandPrefix}{String. The prefix for all model commands}
+\item{Refit_Prefix}{String. Prefix for the file containing commands to be re-fitted}
 
-\item{RefitPrefix}{String. The prefix for commands to be re-fitted}
+\item{SLURM_Prefix}{String. Prefix for the exported SLURM file}
 }
 \description{
 Prepare SLURM file for unfitted models on HPC

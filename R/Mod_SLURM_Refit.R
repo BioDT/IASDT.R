@@ -17,8 +17,8 @@
 #' @param ntasks Integer. The value for the `#SBATCH --ntasks=` SLURM argument. Default: 1
 #' @param CpusPerTask Integer. The value for the `#SBATCH --cpus-per-task=` SLURM argument. Default: 1
 #' @param GpusPerNode Integer. The value for the `#SBATCH --gpus-per-node=` SLURM argument. Default: 1
-#' @param CommandPrefix String. The prefix for all model commands
-#' @param RefitPrefix String. The prefix for commands to be re-fitted
+#' @param Refit_Prefix String. Prefix for the file containing commands to be re-fitted
+#' @param SLURM_Prefix String. Prefix for the exported SLURM file
 #' @name Mod_SLURM_Refit
 #' @author Ahmed El-Gabbas
 #' @return NULL
@@ -28,7 +28,7 @@ Mod_SLURM_Refit <- function(
     Path_Model = NULL, MaxJobCounts = 210, JobName = NULL, MemPerCpu = NULL,
     Time = NULL, Partition = "small-g", Path_EnvFile = ".env", CatJobInfo = TRUE,
     ntasks = 1, CpusPerTask = 1, GpusPerNode = 1,
-    CommandPrefix = "Commands_All", RefitPrefix = "Commands2Refit") {
+    Refit_Prefix = "Commands2Refit", SLURM_Prefix = "Bash_Refit") {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
@@ -57,7 +57,7 @@ Mod_SLURM_Refit <- function(
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "character",
     Args = c("Partition", "Path_EnvFile", "Time", "JobName",
-             "MemPerCpu", "Path_Model", "CommandPrefix", "RefitPrefix"))
+             "MemPerCpu", "Path_Model", "SLURM_Prefix", "Refit_Prefix"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric",
     Args = c("MaxJobCounts", "ntasks", "CpusPerTask", "GpusPerNode"))
@@ -77,7 +77,7 @@ Mod_SLURM_Refit <- function(
     tempFilesRDs <- stringr::str_replace_all(tempFiles, ".rds_temp$", ".rds")
     purrr::walk(
       .x = c(tempFilesRDs, tempFiles),
-      .f = ~if(file.exists(.x)) file.remove(.x) )
+      .f = ~{ if(file.exists(.x)) file.remove(.x) } )
   }
 
   # List of unfitted model variants
@@ -106,20 +106,20 @@ Mod_SLURM_Refit <- function(
         CurrIDs <- IDs[[x]]
 
         if (NSplits == 1) {
-          OutCommandFile <- paste0(RefitPrefix, ".txt")
+          OutCommandFile <- paste0(Refit_Prefix, ".txt")
         } else {
-          OutCommandFile <- paste0(RefitPrefix, "_", x, ".txt")
+          OutCommandFile <- paste0(Refit_Prefix, "_", x, ".txt")
         }
         cat(Commands2Refit[CurrIDs], sep = "\n", append = FALSE,
             file = file.path(Path_Model, OutCommandFile))
       })
 
-    IASDT.R::PrepSLURM(
+    IASDT.R::Mod_SLURM(
       Path_Model = Path_Model, JobName = paste0(basename(Path_Model), "_RF"),
       MemPerCpu = MemPerCpu, Time = Time, Partition = Partition,
-      Path_EnvFile = Path_EnvFile, CommandPrefix = RefitPrefix,
+      Path_EnvFile = Path_EnvFile, GpusPerNode = GpusPerNode,
       CatJobInfo = CatJobInfo, ntasks = ntasks, CpusPerTask = CpusPerTask,
-      GpusPerNode = GpusPerNode, SLURM_Prefix = "Bash_Refit")
+      Command_Prefix = Refit_Prefix, SLURM_Prefix = SLURM_Prefix)
 
     IASDT.R::CatTime(
       paste0(NJobs, " model variants (in ", NSplits,

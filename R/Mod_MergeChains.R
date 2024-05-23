@@ -130,7 +130,7 @@ Mod_MergeChains <- function(
         .f = ~{
           if (.x) {
             purrr::map_dbl(.y, function(File) {
-              .y %>%
+              File %>%
                 readr::read_lines() %>%
                 stringr::str_subset("Whole Gibbs sampler elapsed") %>%
                 stringr::str_remove("Whole Gibbs sampler elapsed") %>%

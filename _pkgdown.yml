@@ -90,12 +90,13 @@ reference:
   - PlotBeta_byVar
   - PlotRespCurv
   - PrepKnots
-  - PrepModData
-  - PrepMod4HPC
+  - SetChainName
+  - Mod_PrepData
+  - Mod_Prep4HPC
   - Mod_SLURM
   - Mod_SLURM_Refit
-  - SetChainName
   - Mod_Fit_WS
+  - Mod_MergeChains
 
 - title: Spatial functions
   desc:

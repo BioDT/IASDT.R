@@ -1,6 +1,6 @@
-# |---------------------------------------------------| #
-# PrepMod4HPC ----
-# |---------------------------------------------------| #
+## |------------------------------------------------------------------------| #
+# Mod_Prep4HPC ----
+## |------------------------------------------------------------------------| #
 
 #' Prepare initial models in R to be used by the Hmsc-HPC
 #'
@@ -29,12 +29,12 @@
 #' @param ModelCountry String. Filter observations to the following country list. Default: `NULL`, which means prepare data for the whole Europe
 #' @param MinPresPerCountry Integer. Minimum of grid cells for the selected country/countries for species to be considered in the models. Effective only if a valid `ModelCountry` is provided.
 #' @param VerboseProgress Logical. Show messages for the progress of creating files
-#' @name PrepMod4HPC
+#' @name Mod_Prep4HPC
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
-PrepMod4HPC <- function(
+Mod_Prep4HPC <- function(
     Hab_Abb = NULL, Path_Data = NULL, Path_Model = NULL, MinPresGrids = NULL,
     Path_EnvFile = ".env", PrepareData = TRUE,
     GPP_Dists = c(20, 30, 40, 50, 60), GPP_Save = TRUE, GPP_Plot = TRUE,
@@ -148,7 +148,7 @@ PrepMod4HPC <- function(
 
 
   if (PrepareData) {
-    DT_All <- IASDT.R::PrepModData(
+    DT_All <- IASDT.R::Mod_PrepData(
       Hab_Abb = Hab_Abb, MinPresGrids = MinPresGrids, OutputPath = Path_Model,
       Path_EnvFile = Path_EnvFile, ReturnData = TRUE)
   } else {

@@ -2,9 +2,9 @@
 % Please edit documentation in R/Mod_PrepKnots.R
 \name{PrepKnots}
 \alias{PrepKnots}
-\title{Prepare knot locations for GPP models.}
+\title{Prepare knot locations for GPP models}
 \usage{
-PrepKnots(Coords = DT_xy, MinDist, JitterDist = 100)
+PrepKnots(Coords = NULL, MinDist = NULL, JitterDist = 100)
 }
 \arguments{
 \item{Coords}{A matrix or data frame for the coordinates of the sampling units.}
@@ -14,7 +14,7 @@ PrepKnots(Coords = DT_xy, MinDist, JitterDist = 100)
 \item{JitterDist}{Numeric. Distance in meter to be used in the \code{sf::st_jitter} function.}
 }
 \description{
-Prepare knot locations for GPP models.
+Prepare knot locations for GPP models
 }
 \author{
 Ahmed El-Gabbas

@@ -1,14 +1,14 @@
-# |---------------------------------------------------| #
+## |------------------------------------------------------------------------| #
 # Mod_SLURM ----
-# |---------------------------------------------------| #
+## |------------------------------------------------------------------------| #
 
 #' Prepare SLURM file for model fitting on HPC
 #'
 #' Prepare SLURM file for model fitting on HPC
 #'
 #' @param Path_Model String. Path to the model files (without trailing slash)
-#' @param JobName String. The name of the submitted jobs
-#' @param CatJobInfo Logical. Add bash lines to report some job information. Default: `TRUE`
+#' @param JobName String. The name of the submitted job(s)
+#' @param CatJobInfo Logical. Add bash lines to print information on the submitted job. Default: `TRUE`
 #' @param ntasks Integer. The value for the `#SBATCH --ntasks=` SLURM argument. Default: 1
 #' @param CpusPerTask Integer. The value for the `#SBATCH --cpus-per-task=` SLURM argument. Default: 1
 #' @param GpusPerNode Integer. The value for the `#SBATCH --gpus-per-node=` SLURM argument. Default: 1

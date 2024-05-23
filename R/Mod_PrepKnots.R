@@ -1,10 +1,10 @@
-# |---------------------------------------------------| #
+## |------------------------------------------------------------------------| #
 # PrepKnots ----
-# |---------------------------------------------------| #
+## |------------------------------------------------------------------------| #
 
-#' Prepare knot locations for GPP models.
+#' Prepare knot locations for GPP models
 #'
-#' Prepare knot locations for GPP models.
+#' Prepare knot locations for GPP models
 #'
 #' @param Coords A matrix or data frame for the coordinates of the sampling units.
 #' @param MinDist Numeric. Minimum distance in meters for the `knotDist` and `minKnotDist` arguments of the `Hmsc::constructKnots` function.
@@ -14,7 +14,8 @@
 #' @return NULL
 #' @export
 
-PrepKnots <- function(Coords = DT_xy, MinDist, JitterDist = 100) {
+PrepKnots <- function(
+    Coords = NULL, MinDist = NULL, JitterDist = 100) {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/

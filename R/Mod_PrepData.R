@@ -1,6 +1,6 @@
-# |---------------------------------------------------| #
-# PrepModData ----
-# |---------------------------------------------------| #
+## |------------------------------------------------------------------------| #
+# Mod_PrepData ----
+## |------------------------------------------------------------------------| #
 
 #' Prepare habitat-specific data for the models
 #'
@@ -13,12 +13,12 @@
 #' @param ReturnData Logical. Should the resulted data be returned as an R object? Default: `FALSE`
 #' @param OutputPath String. Path to save the output file.
 #' @param VerboseProgress Logical. Show messages for the progress of creating files
-#' @name PrepModData
+#' @name Mod_PrepData
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
-PrepModData <- function(
+Mod_PrepData <- function(
     Hab_Abb = NULL, MinPresGrids = 50, Path_EnvFile = ".env",
     BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
     ReturnData = FALSE, OutputPath = NULL, VerboseProgress = FALSE) {

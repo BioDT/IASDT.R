@@ -1,6 +1,6 @@
-# |---------------------------------------------------| #
+## |------------------------------------------------------------------------| #
 # Mod_SLURM_Refit ----
-# |---------------------------------------------------| #
+## |------------------------------------------------------------------------| #
 
 #' Prepare SLURM file for unfitted models on HPC
 #'
@@ -77,7 +77,9 @@ Mod_SLURM_Refit <- function(
     tempFilesRDs <- stringr::str_replace_all(tempFiles, ".rds_temp$", ".rds")
     purrr::walk(
       .x = c(tempFilesRDs, tempFiles),
-      .f = ~{ if(file.exists(.x)) file.remove(.x) } )
+      .f = ~{
+        if (file.exists(.x)) file.remove(.x)
+        })
   }
 
   # List of unfitted model variants
@@ -129,4 +131,3 @@ Mod_SLURM_Refit <- function(
   }
   return(invisible(NULL))
 }
-

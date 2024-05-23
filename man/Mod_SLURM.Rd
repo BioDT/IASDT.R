@@ -22,9 +22,9 @@ Mod_SLURM(
 \arguments{
 \item{Path_Model}{String. Path to the model files (without trailing slash)}
 
-\item{JobName}{String. The name of the submitted jobs}
+\item{JobName}{String. The name of the submitted job(s)}
 
-\item{CatJobInfo}{Logical. Add bash lines to report some job information. Default: \code{TRUE}}
+\item{CatJobInfo}{Logical. Add bash lines to print information on the submitted job. Default: \code{TRUE}}
 
 \item{ntasks}{Integer. The value for the \verb{#SBATCH --ntasks=} SLURM argument. Default: 1}
 

@@ -46,11 +46,48 @@ Mod_MergeChains <- function(
       ModelPosts = furrr::future_pmap(
         .l = list(Post_Missing, Post_Path, M_Init_Path, M_samples,
                   M_thin, M_transient, M_Name_Fit, Path_Model),
-        .f = Mod_MergeChains_Int(
-          Post_Missing = Post_Missing, Post_Path = Post_Path,
-          M_Init_Path = M_Init_Path, M_samples = M_samples, M_thin = M_thin,
-          M_transient = M_transient, M_Name_Fit = M_Name_Fit,
-          Path_Model = Path_Model),
+        # .f = Mod_MergeChains_Int(
+        #   Post_Missing = Post_Missing, Post_Path = Post_Path,
+        #   M_Init_Path = M_Init_Path, M_samples = M_samples, M_thin = M_thin,
+        #   M_transient = M_transient, M_Name_Fit = M_Name_Fit,
+        #   Path_Model = Path_Model),
+        .f = function(Post_Missing, Post_Path, M_Init_Path, M_samples,
+                      M_thin, M_transient, M_Name_Fit) {
+
+
+          if (Post_Missing) {
+            return(list(FittedMod_Path = NULL, Post_Aligned = NULL))
+          } else {
+            OutPath <- file.path(
+              Path_Model, "ModelFitting", paste0(M_Name_Fit, "_Fitted.RData"))
+
+            if (magrittr::not(file.exists(OutPath))) {
+              Posts <- purrr::map(as.character(Post_Path), IASDT.R::GetPosts)
+
+              Model_Fit <- try(Hmsc::importPosteriorFromHPC(
+                m = IASDT.R::LoadAs(M_Init_Path), postList = Posts,
+                nSamples = M_samples, thin = M_thin, transient = M_transient,
+                alignPost = TRUE)) %>%
+                try(silent = TRUE)
+
+              if (inherits(Model_Fit, "try-error")) {
+                Model_Fit <- try(Hmsc::importPosteriorFromHPC(
+                  m = IASDT.R::LoadAs(M_Init_Path), postList = Posts,
+                  nSamples = M_samples, thin = M_thin, transient = M_transient,
+                  alignPost = FALSE))
+                Post_Aligned <- FALSE
+              } else {
+                Post_Aligned <- TRUE
+              }
+
+              IASDT.R::SaveAs(
+                InObj = Model_Fit, OutObj = M_Name_Fit, OutPath = OutPath)
+              rm(Posts, Model_Fit)
+              invisible(gc())
+              return(list(FittedMod_Path = OutPath, Post_Aligned = Post_Aligned))
+            } else {
+              return(list(FittedMod_Path = OutPath, Post_Aligned = NULL))
+            }}},
         .progress = FALSE,
         .options = furrr::furrr_options(seed = TRUE, scheduling = Inf)))
 
@@ -64,7 +101,6 @@ Mod_MergeChains <- function(
   }
   return(invisible(NULL))
 }
-
 
 ## |------------------------------------------------------------------------| #
 ## Mod_MergeChains_Int ----

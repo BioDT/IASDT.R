@@ -24,7 +24,6 @@ Mod_MergeChains <- function(
   Post_Path <- Post_Missing <- Post_Path <- M_Init_Path <- M_samples <-
     M_thin <- M_transient <- M_Name_Fit <- NULL
 
-  IASDT.R::CatTime("Checking input arguments")
   AllArgs <- ls()
   AllArgs <- purrr::map(
     AllArgs,
@@ -86,7 +85,7 @@ Mod_MergeChains_Int <- function(
     Post_Missing, Post_Path, M_Init_Path, M_samples,
     M_thin, M_transient, M_Name_Fit) {
 
-  Path_Model <- Path_Model
+  Path_Model <- get("Path_Model", envir = parent.env(env = environment()))
 
   if (Post_Missing) {
     return(list(FittedMod_Path = NULL, Post_Aligned = NULL))

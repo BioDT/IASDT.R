@@ -48,15 +48,21 @@ Mod_MergeChains <- function(
                   M_thin, M_transient, M_Name_Fit),
         .f = function(Post_Missing, Post_Path, M_Init_Path, M_samples,
                       M_thin, M_transient, M_Name_Fit) {
+
           if (Post_Missing) {
-            return(list(FittedMod_Path = NULL, Post_Aligned = NULL))
+            return(list(Path_FittedMod = NULL, Path_Coda = NULL, Post_Aligned = NULL))
           } else {
-            OutPath <- file.path(
+
+            Path_FittedMod <- file.path(
               Path_Model, "ModelFitting", paste0(M_Name_Fit, "_Fitted.RData"))
+            ModFitMissing <- magrittr::not(file.exists(Path_FittedMod))
 
-            if (magrittr::not(file.exists(OutPath))) {
+            Path_Coda <- file.path(
+              Path_Model, "ModelFitting", paste0(M_Name_Fit, "_Coda.RData"))
+            CodaMissing <- magrittr::not(file.exists(Path_Coda))
+
+            if (ModFitMissing) {
               Posts <- purrr::map(as.character(Post_Path), IASDT.R::GetPosts)
-
               Model_Fit <- try(Hmsc::importPosteriorFromHPC(
                 m = IASDT.R::LoadAs(M_Init_Path), postList = Posts,
                 nSamples = M_samples, thin = M_thin, transient = M_transient,
@@ -74,13 +80,32 @@ Mod_MergeChains <- function(
               }
 
               IASDT.R::SaveAs(
-                InObj = Model_Fit, OutObj = M_Name_Fit, OutPath = OutPath)
-              rm(Posts, Model_Fit)
-              invisible(gc())
-              return(list(FittedMod_Path = OutPath, Post_Aligned = Post_Aligned))
+                InObj = Model_Fit, OutObj = M_Name_Fit, OutPath = Path_FittedMod)
             } else {
-              return(list(FittedMod_Path = OutPath, Post_Aligned = NULL))
-            }}},
+              Post_Aligned <- NULL
+            }
+
+            if (CodaMissing) {
+              if (magrittr::not(ModFitMissing)) {
+                Model_Fit <- IASDT.R::LoadAs(Path_FittedMod)
+              }
+
+              Mod_Coda <- Hmsc::convertToCodaObject(
+                Model_Fit, spNamesNumbers = c(TRUE, FALSE),
+                covNamesNumbers = c(TRUE, FALSE))
+
+              IASDT.R::SaveAs(
+                InObj = Mod_Coda, OutObj = paste0(M_Name_Fit, "_coda"),
+                OutPath = Path_Coda)
+              rm(Mod_Coda)
+            }
+
+            invisible(gc())
+            list(Path_FittedMod = Path_FittedMod,
+                 Path_Coda = Path_Coda,
+                 Post_Aligned = Post_Aligned) %>%
+              return()
+          }},
         .progress = FALSE,
         .options = furrr::furrr_options(seed = TRUE, scheduling = Inf))) %>%
     tidyr::unnest_wider("ModelPosts")
@@ -94,64 +119,4 @@ Mod_MergeChains <- function(
       OutPath = file.path(Path_Model, paste0(ModInfoName, ".RData")))
   }
   return(invisible(NULL))
-}
-
-## |------------------------------------------------------------------------| #
-## Mod_MergeChains_Int ----
-## |------------------------------------------------------------------------| #
-
-#' Internal function to merge model chains
-#'
-#' Internal function to merge model chains
-#'
-#' @name Mod_MergeChains_Int
-#' @param Post_Missing Whether the file for the posterior of the model variant is missing.
-#' @param Post_Path Path of the fitted model variants
-#' @param M_Init_Path Path of the initial unfitted model
-#' @param M_samples Number of samples
-#' @param M_thin How much thinning is implemented
-#' @param M_transient Number of transient samples
-#' @param M_Name_Fit Model name
-#' @author Ahmed El-Gabbas
-#' @return NULL
-#' @noRd
-
-Mod_MergeChains_Int <- function(
-    Post_Missing, Post_Path, M_Init_Path, M_samples,
-    M_thin, M_transient, M_Name_Fit, Path_Model) {
-
-  if (Post_Missing) {
-    return(list(FittedMod_Path = NULL, Post_Aligned = NULL))
-  } else {
-    OutPath <- file.path(
-      Path_Model, "ModelFitting", paste0(M_Name_Fit, "_Fitted.RData"))
-
-    if (magrittr::not(file.exists(OutPath))) {
-      Posts <- purrr::map(as.character(Post_Path), IASDT.R::GetPosts)
-
-      Model_Fit <- try(Hmsc::importPosteriorFromHPC(
-        m = IASDT.R::LoadAs(M_Init_Path), postList = Posts,
-        nSamples = M_samples, thin = M_thin, transient = M_transient,
-        alignPost = TRUE)) %>%
-        try(silent = TRUE)
-
-      if (inherits(Model_Fit, "try-error")) {
-        Model_Fit <- try(Hmsc::importPosteriorFromHPC(
-          m = IASDT.R::LoadAs(M_Init_Path), postList = Posts,
-          nSamples = M_samples, thin = M_thin, transient = M_transient,
-          alignPost = FALSE))
-        Post_Aligned <- FALSE
-      } else {
-        Post_Aligned <- TRUE
-      }
-
-      IASDT.R::SaveAs(
-        InObj = Model_Fit, OutObj = M_Name_Fit, OutPath = OutPath)
-      rm(Posts, Model_Fit)
-      invisible(gc())
-      return(list(FittedMod_Path = OutPath, Post_Aligned = Post_Aligned))
-    } else {
-      return(list(FittedMod_Path = OutPath, Post_Aligned = NULL))
-    }
-  }
 }

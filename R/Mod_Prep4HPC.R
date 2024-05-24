@@ -119,7 +119,6 @@ Mod_Prep4HPC <- function(
     "GPP_Dists", "NParallel", "nChains", "thin", "samples", "verbose",
     "MinPresGrids", "transientFactor")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = NumericArgs, Type = "numeric")
-  rm(AllArgs, CharArgs, LogicArgs, NumericArgs)
 
   if (PrepSLURM) {
     IASDT.R::CheckArgs(
@@ -131,6 +130,8 @@ Mod_Prep4HPC <- function(
     if (magrittr::not(VerboseProgress)) sink()
     stop("At least one of PhyloTree or NoPhyloTree has to be true")
   }
+
+  rm(AllArgs, CharArgs, LogicArgs, NumericArgs)
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

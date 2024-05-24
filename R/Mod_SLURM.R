@@ -16,7 +16,7 @@
 #' @param Time String. The value for the requested time for each job in the bash arrays. Example: "01:00:00" to request an hour.
 #' @param Partition String. The name of the partition. Default: `small-g`
 #' @param Path_EnvFile String. Path to read the environment variables. Default value: `.env`
-#' @param FromHPC Logical.
+#' @param FromHPC Logical. Work from HPC? This is to adjust the file paths.
 #' @param Command_Prefix String. Prefix for the bash commands to be executed
 #' @param SLURM_Prefix String. Prefix for the exported SLURM file.
 #' @name Mod_SLURM

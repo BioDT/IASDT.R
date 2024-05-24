@@ -29,6 +29,12 @@
 #' @param ModelCountry String. Filter observations to the following country list. Default: `NULL`, which means prepare data for the whole Europe
 #' @param MinPresPerCountry Integer. Minimum of grid cells for the selected country/countries for species to be considered in the models. Effective only if a valid `ModelCountry` is provided.
 #' @param VerboseProgress Logical. Show messages for the progress of creating files
+#' @param FromHPC Logical. Work from HPC? This is to adjust the file paths.
+#' @param PrepSLURM Logical. Prepare SLURM command? If `TRUE`, the SLURM commands will be exported using the `IASDT.R::Mod_SLURM` function.
+#' @param MemPerCpu String. The value for the `#SBATCH --mem-per-cpu=` SLURM argument. Example: "32G" to request 32 gigabyte. Only effective if `PrepSLURM = TRUE`.
+#' @param Time String. The value for the requested time for each job in the bash arrays. Example: "01:00:00" to request an hour. Only effective if `PrepSLURM = TRUE`.
+#' @param JobName String. The name of the submitted job(s). Only effective if `PrepSLURM = TRUE`.
+#' @param ... additional parameters provided to the `IASDT.R::Mod_SLURM` function
 #' @name Mod_Prep4HPC
 #' @author Ahmed El-Gabbas
 #' @return NULL
@@ -41,7 +47,8 @@ Mod_Prep4HPC <- function(
     NParallel = 8, nChains = 4, thin = NULL, samples = NULL,
     transientFactor = 300, verbose = 1000, SkipFitted = TRUE, MaxJobCounts = 210,
     ModelCountry = NULL, MinPresPerCountry = 50, VerboseProgress = FALSE,
-    FromHPC = TRUE) {
+    FromHPC = TRUE, PrepSLURM = TRUE, MemPerCpu = NULL, Time = NULL,
+    JobName = NULL, ...) {
 
   # https://github.com/hmsc-r/HMSC/issues/180
   # https://github.com/hmsc-r/HMSC/issues/139
@@ -113,6 +120,11 @@ Mod_Prep4HPC <- function(
     "MinPresGrids", "transientFactor")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = NumericArgs, Type = "numeric")
   rm(AllArgs, CharArgs, LogicArgs, NumericArgs)
+
+  if (PrepSLURM) {
+    IASDT.R::CheckArgs(
+      AllArgs = AllArgs, Args = c("MemPerCpu", "Time"), Type = "character")
+  }
 
   # Phylogenetic tree options
   if (PhyloTree == FALSE && NoPhyloTree == FALSE) {
@@ -578,6 +590,26 @@ Mod_Prep4HPC <- function(
       Post_Aligned = NA)
 
   save(Model_Info, file = Path_ModelDT)
+
+  ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  # # |||||||||||||||||||||||||||||||||||
+  # # Prepare SLURM file
+  # # |||||||||||||||||||||||||||||||||||
+
+  if (PrepSLURM) {
+    IASDT.R::CatTime("Prepare SLURM file")
+    if (is.null(JobName)) {
+      JobName <- basename(Path_Model) %>%
+        stringr::str_remove_all(paste0("_", HabVal))
+    }
+    IASDT.R::Mod_SLURM(
+      Path_Model = Path_Model, JobName = JobName,
+      MemPerCpu = MemPerCpu, Time = Time, FromHPC = FALSE,
+      Path_EnvFile = Path_EnvFile, ...)
+  } else {
+    IASDT.R::CatTime("SLURM file was NOT prepared")
+  }
 
   if (magrittr::not(VerboseProgress)) { sink() }
 

@@ -41,7 +41,7 @@ Mod_SLURM(
 
 \item{Path_EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
 
-\item{FromHPC}{Logical.}
+\item{FromHPC}{Logical. Work from HPC? This is to adjust the file paths.}
 
 \item{Command_Prefix}{String. Prefix for the bash commands to be executed}
 

@@ -22,9 +22,7 @@ Mod_MergeChains(
 
 \item{PrintIncomplete}{Logical. Print to the console the name of unfitted models}
 
-\item{FromHPC}{Logical. Is the merging of chain files performed from HPC. This is to adjust the file paths before reading files}
-
-\item{Path_EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
+\item{FromHPC}{Logical. Work from HPC? This is to adjust the file paths.#' @param Path_EnvFile String. Path to read the environment variables. Default value: \code{.env}}
 }
 \description{
 Prepare habitat-specific data for the models

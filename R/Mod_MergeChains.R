@@ -10,8 +10,7 @@
 #' @param NCores Integer. Number of parallel cores to use
 #' @param ModInfoName String. Default: `NULL` which means overwrite the `Model_Info.RData` file. If `ModInfoName` is provided, a new `.RData` file will be created with this prefix for file name (excluding extension)
 #' @param PrintIncomplete Logical. Print to the console the name of unfitted models
-#' @param FromHPC Logical. Is the merging of chain files performed from HPC. This is to adjust the file paths before reading files
-#' @param Path_EnvFile String. Path to read the environment variables. Default value: `.env`
+#' @param FromHPC Logical. Work from HPC? This is to adjust the file paths.#' @param Path_EnvFile String. Path to read the environment variables. Default value: `.env`
 #' @name Mod_MergeChains
 #' @author Ahmed El-Gabbas
 #' @return NULL
@@ -107,11 +106,11 @@ Mod_MergeChains <- function(
       Path_FittedMod = NULL, Path_Coda = NULL)
 
 
-
-  Path_ModInfo %>%
-    IASDT.R::LoadAs() %>%
-    pull(Post_Path) %>%
-    file.exists()
+#
+#   Path_ModInfo %>%
+#     IASDT.R::LoadAs() %>%
+#     pull(Post_Path) %>%
+#     file.exists()
 
 
   Post_Missing <- Model_Info2$Post_Missing[[1]]

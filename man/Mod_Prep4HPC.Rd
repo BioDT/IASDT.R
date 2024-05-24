@@ -28,7 +28,12 @@ Mod_Prep4HPC(
   ModelCountry = NULL,
   MinPresPerCountry = 50,
   VerboseProgress = FALSE,
-  FromHPC = TRUE
+  FromHPC = TRUE,
+  PrepSLURM = TRUE,
+  MemPerCpu = NULL,
+  Time = NULL,
+  JobName = NULL,
+  ...
 )
 }
 \arguments{
@@ -77,6 +82,18 @@ Mod_Prep4HPC(
 \item{MinPresPerCountry}{Integer. Minimum of grid cells for the selected country/countries for species to be considered in the models. Effective only if a valid \code{ModelCountry} is provided.}
 
 \item{VerboseProgress}{Logical. Show messages for the progress of creating files}
+
+\item{FromHPC}{Logical. Work from HPC? This is to adjust the file paths.}
+
+\item{PrepSLURM}{Logical. Prepare SLURM command? If \code{TRUE}, the SLURM commands will be exported using the \code{IASDT.R::Mod_SLURM} function.}
+
+\item{MemPerCpu}{String. The value for the \verb{#SBATCH --mem-per-cpu=} SLURM argument. Example: "32G" to request 32 gigabyte. Only effective if \code{PrepSLURM = TRUE}.}
+
+\item{Time}{String. The value for the requested time for each job in the bash arrays. Example: "01:00:00" to request an hour. Only effective if \code{PrepSLURM = TRUE}.}
+
+\item{JobName}{String. The name of the submitted job(s). Only effective if \code{PrepSLURM = TRUE}.}
+
+\item{...}{additional parameters provided to the \code{IASDT.R::Mod_SLURM} function}
 }
 \description{
 Prepare initial models in R to be used by the Hmsc-HPC

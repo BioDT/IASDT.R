@@ -17,6 +17,7 @@
 #' @param ntasks Integer. The value for the `#SBATCH --ntasks=` SLURM argument. Default: 1
 #' @param CpusPerTask Integer. The value for the `#SBATCH --cpus-per-task=` SLURM argument. Default: 1
 #' @param GpusPerNode Integer. The value for the `#SBATCH --gpus-per-node=` SLURM argument. Default: 1
+#' @param FromHPC Logical. Work from HPC? This is to adjust the file paths.
 #' @param Refit_Prefix String. Prefix for the file containing commands to be re-fitted
 #' @param SLURM_Prefix String. Prefix for the exported SLURM file
 #' @name Mod_SLURM_Refit
@@ -27,7 +28,7 @@
 Mod_SLURM_Refit <- function(
     Path_Model = NULL, MaxJobCounts = 210, JobName = NULL, MemPerCpu = NULL,
     Time = NULL, Partition = "small-g", Path_EnvFile = ".env", CatJobInfo = TRUE,
-    ntasks = 1, CpusPerTask = 1, GpusPerNode = 1,
+    ntasks = 1, CpusPerTask = 1, GpusPerNode = 1, FromHPC = TRUE,
     Refit_Prefix = "Commands2Refit", SLURM_Prefix = "Bash_Refit") {
 
   # Avoid "no visible binding for global variable" message
@@ -65,6 +66,11 @@ Mod_SLURM_Refit <- function(
 
   rm(AllArgs)
   invisible(gc())
+
+
+
+  # temporarily setting the working directory
+  if (FromHPC) setwd(Path_Scratch)
 
   # remove temp files and incomplete RDs files
   Path_Model_Fit <- file.path(Path_Model, "Model_Fitting")
@@ -129,5 +135,8 @@ Mod_SLURM_Refit <- function(
   } else {
     IASDT.R::CatTime("All models were already fitted!")
   }
+
+  if (FromHPC) setwd(InitialWD)
+
   return(invisible(NULL))
 }

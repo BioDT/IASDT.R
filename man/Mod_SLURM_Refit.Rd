@@ -16,6 +16,7 @@ Mod_SLURM_Refit(
   ntasks = 1,
   CpusPerTask = 1,
   GpusPerNode = 1,
+  FromHPC = TRUE,
   Refit_Prefix = "Commands2Refit",
   SLURM_Prefix = "Bash_Refit"
 )
@@ -42,6 +43,8 @@ Mod_SLURM_Refit(
 \item{CpusPerTask}{Integer. The value for the \verb{#SBATCH --cpus-per-task=} SLURM argument. Default: 1}
 
 \item{GpusPerNode}{Integer. The value for the \verb{#SBATCH --gpus-per-node=} SLURM argument. Default: 1}
+
+\item{FromHPC}{Logical. Work from HPC? This is to adjust the file paths.}
 
 \item{Refit_Prefix}{String. Prefix for the file containing commands to be re-fitted}
 

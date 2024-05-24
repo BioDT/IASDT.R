@@ -15,6 +15,7 @@ Mod_SLURM(
   Time = NULL,
   Partition = "small-g",
   Path_EnvFile = ".env",
+  FromHPC = TRUE,
   Command_Prefix = "Commands_All",
   SLURM_Prefix = "Bash_Fit"
 )
@@ -39,6 +40,8 @@ Mod_SLURM(
 \item{Partition}{String. The name of the partition. Default: \code{small-g}}
 
 \item{Path_EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
+
+\item{FromHPC}{Logical.}
 
 \item{Command_Prefix}{String. Prefix for the bash commands to be executed}
 

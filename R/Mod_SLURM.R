@@ -16,6 +16,7 @@
 #' @param Time String. The value for the requested time for each job in the bash arrays. Example: "01:00:00" to request an hour.
 #' @param Partition String. The name of the partition. Default: `small-g`
 #' @param Path_EnvFile String. Path to read the environment variables. Default value: `.env`
+#' @param FromHPC Logical.
 #' @param Command_Prefix String. Prefix for the bash commands to be executed
 #' @param SLURM_Prefix String. Prefix for the exported SLURM file.
 #' @name Mod_SLURM
@@ -26,15 +27,16 @@
 Mod_SLURM <- function(
     Path_Model = NULL, JobName = NULL, CatJobInfo = TRUE, ntasks = 1,
     CpusPerTask = 1, GpusPerNode = 1, MemPerCpu = NULL, Time = NULL,
-    Partition = "small-g", Path_EnvFile = ".env",
+    Partition = "small-g", Path_EnvFile = ".env", FromHPC = TRUE,
     Command_Prefix = "Commands_All", SLURM_Prefix = "Bash_Fit") {
+
+  InitialWD <- getwd()
 
   # # |||||||||||||||||||||||||||||||||||
   # # cat2
   # # |||||||||||||||||||||||||||||||||||
 
   # a wrapper function of cat with new line separator
-
   cat2 <- function(...) cat(sep = "\n", ...)
 
   # # |||||||||||||||||||||||||||||||||||
@@ -53,6 +55,10 @@ Mod_SLURM <- function(
       "Path for environment variables: ", Path_EnvFile, " was not found")
     stop(MSG)
   }
+
+  # temporarily setting the working directory
+  if (FromHPC) setwd(Path_Scratch)
+
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -190,5 +196,8 @@ Mod_SLURM <- function(
       cat2('echo "End of program at `date`"')
       sink()
     })
+
+  if (FromHPC) setwd(InitialWD)
+
   return(invisible(NULL))
 }

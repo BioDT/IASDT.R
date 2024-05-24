@@ -27,7 +27,8 @@ Mod_Prep4HPC(
   MaxJobCounts = 210,
   ModelCountry = NULL,
   MinPresPerCountry = 50,
-  VerboseProgress = FALSE
+  VerboseProgress = FALSE,
+  FromHPC = TRUE
 )
 }
 \arguments{

@@ -19,7 +19,7 @@ Mod_Fit_WS <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Path_ModPorg <- Command_WS <- NULL
+  Path_ModProg <- Command_WS <- NULL
 
   # # |||||||||||||||||||||||||||||||||||
   # # Load environment variables
@@ -58,9 +58,9 @@ Mod_Fit_WS <- function(
 
   Model2Run <- file.path(Path_Model, "Model_Info.RData") %>%
     IASDT.R::LoadAs() %>%
-    dplyr::select(Path_ModPorg, Command_WS) %>%
-    tidyr::unnest(cols = c("Path_ModPorg", "Command_WS")) %>%
-    dplyr::filter(magrittr::not(file.exists(Path_ModPorg)))
+    dplyr::select(Path_ModProg, Command_WS) %>%
+    tidyr::unnest(cols = c("Path_ModProg", "Command_WS")) %>%
+    dplyr::filter(magrittr::not(file.exists(Path_ModProg)))
 
   if (nrow(Model2Run) > 0) {
     IASDT.R::CatTime(
@@ -76,8 +76,8 @@ Mod_Fit_WS <- function(
       FUN = function(x) {
         system2(
           command = Path_Hmsc_WS, args = Model2Run$Command_WS[x],
-          stdout = Model2Run$Path_ModPorg[x],
-          stderr = Model2Run$Path_ModPorg[x])
+          stdout = Model2Run$Path_ModProg[x],
+          stderr = Model2Run$Path_ModProg[x])
       },
       future.scheduling = Inf, future.seed = TRUE)
   } else {

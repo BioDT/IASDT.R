@@ -8,7 +8,9 @@ Mod_MergeChains(
   Path_Model = NULL,
   NCores = NULL,
   ModInfoName = NULL,
-  PrintIncomplete = TRUE
+  PrintIncomplete = TRUE,
+  FromHPC = TRUE,
+  Path_EnvFile = ".env"
 )
 }
 \arguments{

@@ -52,7 +52,7 @@ Mod_Prep4HPC <- function(
     dplyr <- sf <- Hmsc <- jsonify <- magrittr <- M_thin <- rL <- M_Name_init <-
     rL2 <- M_samples <- M4HPC_Path <- M_transient <- M_Init_Path <- M_Name_Fit <-
     Chain <- Post_Missing <- Command_HPC <- Command_WS <- Post_Path <-
-    Path_ModPorg <- NULL
+    Path_ModProg <- NULL
 
   if (magrittr::not(VerboseProgress)) {
     sink(file = nullfile())
@@ -151,7 +151,7 @@ Mod_Prep4HPC <- function(
   } else {
     Path_Data2 <- file.path(
       Path_Data,
-      paste0("ModelDT_", MinPresGrids, "Grids_",
+      paste0("ModelData_", MinPresGrids, "Grids_",
              stringr::str_remove(HabVal, "Hab_"), ".RData"))
     DT_All <- IASDT.R::LoadAs(Path_Data2)
   }
@@ -456,7 +456,7 @@ Mod_Prep4HPC <- function(
           Post_Path <- file.path(
             Path_Model, "ModelFitting",
             paste0(M_Name_Fit, "_Chain", Chain, "_post.rds"))
-          Path_ModPorg <- file.path(
+          Path_ModProg <- file.path(
             Path_Model, "ModelFitting",
             paste0(M_Name_Fit, "_Chain", Chain, "_Progress.txt"))
 
@@ -473,7 +473,7 @@ Mod_Prep4HPC <- function(
             " --thin ", M_thin,
             " --verbose ", verbose,
             " --chain ", Chain - 1,
-            " >& ", shQuote(Path_ModPorg))
+            " >& ", shQuote(Path_ModProg))
 
           Command_WS <- paste0(
             "-m hmsc.run_gibbs_sampler",
@@ -488,7 +488,7 @@ Mod_Prep4HPC <- function(
           list(
             M4HPC_Path_LUMI = M4HPC_Path2,
             Post_Path = Post_Path, Post_Missing = Post_Missing,
-            Path_ModPorg = Path_ModPorg, Command_HPC = Command_HPC,
+            Path_ModProg = Path_ModProg, Command_HPC = Command_HPC,
             Command_WS = Command_WS) %>%
             return()
         })) %>%
@@ -555,7 +555,7 @@ Mod_Prep4HPC <- function(
 
   Model_Info <- Model_Info %>%
     tidyr::nest(
-      Post_Path = Post_Path, Path_ModPorg = Path_ModPorg,
+      Post_Path = Post_Path, Path_ModProg = Path_ModProg,
       Chain = Chain, Command_HPC = Command_HPC, Command_WS = Command_WS,
       Post_Missing = Post_Missing) %>%
     dplyr::mutate(
@@ -563,7 +563,7 @@ Mod_Prep4HPC <- function(
       Chain = purrr::map2(Chain, Chain, IASDT.R::SetChainName),
       Command_HPC = purrr::map2(Command_HPC, Chain, IASDT.R::SetChainName),
       Command_WS = purrr::map2(Command_WS, Chain, IASDT.R::SetChainName),
-      Path_ModPorg = purrr::map2(Path_ModPorg, Chain, IASDT.R::SetChainName),
+      Path_ModProg = purrr::map2(Path_ModProg, Chain, IASDT.R::SetChainName),
       Post_Aligned = NA)
 
   save(Model_Info, file = Path_ModelDT)

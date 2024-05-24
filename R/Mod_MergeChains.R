@@ -23,7 +23,8 @@ Mod_MergeChains <- function(
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Post_Path <- Post_Missing <- Post_Path <- M_Init_Path <- M_samples <-
     M_thin <- M_transient <- M_Name_Fit <- Path_FittedMod <- Path_Coda <-
-    NMissingChains <- MissingModels <- Model_Finished <- Path_ModPorg <- NULL
+    NMissingChains <- MissingModels <- Model_Finished <- Path_ModPorg <-
+    Post_Aligned <- Post_Aligned2 <- NULL
 
   AllArgs <- ls()
   AllArgs <- purrr::map(
@@ -46,6 +47,10 @@ Mod_MergeChains <- function(
       Post_Missing = purrr::map_lgl(
         .x = Post_Path,
         .f = ~magrittr::not(all(file.exists(.x)))),
+
+      # delete these columns if already exist from previous function execution
+      Path_FittedMod = NULL, Path_Coda = NULL,
+
       ModelPosts = furrr::future_pmap(
         .l = list(Post_Missing, Post_Path, M_Init_Path, M_samples,
                   M_thin, M_transient, M_Name_Fit, Post_Aligned),
@@ -53,8 +58,7 @@ Mod_MergeChains <- function(
                       M_thin, M_transient, M_Name_Fit, Post_Aligned) {
 
           if (Post_Missing) {
-            list(Path_FittedMod = NA, Path_Coda = NA,
-                 Post_Aligned2 = NA) %>%
+            list(Path_FittedMod = NA, Path_Coda = NA, Post_Aligned2 = NA) %>%
               return()
           } else {
 
@@ -121,9 +125,9 @@ Mod_MergeChains <- function(
             }
 
             invisible(gc())
-            list(Path_FittedMod = Path_FittedMod,
-                 Path_Coda = Path_Coda,
-                 Post_Aligned2 = Post_Aligned2) %>%
+            list(
+              Path_FittedMod = Path_FittedMod, Path_Coda = Path_Coda,
+              Post_Aligned2 = Post_Aligned2) %>%
               return()
           }},
         .progress = FALSE,

@@ -536,9 +536,13 @@ Mod_Prep4HPC <- function(
 
   lapply(seq_len(NSplits), function(x) {
     CurrIDs <- IDs[[x]]
+    if (NSplits > 1) {
+      CommandFile <- file.path(Path_Model, paste0("Commands_All_", x, ".txt"))
+    } else {
+      CommandFile <- file.path(Path_Model, "Commands_All.txt")
+    }
     Models2Fit_HPC[CurrIDs] %>%
-      cat(sep = "\n", append = FALSE,
-          file = file.path(Path_Model, paste0("Commands_All_", x, ".txt")))
+      cat(sep = "\n", append = FALSE, file = CommandFile)
   })
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

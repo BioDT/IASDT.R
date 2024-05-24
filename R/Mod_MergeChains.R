@@ -10,6 +10,8 @@
 #' @param NCores Integer. Number of parallel cores to use
 #' @param ModInfoName String. Default: `NULL` which means overwrite the `Model_Info.RData` file. If `ModInfoName` is provided, a new `.RData` file will be created with this prefix for file name (excluding extension)
 #' @param PrintIncomplete Logical. Print to the console the name of unfitted models
+#' @param FromHPC Logical. Is the merging of chain files performed from HPC. This is to adjust the file paths before reading files
+#' @param Path_EnvFile String. Path to read the environment variables. Default value: `.env`
 #' @name Mod_MergeChains
 #' @author Ahmed El-Gabbas
 #' @return NULL
@@ -55,7 +57,7 @@ Mod_MergeChains <- function(
   }
 
   # remove temp files and incomplete RDs files
-  Path_Model_Fit <- file.path(Path_Model, "ModelFitting")
+  Path_Model_Fit <- file.path(Path_Model, "Model_Fitting")
   tempFiles <- list.files(
     path = Path_Model_Fit, pattern = ".rds_temp$", full.names = TRUE)
   if (length(tempFiles) > 0) {
@@ -106,7 +108,7 @@ Mod_MergeChains <- function(
               return()
           } else {
 
-            Path_Fitted_Models <- file.path(Path_Model, "ModelFitted")
+            Path_Fitted_Models <- file.path(Path_Model, "Model_Fitted")
             fs::dir_create(Path_Fitted_Models)
 
             Path_FittedMod <- file.path(

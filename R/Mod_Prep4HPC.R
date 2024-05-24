@@ -120,7 +120,7 @@ Mod_Prep4HPC <- function(
   # # |||||||||||||||||||||||||||||||||||
 
   fs::dir_create(file.path(Path_Model, "InitMod_HPC"))
-  fs::dir_create(file.path(Path_Model, "ModelFitting"))
+  fs::dir_create(file.path(Path_Model, "Model_Fitting"))
   Path_ModelDT <- file.path(Path_Model, "Model_Info.RData")
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -454,10 +454,10 @@ Mod_Prep4HPC <- function(
           M4HPC_Path2 <- file.path(
             Path_Model, "InitMod_HPC", basename(M4HPC_Path))
           Post_Path <- file.path(
-            Path_Model, "ModelFitting",
+            Path_Model, "Model_Fitting",
             paste0(M_Name_Fit, "_Chain", Chain, "_post.rds"))
           Path_ModProg <- file.path(
-            Path_Model, "ModelFitting",
+            Path_Model, "Model_Fitting",
             paste0(M_Name_Fit, "_Chain", Chain, "_Progress.txt"))
 
           Post_Missing <- magrittr::not(file.exists(Post_Path))

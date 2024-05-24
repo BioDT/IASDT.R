@@ -96,7 +96,7 @@ Mod_SLURM <- function(
       NJobs <- R.utils::countLines(ListCommands[x])[1]
 
       sink(file = file.path(Path_Model, OutFile))
-      Path_SLURM_Out <- file.path(Path_Model, "ModelFitting", "SLURM_Results")
+      Path_SLURM_Out <- file.path(Path_Model, "Model_Fitting", "SLURM_Results")
       fs::dir_create(Path_SLURM_Out)
 
       cat2("#!/bin/bash\n")

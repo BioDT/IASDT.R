@@ -67,7 +67,7 @@ Mod_SLURM_Refit <- function(
   invisible(gc())
 
   # remove temp files and incomplete RDs files
-  Path_Model_Fit <- file.path(Path_Model, "ModelFitting")
+  Path_Model_Fit <- file.path(Path_Model, "Model_Fitting")
   tempFiles <- list.files(
     path = Path_Model_Fit, pattern = ".rds_temp$", full.names = TRUE)
   if (length(tempFiles) > 0) {

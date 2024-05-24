@@ -21,6 +21,10 @@ Mod_MergeChains(
 \item{ModInfoName}{String. Default: \code{NULL} which means overwrite the \code{Model_Info.RData} file. If \code{ModInfoName} is provided, a new \code{.RData} file will be created with this prefix for file name (excluding extension)}
 
 \item{PrintIncomplete}{Logical. Print to the console the name of unfitted models}
+
+\item{FromHPC}{Logical. Is the merging of chain files performed from HPC. This is to adjust the file paths before reading files}
+
+\item{Path_EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
 }
 \description{
 Prepare habitat-specific data for the models

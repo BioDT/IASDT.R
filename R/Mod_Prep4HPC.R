@@ -556,7 +556,8 @@ Mod_Prep4HPC <- function(
   Model_Info <- Model_Info %>%
     tidyr::nest(
       Post_Path = Post_Path, Path_ModPorg = Path_ModPorg,
-      Chain = Chain, Command_HPC = Command_HPC, Command_WS = Command_WS) %>%
+      Chain = Chain, Command_HPC = Command_HPC, Command_WS = Command_WS,
+      Post_Missing = Post_Missing) %>%
     dplyr::mutate(
       Post_Path = purrr::map2(Post_Path, Chain, IASDT.R::SetChainName),
       Chain = purrr::map2(Chain, Chain, IASDT.R::SetChainName),

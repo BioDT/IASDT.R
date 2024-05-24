@@ -612,7 +612,7 @@ Mod_Prep4HPC <- function(
     IASDT.R::CatTime("SLURM file was NOT prepared")
   }
 
-  if (magrittr::not(VerboseProgress)) { sink() }
+  if (magrittr::not(VerboseProgress)) sink()
 
   IASDT.R::CatDiff(.StartTime, CatInfo = FALSE)
   if (FromHPC) setwd(InitialWD)

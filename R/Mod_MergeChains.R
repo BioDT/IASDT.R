@@ -19,14 +19,11 @@ Mod_MergeChains <- function(
     Path_Model = NULL, NCores = NULL, ModInfoName = NULL,
     PrintIncomplete = TRUE) {
 
-  # Overwrite_ModInfo = TRUE,
-
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Post_Path <- Post_Missing <- Post_Path <- M_Init_Path <- M_samples <-
-    M_thin <- M_transient <- M_Name_Fit <- Path_FittedMod <-
-    Path_Coda <- NMissingChains <- MissingModels <- Model_Finished <-
-    Path_ModPorg <- NULL
+    M_thin <- M_transient <- M_Name_Fit <- Path_FittedMod <- Path_Coda <-
+    NMissingChains <- MissingModels <- Model_Finished <- Path_ModPorg <- NULL
 
   AllArgs <- ls()
   AllArgs <- purrr::map(
@@ -42,6 +39,7 @@ Mod_MergeChains <- function(
   c1 <- snow::makeSOCKcluster(NCores)
   future::plan(future::cluster, workers = c1, gc = TRUE)
 
+
   Model_Info2 <- Path_ModInfo %>%
     IASDT.R::LoadAs() %>%
     dplyr::mutate(
@@ -50,13 +48,13 @@ Mod_MergeChains <- function(
         .f = ~magrittr::not(all(file.exists(.x)))),
       ModelPosts = furrr::future_pmap(
         .l = list(Post_Missing, Post_Path, M_Init_Path, M_samples,
-                  M_thin, M_transient, M_Name_Fit),
+                  M_thin, M_transient, M_Name_Fit, Post_Aligned),
         .f = function(Post_Missing, Post_Path, M_Init_Path, M_samples,
-                      M_thin, M_transient, M_Name_Fit) {
+                      M_thin, M_transient, M_Name_Fit, Post_Aligned) {
 
           if (Post_Missing) {
-            list(Path_FittedMod = NULL, Path_Coda = NULL,
-                 Post_Aligned = NULL) %>%
+            list(Path_FittedMod = NA, Path_Coda = NA,
+                 Post_Aligned2 = NA) %>%
               return()
           } else {
 
@@ -73,26 +71,35 @@ Mod_MergeChains <- function(
 
             if (ModFitMissing) {
               Posts <- purrr::map(as.character(Post_Path), IASDT.R::GetPosts)
-              Model_Fit <- try(Hmsc::importPosteriorFromHPC(
-                m = IASDT.R::LoadAs(M_Init_Path), postList = Posts,
-                nSamples = M_samples, thin = M_thin, transient = M_transient,
-                alignPost = TRUE)) %>%
+              Model_Fit <- try(
+                Hmsc::importPosteriorFromHPC(
+                  m = IASDT.R::LoadAs(M_Init_Path), postList = Posts,
+                  nSamples = M_samples, thin = M_thin, transient = M_transient,
+                  alignPost = TRUE)) %>%
                 try(silent = TRUE)
 
               if (inherits(Model_Fit, "try-error")) {
-                Model_Fit <- try(Hmsc::importPosteriorFromHPC(
-                  m = IASDT.R::LoadAs(M_Init_Path), postList = Posts,
-                  nSamples = M_samples, thin = M_thin, transient = M_transient,
-                  alignPost = FALSE))
-                Post_Aligned <- FALSE
+                Model_Fit <- try(
+                  Hmsc::importPosteriorFromHPC(
+                    m = IASDT.R::LoadAs(M_Init_Path), postList = Posts,
+                    nSamples = M_samples, thin = M_thin, transient = M_transient,
+                    alignPost = FALSE))
+                Post_Aligned2 <- FALSE
               } else {
-                Post_Aligned <- TRUE
+                Post_Aligned2 <- TRUE
               }
 
-              IASDT.R::SaveAs(
-                InObj = Model_Fit, OutObj = M_Name_Fit, OutPath = Path_FittedMod)
+              if (inherits(Model_Fit, "try-error")) {
+                paste0("Model ", M_Name_Fit, " failed to be merged!") %>%
+                  IASDT.R::CatTime()
+              } else {
+                IASDT.R::SaveAs(
+                  InObj = Model_Fit, OutObj = M_Name_Fit,
+                  OutPath = Path_FittedMod)
+              }
+
             } else {
-              Post_Aligned <- NULL
+              Post_Aligned2 <- Post_Aligned
             }
 
             if (CodaMissing) {
@@ -100,27 +107,30 @@ Mod_MergeChains <- function(
                 Model_Fit <- IASDT.R::LoadAs(Path_FittedMod)
               }
 
-              Mod_Coda <- Hmsc::convertToCodaObject(
-                Model_Fit, spNamesNumbers = c(TRUE, FALSE),
-                covNamesNumbers = c(TRUE, FALSE))
-
-              IASDT.R::SaveAs(
-                InObj = Mod_Coda, OutObj = paste0(M_Name_Fit, "_coda"),
-                OutPath = Path_Coda)
-              rm(Mod_Coda)
+              if (inherits(Model_Fit, "try-error")) {
+                IASDT.R::CatTime("  >>>  No Coad object was exported")
+              } else {
+                Mod_Coda <- Hmsc::convertToCodaObject(
+                  Model_Fit, spNamesNumbers = c(TRUE, FALSE),
+                  covNamesNumbers = c(TRUE, FALSE))
+                IASDT.R::SaveAs(
+                  InObj = Mod_Coda, OutObj = paste0(M_Name_Fit, "_coda"),
+                  OutPath = Path_Coda)
+                rm(Mod_Coda)
+              }
             }
 
             invisible(gc())
             list(Path_FittedMod = Path_FittedMod,
                  Path_Coda = Path_Coda,
-                 Post_Aligned = Post_Aligned) %>%
+                 Post_Aligned2 = Post_Aligned2) %>%
               return()
           }},
         .progress = FALSE,
         .options = furrr::furrr_options(seed = TRUE, scheduling = Inf))) %>%
-    tidyr::unnest_wider("ModelPosts")
-
-  Model_Info2 <- Model_Info2 %>%
+    tidyr::unnest_wider("ModelPosts") %>%
+    dplyr::mutate(Post_Aligned = dplyr::coalesce(Post_Aligned2)) %>%
+    dplyr::select(-Post_Aligned2) %>%
     dplyr::mutate(
       Model_Finished = purrr::map2_lgl(
         .x = Path_FittedMod, .y = Path_Coda,
@@ -146,6 +156,8 @@ Mod_MergeChains <- function(
             }) %>%
             unlist()
         }))
+
+  snow::stopCluster(c1)
 
   if (PrintIncomplete) {
     IASDT.R::InfoChunk("Unsuccessful models")

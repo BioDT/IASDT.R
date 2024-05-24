@@ -558,7 +558,9 @@ Mod_Prep4HPC <- function(
       Chain = purrr::map2(Chain, Chain, IASDT.R::SetChainName),
       Command_HPC = purrr::map2(Command_HPC, Chain, IASDT.R::SetChainName),
       Command_WS = purrr::map2(Command_WS, Chain, IASDT.R::SetChainName),
-      Path_ModPorg = purrr::map2(Path_ModPorg, Chain, IASDT.R::SetChainName))
+      Path_ModPorg = purrr::map2(Path_ModPorg, Chain, IASDT.R::SetChainName),
+      Post_Aligned = NA)
+
   save(Model_Info, file = Path_ModelDT)
 
   if (magrittr::not(VerboseProgress)) {

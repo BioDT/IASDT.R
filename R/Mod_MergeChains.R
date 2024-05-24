@@ -11,6 +11,7 @@
 #' @param ModInfoName String. Default: `NULL` which means overwrite the `Model_Info.RData` file. If `ModInfoName` is provided, a new `.RData` file will be created with this prefix for file name (excluding extension)
 #' @param PrintIncomplete Logical. Print to the console the name of unfitted models
 #' @param FromHPC Logical. Work from HPC? This is to adjust the file paths.#' @param Path_EnvFile String. Path to read the environment variables. Default value: `.env`
+#' @param Path_EnvFile String. Path to read the environment variables. Default value: `.env`
 #' @name Mod_MergeChains
 #' @author Ahmed El-Gabbas
 #' @return NULL
@@ -79,8 +80,8 @@ Mod_MergeChains <- function(
   Path_ModInfo <- file.path(Path_Model, "Model_Info.RData")
 
   Path_Fitted_Models <- file.path(Path_Model, "Model_Fitted")
-  fs::dir_create(Path_Fitted_Models)
-
+  Path_Coda <- file.path(Path_Model, "Model_Coda")
+  fs::dir_create(c(Path_Fitted_Models, Path_Coda))
 
   Model_Info2 <- Path_ModInfo %>%
     IASDT.R::LoadAs() %>%
@@ -111,11 +112,11 @@ Mod_MergeChains <- function(
               return()
           } else {
             Path_FittedMod <- file.path(
-              Path_Fitted_Models, paste0(M_Name_Fit, "_Fitted.RData"))
+              Path_Fitted_Models, paste0(M_Name_Fit, "_Model.RData"))
             ModFitMissing <- magrittr::not(file.exists(Path_FittedMod))
 
             Path_Coda <- file.path(
-              Path_Fitted_Models, paste0(M_Name_Fit, "_Coda.RData"))
+              Path_Coda, paste0(M_Name_Fit, "_Coda.RData"))
             CodaMissing <- magrittr::not(file.exists(Path_Coda))
 
             # Merge fitted models
@@ -126,16 +127,17 @@ Mod_MergeChains <- function(
                 M_Init_Path <- file.path(Path_Scratch, M_Init_Path)
               }
 
+              # Get posteriors
               Posts <- purrr::map(as.character(Post_Path), IASDT.R::GetPosts)
 
-              # Try with alignPost = TRUE
+              # Convert to Hmsc object - Try with `alignPost = TRUE`
               Model_Fit <- Hmsc::importPosteriorFromHPC(
                 m = IASDT.R::LoadAs(M_Init_Path), postList = Posts,
                 nSamples = M_samples, thin = M_thin, transient = M_transient,
                 alignPost = TRUE) %>%
                 try(silent = TRUE)
 
-              # If failed, use alignPost = FALSE
+              # Convert to Hmsc object - If failed, use `alignPost = FALSE`
               if (inherits(Model_Fit, "try-error")) {
                 Model_Fit <- try(
                   Hmsc::importPosteriorFromHPC(
@@ -152,7 +154,7 @@ Mod_MergeChains <- function(
                   IASDT.R::CatTime()
               } else {
                 IASDT.R::SaveAs(
-                  InObj = Model_Fit, OutObj = M_Name_Fit,
+                  InObj = Model_Fit, OutObj = paste0(M_Name_Fit, "_Model"),
                   OutPath = Path_FittedMod)
               }
 
@@ -173,7 +175,7 @@ Mod_MergeChains <- function(
                   Model_Fit, spNamesNumbers = c(TRUE, FALSE),
                   covNamesNumbers = c(TRUE, FALSE))
                 IASDT.R::SaveAs(
-                  InObj = Mod_Coda, OutObj = paste0(M_Name_Fit, "_coda"),
+                  InObj = Mod_Coda, OutObj = paste0(M_Name_Fit, "_Coda"),
                   OutPath = Path_Coda)
                 rm(Mod_Coda)
               }
@@ -253,6 +255,7 @@ Mod_MergeChains <- function(
         }))
 
   snow::stopCluster(c1)
+
 
   # Print to the console the name of failed models and number of missing chain files
   if (PrintIncomplete) {

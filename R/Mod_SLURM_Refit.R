@@ -31,6 +31,10 @@ Mod_SLURM_Refit <- function(
     ntasks = 1, CpusPerTask = 1, GpusPerNode = 1, FromHPC = TRUE,
     Refit_Prefix = "Commands2Refit", SLURM_Prefix = "Bash_Refit") {
 
+
+  InitialWD <- getwd()
+
+
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Command_HPC <- Post_Path <- NULL

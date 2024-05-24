@@ -574,6 +574,7 @@ Mod_Prep4HPC <- function(
       Command_HPC = purrr::map2(Command_HPC, Chain, IASDT.R::SetChainName),
       Command_WS = purrr::map2(Command_WS, Chain, IASDT.R::SetChainName),
       Path_ModProg = purrr::map2(Path_ModProg, Chain, IASDT.R::SetChainName),
+      Post_Missing = purrr::map2(Post_Missing, Chain, IASDT.R::SetChainName),
       Post_Aligned = NA)
 
   save(Model_Info, file = Path_ModelDT)

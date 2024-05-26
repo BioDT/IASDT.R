@@ -9,6 +9,7 @@ PlotVarPar(
   PlotPath = NULL,
   ModelName = NULL,
   ModelEval = NULL,
+  ModelEvalPar = 1,
   VarPar = NULL,
   EnvFile = ".env"
 )
@@ -21,6 +22,8 @@ PlotVarPar(
 \item{ModelName}{String. Prefix to add to the title of the plot. Default: \code{NULL}, which means only use 'Variance paritioning' in the title.}
 
 \item{ModelEval}{Result of the \code{Hmsc::evaluateModelFit} function. If \code{ModelEval = NULL} (default), \code{Hmsc::evaluateModelFit} will be executed on the model object to compute measures of model fit.}
+
+\item{ModelEvalPar}{Integer. Number of parallel computations for computing predicted values. This is used as the \code{nParallel} argument of the \code{Hmsc::computePredictedValues} function.}
 
 \item{VarPar}{Variance partitioning. An object resulted from \code{Hmsc::computeVariancePartitioning}.}
 

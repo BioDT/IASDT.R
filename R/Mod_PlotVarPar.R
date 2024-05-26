@@ -10,6 +10,7 @@
 #' @param PlotPath String. Path to save the output file.
 #' @param ModelName String. Prefix to add to the title of the plot. Default: `NULL`, which means only use 'Variance paritioning' in the title.
 #' @param ModelEval Result of the `Hmsc::evaluateModelFit` function. If `ModelEval = NULL` (default), `Hmsc::evaluateModelFit` will be executed on the model object to compute measures of model fit.
+#' @param ModelEvalPar Integer. Number of parallel computations for computing predicted values. This is used as the `nParallel` argument of the `Hmsc::computePredictedValues` function.
 #' @param VarPar Variance partitioning. An object resulted from `Hmsc::computeVariancePartitioning`.
 #' @param EnvFile String. Path to read the environment variables. Default value: `.env`
 #' @name PlotVarPar
@@ -18,8 +19,8 @@
 #' @export
 
 PlotVarPar <- function(
-    Model, PlotPath = NULL, ModelName = NULL, ModelEval = NULL, VarPar = NULL,
-    EnvFile = ".env") {
+    Model, PlotPath = NULL, ModelName = NULL, ModelEval = NULL,
+    ModelEvalPar = 1, VarPar = NULL, EnvFile = ".env") {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
@@ -83,7 +84,7 @@ PlotVarPar <- function(
 
     if (is.null(ModelEval)) {
       preds <- Hmsc::computePredictedValues(
-        hM = Model, nParallel = length(Model$postList)) %>%
+        hM = Model, nParallel = ModelEvalPar) %>%
         suppressWarnings()
 
       # Evaluate model fit

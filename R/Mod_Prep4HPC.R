@@ -10,7 +10,7 @@
 #' @param Path_Data String. Path to read modelling data (without trailing slash)
 #' @param Path_Model String. Path to save all the output, including the to be fitted models (without trailing slash)
 #' @param MinPresGrids Integer. Minimum number of presence grid cells per species. Only species with ≥ this number will be considered
-#' @param Path_EnvFile String. Path to read the environment variables. Default value: `.env`
+#' @param EnvFile String. Path to read the environment variables. Default value: `.env`
 #' @param PrepareData Logical. Should the input data be prepared or loaded from disk?
 #' @param GPP_Dists Integer. Distance in kilometer for the distance between the knots and the minimum distance of a knot to the nearest data point. The same value will be used for the `knotDist`	and `minKnotDist`	arguments of the `Hmsc::constructKnots` function.
 #' @param GPP_Save Logical. Save the resulted knots as RData. Default: `TRUE`
@@ -42,7 +42,7 @@
 
 Mod_Prep4HPC <- function(
     Hab_Abb = NULL, Path_Data = NULL, Path_Model = NULL, MinPresGrids = NULL,
-    Path_EnvFile = ".env", PrepareData = TRUE, GPP_Dists = NULL, GPP_Save = TRUE,
+    EnvFile = ".env", PrepareData = TRUE, GPP_Dists = NULL, GPP_Save = TRUE,
     GPP_Plot = TRUE, XVars = NULL, PhyloTree = TRUE, NoPhyloTree = TRUE,
     NParallel = 8, nChains = 4, thin = NULL, samples = NULL,
     transientFactor = 300, verbose = 1000, SkipFitted = TRUE, MaxJobCounts = 210,
@@ -75,8 +75,8 @@ Mod_Prep4HPC <- function(
   # # |||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("\nLoad environment variables")
-  if (file.exists(Path_EnvFile)) {
-    readRenviron(Path_EnvFile)
+  if (file.exists(EnvFile)) {
+    readRenviron(EnvFile)
     Path_Hmsc <- Sys.getenv("DP_R_Mod_Path_Hmsc")
     Path_Python <- Sys.getenv("DP_R_Mod_Path_Python")
     Path_TaxaList <- Sys.getenv("DP_R_Mod_Path_TaxaList")
@@ -84,7 +84,7 @@ Mod_Prep4HPC <- function(
     Path_Scratch <- Sys.getenv("Path_LUMI_Scratch")
   } else {
     MSG <- paste0(
-      "Path for environment variables: ", Path_EnvFile, " was not found")
+      "Path for environment variables: ", EnvFile, " was not found")
     if (magrittr::not(VerboseProgress)) sink()
     stop(MSG)
   }
@@ -140,7 +140,7 @@ Mod_Prep4HPC <- function(
   # # |||||||||||||||||||||||||||||||||||
 
   fs::dir_create(file.path(Path_Model, "InitMod_HPC"))
-  fs::dir_create(file.path(Path_Model, "Model_Fitting"))
+  fs::dir_create(file.path(Path_Model, "Model_Fitting_HPC"))
   Path_ModelDT <- file.path(Path_Model, "Model_Info.RData")
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -168,7 +168,7 @@ Mod_Prep4HPC <- function(
   if (PrepareData) {
     DT_All <- IASDT.R::Mod_PrepData(
       Hab_Abb = Hab_Abb, MinPresGrids = MinPresGrids, OutputPath = Path_Model,
-      Path_EnvFile = Path_EnvFile, ReturnData = TRUE)
+      EnvFile = EnvFile, ReturnData = TRUE)
   } else {
     Path_Data2 <- file.path(
       Path_Data,
@@ -477,10 +477,10 @@ Mod_Prep4HPC <- function(
             Path_Model, "InitMod_HPC", basename(M4HPC_Path))
 
           Post_Path <- file.path(
-            Path_Model, "Model_Fitting",
+            Path_Model, "Model_Fitting_HPC",
             paste0(M_Name_Fit, "_Chain", Chain, "_post.rds"))
           Path_ModProg <- file.path(
-            Path_Model, "Model_Fitting",
+            Path_Model, "Model_Fitting_HPC",
             paste0(M_Name_Fit, "_Chain", Chain, "_Progress.txt"))
 
           Post_Missing <- magrittr::not(file.exists(Post_Path))
@@ -607,7 +607,7 @@ Mod_Prep4HPC <- function(
     IASDT.R::Mod_SLURM(
       Path_Model = Path_Model, JobName = JobName,
       MemPerCpu = MemPerCpu, Time = Time, FromHPC = FALSE,
-      Path_EnvFile = Path_EnvFile, ...)
+      EnvFile = EnvFile, ...)
   } else {
     IASDT.R::CatTime("SLURM file was NOT prepared")
   }

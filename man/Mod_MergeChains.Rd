@@ -2,7 +2,7 @@
 % Please edit documentation in R/Mod_MergeChains.R
 \name{Mod_MergeChains}
 \alias{Mod_MergeChains}
-\title{Prepare habitat-specific data for the models}
+\title{Post-processing of model outputs}
 \usage{
 Mod_MergeChains(
   Path_Model = NULL,
@@ -10,7 +10,8 @@ Mod_MergeChains(
   ModInfoName = NULL,
   PrintIncomplete = TRUE,
   FromHPC = TRUE,
-  Path_EnvFile = ".env"
+  EnvFile = ".env",
+  PlotVP = TRUE
 )
 }
 \arguments{
@@ -22,12 +23,14 @@ Mod_MergeChains(
 
 \item{PrintIncomplete}{Logical. Print to the console the name of unfitted models}
 
-\item{FromHPC}{Logical. Work from HPC? This is to adjust the file paths.#' @param Path_EnvFile String. Path to read the environment variables. Default value: \code{.env}}
+\item{FromHPC}{Logical. Work from HPC? This is to adjust the file paths.#' @param EnvFile String. Path to read the environment variables. Default value: \code{.env}}
 
-\item{Path_EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
+\item{EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
+
+\item{PlotVP}{Logical. Plot variance partitioning using the \code{IASDT.R::PlotVarPar} function.}
 }
 \description{
-Prepare habitat-specific data for the models
+Post-processing of model outputs
 }
 \author{
 Ahmed El-Gabbas

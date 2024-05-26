@@ -4,12 +4,12 @@
 \alias{Mod_Fit_WS}
 \title{Fit Hmsc-HPC models on UFZ Windows Server}
 \usage{
-Mod_Fit_WS(Path_Model = NULL, Path_EnvFile = ".env", NCores = NULL)
+Mod_Fit_WS(Path_Model = NULL, EnvFile = ".env", NCores = NULL)
 }
 \arguments{
 \item{Path_Model}{String. Path to the model files (without trailing slash)}
 
-\item{Path_EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
+\item{EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
 
 \item{NCores}{Integer. Number of parallel processes.}
 }

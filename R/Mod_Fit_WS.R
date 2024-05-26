@@ -7,7 +7,7 @@
 #' Fit Hmsc-HPC models on UFZ Windows Server
 #'
 #' @param Path_Model String. Path to the model files (without trailing slash)
-#' @param Path_EnvFile String. Path to read the environment variables. Default value: `.env`
+#' @param EnvFile String. Path to read the environment variables. Default value: `.env`
 #' @param NCores Integer. Number of parallel processes.
 #' @name Mod_Fit_WS
 #' @author Ahmed El-Gabbas
@@ -15,7 +15,7 @@
 #' @export
 
 Mod_Fit_WS <- function(
-    Path_Model = NULL, Path_EnvFile = ".env", NCores = NULL) {
+    Path_Model = NULL, EnvFile = ".env", NCores = NULL) {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
@@ -25,12 +25,12 @@ Mod_Fit_WS <- function(
   # # Load environment variables
   # # |||||||||||||||||||||||||||||||||||
 
-  if (file.exists(Path_EnvFile)) {
-    readRenviron(Path_EnvFile)
+  if (file.exists(EnvFile)) {
+    readRenviron(EnvFile)
     Path_Hmsc_WS <- Sys.getenv("DP_R_Mod_Path_VE_WS")
   } else {
     MSG <- paste0(
-      "Path for environment variables: ", Path_EnvFile, " was not found")
+      "Path for environment variables: ", EnvFile, " was not found")
     stop(MSG)
   }
 

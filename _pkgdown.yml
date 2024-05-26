@@ -86,9 +86,6 @@ reference:
   - BetaSummary
   - GetCV
   - GetPosts
-  - PlotBeta_bySp
-  - PlotBeta_byVar
-  - PlotRespCurv
   - PrepKnots
   - SetChainName
   - Mod_PrepData
@@ -97,6 +94,10 @@ reference:
   - Mod_SLURM_Refit
   - Mod_Fit_WS
   - Mod_MergeChains
+  - PlotVarPar
+  - PlotRespCurv
+  - PlotBeta_bySp
+  - PlotBeta_byVar
 
 - title: Spatial functions
   desc:

@@ -15,7 +15,7 @@
 #' @param MemPerCpu String. The value for the `#SBATCH --mem-per-cpu=` SLURM argument. Example: "32G" to request 32 gigabyte
 #' @param Time String. The value for the requested time for each job in the bash arrays. Example: "01:00:00" to request an hour.
 #' @param Partition String. The name of the partition. Default: `small-g`
-#' @param Path_EnvFile String. Path to read the environment variables. Default value: `.env`
+#' @param EnvFile String. Path to read the environment variables. Default value: `.env`
 #' @param FromHPC Logical. Work from HPC? This is to adjust the file paths.
 #' @param Command_Prefix String. Prefix for the bash commands to be executed
 #' @param SLURM_Prefix String. Prefix for the exported SLURM file.
@@ -27,7 +27,7 @@
 Mod_SLURM <- function(
     Path_Model = NULL, JobName = NULL, CatJobInfo = TRUE, ntasks = 1,
     CpusPerTask = 1, GpusPerNode = 1, MemPerCpu = NULL, Time = NULL,
-    Partition = "small-g", Path_EnvFile = ".env", FromHPC = TRUE,
+    Partition = "small-g", EnvFile = ".env", FromHPC = TRUE,
     Command_Prefix = "Commands_All", SLURM_Prefix = "Bash_Fit") {
 
   InitialWD <- getwd()
@@ -43,8 +43,8 @@ Mod_SLURM <- function(
   # # Load environment variables
   # # |||||||||||||||||||||||||||||||||||
 
-  if (file.exists(Path_EnvFile)) {
-    readRenviron(Path_EnvFile)
+  if (file.exists(EnvFile)) {
+    readRenviron(EnvFile)
     Path_Hmsc <- Sys.getenv("DP_R_Mod_Path_Hmsc")
     Path_Python <- Sys.getenv("DP_R_Mod_Path_Python")
     ProjNum <- Sys.getenv("IASDT_Proj_Number")
@@ -52,7 +52,7 @@ Mod_SLURM <- function(
     Path_GPU_Check <- Sys.getenv("DP_R_Mod_Path_GPU_Check")
   } else {
     MSG <- paste0(
-      "Path for environment variables: ", Path_EnvFile, " was not found")
+      "Path for environment variables: ", EnvFile, " was not found")
     stop(MSG)
   }
 
@@ -70,7 +70,7 @@ Mod_SLURM <- function(
 
   # character arguments
   CharArgs <- c(
-    "Path_Model", "JobName", "Path_EnvFile", "Time", "MemPerCpu", "Partition",
+    "Path_Model", "JobName", "EnvFile", "Time", "MemPerCpu", "Partition",
     "Path_Hmsc", "Path_Python", "ProjNum", "Path_Scratch", "Path_GPU_Check",
     "Command_Prefix", "SLURM_Prefix")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = CharArgs, Type = "character")
@@ -102,7 +102,7 @@ Mod_SLURM <- function(
       NJobs <- R.utils::countLines(ListCommands[x])[1]
 
       sink(file = file.path(Path_Model, OutFile))
-      Path_SLURM_Out <- file.path(Path_Model, "Model_Fitting", "SLURM_Results")
+      Path_SLURM_Out <- file.path(Path_Model, "Model_Fitting_HPC", "SLURM_Results")
       fs::dir_create(Path_SLURM_Out)
 
       cat2("#!/bin/bash\n")

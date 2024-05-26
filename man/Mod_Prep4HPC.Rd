@@ -9,7 +9,7 @@ Mod_Prep4HPC(
   Path_Data = NULL,
   Path_Model = NULL,
   MinPresGrids = NULL,
-  Path_EnvFile = ".env",
+  EnvFile = ".env",
   PrepareData = TRUE,
   GPP_Dists = NULL,
   GPP_Save = TRUE,
@@ -45,7 +45,7 @@ Mod_Prep4HPC(
 
 \item{MinPresGrids}{Integer. Minimum number of presence grid cells per species. Only species with ≥ this number will be considered}
 
-\item{Path_EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
+\item{EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
 
 \item{PrepareData}{Logical. Should the input data be prepared or loaded from disk?}
 

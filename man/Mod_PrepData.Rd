@@ -7,7 +7,7 @@
 Mod_PrepData(
   Hab_Abb = NULL,
   MinPresGrids = 50,
-  Path_EnvFile = ".env",
+  EnvFile = ".env",
   BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
   ReturnData = FALSE,
   OutputPath = NULL,
@@ -19,7 +19,7 @@ Mod_PrepData(
 
 \item{MinPresGrids}{Integer. Minimum number of presence grid cells per species. Only species with ≥ this number will be considered}
 
-\item{Path_EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
+\item{EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
 
 \item{BioVars}{String. The bioclimatic variables to get from CHELSA. Default value: \code{c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18")}}
 

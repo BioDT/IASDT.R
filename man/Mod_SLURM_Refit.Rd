@@ -11,7 +11,7 @@ Mod_SLURM_Refit(
   MemPerCpu = NULL,
   Time = NULL,
   Partition = "small-g",
-  Path_EnvFile = ".env",
+  EnvFile = ".env",
   CatJobInfo = TRUE,
   ntasks = 1,
   CpusPerTask = 1,
@@ -34,7 +34,7 @@ Mod_SLURM_Refit(
 
 \item{Partition}{String. The name of the partition. Default: \code{small-g}}
 
-\item{Path_EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
+\item{EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
 
 \item{CatJobInfo}{Logical. Add bash lines to report some job information. Default: \code{TRUE}}
 

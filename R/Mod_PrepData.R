@@ -8,7 +8,7 @@
 #'
 #' @param Hab_Abb String. Habitat type. This has to be one of the following: c("0", "1", "2", "3", "4a", "4b", "5", "6", "8", "10", "12a", "12b"). "0" means prepare data irrespective of the habitat type
 #' @param MinPresGrids Integer. Minimum number of presence grid cells per species. Only species with ≥ this number will be considered
-#' @param Path_EnvFile String. Path to read the environment variables. Default value: `.env`
+#' @param EnvFile String. Path to read the environment variables. Default value: `.env`
 #' @param BioVars String. The bioclimatic variables to get from CHELSA. Default value: `c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18")`
 #' @param ReturnData Logical. Should the resulted data be returned as an R object? Default: `FALSE`
 #' @param OutputPath String. Path to save the output file.
@@ -19,7 +19,7 @@
 #' @export
 
 Mod_PrepData <- function(
-    Hab_Abb = NULL, MinPresGrids = 50, Path_EnvFile = ".env",
+    Hab_Abb = NULL, MinPresGrids = 50, EnvFile = ".env",
     BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
     ReturnData = FALSE, OutputPath = NULL, VerboseProgress = FALSE) {
 
@@ -43,15 +43,15 @@ Mod_PrepData <- function(
     AllArgs,
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
-  CharArgs <- c("Path_EnvFile", "Hab_Abb", "OutputPath")
+  CharArgs <- c("EnvFile", "Hab_Abb", "OutputPath")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = CharArgs, Type = "character")
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Input data paths - these are read from the .env file
 
-  if (file.exists(Path_EnvFile)) {
-    readRenviron(Path_EnvFile)
+  if (file.exists(EnvFile)) {
+    readRenviron(EnvFile)
     Path_Grid <- Sys.getenv("DP_R_Mod_Path_Grid")
     Path_Bound <- Sys.getenv("DP_R_Mod_Path_Bound")
     Path_PA <- Sys.getenv("DP_R_Mod_Path_PA")
@@ -62,7 +62,7 @@ Mod_PrepData <- function(
     Path_Bias <- Sys.getenv("DP_R_Mod_Path_Bias")
   } else {
     MSG <- paste0(
-      "Path for environment variables: ", Path_EnvFile, " was not found")
+      "Path for environment variables: ", EnvFile, " was not found")
     stop(MSG)
   }
 

@@ -12,7 +12,7 @@
 #' @param MemPerCpu String. The value for the `#SBATCH --mem-per-cpu=` SLURM argument. Example: "32G" to request 32 gigabyte
 #' @param Time String. The value for the requested time for each job in the bash arrays. Example: "01:00:00" to request an hour.
 #' @param Partition String. The name of the partition. Default: `small-g`
-#' @param Path_EnvFile String. Path to read the environment variables. Default value: `.env`
+#' @param EnvFile String. Path to read the environment variables. Default value: `.env`
 #' @param CatJobInfo Logical. Add bash lines to report some job information. Default: `TRUE`
 #' @param ntasks Integer. The value for the `#SBATCH --ntasks=` SLURM argument. Default: 1
 #' @param CpusPerTask Integer. The value for the `#SBATCH --cpus-per-task=` SLURM argument. Default: 1
@@ -27,7 +27,7 @@
 
 Mod_SLURM_Refit <- function(
     Path_Model = NULL, MaxJobCounts = 210, JobName = NULL, MemPerCpu = NULL,
-    Time = NULL, Partition = "small-g", Path_EnvFile = ".env", CatJobInfo = TRUE,
+    Time = NULL, Partition = "small-g", EnvFile = ".env", CatJobInfo = TRUE,
     ntasks = 1, CpusPerTask = 1, GpusPerNode = 1, FromHPC = TRUE,
     Refit_Prefix = "Commands2Refit", SLURM_Prefix = "Bash_Refit") {
 
@@ -39,12 +39,12 @@ Mod_SLURM_Refit <- function(
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Command_HPC <- Post_Path <- NULL
 
-  if (file.exists(Path_EnvFile)) {
-    readRenviron(Path_EnvFile)
+  if (file.exists(EnvFile)) {
+    readRenviron(EnvFile)
     Path_Scratch <- Sys.getenv("Path_LUMI_Scratch")
   } else {
     MSG <- paste0(
-      "Path for environment variables: ", Path_EnvFile, " was not found")
+      "Path for environment variables: ", EnvFile, " was not found")
     stop(MSG)
   }
 
@@ -61,7 +61,7 @@ Mod_SLURM_Refit <- function(
 
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "character",
-    Args = c("Partition", "Path_EnvFile", "Time", "JobName",
+    Args = c("Partition", "EnvFile", "Time", "JobName",
              "MemPerCpu", "Path_Model", "SLURM_Prefix", "Refit_Prefix"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric",
@@ -77,7 +77,7 @@ Mod_SLURM_Refit <- function(
   if (FromHPC) setwd(Path_Scratch)
 
   # remove temp files and incomplete RDs files
-  Path_Model_Fit <- file.path(Path_Model, "Model_Fitting")
+  Path_Model_Fit <- file.path(Path_Model, "Model_Fitting_HPC")
   tempFiles <- list.files(
     path = Path_Model_Fit, pattern = ".rds_temp$", full.names = TRUE)
   if (length(tempFiles) > 0) {
@@ -129,7 +129,7 @@ Mod_SLURM_Refit <- function(
     IASDT.R::Mod_SLURM(
       Path_Model = Path_Model, JobName = paste0(basename(Path_Model), "_RF"),
       MemPerCpu = MemPerCpu, Time = Time, Partition = Partition,
-      Path_EnvFile = Path_EnvFile, GpusPerNode = GpusPerNode,
+      EnvFile = EnvFile, GpusPerNode = GpusPerNode,
       CatJobInfo = CatJobInfo, ntasks = ntasks, CpusPerTask = CpusPerTask,
       Command_Prefix = Refit_Prefix, SLURM_Prefix = SLURM_Prefix)
 

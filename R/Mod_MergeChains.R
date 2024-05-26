@@ -78,6 +78,7 @@ Mod_MergeChains <- function(
   # Prepare working on parallel
   c1 <- snow::makeSOCKcluster(NCores)
   future::plan(future::cluster, workers = c1, gc = TRUE)
+
   Path_ModInfo <- file.path(Path_Model, "Model_Info.RData")
 
   Path_Fitted_Models <- file.path(Path_Model, "Model_Fitted")
@@ -112,7 +113,9 @@ Mod_MergeChains <- function(
                       M_thin, M_transient, M_Name_Fit, Post_Aligned) {
 
           if (Post_Missing) {
-            list(Path_FittedMod = NA, Path_Coda = NA, Post_Aligned2 = NA) %>%
+            list(
+              Path_FittedMod = NA, Path_Coda = NA, Post_Aligned2 = NA,
+              Path_PredVals = NA, Path_ModEval = NA, Path_ModVarPar = NA) %>%
               return()
           } else {
 
@@ -152,6 +155,9 @@ Mod_MergeChains <- function(
                 Post_Aligned2 <- TRUE
               }
 
+              rm(Posts)
+              invisible(gc())
+
               if (inherits(Model_Fit, "try-error")) {
                 paste0("Model ", M_Name_Fit, " failed to be merged!") %>%
                   IASDT.R::CatTime()
@@ -178,6 +184,7 @@ Mod_MergeChains <- function(
               IASDT.R::SaveAs(
                 InObj = Model_Preds, OutObj = paste0(M_Name_Fit, "_Preds"),
                 OutPath = Path_PredVals)
+              invisible(gc())
             } else {
               Model_Preds <- IASDT.R::LoadAs(Path_PredVals)
             }
@@ -196,6 +203,7 @@ Mod_MergeChains <- function(
               IASDT.R::SaveAs(
                 InObj = Model_Evals, OutObj = paste0(M_Name_Fit, "_Evals"),
                 OutPath = Path_ModEval)
+              invisible(gc())
             } else {
               Model_Evals <- IASDT.R::LoadAs(Path_ModEval)
             }
@@ -212,6 +220,7 @@ Mod_MergeChains <- function(
               IASDT.R::SaveAs(
                 InObj = Model_VP, OutObj = paste0(M_Name_Fit, "_VP"),
                 OutPath = Path_ModVarPar)
+              invisible(gc())
             } else {
               Model_VP <- IASDT.R::LoadAs(Path_ModVarPar)
             }
@@ -230,17 +239,20 @@ Mod_MergeChains <- function(
                 EnvFile = EnvFile)
             }
 
+            rm(Model_Evals, Model_VP)
+            invisible(gc())
+
             # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
             # Convert to Coda object
             # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-            Path_Coda <- file.path(
-              Path_Coda, paste0(M_Name_Fit, "_Coda.RData"))
+            Path_Coda <- file.path(Path_Coda, paste0(M_Name_Fit, "_Coda.RData"))
             CodaMissing <- magrittr::not(file.exists(Path_Coda))
 
             if (magrittr::not(ModFitMissing)) {
               Model_Fit <- IASDT.R::LoadAs(Path_FittedMod)
             }
+
             if (CodaMissing) {
               if (inherits(Model_Fit, "try-error")) {
                 IASDT.R::CatTime("  >>>  No Coad object was exported")
@@ -253,6 +265,8 @@ Mod_MergeChains <- function(
                   OutPath = Path_Coda)
                 rm(Mod_Coda)
               }
+              rm(Model_Evals, Model_VP)
+              invisible(gc())
             }
 
             # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

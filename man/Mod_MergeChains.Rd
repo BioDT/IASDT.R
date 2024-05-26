@@ -10,8 +10,7 @@ Mod_MergeChains(
   ModInfoName = NULL,
   PrintIncomplete = TRUE,
   FromHPC = TRUE,
-  EnvFile = ".env",
-  PlotVP = TRUE
+  EnvFile = ".env"
 )
 }
 \arguments{
@@ -23,11 +22,9 @@ Mod_MergeChains(
 
 \item{PrintIncomplete}{Logical. Print to the console the name of unfitted models}
 
-\item{FromHPC}{Logical. Work from HPC? This is to adjust the file paths.#' @param EnvFile String. Path to read the environment variables. Default value: \code{.env}}
+\item{FromHPC}{Logical. Work from HPC? This is to adjust the file paths.}
 
 \item{EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
-
-\item{PlotVP}{Logical. Plot variance partitioning using the \code{IASDT.R::PlotVarPar} function.}
 }
 \description{
 Post-processing of model outputs

@@ -10,17 +10,17 @@
 #' @param NCores Integer. Number of parallel cores to use
 #' @param ModInfoName String. Default: `NULL` which means overwrite the `Model_Info.RData` file. If `ModInfoName` is provided, a new `.RData` file will be created with this prefix for file name (excluding extension)
 #' @param PrintIncomplete Logical. Print to the console the name of unfitted models
-#' @param FromHPC Logical. Work from HPC? This is to adjust the file paths.#' @param EnvFile String. Path to read the environment variables. Default value: `.env`
+#' @param FromHPC Logical. Work from HPC? This is to adjust the file paths.
 #' @param EnvFile String. Path to read the environment variables. Default value: `.env`
-#' @param PlotVP Logical. Plot variance partitioning using the `IASDT.R::PlotVarPar` function.
 #' @name Mod_MergeChains
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
+
 Mod_MergeChains <- function(
-    Path_Model = NULL, NCores = NULL, ModInfoName = NULL, PrintIncomplete = TRUE,
-    FromHPC = TRUE, EnvFile = ".env", PlotVP = TRUE) {
+    Path_Model = NULL, NCores = NULL, ModInfoName = NULL,
+    PrintIncomplete = TRUE, FromHPC = TRUE, EnvFile = ".env") {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
@@ -114,9 +114,9 @@ Mod_MergeChains <- function(
 
           if (Post_Missing) {
             list(
-              Path_FittedMod = NA, Path_Coda = NA, Post_Aligned2 = NA,
-              Path_PredVals = NA, Path_ModEval = NA, Path_ModVarPar = NA) %>%
+              Path_FittedMod = NA, Path_Coda = NA, Post_Aligned2 = NA) %>%
               return()
+
           } else {
 
             # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -171,78 +171,6 @@ Mod_MergeChains <- function(
             }
 
             # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-            # Compute predicted values
-            # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-            Path_PredVals <- file.path(
-              Path_Preds, paste0(M_Name_Fit, "_Preds.RData"))
-
-            if (magrittr::not(file.exists(Path_PredVals))) {
-              Model_Preds <- Hmsc::computePredictedValues(
-                hM = Model_Fit, nParallel = length(Model_Fit$postList)) %>%
-                suppressWarnings()
-              IASDT.R::SaveAs(
-                InObj = Model_Preds, OutObj = paste0(M_Name_Fit, "_Preds"),
-                OutPath = Path_PredVals)
-              invisible(gc())
-            } else {
-              Model_Preds <- IASDT.R::LoadAs(Path_PredVals)
-            }
-
-            # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-            # Compute measures of model fit
-            # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-            Path_ModEval <- file.path(
-              Path_Eval, paste0(M_Name_Fit, "_ModEval.RData"))
-
-            if (magrittr::not(file.exists(Path_ModEval))) {
-              Model_Evals <- Hmsc::evaluateModelFit(
-                hM = Model_Fit, predY = Model_Preds) %>%
-                suppressWarnings()
-              IASDT.R::SaveAs(
-                InObj = Model_Evals, OutObj = paste0(M_Name_Fit, "_Evals"),
-                OutPath = Path_ModEval)
-              invisible(gc())
-            } else {
-              Model_Evals <- IASDT.R::LoadAs(Path_ModEval)
-            }
-
-            # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-            # Compute variance partitioning
-            # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-            Path_ModVarPar <- file.path(
-              Path_VarPar, paste0(M_Name_Fit, "_VP.RData"))
-
-            if (magrittr::not(file.exists(Path_ModVarPar))) {
-              Model_VP <- Hmsc::computeVariancePartitioning(Model_Fit)
-              IASDT.R::SaveAs(
-                InObj = Model_VP, OutObj = paste0(M_Name_Fit, "_VP"),
-                OutPath = Path_ModVarPar)
-              invisible(gc())
-            } else {
-              Model_VP <- IASDT.R::LoadAs(Path_ModVarPar)
-            }
-
-            # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-            # Plot variance partitioning
-            # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-            if (PlotVP) {
-              Path_VP_Plot <- file.path(
-                Path_VarPar, paste0(M_Name_Fit, "_VP.jpeg"))
-
-              IASDT.R::PlotVarPar(
-                Model = NULL, PlotPath = Path_VP_Plot, ModelName = NULL,
-                ModelEval = Model_Evals, VarPar = Model_VP,
-                EnvFile = EnvFile)
-            }
-
-            rm(Model_Evals, Model_VP)
-            invisible(gc())
-
-            # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
             # Convert to Coda object
             # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -287,9 +215,9 @@ Mod_MergeChains <- function(
 
             list(
               Path_FittedMod = Path_FittedMod, Path_Coda = Path_Coda,
-              Post_Aligned2 = Post_Aligned2, Path_PredVals = Path_PredVals,
-              Path_ModEval = Path_ModEval, Path_ModVarPar = Path_ModVarPar) %>%
+              Post_Aligned2 = Post_Aligned2) %>%
               return()
+
           }},
         .progress = FALSE,
         .options = furrr::furrr_options(seed = TRUE, scheduling = Inf)))

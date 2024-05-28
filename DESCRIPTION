@@ -2,7 +2,7 @@ Type: Package
 Package: IASDT.R
 Title: Helper R functions for IAS pDT project
 Version: 0.0.5
-Date: 2024-05-26
+Date: 2024-05-28
 Authors@R: 
     person("Ahmed", "El-Gabbas", , "ahmed.el-gabbas@ufz.de", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-2225-088X"))
@@ -33,7 +33,9 @@ Suggests:
     future,
     future.apply,
     gdata,
+    ggExtra,
     ggplot2,
+    ggtext,
     gridExtra,
     gtools,
     Hmsc (>= 3.1-2),

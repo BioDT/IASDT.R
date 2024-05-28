@@ -83,11 +83,7 @@ Mod_MergeChains <- function(
 
   Path_Fitted_Models <- file.path(Path_Model, "Model_Fitted")
   Path_Coda <- file.path(Path_Model, "Model_Coda")
-  Path_VarPar <- file.path(Path_Model, "Model_VarPar")
-  Path_Preds <- file.path(Path_Model, "Model_Preds")
-  Path_Eval <- file.path(Path_Model, "Model_Eval")
-  c(Path_Fitted_Models, Path_Coda, Path_VarPar, Path_Preds, Path_Eval) %>%
-    fs::dir_create()
+  fs::dir_create(c(Path_Fitted_Models, Path_Coda))
 
 
   Model_Info2 <- Path_ModInfo %>%

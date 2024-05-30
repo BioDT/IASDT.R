@@ -606,7 +606,7 @@ Mod_Prep4HPC <- function(
     }
     IASDT.R::Mod_SLURM(
       Path_Model = Path_Model, JobName = JobName,
-      MemPerCpu = MemPerCpu, Time = Time, FromHPC = FALSE,
+      MemPerCpu = MemPerCpu, Time = Time, FromHPC = FromHPC,
       EnvFile = EnvFile, ...)
   } else {
     IASDT.R::CatTime("SLURM file was NOT prepared")

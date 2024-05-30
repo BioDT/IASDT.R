@@ -23,8 +23,6 @@ Gelman_Omega <- function(
   Iter <- Type <- Sp_comb <- dplyr <- coda <- tibble <- magrittr <-
     ShrinkFactor <- group <- NULL
 
-
-
   c1 <- snow::makeSOCKcluster(NCores)
   future::plan(future::cluster, workers = c1, gc = TRUE)
 
@@ -58,8 +56,8 @@ Gelman_Omega <- function(
           cols = -Iter, names_to = "Type", values_to = "ShrinkFactor") %>%
         dplyr::arrange(Type, Iter) %>%
         dplyr::mutate(
-          Colour = dplyr::if_else(Type == "Median", "black", "red"),
-          LType = dplyr::if_else(Type == "Median", "dashed", "solid"),
+          # Colour = dplyr::if_else(Type == "Median", "black", "red"),
+          # LType = dplyr::if_else(Type == "Median", "dashed", "solid"),
           Type = factor(Type), Sp_comb = x)
     }) %>%
     dplyr::bind_rows() %>%

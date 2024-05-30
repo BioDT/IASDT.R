@@ -352,7 +352,7 @@ Mod_Prep4HPC <- function(
     dplyr::mutate(M_transient = M_thin * transientFactor)
 
   Model_Info <- tibble::tibble(rL = GPP_Dists, rL2 = GPP_Knots) %>%
-    tidyr::expand_grid(Tree = c("Tree", "NoTree")) %>%
+    tidyr::expand_grid(Tree = Tree) %>%
     dplyr::mutate(
       M_Name_init = paste0("GPP", rL, "_", Tree),
       M_Init_Path = purrr::map2_chr(

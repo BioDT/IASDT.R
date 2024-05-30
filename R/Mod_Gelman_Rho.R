@@ -31,8 +31,8 @@ Gelman_Rho <- function(CodaObj = NULL) {
       cols = -Iter, names_to = "Type", values_to = "ShrinkFactor") %>%
     dplyr::arrange(Type, Iter) %>%
     dplyr::mutate(
-      Colour = dplyr::if_else(Type == "Median", "black", "red"),
-      LType = dplyr::if_else(Type == "Median", "dashed", "solid"),
+      # Colour = dplyr::if_else(Type == "Median", "black", "red"),
+      # LType = dplyr::if_else(Type == "Median", "dashed", "solid"),
       Type = factor(Type)) %>%
     ggplot2::ggplot() +
     ggplot2::geom_line(

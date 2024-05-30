@@ -59,8 +59,7 @@ Gelman_Beta <- function(CodaObj = NULL, NCores = NULL, PlotAlpha = 0.25) {
           cols = -Iter, names_to = "Type", values_to = "ShrinkFactor") %>%
         dplyr::arrange(Type, Iter) %>%
         dplyr::mutate(
-          Colour = dplyr::if_else(Type == "Median", "black", "red"),
-          LType = dplyr::if_else(Type == "Median", "dashed", "solid"),
+          # Colour = dplyr::if_else(Type == "Median", "black", "red"),
           Type = factor(Type), Var_Sp = x)
     }) %>%
     dplyr::bind_rows() %>%

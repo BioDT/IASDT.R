@@ -100,7 +100,13 @@ or re-install it; you can use `force = TRUE` to force installation, even
 if the remote state has not changed since the previous install.
 
 ``` r
-# remotes::install_gitlab(repo = "BioDT/IASDT.R", host = "git.ufz.de")
+remotes::install_gitlab(repo = "BioDT/IASDT.R", host = "git.ufz.de")
+```
+
+If you are using `renv`, you may use the following to update the package
+
+``` r
+renv::update("IASDT.R", prompt = FALSE)
 ```
 
 ### Contribute to the package

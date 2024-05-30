@@ -10,7 +10,8 @@ Mod_MergeChains(
   ModInfoName = NULL,
   PrintIncomplete = TRUE,
   FromHPC = TRUE,
-  EnvFile = ".env"
+  EnvFile = ".env",
+  FromJSON = FALSE
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ Mod_MergeChains(
 \item{FromHPC}{Logical. Work from HPC? This is to adjust the file paths.}
 
 \item{EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
+
+\item{FromJSON}{Logical. Convert loaded models to JSON format before reading}
 }
 \description{
 Post-processing of model outputs

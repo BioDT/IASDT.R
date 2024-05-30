@@ -12,6 +12,7 @@
 #' @param PrintIncomplete Logical. Print to the console the name of unfitted models
 #' @param FromHPC Logical. Work from HPC? This is to adjust the file paths.
 #' @param EnvFile String. Path to read the environment variables. Default value: `.env`
+#' @param FromJSON Logical. Convert loaded models to JSON format before reading
 #' @name Mod_MergeChains
 #' @author Ahmed El-Gabbas
 #' @return NULL
@@ -20,7 +21,7 @@
 
 Mod_MergeChains <- function(
     Path_Model = NULL, NCores = NULL, ModInfoName = NULL,
-    PrintIncomplete = TRUE, FromHPC = TRUE, EnvFile = ".env") {
+    PrintIncomplete = TRUE, FromHPC = TRUE, EnvFile = ".env", FromJSON = FALSE) {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
@@ -131,7 +132,8 @@ Mod_MergeChains <- function(
               }
 
               # Get posteriors
-              Posts <- purrr::map(as.character(Post_Path), IASDT.R::GetPosts)
+              Posts <- purrr::map(
+                as.character(Post_Path), IASDT.R::GetPosts, FromJSON = FromJSON)
 
               # Convert to Hmsc object - Try with `alignPost = TRUE`
               Model_Fit <- Hmsc::importPosteriorFromHPC(

@@ -189,7 +189,7 @@ Mod_MergeChains <- function(
                   OutPath = Path_Coda)
                 rm(Mod_Coda)
               }
-              rm(Model_Fit, Model_Evals, Model_VP)
+              rm(Model_Fit)
               invisible(gc())
             }
 

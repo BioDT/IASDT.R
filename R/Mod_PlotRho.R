@@ -19,7 +19,7 @@ PlotRho <- function(
     Post, Model, Title,
     Cols = c("red", "blue", "darkgreen", "darkgrey")) {
 
-  Chain <- ID <- NULL
+  Chain <- ID <- Value <- x <- y <- label <- NULL
 
   # Load coda object
   if (inherits(Post, "character")) {

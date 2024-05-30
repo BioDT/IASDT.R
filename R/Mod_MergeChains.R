@@ -52,6 +52,7 @@ Mod_MergeChains <- function(
     AllArgs = AllArgs, Args = c("PrintIncomplete", "FromHPC", "PlotVP"),
     Type = "logical")
 
+  rm(AllArgs)
 
   if (FromHPC) {
     Path_Model <- file.path(Path_Scratch, Path_Model)

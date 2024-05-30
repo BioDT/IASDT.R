@@ -33,6 +33,7 @@ Mod_Prep4HPC(
   MemPerCpu = NULL,
   Time = NULL,
   JobName = NULL,
+  ToJSON = FALSE,
   ...
 )
 }
@@ -92,6 +93,8 @@ Mod_Prep4HPC(
 \item{Time}{String. The value for the requested time for each job in the bash arrays. Example: "01:00:00" to request an hour. Only effective if \code{PrepSLURM = TRUE}.}
 
 \item{JobName}{String. The name of the submitted job(s). Only effective if \code{PrepSLURM = TRUE}.}
+
+\item{ToJSON}{Logical. Convert unfitted models to JSON before saving to rds file}
 
 \item{...}{additional parameters provided to the \code{IASDT.R::Mod_SLURM} function}
 }

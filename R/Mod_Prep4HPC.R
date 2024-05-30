@@ -34,6 +34,7 @@
 #' @param MemPerCpu String. The value for the `#SBATCH --mem-per-cpu=` SLURM argument. Example: "32G" to request 32 gigabyte. Only effective if `PrepSLURM = TRUE`.
 #' @param Time String. The value for the requested time for each job in the bash arrays. Example: "01:00:00" to request an hour. Only effective if `PrepSLURM = TRUE`.
 #' @param JobName String. The name of the submitted job(s). Only effective if `PrepSLURM = TRUE`.
+#' @param ToJSON Logical. Convert unfitted models to JSON before saving to rds file
 #' @param ... additional parameters provided to the `IASDT.R::Mod_SLURM` function
 #' @name Mod_Prep4HPC
 #' @author Ahmed El-Gabbas
@@ -48,7 +49,7 @@ Mod_Prep4HPC <- function(
     transientFactor = 300, verbose = 1000, SkipFitted = TRUE, MaxJobCounts = 210,
     ModelCountry = NULL, MinPresPerCountry = 50, VerboseProgress = FALSE,
     FromHPC = TRUE, PrepSLURM = TRUE, MemPerCpu = NULL, Time = NULL,
-    JobName = NULL, ...) {
+    JobName = NULL, ToJSON = FALSE, ...) {
 
   # https://github.com/hmsc-r/HMSC/issues/180
   # https://github.com/hmsc-r/HMSC/issues/139
@@ -112,7 +113,7 @@ Mod_Prep4HPC <- function(
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = CharArgs, Type = "character")
 
   LogicArgs <- c("GPP_Save", "GPP_Plot", "PhyloTree",
-                 "NoPhyloTree", "VerboseProgress")
+                 "NoPhyloTree", "VerboseProgress", "ToJSON")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = LogicArgs, Type = "logical")
 
   NumericArgs <- c(
@@ -422,8 +423,11 @@ Mod_Prep4HPC <- function(
       Model <- Hmsc::sampleMcmc(
         hM = M_Init, samples = M_samples, thin = M_thin,
         transient = M_transient, nChains = nChains,
-        verbose = verbose, engine = "HPC") %>%
-        jsonify::to_json()
+        verbose = verbose, engine = "HPC")
+
+      if (ToJSON) {
+        Model <- jsonify::to_json(Model)
+      }
 
       saveRDS(Model, file = M4HPC_Path)
       return(pryr::object_size(Model))

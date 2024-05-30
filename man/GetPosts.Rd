@@ -4,10 +4,12 @@
 \alias{GetPosts}
 \title{Combining posteriors exported by \code{Hmsc-HPC} into Hmsc object}
 \usage{
-GetPosts(FilePath)
+GetPosts(FilePath, FromJSON = FALSE)
 }
 \arguments{
 \item{FilePath}{String. Vector of the file paths of the \code{rds} files created by \code{Hmsc-HPC}}
+
+\item{FromJSON}{Logical. Convert loaded models to JSON format before reading}
 }
 \description{
 Combining posteriors exported by \code{Hmsc-HPC} into Hmsc object

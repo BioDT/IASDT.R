@@ -69,7 +69,7 @@ Mod_PrepData <- function(
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  # Paths checking
+ ## Paths checking ----
 
   IASDT.R::CatTime("Checking paths")
 
@@ -106,6 +106,7 @@ Mod_PrepData <- function(
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
+  IASDT.R::CatTime("Checking arguments")
   ValidHabAbbs <- c(0:3, "4a", "4b", 5, 6, 8, 10, "12a", "12b")
   if (magrittr::not(as.character(Hab_Abb) %in% ValidHabAbbs)) {
     stop(
@@ -118,6 +119,9 @@ Mod_PrepData <- function(
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
+  IASDT.R::CatTime("Load input data")
+
+  IASDT.R::CatTime(">> Load species data summary")
   R_Sp <- file.path(Path_PA, "Sp_PA_Summary_DF.RData") %>%
     IASDT.R::LoadAs()
 
@@ -134,6 +138,7 @@ Mod_PrepData <- function(
     R_Sp <- dplyr::filter(R_Sp, !!as.symbol(Hab_column))
   }
 
+  IASDT.R::CatTime(">> Load species PA data")
   R_Sp <- R_Sp %>%
     dplyr::filter(NCells >= MinPresGrids) %>%
     dplyr::select(SpeciesID, Species_name, Species_File) %>%
@@ -154,6 +159,7 @@ Mod_PrepData <- function(
 
   ## CHELSA -----
 
+  IASDT.R::CatTime(">> Load CHELSA data")
   R_Chelsa <- Path_Chelsa_Time_CC %>%
     file.path("St_1981_2010.RData") %>%
     IASDT.R::LoadAs() %>%
@@ -165,6 +171,7 @@ Mod_PrepData <- function(
 
   ## Habitat coverage -----
 
+  IASDT.R::CatTime(">> Load Habitat coverage")
   if (Hab_Abb == "0") {
     R_Hab <- file.path(Path_CLC_Summ, "PercCov_SynHab_Crop.RData") %>%
       IASDT.R::LoadAs() %>%
@@ -184,7 +191,7 @@ Mod_PrepData <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   ## Road ----
-
+  IASDT.R::CatTime(">> Load Road intensity")
   R_RoadInt <- file.path(Path_Roads, "Road_Length.RData") %>%
     IASDT.R::LoadAs() %>%
     terra::unwrap() %>%
@@ -203,6 +210,7 @@ Mod_PrepData <- function(
 
   ## Rail ----
 
+  IASDT.R::CatTime(">> Load railway intensity")
   R_RailInt <- file.path(Path_Rail, "Railway_Length.RData") %>%
     IASDT.R::LoadAs() %>%
     terra::unwrap() %>%
@@ -220,6 +228,8 @@ Mod_PrepData <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   ## Road + rail ----
+
+  IASDT.R::CatTime(">> Load railway + road intensity")
   R_RoadRail <- (R_RoadInt + R_RailInt) %>%
     stats::setNames("RoadRail")
   R_RoadRailLog <- log10(R_RoadRail + 0.1) %>%
@@ -228,6 +238,7 @@ Mod_PrepData <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   ## Sampling intensity ----
+  IASDT.R::CatTime(">> Load sampling intensity")
   R_Bias <- file.path(Path_Bias, "Bias_GBIF_SummaryR.RData") %>%
     IASDT.R::LoadAs() %>%
     terra::unwrap() %>%
@@ -240,6 +251,8 @@ Mod_PrepData <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   ## Reference grid -----
+
+  IASDT.R::CatTime("Load reference grid")
   EU_Grid <- Path_Grid %>%
     file.path("Grid_10_sf.RData") %>%
     IASDT.R::LoadAs() %>%
@@ -248,6 +261,8 @@ Mod_PrepData <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   ## Country boundary -----
+
+  IASDT.R::CatTime(">> Load country boundaries")
   EU_Bound <- Path_Bound %>%
     file.path("Bound_sf_Eur.RData") %>%
     IASDT.R::LoadAs() %>%
@@ -258,8 +273,10 @@ Mod_PrepData <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   ## Merging data together -----
+  IASDT.R::CatTime("Merging data together")
 
   ### Combine maps and convert to tibble -----
+  IASDT.R::CatTime(">> Combine maps and convert to tibble")
   DT_All <- c(
     R_Chelsa, R_Hab, R_RoadInt, R_RoadIntLog, R_RoadDist,
     R_RailInt, R_RailIntLog, R_RailDist, R_RoadRail, R_RoadRailLog,
@@ -270,6 +287,8 @@ Mod_PrepData <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # get country and grid cell ID
+
+  IASDT.R::CatTime(">> get country and grid cell ID")
 
   # List of countries in the boundaries shapefile
   CountryNames <- EU_Bound$NAME_ENGL
@@ -283,6 +302,7 @@ Mod_PrepData <- function(
     dplyr::rename(Country = NAME_ENGL)
 
   # find nearest countries for unmatched grid cells
+  IASDT.R::CatTime(">> find nearest countries for unmatched grid cells")
   MissingCountries <- DT_Country %>%
     dplyr::filter(is.na(Country)) %>%
     dplyr::mutate(

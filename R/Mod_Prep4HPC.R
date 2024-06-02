@@ -172,7 +172,7 @@ Mod_Prep4HPC <- function(
   if (PrepareData) {
     DT_All <- IASDT.R::Mod_PrepData(
       Hab_Abb = Hab_Abb, MinPresGrids = MinPresGrids, OutputPath = Path_Model,
-      EnvFile = EnvFile, ReturnData = TRUE)
+      EnvFile = EnvFile, ReturnData = TRUE, VerboseProgress = VerboseProgress)
   } else {
     Path_Data2 <- file.path(
       Path_Data,

@@ -65,7 +65,10 @@ Mod_Prep4HPC <- function(
     Chain <- Post_Missing <- Command_HPC <- Command_WS <- Post_Path <-
     Path_ModProg <- NULL
 
-  if (magrittr::not(VerboseProgress)) sink(file = nullfile())
+  if (magrittr::not(VerboseProgress)) {
+    sink(file = nullfile())
+    on.exit(sink(), add = TRUE)
+  }
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -86,12 +89,14 @@ Mod_Prep4HPC <- function(
   } else {
     MSG <- paste0(
       "Path for environment variables: ", EnvFile, " was not found")
-    if (magrittr::not(VerboseProgress)) sink()
     stop(MSG)
   }
 
   # temporarily setting the working directory
-  if (FromHPC) setwd(Path_Scratch)
+  if (FromHPC) {
+    setwd(Path_Scratch)
+    on.exit(setwd(InitialWD), add = TRUE)
+  }
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -128,7 +133,6 @@ Mod_Prep4HPC <- function(
 
   # Phylogenetic tree options
   if (PhyloTree == FALSE && NoPhyloTree == FALSE) {
-    if (magrittr::not(VerboseProgress)) sink()
     stop("At least one of PhyloTree or NoPhyloTree has to be true")
   }
 
@@ -155,7 +159,6 @@ Mod_Prep4HPC <- function(
   if (magrittr::not(as.character(Hab_Abb) %in% ValidHabAbbs)) {
     MSG <- paste0("Hab_Abb has to be one of the following:\n >> ",
                   paste0(ValidHabAbbs, collapse = " | "))
-    if (magrittr::not(VerboseProgress)) sink()
     stop(MSG)
   }
   HabVal <- c(
@@ -203,7 +206,6 @@ Mod_Prep4HPC <- function(
       MSG <- paste0(
         "The following are invalid country names: ",
         paste0(ModelCountry[!ValidCountries], collapse = " & "))
-      if (magrittr::not(VerboseProgress)) sink()
       stop(MSG)
     }
 
@@ -616,10 +618,7 @@ Mod_Prep4HPC <- function(
     IASDT.R::CatTime("SLURM file was NOT prepared")
   }
 
-  if (magrittr::not(VerboseProgress)) sink()
-
   IASDT.R::CatDiff(.StartTime, CatInfo = FALSE)
-  if (FromHPC) setwd(InitialWD)
 
   return(invisible(NULL))
 }

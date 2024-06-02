@@ -32,6 +32,7 @@ Mod_PrepData <- function(
 
   if (magrittr::not(VerboseProgress)) {
     sink(file = nullfile())
+    on.exit(sink(), add = TRUE)
   }
 
   Hab_Abb <- as.character(Hab_Abb)
@@ -312,10 +313,6 @@ Mod_PrepData <- function(
   IASDT.R::SaveAs(
     InObj = DT_All, OutObj = OutObjName,
     OutPath = file.path(OutputPath, paste0(OutObjName, ".RData")))
-
-  if (magrittr::not(VerboseProgress)) {
-    sink()
-  }
 
   if (ReturnData) {
     return(DT_All)

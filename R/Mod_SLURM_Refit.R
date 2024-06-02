@@ -34,7 +34,6 @@ Mod_SLURM_Refit <- function(
 
   InitialWD <- getwd()
 
-
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Command_HPC <- Post_Path <- NULL
@@ -74,7 +73,10 @@ Mod_SLURM_Refit <- function(
 
 
   # temporarily setting the working directory
-  if (FromHPC) setwd(Path_Scratch)
+  if (FromHPC) {
+    setwd(Path_Scratch)
+    on.exit(setwd(InitialWD), add = TRUE)
+  }
 
   # remove temp files and incomplete RDs files
   Path_Model_Fit <- file.path(Path_Model, "Model_Fitting_HPC")
@@ -89,7 +91,7 @@ Mod_SLURM_Refit <- function(
       .x = c(tempFilesRDs, tempFiles),
       .f = ~{
         if (file.exists(.x)) file.remove(.x)
-        })
+      })
   }
 
   # List of unfitted model variants
@@ -139,8 +141,6 @@ Mod_SLURM_Refit <- function(
   } else {
     IASDT.R::CatTime("All models were already fitted!")
   }
-
-  if (FromHPC) setwd(InitialWD)
 
   return(invisible(NULL))
 }

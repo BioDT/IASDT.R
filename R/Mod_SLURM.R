@@ -57,7 +57,10 @@ Mod_SLURM <- function(
   }
 
   # temporarily setting the working directory
-  if (FromHPC) setwd(Path_Scratch)
+  if (FromHPC) {
+    setwd(Path_Scratch)
+    on.exit(setwd(InitialWD), add = TRUE)
+  }
 
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -197,8 +200,6 @@ Mod_SLURM <- function(
       cat2('echo "End of program at `date`"')
       sink()
     })
-
-  if (FromHPC) setwd(InitialWD)
 
   return(invisible(NULL))
 }

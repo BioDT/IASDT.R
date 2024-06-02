@@ -26,8 +26,9 @@ Mod_PrepData <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  NCells <- SpeciesID <- Species_name <- Species_File <- PA <- NAME_ENGL <-
-    cell <- geometry <- Country <- Country2 <- NULL
+  NCells <- SpeciesID <- Species_name <- Species_File <- PA <-
+    NAME_ENGL <- cell <- geometry <- Country <- Country2 <-
+    x <- y <- NULL
 
 
   if (magrittr::not(VerboseProgress)) {
@@ -295,12 +296,15 @@ Mod_PrepData <- function(
   # Find spatially matching countries
   IASDT.R::CatTime(">> find spatially matching countries")
   DT_Country <- DT_All %>%
-    sf::st_as_sf(coords = c("x", "y"), crs = 3035) %>%
-    dplyr::select(cell, geometry) %>%
-    sf::st_join(EU_Grid) %>%
-    sf::st_join(EU_Bound) %>%
-    dplyr::rename(Country = NAME_ENGL)
+    dplyr::select(cell, x, y) %>%
+    sf::st_as_sf(coords = c("x", "y"), crs = 3035)
 
+  IASDT.R::CatTime(">> Add grid cell code")
+  DT_Country <- sf::st_join(DT_Country, EU_Grid)
+
+  IASDT.R::CatTime(">> Add country name")
+  DT_Country <- sf::st_join(DT_Country, EU_Bound) %>%
+    dplyr::rename(Country = NAME_ENGL)
 
   # find nearest countries for unmatched grid cells
   IASDT.R::CatTime(">> find nearest countries for unmatched grid cells")

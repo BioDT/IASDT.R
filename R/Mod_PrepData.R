@@ -70,7 +70,7 @@ Mod_PrepData <- function(
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
- ## Paths checking ----
+  ## Paths checking ----
 
   IASDT.R::CatTime("Checking paths")
 
@@ -122,7 +122,7 @@ Mod_PrepData <- function(
 
   IASDT.R::CatTime("Loading data")
 
-  IASDT.R::CatTime(">> species data summary")
+  IASDT.R::CatTime(">> Species data summary")
   R_Sp <- file.path(Path_PA, "Sp_PA_Summary_DF.RData") %>%
     IASDT.R::LoadAs()
 
@@ -139,7 +139,7 @@ Mod_PrepData <- function(
     R_Sp <- dplyr::filter(R_Sp, !!as.symbol(Hab_column))
   }
 
-  IASDT.R::CatTime(">> species PA data")
+  IASDT.R::CatTime(">> Species PA data")
   R_Sp <- R_Sp %>%
     dplyr::filter(NCells >= MinPresGrids) %>%
     dplyr::select(SpeciesID, Species_name, Species_File) %>%
@@ -211,7 +211,7 @@ Mod_PrepData <- function(
 
   ## Rail ----
 
-  IASDT.R::CatTime(">> railway intensity")
+  IASDT.R::CatTime(">> Railway intensity")
   R_RailInt <- file.path(Path_Rail, "Railway_Length.RData") %>%
     IASDT.R::LoadAs() %>%
     terra::unwrap() %>%
@@ -230,7 +230,7 @@ Mod_PrepData <- function(
 
   ## Road + rail ----
 
-  IASDT.R::CatTime(">> railway + road intensity")
+  IASDT.R::CatTime(">> Railway + road intensity")
   R_RoadRail <- (R_RoadInt + R_RailInt) %>%
     stats::setNames("RoadRail")
   R_RoadRailLog <- log10(R_RoadRail + 0.1) %>%
@@ -239,7 +239,7 @@ Mod_PrepData <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   ## Sampling intensity ----
-  IASDT.R::CatTime(">> sampling intensity")
+  IASDT.R::CatTime(">> Sampling intensity")
   R_Bias <- file.path(Path_Bias, "Bias_GBIF_SummaryR.RData") %>%
     IASDT.R::LoadAs() %>%
     terra::unwrap() %>%
@@ -253,7 +253,7 @@ Mod_PrepData <- function(
 
   ## Reference grid -----
 
-  IASDT.R::CatTime(">> reference grid")
+  IASDT.R::CatTime(">> Reference grid")
   EU_Grid <- Path_Grid %>%
     file.path("Grid_10_sf.RData") %>%
     IASDT.R::LoadAs() %>%
@@ -263,13 +263,11 @@ Mod_PrepData <- function(
 
   ## Country boundary -----
 
-  IASDT.R::CatTime(">> country boundaries")
+  IASDT.R::CatTime(">> Country boundaries")
   EU_Bound <- Path_Bound %>%
     file.path("Bound_sf_Eur.RData") %>%
-    IASDT.R::LoadAs() %>%
-    magrittr::extract2("Bound_sf_Eur") %>%
-    magrittr::extract2("L_01") %>%
-    dplyr::select(NAME_ENGL)
+    IASDT.R::LoadAs()
+  EU_Bound <- dplyr::select(EU_Bound$Bound_sf_Eur$L_01, NAME_ENGL)
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -288,28 +286,31 @@ Mod_PrepData <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # get country and grid cell ID
-  IASDT.R::CatTime(">> get country and grid cell ID")
+  IASDT.R::CatTime(">> Get country and grid cell ID")
 
   # List of countries in the boundaries shapefile
   CountryNames <- dplyr::pull(EU_Bound, NAME_ENGL)
 
   # Find spatially matching countries
-  IASDT.R::CatTime(">> find spatially matching countries")
+  IASDT.R::CatTime(">> Find spatially matching countries")
   DT_Country <- DT_All %>%
     dplyr::select(cell, x, y) %>%
-    sf::st_as_sf(coords = c("x", "y"), crs = 3035)
+    sf::st_as_sf(coords = c("x", "y"), crs = 3035) %>%
+    sf::st_join(EU_Grid) %>%
+    sf::st_join(EU_Bound) %>%
+    dplyr::rename(Country = NAME_ENGL)
 
-  IASDT.R::CatTime(">> Add grid cell code")
-  DT_Country <- sf::st_join(DT_Country, EU_Grid)
-
-  IASDT.R::CatTime(">> Add country name")
-  DT_Country <- sf::st_join(DT_Country, EU_Bound)
-
-  IASDT.R::CatTime(">> Rename country column")
-  DT_Country <- dplyr::rename(DT_Country, Country = NAME_ENGL)
+  # IASDT.R::CatTime(">> Add grid cell code")
+  # DT_Country <- sf::st_join(DT_Country, EU_Grid)
+  #
+  # IASDT.R::CatTime(">> Add country name")
+  # DT_Country <- sf::st_join(DT_Country, EU_Bound)
+  #
+  # IASDT.R::CatTime(">> Rename country column")
+  # DT_Country <- dplyr::rename(DT_Country, Country = NAME_ENGL)
 
   # find nearest countries for unmatched grid cells
-  IASDT.R::CatTime(">> find nearest countries for unmatched grid cells")
+  IASDT.R::CatTime(">> Find nearest countries for unmatched grid cells")
   MissingCountries <- DT_Country %>%
     dplyr::filter(is.na(Country)) %>%
     dplyr::mutate(

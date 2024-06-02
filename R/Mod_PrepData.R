@@ -120,9 +120,9 @@ Mod_PrepData <- function(
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatTime("Load data")
+  IASDT.R::CatTime("Loading data")
 
-  IASDT.R::CatTime(">> Load species data summary")
+  IASDT.R::CatTime(">> species data summary")
   R_Sp <- file.path(Path_PA, "Sp_PA_Summary_DF.RData") %>%
     IASDT.R::LoadAs()
 
@@ -139,7 +139,7 @@ Mod_PrepData <- function(
     R_Sp <- dplyr::filter(R_Sp, !!as.symbol(Hab_column))
   }
 
-  IASDT.R::CatTime(">> Load species PA data")
+  IASDT.R::CatTime(">> species PA data")
   R_Sp <- R_Sp %>%
     dplyr::filter(NCells >= MinPresGrids) %>%
     dplyr::select(SpeciesID, Species_name, Species_File) %>%
@@ -160,7 +160,7 @@ Mod_PrepData <- function(
 
   ## CHELSA -----
 
-  IASDT.R::CatTime(">> Load CHELSA data")
+  IASDT.R::CatTime(">> CHELSA data")
   R_Chelsa <- Path_Chelsa_Time_CC %>%
     file.path("St_1981_2010.RData") %>%
     IASDT.R::LoadAs() %>%
@@ -172,7 +172,7 @@ Mod_PrepData <- function(
 
   ## Habitat coverage -----
 
-  IASDT.R::CatTime(">> Load Habitat coverage")
+  IASDT.R::CatTime(">> Habitat coverage")
   if (Hab_Abb == "0") {
     R_Hab <- file.path(Path_CLC_Summ, "PercCov_SynHab_Crop.RData") %>%
       IASDT.R::LoadAs() %>%
@@ -192,7 +192,7 @@ Mod_PrepData <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   ## Road ----
-  IASDT.R::CatTime(">> Load Road intensity")
+  IASDT.R::CatTime(">> Road intensity")
   R_RoadInt <- file.path(Path_Roads, "Road_Length.RData") %>%
     IASDT.R::LoadAs() %>%
     terra::unwrap() %>%
@@ -211,7 +211,7 @@ Mod_PrepData <- function(
 
   ## Rail ----
 
-  IASDT.R::CatTime(">> Load railway intensity")
+  IASDT.R::CatTime(">> railway intensity")
   R_RailInt <- file.path(Path_Rail, "Railway_Length.RData") %>%
     IASDT.R::LoadAs() %>%
     terra::unwrap() %>%
@@ -230,7 +230,7 @@ Mod_PrepData <- function(
 
   ## Road + rail ----
 
-  IASDT.R::CatTime(">> Load railway + road intensity")
+  IASDT.R::CatTime(">> railway + road intensity")
   R_RoadRail <- (R_RoadInt + R_RailInt) %>%
     stats::setNames("RoadRail")
   R_RoadRailLog <- log10(R_RoadRail + 0.1) %>%
@@ -239,7 +239,7 @@ Mod_PrepData <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   ## Sampling intensity ----
-  IASDT.R::CatTime(">> Load sampling intensity")
+  IASDT.R::CatTime(">> sampling intensity")
   R_Bias <- file.path(Path_Bias, "Bias_GBIF_SummaryR.RData") %>%
     IASDT.R::LoadAs() %>%
     terra::unwrap() %>%
@@ -253,7 +253,7 @@ Mod_PrepData <- function(
 
   ## Reference grid -----
 
-  IASDT.R::CatTime(">> Load reference grid")
+  IASDT.R::CatTime(">> reference grid")
   EU_Grid <- Path_Grid %>%
     file.path("Grid_10_sf.RData") %>%
     IASDT.R::LoadAs() %>%
@@ -263,7 +263,7 @@ Mod_PrepData <- function(
 
   ## Country boundary -----
 
-  IASDT.R::CatTime(">> Load country boundaries")
+  IASDT.R::CatTime(">> country boundaries")
   EU_Bound <- Path_Bound %>%
     file.path("Bound_sf_Eur.RData") %>%
     IASDT.R::LoadAs() %>%
@@ -303,8 +303,10 @@ Mod_PrepData <- function(
   DT_Country <- sf::st_join(DT_Country, EU_Grid)
 
   IASDT.R::CatTime(">> Add country name")
-  DT_Country <- sf::st_join(DT_Country, EU_Bound) %>%
-    dplyr::rename(Country = NAME_ENGL)
+  DT_Country <- sf::st_join(DT_Country, EU_Bound)
+
+  IASDT.R::CatTime(">> Rename country column")
+  DT_Country <- dplyr::rename(DT_Country, Country = NAME_ENGL)
 
   # find nearest countries for unmatched grid cells
   IASDT.R::CatTime(">> find nearest countries for unmatched grid cells")

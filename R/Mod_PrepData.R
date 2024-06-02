@@ -119,7 +119,7 @@ Mod_PrepData <- function(
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatTime("Load input data")
+  IASDT.R::CatTime("Load data")
 
   IASDT.R::CatTime(">> Load species data summary")
   R_Sp <- file.path(Path_PA, "Sp_PA_Summary_DF.RData") %>%
@@ -252,7 +252,7 @@ Mod_PrepData <- function(
 
   ## Reference grid -----
 
-  IASDT.R::CatTime("Load reference grid")
+  IASDT.R::CatTime(">> Load reference grid")
   EU_Grid <- Path_Grid %>%
     file.path("Grid_10_sf.RData") %>%
     IASDT.R::LoadAs() %>%
@@ -287,19 +287,20 @@ Mod_PrepData <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # get country and grid cell ID
-
   IASDT.R::CatTime(">> get country and grid cell ID")
 
   # List of countries in the boundaries shapefile
-  CountryNames <- EU_Bound$NAME_ENGL
+  CountryNames <- dplyr::pull(EU_Bound, NAME_ENGL)
 
   # Find spatially matching countries
+  IASDT.R::CatTime(">> find spatially matching countries")
   DT_Country <- DT_All %>%
     sf::st_as_sf(coords = c("x", "y"), crs = 3035) %>%
     dplyr::select(cell, geometry) %>%
     sf::st_join(EU_Grid) %>%
     sf::st_join(EU_Bound) %>%
     dplyr::rename(Country = NAME_ENGL)
+
 
   # find nearest countries for unmatched grid cells
   IASDT.R::CatTime(">> find nearest countries for unmatched grid cells")

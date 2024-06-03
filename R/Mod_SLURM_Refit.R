@@ -103,6 +103,7 @@ Mod_SLURM_Refit <- function(
       magrittr::not(file.exists(file.path(Path_Scratch, Post_Path)))) %>%
     dplyr::pull(Command_HPC) %>%
     purrr::set_names(NULL)
+
   NJobs <- length(Commands2Refit)
 
   if (NJobs > 0) {
@@ -124,8 +125,12 @@ Mod_SLURM_Refit <- function(
         } else {
           OutCommandFile <- paste0(Refit_Prefix, "_", x, ".txt")
         }
-        cat(Commands2Refit[CurrIDs], sep = "\n", append = FALSE,
-            file = file.path(Path_Model, OutCommandFile))
+
+        # create connection to SLURM file
+        # This is better than using sink to have a platform independent file (here, to maintain a linux-like new line ending)
+        f <- file(file.path(Path_Model, OutCommandFile), open = "wb")
+        cat(Commands2Refit[CurrIDs], sep = "\n", append = FALSE, file = f)
+        close(f)
       })
 
     IASDT.R::Mod_SLURM(

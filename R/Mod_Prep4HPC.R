@@ -146,6 +146,8 @@ Mod_Prep4HPC <- function(
 
   fs::dir_create(file.path(Path_Model, "InitMod_HPC"))
   fs::dir_create(file.path(Path_Model, "Model_Fitting_HPC"))
+  # Also create directory for SLURM outputs
+  fs::dir_create(file.path(Path_Model, "Model_Fitting_HPC", "SLURM_Results"))
   Path_ModelDT <- file.path(Path_Model, "Model_Info.RData")
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -570,8 +572,12 @@ Mod_Prep4HPC <- function(
     } else {
       CommandFile <- file.path(Path_Model, "Commands_All.txt")
     }
-    Models2Fit_HPC[CurrIDs] %>%
-      cat(sep = "\n", append = FALSE, file = CommandFile)
+
+    # create connection to SLURM file
+    # This is better than using sink to have a platform independent file (here, to maintain a linux-like new line ending)
+    f <- file(CommandFile, open = "wb")
+    cat(Models2Fit_HPC[CurrIDs], sep = "\n", append = FALSE, file = f)
+    close(f)
   })
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

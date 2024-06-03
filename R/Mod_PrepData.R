@@ -30,7 +30,6 @@ Mod_PrepData <- function(
     NAME_ENGL <- cell <- geometry <- Country <- Country2 <-
     x <- y <- NULL
 
-
   if (magrittr::not(VerboseProgress)) {
     sink(file = nullfile())
     on.exit(sink(), add = TRUE)
@@ -300,15 +299,6 @@ Mod_PrepData <- function(
     sf::st_join(EU_Bound) %>%
     dplyr::rename(Country = NAME_ENGL)
 
-  # IASDT.R::CatTime(">> Add grid cell code")
-  # DT_Country <- sf::st_join(DT_Country, EU_Grid)
-  #
-  # IASDT.R::CatTime(">> Add country name")
-  # DT_Country <- sf::st_join(DT_Country, EU_Bound)
-  #
-  # IASDT.R::CatTime(">> Rename country column")
-  # DT_Country <- dplyr::rename(DT_Country, Country = NAME_ENGL)
-
   # find nearest countries for unmatched grid cells
   IASDT.R::CatTime(">> Find nearest countries for unmatched grid cells")
   MissingCountries <- DT_Country %>%
@@ -338,6 +328,7 @@ Mod_PrepData <- function(
                          stringr::str_remove(Hab_column, "Hab_"))
   }
 
+  IASDT.R::CatTime("Save model data to disk")
   IASDT.R::SaveAs(
     InObj = DT_All, OutObj = OutObjName,
     OutPath = file.path(OutputPath, paste0(OutObjName, ".RData")))

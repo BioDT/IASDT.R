@@ -16,6 +16,7 @@ Mod_SLURM(
   Partition = "small-g",
   EnvFile = ".env",
   FromHPC = TRUE,
+  Path_Hmsc = "IASDT_Model_Test/Hmsc_Main",
   Command_Prefix = "Commands_All",
   SLURM_Prefix = "Bash_Fit"
 )
@@ -42,6 +43,8 @@ Mod_SLURM(
 \item{EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
 
 \item{FromHPC}{Logical. Work from HPC? This is to adjust the file paths.}
+
+\item{Path_Hmsc}{String. Path for the Hmsc-HPC.}
 
 \item{Command_Prefix}{String. Prefix for the bash commands to be executed}
 

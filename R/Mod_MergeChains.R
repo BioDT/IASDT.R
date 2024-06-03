@@ -87,7 +87,6 @@ Mod_MergeChains <- function(
   Path_Coda <- file.path(Path_Model, "Model_Coda")
   fs::dir_create(c(Path_Fitted_Models, Path_Coda))
 
-
   Model_Info2 <- Path_ModInfo %>%
     IASDT.R::LoadAs() %>%
     # Check if any posterior files is missing
@@ -182,7 +181,7 @@ Mod_MergeChains <- function(
 
             if (CodaMissing) {
               if (inherits(Model_Fit, "try-error")) {
-                IASDT.R::CatTime("  >>>  No Coad object was exported")
+                IASDT.R::CatTime("  >>>  No Coda object was exported")
               } else {
                 Mod_Coda <- Hmsc::convertToCodaObject(
                   Model_Fit, spNamesNumbers = c(TRUE, FALSE),

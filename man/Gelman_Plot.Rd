@@ -51,7 +51,7 @@ Gelman_Plot(
 \item{Alpha_File}{String. File name (with extension) for saving the results of \code{IASDT.R::Gelman_Alpha}}
 }
 \description{
-Plot Gelman-Rubin-Brooks plots
+Plot Gelman-Rubin-Brooks plots. This plot shows the evolution of Gelman and Rubin's shrink factor as the number of iterations increases. For more information, see \code{coda:::gelman.plot}
 }
 \author{
 Ahmed El-Gabbas

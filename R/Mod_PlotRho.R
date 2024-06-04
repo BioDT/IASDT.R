@@ -2,12 +2,12 @@
 # PlotRho ----
 ## |------------------------------------------------------------------------| #
 
-#' Plot convergence of the rho parameter
+#' Plot convergence traceplots for the rho parameter
 #'
-#' Plot convergence of the rho parameter
+#' Plot convergence traceplots for the rho parameter
 #'
-#' @param Post String. Path to Coda object
-#' @param Model String. Path to the fitted model
+#' @param Post Coda object or path to it
+#' @param Model Fitted model object or path to it
 #' @param Title String. Plotting title
 #' @param Cols Colours for lines for each chain
 #' @name PlotRho
@@ -16,7 +16,7 @@
 #' @export
 
 PlotRho <- function(
-    Post, Model, Title,
+    Post = NULL, Model = NULL, Title = NULL,
     Cols = c("red", "blue", "darkgreen", "darkgrey")) {
 
   Chain <- ID <- Value <- x <- y <- label <- NULL
@@ -25,14 +25,20 @@ PlotRho <- function(
   if (inherits(Post, "character")) {
     Post <- IASDT.R::LoadAs(Post)
   }
+  Post <- Post$Rho
 
   # Load model object
   if (inherits(Model, "character")) {
     Model <- IASDT.R::LoadAs(Model)
   }
 
+  SampleSize <- Model$samples
+  NChains <- length(Model$postList)
+  rm(Model)
+  invisible(gc())
+
   ## Gelman convergence diagnostic
-  Gelman <- Post$Rho %>%
+  Gelman <- Post %>%
     coda::gelman.diag(multivariate = FALSE) %>%
     magrittr::extract2("psrf") %>%
     magrittr::extract(1) %>%
@@ -40,16 +46,19 @@ PlotRho <- function(
     paste0("<i>Gelman convergence diagnostic:</i> ", .)
 
   ## Effective sample size
-  ESS <- coda::effectiveSize(Post$Rho) %>%
+  ESS <- Post %>%
+    coda::effectiveSize() %>%
     round() %>%
-    paste0("<i>Effective sample size:</i> ", ., " / ", Model$np)
+    magrittr::divide_by(NChains) %>%
+    paste0("<i>Mean effective sample size:</i> ", ., " / ", SampleSize)
 
   ## quantiles
-  CI <- summary(Post$Rho, quantiles = c(0.25, 0.75))$quantiles %>%
+  CI <- summary(Post, quantiles = c(0.25, 0.75))$quantiles
+  CI2 <- CI %>%
     paste0(collapse = " - ") %>%
     paste0("<i>50% credible interval:</i> ", .)
 
-  RhoDF <- Post$Rho %>%
+  RhoDF <- Post %>%
     purrr::map(tibble::as_tibble, rownames = "ID") %>%
     dplyr::bind_rows(.id = "Chain") %>%
     dplyr::rename(Value = "var1") %>%
@@ -60,7 +69,7 @@ PlotRho <- function(
     label = paste0('<b><span style="color:blue">',
                    Title, "</span></b><br>", Gelman))
   ESS_CI <- data.frame(
-    x = -Inf, y = -Inf, label = paste0(ESS, "<br>", CI))
+    x = -Inf, y = -Inf, label = paste0(ESS, "<br>", CI2))
 
   Plot <- RhoDF %>%
     ggplot2::ggplot(
@@ -69,8 +78,10 @@ PlotRho <- function(
     ggplot2::geom_smooth(
       method = "loess", formula = y ~ x, se = FALSE, linewidth = 0.8) +
     ggplot2::geom_point(alpha = 0) +
+    ggplot2::geom_hline(
+      yintercept = CI, linetype = "dashed", color = "black", linewidth = 1) +
     ggplot2::scale_color_manual(values = Cols) +
-    ggplot2::coord_cartesian(ylim = c(0, 1), expand = FALSE) +
+    ggplot2::scale_x_continuous(expand = c(0, 0)) +
     ggplot2::theme_bw() +
     ggplot2::xlab(NULL) +
     ggplot2::ylab(NULL) +
@@ -82,8 +93,7 @@ PlotRho <- function(
       mapping = ggplot2::aes(x = x, y = y, label = label),
       data = ESS_CI, inherit.aes = FALSE,
       hjust = 0, vjust = 0, lineheight  = 0, fill = NA, label.color = NA) +
-    ggplot2::theme(
-      legend.position = "none")
+    ggplot2::theme(legend.position = "none")
 
   Plot1 <- Plot %>%
     ggExtra::ggMarginal(

@@ -61,9 +61,8 @@ Coda_to_tibble <- function(
     as.matrix(iter = TRUE, chain = TRUE) %>%
     tibble::as_tibble() %>%
     dplyr::rename(Chain = CHAIN, Iter = ITER) %>%
-    dplyr::mutate(Chain = factor(Chain)) %>%
+    dplyr::mutate(Chain = factor(Chain), Iter = as.integer(Iter)) %>%
     dplyr::arrange(Chain, Iter)
-
 
   # # |||||||||||||||||||||||||||||||||||||||
   # Rho parameter ----

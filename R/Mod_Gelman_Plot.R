@@ -4,7 +4,7 @@
 
 #' Plot Gelman-Rubin-Brooks plots
 #'
-#' Plot Gelman-Rubin-Brooks plots
+#' Plot Gelman-Rubin-Brooks plots. This plot shows the evolution of Gelman and Rubin's shrink factor as the number of iterations increases. For more information, see `coda:::gelman.plot`
 #'
 #' @param CodaPath Path to RData file containing the coda object
 #' @param Beta Logical. Run `IASDT.R::Gelman_Beta`?

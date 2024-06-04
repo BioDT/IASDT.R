@@ -84,6 +84,7 @@ reference:
   desc:
   contents:
   - BetaSummary
+  - Coda_to_tibble
   - GetCV
   - GetPosts
   - PrepKnots
@@ -98,6 +99,12 @@ reference:
   - PlotRespCurv
   - PlotBeta_bySp
   - PlotBeta_byVar
+  - Gelman_Beta
+  - Gelman_Omega
+  - Gelman_Rho
+  - Gelman_Plot
+  - PlotRho
+
 
 - title: Spatial functions
   desc:
@@ -130,3 +137,4 @@ reference:
   - Chelsa_Vars
   - Chelsa_Info
   - Chelsa_Project
+  - GetSpeciesName

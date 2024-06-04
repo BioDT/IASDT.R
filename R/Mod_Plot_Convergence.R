@@ -31,8 +31,9 @@ Plot_Convergence <- function(
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Check input arguments")
+  AllArgs <- ls()
   AllArgs <- purrr::map(
-    ls(),
+    AllArgs,
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
 

@@ -11,7 +11,7 @@
 #' @param Title String. Plotting title
 #' @param NRC Vector for the number of rows and columns per plot page
 #' @param Cols Colours for lines for each chain
-#' @name PlotRho
+#' @name PlotAlpha
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export

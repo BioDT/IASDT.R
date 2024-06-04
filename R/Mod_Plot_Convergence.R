@@ -1,0 +1,472 @@
+## |------------------------------------------------------------------------| #
+# Plot_Convergence ----
+## |------------------------------------------------------------------------| #
+
+#' Plot model convergence of multiple modelling alternatives
+#'
+#' Plot model convergence of multiple modelling alternatives
+#'
+#' @param Path_Model String. Path to save all the output, including the to be fitted models (without trailing slash)
+#' @param EnvFile String. Path to read the environment variables. Default value: `.env`
+#' @param FromHPC Logical. Work from HPC? This is to adjust the file paths.
+#' @param NChains Integer. Number of model chains
+#' @param maxOmega Number of sample species interactions
+#' @param NCores Number of parallel cores for parallelization
+#' @name Plot_Convergence
+#' @author Ahmed El-Gabbas
+#' @return NULL
+#' @export
+
+Plot_Convergence <- function(
+    Path_Model = NULL, EnvFile = ".env", FromHPC = TRUE, NChains = 4,
+    maxOmega = 1000, NCores = NULL) {
+
+  GPP_Thin <- Path_Coda <- Path_FittedMod <- M_Name_Fit <- Tree <- Plots <-
+    rL <- M_thin <- M_samples <- Omega_Gelman <- Omega_ESS <- Beta_Gelman <-
+    Beta_ESS <- ESS2 <- NULL
+
+
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # Check input arguments
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  IASDT.R::CatTime("Check input arguments")
+  AllArgs <- purrr::map(
+    ls(),
+    function(x) get(x, envir = parent.env(env = environment()))) %>%
+    stats::setNames(AllArgs)
+
+  IASDT.R::CheckArgs(
+    AllArgs = AllArgs, Type = "character", Args = c("Path_Model", "EnvFile"))
+  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "logical", Args = "FromHPC")
+  IASDT.R::CheckArgs(
+    AllArgs = AllArgs, Type = "numeric",
+    Args = c("NChains", "maxOmega", "NCores"))
+
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # Load environment data
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  IASDT.R::CatTime("Load environment data")
+
+  if (file.exists(EnvFile)) {
+    readRenviron(EnvFile)
+    Path_Scratch <- Sys.getenv("Path_LUMI_Scratch")
+    if (FromHPC) {
+      setwd(Path_Scratch)
+    }
+  } else {
+    MSG <- paste0("Path for environment variables: ", EnvFile, " was not found")
+    stop(MSG)
+  }
+
+  Path_Convergence <- file.path(Path_Model, "Model_Convergence")
+  fs::dir_create(Path_Convergence)
+
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  ## Prepare convergence data ------
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  IASDT.R::CatTime("Prepare convergence data")
+
+  c1 <- snow::makeSOCKcluster(NCores)
+  future::plan(future::cluster, workers = c1, gc = TRUE)
+
+  Model_Info <- IASDT.R::LoadAs(file.path(Path_Model, "Model_Info.RData"))
+
+  Convergence_DT <- Model_Info %>%
+    dplyr::mutate(
+      Plots = furrr::future_pmap(
+        .l = list(Path_Coda, Path_FittedMod, M_Name_Fit, Tree),
+        .f = function(Path_Coda, Path_FittedMod, M_Name_Fit, Tree) {
+
+          Path_ConvDT <- file.path(Path_Convergence, "DT")
+          fs::dir_create(Path_ConvDT)
+
+          ObjName_Rho <- paste0(M_Name_Fit, "_TraceRho")
+          Path_Trace_Rho <- file.path(
+            Path_ConvDT, paste0(ObjName_Rho, ".RData"))
+
+          ObjName_Alpha <- paste0(M_Name_Fit, "_TraceAlpha")
+          Path_Trace_Alpha <- file.path(
+            Path_ConvDT, paste0(ObjName_Alpha, ".RData"))
+
+          ObjName_Beta_Omega <- paste0(M_Name_Fit, "_Beta_Omega")
+          Path_Beta_Omega <- file.path(
+            Path_ConvDT, paste0(ObjName_Beta_Omega, ".RData"))
+
+          CodaModelExist <- all(file.exists(c(Path_Coda, Path_FittedMod)))
+          SavedTrace <- all(file.exists(c(Path_Trace_Rho, Path_Trace_Alpha)))
+
+          Coda_Loaded <- FALSE
+
+          # prepare traceplot
+          if (CodaModelExist && magrittr::not(SavedTrace)) {
+
+            Model_Obj <- IASDT.R::LoadAs(Path_FittedMod)
+            Coda_Obj <- IASDT.R::LoadAs(Path_Coda)
+            Coda_Loaded <- TRUE
+
+            # Rho
+            if (Tree == "Tree") {
+              RhoTitle <- stringr::str_remove_all(
+                string = basename(Path_Coda), pattern = "_Tree|_Coda.RData$")
+
+              Plot_Rho <- IASDT.R::PlotRho(
+                Post = Coda_Obj, Model = Model_Obj, Title = RhoTitle)
+
+              IASDT.R::SaveAs(
+                InObj = Plot_Rho, OutObj = ObjName_Rho,
+                OutPath = Path_Trace_Rho)
+
+              rm(Plot_Rho)
+            } else {
+              Path_Trace_Rho <- NULL
+            }
+
+            # Alpha
+            Plot_Alpha <- IASDT.R::PlotAlpha(
+              Post = Coda_Obj, Model = Model_Obj, NRC = c(2, 3),
+              Title = stringr::str_remove_all(
+                basename(Path_Coda), "_Tree|_Coda.RData$"))
+            IASDT.R::SaveAs(
+              InObj = Plot_Alpha, OutObj = ObjName_Alpha,
+              OutPath = Path_Trace_Alpha)
+
+            rm(Plot_Alpha, Model_Obj)
+            invisible(gc())
+          }
+
+
+          if (CodaModelExist) {
+
+            if (file.exists(Path_Beta_Omega)) {
+              Beta_Omega <- IASDT.R::LoadAs(Path_Beta_Omega)
+              Beta_Gelman <- Beta_Omega$Beta_Gelman
+              Beta_ESS <- Beta_Omega$Beta_ESS
+              Omega_ESS <- Beta_Omega$Omega_ESS
+              Omega_Gelman <- Beta_Omega$Omega_Gelman
+              rm(Beta_Omega)
+
+            } else {
+
+              if (magrittr::not(Coda_Loaded)) {
+                Coda_Obj <- IASDT.R::LoadAs(Path_Coda)
+              }
+
+              Beta <- magrittr::extract2(Coda_Obj, "Beta")
+              Omega <- magrittr::extract2(Coda_Obj, "Omega") %>%
+                magrittr::extract2(1)
+              rm(Coda_Obj)
+              invisible(gc())
+
+              # BETA - effectiveSize
+              Beta_ESS <- coda::effectiveSize(Beta)
+
+              # BETA - gelman.diag
+              Beta_Gelman <- Beta %>%
+                coda::gelman.diag(multivariate = FALSE) %>%
+                magrittr::extract2("psrf") %>%
+                as.data.frame() %>%
+                dplyr::pull(1) %>%
+                magrittr::set_names(NULL)
+
+              # OMEGA - effectiveSize
+              Omega_ESS <- coda::effectiveSize(Omega)
+
+              # OMEGA - gelman.diag
+              sel <- sample(seq_len(dim(Omega[[1]])[2]), size = maxOmega)
+              Omega_Gelman <- Omega %>%
+                purrr::map(~ .x[, sel]) %>%
+                coda::gelman.diag(multivariate = FALSE) %>%
+                magrittr::extract2("psrf") %>%
+                as.data.frame() %>%
+                dplyr::pull(1) %>%
+                magrittr::set_names(NULL)
+
+              Beta_Omega <- list(
+                Beta_Gelman = Beta_Gelman, Beta_ESS = Beta_ESS,
+                Omega_Gelman = Omega_Gelman, Omega_ESS = Omega_ESS)
+              save(Beta_Omega, file = Path_Beta_Omega)
+              rm(Beta_Omega)
+            }
+
+          } else {
+            Path_Trace_Rho <- Path_Trace_Alpha <- Beta_Gelman <-
+              Beta_ESS <- Omega_Gelman <- Omega_ESS  <- NULL
+          }
+
+          list(
+            Path_Trace_Alpha = Path_Trace_Alpha,
+            Path_Trace_Rho = Path_Trace_Rho,
+            Beta_Gelman = Beta_Gelman, Beta_ESS = Beta_ESS,
+            Omega_Gelman = Omega_Gelman, Omega_ESS = Omega_ESS) %>%
+            return()
+        },
+        .progress = FALSE, .options = furrr::furrr_options(seed = TRUE))) %>%
+    dplyr::select(M_Name_Fit, Plots) %>%
+    tidyr::unnest_wider("Plots")
+
+  save(Convergence_DT,
+       file = file.path(Path_Convergence, "Convergence_DT.RData"))
+
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # Plotting theme -----
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  Theme <- ggplot2::theme(
+    strip.text = ggplot2::element_text(size = 16, face = "bold"),
+    axis.title = ggplot2::element_text(
+      size = 16, colour = "darkgrey", face = "bold"),
+    axis.text = ggplot2::element_text(size = 12),
+    title = ggplot2::element_text(size = 20, face = "bold", color = "blue"),
+    axis.text.y = ggplot2::element_text(hjust = 0),
+    panel.spacing = ggplot2::unit(0.85, "lines"))
+
+  Label <- ggplot2::as_labeller(c(
+    `2000` = "2000 samples",
+    `1000` = "1000 samples",
+    `3000` = "3000 samples",
+    `Tree` = "Phylogenetic (taxonomic) tree",
+    `NoTree` = "No phylogenetic (taxonomic) tree"))
+
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  ## Alpha - trace plots ------
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  IASDT.R::CatTime("Alpha - trace plots")
+
+  grDevices::pdf(
+    file = file.path(Path_Convergence, "TracePlots_Alpha.pdf"),
+    width = 18, height = 12)
+  Convergence_DT$Path_Trace_Alpha %>%
+    purrr::walk(purrr::safely(~print(IASDT.R::LoadAs(.x))))
+  grDevices::dev.off()
+
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  ## Rho - trace plots ------
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  IASDT.R::CatTime("Rho - trace plots")
+
+  Convergence_DT$Path_Trace_Rho %>%
+    stats::na.omit() %>%
+    purrr::map(IASDT.R::LoadAs) %>%
+    gridExtra::marrangeGrob(top = NULL, nrow = 2, ncol = 3) %>%
+    ggplot2::ggsave(
+      dpi = 600, device = "pdf", width = 18, height = 12,
+      filename = file.path(Path_Convergence, "TracePlots_Rho_Phylogenetic.pdf"))
+
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  ## Omega - Gelman convergence ------
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  IASDT.R::CatTime("Omega - Gelman convergence")
+
+  Plot_Title <- paste0(
+    "Gelman convergence diagnostic - Omega (", maxOmega, " samples)")
+  Plot_Path <- file.path(
+    Path_Convergence, paste0("Convergence_Omega_Gelman.jpeg"))
+
+  Plot <- Convergence_DT %>%
+    dplyr::left_join(Model_Info, by = "M_Name_Fit") %>%
+    dplyr::select(rL, Tree, M_thin, M_samples, Omega_Gelman) %>%
+    dplyr::mutate(
+      GPP_Thin = paste0("GPP", rL, " - Th", M_thin),
+      GPP_Thin = factor(
+        GPP_Thin, levels = rev(gtools::mixedsort(unique(GPP_Thin))))) %>%
+    tidyr::unnest("Omega_Gelman") %>%
+    ggplot2::ggplot(ggplot2::aes(GPP_Thin, Omega_Gelman)) +
+    ggplot2::geom_violin() +
+    ggplot2::geom_vline(
+      xintercept = c(4.5, 8.5, 12.5), linetype = "dashed", color = "blue") +
+    ggplot2::scale_y_log10() +
+    ggplot2::facet_grid(Tree ~ M_samples, labeller = Label) +
+    ggplot2::labs(title = Plot_Title) +
+    ggplot2::xlab(NULL) +
+    ggplot2::ylab("Gelman and Rubin's convergence diagnostic - log10") +
+    ggplot2::coord_flip(expand = FALSE) +
+    Theme
+
+  ggplot2::ggsave(
+    plot = Plot, filename = Plot_Path, width = 16, height = 12, dpi = 600)
+
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  IASDT.R::CatTime("Omega - Gelman convergence - cropped")
+
+  Plot_Path <- file.path(
+    Path_Convergence, paste0("Convergence_Omega_Gelman_cropped.jpeg"))
+  Plot2 <- Plot +
+    ggplot2::ylab("Gelman and Rubin's convergence diagnostic - cropped view") +
+    ggplot2::coord_flip(expand = FALSE, ylim = c(0.995, 1.05))
+  ggplot2::ggsave(
+    plot = Plot2, filename = Plot_Path, width = 16, height = 12, dpi = 600)
+
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  ## Omega - Effective sample size -----
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  IASDT.R::CatTime("Omega - Effective sample size")
+
+  Plot_Path <- file.path(Path_Convergence, paste0("Convergence_Omega_ESS.jpeg"))
+
+  Plot <- Convergence_DT %>%
+    dplyr::left_join(Model_Info, by = "M_Name_Fit") %>%
+    dplyr::select(rL, Tree, M_thin, M_samples, Omega_ESS) %>%
+    dplyr::mutate(
+      GPP_Thin = paste0("GPP", rL, " - Th", M_thin),
+      GPP_Thin = factor(
+        GPP_Thin, levels = rev(gtools::mixedsort(unique(GPP_Thin))))) %>%
+    tidyr::unnest("Omega_ESS") %>%
+    ggplot2::ggplot(ggplot2::aes(GPP_Thin, Omega_ESS)) +
+    ggplot2::geom_violin() +
+    ggplot2::geom_vline(
+      xintercept = c(4.5, 8.5, 12.5), linetype = "dashed", color = "blue") +
+    ggplot2::facet_grid(Tree ~ M_samples, labeller = Label) +
+    ggplot2::labs(title = Plot_Title) +
+    ggplot2::xlab(NULL) +
+    ggplot2::ylab("Effective sample size") +
+    ggplot2::coord_flip(expand = FALSE) +
+    Theme
+
+  ggplot2::ggsave(
+    plot = Plot, filename = Plot_Path, width = 16, height = 12, dpi = 600)
+
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  IASDT.R::CatTime("Omega - Effective sample size - percent")
+
+  Plot_Path <- file.path(
+    Path_Convergence, paste0("Convergence_Omega_ESS_Percent.jpeg"))
+
+  Plot <- Convergence_DT %>%
+    dplyr::left_join(Model_Info, by = "M_Name_Fit") %>%
+    dplyr::select(rL, Tree, M_thin, M_samples, Omega_ESS) %>%
+    dplyr::mutate(
+      GPP_Thin = paste0("GPP", rL, " - Th", M_thin),
+      GPP_Thin = factor(
+        GPP_Thin, levels = rev(gtools::mixedsort(unique(GPP_Thin))))) %>%
+    tidyr::unnest("Omega_ESS") %>%
+    dplyr::mutate(ESS2 = (100 * Omega_ESS / (M_samples * NChains))) %>%
+    ggplot2::ggplot(ggplot2::aes(GPP_Thin, ESS2)) +
+    ggplot2::geom_violin() +
+    ggplot2::geom_vline(
+      xintercept = c(4.5, 8.5, 12.5), linetype = "dashed", color = "blue") +
+    ggplot2::facet_grid(Tree ~ M_samples, labeller = Label) +
+    ggplot2::labs(title = Plot_Title) +
+    ggplot2::xlab(NULL) +
+    ggplot2::ylab("Effective sample size (%)") +
+    ggplot2::coord_flip(expand = FALSE) +
+    Theme
+
+  ggplot2::ggsave(
+    plot = Plot, filename = Plot_Path, width = 16, height = 12, dpi = 600)
+
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  ## Beta - Gelman convergence ------
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  IASDT.R::CatTime("Beta - Gelman convergence")
+
+  Plot_Title <- paste0("Gelman convergence diagnostic - Beta")
+  Plot_Path <- file.path(
+    Path_Convergence, paste0("Convergence_Beta_Gelman.jpeg"))
+
+  Plot <- Convergence_DT %>%
+    dplyr::left_join(Model_Info, by = "M_Name_Fit") %>%
+    dplyr::select(rL, Tree, M_thin, M_samples, Beta_Gelman) %>%
+    dplyr::mutate(
+      GPP_Thin = paste0("GPP", rL, " - Th", M_thin),
+      GPP_Thin = factor(
+        GPP_Thin, levels = rev(gtools::mixedsort(unique(GPP_Thin))))) %>%
+    tidyr::unnest("Beta_Gelman") %>%
+    ggplot2::ggplot(ggplot2::aes(GPP_Thin, Beta_Gelman)) +
+    ggplot2::geom_violin() +
+    ggplot2::geom_vline(
+      xintercept = c(4.5, 8.5, 12.5), linetype = "dashed", color = "blue") +
+    ggplot2::scale_y_log10() +
+    ggplot2::facet_grid(Tree ~ M_samples, labeller = Label) +
+    ggplot2::labs(title = Plot_Title) +
+    ggplot2::xlab(NULL) +
+    ggplot2::ylab("Gelman and Rubin's convergence diagnostic - log10") +
+    ggplot2::coord_flip(expand = FALSE) +
+    Theme
+
+  ggplot2::ggsave(
+    plot = Plot, filename = Plot_Path, width = 16, height = 12, dpi = 600)
+
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  IASDT.R::CatTime("Beta - Gelman convergence - cropped")
+
+  Plot_Path <- file.path(
+    Path_Convergence, paste0("Convergence_Beta_Gelman_cropped.jpeg"))
+  Plot2 <- Plot +
+    ggplot2::ylab("Gelman and Rubin's convergence diagnostic - cropped view") +
+    ggplot2::coord_flip(expand = FALSE, ylim = c(0.995, 1.05))
+  ggplot2::ggsave(
+    plot = Plot2, filename = Plot_Path, width = 16, height = 12, dpi = 600)
+
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  ## Beta - Effective sample size -----
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  IASDT.R::CatTime("Beta - Effective sample size")
+
+  Plot_Path <- file.path(Path_Convergence, paste0("Convergence_Beta_ESS.jpeg"))
+
+  Plot <- Convergence_DT %>%
+    dplyr::left_join(Model_Info, by = "M_Name_Fit") %>%
+    dplyr::select(rL, Tree, M_thin, M_samples, Beta_ESS) %>%
+    dplyr::mutate(
+      GPP_Thin = paste0("GPP", rL, " - Th", M_thin),
+      GPP_Thin = factor(
+        GPP_Thin, levels = rev(gtools::mixedsort(unique(GPP_Thin))))) %>%
+    tidyr::unnest("Beta_ESS") %>%
+    ggplot2::ggplot(ggplot2::aes(GPP_Thin, Beta_ESS)) +
+    ggplot2::geom_violin() +
+    ggplot2::geom_vline(
+      xintercept = c(4.5, 8.5, 12.5), linetype = "dashed", color = "blue") +
+    ggplot2::facet_grid(Tree ~ M_samples, labeller = Label) +
+    ggplot2::labs(title = Plot_Title) +
+    ggplot2::xlab(NULL) +
+    ggplot2::ylab("Effective sample size") +
+    ggplot2::coord_flip(expand = FALSE) +
+    Theme
+
+  ggplot2::ggsave(
+    plot = Plot, filename = Plot_Path, width = 16, height = 12, dpi = 600)
+
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  IASDT.R::CatTime("Beta - Effective sample size - percent")
+
+  Plot_Path <- file.path(
+    Path_Convergence, paste0("Convergence_Beta_ESS_Percent.jpeg"))
+  Plot <- Convergence_DT %>%
+    dplyr::left_join(Model_Info, by = "M_Name_Fit") %>%
+    dplyr::select(rL, Tree, M_thin, M_samples, Beta_ESS) %>%
+    dplyr::mutate(
+      GPP_Thin = paste0("GPP", rL, " - Th", M_thin),
+      GPP_Thin = factor(
+        GPP_Thin, levels = rev(gtools::mixedsort(unique(GPP_Thin))))) %>%
+    tidyr::unnest("Beta_ESS") %>%
+    dplyr::mutate(ESS2 = (100 * Beta_ESS / (M_samples * NChains))) %>%
+    ggplot2::ggplot(ggplot2::aes(GPP_Thin, ESS2)) +
+    ggplot2::geom_violin() +
+    ggplot2::geom_vline(
+      xintercept = c(4.5, 8.5, 12.5), linetype = "dashed", color = "blue") +
+    ggplot2::facet_grid(Tree ~ M_samples, labeller = Label) +
+    ggplot2::labs(title = Plot_Title) +
+    ggplot2::xlab(NULL) +
+    ggplot2::ylab("Effective sample size (%)") +
+    ggplot2::coord_flip(expand = FALSE) +
+    Theme
+  ggplot2::ggsave(
+    plot = Plot, filename = Plot_Path, width = 16, height = 12, dpi = 600)
+
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  return(invisible(NULL))
+}

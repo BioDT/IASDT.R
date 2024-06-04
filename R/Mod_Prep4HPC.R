@@ -18,7 +18,7 @@
 #' @param XVars String. Variables to be used in the model. Default value: `NULL`, which means to use the following variables: bio4, bio6, bio8, bio12, bio15, bio18, RoadRailLog, BiasLog
 #' @param PhyloTree Logical. Fit model variants with phylogenetic trees. Default: `TRUE`. At least one of `PhyloTree` and `NoPhyloTree` can not be `FALSE`.
 #' @param NoPhyloTree Logical. Fit model variants without phylogenetic trees. Default: `TRUE`. At least one of `PhyloTree` and `NoPhyloTree` can not be `FALSE`.
-#' @param NParallel Number of parallel cores for palatalization
+#' @param NParallel Number of parallel cores for parallelization
 #' @param nChains Integer. Number of model chains
 #' @param thin Integer. Value(s) for thinning
 #' @param samples Integer. Value(s) for the number of MCMC samples

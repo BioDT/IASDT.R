@@ -62,7 +62,7 @@ Mod_Prep4HPC(
 
 \item{NoPhyloTree}{Logical. Fit model variants without phylogenetic trees. Default: \code{TRUE}. At least one of \code{PhyloTree} and \code{NoPhyloTree} can not be \code{FALSE}.}
 
-\item{NParallel}{Number of parallel cores for palatalization}
+\item{NParallel}{Number of parallel cores for parallelization}
 
 \item{nChains}{Integer. Number of model chains}
 

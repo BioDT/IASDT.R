@@ -9,6 +9,7 @@ PlotAlpha(
   Post = NULL,
   Model = NULL,
   Title = NULL,
+  NRC = NULL,
   Cols = c("red", "blue", "darkgreen", "darkgrey")
 )
 
@@ -25,6 +26,8 @@ PlotRho(
 \item{Model}{Fitted model object or path to it}
 
 \item{Title}{String. Plotting title}
+
+\item{NRC}{Vector for the number of rows and columns per plot page}
 
 \item{Cols}{Colours for lines for each chain}
 }

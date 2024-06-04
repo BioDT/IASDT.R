@@ -140,7 +140,7 @@ PlotAlpha <- function(
           hjust = 0, vjust = 0, lineheight  = 0, fill = NA, label.color = NA) +
         ggplot2::theme(
           legend.position = "none", axis.text = ggplot2::element_text(size = 12),
-          axis.title = element_blank())
+          axis.title = ggplot2::element_blank())
 
       Plot <- ggExtra::ggMarginal(
         p = Plot, type = "density", margins = "y", size = 4, color = "steelblue4")

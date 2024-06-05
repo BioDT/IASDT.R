@@ -5,7 +5,7 @@
 \title{Plot Gelman-Rubin-Brooks plots}
 \usage{
 Gelman_Plot(
-  CodaPath = NULL,
+  InputCoda = NULL,
   Beta = TRUE,
   Rho = TRUE,
   Omega = TRUE,
@@ -13,16 +13,13 @@ Gelman_Plot(
   NCores = NULL,
   NOmega = 1000,
   PlotAlpha = 0.25,
-  SavePlot = NULL,
-  OutPath = NULL,
-  Beta_File = NULL,
-  Rho_File = NULL,
-  Omega_File = NULL,
-  Alpha_File = NULL
+  SavePlot = TRUE,
+  ReturnPlots = FALSE,
+  OutPath = NULL
 )
 }
 \arguments{
-\item{CodaPath}{Path to RData file containing the coda object}
+\item{InputCoda}{Path to RData file containing the coda object}
 
 \item{Beta}{Logical. Run \code{IASDT.R::Gelman_Beta}?}
 
@@ -38,17 +35,11 @@ Gelman_Plot(
 
 \item{PlotAlpha}{Double. Plotting alpha for line transparency}
 
-\item{SavePlot}{Logical. Save the outputs as JPEG file}
+\item{SavePlot}{Logical. Save the outputs as PDF}
+
+\item{ReturnPlots}{Logical. Return ggplot objects}
 
 \item{OutPath}{String. Folder path to save the output figures}
-
-\item{Beta_File}{String. File name (with extension) for saving the results of \code{IASDT.R::Gelman_Beta}}
-
-\item{Rho_File}{String. File name (with extension) for saving the results of \code{IASDT.R::Gelman_Rho}}
-
-\item{Omega_File}{String. File name (with extension) for saving the results of \code{IASDT.R::Gelman_Omega}}
-
-\item{Alpha_File}{String. File name (with extension) for saving the results of \code{IASDT.R::Gelman_Alpha}}
 }
 \description{
 Plot Gelman-Rubin-Brooks plots. This plot shows the evolution of Gelman and Rubin's shrink factor as the number of iterations increases. For more information, see \code{coda:::gelman.plot}

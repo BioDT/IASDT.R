@@ -1,5 +1,5 @@
 ## |------------------------------------------------------------------------| #
-# Plot_Convergence ----
+# Plot_Convergence_All ----
 ## |------------------------------------------------------------------------| #
 
 #' Plot model convergence of multiple modelling alternatives
@@ -12,18 +12,18 @@
 #' @param NChains Integer. Number of model chains
 #' @param maxOmega Number of sample species interactions
 #' @param NCores Number of parallel cores for parallelization
-#' @name Plot_Convergence
+#' @name Plot_Convergence_All
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
-Plot_Convergence <- function(
+Plot_Convergence_All <- function(
     Path_Model = NULL, EnvFile = ".env", FromHPC = TRUE, NChains = 4,
     maxOmega = 1000, NCores = NULL) {
 
   GPP_Thin <- Path_Coda <- Path_FittedMod <- M_Name_Fit <- Tree <- Plots <-
     rL <- M_thin <- M_samples <- Omega_Gelman <- Omega_ESS <- Beta_Gelman <-
-    Beta_ESS <- ESS2 <- NULL
+    Beta_ESS <- ESS2 <- Path_Trace_Rho <- Rho <- NULL
 
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -215,14 +215,15 @@ Plot_Convergence <- function(
   # Plotting theme -----
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  Theme <- ggplot2::theme(
+  Theme <-  ggplot2::theme(
     strip.text = ggplot2::element_text(size = 16, face = "bold"),
     axis.title = ggplot2::element_text(
-      size = 16, colour = "darkgrey", face = "bold"),
-    axis.text = ggplot2::element_text(size = 12),
+      size = 20, colour = "darkgrey", face = "bold"),
+    axis.text = ggplot2::element_text(size = 16),
     title = ggplot2::element_text(size = 20, face = "bold", color = "blue"),
-    axis.text.y = ggplot2::element_text(hjust = 0),
-    panel.spacing = ggplot2::unit(0.85, "lines"))
+    axis.text.y = ggplot2::element_text(
+      hjust = 0, margin = ggplot2::margin(t = 0, r = 10, b = 0, l = 5)),
+    panel.spacing = ggplot2::unit(0.75, "lines"))
 
   Label <- ggplot2::as_labeller(c(
     `2000` = "2000 samples",
@@ -250,10 +251,22 @@ Plot_Convergence <- function(
 
   IASDT.R::CatTime("Rho - trace plots")
 
-  Convergence_DT$Path_Trace_Rho %>%
-    stats::na.omit() %>%
-    purrr::map(IASDT.R::LoadAs) %>%
-    gridExtra::marrangeGrob(top = NULL, nrow = 2, ncol = 3) %>%
+  Convergence_DT %>%
+    dplyr::filter(stringr::str_detect(M_Name_Fit, "_Tree_")) %>%
+    dplyr::mutate(
+      Rho = purrr::map_if(
+        .x = Path_Trace_Rho,
+        .p = ~is.na(.x),
+        .f = ~grid::grid.rect(gp = grid::gpar(col = "white")),
+        .else = ~IASDT.R::LoadAs(.x))
+    ) %>%
+    dplyr::pull(Rho) %>%
+    gridExtra::marrangeGrob(
+      bottom = bquote(paste0("page ", g, " of ", npages)),
+      top = grid::textGrob(
+        label = "Convergence of the rho parameter",
+        gp = grid::gpar(fontface = "bold", fontsize = 20)),
+      nrow = 2, ncol = 3) %>%
     ggplot2::ggsave(
       dpi = 600, device = "pdf", width = 18, height = 12,
       filename = file.path(Path_Convergence, "TracePlots_Rho_Phylogenetic.pdf"))
@@ -264,16 +277,17 @@ Plot_Convergence <- function(
 
   IASDT.R::CatTime("Omega - Gelman convergence")
 
+  Plot_Path <- file.path(
+    Path_Convergence, paste0("Convergence_Omega_Gelman.pdf"))
+
   Plot_Title <- paste0(
     "Gelman convergence diagnostic - Omega (", maxOmega, " samples)")
-  Plot_Path <- file.path(
-    Path_Convergence, paste0("Convergence_Omega_Gelman.jpeg"))
 
   Plot <- Convergence_DT %>%
     dplyr::left_join(Model_Info, by = "M_Name_Fit") %>%
     dplyr::select(rL, Tree, M_thin, M_samples, Omega_Gelman) %>%
     dplyr::mutate(
-      GPP_Thin = paste0("GPP", rL, " - Th", M_thin),
+      GPP_Thin = paste0("GPP", rL, " | Th", M_thin),
       GPP_Thin = factor(
         GPP_Thin, levels = rev(gtools::mixedsort(unique(GPP_Thin))))) %>%
     tidyr::unnest("Omega_Gelman") %>%
@@ -285,24 +299,19 @@ Plot_Convergence <- function(
     ggplot2::facet_grid(Tree ~ M_samples, labeller = Label) +
     ggplot2::labs(title = Plot_Title) +
     ggplot2::xlab(NULL) +
-    ggplot2::ylab("Gelman and Rubin's convergence diagnostic - log10") +
+    ggplot2::ylab("Gelman and Rubin's convergence diagnostic (log10)") +
     ggplot2::coord_flip(expand = FALSE) +
     Theme
 
-  ggplot2::ggsave(
-    plot = Plot, filename = Plot_Path, width = 16, height = 12, dpi = 600)
-
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-  IASDT.R::CatTime("Omega - Gelman convergence - cropped")
-
-  Plot_Path <- file.path(
-    Path_Convergence, paste0("Convergence_Omega_Gelman_cropped.jpeg"))
   Plot2 <- Plot +
-    ggplot2::ylab("Gelman and Rubin's convergence diagnostic - cropped view") +
+    ggplot2::ylab("Gelman and Rubin's convergence diagnostic - (cropped)") +
     ggplot2::coord_flip(expand = FALSE, ylim = c(0.995, 1.05))
+
   ggplot2::ggsave(
-    plot = Plot2, filename = Plot_Path, width = 16, height = 12, dpi = 600)
+    filename = Plot_Path,
+    plot = gridExtra::marrangeGrob(
+      grobs = list(Plot, Plot2), nrow = 1, ncol = 1, top = NULL),
+    width = 18, height = 12)
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   ## Omega - Effective sample size -----
@@ -310,13 +319,15 @@ Plot_Convergence <- function(
 
   IASDT.R::CatTime("Omega - Effective sample size")
 
-  Plot_Path <- file.path(Path_Convergence, paste0("Convergence_Omega_ESS.jpeg"))
+  Plot_Path <- file.path(Path_Convergence, paste0("Convergence_Omega_ESS.pdf"))
+
+  Plot_Title <- paste0("Effective sample size - Omega (", maxOmega, " samples)")
 
   Plot <- Convergence_DT %>%
     dplyr::left_join(Model_Info, by = "M_Name_Fit") %>%
     dplyr::select(rL, Tree, M_thin, M_samples, Omega_ESS) %>%
     dplyr::mutate(
-      GPP_Thin = paste0("GPP", rL, " - Th", M_thin),
+      GPP_Thin = paste0("GPP", rL, " | Th", M_thin),
       GPP_Thin = factor(
         GPP_Thin, levels = rev(gtools::mixedsort(unique(GPP_Thin))))) %>%
     tidyr::unnest("Omega_ESS") %>%
@@ -327,25 +338,15 @@ Plot_Convergence <- function(
     ggplot2::facet_grid(Tree ~ M_samples, labeller = Label) +
     ggplot2::labs(title = Plot_Title) +
     ggplot2::xlab(NULL) +
-    ggplot2::ylab("Effective sample size") +
+    ggplot2::ylab(paste0("Effective sample size - ", NChains, " chains")) +
     ggplot2::coord_flip(expand = FALSE) +
     Theme
 
-  ggplot2::ggsave(
-    plot = Plot, filename = Plot_Path, width = 16, height = 12, dpi = 600)
-
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-  IASDT.R::CatTime("Omega - Effective sample size - percent")
-
-  Plot_Path <- file.path(
-    Path_Convergence, paste0("Convergence_Omega_ESS_Percent.jpeg"))
-
-  Plot <- Convergence_DT %>%
+  Plot2 <- Convergence_DT %>%
     dplyr::left_join(Model_Info, by = "M_Name_Fit") %>%
     dplyr::select(rL, Tree, M_thin, M_samples, Omega_ESS) %>%
     dplyr::mutate(
-      GPP_Thin = paste0("GPP", rL, " - Th", M_thin),
+      GPP_Thin = paste0("GPP", rL, " | Th", M_thin),
       GPP_Thin = factor(
         GPP_Thin, levels = rev(gtools::mixedsort(unique(GPP_Thin))))) %>%
     tidyr::unnest("Omega_ESS") %>%
@@ -357,12 +358,16 @@ Plot_Convergence <- function(
     ggplot2::facet_grid(Tree ~ M_samples, labeller = Label) +
     ggplot2::labs(title = Plot_Title) +
     ggplot2::xlab(NULL) +
-    ggplot2::ylab("Effective sample size (%)") +
+    ggplot2::ylab("Mean effective sample size (%)") +
     ggplot2::coord_flip(expand = FALSE) +
     Theme
 
   ggplot2::ggsave(
-    plot = Plot, filename = Plot_Path, width = 16, height = 12, dpi = 600)
+    filename = Plot_Path,
+    plot = gridExtra::marrangeGrob(
+      grobs = list(Plot, Plot2), nrow = 1, ncol = 1, top = NULL),
+    width = 18, height = 12)
+
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   ## Beta - Gelman convergence ------
@@ -371,14 +376,15 @@ Plot_Convergence <- function(
   IASDT.R::CatTime("Beta - Gelman convergence")
 
   Plot_Title <- paste0("Gelman convergence diagnostic - Beta")
+
   Plot_Path <- file.path(
-    Path_Convergence, paste0("Convergence_Beta_Gelman.jpeg"))
+    Path_Convergence, paste0("Convergence_Beta_Gelman.pdf"))
 
   Plot <- Convergence_DT %>%
     dplyr::left_join(Model_Info, by = "M_Name_Fit") %>%
     dplyr::select(rL, Tree, M_thin, M_samples, Beta_Gelman) %>%
     dplyr::mutate(
-      GPP_Thin = paste0("GPP", rL, " - Th", M_thin),
+      GPP_Thin = paste0("GPP", rL, " | Th", M_thin),
       GPP_Thin = factor(
         GPP_Thin, levels = rev(gtools::mixedsort(unique(GPP_Thin))))) %>%
     tidyr::unnest("Beta_Gelman") %>%
@@ -390,24 +396,19 @@ Plot_Convergence <- function(
     ggplot2::facet_grid(Tree ~ M_samples, labeller = Label) +
     ggplot2::labs(title = Plot_Title) +
     ggplot2::xlab(NULL) +
-    ggplot2::ylab("Gelman and Rubin's convergence diagnostic - log10") +
+    ggplot2::ylab("Gelman and Rubin's convergence diagnostic (log10)") +
     ggplot2::coord_flip(expand = FALSE) +
     Theme
 
-  ggplot2::ggsave(
-    plot = Plot, filename = Plot_Path, width = 16, height = 12, dpi = 600)
-
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-  IASDT.R::CatTime("Beta - Gelman convergence - cropped")
-
-  Plot_Path <- file.path(
-    Path_Convergence, paste0("Convergence_Beta_Gelman_cropped.jpeg"))
   Plot2 <- Plot +
-    ggplot2::ylab("Gelman and Rubin's convergence diagnostic - cropped view") +
+    ggplot2::ylab("Gelman and Rubin's convergence diagnostic (cropped)") +
     ggplot2::coord_flip(expand = FALSE, ylim = c(0.995, 1.05))
+
   ggplot2::ggsave(
-    plot = Plot2, filename = Plot_Path, width = 16, height = 12, dpi = 600)
+    filename = Plot_Path,
+    plot = gridExtra::marrangeGrob(
+      grobs = list(Plot, Plot2), nrow = 1, ncol = 1, top = NULL),
+    width = 18, height = 12)
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   ## Beta - Effective sample size -----
@@ -415,13 +416,14 @@ Plot_Convergence <- function(
 
   IASDT.R::CatTime("Beta - Effective sample size")
 
-  Plot_Path <- file.path(Path_Convergence, paste0("Convergence_Beta_ESS.jpeg"))
+  Plot_Path <- file.path(Path_Convergence, paste0("Convergence_Beta_ESS.pdf"))
+  Plot_Title <- "Effective sample size - Beta"
 
   Plot <- Convergence_DT %>%
     dplyr::left_join(Model_Info, by = "M_Name_Fit") %>%
     dplyr::select(rL, Tree, M_thin, M_samples, Beta_ESS) %>%
     dplyr::mutate(
-      GPP_Thin = paste0("GPP", rL, " - Th", M_thin),
+      GPP_Thin = paste0("GPP", rL, " | Th", M_thin),
       GPP_Thin = factor(
         GPP_Thin, levels = rev(gtools::mixedsort(unique(GPP_Thin))))) %>%
     tidyr::unnest("Beta_ESS") %>%
@@ -432,24 +434,15 @@ Plot_Convergence <- function(
     ggplot2::facet_grid(Tree ~ M_samples, labeller = Label) +
     ggplot2::labs(title = Plot_Title) +
     ggplot2::xlab(NULL) +
-    ggplot2::ylab("Effective sample size") +
+    ggplot2::ylab(paste0("Effective sample size - ", NChains, " chains")) +
     ggplot2::coord_flip(expand = FALSE) +
     Theme
 
-  ggplot2::ggsave(
-    plot = Plot, filename = Plot_Path, width = 16, height = 12, dpi = 600)
-
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-  IASDT.R::CatTime("Beta - Effective sample size - percent")
-
-  Plot_Path <- file.path(
-    Path_Convergence, paste0("Convergence_Beta_ESS_Percent.jpeg"))
-  Plot <- Convergence_DT %>%
+  Plot2 <- Convergence_DT %>%
     dplyr::left_join(Model_Info, by = "M_Name_Fit") %>%
     dplyr::select(rL, Tree, M_thin, M_samples, Beta_ESS) %>%
     dplyr::mutate(
-      GPP_Thin = paste0("GPP", rL, " - Th", M_thin),
+      GPP_Thin = paste0("GPP", rL, " | Th", M_thin),
       GPP_Thin = factor(
         GPP_Thin, levels = rev(gtools::mixedsort(unique(GPP_Thin))))) %>%
     tidyr::unnest("Beta_ESS") %>%
@@ -461,13 +454,15 @@ Plot_Convergence <- function(
     ggplot2::facet_grid(Tree ~ M_samples, labeller = Label) +
     ggplot2::labs(title = Plot_Title) +
     ggplot2::xlab(NULL) +
-    ggplot2::ylab("Effective sample size (%)") +
+    ggplot2::ylab("Mean effective sample size (%)") +
     ggplot2::coord_flip(expand = FALSE) +
     Theme
-  ggplot2::ggsave(
-    plot = Plot, filename = Plot_Path, width = 16, height = 12, dpi = 600)
 
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  ggplot2::ggsave(
+    filename = Plot_Path,
+    plot = gridExtra::marrangeGrob(
+      grobs = list(Plot, Plot2), nrow = 1, ncol = 1, top = NULL),
+    width = 18, height = 12)
 
   return(invisible(NULL))
 }

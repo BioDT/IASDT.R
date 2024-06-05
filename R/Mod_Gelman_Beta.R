@@ -100,7 +100,7 @@ Gelman_Beta <- function(CodaObj = NULL, NCores = NULL, PlotAlpha = 0.25) {
         size = 12, face = "italic", color = "darkgrey"),
       panel.spacing = ggplot2::unit(0.85, "lines"),
       plot.caption = ggplot2::element_text(
-        color = "darkgrey", face = "italic", size = 12))
+        color = "darkgrey", face = "italic", size = 10))
 
   snow::stopCluster(c1)
   return(Gelman_Beta_Plot)

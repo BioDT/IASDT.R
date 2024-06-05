@@ -67,7 +67,7 @@ Gelman_Rho <- function(CodaObj = NULL) {
         size = 12, face = "italic", color = "darkgrey"),
       panel.spacing = ggplot2::unit(0.85, "lines"),
       plot.caption = ggplot2::element_text(
-        color = "darkgrey", face = "italic", size = 12))
+        color = "darkgrey", face = "italic", size = 10))
 
   return(Gelman_Rho_Plot)
 }

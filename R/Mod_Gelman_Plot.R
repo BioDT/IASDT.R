@@ -6,7 +6,7 @@
 #'
 #' Plot Gelman-Rubin-Brooks plots. This plot shows the evolution of Gelman and Rubin's shrink factor as the number of iterations increases. For more information, see `coda:::gelman.plot`
 #'
-#' @param CodaPath Path to RData file containing the coda object
+#' @param InputCoda Path to RData file containing the coda object
 #' @param Beta Logical. Run `IASDT.R::Gelman_Beta`?
 #' @param Rho Logical. Run `IASDT.R::Gelman_Rho`?
 #' @param Omega Logical. Run `IASDT.R::Gelman_Omega`?
@@ -14,22 +14,27 @@
 #' @param NCores Integer. Number of parallel processes.
 #' @param NOmega Integer. Number of species to be sampled for the Omega parameter
 #' @param PlotAlpha Double. Plotting alpha for line transparency
-#' @param SavePlot Logical. Save the outputs as JPEG file
+#' @param SavePlot Logical. Save the outputs as PDF
+#' @param ReturnPlots Logical. Return ggplot objects
 #' @param OutPath String. Folder path to save the output figures
-#' @param Beta_File String. File name (with extension) for saving the results of `IASDT.R::Gelman_Beta`
-#' @param Rho_File String. File name (with extension) for saving the results of `IASDT.R::Gelman_Rho`
-#' @param Omega_File String. File name (with extension) for saving the results of `IASDT.R::Gelman_Omega`
-#' @param Alpha_File String. File name (with extension) for saving the results of `IASDT.R::Gelman_Alpha`
 #' @name Gelman_Plot
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
 Gelman_Plot <- function(
-    CodaPath = NULL, Beta = TRUE, Rho = TRUE, Omega = TRUE, Alpha = TRUE,
+    InputCoda = NULL, Beta = TRUE, Rho = TRUE, Omega = TRUE, Alpha = TRUE,
     NCores = NULL, NOmega = 1000, PlotAlpha = 0.25,
-    SavePlot = NULL, OutPath = NULL, Beta_File = NULL, Rho_File = NULL,
-    Omega_File = NULL, Alpha_File = NULL) {
+    SavePlot = TRUE, ReturnPlots = FALSE, OutPath = NULL) {
+
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # Checking arguments
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  if (SavePlot == FALSE && ReturnPlots == FALSE) {
+    MSG <- "SavePlot & ReturnPlots can not be both FALSE"
+    stop(MSG)
+  }
 
   AllArgs <- ls()
   AllArgs <- purrr::map(
@@ -37,10 +42,9 @@ Gelman_Plot <- function(
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::CheckArgs(AllArgs, "CodaPath", "character")
   IASDT.R::CheckArgs(AllArgs, c("NCores", "NOmega", "PlotAlpha"), "numeric")
   IASDT.R::CheckArgs(
-    AllArgs, c("Beta", "Rho", "Omega", "Alpha", "SavePlot"), "logical")
+    AllArgs, c("Beta", "Rho", "Omega", "Alpha", "SavePlot", "ReturnPlots"), "logical")
 
   if (SavePlot) {
     IASDT.R::CheckArgs(AllArgs = AllArgs, Args = "OutPath", Type = "character")
@@ -53,76 +57,96 @@ Gelman_Plot <- function(
 
   rm(AllArgs)
 
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # Loading coda object ------
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  if (inherits(InputCoda, "character")) {
+    CodaObj <- IASDT.R::LoadAs(InputCoda)
+  } else {
+    CodaObj <- InputCoda
+    rm(InputCoda)
+    invisible(gc())
+  }
+
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # Alpha -----
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Alpha")
   if (Alpha) {
-    Plot_Alpha <- NULL
-    # if (SavePlot) {
-    #   ggplot2::ggsave(
-    #     plot = Plot_Alpha, filename = file.path(OutPath, Alpha_File),
-    #     width = 16, height = 9, dpi = 600)
-    # }
-
+    Plot_Alpha <- CodaObj %>%
+      magrittr::extract2("Alpha") %>%
+      magrittr::extract2(1)
+    Plot_Alpha <- IASDT.R::Gelman_Alpha(
+      CodaObj = Plot_Alpha, NCores = NCores, PlotAlpha = PlotAlpha)
   } else {
     Plot_Alpha <- NULL
   }
 
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # Beta -----
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
   IASDT.R::CatTime("Beta")
   if (Beta) {
-    Plot_Beta <- CodaPath %>%
-      IASDT.R::LoadAs() %>%
-      magrittr::extract2("Beta") %>%
-      IASDT.R::Gelman_Beta(NCores = NCores, PlotAlpha = PlotAlpha)
-
-    if (SavePlot) {
-      ggplot2::ggsave(
-        plot = Plot_Beta, filename = file.path(OutPath, Beta_File),
-        width = 16, height = 9, dpi = 600)
-    }
-
+    Plot_Beta <- magrittr::extract2(CodaObj, "Beta")
+    Plot_Beta <- IASDT.R::Gelman_Beta(
+      CodaObj = Plot_Beta, NCores = NCores, PlotAlpha = PlotAlpha)
     invisible(gc())
   } else {
     Plot_Beta <- NULL
   }
 
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # Omega -----
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
   IASDT.R::CatTime("Omega")
   if (Omega) {
-    Plot_Omega <- CodaPath %>%
-      IASDT.R::LoadAs() %>%
+    Plot_Omega <- CodaObj %>%
       magrittr::extract2("Omega") %>%
-      magrittr::extract2(1) %>%
-      IASDT.R::Gelman_Omega(NCores = NCores, PlotAlpha = PlotAlpha, NOmega = NOmega)
-
-    if (SavePlot) {
-      ggplot2::ggsave(
-        plot = Plot_Omega, filename = file.path(OutPath, Omega_File),
-        width = 16, height = 9, dpi = 600)
-    }
-
+      magrittr::extract2(1)
+    Plot_Omega <- IASDT.R::Gelman_Omega(
+      CodaObj = Plot_Omega, NCores = NCores,
+      PlotAlpha = PlotAlpha, NOmega = NOmega)
     invisible(gc())
   } else {
     Plot_Omega <- NULL
   }
 
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # Rho -----
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
   IASDT.R::CatTime("Rho")
   if (Rho) {
-    Plot_Rho <- CodaPath %>%
-      IASDT.R::LoadAs() %>%
-      magrittr::extract2("Rho") %>%
-      IASDT.R::Gelman_Rho()
-
-    if (SavePlot) {
-      ggplot2::ggsave(
-        plot = Plot_Rho, filename = file.path(OutPath, Rho_File),
-        width = 16, height = 9, dpi = 600)
-    }
-
+    Plot_Rho <- magrittr::extract2(CodaObj, "Rho")
+    Plot_Rho <- IASDT.R::Gelman_Rho(CodaObj = Plot_Rho)
     invisible(gc())
   } else {
     Plot_Rho <- NULL
   }
 
-  return(list(
-    Alpha = Plot_Alpha, Beta = Plot_Beta,
-    Omega = Plot_Omega, Rho = Plot_Rho))
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # Saving plots -----
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  PlotList <- list(
+    Alpha = Plot_Alpha, Beta = Plot_Beta, Omega = Plot_Omega, Rho = Plot_Rho)
+
+  if (SavePlot) {
+    PlotList4Plot <- purrr::list_flatten(purrr::discard(PlotList, is.null))
+    ggplot2::ggsave(
+      filename = file.path(OutPath, "GelmanPlots.pdf"),
+      plot = gridExtra::marrangeGrob(
+        grobs = PlotList4Plot, nrow = 1, ncol = 1, top = NULL),
+      width = 13, height = 7)
+  }
+
+  if (ReturnPlots) {
+    return(PlotList)
+  } else {
+    return(invisible(NULL))
+  }
 }

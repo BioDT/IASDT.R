@@ -61,8 +61,8 @@ Plot_Convergence_All <- function(
     stop(MSG)
   }
 
-  Path_Convergence <- file.path(Path_Model, "Model_Convergence")
-  fs::dir_create(Path_Convergence)
+  Path_Convergence_All <- file.path(Path_Model, "Model_Convergence_All")
+  fs::dir_create(Path_Convergence_All)
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   ## Prepare convergence data ------
@@ -81,7 +81,7 @@ Plot_Convergence_All <- function(
         .l = list(Path_Coda, Path_FittedMod, M_Name_Fit, Tree),
         .f = function(Path_Coda, Path_FittedMod, M_Name_Fit, Tree) {
 
-          Path_ConvDT <- file.path(Path_Convergence, "DT")
+          Path_ConvDT <- file.path(Path_Convergence_All, "DT")
           fs::dir_create(Path_ConvDT)
 
           ObjName_Rho <- paste0(M_Name_Fit, "_TraceRho")
@@ -209,7 +209,7 @@ Plot_Convergence_All <- function(
     tidyr::unnest_wider("Plots")
 
   save(Convergence_DT,
-       file = file.path(Path_Convergence, "Convergence_DT.RData"))
+       file = file.path(Path_Convergence_All, "Convergence_DT.RData"))
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Plotting theme -----
@@ -239,7 +239,7 @@ Plot_Convergence_All <- function(
   IASDT.R::CatTime("Alpha - trace plots")
 
   grDevices::pdf(
-    file = file.path(Path_Convergence, "TracePlots_Alpha.pdf"),
+    file = file.path(Path_Convergence_All, "TracePlots_Alpha.pdf"),
     width = 18, height = 12)
   Convergence_DT$Path_Trace_Alpha %>%
     purrr::walk(purrr::safely(~print(IASDT.R::LoadAs(.x))))
@@ -269,7 +269,8 @@ Plot_Convergence_All <- function(
       nrow = 2, ncol = 3) %>%
     ggplot2::ggsave(
       dpi = 600, device = "pdf", width = 18, height = 12,
-      filename = file.path(Path_Convergence, "TracePlots_Rho_Phylogenetic.pdf"))
+      filename = file.path(
+        Path_Convergence_All, "TracePlots_Rho_Phylogenetic.pdf"))
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   ## Omega - Gelman convergence ------
@@ -278,7 +279,7 @@ Plot_Convergence_All <- function(
   IASDT.R::CatTime("Omega - Gelman convergence")
 
   Plot_Path <- file.path(
-    Path_Convergence, paste0("Convergence_Omega_Gelman.pdf"))
+    Path_Convergence_All, paste0("Convergence_Omega_Gelman.pdf"))
 
   Plot_Title <- paste0(
     "Gelman convergence diagnostic - Omega (", maxOmega, " samples)")
@@ -319,7 +320,8 @@ Plot_Convergence_All <- function(
 
   IASDT.R::CatTime("Omega - Effective sample size")
 
-  Plot_Path <- file.path(Path_Convergence, paste0("Convergence_Omega_ESS.pdf"))
+  Plot_Path <- file.path(
+    Path_Convergence_All, paste0("Convergence_Omega_ESS.pdf"))
 
   Plot_Title <- paste0("Effective sample size - Omega (", maxOmega, " samples)")
 
@@ -378,7 +380,7 @@ Plot_Convergence_All <- function(
   Plot_Title <- paste0("Gelman convergence diagnostic - Beta")
 
   Plot_Path <- file.path(
-    Path_Convergence, paste0("Convergence_Beta_Gelman.pdf"))
+    Path_Convergence_All, paste0("Convergence_Beta_Gelman.pdf"))
 
   Plot <- Convergence_DT %>%
     dplyr::left_join(Model_Info, by = "M_Name_Fit") %>%
@@ -416,7 +418,8 @@ Plot_Convergence_All <- function(
 
   IASDT.R::CatTime("Beta - Effective sample size")
 
-  Plot_Path <- file.path(Path_Convergence, paste0("Convergence_Beta_ESS.pdf"))
+  Plot_Path <- file.path(
+    Path_Convergence_All, paste0("Convergence_Beta_ESS.pdf"))
   Plot_Title <- "Effective sample size - Beta"
 
   Plot <- Convergence_DT %>%

@@ -90,7 +90,6 @@ PlotAlpha <- function(
       .default = c(2, 3))
   }
 
-
   Plots <- purrr::map(
     .x = seq_len(NLV),
     .f = ~{
@@ -147,9 +146,10 @@ PlotAlpha <- function(
       Plot <- ggExtra::ggMarginal(
         p = Plot, type = "density", margins = "y", size = 4, color = "steelblue4")
       return(Plot)
-    }) %>%
+    })
 
-    if (AddTitle) {
+  if (AddTitle) {
+    Plots <- Plots %>%
       gridExtra::marrangeGrob(
         bottom = dplyr::if_else(
           condition = AddFooter,
@@ -157,13 +157,14 @@ PlotAlpha <- function(
         top = grid::textGrob(
           label = Title, gp = grid::gpar(fontface = "bold", fontsize = 20)),
         nrow = NRC[1], ncol = NRC[2])
-    } else {
+  } else {
+    Plots <- Plots %>%
       gridExtra::marrangeGrob(
         bottom = dplyr::if_else(
           condition = AddFooter,
           true = bquote(paste0("page ", g, " of ", npages)), false = NULL),
         top = NULL, nrow = NRC[1], ncol = NRC[2])
-    }
+  }
 
   return(Plots)
 }

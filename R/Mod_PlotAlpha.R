@@ -10,6 +10,8 @@
 #' @param Model fitted model object or path to it
 #' @param Title String. Plotting title
 #' @param NRC Vector for the number of rows and columns per plot page
+#' @param AddFooter Add footer to the plot for the page number
+#' @param AddTitle Add main title to the plot
 #' @param Cols Colours for lines for each chain
 #' @name PlotAlpha
 #' @author Ahmed El-Gabbas
@@ -17,8 +19,8 @@
 #' @export
 
 PlotAlpha <- function(
-    Post = NULL, Model = NULL, Title = NULL, NRC = NULL,
-    Cols = c("red", "blue", "darkgreen", "darkgrey")) {
+    Post = NULL, Model = NULL, Title = NULL, NRC = NULL, AddFooter = TRUE,
+    AddTitle = TRUE, Cols = c("red", "blue", "darkgreen", "darkgrey")) {
 
   AllArgs <- ls()
   AllArgs <- purrr::map(
@@ -147,11 +149,21 @@ PlotAlpha <- function(
       return(Plot)
     }) %>%
 
-    gridExtra::marrangeGrob(
-      bottom = bquote(paste0("page ", g, " of ", npages)),
-      top = grid::textGrob(
-        label = Title, gp = grid::gpar(fontface = "bold", fontsize = 20)),
-      nrow = NRC[1], ncol = NRC[2])
+    if (AddTitle) {
+      gridExtra::marrangeGrob(
+        bottom = dplyr::if_else(
+          condition = AddFooter,
+          true = bquote(paste0("page ", g, " of ", npages)), false = NULL),
+        top = grid::textGrob(
+          label = Title, gp = grid::gpar(fontface = "bold", fontsize = 20)),
+        nrow = NRC[1], ncol = NRC[2])
+    } else {
+      gridExtra::marrangeGrob(
+        bottom = dplyr::if_else(
+          condition = AddFooter,
+          true = bquote(paste0("page ", g, " of ", npages)), false = NULL),
+        top = NULL, nrow = NRC[1], ncol = NRC[2])
+    }
 
   return(Plots)
 }

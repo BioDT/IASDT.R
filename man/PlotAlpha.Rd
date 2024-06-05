@@ -9,6 +9,8 @@ PlotAlpha(
   Model = NULL,
   Title = NULL,
   NRC = NULL,
+  AddFooter = TRUE,
+  AddTitle = TRUE,
   Cols = c("red", "blue", "darkgreen", "darkgrey")
 )
 }
@@ -20,6 +22,10 @@ PlotAlpha(
 \item{Title}{String. Plotting title}
 
 \item{NRC}{Vector for the number of rows and columns per plot page}
+
+\item{AddFooter}{Add footer to the plot for the page number}
+
+\item{AddTitle}{Add main title to the plot}
 
 \item{Cols}{Colours for lines for each chain}
 }

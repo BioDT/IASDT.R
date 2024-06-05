@@ -148,22 +148,38 @@ PlotAlpha <- function(
       return(Plot)
     })
 
-  if (AddTitle) {
+
+
+  if (AddTitle && AddFooter) {
     Plots <- Plots %>%
       gridExtra::marrangeGrob(
-        bottom = dplyr::if_else(
-          condition = AddFooter,
-          true = bquote(paste0("page ", g, " of ", npages)), false = NULL),
+        bottom = bquote(paste0("page ", g, " of ", npages)),
         top = grid::textGrob(
           label = Title, gp = grid::gpar(fontface = "bold", fontsize = 20)),
         nrow = NRC[1], ncol = NRC[2])
-  } else {
+  }
+
+  if (AddTitle && magrittr::not(AddFooter)) {
     Plots <- Plots %>%
       gridExtra::marrangeGrob(
-        bottom = dplyr::if_else(
-          condition = AddFooter,
-          true = bquote(paste0("page ", g, " of ", npages)), false = NULL),
+        bottom = NULL,
+        top = grid::textGrob(
+          label = Title, gp = grid::gpar(fontface = "bold", fontsize = 20)),
+        nrow = NRC[1], ncol = NRC[2])
+  }
+
+
+  if (magrittr::not(AddTitle) && AddFooter) {
+    Plots <- Plots %>%
+      gridExtra::marrangeGrob(
+        bottom = bquote(paste0("page ", g, " of ", npages)),
         top = NULL, nrow = NRC[1], ncol = NRC[2])
+  }
+
+  if (magrittr::not(AddTitle) && magrittr::not(AddFooter)) {
+    Plots <- Plots %>%
+      gridExtra::marrangeGrob(
+        bottom = NULL, top = NULL, nrow = NRC[1], ncol = NRC[2])
   }
 
   return(Plots)

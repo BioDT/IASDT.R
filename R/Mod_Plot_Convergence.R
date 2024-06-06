@@ -32,9 +32,10 @@ Plot_Convergence <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  SpComb <- `25%` <- `75%` <- Class <- Order <- Family <- Plot <-
+  SpComb <- `25%` <- `75%` <- Class <- Order <- Family <- Plot <- DT <-
     IAS_ID <- Species <- Variable <- Chain <- Iter <- Value <- Var_Sp <-
-    coda <- data <- dplyr <- ggExtra <- ggplot2 <- ggtext <- label <- y <- NULL
+    coda <- data <- dplyr <- ggExtra <- ggplot2 <- ggtext <- label <- y <-
+    Var <- PlotFixedY <- Var <- NULL
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Check input arguments ------
@@ -57,7 +58,6 @@ Plot_Convergence <- function(
     AllArgs = AllArgs, Type = "numeric",
     Args = c("NChains", "NOmega", "NCores", "NRC"))
 
-
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Load environment variables ------
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -75,9 +75,10 @@ Plot_Convergence <- function(
     stop(MSG)
   }
 
-  IASDT.R::CatTime("  >>  Create path")
+  IASDT.R::CatTime("Create path")
   Path_Convergence <- file.path(Path_Model, "Model_Convergence")
-  fs::dir_create(Path_Convergence)
+  Path_Convergence_BySp <- file.path(Path_Convergence, "Beta_BySpecies")
+  fs::dir_create(c(Path_Convergence, Path_Convergence_BySp))
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Prepare convergence data ------
@@ -88,8 +89,9 @@ Plot_Convergence <- function(
   IASDT.R::CatTime("  >>  Loading coda object")
   Coda_Obj <- IASDT.R::LoadAs(Path_Coda)
 
-  IASDT.R::CatTime("  >>  Loading model object")
+  IASDT.R::CatTime("  >>  Loading fitted model object")
   Model <- IASDT.R::LoadAs(Path_FittedModel)
+
   Obj_Omega <- Coda_Obj$Omega[[1]]
   Obj_Beta <- Coda_Obj$Beta
 
@@ -147,13 +149,13 @@ Plot_Convergence <- function(
 
   IASDT.R::CatTime("Omega")
 
-  IASDT.R::CatTime("  >>  Save Coda to tibble")
+  IASDT.R::CatTime("  >>  Coda to tibble")
   OmegaDF <- IASDT.R::Coda_to_tibble(
     CodaObj = Obj_Omega, Type = "omega", NOmega = NOmega)
 
   SelectedCombs <- unique(OmegaDF$SpComb)
 
-  IASDT.R::CatTime("  >>  Prepare confidence intervals")
+  IASDT.R::CatTime("  >>  Prepare confidence interval data")
   CI <- Obj_Omega %>%
     purrr::map(.f = ~.x[, SelectedCombs]) %>%
     coda::mcmc.list() %>%
@@ -221,7 +223,6 @@ Plot_Convergence <- function(
         ggplot2::ylab(NULL) +
         ggplot2::theme(legend.position = "none")
 
-
       if (dplyr::between(0, ValRange[1], ValRange[2])) {
         Plot <- Plot +
           ggplot2::geom_hline(
@@ -272,11 +273,11 @@ Plot_Convergence <- function(
 
   IASDT.R::CatTime("  >>  Prepare trace plot data")
 
-  IASDT.R::CatTime("  >> >> prepare working on parallel")
+  IASDT.R::CatTime("  >> >> Prepare working in parallel")
   c1 <- snow::makeSOCKcluster(NCores)
   future::plan(future::cluster, workers = c1, gc = TRUE)
 
-  IASDT.R::CatTime("  >> >> get confidence intervals")
+  IASDT.R::CatTime("  >> >> Prepare confidence interval data")
   CI <- summary(Obj_Beta, quantiles = c(0.25, 0.75))$quantiles %>%
     as.data.frame() %>%
     tibble::as_tibble(rownames = "Var_Sp") %>%
@@ -288,13 +289,40 @@ Plot_Convergence <- function(
     dplyr::left_join(CI, by = "Var_Sp")
   rm(CI)
 
+  VarRanges <- BetaTracePlots %>%
+    dplyr::arrange(Variable, IAS_ID) %>%
+    dplyr::select(Var = Variable, DT) %>%
+    dplyr::mutate(
+      Range = purrr::map(
+        .x = DT,
+        .f = ~{
+          .x %>%
+            dplyr::pull(Value) %>%
+            range()
+        })) %>%
+    dplyr::select(-DT) %>%
+    tidyr::nest(data = c("Range")) %>%
+    dplyr::mutate(
+      Range = purrr::map(
+        .x = data,
+        .f = ~{
+          .x %>%
+            pull(Range) %>%
+            as.vector() %>%
+            range() %>%
+            purrr::set_names(c("Min", "Max"))
+        })) %>%
+    dplyr::select(-data) %>%
+    tidyr::unnest_wider("Range")
+
   IASDT.R::CatTime("  >> >> Export objects to cores")
   invisible(snow::clusterEvalQ(
     cl = c1, IASDT.R::LoadPackages(dplyr, coda, ggplot2, ggExtra, ggtext)))
   snow::clusterExport(
-    cl = c1, list = c("BetaTracePlots", "Cols"), envir = environment())
+    cl = c1, list = c("BetaTracePlots", "Cols", "VarRanges"),
+    envir = environment())
 
-  IASDT.R::CatTime("  >> >> Prepare trace plot data")
+  IASDT.R::CatTime("  >> >> Prepare data in parallel")
   BetaTracePlots <- snow::parLapply(
     cl = c1, x = BetaTracePlots$Var_Sp,
     fun = function(x) {
@@ -303,13 +331,19 @@ Plot_Convergence <- function(
       Species <- SubDT$Species
       IAS_ID <- SubDT$IAS_ID
       DT <- SubDT$DT[[1]]
-      ValRange <- range(DT$Value)
 
       Variable <- SubDT$Variable
-      Variable <- dplyr::case_when(
+      VariableLabel <- dplyr::case_when(
         Variable == "RoadRailLog" ~ "Road + Rail intensity",
         Variable == "BiasLog" ~ "Sampling intensity",
         .default = Variable)
+
+      ValRange <- range(DT$Value)
+
+      ValRangeByVar <- VarRanges %>%
+        dplyr::filter(Var == Variable) %>%
+        dplyr::select(-Var) %>%
+        unlist()
 
       CI0 <- round(c(SubDT$CI_25, SubDT$CI_75), 2)
       CI1 <- CI0 %>%
@@ -326,7 +360,7 @@ Plot_Convergence <- function(
         paste0("<b>", ., "</b>") %>%
         paste0("<br>", IAS_ID) %>%
         data.frame(x = -Inf, y = Inf, label = .)
-      PanelTitle3 <- data.frame(x = Inf, y = -Inf, label = Variable)
+      PanelTitle3 <- data.frame(x = Inf, y = -Inf, label = VariableLabel)
 
       Plot <- DT %>%
         ggplot2::ggplot(mapping = ggplot2::aes(
@@ -364,6 +398,18 @@ Plot_Convergence <- function(
           legend.position = "none",
           axis.text = ggplot2::element_text(size = 10))
 
+      suppressMessages({
+        Plot2 <- Plot +
+          ggplot2::scale_y_continuous(limits = ValRangeByVar)
+      })
+
+      if (dplyr::between(0, ValRangeByVar[1], ValRangeByVar[2])) {
+        Plot2 <- Plot2 +
+          ggplot2::geom_hline(
+            yintercept = 0, linetype = "solid", color = "green",
+            linewidth = 0.4)
+      }
+
       if (dplyr::between(0, ValRange[1], ValRange[2])) {
         Plot <- Plot +
           ggplot2::geom_hline(
@@ -373,12 +419,15 @@ Plot_Convergence <- function(
 
       Plot <- ggExtra::ggMarginal(
         p = Plot, type = "density", margins = "y", size = 5, color = "steelblue4")
+      Plot2 <- ggExtra::ggMarginal(
+        p = Plot2, type = "density", margins = "y", size = 5, color = "steelblue4")
 
       invisible(gc())
-      return(tibble::tibble(Var_Sp = x, Plot = list(Plot)))
+      return(tibble::tibble(Var_Sp = x, Plot = list(Plot), PlotFixedY = list(Plot2)))
     }) %>%
     dplyr::bind_rows() %>%
     dplyr::right_join(BetaTracePlots, by = "Var_Sp")
+
   snow::stopCluster(c1)
   closeAllConnections()
   invisible(gc())
@@ -392,10 +441,10 @@ Plot_Convergence <- function(
   }
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # Beta - by variable ------
+  ## Beta - by variable - Free y ------
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatTime("  >>  Prepare trace plot data")
+  IASDT.R::CatTime("  >>  Trace plots, grouped by variables - Free Y axis")
 
   IASDT.R::CatTime("  >>  >>  Preparing data")
   BetaTracePlots_ByVar <- BetaTracePlots %>%
@@ -403,7 +452,7 @@ Plot_Convergence <- function(
     dplyr::select(Variable, Plot) %>%
     tidyr::nest(data = c("Plot"))
 
-  IASDT.R::CatTime("  >>  >>  Preparing working on parallel")
+  IASDT.R::CatTime("  >>  >>  Preparing working in parallel")
   c1 <- snow::makeSOCKcluster(NCores)
   future::plan(future::cluster, workers = c1, gc = TRUE)
 
@@ -413,7 +462,7 @@ Plot_Convergence <- function(
     cl = c1, list = c("BetaTracePlots_ByVar", "Path_Convergence", "NRC", "Cols"),
     envir = environment())
 
-  IASDT.R::CatTime("  >>  >>  save plots on parallel")
+  IASDT.R::CatTime("  >>  >>  save plots in parallel")
   BetaTracePlots_ByVar0 <- snow::parLapply(
     cl = c1, x = BetaTracePlots_ByVar$Variable,
     fun = function(x) {
@@ -424,7 +473,7 @@ Plot_Convergence <- function(
         .default = x)
 
       Path_Beta <- file.path(
-        Path_Convergence, paste0("Convergence_Beta_", x, ".pdf"))
+        Path_Convergence, paste0("Convergence_Beta_", x, "_FreeY.pdf"))
 
       Plot <- dplyr::filter(BetaTracePlots_ByVar, Variable == x) %>%
         dplyr::pull(data) %>%
@@ -450,30 +499,88 @@ Plot_Convergence <- function(
   invisible(gc())
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # Beta - by species ------
+  ## Beta - by variable - Fixed y ------
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
+  IASDT.R::CatTime("  >>  Trace plots, grouped by variables - Fixed Y axis")
+
   IASDT.R::CatTime("  >>  >>  Preparing data")
+  BetaTracePlots_ByVar <- BetaTracePlots %>%
+    dplyr::arrange(Variable, IAS_ID) %>%
+    dplyr::select(Variable, PlotFixedY) %>%
+    tidyr::nest(data = c("PlotFixedY"))
 
-  Order <- c("Intercept", "bio4", "bio6", "bio8", "bio12", "bio15",
-             "bio18", "RoadRailLog", "BiasLog")
-
-  BetaTracePlots_BySp <- BetaTracePlots %>%
-    dplyr::slice(order(factor(Variable, levels = Order))) %>%
-    dplyr::select(Species, IAS_ID, Plot) %>%
-    tidyr::nest(data = -c("Species", "IAS_ID"))
-
-  IASDT.R::CatTime("  >>  >>  Preparing working on parallel")
+  IASDT.R::CatTime("  >>  >>  Preparing working in parallel")
   c1 <- snow::makeSOCKcluster(NCores)
   future::plan(future::cluster, workers = c1, gc = TRUE)
 
   invisible(snow::clusterEvalQ(
     cl = c1, IASDT.R::LoadPackages(dplyr, coda, ggplot2, ggExtra, ggtext)))
   snow::clusterExport(
-    cl = c1, list = c("BetaTracePlots_BySp", "Path_Convergence"),
+    cl = c1, list = c("BetaTracePlots_ByVar", "Path_Convergence", "NRC", "Cols"),
     envir = environment())
 
-  IASDT.R::CatTime("  >>  >>  save plots on parallel")
+  IASDT.R::CatTime("  >>  >>  save plots in parallel")
+  BetaTracePlots_ByVar0 <- snow::parLapply(
+    cl = c1, x = BetaTracePlots_ByVar$Variable,
+    fun = function(x) {
+
+      VarName <- dplyr::case_when(
+        x == "RoadRailLog" ~ "Road + Rail intensity",
+        x == "BiasLog" ~ "Sampling intensity",
+        .default = x)
+
+      Path_Beta <- file.path(
+        Path_Convergence, paste0("Convergence_Beta_", x, "_FixedY.pdf"))
+
+      Plot <- dplyr::filter(BetaTracePlots_ByVar, Variable == x) %>%
+        dplyr::pull(data) %>%
+        magrittr::extract2(1) %>%
+        dplyr::pull(1) %>%
+        gridExtra::marrangeGrob(
+          bottom = bquote(paste0("page ", g, " of ", npages)),
+          top = grid::textGrob(
+            label = paste0("Convergence of the beta parameter - ", VarName, " - Fixed y-axis"),
+            gp = grid::gpar(fontface = "bold", fontsize = 20)),
+          nrow = NRC[1], ncol = NRC[2])
+
+      ggplot2::ggsave(
+        plot = Plot, dpi = 600, device = "pdf", width = 18, height = 12,
+        filename = Path_Beta)
+
+      return(Path_Beta)
+    })
+
+  snow::stopCluster(c1)
+  closeAllConnections()
+  rm(BetaTracePlots_ByVar0, BetaTracePlots_ByVar)
+  invisible(gc())
+
+  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # Beta - by species ------
+  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  IASDT.R::CatTime("  >>  Trace plots, grouped by species")
+
+  IASDT.R::CatTime("  >>  >>  Preparing data")
+  Order <- c("Intercept", "bio4", "bio6", "bio8", "bio12", "bio15",
+             "bio18", "RoadRailLog", "BiasLog")
+  BetaTracePlots_BySp <- BetaTracePlots %>%
+    dplyr::slice(order(factor(Variable, levels = Order))) %>%
+    dplyr::select(Species, IAS_ID, Plot) %>%
+    tidyr::nest(data = -c("Species", "IAS_ID"))
+
+  IASDT.R::CatTime("  >>  >>  Preparing working in parallel")
+  c1 <- snow::makeSOCKcluster(NCores)
+  future::plan(future::cluster, workers = c1, gc = TRUE)
+
+  invisible(snow::clusterEvalQ(
+    cl = c1, IASDT.R::LoadPackages(dplyr, coda, ggplot2, ggExtra, ggtext)))
+  snow::clusterExport(
+    cl = c1, list = c("BetaTracePlots_BySp", "Path_Convergence_BySp"),
+    envir = environment())
+
+  IASDT.R::CatTime("  >>  >>  save plots in parallel")
   BetaTracePlots_BySp0 <- snow::parLapply(
     cl = c1, x = BetaTracePlots_BySp$Species,
     fun = function(x) {
@@ -486,7 +593,7 @@ Plot_Convergence <- function(
       DT <- dplyr::filter(BetaTracePlots_BySp, Species == x)
 
       Path_Beta <- file.path(
-        Path_Convergence, "Convergence_Beta_BySpecies",
+        Path_Convergence_BySp,
         paste0("Convergence_Beta_", DT$IAS_ID, "_",
                IASDT.R::ReplaceSpace(x), ".pdf"))
 
@@ -506,6 +613,7 @@ Plot_Convergence <- function(
 
       return(Path_Beta)
     })
+  rm(BetaTracePlots_BySp0)
 
   return(invisible(NULL))
 

@@ -11,7 +11,8 @@
 #' @param ModelName String. Prefix to add to the title of the plot. Default: `NULL`, which means only use 'Variance partitioning' in the title.
 #' @param ModelEval Result of the `Hmsc::evaluateModelFit` function. If `ModelEval = NULL` (default), `Hmsc::evaluateModelFit` will be executed on the model object to compute measures of model fit.
 #' @param ModelEvalPar Integer. Number of parallel computations for computing predicted values. This is used as the `nParallel` argument of the `Hmsc::computePredictedValues` function.
-#' @param VarPar Variance partitioning. An object resulted from `Hmsc::computeVariancePartitioning`.
+#' @param VarPar Variance partitioning. An object resulted from `Hmsc::computeVariancePartitioning`. if `ModelEval = NULL` (default), `Hmsc::computeVariancePartitioning` will be executed on the model object.
+#'
 #' @param EnvFile String. Path to read the environment variables. Default value: `.env`
 #' @name Plot_VarPar
 #' @author Ahmed El-Gabbas
@@ -20,7 +21,7 @@
 
 Plot_VarPar <- function(
     Model, PlotPath = NULL, ModelName = NULL, ModelEval = NULL,
-    ModelEvalPar = 1, VarPar = NULL, EnvFile = ".env") {
+    ModelEvalPar = NULL, VarPar = NULL, EnvFile = ".env") {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
@@ -29,7 +30,7 @@ Plot_VarPar <- function(
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Loading species list
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
+  IASDT.R::CatTime("Loading species list")
   if (file.exists(EnvFile)) {
     readRenviron(EnvFile)
     Path_TaxaList <- Sys.getenv("DP_R_Mod_Path_TaxaList")
@@ -38,6 +39,7 @@ Plot_VarPar <- function(
       "Path for environment variables: ", EnvFile, " was not found")
     stop(MSG)
   }
+
   SpList <- file.path(Path_TaxaList, "TaxaList.RData") %>%
     IASDT.R::LoadAs() %>%
     dplyr::select(Species = IAS_ID, Species_name) %>%
@@ -48,19 +50,23 @@ Plot_VarPar <- function(
 
   if (purrr::some(list(ModelEval, VarPar), is.null)) {
 
+    IASDT.R::CatTime("Either ModelEval or VarPar is NULL")
+
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
     # Loading model
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
     if (magrittr::not(inherits(Model, "Hmsc"))) {
+
+      IASDT.R::CatTime("Loading model object from file")
+
       if (inherits(Model, "character")) {
         if (magrittr::not(file.exists(Model))) {
           MSG <- "The provided path for the model does not exist"
           stop(MSG)
         }
         Model <- IASDT.R::LoadAs(Model)
-        if (inherits(Model, "Hmsc")) {
-        } else {
+        if (magrittr::not(inherits(Model, "Hmsc"))) {
           MSG <- "The loaded model is not of an Hmsc object"
           stop(MSG)
         }
@@ -75,6 +81,7 @@ Plot_VarPar <- function(
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
     if (is.null(VarPar)) {
+      IASDT.R::CatTime("Calculate variance partitioning")
       VarPar <- Hmsc::computeVariancePartitioning(Model)
     }
 
@@ -83,11 +90,13 @@ Plot_VarPar <- function(
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
     if (is.null(ModelEval)) {
+
+      IASDT.R::CatTime("Compute predicted Values")
       preds <- Hmsc::computePredictedValues(
         hM = Model, nParallel = ModelEvalPar) %>%
         suppressWarnings()
 
-      # Evaluate model fit
+      IASDT.R::CatTime("Evaluate model fit")
       ModelEval <- Hmsc::evaluateModelFit(hM = Model, predY = preds) %>%
         suppressWarnings()
 
@@ -118,10 +127,11 @@ Plot_VarPar <- function(
     return(legend)
   }
 
-
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Relative variance partitioning
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  IASDT.R::CatTime("Plot 1 - Relative variance partitioning")
 
   vp_df <- VarPar$vals %>%
     tibble::as_tibble(rownames = "variable") %>%
@@ -170,6 +180,8 @@ Plot_VarPar <- function(
   # Raw variance partitioning
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
+  IASDT.R::CatTime("Plot 2 - Raw variance partitioning")
+
   for (ii in seq_along(ModelEval$TjurR2)) {
     VarPar$vals[, ii] <- ModelEval$TjurR2[ii] * VarPar$vals[, ii]
   }
@@ -209,10 +221,11 @@ Plot_VarPar <- function(
     ggplot2::coord_cartesian(xlim = c(0, MaxVal), expand = FALSE) +
     Theme
 
-
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Combine plots
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  IASDT.R::CatTime("Combine plots")
 
   Legend <- Plot +
     ggplot2::theme(legend.position = "bottom") +
@@ -230,6 +243,8 @@ Plot_VarPar <- function(
   # Save plot to disk
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
+  IASDT.R::CatTime("Save plot to disk")
+
   gridExtra::arrangeGrob(Plot, Plot_raw, nrow = 1) %>%
     gridExtra::grid.arrange(
       Legend, nrow = 2, heights = c(15, 1),
@@ -237,4 +252,6 @@ Plot_VarPar <- function(
         PlotTitle, gp = grid::gpar(fontsize = 30, font = 2))) %>%
     ggplot2::ggsave(
       filename = PlotPath, height = 16, width = 24, dpi = 600)
+
+  return(invisible(NULL))
 }

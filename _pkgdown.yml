@@ -95,15 +95,14 @@ reference:
   - Mod_SLURM_Refit
   - Mod_Fit_WS
   - Mod_MergeChains
-  - PlotVarPar
-  - PlotRespCurv
-  - PlotBeta_bySp
-  - PlotBeta_byVar
+  - Plot_VarPar
+  - Plot_RespCurv
+  - Plot_Rho
   - Gelman_Beta
   - Gelman_Omega
   - Gelman_Rho
   - Gelman_Plot
-  - PlotRho
+
 
 
 - title: Spatial functions

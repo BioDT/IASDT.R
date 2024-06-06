@@ -9,7 +9,7 @@ Plot_VarPar(
   PlotPath = NULL,
   ModelName = NULL,
   ModelEval = NULL,
-  ModelEvalPar = 1,
+  ModelEvalPar = NULL,
   VarPar = NULL,
   EnvFile = ".env"
 )
@@ -25,7 +25,7 @@ Plot_VarPar(
 
 \item{ModelEvalPar}{Integer. Number of parallel computations for computing predicted values. This is used as the \code{nParallel} argument of the \code{Hmsc::computePredictedValues} function.}
 
-\item{VarPar}{Variance partitioning. An object resulted from \code{Hmsc::computeVariancePartitioning}.}
+\item{VarPar}{Variance partitioning. An object resulted from \code{Hmsc::computeVariancePartitioning}. if \code{ModelEval = NULL} (default), \code{Hmsc::computeVariancePartitioning} will be executed on the model object.}
 
 \item{EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
 }

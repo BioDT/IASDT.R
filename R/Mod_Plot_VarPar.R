@@ -66,6 +66,8 @@ Plot_VarPar <- function(
           stop(MSG)
         }
         Model <- IASDT.R::LoadAs(Model)
+        invisible(gc())
+
         if (magrittr::not(inherits(Model, "Hmsc"))) {
           MSG <- "The loaded model is not of an Hmsc object"
           stop(MSG)
@@ -76,6 +78,7 @@ Plot_VarPar <- function(
       }
     }
 
+
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
     # Calculate variance partitioning
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -83,6 +86,7 @@ Plot_VarPar <- function(
     if (is.null(VarPar)) {
       IASDT.R::CatTime("Calculate variance partitioning")
       VarPar <- Hmsc::computeVariancePartitioning(Model)
+      invisible(gc())
     }
 
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -101,9 +105,9 @@ Plot_VarPar <- function(
         suppressWarnings()
 
       rm(preds)
+      invisible(gc())
     }
     rm(Model)
-    invisible(gc())
   }
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -176,6 +180,8 @@ Plot_VarPar <- function(
     ggplot2::coord_cartesian(xlim = c(0, 1.0125), expand = FALSE) +
     Theme
 
+  invisible(gc())
+
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Raw variance partitioning
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -220,6 +226,8 @@ Plot_VarPar <- function(
     ggplot2::scale_fill_brewer(palette = "Paired") +
     ggplot2::coord_cartesian(xlim = c(0, MaxVal), expand = FALSE) +
     Theme
+
+  invisible(gc())
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Combine plots

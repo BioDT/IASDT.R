@@ -1,5 +1,5 @@
 ## |------------------------------------------------------------------------| #
-# PlotAlpha ----
+# Plot_Alpha ----
 ## |------------------------------------------------------------------------| #
 
 #' Plot convergence traceplots for the alpha parameter
@@ -13,14 +13,19 @@
 #' @param AddFooter Add footer to the plot for the page number
 #' @param AddTitle Add main title to the plot
 #' @param Cols Colours for lines for each chain
-#' @name PlotAlpha
+#' @name Plot_Alpha
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
-PlotAlpha <- function(
+Plot_Alpha <- function(
     Post = NULL, Model = NULL, Title = NULL, NRC = NULL, AddFooter = TRUE,
     AddTitle = TRUE, Cols = c("red", "blue", "darkgreen", "darkgrey")) {
+
+
+
+  SampleSize <- ESS <- NULL
+
 
   AllArgs <- ls()
   AllArgs <- purrr::map(
@@ -60,8 +65,8 @@ PlotAlpha <- function(
   ## Effective sample size
   ESS <- Post %>%
     coda::effectiveSize() %>%
-    round() %>%
-    magrittr::divide_by(NChains)
+    magrittr::divide_by(NChains) %>%
+    round(1)
 
   ## quantiles
   CI <- Post %>%
@@ -106,7 +111,8 @@ PlotAlpha <- function(
       ESS_CI <- data.frame(
         x = -Inf, y = -Inf, label = paste0(ESS0, "<br>", CI0))
 
-      Gelman0 <- paste0("<b><i>Gelman convergence diagnostic:</i></b> ", Gelman[.x])
+      Gelman0 <- paste0(
+        "<b><i>Gelman convergence diagnostic:</i></b> ", Gelman[.x])
       Title2 <- data.frame(x = Inf, y = Inf, label = Gelman0)
       Title3 <- data.frame(x = -Inf, y = Inf, label = paste0("Factor", .x))
 
@@ -144,11 +150,10 @@ PlotAlpha <- function(
           axis.title = ggplot2::element_blank())
 
       Plot <- ggExtra::ggMarginal(
-        p = Plot, type = "density", margins = "y", size = 4, color = "steelblue4")
+        p = Plot, type = "density", margins = "y", size = 4,
+        color = "steelblue4")
       return(Plot)
     })
-
-
 
   if (AddTitle && AddFooter) {
     Plots <- Plots %>%

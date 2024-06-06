@@ -13,7 +13,7 @@
 #' @param Alpha Logical. Run `IASDT.R::Gelman_Alpha` (not yet available)?
 #' @param NCores Integer. Number of parallel processes.
 #' @param NOmega Integer. Number of species to be sampled for the Omega parameter
-#' @param PlotAlpha Double. Plotting alpha for line transparency
+#' @param PlottingAlpha Double. Plotting alpha for line transparency
 #' @param SavePlot Logical. Save the outputs as PDF
 #' @param ReturnPlots Logical. Return ggplot objects
 #' @param OutPath String. Folder path to save the output figures
@@ -24,7 +24,7 @@
 
 Gelman_Plot <- function(
     InputCoda = NULL, Beta = TRUE, Rho = TRUE, Omega = TRUE, Alpha = TRUE,
-    NCores = NULL, NOmega = 1000, PlotAlpha = 0.25,
+    NCores = NULL, NOmega = 1000, PlottingAlpha = 0.25,
     SavePlot = TRUE, ReturnPlots = FALSE, OutPath = NULL) {
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -42,7 +42,7 @@ Gelman_Plot <- function(
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::CheckArgs(AllArgs, c("NCores", "NOmega", "PlotAlpha"), "numeric")
+  IASDT.R::CheckArgs(AllArgs, c("NCores", "NOmega", "PlottingAlpha"), "numeric")
   IASDT.R::CheckArgs(
     AllArgs, c("Beta", "Rho", "Omega", "Alpha", "SavePlot", "ReturnPlots"), "logical")
 
@@ -79,7 +79,7 @@ Gelman_Plot <- function(
       magrittr::extract2("Alpha") %>%
       magrittr::extract2(1)
     Plot_Alpha <- IASDT.R::Gelman_Alpha(
-      CodaObj = Plot_Alpha, NCores = NCores, PlotAlpha = PlotAlpha)
+      CodaObj = Plot_Alpha, NCores = NCores, PlottingAlpha = PlottingAlpha)
   } else {
     Plot_Alpha <- NULL
   }
@@ -92,7 +92,7 @@ Gelman_Plot <- function(
   if (Beta) {
     Plot_Beta <- magrittr::extract2(CodaObj, "Beta")
     Plot_Beta <- IASDT.R::Gelman_Beta(
-      CodaObj = Plot_Beta, NCores = NCores, PlotAlpha = PlotAlpha)
+      CodaObj = Plot_Beta, NCores = NCores, PlottingAlpha = PlottingAlpha)
     invisible(gc())
   } else {
     Plot_Beta <- NULL
@@ -109,7 +109,7 @@ Gelman_Plot <- function(
       magrittr::extract2(1)
     Plot_Omega <- IASDT.R::Gelman_Omega(
       CodaObj = Plot_Omega, NCores = NCores,
-      PlotAlpha = PlotAlpha, NOmega = NOmega)
+      PlottingAlpha = PlottingAlpha, NOmega = NOmega)
     invisible(gc())
   } else {
     Plot_Omega <- NULL

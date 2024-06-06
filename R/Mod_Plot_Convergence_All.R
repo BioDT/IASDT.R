@@ -21,10 +21,12 @@ Plot_Convergence_All <- function(
     Path_Model = NULL, EnvFile = ".env", FromHPC = TRUE, NChains = 4,
     maxOmega = 1000, NCores = NULL) {
 
+  # Avoid "no visible binding for global variable" message
+  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
+
   GPP_Thin <- Path_Coda <- Path_FittedMod <- M_Name_Fit <- Tree <- Plots <-
     rL <- M_thin <- M_samples <- Omega_Gelman <- Omega_ESS <- Beta_Gelman <-
     Beta_ESS <- ESS2 <- Path_Trace_Rho <- Rho <- NULL
-
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Check input arguments
@@ -45,10 +47,10 @@ Plot_Convergence_All <- function(
     Args = c("NChains", "maxOmega", "NCores"))
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # Load environment data
+  # Load environment variables
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatTime("Load environment data")
+  IASDT.R::CatTime("Load environment variables")
 
   if (file.exists(EnvFile)) {
     readRenviron(EnvFile)
@@ -113,7 +115,7 @@ Plot_Convergence_All <- function(
               RhoTitle <- stringr::str_remove_all(
                 string = basename(Path_Coda), pattern = "_Tree|_Coda.RData$")
 
-              Plot_Rho <- IASDT.R::PlotRho(
+              Plot_Rho <- IASDT.R::Plot_Rho(
                 Post = Coda_Obj, Model = Model_Obj, Title = RhoTitle)
 
               IASDT.R::SaveAs(
@@ -126,7 +128,7 @@ Plot_Convergence_All <- function(
             }
 
             # Alpha
-            Plot_Alpha <- IASDT.R::PlotAlpha(
+            Plot_Alpha <- IASDT.R::Plot_Alpha(
               Post = Coda_Obj, Model = Model_Obj, NRC = c(2, 3),
               Title = stringr::str_remove_all(
                 basename(Path_Coda), "_Tree|_Coda.RData$"))

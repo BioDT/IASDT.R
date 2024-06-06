@@ -9,14 +9,14 @@
 #' @param CodaObj an mcmc object
 #' @param NCores Integer. Number of parallel processes.
 #' @param NOmega Integer. Number of species to be sampled for the Omega parameter
-#' @param PlotAlpha Double. Plotting alpha for line transparency
+#' @param PlottingAlpha Double. Plotting alpha for line transparency
 #' @name Gelman_Omega
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
 Gelman_Omega <- function(
-    CodaObj = NULL, NCores = NULL, NOmega = 1000, PlotAlpha = 0.25) {
+    CodaObj = NULL, NCores = NULL, NOmega = 1000, PlottingAlpha = 0.25) {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
@@ -68,7 +68,7 @@ Gelman_Omega <- function(
     ggplot2::geom_line(
       mapping = ggplot2::aes(
         x = Iter, y = ShrinkFactor, group = group, color = Type),
-      alpha = PlotAlpha) +
+      alpha = PlottingAlpha) +
     ggplot2::scale_color_manual(
       values = c("Median" = "red", "Q97_5" = "black")) +
     ggplot2::geom_hline(

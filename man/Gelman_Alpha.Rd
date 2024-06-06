@@ -4,14 +4,14 @@
 \alias{Gelman_Alpha}
 \title{Gelman-Rubin-Brooks plot for alpha}
 \usage{
-Gelman_Alpha(CodaObj = NULL, NCores = NULL, PlotAlpha = 0.25)
+Gelman_Alpha(CodaObj = NULL, NCores = NULL, PlottingAlpha = 0.25)
 }
 \arguments{
 \item{CodaObj}{an mcmc object}
 
 \item{NCores}{Integer. Number of parallel processes.}
 
-\item{PlotAlpha}{Double. Plotting alpha for line transparency}
+\item{PlottingAlpha}{Double. Plotting alpha for line transparency}
 }
 \description{
 Gelman-Rubin-Brooks plot for alpha

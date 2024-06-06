@@ -1,5 +1,5 @@
 ## |------------------------------------------------------------------------| #
-# PlotRho ----
+# Plot_Rho ----
 ## |------------------------------------------------------------------------| #
 
 #' Plot convergence traceplots for the rho parameter
@@ -10,12 +10,12 @@
 #' @param Model Fitted model object or path to it
 #' @param Title String. Plotting title
 #' @param Cols Colours for lines for each chain
-#' @name PlotRho
+#' @name Plot_Rho
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
-PlotRho <- function(
+Plot_Rho <- function(
     Post = NULL, Model = NULL, Title = NULL,
     Cols = c("red", "blue", "darkgreen", "darkgrey")) {
 
@@ -48,8 +48,8 @@ PlotRho <- function(
   ## Effective sample size
   ESS <- Post %>%
     coda::effectiveSize() %>%
-    round() %>%
     magrittr::divide_by(NChains) %>%
+    round(1) %>%
     paste0("<i>Mean effective sample size:</i> ", ., " / ", SampleSize)
 
   ## quantiles

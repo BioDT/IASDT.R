@@ -4,7 +4,12 @@
 \alias{Gelman_Omega}
 \title{Gelman-Rubin-Brooks plot for all omega parameters}
 \usage{
-Gelman_Omega(CodaObj = NULL, NCores = NULL, NOmega = 1000, PlotAlpha = 0.25)
+Gelman_Omega(
+  CodaObj = NULL,
+  NCores = NULL,
+  NOmega = 1000,
+  PlottingAlpha = 0.25
+)
 }
 \arguments{
 \item{CodaObj}{an mcmc object}
@@ -13,7 +18,7 @@ Gelman_Omega(CodaObj = NULL, NCores = NULL, NOmega = 1000, PlotAlpha = 0.25)
 
 \item{NOmega}{Integer. Number of species to be sampled for the Omega parameter}
 
-\item{PlotAlpha}{Double. Plotting alpha for line transparency}
+\item{PlottingAlpha}{Double. Plotting alpha for line transparency}
 }
 \description{
 Gelman-Rubin-Brooks plot for all omega parameters

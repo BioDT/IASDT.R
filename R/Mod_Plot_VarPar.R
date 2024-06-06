@@ -1,5 +1,5 @@
 ## |------------------------------------------------------------------------| #
-# PlotVarPar ----
+# Plot_VarPar ----
 ## |------------------------------------------------------------------------| #
 
 #' Plot variance partitioning of the model
@@ -8,17 +8,17 @@
 #'
 #' @param Model an object of class `Hmsc` or a path for the model. Only needed if one of `ModelEval` and `VarPar` arguments are `NULL`.
 #' @param PlotPath String. Path to save the output file.
-#' @param ModelName String. Prefix to add to the title of the plot. Default: `NULL`, which means only use 'Variance paritioning' in the title.
+#' @param ModelName String. Prefix to add to the title of the plot. Default: `NULL`, which means only use 'Variance partitioning' in the title.
 #' @param ModelEval Result of the `Hmsc::evaluateModelFit` function. If `ModelEval = NULL` (default), `Hmsc::evaluateModelFit` will be executed on the model object to compute measures of model fit.
 #' @param ModelEvalPar Integer. Number of parallel computations for computing predicted values. This is used as the `nParallel` argument of the `Hmsc::computePredictedValues` function.
 #' @param VarPar Variance partitioning. An object resulted from `Hmsc::computeVariancePartitioning`.
 #' @param EnvFile String. Path to read the environment variables. Default value: `.env`
-#' @name PlotVarPar
+#' @name Plot_VarPar
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
-PlotVarPar <- function(
+Plot_VarPar <- function(
     Model, PlotPath = NULL, ModelName = NULL, ModelEval = NULL,
     ModelEvalPar = 1, VarPar = NULL, EnvFile = ".env") {
 
@@ -110,9 +110,9 @@ PlotVarPar <- function(
     legend.text = ggplot2::element_text(size = 30),
     legend.key.spacing.x = ggplot2::unit(0.75, "cm"))
 
-  g_legend <- function(a.gplot) {
+  g_legend <- function(Plot) {
     # https://stackoverflow.com/a/13650878/3652584
-    tmp <- ggplot2::ggplot_gtable(ggplot2::ggplot_build(a.gplot))
+    tmp <- ggplot2::ggplot_gtable(ggplot2::ggplot_build(Plot))
     leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
     legend <- tmp$grobs[[leg]]
     return(legend)
@@ -221,9 +221,9 @@ PlotVarPar <- function(
   Legend <- g_legend(Legend)
 
   if (is.null(ModelName)) {
-    PlotTitle <- "Variance paritioning"
+    PlotTitle <- "Variance partitioning"
   } else {
-    PlotTitle <- paste0("Variance paritioning (", ModelName, ")")
+    PlotTitle <- paste0("Variance partitioning (", ModelName, ")")
   }
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

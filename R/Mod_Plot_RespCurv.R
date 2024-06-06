@@ -1,21 +1,21 @@
 ## |------------------------------------------------------------------------| #
-# PlotRespCurv ----
+# Plot_RespCurv ----
 ## |------------------------------------------------------------------------| #
 
-#' PlotRespCurv
+#' Plot response curves
 #'
-#' PlotRespCurv
+#' Plot response curves
 #' @param Model Model
 #' @param ResCurvePath ResCurvePath
 #' @param ResCurvePrefix ResCurvePrefix
 #' @param Verbose Verbose
 #' @param NCores Number of cores to use
-#' @name PlotRespCurv
+#' @name Plot_RespCurv
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
-PlotRespCurv <- function(
+Plot_RespCurv <- function(
     Model, ResCurvePath = getwd(), ResCurvePrefix = "ResCurv_", Verbose = TRUE, NCores = NULL) {
 
 
@@ -24,7 +24,7 @@ PlotRespCurv <- function(
   Var <- NFV <- NULL
 
   if (is.null(NCores)) {
-    Cores <- get(".NCores", envir = parent.env(environment()))
+    NCores <- get(".NCores", envir = parent.env(environment()))
   }
 
   IASDT.R::CatTime("Extract names of the variables")

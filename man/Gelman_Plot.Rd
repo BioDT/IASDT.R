@@ -12,7 +12,7 @@ Gelman_Plot(
   Alpha = TRUE,
   NCores = NULL,
   NOmega = 1000,
-  PlotAlpha = 0.25,
+  PlottingAlpha = 0.25,
   SavePlot = TRUE,
   ReturnPlots = FALSE,
   OutPath = NULL
@@ -33,7 +33,7 @@ Gelman_Plot(
 
 \item{NOmega}{Integer. Number of species to be sampled for the Omega parameter}
 
-\item{PlotAlpha}{Double. Plotting alpha for line transparency}
+\item{PlottingAlpha}{Double. Plotting alpha for line transparency}
 
 \item{SavePlot}{Logical. Save the outputs as PDF}
 

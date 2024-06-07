@@ -7,29 +7,58 @@
 #' Plot variance partitioning of the model
 #'
 #' @param Model an object of class `Hmsc` or a path for the model. Only needed if one of `ModelEval` and `VarPar` arguments are `NULL`.
-#' @param PlotPath String. Path to save the output file.
-#' @param ModelName String. Prefix to add to the title of the plot. Default: `NULL`, which means only use 'Variance partitioning' in the title.
+#' @param Path_Plot String. Path to save the output file.
+#' @param PlotTitlePrefix String. Prefix to add to the title of the plot. Default: `NULL`, which means only use 'Variance partitioning' in the title.
 #' @param ModelEval Result of the `Hmsc::evaluateModelFit` function. If `ModelEval = NULL` (default), `Hmsc::evaluateModelFit` will be executed on the model object to compute measures of model fit.
-#' @param ModelEvalPar Integer. Number of parallel computations for computing predicted values. This is used as the `nParallel` argument of the `Hmsc::computePredictedValues` function.
+#' @param NCores Integer. Number of parallel computations for computing predicted values. This is used as the `nParallel` argument of the `Hmsc::computePredictedValues` function.
 #' @param VarPar Variance partitioning. An object resulted from `Hmsc::computeVariancePartitioning`. if `ModelEval = NULL` (default), `Hmsc::computeVariancePartitioning` will be executed on the model object.
 #'
 #' @param EnvFile String. Path to read the environment variables. Default value: `.env`
+#' @param SaveVarPar Logical. If `VarPar = NULL`, should the calculated variance partitioning be saved as RData file?
+#' @param SaveModelEval Logical. If `ModelEval = NULL`, should the calculated model evaluation be be saved as RData file?
+#' @param SaveGG Logical. Should the plots be exported as RData object?
 #' @name Plot_VarPar
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
 Plot_VarPar <- function(
-    Model, PlotPath = NULL, ModelName = NULL, ModelEval = NULL,
-    ModelEvalPar = NULL, VarPar = NULL, EnvFile = ".env") {
+    Model = NULL, Path_Plot = NULL, PlotTitlePrefix = NULL, ModelEval = NULL,
+    NCores = NULL, VarPar = NULL, EnvFile = ".env",
+    SaveVarPar = TRUE, SaveModelEval = TRUE, SaveGG = TRUE) {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   IAS_ID <- Species_name <- Species <- variable <- value <- NULL
 
+
+  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # Check input arguments ------
+  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  IASDT.R::CatTime("Check input arguments")
+
+  AllArgs <- ls()
+  AllArgs <- purrr::map(
+    AllArgs,
+    function(x) get(x, envir = parent.env(env = environment()))) %>%
+    stats::setNames(AllArgs)
+
+  IASDT.R::CheckArgs(
+    AllArgs = AllArgs, Type = "character", Args = c("Path_Plot", "EnvFile"))
+  IASDT.R::CheckArgs(
+    AllArgs = AllArgs, Type = "logical",
+    Args = c("SaveVarPar", "SaveModelEval", "SaveGG"))
+  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "numeric", Args = "NCores")
+
+  rm(AllArgs)
+
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Loading species list
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  fs::dir_create(Path_Plot)
+
   IASDT.R::CatTime("Loading species list")
   if (file.exists(EnvFile)) {
     readRenviron(EnvFile)
@@ -50,7 +79,7 @@ Plot_VarPar <- function(
 
   if (purrr::some(list(ModelEval, VarPar), is.null)) {
 
-    IASDT.R::CatTime("Either ModelEval or VarPar is NULL")
+    IASDT.R::CatTime("Either ModelEval or VarPar was not provided and has to be calculated")
 
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
     # Loading model
@@ -58,7 +87,7 @@ Plot_VarPar <- function(
 
     if (magrittr::not(inherits(Model, "Hmsc"))) {
 
-      IASDT.R::CatTime("Loading model object from file")
+      IASDT.R::CatTime("  >>  Loading model object from file")
 
       if (inherits(Model, "character")) {
         if (magrittr::not(file.exists(Model))) {
@@ -78,14 +107,17 @@ Plot_VarPar <- function(
       }
     }
 
-
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
     # Calculate variance partitioning
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
     if (is.null(VarPar)) {
-      IASDT.R::CatTime("Calculate variance partitioning")
+      IASDT.R::CatTime("  >>  Calculate variance partitioning")
       VarPar <- Hmsc::computeVariancePartitioning(Model)
+
+      if (SaveVarPar) {
+        save(VarPar, file = file.path(Path_Plot, "VarPar.RData"))
+      }
       invisible(gc())
     }
 
@@ -95,20 +127,26 @@ Plot_VarPar <- function(
 
     if (is.null(ModelEval)) {
 
-      IASDT.R::CatTime("Compute predicted Values")
+      IASDT.R::CatTime("  >>  Compute R2")
+
+      IASDT.R::CatTime("  >>  >>  Compute predicted Values")
       preds <- Hmsc::computePredictedValues(
-        hM = Model, nParallel = ModelEvalPar) %>%
+        hM = Model, nParallel = NCores) %>%
         suppressWarnings()
 
-      IASDT.R::CatTime("Evaluate model fit")
+      IASDT.R::CatTime("  >>  >>  Evaluate model fit")
       ModelEval <- Hmsc::evaluateModelFit(hM = Model, predY = preds) %>%
         suppressWarnings()
+      if (SaveModelEval) {
+        save(ModelEval, file = file.path(Path_Plot, "ModelEval.RData"))
+      }
 
       rm(preds)
-      invisible(gc())
     }
-    rm(Model)
   }
+
+  rm(Model)
+  invisible(gc())
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Plot theme
@@ -241,10 +279,16 @@ Plot_VarPar <- function(
       fill = ggplot2::guide_legend(nrow = 1, override.aes = list(size = 10)))
   Legend <- g_legend(Legend)
 
-  if (is.null(ModelName)) {
+  if (is.null(PlotTitlePrefix)) {
     PlotTitle <- "Variance partitioning"
   } else {
-    PlotTitle <- paste0("Variance partitioning (", ModelName, ")")
+    PlotTitle <- paste0("Variance partitioning (", PlotTitlePrefix, ")")
+  }
+
+  if (SaveGG) {
+    IASDT.R::CatTime("Save plots as RData")
+    PlotList <- list(Plot = Plot, Plot_raw = Plot_raw)
+    save(PlotList, file = file.path(Path_Plot, "VarPar_Plots.RData"))
   }
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -253,13 +297,15 @@ Plot_VarPar <- function(
 
   IASDT.R::CatTime("Save plot to disk")
 
-  gridExtra::arrangeGrob(Plot, Plot_raw, nrow = 1) %>%
+  PlotPath2 <- file.path(Path_Plot, "VariancePartitioning.jpeg")
+  VarParPlot <- gridExtra::arrangeGrob(Plot, Plot_raw, nrow = 1) %>%
     gridExtra::grid.arrange(
       Legend, nrow = 2, heights = c(15, 1),
       top = grid::textGrob(
-        PlotTitle, gp = grid::gpar(fontsize = 30, font = 2))) %>%
+        PlotTitle, gp = grid::gpar(fontsize = 30, font = 2)))
     ggplot2::ggsave(
-      filename = PlotPath, height = 16, width = 24, dpi = 600)
+      plot = VarParPlot, filename = PlotPath2,
+      height = 16, width = 24, dpi = 600)
 
   return(invisible(NULL))
 }

@@ -95,6 +95,9 @@ reference:
   - Mod_SLURM_Refit
   - Mod_Fit_WS
   - Mod_MergeChains
+  - Plot_Alpha
+  - Plot_Convergence
+  - Plot_Convergence_All
   - Plot_VarPar
   - Plot_RespCurv
   - Plot_Rho
@@ -102,7 +105,7 @@ reference:
   - Gelman_Omega
   - Gelman_Rho
   - Gelman_Plot
-
+  - Gelman_Alpha
 
 
 - title: Spatial functions

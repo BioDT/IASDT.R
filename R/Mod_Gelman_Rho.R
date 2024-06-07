@@ -2,9 +2,9 @@
 # Gelman_Rho ----
 ## |------------------------------------------------------------------------| #
 
-#' Gelman-Rubin-Brooks plot for all beta parameters
+#' Gelman-Rubin-Brooks plot for the rho parameter
 #'
-#' Gelman-Rubin-Brooks plot for all beta parameters
+#' Gelman-Rubin-Brooks plot for the rho parameter
 #'
 #' @param CodaObj an mcmc object
 #' @name Gelman_Rho
@@ -17,7 +17,6 @@ Gelman_Rho <- function(CodaObj = NULL) {
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Iter <- Type <- ShrinkFactor <- NULL
-
 
   Gelman_Rho_Plot <- CodaObj %>%
     coda:::gelman.preplot(

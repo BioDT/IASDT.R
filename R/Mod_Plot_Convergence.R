@@ -57,6 +57,7 @@ Plot_Convergence <- function(
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric",
     Args = c("NChains", "NOmega", "NCores", "NRC"))
+  rm(AllArgs)
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Load environment variables ------

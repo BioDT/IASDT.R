@@ -2,7 +2,7 @@
 % Please edit documentation in R/Mod_Gelman_Rho.R
 \name{Gelman_Rho}
 \alias{Gelman_Rho}
-\title{Gelman-Rubin-Brooks plot for all beta parameters}
+\title{Gelman-Rubin-Brooks plot for the rho parameter}
 \usage{
 Gelman_Rho(CodaObj = NULL)
 }
@@ -10,7 +10,7 @@ Gelman_Rho(CodaObj = NULL)
 \item{CodaObj}{an mcmc object}
 }
 \description{
-Gelman-Rubin-Brooks plot for all beta parameters
+Gelman-Rubin-Brooks plot for the rho parameter
 }
 \author{
 Ahmed El-Gabbas

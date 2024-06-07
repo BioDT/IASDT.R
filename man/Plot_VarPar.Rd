@@ -5,29 +5,38 @@
 \title{Plot variance partitioning of the model}
 \usage{
 Plot_VarPar(
-  Model,
-  PlotPath = NULL,
-  ModelName = NULL,
+  Model = NULL,
+  Path_Plot = NULL,
+  PlotTitlePrefix = NULL,
   ModelEval = NULL,
-  ModelEvalPar = NULL,
+  NCores = NULL,
   VarPar = NULL,
-  EnvFile = ".env"
+  EnvFile = ".env",
+  SaveVarPar = TRUE,
+  SaveModelEval = TRUE,
+  SaveGG = TRUE
 )
 }
 \arguments{
 \item{Model}{an object of class \code{Hmsc} or a path for the model. Only needed if one of \code{ModelEval} and \code{VarPar} arguments are \code{NULL}.}
 
-\item{PlotPath}{String. Path to save the output file.}
+\item{Path_Plot}{String. Path to save the output file.}
 
-\item{ModelName}{String. Prefix to add to the title of the plot. Default: \code{NULL}, which means only use 'Variance partitioning' in the title.}
+\item{PlotTitlePrefix}{String. Prefix to add to the title of the plot. Default: \code{NULL}, which means only use 'Variance partitioning' in the title.}
 
 \item{ModelEval}{Result of the \code{Hmsc::evaluateModelFit} function. If \code{ModelEval = NULL} (default), \code{Hmsc::evaluateModelFit} will be executed on the model object to compute measures of model fit.}
 
-\item{ModelEvalPar}{Integer. Number of parallel computations for computing predicted values. This is used as the \code{nParallel} argument of the \code{Hmsc::computePredictedValues} function.}
+\item{NCores}{Integer. Number of parallel computations for computing predicted values. This is used as the \code{nParallel} argument of the \code{Hmsc::computePredictedValues} function.}
 
 \item{VarPar}{Variance partitioning. An object resulted from \code{Hmsc::computeVariancePartitioning}. if \code{ModelEval = NULL} (default), \code{Hmsc::computeVariancePartitioning} will be executed on the model object.}
 
 \item{EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
+
+\item{SaveVarPar}{Logical. If \code{VarPar = NULL}, should the calculated variance partitioning be saved as RData file?}
+
+\item{SaveModelEval}{Logical. If \code{ModelEval = NULL}, should the calculated model evaluation be be saved as RData file?}
+
+\item{SaveGG}{Logical. Should the plots be exported as RData object?}
 }
 \description{
 Plot variance partitioning of the model

@@ -558,7 +558,7 @@ Mod_Prep4HPC <- function(
 
   NJobs <- length(Models2Fit_HPC)
   if (NJobs > MaxJobCounts) {
-    NSplits <- ceiling(NJobs / MaxJobCounts)
+    NSplits <- ceiling((NJobs / MaxJobCounts))
     IDs <- IASDT.R::SplitVector(Vector = seq_len(NJobs), NSplit = NSplits)
   } else {
     NSplits <- 1

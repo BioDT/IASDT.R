@@ -108,7 +108,7 @@ Mod_SLURM_Refit <- function(
 
   if (NJobs > 0) {
     if (NJobs > MaxJobCounts) {
-      NSplits <- ceiling(NJobs / MaxJobCounts)
+      NSplits <- ceiling((NJobs / MaxJobCounts))
       IDs <- IASDT.R::SplitVector(Vector = seq_len(NJobs), NSplit = NSplits)
     } else {
       NSplits <- 1

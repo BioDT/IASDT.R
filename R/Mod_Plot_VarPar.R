@@ -16,6 +16,7 @@
 #' @param EnvFile String. Path to read the environment variables. Default value: `.env`
 #' @param SaveVarPar Logical. If `VarPar = NULL`, should the calculated variance partitioning be saved as RData file?
 #' @param SaveModelEval Logical. If `ModelEval = NULL`, should the calculated model evaluation be be saved as RData file?
+#' @param ReturnGG Logical. Return the plot object. Default: `FALSE`, which does not return anything
 #' @param SaveGG Logical. Should the plots be exported as RData object?
 #' @name Plot_VarPar
 #' @author Ahmed El-Gabbas
@@ -25,12 +26,11 @@
 Plot_VarPar <- function(
     Model = NULL, Path_Plot = NULL, PlotTitlePrefix = NULL, ModelEval = NULL,
     NCores = NULL, VarPar = NULL, EnvFile = ".env",
-    SaveVarPar = TRUE, SaveModelEval = TRUE, SaveGG = TRUE) {
+    SaveVarPar = TRUE, SaveModelEval = TRUE, ReturnGG = FALSE, SaveGG = TRUE) {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   IAS_ID <- Species_name <- Species <- variable <- value <- NULL
-
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Check input arguments ------
@@ -48,7 +48,7 @@ Plot_VarPar <- function(
     AllArgs = AllArgs, Type = "character", Args = c("Path_Plot", "EnvFile"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "logical",
-    Args = c("SaveVarPar", "SaveModelEval", "SaveGG"))
+    Args = c("SaveVarPar", "SaveModelEval", "ReturnGG", "SaveGG"))
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "numeric", Args = "NCores")
 
   rm(AllArgs)
@@ -75,7 +75,6 @@ Plot_VarPar <- function(
     dplyr::mutate(
       Species = stringr::str_pad(string = Species, width = 4, pad = 0),
       Species = paste0("Sp_", Species))
-
 
   if (purrr::some(list(ModelEval, VarPar), is.null)) {
 
@@ -130,9 +129,11 @@ Plot_VarPar <- function(
       IASDT.R::CatTime("  >>  Compute R2")
 
       IASDT.R::CatTime("  >>  >>  Compute predicted Values")
-      preds <- Hmsc::computePredictedValues(
-        hM = Model, nParallel = NCores) %>%
-        suppressWarnings()
+      # 06.07.2024 - This uses the updated predict function, currently available on my forked version of the package github.com/elgabbas/Hmsc
+      # The `Hmsc::evaluateModelFit` function expects an array object returned from `Hmsc::computePredictedValues`. The `computePredictedValues` function does not work on parallel, so I used the updated predict function on parallel then converted the out put to array
+
+      preds <- IASDT.R::Pred2Array(
+        Predict = TRUE, Model = Model, NCores = NCores)
 
       IASDT.R::CatTime("  >>  >>  Evaluate model fit")
       ModelEval <- Hmsc::evaluateModelFit(hM = Model, predY = preds) %>%
@@ -156,10 +157,10 @@ Plot_VarPar <- function(
     legend.title = ggplot2::element_blank(),
     legend.position = "none",
     axis.text.y = ggplot2::element_text(face = "italic"),
-    axis.title.y = ggplot2::element_text(size = 30),
-    axis.title.x = ggplot2::element_text(size = 30),
-    legend.text = ggplot2::element_text(size = 30),
-    legend.key.spacing.x = ggplot2::unit(0.75, "cm"))
+    axis.title.y = ggplot2::element_text(size = 25),
+    axis.title.x = ggplot2::element_text(size = 25),
+    legend.text = ggplot2::element_text(size = 28),
+    legend.key.spacing.x = ggplot2::unit(0.7, "cm"))
 
   g_legend <- function(Plot) {
     # https://stackoverflow.com/a/13650878/3652584
@@ -303,9 +304,12 @@ Plot_VarPar <- function(
       Legend, nrow = 2, heights = c(15, 1),
       top = grid::textGrob(
         PlotTitle, gp = grid::gpar(fontsize = 30, font = 2)))
-    ggplot2::ggsave(
-      plot = VarParPlot, filename = PlotPath2,
-      height = 16, width = 24, dpi = 600)
+  ggplot2::ggsave(
+    plot = VarParPlot, filename = PlotPath2, height = 16, width = 24, dpi = 600)
 
-  return(invisible(NULL))
+  if (ReturnGG) {
+    return(VarParPlot)
+  } else {
+    return(invisible(NULL))
+  }
 }

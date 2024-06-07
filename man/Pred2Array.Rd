@@ -19,9 +19,9 @@ Pred2Array(
 
 \item{Preds}{Pre-computed predictions}
 
-\item{NCores}{Integer. Number of parallel computations for computing predicted values.}
+\item{expected}{Logical. Whether to return the location parameter of the observation models or sample the values from those.}
 
-\item{Expected}{Logical. Whether to return the location parameter of the observation models or sample the values from those.}
+\item{NCores}{Integer. Number of parallel computations for computing predicted values.}
 }
 \description{
 Convert results from predict function to array, with possibility to make predictions first

@@ -14,6 +14,7 @@ Plot_VarPar(
   EnvFile = ".env",
   SaveVarPar = TRUE,
   SaveModelEval = TRUE,
+  ReturnGG = FALSE,
   SaveGG = TRUE
 )
 }
@@ -35,6 +36,8 @@ Plot_VarPar(
 \item{SaveVarPar}{Logical. If \code{VarPar = NULL}, should the calculated variance partitioning be saved as RData file?}
 
 \item{SaveModelEval}{Logical. If \code{ModelEval = NULL}, should the calculated model evaluation be be saved as RData file?}
+
+\item{ReturnGG}{Logical. Return the plot object. Default: \code{FALSE}, which does not return anything}
 
 \item{SaveGG}{Logical. Should the plots be exported as RData object?}
 }

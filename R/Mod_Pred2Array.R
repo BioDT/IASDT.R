@@ -9,7 +9,7 @@
 #' @param Predict Logical. Make predictions first
 #' @param Model Hmsc object or path of the saved model
 #' @param Preds Pre-computed predictions
-#' @param Expected Logical. Whether to return the location parameter of the observation models or sample the values from those.
+#' @param expected Logical. Whether to return the location parameter of the observation models or sample the values from those.
 #' @param NCores Integer. Number of parallel computations for computing predicted values.
 #' @name Pred2Array
 #' @author Ahmed El-Gabbas
@@ -24,7 +24,7 @@ Pred2Array <- function(
       Model <- IASDT.R::LoadAs(Model)
     }
 
-    Preds <- predict(object = Model, expected = expected, nParallel = NCores)
+    Preds <- stats::predict(object = Model, expected = expected, nParallel = NCores)
     invisible(gc())
   }
 

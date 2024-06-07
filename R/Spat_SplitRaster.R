@@ -54,8 +54,8 @@ SplitRaster <- function(
     raster, Ncol = 4, Nrow = 4, save = FALSE,
     SplitPath = "", plot = FALSE, Extent = FALSE) {
 
-  h <- ceiling(ncol(raster) / Ncol)
-  v <- ceiling(nrow(raster) / Nrow)
+  h <- ceiling((ncol(raster) / Ncol))
+  v <- ceiling((nrow(raster) / Nrow))
   agg <- raster::aggregate(raster, fact = c(h, v))
   agg[] <- 1:raster::ncell(agg)
   agg_poly <- raster::rasterToPolygons(agg)

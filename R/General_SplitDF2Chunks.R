@@ -42,7 +42,7 @@ SplitDF2Chunks <- function(
   }
 
   if (is.null(ChunkSize)) {
-    ChunkSize <- ceiling(nrow(DF) / NChunks)
+    ChunkSize <- ceiling((nrow(DF) / NChunks))
     DefaultChunkSize <- TRUE
   }
 

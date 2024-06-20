@@ -25,7 +25,7 @@
 #' @param transientFactor Integer. Transient multiplication factor. The value of transient = `transientFactor * thin`.
 #' @param verbose Integer. How often the results of the MCMC sampling be reported
 #' @param SkipFitted Logic. Should the already fitted models be skipped.
-#' @param MaxJobCounts Integer. Maximum number of jobs per slurm file
+#' @param MaxJobCounts Integer. Maximum number of jobs per SLURM file
 #' @param ModelCountry String. Filter observations to the following country list. Default: `NULL`, which means prepare data for the whole Europe
 #' @param MinPresPerCountry Integer. Minimum of grid cells for the selected country/countries for species to be considered in the models. Effective only if a valid `ModelCountry` is provided.
 #' @param VerboseProgress Logical. Show messages for the progress of creating files
@@ -34,6 +34,7 @@
 #' @param MemPerCpu String. The value for the `#SBATCH --mem-per-cpu=` SLURM argument. Example: "32G" to request 32 gigabyte. Only effective if `PrepSLURM = TRUE`.
 #' @param Time String. The value for the requested time for each job in the bash arrays. Example: "01:00:00" to request an hour. Only effective if `PrepSLURM = TRUE`.
 #' @param JobName String. The name of the submitted job(s). Only effective if `PrepSLURM = TRUE`.
+#' @param Path_Hmsc String. Path for the Hmsc-HPC.
 #' @param ToJSON Logical. Convert unfitted models to JSON before saving to rds file
 #' @param ... additional parameters provided to the `IASDT.R::Mod_SLURM` function
 #' @name Mod_Prep4HPC
@@ -49,7 +50,7 @@ Mod_Prep4HPC <- function(
     transientFactor = 300, verbose = 1000, SkipFitted = TRUE, MaxJobCounts = 210,
     ModelCountry = NULL, MinPresPerCountry = 50, VerboseProgress = FALSE,
     FromHPC = TRUE, PrepSLURM = TRUE, MemPerCpu = NULL, Time = NULL,
-    JobName = NULL, ToJSON = FALSE, ...) {
+    JobName = NULL, Path_Hmsc = NULL, ToJSON = FALSE, ...) {
 
   # https://github.com/hmsc-r/HMSC/issues/180
   # https://github.com/hmsc-r/HMSC/issues/139
@@ -81,7 +82,6 @@ Mod_Prep4HPC <- function(
   IASDT.R::CatTime("\nLoad environment variables")
   if (file.exists(EnvFile)) {
     readRenviron(EnvFile)
-    Path_Hmsc <- Sys.getenv("DP_R_Mod_Path_Hmsc")
     Path_Python <- Sys.getenv("DP_R_Mod_Path_Python")
     Path_TaxaList <- Sys.getenv("DP_R_Mod_Path_TaxaList")
     Path_Grid <- Sys.getenv("DP_R_Mod_Path_Grid")
@@ -613,16 +613,17 @@ Mod_Prep4HPC <- function(
   if (PrepSLURM) {
     IASDT.R::CatTime("Prepare SLURM file")
     if (is.null(JobName)) {
-      JobName <- basename(Path_Model) %>%
-        stringr::str_remove_all(paste0("_", HabVal))
+      JobName <- stringr::str_remove_all(
+        basename(Path_Model), paste0("_", HabVal))
     }
     IASDT.R::Mod_SLURM(
-      Path_Model = Path_Model, JobName = JobName,
-      MemPerCpu = MemPerCpu, Time = Time, FromHPC = FromHPC,
-      EnvFile = EnvFile, ...)
+      Path_Model = Path_Model, JobName = JobName, MemPerCpu = MemPerCpu,
+      Time = Time, FromHPC = FromHPC, EnvFile = EnvFile, ...)
   } else {
     IASDT.R::CatTime("SLURM file was NOT prepared")
   }
+
+  ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatDiff(.StartTime, CatInfo = FALSE)
 

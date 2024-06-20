@@ -28,8 +28,7 @@
 Mod_SLURM <- function(
     Path_Model = NULL, JobName = NULL, CatJobInfo = TRUE, ntasks = 1,
     CpusPerTask = 1, GpusPerNode = 1, MemPerCpu = NULL, Time = NULL,
-    Partition = "small-g", EnvFile = ".env", FromHPC = TRUE,
-    Path_Hmsc = "IASDT_Model_Test/Hmsc_Main",
+    Partition = "small-g", EnvFile = ".env", FromHPC = TRUE, Path_Hmsc = NULL,
     Command_Prefix = "Commands_All", SLURM_Prefix = "Bash_Fit") {
 
   # # |||||||||||||||||||||||||||||||||||

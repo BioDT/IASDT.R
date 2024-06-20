@@ -16,7 +16,7 @@ Mod_SLURM(
   Partition = "small-g",
   EnvFile = ".env",
   FromHPC = TRUE,
-  Path_Hmsc = "IASDT_Model_Test/Hmsc_Main",
+  Path_Hmsc = NULL,
   Command_Prefix = "Commands_All",
   SLURM_Prefix = "Bash_Fit"
 )

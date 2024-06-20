@@ -33,6 +33,7 @@ Mod_Prep4HPC(
   MemPerCpu = NULL,
   Time = NULL,
   JobName = NULL,
+  Path_Hmsc = NULL,
   ToJSON = FALSE,
   ...
 )
@@ -76,7 +77,7 @@ Mod_Prep4HPC(
 
 \item{SkipFitted}{Logic. Should the already fitted models be skipped.}
 
-\item{MaxJobCounts}{Integer. Maximum number of jobs per slurm file}
+\item{MaxJobCounts}{Integer. Maximum number of jobs per SLURM file}
 
 \item{ModelCountry}{String. Filter observations to the following country list. Default: \code{NULL}, which means prepare data for the whole Europe}
 
@@ -93,6 +94,8 @@ Mod_Prep4HPC(
 \item{Time}{String. The value for the requested time for each job in the bash arrays. Example: "01:00:00" to request an hour. Only effective if \code{PrepSLURM = TRUE}.}
 
 \item{JobName}{String. The name of the submitted job(s). Only effective if \code{PrepSLURM = TRUE}.}
+
+\item{Path_Hmsc}{String. Path for the Hmsc-HPC.}
 
 \item{ToJSON}{Logical. Convert unfitted models to JSON before saving to rds file}
 

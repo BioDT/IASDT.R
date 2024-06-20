@@ -18,6 +18,7 @@
 #' @param CpusPerTask Integer. The value for the `#SBATCH --cpus-per-task=` SLURM argument. Default: 1
 #' @param GpusPerNode Integer. The value for the `#SBATCH --gpus-per-node=` SLURM argument. Default: 1
 #' @param FromHPC Logical. Work from HPC? This is to adjust the file paths.
+#' @param Path_Hmsc String. Path for the Hmsc-HPC.
 #' @param Refit_Prefix String. Prefix for the file containing commands to be re-fitted
 #' @param SLURM_Prefix String. Prefix for the exported SLURM file
 #' @name Mod_SLURM_Refit
@@ -29,6 +30,7 @@ Mod_SLURM_Refit <- function(
     Path_Model = NULL, MaxJobCounts = 210, JobName = NULL, MemPerCpu = NULL,
     Time = NULL, Partition = "small-g", EnvFile = ".env", CatJobInfo = TRUE,
     ntasks = 1, CpusPerTask = 1, GpusPerNode = 1, FromHPC = TRUE,
+    Path_Hmsc = NULL,
     Refit_Prefix = "Commands2Refit", SLURM_Prefix = "Bash_Refit") {
 
 
@@ -60,8 +62,8 @@ Mod_SLURM_Refit <- function(
 
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "character",
-    Args = c("Partition", "EnvFile", "Time", "JobName",
-             "MemPerCpu", "Path_Model", "SLURM_Prefix", "Refit_Prefix"))
+    Args = c("Partition", "EnvFile", "Time", "JobName", "MemPerCpu",
+             "Path_Model", "Path_Hmsc", "SLURM_Prefix", "Refit_Prefix"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric",
     Args = c("MaxJobCounts", "ntasks", "CpusPerTask", "GpusPerNode"))
@@ -138,6 +140,7 @@ Mod_SLURM_Refit <- function(
       MemPerCpu = MemPerCpu, Time = Time, Partition = Partition,
       EnvFile = EnvFile, GpusPerNode = GpusPerNode,
       CatJobInfo = CatJobInfo, ntasks = ntasks, CpusPerTask = CpusPerTask,
+      Path_Hmsc = Path_Hmsc,
       Command_Prefix = Refit_Prefix, SLURM_Prefix = SLURM_Prefix)
 
     IASDT.R::CatTime(

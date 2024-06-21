@@ -494,8 +494,7 @@ Mod_Prep4HPC <- function(
           Post_Missing <- magrittr::not(file.exists(Post_Path))
 
           Command_HPC <- paste0(
-            "export TF_CPP_MIN_LOG_LEVEL=3; export PYTHONPATH=", Path_Hmsc,
-            ":$PYTHONPATH; /usr/bin/time -v ", Path_Python,
+            "export TF_CPP_MIN_LOG_LEVEL=3; /usr/bin/time -v ", Path_Python,
             " -m hmsc.run_gibbs_sampler",
             " --input ", shQuote(M4HPC_Path2),
             " --output ", shQuote(Post_Path),
@@ -618,7 +617,8 @@ Mod_Prep4HPC <- function(
     }
     IASDT.R::Mod_SLURM(
       Path_Model = Path_Model, JobName = JobName, MemPerCpu = MemPerCpu,
-      Time = Time, FromHPC = FromHPC, EnvFile = EnvFile, ...)
+      Time = Time, EnvFile = EnvFile, FromHPC = FromHPC,
+      Path_Hmsc = Path_Hmsc, ...)
   } else {
     IASDT.R::CatTime("SLURM file was NOT prepared")
   }

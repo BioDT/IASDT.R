@@ -75,6 +75,9 @@ Mod_SLURM <- function(
   rm(AllArgs)
   invisible(gc())
 
+  # Ensure that model path does not contain the scratch path
+  Path_Model <- stringr::str_remove(Path_Model, paste0(Path_Scratch, "/"))
+
   ListCommands <- list.files(
     Path_Model, pattern = Command_Prefix, full.names = TRUE)
   NCommandFiles <- length(ListCommands)

@@ -45,7 +45,7 @@ Mod_SLURM_Refit <- function(
     Path_Scratch <- Sys.getenv("Path_LUMI_Scratch")
   } else {
     MSG <- paste0(
-      "Path for environment variables: ", EnvFile, " was not found")
+      'Path for environment variables: "', EnvFile, '" was not found')
     stop(MSG)
   }
 

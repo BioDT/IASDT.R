@@ -30,7 +30,9 @@ Mod_MergeChains <- function(
     NMissingChains <- MissingModels <- Model_Finished <- Path_ModProg <-
     Post_Aligned <- Post_Aligned2 <- FittingTime <- NULL
 
-  # Load .env file
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  # Load .env file ----
   if (file.exists(EnvFile)) {
     readRenviron(EnvFile)
     Path_Scratch <- Sys.getenv("Path_LUMI_Scratch")
@@ -40,7 +42,9 @@ Mod_MergeChains <- function(
     stop(MSG)
   }
 
-  # Checking arguments
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  # Checking arguments ----
   AllArgs <- ls()
   AllArgs <- purrr::map(
     AllArgs,
@@ -59,10 +63,14 @@ Mod_MergeChains <- function(
     Path_Model <- file.path(Path_Scratch, Path_Model)
   }
 
-  # remove temp files and incomplete RDs files
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  # Remove temp files and incomplete RDs files ----
+
   Path_Model_Fit <- file.path(Path_Model, "Model_Fitting_HPC")
   tempFiles <- list.files(
     path = Path_Model_Fit, pattern = ".rds_temp$", full.names = TRUE)
+
   if (length(tempFiles) > 0) {
     IASDT.R::CatTime(
       paste0("There are ", length(tempFiles),
@@ -77,12 +85,14 @@ Mod_MergeChains <- function(
       })
   }
 
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
   # Prepare working on parallel
+
   c1 <- snow::makeSOCKcluster(NCores)
   future::plan(future::cluster, workers = c1, gc = TRUE)
 
   Path_ModInfo <- file.path(Path_Model, "Model_Info.RData")
-
   Path_Fitted_Models <- file.path(Path_Model, "Model_Fitted")
   Path_Coda <- file.path(Path_Model, "Model_Coda")
   fs::dir_create(c(Path_Fitted_Models, Path_Coda))
@@ -94,8 +104,16 @@ Mod_MergeChains <- function(
       Post_Missing = purrr::map_lgl(
         .x = Post_Path,
         .f = ~{
-          if (FromHPC) PostP <- file.path(Path_Scratch, .x)
-          magrittr::not(all(file.exists(PostP)))
+          if (FromHPC) {
+            Post <- file.path(Path_Scratch, stringr::str_remove_all(.x, Path_Scratch))
+          } else {
+            Post <- .x
+          }
+          Post %>%
+            file.exists() %>%
+            all() %>%
+            magrittr::not() %>%
+            return()
         }),
 
       # delete these columns if already exist from previous function execution
@@ -220,6 +238,7 @@ Mod_MergeChains <- function(
         .progress = FALSE,
         .options = furrr::furrr_options(seed = TRUE, scheduling = Inf)))
 
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   Model_Info2 <- Model_Info2 %>%
     tidyr::unnest_wider("ModelPosts") %>%
@@ -279,8 +298,10 @@ Mod_MergeChains <- function(
 
   snow::stopCluster(c1)
 
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Print to the console the name of failed models and number of missing chain files
+
   if (PrintIncomplete) {
     MissingModelVars <- Model_Info2 %>%
       dplyr::filter(magrittr::not(Model_Finished)) %>%
@@ -300,7 +321,10 @@ Mod_MergeChains <- function(
     }
   }
 
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
   # Save Model_Info to disk
+
   if (is.null(ModInfoName)) {
     IASDT.R::SaveAs(
       InObj = Model_Info2, OutObj = "Model_Info", OutPath = Path_ModInfo)

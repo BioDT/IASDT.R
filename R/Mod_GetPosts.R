@@ -34,9 +34,7 @@ GetPosts <- function(FilePath, FromJSON = FALSE) {
   } else {
     readRDS(file = FilePath) %>%
       magrittr::extract2(1) %>%
-      # This needs to be checked again
-      # jsonify::from_json() %>%
-      # magrittr::extract2(1) %>%
+      magrittr::extract2(1) %>%
       return()
   }
 }

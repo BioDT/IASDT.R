@@ -159,7 +159,7 @@ PlotConvergence <- function(
 
   IASDT.R::CatTime("  >>  Prepare confidence interval data")
   CI <- Obj_Omega %>%
-    purrr::map(.f = ~.x[, SelectedCombs]) %>%
+    purrr::map(.f = ~{ .x[, SelectedCombs] }) %>%
     coda::mcmc.list() %>%
     summary(quantiles = c(0.25, 0.75)) %>%
     magrittr::extract2("quantiles") %>%
@@ -255,11 +255,11 @@ PlotConvergence <- function(
   purrr::walk(
     .x = seq_along(split_Omega),
     .f = ~{
+
       PlotSeq <- seq(split_Omega[[.x]][1], split_Omega[[.x]][2])
       Plot <- OmegaTracePlots[PlotSeq] %>%
         gridExtra::marrangeGrob(
-          bottom = bquote(paste0(
-            "File ", .x, " -- page ", g, " of ", npages)),
+          bottom = bquote(paste0("page ", g, " of ", npages)),
           top = grid::textGrob(
             label = paste0(
               "Convergence of the omega parameter - ", NOmega,

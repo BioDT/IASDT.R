@@ -14,7 +14,7 @@ PlotConvergence(
   NOmega = 1000,
   NCores = NULL,
   NRC = c(2, 3),
-  SavePlotData = FALSE,
+  SavePlotData = TRUE,
   Cols = c("red", "blue", "darkgreen", "darkgrey")
 )
 }

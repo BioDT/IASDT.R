@@ -25,7 +25,7 @@
 PlotConvergence <- function(
     Path_Coda = NULL, Path_FittedModel = NULL, EnvFile = ".env",
     FromHPC = TRUE, NChains = 4, Title = " ", NOmega = 1000, NCores = NULL,
-    NRC = c(2, 3), SavePlotData = FALSE,
+    NRC = c(2, 3), SavePlotData = TRUE,
     Cols = c("red", "blue", "darkgreen", "darkgrey")) {
 
   # Avoid "no visible binding for global variable" message
@@ -33,7 +33,7 @@ PlotConvergence <- function(
   SpComb <- `25%` <- `75%` <- Class <- Order <- Family <- Plot <- DT <-
     IAS_ID <- Species <- Variable <- Chain <- Iter <- Value <- Var_Sp <-
     coda <- data <- dplyr <- ggExtra <- ggplot2 <- ggtext <- label <- y <-
-    Var <- PlotFixedY <- Var <- NULL
+    Var <- PlotFixedY <- Var <- group <- NULL
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Check input arguments ------
@@ -242,17 +242,36 @@ PlotConvergence <- function(
 
   # Save plot
   IASDT.R::CatTime("  >>  Save plots")
-  OmegaTracePlots %>%
-    gridExtra::marrangeGrob(
-      bottom = bquote(paste0("page ", g, " of ", npages)),
-      top = grid::textGrob(
-        label = paste0(
-          "Convergence of the omega parameter - ", NOmega, " species pair sample"),
-        gp = grid::gpar(fontface = "bold", fontsize = 20)),
-      nrow = NRC[1], ncol = NRC[2]) %>%
-    ggplot2::ggsave(
-      dpi = 600, device = "pdf", width = 18, height = 12,
-      filename = file.path(Path_Convergence, "Convergence_Omega.pdf"))
+
+  PlotsPerFile <- 20 * NRC[1] * NRC[2]
+  split_Omega <- OmegaTracePlots %>%
+    length() %>%
+    seq_len() %>%
+    tibble::tibble(Index = .) %>%
+    dplyr::mutate(group = ceiling(dplyr::row_number() / PlotsPerFile)) %>%
+    dplyr::group_split(group) %>%
+    purrr::map(~ range(.x$Index))
+
+  purrr::walk(
+    .x = seq_along(split_Omega),
+    .f = ~{
+      PlotSeq <- seq(split_Omega[[.x]][1], split_Omega[[.x]][2])
+      Plot <- OmegaTracePlots[PlotSeq] %>%
+        gridExtra::marrangeGrob(
+          bottom = bquote(paste0(
+            "File ", .x, " -- page ", g, " of ", npages)),
+          top = grid::textGrob(
+            label = paste0(
+              "Convergence of the omega parameter - ", NOmega,
+              " species pair sample"),
+            gp = grid::gpar(fontface = "bold", fontsize = 20)),
+          nrow = NRC[1], ncol = NRC[2])
+
+      ggplot2::ggsave(
+        plot = Plot, dpi = 600, device = "pdf", width = 18, height = 12,
+        filename = file.path(
+          Path_Convergence, paste0("Convergence_Omega_", .x, ".pdf")))
+    })
 
   if (SavePlotData) {
     IASDT.R::CatTime("  >>  Save plot data")
@@ -560,7 +579,7 @@ PlotConvergence <- function(
   invisible(gc())
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # Beta - by species ------
+  ## Beta - by species ------
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("  >>  Trace plots, grouped by species")

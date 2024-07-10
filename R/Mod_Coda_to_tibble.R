@@ -175,14 +175,19 @@ Coda_to_tibble <- function(
               as.character() %>%
               purrr::set_names(c("Sp1", "Sp2"))
 
-            IAS1 <- dplyr::pull(GetSpeciesName(SpID = IAS_N[1]), Species_name)
-            IAS2 <- dplyr::pull(GetSpeciesName(SpID = IAS_N[2]), Species_name)
+            IAS1 <- IASDT.R::GetSpeciesName(
+              EnvFile = EnvFile, SpID = IAS_N[1]) %>%
+              dplyr::pull(Species_name)
+            IAS2 <- IASDT.R::GetSpeciesName(
+              EnvFile = EnvFile, SpID = IAS_N[2]) %>%
+              dplyr::pull(Species_name)
             return(c(IAS_N, IAS1 = IAS1, IAS2 = IAS2))
           })) %>%
       tidyr::unnest_wider("SP") %>%
       dplyr::right_join(Coda, by = "SpComb") %>%
       dplyr::select(
-        SpComb, Sp1, IAS1, Sp2, IAS2, Chain, Iter, Value, dplyr::everything()) %>%
+        SpComb, Sp1, IAS1, Sp2, IAS2, Chain, Iter, Value,
+        dplyr::everything()) %>%
       tidyr::nest(DT = -c(SpComb, Sp1, IAS1, Sp2, IAS2)) %>%
       dplyr::arrange(SpComb)
   }

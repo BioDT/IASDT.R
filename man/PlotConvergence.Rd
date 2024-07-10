@@ -5,7 +5,6 @@
 \title{Plot model convergence of a selected model}
 \usage{
 PlotConvergence(
-  Path_Model = NULL,
   Path_Coda = NULL,
   Path_FittedModel = NULL,
   EnvFile = ".env",
@@ -20,11 +19,9 @@ PlotConvergence(
 )
 }
 \arguments{
-\item{Path_Model}{String. Path to save all the output, including the to be fitted models (without trailing slash)}
-
 \item{Path_Coda}{String. Path to the coda object.}
 
-\item{Path_FittedModel}{String. Path to the model object}
+\item{Path_FittedModel}{String. Path to the fitted Hmsc model object}
 
 \item{EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
 

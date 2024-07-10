@@ -6,9 +6,8 @@
 #'
 #' Plot model convergence of a selected model
 #'
-#' @param Path_Model String. Path to save all the output, including the to be fitted models (without trailing slash)
 #' @param Path_Coda String. Path to the coda object.
-#' @param Path_FittedModel String. Path to the model object
+#' @param Path_FittedModel String. Path to the fitted Hmsc model object
 #' @param EnvFile String. Path to read the environment variables. Default value: `.env`
 #' @param FromHPC Logical. Work from HPC? This is to adjust the file paths.
 #' @param NChains Integer. Number of model chains
@@ -24,10 +23,9 @@
 #' @export
 
 PlotConvergence <- function(
-    Path_Model = NULL, Path_Coda = NULL, Path_FittedModel = NULL,
-    EnvFile = ".env", FromHPC = TRUE, NChains = 4,
-    Title = " ", NOmega = 1000, NCores = NULL, NRC = c(2, 3),
-    SavePlotData = FALSE,
+    Path_Coda = NULL, Path_FittedModel = NULL, EnvFile = ".env",
+    FromHPC = TRUE, NChains = 4, Title = " ", NOmega = 1000, NCores = NULL,
+    NRC = c(2, 3), SavePlotData = FALSE,
     Cols = c("red", "blue", "darkgreen", "darkgrey")) {
 
   # Avoid "no visible binding for global variable" message
@@ -51,7 +49,7 @@ PlotConvergence <- function(
 
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "character",
-    Args = c("Path_Model", "Path_Coda", "Path_FittedModel", "EnvFile"))
+    Args = c("Path_Coda", "Path_FittedModel", "EnvFile"))
 
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "logical", Args = "FromHPC")
   IASDT.R::CheckArgs(
@@ -77,7 +75,10 @@ PlotConvergence <- function(
   }
 
   IASDT.R::CatTime("Create path")
-  Path_Convergence <- file.path(Path_Model, "Model_Convergence")
+  Path_Convergence <- Path_Coda %>%
+    dirname() %>%
+    dirname() %>%
+    file.path("Model_Convergence")
   Path_Convergence_BySp <- file.path(Path_Convergence, "Beta_BySpecies")
   fs::dir_create(c(Path_Convergence, Path_Convergence_BySp))
 
@@ -152,7 +153,7 @@ PlotConvergence <- function(
 
   IASDT.R::CatTime("  >>  Coda to tibble")
   OmegaDF <- IASDT.R::Coda_to_tibble(
-    CodaObj = Obj_Omega, Type = "omega", NOmega = NOmega)
+    CodaObj = Obj_Omega, Type = "omega", NOmega = NOmega, EnvFile = EnvFile)
 
   SelectedCombs <- unique(OmegaDF$SpComb)
 
@@ -286,7 +287,7 @@ PlotConvergence <- function(
 
   IASDT.R::CatTime("  >> >> Coda to tibble")
   BetaTracePlots <- Obj_Beta %>%
-    IASDT.R::Coda_to_tibble(Type = "beta") %>%
+    IASDT.R::Coda_to_tibble(Type = "beta", EnvFile = EnvFile) %>%
     dplyr::left_join(CI, by = "Var_Sp")
   rm(CI)
 
@@ -354,7 +355,8 @@ PlotConvergence <- function(
 
       PanelTitle <- data.frame(
         x = Inf, y = Inf, label = paste0("<b><i>", Species, "</i></b>"))
-      PanelTitle2 <- IASDT.R::GetSpeciesName(SpID = IAS_ID) %>%
+      PanelTitle2 <- IASDT.R::GetSpeciesName(
+        EnvFile = EnvFile, SpID = IAS_ID) %>%
         dplyr::select(Class, Order, Family) %>%
         unlist() %>%
         paste0(collapse = " | ") %>%

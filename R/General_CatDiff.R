@@ -5,6 +5,7 @@
 #' Print time difference
 #'
 #' Print time difference
+#'
 #' @name CatDiff
 #' @author Ahmed El-Gabbas
 #' @return NULL

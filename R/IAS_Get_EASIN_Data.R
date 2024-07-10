@@ -5,6 +5,7 @@
 #' Extract EASIN data using EASIN ID
 #'
 #' Extract EASIN data using EASIN ID
+#'
 #' @param SpKey character; EASIN taxon ID
 #' @param NSearch number of observations to extract each time; default: 1000 (the current maximum per request)
 #' @param SleepPart integer; time in seconds to wait between each request. Default: 1.

@@ -1,5 +1,5 @@
 ## |------------------------------------------------------------------------| #
-# Plot_Rho ----
+# PlotRho ----
 ## |------------------------------------------------------------------------| #
 
 #' Plot convergence traceplots for the rho parameter
@@ -10,12 +10,12 @@
 #' @param Model Fitted model object or path to it
 #' @param Title String. Plotting title
 #' @param Cols Colours for lines for each chain
-#' @name Plot_Rho
+#' @name PlotRho
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
-Plot_Rho <- function(
+PlotRho <- function(
     Post = NULL, Model = NULL, Title = NULL,
     Cols = c("red", "blue", "darkgreen", "darkgrey")) {
 

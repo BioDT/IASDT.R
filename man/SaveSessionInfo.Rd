@@ -2,7 +2,7 @@
 % Please edit documentation in R/General_SaveSessionInfo.R
 \name{SaveSessionInfo}
 \alias{SaveSessionInfo}
-\title{Save all objects (except functions) of the global environment as list items}
+\title{Save session info}
 \usage{
 SaveSessionInfo(Path = getwd(), SessionObj = NULL, Prefix = "S")
 }
@@ -14,7 +14,7 @@ SaveSessionInfo(Path = getwd(), SessionObj = NULL, Prefix = "S")
 \item{Prefix}{file prefix}
 }
 \description{
-Save all objects (except functions) of the global environment as list items
+Save session info
 }
 \author{
 Ahmed El-Gabbas

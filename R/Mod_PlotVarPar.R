@@ -1,5 +1,5 @@
 ## |------------------------------------------------------------------------| #
-# Plot_VarPar ----
+# PlotVarPar ----
 ## |------------------------------------------------------------------------| #
 
 #' Plot variance partitioning of the model
@@ -18,12 +18,12 @@
 #' @param SaveModelEval Logical. If `ModelEval = NULL`, should the calculated model evaluation be be saved as RData file?
 #' @param ReturnGG Logical. Return the plot object. Default: `FALSE`, which does not return anything
 #' @param SaveGG Logical. Should the plots be exported as RData object?
-#' @name Plot_VarPar
+#' @name PlotVarPar
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
-Plot_VarPar <- function(
+PlotVarPar <- function(
     Model = NULL, Path_Plot = NULL, PlotTitlePrefix = NULL, ModelEval = NULL,
     NCores = NULL, VarPar = NULL, EnvFile = ".env",
     SaveVarPar = TRUE, SaveModelEval = TRUE, ReturnGG = FALSE, SaveGG = TRUE) {
@@ -115,7 +115,8 @@ Plot_VarPar <- function(
       VarPar <- Hmsc::computeVariancePartitioning(Model)
 
       if (SaveVarPar) {
-        save(VarPar, file = file.path(Path_Plot, "VarPar.RData"))
+        save(VarPar,
+             file = file.path(Path_Plot, "VariancePartitioning_DT.RData"))
       }
       invisible(gc())
     }
@@ -132,14 +133,14 @@ Plot_VarPar <- function(
       # 06.07.2024 - This uses the updated predict function, currently available on my forked version of the package github.com/elgabbas/Hmsc
       # The `Hmsc::evaluateModelFit` function expects an array object returned from `Hmsc::computePredictedValues`. The `computePredictedValues` function does not work on parallel, so I used the updated predict function on parallel then converted the out put to array
 
-      preds <- IASDT.R::Pred2Array(
+      preds <- IASDT.R::Mod_Pred2Array(
         Predict = TRUE, Model = Model, NCores = NCores)
 
       IASDT.R::CatTime("  >>  >>  Evaluate model fit")
       ModelEval <- Hmsc::evaluateModelFit(hM = Model, predY = preds) %>%
         suppressWarnings()
       if (SaveModelEval) {
-        save(ModelEval, file = file.path(Path_Plot, "ModelEval.RData"))
+        save(ModelEval, file = file.path(Path_Plot, "ModelEval_explanatory.RData"))
       }
 
       rm(preds)
@@ -289,7 +290,7 @@ Plot_VarPar <- function(
   if (SaveGG) {
     IASDT.R::CatTime("Save plots as RData")
     PlotList <- list(Plot = Plot, Plot_raw = Plot_raw)
-    save(PlotList, file = file.path(Path_Plot, "VarPar_Plots.RData"))
+    save(PlotList, file = file.path(Path_Plot, "VariancePartitioning_GG.RData"))
   }
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

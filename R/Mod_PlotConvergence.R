@@ -1,10 +1,10 @@
 ## |------------------------------------------------------------------------| #
-# Plot_Convergence ----
+# PlotConvergence ----
 ## |------------------------------------------------------------------------| #
 
-#' Plot model convergence of selected model
+#' Plot model convergence of a selected model
 #'
-#' Plot model convergence of selected model
+#' Plot model convergence of a selected model
 #'
 #' @param Path_Model String. Path to save all the output, including the to be fitted models (without trailing slash)
 #' @param Path_Coda String. Path to the coda object.
@@ -18,12 +18,12 @@
 #' @param NRC Vector. Number of rows and columns
 #' @param SavePlotData Logical. Save plots as RData file
 #' @param Cols Colours for lines for each chain
-#' @name Plot_Convergence
+#' @name PlotConvergence
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
-Plot_Convergence <- function(
+PlotConvergence <- function(
     Path_Model = NULL, Path_Coda = NULL, Path_FittedModel = NULL,
     EnvFile = ".env", FromHPC = TRUE, NChains = 4,
     Title = " ", NOmega = 1000, NCores = NULL, NRC = c(2, 3),
@@ -103,18 +103,18 @@ Plot_Convergence <- function(
   IASDT.R::CatTime("Rho")
 
   IASDT.R::CatTime("  >>  Prepare plot")
-  Plot_Rho <- IASDT.R::Plot_Rho(
+  PlotObj_Rho <- IASDT.R::PlotRho(
     Post = Coda_Obj, Model = Model, Title = Title, Cols = Cols)
 
   IASDT.R::CatTime("  >>  Save plot")
   ggplot2::ggsave(
-    plot = Plot_Rho, dpi = 600, device = "pdf", width = 18, height = 12,
+    plot = PlotObj_Rho, dpi = 600, device = "pdf", width = 18, height = 12,
     filename = file.path(Path_Convergence, "Convergence_Rho.pdf"))
 
   if (SavePlotData) {
     IASDT.R::CatTime("  >>  Save plotting data")
     IASDT.R::SaveAs(
-      InObj = Plot_Rho, OutObj = "Convergence_Rho",
+      InObj = PlotObj_Rho, OutObj = "Convergence_Rho",
       OutPath = file.path(Path_Convergence, "Convergence_Rho.RData"))
   }
 
@@ -125,23 +125,23 @@ Plot_Convergence <- function(
   IASDT.R::CatTime("Alpha")
 
   IASDT.R::CatTime("  >>  Prepare plot")
-  Plot_Alpha <- IASDT.R::Plot_Alpha(
+  PlotObj_Alpha <- IASDT.R::PlotAlpha(
     Post = Coda_Obj, Model = Model, Title = Title, NRC = NRC,
     AddFooter = FALSE, AddTitle = FALSE, Cols = Cols)
 
   IASDT.R::CatTime("  >>  Save plot")
   ggplot2::ggsave(
-    plot = Plot_Alpha, dpi = 600, device = "pdf", width = 18, height = 12,
+    plot = PlotObj_Alpha, dpi = 600, device = "pdf", width = 18, height = 12,
     filename = file.path(Path_Convergence, "Convergence_Alpha.pdf"))
 
   if (SavePlotData) {
     IASDT.R::CatTime("  >>  Save plotting data")
     IASDT.R::SaveAs(
-      InObj = Plot_Alpha, OutObj = "Convergence_Alpha",
+      InObj = PlotObj_Alpha, OutObj = "Convergence_Alpha",
       OutPath = file.path(Path_Convergence, "Convergence_Alpha.RData"))
   }
 
-  rm(Model, Coda_Obj, Plot_Alpha, Plot_Rho)
+  rm(Model, Coda_Obj, PlotObj_Alpha, PlotObj_Rho)
   invisible(gc())
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

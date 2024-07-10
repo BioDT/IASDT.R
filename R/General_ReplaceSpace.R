@@ -5,6 +5,7 @@
 #' Replace space with underscore
 #'
 #' Replace space with underscore
+#'
 #' @param x string
 #' @name ReplaceSpace
 #' @author Ahmed El-Gabbas

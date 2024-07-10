@@ -2,9 +2,9 @@
 # Package_RemoteSha ----
 ## |------------------------------------------------------------------------| #
 
-#' get remote sha of R packages
+#' Get remote sha of R packages
 #'
-#' get remote sha of R packages
+#' Get remote sha of R packages
 #'
 #' @name Package_RemoteSha
 #' @param ... name of one or more R packages

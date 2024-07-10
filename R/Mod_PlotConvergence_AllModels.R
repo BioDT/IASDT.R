@@ -1,5 +1,5 @@
 ## |------------------------------------------------------------------------| #
-# Plot_Convergence_All ----
+# PlotConvergence_AllModels ----
 ## |------------------------------------------------------------------------| #
 
 #' Plot model convergence of multiple modelling alternatives
@@ -12,12 +12,12 @@
 #' @param NChains Integer. Number of model chains
 #' @param maxOmega Number of sample species interactions
 #' @param NCores Number of parallel cores for parallelization
-#' @name Plot_Convergence_All
+#' @name PlotConvergence_AllModels
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
-Plot_Convergence_All <- function(
+PlotConvergence_AllModels <- function(
     Path_Model = NULL, EnvFile = ".env", FromHPC = TRUE, NChains = 4,
     maxOmega = 1000, NCores = NULL) {
 
@@ -64,7 +64,8 @@ Plot_Convergence_All <- function(
   }
 
   Path_Convergence_All <- file.path(Path_Model, "Model_Convergence_All")
-  fs::dir_create(Path_Convergence_All)
+  Path_ConvDT <- file.path(Path_Convergence_All, "DT")
+  fs::dir_create(c(Path_ConvDT, Path_Convergence_All))
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   ## Prepare convergence data ------
@@ -83,65 +84,58 @@ Plot_Convergence_All <- function(
         .l = list(Path_Coda, Path_FittedMod, M_Name_Fit, Tree),
         .f = function(Path_Coda, Path_FittedMod, M_Name_Fit, Tree) {
 
-          Path_ConvDT <- file.path(Path_Convergence_All, "DT")
-          fs::dir_create(Path_ConvDT)
-
-          ObjName_Rho <- paste0(M_Name_Fit, "_TraceRho")
-          Path_Trace_Rho <- file.path(
-            Path_ConvDT, paste0(ObjName_Rho, ".RData"))
-
-          ObjName_Alpha <- paste0(M_Name_Fit, "_TraceAlpha")
-          Path_Trace_Alpha <- file.path(
-            Path_ConvDT, paste0(ObjName_Alpha, ".RData"))
-
-          ObjName_Beta_Omega <- paste0(M_Name_Fit, "_Beta_Omega")
-          Path_Beta_Omega <- file.path(
-            Path_ConvDT, paste0(ObjName_Beta_Omega, ".RData"))
-
           CodaModelExist <- all(file.exists(c(Path_Coda, Path_FittedMod)))
-          SavedTrace <- all(file.exists(c(Path_Trace_Rho, Path_Trace_Alpha)))
 
-          Coda_Loaded <- FALSE
-
-          # prepare traceplot
-          if (CodaModelExist && magrittr::not(SavedTrace)) {
-
+          # prepare traceplot ----
+          if (CodaModelExist) {
             Model_Obj <- IASDT.R::LoadAs(Path_FittedMod)
             Coda_Obj <- IASDT.R::LoadAs(Path_Coda)
-            Coda_Loaded <- TRUE
 
-            # Rho
-            if (Tree == "Tree") {
-              RhoTitle <- stringr::str_remove_all(
-                string = basename(Path_Coda), pattern = "_Tree|_Coda.RData$")
+            # Rho -----
+            ObjName_Rho <- paste0(M_Name_Fit, "_TraceRho")
+            Path_Trace_Rho <- file.path(
+              Path_ConvDT, paste0(ObjName_Rho, ".RData"))
 
-              Plot_Rho <- IASDT.R::Plot_Rho(
-                Post = Coda_Obj, Model = Model_Obj, Title = RhoTitle)
+            if (magrittr::not(file.exists(Path_Trace_Rho))) {
+              if (Tree == "Tree") {
+                RhoTitle <- stringr::str_remove_all(
+                  string = basename(Path_Coda), pattern = "_Tree|_Coda.RData$")
 
-              IASDT.R::SaveAs(
-                InObj = Plot_Rho, OutObj = ObjName_Rho,
-                OutPath = Path_Trace_Rho)
+                PlotObj_Rho <- IASDT.R::PlotRho(
+                  Post = Coda_Obj, Model = Model_Obj, Title = RhoTitle)
 
-              rm(Plot_Rho)
-            } else {
-              Path_Trace_Rho <- NULL
+                IASDT.R::SaveAs(
+                  InObj = PlotObj_Rho, OutObj = ObjName_Rho,
+                  OutPath = Path_Trace_Rho)
+
+                rm(PlotObj_Rho)
+              } else {
+                Path_Trace_Rho <- NULL
+              }
             }
 
-            # Alpha
-            Plot_Alpha <- IASDT.R::Plot_Alpha(
-              Post = Coda_Obj, Model = Model_Obj, NRC = c(2, 3),
-              Title = stringr::str_remove_all(
-                basename(Path_Coda), "_Tree|_Coda.RData$"))
-            IASDT.R::SaveAs(
-              InObj = Plot_Alpha, OutObj = ObjName_Alpha,
-              OutPath = Path_Trace_Alpha)
+            # Alpha -----
+            ObjName_Alpha <- paste0(M_Name_Fit, "_TraceAlpha")
+            Path_Trace_Alpha <- file.path(
+              Path_ConvDT, paste0(ObjName_Alpha, ".RData"))
 
-            rm(Plot_Alpha, Model_Obj)
-            invisible(gc())
-          }
+            if (magrittr::not(file.exists(Path_Trace_Alpha))) {
+              PlotObj_Alpha <- IASDT.R::PlotAlpha(
+                Post = Coda_Obj, Model = Model_Obj, NRC = c(2, 3),
+                Title = stringr::str_remove_all(
+                  basename(Path_Coda), "_Tree|_Coda.RData$"))
+              IASDT.R::SaveAs(
+                InObj = PlotObj_Alpha, OutObj = ObjName_Alpha,
+                OutPath = Path_Trace_Alpha)
 
+              rm(PlotObj_Alpha, Model_Obj)
+              invisible(gc())
+            }
 
-          if (CodaModelExist) {
+            # Beta + Omega -----
+            ObjName_Beta_Omega <- paste0(M_Name_Fit, "_Beta_Omega")
+            Path_Beta_Omega <- file.path(
+              Path_ConvDT, paste0(ObjName_Beta_Omega, ".RData"))
 
             if (file.exists(Path_Beta_Omega)) {
               Beta_Omega <- IASDT.R::LoadAs(Path_Beta_Omega)
@@ -150,12 +144,7 @@ Plot_Convergence_All <- function(
               Omega_ESS <- Beta_Omega$Omega_ESS
               Omega_Gelman <- Beta_Omega$Omega_Gelman
               rm(Beta_Omega)
-
             } else {
-
-              if (magrittr::not(Coda_Loaded)) {
-                Coda_Obj <- IASDT.R::LoadAs(Path_Coda)
-              }
 
               Beta <- magrittr::extract2(Coda_Obj, "Beta")
               Omega <- magrittr::extract2(Coda_Obj, "Omega") %>%
@@ -193,7 +182,6 @@ Plot_Convergence_All <- function(
               save(Beta_Omega, file = Path_Beta_Omega)
               rm(Beta_Omega)
             }
-
           } else {
             Path_Trace_Rho <- Path_Trace_Alpha <- Beta_Gelman <-
               Beta_ESS <- Omega_Gelman <- Omega_ESS  <- NULL
@@ -231,6 +219,8 @@ Plot_Convergence_All <- function(
     `2000` = "2000 samples",
     `1000` = "1000 samples",
     `3000` = "3000 samples",
+    `4000` = "4000 samples",
+    `5000` = "5000 samples",
     `Tree` = "Phylogenetic (taxonomic) tree",
     `NoTree` = "No phylogenetic (taxonomic) tree"))
 
@@ -240,12 +230,14 @@ Plot_Convergence_All <- function(
 
   IASDT.R::CatTime("Alpha - trace plots")
 
-  grDevices::pdf(
-    file = file.path(Path_Convergence_All, "TracePlots_Alpha.pdf"),
-    width = 18, height = 12)
-  Convergence_DT$Path_Trace_Alpha %>%
-    purrr::walk(purrr::safely(~print(IASDT.R::LoadAs(.x))))
-  grDevices::dev.off()
+  invisible({
+    grDevices::pdf(
+      file = file.path(Path_Convergence_All, "TracePlots_Alpha.pdf"),
+      width = 18, height = 12)
+    Convergence_DT$Path_Trace_Alpha %>%
+      purrr::map(purrr::safely(~print(IASDT.R::LoadAs(.x))))
+    grDevices::dev.off()
+  })
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   ## Rho - trace plots ------
@@ -371,7 +363,6 @@ Plot_Convergence_All <- function(
     plot = gridExtra::marrangeGrob(
       grobs = list(Plot, Plot2), nrow = 1, ncol = 1, top = NULL),
     width = 18, height = 12)
-
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   ## Beta - Gelman convergence ------

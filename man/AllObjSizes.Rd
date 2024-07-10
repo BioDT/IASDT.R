@@ -10,7 +10,7 @@ AllObjSizes(GreaterThan = 0)
 \item{GreaterThan}{Only show objects with size > specified value in MB. Default: 0, which means show all variables size}
 }
 \description{
-This function print the size allocated by any of loaded objects into \code{R}
+Size of objects in memory. This function print the size allocated by any of loaded objects into \code{R}
 }
 \examples{
 AA1 <<- rep(1:1000, 10000)

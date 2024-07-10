@@ -5,8 +5,8 @@
 #' Concatenate without quotes
 #'
 #' Concatenate without quotes
+#'
 #' @param ... one or more string to concatenate
-#' @name cc
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export

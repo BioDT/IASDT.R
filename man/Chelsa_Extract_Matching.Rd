@@ -14,7 +14,7 @@ Chelsa_Extract_Matching(String, Time, Matches)
 \item{Matches}{Further string to match}
 }
 \description{
-A function to extract which climate model and scenario each file represent
+Extract time / climate models & scenarios from Chelsa URL. A function to extract which climate model and scenario each file represent
 }
 \details{
 A function to extract which climate model and scenario each file represent

@@ -5,6 +5,7 @@
 #' Match taxonomy with GBIF; may return >1 match
 #'
 #' Match taxonomy with GBIF; may return >1 match
+#'
 #' @param taxon_name Taxonomy name
 #' @param taxon_id Taxonomy ID
 #' @param include_genus Include matches at genus level; default: `FALSE`

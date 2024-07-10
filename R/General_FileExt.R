@@ -5,6 +5,7 @@
 #' Get file extension
 #'
 #' Get file extension
+#'
 #' @name FileExt
 #' @author Ahmed El-Gabbas
 #' @return NULL

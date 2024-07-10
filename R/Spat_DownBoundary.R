@@ -5,6 +5,7 @@
 #' Determine the boundaries of the requested GBIF data
 #'
 #' Determine the boundaries of the requested GBIF data
+#'
 #' @param L left boundary
 #' @param R right boundary
 #' @param B bottom boundary

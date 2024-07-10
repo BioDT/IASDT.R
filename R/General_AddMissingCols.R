@@ -5,6 +5,7 @@
 #' Add missing columns to data frame
 #'
 #' Add missing columns to data frame
+#'
 #' @name AddMissingCols
 #' @author Ahmed El-Gabbas
 #' @return NULL

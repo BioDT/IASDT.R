@@ -1,5 +1,5 @@
 ## |------------------------------------------------------------------------| #
-# Gelman_Alpha ----
+# PlotGelman_Alpha ----
 ## |------------------------------------------------------------------------| #
 
 #' Gelman-Rubin-Brooks plot for alpha
@@ -9,12 +9,13 @@
 #' @param CodaObj an mcmc object
 #' @param NCores Integer. Number of parallel processes.
 #' @param PlottingAlpha Double. Plotting alpha for line transparency
-#' @name Gelman_Alpha
+#' @name PlotGelman_Alpha
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
-Gelman_Alpha <- function(CodaObj = NULL, NCores = NULL, PlottingAlpha = 0.25) {
+
+PlotGelman_Alpha <- function(CodaObj = NULL, NCores = NULL, PlottingAlpha = 0.25) {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
@@ -23,6 +24,7 @@ Gelman_Alpha <- function(CodaObj = NULL, NCores = NULL, PlottingAlpha = 0.25) {
 
   c1 <- snow::makeSOCKcluster(NCores)
   future::plan(future::cluster, workers = c1, gc = TRUE)
+  on.exit(snow::stopCluster(c1), add = TRUE)
 
   AlphaNames <- CodaObj %>%
     magrittr::extract2(1) %>%
@@ -102,6 +104,5 @@ Gelman_Alpha <- function(CodaObj = NULL, NCores = NULL, PlottingAlpha = 0.25) {
     ) %>%
     dplyr::pull(Plot)
 
-  snow::stopCluster(c1)
   return(Gelman_Alpha_Plot)
 }

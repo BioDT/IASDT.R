@@ -5,6 +5,7 @@
 #' Assign a value to a variable, only if not existing in the global environment
 #'
 #' Assign a value to a variable, only if not existing in the global environment
+#'
 #' @param Variable Variable name
 #' @param Value Value to be assigned
 #' @param Env environment to assign value to

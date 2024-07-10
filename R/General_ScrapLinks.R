@@ -5,6 +5,7 @@
 #' Extract link texts and urls from a web page
 #'
 #' Extract link texts and urls from a web page
+#'
 #' @param url the url
 #' @name ScrapLinks
 #' @return NULL

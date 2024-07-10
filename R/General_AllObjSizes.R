@@ -4,8 +4,8 @@
 
 #' Size of objects in memory
 #'
-#' This function print the size allocated by any of loaded objects into `R`
-#' @name AllObjSizes
+#' Size of objects in memory. This function print the size allocated by any of loaded objects into `R`
+#'
 #' @param GreaterThan Only show objects with size > specified value in MB. Default: 0, which means show all variables size
 #' @author Ahmed El-Gabbas
 #' @importFrom rlang .data

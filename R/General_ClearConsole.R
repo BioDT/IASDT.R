@@ -4,8 +4,7 @@
 #
 #' Clear the console
 #'
-#' Clear the console
-#' This function is a lazy equivalent of `cat("\014")`
+#' Clear the console. This function is equivalent to `cat("\014")`
 #'
 #' @name ClearConsole
 #' @export

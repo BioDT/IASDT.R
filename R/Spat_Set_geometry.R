@@ -5,6 +5,7 @@
 #' Set geometry of an sf object in the pipe line
 #'
 #' Set geometry of an sf object in the pipe line
+#'
 #' @param x simple feature data frame
 #' @param Name the name of the geometry column to be used
 #' @name Set_geometry

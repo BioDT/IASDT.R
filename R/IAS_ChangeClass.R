@@ -5,6 +5,7 @@
 #' Change the class of some of GBIF columns
 #'
 #' Change the class of some of GBIF columns
+#'
 #' @param DF Data frame
 #' @name ChangeClass
 #' @author Ahmed El-Gabbas

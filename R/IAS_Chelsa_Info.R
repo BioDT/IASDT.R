@@ -5,6 +5,7 @@
 #' Extract info from Chelsa file name
 #'
 #' Extract info from Chelsa file name
+#'
 #' @name Chelsa_Info
 #' @param FileName character; URL, file path or file name
 #' @author Ahmed El-Gabbas

@@ -5,6 +5,7 @@
 #' Get accepted name of a taxa
 #'
 #' Get accepted name of a taxa
+#'
 #' @name GetAcceptedName
 #' @param ID GBIF id
 #' @author Ahmed El-Gabbas

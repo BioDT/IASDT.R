@@ -1,5 +1,5 @@
 ## |------------------------------------------------------------------------| #
-# Pred2Array ----
+# Mod_Pred2Array ----
 ## |------------------------------------------------------------------------| #
 
 #' Convert results from predict function to array
@@ -11,12 +11,12 @@
 #' @param Preds Pre-computed predictions
 #' @param expected Logical. Whether to return the location parameter of the observation models or sample the values from those.
 #' @param NCores Integer. Number of parallel computations for computing predicted values.
-#' @name Pred2Array
+#' @name Mod_Pred2Array
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
-Pred2Array <- function(
+Mod_Pred2Array <- function(
     Predict = TRUE, Model = NULL, Preds = NULL, expected = TRUE, NCores = NULL) {
   if (Predict) {
 

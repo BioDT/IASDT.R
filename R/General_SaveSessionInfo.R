@@ -2,9 +2,9 @@
 # SaveSessionInfo ----
 ## |------------------------------------------------------------------------| #
 #
-#' Save all objects (except functions) of the global environment as list items
+#' Save session info
 #'
-#' Save all objects (except functions) of the global environment as list items
+#' Save session info
 #'
 #' @param Path Path of where to save the output RData file
 #' @param SessionObj List of objects and their sizes (typically a a result of `IASDT::SaveSession` function)

@@ -5,6 +5,7 @@
 #' Detailed information on Chelsa data
 #'
 #' Detailed information on Chelsa data
+#'
 #' @name Chelsa_Vars
 #' @author Ahmed El-Gabbas
 #' @examples

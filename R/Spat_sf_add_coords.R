@@ -5,6 +5,7 @@
 #' Add coordinates of the current sf object as columns
 #'
 #' Add coordinates of the current sf object as columns
+#'
 #' @name sf_add_coords
 #' @param Sf_Obj input sf object
 #' @param NameX Name of the longitude column to be added

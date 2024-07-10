@@ -5,6 +5,7 @@
 #' Check function arguments
 #'
 #' Check function arguments
+#'
 #' @name CheckArgs
 #' @author Ahmed El-Gabbas
 #' @return NULL

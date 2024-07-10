@@ -1,27 +1,28 @@
 ## |------------------------------------------------------------------------| #
-# Plot_RespCurv ----
+# PlotRespCurv ----
 ## |------------------------------------------------------------------------| #
 
 #' Plot response curves
 #'
 #' Plot response curves
+#'
 #' @param Model Model
 #' @param ResCurvePath ResCurvePath
 #' @param ResCurvePrefix ResCurvePrefix
 #' @param Verbose Verbose
 #' @param NCores Number of cores to use
-#' @name Plot_RespCurv
+#' @name PlotRespCurv
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
-Plot_RespCurv <- function(
-    Model, ResCurvePath = getwd(), ResCurvePrefix = "ResCurv_", Verbose = TRUE, NCores = NULL) {
-
+PlotRespCurv <- function(
+    Model, ResCurvePath = getwd(), ResCurvePrefix = "ResCurv_", Verbose = TRUE,
+    NCores = NULL) {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Var <- NFV <- NULL
+  Var <- NFV <- ResCurvDT <- NULL
 
   if (is.null(NCores)) {
     NCores <- get(".NCores", envir = parent.env(environment()))
@@ -35,6 +36,7 @@ Plot_RespCurv <- function(
   IASDT.R::CatTime("Prepare working on parallel")
   c1 <- snow::makeSOCKcluster(min(NCores, nrow(ResCurvDT)))
   future::plan(future::cluster, workers = c1, gc = TRUE)
+  on.exit(snow::stopCluster(c1), add = TRUE)
 
   IASDT.R::CatTime("Prepare response curve data on parallel - coordinates = i")
   ResCurvDT <- tidyr::expand_grid(Var = ModelVars, NFV = 1:2)
@@ -71,7 +73,6 @@ Plot_RespCurv <- function(
   #   tidyr::unnest_wider(ResCurv)
 
   IASDT.R::CatTime("Stopping the cluster")
-  snow::stopCluster(c1)
 
 
   IASDT.R::CatTime("Prepare species response curves")

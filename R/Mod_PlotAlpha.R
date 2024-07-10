@@ -1,5 +1,5 @@
 ## |------------------------------------------------------------------------| #
-# Plot_Alpha ----
+# PlotAlpha ----
 ## |------------------------------------------------------------------------| #
 
 #' Plot convergence traceplots for the alpha parameter
@@ -13,19 +13,16 @@
 #' @param AddFooter Add footer to the plot for the page number
 #' @param AddTitle Add main title to the plot
 #' @param Cols Colours for lines for each chain
-#' @name Plot_Alpha
+#' @name PlotAlpha
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
-Plot_Alpha <- function(
+PlotAlpha <- function(
     Post = NULL, Model = NULL, Title = NULL, NRC = NULL, AddFooter = TRUE,
     AddTitle = TRUE, Cols = c("red", "blue", "darkgreen", "darkgrey")) {
 
-
-
-  SampleSize <- ESS <- NULL
-
+  SampleSize <- ESS <- x <- Factor <- NULL
 
   AllArgs <- ls()
   AllArgs <- purrr::map(
@@ -33,8 +30,6 @@ Plot_Alpha <- function(
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = "Title")
-
-  x <- Factor <- NULL
 
   # Load coda object
   if (inherits(Post, "character")) {

@@ -4,8 +4,8 @@
 
 #' Extract time / climate models & scenarios from Chelsa URL
 #'
-#' A function to extract which climate model and scenario each file represent
-#' @name Chelsa_Extract_Matching
+#' Extract time / climate models & scenarios from Chelsa URL. A function to extract which climate model and scenario each file represent
+#'
 #' @param String URL string
 #' @param Time Time period to match
 #' @param Matches Further string to match

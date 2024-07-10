@@ -5,7 +5,7 @@
 #' Set name of the chain to a vector of strings
 #'
 #' Set name of the chain to a vector of strings
-#' 
+#'
 #' @param Obj Input object name
 #' @param Chain Integer. Chain number
 #' @name SetChainName

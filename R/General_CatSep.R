@@ -5,6 +5,7 @@
 #' Print separator(s) to the console
 #'
 #' Print separator(s) to the console
+#'
 #' @param Rep integer; number of separator lines; default `1` row
 #' @param Extra1 integer; number of extra empty lines before the separator; default: `0`
 #' @param Extra2 integer; number of extra empty lines after the separator; default: `0`

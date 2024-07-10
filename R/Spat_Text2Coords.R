@@ -5,6 +5,7 @@
 #' Extract longitude / latitude from text
 #'
 #' Extract longitude / latitude from text
+#'
 #' @param String string of coordinate
 #' @param Long_Name Column name for the longitude information; default: "Longitude"
 #' @param Lat_Name Column name for the latitude information; default: "Latitude"

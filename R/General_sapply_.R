@@ -5,6 +5,7 @@
 #' Apply a Function over a List or Vector (with no return value)
 #'
 #' Apply a Function over a List or Vector (with no return value)
+#'
 #' @param X vector
 #' @param FUN function
 #' @param simplify should be the output be simplified

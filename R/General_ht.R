@@ -5,6 +5,7 @@
 #' Print head and tail of data frame
 #'
 #' Print head and tail of data frame
+#'
 #' @name ht
 #' @author Ahmed El-Gabbas
 #' @return NULL

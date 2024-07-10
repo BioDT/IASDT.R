@@ -5,6 +5,7 @@
 #' Check if tiff file corrupted
 #'
 #' Check if tiff file corrupted
+#'
 #' @param x tiff file path
 #' @name CheckTiff
 #' @author Ahmed El-Gabbas

@@ -5,6 +5,7 @@
 #' Load multiple RData files together
 #'
 #' Load multiple RData files together
+#'
 #' @param Files vector containing the list of `.RData` files to be loaded
 #' @param Verbose Verbose? Only valid when `OneObject = FALSE`. Default = `TRUE`
 #' @param OneObject Should the objects loaded as one object, each as a list item? If `FALSE`, then all original object names will be loaded to the global environment. Default = `TRUE`.

@@ -5,6 +5,7 @@
 #' Save an object with a different name
 #'
 #' Save an object with a different name
+#'
 #' @param InObj input object
 #' @param OutObj output object
 #' @param OutPath save path

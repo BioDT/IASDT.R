@@ -5,6 +5,7 @@
 #' Extract a specific column from the output of GBIF standardization
 #'
 #' Extract a specific column from the output of GBIF standardization
+#'
 #' @name Extract_BB
 #' @param x GBIF results of GBIF standardization `rgbif::name_backbone`
 #' @param var Column name to extract

@@ -5,6 +5,7 @@
 #' Number of decimal places in a vector
 #'
 #' Number of decimal places in a vector
+#'
 #' @param x vector
 #' @name NDecimals
 #' @author Ahmed El-Gabbas

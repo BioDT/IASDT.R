@@ -5,6 +5,7 @@
 #' Load package silently (+ install missing packages)
 #'
 #' Load package silently (+ install missing packages)
+#'
 #' @param ... packages to load / install
 #' @param List vector for the name of packages to be loaded
 #' @param Verbose print a message of the package name and version

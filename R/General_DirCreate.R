@@ -5,6 +5,7 @@
 #' Create directory if not existed (recursively)
 #'
 #' Create directory if not existed (recursively)
+#'
 #' @param Path character; folder path
 #' @param Verbose logical; print a message of whether the folder was created or already available. Default: `TRUE`
 #' @name DirCreate

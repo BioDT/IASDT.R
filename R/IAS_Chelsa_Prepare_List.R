@@ -5,6 +5,7 @@
 #' Prepare list of potential variables
 #'
 #' Prepare list of potential variables
+#'
 #' @name Chelsa_Prepare_List
 #' @param Down Logical. Download Chelsa files?
 #' @param DownParallel Logical. Download input files on parallel (if `Down` = `TRUE`)

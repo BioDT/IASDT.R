@@ -5,6 +5,7 @@
 #' BetaSummary
 #'
 #' BetaSummary
+#'
 #' @param Beta Beta
 #' @name BetaSummary
 #' @author Ahmed El-Gabbas

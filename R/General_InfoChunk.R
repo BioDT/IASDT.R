@@ -4,7 +4,8 @@
 #
 #' Print Information chunk with time stamp
 #'
-#' Print Information chunk time stamp
+#' Print Information chunk with time stamp
+#'
 #' @param Message A character string passed to `IASDT.R::CatTime`
 #' @param ... additional arguments for the `IASDT.R::CatSep`
 #' @author Ahmed El-Gabbas

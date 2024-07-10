@@ -5,6 +5,7 @@
 #' Clip raster by a spatial polygon
 #'
 #' Clip raster by a spatial polygon
+#'
 #' @param raster raster layer
 #' @param shape Polygon
 #' @export

@@ -1,30 +1,31 @@
 ## |------------------------------------------------------------------------| #
-# Gelman_Plot ----
+# PlotGelman ----
 ## |------------------------------------------------------------------------| #
 
-#' Plot Gelman-Rubin-Brooks plots
+#' Plot Gelman-Rubin-Brooks
 #'
-#' Plot Gelman-Rubin-Brooks plots. This plot shows the evolution of Gelman and Rubin's shrink factor as the number of iterations increases. For more information, see `coda:::gelman.plot`
+#' Plot Gelman-Rubin-Brooks. This plot shows the evolution of Gelman and Rubin's shrink factor as the number of iterations increases. For more information, see `coda:::gelman.plot`
 #'
 #' @param InputCoda Path to RData file containing the coda object
-#' @param Beta Logical. Run `IASDT.R::Gelman_Beta`?
-#' @param Rho Logical. Run `IASDT.R::Gelman_Rho`?
-#' @param Omega Logical. Run `IASDT.R::Gelman_Omega`?
-#' @param Alpha Logical. Run `IASDT.R::Gelman_Alpha` (not yet available)?
+#' @param Beta Logical. Run `IASDT.R::PlotGelman_Beta`?
+#' @param Rho Logical. Run `IASDT.R::PlotGelman_Rho`?
+#' @param Omega Logical. Run `IASDT.R::PlotGelman_Omega`?
+#' @param Alpha Logical. Run `IASDT.R::PlotGelman_Alpha`
 #' @param NCores Integer. Number of parallel processes.
 #' @param NOmega Integer. Number of species to be sampled for the Omega parameter
 #' @param PlottingAlpha Double. Plotting alpha for line transparency
+#' @param EnvFile String. Path to read the environment variables. Default value: `.env`
 #' @param SavePlot Logical. Save the outputs as PDF
 #' @param ReturnPlots Logical. Return ggplot objects
 #' @param OutPath String. Folder path to save the output figures
-#' @name Gelman_Plot
+#' @name PlotGelman
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
-Gelman_Plot <- function(
+PlotGelman <- function(
     InputCoda = NULL, Beta = TRUE, Rho = TRUE, Omega = TRUE, Alpha = TRUE,
-    NCores = NULL, NOmega = 1000, PlottingAlpha = 0.25,
+    NCores = NULL, NOmega = 1000, PlottingAlpha = 0.25, EnvFile = ".env",
     SavePlot = TRUE, ReturnPlots = FALSE, OutPath = NULL) {
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -75,13 +76,13 @@ Gelman_Plot <- function(
 
   IASDT.R::CatTime("Alpha")
   if (Alpha) {
-    Plot_Alpha <- CodaObj %>%
+    PlotObj_Alpha <- CodaObj %>%
       magrittr::extract2("Alpha") %>%
       magrittr::extract2(1)
-    Plot_Alpha <- IASDT.R::Gelman_Alpha(
-      CodaObj = Plot_Alpha, NCores = NCores, PlottingAlpha = PlottingAlpha)
+    PlotObj_Alpha <- IASDT.R::PlotGelman_Alpha(
+      CodaObj = PlotObj_Alpha, NCores = NCores, PlottingAlpha = PlottingAlpha)
   } else {
-    Plot_Alpha <- NULL
+    PlotObj_Alpha <- NULL
   }
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -90,12 +91,12 @@ Gelman_Plot <- function(
 
   IASDT.R::CatTime("Beta")
   if (Beta) {
-    Plot_Beta <- magrittr::extract2(CodaObj, "Beta")
-    Plot_Beta <- IASDT.R::Gelman_Beta(
-      CodaObj = Plot_Beta, NCores = NCores, PlottingAlpha = PlottingAlpha)
+    PlotObj_Beta <- IASDT.R::PlotGelman_Beta(
+      CodaObj = magrittr::extract2(CodaObj, "Beta"),
+      NCores = NCores, PlottingAlpha = PlottingAlpha, EnvFile = EnvFile)
     invisible(gc())
   } else {
-    Plot_Beta <- NULL
+    PlotObj_Beta <- NULL
   }
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -104,15 +105,15 @@ Gelman_Plot <- function(
 
   IASDT.R::CatTime("Omega")
   if (Omega) {
-    Plot_Omega <- CodaObj %>%
+    PlotObj_Omega <- CodaObj %>%
       magrittr::extract2("Omega") %>%
       magrittr::extract2(1)
-    Plot_Omega <- IASDT.R::Gelman_Omega(
-      CodaObj = Plot_Omega, NCores = NCores,
+    PlotObj_Omega <- IASDT.R::PlotGelman_Omega(
+      CodaObj = PlotObj_Omega, NCores = NCores,
       PlottingAlpha = PlottingAlpha, NOmega = NOmega)
     invisible(gc())
   } else {
-    Plot_Omega <- NULL
+    PlotObj_Omega <- NULL
   }
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -121,11 +122,11 @@ Gelman_Plot <- function(
 
   IASDT.R::CatTime("Rho")
   if (Rho) {
-    Plot_Rho <- magrittr::extract2(CodaObj, "Rho")
-    Plot_Rho <- IASDT.R::Gelman_Rho(CodaObj = Plot_Rho)
+    PlotObj_Rho <- IASDT.R::PlotGelman_Rho(
+      CodaObj = magrittr::extract2(CodaObj, "Rho"))
     invisible(gc())
   } else {
-    Plot_Rho <- NULL
+    PlotObj_Rho <- NULL
   }
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -133,7 +134,8 @@ Gelman_Plot <- function(
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   PlotList <- list(
-    Alpha = Plot_Alpha, Beta = Plot_Beta, Omega = Plot_Omega, Rho = Plot_Rho)
+    Alpha = PlotObj_Alpha, Beta = PlotObj_Beta, Omega = PlotObj_Omega,
+    Rho = PlotObj_Rho)
 
   if (SavePlot) {
     PlotList4Plot <- purrr::list_flatten(purrr::discard(PlotList, is.null))

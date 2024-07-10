@@ -5,6 +5,7 @@
 #' Run bash script depending on the operating system
 #'
 #' Run bash script depending on the operating system
+#'
 #' @param command Bash command to implement
 #' @param RObj Whether to make the output of the command an R object
 #' @param ... Additional arguments to `shell` pr `system` functions

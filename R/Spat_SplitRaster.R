@@ -5,6 +5,7 @@
 #' Split a raster object into a list of smaller rasters
 #'
 #' Split a raster object into a list of smaller rasters
+#'
 #' @param raster raster object to split
 #' @param Ncol number of columns
 #' @param Nrow number of rows

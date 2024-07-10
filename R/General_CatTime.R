@@ -5,6 +5,7 @@
 #' Print text with time stamp
 #'
 #' Print text with time stamp
+#'
 #' @param Text character; the text to print: default empty string (print time only)
 #' @param NLines number of empty lines after the printing; default: 1
 #' @param Date Also print date? Default value `FALSE`

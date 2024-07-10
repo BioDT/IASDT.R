@@ -5,6 +5,7 @@
 #' Split data.frame into smaller chunks
 #'
 #' Split data.frame into smaller chunks
+#'
 #' @param DF The data frame to split
 #' @param ChunkSize Integer. Number of rows per chunk
 #' @param NChunks Integer. Number of chunks (only if `ChunkSize` not provided)

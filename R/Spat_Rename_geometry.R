@@ -5,6 +5,7 @@
 #' Rename active geometry column of an sf object
 #'
 #' Rename active geometry column of an sf object
+#'
 #' @param g simple feature object
 #' @param name the new name of geometry
 #' @name Rename_geometry

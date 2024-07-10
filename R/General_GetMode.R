@@ -5,6 +5,7 @@
 #' Calculate the mode of numbers
 #'
 #' Calculate the mode of numbers
+#'
 #' @param v vector
 #' @name GetMode
 #' @references https://www.tutorialspoint.com/r/r_mean_median_mode.htm

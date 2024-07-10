@@ -4,7 +4,8 @@
 
 #' Load (or install) multiple packages at once
 #'
-#' @name RequireMultiple
+#' Load (or install) multiple packages at once
+#'
 #' @param ... Packages to load or install
 #' @param Reload Should the already loaded packages re-loaded? Default: `FALSE`
 #' @param InstallMissing Should the missing packages be installed and loaded? Default: `TRUE`

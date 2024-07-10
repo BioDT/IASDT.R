@@ -5,6 +5,7 @@
 #' Check the validity of a URL
 #'
 #' Check the validity of a URL
+#'
 #' @param url_in URL path
 #' @param t Timeout
 #' @name Valid_URL

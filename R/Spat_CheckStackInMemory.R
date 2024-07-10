@@ -5,6 +5,7 @@
 #' Check if the raster stack reads from disk or memory
 #'
 #' Check if the raster stack reads from disk or memory
+#'
 #' @author Ahmed El-Gabbas
 #' @export
 #' @param Stack Stack

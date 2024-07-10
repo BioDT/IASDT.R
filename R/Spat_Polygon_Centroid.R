@@ -5,6 +5,7 @@
 #' Replace the geometry of a polygon with its centroid point
 #'
 #' Replace the geometry of a polygon with its centroid point
+#'
 #' @param x simple feature object
 #' @param Rename should the geometry field renamed
 #' @param NewName the new name of geometry

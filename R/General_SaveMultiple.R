@@ -5,6 +5,7 @@
 #' Save multiple objects to their respective `.RData` files
 #'
 #' Save multiple objects to their respective `.RData` files
+#'
 #' @param Vars variables to save
 #' @param OutFolder output path
 #' @param Overwrite overwrite existing files? If file already exist, no files are saved unless `Overwrite` argument is set as `TRUE`

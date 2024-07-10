@@ -60,7 +60,8 @@ Mod_MergeChains <- function(
   rm(AllArgs)
 
   if (FromHPC) {
-    Path_Model <- file.path(Path_Scratch, Path_Model)
+    Path_Model <- file.path(
+      Path_Scratch, stringr::str_remove(Path_Model, paste0(Path_Scratch, "/")))
   }
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -97,6 +98,7 @@ Mod_MergeChains <- function(
   Path_Coda <- file.path(Path_Model, "Model_Coda")
   fs::dir_create(c(Path_Fitted_Models, Path_Coda))
 
+
   Model_Info2 <- Path_ModInfo %>%
     IASDT.R::LoadAs() %>%
     # Check if any posterior files is missing
@@ -117,7 +119,11 @@ Mod_MergeChains <- function(
         }),
 
       # delete these columns if already exist from previous function execution
-      Path_FittedMod = NULL, Path_Coda = NULL,
+      Path_FittedMod = NULL, Path_Coda = NULL)
+
+
+  Model_Info2 <- Model_Info2 %>%
+    dplyr::mutate(
 
       # Merge posteriors and save as coda object
       ModelPosts = furrr::future_pmap(
@@ -164,8 +170,8 @@ Mod_MergeChains <- function(
                 Model_Fit <- try(
                   Hmsc::importPosteriorFromHPC(
                     m = IASDT.R::LoadAs(M_Init_Path), postList = Posts,
-                    nSamples = M_samples, thin = M_thin, transient = M_transient,
-                    alignPost = FALSE))
+                    nSamples = M_samples, thin = M_thin,
+                    transient = M_transient, alignPost = FALSE))
                 Post_Aligned2 <- FALSE
               } else {
                 Post_Aligned2 <- TRUE

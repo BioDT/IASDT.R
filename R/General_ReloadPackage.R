@@ -5,6 +5,7 @@
 #' Reload an R package
 #'
 #' Reload an R package
+#'
 #' @name ReloadPackage
 #' @param Package The name of packages to reload
 #' @examples

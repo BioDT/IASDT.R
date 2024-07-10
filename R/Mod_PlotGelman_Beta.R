@@ -1,36 +1,42 @@
 ## |------------------------------------------------------------------------| #
-# Gelman_Omega ----
+# PlotGelman_Beta ----
 ## |------------------------------------------------------------------------| #
 
-#' Gelman-Rubin-Brooks plot for all omega parameters
+#' Gelman-Rubin-Brooks plot for all beta parameters
 #'
-#' Gelman-Rubin-Brooks plot for all omega parameters
+#' Gelman-Rubin-Brooks plot for all beta parameters
 #'
 #' @param CodaObj an mcmc object
 #' @param NCores Integer. Number of parallel processes.
-#' @param NOmega Integer. Number of species to be sampled for the Omega parameter
+#' @param EnvFile String. Path to read the environment variables. Default value: `.env`
 #' @param PlottingAlpha Double. Plotting alpha for line transparency
-#' @name Gelman_Omega
+#' @name PlotGelman_Beta
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
-Gelman_Omega <- function(
-    CodaObj = NULL, NCores = NULL, NOmega = 1000, PlottingAlpha = 0.25) {
+PlotGelman_Beta <- function(
+    CodaObj = NULL, NCores = NULL, EnvFile = ".env", PlottingAlpha = 0.25) {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Iter <- Type <- Sp_comb <- dplyr <- coda <- tibble <- magrittr <-
-    ShrinkFactor <- group <- NULL
+  Iter <- Type <- Var_Sp <- dplyr <- coda <- tibble <- magrittr <- ShrinkFactor <- group <- NULL
 
   c1 <- snow::makeSOCKcluster(NCores)
   future::plan(future::cluster, workers = c1, gc = TRUE)
+  on.exit(snow::stopCluster(c1), add = TRUE)
 
-  OmegaNames <- CodaObj %>%
+  Beta_Coda <- IASDT.R::Coda_to_tibble(
+    CodaObj = CodaObj, Type = "beta", EnvFile = EnvFile)
+  NVars <- length(unique(Beta_Coda$Variable))
+  NSp <- length(unique(Beta_Coda$Species))
+  SubTitle <- paste0(NVars, " covariates - ", NSp, " species")
+  rm(Beta_Coda)
+
+  BetaNames <- CodaObj %>%
     magrittr::extract2(1) %>%
     attr("dimnames") %>%
     magrittr::extract2(2) %>%
-    sample(NOmega) %>%
     sort()
 
   invisible(snow::clusterEvalQ(
@@ -38,8 +44,8 @@ Gelman_Omega <- function(
   snow::clusterExport(
     cl = c1, list = c("CodaObj"), envir = environment())
 
-  Gelman_Omega <- snow::parLapply(
-    cl = c1, x = OmegaNames,
+  Gelman_Beta_Vals <- snow::parLapply(
+    cl = c1, x = BetaNames,
     fun = function(x) {
       lapply(CodaObj, function(Y) {
         Y[, x, drop = TRUE]
@@ -57,13 +63,12 @@ Gelman_Omega <- function(
         dplyr::arrange(Type, Iter) %>%
         dplyr::mutate(
           # Colour = dplyr::if_else(Type == "Median", "black", "red"),
-          # LType = dplyr::if_else(Type == "Median", "dashed", "solid"),
-          Type = factor(Type), Sp_comb = x)
+          Type = factor(Type), Var_Sp = x)
     }) %>%
     dplyr::bind_rows() %>%
-    dplyr::mutate(group = paste0(Sp_comb, "_", Type))
+    dplyr::mutate(group = paste0(Var_Sp, "_", Type))
 
-  Gelman_Omega_Plot <- Gelman_Omega %>%
+  Gelman_Beta_Plot <- Gelman_Beta_Vals %>%
     ggplot2::ggplot() +
     ggplot2::geom_line(
       mapping = ggplot2::aes(
@@ -80,9 +85,7 @@ Gelman_Omega <- function(
     ggplot2::coord_cartesian(expand = FALSE) +
     ggplot2::theme_bw() +
     ggplot2::labs(
-      title = paste0("Gelman-Rubin-Brooks plot - Omega - ",
-                     NOmega, " species combination samples"),
-      subtitle = NULL,
+      title = "Gelman-Rubin-Brooks plot - Beta", subtitle = SubTitle,
       caption = "This plot shows the evolution of Gelman and Rubin's shrink factor as the number of iterations increases.") +
     ggplot2::xlab(NULL) +
     ggplot2::ylab("Shrink factor") +
@@ -102,6 +105,5 @@ Gelman_Omega <- function(
       plot.caption = ggplot2::element_text(
         color = "darkgrey", face = "italic", size = 10))
 
-  snow::stopCluster(c1)
-  return(Gelman_Omega_Plot)
+  return(Gelman_Beta_Plot)
 }

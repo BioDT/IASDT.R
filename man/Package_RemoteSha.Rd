@@ -2,7 +2,7 @@
 % Please edit documentation in R/General_Package_RemoteSha.R
 \name{Package_RemoteSha}
 \alias{Package_RemoteSha}
-\title{get remote sha of R packages}
+\title{Get remote sha of R packages}
 \usage{
 Package_RemoteSha(...)
 }
@@ -10,7 +10,7 @@ Package_RemoteSha(...)
 \item{...}{name of one or more R packages}
 }
 \description{
-get remote sha of R packages
+Get remote sha of R packages
 }
 \examples{
 # Package_RemoteSha(IASDT.R, devtools)

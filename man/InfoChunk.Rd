@@ -12,7 +12,7 @@ InfoChunk(Message = "", ...)
 \item{...}{additional arguments for the \code{IASDT.R::CatSep}}
 }
 \description{
-Print Information chunk time stamp
+Print Information chunk with time stamp
 }
 \examples{
 InfoChunk(Message = "Started")

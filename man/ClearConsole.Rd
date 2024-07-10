@@ -7,8 +7,7 @@
 ClearConsole()
 }
 \description{
-Clear the console
-This function is a lazy equivalent of \code{cat("\\014")}
+Clear the console. This function is equivalent to \code{cat("\\014")}
 }
 \examples{
 \dontrun{

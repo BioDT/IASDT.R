@@ -5,6 +5,7 @@
 #' Sort alphanumeric strings
 #'
 #' Sort alphanumeric strings
+#'
 #' @param x Vector to be sorted.
 #' @param decreasing logical. Should the sort be increasing or decreasing? Note that descending=TRUE reverses the meanings of na.last and blanks.last. Default: `FALSE`
 #' @param na.last for controlling the treatment of NA values. If TRUE, missing values in the data are put last; if FALSE, they are put first; if NA, they are removed. Default: `TRUE`

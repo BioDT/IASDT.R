@@ -5,6 +5,7 @@
 #' Check if `Quarto` should be updated
 #'
 #' Check if `Quarto` should be updated
+#'
 #' @name CheckQuartoVersion
 #' @author Ahmed El-Gabbas
 #' @export

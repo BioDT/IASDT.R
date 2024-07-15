@@ -2,9 +2,9 @@
 # PlotGelman_Rho ----
 ## |------------------------------------------------------------------------| #
 
-#' Gelman-Rubin-Brooks plot for the rho parameter
+#' Gelman-Rubin-Brooks plot for `rho` parameter
 #'
-#' Gelman-Rubin-Brooks plot for the rho parameter
+#' Gelman-Rubin-Brooks plot for `rho` parameter
 #'
 #' @param CodaObj an mcmc object
 #' @name PlotGelman_Rho

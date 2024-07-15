@@ -2,9 +2,9 @@
 # PlotGelman_Beta ----
 ## |------------------------------------------------------------------------| #
 
-#' Gelman-Rubin-Brooks plot for all beta parameters
+#' Gelman-Rubin-Brooks plot for `beta` parameters
 #'
-#' Gelman-Rubin-Brooks plot for all beta parameters
+#' Gelman-Rubin-Brooks plot for `beta` parameters
 #'
 #' @param CodaObj an mcmc object
 #' @param NCores Integer. Number of parallel processes.

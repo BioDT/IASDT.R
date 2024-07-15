@@ -19,12 +19,12 @@ width="500" />
 
 ## Installing the package
 
-The `IASDT.R` package is still at an early development stage and
-currently stores some helper function needed for the input data
-processing and modelling of the IAS across Europe. The package is
-currently private (hosted at: <https://git.ufz.de/>). This means that
-only users with access rights to the git repository can use the package
-using a valid private access token (PAT) authentication.
+The `IASDT.R` package is still at the development stage and currently
+stores some helper function needed for the input data processing and
+modelling of the IAS across Europe. The package is currently private
+(hosted at: <https://git.ufz.de/>). This means that only users with
+access rights to the git repository can use the package using a valid
+private access token (PAT) authentication.
 
 By mid-2024, the package will be publicly available at the BioDT [github
 organization](https://github.com/BioDT).
@@ -50,7 +50,7 @@ require(remotes)
 
 ``` r
 usethis::edit_r_environ()                             # global `.Renviron` file
-# or altetnatively
+# or alternatively
 # usethis::edit_r_environ(scope = "project")          # project-specific settings
 ```
 
@@ -121,6 +121,5 @@ For questions, please contact [me](https://elgabbas.netlify.app/) at:
 `ahmed.el-gabbas[at]ufz[dot]de`
 
 <span style="     color: grey !important;">Last update:
-2024-07-10</span>
-
+2024-07-15</span>
 </center>

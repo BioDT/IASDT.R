@@ -2,9 +2,9 @@
 # PlotGelman_Alpha ----
 ## |------------------------------------------------------------------------| #
 
-#' Gelman-Rubin-Brooks plot for alpha
+#' Gelman-Rubin-Brooks plot `alpha` parameters
 #'
-#' Gelman-Rubin-Brooks plot for alpha
+#' Gelman-Rubin-Brooks plot `alpha` parameters
 #'
 #' @param CodaObj an mcmc object
 #' @param NCores Integer. Number of parallel processes.
@@ -15,7 +15,8 @@
 #' @export
 
 
-PlotGelman_Alpha <- function(CodaObj = NULL, NCores = NULL, PlottingAlpha = 0.25) {
+PlotGelman_Alpha <- function(
+    CodaObj = NULL, NCores = NULL, PlottingAlpha = 0.25) {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/

@@ -2,7 +2,7 @@
 % Please edit documentation in R/Mod_PlotGelman_Alpha.R
 \name{PlotGelman_Alpha}
 \alias{PlotGelman_Alpha}
-\title{Gelman-Rubin-Brooks plot for alpha}
+\title{Gelman-Rubin-Brooks plot \code{alpha} parameters}
 \usage{
 PlotGelman_Alpha(CodaObj = NULL, NCores = NULL, PlottingAlpha = 0.25)
 }
@@ -14,7 +14,7 @@ PlotGelman_Alpha(CodaObj = NULL, NCores = NULL, PlottingAlpha = 0.25)
 \item{PlottingAlpha}{Double. Plotting alpha for line transparency}
 }
 \description{
-Gelman-Rubin-Brooks plot for alpha
+Gelman-Rubin-Brooks plot \code{alpha} parameters
 }
 \author{
 Ahmed El-Gabbas

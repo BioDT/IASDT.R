@@ -2,7 +2,7 @@
 % Please edit documentation in R/Mod_PlotGelman_Omega.R
 \name{PlotGelman_Omega}
 \alias{PlotGelman_Omega}
-\title{Gelman-Rubin-Brooks plot for all omega parameters}
+\title{Gelman-Rubin-Brooks plot for \code{omega} parameters}
 \usage{
 PlotGelman_Omega(
   CodaObj = NULL,
@@ -21,7 +21,7 @@ PlotGelman_Omega(
 \item{PlottingAlpha}{Double. Plotting alpha for line transparency}
 }
 \description{
-Gelman-Rubin-Brooks plot for all omega parameters
+Gelman-Rubin-Brooks plot for \code{omega} parameters
 }
 \author{
 Ahmed El-Gabbas

@@ -159,7 +159,7 @@ PlotConvergence <- function(
 
   IASDT.R::CatTime("  >>  Prepare confidence interval data")
   CI <- Obj_Omega %>%
-    purrr::map(.f = ~{ .x[, SelectedCombs] }) %>%
+    purrr::map(.f = ~ .x[, SelectedCombs] ) %>%
     coda::mcmc.list() %>%
     summary(quantiles = c(0.25, 0.75)) %>%
     magrittr::extract2("quantiles") %>%

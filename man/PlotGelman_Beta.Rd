@@ -2,7 +2,7 @@
 % Please edit documentation in R/Mod_PlotGelman_Beta.R
 \name{PlotGelman_Beta}
 \alias{PlotGelman_Beta}
-\title{Gelman-Rubin-Brooks plot for all beta parameters}
+\title{Gelman-Rubin-Brooks plot for \code{beta} parameters}
 \usage{
 PlotGelman_Beta(
   CodaObj = NULL,
@@ -21,7 +21,7 @@ PlotGelman_Beta(
 \item{PlottingAlpha}{Double. Plotting alpha for line transparency}
 }
 \description{
-Gelman-Rubin-Brooks plot for all beta parameters
+Gelman-Rubin-Brooks plot for \code{beta} parameters
 }
 \author{
 Ahmed El-Gabbas

@@ -1,0 +1,333 @@
+## |------------------------------------------------------------------------| #
+# RespCurv_PrepData ----
+## |------------------------------------------------------------------------| #
+
+#' Prepare response curve data
+#'
+#' Prepare response curve data
+#'
+#' @param Path_Model String. Path to .RData file for selected model
+#' @param ngrid Integer. Number of points along the gradient (for continuous focal variables)
+#' @param NCores Integer. Number of parallel cores.
+#' @param ShowProgress Logical. Show progress bar. Default: `FALSE`
+#'
+#' @export
+#'
+
+RespCurv_PrepData <- function(
+    Path_Model = NULL, ngrid = 50, NCores = 15, ShowProgress = FALSE) {
+
+  TimeStartData <- lubridate::now(tzone = "CET")
+
+  # Avoid "no visible binding for global variable" message
+  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
+  ResCurvDT <- Variable <- RC_DT_Name <- SampleID <- Species <-
+    SR <- MM <- PlotData <- NFV <- Coords <- RC_DT_Path_Orig <-
+    RC_DT_Path_Prob <- RC_DT_Path_SR <- NULL
+
+  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # Check input arguments ------
+  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  IASDT.R::CatTime("Check input arguments")
+  AllArgs <- ls()
+  AllArgs <- purrr::map(
+    AllArgs,
+    function(x) get(x, envir = parent.env(env = environment()))) %>%
+    stats::setNames(AllArgs)
+
+  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = "Path_Model")
+  IASDT.R::CheckArgs(
+    AllArgs = AllArgs, Type = "numeric", Args = c("NCores", "ngrid"))
+  rm(AllArgs)
+
+  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # Loading model object ------
+  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  IASDT.R::CatTime("Loading model object")
+  if (file.exists(Path_Model) && stringr::str_detect(Path_Model, ".+.RData$")) {
+    Model <- IASDT.R::LoadAs(Path_Model)
+  } else {
+    stop("Path of the model object was not found", call. = FALSE)
+  }
+
+  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # PrepRCData_Int -------
+  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  PrepRCData_Int <- function(ID) {
+
+    Variable <- ResCurvDT$Variable[[ID]]
+    Coords <- ResCurvDT$Coords[[ID]]
+    NFV <- ResCurvDT$NFV[[ID]]
+    RC_DT_Name <- ResCurvDT$RC_DT_Name[[ID]]
+    RC_DT_Path_Orig <- ResCurvDT$RC_DT_Path_Orig[[ID]]
+    RC_DT_Path_Prob <- ResCurvDT$RC_DT_Path_Prob[[ID]]
+    RC_DT_Path_SR <- ResCurvDT$RC_DT_Path_SR[[ID]]
+
+    OutputTibble <- tibble::tibble(
+      Variable = Variable, Coords = Coords, NFV = NFV,
+      RC_Path_Orig = RC_DT_Path_Orig, RC_Path_Prob = RC_DT_Path_Prob,
+      RC_Path_SR = RC_DT_Path_SR)
+
+    OutFilesExists <- c(RC_DT_Path_Orig, RC_DT_Path_Prob, RC_DT_Path_SR) %>%
+      file.exists() %>%
+      all()
+
+    if (magrittr::not(OutFilesExists)) {
+
+      if (file.exists(RC_DT_Path_Orig)) {
+        RC_Data_Orig <- IASDT.R::LoadAs(RC_DT_Path_Orig)
+        Gradient <- RC_Data_Orig$Gradient
+        XVals <- Gradient$XDataNew[, Variable]
+        Pred_Expected <- RC_Data_Orig$Pred_Expected
+        Pred_SR <- RC_Data_Orig$Pred_SR
+
+      } else {
+
+        # +++++++++++++++++++++++++++++++++
+        # constructGradient
+        # +++++++++++++++++++++++++++++++++
+
+        Gradient <- Hmsc::constructGradient(
+          hM = Model, focalVariable = Variable, non.focalVariables = NFV,
+          ngrid = ngrid, coordinates = list(sample = Coords))
+        XVals <- Gradient$XDataNew[, Variable]
+
+        # +++++++++++++++++++++++++++++++++
+        # Predicting
+        # +++++++++++++++++++++++++++++++++
+
+        # probability of occurrence
+        Pred_Expected <- stats::predict(
+          object = Model, Gradient = Gradient, expected = TRUE)
+        invisible(gc())
+
+        # Species richness
+        Pred_SR <- stats::predict(
+          object = Model, Gradient = Gradient, expected = FALSE)
+        invisible(gc())
+
+        # +++++++++++++++++++++++++++++++++
+        # Save gradient and original prediction values
+        # +++++++++++++++++++++++++++++++++
+
+        RC_Data_Orig <- list(
+          Variable = Variable, Coords = Coords, NFV = NFV,
+          Gradient = Gradient, Pred_Expected = Pred_Expected, Pred_SR = Pred_SR)
+        IASDT.R::SaveAs(
+          InObj = RC_Data_Orig, OutObj = paste0(RC_DT_Name,  "_Orig"),
+          OutPath = RC_DT_Path_Orig)
+      }
+
+      rm(RC_Data_Orig)
+      invisible(gc())
+
+      # +++++++++++++++++++++++++++++++++
+      # Prepare plotting data: probability of occurrences
+      # +++++++++++++++++++++++++++++++++
+
+      probs <- c(0.025, 0.5, 0.975) # quantiles to be calculated
+
+      RC_Data_Prob <- purrr::map_dfr(
+        .x = seq_len(length(Pred_Expected)),
+        .f = function(Sample) {
+          tibble::as_tibble(Pred_Expected[[Sample]]) %>%
+            dplyr::mutate(XVals = XVals, SampleID = Sample)
+        }) %>%
+        tidyr::pivot_longer(
+          cols = c(-XVals, -SampleID),
+          names_to = "Species", values_to = "Pred") %>%
+        dplyr::arrange(Species, XVals, SampleID) %>%
+        tidyr::nest(PlotData = -Species) %>%
+        dplyr::mutate(
+          PlotData_Quant = purrr::map(
+            .x = PlotData,
+            .f = ~{
+              dplyr::reframe(
+                .x,
+                Pred = stats::quantile(Pred, probs), Quantile = probs,
+                .by	= XVals)
+            }),
+
+          # Values at observed presence and absences
+          Observed_PA = purrr::map(
+            .x = Species,
+            .f = ~tibble::tibble(
+              XVals = Model$XData[, Variable], Pred = Model$Y[, .x])),
+
+          # Positive trend probability
+          PositiveTrendProb = purrr::map_dbl(
+            .x = PlotData,
+            .f = ~{
+              .x %>%
+                dplyr::group_by(SampleID) %>%
+                dplyr::reframe(MM = dplyr::last(Pred) > dplyr::first(Pred)) %>%
+                dplyr::pull(MM) %>%
+                mean()
+            })) %>%
+        dplyr::mutate(
+          Variable = Variable, Coords = Coords, NFV = NFV, .before = 1)
+
+      # Save data
+      IASDT.R::SaveAs(
+        InObj = RC_Data_Prob, OutObj = paste0(RC_DT_Name,  "_Prob"),
+        OutPath = RC_DT_Path_Prob)
+
+      rm(Pred_Expected, RC_Data_Prob)
+      invisible(gc())
+
+      # +++++++++++++++++++++++++++++++++
+      # Prepare plotting data: Species richness
+      # +++++++++++++++++++++++++++++++++
+
+      # predicted species richness
+      RC_Data_SR <- purrr::map(
+        .x = seq_len(length(Pred_SR)),
+        .f = ~tibble::tibble(
+          XVals = XVals, SampleID = .x, SR = rowSums(Pred_SR[[.x]]))) %>%
+        dplyr::bind_rows() %>%
+        dplyr::arrange(XVals, SampleID)
+
+      # Quantiles of species richness
+      RC_Data_SR_Quant <- dplyr::reframe(
+        RC_Data_SR, SR = stats::quantile(SR, probs), Quantile = probs,
+        .by	= XVals)
+
+      # Trend of the species richness
+      SR_PositiveTrendProb <- RC_Data_SR %>%
+        dplyr::group_by(SampleID) %>%
+        dplyr::reframe(MM = dplyr::last(SR) > dplyr::first(SR)) %>%
+        dplyr::pull(MM) %>%
+        mean()
+
+      # Values at observed species richness
+      Observed_SR <- tibble::tibble(
+        XVals = Model$XData[, Variable], Pred = rowSums(Model$Y, na.rm = TRUE))
+
+      # save species richness data
+      RC_Data_SR <- list(
+        Variable = Variable, Coords = Coords, NFV = NFV,
+        RC_Data_SR = RC_Data_SR,
+        RC_Data_SR_Quant = RC_Data_SR_Quant,
+        Observed_SR = Observed_SR,
+        SR_PositiveTrendProb = SR_PositiveTrendProb)
+      IASDT.R::SaveAs(
+        InObj = RC_Data_SR, OutObj = paste0(RC_DT_Name,  "_SR"),
+        OutPath = RC_DT_Path_SR)
+
+      rm(RC_Data_SR, RC_Data_SR_Quant, Observed_SR, SR_PositiveTrendProb)
+      invisible(gc())
+    }
+    return(OutputTibble)
+  }
+
+  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # Prepare response curve data -------
+  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  IASDT.R::CatTime("Prepare response curve data")
+
+  Path_ResCurve <- Path_Model %>%
+    dirname() %>%
+    dirname() %>%
+    file.path("ResponseCurves")
+  Path_RespCurvDT <- file.path(Path_ResCurve, "RespCurv_DT")
+  fs::dir_create(Path_RespCurvDT)
+
+  # +++++++++++++++++++++++++++++++++
+  # Extract names of the variables
+  # +++++++++++++++++++++++++++++++++
+  IASDT.R::CatTime(" >>> Extract names of the variables")
+  ModelVars <- stringr::str_split(
+    as.character(Model$XFormula)[2], "\\+", simplify = TRUE) %>%
+    stringr::str_trim()
+
+  # +++++++++++++++++++++++++++++++++
+  # Predictions variants
+  # +++++++++++++++++++++++++++++++++
+
+  # Coords - Value of the `coordinates` argument of the `constructGradient` function
+  # coordinates = "c" for mean of coordinates (default)
+  # coordinates = "i" for infinite coordinates without effect of spatial dependence
+
+  # NFV - Value of the `non.focalVariables` argument of the `constructGradient` function
+  # non.focalVariables = 1 sets the values of the non-focal variable to the most likely value (defined as expected value for covariates, mode for factors)
+  # non.focalVariables = 2 sets the values of the non-focal variable to most likely value, given the value of focal variable, based on a linear relationship
+  # non.focalVariables = 3 fixes to the value given
+
+  ResCurvDT <- tidyr::expand_grid(
+    Variable = ModelVars, Coords = c("c", "i"), NFV = c(1, 2)) %>%
+    dplyr::mutate(
+      RC_DT_Name = paste0("RC_", Variable, "_NFV_", NFV, "_Coords_", Coords),
+      RC_DT_Path_Orig = file.path(
+        Path_RespCurvDT, paste0(RC_DT_Name,  "_Orig.RData")),
+      RC_DT_Path_Prob = file.path(
+        Path_RespCurvDT, paste0(RC_DT_Name,  "_Prob.RData")),
+      RC_DT_Path_SR = file.path(
+        Path_RespCurvDT, paste0(RC_DT_Name,  "_SR.RData")),
+      FileExists = purrr::pmap_lgl(
+        .l = list(RC_DT_Path_Orig, RC_DT_Path_Prob, RC_DT_Path_SR),
+        .f = function(RC_DT_Path_Orig, RC_DT_Path_Prob, RC_DT_Path_SR) {
+          c(RC_DT_Path_Orig, RC_DT_Path_Prob, RC_DT_Path_SR) %>%
+            file.exists() %>%
+            all()
+        }))
+
+  # +++++++++++++++++++++++++++++++++
+  # Checking file existence
+  # +++++++++++++++++++++++++++++++++
+
+  MissingRows <- sum(magrittr::not(ResCurvDT$FileExists))
+
+  if (MissingRows == 0) {
+    IASDT.R::CatTime(
+      " >>> All response curve data files were already available on disk")
+    ResCurvDT <- purrr::map(
+      .x = seq_len(nrow(ResCurvDT)), .f = PrepRCData_Int) %>%
+      dplyr::bind_rows()
+
+  } else {
+
+    paste0(
+      " >>> Some response curve data files (",
+      MissingRows, ") were missing") %>%
+      IASDT.R::CatTime()
+
+    # +++++++++++++++++++++++++++++++++
+    # Prepare working on parallel
+    # +++++++++++++++++++++++++++++++++
+
+    NCores <- max(min(NCores, MissingRows), 1)
+
+    paste0(
+      "      >>> Prepare working on parallel, using ", NCores, " cores") %>%
+      IASDT.R::CatTime()
+
+    c1 <- snow::makeSOCKcluster(NCores)
+    future::plan(future::cluster, workers = c1, gc = TRUE)
+    on.exit(snow::stopCluster(c1), add = TRUE)
+    invisible(snow::clusterEvalQ(
+      cl = c1, IASDT.R::LoadPackages(c("dplyr", "purrr", "tidyr"))))
+    snow::clusterExport(
+      cl = c1, list = c("ResCurvDT", "Model"), envir = environment())
+
+    # +++++++++++++++++++++++++++++++++
+    # Prepare response curve data on parallel
+    # +++++++++++++++++++++++++++++++++
+
+    IASDT.R::CatTime("      >>> Prepare response curve data on parallel")
+
+    ResCurvDT <- future.apply::future_lapply(
+      X = seq_len(nrow(ResCurvDT)), FUN = PrepRCData_Int,
+      .progress = ShowProgress,
+      future.scheduling = Inf, future.seed = TRUE) %>%
+      dplyr::bind_rows()
+  }
+
+  IASDT.R::CatDiff(
+    InitTime = TimeStartData, Prefix = "Completed in ", CatInfo = FALSE)
+  save(ResCurvDT, file = file.path(Path_RespCurvDT, "ResCurvDT.RData"))
+  return(ResCurvDT)
+}

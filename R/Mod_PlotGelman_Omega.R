@@ -2,9 +2,9 @@
 # PlotGelman_Omega ----
 ## |------------------------------------------------------------------------| #
 
-#' Gelman-Rubin-Brooks plot for all omega parameters
+#' Gelman-Rubin-Brooks plot for `omega` parameters
 #'
-#' Gelman-Rubin-Brooks plot for all omega parameters
+#' Gelman-Rubin-Brooks plot for `omega` parameters
 #'
 #' @param CodaObj an mcmc object
 #' @param NCores Integer. Number of parallel processes.

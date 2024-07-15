@@ -1,23 +1,18 @@
 ---
 output: github_document
-#title: "IASDT.R"
-#published-title: ""
-#date: last-modified
-#date-format: "[Last Updated on] DD, MMMM, YYYY"
 ---
+
+# IASDT.R R-package
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   fig.path = "man/figures/README-",
-  out.width = "100%"
-)
+  out.width = "100%")
 
 .Today <- paste0("Last update: ", lubridate::today())
 ```
-
-# IASDT.R R-package
 
 The `IASDT.R` is an R package that aims at supporting the invasive alien species (IAS) prototype digital twin, as part of the EU-funded BioDT project. These functions help in the the preparation of IAS data and the modelling the distribution of IAS across Europe. This package is currently hosted at <https://git.ufz.de/biodt/IASDT.R>.
 
@@ -29,7 +24,7 @@ More information on the BioDT project can be found at this [link](https://biodt.
 
 ## Installing the package
 
-The `IASDT.R` package is still at an early development stage and currently stores some helper function needed for the input data processing and modelling of the IAS across Europe. The package is currently private (hosted at: <https://git.ufz.de/>). This means that only users with access rights to the git repository can use the package using a valid private access token (PAT) authentication.
+The `IASDT.R` package is still at the development stage and currently stores some helper function needed for the input data processing and modelling of the IAS across Europe. The package is currently private (hosted at: <https://git.ufz.de/>). This means that only users with access rights to the git repository can use the package using a valid private access token (PAT) authentication.
 
 By mid-2024, the package will be publicly available at the BioDT [github organization](https://github.com/BioDT).
 
@@ -46,9 +41,10 @@ In an interactive RStudio session, you add the PAT by using:
 require(usethis)
 require(remotes)
 ```
+
 ```{r, eval=FALSE}
 usethis::edit_r_environ()                             # global `.Renviron` file
-# or altetnatively
+# or alternatively
 # usethis::edit_r_environ(scope = "project")          # project-specific settings
 ```
 
@@ -88,16 +84,18 @@ To update the package, use the following
 ```{r, eval=FALSE}
 remotes::update_packages("IASDT.R")
 ```
+
 or re-install it; you can use `force = TRUE` to force installation, even if the remote state has not changed since the previous install.
+
 ```{r, eval=FALSE}
 remotes::install_gitlab(repo = "BioDT/IASDT.R", host = "git.ufz.de")
 ```
 
-If you are using `renv`, you may use the following to update the package 
+If you are using `renv`, you may use the following to update the package
+
 ```{r, eval=FALSE}
 renv::update("IASDT.R", prompt = FALSE)
 ```
-
 
 ### Contribute to the package
 
@@ -106,9 +104,7 @@ Your contribution to the package is welcome. Please make your changes to a diffe
 <hr>
 
 <center>
-
 For questions, please contact [me](https://elgabbas.netlify.app/) at: `ahmed.el-gabbas[at]ufz[dot]de`
 
 `r kableExtra::text_spec(.Today, color = "grey")`
-
 </center>

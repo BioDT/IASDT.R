@@ -2,12 +2,15 @@
 % Please edit documentation in R/General_GetBashVars.R
 \name{GetBashVars}
 \alias{GetBashVars}
-\title{Loading arguments passed to Rscript bash command}
+\title{This function reads command line arguments passed to an R script executed via the bash command line and assigns them into the global environment of the R session. This allows for dynamic passing of variables from a bash script to an R script.}
 \usage{
 GetBashVars()
 }
+\value{
+NULL This function does not return anything but has the side effect of assigning variables into the global environment.
+}
 \description{
-Loading arguments passed to Rscript bash command
+This function reads command line arguments passed to an R script executed via the bash command line and assigns them into the global environment of the R session. This allows for dynamic passing of variables from a bash script to an R script.
 }
 \author{
 Ahmed El-Gabbas

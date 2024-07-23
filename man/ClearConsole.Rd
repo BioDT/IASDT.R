@@ -6,8 +6,14 @@
 \usage{
 ClearConsole()
 }
+\value{
+An invisible \code{NULL} to indicate the function has completed without returning any meaningful value.
+}
 \description{
-Clear the console. This function is equivalent to \code{cat("\\014")}
+function clears the console in RStudio by sending a form feed character. If not run in RStudio, it prints a message indicating the function is not supported.
+}
+\note{
+This function checks if it is being run in RStudio by examining the \code{RSTUDIO} environment variable. If the function is not run in RStudio, it will not clear the console and instead print a message.
 }
 \examples{
 \dontrun{

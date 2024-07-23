@@ -5,7 +5,7 @@
 \title{Split a raster object into a list of smaller rasters}
 \usage{
 SplitRaster(
-  raster,
+  raster = NULL,
   Ncol = 4,
   Nrow = 4,
   save = FALSE,
@@ -15,37 +15,33 @@ SplitRaster(
 )
 }
 \arguments{
-\item{raster}{raster object to split}
+\item{raster}{A raster object to be split. If NULL (the default), the function will not execute.}
 
-\item{Ncol}{number of columns}
+\item{Ncol, Nrow}{Integer. The desired number of columns and rows to split the raster into. Default is 4 columns and 4 rows.}
 
-\item{Nrow}{number of rows}
+\item{save}{Logical. Indicates whether to save the split rasters to disk. Default is \code{FALSE}.}
 
-\item{save}{save output to disk?}
+\item{SplitPath}{Character string. Specifies the directory path where the split rasters should be saved if \code{save} is \code{TRUE}. If the directory does not exist, it will be created.}
 
-\item{SplitPath}{file path}
+\item{plot}{Logical. Indicates whether to plot the split rasters. Default is \code{FALSE}.}
 
-\item{plot}{plot the results}
-
-\item{Extent}{return only the extent of split raster}
+\item{Extent}{Logical. If \code{TRUE}, the function returns only the extents of the split rasters instead of the raster data. Default is \code{FALSE}.}
+}
+\value{
+A list of raster objects or extents of the split rasters, depending on the value of the \code{Extent} parameter.
 }
 \description{
-Split a raster object into a list of smaller rasters
-}
-\details{
-#' References:
-https://stackoverflow.com/questions/29784829/
-https://stackoverflow.com/questions/22109774/r-raster-mosaic-from-list-of-rasters
+Split a raster object into a list of smaller rasters based on specified numbers of rows and columns. It can optionally save the resulting rasters to disk, plot them, or return just their extents.
 }
 \examples{
-LoadPackages(raster)
+library(raster)
 logo <- raster(system.file("external/rlogo.grd", package = "raster"))
 plot(logo, axes = FALSE, legend = FALSE, bty = "n",
      box = FALSE, main = "Original raster layer")
 # --------------------------------------------------
 
 # Split into 3 rows and 3 columns
-logoSplit <- SplitRaster(logo, Ncol = 3, Nrow = 3, plot = TRUE)
+logoSplit <- SplitRaster(raster = logo, Ncol = 3, Nrow = 3, plot = TRUE)
 
 print(logoSplit) # a list object of 9 items
 
@@ -66,6 +62,9 @@ print({logoSplit2 - logo}) # No value difference!
 logoSplit <- SplitRaster(logo, Ncol = 3, Nrow = 3, Extent = TRUE)
 print(logoSplit)
 
+}
+\references{
+Click \href{https://stackoverflow.com/questions/29784829/}{here} and \href{https://stackoverflow.com/questions/22109774/r-raster-mosaic-from-list-of-rasters}{here}
 }
 \author{
 Ahmed El-Gabbas

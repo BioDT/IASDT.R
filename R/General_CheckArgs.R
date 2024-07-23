@@ -2,31 +2,36 @@
 # CheckArgs ----
 ## |------------------------------------------------------------------------| #
 
-#' Check function arguments
+#' Check function arguments for specific types
 #'
-#' Check function arguments
+#' This function checks if the specified arguments of a function match the expected type. It is useful for validating function inputs.
 #'
 #' @name CheckArgs
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @param AllArgs String. Vector for the input parameters of the function. Usually as a result of `formals()` function
-#' @param Args Arguments to check
-#' @param Type Class of the arguments to check. This has to be one of "character", "logical", or "numeric".
+#' @param Args character vector. Names of the arguments to be checked.
+#' @param Type character. Specifies the expected type of the arguments. Must be one of "character", "logical", or "numeric".
+#' @return NULL. The function does not return a value but will stop execution and throw an error if any of the specified arguments do not match the expected type.
 #' @export
 
 CheckArgs <- function(AllArgs, Args, Type) {
 
-  match.arg(arg = Type, choices = c("character", "logical", "numeric"))
+  if (is.null(AllArgs) || is.null(Args) || is.null(Type)) {
+    stop("AllArgs, Args, or Type cannot be NULL")
+  }
+
+  Type <- match.arg(arg = Type, choices = c("character", "logical", "numeric"))
 
   if (Type == "character") {
     MissingArgs <- AllArgs[Args] %>%
       purrr::map(~inherits(.x, "character") && nchar(.x) > 0) %>%
-      purrr::discard(.p = isTRUE) %>%
+      purrr::keep(.p = Negate(isTRUE)) %>%
       names() %>%
       sort()
 
     if (length(MissingArgs) > 0) {
-      MSG <- paste0(
+      paste0(
         "The following character argument(s) must be provided\n  >>  ",
         paste0(MissingArgs, collapse = " | ")) %>%
         stop(call. = FALSE)
@@ -36,12 +41,12 @@ CheckArgs <- function(AllArgs, Args, Type) {
   if (Type == "logical") {
     MissingArgs <- AllArgs[Args] %>%
       purrr::map(~inherits(.x, "logical")) %>%
-      purrr::discard(.p = isTRUE) %>%
+      purrr::keep(.p = Negate(isTRUE)) %>%
       names() %>%
       sort()
 
     if (length(MissingArgs) > 0) {
-      MSG <- paste0(
+      paste0(
         "The following argument(s) must be logical\n  >>  ",
         paste0(MissingArgs, collapse = " | ")) %>%
         stop(call. = FALSE)
@@ -51,12 +56,12 @@ CheckArgs <- function(AllArgs, Args, Type) {
   if (Type == "numeric") {
     MissingArgs <- AllArgs[Args] %>%
       purrr::map(~inherits(.x, "numeric")) %>%
-      purrr::discard(.p = isTRUE) %>%
+      purrr::keep(.p = Negate(isTRUE)) %>%
       names() %>%
       sort()
 
     if (length(MissingArgs) > 0) {
-      MSG <- paste0(
+      paste0(
         "The following argument(s) must be numeric (integer)\n  >>  ",
         paste0(MissingArgs, collapse = " | ")) %>%
         stop(call. = FALSE)

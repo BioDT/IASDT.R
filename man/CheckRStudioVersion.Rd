@@ -2,12 +2,18 @@
 % Please edit documentation in R/General_CheckRStudioVersion.R
 \name{CheckRStudioVersion}
 \alias{CheckRStudioVersion}
-\title{Check if \code{RStudio} should be updated}
+\title{Check if the installed RStudio version is up to date}
 \usage{
 CheckRStudioVersion()
 }
+\value{
+An invisible NULL. Side effects include printing messages to the console regarding the status of RStudio version.
+}
 \description{
-Check if \code{RStudio} should be updated
+This function checks the current installed version of RStudio against the latest version available online. If the versions do not match, it suggests updating RStudio.
+}
+\note{
+This function requires internet access to check the latest version of RStudio online. It also depends on \code{rstudioapi}, \code{xml2}, \code{rvest}, \code{stringr}, and \code{magrittr} packages for its operations. If called outside of RStudio, it will only fetch and display the latest version without comparing.
 }
 \examples{
 \dontrun{

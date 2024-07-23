@@ -4,16 +4,15 @@
 
 #' Print text with time stamp
 #'
-#' Print text with time stamp
-#'
-#' @param Text character; the text to print: default empty string (print time only)
-#' @param NLines number of empty lines after the printing; default: 1
-#' @param Date Also print date? Default value `FALSE`
-#' @param TZ time zone (default: CET)
-#' @param ... other arguments passed to `cat`
+#' This function prints a given text followed by the current time (and optionally the date) to the console. It allows for customization of the time zone, the inclusion of the date, and the number of newline characters to print after the message.
+#' @param Text character; the text to print before the timestamp. If empty (default), only the timestamp is printed.
+#' @param NLines integer; the number of newline characters to print after the message. Default is 1.
+#' @param Date logical; whether to include the date in the timestamp. Default is `FALSE`, meaning only the time is printed.
+#' @param TZ character; the time zone to use for the timestamp. Default is "CET".
+#' @param ... additional arguments passed to `cat`.
 #' @name CatTime
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return NULL; the function is called for its side effect of printing to the console.
 #' @export
 #' @examples
 #' CatTime()
@@ -23,13 +22,14 @@
 #' CatTime("Time now", Date = TRUE)
 
 CatTime <- function(Text = "", NLines = 1, Date = FALSE, TZ = "CET", ...) {
+
   DateFormat <- dplyr::if_else(Date, "%d/%m/%Y %X", "%X")
   Now <- lubridate::now(tzone = TZ)
+  
   if (Text == "") {
     cat(format(Now, DateFormat), ...)
     cat(rep("\n", NLines))
   } else {
-    Text <- rlang::quo_name(rlang::enquo(Text))
     cat(paste0(Text, " - ", format(Now, DateFormat)), ...)
     cat(rep("\n", NLines))
   }

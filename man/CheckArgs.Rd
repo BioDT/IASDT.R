@@ -2,19 +2,22 @@
 % Please edit documentation in R/General_CheckArgs.R
 \name{CheckArgs}
 \alias{CheckArgs}
-\title{Check function arguments}
+\title{Check function arguments for specific types}
 \usage{
 CheckArgs(AllArgs, Args, Type)
 }
 \arguments{
 \item{AllArgs}{String. Vector for the input parameters of the function. Usually as a result of \code{formals()} function}
 
-\item{Args}{Arguments to check}
+\item{Args}{character vector. Names of the arguments to be checked.}
 
-\item{Type}{Class of the arguments to check. This has to be one of "character", "logical", or "numeric".}
+\item{Type}{character. Specifies the expected type of the arguments. Must be one of "character", "logical", or "numeric".}
+}
+\value{
+NULL. The function does not return a value but will stop execution and throw an error if any of the specified arguments do not match the expected type.
 }
 \description{
-Check function arguments
+This function checks if the specified arguments of a function match the expected type. It is useful for validating function inputs.
 }
 \author{
 Ahmed El-Gabbas

@@ -2,20 +2,27 @@
 % Please edit documentation in R/General_FileExt.R
 \name{FileExt}
 \alias{FileExt}
-\title{Get file extension}
+\title{Get the file extension from a file path}
 \usage{
 FileExt(Path)
 }
 \arguments{
-\item{Path}{File path}
+\item{Path}{A character string representing the file path from which the file extension is to be extracted. It must not be NULL and has to be a character string.}
+}
+\value{
+A character string representing the file extension of the given file path. If the path does not have an extension, an empty string is returned.
 }
 \description{
-Get file extension
+This function extracts the file extension from a given file path. It first checks if the input is not NULL and is a character string. If these conditions are met, it then uses the \code{tools::file_ext} function to extract and return the file extension. The function does not check the existence of the file or explicitly get the file type from its content. It merely guess file extension from the file name.
 }
 \examples{
-FileExt("File.doc")
-FileExt("D:/File.doc")
-
+FileExt(Path = "File.doc")
+FileExt(Path = "D:/File.doc")
+FileExt(Path = "File.1.doc")
+FileExt(Path = "D:/Files.All")
+FileExt(Path = "D:/Files.All/")
+FileExt("example.txt") # Returns "txt"
+FileExt("archive.tar.gz") # Returns "gz"
 }
 \author{
 Ahmed El-Gabbas

@@ -2,15 +2,21 @@
 % Please edit documentation in R/Spat_GridDiagOff.R
 \name{GridDiagOff}
 \alias{GridDiagOff}
-\title{Create a \code{multilinestring} (diagonal and off-diagonal lines) sf object from each grid cell}
+\title{Create a \code{multilinestring} sf object for the diagonal and off-diagonal lines for each grid cell}
 \usage{
-GridDiagOff(DT)
+GridDiagOff(DT = NULL)
 }
 \arguments{
-\item{DT}{input sf tibble}
+\item{DT}{An sf object (tibble) representing a spatial grid. The function expects this object to have a geometry column with polygons representing grid cells. If \code{NULL}, the function will stop with an error message.}
+}
+\value{
+An \code{sf} object where each row corresponds to a grid cell from the input, represented by a \code{multilinestring} geometry of its diagonal and off-diagonal lines. The returned object retains the coordinate reference system (CRS) of the input.
 }
 \description{
-Create a \code{multilinestring} (diagonal and off-diagonal lines) sf object from each grid cell
+This function takes an \code{sf} object representing a grid and creates a new sf object where each grid cell is represented by a \code{multilinestring} geometry consisting of its diagonal and off-diagonal lines.
+}
+\note{
+The function requires the \code{sf}, \code{dplyr}, \code{purrr}, \code{tibble}, and \code{tidyr} packages to be installed and loaded.
 }
 \examples{
 IASDT.R::LoadPackages(dplyr, sf, raster, ggplot2)
@@ -29,7 +35,7 @@ ggplot2::ggplot() +
   ggplot2::scale_y_continuous(expand = c(0, 0, 0, 0), limits = c(0, 10)) +
   ggplot2::theme_minimal()
 
-Grid_X <- GridDiagOff(Grid)
+Grid_X <- GridDiagOff(DT = Grid)
 
 ggplot2::ggplot() +
   ggplot2::geom_sf(Grid, mapping = ggplot2::aes(), color = "black",
@@ -39,6 +45,9 @@ ggplot2::ggplot() +
   ggplot2::scale_x_continuous(expand = c(0, 0, 0, 0), limits = c(0, 10)) +
   ggplot2::scale_y_continuous(expand = c(0, 0, 0, 0), limits = c(0, 10)) +
   ggplot2::theme_minimal()
+}
+\seealso{
+GridCross
 }
 \author{
 Ahmed El-Gabbas

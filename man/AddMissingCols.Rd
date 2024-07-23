@@ -2,19 +2,22 @@
 % Please edit documentation in R/General_AddMissingCols.R
 \name{AddMissingCols}
 \alias{AddMissingCols}
-\title{Add missing columns to data frame}
+\title{Add missing columns to a data frame with specified fill values}
 \usage{
 AddMissingCols(DT, FillVal = NA_character_, ...)
 }
 \arguments{
-\item{DT}{data frame}
+\item{DT}{A data frame to which missing columns will be added. This parameter cannot be NULL.}
 
-\item{FillVal}{value to be used: default: NA_character}
+\item{FillVal}{The value to fill the missing columns with. This parameter defaults to \code{NA_character_}, but can be changed to any scalar value as required.}
 
-\item{...}{list of column names to add}
+\item{...}{Column names as character strings.}
+}
+\value{
+a data frame with the missing columns added, if any were missing.
 }
 \description{
-Add missing columns to data frame
+This function checks a data frame for missing columns specified by the user. If any are missing, it adds these columns to the data frame, filling them with a specified value.
 }
 \examples{
 mtcars \%>\%

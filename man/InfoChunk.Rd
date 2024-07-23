@@ -7,12 +7,15 @@
 InfoChunk(Message = "", ...)
 }
 \arguments{
-\item{Message}{A character string passed to \code{IASDT.R::CatTime}}
+\item{Message}{A character string representing the main message to be timestamped.  parameter is mandatory and cannot be NULL or empty.}
 
-\item{...}{additional arguments for the \code{IASDT.R::CatSep}}
+\item{...}{Additional arguments passed to \code{IASDT.R::CatSep} for customizing the separators.}
+}
+\value{
+The function does not return any value but prints the message and separators to the console.
 }
 \description{
-Print Information chunk with time stamp
+This function prints a formatted message with a timestamp, surrounded by separators for better readability in console outputs or logs.
 }
 \examples{
 InfoChunk(Message = "Started")

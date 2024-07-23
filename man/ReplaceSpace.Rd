@@ -2,15 +2,18 @@
 % Please edit documentation in R/General_ReplaceSpace.R
 \name{ReplaceSpace}
 \alias{ReplaceSpace}
-\title{Replace space with underscore}
+\title{Replace space with underscore in a string}
 \usage{
 ReplaceSpace(x)
 }
 \arguments{
-\item{x}{string}
+\item{x}{A character string. The string in which spaces will be replaced with underscores.}
+}
+\value{
+A character string with all spaces replaced by underscores.
 }
 \description{
-Replace space with underscore
+This function takes a string as input and replaces all spaces with underscores. It is useful for formatting strings to be used in contexts where spaces are not allowed or desired.
 }
 \examples{
 ReplaceSpace("Genus species")

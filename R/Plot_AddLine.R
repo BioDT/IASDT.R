@@ -2,17 +2,18 @@
 # AddLine ----
 ## |------------------------------------------------------------------------| #
 #
-#' Add a line to the current plot
+#' Add a horizontal or vertical line to the current plot
 #'
 #' Add a line to the current plot
 #'
 #' @name AddLine
 #' @references [Click here](https://stackoverflow.com/questions/27800307/)
 #' @export
-#' @param at relative location of where the line should be plotted
-#' @param Outer plot the line out of plotting area. Default: `FALSE`
-#' @param H Horizontal line? if H == FALSE, vertical line will be added. Default: `TRUE`
-#' @param ... Other arguments
+#' @param at Numeric; the relative location of where the line should be plotted. Cannot be NULL.
+#' @param Outer Logical; if `TRUE`, the line is plotted outside of the plotting area. Default is `FALSE`.
+#' @param H Logical; if `TRUE` (default), a horizontal line is added. If `FALSE`, a vertical line is added.
+#' @param ... Additional graphical parameters passed to `graphics::abline`.
+#' @return Invisible; the function is called for its side effect of drawing on the current plot.
 #' @examples
 #' # Horizontal line
 #' par(oma = c(1, 1, 1, 1), mar = c(3, 3, 1, 1))
@@ -30,10 +31,15 @@
 #' AddLine(H = FALSE, at = 0.5, Outer = TRUE, lwd = 2, col = "red")
 
 AddLine <- function(at = NULL, Outer = FALSE, H = TRUE, ...) {
+
+  if (is.null(at)) {
+    stop("at cannot be NULL")
+  }
+
   if (Outer) graphics::par(xpd = TRUE)
 
   if (H) {
-    graphics::abline(h = graphics::grconvertX(at, "npc"), ...)
+    graphics::abline(h = graphics::grconvertY(at, "npc"), ...)
   } else {
     graphics::abline(v = graphics::grconvertX(at, "npc"), ...)
   }

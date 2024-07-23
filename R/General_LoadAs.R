@@ -11,6 +11,7 @@
 #' @return NULL
 #' @export
 #' @examples
+#'
 #' File <- system.file("testdata", "culcita_dat.RData", package = "lme4")
 #'
 #' # ---------------------------------------------------------
@@ -21,8 +22,6 @@
 #' ls()
 #'
 #' tibble::tibble(culcita_dat)
-#'
-#' rm(culcita_dat)
 #'
 #' # ---------------------------------------------------------
 #' # Loading as custom object name
@@ -51,8 +50,15 @@
 #' names(mtcars_all)
 #' names(mtcars_all2)
 
-LoadAs <- function(File = NA) {
+LoadAs <- function(File) {
+
+  if (is.null(File)) {
+    stop("File cannot be NULL")
+  }
+
+  # Load the .RData file and capture the names of loaded objects
   InFile0 <- load(File)
+
   if (length(InFile0) == 1) {
     OutFile <- get(paste0(InFile0))
   } else {

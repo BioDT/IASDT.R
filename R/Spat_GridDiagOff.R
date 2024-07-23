@@ -2,14 +2,16 @@
 # GridDiagOff ------
 ## |------------------------------------------------------------------------| #
 
-#' Create a `multilinestring` (diagonal and off-diagonal lines) sf object from each grid cell
+#' Create a `multilinestring` sf object for the diagonal and off-diagonal lines for each grid cell
 #'
-#' Create a `multilinestring` (diagonal and off-diagonal lines) sf object from each grid cell
-#'
+#' This function takes an `sf` object representing a grid and creates a new sf object where each grid cell is represented by a `multilinestring` geometry consisting of its diagonal and off-diagonal lines.
 #' @name GridDiagOff
-#' @param DT input sf tibble
+#' @param DT An sf object (tibble) representing a spatial grid. The function expects this object to have a geometry column with polygons representing grid cells. If `NULL`, the function will stop with an error message.
+#' @return An `sf` object where each row corresponds to a grid cell from the input, represented by a `multilinestring` geometry of its diagonal and off-diagonal lines. The returned object retains the coordinate reference system (CRS) of the input.
 #' @author Ahmed El-Gabbas
 #' @export
+#' @note The function requires the `sf`, `dplyr`, `purrr`, `tibble`, and `tidyr` packages to be installed and loaded.
+#' @seealso GridCross
 #' @examples
 #' IASDT.R::LoadPackages(dplyr, sf, raster, ggplot2)
 #'
@@ -27,7 +29,7 @@
 #'   ggplot2::scale_y_continuous(expand = c(0, 0, 0, 0), limits = c(0, 10)) +
 #'   ggplot2::theme_minimal()
 #'
-#' Grid_X <- GridDiagOff(Grid)
+#' Grid_X <- GridDiagOff(DT = Grid)
 #'
 #' ggplot2::ggplot() +
 #'   ggplot2::geom_sf(Grid, mapping = ggplot2::aes(), color = "black",
@@ -38,7 +40,11 @@
 #'   ggplot2::scale_y_continuous(expand = c(0, 0, 0, 0), limits = c(0, 10)) +
 #'   ggplot2::theme_minimal()
 
-GridDiagOff <- function(DT) {
+GridDiagOff <- function(DT = NULL) {
+
+  if (is.null(DT)) {
+    stop("Input DT  cannot be NULL")
+  }
 
   InputCRS <- sf::st_crs(DT)
 

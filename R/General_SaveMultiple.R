@@ -4,18 +4,19 @@
 
 #' Save multiple objects to their respective `.RData` files
 #'
-#' Save multiple objects to their respective `.RData` files
+#' This function saves specified variables from the global environment to separate `.RData` files. It allows for optional file prefixing and overwriting of existing files.
 #'
-#' @param Vars variables to save
-#' @param OutFolder output path
-#' @param Overwrite overwrite existing files? If file already exist, no files are saved unless `Overwrite` argument is set as `TRUE`
-#' @param Prefix String prefix of the output file
-#' @param Verbose Show message after saving files
+#' @param Vars A character vector specifying the names of the variables to be saved. If `NULL` or any specified variable does not exist in the global environment, the function will stop with an error.
+#' @param OutFolder  A string specifying the path to the output folder where the `.RData` files will be saved. Defaults to the current working directory.
+#' @param Overwrite A logical value indicating whether existing `.RData` files should be overwritten. If `FALSE` and files exist, the function will stop with an error message. Defaults to `FALSE`.
+#' @param Prefix A string to be prefixed to each output file name. Useful for organizing saved files or avoiding name conflicts. Defaults to an empty string.
+#' @param Verbose A logical value indicating whether to print a message upon successful saving of files. Defaults to `FALSE`.
 #' @name SaveMultiple
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return Invisible `NULL`. The function is used for its side effect of saving files and does not return a value.
 #' @export
 #' @examples
+#' \donttest{
 #' TMP_Folder <- file.path(tempdir(), stringi::stri_rand_strings(1, 5))
 #' fs::dir_create(TMP_Folder)
 #'
@@ -24,19 +25,19 @@
 #' # ----------------------------------------------
 #' x1 = 10; x2 = 20
 #'
-#' SaveMultiple(Vars = cc(x1, x2), OutFolder = TMP_Folder)
+#' SaveMultiple(Vars = c("x1", "x2"), OutFolder = TMP_Folder)
 #'
 #' list.files(path = TMP_Folder, pattern = "^.+.RData")
 #'
-#' (x1Contents <- LoadAs(file.path(TMP_Folder, "x1.RData")))
+#' (x1Contents <- IASDT.R::LoadAs(file.path(TMP_Folder, "x1.RData")))
 #'
-#' (x2Contents <- LoadAs(file.path(TMP_Folder, "x2.RData")))
+#' (x2Contents <- IASDT.R::LoadAs(file.path(TMP_Folder, "x2.RData")))
 #'
 #' # ----------------------------------------------
 #' # Use Prefix
 #' # ----------------------------------------------
 #'
-#' SaveMultiple(Vars = cc(x1, x2), OutFolder = TMP_Folder, Prefix = "A_")
+#' SaveMultiple(Vars = c("x1", "x2"), OutFolder = TMP_Folder, Prefix = "A_")
 #'
 #' list.files(path = TMP_Folder, pattern = "^.+.RData")
 #'
@@ -50,13 +51,15 @@
 #' # ----------------------------------------------
 #' x1 = 100; x2 = 200; x3 = 300
 #'
-#' SaveMultiple(Vars = cc(x1, x2, x3), OutFolder = TMP_Folder, Overwrite = TRUE)
+#' SaveMultiple(Vars = c("x1", "x2", "x3"), OutFolder = TMP_Folder, Overwrite = TRUE)
 #'
-#' (x1Contents <- LoadAs(file.path(TMP_Folder, "x1.RData")))
+#' (x1Contents <- IASDT.R::LoadAs(file.path(TMP_Folder, "x1.RData")))
 #'
-#' (x2Contents <- LoadAs(file.path(TMP_Folder, "x2.RData")))
+#' (x2Contents <- IASDT.R::LoadAs(file.path(TMP_Folder, "x2.RData")))
 #'
-#' (x3Contents <- LoadAs(file.path(TMP_Folder, "x3.RData")))
+#' (x3Contents <- IASDT.R::LoadAs(file.path(TMP_Folder, "x3.RData")))
+#' }
+
 
 SaveMultiple <- function(
     Vars = NULL, OutFolder = getwd(),
@@ -67,65 +70,54 @@ SaveMultiple <- function(
     any(!Vars %in% ls(envir = rlang::caller_env())))
 
   if (SkipFun) {
-    cat(paste0(crayon::red("Vars should be a character vector for names of objects available in the global environment"), "\n"))
-    opt <- options(show.error.messages = FALSE)
-    on.exit(options(opt))
-    stop()
+    stop("Vars should be a character vector for names of objects available in the global environment")
   }
 
   GlobalVars <- ls(rlang::caller_env())
-  VarsInGlobal <- Vars %>%
-    purrr::map_lgl(~.x %in% GlobalVars) %>%
-    all() %>%
-    magrittr::not()
 
-  if (VarsInGlobal) {
+  if (magrittr::not(all(Vars %in% GlobalVars))) {
     "Please check that all variables to be saved exist at your global environment" %>%
       crayon::red() %>%
       cat(sep = "\n")
 
-    MissedVars <- setdiff(Vars, GlobalVars)
-    cat(crayon::red(paste0("Variable ", MissedVars, " does not exist.\n")))
-    opt <- options(show.error.messages = FALSE)
-    on.exit(options(opt))
-    stop()
+    stop(paste0(
+      "Variable ", paste0(setdiff(Vars, GlobalVars), collapse = " & "),
+      " does not exist.\n"))
+
   } else {
-    if (is.null(OutFolder)) {
-      OutFolder <- getwd()
-    }
     fs::dir_create(OutFolder)
   }
 
-  FilesExist <- file.path(OutFolder, paste0(Prefix, Vars, ".RData")) %>%
-    file.exists() %>%
+  FilesExist <- sapply(file.path(OutFolder, paste0(Prefix, Vars, ".RData")), file.exists) %>%
     any()
 
-
   if (FilesExist && !Overwrite) {
-    "Some files already exist.\nNo files are saved. Please use overwrite = TRUE" %>%
+    "Some files already exist. No files are saved. Please use overwrite = TRUE" %>%
       crayon::red() %>%
       cat(sep = "\n")
-    opt <- options(show.error.messages = FALSE)
-    on.exit(options(opt))
-    stop()
-  }
-
-  purrr::walk(
-    .x = Vars,
-    .f = ~{
-      Val <- get(.x, envir = parent.frame(n = 4))
-      assign(rlang::eval_tidy(.x), Val)
-      save(
-        list = paste0(.x),
-        file = file.path(OutFolder, paste0(Prefix, .x, ".RData")))
-    })
-
-
-  if (all(file.exists(file.path(OutFolder, paste0(Prefix, Vars, ".RData"))))) {
-    if (Verbose) {
-      cat(paste0(crayon::blue("All files are saved to disk", crayon::red(OutFolder), "successfully."), "\n"))
-    }
   } else {
-    cat(paste0(crayon::red("Some files were not saved to disk!\nplease check again"), "\n"))
+
+    purrr::walk(
+      .x = Vars,
+      .f = ~{
+        Val <- get(.x, envir = parent.frame(n = 4))
+        assign(rlang::eval_tidy(.x), Val)
+        save(
+          list = paste0(.x),
+          file = file.path(OutFolder, paste0(Prefix, .x, ".RData")))
+      })
+
+
+    if (all(
+      file.exists(file.path(OutFolder, paste0(Prefix, Vars, ".RData"))))) {
+      if (Verbose) {
+        cat(paste0(
+          crayon::blue("All files are saved to disk", crayon::red(OutFolder),
+                       "successfully."), "\n"))
+      }
+    } else {
+      cat(paste0(crayon::red("Some files were not saved to disk!\nplease check again"), "\n"))
+    }
   }
+  return(invisible(NULL))
 }

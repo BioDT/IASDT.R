@@ -15,6 +15,8 @@
 #' @details
 #' Extract a specific column from the output of GBIF
 #' @examples
+#'
+#' \dontrun{
 #' rgbif::name_backbone(name = "Helianthus annuus", kingdom = "plants") %>%
 #'    Extract_BB(status)
 #'
@@ -26,6 +28,7 @@
 #'       BB = purrr::map(Taxa, rgbif::name_backbone),
 #'       status = purrr::map_chr(BB, Extract_BB, status),
 #'       SpKey = purrr::map_int(BB, Extract_BB, speciesKey))
+#' }
 
 Extract_BB <- function(x = ., var) {
   var <- rlang::ensyms(var) %>%

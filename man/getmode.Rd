@@ -2,19 +2,26 @@
 % Please edit documentation in R/General_GetMode.R
 \name{GetMode}
 \alias{GetMode}
-\title{Calculate the mode of numbers}
+\title{Calculate the Mode of a Numeric Vector
+This function calculates the mode of a given numeric vector. The mode is the value that appears most frequently in the vector.}
 \usage{
 GetMode(v)
 }
 \arguments{
-\item{v}{vector}
+\item{v}{A numeric vector. It must not be NULL or empty.}
+}
+\value{
+The mode of the vector as a single value. If the vector has a uniform distribution (all values appear with the same frequency), the function returns the first value encountered.
 }
 \description{
-Calculate the mode of numbers
+Calculate the Mode of a Numeric Vector
+This function calculates the mode of a given numeric vector. The mode is the value that appears most frequently in the vector.
 }
 \examples{
 GetMode(c(1:10,1,1,3,3,3,3))
+GetMode(c(1, 2, 2, 3, 4)) # Returns 2
+GetMode(c(1, 1, 2, 3, 3)) # Returns 1
 }
 \references{
-https://www.tutorialspoint.com/r/r_mean_median_mode.htm
+\href{https://www.tutorialspoint.com/r/r_mean_median_mode.htm}{click here}
 }

@@ -2,39 +2,43 @@
 % Please edit documentation in R/General_Range2NewVal.R
 \name{Range2NewVal}
 \alias{Range2NewVal}
-\title{Change values of \code{vector}/\code{data.frame}/\code{raster} within/outside a certain range to another value}
+\title{Changes values within a specified range or larger than or equals to / less than or equals to specific value to a new value in a vector, data.frame, or raster.}
 \usage{
 Range2NewVal(
-  x = NULL,
+  x,
   Between = NULL,
   MoreThan = NULL,
   LessThan = NULL,
-  NewVal = NA,
+  NewVal,
   InvertSelection = FALSE
 )
 }
 \arguments{
-\item{x}{vector / data.frame / raster object.}
+\item{x}{A vector, data.frame, or RasterLayer object whose values are to be modified.}
 
-\item{Between}{Range of values to be changed or kept.}
+\item{Between}{A numeric vector of length 2 specifying the range of values to be changed or kept. If specified, \code{MoreThan} and \code{LessThan} are ignored.}
 
-\item{MoreThan}{The value above which the original values will be changed. Only applied if \code{Between} is not used.}
+\item{MoreThan, LessThan}{A numeric value specifying the threshold above/below which values in \code{x} will be changed to \code{NewVal}. Only applied if \code{Between} is not specified.}
 
-\item{LessThan}{The value below which the original values will be changed. Only applied if \code{Between} and \code{MoreThan} are not used.}
+\item{NewVal}{The new value to assign to the selected elements in \code{x}.}
 
-\item{NewVal}{The new value to be assigned. Default: \code{NA}.}
-
-\item{InvertSelection}{Should the selection be inverted? Only valid if \code{Between} used. If \code{InvertSelection = TRUE}, then the values not in the range of \code{Between} argument will be changed. Default: \code{FALSE}.}
+\item{InvertSelection}{A logical value indicating whether to invert the selection specified by \code{Between}. If \code{TRUE}, values outside the specified range are changed to \code{NewVal}. Default is \code{FALSE}.}
+}
+\value{
+The modified object \code{x} with values changed according to the specified conditions.
 }
 \description{
-Change values of \code{vector}/\code{data.frame}/\code{raster} within/outside a certain range to another value
+This function modifies values in the input object \code{x} based on the specified conditions. It can operate on vectors, data.frames, or RasterLayer objects. The function allows for changing values within a specified range (\code{Between}), greater than or equals to a specified value (\code{MoreThan}), or less than or equals to a specified value (\code{LessThan}) to a new value (\code{NewVal}). An option to invert the selection is also available for ranges.
 }
 \examples{
 # Vector
 
 Range2NewVal(x =  1:10, Between = c(5, 8), NewVal = NA)
 
+
 Range2NewVal(x =  1:10, Between = c(5, 8), NewVal = NA, InvertSelection = TRUE)
+
+Range2NewVal(x =  1:10, Between = c(5, 8), NewVal = NA, MoreThan = 4)
 
 # ---------------------------------------------
 
@@ -56,7 +60,7 @@ iris \%>\%
 
 # raster
 
-LoadPackages(raster)
+library(raster)
 
 RRR <- system.file("external/test.grd", package = "raster") \%>\%
     raster::raster()

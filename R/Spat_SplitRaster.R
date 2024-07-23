@@ -4,32 +4,28 @@
 
 #' Split a raster object into a list of smaller rasters
 #'
-#' Split a raster object into a list of smaller rasters
+#' Split a raster object into a list of smaller rasters based on specified numbers of rows and columns. It can optionally save the resulting rasters to disk, plot them, or return just their extents.
 #'
-#' @param raster raster object to split
-#' @param Ncol number of columns
-#' @param Nrow number of rows
-#' @param save save output to disk?
-#' @param SplitPath file path
-#' @param plot plot the results
-#' @param Extent return only the extent of split raster
+#' @param raster A raster object to be split. If NULL (the default), the function will not execute.
+#' @param Ncol,Nrow Integer. The desired number of columns and rows to split the raster into. Default is 4 columns and 4 rows.
+#' @param save Logical. Indicates whether to save the split rasters to disk. Default is `FALSE`.
+#' @param SplitPath Character string. Specifies the directory path where the split rasters should be saved if `save` is `TRUE`. If the directory does not exist, it will be created.
+#' @param plot Logical. Indicates whether to plot the split rasters. Default is `FALSE`.
+#' @param Extent Logical. If `TRUE`, the function returns only the extents of the split rasters instead of the raster data. Default is `FALSE`.
 #' @name SplitRaster
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return A list of raster objects or extents of the split rasters, depending on the value of the `Extent` parameter.
 #' @export
-#' @details
-#' #' References:
-#' https://stackoverflow.com/questions/29784829/
-#' https://stackoverflow.com/questions/22109774/r-raster-mosaic-from-list-of-rasters
+#' @references Click [here](https://stackoverflow.com/questions/29784829/) and [here](https://stackoverflow.com/questions/22109774/r-raster-mosaic-from-list-of-rasters)
 #' @examples
-#' LoadPackages(raster)
+#' library(raster)
 #' logo <- raster(system.file("external/rlogo.grd", package = "raster"))
 #' plot(logo, axes = FALSE, legend = FALSE, bty = "n",
 #'      box = FALSE, main = "Original raster layer")
 #' # --------------------------------------------------
 #'
 #' # Split into 3 rows and 3 columns
-#' logoSplit <- SplitRaster(logo, Ncol = 3, Nrow = 3, plot = TRUE)
+#' logoSplit <- SplitRaster(raster = logo, Ncol = 3, Nrow = 3, plot = TRUE)
 #'
 #' print(logoSplit) # a list object of 9 items
 #'
@@ -52,18 +48,31 @@
 #'
 
 SplitRaster <- function(
-    raster, Ncol = 4, Nrow = 4, save = FALSE,
+    raster = NULL, Ncol = 4, Nrow = 4, save = FALSE,
     SplitPath = "", plot = FALSE, Extent = FALSE) {
+
+  # Directory Check
+  if (save && !dir.exists(SplitPath)) {
+    fs::dir_create(SplitPath)
+  }
+
+  # Check input raster
+  if (is.null(raster)) {
+    stop("raster cannot be NULL.")
+  }
 
   h <- ceiling((ncol(raster) / Ncol))
   v <- ceiling((nrow(raster) / Nrow))
   agg <- raster::aggregate(raster, fact = c(h, v))
-  agg[] <- 1:raster::ncell(agg)
+  agg[] <- seq_len(raster::ncell(agg))
   agg_poly <- raster::rasterToPolygons(agg)
-  names(agg_poly) <- "polis"
+  names(agg_poly@data) <- "polis"
+
   r_list <- list()
-  for (i in 1:raster::ncell(agg)) {
-    e1 <- raster::extent(agg_poly[agg_poly$polis == i, ])
+
+   for (i in seq_len(raster::ncell(agg))) {
+    e1 <- raster::extent(agg_poly[agg_poly@data$polis == i, ])
+
     if (Extent) {
       r_list[[i]] <- e1
     } else {
@@ -71,15 +80,16 @@ SplitRaster <- function(
     }
   }
 
-  if (save == TRUE) {
+  if (save) {
     for (i in seq_along(r_list)) {
       raster::writeRaster(
-        x = r_list[[i]], filename = paste(SplitPath, "/SplitRas", i, sep = ""),
+        x = r_list[[i]],
+        filename = paste0(SplitPath, "/SplitRas", i),
         format = "GTiff", datatype = "FLT4S", overwrite = TRUE)
     }
   }
 
-  if (plot == TRUE) {
+  if (plot) {
     graphics::par(mfrow = c(Nrow, Ncol))
     for (i in seq_along(r_list)) {
       raster::plot(r_list[[i]], axes = FALSE, legend = FALSE, bty = "n", box = FALSE)

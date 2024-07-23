@@ -2,19 +2,23 @@
 # CatPipe ----
 ## |------------------------------------------------------------------------| #
 
-#' print a message with time in the middle of the pipe
+#' print a message with the current time in the middle of the pipe
 #'
-#' print a message with time in the middle of the pipe
-#'
-#' @param x input object to pipe
-#' @param message printed message
+#' This function is designed to be used within a pipe operation to print a custom message along with the current time, without interrupting the flow of data through the pipe. It is useful for debugging or monitoring the progress of data processing in a pipeline.
+#' @param x The input object to be passed through the pipe. This parameter is required and cannot be NULL.
+#' @param message A character string representing the message to be printed.
+#' @return The same object passed as input (`x`), allowing the pipe operation to continue uninterrupted.
 #' @name CatPipe
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @keywords internal
+#' @references This function is currently not exported. See [here](https://stackoverflow.com/questions/76722921/print-message-in-the-middle-of-long-pipe) for more details
 #' @noRd
 
-CatPipe <- function(x, message = NULL) {
-  CatTime(message)
+CatPipe <- function(x, message) {
+  if (is.null(x) || is.null(message)) {
+    stop("x or message cannot be NULL")
+  }
+  IASDT.R::CatTime(message)
   return(x)
 }

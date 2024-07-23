@@ -2,36 +2,27 @@
 # SaveSessionInfo ----
 ## |------------------------------------------------------------------------| #
 #
-#' Save session info
+#' Save Session Information to a File
 #'
-#' Save session info
-#'
-#' @param Path Path of where to save the output RData file
-#' @param SessionObj List of objects and their sizes (typically a a result of `IASDT::SaveSession` function)
-#' @param Prefix file prefix
+#' This function saves the current R session information, including installed packages, session details, and optionally, information about specific objects in the session, to a text file.
+#' @param Path  string specifying the directory path where the output file should be saved. The default is the current working directory (`getwd()`).
+#' @param SessionObj An optional list of objects to include in the session information output. This is typically the result of a session management function like `IASDT::SaveSession`. If provided, details of these objects (excluding functions and pre-selected objects, with sizes in megabytes) are appended to the session information file.
+#' @param Prefix A string to be used as a prefix for the output file name. The default prefix is "S".
 #' @author Ahmed El-Gabbas
 #' @return NULL
+#' @return Invisibly returns NULL. The primary effect of this function is the side effect of writing  session information to a file.
 #' @export
 
 SaveSessionInfo <- function(Path = getwd(), SessionObj = NULL, Prefix = "S") {
 
-  FileName <- lubridate::now(tzone = "CET") %>%
-    purrr::map_chr(
-      .f = ~{
-        c(lubridate::year(.x), lubridate::month(.x),
-          lubridate::day(.x), "__",
-          lubridate::hour(.x), lubridate::minute(.x)) %>%
-          sapply(stringr::str_pad, width = 2, pad = "0") %>%
-          stringr::str_c(collapse = "") %>%
-          stringr::str_replace_all("__", "_") %>%
-          stringr::str_c(Prefix, "_", ., collapse = "_")
-      }) %>%
-    stringr::str_c(Path, "/", ., ".txt")
+  FileName <- paste0(
+    Path, "/", Prefix, "_", format(lubridate::now(tzone = "CET"), "%Y%m%d_%H%M"),
+    ".txt")
 
-  IASDT.R::InfoChunk("Session Info") %>%
-    utils::capture.output(file = FileName, append = TRUE)
-  sessioninfo::session_info() %>%
-    utils::capture.output(file = FileName, append = TRUE)
+  utils::capture.output(
+    IASDT.R::InfoChunk("Session Info"), file = FileName, append = TRUE)
+  utils::capture.output(
+    sessioninfo::session_info(), file = FileName, append = TRUE)
 
   if (magrittr::not(is.null(SessionObj))) {
     utils::capture.output(

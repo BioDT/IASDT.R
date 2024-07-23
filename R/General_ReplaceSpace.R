@@ -2,14 +2,14 @@
 # ReplaceSpace ----
 ## |------------------------------------------------------------------------| #
 #
-#' Replace space with underscore
+#' Replace space with underscore in a string
 #'
-#' Replace space with underscore
+#' This function takes a string as input and replaces all spaces with underscores. It is useful for formatting strings to be used in contexts where spaces are not allowed or desired.
 #'
-#' @param x string
+#' @param x A character string. The string in which spaces will be replaced with underscores.
 #' @name ReplaceSpace
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return A character string with all spaces replaced by underscores.
 #' @examples
 #' ReplaceSpace("Genus species")
 #'
@@ -17,5 +17,9 @@
 #' @export
 
 ReplaceSpace <- function(x) {
-  stringr::str_replace_all(x, " ", "_")
+  if (is.null(x)) {
+    stop("x name cannot be NULL")
+  }
+
+  return(stringr::str_replace_all(as.character(x), " ", "_"))
 }

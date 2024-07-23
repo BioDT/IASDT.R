@@ -2,15 +2,28 @@
 % Please edit documentation in R/Spat_Scale_0_1.R
 \name{Scale_0_1}
 \alias{Scale_0_1}
-\title{Scale a spatRaster object between 0 and 1}
+\title{Scale a \code{SpatRaster} object values to a range between 0 and 1}
 \usage{
 Scale_0_1(x)
 }
 \arguments{
-\item{x}{x}
+\item{x}{SpatRaster; The SpatRaster object to be scaled.}
+}
+\value{
+SpatRaster; A SpatRaster object with all values scaled between 0 and 1.
 }
 \description{
-Scale a spatRaster object between 0 and 1
+Scale a \code{SpatRaster} object (from the \code{terra} R package in) values to a range between 0 and 1.
+}
+\note{
+This function takes a SpatRaster object as input, calculates its minimum and maximum values, and scales all its values to a range between 0 and 1. This is useful for normalization purposes in spatial analysis and modeling. The function relies on the \code{terra} package for spatial data manipulation.
+}
+\examples{
+library(terra)
+r <- rast(ncols=10, nrows=10)
+values(r) <- 1:ncell(r)
+
+Scale_0_1(r)
 }
 \author{
 Ahmed El-Gabbas

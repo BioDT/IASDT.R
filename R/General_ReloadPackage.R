@@ -4,10 +4,11 @@
 #
 #' Reload an R package
 #'
-#' Reload an R package
+#' This function reloads a specified R package. If the package is not already loaded, it attempts to load it. If the package is already loaded, it reloads the package from its library location. This can be useful during package development when changes are made to the package code.
 #'
 #' @name ReloadPackage
-#' @param Package The name of packages to reload
+#' @param Package A character string specifying the name of the package to reload.
+#' @return Returns The function is used for its side effect of reloading a package rather than for its return value.
 #' @examples
 #' LoadPackages(sf)
 #'
@@ -15,22 +16,22 @@
 #'
 #' @export
 
-ReloadPackage <- function(Package = NULL) {
+ReloadPackage <- function(Package) {
+
   if (is.null(Package)) {
-    stop()
+    stop("Package name cannot be NULL")
   }
 
-  if (!Package %in% LoadedPackages()) {
+  if (!requireNamespace(Package, quietly = TRUE)) {
     library(package = Package, character.only = TRUE)
   } else {
-    PackagesFolders <- paste0(.libPaths(), "/")
-    PackagesFolders <- c(outer(PackagesFolders, Package, FUN = "paste0"))
-    PackagesFolders <- PackagesFolders[file.exists(PackagesFolders)]
-    PackagesFolders <- gsub(pattern = "/", replacement = "//", x = PackagesFolders)
-    lapply(PackagesFolders, function(x) {
-      devtools::reload(x, quiet = FALSE)
-    })
-  }
 
+    PackagesFolders <- paste0(.libPaths(), "/", Package)
+    PackagesFolders <- PackagesFolders[file.exists(PackagesFolders)]
+    if (length(PackagesFolders) > 0) {
+      purrr::walk(
+      .x = PackagesFolders, .f = ~ devtools::reload(pkg = .x, quiet = FALSE))
+  }
+}
   return(invisible(NULL))
 }

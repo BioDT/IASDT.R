@@ -7,17 +7,22 @@
 Valid_URL(url_in, t = 2)
 }
 \arguments{
-\item{url_in}{URL path}
+\item{url_in}{A character string specifying the URL to be checked.}
 
-\item{t}{Timeout}
+\item{t}{A numeric value specifying the timeout in seconds for the connection attempt. Default is 2 seconds.}
+}
+\value{
+A logical value: \code{TRUE} if the URL is valid, \code{FALSE} if not.
 }
 \description{
-Check the validity of a URL
+This function opens a connection to the specified URL to check its validity. It returns \code{TRUE} if the URL is valid (i.e., the connection can be opened), and \code{FALSE} otherwise.
 }
 \examples{
-urls <- c("http://www.amazon.com", "http://this.isafakelink.biz", "https://stackoverflow.com")
+urls <- c(
+     "http://www.amazon.com", "http://this.isafakelink.biz",
+     "https://stackoverflow.com", "https://stack-overflow.com")
 sapply(urls, Valid_URL)
 }
 \references{
-https://stackoverflow.com/questions/52911812/check-if-url-exists-in-r
+\href{https://stackoverflow.com/questions/52911812/check-if-url-exists-in-r}{Click here}
 }

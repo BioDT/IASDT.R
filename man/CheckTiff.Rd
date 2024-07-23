@@ -2,23 +2,27 @@
 % Please edit documentation in R/Spat_CheckTiff.R
 \name{CheckTiff}
 \alias{CheckTiff}
-\title{Check if tiff file corrupted}
+\title{Check if a tiff file corrupted}
 \usage{
-CheckTiff(x)
+CheckTiff(x = NULL)
 }
 \arguments{
-\item{x}{tiff file path}
+\item{x}{Character; the file path of the tiff file to be checked. The function will stop with an error if \code{x} is \code{NULL} or if the file does not exist.}
 }
 \value{
-logical: \code{TRUE} when the tiff file is okay; \code{FALSE} when corrupted
+Logical; returns \code{TRUE} if the tiff file is not corrupted (i.e., it can be described and contains "Driver" in its description),
+and \code{FALSE} otherwise.
 }
 \description{
-Check if tiff file corrupted
+This function checks if the provided tiff file is corrupted by attempting to describe it using the \code{terra} package and searching for the presence of a "Driver" string in the description, which indicates a valid tiff file. If the string is found, the function returns \code{TRUE} and \code{FALSE} otherwise.
+}
+\note{
+This function depends on the \code{terra}, \code{magrittr}, and \code{stringr} packages.
 }
 \examples{
 (f <- system.file("ex/elev.tif", package="terra"))
 
-CheckTiff(f)
+CheckTiff(x = f)
 }
 \author{
 Ahmed El-Gabbas

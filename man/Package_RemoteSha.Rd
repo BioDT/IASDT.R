@@ -2,15 +2,18 @@
 % Please edit documentation in R/General_Package_RemoteSha.R
 \name{Package_RemoteSha}
 \alias{Package_RemoteSha}
-\title{Get remote sha of R packages}
+\title{Get the remote SHA of specified R packages}
 \usage{
 Package_RemoteSha(...)
 }
 \arguments{
-\item{...}{name of one or more R packages}
+\item{...}{character. Names of one or more R packages for which to retrieve the remote SHA.}
+}
+\value{
+A named character vector where names are the package names and values are the corresponding remote SHAs.
 }
 \description{
-Get remote sha of R packages
+This function retrieves the remote SHA (Secure Hash Algorithm) reference for one or more specified R packages. It is useful for tracking the exact version of a package's source code.
 }
 \examples{
 # Package_RemoteSha(IASDT.R, devtools)

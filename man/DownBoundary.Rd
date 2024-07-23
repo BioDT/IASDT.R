@@ -4,10 +4,10 @@
 \alias{DownBoundary}
 \title{Determine the boundaries of the requested GBIF data}
 \usage{
-DownBoundary(Left = NULL, Right = NULL, Bottom = NULL, Top = NULL)
+DownBoundary(L = NULL, R = NULL, B = NULL, T = NULL)
 }
 \arguments{
-\item{Left, Right, Bottom, Top}{Numeric, the left, right, bottom, and top boundary of the area.}
+\item{L, R, B, T}{Numeric, the left, right, bottom, and top boundary of the area.}
 }
 \value{
 A character string representing the WKT of the polygon that outlines the specified boundaries.

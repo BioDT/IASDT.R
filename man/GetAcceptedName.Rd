@@ -19,7 +19,9 @@ This function queries the GBIF database to retrieve the accepted scientific name
 Get accepted name of a taxa
 }
 \examples{
-GetAcceptedName(5372559) # https://www.gbif.org/species/5372559
+\dontrun{
+GetAcceptedName(5372559) ### https://www.gbif.org/species/5372559
+}
 }
 \author{
 Ahmed El-Gabbas

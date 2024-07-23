@@ -2,19 +2,19 @@
 # Match_to_GBIF ----
 ## |------------------------------------------------------------------------| #
 
-#' Match taxonomy with GBIF; may return >1 match
+#' Match taxonomy names with GBIF and return standardized results.
+#' 
+#' This function matches given taxonomy names with the GBIF database, potentially returning more than one match per name. It can operate in parallel.
 #'
-#' Match taxonomy with GBIF; may return >1 match
-#'
-#' @param taxon_name Taxonomy name
-#' @param taxon_id Taxonomy ID
-#' @param include_genus Include matches at genus level; default: `FALSE`
-#' @param Parallel Logical. Whether to implement standardization on parallel; default: `FALSE`
-#' @param Progress Logical. Whether to print progress bar; default: `FALSE`
+#' @param taxon_name A character vector of taxonomy names to be matched.
+#' @param taxon_id An optional numeric or character vector of local identifiers corresponding to `taxon_name`. If `NULL`, a sequence along `taxon_name` is used. Defaults to `NULL`.
+#' @param include_genus Logical, whether to include matches at the genus level in the results. Defaults to `FALSE`.
+#' @param Parallel Logical, whether to perform the matching in parallel. Defaults to `FALSE`.
+#' @param Progress Logical, whether to display a progress bar during the operation. Defaults to `FALSE`.
 #' @name Match_to_GBIF
 #' @importFrom rlang .data
 #' @author Marina Golivets
-#' @return a tibble for the standardization results
+#' @return A `tibble` containing the standardized taxonomy results, including both the best matches and alternatives, filtered to include only vascular plants (Tracheophyta) and excluding non-matches and higher rank matches. The results are further refined based on the confidence score and the status (ACCEPTED, SYNONYM, DOUBTFUL) of the matches.
 #' @export
 #' @details
 #' as input, provide a vector of verbatim taxon names (preferably with authorship) and a vector of existing local identifiers for those names
@@ -22,6 +22,10 @@
 Match_to_GBIF <- function(
     taxon_name, taxon_id = NULL, include_genus = FALSE,
     Parallel = FALSE, Progress = FALSE) {
+
+  if (is.null(taxon_name)) {
+    stop("taxon_name cannot be NULL")
+  }
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/

@@ -2,17 +2,20 @@
 % Please edit documentation in R/General_DetectAlias.R
 \name{DetectAlias}
 \alias{DetectAlias}
-\title{Detect aliased variables}
+\title{Detect Aliased Variables in a Linear Model}
 \usage{
 DetectAlias(DT, Verbose = FALSE)
 }
 \arguments{
-\item{DT}{input data as tibble or data frame}
+\item{DT}{A \verb{data frame} or \code{tibble} containing the variables to be checked for aliasing.}
 
-\item{Verbose}{print message for the output of the function}
+\item{Verbose}{A logical value indicating whether to print the aliased variables found (if any). If \code{TRUE}, aliased variables are printed to the console. Defaults to \code{FALSE}.}
+}
+\value{
+Returns a character vector of aliased variable names if any are found; otherwise, returns \code{NULL} invisibly. If \code{Verbose} is \code{TRUE}, the function will also print a message to the console.
 }
 \description{
-Detect aliased variables
+This function identifies aliased (linearly dependent) variables in a linear model by adding a constant column to the data frame, fitting a linear model, and then using the alias function to detect aliased variables.
 }
 \examples{
 if (require("car")) {
@@ -25,8 +28,8 @@ if (require("car")) {
   summary(model)
 
   try(vif(model))
-  DetectAlias(DT = cbind(x1, x2, x3))
-  DetectAlias(DT = cbind(x1, x2, x3), Verbose = TRUE)
+  DetectAlias(DT = cbind.data.frame(x1, x2, x3))
+  DetectAlias(DT = cbind.data.frame(x1, x2, x3), Verbose = TRUE)
 
   # excluding x2
   model <- lm(y ~ x1 + x3)

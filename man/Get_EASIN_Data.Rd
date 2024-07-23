@@ -14,20 +14,23 @@ Get_EASIN_Data(
 )
 }
 \arguments{
-\item{SpKey}{character; EASIN taxon ID}
+\item{SpKey}{character; the EASIN taxon ID for which data is to be retrieved.}
 
-\item{NSearch}{number of observations to extract each time; default: 1000 (the current maximum per request)}
+\item{NSearch}{integer; the number of records to attempt to retrieve per request. Default is 1000, which is the currently maximum allowed by the API.}
 
-\item{SleepPart}{integer; time in seconds to wait between each request. Default: 1.}
+\item{SleepPart}{integer; the number of seconds to pause between each data retrieval request to prevent overloading the server. Default is 1 second.}
 
-\item{Path_Raw}{character; a valid path for the location to store the output data. A subfolder named \code{FileParts} will be created for temporary files for individual requests.}
+\item{Path_Raw}{character; the file path where the raw data files and temporary parts will be stored. Default is "Data/EASIN/Raw".}
 
-\item{ReturnVal}{logical; should the data be returned or only saved to disk. Default: \code{FALSE}}
+\item{ReturnVal}{logical; if \code{TRUE}, the function will return the combined data as a dataframe. If \code{FALSE}, the data will only be saved to disk and the function will return \code{NULL}. Default is \code{FALSE}.}
 
-\item{SleepAfter}{integer; time in seconds to wait after finishing with downloading taxon data. Default: 10.}
+\item{SleepAfter}{integer; the number of seconds to pause after all data has been retrieved and before the function completes. This can be useful for pacing batch operations. Default is 5 seconds.}
+}
+\value{
+If ReturnVal is \code{TRUE}, returns a dataframe containing all the data retrieved for the specified EASIN ID. If ReturnVal is \code{FALSE}, returns \code{NULL}.
 }
 \description{
-Extract EASIN data using EASIN ID
+This function downloads data for a specified species from the EASIN database. It handles pagination automatically, downloading data in chunks until all available data for the species is retrieved. The function also supports pausing between requests to avoid overloading the server.
 }
 \details{
 A function to extract EASIN data for a given EASIN_ID

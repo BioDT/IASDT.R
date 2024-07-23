@@ -4,13 +4,16 @@
 \alias{ReloadPackage}
 \title{Reload an R package}
 \usage{
-ReloadPackage(Package = NULL)
+ReloadPackage(Package)
 }
 \arguments{
-\item{Package}{The name of packages to reload}
+\item{Package}{A character string specifying the name of the package to reload.}
+}
+\value{
+Returns The function is used for its side effect of reloading a package rather than for its return value.
 }
 \description{
-Reload an R package
+This function reloads a specified R package. If the package is not already loaded, it attempts to load it. If the package is already loaded, it reloads the package from its library location. This can be useful during package development when changes are made to the package code.
 }
 \examples{
 LoadPackages(sf)

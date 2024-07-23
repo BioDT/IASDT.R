@@ -2,7 +2,7 @@
 % Please edit documentation in R/IAS_Chelsa_Prepare_List.R
 \name{Chelsa_Prepare_List}
 \alias{Chelsa_Prepare_List}
-\title{Prepare list of potential variables}
+\title{Prepare and Download CHELSA Climate Data}
 \usage{
 Chelsa_Prepare_List(
   Down = FALSE,
@@ -14,20 +14,23 @@ Chelsa_Prepare_List(
 )
 }
 \arguments{
-\item{Down}{Logical. Download Chelsa files?}
+\item{Down}{Logical, whether to download the CHELSA files.}
 
-\item{DownParallel}{Logical. Download input files on parallel (if \code{Down} = \code{TRUE})}
+\item{DownParallel}{Logical, whether to download files in parallel (if \code{Down} is \code{TRUE}).}
 
-\item{DwnPath}{String. Download path}
+\item{DwnPath}{String, the path where downloaded files should be saved.}
 
-\item{OutPath}{String. Output path}
+\item{OutPath}{String, the path where output files should be saved.}
 
-\item{UpdateExisting}{Logical. Reprocess existing file?}
+\item{UpdateExisting}{Logical, whether to re-download and process files that already exist.}
 
-\item{Path_Chelsa}{String. Path for Chelsa analyses}
+\item{Path_Chelsa}{String, the base path for CHELSA analyses and data storage.}
+}
+\value{
+A data frame containing metadata about the CHELSA climate data files, including variables, climate models, scenarios, and download URLs.
 }
 \description{
-Prepare list of potential variables
+This function prepares a list of CHELSA climate data files to download based on specified criteria, downloads the files if requested, and saves the list and downloaded files to disk.
 }
 \details{
 list of variables exist under current and future climates.

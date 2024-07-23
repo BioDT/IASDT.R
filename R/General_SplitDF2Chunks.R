@@ -2,17 +2,17 @@
 # SplitDF2Chunks ----
 ## |------------------------------------------------------------------------| #
 
-#' Split data.frame into smaller chunks
+#' Split a data.frame into smaller chunks
 #'
-#' Split data.frame into smaller chunks
+#' This function divides a data.frame into smaller chunks based on the specified number of rows per chunk (`ChunkSize`) or the specified number of chunks (`NChunks`). If neither is provided, it defaults to splitting the data.frame into  a minimum of 5 chunks or less if the data.frame has fewer than 5 rows. The function ensures that the data is evenly distributed among the chunks as much as possible.
 #'
-#' @param DF The data frame to split
-#' @param ChunkSize Integer. Number of rows per chunk
-#' @param NChunks Integer. Number of chunks (only if `ChunkSize` not provided)
-#' @param Prefix Prefix
+#' @param DF data.frame. The data.frame to be split into chunks.
+#' @param ChunkSize integer (optional). The desired number of rows each chunk should contain. It must be a positive integer and less than the number of rows in `DF`.
+#' @param NChunks integer (optional). The desired number of chunks to split the data.frame into. It must be a positive integer.
+#' @param Prefix Character. A string value that will be used as a prefix for the names of the chunks. Default is "Chunk".
 #' @name SplitDF2Chunks
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return A list of data.frames, where each data.frame represents a chunk of the original data.frame. The names of the list elements are constructed using the `Prefix` parameter followed by an underscore and the chunk number (e.g., "Chunk_1", "Chunk_2", ...).
 #' @export
 #' @examples
 #' SplitDF2Chunks(mtcars, ChunkSize = 16)
@@ -26,48 +26,32 @@
 #' SplitDF2Chunks(mtcars, NChunks = 3, Prefix = "T")
 
 SplitDF2Chunks <- function(
-    DF = NULL, ChunkSize = NULL,
-    NChunks = NULL, Prefix = "Chunk") {
+    DF = NULL, ChunkSize = NULL, NChunks = NULL, Prefix = "Chunk") {
 
   if (is.null(DF)) {
-    cat(paste0(crayon::red("DF should be a loaded data frame"), "\n"))
-    opt <- options(show.error.messages = FALSE)
-    on.exit(options(opt))
-    stop()
+    stop("DF cannot be NULL")
   }
 
-  DefaultChunkSize <- DefaultNChunks <- FALSE
-  if (is.null(NChunks)) {
+  if (!is.null(ChunkSize) && (ChunkSize < 1 || !is.numeric(ChunkSize))) {
+    stop("ChunkSize must be numeric and larger than 1")
+  }
+
+  if (is.null(ChunkSize) && is.null(NChunks)) {
     NChunks <- min(5, nrow(DF))
-    DefaultNChunks <- TRUE
+    cat(paste0(crayon::green("ChunkSize and NChunks are not determined by user. Defaulting to split into "), NChunks, " chunks.\n"))
+  }
+
+  if (!is.null(ChunkSize) && nrow(DF) <= ChunkSize) {
+    stop("ChunkSize is larger than the number of rows in the data frame!\nPlease use a smaller ChunkSize.")
   }
 
   if (is.null(ChunkSize)) {
-    ChunkSize <- ceiling((nrow(DF) / NChunks))
-    DefaultChunkSize <- TRUE
-  }
-
-  if (any(!is.numeric(ChunkSize), !(ChunkSize > 1))) {
-    cat(paste0(crayon::red("ChunkSize should be a numeric vector of length of 1"), "\n"))
-    opt <- options(show.error.messages = FALSE)
-    on.exit(options(opt))
-    stop()
-  }
-
-  if (all(DefaultChunkSize, DefaultNChunks)) {
-    cat(paste0(crayon::green("ChunkSize is not determined by user. The default split into 5 chunks is implemented"), "\n"))
-  }
-
-
-  if (nrow(DF) <= ChunkSize) {
-    cat(paste0(crayon::red("ChunkSize is larger than the number of rows in the data frame!\nPlease use a smaller ChunkSize."), "\n"))
-    opt <- options(show.error.messages = FALSE)
-    on.exit(options(opt))
-    stop()
+    ChunkSize <- ceiling(nrow(DF) / NChunks)
   }
 
   DF <- tibble::as_tibble(DF)
   Out <- split(DF, (seq_len(nrow(DF)) - 1) %/% ChunkSize)
   names(Out) <- paste0(Prefix, "_", seq_along(Out))
-  Out
+
+  return(Out)
 }

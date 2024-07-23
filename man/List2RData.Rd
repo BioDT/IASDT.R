@@ -2,21 +2,24 @@
 % Please edit documentation in R/General_List2RData.R
 \name{List2RData}
 \alias{List2RData}
-\title{Split list items to separate RData files}
+\title{Split list items into separate RData files}
 \usage{
 List2RData(List, Prefix = "", Dir = getwd(), Overwrite = FALSE)
 }
 \arguments{
-\item{List}{list object}
+\item{List}{A named list object to be split into separate RData files.}
 
-\item{Prefix}{prefix string}
+\item{Prefix}{A character string to prefix to each filename. If empty (default), no prefix is added.}
 
-\item{Dir}{output directory}
+\item{Dir}{The directory where the RData files will be saved. Defaults to the current working directory.}
 
-\item{Overwrite}{overwrite existing files?}
+\item{Overwrite}{A logical indicating whether to overwrite existing files.  Defaults to \code{FALSE}, in which case files that already exist will not be overwritten, and a message will be printed for each such file.}
+}
+\value{
+Invisible NULL. The function is called for its side effect of saving files and does not return a value.
 }
 \description{
-Split list items to separate RData files
+This function takes a named list and saves each element of the list as a separate RData file. The names of the list elements are used as the base for the filenames, optionally prefixed. Files are saved in the specified directory, with an option to overwrite existing files.
 }
 \examples{
 # split iris data by species name
@@ -29,7 +32,7 @@ str(iris2, 1)
 (TMP_Folder <- file.path(tempdir(), stringi::stri_rand_strings(1, 5)))
 list.files(TMP_Folder)
 
-List2RData(iris2, Dir = TMP_Folder)
+List2RData(List = iris2, Dir = TMP_Folder)
 list.files(TMP_Folder)
 }
 \author{

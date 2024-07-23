@@ -4,7 +4,7 @@
 \alias{LoadAs}
 \title{Load RData file, ignoring original object name}
 \usage{
-LoadAs(File = NA)
+LoadAs(File)
 }
 \arguments{
 \item{File}{character; path of \code{.RData} file}
@@ -13,6 +13,7 @@ LoadAs(File = NA)
 Load RData file, ignoring original object name
 }
 \examples{
+
 File <- system.file("testdata", "culcita_dat.RData", package = "lme4")
 
 # ---------------------------------------------------------
@@ -23,8 +24,6 @@ File <- system.file("testdata", "culcita_dat.RData", package = "lme4")
 ls()
 
 tibble::tibble(culcita_dat)
-
-rm(culcita_dat)
 
 # ---------------------------------------------------------
 # Loading as custom object name

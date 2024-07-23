@@ -2,20 +2,26 @@
 # ScrapLinks ----
 ## |------------------------------------------------------------------------| #
 #
-#' Extract link texts and urls from a web page
+#' Extracts link texts and URLs from a web page
 #'
-#' Extract link texts and urls from a web page
+#' This function scrapes a web page for all links (<a> tags) and extracts both the URLs and the link text. It returns a tibble with two columns: one for the link text and one for the URLs. The URLs are made absolute using the base URL provided. The function also ensures that the URLs are unique and sorted.
 #'
-#' @param url the url
+#' @param url A character string specifying the URL of the web page to scrape. This URL is also used to resolve relative links to absolute URLs.
 #' @name ScrapLinks
+#' @return A tibble with two columns: `link_text` containing the text of each link, and `url` containing  the absolute URL of each link. The tibble is sorted by URL and then by link text, and only unique links are included.
 #' @return NULL
 #' @importFrom rlang .data
-#' @references https://gist.github.com/paulrougieux/e1ee769577b40cd9ed9db7f75e9a2cc2
+#' @references [Read more](https://gist.github.com/paulrougieux/e1ee769577b40cd9ed9db7f75e9a2cc2)
 #' @examples
 #' ScrapLinks("https://github.com/")
 #' @export
 
 ScrapLinks <- function(url) {
+
+  if (is.null(url)) {
+    stop("url cannot be NULL")
+  }
+
   # Create an html document from the url
   webpage <- xml2::read_html(url) %>%
     rvest::html_nodes("a")

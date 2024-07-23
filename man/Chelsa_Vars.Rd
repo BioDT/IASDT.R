@@ -2,15 +2,18 @@
 % Please edit documentation in R/IAS_Chelsa_Vars.R
 \name{Chelsa_Vars}
 \alias{Chelsa_Vars}
-\title{Detailed information on Chelsa data}
+\title{Detailed information on Chelsa climate variables}
 \usage{
 Chelsa_Vars()
 }
+\value{
+A tibble with columns: Variable (character), Long_name (character), unit (character), scale (numeric), offset (numeric), and explanation (character). Each row represents a different climate variable.
+}
 \description{
-Detailed information on Chelsa data
+This function returns a tibble containing detailed information about various climate variables used in the Chelsa climate data set. Each row in the tibble represents a different climate variable, with columns providing additional details such as the long name, unit, scale, offset, and an explanation of the variable.
 }
 \details{
-https://chelsa-climate.org/bioclim/
+\href{https://chelsa-climate.org/bioclim/}{click here}
 }
 \examples{
 print(Chelsa_Vars(), n = Inf)

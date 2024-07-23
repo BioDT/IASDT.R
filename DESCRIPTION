@@ -1,8 +1,8 @@
 Type: Package
 Package: IASDT.R
 Title: Helper R functions for IAS pDT project
-Version: 0.0.5
-Date: 2024-07-15
+Version: 0.0.6
+Date: 2024-07-23
 Authors@R: 
     person("Ahmed", "El-Gabbas", , "ahmed.el-gabbas@ufz.de", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-2225-088X"))
@@ -77,6 +77,9 @@ Suggests:
     tidyverse,
     withr,
     xml2
+Remotes:
+    elgabbas/HMSC,
+    YuLab-SMU/ggtree
 Config/testthat/edition: 3
 Encoding: UTF-8
 Language: en-US

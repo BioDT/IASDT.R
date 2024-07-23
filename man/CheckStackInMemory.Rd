@@ -2,18 +2,21 @@
 % Please edit documentation in R/Spat_CheckStackInMemory.R
 \name{CheckStackInMemory}
 \alias{CheckStackInMemory}
-\title{Check if the raster stack reads from disk or memory}
+\title{Check if a raster stack reads from disk or memory}
 \usage{
 CheckStackInMemory(Stack = NULL)
 }
 \arguments{
-\item{Stack}{Stack}
+\item{Stack}{A RasterStack object. If \code{NULL} or not a RasterStack, the function will stop with an error.}
+}
+\value{
+No return value, but prints messages to the console.
 }
 \description{
-Check if the raster stack reads from disk or memory
+This function checks whether the layers of a RasterStack object are stored in memory or read from disk.  It prints messages indicating whether all layers are in memory, all layers are on disk, or a mix of both. If there's a mix, it specifies which layers are on disk.
 }
 \examples{
-LoadPackages(raster)
+library(raster)
 logo <- raster(system.file("external/rlogo.grd", package = "raster"))
 logo@data@inmemory
 logo@data@fromdisk

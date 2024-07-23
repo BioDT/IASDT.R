@@ -2,17 +2,20 @@
 % Please edit documentation in R/Spat_Set_geometry.R
 \name{Set_geometry}
 \alias{Set_geometry}
-\title{Set geometry of an sf object in the pipe line}
+\title{Set the geometry column of a simple feature (sf) data frame in the pipe pipeline.}
 \usage{
 Set_geometry(x, Name)
 }
 \arguments{
-\item{x}{simple feature data frame}
+\item{x}{A simple feature (sf) data frame. This is the data frame whose geometry column will be set or changed.}
 
-\item{Name}{the name of the geometry column to be used}
+\item{Name}{A string specifying the name of the geometry column to be used or set in the \code{x} data frame.}
+}
+\value{
+The modified simple feature (sf) data frame with the updated geometry column. The function returns the original data frame \code{x} with its geometry column set to \code{Name}.
 }
 \description{
-Set geometry of an sf object in the pipe line
+Set the geometry column of a simple feature (sf) data frame, making it particularly useful in data processing pipelines. By specifying the name of the geometry column, users can ensure that spatial operations utilize the correct data.
 }
 \author{
 Ahmed El-Gabbas

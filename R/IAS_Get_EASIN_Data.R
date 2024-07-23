@@ -4,17 +4,17 @@
 
 #' Extract EASIN data using EASIN ID
 #'
-#' Extract EASIN data using EASIN ID
+#' This function downloads data for a specified species from the EASIN database. It handles pagination automatically, downloading data in chunks until all available data for the species is retrieved. The function also supports pausing between requests to avoid overloading the server.
 #'
-#' @param SpKey character; EASIN taxon ID
-#' @param NSearch number of observations to extract each time; default: 1000 (the current maximum per request)
-#' @param SleepPart integer; time in seconds to wait between each request. Default: 1.
-#' @param Path_Raw character; a valid path for the location to store the output data. A subfolder named `FileParts` will be created for temporary files for individual requests.
-#' @param ReturnVal logical; should the data be returned or only saved to disk. Default: `FALSE`
-#' @param SleepAfter integer; time in seconds to wait after finishing with downloading taxon data. Default: 10.
+#' @param SpKey character; the EASIN taxon ID for which data is to be retrieved.
+#' @param NSearch integer; the number of records to attempt to retrieve per request. Default is 1000, which is the currently maximum allowed by the API.
+#' @param SleepPart integer; the number of seconds to pause between each data retrieval request to prevent overloading the server. Default is 1 second.
+#' @param Path_Raw character; the file path where the raw data files and temporary parts will be stored. Default is "Data/EASIN/Raw".
+#' @param ReturnVal logical; if `TRUE`, the function will return the combined data as a dataframe. If `FALSE`, the data will only be saved to disk and the function will return `NULL`. Default is `FALSE`.
+#' @param SleepAfter integer; the number of seconds to pause after all data has been retrieved and before the function completes. This can be useful for pacing batch operations. Default is 5 seconds.
 #' @name Get_EASIN_Data
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return If ReturnVal is `TRUE`, returns a dataframe containing all the data retrieved for the specified EASIN ID. If ReturnVal is `FALSE`, returns `NULL`.
 #' @export
 #' @details
 #' A function to extract EASIN data for a given EASIN_ID
@@ -22,6 +22,10 @@
 Get_EASIN_Data <- function(
     SpKey, NSearch = 1000, SleepPart = 1, Path_Raw = "Data/EASIN/Raw",
     ReturnVal = FALSE, SleepAfter = 5) {
+
+  if (is.null(SpKey)) {
+    stop("SpKey cannot be NULL")
+  }
 
   withr::local_options(list(scipen = 999, timeout = 200))
 
@@ -31,8 +35,11 @@ Get_EASIN_Data <- function(
   OutFileExist <- FALSE
 
   if (file.exists(Path_Out)) {
+
     OutFileExist <- TRUE
+
   } else {
+
     # Update 08.03.2024
     # The following does not work as of 08.03.2024 due to changes in the EASIN API
     # URL <- "https://easin.jrc.ec.europa.eu/apixg/geoxg/speciesid/{SpKey}/layertype/grid/skip/{Skip}/take/{NSearch}" %>%
@@ -44,7 +51,6 @@ Get_EASIN_Data <- function(
     BaseURL <- "https://easin.jrc.ec.europa.eu/apixg/geoxg"
     Skip <- 0         # Skip = 0; start at the first presence grid
     ID <- 0           # iteration ID
-    # DT <- list()      # List object to save the data
 
     while (TRUE) {
       ID <- ID + 1
@@ -61,13 +67,19 @@ Get_EASIN_Data <- function(
         DownTry <- 0
 
         while (TRUE) {
+
           DownTry <- DownTry + 1
           # .mapUnicode = FALSE to ignore encoding issues in some references
           ChunkDT <- RCurl::getURL(ChunkDT_URL, .mapUnicode = FALSE)
-          ReDown <- inherits(ChunkDT, "try-error") ||
-            stringr::str_detect(
-              string = ChunkDT, pattern = "An error occurred while retrieving")
-          if (magrittr::not(ReDown)) break()
+
+          ReDown <- (inherits(ChunkDT, "try-error") ||
+                       stringr::str_detect(
+                         string = ChunkDT, pattern = "An error occurred while retrieving"))
+
+          if (magrittr::not(ReDown)) {
+            break()
+          }
+
           if (ReDown && DownTry > 10) {
             SpeciesOkay <- FALSE
             break()

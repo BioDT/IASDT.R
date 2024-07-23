@@ -2,19 +2,20 @@
 # Chelsa_Prepare_List ----
 ## |------------------------------------------------------------------------| #
 
-#' Prepare list of potential variables
+#' Prepare and Download CHELSA Climate Data
 #'
-#' Prepare list of potential variables
+#' This function prepares a list of CHELSA climate data files to download based on specified criteria, downloads the files if requested, and saves the list and downloaded files to disk.
 #'
 #' @name Chelsa_Prepare_List
-#' @param Down Logical. Download Chelsa files?
-#' @param DownParallel Logical. Download input files on parallel (if `Down` = `TRUE`)
-#' @param DwnPath String. Download path
-#' @param OutPath String. Output path
-#' @param UpdateExisting Logical. Reprocess existing file?
-#' @param Path_Chelsa String. Path for Chelsa analyses
+#' @param Down Logical, whether to download the CHELSA files.
+#' @param DownParallel Logical, whether to download files in parallel (if `Down` is `TRUE`).
+#' @param DwnPath String, the path where downloaded files should be saved.
+#' @param OutPath String, the path where output files should be saved.
+#' @param UpdateExisting Logical, whether to re-download and process files that already exist.
+#' @param Path_Chelsa String, the base path for CHELSA analyses and data storage.
 #' @author Ahmed El-Gabbas
 #' @importFrom rlang .data
+#' @return A data frame containing metadata about the CHELSA climate data files, including variables, climate models, scenarios, and download URLs.
 #' @export
 #' @details
 #' list of variables exist under current and future climates.
@@ -25,14 +26,23 @@ Chelsa_Prepare_List <- function(
     Down = FALSE, DownParallel = TRUE, DwnPath = NULL, OutPath = NULL,
     UpdateExisting = FALSE, Path_Chelsa = "Data/Chelsa") {
 
+  if (Down && (is.null(DwnPath) || is.null(OutPath))) {
+    stop("DwnPath and OutPath cannot be NULL")
+  }
+
+  if (magrittr::not(fs::dir_exists(Path_Chelsa))) {
+    stop("Path_Chelsa path does not exist")
+  }
+
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Variable <- DownFile <- NULL
 
-
   BaseURL <- "https://os.zhdk.cloud.switch.ch/envicloud/chelsa/chelsa_V2/GLOBAL/"
+
   ClimateModels <- c(
     "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL")
+
   ClimateScenarios <- c("ssp126", "ssp370", "ssp585")
 
   # Variables to exclude
@@ -116,8 +126,10 @@ Chelsa_Prepare_List <- function(
             stringr::str_remove_all(
               pattern = stringr::str_glue('{.y}|{stringr::str_replace(.y, "-", "_")}'))
         }),
+
       Var = purrr::map_chr(
         .x = .data$Var, .f = stringr::str_remove_all, pattern = "__|___"),
+
       Var = purrr::map_chr(
         .x = .data$Var, .f = stringr::str_remove_all, pattern = "^_|_$"),
 
@@ -181,7 +193,8 @@ Chelsa_Prepare_List <- function(
 
   # Save to disk
   save(ChelsaClimData, file = file.path(Path_Chelsa, "ChelsaClimData.RData"))
-  readr::write_csv(ChelsaClimData, file = file.path(Path_Chelsa, "ChelsaClimData.csv"))
+  readr::write_csv(
+    x = ChelsaClimData, file = file.path(Path_Chelsa, "ChelsaClimData.csv"))
 
   return(ChelsaClimData)
 }

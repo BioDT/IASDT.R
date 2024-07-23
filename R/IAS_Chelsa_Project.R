@@ -4,18 +4,18 @@
 
 #' Project Chelsa data to the study area
 #'
-#' Project Chelsa data to the study area
+#' This function processes Chelsa climate data, projects it to a specified reference grid, and optionally saves the output in NetCDF or TIFF format. It supports downloading data from a URL, applying a land mask, and adjusting data with scale and offset values.
 #'
 #' @name Chelsa_Project
 #' @param InputFile character; file path or URL for input tif file
-#' @param OutFile character; file path for output nc/tif file. File extension will be replaced when needed.
-#' @param GridFile reference grid; either as `RasterLayer`, `SpatRaster`, or `PackedSpatRaster`. The reference grid will be used for projection and the resulted maps will be masked to it
-#' @param ReturnMap logical; should the processed map be returned by the end of the function? Default: `FALSE`
-#' @param DownPath character; Where to save downloaded files (if the `InputFile` is a URL)
-#' @param KeepDownloaded logical; if URL is provided as input file, the file will be downloaded to disk first before processing. Should the downloaded file be kept in disk. Default: `FALSE`
-#' @param SaveTiff logical; also save output map as *.tif file. Default: `FALSE`
-#' @param CompressLevel integer; compression level of the exported NetCDF file (see: `terra::writeCDF` for more information). Can be set to an integer between 1 (least compression) and 9 (most compression). Default: `5`.
-#' @returns If `ReturnMap = TRUE`, a wrapped SpatRaster object (`PackedSpatRaster`) is returned; otherwise nothing is returned. By default the function exports a NetCDF file. If `SaveTiff` is set as `TRUE`, additional tiff file will be saved to disk.
+#' @param OutFile character; the file path or URL for the input TIFF file. If a URL is provided, the file is downloaded for processing.
+#' @param GridFile either a `RasterLayer`, `SpatRaster`, or `PackedSpatRaster` object; the reference grid to which the input data will be projected. The output maps will be masked to this grid.
+#' @param ReturnMap logical; if `TRUE`, the processed map (as a `PackedSpatRaster` object) is returned. Defaults to `FALSE`.
+#' @param DownPath character; the directory path where downloaded files (if `InputFile` is a URL) are saved. If not specified, a temporary file is used.
+#' @param KeepDownloaded logical; determines whether the downloaded file (if `InputFile` is a URL) should be kept after processing. Defaults to `TRUE`.
+#' @param SaveTiff logical; if `TRUE`, the output map is also saved as a TIFF file in addition to the default NetCDF format. Defaults to `FALSE`.
+#' @param CompressLevel integer; specifies the compression level for the exported NetCDF file, ranging from 1 (least compression) to 9 (most compression). Defaults to 5.
+#' @return Depending on the `ReturnMap` parameter, either a `PackedSpatRaster` object is returned, or nothing is returned. The function always writes at least one file to disk (NetCDF or TIFF).
 #' @author Ahmed El-Gabbas
 #' @export
 
@@ -23,6 +23,14 @@ Chelsa_Project <- function(
     InputFile = NULL, OutFile = NULL, GridFile = NULL, ReturnMap = FALSE,
     DownPath = NULL, KeepDownloaded = TRUE, SaveTiff = FALSE,
     CompressLevel = 5) {
+
+  if (is.null(InputFile) || is.null(OutFile) || is.null(GridFile)) {
+    stop("InputFile, OutFile, and GridFile cannot be NULL")
+  }
+
+  if (magrittr::not(dirname(fs::dir_exists(InputFile)))) {
+    stop("InputFile path does not exist")
+  }
 
   # Ensure that the reference grid is not null
   if (is.null(GridFile)) stop("GridFile can not be empty")

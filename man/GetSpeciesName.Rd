@@ -2,17 +2,20 @@
 % Please edit documentation in R/IAS_GetSpeciesName.R
 \name{GetSpeciesName}
 \alias{GetSpeciesName}
-\title{Get species information for specific species number}
+\title{Get Species Name or Information Based on IASDT Species ID}
 \usage{
 GetSpeciesName(EnvFile = ".env", SpID = NULL)
 }
 \arguments{
-\item{EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
+\item{EnvFile}{EnvFile A string specifying the path to the environment variables file. Default is ".env". This file must exist in the specified path; otherwise, the function will stop with an error message.}
 
-\item{SpID}{Species ID}
+\item{SpID}{optional IASDT species ID for which detailed information is required. If not provided, the function returns the entire species list.}
+}
+\value{
+A data frame containing species information.
 }
 \description{
-Get species information for specific species number
+This function retrieves detailed information on IASDT Species, optionally filtered by a specific IASDT species ID. It first loads environment variables from a given file, then reads a species list from a path specified in the environment variables. If a species ID is provided, it also fetches the number of grid cells associated with that species.
 }
 \author{
 Ahmed El-Gabbas

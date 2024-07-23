@@ -2,16 +2,16 @@
 # LoadPackages ----
 ## |------------------------------------------------------------------------| #
 
-#' Load package silently (+ install missing packages)
+#' Load package silently and install missing packages
 #'
-#' Load package silently (+ install missing packages)
+#' This function attempts to load specified R packages. If any package is not installed, it installs them first. It can operate silently or verbosely, indicating which packages were loaded and their versions.
 #'
-#' @param ... packages to load / install
-#' @param List vector for the name of packages to be loaded
-#' @param Verbose print a message of the package name and version
+#' @param ... character. Names of packages to load/install, passed as individual arguments.
+#' @param List character vector. An alternative or additional way to specify package names as a vector.
+#' @param Verbose logical. If `TRUE`, prints the names and versions of loaded packages. Defaults to `FALSE`.
 #' @name LoadPackages
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return NULL This function does not return anything.
 #' @export
 #' @examples
 #' LoadPackages(raster)
@@ -19,19 +19,17 @@
 #' LoadPackages(terra, Verbose = TRUE)
 
 LoadPackages <- function(..., List = NULL, Verbose = FALSE) {
+
   # Packages to load
   PG <- rlang::ensyms(...) %>%
     as.character() %>%
     c(List) %>%
+    unique() %>%
     sort() %>%
-    setdiff(as.character(.packages()))
+    setdiff(as.character(.packages(all.available = TRUE)))
 
   # packages to install
-  InstPack <- utils::installed.packages() %>%
-    as.data.frame() %>%
-    "["("Package") %>%
-    unlist() %>%
-    setdiff(x = PG)
+  InstPack <- setdiff(PG, rownames(utils::installed.packages()))
 
   if (length(InstPack) > 0) {
     cat("The following packages will be installed\n")
@@ -40,10 +38,11 @@ LoadPackages <- function(..., List = NULL, Verbose = FALSE) {
       stringr::str_c("", collapse = "\n") %>%
       cat()
 
-    InstPack %>%
-      purrr::map(
-        utils::install.packages, repos = "http://cran.us.r-project.org",
-        dependencies = TRUE, quiet = TRUE) %>%
+    # Installing missing packages
+    purrr::map(
+      .x = InstPack, .f = utils::install.packages,
+      repos = "http://cran.us.r-project.org",
+      dependencies = TRUE, quiet = TRUE) %>%
       utils::capture.output(file = nullfile()) %>%
       suppressMessages() %>%
       suppressWarnings()
@@ -52,19 +51,20 @@ LoadPackages <- function(..., List = NULL, Verbose = FALSE) {
   }
 
   # load packages
-  PG %>%
-    sapply(library, character.only = TRUE, quietly = TRUE, verbose = FALSE) %>%
+  sapply(PG, library, character.only = TRUE, quietly = TRUE, verbose = FALSE) %>%
     invisible() %>%
     suppressWarnings() %>%
     suppressMessages()
 
   if (Verbose && length(PG) > 0) {
     cat("\nThe following packages were loaded:\n")
-    PG %>%
-      purrr::map_chr(~{
+
+    purrr::map_chr(
+      .x = PG,
+      .f = ~{
         .x %>%
           utils::packageDescription() %>%
-          "$"("Version") %>%
+          magrittr::extract2("Version") %>%
           as.character() %>%
           paste0("  >>>>>  ", .x, ": ", .)
       }) %>%

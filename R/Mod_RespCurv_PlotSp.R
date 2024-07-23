@@ -27,9 +27,6 @@ RespCurv_PlotSp <- function(
     Observed_PA <- Col <- Q975 <- Q25 <- Q50 <- X <- Y <- NULL
 
 
-  # RespCurv_PlotSp: no visible binding for global variable 'Plot'
-  #
-
   IASDT.R::CatTime("Check input arguments")
   AllArgs <- ls()
   AllArgs <- purrr::map(

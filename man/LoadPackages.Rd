@@ -2,19 +2,22 @@
 % Please edit documentation in R/General_LoadPackages.R
 \name{LoadPackages}
 \alias{LoadPackages}
-\title{Load package silently (+ install missing packages)}
+\title{Load package silently and install missing packages}
 \usage{
 LoadPackages(..., List = NULL, Verbose = FALSE)
 }
 \arguments{
-\item{...}{packages to load / install}
+\item{...}{character. Names of packages to load/install, passed as individual arguments.}
 
-\item{List}{vector for the name of packages to be loaded}
+\item{List}{character vector. An alternative or additional way to specify package names as a vector.}
 
-\item{Verbose}{print a message of the package name and version}
+\item{Verbose}{logical. If \code{TRUE}, prints the names and versions of loaded packages. Defaults to \code{FALSE}.}
+}
+\value{
+NULL This function does not return anything.
 }
 \description{
-Load package silently (+ install missing packages)
+This function attempts to load specified R packages. If any package is not installed, it installs them first. It can operate silently or verbosely, indicating which packages were loaded and their versions.
 }
 \examples{
 LoadPackages(raster)

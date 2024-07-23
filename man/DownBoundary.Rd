@@ -4,28 +4,22 @@
 \alias{DownBoundary}
 \title{Determine the boundaries of the requested GBIF data}
 \usage{
-DownBoundary(L, R, B, T)
+DownBoundary(Left = NULL, Right = NULL, Bottom = NULL, Top = NULL)
 }
 \arguments{
-\item{L}{left boundary}
-
-\item{R}{right boundary}
-
-\item{B}{bottom boundary}
-
-\item{T}{top boundary}
+\item{Left, Right, Bottom, Top}{Numeric, the left, right, bottom, and top boundary of the area.}
 }
 \value{
-WKT string
+A character string representing the WKT of the polygon that outlines the specified boundaries.
 }
 \description{
-\code{rgbif::pred_within()} function used to download GBIF data only accepts a WKT string. This function takes the values of the boundary and converts it to a WKT string. Default values are determined by the variables: Bound_L, R = Bound_R, Bound_B, Bound_T...
+\code{rgbif::pred_within()} function used to download GBIF data only accepts a WKT string. This function takes the values of the boundary and converts it to a WKT string.
 }
 \details{
-Determine the boundaries of the requested GBIF data
+This function constructs a Well-Known Text (WKT) string representing a polygon that outlines the specified boundaries. It is used to define the area of interest for downloading GBIF data through the \code{rgbif::pred_within()} function.
 }
 \examples{
-IASDT.R::DownBoundary(20, 30, 40, 50)
+IASDT.R::DownBoundary(Left = 20, Right = 30, Bottom = 40, Top = 50)
 }
 \author{
 Ahmed El-Gabbas

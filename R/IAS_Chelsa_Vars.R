@@ -2,17 +2,16 @@
 # Chelsa_Vars ----
 ## |------------------------------------------------------------------------| #
 
-#' Detailed information on Chelsa data
+#' Detailed information on Chelsa climate variables
 #'
-#' Detailed information on Chelsa data
-#'
+#' This function returns a tibble containing detailed information about various climate variables used in the Chelsa climate data set. Each row in the tibble represents a different climate variable, with columns providing additional details such as the long name, unit, scale, offset, and an explanation of the variable.
 #' @name Chelsa_Vars
+#' @return A tibble with columns: Variable (character), Long_name (character), unit (character), scale (numeric), offset (numeric), and explanation (character). Each row represents a different climate variable.
 #' @author Ahmed El-Gabbas
 #' @examples
 #' print(Chelsa_Vars(), n = Inf)
 #' @export
-#' @details
-#' https://chelsa-climate.org/bioclim/
+#' @details [click here](https://chelsa-climate.org/bioclim/)
 
 Chelsa_Vars <- function() {
   tibble::tribble(
@@ -22,7 +21,7 @@ Chelsa_Vars <- function() {
     "bio3", "isothermality", "deg C", 0.1, 0, "ratio of diurnal variation to annual variation in temperatures",
     "bio4", "temperature seasonality", "deg C/100", 0.1, 0, "standard deviation of the monthly mean temperatures",
     "bio5", "mean daily maximum air temperature of the warmest month", "deg C", 0.1, -273.15, "The highest temperature of any monthly daily mean maximum temperature",
-    "bio6", "mean daily minimum air temperature of the coldest month", "deg C", 0.1, -273.15, "The lowest temperature of any monthly daily mean maximum temperature",
+    "bio6", "mean daily minimum air temperature of the coldest month", "deg C", 0.1, -273.15, "The lowest temperature of any monthly daily mean minimum temperature",
     "bio7", "annual range of air temperature", "deg C", 0.1, 0, "Difference between the Maximum Temperature of Warmest month and the Minimum Temperature of Coldest month (bio5-bio6)",
     "bio8", "mean daily mean air temperatures of the wettest quarter", "deg C", 0.1, -273.15, "The wettest quarter of the year is determined (to the nearest month)",
     "bio9", "mean daily mean air temperatures of the driest quarter", "deg C", 0.1, -273.15, "The driest quarter of the year is determined (to the nearest month)",
@@ -63,5 +62,6 @@ Chelsa_Vars <- function() {
     "kg4", "Koeppen-Geiger climate classification", "category", 1, 0, "Thornthwaite 1931",
     "kg5", "Koeppen-Geiger climate classification", "category", 1, 0, "Troll-Pfaffen - Troll&Paffen (1964)",
     "npp", "Net primary productivity", "g C m-2 yr-1", 0.1, 0, "Calculated based on the `Miami model`, Lieth, H., 1972."
-  )
+  ) %>% 
+  return()
 }

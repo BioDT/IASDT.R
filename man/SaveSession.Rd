@@ -2,19 +2,22 @@
 % Please edit documentation in R/General_SaveSession.R
 \name{SaveSession}
 \alias{SaveSession}
-\title{Save all objects (except functions) of the global environment as list items}
+\title{Saves all non-function objects from the global environment to an RData file.}
 \usage{
 SaveSession(Path = getwd(), ExcludeObj = NULL, Prefix = "S")
 }
 \arguments{
-\item{Path}{String. Path of where to save the output RData file}
+\item{Path}{A string specifying the directory path where the output RData file should be saved. Defaults to the current working directory.}
 
-\item{ExcludeObj}{Objects not to save}
+\item{ExcludeObj}{A vector of object names (as strings) to exclude from saving.}
 
-\item{Prefix}{String. File prefix}
+\item{Prefix}{A string to prefix the saved file name with. Defaults to "S".}
+}
+\value{
+A tibble containing the names and sizes (in MB, rounded to 1 decimal place) of the saved objects.
 }
 \description{
-Save all objects (except functions) of the global environment as list items
+This function saves all objects (except functions and specified exclusions) from the global environment as list items in an RData file. It also creates a summary of these objects' sizes in memory.
 }
 \author{
 Ahmed El-Gabbas

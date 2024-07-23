@@ -2,31 +2,31 @@
 % Please edit documentation in R/General_NDecimals.R
 \name{NDecimals}
 \alias{NDecimals}
-\title{Number of decimal places in a vector}
+\title{Number of Decimal Places in a Numeric Value}
 \usage{
 NDecimals(x)
 }
 \arguments{
-\item{x}{vector}
+\item{x}{A numeric value or a string that represents a numeric value. The function will return the number of decimal places in this value.}
 }
 \value{
-integer; number of decimal places
+An integer representing the number of decimal places in the input value. If the input value does not have any decimal places, the function returns 0.
 }
 \description{
-Number of decimal places in a vector
+This function calculates the number of decimal places in a numeric value. It is designed to work with numeric inputs that can be coerced to character format.
 }
 \examples{
-NDecimals("13.45554545")
+NDecimals(x = "13.45554545")
 
 # -------------------------------------------
 
-NDecimals(15.01500)
+NDecimals(x = 15.01500)
 
-NDecimals('15.01500')
+NDecimals(x = '15.01500')
 
 # -------------------------------------------
 
-NDecimals(13.45554545)
+NDecimals(x = 13.45554545)
 }
 \author{
 Ahmed El-Gabbas

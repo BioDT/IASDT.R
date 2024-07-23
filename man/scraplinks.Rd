@@ -2,19 +2,22 @@
 % Please edit documentation in R/General_ScrapLinks.R
 \name{ScrapLinks}
 \alias{ScrapLinks}
-\title{Extract link texts and urls from a web page}
+\title{Extracts link texts and URLs from a web page}
 \usage{
 ScrapLinks(url)
 }
 \arguments{
-\item{url}{the url}
+\item{url}{A character string specifying the URL of the web page to scrape. This URL is also used to resolve relative links to absolute URLs.}
+}
+\value{
+A tibble with two columns: \code{link_text} containing the text of each link, and \code{url} containing  the absolute URL of each link. The tibble is sorted by URL and then by link text, and only unique links are included.
 }
 \description{
-Extract link texts and urls from a web page
+This function scrapes a web page for all links (\if{html}{\out{<a>}} tags) and extracts both the URLs and the link text. It returns a tibble with two columns: one for the link text and one for the URLs. The URLs are made absolute using the base URL provided. The function also ensures that the URLs are unique and sorted.
 }
 \examples{
 ScrapLinks("https://github.com/")
 }
 \references{
-https://gist.github.com/paulrougieux/e1ee769577b40cd9ed9db7f75e9a2cc2
+\href{https://gist.github.com/paulrougieux/e1ee769577b40cd9ed9db7f75e9a2cc2}{Read more}
 }

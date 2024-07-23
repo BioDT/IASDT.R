@@ -2,15 +2,15 @@
 # CheckStackInMemory ------
 ## |------------------------------------------------------------------------| #
 
-#' Check if the raster stack reads from disk or memory
+#' Check if a raster stack reads from disk or memory
 #'
-#' Check if the raster stack reads from disk or memory
-#'
+#' This function checks whether the layers of a RasterStack object are stored in memory or read from disk.  It prints messages indicating whether all layers are in memory, all layers are on disk, or a mix of both. If there's a mix, it specifies which layers are on disk.
 #' @author Ahmed El-Gabbas
 #' @export
-#' @param Stack Stack
+#' @param Stack A RasterStack object. If `NULL` or not a RasterStack, the function will stop with an error.
+#' @return No return value, but prints messages to the console.
 #' @examples
-#' LoadPackages(raster)
+#' library(raster)
 #' logo <- raster(system.file("external/rlogo.grd", package = "raster"))
 #' logo@data@inmemory
 #' logo@data@fromdisk
@@ -36,23 +36,26 @@
 
 CheckStackInMemory <- function(Stack = NULL) {
 
-  if (!inherits(Stack, "RasterStack")) {
-    message("The object should be a Raster stack object")
-    opt <- options(show.error.messages = FALSE)
-    on.exit(options(opt))
-    invisible(stop())
+  # Check input argument
+  if (is.null(Stack)) {
+    stop("Input Stack cannot be NULL")
+  }
+
+  if (magrittr::not(inherits(Stack, "RasterStack"))) {
+    stop("The object should be a RasterStack object")
   }
 
   InMem <- sapply(raster::unstack(Stack), raster::inMemory)
+
   if (all(InMem)) {
     message(paste0("All stack layers reads from ", crayon::bold("disk")))
   }
-  if (all(!InMem)) {
+  if (all(magrittr::not(InMem))) {
     message(paste0("All stack layers reads from ", crayon::bold("memory")))
   }
 
-  if (sum(InMem) > 0 && sum(InMem) < raster::nlayers(Stack)) {
-    paste0("Layers numbered (", paste0(which(!InMem), collapse = "-"),
-           ") reads from disk")
+  if (sum(InMem) > 0 && (sum(InMem) < raster::nlayers(Stack))) {
+    paste0("Layers numbered (",
+      paste0(which(!InMem), collapse = "-"), ") reads from disk")
   }
 }

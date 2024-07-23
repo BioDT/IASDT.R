@@ -2,15 +2,15 @@
 # SaveSession ----
 ## |------------------------------------------------------------------------| #
 #
-#' Save all objects (except functions) of the global environment as list items
+#' Saves all non-function objects from the global environment to an RData file.
 #'
-#' Save all objects (except functions) of the global environment as list items
+#' This function saves all objects (except functions and specified exclusions) from the global environment as list items in an RData file. It also creates a summary of these objects' sizes in memory.
 #'
-#' @param Path String. Path of where to save the output RData file
-#' @param ExcludeObj Objects not to save
-#' @param Prefix String. File prefix
+#' @param Path A string specifying the directory path where the output RData file should be saved. Defaults to the current working directory.
+#' @param ExcludeObj A vector of object names (as strings) to exclude from saving.
+#' @param Prefix A string to prefix the saved file name with. Defaults to "S".
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return A tibble containing the names and sizes (in MB, rounded to 1 decimal place) of the saved objects.
 #' @export
 
 SaveSession <- function(Path = getwd(), ExcludeObj = NULL, Prefix = "S") {
@@ -20,6 +20,7 @@ SaveSession <- function(Path = getwd(), ExcludeObj = NULL, Prefix = "S") {
   Object <- Class <- Size <- Obj <- NULL
 
   fs::dir_create(Path)
+
   ExcludeObj <- c(ExcludeObj, "Grid_10_sf_s", "Grid_10_Raster", "Bound_sf_Eur_s", "Bound_sf_Eur")
 
   AllObjs <- ls(envir = .GlobalEnv) %>%
@@ -38,8 +39,8 @@ SaveSession <- function(Path = getwd(), ExcludeObj = NULL, Prefix = "S") {
       magrittr::not(Object %in% ExcludeObj)) %>%
     dplyr::pull(Object)
 
-  AllObjs <- AllObjs %>%
-    purrr::map(
+  AllObjs <- purrr::map(
+      .x = AllObjs,
       .f = ~{
         Obj <- get(.x, envir = .GlobalEnv)
         if (class(Obj)[1] == "SpatRaster") {
@@ -50,8 +51,8 @@ SaveSession <- function(Path = getwd(), ExcludeObj = NULL, Prefix = "S") {
       }) %>%
     stats::setNames(AllObjs)
 
-  FF2 <- lubridate::now(tzone = "CET") %>%
-    purrr::map_chr(
+  FF2 <- purrr::map_chr(
+      .x = lubridate::now(tzone = "CET"),
       .f = ~{
         c(lubridate::year(.x), lubridate::month(.x),
           lubridate::day(.x), "__",

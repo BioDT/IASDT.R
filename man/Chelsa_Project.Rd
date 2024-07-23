@@ -18,25 +18,25 @@ Chelsa_Project(
 \arguments{
 \item{InputFile}{character; file path or URL for input tif file}
 
-\item{OutFile}{character; file path for output nc/tif file. File extension will be replaced when needed.}
+\item{OutFile}{character; the file path or URL for the input TIFF file. If a URL is provided, the file is downloaded for processing.}
 
-\item{GridFile}{reference grid; either as \code{RasterLayer}, \code{SpatRaster}, or \code{PackedSpatRaster}. The reference grid will be used for projection and the resulted maps will be masked to it}
+\item{GridFile}{either a \code{RasterLayer}, \code{SpatRaster}, or \code{PackedSpatRaster} object; the reference grid to which the input data will be projected. The output maps will be masked to this grid.}
 
-\item{ReturnMap}{logical; should the processed map be returned by the end of the function? Default: \code{FALSE}}
+\item{ReturnMap}{logical; if \code{TRUE}, the processed map (as a \code{PackedSpatRaster} object) is returned. Defaults to \code{FALSE}.}
 
-\item{DownPath}{character; Where to save downloaded files (if the \code{InputFile} is a URL)}
+\item{DownPath}{character; the directory path where downloaded files (if \code{InputFile} is a URL) are saved. If not specified, a temporary file is used.}
 
-\item{KeepDownloaded}{logical; if URL is provided as input file, the file will be downloaded to disk first before processing. Should the downloaded file be kept in disk. Default: \code{FALSE}}
+\item{KeepDownloaded}{logical; determines whether the downloaded file (if \code{InputFile} is a URL) should be kept after processing. Defaults to \code{TRUE}.}
 
-\item{SaveTiff}{logical; also save output map as *.tif file. Default: \code{FALSE}}
+\item{SaveTiff}{logical; if \code{TRUE}, the output map is also saved as a TIFF file in addition to the default NetCDF format. Defaults to \code{FALSE}.}
 
-\item{CompressLevel}{integer; compression level of the exported NetCDF file (see: \code{terra::writeCDF} for more information). Can be set to an integer between 1 (least compression) and 9 (most compression). Default: \code{5}.}
+\item{CompressLevel}{integer; specifies the compression level for the exported NetCDF file, ranging from 1 (least compression) to 9 (most compression). Defaults to 5.}
 }
 \value{
-If \code{ReturnMap = TRUE}, a wrapped SpatRaster object (\code{PackedSpatRaster}) is returned; otherwise nothing is returned. By default the function exports a NetCDF file. If \code{SaveTiff} is set as \code{TRUE}, additional tiff file will be saved to disk.
+Depending on the \code{ReturnMap} parameter, either a \code{PackedSpatRaster} object is returned, or nothing is returned. The function always writes at least one file to disk (NetCDF or TIFF).
 }
 \description{
-Project Chelsa data to the study area
+This function processes Chelsa climate data, projects it to a specified reference grid, and optionally saves the output in NetCDF or TIFF format. It supports downloading data from a URL, applying a land mask, and adjusting data with scale and offset values.
 }
 \author{
 Ahmed El-Gabbas

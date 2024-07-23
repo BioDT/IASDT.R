@@ -10,12 +10,14 @@
 #' @param ngrid Integer. Number of points along the gradient (for continuous focal variables)
 #' @param NCores Integer. Number of parallel cores.
 #' @param ShowProgress Logical. Show progress bar. Default: `FALSE`
+#' @param ReturnData Logical. Should the response curve data be returned as an R object? Default: `FALSE`
 #'
 #' @export
 #'
 
 RespCurv_PrepData <- function(
-    Path_Model = NULL, ngrid = 50, NCores = 15, ShowProgress = FALSE) {
+    Path_Model = NULL, ngrid = 50, NCores = 15, ShowProgress = FALSE,
+    ReturnData = FALSE) {
 
   TimeStartData <- lubridate::now(tzone = "CET")
 
@@ -125,7 +127,7 @@ RespCurv_PrepData <- function(
       invisible(gc())
 
       # +++++++++++++++++++++++++++++++++
-      # Prepare plotting data: probability of occurrences
+      # Prepare plotting data: probability of occurrence
       # +++++++++++++++++++++++++++++++++
 
       probs <- c(0.025, 0.5, 0.975) # quantiles to be calculated
@@ -206,7 +208,7 @@ RespCurv_PrepData <- function(
       Observed_SR <- tibble::tibble(
         XVals = Model$XData[, Variable], Pred = rowSums(Model$Y, na.rm = TRUE))
 
-      # save species richness data
+      # Save species richness data
       RC_Data_SR <- list(
         Variable = Variable, Coords = Coords, NFV = NFV,
         RC_Data_SR = RC_Data_SR,
@@ -232,7 +234,7 @@ RespCurv_PrepData <- function(
   Path_ResCurve <- Path_Model %>%
     dirname() %>%
     dirname() %>%
-    file.path("ResponseCurves")
+    file.path("Model_Postprocessing")
   Path_RespCurvDT <- file.path(Path_ResCurve, "RespCurv_DT")
   fs::dir_create(Path_RespCurvDT)
 
@@ -326,8 +328,16 @@ RespCurv_PrepData <- function(
       dplyr::bind_rows()
   }
 
+  IASDT.R::CatTime("Saving data to desk")
+  save(ResCurvDT, file = file.path(Path_RespCurvDT, "ResCurvDT.RData"))
+
+
   IASDT.R::CatDiff(
     InitTime = TimeStartData, Prefix = "Completed in ", CatInfo = FALSE)
-  save(ResCurvDT, file = file.path(Path_RespCurvDT, "ResCurvDT.RData"))
-  return(ResCurvDT)
+
+  if (ReturnData) {
+    return(ResCurvDT)
+  } else {
+    return(invisible(NULL))
+  }
 }

@@ -2,26 +2,28 @@
 # Range2NewVal ----
 ## |------------------------------------------------------------------------| #
 #
-#' Change values of `vector`/`data.frame`/`raster` within/outside a certain range to another value
+#' Changes values within a specified range or larger than or equals to / less than or equals to specific value to a new value in a vector, data.frame, or raster.
 #'
-#' Change values of `vector`/`data.frame`/`raster` within/outside a certain range to another value
+#' This function modifies values in the input object `x` based on the specified conditions. It can operate on vectors, data.frames, or RasterLayer objects. The function allows for changing values within a specified range (`Between`), greater than or equals to a specified value (`MoreThan`), or less than or equals to a specified value (`LessThan`) to a new value (`NewVal`). An option to invert the selection is also available for ranges.
 #'
 #' @name Range2NewVal
 #' @author Ahmed El-Gabbas
-#' @param x vector / data.frame / raster object.
-#' @param Between Range of values to be changed or kept.
-#' @param MoreThan The value above which the original values will be changed. Only applied if `Between` is not used.
-#' @param LessThan The value below which the original values will be changed. Only applied if `Between` and `MoreThan` are not used.
-#' @param NewVal The new value to be assigned. Default: `NA`.
-#' @param InvertSelection Should the selection be inverted? Only valid if `Between` used. If `InvertSelection = TRUE`, then the values not in the range of `Between` argument will be changed. Default: `FALSE`.
-#'
+#' @param x A vector, data.frame, or RasterLayer object whose values are to be modified.
+#' @param Between A numeric vector of length 2 specifying the range of values to be changed or kept. If specified, `MoreThan` and `LessThan` are ignored.
+#' @param MoreThan,LessThan A numeric value specifying the threshold above/below which values in `x` will be changed to `NewVal`. Only applied if `Between` is not specified.
+#' @param NewVal The new value to assign to the selected elements in `x`.
+#' @param InvertSelection A logical value indicating whether to invert the selection specified by `Between`. If `TRUE`, values outside the specified range are changed to `NewVal`. Default is `FALSE`.
+#' @return The modified object `x` with values changed according to the specified conditions.
 #' @export
 #' @examples
 #' # Vector
 #'
 #' Range2NewVal(x =  1:10, Between = c(5, 8), NewVal = NA)
 #'
+#'
 #' Range2NewVal(x =  1:10, Between = c(5, 8), NewVal = NA, InvertSelection = TRUE)
+#'
+#' Range2NewVal(x =  1:10, Between = c(5, 8), NewVal = NA, MoreThan = 4)
 #'
 #' # ---------------------------------------------
 #'
@@ -43,7 +45,7 @@
 #'
 #' # raster
 #'
-#' LoadPackages(raster)
+#' library(raster)
 #'
 #' RRR <- system.file("external/test.grd", package = "raster") %>%
 #'     raster::raster()
@@ -58,14 +60,35 @@
 #' plot(stack(RRR>=1000, RRR2, RRR3), nr = 1, main = c(">1000 ?", "<500 to NA", ">500 to NA"))
 
 Range2NewVal <- function(
-    x = NULL, Between = NULL,
-    MoreThan = NULL, LessThan = NULL,
-    NewVal = NA, InvertSelection = FALSE) {
+    x, Between = NULL, MoreThan = NULL, LessThan = NULL,
+    NewVal, InvertSelection = FALSE) {
+
+  if (is.null(x) || is.null(NewVal)) {
+    stop("x and NewVal cannot be NULL")
+  }
+
+  if (all(is.null(MoreThan), is.null(LessThan), is.null(Between))) {
+      stop("At least one of MoreThan, LessThan, and Between should be not NULL")
+  }
 
   if (!is.null(Between)) {
-    if (length(Between) != 2) stop()
+
+    if (length(Between) != 2) {
+      stop("Between should have exactly two values: a minimum and a maximum.")
+    }
+
+    if (any(is.null(MoreThan), is.null(LessThan))) {
+      message("Values of MoreThan and LessThan are ignored if Between argument is used")
+    }
+
     Min <- Between[1]
     Max <- Between[2]
+
+    if (Max <= Min) {
+      stop("Max must be greater than Min.")
+    }
+
+
     if (inherits(x, "RasterLayer")) {
       X1 <- X2 <- x
       X1[X1 >= Max] <- NA
@@ -79,11 +102,8 @@ Range2NewVal <- function(
       } else {
         x[X3 == 2] <- NewVal
       }
-    } else {
 
-      if (is.null(Max)) Max <- max(x)
-      if (is.null(Min)) Min <- min(x)
-      if (Max <= Min) stop()
+    } else {
 
       if (InvertSelection) {
         x[!(x >= Min & x <= Max)] <- NewVal
@@ -94,10 +114,12 @@ Range2NewVal <- function(
   } else {
 
     if (!is.null(MoreThan)) {
-      x[x > MoreThan] <- NewVal
-    } else {
-      if (!is.null(LessThan)) x[x < LessThan] <- NewVal
+      x[x >= MoreThan] <- NewVal
+    }
+
+    if (!is.null(LessThan)) {
+      x[x <= LessThan] <- NewVal
     }
   }
-  x
+  return(x)
 }

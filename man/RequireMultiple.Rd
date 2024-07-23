@@ -7,14 +7,17 @@
 RequireMultiple(..., Reload = FALSE, InstallMissing = TRUE)
 }
 \arguments{
-\item{...}{Packages to load or install}
+\item{...}{character. Names of the packages to be loaded or installed.}
 
-\item{Reload}{Should the already loaded packages re-loaded? Default: \code{FALSE}}
+\item{Reload}{logical. Determines whether already loaded packages should be reloaded. Defaults to \code{FALSE}.}
 
-\item{InstallMissing}{Should the missing packages be installed and loaded? Default: \code{TRUE}}
+\item{InstallMissing}{logical. Determines whether missing packages should be automatically installed and then loaded. Defaults to \code{TRUE}.}
+}
+\value{
+Invisible NULL. The function is used for its side effects (loading/installing packages) and does not return any value.
 }
 \description{
-Load (or install) multiple packages at once
+This function attempts to load multiple R packages specified by the user. If a package is not installed, the function can optionally install it before loading. It also provides an option to reload already loaded packages.
 }
 \examples{
 # Currently loaded packages

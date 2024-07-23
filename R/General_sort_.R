@@ -2,26 +2,23 @@
 # sort_ ----
 ## |------------------------------------------------------------------------| #
 
-#' Sort alphanumeric strings
+#' Sort alphanumeric strings with enhanced options
 #'
-#' Sort alphanumeric strings
+#' This function extends the sorting capabilities for alphanumeric strings by allowing
+#' for sorting of mixed numeric and character strings, with additional control over
+#' sorting direction, treatment of NA and blank values, and handling of numeric values
+#' represented as either decimal numbers or Roman numerals. This function is just a wrapper function for the `gtools::mixedsort` function.
 #'
-#' @param x Vector to be sorted.
-#' @param decreasing logical. Should the sort be increasing or decreasing? Note that descending=TRUE reverses the meanings of na.last and blanks.last. Default: `FALSE`
-#' @param na.last for controlling the treatment of NA values. If TRUE, missing values in the data are put last; if FALSE, they are put first; if NA, they are removed. Default: `TRUE`
-#' @param blank.last for controlling the treatment of blank values. If TRUE, blank values in the data are put last; if FALSE, they are put first; if NA, they are removed. Default: `FALSE`
-#' @param numeric.type either "decimal" (default) or "roman". Are numeric values represented as decimal numbers (numeric.type="decimal") or as Roman numerals (numeric.type="roman")?
-#' @param roman.case one of "upper", "lower", or "both". Are roman numerals represented using only capital letters ('IX') or lower-case letters ('ix') or both?
+#' @inheritParams gtools::mixedsort
 #' @name sort_
-#' @author Ahmed El-Gabbas
 #' @return NULL
 #' @examples
 #' # example code
 #' (AA <- paste0("V", 1:12))
 #'
-#' sort(AA)
+#' sort(x = AA)
 #'
-#' sort_(AA)
+#' sort_(x = AA)
 #'
 #' @export
 
@@ -29,6 +26,21 @@ sort_ <- function(
     x, decreasing = FALSE, na.last = TRUE,
     blank.last = FALSE, numeric.type = c("decimal", "roman"),
     roman.case = c("upper", "lower", "both")) {
+
+  if (is.null(x) || is.null(numeric.type) || is.null(roman.case)) {
+    stop("x, numeric.type, and roman.case cannot be NULL")
+  }
+
+  numeric.type <- numeric.type[1]
+  roman.case <- roman.case[1]
+
+  if (!numeric.type %in% c("decimal", "roman")) {
+    stop("numeric.type must be either 'decimal' or 'roman'")
+  }
+
+  if (!roman.case %in% c("upper", "lower", "both")) {
+    stop("roman.case must be one of 'upper', 'lower', or 'both'")
+  }
 
   gtools::mixedsort(
     x = x, decreasing = decreasing, na.last = na.last,

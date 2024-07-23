@@ -7,26 +7,29 @@
 SplitVector(Vector = NULL, NSplit = NULL, Prefix = "Chunk")
 }
 \arguments{
-\item{Vector}{Vector to split}
+\item{Vector}{A numeric or character vector that you want to split.}
 
-\item{NSplit}{Integer. Number of splits}
+\item{NSplit}{An integer specifying the number of chunks to split the vector into. It must not exceed the length of the vector.}
 
-\item{Prefix}{String. Prefix string for the name of the resulted list}
+\item{Prefix}{A string value that serves as the prefix for the names of the chunks in the returned list. Defaults to "Chunk".}
+}
+\value{
+A list of vectors, where each vector represents a chunk of the original vector. The names of the list elements are generated using the specified prefix followed by an underscore and the chunk number.
 }
 \description{
-Split a vector into smaller chunks
+This function divides a given vector into a specified number of smaller chunks. It is useful for partitioning data into more manageable pieces or for parallel processing tasks.
 }
 \examples{
-SplitVector(1:100, 3)
+SplitVector(Vector = 1:100, NSplit = 3)
 
 # -------------------------------------------
 
-SplitVector(1:100, 2, "T")
+SplitVector(Vector = 1:100, NSplit = 2, Prefix = "T")
 
 # -------------------------------------------
 
 \dontrun{
-SplitVector(1:100)
+SplitVector(Vector = 1:100)
 }
 }
 \author{

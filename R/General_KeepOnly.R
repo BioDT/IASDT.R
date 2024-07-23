@@ -2,13 +2,14 @@
 # KeepOnly ----
 ## |------------------------------------------------------------------------| #
 
-#' Keep only certain objects in memory, all other objects will be removed
+#' Keep only specified objects in the environment, removing all others.
 #'
-#' Keep only certain objects in memory, all other objects will be removed
+#' This function selectively retains the objects specified in the `Obj` parameter in the current environment, removing all other objects. It is useful for memory management by clearing unnecessary objects from the environment. The function also provides an option to print the names of the kept and removed variables.
 #'
 #' @name KeepOnly
-#' @param Obj character vector for objects to be kept in memory
-#' @param Verbose Should the names of kept and removed variables printed? Default: `TRUE`.
+#' @param Obj A character vector specifying the names of the objects to be kept in the environment.
+#' @param Verbose A logical value indicating whether to print the names of kept and removed variables. Default to `TRUE`.
+#' @return No return value, called for side effects.
 #' @author Ahmed El-Gabbas
 #' @export
 #' @examples
@@ -25,16 +26,25 @@
 #' KeepOnly(c("A","B"))
 #' ls()
 
-KeepOnly <- function(Obj = NULL, Verbose = TRUE) {
+KeepOnly <- function(Obj, Verbose = TRUE) {
+
   if (is.null(Obj) || length(Obj) == 0) {
-    stop()
+    stop("Obj cannot be NULL or empty.")
   }
+
+  if (!is.character(Obj)) {
+    stop("Obj must be a character vector.")
+  }
+
   AllObjects <- ls(pos = parent.frame())
   RemObjects <- setdiff(AllObjects, Obj)
+
   if (Verbose) {
     cat(crayon::red(paste0("Removed Variables (", length(RemObjects), "): ")), crayon::blue(paste0(seq_along(RemObjects), ":", RemObjects, collapse = " ||  ")), sep = "")
   }
+
   rm(list = RemObjects, pos = parent.frame())
+
   if (Verbose) {
     cat(crayon::red(paste0("\nKept Variables (", length(Obj), "): ")), crayon::blue(paste0(seq_along(Obj), ":", Obj, collapse = " ||  ")), "\n", sep = "")
   }

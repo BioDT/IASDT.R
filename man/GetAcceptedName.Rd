@@ -2,25 +2,24 @@
 % Please edit documentation in R/IAS_GetAcceptedName.R
 \name{GetAcceptedName}
 \alias{GetAcceptedName}
-\title{Get accepted name of a taxa}
+\title{Get accepted name of a taxon}
 \usage{
 GetAcceptedName(ID)
 }
 \arguments{
-\item{ID}{GBIF id}
+\item{ID}{numeric or integer; the GBIF ID of the taxa for which the accepted name is being queried.}
 }
 \value{
-Scientific name of the accepted taxa
+A character string representing the scientific name of the accepted taxa. If the ID is valid and found in the GBIF database, the scientific name is returned. If the ID is NA, the function returns \code{NA_character_}.
 }
 \description{
-Get accepted name of a taxa
+This function queries the GBIF database to retrieve the accepted scientific name for a given taxa based on its GBIF ID. It uses the \code{rgbif} package to perform the query.
 }
 \details{
 Get accepted name of a taxa
 }
 \examples{
-# https://www.gbif.org/species/5372559
-GetAcceptedName(5372559)
+GetAcceptedName(5372559) # https://www.gbif.org/species/5372559
 }
 \author{
 Ahmed El-Gabbas

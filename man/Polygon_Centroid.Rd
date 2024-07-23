@@ -4,17 +4,23 @@
 \alias{Polygon_Centroid}
 \title{Replace the geometry of a polygon with its centroid point}
 \usage{
-Polygon_Centroid(x, Rename = FALSE, NewName = "")
+Polygon_Centroid(x = NULL, Rename = FALSE, NewName = NULL)
 }
 \arguments{
-\item{x}{simple feature object}
+\item{x}{A simple feature (\code{sf}) object; the polygon whose geometry is to be replaced with its centroid. Cannot be \code{NULL}.}
 
-\item{Rename}{should the geometry field renamed}
+\item{Rename}{A logical value indicating whether to rename the geometry column of the sf object. Defaults to \code{FALSE}.}
 
-\item{NewName}{the new name of geometry}
+\item{NewName}{A string specifying the new name for the geometry column if Rename is \code{TRUE}. If Rename is \code{FALSE}, this parameter is ignored.}
+}
+\value{
+The modified sf object with its geometry replaced by the centroid of the original polygon geometry. If Rename is \code{TRUE}, the geometry column will also be renamed as specified by NewName.
 }
 \description{
-Replace the geometry of a polygon with its centroid point
+This function replaces the geometry of a simple feature (\code{sf}) polygon object with the geometry of its centroid point. It can optionally rename the geometry column of the modified \code{sf} object.
+}
+\references{
+\href{https://github.com/r-spatial/sf/issues/480}{Click here}
 }
 \author{
 Ahmed El-Gabbas

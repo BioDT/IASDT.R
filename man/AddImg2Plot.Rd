@@ -2,30 +2,34 @@
 % Please edit documentation in R/Plot_AddImg2Plot.R
 \name{AddImg2Plot}
 \alias{AddImg2Plot}
-\title{Add image to plot}
+\title{Add an image to an existing plot in R}
 \usage{
-AddImg2Plot(obj, x = NULL, y = NULL, width = NULL, interpolate = TRUE)
+AddImg2Plot(obj, x, y, width, interpolate = TRUE)
 }
 \arguments{
-\item{obj}{an image file imported as an array (e.g. \code{png::readPNG}, \code{jpeg::readJPEG})}
+\item{obj}{The image object to be added to the plot, expected to be an array-like structure (e.g., as read by \code{png::readPNG} or \code{jpeg::readJPEG}).}
 
-\item{x}{mid x coordinate for image}
+\item{x, y}{Numeric, the x-coordinate or y-coordinate (in plot units) at which the center of the image should be placed.}
 
-\item{y}{mid y coordinate for image}
+\item{width}{Numeric, the desired width of the image in plot units (not pixels or inches). The function will calculate the corresponding height to preserve the image's aspect ratio.}
 
-\item{width}{width of image (in x coordinate units)}
-
-\item{interpolate}{(passed to \code{graphics::rasterImage}) A logical vector (or scalar) indicating whether to apply linear interpolation to the image when drawing. Default = \code{TRUE}.}
+\item{interpolate}{Logical, whether to apply linear interpolation to the image when drawing. Defaults to \code{TRUE}. Passed directly to \code{graphics::rasterImage}. Interpolation can improve image quality but may take longer to render.}
+}
+\value{
+This function does not return a value but modifies the current plot by adding an image.
 }
 \description{
-Add image to plot
+This function allows the user to add an image to an existing plot in R by specifying the image object, its position, and its size. The function calculates the necessary dimensions and places the image accordingly. The function uses the existing plot's coordinate system and accounts for the current plot dimensions to ensure accurate placement of the image. It also allows for interpolation, which can improve the visual quality of the image.
+}
+\note{
+The function will stop with an error message if any of the required arguments (\code{obj}, \code{x}, \code{y}, \code{width}) are \code{NULL}.
 }
 \examples{
-LoadPackages(png)
+library(png)
 myurl <- "https://upload.wikimedia.org/wikipedia/commons/e/e1/Jupiter_\%28transparent\%29.png"
 z <- tempfile()
-download.file(myurl, z, mode="wb")
-pic <- readPNG(z)
+download.file(myurl, z, mode="wb", quiet = TRUE)
+pic <- png::readPNG(z)
 file.remove(z) # cleanup
 
 image(volcano)

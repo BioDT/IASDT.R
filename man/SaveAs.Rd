@@ -2,31 +2,32 @@
 % Please edit documentation in R/General_SaveAs.R
 \name{SaveAs}
 \alias{SaveAs}
-\title{Save an object with a different name}
+\title{Save an object to a file with a new name}
 \usage{
 SaveAs(InObj, OutObj, OutPath)
 }
 \arguments{
-\item{InObj}{input object}
+\item{InObj}{The input object to be saved. This can be an actual R object or a character string representing the name of an object.}
 
-\item{OutObj}{output object}
+\item{OutObj}{A character string specifying the new name for the saved object. This name is used when the object is loaded back into R.}
 
-\item{OutPath}{save path}
+\item{OutPath}{A character string specifying the file path (*.RData) where the object should be saved. This includes the directory and the file name.}
+}
+\value{
+NULL The function does not return a value but saves an object to the specified file path.
 }
 \description{
-Save an object with a different name
+This function saves an R object to a specified file path with a potentially new name. It is useful for renaming objects during the save process.
 }
 \examples{
 TMP_Folder <- file.path(tempdir(), stringi::stri_rand_strings(1, 5))
 fs::dir_create(TMP_Folder)
-
+list.files(TMP_Folder)
 # save iris data in `iris2.RData` with `iris2` object name
 SaveAs(iris, "iris2", file.path(TMP_Folder, "iris2.RData"))
-
 list.files(TMP_Folder, pattern = "^.+.RData")
 
 (load(file.path(TMP_Folder, "iris2.RData")))
-
 tibble::tibble(iris2)
 }
 \author{

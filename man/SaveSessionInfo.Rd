@@ -2,19 +2,22 @@
 % Please edit documentation in R/General_SaveSessionInfo.R
 \name{SaveSessionInfo}
 \alias{SaveSessionInfo}
-\title{Save session info}
+\title{Save Session Information to a File}
 \usage{
 SaveSessionInfo(Path = getwd(), SessionObj = NULL, Prefix = "S")
 }
 \arguments{
-\item{Path}{Path of where to save the output RData file}
+\item{Path}{string specifying the directory path where the output file should be saved. The default is the current working directory (\code{getwd()}).}
 
-\item{SessionObj}{List of objects and their sizes (typically a a result of \code{IASDT::SaveSession} function)}
+\item{SessionObj}{An optional list of objects to include in the session information output. This is typically the result of a session management function like \code{IASDT::SaveSession}. If provided, details of these objects (excluding functions and pre-selected objects, with sizes in megabytes) are appended to the session information file.}
 
-\item{Prefix}{file prefix}
+\item{Prefix}{A string to be used as a prefix for the output file name. The default prefix is "S".}
+}
+\value{
+Invisibly returns NULL. The primary effect of this function is the side effect of writing  session information to a file.
 }
 \description{
-Save session info
+This function saves the current R session information, including installed packages, session details, and optionally, information about specific objects in the session, to a text file.
 }
 \author{
 Ahmed El-Gabbas

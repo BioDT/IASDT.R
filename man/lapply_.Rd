@@ -2,21 +2,24 @@
 % Please edit documentation in R/General_lapply_.R
 \name{lapply_}
 \alias{lapply_}
-\title{Apply a Function over a List or Vector (with no return value)}
+\title{Apply a Function over a List or Vector with Optional Silence}
 \usage{
 lapply_(X, FUN, Silent = TRUE, ...)
 }
 \arguments{
-\item{X}{vector}
+\item{X}{A list or vector. The input data over which \code{FUN} is to be applied.}
 
-\item{FUN}{function}
+\item{FUN}{A function to be applied to each element of \code{X}.}
 
-\item{Silent}{should the output be silenced?}
+\item{Silent}{A logical value. If \code{TRUE}, the function suppresses the return value of \code{FUN} and returns \code{NULL} invisibly. If \code{FALSE}, the function returns the result of applying \code{FUN} over \code{X}.}
 
-\item{...}{additional arguments to lapply}
+\item{...}{Additional arguments to be passed to \code{FUN}.}
+}
+\value{
+If \code{Silent} is \code{TRUE}, returns \code{NULL} invisibly, otherwise returns a list of the same length as \code{X}, where each element is the result of applying \code{FUN} to the corresponding element of \code{X}.
 }
 \description{
-Apply a Function over a List or Vector (with no return value)
+This function is a wrapper around the base \code{lapply} function that allows for the application of a function over a list or vector. It optionally allows for the suppression of the function's return value, making it useful for operations where the user is only interested in the side effects of the function.
 }
 \examples{
 par(mfrow = c(1,2), oma = c(0.25, 0.25, 0.25, 0.25), mar = c(3,3,3,1))

@@ -2,19 +2,22 @@
 % Please edit documentation in R/General_System.R
 \name{System}
 \alias{System}
-\title{Run bash script depending on the operating system}
+\title{Run a system command in a cross-platform manner}
 \usage{
 System(command, RObj = TRUE, ...)
 }
 \arguments{
-\item{command}{Bash command to implement}
+\item{command}{A string representing the bash command to be executed.}
 
-\item{RObj}{Whether to make the output of the command an R object}
+\item{RObj}{A logical indicating whether to capture the output of the command as an R object. If \code{TRUE}, the output is captured; if \code{FALSE}, the output is printed to the console. Defaults to \code{TRUE}.}
 
-\item{...}{Additional arguments to \code{shell} pr \code{system} functions}
+\item{...}{Additional arguments passed to either \code{shell} or \code{system} function, depending on the operating system.}
+}
+\value{
+Depending on the value of \code{RObj}, either the output of the executed command as an R object or \code{NULL} if \code{RObj} is \code{FALSE} and the output is printed to the console.
 }
 \description{
-Run bash script depending on the operating system
+This function executes a system command, using either \code{shell} on Windows or \code{system} on Linux. It allows the output of the command to be captured into an R object.
 }
 \examples{
 # print working directory

@@ -4,15 +4,13 @@
 #
 #' Print separator(s) to the console
 #'
-#' Print separator(s) to the console
-#'
-#' @param Rep integer; number of separator lines; default `1` row
-#' @param Extra1 integer; number of extra empty lines before the separator; default: `0`
-#' @param Extra2 integer; number of extra empty lines after the separator; default: `0`
-#' @param Char character; the character to be used as a separator; default "-"
-#' @param CharReps integer; number of times the character is repeated; default: 50
+#' This function prints customizable separator lines to the console, optionally preceded and followed by empty lines. It is useful for improving the readability of console output in R scripts or during interactive sessions.
+#' @param Rep integer; the number of separator lines to print. Default is `1`.
+#' @param Extra1,Extra2 integer; the number of extra empty lines to print before and after the separator lines. Default is `0`.
+#' @param Char character; the character used to construct the separator line. Default is `"-"`.
+#' @param CharReps integer; the number of times the character is repeated to form a separator line. Default is `50`.
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return NULL; The function is called for its side effect (printing to the console) and does not return a meaningful value.
 #' @examples
 #' CatSep()
 #'
@@ -26,12 +24,14 @@
 #' @export
 
 CatSep <- function(Rep = 1, Extra1 = 0, Extra2 = 0, Char = "-", CharReps = 50) {
+  
   if (Extra1 > 0) {
     replicate(n = Extra1, expr = cat("\n"))
   }
-  S <- c(rep(Char, CharReps)) %>%
-    paste0(collapse = "")
+  
+  S <- paste0(rep(Char, CharReps), collapse = "")
   replicate(n = Rep, expr = cat(S, sep = "\n"))
+
   if (Extra2 > 0) {
     replicate(n = Extra2, expr = cat("\n"))
   }

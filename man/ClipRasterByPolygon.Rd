@@ -2,22 +2,28 @@
 % Please edit documentation in R/Spat_ClipRasterByPolygon.R
 \name{ClipRasterByPolygon}
 \alias{ClipRasterByPolygon}
-\title{Clip raster by a spatial polygon}
+\title{Clip a raster layer by a spatial polygon}
 \usage{
 ClipRasterByPolygon(raster = NULL, shape = NULL)
 }
 \arguments{
-\item{raster}{raster layer}
+\item{raster}{A \code{RasterLayer} object to be clipped. This is the raster layer that will be masked by the polygon.}
 
-\item{shape}{Polygon}
+\item{shape}{Extent object, or any object from which an Extent object can be extracted.}
+}
+\value{
+A RasterLayer object representing the portion of the input raster that falls within the specified polygon. The returned raster contains the same data as the original within the polygon's bounds but is masked (set to NA) outside of it.
 }
 \description{
-Clip raster by a spatial polygon
+This function clips a raster layer using a specified spatial polygon, effectively masking the raster outside the polygon area. The resulting clipped raster retains the original raster's properties and values within the polygon's bounds.
+}
+\note{
+This function requires the 'raster' and 'sp' packages.
 }
 \examples{
-LoadPackages(sp)
-LoadPackages(raster)
-LoadPackages(rworldmap)
+library(sp)
+library(raster)
+library(rworldmap)
 
 # Example Polygon
 SPDF <- getMap(resolution = "low") \%>\%

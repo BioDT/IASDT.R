@@ -4,9 +4,9 @@
 
 #' Size of objects in memory
 #'
-#' Size of objects in memory. This function print the size allocated by any of loaded objects into `R`
-#'
-#' @param GreaterThan Only show objects with size > specified value in MB. Default: 0, which means show all variables size
+#' This function calculates the size of objects in the global environment of R using `pryr::object_size` and prints a summary of objects that are greater than a specified size threshold. It is useful for memory management and identifying large objects in the workspace.
+#' @param GreaterThan  numeric value specifying the size threshold in MB. Only objects larger than this value will be shown. Default is 0, which means all objects will be shown.GreaterThan must be a non-negative number.
+#' @return The function prints a tibble containing the variables' names, their sizes in MB, and their percentage of the total size of all variables. If no objects meet the criteria, a message is printed instead. Output is sorted in descending order of the size of the objects. The function also prints the total size of all variables and the number of objects that were examined.
 #' @author Ahmed El-Gabbas
 #' @importFrom rlang .data
 #' @export
@@ -21,6 +21,11 @@
 #' AllObjSizes(GreaterThan = 50)
 
 AllObjSizes <- function(GreaterThan = 0) {
+
+  if (!is.numeric(GreaterThan) || is.na(GreaterThan) || GreaterThan < 0) {
+    stop("GreaterThan must be a non-negative number")
+  }
+
   AllVars <- ls(envir = .GlobalEnv)
 
   if (length(AllVars) == 0) {
@@ -43,29 +48,25 @@ AllObjSizes <- function(GreaterThan = 0) {
       dplyr::arrange(dplyr::desc(.data$Size)) %>%
       dplyr::select(tidyselect::all_of(c("Vars", "Size", "Percent")))
 
-    if (!is.na(GreaterThan)) {
-      AllVarsSize <- dplyr::filter(AllVarsSize, .data$Size >= GreaterThan)
-      if (nrow(AllVarsSize) > 0) {
-        cat(crayon::blue(
-          "---------------------------------------------\n",
-          crayon::bold(nrow(AllVarsSize)),
-          " Object(s) fulfill the criteria.\n",
-          "---------------------------------------------\n",
-          sep = ""),
-          sep = "")
-        print(AllVarsSize, row.names = FALSE, n = Inf)
-        cat(crayon::blue(
-          "Object sizes are in MB.\n",
-          "---------------------------------------------\n", sep = ""),
-          sep = "")
-      } else {
-        cat(crayon::red(
-          paste0("No variables have Size > ",
-                 GreaterThan, " MB\n")), sep = "")
-      }
-    } else {
+    
+    AllVarsSize <- dplyr::filter(AllVarsSize, .data$Size >= GreaterThan)
+    
+    if (nrow(AllVarsSize) > 0) {
+      cat(crayon::blue(
+        "---------------------------------------------\n",
+        crayon::bold(nrow(AllVarsSize)),
+        " Object(s) fulfill the criteria.\n",
+        "---------------------------------------------\n",
+        sep = ""),
+        sep = "")
       print(AllVarsSize, row.names = FALSE, n = Inf)
-      cat(crayon::green("Object sizes are in MB"), sep = "")
+      cat(crayon::blue(
+        "Object sizes are in MB.\n",
+        "---------------------------------------------\n", sep = ""),
+        sep = "")
+    } else {
+      cat(crayon::red(
+        paste0("No variables have Size > ", GreaterThan, " MB\n")), sep = "")
     }
   }
 }

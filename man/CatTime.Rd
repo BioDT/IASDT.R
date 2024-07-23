@@ -7,18 +7,21 @@
 CatTime(Text = "", NLines = 1, Date = FALSE, TZ = "CET", ...)
 }
 \arguments{
-\item{Text}{character; the text to print: default empty string (print time only)}
+\item{Text}{character; the text to print before the timestamp. If empty (default), only the timestamp is printed.}
 
-\item{NLines}{number of empty lines after the printing; default: 1}
+\item{NLines}{integer; the number of newline characters to print after the message. Default is 1.}
 
-\item{Date}{Also print date? Default value \code{FALSE}}
+\item{Date}{logical; whether to include the date in the timestamp. Default is \code{FALSE}, meaning only the time is printed.}
 
-\item{TZ}{time zone (default: CET)}
+\item{TZ}{character; the time zone to use for the timestamp. Default is "CET".}
 
-\item{...}{other arguments passed to \code{cat}}
+\item{...}{additional arguments passed to \code{cat}.}
+}
+\value{
+NULL; the function is called for its side effect of printing to the console.
 }
 \description{
-Print text with time stamp
+This function prints a given text followed by the current time (and optionally the date) to the console. It allows for customization of the time zone, the inclusion of the date, and the number of newline characters to print after the message.
 }
 \examples{
 CatTime()

@@ -4,22 +4,24 @@
 
 #' Determine the boundaries of the requested GBIF data
 #'
-#' Determine the boundaries of the requested GBIF data
-#'
-#' @param L left boundary
-#' @param R right boundary
-#' @param B bottom boundary
-#' @param T top boundary
+#' This function constructs a Well-Known Text (WKT) string representing a polygon that outlines the specified boundaries. It is used to define the area of interest for downloading GBIF data through the `rgbif::pred_within()` function.
+#' @param Left,Right,Bottom,Top Numeric, the left, right, bottom, and top boundary of the area.
 #' @name DownBoundary
 #' @author Ahmed El-Gabbas
-#' @return WKT string
+#' @return A character string representing the WKT of the polygon that outlines the specified boundaries.
 #' @export
-#' @description `rgbif::pred_within()` function used to download GBIF data only accepts a WKT string. This function takes the values of the boundary and converts it to a WKT string. Default values are determined by the variables: Bound_L, R = Bound_R, Bound_B, Bound_T...
+#' @description `rgbif::pred_within()` function used to download GBIF data only accepts a WKT string. This function takes the values of the boundary and converts it to a WKT string.
 #' @examples
-#' IASDT.R::DownBoundary(20, 30, 40, 50)
+#' IASDT.R::DownBoundary(Left = 20, Right = 30, Bottom = 40, Top = 50)
 
-DownBoundary <- function(L, R, B, T) {
-  "POLYGON(({L} {B},{R} {B},{R} {T},{L} {T},{L} {B}))" %>%
+DownBoundary <- function(Left = NULL, Right = NULL, Bottom = NULL, Top = NULL) {
+
+  if (any(c(is.null(Left), is.null(Right), is.null(Bottom), is.null(Top)))) {
+    stop("none of Left, Right, Bottom, or Top can be NULL")
+  }
+
+  "POLYGON(({Left} {Bottom},{Right} {Bottom},{Right} {Top},{Left} {Top},{Left} {Bottom}))" %>%
     stringr::str_glue() %>%
-    as.character()
+    as.character() %>%
+    return()
 }

@@ -7,10 +7,17 @@
 FileSize(File, ...)
 }
 \arguments{
-\item{File}{character; file path}
+\item{File}{character; the path to the file whose size you want to check.}
 
-\item{...}{additional arguments for \code{gdata::humanReadable} function}
+\item{...}{additional arguments passed to the \code{gdata::humanReadable} function, allowing for further customization of the output format.}
+}
+\value{
+A character string representing the size of the file in a human-readable format.
 }
 \description{
-File size in a Human Readable format
+This function takes the path to a file and returns its size in a format that is easy to read (e.g., KB, MB, GB), using the \code{gdata::humanReadable} function.
+}
+\examples{
+(f <- system.file("ex/elev.tif", package="terra"))
+FileSize(File = f)
 }

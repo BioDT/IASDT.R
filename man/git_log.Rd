@@ -2,12 +2,15 @@
 % Please edit documentation in R/General_git_log.R
 \name{git_log}
 \alias{git_log}
-\title{print detailed \verb{git log} of the git repo located in the current working directory}
+\title{Print a detailed \verb{git log} of the git repository located in the current working directory.}
 \usage{
 git_log()
 }
+\value{
+Invisible NULL. This function is called for its side effect of printing to the console.
+}
 \description{
-print detailed \verb{git log} of the git repo located in the current working directory
+This function executes a \verb{git log} command with specific formatting options to display a detailed and colored log. It shows the commit hash, references (like branches or tags), commit message, relative commit date, and author name in a visually appealing graph format.
 }
 \examples{
 git_log()

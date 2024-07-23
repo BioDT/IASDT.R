@@ -2,17 +2,23 @@
 % Please edit documentation in R/Spat_Rename_geometry.R
 \name{Rename_geometry}
 \alias{Rename_geometry}
-\title{Rename active geometry column of an sf object}
+\title{Rename active geometry column of an \code{sf} object.}
 \usage{
-Rename_geometry(g, name)
+Rename_geometry(g = NULL, name = NULL)
 }
 \arguments{
-\item{g}{simple feature object}
+\item{g}{\code{sf} object; the simple feature object whose geometry column name is to be changed.}
 
-\item{name}{the new name of geometry}
+\item{name}{\code{character}; the new name for the geometry column.}
+}
+\value{
+The modified \code{sf} object with the renamed geometry column.
 }
 \description{
-Rename active geometry column of an sf object
+This function renames the active geometry column of a simple feature (\code{sf}) object to a new name provided by the user.
+}
+\references{
+\href{https://gis.stackexchange.com/a/386589/30390}{Click here}
 }
 \author{
 Ahmed El-Gabbas

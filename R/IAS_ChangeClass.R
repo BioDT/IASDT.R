@@ -2,34 +2,39 @@
 # ChangeClass ----
 ## |------------------------------------------------------------------------| #
 
-#' Change the class of some of GBIF columns
+#' Change the class of specified columns in a GBIF data frame
 #'
-#' Change the class of some of GBIF columns
+#' This function takes a data frame containing GBIF data and converts the data types of specific columns to more appropriate types for analysis. Integer, integer64, double, logical, and date classes are applied to various columns as specified.
 #'
-#' @param DF Data frame
+#' @param DF A data frame containing GBIF data.
 #' @name ChangeClass
 #' @author Ahmed El-Gabbas
-#' @details
-#' A function to change the class of some of GBIF columns
-#' @return NULL
+#' @return A data frame with the same data as `DF` but with specified columns converted to their designated data types.
 #' @keywords internal
 #' @noRd
 
 ChangeClass <- function(DF) {
+
+  if (is.null(DF)) {
+    stop("DF cannot be NULL")
+  }
+
   VarsInt <- c(
-    "year", "month", "day", "coordinateUncertaintyInMeters", "acceptedNameUsageID",
-    "taxonKey", "acceptedTaxonKey", "kingdomKey", "phylumKey", "classKey",
-    "orderKey", "familyKey", "genusKey", "speciesKey")
-  VarsInt64 <- c("gbifID", "catalogNumber", "recordNumber", "taxonID", "identificationID")
+    "year", "month", "day", "coordinateUncertaintyInMeters", 
+    "acceptedNameUsageID", "taxonKey", "acceptedTaxonKey", "kingdomKey", 
+    "phylumKey", "classKey", "orderKey", "familyKey", "genusKey", "speciesKey")
+  VarsInt64 <- c("gbifID", "catalogNumber", "recordNumber", "taxonID",
+    "identificationID")
   VarsDbl <- c("decimalLatitude", "decimalLongitude")
   VarsLgl <- c("hasCoordinate", "hasGeospatialIssues", "repatriated")
-  VarsDte <- c("modified", "eventDate", "dateIdentified", "lastInterpreted", "lastParsed", "lastCrawled")
+  VarsDte <- c("modified", "eventDate", "dateIdentified", "lastInterpreted",
+    "lastParsed", "lastCrawled")
 
   DF %>%
-    dplyr::mutate_at(VarsInt, as.integer) %>%
-    dplyr::mutate_at(VarsInt64, bit64::as.integer64) %>%
-    dplyr::mutate_at(VarsDbl, as.double)  %>%
-    dplyr::mutate_at(VarsLgl, as.logical)  %>%
-    dplyr::mutate_at(VarsDte, lubridate::as_date) %>%
+    dplyr::mutate(dplyr::across(VarsInt, as.integer)) %>%
+    dplyr::mutate(dplyr::across(VarsInt64, bit64::as.integer64)) %>%
+    dplyr::mutate(dplyr::across(VarsDbl, as.double))  %>%
+    dplyr::mutate(dplyr::across(VarsLgl, as.logical))  %>%
+    dplyr::mutate(dplyr::across(VarsDte, lubridate::as_date)) %>%
     return()
 }

@@ -2,18 +2,21 @@
 % Please edit documentation in R/Plot_AddLine.R
 \name{AddLine}
 \alias{AddLine}
-\title{Add a line to the current plot}
+\title{Add a horizontal or vertical line to the current plot}
 \usage{
 AddLine(at = NULL, Outer = FALSE, H = TRUE, ...)
 }
 \arguments{
-\item{at}{relative location of where the line should be plotted}
+\item{at}{Numeric; the relative location of where the line should be plotted. Cannot be NULL.}
 
-\item{Outer}{plot the line out of plotting area. Default: \code{FALSE}}
+\item{Outer}{Logical; if \code{TRUE}, the line is plotted outside of the plotting area. Default is \code{FALSE}.}
 
-\item{H}{Horizontal line? if H == FALSE, vertical line will be added. Default: \code{TRUE}}
+\item{H}{Logical; if \code{TRUE} (default), a horizontal line is added. If \code{FALSE}, a vertical line is added.}
 
-\item{...}{Other arguments}
+\item{...}{Additional graphical parameters passed to \code{graphics::abline}.}
+}
+\value{
+Invisible; the function is called for its side effect of drawing on the current plot.
 }
 \description{
 Add a line to the current plot

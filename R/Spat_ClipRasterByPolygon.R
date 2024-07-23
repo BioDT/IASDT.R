@@ -2,17 +2,19 @@
 # ClipRasterByPolygon ------
 ## |------------------------------------------------------------------------| #
 
-#' Clip raster by a spatial polygon
+#' Clip a raster layer by a spatial polygon
 #'
-#' Clip raster by a spatial polygon
+#' This function clips a raster layer using a specified spatial polygon, effectively masking the raster outside the polygon area. The resulting clipped raster retains the original raster's properties and values within the polygon's bounds.
 #'
-#' @param raster raster layer
-#' @param shape Polygon
+#' @param raster A `RasterLayer` object to be clipped. This is the raster layer that will be masked by the polygon.
+#' @param shape Extent object, or any object from which an Extent object can be extracted.
+#' @return A RasterLayer object representing the portion of the input raster that falls within the specified polygon. The returned raster contains the same data as the original within the polygon's bounds but is masked (set to NA) outside of it.
+#' @note This function requires the 'raster' and 'sp' packages.
 #' @export
 #' @examples
-#' LoadPackages(sp)
-#' LoadPackages(raster)
-#' LoadPackages(rworldmap)
+#' library(sp)
+#' library(raster)
+#' library(rworldmap)
 #'
 #' # Example Polygon
 #' SPDF <- getMap(resolution = "low") %>%
@@ -32,9 +34,15 @@
 #' plot(SPDF, add = TRUE)
 
 ClipRasterByPolygon <- function(raster = NULL, shape = NULL) {
+
+  if (is.null(raster) || is.null(shape)) {
+    stop("Input raster or shape cannot be NULL")
+  }
+
   a1_crop <- raster::crop(raster, shape)
-  step1 <- raster::rasterize(shape, a1_crop)
+  step1 <- raster::rasterize(shape, a1_crop, field = 1)
   ClippedRaster <- a1_crop * step1
   names(ClippedRaster) <- names(raster)
+
   return(ClippedRaster)
 }

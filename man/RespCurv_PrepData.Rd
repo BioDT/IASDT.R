@@ -8,7 +8,8 @@ RespCurv_PrepData(
   Path_Model = NULL,
   ngrid = 50,
   NCores = 15,
-  ShowProgress = FALSE
+  ShowProgress = FALSE,
+  ReturnData = FALSE
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ RespCurv_PrepData(
 \item{NCores}{Integer. Number of parallel cores.}
 
 \item{ShowProgress}{Logical. Show progress bar. Default: \code{FALSE}}
+
+\item{ReturnData}{Logical. Should the response curve data be returned as an R object? Default: \code{FALSE}}
 }
 \description{
 Prepare response curve data

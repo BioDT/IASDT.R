@@ -4,11 +4,11 @@
 
 #' Concatenate without quotes
 #'
-#' Concatenate without quotes
+#' This function takes one or more expressions and concatenates them into a single string without quotes. It is particularly useful for creating strings from variable names or expressions without including the usual quotes.
 #'
-#' @param ... one or more string to concatenate
+#' @param ... strings to be concatenated. Note that numeric values should be converted to strings before being passed.
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return A character string representing the concatenated values of the input expressions.
 #' @export
 #' @examples
 #' cc(A, B, C)
@@ -25,6 +25,6 @@
 
 cc <- function(...) {
   rlang::ensyms(...) %>%
-    as.character() %>%
-    stringr::str_remove_all("`|`")
+    purrr::map_chr(rlang::as_string) %>%
+    stringr::str_remove_all("`")
 }

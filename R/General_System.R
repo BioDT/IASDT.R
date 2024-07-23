@@ -2,16 +2,16 @@
 # System ----
 ## |------------------------------------------------------------------------| #
 
-#' Run bash script depending on the operating system
+#' Run a system command in a cross-platform manner
 #'
-#' Run bash script depending on the operating system
+#' This function executes a system command, using either `shell` on Windows or `system` on Linux. It allows the output of the command to be captured into an R object.
 #'
-#' @param command Bash command to implement
-#' @param RObj Whether to make the output of the command an R object
-#' @param ... Additional arguments to `shell` pr `system` functions
+#' @param command A string representing the bash command to be executed.
+#' @param RObj A logical indicating whether to capture the output of the command as an R object. If `TRUE`, the output is captured; if `FALSE`, the output is printed to the console. Defaults to `TRUE`.
+#' @param ... Additional arguments passed to either `shell` or `system` function, depending on the operating system.
 #' @name System
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return Depending on the value of `RObj`, either the output of the executed command as an R object or `NULL` if `RObj` is `FALSE` and the output is printed to the console.
 #' @examples
 #' # print working directory
 #' System("pwd")

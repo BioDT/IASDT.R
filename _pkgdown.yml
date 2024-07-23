@@ -102,6 +102,7 @@ reference:
   - Coda_to_tibble
   - GetPosts
   - Mod_MergeChains
+  - Mod_Summary
 - subtitle: Plotting
   desc:
   contents:

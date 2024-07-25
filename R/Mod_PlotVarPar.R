@@ -7,7 +7,7 @@
 #' This function generates and optionally saves plots visualizing the variance partitioning of a Hmsc model. It can calculate variance partitioning and model evaluation if not provided and supports parallel computation for model predictions.
 #'
 #' @param Model an object of class `Hmsc` or a path for the model file. Only needed if one of `ModelEval` and `VarPar` arguments are `NULL`.
-#' @param Path_Plot String. Path where the output file(s) will be saved. 
+#' @param Path_Plot String. Path where the output file(s) will be saved.
 #' @param PlotTitlePrefix String (optional). Prefix to add to the title of the plot. Default: `NULL`, which means only 'Variance partitioning' will be used in the title.
 #' @param ModelEval Result of the `Hmsc::evaluateModelFit` function. If `ModelEval = NULL` (default), `Hmsc::evaluateModelFit` will be executed on the model object to compute measures of model fit.
 #' @param NCores Integer. Number of parallel computations for computing predicted values. This is used as the `nParallel` argument of the `Hmsc::computePredictedValues` function.
@@ -134,7 +134,7 @@ PlotVarPar <- function(
 
       IASDT.R::CatTime("  >>  >>  Compute predicted Values")
       # 06.07.2024 - This uses the updated predict function, currently available on my forked version of the package github.com/elgabbas/Hmsc
-      # The `Hmsc::evaluateModelFit` function expects an array object returned from `Hmsc::computePredictedValues`. The `computePredictedValues` function does not work on parallel, so I used the updated predict function on parallel then converted the out put to array
+      # The `Hmsc::evaluateModelFit` function expects an array object returned from `Hmsc::computePredictedValues`. The `computePredictedValues` function does not work on parallel, so I used the updated predict function on parallel then converted the output to array
 
       preds <- IASDT.R::Mod_Pred2Array(
         Predict = TRUE, Model = Model, NCores = NCores)
@@ -180,8 +180,7 @@ PlotVarPar <- function(
 
   IASDT.R::CatTime("Plot 1 - Relative variance partitioning")
 
-  vp_df <- VarPar$vals %>%
-    tibble::as_tibble(rownames = "variable") %>%
+  vp_df <- tibble::as_tibble(VarPar$vals, rownames = "variable") %>%
     tidyr::pivot_longer(
       cols = -variable, names_to = "Species", values_to = "value")
 
@@ -239,8 +238,7 @@ PlotVarPar <- function(
     stop("Mismatch between the length of ModelEval$TjurR2 and the number of columns in VarPar$vals")
   }
 
- vp_df_R <- VarPar$vals %>%
-    tibble::as_tibble(rownames = "variable") %>%
+  vp_df_R <- tibble::as_tibble(VarPar$vals, rownames = "variable") %>%
     tidyr::pivot_longer(
       cols = -variable, names_to = "Species", values_to = "value")
 
@@ -286,7 +284,7 @@ PlotVarPar <- function(
     ggplot2::theme(legend.position = "bottom") +
     ggplot2::guides(
       fill = ggplot2::guide_legend(nrow = 1, override.aes = list(size = 10)))
-      
+
   Legend <- g_legend(Legend)
 
   if (is.null(PlotTitlePrefix)) {

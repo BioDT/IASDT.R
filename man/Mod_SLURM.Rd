@@ -18,7 +18,8 @@ Mod_SLURM(
   FromHPC = TRUE,
   Path_Hmsc = NULL,
   Command_Prefix = "Commands_All",
-  SLURM_Prefix = "Bash_Fit"
+  SLURM_Prefix = "Bash_Fit",
+  Path_SLURM_Out = NULL
 )
 }
 \arguments{
@@ -49,6 +50,8 @@ Mod_SLURM(
 \item{Command_Prefix}{String. Prefix for the bash commands to be executed.}
 
 \item{SLURM_Prefix}{String. Prefix for the exported SLURM file.}
+
+\item{Path_SLURM_Out}{String indicating the directory where the SLURM file(s) will be saved. Defaults to \code{NULL}, which means to identify the path from \code{Path_Model}.}
 }
 \value{
 The function does not return any value but writes SLURM script files to the disk.

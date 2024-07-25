@@ -120,9 +120,8 @@ Mod_Prep4HPC <- function(
     }
 
   } else {
-    MSG <- paste0(
-      "Path for environment variables: ", EnvFile, " was not found")
-    stop(MSG)
+    stop(paste0(
+      "Path for environment variables: ", EnvFile, " was not found"))
   }
 
   # temporarily setting the working directory
@@ -192,9 +191,8 @@ Mod_Prep4HPC <- function(
   IASDT.R::CatTime("Loading/preparing input data")
   ValidHabAbbs <- c(0:3, "4a", "4b", 5, 6, 8, 10, "12a", "12b")
   if (magrittr::not(as.character(Hab_Abb) %in% ValidHabAbbs)) {
-    MSG <- paste0("Hab_Abb has to be one of the following:\n >> ",
-                  paste0(ValidHabAbbs, collapse = " | "))
-    stop(MSG)
+    stop(paste0("Hab_Abb has to be one of the following:\n >> ",
+                paste0(ValidHabAbbs, collapse = " | ")))
   }
   HabVal <- c(
     "0_All", "1_Forests", "2_Open_forests", "3_Scrub",
@@ -243,10 +241,9 @@ Mod_Prep4HPC <- function(
         dplyr::filter(NCells < MinPresPerCountry) %>%
         dplyr::pull(Sp)
     } else {
-      MSG <- paste0(
+      stop(paste0(
         "The following are invalid country names: ",
-        paste0(ModelCountry[!ValidCountries], collapse = " & "))
-      stop(MSG)
+        paste0(ModelCountry[!ValidCountries], collapse = " & ")))
     }
 
     DT_All <- DT_All %>%
@@ -603,20 +600,22 @@ Mod_Prep4HPC <- function(
     IDs <- list(seq_len(NJobs))
   }
 
-  lapply(seq_len(NSplits), function(x) {
-    CurrIDs <- IDs[[x]]
-    if (NSplits > 1) {
-      CommandFile <- file.path(Path_Model, paste0("Commands_All_", x, ".txt"))
-    } else {
-      CommandFile <- file.path(Path_Model, "Commands_All.txt")
-    }
+  lapply(
+    X = seq_len(NSplits),
+    FUN = function(x) {
+      CurrIDs <- IDs[[x]]
+      if (NSplits > 1) {
+        CommandFile <- file.path(Path_Model, paste0("Commands_All_", x, ".txt"))
+      } else {
+        CommandFile <- file.path(Path_Model, "Commands_All.txt")
+      }
 
-    # create connection to SLURM file
-    # This is better than using sink to have a platform independent file (here, to maintain a linux-like new line ending)
-    f <- file(CommandFile, open = "wb")
-    cat(Models2Fit_HPC[CurrIDs], sep = "\n", append = FALSE, file = f)
-    close(f)
-  })
+      # create connection to SLURM file
+      # This is better than using sink to have a platform independent file (here, to maintain a linux-like new line ending)
+      f <- file(CommandFile, open = "wb")
+      cat(Models2Fit_HPC[CurrIDs], sep = "\n", append = FALSE, file = f)
+      close(f)
+    })
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

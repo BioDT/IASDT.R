@@ -20,6 +20,7 @@
 #' @param Path_Hmsc String. Path for the Hmsc-HPC.
 #' @param Command_Prefix String. Prefix for the bash commands to be executed.
 #' @param SLURM_Prefix String. Prefix for the exported SLURM file.
+#' @param Path_SLURM_Out String indicating the directory where the SLURM file(s) will be saved. Defaults to `NULL`, which means to identify the path from `Path_Model`.
 #' @name Mod_SLURM
 #' @author Ahmed El-Gabbas
 #' @return The function does not return any value but writes SLURM script files to the disk.
@@ -29,7 +30,8 @@ Mod_SLURM <- function(
     Path_Model = NULL, JobName = NULL, CatJobInfo = TRUE, ntasks = 1,
     CpusPerTask = 1, GpusPerNode = 1, MemPerCpu = NULL, Time = NULL,
     Partition = "small-g", EnvFile = ".env", FromHPC = TRUE,
-    Path_Hmsc = NULL, Command_Prefix = "Commands_All", SLURM_Prefix = "Bash_Fit") {
+    Path_Hmsc = NULL, Command_Prefix = "Commands_All",
+    SLURM_Prefix = "Bash_Fit", Path_SLURM_Out = NULL) {
 
   if (is.null(Path_Model) || is.null(JobName) || is.null(MemPerCpu)) {
     stop("Path_Model, JobName and MemPerCpu cannot be empty")
@@ -93,9 +95,11 @@ Mod_SLURM <- function(
     stop("The file containing the bash commands does not exist")
   }
 
-  # This folder was created in the Mod_Prep4HPC function
-  Path_SLURM_Out <- file.path(
-    Path_Scratch, Path_Model, "Model_Fitting_HPC", "SLURM_Results")
+  if (is.null(Path_SLURM_Out)) {
+    # This folder was created in the Mod_Prep4HPC function
+    Path_SLURM_Out <- file.path(
+      Path_Scratch, Path_Model, "Model_Fitting_HPC", "SLURM_Results")
+  }
 
   purrr::walk(
     .x = seq_len(NCommandFiles),

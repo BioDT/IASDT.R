@@ -9,10 +9,10 @@
 #' @name AddLine
 #' @references [Click here](https://stackoverflow.com/questions/27800307/)
 #' @export
-#' @param at Numeric; the relative location of where the line should be plotted. Cannot be NULL.
+#' @param at Numeric; the relative location of where the line should be plotted. Cannot be `NULL`.
 #' @param Outer Logical; if `TRUE`, the line is plotted outside of the plotting area. Default is `FALSE`.
 #' @param H Logical; if `TRUE` (default), a horizontal line is added. If `FALSE`, a vertical line is added.
-#' @param ... Additional graphical parameters passed to `graphics::abline`.
+#' @param ... Additional graphical parameters passed to [graphics::abline].
 #' @return Invisible; the function is called for its side effect of drawing on the current plot.
 #' @examples
 #' # Horizontal line

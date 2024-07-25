@@ -13,6 +13,7 @@
 #' @param ShowProgress Logical. Indicates whether to show a progress bar during execution. Defaults to FALSE.
 #' @return A data frame containing paths to the JPEG images and, if requested, the ggplot objects saved as RData files.
 #' @export
+#' @name RespCurv_PlotSp
 
 RespCurv_PlotSp <- function(
     Path_RC = NULL, NCores = 20, EnvFile = ".env", SaveGG = FALSE,
@@ -49,7 +50,7 @@ RespCurv_PlotSp <- function(
   fs::dir_create(file.path(Path_RC, "RespCurv_Sp"))
 
   c1 <- snow::makeSOCKcluster(NCores)
-  on.exit(snow::stopCluster(c1), add = TRUE)
+  on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
   future::plan(future::cluster, workers = c1, gc = TRUE)
 
   SR_DT_All <- file.path(Path_RC, "RespCurv_DT/ResCurvDT.RData") %>%

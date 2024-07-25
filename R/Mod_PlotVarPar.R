@@ -9,9 +9,9 @@
 #' @param Model an object of class `Hmsc` or a path for the model file. Only needed if one of `ModelEval` and `VarPar` arguments are `NULL`.
 #' @param Path_Plot String. Path where the output file(s) will be saved.
 #' @param PlotTitlePrefix String (optional). Prefix to add to the title of the plot. Default: `NULL`, which means only 'Variance partitioning' will be used in the title.
-#' @param ModelEval Result of the `Hmsc::evaluateModelFit` function. If `ModelEval = NULL` (default), `Hmsc::evaluateModelFit` will be executed on the model object to compute measures of model fit.
-#' @param NCores Integer. Number of parallel computations for computing predicted values. This is used as the `nParallel` argument of the `Hmsc::computePredictedValues` function.
-#' @param VarPar Variance partitioning object resulted from `Hmsc::computeVariancePartitioning`. If `VarPar = NULL` (default), `Hmsc::computeVariancePartitioning` will be executed on the model object.
+#' @param ModelEval Result of the [Hmsc::evaluateModelFit] function. If `ModelEval = NULL` (default), [Hmsc::evaluateModelFit] will be executed on the model object to compute measures of model fit.
+#' @param NCores Integer. Number of parallel computations for computing predicted values. This is used as the `nParallel` argument of the [Hmsc::computePredictedValues] function.
+#' @param VarPar Variance partitioning object resulted from [Hmsc::computeVariancePartitioning]. If `VarPar = NULL` (default), [Hmsc::computeVariancePartitioning] will be executed on the model object.
 #' @param EnvFile String. Path to read the environment variables. Default value: `.env`
 #' @param SaveVarPar Logical. If `VarPar = NULL`, should the calculated variance partitioning be saved as an RData file?  Default: `TRUE`.
 #' @param SaveModelEval Logical. If `ModelEval = NULL`, should the calculated model evaluation be saved as an RData file?  Default: `TRUE`.
@@ -134,7 +134,7 @@ PlotVarPar <- function(
 
       IASDT.R::CatTime("  >>  >>  Compute predicted Values")
       # 06.07.2024 - This uses the updated predict function, currently available on my forked version of the package github.com/elgabbas/Hmsc
-      # The `Hmsc::evaluateModelFit` function expects an array object returned from `Hmsc::computePredictedValues`. The `computePredictedValues` function does not work on parallel, so I used the updated predict function on parallel then converted the output to array
+      # The Hmsc::evaluateModelFit function expects an array object returned from Hmsc::computePredictedValues. The `computePredictedValues` function does not work on parallel, so I used the updated predict function on parallel then converted the output to array
 
       preds <- IASDT.R::Mod_Pred2Array(
         Predict = TRUE, Model = Model, NCores = NCores)

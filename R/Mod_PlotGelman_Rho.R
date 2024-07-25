@@ -4,7 +4,7 @@
 
 #' Creates a Gelman-Rubin-Brooks plot for the `rho` parameter.
 #'
-#' This function generates a Gelman-Rubin-Brooks plot for the `rho` parameter of a coda object. The plot includes lines for the median and the 97.5th percentile of the shrink factor, with a dashed line at 1.1 indicating the threshold for convergence.
+#' This function generates a Gelman-Rubin-Brooks plot for the `rho` parameter of a coda object. The plot includes lines for the median and the 97.5th percentile of the shrink factor, with a dashed line at 1.1 indicating the threshold for convergence. This function is not planned to be used in isolation but rather within [IASDT.R::PlotGelman].
 #'
 #' @param CodaObj An object of class `mcmc.list`, representing the Hmsc samples.
 #' @name PlotGelman_Rho

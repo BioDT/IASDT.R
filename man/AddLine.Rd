@@ -7,13 +7,13 @@
 AddLine(at = NULL, Outer = FALSE, H = TRUE, ...)
 }
 \arguments{
-\item{at}{Numeric; the relative location of where the line should be plotted. Cannot be NULL.}
+\item{at}{Numeric; the relative location of where the line should be plotted. Cannot be \code{NULL}.}
 
 \item{Outer}{Logical; if \code{TRUE}, the line is plotted outside of the plotting area. Default is \code{FALSE}.}
 
 \item{H}{Logical; if \code{TRUE} (default), a horizontal line is added. If \code{FALSE}, a vertical line is added.}
 
-\item{...}{Additional graphical parameters passed to \code{graphics::abline}.}
+\item{...}{Additional graphical parameters passed to \link[graphics:abline]{graphics::abline}.}
 }
 \value{
 Invisible; the function is called for its side effect of drawing on the current plot.

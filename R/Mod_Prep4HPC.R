@@ -4,15 +4,15 @@
 
 #' Prepare initial models in R for model fitting by Hmsc-HPC
 #'
-#' This function prepares initial models in R for model fitting by Hmsc-HPC. It involves data preparation, model initialization, and generating commands for running models on HPC. It supports parallel processing, options to include/not include phylogenetic tree data, and spatial information through Gaussian Process Priors (GPP).
+#' This function prepares initial models in R for model fitting by Hmsc-HPC. It involves data preparation, model initialization, and generating commands for running models on HPC. It supports parallel processing, options to include/not include phylogenetic tree data.
 #'
 #' @param Hab_Abb String indicating the habitat type to be considered for model preparation. This has to be one of the following: c("0", "1", "2", "3", "4a", "4b", "5", "6", "8", "10", "12a", "12b"). "0" means prepare data irrespective of the habitat type
 #' @param Path_Data String specifying the path where modeling data is read from.
 #' @param Path_Model String (without trailing slash) specifying the path where all output, including models to be fitted, will be saved.
 #' @param MinPresGrids Integer indicating the minimum number of presence grid cells per species for a species to be used in the model. Only species with ≥ this number will be considered. Default: 50.
 #' @param EnvFile String specifying the path to read environment variables from, with a default value of ".env".
-#' @param PrepareData Logical indicating whether to prepare input data or load it from disk. Defaults to `TRUE` which means the input data will be prepared using the `IASDT.R::Mod_PrepData` function.
-#' @param GPP_Dists Integer specifying the distance in kilometers for both the distance between knots and the minimum distance of a knot to the nearest data point. The same value will be used for the `knotDist` and `minKnotDist`	arguments of the `Hmsc::constructKnots` function.
+#' @param PrepareData Logical indicating whether to prepare input data or load it from disk. Defaults to `TRUE` which means the input data will be prepared using the [IASDT.R::Mod_PrepData] function.
+#' @param GPP_Dists Integer specifying the distance in kilometers for both the distance between knots and the minimum distance of a knot to the nearest data point. The same value will be used for the `knotDist` and `minKnotDist`	arguments of the [Hmsc::constructKnots] function.
 #' @param GPP_Save Logical indicating whether to save the resulted knots as RData Default: `TRUE`.
 #' @param GPP_Plot Logical indicating whether to plot the coordinates of the sampling units and the knots in a pdf file. Default: `TRUE`
 #' @param XVars Vector of strings specifying variables to be used in the model. Default value: `NULL`, which means to use the following variables: bio4, bio6, bio8, bio12, bio15, bio18, RoadRailLog, BiasLog.
@@ -29,13 +29,13 @@
 #' @param MinPresPerCountry Integer specifying the minimum number of grid cells for the selected country/countries for species to be considered in the models. Effective only if a valid `ModelCountry` is provided. Default: 50.
 #' @param VerboseProgress Logical indicating whether to show messages for the progress of creating files. Default: `FALSE`.
 #' @param FromHPC Logical indicating whether the work is being done from HPC, to adjust file paths accordingly. Default: `TRUE`.
-#' @param PrepSLURM Logical indicating whether to prepare SLURM command files. If `TRUE` (default), the SLURM commands will be saved to disk using the `IASDT.R::Mod_SLURM` function.
+#' @param PrepSLURM Logical indicating whether to prepare SLURM command files. If `TRUE` (default), the SLURM commands will be saved to disk using the [IASDT.R::Mod_SLURM] function.
 #' @param MemPerCpu String specifying the memory per CPU for the SLURM job. This value will be assigned to the `#SBATCH --mem-per-cpu=` SLURM argument. Example: "32G" to request 32 gigabyte. Only effective if `PrepSLURM = TRUE`.
 #' @param Time String specifying the requested time for each job in the SLURM bash arrays. Example: "01:00:00" to request an hour. Only effective if `PrepSLURM = TRUE`.
 #' @param JobName String specifying the name of the submitted job(s) for SLURM. If `NULL` (Default), the job name will be prepared based on the folder path and the `Hab_Abb` value. Only effective if `PrepSLURM = TRUE`.
-#' @param Path_Hmsc String specifying the path for the Hmsc-HPC. This will be provided as the `Path_Hmsc` argument of the `IASDT.R::Mod_SLURM` function.
+#' @param Path_Hmsc String specifying the path for the Hmsc-HPC. This will be provided as the `Path_Hmsc` argument of the [IASDT.R::Mod_SLURM] function.
 #' @param ToJSON Logical indicating whether to convert unfitted models to JSON before saving to RDS file. Default: `FALSE`.
-#' @param ... Additional parameters provided to the `IASDT.R::Mod_SLURM` function.
+#' @param ... Additional parameters provided to the [IASDT.R::Mod_SLURM] function.
 #' @name Mod_Prep4HPC
 #' @author Ahmed El-Gabbas
 #' @return The function is used for its side effects of preparing data and models for HPC and does not return any value.
@@ -54,9 +54,11 @@ Mod_Prep4HPC <- function(
   if (is.null(Path_Data) || is.null(Path_Model) || is.null(MinPresGrids)) {
     stop("Path_Data, Path_Model and MinPresGrids cannot be empty")
   }
+
   if (is.null(thin) || is.null(samples) || is.null(GPP_Dists)) {
     stop("thin, samples and GPP_Dists cannot be empty")
   }
+
   if (is.null(MemPerCpu) || is.null(Time) || is.null(Path_Hmsc)) {
     stop("MemPerCpu, Time and Path_Hmsc cannot be empty")
   }
@@ -68,9 +70,11 @@ Mod_Prep4HPC <- function(
   if (!all(is.numeric(samples)) || any(samples <= 0)) {
     stop("samples should be numeric and greater than zero")
   }
+
   if (!all(is.numeric(thin)) || any(thin <= 0)) {
     stop("thin should be numeric and greater than zero")
   }
+
   if (!all(is.numeric(MinPresGrids)) || any(MinPresGrids <= 0)) {
     stop("MinPresGrids should be numeric and greater than zero")
   }
@@ -78,8 +82,6 @@ Mod_Prep4HPC <- function(
 
   # https://github.com/hmsc-r/HMSC/issues/180
   # https://github.com/hmsc-r/HMSC/issues/139
-
-  InitialWD <- getwd()
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
@@ -111,6 +113,20 @@ Mod_Prep4HPC <- function(
     Path_Grid <- Sys.getenv("DP_R_Mod_Path_Grid")
     Path_Scratch <- Sys.getenv("Path_LUMI_Scratch")
 
+    EmptyEnvVars <- c(
+      Path_Python, Path_TaxaList, Path_Grid, Path_Scratch) %>%
+      magrittr::equals("") %>%
+      which()
+
+    if (length(EmptyEnvVars) > 0) {
+      MissingVars <- c(
+        "Path_Python", "Path_TaxaList", "Path_Grid", "Path_Scratch")
+      MissingVars <- MissingVars[EmptyEnvVars]
+
+      stop(paste0(
+        paste0(MissingVars, collapse = ", "), "environment variable not found."))
+    }
+
     if (PhyloTree && !dir.exists(Path_TaxaList)) {
       stop("Path_TaxaList directory does not exist")
     }
@@ -126,8 +142,13 @@ Mod_Prep4HPC <- function(
 
   # temporarily setting the working directory
   if (FromHPC) {
-    setwd(Path_Scratch)
-    on.exit(setwd(InitialWD), add = TRUE)
+    if (dir.exists(Path_Scratch)) {
+      InitialWD <- getwd()
+      setwd(Path_Scratch)
+      on.exit(setwd(InitialWD), add = TRUE)
+    } else {
+      stop("The scratch folder does not exist")
+    }
   }
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -613,6 +634,7 @@ Mod_Prep4HPC <- function(
       # create connection to SLURM file
       # This is better than using sink to have a platform independent file (here, to maintain a linux-like new line ending)
       f <- file(CommandFile, open = "wb")
+      on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
       cat(Models2Fit_HPC[CurrIDs], sep = "\n", append = FALSE, file = f)
       close(f)
     })

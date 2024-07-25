@@ -12,6 +12,7 @@
 #' @return Invisible NULL. The function is used for its side effects (loading/installing packages) and does not return any value.
 #' @author Ahmed El-Gabbas
 #' @export
+#' @name RequireMultiple
 #' @examples
 #' # Currently loaded packages
 #' (P1 <- LoadedPackages())

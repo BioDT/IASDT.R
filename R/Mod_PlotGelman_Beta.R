@@ -4,7 +4,7 @@
 
 #' Gelman-Rubin-Brooks plot for `beta` parameters
 #'
-#' This function generates a Gelman-Rubin-Brooks plot for `beta` parameters from a Hmsc object. It is used to assess the convergence of MCMC simulations by plotting the evolution of the shrink factor over iterations. The plot helps in identifying whether the chains have converged to a common distribution. The plot includes lines for the median and the 97.5th percentile of the shrink factor, with a dashed line at 1.1 indicating the threshold for convergence.
+#' This function generates a Gelman-Rubin-Brooks plot for `beta` parameters from a Hmsc object. It is used to assess the convergence of MCMC simulations by plotting the evolution of the shrink factor over iterations. The plot helps in identifying whether the chains have converged to a common distribution. The plot includes lines for the median and the 97.5th percentile of the shrink factor, with a dashed line at 1.1 indicating the threshold for convergence. This function is not planned to be used in isolation but rather within [IASDT.R::PlotGelman].
 #'
 #' @param CodaObj An object of class `mcmc.list`, representing the Hmsc samples.
 #' @param NCores Integer indicating the number of parallel processes to be used for computation.
@@ -37,7 +37,7 @@ PlotGelman_Beta <- function(
     ShrinkFactor <- group <- NULL
 
   c1 <- snow::makeSOCKcluster(NCores)
-  on.exit(snow::stopCluster(c1), add = TRUE)
+  on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
   future::plan(future::cluster, workers = c1, gc = TRUE)
 
   Beta_Coda <- IASDT.R::Coda_to_tibble(

@@ -17,7 +17,7 @@ PlotGelman_Alpha(CodaObj, NCores, PlottingAlpha = 0.25)
 A ggplot object(s) representing the Gelman-Rubin-Brooks plot for the \code{beta} parameters.
 }
 \description{
-This function generates a Gelman-Rubin-Brooks plot for \code{alpha} parameters. It uses parallel processing to speed up the computation. The plot includes lines for the median and the 97.5th percentile of the shrink factor, with a dashed line at 1.1 indicating the threshold for convergence.
+This function generates a Gelman-Rubin-Brooks plot for \code{alpha} parameters. It uses parallel processing to speed up the computation. The plot includes lines for the median and the 97.5th percentile of the shrink factor, with a dashed line at 1.1 indicating the threshold for convergence. This function is not planned to be used in isolation but rather within \link{PlotGelman}.
 }
 \author{
 Ahmed El-Gabbas

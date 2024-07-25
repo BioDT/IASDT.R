@@ -77,6 +77,7 @@ reference:
   - SaveSession
   - SaveSessionInfo
   - FileSize
+  - FileType
   - DetectAlias
   - GetBashVars
   - CheckArgs
@@ -96,6 +97,7 @@ reference:
   - Mod_SLURM
   - Mod_SLURM_Refit
   - Mod_Fit_WS
+  - Mod_SLURM_CV
 - subtitle: Model postprocessing
   desc:
   contents:
@@ -103,6 +105,9 @@ reference:
   - GetPosts
   - Mod_MergeChains
   - Mod_Summary
+  - PlotBetaGG
+  - PlotOmegaGG
+  
 - subtitle: Plotting
   desc:
   contents:
@@ -122,7 +127,6 @@ reference:
 - subtitle: Other functions
   desc:
   contents:
-  - BetaSummary
   - SetChainName
   - Mod_Pred2Array
 

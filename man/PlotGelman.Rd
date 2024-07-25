@@ -22,13 +22,13 @@ PlotGelman(
 \arguments{
 \item{InputCoda}{Path to RData file containing the coda object.}
 
-\item{Beta}{Logical indicating whether to plot the Gelman-Rubin statistic for the Beta parameter. If \code{TRUE} (default), the function executes the \code{IASDT.R::PlotGelman_Beta} function.}
+\item{Beta}{Logical indicating whether to plot the Gelman-Rubin statistic for the Beta parameter. If \code{TRUE} (default), the function executes the \link{PlotGelman_Beta} function.}
 
-\item{Rho}{Logical indicating whether to plot the Gelman-Rubin statistic for the Rho parameter.  If \code{TRUE} (default), the function executes the  \code{IASDT.R::PlotGelman_Rho} function.}
+\item{Rho}{Logical indicating whether to plot the Gelman-Rubin statistic for the Rho parameter.  If \code{TRUE} (default), the function executes the  \link{PlotGelman_Rho} function.}
 
-\item{Omega}{Logical indicating whether to plot the Gelman-Rubin statistic for the Omega parameter. If \code{TRUE} (default), the function executes the \code{IASDT.R::PlotGelman_Omega} function.}
+\item{Omega}{Logical indicating whether to plot the Gelman-Rubin statistic for the Omega parameter. If \code{TRUE} (default), the function executes the \link{PlotGelman_Omega} function.}
 
-\item{Alpha}{Logical indicating whether to plot the Gelman-Rubin statistic for the Alpha parameter. If \code{TRUE} (default), the function executes the \code{IASDT.R::PlotGelman_Alpha} function.}
+\item{Alpha}{Logical indicating whether to plot the Gelman-Rubin statistic for the Alpha parameter. If \code{TRUE} (default), the function executes the \link{PlotGelman_Alpha} function.}
 
 \item{NCores}{Integer specifying the number of cores to use for parallel processing.}
 
@@ -49,6 +49,9 @@ If \code{ReturnPlots} is \code{TRUE}, returns a list of ggplot objects correspon
 }
 \description{
 This function generates and optionally saves a series of plots showing the evolution of Gelman and Rubin's shrink factor for various model parameters as the number of iterations increases. It is designed to help assess the convergence of Hmsc model by visualizing the shrink factor over iterations. The function supports parallel processing and can handle multiple parameters simultaneously.
+}
+\seealso{
+\code{\link[=PlotGelman_Alpha]{PlotGelman_Alpha()}}\if{html}{\out{<br>}}\code{\link[=PlotGelman_Beta]{PlotGelman_Beta()}}\if{html}{\out{<br>}}\code{\link[=PlotGelman_Rho]{PlotGelman_Rho()}}\if{html}{\out{<br>}}\code{\link[=PlotGelman_Omega]{PlotGelman_Omega()}}
 }
 \author{
 Ahmed El-Gabbas

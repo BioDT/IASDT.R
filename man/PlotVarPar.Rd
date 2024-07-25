@@ -25,11 +25,11 @@ PlotVarPar(
 
 \item{PlotTitlePrefix}{String (optional). Prefix to add to the title of the plot. Default: \code{NULL}, which means only 'Variance partitioning' will be used in the title.}
 
-\item{ModelEval}{Result of the \code{Hmsc::evaluateModelFit} function. If \code{ModelEval = NULL} (default), \code{Hmsc::evaluateModelFit} will be executed on the model object to compute measures of model fit.}
+\item{ModelEval}{Result of the \link[Hmsc:evaluateModelFit]{Hmsc::evaluateModelFit} function. If \code{ModelEval = NULL} (default), \link[Hmsc:evaluateModelFit]{Hmsc::evaluateModelFit} will be executed on the model object to compute measures of model fit.}
 
-\item{NCores}{Integer. Number of parallel computations for computing predicted values. This is used as the \code{nParallel} argument of the \code{Hmsc::computePredictedValues} function.}
+\item{NCores}{Integer. Number of parallel computations for computing predicted values. This is used as the \code{nParallel} argument of the \link[Hmsc:computePredictedValues]{Hmsc::computePredictedValues} function.}
 
-\item{VarPar}{Variance partitioning object resulted from \code{Hmsc::computeVariancePartitioning}. If \code{VarPar = NULL} (default), \code{Hmsc::computeVariancePartitioning} will be executed on the model object.}
+\item{VarPar}{Variance partitioning object resulted from \link[Hmsc:computeVariancePartitioning]{Hmsc::computeVariancePartitioning}. If \code{VarPar = NULL} (default), \link[Hmsc:computeVariancePartitioning]{Hmsc::computeVariancePartitioning} will be executed on the model object.}
 
 \item{EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
 

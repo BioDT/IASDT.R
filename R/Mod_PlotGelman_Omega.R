@@ -4,7 +4,7 @@
 
 #' Creates a Gelman-Rubin-Brooks plot for `omega` parameters.
 #'
-#' This function generates a Gelman-Rubin-Brooks plot specifically for `omega` parameters using the provided Hmsc model object. It is designed to help assess the convergence of MCMC simulations by plotting the shrink factor over iterations for a subset of species' omega parameters.
+#' This function generates a Gelman-Rubin-Brooks plot specifically for `omega` parameters using the provided Hmsc model object. It is designed to help assess the convergence of MCMC simulations by plotting the shrink factor over iterations for a subset of species' omega parameters. This function is not planned to be used in isolation but rather within [IASDT.R::PlotGelman].
 #'
 #' @param CodaObj n object of class `mcmc.list` representing the MCMC chains.
 #' @param NCores An integer specifying the number of cores to use for parallel processing.
@@ -21,7 +21,7 @@ PlotGelman_Omega <- function(
   if (is.null(CodaObj) || is.null(NCores)) {
     stop("CodaObj and NCores cannot be empty")
   }
-  
+
   if (!is.numeric(NCores) || NCores <= 0) {
     stop("NCores must be a positive integer.")
   }
@@ -39,13 +39,13 @@ PlotGelman_Omega <- function(
     ShrinkFactor <- group <- NULL
 
   c1 <- snow::makeSOCKcluster(NCores)
-  on.exit(snow::stopCluster(c1), add = TRUE)
+  on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
   future::plan(future::cluster, workers = c1, gc = TRUE)
 
   OmegaNames <- magrittr::extract2(CodaObj, 1) %>%
     attr("dimnames") %>%
     magrittr::extract2(2) %>%
-    sample(min(NOmega, length(.))) %>% 
+    sample(min(NOmega, length(.))) %>%
     sort()
 
   invisible(snow::clusterEvalQ(

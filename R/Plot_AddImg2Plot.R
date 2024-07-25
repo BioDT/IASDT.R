@@ -8,10 +8,10 @@
 #' @name AddImg2Plot
 #' @references [Click here](https://stackoverflow.com/questions/27800307/)
 #' @export
-#' @param obj The image object to be added to the plot, expected to be an array-like structure (e.g., as read by `png::readPNG` or `jpeg::readJPEG`).
+#' @param obj The image object to be added to the plot, expected to be an array-like structure (e.g., as read by [png::readPNG] or [jpeg::readJPEG]).
 #' @param x,y Numeric, the x-coordinate or y-coordinate (in plot units) at which the center of the image should be placed.
 #' @param width Numeric, the desired width of the image in plot units (not pixels or inches). The function will calculate the corresponding height to preserve the image's aspect ratio.
-#' @param interpolate Logical, whether to apply linear interpolation to the image when drawing. Defaults to `TRUE`. Passed directly to `graphics::rasterImage`. Interpolation can improve image quality but may take longer to render.
+#' @param interpolate Logical, whether to apply linear interpolation to the image when drawing. Defaults to `TRUE`. Passed directly to [graphics::rasterImage]. Interpolation can improve image quality but may take longer to render.
 #' @return This function does not return a value but modifies the current plot by adding an image.
 #' @note The function will stop with an error message if any of the required arguments (`obj`, `x`, `y`, `width`) are `NULL`.
 #' @examples

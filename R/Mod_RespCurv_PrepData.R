@@ -14,6 +14,7 @@
 #' @seealso RespCurv_PlotSp RespCurv_PlotSR
 #' @return Depending on the value of `ReturnData`, either returns response curve data or `NULL` invisibly.
 #' @export
+#' @name RespCurv_PrepData
 
 RespCurv_PrepData <- function(
     Path_Model = NULL, ngrid = 50, NCores = 15, ShowProgress = FALSE,
@@ -310,7 +311,7 @@ RespCurv_PrepData <- function(
       IASDT.R::CatTime()
 
     c1 <- snow::makeSOCKcluster(NCores)
-    on.exit(snow::stopCluster(c1), add = TRUE)
+    on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
     future::plan(future::cluster, workers = c1, gc = TRUE)
     invisible(snow::clusterEvalQ(
       cl = c1, IASDT.R::LoadPackages(c("dplyr", "purrr", "tidyr"))))

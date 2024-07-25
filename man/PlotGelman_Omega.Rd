@@ -19,7 +19,7 @@ PlotGelman_Omega(CodaObj, NCores, NOmega = 1000, PlottingAlpha = 0.25)
 A ggplot object representing the Gelman-Rubin-Brooks plot for the sampled omega parameters.
 }
 \description{
-This function generates a Gelman-Rubin-Brooks plot specifically for \code{omega} parameters using the provided Hmsc model object. It is designed to help assess the convergence of MCMC simulations by plotting the shrink factor over iterations for a subset of species' omega parameters.
+This function generates a Gelman-Rubin-Brooks plot specifically for \code{omega} parameters using the provided Hmsc model object. It is designed to help assess the convergence of MCMC simulations by plotting the shrink factor over iterations for a subset of species' omega parameters. This function is not planned to be used in isolation but rather within \link{PlotGelman}.
 }
 \author{
 Ahmed El-Gabbas

@@ -8,6 +8,7 @@
 #' @author Ahmed El-Gabbas
 #' @return A character vector containing the names of all functions in the specified package.
 #' @param Package A character string specifying the name of the package whose functions you want to list.
+#' @name FunctionsInPackage
 #' @export
 #' @examples
 #' FunctionsInPackage(Package = "raster")

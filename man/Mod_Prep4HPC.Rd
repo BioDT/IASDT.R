@@ -49,9 +49,9 @@ Mod_Prep4HPC(
 
 \item{EnvFile}{String specifying the path to read environment variables from, with a default value of ".env".}
 
-\item{PrepareData}{Logical indicating whether to prepare input data or load it from disk. Defaults to \code{TRUE} which means the input data will be prepared using the \code{IASDT.R::Mod_PrepData} function.}
+\item{PrepareData}{Logical indicating whether to prepare input data or load it from disk. Defaults to \code{TRUE} which means the input data will be prepared using the \link{Mod_PrepData} function.}
 
-\item{GPP_Dists}{Integer specifying the distance in kilometers for both the distance between knots and the minimum distance of a knot to the nearest data point. The same value will be used for the \code{knotDist} and \code{minKnotDist}    arguments of the \code{Hmsc::constructKnots} function.}
+\item{GPP_Dists}{Integer specifying the distance in kilometers for both the distance between knots and the minimum distance of a knot to the nearest data point. The same value will be used for the \code{knotDist} and \code{minKnotDist}    arguments of the \link[Hmsc:constructKnots]{Hmsc::constructKnots} function.}
 
 \item{GPP_Save}{Logical indicating whether to save the resulted knots as RData Default: \code{TRUE}.}
 
@@ -85,7 +85,7 @@ Mod_Prep4HPC(
 
 \item{FromHPC}{Logical indicating whether the work is being done from HPC, to adjust file paths accordingly. Default: \code{TRUE}.}
 
-\item{PrepSLURM}{Logical indicating whether to prepare SLURM command files. If \code{TRUE} (default), the SLURM commands will be saved to disk using the \code{IASDT.R::Mod_SLURM} function.}
+\item{PrepSLURM}{Logical indicating whether to prepare SLURM command files. If \code{TRUE} (default), the SLURM commands will be saved to disk using the \link{Mod_SLURM} function.}
 
 \item{MemPerCpu}{String specifying the memory per CPU for the SLURM job. This value will be assigned to the \verb{#SBATCH --mem-per-cpu=} SLURM argument. Example: "32G" to request 32 gigabyte. Only effective if \code{PrepSLURM = TRUE}.}
 
@@ -93,17 +93,17 @@ Mod_Prep4HPC(
 
 \item{JobName}{String specifying the name of the submitted job(s) for SLURM. If \code{NULL} (Default), the job name will be prepared based on the folder path and the \code{Hab_Abb} value. Only effective if \code{PrepSLURM = TRUE}.}
 
-\item{Path_Hmsc}{String specifying the path for the Hmsc-HPC. This will be provided as the \code{Path_Hmsc} argument of the \code{IASDT.R::Mod_SLURM} function.}
+\item{Path_Hmsc}{String specifying the path for the Hmsc-HPC. This will be provided as the \code{Path_Hmsc} argument of the \link{Mod_SLURM} function.}
 
 \item{ToJSON}{Logical indicating whether to convert unfitted models to JSON before saving to RDS file. Default: \code{FALSE}.}
 
-\item{...}{Additional parameters provided to the \code{IASDT.R::Mod_SLURM} function.}
+\item{...}{Additional parameters provided to the \link{Mod_SLURM} function.}
 }
 \value{
 The function is used for its side effects of preparing data and models for HPC and does not return any value.
 }
 \description{
-This function prepares initial models in R for model fitting by Hmsc-HPC. It involves data preparation, model initialization, and generating commands for running models on HPC. It supports parallel processing, options to include/not include phylogenetic tree data, and spatial information through Gaussian Process Priors (GPP).
+This function prepares initial models in R for model fitting by Hmsc-HPC. It involves data preparation, model initialization, and generating commands for running models on HPC. It supports parallel processing, options to include/not include phylogenetic tree data.
 }
 \author{
 Ahmed El-Gabbas

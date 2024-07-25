@@ -4,7 +4,7 @@
 
 #' Creates a Gelman-Rubin-Brooks plot for `alpha` parameters from an Hmsc object.
 #'
-#' This function generates a Gelman-Rubin-Brooks plot for `alpha` parameters. It uses parallel processing to speed up the computation. The plot includes lines for the median and the 97.5th percentile of the shrink factor, with a dashed line at 1.1 indicating the threshold for convergence.
+#' This function generates a Gelman-Rubin-Brooks plot for `alpha` parameters. It uses parallel processing to speed up the computation. The plot includes lines for the median and the 97.5th percentile of the shrink factor, with a dashed line at 1.1 indicating the threshold for convergence. This function is not planned to be used in isolation but rather within [IASDT.R::PlotGelman].
 #'
 #' @param CodaObj An object of class `mcmc.list`, representing the Hmsc samples.
 #' @param NCores An integer specifying the number of cores to use for parallel processing.
@@ -34,7 +34,7 @@ PlotGelman_Alpha <- function(CodaObj, NCores, PlottingAlpha = 0.25) {
     magrittr <- data <- NULL
 
   c1 <- snow::makeSOCKcluster(NCores)
-  on.exit(snow::stopCluster(c1), add = TRUE)
+  on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
   future::plan(future::cluster, workers = c1, gc = TRUE)
 
   AlphaNames <- magrittr::extract2(CodaObj, 1) %>%

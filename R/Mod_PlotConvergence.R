@@ -71,11 +71,16 @@ PlotConvergence <- function(
     readRenviron(EnvFile)
     Path_Scratch <- Sys.getenv("Path_LUMI_Scratch")
     if (FromHPC) {
-      setwd(Path_Scratch)
+      if (dir.exists(Path_Scratch)) {
+        InitialWD <- getwd()
+        setwd(Path_Scratch)
+        on.exit(setwd(InitialWD), add = TRUE)
+      } else {
+        stop("The scratch folder does not exist")
+      }
     }
   } else {
-    MSG <- paste0("Path for environment variables: ", EnvFile, " was not found")
-    stop(MSG)
+    stop(paste0("Path for environment variables: ", EnvFile, " was not found"))
   }
 
   IASDT.R::CatTime("Create path")
@@ -172,6 +177,7 @@ PlotConvergence <- function(
 
   IASDT.R::CatTime("  >>  Prepare working in parallel")
   c1 <- snow::makeSOCKcluster(NCores)
+  on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
   future::plan(future::cluster, workers = c1, gc = TRUE)
   invisible(snow::clusterEvalQ(
     cl = c1, IASDT.R::LoadPackages(dplyr, coda, ggplot2, ggExtra, ggtext)))

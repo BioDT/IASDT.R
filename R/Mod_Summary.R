@@ -12,6 +12,7 @@
 #' @author Ahmed El-Gabbas
 #' @return If `ReturnData` is `FALSE` (default), the function does not return anything and saves the summaries to a directory. If `ReturnData` is `TRUE`, it also returns the data as R object.
 #' @export
+#' @name Mod_Summary
 
 Mod_Summary <- function(Path_Coda = NULL, EnvFile = ".env", ReturnData = FALSE) {
 
@@ -116,8 +117,7 @@ Mod_Summary <- function(Path_Coda = NULL, EnvFile = ".env", ReturnData = FALSE) 
   if (file.exists(EnvFile)) {
     readRenviron(EnvFile)
   } else {
-    MSG <- paste0("Path for environment variables: ", EnvFile, " was not found")
-    stop(MSG)
+    stop(paste0("Path for environment variables: ", EnvFile, " was not found"))
   }
   ListSp <- Sys.getenv("DP_R_Mod_Path_TaxaList") %>%
     file.path("Species_List_ID.txt") %>%

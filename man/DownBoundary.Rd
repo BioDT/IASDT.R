@@ -13,10 +13,7 @@ DownBoundary(Left = NULL, Right = NULL, Bottom = NULL, Top = NULL)
 A character string representing the WKT of the polygon that outlines the specified boundaries.
 }
 \description{
-\code{rgbif::pred_within()} function used to download GBIF data only accepts a WKT string. This function takes the values of the boundary and converts it to a WKT string.
-}
-\details{
-This function constructs a Well-Known Text (WKT) string representing a polygon that outlines the specified boundaries. It is used to define the area of interest for downloading GBIF data through the \code{rgbif::pred_within()} function.
+This function constructs a Well-Known Text (WKT) string representing a polygon that outlines the specified boundaries. It is used to define the area of interest for downloading GBIF data through the \code{\link[rgbif:download_predicate_dsl]{rgbif::pred_within()}} function.
 }
 \examples{
 IASDT.R::DownBoundary(Left = 20, Right = 30, Bottom = 40, Top = 50)

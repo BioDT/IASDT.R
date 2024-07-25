@@ -11,7 +11,7 @@ CatDiff(InitTime, Prefix = "Completed in ", CatInfo = TRUE)
 
 \item{Prefix}{character; A prefix string to prepend to the printed time difference. Defaults to "Completed in ".}
 
-\item{CatInfo}{logical; If \code{TRUE}, prints a session summary using \code{IASDT.R::InfoChunk("Session summary")}. Defaults to \code{TRUE}.}
+\item{CatInfo}{logical; If \code{TRUE}, prints a session summary using \link{InfoChunk} ("Session summary"). Defaults to \code{TRUE}.}
 }
 \value{
 NULL; The function is used for its side effect of printing to the console and does not return any value.

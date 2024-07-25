@@ -2,7 +2,7 @@
 % Please edit documentation in R/Mod_SLURM.R
 \name{Mod_SLURM}
 \alias{Mod_SLURM}
-\title{Prepare SLURM file for model fitting on HPC}
+\title{Prepare SLURM Files for Hmsc-HPC Model Fitting}
 \usage{
 Mod_SLURM(
   Path_Model = NULL,
@@ -57,7 +57,7 @@ Mod_SLURM(
 The function does not return any value but writes SLURM script files to the disk.
 }
 \description{
-This function prepares and writes a SLURM file(s) for submitting model fitting jobs on an HPC environment. It dynamically generates bash scripts based on the provided parameters, which are then used to submit jobs to the SLURM workload manager.
+This function prepares and writes SLURM file(s) for submitting model fitting jobs on an HPC environment. It dynamically generates bash scripts based on the provided parameters, which are then used to submit jobs to the SLURM workload manager.
 }
 \author{
 Ahmed El-Gabbas

@@ -12,6 +12,7 @@
 #' @author Ahmed El-Gabbas
 #' @return A character vector of matched strings if any matches are found; otherwise, returns `NA_character_`. If the time period is "1981-2010", the function returns "Current".
 #' @export
+#' @name Chelsa_Extract_Matching
 #' @details
 #' A function to extract which climate model and scenario each file represent
 

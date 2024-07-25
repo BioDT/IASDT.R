@@ -13,7 +13,7 @@
 #' @export
 
 GetSpeciesName <- function(EnvFile = ".env", SpID = NULL) {
-  
+
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   IAS_ID <- NCells <- NULL
@@ -22,13 +22,20 @@ GetSpeciesName <- function(EnvFile = ".env", SpID = NULL) {
   if (file.exists(EnvFile)) {
     readRenviron(EnvFile)
   } else {
-    MSG <- paste0("Path for environment variables: ", EnvFile, " was not found")
-    stop(MSG)
+    stop(paste0("Path for environment variables: ", EnvFile, " was not found"))
   }
 
-  SpNames <- Sys.getenv("DP_R_Mod_Path_TaxaList") %>%
-    file.path("Species_List_ID.txt") %>%
-    utils::read.delim(sep = "\t") %>%
+  SpNamesF <- Sys.getenv("DP_R_Mod_Path_TaxaList")
+  if (SpNamesF == "") {
+    stop("DP_R_Mod_Path_TaxaList environment variable not set.")
+  }
+
+  SpNamesF <- file.path(SpNamesF, "Species_List_ID.txt")
+  if (magrittr::not(file.exists(SpNamesF))) {
+    stop("Species_List_ID.txt file does not exist")
+  }
+
+  SpNames <- utils::read.delim(SpNamesF, sep = "\t") %>%
     tibble::tibble() %>%
     dplyr::mutate(
       IAS_ID = stringr::str_pad(IAS_ID, pad = "0", width = 4),
@@ -45,7 +52,7 @@ GetSpeciesName <- function(EnvFile = ".env", SpID = NULL) {
         IAS_ID = paste0("Sp_", IAS_ID)) %>%
       dplyr::filter(IAS_ID == SpID) %>%
       dplyr::pull(NCells)
-    
+
     SpNames %>%
       dplyr::filter(IAS_ID == SpID) %>%
       dplyr::mutate(NCells = NGridCells) %>%

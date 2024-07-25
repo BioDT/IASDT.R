@@ -13,7 +13,7 @@ PlotGelman_Rho(CodaObj)
 A ggplot object representing the Gelman-Rubin-Brooks plot for the \code{rho} parameter.
 }
 \description{
-This function generates a Gelman-Rubin-Brooks plot for the \code{rho} parameter of a coda object. The plot includes lines for the median and the 97.5th percentile of the shrink factor, with a dashed line at 1.1 indicating the threshold for convergence.
+This function generates a Gelman-Rubin-Brooks plot for the \code{rho} parameter of a coda object. The plot includes lines for the median and the 97.5th percentile of the shrink factor, with a dashed line at 1.1 indicating the threshold for convergence. This function is not planned to be used in isolation but rather within \link{PlotGelman}.
 }
 \author{
 Ahmed El-Gabbas

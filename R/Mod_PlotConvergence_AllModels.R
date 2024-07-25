@@ -58,13 +58,16 @@ PlotConvergence_AllModels <- function(
     readRenviron(EnvFile)
     Path_Scratch <- Sys.getenv("Path_LUMI_Scratch")
     if (FromHPC) {
-      CurrWD <- getwd()
-      setwd(Path_Scratch)
-      on.exit(setwd(CurrWD), add = TRUE)
+      if (dir.exists(Path_Scratch)) {
+        InitialWD <- getwd()
+        setwd(Path_Scratch)
+        on.exit(setwd(InitialWD), add = TRUE)
+      } else {
+        stop("The scratch folder does not exist")
+      }
     }
   } else {
-    MSG <- paste0("Path for environment variables: ", EnvFile, " was not found")
-    stop(MSG)
+    stop(paste0("Path for environment variables: ", EnvFile, " was not found"))
   }
 
   Path_Convergence_All <- file.path(Path_Model, "Model_Convergence_All")
@@ -78,8 +81,8 @@ PlotConvergence_AllModels <- function(
   IASDT.R::CatTime("Prepare convergence data")
 
   c1 <- snow::makeSOCKcluster(NCores)
+  on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
   future::plan(future::cluster, workers = c1, gc = TRUE)
-  on.exit(snow::stopCluster(c1), add = TRUE)
 
   Model_Info <- IASDT.R::LoadAs(file.path(Path_Model, "Model_Info.RData"))
 

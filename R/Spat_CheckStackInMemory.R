@@ -7,6 +7,7 @@
 #' This function checks whether the layers of a RasterStack object are stored in memory or read from disk.  It prints messages indicating whether all layers are in memory, all layers are on disk, or a mix of both. If there's a mix, it specifies which layers are on disk.
 #' @author Ahmed El-Gabbas
 #' @export
+#' @name CheckStackInMemory
 #' @param Stack A RasterStack object. If `NULL` or not a RasterStack, the function will stop with an error.
 #' @return No return value, but prints messages to the console.
 #' @examples

@@ -9,7 +9,7 @@ PrepKnots(Coords = NULL, MinDist = NULL, JitterDist = 100)
 \arguments{
 \item{Coords}{A matrix or data frame containing the coordinates (x, y) of the sampling units.}
 
-\item{MinDist}{A numeric value specifying the minimum distance (in the same units as Coords; here in meters) between knots. This distance is used for both \code{knotDist} and \code{minKnotDist} parameters of the \code{Hmsc::constructKnots} function.}
+\item{MinDist}{A numeric value specifying the minimum distance (in the same units as Coords; here in meters) between knots. This distance is used for both \code{knotDist} and \code{minKnotDist} parameters of the \link[Hmsc:constructKnots]{Hmsc::constructKnots} function.}
 
 \item{JitterDist}{A numeric value specifying the distance (in the same units as Coords; here in meters) for jittering identical coordinates. Defaults to 100.}
 }

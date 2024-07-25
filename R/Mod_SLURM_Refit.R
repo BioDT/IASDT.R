@@ -37,8 +37,6 @@ Mod_SLURM_Refit <- function(
     stop("Path_Model, MemPerCpu, Time and Path_Hmsc cannot be empty")
   }
 
-  InitialWD <- getwd()
-
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Command_HPC <- Post_Path <- NULL
@@ -76,8 +74,13 @@ Mod_SLURM_Refit <- function(
 
   # temporarily setting the working directory
   if (FromHPC) {
-    setwd(Path_Scratch)
-    on.exit(setwd(InitialWD), add = TRUE)
+    if (dir.exists(Path_Scratch)) {
+      InitialWD <- getwd()
+      setwd(Path_Scratch)
+      on.exit(setwd(InitialWD), add = TRUE)
+    } else {
+      stop("The scratch folder does not exist")
+    }
   }
 
   # remove temp files and incomplete RDs files
@@ -133,7 +136,7 @@ Mod_SLURM_Refit <- function(
         # create connection to SLURM file
         # This is better than using sink to have a platform independent file (here, to maintain a linux-like new line ending)
         f <- file(file.path(Path_Model, OutCommandFile), open = "wb")
-        on.exit(tryCatch(close(f)), add = TRUE)
+        on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
         cat(Commands2Refit[CurrIDs], sep = "\n", append = FALSE, file = f)
         close(f)
       })

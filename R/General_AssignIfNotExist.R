@@ -12,6 +12,7 @@
 #' @author Ahmed El-Gabbas
 #' @return NULL; The function explicitly returns NULL, but its primary effect is the side-effect of assigning a value to a variable in an environment or printing the current value of an existing variable.
 #' @export
+#' @name AssignIfNotExist
 #' @examples
 #' AssignIfNotExist(Variable = "x", Value = TRUE)
 #' print(x)

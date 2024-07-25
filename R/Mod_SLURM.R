@@ -2,9 +2,9 @@
 # Mod_SLURM ----
 ## |------------------------------------------------------------------------| #
 
-#' Prepare SLURM file for model fitting on HPC
+#' Prepare SLURM Files for Hmsc-HPC Model Fitting
 #'
-#' This function prepares and writes a SLURM file(s) for submitting model fitting jobs on an HPC environment. It dynamically generates bash scripts based on the provided parameters, which are then used to submit jobs to the SLURM workload manager.
+#' This function prepares and writes SLURM file(s) for submitting model fitting jobs on an HPC environment. It dynamically generates bash scripts based on the provided parameters, which are then used to submit jobs to the SLURM workload manager.
 #'
 #' @param Path_Model String. Path to the model files (without trailing slash).
 #' @param JobName String. The name of the submitted job(s).
@@ -33,29 +33,27 @@ Mod_SLURM <- function(
     Path_Hmsc = NULL, Command_Prefix = "Commands_All",
     SLURM_Prefix = "Bash_Fit", Path_SLURM_Out = NULL) {
 
-  if (is.null(Path_Model) || is.null(JobName) || is.null(MemPerCpu)) {
-    stop("Path_Model, JobName and MemPerCpu cannot be empty")
+  if (is.null(Path_Model) || is.null(JobName) || is.null(MemPerCpu) ||
+      is.null(Time) || is.null(Path_Hmsc)) {
+    stop("Path_Model, JobName, MemPerCpu, Time, and Path_Hmsc cannot be empty")
   }
-
-  if (is.null(Time) || is.null(Path_Hmsc)) {
-    stop("(Time and Path_Hmsc cannot be empty")
-  }
-
   # # |||||||||||||||||||||||||||||||||||
   # # Load environment variables
   # # |||||||||||||||||||||||||||||||||||
 
-  if (file.exists(EnvFile)) {
-    readRenviron(EnvFile)
-    ProjNum <- Sys.getenv("IASDT_Proj_Number")
-    Path_Scratch <- Sys.getenv("Path_LUMI_Scratch")
-    Path_GPU_Check <- Sys.getenv("DP_R_Mod_Path_GPU_Check")
-  } else {
-    stop(paste0(
-      "Path for environment variables: ", EnvFile, " was not found"))
+  if (!file.exists(EnvFile)) {
+    stop(paste("Environment file not found:", EnvFile))
   }
+  readRenviron(EnvFile)
+  ProjNum <- Sys.getenv("IASDT_Proj_Number")
+  Path_Scratch <- Sys.getenv("Path_LUMI_Scratch")
+  Path_GPU_Check <- Sys.getenv("DP_R_Mod_Path_GPU_Check")
 
   # temporarily setting the working directory
+  if (FromHPC && !dir.exists(Path_Scratch)) {
+    stop("The scratch folder does not exist")
+  }
+
   if (FromHPC) {
     InitialWD <- getwd()
     setwd(Path_Scratch)
@@ -107,8 +105,10 @@ Mod_SLURM <- function(
 
       if (NCommandFiles == 1) {
         OutFile <- paste0(SLURM_Prefix, ".slurm")
+        JobName0 <- JobName
       } else {
         OutFile <- paste0(SLURM_Prefix, "_", x, ".slurm")
+        JobName0 <- paste0(JobName, x)
       }
       NJobs <- R.utils::countLines(ListCommands[x])[1]
 
@@ -116,13 +116,14 @@ Mod_SLURM <- function(
       # create connection to SLURM file
       # This is better than using sink to have a platform independent file (here, to maintain a linux-like new line ending)
       f <- file(file.path(Path_Model, OutFile), open = "wb")
-      on.exit(tryCatch(close(f)), add = TRUE)
+      on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
 
       # a wrapper function of cat with new line separator
       cat2 <- function(...) {
         # always cat to the file connection
         cat(sep = "\n", file = f, ...)
       }
+
 
       # Writing bash commands to text file
 
@@ -131,7 +132,7 @@ Mod_SLURM <- function(
       cat2("# -----------------------------------------------")
       cat2("# Job array configuration")
       cat2("# -----------------------------------------------")
-      cat2(paste0("#SBATCH --job-name=", paste0(JobName, x)))
+      cat2(paste0("#SBATCH --job-name=", JobName0))
       cat2(paste0("#SBATCH --ntasks=", ntasks))
       cat2(paste0(
         "#SBATCH --output=", file.path(Path_SLURM_Out, "Job_%x-%A-%a.out")))
@@ -202,7 +203,13 @@ Mod_SLURM <- function(
       cat2("# -----------------------------------------------")
       cat2("head -n $SLURM_ARRAY_TASK_ID $File | tail -n 1 | bash\n")
 
-      cat2('echo "End of program at `date`"')
+      cat2('echo "End of program at `date`"\n\n')
+
+      cat2("# -----------------------------------------------")
+      cat2("# -----------------------------------------------")
+      cat2(paste0("# This script was created on: \n# ", lubridate::now(tzone = "CET"), " CET"))
+      cat2("# -----------------------------------------------")
+      cat2("# -----------------------------------------------")
 
       # close connection to the file
       close(f)

@@ -14,7 +14,7 @@ PlotBetaGG(
 \arguments{
 \item{Path_Model}{String. The path to the .RData file containing the selected model.}
 
-\item{supportLevel}{Numeric. The threshold for posterior support used in plotting. Values above this threshold (and below 1 - threshold) are considered significant and will be plotted. The default value is 0.95, indicating 95\% posterior support. For more information, see \code{?Hmsc::plotBeta()}}
+\item{supportLevel}{Numeric. The threshold for posterior support used in plotting. Values above this threshold (and below 1 - threshold) are considered significant and will be plotted. The default value is 0.95, indicating 95\% posterior support. For more information, see \link[Hmsc:plotBeta]{Hmsc::plotBeta}}
 
 \item{PlotWidth, PlotHeight}{Numeric. The width and height of the plot in centimeters. Default is 18 cm x 20 cm.}
 }
@@ -22,5 +22,5 @@ PlotBetaGG(
 The function does not return a value but saves heatmap plots as JPEG files in a directory related to the model's path.
 }
 \description{
-This function generates heatmaps of parameter estimates or posterior support values for species' environmental responses, represented by Beta parameters. It is designed to visualize how species (Y) respond to various covariates (X) using ggplot2 for plotting. The function is an adaptation of \code{Hmsc::plotBeta()}, focusing on ggplot2-based visualizations.
+This function generates heatmaps of parameter estimates or posterior support values for species' environmental responses, represented by Beta parameters. It is designed to visualize how species (Y) respond to various covariates (X) using ggplot2 for plotting. The function is an adaptation of \link[Hmsc:plotBeta]{Hmsc::plotBeta}, focusing on ggplot2-based visualizations.
 }

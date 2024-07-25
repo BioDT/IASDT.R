@@ -9,6 +9,7 @@
 #' @param Extra1,Extra2 integer; the number of extra empty lines to print before and after the separator lines. Default is `0`.
 #' @param Char character; the character used to construct the separator line. Default is `"-"`.
 #' @param CharReps integer; the number of times the character is repeated to form a separator line. Default is `50`.
+#' @name CatSep
 #' @author Ahmed El-Gabbas
 #' @return NULL; The function is called for its side effect (printing to the console) and does not return a meaningful value.
 #' @examples

@@ -19,7 +19,7 @@ PlotGelman_Beta(CodaObj, NCores, EnvFile = ".env", PlottingAlpha = 0.25)
 A ggplot object representing the Gelman-Rubin-Brooks plot for the \code{beta} parameters.
 }
 \description{
-This function generates a Gelman-Rubin-Brooks plot for \code{beta} parameters from a Hmsc object. It is used to assess the convergence of MCMC simulations by plotting the evolution of the shrink factor over iterations. The plot helps in identifying whether the chains have converged to a common distribution. The plot includes lines for the median and the 97.5th percentile of the shrink factor, with a dashed line at 1.1 indicating the threshold for convergence.
+This function generates a Gelman-Rubin-Brooks plot for \code{beta} parameters from a Hmsc object. It is used to assess the convergence of MCMC simulations by plotting the evolution of the shrink factor over iterations. The plot helps in identifying whether the chains have converged to a common distribution. The plot includes lines for the median and the 97.5th percentile of the shrink factor, with a dashed line at 1.1 indicating the threshold for convergence. This function is not planned to be used in isolation but rather within \link{PlotGelman}.
 }
 \author{
 Ahmed El-Gabbas

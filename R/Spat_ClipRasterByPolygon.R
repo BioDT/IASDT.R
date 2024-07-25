@@ -11,6 +11,7 @@
 #' @return A RasterLayer object representing the portion of the input raster that falls within the specified polygon. The returned raster contains the same data as the original within the polygon's bounds but is masked (set to NA) outside of it.
 #' @note This function requires the 'raster' and 'sp' packages.
 #' @export
+#' @name ClipRasterByPolygon
 #' @examples
 #' library(sp)
 #' library(raster)

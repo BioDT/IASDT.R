@@ -9,7 +9,7 @@ InfoChunk(Message = "", ...)
 \arguments{
 \item{Message}{A character string representing the main message to be timestamped.  parameter is mandatory and cannot be NULL or empty.}
 
-\item{...}{Additional arguments passed to \code{IASDT.R::CatSep} for customizing the separators.}
+\item{...}{Additional arguments passed to \link{CatSep} for customizing the separators.}
 }
 \value{
 The function does not return any value but prints the message and separators to the console.

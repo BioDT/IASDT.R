@@ -12,6 +12,7 @@
 #' @param ReturnNames A logical flag indicating whether to return the names of the loaded objects. Only effective when `OneObject` is `FALSE`. Defaults to `TRUE`.
 #' @author Ahmed El-Gabbas
 #' @return If `OneObject` is `TRUE`, returns a named list of all objects loaded from the specified files. If `OneObject` is `FALSE` and `ReturnNames` is `TRUE`, returns a character vector of the names of the objects loaded into the global environment. Otherwise, returns `NULL`.
+#' @name LoadMultiple
 #' @examples
 #' (Files <- system.file("testdata", c("culcita_dat.RData", "gopherdat2.RData"), package = "lme4"))
 #'

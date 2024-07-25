@@ -12,6 +12,7 @@
 #' @author Ahmed El-Gabbas
 #' @return A tibble containing the names and sizes (in MB, rounded to 1 decimal place) of the saved objects.
 #' @export
+#' @name SaveSession
 
 SaveSession <- function(Path = getwd(), ExcludeObj = NULL, Prefix = "S") {
 

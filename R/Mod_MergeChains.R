@@ -95,6 +95,7 @@ Mod_MergeChains <- function(
   # Prepare working on parallel
 
   c1 <- snow::makeSOCKcluster(NCores)
+  on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
   future::plan(future::cluster, workers = c1, gc = TRUE)
 
   Path_ModInfo <- file.path(Path_Model, "Model_Info.RData")

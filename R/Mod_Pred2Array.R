@@ -4,7 +4,7 @@
 
 #' Convert results from `Hmsc:::predict.Hmsc` function to array
 #'
-#' This function converts the results from `Hmsc:::predict.Hmsc` function into an array format. It allows for the direct conversion of pre-computed predictions or the generation of predictions from a model before conversion. It supports parallel computation for generating predictions.
+#' This function converts the results from Hmsc:::predict.Hmsc` function into an array format. It allows for the direct conversion of pre-computed predictions or the generation of predictions from a model before conversion. It supports parallel computation for generating predictions.
 #'
 #' @param Predict Logical; if `TRUE`, predictions are made using the Model parameter before conversion. If `FALSE`, uses pre-computed predictions provided in `Preds`.
 #' @param Model Hmsc object or character for path to a saved model file. If `Predict` is `True`, the model object will be used to make predictions first.
@@ -18,7 +18,7 @@
 #' Preds <- IASDT.R::Mod_Pred2Array(
 #'     Predict = TRUE, Model = Hmsc::TD$m, expected = TRUE, NCores = 1)
 #' str(Preds)
-#' 
+#'
 #' Preds <- IASDT.R::Mod_Pred2Array(
 #'     Predict = TRUE, Model = Hmsc::TD$m, expected = FALSE, NCores = 1)
 #' str(Preds)
@@ -36,7 +36,7 @@ Mod_Pred2Array <- function(
   }
 
   if (Predict) {
-    
+
     if (!is.numeric(NCores) || NCores <= 0) {
       stop("NCores must be a positive integer.")
     }

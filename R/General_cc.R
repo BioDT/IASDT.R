@@ -10,6 +10,7 @@
 #' @author Ahmed El-Gabbas
 #' @return A character string representing the concatenated values of the input expressions.
 #' @export
+#' @name cc
 #' @examples
 #' cc(A, B, C)
 #'

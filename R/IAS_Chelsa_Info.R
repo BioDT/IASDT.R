@@ -8,7 +8,7 @@
 #'
 #' @name Chelsa_Info
 #' @param FileName character vector; a vector of CHELSA file names or paths. Each element should be a string representing the file name or path of a CHELSA climate model output file.
-#' @return A data frame with columns for the original file name (`FileName`), the climate variable (`Variable`), the time period (`TimePeriod`), the climate model (`ClimModel`), and the climate scenario (`ClimScenario`). Additional variable information is joined from an external source (`IASDT.R::Chelsa_Vars()`).
+#' @return A data frame with columns for the original file name (`FileName`), the climate variable (`Variable`), the time period (`TimePeriod`), the climate model (`ClimModel`), and the climate scenario (`ClimScenario`). Additional variable information is joined from an external source ([IASDT.R::Chelsa_Vars`).
 #' @author Ahmed El-Gabbas
 #' @examples
 #'BaseURL <- "https://os.zhdk.cloud.switch.ch/envicloud/chelsa/chelsa_V2/GLOBAL/climatologies/"

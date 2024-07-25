@@ -7,7 +7,7 @@
 #' This function prepares the locations of knots for use in GPP models within the HMSC framework. It ensures that knots are spaced at a minimum specified distance and applies jitter to any identical coordinates to avoid overlap.
 #'
 #' @param Coords A matrix or data frame containing the coordinates (x, y) of the sampling units.
-#' @param MinDist A numeric value specifying the minimum distance (in the same units as Coords; here in meters) between knots. This distance is used for both `knotDist` and `minKnotDist` parameters of the `Hmsc::constructKnots` function.
+#' @param MinDist A numeric value specifying the minimum distance (in the same units as Coords; here in meters) between knots. This distance is used for both `knotDist` and `minKnotDist` parameters of the [Hmsc::constructKnots] function.
 #' @param JitterDist A numeric value specifying the distance (in the same units as Coords; here in meters) for jittering identical coordinates. Defaults to 100.
 #' @name PrepKnots
 #' @author Ahmed El-Gabbas

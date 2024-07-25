@@ -7,7 +7,7 @@
 Extract_BB(x, var)
 }
 \arguments{
-\item{x}{A list or data frame containing the results of GBIF standardization (\code{rgbif::name_backbone}).}
+\item{x}{A list or data frame containing the results of GBIF standardization (\link[rgbif:name_backbone]{rgbif::name_backbone}).}
 
 \item{var}{A character string specifying the name of the column to extract from \code{x}.}
 }
@@ -15,7 +15,7 @@ Extract_BB(x, var)
 Returns the content of the specified column \code{var} from the input \code{x}. If \code{var} is not found within \code{x}, the function returns \code{NA_character_}.
 }
 \description{
-This function is designed to extract a specific column from the output of GBIF standardization, typically obtained via the \code{rgbif::name_backbone} function. It is useful for retrieving specific information such as the scientific name of the accepted taxa.
+This function is designed to extract a specific column from the output of GBIF standardization, typically obtained via the \link[rgbif:name_backbone]{rgbif::name_backbone} function. It is useful for retrieving specific information such as the scientific name of the accepted taxa.
 }
 \details{
 Extract a specific column from the output of GBIF

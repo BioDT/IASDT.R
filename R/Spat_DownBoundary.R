@@ -4,13 +4,12 @@
 
 #' Determine the boundaries of the requested GBIF data
 #'
-#' This function constructs a Well-Known Text (WKT) string representing a polygon that outlines the specified boundaries. It is used to define the area of interest for downloading GBIF data through the `rgbif::pred_within()` function.
+#' This function constructs a Well-Known Text (WKT) string representing a polygon that outlines the specified boundaries. It is used to define the area of interest for downloading GBIF data through the [rgbif::pred_within()] function.
 #' @param Left,Right,Bottom,Top Numeric, the left, right, bottom, and top boundary of the area.
 #' @name DownBoundary
 #' @author Ahmed El-Gabbas
 #' @return A character string representing the WKT of the polygon that outlines the specified boundaries.
 #' @export
-#' @description `rgbif::pred_within()` function used to download GBIF data only accepts a WKT string. This function takes the values of the boundary and converts it to a WKT string.
 #' @examples
 #' IASDT.R::DownBoundary(Left = 20, Right = 30, Bottom = 40, Top = 50)
 

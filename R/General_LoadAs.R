@@ -10,6 +10,7 @@
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
+#' @name LoadAs
 #' @examples
 #'
 #' File <- system.file("testdata", "culcita_dat.RData", package = "lme4")

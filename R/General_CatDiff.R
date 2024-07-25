@@ -11,7 +11,7 @@
 #' @return NULL
 #' @param InitTime POSIXct; The initial time from which the difference is calculated.
 #' @param Prefix character; A prefix string to prepend to the printed time difference. Defaults to "Completed in ".
-#' @param CatInfo logical; If `TRUE`, prints a session summary using `IASDT.R::InfoChunk("Session summary")`. Defaults to `TRUE`.
+#' @param CatInfo logical; If `TRUE`, prints a session summary using [IASDT.R::InfoChunk] ("Session summary"). Defaults to `TRUE`.
 #' @return NULL; The function is used for its side effect of printing to the console and does not return any value.
 #' @examples
 #' # Assuming the current time, it prints the time difference from one minute ago.

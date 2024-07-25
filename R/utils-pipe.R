@@ -24,11 +24,8 @@ NULL
   # Retrieve the package version and date dynamically
   packageVersionInfo <- utils::packageVersion("IASDT.R")
   packageDateInfo <- utils::packageDescription("IASDT.R")$Date
-  
-  # Construct the message
-  MSG <- paste0("IASDT.R v", packageVersionInfo, " - Last updated on ", packageDateInfo)
-  
+
   # Display the startup message
-  packageStartupMessage(MSG)
+  packageStartupMessage(paste0("IASDT.R v", packageVersionInfo, " - Last updated on ", packageDateInfo))
 
 }

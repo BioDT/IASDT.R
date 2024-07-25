@@ -9,7 +9,7 @@
 #' @param Path A character string specifying the path to the file whose type is to be determined. The path must not be NULL, and the file must exist.
 #'
 #' @return A character string describing the file type.
-#'
+#' @name FileType
 #' @examples
 #' (f <- system.file("ex/elev.tif", package="terra"))
 #' FileType(Path = f)

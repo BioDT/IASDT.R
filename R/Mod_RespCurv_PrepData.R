@@ -2,22 +2,26 @@
 # RespCurv_PrepData ----
 ## |------------------------------------------------------------------------| #
 
-#' Prepare response curve data
+#' Prepare and Process Response Curve Data for Hmsc Models
 #'
-#' Prepare response curve data
+#' This function prepares and processes data for generating response curves for Hmsc models. It supports parallel processing and can return the processed data.
 #'
-#' @param Path_Model String. Path to .RData file for selected model
-#' @param ngrid Integer. Number of points along the gradient (for continuous focal variables)
-#' @param NCores Integer. Number of parallel cores.
-#' @param ShowProgress Logical. Show progress bar. Default: `FALSE`
-#' @param ReturnData Logical. Should the response curve data be returned as an R object? Default: `FALSE`
-#'
+#' @param Path_Model String specifying the path to the .RData file containing the model to be used.
+#' @param ngrid Integer specifying the number of points along the gradient for continuous focal variables. Defaults to 50.
+#' @param NCores Integer specifying the number of cores to use for parallel processing. Defaults to 15.
+#' @param ShowProgress Logical indicating whether to show a progress bar during execution. Defaults to `FALSE`.
+#' @param ReturnData Logical indicating whether the processed response curve data should be returned as an R object. Defaults to `FALSE`.
+#' @seealso RespCurv_PlotSp RespCurv_PlotSR
+#' @return Depending on the value of `ReturnData`, either returns response curve data or `NULL` invisibly.
 #' @export
-#'
 
 RespCurv_PrepData <- function(
     Path_Model = NULL, ngrid = 50, NCores = 15, ShowProgress = FALSE,
     ReturnData = FALSE) {
+
+  if (is.null(Path_Model)) {
+    stop("Path_Model cannot be NULL")
+  }
 
   TimeStartData <- lubridate::now(tzone = "CET")
 
@@ -34,8 +38,7 @@ RespCurv_PrepData <- function(
   IASDT.R::CatTime("Check input arguments")
   AllArgs <- ls()
   AllArgs <- purrr::map(
-    AllArgs,
-    function(x) get(x, envir = parent.env(env = environment()))) %>%
+    .x = AllArgs, .f = ~get(.x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = "Path_Model")
@@ -163,8 +166,7 @@ RespCurv_PrepData <- function(
           PositiveTrendProb = purrr::map_dbl(
             .x = PlotData,
             .f = ~{
-              .x %>%
-                dplyr::group_by(SampleID) %>%
+              dplyr::group_by(.x, SampleID) %>%
                 dplyr::reframe(MM = dplyr::last(Pred) > dplyr::first(Pred)) %>%
                 dplyr::pull(MM) %>%
                 mean()
@@ -215,6 +217,7 @@ RespCurv_PrepData <- function(
         RC_Data_SR_Quant = RC_Data_SR_Quant,
         Observed_SR = Observed_SR,
         SR_PositiveTrendProb = SR_PositiveTrendProb)
+
       IASDT.R::SaveAs(
         InObj = RC_Data_SR, OutObj = paste0(RC_DT_Name,  "_SR"),
         OutPath = RC_DT_Path_SR)
@@ -231,8 +234,7 @@ RespCurv_PrepData <- function(
 
   IASDT.R::CatTime("Prepare response curve data")
 
-  Path_ResCurve <- Path_Model %>%
-    dirname() %>%
+  Path_ResCurve <- dirname(Path_Model) %>%
     dirname() %>%
     file.path("Model_Postprocessing")
   Path_RespCurvDT <- file.path(Path_ResCurve, "RespCurv_DT")
@@ -308,8 +310,8 @@ RespCurv_PrepData <- function(
       IASDT.R::CatTime()
 
     c1 <- snow::makeSOCKcluster(NCores)
-    future::plan(future::cluster, workers = c1, gc = TRUE)
     on.exit(snow::stopCluster(c1), add = TRUE)
+    future::plan(future::cluster, workers = c1, gc = TRUE)
     invisible(snow::clusterEvalQ(
       cl = c1, IASDT.R::LoadPackages(c("dplyr", "purrr", "tidyr"))))
     snow::clusterExport(

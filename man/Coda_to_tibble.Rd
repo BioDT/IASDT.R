@@ -2,21 +2,35 @@
 % Please edit documentation in R/Mod_Coda_to_tibble.R
 \name{Coda_to_tibble}
 \alias{Coda_to_tibble}
-\title{Convert \code{mcmc.list} to tibble}
+\title{Convert a Coda object to a tibble with specified parameter transformations}
 \usage{
 Coda_to_tibble(CodaObj = NULL, Type = NULL, EnvFile = ".env", NOmega = 1000)
 }
 \arguments{
-\item{CodaObj}{\code{mcmc.list} object}
+\item{CodaObj}{An object of class \code{mcmc.list} or \code{mcmc}, representing the MCMC output.}
 
-\item{Type}{String. Parameter type. It has to be one of \code{rho}, \code{alpha}, \code{omega}, or \code{beta}.}
+\item{Type}{A character string specifying the parameter type to transform and extract. Must be one of "rho", "alpha", "omega", or "beta".}
 
-\item{EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
+\item{EnvFile}{A character string specifying the path to the environment file that contains necessary variables for beta parameter transformation. Defaults to ".env".}
 
-\item{NOmega}{Integer. Number of species to be sampled for the Omega parameter}
+\item{NOmega}{An integer specifying the number of species to be sampled for the Omega parameter transformation. Defaults to 1000.}
+}
+\value{
+A tibble containing the transformed parameters based on the specified \code{Type}. The structure of the returned tibble varies depending on the \code{Type} parameter.
 }
 \description{
-Convert \code{mcmc.list} to tibble
+This function converts a Coda object (\code{mcmc.list} or \code{mcmc}) into a tibble format, facilitating further analysis and visualization. It supports transformation for specific parameter types: rho, alpha, omega, and beta.
+}
+\examples{
+\dontrun{
+   library(Hmsc)
+   library(coda)
+   library(dplyr)
+   Coda  <- Hmsc::convertToCodaObject(Hmsc::TD$m)
+   IASDT.R::Coda_to_tibble(CodaObj = Coda$Alpha[[1]], Type = "Alpha", EnvFile = ".env")
+   IASDT.R::Coda_to_tibble(CodaObj = Coda$Beta, Type = "beta")
+   IASDT.R::Coda_to_tibble(CodaObj = Coda$Omega[[1]], Type = "omega")
+}
 }
 \author{
 Ahmed El-Gabbas

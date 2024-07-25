@@ -4,26 +4,29 @@
 
 #' Plot model convergence of multiple modelling alternatives
 #'
-#' Plot model convergence of multiple modelling alternatives
+#' This function generates and saves a series of diagnostic plots to assess the convergence of Hmsc models across multiple modelling alternatives. It checks model convergence using trace plots and Gelman-Rubin diagnostics for key model parameters.
 #'
-#' @param Path_Model String. Path to save all the output, including the to be fitted models (without trailing slash)
-#' @param EnvFile String. Path to read the environment variables. Default value: `.env`
-#' @param FromHPC Logical. Work from HPC? This is to adjust the file paths.
-#' @param NChains Integer. Number of model chains
-#' @param maxOmega Number of sample species interactions
-#' @param NCores Number of parallel cores for parallelization
+#' @param Path_Model String. Path to save all the output, including the to be fitted models (without trailing slash). Must not be `NULL`.
+#' @param EnvFile String. Path to read the environment variables. Default value: `.env`.
+#' @param FromHPC Logical. Indicates whether the function is being run on a High-Performance Computing (HPC) environment. Adjusts file paths accordingly.
+#' @param NChains Integer. Number of MCMC chains used in the model fitting process.
+#' @param maxOmega Integer. Maximum number of species interactions to sample for convergence diagnostics.
+#' @param NCores Integer. Number of cores to use for parallel processing.
 #' @name PlotConvergence_AllModels
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return The function does not return anything but saves a series of diagnostic plots in the specified path.
 #' @export
 
 PlotConvergence_AllModels <- function(
     Path_Model = NULL, EnvFile = ".env", FromHPC = TRUE, NChains = 4,
     maxOmega = 1000, NCores = NULL) {
 
+  if (is.null(Path_Model) || is.null(NCores)) {
+    stop("Path_Model and NCores cannot be empty")
+  }
+
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-
   GPP_Thin <- Path_Coda <- Path_FittedMod <- M_Name_Fit <- Tree <- Plots <-
     rL <- M_thin <- M_samples <- Omega_Gelman <- Omega_ESS <- Beta_Gelman <-
     Beta_ESS <- ESS2 <- Path_Trace_Rho <- Rho <- NULL
@@ -35,8 +38,7 @@ PlotConvergence_AllModels <- function(
   IASDT.R::CatTime("Check input arguments")
   AllArgs <- ls()
   AllArgs <- purrr::map(
-    AllArgs,
-    function(x) get(x, envir = parent.env(env = environment()))) %>%
+    AllArgs, ~get(.x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
@@ -56,7 +58,9 @@ PlotConvergence_AllModels <- function(
     readRenviron(EnvFile)
     Path_Scratch <- Sys.getenv("Path_LUMI_Scratch")
     if (FromHPC) {
+      CurrWD <- getwd()
       setwd(Path_Scratch)
+      on.exit(setwd(CurrWD), add = TRUE)
     }
   } else {
     MSG <- paste0("Path for environment variables: ", EnvFile, " was not found")
@@ -75,6 +79,7 @@ PlotConvergence_AllModels <- function(
 
   c1 <- snow::makeSOCKcluster(NCores)
   future::plan(future::cluster, workers = c1, gc = TRUE)
+  on.exit(snow::stopCluster(c1), add = TRUE)
 
   Model_Info <- IASDT.R::LoadAs(file.path(Path_Model, "Model_Info.RData"))
 
@@ -95,6 +100,7 @@ PlotConvergence_AllModels <- function(
             ObjName_Rho <- paste0(M_Name_Fit, "_TraceRho")
             Path_Trace_Rho <- file.path(
               Path_ConvDT, paste0(ObjName_Rho, ".RData"))
+
 
             if (magrittr::not(file.exists(Path_Trace_Rho))) {
               if (Tree == "Tree") {

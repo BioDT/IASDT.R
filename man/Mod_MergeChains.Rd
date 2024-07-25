@@ -15,22 +15,25 @@ Mod_MergeChains(
 )
 }
 \arguments{
-\item{Path_Model}{String. Path to save all the output, including the to be fitted models (without trailing slash)}
+\item{Path_Model}{String. Path to the directory where model outputs are stored. This should include the path to the fitted models but should not have a trailing slash.}
 
-\item{NCores}{Integer. Number of parallel cores to use}
+\item{NCores}{Integer. The number of cores to use for parallel processing. This should be a positive integer.}
 
-\item{ModInfoName}{String. Default: \code{NULL} which means overwrite the \code{Model_Info.RData} file. If \code{ModInfoName} is provided, a new \code{.RData} file will be created with this prefix for file name (excluding extension)}
+\item{ModInfoName}{String. The name of the file (without extension) where the processed model information will be saved. If \code{NULL}, it overwrites the \code{Model_Info.RData} file in the \code{Path_Model} directory. If provided, a new \code{.RData} file will be created with this name.}
 
-\item{PrintIncomplete}{Logical. Print to the console the name of unfitted models}
+\item{PrintIncomplete}{Logical. Indicates whether to print the names of models that were not successfully fitted to the console. Defaults to \code{TRUE}.}
 
-\item{FromHPC}{Logical. Work from HPC? This is to adjust the file paths.}
+\item{FromHPC}{Logical. Indicates whether the function is being run in an HPC environment. This affects how file paths are handled. Defaults to \code{TRUE}.}
 
-\item{EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
+\item{EnvFile}{String. The path to the file containing environment variables. Defaults to ".env". This file should contain at least the \code{Path_LUMI_Scratch} variable when running in an HPC environment.}
 
-\item{FromJSON}{Logical. Convert loaded models to JSON format before reading}
+\item{FromJSON}{Logical. Indicates whether to convert loaded models from JSON format before reading. Defaults to \code{FALSE}.}
+}
+\value{
+The function does not return anything but saves the processed model information to disk.
 }
 \description{
-Post-processing of model outputs
+This function performs post-processing of HMSC model outputs. It merges model chains, checks for missing or incomplete model runs, and optionally prints information about incomplete models. It can work with models run on High-Performance Computing (HPC) environments and supports parallel processing.
 }
 \author{
 Ahmed El-Gabbas

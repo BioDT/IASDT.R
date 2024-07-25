@@ -2,21 +2,22 @@
 % Please edit documentation in R/Mod_GetCV.R
 \name{GetCV}
 \alias{GetCV}
-\title{Prepare cross-validation data}
+\title{Prepare cross-validation data for spatial analysis}
 \usage{
 GetCV(DT, NR = 4, NC = 3, Path_Grid)
 }
 \arguments{
-\item{DT}{Input data set}
+\item{DT}{A data frame or tibble containing the input dataset with at least two columns for x and y coordinates.}
 
-\item{NR}{Integer. Number of rows}
+\item{NR, NC}{Integer, the number of rows and columns to divide the spatial area into. Defaults to 4 row and 3 columns.}
 
-\item{NC}{Integer. Number of columns}
-
-\item{Path_Grid}{String. Path of the reference grid.}
+\item{Path_Grid}{String, the file path to the reference grid used for rasterizing the input data.}
+}
+\value{
+The function returns a modified version of the input dataset (DT) with an additional column indicating the cross-validation fold each record belongs to. This allows for spatially-aware cross-validation processes.
 }
 \description{
-Prepare cross-validation data
+This function prepares cross-validation data by dividing the input dataset into spatial blocks. It is designed to work with spatial data, specifically for scenarios where spatial autocorrelation might influence the cross-validation process.
 }
 \author{
 Ahmed El-Gabbas

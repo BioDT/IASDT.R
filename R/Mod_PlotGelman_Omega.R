@@ -2,21 +2,36 @@
 # PlotGelman_Omega ----
 ## |------------------------------------------------------------------------| #
 
-#' Gelman-Rubin-Brooks plot for `omega` parameters
+#' Creates a Gelman-Rubin-Brooks plot for `omega` parameters.
 #'
-#' Gelman-Rubin-Brooks plot for `omega` parameters
+#' This function generates a Gelman-Rubin-Brooks plot specifically for `omega` parameters using the provided Hmsc model object. It is designed to help assess the convergence of MCMC simulations by plotting the shrink factor over iterations for a subset of species' omega parameters.
 #'
-#' @param CodaObj an mcmc object
-#' @param NCores Integer. Number of parallel processes.
-#' @param NOmega Integer. Number of species to be sampled for the Omega parameter
-#' @param PlottingAlpha Double. Plotting alpha for line transparency
+#' @param CodaObj n object of class `mcmc.list` representing the MCMC chains.
+#' @param NCores An integer specifying the number of cores to use for parallel processing.
+#' @param NOmega An optional integer indicating the number of species' omega parameters to sample and plot. Defaults to 1000.
+#' @param PlottingAlpha A numeric value between 0 and 1 indicating the transparency level of the plot lines. Defaults to 0.25.
 #' @name PlotGelman_Omega
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return A ggplot object representing the Gelman-Rubin-Brooks plot for the sampled omega parameters.
 #' @export
 
 PlotGelman_Omega <- function(
-    CodaObj = NULL, NCores = NULL, NOmega = 1000, PlottingAlpha = 0.25) {
+    CodaObj, NCores, NOmega = 1000, PlottingAlpha = 0.25) {
+
+  if (is.null(CodaObj) || is.null(NCores)) {
+    stop("CodaObj and NCores cannot be empty")
+  }
+  
+  if (!is.numeric(NCores) || NCores <= 0) {
+    stop("NCores must be a positive integer.")
+  }
+ if (!is.numeric(NOmega) || NOmega <= 0) {
+    stop("NOmega must be a positive integer.")
+  }
+
+  if (magrittr::not(inherits(CodaObj, "mcmc.list"))) {
+    stop("CodaObj has to be of class mcmc.list")
+  }
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
@@ -24,20 +39,18 @@ PlotGelman_Omega <- function(
     ShrinkFactor <- group <- NULL
 
   c1 <- snow::makeSOCKcluster(NCores)
+  on.exit(snow::stopCluster(c1), add = TRUE)
   future::plan(future::cluster, workers = c1, gc = TRUE)
 
-  OmegaNames <- CodaObj %>%
-    magrittr::extract2(1) %>%
+  OmegaNames <- magrittr::extract2(CodaObj, 1) %>%
     attr("dimnames") %>%
     magrittr::extract2(2) %>%
-    sample(NOmega) %>%
+    sample(min(NOmega, length(.))) %>% 
     sort()
 
   invisible(snow::clusterEvalQ(
     cl = c1, IASDT.R::LoadPackages(dplyr, coda, tibble, magrittr)))
-  snow::clusterExport(
-    cl = c1, list = c("CodaObj"), envir = environment())
-  on.exit(snow::stopCluster(c1), add = TRUE)
+  snow::clusterExport(cl = c1, list = "CodaObj", envir = environment())
 
   Gelman_OmegaDT <- snow::parLapply(
     cl = c1, x = OmegaNames,
@@ -56,10 +69,7 @@ PlotGelman_Omega <- function(
         tidyr::pivot_longer(
           cols = -Iter, names_to = "Type", values_to = "ShrinkFactor") %>%
         dplyr::arrange(Type, Iter) %>%
-        dplyr::mutate(
-          # Colour = dplyr::if_else(Type == "Median", "black", "red"),
-          # LType = dplyr::if_else(Type == "Median", "dashed", "solid"),
-          Type = factor(Type), Sp_comb = x)
+        dplyr::mutate(Type = factor(Type), Sp_comb = x)
     }) %>%
     dplyr::bind_rows() %>%
     dplyr::mutate(group = paste0(Sp_comb, "_", Type))

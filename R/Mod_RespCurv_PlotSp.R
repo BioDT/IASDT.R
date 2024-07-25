@@ -4,20 +4,23 @@
 
 #' Plot species response curves
 #'
-#' Plot species response curves
+#' Generates and saves response curve plots for species based on environmental variables and other factors. Plots show predicted habitat suitability across different values of each variable.
 #'
-#' @param Path_RC String. Path to response curve folder.
-#' @param NCores Integer. Number of parallel cores
-#' @param EnvFile String. Path to read the environment variables. Default value: `.env`
-#' @param SaveGG Logical. Should the ggplot object be saved as RData file. Default: `FALSE`
-#' @param ShowProgress Logical. Show progress bar. Default: `FALSE`
-#'
+#' @param Path_RC String. Path to the directory where response curve data is stored and where plots will be saved.
+#' @param NCores Integer. Number of cores to use for parallel processing. Defaults to 20.
+#' @param EnvFile String. Path to the environment variables file. Defaults to ".env".
+#' @param SaveGG Logical. Indicates whether to save the ggplot objects as RData files. Defaults to `FALSE`.
+#' @param ShowProgress Logical. Indicates whether to show a progress bar during execution. Defaults to FALSE.
+#' @return A data frame containing paths to the JPEG images and, if requested, the ggplot objects saved as RData files.
 #' @export
-#'
 
 RespCurv_PlotSp <- function(
     Path_RC = NULL, NCores = 20, EnvFile = ".env", SaveGG = FALSE,
     ShowProgress = FALSE) {
+
+  if (is.null(Path_RC)) {
+    stop("Path_RC cannot be NULL")
+  }
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
@@ -26,16 +29,18 @@ RespCurv_PlotSp <- function(
     VariableDesc <- Pred <- XVals <- PlotData_Quant <- Quantile <-
     Observed_PA <- Col <- Q975 <- Q25 <- Q50 <- X <- Y <- NULL
 
-
   IASDT.R::CatTime("Check input arguments")
   AllArgs <- ls()
   AllArgs <- purrr::map(
     AllArgs,
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
+
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "character", Args = c("Path_RC", "EnvFile"))
+
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "numeric", Args = "NCores")
+
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "logical", Args = c("SaveGG", "ShowProgress"))
   rm(AllArgs)
@@ -44,8 +49,8 @@ RespCurv_PlotSp <- function(
   fs::dir_create(file.path(Path_RC, "RespCurv_Sp"))
 
   c1 <- snow::makeSOCKcluster(NCores)
-  future::plan(future::cluster, workers = c1, gc = TRUE)
   on.exit(snow::stopCluster(c1), add = TRUE)
+  future::plan(future::cluster, workers = c1, gc = TRUE)
 
   SR_DT_All <- file.path(Path_RC, "RespCurv_DT/ResCurvDT.RData") %>%
     IASDT.R::LoadAs() %>%
@@ -85,10 +90,8 @@ RespCurv_PlotSp <- function(
             dplyr::mutate(
               Trend2 = stringr::str_glue(
                 "\n     Pr[pred(Var=max)] > Pr[pred(Var=min)] = {round(Trend, 2)}"),
-              # Trend2 = stringr::str_glue(
-              #   "\n     Pr[pred({Variable}=max)] > Pr[pred({Variable}=min)] = {round(Trend, 2)}"),
-              X = -Inf, Y = Inf,
-              Trend2 = as.character(Trend2))
+              X = -Inf, Y = Inf, Trend2 = as.character(Trend2))
+
           Quant <- DT %>%
             dplyr::select(Variable, VariableDesc, Quant = PlotData_Quant) %>%
             tidyr::unnest(cols = "Quant") %>%

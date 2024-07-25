@@ -26,9 +26,9 @@ LFiles <- paste0(
    "2041-2070/MRI-ESM2-0/ssp370/bio/CHELSA_bio5_2041-2070_mri-esm2-0_ssp370_V.2.1.tif",
    "2011-2040/MRI-ESM2-0/ssp585/bio/CHELSA_scd_2011-2040_mri-esm2-0_ssp585_V.2.1.tif"))
 
-Chelsa_Info(LFiles[1])
+Chelsa_Info(FileName = LFiles[1])
 
-Chelsa_Info(LFiles)
+Chelsa_Info(FileName = LFiles)
 }
 \author{
 Ahmed El-Gabbas

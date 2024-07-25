@@ -2,18 +2,28 @@
 # Coda_to_tibble ----
 ## |------------------------------------------------------------------------| #
 
-#' Convert `mcmc.list` to tibble
+#' Convert a Coda object to a tibble with specified parameter transformations
 #'
-#' Convert `mcmc.list` to tibble
+#' This function converts a Coda object (`mcmc.list` or `mcmc`) into a tibble format, facilitating further analysis and visualization. It supports transformation for specific parameter types: rho, alpha, omega, and beta.
 #'
-#' @param CodaObj `mcmc.list` object
-#' @param Type String. Parameter type. It has to be one of `rho`, `alpha`, `omega`, or `beta`.
-#' @param EnvFile String. Path to read the environment variables. Default value: `.env`
-#' @param NOmega Integer. Number of species to be sampled for the Omega parameter
+#' @param CodaObj An object of class `mcmc.list` or `mcmc`, representing the MCMC output.
+#' @param Type A character string specifying the parameter type to transform and extract. Must be one of "rho", "alpha", "omega", or "beta".
+#' @param EnvFile A character string specifying the path to the environment file that contains necessary variables for beta parameter transformation. Defaults to ".env".
+#' @param NOmega An integer specifying the number of species to be sampled for the Omega parameter transformation. Defaults to 1000.
 #' @name Coda_to_tibble
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return A tibble containing the transformed parameters based on the specified `Type`. The structure of the returned tibble varies depending on the `Type` parameter.
 #' @export
+#' @examples
+#' \dontrun{
+#'    library(Hmsc)
+#'    library(coda)
+#'    library(dplyr)
+#'    Coda  <- Hmsc::convertToCodaObject(Hmsc::TD$m)
+#'    IASDT.R::Coda_to_tibble(CodaObj = Coda$Alpha[[1]], Type = "Alpha", EnvFile = ".env")
+#'    IASDT.R::Coda_to_tibble(CodaObj = Coda$Beta, Type = "beta")
+#'    IASDT.R::Coda_to_tibble(CodaObj = Coda$Omega[[1]], Type = "omega")
+#' }
 
 Coda_to_tibble <- function(
     CodaObj = NULL, Type = NULL, EnvFile = ".env", NOmega = 1000) {
@@ -28,9 +38,8 @@ Coda_to_tibble <- function(
   # Check missing arguments ----
   # # |||||||||||||||||||||||||||||||||||||||
 
-  if (any(missing(CodaObj), missing(Type))) {
-    MSG <- "None of `CodaObj` or `Type` can be empty"
-    stop(MSG)
+  if (is.null(CodaObj) || is.null(Type)) {
+    stop("None of `CodaObj` or `Type` cannot be empty")
   }
 
   # # |||||||||||||||||||||||||||||||||||||||
@@ -39,26 +48,20 @@ Coda_to_tibble <- function(
 
   Type <- stringr::str_to_lower(Type)
 
-  if (sum(stringr::str_detect(Type, c("rho", "alpha", "omega", "beta"))) == 0) {
-    MSG <- "Type has to be one of rho, alpha, omega, or beta"
-    stop(MSG)
+  if (!Type %in% c("rho", "alpha", "omega", "beta")) {
+    stop("Type has to be one of rho, alpha, omega, or beta")
   }
 
-  CodaClass <- c(
-    inherits(CodaObj, "mcmc.list"), inherits(CodaObj, "mcmc")) %>%
-    sum() %>%
-    magrittr::equals(0)
-
-  if (CodaClass) {
+  if (!(inherits(CodaObj, "mcmc.list") && !inherits(CodaObj, "mcmc"))) {
     stop("Input Coda object has to be of class mcmc.list or mcmc")
   }
+
 
   # # |||||||||||||||||||||||||||||||||||||||
   # Convert to tibble ----
   # # |||||||||||||||||||||||||||||||||||||||
 
-  Coda <- CodaObj %>%
-    as.matrix(iter = TRUE, chain = TRUE) %>%
+  Coda <- as.matrix(CodaObj, iter = TRUE, chain = TRUE) %>%
     tibble::as_tibble() %>%
     dplyr::rename(Chain = CHAIN, Iter = ITER) %>%
     dplyr::mutate(Chain = factor(Chain), Iter = as.integer(Iter)) %>%
@@ -77,9 +80,10 @@ Coda_to_tibble <- function(
   # # |||||||||||||||||||||||||||||||||||||||
 
   if (Type == "alpha") {
-    Coda <- Coda %>%
-      tidyr::pivot_longer(
-        cols = -c(Chain, Iter), names_to = "Alpha", values_to = "Value")
+
+    Coda <- tidyr::pivot_longer(
+      data = Coda,
+      cols = -c(Chain, Iter), names_to = "Alpha", values_to = "Value")
 
     Coda <- Coda %>%
       dplyr::distinct(Alpha) %>%
@@ -102,14 +106,16 @@ Coda_to_tibble <- function(
       dplyr::arrange(Alpha, Chain, Iter)
   }
 
-
   # # |||||||||||||||||||||||||||||||||||||||
   # Beta parameters ------
   # # |||||||||||||||||||||||||||||||||||||||
 
   if (Type == "beta") {
+
     if (file.exists(EnvFile)) {
+
       readRenviron(EnvFile)
+
       SpeciesNames <- Sys.getenv("DP_R_Mod_Path_TaxaList") %>%
         file.path("Species_List_ID.txt") %>%
         readr::read_tsv(show_col_types = FALSE) %>%
@@ -117,10 +123,9 @@ Coda_to_tibble <- function(
         dplyr::mutate(
           IAS_ID = stringr::str_pad(IAS_ID, pad = "0", width = 4),
           IAS_ID = paste0("Sp_", IAS_ID))
+
     } else {
-      MSG <- paste0(
-        "Path for environment variables: ", EnvFile, " was not found")
-      stop(MSG)
+      stop("Path for environment variables: ", EnvFile, " was not found")
     }
 
     Coda <- tidyr::pivot_longer(
@@ -155,9 +160,8 @@ Coda_to_tibble <- function(
 
   if (Type == "omega") {
 
-    SampleOmega <- names(Coda) %>%
-      setdiff(c("Chain", "Iter")) %>%
-      sample(size = NOmega)
+    SampleOmega <- setdiff(names(Coda), c("Chain", "Iter")) %>%
+      sample(size = min((ncol(Coda) - 2), NOmega))
 
     Coda <- Coda %>%
       dplyr::select(Chain, Iter, dplyr::all_of(SampleOmega)) %>%
@@ -190,6 +194,7 @@ Coda_to_tibble <- function(
         dplyr::everything()) %>%
       tidyr::nest(DT = -c(SpComb, Sp1, IAS1, Sp2, IAS2)) %>%
       dplyr::arrange(SpComb)
+
   }
   return(Coda)
 }

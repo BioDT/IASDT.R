@@ -2,26 +2,24 @@
 % Please edit documentation in R/Mod_PlotGelman_Omega.R
 \name{PlotGelman_Omega}
 \alias{PlotGelman_Omega}
-\title{Gelman-Rubin-Brooks plot for \code{omega} parameters}
+\title{Creates a Gelman-Rubin-Brooks plot for \code{omega} parameters.}
 \usage{
-PlotGelman_Omega(
-  CodaObj = NULL,
-  NCores = NULL,
-  NOmega = 1000,
-  PlottingAlpha = 0.25
-)
+PlotGelman_Omega(CodaObj, NCores, NOmega = 1000, PlottingAlpha = 0.25)
 }
 \arguments{
-\item{CodaObj}{an mcmc object}
+\item{CodaObj}{n object of class \code{mcmc.list} representing the MCMC chains.}
 
-\item{NCores}{Integer. Number of parallel processes.}
+\item{NCores}{An integer specifying the number of cores to use for parallel processing.}
 
-\item{NOmega}{Integer. Number of species to be sampled for the Omega parameter}
+\item{NOmega}{An optional integer indicating the number of species' omega parameters to sample and plot. Defaults to 1000.}
 
-\item{PlottingAlpha}{Double. Plotting alpha for line transparency}
+\item{PlottingAlpha}{A numeric value between 0 and 1 indicating the transparency level of the plot lines. Defaults to 0.25.}
+}
+\value{
+A ggplot object representing the Gelman-Rubin-Brooks plot for the sampled omega parameters.
 }
 \description{
-Gelman-Rubin-Brooks plot for \code{omega} parameters
+This function generates a Gelman-Rubin-Brooks plot specifically for \code{omega} parameters using the provided Hmsc model object. It is designed to help assess the convergence of MCMC simulations by plotting the shrink factor over iterations for a subset of species' omega parameters.
 }
 \author{
 Ahmed El-Gabbas

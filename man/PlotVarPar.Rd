@@ -2,14 +2,14 @@
 % Please edit documentation in R/Mod_PlotVarPar.R
 \name{PlotVarPar}
 \alias{PlotVarPar}
-\title{Plot variance partitioning of the model}
+\title{Plot variance partitioning of Hmsc model using ggplot2.}
 \usage{
 PlotVarPar(
-  Model = NULL,
-  Path_Plot = NULL,
+  Model,
+  Path_Plot,
   PlotTitlePrefix = NULL,
   ModelEval = NULL,
-  NCores = NULL,
+  NCores,
   VarPar = NULL,
   EnvFile = ".env",
   SaveVarPar = TRUE,
@@ -19,30 +19,30 @@ PlotVarPar(
 )
 }
 \arguments{
-\item{Model}{an object of class \code{Hmsc} or a path for the model. Only needed if one of \code{ModelEval} and \code{VarPar} arguments are \code{NULL}.}
+\item{Model}{an object of class \code{Hmsc} or a path for the model file. Only needed if one of \code{ModelEval} and \code{VarPar} arguments are \code{NULL}.}
 
-\item{Path_Plot}{String. Path to save the output file.}
+\item{Path_Plot}{String. Path where the output file(s) will be saved.}
 
-\item{PlotTitlePrefix}{String. Prefix to add to the title of the plot. Default: \code{NULL}, which means only use 'Variance partitioning' in the title.}
+\item{PlotTitlePrefix}{String (optional). Prefix to add to the title of the plot. Default: \code{NULL}, which means only 'Variance partitioning' will be used in the title.}
 
 \item{ModelEval}{Result of the \code{Hmsc::evaluateModelFit} function. If \code{ModelEval = NULL} (default), \code{Hmsc::evaluateModelFit} will be executed on the model object to compute measures of model fit.}
 
 \item{NCores}{Integer. Number of parallel computations for computing predicted values. This is used as the \code{nParallel} argument of the \code{Hmsc::computePredictedValues} function.}
 
-\item{VarPar}{Variance partitioning. An object resulted from \code{Hmsc::computeVariancePartitioning}. if \code{ModelEval = NULL} (default), \code{Hmsc::computeVariancePartitioning} will be executed on the model object.}
+\item{VarPar}{Variance partitioning object resulted from \code{Hmsc::computeVariancePartitioning}. If \code{VarPar = NULL} (default), \code{Hmsc::computeVariancePartitioning} will be executed on the model object.}
 
 \item{EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
 
-\item{SaveVarPar}{Logical. If \code{VarPar = NULL}, should the calculated variance partitioning be saved as RData file?}
+\item{SaveVarPar}{Logical. If \code{VarPar = NULL}, should the calculated variance partitioning be saved as an RData file?  Default: \code{TRUE}.}
 
-\item{SaveModelEval}{Logical. If \code{ModelEval = NULL}, should the calculated model evaluation be be saved as RData file?}
+\item{SaveModelEval}{Logical. If \code{ModelEval = NULL}, should the calculated model evaluation be saved as an RData file?  Default: \code{TRUE}.}
 
-\item{ReturnGG}{Logical. Return the plot object. Default: \code{FALSE}, which does not return anything}
+\item{ReturnGG}{Logical. Return the ggplot object. Default: \code{FALSE}.}
 
-\item{SaveGG}{Logical. Should the plots be exported as RData object?}
+\item{SaveGG}{Logical. Should the plots be exported as an RData object?  Default: \code{TRUE}.}
 }
 \description{
-Plot variance partitioning of the model
+This function generates and optionally saves plots visualizing the variance partitioning of a Hmsc model. It can calculate variance partitioning and model evaluation if not provided and supports parallel computation for model predictions.
 }
 \author{
 Ahmed El-Gabbas

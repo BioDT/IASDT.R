@@ -2,19 +2,22 @@
 % Please edit documentation in R/Mod_PlotGelman_Alpha.R
 \name{PlotGelman_Alpha}
 \alias{PlotGelman_Alpha}
-\title{Gelman-Rubin-Brooks plot \code{alpha} parameters}
+\title{Creates a Gelman-Rubin-Brooks plot for \code{alpha} parameters from an Hmsc object.}
 \usage{
-PlotGelman_Alpha(CodaObj = NULL, NCores = NULL, PlottingAlpha = 0.25)
+PlotGelman_Alpha(CodaObj, NCores, PlottingAlpha = 0.25)
 }
 \arguments{
-\item{CodaObj}{an mcmc object}
+\item{CodaObj}{An object of class \code{mcmc.list}, representing the Hmsc samples.}
 
-\item{NCores}{Integer. Number of parallel processes.}
+\item{NCores}{An integer specifying the number of cores to use for parallel processing.}
 
-\item{PlottingAlpha}{Double. Plotting alpha for line transparency}
+\item{PlottingAlpha}{A double specifying the alpha (transparency) level for the plot lines. Default is 0.25.}
+}
+\value{
+A ggplot object(s) representing the Gelman-Rubin-Brooks plot for the \code{beta} parameters.
 }
 \description{
-Gelman-Rubin-Brooks plot \code{alpha} parameters
+This function generates a Gelman-Rubin-Brooks plot for \code{alpha} parameters. It uses parallel processing to speed up the computation. The plot includes lines for the median and the 97.5th percentile of the shrink factor, with a dashed line at 1.1 indicating the threshold for convergence.
 }
 \author{
 Ahmed El-Gabbas

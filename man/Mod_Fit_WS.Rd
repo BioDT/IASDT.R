@@ -4,17 +4,21 @@
 \alias{Mod_Fit_WS}
 \title{Fit Hmsc-HPC models on UFZ Windows Server}
 \usage{
-Mod_Fit_WS(Path_Model = NULL, EnvFile = ".env", NCores = NULL)
+Mod_Fit_WS(Path_Model, EnvFile = ".env", NCores = NULL)
 }
 \arguments{
-\item{Path_Model}{String. Path to the model files (without trailing slash)}
+\item{Path_Model}{String. Path to the model files (without trailing slash).}
 
-\item{EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
+\item{EnvFile}{Path to the file containing environment variables. Defaults to ".env".}
 
-\item{NCores}{Integer. Number of parallel processes.}
+\item{NCores}{Integer. Number of cores to use for parallel processing.}
+}
+\value{
+The function does not return anything but prints messages to the console regarding the progress and completion of model fitting.
 }
 \description{
-Fit Hmsc-HPC models on UFZ Windows Server
+This function fits Hmsc models on a UFZ Windows Server. It reads model configurations from a specified path, loads environment variables, checks input arguments for validity, and executes model fitting in parallel if required.
+#'
 }
 \author{
 Ahmed El-Gabbas

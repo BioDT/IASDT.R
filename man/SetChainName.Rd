@@ -7,12 +7,15 @@
 SetChainName(Obj, Chain)
 }
 \arguments{
-\item{Obj}{Input object name}
+\item{Obj}{An object to which the chain names will be assigned.}
 
-\item{Chain}{Integer. Chain number}
+\item{Chain}{An integer or vector of integers representing the chain number(s).}
+}
+\value{
+Returns the input object with elements named according to the specified chain number(s). The function modifies the names attribute of the object.
 }
 \description{
-Set name of the chain to a vector of strings
+This function takes an input object and a chain number, then assigns names to the elements of the object. #' The names are created by prefixing 'Chain' to the chain number for each element.
 }
 \author{
 Ahmed El-Gabbas

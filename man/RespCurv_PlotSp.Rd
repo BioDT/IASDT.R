@@ -13,16 +13,19 @@ RespCurv_PlotSp(
 )
 }
 \arguments{
-\item{Path_RC}{String. Path to response curve folder.}
+\item{Path_RC}{String. Path to the directory where response curve data is stored and where plots will be saved.}
 
-\item{NCores}{Integer. Number of parallel cores}
+\item{NCores}{Integer. Number of cores to use for parallel processing. Defaults to 20.}
 
-\item{EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
+\item{EnvFile}{String. Path to the environment variables file. Defaults to ".env".}
 
-\item{SaveGG}{Logical. Should the ggplot object be saved as RData file. Default: \code{FALSE}}
+\item{SaveGG}{Logical. Indicates whether to save the ggplot objects as RData files. Defaults to \code{FALSE}.}
 
-\item{ShowProgress}{Logical. Show progress bar. Default: \code{FALSE}}
+\item{ShowProgress}{Logical. Indicates whether to show a progress bar during execution. Defaults to FALSE.}
+}
+\value{
+A data frame containing paths to the JPEG images and, if requested, the ggplot objects saved as RData files.
 }
 \description{
-Plot species response curves
+Generates and saves response curve plots for species based on environmental variables and other factors. Plots show predicted habitat suitability across different values of each variable.
 }

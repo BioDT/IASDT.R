@@ -4,27 +4,41 @@
 
 #' Gelman-Rubin-Brooks plot for `beta` parameters
 #'
-#' Gelman-Rubin-Brooks plot for `beta` parameters
+#' This function generates a Gelman-Rubin-Brooks plot for `beta` parameters from a Hmsc object. It is used to assess the convergence of MCMC simulations by plotting the evolution of the shrink factor over iterations. The plot helps in identifying whether the chains have converged to a common distribution. The plot includes lines for the median and the 97.5th percentile of the shrink factor, with a dashed line at 1.1 indicating the threshold for convergence.
 #'
-#' @param CodaObj an mcmc object
-#' @param NCores Integer. Number of parallel processes.
-#' @param EnvFile String. Path to read the environment variables. Default value: `.env`
-#' @param PlottingAlpha Double. Plotting alpha for line transparency
+#' @param CodaObj An object of class `mcmc.list`, representing the Hmsc samples.
+#' @param NCores Integer indicating the number of parallel processes to be used for computation.
+#' @param EnvFile String specifying the path to read the environment variables. Default value is `.env`.
+#' @param PlottingAlpha Double indicating the alpha (transparency) level for the plotting lines. Default value is 0.25.
 #' @name PlotGelman_Beta
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return A ggplot object representing the Gelman-Rubin-Brooks plot for the `beta` parameters.
 #' @export
 
 PlotGelman_Beta <- function(
-    CodaObj = NULL, NCores = NULL, EnvFile = ".env", PlottingAlpha = 0.25) {
+    CodaObj, NCores, EnvFile = ".env", PlottingAlpha = 0.25) {
+
+
+  if (is.null(CodaObj) || is.null(NCores)) {
+    stop("CodaObj and NCores cannot be empty")
+  }
+
+  if (!is.numeric(NCores) || NCores <= 0) {
+    stop("NCores must be a positive integer.")
+  }
+
+  if (magrittr::not(inherits(CodaObj, "mcmc.list"))) {
+    stop("CodaObj has to be of class mcmc.list")
+  }
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Iter <- Type <- Var_Sp <- dplyr <- coda <- tibble <- magrittr <- ShrinkFactor <- group <- NULL
+  Iter <- Type <- Var_Sp <- dplyr <- coda <- tibble <- magrittr <-
+    ShrinkFactor <- group <- NULL
 
   c1 <- snow::makeSOCKcluster(NCores)
-  future::plan(future::cluster, workers = c1, gc = TRUE)
   on.exit(snow::stopCluster(c1), add = TRUE)
+  future::plan(future::cluster, workers = c1, gc = TRUE)
 
   Beta_Coda <- IASDT.R::Coda_to_tibble(
     CodaObj = CodaObj, Type = "beta", EnvFile = EnvFile)
@@ -41,8 +55,7 @@ PlotGelman_Beta <- function(
 
   invisible(snow::clusterEvalQ(
     cl = c1, IASDT.R::LoadPackages(dplyr, coda, tibble, magrittr)))
-  snow::clusterExport(
-    cl = c1, list = c("CodaObj"), envir = environment())
+  snow::clusterExport(cl = c1, list = "CodaObj", envir = environment())
 
   Gelman_Beta_Vals <- snow::parLapply(
     cl = c1, x = BetaNames,

@@ -2,29 +2,35 @@
 % Please edit documentation in R/Mod_Pred2Array.R
 \name{Mod_Pred2Array}
 \alias{Mod_Pred2Array}
-\title{Convert results from predict function to array}
+\title{Convert results from \code{Hmsc:::predict.Hmsc} function to array}
 \usage{
-Mod_Pred2Array(
-  Predict = TRUE,
-  Model = NULL,
-  Preds = NULL,
-  expected = TRUE,
-  NCores = NULL
-)
+Mod_Pred2Array(Predict, Model, Preds = NULL, expected = TRUE, NCores = 1)
 }
 \arguments{
-\item{Predict}{Logical. Make predictions first}
+\item{Predict}{Logical; if \code{TRUE}, predictions are made using the Model parameter before conversion. If \code{FALSE}, uses pre-computed predictions provided in \code{Preds}.}
 
-\item{Model}{Hmsc object or path of the saved model}
+\item{Model}{Hmsc object or character for path to a saved model file. If \code{Predict} is \code{True}, the model object will be used to make predictions first.}
 
-\item{Preds}{Pre-computed predictions}
+\item{Preds}{pre-computed predictions, resulted from \code{Hmsc:::predict.Hmsc}, to be converted into an array. Required if \code{Predict} is \code{FALSE}.}
 
-\item{expected}{Logical. Whether to return the location parameter of the observation models or sample the values from those.}
+\item{expected}{Logical; if \code{TRUE}, returns the location parameter of the observation models. If \code{FALSE}, samples values from the observation models. See \code{Hmsc:::predict.Hmsc} for more info.}
 
-\item{NCores}{Integer. Number of parallel computations for computing predicted values.}
+\item{NCores}{Integer; specifies the number of cores to use for parallel computation of predicted values. Must be a positive integer.}
+}
+\value{
+An array of predictions.
 }
 \description{
-Convert results from predict function to array, with possibility to make predictions first
+This function converts the results from \code{Hmsc:::predict.Hmsc} function into an array format. It allows for the direct conversion of pre-computed predictions or the generation of predictions from a model before conversion. It supports parallel computation for generating predictions.
+}
+\examples{
+Preds <- IASDT.R::Mod_Pred2Array(
+    Predict = TRUE, Model = Hmsc::TD$m, expected = TRUE, NCores = 1)
+str(Preds)
+
+Preds <- IASDT.R::Mod_Pred2Array(
+    Predict = TRUE, Model = Hmsc::TD$m, expected = FALSE, NCores = 1)
+str(Preds)
 }
 \author{
 Ahmed El-Gabbas

@@ -4,25 +4,25 @@
 
 #' Prepare SLURM file for model fitting on HPC
 #'
-#' Prepare SLURM file for model fitting on HPC
+#' This function prepares and writes a SLURM file(s) for submitting model fitting jobs on an HPC environment. It dynamically generates bash scripts based on the provided parameters, which are then used to submit jobs to the SLURM workload manager.
 #'
-#' @param Path_Model String. Path to the model files (without trailing slash)
-#' @param JobName String. The name of the submitted job(s)
-#' @param CatJobInfo Logical. Add bash lines to print information on the submitted job. Default: `TRUE`
-#' @param ntasks Integer. The value for the `#SBATCH --ntasks=` SLURM argument. Default: 1
-#' @param CpusPerTask Integer. The value for the `#SBATCH --cpus-per-task=` SLURM argument. Default: 1
-#' @param GpusPerNode Integer. The value for the `#SBATCH --gpus-per-node=` SLURM argument. Default: 1
-#' @param MemPerCpu String. The value for the `#SBATCH --mem-per-cpu=` SLURM argument. Example: "32G" to request 32 gigabyte
+#' @param Path_Model String. Path to the model files (without trailing slash).
+#' @param JobName String. The name of the submitted job(s).
+#' @param CatJobInfo Logical. Add bash lines to print information on the submitted job. Default: `TRUE`.
+#' @param ntasks Integer. The value for the `#SBATCH --ntasks=` SLURM argument. Default: 1.
+#' @param CpusPerTask Integer. The value for the `#SBATCH --cpus-per-task=` SLURM argument. Default: 1.
+#' @param GpusPerNode Integer. The value for the `#SBATCH --gpus-per-node=` SLURM argument. Default: 1.
+#' @param MemPerCpu String. The value for the `#SBATCH --mem-per-cpu=` SLURM argument. Example: "32G" to request 32 gigabytes.
 #' @param Time String. The value for the requested time for each job in the bash arrays. Example: "01:00:00" to request an hour.
-#' @param Partition String. The name of the partition. Default: `small-g`
-#' @param EnvFile String. Path to read the environment variables. Default value: `.env`
-#' @param FromHPC Logical. Work from HPC? This is to adjust the file paths.
+#' @param Partition String. The name of the partition. Default: `small-g`.
+#' @param EnvFile String. Path to read the environment variables. Default value: `.env`.
+#' @param FromHPC Logical. Indicates if the operation is being performed from an HPC environment. This adjusts file paths accordingly. Default: `TRUE`.
 #' @param Path_Hmsc String. Path for the Hmsc-HPC.
-#' @param Command_Prefix String. Prefix for the bash commands to be executed
+#' @param Command_Prefix String. Prefix for the bash commands to be executed.
 #' @param SLURM_Prefix String. Prefix for the exported SLURM file.
 #' @name Mod_SLURM
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return The function does not return any value but writes SLURM script files to the disk.
 #' @export
 
 Mod_SLURM <- function(
@@ -30,6 +30,14 @@ Mod_SLURM <- function(
     CpusPerTask = 1, GpusPerNode = 1, MemPerCpu = NULL, Time = NULL,
     Partition = "small-g", EnvFile = ".env", FromHPC = TRUE,
     Path_Hmsc = NULL, Command_Prefix = "Commands_All", SLURM_Prefix = "Bash_Fit") {
+
+  if (is.null(Path_Model) || is.null(JobName) || is.null(MemPerCpu)) {
+    stop("Path_Model, JobName and MemPerCpu cannot be empty")
+  }
+
+  if (is.null(Time) || is.null(Path_Hmsc)) {
+    stop("(Time and Path_Hmsc cannot be empty")
+  }
 
   # # |||||||||||||||||||||||||||||||||||
   # # Load environment variables
@@ -41,9 +49,8 @@ Mod_SLURM <- function(
     Path_Scratch <- Sys.getenv("Path_LUMI_Scratch")
     Path_GPU_Check <- Sys.getenv("DP_R_Mod_Path_GPU_Check")
   } else {
-    MSG <- paste0(
-      "Path for environment variables: ", EnvFile, " was not found")
-    stop(MSG)
+    stop(paste0(
+      "Path for environment variables: ", EnvFile, " was not found"))
   }
 
   # temporarily setting the working directory
@@ -90,7 +97,6 @@ Mod_SLURM <- function(
   Path_SLURM_Out <- file.path(
     Path_Scratch, Path_Model, "Model_Fitting_HPC", "SLURM_Results")
 
-
   purrr::walk(
     .x = seq_len(NCommandFiles),
     .f = function(x) {
@@ -106,6 +112,7 @@ Mod_SLURM <- function(
       # create connection to SLURM file
       # This is better than using sink to have a platform independent file (here, to maintain a linux-like new line ending)
       f <- file(file.path(Path_Model, OutFile), open = "wb")
+      on.exit(tryCatch(close(f)), add = TRUE)
 
       # a wrapper function of cat with new line separator
       cat2 <- function(...) {

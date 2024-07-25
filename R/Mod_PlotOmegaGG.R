@@ -2,19 +2,24 @@
 # PlotOmegaGG ----
 ## |------------------------------------------------------------------------| #
 
-#' Heatmaps of parameter estimates or posterior support values of species' residual association (Omega parameters)
+#' Creates heatmaps of parameter estimates or posterior support values for species' residual association (Omega parameters).
 #'
-#' Heatmaps of parameter estimates or posterior support values of species' residual association (Omega parameters)
+#' This function generates heatmaps to visualize the parameter estimates or posterior support values of species' residual associations (Omega parameters). It is designed to work with model output files and produces two types of visualizations: one indicating the sign (positive or negative) of the associations and another showing the mean values of these associations.
 #'
-#' @param Path_Model String. Path to .RData file for selected model
-#' @param supportLevel controls threshold posterior support for plotting.
-#' @param PlotWidth,PlotHeight Integer. Plot size in cm
+#' @param Path_Model String. Specifies the path to the .RData file containing the selected model.
+#' @param supportLevel Numeric. The threshold for posterior support values used to determine which associations are strong enough to be plotted. Only associations with posterior support exceeding this threshold (or falling below 1 - threshold for negative associations) will be visualized. Defaults to 0.95.
+#' @param PlotWidth,PlotHeight Integer. Specifies the width and height of the generated plot in centimeters. Defaults to 22 x 20.
+#' @return Generates two JPEG files containing the heatmaps of Omega parameter: signs and mean values. These files are saved in a directory named 'Model_Postprocessing' within the parent directory of the provided model file path. The function itself returns NULL invisibly.
 #' @export
 
 PlotOmegaGG <- function(
-    Path_Model = NULL, supportLevel = 0.95, PlotWidth = 22, PlotHeight = 20) {
+    Path_Model, supportLevel = 0.95, PlotWidth = 22, PlotHeight = 20) {
 
   # devtools::install_github("YuLab-SMU/ggtree")
+
+  if (is.null(Path_Model)) {
+    stop("Path_Model cannot be empty")
+  }
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Out path
@@ -43,7 +48,7 @@ PlotOmegaGG <- function(
   if (length(Tree$edge.length) == 2 * nrow(Tree$edge)) {
     Tree$edge.length <- rep(1, length(Tree$edge.length) / 2)
   }
-  
+
   PhyloPlot <- ggtree::ggtree(
     tr = Tree, branch.length = "none", ladderize = FALSE, linewidth = 0.25) +
     ggtree::geom_tiplab(size = 2) +
@@ -94,8 +99,7 @@ PlotOmegaGG <- function(
   LegendTitle <- '<span style="font-size: 12pt"><b>Beta</b></span><br><span style="font-size: 9pt">(sign)</span>'
 
   Plot_Sign <- (
-    PostMean %>%
-      sign() %>%
+    sign(PostMean) %>%
       as.data.frame() %>%
       dplyr::mutate_all(as.character) %>%
       # replace diagonals with NA

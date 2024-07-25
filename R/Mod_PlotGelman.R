@@ -4,23 +4,23 @@
 
 #' Plot Gelman-Rubin-Brooks
 #'
-#' Plot Gelman-Rubin-Brooks. This plot shows the evolution of Gelman and Rubin's shrink factor as the number of iterations increases. For more information, see `coda:::gelman.plot`
-#'
-#' @param InputCoda Path to RData file containing the coda object
-#' @param Beta Logical. Run `IASDT.R::PlotGelman_Beta`?
-#' @param Rho Logical. Run `IASDT.R::PlotGelman_Rho`?
-#' @param Omega Logical. Run `IASDT.R::PlotGelman_Omega`?
-#' @param Alpha Logical. Run `IASDT.R::PlotGelman_Alpha`
-#' @param NCores Integer. Number of parallel processes.
-#' @param NOmega Integer. Number of species to be sampled for the Omega parameter
-#' @param PlottingAlpha Double. Plotting alpha for line transparency
-#' @param EnvFile String. Path to read the environment variables. Default value: `.env`
-#' @param SavePlot Logical. Save the outputs as PDF
-#' @param ReturnPlots Logical. Return ggplot objects
+#' This function generates and optionally saves a series of plots showing the evolution of Gelman and Rubin's shrink factor for various model parameters as the number of iterations increases. It is designed to help assess the convergence of Hmsc model by visualizing the shrink factor over iterations. The function supports parallel processing and can handle multiple parameters simultaneously.
+
+#' @param InputCoda Path to RData file containing the coda object.
+#' @param Beta Logical indicating whether to plot the Gelman-Rubin statistic for the Beta parameter. If `TRUE` (default), the function executes the `IASDT.R::PlotGelman_Beta` function.
+#' @param Rho Logical indicating whether to plot the Gelman-Rubin statistic for the Rho parameter.  If `TRUE` (default), the function executes the  `IASDT.R::PlotGelman_Rho` function.
+#' @param Omega Logical indicating whether to plot the Gelman-Rubin statistic for the Omega parameter. If `TRUE` (default), the function executes the `IASDT.R::PlotGelman_Omega` function.
+#' @param Alpha Logical indicating whether to plot the Gelman-Rubin statistic for the Alpha parameter. If `TRUE` (default), the function executes the `IASDT.R::PlotGelman_Alpha` function.
+#' @param NCores Integer specifying the number of cores to use for parallel processing.
+#' @param NOmega Integer specifying the number of species to be sampled for the Omega parameter.
+#' @param PlottingAlpha A numeric value between 0 and 1 indicating the transparency level of the plot lines. Defaults to 0.25.
+#' @param EnvFile String specifying the path to the environment variables file. The default value is ".env".
+#' @param SavePlot Logical indicating whether to save the generated plots as a PDF file.
+#' @param ReturnPlots String specifying the folder path where output figures should be saved. This parameter is mandatory if `SavePlot` is TRUE.
 #' @param OutPath String. Folder path to save the output figures
 #' @name PlotGelman
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return If `ReturnPlots` is `TRUE`, returns a list of ggplot objects corresponding to the generated plots. Otherwise, returns `NULL`. If `SavePlot` is `TRUE`, pdf file for the plots will be saved at the `OutPath`.
 #' @export
 
 PlotGelman <- function(
@@ -32,9 +32,16 @@ PlotGelman <- function(
   # Checking arguments
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  if (SavePlot == FALSE && ReturnPlots == FALSE) {
-    MSG <- "SavePlot & ReturnPlots can not be both FALSE"
-    stop(MSG)
+  if (is.null(InputCoda) || is.null(NCores)) {
+    stop("InputCoda and NCores cannot be empty")
+  }
+
+  if (SavePlot && is.null(OutPath)) {
+    stop("OutPath cannot be NULL if SavePlot is TRUE")
+  }
+
+  if (!SavePlot && !ReturnPlots) {
+    stop("At least one of SavePlot or ReturnPlots must be TRUE")
   }
 
   AllArgs <- ls()
@@ -67,7 +74,6 @@ PlotGelman <- function(
   } else {
     CodaObj <- InputCoda
     rm(InputCoda)
-    invisible(gc())
   }
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -76,11 +82,10 @@ PlotGelman <- function(
 
   IASDT.R::CatTime("Alpha")
   if (Alpha) {
-    PlotObj_Alpha <- CodaObj %>%
-      magrittr::extract2("Alpha") %>%
-      magrittr::extract2(1)
-    PlotObj_Alpha <- IASDT.R::PlotGelman_Alpha(
-      CodaObj = PlotObj_Alpha, NCores = NCores, PlottingAlpha = PlottingAlpha)
+    PlotObj_Alpha <- magrittr::extract2(CodaObj, "Alpha") %>%
+      magrittr::extract2(1) %>%
+      IASDT.R::PlotGelman_Alpha(
+        CodaObj = ., NCores = NCores, PlottingAlpha = PlottingAlpha)
   } else {
     PlotObj_Alpha <- NULL
   }
@@ -94,7 +99,6 @@ PlotGelman <- function(
     PlotObj_Beta <- IASDT.R::PlotGelman_Beta(
       CodaObj = magrittr::extract2(CodaObj, "Beta"),
       NCores = NCores, PlottingAlpha = PlottingAlpha, EnvFile = EnvFile)
-    invisible(gc())
   } else {
     PlotObj_Beta <- NULL
   }
@@ -105,13 +109,11 @@ PlotGelman <- function(
 
   IASDT.R::CatTime("Omega")
   if (Omega) {
-    PlotObj_Omega <- CodaObj %>%
-      magrittr::extract2("Omega") %>%
-      magrittr::extract2(1)
-    PlotObj_Omega <- IASDT.R::PlotGelman_Omega(
-      CodaObj = PlotObj_Omega, NCores = NCores,
-      PlottingAlpha = PlottingAlpha, NOmega = NOmega)
-    invisible(gc())
+    PlotObj_Omega <- magrittr::extract2(CodaObj, "Omega") %>%
+      magrittr::extract2(1) %>%
+      IASDT.R::PlotGelman_Omega(
+        CodaObj = ., NCores = NCores,
+        PlottingAlpha = PlottingAlpha, NOmega = NOmega)
   } else {
     PlotObj_Omega <- NULL
   }
@@ -124,7 +126,6 @@ PlotGelman <- function(
   if (Rho) {
     PlotObj_Rho <- IASDT.R::PlotGelman_Rho(
       CodaObj = magrittr::extract2(CodaObj, "Rho"))
-    invisible(gc())
   } else {
     PlotObj_Rho <- NULL
   }
@@ -139,16 +140,21 @@ PlotGelman <- function(
 
   if (SavePlot) {
     PlotList4Plot <- purrr::list_flatten(purrr::discard(PlotList, is.null))
-    ggplot2::ggsave(
-      filename = file.path(OutPath, "GelmanPlots.pdf"),
-      plot = gridExtra::marrangeGrob(
-        grobs = PlotList4Plot, nrow = 1, ncol = 1, top = NULL),
-      width = 13, height = 7)
-  }
 
-  if (ReturnPlots) {
-    return(PlotList)
-  } else {
-    return(invisible(NULL))
+    if (length(PlotList4Plot) > 0) {
+      ggplot2::ggsave(
+        filename = file.path(OutPath, "GelmanPlots.pdf"),
+        plot = gridExtra::marrangeGrob(
+          grobs = PlotList4Plot, nrow = 1, ncol = 1, top = NULL),
+        width = 13, height = 7)
+    } else {
+      warning("No plots to save.")
+    }
+
+    if (ReturnPlots) {
+      return(PlotList)
+    } else {
+      return(invisible(NULL))
+    }
   }
 }

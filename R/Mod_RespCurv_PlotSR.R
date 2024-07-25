@@ -4,13 +4,21 @@
 
 #' Plot species richness response curves
 #'
-#' Plot species richness response curves
+#' This function generates and saves species richness response curves as JPEG images for each variable in the dataset. It processes data from a specified directory, creates plots, and saves them in a subdirectory.
 #'
-#' @param Path_RC String. Path to response curve folder.
-#'
+#' @param Path_RC String. The path to the directory containing the response curve data.
+#' @return This function does not return a value but saves JPEG images of the response curves in a subdirectory within the specified path.
+#' @name RespCurv_PlotSR
+#' @author Ahmed El-Gabbas
+#' @seealso RespCurv_PlotSp RespCurv_PrepData
 #' @export
 
+
 RespCurv_PlotSR <- function(Path_RC) {
+
+  if (is.null(Path_RC)) {
+    stop("Path_RC cannot be NULL")
+  }
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
@@ -32,6 +40,7 @@ RespCurv_PlotSR <- function(Path_RC) {
     dir.exists() %>%
     all() %>%
     magrittr::not()
+
   if (DirsMissing) {
     stop(
       "Response curve directory or data subfolder does not exist", call. = FALSE)
@@ -39,7 +48,6 @@ RespCurv_PlotSR <- function(Path_RC) {
   rm(DirsMissing)
 
   fs::dir_create(file.path(Path_RC, "RespCurv_SR"))
-
 
   IASDT.R::CatTime("Sequentially create species richness response curves")
   SR_DT_All <- file.path(Path_RC, "RespCurv_DT/ResCurvDT.RData") %>%
@@ -61,6 +69,7 @@ RespCurv_PlotSR <- function(Path_RC) {
               names_from = Quantile, values_from = SR) %>%
             setNames(c("Variable", "Coords", "NFV", "XVals",
                        "Q25", "Q50", "Q975"))
+
           Observed <- DT$Observed_SR %>%
             dplyr::mutate(
               Variable = DT$Variable, Coords = DT$Coords, NFV = DT$NFV,

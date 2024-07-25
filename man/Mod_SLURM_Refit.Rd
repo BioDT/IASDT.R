@@ -2,7 +2,7 @@
 % Please edit documentation in R/Mod_SLURM_Refit.R
 \name{Mod_SLURM_Refit}
 \alias{Mod_SLURM_Refit}
-\title{Prepare SLURM file for unfitted models on HPC}
+\title{Prepare SLURM file for failed / Unfitted Models}
 \usage{
 Mod_SLURM_Refit(
   Path_Model = NULL,
@@ -23,38 +23,41 @@ Mod_SLURM_Refit(
 )
 }
 \arguments{
-\item{Path_Model}{String. Path to the model files (without trailing slash)}
+\item{Path_Model}{String. Path to the model files directory. Must not end with a slash.}
 
-\item{MaxJobCounts}{Integer. Maximum number of jobs per slurm file}
+\item{MaxJobCounts}{Integer. Maximum number of batch jobs that can be submitted in a single SLURM file.}
 
-\item{JobName}{String. The name of the submitted jobs}
+\item{JobName}{String (optional). Name of the SLURM jobs. If not provided, a default name based on the model path is used.}
 
-\item{MemPerCpu}{String. The value for the \verb{#SBATCH --mem-per-cpu=} SLURM argument. Example: "32G" to request 32 gigabyte}
+\item{MemPerCpu}{String. Memory per CPU allocation for the SLURM job. Example: "32G" for 32 gigabytes.}
 
-\item{Time}{String. The value for the requested time for each job in the bash arrays. Example: "01:00:00" to request an hour.}
+\item{Time}{String. Duration for which the job should run. Example: "01:00:00" for one hour.}
 
-\item{Partition}{String. The name of the partition. Default: \code{small-g}}
+\item{Partition}{String. The SLURM partition to submit the job to. Default is "small-g".}
 
-\item{EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
+\item{EnvFile}{String. Path to the environment variables file. Defaults to \code{.env}.}
 
-\item{CatJobInfo}{Logical. Add bash lines to report some job information. Default: \code{TRUE}}
+\item{CatJobInfo}{Logical. Whether to include commands in the SLURM script to print job information. Defaults to TRUE.}
 
-\item{ntasks}{Integer. The value for the \verb{#SBATCH --ntasks=} SLURM argument. Default: 1}
+\item{ntasks}{Integer. Number of tasks to request (\verb{#SBATCH --ntasks=}) for the SLURM job. Defaults to 1.}
 
-\item{CpusPerTask}{Integer. The value for the \verb{#SBATCH --cpus-per-task=} SLURM argument. Default: 1}
+\item{CpusPerTask}{Integer. Number of CPUs per task (\verb{#SBATCH --cpus-per-task=}) to request. Defaults to 1.}
 
-\item{GpusPerNode}{Integer. The value for the \verb{#SBATCH --gpus-per-node=} SLURM argument. Default: 1}
+\item{GpusPerNode}{Integer. Number of GPUs per node to request (\verb{#SBATCH --gpus-per-node=}). Defaults to 1.}
 
-\item{FromHPC}{Logical. Work from HPC? This is to adjust the file paths.}
+\item{FromHPC}{Logical. Indicates whether the function is being called from an HPC environment. Adjusts file paths accordingly.}
 
-\item{Path_Hmsc}{String. Path for the Hmsc-HPC.}
+\item{Path_Hmsc}{String. Path to the Hmsc-HPC directory.}
 
-\item{Refit_Prefix}{String. Prefix for the file containing commands to be re-fitted}
+\item{Refit_Prefix}{String. Prefix for the files that contain the commands to refit the models.}
 
-\item{SLURM_Prefix}{String. Prefix for the exported SLURM file}
+\item{SLURM_Prefix}{String. Prefix for the generated SLURM batch files.}
+}
+\value{
+The function does not return any value but creates command and SLURM batch files for refitting models.
 }
 \description{
-Prepare SLURM file for unfitted models on HPC
+This function prepares SLURM files for models that have not been successfully fitted yet. It generates command files for refitting and creates corresponding SLURM batch files to execute these commands on a HPC environment.
 }
 \author{
 Ahmed El-Gabbas

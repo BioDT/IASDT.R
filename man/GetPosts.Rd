@@ -2,17 +2,20 @@
 % Please edit documentation in R/Mod_GetPosts.R
 \name{GetPosts}
 \alias{GetPosts}
-\title{Combining posteriors exported by \code{Hmsc-HPC} into Hmsc object}
+\title{Combines posteriors exported by \code{Hmsc-HPC} into an Hmsc object}
 \usage{
 GetPosts(FilePath, FromJSON = FALSE)
 }
 \arguments{
-\item{FilePath}{String. Vector of the file paths of the \code{rds} files created by \code{Hmsc-HPC}}
+\item{FilePath}{A character string specifying the path to the RDS file containing the exported posteriors.}
 
-\item{FromJSON}{Logical. Convert loaded models to JSON format before reading}
+\item{FromJSON}{A logical flag indicating whether the loaded models should be converted from JSON format. Defaults to \code{FALSE}, meaning the data will be read directly from an RDS file without conversion.}
+}
+\value{
+Depending on the \code{FromJSON} parameter, returns an Hmsc object either directly from the RDS file or after converting it from JSON format.
 }
 \description{
-Combining posteriors exported by \code{Hmsc-HPC} into Hmsc object
+This function converts posteriors exported by \code{Hmsc-HPC} into an Hmsc object. It can either read the data directly from RDS files or convert it from JSON format if specified.
 }
 \author{
 Ahmed El-Gabbas

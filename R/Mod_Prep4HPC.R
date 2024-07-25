@@ -2,48 +2,47 @@
 # Mod_Prep4HPC ----
 ## |------------------------------------------------------------------------| #
 
-#' Prepare initial models in R to be used by the Hmsc-HPC
+#' Prepare initial models in R for model fitting by Hmsc-HPC
 #'
-#' Prepare initial models in R to be used by the Hmsc-HPC
+#' This function prepares initial models in R for model fitting by Hmsc-HPC. It involves data preparation, model initialization, and generating commands for running models on HPC. It supports parallel processing, options to include/not include phylogenetic tree data, and spatial information through Gaussian Process Priors (GPP).
 #'
-#' @param Hab_Abb String. Habitat type. This has to be one of the following: c("0", "1", "2", "3", "4a", "4b", "5", "6", "8", "10", "12a", "12b"). "0" means prepare data irrespective of the habitat type
-#' @param Path_Data String. Path to read modelling data (without trailing slash)
-#' @param Path_Model String. Path to save all the output, including the to be fitted models (without trailing slash)
-#' @param MinPresGrids Integer. Minimum number of presence grid cells per species. Only species with ≥ this number will be considered
-#' @param EnvFile String. Path to read the environment variables. Default value: `.env`
-#' @param PrepareData Logical. Should the input data be prepared or loaded from disk?
-#' @param GPP_Dists Integer. Distance in kilometer for the distance between the knots and the minimum distance of a knot to the nearest data point. The same value will be used for the `knotDist`	and `minKnotDist`	arguments of the `Hmsc::constructKnots` function.
-#' @param GPP_Save Logical. Save the resulted knots as RData. Default: `TRUE`
-#' @param GPP_Plot Logical. Plot the coordinates of the sampling units and the knots. Default: `TRUE`
-#' @param XVars String. Variables to be used in the model. Default value: `NULL`, which means to use the following variables: bio4, bio6, bio8, bio12, bio15, bio18, RoadRailLog, BiasLog
-#' @param PhyloTree Logical. Fit model variants with phylogenetic trees. Default: `TRUE`. At least one of `PhyloTree` and `NoPhyloTree` can not be `FALSE`.
-#' @param NoPhyloTree Logical. Fit model variants without phylogenetic trees. Default: `TRUE`. At least one of `PhyloTree` and `NoPhyloTree` can not be `FALSE`.
-#' @param NParallel Number of parallel cores for parallelization
-#' @param nChains Integer. Number of model chains
-#' @param thin Integer. Value(s) for thinning
-#' @param samples Integer. Value(s) for the number of MCMC samples
-#' @param transientFactor Integer. Transient multiplication factor. The value of transient = `transientFactor * thin`.
-#' @param verbose Integer. How often the results of the MCMC sampling be reported
-#' @param SkipFitted Logic. Should the already fitted models be skipped.
-#' @param MaxJobCounts Integer. Maximum number of jobs per SLURM file
-#' @param ModelCountry String. Filter observations to the following country list. Default: `NULL`, which means prepare data for the whole Europe
-#' @param MinPresPerCountry Integer. Minimum of grid cells for the selected country/countries for species to be considered in the models. Effective only if a valid `ModelCountry` is provided.
-#' @param VerboseProgress Logical. Show messages for the progress of creating files
-#' @param FromHPC Logical. Work from HPC? This is to adjust the file paths.
-#' @param PrepSLURM Logical. Prepare SLURM command? If `TRUE`, the SLURM commands will be exported using the `IASDT.R::Mod_SLURM` function.
-#' @param MemPerCpu String. The value for the `#SBATCH --mem-per-cpu=` SLURM argument. Example: "32G" to request 32 gigabyte. Only effective if `PrepSLURM = TRUE`.
-#' @param Time String. The value for the requested time for each job in the bash arrays. Example: "01:00:00" to request an hour. Only effective if `PrepSLURM = TRUE`.
-#' @param JobName String. The name of the submitted job(s). Only effective if `PrepSLURM = TRUE`.
-#' @param Path_Hmsc String. Path for the Hmsc-HPC.
-#' @param ToJSON Logical. Convert unfitted models to JSON before saving to rds file
-#' @param ... additional parameters provided to the `IASDT.R::Mod_SLURM` function
+#' @param Hab_Abb String indicating the habitat type to be considered for model preparation. This has to be one of the following: c("0", "1", "2", "3", "4a", "4b", "5", "6", "8", "10", "12a", "12b"). "0" means prepare data irrespective of the habitat type
+#' @param Path_Data String specifying the path where modeling data is read from.
+#' @param Path_Model String (without trailing slash) specifying the path where all output, including models to be fitted, will be saved.
+#' @param MinPresGrids Integer indicating the minimum number of presence grid cells per species for a species to be used in the model. Only species with ≥ this number will be considered. Default: 50.
+#' @param EnvFile String specifying the path to read environment variables from, with a default value of ".env".
+#' @param PrepareData Logical indicating whether to prepare input data or load it from disk. Defaults to `TRUE` which means the input data will be prepared using the `IASDT.R::Mod_PrepData` function.
+#' @param GPP_Dists Integer specifying the distance in kilometers for both the distance between knots and the minimum distance of a knot to the nearest data point. The same value will be used for the `knotDist` and `minKnotDist`	arguments of the `Hmsc::constructKnots` function.
+#' @param GPP_Save Logical indicating whether to save the resulted knots as RData Default: `TRUE`.
+#' @param GPP_Plot Logical indicating whether to plot the coordinates of the sampling units and the knots in a pdf file. Default: `TRUE`
+#' @param XVars Vector of strings specifying variables to be used in the model. Default value: `NULL`, which means to use the following variables: bio4, bio6, bio8, bio12, bio15, bio18, RoadRailLog, BiasLog.
+#' @param PhyloTree,NoPhyloTree Logical indicating whether to fit model variants  with or without phylogenetic trees, respectively. Default: `TRUE`, which means to fit a model variant with the respective option. If both `PhyloTree` and `NoPhyloTree` are `TRUE` (Default), models for both options will be fitted. At least one of `PhyloTree` and `NoPhyloTree` should be `TRUE`.
+#' @param NParallel Integer specifying the number of parallel cores for parallelization. Default: 8 cores.
+#' @param nChains Integer specifying the number of model chains. Default: 4.
+#' @param thin Integer specifying the value(s) for thinning in MCMC sampling. If more than one value is provided, a separate model will be fitted at each value of thinning.
+#' @param samples Integer specifying the value(s) for the number of MCMC samples. If more than one value is provided, a separate model will be fitted at each value of number of samples.
+#' @param transientFactor Integer specifying the transient multiplication factor. The value of `transient` will equal  the multiplication of `transientFactor and thin`. Default: 300.
+#' @param verbose Integer specifying how often the results of the MCMC sampling should be reported. Default: 1000.
+#' @param SkipFitted Logical indicating whether to skip already fitted models. Default: `TRUE`.
+#' @param MaxJobCounts Integer specifying the maximum allowed number of array jobs per SLURM file. Default: 210. See [here](https://docs.lumi-supercomputer.eu/runjobs/scheduled-jobs/partitions/) for more details.
+#' @param ModelCountry String or vector of strings specifying the country or countries to filter observations by. Default: `NULL`, which means prepare data for the whole Europe.
+#' @param MinPresPerCountry Integer specifying the minimum number of grid cells for the selected country/countries for species to be considered in the models. Effective only if a valid `ModelCountry` is provided. Default: 50.
+#' @param VerboseProgress Logical indicating whether to show messages for the progress of creating files. Default: `FALSE`.
+#' @param FromHPC Logical indicating whether the work is being done from HPC, to adjust file paths accordingly. Default: `TRUE`.
+#' @param PrepSLURM Logical indicating whether to prepare SLURM command files. If `TRUE` (default), the SLURM commands will be saved to disk using the `IASDT.R::Mod_SLURM` function.
+#' @param MemPerCpu String specifying the memory per CPU for the SLURM job. This value will be assigned to the `#SBATCH --mem-per-cpu=` SLURM argument. Example: "32G" to request 32 gigabyte. Only effective if `PrepSLURM = TRUE`.
+#' @param Time String specifying the requested time for each job in the SLURM bash arrays. Example: "01:00:00" to request an hour. Only effective if `PrepSLURM = TRUE`.
+#' @param JobName String specifying the name of the submitted job(s) for SLURM. If `NULL` (Default), the job name will be prepared based on the folder path and the `Hab_Abb` value. Only effective if `PrepSLURM = TRUE`.
+#' @param Path_Hmsc String specifying the path for the Hmsc-HPC. This will be provided as the `Path_Hmsc` argument of the `IASDT.R::Mod_SLURM` function.
+#' @param ToJSON Logical indicating whether to convert unfitted models to JSON before saving to RDS file. Default: `FALSE`.
+#' @param ... Additional parameters provided to the `IASDT.R::Mod_SLURM` function.
 #' @name Mod_Prep4HPC
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return The function is used for its side effects of preparing data and models for HPC and does not return any value.
 #' @export
 
 Mod_Prep4HPC <- function(
-    Hab_Abb = NULL, Path_Data = NULL, Path_Model = NULL, MinPresGrids = NULL,
+    Hab_Abb = NULL, Path_Data = NULL, Path_Model = NULL, MinPresGrids = 50,
     EnvFile = ".env", PrepareData = TRUE, GPP_Dists = NULL, GPP_Save = TRUE,
     GPP_Plot = TRUE, XVars = NULL, PhyloTree = TRUE, NoPhyloTree = TRUE,
     NParallel = 8, nChains = 4, thin = NULL, samples = NULL,
@@ -51,6 +50,31 @@ Mod_Prep4HPC <- function(
     ModelCountry = NULL, MinPresPerCountry = 50, VerboseProgress = FALSE,
     FromHPC = TRUE, PrepSLURM = TRUE, MemPerCpu = NULL, Time = NULL,
     JobName = NULL, Path_Hmsc = NULL, ToJSON = FALSE, ...) {
+
+  if (is.null(Path_Data) || is.null(Path_Model) || is.null(MinPresGrids)) {
+    stop("Path_Data, Path_Model and MinPresGrids cannot be empty")
+  }
+  if (is.null(thin) || is.null(samples) || is.null(GPP_Dists)) {
+    stop("thin, samples and GPP_Dists cannot be empty")
+  }
+  if (is.null(MemPerCpu) || is.null(Time) || is.null(Path_Hmsc)) {
+    stop("MemPerCpu, Time and Path_Hmsc cannot be empty")
+  }
+
+  if (!all(is.numeric(GPP_Dists)) || any(GPP_Dists <= 0)) {
+    stop("GPP_Dists should be numeric and greater than zero")
+  }
+
+  if (!all(is.numeric(samples)) || any(samples <= 0)) {
+    stop("samples should be numeric and greater than zero")
+  }
+  if (!all(is.numeric(thin)) || any(thin <= 0)) {
+    stop("thin should be numeric and greater than zero")
+  }
+  if (!all(is.numeric(MinPresGrids)) || any(MinPresGrids <= 0)) {
+    stop("MinPresGrids should be numeric and greater than zero")
+  }
+
 
   # https://github.com/hmsc-r/HMSC/issues/180
   # https://github.com/hmsc-r/HMSC/issues/139
@@ -86,6 +110,15 @@ Mod_Prep4HPC <- function(
     Path_TaxaList <- Sys.getenv("DP_R_Mod_Path_TaxaList")
     Path_Grid <- Sys.getenv("DP_R_Mod_Path_Grid")
     Path_Scratch <- Sys.getenv("Path_LUMI_Scratch")
+
+    if (PhyloTree && !dir.exists(Path_TaxaList)) {
+      stop("Path_TaxaList directory does not exist")
+    }
+
+    if (!dir.exists(Path_Grid)) {
+      stop("Path_Grid directory does not exist")
+    }
+
   } else {
     MSG <- paste0(
       "Path for environment variables: ", EnvFile, " was not found")
@@ -180,6 +213,11 @@ Mod_Prep4HPC <- function(
       Path_Data,
       paste0("ModelData_", MinPresGrids, "Grids_",
              stringr::str_remove(HabVal, "Hab_"), ".RData"))
+
+    if (!file.exists(Path_Data2)) {
+      stop(paste0("Data file ", Path_Data2, " does not exist"))
+    }
+
     DT_All <- IASDT.R::LoadAs(Path_Data2)
   }
 
@@ -276,6 +314,7 @@ Mod_Prep4HPC <- function(
       dplyr::mutate(dplyr::across(tidyselect::everything(), factor)) %>%
       ape::as.phylo(
         ~Class / Order / Family / Genus / IAS_ID, data = ., collapse = FALSE)
+
     plant.tree$edge.length <- rep(1, length(plant.tree$edge))
   } else {
     plant.tree <- NULL
@@ -292,6 +331,7 @@ Mod_Prep4HPC <- function(
   IASDT.R::CatTime(paste0(
     "Preparing working on parallel (", NParallel, " cores)"))
   c1 <- snow::makeSOCKcluster(NParallel)
+  on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
   future::plan(future::cluster, workers = c1, gc = TRUE)
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -385,7 +425,7 @@ Mod_Prep4HPC <- function(
               OutPath = PathOut)
           }
           return(PathOut)
-        }, .progress = FALSE)) %>%
+        })) %>%
     tidyr::expand_grid(ModelVariants) %>%
     dplyr::mutate(
       rL2 = NULL,
@@ -439,19 +479,19 @@ Mod_Prep4HPC <- function(
 
     Export_Results <- seq_len(nrow(DT2Export)) %>%
       furrr::future_map(
-        .f = purrr::safely(.f = ExportModel, otherwise = NULL, quiet = FALSE),
-        .options = furrr::furrr_options(seed = TRUE, scheduling = Inf),
-        .progress = FALSE)
+        .f = purrr::safely(ExportModel),
+        .options = furrr::furrr_options(seed = TRUE, scheduling = Inf))
 
-    FailedExports <- DT2Export %>%
-      dplyr::filter(magrittr::not(file.exists(M4HPC_Path)))
+    FailedExports <- dplyr::filter(
+      DT2Export, magrittr::not(file.exists(M4HPC_Path)))
 
     if (nrow(FailedExports) > 0) {
-      paste0("  >>  ", nrow(FailedExports),
-             "model variants failed to be exported to rds files.") %>%
-        IASDT.R::CatTime()
+      IASDT.R::CatTime(
+        paste0("  >>  ", nrow(FailedExports),
+               "model variants failed to be exported to rds files."))
 
       save(FailedExports, file = file.path(Path_Model, "FailedExports.RData"))
+
       readr::write_tsv(
         x = FailedExports, file = file.path(Path_Model, "FailedExports.txt"))
     }
@@ -502,7 +542,7 @@ Mod_Prep4HPC <- function(
             " --transient ", M_transient,
             " --thin ", M_thin,
             " --verbose ", verbose,
-            " --chain ", Chain - 1,
+            " --chain ", (Chain - 1),
             " >& ", shQuote(Path_ModProg))
 
           Command_WS <- paste0(
@@ -513,7 +553,7 @@ Mod_Prep4HPC <- function(
             " --transient ", M_transient,
             " --thin ", M_thin,
             " --verbose ", verbose,
-            " --chain ", Chain - 1)
+            " --chain ", (Chain - 1))
 
           list(
             M4HPC_Path_LUMI = M4HPC_Path2,
@@ -523,7 +563,6 @@ Mod_Prep4HPC <- function(
             return()
         })) %>%
     tidyr::unnest_wider("M_Chain")
-
 
   # # |||||||||||||||||||||||||||||||||||
   # # Skip fitted models

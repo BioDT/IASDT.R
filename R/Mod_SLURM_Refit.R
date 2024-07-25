@@ -2,28 +2,28 @@
 # Mod_SLURM_Refit ----
 ## |------------------------------------------------------------------------| #
 
-#' Prepare SLURM file for unfitted models on HPC
+#' Prepare SLURM file for failed / Unfitted Models
 #'
-#' Prepare SLURM file for unfitted models on HPC
-#'
-#' @param Path_Model String. Path to the model files (without trailing slash)
-#' @param MaxJobCounts Integer. Maximum number of jobs per slurm file
-#' @param JobName String. The name of the submitted jobs
-#' @param MemPerCpu String. The value for the `#SBATCH --mem-per-cpu=` SLURM argument. Example: "32G" to request 32 gigabyte
-#' @param Time String. The value for the requested time for each job in the bash arrays. Example: "01:00:00" to request an hour.
-#' @param Partition String. The name of the partition. Default: `small-g`
-#' @param EnvFile String. Path to read the environment variables. Default value: `.env`
-#' @param CatJobInfo Logical. Add bash lines to report some job information. Default: `TRUE`
-#' @param ntasks Integer. The value for the `#SBATCH --ntasks=` SLURM argument. Default: 1
-#' @param CpusPerTask Integer. The value for the `#SBATCH --cpus-per-task=` SLURM argument. Default: 1
-#' @param GpusPerNode Integer. The value for the `#SBATCH --gpus-per-node=` SLURM argument. Default: 1
-#' @param FromHPC Logical. Work from HPC? This is to adjust the file paths.
-#' @param Path_Hmsc String. Path for the Hmsc-HPC.
-#' @param Refit_Prefix String. Prefix for the file containing commands to be re-fitted
-#' @param SLURM_Prefix String. Prefix for the exported SLURM file
+#' This function prepares SLURM files for models that have not been successfully fitted yet. It generates command files for refitting and creates corresponding SLURM batch files to execute these commands on a HPC environment.
+
+#' @param Path_Model String. Path to the model files directory. Must not end with a slash.
+#' @param MaxJobCounts Integer. Maximum number of batch jobs that can be submitted in a single SLURM file.
+#' @param JobName String (optional). Name of the SLURM jobs. If not provided, a default name based on the model path is used.
+#' @param MemPerCpu String. Memory per CPU allocation for the SLURM job. Example: "32G" for 32 gigabytes.
+#' @param Time String. Duration for which the job should run. Example: "01:00:00" for one hour.
+#' @param Partition String. The SLURM partition to submit the job to. Default is "small-g".
+#' @param EnvFile String. Path to the environment variables file. Defaults to `.env`.
+#' @param CatJobInfo Logical. Whether to include commands in the SLURM script to print job information. Defaults to TRUE.
+#' @param ntasks Integer. Number of tasks to request (`#SBATCH --ntasks=`) for the SLURM job. Defaults to 1.
+#' @param CpusPerTask Integer. Number of CPUs per task (`#SBATCH --cpus-per-task=`) to request. Defaults to 1.
+#' @param GpusPerNode Integer. Number of GPUs per node to request (`#SBATCH --gpus-per-node=`). Defaults to 1.
+#' @param FromHPC Logical. Indicates whether the function is being called from an HPC environment. Adjusts file paths accordingly.
+#' @param Path_Hmsc String. Path to the Hmsc-HPC directory.
+#' @param Refit_Prefix String. Prefix for the files that contain the commands to refit the models.
+#' @param SLURM_Prefix String. Prefix for the generated SLURM batch files.
 #' @name Mod_SLURM_Refit
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return The function does not return any value but creates command and SLURM batch files for refitting models.
 #' @export
 
 Mod_SLURM_Refit <- function(
@@ -33,6 +33,9 @@ Mod_SLURM_Refit <- function(
     Path_Hmsc = NULL,
     Refit_Prefix = "Commands2Refit", SLURM_Prefix = "Bash_Refit") {
 
+  if (is.null(Path_Model) || is.null(MemPerCpu) || is.null(Time) || is.null(Path_Hmsc)) {
+    stop("Path_Model, MemPerCpu, Time and Path_Hmsc cannot be empty")
+  }
 
   InitialWD <- getwd()
 
@@ -44,9 +47,8 @@ Mod_SLURM_Refit <- function(
     readRenviron(EnvFile)
     Path_Scratch <- Sys.getenv("Path_LUMI_Scratch")
   } else {
-    MSG <- paste0(
-      'Path for environment variables: "', EnvFile, '" was not found')
-    stop(MSG)
+    stop(paste0(
+      'Path for environment variables: "', EnvFile, '" was not found'))
   }
 
   if (is.null(JobName)) {
@@ -56,8 +58,8 @@ Mod_SLURM_Refit <- function(
   # checking arguments
   AllArgs <- ls()
   AllArgs <- purrr::map(
-    AllArgs,
-    function(x) get(x, envir = parent.env(env = environment()))) %>%
+    .x = AllArgs,
+    .f = ~get(.x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
@@ -71,8 +73,6 @@ Mod_SLURM_Refit <- function(
 
   rm(AllArgs)
   invisible(gc())
-
-
 
   # temporarily setting the working directory
   if (FromHPC) {
@@ -92,7 +92,9 @@ Mod_SLURM_Refit <- function(
     purrr::walk(
       .x = c(tempFilesRDs, tempFiles),
       .f = ~{
-        if (file.exists(.x)) file.remove(.x)
+        if (file.exists(.x)) {
+          file.remove(.x)
+        }
       })
   }
 
@@ -131,6 +133,7 @@ Mod_SLURM_Refit <- function(
         # create connection to SLURM file
         # This is better than using sink to have a platform independent file (here, to maintain a linux-like new line ending)
         f <- file(file.path(Path_Model, OutCommandFile), open = "wb")
+        on.exit(tryCatch(close(f)), add = TRUE)
         cat(Commands2Refit[CurrIDs], sep = "\n", append = FALSE, file = f)
         close(f)
       })

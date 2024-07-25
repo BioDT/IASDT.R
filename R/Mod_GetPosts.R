@@ -2,19 +2,24 @@
 # GetPosts ----
 ## |------------------------------------------------------------------------| #
 
-#' Combining posteriors exported by `Hmsc-HPC` into Hmsc object
+#' Combines posteriors exported by `Hmsc-HPC` into an Hmsc object
 #'
-#' Combining posteriors exported by `Hmsc-HPC` into Hmsc object
+#' This function converts posteriors exported by `Hmsc-HPC` into an Hmsc object. It can either read the data directly from RDS files or convert it from JSON format if specified.
 #'
-#' @param FilePath String. Vector of the file paths of the `rds` files created by `Hmsc-HPC`
-#' @param FromJSON Logical. Convert loaded models to JSON format before reading
+#' @param FilePath A character string specifying the path to the RDS file containing the exported posteriors.
+#' @param FromJSON A logical flag indicating whether the loaded models should be converted from JSON format. Defaults to `FALSE`, meaning the data will be read directly from an RDS file without conversion.
 #' @name GetPosts
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return Depending on the `FromJSON` parameter, returns an Hmsc object either directly from the RDS file or after converting it from JSON format.
 #' @export
 
 GetPosts <- function(FilePath, FromJSON = FALSE) {
 
+  if (is.null(FilePath)) {
+    stop("FilePath cannot be empty")
+  }
+
+  # Checking arguments
   AllArgs <- ls()
   AllArgs <- purrr::map(
     AllArgs,
@@ -23,7 +28,6 @@ GetPosts <- function(FilePath, FromJSON = FALSE) {
 
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = "FilePath", Type = "character")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = "FromJSON", Type = "logical")
-  rm(AllArgs)
 
   if (FromJSON) {
     readRDS(file = FilePath) %>%

@@ -15,22 +15,25 @@ PlotAlpha(
 )
 }
 \arguments{
-\item{Post}{Coda object or path to it}
+\item{Post}{A \code{coda} object or a string path to a saved \code{coda} object containing the posterior samples for the alpha parameter.}
 
-\item{Model}{fitted model object or path to it}
+\item{Model}{A fitted model object or a string path to a saved model object containing the samples and metadata necessary for plotting.}
 
-\item{Title}{String. Plotting title}
+\item{Title}{A string specifying the main title of the plot.}
 
-\item{NRC}{Vector for the number of rows and columns per plot page}
+\item{NRC}{numeric vector of length 2 specifying the number of rows and columns per page of plots. If \code{NULL}, it is automatically determined based on the number of levels of the alpha parameter.}
 
-\item{AddFooter}{Add footer to the plot for the page number}
+\item{AddFooter}{A logical value indicating whether to add a footer with page numbers to each plot page. Defaults to \code{TRUE}.}
 
-\item{AddTitle}{Add main title to the plot}
+\item{AddTitle}{A logical value indicating whether to add the main title (specified by \code{Title}) to the plot. Defaults to \code{TRUE}.}
 
-\item{Cols}{Colours for lines for each chain}
+\item{Cols}{A character vector specifying the colors to be used for each chain in the plots. Defaults to \code{c("red", "blue", "darkgreen", "darkgrey")}.}
+}
+\value{
+A grid of \code{ggplot2} objects representing the traceplots for the alpha parameter, arranged according to the specified number of rows and columns per page. If \code{AddTitle} or \code{AddFooter} is \code{TRUE}, additional text elements are included as specified.
 }
 \description{
-Plot convergence traceplots for the alpha parameter
+This function generates and plots convergence traceplots for the alpha parameter from an Hmsc model, using various diagnostics and visualizations to assess convergence. It supports customization of plot aesthetics and layout.
 }
 \author{
 Ahmed El-Gabbas

@@ -19,30 +19,33 @@ PlotConvergence(
 )
 }
 \arguments{
-\item{Path_Coda}{String. Path to the coda object.}
+\item{Path_Coda}{String. Path to the coda object containing MCMC samples.}
 
-\item{Path_FittedModel}{String. Path to the fitted Hmsc model object}
+\item{Path_FittedModel}{String. Path to the fitted Hmsc model object.}
 
-\item{EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
+\item{EnvFile}{String. Path to the environment file containing necessary environment variables. Default: ".env".}
 
-\item{FromHPC}{Logical. Work from HPC? This is to adjust the file paths.}
+\item{FromHPC}{Logical. Indicates whether the function is being run on an HPC environment, affecting file path handling. Default: \code{TRUE}.}
 
-\item{NChains}{Integer. Number of model chains}
+\item{NChains}{Integer. Number of MCMC chains used in the model. Default: 4.}
 
-\item{Title}{String. Title of the rho and alpha plots}
+\item{Title}{String. Title for the rho and alpha plots. Default: " ".}
 
-\item{NOmega}{Number of sample species interactions}
+\item{NOmega}{Integer. Number of species interactions to sample for omega parameter convergence diagnostics. Default: 1000.}
 
-\item{NCores}{Number of parallel cores for parallelization}
+\item{NCores}{Integer. Number of cores to use for parallel processing.}
 
-\item{NRC}{Vector. Number of rows and columns}
+\item{NRC}{Numeric Vector. Specifies the number of rows and columns for arranging multiple plots on a page. Default: c(2, 3).}
 
-\item{SavePlotData}{Logical. Save plots as RData file}
+\item{SavePlotData}{Logical. Indicates whether to save the plot data as RData files. Default: TRUE.}
 
-\item{Cols}{Colours for lines for each chain}
+\item{Cols}{Character Vector. Specifies the colors to use for each chain in the plots. Default: c("red", "blue", "darkgreen", "darkgrey").}
+}
+\value{
+The function does not return a value but generates and saves plots to disk.
 }
 \description{
-Plot model convergence of a selected model
+This function generates and saves plots for model convergence diagnostics, including rho, alpha, omega, and beta parameters. It supports parallel processing for faster execution and can work with models fitted on High-Performance Computing HPC environments.
 }
 \author{
 Ahmed El-Gabbas

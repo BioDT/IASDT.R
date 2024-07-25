@@ -22,36 +22,39 @@ Mod_SLURM(
 )
 }
 \arguments{
-\item{Path_Model}{String. Path to the model files (without trailing slash)}
+\item{Path_Model}{String. Path to the model files (without trailing slash).}
 
-\item{JobName}{String. The name of the submitted job(s)}
+\item{JobName}{String. The name of the submitted job(s).}
 
-\item{CatJobInfo}{Logical. Add bash lines to print information on the submitted job. Default: \code{TRUE}}
+\item{CatJobInfo}{Logical. Add bash lines to print information on the submitted job. Default: \code{TRUE}.}
 
-\item{ntasks}{Integer. The value for the \verb{#SBATCH --ntasks=} SLURM argument. Default: 1}
+\item{ntasks}{Integer. The value for the \verb{#SBATCH --ntasks=} SLURM argument. Default: 1.}
 
-\item{CpusPerTask}{Integer. The value for the \verb{#SBATCH --cpus-per-task=} SLURM argument. Default: 1}
+\item{CpusPerTask}{Integer. The value for the \verb{#SBATCH --cpus-per-task=} SLURM argument. Default: 1.}
 
-\item{GpusPerNode}{Integer. The value for the \verb{#SBATCH --gpus-per-node=} SLURM argument. Default: 1}
+\item{GpusPerNode}{Integer. The value for the \verb{#SBATCH --gpus-per-node=} SLURM argument. Default: 1.}
 
-\item{MemPerCpu}{String. The value for the \verb{#SBATCH --mem-per-cpu=} SLURM argument. Example: "32G" to request 32 gigabyte}
+\item{MemPerCpu}{String. The value for the \verb{#SBATCH --mem-per-cpu=} SLURM argument. Example: "32G" to request 32 gigabytes.}
 
 \item{Time}{String. The value for the requested time for each job in the bash arrays. Example: "01:00:00" to request an hour.}
 
-\item{Partition}{String. The name of the partition. Default: \code{small-g}}
+\item{Partition}{String. The name of the partition. Default: \code{small-g}.}
 
-\item{EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
+\item{EnvFile}{String. Path to read the environment variables. Default value: \code{.env}.}
 
-\item{FromHPC}{Logical. Work from HPC? This is to adjust the file paths.}
+\item{FromHPC}{Logical. Indicates if the operation is being performed from an HPC environment. This adjusts file paths accordingly. Default: \code{TRUE}.}
 
 \item{Path_Hmsc}{String. Path for the Hmsc-HPC.}
 
-\item{Command_Prefix}{String. Prefix for the bash commands to be executed}
+\item{Command_Prefix}{String. Prefix for the bash commands to be executed.}
 
 \item{SLURM_Prefix}{String. Prefix for the exported SLURM file.}
 }
+\value{
+The function does not return any value but writes SLURM script files to the disk.
+}
 \description{
-Prepare SLURM file for model fitting on HPC
+This function prepares and writes a SLURM file(s) for submitting model fitting jobs on an HPC environment. It dynamically generates bash scripts based on the provided parameters, which are then used to submit jobs to the SLURM workload manager.
 }
 \author{
 Ahmed El-Gabbas

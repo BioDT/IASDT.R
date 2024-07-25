@@ -4,24 +4,27 @@
 
 #' Post-processing of model outputs
 #'
-#' Post-processing of model outputs
-#'
-#' @param Path_Model String. Path to save all the output, including the to be fitted models (without trailing slash)
-#' @param NCores Integer. Number of parallel cores to use
-#' @param ModInfoName String. Default: `NULL` which means overwrite the `Model_Info.RData` file. If `ModInfoName` is provided, a new `.RData` file will be created with this prefix for file name (excluding extension)
-#' @param PrintIncomplete Logical. Print to the console the name of unfitted models
-#' @param FromHPC Logical. Work from HPC? This is to adjust the file paths.
-#' @param EnvFile String. Path to read the environment variables. Default value: `.env`
-#' @param FromJSON Logical. Convert loaded models to JSON format before reading
+#' This function performs post-processing of HMSC model outputs. It merges model chains, checks for missing or incomplete model runs, and optionally prints information about incomplete models. It can work with models run on High-Performance Computing (HPC) environments and supports parallel processing.
+
+#' @param Path_Model String. Path to the directory where model outputs are stored. This should include the path to the fitted models but should not have a trailing slash.
+#' @param NCores Integer. The number of cores to use for parallel processing. This should be a positive integer.
+#' @param ModInfoName String. The name of the file (without extension) where the processed model information will be saved. If `NULL`, it overwrites the `Model_Info.RData` file in the `Path_Model` directory. If provided, a new `.RData` file will be created with this name.
+#' @param PrintIncomplete Logical. Indicates whether to print the names of models that were not successfully fitted to the console. Defaults to `TRUE`.
+#' @param FromHPC Logical. Indicates whether the function is being run in an HPC environment. This affects how file paths are handled. Defaults to `TRUE`.
+#' @param EnvFile String. The path to the file containing environment variables. Defaults to ".env". This file should contain at least the `Path_LUMI_Scratch` variable when running in an HPC environment.
+#' @param FromJSON Logical. Indicates whether to convert loaded models from JSON format before reading. Defaults to `FALSE`.
 #' @name Mod_MergeChains
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return The function does not return anything but saves the processed model information to disk.
 #' @export
-
 
 Mod_MergeChains <- function(
     Path_Model = NULL, NCores = NULL, ModInfoName = NULL,
     PrintIncomplete = TRUE, FromHPC = TRUE, EnvFile = ".env", FromJSON = FALSE) {
+
+  if (is.null(Path_Model) || is.null(NCores) || is.null(ModInfoName)) {
+    stop("FilePath, NCores, and ModInfoName cannot be empty")
+  }
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
@@ -37,9 +40,7 @@ Mod_MergeChains <- function(
     readRenviron(EnvFile)
     Path_Scratch <- Sys.getenv("Path_LUMI_Scratch")
   } else {
-    MSG <- paste0(
-      "Path for environment variables: ", EnvFile, " was not found")
-    stop(MSG)
+    stop(paste0("Path for environment variables: ", EnvFile, " was not found"))
   }
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -50,9 +51,12 @@ Mod_MergeChains <- function(
     AllArgs,
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
+
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Args = c("Path_Model", "EnvFile"), Type = "character")
+
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = "NCores", Type = "numeric")
+
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Args = c("PrintIncomplete", "FromHPC", "PlotVP"),
     Type = "logical")
@@ -99,8 +103,7 @@ Mod_MergeChains <- function(
   fs::dir_create(c(Path_Fitted_Models, Path_Coda))
 
 
-  Model_Info2 <- Path_ModInfo %>%
-    IASDT.R::LoadAs() %>%
+  Model_Info2 <- IASDT.R::LoadAs(Path_ModInfo) %>%
     # Check if any posterior files is missing
     dplyr::mutate(
       Post_Missing = purrr::map_lgl(
@@ -111,8 +114,8 @@ Mod_MergeChains <- function(
           } else {
             Post <- .x
           }
-          Post %>%
-            file.exists() %>%
+
+          file.exists(Post) %>%
             all() %>%
             magrittr::not() %>%
             return()

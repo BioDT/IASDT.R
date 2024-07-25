@@ -2,18 +2,22 @@
 # PlotBetaGG ----
 ## |------------------------------------------------------------------------| #
 
-#' Heatmaps of parameter estimates or posterior support values of species' environmental responses (Beta parameters), i.e. how species in Y responds to covariates in X
+#' Heatmaps of parameter estimates or posterior support values of species' environmental responses (Beta parameters)
 #'
-#' Heatmaps of parameter estimates or posterior support values of species' environmental responses (Beta parameters), i.e. how species in Y responds to covariates in X. This function contain parts of the `?Hmsc::plotBeta()` function, with the main difference that this function uses `ggplot2` for plotting.
+#' This function generates heatmaps of parameter estimates or posterior support values for species' environmental responses, represented by Beta parameters. It is designed to visualize how species (Y) respond to various covariates (X) using ggplot2 for plotting. The function is an adaptation of `Hmsc::plotBeta()`, focusing on ggplot2-based visualizations.
 #'
-#' @param Path_Model String. Path to .RData file for selected model
-#' @param supportLevel controls threshold posterior support for plotting. For more information, see `?Hmsc::plotBeta()`
-#' @param PlotWidth,PlotHeight Integer. Plot size in cm
+#' @param Path_Model String. The path to the .RData file containing the selected model.
+#' @param supportLevel Numeric. The threshold for posterior support used in plotting. Values above this threshold (and below 1 - threshold) are considered significant and will be plotted. The default value is 0.95, indicating 95% posterior support. For more information, see `?Hmsc::plotBeta()`
+#' @param PlotWidth,PlotHeight Numeric. The width and height of the plot in centimeters. Default is 18 cm x 20 cm.
+#' @return The function does not return a value but saves heatmap plots as JPEG files in a directory related to the model's path.
 #' @export
-
 
 PlotBetaGG <- function(
     Path_Model = NULL, supportLevel = 0.95, PlotWidth = 18, PlotHeight = 20) {
+
+  if (is.null(Path_Model)) {
+    stop("Path_Model cannot be empty")
+  }
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Out path
@@ -23,6 +27,7 @@ PlotBetaGG <- function(
     dirname() %>%
     dirname() %>%
     file.path("Model_Postprocessing")
+
   fs::dir_create(Path_Out)
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -39,9 +44,11 @@ PlotBetaGG <- function(
   IASDT.R::CatTime("phylogenetic tree plot")
 
   Tree <- Model$phyloTree
+
   if (length(Tree$edge.length) == 2 * nrow(Tree$edge)) {
     Tree$edge.length <- rep(1, length(Tree$edge.length) / 2)
   }
+
   PhyloPlot <- ggtree::ggtree(
     tr = Tree, branch.length = "none", ladderize = FALSE, linewidth = 0.25) +
     ggtree::geom_tiplab(size = 2) +

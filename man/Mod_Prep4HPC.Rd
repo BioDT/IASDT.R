@@ -2,13 +2,13 @@
 % Please edit documentation in R/Mod_Prep4HPC.R
 \name{Mod_Prep4HPC}
 \alias{Mod_Prep4HPC}
-\title{Prepare initial models in R to be used by the Hmsc-HPC}
+\title{Prepare initial models in R for model fitting by Hmsc-HPC}
 \usage{
 Mod_Prep4HPC(
   Hab_Abb = NULL,
   Path_Data = NULL,
   Path_Model = NULL,
-  MinPresGrids = NULL,
+  MinPresGrids = 50,
   EnvFile = ".env",
   PrepareData = TRUE,
   GPP_Dists = NULL,
@@ -39,70 +39,71 @@ Mod_Prep4HPC(
 )
 }
 \arguments{
-\item{Hab_Abb}{String. Habitat type. This has to be one of the following: c("0", "1", "2", "3", "4a", "4b", "5", "6", "8", "10", "12a", "12b"). "0" means prepare data irrespective of the habitat type}
+\item{Hab_Abb}{String indicating the habitat type to be considered for model preparation. This has to be one of the following: c("0", "1", "2", "3", "4a", "4b", "5", "6", "8", "10", "12a", "12b"). "0" means prepare data irrespective of the habitat type}
 
-\item{Path_Data}{String. Path to read modelling data (without trailing slash)}
+\item{Path_Data}{String specifying the path where modeling data is read from.}
 
-\item{Path_Model}{String. Path to save all the output, including the to be fitted models (without trailing slash)}
+\item{Path_Model}{String (without trailing slash) specifying the path where all output, including models to be fitted, will be saved.}
 
-\item{MinPresGrids}{Integer. Minimum number of presence grid cells per species. Only species with ≥ this number will be considered}
+\item{MinPresGrids}{Integer indicating the minimum number of presence grid cells per species for a species to be used in the model. Only species with ≥ this number will be considered. Default: 50.}
 
-\item{EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
+\item{EnvFile}{String specifying the path to read environment variables from, with a default value of ".env".}
 
-\item{PrepareData}{Logical. Should the input data be prepared or loaded from disk?}
+\item{PrepareData}{Logical indicating whether to prepare input data or load it from disk. Defaults to \code{TRUE} which means the input data will be prepared using the \code{IASDT.R::Mod_PrepData} function.}
 
-\item{GPP_Dists}{Integer. Distance in kilometer for the distance between the knots and the minimum distance of a knot to the nearest data point. The same value will be used for the \code{knotDist}    and \code{minKnotDist}    arguments of the \code{Hmsc::constructKnots} function.}
+\item{GPP_Dists}{Integer specifying the distance in kilometers for both the distance between knots and the minimum distance of a knot to the nearest data point. The same value will be used for the \code{knotDist} and \code{minKnotDist}    arguments of the \code{Hmsc::constructKnots} function.}
 
-\item{GPP_Save}{Logical. Save the resulted knots as RData. Default: \code{TRUE}}
+\item{GPP_Save}{Logical indicating whether to save the resulted knots as RData Default: \code{TRUE}.}
 
-\item{GPP_Plot}{Logical. Plot the coordinates of the sampling units and the knots. Default: \code{TRUE}}
+\item{GPP_Plot}{Logical indicating whether to plot the coordinates of the sampling units and the knots in a pdf file. Default: \code{TRUE}}
 
-\item{XVars}{String. Variables to be used in the model. Default value: \code{NULL}, which means to use the following variables: bio4, bio6, bio8, bio12, bio15, bio18, RoadRailLog, BiasLog}
+\item{XVars}{Vector of strings specifying variables to be used in the model. Default value: \code{NULL}, which means to use the following variables: bio4, bio6, bio8, bio12, bio15, bio18, RoadRailLog, BiasLog.}
 
-\item{PhyloTree}{Logical. Fit model variants with phylogenetic trees. Default: \code{TRUE}. At least one of \code{PhyloTree} and \code{NoPhyloTree} can not be \code{FALSE}.}
+\item{PhyloTree, NoPhyloTree}{Logical indicating whether to fit model variants  with or without phylogenetic trees, respectively. Default: \code{TRUE}, which means to fit a model variant with the respective option. If both \code{PhyloTree} and \code{NoPhyloTree} are \code{TRUE} (Default), models for both options will be fitted. At least one of \code{PhyloTree} and \code{NoPhyloTree} should be \code{TRUE}.}
 
-\item{NoPhyloTree}{Logical. Fit model variants without phylogenetic trees. Default: \code{TRUE}. At least one of \code{PhyloTree} and \code{NoPhyloTree} can not be \code{FALSE}.}
+\item{NParallel}{Integer specifying the number of parallel cores for parallelization. Default: 8 cores.}
 
-\item{NParallel}{Number of parallel cores for parallelization}
+\item{nChains}{Integer specifying the number of model chains. Default: 4.}
 
-\item{nChains}{Integer. Number of model chains}
+\item{thin}{Integer specifying the value(s) for thinning in MCMC sampling. If more than one value is provided, a separate model will be fitted at each value of thinning.}
 
-\item{thin}{Integer. Value(s) for thinning}
+\item{samples}{Integer specifying the value(s) for the number of MCMC samples. If more than one value is provided, a separate model will be fitted at each value of number of samples.}
 
-\item{samples}{Integer. Value(s) for the number of MCMC samples}
+\item{transientFactor}{Integer specifying the transient multiplication factor. The value of \code{transient} will equal  the multiplication of \verb{transientFactor and thin}. Default: 300.}
 
-\item{transientFactor}{Integer. Transient multiplication factor. The value of transient = \code{transientFactor * thin}.}
+\item{verbose}{Integer specifying how often the results of the MCMC sampling should be reported. Default: 1000.}
 
-\item{verbose}{Integer. How often the results of the MCMC sampling be reported}
+\item{SkipFitted}{Logical indicating whether to skip already fitted models. Default: \code{TRUE}.}
 
-\item{SkipFitted}{Logic. Should the already fitted models be skipped.}
+\item{MaxJobCounts}{Integer specifying the maximum allowed number of array jobs per SLURM file. Default: 210. See \href{https://docs.lumi-supercomputer.eu/runjobs/scheduled-jobs/partitions/}{here} for more details.}
 
-\item{MaxJobCounts}{Integer. Maximum number of jobs per SLURM file}
+\item{ModelCountry}{String or vector of strings specifying the country or countries to filter observations by. Default: \code{NULL}, which means prepare data for the whole Europe.}
 
-\item{ModelCountry}{String. Filter observations to the following country list. Default: \code{NULL}, which means prepare data for the whole Europe}
+\item{MinPresPerCountry}{Integer specifying the minimum number of grid cells for the selected country/countries for species to be considered in the models. Effective only if a valid \code{ModelCountry} is provided. Default: 50.}
 
-\item{MinPresPerCountry}{Integer. Minimum of grid cells for the selected country/countries for species to be considered in the models. Effective only if a valid \code{ModelCountry} is provided.}
+\item{VerboseProgress}{Logical indicating whether to show messages for the progress of creating files. Default: \code{FALSE}.}
 
-\item{VerboseProgress}{Logical. Show messages for the progress of creating files}
+\item{FromHPC}{Logical indicating whether the work is being done from HPC, to adjust file paths accordingly. Default: \code{TRUE}.}
 
-\item{FromHPC}{Logical. Work from HPC? This is to adjust the file paths.}
+\item{PrepSLURM}{Logical indicating whether to prepare SLURM command files. If \code{TRUE} (default), the SLURM commands will be saved to disk using the \code{IASDT.R::Mod_SLURM} function.}
 
-\item{PrepSLURM}{Logical. Prepare SLURM command? If \code{TRUE}, the SLURM commands will be exported using the \code{IASDT.R::Mod_SLURM} function.}
+\item{MemPerCpu}{String specifying the memory per CPU for the SLURM job. This value will be assigned to the \verb{#SBATCH --mem-per-cpu=} SLURM argument. Example: "32G" to request 32 gigabyte. Only effective if \code{PrepSLURM = TRUE}.}
 
-\item{MemPerCpu}{String. The value for the \verb{#SBATCH --mem-per-cpu=} SLURM argument. Example: "32G" to request 32 gigabyte. Only effective if \code{PrepSLURM = TRUE}.}
+\item{Time}{String specifying the requested time for each job in the SLURM bash arrays. Example: "01:00:00" to request an hour. Only effective if \code{PrepSLURM = TRUE}.}
 
-\item{Time}{String. The value for the requested time for each job in the bash arrays. Example: "01:00:00" to request an hour. Only effective if \code{PrepSLURM = TRUE}.}
+\item{JobName}{String specifying the name of the submitted job(s) for SLURM. If \code{NULL} (Default), the job name will be prepared based on the folder path and the \code{Hab_Abb} value. Only effective if \code{PrepSLURM = TRUE}.}
 
-\item{JobName}{String. The name of the submitted job(s). Only effective if \code{PrepSLURM = TRUE}.}
+\item{Path_Hmsc}{String specifying the path for the Hmsc-HPC. This will be provided as the \code{Path_Hmsc} argument of the \code{IASDT.R::Mod_SLURM} function.}
 
-\item{Path_Hmsc}{String. Path for the Hmsc-HPC.}
+\item{ToJSON}{Logical indicating whether to convert unfitted models to JSON before saving to RDS file. Default: \code{FALSE}.}
 
-\item{ToJSON}{Logical. Convert unfitted models to JSON before saving to rds file}
-
-\item{...}{additional parameters provided to the \code{IASDT.R::Mod_SLURM} function}
+\item{...}{Additional parameters provided to the \code{IASDT.R::Mod_SLURM} function.}
+}
+\value{
+The function is used for its side effects of preparing data and models for HPC and does not return any value.
 }
 \description{
-Prepare initial models in R to be used by the Hmsc-HPC
+This function prepares initial models in R for model fitting by Hmsc-HPC. It involves data preparation, model initialization, and generating commands for running models on HPC. It supports parallel processing, options to include/not include phylogenetic tree data, and spatial information through Gaussian Process Priors (GPP).
 }
 \author{
 Ahmed El-Gabbas

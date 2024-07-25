@@ -20,32 +20,35 @@ PlotGelman(
 )
 }
 \arguments{
-\item{InputCoda}{Path to RData file containing the coda object}
+\item{InputCoda}{Path to RData file containing the coda object.}
 
-\item{Beta}{Logical. Run \code{IASDT.R::PlotGelman_Beta}?}
+\item{Beta}{Logical indicating whether to plot the Gelman-Rubin statistic for the Beta parameter. If \code{TRUE} (default), the function executes the \code{IASDT.R::PlotGelman_Beta} function.}
 
-\item{Rho}{Logical. Run \code{IASDT.R::PlotGelman_Rho}?}
+\item{Rho}{Logical indicating whether to plot the Gelman-Rubin statistic for the Rho parameter.  If \code{TRUE} (default), the function executes the  \code{IASDT.R::PlotGelman_Rho} function.}
 
-\item{Omega}{Logical. Run \code{IASDT.R::PlotGelman_Omega}?}
+\item{Omega}{Logical indicating whether to plot the Gelman-Rubin statistic for the Omega parameter. If \code{TRUE} (default), the function executes the \code{IASDT.R::PlotGelman_Omega} function.}
 
-\item{Alpha}{Logical. Run \code{IASDT.R::PlotGelman_Alpha}}
+\item{Alpha}{Logical indicating whether to plot the Gelman-Rubin statistic for the Alpha parameter. If \code{TRUE} (default), the function executes the \code{IASDT.R::PlotGelman_Alpha} function.}
 
-\item{NCores}{Integer. Number of parallel processes.}
+\item{NCores}{Integer specifying the number of cores to use for parallel processing.}
 
-\item{NOmega}{Integer. Number of species to be sampled for the Omega parameter}
+\item{NOmega}{Integer specifying the number of species to be sampled for the Omega parameter.}
 
-\item{PlottingAlpha}{Double. Plotting alpha for line transparency}
+\item{PlottingAlpha}{A numeric value between 0 and 1 indicating the transparency level of the plot lines. Defaults to 0.25.}
 
-\item{EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
+\item{EnvFile}{String specifying the path to the environment variables file. The default value is ".env".}
 
-\item{SavePlot}{Logical. Save the outputs as PDF}
+\item{SavePlot}{Logical indicating whether to save the generated plots as a PDF file.}
 
-\item{ReturnPlots}{Logical. Return ggplot objects}
+\item{ReturnPlots}{String specifying the folder path where output figures should be saved. This parameter is mandatory if \code{SavePlot} is TRUE.}
 
 \item{OutPath}{String. Folder path to save the output figures}
 }
+\value{
+If \code{ReturnPlots} is \code{TRUE}, returns a list of ggplot objects corresponding to the generated plots. Otherwise, returns \code{NULL}. If \code{SavePlot} is \code{TRUE}, pdf file for the plots will be saved at the \code{OutPath}.
+}
 \description{
-Plot Gelman-Rubin-Brooks. This plot shows the evolution of Gelman and Rubin's shrink factor as the number of iterations increases. For more information, see \code{coda:::gelman.plot}
+This function generates and optionally saves a series of plots showing the evolution of Gelman and Rubin's shrink factor for various model parameters as the number of iterations increases. It is designed to help assess the convergence of Hmsc model by visualizing the shrink factor over iterations. The function supports parallel processing and can handle multiple parameters simultaneously.
 }
 \author{
 Ahmed El-Gabbas

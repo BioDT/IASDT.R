@@ -2,31 +2,34 @@
 # PlotVarPar ----
 ## |------------------------------------------------------------------------| #
 
-#' Plot variance partitioning of the model
+#' Plot variance partitioning of Hmsc model using ggplot2.
 #'
-#' Plot variance partitioning of the model
+#' This function generates and optionally saves plots visualizing the variance partitioning of a Hmsc model. It can calculate variance partitioning and model evaluation if not provided and supports parallel computation for model predictions.
 #'
-#' @param Model an object of class `Hmsc` or a path for the model. Only needed if one of `ModelEval` and `VarPar` arguments are `NULL`.
-#' @param Path_Plot String. Path to save the output file.
-#' @param PlotTitlePrefix String. Prefix to add to the title of the plot. Default: `NULL`, which means only use 'Variance partitioning' in the title.
+#' @param Model an object of class `Hmsc` or a path for the model file. Only needed if one of `ModelEval` and `VarPar` arguments are `NULL`.
+#' @param Path_Plot String. Path where the output file(s) will be saved. 
+#' @param PlotTitlePrefix String (optional). Prefix to add to the title of the plot. Default: `NULL`, which means only 'Variance partitioning' will be used in the title.
 #' @param ModelEval Result of the `Hmsc::evaluateModelFit` function. If `ModelEval = NULL` (default), `Hmsc::evaluateModelFit` will be executed on the model object to compute measures of model fit.
 #' @param NCores Integer. Number of parallel computations for computing predicted values. This is used as the `nParallel` argument of the `Hmsc::computePredictedValues` function.
-#' @param VarPar Variance partitioning. An object resulted from `Hmsc::computeVariancePartitioning`. if `ModelEval = NULL` (default), `Hmsc::computeVariancePartitioning` will be executed on the model object.
-#'
+#' @param VarPar Variance partitioning object resulted from `Hmsc::computeVariancePartitioning`. If `VarPar = NULL` (default), `Hmsc::computeVariancePartitioning` will be executed on the model object.
 #' @param EnvFile String. Path to read the environment variables. Default value: `.env`
-#' @param SaveVarPar Logical. If `VarPar = NULL`, should the calculated variance partitioning be saved as RData file?
-#' @param SaveModelEval Logical. If `ModelEval = NULL`, should the calculated model evaluation be be saved as RData file?
-#' @param ReturnGG Logical. Return the plot object. Default: `FALSE`, which does not return anything
-#' @param SaveGG Logical. Should the plots be exported as RData object?
+#' @param SaveVarPar Logical. If `VarPar = NULL`, should the calculated variance partitioning be saved as an RData file?  Default: `TRUE`.
+#' @param SaveModelEval Logical. If `ModelEval = NULL`, should the calculated model evaluation be saved as an RData file?  Default: `TRUE`.
+#' @param ReturnGG Logical. Return the ggplot object. Default: `FALSE`.
+#' @param SaveGG Logical. Should the plots be exported as an RData object?  Default: `TRUE`.
 #' @name PlotVarPar
 #' @author Ahmed El-Gabbas
 #' @return NULL
 #' @export
 
 PlotVarPar <- function(
-    Model = NULL, Path_Plot = NULL, PlotTitlePrefix = NULL, ModelEval = NULL,
-    NCores = NULL, VarPar = NULL, EnvFile = ".env",
-    SaveVarPar = TRUE, SaveModelEval = TRUE, ReturnGG = FALSE, SaveGG = TRUE) {
+    Model, Path_Plot, PlotTitlePrefix = NULL, ModelEval = NULL, NCores,
+    VarPar = NULL, EnvFile = ".env", SaveVarPar = TRUE, SaveModelEval = TRUE,
+    ReturnGG = FALSE, SaveGG = TRUE) {
+
+  if (is.null(Model) || is.null(Path_Plot) || is.null(NCores)) {
+    stop("Model, Path_Plot, and NCores cannot be empty")
+  }
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
@@ -46,9 +49,11 @@ PlotVarPar <- function(
 
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "character", Args = c("Path_Plot", "EnvFile"))
+
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "logical",
     Args = c("SaveVarPar", "SaveModelEval", "ReturnGG", "SaveGG"))
+
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "numeric", Args = "NCores")
 
   rm(AllArgs)
@@ -64,16 +69,16 @@ PlotVarPar <- function(
     readRenviron(EnvFile)
     Path_TaxaList <- Sys.getenv("DP_R_Mod_Path_TaxaList")
   } else {
-    MSG <- paste0(
-      "Path for environment variables: ", EnvFile, " was not found")
-    stop(MSG)
+    stop(
+      paste0(
+        "Path for environment variables: ", EnvFile, " was not found"))
   }
 
   SpList <- file.path(Path_TaxaList, "TaxaList.RData") %>%
     IASDT.R::LoadAs() %>%
     dplyr::select(Species = IAS_ID, Species_name) %>%
     dplyr::mutate(
-      Species = stringr::str_pad(string = Species, width = 4, pad = 0),
+      Species = stringr::str_pad(string = Species, width = 4, pad = "0"),
       Species = paste0("Sp_", Species))
 
   if (purrr::some(list(ModelEval, VarPar), is.null)) {
@@ -90,19 +95,17 @@ PlotVarPar <- function(
 
       if (inherits(Model, "character")) {
         if (magrittr::not(file.exists(Model))) {
-          MSG <- "The provided path for the model does not exist"
-          stop(MSG)
+          stop("The provided path for the model does not exist")
         }
         Model <- IASDT.R::LoadAs(Model)
         invisible(gc())
 
         if (magrittr::not(inherits(Model, "Hmsc"))) {
-          MSG <- "The loaded model is not of an Hmsc object"
-          stop(MSG)
+          stop("The loaded model is not of an Hmsc object")
         }
+
       } else {
-        MSG <- "The Model has to be an Hmsc model or a path to a saved model"
-        stop(MSG)
+        stop("The Model has to be an Hmsc model or a path to a saved model")
       }
     }
 
@@ -228,11 +231,15 @@ PlotVarPar <- function(
 
   IASDT.R::CatTime("Plot 2 - Raw variance partitioning")
 
-  for (ii in seq_along(ModelEval$TjurR2)) {
-    VarPar$vals[, ii] <- ModelEval$TjurR2[ii] * VarPar$vals[, ii]
+  if (!is.null(ModelEval$TjurR2) && length(ModelEval$TjurR2) == ncol(VarPar$vals)) {
+    for (ii in seq_along(ModelEval$TjurR2)) {
+      VarPar$vals[, ii] <- ModelEval$TjurR2[ii] * VarPar$vals[, ii]
+    }
+  } else {
+    stop("Mismatch between the length of ModelEval$TjurR2 and the number of columns in VarPar$vals")
   }
 
-  vp_df_R <- VarPar$vals %>%
+ vp_df_R <- VarPar$vals %>%
     tibble::as_tibble(rownames = "variable") %>%
     tidyr::pivot_longer(
       cols = -variable, names_to = "Species", values_to = "value")
@@ -279,6 +286,7 @@ PlotVarPar <- function(
     ggplot2::theme(legend.position = "bottom") +
     ggplot2::guides(
       fill = ggplot2::guide_legend(nrow = 1, override.aes = list(size = 10)))
+      
   Legend <- g_legend(Legend)
 
   if (is.null(PlotTitlePrefix)) {

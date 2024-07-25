@@ -4,32 +4,41 @@
 
 #' Plot convergence traceplots for the alpha parameter
 #'
-#' Plot convergence traceplots for the alpha parameter
+#' This function generates and plots convergence traceplots for the alpha parameter from an Hmsc model, using various diagnostics and visualizations to assess convergence. It supports customization of plot aesthetics and layout.
 #'
-#' @param Post Coda object or path to it
-#' @param Model fitted model object or path to it
-#' @param Title String. Plotting title
-#' @param NRC Vector for the number of rows and columns per plot page
-#' @param AddFooter Add footer to the plot for the page number
-#' @param AddTitle Add main title to the plot
-#' @param Cols Colours for lines for each chain
+#' @param Post A `coda` object or a string path to a saved `coda` object containing the posterior samples for the alpha parameter.
+#' @param Model A fitted model object or a string path to a saved model object containing the samples and metadata necessary for plotting.
+#' @param Title A string specifying the main title of the plot.
+#' @param NRC  numeric vector of length 2 specifying the number of rows and columns per page of plots. If `NULL`, it is automatically determined based on the number of levels of the alpha parameter.
+#' @param AddFooter A logical value indicating whether to add a footer with page numbers to each plot page. Defaults to `TRUE`.
+#' @param AddTitle A logical value indicating whether to add the main title (specified by `Title`) to the plot. Defaults to `TRUE`.
+#' @param Cols A character vector specifying the colors to be used for each chain in the plots. Defaults to `c("red", "blue", "darkgreen", "darkgrey")`.
 #' @name PlotAlpha
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return A grid of `ggplot2` objects representing the traceplots for the alpha parameter, arranged according to the specified number of rows and columns per page. If `AddTitle` or `AddFooter` is `TRUE`, additional text elements are included as specified.
 #' @export
 
 PlotAlpha <- function(
     Post = NULL, Model = NULL, Title = NULL, NRC = NULL, AddFooter = TRUE,
     AddTitle = TRUE, Cols = c("red", "blue", "darkgreen", "darkgrey")) {
 
+
+  if (is.null(Post) || is.null(Model)) {
+    stop("Post and Model cannot be empty")
+  }
+
+  # Avoid "no visible binding for global variable" message
+  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   SampleSize <- ESS <- x <- Factor <- NULL
 
+  # Checking arguments
   AllArgs <- ls()
   AllArgs <- purrr::map(
-    AllArgs,
-    function(x) get(x, envir = parent.env(env = environment()))) %>%
+    AllArgs, ~get(.x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
-  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = "Title")
+
+  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = c("Title"))
+
 
   # Load coda object
   if (inherits(Post, "character")) {
@@ -108,7 +117,9 @@ PlotAlpha <- function(
 
       Gelman0 <- paste0(
         "<b><i>Gelman convergence diagnostic:</i></b> ", Gelman[.x])
+
       Title2 <- data.frame(x = Inf, y = Inf, label = Gelman0)
+
       Title3 <- data.frame(x = -Inf, y = Inf, label = paste0("Factor", .x))
 
       Plot <- AlphaDF %>%
@@ -141,7 +152,8 @@ PlotAlpha <- function(
           data = ESS_CI, inherit.aes = FALSE, size = 4,
           hjust = 0, vjust = 0, lineheight  = 0, fill = NA, label.color = NA) +
         ggplot2::theme(
-          legend.position = "none", axis.text = ggplot2::element_text(size = 12),
+          legend.position = "none",
+          axis.text = ggplot2::element_text(size = 12),
           axis.title = ggplot2::element_blank())
 
       Plot <- ggExtra::ggMarginal(
@@ -167,7 +179,6 @@ PlotAlpha <- function(
           label = Title, gp = grid::gpar(fontface = "bold", fontsize = 20)),
         nrow = NRC[1], ncol = NRC[2])
   }
-
 
   if (magrittr::not(AddTitle) && AddFooter) {
     Plots <- Plots %>%

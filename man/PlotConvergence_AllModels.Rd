@@ -14,20 +14,23 @@ PlotConvergence_AllModels(
 )
 }
 \arguments{
-\item{Path_Model}{String. Path to save all the output, including the to be fitted models (without trailing slash)}
+\item{Path_Model}{String. Path to save all the output, including the to be fitted models (without trailing slash). Must not be \code{NULL}.}
 
-\item{EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
+\item{EnvFile}{String. Path to read the environment variables. Default value: \code{.env}.}
 
-\item{FromHPC}{Logical. Work from HPC? This is to adjust the file paths.}
+\item{FromHPC}{Logical. Indicates whether the function is being run on a High-Performance Computing (HPC) environment. Adjusts file paths accordingly.}
 
-\item{NChains}{Integer. Number of model chains}
+\item{NChains}{Integer. Number of MCMC chains used in the model fitting process.}
 
-\item{maxOmega}{Number of sample species interactions}
+\item{maxOmega}{Integer. Maximum number of species interactions to sample for convergence diagnostics.}
 
-\item{NCores}{Number of parallel cores for parallelization}
+\item{NCores}{Integer. Number of cores to use for parallel processing.}
+}
+\value{
+The function does not return anything but saves a series of diagnostic plots in the specified path.
 }
 \description{
-Plot model convergence of multiple modelling alternatives
+This function generates and saves a series of diagnostic plots to assess the convergence of Hmsc models across multiple modelling alternatives. It checks model convergence using trace plots and Gelman-Rubin diagnostics for key model parameters.
 }
 \author{
 Ahmed El-Gabbas

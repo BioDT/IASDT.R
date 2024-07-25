@@ -2,28 +2,31 @@
 # PrepKnots ----
 ## |------------------------------------------------------------------------| #
 
-#' Prepare knot locations for GPP models
+#' Prepare knot locations for Hmsc GPP models
 #'
-#' Prepare knot locations for GPP models
+#' This function prepares the locations of knots for use in GPP models within the HMSC framework. It ensures that knots are spaced at a minimum specified distance and applies jitter to any identical coordinates to avoid overlap.
 #'
-#' @param Coords A matrix or data frame for the coordinates of the sampling units.
-#' @param MinDist Numeric. Minimum distance in meters for the `knotDist` and `minKnotDist` arguments of the `Hmsc::constructKnots` function.
-#' @param JitterDist Numeric. Distance in meter to be used in the `sf::st_jitter` function.
+#' @param Coords A matrix or data frame containing the coordinates (x, y) of the sampling units.
+#' @param MinDist A numeric value specifying the minimum distance (in the same units as Coords; here in meters) between knots. This distance is used for both `knotDist` and `minKnotDist` parameters of the `Hmsc::constructKnots` function.
+#' @param JitterDist A numeric value specifying the distance (in the same units as Coords; here in meters) for jittering identical coordinates. Defaults to 100.
 #' @name PrepKnots
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return An object suitable for specifying the random level in HMSC GPP models. This object contains the prepared knot locations.
 #' @export
 
-PrepKnots <- function(
-    Coords = NULL, MinDist = NULL, JitterDist = 100) {
+PrepKnots <- function(Coords = NULL, MinDist = NULL, JitterDist = 100) {
+
+  if (is.null(Coords) || is.null(MinDist)) {
+    stop("Both 'Coords' and 'MinDist' must be provided and cannot be NULL")
+  }
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   DT_xy <- Var1 <- Var2 <- Identical <- geometry <- NULL
 
   # coordinates of the sampling units as sf object
-  SU_Sf <- Coords %>%
-    tibble::as_tibble() %>%
+  SU_Sf <- tibble::as_tibble(Coords) %>%
+    stats::setNames(c("x", "y")) %>%
     sf::st_as_sf(coords = c("x", "y"), remove = FALSE, crs = 3035)
 
   # Prepare knots
@@ -40,11 +43,11 @@ PrepKnots <- function(
             dplyr::filter(x == .x, y == .y) %>%
             nrow() %>%
             magrittr::is_greater_than(0)
-        }, .progress = TRUE))
+        }))
 
   if (any(Knots$Identical)) {
-    Knots <- Knots %>%
-      sf::st_as_sf(coords = c("Var1", "Var2"), remove = FALSE, crs = 3035) %>%
+    Knots <- sf::st_as_sf(
+      x = Knots, coords = c("Var1", "Var2"), remove = FALSE, crs = 3035) %>%
       dplyr::mutate(
         geometry = sf::st_sfc(
           dplyr::if_else(
@@ -53,9 +56,7 @@ PrepKnots <- function(
       as.data.frame() %>%
       stats::setNames(c("Var1", "Var2"))
   } else {
-    Knots <- Knots %>%
-      dplyr::select(Var1, Var2) %>%
-      as.data.frame()
+    Knots <- as.data.frame(dplyr::select(Knots, Var1, Var2))
   }
-  Hmsc::HmscRandomLevel(sData = Coords, sMethod = "GPP", sKnot = Knots)
+  return(Hmsc::HmscRandomLevel(sData = Coords, sMethod = "GPP", sKnot = Knots))
 }

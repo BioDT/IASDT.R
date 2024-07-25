@@ -2,39 +2,49 @@
 # PlotGelman_Alpha ----
 ## |------------------------------------------------------------------------| #
 
-#' Gelman-Rubin-Brooks plot `alpha` parameters
+#' Creates a Gelman-Rubin-Brooks plot for `alpha` parameters from an Hmsc object.
 #'
-#' Gelman-Rubin-Brooks plot `alpha` parameters
+#' This function generates a Gelman-Rubin-Brooks plot for `alpha` parameters. It uses parallel processing to speed up the computation. The plot includes lines for the median and the 97.5th percentile of the shrink factor, with a dashed line at 1.1 indicating the threshold for convergence.
 #'
-#' @param CodaObj an mcmc object
-#' @param NCores Integer. Number of parallel processes.
-#' @param PlottingAlpha Double. Plotting alpha for line transparency
+#' @param CodaObj An object of class `mcmc.list`, representing the Hmsc samples.
+#' @param NCores An integer specifying the number of cores to use for parallel processing.
+#' @param PlottingAlpha A double specifying the alpha (transparency) level for the plot lines. Default is 0.25.
 #' @name PlotGelman_Alpha
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return A ggplot object(s) representing the Gelman-Rubin-Brooks plot for the `beta` parameters.
 #' @export
 
+PlotGelman_Alpha <- function(CodaObj, NCores, PlottingAlpha = 0.25) {
 
-PlotGelman_Alpha <- function(
-    CodaObj = NULL, NCores = NULL, PlottingAlpha = 0.25) {
+  if (is.null(CodaObj) || is.null(NCores)) {
+    stop("CodaObj and NCores cannot be empty")
+  }
+
+  if (!is.numeric(NCores) || NCores <= 0) {
+    stop("NCores must be a positive integer.")
+  }
+
+  if (magrittr::not(inherits(CodaObj, "mcmc.list"))) {
+    stop("CodaObj has to be of class mcmc.list")
+  }
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Plot <- Var_LV <- Type <- Iter <- dplyr <- coda <- tibble <-
+  Var_LV <- Type <- Iter <- dplyr <- coda <- tibble <- Plot <-
     magrittr <- data <- NULL
 
   c1 <- snow::makeSOCKcluster(NCores)
-  future::plan(future::cluster, workers = c1, gc = TRUE)
   on.exit(snow::stopCluster(c1), add = TRUE)
+  future::plan(future::cluster, workers = c1, gc = TRUE)
 
-  AlphaNames <- CodaObj %>%
-    magrittr::extract2(1) %>%
+  AlphaNames <- magrittr::extract2(CodaObj, 1) %>%
     attr("dimnames") %>%
     magrittr::extract2(2) %>%
     sort()
 
   invisible(snow::clusterEvalQ(
-    cl = c1, IASDT.R::LoadPackages(dplyr, coda, tibble, magrittr)))
+    cl = c1, IASDT.R::RequireMultiple(dplyr, coda, tibble, magrittr)))
+
   snow::clusterExport(cl = c1, list = "CodaObj", envir = environment())
 
   Gelman_Alpha_Plot <- snow::parLapply(

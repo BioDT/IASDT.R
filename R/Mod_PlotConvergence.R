@@ -4,22 +4,22 @@
 
 #' Plot model convergence of a selected model
 #'
-#' Plot model convergence of a selected model
+#' This function generates and saves plots for model convergence diagnostics, including rho, alpha, omega, and beta parameters. It supports parallel processing for faster execution and can work with models fitted on High-Performance Computing HPC environments.
 #'
-#' @param Path_Coda String. Path to the coda object.
-#' @param Path_FittedModel String. Path to the fitted Hmsc model object
-#' @param EnvFile String. Path to read the environment variables. Default value: `.env`
-#' @param FromHPC Logical. Work from HPC? This is to adjust the file paths.
-#' @param NChains Integer. Number of model chains
-#' @param Title String. Title of the rho and alpha plots
-#' @param NOmega Number of sample species interactions
-#' @param NCores Number of parallel cores for parallelization
-#' @param NRC Vector. Number of rows and columns
-#' @param SavePlotData Logical. Save plots as RData file
-#' @param Cols Colours for lines for each chain
+#' @param Path_Coda String. Path to the coda object containing MCMC samples.
+#' @param Path_FittedModel String. Path to the fitted Hmsc model object.
+#' @param EnvFile String. Path to the environment file containing necessary environment variables. Default: ".env".
+#' @param FromHPC Logical. Indicates whether the function is being run on an HPC environment, affecting file path handling. Default: `TRUE`.
+#' @param NChains Integer. Number of MCMC chains used in the model. Default: 4.
+#' @param Title String. Title for the rho and alpha plots. Default: " ".
+#' @param NOmega Integer. Number of species interactions to sample for omega parameter convergence diagnostics. Default: 1000.
+#' @param NCores Integer. Number of cores to use for parallel processing.
+#' @param NRC Numeric Vector. Specifies the number of rows and columns for arranging multiple plots on a page. Default: c(2, 3).
+#' @param SavePlotData Logical. Indicates whether to save the plot data as RData files. Default: TRUE.
+#' @param Cols Character Vector. Specifies the colors to use for each chain in the plots. Default: c("red", "blue", "darkgreen", "darkgrey").
 #' @name PlotConvergence
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return The function does not return a value but generates and saves plots to disk.
 #' @export
 
 PlotConvergence <- function(
@@ -28,12 +28,16 @@ PlotConvergence <- function(
     NRC = c(2, 3), SavePlotData = TRUE,
     Cols = c("red", "blue", "darkgreen", "darkgrey")) {
 
+  if (is.null(Path_Coda) || is.null(Path_FittedModel) || is.null(NCores)) {
+    stop("Path_Coda, Path_FittedModel, and NCores cannot be empty")
+  }
+
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   SpComb <- `25%` <- `75%` <- Class <- Order <- Family <- Plot <- DT <-
     IAS_ID <- Species <- Variable <- Chain <- Iter <- Value <- Var_Sp <-
     coda <- data <- dplyr <- ggExtra <- ggplot2 <- ggtext <- label <- y <-
-    Var <- PlotFixedY <- Var <- group <- NULL
+    Var <- PlotFixedY <- group <- NULL
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Check input arguments ------

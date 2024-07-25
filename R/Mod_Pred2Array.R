@@ -2,23 +2,44 @@
 # Mod_Pred2Array ----
 ## |------------------------------------------------------------------------| #
 
-#' Convert results from predict function to array
+#' Convert results from `Hmsc:::predict.Hmsc` function to array
 #'
-#' Convert results from predict function to array, with possibility to make predictions first
+#' This function converts the results from `Hmsc:::predict.Hmsc` function into an array format. It allows for the direct conversion of pre-computed predictions or the generation of predictions from a model before conversion. It supports parallel computation for generating predictions.
 #'
-#' @param Predict Logical. Make predictions first
-#' @param Model Hmsc object or path of the saved model
-#' @param Preds Pre-computed predictions
-#' @param expected Logical. Whether to return the location parameter of the observation models or sample the values from those.
-#' @param NCores Integer. Number of parallel computations for computing predicted values.
+#' @param Predict Logical; if `TRUE`, predictions are made using the Model parameter before conversion. If `FALSE`, uses pre-computed predictions provided in `Preds`.
+#' @param Model Hmsc object or character for path to a saved model file. If `Predict` is `True`, the model object will be used to make predictions first.
+#' @param Preds pre-computed predictions, resulted from `Hmsc:::predict.Hmsc`, to be converted into an array. Required if `Predict` is `FALSE`.
+#' @param expected Logical; if `TRUE`, returns the location parameter of the observation models. If `FALSE`, samples values from the observation models. See `Hmsc:::predict.Hmsc` for more info.
+#' @param NCores Integer; specifies the number of cores to use for parallel computation of predicted values. Must be a positive integer.
 #' @name Mod_Pred2Array
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return An array of predictions.
+#' @examples
+#' Preds <- IASDT.R::Mod_Pred2Array(
+#'     Predict = TRUE, Model = Hmsc::TD$m, expected = TRUE, NCores = 1)
+#' str(Preds)
+#' 
+#' Preds <- IASDT.R::Mod_Pred2Array(
+#'     Predict = TRUE, Model = Hmsc::TD$m, expected = FALSE, NCores = 1)
+#' str(Preds)
 #' @export
 
 Mod_Pred2Array <- function(
-    Predict = TRUE, Model = NULL, Preds = NULL, expected = TRUE, NCores = NULL) {
+    Predict, Model, Preds = NULL, expected = TRUE, NCores = 1) {
+
+  if (Predict && is.null(Model)) {
+    stop("Model cannot be empty when Predict is TRUE")
+  }
+
+  if (!Predict && is.null(Preds)) {
+    stop("Preds cannot be empty when Predict is FALSE")
+  }
+
   if (Predict) {
+    
+    if (!is.numeric(NCores) || NCores <= 0) {
+      stop("NCores must be a positive integer.")
+    }
 
     if (inherits(Model, "character")) {
       Model <- IASDT.R::LoadAs(Model)

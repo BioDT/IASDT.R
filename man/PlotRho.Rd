@@ -4,24 +4,23 @@
 \alias{PlotRho}
 \title{Plot convergence traceplots for the rho parameter}
 \usage{
-PlotRho(
-  Post = NULL,
-  Model = NULL,
-  Title = NULL,
-  Cols = c("red", "blue", "darkgreen", "darkgrey")
-)
+PlotRho(Post, Model, Title, Cols = c("red", "blue", "darkgreen", "darkgrey"))
 }
 \arguments{
-\item{Post}{Coda object or path to it}
+\item{Post}{A \code{coda} object containing MCMC samples of the rho parameter or a character string specifying the path to such an object.}
 
-\item{Model}{Fitted model object or path to it}
+\item{Model}{A fitted Hmsc model object or a character string specifying
+the path to such an object.}
 
-\item{Title}{String. Plotting title}
+\item{Title}{A character string specifying the title of the plot.}
 
-\item{Cols}{Colours for lines for each chain}
+\item{Cols}{A character vector specifying the colors to be used for the lines representing each chain in the plot. Defaults to c("red", "blue", "darkgreen", "darkgrey").}
+}
+\value{
+A ggplot object representing the traceplot of the rho parameter, including annotations for the Gelman-Rubin diagnostic, effective sample size, and credible intervals.
 }
 \description{
-Plot convergence traceplots for the rho parameter
+This function generates and plots convergence traceplots for the rho parameter of an Hmsc model. It visualizes the trace and density of the rho parameter across different chains, providing insights into the convergence and distribution of the parameter estimates.
 }
 \author{
 Ahmed El-Gabbas

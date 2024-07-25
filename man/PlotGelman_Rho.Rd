@@ -2,15 +2,18 @@
 % Please edit documentation in R/Mod_PlotGelman_Rho.R
 \name{PlotGelman_Rho}
 \alias{PlotGelman_Rho}
-\title{Gelman-Rubin-Brooks plot for \code{rho} parameter}
+\title{Creates a Gelman-Rubin-Brooks plot for the \code{rho} parameter.}
 \usage{
-PlotGelman_Rho(CodaObj = NULL)
+PlotGelman_Rho(CodaObj)
 }
 \arguments{
-\item{CodaObj}{an mcmc object}
+\item{CodaObj}{An object of class \code{mcmc.list}, representing the Hmsc samples.}
+}
+\value{
+A ggplot object representing the Gelman-Rubin-Brooks plot for the \code{rho} parameter.
 }
 \description{
-Gelman-Rubin-Brooks plot for \code{rho} parameter
+This function generates a Gelman-Rubin-Brooks plot for the \code{rho} parameter of a coda object. The plot includes lines for the median and the 97.5th percentile of the shrink factor, with a dashed line at 1.1 indicating the threshold for convergence.
 }
 \author{
 Ahmed El-Gabbas

@@ -2,19 +2,22 @@
 % Please edit documentation in R/Mod_Summary.R
 \name{Mod_Summary}
 \alias{Mod_Summary}
-\title{Summary of the Hmsc model parameters}
+\title{Summary of Hmsc model parameters}
 \usage{
 Mod_Summary(Path_Coda = NULL, EnvFile = ".env", ReturnData = FALSE)
 }
 \arguments{
-\item{Path_Coda}{String. Path to .RData file containing coda object}
+\item{Path_Coda}{String. Path to the \code{.RData} file containing a coda object.}
 
-\item{EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
+\item{EnvFile}{String. Path to the environment variables file. This file is used to read necessary environmental variables for processing. The default value is \code{.env}.}
 
-\item{ReturnData}{Logical. Should the response curve data be returned as an R object? Default: \code{FALSE}}
+\item{ReturnData}{Logical. Indicates whether the summarized data should be returned as an R object. If \code{TRUE}, the function returns a list containing summaries of Alpha, Beta, Rho, and Omega parameters. The default value is \code{FALSE}, which means the function will not return any data but will save the summaries to a specified directory.}
+}
+\value{
+If \code{ReturnData} is \code{FALSE} (default), the function does not return anything and saves the summaries to a directory. If \code{ReturnData} is \code{TRUE}, it also returns the data as R object.
 }
 \description{
-Summary of the Hmsc model parameters
+This function provides a comprehensive summary of Hmsc model parameters, including Alpha, Beta, Rho, and Omega. It processes the model's output, performs statistical summaries, and optionally returns the summarized data.
 }
 \author{
 Ahmed El-Gabbas

@@ -2,25 +2,28 @@
 # Mod_Summary ----
 ## |------------------------------------------------------------------------| #
 
-#' Summary of the Hmsc model parameters
+#' Summary of Hmsc model parameters
 #'
-#' Summary of the Hmsc model parameters
+#' This function provides a comprehensive summary of Hmsc model parameters, including Alpha, Beta, Rho, and Omega. It processes the model's output, performs statistical summaries, and optionally returns the summarized data.
 #'
-#' @param Path_Coda String. Path to .RData file containing coda object
-#' @param EnvFile String. Path to read the environment variables. Default value: `.env`
-#' @param ReturnData Logical. Should the response curve data be returned as an R object? Default: `FALSE`
+#' @param Path_Coda String. Path to the `.RData` file containing a coda object.
+#' @param EnvFile String. Path to the environment variables file. This file is used to read necessary environmental variables for processing. The default value is `.env`.
+#' @param ReturnData Logical. Indicates whether the summarized data should be returned as an R object. If `TRUE`, the function returns a list containing summaries of Alpha, Beta, Rho, and Omega parameters. The default value is `FALSE`, which means the function will not return any data but will save the summaries to a specified directory.
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return If `ReturnData` is `FALSE` (default), the function does not return anything and saves the summaries to a directory. If `ReturnData` is `TRUE`, it also returns the data as R object.
 #' @export
 
 Mod_Summary <- function(Path_Coda = NULL, EnvFile = ".env", ReturnData = FALSE) {
+
+  if (is.null(Path_Coda)) {
+    stop("Path_Coda cannot be empty")
+  }
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   VarSp <- Variable <- Species <- Sp1_abb <- Sp2_abb <- IAS_ID <- Val <-
     taxon_name <- Species_name <- Sp1_Species_name <- Sp2_Species_name <-
     Q2_5 <- Q97_5 <- Sp1_Sp_abb <- Sp2_Sp_abb <- NULL
-
 
   # DataPrep helper function -------
   DataPrep <- function(DT) {
@@ -58,7 +61,8 @@ Mod_Summary <- function(Path_Coda = NULL, EnvFile = ".env", ReturnData = FALSE) 
       Variable = stringr::str_remove_all(Variable, "B\\[| \\(.+\\)|\\(|\\)"),
       Species = stringr::str_remove_all(Species, "^Species_| \\(S.+\\)\\]|\\]"),
       CI_Overlap_0 = purrr::map2_lgl(
-        .x = Q2_5, .y = Q97_5, dplyr::between, x = 0))
+        .x = Q2_5, .y = Q97_5, ~dplyr::between(x = 0, left = .x, right = .y)))
+
   invisible(gc())
 
   # Alpha -----
@@ -80,7 +84,7 @@ Mod_Summary <- function(Path_Coda = NULL, EnvFile = ".env", ReturnData = FALSE) 
     tidyr::unnest_wider(col = VarSp) %>%
     dplyr::mutate(
       CI_Overlap_0 = purrr::map2_lgl(
-        .x = Q2_5, .y = Q97_5, dplyr::between, x = 0))
+        .x = Q2_5, .y = Q97_5, ~dplyr::between(x = 0, left = .x, right = .y)))
 
   invisible(gc())
 
@@ -102,7 +106,7 @@ Mod_Summary <- function(Path_Coda = NULL, EnvFile = ".env", ReturnData = FALSE) 
     dplyr::mutate(Rho = "Taxonomy", .before = 1) %>%
     dplyr::mutate(
       CI_Overlap_0 = purrr::map2_lgl(
-        .x = Q2_5, .y = Q97_5, dplyr::between, x = 0))
+        .x = Q2_5, .y = Q97_5, ~dplyr::between(x = 0, left = .x, right = .y)))
 
   # Omega ------
 
@@ -155,7 +159,7 @@ Mod_Summary <- function(Path_Coda = NULL, EnvFile = ".env", ReturnData = FALSE) 
     dplyr::relocate(Sp2 = Sp2_Species_name, .after = "Sp2_abb") %>%
     dplyr::mutate(
       CI_Overlap_0 = purrr::map2_lgl(
-        .x = Q2_5, .y = Q97_5, dplyr::between, x = 0))
+        .x = Q2_5, .y = Q97_5, ~dplyr::between(x = 0, left = .x, right = .y)))
 
   # Saving ------
   IASDT.R::CatTime("Saving")

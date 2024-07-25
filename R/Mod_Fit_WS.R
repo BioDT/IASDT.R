@@ -4,18 +4,21 @@
 
 #' Fit Hmsc-HPC models on UFZ Windows Server
 #'
-#' Fit Hmsc-HPC models on UFZ Windows Server
-#'
-#' @param Path_Model String. Path to the model files (without trailing slash)
-#' @param EnvFile String. Path to read the environment variables. Default value: `.env`
-#' @param NCores Integer. Number of parallel processes.
+#' This function fits Hmsc models on a UFZ Windows Server. It reads model configurations from a specified path, loads environment variables, checks input arguments for validity, and executes model fitting in parallel if required.
+#' #'
+#' @param Path_Model String. Path to the model files (without trailing slash).
+#' @param EnvFile Path to the file containing environment variables. Defaults to ".env".
+#' @param NCores Integer. Number of cores to use for parallel processing.
 #' @name Mod_Fit_WS
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return The function does not return anything but prints messages to the console regarding the progress and completion of model fitting.
 #' @export
 
-Mod_Fit_WS <- function(
-    Path_Model = NULL, EnvFile = ".env", NCores = NULL) {
+Mod_Fit_WS <- function(Path_Model, EnvFile = ".env", NCores = NULL) {
+
+  if (is.null(Path_Model) || is.null(NCores)) {
+    stop("Path_Model and NCores cannot be empty")
+  }
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
@@ -29,9 +32,8 @@ Mod_Fit_WS <- function(
     readRenviron(EnvFile)
     Path_Hmsc_WS <- Sys.getenv("DP_R_Mod_Path_VE_WS")
   } else {
-    MSG <- paste0(
-      "Path for environment variables: ", EnvFile, " was not found")
-    stop(MSG)
+    stop(paste0(
+      "Path for environment variables: ", EnvFile, " was not found"))
   }
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -45,9 +47,11 @@ Mod_Fit_WS <- function(
     AllArgs,
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
+
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "character",
     Args = c("Path_Hmsc_WS", "Path_Model"))
+
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = "NCores", Type = "numeric")
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

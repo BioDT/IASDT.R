@@ -4,24 +4,22 @@
 \alias{PlotGelman_Beta}
 \title{Gelman-Rubin-Brooks plot for \code{beta} parameters}
 \usage{
-PlotGelman_Beta(
-  CodaObj = NULL,
-  NCores = NULL,
-  EnvFile = ".env",
-  PlottingAlpha = 0.25
-)
+PlotGelman_Beta(CodaObj, NCores, EnvFile = ".env", PlottingAlpha = 0.25)
 }
 \arguments{
-\item{CodaObj}{an mcmc object}
+\item{CodaObj}{An object of class \code{mcmc.list}, representing the Hmsc samples.}
 
-\item{NCores}{Integer. Number of parallel processes.}
+\item{NCores}{Integer indicating the number of parallel processes to be used for computation.}
 
-\item{EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
+\item{EnvFile}{String specifying the path to read the environment variables. Default value is \code{.env}.}
 
-\item{PlottingAlpha}{Double. Plotting alpha for line transparency}
+\item{PlottingAlpha}{Double indicating the alpha (transparency) level for the plotting lines. Default value is 0.25.}
+}
+\value{
+A ggplot object representing the Gelman-Rubin-Brooks plot for the \code{beta} parameters.
 }
 \description{
-Gelman-Rubin-Brooks plot for \code{beta} parameters
+This function generates a Gelman-Rubin-Brooks plot for \code{beta} parameters from a Hmsc object. It is used to assess the convergence of MCMC simulations by plotting the evolution of the shrink factor over iterations. The plot helps in identifying whether the chains have converged to a common distribution. The plot includes lines for the median and the 97.5th percentile of the shrink factor, with a dashed line at 1.1 indicating the threshold for convergence.
 }
 \author{
 Ahmed El-Gabbas

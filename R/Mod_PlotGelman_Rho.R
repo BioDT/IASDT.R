@@ -2,17 +2,21 @@
 # PlotGelman_Rho ----
 ## |------------------------------------------------------------------------| #
 
-#' Gelman-Rubin-Brooks plot for `rho` parameter
+#' Creates a Gelman-Rubin-Brooks plot for the `rho` parameter.
 #'
-#' Gelman-Rubin-Brooks plot for `rho` parameter
+#' This function generates a Gelman-Rubin-Brooks plot for the `rho` parameter of a coda object. The plot includes lines for the median and the 97.5th percentile of the shrink factor, with a dashed line at 1.1 indicating the threshold for convergence.
 #'
-#' @param CodaObj an mcmc object
+#' @param CodaObj An object of class `mcmc.list`, representing the Hmsc samples.
 #' @name PlotGelman_Rho
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return A ggplot object representing the Gelman-Rubin-Brooks plot for the `rho` parameter.
 #' @export
 
-PlotGelman_Rho <- function(CodaObj = NULL) {
+PlotGelman_Rho <- function(CodaObj) {
+
+  if (is.null(CodaObj)) {
+    stop("CodaObj cannot be empty")
+  }
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
@@ -29,10 +33,7 @@ PlotGelman_Rho <- function(CodaObj = NULL) {
     tidyr::pivot_longer(
       cols = -Iter, names_to = "Type", values_to = "ShrinkFactor") %>%
     dplyr::arrange(Type, Iter) %>%
-    dplyr::mutate(
-      # Colour = dplyr::if_else(Type == "Median", "black", "red"),
-      # LType = dplyr::if_else(Type == "Median", "dashed", "solid"),
-      Type = factor(Type)) %>%
+    dplyr::mutate(Type = factor(Type)) %>%
     ggplot2::ggplot() +
     ggplot2::geom_line(
       mapping = ggplot2::aes(x = Iter, y = ShrinkFactor, color = Type)) +

@@ -2,19 +2,22 @@
 % Please edit documentation in R/Mod_PrepKnots.R
 \name{PrepKnots}
 \alias{PrepKnots}
-\title{Prepare knot locations for GPP models}
+\title{Prepare knot locations for Hmsc GPP models}
 \usage{
 PrepKnots(Coords = NULL, MinDist = NULL, JitterDist = 100)
 }
 \arguments{
-\item{Coords}{A matrix or data frame for the coordinates of the sampling units.}
+\item{Coords}{A matrix or data frame containing the coordinates (x, y) of the sampling units.}
 
-\item{MinDist}{Numeric. Minimum distance in meters for the \code{knotDist} and \code{minKnotDist} arguments of the \code{Hmsc::constructKnots} function.}
+\item{MinDist}{A numeric value specifying the minimum distance (in the same units as Coords; here in meters) between knots. This distance is used for both \code{knotDist} and \code{minKnotDist} parameters of the \code{Hmsc::constructKnots} function.}
 
-\item{JitterDist}{Numeric. Distance in meter to be used in the \code{sf::st_jitter} function.}
+\item{JitterDist}{A numeric value specifying the distance (in the same units as Coords; here in meters) for jittering identical coordinates. Defaults to 100.}
+}
+\value{
+An object suitable for specifying the random level in HMSC GPP models. This object contains the prepared knot locations.
 }
 \description{
-Prepare knot locations for GPP models
+This function prepares the locations of knots for use in GPP models within the HMSC framework. It ensures that knots are spaced at a minimum specified distance and applies jitter to any identical coordinates to avoid overlap.
 }
 \author{
 Ahmed El-Gabbas

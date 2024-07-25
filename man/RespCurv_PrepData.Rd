@@ -2,7 +2,7 @@
 % Please edit documentation in R/Mod_RespCurv_PrepData.R
 \name{RespCurv_PrepData}
 \alias{RespCurv_PrepData}
-\title{Prepare response curve data}
+\title{Prepare and Process Response Curve Data for Hmsc Models}
 \usage{
 RespCurv_PrepData(
   Path_Model = NULL,
@@ -13,16 +13,22 @@ RespCurv_PrepData(
 )
 }
 \arguments{
-\item{Path_Model}{String. Path to .RData file for selected model}
+\item{Path_Model}{String specifying the path to the .RData file containing the model to be used.}
 
-\item{ngrid}{Integer. Number of points along the gradient (for continuous focal variables)}
+\item{ngrid}{Integer specifying the number of points along the gradient for continuous focal variables. Defaults to 50.}
 
-\item{NCores}{Integer. Number of parallel cores.}
+\item{NCores}{Integer specifying the number of cores to use for parallel processing. Defaults to 15.}
 
-\item{ShowProgress}{Logical. Show progress bar. Default: \code{FALSE}}
+\item{ShowProgress}{Logical indicating whether to show a progress bar during execution. Defaults to \code{FALSE}.}
 
-\item{ReturnData}{Logical. Should the response curve data be returned as an R object? Default: \code{FALSE}}
+\item{ReturnData}{Logical indicating whether the processed response curve data should be returned as an R object. Defaults to \code{FALSE}.}
+}
+\value{
+Depending on the value of \code{ReturnData}, either returns response curve data or \code{NULL} invisibly.
 }
 \description{
-Prepare response curve data
+This function prepares and processes data for generating response curves for Hmsc models. It supports parallel processing and can return the processed data.
+}
+\seealso{
+RespCurv_PlotSp RespCurv_PlotSR
 }

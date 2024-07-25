@@ -4,21 +4,27 @@
 
 #' Plot convergence traceplots for the rho parameter
 #'
-#' Plot convergence traceplots for the rho parameter
+#' This function generates and plots convergence traceplots for the rho parameter of an Hmsc model. It visualizes the trace and density of the rho parameter across different chains, providing insights into the convergence and distribution of the parameter estimates.
 #'
-#' @param Post Coda object or path to it
-#' @param Model Fitted model object or path to it
-#' @param Title String. Plotting title
-#' @param Cols Colours for lines for each chain
+#' @param Post A `coda` object containing MCMC samples of the rho parameter or a character string specifying the path to such an object.
+#' @param Model A fitted Hmsc model object or a character string specifying
+#' the path to such an object.
+#' @param Title A character string specifying the title of the plot.
+#' @param Cols A character vector specifying the colors to be used for the lines representing each chain in the plot. Defaults to c("red", "blue", "darkgreen", "darkgrey").
 #' @name PlotRho
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return A ggplot object representing the traceplot of the rho parameter, including annotations for the Gelman-Rubin diagnostic, effective sample size, and credible intervals.
 #' @export
 
 PlotRho <- function(
-    Post = NULL, Model = NULL, Title = NULL,
-    Cols = c("red", "blue", "darkgreen", "darkgrey")) {
+    Post, Model, Title, Cols = c("red", "blue", "darkgreen", "darkgrey")) {
 
+  if (is.null(Post) || is.null(Model) || is.null(Title)) {
+    stop("Post, Model, and Title cannot be empty")
+  }
+
+  # Avoid "no visible binding for global variable" message
+  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Chain <- ID <- Value <- x <- y <- label <- NULL
 
   # Load coda object
@@ -46,17 +52,14 @@ PlotRho <- function(
     paste0("<i>Gelman convergence diagnostic:</i> ", .)
 
   ## Effective sample size
-  ESS <- Post %>%
-    coda::effectiveSize() %>%
+  ESS <- coda::effectiveSize(Post) %>%
     magrittr::divide_by(NChains) %>%
     round(1) %>%
     paste0("<i>Mean effective sample size:</i> ", ., " / ", SampleSize)
 
   ## quantiles
   CI <- summary(Post, quantiles = c(0.25, 0.75))$quantiles
-  CI2 <- CI %>%
-    paste0(collapse = " - ") %>%
-    paste0("<i>50% credible interval:</i> ", .)
+  CI2 <- paste0("<i>50% credible interval:</i> ", CI, collapse = " - ")
 
   RhoDF <- Post %>%
     purrr::map(tibble::as_tibble, rownames = "ID") %>%
@@ -98,5 +101,6 @@ PlotRho <- function(
   Plot1 <- Plot %>%
     ggExtra::ggMarginal(
       type = "density", margins = "y", size = 5, color = "steelblue4")
+
   return(Plot1)
 }

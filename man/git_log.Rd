@@ -2,16 +2,36 @@
 % Please edit documentation in R/General_git_log.R
 \name{git_log}
 \alias{git_log}
-\title{Print a detailed \verb{git log} of the git repository located in the current working directory.}
+\title{Print or return a detailed \verb{git log} of the git repository located in the specified directory.}
 \usage{
-git_log()
+git_log(Path = ".", Num = NULL, ReturnLog = FALSE)
+}
+\arguments{
+\item{Path}{A character string specifying the path to the directory to check. Defaults to the current working directory ".". If the path does not exist, the function will stop and throw an error. If the path is not a git repository, the function will throw a warning.}
+
+\item{Num}{An optional numeric value specifying the number of recent commits to display. If \code{NULL} (the default), the complete log is shown. If \code{Num} is not \code{NULL} or a positive number, the function will stop and throw an error.}
+
+\item{ReturnLog}{A logical value indicating whether to return the log (\code{TRUE}) or print it to the console (\code{FALSE}, default). If \code{TRUE}, the function returns a character vector containing the log lines.}
 }
 \value{
-This function is called for its side effect of printing to the console.
+If \code{ReturnLog} is \code{TRUE}, returns a character vector containing the git log lines. If \code{ReturnLog} is \code{FALSE}, the function is called for its side effect of printing to the console.
 }
 \description{
-This function executes a \verb{git log} command with specific formatting options to display a detailed and colored log. It shows the commit hash, references (like branches or tags), commit message, relative commit date, and author name in a visually appealing graph format.
+This function checks if the specified directory is a Git repository and, if so, executes a \verb{git log} command to either print the log to the console or return it. It supports execution on Windows and Linux operating systems and provides a visually appealing graph format of the log, showing the commit hash, references, commit message, relative commit date, and author name.
+}
+\note{
+The function will stop and throw an error if the specified path does not exist, the operating system is not supported, the directory is not a Git repository, Git is not installed, or if the \code{Num} parameter is not \code{NULL} or a positive number.
 }
 \examples{
-git_log()
+# not a git repo
+git_log(Path = "C:/")
+
+# Show the most recent commit
+git_log(Path = ".", 1)
+
+# Show the most recent 5 commits
+git_log(Path = ".", 5)
+}
+\seealso{
+\link{System}
 }

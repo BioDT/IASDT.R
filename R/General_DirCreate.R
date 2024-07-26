@@ -6,7 +6,7 @@
 #'
 #' This function creates a directory at the specified path. If the directory already exists, it can optionally print a message indicating so. The creation is recursive, meaning it will create any necessary parent directories.
 #'
-#' @param Path character; the path where the directory is to be created. Cannot be NULL.
+#' @param Path character; the path where the directory is to be created. Cannot be `NULL`.
 #' @param Verbose logical; if `TRUE`, the function prints messages about the operation's outcome. Defaults to `TRUE`.
 #' @name DirCreate
 #' @author Ahmed El-Gabbas
@@ -21,6 +21,7 @@
 #' DirCreate(Path2Create, Verbose = FALSE)
 #' file.exists(Path2Create)
 #'
+#' @keywords internal
 #' @noRd
 #' @references This function is currently not exported. I use `fs::dir_create()` instead.
 

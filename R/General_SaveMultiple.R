@@ -16,62 +16,67 @@
 #' @return The function is used for its side effect of saving files and does not return a value.
 #' @export
 #' @examples
-#' TMP_Folder <- file.path(tempdir(), stringi::stri_rand_strings(1, 5))
-#' fs::dir_create(TMP_Folder)
+#' \dontrun{
+#'   TMP_Folder <- file.path(tempdir(), stringi::stri_rand_strings(1, 5))
+#'   fs::dir_create(TMP_Folder)
 #'
-#' # ----------------------------------------------
-#' # Save x1 and x2 to disk
-#' # ----------------------------------------------
-#' x1 = 10; x2 = 20
+#'   # ----------------------------------------------
+#'   # Save x1 and x2 to disk
+#'   # ----------------------------------------------
+#'   x1 = 10; x2 = 20
 #'
-#' SaveMultiple(Vars = c("x1", "x2"), OutFolder = TMP_Folder)
+#'   SaveMultiple(Vars = c("x1", "x2"), OutFolder = TMP_Folder)
 #'
-#' list.files(path = TMP_Folder, pattern = "^.+.RData")
+#'   list.files(path = TMP_Folder, pattern = "^.+.RData")
 #'
-#' (x1Contents <- IASDT.R::LoadAs(file.path(TMP_Folder, "x1.RData")))
+#'   (x1Contents <- IASDT.R::LoadAs(file.path(TMP_Folder, "x1.RData")))
 #'
-#' (x2Contents <- IASDT.R::LoadAs(file.path(TMP_Folder, "x2.RData")))
+#'   (x2Contents <- IASDT.R::LoadAs(file.path(TMP_Folder, "x2.RData")))
 #'
-#' # ----------------------------------------------
-#' # Use Prefix
-#' # ----------------------------------------------
+#'   # ----------------------------------------------
+#'   # Use Prefix
+#'   # ----------------------------------------------
 #'
-#' SaveMultiple(Vars = c("x1", "x2"), OutFolder = TMP_Folder, Prefix = "A_")
+#'   SaveMultiple(Vars = c("x1", "x2"), OutFolder = TMP_Folder, Prefix = "A_")
 #'
-#' list.files(path = TMP_Folder, pattern = "^.+.RData")
+#'   list.files(path = TMP_Folder, pattern = "^.+.RData")
 #'
-#' # ----------------------------------------------
-#' # File exists, no save
-#' # ----------------------------------------------
-#' try(SaveMultiple(Vars = c("x1", "x2"), OutFolder = TMP_Folder))
+#'   # ----------------------------------------------
+#'   # File exists, no save
+#'   # ----------------------------------------------
+#'   try(SaveMultiple(Vars = c("x1", "x2"), OutFolder = TMP_Folder))
 #'
-#' # ----------------------------------------------
-#' # overwrite existing file
-#' # ----------------------------------------------
-#' x1 = 100; x2 = 200; x3 = 300
+#'   # ----------------------------------------------
+#'   # overwrite existing file
+#'   # ----------------------------------------------
+#'   x1 = 100; x2 = 200; x3 = 300
 #'
-#' SaveMultiple(Vars = c("x1", "x2", "x3"), OutFolder = TMP_Folder, Overwrite = TRUE)
+#'   SaveMultiple(Vars = c("x1", "x2", "x3"),
+#'      OutFolder = TMP_Folder, Overwrite = TRUE)
 #'
-#' (x1Contents <- IASDT.R::LoadAs(file.path(TMP_Folder, "x1.RData")))
+#'   (x1Contents <- IASDT.R::LoadAs(file.path(TMP_Folder, "x1.RData")))
 #'
-#' (x2Contents <- IASDT.R::LoadAs(file.path(TMP_Folder, "x2.RData")))
+#'   (x2Contents <- IASDT.R::LoadAs(file.path(TMP_Folder, "x2.RData")))
 #'
-#' (x3Contents <- IASDT.R::LoadAs(file.path(TMP_Folder, "x3.RData")))
+#'      (x3Contents <- IASDT.R::LoadAs(file.path(TMP_Folder, "x3.RData")))
+#' }
 
 SaveMultiple <- function(
     Vars = NULL, OutFolder = getwd(),
     Overwrite = FALSE, Prefix = "", Verbose = FALSE) {
 
   # Check if Vars is provided correctly
-  if (is.null(Vars) || !is.character(Vars) || any(!Vars %in% ls(envir = rlang::caller_env()))) {
-    stop("Vars should be a character vector for names of objects available in the specified environment")
+  if (is.null(Vars) || !is.character(Vars)) {
+    stop("Vars should be a character vector for names of objects")
   }
 
-  # Get variables in the caller environment
-  GlobalVars <- ls(rlang::caller_env())
+  env <- rlang::new_environment()
+
+  purrr::walk(
+    .x = Vars, .f = ~assign(.x, get(.x, envir = parent.frame()), envir = env))
 
   # Check if all specified Vars are available in the caller environment
-  missing_vars <- setdiff(Vars, GlobalVars)
+  missing_vars <- setdiff(Vars, ls(envir = env))
 
   if (length(missing_vars) > 0) {
     stop(paste0("Variable(s) ", paste0(missing_vars, collapse = " & "), " do not exist in the caller environment.\n"))
@@ -80,8 +85,9 @@ SaveMultiple <- function(
   }
 
   # Check if files already exist
-  FilesExist <- sapply(
-    X = file.path(OutFolder, paste0(Prefix, Vars, ".RData")), FUN = file.exists) %>%
+  FilesExist <- purrr::map_lgl(
+    .x = file.path(OutFolder, paste0(Prefix, Vars, ".RData")),
+    .f = file.exists) %>%
     any()
 
   if (FilesExist && !Overwrite) {
@@ -91,19 +97,15 @@ SaveMultiple <- function(
     purrr::walk(
       .x = Vars,
       .f = ~{
-        # Val <- get(.x, envir = parent.frame(n = 4))
-        # assign(rlang::eval_tidy(.x), Val)
-        # save(
-        #   list = paste0(.x),
-        #   file = file.path(OutFolder, paste0(Prefix, .x, ".RData")))
-        Val <- get(.x, envir = rlang::caller_env())
-        save(
-          list = .x,
-          file = file.path(OutFolder, paste0(Prefix, .x, ".RData")))
+        IASDT.R::SaveAs(
+          InObj = get(.x, envir = env), OutObj = .x,
+          OutPath = file.path(OutFolder, paste0(Prefix, .x, ".RData")))
       })
 
-    if (all(
-      file.exists(file.path(OutFolder, paste0(Prefix, Vars, ".RData"))))) {
+    AllExist <- all(
+      file.exists(file.path(OutFolder, paste0(Prefix, Vars, ".RData"))))
+
+    if (AllExist) {
       if (Verbose) {
         message(paste0("All files are saved to disk in ", OutFolder, " successfully."))
       }

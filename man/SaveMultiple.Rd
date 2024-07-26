@@ -30,47 +30,50 @@ The function is used for its side effect of saving files and does not return a v
 This function saves specified variables from the global environment to separate \code{.RData} files. It allows for optional file prefixing and overwriting of existing files.
 }
 \examples{
-TMP_Folder <- file.path(tempdir(), stringi::stri_rand_strings(1, 5))
-fs::dir_create(TMP_Folder)
+\dontrun{
+  TMP_Folder <- file.path(tempdir(), stringi::stri_rand_strings(1, 5))
+  fs::dir_create(TMP_Folder)
 
-# ----------------------------------------------
-# Save x1 and x2 to disk
-# ----------------------------------------------
-x1 = 10; x2 = 20
+  # ----------------------------------------------
+  # Save x1 and x2 to disk
+  # ----------------------------------------------
+  x1 = 10; x2 = 20
 
-SaveMultiple(Vars = c("x1", "x2"), OutFolder = TMP_Folder)
+  SaveMultiple(Vars = c("x1", "x2"), OutFolder = TMP_Folder)
 
-list.files(path = TMP_Folder, pattern = "^.+.RData")
+  list.files(path = TMP_Folder, pattern = "^.+.RData")
 
-(x1Contents <- IASDT.R::LoadAs(file.path(TMP_Folder, "x1.RData")))
+  (x1Contents <- IASDT.R::LoadAs(file.path(TMP_Folder, "x1.RData")))
 
-(x2Contents <- IASDT.R::LoadAs(file.path(TMP_Folder, "x2.RData")))
+  (x2Contents <- IASDT.R::LoadAs(file.path(TMP_Folder, "x2.RData")))
 
-# ----------------------------------------------
-# Use Prefix
-# ----------------------------------------------
+  # ----------------------------------------------
+  # Use Prefix
+  # ----------------------------------------------
 
-SaveMultiple(Vars = c("x1", "x2"), OutFolder = TMP_Folder, Prefix = "A_")
+  SaveMultiple(Vars = c("x1", "x2"), OutFolder = TMP_Folder, Prefix = "A_")
 
-list.files(path = TMP_Folder, pattern = "^.+.RData")
+  list.files(path = TMP_Folder, pattern = "^.+.RData")
 
-# ----------------------------------------------
-# File exists, no save
-# ----------------------------------------------
-try(SaveMultiple(Vars = c("x1", "x2"), OutFolder = TMP_Folder))
+  # ----------------------------------------------
+  # File exists, no save
+  # ----------------------------------------------
+  try(SaveMultiple(Vars = c("x1", "x2"), OutFolder = TMP_Folder))
 
-# ----------------------------------------------
-# overwrite existing file
-# ----------------------------------------------
-x1 = 100; x2 = 200; x3 = 300
+  # ----------------------------------------------
+  # overwrite existing file
+  # ----------------------------------------------
+  x1 = 100; x2 = 200; x3 = 300
 
-SaveMultiple(Vars = c("x1", "x2", "x3"), OutFolder = TMP_Folder, Overwrite = TRUE)
+  SaveMultiple(Vars = c("x1", "x2", "x3"),
+     OutFolder = TMP_Folder, Overwrite = TRUE)
 
-(x1Contents <- IASDT.R::LoadAs(file.path(TMP_Folder, "x1.RData")))
+  (x1Contents <- IASDT.R::LoadAs(file.path(TMP_Folder, "x1.RData")))
 
-(x2Contents <- IASDT.R::LoadAs(file.path(TMP_Folder, "x2.RData")))
+  (x2Contents <- IASDT.R::LoadAs(file.path(TMP_Folder, "x2.RData")))
 
-(x3Contents <- IASDT.R::LoadAs(file.path(TMP_Folder, "x3.RData")))
+     (x3Contents <- IASDT.R::LoadAs(file.path(TMP_Folder, "x3.RData")))
+}
 }
 \author{
 Ahmed El-Gabbas

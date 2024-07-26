@@ -11,10 +11,10 @@
 #' @param confidence confidence
 #' @param transform transform
 #' @param autoburnin autoburnin
-#'
+#' @keywords internal
 #' @name gelman.preplot
 #' @source This function is copied from the unexported `coda:::gelman.preplot` function. This function is used internally in the [coda::gelman.plot] function. I make this function available in the package without exporting it. See: https://svn.r-project.org/R-packages/trunk/coda/R/gelman.R
-#' @noMd
+#' @noRd
 
 gelman.preplot <- function(
     x, bin.width = bin.width, max.bins = max.bins,
@@ -27,11 +27,11 @@ gelman.preplot <- function(
 
 
   x <- coda::as.mcmc.list(x)
-  nbin <- min(floor((niter(x) - 50)/thin(x)), max.bins)
+  nbin <- min(floor((niter(x) - 50) / thin(x)), max.bins)
   if (nbin < 1) {
     stop("Insufficient iterations to produce Gelman-Rubin plot")
   }
-  binw <- floor((niter(x) - 50)/nbin)
+  binw <- floor((niter(x) - 50) / nbin)
   last.iter <- c(
     seq(from = stats::start(x) + 50 * thin(x), by = binw * thin(x), length = nbin),
     stats::end(x))

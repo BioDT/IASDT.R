@@ -11,7 +11,7 @@
 #' @return A named character vector where names are the package names and values are the corresponding remote SHAs.
 #' @export
 #' @examples
-#' # Package_RemoteSha(IASDT.R, devtools)
+#' Package_RemoteSha(IASDT.R, devtools)
 
 Package_RemoteSha <- function(...) {
   Pk <- rlang::ensyms(...)  %>%

@@ -10,7 +10,7 @@
 #' @param Verbose logical; if `TRUE`, the function prints messages about the operation's outcome. Defaults to `TRUE`.
 #' @name DirCreate
 #' @author Ahmed El-Gabbas
-#' @return NULL invisibly. The function is used for its side effect (creating a directory or printing a message) rather than any return value.
+#' @return The function is used for its side effect (creating a directory or printing a message) rather than any return value.
 #' @examples
 #' # create a new folder (random name) in the temporary folder
 #' Path2Create <- file.path(tempdir(), stringi::stri_rand_strings(1, 5))
@@ -26,7 +26,7 @@
 
 
 DirCreate <- function(Path, Verbose = TRUE) {
-  
+
   if (is.null(Path)) {
     stop("Path cannot be NULL")
   }
@@ -41,7 +41,7 @@ DirCreate <- function(Path, Verbose = TRUE) {
     dir.create(Path, recursive = TRUE, showWarnings = FALSE)
     if (Verbose) {
       "Path: {crayon::bold(Path2)} created" %>%
-        stringr::str_glue() %>% 
+        stringr::str_glue() %>%
         IASDT.R::CatTime(Date = TRUE)
     }
   }

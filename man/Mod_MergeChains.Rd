@@ -25,7 +25,7 @@ Mod_MergeChains(
 
 \item{FromHPC}{Logical. Indicates whether the function is being run in an HPC environment. This affects how file paths are handled. Defaults to \code{TRUE}.}
 
-\item{EnvFile}{String. The path to the file containing environment variables. Defaults to ".env". This file should contain at least the \code{Path_LUMI_Scratch} variable when running in an HPC environment.}
+\item{EnvFile}{String. The path to the file containing environment variables. Defaults to \code{.env}. This file should contain at least the \code{Path_LUMI_Scratch} variable when running in an HPC environment.}
 
 \item{FromJSON}{Logical. Indicates whether to convert loaded models from JSON format before reading. Defaults to \code{FALSE}.}
 }
@@ -33,7 +33,7 @@ Mod_MergeChains(
 The function does not return anything but saves the processed model information to disk.
 }
 \description{
-This function performs post-processing of HMSC model outputs. It merges model chains, checks for missing or incomplete model runs, and optionally prints information about incomplete models. It can work with models run on High-Performance Computing (HPC) environments and supports parallel processing.
+This function performs post-processing of HMSC model outputs. It merges model chains, checks for missing or incomplete model runs, and optionally prints information about incomplete models. It can work with models run on HPC environments and supports parallel processing.
 }
 \author{
 Ahmed El-Gabbas

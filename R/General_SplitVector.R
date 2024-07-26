@@ -19,11 +19,6 @@
 #'
 #' SplitVector(Vector = 1:100, NSplit = 2, Prefix = "T")
 #'
-#' # -------------------------------------------
-#'
-#' \dontrun{
-#' SplitVector(Vector = 1:100)
-#' }
 #' @export
 
 SplitVector <- function(Vector = NULL, NSplit = NULL, Prefix = "Chunk") {

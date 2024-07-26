@@ -7,7 +7,7 @@
 #' This function executes a system command, using either `shell` on Windows or `system` on Linux. It allows the output of the command to be captured into an R object.
 #'
 #' @param command A string representing the bash command to be executed.
-#' @param RObj A logical indicating whether to capture the output of the command as an R object. If `TRUE`, the output is captured; if `FALSE`, the output is printed to the console. Defaults to `TRUE`.
+#' @param RObj A logical indicating whether to capture the output of the command as an R object. If `TRUE` (Default), the output is captured; if `FALSE`, the output is printed to the console.
 #' @param ... Additional arguments passed to either `shell` or `system` function, depending on the operating system.
 #' @name System
 #' @author Ahmed El-Gabbas

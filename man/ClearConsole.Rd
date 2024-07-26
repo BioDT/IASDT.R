@@ -16,7 +16,5 @@ function clears the console in RStudio by sending a form feed character. If not 
 This function checks if it is being run in RStudio by examining the \code{RSTUDIO} environment variable. If the function is not run in RStudio, it will not clear the console and instead print a message.
 }
 \examples{
-\dontrun{
 ClearConsole()
-}
 }

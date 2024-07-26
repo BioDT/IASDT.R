@@ -4,14 +4,15 @@
 
 #' Prepare cross-validation data for spatial analysis
 #'
-#' This function prepares cross-validation data by dividing the input dataset into spatial blocks. It is designed to work with spatial data, specifically for scenarios where spatial autocorrelation might influence the cross-validation process.
+#' This function prepares cross-validation data by dividing the input dataset into spatial blocks. The function uses [blockCV::cv_spatial] function to assign grid cells to cross-validation folds. It is designed to work with spatial data, specifically for scenarios where spatial autocorrelation might influence the cross-validation process.
+#' The function may need some improvement to implement more than cross-validation strategy.
 #'
 #' @param DT A data frame or tibble containing the input dataset with at least two columns for x and y coordinates.
 #' @param NR,NC Integer, the number of rows and columns to divide the spatial area into. Defaults to 4 row and 3 columns.
 #' @param Path_Grid String, the file path to the reference grid used for rasterizing the input data.
 #' @name GetCV
 #' @author Ahmed El-Gabbas
-#' @return The function returns a modified version of the input dataset (DT) with an additional column indicating the cross-validation fold each record belongs to. This allows for spatially-aware cross-validation processes.
+#' @return The function returns a modified version of the input dataset `DT` with an additional column indicating the cross-validation fold each record belongs to. This allows for spatially-aware cross-validation processes.
 #' @export
 
 GetCV <- function(DT, NR = 4, NC = 3, Path_Grid) {

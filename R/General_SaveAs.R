@@ -8,23 +8,23 @@
 #'
 #' @param InObj The input object to be saved. This can be an actual R object or a character string representing the name of an object.
 #' @param OutObj A character string specifying the new name for the saved object. This name is used when the object is loaded back into R.
-#' @param OutPath A character string specifying the file path (*.RData) where the object should be saved. This includes the directory and the file name.
+#' @param OutPath A character string specifying the file path (`*.RData`) where the object should be saved. This includes the directory and the file name.
 #' @name SaveAs
 #' @author Ahmed El-Gabbas
-#' @return NULL The function does not return a value but saves an object to the specified file path.
+#' @return The function does not return a value but saves an object to the specified file path.
 #' @export
 #' @examples
 #' TMP_Folder <- file.path(tempdir(), stringi::stri_rand_strings(1, 5))
 #' fs::dir_create(TMP_Folder)
 #' list.files(TMP_Folder)
-
+#'
 #' # save iris data in `iris2.RData` with `iris2` object name
 #' SaveAs(iris, "iris2", file.path(TMP_Folder, "iris2.RData"))
 #' list.files(TMP_Folder, pattern = "^.+.RData")
 #'
 #' (load(file.path(TMP_Folder, "iris2.RData")))
+#'
 #' tibble::tibble(iris2)
-
 
 SaveAs <- function(InObj, OutObj, OutPath) {
 

@@ -4,14 +4,11 @@
 
 #' Sort alphanumeric strings with enhanced options
 #'
-#' This function extends the sorting capabilities for alphanumeric strings by allowing
-#' for sorting of mixed numeric and character strings, with additional control over
-#' sorting direction, treatment of `NA` and blank values, and handling of numeric values
-#' represented as either decimal numbers or Roman numerals. This function is just a wrapper function for the [gtools::mixedsort] function.
+#' This function extends the sorting capabilities for alphanumeric strings by allowing for sorting of mixed numeric and character strings, with additional control over sorting direction, treatment of `NA` and blank values, and handling of numeric values represented as either decimal numbers or Roman numerals. This function is a wrapper function for the [gtools::mixedsort] function.
 #'
 #' @inheritParams gtools::mixedsort
 #' @name sort_
-#' @return NULL
+#' @return A vector of sorted alphanumeric strings.
 #' @examples
 #' # example code
 #' (AA <- paste0("V", 1:12))
@@ -44,7 +41,6 @@ sort_ <- function(
 
   gtools::mixedsort(
     x = x, decreasing = decreasing, na.last = na.last,
-    blank.last = blank.last,
-    numeric.type = numeric.type,
+    blank.last = blank.last, numeric.type = numeric.type,
     roman.case = roman.case)
 }

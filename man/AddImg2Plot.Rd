@@ -3,6 +3,9 @@
 \name{AddImg2Plot}
 \alias{AddImg2Plot}
 \title{Add an image to an existing plot in R}
+\source{
+The source code of this function was taken from this  \href{https://stackoverflow.com/questions/27800307/}{stackoverflow} question.
+}
 \usage{
 AddImg2Plot(obj, x, y, width, interpolate = TRUE)
 }
@@ -36,7 +39,4 @@ image(volcano)
 AddImg2Plot(pic, x = 0.3, y = 0.5, width = 0.2)
 AddImg2Plot(pic, x = 0.7, y = 0.7, width = 0.2)
 AddImg2Plot(pic, x = 0.7, y = 0.2, width = 0.1)
-}
-\references{
-\href{https://stackoverflow.com/questions/27800307/}{Click here}
 }

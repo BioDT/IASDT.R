@@ -10,8 +10,7 @@
 #' @param SessionObj An optional list of objects to include in the session information output. This is typically the result of a session management function like [IASDT.R::SaveSession]. If provided, details of these objects (excluding functions and pre-selected objects, with sizes in megabytes) are appended to the session information file.
 #' @param Prefix A string to be used as a prefix for the output file name. The default prefix is `S`.
 #' @author Ahmed El-Gabbas
-#' @return NULL
-#' @return Invisibly returns `NULL`. The primary effect of this function is the side effect of writing  session information to a file.
+#' @return The primary effect of this function is the side effect of writing  session information to a file.
 #' @export
 #' @name SaveSessionInfo
 

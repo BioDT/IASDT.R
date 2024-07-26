@@ -11,7 +11,7 @@
 #' @param CharReps integer; the number of times the character is repeated to form a separator line. Default is `50`.
 #' @name CatSep
 #' @author Ahmed El-Gabbas
-#' @return NULL; The function is called for its side effect (printing to the console) and does not return a meaningful value.
+#' @return The function is called for its side effect (printing to the console) and does not return a meaningful value.
 #' @examples
 #' CatSep()
 #'
@@ -25,11 +25,11 @@
 #' @export
 
 CatSep <- function(Rep = 1, Extra1 = 0, Extra2 = 0, Char = "-", CharReps = 50) {
-  
+
   if (Extra1 > 0) {
     replicate(n = Extra1, expr = cat("\n"))
   }
-  
+
   S <- paste0(rep(Char, CharReps), collapse = "")
   replicate(n = Rep, expr = cat(S, sep = "\n"))
 

@@ -256,7 +256,7 @@ PlotConvergence <- function(
   PlotsPerFile <- 20 * NRC[1] * NRC[2]
   split_Omega <- OmegaTracePlots %>%
     length() %>%
-    seq_len() %>%
+    seq_len(length.out = .) %>%
     tibble::tibble(Index = .) %>%
     dplyr::mutate(group = ceiling(dplyr::row_number() / PlotsPerFile)) %>%
     dplyr::group_split(group) %>%

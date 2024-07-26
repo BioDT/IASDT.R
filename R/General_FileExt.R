@@ -9,13 +9,20 @@
 #' @author Ahmed El-Gabbas
 #' @return A character string representing the file extension of the given file path. If the path does not have an extension, an empty string is returned.
 #' @param Path A character string representing the file path from which the file extension is to be extracted. It must not be `NULL` and has to be a character string.
+#' @seealso [IASDT.R::FileType()]
 #' @examples
 #' FileExt(Path = "File.doc")
+#'
 #' FileExt(Path = "D:/File.doc")
+#'
 #' FileExt(Path = "File.1.doc")
+#'
 #' FileExt(Path = "D:/Files.All")
+#'
 #' FileExt(Path = "D:/Files.All/")
+#'
 #' FileExt("example.txt") # Returns "txt"
+#'
 #' FileExt("archive.tar.gz") # Returns "gz"
 #' @export
 

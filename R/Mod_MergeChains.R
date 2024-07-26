@@ -4,14 +4,14 @@
 
 #' Post-processing of model outputs
 #'
-#' This function performs post-processing of HMSC model outputs. It merges model chains, checks for missing or incomplete model runs, and optionally prints information about incomplete models. It can work with models run on High-Performance Computing (HPC) environments and supports parallel processing.
+#' This function performs post-processing of HMSC model outputs. It merges model chains, checks for missing or incomplete model runs, and optionally prints information about incomplete models. It can work with models run on HPC environments and supports parallel processing.
 
 #' @param Path_Model String. Path to the directory where model outputs are stored. This should include the path to the fitted models but should not have a trailing slash.
 #' @param NCores Integer. The number of cores to use for parallel processing. This should be a positive integer.
 #' @param ModInfoName String. The name of the file (without extension) where the processed model information will be saved. If `NULL`, it overwrites the `Model_Info.RData` file in the `Path_Model` directory. If provided, a new `.RData` file will be created with this name.
 #' @param PrintIncomplete Logical. Indicates whether to print the names of models that were not successfully fitted to the console. Defaults to `TRUE`.
 #' @param FromHPC Logical. Indicates whether the function is being run in an HPC environment. This affects how file paths are handled. Defaults to `TRUE`.
-#' @param EnvFile String. The path to the file containing environment variables. Defaults to ".env". This file should contain at least the `Path_LUMI_Scratch` variable when running in an HPC environment.
+#' @param EnvFile String. The path to the file containing environment variables. Defaults to `.env`. This file should contain at least the `Path_LUMI_Scratch` variable when running in an HPC environment.
 #' @param FromJSON Logical. Indicates whether to convert loaded models from JSON format before reading. Defaults to `FALSE`.
 #' @name Mod_MergeChains
 #' @author Ahmed El-Gabbas

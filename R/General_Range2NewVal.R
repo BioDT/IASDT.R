@@ -2,9 +2,9 @@
 # Range2NewVal ----
 ## |------------------------------------------------------------------------| #
 #
-#' Changes values within a specified range or larger than or equals to / less than or equals to specific value to a new value in a vector, data.frame, or raster.
+#' Changes values within a specified range, `≥`, or `≤`  specific value to a new value in a vector, data.frame, or raster.
 #'
-#' This function modifies values in the input object `x` based on the specified conditions. It can operate on vectors, data.frames, or RasterLayer objects. The function allows for changing values within a specified range (`Between`), greater than or equals to a specified value (`MoreThan`), or less than or equals to a specified value (`LessThan`) to a new value (`NewVal`). An option to invert the selection is also available for ranges.
+#' This function modifies values in the input object `x` based on the specified conditions. It can operate on vectors, data.frames, or RasterLayer objects. The function allows for changing values within a specified range (`Between`), `≥` a specified value (`MoreThan`), or `≤` a specified value (`LessThan`) to a new value (`NewVal`). An option to invert the selection is also available for ranges.
 #'
 #' @name Range2NewVal
 #' @author Ahmed El-Gabbas
@@ -47,17 +47,22 @@
 #'
 #' library(raster)
 #'
-#' RRR <- system.file("external/test.grd", package = "raster") %>%
-#'     raster::raster()
+#' RRR <- raster::raster(system.file("external/test.grd", package = "raster"))
 #'
 #' RRR2 <- Range2NewVal(x = RRR, LessThan = 500, NewVal = NA)
 #' RRR3 <- Range2NewVal(x = RRR, MoreThan = 500, NewVal = NA)
 #' par(mar = c(0.5, 0.5, 3, 3))
-#' plot(raster::stack(RRR, RRR2, RRR3), nr = 1, main = c("Original", "<500 to NA", ">500 to NA"))
+#' plot(
+#'    raster::stack(RRR, RRR2, RRR3), nr = 1,
+#'    main = c("Original", "<500 to NA", ">500 to NA"))
 #'
-#' RRR2 <- Range2NewVal(x = RRR, Between = c(1000, 1800), NewVal = 1800, InvertSelection = FALSE)
-#' RRR3 <- Range2NewVal(x = RRR, Between = c(1000, 1800), NewVal = 1800, InvertSelection = TRUE)
-#' plot(stack(RRR>=1000, RRR2, RRR3), nr = 1, main = c(">1000 ?", "<500 to NA", ">500 to NA"))
+#' RRR2 <- Range2NewVal(
+#'    x = RRR, Between = c(1000, 1800), NewVal = 1800, InvertSelection = FALSE)
+#' RRR3 <- Range2NewVal(
+#'    x = RRR, Between = c(1000, 1800), NewVal = 1800, InvertSelection = TRUE)
+#' plot(
+#'    raster::stack(RRR>=1000, RRR2, RRR3), nr = 1,
+#'    main = c(">1000 ?", "<500 to NA", ">500 to NA"))
 
 Range2NewVal <- function(
     x, Between = NULL, MoreThan = NULL, LessThan = NULL,
@@ -75,10 +80,6 @@ Range2NewVal <- function(
 
     if (length(Between) != 2) {
       stop("Between should have exactly two values: a minimum and a maximum.")
-    }
-
-    if (any(is.null(MoreThan), is.null(LessThan))) {
-      message("Values of MoreThan and LessThan are ignored if Between argument is used")
     }
 
     Min <- Between[1]

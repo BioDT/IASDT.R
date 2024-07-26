@@ -3,6 +3,9 @@
 \name{ScrapLinks}
 \alias{ScrapLinks}
 \title{Extracts link texts and URLs from a web page}
+\source{
+The source code of this function was taken from this \href{https://gist.github.com/paulrougieux/e1ee769577b40cd9ed9db7f75e9a2cc2}{gist}.
+}
 \usage{
 ScrapLinks(url)
 }
@@ -13,11 +16,8 @@ ScrapLinks(url)
 A tibble with two columns: \code{link_text} containing the text of each link, and \code{url} containing  the absolute URL of each link. The tibble is sorted by URL and then by link text, and only unique links are included.
 }
 \description{
-This function scrapes a web page for all links (\if{html}{\out{<a>}} tags) and extracts both the URLs and the link text. It returns a tibble with two columns: one for the link text and one for the URLs. The URLs are made absolute using the base URL provided. The function also ensures that the URLs are unique and sorted.
+This function scrapes a web page for all links (\verb{<a>} tags) and extracts both the URLs and the link text.
 }
 \examples{
 ScrapLinks("https://github.com/")
-}
-\references{
-\href{https://gist.github.com/paulrougieux/e1ee769577b40cd9ed9db7f75e9a2cc2}{Read more}
 }

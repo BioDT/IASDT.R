@@ -9,8 +9,8 @@
 #' @param Path_Model String. Path to the model files directory. Must not end with a slash.
 #' @param MaxJobCounts Integer. Maximum number of batch jobs that can be submitted in a single SLURM file.
 #' @param JobName String (optional). Name of the SLURM jobs. If not provided, a default name based on the model path is used.
-#' @param MemPerCpu String. Memory per CPU allocation for the SLURM job. Example: "32G" for 32 gigabytes.
-#' @param Time String. Duration for which the job should run. Example: "01:00:00" for one hour.
+#' @param MemPerCpu String. Memory per CPU allocation for the SLURM job. Example: `32G` for 32 gigabytes.
+#' @param Time String. Duration for which the job should run. Example: `01:00:00` for one hour.
 #' @param Partition String. The SLURM partition to submit the job to. Default is "small-g".
 #' @param EnvFile String. Path to the environment variables file. Defaults to `.env`.
 #' @param CatJobInfo Logical. Whether to include commands in the SLURM script to print job information. Defaults to TRUE.

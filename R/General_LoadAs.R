@@ -2,13 +2,13 @@
 # LoadAs ----
 ## |------------------------------------------------------------------------| #
 #
-#' Load RData file, ignoring original object name
+#' Load RData file and return its contents as a list or a single object
 #'
-#' Load RData file, ignoring original object name
+#' This function loads an `RData` file specified by the `File` parameter. If the `RData` file contains a single object, that object is returned directly. If the file contains multiple objects, they are returned as a list with each object accessible by its name. This allows for flexible handling of loaded data without needing to know the names of the objects stored within the RData file ahead of time.
 #'
-#' @param File character; path of `.RData` file
+#' @param File character; the file path of the `.RData` file to be loaded.
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return Depending on the contents of the `RData` file, this function returns either a single R object or a named list of R objects. The names of the list elements (if a list is returned) correspond to the names of the objects stored within the RData file.
 #' @export
 #' @name LoadAs
 #' @examples

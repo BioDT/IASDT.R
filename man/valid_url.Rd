@@ -3,6 +3,9 @@
 \name{Valid_URL}
 \alias{Valid_URL}
 \title{Check the validity of a URL}
+\source{
+The source code of this function was taken from this \href{https://stackoverflow.com/questions/52911812/check-if-url-exists-in-r}{stackoverflow} discussion.
+}
 \usage{
 Valid_URL(url_in, t = 2)
 }
@@ -22,7 +25,4 @@ urls <- c(
      "http://www.amazon.com", "http://this.isafakelink.biz",
      "https://stackoverflow.com", "https://stack-overflow.com")
 sapply(urls, Valid_URL)
-}
-\references{
-\href{https://stackoverflow.com/questions/52911812/check-if-url-exists-in-r}{Click here}
 }

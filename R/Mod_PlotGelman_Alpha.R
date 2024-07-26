@@ -43,7 +43,7 @@ PlotGelman_Alpha <- function(CodaObj, NCores, PlottingAlpha = 0.25) {
     sort()
 
   invisible(snow::clusterEvalQ(
-    cl = c1, IASDT.R::RequireMultiple(dplyr, coda, tibble, magrittr)))
+    cl = c1, IASDT.R::LoadPackages(dplyr, coda, tibble, magrittr)))
 
   snow::clusterExport(cl = c1, list = "CodaObj", envir = environment())
 
@@ -54,7 +54,7 @@ PlotGelman_Alpha <- function(CodaObj, NCores, PlottingAlpha = 0.25) {
         Y[, x, drop = TRUE]
       }) %>%
         coda::mcmc.list() %>%
-        coda:::gelman.preplot(
+        gelman.preplot(
           bin.width = 10, max.bins = 50, confidence = 0.95,
           transform = FALSE, autoburnin = TRUE) %>%
         magrittr::extract2("shrink") %>%

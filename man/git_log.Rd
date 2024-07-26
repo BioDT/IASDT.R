@@ -7,7 +7,7 @@
 git_log()
 }
 \value{
-Invisible NULL. This function is called for its side effect of printing to the console.
+This function is called for its side effect of printing to the console.
 }
 \description{
 This function executes a \verb{git log} command with specific formatting options to display a detailed and colored log. It shows the commit hash, references (like branches or tags), commit message, relative commit date, and author name in a visually appealing graph format.

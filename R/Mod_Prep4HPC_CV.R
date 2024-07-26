@@ -7,23 +7,23 @@
 #' This function prepares initial cross-validated Hmsc models in R for fitting by Hmsc-HPC. It includes data preparation, model initialization, and command generation for running models on HPC.
 #'
 #' @param Model Either a path to a saved model file (character) or an Hmsc model object. If a path is provided, the model is loaded from the file.
-#' @param CVName Character vector specifying the name of the column(s) in the model input data (see [IASDT.R::Mod_PrepData]) to be used to cross-validate the models. Currently, there is only one column `CV` for spatial cross-validation, created using the [IASDT.R::Mod_PrepData] function. The function allows the possibility of using more than one way of assigning grid cells into cross-validation folders. If multiple names are provided, separate cross-validation models will be fitted for each column.
+#' @param CVName Character vector specifying the name of the column(s) in the model input data (see [IASDT.R::Mod_PrepData] and [IASDT.R::GetCV]) to be used to cross-validate the models. Currently, there is only one column `CV` for spatial cross-validation, created using the [IASDT.R::Mod_PrepData] function. The function allows the possibility of using more than one way of assigning grid cells into cross-validation folders. If multiple names are provided, separate cross-validation models will be fitted for each column.
 #' @param partition A vector for cross-validation created by [Hmsc::createPartition] or similar. Defaults to `NULL`, which means to use column name(s) provided in the `CVName` argument. If the `partition` vector is provided, the label used in the output files will be `CV_Custom`.
-#' @param Path_CV The directory path where cross-validation models and outputs will be stored. It will be estimated from the model path, If `Model` argument is a character vector. If `Model` is an Hmsc model object, it has to be provided by the user, otherwise the function will give an error.
-#' @param EnvFile String specifying the path to read environment variables from, with a default value of ".env".
+#' @param Path_CV The directory path where cross-validation models and outputs will be stored. If `Model` argument is a character vector, it will be estimated from the model path. If `Model` is an Hmsc model object, it has to be provided by the user, otherwise the function will give an error.
+#' @param EnvFile String specifying the path to read environment variables from, with a default value of `.env`.
 #' @param initPar a named list of parameter values used for initialization of MCMC states. See [Hmsc::computePredictedValues] for more information.
 #' @param JobName String specifying the name of the submitted job(s) for SLURM. Default: `CV_Models`.
 #' @param updater a named list, specifying which conditional updaters should be omitted.  See [Hmsc::computePredictedValues] for more information. Defaults to `list(Gamma2 = FALSE, GammaEta = FALSE)` to disable the following warnings: `setting updater$Gamma2=FALSE due to specified phylogeny matrix` and `setting updater$GammaEta=FALSE: not implemented for spatial methods 'GPP' and 'NNGP'`
 #'
-#' @param alignPost boolean flag indicating whether the posterior of each chains should be aligned. See [Hmsc::computePredictedValues] for more information.
+#' @param alignPost boolean flag indicating whether the posterior of each chains should be aligned. See [Hmsc::computePredictedValues] for more information. Default: `TRUE`.
 #' @param ToJSON Logical indicating whether to convert unfitted models to JSON before saving to RDS file. Default: `FALSE`.
 #' @param FromHPC Logical indicating whether the work is being done from HPC, to adjust file paths accordingly. Default: `TRUE`.
-#' @param MemPerCpu String specifying the memory per CPU for the SLURM job. This value will be assigned to the `#SBATCH --mem-per-cpu=` SLURM argument. Example: "32G" to request 32 gigabyte. Only effective if `PrepSLURM = TRUE`.
-#' @param Time String specifying the requested time for each job in the SLURM bash arrays. Example: "01:00:00" to request an hour. Only effective if `PrepSLURM = TRUE`.
+#' @param MemPerCpu String specifying the memory per CPU for the SLURM job. This value will be assigned to the `#SBATCH --mem-per-cpu=` SLURM argument. Example: `32G` to request 32 gigabyte. Only effective if `PrepSLURM = TRUE`.
+#' @param Time String specifying the requested time for each job in the SLURM bash arrays. Example: `01:00:00` to request an hour. Only effective if `PrepSLURM = TRUE`.
 #' @param Path_Hmsc String specifying the path for the Hmsc-HPC. This will be provided as the `Path_Hmsc` argument of the [IASDT.R::Mod_SLURM] function.
 #' @param ... Additional arguments passed to the [IASDT.R::Mod_SLURM] function.
-#' @param CheckPyPath Logical, whether to check the existence of the Path_Python directory extracted from reading `EnvFile` content.
-#' @details The function copies part of the [Hmsc::computePredictedValues] function. The current version of the [Hmsc::computePredictedValues] does not support performing cross-validation using Hmsc-HPC. Although it is possible to [make some changes](https://github.com/aniskhan25/hmsc-hpc/issues/14) to the [Hmsc::computePredictedValues] to make it possible to use Hmsc-HPC, this does not help as our intention is to use the Hmsc-HPC using GPU.
+#' @param CheckPyPath Logical, whether to check the existence of the `Path_Python` directory extracted from reading `EnvFile` content. Default: `TRUE`.
+#' @details The function copies part of the [Hmsc::computePredictedValues] function, which currently does not support performing cross-validation using Hmsc-HPC. Although it is possible to [make some changes](https://github.com/aniskhan25/hmsc-hpc/issues/14) to the [Hmsc::computePredictedValues] to make it possible to use Hmsc-HPC, this does not help as our intention is to use the Hmsc-HPC using GPU.
 #' @author Ahmed El-Gabbas
 #' @export
 #' @name Mod_SLURM_CV
@@ -328,7 +328,7 @@ Mod_SLURM_CV <- function(
   close(f)
 
   # Prepare SLURM file to submit ALL commands to HPC
-  Hmsc::Mod_SLURM(
+  IASDT.R::Mod_SLURM(
     Path_Model = Path_CV, JobName = JobName, MemPerCpu = MemPerCpu,
     Time = Time, EnvFile = EnvFile, FromHPC = FromHPC, Path_Hmsc = Path_Hmsc,
     Path_SLURM_Out = Path_CV, ...)

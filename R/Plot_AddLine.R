@@ -7,7 +7,7 @@
 #' Add a line to the current plot
 #'
 #' @name AddLine
-#' @references [Click here](https://stackoverflow.com/questions/27800307/)
+#' @source The source code of this function was taken from this  [stackoverflow](https://stackoverflow.com/questions/27800307/) question.
 #' @export
 #' @param at Numeric; the relative location of where the line should be plotted. Cannot be `NULL`.
 #' @param Outer Logical; if `TRUE`, the line is plotted outside of the plotting area. Default is `FALSE`.

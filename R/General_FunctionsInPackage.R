@@ -11,9 +11,9 @@
 #' @name FunctionsInPackage
 #' @export
 #' @examples
-#' FunctionsInPackage(Package = "raster")
+#' str(FunctionsInPackage(Package = "raster"))
 #'
-#' FunctionsInPackage(Package = "ggplot2")
+#' str(FunctionsInPackage(Package = "sf"))
 
 FunctionsInPackage <- function(Package) {
   if (is.null(Package)) {

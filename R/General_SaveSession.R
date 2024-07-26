@@ -2,13 +2,13 @@
 # SaveSession ----
 ## |------------------------------------------------------------------------| #
 #
-#' Saves all non-function objects from the global environment to an RData file.
+#' Saves all non-function objects from the global environment to an RData file
 #'
-#' This function saves all objects (except functions and specified exclusions) from the global environment as list items in an RData file. It also creates a summary of these objects' sizes in memory.
+#' This function saves all objects (except functions and specified exclusions) from the global environment as list items in an `RData` file. It also creates a summary of these objects' sizes in memory.
 #'
-#' @param Path A string specifying the directory path where the output RData file should be saved. Defaults to the current working directory.
+#' @param Path A string specifying the directory path where the output `RData` file should be saved. Defaults to the current working directory [base::getwd()].
 #' @param ExcludeObj A vector of object names (as strings) to exclude from saving.
-#' @param Prefix A string to prefix the saved file name with. Defaults to "S".
+#' @param Prefix A string to prefix the saved file name with. Defaults to `S`.
 #' @author Ahmed El-Gabbas
 #' @return A tibble containing the names and sizes (in MB, rounded to 1 decimal place) of the saved objects.
 #' @export

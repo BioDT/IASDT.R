@@ -7,18 +7,16 @@
 CheckRStudioVersion()
 }
 \value{
-An invisible NULL. Side effects include printing messages to the console regarding the status of RStudio version.
+Side effects include printing messages to the console regarding the status of RStudio version.
 }
 \description{
 This function checks the current installed version of RStudio against the latest version available online. If the versions do not match, it suggests updating RStudio.
 }
 \note{
-This function requires internet access to check the latest version of RStudio online. It also depends on \code{rstudioapi}, \code{xml2}, \code{rvest}, \code{stringr}, and \code{magrittr} packages for its operations. If called outside of RStudio, it will only fetch and display the latest version without comparing.
+This function requires internet access to check the latest version of RStudio online. If called outside of RStudio, it will only fetch and display the latest version without comparing.
 }
 \examples{
-\dontrun{
-CheckRStudioVersion()
-}
+try(CheckRStudioVersion())
 }
 \author{
 Ahmed El-Gabbas

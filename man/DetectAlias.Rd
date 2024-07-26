@@ -18,22 +18,27 @@ Returns a character vector of aliased variable names if any are found; otherwise
 This function identifies aliased (linearly dependent) variables in a linear model by adding a constant column to the data frame, fitting a linear model, and then using the alias function to detect aliased variables.
 }
 \examples{
-if (require("car")) {
-  x1 <- rnorm(100)
-  x2 <- 2 * x1
-  x3 <- rnorm(100)
-  y <- rnorm(100)
+library("car", warn.conflicts = FALSE, quietly = TRUE, verbose = FALSE)
+x1 <- rnorm(100)
+x2 <- 2 * x1
+x3 <- rnorm(100)
+y <- rnorm(100)
 
-  model <- lm(y ~ x1 + x2 + x3)
-  summary(model)
+model <- lm(y ~ x1 + x2 + x3)
+summary(model)
 
-  try(vif(model))
-  DetectAlias(DT = cbind.data.frame(x1, x2, x3))
-  DetectAlias(DT = cbind.data.frame(x1, x2, x3), Verbose = TRUE)
+# there are aliased coefficients in the model
+try(car::vif(model))
 
-  # excluding x2
-  model <- lm(y ~ x1 + x3)
-  summary(model)
-  try(vif(model))
-}
+# The function identifies the aliased variables
+DetectAlias(DT = cbind.data.frame(x1, x2, x3))
+
+DetectAlias(DT = cbind.data.frame(x1, x2, x3), Verbose = TRUE)
+
+# excluding x2 and refit the model
+model <- lm(y ~ x1 + x3)
+
+summary(model)
+
+try(car::vif(model))
 }

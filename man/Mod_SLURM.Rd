@@ -35,9 +35,9 @@ Mod_SLURM(
 
 \item{GpusPerNode}{Integer. The value for the \verb{#SBATCH --gpus-per-node=} SLURM argument. Default: 1.}
 
-\item{MemPerCpu}{String. The value for the \verb{#SBATCH --mem-per-cpu=} SLURM argument. Example: "32G" to request 32 gigabytes.}
+\item{MemPerCpu}{String. The value for the \verb{#SBATCH --mem-per-cpu=} SLURM argument. Example: \verb{32G} to request 32 gigabytes.}
 
-\item{Time}{String. The value for the requested time for each job in the bash arrays. Example: "01:00:00" to request an hour.}
+\item{Time}{String. The value for the requested time for each job in the bash arrays. Example: \code{01:00:00} to request an hour.}
 
 \item{Partition}{String. The name of the partition. Default: \code{small-g}.}
 

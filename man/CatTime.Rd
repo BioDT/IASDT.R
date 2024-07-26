@@ -13,21 +13,23 @@ CatTime(Text = "", NLines = 1, Date = FALSE, TZ = "CET", ...)
 
 \item{Date}{logical; whether to include the date in the timestamp. Default is \code{FALSE}, meaning only the time is printed.}
 
-\item{TZ}{character; the time zone to use for the timestamp. Default is "CET".}
+\item{TZ}{character; the time zone to use for the timestamp. Default is \code{CET}.}
 
 \item{...}{additional arguments passed to \code{cat}.}
 }
 \value{
-NULL; the function is called for its side effect of printing to the console.
+The function is called for its side effect of printing to the console.
 }
 \description{
 This function prints a given text followed by the current time (and optionally the date) to the console. It allows for customization of the time zone, the inclusion of the date, and the number of newline characters to print after the message.
 }
 \examples{
 CatTime()
+
 CatTime(Date = TRUE)
 
 CatTime("Time now")
+
 CatTime("Time now", Date = TRUE)
 }
 \author{

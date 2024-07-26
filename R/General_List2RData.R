@@ -2,17 +2,17 @@
 # List2RData ----
 ## |------------------------------------------------------------------------| #
 
-#' Split list items into separate RData files
+#' Split list items into separate `.RData` files
 #'
-#' This function takes a named list and saves each element of the list as a separate RData file. The names of the list elements are used as the base for the filenames, optionally prefixed. Files are saved in the specified directory, with an option to overwrite existing files.
+#' This function takes a named list and saves each element of the list as a separate `.RData` file. The names of the list elements are used as the base for the filenames, optionally prefixed. Files are saved in the specified directory, with an option to overwrite existing files.
 #'
-#' @param List A named list object to be split into separate RData files.
+#' @param List A named list object to be split into separate `.RData` files.
 #' @param Prefix A character string to prefix to each filename. If empty (default), no prefix is added.
-#' @param Dir The directory where the RData files will be saved. Defaults to the current working directory.
+#' @param Dir The directory where the `.RData` files will be saved. Defaults to the current working directory.
 #' @param Overwrite A logical indicating whether to overwrite existing files.  Defaults to `FALSE`, in which case files that already exist will not be overwritten, and a message will be printed for each such file.
 #' @name List2RData
 #' @author Ahmed El-Gabbas
-#' @return Invisible NULL. The function is called for its side effect of saving files and does not return a value.
+#' @return The function is called for its side effect of saving files and does not return a value.
 #' @export
 #' @examples
 #' # split iris data by species name

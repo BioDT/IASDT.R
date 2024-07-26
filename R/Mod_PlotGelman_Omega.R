@@ -59,7 +59,7 @@ PlotGelman_Omega <- function(
         Y[, x, drop = TRUE]
       }) %>%
         coda::mcmc.list() %>%
-        coda:::gelman.preplot(
+        gelman.preplot(
           bin.width = 10, max.bins = 50, confidence = 0.95,
           transform = FALSE, autoburnin = TRUE) %>%
         magrittr::extract2("shrink") %>%

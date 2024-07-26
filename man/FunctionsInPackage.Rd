@@ -16,9 +16,9 @@ A character vector containing the names of all functions in the specified packag
 This function returns a character vector listing all the functions available in the specified R package. It first checks if the package is installed and can be loaded; if not, it raises an error.
 }
 \examples{
-FunctionsInPackage(Package = "raster")
+str(FunctionsInPackage(Package = "raster"))
 
-FunctionsInPackage(Package = "ggplot2")
+str(FunctionsInPackage(Package = "sf"))
 }
 \author{
 Ahmed El-Gabbas

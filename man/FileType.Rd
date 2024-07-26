@@ -2,7 +2,7 @@
 % Please edit documentation in R/General_FileType.R
 \name{FileType}
 \alias{FileType}
-\title{Determines the file type of a given file path}
+\title{Determine the file type of a given file path}
 \usage{
 FileType(Path)
 }
@@ -20,5 +20,6 @@ This function relies on the system's \code{file} command and therefore might pro
 }
 \examples{
 (f <- system.file("ex/elev.tif", package="terra"))
+
 FileType(Path = f)
 }

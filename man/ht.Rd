@@ -12,7 +12,7 @@ ht(DF, NRows = 5)
 \item{NRows}{Integer specifying the number of rows to print from both the head and tail of the data frame. Defaults to 5.}
 }
 \value{
-NULL. The function is used for its side effect (printing) and does not return any value.
+The function is used for its side effect (printing) and does not return any value.
 }
 \description{
 This function takes a data frame and an optional number of rows to print from both the top (head) and bottom (tail) of the data frame. It is useful for quickly inspecting the first few and last few rows of a large data frame to understand its structure and contents.

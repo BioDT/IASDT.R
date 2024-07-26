@@ -4,13 +4,13 @@
 
 #' Prepare habitat-specific data for Hmsc models
 #'
-#' This function prepares habitat-specific data for Hmsc models by processing environmental and species presence data. It checks input arguments, reads environment variables from a file, verifies paths, loads and filters species data based on habitat type and minimum presence grid cells, and merges various environmental layers (e.g., CHELSA bioclimatic variables, habitat coverage, road and railway intensity, sampling intensity) into a single dataset. The processed data can be saved to disk and/or returned as an R object.
+#' This function prepares habitat-specific data for Hmsc models by processing environmental and species presence data. It checks input arguments, reads environment variables from a file, verifies paths, loads and filters species data based on habitat type and minimum presence grid cells per species, and merges various environmental layers (e.g., CHELSA bioclimatic variables, habitat coverage, road and railway intensity, sampling intensity) into a single dataset. The processed data can be saved to disk and/or returned as an R object.
 #'
-#' @param Hab_Abb Character. Habitat abbreviation indicating the specific SynHab habitat type to prepare data for. Valid values: c("0", "1", "2", "3", "4a", "4b", "5", "6", "8", "10", "12a", "12b"). "0" means prepare data irrespective of the habitat type
-#' @param MinPresGrids Integer. Minimum number of presence grid cells required for a species to be included in the analysis. Only species with ≥ this number will be considered. Defaults to 50.
-#' @param EnvFile Character. Path to the environment file containing paths to data sources. Defaults to ".env".
+#' @param Hab_Abb Character. Habitat abbreviation indicating the specific `SynHab` habitat type to prepare data for. Valid values: c("0", "1", "2", "3", "4a", "4b", "5", "6", "8", "10", "12a", "12b"). "0" means prepare data irrespective of the habitat type
+#' @param MinPresGrids Integer. Minimum number of presence grid cells required for a species to be included in the analysis. Defaults to 50.
+#' @param EnvFile Character. Path to the environment file containing paths to data sources. Defaults to `.env`.
 #' @param BioVars Character vector. Specifies the bioclimatic variables to be included from the CHELSA dataset. Defaults to a selection of variables: "bio4", "bio6", "bio8", "bio12", "bio15", and "bio18".
-#' @param ReturnData Logical. Indicates whether the processed data should be returned as an R object. Defaults to `FALSE`, meaning the data will not be returned but saved to disk.
+#' @param ReturnData Logical. Indicates whether the processed data should be returned as an R object. Defaults to `FALSE`, meaning the data will not be returned but only saved to disk.
 #' @param OutputPath Character. Path where the output file should be saved.
 #' @param VerboseProgress Logical. Indicates whether progress messages should be displayed. Defaults to `FALSE`.
 #' @name Mod_PrepData
@@ -99,7 +99,7 @@ Mod_PrepData <- function(
     purrr::discard(.p = isTRUE) %>%
     names() %>%
     sort()
-  
+
   if (length(MissingPaths) > 0) {
     stop(
       paste0("The following path(s) does not exist.",
@@ -111,7 +111,7 @@ Mod_PrepData <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Checking arguments")
-  
+
   ValidHabAbbs <- c(0:3, "4a", "4b", 5, 6, 8, 10, "12a", "12b")
 
   if (magrittr::not(as.character(Hab_Abb) %in% ValidHabAbbs)) {
@@ -310,7 +310,7 @@ Mod_PrepData <- function(
   MissingCountries <- DT_Country %>%
     dplyr::filter(is.na(Country)) %>%
     dplyr::mutate(
-      Country2 = purrr::map_chr(geometry, ~CountryNames[sf::st_nearest_feature(.x, EU_Bound)])) %>% 
+      Country2 = purrr::map_chr(geometry, ~CountryNames[sf::st_nearest_feature(.x, EU_Bound)])) %>%
    dplyr::select(cell, Country2) %>%
     sf::st_drop_geometry()
 

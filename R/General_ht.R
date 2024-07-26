@@ -8,7 +8,7 @@
 #'
 #' @name ht
 #' @author Ahmed El-Gabbas
-#' @return NULL. The function is used for its side effect (printing) and does not return any value.
+#' @return The function is used for its side effect (printing) and does not return any value.
 #' @param DF A data frame to print. This parameter cannot be NULL.
 #' @param NRows Integer specifying the number of rows to print from both the head and tail of the data frame. Defaults to 5.
 #' @examples
@@ -24,7 +24,7 @@
 #' @export
 
 ht <- function(DF, NRows = 5) {
-  
+
   if (is.null(DF)) {
     stop("DF cannot be NULL")
   }
@@ -32,6 +32,6 @@ ht <- function(DF, NRows = 5) {
   DF %>%
     data.table::data.table() %>%
     print(topn = NRows)
-  
+
   return(invisible(NULL))
 }

@@ -2,23 +2,22 @@
 # IASDT.R R-package
 
 The `IASDT.R` is an R package that aims at supporting the invasive alien
-species (IAS) prototype digital twin, as part of the EU-funded BioDT
-project. These functions help in the the preparation of IAS input data
-and the modelling the distribution of IAS across Europe using joint
-species distribution models. It is planned that the package will allow
-end users to access model outputs (e.g. prediction maps) from within R
-by the end of 2024.
+species (IAS) prototype Digital Twin (`IAS-pDT`), as part of the
+EU-funded [BioDT](https://biodt.eu/) project. These functions help in
+the manipulation of IAS input data and the modelling the distribution of
+IAS across Europe using joint species distribution models. It is planned
+that the package will allow end users to access model outputs
+(e.g. prediction maps) from within R by the end of 2024.
 
-This package is currently hosted at <https://git.ufz.de/biodt/IASDT.R>,
-but will be moved to the [BioDT GitHub
-Organisation](https://github.com/BioDT) soon.
+This package is currently hosted at a private
+[GitLab](https://git.ufz.de/biodt/IASDT.R) repository, but will be moved
+to the [BioDT GitHub Organisation](https://github.com/BioDT) soon.
 
 More information on the BioDT project can be found at this
 [link](https://biodt.eu/) <br/><br/>
 
-For more information on the IASDT prototype Digital Twin, see [Taimur,
-El-Gabbas, et al. (2024)](https://doi.org/10.3897/rio.10.e124579)
-<br/><br/>
+For more information on the IAS-pDT, see [Taimur, El-Gabbas, et
+al. (2024)](https://doi.org/10.3897/rio.10.e124579) <br/><br/>
 
 <center>
 
@@ -36,7 +35,7 @@ width="500" alt="bioDT" />
 
 The `IASDT.R` package is still at the development stage and currently
 stores some helper function needed for the input data processing and
-modelling of the IA. The package is currently private (hosted at:
+modelling of the IAS. The package is currently private (hosted at:
 <https://git.ufz.de/>). This means that only users with access rights to
 the git repository can use the package using a valid private access
 token (PAT) authentication.
@@ -64,7 +63,7 @@ usethis::edit_r_environ()                             # global `.Renviron` file
 ```
 
 This opens the `.Renviron` file. You need to add the following line to
-the file (replace `XXXXXXXXXX` with your valid PAT)
+the file (replace `XXXXXXXXXX` with your valid PAT).
 
 ``` r
 GITLAB_PAT=XXXXXXXXXX
@@ -94,7 +93,8 @@ Alternatively, you can provide the PAT directly to the
 `remotes::install_gitlab` function; however, this is not recommended.
 
 ``` r
-remotes::install_gitlab(repo = "BioDT/IASDT.R", host = "git.ufz.de", auth_token = "XXXXXXXXXX")
+remotes::install_gitlab(
+    repo = "BioDT/IASDT.R", host = "git.ufz.de", auth_token = "XXXXXXXXXX")
 ```
 
 ### Update the package
@@ -130,6 +130,6 @@ For questions, please contact [me](https://elgabbas.netlify.app/) at:
 `ahmed.el-gabbas[at]ufz[dot]de`
 
 <span style="     color: grey !important;">Last update:
-2024-07-25</span>
+2024-07-26</span>
 
 </center>

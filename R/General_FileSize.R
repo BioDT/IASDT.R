@@ -13,6 +13,7 @@
 #' @export
 #' @examples
 #' (f <- system.file("ex/elev.tif", package="terra"))
+#'
 #' FileSize(File = f)
 
 FileSize <- function(File, ...) {

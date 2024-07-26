@@ -14,7 +14,7 @@ AssignIfNotExist(Variable, Value, Env = globalenv())
 \item{Env}{environment; the environment in which to check for the existence of the variable and potentially assign the value. Defaults to the global environment.}
 }
 \value{
-NULL; The function explicitly returns NULL, but its primary effect is the side-effect of assigning a value to a variable in an environment or printing the current value of an existing variable.
+The function explicitly returns \code{NULL}, but its primary effect is the side-effect of assigning a value to a variable in an environment or printing the current value of an existing variable.
 }
 \description{
 This function checks if a given variable exists in the specified environment (global environment by default). If the variable does not exist, it assigns a given value to it. If the variable already exists, it prints the current value of the variable. The function is designed to prevent overwriting existing variables unintentionally.
@@ -26,7 +26,6 @@ print(x)
 # --------------------------------------------------
 
 y <- 10
-
 # y exists and thus its value was not changed
 AssignIfNotExist(Variable = "y", Value = TRUE)
 print(y)

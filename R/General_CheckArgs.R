@@ -8,11 +8,10 @@
 #'
 #' @name CheckArgs
 #' @author Ahmed El-Gabbas
-#' @return NULL
 #' @param AllArgs String. Vector for the input parameters of the function. Usually as a result of `formals()` function
 #' @param Args character vector. Names of the arguments to be checked.
 #' @param Type character. Specifies the expected type of the arguments. Must be one of "character", "logical", or "numeric".
-#' @return NULL. The function does not return a value but will stop execution and throw an error if any of the specified arguments do not match the expected type.
+#' @return The function does not return a value but will stop execution and throw an error if any of the specified arguments do not match the expected type.
 #' @export
 
 CheckArgs <- function(AllArgs, Args, Type) {

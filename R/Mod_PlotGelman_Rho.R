@@ -23,7 +23,7 @@ PlotGelman_Rho <- function(CodaObj) {
   Iter <- Type <- ShrinkFactor <- NULL
 
   Gelman_Rho_Plot <- CodaObj %>%
-    coda:::gelman.preplot(
+    gelman.preplot(
       bin.width = 10, max.bins = 50, confidence = 0.95,
       transform = FALSE, autoburnin = TRUE) %>%
     magrittr::extract2("shrink") %>%

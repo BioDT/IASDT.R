@@ -9,7 +9,7 @@ System(command, RObj = TRUE, ...)
 \arguments{
 \item{command}{A string representing the bash command to be executed.}
 
-\item{RObj}{A logical indicating whether to capture the output of the command as an R object. If \code{TRUE}, the output is captured; if \code{FALSE}, the output is printed to the console. Defaults to \code{TRUE}.}
+\item{RObj}{A logical indicating whether to capture the output of the command as an R object. If \code{TRUE} (Default), the output is captured; if \code{FALSE}, the output is printed to the console.}
 
 \item{...}{Additional arguments passed to either \code{shell} or \code{system} function, depending on the operating system.}
 }

@@ -3,6 +3,9 @@
 \name{NUnique}
 \alias{NUnique}
 \title{Number of unique values for all columns of a data frame}
+\source{
+The source code of the function was copied from this \href{https://stackoverflow.com/questions/22196078/count-unique-values-for-every-column}{stackoverflow} question.
+}
 \usage{
 NUnique(Data)
 }
@@ -10,16 +13,13 @@ NUnique(Data)
 \item{Data}{A data frame for which the number of unique values per column will be calculated.}
 }
 \value{
-A data frame with two columns: Variable and NUnique. The Variable column lists the names of the original columns, and the NUnique column lists the number of unique values in each column. The result is sorted by NUnique in ascending order.
+A data frame with two columns: \code{Variable} and \code{NUnique}. The Variable column lists the names of the original columns, and the \code{NUnique} column lists the number of unique values in each column. The result is sorted by \code{NUnique} in ascending order.
 }
 \description{
-This function calculates the number of unique values for each column in a given data frame and returns a data frame with two columns: Variable and NUnique. The Variable column lists the names of the original columns, and the NUnique column lists the corresponding number of unique values in each column. The result is sorted by the number of unique values in ascending order.
+This function calculates the number of unique values for each column in a given data frame and returns a data frame with two columns: \code{Variable} and \code{NUnique}. The \code{Variable} column lists the names of the original columns, and the \code{NUnique} column lists the corresponding number of unique values in each column. The result is sorted by the number of unique values in ascending order.
 }
 \examples{
 NUnique(mtcars)
 
 NUnique(iris)
-}
-\references{
-\href{https://stackoverflow.com/questions/22196078/count-unique-values-for-every-column}{Click here}
 }

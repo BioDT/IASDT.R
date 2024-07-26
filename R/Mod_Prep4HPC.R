@@ -6,23 +6,23 @@
 #'
 #' This function prepares initial models in R for model fitting by Hmsc-HPC. It involves data preparation, model initialization, and generating commands for running models on HPC. It supports parallel processing, options to include/not include phylogenetic tree data.
 #'
-#' @param Hab_Abb String indicating the habitat type to be considered for model preparation. This has to be one of the following: c("0", "1", "2", "3", "4a", "4b", "5", "6", "8", "10", "12a", "12b"). "0" means prepare data irrespective of the habitat type
+#' @param Hab_Abb String indicating the `SynHab` habitat type to be considered for model preparation. This has to be one of the following: c("0", "1", "2", "3", "4a", "4b", "5", "6", "8", "10", "12a", "12b"). "0" means prepare data irrespective of the habitat type
 #' @param Path_Data String specifying the path where modeling data is read from.
 #' @param Path_Model String (without trailing slash) specifying the path where all output, including models to be fitted, will be saved.
-#' @param MinPresGrids Integer indicating the minimum number of presence grid cells per species for a species to be used in the model. Only species with ≥ this number will be considered. Default: 50.
-#' @param EnvFile String specifying the path to read environment variables from, with a default value of ".env".
+#' @param MinPresGrids Integer indicating the minimum number of presence grid cells per species for a species to be used in the model. Default: 50.
+#' @param EnvFile String specifying the path to read environment variables from, with a default value of `.env`.
 #' @param PrepareData Logical indicating whether to prepare input data or load it from disk. Defaults to `TRUE` which means the input data will be prepared using the [IASDT.R::Mod_PrepData] function.
-#' @param GPP_Dists Integer specifying the distance in kilometers for both the distance between knots and the minimum distance of a knot to the nearest data point. The same value will be used for the `knotDist` and `minKnotDist`	arguments of the [Hmsc::constructKnots] function.
-#' @param GPP_Save Logical indicating whether to save the resulted knots as RData Default: `TRUE`.
+#' @param GPP_Dists Integer specifying the distance in kilometers for both the distance between knots and the minimum distance of a knot to the nearest data point. The GPP knots are prepared by the [IASDT.R::PrepKnots] function. The same value will be used for the `knotDist` and `minKnotDist`	arguments of the [Hmsc::constructKnots] function.
+#' @param GPP_Save Logical indicating whether to save the resulted knots as `RData` Default: `TRUE`.
 #' @param GPP_Plot Logical indicating whether to plot the coordinates of the sampling units and the knots in a pdf file. Default: `TRUE`
-#' @param XVars Vector of strings specifying variables to be used in the model. Default value: `NULL`, which means to use the following variables: bio4, bio6, bio8, bio12, bio15, bio18, RoadRailLog, BiasLog.
-#' @param PhyloTree,NoPhyloTree Logical indicating whether to fit model variants  with or without phylogenetic trees, respectively. Default: `TRUE`, which means to fit a model variant with the respective option. If both `PhyloTree` and `NoPhyloTree` are `TRUE` (Default), models for both options will be fitted. At least one of `PhyloTree` and `NoPhyloTree` should be `TRUE`.
+#' @param XVars Vector of strings specifying variables to be used in the model. Default value: `NULL`, which means to use the following variables: `bio4`, `bio6`, `bio8`, `bio12`, `bio15`, `bio18`, `RoadRailLog`, `BiasLog`.
+#' @param PhyloTree,NoPhyloTree Logical indicating whether to fit model variants  with or without phylogenetic trees, respectively. The default of both arguments is `TRUE`, which means to fit a model variant with the respective option. If both `PhyloTree` and `NoPhyloTree` are `TRUE` (Default), models for both options will be fitted. At least one of `PhyloTree` and `NoPhyloTree` should be `TRUE`.
 #' @param NParallel Integer specifying the number of parallel cores for parallelization. Default: 8 cores.
 #' @param nChains Integer specifying the number of model chains. Default: 4.
 #' @param thin Integer specifying the value(s) for thinning in MCMC sampling. If more than one value is provided, a separate model will be fitted at each value of thinning.
 #' @param samples Integer specifying the value(s) for the number of MCMC samples. If more than one value is provided, a separate model will be fitted at each value of number of samples.
-#' @param transientFactor Integer specifying the transient multiplication factor. The value of `transient` will equal  the multiplication of `transientFactor and thin`. Default: 300.
-#' @param verbose Integer specifying how often the results of the MCMC sampling should be reported. Default: 1000.
+#' @param transientFactor Integer specifying the transient multiplication factor. The value of `transient` will equal  the multiplication of `transientFactor` and `thin`. Default: 300.
+#' @param verbose Integer specifying how often the results of the MCMC sampling should be reported. Default: `1000`.
 #' @param SkipFitted Logical indicating whether to skip already fitted models. Default: `TRUE`.
 #' @param MaxJobCounts Integer specifying the maximum allowed number of array jobs per SLURM file. Default: 210. See [here](https://docs.lumi-supercomputer.eu/runjobs/scheduled-jobs/partitions/) for more details.
 #' @param ModelCountry String or vector of strings specifying the country or countries to filter observations by. Default: `NULL`, which means prepare data for the whole Europe.

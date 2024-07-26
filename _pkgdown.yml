@@ -28,57 +28,76 @@ reference:
 
 - title: General functions
   desc: Data management / utility functions
+- subtitle: Packages management
+  desc:
   contents:
-  - AssignIfNotExist
+  - FunctionsInPackage
+  - LoadPackages
+  - ReloadPackage
+  - LoadedPackages
+  - Package_RemoteSha
+- subtitle: File operations
+  desc:
+  contents:
+  - FileExt
+  - FileSize
+  - FileType
+  - LoadAs
+  - LoadMultiple
+  - SaveAs
+  - SaveMultiple
+- subtitle: Plotting
+  desc:
+  contents:
+  - AddImg2Plot
+  - AddLine
+  - integer_breaks
+- subtitle: Statistics-related
+  desc:
+  contents:
+  - DetectAlias
+  - GetMode
+- subtitle: Printing functions
+  desc:
+  contents:
   - CatSep
   - CatTime
   - CatDiff
+- subtitle: Vector / data frame operations
+  desc:
+  contents:
+  - AssignIfNotExist
   - cc
-  - CurrOS
   - ht
-  - GetMode
   - lapply_
   - sapply_
   - NDecimals
   - ReplaceSpace
-  - SaveAs
-  - SaveMultiple
   - ScrapLinks
   - sort_
-  - SplitDF2Chunks
   - SplitVector
-  - System
-  - Valid_URL
-  - List2RData
-  - LoadAs
-  - LoadMultiple
-  - LoadPackages
-  - AddMissingCols
-  - FileExt
-  - FunctionsInPackage
-  - ReloadPackage
-  - LoadedPackages
-  - AddImg2Plot
-  - AddLine
-  - ScriptLocation
+  - SplitDF2Chunks
   - Range2NewVal
-  - ClearConsole
-  - RequireMultiple
-  - CheckRStudioVersion
-  - CheckQuartoVersion
   - AllObjSizes
   - KeepOnly
   - SourceSilent
   - NUnique
-  - git_log
-  - Package_RemoteSha
-  - integer_breaks
+  - List2RData
+  - AddMissingCols
+- subtitle: OTHERs
+  desc:
+  contents:
+  - CurrOS
+  - System
+  - Valid_URL
+  - ScriptLocation
+  - ClearConsole
+  - CheckRStudioVersion
+  - CheckQuartoVersion
   - InfoChunk
   - SaveSession
   - SaveSessionInfo
-  - FileSize
-  - FileType
-  - DetectAlias
+  - git_log
   - GetBashVars
   - CheckArgs
 
@@ -105,12 +124,13 @@ reference:
   - GetPosts
   - Mod_MergeChains
   - Mod_Summary
-  - PlotBetaGG
-  - PlotOmegaGG
-  
+  - RespCurv_PrepData
+
 - subtitle: Plotting
   desc:
   contents:
+  - PlotBetaGG
+  - PlotOmegaGG
   - PlotAlpha
   - PlotRho
   - PlotConvergence
@@ -121,7 +141,6 @@ reference:
   - PlotGelman_Beta
   - PlotGelman_Omega
   - PlotGelman_Rho
-  - RespCurv_PrepData
   - RespCurv_PlotSp
   - RespCurv_PlotSR
 - subtitle: Other functions

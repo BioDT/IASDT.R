@@ -2,11 +2,13 @@
 # GetBashVars ----
 ## |------------------------------------------------------------------------| #
 
+#' Read command line arguments passed to an R script
+#'
 #' This function reads command line arguments passed to an R script executed via the bash command line and assigns them into the global environment of the R session. This allows for dynamic passing of variables from a bash script to an R script.
 #'
 #' @name GetBashVars
 #' @author Ahmed El-Gabbas
-#' @return NULL This function does not return anything but has the side effect of assigning variables into the global environment.
+#' @return This function does not return anything but has the side effect of assigning variables into the global environment.
 #' @export
 
 GetBashVars <- function() {

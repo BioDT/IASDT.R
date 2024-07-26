@@ -39,27 +39,27 @@ Mod_Prep4HPC(
 )
 }
 \arguments{
-\item{Hab_Abb}{String indicating the habitat type to be considered for model preparation. This has to be one of the following: c("0", "1", "2", "3", "4a", "4b", "5", "6", "8", "10", "12a", "12b"). "0" means prepare data irrespective of the habitat type}
+\item{Hab_Abb}{String indicating the \code{SynHab} habitat type to be considered for model preparation. This has to be one of the following: c("0", "1", "2", "3", "4a", "4b", "5", "6", "8", "10", "12a", "12b"). "0" means prepare data irrespective of the habitat type}
 
 \item{Path_Data}{String specifying the path where modeling data is read from.}
 
 \item{Path_Model}{String (without trailing slash) specifying the path where all output, including models to be fitted, will be saved.}
 
-\item{MinPresGrids}{Integer indicating the minimum number of presence grid cells per species for a species to be used in the model. Only species with ≥ this number will be considered. Default: 50.}
+\item{MinPresGrids}{Integer indicating the minimum number of presence grid cells per species for a species to be used in the model. Default: 50.}
 
-\item{EnvFile}{String specifying the path to read environment variables from, with a default value of ".env".}
+\item{EnvFile}{String specifying the path to read environment variables from, with a default value of \code{.env}.}
 
 \item{PrepareData}{Logical indicating whether to prepare input data or load it from disk. Defaults to \code{TRUE} which means the input data will be prepared using the \link{Mod_PrepData} function.}
 
-\item{GPP_Dists}{Integer specifying the distance in kilometers for both the distance between knots and the minimum distance of a knot to the nearest data point. The same value will be used for the \code{knotDist} and \code{minKnotDist}    arguments of the \link[Hmsc:constructKnots]{Hmsc::constructKnots} function.}
+\item{GPP_Dists}{Integer specifying the distance in kilometers for both the distance between knots and the minimum distance of a knot to the nearest data point. The GPP knots are prepared by the \link{PrepKnots} function. The same value will be used for the \code{knotDist} and \code{minKnotDist}    arguments of the \link[Hmsc:constructKnots]{Hmsc::constructKnots} function.}
 
-\item{GPP_Save}{Logical indicating whether to save the resulted knots as RData Default: \code{TRUE}.}
+\item{GPP_Save}{Logical indicating whether to save the resulted knots as \code{RData} Default: \code{TRUE}.}
 
 \item{GPP_Plot}{Logical indicating whether to plot the coordinates of the sampling units and the knots in a pdf file. Default: \code{TRUE}}
 
-\item{XVars}{Vector of strings specifying variables to be used in the model. Default value: \code{NULL}, which means to use the following variables: bio4, bio6, bio8, bio12, bio15, bio18, RoadRailLog, BiasLog.}
+\item{XVars}{Vector of strings specifying variables to be used in the model. Default value: \code{NULL}, which means to use the following variables: \code{bio4}, \code{bio6}, \code{bio8}, \code{bio12}, \code{bio15}, \code{bio18}, \code{RoadRailLog}, \code{BiasLog}.}
 
-\item{PhyloTree, NoPhyloTree}{Logical indicating whether to fit model variants  with or without phylogenetic trees, respectively. Default: \code{TRUE}, which means to fit a model variant with the respective option. If both \code{PhyloTree} and \code{NoPhyloTree} are \code{TRUE} (Default), models for both options will be fitted. At least one of \code{PhyloTree} and \code{NoPhyloTree} should be \code{TRUE}.}
+\item{PhyloTree, NoPhyloTree}{Logical indicating whether to fit model variants  with or without phylogenetic trees, respectively. The default of both arguments is \code{TRUE}, which means to fit a model variant with the respective option. If both \code{PhyloTree} and \code{NoPhyloTree} are \code{TRUE} (Default), models for both options will be fitted. At least one of \code{PhyloTree} and \code{NoPhyloTree} should be \code{TRUE}.}
 
 \item{NParallel}{Integer specifying the number of parallel cores for parallelization. Default: 8 cores.}
 
@@ -69,9 +69,9 @@ Mod_Prep4HPC(
 
 \item{samples}{Integer specifying the value(s) for the number of MCMC samples. If more than one value is provided, a separate model will be fitted at each value of number of samples.}
 
-\item{transientFactor}{Integer specifying the transient multiplication factor. The value of \code{transient} will equal  the multiplication of \verb{transientFactor and thin}. Default: 300.}
+\item{transientFactor}{Integer specifying the transient multiplication factor. The value of \code{transient} will equal  the multiplication of \code{transientFactor} and \code{thin}. Default: 300.}
 
-\item{verbose}{Integer specifying how often the results of the MCMC sampling should be reported. Default: 1000.}
+\item{verbose}{Integer specifying how often the results of the MCMC sampling should be reported. Default: \code{1000}.}
 
 \item{SkipFitted}{Logical indicating whether to skip already fitted models. Default: \code{TRUE}.}
 

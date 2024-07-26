@@ -7,7 +7,7 @@
 GetPosts(FilePath, FromJSON = FALSE)
 }
 \arguments{
-\item{FilePath}{A character string specifying the path to the RDS file containing the exported posteriors.}
+\item{FilePath}{A character string specifying the path to the RDS files containing the exported posteriors.}
 
 \item{FromJSON}{A logical flag indicating whether the loaded models should be converted from JSON format. Defaults to \code{FALSE}, meaning the data will be read directly from an RDS file without conversion.}
 }

@@ -2,15 +2,18 @@
 % Please edit documentation in R/General_LoadAs.R
 \name{LoadAs}
 \alias{LoadAs}
-\title{Load RData file, ignoring original object name}
+\title{Load RData file and return its contents as a list or a single object}
 \usage{
 LoadAs(File)
 }
 \arguments{
-\item{File}{character; path of \code{.RData} file}
+\item{File}{character; the file path of the \code{.RData} file to be loaded.}
+}
+\value{
+Depending on the contents of the \code{RData} file, this function returns either a single R object or a named list of R objects. The names of the list elements (if a list is returned) correspond to the names of the objects stored within the RData file.
 }
 \description{
-Load RData file, ignoring original object name
+This function loads an \code{RData} file specified by the \code{File} parameter. If the \code{RData} file contains a single object, that object is returned directly. If the file contains multiple objects, they are returned as a list with each object accessible by its name. This allows for flexible handling of loaded data without needing to know the names of the objects stored within the RData file ahead of time.
 }
 \examples{
 

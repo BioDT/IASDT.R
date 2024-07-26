@@ -41,6 +41,9 @@ PlotVarPar(
 
 \item{SaveGG}{Logical. Should the plots be exported as an RData object?  Default: \code{TRUE}.}
 }
+\value{
+If \code{ReturnGG} is \code{TRUE}, returns a ggplot object of the variance partitioning plots. Otherwise, returns \code{NULL}.
+}
 \description{
 This function generates and optionally saves plots visualizing the variance partitioning of a Hmsc model. It can calculate variance partitioning and model evaluation if not provided and supports parallel computation for model predictions.
 }

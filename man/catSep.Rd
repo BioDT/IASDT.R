@@ -16,7 +16,7 @@ CatSep(Rep = 1, Extra1 = 0, Extra2 = 0, Char = "-", CharReps = 50)
 \item{CharReps}{integer; the number of times the character is repeated to form a separator line. Default is \code{50}.}
 }
 \value{
-NULL; The function is called for its side effect (printing to the console) and does not return a meaningful value.
+The function is called for its side effect (printing to the console) and does not return a meaningful value.
 }
 \description{
 This function prints customizable separator lines to the console, optionally preceded and followed by empty lines. It is useful for improving the readability of console output in R scripts or during interactive sessions.

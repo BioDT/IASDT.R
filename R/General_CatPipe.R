@@ -10,7 +10,6 @@
 #' @return The same object passed as input (`x`), allowing the pipe operation to continue uninterrupted.
 #' @name CatPipe
 #' @author Ahmed El-Gabbas
-#' @return NULL
 #' @keywords internal
 #' @references This function is currently not exported. See [here](https://stackoverflow.com/questions/76722921/print-message-in-the-middle-of-long-pipe) for more details
 #' @noRd

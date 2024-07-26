@@ -10,9 +10,7 @@
 #' @note This function checks if it is being run in RStudio by examining the `RSTUDIO` environment variable. If the function is not run in RStudio, it will not clear the console and instead print a message.
 #' @export
 #' @examples
-#' \dontrun{
 #' ClearConsole()
-#' }
 
 ClearConsole <- function() {
   if (Sys.getenv("RSTUDIO") == "") {

@@ -21,7 +21,7 @@ Mod_Pred2Array(Predict, Model, Preds = NULL, expected = TRUE, NCores = 1)
 An array of predictions.
 }
 \description{
-This function converts the results from Hmsc:::predict.Hmsc` function into an array format. It allows for the direct conversion of pre-computed predictions or the generation of predictions from a model before conversion. It supports parallel computation for generating predictions.
+This function converts the results from the (unexported) \code{Hmsc:::predict.Hmsc} function into an array format. It allows for the direct conversion of pre-computed predictions or the generation of predictions from a model before conversion. It supports parallel computation for generating predictions.
 }
 \examples{
 Preds <- IASDT.R::Mod_Pred2Array(

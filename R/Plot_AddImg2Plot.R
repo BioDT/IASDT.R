@@ -6,7 +6,7 @@
 #'
 #' This function allows the user to add an image to an existing plot in R by specifying the image object, its position, and its size. The function calculates the necessary dimensions and places the image accordingly. The function uses the existing plot's coordinate system and accounts for the current plot dimensions to ensure accurate placement of the image. It also allows for interpolation, which can improve the visual quality of the image.
 #' @name AddImg2Plot
-#' @references [Click here](https://stackoverflow.com/questions/27800307/)
+#' @source The source code of this function was taken from this  [stackoverflow](https://stackoverflow.com/questions/27800307/) question.
 #' @export
 #' @param obj The image object to be added to the plot, expected to be an array-like structure (e.g., as read by [png::readPNG] or [jpeg::readJPEG]).
 #' @param x,y Numeric, the x-coordinate or y-coordinate (in plot units) at which the center of the image should be placed.

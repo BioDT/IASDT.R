@@ -14,7 +14,7 @@ SaveSessionInfo(Path = getwd(), SessionObj = NULL, Prefix = "S")
 \item{Prefix}{A string to be used as a prefix for the output file name. The default prefix is \code{S}.}
 }
 \value{
-Invisibly returns \code{NULL}. The primary effect of this function is the side effect of writing  session information to a file.
+The primary effect of this function is the side effect of writing  session information to a file.
 }
 \description{
 This function saves the current R session information, including installed packages, session details, and optionally, information about specific objects in the session, to a text file.

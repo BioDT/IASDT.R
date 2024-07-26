@@ -26,13 +26,13 @@ Mod_SLURM_CV(
 \arguments{
 \item{Model}{Either a path to a saved model file (character) or an Hmsc model object. If a path is provided, the model is loaded from the file.}
 
-\item{CVName}{Character vector specifying the name of the column(s) in the model input data (see \link{Mod_PrepData}) to be used to cross-validate the models. Currently, there is only one column \code{CV} for spatial cross-validation, created using the \link{Mod_PrepData} function. The function allows the possibility of using more than one way of assigning grid cells into cross-validation folders. If multiple names are provided, separate cross-validation models will be fitted for each column.}
+\item{CVName}{Character vector specifying the name of the column(s) in the model input data (see \link{Mod_PrepData} and \link{GetCV}) to be used to cross-validate the models. Currently, there is only one column \code{CV} for spatial cross-validation, created using the \link{Mod_PrepData} function. The function allows the possibility of using more than one way of assigning grid cells into cross-validation folders. If multiple names are provided, separate cross-validation models will be fitted for each column.}
 
 \item{partition}{A vector for cross-validation created by \link[Hmsc:createPartition]{Hmsc::createPartition} or similar. Defaults to \code{NULL}, which means to use column name(s) provided in the \code{CVName} argument. If the \code{partition} vector is provided, the label used in the output files will be \code{CV_Custom}.}
 
-\item{Path_CV}{The directory path where cross-validation models and outputs will be stored. It will be estimated from the model path, If \code{Model} argument is a character vector. If \code{Model} is an Hmsc model object, it has to be provided by the user, otherwise the function will give an error.}
+\item{Path_CV}{The directory path where cross-validation models and outputs will be stored. If \code{Model} argument is a character vector, it will be estimated from the model path. If \code{Model} is an Hmsc model object, it has to be provided by the user, otherwise the function will give an error.}
 
-\item{EnvFile}{String specifying the path to read environment variables from, with a default value of ".env".}
+\item{EnvFile}{String specifying the path to read environment variables from, with a default value of \code{.env}.}
 
 \item{initPar}{a named list of parameter values used for initialization of MCMC states. See \link[Hmsc:computePredictedValues]{Hmsc::computePredictedValues} for more information.}
 
@@ -40,19 +40,19 @@ Mod_SLURM_CV(
 
 \item{updater}{a named list, specifying which conditional updaters should be omitted.  See \link[Hmsc:computePredictedValues]{Hmsc::computePredictedValues} for more information. Defaults to \code{list(Gamma2 = FALSE, GammaEta = FALSE)} to disable the following warnings: \verb{setting updater$Gamma2=FALSE due to specified phylogeny matrix} and \verb{setting updater$GammaEta=FALSE: not implemented for spatial methods 'GPP' and 'NNGP'}}
 
-\item{alignPost}{boolean flag indicating whether the posterior of each chains should be aligned. See \link[Hmsc:computePredictedValues]{Hmsc::computePredictedValues} for more information.}
+\item{alignPost}{boolean flag indicating whether the posterior of each chains should be aligned. See \link[Hmsc:computePredictedValues]{Hmsc::computePredictedValues} for more information. Default: \code{TRUE}.}
 
 \item{ToJSON}{Logical indicating whether to convert unfitted models to JSON before saving to RDS file. Default: \code{FALSE}.}
 
 \item{FromHPC}{Logical indicating whether the work is being done from HPC, to adjust file paths accordingly. Default: \code{TRUE}.}
 
-\item{MemPerCpu}{String specifying the memory per CPU for the SLURM job. This value will be assigned to the \verb{#SBATCH --mem-per-cpu=} SLURM argument. Example: "32G" to request 32 gigabyte. Only effective if \code{PrepSLURM = TRUE}.}
+\item{MemPerCpu}{String specifying the memory per CPU for the SLURM job. This value will be assigned to the \verb{#SBATCH --mem-per-cpu=} SLURM argument. Example: \verb{32G} to request 32 gigabyte. Only effective if \code{PrepSLURM = TRUE}.}
 
-\item{Time}{String specifying the requested time for each job in the SLURM bash arrays. Example: "01:00:00" to request an hour. Only effective if \code{PrepSLURM = TRUE}.}
+\item{Time}{String specifying the requested time for each job in the SLURM bash arrays. Example: \code{01:00:00} to request an hour. Only effective if \code{PrepSLURM = TRUE}.}
 
 \item{Path_Hmsc}{String specifying the path for the Hmsc-HPC. This will be provided as the \code{Path_Hmsc} argument of the \link{Mod_SLURM} function.}
 
-\item{CheckPyPath}{Logical, whether to check the existence of the Path_Python directory extracted from reading \code{EnvFile} content.}
+\item{CheckPyPath}{Logical, whether to check the existence of the \code{Path_Python} directory extracted from reading \code{EnvFile} content. Default: \code{TRUE}.}
 
 \item{...}{Additional arguments passed to the \link{Mod_SLURM} function.}
 }
@@ -60,7 +60,7 @@ Mod_SLURM_CV(
 This function prepares initial cross-validated Hmsc models in R for fitting by Hmsc-HPC. It includes data preparation, model initialization, and command generation for running models on HPC.
 }
 \details{
-The function copies part of the \link[Hmsc:computePredictedValues]{Hmsc::computePredictedValues} function. The current version of the \link[Hmsc:computePredictedValues]{Hmsc::computePredictedValues} does not support performing cross-validation using Hmsc-HPC. Although it is possible to \href{https://github.com/aniskhan25/hmsc-hpc/issues/14}{make some changes} to the \link[Hmsc:computePredictedValues]{Hmsc::computePredictedValues} to make it possible to use Hmsc-HPC, this does not help as our intention is to use the Hmsc-HPC using GPU.
+The function copies part of the \link[Hmsc:computePredictedValues]{Hmsc::computePredictedValues} function, which currently does not support performing cross-validation using Hmsc-HPC. Although it is possible to \href{https://github.com/aniskhan25/hmsc-hpc/issues/14}{make some changes} to the \link[Hmsc:computePredictedValues]{Hmsc::computePredictedValues} to make it possible to use Hmsc-HPC, this does not help as our intention is to use the Hmsc-HPC using GPU.
 }
 \author{
 Ahmed El-Gabbas

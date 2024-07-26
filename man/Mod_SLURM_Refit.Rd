@@ -29,9 +29,9 @@ Mod_SLURM_Refit(
 
 \item{JobName}{String (optional). Name of the SLURM jobs. If not provided, a default name based on the model path is used.}
 
-\item{MemPerCpu}{String. Memory per CPU allocation for the SLURM job. Example: "32G" for 32 gigabytes.}
+\item{MemPerCpu}{String. Memory per CPU allocation for the SLURM job. Example: \verb{32G} for 32 gigabytes.}
 
-\item{Time}{String. Duration for which the job should run. Example: "01:00:00" for one hour.}
+\item{Time}{String. Duration for which the job should run. Example: \code{01:00:00} for one hour.}
 
 \item{Partition}{String. The SLURM partition to submit the job to. Default is "small-g".}
 

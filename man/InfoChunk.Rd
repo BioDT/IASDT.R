@@ -7,7 +7,7 @@
 InfoChunk(Message = "", ...)
 }
 \arguments{
-\item{Message}{A character string representing the main message to be timestamped.  parameter is mandatory and cannot be NULL or empty.}
+\item{Message}{A character string representing the main message to be timestamped.  parameter is mandatory and cannot be \code{NULL} or empty.}
 
 \item{...}{Additional arguments passed to \link{CatSep} for customizing the separators.}
 }

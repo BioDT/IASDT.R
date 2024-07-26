@@ -8,7 +8,6 @@
 #'
 #' @name AddMissingCols
 #' @author Ahmed El-Gabbas
-#' @return NULL
 #' @param DT A data frame to which missing columns will be added. This parameter cannot be NULL.
 #' @param FillVal The value to fill the missing columns with. This parameter defaults to `NA_character_`, but can be changed to any scalar value as required.
 #' @param ... Column names as character strings.

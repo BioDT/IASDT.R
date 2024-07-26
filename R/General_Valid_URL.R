@@ -9,7 +9,7 @@
 #' @param url_in A character string specifying the URL to be checked.
 #' @param t A numeric value specifying the timeout in seconds for the connection attempt. Default is 2 seconds.
 #' @name Valid_URL
-#' @references [Click here](https://stackoverflow.com/questions/52911812/check-if-url-exists-in-r)
+#' @source The source code of this function was taken from this [stackoverflow](https://stackoverflow.com/questions/52911812/check-if-url-exists-in-r) discussion.
 #' @return A logical value: `TRUE` if the URL is valid, `FALSE` if not.
 #' @examples
 #' urls <- c(

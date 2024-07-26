@@ -7,23 +7,19 @@
 #' This function converts a Coda object (`mcmc.list` or `mcmc`) into a tibble format, facilitating further analysis and visualization. It supports transformation for specific parameter types: rho, alpha, omega, and beta.
 #'
 #' @param CodaObj An object of class `mcmc.list` or `mcmc`, representing the MCMC output.
-#' @param Type A character string specifying the parameter type to transform and extract. Must be one of "rho", "alpha", "omega", or "beta".
-#' @param EnvFile A character string specifying the path to the environment file that contains necessary variables for beta parameter transformation. Defaults to ".env".
+#' @param Type A character string specifying the parameter type to transform and extract. Must be one of `rho`, `alpha`, `omega`, or `beta`.
+#' @param EnvFile A character string specifying the path to the environment file that contains necessary variables for beta parameter transformation. Defaults to `.env`.
 #' @param NOmega An integer specifying the number of species to be sampled for the Omega parameter transformation. Defaults to 1000.
 #' @name Coda_to_tibble
 #' @author Ahmed El-Gabbas
 #' @return A tibble containing the transformed parameters based on the specified `Type`. The structure of the returned tibble varies depending on the `Type` parameter.
 #' @export
 #' @examples
-#' \dontrun{
-#'    library(Hmsc)
-#'    library(coda)
-#'    library(dplyr)
-#'    Coda  <- Hmsc::convertToCodaObject(Hmsc::TD$m)
-#'    IASDT.R::Coda_to_tibble(CodaObj = Coda$Alpha[[1]], Type = "Alpha", EnvFile = ".env")
-#'    IASDT.R::Coda_to_tibble(CodaObj = Coda$Beta, Type = "beta")
-#'    IASDT.R::Coda_to_tibble(CodaObj = Coda$Omega[[1]], Type = "omega")
-#' }
+#' library(Hmsc)
+#' library(coda)
+#' library(dplyr)
+#' Coda  <- Hmsc::convertToCodaObject(Hmsc::TD$m)
+#' IASDT.R::Coda_to_tibble(CodaObj = Coda$Alpha[[1]], Type = "Alpha")
 
 Coda_to_tibble <- function(
     CodaObj = NULL, Type = NULL, EnvFile = ".env", NOmega = 1000) {

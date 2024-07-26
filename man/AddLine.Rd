@@ -3,6 +3,9 @@
 \name{AddLine}
 \alias{AddLine}
 \title{Add a horizontal or vertical line to the current plot}
+\source{
+The source code of this function was taken from this  \href{https://stackoverflow.com/questions/27800307/}{stackoverflow} question.
+}
 \usage{
 AddLine(at = NULL, Outer = FALSE, H = TRUE, ...)
 }
@@ -36,7 +39,4 @@ plot(1:100)
 AddLine(H = FALSE, at = 0.75)
 AddLine(H = FALSE, at = 0.25, Outer = TRUE, lwd = 2)
 AddLine(H = FALSE, at = 0.5, Outer = TRUE, lwd = 2, col = "red")
-}
-\references{
-\href{https://stackoverflow.com/questions/27800307/}{Click here}
 }

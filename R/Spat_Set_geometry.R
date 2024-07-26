@@ -11,7 +11,6 @@
 #' @name Set_geometry
 #' @return The modified simple feature (sf) data frame with the updated geometry column. The function returns the original data frame `x` with its geometry column set to `Name`.
 #' @author Ahmed El-Gabbas
-#' @return NULL
 #' @export
 
 Set_geometry <- function(x, Name) {

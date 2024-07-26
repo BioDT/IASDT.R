@@ -29,26 +29,26 @@ This function loads multiple \code{.RData} files either into a single list objec
 \examples{
 (Files <- system.file("testdata", c("culcita_dat.RData", "gopherdat2.RData"), package = "lme4"))
 
-# ---------------------------------------------------
-# Load multiple *.RData files to one list object
-# ---------------------------------------------------
-file.exists(Files)
 ls()
 
+# ---------------------------------------------------
+# Load multiple *.RData files to one list object
+# `OneObject = TRUE`
+# ---------------------------------------------------
 MultiObj <- LoadMultiple(Files = Files, OneObject = TRUE)
 ls()
 
 str(MultiObj, 1)
 
 # ---------------------------------------------------
-# Load multiple *.RData files current environment
+# Load multiple *.RData files separately to the current environment
+# `OneObject = FALSE`
 # ---------------------------------------------------
+ls()
 rm("MultiObj")
 ls()
 
 LoadMultiple(Files = Files, OneObject = FALSE)
-
-print(c("culcita_dat", "Gdat") \%in\% ls())
 
 str(Gdat, 1)
 
@@ -57,10 +57,9 @@ str(culcita_dat, 1)
 # ---------------------------------------------------
 # Load multiple *.RData files, one object already exists
 # ---------------------------------------------------
+ls()
 rm("culcita_dat")
 ls()
-
-print(c("culcita_dat", "Gdat") \%in\% ls())
 
 try(LoadMultiple(Files = Files, OneObject = FALSE))
 

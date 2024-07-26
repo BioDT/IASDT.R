@@ -36,11 +36,11 @@ Roman numerals (\code{numeric.type="roman"})?}
 represented using only capital letters ('IX') or lower-case letters ('ix')
 or both?}
 }
+\value{
+A vector of sorted alphanumeric strings.
+}
 \description{
-This function extends the sorting capabilities for alphanumeric strings by allowing
-for sorting of mixed numeric and character strings, with additional control over
-sorting direction, treatment of \code{NA} and blank values, and handling of numeric values
-represented as either decimal numbers or Roman numerals. This function is just a wrapper function for the \link[gtools:mixedsort]{gtools::mixedsort} function.
+This function extends the sorting capabilities for alphanumeric strings by allowing for sorting of mixed numeric and character strings, with additional control over sorting direction, treatment of \code{NA} and blank values, and handling of numeric values represented as either decimal numbers or Roman numerals. This function is a wrapper function for the \link[gtools:mixedsort]{gtools::mixedsort} function.
 }
 \examples{
 # example code

@@ -16,7 +16,7 @@ SourceSilent(File, Messages = TRUE, Warnings = TRUE, ...)
 \item{...}{Additional arguments passed to the \code{source} function.}
 }
 \value{
-The function does not explicitly return a value. It is used for its side effect of sourcing a file with optional suppression of messages and warnings.
+It is used for its side effect of sourcing a file with optional suppression of messages and warnings.
 }
 \description{
 This function sources an R script file with options to suppress messages and/or warnings. It is useful for running scripts that generate a lot of console output that is not needed.

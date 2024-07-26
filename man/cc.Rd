@@ -21,12 +21,14 @@ cc(A, B, C)
 # -------------------------------------------
 
 cc(A, B, "A and B")
-\dontrun{
+
+# -------------------------------------------
+
 # this does not work
-cc(A, B, "A and B", 10)
+try(cc(A, B, "A and B", 10))
+
 # this works
 cc(A, B, "A and B", "10")
-}
 }
 \author{
 Ahmed El-Gabbas

@@ -4,11 +4,11 @@
 
 #' Summary of Hmsc model parameters
 #'
-#' This function provides a comprehensive summary of Hmsc model parameters, including Alpha, Beta, Rho, and Omega. It processes the model's output, performs statistical summaries, and optionally returns the summarized data.
+#' This function provides a comprehensive summary of Hmsc model parameters, including `Alpha`, `Beta`, `Rho`, and `Omega`. It processes the model's output, performs statistical summaries, and optionally returns the summarized data.
 #'
 #' @param Path_Coda String. Path to the `.RData` file containing a coda object.
 #' @param EnvFile String. Path to the environment variables file. This file is used to read necessary environmental variables for processing. The default value is `.env`.
-#' @param ReturnData Logical. Indicates whether the summarized data should be returned as an R object. If `TRUE`, the function returns a list containing summaries of Alpha, Beta, Rho, and Omega parameters. The default value is `FALSE`, which means the function will not return any data but will save the summaries to a specified directory.
+#' @param ReturnData Logical. Indicates whether the summarized data should be returned as an R object. If `TRUE`, the function returns a list containing summaries of `Alpha`, `Beta`, `Rho`, and `Omega` parameters. The default value is `FALSE`, which means the function will not return any data but will save the summaries to a specified directory.
 #' @author Ahmed El-Gabbas
 #' @return If `ReturnData` is `FALSE` (default), the function does not return anything and saves the summaries to a directory. If `ReturnData` is `TRUE`, it also returns the data as R object.
 #' @export

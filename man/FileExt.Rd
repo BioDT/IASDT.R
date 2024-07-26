@@ -17,12 +17,21 @@ This function extracts the file extension from a given file path. It first check
 }
 \examples{
 FileExt(Path = "File.doc")
+
 FileExt(Path = "D:/File.doc")
+
 FileExt(Path = "File.1.doc")
+
 FileExt(Path = "D:/Files.All")
+
 FileExt(Path = "D:/Files.All/")
+
 FileExt("example.txt") # Returns "txt"
+
 FileExt("archive.tar.gz") # Returns "gz"
+}
+\seealso{
+\code{\link[=FileType]{FileType()}}
 }
 \author{
 Ahmed El-Gabbas

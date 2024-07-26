@@ -19,7 +19,7 @@
 #' @param SaveGG Logical. Should the plots be exported as an RData object?  Default: `TRUE`.
 #' @name PlotVarPar
 #' @author Ahmed El-Gabbas
-#' @return NULL
+#' @return If `ReturnGG` is `TRUE`, returns a ggplot object of the variance partitioning plots. Otherwise, returns `NULL`.
 #' @export
 
 PlotVarPar <- function(
@@ -248,7 +248,7 @@ PlotVarPar <- function(
     dplyr::pull(value) %>%
     max() %>%
     magrittr::multiply_by(100) %>%
-    ceiling() %>%
+    ceiling(x = .) %>%
     magrittr::divide_by(100)
 
   Plot_R_DT <- vp_df_R %>%

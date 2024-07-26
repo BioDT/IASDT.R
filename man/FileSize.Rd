@@ -19,5 +19,6 @@ This function takes the path to a file and returns its size in a format that is 
 }
 \examples{
 (f <- system.file("ex/elev.tif", package="terra"))
+
 FileSize(File = f)
 }

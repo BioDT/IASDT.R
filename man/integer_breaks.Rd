@@ -25,7 +25,7 @@ ggplot2::ggplot(mtcars, ggplot2::aes(x = drat, y = hp)) +
   ggplot2::geom_point() +
   ggplot2::scale_x_continuous()
 
-ggplot2::ggplot(mtcars, ggplot2::aes(x = disp, y = hp)) +
+ggplot2::ggplot(mtcars, ggplot2::aes(x = drat, y = hp)) +
   ggplot2::geom_point() +
   ggplot2::scale_x_continuous(breaks = integer_breaks(5))
 }

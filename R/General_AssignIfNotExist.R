@@ -10,7 +10,7 @@
 #' @param Value any; the value to be assigned to the variable if it does not already exist.
 #' @param Env environment; the environment in which to check for the existence of the variable and potentially assign the value. Defaults to the global environment.
 #' @author Ahmed El-Gabbas
-#' @return NULL; The function explicitly returns NULL, but its primary effect is the side-effect of assigning a value to a variable in an environment or printing the current value of an existing variable.
+#' @return The function explicitly returns `NULL`, but its primary effect is the side-effect of assigning a value to a variable in an environment or printing the current value of an existing variable.
 #' @export
 #' @name AssignIfNotExist
 #' @examples
@@ -20,7 +20,6 @@
 #' # --------------------------------------------------
 #'
 #' y <- 10
-#'
 #' # y exists and thus its value was not changed
 #' AssignIfNotExist(Variable = "y", Value = TRUE)
 #' print(y)

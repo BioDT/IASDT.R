@@ -15,7 +15,7 @@ This function returns a character vector listing all the packages that are curre
 \examples{
 LoadedPackages()
 
-LoadPackages(sf)
+require(Hmsc)
 
 LoadedPackages()
 

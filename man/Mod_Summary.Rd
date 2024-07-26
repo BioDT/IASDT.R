@@ -11,13 +11,13 @@ Mod_Summary(Path_Coda = NULL, EnvFile = ".env", ReturnData = FALSE)
 
 \item{EnvFile}{String. Path to the environment variables file. This file is used to read necessary environmental variables for processing. The default value is \code{.env}.}
 
-\item{ReturnData}{Logical. Indicates whether the summarized data should be returned as an R object. If \code{TRUE}, the function returns a list containing summaries of Alpha, Beta, Rho, and Omega parameters. The default value is \code{FALSE}, which means the function will not return any data but will save the summaries to a specified directory.}
+\item{ReturnData}{Logical. Indicates whether the summarized data should be returned as an R object. If \code{TRUE}, the function returns a list containing summaries of \code{Alpha}, \code{Beta}, \code{Rho}, and \code{Omega} parameters. The default value is \code{FALSE}, which means the function will not return any data but will save the summaries to a specified directory.}
 }
 \value{
 If \code{ReturnData} is \code{FALSE} (default), the function does not return anything and saves the summaries to a directory. If \code{ReturnData} is \code{TRUE}, it also returns the data as R object.
 }
 \description{
-This function provides a comprehensive summary of Hmsc model parameters, including Alpha, Beta, Rho, and Omega. It processes the model's output, performs statistical summaries, and optionally returns the summarized data.
+This function provides a comprehensive summary of Hmsc model parameters, including \code{Alpha}, \code{Beta}, \code{Rho}, and \code{Omega}. It processes the model's output, performs statistical summaries, and optionally returns the summarized data.
 }
 \author{
 Ahmed El-Gabbas

@@ -8,16 +8,14 @@
 #'
 #' @name CheckRStudioVersion
 #' @author Ahmed El-Gabbas
-#' @return An invisible NULL. Side effects include printing messages to the console regarding the status of RStudio version.
-#' @note This function requires internet access to check the latest version of RStudio online. It also depends on `rstudioapi`, `xml2`, `rvest`, `stringr`, and `magrittr` packages for its operations. If called outside of RStudio, it will only fetch and display the latest version without comparing.
+#' @return Side effects include printing messages to the console regarding the status of RStudio version.
+#' @note This function requires internet access to check the latest version of RStudio online. If called outside of RStudio, it will only fetch and display the latest version without comparing.
 #' @export
 #' @examples
-#' \dontrun{
-#' CheckRStudioVersion()
-#' }
+#' try(CheckRStudioVersion())
 
 CheckRStudioVersion <- function() {
-  
+
   OnlineVersion <- "https://posit.co/download/rstudio-desktop/" %>%
     xml2::read_html() %>%
     rvest::html_node(".flex-inhe:nth-child(8)") %>%

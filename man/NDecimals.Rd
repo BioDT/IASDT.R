@@ -7,7 +7,7 @@
 NDecimals(x)
 }
 \arguments{
-\item{x}{A numeric value or a string that represents a numeric value. The function will return the number of decimal places in this value.}
+\item{x}{A numeric value or a string that represents a numeric value.}
 }
 \value{
 An integer representing the number of decimal places in the input value. If the input value does not have any decimal places, the function returns 0.

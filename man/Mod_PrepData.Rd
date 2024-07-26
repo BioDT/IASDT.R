@@ -15,15 +15,15 @@ Mod_PrepData(
 )
 }
 \arguments{
-\item{Hab_Abb}{Character. Habitat abbreviation indicating the specific SynHab habitat type to prepare data for. Valid values: c("0", "1", "2", "3", "4a", "4b", "5", "6", "8", "10", "12a", "12b"). "0" means prepare data irrespective of the habitat type}
+\item{Hab_Abb}{Character. Habitat abbreviation indicating the specific \code{SynHab} habitat type to prepare data for. Valid values: c("0", "1", "2", "3", "4a", "4b", "5", "6", "8", "10", "12a", "12b"). "0" means prepare data irrespective of the habitat type}
 
-\item{MinPresGrids}{Integer. Minimum number of presence grid cells required for a species to be included in the analysis. Only species with ≥ this number will be considered. Defaults to 50.}
+\item{MinPresGrids}{Integer. Minimum number of presence grid cells required for a species to be included in the analysis. Defaults to 50.}
 
-\item{EnvFile}{Character. Path to the environment file containing paths to data sources. Defaults to ".env".}
+\item{EnvFile}{Character. Path to the environment file containing paths to data sources. Defaults to \code{.env}.}
 
 \item{BioVars}{Character vector. Specifies the bioclimatic variables to be included from the CHELSA dataset. Defaults to a selection of variables: "bio4", "bio6", "bio8", "bio12", "bio15", and "bio18".}
 
-\item{ReturnData}{Logical. Indicates whether the processed data should be returned as an R object. Defaults to \code{FALSE}, meaning the data will not be returned but saved to disk.}
+\item{ReturnData}{Logical. Indicates whether the processed data should be returned as an R object. Defaults to \code{FALSE}, meaning the data will not be returned but only saved to disk.}
 
 \item{OutputPath}{Character. Path where the output file should be saved.}
 
@@ -33,7 +33,7 @@ Mod_PrepData(
 If \code{ReturnData} is \code{TRUE}, returns a data frame containing the modelling data. Otherwise, invisibly returns \code{NULL}.
 }
 \description{
-This function prepares habitat-specific data for Hmsc models by processing environmental and species presence data. It checks input arguments, reads environment variables from a file, verifies paths, loads and filters species data based on habitat type and minimum presence grid cells, and merges various environmental layers (e.g., CHELSA bioclimatic variables, habitat coverage, road and railway intensity, sampling intensity) into a single dataset. The processed data can be saved to disk and/or returned as an R object.
+This function prepares habitat-specific data for Hmsc models by processing environmental and species presence data. It checks input arguments, reads environment variables from a file, verifies paths, loads and filters species data based on habitat type and minimum presence grid cells per species, and merges various environmental layers (e.g., CHELSA bioclimatic variables, habitat coverage, road and railway intensity, sampling intensity) into a single dataset. The processed data can be saved to disk and/or returned as an R object.
 }
 \author{
 Ahmed El-Gabbas

@@ -4,7 +4,7 @@
 
 #' Apply a Function over a List or Vector with Optional Silence
 #'
-#' This function is a wrapper around the base `lapply` function that allows for the application of a function over a list or vector. It optionally allows for the suppression of the function's return value, making it useful for operations where the user is only interested in the side effects of the function.
+#' This function is a wrapper around the base [base::lapply] function that allows for the application of a function over a list or vector. It optionally allows for the suppression of the function's return value, making it useful for operations where the user is only interested in the side effects of the function.
 #'
 #' @param X A list or vector. The input data over which `FUN` is to be applied.
 #' @param FUN A function to be applied to each element of `X`.
@@ -28,13 +28,13 @@
 #' @export
 
 lapply_ <- function(X, FUN, Silent = TRUE, ...) {
-  
+
   if (is.null(X) || is.null(FUN)) {
     stop("X or FUN cannot be NULL")
   }
 
   result <- lapply(X = X, FUN = FUN, ...)
-  
+
   if (Silent) {
     return(invisible(NULL))
   } else {

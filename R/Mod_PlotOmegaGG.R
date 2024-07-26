@@ -2,14 +2,14 @@
 # PlotOmegaGG ----
 ## |------------------------------------------------------------------------| #
 
-#' Creates heatmaps of parameter estimates or posterior support values for species' residual association (Omega parameters).
+#' Creates heatmaps of parameter estimates or posterior support values for species' residual association (`Omega` parameters).
 #'
-#' This function generates heatmaps to visualize the parameter estimates or posterior support values of species' residual associations (Omega parameters). It is designed to work with model output files and produces two types of visualizations: one indicating the sign (positive or negative) of the associations and another showing the mean values of these associations.
+#' This function generates heatmaps to visualize the parameter estimates or posterior support values of species' residual associations (`Omega` parameters). It is designed to work with model output files and produces two types of visualizations: one indicating the sign (positive or negative) of the associations and another showing the mean values of these associations.
 #'
-#' @param Path_Model String. Specifies the path to the .RData file containing the selected model.
+#' @param Path_Model String. Specifies the path to the `.RData` file containing the selected model.
 #' @param supportLevel Numeric. The threshold for posterior support values used to determine which associations are strong enough to be plotted. Only associations with posterior support exceeding this threshold (or falling below 1 - threshold for negative associations) will be visualized. Defaults to 0.95.
-#' @param PlotWidth,PlotHeight Integer. Specifies the width and height of the generated plot in centimeters. Defaults to 22 x 20.
-#' @return Generates two JPEG files containing the heatmaps of Omega parameter: signs and mean values. These files are saved in a directory named 'Model_Postprocessing' within the parent directory of the provided model file path. The function itself returns NULL invisibly.
+#' @param PlotWidth,PlotHeight Integer. Specifies the width and height of the generated plot in centimeters. Defaults to `22` x `20`.
+#' @return Generates two JPEG files containing the heatmaps of Omega parameter: signs and mean values. These files are saved in a directory named 'Model_Postprocessing' within the parent directory of the provided model file path. The function itself returns `NULL` invisibly.
 #' @name PlotOmegaGG
 #' @export
 

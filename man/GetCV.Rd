@@ -14,10 +14,11 @@ GetCV(DT, NR = 4, NC = 3, Path_Grid)
 \item{Path_Grid}{String, the file path to the reference grid used for rasterizing the input data.}
 }
 \value{
-The function returns a modified version of the input dataset (DT) with an additional column indicating the cross-validation fold each record belongs to. This allows for spatially-aware cross-validation processes.
+The function returns a modified version of the input dataset \code{DT} with an additional column indicating the cross-validation fold each record belongs to. This allows for spatially-aware cross-validation processes.
 }
 \description{
-This function prepares cross-validation data by dividing the input dataset into spatial blocks. It is designed to work with spatial data, specifically for scenarios where spatial autocorrelation might influence the cross-validation process.
+This function prepares cross-validation data by dividing the input dataset into spatial blocks. The function uses \link[blockCV:cv_spatial]{blockCV::cv_spatial} function to assign grid cells to cross-validation folds. It is designed to work with spatial data, specifically for scenarios where spatial autocorrelation might influence the cross-validation process.
+The function may need some improvement to implement more than cross-validation strategy.
 }
 \author{
 Ahmed El-Gabbas

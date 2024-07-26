@@ -17,20 +17,19 @@ SaveMultiple(
 
 \item{OutFolder}{A string specifying the path to the output folder where the \code{.RData} files will be saved. Defaults to the current working directory.}
 
-\item{Overwrite}{A logical value indicating whether existing \code{.RData} files should be overwritten. If \code{FALSE} and files exist, the function will stop with an error message. Defaults to \code{FALSE}.}
+\item{Overwrite}{A logical value indicating whether existing \code{.RData} files should be overwritten. If \code{FALSE} (Default) and files exist, the function will stop with an error message.}
 
 \item{Prefix}{A string to be prefixed to each output file name. Useful for organizing saved files or avoiding name conflicts. Defaults to an empty string.}
 
 \item{Verbose}{A logical value indicating whether to print a message upon successful saving of files. Defaults to \code{FALSE}.}
 }
 \value{
-Invisible \code{NULL}. The function is used for its side effect of saving files and does not return a value.
+The function is used for its side effect of saving files and does not return a value.
 }
 \description{
 This function saves specified variables from the global environment to separate \code{.RData} files. It allows for optional file prefixing and overwriting of existing files.
 }
 \examples{
-\donttest{
 TMP_Folder <- file.path(tempdir(), stringi::stri_rand_strings(1, 5))
 fs::dir_create(TMP_Folder)
 
@@ -72,7 +71,6 @@ SaveMultiple(Vars = c("x1", "x2", "x3"), OutFolder = TMP_Folder, Overwrite = TRU
 (x2Contents <- IASDT.R::LoadAs(file.path(TMP_Folder, "x2.RData")))
 
 (x3Contents <- IASDT.R::LoadAs(file.path(TMP_Folder, "x3.RData")))
-}
 }
 \author{
 Ahmed El-Gabbas

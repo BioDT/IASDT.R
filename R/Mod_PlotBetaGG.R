@@ -4,11 +4,11 @@
 
 #' Heatmaps of parameter estimates or posterior support values of species' environmental responses (Beta parameters)
 #'
-#' This function generates heatmaps of parameter estimates or posterior support values for species' environmental responses, represented by Beta parameters. It is designed to visualize how species (Y) respond to various covariates (X) using ggplot2 for plotting. The function is an adaptation of [Hmsc::plotBeta], focusing on ggplot2-based visualizations.
+#' This function generates heatmaps of parameter estimates or posterior support values for species' environmental responses, represented by Beta parameters. It is designed to visualize how species (Y) respond to various covariates (X) using `ggplot2` for plotting. The function is an adaptation of [Hmsc::plotBeta], focusing on `ggplot2`-based visualizations.
 #'
-#' @param Path_Model String. The path to the .RData file containing the selected model.
+#' @param Path_Model String. The path to the `.RData` file containing the selected model.
 #' @param supportLevel Numeric. The threshold for posterior support used in plotting. Values above this threshold (and below 1 - threshold) are considered significant and will be plotted. The default value is 0.95, indicating 95% posterior support. For more information, see [Hmsc::plotBeta]
-#' @param PlotWidth,PlotHeight Numeric. The width and height of the plot in centimeters. Default is 18 cm x 20 cm.
+#' @param PlotWidth,PlotHeight Numeric. The width and height of the plot in centimeters. Default is `18` cm x `20` cm.
 #' @return The function does not return a value but saves heatmap plots as JPEG files in a directory related to the model's path.
 #' @name PlotBetaGG
 #' @export
@@ -107,7 +107,7 @@ PlotBetaGG <- function(
 
   Plot_Sign <- (
     Plot_SignD %>%
-      sign() %>%
+      sign(x = .) %>%
       t() %>%
       as.data.frame() %>%
       dplyr::mutate_all(as.character) %>%

@@ -12,8 +12,8 @@
 #' @param ntasks Integer. The value for the `#SBATCH --ntasks=` SLURM argument. Default: 1.
 #' @param CpusPerTask Integer. The value for the `#SBATCH --cpus-per-task=` SLURM argument. Default: 1.
 #' @param GpusPerNode Integer. The value for the `#SBATCH --gpus-per-node=` SLURM argument. Default: 1.
-#' @param MemPerCpu String. The value for the `#SBATCH --mem-per-cpu=` SLURM argument. Example: "32G" to request 32 gigabytes.
-#' @param Time String. The value for the requested time for each job in the bash arrays. Example: "01:00:00" to request an hour.
+#' @param MemPerCpu String. The value for the `#SBATCH --mem-per-cpu=` SLURM argument. Example: `32G` to request 32 gigabytes.
+#' @param Time String. The value for the requested time for each job in the bash arrays. Example: `01:00:00` to request an hour.
 #' @param Partition String. The name of the partition. Default: `small-g`.
 #' @param EnvFile String. Path to read the environment variables. Default value: `.env`.
 #' @param FromHPC Logical. Indicates if the operation is being performed from an HPC environment. This adjusts file paths accordingly. Default: `TRUE`.

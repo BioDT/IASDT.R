@@ -27,10 +27,12 @@ The function will stop and throw an error if the specified path does not exist, 
 git_log(Path = "C:/")
 
 # Show the most recent commit
-git_log(Path = ".", 1)
+git_log(Path = ".", Num = 1)
 
 # Show the most recent 5 commits
-git_log(Path = ".", 5)
+git_log(Path = ".", Num = 5)
+
+git_log(Path = ".", Num = 5, ReturnLog = TRUE)
 }
 \seealso{
 \link{System}

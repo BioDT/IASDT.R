@@ -19,10 +19,12 @@
 #' git_log(Path = "C:/")
 #'
 #' # Show the most recent commit
-#' git_log(Path = ".", 1)
+#' git_log(Path = ".", Num = 1)
 #'
 #' # Show the most recent 5 commits
-#' git_log(Path = ".", 5)
+#' git_log(Path = ".", Num = 5)
+#'
+#' git_log(Path = ".", Num = 5, ReturnLog = TRUE)
 
 git_log <- function(Path = ".", Num = NULL, ReturnLog = FALSE) {
 
@@ -49,14 +51,26 @@ git_log <- function(Path = ".", Num = NULL, ReturnLog = FALSE) {
 
   # Check if the directory is a Git repo
   is_git <- tryCatch({
-    system(git_check_command, intern = TRUE) %>%
-      magrittr::equals("true") %>%
+    result <- system(
+      command = git_check_command, intern = TRUE, ignore.stderr = TRUE) %>%
       suppressWarnings()
-  }, error = function(e) FALSE)
 
+    if (length(result) == 0) {
+      message("The git_check_command returned an empty result.")
+      return(invisible(NULL))
+    }
+    result
+  },
+  error = function(e) {
+    message("Error checking if directory is a Git repository: ", e$message)
+    return(invisible(NULL))
+  })
 
-  if (is_git) {
+  if (is.null(is_git)) {
+    stop("Failed to determine if the directory is a Git repository.")
+  }
 
+  if (is_git == "true") {
     # Construct the command to get the Git log
     log_command <- paste0(
       'git -C ', shQuote(Path), ' log --graph --pretty=format:"%Cred%h%Creset ',
@@ -66,7 +80,8 @@ git_log <- function(Path = ".", Num = NULL, ReturnLog = FALSE) {
     # Execute the command and capture the output
     log_output <- tryCatch({
       IASDT.R::System(log_command, RObj = TRUE)
-    }, error = function(e) {
+    },
+    error = function(e) {
       stop(
         "Failed to retrieve Git log. Ensure Git is installed and the directory is a valid Git repository.",
         call. = FALSE)
@@ -78,7 +93,7 @@ git_log <- function(Path = ".", Num = NULL, ReturnLog = FALSE) {
         cat(log_output, sep = "\n")
       } else {
         if (is.numeric(Num) && Num > 0) {
-          cat(head(log_output, n = Num), sep = "\n")
+          cat(utils::head(log_output, n = Num), sep = "\n")
         } else {
           stop("The 'Num' argument can be either NULL to show the complete log or a positive numeric value to show the most recent commits.", call. = FALSE)
         }

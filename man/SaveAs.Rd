@@ -7,17 +7,22 @@
 SaveAs(InObj, OutObj, OutPath)
 }
 \arguments{
-\item{InObj}{The input object to be saved. This can be an actual R object or a character string representing the name of an object.}
+\item{InObj}{The input object to be saved. This can be an actual R object or
+a character string representing the name of an object.}
 
-\item{OutObj}{A character string specifying the new name for the saved object. This name is used when the object is loaded back into R.}
+\item{OutObj}{A character string specifying the new name for the saved
+object. This name is used when the object is loaded back into R.}
 
-\item{OutPath}{A character string specifying the file path (\verb{*.RData}) where the object should be saved. This includes the directory and the file name.}
+\item{OutPath}{A character string specifying the file path (\verb{*.RData}) where
+the object should be saved. This includes the directory and the file name.}
 }
 \value{
-The function does not return a value but saves an object to the specified file path.
+The function does not return a value but saves an object to the
+specified file path.
 }
 \description{
-This function saves an R object to a specified file path with a potentially new name. It is useful for renaming objects during the save process.
+This function saves an R object to a specified file path with a potentially
+new name. It is useful for renaming objects during the save process.
 }
 \examples{
 TMP_Folder <- file.path(tempdir(), stringi::stri_rand_strings(1, 5))

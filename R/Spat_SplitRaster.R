@@ -4,19 +4,29 @@
 
 #' Split a raster object into a list of smaller rasters
 #'
-#' Split a raster object into a list of smaller rasters based on specified numbers of rows and columns. It can optionally save the resulting rasters to disk, plot them, or return just their extents.
-#'
-#' @param raster A raster object to be split. If NULL (the default), the function will not execute.
-#' @param Ncol,Nrow Integer. The desired number of columns and rows to split the raster into. Default is 4 columns and 4 rows.
-#' @param save Logical. Indicates whether to save the split rasters to disk. Default is `FALSE`.
-#' @param SplitPath Character string. Specifies the directory path where the split rasters should be saved if `save` is `TRUE`. If the directory does not exist, it will be created.
-#' @param plot Logical. Indicates whether to plot the split rasters. Default is `FALSE`.
-#' @param Extent Logical. If `TRUE`, the function returns only the extents of the split rasters instead of the raster data. Default is `FALSE`.
+#' Split a raster object into a list of smaller rasters based on specified
+#' numbers of rows and columns. It can optionally save the resulting rasters to
+#' disk, plot them, or return just their extents.
+#' @param raster A raster object to be split. If NULL (the default), the
+#'   function will not execute.
+#' @param Ncol,Nrow Integer. The desired number of columns and rows to split the
+#'   raster into. Default is 4 columns and 4 rows.
+#' @param save Logical. Indicates whether to save the split rasters to disk.
+#'   Default is `FALSE`.
+#' @param SplitPath Character string. Specifies the directory path where the
+#'   split rasters should be saved if `save` is `TRUE`. If the directory does
+#'   not exist, it will be created.
+#' @param plot Logical. Indicates whether to plot the split rasters. Default is
+#'   `FALSE`.
+#' @param Extent Logical. If `TRUE`, the function returns only the extents of
+#'   the split rasters instead of the raster data. Default is `FALSE`.
 #' @name SplitRaster
 #' @author Ahmed El-Gabbas
-#' @return A list of raster objects or extents of the split rasters, depending on the value of the `Extent` parameter.
+#' @return A list of raster objects or extents of the split rasters, depending
+#'   on the value of the `Extent` parameter.
 #' @export
-#' @references Click [here](https://stackoverflow.com/questions/29784829/) and [here](https://stackoverflow.com/questions/22109774/r-raster-mosaic-from-list-of-rasters)
+#' @references Click [here](https://stackoverflow.com/questions/29784829/) and
+#'   [here](https://stackoverflow.com/q/22109774)
 #' @examples
 #' library(raster)
 #' logo <- raster(system.file("external/rlogo.grd", package = "raster"))
@@ -92,7 +102,8 @@ SplitRaster <- function(
   if (plot) {
     graphics::par(mfrow = c(Nrow, Ncol))
     for (i in seq_along(r_list)) {
-      raster::plot(r_list[[i]], axes = FALSE, legend = FALSE, bty = "n", box = FALSE)
+      raster::plot(
+        r_list[[i]], axes = FALSE, legend = FALSE, bty = "n",  box = FALSE)
     }
   }
   return(r_list)

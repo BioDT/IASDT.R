@@ -13,21 +13,32 @@ SaveMultiple(
 )
 }
 \arguments{
-\item{Vars}{A character vector specifying the names of the variables to be saved. If \code{NULL} or any specified variable does not exist in the global environment, the function will stop with an error.}
+\item{Vars}{A character vector specifying the names of the variables to be
+saved. If \code{NULL} or any specified variable does not exist in the global
+environment, the function will stop with an error.}
 
-\item{OutFolder}{A string specifying the path to the output folder where the \code{.RData} files will be saved. Defaults to the current working directory.}
+\item{OutFolder}{A string specifying the path to the output folder where the
+\code{.RData} files will be saved. Defaults to the current working directory.}
 
-\item{Overwrite}{A logical value indicating whether existing \code{.RData} files should be overwritten. If \code{FALSE} (Default) and files exist, the function will stop with an error message.}
+\item{Overwrite}{A logical value indicating whether existing \code{.RData} files
+should be overwritten. If \code{FALSE} (Default) and files exist, the function
+will stop with an error message.}
 
-\item{Prefix}{A string to be prefixed to each output file name. Useful for organizing saved files or avoiding name conflicts. Defaults to an empty string.}
+\item{Prefix}{A string to be prefixed to each output file name. Useful for
+organizing saved files or avoiding name conflicts. Defaults to an empty
+string.}
 
-\item{Verbose}{A logical value indicating whether to print a message upon successful saving of files. Defaults to \code{FALSE}.}
+\item{Verbose}{A logical value indicating whether to print a message upon
+successful saving of files. Defaults to \code{FALSE}.}
 }
 \value{
-The function is used for its side effect of saving files and does not return a value.
+The function is used for its side effect of saving files and does not
+return a value.
 }
 \description{
-This function saves specified variables from the global environment to separate \code{.RData} files. It allows for optional file prefixing and overwriting of existing files.
+This function saves specified variables from the global environment to
+separate \code{.RData} files. It allows for optional file prefixing and
+overwriting of existing files.
 }
 \examples{
 \dontrun{

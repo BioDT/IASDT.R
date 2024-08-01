@@ -4,18 +4,20 @@
 #
 #' Determine the file type of a given file path
 #'
-#' This function uses the system's `file` command to determine the type of the file specified by the `Path` parameter. It returns a character string describing the file type.
-#'
-#' @param Path A character string specifying the path to the file whose type is to be determined. The path must not be NULL, and the file must exist.
-#'
+#' This function uses the system's `file` command to determine the type of the
+#' file specified by the `Path` parameter. It returns a character string
+#' describing the file type.
+#' @param Path A character string specifying the path to the file whose type
+#' is to be determined. The path must not be NULL, and the file must exist.
 #' @return A character string describing the file type.
 #' @name FileType
+#' @export
+#' @note This function relies on the system's `file` command and therefore
+#'    might produce different outputs on different platforms.
 #' @examples
 #' (f <- system.file("ex/elev.tif", package="terra"))
 #'
 #' FileType(Path = f)
-#' @export
-#' @note This function relies on the system's `file` command and therefore might produce different outputs on different platforms.
 
 FileType <- function(Path) {
   if (is.null(Path)) {

@@ -4,16 +4,26 @@
 
 #' Save multiple objects to their respective `.RData` files
 #'
-#' This function saves specified variables from the global environment to separate `.RData` files. It allows for optional file prefixing and overwriting of existing files.
-#'
-#' @param Vars A character vector specifying the names of the variables to be saved. If `NULL` or any specified variable does not exist in the global environment, the function will stop with an error.
-#' @param OutFolder  A string specifying the path to the output folder where the `.RData` files will be saved. Defaults to the current working directory.
-#' @param Overwrite A logical value indicating whether existing `.RData` files should be overwritten. If `FALSE` (Default) and files exist, the function will stop with an error message.
-#' @param Prefix A string to be prefixed to each output file name. Useful for organizing saved files or avoiding name conflicts. Defaults to an empty string.
-#' @param Verbose A logical value indicating whether to print a message upon successful saving of files. Defaults to `FALSE`.
+#' This function saves specified variables from the global environment to
+#' separate `.RData` files. It allows for optional file prefixing and
+#' overwriting of existing files.
+#' @param Vars A character vector specifying the names of the variables to be
+#'   saved. If `NULL` or any specified variable does not exist in the global
+#'   environment, the function will stop with an error.
+#' @param OutFolder  A string specifying the path to the output folder where the
+#'   `.RData` files will be saved. Defaults to the current working directory.
+#' @param Overwrite A logical value indicating whether existing `.RData` files
+#'   should be overwritten. If `FALSE` (Default) and files exist, the function
+#'   will stop with an error message.
+#' @param Prefix A string to be prefixed to each output file name. Useful for
+#'   organizing saved files or avoiding name conflicts. Defaults to an empty
+#'   string.
+#' @param Verbose A logical value indicating whether to print a message upon
+#'   successful saving of files. Defaults to `FALSE`.
 #' @name SaveMultiple
 #' @author Ahmed El-Gabbas
-#' @return The function is used for its side effect of saving files and does not return a value.
+#' @return The function is used for its side effect of saving files and does not
+#'   return a value.
 #' @export
 #' @examples
 #' \dontrun{
@@ -79,7 +89,9 @@ SaveMultiple <- function(
   missing_vars <- setdiff(Vars, ls(envir = env))
 
   if (length(missing_vars) > 0) {
-    stop(paste0("Variable(s) ", paste0(missing_vars, collapse = " & "), " do not exist in the caller environment.\n"))
+    stop(paste0(
+      "Variable(s) ", paste0(missing_vars, collapse = " & "),
+      " do not exist in the caller environment.\n"))
   } else {
     fs::dir_create(OutFolder)
   }
@@ -91,7 +103,9 @@ SaveMultiple <- function(
     any()
 
   if (FilesExist && !Overwrite) {
-    message("Some files already exist. No files are saved. Please use overwrite = TRUE")
+    message(paste0(
+      "Some files already exist. No files are saved. ",
+      "Please use overwrite = TRUE"))
   } else {
 
     purrr::walk(
@@ -107,7 +121,8 @@ SaveMultiple <- function(
 
     if (AllExist) {
       if (Verbose) {
-        message(paste0("All files are saved to disk in ", OutFolder, " successfully."))
+        message(paste0(
+          "All files are saved to disk in ", OutFolder, " successfully."))
       }
     } else {
       message("Some files were not saved to disk! Please check again.")

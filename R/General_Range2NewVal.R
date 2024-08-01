@@ -2,18 +2,30 @@
 # Range2NewVal ----
 ## |------------------------------------------------------------------------| #
 #
-#' Changes values within a specified range, `≥`, or `≤`  specific value to a new value in a vector, data.frame, or raster.
+#' Changes values within a specified range, `≥`, or `≤`  specific value to a new
+#' value in a vector, data.frame, or raster.
 #'
-#' This function modifies values in the input object `x` based on the specified conditions. It can operate on vectors, data.frames, or RasterLayer objects. The function allows for changing values within a specified range (`Between`), `≥` a specified value (`MoreThan`), or `≤` a specified value (`LessThan`) to a new value (`NewVal`). An option to invert the selection is also available for ranges.
-#'
+#' This function modifies values in the input object `x` based on the specified
+#' conditions. It can operate on vectors, data.frames, or RasterLayer objects.
+#' The function allows for changing values within a specified range (`Between`),
+#' `≥` a specified value (`MoreThan`), or `≤` a specified value (`LessThan`) to
+#' a new value (`NewVal`). An option to invert the selection is also available
+#' for ranges.
 #' @name Range2NewVal
 #' @author Ahmed El-Gabbas
-#' @param x A vector, data.frame, or RasterLayer object whose values are to be modified.
-#' @param Between A numeric vector of length 2 specifying the range of values to be changed or kept. If specified, `MoreThan` and `LessThan` are ignored.
-#' @param MoreThan,LessThan A numeric value specifying the threshold above/below which values in `x` will be changed to `NewVal`. Only applied if `Between` is not specified.
+#' @param x A vector, data.frame, or RasterLayer object whose values are to be
+#'   modified.
+#' @param Between A numeric vector of length 2 specifying the range of values to
+#'   be changed or kept. If specified, `MoreThan` and `LessThan` are ignored.
+#' @param MoreThan,LessThan A numeric value specifying the threshold above/below
+#'   which values in `x` will be changed to `NewVal`. Only applied if `Between`
+#'   is not specified.
 #' @param NewVal The new value to assign to the selected elements in `x`.
-#' @param InvertSelection A logical value indicating whether to invert the selection specified by `Between`. If `TRUE`, values outside the specified range are changed to `NewVal`. Default is `FALSE`.
-#' @return The modified object `x` with values changed according to the specified conditions.
+#' @param InvertSelection A logical value indicating whether to invert the
+#'   selection specified by `Between`. If `TRUE`, values outside the specified
+#'   range are changed to `NewVal`. Default is `FALSE`.
+#' @return The modified object `x` with values changed according to the
+#'   specified conditions.
 #' @export
 #' @examples
 #' # Vector
@@ -21,7 +33,8 @@
 #' Range2NewVal(x =  1:10, Between = c(5, 8), NewVal = NA)
 #'
 #'
-#' Range2NewVal(x =  1:10, Between = c(5, 8), NewVal = NA, InvertSelection = TRUE)
+#' Range2NewVal(
+#' x =  1:10, Between = c(5, 8), NewVal = NA, InvertSelection = TRUE)
 #'
 #' Range2NewVal(x =  1:10, Between = c(5, 8), NewVal = NA, MoreThan = 4)
 #'
@@ -35,9 +48,11 @@
 #'  dplyr::select(-Sepal.Length, -Petal.Length, -Petal.Width) %>%
 #'  dplyr::mutate(
 #'    Sepal.Width.New = Range2NewVal(
-#'        x = Sepal.Width, Between = c(3, 3.5), NewVal = NA, InvertSelection = FALSE),
+#'        x = Sepal.Width, Between = c(3, 3.5), NewVal = NA,
+#'         InvertSelection = FALSE),
 #'    Sepal.Width.Rev = Range2NewVal(
-#'        x = Sepal.Width, Between = c(3, 3.5), NewVal = NA, InvertSelection = TRUE)) %>%
+#'        x = Sepal.Width, Between = c(3, 3.5), NewVal = NA,
+#'         InvertSelection = TRUE)) %>%
 #'  dplyr::arrange(-Sepal.Width) %>%
 #'  print(n = 50)
 #'

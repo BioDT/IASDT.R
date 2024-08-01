@@ -11,29 +11,79 @@ Mod_PrepData(
   BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
   ReturnData = FALSE,
   OutputPath = NULL,
-  VerboseProgress = FALSE
+  VerboseProgress = FALSE,
+  FromHPC = TRUE
 )
 }
 \arguments{
-\item{Hab_Abb}{Character. Habitat abbreviation indicating the specific \code{SynHab} habitat type to prepare data for. Valid values: c("0", "1", "2", "3", "4a", "4b", "5", "6", "8", "10", "12a", "12b"). "0" means prepare data irrespective of the habitat type}
+\item{Hab_Abb}{Character. Habitat abbreviation indicating the specific
+\href{https://www.preslia.cz/article/pdf?id=11548}{SynHab} habitat type to
+prepare data for. Valid values include "0", "1", "2", "3", "4a", "4b",
+"10", "12a", "12b". If \code{Hab_Abb} = "0", data is prepared irrespective of
+the habitat type.}
 
-\item{MinPresGrids}{Integer. Minimum number of presence grid cells required for a species to be included in the analysis. Defaults to 50.}
+\item{MinPresGrids}{Integer. Minimum number of presence grid cells required
+for a species to be included in the analysis. Defaults to 50.}
 
-\item{EnvFile}{Character. Path to the environment file containing paths to data sources. Defaults to \code{.env}.}
+\item{EnvFile}{Character. Path to the environment file containing paths to
+data sources. Defaults to \code{.env}.}
 
-\item{BioVars}{Character vector. Specifies the bioclimatic variables to be included from the CHELSA dataset. Defaults to a selection of variables: "bio4", "bio6", "bio8", "bio12", "bio15", and "bio18".}
+\item{BioVars}{Character vector. Specifies the bioclimatic variables to be
+included from the CHELSA dataset. Defaults to a selection of variables:
+"bio4", "bio6", "bio8", "bio12", "bio15", and "bio18".}
 
-\item{ReturnData}{Logical. Indicates whether the processed data should be returned as an R object. Defaults to \code{FALSE}, meaning the data will not be returned but only saved to disk.}
+\item{ReturnData}{Logical. Indicates whether the processed data should be
+returned as an R object. Defaults to \code{FALSE}, meaning the data will not be
+returned but only saved to disk.}
 
 \item{OutputPath}{Character. Path where the output file should be saved.}
 
-\item{VerboseProgress}{Logical. Indicates whether progress messages should be displayed. Defaults to \code{FALSE}.}
+\item{VerboseProgress}{Logical. Indicates whether progress messages should be
+displayed. Defaults to \code{FALSE}.}
+
+\item{FromHPC}{Logical indicating whether the work is being done from HPC, to
+adjust file paths accordingly. Default: \code{TRUE}.}
 }
 \value{
-If \code{ReturnData} is \code{TRUE}, returns a data frame containing the modelling data. Otherwise, invisibly returns \code{NULL}.
+If \code{ReturnData} is \code{TRUE}, returns a data frame containing the
+modelling data. Otherwise, invisibly returns \code{NULL}.
 }
 \description{
-This function prepares habitat-specific data for Hmsc models by processing environmental and species presence data. It checks input arguments, reads environment variables from a file, verifies paths, loads and filters species data based on habitat type and minimum presence grid cells per species, and merges various environmental layers (e.g., CHELSA bioclimatic variables, habitat coverage, road and railway intensity, sampling intensity) into a single dataset. The processed data can be saved to disk and/or returned as an R object.
+This function prepares habitat-specific data for Hmsc models by processing
+environmental and species presence data. It checks input arguments, reads
+environment variables from a file, verifies paths, loads and filters species
+data based on habitat type and minimum presence grid cells per species, and
+merges various environmental layers (e.g., CHELSA bioclimatic variables,
+habitat coverage, road and railway intensity, sampling intensity) into a
+single dataset. The processed data can be saved to disk and/or returned as an
+R object.
+}
+\details{
+The function reads the following environment variables:
+\itemize{
+\item \strong{\code{DP_R_Path_Grid}} (if \code{FromHPC} = \code{TRUE}) or \strong{\code{DP_R_Path_Grid_Local}} (if
+\code{FromHPC} = \code{FALSE}). The function reads the content of the following files
+in this path: \code{Grid_10_sf.RData}, \code{Grid_10_Land_Crop.RData}, and
+\code{Grid_10_Land_Crop_sf_Country.RData}
+\item \strong{\code{DP_R_Path_PA}} (if \code{FromHPC} = \code{TRUE}) or \strong{\code{DP_R_Path_PA_Local}} (if \code{FromHPC} = \code{FALSE}). The function reads the content of the \code{Sp_PA_Summary_DF.RData} file from this path.
+\item \strong{\code{DP_R_Path_CLC_Summary}}: Path containing the
+\code{PercCov_SynHab_Crop.RData} file. This file contains maps for the
+percentage coverage of each SynHab habitat type per grid cell.
+\item \strong{\code{DP_R_Path_CHELSA_Time_CC}}: Path containing the
+\code{St_1981_2010.RData} file. This file contains processed CHELSA data for the
+current climate.
+\item \strong{\code{DP_R_Path_Roads}}: Path for processed road data. The function reads
+the contents of: \code{Road_Length.RData} for the total length of any road type
+per grid cell and \code{Dist2Road.RData} for the minimum distance between the
+centroid of each grid cell and the nearest road.
+\item \strong{\code{DP_R_Path_Railway}}: Path for processed railway data. The function
+reads the contents of: \code{Railway_Length.RData} for the total length of any
+railway type per grid cell and \code{Dist2Rail.RData} for the minimum distance
+between the centroid of each grid cell and the nearest railway.
+\item \strong{\code{DP_R_Path_Bias}}: Path for processed sampling efforts analysis. The
+function reads the content of \code{Bias_GBIF_SummaryR.RData} file containing
+the total number of GBIF vascular plant observations per grid cell.
+}
 }
 \author{
 Ahmed El-Gabbas

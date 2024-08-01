@@ -4,14 +4,21 @@
 
 #' Fit Hmsc-HPC models on UFZ Windows Server
 #'
-#' This function fits Hmsc models on a UFZ Windows Server. It reads model configurations from a specified path, loads environment variables, checks input arguments for validity, and executes model fitting in parallel if required.
-#' #'
+#' This function fits Hmsc models on a UFZ Windows Server. It reads model
+#' configurations from a specified path, loads environment variables, checks
+#' input arguments for validity, and executes model fitting in parallel if
+#' required. #'
 #' @param Path_Model String. Path to the model files (without trailing slash).
-#' @param EnvFile Path to the file containing environment variables. Defaults to ".env".
+#' @param EnvFile Path to the file containing environment variables. Defaults to
+#'   ".env".
 #' @param NCores Integer. Number of cores to use for parallel processing.
 #' @name Mod_Fit_WS
 #' @author Ahmed El-Gabbas
-#' @return The function does not return anything but prints messages to the console regarding the progress and completion of model fitting.
+#' @return The function does not return anything but prints messages to the
+#'   console regarding the progress and completion of model fitting.
+#' @details The function reads the following environment variable:
+#'    - **`DP_R_Path_HmscVE_Win`** for the path of the `Hmsc-HPC` Python
+#'    virtual environment under windows operating system.
 #' @export
 
 Mod_Fit_WS <- function(Path_Model, EnvFile = ".env", NCores = NULL) {
@@ -30,7 +37,7 @@ Mod_Fit_WS <- function(Path_Model, EnvFile = ".env", NCores = NULL) {
 
   if (file.exists(EnvFile)) {
     readRenviron(EnvFile)
-    Path_Hmsc_WS <- Sys.getenv("DP_R_Mod_Path_VE_WS")
+    Path_Hmsc_WS <- Sys.getenv("DP_R_Path_HmscVE_Win")
   } else {
     stop(paste0(
       "Path for environment variables: ", EnvFile, " was not found"))

@@ -9,17 +9,29 @@ SplitDF2Chunks(DF = NULL, ChunkSize = NULL, NChunks = NULL, Prefix = "Chunk")
 \arguments{
 \item{DF}{data.frame. The data.frame to be split into chunks.}
 
-\item{ChunkSize}{integer (optional). The desired number of rows each chunk should contain. It must be a positive integer and less than the number of rows in \code{DF}.}
+\item{ChunkSize}{integer (optional). The desired number of rows each chunk
+should contain. It must be a positive integer and less than the number of
+rows in \code{DF}.}
 
-\item{NChunks}{integer (optional). The desired number of chunks to split the data.frame into. It must be a positive integer.}
+\item{NChunks}{integer (optional). The desired number of chunks to split the
+data.frame into. It must be a positive integer.}
 
-\item{Prefix}{Character. A string value that will be used as a prefix for the names of the chunks. Default is "Chunk".}
+\item{Prefix}{Character. A string value that will be used as a prefix for the
+names of the chunks. Default is "Chunk".}
 }
 \value{
-A list of data.frames, where each data.frame represents a chunk of the original data.frame. The names of the list elements are constructed using the \code{Prefix} parameter followed by an underscore and the chunk number (e.g., "Chunk_1", "Chunk_2", ...).
+A list of data.frames, where each data.frame represents a chunk of
+the original data.frame. The names of the list elements are constructed
+using the \code{Prefix} parameter followed by an underscore and the chunk number
+(e.g., "Chunk_1", "Chunk_2", ...).
 }
 \description{
-This function divides a data.frame into smaller chunks based on the specified number of rows per chunk (\code{ChunkSize}) or the specified number of chunks (\code{NChunks}). If neither is provided, it defaults to splitting the data.frame into  a minimum of 5 chunks or less if the data.frame has fewer than 5 rows. The function ensures that the data is evenly distributed among the chunks as much as possible.
+This function divides a data.frame into smaller chunks based on the specified
+number of rows per chunk (\code{ChunkSize}) or the specified number of chunks
+(\code{NChunks}). If neither is provided, it defaults to splitting the data.frame
+into  a minimum of 5 chunks or less if the data.frame has fewer than 5 rows.
+The function ensures that the data is evenly distributed among the chunks as
+much as possible.
 }
 \examples{
 SplitDF2Chunks(mtcars, ChunkSize = 16)

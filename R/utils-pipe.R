@@ -26,6 +26,8 @@ NULL
   packageDateInfo <- utils::packageDescription("IASDT.R")$Date
 
   # Display the startup message
-  packageStartupMessage(paste0("IASDT.R v", packageVersionInfo, " - Last updated on ", packageDateInfo))
+  packageStartupMessage(
+    paste0("IASDT.R v", packageVersionInfo,
+           " - Last updated on ", packageDateInfo))
 
 }

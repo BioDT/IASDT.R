@@ -4,18 +4,32 @@
 
 #' Project Chelsa data to the study area
 #'
-#' This function processes Chelsa climate data, projects it to a specified reference grid, and optionally saves the output in NetCDF or TIFF format. It supports downloading data from a URL, applying a land mask, and adjusting data with scale and offset values.
-#'
+#' This function processes Chelsa climate data, projects it to a specified
+#' reference grid, and optionally saves the output in NetCDF or TIFF format. It
+#' supports downloading data from a URL, applying a land mask, and adjusting
+#' data with scale and offset values.
 #' @name Chelsa_Project
 #' @param InputFile character; file path or URL for input tif file
-#' @param OutFile character; the file path or URL for the input TIFF file. If a URL is provided, the file is downloaded for processing.
-#' @param GridFile either a `RasterLayer`, `SpatRaster`, or `PackedSpatRaster` object; the reference grid to which the input data will be projected. The output maps will be masked to this grid.
-#' @param ReturnMap logical; if `TRUE`, the processed map (as a `PackedSpatRaster` object) is returned. Defaults to `FALSE`.
-#' @param DownPath character; the directory path where downloaded files (if `InputFile` is a URL) are saved. If not specified, a temporary file is used.
-#' @param KeepDownloaded logical; determines whether the downloaded file (if `InputFile` is a URL) should be kept after processing. Defaults to `TRUE`.
-#' @param SaveTiff logical; if `TRUE`, the output map is also saved as a TIFF file in addition to the default NetCDF format. Defaults to `FALSE`.
-#' @param CompressLevel integer; specifies the compression level for the exported NetCDF file, ranging from 1 (least compression) to 9 (most compression). Defaults to 5.
-#' @return Depending on the `ReturnMap` parameter, either a `PackedSpatRaster` object is returned, or nothing is returned. The function always writes at least one file to disk (NetCDF or TIFF).
+#' @param OutFile character; the file path or URL for the input TIFF file. If a
+#'   URL is provided, the file is downloaded for processing.
+#' @param GridFile either a `RasterLayer`, `SpatRaster`, or `PackedSpatRaster`
+#'   object; the reference grid to which the input data will be projected. The
+#'   output maps will be masked to this grid.
+#' @param ReturnMap logical; if `TRUE`, the processed map (as a
+#'   `PackedSpatRaster` object) is returned. Defaults to `FALSE`.
+#' @param DownPath character; the directory path where downloaded files (if
+#'   `InputFile` is a URL) are saved. If not specified, a temporary file is
+#'   used.
+#' @param KeepDownloaded logical; determines whether the downloaded file (if
+#'   `InputFile` is a URL) should be kept after processing. Defaults to `TRUE`.
+#' @param SaveTiff logical; if `TRUE`, the output map is also saved as a TIFF
+#'   file in addition to the default NetCDF format. Defaults to `FALSE`.
+#' @param CompressLevel integer; specifies the compression level for the
+#'   exported NetCDF file, ranging from 1 (least compression) to 9 (most
+#'   compression). Defaults to 5.
+#' @return Depending on the `ReturnMap` parameter, either a `PackedSpatRaster`
+#'   object is returned, or nothing is returned. The function always writes at
+#'   least one file to disk (NetCDF or TIFF).
 #' @author Ahmed El-Gabbas
 #' @export
 
@@ -35,7 +49,8 @@ Chelsa_Project <- function(
   # Ensure that the reference grid is not null
   if (is.null(GridFile)) stop("GridFile can not be empty")
 
-  # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use official parameters (overriding the ones from GeoTIFF keys)
+  # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use official
+  # parameters (overriding the ones from GeoTIFF keys)
   terra::setGDALconfig("GTIFF_SRS_SOURCE", "EPSG")
 
   # Input file name
@@ -77,7 +92,9 @@ Chelsa_Project <- function(
 
   if (Remote) {
 
-    if (is.null(OutFile)) stop("OutFile can not be empty if the input file is an URL")
+    if (is.null(OutFile)) {
+      stop("OutFile can not be empty if the input file is an URL")
+    }
 
     # Folder to download the file
     if (is.null(DownPath)) {
@@ -129,15 +146,24 @@ Chelsa_Project <- function(
   # read tif file as terra SpatRaster object
   # ||||||||||||||||||||||||||||||||||||||||
 
-  # terra package by default considers the scale and offset information stored in the tiff files. Here I disable this to read the raw values as it is and later consider the scale and offset information manually. This is more safe as I found that some of the future projections do not include such information in the tiff files.
+  # terra package by default considers the scale and offset information stored
+  # in the tiff files. Here I disable this to read the raw values as it is and
+  # later consider the scale and offset information manually. This is more safe
+  # as I found that some of the future projections do not include such
+  # information in the tiff files.
   Rstr <- terra::rast(DownPath, raw = TRUE) %>%
     stats::setNames(paste0(tools::file_path_sans_ext(InputName), ".tif")) %>%
-    # crop to European boundaries
-    # although it is not necessary to crop the input maps into the European boundaries, we will crop the data prior to projection. Cropping will make the values of the raster read from memory not from the file. This is a workaround to avoid wrong extreme values in the output file because of a bug in terra package (see this issue: https://github.com/rspatial/terra/issues/1356) [18.02.2023]
+    # crop to European boundaries although it is not necessary to crop the input
+    # maps into the European boundaries, we will crop the data prior to
+    # projection. Cropping will make the values of the raster read from memory
+    # not from the file. This is a workaround to avoid wrong extreme values in
+    # the output file because of a bug in terra package (see this issue:
+    # https://github.com/rspatial/terra/issues/1356) [18.02.2023]
     terra::crop(CropExtent) %>%
     # mask by land mask
     terra::mask(LandMaskL) %>%
-    # `gsp` maps contains extremely high values instead of NA; the following replace extreme values with NA
+    # `gsp` maps contains extremely high values instead of NA; the following
+    # replace extreme values with NA
     terra::classify(cbind(420000000, Inf, NA))
 
   rm(LandMaskL, CropExtent)
@@ -146,8 +172,8 @@ Chelsa_Project <- function(
   # Manually considering offset and scale
   # ||||||||||||||||||||||||||||||||||||||||
 
-  # For `npp` layers, all tiff maps except for current climate does have a scaling factor
-  # all scale and offset information were set manually
+  # For `npp` layers, all tiff maps except for current climate does have a
+  # scaling factor all scale and offset information were set manually
   if (VarScale != 1) Rstr <- Rstr * VarScale
   if (VarOffset != 0) Rstr <- Rstr + VarOffset
 
@@ -227,8 +253,6 @@ Chelsa_Project <- function(
   # ||||||||||||||||||||||||||||||||||||||||
   # Return map?
   # ||||||||||||||||||||||||||||||||||||||||
-
-  invisible(gc())
 
   if (ReturnMap) {
     return(terra::wrap(Rstr))

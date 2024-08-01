@@ -7,13 +7,17 @@
 RespCurv_PlotSR(Path_RC)
 }
 \arguments{
-\item{Path_RC}{String. The path to the directory containing the response curve data.}
+\item{Path_RC}{String. The path to the directory containing the response
+curve data.}
 }
 \value{
-This function does not return a value but saves JPEG images of the response curves in a subdirectory within the specified path.
+This function does not return a value but saves JPEG images of the
+response curves in a subdirectory within the specified path.
 }
 \description{
-This function generates and saves species richness response curves as JPEG images for each variable in the dataset. It processes data from a specified directory, creates plots, and saves them in a subdirectory.
+This function generates and saves species richness response curves as JPEG
+images for each variable in the dataset. It processes data from a specified
+directory, creates plots, and saves them in a subdirectory.
 }
 \seealso{
 RespCurv_PlotSp RespCurv_PrepData

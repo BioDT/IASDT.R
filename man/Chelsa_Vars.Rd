@@ -7,10 +7,16 @@
 Chelsa_Vars()
 }
 \value{
-A tibble with columns: Variable (character), Long_name (character), unit (character), scale (numeric), offset (numeric), and explanation (character). Each row represents a different climate variable.
+A tibble with columns: Variable (character), Long_name (character),
+unit (character), scale (numeric), offset (numeric), and explanation
+(character). Each row represents a different climate variable.
 }
 \description{
-This function returns a tibble containing detailed information about various climate variables used in the Chelsa climate data set. Each row in the tibble represents a different climate variable, with columns providing additional details such as the long name, unit, scale, offset, and an explanation of the variable.
+This function returns a tibble containing detailed information about various
+climate variables used in the Chelsa climate data set. Each row in the tibble
+represents a different climate variable, with columns providing additional
+details such as the long name, unit, scale, offset, and an explanation of the
+variable.
 }
 \details{
 \href{https://chelsa-climate.org/bioclim/}{click here}

@@ -4,28 +4,50 @@
 
 #' Plot variance partitioning of Hmsc model using ggplot2.
 #'
-#' This function generates and optionally saves plots visualizing the variance partitioning of a Hmsc model. It can calculate variance partitioning and model evaluation if not provided and supports parallel computation for model predictions.
-#'
-#' @param Model an object of class `Hmsc` or a path for the model file. Only needed if one of `ModelEval` and `VarPar` arguments are `NULL`.
+#' This function generates and optionally saves plots visualizing the variance
+#' partitioning of a Hmsc model. It can calculate variance partitioning and
+#' model evaluation if not provided and supports parallel computation for model
+#' predictions.
+#' @param Model an object of class `Hmsc` or a path for the model file. Only
+#'   needed if one of `ModelEval` and `VarPar` arguments are `NULL`.
 #' @param Path_Plot String. Path where the output file(s) will be saved.
-#' @param PlotTitlePrefix String (optional). Prefix to add to the title of the plot. Default: `NULL`, which means only 'Variance partitioning' will be used in the title.
-#' @param ModelEval Result of the [Hmsc::evaluateModelFit] function. If `ModelEval = NULL` (default), [Hmsc::evaluateModelFit] will be executed on the model object to compute measures of model fit.
-#' @param NCores Integer. Number of parallel computations for computing predicted values. This is used as the `nParallel` argument of the [Hmsc::computePredictedValues] function.
-#' @param VarPar Variance partitioning object resulted from [Hmsc::computeVariancePartitioning]. If `VarPar = NULL` (default), [Hmsc::computeVariancePartitioning] will be executed on the model object.
-#' @param EnvFile String. Path to read the environment variables. Default value: `.env`
-#' @param SaveVarPar Logical. If `VarPar = NULL`, should the calculated variance partitioning be saved as an RData file?  Default: `TRUE`.
-#' @param SaveModelEval Logical. If `ModelEval = NULL`, should the calculated model evaluation be saved as an RData file?  Default: `TRUE`.
+#' @param PlotTitlePrefix String (optional). Prefix to add to the title of the
+#'   plot. Default: `NULL`, which means only 'Variance partitioning' will be
+#'   used in the title.
+#' @param ModelEval Result of the [Hmsc::evaluateModelFit] function. If
+#'   `ModelEval = NULL` (default), [Hmsc::evaluateModelFit] will be executed on
+#'   the model object to compute measures of model fit.
+#' @param NCores Integer. Number of parallel computations for computing
+#'   predicted values. This is used as the `nParallel` argument of the
+#'   [Hmsc::computePredictedValues] function.
+#' @param VarPar Variance partitioning object resulted from
+#'   [Hmsc::computeVariancePartitioning]. If `VarPar = NULL` (default),
+#'   [Hmsc::computeVariancePartitioning] will be executed on the model object.
+#' @param EnvFile String. Path to read the environment variables. Default value:
+#'   `.env`
+#' @param SaveVarPar Logical. If `VarPar = NULL`, should the calculated variance
+#'   partitioning be saved as an RData file?  Default: `TRUE`.
+#' @param SaveModelEval Logical. If `ModelEval = NULL`, should the calculated
+#'   model evaluation be saved as an RData file?  Default: `TRUE`.
 #' @param ReturnGG Logical. Return the ggplot object. Default: `FALSE`.
-#' @param SaveGG Logical. Should the plots be exported as an RData object?  Default: `TRUE`.
+#' @param SaveGG Logical. Should the plots be exported as an RData object?
+#'   Default: `TRUE`.
+#' @param FromHPC Logical. Indicates whether the function is being run on an HPC
+#'   environment, affecting file path handling. Default: `TRUE`.
 #' @name PlotVarPar
 #' @author Ahmed El-Gabbas
-#' @return If `ReturnGG` is `TRUE`, returns a ggplot object of the variance partitioning plots. Otherwise, returns `NULL`.
+#' @details The function reads the following environment variables:
+#'    - **`DP_R_Path_TaxaList`** (if `FromHPC` = `TRUE`) or
+#'    **`DP_R_Path_TaxaList_Local`** (if `FromHPC` = `FALSE`). The function
+#'    reads the content of the `TaxaList.RData` file from this path.
+#' @return If `ReturnGG` is `TRUE`, returns a ggplot object of the variance
+#'   partitioning plots. Otherwise, returns `NULL`.
 #' @export
 
 PlotVarPar <- function(
     Model, Path_Plot, PlotTitlePrefix = NULL, ModelEval = NULL, NCores,
     VarPar = NULL, EnvFile = ".env", SaveVarPar = TRUE, SaveModelEval = TRUE,
-    ReturnGG = FALSE, SaveGG = TRUE) {
+    ReturnGG = FALSE, SaveGG = TRUE, FromHPC = TRUE) {
 
   if (is.null(Model) || is.null(Path_Plot) || is.null(NCores)) {
     stop("Model, Path_Plot, and NCores cannot be empty")
@@ -67,15 +89,35 @@ PlotVarPar <- function(
   IASDT.R::CatTime("Loading species list")
   if (file.exists(EnvFile)) {
     readRenviron(EnvFile)
-    Path_TaxaList <- Sys.getenv("DP_R_Mod_Path_TaxaList")
+
+    if (FromHPC) {
+      SpNamesF <- Sys.getenv("DP_R_Path_TaxaList")
+      if (SpNamesF == "") {
+        stop("DP_R_Path_TaxaList environment variable not set.")
+      }
+
+    } else {
+      SpNamesF <- Sys.getenv("DP_R_Path_TaxaList_Local")
+      if (SpNamesF == "") {
+        stop("DP_R_Path_TaxaList_Local environment variable not set.")
+      }
+    }
+
   } else {
     stop(
       paste0(
         "Path for environment variables: ", EnvFile, " was not found"))
   }
 
-  SpList <- file.path(Path_TaxaList, "TaxaList.RData") %>%
-    IASDT.R::LoadAs() %>%
+
+  SpNamesF <- file.path(SpNamesF, "TaxaList.RData")
+
+  if (magrittr::not(file.exists(SpNamesF))) {
+    stop(paste0("TaxaList.RData file does not exist in the ",
+                SpNamesF, " folder"))
+  }
+
+  SpList <- IASDT.R::LoadAs(SpNamesF) %>%
     dplyr::select(Species = IAS_ID, Species_name) %>%
     dplyr::mutate(
       Species = stringr::str_pad(string = Species, width = 4, pad = "0"),
@@ -83,7 +125,8 @@ PlotVarPar <- function(
 
   if (purrr::some(list(ModelEval, VarPar), is.null)) {
 
-    IASDT.R::CatTime("Either ModelEval or VarPar was not provided and has to be calculated")
+    IASDT.R::CatTime(
+      "Either ModelEval or VarPar was not provided and has to be calculated")
 
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
     # Loading model
@@ -98,7 +141,6 @@ PlotVarPar <- function(
           stop("The provided path for the model does not exist")
         }
         Model <- IASDT.R::LoadAs(Model)
-        invisible(gc())
 
         if (magrittr::not(inherits(Model, "Hmsc"))) {
           stop("The loaded model is not of an Hmsc object")
@@ -121,7 +163,6 @@ PlotVarPar <- function(
         save(VarPar,
              file = file.path(Path_Plot, "VariancePartitioning_DT.RData"))
       }
-      invisible(gc())
     }
 
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -133,8 +174,12 @@ PlotVarPar <- function(
       IASDT.R::CatTime("  >>  Compute R2")
 
       IASDT.R::CatTime("  >>  >>  Compute predicted Values")
-      # 06.07.2024 - This uses the updated predict function, currently available on my forked version of the package github.com/elgabbas/Hmsc
-      # The Hmsc::evaluateModelFit function expects an array object returned from Hmsc::computePredictedValues. The `computePredictedValues` function does not work on parallel, so I used the updated predict function on parallel then converted the output to array
+      # 06.07.2024 - This uses the updated predict function, currently available
+      # on my forked version of the package github.com/elgabbas/Hmsc The
+      # Hmsc::evaluateModelFit function expects an array object returned from
+      # Hmsc::computePredictedValues. The `computePredictedValues` function does
+      # not work on parallel, so I used the updated predict function on parallel
+      # then converted the output to array
 
       preds <- IASDT.R::Mod_Pred2Array(
         Predict = TRUE, Model = Model, NCores = NCores)
@@ -143,7 +188,8 @@ PlotVarPar <- function(
       ModelEval <- Hmsc::evaluateModelFit(hM = Model, predY = preds) %>%
         suppressWarnings()
       if (SaveModelEval) {
-        save(ModelEval, file = file.path(Path_Plot, "ModelEval_explanatory.RData"))
+        save(ModelEval,
+             file = file.path(Path_Plot, "ModelEval_explanatory.RData"))
       }
 
       rm(preds)
@@ -151,7 +197,6 @@ PlotVarPar <- function(
   }
 
   rm(Model)
-  invisible(gc())
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Plot theme
@@ -222,20 +267,20 @@ PlotVarPar <- function(
     ggplot2::coord_cartesian(xlim = c(0, 1.0125), expand = FALSE) +
     Theme
 
-  invisible(gc())
-
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Raw variance partitioning
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Plot 2 - Raw variance partitioning")
 
-  if (!is.null(ModelEval$TjurR2) && length(ModelEval$TjurR2) == ncol(VarPar$vals)) {
+  if (!is.null(ModelEval$TjurR2) &&
+      length(ModelEval$TjurR2) == ncol(VarPar$vals)) {
     for (ii in seq_along(ModelEval$TjurR2)) {
       VarPar$vals[, ii] <- ModelEval$TjurR2[ii] * VarPar$vals[, ii]
     }
   } else {
-    stop("Mismatch between the length of ModelEval$TjurR2 and the number of columns in VarPar$vals")
+    stop(paste0("Mismatch between the length of ModelEval$TjurR2 and the ",
+                "number of columns in VarPar$vals"))
   }
 
   vp_df_R <- tibble::as_tibble(VarPar$vals, rownames = "variable") %>%
@@ -263,7 +308,8 @@ PlotVarPar <- function(
       Species_name = factor(Species_name, SpOrder))
 
   Plot_raw <- Plot_R_DT %>%
-    ggplot2::ggplot(ggplot2::aes(x = value, y = Species_name, fill = variable)) +
+    ggplot2::ggplot(
+      ggplot2::aes(x = value, y = Species_name, fill = variable)) +
     ggplot2::geom_bar(stat = "identity", width = 1) +
     ggplot2::theme_classic() +
     ggplot2::ylab("Species") +
@@ -271,8 +317,6 @@ PlotVarPar <- function(
     ggplot2::scale_fill_brewer(palette = "Paired") +
     ggplot2::coord_cartesian(xlim = c(0, MaxVal), expand = FALSE) +
     Theme
-
-  invisible(gc())
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Combine plots

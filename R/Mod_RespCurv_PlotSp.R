@@ -4,20 +4,29 @@
 
 #' Plot species response curves
 #'
-#' Generates and saves response curve plots for species based on environmental variables and other factors. Plots show predicted habitat suitability across different values of each variable.
-#'
-#' @param Path_RC String. Path to the directory where response curve data is stored and where plots will be saved.
-#' @param NCores Integer. Number of cores to use for parallel processing. Defaults to 20.
-#' @param EnvFile String. Path to the environment variables file. Defaults to ".env".
-#' @param SaveGG Logical. Indicates whether to save the ggplot objects as RData files. Defaults to `FALSE`.
-#' @param ShowProgress Logical. Indicates whether to show a progress bar during execution. Defaults to FALSE.
-#' @return A data frame containing paths to the JPEG images and, if requested, the ggplot objects saved as RData files.
+#' Generates and saves response curve plots for species based on environmental
+#' variables and other factors. Plots show predicted habitat suitability across
+#' different values of each variable.
+#' @param Path_RC String. Path to the directory where response curve data is
+#'   stored and where plots will be saved.
+#' @param NCores Integer. Number of cores to use for parallel processing.
+#'   Defaults to 20.
+#' @param EnvFile String. Path to the environment variables file. Defaults to
+#'   ".env".
+#' @param SaveGG Logical. Indicates whether to save the ggplot objects as RData
+#'   files. Defaults to `FALSE`.
+#' @param ShowProgress Logical. Indicates whether to show a progress bar during
+#'   execution. Defaults to FALSE.
+#' @param FromHPC Logical. Indicates whether the function is being run on an HPC
+#'   environment, affecting file path handling. Default: `TRUE`.
+#' @return A data frame containing paths to the JPEG images and, if requested,
+#'   the ggplot objects saved as RData files.
 #' @export
 #' @name RespCurv_PlotSp
 
 RespCurv_PlotSp <- function(
     Path_RC = NULL, NCores = 20, EnvFile = ".env", SaveGG = FALSE,
-    ShowProgress = FALSE) {
+    ShowProgress = FALSE, FromHPC = TRUE) {
 
   if (is.null(Path_RC)) {
     stop("Path_RC cannot be NULL")
@@ -61,7 +70,8 @@ RespCurv_PlotSp <- function(
       .f =  ~dplyr::select(IASDT.R::LoadAs(.x), -PlotData),
       .options = furrr::furrr_options(seed = TRUE, scheduling = Inf),
       .progress = ShowProgress) %>%
-    tidyr::nest(DT = tidyselect::everything(), .by = c(Coords, NFV, Species)) %>%
+    tidyr::nest(
+      DT = tidyselect::everything(), .by = c(Coords, NFV, Species)) %>%
     dplyr::mutate(
       Plot = furrr::future_pmap(
         .l = list(Coords, NFV, Species, DT),
@@ -99,7 +109,9 @@ RespCurv_PlotSp <- function(
             tidyr::pivot_wider(
               id_cols = c(Variable, VariableDesc, XVals), names_from = Quantile,
               values_from = Pred) %>%
-            stats::setNames(c("Variable", "VariableDesc", "XVals", "Q25", "Q50", "Q975"))
+            stats::setNames(
+              c("Variable", "VariableDesc", "XVals", "Q25", "Q50", "Q975"))
+
           ObsPA <- DT %>%
             dplyr::select(Variable,  VariableDesc, PA = Observed_PA) %>%
             tidyr::unnest(cols = "PA") %>%
@@ -108,7 +120,9 @@ RespCurv_PlotSp <- function(
               Pred = dplyr::case_when(
                 Pred == 1 ~ 0.97, Pred == 0 ~ 0.03, .default = Pred))
 
-          Species2 <- IASDT.R::GetSpeciesName(EnvFile = EnvFile, SpID = Species)
+          Species2 <- IASDT.R::GetSpeciesName(
+            EnvFile = EnvFile, SpID = Species, FromHPC = FromHPC)
+
           NFV_Label <- dplyr::if_else(
             NFV == 1,
             "non-focal variables are set to most likely value <i>[non.focalVariables = 1]</i>",
@@ -154,22 +168,26 @@ RespCurv_PlotSp <- function(
               limits = c(-0.005, 1.05), oob = scales::squish, expand = c(0, 0)) +
             ggplot2::scale_x_continuous(expand = c(0.015, 0.015)) +
             ggplot2::facet_wrap(
-              ggplot2::vars(VariableDesc), scales = "free_x", nrow = 2, ncol = 4) +
+              ggplot2::vars(VariableDesc),
+              scales = "free_x", nrow = 2, ncol = 4) +
             ggplot2::xlab("Predictor value") +
             ggplot2::ylab("Predicted habitat suitability") +
             ggplot2::labs(title = TitleTxt, subtitle = SubTitleTxt) +
             ggplot2::theme_bw() +
             ggplot2::theme(
               strip.text = ggtext::element_markdown(
-                hjust = -0.025, margin = ggplot2::margin(0.05, 0.1, 0.05, 0.1, "cm")),
-              strip.background = ggplot2::element_rect(colour = NA, fill = "white"),
+                hjust = -0.025,
+                margin = ggplot2::margin(0.05, 0.1, 0.05, 0.1, "cm")),
+              strip.background = ggplot2::element_rect(
+                colour = NA, fill = "white"),
               legend.position = "none",
               axis.title = ggtext::element_markdown(size = 8),
               plot.title = ggtext::element_markdown(
                 margin = ggplot2::margin(0, 0, 0, 0)),
               plot.title.position = "plot",
               plot.subtitle = ggtext::element_markdown(
-                size = 7, colour = "darkgrey", margin = ggplot2::margin(4, 0, 4, 0)),
+                size = 7, colour = "darkgrey",
+                margin = ggplot2::margin(4, 0, 4, 0)),
               axis.text = ggplot2::element_text(size = 6),
               panel.grid.major = ggplot2::element_line(linewidth = 0.25),
               panel.grid.minor = ggplot2::element_line(linewidth = 0.1),
@@ -184,7 +202,8 @@ RespCurv_PlotSp <- function(
             fs::dir_create(file.path(Path_RC, "RespCurv_Sp_GG"))
             Path_GG <- file.path(
               Path_RC, "RespCurv_Sp_GG", paste0(FilePrefix, ".RData"))
-            IASDT.R::SaveAs(InObj = Plot, OutObj = FilePrefix, OutPath = Path_GG)
+            IASDT.R::SaveAs(
+              InObj = Plot, OutObj = FilePrefix, OutPath = Path_GG)
             OutDF <- tibble::tibble(Path_JPEG = Path_JPEG, Path_GG = Path_GG)
           } else {
             OutDF <- tibble::tibble(Path_JPEG = Path_JPEG)

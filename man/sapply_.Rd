@@ -11,27 +11,46 @@ sapply_(X, FUN, simplify = TRUE, Silent = TRUE, ...)
 
 \item{FUN}{The function to be applied to each element of \code{X}.}
 
-\item{simplify}{Logical; should the result be simplified to a vector or matrix if possible? Passed to \link[base:lapply]{base::sapply}.}
+\item{simplify}{Logical; should the result be simplified to a vector or
+matrix if possible? Passed to \link[base:lapply]{base::sapply}.}
 
-\item{Silent}{Logical; if TRUE, the function returns \code{invisible(NULL)} instead of the actual result, effectively suppressing the output. This enhances the base \link[base:lapply]{base::sapply} for cases where the return value is not necessary and its output is undesired.}
+\item{Silent}{Logical; if TRUE, the function returns \code{invisible(NULL)}
+instead of the actual result, effectively suppressing the output. This
+enhances the base \link[base:lapply]{base::sapply} for cases where the return value is not
+necessary and its output is undesired.}
 
 \item{...}{Additional arguments to be passed to \code{FUN}.}
 }
 \value{
-If \code{Silent} is \code{FALSE}, returns the result of applying \code{FUN} over \code{X}, potentially simplified according to the \code{simplify} argument. If \code{Silent} is TRUE, returns nothing.
+If \code{Silent} is \code{FALSE}, returns the result of applying \code{FUN} over
+\code{X}, potentially simplified according to the \code{simplify} argument. If
+\code{Silent} is TRUE, returns nothing.
 }
 \description{
-This function is a wrapper around the base \link[base:lapply]{base::sapply} function, allowing for the application of a function over a list or vector. It extends \link[base:lapply]{base::sapply} by providing an option to suppress the output, effectively allowing for operations where the user may not care about the return value (e.g., plotting).
+This function is a wrapper around the base \link[base:lapply]{base::sapply} function, allowing
+for the application of a function over a list or vector. It extends
+\link[base:lapply]{base::sapply} by providing an option to suppress the output, effectively
+allowing for operations where the user may not care about the return value
+(e.g., plotting).
 }
 \examples{
 par(mfrow = c(1,2), oma = c(0.25, 0.25, 0.25, 0.25), mar = c(3,3,3,1))
-sapply(list(x = 100:110, y = 110:120), function(V){plot(V, las = 1, main = "sapply")})
+sapply(
+    list(x = 100:110, y = 110:120),
+    function(V) {
+        plot(V, las = 1, main = "sapply")
+        })
 
 # -------------------------------------------
 
 # nothing returned or printed, only the plotting
 par(mfrow = c(1,2), oma = c(0.25, 0.25, 0.25, 0.25), mar = c(3,3,3,1))
-sapply_(list(x = 100:110, y = 110:120), function(V){plot(V, las = 1, main = "sapply_")})
+sapply_(
+  list(x = 100:110, y = 110:120),
+  function(V) {
+    plot(V, las = 1, main = "sapply_")
+    })
+
 }
 \author{
 Ahmed El-Gabbas

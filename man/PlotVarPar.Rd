@@ -15,37 +15,66 @@ PlotVarPar(
   SaveVarPar = TRUE,
   SaveModelEval = TRUE,
   ReturnGG = FALSE,
-  SaveGG = TRUE
+  SaveGG = TRUE,
+  FromHPC = TRUE
 )
 }
 \arguments{
-\item{Model}{an object of class \code{Hmsc} or a path for the model file. Only needed if one of \code{ModelEval} and \code{VarPar} arguments are \code{NULL}.}
+\item{Model}{an object of class \code{Hmsc} or a path for the model file. Only
+needed if one of \code{ModelEval} and \code{VarPar} arguments are \code{NULL}.}
 
 \item{Path_Plot}{String. Path where the output file(s) will be saved.}
 
-\item{PlotTitlePrefix}{String (optional). Prefix to add to the title of the plot. Default: \code{NULL}, which means only 'Variance partitioning' will be used in the title.}
+\item{PlotTitlePrefix}{String (optional). Prefix to add to the title of the
+plot. Default: \code{NULL}, which means only 'Variance partitioning' will be
+used in the title.}
 
-\item{ModelEval}{Result of the \link[Hmsc:evaluateModelFit]{Hmsc::evaluateModelFit} function. If \code{ModelEval = NULL} (default), \link[Hmsc:evaluateModelFit]{Hmsc::evaluateModelFit} will be executed on the model object to compute measures of model fit.}
+\item{ModelEval}{Result of the \link[Hmsc:evaluateModelFit]{Hmsc::evaluateModelFit} function. If
+\code{ModelEval = NULL} (default), \link[Hmsc:evaluateModelFit]{Hmsc::evaluateModelFit} will be executed on
+the model object to compute measures of model fit.}
 
-\item{NCores}{Integer. Number of parallel computations for computing predicted values. This is used as the \code{nParallel} argument of the \link[Hmsc:computePredictedValues]{Hmsc::computePredictedValues} function.}
+\item{NCores}{Integer. Number of parallel computations for computing
+predicted values. This is used as the \code{nParallel} argument of the
+\link[Hmsc:computePredictedValues]{Hmsc::computePredictedValues} function.}
 
-\item{VarPar}{Variance partitioning object resulted from \link[Hmsc:computeVariancePartitioning]{Hmsc::computeVariancePartitioning}. If \code{VarPar = NULL} (default), \link[Hmsc:computeVariancePartitioning]{Hmsc::computeVariancePartitioning} will be executed on the model object.}
+\item{VarPar}{Variance partitioning object resulted from
+\link[Hmsc:computeVariancePartitioning]{Hmsc::computeVariancePartitioning}. If \code{VarPar = NULL} (default),
+\link[Hmsc:computeVariancePartitioning]{Hmsc::computeVariancePartitioning} will be executed on the model object.}
 
-\item{EnvFile}{String. Path to read the environment variables. Default value: \code{.env}}
+\item{EnvFile}{String. Path to read the environment variables. Default value:
+\code{.env}}
 
-\item{SaveVarPar}{Logical. If \code{VarPar = NULL}, should the calculated variance partitioning be saved as an RData file?  Default: \code{TRUE}.}
+\item{SaveVarPar}{Logical. If \code{VarPar = NULL}, should the calculated variance
+partitioning be saved as an RData file?  Default: \code{TRUE}.}
 
-\item{SaveModelEval}{Logical. If \code{ModelEval = NULL}, should the calculated model evaluation be saved as an RData file?  Default: \code{TRUE}.}
+\item{SaveModelEval}{Logical. If \code{ModelEval = NULL}, should the calculated
+model evaluation be saved as an RData file?  Default: \code{TRUE}.}
 
 \item{ReturnGG}{Logical. Return the ggplot object. Default: \code{FALSE}.}
 
-\item{SaveGG}{Logical. Should the plots be exported as an RData object?  Default: \code{TRUE}.}
+\item{SaveGG}{Logical. Should the plots be exported as an RData object?
+Default: \code{TRUE}.}
+
+\item{FromHPC}{Logical. Indicates whether the function is being run on an HPC
+environment, affecting file path handling. Default: \code{TRUE}.}
 }
 \value{
-If \code{ReturnGG} is \code{TRUE}, returns a ggplot object of the variance partitioning plots. Otherwise, returns \code{NULL}.
+If \code{ReturnGG} is \code{TRUE}, returns a ggplot object of the variance
+partitioning plots. Otherwise, returns \code{NULL}.
 }
 \description{
-This function generates and optionally saves plots visualizing the variance partitioning of a Hmsc model. It can calculate variance partitioning and model evaluation if not provided and supports parallel computation for model predictions.
+This function generates and optionally saves plots visualizing the variance
+partitioning of a Hmsc model. It can calculate variance partitioning and
+model evaluation if not provided and supports parallel computation for model
+predictions.
+}
+\details{
+The function reads the following environment variables:
+\itemize{
+\item \strong{\code{DP_R_Path_TaxaList}} (if \code{FromHPC} = \code{TRUE}) or
+\strong{\code{DP_R_Path_TaxaList_Local}} (if \code{FromHPC} = \code{FALSE}). The function
+reads the content of the \code{TaxaList.RData} file from this path.
+}
 }
 \author{
 Ahmed El-Gabbas

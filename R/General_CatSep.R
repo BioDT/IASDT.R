@@ -4,14 +4,20 @@
 #
 #' Print separator(s) to the console
 #'
-#' This function prints customizable separator lines to the console, optionally preceded and followed by empty lines. It is useful for improving the readability of console output in R scripts or during interactive sessions.
+#' This function prints customizable separator lines to the console, optionally
+#' preceded and followed by empty lines. It is useful for improving the
+#' readability of console output in R scripts or during interactive sessions.
 #' @param Rep integer; the number of separator lines to print. Default is `1`.
-#' @param Extra1,Extra2 integer; the number of extra empty lines to print before and after the separator lines. Default is `0`.
-#' @param Char character; the character used to construct the separator line. Default is `"-"`.
-#' @param CharReps integer; the number of times the character is repeated to form a separator line. Default is `50`.
+#' @param Extra1,Extra2 integer; the number of extra empty lines to print before
+#'   and after the separator lines. Default is `0`.
+#' @param Char character; the character used to construct the separator line.
+#'   Default is `"-"`.
+#' @param CharReps integer; the number of times the character is repeated to
+#'   form a separator line. Default is `50`.
 #' @name CatSep
 #' @author Ahmed El-Gabbas
-#' @return The function is called for its side effect (printing to the console) and does not return a meaningful value.
+#' @return The function is called for its side effect (printing to the console)
+#'   and does not return a meaningful value.
 #' @examples
 #' CatSep()
 #'
@@ -25,6 +31,16 @@
 #' @export
 
 CatSep <- function(Rep = 1, Extra1 = 0, Extra2 = 0, Char = "-", CharReps = 50) {
+
+  # Check input arguments
+  AllArgs <- ls()
+  AllArgs <- purrr::map(
+    AllArgs,
+    function(x) get(x, envir = parent.env(env = environment()))) %>%
+    stats::setNames(AllArgs)
+  NumericArgs <- c("Rep", "Extra1", "Extra2", "CharReps")
+  IASDT.R::CheckArgs(AllArgs = AllArgs, Args = NumericArgs, Type = "numeric")
+  IASDT.R::CheckArgs(AllArgs = AllArgs, Args = "Char", Type = "character")
 
   if (Extra1 > 0) {
     replicate(n = Extra1, expr = cat("\n"))

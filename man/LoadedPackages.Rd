@@ -10,7 +10,8 @@ LoadedPackages()
 A character vector containing the names of all loaded packages.
 }
 \description{
-This function returns a character vector listing all the packages that are currently loaded in the R session.
+This function returns a character vector listing all the packages that are
+currently loaded in the R session.
 }
 \examples{
 LoadedPackages()

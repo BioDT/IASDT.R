@@ -16,21 +16,27 @@ Chelsa_Prepare_List(
 \arguments{
 \item{Down}{Logical, whether to download the CHELSA files.}
 
-\item{DownParallel}{Logical, whether to download files in parallel (if \code{Down} is \code{TRUE}).}
+\item{DownParallel}{Logical, whether to download files in parallel (if \code{Down}
+is \code{TRUE}).}
 
 \item{DwnPath}{String, the path where downloaded files should be saved.}
 
 \item{OutPath}{String, the path where output files should be saved.}
 
-\item{UpdateExisting}{Logical, whether to re-download and process files that already exist.}
+\item{UpdateExisting}{Logical, whether to re-download and process files that
+already exist.}
 
-\item{Path_Chelsa}{String, the base path for CHELSA analyses and data storage.}
+\item{Path_Chelsa}{String, the base path for CHELSA analyses and data
+storage.}
 }
 \value{
-A data frame containing metadata about the CHELSA climate data files, including variables, climate models, scenarios, and download URLs.
+A data frame containing metadata about the CHELSA climate data files,
+including variables, climate models, scenarios, and download URLs.
 }
 \description{
-This function prepares a list of CHELSA climate data files to download based on specified criteria, downloads the files if requested, and saves the list and downloaded files to disk.
+This function prepares a list of CHELSA climate data files to download based
+on specified criteria, downloads the files if requested, and saves the list
+and downloaded files to disk.
 }
 \details{
 list of variables exist under current and future climates.

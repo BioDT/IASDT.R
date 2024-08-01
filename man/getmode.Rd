@@ -4,7 +4,8 @@
 \alias{GetMode}
 \title{Calculate the Mode of a Numeric Vector}
 \source{
-The source of this function was taken from this \href{https://www.tutorialspoint.com/r/r_mean_median_mode.htm}{link}.
+The source of this function was taken from this
+\href{https://www.tutorialspoint.com/r/r_mean_median_mode.htm}{link}.
 }
 \usage{
 GetMode(v)
@@ -13,7 +14,9 @@ GetMode(v)
 \item{v}{A numeric vector. It must not be NULL or empty.}
 }
 \value{
-The mode of the vector as a single value. If the vector has a uniform distribution (all values appear with the same frequency), the function returns the first value encountered.
+The mode of the vector as a single value. If the vector has a uniform
+distribution (all values appear with the same frequency), the function
+returns the first value encountered.
 }
 \description{
 This function calculates the mode of a given numeric vector.

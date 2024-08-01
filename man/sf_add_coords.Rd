@@ -7,21 +7,33 @@
 sf_add_coords(Sf_Obj, NameX = "Long", NameY = "Lat", Overwrite = FALSE)
 }
 \arguments{
-\item{Sf_Obj}{An sf object to which longitude and latitude columns will be added.}
+\item{Sf_Obj}{An sf object to which longitude and latitude columns will be
+added.}
 
-\item{NameX, NameY}{A string specifying the name of the longitude column to be added. Defaults to \code{Long} and \code{Lat}.}
+\item{NameX, NameY}{A string specifying the name of the longitude column to be
+added. Defaults to \code{Long} and \code{Lat}.}
 
-\item{Overwrite}{A logical value indicating whether to overwrite existing columns with names specified by NameX and NameY. If \code{FALSE} and columns with these names exist, new columns are appended with "_NEW" suffix. Defaults to \code{FALSE}.}
+\item{Overwrite}{A logical value indicating whether to overwrite existing
+columns with names specified by NameX and NameY. If \code{FALSE} and columns
+with these names exist, new columns are appended with "_NEW" suffix.
+Defaults to \code{FALSE}.}
 }
 \value{
 An sf object with added longitude and latitude columns.
 }
 \description{
-Add longitude and latitude coordinates as new columns to an sf object (\code{Sf_Obj}). It extracts the coordinates from the sf object, converts them into a tibble, and appends them to the original sf object as new columns.
-If \code{NameX} or \code{NameY}, provided as arguments respectively, already exist in the sf object, the function either  1) overwrites these columns if \code{Overwrite} is set to \code{TRUE} or 2) appends "_NEW" to the new column names to avoid overwrite if \code{Overwrite} is set to \code{FALSE}.
+Add longitude and latitude coordinates as new columns to an sf object
+(\code{Sf_Obj}). It extracts the coordinates from the sf object, converts them
+into a tibble, and appends them to the original sf object as new columns. If
+\code{NameX} or \code{NameY}, provided as arguments respectively, already exist in the
+sf object, the function either  1) overwrites these columns if \code{Overwrite} is
+set to \code{TRUE} or 2) appends "_NEW" to the new column names to avoid overwrite
+if \code{Overwrite} is set to \code{FALSE}.
 }
 \note{
-If the Overwrite parameter is \code{FALSE} (default) and columns with the specified names already exist, the function will issue a warning and append "_NEW" to the names of the new columns to avoid overwriting.
+If the Overwrite parameter is \code{FALSE} (default) and columns with the
+specified names already exist, the function will issue a warning and append
+"_NEW" to the names of the new columns to avoid overwriting.
 }
 \examples{
 pt1 = sf::st_point(c(0,1))

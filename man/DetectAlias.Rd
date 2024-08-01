@@ -7,15 +7,22 @@
 DetectAlias(DT, Verbose = FALSE)
 }
 \arguments{
-\item{DT}{A \verb{data frame} or \code{tibble} containing the variables to be checked for aliasing.}
+\item{DT}{A \verb{data frame} or \code{tibble} containing the variables to be checked
+for aliasing.}
 
-\item{Verbose}{A logical value indicating whether to print the aliased variables found (if any). If \code{TRUE}, aliased variables are printed to the console. Defaults to \code{FALSE}.}
+\item{Verbose}{A logical value indicating whether to print the aliased
+variables found (if any). If \code{TRUE}, aliased variables are printed to the
+console. Defaults to \code{FALSE}.}
 }
 \value{
-Returns a character vector of aliased variable names if any are found; otherwise, returns \code{NULL} invisibly. If \code{Verbose} is \code{TRUE}, the function will also print a message to the console.
+Returns a character vector of aliased variable names if any are
+found; otherwise, returns \code{NULL} invisibly. If \code{Verbose} is \code{TRUE}, the
+function will also print a message to the console.
 }
 \description{
-This function identifies aliased (linearly dependent) variables in a linear model by adding a constant column to the data frame, fitting a linear model, and then using the alias function to detect aliased variables.
+This function identifies aliased (linearly dependent) variables in a linear
+model by adding a constant column to the data frame, fitting a linear model,
+and then using the alias function to detect aliased variables.
 }
 \examples{
 library("car", warn.conflicts = FALSE, quietly = TRUE, verbose = FALSE)

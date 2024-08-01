@@ -7,15 +7,21 @@
 KeepOnly(Obj, Verbose = TRUE)
 }
 \arguments{
-\item{Obj}{A character vector specifying the names of the objects to be kept in the environment.}
+\item{Obj}{A character vector specifying the names of the objects to be kept
+in the environment.}
 
-\item{Verbose}{A logical value indicating whether to print the names of kept and removed variables. Default to \code{TRUE}.}
+\item{Verbose}{A logical value indicating whether to print the names of kept
+and removed variables. Default to \code{TRUE}.}
 }
 \value{
 No return value, called for side effects.
 }
 \description{
-This function selectively retains the objects specified in the \code{Obj} parameter in the current environment, removing all other objects. It is useful for memory management by clearing unnecessary objects from the environment. The function also provides an option to print the names of the kept and removed variables.
+This function selectively retains the objects specified in the \code{Obj}
+parameter in the current environment, removing all other objects. It is
+useful for memory management by clearing unnecessary objects from the
+environment. The function also provides an option to print the names of the
+kept and removed variables.
 }
 \examples{
 A <- B <- C <- 15

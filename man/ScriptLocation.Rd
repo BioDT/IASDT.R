@@ -4,16 +4,23 @@
 \alias{ScriptLocation}
 \title{Retrieve the location of the current R script.}
 \source{
-The source code of this function was taken from this  \href{https://stackoverflow.com/questions/47044068/}{stackoverflow} question.
+The source code of this function was taken from this
+\href{https://stackoverflow.com/questions/47044068/}{stackoverflow} question.
 }
 \usage{
 ScriptLocation()
 }
 \value{
-A character string representing the file path of the current R script, or \code{NA} if the path cannot be determined.
+A character string representing the file path of the current R
+script, or \code{NA} if the path cannot be determined.
 }
 \description{
-This function attempts to find the location of the currently running R script. It first tries to identify the script's location based on the command line arguments used to start the script. If the script is being run in an interactive session within RStudio, it falls back to using the \code{rstudioapi} to find the file path of the script in the source editor. If the location cannot be determined, it returns \code{NA}.
+This function attempts to find the location of the currently running R
+script. It first tries to identify the script's location based on the command
+line arguments used to start the script. If the script is being run in an
+interactive session within RStudio, it falls back to using the \code{rstudioapi}
+to find the file path of the script in the source editor. If the location
+cannot be determined, it returns \code{NA}.
 }
 \examples{
 # ScriptLocation()

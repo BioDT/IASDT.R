@@ -15,22 +15,34 @@ Match_to_GBIF(
 \arguments{
 \item{taxon_name}{A character vector of taxonomy names to be matched.}
 
-\item{taxon_id}{An optional numeric or character vector of local identifiers corresponding to \code{taxon_name}. If \code{NULL}, a sequence along \code{taxon_name} is used. Defaults to \code{NULL}.}
+\item{taxon_id}{An optional numeric or character vector of local identifiers
+corresponding to \code{taxon_name}. If \code{NULL}, a sequence along \code{taxon_name} is
+used. Defaults to \code{NULL}.}
 
-\item{include_genus}{Logical, whether to include matches at the genus level in the results. Defaults to \code{FALSE}.}
+\item{include_genus}{Logical, whether to include matches at the genus level
+in the results. Defaults to \code{FALSE}.}
 
-\item{Parallel}{Logical, whether to perform the matching in parallel. Defaults to \code{FALSE}.}
+\item{Parallel}{Logical, whether to perform the matching in parallel.
+Defaults to \code{FALSE}.}
 
-\item{Progress}{Logical, whether to display a progress bar during the operation. Defaults to \code{FALSE}.}
+\item{Progress}{Logical, whether to display a progress bar during the
+operation. Defaults to \code{FALSE}.}
 }
 \value{
-A \code{tibble} containing the standardized taxonomy results, including both the best matches and alternatives, filtered to include only vascular plants (Tracheophyta) and excluding non-matches and higher rank matches. The results are further refined based on the confidence score and the status (ACCEPTED, SYNONYM, DOUBTFUL) of the matches.
+A \code{tibble} containing the standardized taxonomy results, including
+both the best matches and alternatives, filtered to include only vascular
+plants (Tracheophyta) and excluding non-matches and higher rank matches.
+The results are further refined based on the confidence score and the
+status (ACCEPTED, SYNONYM, DOUBTFUL) of the matches.
 }
 \description{
-This function matches given taxonomy names with the GBIF database, potentially returning more than one match per name. It can operate in parallel.
+This function matches given taxonomy names with the GBIF database,
+potentially returning more than one match per name. It can operate in
+parallel.
 }
 \details{
-as input, provide a vector of verbatim taxon names (preferably with authorship) and a vector of existing local identifiers for those names
+as input, provide a vector of verbatim taxon names (preferably with
+authorship) and a vector of existing local identifiers for those names
 }
 \author{
 Marina Golivets

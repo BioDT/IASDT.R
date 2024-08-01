@@ -4,11 +4,18 @@
 #
 #' Load RData file and return its contents as a list or a single object
 #'
-#' This function loads an `RData` file specified by the `File` parameter. If the `RData` file contains a single object, that object is returned directly. If the file contains multiple objects, they are returned as a list with each object accessible by its name. This allows for flexible handling of loaded data without needing to know the names of the objects stored within the RData file ahead of time.
-#'
+#' This function loads an `RData` file specified by the `File` parameter. If the
+#' `RData` file contains a single object, that object is returned directly. If
+#' the file contains multiple objects, they are returned as a list with each
+#' object accessible by its name. This allows for flexible handling of loaded
+#' data without needing to know the names of the objects stored within the RData
+#' file ahead of time.
 #' @param File character; the file path of the `.RData` file to be loaded.
 #' @author Ahmed El-Gabbas
-#' @return Depending on the contents of the `RData` file, this function returns either a single R object or a named list of R objects. The names of the list elements (if a list is returned) correspond to the names of the objects stored within the RData file.
+#' @return Depending on the contents of the `RData` file, this function returns
+#'   either a single R object or a named list of R objects. The names of the
+#'   list elements (if a list is returned) correspond to the names of the
+#'   objects stored within the RData file.
 #' @export
 #' @name LoadAs
 #' @examples
@@ -47,7 +54,7 @@
 #' save(mtcars, mtcars2, mtcars3, file = TempFile)
 #' mtcars_all2 <- LoadAs(TempFile)
 #'
-#' # single list object with three items, keeping original object names and order
+#' # single list object with 3 items, keeping original object names and order
 #' names(mtcars_all)
 #' names(mtcars_all2)
 

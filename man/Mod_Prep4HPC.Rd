@@ -14,7 +14,15 @@ Mod_Prep4HPC(
   GPP_Dists = NULL,
   GPP_Save = TRUE,
   GPP_Plot = TRUE,
-  XVars = NULL,
+  BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
+  EffortsAsPredictor = TRUE,
+  RoadRailAsPredictor = TRUE,
+  HabAsPredictor = TRUE,
+  ExclGridsWOSp = TRUE,
+  NFolds = 4,
+  NGrids = 20,
+  NR = 2,
+  NC = 2,
   PhyloTree = TRUE,
   NoPhyloTree = TRUE,
   NParallel = 8,
@@ -39,71 +47,163 @@ Mod_Prep4HPC(
 )
 }
 \arguments{
-\item{Hab_Abb}{String indicating the \code{SynHab} habitat type to be considered for model preparation. This has to be one of the following: c("0", "1", "2", "3", "4a", "4b", "5", "6", "8", "10", "12a", "12b"). "0" means prepare data irrespective of the habitat type}
+\item{Hab_Abb}{Character. Habitat abbreviation indicating the specific
+\code{SynHab} habitat type to prepare data for. Valid values include "0", "1",
+"2", "3", "4a", "4b", "10", "12a", "12b". If \code{Hab_Abb} = "0", data is
+prepared irrespective of the habitat type.}
 
-\item{Path_Data}{String specifying the path where modeling data is read from.}
+\item{Path_Data}{String specifying the path where modeling data is read from.
+Only effective if \code{PrepareData} = \code{FALSE}; see below.}
 
-\item{Path_Model}{String (without trailing slash) specifying the path where all output, including models to be fitted, will be saved.}
+\item{Path_Model}{String (without trailing slash) specifying the path where
+all output, including models to be fitted, will be saved.}
 
-\item{MinPresGrids}{Integer indicating the minimum number of presence grid cells per species for a species to be used in the model. Default: 50.}
+\item{MinPresGrids}{Integer indicating the minimum number of presence grid
+cells per species for a species to be used in the model. Default: 50.}
 
-\item{EnvFile}{String specifying the path to read environment variables from, with a default value of \code{.env}.}
+\item{EnvFile}{String specifying the path to read environment variables from,
+with a default value of \code{.env}.}
 
-\item{PrepareData}{Logical indicating whether to prepare input data or load it from disk. Defaults to \code{TRUE} which means the input data will be prepared using the \link{Mod_PrepData} function.}
+\item{PrepareData}{Logical indicating whether to prepare input data or load
+it from disk. Defaults to \code{TRUE} which means the input data will be
+prepared using the \link{Mod_PrepData} function.}
 
-\item{GPP_Dists}{Integer specifying the distance in kilometers for both the distance between knots and the minimum distance of a knot to the nearest data point. The GPP knots are prepared by the \link{PrepKnots} function. The same value will be used for the \code{knotDist} and \code{minKnotDist}    arguments of the \link[Hmsc:constructKnots]{Hmsc::constructKnots} function.}
+\item{GPP_Dists}{Integer specifying the distance in kilometers for both the
+distance between knots and the minimum distance of a knot to the nearest
+data point. The GPP knots are prepared by the \link{PrepKnots}
+function. The same value will be used for the \code{knotDist} and
+\code{minKnotDist}    arguments of the \link[Hmsc:constructKnots]{Hmsc::constructKnots} function.}
 
-\item{GPP_Save}{Logical indicating whether to save the resulted knots as \code{RData} Default: \code{TRUE}.}
+\item{GPP_Save}{Logical indicating whether to save the resulted knots as
+\code{RData} Default: \code{TRUE}.}
 
-\item{GPP_Plot}{Logical indicating whether to plot the coordinates of the sampling units and the knots in a pdf file. Default: \code{TRUE}}
+\item{GPP_Plot}{Logical indicating whether to plot the coordinates of the
+sampling units and the knots in a pdf file. Default: \code{TRUE}}
 
-\item{XVars}{Vector of strings specifying variables to be used in the model. Default value: \code{NULL}, which means to use the following variables: \code{bio4}, \code{bio6}, \code{bio8}, \code{bio12}, \code{bio15}, \code{bio18}, \code{RoadRailLog}, \code{BiasLog}.}
+\item{BioVars}{Vector of strings specifying bioclimatic variables to be used
+in the model. Default value: \code{NULL}, which means to use the following
+variables: \code{bio4}, \code{bio6}, \code{bio8}, \code{bio12}, \code{bio15}, and \code{bio18}.}
 
-\item{PhyloTree, NoPhyloTree}{Logical indicating whether to fit model variants  with or without phylogenetic trees, respectively. The default of both arguments is \code{TRUE}, which means to fit a model variant with the respective option. If both \code{PhyloTree} and \code{NoPhyloTree} are \code{TRUE} (Default), models for both options will be fitted. At least one of \code{PhyloTree} and \code{NoPhyloTree} should be \code{TRUE}.}
+\item{EffortsAsPredictor}{Logical indicating whether to include the (log10)
+sampling efforts as predictor to the model. Default: \code{TRUE}.}
 
-\item{NParallel}{Integer specifying the number of parallel cores for parallelization. Default: 8 cores.}
+\item{RoadRailAsPredictor}{Logical indicating whether to include the (log10)
+sum of road and railway intensity as predictor to the model. Default:
+\code{TRUE}.}
+
+\item{HabAsPredictor}{Logical indicating whether to include the (log10)
+percentage coverage of respective habitat type per grid cell as predictor
+to the model. Default: \code{TRUE}. Only valid if \code{Hab_Abb} not equals to "0".}
+
+\item{ExclGridsWOSp}{Logical indicating whether to exclude grid cells that
+do not contain at least single species presences from the analysis.
+Default: \code{TRUE}.}
+
+\item{NFolds}{Number of cross-validation folds. Default: 4. See
+\link{GetCV} for more details.}
+
+\item{NGrids}{For \code{CV_Dist} cross-validation strategy, how many grid cells in
+both directions to be used in cross-validation. See \link{GetCV} for
+more details.}
+
+\item{NR, NC}{Integer, the number of rows and columns to divide the spatial
+area into. Defaults to 2 row and 2 columns. See \link{GetCV} for more
+details.}
+
+\item{PhyloTree, NoPhyloTree}{Logical indicating whether to fit model variants
+with or without phylogenetic trees, respectively. The default of both
+arguments is \code{TRUE}, which means to fit a model variant with the respective
+option. If both \code{PhyloTree} and \code{NoPhyloTree} are \code{TRUE} (Default), models
+for both options will be fitted. At least one of \code{PhyloTree} and
+\code{NoPhyloTree} should be \code{TRUE}.}
+
+\item{NParallel}{Integer specifying the number of parallel cores for
+parallelization. Default: 8 cores.}
 
 \item{nChains}{Integer specifying the number of model chains. Default: 4.}
 
-\item{thin}{Integer specifying the value(s) for thinning in MCMC sampling. If more than one value is provided, a separate model will be fitted at each value of thinning.}
+\item{thin}{Integer specifying the value(s) for thinning in MCMC sampling. If
+more than one value is provided, a separate model will be fitted at each
+value of thinning.}
 
-\item{samples}{Integer specifying the value(s) for the number of MCMC samples. If more than one value is provided, a separate model will be fitted at each value of number of samples.}
+\item{samples}{Integer specifying the value(s) for the number of MCMC
+samples. If more than one value is provided, a separate model will be
+fitted at each value of number of samples.}
 
-\item{transientFactor}{Integer specifying the transient multiplication factor. The value of \code{transient} will equal  the multiplication of \code{transientFactor} and \code{thin}. Default: 300.}
+\item{transientFactor}{Integer specifying the transient multiplication
+factor. The value of \code{transient} will equal  the multiplication of
+\code{transientFactor} and \code{thin}. Default: 300.}
 
-\item{verbose}{Integer specifying how often the results of the MCMC sampling should be reported. Default: \code{1000}.}
+\item{verbose}{Integer specifying how often the results of the MCMC sampling
+should be reported. Default: \code{1000}.}
 
-\item{SkipFitted}{Logical indicating whether to skip already fitted models. Default: \code{TRUE}.}
+\item{SkipFitted}{Logical indicating whether to skip already fitted models.
+Default: \code{TRUE}.}
 
-\item{MaxJobCounts}{Integer specifying the maximum allowed number of array jobs per SLURM file. Default: 210. See \href{https://docs.lumi-supercomputer.eu/runjobs/scheduled-jobs/partitions/}{here} for more details.}
+\item{MaxJobCounts}{Integer specifying the maximum allowed number of array
+jobs per SLURM file. Default: 210. See
+\href{https://docs.lumi-supercomputer.eu/runjobs/scheduled-jobs/partitions}{here}
+for more details.}
 
-\item{ModelCountry}{String or vector of strings specifying the country or countries to filter observations by. Default: \code{NULL}, which means prepare data for the whole Europe.}
+\item{ModelCountry}{String or vector of strings specifying the country or
+countries to filter observations by. Default: \code{NULL}, which means prepare
+data for the whole Europe.}
 
-\item{MinPresPerCountry}{Integer specifying the minimum number of grid cells for the selected country/countries for species to be considered in the models. Effective only if a valid \code{ModelCountry} is provided. Default: 50.}
+\item{MinPresPerCountry}{Integer specifying the minimum number of grid cells
+for the selected country/countries for species to be considered in the
+models. Effective only if a valid \code{ModelCountry} is provided. Default: 50.}
 
-\item{VerboseProgress}{Logical indicating whether to show messages for the progress of creating files. Default: \code{FALSE}.}
+\item{VerboseProgress}{Logical indicating whether to show messages for the
+progress of creating files. Default: \code{FALSE}.}
 
-\item{FromHPC}{Logical indicating whether the work is being done from HPC, to adjust file paths accordingly. Default: \code{TRUE}.}
+\item{FromHPC}{Logical indicating whether the work is being done from HPC, to
+adjust file paths accordingly. Default: \code{TRUE}.}
 
-\item{PrepSLURM}{Logical indicating whether to prepare SLURM command files. If \code{TRUE} (default), the SLURM commands will be saved to disk using the \link{Mod_SLURM} function.}
+\item{PrepSLURM}{Logical indicating whether to prepare SLURM command files.
+If \code{TRUE} (default), the SLURM commands will be saved to disk using the
+\link{Mod_SLURM} function.}
 
-\item{MemPerCpu}{String specifying the memory per CPU for the SLURM job. This value will be assigned to the \verb{#SBATCH --mem-per-cpu=} SLURM argument. Example: "32G" to request 32 gigabyte. Only effective if \code{PrepSLURM = TRUE}.}
+\item{MemPerCpu}{String specifying the memory per CPU for the SLURM job. This
+value will be assigned to the \verb{#SBATCH --mem-per-cpu=} SLURM argument.
+Example: "32G" to request 32 gigabyte. Only effective if \code{PrepSLURM = TRUE}.}
 
-\item{Time}{String specifying the requested time for each job in the SLURM bash arrays. Example: "01:00:00" to request an hour. Only effective if \code{PrepSLURM = TRUE}.}
+\item{Time}{String specifying the requested time for each job in the SLURM
+bash arrays. Example: "01:00:00" to request an hour. Only effective if
+\code{PrepSLURM = TRUE}.}
 
-\item{JobName}{String specifying the name of the submitted job(s) for SLURM. If \code{NULL} (Default), the job name will be prepared based on the folder path and the \code{Hab_Abb} value. Only effective if \code{PrepSLURM = TRUE}.}
+\item{JobName}{String specifying the name of the submitted job(s) for SLURM.
+If \code{NULL} (Default), the job name will be prepared based on the folder path
+and the \code{Hab_Abb} value. Only effective if \code{PrepSLURM = TRUE}.}
 
-\item{Path_Hmsc}{String specifying the path for the Hmsc-HPC. This will be provided as the \code{Path_Hmsc} argument of the \link{Mod_SLURM} function.}
+\item{Path_Hmsc}{String specifying the path for the Hmsc-HPC. This will be
+provided as the \code{Path_Hmsc} argument of the \link{Mod_SLURM} function.}
 
-\item{ToJSON}{Logical indicating whether to convert unfitted models to JSON before saving to RDS file. Default: \code{FALSE}.}
+\item{ToJSON}{Logical indicating whether to convert unfitted models to JSON
+before saving to RDS file. Default: \code{FALSE}.}
 
-\item{...}{Additional parameters provided to the \link{Mod_SLURM} function.}
+\item{...}{Additional parameters provided to the \link{Mod_SLURM}
+function.}
 }
 \value{
-The function is used for its side effects of preparing data and models for HPC and does not return any value.
+The function is used for its side effects of preparing data and
+models for HPC and does not return any value.
 }
 \description{
-This function prepares initial models in R for model fitting by Hmsc-HPC. It involves data preparation, model initialization, and generating commands for running models on HPC. It supports parallel processing, options to include/not include phylogenetic tree data.
+This function prepares initial models in R for model fitting by Hmsc-HPC. It
+involves data preparation, model initialization, and generating commands for
+running models on HPC. It supports parallel processing, options to
+include/not include phylogenetic tree data.
+}
+\details{
+The function reads the following environment variables:
+\itemize{
+\item \strong{\code{DP_R_Path_Python}} for Python path on LUMI.
+\item \strong{\code{Path_LUMI_Scratch}} for the path of the scratch folder of the \code{BioDT}
+project on LUMI.
+\item \strong{\code{DP_R_Path_TaxaList}} (if \code{FromHPC} = \code{TRUE}) or
+\strong{\code{DP_R_Path_TaxaList_Local}} (if \code{FromHPC} = \code{FALSE}). The function
+reads the content of the \code{Species_List_ID.txt} file from this path.
+}
 }
 \author{
 Ahmed El-Gabbas

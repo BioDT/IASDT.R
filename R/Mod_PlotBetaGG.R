@@ -2,14 +2,25 @@
 # PlotBetaGG ----
 ## |------------------------------------------------------------------------| #
 
-#' Heatmaps of parameter estimates or posterior support values of species' environmental responses (Beta parameters)
+#' Heatmaps of parameter estimates or posterior support values of species'
+#' environmental responses (Beta parameters)
 #'
-#' This function generates heatmaps of parameter estimates or posterior support values for species' environmental responses, represented by Beta parameters. It is designed to visualize how species (Y) respond to various covariates (X) using `ggplot2` for plotting. The function is an adaptation of [Hmsc::plotBeta], focusing on `ggplot2`-based visualizations.
-#'
-#' @param Path_Model String. The path to the `.RData` file containing the selected model.
-#' @param supportLevel Numeric. The threshold for posterior support used in plotting. Values above this threshold (and below 1 - threshold) are considered significant and will be plotted. The default value is 0.95, indicating 95% posterior support. For more information, see [Hmsc::plotBeta]
-#' @param PlotWidth,PlotHeight Numeric. The width and height of the plot in centimeters. Default is `18` cm x `20` cm.
-#' @return The function does not return a value but saves heatmap plots as JPEG files in a directory related to the model's path.
+#' This function generates heatmaps of parameter estimates or posterior support
+#' values for species' environmental responses, represented by Beta parameters.
+#' It is designed to visualize how species (Y) respond to various covariates (X)
+#' using `ggplot2` for plotting. The function is an adaptation of
+#' [Hmsc::plotBeta], focusing on `ggplot2`-based visualizations.
+#' @param Path_Model String. The path to the `.RData` file containing the
+#'   selected model.
+#' @param supportLevel Numeric. The threshold for posterior support used in
+#'   plotting. Values above this threshold (and below 1 - threshold) are
+#'   considered significant and will be plotted. The default value is 0.95,
+#'   indicating 95% posterior support. For more information, see
+#'   [Hmsc::plotBeta]
+#' @param PlotWidth,PlotHeight Numeric. The width and height of the plot in
+#'   centimeters. Default is `18` cm x `20` cm.
+#' @return The function does not return a value but saves heatmap plots as JPEG
+#'   files in a directory related to the model's path.
 #' @name PlotBetaGG
 #' @export
 
@@ -81,7 +92,8 @@ PlotBetaGG <- function(
 
   IASDT.R::CatTime("getPostEstimate")
 
-  # Calculates mean, support and other posterior quantities for a specified model parameter
+  # Calculates mean, support and other posterior quantities for a specified
+  # model parameter
   post <- Hmsc::getPostEstimate(hM = Model, parName = "Beta")
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -103,7 +115,8 @@ PlotBetaGG <- function(
 
   PosSign <- '<span style="font-size: 8pt"><b>  +  </b></span>'
   NegSign <- '<span style="font-size: 8pt"><b>  \U2212  </b></span>'
-  LegendTitle <- '<span style="font-size: 12pt"><b>Beta</b></span><br><span style="font-size: 9pt">(sign)</span>'
+  LegendTitle <- paste0('<span style="font-size: 12pt"><b>Beta</b></span>",
+                        "<br><span style="font-size: 9pt">(sign)</span>')
 
   Plot_Sign <- (
     Plot_SignD %>%
@@ -124,7 +137,8 @@ PlotBetaGG <- function(
       ggplot2::labs(fill = LegendTitle) +
       Theme +
       ggplot2::theme(legend.text = ggtext::element_markdown(size = 6))) %>%
-    # suppress the message: Scale for fill is already present. Adding another scale for fill, which will replace the existing scale.
+    # suppress the message: Scale for fill is already present. Adding another
+    # scale for fill, which will replace the existing scale.
     suppressMessages()
 
   cowplot::plot_grid(
@@ -152,7 +166,8 @@ PlotBetaGG <- function(
     Model$covNames == "RoadRailLog" ~ "\n\nRoad&Rail\nintensity",
     .default = paste0("\n\n", Model$covNames, "\n"))
 
-  LegendTitle <- '<span style="font-size: 12pt"><b>Beta</span><br><span style="font-size: 9pt">(mean)</span>'
+  LegendTitle <- paste0('<span style="font-size: 12pt"><b>Beta</span><br>",
+                        "<span style="font-size: 9pt">(mean)</span>')
 
   Plot_Mean <- (
     Plot_MeanD %>%
@@ -167,7 +182,8 @@ PlotBetaGG <- function(
       ggplot2::labs(fill = LegendTitle) +
       Theme +
       ggplot2::theme(legend.text = ggplot2::element_text(size = 6))) %>%
-    # suppress the message: Scale for fill is already present. Adding another scale for fill, which will replace the existing scale.
+    # suppress the message: Scale for fill is already present. Adding another
+    # scale for fill, which will replace the existing scale.
     suppressMessages()
 
   cowplot::plot_grid(
@@ -186,7 +202,10 @@ PlotBetaGG <- function(
 
   Plot_MeanD <- Plot_MeanD[-1, ]
 
-  LegendTitle <- '<span style="font-size: 12pt"><b>Beta</span><br><span style="font-size: 9pt">(mean)</span><br><br><span style="font-size: 7pt">[excl.<br/>Intercept]</span>'
+  LegendTitle <- paste0(
+    '<span style="font-size: 12pt"><b>Beta</span><br>',
+    '<span style="font-size: 9pt">(mean)</span><br><br>',
+    '<span style="font-size: 7pt">[excl.<br/>Intercept]</span>')
 
   Plot_Mean <- (
     Plot_MeanD %>%
@@ -201,7 +220,8 @@ PlotBetaGG <- function(
       ggplot2::labs(fill = LegendTitle) +
       Theme +
       ggplot2::theme(legend.text = ggplot2::element_text(size = 6))) %>%
-    # suppress the message: Scale for fill is already present. Adding another scale for fill, which will replace the existing scale.
+    # suppress the message: Scale for fill is already present. Adding another
+    # scale for fill, which will replace the existing scale.
     suppressMessages()
 
   cowplot::plot_grid(
@@ -229,7 +249,8 @@ PlotBetaGG <- function(
     Model$covNames == "RoadRailLog" ~ "\n\nRoad&Rail\nintensity",
     .default = paste0("\n\n", Model$covNames, "\n"))
 
-  LegendTitle <- '<span style="font-size: 12pt"><b>Beta</span><br><span style="font-size: 7pt">(support)</span>'
+  LegendTitle <- paste0('<span style="font-size: 12pt"><b>Beta</span><br>',
+                        '<span style="font-size: 7pt">(support)</span>')
 
   Plot_Support <- (
     Plot_SupportD %>%
@@ -246,7 +267,8 @@ PlotBetaGG <- function(
       ggplot2::labs(fill = LegendTitle) +
       Theme +
       ggplot2::theme(legend.text = ggplot2::element_text(size = 6))) %>%
-    # suppress the message: Scale for fill is already present. Adding another scale for fill, which will replace the existing scale.
+    # suppress the message: Scale for fill is already present. Adding another
+    # scale for fill, which will replace the existing scale.
     suppressMessages()
 
   cowplot::plot_grid(

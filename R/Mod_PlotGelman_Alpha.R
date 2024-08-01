@@ -2,16 +2,23 @@
 # PlotGelman_Alpha ----
 ## |------------------------------------------------------------------------| #
 
-#' Creates a Gelman-Rubin-Brooks plot for `alpha` parameters from an Hmsc object.
+#' Creates a Gelman-Rubin-Brooks plot for `alpha` parameters from an Hmsc
+#' object.
 #'
-#' This function generates a Gelman-Rubin-Brooks plot for `alpha` parameters. It uses parallel processing to speed up the computation. The plot includes lines for the median and the 97.5th percentile of the shrink factor, with a dashed line at 1.1 indicating the threshold for convergence. This function is not planned to be used in isolation but rather within [IASDT.R::PlotGelman].
-#'
+#' This function generates a Gelman-Rubin-Brooks plot for `alpha` parameters. It
+#' uses parallel processing to speed up the computation. The plot includes lines
+#' for the median and the 97.5th percentile of the shrink factor, with a dashed
+#' line at 1.1 indicating the threshold for convergence. This function is not
+#' planned to be used in isolation but rather within [IASDT.R::PlotGelman].
 #' @param CodaObj An object of class `mcmc.list`, representing the Hmsc samples.
-#' @param NCores An integer specifying the number of cores to use for parallel processing.
-#' @param PlottingAlpha A double specifying the alpha (transparency) level for the plot lines. Default is 0.25.
+#' @param NCores An integer specifying the number of cores to use for parallel
+#'   processing.
+#' @param PlottingAlpha A double specifying the alpha (transparency) level for
+#'   the plot lines. Default is 0.25.
 #' @name PlotGelman_Alpha
 #' @author Ahmed El-Gabbas
-#' @return A ggplot object(s) representing the Gelman-Rubin-Brooks plot for the `beta` parameters.
+#' @return A ggplot object(s) representing the Gelman-Rubin-Brooks plot for the
+#'   `beta` parameters.
 #' @export
 
 PlotGelman_Alpha <- function(CodaObj, NCores, PlottingAlpha = 0.25) {
@@ -93,7 +100,9 @@ PlotGelman_Alpha <- function(CodaObj, NCores, PlottingAlpha = 0.25) {
             ggplot2::labs(
               title = "Gelman-Rubin-Brooks plot - Alpha",
               subtitle = .x,
-              caption = "This plot shows the evolution of Gelman and Rubin's shrink factor as the number of iterations increases.") +
+              caption = paste0(
+                "This plot shows the evolution of Gelman and Rubin's shrink ",
+                "factor as the number of iterations increases.")) +
             ggplot2::xlab(NULL) +
             ggplot2::ylab("Shrink factor") +
             ggplot2::theme(

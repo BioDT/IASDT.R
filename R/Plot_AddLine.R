@@ -4,16 +4,21 @@
 #
 #' Add a horizontal or vertical line to the current plot
 #'
-#' Add a line to the current plot
+#' Add a horizontal or vertical line to the current plot
 #'
 #' @name AddLine
-#' @source The source code of this function was taken from this  [stackoverflow](https://stackoverflow.com/questions/27800307/) question.
+#' @source The source code of this function was taken from this
+#'   [stackoverflow](https://stackoverflow.com/questions/27800307/) question.
 #' @export
-#' @param at Numeric; the relative location of where the line should be plotted. Cannot be `NULL`.
-#' @param Outer Logical; if `TRUE`, the line is plotted outside of the plotting area. Default is `FALSE`.
-#' @param H Logical; if `TRUE` (default), a horizontal line is added. If `FALSE`, a vertical line is added.
+#' @param at Numeric; the relative location of where the line should be plotted.
+#'   Cannot be `NULL`.
+#' @param Outer Logical; if `TRUE`, the line is plotted outside of the plotting
+#'   area. Default is `FALSE`.
+#' @param H Logical; if `TRUE` (default), a horizontal line is added. If
+#'   `FALSE`, a vertical line is added.
 #' @param ... Additional graphical parameters passed to [graphics::abline].
-#' @return Invisible; the function is called for its side effect of drawing on the current plot.
+#' @return Invisible; the function is called for its side effect of drawing on
+#'   the current plot.
 #' @examples
 #' # Horizontal line
 #' par(oma = c(1, 1, 1, 1), mar = c(3, 3, 1, 1))

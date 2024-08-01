@@ -4,17 +4,29 @@
 
 #' Extract EASIN data using EASIN ID
 #'
-#' This function downloads data for a specified species from the EASIN database. It handles pagination automatically, downloading data in chunks until all available data for the species is retrieved. The function also supports pausing between requests to avoid overloading the server.
-#'
+#' This function downloads data for a specified species from the EASIN database.
+#' It handles pagination automatically, downloading data in chunks until all
+#' available data for the species is retrieved. The function also supports
+#' pausing between requests to avoid overloading the server.
 #' @param SpKey character; the EASIN taxon ID for which data is to be retrieved.
-#' @param NSearch integer; the number of records to attempt to retrieve per request. Default is 1000, which is the currently maximum allowed by the API.
-#' @param SleepPart integer; the number of seconds to pause between each data retrieval request to prevent overloading the server. Default is 1 second.
-#' @param Path_Raw character; the file path where the raw data files and temporary parts will be stored. Default is "Data/EASIN/Raw".
-#' @param ReturnVal logical; if `TRUE`, the function will return the combined data as a dataframe. If `FALSE`, the data will only be saved to disk and the function will return `NULL`. Default is `FALSE`.
-#' @param SleepAfter integer; the number of seconds to pause after all data has been retrieved and before the function completes. This can be useful for pacing batch operations. Default is 5 seconds.
+#' @param NSearch integer; the number of records to attempt to retrieve per
+#'   request. Default is 1000, which is the currently maximum allowed by the
+#'   API.
+#' @param SleepPart integer; the number of seconds to pause between each data
+#'   retrieval request to prevent overloading the server. Default is 1 second.
+#' @param Path_Raw character; the file path where the raw data files and
+#'   temporary parts will be stored. Default is "Data/EASIN/Raw".
+#' @param ReturnVal logical; if `TRUE`, the function will return the combined
+#'   data as a dataframe. If `FALSE`, the data will only be saved to disk and
+#'   the function will return `NULL`. Default is `FALSE`.
+#' @param SleepAfter integer; the number of seconds to pause after all data has
+#'   been retrieved and before the function completes. This can be useful for
+#'   pacing batch operations. Default is 5 seconds.
 #' @name Get_EASIN_Data
 #' @author Ahmed El-Gabbas
-#' @return If ReturnVal is `TRUE`, returns a dataframe containing all the data retrieved for the specified EASIN ID. If ReturnVal is `FALSE`, returns `NULL`.
+#' @return If ReturnVal is `TRUE`, returns a dataframe containing all the data
+#'   retrieved for the specified EASIN ID. If ReturnVal is `FALSE`, returns
+#'   `NULL`.
 #' @export
 #' @details
 #' A function to extract EASIN data for a given EASIN_ID
@@ -74,7 +86,8 @@ Get_EASIN_Data <- function(
 
           ReDown <- (inherits(ChunkDT, "try-error") ||
                        stringr::str_detect(
-                         string = ChunkDT, pattern = "An error occurred while retrieving"))
+                         string = ChunkDT,
+                         pattern = "An error occurred while retrieving"))
 
           if (magrittr::not(ReDown)) {
             break()
@@ -88,7 +101,8 @@ Get_EASIN_Data <- function(
         }
 
         if (magrittr::not(SpeciesOkay)) {
-          "data for {SpKey} can not be downloaded. Download failed after {DownTry} trials. Check server status." %>%
+          paste0("data for ", SpKey, "can not be downloaded. Download failed ",
+                 "after ", DownTry, " trials. Check server status.") %>%
             stringr::str_glue() %>%
             IASDT.R::CatTime()
           break()

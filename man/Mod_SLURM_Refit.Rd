@@ -23,41 +23,63 @@ Mod_SLURM_Refit(
 )
 }
 \arguments{
-\item{Path_Model}{String. Path to the model files directory. Must not end with a slash.}
+\item{Path_Model}{String. Path to the model files directory. Must not end
+with a slash.}
 
-\item{MaxJobCounts}{Integer. Maximum number of batch jobs that can be submitted in a single SLURM file.}
+\item{MaxJobCounts}{Integer. Maximum number of batch jobs that can be
+submitted in a single SLURM file.}
 
-\item{JobName}{String (optional). Name of the SLURM jobs. If not provided, a default name based on the model path is used.}
+\item{JobName}{String (optional). Name of the SLURM jobs. If not provided, a
+default name based on the model path is used.}
 
-\item{MemPerCpu}{String. Memory per CPU allocation for the SLURM job. Example: \verb{32G} for 32 gigabytes.}
+\item{MemPerCpu}{String. Memory per CPU allocation for the SLURM job.
+Example: \verb{32G} for 32 gigabytes.}
 
-\item{Time}{String. Duration for which the job should run. Example: \code{01:00:00} for one hour.}
+\item{Time}{String. Duration for which the job should run. Example:
+\code{01:00:00} for one hour.}
 
-\item{Partition}{String. The SLURM partition to submit the job to. Default is "small-g".}
+\item{Partition}{String. The SLURM partition to submit the job to. Default is
+"small-g".}
 
-\item{EnvFile}{String. Path to the environment variables file. Defaults to \code{.env}.}
+\item{EnvFile}{String. Path to the environment variables file. Defaults to
+\code{.env}.}
 
-\item{CatJobInfo}{Logical. Whether to include commands in the SLURM script to print job information. Defaults to TRUE.}
+\item{CatJobInfo}{Logical. Whether to include commands in the SLURM script to
+print job information. Defaults to TRUE.}
 
-\item{ntasks}{Integer. Number of tasks to request (\verb{#SBATCH --ntasks=}) for the SLURM job. Defaults to 1.}
+\item{ntasks}{Integer. Number of tasks to request (\verb{#SBATCH --ntasks=}) for
+the SLURM job. Defaults to 1.}
 
 \item{CpusPerTask}{Integer. Number of CPUs per task (\verb{#SBATCH --cpus-per-task=}) to request. Defaults to 1.}
 
 \item{GpusPerNode}{Integer. Number of GPUs per node to request (\verb{#SBATCH --gpus-per-node=}). Defaults to 1.}
 
-\item{FromHPC}{Logical. Indicates whether the function is being called from an HPC environment. Adjusts file paths accordingly.}
+\item{FromHPC}{Logical. Indicates whether the function is being called from
+an HPC environment. Adjusts file paths accordingly.}
 
-\item{Path_Hmsc}{String. Path to the Hmsc-HPC directory.}
+\item{Path_Hmsc}{String. Path to the \code{Hmsc-HPC} directory.}
 
-\item{Refit_Prefix}{String. Prefix for the files that contain the commands to refit the models.}
+\item{Refit_Prefix}{String. Prefix for the files that contain the commands to
+refit the models.}
 
 \item{SLURM_Prefix}{String. Prefix for the generated SLURM batch files.}
 }
 \value{
-The function does not return any value but creates command and SLURM batch files for refitting models.
+The function does not return any value but creates command and SLURM
+batch files for refitting models.
 }
 \description{
-This function prepares SLURM files for models that have not been successfully fitted yet. It generates command files for refitting and creates corresponding SLURM batch files to execute these commands on a HPC environment.
+This function prepares SLURM files for models that have not been successfully
+fitted yet. It generates command files for refitting and creates
+corresponding SLURM batch files to execute these commands on a HPC
+environment.
+}
+\details{
+The function reads the following environment variable:
+\itemize{
+\item \strong{\code{Path_LUMI_Scratch}} for the path of the scratch folder of the
+\code{BioDT} project on LUMI.
+}
 }
 \author{
 Ahmed El-Gabbas

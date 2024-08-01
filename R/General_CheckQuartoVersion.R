@@ -4,10 +4,15 @@
 
 #' Check if the installed Quarto version is up to date
 #'
-#' This function compares the installed Quarto version on the user's system with the latest version available online. If the versions differ, it suggests the user to update Quarto. It uses web scraping to find the latest version available on the Quarto GitHub releases page and the system command to find the installed version.
+#' This function compares the installed Quarto version on the user's system with
+#' the latest version available online. If the versions differ, it suggests the
+#' user to update Quarto. It uses web scraping to find the latest version
+#' available on the Quarto GitHub releases page and the system command to find
+#' the installed version.
 #' @name CheckQuartoVersion
 #' @author Ahmed El-Gabbas
-#' @return A message indicating whether the installed Quarto version is up to date or suggesting an update if it is not.
+#' @return A message indicating whether the installed Quarto version is up to
+#'   date or suggesting an update if it is not.
 #' @export
 #' @examples
 #' CheckQuartoVersion()
@@ -19,7 +24,7 @@ CheckQuartoVersion <- function() {
     rvest::html_nodes(".Link--primary") %>%
     rvest::html_text2() %>%
     stringr::str_remove_all("v") %>%
-    gtools::mixedsort(decreasing = TRUE) %>% 
+    gtools::mixedsort(decreasing = TRUE) %>%
     magrittr::extract(1)
 
   InstalledVersion <- system("quarto --version", intern = TRUE)

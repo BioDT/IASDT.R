@@ -4,18 +4,23 @@
 
 #' Prepare and Download CHELSA Climate Data
 #'
-#' This function prepares a list of CHELSA climate data files to download based on specified criteria, downloads the files if requested, and saves the list and downloaded files to disk.
-#'
+#' This function prepares a list of CHELSA climate data files to download based
+#' on specified criteria, downloads the files if requested, and saves the list
+#' and downloaded files to disk.
 #' @name Chelsa_Prepare_List
 #' @param Down Logical, whether to download the CHELSA files.
-#' @param DownParallel Logical, whether to download files in parallel (if `Down` is `TRUE`).
+#' @param DownParallel Logical, whether to download files in parallel (if `Down`
+#'   is `TRUE`).
 #' @param DwnPath String, the path where downloaded files should be saved.
 #' @param OutPath String, the path where output files should be saved.
-#' @param UpdateExisting Logical, whether to re-download and process files that already exist.
-#' @param Path_Chelsa String, the base path for CHELSA analyses and data storage.
+#' @param UpdateExisting Logical, whether to re-download and process files that
+#'   already exist.
+#' @param Path_Chelsa String, the base path for CHELSA analyses and data
+#'   storage.
 #' @author Ahmed El-Gabbas
 #' @importFrom rlang .data
-#' @return A data frame containing metadata about the CHELSA climate data files, including variables, climate models, scenarios, and download URLs.
+#' @return A data frame containing metadata about the CHELSA climate data files,
+#'   including variables, climate models, scenarios, and download URLs.
 #' @export
 #' @details
 #' list of variables exist under current and future climates.
@@ -36,9 +41,10 @@ Chelsa_Prepare_List <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Variable <- DownFile <- NULL
+  Variable <- DownFile <- TimePeriod <- Ext <- ClimScenario <- NULL
 
-  BaseURL <- "https://os.zhdk.cloud.switch.ch/envicloud/chelsa/chelsa_V2/GLOBAL/"
+  BaseURL <- paste0("https://os.zhdk.cloud.switch.ch/envicloud/",
+                    "chelsa/chelsa_V2/GLOBAL/")
 
   ClimateModels <- c(
     "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL")
@@ -109,8 +115,9 @@ Chelsa_Prepare_List <- function(
       Var = purrr::map_chr(
         .x = .data$File,
         .f = stringr::str_remove_all,
-        pattern = stringr::str_glue("_r1i1p1f1_w5e5_|_norm|CHELSA_|V.2.1|_V\\.2\\.1|{TimePeriod}|.{Ext}|{ClimScenario}")),
-
+        pattern = paste0(
+          "_r1i1p1f1_w5e5_|_norm|CHELSA_|V.2.1|_V\\.2\\.1|", TimePeriod,
+          "|.", Ext, "|", ClimScenario)),
       Var = purrr::map2_chr(
         .x = .data$Var, .y = .data$ClimModel,
         .f = ~{
@@ -124,7 +131,8 @@ Chelsa_Prepare_List <- function(
         .f = ~{
           .x %>%
             stringr::str_remove_all(
-              pattern = stringr::str_glue('{.y}|{stringr::str_replace(.y, "-", "_")}'))
+              pattern = stringr::str_glue(
+                '{.y}|{stringr::str_replace(.y, "-", "_")}'))
         }),
 
       Var = purrr::map_chr(
@@ -139,7 +147,8 @@ Chelsa_Prepare_List <- function(
         .x = .data$DownFile, stringr::str_replace,
         pattern = DwnPath, replacement = OutPath),
 
-      DownCommand = stringr::str_glue('curl -k -L "{URL}" -o "{DownFile}" --silent'),
+      DownCommand = stringr::str_glue(
+        'curl -k -L "{URL}" -o "{DownFile}" --silent'),
 
       # Unique name for variable / time combination
       OutName = paste0(
@@ -170,7 +179,8 @@ Chelsa_Prepare_List <- function(
     if (UpdateExisting) {
       Data2Down <- ChelsaClimData
     } else {
-      Data2Down <- dplyr::filter(ChelsaClimData, magrittr::not(file.exists(DownFile)))
+      Data2Down <- dplyr::filter(
+        ChelsaClimData, magrittr::not(file.exists(DownFile)))
     }
 
     # Download in parallel

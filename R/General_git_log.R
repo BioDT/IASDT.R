@@ -2,15 +2,31 @@
 # git_log ----
 ## |------------------------------------------------------------------------| #
 
-#' Print or return a detailed `git log` of the git repository located in the specified directory.
+#' Print or return a detailed `git log` of the git repository located in the
+#' specified directory.
 #'
-#' This function checks if the specified directory is a Git repository and, if so, executes a `git log` command to either print the log to the console or return it. It supports execution on Windows and Linux operating systems and provides a visually appealing graph format of the log, showing the commit hash, references, commit message, relative commit date, and author name.
-#'
-#' @param Path A character string specifying the path to the directory to check. Defaults to the current working directory ".". If the path does not exist, the function will stop and throw an error. If the path is not a git repository, the function will throw a warning.
-#' @param Num An optional numeric value specifying the number of recent commits to display. If `NULL` (the default), the complete log is shown. If `Num` is not `NULL` or a positive number, the function will stop and throw an error.
-#' @param ReturnLog A logical value indicating whether to return the log (`TRUE`) or print it to the console (`FALSE`, default). If `TRUE`, the function returns a character vector containing the log lines.
-#' @return If `ReturnLog` is `TRUE`, returns a character vector containing the git log lines. If `ReturnLog` is `FALSE`, the function is called for its side effect of printing to the console.
-#' @note The function will stop and throw an error if the specified path does not exist, the operating system is not supported, the directory is not a Git repository, Git is not installed, or if the `Num` parameter is not `NULL` or a positive number.
+#' This function checks if the specified directory is a Git repository and, if
+#' so, executes a `git log` command to either print the log to the console or
+#' return it. It supports execution on Windows and Linux operating systems and
+#' provides a visually appealing graph format of the log, showing the commit
+#' hash, references, commit message, relative commit date, and author name.
+#' @param Path A character string specifying the path to the directory to check.
+#'   Defaults to the current working directory ".". If the path does not exist,
+#'   the function will stop and throw an error. If the path is not a git
+#'   repository, the function will throw a warning.
+#' @param Num An optional numeric value specifying the number of recent commits
+#'   to display. If `NULL` (the default), the complete log is shown. If `Num` is
+#'   not `NULL` or a positive number, the function will stop and throw an error.
+#' @param ReturnLog A logical value indicating whether to return the log
+#'   (`TRUE`) or print it to the console (`FALSE`, default). If `TRUE`, the
+#'   function returns a character vector containing the log lines.
+#' @return If `ReturnLog` is `TRUE`, returns a character vector containing the
+#'   git log lines. If `ReturnLog` is `FALSE`, the function is called for its
+#'   side effect of printing to the console.
+#' @note The function will stop and throw an error if the specified path does
+#'   not exist, the operating system is not supported, the directory is not a
+#'   Git repository, Git is not installed, or if the `Num` parameter is not
+#'   `NULL` or a positive number.
 #' @name git_log
 #' @export
 #' @seealso [IASDT.R::System]
@@ -83,7 +99,8 @@ git_log <- function(Path = ".", Num = NULL, ReturnLog = FALSE) {
     },
     error = function(e) {
       stop(
-        "Failed to retrieve Git log. Ensure Git is installed and the directory is a valid Git repository.",
+        paste0("Failed to retrieve Git log. Ensure Git is installed and the ",
+               "directory is a valid Git repository."),
         call. = FALSE)
     })
 
@@ -95,7 +112,10 @@ git_log <- function(Path = ".", Num = NULL, ReturnLog = FALSE) {
         if (is.numeric(Num) && Num > 0) {
           cat(utils::head(log_output, n = Num), sep = "\n")
         } else {
-          stop("The 'Num' argument can be either NULL to show the complete log or a positive numeric value to show the most recent commits.", call. = FALSE)
+          stop(paste0(
+            "The 'Num' argument can be either NULL to show the ",
+            "complete log or a positive numeric value to show the ",
+            "most recent commits."), call. = FALSE)
         }
       }
     }

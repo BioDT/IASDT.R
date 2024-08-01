@@ -4,15 +4,22 @@
 
 #' Creates a Gelman-Rubin-Brooks plot for `omega` parameters.
 #'
-#' This function generates a Gelman-Rubin-Brooks plot specifically for `omega` parameters using the provided Hmsc model object. It is designed to help assess the convergence of MCMC simulations by plotting the shrink factor over iterations for a subset of species' omega parameters. This function is not planned to be used in isolation but rather within [IASDT.R::PlotGelman].
-#'
+#' This function generates a Gelman-Rubin-Brooks plot specifically for `omega`
+#' parameters using the provided Hmsc model object. It is designed to help
+#' assess the convergence of MCMC simulations by plotting the shrink factor over
+#' iterations for a subset of species' omega parameters. This function is not
+#' planned to be used in isolation but rather within [IASDT.R::PlotGelman].
 #' @param CodaObj n object of class `mcmc.list` representing the MCMC chains.
-#' @param NCores An integer specifying the number of cores to use for parallel processing.
-#' @param NOmega An optional integer indicating the number of species' omega parameters to sample and plot. Defaults to 1000.
-#' @param PlottingAlpha A numeric value between 0 and 1 indicating the transparency level of the plot lines. Defaults to 0.25.
+#' @param NCores An integer specifying the number of cores to use for parallel
+#'   processing.
+#' @param NOmega An optional integer indicating the number of species' omega
+#'   parameters to sample and plot. Defaults to 1000.
+#' @param PlottingAlpha A numeric value between 0 and 1 indicating the
+#'   transparency level of the plot lines. Defaults to 0.25.
 #' @name PlotGelman_Omega
 #' @author Ahmed El-Gabbas
-#' @return A ggplot object representing the Gelman-Rubin-Brooks plot for the sampled omega parameters.
+#' @return A ggplot object representing the Gelman-Rubin-Brooks plot for the
+#'   sampled omega parameters.
 #' @export
 
 PlotGelman_Omega <- function(
@@ -83,7 +90,8 @@ PlotGelman_Omega <- function(
     ggplot2::scale_color_manual(
       values = c("Median" = "red", "Q97_5" = "black")) +
     ggplot2::geom_hline(
-      yintercept = 1.1, linetype = "dashed", col = "darkgrey", linewidth = 0.8) +
+      yintercept = 1.1, linetype = "dashed", col = "darkgrey",
+      linewidth = 0.8) +
     ggplot2::facet_grid(
       ~Type,
       labeller = ggplot2::as_labeller(
@@ -94,7 +102,9 @@ PlotGelman_Omega <- function(
       title = paste0("Gelman-Rubin-Brooks plot - Omega - ",
                      NOmega, " species combination samples"),
       subtitle = NULL,
-      caption = "This plot shows the evolution of Gelman and Rubin's shrink factor as the number of iterations increases.") +
+      caption = paste0(
+        "This plot shows the evolution of Gelman and Rubin's shrink factor as ",
+        "the number of iterations increases.")) +
     ggplot2::xlab(NULL) +
     ggplot2::ylab("Shrink factor") +
     ggplot2::theme(

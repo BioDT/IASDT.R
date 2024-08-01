@@ -7,13 +7,21 @@
 FileExt(Path)
 }
 \arguments{
-\item{Path}{A character string representing the file path from which the file extension is to be extracted. It must not be \code{NULL} and has to be a character string.}
+\item{Path}{A character string representing the file path from which the file
+extension is to be extracted. It must not be \code{NULL} and has to be a
+character string.}
 }
 \value{
-A character string representing the file extension of the given file path. If the path does not have an extension, an empty string is returned.
+A character string representing the file extension of the given file
+path. If the path does not have an extension, an empty string is returned.
 }
 \description{
-This function extracts the file extension from a given file path. It first checks if the input is not NULL and is a character string. If these conditions are met, it then uses the \link[tools:fileutils]{tools::file_ext} function to extract and return the file extension. The function does not check the existence of the file or explicitly get the file type from its content. It merely guess file extension from the file name.
+This function extracts the file extension from a given file path. It first
+checks if the input is not NULL and is a character string. If these
+conditions are met, it then uses the \link[tools:fileutils]{tools::file_ext} function to extract
+and return the file extension. The function does not check the existence of
+the file or explicitly get the file type from its content. It merely guess
+file extension from the file name.
 }
 \examples{
 FileExt(Path = "File.doc")

@@ -9,17 +9,23 @@ CatSep(Rep = 1, Extra1 = 0, Extra2 = 0, Char = "-", CharReps = 50)
 \arguments{
 \item{Rep}{integer; the number of separator lines to print. Default is \code{1}.}
 
-\item{Extra1, Extra2}{integer; the number of extra empty lines to print before and after the separator lines. Default is \code{0}.}
+\item{Extra1, Extra2}{integer; the number of extra empty lines to print before
+and after the separator lines. Default is \code{0}.}
 
-\item{Char}{character; the character used to construct the separator line. Default is \code{"-"}.}
+\item{Char}{character; the character used to construct the separator line.
+Default is \code{"-"}.}
 
-\item{CharReps}{integer; the number of times the character is repeated to form a separator line. Default is \code{50}.}
+\item{CharReps}{integer; the number of times the character is repeated to
+form a separator line. Default is \code{50}.}
 }
 \value{
-The function is called for its side effect (printing to the console) and does not return a meaningful value.
+The function is called for its side effect (printing to the console)
+and does not return a meaningful value.
 }
 \description{
-This function prints customizable separator lines to the console, optionally preceded and followed by empty lines. It is useful for improving the readability of console output in R scripts or during interactive sessions.
+This function prints customizable separator lines to the console, optionally
+preceded and followed by empty lines. It is useful for improving the
+readability of console output in R scripts or during interactive sessions.
 }
 \examples{
 CatSep()

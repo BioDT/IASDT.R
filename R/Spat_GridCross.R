@@ -2,20 +2,29 @@
 # GridCross ------
 ## |------------------------------------------------------------------------| #
 
-#' Create a `multilinestring` sf object representing cross in the middle of each grid cell
+#' Create a `multilinestring` sf object representing cross in the middle of each
+#' grid cell
 #'
-#' Create a `multilinestring` (cross in the middle of the grid) sf object from each grid cell
+#' Create a `multilinestring` (cross in the middle of the grid) sf object from
+#' each grid cell
 #' @name GridCross
-#' @param DT An `sf` object (tibble) representing grid cells. The function expects this object to have a geometry column with polygon geometries. If `NULL`, the function will stop with an error message.
-#' @return An `sf` object with `multilinestring` geometries representing crosses in the middle of each input grid cell. The returned object has the same CRS (Coordinate Reference System) as the input `DT`
+#' @param DT An `sf` object (tibble) representing grid cells. The function
+#'   expects this object to have a geometry column with polygon geometries. If
+#'   `NULL`, the function will stop with an error message.
+#' @return An `sf` object with `multilinestring` geometries representing crosses
+#'   in the middle of each input grid cell. The returned object has the same CRS
+#'   (Coordinate Reference System) as the input `DT`
 #' @author Ahmed El-Gabbas
 #' @export
 #' @seealso \code{\link{GridDiagOff}} for creating diagonal lines in grid cells.
-#' @note The function requires the `sf`, `dplyr`, `purrr`, `tibble`, and `tidyr` packages to be installed and loaded.
+#' @note The function requires the `sf`, `dplyr`, `purrr`, `tibble`, and `tidyr`
+#'   packages to be installed and loaded.
 #' @examples
 #' IASDT.R::LoadPackages(dplyr, sf, raster, ggplot2)
 #'
-#' Grid <- raster::raster(nrows = 10, ncols = 10, xmn = 0, xmx = 10, ymn = 0, ymx = 10, crs = 4326) %>%
+#' Grid <- raster::raster(
+#'     nrows = 10, ncols = 10, xmn = 0, xmx = 10,
+#'     ymn = 0, ymx = 10, crs = 4326) %>%
 #'   setNames("Grid") %>%
 #'   raster::setValues(1) %>%
 #'   raster::rasterToPolygons() %>%

@@ -27,23 +27,31 @@ Mod_SLURM(
 
 \item{JobName}{String. The name of the submitted job(s).}
 
-\item{CatJobInfo}{Logical. Add bash lines to print information on the submitted job. Default: \code{TRUE}.}
+\item{CatJobInfo}{Logical. Add bash lines to print information on the
+submitted job. Default: \code{TRUE}.}
 
-\item{ntasks}{Integer. The value for the \verb{#SBATCH --ntasks=} SLURM argument. Default: 1.}
+\item{ntasks}{Integer. The value for the \verb{#SBATCH --ntasks=} SLURM argument.
+Default: 1.}
 
-\item{CpusPerTask}{Integer. The value for the \verb{#SBATCH --cpus-per-task=} SLURM argument. Default: 1.}
+\item{CpusPerTask}{Integer. The value for the \verb{#SBATCH --cpus-per-task=}
+SLURM argument. Default: 1.}
 
-\item{GpusPerNode}{Integer. The value for the \verb{#SBATCH --gpus-per-node=} SLURM argument. Default: 1.}
+\item{GpusPerNode}{Integer. The value for the \verb{#SBATCH --gpus-per-node=}
+SLURM argument. Default: 1.}
 
-\item{MemPerCpu}{String. The value for the \verb{#SBATCH --mem-per-cpu=} SLURM argument. Example: \verb{32G} to request 32 gigabytes.}
+\item{MemPerCpu}{String. The value for the \verb{#SBATCH --mem-per-cpu=} SLURM
+argument. Example: \verb{32G} to request 32 gigabytes.}
 
-\item{Time}{String. The value for the requested time for each job in the bash arrays. Example: \code{01:00:00} to request an hour.}
+\item{Time}{String. The value for the requested time for each job in the bash
+arrays. Example: \code{01:00:00} to request an hour.}
 
 \item{Partition}{String. The name of the partition. Default: \code{small-g}.}
 
-\item{EnvFile}{String. Path to read the environment variables. Default value: \code{.env}.}
+\item{EnvFile}{String. Path to read the environment variables. Default value:
+\code{.env}.}
 
-\item{FromHPC}{Logical. Indicates if the operation is being performed from an HPC environment. This adjusts file paths accordingly. Default: \code{TRUE}.}
+\item{FromHPC}{Logical. Indicates if the operation is being performed from an
+HPC environment. This adjusts file paths accordingly. Default: \code{TRUE}.}
 
 \item{Path_Hmsc}{String. Path for the Hmsc-HPC.}
 
@@ -51,13 +59,29 @@ Mod_SLURM(
 
 \item{SLURM_Prefix}{String. Prefix for the exported SLURM file.}
 
-\item{Path_SLURM_Out}{String indicating the directory where the SLURM file(s) will be saved. Defaults to \code{NULL}, which means to identify the path from \code{Path_Model}.}
+\item{Path_SLURM_Out}{String indicating the directory where the SLURM file(s)
+will be saved. Defaults to \code{NULL}, which means to identify the path from
+\code{Path_Model}.}
 }
 \value{
-The function does not return any value but writes SLURM script files to the disk.
+The function does not return any value but writes SLURM script files
+to the disk.
 }
 \description{
-This function prepares and writes SLURM file(s) for submitting model fitting jobs on an HPC environment. It dynamically generates bash scripts based on the provided parameters, which are then used to submit jobs to the SLURM workload manager.
+This function prepares and writes SLURM file(s) for submitting model fitting
+jobs on an HPC environment. It dynamically generates bash scripts based on
+the provided parameters, which are then used to submit jobs to the SLURM
+workload manager.
+}
+\details{
+The function reads the following environment variables:
+\itemize{
+\item \strong{\code{Path_LUMI_Scratch}} for the path of
+the scratch folder of the \code{BioDT} project on LUMI.
+\item \strong{\code{DP_R_LUMI_ProjNum}} for the BioDT LUMI project number.
+\item \strong{\code{DP_R_Path_GPU_Check}} for the path of the python for reporting if
+the GPU was used in the running SLURM job.
+}
 }
 \author{
 Ahmed El-Gabbas

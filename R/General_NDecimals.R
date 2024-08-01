@@ -4,12 +4,16 @@
 
 #' Number of Decimal Places in a Numeric Value
 #'
-#' This function calculates the number of decimal places in a numeric value. It is designed to work with numeric inputs that can be coerced to character format.
+#' This function calculates the number of decimal places in a numeric value. It
+#' is designed to work with numeric inputs that can be coerced to character
+#' format.
 #'
 #' @param x A numeric value or a string that represents a numeric value.
 #' @name NDecimals
 #' @author Ahmed El-Gabbas
-#' @return An integer representing the number of decimal places in the input value. If the input value does not have any decimal places, the function returns 0.
+#' @return An integer representing the number of decimal places in the input
+#'   value. If the input value does not have any decimal places, the function
+#'   returns 0.
 #' @examples
 #' NDecimals(x = "13.45554545")
 #'

@@ -7,13 +7,22 @@
 Chelsa_Info(FileName)
 }
 \arguments{
-\item{FileName}{character vector; a vector of CHELSA file names or paths. Each element should be a string representing the file name or path of a CHELSA climate model output file.}
+\item{FileName}{character vector; a vector of CHELSA file names or paths.
+Each element should be a string representing the file name or path of a
+CHELSA climate model output file.}
 }
 \value{
-A data frame with columns for the original file name (\code{FileName}), the climate variable (\code{Variable}), the time period (\code{TimePeriod}), the climate model (\code{ClimModel}), and the climate scenario (\code{ClimScenario}). Additional variable information is joined from an external source ([IASDT.R::Chelsa_Vars`).
+A data frame with columns for the original file name (\code{FileName}),
+the climate variable (\code{Variable}), the time period (\code{TimePeriod}), the
+climate model (\code{ClimModel}), and the climate scenario (\code{ClimScenario}).
+Additional variable information is joined from an external source
+([IASDT.R::Chelsa_Vars`).
 }
 \description{
-This function parses CHELSA climate model file names to extract and summarize information such as the time period, climate model, climate scenario, and variable represented in the file. It returns a data frame with these details for each file name provided.
+This function parses CHELSA climate model file names to extract and summarize
+information such as the time period, climate model, climate scenario, and
+variable represented in the file. It returns a data frame with these details
+for each file name provided.
 }
 \examples{
 BaseURL <- "https://os.zhdk.cloud.switch.ch/envicloud/chelsa/chelsa_V2/GLOBAL/climatologies/"

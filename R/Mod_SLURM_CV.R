@@ -4,34 +4,78 @@
 
 #' Prepare Cross-Validated Hmsc Models for HPC Fitting
 #'
-#' This function prepares initial cross-validated Hmsc models in R for fitting by Hmsc-HPC. It includes data preparation, model initialization, and command generation for running models on HPC.
-#'
-#' @param Model Either a path to a saved model file (character) or an Hmsc model object. If a path is provided, the model is loaded from the file.
-#' @param CVName Character vector specifying the name of the column(s) in the model input data (see [IASDT.R::Mod_PrepData] and [IASDT.R::GetCV]) to be used to cross-validate the models. Currently, there is only one column `CV` for spatial cross-validation, created using the [IASDT.R::Mod_PrepData] function. The function allows the possibility of using more than one way of assigning grid cells into cross-validation folders. If multiple names are provided, separate cross-validation models will be fitted for each column.
-#' @param partition A vector for cross-validation created by [Hmsc::createPartition] or similar. Defaults to `NULL`, which means to use column name(s) provided in the `CVName` argument. If the `partition` vector is provided, the label used in the output files will be `CV_Custom`.
-#' @param Path_CV The directory path where cross-validation models and outputs will be stored. If `Model` argument is a character vector, it will be estimated from the model path. If `Model` is an Hmsc model object, it has to be provided by the user, otherwise the function will give an error.
-#' @param EnvFile String specifying the path to read environment variables from, with a default value of `.env`.
-#' @param initPar a named list of parameter values used for initialization of MCMC states. See [Hmsc::computePredictedValues] for more information.
-#' @param JobName String specifying the name of the submitted job(s) for SLURM. Default: `CV_Models`.
-#' @param updater a named list, specifying which conditional updaters should be omitted.  See [Hmsc::computePredictedValues] for more information. Defaults to `list(Gamma2 = FALSE, GammaEta = FALSE)` to disable the following warnings: `setting updater$Gamma2=FALSE due to specified phylogeny matrix` and `setting updater$GammaEta=FALSE: not implemented for spatial methods 'GPP' and 'NNGP'`
-#'
-#' @param alignPost boolean flag indicating whether the posterior of each chains should be aligned. See [Hmsc::computePredictedValues] for more information. Default: `TRUE`.
-#' @param ToJSON Logical indicating whether to convert unfitted models to JSON before saving to RDS file. Default: `FALSE`.
-#' @param FromHPC Logical indicating whether the work is being done from HPC, to adjust file paths accordingly. Default: `TRUE`.
-#' @param MemPerCpu String specifying the memory per CPU for the SLURM job. This value will be assigned to the `#SBATCH --mem-per-cpu=` SLURM argument. Example: `32G` to request 32 gigabyte. Only effective if `PrepSLURM = TRUE`.
-#' @param Time String specifying the requested time for each job in the SLURM bash arrays. Example: `01:00:00` to request an hour. Only effective if `PrepSLURM = TRUE`.
-#' @param Path_Hmsc String specifying the path for the Hmsc-HPC. This will be provided as the `Path_Hmsc` argument of the [IASDT.R::Mod_SLURM] function.
+#' This function prepares initial cross-validated Hmsc models in R for fitting
+#' by Hmsc-HPC. It includes data preparation, model initialization, and command
+#' generation for running models on HPC.
+#' @param Model Either a path to a saved model file (character) or an Hmsc model
+#'   object. If a path is provided, the model is loaded from the file.
+#' @param CVName Character vector specifying the name of the column(s) in the
+#'   model input data (see [IASDT.R::Mod_PrepData] and [IASDT.R::GetCV]) to be
+#'   used to cross-validate the models. The function allows the possibility of
+#'   using more than one way of assigning grid cells into cross-validation
+#'   folders. If multiple names are provided, separate cross-validation models
+#'   will be fitted for each column. Currently, there are three cross-validation
+#'   strategies, created using the [IASDT.R::Mod_PrepData]: `CV_SAC`, `CV_Dist`,
+#'   and `CV_Median` (see [IASDT.R::GetCV]).
+#' @param partition A vector for cross-validation created by
+#'   [Hmsc::createPartition] or similar. Defaults to `NULL`, which means to use
+#'   column name(s) provided in the `CVName` argument. If the `partition` vector
+#'   is provided, the label used in the output files will be `CV_Custom`.
+#' @param Path_CV The directory path where cross-validation models and outputs
+#'   will be stored. If `Model` argument is a character vector, it will be
+#'   estimated from the model path. If `Model` is an Hmsc model object, it has
+#'   to be provided by the user, otherwise the function will give an error.
+#' @param EnvFile String specifying the path to read environment variables from,
+#'   with a default value of `.env`.
+#' @param initPar a named list of parameter values used for initialization of
+#'   MCMC states. See [Hmsc::computePredictedValues] for more information.
+#' @param JobName String specifying the name of the submitted job(s) for SLURM.
+#'   Default: `CV_Models`.
+#' @param updater a named list, specifying which conditional updaters should be
+#'   omitted.  See [Hmsc::computePredictedValues] for more information. Defaults
+#'   to `list(Gamma2 = FALSE, GammaEta = FALSE)` to disable the following
+#'   warnings: `setting updater$Gamma2=FALSE due to specified phylogeny matrix`
+#'   and `setting updater$GammaEta=FALSE: not implemented for spatial methods
+#'   'GPP' and 'NNGP'`.
+#' @param alignPost boolean flag indicating whether the posterior of each chains
+#'   should be aligned. See [Hmsc::computePredictedValues] for more information.
+#'   Default: `TRUE`.
+#' @param ToJSON Logical indicating whether to convert unfitted models to JSON
+#'   before saving to RDS file. Default: `FALSE`.
+#' @param FromHPC Logical indicating whether the work is being done from HPC, to
+#'   adjust file paths accordingly. Default: `TRUE`.
+#' @param MemPerCpu String specifying the memory per CPU for the SLURM job. This
+#'   value will be assigned to the `#SBATCH --mem-per-cpu=` SLURM argument.
+#'   Example: `32G` to request 32 gigabyte. Only effective if `PrepSLURM =
+#'   TRUE`.
+#' @param Time String specifying the requested time for each job in the SLURM
+#'   bash arrays. Example: `01:00:00` to request an hour. Only effective if
+#'   `PrepSLURM = TRUE`.
+#' @param Path_Hmsc String specifying the path for the Hmsc-HPC. This will be
+#'   provided as the `Path_Hmsc` argument of the [IASDT.R::Mod_SLURM] function.
 #' @param ... Additional arguments passed to the [IASDT.R::Mod_SLURM] function.
-#' @param CheckPyPath Logical, whether to check the existence of the `Path_Python` directory extracted from reading `EnvFile` content. Default: `TRUE`.
-#' @details The function copies part of the [Hmsc::computePredictedValues] function, which currently does not support performing cross-validation using Hmsc-HPC. Although it is possible to [make some changes](https://github.com/aniskhan25/hmsc-hpc/issues/14) to the [Hmsc::computePredictedValues] to make it possible to use Hmsc-HPC, this does not help as our intention is to use the Hmsc-HPC using GPU.
+#' @param CheckPyPath Logical, whether to check the existence of the
+#'   `Path_Python` directory extracted from reading `EnvFile` content. Default:
+#'   `TRUE`.
+#' @details The function copies part of the [Hmsc::computePredictedValues]
+#'   function, which currently does not support performing cross-validation
+#'   using Hmsc-HPC. Although it is possible to [make some
+#'   changes](https://github.com/aniskhan25/hmsc-hpc/issues/14) to the
+#'   [Hmsc::computePredictedValues] to make it possible to use Hmsc-HPC, this
+#'   does not help as our intention is to use the Hmsc-HPC using GPU.
+#'
+#'   The function reads the following environment variables:
+#'   - **`DP_R_Path_Python`** for Python path on LUMI.
+#'   - **`Path_LUMI_Scratch`** for the path of the scratch folder of the `BioDT`
+#'   project on LUMI.
 #' @author Ahmed El-Gabbas
 #' @export
 #' @name Mod_SLURM_CV
 
 Mod_SLURM_CV <- function(
-    Model = NULL, CVName = NULL, partition = NULL, Path_CV = NULL,
-    EnvFile = ".env", initPar = NULL, JobName = "CV_Models",
-    updater = list(Gamma2 = FALSE, GammaEta = FALSE),
+    Model = NULL, CVName = c("CV_SAC", "CV_Dist", "CV_Median"),
+    partition = NULL, Path_CV = NULL, EnvFile = ".env", initPar = NULL,
+    JobName = "CV_Models", updater = list(Gamma2 = FALSE, GammaEta = FALSE),
     alignPost = TRUE, ToJSON = FALSE, FromHPC = TRUE, MemPerCpu = NULL,
     Time = NULL, Path_Hmsc = NULL, CheckPyPath = TRUE, ...) {
 
@@ -44,20 +88,19 @@ Mod_SLURM_CV <- function(
   # # ++++++++++++++++++++++++++++++++++++
   if (is.null(Model) || is.null(Path_Hmsc) || is.null(MemPerCpu) ||
       is.null(Time) || is.null(EnvFile)) {
-    stop("Model, Path_Hmsc, MemPerCpu, Time, and EnvFile cannot be empty")
+    stop("The following arguments cannot be empty: ",
+         "Model, Path_Hmsc, MemPerCpu, Time, EnvFile")
   }
 
   AllArgs <- ls()
   AllArgs <- purrr::map(
-    AllArgs,
-    function(x) get(x, envir = parent.env(env = environment()))) %>%
+    .x = AllArgs,
+    .f = function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
 
   # character arguments
   CharArgs <- c(
-    "Path_Model", "JobName", "EnvFile", "Time", "MemPerCpu", "Partition",
-    "Path_Hmsc", "ProjNum", "Path_Scratch", "Path_GPU_Check",
-    "Command_Prefix", "SLURM_Prefix")
+    "Model", "JobName", "EnvFile", "Time", "MemPerCpu", "Path_Hmsc", "Path_CV")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = CharArgs, Type = "character")
 
   # numeric arguments
@@ -65,7 +108,6 @@ Mod_SLURM_CV <- function(
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = NumericArgs, Type = "numeric")
 
   rm(AllArgs)
-  invisible(gc())
 
   # # ++++++++++++++++++++++++++++++++++++
   # Loading environment variables
@@ -77,8 +119,17 @@ Mod_SLURM_CV <- function(
   }
 
   readRenviron(EnvFile)
-  Path_Python <- Sys.getenv("DP_R_Mod_Path_Python")
+  Path_Python <- Sys.getenv("DP_R_Path_Python")
   Path_Scratch <- Sys.getenv("Path_LUMI_Scratch")
+
+  # If `FromHPC == TRUE`, check if Path_Scratch path exist
+  if (FromHPC && Path_Scratch == "") {
+    stop("Path_Scratch environment variable not set.")
+  }
+
+  if (FromHPC && magrittr::not(dir.exists(Path_Scratch))) {
+    stop("The scratch folder does not exist")
+  }
 
   # Check if Path_Python path exist
   if (Path_Python == "") {
@@ -87,11 +138,6 @@ Mod_SLURM_CV <- function(
 
   if (CheckPyPath && magrittr::not(dir.exists(Path_Python))) {
     stop("Path_Python directory does not exist.")
-  }
-
-  # If `FromHPC == TRUE`, check if Path_Scratch path exist
-  if (FromHPC && Path_Scratch == "") {
-    stop("Path_Scratch environment variable not set.")
   }
 
   # # ++++++++++++++++++++++++++++++++++++
@@ -133,17 +179,20 @@ Mod_SLURM_CV <- function(
   # Cross-validation partitions
   # # ++++++++++++++++++++++++++++++++++++
   if (is.null(partition)) {
-    # if custom partition is not provided, extract the CV column(s) available in the modelling data
+    # if custom partition is not provided, extract the CV column(s) available in
+    # the modelling data
     if (all(CVName %in% names(ModFull$XData))) {
       # Extract CV folds from the CV column(s)
       partition <- purrr::map(CVName, ~dplyr::pull(ModFull$XData, .x))
       names(partition) <- CVName
     } else {
       # if any of the column names does not exist, stop the function
-      stop("partition was not defined and column(s) for CV folds can not be found in species data")
+      stop("partition was not defined and column(s) for CV folds ",
+           "can not be found in species data")
     }
   } else {
-    # If partition is provided directly to the function, use "CV_Custom" as CV name
+    # If partition is provided directly to the function, use "CV_Custom" as CV
+    # name
     CVName <- "CV_Custom"
   }
 
@@ -156,9 +205,11 @@ Mod_SLURM_CV <- function(
   # Verbose
   # # ++++++++++++++++++++++++++++++++++++
 
-  # If not provided explicitly as model argument, the verbose value should be read directly from the model object.
-  # It seems that models fitted with Hmsc-HPC have NULL verbose value; however, I did not test this.
-  # if the verbose value stored in the model object is NULL, the following assign a value of 1000 to it.
+  # If not provided explicitly as model argument, the verbose value should be
+  # read directly from the model object. It seems that models fitted with
+  # Hmsc-HPC have NULL verbose value; however, I did not test this. if the
+  # verbose value stored in the model object is NULL, the following assign a
+  # value of 1000 to it.
   if (is.null(ModFull$verbose)) {
     verbose <- 1000
   } else {
@@ -171,7 +222,7 @@ Mod_SLURM_CV <- function(
   nChains <- length(ModFull$postList)
 
   # # ++++++++++++++++++++++++++++++++++++
-  # Prepare cross-validated initial models, model fitting commands, and SLURM jobs
+  # Prepare cross-validated initial models / model fitting commands / SLURM jobs
   # # ++++++++++++++++++++++++++++++++++++
 
   CV_DT <- tibble::tibble(partition = partition, CVName = names(partition)) %>%
@@ -188,7 +239,7 @@ Mod_SLURM_CV <- function(
             .x = seq_len(CV_Folds),
             .f = function(k) {
 
-              # The following is copied from the Hmsc::computePredictedValues() function
+              # The following is copied from Hmsc::computePredictedValues()
               train <- (CV_Fold != k)
               val <- (CV_Fold == k)
               dfPi <- as.data.frame(matrix(NA, sum(train), ModFull$nr))
@@ -205,8 +256,10 @@ Mod_SLURM_CV <- function(
                   XVal <- ModFull$X[val, , drop = FALSE]
                 },
                 list = {
-                  XTrain <- purrr::map(.x = ModFull$X, .f = ~.x[train, , drop = FALSE])
-                  XVal <- purrr::map(.x = ModFull$X, .f = ~.x[val, , drop = FALSE])
+                  XTrain <- purrr::map(
+                    .x = ModFull$X, .f = ~.x[train, , drop = FALSE])
+                  XVal <- purrr::map(
+                    .x = ModFull$X, .f = ~.x[val, , drop = FALSE])
                 }
               )
 
@@ -228,9 +281,10 @@ Mod_SLURM_CV <- function(
                 ranLevels = ModFull$rL)
 
               ModCV <- Hmsc::setPriors(
-                ModCV, V0 = ModFull$V0, f0 = ModFull$f0, mGamma = ModFull$mGamma,
-                UGamma = ModFull$UGamma, aSigma = ModFull$aSigma,
-                bSigma = ModFull$bSigma, rhopw = ModFull$rhowp)
+                ModCV, V0 = ModFull$V0, f0 = ModFull$f0,
+                mGamma = ModFull$mGamma, UGamma = ModFull$UGamma,
+                aSigma = ModFull$aSigma, bSigma = ModFull$bSigma,
+                rhopw = ModFull$rhowp)
 
               ModCV$YScalePar <- ModFull$YScalePar
               ModCV$YScaled <- (ModCV$Y - matrix(ModCV$YScalePar[1, ], ModCV$ny, ModCV$ns, byrow = TRUE)) / matrix(ModCV$YScalePar[2, ], ModCV$ny, ModCV$ns, byrow = TRUE)

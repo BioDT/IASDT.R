@@ -9,15 +9,22 @@ System(command, RObj = TRUE, ...)
 \arguments{
 \item{command}{A string representing the bash command to be executed.}
 
-\item{RObj}{A logical indicating whether to capture the output of the command as an R object. If \code{TRUE} (Default), the output is captured; if \code{FALSE}, the output is printed to the console.}
+\item{RObj}{A logical indicating whether to capture the output of the command
+as an R object. If \code{TRUE} (Default), the output is captured; if \code{FALSE},
+the output is printed to the console.}
 
-\item{...}{Additional arguments passed to either \code{shell} or \code{system} function, depending on the operating system.}
+\item{...}{Additional arguments passed to either \code{shell} or \code{system}
+function, depending on the operating system.}
 }
 \value{
-Depending on the value of \code{RObj}, either the output of the executed command as an R object or \code{NULL} if \code{RObj} is \code{FALSE} and the output is printed to the console.
+Depending on the value of \code{RObj}, either the output of the executed
+command as an R object or \code{NULL} if \code{RObj} is \code{FALSE} and the output is
+printed to the console.
 }
 \description{
-This function executes a system command, using either \code{shell} on Windows or \code{system} on Linux. It allows the output of the command to be captured into an R object.
+This function executes a system command, using either \code{shell} on Windows or
+\code{system} on Linux. It allows the output of the command to be captured into an
+R object.
 }
 \examples{
 # print working directory

@@ -4,23 +4,36 @@
 
 #' Plot model convergence of a selected model
 #'
-#' This function generates and saves plots for model convergence diagnostics, including rho, alpha, omega, and beta parameters. It supports parallel processing for faster execution and can work with models fitted on High-Performance Computing HPC environments.
-#'
+#' This function generates and saves plots for model convergence diagnostics,
+#' including rho, alpha, omega, and beta parameters. It supports parallel
+#' processing for faster execution and can work with models fitted on
+#' High-Performance Computing HPC environments.
 #' @param Path_Coda String. Path to the coda object containing MCMC samples.
 #' @param Path_FittedModel String. Path to the fitted Hmsc model object.
-#' @param EnvFile String. Path to the environment file containing necessary environment variables. Default: ".env".
-#' @param FromHPC Logical. Indicates whether the function is being run on an HPC environment, affecting file path handling. Default: `TRUE`.
+#' @param EnvFile String. Path to the environment file containing necessary
+#'   environment variables. Default: ".env".
+#' @param FromHPC Logical. Indicates whether the function is being run on an HPC
+#'   environment, affecting file path handling. Default: `TRUE`.
 #' @param NChains Integer. Number of MCMC chains used in the model. Default: 4.
 #' @param Title String. Title for the rho and alpha plots. Default: " ".
-#' @param NOmega Integer. Number of species interactions to sample for omega parameter convergence diagnostics. Default: 1000.
+#' @param NOmega Integer. Number of species interactions to sample for omega
+#'   parameter convergence diagnostics. Default: 1000.
 #' @param NCores Integer. Number of cores to use for parallel processing.
-#' @param NRC Numeric Vector. Specifies the number of rows and columns for arranging multiple plots on a page. Default: c(2, 3).
-#' @param SavePlotData Logical. Indicates whether to save the plot data as RData files. Default: TRUE.
-#' @param Cols Character Vector. Specifies the colors to use for each chain in the plots. Default: c("red", "blue", "darkgreen", "darkgrey").
+#' @param NRC Numeric Vector. Specifies the number of rows and columns for
+#'   arranging multiple plots on a page. Default: c(2, 3).
+#' @param SavePlotData Logical. Indicates whether to save the plot data as RData
+#'   files. Default: TRUE.
+#' @param Cols Character Vector. Specifies the colors to use for each chain in
+#'   the plots. Default: c("red", "blue", "darkgreen", "darkgrey").
 #' @name PlotConvergence
 #' @author Ahmed El-Gabbas
-#' @return The function does not return a value but generates and saves plots to disk.
+#' @return The function does not return a value but generates and saves plots to
+#'   disk.
+#' @details The function reads the following environment variable:
+#'    - **`Path_LUMI_Scratch`** (only if `FromHPC` = `TRUE`) for the path of
+#'    the scratch folder of the `BioDT` project on LUMI.
 #' @export
+
 
 PlotConvergence <- function(
     Path_Coda = NULL, Path_FittedModel = NULL, EnvFile = ".env",
@@ -67,25 +80,29 @@ PlotConvergence <- function(
 
   IASDT.R::CatTime("Load environment variables")
 
-  if (file.exists(EnvFile)) {
+  if (FromHPC) {
+    if (magrittr::not(file.exists(EnvFile))) {
+      stop(paste0(
+        "Path for environment variables: ", EnvFile, " was not found"))
+    }
+
     readRenviron(EnvFile)
     Path_Scratch <- Sys.getenv("Path_LUMI_Scratch")
-    if (FromHPC) {
-      if (dir.exists(Path_Scratch)) {
-        InitialWD <- getwd()
-        setwd(Path_Scratch)
-        on.exit(setwd(InitialWD), add = TRUE)
-      } else {
-        stop("The scratch folder does not exist")
-      }
+    if (Path_Scratch == "") {
+      stop("Path_Scratch environment variable not found.")
     }
-  } else {
-    stop(paste0("Path for environment variables: ", EnvFile, " was not found"))
+
+    if (magrittr::not(dir.exists(Path_Scratch))) {
+      stop("The scratch folder does not exist")
+    }
+
+    InitialWD <- getwd()
+    setwd(Path_Scratch)
+    on.exit(setwd(InitialWD), add = TRUE)
   }
 
   IASDT.R::CatTime("Create path")
-  Path_Convergence <- Path_Coda %>%
-    dirname() %>%
+  Path_Convergence <- dirname(Path_Coda) %>%
     dirname() %>%
     file.path("Model_Convergence")
   Path_Convergence_BySp <- file.path(Path_Convergence, "Beta_BySpecies")
@@ -102,6 +119,8 @@ PlotConvergence <- function(
 
   IASDT.R::CatTime("  >>  Loading fitted model object")
   Model <- IASDT.R::LoadAs(Path_FittedModel)
+
+  ModVars <- Model$covNames
 
   Obj_Omega <- Coda_Obj$Omega[[1]]
   Obj_Beta <- Coda_Obj$Beta
@@ -152,7 +171,6 @@ PlotConvergence <- function(
   }
 
   rm(Model, Coda_Obj, PlotObj_Alpha, PlotObj_Rho)
-  invisible(gc())
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Omega  ------
@@ -162,7 +180,8 @@ PlotConvergence <- function(
 
   IASDT.R::CatTime("  >>  Coda to tibble")
   OmegaDF <- IASDT.R::Coda_to_tibble(
-    CodaObj = Obj_Omega, Type = "omega", NOmega = NOmega, EnvFile = EnvFile)
+    CodaObj = Obj_Omega, Type = "omega", NOmega = NOmega, EnvFile = EnvFile,
+    FromHPC = FromHPC)
 
   SelectedCombs <- unique(OmegaDF$SpComb)
 
@@ -219,7 +238,8 @@ PlotConvergence <- function(
           method = "loess", formula = y ~ x, se = FALSE, linewidth = 0.8) +
         ggplot2::geom_point(alpha = 0) +
         ggplot2::geom_hline(
-          yintercept = CI0, linetype = "dashed", color = "black", linewidth = 1) +
+          yintercept = CI0, linetype = "dashed", color = "black",
+          linewidth = 1) +
         ggplot2::scale_color_manual(values = Cols) +
         ggplot2::scale_x_continuous(expand = c(0, 0)) +
         ggtext::geom_richtext(
@@ -246,7 +266,6 @@ PlotConvergence <- function(
         p = Plot, type = "density", margins = "y", size = 5,
         color = "steelblue4")
 
-      invisible(gc())
       return(Plot)
     })
 
@@ -294,7 +313,6 @@ PlotConvergence <- function(
   snow::stopCluster(c1)
   closeAllConnections()
   rm(Obj_Omega, OmegaDF, SelectedCombs, CI, OmegaTracePlots)
-  invisible(gc())
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Beta ------
@@ -316,7 +334,8 @@ PlotConvergence <- function(
 
   IASDT.R::CatTime("  >> >> Coda to tibble")
   BetaTracePlots <- Obj_Beta %>%
-    IASDT.R::Coda_to_tibble(Type = "beta", EnvFile = EnvFile) %>%
+    IASDT.R::Coda_to_tibble(
+      Type = "beta", EnvFile = EnvFile, FromHPC = FromHPC) %>%
     dplyr::left_join(CI, by = "Var_Sp")
   rm(CI)
 
@@ -326,19 +345,14 @@ PlotConvergence <- function(
     dplyr::mutate(
       Range = purrr::map(
         .x = DT,
-        .f = ~{
-          .x %>%
-            dplyr::pull(Value) %>%
-            range()
-        })) %>%
+        .f = ~ range(dplyr::pull(.x, Value)))) %>%
     dplyr::select(-DT) %>%
     tidyr::nest(data = c("Range")) %>%
     dplyr::mutate(
       Range = purrr::map(
         .x = data,
         .f = ~{
-          .x %>%
-            pull(Range) %>%
+          pull(.x, Range) %>%
             as.vector() %>%
             range() %>%
             purrr::set_names(c("Min", "Max"))
@@ -348,10 +362,13 @@ PlotConvergence <- function(
 
   IASDT.R::CatTime("  >> >> Export objects to cores")
   invisible(snow::clusterEvalQ(
-    cl = c1, IASDT.R::LoadPackages(dplyr, coda, ggplot2, ggExtra, ggtext)))
+    cl = c1,
+    IASDT.R::LoadPackages(dplyr, coda, ggplot2, ggExtra, ggtext)))
   snow::clusterExport(
-    cl = c1, list = c("BetaTracePlots", "Cols", "VarRanges"),
+    cl = c1,
+    list = c("BetaTracePlots", "Cols", "VarRanges", "EnvFile", "FromHPC"),
     envir = environment())
+
 
   IASDT.R::CatTime("  >> >> Prepare data in parallel")
   BetaTracePlots <- snow::parLapply(
@@ -385,7 +402,7 @@ PlotConvergence <- function(
       PanelTitle <- data.frame(
         x = Inf, y = Inf, label = paste0("<b><i>", Species, "</i></b>"))
       PanelTitle2 <- IASDT.R::GetSpeciesName(
-        EnvFile = EnvFile, SpID = IAS_ID) %>%
+        EnvFile = EnvFile, SpID = IAS_ID, FromHPC = FromHPC) %>%
         dplyr::select(Class, Order, Family) %>%
         unlist() %>%
         paste0(collapse = " | ") %>%
@@ -450,19 +467,20 @@ PlotConvergence <- function(
       }
 
       Plot <- ggExtra::ggMarginal(
-        p = Plot, type = "density", margins = "y", size = 5, color = "steelblue4")
+        p = Plot, type = "density", margins = "y", size = 5,
+        color = "steelblue4")
       Plot2 <- ggExtra::ggMarginal(
-        p = Plot2, type = "density", margins = "y", size = 5, color = "steelblue4")
+        p = Plot2, type = "density", margins = "y", size = 5,
+        color = "steelblue4")
 
-      invisible(gc())
-      return(tibble::tibble(Var_Sp = x, Plot = list(Plot), PlotFixedY = list(Plot2)))
+      return(
+        tibble::tibble(Var_Sp = x, Plot = list(Plot), PlotFixedY = list(Plot2)))
     }) %>%
     dplyr::bind_rows() %>%
     dplyr::right_join(BetaTracePlots, by = "Var_Sp")
 
   snow::stopCluster(c1)
   closeAllConnections()
-  invisible(gc())
 
   IASDT.R::CatTime("  >>  Save trace plot data")
   if (SavePlotData) {
@@ -491,7 +509,8 @@ PlotConvergence <- function(
   invisible(snow::clusterEvalQ(
     cl = c1, IASDT.R::LoadPackages(dplyr, coda, ggplot2, ggExtra, ggtext)))
   snow::clusterExport(
-    cl = c1, list = c("BetaTracePlots_ByVar", "Path_Convergence", "NRC", "Cols"),
+    cl = c1,
+    list = c("BetaTracePlots_ByVar", "Path_Convergence", "NRC", "Cols"),
     envir = environment())
 
   IASDT.R::CatTime("  >>  >>  save plots in parallel")
@@ -528,7 +547,6 @@ PlotConvergence <- function(
   snow::stopCluster(c1)
   closeAllConnections()
   rm(BetaTracePlots_ByVar0, BetaTracePlots_ByVar)
-  invisible(gc())
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   ## Beta - by variable - Fixed y ------
@@ -549,7 +567,8 @@ PlotConvergence <- function(
   invisible(snow::clusterEvalQ(
     cl = c1, IASDT.R::LoadPackages(dplyr, coda, ggplot2, ggExtra, ggtext)))
   snow::clusterExport(
-    cl = c1, list = c("BetaTracePlots_ByVar", "Path_Convergence", "NRC", "Cols"),
+    cl = c1,
+    list = c("BetaTracePlots_ByVar", "Path_Convergence", "NRC", "Cols"),
     envir = environment())
 
   IASDT.R::CatTime("  >>  >>  save plots in parallel")
@@ -572,7 +591,8 @@ PlotConvergence <- function(
         gridExtra::marrangeGrob(
           bottom = bquote(paste0("page ", g, " of ", npages)),
           top = grid::textGrob(
-            label = paste0("Convergence of the beta parameter - ", VarName, " - Fixed y-axis"),
+            label = paste0("Convergence of the beta parameter - ", VarName,
+                           " - Fixed y-axis"),
             gp = grid::gpar(fontface = "bold", fontsize = 20)),
           nrow = NRC[1], ncol = NRC[2])
 
@@ -586,7 +606,6 @@ PlotConvergence <- function(
   snow::stopCluster(c1)
   closeAllConnections()
   rm(BetaTracePlots_ByVar0, BetaTracePlots_ByVar)
-  invisible(gc())
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   ## Beta - by species ------
@@ -595,8 +614,8 @@ PlotConvergence <- function(
   IASDT.R::CatTime("  >>  Trace plots, grouped by species")
 
   IASDT.R::CatTime("  >>  >>  Preparing data")
-  Order <- c("Intercept", "bio4", "bio6", "bio8", "bio12", "bio15",
-             "bio18", "RoadRailLog", "BiasLog")
+  Order <- stringr::str_remove_all(ModVars, "\\(|\\)")
+
   BetaTracePlots_BySp <- BetaTracePlots %>%
     dplyr::slice(order(factor(Variable, levels = Order))) %>%
     dplyr::select(Species, IAS_ID, Plot) %>%
@@ -645,8 +664,8 @@ PlotConvergence <- function(
 
       return(Path_Beta)
     })
+
   rm(BetaTracePlots_BySp0)
 
   return(invisible(NULL))
-
 }

@@ -7,15 +7,19 @@
 InfoChunk(Message = "", ...)
 }
 \arguments{
-\item{Message}{A character string representing the main message to be timestamped.  parameter is mandatory and cannot be \code{NULL} or empty.}
+\item{Message}{A character string representing the main message to be
+timestamped.  parameter is mandatory and cannot be \code{NULL} or empty.}
 
-\item{...}{Additional arguments passed to \link{CatSep} for customizing the separators.}
+\item{...}{Additional arguments passed to \link{CatSep} for customizing
+the separators.}
 }
 \value{
-The function does not return any value but prints the message and separators to the console.
+The function does not return any value but prints the message and
+separators to the console.
 }
 \description{
-This function prints a formatted message with a timestamp, surrounded by separators for better readability in console outputs or logs.
+This function prints a formatted message with a timestamp, surrounded by
+separators for better readability in console outputs or logs.
 }
 \examples{
 InfoChunk(Message = "Started")

@@ -4,18 +4,48 @@
 \alias{GetSpeciesName}
 \title{Get Species Name or Information Based on IASDT Species ID}
 \usage{
-GetSpeciesName(EnvFile = ".env", SpID = NULL)
+GetSpeciesName(EnvFile = ".env", SpID = NULL, FromHPC = TRUE)
 }
 \arguments{
-\item{EnvFile}{EnvFile A string specifying the path to the environment variables file. Default is ".env". This file must exist in the specified path; otherwise, the function will stop with an error message.}
+\item{EnvFile}{EnvFile A string specifying the path to the environment
+variables file. Default is ".env". This file must exist in the specified
+path; otherwise, the function will stop with an error message.}
 
-\item{SpID}{optional IASDT species ID for which detailed information is required. If not provided, the function returns the entire species list.}
+\item{SpID}{optional IASDT species ID for which detailed information is
+required. If not provided, the function returns the entire species list.}
+
+\item{FromHPC}{Logical. Indicates whether the function is being run on an HPC
+environment, affecting file path handling. Default: \code{TRUE}.}
 }
 \value{
-A data frame containing species information.
+A data frame containing species information. If a species ID \code{SpID}
+is provided, it only returns species information for the listed species,
+otherwise return the full list of IAS.
 }
 \description{
-This function retrieves detailed information on IASDT Species, optionally filtered by a specific IASDT species ID. It first loads environment variables from a given file, then reads a species list from a path specified in the environment variables. If a species ID is provided, it also fetches the number of grid cells associated with that species.
+This function retrieves detailed information on IASDT Species, optionally
+filtered by a specific IASDT species ID. It first loads environment variables
+from a given file, then reads a species list from a path specified in the
+environment variables. If a species ID \code{SpID} is provided, it only returns
+species information for the listed species, otherwise return the full list of
+IAS.
+}
+\details{
+The function reads the following environment variables:
+\itemize{
+\item \strong{\code{DP_R_Path_TaxaList}} (if \code{FromHPC} = \code{TRUE}) or
+\strong{\code{DP_R_Path_TaxaList_Local}} (if \code{FromHPC} = \code{FALSE}). The function
+reads the contents of the
+\code{Species_List_ID.txt} file from this path.
+\item \strong{\code{DP_R_Path_PA}} (if \code{FromHPC} = \code{TRUE}) or \strong{\code{DP_R_Path_PA_Local}} (if \code{FromHPC} = \code{FALSE}). The function reads the contents of the \code{Sp_PA_Summary_DF.RData} file from this path.
+}
+}
+\examples{
+GetSpeciesName(
+   EnvFile = "D:/BioDT_IAS/.env", SpID = NULL, FromHPC = FALSE)
+
+GetSpeciesName(
+   EnvFile = "D:/BioDT_IAS/.env", SpID = "Sp_0004", FromHPC = FALSE)
 }
 \author{
 Ahmed El-Gabbas

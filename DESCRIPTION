@@ -3,7 +3,7 @@ Package: IASDT.R
 Title: Helper R functions for the Invasive Alien Species prototype Digital
     Twin (IAS-pDT)
 Version: 0.0.6
-Date: 2024-07-27
+Date: 2024-08-01
 Authors@R: 
     person("Ahmed", "El-Gabbas", , "ahmed.el-gabbas@ufz.de", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-2225-088X"))
@@ -20,6 +20,7 @@ Imports:
     rlang (>= 1.1.4)
 Suggests: 
     ape (>= 5.8),
+    automap (>= 1.1-9),
     bit64 (>= 4.0.5),
     blockCV (>= 3.1.4),
     car (>= 3.1.2),

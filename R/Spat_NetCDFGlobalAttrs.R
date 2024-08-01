@@ -4,9 +4,12 @@
 
 #' Get global attributes for NetCDF files
 #'
-#' This function opens a NetCDF file, extracts all global attributes, and returns them as a character vector where each element is an attribute name-value pair.
+#' This function opens a NetCDF file, extracts all global attributes, and
+#' returns them as a character vector where each element is an attribute
+#' name-value pair.
 #' @name NetCDFGlobalAttrs
-#' @param nc A character string specifying the path to the NetCDF file. If `NULL`, the function will stop with an error message.
+#' @param nc A character string specifying the path to the NetCDF file. If
+#'   `NULL`, the function will stop with an error message.
 #' @return A character vector where each element is a global attribute.
 #' @references [Click here](https://github.com/rspatial/terra/issues/1443)
 #' @export

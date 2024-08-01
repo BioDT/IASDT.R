@@ -10,10 +10,14 @@ NDecimals(x)
 \item{x}{A numeric value or a string that represents a numeric value.}
 }
 \value{
-An integer representing the number of decimal places in the input value. If the input value does not have any decimal places, the function returns 0.
+An integer representing the number of decimal places in the input
+value. If the input value does not have any decimal places, the function
+returns 0.
 }
 \description{
-This function calculates the number of decimal places in a numeric value. It is designed to work with numeric inputs that can be coerced to character format.
+This function calculates the number of decimal places in a numeric value. It
+is designed to work with numeric inputs that can be coerced to character
+format.
 }
 \examples{
 NDecimals(x = "13.45554545")

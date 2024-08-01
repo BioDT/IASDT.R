@@ -7,17 +7,22 @@
 CheckArgs(AllArgs, Args, Type)
 }
 \arguments{
-\item{AllArgs}{String. Vector for the input parameters of the function. Usually as a result of \code{formals()} function}
+\item{AllArgs}{String. Vector for the input parameters of the function.
+Usually as a result of \code{formals()} function}
 
 \item{Args}{character vector. Names of the arguments to be checked.}
 
-\item{Type}{character. Specifies the expected type of the arguments. Must be one of "character", "logical", or "numeric".}
+\item{Type}{character. Specifies the expected type of the arguments. Must be
+one of "character", "logical", or "numeric".}
 }
 \value{
-The function does not return a value but will stop execution and throw an error if any of the specified arguments do not match the expected type.
+The function does not return a value but will stop execution and
+throw an error if any of the specified arguments do not match the expected
+type.
 }
 \description{
-This function checks if the specified arguments of a function match the expected type. It is useful for validating function inputs.
+This function checks if the specified arguments of a function match the
+expected type. It is useful for validating function inputs.
 }
 \author{
 Ahmed El-Gabbas

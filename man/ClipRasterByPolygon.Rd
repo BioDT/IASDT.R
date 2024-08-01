@@ -7,15 +7,23 @@
 ClipRasterByPolygon(raster = NULL, shape = NULL)
 }
 \arguments{
-\item{raster}{A \code{RasterLayer} object to be clipped. This is the raster layer that will be masked by the polygon.}
+\item{raster}{A \code{RasterLayer} object to be clipped. This is the raster layer
+that will be masked by the polygon.}
 
-\item{shape}{Extent object, or any object from which an Extent object can be extracted.}
+\item{shape}{Extent object, or any object from which an Extent object can be
+extracted.}
 }
 \value{
-A RasterLayer object representing the portion of the input raster that falls within the specified polygon. The returned raster contains the same data as the original within the polygon's bounds but is masked (set to NA) outside of it.
+A RasterLayer object representing the portion of the input raster
+that falls within the specified polygon. The returned raster contains the
+same data as the original within the polygon's bounds but is masked (set to
+NA) outside of it.
 }
 \description{
-This function clips a raster layer using a specified spatial polygon, effectively masking the raster outside the polygon area. The resulting clipped raster retains the original raster's properties and values within the polygon's bounds.
+This function clips a raster layer using a specified spatial polygon,
+effectively masking the raster outside the polygon area. The resulting
+clipped raster retains the original raster's properties and values within the
+polygon's bounds.
 }
 \note{
 This function requires the 'raster' and 'sp' packages.

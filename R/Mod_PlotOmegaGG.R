@@ -2,14 +2,27 @@
 # PlotOmegaGG ----
 ## |------------------------------------------------------------------------| #
 
-#' Creates heatmaps of parameter estimates or posterior support values for species' residual association (`Omega` parameters).
+#' Creates heatmaps of parameter estimates or posterior support values for
+#' species' residual association (`Omega` parameters).
 #'
-#' This function generates heatmaps to visualize the parameter estimates or posterior support values of species' residual associations (`Omega` parameters). It is designed to work with model output files and produces two types of visualizations: one indicating the sign (positive or negative) of the associations and another showing the mean values of these associations.
-#'
-#' @param Path_Model String. Specifies the path to the `.RData` file containing the selected model.
-#' @param supportLevel Numeric. The threshold for posterior support values used to determine which associations are strong enough to be plotted. Only associations with posterior support exceeding this threshold (or falling below 1 - threshold for negative associations) will be visualized. Defaults to 0.95.
-#' @param PlotWidth,PlotHeight Integer. Specifies the width and height of the generated plot in centimeters. Defaults to `22` x `20`.
-#' @return Generates two JPEG files containing the heatmaps of Omega parameter: signs and mean values. These files are saved in a directory named 'Model_Postprocessing' within the parent directory of the provided model file path. The function itself returns `NULL` invisibly.
+#' This function generates heatmaps to visualize the parameter estimates or
+#' posterior support values of species' residual associations (`Omega`
+#' parameters). It is designed to work with model output files and produces two
+#' types of visualizations: one indicating the sign (positive or negative) of
+#' the associations and another showing the mean values of these associations.
+#' @param Path_Model String. Specifies the path to the `.RData` file containing
+#'   the selected model.
+#' @param supportLevel Numeric. The threshold for posterior support values used
+#'   to determine which associations are strong enough to be plotted. Only
+#'   associations with posterior support exceeding this threshold (or falling
+#'   below 1 - threshold for negative associations) will be visualized. Defaults
+#'   to 0.95.
+#' @param PlotWidth,PlotHeight Integer. Specifies the width and height of the
+#'   generated plot in centimeters. Defaults to `22` x `20`.
+#' @return Generates two JPEG files containing the heatmaps of Omega parameter:
+#'   signs and mean values. These files are saved in a directory named
+#'   'Model_Postprocessing' within the parent directory of the provided model
+#'   file path. The function itself returns `NULL` invisibly.
 #' @name PlotOmegaGG
 #' @export
 
@@ -97,7 +110,9 @@ PlotOmegaGG <- function(
 
   PosSign <- '<span style="font-size: 8pt"><b>  +  </b></span>'
   NegSign <- '<span style="font-size: 8pt"><b>  \U2212  </b></span>'
-  LegendTitle <- '<span style="font-size: 12pt"><b>Beta</b></span><br><span style="font-size: 9pt">(sign)</span>'
+  LegendTitle <- paste0(
+    '<span style="font-size: 12pt"><b>Beta</b></span><br>',
+    '<span style="font-size: 9pt">(sign)</span>')
 
   Plot_Sign <- (
     sign(PostMean) %>%
@@ -118,7 +133,8 @@ PlotOmegaGG <- function(
       ggplot2::labs(fill = LegendTitle) +
       Theme +
       ggplot2::theme(legend.text = ggtext::element_markdown(size = 8))) %>%
-    # suppress the message: Scale for fill is already present. Adding another scale for fill, which will replace the existing scale.
+    # suppress the message: Scale for fill is already present. Adding another
+    # scale for fill, which will replace the existing scale.
     suppressMessages()
 
   cowplot::plot_grid(
@@ -135,7 +151,9 @@ PlotOmegaGG <- function(
 
   IASDT.R::CatTime("2. mean")
 
-  LegendTitle <- '<span style="font-size: 12pt"><b>Beta</span><br><span style="font-size: 9pt">(mean)</span>'
+  LegendTitle <- paste0(
+    '<span style="font-size: 12pt"><b>Beta</span><br>',
+    '<span style="font-size: 9pt">(mean)</span>')
 
   Plot_Mean <- (
     PostMean %>%
@@ -153,7 +171,8 @@ PlotOmegaGG <- function(
       ggplot2::labs(fill = LegendTitle) +
       Theme +
       ggplot2::theme(legend.text = ggplot2::element_text(size = 8))) %>%
-    # suppress the message: Scale for fill is already present. Adding another scale for fill, which will replace the existing scale.
+    # suppress the message: Scale for fill is already present. Adding another
+    # scale for fill, which will replace the existing scale.
     suppressMessages()
 
   cowplot::plot_grid(

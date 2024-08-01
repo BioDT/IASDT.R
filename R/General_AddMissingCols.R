@@ -4,12 +4,17 @@
 
 #' Add missing columns to a data frame with specified fill values
 #'
-#' This function checks a data frame for missing columns specified by the user. If any are missing, it adds these columns to the data frame, filling them with a specified value.
+#' This function checks a data frame for missing columns specified by the user.
+#' If any are missing, it adds these columns to the data frame, filling them
+#' with a specified value.
 #'
 #' @name AddMissingCols
 #' @author Ahmed El-Gabbas
-#' @param DT A data frame to which missing columns will be added. This parameter cannot be NULL.
-#' @param FillVal The value to fill the missing columns with. This parameter defaults to `NA_character_`, but can be changed to any scalar value as required.
+#' @param DT A data frame to which missing columns will be added. This parameter
+#'   cannot be NULL.
+#' @param FillVal The value to fill the missing columns with. This parameter
+#'   defaults to `NA_character_`, but can be changed to any scalar value as
+#'   required.
 #' @param ... Column names as character strings.
 #' @return a data frame with the missing columns added, if any were missing.
 #' @export

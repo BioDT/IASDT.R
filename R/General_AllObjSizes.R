@@ -4,9 +4,19 @@
 
 #' Size of objects in memory
 #'
-#' This function calculates the size of objects in the global environment of R using [pryr::object_size] and prints a summary of objects that are greater than a specified size threshold. It is useful for memory management and identifying large objects in the workspace.
-#' @param GreaterThan  numeric value specifying the size threshold in MB. Only objects larger than this value will be shown. Default is 0, which means all objects will be shown. `GreaterThan` must be a non-negative number.
-#' @return The function prints a tibble containing the variables' names, their sizes in MB, and their percentage of the total size of all variables. If no objects meet the criteria, a message is printed instead. Output is sorted in descending order of the size of the objects. The function also prints the total size of all variables and the number of objects that were examined.
+#' This function calculates the size of objects in the global environment of R
+#' using [pryr::object_size] and prints a summary of objects that are greater
+#' than a specified size threshold. It is useful for memory management and
+#' identifying large objects in the workspace.
+#' @param GreaterThan  numeric value specifying the size threshold in MB. Only
+#'   objects larger than this value will be shown. Default is 0, which means all
+#'   objects will be shown. `GreaterThan` must be a non-negative number.
+#' @return The function prints a tibble containing the variables' names, their
+#'   sizes in MB, and their percentage of the total size of all variables. If no
+#'   objects meet the criteria, a message is printed instead. Output is sorted
+#'   in descending order of the size of the objects. The function also prints
+#'   the total size of all variables and the number of objects that were
+#'   examined.
 #' @author Ahmed El-Gabbas
 #' @importFrom rlang .data
 #' @export

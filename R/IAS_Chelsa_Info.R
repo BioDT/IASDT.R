@@ -4,11 +4,19 @@
 
 #' Extracts and summarizes information from CHELSA climate model file names
 #'
-#' This function parses CHELSA climate model file names to extract and summarize information such as the time period, climate model, climate scenario, and variable represented in the file. It returns a data frame with these details for each file name provided.
-#'
+#' This function parses CHELSA climate model file names to extract and summarize
+#' information such as the time period, climate model, climate scenario, and
+#' variable represented in the file. It returns a data frame with these details
+#' for each file name provided.
 #' @name Chelsa_Info
-#' @param FileName character vector; a vector of CHELSA file names or paths. Each element should be a string representing the file name or path of a CHELSA climate model output file.
-#' @return A data frame with columns for the original file name (`FileName`), the climate variable (`Variable`), the time period (`TimePeriod`), the climate model (`ClimModel`), and the climate scenario (`ClimScenario`). Additional variable information is joined from an external source ([IASDT.R::Chelsa_Vars`).
+#' @param FileName character vector; a vector of CHELSA file names or paths.
+#'   Each element should be a string representing the file name or path of a
+#'   CHELSA climate model output file.
+#' @return A data frame with columns for the original file name (`FileName`),
+#'   the climate variable (`Variable`), the time period (`TimePeriod`), the
+#'   climate model (`ClimModel`), and the climate scenario (`ClimScenario`).
+#'   Additional variable information is joined from an external source
+#'   ([IASDT.R::Chelsa_Vars`).
 #' @author Ahmed El-Gabbas
 #' @examples
 #'BaseURL <- "https://os.zhdk.cloud.switch.ch/envicloud/chelsa/chelsa_V2/GLOBAL/climatologies/"
@@ -53,7 +61,8 @@ Chelsa_Info <- function(FileName) {
 
       ClimModel <- dplyr::case_when(
         stringr::str_detect(file_base, "1981-2010") ~ "Current",
-        # National Oceanic and Atmospheric Administration, Geophysical Fluid Dynamics Laboratory, Princeton, NJ 08540, USA
+        # National Oceanic and Atmospheric Administration, Geophysical Fluid
+        # Dynamics Laboratory, Princeton, NJ 08540, USA
         stringr::str_detect(file_base, "GFDL-ESM4|gfdl-esm4") ~ "GFDL_ESM4",
         # Institut Pierre Simon Laplace, Paris 75252, France
         stringr::str_detect(file_base, "IPSL-CM6A-LR|ipsl-cm6a-lr") ~ "IPSL_CM6A",
@@ -77,8 +86,9 @@ Chelsa_Info <- function(FileName) {
 
       CurrVar <-  file_base %>%
         stringr::str_remove_all(
-          (c("1981-2010", "2011-2040", "2041-2070", "2071-2100", "GFDL-ESM4|gfdl-esm4",
-             "IPSL-CM6A-LR|ipsl-cm6a-lr", "MPI-ESM1-2-HR|mpi-esm1-2-hr",
+          (c("1981-2010", "2011-2040", "2041-2070", "2071-2100",
+             "GFDL-ESM4|gfdl-esm4", "IPSL-CM6A-LR|ipsl-cm6a-lr",
+             "MPI-ESM1-2-HR|mpi-esm1-2-hr",
              "UKESM1-0-LL|ukesm1-0-ll", "MRI-ESM2-0|mri-esm2-0",
              "ssp126", "ssp370", "ssp585", "CHELSA") %>%
              paste0(collapse = "|") %>%

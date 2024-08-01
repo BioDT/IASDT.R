@@ -7,15 +7,21 @@
 GetPosts(FilePath, FromJSON = FALSE)
 }
 \arguments{
-\item{FilePath}{A character string specifying the path to the RDS files containing the exported posteriors.}
+\item{FilePath}{A character string specifying the path to the RDS files
+containing the exported posteriors.}
 
-\item{FromJSON}{A logical flag indicating whether the loaded models should be converted from JSON format. Defaults to \code{FALSE}, meaning the data will be read directly from an RDS file without conversion.}
+\item{FromJSON}{A logical flag indicating whether the loaded models should be
+converted from JSON format. Defaults to \code{FALSE}, meaning the data will be
+read directly from an RDS file without conversion.}
 }
 \value{
-Depending on the \code{FromJSON} parameter, returns an Hmsc object either directly from the RDS file or after converting it from JSON format.
+Depending on the \code{FromJSON} parameter, returns an Hmsc object either
+directly from the RDS file or after converting it from JSON format.
 }
 \description{
-This function converts posteriors exported by \code{Hmsc-HPC} into an Hmsc object. It can either read the data directly from RDS files or convert it from JSON format if specified.
+This function converts posteriors exported by \code{Hmsc-HPC} into an Hmsc object.
+It can either read the data directly from RDS files or convert it from JSON
+format if specified.
 }
 \author{
 Ahmed El-Gabbas

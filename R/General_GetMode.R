@@ -8,8 +8,11 @@
 #'
 #' @param v A numeric vector. It must not be NULL or empty.
 #' @name GetMode
-#' @source The source of this function was taken from this [link](https://www.tutorialspoint.com/r/r_mean_median_mode.htm).
-#' @return The mode of the vector as a single value. If the vector has a uniform distribution (all values appear with the same frequency), the function returns the first value encountered.
+#' @source The source of this function was taken from this
+#'   [link](https://www.tutorialspoint.com/r/r_mean_median_mode.htm).
+#' @return The mode of the vector as a single value. If the vector has a uniform
+#'   distribution (all values appear with the same frequency), the function
+#'   returns the first value encountered.
 #' @examples
 #' GetMode(c(1:10,1,1,3,3,3,3))
 #'

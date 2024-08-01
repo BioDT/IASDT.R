@@ -7,13 +7,17 @@
 cc(...)
 }
 \arguments{
-\item{...}{strings to be concatenated. Note that numeric values should be converted to strings before being passed.}
+\item{...}{strings to be concatenated. Note that numeric values should be
+converted to strings before being passed.}
 }
 \value{
-A character string representing the concatenated values of the input expressions.
+A character string representing the concatenated values of the input
+expressions.
 }
 \description{
-This function takes one or more expressions and concatenates them into a single string without quotes. It is particularly useful for creating strings from variable names or expressions without including the usual quotes.
+This function takes one or more expressions and concatenates them into a
+single string without quotes. It is particularly useful for creating strings
+from variable names or expressions without including the usual quotes.
 }
 \examples{
 cc(A, B, C)

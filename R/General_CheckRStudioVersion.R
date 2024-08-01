@@ -4,12 +4,16 @@
 
 #' Check if the installed RStudio version is up to date
 #'
-#' This function checks the current installed version of RStudio against the latest version available online. If the versions do not match, it suggests updating RStudio.
-#'
+#' This function checks the current installed version of RStudio against the
+#' latest version available online. If the versions do not match, it suggests
+#' updating RStudio.
 #' @name CheckRStudioVersion
 #' @author Ahmed El-Gabbas
-#' @return Side effects include printing messages to the console regarding the status of RStudio version.
-#' @note This function requires internet access to check the latest version of RStudio online. If called outside of RStudio, it will only fetch and display the latest version without comparing.
+#' @return Side effects include printing messages to the console regarding the
+#'   status of RStudio version.
+#' @note This function requires internet access to check the latest version of
+#'   RStudio online. If called outside of RStudio, it will only fetch and
+#'   display the latest version without comparing.
 #' @export
 #' @examples
 #' try(CheckRStudioVersion())
@@ -25,7 +29,10 @@ CheckRStudioVersion <- function() {
 
   if (Sys.getenv("RSTUDIO") == "") {
 
-    cat(paste0("This function was not called from RStudio. No version comparison was done. The most recent version of RStudio is ", OnlineVersion, "\n"))
+    cat(paste0(
+      "This function was not called from RStudio. ",
+      "No version comparison was done. The most recent version of RStudio is ",
+      OnlineVersion, "\n"))
 
   } else {
 

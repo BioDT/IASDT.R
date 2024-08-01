@@ -4,11 +4,16 @@
 
 #' Keep only specified objects in the environment, removing all others.
 #'
-#' This function selectively retains the objects specified in the `Obj` parameter in the current environment, removing all other objects. It is useful for memory management by clearing unnecessary objects from the environment. The function also provides an option to print the names of the kept and removed variables.
-#'
+#' This function selectively retains the objects specified in the `Obj`
+#' parameter in the current environment, removing all other objects. It is
+#' useful for memory management by clearing unnecessary objects from the
+#' environment. The function also provides an option to print the names of the
+#' kept and removed variables.
 #' @name KeepOnly
-#' @param Obj A character vector specifying the names of the objects to be kept in the environment.
-#' @param Verbose A logical value indicating whether to print the names of kept and removed variables. Default to `TRUE`.
+#' @param Obj A character vector specifying the names of the objects to be kept
+#'   in the environment.
+#' @param Verbose A logical value indicating whether to print the names of kept
+#'   and removed variables. Default to `TRUE`.
 #' @return No return value, called for side effects.
 #' @author Ahmed El-Gabbas
 #' @export
@@ -40,12 +45,18 @@ KeepOnly <- function(Obj, Verbose = TRUE) {
   RemObjects <- setdiff(AllObjects, Obj)
 
   if (Verbose) {
-    cat(crayon::red(paste0("Removed Variables (", length(RemObjects), "): ")), crayon::blue(paste0(seq_along(RemObjects), ":", RemObjects, collapse = " ||  ")), sep = "")
+    cat(crayon::red(
+      paste0("Removed Variables (", length(RemObjects), "): ")),
+      crayon::blue(paste0(seq_along(RemObjects), ":", RemObjects,
+                          collapse = " ||  ")), sep = "")
   }
 
   rm(list = RemObjects, pos = parent.frame())
 
   if (Verbose) {
-    cat(crayon::red(paste0("\nKept Variables (", length(Obj), "): ")), crayon::blue(paste0(seq_along(Obj), ":", Obj, collapse = " ||  ")), "\n", sep = "")
+    cat(crayon::red(
+      paste0("\nKept Variables (", length(Obj), "): ")),
+      crayon::blue(paste0(seq_along(Obj), ":", Obj, collapse = " ||  ")),
+      "\n", sep = "")
   }
 }

@@ -4,14 +4,19 @@
 
 #' Check function arguments for specific types
 #'
-#' This function checks if the specified arguments of a function match the expected type. It is useful for validating function inputs.
+#' This function checks if the specified arguments of a function match the
+#' expected type. It is useful for validating function inputs.
 #'
 #' @name CheckArgs
 #' @author Ahmed El-Gabbas
-#' @param AllArgs String. Vector for the input parameters of the function. Usually as a result of `formals()` function
+#' @param AllArgs String. Vector for the input parameters of the function.
+#'   Usually as a result of `formals()` function
 #' @param Args character vector. Names of the arguments to be checked.
-#' @param Type character. Specifies the expected type of the arguments. Must be one of "character", "logical", or "numeric".
-#' @return The function does not return a value but will stop execution and throw an error if any of the specified arguments do not match the expected type.
+#' @param Type character. Specifies the expected type of the arguments. Must be
+#'   one of "character", "logical", or "numeric".
+#' @return The function does not return a value but will stop execution and
+#'   throw an error if any of the specified arguments do not match the expected
+#'   type.
 #' @export
 
 CheckArgs <- function(AllArgs, Args, Type) {

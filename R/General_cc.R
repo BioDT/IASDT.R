@@ -4,11 +4,15 @@
 
 #' Concatenate without quotes
 #'
-#' This function takes one or more expressions and concatenates them into a single string without quotes. It is particularly useful for creating strings from variable names or expressions without including the usual quotes.
+#' This function takes one or more expressions and concatenates them into a
+#' single string without quotes. It is particularly useful for creating strings
+#' from variable names or expressions without including the usual quotes.
 #'
-#' @param ... strings to be concatenated. Note that numeric values should be converted to strings before being passed.
+#' @param ... strings to be concatenated. Note that numeric values should be
+#'   converted to strings before being passed.
 #' @author Ahmed El-Gabbas
-#' @return A character string representing the concatenated values of the input expressions.
+#' @return A character string representing the concatenated values of the input
+#'   expressions.
 #' @export
 #' @name cc
 #' @examples

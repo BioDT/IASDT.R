@@ -4,26 +4,48 @@
 
 #' Plot Gelman-Rubin-Brooks
 #'
-#' This function generates and optionally saves a series of plots showing the evolution of Gelman and Rubin's shrink factor for various model parameters as the number of iterations increases. It is designed to help assess the convergence of Hmsc model by visualizing the shrink factor over iterations. The function supports parallel processing and can handle multiple parameters simultaneously.
-
+#' This function generates and optionally saves a series of plots showing the
+#' evolution of Gelman and Rubin's shrink factor for various model parameters as
+#' the number of iterations increases. It is designed to help assess the
+#' convergence of Hmsc model by visualizing the shrink factor over iterations.
+#' The function supports parallel processing and can handle multiple parameters
+#' simultaneously.
 #' @param InputCoda Path to RData file containing the coda object.
-#' @param Beta Logical indicating whether to plot the Gelman-Rubin statistic for the Beta parameter. If `TRUE` (default), the function executes the [IASDT.R::PlotGelman_Beta] function.
-#' @param Rho Logical indicating whether to plot the Gelman-Rubin statistic for the Rho parameter.  If `TRUE` (default), the function executes the  [IASDT.R::PlotGelman_Rho] function.
-#' @param Omega Logical indicating whether to plot the Gelman-Rubin statistic for the Omega parameter. If `TRUE` (default), the function executes the [IASDT.R::PlotGelman_Omega] function.
-#' @param Alpha Logical indicating whether to plot the Gelman-Rubin statistic for the Alpha parameter. If `TRUE` (default), the function executes the [IASDT.R::PlotGelman_Alpha] function.
-#' @param NCores Integer specifying the number of cores to use for parallel processing.
-#' @param NOmega Integer specifying the number of species to be sampled for the Omega parameter.
-#' @param PlottingAlpha A numeric value between 0 and 1 indicating the transparency level of the plot lines. Defaults to 0.25.
-#' @param EnvFile String specifying the path to the environment variables file. The default value is ".env".
-#' @param SavePlot Logical indicating whether to save the generated plots as a PDF file.
-#' @param ReturnPlots String specifying the folder path where output figures should be saved. This parameter is mandatory if `SavePlot` is TRUE.
+#' @param Beta Logical indicating whether to plot the Gelman-Rubin statistic for
+#'   the Beta parameter. If `TRUE` (default), the function executes the
+#'   [IASDT.R::PlotGelman_Beta] function.
+#' @param Rho Logical indicating whether to plot the Gelman-Rubin statistic for
+#'   the Rho parameter.  If `TRUE` (default), the function executes the
+#'   [IASDT.R::PlotGelman_Rho] function.
+#' @param Omega Logical indicating whether to plot the Gelman-Rubin statistic
+#'   for the Omega parameter. If `TRUE` (default), the function executes the
+#'   [IASDT.R::PlotGelman_Omega] function.
+#' @param Alpha Logical indicating whether to plot the Gelman-Rubin statistic
+#'   for the Alpha parameter. If `TRUE` (default), the function executes the
+#'   [IASDT.R::PlotGelman_Alpha] function.
+#' @param NCores Integer specifying the number of cores to use for parallel
+#'   processing.
+#' @param NOmega Integer specifying the number of species to be sampled for the
+#'   Omega parameter.
+#' @param PlottingAlpha A numeric value between 0 and 1 indicating the
+#'   transparency level of the plot lines. Defaults to 0.25.
+#' @param EnvFile String specifying the path to the environment variables file.
+#'   The default value is ".env".
+#' @param SavePlot Logical indicating whether to save the generated plots as a
+#'   PDF file.
+#' @param ReturnPlots String specifying the folder path where output figures
+#'   should be saved. This parameter is mandatory if `SavePlot` is TRUE.
 #' @param OutPath String. Folder path to save the output figures
 #' @name PlotGelman
 #' @author Ahmed El-Gabbas
-#' @return If `ReturnPlots` is `TRUE`, returns a list of ggplot objects corresponding to the generated plots. Otherwise, returns `NULL`. If `SavePlot` is `TRUE`, pdf file for the plots will be saved at the `OutPath`.
+#' @return If `ReturnPlots` is `TRUE`, returns a list of ggplot objects
+#'   corresponding to the generated plots. Otherwise, returns `NULL`. If
+#'   `SavePlot` is `TRUE`, pdf file for the plots will be saved at the
+#'   `OutPath`.
 #' @export
 #' @seealso
-#'   [IASDT.R::PlotGelman_Alpha()]<br>[IASDT.R::PlotGelman_Beta()]<br>[IASDT.R::PlotGelman_Rho()]<br>[IASDT.R::PlotGelman_Omega()]
+#' [IASDT.R::PlotGelman_Alpha()]<br>[IASDT.R::PlotGelman_Beta()]<br>
+#' [IASDT.R::PlotGelman_Rho()]<br>[IASDT.R::PlotGelman_Omega()]
 
 PlotGelman <- function(
     InputCoda = NULL, Beta = TRUE, Rho = TRUE, Omega = TRUE, Alpha = TRUE,
@@ -54,7 +76,8 @@ PlotGelman <- function(
 
   IASDT.R::CheckArgs(AllArgs, c("NCores", "NOmega", "PlottingAlpha"), "numeric")
   IASDT.R::CheckArgs(
-    AllArgs, c("Beta", "Rho", "Omega", "Alpha", "SavePlot", "ReturnPlots"), "logical")
+    AllArgs, c("Beta", "Rho", "Omega", "Alpha", "SavePlot", "ReturnPlots"),
+    "logical")
 
   if (SavePlot) {
     IASDT.R::CheckArgs(AllArgs = AllArgs, Args = "OutPath", Type = "character")

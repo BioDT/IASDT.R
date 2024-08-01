@@ -2,26 +2,35 @@
 % Please edit documentation in R/Spat_GridCross.R
 \name{GridCross}
 \alias{GridCross}
-\title{Create a \code{multilinestring} sf object representing cross in the middle of each grid cell}
+\title{Create a \code{multilinestring} sf object representing cross in the middle of each
+grid cell}
 \usage{
 GridCross(DT = NULL)
 }
 \arguments{
-\item{DT}{An \code{sf} object (tibble) representing grid cells. The function expects this object to have a geometry column with polygon geometries. If \code{NULL}, the function will stop with an error message.}
+\item{DT}{An \code{sf} object (tibble) representing grid cells. The function
+expects this object to have a geometry column with polygon geometries. If
+\code{NULL}, the function will stop with an error message.}
 }
 \value{
-An \code{sf} object with \code{multilinestring} geometries representing crosses in the middle of each input grid cell. The returned object has the same CRS (Coordinate Reference System) as the input \code{DT}
+An \code{sf} object with \code{multilinestring} geometries representing crosses
+in the middle of each input grid cell. The returned object has the same CRS
+(Coordinate Reference System) as the input \code{DT}
 }
 \description{
-Create a \code{multilinestring} (cross in the middle of the grid) sf object from each grid cell
+Create a \code{multilinestring} (cross in the middle of the grid) sf object from
+each grid cell
 }
 \note{
-The function requires the \code{sf}, \code{dplyr}, \code{purrr}, \code{tibble}, and \code{tidyr} packages to be installed and loaded.
+The function requires the \code{sf}, \code{dplyr}, \code{purrr}, \code{tibble}, and \code{tidyr}
+packages to be installed and loaded.
 }
 \examples{
 IASDT.R::LoadPackages(dplyr, sf, raster, ggplot2)
 
-Grid <- raster::raster(nrows = 10, ncols = 10, xmn = 0, xmx = 10, ymn = 0, ymx = 10, crs = 4326) \%>\%
+Grid <- raster::raster(
+    nrows = 10, ncols = 10, xmn = 0, xmx = 10,
+    ymn = 0, ymx = 10, crs = 4326) \%>\%
   setNames("Grid") \%>\%
   raster::setValues(1) \%>\%
   raster::rasterToPolygons() \%>\%

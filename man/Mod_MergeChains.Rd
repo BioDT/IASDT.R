@@ -15,25 +15,47 @@ Mod_MergeChains(
 )
 }
 \arguments{
-\item{Path_Model}{String. Path to the directory where model outputs are stored. This should include the path to the fitted models but should not have a trailing slash.}
+\item{Path_Model}{String. Path to the directory where model outputs are
+stored. This should include the path to the fitted models but should not
+have a trailing slash.}
 
-\item{NCores}{Integer. The number of cores to use for parallel processing. This should be a positive integer.}
+\item{NCores}{Integer. The number of cores to use for parallel processing.
+This should be a positive integer.}
 
-\item{ModInfoName}{String. The name of the file (without extension) where the processed model information will be saved. If \code{NULL}, it overwrites the \code{Model_Info.RData} file in the \code{Path_Model} directory. If provided, a new \code{.RData} file will be created with this name.}
+\item{ModInfoName}{String. The name of the file (without extension) where the
+processed model information will be saved. If \code{NULL}, it overwrites the
+\code{Model_Info.RData} file in the \code{Path_Model} directory. If provided, a new
+\code{.RData} file will be created with this name.}
 
-\item{PrintIncomplete}{Logical. Indicates whether to print the names of models that were not successfully fitted to the console. Defaults to \code{TRUE}.}
+\item{PrintIncomplete}{Logical. Indicates whether to print the names of
+models that were not successfully fitted to the console. Defaults to
+\code{TRUE}.}
 
-\item{FromHPC}{Logical. Indicates whether the function is being run in an HPC environment. This affects how file paths are handled. Defaults to \code{TRUE}.}
+\item{FromHPC}{Logical. Indicates whether the function is being run in an HPC
+environment. This affects how file paths are handled. Defaults to \code{TRUE}.}
 
-\item{EnvFile}{String. The path to the file containing environment variables. Defaults to \code{.env}. This file should contain at least the \code{Path_LUMI_Scratch} variable when running in an HPC environment.}
+\item{EnvFile}{String. The path to the file containing environment variables.
+Defaults to \code{.env}.}
 
-\item{FromJSON}{Logical. Indicates whether to convert loaded models from JSON format before reading. Defaults to \code{FALSE}.}
+\item{FromJSON}{Logical. Indicates whether to convert loaded models from JSON
+format before reading. Defaults to \code{FALSE}.}
 }
 \value{
-The function does not return anything but saves the processed model information to disk.
+The function does not return anything but saves the processed model
+information to disk.
 }
 \description{
-This function performs post-processing of HMSC model outputs. It merges model chains, checks for missing or incomplete model runs, and optionally prints information about incomplete models. It can work with models run on HPC environments and supports parallel processing.
+This function performs post-processing of HMSC model outputs. It merges model
+chains, checks for missing or incomplete model runs, and optionally prints
+information about incomplete models. It can work with models run on HPC
+environments and supports parallel processing.
+}
+\details{
+The function reads the following environment variable:
+\itemize{
+\item \strong{\code{Path_LUMI_Scratch}} (only if \code{FromHPC} = \code{TRUE}) for the path of the
+scratch folder of the \code{BioDT} project on LUMI.
+}
 }
 \author{
 Ahmed El-Gabbas

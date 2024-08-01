@@ -7,17 +7,24 @@
 Polygon_Centroid(x = NULL, Rename = FALSE, NewName = NULL)
 }
 \arguments{
-\item{x}{A simple feature (\code{sf}) object; the polygon whose geometry is to be replaced with its centroid. Cannot be \code{NULL}.}
+\item{x}{A simple feature (\code{sf}) object; the polygon whose geometry is to be
+replaced with its centroid. Cannot be \code{NULL}.}
 
-\item{Rename}{A logical value indicating whether to rename the geometry column of the sf object. Defaults to \code{FALSE}.}
+\item{Rename}{A logical value indicating whether to rename the geometry
+column of the sf object. Defaults to \code{FALSE}.}
 
-\item{NewName}{A string specifying the new name for the geometry column if Rename is \code{TRUE}. If Rename is \code{FALSE}, this parameter is ignored.}
+\item{NewName}{A string specifying the new name for the geometry column if
+Rename is \code{TRUE}. If Rename is \code{FALSE}, this parameter is ignored.}
 }
 \value{
-The modified sf object with its geometry replaced by the centroid of the original polygon geometry. If Rename is \code{TRUE}, the geometry column will also be renamed as specified by NewName.
+The modified sf object with its geometry replaced by the centroid of
+the original polygon geometry. If Rename is \code{TRUE}, the geometry column
+will also be renamed as specified by NewName.
 }
 \description{
-This function replaces the geometry of a simple feature (\code{sf}) polygon object with the geometry of its centroid point. It can optionally rename the geometry column of the modified \code{sf} object.
+This function replaces the geometry of a simple feature (\code{sf}) polygon object
+with the geometry of its centroid point. It can optionally rename the
+geometry column of the modified \code{sf} object.
 }
 \references{
 \href{https://github.com/r-spatial/sf/issues/480}{Click here}

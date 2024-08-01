@@ -13,7 +13,10 @@
 #' @param autoburnin autoburnin
 #' @keywords internal
 #' @name gelman.preplot
-#' @source This function is copied from the unexported `coda:::gelman.preplot` function. This function is used internally in the [coda::gelman.plot] function. I make this function available in the package without exporting it. See: https://svn.r-project.org/R-packages/trunk/coda/R/gelman.R
+#' @source This function is copied from the unexported `coda:::gelman.preplot`
+#'   function. This function is used internally in the [coda::gelman.plot]
+#'   function. I make this function available in the package without exporting
+#'   it. See: https://svn.r-project.org/R-packages/trunk/coda/R/gelman.R
 #' @noRd
 
 gelman.preplot <- function(
@@ -33,7 +36,8 @@ gelman.preplot <- function(
   }
   binw <- floor((niter(x) - 50) / nbin)
   last.iter <- c(
-    seq(from = stats::start(x) + 50 * thin(x), by = binw * thin(x), length = nbin),
+    seq(from = stats::start(x) + 50 * thin(x), by = binw * thin(x),
+        length = nbin),
     stats::end(x))
   shrink <- array(dim = c(nbin + 1, nvar(x), 2))
   dimnames(shrink) <- list(

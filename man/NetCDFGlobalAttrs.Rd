@@ -7,13 +7,16 @@
 NetCDFGlobalAttrs(nc = NULL)
 }
 \arguments{
-\item{nc}{A character string specifying the path to the NetCDF file. If \code{NULL}, the function will stop with an error message.}
+\item{nc}{A character string specifying the path to the NetCDF file. If
+\code{NULL}, the function will stop with an error message.}
 }
 \value{
 A character vector where each element is a global attribute.
 }
 \description{
-This function opens a NetCDF file, extracts all global attributes, and returns them as a character vector where each element is an attribute name-value pair.
+This function opens a NetCDF file, extracts all global attributes, and
+returns them as a character vector where each element is an attribute
+name-value pair.
 }
 \references{
 \href{https://github.com/rspatial/terra/issues/1443}{Click here}

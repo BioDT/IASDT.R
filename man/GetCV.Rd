@@ -2,23 +2,79 @@
 % Please edit documentation in R/Mod_GetCV.R
 \name{GetCV}
 \alias{GetCV}
-\title{Prepare cross-validation data for spatial analysis}
+\title{Prepare spatial-block cross-validation folds for spatial analysis}
 \usage{
-GetCV(DT, NR = 4, NC = 3, Path_Grid)
+GetCV(
+  DT,
+  EnvFile = ".env",
+  XVars,
+  NFolds = 4,
+  NGrids = 20,
+  NR = 2,
+  NC = 2,
+  OutPath = NULL,
+  FromHPC = TRUE
+)
 }
 \arguments{
-\item{DT}{A data frame or tibble containing the input dataset with at least two columns for x and y coordinates.}
+\item{DT}{A data frame or tibble containing the input dataset. This data
+frame should include two columns for \code{x} and \code{y} coordinates as long as
+other columns matching the names of predictors listed in \code{XVars} argument.}
 
-\item{NR, NC}{Integer, the number of rows and columns to divide the spatial area into. Defaults to 4 row and 3 columns.}
+\item{EnvFile}{String specifying the path to read environment variables from,
+with a default value of \code{.env}.}
 
-\item{Path_Grid}{String, the file path to the reference grid used for rasterizing the input data.}
+\item{XVars}{Vector of strings specifying variables to be used in the model.
+This argument is mandatory and can not be empty.}
+
+\item{NFolds}{Number of cross-validation folds. Default: 4.}
+
+\item{NGrids}{For \code{CV_Dist} cross-validation strategy (see below), this
+argument determines the size of the blocks (how many grid cells in both
+directions).}
+
+\item{NR, NC}{Integer, the number of rows and columns used in the \code{CV_Large}
+cross-validation strategy (see below), in which the study area is divided
+into large blocks given the provided \code{NR} and \code{NC} values. Both default to
+2 which means to split the study area into four large blocks at the median
+latitude and longitude.}
+
+\item{OutPath}{String specifying the folder path to save the cross-validation
+results. Default: \code{NULL}.}
+
+\item{FromHPC}{Logical. Indicates whether the function is being run on an HPC
+environment, affecting file path handling. Default: \code{TRUE}.}
 }
 \value{
-The function returns a modified version of the input dataset \code{DT} with an additional column indicating the cross-validation fold each record belongs to. This allows for spatially-aware cross-validation processes.
+The function returns a modified version of the input dataset \code{DT}
+with 3 additional numeric columns (integer) indicating the cross-validation
+folds:
+\enumerate{
+\item \code{CV_SAC} in which the size of the blocks is determined by the median
+spatial autocorrelation range in the predictor data (estimated using
+\link[blockCV:cv_spatial_autocor]{blockCV::cv_spatial_autocor}). This requires the availability of the
+\code{automap} R package.
+\item \code{CV_Dist} in which the size of spatial cross-validation blocks is
+determined by the \code{NGrids} argument. The default \code{NGrids} value is 20,
+which means blocks of 20x20 grid cell each.
+\item \code{CV_Large} which splits the study area into large blocks, as determined
+by the  \code{NR} and \code{NC} arguments. if \code{NR} = \code{NC} = 2 (default), four large
+blocks will be used, split the study area at the median coordinates..
+}
 }
 \description{
-This function prepares cross-validation data by dividing the input dataset into spatial blocks. The function uses \link[blockCV:cv_spatial]{blockCV::cv_spatial} function to assign grid cells to cross-validation folds. It is designed to work with spatial data, specifically for scenarios where spatial autocorrelation might influence the cross-validation process.
-The function may need some improvement to implement more than cross-validation strategy.
+This function assign modelling input data into spatial-block cross-validation
+folds. The function uses \link[blockCV:cv_spatial]{blockCV::cv_spatial} to assign grid cells to
+cross-validation folds using three strategies (see below). The function is
+planned to be used inside the \link{Mod_Prep4HPC} function.
+}
+\details{
+The function reads the following environment variable:
+\itemize{
+\item \strong{\code{DP_R_Path_Grid}} (if \code{FromHPC} = \code{TRUE}) or
+\strong{\code{DP_R_Path_Grid_Local}} (if \code{FromHPC} = \code{FALSE}). The function reads
+the content of the \code{Grid_10_Land_Crop.RData} file from this path.
+}
 }
 \author{
 Ahmed El-Gabbas

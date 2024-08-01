@@ -4,28 +4,55 @@
 \alias{Coda_to_tibble}
 \title{Convert a Coda object to a tibble with specified parameter transformations}
 \usage{
-Coda_to_tibble(CodaObj = NULL, Type = NULL, EnvFile = ".env", NOmega = 1000)
+Coda_to_tibble(
+  CodaObj = NULL,
+  Type = NULL,
+  EnvFile = ".env",
+  NOmega = 100,
+  FromHPC = TRUE
+)
 }
 \arguments{
-\item{CodaObj}{An object of class \code{mcmc.list} or \code{mcmc}, representing the MCMC output.}
+\item{CodaObj}{An object of class \code{mcmc.list} or \code{mcmc}, representing the
+MCMC output.}
 
-\item{Type}{A character string specifying the parameter type to transform and extract. Must be one of \code{rho}, \code{alpha}, \code{omega}, or \code{beta}.}
+\item{Type}{A character string specifying the parameter type to transform and
+extract. Must be one of \code{rho}, \code{alpha}, \code{omega}, or \code{beta}.}
 
-\item{EnvFile}{A character string specifying the path to the environment file that contains necessary variables for beta parameter transformation. Defaults to \code{.env}.}
+\item{EnvFile}{A character string specifying the path to the environment file
+that contains necessary variables for \code{beta} parameter transformation.
+Defaults to \code{.env}. Only required for the \code{beta} and \code{Omega} parameters.}
 
-\item{NOmega}{An integer specifying the number of species to be sampled for the Omega parameter transformation. Defaults to 1000.}
+\item{NOmega}{An integer specifying the number of species to be sampled for
+the \code{Omega} parameter transformation. Defaults to 100.}
+
+\item{FromHPC}{Logical. Indicates whether the function is being run on an HPC
+environment, affecting file path handling. Default: \code{TRUE}.}
 }
 \value{
-A tibble containing the transformed parameters based on the specified \code{Type}. The structure of the returned tibble varies depending on the \code{Type} parameter.
+A tibble containing the transformed parameters based on the specified
+\code{Type}. The structure of the returned tibble varies depending on the \code{Type}
+parameter.
 }
 \description{
-This function converts a Coda object (\code{mcmc.list} or \code{mcmc}) into a tibble format, facilitating further analysis and visualization. It supports transformation for specific parameter types: rho, alpha, omega, and beta.
+This function converts a Coda object (\code{mcmc.list} or \code{mcmc}) into a tibble
+format, facilitating further analysis and visualization. It supports
+transformation for specific parameter types: \code{rho}, \code{alpha}, \code{omega}, and
+\code{beta}.
+}
+\details{
+The function reads the following environment variables:
+\itemize{
+\item \strong{\code{DP_R_Path_TaxaList}} (if \code{FromHPC} = \code{TRUE}) or
+\strong{\code{DP_R_Path_TaxaList_Local}} (if \code{FromHPC} = \code{FALSE}). The function
+reads the content of the \code{Species_List_ID.txt} file from this path.
+}
 }
 \examples{
 library(Hmsc)
 library(coda)
 library(dplyr)
-Coda  <- Hmsc::convertToCodaObject(Hmsc::TD$m)
+Coda <- Hmsc::convertToCodaObject(Hmsc::TD$m)
 IASDT.R::Coda_to_tibble(CodaObj = Coda$Alpha[[1]], Type = "Alpha")
 }
 \author{

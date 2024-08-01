@@ -15,23 +15,33 @@ SplitRaster(
 )
 }
 \arguments{
-\item{raster}{A raster object to be split. If NULL (the default), the function will not execute.}
+\item{raster}{A raster object to be split. If NULL (the default), the
+function will not execute.}
 
-\item{Ncol, Nrow}{Integer. The desired number of columns and rows to split the raster into. Default is 4 columns and 4 rows.}
+\item{Ncol, Nrow}{Integer. The desired number of columns and rows to split the
+raster into. Default is 4 columns and 4 rows.}
 
-\item{save}{Logical. Indicates whether to save the split rasters to disk. Default is \code{FALSE}.}
+\item{save}{Logical. Indicates whether to save the split rasters to disk.
+Default is \code{FALSE}.}
 
-\item{SplitPath}{Character string. Specifies the directory path where the split rasters should be saved if \code{save} is \code{TRUE}. If the directory does not exist, it will be created.}
+\item{SplitPath}{Character string. Specifies the directory path where the
+split rasters should be saved if \code{save} is \code{TRUE}. If the directory does
+not exist, it will be created.}
 
-\item{plot}{Logical. Indicates whether to plot the split rasters. Default is \code{FALSE}.}
+\item{plot}{Logical. Indicates whether to plot the split rasters. Default is
+\code{FALSE}.}
 
-\item{Extent}{Logical. If \code{TRUE}, the function returns only the extents of the split rasters instead of the raster data. Default is \code{FALSE}.}
+\item{Extent}{Logical. If \code{TRUE}, the function returns only the extents of
+the split rasters instead of the raster data. Default is \code{FALSE}.}
 }
 \value{
-A list of raster objects or extents of the split rasters, depending on the value of the \code{Extent} parameter.
+A list of raster objects or extents of the split rasters, depending
+on the value of the \code{Extent} parameter.
 }
 \description{
-Split a raster object into a list of smaller rasters based on specified numbers of rows and columns. It can optionally save the resulting rasters to disk, plot them, or return just their extents.
+Split a raster object into a list of smaller rasters based on specified
+numbers of rows and columns. It can optionally save the resulting rasters to
+disk, plot them, or return just their extents.
 }
 \examples{
 library(raster)
@@ -64,7 +74,8 @@ print(logoSplit)
 
 }
 \references{
-Click \href{https://stackoverflow.com/questions/29784829/}{here} and \href{https://stackoverflow.com/questions/22109774/r-raster-mosaic-from-list-of-rasters}{here}
+Click \href{https://stackoverflow.com/questions/29784829/}{here} and
+\href{https://stackoverflow.com/q/22109774}{here}
 }
 \author{
 Ahmed El-Gabbas

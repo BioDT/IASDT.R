@@ -9,17 +9,24 @@ LoadPackages(..., List = NULL, Verbose = FALSE, InstallMissing = TRUE)
 \arguments{
 \item{...}{character. Names of the packages to be loaded or installed.}
 
-\item{List}{character vector. An alternative or additional way to specify package names as a vector.}
+\item{List}{character vector. An alternative or additional way to specify
+package names as a vector.}
 
-\item{Verbose}{logical. If \code{TRUE}, prints the names and versions of the loaded packages. Defaults to \code{FALSE}.}
+\item{Verbose}{logical. If \code{TRUE}, prints the names and versions of the
+loaded packages. Defaults to \code{FALSE}.}
 
-\item{InstallMissing}{logical. If \code{TRUE} (default), missing packages are automatically installed and then loaded.}
+\item{InstallMissing}{logical. If \code{TRUE} (default), missing packages are
+automatically installed and then loaded.}
 }
 \value{
-This function is used for its side effects (loading/installing packages) and does not return any value.
+This function is used for its side effects (loading/installing
+packages) and does not return any value.
 }
 \description{
-This function attempts to load multiple R packages specified by the user. If a package is not installed, the function can optionally install it before loading. It also provides an option to print the names and versions of the loaded packages.
+This function attempts to load multiple R packages specified by the user. If
+a package is not installed, the function can optionally install it before
+loading. It also provides an option to print the names and versions of the
+loaded packages.
 }
 \examples{
 # Currently loaded packages

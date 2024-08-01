@@ -4,12 +4,15 @@
 #
 #' Check the validity of a URL
 #'
-#' This function opens a connection to the specified URL to check its validity. It returns `TRUE` if the URL is valid (i.e., the connection can be opened), and `FALSE` otherwise.
-#'
+#' This function opens a connection to the specified URL to check its validity.
+#' It returns `TRUE` if the URL is valid (i.e., the connection can be opened),
+#' and `FALSE` otherwise.
 #' @param url_in A character string specifying the URL to be checked.
-#' @param t A numeric value specifying the timeout in seconds for the connection attempt. Default is 2 seconds.
+#' @param t A numeric value specifying the timeout in seconds for the connection
+#'   attempt. Default is 2 seconds.
 #' @name Valid_URL
-#' @source The source code of this function was taken from this [stackoverflow](https://stackoverflow.com/questions/52911812/check-if-url-exists-in-r) discussion.
+#' @source The source code of this function was taken from this
+#'   [stackoverflow](https://stackoverflow.com/q/52911812) discussion.
 #' @return A logical value: `TRUE` if the URL is valid, `FALSE` if not.
 #' @examples
 #' urls <- c(
@@ -25,7 +28,8 @@ Valid_URL <- function(url_in, t = 2) {
   }
 
   con <- url(url_in)
-  check <- suppressWarnings(try(open.connection(con, open = "rt", timeout = t), silent = TRUE)[1])
+  check <- suppressWarnings(
+    try(open.connection(con, open = "rt", timeout = t), silent = TRUE)[1])
 
   suppressWarnings(try(close.connection(con), silent = TRUE))
 

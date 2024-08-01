@@ -7,21 +7,33 @@
 Mod_Pred2Array(Predict, Model, Preds = NULL, expected = TRUE, NCores = 1)
 }
 \arguments{
-\item{Predict}{Logical; if \code{TRUE}, predictions are made using the Model parameter before conversion. If \code{FALSE}, uses pre-computed predictions provided in \code{Preds}.}
+\item{Predict}{Logical; if \code{TRUE}, predictions are made using the Model
+parameter before conversion. If \code{FALSE}, uses pre-computed predictions
+provided in \code{Preds}.}
 
-\item{Model}{Hmsc object or character for path to a saved model file. If \code{Predict} is \code{True}, the model object will be used to make predictions first.}
+\item{Model}{Hmsc object or character for path to a saved model file. If
+\code{Predict} is \code{True}, the model object will be used to make predictions
+first.}
 
-\item{Preds}{pre-computed predictions, resulted from \code{Hmsc:::predict.Hmsc}, to be converted into an array. Required if \code{Predict} is \code{FALSE}.}
+\item{Preds}{pre-computed predictions, resulted from \code{Hmsc:::predict.Hmsc},
+to be converted into an array. Required if \code{Predict} is \code{FALSE}.}
 
-\item{expected}{Logical; if \code{TRUE}, returns the location parameter of the observation models. If \code{FALSE}, samples values from the observation models. See \code{Hmsc:::predict.Hmsc} for more info.}
+\item{expected}{Logical; if \code{TRUE}, returns the location parameter of the
+observation models. If \code{FALSE}, samples values from the observation models.
+See \code{Hmsc:::predict.Hmsc} for more info.}
 
-\item{NCores}{Integer; specifies the number of cores to use for parallel computation of predicted values. Must be a positive integer.}
+\item{NCores}{Integer; specifies the number of cores to use for parallel
+computation of predicted values. Must be a positive integer.}
 }
 \value{
 An array of predictions.
 }
 \description{
-This function converts the results from the (unexported) \code{Hmsc:::predict.Hmsc} function into an array format. It allows for the direct conversion of pre-computed predictions or the generation of predictions from a model before conversion. It supports parallel computation for generating predictions.
+This function converts the results from the (unexported)
+\code{Hmsc:::predict.Hmsc} function into an array format. It allows for the direct
+conversion of pre-computed predictions or the generation of predictions from
+a model before conversion. It supports parallel computation for generating
+predictions.
 }
 \examples{
 Preds <- IASDT.R::Mod_Pred2Array(

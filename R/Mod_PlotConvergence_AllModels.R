@@ -4,17 +4,29 @@
 
 #' Plot model convergence of multiple modelling alternatives
 #'
-#' This function generates and saves a series of diagnostic plots to assess the convergence of Hmsc models across multiple modelling alternatives. It checks model convergence using trace plots and Gelman-Rubin diagnostics for key model parameters.
-#'
-#' @param Path_Model String. Path to save all the output, including the to be fitted models (without trailing slash). Must not be `NULL`.
-#' @param EnvFile String. Path to read the environment variables. Default value: `.env`.
-#' @param FromHPC Logical. Indicates whether the function is being run on a High-Performance Computing (HPC) environment. Adjusts file paths accordingly.
-#' @param NChains Integer. Number of MCMC chains used in the model fitting process.
-#' @param maxOmega Integer. Maximum number of species interactions to sample for convergence diagnostics.
+#' This function generates and saves a series of diagnostic plots to assess the
+#' convergence of Hmsc models across multiple modelling alternatives. It checks
+#' model convergence using trace plots and Gelman-Rubin diagnostics for key
+#' model parameters.
+#' @param Path_Model String. Path to save all the output, including the to be
+#'   fitted models (without trailing slash). Must not be `NULL`.
+#' @param EnvFile String. Path to read the environment variables. Default value:
+#'   `.env`.
+#' @param FromHPC Logical. Indicates whether the function is being run on a
+#'   High-Performance Computing (HPC) environment. Adjusts file paths
+#'   accordingly.
+#' @param NChains Integer. Number of MCMC chains used in the model fitting
+#'   process.
+#' @param maxOmega Integer. Maximum number of species interactions to sample for
+#'   convergence diagnostics.
 #' @param NCores Integer. Number of cores to use for parallel processing.
 #' @name PlotConvergence_AllModels
 #' @author Ahmed El-Gabbas
-#' @return The function does not return anything but saves a series of diagnostic plots in the specified path.
+#' @return The function does not return anything but saves a series of
+#'   diagnostic plots in the specified path.
+#' @details The function reads the following environment variable:
+#'    - **`Path_LUMI_Scratch`** (only if `FromHPC` = `TRUE`) for the path of
+#'    the scratch folder of the `BioDT` project on LUMI.
 #' @export
 
 PlotConvergence_AllModels <- function(
@@ -22,7 +34,7 @@ PlotConvergence_AllModels <- function(
     maxOmega = 1000, NCores = NULL) {
 
   if (is.null(Path_Model) || is.null(NCores)) {
-    stop("Path_Model and NCores cannot be empty")
+    stop("Path_Model and NCores must not be NULL")
   }
 
   # Avoid "no visible binding for global variable" message
@@ -54,20 +66,26 @@ PlotConvergence_AllModels <- function(
 
   IASDT.R::CatTime("Load environment variables")
 
-  if (file.exists(EnvFile)) {
+  if (FromHPC) {
+    if (magrittr::not(file.exists(EnvFile))) {
+      stop(paste0(
+        "Path for environment variables: ", EnvFile, " was not found"))
+    }
+
     readRenviron(EnvFile)
     Path_Scratch <- Sys.getenv("Path_LUMI_Scratch")
-    if (FromHPC) {
-      if (dir.exists(Path_Scratch)) {
-        InitialWD <- getwd()
-        setwd(Path_Scratch)
-        on.exit(setwd(InitialWD), add = TRUE)
-      } else {
-        stop("The scratch folder does not exist")
-      }
+
+    if (Path_Scratch == "") {
+      stop("Path_Scratch environment variable not found.")
     }
-  } else {
-    stop(paste0("Path for environment variables: ", EnvFile, " was not found"))
+    if (magrittr::not(dir.exists(Path_Scratch))) {
+      stop("The scratch folder does not exist")
+    }
+
+    InitialWD <- getwd()
+    setwd(Path_Scratch)
+    on.exit(setwd(InitialWD), add = TRUE)
+
   }
 
   Path_Convergence_All <- file.path(Path_Model, "Model_Convergence_All")
@@ -133,12 +151,12 @@ PlotConvergence_AllModels <- function(
                 Post = Coda_Obj, Model = Model_Obj, NRC = c(2, 3),
                 Title = stringr::str_remove_all(
                   basename(Path_Coda), "_Tree|_Coda.RData$"))
+
               IASDT.R::SaveAs(
                 InObj = PlotObj_Alpha, OutObj = ObjName_Alpha,
                 OutPath = Path_Trace_Alpha)
 
               rm(PlotObj_Alpha, Model_Obj)
-              invisible(gc())
             }
 
             # Beta + Omega -----
@@ -159,7 +177,6 @@ PlotConvergence_AllModels <- function(
               Omega <- magrittr::extract2(Coda_Obj, "Omega") %>%
                 magrittr::extract2(1)
               rm(Coda_Obj)
-              invisible(gc())
 
               # BETA - effectiveSize
               Beta_ESS <- coda::effectiveSize(Beta)
@@ -287,8 +304,7 @@ PlotConvergence_AllModels <- function(
   Plot_Title <- paste0(
     "Gelman convergence diagnostic - Omega (", maxOmega, " samples)")
 
-  Plot <- Convergence_DT %>%
-    dplyr::left_join(Model_Info, by = "M_Name_Fit") %>%
+  Plot <- dplyr::left_join(Convergence_DT, Model_Info, by = "M_Name_Fit") %>%
     dplyr::select(rL, Tree, M_thin, M_samples, Omega_Gelman) %>%
     dplyr::mutate(
       GPP_Thin = paste0("GPP", rL, " | Th", M_thin),

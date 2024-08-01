@@ -4,25 +4,30 @@
 \alias{AddLine}
 \title{Add a horizontal or vertical line to the current plot}
 \source{
-The source code of this function was taken from this  \href{https://stackoverflow.com/questions/27800307/}{stackoverflow} question.
+The source code of this function was taken from this
+\href{https://stackoverflow.com/questions/27800307/}{stackoverflow} question.
 }
 \usage{
 AddLine(at = NULL, Outer = FALSE, H = TRUE, ...)
 }
 \arguments{
-\item{at}{Numeric; the relative location of where the line should be plotted. Cannot be \code{NULL}.}
+\item{at}{Numeric; the relative location of where the line should be plotted.
+Cannot be \code{NULL}.}
 
-\item{Outer}{Logical; if \code{TRUE}, the line is plotted outside of the plotting area. Default is \code{FALSE}.}
+\item{Outer}{Logical; if \code{TRUE}, the line is plotted outside of the plotting
+area. Default is \code{FALSE}.}
 
-\item{H}{Logical; if \code{TRUE} (default), a horizontal line is added. If \code{FALSE}, a vertical line is added.}
+\item{H}{Logical; if \code{TRUE} (default), a horizontal line is added. If
+\code{FALSE}, a vertical line is added.}
 
 \item{...}{Additional graphical parameters passed to \link[graphics:abline]{graphics::abline}.}
 }
 \value{
-Invisible; the function is called for its side effect of drawing on the current plot.
+Invisible; the function is called for its side effect of drawing on
+the current plot.
 }
 \description{
-Add a line to the current plot
+Add a horizontal or vertical line to the current plot
 }
 \examples{
 # Horizontal line

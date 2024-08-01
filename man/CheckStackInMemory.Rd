@@ -7,13 +7,17 @@
 CheckStackInMemory(Stack = NULL)
 }
 \arguments{
-\item{Stack}{A RasterStack object. If \code{NULL} or not a RasterStack, the function will stop with an error.}
+\item{Stack}{A RasterStack object. If \code{NULL} or not a RasterStack, the
+function will stop with an error.}
 }
 \value{
 No return value, but prints messages to the console.
 }
 \description{
-This function checks whether the layers of a RasterStack object are stored in memory or read from disk.  It prints messages indicating whether all layers are in memory, all layers are on disk, or a mix of both. If there's a mix, it specifies which layers are on disk.
+This function checks whether the layers of a RasterStack object are stored in
+memory or read from disk.  It prints messages indicating whether all layers
+are in memory, all layers are on disk, or a mix of both. If there's a mix, it
+specifies which layers are on disk.
 }
 \examples{
 library(raster)

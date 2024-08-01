@@ -4,7 +4,8 @@
 \alias{Valid_URL}
 \title{Check the validity of a URL}
 \source{
-The source code of this function was taken from this \href{https://stackoverflow.com/questions/52911812/check-if-url-exists-in-r}{stackoverflow} discussion.
+The source code of this function was taken from this
+\href{https://stackoverflow.com/q/52911812}{stackoverflow} discussion.
 }
 \usage{
 Valid_URL(url_in, t = 2)
@@ -12,13 +13,16 @@ Valid_URL(url_in, t = 2)
 \arguments{
 \item{url_in}{A character string specifying the URL to be checked.}
 
-\item{t}{A numeric value specifying the timeout in seconds for the connection attempt. Default is 2 seconds.}
+\item{t}{A numeric value specifying the timeout in seconds for the connection
+attempt. Default is 2 seconds.}
 }
 \value{
 A logical value: \code{TRUE} if the URL is valid, \code{FALSE} if not.
 }
 \description{
-This function opens a connection to the specified URL to check its validity. It returns \code{TRUE} if the URL is valid (i.e., the connection can be opened), and \code{FALSE} otherwise.
+This function opens a connection to the specified URL to check its validity.
+It returns \code{TRUE} if the URL is valid (i.e., the connection can be opened),
+and \code{FALSE} otherwise.
 }
 \examples{
 urls <- c(

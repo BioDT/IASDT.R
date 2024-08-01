@@ -23,29 +23,46 @@ PlotConvergence(
 
 \item{Path_FittedModel}{String. Path to the fitted Hmsc model object.}
 
-\item{EnvFile}{String. Path to the environment file containing necessary environment variables. Default: ".env".}
+\item{EnvFile}{String. Path to the environment file containing necessary
+environment variables. Default: ".env".}
 
-\item{FromHPC}{Logical. Indicates whether the function is being run on an HPC environment, affecting file path handling. Default: \code{TRUE}.}
+\item{FromHPC}{Logical. Indicates whether the function is being run on an HPC
+environment, affecting file path handling. Default: \code{TRUE}.}
 
 \item{NChains}{Integer. Number of MCMC chains used in the model. Default: 4.}
 
 \item{Title}{String. Title for the rho and alpha plots. Default: " ".}
 
-\item{NOmega}{Integer. Number of species interactions to sample for omega parameter convergence diagnostics. Default: 1000.}
+\item{NOmega}{Integer. Number of species interactions to sample for omega
+parameter convergence diagnostics. Default: 1000.}
 
 \item{NCores}{Integer. Number of cores to use for parallel processing.}
 
-\item{NRC}{Numeric Vector. Specifies the number of rows and columns for arranging multiple plots on a page. Default: c(2, 3).}
+\item{NRC}{Numeric Vector. Specifies the number of rows and columns for
+arranging multiple plots on a page. Default: c(2, 3).}
 
-\item{SavePlotData}{Logical. Indicates whether to save the plot data as RData files. Default: TRUE.}
+\item{SavePlotData}{Logical. Indicates whether to save the plot data as RData
+files. Default: TRUE.}
 
-\item{Cols}{Character Vector. Specifies the colors to use for each chain in the plots. Default: c("red", "blue", "darkgreen", "darkgrey").}
+\item{Cols}{Character Vector. Specifies the colors to use for each chain in
+the plots. Default: c("red", "blue", "darkgreen", "darkgrey").}
 }
 \value{
-The function does not return a value but generates and saves plots to disk.
+The function does not return a value but generates and saves plots to
+disk.
 }
 \description{
-This function generates and saves plots for model convergence diagnostics, including rho, alpha, omega, and beta parameters. It supports parallel processing for faster execution and can work with models fitted on High-Performance Computing HPC environments.
+This function generates and saves plots for model convergence diagnostics,
+including rho, alpha, omega, and beta parameters. It supports parallel
+processing for faster execution and can work with models fitted on
+High-Performance Computing HPC environments.
+}
+\details{
+The function reads the following environment variable:
+\itemize{
+\item \strong{\code{Path_LUMI_Scratch}} (only if \code{FromHPC} = \code{TRUE}) for the path of
+the scratch folder of the \code{BioDT} project on LUMI.
+}
 }
 \author{
 Ahmed El-Gabbas

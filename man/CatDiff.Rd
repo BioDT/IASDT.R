@@ -7,20 +7,27 @@
 CatDiff(InitTime, Prefix = "Completed in ", CatInfo = TRUE)
 }
 \arguments{
-\item{InitTime}{POSIXct; The initial time from which the difference is calculated.}
+\item{InitTime}{POSIXct; The initial time from which the difference is
+calculated.}
 
-\item{Prefix}{character; A prefix string to prepend to the printed time difference. Defaults to "Completed in ".}
+\item{Prefix}{character; A prefix string to prepend to the printed time
+difference. Defaults to "Completed in ".}
 
-\item{CatInfo}{logical; If \code{TRUE}, prints a session summary using \link{InfoChunk} ("Session summary"). Defaults to \code{TRUE}.}
+\item{CatInfo}{logical; If \code{TRUE}, prints a session summary using
+\link{InfoChunk} ("Session summary"). Defaults to \code{TRUE}.}
 }
 \value{
-The function is used for its side effect of printing to the console and does not return any value.
+The function is used for its side effect of printing to the console
+and does not return any value.
 }
 \description{
-This function calculates the time difference from a given initial time to the current time and prints it with a specified prefix. Optionally, it can also print a session summary.
+This function calculates the time difference from a given initial time to the
+current time and prints it with a specified prefix. Optionally, it can also
+print a session summary.
 }
 \examples{
-# Assuming the current time, it prints the time difference from one minute ago.
+# Assuming the current time, it prints the time difference
+# from one minute ago.
 CatDiff(Sys.time() - 60)
 }
 \author{

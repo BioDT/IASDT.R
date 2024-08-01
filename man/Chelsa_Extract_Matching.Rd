@@ -7,20 +7,29 @@
 Chelsa_Extract_Matching(String, Time, Matches)
 }
 \arguments{
-\item{String}{A character string representing the URL from which to extract information.}
+\item{String}{A character string representing the URL from which to extract
+information.}
 
-\item{Time}{A character string representing the time period to match. The special value "1981-2010" is treated as representing current climates, and the function returns "Current" for this case.}
+\item{Time}{A character string representing the time period to match. The
+special value "1981-2010" is treated as representing current climates, and
+the function returns "Current" for this case.}
 
-\item{Matches}{A character vector of additional strings to match within the URL. The function returns these matches if they are found in the URL.}
+\item{Matches}{A character vector of additional strings to match within the
+URL. The function returns these matches if they are found in the URL.}
 }
 \value{
-A character vector of matched strings if any matches are found; otherwise, returns \code{NA_character_}. If the time period is "1981-2010", the function returns "Current".
+A character vector of matched strings if any matches are found;
+otherwise, returns \code{NA_character_}. If the time period is "1981-2010", the
+function returns "Current".
 }
 \description{
-This function extracts which climate model and scenario each file represents based on the provided URL string, time period, and additional match criteria. It is specifically designed to work with Chelsa climate data URLs.
+This function extracts which climate model and scenario each file represents
+based on the provided URL string, time period, and additional match criteria.
+It is specifically designed to work with Chelsa climate data URLs.
 }
 \details{
-A function to extract which climate model and scenario each file represent
+A function to extract which climate model and scenario each file
+represent
 }
 \author{
 Ahmed El-Gabbas

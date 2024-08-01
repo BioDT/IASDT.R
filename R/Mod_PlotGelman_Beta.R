@@ -4,19 +4,31 @@
 
 #' Gelman-Rubin-Brooks plot for `beta` parameters
 #'
-#' This function generates a Gelman-Rubin-Brooks plot for `beta` parameters from a Hmsc object. It is used to assess the convergence of MCMC simulations by plotting the evolution of the shrink factor over iterations. The plot helps in identifying whether the chains have converged to a common distribution. The plot includes lines for the median and the 97.5th percentile of the shrink factor, with a dashed line at 1.1 indicating the threshold for convergence. This function is not planned to be used in isolation but rather within [IASDT.R::PlotGelman].
-#'
+#' This function generates a Gelman-Rubin-Brooks plot for `beta` parameters from
+#' a Hmsc object. It is used to assess the convergence of MCMC simulations by
+#' plotting the evolution of the shrink factor over iterations. The plot helps
+#' in identifying whether the chains have converged to a common distribution.
+#' The plot includes lines for the median and the 97.5th percentile of the
+#' shrink factor, with a dashed line at 1.1 indicating the threshold for
+#' convergence. This function is not planned to be used in isolation but rather
+#' within [IASDT.R::PlotGelman].
 #' @param CodaObj An object of class `mcmc.list`, representing the Hmsc samples.
-#' @param NCores Integer indicating the number of parallel processes to be used for computation.
-#' @param EnvFile String specifying the path to read the environment variables. Default value is `.env`.
-#' @param PlottingAlpha Double indicating the alpha (transparency) level for the plotting lines. Default value is 0.25.
+#' @param NCores Integer indicating the number of parallel processes to be used
+#'   for computation.
+#' @param EnvFile String specifying the path to read the environment variables.
+#'   Default value is `.env`.
+#' @param PlottingAlpha Double indicating the alpha (transparency) level for the
+#'   plotting lines. Default value is 0.25.
+#' @param FromHPC Logical. Indicates whether the function is being run on an HPC
+#'   environment, affecting file path handling. Default: `TRUE`.
 #' @name PlotGelman_Beta
 #' @author Ahmed El-Gabbas
-#' @return A ggplot object representing the Gelman-Rubin-Brooks plot for the `beta` parameters.
+#' @return A ggplot object representing the Gelman-Rubin-Brooks plot for the
+#'   `beta` parameters.
 #' @export
 
 PlotGelman_Beta <- function(
-    CodaObj, NCores, EnvFile = ".env", PlottingAlpha = 0.25) {
+    CodaObj, NCores, EnvFile = ".env", PlottingAlpha = 0.25, FromHPC = TRUE) {
 
 
   if (is.null(CodaObj) || is.null(NCores)) {
@@ -41,7 +53,7 @@ PlotGelman_Beta <- function(
   future::plan(future::cluster, workers = c1, gc = TRUE)
 
   Beta_Coda <- IASDT.R::Coda_to_tibble(
-    CodaObj = CodaObj, Type = "beta", EnvFile = EnvFile)
+    CodaObj = CodaObj, Type = "beta", EnvFile = EnvFile, FromHPC = FromHPC)
   NVars <- length(unique(Beta_Coda$Variable))
   NSp <- length(unique(Beta_Coda$Species))
   SubTitle <- paste0(NVars, " covariates - ", NSp, " species")
@@ -90,7 +102,8 @@ PlotGelman_Beta <- function(
     ggplot2::scale_color_manual(
       values = c("Median" = "red", "Q97_5" = "black")) +
     ggplot2::geom_hline(
-      yintercept = 1.1, linetype = "dashed", col = "darkgrey", linewidth = 0.8) +
+      yintercept = 1.1, linetype = "dashed", col = "darkgrey",
+      linewidth = 0.8) +
     ggplot2::facet_grid(
       ~Type,
       labeller = ggplot2::as_labeller(
@@ -99,7 +112,9 @@ PlotGelman_Beta <- function(
     ggplot2::theme_bw() +
     ggplot2::labs(
       title = "Gelman-Rubin-Brooks plot - Beta", subtitle = SubTitle,
-      caption = "This plot shows the evolution of Gelman and Rubin's shrink factor as the number of iterations increases.") +
+      caption = paste0(
+        "This plot shows the evolution of Gelman and Rubin's shrink factor as ",
+        "the number of iterations increases.")) +
     ggplot2::xlab(NULL) +
     ggplot2::ylab("Shrink factor") +
     ggplot2::theme(

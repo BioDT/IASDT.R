@@ -4,13 +4,18 @@
 
 #' Extract a specific column from the output of GBIF standardization
 #'
-#' This function is designed to extract a specific column from the output of GBIF standardization, typically obtained via the [rgbif::name_backbone] function. It is useful for retrieving specific information such as the scientific name of the accepted taxa.
-#'
+#' This function is designed to extract a specific column from the output of
+#' GBIF standardization, typically obtained via the [rgbif::name_backbone]
+#' function. It is useful for retrieving specific information such as the
+#' scientific name of the accepted taxa.
 #' @name Extract_BB
-#' @param x A list or data frame containing the results of GBIF standardization ([rgbif::name_backbone]).
-#' @param var A character string specifying the name of the column to extract from `x`.
+#' @param x A list or data frame containing the results of GBIF standardization
+#'   ([rgbif::name_backbone]).
+#' @param var A character string specifying the name of the column to extract
+#'   from `x`.
 #' @author Ahmed El-Gabbas
-#' @return Returns the content of the specified column `var` from the input `x`. If `var` is not found within `x`, the function returns `NA_character_`.
+#' @return Returns the content of the specified column `var` from the input `x`.
+#'   If `var` is not found within `x`, the function returns `NA_character_`.
 #' @export
 #' @details
 #' Extract a specific column from the output of GBIF

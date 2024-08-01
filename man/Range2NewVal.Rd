@@ -2,7 +2,8 @@
 % Please edit documentation in R/General_Range2NewVal.R
 \name{Range2NewVal}
 \alias{Range2NewVal}
-\title{Changes values within a specified range, \verb{≥}, or \verb{≤}  specific value to a new value in a vector, data.frame, or raster.}
+\title{Changes values within a specified range, \verb{≥}, or \verb{≤}  specific value to a new
+value in a vector, data.frame, or raster.}
 \usage{
 Range2NewVal(
   x,
@@ -14,21 +15,33 @@ Range2NewVal(
 )
 }
 \arguments{
-\item{x}{A vector, data.frame, or RasterLayer object whose values are to be modified.}
+\item{x}{A vector, data.frame, or RasterLayer object whose values are to be
+modified.}
 
-\item{Between}{A numeric vector of length 2 specifying the range of values to be changed or kept. If specified, \code{MoreThan} and \code{LessThan} are ignored.}
+\item{Between}{A numeric vector of length 2 specifying the range of values to
+be changed or kept. If specified, \code{MoreThan} and \code{LessThan} are ignored.}
 
-\item{MoreThan, LessThan}{A numeric value specifying the threshold above/below which values in \code{x} will be changed to \code{NewVal}. Only applied if \code{Between} is not specified.}
+\item{MoreThan, LessThan}{A numeric value specifying the threshold above/below
+which values in \code{x} will be changed to \code{NewVal}. Only applied if \code{Between}
+is not specified.}
 
 \item{NewVal}{The new value to assign to the selected elements in \code{x}.}
 
-\item{InvertSelection}{A logical value indicating whether to invert the selection specified by \code{Between}. If \code{TRUE}, values outside the specified range are changed to \code{NewVal}. Default is \code{FALSE}.}
+\item{InvertSelection}{A logical value indicating whether to invert the
+selection specified by \code{Between}. If \code{TRUE}, values outside the specified
+range are changed to \code{NewVal}. Default is \code{FALSE}.}
 }
 \value{
-The modified object \code{x} with values changed according to the specified conditions.
+The modified object \code{x} with values changed according to the
+specified conditions.
 }
 \description{
-This function modifies values in the input object \code{x} based on the specified conditions. It can operate on vectors, data.frames, or RasterLayer objects. The function allows for changing values within a specified range (\code{Between}), \verb{≥} a specified value (\code{MoreThan}), or \verb{≤} a specified value (\code{LessThan}) to a new value (\code{NewVal}). An option to invert the selection is also available for ranges.
+This function modifies values in the input object \code{x} based on the specified
+conditions. It can operate on vectors, data.frames, or RasterLayer objects.
+The function allows for changing values within a specified range (\code{Between}),
+\verb{≥} a specified value (\code{MoreThan}), or \verb{≤} a specified value (\code{LessThan}) to
+a new value (\code{NewVal}). An option to invert the selection is also available
+for ranges.
 }
 \examples{
 # Vector
@@ -36,7 +49,8 @@ This function modifies values in the input object \code{x} based on the specifie
 Range2NewVal(x =  1:10, Between = c(5, 8), NewVal = NA)
 
 
-Range2NewVal(x =  1:10, Between = c(5, 8), NewVal = NA, InvertSelection = TRUE)
+Range2NewVal(
+x =  1:10, Between = c(5, 8), NewVal = NA, InvertSelection = TRUE)
 
 Range2NewVal(x =  1:10, Between = c(5, 8), NewVal = NA, MoreThan = 4)
 
@@ -50,9 +64,11 @@ iris \%>\%
  dplyr::select(-Sepal.Length, -Petal.Length, -Petal.Width) \%>\%
  dplyr::mutate(
    Sepal.Width.New = Range2NewVal(
-       x = Sepal.Width, Between = c(3, 3.5), NewVal = NA, InvertSelection = FALSE),
+       x = Sepal.Width, Between = c(3, 3.5), NewVal = NA,
+        InvertSelection = FALSE),
    Sepal.Width.Rev = Range2NewVal(
-       x = Sepal.Width, Between = c(3, 3.5), NewVal = NA, InvertSelection = TRUE)) \%>\%
+       x = Sepal.Width, Between = c(3, 3.5), NewVal = NA,
+        InvertSelection = TRUE)) \%>\%
  dplyr::arrange(-Sepal.Width) \%>\%
  print(n = 50)
 

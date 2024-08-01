@@ -4,20 +4,47 @@
 \alias{Mod_Summary}
 \title{Summary of Hmsc model parameters}
 \usage{
-Mod_Summary(Path_Coda = NULL, EnvFile = ".env", ReturnData = FALSE)
+Mod_Summary(
+  Path_Coda = NULL,
+  EnvFile = ".env",
+  ReturnData = FALSE,
+  FromHPC = TRUE
+)
 }
 \arguments{
 \item{Path_Coda}{String. Path to the \code{.RData} file containing a coda object.}
 
-\item{EnvFile}{String. Path to the environment variables file. This file is used to read necessary environmental variables for processing. The default value is \code{.env}.}
+\item{EnvFile}{String. Path to the environment variables file. This file is
+used to read necessary environmental variables for processing. The default
+value is \code{.env}.}
 
-\item{ReturnData}{Logical. Indicates whether the summarized data should be returned as an R object. If \code{TRUE}, the function returns a list containing summaries of \code{Alpha}, \code{Beta}, \code{Rho}, and \code{Omega} parameters. The default value is \code{FALSE}, which means the function will not return any data but will save the summaries to a specified directory.}
+\item{ReturnData}{Logical. Indicates whether the summarized data should be
+returned as an R object. If \code{TRUE}, the function returns a list containing
+summaries of \code{Alpha}, \code{Beta}, \code{Rho}, and \code{Omega} parameters. The default
+value is \code{FALSE}, which means the function will not return any data but
+will save the summaries to a specified directory.}
+
+\item{FromHPC}{Logical. Indicates whether the function is being run in an HPC
+environment. This affects how file paths are handled. Defaults to \code{TRUE}.}
 }
 \value{
-If \code{ReturnData} is \code{FALSE} (default), the function does not return anything and saves the summaries to a directory. If \code{ReturnData} is \code{TRUE}, it also returns the data as R object.
+If \code{ReturnData} is \code{FALSE} (default), the function does not return
+anything and saves the summaries to a directory. If \code{ReturnData} is \code{TRUE},
+it also returns the data as R object.
 }
 \description{
-This function provides a comprehensive summary of Hmsc model parameters, including \code{Alpha}, \code{Beta}, \code{Rho}, and \code{Omega}. It processes the model's output, performs statistical summaries, and optionally returns the summarized data.
+This function provides a comprehensive summary of Hmsc model parameters,
+including \code{Alpha}, \code{Beta}, \code{Rho}, and \code{Omega}. It processes the model's
+output, performs statistical summaries, and optionally returns the summarized
+data.
+}
+\details{
+The function reads the following environment variables:
+\itemize{
+\item \strong{\code{DP_R_Path_TaxaList}} (if \code{FromHPC} = \code{TRUE}) or
+\strong{\code{DP_R_Path_TaxaList_Local}} (if \code{FromHPC} = \code{FALSE}). The function
+reads the content of the \code{Species_List_ID.txt} file from this path.
+}
 }
 \author{
 Ahmed El-Gabbas

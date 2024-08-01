@@ -7,13 +7,23 @@
 AllObjSizes(GreaterThan = 0)
 }
 \arguments{
-\item{GreaterThan}{numeric value specifying the size threshold in MB. Only objects larger than this value will be shown. Default is 0, which means all objects will be shown. \code{GreaterThan} must be a non-negative number.}
+\item{GreaterThan}{numeric value specifying the size threshold in MB. Only
+objects larger than this value will be shown. Default is 0, which means all
+objects will be shown. \code{GreaterThan} must be a non-negative number.}
 }
 \value{
-The function prints a tibble containing the variables' names, their sizes in MB, and their percentage of the total size of all variables. If no objects meet the criteria, a message is printed instead. Output is sorted in descending order of the size of the objects. The function also prints the total size of all variables and the number of objects that were examined.
+The function prints a tibble containing the variables' names, their
+sizes in MB, and their percentage of the total size of all variables. If no
+objects meet the criteria, a message is printed instead. Output is sorted
+in descending order of the size of the objects. The function also prints
+the total size of all variables and the number of objects that were
+examined.
 }
 \description{
-This function calculates the size of objects in the global environment of R using \link[pryr:object_size]{pryr::object_size} and prints a summary of objects that are greater than a specified size threshold. It is useful for memory management and identifying large objects in the workspace.
+This function calculates the size of objects in the global environment of R
+using \link[pryr:object_size]{pryr::object_size} and prints a summary of objects that are greater
+than a specified size threshold. It is useful for memory management and
+identifying large objects in the workspace.
 }
 \examples{
 AA1 <<- rep(1:1000, 10000)

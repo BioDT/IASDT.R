@@ -7,17 +7,27 @@
 SaveSessionInfo(Path = getwd(), SessionObj = NULL, Prefix = "S")
 }
 \arguments{
-\item{Path}{string specifying the directory path where the output file should be saved. The default is the current working directory (\link[base:getwd]{base::getwd}).}
+\item{Path}{string specifying the directory path where the output file
+should be saved. The default is the current working directory
+(\link[base:getwd]{base::getwd}).}
 
-\item{SessionObj}{An optional list of objects to include in the session information output. This is typically the result of a session management function like \link{SaveSession}. If provided, details of these objects (excluding functions and pre-selected objects, with sizes in megabytes) are appended to the session information file.}
+\item{SessionObj}{An optional list of objects to include in the session
+information output. This is typically the result of a session management
+function like \link{SaveSession}. If provided, details of these objects
+(excluding functions and pre-selected objects, with sizes in megabytes) are
+appended to the session information file.}
 
-\item{Prefix}{A string to be used as a prefix for the output file name. The default prefix is \code{S}.}
+\item{Prefix}{A string to be used as a prefix for the output file name. The
+default prefix is \code{S}.}
 }
 \value{
-The primary effect of this function is the side effect of writing  session information to a file.
+The primary effect of this function is the side effect of writing
+session information to a file.
 }
 \description{
-This function saves the current R session information, including installed packages, session details, and optionally, information about specific objects in the session, to a text file.
+This function saves the current R session information, including installed
+packages, session details, and optionally, information about specific objects
+in the session, to a text file.
 }
 \author{
 Ahmed El-Gabbas

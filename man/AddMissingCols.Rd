@@ -7,9 +7,12 @@
 AddMissingCols(DT, FillVal = NA_character_, ...)
 }
 \arguments{
-\item{DT}{A data frame to which missing columns will be added. This parameter cannot be NULL.}
+\item{DT}{A data frame to which missing columns will be added. This parameter
+cannot be NULL.}
 
-\item{FillVal}{The value to fill the missing columns with. This parameter defaults to \code{NA_character_}, but can be changed to any scalar value as required.}
+\item{FillVal}{The value to fill the missing columns with. This parameter
+defaults to \code{NA_character_}, but can be changed to any scalar value as
+required.}
 
 \item{...}{Column names as character strings.}
 }
@@ -17,7 +20,9 @@ AddMissingCols(DT, FillVal = NA_character_, ...)
 a data frame with the missing columns added, if any were missing.
 }
 \description{
-This function checks a data frame for missing columns specified by the user. If any are missing, it adds these columns to the data frame, filling them with a specified value.
+This function checks a data frame for missing columns specified by the user.
+If any are missing, it adds these columns to the data frame, filling them
+with a specified value.
 }
 \examples{
 mtcars \%>\%

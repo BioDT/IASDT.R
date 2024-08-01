@@ -7,10 +7,15 @@
 CheckQuartoVersion()
 }
 \value{
-A message indicating whether the installed Quarto version is up to date or suggesting an update if it is not.
+A message indicating whether the installed Quarto version is up to
+date or suggesting an update if it is not.
 }
 \description{
-This function compares the installed Quarto version on the user's system with the latest version available online. If the versions differ, it suggests the user to update Quarto. It uses web scraping to find the latest version available on the Quarto GitHub releases page and the system command to find the installed version.
+This function compares the installed Quarto version on the user's system with
+the latest version available online. If the versions differ, it suggests the
+user to update Quarto. It uses web scraping to find the latest version
+available on the Quarto GitHub releases page and the system command to find
+the installed version.
 }
 \examples{
 CheckQuartoVersion()

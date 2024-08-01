@@ -9,17 +9,25 @@ PlotGelman_Omega(CodaObj, NCores, NOmega = 1000, PlottingAlpha = 0.25)
 \arguments{
 \item{CodaObj}{n object of class \code{mcmc.list} representing the MCMC chains.}
 
-\item{NCores}{An integer specifying the number of cores to use for parallel processing.}
+\item{NCores}{An integer specifying the number of cores to use for parallel
+processing.}
 
-\item{NOmega}{An optional integer indicating the number of species' omega parameters to sample and plot. Defaults to 1000.}
+\item{NOmega}{An optional integer indicating the number of species' omega
+parameters to sample and plot. Defaults to 1000.}
 
-\item{PlottingAlpha}{A numeric value between 0 and 1 indicating the transparency level of the plot lines. Defaults to 0.25.}
+\item{PlottingAlpha}{A numeric value between 0 and 1 indicating the
+transparency level of the plot lines. Defaults to 0.25.}
 }
 \value{
-A ggplot object representing the Gelman-Rubin-Brooks plot for the sampled omega parameters.
+A ggplot object representing the Gelman-Rubin-Brooks plot for the
+sampled omega parameters.
 }
 \description{
-This function generates a Gelman-Rubin-Brooks plot specifically for \code{omega} parameters using the provided Hmsc model object. It is designed to help assess the convergence of MCMC simulations by plotting the shrink factor over iterations for a subset of species' omega parameters. This function is not planned to be used in isolation but rather within \link{PlotGelman}.
+This function generates a Gelman-Rubin-Brooks plot specifically for \code{omega}
+parameters using the provided Hmsc model object. It is designed to help
+assess the convergence of MCMC simulations by plotting the shrink factor over
+iterations for a subset of species' omega parameters. This function is not
+planned to be used in isolation but rather within \link{PlotGelman}.
 }
 \author{
 Ahmed El-Gabbas

@@ -7,7 +7,8 @@
 Rename_geometry(g = NULL, name = NULL)
 }
 \arguments{
-\item{g}{\code{sf} object; the simple feature object whose geometry column name is to be changed.}
+\item{g}{\code{sf} object; the simple feature object whose geometry column name is
+to be changed.}
 
 \item{name}{\code{character}; the new name for the geometry column.}
 }
@@ -15,11 +16,9 @@ Rename_geometry(g = NULL, name = NULL)
 The modified \code{sf} object with the renamed geometry column.
 }
 \description{
-This function renames the active geometry column of a simple feature (\code{sf}) object to a new name provided by the user.
+This function renames the active geometry column of a simple feature (\code{sf})
+object to a new name provided by the user.
 }
 \references{
 \href{https://gis.stackexchange.com/a/386589/30390}{Click here}
-}
-\author{
-Ahmed El-Gabbas
 }

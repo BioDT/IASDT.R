@@ -4,17 +4,34 @@
 
 #' Summary of Hmsc model parameters
 #'
-#' This function provides a comprehensive summary of Hmsc model parameters, including `Alpha`, `Beta`, `Rho`, and `Omega`. It processes the model's output, performs statistical summaries, and optionally returns the summarized data.
-#'
+#' This function provides a comprehensive summary of Hmsc model parameters,
+#' including `Alpha`, `Beta`, `Rho`, and `Omega`. It processes the model's
+#' output, performs statistical summaries, and optionally returns the summarized
+#' data.
 #' @param Path_Coda String. Path to the `.RData` file containing a coda object.
-#' @param EnvFile String. Path to the environment variables file. This file is used to read necessary environmental variables for processing. The default value is `.env`.
-#' @param ReturnData Logical. Indicates whether the summarized data should be returned as an R object. If `TRUE`, the function returns a list containing summaries of `Alpha`, `Beta`, `Rho`, and `Omega` parameters. The default value is `FALSE`, which means the function will not return any data but will save the summaries to a specified directory.
+#' @param EnvFile String. Path to the environment variables file. This file is
+#'   used to read necessary environmental variables for processing. The default
+#'   value is `.env`.
+#' @param ReturnData Logical. Indicates whether the summarized data should be
+#'   returned as an R object. If `TRUE`, the function returns a list containing
+#'   summaries of `Alpha`, `Beta`, `Rho`, and `Omega` parameters. The default
+#'   value is `FALSE`, which means the function will not return any data but
+#'   will save the summaries to a specified directory.
+#' @param FromHPC Logical. Indicates whether the function is being run in an HPC
+#'   environment. This affects how file paths are handled. Defaults to `TRUE`.
 #' @author Ahmed El-Gabbas
-#' @return If `ReturnData` is `FALSE` (default), the function does not return anything and saves the summaries to a directory. If `ReturnData` is `TRUE`, it also returns the data as R object.
+#' @return If `ReturnData` is `FALSE` (default), the function does not return
+#'   anything and saves the summaries to a directory. If `ReturnData` is `TRUE`,
+#'   it also returns the data as R object.
 #' @export
+#' @details The function reads the following environment variables:
+#'    - **`DP_R_Path_TaxaList`** (if `FromHPC` = `TRUE`) or
+#'    **`DP_R_Path_TaxaList_Local`** (if `FromHPC` = `FALSE`). The function
+#'    reads the content of the `Species_List_ID.txt` file from this path.
 #' @name Mod_Summary
 
-Mod_Summary <- function(Path_Coda = NULL, EnvFile = ".env", ReturnData = FALSE) {
+Mod_Summary <- function(
+    Path_Coda = NULL, EnvFile = ".env", ReturnData = FALSE, FromHPC = TRUE) {
 
   if (is.null(Path_Coda)) {
     stop("Path_Coda cannot be empty")
@@ -60,11 +77,10 @@ Mod_Summary <- function(Path_Coda = NULL, EnvFile = ".env", ReturnData = FALSE) 
     tidyr::unnest_wider(col = VarSp) %>%
     dplyr::mutate(
       Variable = stringr::str_remove_all(Variable, "B\\[| \\(.+\\)|\\(|\\)"),
-      Species = stringr::str_remove_all(Species, "^Species_| \\(S.+\\)\\]|\\]"),
+      Species = stringr::str_remove_all(
+        Species, "^Species_| \\(S.+\\)\\]|\\]"),
       CI_Overlap_0 = purrr::map2_lgl(
         .x = Q2_5, .y = Q97_5, ~dplyr::between(x = 0, left = .x, right = .y)))
-
-  invisible(gc())
 
   # Alpha -----
 
@@ -86,8 +102,6 @@ Mod_Summary <- function(Path_Coda = NULL, EnvFile = ".env", ReturnData = FALSE) 
     dplyr::mutate(
       CI_Overlap_0 = purrr::map2_lgl(
         .x = Q2_5, .y = Q97_5, ~dplyr::between(x = 0, left = .x, right = .y)))
-
-  invisible(gc())
 
   # Rho ----
   IASDT.R::CatTime("Rho")
@@ -119,9 +133,27 @@ Mod_Summary <- function(Path_Coda = NULL, EnvFile = ".env", ReturnData = FALSE) 
   } else {
     stop(paste0("Path for environment variables: ", EnvFile, " was not found"))
   }
-  ListSp <- Sys.getenv("DP_R_Mod_Path_TaxaList") %>%
-    file.path("Species_List_ID.txt") %>%
-    utils::read.delim(sep = "\t") %>%
+
+  if (FromHPC) {
+    SpNamesF <- Sys.getenv("DP_R_Path_TaxaList")
+    if (SpNamesF == "") {
+      stop("DP_R_Path_TaxaList environment variable not set.")
+    }
+  } else {
+    SpNamesF <- Sys.getenv("DP_R_Path_TaxaList_Local")
+    if (SpNamesF == "") {
+      stop("DP_R_Path_TaxaList_Local environment variable not set.")
+    }
+  }
+
+  SpNamesF <- file.path(SpNamesF, "Species_List_ID.txt")
+
+  if (magrittr::not(file.exists(SpNamesF))) {
+    stop(paste0("Species_List_ID.txt file does not exist in the ",
+                SpNamesF, " folder"))
+  }
+
+  ListSp <- utils::read.delim(SpNamesF, sep = "\t") %>%
     tibble::tibble() %>%
     dplyr::mutate(
       IAS_ID = stringr::str_pad(IAS_ID, pad = "0", width = 4),

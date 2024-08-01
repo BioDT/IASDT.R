@@ -4,15 +4,22 @@
 
 #' Prepare and Process Response Curve Data for Hmsc Models
 #'
-#' This function prepares and processes data for generating response curves for Hmsc models. It supports parallel processing and can return the processed data.
-#'
-#' @param Path_Model String specifying the path to the .RData file containing the model to be used.
-#' @param ngrid Integer specifying the number of points along the gradient for continuous focal variables. Defaults to 50.
-#' @param NCores Integer specifying the number of cores to use for parallel processing. Defaults to 15.
-#' @param ShowProgress Logical indicating whether to show a progress bar during execution. Defaults to `FALSE`.
-#' @param ReturnData Logical indicating whether the processed response curve data should be returned as an R object. Defaults to `FALSE`.
+#' This function prepares and processes data for generating response curves for
+#' Hmsc models. It supports parallel processing and can return the processed
+#' data.
+#' @param Path_Model String specifying the path to the .RData file containing
+#'   the model to be used.
+#' @param ngrid Integer specifying the number of points along the gradient for
+#'   continuous focal variables. Defaults to 50.
+#' @param NCores Integer specifying the number of cores to use for parallel
+#'   processing. Defaults to 15.
+#' @param ShowProgress Logical indicating whether to show a progress bar during
+#'   execution. Defaults to `FALSE`.
+#' @param ReturnData Logical indicating whether the processed response curve
+#'   data should be returned as an R object. Defaults to `FALSE`.
 #' @seealso RespCurv_PlotSp RespCurv_PlotSR
-#' @return Depending on the value of `ReturnData`, either returns response curve data or `NULL` invisibly.
+#' @return Depending on the value of `ReturnData`, either returns response curve
+#'   data or `NULL` invisibly.
 #' @export
 #' @name RespCurv_PrepData
 
@@ -52,7 +59,8 @@ RespCurv_PrepData <- function(
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Loading model object")
-  if (file.exists(Path_Model) && stringr::str_detect(Path_Model, ".+.RData$")) {
+  if (file.exists(Path_Model) &&
+      stringr::str_detect(Path_Model, ".+.RData$")) {
     Model <- IASDT.R::LoadAs(Path_Model)
   } else {
     stop("Path of the model object was not found", call. = FALSE)
@@ -108,12 +116,10 @@ RespCurv_PrepData <- function(
         # probability of occurrence
         Pred_Expected <- stats::predict(
           object = Model, Gradient = Gradient, expected = TRUE)
-        invisible(gc())
 
         # Species richness
         Pred_SR <- stats::predict(
           object = Model, Gradient = Gradient, expected = FALSE)
-        invisible(gc())
 
         # +++++++++++++++++++++++++++++++++
         # Save gradient and original prediction values
@@ -128,7 +134,6 @@ RespCurv_PrepData <- function(
       }
 
       rm(RC_Data_Orig)
-      invisible(gc())
 
       # +++++++++++++++++++++++++++++++++
       # Prepare plotting data: probability of occurrence
@@ -181,7 +186,6 @@ RespCurv_PrepData <- function(
         OutPath = RC_DT_Path_Prob)
 
       rm(Pred_Expected, RC_Data_Prob)
-      invisible(gc())
 
       # +++++++++++++++++++++++++++++++++
       # Prepare plotting data: Species richness
@@ -224,7 +228,6 @@ RespCurv_PrepData <- function(
         OutPath = RC_DT_Path_SR)
 
       rm(RC_Data_SR, RC_Data_SR_Quant, Observed_SR, SR_PositiveTrendProb)
-      invisible(gc())
     }
     return(OutputTibble)
   }
@@ -253,13 +256,20 @@ RespCurv_PrepData <- function(
   # Predictions variants
   # +++++++++++++++++++++++++++++++++
 
-  # Coords - Value of the `coordinates` argument of the `constructGradient` function
+  # Coords
+  # Value of the `coordinates` argument of the `constructGradient` function
   # coordinates = "c" for mean of coordinates (default)
-  # coordinates = "i" for infinite coordinates without effect of spatial dependence
+  # coordinates = "i" for infinite coordinates without effect of
+  # spatial dependence
 
-  # NFV - Value of the `non.focalVariables` argument of the `constructGradient` function
-  # non.focalVariables = 1 sets the values of the non-focal variable to the most likely value (defined as expected value for covariates, mode for factors)
-  # non.focalVariables = 2 sets the values of the non-focal variable to most likely value, given the value of focal variable, based on a linear relationship
+  # NFV
+  # Value of the `non.focalVariables` argument of `constructGradient`
+  # non.focalVariables = 1 sets the values of the non-focal variable to
+  # the most likely value (defined as expected value for covariates, mode
+  # for factors)
+  # non.focalVariables = 2 sets the values of the non-focal variable to most
+  # likely value, given the value of focal variable, based on a linear
+  # relationship
   # non.focalVariables = 3 fixes to the value given
 
   ResCurvDT <- tidyr::expand_grid(

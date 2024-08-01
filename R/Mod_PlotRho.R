@@ -4,16 +4,23 @@
 
 #' Plot convergence traceplots for the rho parameter
 #'
-#' This function generates and plots convergence traceplots for the rho parameter of an Hmsc model. It visualizes the trace and density of the rho parameter across different chains, providing insights into the convergence and distribution of the parameter estimates.
-#'
-#' @param Post A `coda` object containing MCMC samples of the rho parameter or a character string specifying the path to such an object.
-#' @param Model A fitted Hmsc model object or a character string specifying
-#' the path to such an object.
+#' This function generates and plots convergence traceplots for the rho
+#' parameter of an Hmsc model. It visualizes the trace and density of the rho
+#' parameter across different chains, providing insights into the convergence
+#' and distribution of the parameter estimates.
+#' @param Post A `coda` object containing MCMC samples of the rho parameter or a
+#'   character string specifying the path to such an object.
+#' @param Model A fitted Hmsc model object or a character string specifying the
+#'   path to such an object.
 #' @param Title A character string specifying the title of the plot.
-#' @param Cols A character vector specifying the colors to be used for the lines representing each chain in the plot. Defaults to c("red", "blue", "darkgreen", "darkgrey").
+#' @param Cols A character vector specifying the colors to be used for the lines
+#'   representing each chain in the plot. Defaults to c("red", "blue",
+#'   "darkgreen", "darkgrey").
 #' @name PlotRho
 #' @author Ahmed El-Gabbas
-#' @return A ggplot object representing the traceplot of the rho parameter, including annotations for the Gelman-Rubin diagnostic, effective sample size, and credible intervals.
+#' @return A ggplot object representing the traceplot of the rho parameter,
+#'   including annotations for the Gelman-Rubin diagnostic, effective sample
+#'   size, and credible intervals.
 #' @export
 
 PlotRho <- function(
@@ -41,7 +48,6 @@ PlotRho <- function(
   SampleSize <- Model$samples
   NChains <- length(Model$postList)
   rm(Model)
-  invisible(gc())
 
   ## Gelman convergence diagnostic
   Gelman <- Post %>%

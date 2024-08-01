@@ -9,23 +9,35 @@ RespCurv_PlotSp(
   NCores = 20,
   EnvFile = ".env",
   SaveGG = FALSE,
-  ShowProgress = FALSE
+  ShowProgress = FALSE,
+  FromHPC = TRUE
 )
 }
 \arguments{
-\item{Path_RC}{String. Path to the directory where response curve data is stored and where plots will be saved.}
+\item{Path_RC}{String. Path to the directory where response curve data is
+stored and where plots will be saved.}
 
-\item{NCores}{Integer. Number of cores to use for parallel processing. Defaults to 20.}
+\item{NCores}{Integer. Number of cores to use for parallel processing.
+Defaults to 20.}
 
-\item{EnvFile}{String. Path to the environment variables file. Defaults to ".env".}
+\item{EnvFile}{String. Path to the environment variables file. Defaults to
+".env".}
 
-\item{SaveGG}{Logical. Indicates whether to save the ggplot objects as RData files. Defaults to \code{FALSE}.}
+\item{SaveGG}{Logical. Indicates whether to save the ggplot objects as RData
+files. Defaults to \code{FALSE}.}
 
-\item{ShowProgress}{Logical. Indicates whether to show a progress bar during execution. Defaults to FALSE.}
+\item{ShowProgress}{Logical. Indicates whether to show a progress bar during
+execution. Defaults to FALSE.}
+
+\item{FromHPC}{Logical. Indicates whether the function is being run on an HPC
+environment, affecting file path handling. Default: \code{TRUE}.}
 }
 \value{
-A data frame containing paths to the JPEG images and, if requested, the ggplot objects saved as RData files.
+A data frame containing paths to the JPEG images and, if requested,
+the ggplot objects saved as RData files.
 }
 \description{
-Generates and saves response curve plots for species based on environmental variables and other factors. Plots show predicted habitat suitability across different values of each variable.
+Generates and saves response curve plots for species based on environmental
+variables and other factors. Plots show predicted habitat suitability across
+different values of each variable.
 }

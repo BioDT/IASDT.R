@@ -9,16 +9,27 @@ Mod_Fit_WS(Path_Model, EnvFile = ".env", NCores = NULL)
 \arguments{
 \item{Path_Model}{String. Path to the model files (without trailing slash).}
 
-\item{EnvFile}{Path to the file containing environment variables. Defaults to ".env".}
+\item{EnvFile}{Path to the file containing environment variables. Defaults to
+".env".}
 
 \item{NCores}{Integer. Number of cores to use for parallel processing.}
 }
 \value{
-The function does not return anything but prints messages to the console regarding the progress and completion of model fitting.
+The function does not return anything but prints messages to the
+console regarding the progress and completion of model fitting.
 }
 \description{
-This function fits Hmsc models on a UFZ Windows Server. It reads model configurations from a specified path, loads environment variables, checks input arguments for validity, and executes model fitting in parallel if required.
-#'
+This function fits Hmsc models on a UFZ Windows Server. It reads model
+configurations from a specified path, loads environment variables, checks
+input arguments for validity, and executes model fitting in parallel if
+required. #'
+}
+\details{
+The function reads the following environment variable:
+\itemize{
+\item \strong{\code{DP_R_Path_HmscVE_Win}} for the path of the \code{Hmsc-HPC} Python
+virtual environment under windows operating system.
+}
 }
 \author{
 Ahmed El-Gabbas

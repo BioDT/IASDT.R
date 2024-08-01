@@ -4,26 +4,45 @@
 
 #' Prepare SLURM Files for Hmsc-HPC Model Fitting
 #'
-#' This function prepares and writes SLURM file(s) for submitting model fitting jobs on an HPC environment. It dynamically generates bash scripts based on the provided parameters, which are then used to submit jobs to the SLURM workload manager.
-#'
+#' This function prepares and writes SLURM file(s) for submitting model fitting
+#' jobs on an HPC environment. It dynamically generates bash scripts based on
+#' the provided parameters, which are then used to submit jobs to the SLURM
+#' workload manager.
 #' @param Path_Model String. Path to the model files (without trailing slash).
 #' @param JobName String. The name of the submitted job(s).
-#' @param CatJobInfo Logical. Add bash lines to print information on the submitted job. Default: `TRUE`.
-#' @param ntasks Integer. The value for the `#SBATCH --ntasks=` SLURM argument. Default: 1.
-#' @param CpusPerTask Integer. The value for the `#SBATCH --cpus-per-task=` SLURM argument. Default: 1.
-#' @param GpusPerNode Integer. The value for the `#SBATCH --gpus-per-node=` SLURM argument. Default: 1.
-#' @param MemPerCpu String. The value for the `#SBATCH --mem-per-cpu=` SLURM argument. Example: `32G` to request 32 gigabytes.
-#' @param Time String. The value for the requested time for each job in the bash arrays. Example: `01:00:00` to request an hour.
+#' @param CatJobInfo Logical. Add bash lines to print information on the
+#'   submitted job. Default: `TRUE`.
+#' @param ntasks Integer. The value for the `#SBATCH --ntasks=` SLURM argument.
+#'   Default: 1.
+#' @param CpusPerTask Integer. The value for the `#SBATCH --cpus-per-task=`
+#'   SLURM argument. Default: 1.
+#' @param GpusPerNode Integer. The value for the `#SBATCH --gpus-per-node=`
+#'   SLURM argument. Default: 1.
+#' @param MemPerCpu String. The value for the `#SBATCH --mem-per-cpu=` SLURM
+#'   argument. Example: `32G` to request 32 gigabytes.
+#' @param Time String. The value for the requested time for each job in the bash
+#'   arrays. Example: `01:00:00` to request an hour.
 #' @param Partition String. The name of the partition. Default: `small-g`.
-#' @param EnvFile String. Path to read the environment variables. Default value: `.env`.
-#' @param FromHPC Logical. Indicates if the operation is being performed from an HPC environment. This adjusts file paths accordingly. Default: `TRUE`.
+#' @param EnvFile String. Path to read the environment variables. Default value:
+#'   `.env`.
+#' @param FromHPC Logical. Indicates if the operation is being performed from an
+#'   HPC environment. This adjusts file paths accordingly. Default: `TRUE`.
 #' @param Path_Hmsc String. Path for the Hmsc-HPC.
 #' @param Command_Prefix String. Prefix for the bash commands to be executed.
 #' @param SLURM_Prefix String. Prefix for the exported SLURM file.
-#' @param Path_SLURM_Out String indicating the directory where the SLURM file(s) will be saved. Defaults to `NULL`, which means to identify the path from `Path_Model`.
+#' @param Path_SLURM_Out String indicating the directory where the SLURM file(s)
+#'   will be saved. Defaults to `NULL`, which means to identify the path from
+#'   `Path_Model`.
 #' @name Mod_SLURM
 #' @author Ahmed El-Gabbas
-#' @return The function does not return any value but writes SLURM script files to the disk.
+#' @return The function does not return any value but writes SLURM script files
+#'   to the disk.
+#' @details The function reads the following environment variables:
+#'    - **`Path_LUMI_Scratch`** for the path of
+#'    the scratch folder of the `BioDT` project on LUMI.
+#'    - **`DP_R_LUMI_ProjNum`** for the BioDT LUMI project number.
+#'    - **`DP_R_Path_GPU_Check`** for the path of the python for reporting if
+#'    the GPU was used in the running SLURM job.
 #' @export
 
 Mod_SLURM <- function(
@@ -37,6 +56,7 @@ Mod_SLURM <- function(
       is.null(Time) || is.null(Path_Hmsc)) {
     stop("Path_Model, JobName, MemPerCpu, Time, and Path_Hmsc cannot be empty")
   }
+
   # # |||||||||||||||||||||||||||||||||||
   # # Load environment variables
   # # |||||||||||||||||||||||||||||||||||
@@ -45,16 +65,17 @@ Mod_SLURM <- function(
     stop(paste("Environment file not found:", EnvFile))
   }
   readRenviron(EnvFile)
-  ProjNum <- Sys.getenv("IASDT_Proj_Number")
+  ProjNum <- Sys.getenv("DP_R_LUMI_ProjNum")
   Path_Scratch <- Sys.getenv("Path_LUMI_Scratch")
-  Path_GPU_Check <- Sys.getenv("DP_R_Mod_Path_GPU_Check")
+  Path_GPU_Check <- Sys.getenv("DP_R_Path_GPU_Check")
 
   # temporarily setting the working directory
-  if (FromHPC && !dir.exists(Path_Scratch)) {
-    stop("The scratch folder does not exist")
-  }
 
   if (FromHPC) {
+    if (magrittr::not(dir.exists(Path_Scratch))) {
+      stop("The scratch folder does not exist")
+    }
+
     InitialWD <- getwd()
     setwd(Path_Scratch)
     on.exit(setwd(InitialWD), add = TRUE)
@@ -80,23 +101,23 @@ Mod_SLURM <- function(
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = NumericArgs, Type = "numeric")
 
   rm(AllArgs)
-  invisible(gc())
-
-  # Ensure that model path does not contain the scratch path
-  Path_Model <- stringr::str_remove(Path_Model, paste0(Path_Scratch, "/"))
 
   ListCommands <- list.files(
     Path_Model, pattern = Command_Prefix, full.names = TRUE)
   NCommandFiles <- length(ListCommands)
-
   if (NCommandFiles == 0) {
     stop("The file containing the bash commands does not exist")
   }
 
   if (is.null(Path_SLURM_Out)) {
+    # Ensure that model path does not contain the scratch path or local paths
+    Path_Model2 <- Path_Model %>%
+      stringr::str_remove(paste0(Path_Scratch, "/")) %>%
+      stringr::str_remove("^[A-Z]:/.*BioDT_IAS/")
+
     # This folder was created in the Mod_Prep4HPC function
     Path_SLURM_Out <- file.path(
-      Path_Scratch, Path_Model, "Model_Fitting_HPC", "SLURM_Results")
+      Path_Scratch, Path_Model2, "Model_Fitting_HPC", "SLURM_Results")
   }
 
   purrr::walk(
@@ -114,7 +135,9 @@ Mod_SLURM <- function(
 
 
       # create connection to SLURM file
-      # This is better than using sink to have a platform independent file (here, to maintain a linux-like new line ending)
+
+      # This is better than using sink to have a platform independent file
+      # (here, to maintain a linux-like new line ending)
       f <- file(file.path(Path_Model, OutFile), open = "wb")
       on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
 
@@ -163,22 +186,31 @@ Mod_SLURM <- function(
         cat2('echo "Job id = "$SLURM_JOB_ID')
         cat2('echo "Job name = "$SLURM_JOB_NAME')
         cat2('echo "memory per CPU = "$SLURM_MEM_PER_CPU')
-        cat2('echo "The GPU IDs of GPUs in the job allocation (if any) = "$SLURM_JOB_GPUS')
+        cat2(paste0('echo "The GPU IDs of GPUs in the job allocation ',
+                    '(if any) = "$SLURM_JOB_GPUS'))
         cat2('echo "Node running the job script = "$SLURMD_NODENAME')
-        cat2('echo "Process ID of the process started for the task = "$SLURM_TASK_PID')
+        cat2(paste0(
+          'echo "Process ID of the process started for the task',
+          ' = "$SLURM_TASK_PID'))
         cat2('echo "Dependency = "$SLURM_JOB_DEPENDENCY')
         cat2('echo "Number of nodes assigned to a job = "$SLURM_NNODES')
         cat2('echo "Number of tasks requested by the job = "$SLURM_NTASKS')
         cat2('echo "Number of cpus per task = "$SLURM_CPUS_PER_TASK')
         cat2('echo "Number of tasks in the array = "$SLURM_ARRAY_TASK_COUNT')
-        cat2('echo "Array\'s maximum ID (index) number = "$SLURM_ARRAY_TASK_MIN')
-        cat2('echo "Array\'s minimum ID (index) number = "$SLURM_ARRAY_TASK_MAX\n')
+        cat2(
+          'echo "Array\'s maximum ID (index) number = "$SLURM_ARRAY_TASK_MIN')
+        cat2(
+          'echo "Array\'s minimum ID (index) number = "$SLURM_ARRAY_TASK_MAX\n')
       }
 
       cat2("# -----------------------------------------------")
       cat2("# File contains bash commands for model fitting")
       cat2("# -----------------------------------------------")
-      cat2(paste0("File=", ListCommands[x], "\n"))
+      # Ensure that path to commands does not contain the scratch path or local paths
+      CurrCommand <- ListCommands[x] %>%
+        stringr::str_remove(paste0(Path_Scratch, "/")) %>%
+        stringr::str_remove("^[A-Z]:/.*BioDT_IAS/")
+      cat2(paste0("File=", CurrCommand, "\n"))
 
       cat2("# -----------------------------------------------")
       cat2("# Loading Hmsc-HPC")
@@ -195,7 +227,10 @@ Mod_SLURM <- function(
       cat2("# Some checking")
       cat2("# -----------------------------------------------")
       cat2("Path_Python=$(which python3)")
-      cat2('echo -e "Some Checking:\\n  >>  Working directory: $PWD\\n  >>  Python path:       $Path_Python\\n  >>  Checking GPU:      $(python3 $PythonCheckGPU)\\n"')
+      cat2(paste0(
+        'echo -e "Some Checking:\\n  >>  Working directory',
+        ': $PWD\\n  >>  Python path:       $Path_Python\\n  >>  ', # nolint
+        'Checking GPU:      $(python3 $PythonCheckGPU)\\n"'))
       cat2("")
 
       cat2("# -----------------------------------------------")
@@ -207,7 +242,8 @@ Mod_SLURM <- function(
 
       cat2("# -----------------------------------------------")
       cat2("# -----------------------------------------------")
-      cat2(paste0("# This script was created on: \n# ", lubridate::now(tzone = "CET"), " CET"))
+      cat2(paste0("# This script was created on: \n# ",
+                  lubridate::now(tzone = "CET"), " CET"))
       cat2("# -----------------------------------------------")
       cat2("# -----------------------------------------------")
 

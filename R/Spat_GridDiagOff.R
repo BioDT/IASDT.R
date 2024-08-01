@@ -2,15 +2,24 @@
 # GridDiagOff ------
 ## |------------------------------------------------------------------------| #
 
-#' Create a `multilinestring` sf object for the diagonal and off-diagonal lines for each grid cell
+#' Create a `multilinestring` sf object for the diagonal and off-diagonal lines
+#' for each grid cell
 #'
-#' This function takes an `sf` object representing a grid and creates a new sf object where each grid cell is represented by a `multilinestring` geometry consisting of its diagonal and off-diagonal lines.
+#' This function takes an `sf` object representing a grid and creates a new sf
+#' object where each grid cell is represented by a `multilinestring` geometry
+#' consisting of its diagonal and off-diagonal lines.
 #' @name GridDiagOff
-#' @param DT An sf object (tibble) representing a spatial grid. The function expects this object to have a geometry column with polygons representing grid cells. If `NULL`, the function will stop with an error message.
-#' @return An `sf` object where each row corresponds to a grid cell from the input, represented by a `multilinestring` geometry of its diagonal and off-diagonal lines. The returned object retains the coordinate reference system (CRS) of the input.
+#' @param DT An sf object (tibble) representing a spatial grid. The function
+#'   expects this object to have a geometry column with polygons representing
+#'   grid cells. If `NULL`, the function will stop with an error message.
+#' @return An `sf` object where each row corresponds to a grid cell from the
+#'   input, represented by a `multilinestring` geometry of its diagonal and
+#'   off-diagonal lines. The returned object retains the coordinate reference
+#'   system (CRS) of the input.
 #' @author Ahmed El-Gabbas
 #' @export
-#' @note The function requires the `sf`, `dplyr`, `purrr`, `tibble`, and `tidyr` packages to be installed and loaded.
+#' @note The function requires the `sf`, `dplyr`, `purrr`, `tibble`, and `tidyr`
+#'   packages to be installed and loaded.
 #' @seealso GridCross
 #' @examples
 #' IASDT.R::LoadPackages(dplyr, sf, raster, ggplot2)

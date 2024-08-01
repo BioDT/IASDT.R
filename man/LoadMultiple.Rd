@@ -12,22 +12,35 @@ LoadMultiple(
 )
 }
 \arguments{
-\item{Files}{A character vector specifying the paths of \code{.RData} files to be loaded.}
+\item{Files}{A character vector specifying the paths of \code{.RData} files to be
+loaded.}
 
-\item{Verbose}{A logical flag indicating whether to print messages about the loading process. Only effective when \code{OneObject} is \code{FALSE}. Defaults to \code{TRUE}.}
+\item{Verbose}{A logical flag indicating whether to print messages about the
+loading process. Only effective when \code{OneObject} is \code{FALSE}. Defaults to
+\code{TRUE}.}
 
-\item{OneObject}{A logical flag indicating whether to load all objects into a single list (\code{TRUE}) or directly into the global environment (\code{FALSE}). Defaults to \code{TRUE}.}
+\item{OneObject}{A logical flag indicating whether to load all objects into a
+single list (\code{TRUE}) or directly into the global environment (\code{FALSE}).
+Defaults to \code{TRUE}.}
 
-\item{ReturnNames}{A logical flag indicating whether to return the names of the loaded objects. Only effective when \code{OneObject} is \code{FALSE}. Defaults to \code{TRUE}.}
+\item{ReturnNames}{A logical flag indicating whether to return the names of
+the loaded objects. Only effective when \code{OneObject} is \code{FALSE}. Defaults to
+\code{TRUE}.}
 }
 \value{
-If \code{OneObject} is \code{TRUE}, returns a named list of all objects loaded from the specified files. If \code{OneObject} is \code{FALSE} and \code{ReturnNames} is \code{TRUE}, returns a character vector of the names of the objects loaded into the global environment. Otherwise, returns \code{NULL}.
+If \code{OneObject} is \code{TRUE}, returns a named list of all objects loaded
+from the specified files. If \code{OneObject} is \code{FALSE} and \code{ReturnNames} is
+\code{TRUE}, returns a character vector of the names of the objects loaded into
+the global environment. Otherwise, returns \code{NULL}.
 }
 \description{
-This function loads multiple \code{.RData} files either into a single list object or directly into the global environment. It provides options for verbosity, returning object names, and handling of non-existent files.
+This function loads multiple \code{.RData} files either into a single list object
+or directly into the global environment. It provides options for verbosity,
+returning object names, and handling of non-existent files.
 }
 \examples{
-(Files <- system.file("testdata", c("culcita_dat.RData", "gopherdat2.RData"), package = "lme4"))
+(Files <- system.file(
+   "testdata", c("culcita_dat.RData", "gopherdat2.RData"), package = "lme4"))
 
 ls()
 

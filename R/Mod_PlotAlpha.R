@@ -4,23 +4,38 @@
 
 #' Plot convergence traceplots for the alpha parameter
 #'
-#' This function generates and plots convergence traceplots for the alpha parameter from an Hmsc model, using various diagnostics and visualizations to assess convergence. It supports customization of plot aesthetics and layout.
-#'
-#' @param Post A `coda` object or a string path to a saved `coda` object containing the posterior samples for the alpha parameter.
-#' @param Model A fitted model object or a string path to a saved model object containing the samples and metadata necessary for plotting.
+#' This function generates and plots convergence traceplots for the alpha
+#' parameter from an Hmsc model, using various diagnostics and visualizations to
+#' assess convergence. It supports customization of plot aesthetics and layout.
+#' @param Post A `coda` object or a string path to a saved `coda` object
+#'   containing the posterior samples for the alpha parameter.
+#' @param Model A fitted model object or a string path to a saved model object
+#'   containing the samples and metadata necessary for plotting.
 #' @param Title A string specifying the main title of the plot.
-#' @param NRC  numeric vector of length 2 specifying the number of rows and columns per page of plots. If `NULL`, it is automatically determined based on the number of levels of the alpha parameter.
-#' @param AddFooter A logical value indicating whether to add a footer with page numbers to each plot page. Defaults to `TRUE`.
-#' @param AddTitle A logical value indicating whether to add the main title (specified by `Title`) to the plot. Defaults to `TRUE`.
-#' @param Cols A character vector specifying the colors to be used for each chain in the plots. Defaults to `c("red", "blue", "darkgreen", "darkgrey")`.
+#' @param NRC  numeric vector of length 2 specifying the number of rows and
+#'   columns per page of plots. If `NULL`, it is automatically determined based
+#'   on the number of levels of the alpha parameter.
+#' @param AddFooter A logical value indicating whether to add a footer with page
+#'   numbers to each plot page. Defaults to `TRUE`.
+#' @param AddTitle A logical value indicating whether to add the main title
+#'   (specified by `Title`) to the plot. Defaults to `TRUE`.
+#' @param Cols A character vector specifying the colors to be used for each
+#'   chain in the plots. Defaults to `c("red", "blue", "darkgreen",
+#'   "darkgrey")`.
+#' @param FromHPC Logical. Indicates whether the function is being run on an HPC
+#'   environment, affecting file path handling. Default: `TRUE`.
 #' @name PlotAlpha
 #' @author Ahmed El-Gabbas
-#' @return A grid of `ggplot2` objects representing the traceplots for the alpha parameter, arranged according to the specified number of rows and columns per page. If `AddTitle` or `AddFooter` is `TRUE`, additional text elements are included as specified.
+#' @return A grid of `ggplot2` objects representing the traceplots for the alpha
+#'   parameter, arranged according to the specified number of rows and columns
+#'   per page. If `AddTitle` or `AddFooter` is `TRUE`, additional text elements
+#'   are included as specified.
 #' @export
 
 PlotAlpha <- function(
     Post = NULL, Model = NULL, Title = NULL, NRC = NULL, AddFooter = TRUE,
-    AddTitle = TRUE, Cols = c("red", "blue", "darkgreen", "darkgrey")) {
+    AddTitle = TRUE, Cols = c("red", "blue", "darkgreen", "darkgrey"),
+    FromHPC = TRUE) {
 
 
   if (is.null(Post) || is.null(Model)) {
@@ -44,7 +59,12 @@ PlotAlpha <- function(
   if (inherits(Post, "character")) {
     Post <- IASDT.R::LoadAs(Post)
   }
-  Post <- Post$Alpha[[1]]
+  if ("Alpha" %in% names(Post)) {
+    Post <- Post$Alpha[[1]]
+  } else {
+    stop("Post object does not contain 'Alpha'")
+  }
+
 
   # Load model object
   if (inherits(Model, "character")) {
@@ -54,33 +74,29 @@ PlotAlpha <- function(
   SampleSize <- Model$samples
   NChains <- length(Model$postList)
   rm(Model)
-  invisible(gc())
 
   NLV <- ncol(Post[[1]])
 
   ## Gelman convergence diagnostic
-  Gelman <- Post %>%
-    coda::gelman.diag(multivariate = FALSE) %>%
+  Gelman <- coda::gelman.diag(x = Post, multivariate = FALSE) %>%
     magrittr::extract2("psrf") %>%
     as.data.frame() %>%
     dplyr::pull(1) %>%
     round(2)
 
   ## Effective sample size
-  ESS <- Post %>%
-    coda::effectiveSize() %>%
+  ESS <- coda::effectiveSize(x = Post) %>%
     magrittr::divide_by(NChains) %>%
     round(1)
 
   ## quantiles
-  CI <- Post %>%
-    summary(quantiles = c(0.25, 0.75)) %>%
+  CI <- summary(Post, quantiles = c(0.25, 0.75)) %>%
     magrittr::extract2("quantiles") %>%
     matrix(ncol = 2) %>%
     round(3)
 
-  AlphaDF <- Post %>%
-    IASDT.R::Coda_to_tibble(Type = "alpha") %>%
+  AlphaDF <- IASDT.R::Coda_to_tibble(
+    CodaObj = Post, Type = "alpha", FromHPC = FromHPC) %>%
     dplyr::mutate(
       Factor2 = purrr::map_int(
         .x = Factor,
@@ -92,10 +108,8 @@ PlotAlpha <- function(
 
   if (is.null(NRC)) {
     NRC <- dplyr::case_when(
-      NLV == 1 ~ c(1, 1),
-      NLV == 2 ~ c(1, 2),
-      NLV == 3 ~ c(1, 3),
-      NLV == 4 ~ c(2, 2),
+      NLV == 1 ~ c(1, 1), NLV == 2 ~ c(1, 2),
+      NLV == 3 ~ c(1, 3), NLV == 4 ~ c(2, 2),
       .default = c(2, 3))
   }
 
@@ -107,8 +121,7 @@ PlotAlpha <- function(
         "<b><i>Mean effective sample size:</i></b> ", ESS[.x],
         " / ", SampleSize, " samples")
 
-      CI0 <- CI[.x, ] %>%
-        round(2) %>%
+      CI0 <- round(CI[.x, ], 2) %>%
         paste0(collapse = "-") %>%
         paste0("<b><i>50% credible interval:</i></b> ", .)
 
@@ -122,8 +135,7 @@ PlotAlpha <- function(
 
       Title3 <- data.frame(x = -Inf, y = Inf, label = paste0("Factor", .x))
 
-      Plot <- AlphaDF %>%
-        dplyr::filter(Factor2 == .x) %>%
+      Plot <- dplyr::filter(AlphaDF, Factor2 == .x) %>%
         ggplot2::ggplot(
           mapping = ggplot2::aes(x = Iter, y = Value, color = Chain)) +
         ggplot2::geom_line(linewidth = 0.15, alpha = 0.6) +

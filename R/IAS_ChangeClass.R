@@ -4,12 +4,15 @@
 
 #' Change the class of specified columns in a GBIF data frame
 #'
-#' This function takes a data frame containing GBIF data and converts the data types of specific columns to more appropriate types for analysis. Integer, integer64, double, logical, and date classes are applied to various columns as specified.
-#'
+#' This function takes a data frame containing GBIF data and converts the data
+#' types of specific columns to more appropriate types for analysis. Integer,
+#' integer64, double, logical, and date classes are applied to various columns
+#' as specified.
 #' @param DF A data frame containing GBIF data.
 #' @name ChangeClass
 #' @author Ahmed El-Gabbas
-#' @return A data frame with the same data as `DF` but with specified columns converted to their designated data types.
+#' @return A data frame with the same data as `DF` but with specified columns
+#'   converted to their designated data types.
 #' @keywords internal
 #' @noRd
 
@@ -20,8 +23,8 @@ ChangeClass <- function(DF) {
   }
 
   VarsInt <- c(
-    "year", "month", "day", "coordinateUncertaintyInMeters", 
-    "acceptedNameUsageID", "taxonKey", "acceptedTaxonKey", "kingdomKey", 
+    "year", "month", "day", "coordinateUncertaintyInMeters",
+    "acceptedNameUsageID", "taxonKey", "acceptedTaxonKey", "kingdomKey",
     "phylumKey", "classKey", "orderKey", "familyKey", "genusKey", "speciesKey")
   VarsInt64 <- c("gbifID", "catalogNumber", "recordNumber", "taxonID",
     "identificationID")

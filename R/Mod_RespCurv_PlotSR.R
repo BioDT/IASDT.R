@@ -4,10 +4,13 @@
 
 #' Plot species richness response curves
 #'
-#' This function generates and saves species richness response curves as JPEG images for each variable in the dataset. It processes data from a specified directory, creates plots, and saves them in a subdirectory.
-#'
-#' @param Path_RC String. The path to the directory containing the response curve data.
-#' @return This function does not return a value but saves JPEG images of the response curves in a subdirectory within the specified path.
+#' This function generates and saves species richness response curves as JPEG
+#' images for each variable in the dataset. It processes data from a specified
+#' directory, creates plots, and saves them in a subdirectory.
+#' @param Path_RC String. The path to the directory containing the response
+#'   curve data.
+#' @return This function does not return a value but saves JPEG images of the
+#'   response curves in a subdirectory within the specified path.
 #' @name RespCurv_PlotSR
 #' @author Ahmed El-Gabbas
 #' @seealso RespCurv_PlotSp RespCurv_PrepData
@@ -43,7 +46,8 @@ RespCurv_PlotSR <- function(Path_RC) {
 
   if (DirsMissing) {
     stop(
-      "Response curve directory or data subfolder does not exist", call. = FALSE)
+      "Response curve directory or data subfolder does not exist",
+      call. = FALSE)
   }
   rm(DirsMissing)
 
@@ -98,7 +102,8 @@ RespCurv_PlotSR <- function(Path_RC) {
           PlotMax <- max(Observed$Pred, Quant$Q975 + 3)
 
           # Label on the y axis
-          YAxisLabel <- "<span style='font-size: 12pt;'><b>Predicted species richness</span></b>"
+          YAxisLabel <- paste0("<span style='font-size: 12pt;'><b>Predicted ",
+                               "species richness</span></b>")
 
           # Trend text
           DT_Trend <- Trend %>%
@@ -150,7 +155,8 @@ RespCurv_PlotSR <- function(Path_RC) {
               mapping = ggplot2::aes(x = XVals, y = Q50), data = Quant,
               linetype = 1, linewidth = 0.6, colour = "blue") +
             ggplot2::geom_text(
-              data = DT_Trend, mapping = ggplot2::aes(x = X, y = Y, label = Trend2),
+              data = DT_Trend,
+              mapping = ggplot2::aes(x = X, y = Y, label = Trend2),
               colour = "darkgrey", size = 2.75, vjust = 1.4, hjust = -0.05) +
             ggplot2::facet_grid(Coords ~ NFV, labeller = FacetLabel) +
             ggplot2::scale_y_continuous(
@@ -163,13 +169,15 @@ RespCurv_PlotSR <- function(Path_RC) {
             ggplot2::theme(
               strip.text = ggtext::element_markdown(
                 margin = ggplot2::margin(0.05, 0.1, 0.05, 0.1, "cm")),
-              strip.background = ggplot2::element_rect(colour = NA, fill = "white"),
+              strip.background = ggplot2::element_rect(
+                colour = NA, fill = "white"),
               legend.position = "none",
               axis.title = ggtext::element_markdown(size = 10),
               plot.title = ggtext::element_markdown(
                 margin = ggplot2::margin(2, 0, 6, 0)),
               plot.subtitle = ggtext::element_markdown(
-                size = 7, colour = "darkgrey", margin = ggplot2::margin(4, 0, 4, 0)),
+                size = 7, colour = "darkgrey",
+                margin = ggplot2::margin(4, 0, 4, 0)),
               axis.text = ggplot2::element_text(size = 8),
               panel.grid.major = ggplot2::element_line(linewidth = 0.25),
               panel.grid.minor = ggplot2::element_line(linewidth = 0.1),

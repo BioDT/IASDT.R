@@ -4,25 +4,41 @@
 
 #' Convert a Coda object to a tibble with specified parameter transformations
 #'
-#' This function converts a Coda object (`mcmc.list` or `mcmc`) into a tibble format, facilitating further analysis and visualization. It supports transformation for specific parameter types: rho, alpha, omega, and beta.
-#'
-#' @param CodaObj An object of class `mcmc.list` or `mcmc`, representing the MCMC output.
-#' @param Type A character string specifying the parameter type to transform and extract. Must be one of `rho`, `alpha`, `omega`, or `beta`.
-#' @param EnvFile A character string specifying the path to the environment file that contains necessary variables for beta parameter transformation. Defaults to `.env`.
-#' @param NOmega An integer specifying the number of species to be sampled for the Omega parameter transformation. Defaults to 1000.
+#' This function converts a Coda object (`mcmc.list` or `mcmc`) into a tibble
+#' format, facilitating further analysis and visualization. It supports
+#' transformation for specific parameter types: `rho`, `alpha`, `omega`, and
+#' `beta`.
+#' @param CodaObj An object of class `mcmc.list` or `mcmc`, representing the
+#'   MCMC output.
+#' @param Type A character string specifying the parameter type to transform and
+#'   extract. Must be one of `rho`, `alpha`, `omega`, or `beta`.
+#' @param EnvFile A character string specifying the path to the environment file
+#'   that contains necessary variables for `beta` parameter transformation.
+#'   Defaults to `.env`. Only required for the `beta` and `Omega` parameters.
+#' @param NOmega An integer specifying the number of species to be sampled for
+#'   the `Omega` parameter transformation. Defaults to 100.
+#' @param FromHPC Logical. Indicates whether the function is being run on an HPC
+#'   environment, affecting file path handling. Default: `TRUE`.
 #' @name Coda_to_tibble
 #' @author Ahmed El-Gabbas
-#' @return A tibble containing the transformed parameters based on the specified `Type`. The structure of the returned tibble varies depending on the `Type` parameter.
+#' @return A tibble containing the transformed parameters based on the specified
+#'   `Type`. The structure of the returned tibble varies depending on the `Type`
+#'   parameter.
+#' @details The function reads the following environment variables:
+#'    - **`DP_R_Path_TaxaList`** (if `FromHPC` = `TRUE`) or
+#'    **`DP_R_Path_TaxaList_Local`** (if `FromHPC` = `FALSE`). The function
+#'    reads the content of the `Species_List_ID.txt` file from this path.
 #' @export
 #' @examples
 #' library(Hmsc)
 #' library(coda)
 #' library(dplyr)
-#' Coda  <- Hmsc::convertToCodaObject(Hmsc::TD$m)
+#' Coda <- Hmsc::convertToCodaObject(Hmsc::TD$m)
 #' IASDT.R::Coda_to_tibble(CodaObj = Coda$Alpha[[1]], Type = "Alpha")
 
 Coda_to_tibble <- function(
-    CodaObj = NULL, Type = NULL, EnvFile = ".env", NOmega = 1000) {
+    CodaObj = NULL, Type = NULL, EnvFile = ".env", NOmega = 100,
+    FromHPC = TRUE) {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
@@ -42,16 +58,15 @@ Coda_to_tibble <- function(
   # Check class of input coda object -----
   # # |||||||||||||||||||||||||||||||||||||||
 
-  Type <- stringr::str_to_lower(Type)
+  Type <- tolower(Type)
 
   if (!Type %in% c("rho", "alpha", "omega", "beta")) {
     stop("Type has to be one of rho, alpha, omega, or beta")
   }
 
-  if (!(inherits(CodaObj, "mcmc.list") && !inherits(CodaObj, "mcmc"))) {
+  if (!(inherits(CodaObj, "mcmc.list") || inherits(CodaObj, "mcmc"))) {
     stop("Input Coda object has to be of class mcmc.list or mcmc")
   }
-
 
   # # |||||||||||||||||||||||||||||||||||||||
   # Convert to tibble ----
@@ -81,8 +96,7 @@ Coda_to_tibble <- function(
       data = Coda,
       cols = -c(Chain, Iter), names_to = "Alpha", values_to = "Value")
 
-    Coda <- Coda %>%
-      dplyr::distinct(Alpha) %>%
+    Coda <- dplyr::distinct(Coda, Alpha) %>%
       dplyr::mutate(
         Alpha2 = purrr::map(
           .x = Alpha,
@@ -112,9 +126,27 @@ Coda_to_tibble <- function(
 
       readRenviron(EnvFile)
 
-      SpeciesNames <- Sys.getenv("DP_R_Mod_Path_TaxaList") %>%
-        file.path("Species_List_ID.txt") %>%
-        readr::read_tsv(show_col_types = FALSE) %>%
+      if (FromHPC) {
+        SpNamesF <- Sys.getenv("DP_R_Path_TaxaList")
+          if (SpNamesF == "") {
+            stop("DP_R_Path_TaxaList environment variable not set.")
+          }
+      } else {
+        SpNamesF <- Sys.getenv("DP_R_Path_TaxaList_Local")
+        if (SpNamesF == "") {
+          stop("DP_R_Path_TaxaList_Local environment variable not set.")
+        }
+      }
+
+      SpNamesF <- file.path(SpNamesF, "Species_List_ID.txt")
+
+      if (magrittr::not(file.exists(SpNamesF))) {
+        stop(paste0("Species_List_ID.txt file does not exist in the ",
+                    SpNamesF, " folder"))
+      }
+
+      SpeciesNames <- readr::read_tsv(
+        file = SpNamesF, show_col_types = FALSE) %>%
         dplyr::select(IAS_ID, Species = Species_name) %>%
         dplyr::mutate(
           IAS_ID = stringr::str_pad(IAS_ID, pad = "0", width = 4),
@@ -127,8 +159,7 @@ Coda_to_tibble <- function(
     Coda <- tidyr::pivot_longer(
       Coda, -c(Chain, Iter), names_to = "Var_Sp", values_to = "Value")
 
-    Coda <- Coda %>%
-      dplyr::distinct(Var_Sp) %>%
+    Coda <- dplyr::distinct(Coda, Var_Sp) %>%
       dplyr::mutate(
         Betas = purrr::map(
           .x = Var_Sp,
@@ -169,18 +200,19 @@ Coda_to_tibble <- function(
         SP = purrr::map(
           .x = SpComb,
           .f = ~{
-            IAS_N <- .x %>%
-              stringr::str_remove_all("Omega1\\[|\\]") %>%
+            IAS_N <- stringr::str_remove_all(.x, "Omega1\\[|\\]") %>%
               stringr::str_split(", ", simplify = TRUE) %>%
               as.character() %>%
               purrr::set_names(c("Sp1", "Sp2"))
 
             IAS1 <- IASDT.R::GetSpeciesName(
-              EnvFile = EnvFile, SpID = IAS_N[1]) %>%
+              EnvFile = EnvFile, SpID = IAS_N[1], FromHPC = FromHPC) %>%
               dplyr::pull(Species_name)
+
             IAS2 <- IASDT.R::GetSpeciesName(
-              EnvFile = EnvFile, SpID = IAS_N[2]) %>%
+              EnvFile = EnvFile, SpID = IAS_N[2], FromHPC = FromHPC) %>%
               dplyr::pull(Species_name)
+
             return(c(IAS_N, IAS1 = IAS1, IAS2 = IAS2))
           })) %>%
       tidyr::unnest_wider("SP") %>%

@@ -10,7 +10,8 @@ CurrOS()
 A character string representing the name of the operating system.
 }
 \description{
-This function returns the name of the current operating system the R session is running on.
+This function returns the name of the current operating system the R session
+is running on.
 }
 \examples{
 CurrOS()

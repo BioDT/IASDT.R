@@ -4,22 +4,42 @@
 \alias{PlotGelman_Beta}
 \title{Gelman-Rubin-Brooks plot for \code{beta} parameters}
 \usage{
-PlotGelman_Beta(CodaObj, NCores, EnvFile = ".env", PlottingAlpha = 0.25)
+PlotGelman_Beta(
+  CodaObj,
+  NCores,
+  EnvFile = ".env",
+  PlottingAlpha = 0.25,
+  FromHPC = TRUE
+)
 }
 \arguments{
 \item{CodaObj}{An object of class \code{mcmc.list}, representing the Hmsc samples.}
 
-\item{NCores}{Integer indicating the number of parallel processes to be used for computation.}
+\item{NCores}{Integer indicating the number of parallel processes to be used
+for computation.}
 
-\item{EnvFile}{String specifying the path to read the environment variables. Default value is \code{.env}.}
+\item{EnvFile}{String specifying the path to read the environment variables.
+Default value is \code{.env}.}
 
-\item{PlottingAlpha}{Double indicating the alpha (transparency) level for the plotting lines. Default value is 0.25.}
+\item{PlottingAlpha}{Double indicating the alpha (transparency) level for the
+plotting lines. Default value is 0.25.}
+
+\item{FromHPC}{Logical. Indicates whether the function is being run on an HPC
+environment, affecting file path handling. Default: \code{TRUE}.}
 }
 \value{
-A ggplot object representing the Gelman-Rubin-Brooks plot for the \code{beta} parameters.
+A ggplot object representing the Gelman-Rubin-Brooks plot for the
+\code{beta} parameters.
 }
 \description{
-This function generates a Gelman-Rubin-Brooks plot for \code{beta} parameters from a Hmsc object. It is used to assess the convergence of MCMC simulations by plotting the evolution of the shrink factor over iterations. The plot helps in identifying whether the chains have converged to a common distribution. The plot includes lines for the median and the 97.5th percentile of the shrink factor, with a dashed line at 1.1 indicating the threshold for convergence. This function is not planned to be used in isolation but rather within \link{PlotGelman}.
+This function generates a Gelman-Rubin-Brooks plot for \code{beta} parameters from
+a Hmsc object. It is used to assess the convergence of MCMC simulations by
+plotting the evolution of the shrink factor over iterations. The plot helps
+in identifying whether the chains have converged to a common distribution.
+The plot includes lines for the median and the 97.5th percentile of the
+shrink factor, with a dashed line at 1.1 indicating the threshold for
+convergence. This function is not planned to be used in isolation but rather
+within \link{PlotGelman}.
 }
 \author{
 Ahmed El-Gabbas

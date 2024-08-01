@@ -9,17 +9,25 @@ List2RData(List, Prefix = "", Dir = getwd(), Overwrite = FALSE)
 \arguments{
 \item{List}{A named list object to be split into separate \code{.RData} files.}
 
-\item{Prefix}{A character string to prefix to each filename. If empty (default), no prefix is added.}
+\item{Prefix}{A character string to prefix to each filename. If empty
+(default), no prefix is added.}
 
-\item{Dir}{The directory where the \code{.RData} files will be saved. Defaults to the current working directory.}
+\item{Dir}{The directory where the \code{.RData} files will be saved. Defaults to
+the current working directory.}
 
-\item{Overwrite}{A logical indicating whether to overwrite existing files.  Defaults to \code{FALSE}, in which case files that already exist will not be overwritten, and a message will be printed for each such file.}
+\item{Overwrite}{A logical indicating whether to overwrite existing files.
+Defaults to \code{FALSE}, in which case files that already exist will not be
+overwritten, and a message will be printed for each such file.}
 }
 \value{
-The function is called for its side effect of saving files and does not return a value.
+The function is called for its side effect of saving files and does
+not return a value.
 }
 \description{
-This function takes a named list and saves each element of the list as a separate \code{.RData} file. The names of the list elements are used as the base for the filenames, optionally prefixed. Files are saved in the specified directory, with an option to overwrite existing files.
+This function takes a named list and saves each element of the list as a
+separate \code{.RData} file. The names of the list elements are used as the base
+for the filenames, optionally prefixed. Files are saved in the specified
+directory, with an option to overwrite existing files.
 }
 \examples{
 # split iris data by species name

@@ -65,8 +65,8 @@ sf_add_coords <- function(
       Sf_Obj <- dplyr::select(Sf_Obj, -dplyr::all_of(c(NameX, NameY)))
     } else {
       warning(paste0(
-        'Provided column names for longitude and Latitude already exist ',
-        'in the data; "_NEW" is used as suffix'))
+        "Provided column names for longitude and Latitude already exist ",
+        "in the data; `_NEW` is used as suffix"))
       Coords <- Coords %>%
         stats::setNames(c(paste0(NameX, "_NEW"), paste0(NameY, "_NEW")))
     }

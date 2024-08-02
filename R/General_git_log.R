@@ -89,8 +89,9 @@ git_log <- function(Path = ".", Num = NULL, ReturnLog = FALSE) {
   if (is_git == "true") {
     # Construct the command to get the Git log
     log_command <- paste0(
-      'git -C ', shQuote(Path), ' log --graph --pretty=format:"%Cred%h%Creset ',
-      '-%C(yellow)%d%Creset %s %Cgreen(%cr) ',
+      "git -C ", shQuote(Path),
+      ' log --graph --pretty=format:"%Cred%h%Creset ',
+      "-%C(yellow)%d%Creset %s %Cgreen(%cr) ",
       '%C(bold blue)<%an>%Creset" --abbrev-commit')
 
     # Execute the command and capture the output
@@ -99,8 +100,9 @@ git_log <- function(Path = ".", Num = NULL, ReturnLog = FALSE) {
     },
     error = function(e) {
       stop(
-        paste0("Failed to retrieve Git log. Ensure Git is installed and the ",
-               "directory is a valid Git repository."),
+        paste0(
+          "Failed to retrieve Git log. Ensure Git is installed and the ",
+          "directory is a valid Git repository."),
         call. = FALSE)
     })
 

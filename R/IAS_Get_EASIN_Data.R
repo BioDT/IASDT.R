@@ -47,11 +47,8 @@ Get_EASIN_Data <- function(
   OutFileExist <- FALSE
 
   if (file.exists(Path_Out)) {
-
     OutFileExist <- TRUE
-
   } else {
-
     # Update 08.03.2024
     # The following does not work as of 08.03.2024 due to changes in the EASIN API
     # URL <- "https://easin.jrc.ec.europa.eu/apixg/geoxg/speciesid/{SpKey}/layertype/grid/skip/{Skip}/take/{NSearch}" %>%

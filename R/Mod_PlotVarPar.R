@@ -37,8 +37,8 @@
 #' @name PlotVarPar
 #' @author Ahmed El-Gabbas
 #' @details The function reads the following environment variables:
-#'    - **`DP_R_Path_TaxaList`** (if `FromHPC` = `TRUE`) or
-#'    **`DP_R_Path_TaxaList_Local`** (if `FromHPC` = `FALSE`). The function
+#'    - **`DP_R_TaxaInfo`** (if `FromHPC` = `TRUE`) or
+#'    **`DP_R_TaxaInfo_Local`** (if `FromHPC` = `FALSE`). The function
 #'    reads the content of the `TaxaList.RData` file from this path.
 #' @return If `ReturnGG` is `TRUE`, returns a ggplot object of the variance
 #'   partitioning plots. Otherwise, returns `NULL`.
@@ -49,13 +49,15 @@ PlotVarPar <- function(
     VarPar = NULL, EnvFile = ".env", SaveVarPar = TRUE, SaveModelEval = TRUE,
     ReturnGG = FALSE, SaveGG = TRUE, FromHPC = TRUE) {
 
+  .StartTime <- lubridate::now(tzone = "CET")
+
   if (is.null(Model) || is.null(Path_Plot) || is.null(NCores)) {
     stop("Model, Path_Plot, and NCores cannot be empty")
   }
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  IAS_ID <- Species_name <- Species <- variable <- value <- NULL
+  IAS_ID <- Species_name <- Species <- variable <- value <- SpNamesF <- NULL
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Check input arguments ------
@@ -77,7 +79,6 @@ PlotVarPar <- function(
     Args = c("SaveVarPar", "SaveModelEval", "ReturnGG", "SaveGG"))
 
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "numeric", Args = "NCores")
-
   rm(AllArgs)
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -87,34 +88,29 @@ PlotVarPar <- function(
   fs::dir_create(Path_Plot)
 
   IASDT.R::CatTime("Loading species list")
-  if (file.exists(EnvFile)) {
-    readRenviron(EnvFile)
 
-    if (FromHPC) {
-      SpNamesF <- Sys.getenv("DP_R_Path_TaxaList")
-      if (SpNamesF == "") {
-        stop("DP_R_Path_TaxaList environment variable not set.")
-      }
-
-    } else {
-      SpNamesF <- Sys.getenv("DP_R_Path_TaxaList_Local")
-      if (SpNamesF == "") {
-        stop("DP_R_Path_TaxaList_Local environment variable not set.")
-      }
-    }
-
-  } else {
-    stop(
-      paste0(
-        "Path for environment variables: ", EnvFile, " was not found"))
+  if (magrittr::not(file.exists(EnvFile))) {
+    stop(paste0(
+      "Path for environment variables: ", EnvFile, " was not found"))
   }
 
+  if (FromHPC) {
+    EnvVars2Read <- tibble::tribble(
+      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+      "SpNamesF", "DP_R_TaxaInfo", TRUE, FALSE)
+  } else {
+    EnvVars2Read <- tibble::tribble(
+      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+      "SpNamesF", "DP_R_TaxaInfo_Local", TRUE, FALSE)
+  }
+
+  # Assign environment variables and check file and paths
+  IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
   SpNamesF <- file.path(SpNamesF, "TaxaList.RData")
-
   if (magrittr::not(file.exists(SpNamesF))) {
-    stop(paste0("TaxaList.RData file does not exist in the ",
-                SpNamesF, " folder"))
+    stop(paste0(
+      "TaxaList.RData file does not exist in the ", SpNamesF, " folder"))
   }
 
   SpList <- IASDT.R::LoadAs(SpNamesF) %>%
@@ -123,10 +119,20 @@ PlotVarPar <- function(
       Species = stringr::str_pad(string = Species, width = 4, pad = "0"),
       Species = paste0("Sp_", Species))
 
-  if (purrr::some(list(ModelEval, VarPar), is.null)) {
 
-    IASDT.R::CatTime(
-      "Either ModelEval or VarPar was not provided and has to be calculated")
+  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # Processing ModelEval and VarPar
+  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  if (purrr::some(list(ModelEval, VarPar), is.null)) {
+    if (is.null(ModelEval)) {
+      IASDT.R::CatTime(
+        "ModelEval was not provided and has to be calculated")
+    }
+    if (is.null(VarPar)) {
+      IASDT.R::CatTime(
+        "VarPar was not provided and has to be calculated")
+    }
 
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
     # Loading model
@@ -157,7 +163,7 @@ PlotVarPar <- function(
 
     if (is.null(VarPar)) {
       IASDT.R::CatTime("  >>  Calculate variance partitioning")
-      VarPar <- Hmsc::computeVariancePartitioning(Model)
+      VarPar <- Hmsc::computeVariancePartitioning(hM = Model)
 
       if (SaveVarPar) {
         save(VarPar,
@@ -182,21 +188,32 @@ PlotVarPar <- function(
       # then converted the output to array
 
       preds <- IASDT.R::Mod_Pred2Array(
-        Predict = TRUE, Model = Model, NCores = NCores)
+        Predict = TRUE, Model = Model, expected = TRUE, NCores = NCores)
 
       IASDT.R::CatTime("  >>  >>  Evaluate model fit")
-      ModelEval <- Hmsc::evaluateModelFit(hM = Model, predY = preds) %>%
-        suppressWarnings()
+      # Suppress the warning: In cor(lbeta[[i]][k, ], lmu[[i]][k, ]) : the
+      # standard deviation is zero
+      invisible(ModelEval <- suppressWarnings(Hmsc::evaluateModelFit(hM = Model, predY = preds)))
+
       if (SaveModelEval) {
-        save(ModelEval,
-             file = file.path(Path_Plot, "ModelEval_explanatory.RData"))
+        save(
+          ModelEval, file = file.path(Path_Plot, "ModelEval_explanatory.RData"))
       }
 
       rm(preds)
     }
+    rm(Model)
   }
 
-  rm(Model)
+  if (inherits(ModelEval, "character")) {
+    IASDT.R::CatTime("Loading ModelEval from RData file")
+    ModelEval <- IASDT.R::LoadAs(ModelEval)
+  }
+
+  if (inherits(VarPar, "character")) {
+    IASDT.R::CatTime("Loading VarPar from RData file")
+    VarPar <- IASDT.R::LoadAs(VarPar)
+  }
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Plot theme
@@ -211,8 +228,9 @@ PlotVarPar <- function(
     legend.text = ggplot2::element_text(size = 28),
     legend.key.spacing.x = ggplot2::unit(0.7, "cm"))
 
+  # Add a common Legend for combined ggplots
+  # Source: https://stackoverflow.com/a/13650878/3652584
   g_legend <- function(Plot) {
-    # https://stackoverflow.com/a/13650878/3652584
     tmp <- ggplot2::ggplot_gtable(ggplot2::ggplot_build(Plot))
     leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
     legend <- tmp$grobs[[leg]]
@@ -223,45 +241,83 @@ PlotVarPar <- function(
   # Relative variance partitioning
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatTime("Plot 1 - Relative variance partitioning")
+  IASDT.R::CatTime("Plotting relative variance partitioning")
 
   vp_df <- tibble::as_tibble(VarPar$vals, rownames = "variable") %>%
     tidyr::pivot_longer(
       cols = -variable, names_to = "Species", values_to = "value")
 
-  VarOrder <- vp_df %>%
-    dplyr::group_by(variable) %>%
+  VarOrder <- dplyr::group_by(vp_df, variable) %>%
     dplyr::summarise(value = mean(value)) %>%
     dplyr::ungroup() %>%
     dplyr::arrange(dplyr::desc(value)) %>%
     dplyr::pull(variable)
 
-  SpOrder <- vp_df %>%
-    dplyr::left_join(SpList, by = "Species") %>%
+  # Order species by the mean variance partitioning per variable
+  SpOrder <- dplyr::left_join(vp_df, SpList, by = "Species") %>%
     dplyr::mutate(variable = factor(variable, VarOrder)) %>%
     dplyr::summarise(value = sum(value), .by = c(Species_name, variable)) %>%
     dplyr::arrange(variable, dplyr::desc(value)) %>%
     dplyr::pull(Species_name) %>%
     unique()
 
-  Plot_DT <- vp_df %>%
-    dplyr::left_join(SpList, by = "Species") %>%
+  Plot_DT <- dplyr::left_join(vp_df, SpList, by = "Species") %>%
     dplyr::arrange(variable, value) %>%
     dplyr::mutate(
       variable = factor(variable, VarOrder),
       variable = forcats::fct_recode(
         variable,
+        "Habitat coverage" = "HabLog",
         "Road + Rail intensity" = "RoadRailLog",
         "Sampling intensity" = "BiasLog",
         "Spatial random effect" = "Random: sample"),
-      Species_name = factor(Species_name, SpOrder))
+      Species_name = factor(Species_name, SpOrder)) %>%
+    # suppress warning: ! Unknown levels in `f`: HabLog; if habitat is not used
+    # as predictor
+    suppressWarnings()
 
-  Plot <- Plot_DT %>%
-    ggplot2::ggplot(
-      mapping = ggplot2::aes(x = value, y = Species_name, fill = variable)) +
+  Plot <- ggplot2::ggplot(
+    data = Plot_DT,
+    mapping = ggplot2::aes(x = value, y = Species_name, fill = variable)) +
     ggplot2::geom_bar(stat = "identity", width = 1) +
     ggplot2::theme_classic() +
     ggplot2::ylab("Species") +
+    ggplot2::xlab("Proportion of variance explained") +
+    ggplot2::scale_fill_brewer(palette = "Paired") +
+    ggplot2::coord_cartesian(xlim = c(0, 1.0125), expand = FALSE) +
+    Theme
+
+
+
+  # Use original species order
+
+  SpOrder_Orig <- dplyr::left_join(vp_df, SpList, by = "Species") %>%
+    dplyr::distinct(Species, Species_name) %>%
+    dplyr::arrange(Species) %>%
+    dplyr::pull(Species_name) %>%
+    unique()
+
+  Plot_DT_Orig <- dplyr::left_join(vp_df, SpList, by = "Species") %>%
+    dplyr::arrange(variable, value) %>%
+    dplyr::mutate(
+      variable = factor(variable, VarOrder),
+      variable = forcats::fct_recode(
+        variable,
+        "Habitat coverage" = "HabLog",
+        "Road + Rail intensity" = "RoadRailLog",
+        "Sampling intensity" = "BiasLog",
+        "Spatial random effect" = "Random: sample"),
+      Species_name = factor(Species_name, SpOrder_Orig)) %>%
+    # suppress warning: ! Unknown levels in `f`: HabLog; if habitat is not used
+    # as predictor
+    suppressWarnings()
+
+  Plot_Orig <- ggplot2::ggplot(
+    data = Plot_DT_Orig,
+    mapping = ggplot2::aes(x = value, y = Species_name, fill = variable)) +
+    ggplot2::geom_bar(stat = "identity", width = 1) +
+    ggplot2::theme_classic() +
+    ggplot2::ylab("Species (original order)") +
     ggplot2::xlab("Proportion of variance explained") +
     ggplot2::scale_fill_brewer(palette = "Paired") +
     ggplot2::coord_cartesian(xlim = c(0, 1.0125), expand = FALSE) +
@@ -271,7 +327,7 @@ PlotVarPar <- function(
   # Raw variance partitioning
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatTime("Plot 2 - Raw variance partitioning")
+  IASDT.R::CatTime("Plotting raw variance partitioning")
 
   if (!is.null(ModelEval$TjurR2) &&
       length(ModelEval$TjurR2) == ncol(VarPar$vals)) {
@@ -287,8 +343,7 @@ PlotVarPar <- function(
     tidyr::pivot_longer(
       cols = -variable, names_to = "Species", values_to = "value")
 
-  MaxVal <- vp_df_R %>%
-    dplyr::group_by(Species) %>%
+  MaxVal <- dplyr::group_by(vp_df_R, Species) %>%
     dplyr::summarize(value = sum(value)) %>%
     dplyr::pull(value) %>%
     max() %>%
@@ -296,23 +351,57 @@ PlotVarPar <- function(
     ceiling(x = .) %>%
     magrittr::divide_by(100)
 
-  Plot_R_DT <- vp_df_R %>%
-    dplyr::left_join(SpList, by = "Species") %>%
+  # Order species by the mean variance partitioning per variable
+
+  Plot_R_DT <- dplyr::left_join(vp_df_R, SpList, by = "Species") %>%
     dplyr::arrange(variable, value) %>%
     dplyr::mutate(
       variable = factor(variable, VarOrder),
       variable = forcats::fct_recode(
-        variable, "Road + Rail intensity" = "RoadRailLog",
+        variable,
+        "Habitat coverage" = "HabLog",
+        "Road + Rail intensity" = "RoadRailLog",
         "Sampling intensity" = "BiasLog",
         "Spatial random effect" = "Random: sample"),
-      Species_name = factor(Species_name, SpOrder))
+      Species_name = factor(Species_name, SpOrder)) %>%
+    # suppress warning: ! Unknown levels in `f`: HabLog; if habitat is not used
+    # as predictor
+    suppressWarnings()
 
-  Plot_raw <- Plot_R_DT %>%
-    ggplot2::ggplot(
-      ggplot2::aes(x = value, y = Species_name, fill = variable)) +
+  Plot_raw <- ggplot2::ggplot(
+    data = Plot_R_DT,
+    ggplot2::aes(x = value, y = Species_name, fill = variable)) +
     ggplot2::geom_bar(stat = "identity", width = 1) +
     ggplot2::theme_classic() +
     ggplot2::ylab("Species") +
+    ggplot2::xlab("Variance explained (raw)") +
+    ggplot2::scale_fill_brewer(palette = "Paired") +
+    ggplot2::coord_cartesian(xlim = c(0, MaxVal), expand = FALSE) +
+    Theme
+
+  # Use original species order
+
+  Plot_R_DT_Orig <- dplyr::left_join(vp_df_R, SpList, by = "Species") %>%
+    dplyr::arrange(variable, value) %>%
+    dplyr::mutate(
+      variable = factor(variable, VarOrder),
+      variable = forcats::fct_recode(
+        variable,
+        "Habitat coverage" = "HabLog",
+        "Road + Rail intensity" = "RoadRailLog",
+        "Sampling intensity" = "BiasLog",
+        "Spatial random effect" = "Random: sample"),
+      Species_name = factor(Species_name, SpOrder_Orig)) %>%
+    # suppress warning: ! Unknown levels in `f`: HabLog; if habitat is not used
+    # as predictor
+    suppressWarnings()
+
+  Plot_raw_Orig <- ggplot2::ggplot(
+    data = Plot_R_DT_Orig,
+    ggplot2::aes(x = value, y = Species_name, fill = variable)) +
+    ggplot2::geom_bar(stat = "identity", width = 1) +
+    ggplot2::theme_classic() +
+    ggplot2::ylab("Species (original order)") +
     ggplot2::xlab("Variance explained (raw)") +
     ggplot2::scale_fill_brewer(palette = "Paired") +
     ggplot2::coord_cartesian(xlim = c(0, MaxVal), expand = FALSE) +
@@ -328,7 +417,6 @@ PlotVarPar <- function(
     ggplot2::theme(legend.position = "bottom") +
     ggplot2::guides(
       fill = ggplot2::guide_legend(nrow = 1, override.aes = list(size = 10)))
-
   Legend <- g_legend(Legend)
 
   if (is.null(PlotTitlePrefix)) {
@@ -339,7 +427,9 @@ PlotVarPar <- function(
 
   if (SaveGG) {
     IASDT.R::CatTime("Save plots as RData")
-    PlotList <- list(Plot = Plot, Plot_raw = Plot_raw)
+    PlotList <- list(
+      Plot = Plot, Plot_raw = Plot_raw,
+      Plot_Orig = Plot_Orig, Plot_raw_Orig = Plot_raw_Orig)
     save(PlotList, file = file.path(Path_Plot, "VariancePartitioning_GG.RData"))
   }
 
@@ -351,12 +441,23 @@ PlotVarPar <- function(
 
   PlotPath2 <- file.path(Path_Plot, "VariancePartitioning.jpeg")
   VarParPlot <- gridExtra::arrangeGrob(Plot, Plot_raw, nrow = 1) %>%
-    gridExtra::grid.arrange(
+    gridExtra::arrangeGrob(
       Legend, nrow = 2, heights = c(15, 1),
       top = grid::textGrob(
         PlotTitle, gp = grid::gpar(fontsize = 30, font = 2)))
   ggplot2::ggsave(
     plot = VarParPlot, filename = PlotPath2, height = 16, width = 24, dpi = 600)
+
+  PlotPath2 <- file.path(Path_Plot, "VariancePartitioning_Orig.jpeg")
+  VarParPlot <- gridExtra::arrangeGrob(Plot_Orig, Plot_raw_Orig, nrow = 1) %>%
+    gridExtra::arrangeGrob(
+      Legend, nrow = 2, heights = c(15, 1),
+      top = grid::textGrob(
+        PlotTitle, gp = grid::gpar(fontsize = 30, font = 2)))
+  ggplot2::ggsave(
+    plot = VarParPlot, filename = PlotPath2, height = 16, width = 24, dpi = 600)
+
+  IASDT.R::CatDiff(.StartTime, Prefix = "\nCompleted in ", CatInfo = FALSE)
 
   if (ReturnGG) {
     return(VarParPlot)

@@ -13,8 +13,6 @@
 #'   continuous focal variables. Defaults to 50.
 #' @param NCores Integer specifying the number of cores to use for parallel
 #'   processing. Defaults to 15.
-#' @param ShowProgress Logical indicating whether to show a progress bar during
-#'   execution. Defaults to `FALSE`.
 #' @param ReturnData Logical indicating whether the processed response curve
 #'   data should be returned as an R object. Defaults to `FALSE`.
 #' @seealso RespCurv_PlotSp RespCurv_PlotSR
@@ -24,8 +22,7 @@
 #' @name RespCurv_PrepData
 
 RespCurv_PrepData <- function(
-    Path_Model = NULL, ngrid = 50, NCores = 15, ShowProgress = FALSE,
-    ReturnData = FALSE) {
+    Path_Model = NULL, ngrid = 50, NCores = 15, ReturnData = FALSE) {
 
   if (is.null(Path_Model)) {
     stop("Path_Model cannot be NULL")
@@ -37,7 +34,7 @@ RespCurv_PrepData <- function(
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   ResCurvDT <- Variable <- RC_DT_Name <- SampleID <- Species <-
     SR <- MM <- PlotData <- NFV <- Coords <- RC_DT_Path_Orig <-
-    RC_DT_Path_Prob <- RC_DT_Path_SR <- NULL
+    RC_DT_Path_Prob <- RC_DT_Path_SR <- dplyr <- purrr <- tidyr <- NULL
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Check input arguments ------
@@ -76,8 +73,12 @@ RespCurv_PrepData <- function(
     Coords <- ResCurvDT$Coords[[ID]]
     NFV <- ResCurvDT$NFV[[ID]]
     RC_DT_Name <- ResCurvDT$RC_DT_Name[[ID]]
+
+    # original prediction values
     RC_DT_Path_Orig <- ResCurvDT$RC_DT_Path_Orig[[ID]]
+    # plotting data: probability of occurrence
     RC_DT_Path_Prob <- ResCurvDT$RC_DT_Path_Prob[[ID]]
+    # plotting data: Species richness
     RC_DT_Path_SR <- ResCurvDT$RC_DT_Path_SR[[ID]]
 
     OutputTibble <- tibble::tibble(
@@ -103,10 +104,10 @@ RespCurv_PrepData <- function(
         # +++++++++++++++++++++++++++++++++
         # constructGradient
         # +++++++++++++++++++++++++++++++++
-
         Gradient <- Hmsc::constructGradient(
           hM = Model, focalVariable = Variable, non.focalVariables = NFV,
           ngrid = ngrid, coordinates = list(sample = Coords))
+
         XVals <- Gradient$XDataNew[, Variable]
 
         # +++++++++++++++++++++++++++++++++
@@ -238,8 +239,7 @@ RespCurv_PrepData <- function(
 
   IASDT.R::CatTime("Prepare response curve data")
 
-  Path_ResCurve <- dirname(Path_Model) %>%
-    dirname() %>%
+  Path_ResCurve <- dirname(dirname(Path_Model)) %>%
     file.path("Model_Postprocessing")
   Path_RespCurvDT <- file.path(Path_ResCurve, "RespCurv_DT")
   fs::dir_create(Path_RespCurvDT)
@@ -302,13 +302,19 @@ RespCurv_PrepData <- function(
     ResCurvDT <- purrr::map(
       .x = seq_len(nrow(ResCurvDT)), .f = PrepRCData_Int) %>%
       dplyr::bind_rows()
-
   } else {
-
-    paste0(
-      " >>> Some response curve data files (",
-      MissingRows, ") were missing") %>%
-      IASDT.R::CatTime()
+    if (all(magrittr::not(ResCurvDT$FileExists))) {
+      IASDT.R::CatTime(
+        paste0(
+          " >>> All response curve data (", MissingRows,
+          ") need to be prepared"))
+    } else {
+      IASDT.R::CatTime(
+        paste0(
+          " >>> Some response curve data files (",
+          MissingRows, " of ", length(ResCurvDT$FileExists),
+          ") were missing"))
+    }
 
     # +++++++++++++++++++++++++++++++++
     # Prepare working on parallel
@@ -324,7 +330,7 @@ RespCurv_PrepData <- function(
     on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
     future::plan(future::cluster, workers = c1, gc = TRUE)
     invisible(snow::clusterEvalQ(
-      cl = c1, IASDT.R::LoadPackages(c("dplyr", "purrr", "tidyr"))))
+      cl = c1, IASDT.R::LoadPackages(dplyr, purrr, tidyr)))
     snow::clusterExport(
       cl = c1, list = c("ResCurvDT", "Model"), envir = environment())
 
@@ -335,8 +341,8 @@ RespCurv_PrepData <- function(
     IASDT.R::CatTime("      >>> Prepare response curve data on parallel")
 
     ResCurvDT <- future.apply::future_lapply(
-      X = seq_len(nrow(ResCurvDT)), FUN = PrepRCData_Int,
-      .progress = ShowProgress,
+      X = seq_len(nrow(ResCurvDT)),
+      FUN = PrepRCData_Int,
       future.scheduling = Inf, future.seed = TRUE) %>%
       dplyr::bind_rows()
   }

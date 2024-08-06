@@ -86,7 +86,8 @@ Sys.getenv("GITLAB_PAT")
 To install the package you can use the following command
 
 ``` r
-remotes::install_gitlab(repo = "BioDT/IASDT.R", host = "git.ufz.de")
+remotes::install_gitlab(
+    repo = "BioDT/IASDT.R", host = "git.ufz.de", dependencies = TRUE)
 ```
 
 Alternatively, you can provide the PAT directly to the
@@ -94,7 +95,8 @@ Alternatively, you can provide the PAT directly to the
 
 ``` r
 remotes::install_gitlab(
-    repo = "BioDT/IASDT.R", host = "git.ufz.de", auth_token = "XXXXXXXXXX")
+    repo = "BioDT/IASDT.R", host = "git.ufz.de", auth_token = "XXXXXXXXXX", 
+    dependencies = TRUE)
 ```
 
 ### Update the package
@@ -102,14 +104,15 @@ remotes::install_gitlab(
 To update the package, use the following
 
 ``` r
-remotes::update_packages("IASDT.R")
+remotes::update_packages("IASDT.R", dependencies = TRUE)
 ```
 
 or re-install it; you can use `force = TRUE` to force installation, even
 if the remote state has not changed since the previous install.
 
 ``` r
-remotes::install_gitlab(repo = "BioDT/IASDT.R", host = "git.ufz.de")
+remotes::install_gitlab(
+    repo = "BioDT/IASDT.R", host = "git.ufz.de", dependencies = TRUE)
 ```
 
 If you are using `renv`, you may use the following to update the package
@@ -130,6 +133,6 @@ For questions, please contact [me](https://elgabbas.netlify.app/) at:
 `ahmed.el-gabbas[at]ufz[dot]de`
 
 <span style="     color: grey !important;">Last update:
-2024-08-02</span>
+2024-08-06</span>
 
 </center>

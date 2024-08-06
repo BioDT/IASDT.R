@@ -41,8 +41,8 @@ data.
 \details{
 The function reads the following environment variables:
 \itemize{
-\item \strong{\code{DP_R_Path_TaxaList}} (if \code{FromHPC} = \code{TRUE}) or
-\strong{\code{DP_R_Path_TaxaList_Local}} (if \code{FromHPC} = \code{FALSE}). The function
+\item \strong{\code{DP_R_TaxaInfo}} (if \code{FromHPC} = \code{TRUE}) or
+\strong{\code{DP_R_TaxaInfo_Local}} (if \code{FromHPC} = \code{FALSE}). The function
 reads the content of the \code{Species_List_ID.txt} file from this path.
 }
 }

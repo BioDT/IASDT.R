@@ -23,8 +23,10 @@ Mod_Prep4HPC(
   NGrids = 20,
   NR = 2,
   NC = 2,
+  PlotCV = TRUE,
   PhyloTree = TRUE,
   NoPhyloTree = TRUE,
+  OverwriteInitMod = TRUE,
   NParallel = 8,
   nChains = 4,
   thin = NULL,
@@ -95,9 +97,9 @@ sum of road and railway intensity as predictor to the model. Default:
 percentage coverage of respective habitat type per grid cell as predictor
 to the model. Default: \code{TRUE}. Only valid if \code{Hab_Abb} not equals to "0".}
 
-\item{ExclGridsWOSp}{Logical indicating whether to exclude grid cells that
-do not contain at least single species presences from the analysis.
-Default: \code{TRUE}.}
+\item{ExclGridsWOSp}{Logical indicating whether to exclude grid cells that do
+not contain at least single species presences from the analysis. Default:
+\code{TRUE}.}
 
 \item{NFolds}{Number of cross-validation folds. Default: 4. See
 \link{GetCV} for more details.}
@@ -110,12 +112,18 @@ more details.}
 area into. Defaults to 2 row and 2 columns. See \link{GetCV} for more
 details.}
 
+\item{PlotCV}{Logical. Indicating whether to plot the block cross-validation
+folds.}
+
 \item{PhyloTree, NoPhyloTree}{Logical indicating whether to fit model variants
 with or without phylogenetic trees, respectively. The default of both
 arguments is \code{TRUE}, which means to fit a model variant with the respective
 option. If both \code{PhyloTree} and \code{NoPhyloTree} are \code{TRUE} (Default), models
 for both options will be fitted. At least one of \code{PhyloTree} and
 \code{NoPhyloTree} should be \code{TRUE}.}
+
+\item{OverwriteInitMod}{Logical. Indicating whether to overwrite previously
+exported RDS files for initial models. Default: \code{TRUE}.}
 
 \item{NParallel}{Integer specifying the number of parallel cores for
 parallelization. Default: 8 cores.}
@@ -190,19 +198,40 @@ models for HPC and does not return any value.
 }
 \description{
 This function prepares initial models in R for model fitting by Hmsc-HPC. It
-involves data preparation, model initialization, and generating commands for
-running models on HPC. It supports parallel processing, options to
-include/not include phylogenetic tree data.
+involves data preparation, define spatial block cross-validation folds, model
+initialization, and generating commands for running models on HPC. It
+supports parallel processing, options to include/not include phylogenetic
+tree data. The models are fitted with Gaussian Predictive Process (GPP; see
+\href{https://doi.org/10.1002/ecy.2929}{Tikhonov et al.}) for more details) using
+the Hmsc-HPC \href{https://doi.org/10.1101/2024.02.13.580046}{extension}.
 }
 \details{
+The function provides options for:
+\itemize{
+\item for which habitat types the models will be fitted.
+\item selection of species based on minimum number of presence-grid cells (\code{MinPresGrids})
+\item optionally model fitting on specified list of countries: (\code{ModelCountry} and \code{MinPresPerCountry})
+\item whether to exclude grid cells with no species observations
+(\code{ExclGridsWOSp})
+\item number of cross-validation folds
+\item options for whether or not to include phylogentic information to the model
+\item different values for knot distance for GPP (\code{GPP_Dists})
+\item which bioclimatic variables to be uses in the models (\code{BioVars})
+\item whether to include sampling efforts \code{EffortsAsPredictor}, percentage of respective habitat type per grid cell \code{HabAsPredictor}, and railway and road intensity per grid cell \code{RoadRailAsPredictor}
+\item Hmsc options (\code{nChains}, \code{thin}, \code{samples}, \code{transientFactor}, and \code{verbose})
+\item prepare SLURM commands (\code{PrepSLURM}) and some specifications (e.g. \code{MaxJobCounts}, \code{MemPerCpu}, \code{Time}, \code{JobName})
+}
+
 The function reads the following environment variables:
 \itemize{
-\item \strong{\code{DP_R_Path_Python}} for Python path on LUMI.
-\item \strong{\code{Path_LUMI_Scratch}} for the path of the scratch folder of the \code{BioDT}
-project on LUMI.
-\item \strong{\code{DP_R_Path_TaxaList}} (if \code{FromHPC} = \code{TRUE}) or
-\strong{\code{DP_R_Path_TaxaList_Local}} (if \code{FromHPC} = \code{FALSE}). The function
+\item \strong{\code{DP_R_Path_Python}}: Python path on LUMI.
+\item \strong{\code{LUMI_Scratch}}: path of the scratch folder of the \code{BioDT} project on LUMI.
+\item \strong{\code{DP_R_TaxaInfo}} (if \code{FromHPC} = \code{TRUE}) or
+\strong{\code{DP_R_TaxaInfo_Local}} (if \code{FromHPC} = \code{FALSE}). The function
 reads the content of the \code{Species_List_ID.txt} file from this path.
+\item \strong{\code{DP_R_EUBound}} (if \code{FromHPC} = \code{TRUE}) or
+\strong{\code{DP_R_EUBound_Local}} (if \code{FromHPC} = \code{FALSE}). The function
+reads the content of the \code{Bound_sf_Eur.RData} file from this path.
 }
 }
 \author{

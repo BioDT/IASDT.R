@@ -59,12 +59,12 @@ PlotAlpha <- function(
   if (inherits(Post, "character")) {
     Post <- IASDT.R::LoadAs(Post)
   }
+
   if ("Alpha" %in% names(Post)) {
     Post <- Post$Alpha[[1]]
   } else {
     stop("Post object does not contain 'Alpha'")
   }
-
 
   # Load model object
   if (inherits(Model, "character")) {
@@ -90,7 +90,7 @@ PlotAlpha <- function(
     round(1)
 
   ## quantiles
-  CI <- summary(Post, quantiles = c(0.25, 0.75)) %>%
+  CI <- summary(Post, quantiles = c(0.025, 0.975)) %>%
     magrittr::extract2("quantiles") %>%
     matrix(ncol = 2) %>%
     round(3)
@@ -121,9 +121,9 @@ PlotAlpha <- function(
         "<b><i>Mean effective sample size:</i></b> ", ESS[.x],
         " / ", SampleSize, " samples")
 
-      CI0 <- round(CI[.x, ], 2) %>%
-        paste0(collapse = "-") %>%
-        paste0("<b><i>50% credible interval:</i></b> ", .)
+      CI0 <- round(CI[.x, ] / 1000, 2) %>%
+        paste0(collapse = " - ") %>%
+        paste0("<b><i>95% credible interval:</i></b> ", ., " km")
 
       ESS_CI <- data.frame(
         x = -Inf, y = -Inf, label = paste0(ESS0, "<br>", CI0))
@@ -135,10 +135,12 @@ PlotAlpha <- function(
 
       Title3 <- data.frame(x = -Inf, y = Inf, label = paste0("Factor", .x))
 
-      Plot <- dplyr::filter(AlphaDF, Factor2 == .x) %>%
-        ggplot2::ggplot(
-          mapping = ggplot2::aes(x = Iter, y = Value, color = Chain)) +
-        ggplot2::geom_line(linewidth = 0.15, alpha = 0.6) +
+      PlotDT <- dplyr::filter(AlphaDF, Factor2 == .x)
+
+      Plot <- ggplot2::ggplot(
+        data = PlotDT,
+        mapping = ggplot2::aes(x = Iter, y = Value, color = Chain)) +
+        ggplot2::geom_line(linewidth = 0.125, alpha = 0.6) +
         ggplot2::geom_smooth(
           method = "loess", formula = y ~ x, se = FALSE, linewidth = 0.8) +
         ggplot2::geom_point(alpha = 0) +
@@ -147,6 +149,8 @@ PlotAlpha <- function(
           linewidth = 1) +
         ggplot2::scale_color_manual(values = Cols) +
         ggplot2::scale_x_continuous(expand = c(0, 0)) +
+        ggplot2::scale_y_continuous(
+          limits = c(0, max(PlotDT$Value)), expand = c(0, 0)) +
         ggplot2::theme_bw() +
         ggplot2::xlab(NULL) +
         ggplot2::ylab(NULL) +
@@ -171,38 +175,39 @@ PlotAlpha <- function(
       Plot <- ggExtra::ggMarginal(
         p = Plot, type = "density", margins = "y", size = 4,
         color = "steelblue4")
+
       return(Plot)
     })
 
+
   if (AddTitle && AddFooter) {
-    Plots <- Plots %>%
-      gridExtra::marrangeGrob(
-        bottom = bquote(paste0("page ", g, " of ", npages)),
-        top = grid::textGrob(
-          label = Title, gp = grid::gpar(fontface = "bold", fontsize = 20)),
-        nrow = NRC[1], ncol = NRC[2])
+    Plots <- gridExtra::marrangeGrob(
+      Plots,
+      bottom = bquote(paste0("page ", g, " of ", npages)),
+      top = grid::textGrob(
+        label = Title, gp = grid::gpar(fontface = "bold", fontsize = 20)),
+      nrow = NRC[1], ncol = NRC[2])
   }
 
   if (AddTitle && magrittr::not(AddFooter)) {
-    Plots <- Plots %>%
-      gridExtra::marrangeGrob(
-        bottom = NULL,
-        top = grid::textGrob(
-          label = Title, gp = grid::gpar(fontface = "bold", fontsize = 20)),
-        nrow = NRC[1], ncol = NRC[2])
+    Plots <- gridExtra::marrangeGrob(
+      Plots,
+      bottom = NULL,
+      top = grid::textGrob(
+        label = Title, gp = grid::gpar(fontface = "bold", fontsize = 20)),
+      nrow = NRC[1], ncol = NRC[2])
   }
 
   if (magrittr::not(AddTitle) && AddFooter) {
-    Plots <- Plots %>%
-      gridExtra::marrangeGrob(
-        bottom = bquote(paste0("page ", g, " of ", npages)),
-        top = NULL, nrow = NRC[1], ncol = NRC[2])
+    Plots <- gridExtra::marrangeGrob(
+      Plots,
+      bottom = bquote(paste0("page ", g, " of ", npages)),
+      top = NULL, nrow = NRC[1], ncol = NRC[2])
   }
 
   if (magrittr::not(AddTitle) && magrittr::not(AddFooter)) {
-    Plots <- Plots %>%
-      gridExtra::marrangeGrob(
-        bottom = NULL, top = NULL, nrow = NRC[1], ncol = NRC[2])
+    Plots <- cowplot::plot_grid(
+      plotlist = Plots, ncol = NRC[2], nrow = NRC[1], align = "hv")
   }
 
   return(Plots)

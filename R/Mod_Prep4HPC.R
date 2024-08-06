@@ -5,9 +5,12 @@
 #' Prepare initial models in R for model fitting by Hmsc-HPC
 #'
 #' This function prepares initial models in R for model fitting by Hmsc-HPC. It
-#' involves data preparation, model initialization, and generating commands for
-#' running models on HPC. It supports parallel processing, options to
-#' include/not include phylogenetic tree data.
+#' involves data preparation, define spatial block cross-validation folds, model
+#' initialization, and generating commands for running models on HPC. It
+#' supports parallel processing, options to include/not include phylogenetic
+#' tree data. The models are fitted with Gaussian Predictive Process (GPP; see
+#' [Tikhonov et al.](https://doi.org/10.1002/ecy.2929)) for more details) using
+#' the Hmsc-HPC [extension](https://doi.org/10.1101/2024.02.13.580046).
 #'
 #' @param Hab_Abb Character. Habitat abbreviation indicating the specific
 #'   `SynHab` habitat type to prepare data for. Valid values include "0", "1",
@@ -44,9 +47,9 @@
 #' @param HabAsPredictor Logical indicating whether to include the (log10)
 #'   percentage coverage of respective habitat type per grid cell as predictor
 #'   to the model. Default: `TRUE`. Only valid if `Hab_Abb` not equals to "0".
-#' @param ExclGridsWOSp Logical indicating whether to exclude grid cells that
-#'   do not contain at least single species presences from the analysis.
-#'   Default: `TRUE`.
+#' @param ExclGridsWOSp Logical indicating whether to exclude grid cells that do
+#'   not contain at least single species presences from the analysis. Default:
+#'   `TRUE`.
 #' @param NGrids For `CV_Dist` cross-validation strategy, how many grid cells in
 #'   both directions to be used in cross-validation. See [IASDT.R::GetCV] for
 #'   more details.
@@ -55,12 +58,16 @@
 #' @param NR,NC Integer, the number of rows and columns to divide the spatial
 #'   area into. Defaults to 2 row and 2 columns. See [IASDT.R::GetCV] for more
 #'   details.
+#' @param PlotCV Logical. Indicating whether to plot the block cross-validation
+#'   folds.
 #' @param PhyloTree,NoPhyloTree Logical indicating whether to fit model variants
 #'   with or without phylogenetic trees, respectively. The default of both
 #'   arguments is `TRUE`, which means to fit a model variant with the respective
 #'   option. If both `PhyloTree` and `NoPhyloTree` are `TRUE` (Default), models
 #'   for both options will be fitted. At least one of `PhyloTree` and
 #'   `NoPhyloTree` should be `TRUE`.
+#' @param OverwriteInitMod Logical. Indicating whether to overwrite previously
+#'   exported RDS files for initial models. Default: `TRUE`.
 #' @param NParallel Integer specifying the number of parallel cores for
 #'   parallelization. Default: 8 cores.
 #' @param nChains Integer specifying the number of model chains. Default: 4.
@@ -115,13 +122,30 @@
 #' @return The function is used for its side effects of preparing data and
 #'   models for HPC and does not return any value.
 #' @details
+#' The function provides options for:
+#'
+#' - for which habitat types the models will be fitted.
+#' - selection of species based on minimum number of presence-grid cells (`MinPresGrids`)
+#' - optionally model fitting on specified list of countries: (`ModelCountry` and `MinPresPerCountry`)
+#' - whether to exclude grid cells with no species observations
+#' (`ExclGridsWOSp`)
+#' - number of cross-validation folds
+#' - options for whether or not to include phylogentic information to the model
+#' - different values for knot distance for GPP (`GPP_Dists`)
+#' - which bioclimatic variables to be uses in the models (`BioVars`)
+#' - whether to include sampling efforts `EffortsAsPredictor`, percentage of respective habitat type per grid cell `HabAsPredictor`, and railway and road intensity per grid cell `RoadRailAsPredictor`
+#' - Hmsc options (`nChains`, `thin`, `samples`, `transientFactor`, and `verbose`)
+#' - prepare SLURM commands (`PrepSLURM`) and some specifications (e.g. `MaxJobCounts`, `MemPerCpu`, `Time`, `JobName`)
+#'
 #' The function reads the following environment variables:
-#'   - **`DP_R_Path_Python`** for Python path on LUMI.
-#'   - **`Path_LUMI_Scratch`** for the path of the scratch folder of the `BioDT`
-#'    project on LUMI.
-#'    - **`DP_R_Path_TaxaList`** (if `FromHPC` = `TRUE`) or
-#'     **`DP_R_Path_TaxaList_Local`** (if `FromHPC` = `FALSE`). The function
-#'     reads the content of the `Species_List_ID.txt` file from this path.
+#'   - **`DP_R_Path_Python`**: Python path on LUMI.
+#'   - **`LUMI_Scratch`**: path of the scratch folder of the `BioDT` project on LUMI.
+#'   - **`DP_R_TaxaInfo`** (if `FromHPC` = `TRUE`) or
+#'     **`DP_R_TaxaInfo_Local`** (if `FromHPC` = `FALSE`). The function
+#' reads the content of the `Species_List_ID.txt` file from this path.
+#'   - **`DP_R_EUBound`** (if `FromHPC` = `TRUE`) or
+#'     **`DP_R_EUBound_Local`** (if `FromHPC` = `FALSE`). The function
+#' reads the content of the `Bound_sf_Eur.RData` file from this path.
 #' @export
 
 Mod_Prep4HPC <- function(
@@ -131,12 +155,14 @@ Mod_Prep4HPC <- function(
     BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
     EffortsAsPredictor = TRUE, RoadRailAsPredictor = TRUE,
     HabAsPredictor = TRUE, ExclGridsWOSp = TRUE, NFolds = 4, NGrids = 20, NR = 2,
-    NC = 2, PhyloTree = TRUE, NoPhyloTree = TRUE, NParallel = 8, nChains = 4,
-    thin = NULL, samples = NULL, transientFactor = 300, verbose = 1000,
-    SkipFitted = TRUE, MaxJobCounts = 210, ModelCountry = NULL,
-    MinPresPerCountry = 50, VerboseProgress = FALSE, FromHPC = TRUE,
-    PrepSLURM = TRUE, MemPerCpu = NULL, Time = NULL, JobName = NULL,
-    Path_Hmsc = NULL, ToJSON = FALSE, ...) {
+    NC = 2, PlotCV = TRUE, PhyloTree = TRUE, NoPhyloTree = TRUE,
+    OverwriteInitMod = TRUE, NParallel = 8, nChains = 4, thin = NULL,
+    samples = NULL, transientFactor = 300, verbose = 1000, SkipFitted = TRUE,
+    MaxJobCounts = 210, ModelCountry = NULL, MinPresPerCountry = 50,
+    VerboseProgress = FALSE, FromHPC = TRUE, PrepSLURM = TRUE, MemPerCpu = NULL,
+    Time = NULL, JobName = NULL, Path_Hmsc = NULL, ToJSON = FALSE, ...) {
+
+  .StartTime <- lubridate::now(tzone = "CET")
 
   if (is.null(Path_Model) || is.null(MinPresGrids)) {
     stop("Path_Model and MinPresGrids cannot be empty")
@@ -177,14 +203,13 @@ Mod_Prep4HPC <- function(
     Hmsc <- jsonify <- magrittr <- M_thin <- rL <- M_Name_init <- rL2 <-
     M_samples <- M4HPC_Path <- M_transient <- M_Init_Path <- M_Name_Fit <-
     Chain <- Post_Missing <- Command_HPC <- Command_WS <- Post_Path <-
-    Path_ModProg <- NULL
+    Path_ModProg <- Path_Scratch <- Path_TaxaList <- Path_Python <-
+    Path_EU_Bound <- Path_Grid <- NULL
 
   if (magrittr::not(VerboseProgress)) {
     sink(file = nullfile())
     on.exit(sink(), add = TRUE)
   }
-
-  .StartTime <- lubridate::now(tzone = "CET")
 
   Hab_Abb <- as.character(Hab_Abb)
 
@@ -197,52 +222,51 @@ Mod_Prep4HPC <- function(
   # # |||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Load/check environment variables")
-  if (file.exists(EnvFile)) {
 
-    readRenviron(EnvFile)
-
-    if (FromHPC) {
-      Path_Python <- Sys.getenv("DP_R_Path_Python")
-      if (Path_Python == "") {
-        stop(paste0("Path_Python environment variable not found: ", Path_Python))
-      }
-      Path_TaxaList <- Sys.getenv("DP_R_Path_TaxaList")
-    } else {
-      Path_TaxaList <- Sys.getenv("DP_R_Path_TaxaList_Local")
-    }
-
-    Path_Scratch <- Sys.getenv("Path_LUMI_Scratch")
-
-    EmptyEnvVars <- c(Path_TaxaList, Path_Scratch) %>%
-      magrittr::equals("") %>%
-      which()
-
-    if (length(EmptyEnvVars) > 0) {
-      MissingVars <- c("Path_TaxaList", "Path_Scratch")
-      MissingVars <- MissingVars[EmptyEnvVars]
-      stop(paste0(
-        paste0(MissingVars, collapse = ", "),
-        " environment variable not found."))
-    }
-
-    if (PhyloTree && !dir.exists(Path_TaxaList)) {
-      stop("Path_TaxaList directory does not exist")
-    }
-
-  } else {
+  if (magrittr::not(file.exists(EnvFile))) {
     stop(paste0(
       "Path for environment variables: ", EnvFile, " was not found"))
   }
 
+  if (FromHPC) {
+    EnvVars2Read <- tibble::tribble(
+      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+      "Path_Python", "DP_R_Path_Python", FALSE, FALSE,
+      "Path_TaxaList", "DP_R_TaxaInfo", TRUE, FALSE,
+      "Path_Scratch", "LUMI_Scratch", TRUE, FALSE,
+      "Path_EU_Bound", "DP_R_EUBound", TRUE, FALSE,
+      "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE)
+  } else {
+    EnvVars2Read <- tibble::tribble(
+      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+      "Path_Python", "DP_R_Path_Python", FALSE, FALSE,
+      "Path_TaxaList", "DP_R_TaxaInfo_Local", TRUE, FALSE,
+      "Path_Scratch", "LUMI_Scratch", FALSE, FALSE,
+      "Path_EU_Bound", "DP_R_EUBound_Local", TRUE, FALSE,
+      "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE)
+  }
+
+  # Assign environment variables and check file and paths
+  IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+
+
+  if (GPP_Plot) {
+    Path_GridR <- file.path(Path_Grid, "Grid_10_Land_Crop.RData")
+    if (magrittr::not(file.exists(Path_GridR))) {
+      stop(paste0("Path for the Europe boundaries does not exist: ", Path_GridR))
+    }
+
+    EU_Bound <- file.path(Path_EU_Bound, "Bound_sf_Eur.RData")
+    if (magrittr::not(file.exists(EU_Bound))) {
+      stop(paste0("Path for the Europe boundaries does not exist: ", EU_Bound))
+    }
+  }
+
   # temporarily setting the working directory
   if (FromHPC) {
-    if (dir.exists(Path_Scratch)) {
-      InitialWD <- getwd()
-      setwd(Path_Scratch)
-      on.exit(setwd(InitialWD), add = TRUE)
-    } else {
-      stop("The scratch folder does not exist")
-    }
+    InitialWD <- getwd()
+    setwd(Path_Scratch)
+    on.exit(setwd(InitialWD), add = TRUE)
   }
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -260,7 +284,7 @@ Mod_Prep4HPC <- function(
     stats::setNames(AllArgs)
 
   CharArgs <- c(
-    "Hab_Abb", "Path_Model", "Path_TaxaList", "Path_Hmsc")
+    "Hab_Abb", "Path_Model", "Path_Hmsc")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = CharArgs, Type = "character")
 
   LogicArgs <- c("GPP_Save", "GPP_Plot", "PhyloTree",
@@ -272,7 +296,6 @@ Mod_Prep4HPC <- function(
     "MinPresGrids", "transientFactor", "NFolds", "NGrids", "NR", "NC")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = NumericArgs, Type = "numeric")
 
-
   if (PrepSLURM) {
     IASDT.R::CheckArgs(
       AllArgs = AllArgs, Args = c("MemPerCpu", "Time"), Type = "character")
@@ -281,6 +304,15 @@ Mod_Prep4HPC <- function(
   # Phylogenetic tree options
   if (PhyloTree == FALSE && NoPhyloTree == FALSE) {
     stop("At least one of PhyloTree or NoPhyloTree has to be true")
+  }
+
+
+  NumArgsInvalid <- purrr::map_lgl(.x = NumericArgs, .f = ~all(get(.x) < 1))
+  if (any(NumArgsInvalid)) {
+    paste0(
+      "The following parameter(s) can not be < 1\n  >>  ",
+      paste0(NumericArgs[NumArgsInvalid], collapse = " | ")) %>%
+      stop(call. = FALSE)
   }
 
   rm(AllArgs, CharArgs, LogicArgs, NumericArgs)
@@ -350,6 +382,7 @@ Mod_Prep4HPC <- function(
       Hab_Abb = Hab_Abb, MinPresGrids = MinPresGrids, EnvFile = EnvFile,
       BioVars = BioVars, ReturnData = TRUE, OutputPath = Path_Model,
       VerboseProgress = VerboseProgress, FromHPC = FromHPC)
+
     IASDT.R::CatSep(Rep = 1, Extra1 = 0, Extra2 = 1)
   } else {
     IASDT.R::CatTime("   >>>   Loading input data")
@@ -399,9 +432,7 @@ Mod_Prep4HPC <- function(
 
     DT_All <- dplyr::filter(DT_All, Country %in% ModelCountry) %>%
       dplyr::select(
-        -tidyselect::all_of(Sample_ExclSp), -"CellCode", -"Country",
-        -"Country_Nearest")
-
+        -tidyselect::all_of(Sample_ExclSp), -"CellCode", -"Country", -"Country_Nearest")
 
   } else {
     IASDT.R::CatTime("   >>>   No data subsetting was implemented")
@@ -429,19 +460,18 @@ Mod_Prep4HPC <- function(
     IASDT.R::CatTime("Grid cells with no presences were not excluded")
   }
 
-
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # # |||||||||||||||||||||||||||||||||||
   # # Cross-validation
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatTime("Cross-validation")
+  IASDT.R::CatTime("Prepare cross-validation folds")
 
   DT_All <- IASDT.R::GetCV(
     DT = DT_All, EnvFile = EnvFile, XVars = XVars,
     NFolds = NFolds, FromHPC = FromHPC, NGrids = NGrids, NR = NR,
-    NC = NC, OutPath = Path_Model)
+    NC = NC, OutPath = Path_Model, PlotCV = PlotCV)
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -509,20 +539,21 @@ Mod_Prep4HPC <- function(
   # # Preparing working on parallel
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatTime(paste0(
-    "Preparing working on parallel (", NParallel, " cores)"))
-  c1 <- snow::makeSOCKcluster(NParallel)
-  on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
-  future::plan(future::cluster, workers = c1, gc = TRUE)
+  if (NParallel > 1) {
+    IASDT.R::CatTime(paste0(
+      "Preparing working on parallel (", NParallel, " cores)"))
+    c1 <- snow::makeSOCKcluster(NParallel)
+    on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
+    future::plan(future::cluster, workers = c1, gc = TRUE)
+  } else {
+    IASDT.R::CatTime("Working sequentially")
+  }
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # # |||||||||||||||||||||||||||||||||||
   # # spatial info / random effect
   # # |||||||||||||||||||||||||||||||||||
-
-  # Hmsc-hpc does not help much to speed up NNGP models
-  # I will only proceed with GPP models
 
   IASDT.R::CatTime("Spatial info / random effect")
   studyDesign <- data.frame(sample = as.factor(seq_len(nrow(DT_x))))
@@ -531,35 +562,91 @@ Mod_Prep4HPC <- function(
   rownames(DT_xy) <- studyDesign$sample
   rm(DT_All)
 
+
+  # Prepare GPP knots
   IASDT.R::CatTime("   >>>   Prepare GPP knots")
-  invisible(snow::clusterEvalQ(
-    cl = c1, IASDT.R::LoadPackages(dplyr, sf, Hmsc, jsonify, magrittr)))
-  snow::clusterExport(
-    cl = c1, list = c("DT_xy", "GPP_Dists"), envir = environment())
 
-  GPP_Knots <- snow::parLapply(
-    cl = c1, x = GPP_Dists * 1000,
-    fun = function(x) {
-      IASDT.R::PrepKnots(Coords = DT_xy, MinDist = x)
-    }) %>%
-    stats::setNames(paste0("GPP_", GPP_Dists))
+  if (NParallel > 1) {
+    invisible(snow::clusterEvalQ(
+      cl = c1, IASDT.R::LoadPackages(dplyr, sf, Hmsc, jsonify, magrittr)))
+    snow::clusterExport(
+      cl = c1, list = c("DT_xy", "GPP_Dists"), envir = environment())
+    GPP_Knots <- snow::parLapply(
+      cl = c1, x = GPP_Dists * 1000,
+      fun = function(x) {
+        IASDT.R::PrepKnots(Coords = DT_xy, MinDist = x)
+      }) %>%
+      stats::setNames(paste0("GPP_", GPP_Dists))
+  } else {
+    GPP_Knots <- purrr::map(
+      .x = GPP_Dists * 1000,
+      .f = ~IASDT.R::PrepKnots(Coords = DT_xy, MinDist = .x)) %>%
+      stats::setNames(paste0("GPP_", GPP_Dists))
+  }
 
+
+  # Plotting knot location
   if (GPP_Plot) {
     IASDT.R::CatTime("   >>>   Plotting GPP knots")
-    grDevices::pdf(
-      file.path(Path_Model, "knot_Locations.pdf"), width = 16, height = 20)
-    graphics::par(oma = c(0.5, 0.5, 0.5, 0.5), mar = c(0.5, 0.5, 2, 0.5))
-    purrr::map(
+
+    KnotExt <- rbind(
+      as.matrix(purrr::map_dfr(GPP_Knots, ~.x$sKnot)), as.matrix(DT_xy)) %>%
+      as.data.frame() %>%
+      stats::setNames(c("x", "y")) %>%
+      sf::st_as_sf(coords = c("x", "y"), crs = 3035) %>%
+      sf::st_buffer(10000) %>%
+      sf::st_bbox()
+    AspectRatio <- (KnotExt[3] - KnotExt[1]) / (KnotExt[4] - KnotExt[2])
+
+    GridR <- IASDT.R::LoadAs(Path_GridR) %>%
+      terra::unwrap()
+    GridR <- sf::st_as_sf(
+      x = data.frame(DT_xy), coords = c("x", "y"), crs = 3035) %>%
+      terra::rasterize(GridR) %>%
+      terra::trim() %>%
+      stats::setNames("GridR")
+
+    EU_Bound <- IASDT.R::LoadAs(EU_Bound) %>%
+      magrittr::extract2("Bound_sf_Eur_s") %>%
+      magrittr::extract2("L_01") %>%
+      sf::st_crop(KnotExt) %>%
+      suppressWarnings()
+
+    Knots_Plots <- purrr::map(
       .x = GPP_Dists,
       .f = ~{
-        plot(
-          DT_xy, pch = 19, cex = 0.3, axes = FALSE,
-          main = paste0(.x, " km"), cex.main = 2)
-        points(
-          GPP_Knots[[paste0("GPP_", .x)]]$sKnot,
-          pch = 4, col = "blue", cex = 1, font = 1)
+        Knot_sf <- GPP_Knots[[paste0("GPP_", .x)]]$sKnot %>%
+          sf::st_as_sf(coords = c("Var1", "Var2"), crs = 3035)
+
+        Plot <- ggplot2::ggplot() +
+          tidyterra::geom_spatraster(data = GridR) +
+          ggplot2::geom_sf(
+            data = EU_Bound, fill = "transparent", colour = "darkgrey",
+            linewidth = 1.5) +
+          ggplot2::geom_sf(
+            data = Knot_sf, colour = "black", shape = 19, stroke = 2, size = 3) +
+          ggplot2::scale_x_continuous(
+            limits = sf::st_bbox(EU_Bound)[c(1, 3)], expand = c(0, 0)) +
+          ggplot2::scale_y_continuous(
+            limits = sf::st_bbox(EU_Bound)[c(2, 4)], expand = c(0, 0)) +
+          ggplot2::ggtitle(
+            paste0(
+              "<span style='font-size: 50pt;'>&#160;GPP knots &#8212; &#160;",
+              .x, " km</font>")) +
+          ggplot2::scale_fill_continuous(na.value = "transparent") +
+          ggplot2::theme_void() +
+          ggplot2::theme(
+            plot.title = ggtext::element_markdown(),
+            legend.position = "none")
+
+        return(Plot)
       })
-    invisible(grDevices::dev.off())
+
+    ggplot2::ggsave(
+      filename = file.path(Path_Model, "knot_Locations.pdf"),
+      plot = gridExtra::marrangeGrob(
+        Knots_Plots, nrow = 1, ncol = 1, top = NULL),
+      width = 25 * AspectRatio, height = 25, unit = "in")
   }
 
   if (GPP_Save) {
@@ -629,66 +716,94 @@ Mod_Prep4HPC <- function(
   rm(GPP_Knots)
 
   # # |||||||||||||||||||||||||||||||||||
-  # # Save missing unfitted models
+  # # Prepare and save unfitted models
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatTime("Save missing unfitted models")
-  DT2Export <- Model_Info %>%
-    dplyr::filter(magrittr::not(file.exists(M4HPC_Path))) %>%
-    dplyr::select(M4HPC_Path, M_samples, M_thin, M_transient, M_Init_Path)
+  IASDT.R::CatTime("Save unfitted models")
 
-  if (nrow(DT2Export) > 0) {
+  if (OverwriteInitMod) {
+    IASDT.R::CatTime(paste0("   >>>   Processing all model variants"))
+  } else {
+    NMod2Export <- Model_Info %>%
+      dplyr::filter(magrittr::not(file.exists(M4HPC_Path))) %>%
+      nrow()
+    if (NMod2Export == 0) {
+      IASDT.R::CatTime(
+        "   >>>   All model variants were already available as RDS files")
+    } else {
+      IASDT.R::CatTime(
+        paste0("   >>>   ", NMod2Export,
+               " model variants need to be exported as RDS files"))
+    }
+  }
 
-    ExportModel <- function(x) {
-      M4HPC_Path <- DT2Export$M4HPC_Path[x]
-      M_samples <- DT2Export$M_samples[x]
-      M_thin <- DT2Export$M_thin[x]
-      M_transient <- DT2Export$M_transient[x]
-      M_Init <- IASDT.R::LoadAs(DT2Export$M_Init_Path[x])
-
+  InitFitFun <- function(ID) {
+    CurrPath <- Model_Info$M4HPC_Path[ID]
+    if (OverwriteInitMod && file.exists(CurrPath)) {
+      file.remove(CurrPath)
+    }
+    Try <- 0
+    while (Try < 6 && magrittr::not(file.exists(CurrPath))) {
+      Try <- Try + 1
       Model <- Hmsc::sampleMcmc(
-        hM = M_Init, samples = M_samples, thin = M_thin,
-        transient = M_transient, nChains = nChains,
+        hM = IASDT.R::LoadAs(Model_Info$M_Init_Path[ID]),
+        samples = Model_Info$M_samples[ID],
+        thin = Model_Info$M_thin[ID],
+        transient = Model_Info$M_transient[ID],
+        nChains = nChains,
         verbose = verbose, engine = "HPC")
-
       if (ToJSON) {
         Model <- jsonify::to_json(Model)
       }
-
-      saveRDS(Model, file = M4HPC_Path)
-
-      return(pryr::object_size(Model))
+      saveRDS(Model, file = CurrPath)
+      if (file.exists(CurrPath)) {
+        break
+      }
     }
+    return(invisible(NULL))
+  }
 
 
-    furrr::future_walk(
-      .x = seq_len(nrow(DT2Export)),
-      .f = purrr::safely(ExportModel),
-      .options = furrr::furrr_options(seed = TRUE, scheduling = Inf))
+  if (NParallel > 1) {
+    invisible(snow::clusterEvalQ(
+      cl = c1, IASDT.R::LoadPackages(dplyr, Hmsc, jsonify, magrittr)))
+    snow::clusterExport(
+      cl = c1, envir = environment(),
+      list = c("InitFitFun", "Model_Info", "OverwriteInitMod",
+               "verbose", "nChains", "ToJSON"))
 
-    FailedExports <- dplyr::filter(
-      DT2Export, magrittr::not(file.exists(M4HPC_Path)))
+    Model_Process <- snow::parLapply(
+      cl = c1, x = seq_len(nrow(Model_Info)), fun = InitFitFun)
 
-    if (nrow(FailedExports) > 0) {
-      IASDT.R::CatTime(
-        paste0(
-          "   >>>   ", nrow(FailedExports),
-          "model variants failed to be exported to rds files."))
+  } else {
+    Model_Process <- purrr::map(
+      .x = seq_len(nrow(Model_Info)), .f = InitFitFun)
+  }
 
-      save(FailedExports, file = file.path(Path_Model, "FailedExports.RData"))
+  Failed2Export <- Model_Info %>%
+    dplyr::filter(magrittr::not(file.exists(M4HPC_Path)))
 
-      readr::write_tsv(
-        x = FailedExports, file = file.path(Path_Model, "FailedExports.txt"))
-
-    }
+  if (nrow(Failed2Export) == 0) {
+    IASDT.R::CatTime(
+      "   >>>   All model variants were exported as RDS files")
+  } else {
+    IASDT.R::CatTime(
+      paste0(
+        "   >>>   ", nrow(Failed2Export),
+        " model variants failed to be exported to rds files after 5 tries."))
+    save(Failed2Export, file = file.path(Path_Model, "Failed2Export.RData"))
+    readr::write_tsv(
+      x = Failed2Export, file = file.path(Path_Model, "Failed2Export.txt"))
   }
 
   # # # |||||||||||||||||||||||||||||||||||
   # # # Stopping cluster
   # # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatTime("Stopping cluster")
-  snow::stopCluster(c1)
+  if (NParallel > 1) {
+    IASDT.R::CatTime("Stopping cluster")
+    snow::stopCluster(c1)
+  }
 
   # # |||||||||||||||||||||||||||||||||||
   # # Prepare Hmsc-HPC fitting commands
@@ -802,14 +917,23 @@ Mod_Prep4HPC <- function(
     IDs <- list(seq_len(NJobs))
   }
 
+  # Save all fitting commands to single file
+  f <- file(
+    description = file.path(Path_Model, "Commands_All.txt"),
+    open = "wb")
+  on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
+  cat(Models2Fit_HPC, sep = "\n", append = FALSE, file = f)
+  close(f)
+
+  # Save fitting commands into separate files, when necessary
   purrr::walk(
     .x = seq_len(NSplits),
     .f = function(x) {
       CurrIDs <- IDs[[x]]
       if (NSplits > 1) {
-        CommandFile <- file.path(Path_Model, paste0("Commands_All_", x, ".txt"))
+        CommandFile <- file.path(Path_Model, paste0("Commands2Fit_", x, ".txt"))
       } else {
-        CommandFile <- file.path(Path_Model, "Commands_All.txt")
+        CommandFile <- file.path(Path_Model, "Commands2Fit.txt")
       }
 
       # create connection to SLURM file This is better than using sink to have a
@@ -850,7 +974,6 @@ Mod_Prep4HPC <- function(
   # # |||||||||||||||||||||||||||||||||||
   # # Prepare SLURM file
   # # |||||||||||||||||||||||||||||||||||
-
 
   if (PrepSLURM) {
     IASDT.R::CatTime("Preparing SLURM file")

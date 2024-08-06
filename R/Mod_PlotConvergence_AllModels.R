@@ -25,7 +25,7 @@
 #' @return The function does not return anything but saves a series of
 #'   diagnostic plots in the specified path.
 #' @details The function reads the following environment variable:
-#'    - **`Path_LUMI_Scratch`** (only if `FromHPC` = `TRUE`) for the path of
+#'    - **`LUMI_Scratch`** (only if `FromHPC` = `TRUE`) for the path of
 #'    the scratch folder of the `BioDT` project on LUMI.
 #' @export
 
@@ -33,15 +33,19 @@ PlotConvergence_AllModels <- function(
     Path_Model = NULL, EnvFile = ".env", FromHPC = TRUE, NChains = 4,
     maxOmega = 1000, NCores = NULL) {
 
+  .StartTime <- lubridate::now(tzone = "CET")
+
   if (is.null(Path_Model) || is.null(NCores)) {
     stop("Path_Model and NCores must not be NULL")
   }
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  GPP_Thin <- Path_Coda <- Path_FittedMod <- M_Name_Fit <- Tree <- Plots <-
-    rL <- M_thin <- M_samples <- Omega_Gelman <- Omega_ESS <- Beta_Gelman <-
-    Beta_ESS <- ESS2 <- Path_Trace_Rho <- Rho <- NULL
+  GPP_Thin <- Path_Coda <- Path_FittedMod <- M_Name_Fit <- Tree <- rL <-
+    M_thin <- M_samples <- Omega_Gelman <- Omega_ESS <- Beta_Gelman <-
+    Beta_ESS <- ESS2 <- Path_Trace_Rho <- Rho <- Path_Scratch <-
+    Root_Local <- Path_Trace_Alpha <- Path_Trace_Rho <- dplyr <-
+    sf <- Hmsc <- coda <- magrittr <- NULL
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Check input arguments
@@ -66,26 +70,26 @@ PlotConvergence_AllModels <- function(
 
   IASDT.R::CatTime("Load environment variables")
 
+  if (magrittr::not(file.exists(EnvFile))) {
+    stop(paste0(
+      "Path for environment variables: ", EnvFile, " was not found"))
+  }
+
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_Scratch", "LUMI_Scratch", FromHPC, FALSE,
+    "Root_Local", "Root_Local", magrittr::not(FromHPC), FALSE)
+
+  # Assign environment variables and check file and paths
+  IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+
+
   if (FromHPC) {
-    if (magrittr::not(file.exists(EnvFile))) {
-      stop(paste0(
-        "Path for environment variables: ", EnvFile, " was not found"))
-    }
-
-    readRenviron(EnvFile)
-    Path_Scratch <- Sys.getenv("Path_LUMI_Scratch")
-
-    if (Path_Scratch == "") {
-      stop("Path_Scratch environment variable not found.")
-    }
-    if (magrittr::not(dir.exists(Path_Scratch))) {
-      stop("The scratch folder does not exist")
-    }
-
-    InitialWD <- getwd()
-    setwd(Path_Scratch)
-    on.exit(setwd(InitialWD), add = TRUE)
-
+    Path_Model <- file.path(
+      Path_Scratch, stringr::str_remove(Path_Model, paste0(Path_Scratch, "/")))
+  } else {
+    Path_Model <- file.path(
+      Root_Local, stringr::str_remove(Path_Model, paste0(Root_Local, "/")))
   }
 
   Path_Convergence_All <- file.path(Path_Model, "Model_Convergence_All")
@@ -93,139 +97,202 @@ PlotConvergence_AllModels <- function(
   fs::dir_create(c(Path_ConvDT, Path_Convergence_All))
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  ## Prepare convergence data ------
+  ## Prepare/load convergence data ------
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatTime("Prepare convergence data")
+  IASDT.R::CatTime("Prepare/load convergence data")
 
   c1 <- snow::makeSOCKcluster(NCores)
   on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
   future::plan(future::cluster, workers = c1, gc = TRUE)
 
-  Model_Info <- IASDT.R::LoadAs(file.path(Path_Model, "Model_Info.RData"))
+  Model_Info <- file.path(Path_Model, "Model_Info.RData")
+  if (magrittr::not(file.exists(Model_Info))) {
+    stop(paste0("Model info file `", Model_Info, "` does not exist"))
+  }
+  Model_Info <- IASDT.R::LoadAs(Model_Info)
+
+
+  PrepConvergence <- function(ID) {
+
+    Path_Coda <- Model_Info$Path_Coda[[ID]]
+    Path_FittedMod <- Model_Info$Path_FittedMod[[ID]]
+    M_Name_Fit <- Model_Info$M_Name_Fit[[ID]]
+    Tree <- Model_Info$Tree[[ID]]
+
+    if (FromHPC) {
+      Path_Coda <- file.path(
+        Path_Scratch,
+        stringr::str_remove(Path_Coda, paste0(Path_Scratch, "/")))
+      Path_FittedMod <- file.path(
+        Path_Scratch,
+        stringr::str_remove(Path_FittedMod, paste0(Path_Scratch, "/")))
+    } else {
+      Path_Coda <- file.path(
+        Root_Local,
+        stringr::str_remove(Path_Coda, paste0(Root_Local, "/")))
+      Path_FittedMod <- file.path(
+        Root_Local,
+        stringr::str_remove(Path_FittedMod, paste0(Root_Local, "/")))
+    }
+
+    CodaModelExist <- all(file.exists(c(Path_Coda, Path_FittedMod)))
+
+    # prepare traceplot ----
+    if (CodaModelExist) {
+
+      ObjName_Rho <- paste0(M_Name_Fit, "_TraceRho")
+      Path_Trace_Rho <- file.path(
+        Path_ConvDT, paste0(ObjName_Rho, ".RData"))
+
+      ObjName_Alpha <- paste0(M_Name_Fit, "_TraceAlpha")
+      Path_Trace_Alpha <- file.path(
+        Path_ConvDT, paste0(ObjName_Alpha, ".RData"))
+
+      ObjName_Beta_Omega <- paste0(M_Name_Fit, "_Beta_Omega")
+      Path_Beta_Omega <- file.path(
+        Path_ConvDT, paste0(ObjName_Beta_Omega, ".RData"))
+
+
+      if ((Tree == "Tree" && magrittr::not(file.exists(Path_Trace_Rho))) ||
+          magrittr::not(file.exists(Path_Trace_Alpha)) ||
+          magrittr::not(file.exists(Path_Beta_Omega))) {
+        Model_Obj <- IASDT.R::LoadAs(Path_FittedMod)
+        Coda_Obj <- IASDT.R::LoadAs(Path_Coda)
+      }
+
+      # Rho -----
+      if (magrittr::not(file.exists(Path_Trace_Rho))) {
+        if (Tree == "Tree") {
+          RhoTitle <- stringr::str_remove_all(
+            string = basename(Path_Coda), pattern = "_Tree|_Coda.RData$")
+
+          PlotObj_Rho <- IASDT.R::PlotRho(
+            Post = Coda_Obj, Model = Model_Obj, Title = RhoTitle)
+
+          IASDT.R::SaveAs(
+            InObj = PlotObj_Rho, OutObj = ObjName_Rho,
+            OutPath = Path_Trace_Rho)
+
+          rm(PlotObj_Rho)
+        } else {
+          Path_Trace_Rho <- NULL
+        }
+      }
+
+      # Alpha -----
+      if (magrittr::not(file.exists(Path_Trace_Alpha))) {
+        PlotObj_Alpha <- IASDT.R::PlotAlpha(
+          Post = Coda_Obj, Model = Model_Obj, NRC = c(2, 3),
+          Title = stringr::str_remove_all(
+            basename(Path_Coda), "_Tree|_Coda.RData$"))
+
+        IASDT.R::SaveAs(
+          InObj = PlotObj_Alpha, OutObj = ObjName_Alpha,
+          OutPath = Path_Trace_Alpha)
+
+        rm(PlotObj_Alpha, Model_Obj)
+      }
+
+      # Beta + Omega -----
+
+      if (file.exists(Path_Beta_Omega)) {
+        Beta_Omega <- IASDT.R::LoadAs(Path_Beta_Omega)
+        Beta_Gelman <- Beta_Omega$Beta_Gelman
+        Beta_ESS <- Beta_Omega$Beta_ESS
+        Omega_ESS <- Beta_Omega$Omega_ESS
+        Omega_Gelman <- Beta_Omega$Omega_Gelman
+        rm(Beta_Omega)
+      } else {
+
+        Beta <- magrittr::extract2(Coda_Obj, "Beta")
+        Omega <- magrittr::extract2(Coda_Obj, "Omega") %>%
+          magrittr::extract2(1)
+        rm(Coda_Obj)
+
+        # BETA - effectiveSize
+        Beta_ESS <- coda::effectiveSize(Beta)
+
+        # BETA - gelman.diag
+        Beta_Gelman <- Beta %>%
+          coda::gelman.diag(multivariate = FALSE) %>%
+          magrittr::extract2("psrf") %>%
+          as.data.frame() %>%
+          dplyr::pull(1) %>%
+          magrittr::set_names(NULL)
+
+        # OMEGA - effectiveSize
+        Omega_ESS <- coda::effectiveSize(Omega)
+
+        # OMEGA - gelman.diag
+        sel <- sample(seq_len(dim(Omega[[1]])[2]), size = maxOmega)
+        Omega_Gelman <- Omega %>%
+          purrr::map(~ .x[, sel]) %>%
+          coda::gelman.diag(multivariate = FALSE) %>%
+          magrittr::extract2("psrf") %>%
+          as.data.frame() %>%
+          dplyr::pull(1) %>%
+          magrittr::set_names(NULL)
+
+        Beta_Omega <- list(
+          Beta_Gelman = Beta_Gelman, Beta_ESS = Beta_ESS,
+          Omega_Gelman = Omega_Gelman, Omega_ESS = Omega_ESS)
+        save(Beta_Omega, file = Path_Beta_Omega)
+        rm(Beta_Omega)
+      }
+    } else {
+      Path_Trace_Rho <- Path_Trace_Alpha <- Beta_Gelman <-
+        Beta_ESS <- Omega_Gelman <- Omega_ESS  <- NULL
+    }
+
+    invisible(gc())
+
+    list(
+      Path_Trace_Alpha = Path_Trace_Alpha,
+      Path_Trace_Rho = Path_Trace_Rho,
+      Beta_Gelman = Beta_Gelman, Beta_ESS = Beta_ESS,
+      Omega_Gelman = Omega_Gelman, Omega_ESS = Omega_ESS) %>%
+      return()
+  }
+
+  invisible(snow::clusterEvalQ(
+    cl = c1, IASDT.R::LoadPackages(dplyr, sf, Hmsc, coda, magrittr)))
+  snow::clusterExport(
+    cl = c1, envir = environment(),
+    list = c("Model_Info", "FromHPC", "Root_Local", "Path_ConvDT", "maxOmega"))
 
   Convergence_DT <- Model_Info %>%
     dplyr::mutate(
-      Plots = furrr::future_pmap(
-        .l = list(Path_Coda, Path_FittedMod, M_Name_Fit, Tree),
-        .f = function(Path_Coda, Path_FittedMod, M_Name_Fit, Tree) {
-
-          CodaModelExist <- all(file.exists(c(Path_Coda, Path_FittedMod)))
-
-          # prepare traceplot ----
-          if (CodaModelExist) {
-            Model_Obj <- IASDT.R::LoadAs(Path_FittedMod)
-            Coda_Obj <- IASDT.R::LoadAs(Path_Coda)
-
-            # Rho -----
-            ObjName_Rho <- paste0(M_Name_Fit, "_TraceRho")
-            Path_Trace_Rho <- file.path(
-              Path_ConvDT, paste0(ObjName_Rho, ".RData"))
-
-
-            if (magrittr::not(file.exists(Path_Trace_Rho))) {
-              if (Tree == "Tree") {
-                RhoTitle <- stringr::str_remove_all(
-                  string = basename(Path_Coda), pattern = "_Tree|_Coda.RData$")
-
-                PlotObj_Rho <- IASDT.R::PlotRho(
-                  Post = Coda_Obj, Model = Model_Obj, Title = RhoTitle)
-
-                IASDT.R::SaveAs(
-                  InObj = PlotObj_Rho, OutObj = ObjName_Rho,
-                  OutPath = Path_Trace_Rho)
-
-                rm(PlotObj_Rho)
-              } else {
-                Path_Trace_Rho <- NULL
-              }
-            }
-
-            # Alpha -----
-            ObjName_Alpha <- paste0(M_Name_Fit, "_TraceAlpha")
-            Path_Trace_Alpha <- file.path(
-              Path_ConvDT, paste0(ObjName_Alpha, ".RData"))
-
-            if (magrittr::not(file.exists(Path_Trace_Alpha))) {
-              PlotObj_Alpha <- IASDT.R::PlotAlpha(
-                Post = Coda_Obj, Model = Model_Obj, NRC = c(2, 3),
-                Title = stringr::str_remove_all(
-                  basename(Path_Coda), "_Tree|_Coda.RData$"))
-
-              IASDT.R::SaveAs(
-                InObj = PlotObj_Alpha, OutObj = ObjName_Alpha,
-                OutPath = Path_Trace_Alpha)
-
-              rm(PlotObj_Alpha, Model_Obj)
-            }
-
-            # Beta + Omega -----
-            ObjName_Beta_Omega <- paste0(M_Name_Fit, "_Beta_Omega")
-            Path_Beta_Omega <- file.path(
-              Path_ConvDT, paste0(ObjName_Beta_Omega, ".RData"))
-
-            if (file.exists(Path_Beta_Omega)) {
-              Beta_Omega <- IASDT.R::LoadAs(Path_Beta_Omega)
-              Beta_Gelman <- Beta_Omega$Beta_Gelman
-              Beta_ESS <- Beta_Omega$Beta_ESS
-              Omega_ESS <- Beta_Omega$Omega_ESS
-              Omega_Gelman <- Beta_Omega$Omega_Gelman
-              rm(Beta_Omega)
-            } else {
-
-              Beta <- magrittr::extract2(Coda_Obj, "Beta")
-              Omega <- magrittr::extract2(Coda_Obj, "Omega") %>%
-                magrittr::extract2(1)
-              rm(Coda_Obj)
-
-              # BETA - effectiveSize
-              Beta_ESS <- coda::effectiveSize(Beta)
-
-              # BETA - gelman.diag
-              Beta_Gelman <- Beta %>%
-                coda::gelman.diag(multivariate = FALSE) %>%
-                magrittr::extract2("psrf") %>%
-                as.data.frame() %>%
-                dplyr::pull(1) %>%
-                magrittr::set_names(NULL)
-
-              # OMEGA - effectiveSize
-              Omega_ESS <- coda::effectiveSize(Omega)
-
-              # OMEGA - gelman.diag
-              sel <- sample(seq_len(dim(Omega[[1]])[2]), size = maxOmega)
-              Omega_Gelman <- Omega %>%
-                purrr::map(~ .x[, sel]) %>%
-                coda::gelman.diag(multivariate = FALSE) %>%
-                magrittr::extract2("psrf") %>%
-                as.data.frame() %>%
-                dplyr::pull(1) %>%
-                magrittr::set_names(NULL)
-
-              Beta_Omega <- list(
-                Beta_Gelman = Beta_Gelman, Beta_ESS = Beta_ESS,
-                Omega_Gelman = Omega_Gelman, Omega_ESS = Omega_ESS)
-              save(Beta_Omega, file = Path_Beta_Omega)
-              rm(Beta_Omega)
-            }
-          } else {
-            Path_Trace_Rho <- Path_Trace_Alpha <- Beta_Gelman <-
-              Beta_ESS <- Omega_Gelman <- Omega_ESS  <- NULL
-          }
-
-          list(
-            Path_Trace_Alpha = Path_Trace_Alpha,
-            Path_Trace_Rho = Path_Trace_Rho,
-            Beta_Gelman = Beta_Gelman, Beta_ESS = Beta_ESS,
-            Omega_Gelman = Omega_Gelman, Omega_ESS = Omega_ESS) %>%
-            return()
-        },
-        .progress = FALSE, .options = furrr::furrr_options(seed = TRUE))) %>%
-    dplyr::select(M_Name_Fit, Plots) %>%
+      Plots = snow::parLapply(
+        cl = c1, x = seq_len(nrow(Model_Info)), fun = PrepConvergence)) %>%
+    dplyr::select(tidyselect::all_of(c("M_Name_Fit", "Plots"))) %>%
     tidyr::unnest_wider("Plots")
 
-  save(Convergence_DT,
-       file = file.path(Path_Convergence_All, "Convergence_DT.RData"))
+  # Remove root path before saving
+  Convergence_DT2Save <- Convergence_DT %>%
+    dplyr::mutate(
+      Path_Trace_Alpha = purrr::map_chr(
+        .x = Path_Trace_Alpha,
+        .f = ~{
+          dplyr::if_else(
+            FromHPC,
+            stringr::str_remove(.x, paste0(Path_Scratch, "/")),
+            stringr::str_remove(.x, paste0(Root_Local, "/"))
+          )}),
+      Path_Trace_Rho = purrr::map_chr(
+        .x = Path_Trace_Rho,
+        .f = ~{
+          dplyr::if_else(
+            FromHPC,
+            stringr::str_remove(.x, paste0(Path_Scratch, "/")),
+            stringr::str_remove(.x, paste0(Root_Local, "/"))
+          )}))
+
+  IASDT.R::SaveAs(
+    InObj = Convergence_DT2Save, OutObj = "Convergence_DT",
+    OutPath = file.path(Path_Convergence_All, "Convergence_DT.RData"))
+
+  snow::stopCluster(c1)
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Plotting theme -----
@@ -256,14 +323,15 @@ PlotConvergence_AllModels <- function(
 
   IASDT.R::CatTime("Alpha - trace plots")
 
-  invisible({
-    grDevices::pdf(
-      file = file.path(Path_Convergence_All, "TracePlots_Alpha.pdf"),
-      width = 18, height = 12)
-    Convergence_DT$Path_Trace_Alpha %>%
-      purrr::map(purrr::safely(~print(IASDT.R::LoadAs(.x))))
-    grDevices::dev.off()
-  })
+  grDevices::pdf(
+    file = file.path(Path_Convergence_All, "TracePlots_Alpha.pdf"),
+    width = 18, height = 12)
+  purrr::walk(
+    .x = Convergence_DT$Path_Trace_Alpha,
+    .f = purrr::safely(~{
+      gridExtra::grid.arrange(IASDT.R::LoadAs(.x)[[1]])
+    }))
+  grDevices::dev.off()
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   ## Rho - trace plots ------
@@ -278,8 +346,7 @@ PlotConvergence_AllModels <- function(
         .x = Path_Trace_Rho,
         .p = ~is.na(.x),
         .f = ~grid::grid.rect(gp = grid::gpar(col = "white")),
-        .else = ~IASDT.R::LoadAs(.x))
-    ) %>%
+        .else = ~IASDT.R::LoadAs(.x))) %>%
     dplyr::pull(Rho) %>%
     gridExtra::marrangeGrob(
       bottom = bquote(paste0("page ", g, " of ", npages)),
@@ -323,15 +390,19 @@ PlotConvergence_AllModels <- function(
     ggplot2::coord_flip(expand = FALSE) +
     Theme
 
-  Plot2 <- Plot +
-    ggplot2::ylab("Gelman and Rubin's convergence diagnostic - (cropped)") +
-    ggplot2::coord_flip(expand = FALSE, ylim = c(0.995, 1.05))
+  # Suppress the following message: Scale for y is already present. Adding
+  # another scale for y, which will replace the existing scale.
+  suppressMessages(suppressWarnings({
+    Plot2 <- Plot +
+      ggplot2::ylab("Gelman and Rubin's convergence diagnostic - (cropped)") +
+      ggplot2::ylim(c(0.995, 1.05))
 
-  ggplot2::ggsave(
-    filename = Plot_Path,
-    plot = gridExtra::marrangeGrob(
-      grobs = list(Plot, Plot2), nrow = 1, ncol = 1, top = NULL),
-    width = 18, height = 12)
+    ggplot2::ggsave(
+      filename = Plot_Path,
+      plot = gridExtra::marrangeGrob(
+        grobs = list(Plot, Plot2), nrow = 1, ncol = 1, top = NULL),
+      width = 18, height = 12)
+  }))
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   ## Omega - Effective sample size -----
@@ -420,15 +491,17 @@ PlotConvergence_AllModels <- function(
     ggplot2::coord_flip(expand = FALSE) +
     Theme
 
-  Plot2 <- Plot +
-    ggplot2::ylab("Gelman and Rubin's convergence diagnostic (cropped)") +
-    ggplot2::coord_flip(expand = FALSE, ylim = c(0.995, 1.05))
+  suppressMessages(suppressWarnings({
+    Plot2 <- Plot +
+      ggplot2::ylab("Gelman and Rubin's convergence diagnostic - (cropped)") +
+      ggplot2::ylim(c(0.995, 1.05))
 
-  ggplot2::ggsave(
-    filename = Plot_Path,
-    plot = gridExtra::marrangeGrob(
-      grobs = list(Plot, Plot2), nrow = 1, ncol = 1, top = NULL),
-    width = 18, height = 12)
+    ggplot2::ggsave(
+      filename = Plot_Path,
+      plot = gridExtra::marrangeGrob(
+        grobs = list(Plot, Plot2), nrow = 1, ncol = 1, top = NULL),
+      width = 18, height = 12)
+  }))
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   ## Beta - Effective sample size -----
@@ -484,6 +557,8 @@ PlotConvergence_AllModels <- function(
     plot = gridExtra::marrangeGrob(
       grobs = list(Plot, Plot2), nrow = 1, ncol = 1, top = NULL),
     width = 18, height = 12)
+
+  IASDT.R::CatDiff(.StartTime, Prefix = "\nCompleted in ", CatInfo = FALSE)
 
   return(invisible(NULL))
 }

@@ -25,8 +25,8 @@
 #'   `Type`. The structure of the returned tibble varies depending on the `Type`
 #'   parameter.
 #' @details The function reads the following environment variables:
-#'    - **`DP_R_Path_TaxaList`** (if `FromHPC` = `TRUE`) or
-#'    **`DP_R_Path_TaxaList_Local`** (if `FromHPC` = `FALSE`). The function
+#'    - **`DP_R_TaxaInfo`** (if `FromHPC` = `TRUE`) or
+#'    **`DP_R_TaxaInfo_Local`** (if `FromHPC` = `FALSE`). The function
 #'    reads the content of the `Species_List_ID.txt` file from this path.
 #' @export
 #' @examples
@@ -44,7 +44,7 @@ Coda_to_tibble <- function(
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Chain <- Iter <- Alpha <- AlphaNum <- Factor <- CHAIN <- ITER <-
     Value <- IAS_ID <- Species_name <- Var_Sp <- Variable <- Species <-
-    SpComb <- Sp1 <- IAS1 <- Sp2 <- IAS2 <- NULL
+    SpComb <- Sp1 <- IAS1 <- Sp2 <- IAS2 <- SpNamesF <- NULL
 
   # # |||||||||||||||||||||||||||||||||||||||
   # Check missing arguments ----
@@ -122,39 +122,38 @@ Coda_to_tibble <- function(
 
   if (Type == "beta") {
 
-    if (file.exists(EnvFile)) {
-
-      readRenviron(EnvFile)
-
-      if (FromHPC) {
-        SpNamesF <- Sys.getenv("DP_R_Path_TaxaList")
-          if (SpNamesF == "") {
-            stop("DP_R_Path_TaxaList environment variable not set.")
-          }
-      } else {
-        SpNamesF <- Sys.getenv("DP_R_Path_TaxaList_Local")
-        if (SpNamesF == "") {
-          stop("DP_R_Path_TaxaList_Local environment variable not set.")
-        }
-      }
-
-      SpNamesF <- file.path(SpNamesF, "Species_List_ID.txt")
-
-      if (magrittr::not(file.exists(SpNamesF))) {
-        stop(paste0("Species_List_ID.txt file does not exist in the ",
-                    SpNamesF, " folder"))
-      }
-
-      SpeciesNames <- readr::read_tsv(
-        file = SpNamesF, show_col_types = FALSE) %>%
-        dplyr::select(IAS_ID, Species = Species_name) %>%
-        dplyr::mutate(
-          IAS_ID = stringr::str_pad(IAS_ID, pad = "0", width = 4),
-          IAS_ID = paste0("Sp_", IAS_ID))
-
-    } else {
-      stop("Path for environment variables: ", EnvFile, " was not found")
+    if (magrittr::not(file.exists(EnvFile))) {
+      stop(paste0("Path for environment variables: ",
+                  EnvFile, " was not found"))
     }
+
+    if (FromHPC) {
+      EnvVars2Read <- tibble::tribble(
+        ~VarName, ~Value, ~CheckDir, ~CheckFile,
+        "SpNamesF", "DP_R_TaxaInfo", TRUE, FALSE)
+    } else {
+      EnvVars2Read <- tibble::tribble(
+        ~VarName, ~Value, ~CheckDir, ~CheckFile,
+        "SpNamesF", "DP_R_TaxaInfo_Local", TRUE, FALSE)
+    }
+
+    # Assign environment variables and check file and paths
+    IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+
+
+    SpNamesF <- file.path(SpNamesF, "Species_List_ID.txt")
+    if (magrittr::not(file.exists(SpNamesF))) {
+      stop(paste0("Species_List_ID.txt file does not exist in the ",
+                  SpNamesF, " folder"))
+    }
+
+    SpeciesNames <- readr::read_tsv(
+      file = SpNamesF, show_col_types = FALSE) %>%
+      dplyr::select(IAS_ID, Species = Species_name) %>%
+      dplyr::mutate(
+        IAS_ID = stringr::str_pad(IAS_ID, pad = "0", width = 4),
+        IAS_ID = paste0("Sp_", IAS_ID))
+
 
     Coda <- tidyr::pivot_longer(
       Coda, -c(Chain, Iter), names_to = "Var_Sp", values_to = "Value")

@@ -54,13 +54,13 @@ PlotGelman_Beta <- function(
 
   Beta_Coda <- IASDT.R::Coda_to_tibble(
     CodaObj = CodaObj, Type = "beta", EnvFile = EnvFile, FromHPC = FromHPC)
+
   NVars <- length(unique(Beta_Coda$Variable))
   NSp <- length(unique(Beta_Coda$Species))
   SubTitle <- paste0(NVars, " covariates - ", NSp, " species")
   rm(Beta_Coda)
 
-  BetaNames <- CodaObj %>%
-    magrittr::extract2(1) %>%
+  BetaNames <- magrittr::extract2(CodaObj, 1) %>%
     attr("dimnames") %>%
     magrittr::extract2(2) %>%
     sort()
@@ -86,9 +86,7 @@ PlotGelman_Beta <- function(
         tidyr::pivot_longer(
           cols = -Iter, names_to = "Type", values_to = "ShrinkFactor") %>%
         dplyr::arrange(Type, Iter) %>%
-        dplyr::mutate(
-          # Colour = dplyr::if_else(Type == "Median", "black", "red"),
-          Type = factor(Type), Var_Sp = x)
+        dplyr::mutate(Type = factor(Type), Var_Sp = x)
     }) %>%
     dplyr::bind_rows() %>%
     dplyr::mutate(group = paste0(Var_Sp, "_", Type))

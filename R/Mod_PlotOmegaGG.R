@@ -39,10 +39,8 @@ PlotOmegaGG <- function(
   # Out path
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  Path_Out <- Path_Model %>%
-    dirname() %>%
-    dirname() %>%
-    file.path("Model_Postprocessing")
+  Path_Out <- dirname(dirname(Path_Model)) %>%
+    file.path("Model_Postprocessing", "Parameters_Summary")
   fs::dir_create(Path_Out)
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -76,7 +74,6 @@ PlotOmegaGG <- function(
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Plotting theme")
-
   Theme <- ggplot2::theme(
     # legend.title = ggplot2::element_text(size = 7, face = "bold"),
     legend.title = ggtext::element_markdown(),

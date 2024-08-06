@@ -15,6 +15,7 @@ PlotConvergence(
   NCores = NULL,
   NRC = c(2, 3),
   SavePlotData = TRUE,
+  PagePerFile = 20,
   Cols = c("red", "blue", "darkgreen", "darkgrey")
 )
 }
@@ -44,6 +45,9 @@ arranging multiple plots on a page. Default: c(2, 3).}
 \item{SavePlotData}{Logical. Indicates whether to save the plot data as RData
 files. Default: TRUE.}
 
+\item{PagePerFile}{Integer. Indicates the number of pages per single pdf page
+for the \code{Omega} parameter. Default: 20.}
+
 \item{Cols}{Character Vector. Specifies the colors to use for each chain in
 the plots. Default: c("red", "blue", "darkgreen", "darkgrey").}
 }
@@ -60,7 +64,7 @@ High-Performance Computing HPC environments.
 \details{
 The function reads the following environment variable:
 \itemize{
-\item \strong{\code{Path_LUMI_Scratch}} (only if \code{FromHPC} = \code{TRUE}) for the path of
+\item \strong{\code{LUMI_Scratch}} (only if \code{FromHPC} = \code{TRUE}) for the path of
 the scratch folder of the \code{BioDT} project on LUMI.
 }
 }

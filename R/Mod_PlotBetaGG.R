@@ -35,11 +35,8 @@ PlotBetaGG <- function(
   # Out path
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  Path_Out <- Path_Model %>%
-    dirname() %>%
-    dirname() %>%
-    file.path("Model_Postprocessing")
-
+  Path_Out <- dirname(dirname(Path_Model)) %>%
+    file.path("Model_Postprocessing", "Parameters_Summary")
   fs::dir_create(Path_Out)
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -91,7 +88,6 @@ PlotBetaGG <- function(
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("getPostEstimate")
-
   # Calculates mean, support and other posterior quantities for a specified
   # model parameter
   post <- Hmsc::getPostEstimate(hM = Model, parName = "Beta")
@@ -101,7 +97,6 @@ PlotBetaGG <- function(
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("1. sign")
-
   Plot_SignD <- (post$support > supportLevel) %>%
     magrittr::add(post$support < (1 - supportLevel)) %>%
     magrittr::is_greater_than(0) %>%

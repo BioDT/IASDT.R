@@ -30,7 +30,7 @@ AssignEnvVars <- function(EnvFile = ".env", EnvVarDT = NULL) {
   if (is.null(EnvFile) || is.null(EnvVarDT)) {
     stop("EnvFile and EnvVarDT can not be empty")
   }
-  
+
   if (magrittr::not(file.exists((EnvFile)))) {
     stop(paste0(EnvFile, " file does not exist"))
   }
@@ -76,6 +76,7 @@ AssignEnvVars <- function(EnvFile = ".env", EnvVarDT = NULL) {
       Var_Name <- EnvVarDT$VarName[.x]
       CheckDir <- EnvVarDT$CheckDir[.x]
       CheckFile <- EnvVarDT$CheckFile[.x]
+
       Val <- Sys.getenv(EV_Name)
 
       if (CheckDir && CheckFile) {
@@ -83,19 +84,19 @@ AssignEnvVars <- function(EnvFile = ".env", EnvVarDT = NULL) {
           Val, " should be checked as either file or directory, not both"))
       }
 
-      if (CheckDir && magrittr::not(dir.exists(Val))) {
-        stop(paste0(Val, " directory does not exist"))
-      }
-
-      if (CheckFile && magrittr::not(file.exists(Val))) {
-        stop(paste0(Val, " file does not exist"))
-      }
-
       if (nchar(Val) == 0) {
         stop(
           paste0(
-            EV_Name, " environment variable was not set in the .env file"),
+            "`", EV_Name, "` environment variable was not set in the .env file"),
           call. = FALSE)
+      }
+
+      if (CheckDir && magrittr::not(dir.exists(Val))) {
+        stop(paste0("`", Val, "` directory does not exist"))
+      }
+
+      if (CheckFile && magrittr::not(file.exists(Val))) {
+        stop(paste0("`", Val, "` file does not exist"))
       }
 
       assign(x = Var_Name, value = Val, envir = parent.frame(5))

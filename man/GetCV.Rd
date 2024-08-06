@@ -13,7 +13,8 @@ GetCV(
   NR = 2,
   NC = 2,
   OutPath = NULL,
-  FromHPC = TRUE
+  FromHPC = TRUE,
+  PlotCV = TRUE
 )
 }
 \arguments{
@@ -44,6 +45,9 @@ results. Default: \code{NULL}.}
 
 \item{FromHPC}{Logical. Indicates whether the function is being run on an HPC
 environment, affecting file path handling. Default: \code{TRUE}.}
+
+\item{PlotCV}{Logical. Indicating whether to plot the block cross-validation
+folds.}
 }
 \value{
 The function returns a modified version of the input dataset \code{DT}
@@ -58,7 +62,7 @@ spatial autocorrelation range in the predictor data (estimated using
 determined by the \code{NGrids} argument. The default \code{NGrids} value is 20,
 which means blocks of 20x20 grid cell each.
 \item \code{CV_Large} which splits the study area into large blocks, as determined
-by the  \code{NR} and \code{NC} arguments. if \code{NR} = \code{NC} = 2 (default), four large
+by the  \code{NR} and \code{NC} arguments. if \code{NR = NC} = 2 (default), four large
 blocks will be used, split the study area at the median coordinates..
 }
 }
@@ -71,9 +75,12 @@ planned to be used inside the \link{Mod_Prep4HPC} function.
 \details{
 The function reads the following environment variable:
 \itemize{
-\item \strong{\code{DP_R_Path_Grid}} (if \code{FromHPC} = \code{TRUE}) or
-\strong{\code{DP_R_Path_Grid_Local}} (if \code{FromHPC} = \code{FALSE}). The function reads
+\item \strong{\code{DP_R_Grid}} (if \code{FromHPC = TRUE}) or
+\strong{\code{DP_R_Grid_Local}} (if \code{FromHPC = FALSE}). The function reads
 the content of the \code{Grid_10_Land_Crop.RData} file from this path.
+\item \strong{\code{DP_R_EUBound}} (if \code{FromHPC = TRUE}) or
+\strong{\code{DP_R_EUBound_Local}} (if \code{FromHPC = FALSE}). The function reads
+the content of the \code{Bound_sf_Eur.RData} file from this path.
 }
 }
 \author{

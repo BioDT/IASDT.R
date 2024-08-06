@@ -53,7 +53,7 @@ environments and supports parallel processing.
 \details{
 The function reads the following environment variable:
 \itemize{
-\item \strong{\code{Path_LUMI_Scratch}} (only if \code{FromHPC} = \code{TRUE}) for the path of the
+\item \strong{\code{LUMI_Scratch}} (only if \code{FromHPC} = \code{TRUE}) for the path of the
 scratch folder of the \code{BioDT} project on LUMI.
 }
 }

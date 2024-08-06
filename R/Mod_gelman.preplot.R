@@ -24,24 +24,19 @@ gelman.preplot <- function(
     confidence = confidence, transform = transform,
     autoburnin = autoburnin) {
 
-  # Avoid "no visible binding for global variable" message
-  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  niter <- thin <- nvar <- varnames <- NULL
-
-
   x <- coda::as.mcmc.list(x)
-  nbin <- min(floor((niter(x) - 50) / thin(x)), max.bins)
+  nbin <- min(floor((coda::niter(x) - 50) / coda::thin(x)), max.bins)
   if (nbin < 1) {
     stop("Insufficient iterations to produce Gelman-Rubin plot")
   }
-  binw <- floor((niter(x) - 50) / nbin)
+  binw <- floor((coda::niter(x) - 50) / nbin)
   last.iter <- c(
-    seq(from = stats::start(x) + 50 * thin(x), by = binw * thin(x),
+    seq(from = stats::start(x) + 50 * coda::thin(x), by = binw * coda::thin(x),
         length = nbin),
     stats::end(x))
-  shrink <- array(dim = c(nbin + 1, nvar(x), 2))
+  shrink <- array(dim = c(nbin + 1, coda::nvar(x), 2))
   dimnames(shrink) <- list(
-    last.iter, varnames(x),
+    last.iter, coda::varnames(x),
     c("median", paste(50 * (confidence + 1), "%", sep = "")))
 
   for (i in 1:(nbin + 1)) {
@@ -56,7 +51,7 @@ gelman.preplot <- function(
   if (any(all.na)) {
     cat("\n******* Error: *******\n")
     cat("Cannot compute Gelman & Rubin's diagnostic for any chain \n")
-    cat("segments for variables", varnames(x)[all.na], "\n")
+    cat("segments for variables", coda::varnames(x)[all.na], "\n")
     cat("This indicates convergence failure\n")
   }
   return(list(shrink = shrink, last.iter = last.iter))

@@ -28,7 +28,7 @@
 #' @param FromHPC Logical. Indicates if the operation is being performed from an
 #'   HPC environment. This adjusts file paths accordingly. Default: `TRUE`.
 #' @param Path_Hmsc String. Path for the Hmsc-HPC.
-#' @param Command_Prefix String. Prefix for the bash commands to be executed.
+#' @param Command_Prefix String. Prefix for the bash commands to be executed. Default: `Commands2Fit`.
 #' @param SLURM_Prefix String. Prefix for the exported SLURM file.
 #' @param Path_SLURM_Out String indicating the directory where the SLURM file(s)
 #'   will be saved. Defaults to `NULL`, which means to identify the path from
@@ -38,9 +38,9 @@
 #' @return The function does not return any value but writes SLURM script files
 #'   to the disk.
 #' @details The function reads the following environment variables:
-#'    - **`Path_LUMI_Scratch`** for the path of
+#'    - **`LUMI_Scratch`** for the path of
 #'    the scratch folder of the `BioDT` project on LUMI.
-#'    - **`DP_R_LUMI_ProjNum`** for the BioDT LUMI project number.
+#'    - **`LUMI_ProjNum`** for the BioDT LUMI project number.
 #'    - **`DP_R_Path_GPU_Check`** for the path of the python for reporting if
 #'    the GPU was used in the running SLURM job.
 #' @export
@@ -49,8 +49,12 @@ Mod_SLURM <- function(
     Path_Model = NULL, JobName = NULL, CatJobInfo = TRUE, ntasks = 1,
     CpusPerTask = 1, GpusPerNode = 1, MemPerCpu = NULL, Time = NULL,
     Partition = "small-g", EnvFile = ".env", FromHPC = TRUE,
-    Path_Hmsc = NULL, Command_Prefix = "Commands_All",
+    Path_Hmsc = NULL, Command_Prefix = "Commands2Fit",
     SLURM_Prefix = "Bash_Fit", Path_SLURM_Out = NULL) {
+
+  # Avoid "no visible binding for global variable" message
+  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
+  Path_Scratch <- ProjNum <- Path_GPU_Check <- NULL
 
   if (is.null(Path_Model) || is.null(JobName) || is.null(MemPerCpu) ||
       is.null(Time) || is.null(Path_Hmsc)) {
@@ -64,18 +68,18 @@ Mod_SLURM <- function(
   if (!file.exists(EnvFile)) {
     stop(paste("Environment file not found:", EnvFile))
   }
-  readRenviron(EnvFile)
-  ProjNum <- Sys.getenv("DP_R_LUMI_ProjNum")
-  Path_Scratch <- Sys.getenv("Path_LUMI_Scratch")
-  Path_GPU_Check <- Sys.getenv("DP_R_Path_GPU_Check")
+
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "ProjNum", "LUMI_ProjNum", FALSE, FALSE,
+    "Path_Scratch", "LUMI_Scratch", FromHPC, FALSE,
+    "Path_GPU_Check", "DP_R_Path_GPU_Check", FALSE, FromHPC)
+
+  # Assign environment variables and check file and paths
+  IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
   # temporarily setting the working directory
-
   if (FromHPC) {
-    if (magrittr::not(dir.exists(Path_Scratch))) {
-      stop("The scratch folder does not exist")
-    }
-
     InitialWD <- getwd()
     setwd(Path_Scratch)
     on.exit(setwd(InitialWD), add = TRUE)

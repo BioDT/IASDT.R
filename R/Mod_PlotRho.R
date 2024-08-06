@@ -50,8 +50,7 @@ PlotRho <- function(
   rm(Model)
 
   ## Gelman convergence diagnostic
-  Gelman <- Post %>%
-    coda::gelman.diag(multivariate = FALSE) %>%
+  Gelman <- coda::gelman.diag(x = Post, multivariate = FALSE) %>%
     magrittr::extract2("psrf") %>%
     magrittr::extract(1) %>%
     round(3) %>%
@@ -67,8 +66,7 @@ PlotRho <- function(
   CI <- summary(Post, quantiles = c(0.25, 0.75))$quantiles
   CI2 <- paste0("<i>50% credible interval:</i> ", CI, collapse = " - ")
 
-  RhoDF <- Post %>%
-    purrr::map(tibble::as_tibble, rownames = "ID") %>%
+  RhoDF <- purrr::map(.x = Post, .f = tibble::as_tibble, rownames = "ID") %>%
     dplyr::bind_rows(.id = "Chain") %>%
     dplyr::rename(Value = "var1") %>%
     dplyr::mutate(Chain = factor(Chain), ID = as.integer(ID))
@@ -80,9 +78,9 @@ PlotRho <- function(
   ESS_CI <- data.frame(
     x = -Inf, y = -Inf, label = paste0(ESS, "<br>", CI2))
 
-  Plot <- RhoDF %>%
-    ggplot2::ggplot(
-      mapping = ggplot2::aes(x = ID, y = Value, color = factor(Chain))) +
+  Plot <- ggplot2::ggplot(
+    data = RhoDF,
+    mapping = ggplot2::aes(x = ID, y = Value, color = factor(Chain))) +
     ggplot2::geom_line(linewidth = 0.15, alpha = 0.6) +
     ggplot2::geom_smooth(
       method = "loess", formula = y ~ x, se = FALSE, linewidth = 0.8) +
@@ -96,13 +94,14 @@ PlotRho <- function(
     ggplot2::ylab(NULL) +
     ggtext::geom_richtext(
       mapping = ggplot2::aes(x = x, y = y, label = label),
-      data = Title2, inherit.aes = FALSE,
+      data = Title2, inherit.aes = FALSE, size = 6,
       hjust = 1, vjust = 1, lineheight  = 0, fill = NA, label.color = NA) +
     ggtext::geom_richtext(
       mapping = ggplot2::aes(x = x, y = y, label = label),
-      data = ESS_CI, inherit.aes = FALSE,
+      data = ESS_CI, inherit.aes = FALSE, size = 6,
       hjust = 0, vjust = 0, lineheight  = 0, fill = NA, label.color = NA) +
-    ggplot2::theme(legend.position = "none")
+    ggplot2::theme(
+      legend.position = "none", axis.text = ggplot2::element_text(size = 14))
 
   Plot1 <- Plot %>%
     ggExtra::ggMarginal(

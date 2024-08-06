@@ -17,7 +17,7 @@ Mod_SLURM(
   EnvFile = ".env",
   FromHPC = TRUE,
   Path_Hmsc = NULL,
-  Command_Prefix = "Commands_All",
+  Command_Prefix = "Commands2Fit",
   SLURM_Prefix = "Bash_Fit",
   Path_SLURM_Out = NULL
 )
@@ -55,7 +55,7 @@ HPC environment. This adjusts file paths accordingly. Default: \code{TRUE}.}
 
 \item{Path_Hmsc}{String. Path for the Hmsc-HPC.}
 
-\item{Command_Prefix}{String. Prefix for the bash commands to be executed.}
+\item{Command_Prefix}{String. Prefix for the bash commands to be executed. Default: \code{Commands2Fit}.}
 
 \item{SLURM_Prefix}{String. Prefix for the exported SLURM file.}
 
@@ -76,9 +76,9 @@ workload manager.
 \details{
 The function reads the following environment variables:
 \itemize{
-\item \strong{\code{Path_LUMI_Scratch}} for the path of
+\item \strong{\code{LUMI_Scratch}} for the path of
 the scratch folder of the \code{BioDT} project on LUMI.
-\item \strong{\code{DP_R_LUMI_ProjNum}} for the BioDT LUMI project number.
+\item \strong{\code{LUMI_ProjNum}} for the BioDT LUMI project number.
 \item \strong{\code{DP_R_Path_GPU_Check}} for the path of the python for reporting if
 the GPU was used in the running SLURM job.
 }

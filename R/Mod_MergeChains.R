@@ -31,7 +31,7 @@
 #' @return The function does not return anything but saves the processed model
 #'   information to disk.
 #' @details The function reads the following environment variable:
-#'    - **`Path_LUMI_Scratch`** (only if `FromHPC` = `TRUE`) for the path of the
+#'    - **`LUMI_Scratch`** (only if `FromHPC` = `TRUE`) for the path of the
 #'     scratch folder of the `BioDT` project on LUMI.
 #' @export
 
@@ -40,8 +40,10 @@ Mod_MergeChains <- function(
     PrintIncomplete = TRUE, FromHPC = TRUE, EnvFile = ".env",
     FromJSON = FALSE) {
 
-  if (is.null(Path_Model) || is.null(NCores) || is.null(ModInfoName)) {
-    stop("FilePath, NCores, and ModInfoName cannot be empty")
+  .StartTime <- lubridate::now(tzone = "CET")
+
+  if (is.null(Path_Model) || is.null(NCores)) {
+    stop("Path_Model, and NCores cannot be empty")
   }
 
   # Avoid "no visible binding for global variable" message
@@ -49,25 +51,25 @@ Mod_MergeChains <- function(
   Post_Path <- Post_Missing <- Post_Path <- M_Init_Path <- M_samples <-
     M_thin <- M_transient <- M_Name_Fit <- Path_FittedMod <- Path_Coda <-
     NMissingChains <- MissingModels <- Model_Finished <- Path_ModProg <-
-    Post_Aligned <- Post_Aligned2 <- FittingTime <- NULL
+    Post_Aligned <- Post_Aligned2 <- FittingTime <- Path_Scratch <-
+    Root_Local <- NULL
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Load .env file ----
-  if (FromHPC && file.exists(EnvFile)) {
-    readRenviron(EnvFile)
-    Path_Scratch <- Sys.getenv("Path_LUMI_Scratch")
 
-    if (Path_Scratch == "") {
-      stop("Path_Scratch environment variable not found.")
-    }
-    if (magrittr::not(dir.exists(Path_Scratch))) {
-      stop("The scratch folder does not exist")
-    }
-
-  } else {
-    stop(paste0("Path for environment variables: ", EnvFile, " was not found"))
+  if (magrittr::not(file.exists(EnvFile))) {
+    stop(paste0(
+      "Path for environment variables: ", EnvFile, " was not found"))
   }
+
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_Scratch", "LUMI_Scratch", FromHPC, FALSE,
+    "Root_Local", "Root_Local", magrittr::not(FromHPC), FALSE)
+
+  # Assign environment variables and check file and paths
+  IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -92,8 +94,24 @@ Mod_MergeChains <- function(
   if (FromHPC) {
     Path_Model <- file.path(
       Path_Scratch, stringr::str_remove(Path_Model, paste0(Path_Scratch, "/")))
+  } else {
+    Path_Model <- file.path(
+      Root_Local, stringr::str_remove(Path_Model, paste0(Root_Local, "/")))
   }
 
+  if (magrittr::not(dir.exists(Path_Model))) {
+    stop(paste0(
+      "Path_Model directory (`", Path_Model, "`) does not exist"), call. = FALSE)
+  }
+
+  Path_ModInfo <- file.path(Path_Model, "Model_Info.RData")
+  
+  if (magrittr::not(file.exists(Path_ModInfo))) {
+    stop(paste0(
+      "ModInfo file `", Path_ModInfo, "` does not exist"), call. = FALSE)
+  }
+
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Remove temp files and incomplete RDs files ----
@@ -117,6 +135,7 @@ Mod_MergeChains <- function(
   }
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Prepare working on parallel
 
@@ -124,11 +143,9 @@ Mod_MergeChains <- function(
   on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
   future::plan(future::cluster, workers = c1, gc = TRUE)
 
-  Path_ModInfo <- file.path(Path_Model, "Model_Info.RData")
   Path_Fitted_Models <- file.path(Path_Model, "Model_Fitted")
   Path_Coda <- file.path(Path_Model, "Model_Coda")
   fs::dir_create(c(Path_Fitted_Models, Path_Coda))
-
 
   Model_Info2 <- IASDT.R::LoadAs(Path_ModInfo) %>%
     # Check if any posterior files is missing
@@ -137,14 +154,14 @@ Mod_MergeChains <- function(
         .x = Post_Path,
         .f = ~{
           if (FromHPC) {
-            Post <- file.path(Path_Scratch,
-                              stringr::str_remove_all(.x, Path_Scratch))
+            Post <- file.path(
+              Path_Scratch, stringr::str_remove_all(.x, Path_Scratch))
           } else {
-            Post <- .x
+            Post <- file.path(
+              Root_Local, stringr::str_remove_all(.x, Root_Local))
           }
 
-          file.exists(Post) %>%
-            all() %>%
+          all(file.exists(Post)) %>%
             magrittr::not() %>%
             return()
         }),
@@ -152,11 +169,13 @@ Mod_MergeChains <- function(
       # delete these columns if already exist from previous function execution
       Path_FittedMod = NULL, Path_Coda = NULL)
 
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  # Merge posteriors and save as Hmsc model / coda object
 
   Model_Info2 <- Model_Info2 %>%
     dplyr::mutate(
-
-      # Merge posteriors and save as coda object
       ModelPosts = furrr::future_pmap(
         .l = list(
           Post_Missing, Post_Path, M_Init_Path, M_samples,
@@ -168,114 +187,124 @@ Mod_MergeChains <- function(
             list(
               Path_FittedMod = NA, Path_Coda = NA, Post_Aligned2 = NA) %>%
               return()
+          }
 
-          } else {
+          # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+          # Merge fitted models
+          # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-            # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-            # Merge fitted models
-            # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+          Path_FittedMod <- file.path(
+            Path_Fitted_Models, paste0(M_Name_Fit, "_Model.RData"))
+          ModFitMissing <- magrittr::not(file.exists(Path_FittedMod))
 
-            Path_FittedMod <- file.path(
-              Path_Fitted_Models, paste0(M_Name_Fit, "_Model.RData"))
-            ModFitMissing <- magrittr::not(file.exists(Path_FittedMod))
-
-            if (ModFitMissing) {
-              if (FromHPC) {
-                Post_Path <- file.path(Path_Scratch, Post_Path)
-                M_Init_Path <- file.path(Path_Scratch, M_Init_Path)
-              }
-
-              # Get posteriors
-              Posts <- purrr::map(
-                as.character(Post_Path), IASDT.R::GetPosts, FromJSON = FromJSON)
-
-              # Convert to Hmsc object - Try with `alignPost = TRUE`
-              Model_Fit <- Hmsc::importPosteriorFromHPC(
-                m = IASDT.R::LoadAs(M_Init_Path), postList = Posts,
-                nSamples = M_samples, thin = M_thin, transient = M_transient,
-                alignPost = TRUE) %>%
-                try(silent = TRUE)
-
-              # Convert to Hmsc object - If failed, use `alignPost = FALSE`
-              if (inherits(Model_Fit, "try-error")) {
-                Model_Fit <- try(
-                  Hmsc::importPosteriorFromHPC(
-                    m = IASDT.R::LoadAs(M_Init_Path), postList = Posts,
-                    nSamples = M_samples, thin = M_thin,
-                    transient = M_transient, alignPost = FALSE))
-                Post_Aligned2 <- FALSE
-              } else {
-                Post_Aligned2 <- TRUE
-              }
-
-              rm(Posts)
-
-              if (inherits(Model_Fit, "try-error")) {
-                paste0("Model ", M_Name_Fit, " failed to be merged!") %>%
-                  IASDT.R::CatTime()
-              } else {
-                IASDT.R::SaveAs(
-                  InObj = Model_Fit, OutObj = paste0(M_Name_Fit, "_Model"),
-                  OutPath = Path_FittedMod)
-              }
-            } else {
-              Post_Aligned2 <- Post_Aligned
-            }
-
-            # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-            # Convert to Coda object
-            # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-            Path_Coda <- file.path(Path_Coda, paste0(M_Name_Fit, "_Coda.RData"))
-            CodaMissing <- magrittr::not(file.exists(Path_Coda))
-
-            if (magrittr::not(ModFitMissing)) {
-              Model_Fit <- IASDT.R::LoadAs(Path_FittedMod)
-            }
-
-            if (CodaMissing) {
-              if (inherits(Model_Fit, "try-error")) {
-                IASDT.R::CatTime("  >>>  No Coda object was exported")
-              } else {
-                Mod_Coda <- Hmsc::convertToCodaObject(
-                  Model_Fit, spNamesNumbers = c(TRUE, FALSE),
-                  covNamesNumbers = c(TRUE, FALSE))
-                IASDT.R::SaveAs(
-                  InObj = Mod_Coda, OutObj = paste0(M_Name_Fit, "_Coda"),
-                  OutPath = Path_Coda)
-                rm(Mod_Coda)
-              }
-              rm(Model_Fit)
-            }
-
-            # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-            # Remove the prefix for scratch
-            # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+          if (ModFitMissing) {
 
             if (FromHPC) {
-              Path_FittedMod <- stringr::str_remove(
-                Path_FittedMod, paste0(Path_Scratch, "/"))
-              Path_Coda <- stringr::str_remove(
-                Path_Coda, paste0(Path_Scratch, "/"))
+              Post_Path <- file.path(Path_Scratch, Post_Path)
+              M_Init_Path <- file.path(Path_Scratch, M_Init_Path)
+            } else {
+              Post_Path <- file.path(Root_Local, Post_Path)
+              M_Init_Path <- file.path(Root_Local, M_Init_Path)
             }
 
-            # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-            # Return list of objects
-            # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+            # Get posteriors
+            Posts <- purrr::map(
+              as.character(Post_Path), IASDT.R::GetPosts, FromJSON = FromJSON)
 
-            list(
-              Path_FittedMod = Path_FittedMod, Path_Coda = Path_Coda,
-              Post_Aligned2 = Post_Aligned2) %>%
-              return()
+            # Convert to Hmsc object - Try with `alignPost = TRUE`
+            Model_Fit <- Hmsc::importPosteriorFromHPC(
+              m = IASDT.R::LoadAs(M_Init_Path), postList = Posts,
+              nSamples = M_samples, thin = M_thin, transient = M_transient,
+              alignPost = TRUE) %>%
+              try(silent = TRUE)
 
-          }},
+            # Convert to Hmsc object - If failed, use `alignPost = FALSE`
+            if (inherits(Model_Fit, "try-error")) {
+              Model_Fit <- try(
+                Hmsc::importPosteriorFromHPC(
+                  m = IASDT.R::LoadAs(M_Init_Path), postList = Posts,
+                  nSamples = M_samples, thin = M_thin,
+                  transient = M_transient, alignPost = FALSE))
+              Post_Aligned2 <- FALSE
+            } else {
+              Post_Aligned2 <- TRUE
+            }
+
+            rm(Posts)
+
+            if (inherits(Model_Fit, "try-error")) {
+              paste0("Model ", M_Name_Fit, " failed to be merged!") %>%
+                IASDT.R::CatTime()
+            } else {
+              IASDT.R::SaveAs(
+                InObj = Model_Fit, OutObj = paste0(M_Name_Fit, "_Model"),
+                OutPath = Path_FittedMod)
+            }
+          } else {
+            Post_Aligned2 <- Post_Aligned
+          }
+
+          # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+          # Convert to Coda object
+          # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+          Path_Coda <- file.path(Path_Coda, paste0(M_Name_Fit, "_Coda.RData"))
+          CodaMissing <- magrittr::not(file.exists(Path_Coda))
+
+          if (magrittr::not(ModFitMissing)) {
+            Model_Fit <- IASDT.R::LoadAs(Path_FittedMod)
+          }
+
+          if (CodaMissing) {
+            if (inherits(Model_Fit, "try-error")) {
+              IASDT.R::CatTime("  >>>  No Coda object was exported")
+            } else {
+              Mod_Coda <- Hmsc::convertToCodaObject(
+                Model_Fit, spNamesNumbers = c(TRUE, FALSE),
+                covNamesNumbers = c(TRUE, FALSE))
+
+              IASDT.R::SaveAs(
+                InObj = Mod_Coda, OutObj = paste0(M_Name_Fit, "_Coda"),
+                OutPath = Path_Coda)
+
+              rm(Mod_Coda)
+            }
+            rm(Model_Fit)
+          }
+
+          # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+          # Remove the prefix for scratch
+          # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+          if (FromHPC) {
+            Path_FittedMod <- stringr::str_remove(
+              Path_FittedMod, paste0(Path_Scratch, "/"))
+            Path_Coda <- stringr::str_remove(
+              Path_Coda, paste0(Path_Scratch, "/"))
+          } else {
+            Path_FittedMod <- stringr::str_remove(
+              Path_FittedMod, paste0(Root_Local, "/"))
+            Path_Coda <- stringr::str_remove(
+              Path_Coda, paste0(Root_Local, "/"))
+          }
+
+          # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+          # Return list of objects
+          # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+          list(
+            Path_FittedMod = Path_FittedMod, Path_Coda = Path_Coda,
+            Post_Aligned2 = Post_Aligned2) %>%
+            return()
+
+        },
         .progress = FALSE,
         .options = furrr::furrr_options(seed = TRUE, scheduling = Inf)))
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  Model_Info2 <- Model_Info2 %>%
-    tidyr::unnest_wider("ModelPosts") %>%
+  Model_Info2 <- tidyr::unnest_wider(data = Model_Info2, "ModelPosts") %>%
     dplyr::mutate(Post_Aligned = dplyr::coalesce(Post_Aligned2)) %>%
     dplyr::select(-Post_Aligned2) %>%
     dplyr::mutate(
@@ -285,9 +314,13 @@ Mod_MergeChains <- function(
         .x = Path_FittedMod, .y = Path_Coda,
         .f = ~{
           ModelFiles <- c(.x, .y)
+
           if (FromHPC) {
             ModelFiles <- file.path(Path_Scratch, ModelFiles)
+          } else {
+            ModelFiles <- file.path(Root_Local, ModelFiles)
           }
+
           all(file.exists(ModelFiles))
         }),
 
@@ -301,11 +334,12 @@ Mod_MergeChains <- function(
 
               if (FromHPC) {
                 File <- file.path(Path_Scratch, File)
+              } else {
+                File <- file.path(Root_Local, File)
               }
 
               if (file.exists(File)) {
-                File %>%
-                  readr::read_lines() %>%
+                readr::read_lines(file = File) %>%
                   stringr::str_subset("Whole Gibbs sampler elapsed") %>%
                   stringr::str_remove("Whole Gibbs sampler elapsed") %>%
                   stringr::str_trim() %>%
@@ -368,5 +402,8 @@ Mod_MergeChains <- function(
       InObj = Model_Info2, OutObj = ModInfoName,
       OutPath = file.path(Path_Model, paste0(ModInfoName, ".RData")))
   }
+
+  IASDT.R::CatDiff(.StartTime, Prefix = "\nCompleted in ", CatInfo = FALSE)
+
   return(invisible(NULL))
 }

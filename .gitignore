@@ -6,3 +6,4 @@ docs
 Ignore
 S_*.txt
 S_*.RData
+.Renviron

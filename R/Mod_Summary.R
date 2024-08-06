@@ -25,8 +25,8 @@
 #'   it also returns the data as R object.
 #' @export
 #' @details The function reads the following environment variables:
-#'    - **`DP_R_Path_TaxaList`** (if `FromHPC` = `TRUE`) or
-#'    **`DP_R_Path_TaxaList_Local`** (if `FromHPC` = `FALSE`). The function
+#'    - **`DP_R_TaxaInfo`** (if `FromHPC` = `TRUE`) or
+#'    **`DP_R_TaxaInfo_Local`** (if `FromHPC` = `FALSE`). The function
 #'    reads the content of the `Species_List_ID.txt` file from this path.
 #' @name Mod_Summary
 
@@ -36,12 +36,16 @@ Mod_Summary <- function(
   if (is.null(Path_Coda)) {
     stop("Path_Coda cannot be empty")
   }
+  
+  if (magrittr::not(file.exists(EnvFile))) {
+    stop(paste("Environment file not found:", EnvFile))
+  }
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   VarSp <- Variable <- Species <- Sp1_abb <- Sp2_abb <- IAS_ID <- Val <-
     taxon_name <- Species_name <- Sp1_Species_name <- Sp2_Species_name <-
-    Q2_5 <- Q97_5 <- Sp1_Sp_abb <- Sp2_Sp_abb <- NULL
+    Q2_5 <- Q97_5 <- Sp1_Sp_abb <- Sp2_Sp_abb <- SpNamesF <- SpNamesDir <- NULL
 
   # DataPrep helper function -------
   DataPrep <- function(DT) {
@@ -124,33 +128,28 @@ Mod_Summary <- function(
         .x = Q2_5, .y = Q97_5, ~dplyr::between(x = 0, left = .x, right = .y)))
 
   # Omega ------
-
   IASDT.R::CatTime("Omega")
 
   # Prepare Species list
-  if (file.exists(EnvFile)) {
-    readRenviron(EnvFile)
-  } else {
-    stop(paste0("Path for environment variables: ", EnvFile, " was not found"))
-  }
-
   if (FromHPC) {
-    SpNamesF <- Sys.getenv("DP_R_Path_TaxaList")
-    if (SpNamesF == "") {
-      stop("DP_R_Path_TaxaList environment variable not set.")
-    }
+    EnvVars2Read <- tibble::tribble(
+      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+      "SpNamesDir", "DP_R_TaxaInfo", TRUE, FALSE)
   } else {
-    SpNamesF <- Sys.getenv("DP_R_Path_TaxaList_Local")
-    if (SpNamesF == "") {
-      stop("DP_R_Path_TaxaList_Local environment variable not set.")
-    }
+    EnvVars2Read <- tibble::tribble(
+      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+      "SpNamesDir", "DP_R_TaxaInfo_Local", TRUE, FALSE)
   }
 
-  SpNamesF <- file.path(SpNamesF, "Species_List_ID.txt")
+  # Assign environment variables and check file and paths
+  IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+
+  SpNamesF <- file.path(SpNamesDir, "Species_List_ID.txt")
 
   if (magrittr::not(file.exists(SpNamesF))) {
-    stop(paste0("Species_List_ID.txt file does not exist in the ",
-                SpNamesF, " folder"))
+    stop(paste0(
+      "`Species_List_ID.txt` file does not exist in the ",
+      SpNamesDir, " folder"))
   }
 
   ListSp <- utils::read.delim(SpNamesF, sep = "\t") %>%
@@ -195,10 +194,8 @@ Mod_Summary <- function(
 
   # Saving ------
   IASDT.R::CatTime("Saving")
-  Path_Out <- Path_Coda %>%
-    dirname() %>%
-    dirname() %>%
-    file.path("Model_Postprocessing")
+  Path_Out <- dirname(dirname(Path_Coda)) %>%
+    file.path("Model_Postprocessing", "Parameters_Summary")
   fs::dir_create(Path_Out)
 
   IASDT.R::SaveAs(
@@ -208,7 +205,6 @@ Mod_Summary <- function(
     OutObj = "Parameters_Summary",
     OutPath = file.path(Path_Out, "Parameters_Summary.RData"))
 
-  return(invisible(NULL))
   if (ReturnData) {
     return(InObj = list(
       Alpha = Alpha_Summary, Beta = Beta_Summary,

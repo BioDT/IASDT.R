@@ -37,28 +37,33 @@
 #' @return If `ReturnData` is `TRUE`, returns a data frame containing the
 #'   modelling data. Otherwise, invisibly returns `NULL`.
 #' @details The function reads the following environment variables:
-#'    - **`DP_R_Path_Grid`** (if `FromHPC` = `TRUE`) or **`DP_R_Path_Grid_Local`** (if
+#'    - **`DP_R_Grid`** (if `FromHPC` = `TRUE`) or **`DP_R_Grid_Local`** (if
 #'   `FromHPC` = `FALSE`). The function reads the content of the following files
 #'   in this path: `Grid_10_sf.RData`, `Grid_10_Land_Crop.RData`, and
 #'   `Grid_10_Land_Crop_sf_Country.RData`
-#'    - **`DP_R_Path_PA`** (if `FromHPC` = `TRUE`) or **`DP_R_Path_PA_Local`** (if `FromHPC` = `FALSE`). The function reads the content of the `Sp_PA_Summary_DF.RData` file from this path.
-#'    - **`DP_R_Path_CLC_Summary`**: Path containing the
-#'   `PercCov_SynHab_Crop.RData` file. This file contains maps for the
+#'    - **`DP_R_PA`** (if `FromHPC` = `TRUE`) or **`DP_R_PA_Local`** (if
+#'    `FromHPC` = `FALSE`). The function reads the content of the
+#'     `Sp_PA_Summary_DF.RData` file from this path.
+#'    - **`DP_R_CLC_Summary`** / **`DP_R_CLC_Summary_Local`**: Path containing
+#'    the `PercCov_SynHab_Crop.RData` file. This file contains maps for the
 #'   percentage coverage of each SynHab habitat type per grid cell.
-#'    - **`DP_R_Path_CHELSA_Time_CC`**: Path containing the
-#'   `St_1981_2010.RData` file. This file contains processed CHELSA data for the
-#'   current climate.
-#'    - **`DP_R_Path_Roads`**: Path for processed road data. The function reads
-#'    the contents of: `Road_Length.RData` for the total length of any road type
-#'    per grid cell and `Dist2Road.RData` for the minimum distance between the
-#'    centroid of each grid cell and the nearest road.
-#'    - **`DP_R_Path_Railway`**: Path for processed railway data. The function
-#'    reads the contents of: `Railway_Length.RData` for the total length of any
-#'    railway type per grid cell and `Dist2Rail.RData` for the minimum distance
-#'    between the centroid of each grid cell and the nearest railway.
-#'    - **`DP_R_Path_Bias`**: Path for processed sampling efforts analysis. The
-#'    function reads the content of `Bias_GBIF_SummaryR.RData` file containing
-#'    the total number of GBIF vascular plant observations per grid cell.
+#'    - **`DP_R_CHELSA_Time_CC`** / **`DP_R_CHELSA_Time_CC_Local`**: Path
+#'    containing the `St_1981_2010.RData` file. This file contains processed
+#'    `CHELSA` data for the current climate.
+#'    - **`DP_R_Roads`** / **`DP_R_Roads_Local`**: Path for processed road data.
+#'    The function reads the contents of: `Road_Length.RData` for the total
+#'    length of any road type per grid cell and `Dist2Road.RData` for the
+#'    minimum distance between the centroid of each grid cell and the nearest
+#'    road.
+#'    - **`DP_R_Railway`** / **`DP_R_Railway_Local`**: Path for processed
+#'    railway data. The function reads the contents of: `Railway_Length.RData`
+#'    for the total length of any railway type per grid cell and
+#'    `Dist2Rail.RData` for the minimum distance between the centroid of each
+#'    grid cell and the nearest railway.
+#'    - **`DP_R_Bias`** / **`DP_R_Bias_Local`**: Path for processed sampling
+#'    efforts analysis. The function reads the content of
+#'    `Bias_GBIF_SummaryR.RData` file containing the total number of GBIF
+#'    vascular plant observations per grid cell.
 #' @export
 
 Mod_PrepData <- function(
@@ -85,12 +90,12 @@ Mod_PrepData <- function(
   # # 6. Rocky
   # # 8. Saline
 
-  if (is.null(Hab_Abb) || is.null(OutputPath)) {
-    stop("Hab_Abb and OutputPath cannot be NULL")
+  if (is.null(Hab_Abb) || is.null(OutputPath) || is.null(EnvFile)) {
+    stop("Hab_Abb, OutputPath, and EnvFile cannot be NULL")
   }
   Hab_Abb <- as.character(Hab_Abb)
 
- if (magrittr::not(VerboseProgress)) {
+  if (magrittr::not(VerboseProgress)) {
     sink(file = nullfile())
     on.exit(sink(), add = TRUE)
   }
@@ -98,8 +103,8 @@ Mod_PrepData <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   NCells <- SpeciesID <- Species_name <- Species_File <- PA <-
-    NAME_ENGL <- cell <- geometry <- Country <- Country2 <-
-    x <- y <- NULL
+    cell <- x <- Path_PA <- Path_Grid <- Path_CLC_Summ <- Path_Roads <-
+    Path_Rail <- Path_Bias <- Path_Chelsa_Time_CC <- NULL
 
   IASDT.R::CatTime("Checking input arguments")
   AllArgs <- ls()
@@ -114,88 +119,36 @@ Mod_PrepData <- function(
 
   # Input data paths - these are read from the .env file
 
-  if (file.exists(EnvFile)) {
-
-    readRenviron(EnvFile)
-
-    if (FromHPC) {
-      Path_Grid <- Sys.getenv("DP_R_Path_Grid")
-      Path_Bound <- Sys.getenv("DP_R_Path_EUBound")
-      Path_PA <- Sys.getenv("DP_R_Path_PA")
-      Path_CLC_Summ <- Sys.getenv("DP_R_Path_CLC_Summary")
-      Path_Chelsa_Time_CC <- Sys.getenv("DP_R_Path_CHELSA_Time_CC")
-      Path_Roads <- Sys.getenv("DP_R_Path_Roads")
-      Path_Rail <- Sys.getenv("DP_R_Path_Railway")
-      Path_Bias <- Sys.getenv("DP_R_Path_Bias")
-    } else {
-      Path_Grid <- Sys.getenv("DP_R_Path_Grid_Local")
-      Path_Bound <- Sys.getenv("DP_R_Path_EUBound_Local")
-      Path_PA <- Sys.getenv("DP_R_Path_PA_Local")
-      Path_CLC_Summ <- Sys.getenv("DP_R_Path_CLC_Summary_Local")
-      Path_Chelsa_Time_CC <- Sys.getenv("DP_R_Path_CHELSA_Time_CC_Local")
-      Path_Roads <- Sys.getenv("DP_R_Path_Roads_Local")
-      Path_Rail <- Sys.getenv("DP_R_Path_Railway_Local")
-      Path_Bias <- Sys.getenv("DP_R_Path_Bias_Local")
-    }
-
-    EmptyEnvVars <- c(
-      Path_Grid, Path_Bound, Path_PA, Path_CLC_Summ, Path_Chelsa_Time_CC,
-      Path_Roads, Path_Rail, Path_Bias) %>%
-      magrittr::equals("") %>%
-      which()
-
-    if (length(EmptyEnvVars) > 0) {
-      MissingVars <- c(
-        "Path_Grid", "Path_Bound", "Path_PA", "Path_CLC_Summ",
-        "Path_Chelsa_Time_CC", "Path_Roads", "Path_Rail", "Path_Bias")
-      MissingVars <- MissingVars[EmptyEnvVars]
-      stop(paste0(
-        paste0(MissingVars, collapse = ", "),
-        "environment variable not found."))
-    }
-
-  } else {
+  if (magrittr::not(file.exists(EnvFile))) {
     stop(paste0(
       "Path for environment variables: ", EnvFile, " was not found"))
   }
 
-  ## ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  if (FromHPC) {
+    EnvVars2Read <- tibble::tribble(
+      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+      "Path_Grid", "DP_R_Grid", TRUE, FALSE,
+      "Path_PA", "DP_R_PA", TRUE, FALSE,
+      "Path_CLC_Summ", "DP_R_CLC_Summary", TRUE, FALSE,
+      "Path_Chelsa_Time_CC", "DP_R_CHELSA_Time_CC", TRUE, FALSE,
+      "Path_Roads", "DP_R_Roads", TRUE, FALSE,
+      "Path_Rail", "DP_R_Railway", TRUE, FALSE,
+      "Path_Bias", "DP_R_Bias", TRUE, FALSE)
 
-  ## Paths checking ----
-
-  IASDT.R::CatTime("Checking paths")
-
-  AllArgs <- ls()
-  AllArgs <- purrr::map(
-    AllArgs,
-    function(x) get(x, envir = parent.env(env = environment()))) %>%
-    stats::setNames(AllArgs)
-  CharArgs <- c(
-    "Path_Grid", "Path_Bound", "Path_PA", "Path_CLC_Summ",
-    "Path_Chelsa_Time_CC", "Path_Roads", "Path_Rail", "Path_Bias")
-  IASDT.R::CheckArgs(AllArgs = AllArgs, Args = CharArgs, Type = "character")
-  IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Args = c("ReturnData", "VerboseProgress"),
-    Type = "logical")
-
-  Path_List <- list(
-    Path_Grid = Path_Grid, Path_Bound = Path_Bound, Path_PA = Path_PA,
-    Path_CLC_Summ = Path_CLC_Summ, Path_Chelsa_Time_CC = Path_Chelsa_Time_CC,
-    Path_Roads = Path_Roads, Path_Rail = Path_Rail, Path_Bias = Path_Bias)
-
-  MissingPaths <- purrr::map(Path_List, fs::dir_exists) %>%
-    purrr::discard(.p = isTRUE) %>%
-    names() %>%
-    sort()
-
-  if (length(MissingPaths) > 0) {
-    stop(
-      paste0(
-        "The following path(s) does not exist.",
-        " Please check provided values in the .env file\n >> ",
-        paste0(MissingPaths, collapse = ", ")))
+  } else {
+    EnvVars2Read <- tibble::tribble(
+      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+      "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE,
+      "Path_PA", "DP_R_PA_Local", TRUE, FALSE,
+      "Path_CLC_Summ", "DP_R_CLC_Summary_Local", TRUE, FALSE,
+      "Path_Chelsa_Time_CC", "DP_R_CHELSA_Time_CC_Local", TRUE, FALSE,
+      "Path_Roads", "DP_R_Roads_Local", TRUE, FALSE,
+      "Path_Rail", "DP_R_Railway_Local", TRUE, FALSE,
+      "Path_Bias", "DP_R_Bias_Local", TRUE, FALSE)
   }
-  rm(CharArgs)
+
+  # Assign environment variables and check file and paths
+  IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

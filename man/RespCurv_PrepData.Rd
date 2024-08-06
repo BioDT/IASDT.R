@@ -8,7 +8,6 @@ RespCurv_PrepData(
   Path_Model = NULL,
   ngrid = 50,
   NCores = 15,
-  ShowProgress = FALSE,
   ReturnData = FALSE
 )
 }
@@ -21,9 +20,6 @@ continuous focal variables. Defaults to 50.}
 
 \item{NCores}{Integer specifying the number of cores to use for parallel
 processing. Defaults to 15.}
-
-\item{ShowProgress}{Logical indicating whether to show a progress bar during
-execution. Defaults to \code{FALSE}.}
 
 \item{ReturnData}{Logical indicating whether the processed response curve
 data should be returned as an R object. Defaults to \code{FALSE}.}

@@ -11,20 +11,22 @@
 #' The function supports parallel processing and can handle multiple parameters
 #' simultaneously.
 #' @param InputCoda Path to RData file containing the coda object.
-#' @param Beta Logical indicating whether to plot the Gelman-Rubin statistic for
-#'   the Beta parameter. If `TRUE` (default), the function executes the
-#'   [IASDT.R::PlotGelman_Beta] function.
-#' @param Rho Logical indicating whether to plot the Gelman-Rubin statistic for
-#'   the Rho parameter.  If `TRUE` (default), the function executes the
-#'   [IASDT.R::PlotGelman_Rho] function.
-#' @param Omega Logical indicating whether to plot the Gelman-Rubin statistic
-#'   for the Omega parameter. If `TRUE` (default), the function executes the
-#'   [IASDT.R::PlotGelman_Omega] function.
 #' @param Alpha Logical indicating whether to plot the Gelman-Rubin statistic
 #'   for the Alpha parameter. If `TRUE` (default), the function executes the
 #'   [IASDT.R::PlotGelman_Alpha] function.
+#' @param Beta Logical indicating whether to plot the Gelman-Rubin statistic for
+#'   the Beta parameter. If `TRUE` (default), the function executes the
+#'   [IASDT.R::PlotGelman_Beta] function.
+#' @param Omega Logical indicating whether to plot the Gelman-Rubin statistic
+#'   for the Omega parameter. If `TRUE` (default), the function executes the
+#'   [IASDT.R::PlotGelman_Omega] function.
+#' @param Rho Logical indicating whether to plot the Gelman-Rubin statistic for
+#'   the Rho parameter.  If `TRUE` (default), the function executes the
+#'   [IASDT.R::PlotGelman_Rho] function.
 #' @param NCores Integer specifying the number of cores to use for parallel
 #'   processing.
+#' @param FromHPC Logical. Indicates whether the function is being run on an HPC
+#'   environment, affecting file path handling. Default: `TRUE`.
 #' @param NOmega Integer specifying the number of species to be sampled for the
 #'   Omega parameter.
 #' @param PlottingAlpha A numeric value between 0 and 1 indicating the
@@ -35,33 +37,34 @@
 #'   PDF file.
 #' @param ReturnPlots String specifying the folder path where output figures
 #'   should be saved. This parameter is mandatory if `SavePlot` is TRUE.
-#' @param OutPath String. Folder path to save the output figures
 #' @name PlotGelman
 #' @author Ahmed El-Gabbas
 #' @return If `ReturnPlots` is `TRUE`, returns a list of ggplot objects
 #'   corresponding to the generated plots. Otherwise, returns `NULL`. If
-#'   `SavePlot` is `TRUE`, pdf file for the plots will be saved at the
-#'   `OutPath`.
+#'   `SavePlot` is `TRUE`, pdf file for the plots will be saved.
 #' @export
 #' @seealso
-#' [IASDT.R::PlotGelman_Alpha()]<br>[IASDT.R::PlotGelman_Beta()]<br>
-#' [IASDT.R::PlotGelman_Rho()]<br>[IASDT.R::PlotGelman_Omega()]
+#' [IASDT.R::PlotGelman_Alpha]<br>[IASDT.R::PlotGelman_Beta]<br>
+#' [IASDT.R::PlotGelman_Rho]<br>[IASDT.R::PlotGelman_Omega]
 
 PlotGelman <- function(
-    InputCoda = NULL, Beta = TRUE, Rho = TRUE, Omega = TRUE, Alpha = TRUE,
-    NCores = NULL, NOmega = 1000, PlottingAlpha = 0.25, EnvFile = ".env",
-    SavePlot = TRUE, ReturnPlots = FALSE, OutPath = NULL) {
+    InputCoda = NULL, Alpha = TRUE, Beta = TRUE, Omega = TRUE, Rho = TRUE,
+    NCores = NULL, NOmega = 1000, FromHPC = TRUE, PlottingAlpha = 0.25,
+    EnvFile = ".env", SavePlot = TRUE, ReturnPlots = FALSE) {
+
+  .StartTime <- lubridate::now(tzone = "CET")
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Checking arguments
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  if (is.null(InputCoda) || is.null(NCores)) {
-    stop("InputCoda and NCores cannot be empty")
+  if (sum(Alpha, Beta, Omega, Rho) == 0) {
+    stop("At least one of Alpha, Beta, Omega, and Rho must be `TRUE`",
+         call. = FALSE)
   }
 
-  if (SavePlot && is.null(OutPath)) {
-    stop("OutPath cannot be NULL if SavePlot is TRUE")
+  if (is.null(InputCoda) || is.null(NCores)) {
+    stop("InputCoda and NCores cannot be empty")
   }
 
   if (!SavePlot && !ReturnPlots) {
@@ -80,12 +83,10 @@ PlotGelman <- function(
     "logical")
 
   if (SavePlot) {
-    IASDT.R::CheckArgs(AllArgs = AllArgs, Args = "OutPath", Type = "character")
     if (Beta) IASDT.R::CheckArgs(AllArgs, "Beta_File", "character")
     if (Rho) IASDT.R::CheckArgs(AllArgs, "Rho_File", "character")
     if (Omega) IASDT.R::CheckArgs(AllArgs, "Omega_File", "character")
     if (Alpha) IASDT.R::CheckArgs(AllArgs, "Alpha_File", "character")
-    fs::dir_create(OutPath)
   }
 
   rm(AllArgs)
@@ -95,18 +96,23 @@ PlotGelman <- function(
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   if (inherits(InputCoda, "character")) {
+    IASDT.R::CatTime("Loading coda object")
     CodaObj <- IASDT.R::LoadAs(InputCoda)
   } else {
     CodaObj <- InputCoda
     rm(InputCoda)
   }
 
+  OutPath <- dirname(dirname(InputCoda)) %>%
+    file.path("Model_Convergence")
+  fs::dir_create(OutPath)
+
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Alpha -----
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatTime("Alpha")
   if (Alpha) {
+    IASDT.R::CatTime("Alpha")
     PlotObj_Alpha <- magrittr::extract2(CodaObj, "Alpha") %>%
       magrittr::extract2(1) %>%
       IASDT.R::PlotGelman_Alpha(
@@ -119,11 +125,12 @@ PlotGelman <- function(
   # Beta -----
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatTime("Beta")
   if (Beta) {
+    IASDT.R::CatTime("Beta")
     PlotObj_Beta <- IASDT.R::PlotGelman_Beta(
       CodaObj = magrittr::extract2(CodaObj, "Beta"),
-      NCores = NCores, PlottingAlpha = PlottingAlpha, EnvFile = EnvFile)
+      NCores = NCores, EnvFile = EnvFile, PlottingAlpha = PlottingAlpha,
+      FromHPC = FromHPC)
   } else {
     PlotObj_Beta <- NULL
   }
@@ -132,13 +139,13 @@ PlotGelman <- function(
   # Omega -----
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatTime("Omega")
   if (Omega) {
+    IASDT.R::CatTime("Omega")
     PlotObj_Omega <- magrittr::extract2(CodaObj, "Omega") %>%
       magrittr::extract2(1) %>%
       IASDT.R::PlotGelman_Omega(
         CodaObj = ., NCores = NCores,
-        PlottingAlpha = PlottingAlpha, NOmega = NOmega)
+        NOmega = NOmega, PlottingAlpha = PlottingAlpha)
   } else {
     PlotObj_Omega <- NULL
   }
@@ -147,10 +154,10 @@ PlotGelman <- function(
   # Rho -----
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatTime("Rho")
-  if (Rho) {
-    PlotObj_Rho <- IASDT.R::PlotGelman_Rho(
-      CodaObj = magrittr::extract2(CodaObj, "Rho"))
+  if (Rho && ("Rho" %in% names(CodaObj))) {
+    IASDT.R::CatTime("Rho")
+    PlotObj_Rho <- magrittr::extract2(CodaObj, "Rho") %>%
+      IASDT.R::PlotGelman_Rho()
   } else {
     PlotObj_Rho <- NULL
   }
@@ -173,8 +180,10 @@ PlotGelman <- function(
           grobs = PlotList4Plot, nrow = 1, ncol = 1, top = NULL),
         width = 13, height = 7)
     } else {
-      warning("No plots to save.")
+      warning("No plots to save")
     }
+
+    IASDT.R::CatDiff(.StartTime, Prefix = "\nCompleted in ", CatInfo = FALSE)
 
     if (ReturnPlots) {
       return(PlotList)

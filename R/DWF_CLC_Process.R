@@ -525,6 +525,7 @@ CLC_Process <- function(
 #' @noRd
 #' @keywords internal
 #' @return A tibble containing the processed raster object.
+#' @author Ahmed El-Gabbas
 
 CLC_GetPerc <- function(Type, CLC_CrossWalk, CLC_FracsR, Path_Tif, Path_RData) {
 

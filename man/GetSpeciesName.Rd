@@ -33,19 +33,12 @@ IAS.
 \details{
 The function reads the following environment variables:
 \itemize{
-\item \strong{\code{DP_R_Path_TaxaList}} (if \code{FromHPC} = \code{TRUE}) or
-\strong{\code{DP_R_Path_TaxaList_Local}} (if \code{FromHPC} = \code{FALSE}). The function
+\item \strong{\code{DP_R_TaxaInfo}} (if \code{FromHPC} = \code{TRUE}) or
+\strong{\code{DP_R_TaxaInfo_Local}} (if \code{FromHPC} = \code{FALSE}). The function
 reads the contents of the
 \code{Species_List_ID.txt} file from this path.
-\item \strong{\code{DP_R_Path_PA}} (if \code{FromHPC} = \code{TRUE}) or \strong{\code{DP_R_Path_PA_Local}} (if \code{FromHPC} = \code{FALSE}). The function reads the contents of the \code{Sp_PA_Summary_DF.RData} file from this path.
+\item \strong{\code{DP_R_PA}} (if \code{FromHPC} = \code{TRUE}) or \strong{\code{DP_R_PA_Local}} (if \code{FromHPC} = \code{FALSE}). The function reads the contents of the \code{Sp_PA_Summary_DF.RData} file from this path.
 }
-}
-\examples{
-GetSpeciesName(
-   EnvFile = "D:/BioDT_IAS/.env", SpID = NULL, FromHPC = FALSE)
-
-GetSpeciesName(
-   EnvFile = "D:/BioDT_IAS/.env", SpID = "Sp_0004", FromHPC = FALSE)
 }
 \author{
 Ahmed El-Gabbas

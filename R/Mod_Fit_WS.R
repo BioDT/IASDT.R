@@ -29,19 +29,23 @@ Mod_Fit_WS <- function(Path_Model, EnvFile = ".env", NCores = NULL) {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Path_ModProg <- Command_WS <- NULL
+  Path_ModProg <- Command_WS <- Path_Hmsc_WS <- NULL
 
   # # |||||||||||||||||||||||||||||||||||
   # # Load environment variables
   # # |||||||||||||||||||||||||||||||||||
 
-  if (file.exists(EnvFile)) {
-    readRenviron(EnvFile)
-    Path_Hmsc_WS <- Sys.getenv("DP_R_Path_HmscVE_Win")
-  } else {
+  if (magrittr::not(file.exists(EnvFile))) {
     stop(paste0(
       "Path for environment variables: ", EnvFile, " was not found"))
   }
+
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_Hmsc_WS", "DP_R_Path_HmscVE_Win", TRUE, FALSE)
+
+  # Assign environment variables and check file and paths
+  IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

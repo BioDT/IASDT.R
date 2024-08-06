@@ -20,6 +20,7 @@
 #'   with free legend will be saved (not bounded between 0 and 1).
 #' @name CLC_Plot
 #' @noRd
+#' @author Ahmed El-Gabbas
 #' @keywords internal
 #' @return NULL. Plots are saved as JPEG files.
 #' @note This function is marked as internal and not intended for direct use by

@@ -1,5 +1,5 @@
 ## |------------------------------------------------------------------------| #
-# Mod_SLURM_CV ----
+# Mod_CV ----
 ## |------------------------------------------------------------------------| #
 
 #' Prepare Cross-Validated Hmsc Models for HPC Fitting
@@ -28,7 +28,10 @@
 #' @param EnvFile String specifying the path to read environment variables from,
 #'   with a default value of `.env`.
 #' @param initPar a named list of parameter values used for initialization of
-#'   MCMC states. See [Hmsc::computePredictedValues] for more information.
+#'   MCMC states. See [Hmsc::computePredictedValues] for more information. Default: `NULL`.
+#' @param PrepSLURM Logical indicating whether to prepare SLURM command files.
+#'   If `TRUE` (default), the SLURM commands will be saved to disk using the
+#'   [IASDT.R::Mod_SLURM] function.
 #' @param JobName String specifying the name of the submitted job(s) for SLURM.
 #'   Default: `CV_Models`.
 #' @param updater a named list, specifying which conditional updaters should be
@@ -66,22 +69,45 @@
 #'
 #'   The function reads the following environment variables:
 #'   - **`DP_R_Path_Python`** for Python path on LUMI.
-#'   - **`Path_LUMI_Scratch`** for the path of the scratch folder of the `BioDT`
+#'   - **`LUMI_Scratch`** for the path of the scratch folder of the `BioDT`
 #'   project on LUMI.
 #' @author Ahmed El-Gabbas
 #' @export
-#' @name Mod_SLURM_CV
+#' @name Mod_CV
 
-Mod_SLURM_CV <- function(
+
+
+# require(IASDT.R)
+# require(dplyr)
+# Model = "IASDT_Model_Test/SW_1_Forests/Model_Fitted/GPP60_Tree_samp3000_th5_Model.RData"
+# CVName = c("CV_SAC", "CV_Dist", "CV_Median")
+# partition = NULL
+# Path_CV = NULL
+# EnvFile = ".env"
+# initPar = NULL
+# JobName = "CV_Models"
+# updater = list(Gamma2 = FALSE, GammaEta = FALSE)
+# alignPost = TRUE
+# ToJSON = FALSE
+# FromHPC = FALSE
+# PrepSLURM = TRUE
+# MemPerCpu = "100G"
+# Time = "04:00:00"
+# Path_Hmsc = "/pfs/lustrep4/scratch/project_465000915/IASDT_Model_Test/Hmsc_No_JSON"
+# CheckPyPath = TRUE
+
+
+
+Mod_CV <- function(
     Model = NULL, CVName = c("CV_SAC", "CV_Dist", "CV_Median"),
     partition = NULL, Path_CV = NULL, EnvFile = ".env", initPar = NULL,
     JobName = "CV_Models", updater = list(Gamma2 = FALSE, GammaEta = FALSE),
-    alignPost = TRUE, ToJSON = FALSE, FromHPC = TRUE, MemPerCpu = NULL,
-    Time = NULL, Path_Hmsc = NULL, CheckPyPath = TRUE, ...) {
+    alignPost = TRUE, ToJSON = FALSE, FromHPC = TRUE, PrepSLURM = TRUE,
+    MemPerCpu = NULL, Time = NULL, Path_Hmsc = NULL, CheckPyPath = TRUE, ...) {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  nfolds <- CV_DT0 <- NULL
+  nfolds <- CV_DT0 <- Path_Scratch <- Path_Python <- NULL
 
   # # ++++++++++++++++++++++++++++++++++++
   # Check input parameters
@@ -100,7 +126,7 @@ Mod_SLURM_CV <- function(
 
   # character arguments
   CharArgs <- c(
-    "Model", "JobName", "EnvFile", "Time", "MemPerCpu", "Path_Hmsc", "Path_CV")
+    "Model", "JobName", "EnvFile", "Time", "MemPerCpu", "Path_Hmsc")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = CharArgs, Type = "character")
 
   # numeric arguments
@@ -118,39 +144,28 @@ Mod_SLURM_CV <- function(
       "Path for environment variables: ", EnvFile, " was not found"))
   }
 
-  readRenviron(EnvFile)
-  Path_Python <- Sys.getenv("DP_R_Path_Python")
-  Path_Scratch <- Sys.getenv("Path_LUMI_Scratch")
-
-  # If `FromHPC == TRUE`, check if Path_Scratch path exist
-  if (FromHPC && Path_Scratch == "") {
-    stop("Path_Scratch environment variable not set.")
+  if (FromHPC) {
+    EnvVars2Read <- tibble::tribble(
+      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+      "Path_Python", "DP_R_Path_Python", CheckPyPath, FALSE,
+      "Path_Scratch", "LUMI_Scratch", TRUE, FALSE)
+  } else {
+    EnvVars2Read <- tibble::tribble(
+      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+      "Path_Python", "DP_R_Path_Python", FALSE, FALSE,
+      "Path_Scratch", "LUMI_Scratch", FALSE, FALSE)
   }
 
-  if (FromHPC && magrittr::not(dir.exists(Path_Scratch))) {
-    stop("The scratch folder does not exist")
-  }
-
-  # Check if Path_Python path exist
-  if (Path_Python == "") {
-    stop("Path_Python environment variable not set.")
-  }
-
-  if (CheckPyPath && magrittr::not(dir.exists(Path_Python))) {
-    stop("Path_Python directory does not exist.")
-  }
+  # Assign environment variables and check file and paths
+  IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
   # # ++++++++++++++++++++++++++++++++++++
   # temporarily setting the working directory
   # # ++++++++++++++++++++++++++++++++++++
   if (FromHPC) {
-    if (dir.exists(Path_Scratch)) {
-      InitialWD <- getwd()
-      setwd(Path_Scratch)
-      on.exit(setwd(InitialWD), add = TRUE)
-    } else {
-      stop("The scratch folder does not exist")
-    }
+    InitialWD <- getwd()
+    setwd(Path_Scratch)
+    on.exit(setwd(InitialWD), add = TRUE)
   }
 
   # # ++++++++++++++++++++++++++++++++++++
@@ -374,18 +389,20 @@ Mod_SLURM_CV <- function(
     dplyr::select(-partition) %>%
     tidyr::unnest(CV_DT0)
 
-  # Save model fitting commands to "Commands_All.txt" file
-  CommandFile <- file.path(Path_CV, "Commands_All.txt")
+  # Save model fitting commands to "Commands2Fit.txt" file
+  CommandFile <- file.path(Path_CV, "Commands2Fit.txt")
   f <- file(CommandFile, open = "wb")
   on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
   cat(CV_DT$Command_HPC, sep = "\n", append = FALSE, file = f)
   close(f)
 
-  # Prepare SLURM file to submit ALL commands to HPC
-  IASDT.R::Mod_SLURM(
-    Path_Model = Path_CV, JobName = JobName, MemPerCpu = MemPerCpu,
-    Time = Time, EnvFile = EnvFile, FromHPC = FromHPC, Path_Hmsc = Path_Hmsc,
-    Path_SLURM_Out = Path_CV, ...)
+  if (PrepSLURM) {
+    # Prepare SLURM file to submit ALL commands to HPC
+    IASDT.R::Mod_SLURM(
+      Path_Model = Path_CV, JobName = JobName, MemPerCpu = MemPerCpu,
+      Time = Time, EnvFile = EnvFile, FromHPC = FromHPC, Path_Hmsc = Path_Hmsc,
+      Path_SLURM_Out = Path_CV, ...)
+  }
 
   # Save summary data to disk
   save(CV_DT, file = file.path(Path_CV, "CV_DT.RData"))

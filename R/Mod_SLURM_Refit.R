@@ -41,7 +41,7 @@
 #' @return The function does not return any value but creates command and SLURM
 #'   batch files for refitting models.
 #' @details The function reads the following environment variable:
-#'    - **`Path_LUMI_Scratch`** for the path of the scratch folder of the
+#'    - **`LUMI_Scratch`** for the path of the scratch folder of the
 #'    `BioDT` project on LUMI.
 #' @export
 
@@ -59,14 +59,25 @@ Mod_SLURM_Refit <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Command_HPC <- Post_Path <- NULL
+  Command_HPC <- Post_Path <- Path_Scratch <- NULL
 
-  if (file.exists(EnvFile)) {
-    readRenviron(EnvFile)
-    Path_Scratch <- Sys.getenv("Path_LUMI_Scratch")
-  } else {
+  if (magrittr::not(file.exists(EnvFile))) {
     stop(paste0(
-      'Path for environment variables: "', EnvFile, '" was not found'))
+      "Path for environment variables: ", EnvFile, " was not found"))
+  }
+
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_Scratch", "LUMI_Scratch", FromHPC, FALSE)
+
+  # Assign environment variables and check file and paths
+  IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+
+  # temporarily setting the working directory
+  if (FromHPC) {
+    InitialWD <- getwd()
+    setwd(Path_Scratch)
+    on.exit(setwd(InitialWD), add = TRUE)
   }
 
   if (is.null(JobName)) {
@@ -89,23 +100,8 @@ Mod_SLURM_Refit <- function(
     Args = c("MaxJobCounts", "ntasks", "CpusPerTask", "GpusPerNode"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Args = c("CatJobInfo"), Type = "logical")
-
   rm(AllArgs)
 
-  # temporarily setting the working directory
-
-  if (FromHPC && Path_Scratch == "") {
-    stop("Path_Scratch environment variable not set.")
-  }
-  if (FromHPC && magrittr::not(dir.exists(Path_Scratch))) {
-    stop("The scratch folder does not exist")
-  }
-
-  if (FromHPC) {
-    InitialWD <- getwd()
-    setwd(Path_Scratch)
-    on.exit(setwd(InitialWD), add = TRUE)
-  }
 
   # remove temp files and incomplete RDs files
   Path_Model_Fit <- file.path(Path_Model, "Model_Fitting_HPC")
@@ -149,6 +145,7 @@ Mod_SLURM_Refit <- function(
     purrr::walk(
       .x = seq_len(NSplits),
       .f = function(x) {
+
         CurrIDs <- IDs[[x]]
 
         if (NSplits == 1) {
@@ -172,7 +169,9 @@ Mod_SLURM_Refit <- function(
       EnvFile = EnvFile, GpusPerNode = GpusPerNode,
       CatJobInfo = CatJobInfo, ntasks = ntasks, CpusPerTask = CpusPerTask,
       Path_Hmsc = Path_Hmsc,
-      Command_Prefix = Refit_Prefix, SLURM_Prefix = SLURM_Prefix)
+      Command_Prefix = Refit_Prefix, SLURM_Prefix = SLURM_Prefix,
+      FromHPC = FromHPC,
+      Path_SLURM_Out = NULL)
 
     IASDT.R::CatTime(
       paste0(NJobs, " model variants (in ", NSplits,

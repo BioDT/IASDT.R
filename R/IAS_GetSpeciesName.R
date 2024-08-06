@@ -23,47 +23,45 @@
 #'   is provided, it only returns species information for the listed species,
 #'   otherwise return the full list of IAS.
 #' @details The function reads the following environment variables:
-#'    - **`DP_R_Path_TaxaList`** (if `FromHPC` = `TRUE`) or
-#'    **`DP_R_Path_TaxaList_Local`** (if `FromHPC` = `FALSE`). The function
+#'    - **`DP_R_TaxaInfo`** (if `FromHPC` = `TRUE`) or
+#'    **`DP_R_TaxaInfo_Local`** (if `FromHPC` = `FALSE`). The function
 #'    reads the contents of the
 #'   `Species_List_ID.txt` file from this path.
-#'    - **`DP_R_Path_PA`** (if `FromHPC` = `TRUE`) or **`DP_R_Path_PA_Local`** (if `FromHPC` = `FALSE`). The function reads the contents of the `Sp_PA_Summary_DF.RData` file from this path.
+#'    - **`DP_R_PA`** (if `FromHPC` = `TRUE`) or **`DP_R_PA_Local`** (if `FromHPC` = `FALSE`). The function reads the contents of the `Sp_PA_Summary_DF.RData` file from this path.
 #' @export
-#' @examples
-#' GetSpeciesName(
-#'    EnvFile = "D:/BioDT_IAS/.env", SpID = NULL, FromHPC = FALSE)
-#'
-#' GetSpeciesName(
-#'    EnvFile = "D:/BioDT_IAS/.env", SpID = "Sp_0004", FromHPC = FALSE)
 
 GetSpeciesName <- function(EnvFile = ".env", SpID = NULL, FromHPC = TRUE) {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  IAS_ID <- NCells <- NULL
+  Path_PA <- IAS_ID <- NCells <- SpNamesF <- SpNamesDir <- NULL
 
   # Load environment variables
   if (magrittr::not(file.exists(EnvFile))) {
     stop(paste0("Path for environment variables: ", EnvFile, " was not found"))
   }
-  readRenviron(EnvFile)
 
   if (FromHPC) {
-    SpNamesF <- Sys.getenv("DP_R_Path_TaxaList")
-    if (SpNamesF == "") {
-      stop("DP_R_Path_TaxaList environment variable not set.")
-    }
+    EnvVars2Read <- tibble::tribble(
+      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+      "SpNamesDir", "DP_R_TaxaInfo", TRUE, FALSE,
+      "Path_PA", "DP_R_PA", TRUE, FALSE)
   } else {
-    SpNamesF <- Sys.getenv("DP_R_Path_TaxaList_Local")
-    if (SpNamesF == "") {
-      stop("DP_R_Path_TaxaList_Local environment variable not set.")
-    }
+    EnvVars2Read <- tibble::tribble(
+      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+      "SpNamesDir", "DP_R_TaxaInfo_Local", TRUE, FALSE,
+      "Path_PA", "DP_R_PA_Local", TRUE, FALSE)
   }
 
-  SpNamesF <- file.path(SpNamesF, "Species_List_ID.txt")
+  # Assign environment variables and check file and paths
+  IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+
+  # Reading species info
+  SpNamesF <- file.path(SpNamesDir, "Species_List_ID.txt")
   if (magrittr::not(file.exists(SpNamesF))) {
-    stop(paste0("Species_List_ID.txt file does not exist in the ",
-                SpNamesF, " folder"))
+    stop(
+      paste0("`Species_List_ID.txt` file does not exist in the `",
+             SpNamesDir, "` direcory."), call. = FALSE)
   }
 
   SpNames <- utils::read.delim(SpNamesF, sep = "\t") %>%
@@ -74,18 +72,6 @@ GetSpeciesName <- function(EnvFile = ".env", SpID = NULL, FromHPC = TRUE) {
   if (is.null(SpID)) {
     return(SpNames)
   } else {
-
-    if (FromHPC) {
-      Path_PA <- Sys.getenv("DP_R_Path_PA")
-      if (Path_PA == "") {
-        stop("DP_R_Path_PA environment variable not set.")
-      }
-    } else {
-      Path_PA <- Sys.getenv("DP_R_Path_PA_Local")
-      if (Path_PA == "") {
-        stop("DP_R_Path_PA_Local environment variable not set.")
-      }
-    }
 
     NGridCells <- file.path(Path_PA, "Sp_PA_Summary_DF.RData")
 

@@ -7,7 +7,11 @@
 #'This function prints a formatted message with a timestamp, surrounded by
 #'separators for better readability in console outputs or logs.
 #'@param Message A character string representing the main message to be
-#'  timestamped.  parameter is mandatory and cannot be `NULL` or empty.
+#'  timestamped. This parameter is mandatory and cannot be `NULL` or empty.
+#' @param Date logical; whether to include the date in the timestamp. Default is
+#'   `FALSE`, meaning only the time is printed. See [IASDT.R::CatTime].
+#' @param Extra1,Extra2 integer; the number of extra empty lines to print before
+#'   and after the separator lines. See [IASDT.R::CatSep] for more details.
 #'@param ... Additional arguments passed to [IASDT.R::CatSep] for customizing
 #'  the separators.
 #'@author Ahmed El-Gabbas
@@ -20,14 +24,16 @@
 #' InfoChunk(Message = "finished", Char = "*", CharReps = 60)
 #' @export
 
-InfoChunk <- function(Message = "", ...) {
+InfoChunk <- function(
+    Message = "", Date = TRUE, Extra1 = 1, Extra2 = 2, ...) {
+
   if (is.null(Message)) {
     stop("Message cannot be NULL")
   }
 
-  IASDT.R::CatSep(..., Extra1 = 1)
-  IASDT.R::CatTime(Message)
-  IASDT.R::CatSep(..., Extra2 = 1)
+  IASDT.R::CatSep(..., Extra1 = Extra1)
+  IASDT.R::CatTime(Message, Date = Date)
+  IASDT.R::CatSep(..., Extra2 = Extra2)
 
   return(invisible(NULL))
 }

@@ -4,11 +4,17 @@
 \alias{InfoChunk}
 \title{Print Information chunk with time stamp}
 \usage{
-InfoChunk(Message = "", ...)
+InfoChunk(Message = "", Date = TRUE, Extra1 = 1, Extra2 = 2, ...)
 }
 \arguments{
 \item{Message}{A character string representing the main message to be
-timestamped.  parameter is mandatory and cannot be \code{NULL} or empty.}
+timestamped. This parameter is mandatory and cannot be \code{NULL} or empty.}
+
+\item{Date}{logical; whether to include the date in the timestamp. Default is
+\code{FALSE}, meaning only the time is printed. See \link{CatTime}.}
+
+\item{Extra1, Extra2}{integer; the number of extra empty lines to print before
+and after the separator lines. See \link{CatSep} for more details.}
 
 \item{...}{Additional arguments passed to \link{CatSep} for customizing
 the separators.}

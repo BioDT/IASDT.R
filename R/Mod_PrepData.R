@@ -38,15 +38,15 @@
 #'   modelling data. Otherwise, invisibly returns `NULL`.
 #' @details The function reads the following environment variables:
 #'    - **`DP_R_Grid`** (if `FromHPC` = `TRUE`) or **`DP_R_Grid_Local`** (if
-#'   `FromHPC` = `FALSE`). The function reads the content of the following files
-#'   in this path: `Grid_10_sf.RData`, `Grid_10_Land_Crop.RData`, and
-#'   `Grid_10_Land_Crop_sf_Country.RData`
-#'    - **`DP_R_PA`** (if `FromHPC` = `TRUE`) or **`DP_R_PA_Local`** (if
-#'    `FromHPC` = `FALSE`). The function reads the content of the
-#'     `Sp_PA_Summary_DF.RData` file from this path.
+#'    `FromHPC` = `FALSE`). The function reads the content of the `Grid_10_Land_Crop.RData` and 
+#'    `Grid_10_Land_Crop_sf_Country.RData` files
+#'    - **`DP_R_Grid_Ref`** or **`DP_R_Grid_Ref_Local`**: The function reads the 
+#'    content of `Grid_10_sf.RData` file from this path.
+#'    - **`DP_R_PA`** or **`DP_R_PA_Local`**: The function reads the contents of the
+#'    `Sp_PA_Summary_DF.RData` file from this path.
 #'    - **`DP_R_CLC_Summary`** / **`DP_R_CLC_Summary_Local`**: Path containing
 #'    the `PercCov_SynHab_Crop.RData` file. This file contains maps for the
-#'   percentage coverage of each SynHab habitat type per grid cell.
+#'    percentage coverage of each SynHab habitat type per grid cell.
 #'    - **`DP_R_CHELSA_Time_CC`** / **`DP_R_CHELSA_Time_CC_Local`**: Path
 #'    containing the `St_1981_2010.RData` file. This file contains processed
 #'    `CHELSA` data for the current climate.
@@ -103,8 +103,8 @@ Mod_PrepData <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   NCells <- SpeciesID <- Species_name <- Species_File <- PA <-
-    cell <- x <- Path_PA <- Path_Grid <- Path_CLC_Summ <- Path_Roads <-
-    Path_Rail <- Path_Bias <- Path_Chelsa_Time_CC <- NULL
+    cell <- x <- Path_PA <- Path_Grid <- Path_Grid_Ref <- Path_CLC_Summ <- 
+    Path_Roads <- Path_Rail <- Path_Bias <- Path_Chelsa_Time_CC <- NULL
 
   IASDT.R::CatTime("Checking input arguments")
   AllArgs <- ls()
@@ -127,7 +127,8 @@ Mod_PrepData <- function(
   if (FromHPC) {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Grid", "DP_R_Grid", TRUE, FALSE,
+      "Path_Grid", "DP_R_Grid", FALSE, FALSE,
+      "Path_Grid_Ref", "DP_R_Grid_Ref", TRUE, FALSE,
       "Path_PA", "DP_R_PA", TRUE, FALSE,
       "Path_CLC_Summ", "DP_R_CLC_Summary", TRUE, FALSE,
       "Path_Chelsa_Time_CC", "DP_R_CHELSA_Time_CC", TRUE, FALSE,
@@ -138,7 +139,8 @@ Mod_PrepData <- function(
   } else {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE,
+      "Path_Grid", "DP_R_Grid", FALSE, FALSE,
+      "Path_Grid_Ref", "DP_R_Grid_Ref_Local", TRUE, FALSE,
       "Path_PA", "DP_R_PA_Local", TRUE, FALSE,
       "Path_CLC_Summ", "DP_R_CLC_Summary_Local", TRUE, FALSE,
       "Path_Chelsa_Time_CC", "DP_R_CHELSA_Time_CC_Local", TRUE, FALSE,
@@ -229,7 +231,7 @@ Mod_PrepData <- function(
 
   IASDT.R::CatTime("   >>>   Reference grid   >>>   sf")
   # Reference grid as sf
-  Grid_SF <- file.path(Path_Grid, "Grid_10_sf.RData")
+  Grid_SF <- file.path(Path_Grid_Ref, "Grid_10_sf.RData")
   if (magrittr::not(file.exists(Grid_SF))) {
     stop(paste0(Grid_SF, " file does not exist"))
   }

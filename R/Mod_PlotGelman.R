@@ -183,7 +183,8 @@ PlotGelman <- function(
       warning("No plots to save")
     }
 
-    IASDT.R::CatDiff(.StartTime, Prefix = "\nCompleted in ", CatInfo = FALSE)
+    IASDT.R::CatDiff(
+      InitTime = .StartTime, ChunkText = "Function summary", CatInfo = TRUE)
 
     if (ReturnPlots) {
       return(PlotList)

@@ -326,7 +326,8 @@ Mod_MergeChains <- function(
       OutPath = file.path(Path_Model, paste0(ModInfoName, ".RData")))
   }
 
-  IASDT.R::CatDiff(.StartTime, Prefix = "\nCompleted in ", CatInfo = FALSE)
+  IASDT.R::CatDiff(
+    InitTime = .StartTime, ChunkText = "Function summary", CatInfo = TRUE)
 
   return(invisible(NULL))
 }

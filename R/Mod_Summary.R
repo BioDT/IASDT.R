@@ -25,9 +25,8 @@
 #'   it also returns the data as R object.
 #' @export
 #' @details The function reads the following environment variables:
-#'    - **`DP_R_TaxaInfo`** (if `FromHPC` = `TRUE`) or
-#'    **`DP_R_TaxaInfo_Local`** (if `FromHPC` = `FALSE`). The function
-#'    reads the content of the `Species_List_ID.txt` file from this path.
+#'   - **`DP_R_TaxaInfo`** (if `FromHPC` = `TRUE`) or
+#'     **`DP_R_TaxaInfo_Local`** (if `FromHPC` = `FALSE`) for the location of the `Species_List_ID.txt` file containing species information.
 #' @name Mod_Summary
 
 Mod_Summary <- function(
@@ -45,7 +44,23 @@ Mod_Summary <- function(
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   VarSp <- Variable <- Species <- Sp1_abb <- Sp2_abb <- IAS_ID <- Val <-
     taxon_name <- Species_name <- Sp1_Species_name <- Sp2_Species_name <-
-    Q2_5 <- Q97_5 <- Sp1_Sp_abb <- Sp2_Sp_abb <- SpNamesF <- SpNamesDir <- NULL
+    Q2_5 <- Q97_5 <- Sp1_Sp_abb <- Sp2_Sp_abb <- TaxaInfoFile <- NULL
+
+
+  # Prepare Species list
+  if (FromHPC) {
+    EnvVars2Read <- tibble::tribble(
+      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+      "TaxaInfoFile", "DP_R_TaxaInfo", FALSE, TRUE)
+  } else {
+    EnvVars2Read <- tibble::tribble(
+      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+      "TaxaInfoFile", "DP_R_TaxaInfo_Local", FALSE, TRUE)
+  }
+
+  # Assign environment variables and check file and paths
+  IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+
 
   # DataPrep helper function -------
   DataPrep <- function(DT) {
@@ -129,30 +144,8 @@ Mod_Summary <- function(
 
   # Omega ------
   IASDT.R::CatTime("Omega")
-
-  # Prepare Species list
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "SpNamesDir", "DP_R_TaxaInfo", TRUE, FALSE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "SpNamesDir", "DP_R_TaxaInfo_Local", TRUE, FALSE)
-  }
-
-  # Assign environment variables and check file and paths
-  IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
-
-  SpNamesF <- file.path(SpNamesDir, "Species_List_ID.txt")
-
-  if (magrittr::not(file.exists(SpNamesF))) {
-    stop(paste0(
-      "`Species_List_ID.txt` file does not exist in the ",
-      SpNamesDir, " folder"))
-  }
-
-  ListSp <- utils::read.delim(SpNamesF, sep = "\t") %>%
+  
+  ListSp <- utils::read.delim(TaxaInfoFile, sep = "\t") %>%
     tibble::tibble() %>%
     dplyr::mutate(
       IAS_ID = stringr::str_pad(IAS_ID, pad = "0", width = 4),

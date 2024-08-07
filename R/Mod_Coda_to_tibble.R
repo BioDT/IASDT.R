@@ -25,9 +25,8 @@
 #'   `Type`. The structure of the returned tibble varies depending on the `Type`
 #'   parameter.
 #' @details The function reads the following environment variables:
-#'    - **`DP_R_TaxaInfo`** (if `FromHPC` = `TRUE`) or
-#'    **`DP_R_TaxaInfo_Local`** (if `FromHPC` = `FALSE`). The function
-#'    reads the content of the `Species_List_ID.txt` file from this path.
+#'   - **`DP_R_TaxaInfo`** (if `FromHPC` = `TRUE`) or
+#'     **`DP_R_TaxaInfo_Local`** (if `FromHPC` = `FALSE`) for the location of the `Species_List_ID.txt` file containing species information.
 #' @export
 #' @examples
 #' library(Hmsc)
@@ -44,7 +43,7 @@ Coda_to_tibble <- function(
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Chain <- Iter <- Alpha <- AlphaNum <- Factor <- CHAIN <- ITER <-
     Value <- IAS_ID <- Species_name <- Var_Sp <- Variable <- Species <-
-    SpComb <- Sp1 <- IAS1 <- Sp2 <- IAS2 <- SpNamesF <- NULL
+    SpComb <- Sp1 <- IAS1 <- Sp2 <- IAS2 <- TaxaInfoFile <- NULL
 
   # # |||||||||||||||||||||||||||||||||||||||
   # Check missing arguments ----
@@ -130,25 +129,19 @@ Coda_to_tibble <- function(
     if (FromHPC) {
       EnvVars2Read <- tibble::tribble(
         ~VarName, ~Value, ~CheckDir, ~CheckFile,
-        "SpNamesF", "DP_R_TaxaInfo", TRUE, FALSE)
+        "TaxaInfoFile", "DP_R_TaxaInfo", FALSE, TRUE)
     } else {
       EnvVars2Read <- tibble::tribble(
         ~VarName, ~Value, ~CheckDir, ~CheckFile,
-        "SpNamesF", "DP_R_TaxaInfo_Local", TRUE, FALSE)
+        "TaxaInfoFile", "DP_R_TaxaInfo_Local", FALSE, TRUE)
     }
 
     # Assign environment variables and check file and paths
     IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
 
-    SpNamesF <- file.path(SpNamesF, "Species_List_ID.txt")
-    if (magrittr::not(file.exists(SpNamesF))) {
-      stop(paste0("Species_List_ID.txt file does not exist in the ",
-                  SpNamesF, " folder"))
-    }
-
     SpeciesNames <- readr::read_tsv(
-      file = SpNamesF, show_col_types = FALSE) %>%
+      file = TaxaInfoFile, show_col_types = FALSE) %>%
       dplyr::select(IAS_ID, Species = Species_name) %>%
       dplyr::mutate(
         IAS_ID = stringr::str_pad(IAS_ID, pad = "0", width = 4),

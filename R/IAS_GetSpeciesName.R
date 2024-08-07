@@ -23,10 +23,8 @@
 #'   is provided, it only returns species information for the listed species,
 #'   otherwise return the full list of IAS.
 #' @details The function reads the following environment variables:
-#'    - **`DP_R_TaxaInfo`** (if `FromHPC` = `TRUE`) or
-#'    **`DP_R_TaxaInfo_Local`** (if `FromHPC` = `FALSE`). The function
-#'    reads the contents of the
-#'   `Species_List_ID.txt` file from this path.
+#'   - **`DP_R_TaxaInfo`** (if `FromHPC` = `TRUE`) or
+#'     **`DP_R_TaxaInfo_Local`** (if `FromHPC` = `FALSE`) for the location of the `Species_List_ID.txt` file containing species information.
 #'    - **`DP_R_PA`** (if `FromHPC` = `TRUE`) or **`DP_R_PA_Local`** (if `FromHPC` = `FALSE`). The function reads the contents of the `Sp_PA_Summary_DF.RData` file from this path.
 #' @export
 
@@ -34,7 +32,7 @@ GetSpeciesName <- function(EnvFile = ".env", SpID = NULL, FromHPC = TRUE) {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Path_PA <- IAS_ID <- NCells <- SpNamesF <- SpNamesDir <- NULL
+  Path_PA <- IAS_ID <- NCells <- TaxaInfoFile <- NULL
 
   # Load environment variables
   if (magrittr::not(file.exists(EnvFile))) {
@@ -44,12 +42,12 @@ GetSpeciesName <- function(EnvFile = ".env", SpID = NULL, FromHPC = TRUE) {
   if (FromHPC) {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "SpNamesDir", "DP_R_TaxaInfo", TRUE, FALSE,
+      "TaxaInfoFile", "DP_R_TaxaInfo", FALSE, TRUE,
       "Path_PA", "DP_R_PA", TRUE, FALSE)
   } else {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "SpNamesDir", "DP_R_TaxaInfo_Local", TRUE, FALSE,
+      "TaxaInfoFile", "DP_R_TaxaInfo_Local", FALSE, TRUE,
       "Path_PA", "DP_R_PA_Local", TRUE, FALSE)
   }
 
@@ -57,14 +55,7 @@ GetSpeciesName <- function(EnvFile = ".env", SpID = NULL, FromHPC = TRUE) {
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
   # Reading species info
-  SpNamesF <- file.path(SpNamesDir, "Species_List_ID.txt")
-  if (magrittr::not(file.exists(SpNamesF))) {
-    stop(
-      paste0("`Species_List_ID.txt` file does not exist in the `",
-             SpNamesDir, "` direcory."), call. = FALSE)
-  }
-
-  SpNames <- utils::read.delim(SpNamesF, sep = "\t") %>%
+   SpNames <- utils::read.delim(TaxaInfoFile, sep = "\t") %>%
     tibble::tibble() %>%
     dplyr::mutate(
       IAS_ID = paste0("Sp_", stringr::str_pad(IAS_ID, pad = "0", width = 4)))

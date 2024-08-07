@@ -239,7 +239,7 @@ CLC_Plot <- function(
         })
     })
 
-  IASDT.R::CatTime("        >>>>> Multiple panels per file ")
+  IASDT.R::CatTime("        Multiple panels per file ")
 
   CommonLegend <- cowplot::get_legend(
     (ggplot2::ggplot() +

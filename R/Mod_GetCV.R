@@ -52,9 +52,9 @@
 #'    - **`DP_R_Grid`** (if `FromHPC = TRUE`) or
 #'    **`DP_R_Grid_Local`** (if `FromHPC = FALSE`). The function reads
 #'   the content of the `Grid_10_Land_Crop.RData` file from this path.
-#'    - **`DP_R_EUBound`** (if `FromHPC = TRUE`) or
-#'    **`DP_R_EUBound_Local`** (if `FromHPC = FALSE`). The function reads
-#'   the content of the `Bound_sf_Eur.RData` file from this path.
+#'   - **`DP_R_EUBound_sf`** (if `FromHPC` = `TRUE`) or
+#'     **`DP_R_EUBound_sf_Local`** (if `FromHPC` = `FALSE`): path for the 
+#'     `RData` file containing the country boundaries (`sf` object).
 #' @export
 
 GetCV <- function(
@@ -63,7 +63,7 @@ GetCV <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Path_Grid <- Path_EU_Bound <- NULL
+  Path_Grid <- NULL
 
   if (is.null(DT) || is.null(EnvFile) || is.null(OutPath) || is.null(XVars)) {
     stop("DT, EnvFile, OutPath, and XVars can not be empty")
@@ -90,12 +90,12 @@ GetCV <- function(
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
       "Path_Grid", "DP_R_Grid", TRUE, FALSE,
-      "Path_EU_Bound", "DP_R_EUBound", TRUE, FALSE)
+      "EU_Bound", "DP_R_EUBound_sf", FALSE, TRUE)
   } else {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
       "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE,
-      "Path_EU_Bound", "DP_R_EUBound_Local", TRUE, FALSE)
+      "EU_Bound", "DP_R_EUBound_sf_Local", FALSE, TRUE)
   }
 
   # Assign environment variables and check file and paths
@@ -171,10 +171,6 @@ GetCV <- function(
       sf::st_bbox()
     AspectRatio <- (PlotBox[3] - PlotBox[1]) / (PlotBox[4] - PlotBox[2])
 
-    EU_Bound <- file.path(Path_EU_Bound, "Bound_sf_Eur.RData")
-    if (magrittr::not(file.exists(EU_Bound))) {
-      stop(paste0("Path for the Europe boundaries does not exist: ", EU_Bound))
-    }
     EU_Bound <- IASDT.R::LoadAs(EU_Bound) %>%
       magrittr::extract2("Bound_sf_Eur_s") %>%
       magrittr::extract2("L_01") %>%

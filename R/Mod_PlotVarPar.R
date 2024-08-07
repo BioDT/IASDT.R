@@ -37,9 +37,8 @@
 #' @name PlotVarPar
 #' @author Ahmed El-Gabbas
 #' @details The function reads the following environment variables:
-#'    - **`DP_R_TaxaInfo`** (if `FromHPC` = `TRUE`) or
-#'    **`DP_R_TaxaInfo_Local`** (if `FromHPC` = `FALSE`). The function
-#'    reads the content of the `TaxaList.RData` file from this path.
+#'   - **`DP_R_TaxaInfo_RData`** (if `FromHPC` = `TRUE`) or
+#'     **`DP_R_TaxaInfo_RData_Local`** (if `FromHPC` = `FALSE`) for the location of the `TaxaList.RData` file containing species information.
 #' @return If `ReturnGG` is `TRUE`, returns a ggplot object of the variance
 #'   partitioning plots. Otherwise, returns `NULL`.
 #' @export
@@ -57,7 +56,7 @@ PlotVarPar <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  IAS_ID <- Species_name <- Species <- variable <- value <- SpNamesF <- NULL
+  IAS_ID <- Species_name <- Species <- variable <- value <- TaxaInfoFile <- NULL
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Check input arguments ------
@@ -97,23 +96,17 @@ PlotVarPar <- function(
   if (FromHPC) {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "SpNamesF", "DP_R_TaxaInfo", TRUE, FALSE)
+      "TaxaInfoFile", "DP_R_TaxaInfo_RData", FALSE, TRUE)
   } else {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "SpNamesF", "DP_R_TaxaInfo_Local", TRUE, FALSE)
+      "TaxaInfoFile", "DP_R_TaxaInfo_RData_Local", FALSE, TRUE)
   }
 
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
-  SpNamesF <- file.path(SpNamesF, "TaxaList.RData")
-  if (magrittr::not(file.exists(SpNamesF))) {
-    stop(paste0(
-      "TaxaList.RData file does not exist in the ", SpNamesF, " folder"))
-  }
-
-  SpList <- IASDT.R::LoadAs(SpNamesF) %>%
+  SpList <- IASDT.R::LoadAs(TaxaInfoFile) %>%
     dplyr::select(Species = IAS_ID, Species_name) %>%
     dplyr::mutate(
       Species = stringr::str_pad(string = Species, width = 4, pad = "0"),
@@ -457,7 +450,8 @@ PlotVarPar <- function(
   ggplot2::ggsave(
     plot = VarParPlot, filename = PlotPath2, height = 16, width = 24, dpi = 600)
 
-  IASDT.R::CatDiff(.StartTime, Prefix = "\nCompleted in ", CatInfo = FALSE)
+  IASDT.R::CatDiff(
+    InitTime = .StartTime, ChunkText = "Function summary", CatInfo = TRUE)
 
   if (ReturnGG) {
     return(VarParPlot)

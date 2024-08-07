@@ -44,8 +44,7 @@ transformation for specific parameter types: \code{rho}, \code{alpha}, \code{ome
 The function reads the following environment variables:
 \itemize{
 \item \strong{\code{DP_R_TaxaInfo}} (if \code{FromHPC} = \code{TRUE}) or
-\strong{\code{DP_R_TaxaInfo_Local}} (if \code{FromHPC} = \code{FALSE}). The function
-reads the content of the \code{Species_List_ID.txt} file from this path.
+\strong{\code{DP_R_TaxaInfo_Local}} (if \code{FromHPC} = \code{FALSE}) for the location of the \code{Species_List_ID.txt} file containing species information.
 }
 }
 \examples{

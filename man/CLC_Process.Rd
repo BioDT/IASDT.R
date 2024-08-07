@@ -24,11 +24,6 @@ The function does not return a value but produces side effects such
 as saving processed data and plots to specified directories.
 }
 \description{
-\itemize{
-\item \href{https://land.copernicus.eu/pan-european/corine-land-cover/clc2018}{Data source} | \href{https://doi.org/10.2909/960998c1-1870-4e82-8051-6485205ebbac}{Citation}
-}
-}
-\details{
 Processes Corine Land Cover (CLC) data for environmental modeling purposes.
 The function calculates the percentage coverage of CLC per grid cell. It
 estimate the percent coverage at the 3 CLC levels, and cross-walk for
@@ -36,6 +31,31 @@ estimate the percent coverage at the 3 CLC levels, and cross-walk for
 most common class per grid cell (3 CLC levels, EUNIS, and SynHab habitat
 types) and prepares reference grid for models. The function optionally plots
 \% coverage maps.
+}
+\details{
+\itemize{
+\item \href{https://land.copernicus.eu/pan-european/corine-land-cover/clc2018}{Data source}
+\item Citation](https://doi.org/10.2909/960998c1-1870-4e82-8051-6485205ebbac)
+}
+
+The function reads the following environment variable:
+\itemize{
+\item \strong{\code{DP_R_Grid}} (if \code{FromHPC = TRUE}) or
+\strong{\code{DP_R_Grid_Local}} (if \code{FromHPC = FALSE}): Path for saving the processed CLC data.
+\item \strong{\code{DP_R_Grid_Ref}} (if \code{FromHPC = TRUE}) or
+\strong{\code{DP_R_Grid_Ref_Local}} (if \code{FromHPC = FALSE}). The function reads
+the content of \code{Grid_10_sf.RData} and \code{Grid_10_Raster.RData} files from this
+path.
+\item \strong{\code{DP_R_EUBound_sf}} (if \code{FromHPC} = \code{TRUE}) or
+\strong{\code{DP_R_EUBound_sf_Local}} (if \code{FromHPC} = \code{FALSE}): path for the
+\code{RData} file containing the country boundaries (\code{sf} object).
+\item \strong{\code{DP_R_CLC}} (if \code{FromHPC} = \code{TRUE}) or
+\strong{\code{DP_R_CLC_Local}} (if \code{FromHPC} = \code{FALSE}): directory where the outputs of CLC data processing are processed.
+\item \strong{\code{DP_R_CLC_CW}} (if \code{FromHPC} = \code{TRUE}) or
+\strong{\code{DP_R_CLC_CW_Local}} (if \code{FromHPC} = \code{FALSE}): path for the \code{crossWalk.txt} file containing custom cross-walk between CLC values and their corresponding values for three levels of CLC and EUNIS19 & SynHab habitat types.
+\item \strong{\code{DP_R_CLC_tif}} (if \code{FromHPC} = \code{TRUE}) or
+\strong{\code{DP_R_CLC_tif_Local}} (if \code{FromHPC} = \code{FALSE}): path for the input CLC \code{.tif} file.
+}
 }
 \author{
 Ahmed El-Gabbas

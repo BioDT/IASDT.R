@@ -62,11 +62,11 @@ R object.
 The function reads the following environment variables:
 \itemize{
 \item \strong{\code{DP_R_Grid}} (if \code{FromHPC} = \code{TRUE}) or \strong{\code{DP_R_Grid_Local}} (if
-\code{FromHPC} = \code{FALSE}). The function reads the content of the following files
-in this path: \code{Grid_10_sf.RData}, \code{Grid_10_Land_Crop.RData}, and
-\code{Grid_10_Land_Crop_sf_Country.RData}
-\item \strong{\code{DP_R_PA}} (if \code{FromHPC} = \code{TRUE}) or \strong{\code{DP_R_PA_Local}} (if
-\code{FromHPC} = \code{FALSE}). The function reads the content of the
+\code{FromHPC} = \code{FALSE}). The function reads the content of the \code{Grid_10_Land_Crop.RData} and
+\code{Grid_10_Land_Crop_sf_Country.RData} files
+\item \strong{\code{DP_R_Grid_Ref}} or \strong{\code{DP_R_Grid_Ref_Local}}: The function reads the
+content of \code{Grid_10_sf.RData} file from this path.
+\item \strong{\code{DP_R_PA}} or \strong{\code{DP_R_PA_Local}}: The function reads the contents of the
 \code{Sp_PA_Summary_DF.RData} file from this path.
 \item \strong{\code{DP_R_CLC_Summary}} / \strong{\code{DP_R_CLC_Summary_Local}}: Path containing
 the \code{PercCov_SynHab_Crop.RData} file. This file contains maps for the

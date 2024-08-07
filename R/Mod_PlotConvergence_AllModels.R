@@ -34,7 +34,7 @@ PlotConvergence_AllModels <- function(
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   GPP_Thin <- Path_Coda <- Path_FittedMod <- M_Name_Fit <- Tree <- rL <-
     M_thin <- M_samples <- Omega_Gelman <- Omega_ESS <- Beta_Gelman <-
-    Beta_ESS <- ESS2 <- Path_Trace_Rho <- Rho <- Path_Trace_Alpha <- 
+    Beta_ESS <- ESS2 <- Path_Trace_Rho <- Rho <- Path_Trace_Alpha <-
     Path_Trace_Rho <- dplyr <- sf <- Hmsc <- coda <- magrittr <- NULL
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -58,7 +58,7 @@ PlotConvergence_AllModels <- function(
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Prepare/load convergence data")
-  
+
   Path_Convergence_All <- file.path(Path_Model, "Model_Convergence_All")
   Path_ConvDT <- file.path(Path_Convergence_All, "DT")
   fs::dir_create(c(Path_ConvDT, Path_Convergence_All))
@@ -81,7 +81,7 @@ PlotConvergence_AllModels <- function(
     Path_FittedMod <- Model_Info$Path_FittedMod[[ID]]
     M_Name_Fit <- Model_Info$M_Name_Fit[[ID]]
     Tree <- Model_Info$Tree[[ID]]
-   
+
     CodaModelExist <- all(file.exists(c(Path_Coda, Path_FittedMod)))
 
     # prepare traceplot ----
@@ -217,7 +217,7 @@ PlotConvergence_AllModels <- function(
   save(
     Convergence_DT,
     file = file.path(Path_Convergence_All, "Convergence_DT.RData"))
-  
+
   snow::stopCluster(c1)
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -484,7 +484,8 @@ PlotConvergence_AllModels <- function(
       grobs = list(Plot, Plot2), nrow = 1, ncol = 1, top = NULL),
     width = 18, height = 12)
 
-  IASDT.R::CatDiff(.StartTime, Prefix = "\nCompleted in ", CatInfo = FALSE)
+  IASDT.R::CatDiff(
+    InitTime = .StartTime, ChunkText = "Function summary", CatInfo = TRUE)
 
   return(invisible(NULL))
 }

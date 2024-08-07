@@ -24,8 +24,26 @@
 #' @name CLC_Process
 #' @author Ahmed El-Gabbas
 #' @export
-#' @description
-#' - [Data source](https://land.copernicus.eu/pan-european/corine-land-cover/clc2018) | [Citation](https://doi.org/10.2909/960998c1-1870-4e82-8051-6485205ebbac)
+#' @details
+#' - [Data source](https://land.copernicus.eu/pan-european/corine-land-cover/clc2018)
+#' - Citation](https://doi.org/10.2909/960998c1-1870-4e82-8051-6485205ebbac)
+#'
+#' The function reads the following environment variable:
+#'    - **`DP_R_Grid`** (if `FromHPC = TRUE`) or
+#'    **`DP_R_Grid_Local`** (if `FromHPC = FALSE`): Path for saving the processed CLC data.
+#'    - **`DP_R_Grid_Ref`** (if `FromHPC = TRUE`) or
+#'    **`DP_R_Grid_Ref_Local`** (if `FromHPC = FALSE`). The function reads
+#' the content of `Grid_10_sf.RData` and `Grid_10_Raster.RData` files from this
+#' path.
+#'    - **`DP_R_EUBound_sf`** (if `FromHPC` = `TRUE`) or
+#'     **`DP_R_EUBound_sf_Local`** (if `FromHPC` = `FALSE`): path for the
+#' `RData` file containing the country boundaries (`sf` object).
+#'   - **`DP_R_CLC`** (if `FromHPC` = `TRUE`) or
+#'     **`DP_R_CLC_Local`** (if `FromHPC` = `FALSE`): directory where the outputs of CLC data processing are processed.
+#'   - **`DP_R_CLC_CW`** (if `FromHPC` = `TRUE`) or
+#'     **`DP_R_CLC_CW_Local`** (if `FromHPC` = `FALSE`): path for the `crossWalk.txt` file containing custom cross-walk between CLC values and their corresponding values for three levels of CLC and EUNIS19 & SynHab habitat types.
+#'   - **`DP_R_CLC_tif`** (if `FromHPC` = `TRUE`) or
+#'     **`DP_R_CLC_tif_Local`** (if `FromHPC` = `FALSE`): path for the input CLC `.tif` file.
 
 CLC_Process <- function(
     EnvFile = ".env", FromHPC = TRUE, MinLandPerc = 15, PlotCLC = TRUE) {
@@ -39,7 +57,8 @@ CLC_Process <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   SynHab_desc <- CNTR_ID <- geometry <- Name <- Path_CLC <- Path_Grid <-
-    Path_EUBound <- km <- Majority <- Path_CLC_tif <- Path_CLC_CW <- NULL
+    Path_Grid_Ref <- km <- Majority <- Path_CLC_tif <- Path_CLC_CW <-
+    EU_Bound <- Value <- NULL
 
   if (is.null(EnvFile)) {
     stop("EnvFile can not be empty")
@@ -64,35 +83,41 @@ CLC_Process <- function(
   # # ||||||||||||||||||||||||||||||||||||||||||||
   # Loading environment variables
   # # ||||||||||||||||||||||||||||||||||||||||||||
-
+  IASDT.R::CatTime(" >>>>> Loading and checking environment variables")
   if (FromHPC) {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Grid", "DP_R_Grid", TRUE, FALSE,
-      "Path_CLC", "DP_R_CLC", FALSE, FALSE,
+      "Path_Grid", "DP_R_Grid", FALSE, FALSE,
+      "Path_Grid_Ref", "DP_R_Grid_Ref", TRUE, FALSE,
+      "Path_CLC", "DP_R_CLC", TRUE, FALSE,
       "Path_CLC_tif", "DP_R_CLC_tif", FALSE, TRUE,
       "Path_CLC_CW", "DP_R_CLC_CW", FALSE, TRUE,
-      "Path_EUBound", "DP_R_EUBound", TRUE, FALSE)
+      "EU_Bound", "DP_R_EUBound_sf", FALSE, TRUE)
   } else {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE,
-      "Path_CLC", "DP_R_CLC_Local", FALSE, FALSE,
+      "Path_Grid", "DP_R_Grid", FALSE, FALSE,
+      "Path_Grid_Ref", "DP_R_Grid_Ref_Local", TRUE, FALSE,
+      "Path_CLC", "DP_R_CLC_Local", TRUE, FALSE,
       "Path_CLC_tif", "DP_R_CLC_tif_Local", FALSE, TRUE,
       "Path_CLC_CW", "DP_R_CLC_CW_Local", FALSE, TRUE,
-      "Path_EUBound", "DP_R_EUBound_Local", TRUE, FALSE)
+      "EU_Bound", "DP_R_EUBound_sf_Local", FALSE, TRUE)
   }
 
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
+  # # ||||||||||||||||||||||||||||||||||||||||||||
+  # Check files/directories
+  # # ||||||||||||||||||||||||||||||||||||||||||||
+
+  IASDT.R::CatTime(" >>>>> Check files/directories")
   fs::dir_create(Path_CLC)
 
-  Path_Grid_sf <- file.path(Path_Grid, "Grid_10_sf.RData")
-  Path_Grid_rast <- file.path(Path_Grid, "Grid_10_Raster.RData")
-  Path_EUBound_sf <- file.path(Path_EUBound, "Bound_sf_Eur.RData")
+  Path_Grid_sf <- file.path(Path_Grid_Ref, "Grid_10_sf.RData")
+  Path_Grid_rast <- file.path(Path_Grid_Ref, "Grid_10_Raster.RData")
 
-  requiredPaths <- c(Path_Grid_sf, Path_CLC_CW, Path_Grid_rast, Path_EUBound_sf)
+  requiredPaths <- c(Path_Grid_sf, Path_CLC_CW, Path_Grid_rast)
   lapply(requiredPaths, function(path) {
     if (magrittr::not(file.exists(path))) {
       stop("Required path does not exist: ", path)
@@ -116,10 +141,13 @@ CLC_Process <- function(
   IASDT.R::CatTime(" >>>>> Loading reference grid")
 
   # sf
+  IASDT.R::CatTime(" >>>>>  >>>>> sf")
+
   Grid_sf <- IASDT.R::LoadAs(Path_Grid_sf) %>%
     magrittr::extract2("Grid_10_sf_s")
 
   # raster
+  IASDT.R::CatTime(" >>>>>  >>>>> raster")
   Grid_R <- IASDT.R::LoadAs(Path_Grid_rast)
 
   # # ||||||||||||||||||||||||||||||||||||||||||||
@@ -127,7 +155,7 @@ CLC_Process <- function(
   # # ||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime(" >>>>> Loading country boundaries")
-  EUBound_sf <- IASDT.R::LoadAs(Path_EUBound_sf) %>%
+  EUBound_sf <- IASDT.R::LoadAs(EU_Bound) %>%
     magrittr::extract2("Bound_sf_Eur_s")
 
   # # ||||||||||||||||||||||||||||||||||||||||||||
@@ -145,15 +173,21 @@ CLC_Process <- function(
   # sub-folders to store output RData files
   Path_CLC_Summary_RData <- file.path(Path_CLC, "Summary_RData")
 
-  # sub-folders to store maps
-  Path_CLC_Summary_JPEG <- file.path(Path_CLC, "Summary_JPEG")
-  Path_CLC_Summary_JPEG_Free <- file.path(Path_CLC_Summary_JPEG, "FreeLegend")
-
   # Create folders when necessary
   c(Path_CLC, Path_CLC_Summary_Tif, Path_CLC_Summary_Tif_Crop,
-    Path_CLC_Summary_RData, Path_CLC_Summary_JPEG,
-    Path_CLC_Summary_JPEG_Free) %>%
+    Path_CLC_Summary_RData) %>%
     purrr::walk(fs::dir_create)
+
+
+  if (PlotCLC) {
+    # sub-folders to store JPEG files
+    Path_CLC_Summary_JPEG <- file.path(Path_CLC, "Summary_JPEG")
+    Path_CLC_Summary_JPEG_Free <- file.path(
+      Path_CLC_Summary_JPEG, "FreeLegend")
+
+    c(Path_CLC_Summary_JPEG, Path_CLC_Summary_JPEG_Free) %>%
+      purrr::walk(fs::dir_create)
+  }
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -165,11 +199,18 @@ CLC_Process <- function(
   IASDT.R::InfoChunk(
     Message = "Calculate fraction of each CLC class at each grid cell")
 
+  # # ||||||||||||||||||||||||||||||||||||||||||||
+  # Loading CLC tif file
+  # # ||||||||||||||||||||||||||||||||||||||||||||
+
   IASDT.R::CatTime(" >>>>> Loading CLC tif file")
   CLC_Rast <- terra::rast(Path_CLC_tif)
   terra::NAflag(CLC_Rast) <- 128
 
+  # # ||||||||||||||||||||||||||||||||||||||||||||
   # Calculate fraction for each CLC value
+  # # ||||||||||||||||||||||||||||||||||||||||||||
+
   IASDT.R::CatTime(" >>>>> Processing using exactextractr::exact_extract function")
 
   CLC_Fracs <- Grid_sf %>%
@@ -183,9 +224,17 @@ CLC_Process <- function(
         force_df = TRUE, default_value = 44, progress = FALSE)) %>%
     sf::st_transform(crs = 3035)
 
+  # # ||||||||||||||||||||||||||||||||||||||||||||
+  # Save fraction results
+  # # ||||||||||||||||||||||||||||||||||||||||||||
+
   IASDT.R::CatTime(" >>>>> Save fraction results")
   save(CLC_Fracs,
        file = file.path(Path_CLC_Summary_RData, "CLC_Fracs.RData"))
+
+  # # ||||||||||||||||||||||||||||||||||||||||||||
+  # Convert fractions to raster
+  # # ||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime(" >>>>> Convert fractions to raster")
   # convert to SpatVector objects for faster rasterization
@@ -316,7 +365,7 @@ CLC_Process <- function(
     IASDT.R::setRastCRS()
 
   ## ||||||||||||||||||||||||||||||||||||||||
-  # Reference grid --- land only
+  # Reference grid
   ## ||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime(" >>>>> Reference grid")
@@ -325,10 +374,6 @@ CLC_Process <- function(
   Grid_10_Land[Exclude_Area == 1] <- NA
   Grid_10_Land[Grid_10_Land > (100 - MinLandPerc)] <- NA
   Grid_10_Land[!is.na(Grid_10_Land)] <- 1
-
-  ## ||||||||||||||||||||||||||||||||||||||||
-  # Reference grid --- cropped
-  ## ||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("      >>>>> Reference grid --- cropped")
   Grid_10_Land_Crop <- terra::trim(Grid_10_Land) %>%
@@ -357,6 +402,7 @@ CLC_Process <- function(
   Grid_10_Land <- terra::wrap(Grid_10_Land)
   Grid_10_Land_Crop <- terra::wrap(Grid_10_Land_Crop)
 
+  fs::dir_create(Path_Grid)
   save(Grid_10_Land, file = file.path(Path_Grid, "Grid_10_Land.RData"))
   save(Grid_10_Land_Crop,
        file = file.path(Path_Grid, "Grid_10_Land_Crop.RData"))
@@ -398,7 +444,7 @@ CLC_Process <- function(
   # Crop % coverage results ----
   # ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪
 
-  IASDT.R::InfoChunk("\nCrop % coverage results")
+  IASDT.R::InfoChunk("Crop % coverage results")
 
   PercCovMaps <- dplyr::mutate(
     PercCovMaps,
@@ -434,6 +480,10 @@ CLC_Process <- function(
 
   IASDT.R::InfoChunk("Identify major CLC class per per grid cell")
 
+  ## ||||||||||||||||||||||||||||||||||||||||
+  # Processing using exactextractr::exact_extract
+  ## ||||||||||||||||||||||||||||||||||||||||
+
   IASDT.R::CatTime(" >>>>> Processing using exactextractr::exact_extract")
 
   CLC_Majority <- Grid_sf %>%
@@ -450,7 +500,9 @@ CLC_Process <- function(
     sf::st_as_sf() %>%
     sf::st_transform(crs = 3035)
 
-  ## |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  ## ||||||||||||||||||||||||||||||||||||||||
+  # Save majority results
+  ## ||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime(" >>>>> Save majority results")
   save(CLC_Majority,
@@ -459,7 +511,9 @@ CLC_Process <- function(
   rm(CLC_Rast, Grid_sf)
   invisible(gc())
 
-  ## |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  ## ||||||||||||||||||||||||||||||||||||||||
+  # post-processing majority results
+  ## ||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime(" >>>>> post-processing majority results")
 
@@ -494,8 +548,11 @@ CLC_Process <- function(
   }
 
   ## |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  ## |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatDiff(InitTime = .StartTime, CatInfo = TRUE)
+  IASDT.R::CatDiff(
+    InitTime = .StartTime, ChunkText = "Function summary", CatInfo = TRUE)
+
   return(invisible(NULL))
 
 }

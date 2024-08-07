@@ -138,13 +138,15 @@
 #' - prepare SLURM commands (`PrepSLURM`) and some specifications (e.g. `MaxJobCounts`, `MemPerCpu`, `Time`, `JobName`)
 #'
 #' The function reads the following environment variables:
+#'   - **`DP_R_Grid`** (if `FromHPC = TRUE`) or
+#'    **`DP_R_Grid_Local`** (if `FromHPC = FALSE`). The function reads
+#'   the content of the `Grid_10_Land_Crop.RData` file from this path.
 #'   - **`DP_R_Path_Python`**: Python path on LUMI.
 #'   - **`DP_R_TaxaInfo`** (if `FromHPC` = `TRUE`) or
-#'     **`DP_R_TaxaInfo_Local`** (if `FromHPC` = `FALSE`). The function
-#' reads the content of the `Species_List_ID.txt` file from this path.
-#'   - **`DP_R_EUBound`** (if `FromHPC` = `TRUE`) or
-#'     **`DP_R_EUBound_Local`** (if `FromHPC` = `FALSE`). The function
-#' reads the content of the `Bound_sf_Eur.RData` file from this path.
+#'     **`DP_R_TaxaInfo_Local`** (if `FromHPC` = `FALSE`) for the location of the `Species_List_ID.txt` file representing species information.
+#'   - **`DP_R_EUBound_sf`** (if `FromHPC` = `TRUE`) or
+#'     **`DP_R_EUBound_sf_Local`** (if `FromHPC` = `FALSE`): path for the 
+#'     `RData` file containing the country boundaries (`sf` object).
 #' @export
 
 Mod_Prep4HPC <- function(
@@ -202,8 +204,7 @@ Mod_Prep4HPC <- function(
     Hmsc <- jsonify <- magrittr <- M_thin <- rL <- M_Name_init <- rL2 <-
     M_samples <- M4HPC_Path <- M_transient <- M_Init_Path <- M_Name_Fit <-
     Chain <- Post_Missing <- Command_HPC <- Command_WS <- Post_Path <-
-    Path_ModProg <- Path_TaxaList <- Path_Python <- Path_EU_Bound <- 
-    Path_Grid <- NULL
+    Path_ModProg <- TaxaInfoFile <- Path_Python <- Path_Grid <- NULL
 
   if (magrittr::not(VerboseProgress)) {
     sink(file = nullfile())
@@ -231,31 +232,25 @@ Mod_Prep4HPC <- function(
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
       "Path_Python", "DP_R_Path_Python", FALSE, FALSE,
-      "Path_TaxaList", "DP_R_TaxaInfo", TRUE, FALSE,
-      "Path_EU_Bound", "DP_R_EUBound", TRUE, FALSE,
-      "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE)
+      "TaxaInfoFile", "DP_R_TaxaInfo", FALSE, TRUE,
+      "EU_Bound", "DP_R_EUBound_sf", FALSE, TRUE,
+      "Path_Grid", "DP_R_Grid", TRUE, FALSE)
   } else {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
       "Path_Python", "DP_R_Path_Python", FALSE, FALSE,
-      "Path_TaxaList", "DP_R_TaxaInfo_Local", TRUE, FALSE,
-      "Path_EU_Bound", "DP_R_EUBound_Local", TRUE, FALSE,
+      "TaxaInfoFile", "DP_R_TaxaInfo_Local", FALSE, TRUE,
+      "EU_Bound", "DP_R_EUBound_sf_Local", FALSE, TRUE,
       "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE)
   }
 
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
-
   if (GPP_Plot) {
     Path_GridR <- file.path(Path_Grid, "Grid_10_Land_Crop.RData")
     if (magrittr::not(file.exists(Path_GridR))) {
       stop(paste0("Path for the Europe boundaries does not exist: ", Path_GridR))
-    }
-
-    EU_Bound <- file.path(Path_EU_Bound, "Bound_sf_Eur.RData")
-    if (magrittr::not(file.exists(EU_Bound))) {
-      stop(paste0("Path for the Europe boundaries does not exist: ", EU_Bound))
     }
   }
 
@@ -501,11 +496,7 @@ Mod_Prep4HPC <- function(
 
   if (PhyloTree) {
     # Taxonomy as a proxy for phylogeny
-    plant.tree <- file.path(Path_TaxaList, "Species_List_ID.txt")
-    if (magrittr::not(file.exists(plant.tree))) {
-      stop(paste0(plant.tree, " file does not exist"))
-    }
-    plant.tree <- readr::read_tsv(plant.tree, show_col_types = FALSE) %>%
+    plant.tree <- readr::read_tsv(TaxaInfoFile, show_col_types = FALSE) %>%
       dplyr::mutate(
         IAS_ID = stringr::str_pad(IAS_ID, pad = "0", width = 4),
         IAS_ID = paste0("Sp_", IAS_ID),
@@ -970,7 +961,8 @@ Mod_Prep4HPC <- function(
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatDiff(.StartTime, Prefix = "\nCompleted in ", CatInfo = FALSE)
+  IASDT.R::CatDiff(
+    InitTime = .StartTime, ChunkText = "Function summary", CatInfo = TRUE)
 
   return(invisible(NULL))
 }

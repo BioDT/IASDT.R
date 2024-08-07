@@ -224,13 +224,15 @@ The function provides options for:
 
 The function reads the following environment variables:
 \itemize{
+\item \strong{\code{DP_R_Grid}} (if \code{FromHPC = TRUE}) or
+\strong{\code{DP_R_Grid_Local}} (if \code{FromHPC = FALSE}). The function reads
+the content of the \code{Grid_10_Land_Crop.RData} file from this path.
 \item \strong{\code{DP_R_Path_Python}}: Python path on LUMI.
 \item \strong{\code{DP_R_TaxaInfo}} (if \code{FromHPC} = \code{TRUE}) or
-\strong{\code{DP_R_TaxaInfo_Local}} (if \code{FromHPC} = \code{FALSE}). The function
-reads the content of the \code{Species_List_ID.txt} file from this path.
-\item \strong{\code{DP_R_EUBound}} (if \code{FromHPC} = \code{TRUE}) or
-\strong{\code{DP_R_EUBound_Local}} (if \code{FromHPC} = \code{FALSE}). The function
-reads the content of the \code{Bound_sf_Eur.RData} file from this path.
+\strong{\code{DP_R_TaxaInfo_Local}} (if \code{FromHPC} = \code{FALSE}) for the location of the \code{Species_List_ID.txt} file representing species information.
+\item \strong{\code{DP_R_EUBound_sf}} (if \code{FromHPC} = \code{TRUE}) or
+\strong{\code{DP_R_EUBound_sf_Local}} (if \code{FromHPC} = \code{FALSE}): path for the
+\code{RData} file containing the country boundaries (\code{sf} object).
 }
 }
 \author{

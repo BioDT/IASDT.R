@@ -74,13 +74,6 @@ fitted yet. It generates command files for refitting and creates
 corresponding SLURM batch files to execute these commands on a HPC
 environment.
 }
-\details{
-The function reads the following environment variable:
-\itemize{
-\item \strong{\code{LUMI_Scratch}} for the path of the scratch folder of the
-\code{BioDT} project on LUMI.
-}
-}
 \author{
 Ahmed El-Gabbas
 }

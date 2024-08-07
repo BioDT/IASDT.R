@@ -214,7 +214,7 @@ The function provides options for:
 \item whether to exclude grid cells with no species observations
 (\code{ExclGridsWOSp})
 \item number of cross-validation folds
-\item options for whether or not to include phylogentic information to the model
+\item options for whether or not to include phylogenetic information to the model
 \item different values for knot distance for GPP (\code{GPP_Dists})
 \item which bioclimatic variables to be uses in the models (\code{BioVars})
 \item whether to include sampling efforts \code{EffortsAsPredictor}, percentage of respective habitat type per grid cell \code{HabAsPredictor}, and railway and road intensity per grid cell \code{RoadRailAsPredictor}
@@ -225,7 +225,6 @@ The function provides options for:
 The function reads the following environment variables:
 \itemize{
 \item \strong{\code{DP_R_Path_Python}}: Python path on LUMI.
-\item \strong{\code{LUMI_Scratch}}: path of the scratch folder of the \code{BioDT} project on LUMI.
 \item \strong{\code{DP_R_TaxaInfo}} (if \code{FromHPC} = \code{TRUE}) or
 \strong{\code{DP_R_TaxaInfo_Local}} (if \code{FromHPC} = \code{FALSE}). The function
 reads the content of the \code{Species_List_ID.txt} file from this path.

@@ -6,8 +6,6 @@
 \usage{
 PlotConvergence_AllModels(
   Path_Model = NULL,
-  EnvFile = ".env",
-  FromHPC = TRUE,
   NChains = 4,
   maxOmega = 1000,
   NCores = NULL
@@ -16,13 +14,6 @@ PlotConvergence_AllModels(
 \arguments{
 \item{Path_Model}{String. Path to save all the output, including the to be
 fitted models (without trailing slash). Must not be \code{NULL}.}
-
-\item{EnvFile}{String. Path to read the environment variables. Default value:
-\code{.env}.}
-
-\item{FromHPC}{Logical. Indicates whether the function is being run on a
-High-Performance Computing (HPC) environment. Adjusts file paths
-accordingly.}
 
 \item{NChains}{Integer. Number of MCMC chains used in the model fitting
 process.}
@@ -41,13 +32,6 @@ This function generates and saves a series of diagnostic plots to assess the
 convergence of Hmsc models across multiple modelling alternatives. It checks
 model convergence using trace plots and Gelman-Rubin diagnostics for key
 model parameters.
-}
-\details{
-The function reads the following environment variable:
-\itemize{
-\item \strong{\code{LUMI_Scratch}} (only if \code{FromHPC} = \code{TRUE}) for the path of
-the scratch folder of the \code{BioDT} project on LUMI.
-}
 }
 \author{
 Ahmed El-Gabbas

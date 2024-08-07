@@ -130,7 +130,7 @@
 #' - whether to exclude grid cells with no species observations
 #' (`ExclGridsWOSp`)
 #' - number of cross-validation folds
-#' - options for whether or not to include phylogentic information to the model
+#' - options for whether or not to include phylogenetic information to the model
 #' - different values for knot distance for GPP (`GPP_Dists`)
 #' - which bioclimatic variables to be uses in the models (`BioVars`)
 #' - whether to include sampling efforts `EffortsAsPredictor`, percentage of respective habitat type per grid cell `HabAsPredictor`, and railway and road intensity per grid cell `RoadRailAsPredictor`
@@ -139,7 +139,6 @@
 #'
 #' The function reads the following environment variables:
 #'   - **`DP_R_Path_Python`**: Python path on LUMI.
-#'   - **`LUMI_Scratch`**: path of the scratch folder of the `BioDT` project on LUMI.
 #'   - **`DP_R_TaxaInfo`** (if `FromHPC` = `TRUE`) or
 #'     **`DP_R_TaxaInfo_Local`** (if `FromHPC` = `FALSE`). The function
 #' reads the content of the `Species_List_ID.txt` file from this path.
@@ -203,8 +202,8 @@ Mod_Prep4HPC <- function(
     Hmsc <- jsonify <- magrittr <- M_thin <- rL <- M_Name_init <- rL2 <-
     M_samples <- M4HPC_Path <- M_transient <- M_Init_Path <- M_Name_Fit <-
     Chain <- Post_Missing <- Command_HPC <- Command_WS <- Post_Path <-
-    Path_ModProg <- Path_Scratch <- Path_TaxaList <- Path_Python <-
-    Path_EU_Bound <- Path_Grid <- NULL
+    Path_ModProg <- Path_TaxaList <- Path_Python <- Path_EU_Bound <- 
+    Path_Grid <- NULL
 
   if (magrittr::not(VerboseProgress)) {
     sink(file = nullfile())
@@ -233,7 +232,6 @@ Mod_Prep4HPC <- function(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
       "Path_Python", "DP_R_Path_Python", FALSE, FALSE,
       "Path_TaxaList", "DP_R_TaxaInfo", TRUE, FALSE,
-      "Path_Scratch", "LUMI_Scratch", TRUE, FALSE,
       "Path_EU_Bound", "DP_R_EUBound", TRUE, FALSE,
       "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE)
   } else {
@@ -241,7 +239,6 @@ Mod_Prep4HPC <- function(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
       "Path_Python", "DP_R_Path_Python", FALSE, FALSE,
       "Path_TaxaList", "DP_R_TaxaInfo_Local", TRUE, FALSE,
-      "Path_Scratch", "LUMI_Scratch", FALSE, FALSE,
       "Path_EU_Bound", "DP_R_EUBound_Local", TRUE, FALSE,
       "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE)
   }
@@ -260,13 +257,6 @@ Mod_Prep4HPC <- function(
     if (magrittr::not(file.exists(EU_Bound))) {
       stop(paste0("Path for the Europe boundaries does not exist: ", EU_Bound))
     }
-  }
-
-  # temporarily setting the working directory
-  if (FromHPC) {
-    InitialWD <- getwd()
-    setwd(Path_Scratch)
-    on.exit(setwd(InitialWD), add = TRUE)
   }
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -824,26 +814,17 @@ Mod_Prep4HPC <- function(
 
           # Input model
           M4HPC_Path2 <- file.path(
-            Path_Model, "InitMod_HPC", basename(M4HPC_Path)) %>%
-            # Ensure that path does not contain the scratch path or local paths
-            stringr::str_remove(paste0(Path_Scratch, "/")) %>%
-            stringr::str_remove("^[A-Z]:/.*BioDT_IAS/")
+            Path_Model, "InitMod_HPC", basename(M4HPC_Path))
 
           # Path for posterior sampling
           Post_Path <- file.path(
             Path_Model, "Model_Fitting_HPC",
-            paste0(M_Name_Fit, "_Chain", Chain, "_post.rds")) %>%
-            # Ensure that path does not contain the scratch path or local paths
-            stringr::str_remove(paste0(Path_Scratch, "/")) %>%
-            stringr::str_remove("^[A-Z]:/.*BioDT_IAS/")
+            paste0(M_Name_Fit, "_Chain", Chain, "_post.rds"))
 
           # Path for progress
           Path_ModProg <- file.path(
             Path_Model, "Model_Fitting_HPC",
-            paste0(M_Name_Fit, "_Chain", Chain, "_Progress.txt")) %>%
-            # Ensure that path does not contain the scratch path or local paths
-            stringr::str_remove(paste0(Path_Scratch, "/")) %>%
-            stringr::str_remove("^[A-Z]:/.*BioDT_IAS/")
+            paste0(M_Name_Fit, "_Chain", Chain, "_Progress.txt"))
 
           Post_Missing <- magrittr::not(file.exists(Post_Path))
 

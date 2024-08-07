@@ -22,23 +22,17 @@
 #'   `TRUE`.
 #' @param FromHPC Logical. Indicates whether the function is being run in an HPC
 #'   environment. This affects how file paths are handled. Defaults to `TRUE`.
-#' @param EnvFile String. The path to the file containing environment variables.
-#'   Defaults to `.env`.
 #' @param FromJSON Logical. Indicates whether to convert loaded models from JSON
 #'   format before reading. Defaults to `FALSE`.
 #' @name Mod_MergeChains
 #' @author Ahmed El-Gabbas
 #' @return The function does not return anything but saves the processed model
 #'   information to disk.
-#' @details The function reads the following environment variable:
-#'    - **`LUMI_Scratch`** (only if `FromHPC` = `TRUE`) for the path of the
-#'     scratch folder of the `BioDT` project on LUMI.
 #' @export
 
 Mod_MergeChains <- function(
     Path_Model = NULL, NCores = NULL, ModInfoName = NULL,
-    PrintIncomplete = TRUE, FromHPC = TRUE, EnvFile = ".env",
-    FromJSON = FALSE) {
+    PrintIncomplete = TRUE, FromHPC = TRUE, FromJSON = FALSE) {
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -51,25 +45,7 @@ Mod_MergeChains <- function(
   Post_Path <- Post_Missing <- Post_Path <- M_Init_Path <- M_samples <-
     M_thin <- M_transient <- M_Name_Fit <- Path_FittedMod <- Path_Coda <-
     NMissingChains <- MissingModels <- Model_Finished <- Path_ModProg <-
-    Post_Aligned <- Post_Aligned2 <- FittingTime <- Path_Scratch <-
-    Root_Local <- NULL
-
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-  # Load .env file ----
-
-  if (magrittr::not(file.exists(EnvFile))) {
-    stop(paste0(
-      "Path for environment variables: ", EnvFile, " was not found"))
-  }
-
-  EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
-    "Path_Scratch", "LUMI_Scratch", FromHPC, FALSE,
-    "Root_Local", "Root_Local", magrittr::not(FromHPC), FALSE)
-
-  # Assign environment variables and check file and paths
-  IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+    Post_Aligned <- Post_Aligned2 <- FittingTime <- NULL
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -81,7 +57,7 @@ Mod_MergeChains <- function(
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Args = c("Path_Model", "EnvFile"), Type = "character")
+    AllArgs = AllArgs, Args = "Path_Model", Type = "character")
 
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = "NCores", Type = "numeric")
 
@@ -91,21 +67,13 @@ Mod_MergeChains <- function(
 
   rm(AllArgs)
 
-  if (FromHPC) {
-    Path_Model <- file.path(
-      Path_Scratch, stringr::str_remove(Path_Model, paste0(Path_Scratch, "/")))
-  } else {
-    Path_Model <- file.path(
-      Root_Local, stringr::str_remove(Path_Model, paste0(Root_Local, "/")))
-  }
-
   if (magrittr::not(dir.exists(Path_Model))) {
     stop(paste0(
       "Path_Model directory (`", Path_Model, "`) does not exist"), call. = FALSE)
   }
 
   Path_ModInfo <- file.path(Path_Model, "Model_Info.RData")
-  
+
   if (magrittr::not(file.exists(Path_ModInfo))) {
     stop(paste0(
       "ModInfo file `", Path_ModInfo, "` does not exist"), call. = FALSE)
@@ -127,10 +95,13 @@ Mod_MergeChains <- function(
     tempFilesRDs <- stringr::str_replace_all(tempFiles, ".rds_temp$", ".rds")
     tempFilesProgress <- stringr::str_replace_all(
       tempFiles, "_post.rds_temp", "_Progress.txt")
+
     purrr::walk(
       .x = c(tempFilesRDs, tempFiles, tempFilesProgress),
       .f = ~{
-        if (file.exists(.x)) file.remove(.x)
+        if (file.exists(.x)) {
+          file.remove(.x)
+        }
       })
   }
 
@@ -153,15 +124,7 @@ Mod_MergeChains <- function(
       Post_Missing = purrr::map_lgl(
         .x = Post_Path,
         .f = ~{
-          if (FromHPC) {
-            Post <- file.path(
-              Path_Scratch, stringr::str_remove_all(.x, Path_Scratch))
-          } else {
-            Post <- file.path(
-              Root_Local, stringr::str_remove_all(.x, Root_Local))
-          }
-
-          all(file.exists(Post)) %>%
+          all(file.exists(.x)) %>%
             magrittr::not() %>%
             return()
         }),
@@ -198,14 +161,6 @@ Mod_MergeChains <- function(
           ModFitMissing <- magrittr::not(file.exists(Path_FittedMod))
 
           if (ModFitMissing) {
-
-            if (FromHPC) {
-              Post_Path <- file.path(Path_Scratch, Post_Path)
-              M_Init_Path <- file.path(Path_Scratch, M_Init_Path)
-            } else {
-              Post_Path <- file.path(Root_Local, Post_Path)
-              M_Init_Path <- file.path(Root_Local, M_Init_Path)
-            }
 
             # Get posteriors
             Posts <- purrr::map(
@@ -272,21 +227,6 @@ Mod_MergeChains <- function(
             rm(Model_Fit)
           }
 
-          # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-          # Remove the prefix for scratch
-          # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-          if (FromHPC) {
-            Path_FittedMod <- stringr::str_remove(
-              Path_FittedMod, paste0(Path_Scratch, "/"))
-            Path_Coda <- stringr::str_remove(
-              Path_Coda, paste0(Path_Scratch, "/"))
-          } else {
-            Path_FittedMod <- stringr::str_remove(
-              Path_FittedMod, paste0(Root_Local, "/"))
-            Path_Coda <- stringr::str_remove(
-              Path_Coda, paste0(Root_Local, "/"))
-          }
 
           # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
           # Return list of objects
@@ -312,17 +252,7 @@ Mod_MergeChains <- function(
       # Check if both merged fitted model and coda file exist
       Model_Finished = purrr::map2_lgl(
         .x = Path_FittedMod, .y = Path_Coda,
-        .f = ~{
-          ModelFiles <- c(.x, .y)
-
-          if (FromHPC) {
-            ModelFiles <- file.path(Path_Scratch, ModelFiles)
-          } else {
-            ModelFiles <- file.path(Root_Local, ModelFiles)
-          }
-
-          all(file.exists(ModelFiles))
-        }),
+        .f = ~all(file.exists(c(.x, .y)))),
 
       # Extract fitting time from the progress file
       FittingTime = purrr::map(
@@ -331,13 +261,6 @@ Mod_MergeChains <- function(
           purrr::map(
             .x = .x,
             .f = function(File) {
-
-              if (FromHPC) {
-                File <- file.path(Path_Scratch, File)
-              } else {
-                File <- file.path(Root_Local, File)
-              }
-
               if (file.exists(File)) {
                 readr::read_lines(file = File) %>%
                   stringr::str_subset("Whole Gibbs sampler elapsed") %>%

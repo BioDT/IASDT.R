@@ -38,10 +38,8 @@ CLC_Process <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  SynHab_desc <- Fracs <- Class <- HabPerc <- CNTR_ID <- geometry <- Name <-
-    ID <- Label <-  Path_CLC <- Path_Grid <- Path_EUBound <- km <-
-    Majority <- Path_CLC_tif <- Value <- NULL
-
+  SynHab_desc <- CNTR_ID <- geometry <- Name <- Path_CLC <- Path_Grid <-
+    Path_EUBound <- km <- Majority <- Path_CLC_tif <- Path_CLC_CW <- NULL
 
   if (is.null(EnvFile)) {
     stop("EnvFile can not be empty")
@@ -73,6 +71,7 @@ CLC_Process <- function(
       "Path_Grid", "DP_R_Grid", TRUE, FALSE,
       "Path_CLC", "DP_R_CLC", FALSE, FALSE,
       "Path_CLC_tif", "DP_R_CLC_tif", FALSE, TRUE,
+      "Path_CLC_CW", "DP_R_CLC_CW", FALSE, TRUE,
       "Path_EUBound", "DP_R_EUBound", TRUE, FALSE)
   } else {
     EnvVars2Read <- tibble::tribble(
@@ -80,6 +79,7 @@ CLC_Process <- function(
       "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE,
       "Path_CLC", "DP_R_CLC_Local", FALSE, FALSE,
       "Path_CLC_tif", "DP_R_CLC_tif_Local", FALSE, TRUE,
+      "Path_CLC_CW", "DP_R_CLC_CW_Local", FALSE, TRUE,
       "Path_EUBound", "DP_R_EUBound_Local", TRUE, FALSE)
   }
 
@@ -89,7 +89,6 @@ CLC_Process <- function(
   fs::dir_create(Path_CLC)
 
   Path_Grid_sf <- file.path(Path_Grid, "Grid_10_sf.RData")
-  Path_CLC_CW <- file.path(Path_CLC, "CrossWalk.txt")
   Path_Grid_rast <- file.path(Path_Grid, "Grid_10_Raster.RData")
   Path_EUBound_sf <- file.path(Path_EUBound, "Bound_sf_Eur.RData")
 
@@ -539,12 +538,13 @@ CLC_GetPerc <- function(Type, CLC_CrossWalk, CLC_FracsR, Path_Tif, Path_RData) {
     stop("Type has to be one of SynHab, CLC_L1, CLC_L2, CLC_L3, and EUNIS_2019")
   }
 
-  Value <- Fracs <- Class <- HabPerc <- NULL
+  Fracs <- Class <- HabPerc <- NULL
 
   IASDT.R::CatTime(paste0(" >>>>> ", Type))
   OutObjName <- paste0("PercCov_", Type)
 
-  Map <- dplyr::select(CLC_CrossWalk, Value, tidyselect::all_of(Type)) %>%
+  Map <- dplyr::select(
+    CLC_CrossWalk, "Value", tidyselect::all_of(Type)) %>%
     stats::setNames(c("Fracs", "Class")) %>%
     tidyr::nest(Fracs = -Class) %>%
     dplyr::slice(gtools::mixedorder(Class)) %>%

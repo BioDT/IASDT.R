@@ -61,13 +61,6 @@ including rho, alpha, omega, and beta parameters. It supports parallel
 processing for faster execution and can work with models fitted on
 High-Performance Computing HPC environments.
 }
-\details{
-The function reads the following environment variable:
-\itemize{
-\item \strong{\code{LUMI_Scratch}} (only if \code{FromHPC} = \code{TRUE}) for the path of
-the scratch folder of the \code{BioDT} project on LUMI.
-}
-}
 \author{
 Ahmed El-Gabbas
 }

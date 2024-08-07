@@ -31,9 +31,6 @@
 #' @author Ahmed El-Gabbas
 #' @return The function does not return a value but generates and saves plots to
 #'   disk.
-#' @details The function reads the following environment variable:
-#'    - **`LUMI_Scratch`** (only if `FromHPC` = `TRUE`) for the path of
-#'   the scratch folder of the `BioDT` project on LUMI.
 #' @export
 
 PlotConvergence <- function(
@@ -70,7 +67,7 @@ PlotConvergence <- function(
 
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "character",
-    Args = c("Path_Coda", "Path_FittedModel", "EnvFile"))
+    Args = c("Path_Coda", "Path_FittedModel"))
 
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "logical", Args = "FromHPC")
   IASDT.R::CheckArgs(
@@ -79,28 +76,8 @@ PlotConvergence <- function(
   rm(AllArgs)
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # Load environment variables ------
+  # Create path ------
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-  IASDT.R::CatTime("Load environment variables")
-
-  if (FromHPC) {
-    if (magrittr::not(file.exists(EnvFile))) {
-      stop(paste0(
-        "Path for environment variables: ", EnvFile, " was not found"))
-    }
-
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Scratch", "LUMI_Scratch", TRUE, FALSE)
-
-    # Assign environment variables and check file and paths
-    IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
-
-    InitialWD <- getwd()
-    setwd(Path_Scratch)
-    on.exit(setwd(InitialWD), add = TRUE)
-  }
 
   IASDT.R::CatTime("Create path")
   Path_Convergence <- dirname(dirname(Path_Coda)) %>%

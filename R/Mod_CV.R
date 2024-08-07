@@ -69,7 +69,6 @@
 #'
 #'   The function reads the following environment variables:
 #'   - **`DP_R_Path_Python`** for Python path on LUMI.
-#'   - **`LUMI_Scratch`** for the path of the scratch folder of the `BioDT`
 #'   project on LUMI.
 #' @author Ahmed El-Gabbas
 #' @export
@@ -107,7 +106,7 @@ Mod_CV <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  nfolds <- CV_DT0 <- Path_Scratch <- Path_Python <- NULL
+  nfolds <- CV_DT0 <- Path_Python <- NULL
 
   # # ++++++++++++++++++++++++++++++++++++
   # Check input parameters
@@ -147,33 +146,21 @@ Mod_CV <- function(
   if (FromHPC) {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Python", "DP_R_Path_Python", CheckPyPath, FALSE,
-      "Path_Scratch", "LUMI_Scratch", TRUE, FALSE)
+      "Path_Python", "DP_R_Path_Python", CheckPyPath, FALSE)
   } else {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Python", "DP_R_Path_Python", FALSE, FALSE,
-      "Path_Scratch", "LUMI_Scratch", FALSE, FALSE)
+      "Path_Python", "DP_R_Path_Python", FALSE, FALSE)
   }
 
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
   # # ++++++++++++++++++++++++++++++++++++
-  # temporarily setting the working directory
-  # # ++++++++++++++++++++++++++++++++++++
-  if (FromHPC) {
-    InitialWD <- getwd()
-    setwd(Path_Scratch)
-    on.exit(setwd(InitialWD), add = TRUE)
-  }
-
-  # # ++++++++++++++++++++++++++++++++++++
   # Loading model
   # # ++++++++++++++++++++++++++++++++++++
   if (inherits(Model, "character")) {
     # Ensure that model path does not contain the scratch path
-    Model <- stringr::str_remove(Model, paste0(Path_Scratch, "/"))
     Path_CV <- file.path(dirname(dirname(Model)), "Model_Fitting_HPC_CV")
     ModFull <- IASDT.R::LoadAs(Model)
   } else {

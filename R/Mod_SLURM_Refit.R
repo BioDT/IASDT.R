@@ -40,9 +40,6 @@
 #' @author Ahmed El-Gabbas
 #' @return The function does not return any value but creates command and SLURM
 #'   batch files for refitting models.
-#' @details The function reads the following environment variable:
-#'    - **`LUMI_Scratch`** for the path of the scratch folder of the
-#'    `BioDT` project on LUMI.
 #' @export
 
 Mod_SLURM_Refit <- function(
@@ -59,25 +56,11 @@ Mod_SLURM_Refit <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Command_HPC <- Post_Path <- Path_Scratch <- NULL
+  Command_HPC <- Post_Path <- NULL
 
   if (magrittr::not(file.exists(EnvFile))) {
     stop(paste0(
       "Path for environment variables: ", EnvFile, " was not found"))
-  }
-
-  EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
-    "Path_Scratch", "LUMI_Scratch", FromHPC, FALSE)
-
-  # Assign environment variables and check file and paths
-  IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
-
-  # temporarily setting the working directory
-  if (FromHPC) {
-    InitialWD <- getwd()
-    setwd(Path_Scratch)
-    on.exit(setwd(InitialWD), add = TRUE)
   }
 
   if (is.null(JobName)) {
@@ -126,8 +109,7 @@ Mod_SLURM_Refit <- function(
     IASDT.R::LoadAs() %>%
     tidyr::unnest_longer(c(Post_Path, Command_HPC)) %>%
     dplyr::select(Post_Path, Command_HPC) %>%
-    dplyr::filter(
-      magrittr::not(file.exists(file.path(Path_Scratch, Post_Path)))) %>%
+    dplyr::filter(magrittr::not(file.exists(Post_Path))) %>%
     dplyr::pull(Command_HPC) %>%
     purrr::set_names(NULL)
 

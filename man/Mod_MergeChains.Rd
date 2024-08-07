@@ -10,7 +10,6 @@ Mod_MergeChains(
   ModInfoName = NULL,
   PrintIncomplete = TRUE,
   FromHPC = TRUE,
-  EnvFile = ".env",
   FromJSON = FALSE
 )
 }
@@ -34,9 +33,6 @@ models that were not successfully fitted to the console. Defaults to
 \item{FromHPC}{Logical. Indicates whether the function is being run in an HPC
 environment. This affects how file paths are handled. Defaults to \code{TRUE}.}
 
-\item{EnvFile}{String. The path to the file containing environment variables.
-Defaults to \code{.env}.}
-
 \item{FromJSON}{Logical. Indicates whether to convert loaded models from JSON
 format before reading. Defaults to \code{FALSE}.}
 }
@@ -49,13 +45,6 @@ This function performs post-processing of HMSC model outputs. It merges model
 chains, checks for missing or incomplete model runs, and optionally prints
 information about incomplete models. It can work with models run on HPC
 environments and supports parallel processing.
-}
-\details{
-The function reads the following environment variable:
-\itemize{
-\item \strong{\code{LUMI_Scratch}} (only if \code{FromHPC} = \code{TRUE}) for the path of the
-scratch folder of the \code{BioDT} project on LUMI.
-}
 }
 \author{
 Ahmed El-Gabbas

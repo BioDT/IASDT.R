@@ -10,11 +10,6 @@
 #' model parameters.
 #' @param Path_Model String. Path to save all the output, including the to be
 #'   fitted models (without trailing slash). Must not be `NULL`.
-#' @param EnvFile String. Path to read the environment variables. Default value:
-#'   `.env`.
-#' @param FromHPC Logical. Indicates whether the function is being run on a
-#'   High-Performance Computing (HPC) environment. Adjusts file paths
-#'   accordingly.
 #' @param NChains Integer. Number of MCMC chains used in the model fitting
 #'   process.
 #' @param maxOmega Integer. Maximum number of species interactions to sample for
@@ -24,14 +19,10 @@
 #' @author Ahmed El-Gabbas
 #' @return The function does not return anything but saves a series of
 #'   diagnostic plots in the specified path.
-#' @details The function reads the following environment variable:
-#'    - **`LUMI_Scratch`** (only if `FromHPC` = `TRUE`) for the path of
-#'    the scratch folder of the `BioDT` project on LUMI.
 #' @export
 
 PlotConvergence_AllModels <- function(
-    Path_Model = NULL, EnvFile = ".env", FromHPC = TRUE, NChains = 4,
-    maxOmega = 1000, NCores = NULL) {
+    Path_Model = NULL, NChains = 4, maxOmega = 1000, NCores = NULL) {
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -43,9 +34,8 @@ PlotConvergence_AllModels <- function(
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   GPP_Thin <- Path_Coda <- Path_FittedMod <- M_Name_Fit <- Tree <- rL <-
     M_thin <- M_samples <- Omega_Gelman <- Omega_ESS <- Beta_Gelman <-
-    Beta_ESS <- ESS2 <- Path_Trace_Rho <- Rho <- Path_Scratch <-
-    Root_Local <- Path_Trace_Alpha <- Path_Trace_Rho <- dplyr <-
-    sf <- Hmsc <- coda <- magrittr <- NULL
+    Beta_ESS <- ESS2 <- Path_Trace_Rho <- Rho <- Path_Trace_Alpha <- 
+    Path_Trace_Rho <- dplyr <- sf <- Hmsc <- coda <- magrittr <- NULL
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Check input arguments
@@ -58,49 +48,21 @@ PlotConvergence_AllModels <- function(
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "character", Args = c("Path_Model", "EnvFile"))
-  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "logical", Args = "FromHPC")
+    AllArgs = AllArgs, Type = "character", Args = "Path_Model")
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric",
     Args = c("NChains", "maxOmega", "NCores"))
-
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # Load environment variables
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-  IASDT.R::CatTime("Load environment variables")
-
-  if (magrittr::not(file.exists(EnvFile))) {
-    stop(paste0(
-      "Path for environment variables: ", EnvFile, " was not found"))
-  }
-
-  EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
-    "Path_Scratch", "LUMI_Scratch", FromHPC, FALSE,
-    "Root_Local", "Root_Local", magrittr::not(FromHPC), FALSE)
-
-  # Assign environment variables and check file and paths
-  IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
-
-
-  if (FromHPC) {
-    Path_Model <- file.path(
-      Path_Scratch, stringr::str_remove(Path_Model, paste0(Path_Scratch, "/")))
-  } else {
-    Path_Model <- file.path(
-      Root_Local, stringr::str_remove(Path_Model, paste0(Root_Local, "/")))
-  }
-
-  Path_Convergence_All <- file.path(Path_Model, "Model_Convergence_All")
-  Path_ConvDT <- file.path(Path_Convergence_All, "DT")
-  fs::dir_create(c(Path_ConvDT, Path_Convergence_All))
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   ## Prepare/load convergence data ------
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Prepare/load convergence data")
+  
+  Path_Convergence_All <- file.path(Path_Model, "Model_Convergence_All")
+  Path_ConvDT <- file.path(Path_Convergence_All, "DT")
+  fs::dir_create(c(Path_ConvDT, Path_Convergence_All))
+
 
   c1 <- snow::makeSOCKcluster(NCores)
   on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
@@ -119,23 +81,7 @@ PlotConvergence_AllModels <- function(
     Path_FittedMod <- Model_Info$Path_FittedMod[[ID]]
     M_Name_Fit <- Model_Info$M_Name_Fit[[ID]]
     Tree <- Model_Info$Tree[[ID]]
-
-    if (FromHPC) {
-      Path_Coda <- file.path(
-        Path_Scratch,
-        stringr::str_remove(Path_Coda, paste0(Path_Scratch, "/")))
-      Path_FittedMod <- file.path(
-        Path_Scratch,
-        stringr::str_remove(Path_FittedMod, paste0(Path_Scratch, "/")))
-    } else {
-      Path_Coda <- file.path(
-        Root_Local,
-        stringr::str_remove(Path_Coda, paste0(Root_Local, "/")))
-      Path_FittedMod <- file.path(
-        Root_Local,
-        stringr::str_remove(Path_FittedMod, paste0(Root_Local, "/")))
-    }
-
+   
     CodaModelExist <- all(file.exists(c(Path_Coda, Path_FittedMod)))
 
     # prepare traceplot ----
@@ -259,7 +205,7 @@ PlotConvergence_AllModels <- function(
     cl = c1, IASDT.R::LoadPackages(dplyr, sf, Hmsc, coda, magrittr)))
   snow::clusterExport(
     cl = c1, envir = environment(),
-    list = c("Model_Info", "FromHPC", "Root_Local", "Path_ConvDT", "maxOmega"))
+    list = c("Model_Info", "Path_ConvDT", "maxOmega"))
 
   Convergence_DT <- Model_Info %>%
     dplyr::mutate(
@@ -268,30 +214,10 @@ PlotConvergence_AllModels <- function(
     dplyr::select(tidyselect::all_of(c("M_Name_Fit", "Plots"))) %>%
     tidyr::unnest_wider("Plots")
 
-  # Remove root path before saving
-  Convergence_DT2Save <- Convergence_DT %>%
-    dplyr::mutate(
-      Path_Trace_Alpha = purrr::map_chr(
-        .x = Path_Trace_Alpha,
-        .f = ~{
-          dplyr::if_else(
-            FromHPC,
-            stringr::str_remove(.x, paste0(Path_Scratch, "/")),
-            stringr::str_remove(.x, paste0(Root_Local, "/"))
-          )}),
-      Path_Trace_Rho = purrr::map_chr(
-        .x = Path_Trace_Rho,
-        .f = ~{
-          dplyr::if_else(
-            FromHPC,
-            stringr::str_remove(.x, paste0(Path_Scratch, "/")),
-            stringr::str_remove(.x, paste0(Root_Local, "/"))
-          )}))
-
-  IASDT.R::SaveAs(
-    InObj = Convergence_DT2Save, OutObj = "Convergence_DT",
-    OutPath = file.path(Path_Convergence_All, "Convergence_DT.RData"))
-
+  save(
+    Convergence_DT,
+    file = file.path(Path_Convergence_All, "Convergence_DT.RData"))
+  
   snow::stopCluster(c1)
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

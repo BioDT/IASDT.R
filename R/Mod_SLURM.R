@@ -78,13 +78,6 @@ Mod_SLURM <- function(
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
-  # temporarily setting the working directory
-  if (FromHPC) {
-    InitialWD <- getwd()
-    setwd(Path_Scratch)
-    on.exit(setwd(InitialWD), add = TRUE)
-  }
-
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   AllArgs <- ls()
@@ -114,14 +107,9 @@ Mod_SLURM <- function(
   }
 
   if (is.null(Path_SLURM_Out)) {
-    # Ensure that model path does not contain the scratch path or local paths
-    Path_Model2 <- Path_Model %>%
-      stringr::str_remove(paste0(Path_Scratch, "/")) %>%
-      stringr::str_remove("^[A-Z]:/.*BioDT_IAS/")
-
     # This folder was created in the Mod_Prep4HPC function
     Path_SLURM_Out <- file.path(
-      Path_Scratch, Path_Model2, "Model_Fitting_HPC", "SLURM_Results")
+      Path_Model, "Model_Fitting_HPC", "SLURM_Results")
   }
 
   purrr::walk(
@@ -151,7 +139,6 @@ Mod_SLURM <- function(
         cat(sep = "\n", file = f, ...)
       }
 
-
       # Writing bash commands to text file
 
       cat2("#!/bin/bash\n")
@@ -177,7 +164,6 @@ Mod_SLURM <- function(
       cat2("# Change working directory to scratch")
       cat2("# -----------------------------------------------")
       cat2(paste0("cd ", Path_Scratch, "\n"))
-
 
       if (CatJobInfo) {
         cat2("# -----------------------------------------------")
@@ -210,11 +196,7 @@ Mod_SLURM <- function(
       cat2("# -----------------------------------------------")
       cat2("# File contains bash commands for model fitting")
       cat2("# -----------------------------------------------")
-      # Ensure that path to commands does not contain the scratch path or local paths
-      CurrCommand <- ListCommands[x] %>%
-        stringr::str_remove(paste0(Path_Scratch, "/")) %>%
-        stringr::str_remove("^[A-Z]:/.*BioDT_IAS/")
-      cat2(paste0("File=", CurrCommand, "\n"))
+      cat2(paste0("File=", ListCommands, "\n"))
 
       cat2("# -----------------------------------------------")
       cat2("# Loading Hmsc-HPC")

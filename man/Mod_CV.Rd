@@ -108,7 +108,6 @@ does not help as our intention is to use the Hmsc-HPC using GPU.
 The function reads the following environment variables:
 \itemize{
 \item \strong{\code{DP_R_Path_Python}} for Python path on LUMI.
-\item \strong{\code{LUMI_Scratch}} for the path of the scratch folder of the \code{BioDT}
 project on LUMI.
 }
 }

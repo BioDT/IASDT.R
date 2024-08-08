@@ -36,6 +36,7 @@ reference:
   - ReloadPackage
   - LoadedPackages
   - Package_RemoteSha
+  - AssignEnvVars
 - subtitle: File operations
   desc:
   contents:
@@ -101,6 +102,24 @@ reference:
   - GetBashVars
   - CheckArgs
 
+
+- title: Data workflow
+  desc: Functions for preparing data, running the models, and postprocessing of model outputs
+- subtitle: Data preparation
+  desc:
+  contents:
+  - CLC_Process
+  - Chelsa_Extract_Matching
+  - Chelsa_Prepare_List
+  - Chelsa_Vars
+  - Chelsa_Info
+  - Chelsa_Project
+  - Match_to_GBIF
+  - Get_EASIN_Data
+  - GetAcceptedName
+  - Extract_BB
+  - GetSpeciesName
+
 - title: Modelling functions
   desc: Functions for preparing data, running the models, and postprocessing of model outputs
 - subtitle: Data preparation
@@ -116,7 +135,7 @@ reference:
   - Mod_SLURM
   - Mod_SLURM_Refit
   - Mod_Fit_WS
-  - Mod_SLURM_CV
+  - Mod_CV
 - subtitle: Model postprocessing
   desc:
   contents:
@@ -149,7 +168,6 @@ reference:
   - SetChainName
   - Mod_Pred2Array
 
-
 - title: Spatial functions
   desc:
   contents:
@@ -168,17 +186,5 @@ reference:
   - RastPA
   - NetCDFGlobalAttrs
   - Scale_0_1
+  - setRastCRS
 
-- title: IAS helper functions
-  desc:
-  contents:
-  - Match_to_GBIF
-  - Get_EASIN_Data
-  - GetAcceptedName
-  - Extract_BB
-  - Chelsa_Extract_Matching
-  - Chelsa_Prepare_List
-  - Chelsa_Vars
-  - Chelsa_Info
-  - Chelsa_Project
-  - GetSpeciesName

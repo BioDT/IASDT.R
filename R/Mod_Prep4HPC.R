@@ -142,10 +142,9 @@
 #'    **`DP_R_Grid_Local`** (if `FromHPC = FALSE`). The function reads
 #'   the content of the `Grid_10_Land_Crop.RData` file from this path.
 #'   - **`DP_R_Path_Python`**: Python path on LUMI.
-#'   - **`DP_R_TaxaInfo`** (if `FromHPC` = `TRUE`) or
-#'     **`DP_R_TaxaInfo_Local`** (if `FromHPC` = `FALSE`) for the location of the `Species_List_ID.txt` file representing species information.
-#'   - **`DP_R_EUBound_sf`** (if `FromHPC` = `TRUE`) or
-#'     **`DP_R_EUBound_sf_Local`** (if `FromHPC` = `FALSE`): path for the 
+#'   - **`DP_R_TaxaInfo`** or **`DP_R_TaxaInfo_Local`** for the location of the
+#'    `Species_List_ID.txt` file representing species information.
+#'   - **`DP_R_EUBound_sf`** or **`DP_R_EUBound_sf_Local`** for the path of the
 #'     `RData` file containing the country boundaries (`sf` object).
 #' @export
 
@@ -164,6 +163,10 @@ Mod_Prep4HPC <- function(
     Time = NULL, JobName = NULL, Path_Hmsc = NULL, ToJSON = FALSE, ...) {
 
   .StartTime <- lubridate::now(tzone = "CET")
+
+  # # |||||||||||||||||||||||||||||||||||
+  # # Initial checking -----
+  # # |||||||||||||||||||||||||||||||||||
 
   if (is.null(Path_Model) || is.null(MinPresGrids)) {
     stop("Path_Model and MinPresGrids cannot be empty")
@@ -197,28 +200,25 @@ Mod_Prep4HPC <- function(
     stop("MinPresGrids should be numeric and greater than zero")
   }
 
-
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   NCells <- Sp <- IAS_ID <- x <- y <- dplyr <- sf <- Country <-
     Hmsc <- jsonify <- magrittr <- M_thin <- rL <- M_Name_init <- rL2 <-
     M_samples <- M4HPC_Path <- M_transient <- M_Init_Path <- M_Name_Fit <-
     Chain <- Post_Missing <- Command_HPC <- Command_WS <- Post_Path <-
-    Path_ModProg <- TaxaInfoFile <- Path_Python <- Path_Grid <- NULL
+    Path_ModProg <- TaxaInfoFile <- Path_Python <- Path_Grid <- EU_Bound <- NULL
 
   if (magrittr::not(VerboseProgress)) {
     sink(file = nullfile())
     on.exit(sink(), add = TRUE)
   }
 
-  Hab_Abb <- as.character(Hab_Abb)
-
   IASDT.R::CatSep(Rep = 1, Extra1 = 1, Extra2 = 0, Char = "=")
   IASDT.R::CatTime("Preparing data for Hmsc-HPC models")
   IASDT.R::CatSep(Rep = 1, Extra1 = 0, Extra2 = 1, Char = "=")
 
   # # |||||||||||||||||||||||||||||||||||
-  # # Load/check environment variables
+  # # Load/check environment variables -----
   # # |||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Load/check environment variables")
@@ -257,7 +257,7 @@ Mod_Prep4HPC <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # # |||||||||||||||||||||||||||||||||||
-  # # CHECK input arguments
+  # # check input arguments ----
   # # |||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Checking input arguments")
@@ -291,7 +291,6 @@ Mod_Prep4HPC <- function(
     stop("At least one of PhyloTree or NoPhyloTree has to be true")
   }
 
-
   NumArgsInvalid <- purrr::map_lgl(.x = NumericArgs, .f = ~all(get(.x) < 1))
   if (any(NumArgsInvalid)) {
     paste0(
@@ -305,7 +304,7 @@ Mod_Prep4HPC <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # # |||||||||||||||||||||||||||||||||||
-  # # File paths - Creating missing paths
+  # # File paths - Creating missing paths ----
   # # |||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("File paths - Creating missing paths")
@@ -318,7 +317,7 @@ Mod_Prep4HPC <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # # |||||||||||||||||||||||||||||||||||
-  # # Prepare list of predictors
+  # # Prepare list of predictors -----
   # # |||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Prepare list of predictors")
@@ -342,7 +341,7 @@ Mod_Prep4HPC <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # # |||||||||||||||||||||||||||||||||||
-  # # Loading/preparing input data
+  # # Loading/preparing input data -----
   # # |||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Loading/preparing input data")
@@ -387,7 +386,7 @@ Mod_Prep4HPC <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # # |||||||||||||||||||||||||||||||||||
-  # # Subsetting data
+  # # Subsetting data -----
   # # |||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Subsetting data")
@@ -426,7 +425,7 @@ Mod_Prep4HPC <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # # |||||||||||||||||||||||||||||||||||
-  # # Exclude grid cells with no presences
+  # # Exclude grid cells with no presences -----
   # # |||||||||||||||||||||||||||||||||||
 
   if (ExclGridsWOSp) {
@@ -448,7 +447,7 @@ Mod_Prep4HPC <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # # |||||||||||||||||||||||||||||||||||
-  # # Cross-validation
+  # # Cross-validation ----
   # # |||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Prepare cross-validation folds")
@@ -461,7 +460,7 @@ Mod_Prep4HPC <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # # |||||||||||||||||||||||||||||||||||
-  # # Response - Y matrix
+  # # Response - Y matrix ----
   # # |||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Response - Y matrix")
@@ -471,7 +470,7 @@ Mod_Prep4HPC <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # # |||||||||||||||||||||||||||||||||||
-  # # Xformula
+  # # Xformula -----
   # # |||||||||||||||||||||||||||||||||||
 
   # The formula object becomes too large (up to > 2GB!) if created within a
@@ -489,7 +488,7 @@ Mod_Prep4HPC <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # # |||||||||||||||||||||||||||||||||||
-  # # Phylogenetic tree data
+  # # Phylogenetic tree data -----
   # # |||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Phylogenetic tree data")
@@ -517,7 +516,7 @@ Mod_Prep4HPC <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # # |||||||||||||||||||||||||||||||||||
-  # # Preparing working on parallel
+  # # Preparing working on parallel -----
   # # |||||||||||||||||||||||||||||||||||
 
   if (NParallel > 1) {
@@ -533,7 +532,7 @@ Mod_Prep4HPC <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # # |||||||||||||||||||||||||||||||||||
-  # # spatial info / random effect
+  # # spatial info / random effect ------
   # # |||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Spatial info / random effect")
@@ -552,6 +551,7 @@ Mod_Prep4HPC <- function(
       cl = c1, IASDT.R::LoadPackages(dplyr, sf, Hmsc, jsonify, magrittr)))
     snow::clusterExport(
       cl = c1, list = c("DT_xy", "GPP_Dists"), envir = environment())
+
     GPP_Knots <- snow::parLapply(
       cl = c1, x = GPP_Dists * 1000,
       fun = function(x) {
@@ -565,8 +565,7 @@ Mod_Prep4HPC <- function(
       stats::setNames(paste0("GPP_", GPP_Dists))
   }
 
-
-  # Plotting knot location
+  ## Plotting knot location ----
   if (GPP_Plot) {
     IASDT.R::CatTime("   >>>   Plotting GPP knots")
 
@@ -596,8 +595,11 @@ Mod_Prep4HPC <- function(
     Knots_Plots <- purrr::map(
       .x = GPP_Dists,
       .f = ~{
+
         Knot_sf <- GPP_Knots[[paste0("GPP_", .x)]]$sKnot %>%
           sf::st_as_sf(coords = c("Var1", "Var2"), crs = 3035)
+
+        KnotPointSize <- dplyr::if_else(.x < 50, 2, 3)
 
         Plot <- ggplot2::ggplot() +
           tidyterra::geom_spatraster(data = GridR) +
@@ -605,7 +607,8 @@ Mod_Prep4HPC <- function(
             data = EU_Bound, fill = "transparent", colour = "darkgrey",
             linewidth = 1.5) +
           ggplot2::geom_sf(
-            data = Knot_sf, colour = "black", shape = 19, stroke = 2, size = 3) +
+            data = Knot_sf, colour = "black", shape = 19,
+            stroke = 1.75, size = KnotPointSize) +
           ggplot2::scale_x_continuous(
             limits = sf::st_bbox(EU_Bound)[c(1, 3)], expand = c(0, 0)) +
           ggplot2::scale_y_continuous(
@@ -638,7 +641,7 @@ Mod_Prep4HPC <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # # |||||||||||||||||||||||||||||||||||
-  # # Define the models
+  # # Define the models -----
   # # |||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Define the models")
@@ -697,7 +700,7 @@ Mod_Prep4HPC <- function(
   rm(GPP_Knots)
 
   # # |||||||||||||||||||||||||||||||||||
-  # # Prepare and save unfitted models
+  # # Prepare and save unfitted models -----
   # # |||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Save unfitted models")
@@ -778,7 +781,7 @@ Mod_Prep4HPC <- function(
   }
 
   # # # |||||||||||||||||||||||||||||||||||
-  # # # Stopping cluster
+  # # # Stopping cluster -----
   # # # |||||||||||||||||||||||||||||||||||
 
   if (NParallel > 1) {
@@ -787,7 +790,7 @@ Mod_Prep4HPC <- function(
   }
 
   # # |||||||||||||||||||||||||||||||||||
-  # # Prepare Hmsc-HPC fitting commands
+  # # Prepare Hmsc-HPC fitting commands -----
   # # |||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Prepare Hmsc-HPC fitting commands")
@@ -851,7 +854,7 @@ Mod_Prep4HPC <- function(
     tidyr::unnest_wider("M_Chain")
 
   # # |||||||||||||||||||||||||||||||||||
-  # # Skip fitted models
+  # # Skip fitted models -----
   # # |||||||||||||||||||||||||||||||||||
 
   if (SkipFitted) {
@@ -874,7 +877,7 @@ Mod_Prep4HPC <- function(
   }
 
   # # |||||||||||||||||||||||||||||||||||
-  # # Save commands in a text file
+  # # Save commands in a text file -----
   # # |||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Save commands in a text file")
@@ -920,7 +923,7 @@ Mod_Prep4HPC <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # # |||||||||||||||||||||||||||||||||||
-  # # Save data to disk
+  # # Save data to disk -----
   # # |||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Save data to disk")
@@ -944,7 +947,7 @@ Mod_Prep4HPC <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # # |||||||||||||||||||||||||||||||||||
-  # # Prepare SLURM file
+  # # Prepare SLURM file ------
   # # |||||||||||||||||||||||||||||||||||
 
   if (PrepSLURM) {

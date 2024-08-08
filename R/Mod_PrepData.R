@@ -38,9 +38,9 @@
 #'   modelling data. Otherwise, invisibly returns `NULL`.
 #' @details The function reads the following environment variables:
 #'    - **`DP_R_Grid`** (if `FromHPC` = `TRUE`) or **`DP_R_Grid_Local`** (if
-#'    `FromHPC` = `FALSE`). The function reads the content of the `Grid_10_Land_Crop.RData` and 
+#'    `FromHPC` = `FALSE`). The function reads the content of the `Grid_10_Land_Crop.RData` and
 #'    `Grid_10_Land_Crop_sf_Country.RData` files
-#'    - **`DP_R_Grid_Ref`** or **`DP_R_Grid_Ref_Local`**: The function reads the 
+#'    - **`DP_R_Grid_Ref`** or **`DP_R_Grid_Ref_Local`**: The function reads the
 #'    content of `Grid_10_sf.RData` file from this path.
 #'    - **`DP_R_PA`** or **`DP_R_PA_Local`**: The function reads the contents of the
 #'    `Sp_PA_Summary_DF.RData` file from this path.
@@ -103,7 +103,7 @@ Mod_PrepData <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   NCells <- SpeciesID <- Species_name <- Species_File <- PA <-
-    cell <- x <- Path_PA <- Path_Grid <- Path_Grid_Ref <- Path_CLC_Summ <- 
+    cell <- x <- Path_PA <- Path_Grid <- Path_Grid_Ref <- Path_CLC_Summ <-
     Path_Roads <- Path_Rail <- Path_Bias <- Path_Chelsa_Time_CC <- NULL
 
   IASDT.R::CatTime("Checking input arguments")
@@ -138,7 +138,7 @@ Mod_PrepData <- function(
   } else {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Grid", "DP_R_Grid", FALSE, FALSE,
+      "Path_Grid", "DP_R_Grid_Local", FALSE, FALSE,
       "Path_Grid_Ref", "DP_R_Grid_Ref_Local", TRUE, FALSE,
       "Path_PA", "DP_R_PA_Local", TRUE, FALSE,
       "Path_CLC_Summ", "DP_R_CLC_Summary_Local", TRUE, FALSE,

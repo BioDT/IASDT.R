@@ -4,7 +4,9 @@ Title: IASDT.R: Helper R functions for the Invasive Alien Species
     prototype Digital Twin (IAS-pDT)
 Version: 0.0.7
 Date: 2024-08-08
-Authors@R: person(given = "Ahmed", family = "El-Gabbas", email = "ahmed.el-gabbas@ufz.de", role = c("aut", "cre"), comment = c(ORCID = "0000-0003-2225-088X"))
+Authors@R: 
+    person("Ahmed", "El-Gabbas", , "ahmed.el-gabbas@ufz.de", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0003-2225-088X"))
 Maintainer: Ahmed El-Gabbas <ahmed.el-gabbas@ufz.de>
 Description: Helper functions to be used in the Invasive Alien Species
     (IAS) prototype Digital Twin (IAS pDT).

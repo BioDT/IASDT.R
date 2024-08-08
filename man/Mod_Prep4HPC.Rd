@@ -228,10 +228,9 @@ The function reads the following environment variables:
 \strong{\code{DP_R_Grid_Local}} (if \code{FromHPC = FALSE}). The function reads
 the content of the \code{Grid_10_Land_Crop.RData} file from this path.
 \item \strong{\code{DP_R_Path_Python}}: Python path on LUMI.
-\item \strong{\code{DP_R_TaxaInfo}} (if \code{FromHPC} = \code{TRUE}) or
-\strong{\code{DP_R_TaxaInfo_Local}} (if \code{FromHPC} = \code{FALSE}) for the location of the \code{Species_List_ID.txt} file representing species information.
-\item \strong{\code{DP_R_EUBound_sf}} (if \code{FromHPC} = \code{TRUE}) or
-\strong{\code{DP_R_EUBound_sf_Local}} (if \code{FromHPC} = \code{FALSE}): path for the
+\item \strong{\code{DP_R_TaxaInfo}} or \strong{\code{DP_R_TaxaInfo_Local}} for the location of the
+\code{Species_List_ID.txt} file representing species information.
+\item \strong{\code{DP_R_EUBound_sf}} or \strong{\code{DP_R_EUBound_sf_Local}} for the path of the
 \code{RData} file containing the country boundaries (\code{sf} object).
 }
 }

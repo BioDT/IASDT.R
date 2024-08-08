@@ -481,9 +481,21 @@ Mod_Prep4HPC <- function(
     stringr::str_c("~ ", .) %>%
     stats::as.formula(env = baseenv())
 
-  DT_x <- DT_All %>%
-    dplyr::select(tidyselect::all_of(XVars), dplyr::starts_with("CV")) %>%
+  DT_x <- dplyr::select(DT_All, tidyselect::all_of(XVars)) %>%
     as.data.frame()
+
+  ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  # # |||||||||||||||||||||||||||||||||||
+  # # DT_CV -----
+  # # |||||||||||||||||||||||||||||||||||
+
+  DT_CV <- DT_All %>%
+    dplyr::select("CellNum", "CellCode", "Country",
+                  tidyselect::starts_with("CV"))
+
+  save(DT_CV, file = file.path(Path_Model, "DT_CV.RData"))
+  rm(DT_CV)
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

@@ -169,7 +169,8 @@ GetCV <- function(
   # to avoid the following error if the estimated SAC range is very large that
   # disallow the assignation of grid cells into the number of CV folds in the
   # `NFolds` parameter:
-  # ! 'k' is bigger than the number of spatial blocks: 1.
+  # error in `blockCV::cv_spatial()`: 'k' is bigger than the number of spatial blocks: 1.
+
 
   # Size of the large spatial blocks that split the study area into four large
   # blocks; the same as `CV_Large` method
@@ -180,7 +181,7 @@ GetCV <- function(
   if (CV_SAC_Range$range > MinDist) {
     IASDT.R::CatTime(
       paste0("   >>>   >>>  CV_SAC was NOT implemented; median SAC: ",
-             CV_SAC_Range$range, "m"))
+             round(CV_SAC_Range$range, 2), "m"))
     CV_SAC <- NULL
 
     # Check `folds_ids` exists in each of the cross-validation strategies

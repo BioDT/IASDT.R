@@ -1,54 +1,21 @@
 # use the tidyverse rocker image, as it contains devtools preinstalled
 image: rocker/tidyverse
-# image: r-base
+# image: rocker/r-base
 
-# define stages of runner. at the moment,
-# just test (no build or deploy).
 stages:
-    - test
-    - quality
+  - build
+  - test
+  - deploy
 
-default:
-   before_script:
-    - mkdir -p installed_deps
-    - echo 'R_LIBS="installed_deps"' > .Renviron
-    - echo 'R_LIBS_USER="installed_deps"' >> .Renviron
-    - echo 'R_LIBS_SITE="installed_deps"' >> .Renviron
-    
-    
-image: rocker/r-base
-stages:
-    - test
-    - quality
+before_script:
+  - R -e 'devtools::install_deps(dep = T)'
 
-default:
-   before_script:
-    - mkdir -p installed_deps
-    - echo 'R_LIBS="installed_deps"' > .Renviron
-    - echo 'R_LIBS_USER="installed_deps"' >> .Renviron
-    - echo 'R_LIBS_SITE="installed_deps"' >> .Renviron
+buildbinary:
+  stage: build
+  script:
+    - R -e 'devtools::check(vignettes = FALSE, error_on = "error")'
 
-test:
-   stage: test
-   script:
-    - apt-get update
-    - apt-get install --yes --no-install-recommends r-cran-testthat r-cran-devtools
-    - R -e "devtools::install_deps(dependencies = TRUE)"
-    - R CMD build . --no-build-vignettes --no-manual
-    - PKG_FILE_NAME=$(ls -1t *.tar.gz | head -n 1)
-    - R CMD check "${PKG_FILE_NAME}" --no-build-vignettes --no-manual
-    cache:
-      key: "$CI_COMMIT_REF_SLUG"
-      paths:
-       - installed_deps/
-   artifacts:
-    paths:
-     - '*.Rcheck/'
-   only:
-    - master
-    - dev
-
-quality:
-   stage: quality
-   include:
-    template: Jobs/Code-Quality.gitlab-ci.yml
+unittests:
+  stage: test
+  script:
+    - r -e 'if (any(as.data.frame(devtools::test())[["failed"]] > 0)) stop("Some tests failed.")'

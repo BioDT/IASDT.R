@@ -38,8 +38,6 @@
 #' @return The function does not return any value but writes SLURM script files
 #'   to the disk.
 #' @details The function reads the following environment variables:
-#'    - **`LUMI_Scratch`** for the path of
-#'    the scratch folder of the `BioDT` project on LUMI.
 #'    - **`LUMI_ProjNum`** for the BioDT LUMI project number.
 #'    - **`DP_R_Path_GPU_Check`** for the path of the python for reporting if
 #'    the GPU was used in the running SLURM job.
@@ -54,7 +52,7 @@ Mod_SLURM <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Path_Scratch <- ProjNum <- Path_GPU_Check <- NULL
+  ProjNum <- Path_GPU_Check <- NULL
 
   if (is.null(Path_Model) || is.null(JobName) || is.null(MemPerCpu) ||
       is.null(Time) || is.null(Path_Hmsc)) {
@@ -72,7 +70,6 @@ Mod_SLURM <- function(
   EnvVars2Read <- tibble::tribble(
     ~VarName, ~Value, ~CheckDir, ~CheckFile,
     "ProjNum", "LUMI_ProjNum", FALSE, FALSE,
-    "Path_Scratch", "LUMI_Scratch", FromHPC, FALSE,
     "Path_GPU_Check", "DP_R_Path_GPU_Check", FALSE, FromHPC)
 
   # Assign environment variables and check file and paths
@@ -89,7 +86,7 @@ Mod_SLURM <- function(
   # character arguments
   CharArgs <- c(
     "Path_Model", "JobName", "EnvFile", "Time", "MemPerCpu", "Partition",
-    "Path_Hmsc", "ProjNum", "Path_Scratch", "Path_GPU_Check",
+    "Path_Hmsc", "ProjNum", "Path_GPU_Check",
     "Command_Prefix", "SLURM_Prefix")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = CharArgs, Type = "character")
 
@@ -159,11 +156,6 @@ Mod_SLURM <- function(
       cat2(paste0("#SBATCH --time=", Time))
       cat2(paste0("#SBATCH --partition=", Partition))
       cat2(paste0("#SBATCH --array=1-", NJobs, "\n"))
-
-      cat2("# -----------------------------------------------")
-      cat2("# Change working directory to scratch")
-      cat2("# -----------------------------------------------")
-      cat2(paste0("cd ", Path_Scratch, "\n"))
 
       if (CatJobInfo) {
         cat2("# -----------------------------------------------")

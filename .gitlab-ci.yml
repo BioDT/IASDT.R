@@ -11,6 +11,7 @@ stages:
 test-job:
   stage: test
   script:
+    - R CMD build
     # run the R CMD check on the package (this path)
     - R CMD check ./ --no-manual
     # run the devtools test

@@ -32,7 +32,7 @@ Mod_Prep4HPC(
   thin = NULL,
   samples = NULL,
   transientFactor = 300,
-  verbose = 1000,
+  verbose = 200,
   SkipFitted = TRUE,
   MaxJobCounts = 210,
   ModelCountry = NULL,
@@ -143,7 +143,7 @@ factor. The value of \code{transient} will equal  the multiplication of
 \code{transientFactor} and \code{thin}. Default: 300.}
 
 \item{verbose}{Integer specifying how often the results of the MCMC sampling
-should be reported. Default: \code{1000}.}
+should be reported. Default: \code{200}.}
 
 \item{SkipFitted}{Logical indicating whether to skip already fitted models.
 Default: \code{TRUE}.}

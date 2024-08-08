@@ -135,7 +135,6 @@ Mod_PrepData <- function(
       "Path_Roads", "DP_R_Roads", TRUE, FALSE,
       "Path_Rail", "DP_R_Railway", TRUE, FALSE,
       "Path_Bias", "DP_R_Bias", TRUE, FALSE)
-
   } else {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,

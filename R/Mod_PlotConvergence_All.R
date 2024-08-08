@@ -1,5 +1,5 @@
 ## |------------------------------------------------------------------------| #
-# PlotConvergence_AllModels ----
+# PlotConvergence_All ----
 ## |------------------------------------------------------------------------| #
 
 #' Plot model convergence of multiple modelling alternatives
@@ -10,19 +10,17 @@
 #' model parameters.
 #' @param Path_Model String. Path to save all the output, including the to be
 #'   fitted models (without trailing slash). Must not be `NULL`.
-#' @param NChains Integer. Number of MCMC chains used in the model fitting
-#'   process.
 #' @param maxOmega Integer. Maximum number of species interactions to sample for
 #'   convergence diagnostics.
 #' @param NCores Integer. Number of cores to use for parallel processing.
-#' @name PlotConvergence_AllModels
+#' @name PlotConvergence_All
 #' @author Ahmed El-Gabbas
 #' @return The function does not return anything but saves a series of
 #'   diagnostic plots in the specified path.
 #' @export
 
-PlotConvergence_AllModels <- function(
-    Path_Model = NULL, NChains = 4, maxOmega = 1000, NCores = NULL) {
+PlotConvergence_All <- function(
+    Path_Model = NULL, maxOmega = 1000, NCores = NULL) {
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -50,8 +48,7 @@ PlotConvergence_AllModels <- function(
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "character", Args = "Path_Model")
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "numeric",
-    Args = c("NChains", "maxOmega", "NCores"))
+    AllArgs = AllArgs, Type = "numeric", Args = c("maxOmega", "NCores"))
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   ## Prepare/load convergence data ------
@@ -63,7 +60,6 @@ PlotConvergence_AllModels <- function(
   Path_ConvDT <- file.path(Path_Convergence_All, "DT")
   fs::dir_create(c(Path_ConvDT, Path_Convergence_All))
 
-
   c1 <- snow::makeSOCKcluster(NCores)
   on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
   future::plan(future::cluster, workers = c1, gc = TRUE)
@@ -73,6 +69,12 @@ PlotConvergence_AllModels <- function(
     stop(paste0("Model info file `", Model_Info, "` does not exist"))
   }
   Model_Info <- IASDT.R::LoadAs(Model_Info)
+
+  # Extract number of chains
+  NChains <- Model_Info$Path_FittedMod[[1]] %>%
+    IASDT.R::LoadAs() %>%
+    magrittr::extract2("postList") %>%
+    length()
 
 
   PrepConvergence <- function(ID) {

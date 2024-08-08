@@ -81,7 +81,7 @@
 #'   factor. The value of `transient` will equal  the multiplication of
 #'   `transientFactor` and `thin`. Default: 300.
 #' @param verbose Integer specifying how often the results of the MCMC sampling
-#'   should be reported. Default: `1000`.
+#'   should be reported. Default: `200`.
 #' @param SkipFitted Logical indicating whether to skip already fitted models.
 #'   Default: `TRUE`.
 #' @param MaxJobCounts Integer specifying the maximum allowed number of array
@@ -158,7 +158,7 @@ Mod_Prep4HPC <- function(
     HabAsPredictor = TRUE, ExclGridsWOSp = TRUE, NFolds = 4, NGrids = 20, NR = 2,
     NC = 2, PlotCV = TRUE, PhyloTree = TRUE, NoPhyloTree = TRUE,
     OverwriteInitMod = TRUE, NParallel = 8, nChains = 4, thin = NULL,
-    samples = NULL, transientFactor = 300, verbose = 1000, SkipFitted = TRUE,
+    samples = NULL, transientFactor = 300, verbose = 200, SkipFitted = TRUE,
     MaxJobCounts = 210, ModelCountry = NULL, MinPresPerCountry = 50,
     VerboseProgress = FALSE, FromHPC = TRUE, PrepSLURM = TRUE, MemPerCpu = NULL,
     Time = NULL, JobName = NULL, Path_Hmsc = NULL, ToJSON = FALSE, ...) {

@@ -7,7 +7,7 @@
 #' Processes Corine Land Cover (CLC) data for environmental modeling purposes.
 #' The function calculates the percentage coverage of CLC per grid cell. It
 #' estimate the percent coverage at the 3 CLC levels, and cross-walk for
-#' `EUNIS19` and `SynHab` habitat types. Similarly, the function estimates the
+#' `EUNIS_19` and `SynHab` habitat types. Similarly, the function estimates the
 #' most common class per grid cell (3 CLC levels, EUNIS, and SynHab habitat
 #' types) and prepares reference grid for models. The function optionally plots
 #' % coverage maps.
@@ -41,9 +41,10 @@
 #'   - **`DP_R_CLC`** (if `FromHPC` = `TRUE`) or
 #'     **`DP_R_CLC_Local`** (if `FromHPC` = `FALSE`): directory where the outputs of CLC data processing are processed.
 #'   - **`DP_R_CLC_CW`** (if `FromHPC` = `TRUE`) or
-#'     **`DP_R_CLC_CW_Local`** (if `FromHPC` = `FALSE`): path for the `crossWalk.txt` file containing custom cross-walk between CLC values and their corresponding values for three levels of CLC and EUNIS19 & SynHab habitat types.
+#'     **`DP_R_CLC_CW_Local`** (if `FromHPC` = `FALSE`): path for the `crossWalk.txt` file containing custom cross-walk between CLC values and their corresponding values for three levels of CLC and EUNIS_19 & SynHab habitat types.
 #'   - **`DP_R_CLC_tif`** (if `FromHPC` = `TRUE`) or
 #'     **`DP_R_CLC_tif_Local`** (if `FromHPC` = `FALSE`): path for the input CLC `.tif` file.
+
 
 CLC_Process <- function(
     EnvFile = ".env", FromHPC = TRUE, MinLandPerc = 15, PlotCLC = TRUE) {
@@ -58,7 +59,7 @@ CLC_Process <- function(
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   SynHab_desc <- CNTR_ID <- geometry <- Name <- Path_CLC <- Path_Grid <-
     Path_Grid_Ref <- km <- Majority <- Path_CLC_tif <- Path_CLC_CW <-
-    EU_Bound <- Value <- NULL
+    EU_Bound <- Value <- Country <- Country2 <- NULL
 
   if (is.null(EnvFile)) {
     stop("EnvFile can not be empty")
@@ -89,7 +90,7 @@ CLC_Process <- function(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
       "Path_Grid", "DP_R_Grid", FALSE, FALSE,
       "Path_Grid_Ref", "DP_R_Grid_Ref", TRUE, FALSE,
-      "Path_CLC", "DP_R_CLC", TRUE, FALSE,
+      "Path_CLC", "DP_R_CLC", FALSE, FALSE,
       "Path_CLC_tif", "DP_R_CLC_tif", FALSE, TRUE,
       "Path_CLC_CW", "DP_R_CLC_CW", FALSE, TRUE,
       "EU_Bound", "DP_R_EUBound_sf", FALSE, TRUE)
@@ -98,7 +99,7 @@ CLC_Process <- function(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
       "Path_Grid", "DP_R_Grid", FALSE, FALSE,
       "Path_Grid_Ref", "DP_R_Grid_Ref_Local", TRUE, FALSE,
-      "Path_CLC", "DP_R_CLC_Local", TRUE, FALSE,
+      "Path_CLC", "DP_R_CLC_Local", FALSE, FALSE,
       "Path_CLC_tif", "DP_R_CLC_tif_Local", FALSE, TRUE,
       "Path_CLC_CW", "DP_R_CLC_CW_Local", FALSE, TRUE,
       "EU_Bound", "DP_R_EUBound_sf_Local", FALSE, TRUE)
@@ -118,11 +119,14 @@ CLC_Process <- function(
   Path_Grid_rast <- file.path(Path_Grid_Ref, "Grid_10_Raster.RData")
 
   requiredPaths <- c(Path_Grid_sf, Path_CLC_CW, Path_Grid_rast)
-  lapply(requiredPaths, function(path) {
-    if (magrittr::not(file.exists(path))) {
-      stop("Required path does not exist: ", path)
-    }
-  })
+
+  purrr::walk(
+    .x = requiredPaths,
+    .f = function(path) {
+      if (magrittr::not(file.exists(path))) {
+        stop("Required path does not exist: ", path)
+      }
+    })
 
   # # ||||||||||||||||||||||||||||||||||||||||||||
   # Cross-walk
@@ -410,9 +414,6 @@ CLC_Process <- function(
   save(Grid_10_Land_Crop_sf,
        file = file.path(Path_Grid, "Grid_10_Land_Crop_sf.RData"))
 
-  rm(Grid_10_Land_Crop_sf, Grid_10_Land_sf, Exclude_Area, TR)
-  invisible(gc())
-
   ## ||||||||||||||||||||||||||||||||||||||||
   # Save calculated % coverage
   ## ||||||||||||||||||||||||||||||||||||||||
@@ -436,6 +437,49 @@ CLC_Process <- function(
   terra::writeRaster(
     terra::unwrap(Grid_10_Land_Crop), overwrite = TRUE,
     filename = file.path(Path_Grid, "Grid_10_Land_Crop.tif"))
+
+  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  ## ||||||||||||||||||||||||||||||||||||||||
+  # Add country name to grid cells
+  ## ||||||||||||||||||||||||||||||||||||||||
+
+  # Country boundaries
+  EU_BoundCNT <- IASDT.R::LoadAs(EU_Bound) %>%
+    magrittr::extract2("Bound_sf_Eur") %>%
+    magrittr::extract2("L_01") %>%
+    dplyr::select(Country = "NAME_ENGL") %>%
+    dplyr::filter(!(Country %in% c("Russian Federation", "Belarus", "Ukraine")))
+
+  # Reference grid as points, with spatially matched Country names
+  Grid_CNT <- terra::unwrap(Grid_10_Land_Crop) %>%
+    terra::as.points() %>%
+    sf::st_as_sf() %>%
+    sf::st_join(EU_BoundCNT) %>%
+    dplyr::select(-"Grid_10_Land_Crop")
+
+  # Get the nearest country names for some grid cells that their centroid do not overlap with country boundaries
+  Grid_CNT_Near <- dplyr::filter(Grid_CNT, is.na(Country)) %>%
+    dplyr::select(-"Country") %>%
+    sf::st_join(y = EU_BoundCNT, join = sf::st_nearest_feature) %>%
+    dplyr::rename(Country2 = "Country")
+
+  # Merge data and add a new column representing whether the country information was retrieved by spatial joining of the grid centroid and country boundaries or estimated as the nearest country
+  Grid_CNT <- sf::st_join(x = Grid_CNT, y = Grid_CNT_Near) %>%
+    sf::st_join(Grid_10_Land_Crop_sf) %>%
+    dplyr::mutate(
+      Nearest = is.na(Country),
+      Country = dplyr::coalesce(Country, Country2)) %>%
+    dplyr::select(-"Country2")
+
+  IASDT.R::SaveAs(
+    InObj = Grid_CNT, OutObj = "Grid_10_Land_Crop_sf_Country",
+    OutPath = file.path(Path_Grid, "Grid_10_Land_Crop_sf_Country.RData"))
+
+  rm(Grid_10_Land_Crop_sf, Grid_10_Land_sf, Exclude_Area,
+     TR, Grid_CNT, Grid_CNT_Near)
+  invisible(gc())
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -466,7 +510,8 @@ CLC_Process <- function(
         OutObjName <- paste0(Type, "_Crop")
         IASDT.R::SaveAs(
           InObj = terra::wrap(Map), OutObj = OutObjName,
-          OutPath = file.path(Path_CLC_Summary_RData, paste0(OutObjName, ".RData")))
+          OutPath = file.path(
+            Path_CLC_Summary_RData, paste0(OutObjName, ".RData")))
 
         return(Map)
       }))
@@ -500,6 +545,8 @@ CLC_Process <- function(
     sf::st_as_sf() %>%
     sf::st_transform(crs = 3035)
 
+  rm(CLC_Rast, Grid_sf)
+
   ## ||||||||||||||||||||||||||||||||||||||||
   # Save majority results
   ## ||||||||||||||||||||||||||||||||||||||||
@@ -508,7 +555,6 @@ CLC_Process <- function(
   save(CLC_Majority,
        file = file.path(Path_CLC_Summary_RData, "CLC_Majority.RData"))
 
-  rm(CLC_Rast, Grid_sf)
   invisible(gc())
 
   ## ||||||||||||||||||||||||||||||||||||||||
@@ -680,7 +726,7 @@ CLC_ProcessMajority <- function(
 
   Label <- Class <- ID <- NULL
 
-  IASDT.R::CatTime(paste0("        >>>>> ", Type))
+  IASDT.R::CatTime(paste0("       >>>>> ", Type))
   OutObjName <- paste0("Majority_", Type)
   OutObjName_Cr <- paste0(OutObjName, "_Crop")
 

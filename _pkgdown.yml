@@ -84,7 +84,7 @@ reference:
   - NUnique
   - List2RData
   - AddMissingCols
-- subtitle: OTHERs
+- subtitle: OTHER FUNCTIONS
   desc:
   contents:
   - CurrOS
@@ -134,7 +134,7 @@ reference:
   - PlotAlpha
   - PlotRho
   - PlotConvergence
-  - PlotConvergence_AllModels
+  - PlotConvergence_All
   - PlotVarPar
   - PlotGelman
   - PlotGelman_Alpha

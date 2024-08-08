@@ -27,7 +27,7 @@ as saving processed data and plots to specified directories.
 Processes Corine Land Cover (CLC) data for environmental modeling purposes.
 The function calculates the percentage coverage of CLC per grid cell. It
 estimate the percent coverage at the 3 CLC levels, and cross-walk for
-\code{EUNIS19} and \code{SynHab} habitat types. Similarly, the function estimates the
+\code{EUNIS_19} and \code{SynHab} habitat types. Similarly, the function estimates the
 most common class per grid cell (3 CLC levels, EUNIS, and SynHab habitat
 types) and prepares reference grid for models. The function optionally plots
 \% coverage maps.
@@ -52,7 +52,7 @@ path.
 \item \strong{\code{DP_R_CLC}} (if \code{FromHPC} = \code{TRUE}) or
 \strong{\code{DP_R_CLC_Local}} (if \code{FromHPC} = \code{FALSE}): directory where the outputs of CLC data processing are processed.
 \item \strong{\code{DP_R_CLC_CW}} (if \code{FromHPC} = \code{TRUE}) or
-\strong{\code{DP_R_CLC_CW_Local}} (if \code{FromHPC} = \code{FALSE}): path for the \code{crossWalk.txt} file containing custom cross-walk between CLC values and their corresponding values for three levels of CLC and EUNIS19 & SynHab habitat types.
+\strong{\code{DP_R_CLC_CW_Local}} (if \code{FromHPC} = \code{FALSE}): path for the \code{crossWalk.txt} file containing custom cross-walk between CLC values and their corresponding values for three levels of CLC and EUNIS_19 & SynHab habitat types.
 \item \strong{\code{DP_R_CLC_tif}} (if \code{FromHPC} = \code{TRUE}) or
 \strong{\code{DP_R_CLC_tif_Local}} (if \code{FromHPC} = \code{FALSE}): path for the input CLC \code{.tif} file.
 }

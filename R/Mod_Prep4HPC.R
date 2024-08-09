@@ -174,11 +174,12 @@ Mod_Prep4HPC <- function(
     PrepSLURM = TRUE, MemPerCpu = NULL, Time = NULL, JobName = NULL,
     Path_Hmsc = NULL, ToJSON = FALSE, ...) {
 
-  .StartTime <- lubridate::now(tzone = "CET")
 
   # # |||||||||||||||||||||||||||||||||||
   # # Initial checking -----
   # # |||||||||||||||||||||||||||||||||||
+
+  .StartTime <- lubridate::now(tzone = "CET")
 
   if (is.null(Path_Model) || is.null(MinPresGrids)) {
     stop("Path_Model and MinPresGrids cannot be empty")
@@ -478,12 +479,12 @@ Mod_Prep4HPC <- function(
   IASDT.R::CatTime(
     "   >>>   Plotting grid cells used / excluded in the models")
 
-  GridR <- terra::unwrap(IASDT.R::LoadAs(Path_GridR))
+  GridR <- terra::unwrap(IASDT.R::LoadAs(Path_GridR)) * 2
   GridsIn <- terra::rasterize(
     x = as.matrix(DT_All[, c("x", "y")]), y = GridR)
-  GridR <- GridR * 2
   GridsOut <- terra::classify(terra::cover(GridsIn, GridR), cbind(1, NA))
-  GridsInOut <- as.factor(sum(GridsIn, GridsOut, na.rm = TRUE))
+  GridsInOut <- sum(GridsIn, GridsOut, na.rm = TRUE) %>%
+    terra::as.factor()
 
   Limits <- terra::trim(GridR) %>%
     terra::ext() %>%

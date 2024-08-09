@@ -52,8 +52,8 @@
 #'   to the model. Default: `TRUE`. Only valid if `Hab_Abb` not equals to "0".
 #' @param NspPerGrid Integer. Indicating the minimum number of species per grid
 #'   cell for a grid cell to be include in the analysis. Default to 0 resulting
-#'   in exclusion of any grid cell with no species presence. This parameter can 
-#'   be set to `NULL` to include all grid cells irrespective of the number of 
+#'   in exclusion of any grid cell with no species presence. This parameter can
+#'   be set to `NULL` to include all grid cells irrespective of the number of
 #'   species.
 #' @param NGrids For `CV_Dist` cross-validation strategy, how many grid cells in
 #'   both directions to be used in cross-validation. See [IASDT.R::GetCV] for
@@ -443,26 +443,81 @@ Mod_Prep4HPC <- function(
   # # Exclude grid cells with no / low number of presences -----
   # # |||||||||||||||||||||||||||||||||||
 
+  IASDT.R::CatTime("Exclude grid cells with no / low number of presences")
+
   if (is.null(NspPerGrid)) {
-    IASDT.R::CatTime("All grid cells will be included in the analysis")
+    IASDT.R::CatTime("   >>>   All grid cells will be included in the analysis")
+    SubTitle <- "All grid cells will be used in the models"
+
   } else {
 
-    if (magrittr::not(is.integer(NspPerGrid)) || NspPerGrid < 0) {
+    if (magrittr::not(is.numeric(NspPerGrid)) || NspPerGrid < 0) {
       stop(
         "`NspPerGrid` has to be either `NULL` or integer >= 0", call. = FALSE)
     }
 
+    SubTitle <- paste0(
+      "Data from grid cells with &#8805; ", NspPerGrid,
+      " species will be used in the models")
+
     EmptyGridsID <- dplyr::select(DT_All, tidyselect::starts_with("Sp_")) %>%
       rowSums() %>%
-      magrittr::is_less_than(NspPerGrid) %>%
+      magrittr::is_weakly_less_than(as.integer(NspPerGrid)) %>%
       which() %>%
       magrittr::multiply_by(-1)
 
     if (length(EmptyGridsID) > 0) {
-      IASDT.R::CatTime(paste("Excluding grid cells with < "), NspPerGrid)
+      IASDT.R::CatTime(
+        paste0("   >>>   Excluding grid cells with < "), NspPerGrid)
       DT_All <- dplyr::slice(DT_All, EmptyGridsID)
     }
   }
+
+  ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  IASDT.R::CatTime(
+    "   >>>   Plotting grid cells used / excluded in the models")
+
+  GridR <- terra::unwrap(IASDT.R::LoadAs(Path_GridR))
+  GridsIn <- terra::rasterize(
+    x = as.matrix(DT_All[, c("x", "y")]), y = GridR)
+  GridR <- GridR * 2
+  GridsOut <- terra::classify(terra::cover(GridsIn, GridR), cbind(1, NA))
+  GridsInOut <- as.factor(sum(GridsIn, GridsOut, na.rm = TRUE))
+
+  Limits <- terra::trim(GridR) %>%
+    terra::ext() %>%
+    as.vector()
+
+  GridsInOutPlot <- ggplot2::ggplot() +
+    tidyterra::geom_spatraster(data = GridsInOut) +
+    ggplot2::geom_sf() +
+    ggplot2::scale_fill_manual(
+      values = c("blue", "orange"), na.value = "transparent") +
+    ggplot2::labs(
+      title = paste0(
+        "Grid cells to be used (blue) or excluded (orange) ",
+        "in the model fitting"),
+      subtitle = SubTitle) +
+    ggplot2::scale_y_continuous(expand = c(0, 0), limits = Limits[3:4]) +
+    ggplot2::scale_x_continuous(expand = c(0, 0), limits = Limits[1:2]) +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(
+      legend.position = "none",
+      plot.margin = ggplot2::margin(0.05, 0, 0, 0, "cm"),
+      plot.title = ggplot2::element_text(
+        size = 16, color = "blue", face = "bold", hjust = 0,
+        margin = ggplot2::margin(0, 0, 0.1, 0, "cm")),
+      plot.subtitle = ggtext::element_markdown(size = 14, hjust = 0),
+      axis.title = ggplot2::element_blank(),
+      axis.text = ggplot2::element_blank(),
+      panel.border = ggplot2::element_blank())
+
+  ggplot2::ggsave(
+    plot = GridsInOutPlot, width = 24, height = 25, units = "cm", dpi = 600,
+    filename = file.path(Path_Model, "GridsInOut.jpeg"))
+
+  rm(GridR, GridsIn, GridsOut, GridsInOut, Limits, SubTitle, GridsInOutPlot)
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

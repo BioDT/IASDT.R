@@ -20,7 +20,7 @@ Mod_Prep4HPC(
   EffortsAsPredictor = TRUE,
   RoadRailAsPredictor = TRUE,
   HabAsPredictor = TRUE,
-  ExclGridsWOSp = TRUE,
+  NspPerGrid = NULL,
   NFolds = 4,
   NGrids = 20,
   NR = 2,
@@ -62,7 +62,7 @@ Only effective if \code{PrepareData} = \code{FALSE}; see below.}
 \item{Path_Model}{String (without trailing slash) specifying the path where
 all output, including models to be fitted, will be saved.}
 
-\item{MinPresGrids}{Integer indicating the minimum number of presence grid
+\item{MinPresGrids}{Integer. Indicating the minimum number of presence grid
 cells per species for a species to be used in the model. Default: 50.}
 
 \item{EnvFile}{String specifying the path to read environment variables from,
@@ -103,9 +103,9 @@ sum of road and railway intensity as predictor to the model. Default:
 percentage coverage of respective habitat type per grid cell as predictor
 to the model. Default: \code{TRUE}. Only valid if \code{Hab_Abb} not equals to "0".}
 
-\item{ExclGridsWOSp}{Logical indicating whether to exclude grid cells that do
-not contain at least single species presences from the analysis. Default:
-\code{TRUE}.}
+\item{NspPerGrid}{Integer. Indicating the minimum number of species per grid
+cell for a grid cell to be include in the analysis. Default to \code{NULL},
+which means to include all grid cells.}
 
 \item{NFolds}{Number of cross-validation folds. Default: 4. See
 \link{GetCV} for more details.}
@@ -209,23 +209,27 @@ initialization, and generating commands for running models on HPC. It
 supports parallel processing, options to include/not include phylogenetic
 tree data. The models are fitted with Gaussian Predictive Process (GPP; see
 \href{https://doi.org/10.1002/ecy.2929}{Tikhonov et al.}) for more details) using
-the Hmsc-HPC \href{https://doi.org/10.1101/2024.02.13.580046}{extension}.
+the \href{https://doi.org/10.1101/2024.02.13.580046}{Hmsc-HPC} extension.
 }
 \details{
 The function provides options for:
 \itemize{
 \item for which habitat types the models will be fitted.
-\item selection of species based on minimum number of presence-grid cells (\code{MinPresGrids})
-\item optionally model fitting on specified list of countries: (\code{ModelCountry} and \code{MinPresPerCountry})
-\item whether to exclude grid cells with no species observations
-(\code{ExclGridsWOSp})
+\item selection of species based on minimum number of presence-grid cells
+(\code{MinPresGrids})
+\item optionally model fitting on specified list of countries: (\code{ModelCountry}
+and \code{MinPresPerCountry})
+\item whether to exclude grid cells with few species (\code{NspPerGrid})
 \item number of cross-validation folds
 \item options for whether or not to include phylogenetic information to the model
 \item different values for knot distance for GPP (\code{GPP_Dists})
 \item which bioclimatic variables to be uses in the models (\code{BioVars})
-\item whether to include sampling efforts \code{EffortsAsPredictor}, percentage of respective habitat type per grid cell \code{HabAsPredictor}, and railway and road intensity per grid cell \code{RoadRailAsPredictor}
+\item whether to include sampling efforts \code{EffortsAsPredictor}, percentage of
+respective habitat type per grid cell \code{HabAsPredictor}, and railway and
+road intensity per grid cell \code{RoadRailAsPredictor}
 \item Hmsc options (\code{nChains}, \code{thin}, \code{samples}, \code{transientFactor}, and \code{verbose})
-\item prepare SLURM commands (\code{PrepSLURM}) and some specifications (e.g. \code{MaxJobCounts}, \code{MemPerCpu}, \code{Time}, \code{JobName})
+\item prepare SLURM commands (\code{PrepSLURM}) and some specifications (e.g.
+\code{MaxJobCounts}, \code{MemPerCpu}, \code{Time}, \code{JobName})
 }
 
 The function reads the following environment variables:
@@ -233,11 +237,13 @@ The function reads the following environment variables:
 \item \strong{\code{DP_R_Grid}} (if \code{FromHPC = TRUE}) or
 \strong{\code{DP_R_Grid_Local}} (if \code{FromHPC = FALSE}). The function reads
 the content of the \code{Grid_10_Land_Crop.RData} file from this path.
-\item \strong{\code{DP_R_Path_Python}}: Python path on LUMI.
+\item \strong{\code{DP_R_Path_Python}}: Python path on LUMI
 \item \strong{\code{DP_R_TaxaInfo}} or \strong{\code{DP_R_TaxaInfo_Local}} for the location of the
 \code{Species_List_ID.txt} file representing species information.
 \item \strong{\code{DP_R_EUBound_sf}} or \strong{\code{DP_R_EUBound_sf_Local}} for the path of the
-\code{RData} file containing the country boundaries (\code{sf} object).
+\code{RData} file containing the country boundaries (\code{sf} object)
+\item \strong{\code{DP_R_PA}} or \strong{\code{DP_R_PA_Local}}: The function reads the contents of
+the \code{Sp_PA_Summary_DF.RData} file from this path
 }
 }
 \author{

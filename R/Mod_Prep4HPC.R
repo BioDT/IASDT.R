@@ -10,7 +10,7 @@
 #' supports parallel processing, options to include/not include phylogenetic
 #' tree data. The models are fitted with Gaussian Predictive Process (GPP; see
 #' [Tikhonov et al.](https://doi.org/10.1002/ecy.2929)) for more details) using
-#' the Hmsc-HPC [extension](https://doi.org/10.1101/2024.02.13.580046).
+#' the [Hmsc-HPC](https://doi.org/10.1101/2024.02.13.580046) extension.
 #'
 #' @param Hab_Abb Character. Habitat abbreviation indicating the specific
 #'   `SynHab` habitat type to prepare data for. Valid values include "0", "1",
@@ -20,7 +20,7 @@
 #'   Only effective if `PrepareData` = `FALSE`; see below.
 #' @param Path_Model String (without trailing slash) specifying the path where
 #'   all output, including models to be fitted, will be saved.
-#' @param MinPresGrids Integer indicating the minimum number of presence grid
+#' @param MinPresGrids Integer. Indicating the minimum number of presence grid
 #'   cells per species for a species to be used in the model. Default: 50.
 #' @param EnvFile String specifying the path to read environment variables from,
 #'   with a default value of `.env`.
@@ -50,9 +50,9 @@
 #' @param HabAsPredictor Logical indicating whether to include the (log10)
 #'   percentage coverage of respective habitat type per grid cell as predictor
 #'   to the model. Default: `TRUE`. Only valid if `Hab_Abb` not equals to "0".
-#' @param ExclGridsWOSp Logical indicating whether to exclude grid cells that do
-#'   not contain at least single species presences from the analysis. Default:
-#'   `TRUE`.
+#' @param NspPerGrid Integer. Indicating the minimum number of species per grid
+#'   cell for a grid cell to be include in the analysis. Default to `NULL`,
+#'   which means to include all grid cells.
 #' @param NGrids For `CV_Dist` cross-validation strategy, how many grid cells in
 #'   both directions to be used in cross-validation. See [IASDT.R::GetCV] for
 #'   more details.
@@ -127,27 +127,34 @@
 #' @details The function provides options for:
 #'
 #' - for which habitat types the models will be fitted.
-#' - selection of species based on minimum number of presence-grid cells (`MinPresGrids`)
-#' - optionally model fitting on specified list of countries: (`ModelCountry` and `MinPresPerCountry`)
-#' - whether to exclude grid cells with no species observations
-#' (`ExclGridsWOSp`)
+#' - selection of species based on minimum number of presence-grid cells
+#'   (`MinPresGrids`)
+#' - optionally model fitting on specified list of countries: (`ModelCountry`
+#'   and `MinPresPerCountry`)
+#' - whether to exclude grid cells with few species (`NspPerGrid`)
 #' - number of cross-validation folds
 #' - options for whether or not to include phylogenetic information to the model
 #' - different values for knot distance for GPP (`GPP_Dists`)
 #' - which bioclimatic variables to be uses in the models (`BioVars`)
-#' - whether to include sampling efforts `EffortsAsPredictor`, percentage of respective habitat type per grid cell `HabAsPredictor`, and railway and road intensity per grid cell `RoadRailAsPredictor`
+#' - whether to include sampling efforts `EffortsAsPredictor`, percentage of
+#'   respective habitat type per grid cell `HabAsPredictor`, and railway and
+#'   road intensity per grid cell `RoadRailAsPredictor`
 #' - Hmsc options (`nChains`, `thin`, `samples`, `transientFactor`, and `verbose`)
-#' - prepare SLURM commands (`PrepSLURM`) and some specifications (e.g. `MaxJobCounts`, `MemPerCpu`, `Time`, `JobName`)
+#' - prepare SLURM commands (`PrepSLURM`) and some specifications (e.g.
+#'   `MaxJobCounts`, `MemPerCpu`, `Time`, `JobName`)
 #'
 #' The function reads the following environment variables:
 #'   - **`DP_R_Grid`** (if `FromHPC = TRUE`) or
 #'    **`DP_R_Grid_Local`** (if `FromHPC = FALSE`). The function reads
 #' the content of the `Grid_10_Land_Crop.RData` file from this path.
-#'   - **`DP_R_Path_Python`**: Python path on LUMI.
+#'   - **`DP_R_Path_Python`**: Python path on LUMI
 #'   - **`DP_R_TaxaInfo`** or **`DP_R_TaxaInfo_Local`** for the location of the
 #' `Species_List_ID.txt` file representing species information.
 #'   - **`DP_R_EUBound_sf`** or **`DP_R_EUBound_sf_Local`** for the path of the
-#' `RData` file containing the country boundaries (`sf` object).
+#' `RData` file containing the country boundaries (`sf` object)
+#'   - **`DP_R_PA`** or **`DP_R_PA_Local`**: The function reads the contents of
+#'  the `Sp_PA_Summary_DF.RData` file from this path
+
 #' @export
 
 Mod_Prep4HPC <- function(
@@ -156,13 +163,14 @@ Mod_Prep4HPC <- function(
     GPP_Plot = TRUE, rLMinLF = NULL, rLMaxLF = NULL,
     BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
     EffortsAsPredictor = TRUE, RoadRailAsPredictor = TRUE,
-    HabAsPredictor = TRUE, ExclGridsWOSp = TRUE, NFolds = 4, NGrids = 20, NR = 2,
-    NC = 2, PlotCV = TRUE, PhyloTree = TRUE, NoPhyloTree = TRUE,
-    OverwriteInitMod = TRUE, NParallel = 8, nChains = 4, thin = NULL,
-    samples = NULL, transientFactor = 300, verbose = 200, SkipFitted = TRUE,
-    MaxJobCounts = 210, ModelCountry = NULL, MinPresPerCountry = 50,
-    VerboseProgress = FALSE, FromHPC = TRUE, PrepSLURM = TRUE, MemPerCpu = NULL,
-    Time = NULL, JobName = NULL, Path_Hmsc = NULL, ToJSON = FALSE, ...) {
+    HabAsPredictor = TRUE, NspPerGrid = NULL, NFolds = 4,
+    NGrids = 20, NR = 2, NC = 2, PlotCV = TRUE, PhyloTree = TRUE,
+    NoPhyloTree = TRUE, OverwriteInitMod = TRUE, NParallel = 8, nChains = 4,
+    thin = NULL, samples = NULL, transientFactor = 300, verbose = 200,
+    SkipFitted = TRUE, MaxJobCounts = 210, ModelCountry = NULL,
+    MinPresPerCountry = 50, VerboseProgress = FALSE, FromHPC = TRUE,
+    PrepSLURM = TRUE, MemPerCpu = NULL, Time = NULL, JobName = NULL,
+    Path_Hmsc = NULL, ToJSON = FALSE, ...) {
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -430,23 +438,28 @@ Mod_Prep4HPC <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # # |||||||||||||||||||||||||||||||||||
-  # # Exclude grid cells with no presences -----
+  # # Exclude grid cells with no / low number of presences -----
   # # |||||||||||||||||||||||||||||||||||
 
-  if (ExclGridsWOSp) {
-    IASDT.R::CatTime("Excluding grid cells with no presences")
+  if (is.null(NspPerGrid)) {
+    IASDT.R::CatTime("All grid cells will be included in the analysis")
+  } else {
+
+    if (magrittr::not(is.integer(NspPerGrid)) || NspPerGrid < 0) {
+      stop(
+        "`NspPerGrid` has to be either `NULL` or integer >= 0", call. = FALSE)
+    }
 
     EmptyGridsID <- dplyr::select(DT_All, tidyselect::starts_with("Sp_")) %>%
       rowSums() %>%
-      magrittr::equals(0) %>%
+      magrittr::is_less_than(NspPerGrid) %>%
       which() %>%
       magrittr::multiply_by(-1)
 
     if (length(EmptyGridsID) > 0) {
+      IASDT.R::CatTime(paste("Excluding grid cells with < "), NspPerGrid)
       DT_All <- dplyr::slice(DT_All, EmptyGridsID)
     }
-  } else {
-    IASDT.R::CatTime("Grid cells with no presences were not excluded")
   }
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -581,7 +594,7 @@ Mod_Prep4HPC <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # # |||||||||||||||||||||||||||||||||||
-  # # spatial info / random effect ------
+  # # Spatial info / random effect ------
   # # |||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Spatial info / random effect")
@@ -649,7 +662,7 @@ Mod_Prep4HPC <- function(
         Knot_sf <- GPP_Knots[[paste0("GPP_", .x)]]$sKnot %>%
           sf::st_as_sf(coords = c("Var1", "Var2"), crs = 3035)
         NKnots <- nrow(GPP_Knots[[paste0("GPP_", .x)]]$sKnot) %>%
-          scales::label_comma(accuracy = 1)(.)
+          formatC(format = "d", big.mark = ",")
 
         Plot <- ggplot2::ggplot() +
           tidyterra::geom_spatraster(data = GridR) +
@@ -666,7 +679,7 @@ Mod_Prep4HPC <- function(
           ggplot2::ggtitle(
             paste0(
               "<span style='font-size: 35pt;'>GPP knots</span><br>",
-              "<span style='font-size: 20pt;'>minimum distance between ",
+              "<span style='font-size: 30pt;'>  Minimum distance between ",
               "knots and between knots and grid ",
               " cells is ", .x, " km  &mdash; ", NKnots, " knots</span>")) +
           ggplot2::scale_fill_continuous(na.value = "transparent") +
@@ -1025,7 +1038,7 @@ Mod_Prep4HPC <- function(
     studyDesign = studyDesign, DT_xy = DT_xy, GPP_Knots = GPP_Knots)
 
   OutObjName <- stringr::str_replace(OutObjName, "_subset", "_split")
-  
+
   IASDT.R::SaveAs(
     InObj = DT_Split, OutObj = OutObjName,
     OutPath = file.path(Path_Model, paste0(OutObjName, ".RData")))

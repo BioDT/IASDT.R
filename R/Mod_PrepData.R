@@ -105,7 +105,7 @@ Mod_PrepData <- function(
   NCells <- SpeciesID <- Species_name <- Species_File <- PA <-
     cell <- x <- Path_PA <- Path_Grid <- Path_Grid_Ref <- Path_CLC_Summ <-
     Path_Roads <- Path_Rail <- Path_Bias <- Path_Chelsa_Time_CC <-
-    NGrids <- NSp <- NULL
+    NGrids <- NSp <- EU_Bound <- NULL
 
   IASDT.R::CatTime("Checking input arguments")
   AllArgs <- ls()
@@ -135,7 +135,8 @@ Mod_PrepData <- function(
       "Path_Chelsa_Time_CC", "DP_R_CHELSA_Time_CC", TRUE, FALSE,
       "Path_Roads", "DP_R_Roads", TRUE, FALSE,
       "Path_Rail", "DP_R_Railway", TRUE, FALSE,
-      "Path_Bias", "DP_R_Bias", TRUE, FALSE)
+      "Path_Bias", "DP_R_Bias", TRUE, FALSE,
+      "EU_Bound", "DP_R_EUBound_sf", FALSE, TRUE)
   } else {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
@@ -146,7 +147,8 @@ Mod_PrepData <- function(
       "Path_Chelsa_Time_CC", "DP_R_CHELSA_Time_CC_Local", TRUE, FALSE,
       "Path_Roads", "DP_R_Roads_Local", TRUE, FALSE,
       "Path_Rail", "DP_R_Railway_Local", TRUE, FALSE,
-      "Path_Bias", "DP_R_Bias_Local", TRUE, FALSE)
+      "Path_Bias", "DP_R_Bias_Local", TRUE, FALSE,
+      "EU_Bound", "DP_R_EUBound_sf_Local", FALSE, TRUE)
   }
 
   # Assign environment variables and check file and paths
@@ -213,6 +215,9 @@ Mod_PrepData <- function(
 
   IASDT.R::CatTime("   >>>   Plotting number of grid cells per species")
 
+  EU_Bound <- IASDT.R::LoadAs(EU_Bound) %>%
+    magrittr::extract2("Bound_sf_Eur") %>%
+    magrittr::extract2("L_01")
   R_Sp_sum <- sum(R_Sp, na.rm = TRUE)
   R_Sp_sumP <- terra::classify(R_Sp_sum, cbind(0, NA))
   Limits <- terra::trim(R_Sp_sumP) %>%
@@ -220,9 +225,10 @@ Mod_PrepData <- function(
     as.vector()
   NSpPerGrid <- ggplot2::ggplot() +
     tidyterra::geom_spatraster(data = R_Sp_sumP) +
-    ggplot2::geom_sf() +
     tidyterra::scale_fill_whitebox_c(
       na.value = "transparent", palette = "bl_yl_rd", name = NULL) +
+    ggplot2::geom_sf(
+      data = EU_Bound, fill = "transparent", colour = "black") +
     ggplot2::labs(
       title = "Number of presence species per grid cell",
       subtitle = paste0(
@@ -284,7 +290,8 @@ Mod_PrepData <- function(
     width = 25, height = 15, units = "cm", dpi = 600,
     filename = file.path(OutputPath, "NGridSpecies.jpeg"))
 
-  rm(Limits, NSpPerGrid, Subtitle, NCells, R_Sp_sum, R_Sp_sumP, NGridSpecies)
+  rm(Limits, NSpPerGrid, Subtitle, NCells, R_Sp_sum,
+     R_Sp_sumP, NGridSpecies, EU_Bound)
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

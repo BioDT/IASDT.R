@@ -220,7 +220,7 @@ Mod_Prep4HPC <- function(
     M_samples <- M4HPC_Path <- M_transient <- M_Init_Path <- M_Name_Fit <-
     Chain <- Post_Missing <- Command_HPC <- Command_WS <- Post_Path <-
     Path_ModProg <- TaxaInfoFile <- Path_Python <- Path_Grid <- EU_Bound <-
-    Path_PA <- NULL
+    Path_PA <- SpeciesID <- Species_name <- PA <- Species_File <- NULL
 
   if (magrittr::not(VerboseProgress)) {
     sink(file = nullfile())
@@ -431,8 +431,100 @@ Mod_Prep4HPC <- function(
       dplyr::pull(Sp)
 
     DT_All <- dplyr::filter(DT_All, Country %in% ModelCountry) %>%
-      dplyr::select(
-        -tidyselect::all_of(Sample_ExclSp), -"CellCode", -"Country", -"Country_Nearest")
+      dplyr::select(-tidyselect::all_of(Sample_ExclSp))
+
+
+
+
+
+
+    IASDT.R::CatTime("   >>>   Plotting subsetted data")
+
+    GridSubset <- terra::rasterize(
+      x = as.matrix(DT_All[, c("x", "y")]),
+      y = terra::unwrap(IASDT.R::LoadAs(Path_GridR)))
+
+    DT_Sp <- file.path(Path_PA, "Sp_PA_Summary_DF.RData")
+    if (magrittr::not(file.exists(DT_Sp))) {
+      stop(paste0(DT_Sp, " file does not exist"))
+    }
+    DT_Sp <- IASDT.R::LoadAs(DT_Sp)
+
+    if (Hab_Abb == "0") {
+      Hab_column <- NULL
+    } else {
+      Hab_column <- c(
+        "Hab_1_Forests", "Hab_2_Open_forests", "Hab_3_Scrub",
+        "Hab_4a_Natural_grasslands", "Hab_4b_Human_maintained_grasslands",
+        "Hab_10_Wetland", "Hab_12a_Ruderal_habitats",
+        "Hab_12b_Agricultural_habitats") %>%
+        stringr::str_subset(paste0("_", as.character(Hab_Abb), "_"))
+
+      DT_Sp <- dplyr::filter(DT_Sp, !!as.symbol(Hab_column))
+    }
+
+    R_Sp_sum <- DT_Sp %>%
+      dplyr::mutate(SpeciesID = paste0("Sp_", SpeciesID)) %>%
+      dplyr::select(SpeciesID, Species_name, Species_File) %>%
+      dplyr::filter(
+        SpeciesID %in% stringr::str_subset(names(DT_All), "^Sp_")) %>%
+      dplyr::mutate(
+        PA = purrr::map2(
+          .x = Species_File, .y = SpeciesID,
+          .f = ~{
+            R <- file.path(Path_PA, "RData", stringr::str_c(.x, "_PA.RData")) %>%
+              IASDT.R::LoadAs() %>%
+              terra::unwrap() %>%
+              magrittr::extract2("PA") %>%
+              stats::setNames(paste0("Sp_", .y))
+          })) %>%
+      dplyr::pull(PA) %>%
+      terra::rast() %>%
+      sum(na.rm = TRUE) %>%
+      terra::crop(GridSubset) %>%
+      terra::mask(GridSubset)
+
+    EU_Bound_sub <- IASDT.R::LoadAs(EU_Bound) %>%
+      magrittr::extract2("Bound_sf_Eur") %>%
+      magrittr::extract2("L_01") %>%
+      dplyr::filter(NAME_ENGL %in% ModelCountry)
+
+    R_Sp_sumP <- terra::classify(R_Sp_sum, cbind(0, NA))
+    Limits <- terra::trim(R_Sp_sumP) %>%
+      terra::ext() %>%
+      as.vector()
+    NSpPerGridSub <-
+      ggplot2::ggplot() +
+      tidyterra::geom_spatraster(data = R_Sp_sumP) +
+      tidyterra::scale_fill_whitebox_c(
+        na.value = "transparent", palette = "bl_yl_rd", name = NULL) +
+      ggplot2::labs(
+        title = "Number of presence species per grid cell",
+        subtitle = paste0(
+          "Only species within the selected country/countries and with &#8805;",
+          MinPresPerCountry,
+          " presence grid cells are shown")) +
+      ggplot2::geom_sf(
+        data = EU_Bound_sub, fill = "transparent", colour = "black") +
+      ggplot2::scale_y_continuous(expand = c(0, 0), limits = Limits[3:4]) +
+      ggplot2::scale_x_continuous(expand = c(0, 0), limits = Limits[1:2]) +
+      ggplot2::theme_minimal() +
+      ggplot2::theme(
+        plot.margin = ggplot2::margin(0.05, 0, 0, 0, "cm"),
+        plot.title = ggplot2::element_text(
+          size = 16, color = "blue", face = "bold", hjust = 0,
+          margin = ggplot2::margin(0, 0, 0.1, 0, "cm")),
+        plot.subtitle = ggtext::element_markdown(size = 14, hjust = 0),
+        axis.title = ggplot2::element_blank(),
+        axis.text = ggplot2::element_blank(),
+        panel.border = ggplot2::element_blank())
+
+    ggplot2::ggsave(
+      plot = NSpPerGridSub, width = 25, height = 25, units = "cm", dpi = 600,
+      filename = file.path(Path_Model, "NSpPerGrid_Sub.jpeg"))
+
+    rm(Limits, NSpPerGridSub, R_Sp_sum, R_Sp_sumP, EU_Bound_sub,
+       DT_Sp, GridSubset)
 
   } else {
     IASDT.R::CatTime("   >>>   No data subsetting was implemented")
@@ -669,7 +761,8 @@ Mod_Prep4HPC <- function(
     invisible(snow::clusterEvalQ(
       cl = c1, IASDT.R::LoadPackages(dplyr, sf, Hmsc, jsonify, magrittr)))
     snow::clusterExport(
-      cl = c1, list = c("DT_xy", "GPP_Dists"), envir = environment())
+      cl = c1, list = c("DT_xy", "GPP_Dists", "rLMaxLF", "rLMinLF"),
+      envir = environment())
 
     GPP_Knots <- snow::parLapply(
       cl = c1, x = GPP_Dists * 1000,

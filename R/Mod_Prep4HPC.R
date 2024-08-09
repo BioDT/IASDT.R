@@ -468,7 +468,7 @@ Mod_Prep4HPC <- function(
 
     if (length(EmptyGridsID) > 0) {
       IASDT.R::CatTime(
-        paste0("   >>>   Excluding grid cells with < "), NspPerGrid)
+        paste0("   >>>   Excluding grid cells with < ", NspPerGrid))
       DT_All <- dplyr::slice(DT_All, EmptyGridsID)
     }
   }

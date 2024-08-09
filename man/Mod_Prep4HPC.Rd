@@ -20,7 +20,7 @@ Mod_Prep4HPC(
   EffortsAsPredictor = TRUE,
   RoadRailAsPredictor = TRUE,
   HabAsPredictor = TRUE,
-  NspPerGrid = NULL,
+  NspPerGrid = 0,
   NFolds = 4,
   NGrids = 20,
   NR = 2,
@@ -104,8 +104,10 @@ percentage coverage of respective habitat type per grid cell as predictor
 to the model. Default: \code{TRUE}. Only valid if \code{Hab_Abb} not equals to "0".}
 
 \item{NspPerGrid}{Integer. Indicating the minimum number of species per grid
-cell for a grid cell to be include in the analysis. Default to \code{NULL},
-which means to include all grid cells.}
+cell for a grid cell to be include in the analysis. Default to 0 resulting
+in exclusion of any grid cell with no species presence. This parameter can
+be set to \code{NULL} to include all grid cells irrespective of the number of
+species.}
 
 \item{NFolds}{Number of cross-validation folds. Default: 4. See
 \link{GetCV} for more details.}

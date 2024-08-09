@@ -51,8 +51,10 @@
 #'   percentage coverage of respective habitat type per grid cell as predictor
 #'   to the model. Default: `TRUE`. Only valid if `Hab_Abb` not equals to "0".
 #' @param NspPerGrid Integer. Indicating the minimum number of species per grid
-#'   cell for a grid cell to be include in the analysis. Default to `NULL`,
-#'   which means to include all grid cells.
+#'   cell for a grid cell to be include in the analysis. Default to 0 resulting
+#'   in exclusion of any grid cell with no species presence. This parameter can 
+#'   be set to `NULL` to include all grid cells irrespective of the number of 
+#'   species.
 #' @param NGrids For `CV_Dist` cross-validation strategy, how many grid cells in
 #'   both directions to be used in cross-validation. See [IASDT.R::GetCV] for
 #'   more details.
@@ -163,7 +165,7 @@ Mod_Prep4HPC <- function(
     GPP_Plot = TRUE, rLMinLF = NULL, rLMaxLF = NULL,
     BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
     EffortsAsPredictor = TRUE, RoadRailAsPredictor = TRUE,
-    HabAsPredictor = TRUE, NspPerGrid = NULL, NFolds = 4,
+    HabAsPredictor = TRUE, NspPerGrid = 0, NFolds = 4,
     NGrids = 20, NR = 2, NC = 2, PlotCV = TRUE, PhyloTree = TRUE,
     NoPhyloTree = TRUE, OverwriteInitMod = TRUE, NParallel = 8, nChains = 4,
     thin = NULL, samples = NULL, transientFactor = 300, verbose = 200,

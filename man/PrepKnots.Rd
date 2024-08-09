@@ -4,7 +4,13 @@
 \alias{PrepKnots}
 \title{Prepare knot locations for Hmsc GPP models}
 \usage{
-PrepKnots(Coords = NULL, MinDist = NULL, JitterDist = 100)
+PrepKnots(
+  Coords = NULL,
+  MinDist = NULL,
+  JitterDist = 100,
+  MinLF = NULL,
+  MaxLF = NULL
+)
 }
 \arguments{
 \item{Coords}{A matrix or data frame containing the coordinates (x, y) of the
@@ -18,6 +24,11 @@ function.}
 \item{JitterDist}{A numeric value specifying the distance (in the same units
 as Coords; here in meters) for jittering identical coordinates. Defaults to
 100.}
+
+\item{MinLF, MaxLF}{integer. Minimum and maximum number of latent factors to
+be used. Both default to \code{NULL} which means that the number of latent
+factors will be estimated from the data. If either is provided, the
+respective values will be used as arguments to \link[Hmsc:setPriors]{Hmsc::setPriors}.}
 }
 \value{
 An object suitable for specifying the random level in HMSC GPP

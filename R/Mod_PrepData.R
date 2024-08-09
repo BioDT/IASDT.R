@@ -104,7 +104,8 @@ Mod_PrepData <- function(
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   NCells <- SpeciesID <- Species_name <- Species_File <- PA <-
     cell <- x <- Path_PA <- Path_Grid <- Path_Grid_Ref <- Path_CLC_Summ <-
-    Path_Roads <- Path_Rail <- Path_Bias <- Path_Chelsa_Time_CC <- NULL
+    Path_Roads <- Path_Rail <- Path_Bias <- Path_Chelsa_Time_CC <-
+    NGrids <- NSp <- NULL
 
   IASDT.R::CatTime("Checking input arguments")
   AllArgs <- ls()
@@ -171,13 +172,13 @@ Mod_PrepData <- function(
 
   IASDT.R::CatTime("   >>>   Species data summary")
 
-  R_Sp <- file.path(Path_PA, "Sp_PA_Summary_DF.RData")
+  DT_Sp <- file.path(Path_PA, "Sp_PA_Summary_DF.RData")
 
-  if (magrittr::not(file.exists(R_Sp))) {
-    stop(paste0(R_Sp, " file does not exist"))
+  if (magrittr::not(file.exists(DT_Sp))) {
+    stop(paste0(DT_Sp, " file does not exist"))
   }
 
-  R_Sp <- IASDT.R::LoadAs(R_Sp)
+  DT_Sp <- IASDT.R::LoadAs(DT_Sp)
 
   if (Hab_Abb == "0") {
     Hab_column <- NULL
@@ -189,11 +190,11 @@ Mod_PrepData <- function(
       "Hab_12b_Agricultural_habitats") %>%
       stringr::str_subset(paste0("_", as.character(Hab_Abb), "_"))
 
-    R_Sp <- dplyr::filter(R_Sp, !!as.symbol(Hab_column))
+    DT_Sp <- dplyr::filter(DT_Sp, !!as.symbol(Hab_column))
   }
 
   IASDT.R::CatTime("   >>>   Species Presence-absence data")
-  R_Sp <- dplyr::filter(R_Sp, NCells >= MinPresGrids) %>%
+  R_Sp <- dplyr::filter(DT_Sp, NCells >= MinPresGrids) %>%
     dplyr::select(SpeciesID, Species_name, Species_File) %>%
     dplyr::mutate(
       PA = purrr::map2(
@@ -207,6 +208,84 @@ Mod_PrepData <- function(
         })) %>%
     dplyr::pull(PA) %>%
     terra::rast()
+
+  ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  IASDT.R::CatTime("   >>>   Plotting number of grid cells per species")
+
+  R_Sp_sum <- sum(R_Sp, na.rm = TRUE)
+  R_Sp_sumP <- terra::classify(R_Sp_sum, cbind(0, NA))
+  Limits <- terra::trim(R_Sp_sumP) %>%
+    terra::ext() %>%
+    as.vector()
+  NSpPerGrid <- ggplot2::ggplot() +
+    tidyterra::geom_spatraster(data = R_Sp_sumP) +
+    ggplot2::geom_sf() +
+    tidyterra::scale_fill_whitebox_c(
+      na.value = "transparent", palette = "bl_yl_rd", name = NULL) +
+    ggplot2::labs(
+      title = "Number of presence species per grid cell",
+      subtitle = paste0(
+        "Only species with &#8805;", MinPresGrids,
+        " presence grid cells are shown")) +
+    ggplot2::scale_y_continuous(expand = c(0, 0), limits = Limits[3:4]) +
+    ggplot2::scale_x_continuous(expand = c(0, 0), limits = Limits[1:2]) +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(
+      plot.margin = ggplot2::margin(0.05, 0, 0, 0, "cm"),
+      plot.title = ggplot2::element_text(
+        size = 16, color = "blue", face = "bold", hjust = 0,
+        margin = ggplot2::margin(0, 0, 0.1, 0, "cm")),
+      plot.subtitle = ggtext::element_markdown(size = 14, hjust = 0),
+      axis.title = ggplot2::element_blank(),
+      axis.text = ggplot2::element_blank(),
+      panel.border = ggplot2::element_blank())
+
+  ggplot2::ggsave(
+    plot = NSpPerGrid, width = 26, height = 25, units = "cm", dpi = 600,
+    filename = file.path(OutputPath, "NSpPerGrid.jpeg"))
+
+
+  Subtitle <- paste0(
+    "Candidate species: ",  nrow(DT_Sp), "; ",
+    sum(DT_Sp$NCells >= MinPresGrids),
+    " have &#8805;", MinPresGrids, " presence grid cells. ",
+    scales::label_comma(accuracy = 1)(NCells),
+    " grid cells with at least one species.")
+  NCells <- as.integer(terra::global(!(is.na(R_Sp_sumP)), sum))
+
+  NGridSpecies <- purrr::map_dfr(
+    .x = unique(sort(DT_Sp$NCells)),
+    .f = ~cbind.data.frame(NGrids = .x, NSp = sum(DT_Sp$NCells >= .x))) %>%
+    ggplot2::ggplot() +
+    ggplot2::geom_line(
+      ggplot2::aes(x = NGrids, y = NSp), color = "grey20", lwd = 0.4) +
+    ggbreak::scale_x_break(
+      breaks = c(1025, 1025), scales = 0.4, expand = FALSE, space = 0.05) +
+    ggplot2::geom_vline(xintercept = MinPresGrids, colour = "blue") +
+    ggplot2::xlab("Number of grid cells per species") +
+    ggplot2::ylab("Number of species") +
+    ggplot2::labs(subtitle = Subtitle) +
+    ggplot2::theme(
+      plot.margin = ggplot2::margin(0.1, 0.1, 0.1, 0.1, "cm"),
+      plot.title = ggplot2::element_text(
+        size = 12, color = "blue", face = "bold", hjust = 0,
+        margin = ggplot2::margin(0, 0, 0.1, 0, "cm")),
+      plot.subtitle = ggtext::element_markdown(
+        size = 10, hjust = 0, margin = ggplot2::margin(0, 0, 0.1, 0, "cm")),
+      legend.position = "none",
+      axis.title.y.left = ggplot2::element_text(size = 9, vjust = -1),
+      axis.title.x = ggplot2::element_text(size = 9, vjust = 1),
+      axis.text.y.left = ggplot2::element_text(size = 7),
+      axis.text.y.right = ggplot2::element_blank(),
+      panel.border = ggplot2::element_blank())
+
+  ggplot2::ggsave(
+    plot = NGridSpecies,
+    width = 25, height = 15, units = "cm", dpi = 600,
+    filename = file.path(OutputPath, "NGridSpecies.jpeg"))
+
+  rm(Limits, NSpPerGrid, Subtitle, NCells, R_Sp_sum, R_Sp_sumP, NGridSpecies)
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -400,10 +479,9 @@ Mod_PrepData <- function(
 
   if (Hab_Abb == "0") {
     DT_All$Hab <- NA_real_
-    OutObjName <- paste0("ModDT_", MinPresGrids, "Grids_0_All")
+    OutObjName <- "ModDT_0_All"
   } else {
-    OutObjName <- paste0(
-      "ModDT_", MinPresGrids, "Grids_", stringr::str_remove(Hab_column, "Hab_"))
+    OutObjName <- paste0("ModDT_", stringr::str_remove(Hab_column, "Hab_"))
   }
 
   IASDT.R::SaveAs(

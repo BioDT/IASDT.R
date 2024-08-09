@@ -16,21 +16,34 @@
 #' @param JitterDist A numeric value specifying the distance (in the same units
 #'   as Coords; here in meters) for jittering identical coordinates. Defaults to
 #'   100.
+#' @param MinLF,MaxLF integer. Minimum and maximum number of latent factors to
+#'   be used. Both default to `NULL` which means that the number of latent
+#'   factors will be estimated from the data. If either is provided, the
+#'   respective values will be used as arguments to [Hmsc::setPriors].
 #' @name PrepKnots
 #' @author Ahmed El-Gabbas
 #' @return An object suitable for specifying the random level in HMSC GPP
 #'   models. This object contains the prepared knot locations.
 #' @export
 
-PrepKnots <- function(Coords = NULL, MinDist = NULL, JitterDist = 100) {
+PrepKnots <- function(
+    Coords = NULL, MinDist = NULL, JitterDist = 100, MinLF = NULL, MaxLF = NULL) {
 
   if (is.null(Coords) || is.null(MinDist)) {
-    stop("Both 'Coords' and 'MinDist' must be provided and cannot be NULL")
+    stop("Both 'Coords' and 'MinDist' must be provided and cannot be NULL",
+         call. = FALSE)
+  }
+
+  if (magrittr::not(is.null(MaxLF)) && magrittr::not(is.integer(MaxLF))) {
+    stop("MaxLF is not NULL or integer", call. = FALSE)
+  }
+  if (magrittr::not(is.null(MinLF)) && magrittr::not(is.integer(MinLF))) {
+    stop("MinLF is not NULL or integer", call. = FALSE)
   }
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  DT_xy <- Var1 <- Var2 <- Identical <- geometry <- NULL
+  Var1 <- Var2 <- Identical <- geometry <- NULL
 
   # coordinates of the sampling units as sf object
   SU_Sf <- tibble::as_tibble(Coords) %>%
@@ -47,8 +60,7 @@ PrepKnots <- function(Coords = NULL, MinDist = NULL, JitterDist = 100) {
       Identical = purrr::map2_lgl(
         .x = Var1, .y = Var2,
         .f = ~{
-          SU_Sf %>%
-            dplyr::filter(x == .x, y == .y) %>%
+          dplyr::filter(SU_Sf, x == .x, y == .y) %>%
             nrow() %>%
             magrittr::is_greater_than(0)
         }))
@@ -66,5 +78,18 @@ PrepKnots <- function(Coords = NULL, MinDist = NULL, JitterDist = 100) {
   } else {
     Knots <- as.data.frame(dplyr::select(Knots, Var1, Var2))
   }
-  return(Hmsc::HmscRandomLevel(sData = Coords, sMethod = "GPP", sKnot = Knots))
+
+  rL <- Hmsc::HmscRandomLevel(sData = Coords, sMethod = "GPP", sKnot = Knots)
+
+  if (is.null(MinLF) && magrittr::not(is.null(MaxLF))) {
+    rL <- Hmsc::setPriors(rL, nfMax = MaxLF)
+  }
+  if (magrittr::not(is.null(MinLF)) && is.null(MaxLF)) {
+    rL <- Hmsc::setPriors(rL, nfMin = MinLF)
+  }
+  if (magrittr::not(is.null(MinLF)) && magrittr::not(is.null(MaxLF))) {
+    rL <- Hmsc::setPriors(rL, nfMin = MinLF, nfMax = MaxLF)
+  }
+
+  return(rL)
 }

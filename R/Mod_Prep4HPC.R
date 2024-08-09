@@ -35,7 +35,10 @@
 #' @param GPP_Save Logical indicating whether to save the resulted knots as
 #'   `RData` Default: `TRUE`.
 #' @param GPP_Plot Logical indicating whether to plot the coordinates of the
-#'   sampling units and the knots in a pdf file. Default: `TRUE`
+#'   sampling units and the knots in a pdf file. Default: `TRUE`.
+#' @param rLMinLF,rLMaxLF Integer. Minimum and maximum number of latent factors
+#'   used for the spatial random effect. See [PrepKnots] and [Hmsc::setPriors]
+#'   for more details.
 #' @param BioVars Vector of strings specifying bioclimatic variables to be used
 #'   in the model. Default value: `NULL`, which means to use the following
 #'   variables: `bio4`, `bio6`, `bio8`, `bio12`, `bio15`, and `bio18`.
@@ -121,8 +124,7 @@
 #' @author Ahmed El-Gabbas
 #' @return The function is used for its side effects of preparing data and
 #'   models for HPC and does not return any value.
-#' @details
-#' The function provides options for:
+#' @details The function provides options for:
 #'
 #' - for which habitat types the models will be fitted.
 #' - selection of species based on minimum number of presence-grid cells (`MinPresGrids`)
@@ -140,18 +142,18 @@
 #' The function reads the following environment variables:
 #'   - **`DP_R_Grid`** (if `FromHPC = TRUE`) or
 #'    **`DP_R_Grid_Local`** (if `FromHPC = FALSE`). The function reads
-#'   the content of the `Grid_10_Land_Crop.RData` file from this path.
+#' the content of the `Grid_10_Land_Crop.RData` file from this path.
 #'   - **`DP_R_Path_Python`**: Python path on LUMI.
 #'   - **`DP_R_TaxaInfo`** or **`DP_R_TaxaInfo_Local`** for the location of the
-#'    `Species_List_ID.txt` file representing species information.
+#' `Species_List_ID.txt` file representing species information.
 #'   - **`DP_R_EUBound_sf`** or **`DP_R_EUBound_sf_Local`** for the path of the
-#'     `RData` file containing the country boundaries (`sf` object).
+#' `RData` file containing the country boundaries (`sf` object).
 #' @export
 
 Mod_Prep4HPC <- function(
     Hab_Abb = NULL, Path_Data = NULL, Path_Model = NULL, MinPresGrids = 50,
     EnvFile = ".env", PrepareData = TRUE, GPP_Dists = NULL, GPP_Save = TRUE,
-    GPP_Plot = TRUE,
+    GPP_Plot = TRUE, rLMinLF = NULL, rLMaxLF = NULL,
     BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
     EffortsAsPredictor = TRUE, RoadRailAsPredictor = TRUE,
     HabAsPredictor = TRUE, ExclGridsWOSp = TRUE, NFolds = 4, NGrids = 20, NR = 2,
@@ -206,7 +208,8 @@ Mod_Prep4HPC <- function(
     Hmsc <- jsonify <- magrittr <- M_thin <- rL <- M_Name_init <- rL2 <-
     M_samples <- M4HPC_Path <- M_transient <- M_Init_Path <- M_Name_Fit <-
     Chain <- Post_Missing <- Command_HPC <- Command_WS <- Post_Path <-
-    Path_ModProg <- TaxaInfoFile <- Path_Python <- Path_Grid <- EU_Bound <- NULL
+    Path_ModProg <- TaxaInfoFile <- Path_Python <- Path_Grid <- EU_Bound <-
+    Path_PA <- NULL
 
   if (magrittr::not(VerboseProgress)) {
     sink(file = nullfile())
@@ -234,14 +237,16 @@ Mod_Prep4HPC <- function(
       "Path_Python", "DP_R_Path_Python", FALSE, FALSE,
       "TaxaInfoFile", "DP_R_TaxaInfo", FALSE, TRUE,
       "EU_Bound", "DP_R_EUBound_sf", FALSE, TRUE,
-      "Path_Grid", "DP_R_Grid", TRUE, FALSE)
+      "Path_Grid", "DP_R_Grid", TRUE, FALSE,
+      "Path_PA", "DP_R_PA", TRUE, FALSE)
   } else {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
       "Path_Python", "DP_R_Path_Python", FALSE, FALSE,
       "TaxaInfoFile", "DP_R_TaxaInfo_Local", FALSE, TRUE,
       "EU_Bound", "DP_R_EUBound_sf_Local", FALSE, TRUE,
-      "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE)
+      "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE,
+      "Path_PA", "DP_R_PA_Local", TRUE, FALSE)
   }
 
   # Assign environment variables and check file and paths
@@ -257,7 +262,7 @@ Mod_Prep4HPC <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # # |||||||||||||||||||||||||||||||||||
-  # # check input arguments ----
+  # # Check input arguments ----
   # # |||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Checking input arguments")
@@ -386,10 +391,10 @@ Mod_Prep4HPC <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # # |||||||||||||||||||||||||||||||||||
-  # # Subsetting data -----
+  # # Subsetting study area -----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatTime("Subsetting data")
+  IASDT.R::CatTime("Subsetting study area")
 
   if (magrittr::not(is.null(ModelCountry))) {
 
@@ -457,6 +462,23 @@ Mod_Prep4HPC <- function(
     NFolds = NFolds, FromHPC = FromHPC, NGrids = NGrids, NR = NR,
     NC = NC, OutPath = Path_Model, PlotCV = PlotCV)
 
+
+  if (Hab_Abb == "0") {
+    OutObjName <- "ModDT_0_All_subset"
+  } else {
+    OutObjName <- c(
+      "1_Forests", "2_Open_forests", "3_Scrub",
+      "4a_Natural_grasslands", "4b_Human_maintained_grasslands",
+      "10_Wetland", "12a_Ruderal_habitats",
+      "12b_Agricultural_habitats") %>%
+      stringr::str_subset(paste0("^", as.character(Hab_Abb), "_")) %>%
+      paste0("ModDT_", ., "_subset")
+  }
+
+  IASDT.R::SaveAs(
+    InObj = DT_All, OutObj = OutObjName,
+    OutPath = file.path(Path_Model, paste0(OutObjName, ".RData")))
+
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # # |||||||||||||||||||||||||||||||||||
@@ -466,6 +488,20 @@ Mod_Prep4HPC <- function(
   IASDT.R::CatTime("Response - Y matrix")
   DT_y <- dplyr::select(DT_All, tidyselect::starts_with("Sp_")) %>%
     as.data.frame()
+  IASDT.R::CatTime(paste0("   >>>   ", ncol(DT_y), " species"))
+
+  IASDT.R::CatTime("   >>>   Save species summary")
+  SpSummary <- file.path(Path_PA, "Sp_PA_Summary_DF.RData")
+  if (magrittr::not(file.exists(SpSummary))) {
+    stop(paste0(SpSummary, " file does not exist"))
+  }
+  SpSummary <- IASDT.R::LoadAs(SpSummary) %>%
+    dplyr::mutate(
+      IAS_ID = stringr::str_pad(IAS_ID, pad = "0", width = 4),
+      IAS_ID = paste0("Sp_", IAS_ID)) %>%
+    dplyr::filter(IAS_ID %in% names(DT_y))
+
+  save(SpSummary, file = file.path(Path_Model, "SpSummary.RData"))
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -480,22 +516,23 @@ Mod_Prep4HPC <- function(
   Form_x <- stringr::str_c(XVars, collapse = " + ") %>%
     stringr::str_c("~ ", .) %>%
     stats::as.formula(env = baseenv())
-
   DT_x <- dplyr::select(DT_All, tidyselect::all_of(XVars)) %>%
     as.data.frame()
+
+  IASDT.R::CatTime(
+    paste0(
+      "   >>>   Models will be fitted using ", length(XVars),
+      " predictors: \n   >>>   ", paste0(XVars, collapse = " + ")))
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # # |||||||||||||||||||||||||||||||||||
-  # # DT_CV -----
+  # # Save cross-validation data -----
   # # |||||||||||||||||||||||||||||||||||
 
   DT_CV <- DT_All %>%
-    dplyr::select("CellNum", "CellCode", "Country",
-                  tidyselect::starts_with("CV"))
-
-  save(DT_CV, file = file.path(Path_Model, "DT_CV.RData"))
-  rm(DT_CV)
+    dplyr::select(
+      "CellNum", "CellCode", "Country", tidyselect::starts_with("CV"))
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -554,7 +591,6 @@ Mod_Prep4HPC <- function(
   rownames(DT_xy) <- studyDesign$sample
   rm(DT_All)
 
-
   # Prepare GPP knots
   IASDT.R::CatTime("   >>>   Prepare GPP knots")
 
@@ -567,13 +603,15 @@ Mod_Prep4HPC <- function(
     GPP_Knots <- snow::parLapply(
       cl = c1, x = GPP_Dists * 1000,
       fun = function(x) {
-        IASDT.R::PrepKnots(Coords = DT_xy, MinDist = x)
+        IASDT.R::PrepKnots(
+          Coords = DT_xy, MinDist = x, MinLF = rLMinLF, MaxLF = rLMaxLF)
       }) %>%
       stats::setNames(paste0("GPP_", GPP_Dists))
   } else {
     GPP_Knots <- purrr::map(
       .x = GPP_Dists * 1000,
-      .f = ~IASDT.R::PrepKnots(Coords = DT_xy, MinDist = .x)) %>%
+      .f = ~IASDT.R::PrepKnots(
+        Coords = DT_xy, MinDist = .x, MinLF = rLMinLF, MaxLF = rLMaxLF)) %>%
       stats::setNames(paste0("GPP_", GPP_Dists))
   }
 
@@ -610,8 +648,8 @@ Mod_Prep4HPC <- function(
 
         Knot_sf <- GPP_Knots[[paste0("GPP_", .x)]]$sKnot %>%
           sf::st_as_sf(coords = c("Var1", "Var2"), crs = 3035)
-
-        KnotPointSize <- dplyr::if_else(.x < 50, 2, 3)
+        NKnots <- nrow(GPP_Knots[[paste0("GPP_", .x)]]$sKnot) %>%
+          scales::label_comma(accuracy = 1)(.)
 
         Plot <- ggplot2::ggplot() +
           tidyterra::geom_spatraster(data = GridR) +
@@ -620,18 +658,21 @@ Mod_Prep4HPC <- function(
             linewidth = 1.5) +
           ggplot2::geom_sf(
             data = Knot_sf, colour = "black", shape = 19,
-            stroke = 1.75, size = KnotPointSize) +
+            stroke = 1.75, size = dplyr::if_else(.x < 50, 1.5, 3)) +
           ggplot2::scale_x_continuous(
             limits = sf::st_bbox(EU_Bound)[c(1, 3)], expand = c(0, 0)) +
           ggplot2::scale_y_continuous(
             limits = sf::st_bbox(EU_Bound)[c(2, 4)], expand = c(0, 0)) +
           ggplot2::ggtitle(
             paste0(
-              "<span style='font-size: 50pt;'>&#160;GPP knots &#8212; &#160;",
-              .x, " km</font>")) +
+              "<span style='font-size: 35pt;'>GPP knots</span><br>",
+              "<span style='font-size: 20pt;'>minimum distance between ",
+              "knots and between knots and grid ",
+              " cells is ", .x, " km  &mdash; ", NKnots, " knots</span>")) +
           ggplot2::scale_fill_continuous(na.value = "transparent") +
           ggplot2::theme_void() +
           ggplot2::theme(
+            plot.margin = ggplot2::margin(0, 0, 0, 0, "cm"),
             plot.title = ggtext::element_markdown(),
             legend.position = "none")
 
@@ -708,8 +749,6 @@ Mod_Prep4HPC <- function(
 
         })) %>%
     tidyr::unnest_wider("M_HPC")
-
-  rm(GPP_Knots)
 
   # # |||||||||||||||||||||||||||||||||||
   # # Prepare and save unfitted models -----
@@ -973,6 +1012,23 @@ Mod_Prep4HPC <- function(
       Time = Time, EnvFile = EnvFile, FromHPC = FromHPC,
       Path_Hmsc = Path_Hmsc, ...)
   }
+
+  ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  # # |||||||||||||||||||||||||||||||||||
+  # # Save small datasets prepared in the function ------
+  # # |||||||||||||||||||||||||||||||||||
+
+  DT_Split <- list(
+    DT_y = DT_y, Form_x = Form_x, DT_x = DT_x, XVars = XVars, DT_CV = DT_CV,
+    PhyloTree = PhyloTree, plant.tree = plant.tree, Tree = Tree,
+    studyDesign = studyDesign, DT_xy = DT_xy, GPP_Knots = GPP_Knots)
+
+  OutObjName <- stringr::str_replace(OutObjName, "_subset", "_split")
+  
+  IASDT.R::SaveAs(
+    InObj = DT_Split, OutObj = OutObjName,
+    OutPath = file.path(Path_Model, paste0(OutObjName, ".RData")))
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

@@ -14,6 +14,8 @@ Mod_Prep4HPC(
   GPP_Dists = NULL,
   GPP_Save = TRUE,
   GPP_Plot = TRUE,
+  rLMinLF = NULL,
+  rLMaxLF = NULL,
   BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
   EffortsAsPredictor = TRUE,
   RoadRailAsPredictor = TRUE,
@@ -80,7 +82,11 @@ function. The same value will be used for the \code{knotDist} and
 \code{RData} Default: \code{TRUE}.}
 
 \item{GPP_Plot}{Logical indicating whether to plot the coordinates of the
-sampling units and the knots in a pdf file. Default: \code{TRUE}}
+sampling units and the knots in a pdf file. Default: \code{TRUE}.}
+
+\item{rLMinLF, rLMaxLF}{Integer. Minimum and maximum number of latent factors
+used for the spatial random effect. See \link{PrepKnots} and \link[Hmsc:setPriors]{Hmsc::setPriors}
+for more details.}
 
 \item{BioVars}{Vector of strings specifying bioclimatic variables to be used
 in the model. Default value: \code{NULL}, which means to use the following

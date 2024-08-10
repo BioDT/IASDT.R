@@ -32,7 +32,7 @@ CheckTiff <- function(x = NULL) {
   }
 
   # Check if file exists
-  if (magrittr::not(file.exists(x))) {
+  if (!file.exists(x)) {
     stop("Input file does not exist")
   }
 

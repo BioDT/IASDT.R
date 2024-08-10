@@ -90,7 +90,7 @@ RespCurv_PrepData <- function(
       file.exists() %>%
       all()
 
-    if (magrittr::not(OutFilesExists)) {
+    if (!OutFilesExists) {
 
       if (file.exists(RC_DT_Path_Orig)) {
         RC_Data_Orig <- IASDT.R::LoadAs(RC_DT_Path_Orig)
@@ -294,7 +294,7 @@ RespCurv_PrepData <- function(
   # Checking file existence
   # +++++++++++++++++++++++++++++++++
 
-  MissingRows <- sum(magrittr::not(ResCurvDT$FileExists))
+  MissingRows <- sum(!ResCurvDT$FileExists)
 
   if (MissingRows == 0) {
     IASDT.R::CatTime(
@@ -303,7 +303,7 @@ RespCurv_PrepData <- function(
       .x = seq_len(nrow(ResCurvDT)), .f = PrepRCData_Int) %>%
       dplyr::bind_rows()
   } else {
-    if (all(magrittr::not(ResCurvDT$FileExists))) {
+    if (all(!ResCurvDT$FileExists)) {
       IASDT.R::CatTime(
         paste0(
           " >>> All response curve data (", MissingRows,

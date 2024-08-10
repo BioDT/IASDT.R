@@ -106,7 +106,7 @@ git_log <- function(Path = ".", Num = NULL, ReturnLog = FALSE) {
         call. = FALSE)
     })
 
-    if (magrittr::not(ReturnLog)) {
+    if (!ReturnLog) {
       # Print the log output
       if (is.null(Num)) {
         cat(log_output, sep = "\n")

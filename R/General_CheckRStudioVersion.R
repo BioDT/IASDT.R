@@ -41,7 +41,7 @@ CheckRStudioVersion <- function() {
     stringr::str_replace_all("\\+", "\\.")
 
 
-  if (magrittr::not(identical(OnlineVersion, InstalledVersion))) {
+  if (!identical(OnlineVersion, InstalledVersion)) {
     cat(
       crayon::blue(
         "R-Studio version:",

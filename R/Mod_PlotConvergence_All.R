@@ -65,7 +65,7 @@ PlotConvergence_All <- function(
   future::plan(future::cluster, workers = c1, gc = TRUE)
 
   Model_Info <- file.path(Path_Model, "Model_Info.RData")
-  if (magrittr::not(file.exists(Model_Info))) {
+  if (!file.exists(Model_Info)) {
     stop(paste0("Model info file `", Model_Info, "` does not exist"))
   }
   Model_Info <- IASDT.R::LoadAs(Model_Info)
@@ -102,15 +102,14 @@ PlotConvergence_All <- function(
         Path_ConvDT, paste0(ObjName_Beta_Omega, ".RData"))
 
 
-      if ((Tree == "Tree" && magrittr::not(file.exists(Path_Trace_Rho))) ||
-          magrittr::not(file.exists(Path_Trace_Alpha)) ||
-          magrittr::not(file.exists(Path_Beta_Omega))) {
+      if ((Tree == "Tree" && !file.exists(Path_Trace_Rho)) ||
+          !file.exists(Path_Trace_Alpha) || !file.exists(Path_Beta_Omega)) {
         Model_Obj <- IASDT.R::LoadAs(Path_FittedMod)
         Coda_Obj <- IASDT.R::LoadAs(Path_Coda)
       }
 
       # Rho -----
-      if (magrittr::not(file.exists(Path_Trace_Rho))) {
+      if (!file.exists(Path_Trace_Rho)) {
         if (Tree == "Tree") {
           RhoTitle <- stringr::str_remove_all(
             string = basename(Path_Coda), pattern = "_Tree|_Coda.RData$")
@@ -129,7 +128,7 @@ PlotConvergence_All <- function(
       }
 
       # Alpha -----
-      if (magrittr::not(file.exists(Path_Trace_Alpha))) {
+      if (!file.exists(Path_Trace_Alpha)) {
         PlotObj_Alpha <- IASDT.R::PlotAlpha(
           Post = Coda_Obj, Model = Model_Obj, NRC = c(2, 3),
           Title = stringr::str_remove_all(

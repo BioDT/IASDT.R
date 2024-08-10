@@ -58,7 +58,7 @@ Mod_SLURM_Refit <- function(
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Command_HPC <- Post_Path <- NULL
 
-  if (magrittr::not(file.exists(EnvFile))) {
+  if (!file.exists(EnvFile)) {
     stop(paste0(
       "Path for environment variables: ", EnvFile, " was not found"))
   }
@@ -109,7 +109,7 @@ Mod_SLURM_Refit <- function(
     IASDT.R::LoadAs() %>%
     tidyr::unnest_longer(c(Post_Path, Command_HPC)) %>%
     dplyr::select(Post_Path, Command_HPC) %>%
-    dplyr::filter(magrittr::not(file.exists(Post_Path))) %>%
+    dplyr::filter(!file.exists(Post_Path)) %>%
     dplyr::pull(Command_HPC) %>%
     purrr::set_names(NULL)
 

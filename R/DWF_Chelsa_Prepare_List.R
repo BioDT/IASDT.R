@@ -35,7 +35,7 @@ Chelsa_Prepare_List <- function(
     stop("DwnPath and OutPath cannot be NULL")
   }
 
-  if (magrittr::not(fs::dir_exists(Path_Chelsa))) {
+  if (!fs::dir_exists(Path_Chelsa)) {
     stop("Path_Chelsa path does not exist")
   }
 
@@ -179,14 +179,12 @@ Chelsa_Prepare_List <- function(
     if (UpdateExisting) {
       Data2Down <- ChelsaClimData
     } else {
-      Data2Down <- dplyr::filter(
-        ChelsaClimData, magrittr::not(file.exists(DownFile)))
+      Data2Down <- dplyr::filter(ChelsaClimData, !file.exists(DownFile))
     }
 
     # Download in parallel
     if (DownParallel && nrow(Data2Down) > 0) {
-      Data2Down %>%
-        dplyr::pull(.data$DownCommand) %>%
+      dplyr::pull(Data2Down, .data$DownCommand) %>%
         furrr::future_walk(
           IASDT.R::System, RObj = FALSE,
           .options = furrr::furrr_options(seed = TRUE), .progress = FALSE)
@@ -194,8 +192,7 @@ Chelsa_Prepare_List <- function(
 
     # Download sequentially
     if (!DownParallel && nrow(Data2Down) > 0) {
-      Data2Down %>%
-        dplyr::pull(.data$DownCommand) %>%
+      dplyr::pull(Data2Down, .data$DownCommand) %>%
         purrr::walk(IASDT.R::System, RObj = FALSE, .progress = FALSE)
     }
 

@@ -67,14 +67,14 @@ Mod_MergeChains <- function(
 
   rm(AllArgs)
 
-  if (magrittr::not(dir.exists(Path_Model))) {
+  if (!dir.exists(Path_Model)) {
     stop(paste0(
       "Path_Model directory (`", Path_Model, "`) does not exist"), call. = FALSE)
   }
 
   Path_ModInfo <- file.path(Path_Model, "Model_Info.RData")
 
-  if (magrittr::not(file.exists(Path_ModInfo))) {
+  if (!file.exists(Path_ModInfo)) {
     stop(paste0(
       "ModInfo file `", Path_ModInfo, "` does not exist"), call. = FALSE)
   }
@@ -122,12 +122,7 @@ Mod_MergeChains <- function(
     # Check if any posterior files is missing
     dplyr::mutate(
       Post_Missing = purrr::map_lgl(
-        .x = Post_Path,
-        .f = ~{
-          all(file.exists(.x)) %>%
-            magrittr::not() %>%
-            return()
-        }),
+        .x = Post_Path, .f = ~ !all(file.exists(.x))),
 
       # delete these columns if already exist from previous function execution
       Path_FittedMod = NULL, Path_Coda = NULL)
@@ -158,7 +153,7 @@ Mod_MergeChains <- function(
 
           Path_FittedMod <- file.path(
             Path_Fitted_Models, paste0(M_Name_Fit, "_Model.RData"))
-          ModFitMissing <- magrittr::not(file.exists(Path_FittedMod))
+          ModFitMissing <- !file.exists(Path_FittedMod)
 
           if (ModFitMissing) {
 
@@ -204,9 +199,9 @@ Mod_MergeChains <- function(
           # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
           Path_Coda <- file.path(Path_Coda, paste0(M_Name_Fit, "_Coda.RData"))
-          CodaMissing <- magrittr::not(file.exists(Path_Coda))
+          CodaMissing <- !file.exists(Path_Coda)
 
-          if (magrittr::not(ModFitMissing)) {
+          if (!ModFitMissing) {
             Model_Fit <- IASDT.R::LoadAs(Path_FittedMod)
           }
 
@@ -296,10 +291,10 @@ Mod_MergeChains <- function(
 
   if (PrintIncomplete) {
     MissingModelVars <- Model_Info2 %>%
-      dplyr::filter(magrittr::not(Model_Finished)) %>%
+      dplyr::filter(!Model_Finished) %>%
       dplyr::mutate(
         NMissingChains = purrr::map_int(
-          .x = Post_Path, .f = ~sum(magrittr::not(file.exists(.x)))),
+          .x = Post_Path, .f = ~sum(!file.exists(.x))),
         MissingModels = paste0(M_Name_Fit, " (", NMissingChains, " chains)")
       ) %>%
       dplyr::pull(MissingModels) %>%

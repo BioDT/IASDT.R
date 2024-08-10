@@ -51,10 +51,10 @@
 #'   percentage coverage of respective habitat type per grid cell as predictor
 #'   to the model. Default: `TRUE`. Only valid if `Hab_Abb` not equals to "0".
 #' @param NspPerGrid Integer. Indicating the minimum number of species per grid
-#'   cell for a grid cell to be include in the analysis. Default to 0 resulting
-#'   in exclusion of any grid cell with no species presence. This parameter can
-#'   be set to `NULL` to include all grid cells irrespective of the number of
-#'   species.
+#'   cell for a grid cell to be include in the analysis. Default to 1 resulting
+#'   in the exclusion of any grid cell with no species presence. This parameter
+#'   can be set to `NULL` to include all grid cells irrespective of the number
+#'   of species.
 #' @param NGrids For `CV_Dist` cross-validation strategy, how many grid cells in
 #'   both directions to be used in cross-validation. See [IASDT.R::GetCV] for
 #'   more details.
@@ -145,17 +145,17 @@
 #' - prepare SLURM commands (`PrepSLURM`) and some specifications (e.g.
 #'   `MaxJobCounts`, `MemPerCpu`, `Time`, `JobName`)
 #'
-#' The function reads the following environment variables:
+#'   The function reads the following environment variables:
 #'   - **`DP_R_Grid`** (if `FromHPC = TRUE`) or
 #'    **`DP_R_Grid_Local`** (if `FromHPC = FALSE`). The function reads
-#' the content of the `Grid_10_Land_Crop.RData` file from this path.
+#'   the content of the `Grid_10_Land_Crop.RData` file from this path.
 #'   - **`DP_R_Path_Python`**: Python path on LUMI
 #'   - **`DP_R_TaxaInfo`** or **`DP_R_TaxaInfo_Local`** for the location of the
-#' `Species_List_ID.txt` file representing species information.
+#'   `Species_List_ID.txt` file representing species information.
 #'   - **`DP_R_EUBound_sf`** or **`DP_R_EUBound_sf_Local`** for the path of the
-#' `RData` file containing the country boundaries (`sf` object)
+#'   `RData` file containing the country boundaries (`sf` object)
 #'   - **`DP_R_PA`** or **`DP_R_PA_Local`**: The function reads the contents of
-#'  the `Sp_PA_Summary_DF.RData` file from this path
+#'   the `Sp_PA_Summary_DF.RData` file from this path
 
 #' @export
 
@@ -165,7 +165,7 @@ Mod_Prep4HPC <- function(
     GPP_Plot = TRUE, rLMinLF = NULL, rLMaxLF = NULL,
     BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
     EffortsAsPredictor = TRUE, RoadRailAsPredictor = TRUE,
-    HabAsPredictor = TRUE, NspPerGrid = 0, NFolds = 4,
+    HabAsPredictor = TRUE, NspPerGrid = 1, NFolds = 4,
     NGrids = 20, NR = 2, NC = 2, PlotCV = TRUE, PhyloTree = TRUE,
     NoPhyloTree = TRUE, OverwriteInitMod = TRUE, NParallel = 8, nChains = 4,
     thin = NULL, samples = NULL, transientFactor = 300, verbose = 200,
@@ -210,8 +210,18 @@ Mod_Prep4HPC <- function(
   }
 
   if (!all(is.numeric(MinPresGrids)) || any(MinPresGrids <= 0)) {
-    stop("MinPresGrids should be numeric and greater than zero")
+    stop("`MinPresGrids` should be numeric and greater than zero")
   }
+
+  if (!is.null(ModelCountry) && MinPresPerCountry <= 0) {
+    stop("`MinPresPerCountry` should be numeric and greater than zero")
+  }
+
+  if (!is.null(NspPerGrid) && (!is.numeric(NspPerGrid) || NspPerGrid < 1)) {
+    stop(
+      "`NspPerGrid` has to be either `NULL` or positive integer", call. = FALSE)
+  }
+
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
@@ -220,9 +230,10 @@ Mod_Prep4HPC <- function(
     M_samples <- M4HPC_Path <- M_transient <- M_Init_Path <- M_Name_Fit <-
     Chain <- Post_Missing <- Command_HPC <- Command_WS <- Post_Path <-
     Path_ModProg <- TaxaInfoFile <- Path_Python <- Path_Grid <- EU_Bound <-
-    Path_PA <- SpeciesID <- Species_name <- PA <- Species_File <- NULL
+    Path_PA <- SpeciesID <- Species_name <- PA <- Species_File <-
+    NAME_ENGL <- NULL
 
-  if (magrittr::not(VerboseProgress)) {
+  if (!VerboseProgress) {
     sink(file = nullfile())
     on.exit(sink(), add = TRUE)
   }
@@ -237,7 +248,7 @@ Mod_Prep4HPC <- function(
 
   IASDT.R::CatTime("Load/check environment variables")
 
-  if (magrittr::not(file.exists(EnvFile))) {
+  if (!file.exists(EnvFile)) {
     stop(paste0(
       "Path for environment variables: ", EnvFile, " was not found"))
   }
@@ -265,7 +276,7 @@ Mod_Prep4HPC <- function(
 
   if (GPP_Plot) {
     Path_GridR <- file.path(Path_Grid, "Grid_10_Land_Crop.RData")
-    if (magrittr::not(file.exists(Path_GridR))) {
+    if (!file.exists(Path_GridR)) {
       stop(paste0("Path for the Europe boundaries does not exist: ", Path_GridR))
     }
   }
@@ -362,7 +373,7 @@ Mod_Prep4HPC <- function(
 
   IASDT.R::CatTime("Loading/preparing input data")
   ValidHabAbbs <- c(0:3, "4a", "4b", 10, "12a", "12b")
-  if (magrittr::not(as.character(Hab_Abb) %in% ValidHabAbbs)) {
+  if (!(as.character(Hab_Abb) %in% ValidHabAbbs)) {
     stop(paste0("Hab_Abb has to be one of the following:\n >> ",
                 paste0(ValidHabAbbs, collapse = " | ")))
   }
@@ -407,11 +418,11 @@ Mod_Prep4HPC <- function(
 
   IASDT.R::CatTime("Subsetting study area")
 
-  if (magrittr::not(is.null(ModelCountry))) {
+  if (!is.null(ModelCountry)) {
 
     ValidCountries <- ModelCountry %in% unique(DT_All$Country)
 
-    if (magrittr::not(all(ValidCountries))) {
+    if (!all(ValidCountries)) {
       stop(paste0(
         "The following are invalid country names: ",
         paste0(ModelCountry[!ValidCountries], collapse = " & ")))
@@ -445,7 +456,7 @@ Mod_Prep4HPC <- function(
       y = terra::unwrap(IASDT.R::LoadAs(Path_GridR)))
 
     DT_Sp <- file.path(Path_PA, "Sp_PA_Summary_DF.RData")
-    if (magrittr::not(file.exists(DT_Sp))) {
+    if (!file.exists(DT_Sp)) {
       stop(paste0(DT_Sp, " file does not exist"))
     }
     DT_Sp <- IASDT.R::LoadAs(DT_Sp)
@@ -541,21 +552,14 @@ Mod_Prep4HPC <- function(
   if (is.null(NspPerGrid)) {
     IASDT.R::CatTime("   >>>   All grid cells will be included in the analysis")
     SubTitle <- "All grid cells will be used in the models"
-
   } else {
-
-    if (magrittr::not(is.numeric(NspPerGrid)) || NspPerGrid < 0) {
-      stop(
-        "`NspPerGrid` has to be either `NULL` or integer >= 0", call. = FALSE)
-    }
-
     SubTitle <- paste0(
       "Data from grid cells with &#8805; ", NspPerGrid,
       " species will be used in the models")
 
     EmptyGridsID <- dplyr::select(DT_All, tidyselect::starts_with("Sp_")) %>%
       rowSums() %>%
-      magrittr::is_weakly_less_than(as.integer(NspPerGrid)) %>%
+      magrittr::is_less_than(as.integer(NspPerGrid)) %>%
       which() %>%
       magrittr::multiply_by(-1)
 
@@ -655,7 +659,7 @@ Mod_Prep4HPC <- function(
 
   IASDT.R::CatTime("   >>>   Save species summary")
   SpSummary <- file.path(Path_PA, "Sp_PA_Summary_DF.RData")
-  if (magrittr::not(file.exists(SpSummary))) {
+  if (!file.exists(SpSummary)) {
     stop(paste0(SpSummary, " file does not exist"))
   }
   SpSummary <- IASDT.R::LoadAs(SpSummary) %>%
@@ -924,7 +928,7 @@ Mod_Prep4HPC <- function(
     IASDT.R::CatTime(paste0("   >>>   Processing all model variants"))
   } else {
     NMod2Export <- Model_Info %>%
-      dplyr::filter(magrittr::not(file.exists(M4HPC_Path))) %>%
+      dplyr::filter(!file.exists(M4HPC_Path)) %>%
       nrow()
     if (NMod2Export == 0) {
       IASDT.R::CatTime(
@@ -942,7 +946,7 @@ Mod_Prep4HPC <- function(
       file.remove(CurrPath)
     }
     Try <- 0
-    while (Try < 6 && magrittr::not(file.exists(CurrPath))) {
+    while (Try < 6 && !file.exists(CurrPath)) {
       Try <- Try + 1
       Model <- Hmsc::sampleMcmc(
         hM = IASDT.R::LoadAs(Model_Info$M_Init_Path[ID]),
@@ -979,9 +983,7 @@ Mod_Prep4HPC <- function(
       .x = seq_len(nrow(Model_Info)), .f = InitFitFun)
   }
 
-  Failed2Export <- Model_Info %>%
-    dplyr::filter(magrittr::not(file.exists(M4HPC_Path)))
-
+  Failed2Export <- dplyr::filter(Model_Info, !file.exists(M4HPC_Path))
   if (nrow(Failed2Export) == 0) {
     IASDT.R::CatTime(
       "   >>>   All model variants were exported as RDS files")
@@ -1035,7 +1037,7 @@ Mod_Prep4HPC <- function(
             Path_Model, "Model_Fitting_HPC",
             paste0(M_Name_Fit, "_Chain", Chain, "_Progress.txt"))
 
-          Post_Missing <- magrittr::not(file.exists(Post_Path))
+          Post_Missing <- !file.exists(Post_Path)
 
           Command_HPC <- paste0(
             "export TF_CPP_MIN_LOG_LEVEL=3; /usr/bin/time -v ", Path_Python,

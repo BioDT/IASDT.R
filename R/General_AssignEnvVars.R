@@ -31,11 +31,11 @@ AssignEnvVars <- function(EnvFile = ".env", EnvVarDT = NULL) {
     stop("EnvFile and EnvVarDT can not be empty")
   }
 
-  if (magrittr::not(file.exists((EnvFile)))) {
+  if (!file.exists((EnvFile))) {
     stop(paste0(EnvFile, " file does not exist"))
   }
 
-  if (magrittr::not(inherits(EnvVarDT, "data.frame"))) {
+  if (!inherits(EnvVarDT, "data.frame")) {
     stop("The provided EnvVarDT object should be either tibble or data frame")
   }
 
@@ -52,7 +52,7 @@ AssignEnvVars <- function(EnvFile = ".env", EnvVarDT = NULL) {
   ExpClasses <- c("character", "character", "logical", "logical")
   MatchClass <- all(InClasses == ExpClasses)
 
-  if (magrittr::not(MatchClass)) {
+  if (!MatchClass) {
     Diff <- which(InClasses != ExpClasses)
     purrr::map_chr(
       .x = Diff,
@@ -91,11 +91,11 @@ AssignEnvVars <- function(EnvFile = ".env", EnvVarDT = NULL) {
           call. = FALSE)
       }
 
-      if (CheckDir && magrittr::not(dir.exists(Val))) {
+      if (CheckDir && !dir.exists(Val)) {
         stop(paste0("`", Val, "` directory does not exist"))
       }
 
-      if (CheckFile && magrittr::not(file.exists(Val))) {
+      if (CheckFile && !file.exists(Val)) {
         stop(paste0("`", Val, "` file does not exist"))
       }
 

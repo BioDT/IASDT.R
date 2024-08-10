@@ -46,7 +46,7 @@ CheckStackInMemory <- function(Stack = NULL) {
     stop("Input Stack cannot be NULL")
   }
 
-  if (magrittr::not(inherits(Stack, "RasterStack"))) {
+  if (!inherits(Stack, "RasterStack")) {
     stop("The object should be a RasterStack object")
   }
 
@@ -55,7 +55,7 @@ CheckStackInMemory <- function(Stack = NULL) {
   if (all(InMem)) {
     message(paste0("All stack layers reads from ", crayon::bold("disk")))
   }
-  if (all(magrittr::not(InMem))) {
+  if (all(!InMem)) {
     message(paste0("All stack layers reads from ", crayon::bold("memory")))
   }
 

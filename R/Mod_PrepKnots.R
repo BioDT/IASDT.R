@@ -34,10 +34,10 @@ PrepKnots <- function(
          call. = FALSE)
   }
 
-  if (magrittr::not(is.null(MaxLF)) && magrittr::not(is.integer(MaxLF))) {
+  if (!is.null(MaxLF) && !is.integer(MaxLF)) {
     stop("MaxLF is not NULL or integer", call. = FALSE)
   }
-  if (magrittr::not(is.null(MinLF)) && magrittr::not(is.integer(MinLF))) {
+  if (!is.null(MinLF) && !is.integer(MinLF)) {
     stop("MinLF is not NULL or integer", call. = FALSE)
   }
 
@@ -81,13 +81,13 @@ PrepKnots <- function(
 
   rL <- Hmsc::HmscRandomLevel(sData = Coords, sMethod = "GPP", sKnot = Knots)
 
-  if (is.null(MinLF) && magrittr::not(is.null(MaxLF))) {
+  if (is.null(MinLF) && !is.null(MaxLF)) {
     rL <- Hmsc::setPriors(rL, nfMax = MaxLF)
   }
-  if (magrittr::not(is.null(MinLF)) && is.null(MaxLF)) {
+  if (!is.null(MinLF) && is.null(MaxLF)) {
     rL <- Hmsc::setPriors(rL, nfMin = MinLF)
   }
-  if (magrittr::not(is.null(MinLF)) && magrittr::not(is.null(MaxLF))) {
+  if (!is.null(MinLF) && !is.null(MaxLF)) {
     rL <- Hmsc::setPriors(rL, nfMin = MinLF, nfMax = MaxLF)
   }
 

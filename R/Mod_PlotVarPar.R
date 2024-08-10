@@ -88,7 +88,7 @@ PlotVarPar <- function(
 
   IASDT.R::CatTime("Loading species list")
 
-  if (magrittr::not(file.exists(EnvFile))) {
+  if (!file.exists(EnvFile)) {
     stop(paste0(
       "Path for environment variables: ", EnvFile, " was not found"))
   }
@@ -131,17 +131,17 @@ PlotVarPar <- function(
     # Loading model
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-    if (magrittr::not(inherits(Model, "Hmsc"))) {
+    if (!inherits(Model, "Hmsc")) {
 
       IASDT.R::CatTime("  >>  Loading model object from file")
 
       if (inherits(Model, "character")) {
-        if (magrittr::not(file.exists(Model))) {
+        if (!file.exists(Model)) {
           stop("The provided path for the model does not exist")
         }
         Model <- IASDT.R::LoadAs(Model)
 
-        if (magrittr::not(inherits(Model, "Hmsc"))) {
+        if (!inherits(Model, "Hmsc")) {
           stop("The loaded model is not of an Hmsc object")
         }
 

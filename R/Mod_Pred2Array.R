@@ -42,13 +42,12 @@ Mod_Pred2Array <- function(
     stop("Model cannot be empty when Predict is TRUE")
   }
 
-  if (magrittr::not(Predict) && is.null(Preds)) {
+  if (!Predict && is.null(Preds)) {
     stop("Preds cannot be empty when Predict is FALSE")
   }
 
   if (Predict) {
-
-    if (magrittr::not(is.numeric(NCores)) || NCores <= 0) {
+    if (!is.numeric(NCores) || NCores <= 0) {
       stop("NCores must be a positive integer.")
     }
 

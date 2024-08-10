@@ -42,9 +42,7 @@ SaveSession <- function(Path = getwd(), ExcludeObj = NULL, Prefix = "S") {
             stringr::str_c(collapse = "_")
         }
       )) %>%
-    dplyr::filter(
-      Class != "function",
-      magrittr::not(Object %in% ExcludeObj)) %>%
+    dplyr::filter(Class != "function", !(Object %in% ExcludeObj)) %>%
     dplyr::pull(Object)
 
   AllObjs <- purrr::map(

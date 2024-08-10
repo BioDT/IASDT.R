@@ -65,12 +65,11 @@ CLC_Process <- function(
     stop("EnvFile can not be empty")
   }
 
-  if (magrittr::not(is.numeric(MinLandPerc)) ||
-      magrittr::not(dplyr::between(MinLandPerc, 0, 100))) {
+  if (!is.numeric(MinLandPerc) || !dplyr::between(MinLandPerc, 0, 100)) {
     stop("MinLandPerc must be a numeric value between 0 and 100.")
   }
 
-  if (magrittr::not(file.exists(EnvFile))) {
+  if (!file.exists(EnvFile)) {
     stop(paste0("Path for environment variables (`EnvFile`): ",
                 EnvFile, " was not found"))
   }
@@ -123,7 +122,7 @@ CLC_Process <- function(
   purrr::walk(
     .x = requiredPaths,
     .f = function(path) {
-      if (magrittr::not(file.exists(path))) {
+      if (!file.exists(path)) {
         stop("Required path does not exist: ", path)
       }
     })
@@ -636,7 +635,7 @@ CLC_GetPerc <- function(Type, CLC_CrossWalk, CLC_FracsR, Path_Tif, Path_RData) {
     stop("None of the input parameters can be empty")
   }
 
-  if (magrittr::not(
+  if (!(
     Type %in% c("SynHab", "CLC_L1", "CLC_L2", "CLC_L3", "EUNIS_2019"))) {
     stop("Type has to be one of SynHab, CLC_L1, CLC_L2, CLC_L3, and EUNIS_2019")
   }
@@ -719,7 +718,7 @@ CLC_ProcessMajority <- function(
     stop("None of the input parameters can be empty")
   }
 
-  if (magrittr::not(
+  if (!(
     Type %in% c("SynHab", "CLC_L1", "CLC_L2", "CLC_L3", "EUNIS_2019"))) {
     stop("Type has to be one of SynHab, CLC_L1, CLC_L2, CLC_L3, and EUNIS_2019")
   }

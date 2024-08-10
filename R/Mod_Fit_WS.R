@@ -35,9 +35,8 @@ Mod_Fit_WS <- function(Path_Model, EnvFile = ".env", NCores = NULL) {
   # # Load environment variables
   # # |||||||||||||||||||||||||||||||||||
 
-  if (magrittr::not(file.exists(EnvFile))) {
-    stop(paste0(
-      "Path for environment variables: ", EnvFile, " was not found"))
+  if (!file.exists(EnvFile)) {
+    stop(paste0("Path for environment variables: ", EnvFile, " was not found"))
   }
 
   EnvVars2Read <- tibble::tribble(
@@ -75,7 +74,7 @@ Mod_Fit_WS <- function(Path_Model, EnvFile = ".env", NCores = NULL) {
     IASDT.R::LoadAs() %>%
     dplyr::select(Path_ModProg, Command_WS) %>%
     tidyr::unnest(cols = c("Path_ModProg", "Command_WS")) %>%
-    dplyr::filter(magrittr::not(file.exists(Path_ModProg)))
+    dplyr::filter(!file.exists(Path_ModProg))
 
   if (nrow(Model2Run) > 0) {
     IASDT.R::CatTime(

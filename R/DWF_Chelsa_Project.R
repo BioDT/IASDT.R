@@ -42,7 +42,7 @@ Chelsa_Project <- function(
     stop("InputFile, OutFile, and GridFile cannot be NULL")
   }
 
-  if (magrittr::not(dirname(fs::dir_exists(InputFile)))) {
+  if (!(dirname(fs::dir_exists(InputFile)))) {
     stop("InputFile path does not exist")
   }
 
@@ -194,7 +194,7 @@ Chelsa_Project <- function(
 
   # Ensure that the object is located in memory, not reading from temporary file
   # This may not be necessary as we save the file as .tif file not .RData
-  if (magrittr::not(terra::inMemory(Rstr))) {
+  if (!terra::inMemory(Rstr)) {
     terra::values(Rstr) <- terra::values(Rstr)
   }
 
@@ -214,7 +214,9 @@ Chelsa_Project <- function(
 
     terra::writeRaster(x = Rstr, filename = OutFileTif, overwrite = TRUE)
 
-    if (Remote && magrittr::not(KeepDownloaded)) file.remove(DownPath)
+    if (Remote && !KeepDownloaded) {
+      file.remove(DownPath)
+    }
   }
 
   # ||||||||||||||||||||||||||||||||||||||||

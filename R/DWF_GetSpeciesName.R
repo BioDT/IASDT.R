@@ -35,7 +35,7 @@ GetSpeciesName <- function(EnvFile = ".env", SpID = NULL, FromHPC = TRUE) {
   Path_PA <- IAS_ID <- NCells <- TaxaInfoFile <- NULL
 
   # Load environment variables
-  if (magrittr::not(file.exists(EnvFile))) {
+  if (!file.exists(EnvFile)) {
     stop(paste0("Path for environment variables: ", EnvFile, " was not found"))
   }
 
@@ -66,7 +66,7 @@ GetSpeciesName <- function(EnvFile = ".env", SpID = NULL, FromHPC = TRUE) {
 
     NGridCells <- file.path(Path_PA, "Sp_PA_Summary_DF.RData")
 
-    if (magrittr::not(file.exists(NGridCells))) {
+    if (!file.exists(NGridCells)) {
       stop(
         paste0(
           "Sp_PA_Summary_DF.RData file does not exist in the ",

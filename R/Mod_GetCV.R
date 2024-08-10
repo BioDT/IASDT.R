@@ -73,13 +73,13 @@ GetCV <- function(
     stop("DT, EnvFile, OutPath, and XVars can not be empty")
   }
 
-  if (magrittr::not(file.exists(EnvFile))) {
+  if (!file.exists(EnvFile)) {
     stop(paste0("Path for environment variables: ", EnvFile, " was not found"))
   }
 
   AllVars <- c("x", "y", XVars)
   AllVarsInDT <- all(AllVars %in% names(DT))
-  if (magrittr::not(AllVarsInDT)) {
+  if (!AllVarsInDT) {
     MissingVars <- setdiff(AllVars, names(DT))
     stop(
       paste0(
@@ -109,7 +109,7 @@ GetCV <- function(
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
   Path_Grid <- file.path(Path_Grid, "Grid_10_Land_Crop.RData")
-  if (magrittr::not(file.exists(Path_Grid))) {
+  if (!file.exists(Path_Grid)) {
     stop("Path for reference grid does not exist")
   }
   RefGrid <- terra::unwrap(IASDT.R::LoadAs(Path_Grid))
@@ -185,8 +185,7 @@ GetCV <- function(
     CV_SAC <- NULL
 
     # Check `folds_ids` exists in each of the cross-validation strategies
-    if (magrittr::not(
-      "folds_ids" %in% names(CV_Dist) && "folds_ids" %in% names(CV_Large))) {
+    if (!("folds_ids" %in% names(CV_Dist) && "folds_ids" %in% names(CV_Large))) {
       stop(
         "Cross-validation results do not contain 'folds_ids'.",
         call. = FALSE)
@@ -199,8 +198,7 @@ GetCV <- function(
       report = FALSE)
 
     # Check `folds_ids` exists in each of the cross-validation strategies
-    if (magrittr::not(
-      "folds_ids" %in% names(CV_SAC) && "folds_ids" %in% names(CV_Dist) &&
+    if (!("folds_ids" %in% names(CV_SAC) && "folds_ids" %in% names(CV_Dist) &&
       "folds_ids" %in% names(CV_Large))) {
       stop(
         "Cross-validation results do not contain 'folds_ids'.",

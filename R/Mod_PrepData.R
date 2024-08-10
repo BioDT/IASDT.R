@@ -95,7 +95,7 @@ Mod_PrepData <- function(
   }
   Hab_Abb <- as.character(Hab_Abb)
 
-  if (magrittr::not(VerboseProgress)) {
+  if (!VerboseProgress) {
     sink(file = nullfile())
     on.exit(sink(), add = TRUE)
   }
@@ -120,7 +120,7 @@ Mod_PrepData <- function(
 
   # Input data paths - these are read from the .env file
 
-  if (magrittr::not(file.exists(EnvFile))) {
+  if (!file.exists(EnvFile)) {
     stop(paste0(
       "Path for environment variables: ", EnvFile, " was not found"))
   }
@@ -160,7 +160,7 @@ Mod_PrepData <- function(
 
   ValidHabAbbs <- c(0:3, "4a", "4b", 10, "12a", "12b")
 
-  if (magrittr::not(Hab_Abb %in% ValidHabAbbs)) {
+  if (!(Hab_Abb %in% ValidHabAbbs)) {
     stop(
       paste0("Hab_Abb has to be one of the following:\n >> ",
              paste0(ValidHabAbbs, collapse = ", ")))
@@ -176,7 +176,7 @@ Mod_PrepData <- function(
 
   DT_Sp <- file.path(Path_PA, "Sp_PA_Summary_DF.RData")
 
-  if (magrittr::not(file.exists(DT_Sp))) {
+  if (!file.exists(DT_Sp)) {
     stop(paste0(DT_Sp, " file does not exist"))
   }
 
@@ -299,7 +299,7 @@ Mod_PrepData <- function(
 
   IASDT.R::CatTime("   >>>   CHELSA data")
   R_Chelsa <- file.path(Path_Chelsa_Time_CC, "St_1981_2010.RData")
-  if (magrittr::not(file.exists(R_Chelsa))) {
+  if (!file.exists(R_Chelsa)) {
     stop(paste0(R_Chelsa, " file does not exist"))
   }
   R_Chelsa <- IASDT.R::LoadAs(R_Chelsa) %>%
@@ -316,7 +316,7 @@ Mod_PrepData <- function(
   IASDT.R::CatTime("   >>>   Reference grid   >>>   sf")
   # Reference grid as sf
   Grid_SF <- file.path(Path_Grid_Ref, "Grid_10_sf.RData")
-  if (magrittr::not(file.exists(Grid_SF))) {
+  if (!file.exists(Grid_SF)) {
     stop(paste0(Grid_SF, " file does not exist"))
   }
   Grid_SF <- IASDT.R::LoadAs(Grid_SF) %>%
@@ -325,7 +325,7 @@ Mod_PrepData <- function(
   # Reference grid as raster
   IASDT.R::CatTime("   >>>   Reference grid   >>>   raster")
   Grid_R <- file.path(Path_Grid, "Grid_10_Land_Crop.RData")
-  if (magrittr::not(file.exists(Grid_R))) {
+  if (!file.exists(Grid_R)) {
     stop(paste0(Grid_R, " file does not exist"))
   }
   Grid_R <- IASDT.R::LoadAs(Grid_R) %>%
@@ -334,7 +334,7 @@ Mod_PrepData <- function(
   # Reference grid as sf - country names
   IASDT.R::CatTime("   >>>   Reference grid   >>>   country names")
   Grid_CNT <- file.path(Path_Grid, "Grid_10_Land_Crop_sf_Country.RData")
-  if (magrittr::not(file.exists(Grid_CNT))) {
+  if (!file.exists(Grid_CNT)) {
     stop(paste0(Grid_CNT, " file does not exist"))
   }
   Grid_CNT <- IASDT.R::LoadAs(Grid_CNT)
@@ -346,7 +346,7 @@ Mod_PrepData <- function(
   IASDT.R::CatTime("   >>>   Habitat coverage")
 
   Path_Hab <- file.path(Path_CLC_Summ, "PercCov_SynHab_Crop.RData")
-  if (magrittr::not(file.exists(Path_Hab))) {
+  if (!file.exists(Path_Hab)) {
     stop("Path_Hab file: ", Path_Hab, " does not exist")
   }
 
@@ -373,7 +373,7 @@ Mod_PrepData <- function(
 
   # road intensity of any road type
   R_RoadInt <- file.path(Path_Roads, "Road_Length.RData")
-  if (magrittr::not(file.exists(R_RoadInt))) {
+  if (!file.exists(R_RoadInt)) {
     stop(paste0(R_RoadInt, " file does not exist"))
   }
   R_RoadInt <- IASDT.R::LoadAs(R_RoadInt) %>%
@@ -387,7 +387,7 @@ Mod_PrepData <- function(
 
   # Distance to roads
   R_RoadDist <- file.path(Path_Roads, "Dist2Road.RData")
-  if (magrittr::not(file.exists(R_RoadDist))) {
+  if (file.exists(R_RoadDist)) {
     stop(paste0(R_RoadDist, " file does not exist"))
   }
   R_RoadDist <- IASDT.R::LoadAs(R_RoadDist) %>%
@@ -402,7 +402,7 @@ Mod_PrepData <- function(
 
   # Railway intensity
   R_RailInt <- file.path(Path_Rail, "Railway_Length.RData")
-  if (magrittr::not(file.exists(R_RailInt))) {
+  if (!file.exists(R_RailInt)) {
     stop(paste0(R_RailInt, " file does not exist"))
   }
   R_RailInt <- IASDT.R::LoadAs(R_RailInt) %>%
@@ -416,7 +416,7 @@ Mod_PrepData <- function(
 
   # Distance to nearest rail
   R_RailDist <- file.path(Path_Rail, "Dist2Rail.RData")
-  if (magrittr::not(file.exists(R_RailDist))) {
+  if (!file.exists(R_RailDist)) {
     stop(paste0(R_RailDist, " file does not exist"))
   }
   R_RailDist <- IASDT.R::LoadAs(R_RailDist) %>%
@@ -439,7 +439,7 @@ Mod_PrepData <- function(
 
   IASDT.R::CatTime("   >>>   Sampling intensity")
   R_Bias <- file.path(Path_Bias, "Bias_GBIF_SummaryR.RData")
-  if (magrittr::not(file.exists(R_Bias))) {
+  if (!file.exists(R_Bias)) {
     stop(paste0(R_Bias, " file does not exist"))
   }
   R_Bias <- IASDT.R::LoadAs(R_Bias) %>%

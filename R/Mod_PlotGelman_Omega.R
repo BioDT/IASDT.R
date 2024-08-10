@@ -36,7 +36,7 @@ PlotGelman_Omega <- function(
     stop("NOmega must be a positive integer.")
   }
 
-  if (magrittr::not(inherits(CodaObj, "mcmc.list"))) {
+  if (!inherits(CodaObj, "mcmc.list")) {
     stop("CodaObj has to be of class mcmc.list")
   }
 

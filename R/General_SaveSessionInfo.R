@@ -34,7 +34,7 @@ SaveSessionInfo <- function(Path = getwd(), SessionObj = NULL, Prefix = "S") {
   utils::capture.output(
     sessioninfo::session_info(), file = FileName, append = TRUE)
 
-  if (magrittr::not(is.null(SessionObj))) {
+  if (!is.null(SessionObj)) {
     utils::capture.output(
       IASDT.R::InfoChunk(
         paste0("Objects in the current session (except functions and ",

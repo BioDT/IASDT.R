@@ -35,8 +35,8 @@ Mod_Summary <- function(
   if (is.null(Path_Coda)) {
     stop("Path_Coda cannot be empty")
   }
-  
-  if (magrittr::not(file.exists(EnvFile))) {
+
+  if (!file.exists(EnvFile)) {
     stop(paste("Environment file not found:", EnvFile))
   }
 
@@ -144,7 +144,7 @@ Mod_Summary <- function(
 
   # Omega ------
   IASDT.R::CatTime("Omega")
-  
+
   ListSp <- utils::read.delim(TaxaInfoFile, sep = "\t") %>%
     tibble::tibble() %>%
     dplyr::mutate(

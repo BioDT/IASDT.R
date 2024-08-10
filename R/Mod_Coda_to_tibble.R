@@ -121,7 +121,7 @@ Coda_to_tibble <- function(
 
   if (Type == "beta") {
 
-    if (magrittr::not(file.exists(EnvFile))) {
+    if (!file.exists(EnvFile)) {
       stop(paste0("Path for environment variables: ",
                   EnvFile, " was not found"))
     }

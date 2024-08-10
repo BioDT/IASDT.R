@@ -86,7 +86,7 @@ Get_EASIN_Data <- function(
                          string = ChunkDT,
                          pattern = "An error occurred while retrieving"))
 
-          if (magrittr::not(ReDown)) {
+          if (!ReDown) {
             break()
           }
 
@@ -97,7 +97,7 @@ Get_EASIN_Data <- function(
           Sys.sleep(1)
         }
 
-        if (magrittr::not(SpeciesOkay)) {
+        if (!SpeciesOkay) {
           paste0("data for ", SpKey, "can not be downloaded. Download failed ",
                  "after ", DownTry, " trials. Check server status.") %>%
             stringr::str_glue() %>%

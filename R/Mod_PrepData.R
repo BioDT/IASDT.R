@@ -387,7 +387,7 @@ Mod_PrepData <- function(
 
   # Distance to roads
   R_RoadDist <- file.path(Path_Roads, "Dist2Road.RData")
-  if (file.exists(R_RoadDist)) {
+  if (!file.exists(R_RoadDist)) {
     stop(paste0(R_RoadDist, " file does not exist"))
   }
   R_RoadDist <- IASDT.R::LoadAs(R_RoadDist) %>%

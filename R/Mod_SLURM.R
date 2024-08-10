@@ -96,6 +96,8 @@ Mod_SLURM <- function(
 
   rm(AllArgs)
 
+  ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
   ListCommands <- list.files(
     Path_Model, pattern = Command_Prefix, full.names = TRUE)
   NCommandFiles <- length(ListCommands)
@@ -105,8 +107,7 @@ Mod_SLURM <- function(
 
   if (is.null(Path_SLURM_Out)) {
     # This folder was created in the Mod_Prep4HPC function
-    Path_SLURM_Out <- file.path(
-      Path_Model, "Model_Fitting_HPC", "SLURM_Results")
+    Path_SLURM_Out <- file.path(Path_Model, "Model_Fitting_HPC", "JobsLog")
   }
 
   purrr::walk(
@@ -118,7 +119,7 @@ Mod_SLURM <- function(
         JobName0 <- JobName
       } else {
         OutFile <- paste0(SLURM_Prefix, "_", x, ".slurm")
-        JobName0 <- paste0(JobName, x)
+        JobName0 <- paste0(JobName, "_", x)
       }
       NJobs <- R.utils::countLines(ListCommands[x])[1]
 
@@ -140,9 +141,9 @@ Mod_SLURM <- function(
 
       cat2("#!/bin/bash\n")
 
-      cat2("# -----------------------------------------------")
+      cat2("# -----------------------------------------------------------")
       cat2("# Job array configuration")
-      cat2("# -----------------------------------------------")
+      cat2("# -----------------------------------------------------------")
       cat2(paste0("#SBATCH --job-name=", JobName0))
       cat2(paste0("#SBATCH --ntasks=", ntasks))
       cat2(paste0(
@@ -158,9 +159,9 @@ Mod_SLURM <- function(
       cat2(paste0("#SBATCH --array=1-", NJobs, "\n"))
 
       if (CatJobInfo) {
-        cat2("# -----------------------------------------------")
+        cat2("# -----------------------------------------------------------")
         cat2("# Job info")
-        cat2("# -----------------------------------------------")
+        cat2("# -----------------------------------------------------------")
         cat2('echo "Start time = $(date)"')
         cat2('echo "Submitting directory = "$SLURM_SUBMIT_DIR')
         cat2('echo "working directory = "$PWD')
@@ -185,49 +186,51 @@ Mod_SLURM <- function(
           'echo "Array\'s minimum ID (index) number = "$SLURM_ARRAY_TASK_MAX\n')
       }
 
-      cat2("# -----------------------------------------------")
+      cat2("# -----------------------------------------------------------")
       cat2("# File contains bash commands for model fitting")
-      cat2("# -----------------------------------------------")
-      cat2(paste0("File=", ListCommands, "\n"))
+      cat2("# -----------------------------------------------------------")
+      cat2(paste0("File=", ListCommands[x], "\n"))
 
-      cat2("# -----------------------------------------------")
+      cat2("# -----------------------------------------------------------")
       cat2("# Loading Hmsc-HPC")
-      cat2("# -----------------------------------------------")
+      cat2("# -----------------------------------------------------------")
       cat2(paste0("source ", file.path(Path_Hmsc, "setup-env.sh"), "\n"))
 
-      cat2("# -----------------------------------------------")
+      cat2("# -----------------------------------------------------------")
       cat2("# CHECK GPU")
-      cat2("# -----------------------------------------------")
+      cat2("# -----------------------------------------------------------")
       cat2("export TF_CPP_MIN_LOG_LEVEL=3")
       cat2(paste0("PythonCheckGPU=", Path_GPU_Check, "\n"))
 
-      cat2("# -----------------------------------------------")
+      cat2("# -----------------------------------------------------------")
       cat2("# Some checking")
-      cat2("# -----------------------------------------------")
+      cat2("# -----------------------------------------------------------")
       cat2("Path_Python=$(which python3)")
       cat2(paste0(
         'echo -e "Some Checking:\\n  >>  Working directory',
-        ': $PWD\\n  >>  Python path:       $Path_Python\\n  >>  ', # nolint
+        ": $PWD\\n  >>  Python path:       $Path_Python\\n  >>  ",
         'Checking GPU:      $(python3 $PythonCheckGPU)\\n"'))
       cat2("")
 
-      cat2("# -----------------------------------------------")
+      cat2("# -----------------------------------------------------------")
       cat2("# Run array job")
-      cat2("# -----------------------------------------------")
+      cat2("# -----------------------------------------------------------")
       cat2("head -n $SLURM_ARRAY_TASK_ID $File | tail -n 1 | bash\n")
 
       cat2('echo "End of program at `date`"\n\n')
 
-      cat2("# -----------------------------------------------")
-      cat2("# -----------------------------------------------")
-      cat2(paste0("# This script was created on: \n# ",
-                  lubridate::now(tzone = "CET"), " CET"))
-      cat2("# -----------------------------------------------")
-      cat2("# -----------------------------------------------")
+      cat2("# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||")
+      cat2("# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||")
+      cat2(paste0(
+        "# This script was created on: ",
+        format(lubridate::now(tzone = "CET"), format = "%Y-%m-%d %H:%M"),
+        " CET"))
+      cat2("# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||")
+      cat2("# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||")
 
       # close connection to the file
       close(f)
-    })
+  })
 
   return(invisible(NULL))
 }

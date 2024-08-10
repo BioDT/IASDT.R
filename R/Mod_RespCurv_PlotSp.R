@@ -146,12 +146,12 @@ RespCurv_PlotSp <- function(
             '<span style="color:blue; font-size:13pt;"><b><i>',
             Species2$Species_name, "</i></b></span>",
             '<span style="font-size:8pt;"> (<b>Class:</b> ', Species2$Class,
-            "  &mdash; <b>Order:</b> ", Species2$Order,
-            "  &mdash; <b>Family:</b> ", Species2$Family,
-            '  &mdash; <b>ID:</b></span><span style="font-size:8pt; color:blue;"> ',
+            "  &#8212; <b>Order:</b> ", Species2$Order,
+            "  &#8212; <b>Family:</b> ", Species2$Family,
+            '  &#8212; <b>ID:</b></span><span style="font-size:8pt; color:blue;"> ',
             Species,  '</span><span style="font-size:8pt;">)</span>')
           SubTitleTxt <- paste0(
-            Coords_Label, "  &mdash;&mdash;  ",
+            Coords_Label, "  &#8212;&#8212;  ",
             NFV_Label, "</span>")
 
           Plot <- ggplot2::ggplot(

@@ -335,10 +335,10 @@ Mod_Prep4HPC <- function(
   # # |||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("File paths - Creating missing paths")
-  fs::dir_create(file.path(Path_Model, "InitMod_HPC"))
+  fs::dir_create(file.path(Path_Model, "InitMod4HPC"))
   fs::dir_create(file.path(Path_Model, "Model_Fitting_HPC"))
   # Also create directory for SLURM outputs
-  fs::dir_create(file.path(Path_Model, "Model_Fitting_HPC", "SLURM_Results"))
+  fs::dir_create(file.path(Path_Model, "Model_Fitting_HPC", "JobsLog"))
   Path_ModelDT <- file.path(Path_Model, "Model_Info.RData")
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -836,7 +836,7 @@ Mod_Prep4HPC <- function(
               "<span style='font-size: 35pt;'>GPP knots</span><br>",
               "<span style='font-size: 30pt;'>  Minimum distance between ",
               "knots and between knots and grid ",
-              " cells is ", .x, " km  &mdash; ", NKnots, " knots</span>")) +
+              " cells is ", .x, " km  &#8212; ", NKnots, " knots</span>")) +
           ggplot2::scale_fill_continuous(na.value = "transparent") +
           ggplot2::theme_void() +
           ggplot2::theme(
@@ -910,8 +910,8 @@ Mod_Prep4HPC <- function(
           M_Name_Fit <- paste0(M_Name_init, "_samp", M_samples, "_th", M_thin)
 
           M4HPC_Path <- file.path(
-            Path_Model, "InitMod_HPC",
-            paste0("InitMod_HPC_", M_Name_Fit, ".rds"))
+            Path_Model, "InitMod4HPC",
+            paste0("InitMod_", M_Name_Fit, ".rds"))
 
           return(list(M_Name_Fit = M_Name_Fit, M4HPC_Path = M4HPC_Path))
 
@@ -1025,7 +1025,7 @@ Mod_Prep4HPC <- function(
 
           # Input model
           M4HPC_Path2 <- file.path(
-            Path_Model, "InitMod_HPC", basename(M4HPC_Path))
+            Path_Model, "InitMod4HPC", basename(M4HPC_Path))
 
           # Path for posterior sampling
           Post_Path <- file.path(
@@ -1173,6 +1173,7 @@ Mod_Prep4HPC <- function(
       JobName <- stringr::str_remove_all(
         basename(Path_Model), paste0("_", HabVal))
     }
+
     IASDT.R::Mod_SLURM(
       Path_Model = Path_Model, JobName = JobName, MemPerCpu = MemPerCpu,
       Time = Time, EnvFile = EnvFile, FromHPC = FromHPC,

@@ -251,13 +251,13 @@ Mod_PrepData <- function(
     plot = NSpPerGrid, width = 26, height = 25, units = "cm", dpi = 600,
     filename = file.path(OutputPath, "NSpPerGrid.jpeg"))
 
+  NCells <- as.integer(terra::global(!(is.na(R_Sp_sumP)), sum))
   Subtitle <- paste0(
-    "Candidate species: ",  nrow(DT_Sp), " &mdash; ",
+    "Candidate species: ",  nrow(DT_Sp), " &#8212; ",
     sum(DT_Sp$NCells >= MinPresGrids),
-    " species have &#8805;", MinPresGrids, " presence grid cells. ",
+    " species have &#8805;", MinPresGrids, " presence grid cells. &#8805; ",
     formatC(NCells, format = "d", big.mark = ","),
     " grid cells with at least one species.")
-  NCells <- as.integer(terra::global(!(is.na(R_Sp_sumP)), sum))
 
   NGridSpecies <- purrr::map_dfr(
     .x = unique(sort(DT_Sp$NCells)),

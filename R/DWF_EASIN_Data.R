@@ -114,12 +114,9 @@ EASIN_Data <- function(
   Path_EASIN_R <- file.path(Path_EASIN, "Sp_R")
   Path_EASIN_Summary <- file.path(Path_EASIN, "Summary")
 
-  Path_EASIN_Raw <- file.path(Path_EASIN_Interim, "Raw")
-  Path_EASIN_Raw2 <- file.path(Path_EASIN_Raw, "FileParts")
-
   fs::dir_create(
     c(Path_EASIN_DT, Path_EASIN_Grid, Path_EASIN_R, Path_EASIN_Summary,
-      Path_EASIN_Raw, Path_EASIN_Raw2))
+      Path_EASIN_Interim))
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -254,7 +251,7 @@ EASIN_Data <- function(
 
     # Start downloading ----
     while (TRUE) {
-      NotProcessed <- list.files(Path_EASIN_Raw, pattern = ".RData$") %>%
+      NotProcessed <- list.files(Path_EASIN_Interim, pattern = ".RData$") %>%
         stringr::str_remove(".RData") %>%
         setdiff(EASIN_Taxa$EASINID, .)
 
@@ -289,13 +286,13 @@ EASIN_Data <- function(
           cl = c1, IASDT.R::LoadPackages(List = c("dplyr", "jsonlite"))))
         snow::clusterExport(
           cl = c1,
-          list = c("Path_EASIN_Raw", "NotProcessed", "NSearch",
+          list = c("Path_EASIN_Interim", "NotProcessed", "NSearch",
                    "DeleteChunks", "SleepTime"),
           envir = environment())
 
         Down <- snow::parLapply(
           cl = c1, x = NotProcessed, fun = IASDT.R::EASIN_Down,
-          Path_Raw = Path_EASIN_Raw, DeleteChunks = DeleteChunks,
+          Path_Raw = Path_EASIN_Interim, DeleteChunks = DeleteChunks,
           NSearch = NSearch, SleepTime = SleepTime)
         rm(Down)
       }
@@ -322,7 +319,7 @@ EASIN_Data <- function(
   IASDT.R::CatTime("   >>>   Loading input maps")
 
   EASIN_Files <- list.files(
-    Path_EASIN_Raw, full.names = TRUE, pattern = ".RData")
+    Path_EASIN_Interim, full.names = TRUE, pattern = ".RData")
 
   NotProcessed <- setdiff(
     paste0(EASIN_Taxa$EASINID, ".RData"), basename(EASIN_Files))
@@ -504,7 +501,7 @@ EASIN_Data <- function(
   save(EASIN_NSp_PerPartner, file = Path_NSp_PerPartner)
 
   if (DeleteChunks) {
-    fs::dir_delete(Path_EASIN_Raw2)
+    fs::dir_delete(file.path(Path_EASIN_Interim, "FileParts"))
   }
 
   # # ..................................................................... ###

@@ -12,7 +12,7 @@ EASIN_Down(
   NSearch = 1000,
   Attempts = 10,
   SleepTime = 5,
-  Path_Raw = "datasets/interim/EASIN/Raw",
+  Path_Raw = "datasets/interim/EASIN",
   DeleteChunks = TRUE,
   ReturnData = FALSE
 )
@@ -40,7 +40,7 @@ chunk. Defaults to 10.}
 retrieval request to prevent overloading the server. Default is 5 second.}
 
 \item{Path_Raw}{character; the path where the raw data files and temporary
-parts will be stored. Default is \code{datasets/interim/EASIN/Raw}.}
+parts will be stored. Default is \code{datasets/interim/EASIN}.}
 
 \item{DeleteChunks}{logical, indicating whether to delete temporary files for
 data chunks from the \code{FileParts} subdirectory. Defaults to \code{TRUE}.}

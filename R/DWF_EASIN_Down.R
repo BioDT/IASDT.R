@@ -23,7 +23,7 @@
 #' @param SleepTime integer; the number of seconds to pause between each data
 #'   retrieval request to prevent overloading the server. Default is 5 second.
 #' @param Path_Raw character; the path where the raw data files and temporary
-#'   parts will be stored. Default is `datasets/interim/EASIN/Raw`.
+#'   parts will be stored. Default is `datasets/interim/EASIN`.
 #' @param DeleteChunks logical, indicating whether to delete temporary files for
 #'   data chunks from the `FileParts` subdirectory. Defaults to `TRUE`.
 #' @param ReturnData logical; if `TRUE`, the function will return the combined
@@ -43,7 +43,7 @@ EASIN_Down <- function(
     SpKey, Timeout = 200, Verbose = FALSE,
     BaseURL = "https://easin.jrc.ec.europa.eu/apixg/geoxg",
     NSearch = 1000, Attempts = 10, SleepTime = 5,
-    Path_Raw = "datasets/interim/EASIN/Raw",
+    Path_Raw = "datasets/interim/EASIN",
     DeleteChunks = TRUE, ReturnData = FALSE) {
 
   if (is.null(SpKey)) {

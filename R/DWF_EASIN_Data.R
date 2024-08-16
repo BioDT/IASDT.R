@@ -70,8 +70,8 @@ EASIN_Data <- function(
 
   Path_Grid <- TaxaInfoFile <- Name <- speciesKey <- EASINID <- taxon_name <-
     SpeciesId <- CellCode <- DataPartnerName <- Species_name <- Species_File <-
-    EASIN_Ref <- Year <- GeoJSON <- WKT <- Path_EASIN <- Path_EASIN_Interim <-
-    n <- x <- NULL
+    EASIN_Ref <- Year <- WKT <- Path_EASIN <- Path_EASIN_Interim <-
+    n <- x <- Path_Grid_Ref <- NULL
 
   # # |||||||||||||||||||||||||||||||||||
   # # Loading environment variables ----
@@ -82,6 +82,7 @@ EASIN_Data <- function(
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
       "Path_Grid", "DP_R_Grid", TRUE, FALSE,
+      "Path_Grid_Ref", "DP_R_Grid_Ref", TRUE, FALSE,
       "Path_EASIN", "DP_R_EASIN", FALSE, FALSE,
       "Path_EASIN_Interim", "DP_R_EASIN_Interim", FALSE, FALSE,
       "TaxaInfoFile", "DP_R_TaxaInfo_RData", FALSE, TRUE,
@@ -90,6 +91,7 @@ EASIN_Data <- function(
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
       "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE,
+      "Path_Grid_Ref", "DP_R_Grid_Ref_Local", TRUE, FALSE,
       "Path_EASIN", "DP_R_EASIN_Local", FALSE, FALSE,
       "Path_EASIN_Interim", "DP_R_EASIN_Interim_Local", FALSE, FALSE,
       "TaxaInfoFile", "DP_R_TaxaInfo_RData_Local", FALSE, TRUE,
@@ -128,7 +130,7 @@ EASIN_Data <- function(
   }
 
   ## Grid - sf ----
-  GridSf <- file.path(Path_Grid, "Grid_10_sf.RData")
+  GridSf <- file.path(Path_Grid_Ref, "Grid_10_sf.RData")
   if (!file.exists(GridSf)) {
     stop(paste0("Path for the reference grid does not exist: ", GridSf))
   }

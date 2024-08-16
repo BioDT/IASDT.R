@@ -51,7 +51,8 @@ to be provided by the user, otherwise the function will give an error.}
 with a default value of \code{.env}.}
 
 \item{initPar}{a named list of parameter values used for initialization of
-MCMC states. See \link[Hmsc:computePredictedValues]{Hmsc::computePredictedValues} for more information. Default: \code{NULL}.}
+MCMC states. See \link[Hmsc:computePredictedValues]{Hmsc::computePredictedValues} for more information.
+Default: \code{NULL}.}
 
 \item{JobName}{String specifying the name of the submitted job(s) for SLURM.
 Default: \code{CV_Models}.}

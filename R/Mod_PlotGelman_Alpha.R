@@ -37,8 +37,7 @@ PlotGelman_Alpha <- function(CodaObj, NCores, PlottingAlpha = 0.25) {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Var_LV <- Type <- Iter <- dplyr <- coda <- tibble <- Plot <-
-    magrittr <- data <- NULL
+  Var_LV <- Type <- Iter <- Plot <- data <- NULL
 
   c1 <- snow::makeSOCKcluster(NCores)
   on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
@@ -50,8 +49,8 @@ PlotGelman_Alpha <- function(CodaObj, NCores, PlottingAlpha = 0.25) {
     sort()
 
   invisible(snow::clusterEvalQ(
-    cl = c1, IASDT.R::LoadPackages(dplyr, coda, tibble, magrittr)))
-
+    cl = c1, 
+    IASDT.R::LoadPackages(List = c("dplyr", "coda", "tibble", "magrittr"))))
   snow::clusterExport(cl = c1, list = "CodaObj", envir = environment())
 
   Gelman_Alpha_Plot <- snow::parLapply(

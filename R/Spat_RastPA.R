@@ -20,7 +20,7 @@
 #' @author Ahmed El-Gabbas
 #' @export
 #' @examples
-#' IASDT.R::LoadPackages(dplyr, raster, ggplot2, tidyterra)
+#' IASDT.R::LoadPackages(List = c("dplyr", "raster", "ggplot2", "tidyterra"))
 #'
 #' r <- raster::raster(system.file("external/test.grd", package = "raster"))
 #'

@@ -31,7 +31,7 @@
 #' @export
 
 CatSep <- function(
-    Rep = 1, Extra1 = 0, Extra2 = 0, Char = "-",  CharReps = 50) {
+    Rep = 1L, Extra1 = 0L, Extra2 = 0L, Char = "-",  CharReps = 50L) {
 
   # Check input arguments
   AllArgs <- ls()

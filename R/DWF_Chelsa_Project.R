@@ -66,7 +66,7 @@ Chelsa_Project <- function(
   # Ensure that some packages are loaded
   # ||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::LoadPackages("dplyr", "raster", "terra") %>%
+  IASDT.R::LoadPackages(List = c("dplyr", "raster", "terra")) %>%
     suppressMessages() %>%
     suppressWarnings()
 

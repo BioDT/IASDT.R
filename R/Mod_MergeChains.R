@@ -69,7 +69,8 @@ Mod_MergeChains <- function(
 
   if (!dir.exists(Path_Model)) {
     stop(paste0(
-      "Path_Model directory (`", Path_Model, "`) does not exist"), call. = FALSE)
+      "Path_Model directory (`", Path_Model, "`) does not exist"),
+      call. = FALSE)
   }
 
   Path_ModInfo <- file.path(Path_Model, "Model_Info.RData")
@@ -132,114 +133,106 @@ Mod_MergeChains <- function(
 
   # Merge posteriors and save as Hmsc model / coda object
 
-  Model_Info2 <- Model_Info2 %>%
-    dplyr::mutate(
-      ModelPosts = furrr::future_pmap(
-        .l = list(
-          Post_Missing, Post_Path, M_Init_Path, M_samples,
-          M_thin, M_transient, M_Name_Fit, Post_Aligned),
-        .f = function(Post_Missing, Post_Path, M_Init_Path, M_samples,
-                      M_thin, M_transient, M_Name_Fit, Post_Aligned) {
+  invisible(snow::clusterEvalQ(
+    cl = c1, IASDT.R::LoadPackages(List = c("Hmsc", "coda"))))
+  snow::clusterExport(cl = c1, list = c("Model_Info2"), envir = environment())
 
-          if (Post_Missing) {
-            list(
-              Path_FittedMod = NA, Path_Coda = NA, Post_Aligned2 = NA) %>%
-              return()
-          }
+  Model_Info3 <- snow::parLapply(
+    cl = c1, x = seq_len(nrow(Model_Info2)),
+    fun = function(x) {
 
-          # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-          # Merge fitted models
-          # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+      M_Name_Fit <- Model_Info2$M_Name_Fit[[x]]
+      if (Model_Info2$Post_Missing[[x]]) {
+        return(list(Path_FittedMod = NA, Path_Coda = NA, Post_Aligned2 = NA))
+      }
 
-          Path_FittedMod <- file.path(
-            Path_Fitted_Models, paste0(M_Name_Fit, "_Model.RData"))
-          ModFitMissing <- !file.exists(Path_FittedMod)
+      # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+      # Merge fitted models
+      # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-          if (ModFitMissing) {
+      Path_FittedMod <- file.path(
+        Path_Fitted_Models, paste0(M_Name_Fit, "_Model.RData"))
 
-            # Get posteriors
-            Posts <- purrr::map(
-              as.character(Post_Path), IASDT.R::GetPosts, FromJSON = FromJSON)
+      if (!file.exists(Path_FittedMod)) {
+        # Get posteriors
+        Posts <- purrr::map(
+          .x = as.character(Model_Info2$Post_Path[[x]]),
+          .f = IASDT.R::GetPosts, FromJSON = FromJSON)
 
-            # Convert to Hmsc object - Try with `alignPost = TRUE`
-            Model_Fit <- Hmsc::importPosteriorFromHPC(
-              m = IASDT.R::LoadAs(M_Init_Path), postList = Posts,
-              nSamples = M_samples, thin = M_thin, transient = M_transient,
-              alignPost = TRUE) %>%
-              try(silent = TRUE)
+        # Convert to Hmsc object - Try with `alignPost = TRUE`
+        Model_Fit <- Hmsc::importPosteriorFromHPC(
+          m = IASDT.R::LoadAs(Model_Info2$M_Init_Path[[x]]),
+          postList = Posts, nSamples = Model_Info2$M_samples[[x]],
+          thin = Model_Info2$M_thin[[x]],
+          transient = Model_Info2$M_transient[[x]],
+          alignPost = TRUE) %>%
+          try(silent = TRUE)
 
-            # Convert to Hmsc object - If failed, use `alignPost = FALSE`
-            if (inherits(Model_Fit, "try-error")) {
-              Model_Fit <- try(
-                Hmsc::importPosteriorFromHPC(
-                  m = IASDT.R::LoadAs(M_Init_Path), postList = Posts,
-                  nSamples = M_samples, thin = M_thin,
-                  transient = M_transient, alignPost = FALSE))
-              Post_Aligned2 <- FALSE
-            } else {
-              Post_Aligned2 <- TRUE
-            }
+        # Convert to Hmsc object - If failed, use `alignPost = FALSE`
+        if (inherits(Model_Fit, "try-error")) {
+          Model_Fit <- try(
+            Hmsc::importPosteriorFromHPC(
+              m = IASDT.R::LoadAs(Model_Info2$M_Init_Path[[x]]),
+              postList = Posts,
+              nSamples = Model_Info2$M_samples[[x]],
+              thin = Model_Info2$M_thin[[x]],
+              transient = Model_Info2$M_transient[[x]], alignPost = FALSE),
+            silent = TRUE)
+          Post_Aligned2 <- FALSE
+        } else {
+          Post_Aligned2 <- TRUE
+        }
+        rm(Posts)
+        if (inherits(Model_Fit, "try-error")) {
+          return(list(Path_FittedMod = NA, Path_Coda = NA, Post_Aligned2 = NA))
+        } else {
+          IASDT.R::SaveAs(
+            InObj = Model_Fit, OutObj = paste0(M_Name_Fit, "_Model"),
+            OutPath = Path_FittedMod)
+        }
+      } else {
+        Post_Aligned2 <- Model_Info2$Post_Aligned[[x]]
+      }
 
-            rm(Posts)
+      # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+      # Convert to Coda object
+      # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-            if (inherits(Model_Fit, "try-error")) {
-              paste0("Model ", M_Name_Fit, " failed to be merged!") %>%
-                IASDT.R::CatTime()
-            } else {
-              IASDT.R::SaveAs(
-                InObj = Model_Fit, OutObj = paste0(M_Name_Fit, "_Model"),
-                OutPath = Path_FittedMod)
-            }
-          } else {
-            Post_Aligned2 <- Post_Aligned
-          }
+      Path_Coda <- file.path(Path_Coda, paste0(M_Name_Fit, "_Coda.RData"))
+      CodaMissing <- !file.exists(Path_Coda)
 
-          # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-          # Convert to Coda object
-          # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+      if (!exists("Model_Fit") && !file.exists(Path_FittedMod)) {
+        return(list(Path_FittedMod = NA, Path_Coda = NA, Post_Aligned2 = NA))
+      }
+      if (!exists("Model_Fit")) {
+        Model_Fit <- IASDT.R::LoadAs(Path_FittedMod)
+      }
 
-          Path_Coda <- file.path(Path_Coda, paste0(M_Name_Fit, "_Coda.RData"))
-          CodaMissing <- !file.exists(Path_Coda)
+      if (CodaMissing) {
+        Mod_Coda <- Hmsc::convertToCodaObject(
+          Model_Fit, spNamesNumbers = c(TRUE, FALSE),
+          covNamesNumbers = c(TRUE, FALSE))
+        IASDT.R::SaveAs(
+          InObj = Mod_Coda, OutObj = paste0(M_Name_Fit, "_Coda"),
+          OutPath = Path_Coda)
+      }
 
-          if (!ModFitMissing) {
-            Model_Fit <- IASDT.R::LoadAs(Path_FittedMod)
-          }
+      rm(Mod_Coda, Model_Fit)
 
-          if (CodaMissing) {
-            if (inherits(Model_Fit, "try-error")) {
-              IASDT.R::CatTime("  >>>  No Coda object was exported")
-            } else {
-              Mod_Coda <- Hmsc::convertToCodaObject(
-                Model_Fit, spNamesNumbers = c(TRUE, FALSE),
-                covNamesNumbers = c(TRUE, FALSE))
-
-              IASDT.R::SaveAs(
-                InObj = Mod_Coda, OutObj = paste0(M_Name_Fit, "_Coda"),
-                OutPath = Path_Coda)
-
-              rm(Mod_Coda)
-            }
-            rm(Model_Fit)
-          }
-
-
-          # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-          # Return list of objects
-          # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-          list(
-            Path_FittedMod = Path_FittedMod, Path_Coda = Path_Coda,
-            Post_Aligned2 = Post_Aligned2) %>%
-            return()
-
-        },
-        .progress = FALSE,
-        .options = furrr::furrr_options(seed = TRUE, scheduling = Inf)))
+      # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+      # Return list of objects
+      # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+      list(
+        Path_FittedMod = Path_FittedMod, Path_Coda = Path_Coda,
+        Post_Aligned2 = Post_Aligned2) %>%
+        return()
+    })
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  Model_Info2 <- tidyr::unnest_wider(data = Model_Info2, "ModelPosts") %>%
+  Model_Info2 <- dplyr::mutate(Model_Info2, ModelPosts = Model_Info3) %>%
+    tidyr::unnest_wider("ModelPosts") %>%
     dplyr::mutate(Post_Aligned = dplyr::coalesce(Post_Aligned2)) %>%
     dplyr::select(-Post_Aligned2) %>%
     dplyr::mutate(

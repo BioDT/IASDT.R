@@ -34,7 +34,7 @@ RespCurv_PrepData <- function(
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   ResCurvDT <- Variable <- RC_DT_Name <- SampleID <- Species <-
     SR <- MM <- PlotData <- NFV <- Coords <- RC_DT_Path_Orig <-
-    RC_DT_Path_Prob <- RC_DT_Path_SR <- dplyr <- purrr <- tidyr <- NULL
+    RC_DT_Path_Prob <- RC_DT_Path_SR <- NULL
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Check input arguments ------
@@ -330,7 +330,7 @@ RespCurv_PrepData <- function(
     on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
     future::plan(future::cluster, workers = c1, gc = TRUE)
     invisible(snow::clusterEvalQ(
-      cl = c1, IASDT.R::LoadPackages(dplyr, purrr, tidyr)))
+      cl = c1, IASDT.R::LoadPackages(List = c("dplyr", "purrr", "tidyr"))))
     snow::clusterExport(
       cl = c1, list = c("ResCurvDT", "Model"), envir = environment())
 

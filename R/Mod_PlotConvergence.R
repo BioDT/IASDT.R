@@ -49,9 +49,9 @@ PlotConvergence <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   SpComb <- `2.5%` <- `97.5%` <- Class <- Order <- Family <- Plot <- DT <-
-    IAS_ID <- Species <- Variable <- coda <- data <- dplyr <- PlotID <-
-    ggExtra <- ggplot2 <- ggtext <- Var <- PlotFixedY <- Path_Scratch <-
-    File <- Page <- Iter <- Value <- Chain <- y <- label <- Var_Sp <- NULL
+    IAS_ID <- Species <- Variable <- data <- PlotID <- Var <- PlotFixedY <- 
+    Path_Scratch <- File <- Page <- Iter <- Value <- Chain <- y <- label <- 
+    Var_Sp <- NULL
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Check input arguments ------
@@ -200,7 +200,9 @@ PlotConvergence <- function(
     on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
     future::plan(future::cluster, workers = c1, gc = TRUE)
     invisible(snow::clusterEvalQ(
-      cl = c1, IASDT.R::LoadPackages(dplyr, coda, ggplot2, ggExtra, ggtext)))
+      cl = c1, 
+      IASDT.R::LoadPackages(
+        List = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext"))))
     snow::clusterExport(
       cl = c1, list = c("NOmega", "CI", "SelectedCombs", "OmegaDF", "Cols"),
       envir = environment())
@@ -394,7 +396,8 @@ PlotConvergence <- function(
     IASDT.R::CatTime("  >> >> Export objects to cores")
     invisible(snow::clusterEvalQ(
       cl = c1,
-      IASDT.R::LoadPackages(dplyr, coda, ggplot2, ggExtra, ggtext)))
+      IASDT.R::LoadPackages(
+        List = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext"))))
     snow::clusterExport(
       cl = c1,
       list = c("PlotObj_Beta", "Cols", "VarRanges", "EnvFile", "FromHPC"),
@@ -526,7 +529,8 @@ PlotConvergence <- function(
   c1 <- snow::makeSOCKcluster(NCores)
   future::plan(future::cluster, workers = c1, gc = TRUE)
   invisible(snow::clusterEvalQ(
-    cl = c1, IASDT.R::LoadPackages(dplyr, coda, ggplot2, ggExtra, ggtext)))
+    cl = c1, IASDT.R::LoadPackages(
+      List = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext"))))
   snow::clusterExport(
     cl = c1,
     list = c("BetaTracePlots_ByVar", "Path_Convergence", "NRC", "Cols"),
@@ -634,7 +638,8 @@ PlotConvergence <- function(
   future::plan(future::cluster, workers = c1, gc = TRUE)
 
   invisible(snow::clusterEvalQ(
-    cl = c1, IASDT.R::LoadPackages(dplyr, coda, ggplot2, ggExtra, ggtext)))
+    cl = c1, IASDT.R::LoadPackages(
+      List = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext"))))
   snow::clusterExport(
     cl = c1, list = c("BetaTracePlots_BySp", "Path_Convergence_BySp"),
     envir = environment())

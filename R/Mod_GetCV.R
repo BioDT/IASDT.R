@@ -296,8 +296,6 @@ GetCV <- function(
   # # |||||||||||||||||||||||||||||||||||
   # # Add cross-validation columns to the data -----
   # # |||||||||||||||||||||||||||||||||||
-  IASDT.R::CatTime("   >>>   Add cross-validation columns to the data")
-
   if (is.null(CV_SAC)) {
     DT$CV_SAC <- NA_integer_
   } else {

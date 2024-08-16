@@ -22,7 +22,7 @@
 #'   packages to be installed and loaded.
 #' @seealso GridCross
 #' @examples
-#' IASDT.R::LoadPackages(dplyr, sf, raster, ggplot2)
+#' IASDT.R::LoadPackages(List = c("dplyr", "sf", "raster", "ggplot2"))
 #'
 #' Grid <- raster::raster(nrows = 10, ncols = 10, xmn = 0, xmx = 10,
 #'                        ymn = 0, ymx = 10, crs = 4326) %>%

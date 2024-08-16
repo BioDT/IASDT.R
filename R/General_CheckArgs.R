@@ -25,7 +25,8 @@ CheckArgs <- function(AllArgs, Args, Type) {
     stop("AllArgs, Args, or Type cannot be NULL")
   }
 
-  Type <- match.arg(arg = Type, choices = c("character", "logical", "numeric"))
+  Type <- match.arg(
+    arg = Type, choices = c("character", "logical", "numeric"))
 
   if (Type == "character") {
     MissingArgs <- AllArgs[Args] %>%
@@ -59,16 +60,18 @@ CheckArgs <- function(AllArgs, Args, Type) {
 
   if (Type == "numeric") {
     MissingArgs <- AllArgs[Args] %>%
-      purrr::map(~inherits(.x, "numeric")) %>%
+      purrr::map(~(inherits(.x, "numeric") || inherits(.x, "integer"))) %>%
       purrr::keep(.p = Negate(isTRUE)) %>%
       names() %>%
       sort()
 
     if (length(MissingArgs) > 0) {
       paste0(
-        "The following argument(s) must be numeric (integer)\n  >>  ",
+        "The following argument(s) must be numeric or integer\n  >>  ",
         paste0(MissingArgs, collapse = " | ")) %>%
         stop(call. = FALSE)
     }
   }
+
+  return(invisible(NULL))
 }

@@ -33,7 +33,7 @@ PlotConvergence_All <- function(
   GPP_Thin <- Path_Coda <- Path_FittedMod <- M_Name_Fit <- Tree <- rL <-
     M_thin <- M_samples <- Omega_Gelman <- Omega_ESS <- Beta_Gelman <-
     Beta_ESS <- ESS2 <- Path_Trace_Rho <- Rho <- Path_Trace_Alpha <-
-    Path_Trace_Rho <- dplyr <- sf <- Hmsc <- coda <- magrittr <- NULL
+    Path_Trace_Rho <- NULL
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Check input arguments
@@ -71,8 +71,7 @@ PlotConvergence_All <- function(
   Model_Info <- IASDT.R::LoadAs(Model_Info)
 
   # Extract number of chains
-  NChains <- Model_Info$Path_FittedMod[[1]] %>%
-    IASDT.R::LoadAs() %>%
+  NChains <- IASDT.R::LoadAs(Model_Info$Path_FittedMod[[1]]) %>%
     magrittr::extract2("postList") %>%
     length()
 
@@ -203,7 +202,8 @@ PlotConvergence_All <- function(
   }
 
   invisible(snow::clusterEvalQ(
-    cl = c1, IASDT.R::LoadPackages(dplyr, sf, Hmsc, coda, magrittr)))
+    cl = c1, 
+    IASDT.R::LoadPackages(List = c("dplyr", "sf", "Hmsc", "coda", "magrittr"))))
   snow::clusterExport(
     cl = c1, envir = environment(),
     list = c("Model_Info", "Path_ConvDT", "maxOmega"))
@@ -213,7 +213,11 @@ PlotConvergence_All <- function(
       Plots = snow::parLapply(
         cl = c1, x = seq_len(nrow(Model_Info)), fun = PrepConvergence)) %>%
     dplyr::select(tidyselect::all_of(c("M_Name_Fit", "Plots"))) %>%
-    tidyr::unnest_wider("Plots")
+    tidyr::unnest_wider("Plots") %>% 
+    # arrange data alphanumerically by model name
+    dplyr::arrange(gtools::mixedorder(M_Name_Fit)) %>%
+    # discard non existed data
+    dplyr::filter(!is.na(Path_Trace_Alpha))
 
   save(
     Convergence_DT,

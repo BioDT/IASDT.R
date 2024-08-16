@@ -4,7 +4,7 @@
 \alias{CatSep}
 \title{Print separator(s) to the console}
 \usage{
-CatSep(Rep = 1, Extra1 = 0, Extra2 = 0, Char = "-", CharReps = 50)
+CatSep(Rep = 1L, Extra1 = 0L, Extra2 = 0L, Char = "-", CharReps = 50L)
 }
 \arguments{
 \item{Rep}{integer; the number of separator lines to print. Default is \code{1}.}

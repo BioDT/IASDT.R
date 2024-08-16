@@ -34,7 +34,7 @@ CatDiff <- function(
   }
 
   if (CatInfo) {
-    IASDT.R::InfoChunk(Message = ChunkText)
+    IASDT.R::InfoChunk(Message = ChunkText, Extra1 = 1, Extra2 = 1)
     Prefix <- paste0("\n", Prefix)
   }
 
@@ -42,7 +42,7 @@ CatDiff <- function(
     lubridate::time_length(unit = "min") %>%
     round(2) %>%
     paste0(Prefix, ., " minutes") %>%
-    IASDT.R::CatTime(... = "\n")
+    IASDT.R::CatTime()
 
   return(invisible(NULL))
 }

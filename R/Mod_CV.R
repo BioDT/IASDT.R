@@ -28,7 +28,8 @@
 #' @param EnvFile String specifying the path to read environment variables from,
 #'   with a default value of `.env`.
 #' @param initPar a named list of parameter values used for initialization of
-#'   MCMC states. See [Hmsc::computePredictedValues] for more information. Default: `NULL`.
+#'   MCMC states. See [Hmsc::computePredictedValues] for more information. 
+#'   Default: `NULL`.
 #' @param PrepSLURM Logical indicating whether to prepare SLURM command files.
 #'   If `TRUE` (default), the SLURM commands will be saved to disk using the
 #'   [IASDT.R::Mod_SLURM] function.
@@ -73,28 +74,6 @@
 #' @author Ahmed El-Gabbas
 #' @export
 #' @name Mod_CV
-
-
-
-# require(IASDT.R)
-# require(dplyr)
-# Model = "IASDT_Model_Test/SW_1_Forests/Model_Fitted/GPP60_Tree_samp3000_th5_Model.RData"
-# CVName = c("CV_SAC", "CV_Dist", "CV_Median")
-# partition = NULL
-# Path_CV = NULL
-# EnvFile = ".env"
-# initPar = NULL
-# JobName = "CV_Models"
-# updater = list(Gamma2 = FALSE, GammaEta = FALSE)
-# alignPost = TRUE
-# ToJSON = FALSE
-# FromHPC = FALSE
-# PrepSLURM = TRUE
-# MemPerCpu = "100G"
-# Time = "04:00:00"
-# Path_Hmsc = "/pfs/lustrep4/scratch/project_465000915/IASDT_Model_Test/Hmsc_No_JSON"
-# CheckPyPath = TRUE
-
 
 Mod_CV <- function(
     Model = NULL, CVName = c("CV_SAC", "CV_Dist", "CV_Median"),

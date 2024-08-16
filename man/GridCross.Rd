@@ -26,7 +26,7 @@ The function requires the \code{sf}, \code{dplyr}, \code{purrr}, \code{tibble}, 
 packages to be installed and loaded.
 }
 \examples{
-IASDT.R::LoadPackages(dplyr, sf, raster, ggplot2)
+IASDT.R::LoadPackages(List = c("dplyr", "sf", "raster", "ggplot2"))
 
 Grid <- raster::raster(
     nrows = 10, ncols = 10, xmn = 0, xmx = 10,

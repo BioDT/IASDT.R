@@ -81,7 +81,7 @@ PlotVarPar <- function(
   rm(AllArgs)
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # Loading species list
+  # Loading species list -----
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   fs::dir_create(Path_Plot)
@@ -114,7 +114,7 @@ PlotVarPar <- function(
 
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # Processing ModelEval and VarPar
+  # Processing ModelEval and VarPar -----
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   if (purrr::some(list(ModelEval, VarPar), is.null)) {
@@ -128,7 +128,7 @@ PlotVarPar <- function(
     }
 
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-    # Loading model
+    # Loading model ----
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
     if (!inherits(Model, "Hmsc")) {
@@ -151,7 +151,7 @@ PlotVarPar <- function(
     }
 
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-    # Calculate variance partitioning
+    # Calculate variance partitioning -----
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
     if (is.null(VarPar)) {
@@ -165,7 +165,7 @@ PlotVarPar <- function(
     }
 
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-    # Compute predicted Values
+    # Compute predicted Values -----
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
     if (is.null(ModelEval)) {
@@ -209,7 +209,7 @@ PlotVarPar <- function(
   }
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # Plot theme
+  ## Plot theme ----
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   Theme <- ggplot2::theme(
@@ -221,7 +221,7 @@ PlotVarPar <- function(
     legend.text = ggplot2::element_text(size = 28),
     legend.key.spacing.x = ggplot2::unit(0.7, "cm"))
 
-  # Add a common Legend for combined ggplots
+  # Add a common Legend for combined ggplot plots
   # Source: https://stackoverflow.com/a/13650878/3652584
   g_legend <- function(Plot) {
     tmp <- ggplot2::ggplot_gtable(ggplot2::ggplot_build(Plot))
@@ -231,7 +231,7 @@ PlotVarPar <- function(
   }
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # Relative variance partitioning
+  # Relative variance partitioning ----
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Plotting relative variance partitioning")
@@ -240,9 +240,7 @@ PlotVarPar <- function(
     tidyr::pivot_longer(
       cols = -variable, names_to = "Species", values_to = "value")
 
-  VarOrder <- dplyr::group_by(vp_df, variable) %>%
-    dplyr::summarise(value = mean(value)) %>%
-    dplyr::ungroup() %>%
+  VarOrder <- dplyr::summarise(vp_df, value = mean(value)) %>%
     dplyr::arrange(dplyr::desc(value)) %>%
     dplyr::pull(variable)
 
@@ -281,8 +279,7 @@ PlotVarPar <- function(
     Theme
 
 
-
-  # Use original species order
+  ## Use original species order -----
 
   SpOrder_Orig <- dplyr::left_join(vp_df, SpList, by = "Species") %>%
     dplyr::distinct(Species, Species_name) %>%
@@ -317,7 +314,7 @@ PlotVarPar <- function(
     Theme
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # Raw variance partitioning
+  # Raw variance partitioning ----
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Plotting raw variance partitioning")
@@ -372,7 +369,7 @@ PlotVarPar <- function(
     ggplot2::coord_cartesian(xlim = c(0, MaxVal), expand = FALSE) +
     Theme
 
-  # Use original species order
+  ## Use original species order -----
 
   Plot_R_DT_Orig <- dplyr::left_join(vp_df_R, SpList, by = "Species") %>%
     dplyr::arrange(variable, value) %>%
@@ -401,7 +398,7 @@ PlotVarPar <- function(
     Theme
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # Combine plots
+  # Combine plots -----
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Combine plots")
@@ -427,7 +424,7 @@ PlotVarPar <- function(
   }
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # Save plot to disk
+  # Save plot to disk -----
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Save plot to disk")

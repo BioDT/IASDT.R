@@ -45,8 +45,7 @@ PlotGelman_Beta <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Iter <- Type <- Var_Sp <- dplyr <- coda <- tibble <- magrittr <-
-    ShrinkFactor <- group <- NULL
+  Iter <- Type <- Var_Sp <- ShrinkFactor <- group <- NULL
 
   c1 <- snow::makeSOCKcluster(NCores)
   on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
@@ -66,7 +65,8 @@ PlotGelman_Beta <- function(
     sort()
 
   invisible(snow::clusterEvalQ(
-    cl = c1, IASDT.R::LoadPackages(dplyr, coda, tibble, magrittr)))
+    cl = c1, IASDT.R::LoadPackages(
+      List = c("dplyr", "coda", "tibble", "magrittr"))))
   snow::clusterExport(cl = c1, list = "CodaObj", envir = environment())
 
   Gelman_Beta_Vals <- snow::parLapply(

@@ -27,7 +27,7 @@ allows for the conversion of NA values to 0, and/or 0 values to NA, based on
 the user's choice.
 }
 \examples{
-IASDT.R::LoadPackages(dplyr, raster, ggplot2, tidyterra)
+IASDT.R::LoadPackages(List = c("dplyr", "raster", "ggplot2", "tidyterra"))
 
 r <- raster::raster(system.file("external/test.grd", package = "raster"))
 

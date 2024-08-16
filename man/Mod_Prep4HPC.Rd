@@ -6,39 +6,37 @@
 \usage{
 Mod_Prep4HPC(
   Hab_Abb = NULL,
-  Path_Data = NULL,
   Path_Model = NULL,
-  MinPresGrids = 50,
+  MinEffortsSp = 100L,
+  PresPerVar = 10L,
   EnvFile = ".env",
-  PrepareData = TRUE,
   GPP_Dists = NULL,
   GPP_Save = TRUE,
   GPP_Plot = TRUE,
-  rLMinLF = NULL,
-  rLMaxLF = NULL,
+  MinLF = NULL,
+  MaxLF = NULL,
   BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
-  EffortsAsPredictor = TRUE,
+  EffortsAsPredictor = FALSE,
   RoadRailAsPredictor = TRUE,
   HabAsPredictor = TRUE,
-  NspPerGrid = 1,
-  NFolds = 4,
-  NGrids = 20,
-  NR = 2,
-  NC = 2,
+  NspPerGrid = 1L,
+  NFolds = 4L,
+  NGrids = 20L,
+  NR = 2L,
+  NC = 2L,
   PlotCV = TRUE,
   PhyloTree = TRUE,
   NoPhyloTree = TRUE,
   OverwriteInitMod = TRUE,
-  NParallel = 8,
-  nChains = 4,
+  NParallel = 8L,
+  nChains = 4L,
   thin = NULL,
   samples = NULL,
-  transientFactor = 300,
-  verbose = 200,
+  transientFactor = 300L,
+  verbose = 200L,
   SkipFitted = TRUE,
-  MaxJobCounts = 210,
+  MaxJobCounts = 210L,
   ModelCountry = NULL,
-  MinPresPerCountry = 50,
   VerboseProgress = FALSE,
   FromHPC = TRUE,
   PrepSLURM = TRUE,
@@ -52,25 +50,27 @@ Mod_Prep4HPC(
 }
 \arguments{
 \item{Hab_Abb}{Character. Habitat abbreviation indicating the specific
-\code{SynHab} habitat type to prepare data for. Valid values include "0", "1",
-"2", "3", "4a", "4b", "10", "12a", "12b". If \code{Hab_Abb} = "0", data is
-prepared irrespective of the habitat type.}
-
-\item{Path_Data}{String specifying the path where modeling data is read from.
-Only effective if \code{PrepareData} = \code{FALSE}; see below.}
+\href{https://www.preslia.cz/article/pdf?id=11548}{SynHab} habitat type to
+prepare data for. Valid values are \code{0}, \code{1}, \code{2}, \code{3}, \verb{4a}, \verb{4b}, \code{10},
+\verb{12a}, \verb{12b}. If \code{Hab_Abb} = \code{0}, data is prepared irrespective of the
+habitat type. For more details, see \href{https://doi.org/10.23855/preslia.2022.447}{Pysek et al.}.}
 
 \item{Path_Model}{String (without trailing slash) specifying the path where
 all output, including models to be fitted, will be saved.}
 
-\item{MinPresGrids}{Integer. Indicating the minimum number of presence grid
-cells per species for a species to be used in the model. Default: 50.}
+\item{MinEffortsSp}{Minimum number of vascular plant species per grid cell in
+GBIF database for a grid cell to be included in the models. This to exclude
+grid cells with very little sampling efforts. Defaults to \code{100}.}
 
-\item{EnvFile}{String specifying the path to read environment variables from,
-with a default value of \code{.env}.}
+\item{PresPerVar}{Integer. Number of presence grid cells per predictor
+required for a species to be included in the analysis. The number of
+presence grid cells per species is calculated as the product of this factor
+and the number of variables used in the models \code{NVars} and is calculated
+after discarding grid cells with low sampling efforts (\code{MinEffortsSp}).
+Defaults to \code{10}.}
 
-\item{PrepareData}{Logical indicating whether to prepare input data or load
-it from disk. Defaults to \code{TRUE} which means the input data will be
-prepared using the \link{Mod_PrepData} function.}
+\item{EnvFile}{Character. Path to the environment file containing paths to
+data sources. Defaults to \code{.env}.}
 
 \item{GPP_Dists}{Integer specifying the distance in kilometers for both the
 distance between knots and the minimum distance of a knot to the nearest
@@ -84,24 +84,27 @@ function. The same value will be used for the \code{knotDist} and
 \item{GPP_Plot}{Logical indicating whether to plot the coordinates of the
 sampling units and the knots in a pdf file. Default: \code{TRUE}.}
 
-\item{rLMinLF, rLMaxLF}{Integer. Minimum and maximum number of latent factors
-used for the spatial random effect. See \link{PrepKnots} and \link[Hmsc:setPriors]{Hmsc::setPriors}
-for more details.}
+\item{MinLF, MaxLF}{integer. Minimum and maximum number of latent factors to
+be used. Both default to \code{NULL} which means that the number of latent
+factors will be estimated from the data. If either is provided, the
+respective values will be used as arguments to \link[Hmsc:setPriors]{Hmsc::setPriors}.}
 
-\item{BioVars}{Vector of strings specifying bioclimatic variables to be used
-in the model. Default value: \code{NULL}, which means to use the following
-variables: \code{bio4}, \code{bio6}, \code{bio8}, \code{bio12}, \code{bio15}, and \code{bio18}.}
+\item{BioVars}{Character vector. Specifies the bioclimatic variables to be
+included from the CHELSA dataset. Defaults to a selection of variables:
+\code{bio4}, \code{bio6}, \code{bio8}, \code{bio12}, \code{bio15}, and \code{bio18}.}
 
-\item{EffortsAsPredictor}{Logical indicating whether to include the (log10)
-sampling efforts as predictor to the model. Default: \code{TRUE}.}
+\item{EffortsAsPredictor}{Logical indicating whether to include the
+(log\if{html}{\out{<sub>}}10\if{html}{\out{</sub>}}) sampling efforts as predictor to the model. Default:
+\code{FALSE}.}
 
-\item{RoadRailAsPredictor}{Logical indicating whether to include the (log10)
-sum of road and railway intensity as predictor to the model. Default:
-\code{TRUE}.}
+\item{RoadRailAsPredictor}{Logical indicating whether to include the
+(log\if{html}{\out{<sub>}}10\if{html}{\out{</sub>}}) sum of road and railway intensity as predictor to the
+model. Default: \code{TRUE}.}
 
-\item{HabAsPredictor}{Logical indicating whether to include the (log10)
-percentage coverage of respective habitat type per grid cell as predictor
-to the model. Default: \code{TRUE}. Only valid if \code{Hab_Abb} not equals to "0".}
+\item{HabAsPredictor}{Logical indicating whether to include the
+(log\if{html}{\out{<sub>}}10\if{html}{\out{</sub>}}) percentage coverage of respective habitat type per grid
+cell as predictor to the model. Default: \code{TRUE}. Only valid if \code{Hab_Abb}
+not equals to "0".}
 
 \item{NspPerGrid}{Integer. Indicating the minimum number of species per grid
 cell for a grid cell to be include in the analysis. Default to 1 resulting
@@ -109,16 +112,17 @@ in the exclusion of any grid cell with no species presence. This parameter
 can be set to \code{NULL} to include all grid cells irrespective of the number
 of species.}
 
-\item{NFolds}{Number of cross-validation folds. Default: 4. See
-\link{GetCV} for more details.}
+\item{NFolds}{Number of cross-validation folds. Default: 4.}
 
-\item{NGrids}{For \code{CV_Dist} cross-validation strategy, how many grid cells in
-both directions to be used in cross-validation. See \link{GetCV} for
-more details.}
+\item{NGrids}{For \code{CV_Dist} cross-validation strategy (see below), this
+argument determines the size of the blocks (how many grid cells in both
+directions).}
 
-\item{NR, NC}{Integer, the number of rows and columns to divide the spatial
-area into. Defaults to 2 row and 2 columns. See \link{GetCV} for more
-details.}
+\item{NR, NC}{Integer, the number of rows and columns used in the \code{CV_Large}
+cross-validation strategy (see below), in which the study area is divided
+into large blocks given the provided \code{NR} and \code{NC} values. Both default to
+2 which means to split the study area into four large blocks at the median
+latitude and longitude.}
 
 \item{PlotCV}{Logical. Indicating whether to plot the block cross-validation
 folds.}
@@ -165,12 +169,8 @@ for more details.}
 countries to filter observations by. Default: \code{NULL}, which means prepare
 data for the whole Europe.}
 
-\item{MinPresPerCountry}{Integer specifying the minimum number of grid cells
-for the selected country/countries for species to be considered in the
-models. Effective only if a valid \code{ModelCountry} is provided. Default: 50.}
-
-\item{VerboseProgress}{Logical indicating whether to show messages for the
-progress of creating files. Default: \code{FALSE}.}
+\item{VerboseProgress}{Logical. Indicates whether progress messages should be
+displayed. Defaults to \code{FALSE}.}
 
 \item{FromHPC}{Logical indicating whether the work is being done from HPC, to
 adjust file paths accordingly. Default: \code{TRUE}.}
@@ -207,20 +207,20 @@ models for HPC and does not return any value.
 \description{
 This function prepares initial models in R for model fitting by Hmsc-HPC. It
 involves data preparation, define spatial block cross-validation folds, model
-initialization, and generating commands for running models on HPC. It
-supports parallel processing, options to include/not include phylogenetic
-tree data. The models are fitted with Gaussian Predictive Process (GPP; see
-\href{https://doi.org/10.1002/ecy.2929}{Tikhonov et al.}) for more details) using
-the \href{https://doi.org/10.1101/2024.02.13.580046}{Hmsc-HPC} extension.
+initialization, GPP knots, and generating commands for running models on HPC.
+It supports parallel processing, options to include/not include phylogenetic
+tree data. The models will be fitted using Gaussian Predictive Process (GPP;
+see \href{https://doi.org/10.1002/ecy.2929}{Tikhonov et al.}) for more details)
+via the \href{https://doi.org/10.1101/2024.02.13.580046}{Hmsc-HPC} extension.
 }
 \details{
 The function provides options for:
 \itemize{
-\item for which habitat types the models will be fitted.
+\item for which habitat types the models will be fitted
+\item excluding grid cells with very low sampling efforts (\code{MinEffortsSp})
 \item selection of species based on minimum number of presence-grid cells
-(\code{MinPresGrids})
-\item optionally model fitting on specified list of countries: (\code{ModelCountry}
-and \code{MinPresPerCountry})
+(\code{PresPerVar} * number of predictors)
+\item optionally model fitting on specified list of countries: (\code{ModelCountry})
 \item whether to exclude grid cells with few species (\code{NspPerGrid})
 \item number of cross-validation folds
 \item options for whether or not to include phylogenetic information to the model

@@ -21,17 +21,17 @@
 
 FileType <- function(Path) {
   if (is.null(Path)) {
-    stop("Path cannot be NULL")
+    stop("Path cannot be NULL", .call = FALSE)
   }
 
   # Ensure Path is a character string
   if (!is.character(Path)) {
-    stop("Path must be a character string")
+    stop("Path must be a character string", .call = FALSE)
   }
 
   # Ensure file exists
   if (!file.exists(Path)) {
-    stop("File does not exist")
+    stop("File does not exist", .call = FALSE)
   }
 
   system(paste0("file ", shQuote(Path)), intern = TRUE) %>%

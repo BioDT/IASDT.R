@@ -32,7 +32,7 @@ RespCurv_PlotSp <- function(
     ShowProgress = FALSE, FromHPC = TRUE, ReturnData = FALSE) {
 
   if (is.null(Path_Model)) {
-    stop("Path_Model cannot be NULL")
+    stop("Path_Model cannot be NULL", .call = FALSE)
   }
 
   # Avoid "no visible binding for global variable" message

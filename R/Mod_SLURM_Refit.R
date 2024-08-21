@@ -51,7 +51,8 @@ Mod_SLURM_Refit <- function(
 
   if (is.null(Path_Model) || is.null(MemPerCpu) || is.null(Time) ||
       is.null(Path_Hmsc)) {
-    stop("Path_Model, MemPerCpu, Time and Path_Hmsc cannot be empty")
+    stop("Path_Model, MemPerCpu, Time and Path_Hmsc cannot be empty", 
+    .call = FALSE)
   }
 
   # Avoid "no visible binding for global variable" message
@@ -60,7 +61,8 @@ Mod_SLURM_Refit <- function(
 
   if (!file.exists(EnvFile)) {
     stop(paste0(
-      "Path for environment variables: ", EnvFile, " was not found"))
+      "Path for environment variables: ", EnvFile, " was not found"), 
+      .call = FALSE)
   }
 
   if (is.null(JobName)) {
@@ -69,9 +71,7 @@ Mod_SLURM_Refit <- function(
 
   # checking arguments
   AllArgs <- ls()
-  AllArgs <- purrr::map(
-    .x = AllArgs,
-    .f = ~get(.x, envir = parent.env(env = environment()))) %>%
+  AllArgs <- purrr::map(.x = AllArgs, .f = ~get(.x, envir = environment())) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
@@ -157,7 +157,7 @@ Mod_SLURM_Refit <- function(
 
     IASDT.R::CatTime(
       paste0(NJobs, " model variants (in ", NSplits,
-             " slurm files) need to be re-fitted"))
+             " SLURM files) need to be re-fitted"))
   } else {
     IASDT.R::CatTime("All models were already fitted!")
   }

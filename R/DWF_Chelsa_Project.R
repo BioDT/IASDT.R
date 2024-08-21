@@ -39,15 +39,17 @@ Chelsa_Project <- function(
     CompressLevel = 5) {
 
   if (is.null(InputFile) || is.null(OutFile) || is.null(GridFile)) {
-    stop("InputFile, OutFile, and GridFile cannot be NULL")
+    stop("InputFile, OutFile, and GridFile cannot be NULL", .call = FALSE)
   }
 
   if (!(dirname(fs::dir_exists(InputFile)))) {
-    stop("InputFile path does not exist")
+    stop("InputFile path does not exist", .call = FALSE)
   }
 
   # Ensure that the reference grid is not null
-  if (is.null(GridFile)) stop("GridFile can not be empty")
+  if (is.null(GridFile)) {
+    stop("GridFile can not be empty", .call = FALSE)
+  }
 
   # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use official
   # parameters (overriding the ones from GeoTIFF keys)
@@ -93,7 +95,7 @@ Chelsa_Project <- function(
   if (Remote) {
 
     if (is.null(OutFile)) {
-      stop("OutFile can not be empty if the input file is an URL")
+      stop("OutFile can not be empty if the input file is an URL", .call = FALSE)
     }
 
     # Folder to download the file

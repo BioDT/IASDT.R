@@ -39,7 +39,7 @@
 AssignIfNotExist <- function(Variable, Value, Env = globalenv()) {
 
   if (is.null(Variable) || is.null(Value)) {
-    stop("Variable and Value cannot be NULL")
+    stop("Variable and Value cannot be NULL", .call = FALSE)
   }
 
   Variable <- as.character(rlang::ensyms(Variable))

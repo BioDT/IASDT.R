@@ -21,7 +21,7 @@
 DownBoundary <- function(Left = NULL, Right = NULL, Bottom = NULL, Top = NULL) {
 
   if (any(c(is.null(Left), is.null(Right), is.null(Bottom), is.null(Top)))) {
-    stop("none of Left, Right, Bottom, or Top can be NULL")
+    stop("none of Left, Right, Bottom, or Top can be NULL", .call = FALSE)
   }
 
   "POLYGON(({Left} {Bottom},{Right} {Bottom},{Right} {Top},{Left} {Top},{Left} {Bottom}))" %>%

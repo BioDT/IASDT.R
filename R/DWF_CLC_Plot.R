@@ -35,7 +35,7 @@ CLC_Plot <- function(
 
   if (is.null(CLC_Name) || is.null(EU_Map) || is.null(CrossWalk) ||
       is.null(Path_JPEG) || is.null(Path_JPEG_Free)) {
-    stop("CLC_Name, EU_Map, CrossWalk, Path_JPEG, and Path_JPEG_Free can not be empty")
+    stop("CLC_Name, EU_Map, CrossWalk, Path_JPEG, and Path_JPEG_Free can not be empty", .call = FALSE)
   }
 
   CLC_MapR <- dplyr::filter(CLC_Map, Name == CLC_Name) %>%
@@ -60,7 +60,7 @@ CLC_Plot <- function(
   FilePrefix <- stringr::str_remove_all(CLC_Name, "PercCov_|_Crop") %>%
     stringr::str_replace_all("CLC_L", "CLC")
 
-  IASDT.R::CatTime(paste0("\n >>>>> ", Prefix))
+  IASDT.R::CatTime(paste0("\n ", Prefix), Level = 1)
 
   # determine which layers will be plotted in each figure (4 columns * 2 rows)
   split_vector <- seq_len(terra::nlyr(CLC_MapR)) %>%
@@ -87,7 +87,7 @@ CLC_Plot <- function(
 
           CurrMap <- CLC_MapR[[YY]]
 
-          IASDT.R::CatTime(paste0("        >>>>> ", Labels$Label[[YY]]))
+          IASDT.R::CatTime(paste0(Labels$Label[[YY]]), Level = 2)
           MapTitle <- Labels$Label[[YY]] %>%
             # split long title text into multiple lines when necessary
             stringi::stri_wrap(55) %>%

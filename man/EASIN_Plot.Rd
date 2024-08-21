@@ -30,6 +30,10 @@ it loads required data files, checks for missing files, and proceeds to
 generate and save plots as JPEG files. The plots include the number of
 observations and species and their distribution per data partner.
 }
+\note{
+This function is not intended to be used directly by the user or in the
+IAS-pDT, but only called from the \link{EASIN_Processing} function.
+}
 \author{
 Ahmed El-Gabbas
 }

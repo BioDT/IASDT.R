@@ -22,7 +22,7 @@
 SourceSilent <- function(File, Messages = TRUE, Warnings = TRUE, ...) {
 
   if (is.null(File)) {
-    stop("File cannot be NULL")
+    stop("File cannot be NULL", .call = FALSE)
   }
 
   if (Messages && Warnings) {

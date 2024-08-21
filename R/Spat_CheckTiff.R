@@ -28,12 +28,12 @@ CheckTiff <- function(x = NULL) {
 
   # Check input argument
   if (is.null(x)) {
-    stop("Input file cannot be NULL")
+    stop("Input file cannot be NULL", .call = FALSE)
   }
 
   # Check if file exists
   if (!file.exists(x)) {
-    stop("Input file does not exist")
+    stop("Input file does not exist", .call = FALSE)
   }
 
   x %>%

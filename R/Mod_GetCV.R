@@ -70,11 +70,13 @@ GetCV <- function(
   Path_Grid <- EU_Bound <- NULL
 
   if (is.null(DT) || is.null(EnvFile) || is.null(OutPath) || is.null(XVars)) {
-    stop("DT, EnvFile, OutPath, and XVars can not be empty")
+    stop("DT, EnvFile, OutPath, and XVars can not be empty", .call = FALSE)
   }
 
   if (!file.exists(EnvFile)) {
-    stop(paste0("Path for environment variables: ", EnvFile, " was not found"))
+    stop(
+      paste0("Path for environment variables: ", EnvFile, " was not found"),
+      .call = FALSE)
   }
 
   AllVars <- c("x", "y", XVars)
@@ -110,7 +112,7 @@ GetCV <- function(
 
   Path_Grid <- file.path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(Path_Grid)) {
-    stop("Path for reference grid does not exist")
+    stop("Path for reference grid does not exist", .call = FALSE)
   }
   RefGrid <- terra::unwrap(IASDT.R::LoadAs(Path_Grid))
 
@@ -140,7 +142,7 @@ GetCV <- function(
   # # |||||||||||||||||||||||||||||||||||
   # # 1. CV using large blocks -----
   # # |||||||||||||||||||||||||||||||||||
-  IASDT.R::CatTime("   >>>   1. CV_Large")
+  IASDT.R::CatTime("1. CV_Large", Level = 1)
   CV_Large <- blockCV::cv_spatial(
     x = XY_sf, r = DT_R, hexagon = FALSE, iteration = 1000, k = NFolds,
     rows_cols = c(NR, NC), plot = FALSE, progress = FALSE, report = FALSE)
@@ -148,7 +150,7 @@ GetCV <- function(
   # # |||||||||||||||||||||||||||||||||||
   # # 2. CV based on number of grid cells -----
   # # |||||||||||||||||||||||||||||||||||
-  IASDT.R::CatTime("   >>>   2. CV_Dist")
+  IASDT.R::CatTime("2. CV_Dist", Level = 1)
   CV_Dist <- blockCV::cv_spatial(
     x = XY_sf, r = DT_R, hexagon = FALSE, iteration = 1000, k = NFolds,
     size = NGrids * raster::res(DT_R)[1], plot = FALSE, progress = FALSE,
@@ -157,10 +159,10 @@ GetCV <- function(
   # # |||||||||||||||||||||||||||||||||||
   # # 3. CV based on spatial autocorrelation in predictor raster files -----
   # # |||||||||||||||||||||||||||||||||||
-  IASDT.R::CatTime("   >>>   3. CV_SAC")
+  IASDT.R::CatTime("3. CV_SAC", Level = 1)
 
   # Measure spatial autocorrelation in predictor raster files
-  IASDT.R::CatTime("   >>>   >>>  Calculating median SAC range")
+  IASDT.R::CatTime("Calculating median SAC range", Level = 2)
   CV_SAC_Range <- blockCV::cv_spatial_autocor(
     r = DT_R, num_sample = min(10000, nrow(DT)), plot = FALSE,
     progress = FALSE)
@@ -180,8 +182,8 @@ GetCV <- function(
 
   if (CV_SAC_Range$range > MinDist) {
     IASDT.R::CatTime(
-      paste0("   >>>   >>>  CV_SAC was NOT implemented; median SAC: ",
-             round(CV_SAC_Range$range, 2), "m"))
+      paste0("`CV_SAC` was NOT implemented; median SAC: ",
+             round(CV_SAC_Range$range, 2), "m"), Level = 2)
     CV_SAC <- NULL
 
     # Check `folds_ids` exists in each of the cross-validation strategies
@@ -211,7 +213,7 @@ GetCV <- function(
   # # |||||||||||||||||||||||||||||||||||
   # # Save cross-validation results as RData -----
   # # |||||||||||||||||||||||||||||||||||
-  IASDT.R::CatTime("   >>>   Save cross-validation results as RData")
+  IASDT.R::CatTime("Save cross-validation results as RData", Level = 1)
   CV_data <- list(
     NGrids = NGrids, NR = NR, NC = NC, CV_SAC_Range = CV_SAC_Range,
     CV_SAC = CV_SAC, CV_Dist = CV_Dist, CV_Large = CV_Large)
@@ -223,7 +225,7 @@ GetCV <- function(
   # # |||||||||||||||||||||||||||||||||||
   if (PlotCV) {
 
-    IASDT.R::CatTime("   >>>   Plot cross-validation folds")
+    IASDT.R::CatTime("Plot cross-validation folds", Level = 1)
 
     DT_R <- sf::st_as_sf(DT, coords = c("x", "y"), crs = 3035) %>%
       terra::rasterize(RefGrid) %>%
@@ -246,7 +248,7 @@ GetCV <- function(
 
     EU_Bound <- IASDT.R::LoadAs(EU_Bound) %>%
       magrittr::extract2("Bound_sf_Eur_s") %>%
-      magrittr::extract2("L_01") %>%
+      magrittr::extract2("L_03") %>%
       sf::st_crop(PlotBox) %>%
       suppressWarnings()
 

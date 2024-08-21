@@ -25,7 +25,7 @@ RespCurv_PrepData <- function(
     Path_Model = NULL, ngrid = 50, NCores = 15, ReturnData = FALSE) {
 
   if (is.null(Path_Model)) {
-    stop("Path_Model cannot be NULL")
+    stop("Path_Model cannot be NULL", .call = FALSE)
   }
 
   .StartTime <- lubridate::now(tzone = "CET")
@@ -42,8 +42,7 @@ RespCurv_PrepData <- function(
 
   IASDT.R::CatTime("Check input arguments")
   AllArgs <- ls()
-  AllArgs <- purrr::map(
-    .x = AllArgs, .f = ~get(.x, envir = parent.env(env = environment()))) %>%
+  AllArgs <- purrr::map(.x = AllArgs, .f = ~get(.x, envir = environment())) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = "Path_Model")
@@ -140,7 +139,7 @@ RespCurv_PrepData <- function(
       # Prepare plotting data: probability of occurrence
       # +++++++++++++++++++++++++++++++++
 
-      probs <- c(0.025, 0.5, 0.975) # quantiles to be calculated
+      Probabilities <- c(0.025, 0.5, 0.975) # quantiles to be calculated
 
       RC_Data_Prob <- purrr::map_dfr(
         .x = seq_len(length(Pred_Expected)),
@@ -159,7 +158,7 @@ RespCurv_PrepData <- function(
             .f = ~{
               dplyr::reframe(
                 .x,
-                Pred = stats::quantile(Pred, probs), Quantile = probs,
+                Pred = stats::quantile(Pred, Probabilities), Quantile = Probabilities,
                 .by	= XVals)
             }),
 
@@ -202,8 +201,8 @@ RespCurv_PrepData <- function(
 
       # Quantiles of species richness
       RC_Data_SR_Quant <- dplyr::reframe(
-        RC_Data_SR, SR = stats::quantile(SR, probs), Quantile = probs,
-        .by	= XVals)
+        RC_Data_SR, SR = stats::quantile(SR, Probabilities), 
+        Quantile = Probabilities, .by	= XVals)
 
       # Trend of the species richness
       SR_PositiveTrendProb <- RC_Data_SR %>%
@@ -247,7 +246,7 @@ RespCurv_PrepData <- function(
   # +++++++++++++++++++++++++++++++++
   # Extract names of the variables
   # +++++++++++++++++++++++++++++++++
-  IASDT.R::CatTime(" >>> Extract names of the variables")
+  IASDT.R::CatTime("Extract names of the variables", Level = 1)
   ModelVars <- stringr::str_split(
     as.character(Model$XFormula)[2], "\\+", simplify = TRUE) %>%
     stringr::str_trim()
@@ -298,7 +297,7 @@ RespCurv_PrepData <- function(
 
   if (MissingRows == 0) {
     IASDT.R::CatTime(
-      " >>> All response curve data files were already available on disk")
+      "All response curve data files were already available on disk", Level = 1)
     ResCurvDT <- purrr::map(
       .x = seq_len(nrow(ResCurvDT)), .f = PrepRCData_Int) %>%
       dplyr::bind_rows()
@@ -306,14 +305,14 @@ RespCurv_PrepData <- function(
     if (all(!ResCurvDT$FileExists)) {
       IASDT.R::CatTime(
         paste0(
-          " >>> All response curve data (", MissingRows,
-          ") need to be prepared"))
+          "All response curve data (", MissingRows, ") need to be prepared"),
+        Level = 1)
     } else {
       IASDT.R::CatTime(
         paste0(
-          " >>> Some response curve data files (",
-          MissingRows, " of ", length(ResCurvDT$FileExists),
-          ") were missing"))
+          "Some response curve data files (", MissingRows, " of ", 
+          length(ResCurvDT$FileExists), ") were missing"), 
+        Level = 1)
     }
 
     # +++++++++++++++++++++++++++++++++
@@ -322,9 +321,9 @@ RespCurv_PrepData <- function(
 
     NCores <- max(min(NCores, MissingRows), 1)
 
-    paste0(
-      "      >>> Prepare working on parallel, using ", NCores, " cores") %>%
-      IASDT.R::CatTime()
+    IASDT.R::CatTime(
+      paste0("Prepare working on parallel, using ", NCores, " cores"),
+      Level = 2)
 
     c1 <- snow::makeSOCKcluster(NCores)
     on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
@@ -338,7 +337,7 @@ RespCurv_PrepData <- function(
     # Prepare response curve data on parallel
     # +++++++++++++++++++++++++++++++++
 
-    IASDT.R::CatTime("      >>> Prepare response curve data on parallel")
+    IASDT.R::CatTime("Prepare response curve data on parallel", Level = 2)
 
     ResCurvDT <- future.apply::future_lapply(
       X = seq_len(nrow(ResCurvDT)),

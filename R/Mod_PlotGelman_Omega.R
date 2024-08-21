@@ -26,18 +26,18 @@ PlotGelman_Omega <- function(
     CodaObj, NCores, NOmega = 1000, PlottingAlpha = 0.25) {
 
   if (is.null(CodaObj) || is.null(NCores)) {
-    stop("CodaObj and NCores cannot be empty")
+    stop("CodaObj and NCores cannot be empty", .call = FALSE)
   }
 
   if (!is.numeric(NCores) || NCores <= 0) {
-    stop("NCores must be a positive integer.")
+    stop("NCores must be a positive integer.", .call = FALSE)
   }
  if (!is.numeric(NOmega) || NOmega <= 0) {
-    stop("NOmega must be a positive integer.")
+    stop("NOmega must be a positive integer.", .call = FALSE)
   }
 
   if (!inherits(CodaObj, "mcmc.list")) {
-    stop("CodaObj has to be of class mcmc.list")
+    stop("CodaObj has to be of class mcmc.list", .call = FALSE)
   }
 
   # Avoid "no visible binding for global variable" message

@@ -23,7 +23,7 @@ CheckRData <- function(File) {
         return(FALSE)
       }
     } else {
-      stop("Unsupported file type. Please provide an RData file.")
+      stop("Unsupported file type. Please provide an RData file.", .call = FALSE)
     }
   }, error = function(e) {
     return(FALSE)

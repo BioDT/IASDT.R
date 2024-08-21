@@ -65,6 +65,10 @@ This function extracts EASIN data for a given EASIN_ID, handles
 pagination, and ensures that data retrieval is efficient by managing
 retries and pauses.
 }
+\note{
+This function is not intended to be used directly by the user or in the
+IAS-pDT, but only called from the \link{EASIN_Processing} function.
+}
 \author{
 Ahmed El-Gabbas
 }

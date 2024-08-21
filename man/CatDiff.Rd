@@ -8,7 +8,9 @@ CatDiff(
   InitTime,
   ChunkText = "Session summary",
   Prefix = "Completed in ",
-  CatInfo = TRUE
+  CatInfo = TRUE,
+  Level = 0,
+  ...
 )
 }
 \arguments{
@@ -22,6 +24,12 @@ difference. Defaults to "Completed in ".}
 
 \item{CatInfo}{logical; If \code{TRUE}, prints a session summary using
 \link{InfoChunk} ("Session summary"). Defaults to \code{TRUE}.}
+
+\item{Level}{integer; the level at which the message will be printed. If e.g.
+Level = 1, the following string will be printed at the beginning of the
+message: "   >>>   ".}
+
+\item{...}{Additional arguments for \link{CatTime}.}
 }
 \value{
 The function is used for its side effect of printing to the console

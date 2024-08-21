@@ -31,7 +31,7 @@
 NDecimals <- function(x) {
 
   if (is.null(x)) {
-    stop("x cannot be NULL")
+    stop("x cannot be NULL", .call = FALSE)
   }
 
   Split <- x %>%

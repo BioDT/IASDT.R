@@ -27,7 +27,7 @@ PlotRho <- function(
     Post, Model, Title, Cols = c("red", "blue", "darkgreen", "darkgrey")) {
 
   if (is.null(Post) || is.null(Model) || is.null(Title)) {
-    stop("Post, Model, and Title cannot be empty")
+    stop("Post, Model, and Title cannot be empty", .call = FALSE)
   }
 
   # Avoid "no visible binding for global variable" message

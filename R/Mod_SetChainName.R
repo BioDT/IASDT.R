@@ -20,7 +20,7 @@
 SetChainName <- function(Obj, Chain) {
 
   if (is.null(Obj) || is.null(Chain)) {
-    stop("Obj and Chain cannot be empty")
+    stop("Obj and Chain cannot be empty", .call = FALSE)
   }
 
   Obj %>%

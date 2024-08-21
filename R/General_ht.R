@@ -30,7 +30,7 @@
 ht <- function(DF, NRows = 5) {
 
   if (is.null(DF)) {
-    stop("DF cannot be NULL")
+    stop("DF cannot be NULL", .call = FALSE)
   }
 
   DF %>%

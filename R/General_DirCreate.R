@@ -34,7 +34,7 @@
 DirCreate <- function(Path, Verbose = TRUE) {
 
   if (is.null(Path)) {
-    stop("Path cannot be NULL")
+    stop("Path cannot be NULL", .call = FALSE)
   }
 
   Path2 <- gsub("\\\\", "/", Path)

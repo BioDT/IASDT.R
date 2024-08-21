@@ -17,8 +17,10 @@
 #'   difference. Defaults to "Completed in ".
 #' @param CatInfo logical; If `TRUE`, prints a session summary using
 #'   [IASDT.R::InfoChunk] ("Session summary"). Defaults to `TRUE`.
+#' @param ... Additional arguments for [CatTime].
 #' @return The function is used for its side effect of printing to the console
 #'   and does not return any value.
+#' @inheritParams CatTime
 #' @examples
 #' # Assuming the current time, it prints the time difference
 #' # from one minute ago.
@@ -27,10 +29,10 @@
 
 CatDiff <- function(
     InitTime, ChunkText = "Session summary", Prefix = "Completed in ",
-    CatInfo = TRUE) {
+    CatInfo = TRUE, Level = 0, ...) {
 
   if (is.null(InitTime)) {
-    stop("InitTime cannot be NULL")
+    stop("InitTime cannot be NULL", .call = FALSE)
   }
 
   if (CatInfo) {
@@ -42,7 +44,7 @@ CatDiff <- function(
     lubridate::time_length(unit = "min") %>%
     round(2) %>%
     paste0(Prefix, ., " minutes") %>%
-    IASDT.R::CatTime()
+    IASDT.R::CatTime(Level = Level, ...)
 
   return(invisible(NULL))
 }

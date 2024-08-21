@@ -20,6 +20,8 @@
 #'   it loads required data files, checks for missing files, and proceeds to
 #'   generate and save plots as JPEG files. The plots include the number of
 #'   observations and species and their distribution per data partner.
+#' @note This function is not intended to be used directly by the user or in the
+#'   IAS-pDT, but only called from the [EASIN_Processing] function.
 #' @name EASIN_Plot
 #' @author Ahmed El-Gabbas
 #' @export
@@ -28,13 +30,29 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
 
   .PlotStartTime <- lubridate::now(tzone = "CET")
 
-  Path_EASIN_Summary <- Path_Grid <- EU_Bound <- NULL
+  # # ..................................................................... ###
+
+  # Checking arguments ----
+  IASDT.R::CatTime("Checking arguments")
+
+  AllArgs <- ls()
+  AllArgs <- purrr::map(AllArgs, ~get(.x, envir = environment())) %>%
+    stats::setNames(AllArgs)
+
+  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = "EnvFile")
+  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "logical", Args = "FromHPC")
+
+  # # ..................................................................... ###
+
+  # Avoid "no visible binding for global variable" message
+  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
+  Path_EASIN_Summary <- EU_Bound <- NULL
 
   # # |||||||||||||||||||||||||||||||||||
   # # Loading environment variables ----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatTime("   >>>   Loading environment variables")
+  IASDT.R::CatTime("Loading environment variables", Level = 1)
   if (FromHPC) {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
@@ -58,16 +76,16 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
   # # Input maps ----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatTime("   >>>   Loading input maps")
+  IASDT.R::CatTime("Loading input maps", Level = 1)
 
   ## Country boundaries ----
-  IASDT.R::CatTime("   >>>   >>>   Country boundaries")
+  IASDT.R::CatTime("Country boundaries", Level = 2)
   EuroBound <- IASDT.R::LoadAs(EU_Bound) %>%
     magrittr::extract2("Bound_sf_Eur_s") %>%
-    magrittr::extract2("L_01")
+    magrittr::extract2("L_03")
 
   ## Check input summary maps -----
-  IASDT.R::CatTime("   >>>   >>>   Check input summary maps")
+  IASDT.R::CatTime("Check input summary maps", Level = 2)
   Path_NSp <- file.path(Path_EASIN_Summary, "EASIN_NSp.RData")
   Path_NSp_PerPartner <- file.path(
     Path_EASIN_Summary, "EASIN_NSp_PerPartner.RData")
@@ -84,7 +102,7 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
     stop(paste0(
       "The following input files are missing: \n",
       paste0(" >> ", PathSummaryMaps[which(SummaryMapsMissing)],
-             collapse = "\n")))
+             collapse = "\n")), .call = FALSE)
   }
 
   # # |||||||||||||||||||||||||||||||||||
@@ -93,7 +111,7 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
 
   ## NObs + NSp ----
 
-  IASDT.R::CatTime("   >>>   Number of observations and species")
+  IASDT.R::CatTime("Number of observations and species", Level = 1)
 
   Plot_EASIN_All <- function(
     MapPath, Title, EuroBound, addTag = FALSE, Legend = FALSE) {
@@ -161,20 +179,20 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
   }
 
   ### Number of observations ----
-  IASDT.R::CatTime("   >>>   >>>   Number of observations")
+  IASDT.R::CatTime("Number of observations", Level = 2)
   Plot_NObs <- Plot_EASIN_All(
     MapPath = Path_NObs, Title = "Number of observations",
     EuroBound = EuroBound, addTag = FALSE, Legend = FALSE)
 
   ### Number of species ----
-  IASDT.R::CatTime("   >>>   >>>   Number of species")
+  IASDT.R::CatTime("Number of species", Level = 2)
   Plot_NSp <- Plot_EASIN_All(
     MapPath = Path_NSp, Title = "Number of species",
     EuroBound = EuroBound, addTag = TRUE, Legend = TRUE)
 
   ### Combine maps ----
   IASDT.R::CatTime(
-    Text = "   >>>   >>>   Merge maps side by side and save as JPEG")
+    Text = "Merge maps side by side and save as JPEG", Level = 2)
   (ggpubr::ggarrange(
     Plot_NObs, (ggplot2::ggplot() + ggplot2::theme_void()), Plot_NSp,
     widths = c(1, 0, 1), nrow = 1) +
@@ -195,7 +213,7 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
 
   ## Number of species/observations per partner ----
 
-  IASDT.R::CatTime("   >>>   Number of species/observations per partner")
+  IASDT.R::CatTime("Number of species/observations per partner", Level = 1)
 
   Plot_EASIN_Partner <- function(MapPath, File_prefix, Title) {
 
@@ -274,7 +292,7 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
 
 
   ### Number of observations per partner ----
-  IASDT.R::CatTime("   >>>   >>>   Number of observations per partner")
+  IASDT.R::CatTime("Number of observations per partner", Level = 2)
   Plot_EASIN_Partner(
     MapPath = Path_NObs_PerPartner,
     File_prefix = "EASIN_NObs_per_partner",
@@ -282,7 +300,7 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
 
 
   ### Number of species per partner ----
-  IASDT.R::CatTime("   >>>   >>>   Number of species per partner")
+  IASDT.R::CatTime("Number of species per partner", Level = 2)
   Plot_EASIN_Partner(
     MapPath = Path_NSp_PerPartner,
     File_prefix = "EASIN_NSp_per_partner",
@@ -292,7 +310,7 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
 
   IASDT.R::CatDiff(
     InitTime = .PlotStartTime, CatInfo = FALSE,
-    Prefix = "   >>>   Plotting EASIN data was finished in ")
+    Prefix = "Plotting EASIN data was finished in ", Level = 1)
 
   return(invisible(NULL))
 }

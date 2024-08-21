@@ -36,7 +36,7 @@ GetSpeciesName <- function(EnvFile = ".env", SpID = NULL, FromHPC = TRUE) {
 
   # Load environment variables
   if (!file.exists(EnvFile)) {
-    stop(paste0("Path for environment variables: ", EnvFile, " was not found"))
+    stop(paste0("Path for environment variables: ", EnvFile, " was not found"), .call = FALSE)
   }
 
   if (FromHPC) {

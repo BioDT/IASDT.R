@@ -91,7 +91,7 @@ SaveMultiple <- function(
   if (length(missing_vars) > 0) {
     stop(paste0(
       "Variable(s) ", paste0(missing_vars, collapse = " & "),
-      " do not exist in the caller environment.\n"))
+      " do not exist in the caller environment.\n"), .call = FALSE)
   } else {
     fs::dir_create(OutFolder)
   }

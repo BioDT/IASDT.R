@@ -38,12 +38,12 @@ Chelsa_Info <- function(FileName) {
 
   # Validate inputs
   if (is.null(FileName)) {
-    stop("FileName cannot be NULL")
+    stop("FileName cannot be NULL", .call = FALSE)
   }
 
   # Ensure FileName is a character vector
   if (!is.character(FileName)) {
-    stop("FileName must be a character vector")
+    stop("FileName must be a character vector", .call = FALSE)
   }
 
   purrr::map_dfr(

@@ -22,7 +22,7 @@
 FileSize <- function(File, ...) {
 
   if (is.null(File)) {
-    stop("File cannot be NULL")
+    stop("File cannot be NULL", .call = FALSE)
   }
 
   return(gdata::humanReadable(fs::file_size(File), ...))

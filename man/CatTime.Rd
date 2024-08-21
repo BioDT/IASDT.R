@@ -4,7 +4,7 @@
 \alias{CatTime}
 \title{Print text with time stamp}
 \usage{
-CatTime(Text = "", NLines = 1, Date = FALSE, TZ = "CET", ...)
+CatTime(Text = "", NLines = 1, Date = FALSE, TZ = "CET", Level = 0, ...)
 }
 \arguments{
 \item{Text}{character; the text to print before the timestamp. If empty
@@ -18,6 +18,10 @@ message. Default is 1.}
 
 \item{TZ}{character; the time zone to use for the timestamp. Default is
 \code{CET}.}
+
+\item{Level}{integer; the level at which the message will be printed. If e.g.
+Level = 1, the following string will be printed at the beginning of the
+message: "   >>>   ".}
 
 \item{...}{additional arguments passed to \code{cat}.}
 }
@@ -39,6 +43,14 @@ CatTime(Date = TRUE)
 CatTime("Time now")
 
 CatTime("Time now", Date = TRUE)
+
+# The use of levels
+{
+  CatTime("Task 1")
+  CatTime("subtask L1", Level = 1)
+  CatTime("subtask L1", Level = 2)
+  CatTime("subtask L1", Level = 3)
+}
 }
 \author{
 Ahmed El-Gabbas

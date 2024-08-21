@@ -40,11 +40,11 @@ SplitDF2Chunks <- function(
     DF = NULL, ChunkSize = NULL, NChunks = NULL, Prefix = "Chunk") {
 
   if (is.null(DF)) {
-    stop("DF cannot be NULL")
+    stop("DF cannot be NULL", .call = FALSE)
   }
 
   if (!is.null(ChunkSize) && (ChunkSize < 1 || !is.numeric(ChunkSize))) {
-    stop("ChunkSize must be numeric and larger than 1")
+    stop("ChunkSize must be numeric and larger than 1", .call = FALSE)
   }
 
   if (is.null(ChunkSize) && is.null(NChunks)) {
@@ -56,7 +56,7 @@ SplitDF2Chunks <- function(
 
   if (!is.null(ChunkSize) && nrow(DF) <= ChunkSize) {
     stop(paste0("ChunkSize is larger than the number of rows in the data ",
-                "frame!\nPlease use a smaller ChunkSize."))
+                "frame!\nPlease use a smaller ChunkSize."), .call = FALSE)
   }
 
   if (is.null(ChunkSize)) {

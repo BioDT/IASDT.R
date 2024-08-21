@@ -36,7 +36,7 @@ Text2Coords <- function(
     String = NULL, Long_Name = "Longitude", Lat_Name = "Latitude") {
 
   if (is.null(String)) {
-    stop("Input string cannot be NULL")
+    stop("Input string cannot be NULL", .call = FALSE)
   }
 
   String %>%

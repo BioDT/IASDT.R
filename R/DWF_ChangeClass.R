@@ -19,7 +19,7 @@
 ChangeClass <- function(DF) {
 
   if (is.null(DF)) {
-    stop("DF cannot be NULL")
+    stop("DF cannot be NULL", .call = FALSE)
   }
 
   VarsInt <- c(

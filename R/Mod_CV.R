@@ -91,8 +91,9 @@ Mod_CV <- function(
   # # ++++++++++++++++++++++++++++++++++++
   if (is.null(Model) || is.null(Path_Hmsc) || is.null(MemPerCpu) ||
       is.null(Time) || is.null(EnvFile)) {
-    stop("The following arguments cannot be empty: ",
-         "Model, Path_Hmsc, MemPerCpu, Time, EnvFile")
+    stop(paste0("The following arguments cannot be empty: ",
+         "Model, Path_Hmsc, MemPerCpu, Time, EnvFile"), 
+         .call = FALSE)
   }
 
   AllArgs <- ls()
@@ -117,8 +118,9 @@ Mod_CV <- function(
   # # ++++++++++++++++++++++++++++++++++++
 
   if (!file.exists(EnvFile)) {
-    stop(paste0(
-      "Path for environment variables: ", EnvFile, " was not found"))
+    stop(
+      paste0("Path for environment variables: ", EnvFile, " was not found"), 
+      .call = FALSE)
   }
 
   if (FromHPC) {
@@ -143,7 +145,7 @@ Mod_CV <- function(
     ModFull <- IASDT.R::LoadAs(Model)
   } else {
     if (is.null(Path_CV)) {
-      stop("Path_CV cannot be empty if the Model is provided as Hmsc object")
+      stop("Path_CV cannot be empty if the Model is provided as Hmsc object", .call = FALSE)
     }
     ModFull <- Model
     rm(Model)
@@ -167,8 +169,10 @@ Mod_CV <- function(
       names(partition) <- CVName
     } else {
       # if any of the column names does not exist, stop the function
-      stop("partition was not defined and column(s) for CV folds ",
-           "can not be found in species data")
+      stop(
+        paste0("partition was not defined and column(s) for CV folds ",
+               "can not be found in species data"), 
+        .call = FALSE)
     }
   } else {
     # If partition is provided directly to the function, use "CV_Custom" as CV
@@ -178,7 +182,7 @@ Mod_CV <- function(
 
   # Check the length of CV data equals the number of sampling units in the model
   if (any(sapply(partition, length) != ModFull$ny)) {
-    stop("partition parameter must be a vector of length ny")
+    stop("partition parameter must be a vector of length ny", .call = FALSE)
   }
 
   # # ++++++++++++++++++++++++++++++++++++

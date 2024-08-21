@@ -39,7 +39,7 @@ PlotAlpha <- function(
 
 
   if (is.null(Post) || is.null(Model)) {
-    stop("Post and Model cannot be empty")
+    stop("Post and Model cannot be empty", .call = FALSE)
   }
 
   # Avoid "no visible binding for global variable" message
@@ -48,8 +48,7 @@ PlotAlpha <- function(
 
   # Checking arguments
   AllArgs <- ls()
-  AllArgs <- purrr::map(
-    AllArgs, ~get(.x, envir = parent.env(env = environment()))) %>%
+  AllArgs <- purrr::map(AllArgs, ~get(.x, envir = environment())) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = c("Title"))
@@ -63,7 +62,7 @@ PlotAlpha <- function(
   if ("Alpha" %in% names(Post)) {
     Post <- Post$Alpha[[1]]
   } else {
-    stop("Post object does not contain 'Alpha'")
+    stop("Post object does not contain 'Alpha'", .call = FALSE)
   }
 
   # Load model object

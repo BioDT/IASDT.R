@@ -106,7 +106,7 @@
 #' - number of cross-validation folds
 #' - options for whether or not to include phylogenetic information to the model
 #' - different values for knot distance for GPP (`GPP_Dists`)
-#' - which bioclimatic variables to be uses in the models (`BioVars`)
+#' - which Bioclimatic variables to be uses in the models (`BioVars`)
 #' - whether to include sampling efforts `EffortsAsPredictor`, percentage of
 #'   respective habitat type per grid cell `HabAsPredictor`, and railway and
 #'   road intensity per grid cell `RoadRailAsPredictor`
@@ -158,27 +158,28 @@ Mod_Prep4HPC <- function(
     stop(
       paste0(
         paste0("`", CheckNULL[which(IsNull)], "`", collapse = ", "),
-        " can not be empty"))
+        " can not be empty"),
+      .call = FALSE)
   }
 
   if (!all(is.numeric(GPP_Dists)) || any(GPP_Dists <= 0)) {
-    stop("GPP_Dists should be numeric and greater than zero")
+    stop("GPP_Dists should be numeric and greater than zero", .call = FALSE)
   }
 
   if (!all(is.numeric(samples)) || any(samples <= 0)) {
-    stop("samples should be numeric and greater than zero")
+    stop("samples should be numeric and greater than zero", .call = FALSE)
   }
 
   if (!all(is.numeric(thin)) || any(thin <= 0)) {
-    stop("thin should be numeric and greater than zero")
+    stop("thin should be numeric and greater than zero", .call = FALSE)
   }
 
   if (!all(is.numeric(PresPerVar)) || PresPerVar <= 0) {
-    stop("`PresPerVar` should be numeric and greater than zero")
+    stop("`PresPerVar` should be numeric and greater than zero", .call = FALSE)
   }
 
   if (!all(is.numeric(MinEffortsSp)) || MinEffortsSp <= 0) {
-    stop("`MinEffortsSp` should be numeric and greater than zero")
+    stop("`MinEffortsSp` should be numeric and greater than zero", .call = FALSE)
   }
 
   if (!is.null(NspPerGrid) && (!is.numeric(NspPerGrid) || NspPerGrid < 1)) {
@@ -213,7 +214,8 @@ Mod_Prep4HPC <- function(
 
   if (!file.exists(EnvFile)) {
     stop(paste0(
-      "Path for environment variables: ", EnvFile, " was not found"))
+      "Path for environment variables: ", EnvFile, " was not found"),
+      .call = FALSE)
   }
 
   if (FromHPC) {
@@ -240,7 +242,9 @@ Mod_Prep4HPC <- function(
   if (GPP_Plot) {
     Path_GridR <- file.path(Path_Grid, "Grid_10_Land_Crop.RData")
     if (!file.exists(Path_GridR)) {
-      stop(paste0("Path for the Europe boundaries does not exist: ", Path_GridR))
+      stop(
+        paste0("Path for the Europe boundaries does not exist: ", Path_GridR),
+        .call = FALSE)
     }
   }
 
@@ -279,7 +283,8 @@ Mod_Prep4HPC <- function(
 
   # Phylogenetic tree options
   if (PhyloTree == FALSE && NoPhyloTree == FALSE) {
-    stop("At least one of PhyloTree or NoPhyloTree has to be true")
+    stop(
+      "At least one of PhyloTree or NoPhyloTree has to be true", .call = FALSE)
   }
 
   NumArgsInvalid <- purrr::map_lgl(.x = NumericArgs, .f = ~all(get(.x) < 1))
@@ -342,7 +347,7 @@ Mod_Prep4HPC <- function(
   ValidHabAbbs <- c(0:3, "4a", "4b", 10, "12a", "12b")
   if (!(as.character(Hab_Abb) %in% ValidHabAbbs)) {
     stop(paste0("Hab_Abb has to be one of the following:\n >> ",
-                paste0(ValidHabAbbs, collapse = " | ")))
+                paste0(ValidHabAbbs, collapse = " | ")), .call = FALSE)
   }
 
   HabVal <- c(
@@ -378,12 +383,14 @@ Mod_Prep4HPC <- function(
     if (!all(ValidCountries)) {
       stop(paste0(
         "The following are invalid country names: ",
-        paste0(ModelCountry[!ValidCountries], collapse = " & ")))
+        paste0(ModelCountry[!ValidCountries], collapse = " & ")),
+        .call = FALSE)
     }
 
     IASDT.R::CatTime(
-      paste0("   >>>   Subsetting data to: ",
-             paste0(sort(ModelCountry), collapse = " & ")))
+      paste0("Subsetting data to: ", paste0(sort(ModelCountry),
+                                            collapse = " & ")),
+      Level = 1)
 
     Sample_ExclSp <- dplyr::filter(DT_All, Country %in% ModelCountry) %>%
       dplyr::summarise(
@@ -395,7 +402,7 @@ Mod_Prep4HPC <- function(
       dplyr::pull(Sp)
 
     IASDT.R::CatTime(
-      paste0("   >>>   >>>   ", length(Sample_ExclSp), " species are excluded"))
+      paste0(length(Sample_ExclSp), " species are excluded"), Level = 1)
     DT_All <- dplyr::filter(DT_All, Country %in% ModelCountry) %>%
       dplyr::select(-tidyselect::all_of(Sample_ExclSp))
 
@@ -403,14 +410,14 @@ Mod_Prep4HPC <- function(
     ## Plotting subsetted data -----
     # # |||||||||||||||||||||||||||||||||||
 
-    IASDT.R::CatTime("   >>>   Plotting subsetted data")
+    IASDT.R::CatTime("Plotting subsetted data", Level = 1)
     GridSubset <- terra::rasterize(
       x = as.matrix(DT_All[, c("x", "y")]),
       y = terra::unwrap(IASDT.R::LoadAs(Path_GridR)))
 
     DT_Sp <- file.path(Path_PA, "Sp_PA_Summary_DF.RData")
     if (!file.exists(DT_Sp)) {
-      stop(paste0(DT_Sp, " file does not exist"))
+      stop(paste0(DT_Sp, " file does not exist"), .call = FALSE)
     }
     DT_Sp <- IASDT.R::LoadAs(DT_Sp)
 
@@ -450,7 +457,7 @@ Mod_Prep4HPC <- function(
 
     EU_Bound_sub <- IASDT.R::LoadAs(EU_Bound) %>%
       magrittr::extract2("Bound_sf_Eur") %>%
-      magrittr::extract2("L_01") %>%
+      magrittr::extract2("L_03") %>%
       dplyr::filter(NAME_ENGL %in% ModelCountry)
 
     R_Sp_sumP <- terra::classify(R_Sp_sum, cbind(0, NA))
@@ -503,7 +510,7 @@ Mod_Prep4HPC <- function(
        DT_Sp, GridSubset)
 
   } else {
-    IASDT.R::CatTime("   >>>   No data subsetting was implemented")
+    IASDT.R::CatTime("No data subsetting was implemented", Level = 1)
   }
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -515,7 +522,8 @@ Mod_Prep4HPC <- function(
   IASDT.R::CatTime("Exclude grid cells with low number of presences")
 
   if (is.null(NspPerGrid)) {
-    IASDT.R::CatTime("   >>>   All grid cells will be included in the analysis")
+    IASDT.R::CatTime(
+      "All grid cells will be included in the analysis", Level = 1)
   } else {
     if (NspPerGrid > 1) {
       EmptyGridsID <- dplyr::select(DT_All, tidyselect::starts_with("Sp_")) %>%
@@ -526,7 +534,7 @@ Mod_Prep4HPC <- function(
 
       if (length(EmptyGridsID) > 0) {
         IASDT.R::CatTime(
-          paste0("   >>>   Excluding grid cells with < ", NspPerGrid))
+          paste0("Excluding grid cells with < ", NspPerGrid), Level = 1)
         DT_All <- dplyr::slice(DT_All, EmptyGridsID)
       }
     }
@@ -559,12 +567,12 @@ Mod_Prep4HPC <- function(
   IASDT.R::CatTime("Response - Y matrix")
   DT_y <- dplyr::select(DT_All, tidyselect::starts_with("Sp_")) %>%
     as.data.frame()
-  IASDT.R::CatTime(paste0("   >>>   ", ncol(DT_y), " species"))
+  IASDT.R::CatTime(paste0(ncol(DT_y), " species"), Level = 1)
 
-  IASDT.R::CatTime("   >>>   Save species summary")
+  IASDT.R::CatTime("Save species summary", Level = 1)
   SpSummary <- file.path(Path_PA, "Sp_PA_Summary_DF.RData")
   if (!file.exists(SpSummary)) {
-    stop(paste0(SpSummary, " file does not exist"))
+    stop(paste0(SpSummary, " file does not exist"), .call = FALSE)
   }
   SpSummary <- IASDT.R::LoadAs(SpSummary) %>%
     dplyr::mutate(
@@ -591,9 +599,9 @@ Mod_Prep4HPC <- function(
     as.data.frame()
 
   IASDT.R::CatTime(
-    paste0(
-      "   >>>   Models will be fitted using ", length(XVars),
-      " predictors: \n   >>>   ", paste0(XVars, collapse = " + ")))
+    paste0("Models will be fitted using ", length(XVars), " predictors"),
+    Level = 1)
+  IASDT.R::CatTime(paste0(XVars, collapse = " + "), Level = 1)
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -625,8 +633,8 @@ Mod_Prep4HPC <- function(
 
   IASDT.R::CatTime(
     paste0(
-      "   >>>   Models will be fitted using ",
-      paste0(Tree, collapse = " & ")))
+      "Models will be fitted using ", length(paste0(Tree, collapse = " & "))),
+    Level = 1)
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -657,7 +665,7 @@ Mod_Prep4HPC <- function(
   rownames(DT_xy) <- studyDesign$sample
 
   # Prepare GPP knots
-  IASDT.R::CatTime("   >>>   Preparing GPP knots")
+  IASDT.R::CatTime("Preparing GPP knots", Level = 1)
 
   if (NParallel > 1) {
     invisible(snow::clusterEvalQ(
@@ -685,7 +693,7 @@ Mod_Prep4HPC <- function(
 
   ## Plotting knot location ----
   if (GPP_Plot) {
-    IASDT.R::CatTime("   >>>   Plotting GPP knots")
+    IASDT.R::CatTime("Plotting GPP knots", Level = 1)
 
     KnotExt <- rbind(
       as.matrix(purrr::map_dfr(GPP_Knots, ~.x$sKnot)), as.matrix(DT_xy)) %>%
@@ -706,7 +714,7 @@ Mod_Prep4HPC <- function(
 
     EU_Bound <- IASDT.R::LoadAs(EU_Bound) %>%
       magrittr::extract2("Bound_sf_Eur_s") %>%
-      magrittr::extract2("L_01") %>%
+      magrittr::extract2("L_03") %>%
       sf::st_crop(KnotExt) %>%
       suppressWarnings()
 
@@ -756,7 +764,7 @@ Mod_Prep4HPC <- function(
   }
 
   if (GPP_Save) {
-    IASDT.R::CatTime("   >>>   Saving GPP knots data")
+    IASDT.R::CatTime("Saving GPP knots data", Level = 1)
     save(GPP_Knots, file = file.path(Path_Model, "GPP_Knots.RData"))
   }
 
@@ -829,19 +837,19 @@ Mod_Prep4HPC <- function(
   IASDT.R::CatTime("Save unfitted models")
 
   if (OverwriteInitMod) {
-    IASDT.R::CatTime(paste0("   >>>   Processing all model variants"))
+    IASDT.R::CatTime(paste0("Processing all model variants"), Level = 1)
   } else {
     NMod2Export <- Model_Info %>%
       dplyr::filter(!file.exists(M4HPC_Path)) %>%
       nrow()
     if (NMod2Export == 0) {
       IASDT.R::CatTime(
-        "   >>>   All model variants were already available as RDS files")
+        "All model variants were already available as RDS files", Level = 1)
     } else {
       IASDT.R::CatTime(
         paste0(
-          "   >>>   ", NMod2Export,
-          " model variants need to be exported as RDS files"))
+          NMod2Export, " model variants need to be exported as RDS files"),
+        Level = 1)
     }
   }
 
@@ -896,13 +904,13 @@ Mod_Prep4HPC <- function(
   # Which models failed to be exported as RDS files after 6 trials
   Failed2Export <- dplyr::filter(Model_Info, !file.exists(M4HPC_Path))
   if (nrow(Failed2Export) == 0) {
-    IASDT.R::CatTime(
-      "   >>>   All model variants were exported as RDS files")
+    IASDT.R::CatTime("All model variants were exported as RDS files", Level = 1)
   } else {
     IASDT.R::CatTime(
       paste0(
-        "   >>>   ", nrow(Failed2Export),
-        " model variants failed to be exported to rds files after 5 tries."))
+        nrow(Failed2Export),
+        " model variants failed to be exported to rds files after 5 tries."),
+      Level = 1)
     save(Failed2Export, file = file.path(Path_Model, "Failed2Export.RData"))
     readr::write_tsv(
       x = Failed2Export, file = file.path(Path_Model, "Failed2Export.txt"))
@@ -1014,7 +1022,7 @@ Mod_Prep4HPC <- function(
   }
 
   # Save all fitting commands to single file
-  IASDT.R::CatTime("   >>>   Save all fitting commands to single file")
+  IASDT.R::CatTime("Save all fitting commands to single file", Level = 1)
   f <- file(
     description = file.path(Path_Model, "Commands_All.txt"),
     open = "wb")
@@ -1023,10 +1031,10 @@ Mod_Prep4HPC <- function(
   close(f)
 
   # Save model fitting commands for batch SLURM jobs
-  IASDT.R::CatTime("   >>>   Save model fitting commands for batch SLURM jobs")
   IASDT.R::CatTime(
-    paste0(
-      "   >>>   >>>   Models will be fitted in ", NSplits, " SLURM job(s)"))
+    "Save model fitting commands for batch SLURM jobs", Level = 1)
+  IASDT.R::CatTime(
+    paste0("Models will be fitted in ", NSplits, " SLURM job(s)"), Level = 2)
 
   purrr::walk(
     .x = seq_len(NSplits),

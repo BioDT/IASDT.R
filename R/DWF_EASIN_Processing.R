@@ -1,5 +1,5 @@
 # # |------------------------------------------------------------------------| #
-# EASIN_Data ----
+# EASIN_Processing ----
 ## |------------------------------------------------------------------------| #
 
 #' Extracts and processes EASIN data
@@ -33,7 +33,7 @@
 #' @param Plot Logical. If `TRUE`, the function will generate summary plots of
 #'   the processed data using [EASIN_Plot]. Default is `TRUE`.
 #' @author Ahmed El-Gabbas
-#' @name EASIN_Data
+#' @name EASIN_Processing
 #' @return The function Returns `NULL` invisibly after completing the data
 #'   extraction, processing, and optional plotting. The function saves multiple
 #'   outputs to disk, including the extracted and processed EASIN data,
@@ -52,22 +52,45 @@
 #'   -  Species-specific data files, saved as both sf and raster objects.
 #' @note
 #'   - The function assumes that the necessary environment variables are
-#'   correctly set up in the specified `.env` file. Users should ensure that all
-#'   required files and directories are accessible before running the function.
+#' correctly set up in the specified `.env` file. Users should ensure that all
+#' required files and directories are accessible before running the function.
 #'   - The function skips processing (i.e. reuse) species data or data chunks if
-#'   the data already exist on the raw directory. The function assumes that
-#'   the contents of this folder should be removed as part of the data workflow.
-#'   Skipping processing available data can help not to re-download already
-#'   available data from the EASIN server.
+#' the data already exist on the raw directory. The function assumes that the
+#' contents of this folder should be removed as part of the data workflow.
+#' Skipping processing available data can help not to re-download already
+#' available data from the EASIN server.
+#'   - This function depends on the following functions: [EASIN_Taxonomy]  for getting the most recent EASIN taxonomy; [EASIN_Down] for processing EASIN dataset; and [EASIN_Plot] for plotting.
 #' @export
 
-EASIN_Data <- function(
+EASIN_Processing <- function(
     ExtractTaxa = TRUE, ExtractData = TRUE, NDownTries = 10,
     NCores = 6, SleepTime = 10, NSearch = 1000, FromHPC = TRUE,
     EnvFile = ".env", DeleteChunks = FALSE, MinYear = 1981, Plot = TRUE) {
 
   .StartTime <- lubridate::now(tzone = "CET")
 
+  # # ..................................................................... ###
+
+  # Checking arguments ----
+  IASDT.R::CatTime("Checking arguments")
+
+  AllArgs <- ls()
+  AllArgs <- purrr::map(AllArgs, ~get(.x, envir = environment())) %>%
+    stats::setNames(AllArgs)
+
+  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = "EnvFile")
+  IASDT.R::CheckArgs(
+    AllArgs = AllArgs, Type = "logical",
+    Args = c("ExtractTaxa", "ExtractData", "FromHPC", "Verbose",
+             "Plot", "DeleteChunks"))
+  IASDT.R::CheckArgs(
+    AllArgs = AllArgs, Type = "numeric",
+    Args = c("DownTries", "NCores", "SleepTime", "NSearch", "MinYear"))
+
+  # # ..................................................................... ###
+
+  # Avoid "no visible binding for global variable" message
+  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Path_Grid <- TaxaInfoFile <- Name <- speciesKey <- EASINID <- taxon_name <-
     SpeciesId <- CellCode <- DataPartnerName <- Species_name <- Species_File <-
     EASIN_Ref <- Year <- WKT <- Path_EASIN <- Path_EASIN_Interim <-
@@ -123,24 +146,24 @@ EASIN_Data <- function(
   ## Grid - raster ----
   GridR <- file.path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(GridR)) {
-    stop(paste0("Path for the reference grid does not exist: ", GridR))
+    stop(paste0("Path for the reference grid does not exist: ", GridR), .call = FALSE)
   }
 
   ## Grid - sf ----
   GridSf <- file.path(Path_Grid_Ref, "Grid_10_sf.RData")
   if (!file.exists(GridSf)) {
-    stop(paste0("Path for the reference grid does not exist: ", GridSf))
+    stop(paste0("Path for the reference grid does not exist: ", GridSf), .call = FALSE)
   }
 
   ## Grid - sf - study area ----
   # Grid ID overlapping with study area
   LandGrids <- file.path(Path_Grid, "Grid_10_Land_sf.RData")
   if (!file.exists(LandGrids)) {
-    stop(paste0("Path for the reference grid does not exist: ", LandGrids))
+    stop(paste0("Path for the reference grid does not exist: ", LandGrids), .call = FALSE)
   }
 
   ## Species list ----
-  IASDT.R::CatTime("   >>>   Loading species list")
+  IASDT.R::CatTime("Loading species list", Level = 1)
   TaxaList <- IASDT.R::LoadAs(TaxaInfoFile)
 
   # # ..................................................................... ###
@@ -153,7 +176,7 @@ EASIN_Data <- function(
 
   if (ExtractTaxa) {
 
-    IASDT.R::CatTime("   >>>   Download EASIN taxa")
+    IASDT.R::CatTime("Download EASIN taxa", Level = 1)
 
     EASIN_Taxa_Orig <- IASDT.R::EASIN_Taxonomy(
       # Download EASIN taxa
@@ -163,7 +186,7 @@ EASIN_Data <- function(
       EASIN_Taxa_Orig, file = file.path(Path_EASIN, "EASIN_Taxa_Orig.RData"))
 
 
-    IASDT.R::CatTime("   >>>   Loading pre-standardized EASIN taxonomy")
+    IASDT.R::CatTime("Loading pre-standardized EASIN taxonomy", Level = 1)
 
     # Update 08.2024: While writing this function, I noticed that there 4 taxa
     # in EASIN taxonomy list that is not matched at the most recent
@@ -243,7 +266,10 @@ EASIN_Data <- function(
 
     ## Prepare working on parallel ----
     c1 <- snow::makeSOCKcluster(NCores)
-    on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
+    on.exit({
+      invisible(try(snow::stopCluster(c1), silent = TRUE))
+      future::plan(future::sequential, gc = TRUE)
+    }, add = TRUE)
     future::plan(future::cluster, workers = c1, gc = TRUE)
 
     # Start downloading, allow for a maximum of `NumDownTries` trials
@@ -260,22 +286,24 @@ EASIN_Data <- function(
       }
 
       Try <- Try + 1
-      IASDT.R::CatTime(paste0("   >>>   Try number: ", Try))
+      IASDT.R::CatTime(paste0("Try number: ", Try), Level = 1)
 
       IASDT.R::CatTime(
-        paste0("   >>>   There are ", length(NotProcessed),
-               " EASIN taxa to be downloaded"))
+        paste0("There are ", length(NotProcessed),
+        " EASIN taxa to be downloaded"),
+        Level = 1)
 
       if (length(NotProcessed) == 0 || Try > NDownTries) {
         if (Try > NDownTries) {
           IASDT.R::CatTime(
             paste0(
-              "  >>  Download failed for ", length(NotProcessed),
-              " EASIN taxa after ", NDownTries, " download attempts"))
+              "Download failed for ", length(NotProcessed),
+              " EASIN taxa after ", NDownTries, " download attempts"),
+            Level = 1)
         }
 
         if (length(NotProcessed) == 0) {
-          IASDT.R::CatTime("  >>  Data for all EASIN taxa were downloaded")
+          IASDT.R::CatTime("Data for all EASIN taxa were downloaded", Level = 1)
         }
 
         break
@@ -301,7 +329,7 @@ EASIN_Data <- function(
 
     IASDT.R::CatDiff(
       TimeStartData, CatInfo = FALSE,
-      Prefix = "   >>>   Downloading EASIN data was finished in ")
+      Prefix = "Downloading EASIN data was finished in ", Level = 1)
 
     # Stop cluster ----
     snow::stopCluster(cl = c1)
@@ -316,7 +344,7 @@ EASIN_Data <- function(
   IASDT.R::CatTime("Merging EASIN data")
 
   ## Loading input maps -----
-  IASDT.R::CatTime("   >>>   Loading input maps")
+  IASDT.R::CatTime("Loading input maps", Level = 1)
 
   EASIN_Files <- list.files(
     Path_EASIN_Interim, full.names = TRUE, pattern = ".RData")
@@ -330,13 +358,15 @@ EASIN_Data <- function(
       cat(file = PathNotProcessed, sep = "\n")
     IASDT.R::CatTime(
       paste0(
-        "   >>>   >>>   There are ", length(NotProcessed),
-        " not processed EASIN ID(s).\n",
-        "   >>>   >>>   EASIN IDs are saved to: ", PathNotProcessed))
+        "There are ", length(NotProcessed), " not processed EASIN ID(s)."),
+      Level = 2)
+
+    IASDT.R::CatTime(
+      paste0("EASIN IDs are saved to: ", PathNotProcessed), Level = 2)
   }
 
   ## Merging EASIN data -----
-  IASDT.R::CatTime("   >>>   Merging EASIN data")
+  IASDT.R::CatTime("Merging EASIN data", Level = 1)
   c1 <- snow::makeSOCKcluster(NCores)
   on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
   future::plan(future::cluster, workers = c1, gc = TRUE)
@@ -347,7 +377,7 @@ EASIN_Data <- function(
     dplyr::bind_rows()
 
   ## Save merged EASIN data -----
-  IASDT.R::CatTime("   >>>   Save merged EASIN data")
+  IASDT.R::CatTime("Save merged EASIN data", Level = 1)
   save(
     EASIN_Data_Orig, file = file.path(Path_EASIN, "EASIN_Data_Orig.RData"))
 
@@ -374,7 +404,7 @@ EASIN_Data <- function(
     dplyr::left_join(EASIN_Taxa, by = "EASINID")
 
   ## Extract coordinates from WKT ----
-  IASDT.R::CatTime("   >>>   Extract coordinates from WKT")
+  IASDT.R::CatTime("Extract coordinates from WKT", Level = 1)
   WKTs <- EASIN_Data %>%
     dplyr::distinct(WKT) %>%
     dplyr::pull(WKT) %>%
@@ -388,7 +418,7 @@ EASIN_Data <- function(
       .cols = c("Longitude", "Latitude"), .fns = ~round(.x, 5)))
 
   ## Add coordinates to data and convert to sf ----
-  IASDT.R::CatTime("   >>>   Add coordinates to data and convert to sf")
+  IASDT.R::CatTime("Add coordinates to data and convert to sf", Level = 1)
   EASIN_Data <- EASIN_Data %>%
     dplyr::left_join(WKTs, by = "WKT") %>%
     # convert to sf object, while keeping original coordinates as columns
@@ -405,7 +435,7 @@ EASIN_Data <- function(
   rm(LandGrids, WKTs)
 
   ## Save cleaned EASIN Data ----
-  IASDT.R::CatTime("   >>>   Save cleaned EASIN Data")
+  IASDT.R::CatTime("Save cleaned EASIN Data", Level = 1)
   save(EASIN_Data, file = file.path(Path_EASIN, "EASIN_Data.RData"))
 
   # # ..................................................................... ###
@@ -419,9 +449,9 @@ EASIN_Data <- function(
   GridR <- terra::unwrap(IASDT.R::LoadAs(GridR))
 
   ## NObs ----
-  IASDT.R::CatTime("   >>>   Number of observations per grid cell")
+  IASDT.R::CatTime("Number of observations per grid cell", Level = 1)
 
-  IASDT.R::CatTime("   >>>   >>>   All data")
+  IASDT.R::CatTime("All data", Level = 2)
   EASIN_NObs <- sf::st_drop_geometry(EASIN_Data) %>%
     dplyr::count(CellCode) %>%
     dplyr::rename(NObs = n) %>%
@@ -435,7 +465,7 @@ EASIN_Data <- function(
   save(EASIN_NObs, file = Path_NObs)
 
   ### NObs per partner ----
-  IASDT.R::CatTime("   >>>   >>>   Number of observations per partner")
+  IASDT.R::CatTime("Number of observations per partner", Level = 2)
 
   EASIN_NObs_PerPartner <- sf::st_drop_geometry(EASIN_Data) %>%
     dplyr::count(CellCode, DataPartnerName) %>%
@@ -459,9 +489,9 @@ EASIN_Data <- function(
   save(EASIN_NObs_PerPartner, file = Path_NObs_PerPartner)
 
   ## NSpecies ----
-  IASDT.R::CatTime("   >>>   Number of species per grid cell")
+  IASDT.R::CatTime("Number of species per grid cell", Level = 1)
 
-  IASDT.R::CatTime("   >>>   >>>   All data")
+  IASDT.R::CatTime("All data", Level = 2)
   EASIN_NSp <- sf::st_drop_geometry(EASIN_Data) %>%
     dplyr::distinct(CellCode, Species_name) %>%
     dplyr::count(CellCode) %>%
@@ -476,7 +506,7 @@ EASIN_Data <- function(
   save(EASIN_NSp, file = Path_NSp)
 
   ### NSp per partner ----
-  IASDT.R::CatTime("   >>>   >>>   Number of species per per partner")
+  IASDT.R::CatTime("Number of species per per partner", Level = 2)
 
   EASIN_NSp_PerPartner <- sf::st_drop_geometry(EASIN_Data) %>%
     dplyr::distinct(CellCode, Species_name, DataPartnerName) %>%
@@ -567,7 +597,7 @@ EASIN_Data <- function(
 
   IASDT.R::CatDiff(
     TimeStartData, CatInfo = FALSE,
-    Prefix = "   >>>   Preparing Species-specific data was finished in ")
+    Prefix = "Preparing Species-specific data was finished in ", Level = 1)
 
   # # ..................................................................... ###
 

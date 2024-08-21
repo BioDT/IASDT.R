@@ -47,7 +47,7 @@
 RastPA <- function(x = NULL, NA_to_0 = TRUE, Zero_to_NA = FALSE) {
 
   if (is.null(x)) {
-    stop("x can not be NULL")
+    stop("x can not be NULL", .call = FALSE)
   }
 
   if (inherits(x, "PackedSpatRaster")) {
@@ -66,8 +66,10 @@ RastPA <- function(x = NULL, NA_to_0 = TRUE, Zero_to_NA = FALSE) {
       if (Zero_to_NA) x <- terra::classify(x, cbind(0, NA))
 
     } else {
-      stop(paste0("Input map should be either PackedSpatRaster, ",
-                  "RasterLayer, or SpatRaster"))
+      stop(
+        paste0("Input map should be either PackedSpatRaster, ",
+               "RasterLayer, or SpatRaster"), 
+        .call = FALSE)
     }
   }
   return(x)

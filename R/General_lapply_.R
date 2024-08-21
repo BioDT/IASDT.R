@@ -37,7 +37,7 @@
 lapply_ <- function(X, FUN, Silent = TRUE, ...) {
 
   if (is.null(X) || is.null(FUN)) {
-    stop("X or FUN cannot be NULL")
+    stop("X or FUN cannot be NULL", .call = FALSE)
   }
 
   result <- lapply(X = X, FUN = FUN, ...)

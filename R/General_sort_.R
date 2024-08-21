@@ -29,18 +29,18 @@ sort_ <- function(
     roman.case = c("upper", "lower", "both")) {
 
   if (is.null(x) || is.null(numeric.type) || is.null(roman.case)) {
-    stop("x, numeric.type, and roman.case cannot be NULL")
+    stop("x, numeric.type, and roman.case cannot be NULL", .call = FALSE)
   }
 
   numeric.type <- numeric.type[1]
   roman.case <- roman.case[1]
 
   if (!numeric.type %in% c("decimal", "roman")) {
-    stop("numeric.type must be either 'decimal' or 'roman'")
+    stop("numeric.type must be either 'decimal' or 'roman'", .call = FALSE)
   }
 
   if (!roman.case %in% c("upper", "lower", "both")) {
-    stop("roman.case must be one of 'upper', 'lower', or 'both'")
+    stop("roman.case must be one of 'upper', 'lower', or 'both'", .call = FALSE)
   }
 
   gtools::mixedsort(

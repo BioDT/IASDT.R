@@ -25,7 +25,7 @@ PlotConvergence_All <- function(
   .StartTime <- lubridate::now(tzone = "CET")
 
   if (is.null(Path_Model) || is.null(NCores)) {
-    stop("Path_Model and NCores must not be NULL")
+    stop("Path_Model and NCores must not be NULL", .call = FALSE)
   }
 
   # Avoid "no visible binding for global variable" message
@@ -41,8 +41,7 @@ PlotConvergence_All <- function(
 
   IASDT.R::CatTime("Check input arguments")
   AllArgs <- ls()
-  AllArgs <- purrr::map(
-    AllArgs, ~get(.x, envir = parent.env(env = environment()))) %>%
+  AllArgs <- purrr::map(AllArgs, ~get(.x, envir = environment())) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
@@ -66,7 +65,9 @@ PlotConvergence_All <- function(
 
   Model_Info <- file.path(Path_Model, "Model_Info.RData")
   if (!file.exists(Model_Info)) {
-    stop(paste0("Model info file `", Model_Info, "` does not exist"))
+    stop(
+      paste0("Model info file `", Model_Info, "` does not exist"), 
+      .call = FALSE)
   }
   Model_Info <- IASDT.R::LoadAs(Model_Info)
 

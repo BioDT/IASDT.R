@@ -43,7 +43,8 @@ PlotConvergence <- function(
   .StartTime <- lubridate::now(tzone = "CET")
 
   if (is.null(Path_Coda) || is.null(Path_FittedModel) || is.null(NCores)) {
-    stop("Path_Coda, Path_FittedModel, and NCores cannot be empty")
+    stop(
+      "Path_Coda, Path_FittedModel, and NCores cannot be empty", .call = FALSE)
   }
 
   # Avoid "no visible binding for global variable" message

@@ -56,7 +56,9 @@ Mod_SLURM <- function(
 
   if (is.null(Path_Model) || is.null(JobName) || is.null(MemPerCpu) ||
       is.null(Time) || is.null(Path_Hmsc)) {
-    stop("Path_Model, JobName, MemPerCpu, Time, and Path_Hmsc cannot be empty")
+    stop(
+      "Path_Model, JobName, MemPerCpu, Time, and Path_Hmsc cannot be empty", 
+      .call = FALSE)
   }
 
   # # |||||||||||||||||||||||||||||||||||
@@ -64,7 +66,7 @@ Mod_SLURM <- function(
   # # |||||||||||||||||||||||||||||||||||
 
   if (!file.exists(EnvFile)) {
-    stop(paste("Environment file not found:", EnvFile))
+    stop(paste("Environment file not found:", EnvFile), .call = FALSE)
   }
 
   EnvVars2Read <- tibble::tribble(
@@ -102,7 +104,7 @@ Mod_SLURM <- function(
     Path_Model, pattern = Command_Prefix, full.names = TRUE)
   NCommandFiles <- length(ListCommands)
   if (NCommandFiles == 0) {
-    stop("The file containing the bash commands does not exist")
+    stop("The file containing the bash commands does not exist", .call = FALSE)
   }
 
   if (is.null(Path_SLURM_Out)) {

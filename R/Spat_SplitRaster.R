@@ -68,7 +68,7 @@ SplitRaster <- function(
 
   # Check input raster
   if (is.null(raster)) {
-    stop("raster cannot be NULL.")
+    stop("raster cannot be NULL.", .call = FALSE)
   }
 
   h <- ceiling((ncol(raster) / Ncol))

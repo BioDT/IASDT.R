@@ -24,7 +24,7 @@
 Mod_Fit_WS <- function(Path_Model, EnvFile = ".env", NCores = NULL) {
 
   if (is.null(Path_Model) || is.null(NCores)) {
-    stop("Path_Model and NCores cannot be empty")
+    stop("Path_Model and NCores cannot be empty", .call = FALSE)
   }
 
   # Avoid "no visible binding for global variable" message
@@ -36,7 +36,9 @@ Mod_Fit_WS <- function(Path_Model, EnvFile = ".env", NCores = NULL) {
   # # |||||||||||||||||||||||||||||||||||
 
   if (!file.exists(EnvFile)) {
-    stop(paste0("Path for environment variables: ", EnvFile, " was not found"))
+    stop(
+      paste0("Path for environment variables: ", EnvFile, " was not found"),
+      .call = FALSE)
   }
 
   EnvVars2Read <- tibble::tribble(

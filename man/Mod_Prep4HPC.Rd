@@ -225,7 +225,7 @@ The function provides options for:
 \item number of cross-validation folds
 \item options for whether or not to include phylogenetic information to the model
 \item different values for knot distance for GPP (\code{GPP_Dists})
-\item which bioclimatic variables to be uses in the models (\code{BioVars})
+\item which Bioclimatic variables to be uses in the models (\code{BioVars})
 \item whether to include sampling efforts \code{EffortsAsPredictor}, percentage of
 respective habitat type per grid cell \code{HabAsPredictor}, and railway and
 road intensity per grid cell \code{RoadRailAsPredictor}

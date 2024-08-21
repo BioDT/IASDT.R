@@ -14,7 +14,7 @@
 CheckRDS <- function(File) {
 
   if (!file.exists(File)) {
-    stop("The provided file: `", File, "` does not exist")
+    stop(paste0("The provided file: `", File, "` does not exist"), .call = FALSE)
   }
 
   tryCatch({
@@ -26,7 +26,7 @@ CheckRDS <- function(File) {
         return(FALSE)
       }
     } else {
-      stop("Unsupported file type. Please provide an rds file.")
+      stop("Unsupported file type. Please provide an rds file.", .call = FALSE)
     }
   }, error = function(e) {
     return(FALSE)

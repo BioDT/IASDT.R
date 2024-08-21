@@ -36,12 +36,12 @@
 
 FileExt <- function(Path) {
   if (is.null(Path)) {
-    stop("Path cannot be NULL")
+    stop("Path cannot be NULL", .call = FALSE)
   }
 
   # Ensure Path is a character string
   if (!is.character(Path)) {
-    stop("Path must be a character string")
+    stop("Path must be a character string", .call = FALSE)
   }
 
   return(tools::file_ext(Path))

@@ -27,7 +27,7 @@ Chelsa_Extract_Matching <- function(String, Time, Matches) {
 
   # Validate inputs
   if (is.null(String) || is.null(Time) || is.null(Matches)) {
-    stop("String, Time, and Matches cannot be NULL")
+    stop("String, Time, and Matches cannot be NULL", .call = FALSE)
   }
 
   # assign "Current" for files represent current climates

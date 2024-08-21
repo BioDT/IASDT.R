@@ -17,7 +17,7 @@
 Rename_geometry <- function(g = NULL, name = NULL) {
 
   if (any(is.null(g) | is.null(name))) {
-    stop("The input sf object or name cannot be 'NULL'.")
+    stop("The input sf object or name cannot be 'NULL'.", .call = FALSE)
   }
 
   current <- attr(g, "sf_column")

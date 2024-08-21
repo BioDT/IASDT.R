@@ -43,11 +43,11 @@ CheckStackInMemory <- function(Stack = NULL) {
 
   # Check input argument
   if (is.null(Stack)) {
-    stop("Input Stack cannot be NULL")
+    stop("Input Stack cannot be NULL", .call = FALSE)
   }
 
   if (!inherits(Stack, "RasterStack")) {
-    stop("The object should be a RasterStack object")
+    stop("The object should be a RasterStack object", .call = FALSE)
   }
 
   InMem <- sapply(raster::unstack(Stack), raster::inMemory)

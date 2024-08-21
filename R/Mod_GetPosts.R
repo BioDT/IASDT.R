@@ -21,7 +21,7 @@
 GetPosts <- function(FilePath, FromJSON = FALSE) {
 
   if (is.null(FilePath)) {
-    stop("FilePath cannot be empty")
+    stop("FilePath cannot be empty", .call = FALSE)
   }
 
   # Checking arguments

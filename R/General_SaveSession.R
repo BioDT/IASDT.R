@@ -74,7 +74,7 @@ SaveSession <- function(Path = getwd(), ExcludeObj = NULL, Prefix = "S") {
     OutPath = file.path(Path, paste0(FF2, ".RData")))
 
   AllObjs %>%
-    lapply(pryr::object_size) %>%
+    lapply(lobstr::obj_size) %>%
     tibble::tibble(Obj = names(.), Size = as.numeric(.)) %>%
     dplyr::mutate(Size = Size / (1024 * 1024), Size = round(Size, 1)) %>%
     dplyr::select(Obj, Size) %>%

@@ -21,6 +21,8 @@
 #'   kingdom and phylum.
 #' @author Ahmed El-Gabbas and Marina Golivets
 #' @export
+#' @note This function is not intended to be used directly by the user or in the
+#'   IAS-pDT, but only called from the [EASIN_Processing] function.
 #' @details This function loops through the EASIN API, retrieving data in chunks
 #'   until all available data for the specified kingdom and phylum are
 #'   collected. The results are returned as a tibble after filtering for the
@@ -29,6 +31,22 @@
 EASIN_Taxonomy <- function(
     BaseURL = "https://easin.jrc.ec.europa.eu/apixg/catxg",
     Kingdom = "Plantae", Phylum = "Tracheophyta", NSearch = 100) {
+
+  # # ..................................................................... ###
+
+  # Checking arguments ----
+  IASDT.R::CatTime("Checking arguments")
+
+  AllArgs <- ls()
+  AllArgs <- purrr::map(AllArgs, ~get(.x, envir = environment())) %>%
+    stats::setNames(AllArgs)
+
+  IASDT.R::CheckArgs(
+    AllArgs = AllArgs, Type = "character",
+    Args = c("BaseURL", "Kingdom", "Phylum"))
+  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "numeric", Args = "NSearch")
+
+  # # ..................................................................... ###
 
   ## Download EASIN taxa -----
 
@@ -84,7 +102,7 @@ EASIN_Taxonomy <- function(
 
   IASDT.R::CatDiff(
     InitTime = TimeStartTaxa, CatInfo = FALSE,
-    Prefix = "   >>>   Extracting EASIN taxonomy was finished in ")
+    Prefix = "Extracting EASIN taxonomy was finished in ", Level = 1)
 
   return(EASIN_Taxa)
 }

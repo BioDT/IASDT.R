@@ -50,7 +50,7 @@ Coda_to_tibble <- function(
   # # |||||||||||||||||||||||||||||||||||||||
 
   if (is.null(CodaObj) || is.null(Type)) {
-    stop("None of `CodaObj` or `Type` cannot be empty")
+    stop("None of `CodaObj` or `Type` cannot be empty", .call = FALSE)
   }
 
   # # |||||||||||||||||||||||||||||||||||||||
@@ -60,11 +60,11 @@ Coda_to_tibble <- function(
   Type <- tolower(Type)
 
   if (!Type %in% c("rho", "alpha", "omega", "beta")) {
-    stop("Type has to be one of rho, alpha, omega, or beta")
+    stop("Type has to be one of rho, alpha, omega, or beta", .call = FALSE)
   }
 
   if (!(inherits(CodaObj, "mcmc.list") || inherits(CodaObj, "mcmc"))) {
-    stop("Input Coda object has to be of class mcmc.list or mcmc")
+    stop("Input Coda object has to be of class mcmc.list or mcmc", .call = FALSE)
   }
 
   # # |||||||||||||||||||||||||||||||||||||||
@@ -122,8 +122,9 @@ Coda_to_tibble <- function(
   if (Type == "beta") {
 
     if (!file.exists(EnvFile)) {
-      stop(paste0("Path for environment variables: ",
-                  EnvFile, " was not found"))
+      stop(
+        paste0("Path for environment variables: ", EnvFile, " was not found"), 
+        .call = FALSE)
     }
 
     if (FromHPC) {

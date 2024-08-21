@@ -35,6 +35,8 @@
 #'   retrieved for the specified EASIN ID. If ReturnData is `FALSE`, returns
 #'   `NULL`.
 #' @export
+#' @note This function is not intended to be used directly by the user or in the
+#'   IAS-pDT, but only called from the [EASIN_Processing] function.
 #' @details This function extracts EASIN data for a given EASIN_ID, handles
 #'   pagination, and ensures that data retrieval is efficient by managing
 #'   retries and pauses.
@@ -47,8 +49,29 @@ EASIN_Down <- function(
     DeleteChunks = TRUE, ReturnData = FALSE) {
 
   if (is.null(SpKey)) {
-    stop("SpKey cannot be NULL")
+    stop("SpKey cannot be NULL", .call = FALSE)
   }
+
+  # # ..................................................................... ###
+
+  # Checking arguments ----
+  IASDT.R::CatTime("Checking arguments")
+
+  AllArgs <- ls()
+  AllArgs <- purrr::map(AllArgs, ~get(.x, envir = environment())) %>%
+    stats::setNames(AllArgs)
+
+  IASDT.R::CheckArgs(
+    AllArgs = AllArgs, Type = "character",
+    Args = c("SpKey", "BaseURL", "Path_Raw"))
+  IASDT.R::CheckArgs(
+    AllArgs = AllArgs, Type = "logical",
+    Args = c("ReturnData", "Verbose", "DeleteChunks"))
+  IASDT.R::CheckArgs(
+    AllArgs = AllArgs, Type = "numeric",
+    Args = c("Timeout", "NSearch", "Attempts", "SleepTime"))
+
+  # # ..................................................................... ###
 
   # Temporarily set download time out only within the function
   withr::local_options(list(scipen = 999, timeout = Timeout))
@@ -181,7 +204,7 @@ EASIN_Down <- function(
 
       if (Verbose) {
         IASDT.R::CatTime(
-          paste0("  >>>   ", SpKey, ": ", nrow(DT), " observations"))
+          paste0(SpKey, ": ", nrow(DT), " observations"), Level = 1)
       }
 
       IASDT.R::SaveAs(InObj = DT, OutObj = SpKey, OutPath = Path_Out)

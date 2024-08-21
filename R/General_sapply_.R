@@ -47,7 +47,7 @@
 sapply_ <- function(X, FUN, simplify = TRUE, Silent = TRUE, ...) {
 
   if (is.null(X) || is.null(FUN)) {
-    stop("X or FUN cannot be NULL")
+    stop("X or FUN cannot be NULL", .call = FALSE)
   }
 
   result <- sapply(X = X, FUN = FUN, simplify = simplify, ...)

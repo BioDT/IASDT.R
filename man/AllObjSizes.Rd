@@ -4,12 +4,23 @@
 \alias{AllObjSizes}
 \title{Size of objects in memory}
 \usage{
-AllObjSizes(GreaterThan = 0)
+AllObjSizes(GreaterThan = 0, InFunction = FALSE, SizeDecimals = 2, N = Inf)
 }
 \arguments{
 \item{GreaterThan}{numeric value specifying the size threshold in MB. Only
 objects larger than this value will be shown. Default is 0, which means all
 objects will be shown. \code{GreaterThan} must be a non-negative number.}
+
+\item{InFunction}{Logical, controlling the scope of the function. It
+indicates whether the execution is done inside or outside of a function.
+Defaults to \code{FALSE} to show sizes of objects in the global environment. If
+set to \code{TRUE}, sizes of objects in the function are returned.}
+
+\item{SizeDecimals}{Integer; representing the number of decimal places to
+show in the \code{Size} column. Defaults to 2.}
+
+\item{N}{Number of objects to show. Defaults to \code{Inf} meaning show all
+available objects.}
 }
 \value{
 The function prints a tibble containing the variables' names, their
@@ -21,7 +32,7 @@ examined.
 }
 \description{
 This function calculates the size of objects in the global environment of R
-using \link[pryr:object_size]{pryr::object_size} and prints a summary of objects that are greater
+using \link[lobstr:obj_size]{lobstr::obj_size} and prints a summary of objects that are greater
 than a specified size threshold. It is useful for memory management and
 identifying large objects in the workspace.
 }
@@ -34,6 +45,20 @@ AllObjSizes()
 AllObjSizes(GreaterThan = 1)
 
 AllObjSizes(GreaterThan = 50)
+
+# Outside of a function there is no difference
+AllObjSizes(InFunction = TRUE)
+AllObjSizes(InFunction = FALSE)
+
+# When called with another function, it shows the objects only available within the function
+TestFun <- function(XX = 10) {
+  Y <- 20
+  C <- matrix(data = 1:10000, nrow = 100, ncol = 100)
+  AllObjSizes(InFunction = TRUE)
+}
+
+TestFun()
+TestFun(XX = "TEST")
 }
 \author{
 Ahmed El-Gabbas

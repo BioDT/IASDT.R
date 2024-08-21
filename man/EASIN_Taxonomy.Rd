@@ -40,6 +40,10 @@ until all available data for the specified kingdom and phylum are
 collected. The results are returned as a tibble after filtering for the
 specified taxa.
 }
+\note{
+This function is not intended to be used directly by the user or in the
+IAS-pDT, but only called from the \link{EASIN_Processing} function.
+}
 \author{
 Ahmed El-Gabbas and Marina Golivets
 }

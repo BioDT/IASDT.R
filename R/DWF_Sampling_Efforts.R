@@ -181,38 +181,11 @@ Sampling_Efforts <- function(
   # Processing efforts data ------
 
   IASDT.R::CatTime("Processing efforts data")
-  Success <- FALSE
-
-  Attempt <- 1
-  Attempts <- 5
-
-  while (!Success && (Attempt <= Attempts)) {
-
-    tryCatch({
-      cat("")
-      IASDT.R::CatTime(paste0("Attempt # ", Attempt), Level = 1)
-      IASDT.R::Efforts_Process(
-        NCores = NCores, Path_Efforts = Path_Efforts,
-        Path_Interim = Path_Efforts_Interim, Path_Data = Path_Efforts_Data,
-        Path_Grid = Path_Grid, IAS_List = IAS_List,
-        Efforts_AllRequests = Efforts_AllRequests)
-      Success <- TRUE
-    },
-    error = function(e) {
-      IASDT.R::CatTime(
-        paste0("Error on attempt #", Attempt, ": ", conditionMessage(e)),
-        Level = 2)
-      if (Attempt < Attempts) {
-        Attempt <- Attempt + 1
-      } else {
-        stop(
-          paste0(
-            "Failed to Process efforts data after ", Attempts, " attempts: ",
-            conditionMessage(e)),
-          call. = FALSE)
-      }
-    })
-  }
+  IASDT.R::Efforts_Process(
+    NCores = NCores, Path_Efforts = Path_Efforts,
+    Path_Interim = Path_Efforts_Interim, Path_Data = Path_Efforts_Data,
+    Path_Grid = Path_Grid, IAS_List = IAS_List,
+    Efforts_AllRequests = Efforts_AllRequests)
 
   # # ..................................................................... ###
   # # ..................................................................... ###

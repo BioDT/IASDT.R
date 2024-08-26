@@ -112,7 +112,7 @@ Sampling_Efforts <- function(
   IASDT.R::CatTime("Loading input data")
 
   ## Create paths -----
-  Path_Efforts_Requests <- file.path(Path_Efforts_Interim, "Requests")
+  Path_Efforts_Requests <- file.path(Path_Efforts, "Requests")
   Path_Efforts_Data <- file.path(Path_Efforts_Interim, "CleanedData")
   fs::dir_create(c(
     Path_Efforts, Path_Efforts_Raw, Path_Efforts_Interim, Path_Efforts_Data,

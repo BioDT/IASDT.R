@@ -698,171 +698,199 @@ Efforts_Process <- function(
     cl = c1, x = seq_len(nrow(Efforts_AllRequests)),
     fun = function(x) {
 
-      CSV_File <- Efforts_AllRequests$PathCSV[x]
-      Zip_File <- Efforts_AllRequests$DownPath[x]
-      order <- Efforts_AllRequests$order[x]
-      class <- Efforts_AllRequests$class[x]
-      TotalRecords <- Efforts_AllRequests$TotalRecords[x]
-      ClassOrder <- paste0(class, "_", order)
+      Success <- FALSE
+      Attempt <- 1
+      Attempts <- 5
 
-      Summary_Path <- file.path(
-        Path_Interim, paste0("Summary_", ClassOrder, ".RData"))
-      Path_DT <- file.path(Path_Data, paste0(ClassOrder, ".RData"))
-      Grid_R <- terra::unwrap(IASDT.R::LoadAs(Path_Grid_R))
+      while (!Success && (Attempt <= Attempts)) {
+        tryCatch({
 
-      # # ................................... ###
+          CSV_File <- Efforts_AllRequests$PathCSV[x]
+          Zip_File <- Efforts_AllRequests$DownPath[x]
+          order <- Efforts_AllRequests$order[x]
+          class <- Efforts_AllRequests$class[x]
+          TotalRecords <- Efforts_AllRequests$TotalRecords[x]
+          ClassOrder <- paste0(class, "_", order)
 
-      # Exclude processed Order
-      if (file.exists(Summary_Path)) {
-        return(Summary_Path)
-      }
-
-      # Exclude Orders without any observations
-      if (TotalRecords == 0) {
-        tibble::tibble(
-          ObsN = 0, ObsN_Native = 0,
-          NObs_R = list(NA_integer_), NObs_Native_R = list(NA_integer_),
-          NSp_R = list(NA_integer_), NSp_Native_R = list(NA_integer_),
-          Path_DT = NA_character_) %>%
-          IASDT.R::SaveAs(OutObj = ClassOrder, Summary_Path)
-        return(Summary_Path)
-      }
-
-      # # ................................... ###
-
-      paste0("unzip -qqo ", Zip_File, " -d ", Path_Interim) %>%
-        system() %>%
-        invisible()
-
-      # # ................................... ###
-
-      DT <- readr::read_tsv(
-        file = CSV_File,
-        col_select = tidyselect::all_of(
-          c("coordinateUncertaintyInMeters", "decimalLongitude",
-            "decimalLatitude", "year", "speciesKey", "taxonRank")),
-        progress = FALSE,
-        show_col_types = FALSE,
-        col_types = readr::cols(
-          coordinateUncertaintyInMeters = readr::col_double(),
-          decimalLongitude = readr::col_double(),
-          decimalLatitude = readr::col_double(),
-          year = readr::col_integer(),
-          speciesKey = readr::col_integer(),
-          taxonRank = readr::col_character(),
-          .default = readr::col_double())) %>%
-        dplyr::rename(
-          UncertainKm = coordinateUncertaintyInMeters,
-          Longitude = decimalLongitude, Latitude = decimalLatitude) %>%
-        dplyr::mutate(
-          year = as.integer(year), UncertainKm = UncertainKm / 1000) %>%
-        dplyr::filter(
-          !is.na(Latitude), !is.na(Longitude),
-          speciesKey != "",  year > 1980,
-          taxonRank %in% c("FORM", "SPECIES", "SUBSPECIES", "VARIETY"),
-          UncertainKm <= 100 | is.na(UncertainKm)) %>%
-        sf::st_as_sf(coords = c("Longitude", "Latitude"), crs = 4326) %>%
-        # project to 3035
-        sf::st_transform(3035) %>%
-        sf::st_join(Grid_SF) %>%
-        dplyr::filter(magrittr::not(is.na(CellCode)))
-
-      invisible(gc())
-      fs::file_delete(CSV_File)
-
-      ObsN <- nrow(DT)
-
-      if (ObsN > 0) {
-
-        # Save order data as RData
-        IASDT.R::SaveAs(InObj = DT, OutObj = ClassOrder, OutPath = Path_DT)
-
-        # # ................................... ###
-
-        # Number of observations
-
-        NObs_R <- sf::st_drop_geometry(DT) %>%
-          dplyr::count(CellCode, name = "NObs") %>%
-          dplyr::left_join(Grid_SF, by = "CellCode") %>%
-          sf::st_as_sf() %>%
-          terra::rasterize(y = Grid_R, field = "NObs") %>%
-          terra::classify(cbind(NA, 0)) %>%
-          terra::mask(Grid_R) %>%
-          stats::setNames(paste0("NObs_", ClassOrder)) %>%
-          terra::wrap()
-
-        # # ................................... ###
-
-        # Number of species
-        NSp_R <- sf::st_drop_geometry(DT) %>%
-          dplyr::distinct(CellCode, speciesKey) %>%
-          dplyr::count(CellCode, name = "NSp") %>%
-          dplyr::left_join(Grid_SF, by = "CellCode") %>%
-          sf::st_as_sf() %>%
-          terra::rasterize(y = Grid_R, field = "NSp") %>%
-          terra::classify(cbind(NA, 0)) %>%
-          terra::mask(Grid_R) %>%
-          stats::setNames(paste0("NSp_", ClassOrder)) %>%
-          terra::wrap()
-
-        # # ................................... ###
-
-        # Data on native species
-        DT_Native <- dplyr::filter(DT, !(speciesKey %in% IAS_List))
-
-        rm(DT)
-        invisible(gc())
-
-        if (nrow(DT_Native) > 0) {
-
-          ObsN_Native <- nrow(DT_Native)
+          Summary_Path <- file.path(
+            Path_Interim, paste0("Summary_", ClassOrder, ".RData"))
+          Path_DT <- file.path(Path_Data, paste0(ClassOrder, ".RData"))
+          Grid_R <- terra::unwrap(IASDT.R::LoadAs(Path_Grid_R))
 
           # # ................................... ###
 
-          # Number of observations of native species
-          NObs_Native_R <- sf::st_drop_geometry(DT_Native) %>%
-            dplyr::count(CellCode, name = "NObs_Native") %>%
-            dplyr::left_join(Grid_SF, by = "CellCode") %>%
-            sf::st_as_sf() %>%
-            terra::rasterize(Grid_R, field = "NObs_Native") %>%
-            terra::classify(cbind(NA, 0)) %>%
-            terra::mask(Grid_R) %>%
-            stats::setNames(paste0("NObsNative_", ClassOrder)) %>%
-            terra::wrap()
+          # Exclude processed Order
+          if (file.exists(Summary_Path)) {
+            return(Summary_Path)
+          }
+
+          # Exclude Orders without any observations
+          if (TotalRecords == 0) {
+            tibble::tibble(
+              ObsN = 0, ObsN_Native = 0,
+              NObs_R = list(NA_integer_), NObs_Native_R = list(NA_integer_),
+              NSp_R = list(NA_integer_), NSp_Native_R = list(NA_integer_),
+              Path_DT = NA_character_) %>%
+              IASDT.R::SaveAs(OutObj = ClassOrder, Summary_Path)
+            return(Summary_Path)
+          }
 
           # # ................................... ###
 
-          # Number of native species
-          NSp_Native_R <- sf::st_drop_geometry(DT_Native) %>%
-            dplyr::distinct(CellCode, speciesKey) %>%
-            dplyr::count(CellCode, name = "NSp_Native") %>%
-            dplyr::left_join(Grid_SF, by = "CellCode") %>%
-            sf::st_as_sf() %>%
-            terra::rasterize(Grid_R, field = "NSp_Native") %>%
-            terra::classify(cbind(NA, 0)) %>%
-            terra::mask(Grid_R) %>%
-            stats::setNames(paste0("NSpNative_", ClassOrder)) %>%
-            terra::wrap()
+          paste0("unzip -qqo ", Zip_File, " -d ", Path_Interim) %>%
+            system() %>%
+            invisible()
 
-        } else {
-          ObsN_Native <- 0
-          NObs_Native_R <- NSp_Native_R <- list()
-        }
+          # # ................................... ###
 
-      } else {
-        ObsN <- ObsN_Native <- 0
-        Path_DT <- NA_character_
-        NObs_R <- NSp_R <- NObs_Native_R <- NSp_Native_R <- NA_real_
+          DT <- readr::read_tsv(
+            file = CSV_File,
+            col_select = tidyselect::all_of(
+              c("coordinateUncertaintyInMeters", "decimalLongitude",
+                "decimalLatitude", "year", "speciesKey", "taxonRank")),
+            progress = FALSE,
+            show_col_types = FALSE,
+            col_types = readr::cols(
+              coordinateUncertaintyInMeters = readr::col_double(),
+              decimalLongitude = readr::col_double(),
+              decimalLatitude = readr::col_double(),
+              year = readr::col_integer(),
+              speciesKey = readr::col_integer(),
+              taxonRank = readr::col_character(),
+              .default = readr::col_double())) %>%
+            dplyr::rename(
+              UncertainKm = coordinateUncertaintyInMeters,
+              Longitude = decimalLongitude, Latitude = decimalLatitude) %>%
+            dplyr::mutate(
+              year = as.integer(year), UncertainKm = UncertainKm / 1000) %>%
+            dplyr::filter(
+              !is.na(Latitude), !is.na(Longitude),
+              speciesKey != "",  year > 1980,
+              taxonRank %in% c("FORM", "SPECIES", "SUBSPECIES", "VARIETY"),
+              UncertainKm <= 100 | is.na(UncertainKm)) %>%
+            sf::st_as_sf(coords = c("Longitude", "Latitude"), crs = 4326) %>%
+            # project to 3035
+            sf::st_transform(3035) %>%
+            sf::st_join(Grid_SF) %>%
+            dplyr::filter(magrittr::not(is.na(CellCode)))
+
+          invisible(gc())
+          fs::file_delete(CSV_File)
+
+          ObsN <- nrow(DT)
+
+          if (ObsN > 0) {
+
+            # Save order data as RData
+            IASDT.R::SaveAs(InObj = DT, OutObj = ClassOrder, OutPath = Path_DT)
+
+            # # ................................... ###
+
+            # Number of observations
+
+            NObs_R <- sf::st_drop_geometry(DT) %>%
+              dplyr::count(CellCode, name = "NObs") %>%
+              dplyr::left_join(Grid_SF, by = "CellCode") %>%
+              sf::st_as_sf() %>%
+              terra::rasterize(y = Grid_R, field = "NObs") %>%
+              terra::classify(cbind(NA, 0)) %>%
+              terra::mask(Grid_R) %>%
+              stats::setNames(paste0("NObs_", ClassOrder)) %>%
+              terra::wrap()
+
+            # # ................................... ###
+
+            # Number of species
+            NSp_R <- sf::st_drop_geometry(DT) %>%
+              dplyr::distinct(CellCode, speciesKey) %>%
+              dplyr::count(CellCode, name = "NSp") %>%
+              dplyr::left_join(Grid_SF, by = "CellCode") %>%
+              sf::st_as_sf() %>%
+              terra::rasterize(y = Grid_R, field = "NSp") %>%
+              terra::classify(cbind(NA, 0)) %>%
+              terra::mask(Grid_R) %>%
+              stats::setNames(paste0("NSp_", ClassOrder)) %>%
+              terra::wrap()
+
+            # # ................................... ###
+
+            # Data on native species
+            DT_Native <- dplyr::filter(DT, !(speciesKey %in% IAS_List))
+
+            rm(DT)
+            invisible(gc())
+
+            if (nrow(DT_Native) > 0) {
+
+              ObsN_Native <- nrow(DT_Native)
+
+              # # ................................... ###
+
+              # Number of observations of native species
+              NObs_Native_R <- sf::st_drop_geometry(DT_Native) %>%
+                dplyr::count(CellCode, name = "NObs_Native") %>%
+                dplyr::left_join(Grid_SF, by = "CellCode") %>%
+                sf::st_as_sf() %>%
+                terra::rasterize(Grid_R, field = "NObs_Native") %>%
+                terra::classify(cbind(NA, 0)) %>%
+                terra::mask(Grid_R) %>%
+                stats::setNames(paste0("NObsNative_", ClassOrder)) %>%
+                terra::wrap()
+
+              # # ................................... ###
+
+              # Number of native species
+              NSp_Native_R <- sf::st_drop_geometry(DT_Native) %>%
+                dplyr::distinct(CellCode, speciesKey) %>%
+                dplyr::count(CellCode, name = "NSp_Native") %>%
+                dplyr::left_join(Grid_SF, by = "CellCode") %>%
+                sf::st_as_sf() %>%
+                terra::rasterize(Grid_R, field = "NSp_Native") %>%
+                terra::classify(cbind(NA, 0)) %>%
+                terra::mask(Grid_R) %>%
+                stats::setNames(paste0("NSpNative_", ClassOrder)) %>%
+                terra::wrap()
+
+            } else {
+              ObsN_Native <- 0
+              NObs_Native_R <- NSp_Native_R <- list()
+            }
+
+          } else {
+            ObsN <- ObsN_Native <- 0
+            Path_DT <- NA_character_
+            NObs_R <- NSp_R <- NObs_Native_R <- NSp_Native_R <- NA_real_
+          }
+
+          tibble::tibble(
+            ObsN = ObsN, ObsN_Native = ObsN_Native,
+            NObs_R = list(NObs_R), NObs_Native_R = list(NObs_Native_R),
+            NSp_R = list(NSp_R), NSp_Native_R = list(NSp_Native_R),
+            Path_DT = Path_DT) %>%
+            IASDT.R::SaveAs(OutObj = ClassOrder, OutPath = Summary_Path)
+
+          invisible(gc())
+
+          return(Summary_Path)
+
+
+          Success <- TRUE
+        },
+        error = function(e) {
+          IASDT.R::CatTime(
+            paste0("Error on attempt #", Attempt, ": ", conditionMessage(e)),
+            Level = 2)
+          if (Attempt < Attempts) {
+            Attempt <- Attempt + 1
+          } else {
+            stop(
+              paste0(
+                "Failed to Process efforts data after ", Attempts, " attempts: ",
+                conditionMessage(e)),
+              call. = FALSE)
+          }
+        })
       }
-
-      tibble::tibble(
-        ObsN = ObsN, ObsN_Native = ObsN_Native,
-        NObs_R = list(NObs_R), NObs_Native_R = list(NObs_Native_R),
-        NSp_R = list(NSp_R), NSp_Native_R = list(NSp_Native_R),
-        Path_DT = Path_DT) %>%
-        IASDT.R::SaveAs(OutObj = ClassOrder, OutPath = Summary_Path)
-
-      return(Summary_Path)
     })
 
   Efforts_Summary <- purrr::map_dfr(Efforts_Summary0, IASDT.R::LoadAs) %>%

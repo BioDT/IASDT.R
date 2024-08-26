@@ -298,7 +298,7 @@ IAS_Processing <- function(
 
   IASDT.R::CatDiff(
     InitTime = .StartTimeMaps, CatInfo = FALSE,
-    Prefix = "Processing Species-specific maps took ", NLines = 1, Level = 1)
+    Prefix = "Processing Species-specific maps took ", NLines = 1, Level = 2)
 
   # # ..................................................................... ###
 
@@ -668,7 +668,7 @@ IAS_Processing <- function(
   # Function Summary ----
   IASDT.R::CatDiff(
     InitTime = .StartTime, CatInfo = FALSE,
-    Prefix = "Processing species data was finished in ")
+    Prefix = "\nProcessing species data was finished in ", ... = "\n")
 
   return(invisible(NULL))
 }

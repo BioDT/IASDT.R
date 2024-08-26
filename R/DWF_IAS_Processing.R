@@ -32,22 +32,6 @@
 #' distribution as JPEG.
 
 
-
-
-# require(dplyr)
-# require(sf)
-# require(terra)
-# require(IASDT.R)
-#
-# setwd("D:/BioDT_IAS/")
-# FromHPC = FALSE
-# EnvFile = ".env"
-# NCores = 6
-# Overwrite = TRUE
-
-
-
-
 IAS_Processing <- function(
     FromHPC = TRUE, EnvFile = ".env", NCores = 6, Overwrite = TRUE) {
 
@@ -73,10 +57,10 @@ IAS_Processing <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Path_PA <- Path_TaxaInfo_RData <- taxon_name <- Path_TaxaStand <-
-    Path_HabAff <- Species <- PA_Map <- NCells <- Species_name <-
-    synhab_name <- IAS_ID <- Count <- Hab <- EU_Bound <- Threshold <-
-    NSp <- speciesKey <- taxon_name <- Year <- NULL
+  Path_PA <- Path_TaxaInfo_RData <- taxon_name <- Path_TaxaStand <- Year <-
+    Path_HabAff <- Species <- PA_Map <- NCells <- Species_name <- NCells_All <-
+    synhab_name <- IAS_ID <- Count <- Hab <- EU_Bound <- Threshold <- NSp <-
+    speciesKey <- taxon_name <- PA_Masked_Map <- NCells_Naturalized <- NULL
 
   # # ..................................................................... ###
 
@@ -184,7 +168,6 @@ IAS_Processing <- function(
   # Species-specific data ------
 
   IASDT.R::CatTime("Species-specific data")
-
   .StartTimeDist <- lubridate::now(tzone = "CET")
 
   ## Prepare working on parallel -----
@@ -223,11 +206,9 @@ IAS_Processing <- function(
   IASDT.R::CatTime("Merge Species-specific summary info", Level = 1)
 
   Sp_PA_Data <- dplyr::bind_rows(Sp_PA_Data) %>%
-    # Split number of grid cell per each biogeographical region as separate
+    # Split number of grid cell per country / biogeographical region as separate
     # column
-    tidyr::unnest_wider("BioRegs_DT") %>%
-    # Split number of grid cell per country as separate column
-    tidyr::unnest_wider("SpCountry") %>%
+    tidyr::unnest_wider(c("BioRegs_DT", "BioRegsMask_DT", "SpCountry")) %>%
     dplyr::mutate(
       # replace NA for biogeographical regions and country analysis with 0
       dplyr::across(
@@ -235,11 +216,17 @@ IAS_Processing <- function(
         ~dplyr::if_else(is.na(.x), 0L, .x))) %>%
     # change column order
     dplyr::select(
-      Species:NCells, PA_Map,
-      tidyselect::matches("^GBIF"), tidyselect::matches("^EASIN"),
-      tidyselect::matches("^eLTER"), tidyselect::matches("^iNat"),
-      tidyselect::matches("^BioReg_"), tidyselect::matches("^BioRegSumm_"),
-      tidyselect::matches("^CNT_"), tidyselect::everything()) %>%
+      Species:NCells_Naturalized, PA_Map, PA_Masked_Map,
+      tidyselect::matches("^GBIF"),
+      tidyselect::matches("^EASIN"),
+      tidyselect::matches("^eLTER"),
+      tidyselect::matches("^iNat"),
+      tidyselect::matches("^BioReg_"),
+      tidyselect::matches("^BioRegSumm_"),
+      tidyselect::matches("^BioReg_Masked_"),
+      tidyselect::matches("^BioRegMaskSumm_"),
+      tidyselect::matches("^CNT_"),
+      tidyselect::everything()) %>%
     dplyr::rename(Species_name = Species) %>%
     dplyr::full_join(
       y = dplyr::distinct(
@@ -257,14 +244,15 @@ IAS_Processing <- function(
   ## Save summary results -----
   IASDT.R::CatTime("Save summary results", Level = 1)
 
-  IASDT.R::CatTime("RData format", Level = 2)
+  IASDT.R::CatTime("`RData`", Level = 2)
   save(Sp_PA_Data, file = file.path(Path_PA, "Sp_PA_Data.RData"))
 
-  IASDT.R::CatTime("summary data without maps", Level = 2)
+  IASDT.R::CatTime("Summary data without maps", Level = 2)
   IASDT.R::CatTime("csv format", Level = 3)
   Sp_PA_Summary_DF <- Sp_PA_Data %>%
     dplyr::select(
-      -tidyselect::all_of(c("GBIF_R", "EASIN_R", "eLTER_R", "PA_Map")))
+      -tidyselect::all_of(
+        c("GBIF_R", "EASIN_R", "eLTER_R", "PA_Map", "PA_Masked_Map")))
 
   readr::write_excel_csv(
     Sp_PA_Summary_DF, file = file.path(Path_PA, "Sp_PA_Summary_DF.csv"),
@@ -285,7 +273,7 @@ IAS_Processing <- function(
   c1 <- snow::makeSOCKcluster(NCores)
   on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
   future::plan(future::cluster, workers = c1, gc = TRUE)
-  invisible(snow::clusterEvalQ(cl = c1, IASDT.R::LoadPackages(List = "dplyr", "sf")))
+  snow::clusterEvalQ(cl = c1, IASDT.R::LoadPackages(List = "dplyr", "sf"))
   snow::clusterExport(
     cl = c1, c("EnvFile", "Overwrite", "FromHPC"), envir = environment())
 
@@ -320,7 +308,7 @@ IAS_Processing <- function(
   ## Number of IAS per grid cell -----
   IASDT.R::CatTime("# IAS per grid cell", Level = 1)
 
-  IAS_NumSp <- dplyr::filter(Sp_PA_Data, NCells > 0) %>%
+  IAS_NumSp <- dplyr::filter(Sp_PA_Data, NCells_All > 0) %>%
     dplyr::pull(PA_Map) %>%
     purrr::map(terra::unwrap) %>%
     terra::rast() %>%
@@ -341,6 +329,29 @@ IAS_Processing <- function(
 
   # # .................................... ###
 
+  ## Number of IAS per grid cell - masked data -----
+
+  IAS_NumSp_Masked <- dplyr::filter(Sp_PA_Data, NCells_Naturalized > 0) %>%
+    dplyr::pull(PA_Masked_Map) %>%
+    purrr::map(terra::unwrap) %>%
+    terra::rast() %>%
+    sum(na.rm = TRUE) %>%
+    stats::setNames("IAS_NumSp_Masked") %>%
+    # Ensure that values are read from memory
+    IASDT.R::setRastVals()
+
+  # save as RData
+  IASDT.R::SaveAs(
+    InObj = terra::wrap(IAS_NumSp_Masked), OutObj = "IAS_NumSp_Masked",
+    OutPath = file.path(Path_PA, "IAS_NumSp_Masked.RData"))
+
+  # save as tif
+  raster::writeRaster(
+    x = IAS_NumSp_Masked, overwrite = TRUE,
+    filename = file.path(Path_PA, "IAS_NumSp_Masked.tif"))
+
+  # # .................................... ###
+
   ## Plotting summary of IAS data -----
   IASDT.R::CatTime("Plotting summary of IAS data", Level = 1)
 
@@ -350,14 +361,18 @@ IAS_Processing <- function(
 
   MapLimX <- c(2600000, 6550000)
   MapLimY <- c(1450000, 5410000)
-  IAS_NumSp2Plot <- terra::classify(IAS_NumSp, cbind(0, NA))
+
+  # # +++++++++++++++++++++++++++++++++ ###
 
   PlottingTheme <- ggplot2::theme_bw() +
     ggplot2::theme(
       plot.margin = ggplot2::margin(0, 0, 0, 0.1, "cm"),
       plot.title = ggplot2::element_text(
         size = 10, color = "blue", face = "bold", hjust = 0,
-        margin = ggplot2::margin(2, 0, 4, 0)),
+        margin = ggplot2::margin(2, 0, 2, 0)),
+      plot.subtitle = ggplot2::element_text(
+        size = 8, color = "darkgrey", face = "italic", hjust = 0,
+        margin = ggplot2::margin(1, 0, 1, 0)),
       strip.text = ggplot2::element_text(size = 6, face = "bold"),
       legend.key.size = grid::unit(0.6, "cm"),
       legend.key.width = grid::unit(0.5, "cm"),
@@ -381,11 +396,14 @@ IAS_Processing <- function(
       plot.tag = ggtext::element_markdown(colour = "grey", size = 4),
       panel.ontop = TRUE, panel.background = ggplot2::element_rect(fill = NA))
 
+  # # +++++++++++++++++++++++++++++++++ ###
+
   Plot_Nsp <- ggplot2::ggplot() +
     ggplot2::geom_sf(
       EUBound, mapping = ggplot2::aes(), color = "grey30",
       linewidth = 0.1, fill = "grey95", inherit.aes = TRUE) +
-    tidyterra::geom_spatraster(data = IAS_NumSp2Plot, maxcell = Inf) +
+    tidyterra::geom_spatraster(
+      data = terra::classify(IAS_NumSp, cbind(0, NA)), maxcell = Inf) +
     paletteer::scale_fill_paletteer_c(
       na.value = "transparent", "viridis::plasma",
       breaks = IASDT.R::integer_breaks()) +
@@ -398,6 +416,7 @@ IAS_Processing <- function(
       expand = ggplot2::expansion(mult = c(0, 0)), limits = MapLimY) +
     ggplot2::labs(
       title = "Number of IAS per 10\u00D710 km grid",
+      subtitle = "All data (including cultivated or casual observations)",
       fill = "# IAS") +
     PlottingTheme
 
@@ -405,7 +424,8 @@ IAS_Processing <- function(
     ggplot2::geom_sf(
       EUBound, mapping = ggplot2::aes(), color = "grey30",
       linewidth = 0.1, fill = "grey95", inherit.aes = TRUE) +
-    tidyterra::geom_spatraster(data = log10(IAS_NumSp2Plot), maxcell = Inf) +
+    tidyterra::geom_spatraster(
+      data = log10(terra::classify(IAS_NumSp, cbind(0, NA))), maxcell = Inf) +
     paletteer::scale_fill_paletteer_c(
       na.value = "transparent", "viridis::plasma",
       breaks = IASDT.R::integer_breaks()) +
@@ -418,6 +438,7 @@ IAS_Processing <- function(
       expand = ggplot2::expansion(mult = c(0, 0)), limits = MapLimY) +
     ggplot2::labs(
       title = "Number of IAS per 10\u00D710 km grid (log10 scale)",
+      subtitle = "All data (including cultivated or casual observations)",
       fill = "# IAS\n(log10)") +
     PlottingTheme
 
@@ -427,65 +448,117 @@ IAS_Processing <- function(
         size = 7, hjust = 1)) %>%
     ggplot2::ggsave(
       filename = file.path(Path_PA, "IAS_NumSpecies.jpeg"),
-      width = 30, height = 16, units = "cm", dpi = 600)
+      width = 30, height = 15.5, units = "cm", dpi = 600)
+
+  # # +++++++++++++++++++++++++++++++++ ###
+
+  Plot_Nsp_Masked <- ggplot2::ggplot() +
+    ggplot2::geom_sf(
+      EUBound, mapping = ggplot2::aes(), color = "grey30",
+      linewidth = 0.1, fill = "grey95", inherit.aes = TRUE) +
+    tidyterra::geom_spatraster(
+      data = terra::classify(IAS_NumSp_Masked, cbind(0, NA)), maxcell = Inf) +
+    paletteer::scale_fill_paletteer_c(
+      na.value = "transparent", "viridis::plasma",
+      breaks = IASDT.R::integer_breaks()) +
+    ggplot2::geom_sf(
+      EUBound, mapping = ggplot2::aes(), color = "grey40",
+      linewidth = 0.075, fill = "transparent", inherit.aes = TRUE) +
+    ggplot2::scale_x_continuous(
+      expand = ggplot2::expansion(mult = c(0, 0)), limits = MapLimX) +
+    ggplot2::scale_y_continuous(
+      expand = ggplot2::expansion(mult = c(0, 0)), limits = MapLimY) +
+    ggplot2::labs(
+      title = "Number of IAS per 10\u00D710 km grid",
+      subtitle = "Excluding cultivated or casual observations", fill = "# IAS") +
+    PlottingTheme
+
+  Plot_Nsp_Masked_log <- ggplot2::ggplot() +
+    ggplot2::geom_sf(
+      EUBound, mapping = ggplot2::aes(), color = "grey30",
+      linewidth = 0.1, fill = "grey95", inherit.aes = TRUE) +
+    tidyterra::geom_spatraster(
+      data = log10(terra::classify(IAS_NumSp_Masked, cbind(0, NA))),
+      maxcell = Inf) +
+    paletteer::scale_fill_paletteer_c(
+      na.value = "transparent", "viridis::plasma",
+      breaks = IASDT.R::integer_breaks()) +
+    ggplot2::geom_sf(
+      EUBound, mapping = ggplot2::aes(), color = "grey40",
+      linewidth = 0.075, fill = "transparent", inherit.aes = TRUE) +
+    ggplot2::scale_x_continuous(
+      expand = ggplot2::expansion(mult = c(0, 0)), limits = MapLimX) +
+    ggplot2::scale_y_continuous(
+      expand = ggplot2::expansion(mult = c(0, 0)), limits = MapLimY) +
+    ggplot2::labs(
+      title = "Number of IAS per 10\u00D710 km grid (log10 scale)",
+      subtitle = "Excluding cultivated or casual observations",
+      fill = "# IAS\n(log10)") +
+    PlottingTheme
+
+  (cowplot::plot_grid(
+    Plot_Nsp_Masked, Plot_Nsp_Masked_log, ncol = 2, nrow = 1) +
+      cowplot::draw_label(
+        label = LastUpdate, color = "grey", x = 0.99, y = 0.98,
+        size = 7, hjust = 1)) %>%
+    ggplot2::ggsave(
+      filename = file.path(Path_PA, "IAS_NumSpecies_Masked.jpeg"),
+      width = 30, height = 15.5, units = "cm", dpi = 600)
+
+  # # +++++++++++++++++++++++++++++++++ ###
 
   rm(IAS_NumSp, Plot_Nsp, Plot_Nsp_log, PlottingTheme, EUBound, MapLimX,
-     MapLimY, IAS_NumSp2Plot)
-
-  # # .................................... ###
-
-  ## # Number of IAS to be used in the model ------
-
-  NSp_threshold_DT <- dplyr::select(Sp_PA_Data, Species_name, NCells)
-  NSp_threshold <- purrr::map_dfr(
-    .x = sort(unique(NSp_threshold_DT$NCells)),
-    .f = ~ tibble::tibble(
-      Threshold = .x, NSp = sum(NSp_threshold_DT$NCells >= .x))) %>%
-    dplyr::filter(Threshold < 450) %>%
-    ggplot2::ggplot(ggplot2::aes(x = Threshold, y = NSp)) +
-    ggplot2::geom_line(color = "grey20", linewidth = 1) +
-    ggplot2::scale_y_continuous(
-      expand = c(0, 0, 0, 0), limits = c(0, NA), oob = scales::oob_keep)  +
-    ggplot2::scale_x_continuous(
-      expand = c(0, 0, 0, 0), limits = c(0, NA), oob = scales::oob_keep) +
-    ggplot2::xlab(
-      "Threshold (# of 10\u00D710 km presence grid cells per species)") +
-    ggplot2::ylab("Number of species") +
-    ggplot2::labs(
-      title = paste0(
-        "Number of IAS to be used in the models based on the arbitrary ",
-        "selection of # of presence grid cells per species"),
-      fill = NULL) +
-    ggplot2::theme(
-      plot.margin = ggplot2::margin(0.05, 0.15, 0.05, 0, "cm"),
-      plot.title = ggplot2::element_text(
-        size = 9, color = "blue", face = "bold", hjust = 0.05,
-        margin = ggplot2::margin(0.15, 0, 0.15, 0, "cm")),
-      plot.title.position = "plot",
-      legend.position = "none",
-      axis.title.y.left = ggplot2::element_text(size = 9, vjust = -1),
-      axis.title.x = ggplot2::element_text(size = 9, vjust = 1),
-      axis.text.y.left = ggplot2::element_text(size = 7),
-      axis.text.x.bottom = ggplot2::element_text(size = 7),
-      axis.text.y.right = ggplot2::element_blank(),
-      axis.text.x.top = ggplot2::element_blank(),
-      axis.ticks = ggplot2::element_blank(),
-      panel.grid.major = ggplot2::element_line(
-        linewidth = 0.1, colour = "grey40", linetype = 2),
-      panel.grid.minor = ggplot2::element_blank(),
-      panel.border = ggplot2::element_blank())
-
-  ggplot2::ggsave(
-    plot = NSp_threshold, width = 20, height = 17, units = "cm", dpi = 600,
-    filename = file.path(Path_PA, "IAS_NSp_threshold.jpeg"))
-
-  rm(NSp_threshold, NSp_threshold_DT)
+     MapLimY, Plot_Nsp_Masked_log, Plot_Nsp_Masked)
 
   # # .................................... ###
 
   ## # Number of IAS to be used in the model - per habitat type ------
 
-  NSp_threshold_Hab <- purrr::map_dfr(
+  Threshold_Theme <- ggplot2::theme(
+    plot.margin = ggplot2::margin(0.05, 0.15, 0.05, 0, "cm"),
+    plot.title = ggplot2::element_text(
+      size = 11, color = "black", hjust = 0.05, face = "italic",
+      margin = ggplot2::margin(0.05, 0, 0.05, 0, "cm")),
+    legend.position = "bottom",
+    legend.text = ggplot2::element_text(
+      size = 6, face = "bold", margin = ggplot2::margin(0, 0, 0, 0, "cm")),
+    legend.box.spacing = grid::unit(-0.05, "cm"),
+    legend.key.spacing.x = grid::unit(0.75, "cm"),
+    legend.key = ggplot2::element_rect(fill = scales::alpha("white", 0)),
+    legend.key.height = grid::unit(0.4, "cm"),
+    legend.key.width = grid::unit(0.1, "cm"),
+    axis.title.y.left = ggplot2::element_text(size = 9, vjust = -1),
+    axis.title.x = ggplot2::element_text(size = 9, vjust = 1),
+    axis.text.y.left = ggplot2::element_text(size = 7),
+    axis.text.x.bottom = ggplot2::element_text(size = 7),
+    axis.text.y.right = ggplot2::element_blank(),
+    axis.text.x.top = ggplot2::element_blank(),
+    axis.ticks = ggplot2::element_blank(),
+    panel.grid.major = ggplot2::element_line(
+      linewidth = 0.1, colour = "grey40", linetype = 2),
+    panel.grid.minor = ggplot2::element_blank(),
+    panel.border = ggplot2::element_blank())
+
+  # # +++++++++++++++++++++++++++++++++ ###
+
+  NSp_DT <- dplyr::select(Sp_PA_Data, Species_name, NCells_All)
+  NSp_DT <- purrr::map_dfr(
+    .x = sort(unique(NSp_DT$NCells_All)),
+    .f = ~ tibble::tibble(
+      Threshold = .x, NSp = sum(NSp_DT$NCells_All >= .x, na.rm = TRUE))) %>%
+    dplyr::filter(Threshold < 450)
+
+  NSp_DT_Masked <- dplyr::select(Sp_PA_Data, Species_name, NCells_Naturalized)
+  NSp_DT_Masked <- purrr::map_dfr(
+    .x = sort(unique(NSp_DT_Masked$NCells_Naturalized)),
+    .f = ~ tibble::tibble(
+      Threshold = .x,
+      NSp = sum(NSp_DT_Masked$NCells_Naturalized >= .x, na.rm = TRUE))) %>%
+    dplyr::filter(Threshold < 450)
+
+  # # +++++++++++++++++++++++++++++++++ ###
+
+  NSp_Hab_DT <- purrr::map_dfr(
     .x = c(
       "Hab_1_Forests", "Hab_2_Open_forests", "Hab_3_Scrub",
       "Hab_4a_Natural_grasslands", "Hab_4b_Human_maintained_grasslands",
@@ -493,11 +566,12 @@ IAS_Processing <- function(
       "Hab_12b_Agricultural_habitats"),
     .f = function(Hab) {
       CurrDT <- dplyr::filter(Sp_PA_Data, !!as.symbol(Hab))
-      NCells <- sort(unique(Sp_PA_Data$NCells))
+      NCells <- sort(unique(Sp_PA_Data$NCells_All))
       purrr::map_dfr(
-        sort(unique(Sp_PA_Data$NCells)),
+        sort(unique(Sp_PA_Data$NCells_All)),
         ~tibble::tibble(
-          Hab = Hab, Threshold = .x, NSp = sum(CurrDT$NCells >= .x)))
+          Hab = Hab, Threshold = .x,
+          NSp = sum(CurrDT$NCells_All >= .x, na.rm = TRUE)))
     }) %>%
     dplyr::mutate(
       Hab = stringr::str_remove(Hab, "^Hab_"),
@@ -510,53 +584,84 @@ IAS_Processing <- function(
     ggplot2::geom_line(
       ggplot2::aes(x = Threshold, y = NSp, group = Hab, colour = Hab),
       linewidth = 0.75) +
+    ggplot2::geom_line(
+      data = NSp_DT, inherit.aes = FALSE, colour = "black",
+      ggplot2::aes(x = Threshold, y = NSp), linewidth = 0.75) +
     ggplot2::scale_y_continuous(
       expand = c(0, 0, 0, 0), limits = c(0, NA), oob = scales::oob_keep)  +
     ggplot2::scale_x_continuous(
-      expand = c(0, 0, 0, 0), oob = scales::oob_keep) +
+      expand = c(0, 0, 0, 0), limits = c(-5, NA), oob = scales::oob_keep) +
     ggplot2::xlab(
       "Threshold (# of 10\u00D710 km presence grid cells per species)") +
     ggplot2::ylab("Number of species") +
     ggplot2::scale_color_discrete(name = NULL) +
     ggplot2::labs(
-      title = paste0(
-        "Number of IAS to be used in the models based on the arbitrary ",
-        "selection of # of presence grid cells per species")) +
-    ggplot2::theme(
-      plot.margin = ggplot2::margin(0.05, 0.15, 0.05, 0, "cm"),
-      plot.title = ggplot2::element_text(
-        size = 10, color = "blue", face = "bold", hjust = 0.05,
-        margin = ggplot2::margin(0.15, 0, 0.15, 0, "cm")),
-      plot.title.position = "plot",
-      legend.position = "bottom",
-      legend.text = ggplot2::element_text(
-        size = 6, face = "bold", margin = ggplot2::margin(0, 0, 0, 0, "cm")),
-      legend.box.spacing = grid::unit(-0.05, "cm"),
-      legend.key.spacing.x = grid::unit(0.75, "cm"),
-      legend.key = ggplot2::element_rect(fill = scales::alpha("white", 0)),
-      legend.key.height = grid::unit(0.4, "cm"),
-      legend.key.width = grid::unit(0.1, "cm"),
-      axis.title.y.left = ggplot2::element_text(size = 9, vjust = -1),
-      axis.title.x = ggplot2::element_text(size = 9, vjust = 1),
-      axis.text.y.left = ggplot2::element_text(size = 7),
-      axis.text.x.bottom = ggplot2::element_text(size = 7),
-      axis.text.y.right = ggplot2::element_blank(),
-      axis.text.x.top = ggplot2::element_blank(),
-      axis.ticks = ggplot2::element_blank(),
-      panel.grid.major = ggplot2::element_line(
-        linewidth = 0.1, colour = "grey40", linetype = 2),
-      panel.grid.minor = ggplot2::element_blank(),
-      panel.border = ggplot2::element_blank()) +
+      title = "All data (including cultivated or casual observations)") +
+    Threshold_Theme +
     ggplot2::guides(
       colour = ggplot2::guide_legend(
         nrow = 1, label.position = "bottom",
-        override.aes = list(linewidth = 2)))
+        override.aes = list(linewidth = 1.5)))
 
-  ggplot2::ggsave(
-    plot = NSp_threshold_Hab, width = 25, height = 17, units = "cm", dpi = 600,
-    filename = file.path(Path_PA, "IAS_NSp_threshold_Hab.jpeg"))
+  NSp_Hab_Masked_DT <- purrr::map_dfr(
+    .x = c(
+      "Hab_1_Forests", "Hab_2_Open_forests", "Hab_3_Scrub",
+      "Hab_4a_Natural_grasslands", "Hab_4b_Human_maintained_grasslands",
+      "Hab_10_Wetland", "Hab_12a_Ruderal_habitats",
+      "Hab_12b_Agricultural_habitats"),
+    .f = function(Hab) {
+      CurrDT <- dplyr::filter(Sp_PA_Data, !!as.symbol(Hab))
+      NCells <- sort(unique(Sp_PA_Data$NCells_Naturalized))
+      purrr::map_dfr(
+        sort(unique(Sp_PA_Data$NCells_Naturalized)),
+        ~tibble::tibble(
+          Hab = Hab, Threshold = .x,
+          NSp = sum(CurrDT$NCells_Naturalized >= .x, na.rm = TRUE)))
+    }) %>%
+    dplyr::mutate(
+      Hab = stringr::str_remove(Hab, "^Hab_"),
+      Hab = stringr::str_replace(Hab, "_", " - "),
+      Hab = stringr::str_replace_all(Hab, "_", " "),
+      Hab = forcats::fct_inorder(Hab)) %>%
+    dplyr::slice(gtools::mixedorder(Hab)) %>%
+    dplyr::filter(Threshold < 450) %>%
+    ggplot2::ggplot() +
+    ggplot2::geom_line(
+      ggplot2::aes(x = Threshold, y = NSp, group = Hab, colour = Hab),
+      linewidth = 0.75) +
+    ggplot2::geom_line(
+      data = NSp_DT_Masked, inherit.aes = FALSE, colour = "black",
+      ggplot2::aes(x = Threshold, y = NSp), linewidth = 0.75) +
+    ggplot2::scale_y_continuous(
+      expand = c(0, 0, 0, 0), limits = c(0, NA), oob = scales::oob_keep)  +
+    ggplot2::scale_x_continuous(
+      expand = c(0, 0, 0, 0), limits = c(-5, NA), oob = scales::oob_keep) +
+    ggplot2::xlab(
+      "Threshold (# of 10\u00D710 km presence grid cells per species)") +
+    ggplot2::ylab("Number of species") +
+    ggplot2::scale_color_discrete(name = NULL) +
+    ggplot2::labs(title = "Excluding cultivated or casual observations") +
+    Threshold_Theme +
+    ggplot2::theme(legend.position = "none")
 
-  rm(NSp_threshold_Hab, Sp_PA_Data)
+  Legend <- ggpubr::as_ggplot(ggpubr::get_legend(NSp_Hab_DT))
+  title <- cowplot::ggdraw() +
+    cowplot::draw_label(
+      paste0(
+        "Number of IAS to be used in the models based on the arbitrary ",
+        "selection of # of presence grid cells per species"),
+      fontface = "bold", colour = "blue")
+
+  cowplot::plot_grid(
+    title,
+    cowplot::plot_grid(
+      (NSp_Hab_DT + ggplot2::theme(legend.position = "none")),
+      NSp_Hab_Masked_DT, ncol = 2, nrow = 1),
+    Legend,
+    ncol = 1, rel_heights = c(0.05, 1, 0.05)) %>%
+    ggplot2::ggsave(
+      filename = file.path(Path_PA, "IAS_NSp_threshold_Hab.jpeg"),
+      width = 30, height = 17, units = "cm", dpi = 600)
 
   # # ..................................................................... ###
 

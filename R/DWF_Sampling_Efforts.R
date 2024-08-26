@@ -73,6 +73,7 @@ Sampling_Efforts <- function(
 
   IASDT.R::CatTime(
     "Ensure that GBIF access information is available or can be read")
+
   IASDT.R::Check_GBIF(Renviron = Renviron)
 
   # # ..................................................................... ###
@@ -138,16 +139,20 @@ Sampling_Efforts <- function(
   IASDT.R::CatTime("Request efforts data")
 
   if (RequestData) {
+
     IASDT.R::CatTime("Requesting efforts data")
 
     Efforts_AllRequests <- IASDT.R::Efforts_Request(
       NCores = NCores, Path_Requests = Path_Efforts_Requests,
       Path_Efforts = Path_Efforts, StartYear = StartYear,
       Boundaries = Boundaries)
+
   } else {
+
     IASDT.R::CatTime("Efforts data was not requested, but loaded", Level = 1)
     Efforts_AllRequests <- IASDT.R::LoadAs(
       file.path(Path_Efforts, "Efforts_AllRequests.RData"))
+
   }
 
   # # ..................................................................... ###
@@ -163,9 +168,11 @@ Sampling_Efforts <- function(
       Path_Interim = Path_Efforts_Interim, Path_Efforts = Path_Efforts)
 
   } else {
+
     IASDT.R::CatTime("Efforts data was not downloaded", Level = 1)
     Efforts_AllRequests <- IASDT.R::LoadAs(
       file.path(Path_Efforts, "Efforts_AllRequests.RData"))
+
   }
 
   # # ..................................................................... ###
@@ -193,8 +200,8 @@ Sampling_Efforts <- function(
     },
     error = function(e) {
       IASDT.R::CatTime(
-        paste0("Error on attempt #", Attempt, ": ",
-               conditionMessage(e)), Level = 2)
+        paste0("Error on attempt #", Attempt, ": ", conditionMessage(e)),
+        Level = 2)
       if (Attempt < Attempts) {
         Attempt <- Attempt + 1
       } else {
@@ -291,9 +298,7 @@ Efforts_Request <- function(
   future::plan(future::cluster, workers = c1, gc = TRUE)
   snow::clusterEvalQ(
     cl = c1,
-    expr = {
-      invisible(IASDT.R::LoadPackages(List = c("dplyr", "IASDT.R", "rgbif")))
-    })
+    expr = IASDT.R::LoadPackages(List = c("dplyr", "IASDT.R", "rgbif")))
 
   # # ..................................................................... ###
 
@@ -317,8 +322,7 @@ Efforts_Request <- function(
         .f = ~{
 
           Request_ID <- paste0("Request_", .x)
-          Request_Path <- file.path(
-            Path_Requests, paste0(Request_ID, ".RData"))
+          Request_Path <- file.path(Path_Requests, paste0(Request_ID, ".RData"))
 
           if (file.exists(Request_Path)) {
             # load previous request
@@ -346,9 +350,10 @@ Efforts_Request <- function(
 
             },
             error = function(e) {
-              stop(paste0("Failed to request data for taxonKey ", .x,
-                          ": ", conditionMessage(e)),
-                   call. = FALSE)
+              stop(paste0(
+                "Failed to request data for taxonKey ", .x, ": ",
+                conditionMessage(e)),
+                call. = FALSE)
             })
           }
 
@@ -359,9 +364,8 @@ Efforts_Request <- function(
         },
         .options = furrr::furrr_options(seed = TRUE))) %>%
     dplyr::rowwise() %>%
+
     # Add columns for metadata
-
-
     dplyr::mutate(
       DownDetails = list(rgbif::occ_download_wait(Request, quiet = TRUE)),
       # Extract some info from metadata
@@ -439,8 +443,7 @@ Efforts_Request <- function(
 #'   interim file paths.
 #' @export
 
-Efforts_Download <- function(
-    NCores, Path_Raw, Path_Interim, Path_Efforts) {
+Efforts_Download <- function(NCores, Path_Raw, Path_Interim, Path_Efforts) {
 
   .StartTimeDown <- lubridate::now(tzone = "CET")
 
@@ -455,8 +458,9 @@ Efforts_Download <- function(
   Path_Efforts_Request <- file.path(Path_Efforts, "Efforts_AllRequests.RData")
   if (!file.exists(Path_Efforts_Request)) {
     stop(
-      paste0("The path for the `Efforts_AllRequests` data does not exist: ",
-             Path_Efforts_Request),
+      paste0(
+        "The path for the `Efforts_AllRequests` data does not exist: ",
+        Path_Efforts_Request),
       call. = FALSE)
   }
 
@@ -472,10 +476,8 @@ Efforts_Download <- function(
   future::plan(future::cluster, workers = c1, gc = TRUE)
   snow::clusterEvalQ(
     cl = c1,
-    expr = {
-      invisible(IASDT.R::LoadPackages(
-        List = c("dplyr", "IASDT.R", "rgbif", "stringr")))
-    })
+    expr = IASDT.R::LoadPackages(
+      List = c("dplyr", "IASDT.R", "rgbif", "stringr")))
 
   # # ..................................................................... ###
 
@@ -489,8 +491,7 @@ Efforts_Download <- function(
         .x = Request,
         .f = ~{
 
-          DownFile <- file.path(
-            Path_Raw, paste0(as.character(.x), ".zip"))
+          DownFile <- file.path(Path_Raw, paste0(as.character(.x), ".zip"))
 
           # Check zip file if exist, if not exist download it
           if (file.exists(DownFile)) {
@@ -499,6 +500,7 @@ Efforts_Download <- function(
               stdout = TRUE, stderr = TRUE) %>%
               stringr::str_detect("No errors detected in compressed data") %>%
               any()
+
             if (FileOkay) {
               Success <- TRUE
             } else {
@@ -614,8 +616,7 @@ Efforts_Process <- function(
 
   .StartTimeProcess <- lubridate::now(tzone = "CET")
 
-  Latitude <- Longitude <- taxonRank <- NULL
-
+  # # ..................................................................... ###
 
   if (missing(NCores) || !is.numeric(NCores) || NCores <= 0) {
     stop("NCores must be a positive integer.", call. = FALSE)
@@ -644,12 +645,15 @@ Efforts_Process <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  speciesKey <- CellCode <- coordinateUncertaintyInMeters <-
-    decimalLongitude <- decimalLatitude <- year <- UncertainKm <- NULL
+  speciesKey <- CellCode <- coordinateUncertaintyInMeters <- ObsN <-
+    decimalLongitude <- decimalLatitude <- year <- UncertainKm <-
+    Latitude <- Longitude <- taxonRank <- NULL
 
   # # ..................................................................... ###
 
   Path_Grid_R <- file.path(Path_Grid, "Grid_10_Land_Crop.RData")
+  Path_Grid_SF <- file.path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
+
   if (!file.exists(Path_Grid_R)) {
     stop(
       paste0(
@@ -657,12 +661,12 @@ Efforts_Process <- function(
       call. = FALSE)
   }
 
-  Path_Grid_SF <- file.path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
   if (!file.exists(Path_Grid_SF)) {
     stop(
       paste0("The path for the reference grid does not exist: ", Path_Grid_SF),
       call. = FALSE)
   }
+
   Grid_SF <- IASDT.R::LoadAs(Path_Grid_SF)
 
   # # ..................................................................... ###
@@ -883,8 +887,7 @@ Efforts_Process <- function(
   # Prepare summary maps ----
   IASDT.R::CatTime("Prepare summary maps", Level = 1)
   CalcNObsNSp <- function(List, Name) {
-    unlist(List) %>%
-      purrr::map(terra::unwrap) %>%
+    purrr::map(.x = unlist(List), .f = terra::unwrap) %>%
       terra::rast() %>%
       sum(na.rm = TRUE) %>%
       stats::setNames(Name)
@@ -892,8 +895,7 @@ Efforts_Process <- function(
 
 
   # Exclude orders with no data
-  Efforts_SummaryR <- Efforts_Summary %>%
-    dplyr::filter(ObsN > 0)
+  Efforts_SummaryR <- dplyr::filter(Efforts_Summary, ObsN > 0)
 
   Efforts_SummaryR <- list(
     CalcNObsNSp(Efforts_SummaryR$NObs_R, "NObs"),
@@ -966,6 +968,8 @@ Efforts_Plot <- function(Path_Efforts, EU_Bound) {
 
   Efforts_SummaryR <- terra::unwrap(IASDT.R::LoadAs(File_SummaryR))
 
+  # # ..................................................................... ###
+
   PlottingTheme <- ggplot2::theme_bw() +
     ggplot2::theme(
       plot.margin = ggplot2::margin(0, 0, 0, 0, "cm"),
@@ -1009,6 +1013,8 @@ Efforts_Plot <- function(Path_Efforts, EU_Bound) {
     "Number of plant species",
     "Number of native species")
 
+  # # ..................................................................... ###
+
   Efforts_GBIF_Plots <- purrr::map(
     .x = seq_len(4),
     .f = ~{
@@ -1034,6 +1040,7 @@ Efforts_Plot <- function(Path_Efforts, EU_Bound) {
     }) %>%
     stats::setNames(names(Efforts_SummaryR))
 
+  # # ..................................................................... ###
 
   Efforts_GBIF_Plots_Log <- purrr::map(
     .x = seq_len(4),
@@ -1061,6 +1068,8 @@ Efforts_Plot <- function(Path_Efforts, EU_Bound) {
     }) %>%
     stats::setNames(names(Efforts_SummaryR))
 
+  # # ..................................................................... ###
+
   plots <- list(
     list(Efforts_GBIF_Plots$NObs, Efforts_GBIF_Plots_Log$NObs),
     list(Efforts_GBIF_Plots$NObs_Native, Efforts_GBIF_Plots_Log$NObs_Native),
@@ -1079,6 +1088,8 @@ Efforts_Plot <- function(Path_Efforts, EU_Bound) {
           filename = file.path(Path_Efforts, .y),
           width = 31, height = 16, units = "cm", dpi = 600)
     })
+
+  # # ..................................................................... ###
 
   return(invisible(NULL))
 }

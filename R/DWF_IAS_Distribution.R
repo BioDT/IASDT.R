@@ -30,7 +30,7 @@ IAS_Distribution <- function(
 
   .StartTime <- lubridate::now(tzone = "CET")
 
-  if (is.null(Species)) {
+  if (is.null(Species) || is.na(Species) || Species == "") {
     stop("Species cannot be empty", call. = FALSE)
   }
 
@@ -40,7 +40,6 @@ IAS_Distribution <- function(
   }
 
   IASDT.R::InfoChunk(Species, Extra2 = 0)
-
 
   # # ..................................................................... ###
 
@@ -63,7 +62,8 @@ IAS_Distribution <- function(
   Path_Grid <- Path_TaxaInfo <- Path_GBIF <- Path_eLTER <- Path_EASIN <-
     Path_BioReg <- Path_Grid_Ref <- Path_PA <- Path_TaxaInfo_RData <- BiogReg <-
     Country <- Species_name2 <- Species_name <- n <- GBIF <- EASIN <- eLTER <-
-    PA <- species <- `status-decision` <- Path_TaxaCNT <- country <- NULL
+    PA <- species <- `status-decision` <- Path_TaxaCNT <- country <-
+    gbif_key <- status_decision <- NULL
 
   # # ..................................................................... ###
 
@@ -125,6 +125,7 @@ IAS_Distribution <- function(
     Path_Grid_Ref,
     c("Grid_100_sf.RData", "Grid_10_Land_Crop.RData",
       "Grid_10_Land_sf.RData"))
+
   if (!all(file.exists(GridsPath))) {
     stop(
       paste0(
@@ -158,6 +159,7 @@ IAS_Distribution <- function(
     sf::st_geometry() %>%
     sf::st_centroid() %>%
     sf::st_filter(x = Grid_100_sf, join = sf::st_within)
+
   Grid100Empty <- dplyr::slice(Grid_100_sf, 0)
 
   # # ................................ ###
@@ -182,13 +184,20 @@ IAS_Distribution <- function(
   IASDT.R::CatTime("Check path for EASIN and GBIF data", Level = 2)
   Path_GBIF_DT <- file.path(Path_GBIF, "Sp_Data")
   Path_EASIN <- file.path(Path_EASIN, "Sp_DT")
-  if (!dir.exists(Path_GBIF_DT) || !dir.exists(Path_EASIN)) {
+
+  if (!dir.exists(Path_GBIF_DT)) {
     stop(
-      "Required path(s) for GBIF or EASIN data do not exist.", call. = FALSE)
+      paste0("Required path for GBIF data do not exist: ", Path_GBIF_DT),
+      call. = FALSE)
+  }
+
+  if (!dir.exists(Path_EASIN)) {
+    stop(
+      paste0("Required path for EASIN data do not exist: ", Path_EASIN),
+      call. = FALSE)
   }
 
   IASDT.R::CatTime("Check/create directories", Level = 2)
-
   Path_PA_Summary <- file.path(Path_PA, "SpSummary")
   Path_PA_tif <- file.path(Path_PA, "tif")
   Path_PA_RData <- file.path(Path_PA, "RData")
@@ -215,6 +224,7 @@ IAS_Distribution <- function(
   ## Exclude countries with only cultivated or casual observations ----
   IASDT.R::CatTime(
     "Exclude countries with only cultivated or casual observations", Level = 1)
+
   Countries2Exclude <- readxl::read_xlsx(
     path = Path_TaxaCNT, sheet = 1) %>%
     dplyr::rename(status_decision = `status-decision`) %>%
@@ -224,11 +234,9 @@ IAS_Distribution <- function(
         country ==  "North_Macedonia" ~ "North Macedonia",
         country ==  "Isle_of_Man" ~ "Isle of Man",
         country ==  "Bosnia_and_Herzegovina" ~ "Bosnia and Herzegovina",
-        # country ==  "Turkey" ~ NA_character_,
         .default = country)) %>%
     dplyr::filter(
-      gbif_key %in% GBIF_Keys,
-      country != "Turkey",
+      gbif_key %in% GBIF_Keys, country != "Turkey",
       status_decision %in% c("cult+cas", "delete")) %>%
     dplyr::pull("country")
 
@@ -289,8 +297,11 @@ IAS_Distribution <- function(
     GBIF_R_Out <- stats::setNames(GBIF_R, Sp_File) %>%
       terra::wrap() %>%
       list()
+
     GBIF_Path <- Path_GBIF_D
+
   } else {
+
     GBIF_R <- terra::classify(RefGrid, cbind(1, 0)) %>%
       stats::setNames("GBIF")
 
@@ -300,6 +311,7 @@ IAS_Distribution <- function(
 
     GBIF_Gr100 <- Grid100Empty
     GBIF_Path <- NA_character_
+
   }
 
   # # .................................... ###
@@ -339,6 +351,7 @@ IAS_Distribution <- function(
 
     EASIN_Gr100 <- Grid100Empty
     EASIN_Path <- NA_character_
+
   }
 
   # # .................................... ###
@@ -349,6 +362,7 @@ IAS_Distribution <- function(
   eLTER_DT <- dplyr::filter(eLTER_IAS, Species_name == Species)
 
   if (nrow(eLTER_DT) > 0) {
+
     eLTER_R <- dplyr::select(eLTER_DT, "Species_name") %>%
       terra::rasterize(RefGrid) %>%
       IASDT.R::RastPA() %>%
@@ -371,6 +385,7 @@ IAS_Distribution <- function(
       list()
 
     eLTER_Gr100 <- Grid100Empty
+
   }
 
   # # ..................................................................... ###
@@ -398,16 +413,6 @@ IAS_Distribution <- function(
   IASDT.R::CatTime("Processing species data")
 
   if (PA_NCells_All == 0) {
-    # tibble::tibble(
-    #   Species = Species, SpeciesID = IAS_ID,
-    #   GBIF_Keys = GBIF_Keys,
-    #   NCells_All = PA_NCells_All,
-    #   NCells_Naturalized = PA_NCells_Naturalized,
-    #   GBIF = 0L, GBIF_Unique = 0L, GBIF_Path = GBIF_Path,
-    #   EASIN = 0L, EASIN_Unique = 0L, EASIN_Path = EASIN_Path,
-    #   eLTER = 0L, eLTER_Unique = 0L,
-    #   PA_Map = list(Sp_PA$PA), GBIF_R = list(GBIF_R_Out),
-    #   EASIN_R = list(EASIN_R_Out), eLTER_R = list(eLTER_R_Out)) %>%
     return(invisible(NULL))
   }
 
@@ -452,7 +457,7 @@ IAS_Distribution <- function(
 
   # Number of grid per each biogeographical region
   #
-  # number of biogeographical regions per species and minimum/maximum/mean
+  # number of biogeographical regions per species and minimum / maximum / mean
   # number of grid cells per biogeographical regions
 
   BioReg_R <- terra::unwrap(IASDT.R::LoadAs(Path_BioReg))
@@ -485,8 +490,8 @@ IAS_Distribution <- function(
   IASDT.R::CatTime("Excluding cultivated or casual observations", Level = 2)
 
   BioReg_Names2 <- stringr::str_replace(
-    string = BioReg_Names, pattern = "BioReg_",
-    replacement = "BioReg_Masked_")
+    string = BioReg_Names, pattern = "BioReg_", replacement = "BioReg_Masked_")
+
   Sp_BiogeoRegions_Masked <- terra::classify(Sp_PA$PA_Masked, cbind(0, NA)) %>%
     terra::mask(mask = ., x = BioReg_R) %>%
     as.data.frame() %>%
@@ -530,7 +535,8 @@ IAS_Distribution <- function(
   N_GBIF_Masked <- terra::global(
     (Sp_PA$GBIF * Sp_PA$Mask_Keep), sum, na.rm = TRUE) %>%
     as.integer()
-  N_GBIF_Unique_Masked <- dplyr::filter(RVals_Masked, GBIF == 1, EASIN == 0, eLTER == 0) %>%
+  N_GBIF_Unique_Masked <- dplyr::filter(
+    RVals_Masked, GBIF == 1, EASIN == 0, eLTER == 0) %>%
     dplyr::pull("GBIF") %>%
     sum()
 
@@ -541,19 +547,22 @@ IAS_Distribution <- function(
 
   N_EASIN_Masked <- as.integer(terra::global(
     (Sp_PA$EASIN * Sp_PA$Mask_Keep), sum, na.rm = TRUE))
-  N_EASIN_Unique_Masked <- dplyr::filter(RVals_Masked, GBIF == 0, EASIN == 1, eLTER == 0) %>%
+  N_EASIN_Unique_Masked <- dplyr::filter(
+    RVals_Masked, GBIF == 0, EASIN == 1, eLTER == 0) %>%
     dplyr::pull("EASIN") %>%
     sum()
 
   N_eLTER <- as.integer(terra::global(eLTER_R, sum, na.rm = TRUE))
-  N_eLTER_Unique <- dplyr::filter(RVals_Masked, GBIF == 0, EASIN == 0, eLTER == 1) %>%
+  N_eLTER_Unique <- dplyr::filter(
+    RVals_Masked, GBIF == 0, EASIN == 0, eLTER == 1) %>%
     dplyr::pull("eLTER") %>%
     sum()
 
   N_eLTER_Masked <- terra::global(
     (Sp_PA$eLTER * Sp_PA$Mask_Keep), sum, na.rm = TRUE) %>%
     as.integer()
-  N_eLTER_Unique_Masked <- dplyr::filter(RVals_Masked, GBIF == 0, EASIN == 0, eLTER == 1) %>%
+  N_eLTER_Unique_Masked <- dplyr::filter(
+    RVals_Masked, GBIF == 0, EASIN == 0, eLTER == 1) %>%
     dplyr::pull("eLTER") %>%
     sum()
 
@@ -594,7 +603,6 @@ IAS_Distribution <- function(
     IASDT.R::AddMissingCols(0L, CountryList) %>%
     dplyr::select(tidyselect::all_of(CountryList))
 
-
   # # .................................... ###
 
   ## Number of unique iNaturalist grid cells -----
@@ -619,7 +627,12 @@ IAS_Distribution <- function(
   Binary_R_Out <- stats::setNames(Sp_PA$PA, Sp_File) %>%
     terra::wrap() %>%
     list()
+
   Binary_R_Masked_Out <- stats::setNames(Sp_PA$PA_Masked, Sp_File) %>%
+    terra::wrap() %>%
+    list()
+
+  Binary_R_Mask_Keep <- stats::setNames(Sp_PA$Mask_Keep, Sp_File) %>%
     terra::wrap() %>%
     list()
 
@@ -651,6 +664,7 @@ IAS_Distribution <- function(
     eLTER_Gr100 = list(eLTER_Gr100),
 
     PA_Map = Binary_R_Out, PA_Masked_Map = Binary_R_Masked_Out,
+    Mask_Keep = Binary_R_Mask_Keep,
     GBIF_R = GBIF_R_Out, EASIN_R = EASIN_R_Out, eLTER_R = eLTER_R_Out,
 
     SpCountry = list(SpCountry),
@@ -664,8 +678,8 @@ IAS_Distribution <- function(
     BioRegMaskSumm_Mean = BioRegMaskSumm_Mean,
     BioRegMaskSumm_N = BioRegMaskSumm_N,
 
-    iNaturalist_Unique = iNatur_Unique,
-    iNatur_Perc = iNatur_Perc) %>%
+    iNaturalist_Unique = iNatur_Unique, iNatur_Perc = iNatur_Perc,
+    Countries2Exclude = list(Countries2Exclude)) %>%
     dplyr::mutate_at(IntegerCols, ~as.integer(.))
 
 

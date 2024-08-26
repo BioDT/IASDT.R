@@ -47,7 +47,7 @@ IAS_Plot <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Path_Grid_Ref <- Path_Grid <- Path_TaxaInfo_RData <- Path_PA <-
+  Path_Grid_Ref <- Path_Grid <- Path_TaxaInfo_RData <- Path_PA <- NAME_ENGL <-
     Path_TaxaInfo <- EU_Bound <- Species_name2 <- CellCode <- NULL
 
   # # ..................................................................... ###
@@ -95,13 +95,13 @@ IAS_Plot <- function(
   }
   SpData <- IASDT.R::LoadAs(SpData)
 
-  if (SpData$NCells == 0) {
+  if (SpData$NCells_All == 0) {
     return(invisible(NULL))
   }
 
   CountryBound <- IASDT.R::LoadAs(EU_Bound) %>%
     magrittr::extract2("Bound_sf_Eur_s") %>%
-    magrittr::extract2("L_03")
+    magrittr::extract2("L_10")
 
   LastUpdate <- paste0("Last update: ", format(Sys.Date(), "%d %B %Y"))
 
@@ -139,8 +139,7 @@ IAS_Plot <- function(
 
   SpData <- SpData %>%
     dplyr::select(
-      -tidyselect::all_of(c("GBIF_Gr100", "EASIN_Gr100", "eLTER_Gr100"))) %>%
-    unlist()
+      -tidyselect::all_of(c("GBIF_Gr100", "EASIN_Gr100", "eLTER_Gr100")))
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -165,20 +164,6 @@ IAS_Plot <- function(
     paste0(
       "   <span style='font-size: 14pt; color:blue;'><b><i>", IAS_ID,
       " \U2014 ", Species, "</i></b></span>   (", ., ")")
-
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||
-
-  # Figure subtitle ----
-
-  NGrids_All <- paste0(
-    "<span style='font-size: 12pt; color:red;'><b>", scales::label_comma()(SpData$NCells),
-    " presence grid cells</b></span> \U2014 <b>GBIF</b> (",
-    scales::label_comma()(SpData$GBIF), " / ",
-    scales::label_comma()(SpData$GBIF_Unique), ") \U2014 <b>EASIN</b> (",
-    scales::label_comma()(SpData$EASIN), " / ",
-    scales::label_comma()(SpData$EASIN_Unique), ") \U2014 <b>eLTER</b> (",
-    scales::label_comma()(SpData$eLTER), " / ",
-    scales::label_comma()(SpData$eLTER_Unique), ")")
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -208,11 +193,43 @@ IAS_Plot <- function(
 
   # map to be plotted ----
 
-  # convert to factor
-  PresGrid <- terra::unwrap(SpData$PA_Map) %>%
+  PresGrid <- terra::unwrap(SpData$PA_Map[[1]]) %>%
     terra::classify(cbind(0, NA)) %>%
     terra::as.factor()
+
+  BoundExclude <- IASDT.R::LoadAs(EU_Bound) %>%
+    magrittr::extract2("Bound_sf_Eur") %>%
+    magrittr::extract2("L_10") %>%
+    dplyr::filter(NAME_ENGL %in% SpData$Countries2Exclude[[1]])
+
   rm(SpData)
+
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||
+
+  # Figure subtitle ----
+
+  NGrids_All <- paste0(
+    "<span style='font-size: 12pt; color:red;'><b>All data:</b></span> ",
+    scales::label_comma()(SpData$NCells_All),
+    " presence grid cells</b> \U2014 <b>GBIF</b> (",
+    scales::label_comma()(SpData$GBIF), " / ",
+    scales::label_comma()(SpData$GBIF_Unique), ") \U2014 <b>EASIN</b> (",
+    scales::label_comma()(SpData$EASIN), " / ",
+    scales::label_comma()(SpData$EASIN_Unique), ") \U2014 <b>eLTER</b> (",
+    scales::label_comma()(SpData$eLTER), " / ",
+    scales::label_comma()(SpData$eLTER_Unique), ")<br>",
+
+    "<span style='font-size: 12pt; color:red;'><b>Final data: </span>",
+    scales::label_comma()(SpData$NCells_Naturalized),
+    " presence grid cells</b> \U2014 <b>GBIF</b> (",
+    scales::label_comma()(SpData$GBIF_Masked), " / ",
+    scales::label_comma()(SpData$GBIF_Masked_Unique),
+    ") \U2014 <b>EASIN</b> (",
+    scales::label_comma()(SpData$EASIN_Masked), " / ",
+    scales::label_comma()(SpData$EASIN_Masked_Unique),
+    ") \U2014 <b>eLTER</b> (",
+    scales::label_comma()(SpData$eLTER_Masked), " / ",
+    scales::label_comma()(SpData$eLTER_Masked_Unique), ")\n")
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -221,12 +238,16 @@ IAS_Plot <- function(
   Plot <- ggplot2::ggplot() +
     # country boundaries
     ggplot2::geom_sf(
-      CountryBound, mapping = ggplot2::aes(), color = "grey30",
-      linewidth = 0.2, fill = scales::alpha("lightgrey", 0.2)) +
+      CountryBound, mapping = ggplot2::aes(), color = "grey",
+      linewidth = 0.2, fill = scales::alpha("grey", 0.2)) +
     # the study area
     ggplot2::geom_sf(
       Grid10_Sf, mapping = ggplot2::aes(), color = "lightgrey",
       fill = "lightgrey", linewidth = 0.15) +
+    # Countries to exclude
+    ggplot2::geom_sf(
+      BoundExclude, mapping = ggplot2::aes(), color = "grey90",
+      linewidth = 0.1, fill = scales::alpha("red", 0.2)) +
     # presence grids at 100 km resolution
     ggplot2::geom_sf(
       GBIF_Gr100, mapping = ggplot2::aes(), color = "transparent",
@@ -243,8 +264,8 @@ IAS_Plot <- function(
       fill = "transparent", linewidth = 0.65, linetype = "dotdash") +
     # country boundaries
     ggplot2::geom_sf(
-      CountryBound, mapping = ggplot2::aes(), color = "grey40",
-      linewidth = 0.1, fill = "transparent") +
+      CountryBound, mapping = ggplot2::aes(), color = "black",
+      linewidth = 0.2, fill = "transparent") +
     # legends for data type
     ggplot2::geom_sf(
       Legend_GBIF, mapping = ggplot2::aes(), color = "transparent",

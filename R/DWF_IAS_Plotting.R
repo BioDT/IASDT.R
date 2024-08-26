@@ -202,8 +202,6 @@ IAS_Plot <- function(
     magrittr::extract2("L_10") %>%
     dplyr::filter(NAME_ENGL %in% SpData$Countries2Exclude[[1]])
 
-  rm(SpData)
-
   # # |||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Figure subtitle ----

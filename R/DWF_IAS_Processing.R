@@ -198,12 +198,12 @@ IAS_Processing <- function(
 
   IASDT.R::CatDiff(
     InitTime = .StartTimeDist, CatInfo = FALSE,
-    Prefix = "Processing Species-specific data took ", NLines = 1, Level = 1)
+    Prefix = "Processing Species-specific data took ", NLines = 1, Level = 2)
 
-  # # .................................... ###
+  # # ..................................................................... ###
 
-  ## Merge Species-specific summary info -----
-  IASDT.R::CatTime("Merge Species-specific summary info", Level = 1)
+  # Merge Species-specific summary info -----
+  IASDT.R::CatTime("Merge Species-specific summary info")
 
   Sp_PA_Data <- dplyr::bind_rows(Sp_PA_Data) %>%
     # Split number of grid cell per country / biogeographical region as separate
@@ -247,8 +247,8 @@ IAS_Processing <- function(
   IASDT.R::CatTime("`RData`", Level = 2)
   save(Sp_PA_Data, file = file.path(Path_PA, "Sp_PA_Data.RData"))
 
-  IASDT.R::CatTime("Summary data without maps", Level = 2)
-  IASDT.R::CatTime("csv format", Level = 3)
+  IASDT.R::CatTime("Summary data without maps", Level = 1)
+  IASDT.R::CatTime("csv format", Level = 2)
   Sp_PA_Summary_DF <- Sp_PA_Data %>%
     dplyr::select(
       -tidyselect::all_of(
@@ -258,7 +258,7 @@ IAS_Processing <- function(
     Sp_PA_Summary_DF, file = file.path(Path_PA, "Sp_PA_Summary_DF.csv"),
     progress = FALSE)
 
-  IASDT.R::CatTime("RData format", Level = 3)
+  IASDT.R::CatTime("RData format", Level = 2)
   save(Sp_PA_Summary_DF, file = file.path(Path_PA, "Sp_PA_Summary_DF.RData"))
 
   # # ..................................................................... ###

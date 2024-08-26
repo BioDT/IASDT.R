@@ -49,7 +49,7 @@ EASIN_Down <- function(
     DeleteChunks = TRUE, ReturnData = FALSE) {
 
   if (is.null(SpKey)) {
-    stop("SpKey cannot be NULL", .call = FALSE)
+    stop("SpKey cannot be NULL", call. = FALSE)
   }
 
   # # ..................................................................... ###

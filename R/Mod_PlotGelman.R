@@ -64,11 +64,11 @@ PlotGelman <- function(
   }
 
   if (is.null(InputCoda) || is.null(NCores)) {
-    stop("InputCoda and NCores cannot be empty", .call = FALSE)
+    stop("InputCoda and NCores cannot be empty", call. = FALSE)
   }
 
   if (!SavePlot && !ReturnPlots) {
-    stop("At least one of SavePlot or ReturnPlots must be TRUE", .call = FALSE)
+    stop("At least one of SavePlot or ReturnPlots must be TRUE", call. = FALSE)
   }
 
   AllArgs <- ls()

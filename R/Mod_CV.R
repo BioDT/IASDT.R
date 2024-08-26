@@ -93,7 +93,7 @@ Mod_CV <- function(
       is.null(Time) || is.null(EnvFile)) {
     stop(paste0("The following arguments cannot be empty: ",
          "Model, Path_Hmsc, MemPerCpu, Time, EnvFile"), 
-         .call = FALSE)
+         call. = FALSE)
   }
 
   AllArgs <- ls()
@@ -114,13 +114,13 @@ Mod_CV <- function(
   rm(AllArgs)
 
   # # ++++++++++++++++++++++++++++++++++++
-  # Loading environment variables
+  # Environment variables
   # # ++++++++++++++++++++++++++++++++++++
 
   if (!file.exists(EnvFile)) {
     stop(
       paste0("Path for environment variables: ", EnvFile, " was not found"), 
-      .call = FALSE)
+      call. = FALSE)
   }
 
   if (FromHPC) {
@@ -145,7 +145,7 @@ Mod_CV <- function(
     ModFull <- IASDT.R::LoadAs(Model)
   } else {
     if (is.null(Path_CV)) {
-      stop("Path_CV cannot be empty if the Model is provided as Hmsc object", .call = FALSE)
+      stop("Path_CV cannot be empty if the Model is provided as Hmsc object", call. = FALSE)
     }
     ModFull <- Model
     rm(Model)
@@ -172,7 +172,7 @@ Mod_CV <- function(
       stop(
         paste0("partition was not defined and column(s) for CV folds ",
                "can not be found in species data"), 
-        .call = FALSE)
+        call. = FALSE)
     }
   } else {
     # If partition is provided directly to the function, use "CV_Custom" as CV
@@ -182,7 +182,7 @@ Mod_CV <- function(
 
   # Check the length of CV data equals the number of sampling units in the model
   if (any(sapply(partition, length) != ModFull$ny)) {
-    stop("partition parameter must be a vector of length ny", .call = FALSE)
+    stop("partition parameter must be a vector of length ny", call. = FALSE)
   }
 
   # # ++++++++++++++++++++++++++++++++++++

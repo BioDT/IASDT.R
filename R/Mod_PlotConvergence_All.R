@@ -25,7 +25,7 @@ PlotConvergence_All <- function(
   .StartTime <- lubridate::now(tzone = "CET")
 
   if (is.null(Path_Model) || is.null(NCores)) {
-    stop("Path_Model and NCores must not be NULL", .call = FALSE)
+    stop("Path_Model and NCores must not be NULL", call. = FALSE)
   }
 
   # Avoid "no visible binding for global variable" message
@@ -66,8 +66,8 @@ PlotConvergence_All <- function(
   Model_Info <- file.path(Path_Model, "Model_Info.RData")
   if (!file.exists(Model_Info)) {
     stop(
-      paste0("Model info file `", Model_Info, "` does not exist"), 
-      .call = FALSE)
+      paste0("Model info file `", Model_Info, "` does not exist"),
+      call. = FALSE)
   }
   Model_Info <- IASDT.R::LoadAs(Model_Info)
 
@@ -203,7 +203,7 @@ PlotConvergence_All <- function(
   }
 
   invisible(snow::clusterEvalQ(
-    cl = c1, 
+    cl = c1,
     IASDT.R::LoadPackages(List = c("dplyr", "sf", "Hmsc", "coda", "magrittr"))))
   snow::clusterExport(
     cl = c1, envir = environment(),
@@ -214,7 +214,7 @@ PlotConvergence_All <- function(
       Plots = snow::parLapply(
         cl = c1, x = seq_len(nrow(Model_Info)), fun = PrepConvergence)) %>%
     dplyr::select(tidyselect::all_of(c("M_Name_Fit", "Plots"))) %>%
-    tidyr::unnest_wider("Plots") %>% 
+    tidyr::unnest_wider("Plots") %>%
     # arrange data alphanumerically by model name
     dplyr::arrange(gtools::mixedorder(M_Name_Fit)) %>%
     # discard non existed data
@@ -225,6 +225,7 @@ PlotConvergence_All <- function(
     file = file.path(Path_Convergence_All, "Convergence_DT.RData"))
 
   snow::stopCluster(c1)
+  future::plan(future::sequential, gc = TRUE)
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Plotting theme -----

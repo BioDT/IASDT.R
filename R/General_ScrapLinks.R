@@ -22,7 +22,7 @@
 ScrapLinks <- function(url) {
 
   if (is.null(url)) {
-    stop("url cannot be NULL", .call = FALSE)
+    stop("url cannot be NULL", call. = FALSE)
   }
 
   # Create an html document from the url

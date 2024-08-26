@@ -21,7 +21,7 @@
 
 ReplaceSpace <- function(x) {
   if (is.null(x)) {
-    stop("x name cannot be NULL", .call = FALSE)
+    stop("x name cannot be NULL", call. = FALSE)
   }
 
   return(stringr::str_replace_all(as.character(x), " ", "_"))

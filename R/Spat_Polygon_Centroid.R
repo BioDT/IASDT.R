@@ -24,14 +24,14 @@
 Polygon_Centroid <- function(x = NULL, Rename = FALSE, NewName = NULL) {
 
   if (is.null(x)) {
-    stop("Input sf object cannot be NULL", .call = FALSE)
+    stop("Input sf object cannot be NULL", call. = FALSE)
   }
 
   suppressWarnings(sf::st_geometry(x) <- sf::st_geometry(sf::st_centroid(x)))
 
   if (Rename) {
     if (is.null(NewName)) {
-      stop("NewName cannot be NULL", .call = FALSE)
+      stop("NewName cannot be NULL", call. = FALSE)
     }
 
     x <- Rename_geometry(g = x, name = NewName)

@@ -90,7 +90,9 @@ the data already exist on the raw directory. The function assumes that the
 contents of this folder should be removed as part of the data workflow.
 Skipping processing available data can help not to re-download already
 available data from the EASIN server.
-\item This function depends on the following functions: \link{EASIN_Taxonomy}  for getting the most recent EASIN taxonomy; \link{EASIN_Down} for processing EASIN dataset; and \link{EASIN_Plot} for plotting.
+\item This function depends on the following functions: \link{EASIN_Taxonomy} for
+getting the most recent EASIN taxonomy; \link{EASIN_Down} for processing EASIN
+dataset; and \link{EASIN_Plot} for plotting.
 }
 }
 \author{

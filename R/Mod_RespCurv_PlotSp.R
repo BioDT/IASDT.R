@@ -32,7 +32,7 @@ RespCurv_PlotSp <- function(
     ShowProgress = FALSE, FromHPC = TRUE, ReturnData = FALSE) {
 
   if (is.null(Path_Model)) {
-    stop("Path_Model cannot be NULL", .call = FALSE)
+    stop("Path_Model cannot be NULL", call. = FALSE)
   }
 
   # Avoid "no visible binding for global variable" message
@@ -226,6 +226,9 @@ RespCurv_PlotSp <- function(
         .progress = ShowProgress)) %>%
     dplyr::select(-DT) %>%
     tidyr::unnest(cols = "Plot")
+
+  snow::stopCluster(c1)
+  future::plan(future::sequential, gc = TRUE)
 
   if (ReturnData) {
     return(SR_DT_All)

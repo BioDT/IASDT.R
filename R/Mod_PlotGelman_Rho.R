@@ -19,7 +19,7 @@
 PlotGelman_Rho <- function(CodaObj) {
 
   if (is.null(CodaObj)) {
-    stop("CodaObj cannot be empty", .call = FALSE)
+    stop("CodaObj cannot be empty", call. = FALSE)
   }
 
   # Avoid "no visible binding for global variable" message

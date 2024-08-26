@@ -26,18 +26,18 @@ PlotGelman_Omega <- function(
     CodaObj, NCores, NOmega = 1000, PlottingAlpha = 0.25) {
 
   if (is.null(CodaObj) || is.null(NCores)) {
-    stop("CodaObj and NCores cannot be empty", .call = FALSE)
+    stop("CodaObj and NCores cannot be empty", call. = FALSE)
   }
 
   if (!is.numeric(NCores) || NCores <= 0) {
-    stop("NCores must be a positive integer.", .call = FALSE)
+    stop("NCores must be a positive integer.", call. = FALSE)
   }
  if (!is.numeric(NOmega) || NOmega <= 0) {
-    stop("NOmega must be a positive integer.", .call = FALSE)
+    stop("NOmega must be a positive integer.", call. = FALSE)
   }
 
   if (!inherits(CodaObj, "mcmc.list")) {
-    stop("CodaObj has to be of class mcmc.list", .call = FALSE)
+    stop("CodaObj has to be of class mcmc.list", call. = FALSE)
   }
 
   # Avoid "no visible binding for global variable" message
@@ -55,7 +55,7 @@ PlotGelman_Omega <- function(
     sort()
 
   invisible(snow::clusterEvalQ(
-    cl = c1, 
+    cl = c1,
     IASDT.R::LoadPackages(List = c("dplyr", "coda", "tibble", "magrittr"))))
   snow::clusterExport(cl = c1, list = "CodaObj", envir = environment())
 
@@ -80,6 +80,9 @@ PlotGelman_Omega <- function(
     }) %>%
     dplyr::bind_rows() %>%
     dplyr::mutate(group = paste0(Sp_comb, "_", Type))
+
+  snow::stopCluster(c1)
+  future::plan(future::sequential, gc = TRUE)
 
   Gelman_Omega_Plot <- Gelman_OmegaDT %>%
     ggplot2::ggplot() +

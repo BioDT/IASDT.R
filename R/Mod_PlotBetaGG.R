@@ -28,7 +28,7 @@ PlotBetaGG <- function(
     Path_Model = NULL, supportLevel = 0.95, PlotWidth = 18, PlotHeight = 20) {
 
   if (is.null(Path_Model)) {
-    stop("Path_Model cannot be empty", .call = FALSE)
+    stop("Path_Model cannot be empty", call. = FALSE)
   }
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

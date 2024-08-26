@@ -34,7 +34,7 @@
 #' myurl <- paste0("https://upload.wikimedia.org/wikipedia/commons/",
 #'     "e/e1/Jupiter_%28transparent%29.png")
 #' z <- tempfile()
-#' download.file(myurl, z, mode="wb", quiet = TRUE)
+#' utils::download.file(myurl, z, mode="wb", quiet = TRUE)
 #' pic <- png::readPNG(z)
 #' file.remove(z) # cleanup
 #'
@@ -46,7 +46,7 @@
 AddImg2Plot <- function(obj, x, y, width, interpolate = TRUE) {
 
   if (is.null(obj) || is.null(x) || is.null(y) || is.null(width)) {
-    stop("Must provide args 'obj', 'x', 'y', and 'width'", .call = FALSE)
+    stop("Must provide args 'obj', 'x', 'y', and 'width'", call. = FALSE)
   }
 
   # A vector of the form c(x1, x2, y1, y2) giving the extremes of the user

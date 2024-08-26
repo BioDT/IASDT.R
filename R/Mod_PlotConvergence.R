@@ -44,14 +44,14 @@ PlotConvergence <- function(
 
   if (is.null(Path_Coda) || is.null(Path_FittedModel) || is.null(NCores)) {
     stop(
-      "Path_Coda, Path_FittedModel, and NCores cannot be empty", .call = FALSE)
+      "Path_Coda, Path_FittedModel, and NCores cannot be empty", call. = FALSE)
   }
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   SpComb <- `2.5%` <- `97.5%` <- Class <- Order <- Family <- Plot <- DT <-
-    IAS_ID <- Species <- Variable <- data <- PlotID <- Var <- PlotFixedY <- 
-    Path_Scratch <- File <- Page <- Iter <- Value <- Chain <- y <- label <- 
+    IAS_ID <- Species <- Variable <- data <- PlotID <- Var <- PlotFixedY <-
+    Path_Scratch <- File <- Page <- Iter <- Value <- Chain <- y <- label <-
     Var_Sp <- NULL
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -201,7 +201,7 @@ PlotConvergence <- function(
     on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
     future::plan(future::cluster, workers = c1, gc = TRUE)
     invisible(snow::clusterEvalQ(
-      cl = c1, 
+      cl = c1,
       IASDT.R::LoadPackages(
         List = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext"))))
     snow::clusterExport(
@@ -281,6 +281,7 @@ PlotConvergence <- function(
       })
 
     snow::stopCluster(c1)
+    future::plan(future::sequential, gc = TRUE)
 
     if (SavePlotData) {
       IASDT.R::CatTime("  >>  Save plot data")
@@ -507,6 +508,7 @@ PlotConvergence <- function(
       dplyr::right_join(PlotObj_Beta, by = "Var_Sp")
 
     snow::stopCluster(c1)
+    future::plan(future::sequential, gc = TRUE)
 
     if (SavePlotData) {
       IASDT.R::CatTime("  >>  Save trace plot data")
@@ -619,6 +621,8 @@ PlotConvergence <- function(
     })
 
   snow::stopCluster(c1)
+  future::plan(future::sequential, gc = TRUE)
+
   rm(BetaTracePlots_ByVar0, BetaTracePlots_ByVar)
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

@@ -51,7 +51,7 @@ PlotVarPar <- function(
   .StartTime <- lubridate::now(tzone = "CET")
 
   if (is.null(Model) || is.null(Path_Plot) || is.null(NCores)) {
-    stop("Model, Path_Plot, and NCores cannot be empty", .call = FALSE)
+    stop("Model, Path_Plot, and NCores cannot be empty", call. = FALSE)
   }
 
   # Avoid "no visible binding for global variable" message
@@ -91,7 +91,7 @@ PlotVarPar <- function(
   if (!file.exists(EnvFile)) {
     stop(
       paste0("Path for environment variables: ", EnvFile, " was not found"),
-      .call = FALSE)
+      call. = FALSE)
   }
 
   if (FromHPC) {
@@ -138,18 +138,18 @@ PlotVarPar <- function(
 
       if (inherits(Model, "character")) {
         if (!file.exists(Model)) {
-          stop("The provided path for the model does not exist", .call = FALSE)
+          stop("The provided path for the model does not exist", call. = FALSE)
         }
         Model <- IASDT.R::LoadAs(Model)
 
         if (!inherits(Model, "Hmsc")) {
-          stop("The loaded model is not of an Hmsc object", .call = FALSE)
+          stop("The loaded model is not of an Hmsc object", call. = FALSE)
         }
 
       } else {
         stop(
           "The Model has to be an Hmsc model or a path to a saved model", 
-          .call = FALSE)
+          call. = FALSE)
       }
     }
 
@@ -331,7 +331,7 @@ PlotVarPar <- function(
     stop(
       paste0("Mismatch between the length of ModelEval$TjurR2 and the ",
              "number of columns in VarPar$vals"), 
-      .call = FALSE)
+      call. = FALSE)
   }
 
   vp_df_R <- tibble::as_tibble(VarPar$vals, rownames = "variable") %>%

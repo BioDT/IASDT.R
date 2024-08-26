@@ -38,7 +38,7 @@
 Extract_BB <- function(x, var) {
 
   if (is.null(x) || is.null(var)) {
-    stop("x, and var cannot be NULL", .call = FALSE)
+    stop("x, and var cannot be NULL", call. = FALSE)
   }
 
   var <- as.character(rlang::ensyms(var))

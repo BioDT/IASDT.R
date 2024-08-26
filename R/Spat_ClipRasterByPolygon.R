@@ -44,7 +44,7 @@
 ClipRasterByPolygon <- function(raster = NULL, shape = NULL) {
 
   if (is.null(raster) || is.null(shape)) {
-    stop("Input raster or shape cannot be NULL", .call = FALSE)
+    stop("Input raster or shape cannot be NULL", call. = FALSE)
   }
 
   a1_crop <- raster::crop(raster, shape)

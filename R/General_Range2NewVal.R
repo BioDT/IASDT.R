@@ -84,13 +84,13 @@ Range2NewVal <- function(
     NewVal, InvertSelection = FALSE) {
 
   if (is.null(x) || is.null(NewVal)) {
-    stop("x and NewVal cannot be NULL", .call = FALSE)
+    stop("x and NewVal cannot be NULL", call. = FALSE)
   }
 
   if (all(is.null(MoreThan), is.null(LessThan), is.null(Between))) {
       stop(
         "At least one of MoreThan, LessThan, and Between should be not NULL",
-        .call = FALSE)
+        call. = FALSE)
   }
 
   if (!is.null(Between)) {
@@ -98,14 +98,14 @@ Range2NewVal <- function(
     if (length(Between) != 2) {
       stop(
         "Between should have exactly two values: a minimum and a maximum.", 
-        .call = FALSE)
+        call. = FALSE)
     }
 
     Min <- Between[1]
     Max <- Between[2]
 
     if (Max <= Min) {
-      stop("Max must be greater than Min.", .call = FALSE)
+      stop("Max must be greater than Min.", call. = FALSE)
     }
 
 

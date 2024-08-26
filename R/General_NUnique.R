@@ -29,7 +29,7 @@
 NUnique <- function(Data) {
 
   if (is.null(Data)) {
-    stop("Data cannot be NULL", .call = FALSE)
+    stop("Data cannot be NULL", call. = FALSE)
   }
 
   Data %>%

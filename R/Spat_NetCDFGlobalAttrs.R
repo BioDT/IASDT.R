@@ -18,7 +18,7 @@ NetCDFGlobalAttrs <- function(nc = NULL) {
 
   # Input Validation
   if (is.null(nc)) {
-    stop("Input file cannot be NULL", .call = FALSE)
+    stop("Input file cannot be NULL", call. = FALSE)
   }
 
   # Open the NetCDF File

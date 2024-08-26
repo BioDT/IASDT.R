@@ -38,7 +38,7 @@
 AddLine <- function(at = NULL, Outer = FALSE, H = TRUE, ...) {
 
   if (is.null(at)) {
-    stop("at cannot be NULL", .call = FALSE)
+    stop("at cannot be NULL", call. = FALSE)
   }
 
   if (Outer) graphics::par(xpd = TRUE)

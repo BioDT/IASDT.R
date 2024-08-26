@@ -31,6 +31,23 @@
 #' prepare species-specific final maps and [IAS_Plot] for plotting species
 #' distribution as JPEG.
 
+
+
+
+# require(dplyr)
+# require(sf)
+# require(terra)
+# require(IASDT.R)
+#
+# setwd("D:/BioDT_IAS/")
+# FromHPC = FALSE
+# EnvFile = ".env"
+# NCores = 6
+# Overwrite = TRUE
+
+
+
+
 IAS_Processing <- function(
     FromHPC = TRUE, EnvFile = ".env", NCores = 6, Overwrite = TRUE) {
 
@@ -63,8 +80,8 @@ IAS_Processing <- function(
 
   # # ..................................................................... ###
 
-  # Loading environment variables ----
-  IASDT.R::CatTime("Loading environment variables")
+  # Environment variables ----
+  IASDT.R::CatTime("Environment variables")
 
   if (FromHPC) {
     EnvVars2Read <- tibble::tribble(
@@ -105,7 +122,8 @@ IAS_Processing <- function(
   fs::dir_create(c(Path_PA_JPEG))
 
   # last update info
-  LastUpdate <- stringr::str_glue('Last update: {format(Sys.Date(), "%d %B %Y")}')
+  LastUpdate <- stringr::str_glue(
+    'Last update: {format(Sys.Date(), "%d %B %Y")}')
 
   ## Standardized taxonomy -----
   IASDT.R::CatTime("Standardized taxonomy", Level = 1)
@@ -186,8 +204,8 @@ IAS_Processing <- function(
 
   Sp_PA_Data <- snow::parLapply(
     cl = c1, x = sort(unique(TaxaList$Species_name)),
-    fun = IAS_Distribution, # IASDT.R::
-    FromHPC = FromHPC, EnvFile = EnvFile, Verbose = FALSE)
+    fun = IASDT.R::IAS_Distribution, FromHPC = FromHPC,
+    EnvFile = EnvFile, Verbose = FALSE)
 
   # # .................................... ###
 
@@ -197,7 +215,7 @@ IAS_Processing <- function(
 
   IASDT.R::CatDiff(
     InitTime = .StartTimeDist, CatInfo = FALSE,
-    Prefix = "Processing Species-specific data took  ", NLines = 1, Level = 1)
+    Prefix = "Processing Species-specific data took ", NLines = 1, Level = 1)
 
   # # .................................... ###
 
@@ -265,19 +283,11 @@ IAS_Processing <- function(
   ## Prepare working on parallel -----
   IASDT.R::CatTime("Prepare working on parallel", Level = 1)
   c1 <- snow::makeSOCKcluster(NCores)
-  on.exit({
-    invisible(try(snow::stopCluster(c1), silent = TRUE))
-    future::plan(future::sequential, gc = TRUE)
-  }, add = TRUE)
+  on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
   future::plan(future::cluster, workers = c1, gc = TRUE)
   invisible(snow::clusterEvalQ(cl = c1, IASDT.R::LoadPackages(List = "dplyr", "sf")))
   snow::clusterExport(
-    cl = c1, c("IAS_Plot", "EnvFile", "Overwrite", "FromHPC"),
-    envir = environment())
-
-
-  # CHECK
-  AllObjSizes(InFunction = TRUE, GreaterThan = 1)
+    cl = c1, c("EnvFile", "Overwrite", "FromHPC"), envir = environment())
 
   # # .................................... ###
 
@@ -285,7 +295,7 @@ IAS_Processing <- function(
   IASDT.R::CatTime("Plotting species maps", Level = 1)
   snow::parLapply(
     cl = c1, x = sort(Sp_PA_Summary_DF$Species_name),
-    fun = IAS_Plot, FromHPC = FromHPC, EnvFile = EnvFile,
+    fun = IASDT.R::IAS_Plot, FromHPC = FromHPC, EnvFile = EnvFile,
     Overwrite = Overwrite) %>%
     invisible()
 
@@ -296,6 +306,7 @@ IAS_Processing <- function(
   ## Stopping cluster ----
   IASDT.R::CatTime("Stopping cluster", Level = 1)
   snow::stopCluster(c1)
+  future::plan(future::sequential, gc = TRUE)
 
   IASDT.R::CatDiff(
     InitTime = .StartTimeMaps, CatInfo = FALSE,
@@ -314,11 +325,9 @@ IAS_Processing <- function(
     purrr::map(terra::unwrap) %>%
     terra::rast() %>%
     sum(na.rm = TRUE) %>%
-    stats::setNames("IAS_NumSp")
-
-  if (!terra::inMemory(IAS_NumSp)) {
-    terra::values(IAS_NumSp) <- terra::values(IAS_NumSp)
-  }
+    stats::setNames("IAS_NumSp") %>%
+    # Ensure that values are read from memory
+    IASDT.R::setRastVals()
 
   # save as RData
   IASDT.R::SaveAs(
@@ -522,7 +531,6 @@ IAS_Processing <- function(
       legend.position = "bottom",
       legend.text = ggplot2::element_text(
         size = 6, face = "bold", margin = ggplot2::margin(0, 0, 0, 0, "cm")),
-      # legend.spacing = grid::unit(0, "cm"),
       legend.box.spacing = grid::unit(-0.05, "cm"),
       legend.key.spacing.x = grid::unit(0.75, "cm"),
       legend.key = ggplot2::element_rect(fill = scales::alpha("white", 0)),
@@ -559,12 +567,3 @@ IAS_Processing <- function(
 
   return(invisible(NULL))
 }
-
-# devtools::load_all("D:/IASDT.R/")
-# setwd("D:/BioDT_IAS/")
-# FromHPC = FALSE
-# EnvFile = ".env"
-# NCores = 6
-#
-# IAS_Processing <- function(
-    #     FromHPC = FALSE, EnvFile = ".env", NCores = 6, Overwrite = TRUE)

@@ -22,7 +22,7 @@
 
 CatPipe <- function(x, message) {
   if (is.null(x) || is.null(message)) {
-    stop("x or message cannot be NULL", .call = FALSE)
+    stop("x or message cannot be NULL", call. = FALSE)
   }
   IASDT.R::CatTime(message)
   return(x)

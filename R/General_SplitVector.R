@@ -29,11 +29,11 @@
 SplitVector <- function(Vector = NULL, NSplit = NULL, Prefix = "Chunk") {
 
   if (is.null(Vector) || is.null(NSplit)) {
-    stop("Vector and NSplit cannot be NULL", .call = FALSE)
+    stop("Vector and NSplit cannot be NULL", call. = FALSE)
   }
 
   if (NSplit > length(Vector)) {
-    stop("NSplit cannot be greater than the length of Vector", .call = FALSE)
+    stop("NSplit cannot be greater than the length of Vector", call. = FALSE)
   }
 
   split(

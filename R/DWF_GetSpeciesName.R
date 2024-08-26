@@ -24,8 +24,11 @@
 #'   otherwise return the full list of IAS.
 #' @details The function reads the following environment variables:
 #'   - **`DP_R_TaxaInfo`** (if `FromHPC` = `TRUE`) or
-#'     **`DP_R_TaxaInfo_Local`** (if `FromHPC` = `FALSE`) for the location of the `Species_List_ID.txt` file containing species information.
-#'    - **`DP_R_PA`** (if `FromHPC` = `TRUE`) or **`DP_R_PA_Local`** (if `FromHPC` = `FALSE`). The function reads the contents of the `Sp_PA_Summary_DF.RData` file from this path.
+#'     **`DP_R_TaxaInfo_Local`** (if `FromHPC` = `FALSE`) for the location of
+#'     the `Species_List_ID.txt` file containing species information.
+#'    - **`DP_R_PA`** (if `FromHPC` = `TRUE`) or **`DP_R_PA_Local`** (if
+#'    `FromHPC` = `FALSE`). The function reads the contents of the
+#'    `Sp_PA_Summary_DF.RData` file from this path.
 #' @export
 
 GetSpeciesName <- function(EnvFile = ".env", SpID = NULL, FromHPC = TRUE) {
@@ -36,7 +39,9 @@ GetSpeciesName <- function(EnvFile = ".env", SpID = NULL, FromHPC = TRUE) {
 
   # Load environment variables
   if (!file.exists(EnvFile)) {
-    stop(paste0("Path for environment variables: ", EnvFile, " was not found"), .call = FALSE)
+    stop(
+      paste0("Path for environment variables: ", EnvFile, " was not found"),
+      call. = FALSE)
   }
 
   if (FromHPC) {

@@ -70,13 +70,13 @@ GetCV <- function(
   Path_Grid <- EU_Bound <- NULL
 
   if (is.null(DT) || is.null(EnvFile) || is.null(OutPath) || is.null(XVars)) {
-    stop("DT, EnvFile, OutPath, and XVars can not be empty", .call = FALSE)
+    stop("DT, EnvFile, OutPath, and XVars can not be empty", call. = FALSE)
   }
 
   if (!file.exists(EnvFile)) {
     stop(
       paste0("Path for environment variables: ", EnvFile, " was not found"),
-      .call = FALSE)
+      call. = FALSE)
   }
 
   AllVars <- c("x", "y", XVars)
@@ -112,7 +112,7 @@ GetCV <- function(
 
   Path_Grid <- file.path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(Path_Grid)) {
-    stop("Path for reference grid does not exist", .call = FALSE)
+    stop("Path for reference grid does not exist", call. = FALSE)
   }
   RefGrid <- terra::unwrap(IASDT.R::LoadAs(Path_Grid))
 

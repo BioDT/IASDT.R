@@ -49,9 +49,9 @@ GBIF_SpData <- function(
 
   # # ..................................................................... ###
 
-  # Loading environment variables
+  # Environment variables
   if (Verbose) {
-    IASDT.R::CatTime("Loading environment variables")
+    IASDT.R::CatTime("Environment variables")
   }
 
   if (FromHPC) {
@@ -76,14 +76,15 @@ GBIF_SpData <- function(
   # # Grid_10_Land_Crop_sf
   GridSf <- file.path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
   if (!file.exists(GridSf)) {
-    stop(paste0("Reference grid file (sf) not found at: ", GridSf), .call = FALSE)
+    stop(
+      paste0("Reference grid file (sf) not found at: ", GridSf), call. = FALSE)
   }
   GridSf <- IASDT.R::LoadAs(GridSf)
 
   # Grid_10_Land_Crop
   GridR <- file.path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(GridR)) {
-    stop(paste0("Reference grid file not found at: ", GridR), .call = FALSE)
+    stop(paste0("Reference grid file not found at: ", GridR), call. = FALSE)
   }
   GridR <- terra::unwrap(IASDT.R::LoadAs(GridR))
 

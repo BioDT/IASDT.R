@@ -65,8 +65,8 @@ GBIF_Processing <- function(
 
   # # ..................................................................... ###
 
-  # Loading environment variables ----
-  IASDT.R::CatTime("Loading environment variables")
+  # Environment variables ----
+  IASDT.R::CatTime("Environment variables")
 
   if (FromHPC) {
     EnvVars2Read <- tibble::tribble(
@@ -114,14 +114,15 @@ GBIF_Processing <- function(
   # Grid_10_Land_Crop_sf
   GridSf <- file.path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
   if (!file.exists(GridSf)) {
-    stop(paste0("Reference grid (sf) file not found at: ", GridSf), .call = FALSE)
+    stop(
+      paste0("Reference grid (sf) file not found at: ", GridSf), call. = FALSE)
   }
   GridSf <- IASDT.R::LoadAs(GridSf)
 
   # Grid_10_Land_Crop
   GridR <- file.path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(GridR)) {
-    stop(paste0("Reference grid file not found at: ", GridR), .call = FALSE)
+    stop(paste0("Reference grid file not found at: ", GridR), call. = FALSE)
   }
   GridR <- terra::unwrap(IASDT.R::LoadAs(GridR))
 
@@ -160,6 +161,7 @@ GBIF_Processing <- function(
         ChunkFile = x, EnvFile = EnvFile, FromHPC = FromHPC,
         SaveRData = TRUE, ReturnData = FALSE, Overwrite = Overwrite)
     })
+
   IASDT.R::CatDiff(
     InitTime = .StartTimeChunks, CatInfo = FALSE,
     Prefix = "Finished in ", Level = 2)
@@ -191,6 +193,7 @@ GBIF_Processing <- function(
 
   IASDT.R::CatTime("Stopping cluster", Level = 1)
   invisible(snow::stopCluster(c1))
+  future::plan(future::sequential, gc = TRUE)
 
   IASDT.R::CatTime("Saving `GBIF_Data` to disk", Level = 1)
   save(GBIF_Data, file = file.path(Path_GBIF, "GBIF_Data.RData"))
@@ -518,6 +521,7 @@ GBIF_Processing <- function(
 
   IASDT.R::CatTime("Stopping cluster", Level = 2)
   invisible(snow::stopCluster(c1))
+  future::plan(future::sequential, gc = TRUE)
 
   # # ..................................................................... ###
 

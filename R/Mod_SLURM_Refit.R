@@ -52,7 +52,7 @@ Mod_SLURM_Refit <- function(
   if (is.null(Path_Model) || is.null(MemPerCpu) || is.null(Time) ||
       is.null(Path_Hmsc)) {
     stop("Path_Model, MemPerCpu, Time and Path_Hmsc cannot be empty", 
-    .call = FALSE)
+    call. = FALSE)
   }
 
   # Avoid "no visible binding for global variable" message
@@ -62,7 +62,7 @@ Mod_SLURM_Refit <- function(
   if (!file.exists(EnvFile)) {
     stop(paste0(
       "Path for environment variables: ", EnvFile, " was not found"), 
-      .call = FALSE)
+      call. = FALSE)
   }
 
   if (is.null(JobName)) {

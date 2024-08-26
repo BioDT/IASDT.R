@@ -87,34 +87,12 @@ GBIF_Download <- function(
 
   IASDT.R::CatTime(
     "Ensure that GBIF access information is available or can be read")
-
-  # Check if the accessing information already read
-  Missing_Account <- any(
-    purrr::map_lgl(c("GBIF_EMAIL", "GBIF_PWD", "GBIF_USER"), ~ Sys.getenv(.x) == ""))
-
-  # If access information not read, try to read it from the specified
-  # .Renviron file
-  if (Missing_Account) {
-    if (!file.exists(Renviron)) {
-      stop(paste0("Renviron file does not exist: ", Renviron), call. = FALSE)
-    }
-    readRenviron(Renviron)
-  }
-
-  Missing_Account <- any(
-    purrr::map_lgl(c("GBIF_EMAIL", "GBIF_PWD", "GBIF_USER"), ~ Sys.getenv(.x) == ""))
-
-
-  if (Missing_Account) {
-    stop(
-      "GBIF access information is not available or read from the .Renviron file",
-      call. = FALSE)
-  }
+  IASDT.R::Check_GBIF()
 
   # # ..................................................................... ###
 
-  # Loading environment variables ----
-  IASDT.R::CatTime("Loading environment variables")
+  # Environment variables ----
+  IASDT.R::CatTime("Environment variables")
 
   if (FromHPC) {
     EnvVars2Read <- tibble::tribble(
@@ -139,7 +117,7 @@ GBIF_Download <- function(
 
   # # ..................................................................... ###
 
-  # Loading input data ------
+  # Input data ------
   IASDT.R::CatTime("Loading input data")
 
   ## Create paths -----
@@ -168,8 +146,8 @@ GBIF_Download <- function(
     ## Request GBIF data -----
     IASDT.R::CatTime("Request GBIF data")
 
-    # should the data be requested from GBIF (a new DOI will be created; a
-    # couple of hours waiting time is expected)
+    # a new DOI will be created; a couple of hours waiting time is expected
+
     GBIF_Request <- rgbif::occ_download(
       # list of species keys
       rgbif::pred_in("taxonKey", TaxaList$speciesKey),

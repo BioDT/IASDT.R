@@ -34,7 +34,7 @@ Match_to_GBIF <- function(
     Parallel = FALSE, Progress = FALSE) {
 
   if (is.null(taxon_name)) {
-    stop("taxon_name cannot be NULL", .call = FALSE)
+    stop("taxon_name cannot be NULL", call. = FALSE)
   }
 
   # Avoid "no visible binding for global variable" message

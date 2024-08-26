@@ -25,7 +25,7 @@ GetMode <- function(v) {
 
   # Check if the vector is NULL or empty
   if (is.null(v) || length(v) == 0) {
-    stop("v cannot be NULL or empty", .call = FALSE)
+    stop("v cannot be NULL or empty", call. = FALSE)
   }
 
   # Extract unique values from the vector

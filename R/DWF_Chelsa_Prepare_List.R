@@ -32,11 +32,11 @@ Chelsa_Prepare_List <- function(
     UpdateExisting = FALSE, Path_Chelsa = "Data/Chelsa") {
 
   if (Down && (is.null(DwnPath) || is.null(OutPath))) {
-    stop("DwnPath and OutPath cannot be NULL", .call = FALSE)
+    stop("DwnPath and OutPath cannot be NULL", call. = FALSE)
   }
 
   if (!fs::dir_exists(Path_Chelsa)) {
-    stop("Path_Chelsa path does not exist", .call = FALSE)
+    stop("Path_Chelsa path does not exist", call. = FALSE)
   }
 
   # Avoid "no visible binding for global variable" message

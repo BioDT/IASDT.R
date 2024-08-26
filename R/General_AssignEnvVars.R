@@ -28,11 +28,11 @@
 AssignEnvVars <- function(EnvFile = ".env", EnvVarDT = NULL) {
 
   if (is.null(EnvFile) || is.null(EnvVarDT)) {
-    stop("EnvFile and EnvVarDT can not be empty", .call = FALSE)
+    stop("EnvFile and EnvVarDT can not be empty", call. = FALSE)
   }
 
   if (!file.exists((EnvFile))) {
-    stop(paste0(EnvFile, " file does not exist"), .call = FALSE)
+    stop(paste0(EnvFile, " file does not exist"), call. = FALSE)
   }
 
   if (!inherits(EnvVarDT, "data.frame")) {
@@ -45,7 +45,7 @@ AssignEnvVars <- function(EnvFile = ".env", EnvVarDT = NULL) {
   if (length(MatchNames) > 0) {
     stop(paste0(
       "The following columns are missing from the EnvVarDT object: ",
-      paste0(MatchNames, collapse = "; ")), .call = FALSE)
+      paste0(MatchNames, collapse = "; ")), call. = FALSE)
   }
 
   InClasses <- purrr::map_chr(EnvVarDT, class)
@@ -59,8 +59,7 @@ AssignEnvVars <- function(EnvFile = ".env", EnvVarDT = NULL) {
       .f = ~{
         paste0(
           '"', names(EnvVarDT)[.x], '" is ', InClasses[.x],
-          ' not ', # nolint: quotes_linter.
-          ExpClasses[.x])
+          " not ", ExpClasses[.x])
       }) %>%
       stringr::str_c(collapse = "\n") %>%
       stringr::str_c("\n", ., collapse = "\n") %>%
@@ -80,8 +79,10 @@ AssignEnvVars <- function(EnvFile = ".env", EnvVarDT = NULL) {
       Val <- Sys.getenv(EV_Name)
 
       if (CheckDir && CheckFile) {
-        stop(paste0(
-          Val, " should be checked as either file or directory, not both"), .call = FALSE)
+        stop(
+          paste0(
+            Val, " should be checked as either file or directory, not both"),
+          call. = FALSE)
       }
 
       if (nchar(Val) == 0) {
@@ -92,11 +93,11 @@ AssignEnvVars <- function(EnvFile = ".env", EnvVarDT = NULL) {
       }
 
       if (CheckDir && !dir.exists(Val)) {
-        stop(paste0("`", Val, "` directory does not exist"), .call = FALSE)
+        stop(paste0("`", Val, "` directory does not exist"), call. = FALSE)
       }
 
       if (CheckFile && !file.exists(Val)) {
-        stop(paste0("`", Val, "` file does not exist"), .call = FALSE)
+        stop(paste0("`", Val, "` file does not exist"), call. = FALSE)
       }
 
       assign(x = Var_Name, value = Val, envir = parent.frame(5))

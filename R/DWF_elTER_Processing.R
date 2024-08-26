@@ -38,7 +38,7 @@ elTER_Processing <- function(
 
   # # ..................................................................... ###
 
-  # Loading environment variables ----
+  # Environment variables ----
   if (FromHPC) {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,

@@ -94,7 +94,7 @@ LoadMultiple <- function(
     if (any(ls(envir = Env1) %in% ls(envir = parent.frame()))) {
       stop(paste0(
         "Some of the new object names already exists in the current ",
-        "environment. No files were loaded!"), .call = FALSE)
+        "environment. No files were loaded!"), call. = FALSE)
     }
 
     ObjectsLoaded <- purrr::map(

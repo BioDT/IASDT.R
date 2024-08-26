@@ -21,11 +21,11 @@
 
 FunctionsInPackage <- function(Package) {
   if (is.null(Package)) {
-    stop("Package cannot be NULL or empty", .call = FALSE)
+    stop("Package cannot be NULL or empty", call. = FALSE)
   }
 
   if (!requireNamespace(Package, quietly = TRUE)) {
-    stop(paste("Package", Package, "not found"), .call = FALSE)
+    stop(paste("Package", Package, "not found"), call. = FALSE)
   }
   library(
     package = eval(Package), character.only = TRUE, quietly = TRUE,

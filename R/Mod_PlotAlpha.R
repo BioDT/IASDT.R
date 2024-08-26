@@ -39,7 +39,7 @@ PlotAlpha <- function(
 
 
   if (is.null(Post) || is.null(Model)) {
-    stop("Post and Model cannot be empty", .call = FALSE)
+    stop("Post and Model cannot be empty", call. = FALSE)
   }
 
   # Avoid "no visible binding for global variable" message
@@ -62,7 +62,7 @@ PlotAlpha <- function(
   if ("Alpha" %in% names(Post)) {
     Post <- Post$Alpha[[1]]
   } else {
-    stop("Post object does not contain 'Alpha'", .call = FALSE)
+    stop("Post object does not contain 'Alpha'", call. = FALSE)
   }
 
   # Load model object

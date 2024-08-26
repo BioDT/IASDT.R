@@ -38,8 +38,8 @@
 #' {
 #'   CatTime("Task 1")
 #'   CatTime("subtask L1", Level = 1)
-#'   CatTime("subtask L1", Level = 2)
-#'   CatTime("subtask L1", Level = 3)
+#'   CatTime("subtask L2", Level = 2)
+#'   CatTime("subtask L3", Level = 3)
 #' }
 
 CatTime <- function(

@@ -33,11 +33,11 @@ Mod_Summary <- function(
     Path_Coda = NULL, EnvFile = ".env", ReturnData = FALSE, FromHPC = TRUE) {
 
   if (is.null(Path_Coda)) {
-    stop("Path_Coda cannot be empty", .call = FALSE)
+    stop("Path_Coda cannot be empty", call. = FALSE)
   }
 
   if (!file.exists(EnvFile)) {
-    stop(paste("Environment file not found:", EnvFile), .call = FALSE)
+    stop(paste("Environment file not found:", EnvFile), call. = FALSE)
   }
 
   # Avoid "no visible binding for global variable" message

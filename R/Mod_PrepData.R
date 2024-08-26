@@ -8,7 +8,7 @@
 #' environmental and species presence data. It checks input arguments, reads
 #' environment variables from a file, verifies paths, loads and filters species
 #' data based on habitat type and minimum presence grid cells per species, and
-#' merges various environmental layers (e.g., CHELSA bioclimatic variables,
+#' merges various environmental layers (e.g., CHELSA Bioclimatic variables,
 #' habitat coverage, road and railway intensity, sampling intensity) into a
 #' single dataset. The processed data can be saved to disk as `*.RData` file .
 #' @param Hab_Abb Character. Habitat abbreviation indicating the specific
@@ -30,7 +30,7 @@
 #'   Defaults to `10`.
 #' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
-#' @param BioVars Character vector. Specifies the bioclimatic variables to be
+#' @param BioVars Character vector. Specifies the Bioclimatic variables to be
 #'   included from the CHELSA dataset. Defaults to a selection of variables:
 #'   `bio4`, `bio6`, `bio8`, `bio12`, `bio15`, and `bio18`.
 #' @param Path_Model Character. Path where the output file should be saved.
@@ -66,7 +66,7 @@
 #'   for the total length of any railway type per grid cell and
 #'   `Dist2Rail.RData` for the minimum distance between the centroid of each
 #'   grid cell and the nearest railway.
-#'    - **`DP_R_Bias`** / **`DP_R_Bias_Local`**: Path for processed sampling
+#'    - **`DP_R_Efforts`** / **`DP_R_Efforts_Local`**: Path for processed sampling
 #'   efforts analysis. The function reads the content of
 #'   `Bias_GBIF_SummaryR.RData` file containing the total number of GBIF
 #'   vascular plant observations per grid cell.
@@ -109,7 +109,7 @@ Mod_PrepData <- function(
     stop(
       paste0(
         paste0("`", CheckNULL[which(IsNull)], "`", collapse = ", "),
-        " can not be empty"), .call = FALSE)
+        " can not be empty"), call. = FALSE)
   }
 
   Hab_Abb <- as.character(Hab_Abb)
@@ -148,8 +148,8 @@ Mod_PrepData <- function(
 
   if (!file.exists(EnvFile)) {
     stop(paste0(
-      "Path for environment variables: ", EnvFile, " was not found"), 
-      .call = FALSE)
+      "Path for environment variables: ", EnvFile, " was not found"),
+      call. = FALSE)
   }
 
   if (FromHPC) {
@@ -162,7 +162,7 @@ Mod_PrepData <- function(
       "Path_Chelsa_Time_CC", "DP_R_CHELSA_Time_CC", TRUE, FALSE,
       "Path_Roads", "DP_R_Roads", TRUE, FALSE,
       "Path_Rail", "DP_R_Railway", TRUE, FALSE,
-      "Path_Bias", "DP_R_Bias", TRUE, FALSE,
+      "Path_Bias", "DP_R_Efforts", TRUE, FALSE,
       "EU_Bound", "DP_R_EUBound_sf", FALSE, TRUE)
   } else {
     EnvVars2Read <- tibble::tribble(
@@ -174,7 +174,7 @@ Mod_PrepData <- function(
       "Path_Chelsa_Time_CC", "DP_R_CHELSA_Time_CC_Local", TRUE, FALSE,
       "Path_Roads", "DP_R_Roads_Local", TRUE, FALSE,
       "Path_Rail", "DP_R_Railway_Local", TRUE, FALSE,
-      "Path_Bias", "DP_R_Bias_Local", TRUE, FALSE,
+      "Path_Bias", "DP_R_Efforts_Local", TRUE, FALSE,
       "EU_Bound", "DP_R_EUBound_sf_Local", FALSE, TRUE)
   }
 
@@ -194,7 +194,7 @@ Mod_PrepData <- function(
   if (!(Hab_Abb %in% ValidHabAbbs)) {
     stop(
       paste0("Hab_Abb has to be one of the following:\n >> ",
-             paste0(ValidHabAbbs, collapse = ", ")), .call = FALSE)
+             paste0(ValidHabAbbs, collapse = ", ")), call. = FALSE)
   }
 
   fs::dir_create(Path_Model)
@@ -211,7 +211,7 @@ Mod_PrepData <- function(
   IASDT.R::CatTime("Sampling intensity/efforts", Level = 1)
   R_Bias <- file.path(Path_Bias, "Bias_GBIF_SummaryR.RData")
   if (!file.exists(R_Bias)) {
-    stop(paste0(R_Bias, " file does not exist"), .call = FALSE)
+    stop(paste0(R_Bias, " file does not exist"), call. = FALSE)
   }
 
   EffortsMask <- IASDT.R::LoadAs(R_Bias) %>%
@@ -230,7 +230,7 @@ Mod_PrepData <- function(
   DT_Sp <- file.path(Path_PA, "Sp_PA_Summary_DF.RData")
 
   if (!file.exists(DT_Sp)) {
-    stop(paste0(DT_Sp, " file does not exist"), .call = FALSE)
+    stop(paste0(DT_Sp, " file does not exist"), call. = FALSE)
   }
 
   DT_Sp <- IASDT.R::LoadAs(DT_Sp)
@@ -355,7 +355,7 @@ Mod_PrepData <- function(
   IASDT.R::CatTime("CHELSA", Level = 1)
   R_Chelsa <- file.path(Path_Chelsa_Time_CC, "St_1981_2010.RData")
   if (!file.exists(R_Chelsa)) {
-    stop(paste0(R_Chelsa, " file does not exist"), .call = FALSE)
+    stop(paste0(R_Chelsa, " file does not exist"), call. = FALSE)
   }
   R_Chelsa <- IASDT.R::LoadAs(R_Chelsa) %>%
     terra::unwrap() %>%
@@ -371,7 +371,7 @@ Mod_PrepData <- function(
   # Reference grid as sf
   Grid_SF <- file.path(Path_Grid_Ref, "Grid_10_sf.RData")
   if (!file.exists(Grid_SF)) {
-    stop(paste0(Grid_SF, " file does not exist"), .call = FALSE)
+    stop(paste0(Grid_SF, " file does not exist"), call. = FALSE)
   }
   Grid_SF <- IASDT.R::LoadAs(Grid_SF) %>%
     magrittr::extract2("Grid_10_sf_s")
@@ -381,7 +381,7 @@ Mod_PrepData <- function(
   IASDT.R::CatTime("Reference grid - country names", Level = 1)
   Grid_CNT <- file.path(Path_Grid, "Grid_10_Land_Crop_sf_Country.RData")
   if (!file.exists(Grid_CNT)) {
-    stop(paste0(Grid_CNT, " file does not exist"), .call = FALSE)
+    stop(paste0(Grid_CNT, " file does not exist"), call. = FALSE)
   }
   Grid_CNT <- IASDT.R::LoadAs(Grid_CNT) %>%
     dplyr::mutate(x = sf::st_coordinates(.)[, 1],
@@ -398,7 +398,7 @@ Mod_PrepData <- function(
   Path_Hab <- file.path(Path_CLC_Summ, "PercCov_SynHab_Crop.RData")
   if (!file.exists(Path_Hab)) {
     stop(
-      paste0("Path_Hab file: ", Path_Hab, " does not exist"), .call = FALSE)
+      paste0("Path_Hab file: ", Path_Hab, " does not exist"), call. = FALSE)
   }
 
   if (Hab_Abb == "0") {
@@ -424,7 +424,7 @@ Mod_PrepData <- function(
   # road intensity of any road type
   R_RoadInt <- file.path(Path_Roads, "Road_Length.RData")
   if (!file.exists(R_RoadInt)) {
-    stop(paste0(R_RoadInt, " file does not exist"), .call = FALSE)
+    stop(paste0(R_RoadInt, " file does not exist"), call. = FALSE)
   }
   R_RoadInt <- IASDT.R::LoadAs(R_RoadInt) %>%
     terra::unwrap() %>%
@@ -439,7 +439,7 @@ Mod_PrepData <- function(
   # Distance to roads
   R_RoadDist <- file.path(Path_Roads, "Dist2Road.RData")
   if (!file.exists(R_RoadDist)) {
-    stop(paste0(R_RoadDist, " file does not exist"), .call = FALSE)
+    stop(paste0(R_RoadDist, " file does not exist"), call. = FALSE)
   }
   R_RoadDist <- IASDT.R::LoadAs(R_RoadDist) %>%
     terra::unwrap() %>%
@@ -453,9 +453,9 @@ Mod_PrepData <- function(
   IASDT.R::CatTime("Railway intensity", Level = 1)
 
   # Railway intensity
-  R_RailInt <- file.path(Path_Rail, "Railway_Length.RData")
+  R_RailInt <- file.path(Path_Rail, "Railways_Length.RData")
   if (!file.exists(R_RailInt)) {
-    stop(paste0(R_RailInt, " file does not exist"), .call = FALSE)
+    stop(paste0(R_RailInt, " file does not exist"), call. = FALSE)
   }
   R_RailInt <- IASDT.R::LoadAs(R_RailInt) %>%
     terra::unwrap() %>%
@@ -470,7 +470,7 @@ Mod_PrepData <- function(
   # Distance to nearest rail
   R_RailDist <- file.path(Path_Rail, "Dist2Rail.RData")
   if (!file.exists(R_RailDist)) {
-    stop(paste0(R_RailDist, " file does not exist"), .call = FALSE)
+    stop(paste0(R_RailDist, " file does not exist"), call. = FALSE)
   }
   R_RailDist <- IASDT.R::LoadAs(R_RailDist) %>%
     terra::unwrap() %>%

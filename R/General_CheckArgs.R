@@ -22,7 +22,7 @@
 CheckArgs <- function(AllArgs, Args, Type) {
 
   if (is.null(AllArgs) || is.null(Args) || is.null(Type)) {
-    stop("AllArgs, Args, or Type cannot be NULL", .call = FALSE)
+    stop("AllArgs, Args, or Type cannot be NULL", call. = FALSE)
   }
 
   Type <- match.arg(

@@ -34,11 +34,11 @@
 KeepOnly <- function(Obj, Verbose = TRUE) {
 
   if (is.null(Obj) || length(Obj) == 0) {
-    stop("Obj cannot be NULL or empty.", .call = FALSE)
+    stop("Obj cannot be NULL or empty.", call. = FALSE)
   }
 
   if (!is.character(Obj)) {
-    stop("Obj must be a character vector.", .call = FALSE)
+    stop("Obj must be a character vector.", call. = FALSE)
   }
 
   AllObjects <- ls(pos = parent.frame())

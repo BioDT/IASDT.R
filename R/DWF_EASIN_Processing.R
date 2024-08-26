@@ -59,7 +59,9 @@
 #' contents of this folder should be removed as part of the data workflow.
 #' Skipping processing available data can help not to re-download already
 #' available data from the EASIN server.
-#'   - This function depends on the following functions: [EASIN_Taxonomy]  for getting the most recent EASIN taxonomy; [EASIN_Down] for processing EASIN dataset; and [EASIN_Plot] for plotting.
+#'   - This function depends on the following functions: [EASIN_Taxonomy] for
+#'   getting the most recent EASIN taxonomy; [EASIN_Down] for processing EASIN
+#'   dataset; and [EASIN_Plot] for plotting.
 #' @export
 
 EASIN_Processing <- function(
@@ -97,10 +99,10 @@ EASIN_Processing <- function(
     n <- x <- Path_Grid_Ref <- NULL
 
   # # |||||||||||||||||||||||||||||||||||
-  # # Loading environment variables ----
+  # # Environment variables ----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatTime("Loading environment variables")
+  IASDT.R::CatTime("Environment variables")
   if (FromHPC) {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
@@ -146,20 +148,26 @@ EASIN_Processing <- function(
   ## Grid - raster ----
   GridR <- file.path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(GridR)) {
-    stop(paste0("Path for the reference grid does not exist: ", GridR), .call = FALSE)
+    stop(
+      paste0("Path for the reference grid does not exist: ", GridR),
+      call. = FALSE)
   }
 
   ## Grid - sf ----
   GridSf <- file.path(Path_Grid_Ref, "Grid_10_sf.RData")
   if (!file.exists(GridSf)) {
-    stop(paste0("Path for the reference grid does not exist: ", GridSf), .call = FALSE)
+    stop(
+      paste0("Path for the reference grid does not exist: ", GridSf),
+      call. = FALSE)
   }
 
   ## Grid - sf - study area ----
   # Grid ID overlapping with study area
   LandGrids <- file.path(Path_Grid, "Grid_10_Land_sf.RData")
   if (!file.exists(LandGrids)) {
-    stop(paste0("Path for the reference grid does not exist: ", LandGrids), .call = FALSE)
+    stop(
+      paste0("Path for the reference grid does not exist: ", LandGrids),
+      call. = FALSE)
   }
 
   ## Species list ----
@@ -199,7 +207,8 @@ EASIN_Processing <- function(
     #   "Cenchrus setaceus", "Pennisetum setaceum", "R03000", 5828232,
     #   "Neltuma juliflora", "Prosopis juliflora", "R12278", 5358460,
     #   "Persicaria perfoliata", "Polygonum perfoliatum", "R19287", 4033648,
-    #   "Pueraria montana (Lour.) Merr. var. lobata",  "Pueraria montana var. lobata", "R12644", 2977636)
+    #   "Pueraria montana (Lour.) Merr. var. lobata",
+    #    "Pueraria montana var. lobata", "R12644", 2977636)
 
     EASIN_Ref <- readRDS(EASIN_Ref) %>%
       dplyr::select(Name, speciesKey) %>%
@@ -266,10 +275,7 @@ EASIN_Processing <- function(
 
     ## Prepare working on parallel ----
     c1 <- snow::makeSOCKcluster(NCores)
-    on.exit({
-      invisible(try(snow::stopCluster(c1), silent = TRUE))
-      future::plan(future::sequential, gc = TRUE)
-    }, add = TRUE)
+    on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
     future::plan(future::cluster, workers = c1, gc = TRUE)
 
     # Start downloading, allow for a maximum of `NumDownTries` trials
@@ -333,6 +339,7 @@ EASIN_Processing <- function(
 
     # Stop cluster ----
     snow::stopCluster(cl = c1)
+    future::plan(future::sequential, gc = TRUE)
   }
 
   # # ..................................................................... ###

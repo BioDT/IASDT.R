@@ -41,7 +41,7 @@ Defaults to \code{10}.}
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
 
-\item{BioVars}{Character vector. Specifies the bioclimatic variables to be
+\item{BioVars}{Character vector. Specifies the Bioclimatic variables to be
 included from the CHELSA dataset. Defaults to a selection of variables:
 \code{bio4}, \code{bio6}, \code{bio8}, \code{bio12}, \code{bio15}, and \code{bio18}.}
 
@@ -64,7 +64,7 @@ This function prepares habitat-specific data for Hmsc models by processing
 environmental and species presence data. It checks input arguments, reads
 environment variables from a file, verifies paths, loads and filters species
 data based on habitat type and minimum presence grid cells per species, and
-merges various environmental layers (e.g., CHELSA bioclimatic variables,
+merges various environmental layers (e.g., CHELSA Bioclimatic variables,
 habitat coverage, road and railway intensity, sampling intensity) into a
 single dataset. The processed data can be saved to disk as \verb{*.RData} file .
 }
@@ -93,7 +93,7 @@ railway data. The function reads the contents of: \code{Railway_Length.RData}
 for the total length of any railway type per grid cell and
 \code{Dist2Rail.RData} for the minimum distance between the centroid of each
 grid cell and the nearest railway.
-\item \strong{\code{DP_R_Bias}} / \strong{\code{DP_R_Bias_Local}}: Path for processed sampling
+\item \strong{\code{DP_R_Efforts}} / \strong{\code{DP_R_Efforts_Local}}: Path for processed sampling
 efforts analysis. The function reads the content of
 \code{Bias_GBIF_SummaryR.RData} file containing the total number of GBIF
 vascular plant observations per grid cell.

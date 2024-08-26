@@ -10,12 +10,14 @@ CheckRDS(File)
 \item{File}{A character string specifying the path to the file to be checked.}
 }
 \value{
-A logical value: \code{TRUE} if the file is an RDS file and contains a non-null object, \code{FALSE} otherwise.
+A logical value: \code{TRUE} if the file is an RDS file and contains a
+non-null object, \code{FALSE} otherwise.
 }
 \description{
-This function checks if the specified file is an RDS file and attempts to read it.
-It returns \code{TRUE} if the file is an RDS file and contains a non-null object, otherwise \code{FALSE.}
-If the file is not an RDS file, the function stops with an error message.
+This function checks if the specified file is an RDS file and attempts to
+read it. It returns \code{TRUE} if the file is an RDS file and contains a non-null
+object, otherwise \code{FALSE.} If the file is not an RDS file, the function stops
+with an error message.
 }
 \author{
 Ahmed El-Gabbas

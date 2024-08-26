@@ -19,7 +19,7 @@
 RespCurv_PlotSR <- function(Path_Model) {
 
   if (is.null(Path_Model)) {
-    stop("Path_Model cannot be NULL", .call = FALSE)
+    stop("Path_Model cannot be NULL", call. = FALSE)
   }
 
   # Avoid "no visible binding for global variable" message

@@ -39,16 +39,16 @@ Chelsa_Project <- function(
     CompressLevel = 5) {
 
   if (is.null(InputFile) || is.null(OutFile) || is.null(GridFile)) {
-    stop("InputFile, OutFile, and GridFile cannot be NULL", .call = FALSE)
+    stop("InputFile, OutFile, and GridFile cannot be NULL", call. = FALSE)
   }
 
   if (!(dirname(fs::dir_exists(InputFile)))) {
-    stop("InputFile path does not exist", .call = FALSE)
+    stop("InputFile path does not exist", call. = FALSE)
   }
 
   # Ensure that the reference grid is not null
   if (is.null(GridFile)) {
-    stop("GridFile can not be empty", .call = FALSE)
+    stop("GridFile can not be empty", call. = FALSE)
   }
 
   # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use official
@@ -95,7 +95,7 @@ Chelsa_Project <- function(
   if (Remote) {
 
     if (is.null(OutFile)) {
-      stop("OutFile can not be empty if the input file is an URL", .call = FALSE)
+      stop("OutFile can not be empty if the input file is an URL", call. = FALSE)
     }
 
     # Folder to download the file
@@ -192,15 +192,10 @@ Chelsa_Project <- function(
     # project to reference grid
     terra::project(GridR, method = Method, threads = TRUE) %>%
     # mask to the reference grid
-    terra::mask(GridR)
-
-  # Ensure that the object is located in memory, not reading from temporary file
-  # This may not be necessary as we save the file as .tif file not .RData
-  if (!terra::inMemory(Rstr)) {
-    terra::values(Rstr) <- terra::values(Rstr)
-  }
-
-  terra::crs(Rstr) <- "epsg:3035"
+    terra::mask(GridR) %>%
+    # Ensure that values are read from memory
+    IASDT.R::setRastVals() %>%
+    IASDT.R::setRastCRS()
 
   # ||||||||||||||||||||||||||||||||||||||||
   # Write file to disk --- tiff

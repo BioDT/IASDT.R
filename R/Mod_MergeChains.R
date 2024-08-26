@@ -37,7 +37,7 @@ Mod_MergeChains <- function(
   .StartTime <- lubridate::now(tzone = "CET")
 
   if (is.null(Path_Model) || is.null(NCores)) {
-    stop("Path_Model, and NCores cannot be empty", .call = FALSE)
+    stop("Path_Model, and NCores cannot be empty", call. = FALSE)
   }
 
   # Avoid "no visible binding for global variable" message
@@ -276,6 +276,7 @@ Mod_MergeChains <- function(
         }))
 
   snow::stopCluster(c1)
+  future::plan(future::sequential, gc = TRUE)
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

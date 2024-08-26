@@ -41,20 +41,26 @@ types) and prepares reference grid for models. The function optionally plots
 The function reads the following environment variable:
 \itemize{
 \item \strong{\code{DP_R_Grid}} (if \code{FromHPC = TRUE}) or
-\strong{\code{DP_R_Grid_Local}} (if \code{FromHPC = FALSE}): Path for saving the processed CLC data.
+\strong{\code{DP_R_Grid_Local}} (if \code{FromHPC = FALSE}): Path for saving the
+processed CLC data.
 \item \strong{\code{DP_R_Grid_Ref}} (if \code{FromHPC = TRUE}) or
 \strong{\code{DP_R_Grid_Ref_Local}} (if \code{FromHPC = FALSE}). The function reads
-the content of \code{Grid_10_sf.RData} and \code{Grid_10_Raster.RData} files from this
-path.
+the content of \code{Grid_10_sf.RData} and \code{Grid_10_Raster.RData} files from
+this path.
 \item \strong{\code{DP_R_EUBound_sf}} (if \code{FromHPC} = \code{TRUE}) or
 \strong{\code{DP_R_EUBound_sf_Local}} (if \code{FromHPC} = \code{FALSE}): path for the
 \code{RData} file containing the country boundaries (\code{sf} object).
 \item \strong{\code{DP_R_CLC}} (if \code{FromHPC} = \code{TRUE}) or
-\strong{\code{DP_R_CLC_Local}} (if \code{FromHPC} = \code{FALSE}): directory where the outputs of CLC data processing are processed.
+\strong{\code{DP_R_CLC_Local}} (if \code{FromHPC} = \code{FALSE}): directory where the
+outputs of CLC data processing are processed.
 \item \strong{\code{DP_R_CLC_CW}} (if \code{FromHPC} = \code{TRUE}) or
-\strong{\code{DP_R_CLC_CW_Local}} (if \code{FromHPC} = \code{FALSE}): path for the \code{crossWalk.txt} file containing custom cross-walk between CLC values and their corresponding values for three levels of CLC and EUNIS_19 & SynHab habitat types.
+\strong{\code{DP_R_CLC_CW_Local}} (if \code{FromHPC} = \code{FALSE}): path for the
+\code{crossWalk.txt} file containing custom cross-walk between CLC values and
+their corresponding values for three levels of CLC and \code{EUNIS_19} &
+\code{SynHab} habitat types.
 \item \strong{\code{DP_R_CLC_tif}} (if \code{FromHPC} = \code{TRUE}) or
-\strong{\code{DP_R_CLC_tif_Local}} (if \code{FromHPC} = \code{FALSE}): path for the input CLC \code{.tif} file.
+\strong{\code{DP_R_CLC_tif_Local}} (if \code{FromHPC} = \code{FALSE}): path for the input
+CLC \code{.tif} file.
 }
 }
 \author{

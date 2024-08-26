@@ -32,7 +32,7 @@ PlotOmegaGG <- function(
   # devtools::install_github("YuLab-SMU/ggtree")
 
   if (is.null(Path_Model)) {
-    stop("Path_Model cannot be empty", .call = FALSE)
+    stop("Path_Model cannot be empty", call. = FALSE)
   }
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

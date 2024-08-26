@@ -34,8 +34,11 @@ IAS.
 The function reads the following environment variables:
 \itemize{
 \item \strong{\code{DP_R_TaxaInfo}} (if \code{FromHPC} = \code{TRUE}) or
-\strong{\code{DP_R_TaxaInfo_Local}} (if \code{FromHPC} = \code{FALSE}) for the location of the \code{Species_List_ID.txt} file containing species information.
-\item \strong{\code{DP_R_PA}} (if \code{FromHPC} = \code{TRUE}) or \strong{\code{DP_R_PA_Local}} (if \code{FromHPC} = \code{FALSE}). The function reads the contents of the \code{Sp_PA_Summary_DF.RData} file from this path.
+\strong{\code{DP_R_TaxaInfo_Local}} (if \code{FromHPC} = \code{FALSE}) for the location of
+the \code{Species_List_ID.txt} file containing species information.
+\item \strong{\code{DP_R_PA}} (if \code{FromHPC} = \code{TRUE}) or \strong{\code{DP_R_PA_Local}} (if
+\code{FromHPC} = \code{FALSE}). The function reads the contents of the
+\code{Sp_PA_Summary_DF.RData} file from this path.
 }
 }
 \author{

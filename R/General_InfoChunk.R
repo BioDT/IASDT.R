@@ -28,7 +28,7 @@ InfoChunk <- function(
     Message = "", Date = TRUE, Extra1 = 1, Extra2 = 2, ...) {
 
   if (is.null(Message)) {
-    stop("Message cannot be NULL", .call = FALSE)
+    stop("Message cannot be NULL", call. = FALSE)
   }
 
   IASDT.R::CatSep(..., Extra1 = Extra1)

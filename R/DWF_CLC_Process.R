@@ -30,21 +30,26 @@
 #'
 #' The function reads the following environment variable:
 #'    - **`DP_R_Grid`** (if `FromHPC = TRUE`) or
-#'    **`DP_R_Grid_Local`** (if `FromHPC = FALSE`): Path for saving the processed CLC data.
+#'    **`DP_R_Grid_Local`** (if `FromHPC = FALSE`): Path for saving the
+#'    processed CLC data.
 #'    - **`DP_R_Grid_Ref`** (if `FromHPC = TRUE`) or
 #'    **`DP_R_Grid_Ref_Local`** (if `FromHPC = FALSE`). The function reads
-#' the content of `Grid_10_sf.RData` and `Grid_10_Raster.RData` files from this
-#' path.
+#'    the content of `Grid_10_sf.RData` and `Grid_10_Raster.RData` files from
+#'    this path.
 #'    - **`DP_R_EUBound_sf`** (if `FromHPC` = `TRUE`) or
 #'     **`DP_R_EUBound_sf_Local`** (if `FromHPC` = `FALSE`): path for the
 #' `RData` file containing the country boundaries (`sf` object).
 #'   - **`DP_R_CLC`** (if `FromHPC` = `TRUE`) or
-#'     **`DP_R_CLC_Local`** (if `FromHPC` = `FALSE`): directory where the outputs of CLC data processing are processed.
+#'     **`DP_R_CLC_Local`** (if `FromHPC` = `FALSE`): directory where the
+#'     outputs of CLC data processing are processed.
 #'   - **`DP_R_CLC_CW`** (if `FromHPC` = `TRUE`) or
-#'     **`DP_R_CLC_CW_Local`** (if `FromHPC` = `FALSE`): path for the `crossWalk.txt` file containing custom cross-walk between CLC values and their corresponding values for three levels of CLC and EUNIS_19 & SynHab habitat types.
+#'     **`DP_R_CLC_CW_Local`** (if `FromHPC` = `FALSE`): path for the
+#'     `crossWalk.txt` file containing custom cross-walk between CLC values and
+#'     their corresponding values for three levels of CLC and `EUNIS_19` &
+#'     `SynHab` habitat types.
 #'   - **`DP_R_CLC_tif`** (if `FromHPC` = `TRUE`) or
-#'     **`DP_R_CLC_tif_Local`** (if `FromHPC` = `FALSE`): path for the input CLC `.tif` file.
-
+#'     **`DP_R_CLC_tif_Local`** (if `FromHPC` = `FALSE`): path for the input
+#'     CLC `.tif` file.
 
 CLC_Process <- function(
     EnvFile = ".env", FromHPC = TRUE, MinLandPerc = 15, PlotCLC = TRUE) {
@@ -62,16 +67,17 @@ CLC_Process <- function(
     EU_Bound <- Value <- Country <- Country2 <- NULL
 
   if (is.null(EnvFile)) {
-    stop("EnvFile can not be empty", .call = FALSE)
+    stop("EnvFile can not be empty", call. = FALSE)
   }
 
   if (!is.numeric(MinLandPerc) || !dplyr::between(MinLandPerc, 0, 100)) {
-    stop("MinLandPerc must be a numeric value between 0 and 100.", .call = FALSE)
+    stop(
+      "MinLandPerc must be a numeric value between 0 and 100.", call. = FALSE)
   }
 
   if (!file.exists(EnvFile)) {
     stop(paste0("Path for environment variables (`EnvFile`): ",
-                EnvFile, " was not found"), .call = FALSE)
+                EnvFile, " was not found"), call. = FALSE)
   }
 
   ## ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪
@@ -81,7 +87,7 @@ CLC_Process <- function(
   IASDT.R::InfoChunk("Loading data")
 
   # # ||||||||||||||||||||||||||||||||||||||||||||
-  # Loading environment variables
+  # Environment variables
   # # ||||||||||||||||||||||||||||||||||||||||||||
   IASDT.R::CatTime("Loading and checking environment variables", Level = 1)
   if (FromHPC) {
@@ -123,7 +129,7 @@ CLC_Process <- function(
     .x = requiredPaths,
     .f = function(path) {
       if (!file.exists(path)) {
-        stop(paste0("Required path does not exist: ", path), .call = FALSE)
+        stop(paste0("Required path does not exist: ", path), call. = FALSE)
       }
     })
 
@@ -218,8 +224,9 @@ CLC_Process <- function(
     "Processing using exactextractr::exact_extract function", Level = 1)
 
   CLC_Fracs <- Grid_sf %>%
-    # Ensure that the projection of x and y parameters of exactextractr::exact_extract
-    # suppress warning: Polygons transformed to raster CRS (EPSG:3035)
+    # Ensure that the projection of x and y parameters of
+    # exactextractr::exact_extract suppress warning: Polygons transformed to
+    # raster CRS (EPSG:3035)
     # https://github.com/isciences/exactextractr/issues/103
     sf::st_transform(sf::st_crs(CLC_Rast)) %>%
     dplyr::mutate(
@@ -459,13 +466,16 @@ CLC_Process <- function(
     sf::st_join(EU_BoundCNT) %>%
     dplyr::select(-"Grid_10_Land_Crop")
 
-  # Get the nearest country names for some grid cells that their centroid do not overlap with country boundaries
+  # Get the nearest country names for some grid cells that their centroid do not
+  # overlap with country boundaries
   Grid_CNT_Near <- dplyr::filter(Grid_CNT, is.na(Country)) %>%
     dplyr::select(-"Country") %>%
     sf::st_join(y = EU_BoundCNT, join = sf::st_nearest_feature) %>%
     dplyr::rename(Country2 = "Country")
 
-  # Merge data and add a new column representing whether the country information was retrieved by spatial joining of the grid centroid and country boundaries or estimated as the nearest country
+  # Merge data and add a new column representing whether the country information
+  # was retrieved by spatial joining of the grid centroid and country boundaries
+  # or estimated as the nearest country
   Grid_CNT <- sf::st_join(x = Grid_CNT, y = Grid_CNT_Near) %>%
     sf::st_join(Grid_10_Land_Crop_sf) %>%
     dplyr::mutate(
@@ -532,8 +542,9 @@ CLC_Process <- function(
   IASDT.R::CatTime("Processing using exactextractr::exact_extract", Level = 1)
 
   CLC_Majority <- Grid_sf %>%
-    # Ensure that the projection of x and y parameters of exactextractr::exact_extract
-    # suppress warning: Polygons transformed to raster CRS (EPSG:3035)
+    # Ensure that the projection of x and y parameters of
+    # exactextractr::exact_extract suppress warning: Polygons transformed to
+    # raster CRS (EPSG:3035)
     # https://github.com/isciences/exactextractr/issues/103
     sf::st_transform(sf::st_crs(CLC_Rast)) %>%
     dplyr::mutate(
@@ -633,12 +644,14 @@ CLC_GetPerc <- function(Type, CLC_CrossWalk, CLC_FracsR, Path_Tif, Path_RData) {
 
   if (is.null(Type) || is.null(CLC_CrossWalk) || is.null(CLC_FracsR) ||
       is.null(Path_Tif) || is.null(Path_RData)) {
-    stop("None of the input parameters can be empty", .call = FALSE)
+    stop("None of the input parameters can be empty", call. = FALSE)
   }
 
   if (!(
     Type %in% c("SynHab", "CLC_L1", "CLC_L2", "CLC_L3", "EUNIS_2019"))) {
-    stop("Type has to be one of SynHab, CLC_L1, CLC_L2, CLC_L3, and EUNIS_2019", .call = FALSE)
+    stop(
+      "Type has to be one of SynHab, CLC_L1, CLC_L2, CLC_L3, and EUNIS_2019",
+      call. = FALSE)
   }
 
   Fracs <- Class <- HabPerc <- NULL
@@ -716,12 +729,14 @@ CLC_ProcessMajority <- function(
   if (is.null(Type) || is.null(CLC_Majority) || is.null(Path_Tif) ||
       is.null(Path_Tif_Crop) || is.null(Path_RData) || is.null(Grid_10_Land) ||
       is.null(Grid_10_Land_Crop)) {
-    stop("None of the input parameters can be empty", .call = FALSE)
+    stop("None of the input parameters can be empty", call. = FALSE)
   }
 
   if (!(
     Type %in% c("SynHab", "CLC_L1", "CLC_L2", "CLC_L3", "EUNIS_2019"))) {
-    stop("Type has to be one of SynHab, CLC_L1, CLC_L2, CLC_L3, and EUNIS_2019", .call = FALSE)
+    stop(
+      "Type has to be one of SynHab, CLC_L1, CLC_L2, CLC_L3, and EUNIS_2019",
+      call. = FALSE)
   }
 
   Label <- Class <- ID <- NULL

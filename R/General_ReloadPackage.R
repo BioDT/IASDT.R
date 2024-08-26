@@ -25,7 +25,7 @@
 ReloadPackage <- function(Package) {
 
   if (is.null(Package)) {
-    stop("Package name cannot be NULL", .call = FALSE)
+    stop("Package name cannot be NULL", call. = FALSE)
   }
 
   if (!requireNamespace(Package, quietly = TRUE)) {

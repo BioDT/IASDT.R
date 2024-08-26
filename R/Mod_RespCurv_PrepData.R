@@ -25,7 +25,7 @@ RespCurv_PrepData <- function(
     Path_Model = NULL, ngrid = 50, NCores = 15, ReturnData = FALSE) {
 
   if (is.null(Path_Model)) {
-    stop("Path_Model cannot be NULL", .call = FALSE)
+    stop("Path_Model cannot be NULL", call. = FALSE)
   }
 
   .StartTime <- lubridate::now(tzone = "CET")
@@ -201,7 +201,7 @@ RespCurv_PrepData <- function(
 
       # Quantiles of species richness
       RC_Data_SR_Quant <- dplyr::reframe(
-        RC_Data_SR, SR = stats::quantile(SR, Probabilities), 
+        RC_Data_SR, SR = stats::quantile(SR, Probabilities),
         Quantile = Probabilities, .by	= XVals)
 
       # Trend of the species richness
@@ -310,8 +310,8 @@ RespCurv_PrepData <- function(
     } else {
       IASDT.R::CatTime(
         paste0(
-          "Some response curve data files (", MissingRows, " of ", 
-          length(ResCurvDT$FileExists), ") were missing"), 
+          "Some response curve data files (", MissingRows, " of ",
+          length(ResCurvDT$FileExists), ") were missing"),
         Level = 1)
     }
 
@@ -344,6 +344,10 @@ RespCurv_PrepData <- function(
       FUN = PrepRCData_Int,
       future.scheduling = Inf, future.seed = TRUE) %>%
       dplyr::bind_rows()
+
+    snow::stopCluster(c1)
+    future::plan(future::sequential, gc = TRUE)
+
   }
 
   IASDT.R::CatTime("Saving data to desk")

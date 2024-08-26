@@ -45,12 +45,12 @@
 DetectAlias <- function(DT, Verbose = FALSE) {
 
   if (is.null(DT)) {
-    stop("DT cannot be NULL", .call = FALSE)
+    stop("DT cannot be NULL", call. = FALSE)
   }
 
   # Ensure DT is a data.frame or tibble
   if (!is.data.frame(DT)) {
-    stop("DT must be a data frame or tibble.", .call = FALSE)
+    stop("DT must be a data frame or tibble.", call. = FALSE)
   }
 
   # Add a constant column to the data frame

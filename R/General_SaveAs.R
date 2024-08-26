@@ -34,7 +34,7 @@
 SaveAs <- function(InObj, OutObj, OutPath) {
 
   if (is.null(InObj) || is.null(OutObj) || is.null(OutPath)) {
-    stop("InObj, OutObj, OutPath cannot be NULL", .call = FALSE)
+    stop("InObj, OutObj, OutPath cannot be NULL", call. = FALSE)
   }
 
   if (inherits(InObj, "character")) {

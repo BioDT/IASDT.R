@@ -39,16 +39,16 @@ Mod_Pred2Array <- function(
     Predict, Model, Preds = NULL, expected = TRUE, NCores = 1) {
 
   if (Predict && is.null(Model)) {
-    stop("Model cannot be empty when Predict is TRUE", .call = FALSE)
+    stop("Model cannot be empty when Predict is TRUE", call. = FALSE)
   }
 
   if (!Predict && is.null(Preds)) {
-    stop("Preds cannot be empty when Predict is FALSE", .call = FALSE)
+    stop("Preds cannot be empty when Predict is FALSE", call. = FALSE)
   }
 
   if (Predict) {
     if (!is.numeric(NCores) || NCores <= 0) {
-      stop("NCores must be a positive integer.", .call = FALSE)
+      stop("NCores must be a positive integer.", call. = FALSE)
     }
 
     if (inherits(Model, "character")) {

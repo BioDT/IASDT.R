@@ -51,7 +51,7 @@
 GridCross <- function(DT = NULL) {
 
   if (is.null(DT)) {
-    stop("Input DT  cannot be NULL", .call = FALSE)
+    stop("Input DT  cannot be NULL", call. = FALSE)
   }
 
   InputCRS <- sf::st_crs(DT)

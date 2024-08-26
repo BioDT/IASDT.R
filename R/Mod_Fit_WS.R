@@ -24,7 +24,7 @@
 Mod_Fit_WS <- function(Path_Model, EnvFile = ".env", NCores = NULL) {
 
   if (is.null(Path_Model) || is.null(NCores)) {
-    stop("Path_Model and NCores cannot be empty", .call = FALSE)
+    stop("Path_Model and NCores cannot be empty", call. = FALSE)
   }
 
   # Avoid "no visible binding for global variable" message
@@ -38,7 +38,7 @@ Mod_Fit_WS <- function(Path_Model, EnvFile = ".env", NCores = NULL) {
   if (!file.exists(EnvFile)) {
     stop(
       paste0("Path for environment variables: ", EnvFile, " was not found"),
-      .call = FALSE)
+      call. = FALSE)
   }
 
   EnvVars2Read <- tibble::tribble(
@@ -51,7 +51,7 @@ Mod_Fit_WS <- function(Path_Model, EnvFile = ".env", NCores = NULL) {
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # # |||||||||||||||||||||||||||||||||||
-  # # CHECK input arguments
+  # # Check input arguments
   # # |||||||||||||||||||||||||||||||||||
 
   AllArgs <- ls()
@@ -97,6 +97,10 @@ Mod_Fit_WS <- function(Path_Model, EnvFile = ".env", NCores = NULL) {
           stderr = Model2Run$Path_ModProg[x])
       },
       future.scheduling = Inf, future.seed = TRUE)
+
+    snow::stopCluster(c1)
+    future::plan(future::sequential, gc = TRUE)
+
   } else {
     IASDT.R::CatTime("All model variants were already fitted.")
   }

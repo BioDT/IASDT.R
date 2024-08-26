@@ -23,7 +23,7 @@
 GetAcceptedName <- function(ID) {
 
   if (is.null(ID)) {
-    stop("ID cannot be NULL", .call = FALSE)
+    stop("ID cannot be NULL", call. = FALSE)
   }
 
   if (!is.na(ID)) {

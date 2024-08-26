@@ -47,7 +47,7 @@
 RastPA <- function(x = NULL, NA_to_0 = TRUE, Zero_to_NA = FALSE) {
 
   if (is.null(x)) {
-    stop("x can not be NULL", .call = FALSE)
+    stop("x can not be NULL", call. = FALSE)
   }
 
   if (inherits(x, "PackedSpatRaster")) {
@@ -69,7 +69,7 @@ RastPA <- function(x = NULL, NA_to_0 = TRUE, Zero_to_NA = FALSE) {
       stop(
         paste0("Input map should be either PackedSpatRaster, ",
                "RasterLayer, or SpatRaster"), 
-        .call = FALSE)
+        call. = FALSE)
     }
   }
   return(x)

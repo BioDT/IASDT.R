@@ -61,7 +61,7 @@
 LoadAs <- function(File) {
 
   if (is.null(File)) {
-    stop("File cannot be NULL", .call = FALSE)
+    stop("File cannot be NULL", call. = FALSE)
   }
 
   # Load the .RData file and capture the names of loaded objects

@@ -32,7 +32,7 @@ CatDiff <- function(
     CatInfo = TRUE, Level = 0, ...) {
 
   if (is.null(InitTime)) {
-    stop("InitTime cannot be NULL", .call = FALSE)
+    stop("InitTime cannot be NULL", call. = FALSE)
   }
 
   if (CatInfo) {

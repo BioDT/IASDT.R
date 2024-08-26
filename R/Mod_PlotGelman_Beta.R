@@ -32,24 +32,35 @@ PlotGelman_Beta <- function(
 
 
   if (is.null(CodaObj) || is.null(NCores)) {
-    stop("CodaObj and NCores cannot be empty", .call = FALSE)
+    stop("CodaObj and NCores cannot be empty", call. = FALSE)
   }
 
   if (!is.numeric(NCores) || NCores <= 0) {
-    stop("NCores must be a positive integer.", .call = FALSE)
+    stop("NCores must be a positive integer.", call. = FALSE)
   }
 
   if (!inherits(CodaObj, "mcmc.list")) {
-    stop("CodaObj has to be of class mcmc.list", .call = FALSE)
+    stop("CodaObj has to be of class mcmc.list", call. = FALSE)
   }
+
+  # # ..................................................................... ###
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Iter <- Type <- Var_Sp <- ShrinkFactor <- group <- NULL
 
+  # # ..................................................................... ###
+
   c1 <- snow::makeSOCKcluster(NCores)
   on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
   future::plan(future::cluster, workers = c1, gc = TRUE)
+
+  invisible(snow::clusterEvalQ(
+    cl = c1, IASDT.R::LoadPackages(
+      List = c("dplyr", "coda", "tibble", "magrittr"))))
+  snow::clusterExport(cl = c1, list = "CodaObj", envir = environment())
+
+  # # ..................................................................... ###
 
   Beta_Coda <- IASDT.R::Coda_to_tibble(
     CodaObj = CodaObj, Type = "beta", EnvFile = EnvFile, FromHPC = FromHPC)
@@ -59,18 +70,12 @@ PlotGelman_Beta <- function(
   SubTitle <- paste0(NVars, " covariates - ", NSp, " species")
   rm(Beta_Coda)
 
-  BetaNames <- magrittr::extract2(CodaObj, 1) %>%
+  Gelman_Beta_Vals <- magrittr::extract2(CodaObj, 1) %>%
     attr("dimnames") %>%
     magrittr::extract2(2) %>%
-    sort()
-
-  invisible(snow::clusterEvalQ(
-    cl = c1, IASDT.R::LoadPackages(
-      List = c("dplyr", "coda", "tibble", "magrittr"))))
-  snow::clusterExport(cl = c1, list = "CodaObj", envir = environment())
-
-  Gelman_Beta_Vals <- snow::parLapply(
-    cl = c1, x = BetaNames,
+    sort() %>%
+    snow::parLapply(
+    cl = c1, x = .,
     fun = function(x) {
       lapply(CodaObj, function(Y) {
         Y[, x, drop = TRUE]
@@ -90,6 +95,9 @@ PlotGelman_Beta <- function(
     }) %>%
     dplyr::bind_rows() %>%
     dplyr::mutate(group = paste0(Var_Sp, "_", Type))
+
+  snow::stopCluster(c1)
+  future::plan(future::sequential, gc = TRUE)
 
   Gelman_Beta_Plot <- Gelman_Beta_Vals %>%
     ggplot2::ggplot() +
@@ -130,6 +138,8 @@ PlotGelman_Beta <- function(
       panel.spacing = ggplot2::unit(0.85, "lines"),
       plot.caption = ggplot2::element_text(
         color = "darkgrey", face = "italic", size = 10))
+
+  # # ..................................................................... ###
 
   return(Gelman_Beta_Plot)
 }

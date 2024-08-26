@@ -28,7 +28,7 @@ IAS_Plot <- function(
     Species, FromHPC = TRUE, EnvFile = ".env", Overwrite = FALSE) {
 
   if (is.null(Species)) {
-    stop("Species cannot be empty", .call = FALSE)
+    stop("Species cannot be empty", call. = FALSE)
   }
 
   # # ..................................................................... ###
@@ -52,7 +52,7 @@ IAS_Plot <- function(
 
   # # ..................................................................... ###
 
-  # Loading environment variables ----
+  # Environment variables ----
   if (FromHPC) {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,

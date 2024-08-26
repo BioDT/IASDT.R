@@ -63,7 +63,7 @@ AllObjSizes <- function(
   }
 
   if (!is.numeric(GreaterThan) || is.na(GreaterThan) || GreaterThan < 0) {
-    stop("GreaterThan must be a non-negative number", .call = FALSE)
+    stop("GreaterThan must be a non-negative number", call. = FALSE)
   }
 
   AllVars <- ls(envir = Environment)

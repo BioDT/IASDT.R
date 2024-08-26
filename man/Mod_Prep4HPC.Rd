@@ -89,7 +89,7 @@ be used. Both default to \code{NULL} which means that the number of latent
 factors will be estimated from the data. If either is provided, the
 respective values will be used as arguments to \link[Hmsc:setPriors]{Hmsc::setPriors}.}
 
-\item{BioVars}{Character vector. Specifies the bioclimatic variables to be
+\item{BioVars}{Character vector. Specifies the Bioclimatic variables to be
 included from the CHELSA dataset. Defaults to a selection of variables:
 \code{bio4}, \code{bio6}, \code{bio8}, \code{bio12}, \code{bio15}, and \code{bio18}.}
 

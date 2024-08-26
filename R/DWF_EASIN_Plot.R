@@ -49,10 +49,10 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
   Path_EASIN_Summary <- EU_Bound <- NULL
 
   # # |||||||||||||||||||||||||||||||||||
-  # # Loading environment variables ----
+  # # Environment variables ----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatTime("Loading environment variables", Level = 1)
+  IASDT.R::CatTime("Environment variables", Level = 1)
   if (FromHPC) {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
@@ -102,7 +102,7 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
     stop(paste0(
       "The following input files are missing: \n",
       paste0(" >> ", PathSummaryMaps[which(SummaryMapsMissing)],
-             collapse = "\n")), .call = FALSE)
+             collapse = "\n")), call. = FALSE)
   }
 
   # # |||||||||||||||||||||||||||||||||||

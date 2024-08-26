@@ -40,11 +40,11 @@ List2RData <- function(List, Prefix = "", Dir = getwd(), Overwrite = FALSE) {
 
   # Validation Checks
   if (is.null(List) || length(List) == 0) {
-    stop("List cannot be NULL or empty.", .call = FALSE)
+    stop("List cannot be NULL or empty.", call. = FALSE)
   }
 
   if (is.null(names(List))) {
-    stop("List names cannot be NULL.", .call = FALSE)
+    stop("List names cannot be NULL.", call. = FALSE)
   }
 
   # Directory Creation

@@ -1,4 +1,4 @@
-# # |------------------------------------------------------------------------| #
+## |------------------------------------------------------------------------| #
 # Mod_Prep4HPC ----
 ## |------------------------------------------------------------------------| #
 
@@ -159,27 +159,27 @@ Mod_Prep4HPC <- function(
       paste0(
         paste0("`", CheckNULL[which(IsNull)], "`", collapse = ", "),
         " can not be empty"),
-      .call = FALSE)
+      call. = FALSE)
   }
 
   if (!all(is.numeric(GPP_Dists)) || any(GPP_Dists <= 0)) {
-    stop("GPP_Dists should be numeric and greater than zero", .call = FALSE)
+    stop("GPP_Dists should be numeric and greater than zero", call. = FALSE)
   }
 
   if (!all(is.numeric(samples)) || any(samples <= 0)) {
-    stop("samples should be numeric and greater than zero", .call = FALSE)
+    stop("samples should be numeric and greater than zero", call. = FALSE)
   }
 
   if (!all(is.numeric(thin)) || any(thin <= 0)) {
-    stop("thin should be numeric and greater than zero", .call = FALSE)
+    stop("thin should be numeric and greater than zero", call. = FALSE)
   }
 
   if (!all(is.numeric(PresPerVar)) || PresPerVar <= 0) {
-    stop("`PresPerVar` should be numeric and greater than zero", .call = FALSE)
+    stop("`PresPerVar` should be numeric and greater than zero", call. = FALSE)
   }
 
   if (!all(is.numeric(MinEffortsSp)) || MinEffortsSp <= 0) {
-    stop("`MinEffortsSp` should be numeric and greater than zero", .call = FALSE)
+    stop("`MinEffortsSp` should be numeric and greater than zero", call. = FALSE)
   }
 
   if (!is.null(NspPerGrid) && (!is.numeric(NspPerGrid) || NspPerGrid < 1)) {
@@ -215,7 +215,7 @@ Mod_Prep4HPC <- function(
   if (!file.exists(EnvFile)) {
     stop(paste0(
       "Path for environment variables: ", EnvFile, " was not found"),
-      .call = FALSE)
+      call. = FALSE)
   }
 
   if (FromHPC) {
@@ -244,7 +244,7 @@ Mod_Prep4HPC <- function(
     if (!file.exists(Path_GridR)) {
       stop(
         paste0("Path for the Europe boundaries does not exist: ", Path_GridR),
-        .call = FALSE)
+        call. = FALSE)
     }
   }
 
@@ -284,7 +284,7 @@ Mod_Prep4HPC <- function(
   # Phylogenetic tree options
   if (PhyloTree == FALSE && NoPhyloTree == FALSE) {
     stop(
-      "At least one of PhyloTree or NoPhyloTree has to be true", .call = FALSE)
+      "At least one of PhyloTree or NoPhyloTree has to be true", call. = FALSE)
   }
 
   NumArgsInvalid <- purrr::map_lgl(.x = NumericArgs, .f = ~all(get(.x) < 1))
@@ -347,7 +347,7 @@ Mod_Prep4HPC <- function(
   ValidHabAbbs <- c(0:3, "4a", "4b", 10, "12a", "12b")
   if (!(as.character(Hab_Abb) %in% ValidHabAbbs)) {
     stop(paste0("Hab_Abb has to be one of the following:\n >> ",
-                paste0(ValidHabAbbs, collapse = " | ")), .call = FALSE)
+                paste0(ValidHabAbbs, collapse = " | ")), call. = FALSE)
   }
 
   HabVal <- c(
@@ -384,7 +384,7 @@ Mod_Prep4HPC <- function(
       stop(paste0(
         "The following are invalid country names: ",
         paste0(ModelCountry[!ValidCountries], collapse = " & ")),
-        .call = FALSE)
+        call. = FALSE)
     }
 
     IASDT.R::CatTime(
@@ -417,7 +417,7 @@ Mod_Prep4HPC <- function(
 
     DT_Sp <- file.path(Path_PA, "Sp_PA_Summary_DF.RData")
     if (!file.exists(DT_Sp)) {
-      stop(paste0(DT_Sp, " file does not exist"), .call = FALSE)
+      stop(paste0(DT_Sp, " file does not exist"), call. = FALSE)
     }
     DT_Sp <- IASDT.R::LoadAs(DT_Sp)
 
@@ -572,7 +572,7 @@ Mod_Prep4HPC <- function(
   IASDT.R::CatTime("Save species summary", Level = 1)
   SpSummary <- file.path(Path_PA, "Sp_PA_Summary_DF.RData")
   if (!file.exists(SpSummary)) {
-    stop(paste0(SpSummary, " file does not exist"), .call = FALSE)
+    stop(paste0(SpSummary, " file does not exist"), call. = FALSE)
   }
   SpSummary <- IASDT.R::LoadAs(SpSummary) %>%
     dplyr::mutate(
@@ -923,6 +923,7 @@ Mod_Prep4HPC <- function(
   if (NParallel > 1) {
     IASDT.R::CatTime("Stopping cluster")
     snow::stopCluster(c1)
+    future::plan(future::sequential, gc = TRUE)
   }
 
   # # |||||||||||||||||||||||||||||||||||

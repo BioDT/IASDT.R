@@ -34,7 +34,7 @@
 AddMissingCols <- function(DT, FillVal = NA_character_, ...) {
 
   if (is.null(DT) || is.null(FillVal)) {
-    stop("DT can not be NULL", .call = FALSE)
+    stop("DT can not be NULL", call. = FALSE)
   }
 
   Cols <- as.character(rlang::ensyms(...))

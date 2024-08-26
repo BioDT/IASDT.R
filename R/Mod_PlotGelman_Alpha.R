@@ -24,54 +24,59 @@
 PlotGelman_Alpha <- function(CodaObj, NCores, PlottingAlpha = 0.25) {
 
   if (is.null(CodaObj) || is.null(NCores)) {
-    stop("CodaObj and NCores cannot be empty", .call = FALSE)
+    stop("CodaObj and NCores cannot be empty", call. = FALSE)
   }
 
   if (!is.numeric(NCores) || NCores <= 0) {
-    stop("NCores must be a positive integer.", .call = FALSE)
+    stop("NCores must be a positive integer.", call. = FALSE)
   }
 
   if (!inherits(CodaObj, "mcmc.list")) {
-    stop("CodaObj has to be of class mcmc.list", .call = FALSE)
+    stop("CodaObj has to be of class mcmc.list", call. = FALSE)
   }
+
+  # # ..................................................................... ###
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Var_LV <- Type <- Iter <- Plot <- data <- NULL
 
+  # # ..................................................................... ###
+
   c1 <- snow::makeSOCKcluster(NCores)
   on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
   future::plan(future::cluster, workers = c1, gc = TRUE)
 
-  AlphaNames <- magrittr::extract2(CodaObj, 1) %>%
-    attr("dimnames") %>%
-    magrittr::extract2(2) %>%
-    sort()
-
   invisible(snow::clusterEvalQ(
-    cl = c1, 
+    cl = c1,
     IASDT.R::LoadPackages(List = c("dplyr", "coda", "tibble", "magrittr"))))
   snow::clusterExport(cl = c1, list = "CodaObj", envir = environment())
 
-  Gelman_Alpha_Plot <- snow::parLapply(
-    cl = c1, x = AlphaNames,
-    fun = function(x) {
-      lapply(CodaObj, function(Y) {
-        Y[, x, drop = TRUE]
+  # # ..................................................................... ###
+
+  Gelman_Alpha_Plot <- magrittr::extract2(CodaObj, 1) %>%
+    attr("dimnames") %>%
+    magrittr::extract2(2) %>%
+    sort() %>%
+    snow::parLapply(
+      cl = c1, x = .,
+      fun = function(x) {
+        lapply(CodaObj, function(Y) {
+          Y[, x, drop = TRUE]
+        }) %>%
+          coda::mcmc.list() %>%
+          gelman.preplot(
+            bin.width = 10, max.bins = 50, confidence = 0.95,
+            transform = FALSE, autoburnin = TRUE) %>%
+          magrittr::extract2("shrink") %>%
+          tibble::as_tibble(rownames = "Iter") %>%
+          purrr::set_names(c("Iter", "Median", "Q97_5")) %>%
+          dplyr::mutate(Iter = as.integer(Iter)) %>%
+          tidyr::pivot_longer(
+            cols = -Iter, names_to = "Type", values_to = "ShrinkFactor") %>%
+          dplyr::arrange(Type, Iter) %>%
+          dplyr::mutate(Type = factor(Type), Var_LV = x)
       }) %>%
-        coda::mcmc.list() %>%
-        gelman.preplot(
-          bin.width = 10, max.bins = 50, confidence = 0.95,
-          transform = FALSE, autoburnin = TRUE) %>%
-        magrittr::extract2("shrink") %>%
-        tibble::as_tibble(rownames = "Iter") %>%
-        purrr::set_names(c("Iter", "Median", "Q97_5")) %>%
-        dplyr::mutate(Iter = as.integer(Iter)) %>%
-        tidyr::pivot_longer(
-          cols = -Iter, names_to = "Type", values_to = "ShrinkFactor") %>%
-        dplyr::arrange(Type, Iter) %>%
-        dplyr::mutate(Type = factor(Type), Var_LV = x)
-    }) %>%
     dplyr::bind_rows() %>%
     dplyr::mutate(
       group = paste0(Var_LV, "_", Type),
@@ -122,6 +127,13 @@ PlotGelman_Alpha <- function(CodaObj, NCores, PlottingAlpha = 0.25) {
         })
     ) %>%
     dplyr::pull(Plot)
+
+  # # ..................................................................... ###
+
+  snow::stopCluster(c1)
+  future::plan(future::sequential, gc = TRUE)
+
+  # # ..................................................................... ###
 
   return(Gelman_Alpha_Plot)
 }

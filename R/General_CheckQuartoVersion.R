@@ -19,6 +19,11 @@
 
 CheckQuartoVersion <- function() {
 
+  # Check system commands
+  IASDT.R::CheckCommands("quarto")
+
+  # # ..................................................................... ###
+
   OnlineVersion <- "https://github.com/quarto-dev/quarto-cli/releases/" %>%
     xml2::read_html() %>%
     rvest::html_nodes(".Link--primary") %>%
@@ -26,6 +31,8 @@ CheckQuartoVersion <- function() {
     stringr::str_remove_all("v") %>%
     gtools::mixedsort(decreasing = TRUE) %>%
     magrittr::extract(1)
+
+  # # ..................................................................... ###
 
   InstalledVersion <- system("quarto --version", intern = TRUE)
 

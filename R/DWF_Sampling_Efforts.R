@@ -4,9 +4,10 @@
 
 #' Download and Process sampling efforts data
 #'
-#' This script download GBIF data for all vascular plants (grouped by order) in
-#' the study area. Data is converted to raster to represent the number of
-#' vascular plant observation per grid
+#' This function downloads GBIF data for all vascular plants within a specified
+#' geographical area (Europe), grouped by order, and converts the data to raster
+#' format to represent the number of vascular plant observations and species per
+#' grid cell.
 #' @param FromHPC Logical indicating whether the work is being done from HPC, to
 #'   adjust file paths accordingly. Default: `TRUE`.
 #' @param EnvFile Character. The path to the environment file containing
@@ -25,9 +26,15 @@
 #' @param NCores Integer. The number of cores to use for parallel processing.
 #' @param StartYear Numeric. The starting year for the occurrence data. Only
 #'   records from this year onward will be requested from GBIF. Default: `1980`.
-#' @note The function is expected to take substantial amount of time (> 9 hours
-#'   on a Windows PC running with 6 cores). The data request is expected to take
-#'   5 hours, as it includes waiting for the GBIF data to be ready.
+#' @param ChunkSize Integer. The number of rows per chunk file. Default:
+#'   `100,000`. See [Efforts_Split] and [Efforts_Process] for more details.
+#' @note This function is expected to take a substantial amount of time (>9
+#'   hours on a Windows PC with 6 cores). The data request from GBIF may take
+#'   around 5 hours to be ready. The function requests GBIF data for each
+#'   vascular plant order and waits for the data to be ready before processing
+#'   them.
+#' @return Returns `NULL` invisibly. The function generates various output
+#'   files, maps, and logs, and it is designed to be used for its side effects.
 #' @author Ahmed El-Gabbas
 #' @name Sampling_Efforts
 #' @export
@@ -35,7 +42,7 @@
 Sampling_Efforts <- function(
     FromHPC = TRUE, EnvFile = ".env", Renviron = ".Renviron",
     RequestData = TRUE, DownloadData = TRUE, NCores = 6, StartYear = 1980,
-    Boundaries = c(-30, 50, 25, 75)) {
+    Boundaries = c(-30, 50, 25, 75), ChunkSize = 10000) {
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -58,15 +65,32 @@ Sampling_Efforts <- function(
     AllArgs = AllArgs, Type = "numeric",
     Args = c("NCores", "Boundaries", "StartYear"))
 
+  # Validate Boundaries argument
+  if (length(Boundaries) != 4) {
+    stop("Boundaries must be a numeric vector of length 4.")
+  }
+
+  # Validate ChunkSize
+  if (!is.numeric(ChunkSize) || ChunkSize <= 0) {
+    stop("ChunkSize must be a positive numeric value.")
+  }
+
+  # Validate NCores
+  if (!is.numeric(NCores) || NCores <= 0 || NCores > 50) {
+    stop("NCores must be a positive integer.")
+  }
+
+  # Validate StartYear
+  if (!is.numeric(StartYear) || StartYear <= 1950) {
+    stop("StartYear must be a positive integer after 1950")
+  }
+
   # # ..................................................................... ###
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Path_Efforts <- Path_Efforts_Raw <- Path_Efforts_Interim <-
-    Path_Grid <- Taxa_Stand <- EU_Bound <- orderKey <- Request <-
-    DownDetails <- Size <- DownPath <- PathCSV <- order <- class <-
-    TotalRecords <- CellCode <- speciesKey <- coordinateUncertaintyInMeters <-
-    decimalLongitude <- decimalLatitude <- year <- UncertainKm <- NULL
+  Path_Efforts <- Path_Efforts_Raw <- Path_Efforts_Interim <- Path_Grid <-
+    Taxa_Stand <- EU_Bound <- NULL
 
   # # ..................................................................... ###
 
@@ -113,6 +137,7 @@ Sampling_Efforts <- function(
   ## Create paths -----
   Path_Efforts_Requests <- file.path(Path_Efforts, "Requests")
   Path_Efforts_Data <- file.path(Path_Efforts_Interim, "CleanedData")
+  # Create required directories
   fs::dir_create(c(
     Path_Efforts, Path_Efforts_Raw, Path_Efforts_Interim, Path_Efforts_Data,
     Path_Efforts_Requests))
@@ -121,10 +146,11 @@ Sampling_Efforts <- function(
   Grids <- Path_Grid %>%
     file.path(c("Grid_10_Land_Crop_sf.RData", "Grid_10_Land_Crop.RData"))
 
-  if (!all(file.exists(Grids))) {
+  missing_grids <- Grids[!file.exists(Grids)]
+  if (length(missing_grids) > 0) {
     stop(
       paste0("The following grid file(s) do not exist:\n",
-             paste0(" >>> ", Grids[!file.exists(Grids)], recycle0 = "\n")),
+             paste0(" >>> ", missing_grids, collapse = "\n")),
       call. = FALSE)
   }
 
@@ -182,9 +208,10 @@ Sampling_Efforts <- function(
   IASDT.R::CatTime("Processing efforts data")
   IASDT.R::Efforts_Process(
     NCores = NCores, Path_Efforts = Path_Efforts,
-    Path_Interim = Path_Efforts_Interim, Path_Data = Path_Efforts_Data,
+    Path_Efforts_Interim = Path_Efforts_Interim,
+    Path_Efforts_Data = Path_Efforts_Data,
     Path_Grid = Path_Grid, IAS_List = IAS_List,
-    Efforts_AllRequests = Efforts_AllRequests)
+    Efforts_AllRequests = Efforts_AllRequests, ChunkSize = ChunkSize)
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -216,8 +243,8 @@ Sampling_Efforts <- function(
 #' This function requests GBIF data for each vascular plant order, processes it
 #' in parallel, and manages the data download and storage. If data is already
 #' available, it loads the data instead of making new requests.
-#'
-#' @param NCores Integer. The number of cores to use for parallel processing (1 to 3). Must be a positive integer, up to a maximum of 3.
+#' @param NCores Integer. The number of cores to use for parallel processing
+#'   (between 1 and 3). Must be a positive integer.
 #' @param Path_Requests Character. The directory path to save individual request
 #'   files.
 #' @param Path_Efforts Character. The directory path to save the final compiled
@@ -234,7 +261,6 @@ Sampling_Efforts <- function(
 #' @name Efforts_Request
 #' @export
 
-
 Efforts_Request <- function(
     NCores, Path_Requests, Path_Efforts, StartYear, Boundaries) {
 
@@ -247,8 +273,24 @@ Efforts_Request <- function(
 
   .StartTimeRequest <- lubridate::now(tzone = "CET")
 
-  if (missing(NCores) || !is.numeric(NCores) || NCores <= 0) {
-    stop("NCores must be a positive integer between 1 and 3.", call. = FALSE)
+  if (missing(NCores) || !is.numeric(NCores) || NCores < 1 || NCores > 3) {
+    stop("`NCores` must be a positive integer between 1 and 3.", call. = FALSE)
+  }
+
+  if (!is.character(Path_Requests) || !dir.exists(Path_Requests)) {
+    stop("`Path_Requests` must be a valid directory path.", call. = FALSE)
+  }
+
+  if (!is.character(Path_Efforts) || !dir.exists(Path_Efforts)) {
+    stop("`Path_Efforts` must be a valid directory path.", call. = FALSE)
+  }
+
+  if (!is.numeric(StartYear) || StartYear <= 1950) {
+    stop("`StartYear` must be a positive integer after 1950")
+  }
+
+  if (!is.numeric(Boundaries) || length(Boundaries) != 4) {
+    stop("`Boundaries` must be a numeric vector of length 4.", call. = FALSE)
   }
 
   # # ..................................................................... ###
@@ -403,19 +445,21 @@ Efforts_Request <- function(
 #' validity of downloaded files, and stores the data in specified directories.
 #' If data has already been downloaded, it validates the files instead of
 #' downloading them again.
-#' @param NCores Integer. Number of cores to use for parallel processing.
+#' @param NCores Integer. Number of cores to use for parallel processing.  Must
+#'   be a positive integer. This directory must exist or be created beforehand.
 #' @param Path_Raw Character. Path where the raw downloaded data will be saved.
+#'   This directory must exist or be created beforehand.
 #' @param Path_Interim Character. Path where the interim CSV files will be
-#'   saved.
+#'   saved. This directory must exist or be created beforehand.
 #' @param Path_Efforts Character. Path where the final processed data will be
-#'   saved.
+#'   saved. This directory must exist or be created beforehand.
 #' @name Efforts_Download
 #' @author Ahmed El-Gabbas
 #' @return A data frame (`Efforts_AllRequests`) with updated download paths and
 #'   interim file paths.
 #' @export
 
-Efforts_Download <- function(NCores, Path_Raw, Path_Interim, Path_Efforts) {
+Efforts_Download <- function(NCores = 6, Path_Raw, Path_Interim, Path_Efforts) {
 
   .StartTimeDown <- lubridate::now(tzone = "CET")
 
@@ -424,6 +468,28 @@ Efforts_Download <- function(NCores, Path_Raw, Path_Interim, Path_Efforts) {
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   DownPath <- Request <- NULL
+
+  # # ..................................................................... ###
+
+  # Validate NCores
+  if (missing(NCores) || !is.numeric(NCores) || NCores <= 0) {
+    stop("NCores must be a positive integer.", call. = FALSE)
+  }
+
+  # Validate directory paths
+  if (!is.character(Path_Raw) || !dir.exists(Path_Raw)) {
+    stop("`Path_Raw` must be a valid directory path.", call. = FALSE)
+  }
+
+  if (!is.character(Path_Interim) || !dir.exists(Path_Interim)) {
+    stop("`Path_Interim` must be a valid directory path.", call. = FALSE)
+  }
+
+  if (!is.character(Path_Efforts) || !dir.exists(Path_Efforts)) {
+    stop("`Path_Efforts` must be a valid directory path.", call. = FALSE)
+  }
+
+  IASDT.R::CheckCommands("unzip")
 
   # # ..................................................................... ###
 
@@ -467,9 +533,13 @@ Efforts_Download <- function(NCores, Path_Raw, Path_Interim, Path_Efforts) {
 
           # Check zip file if exist, if not exist download it
           if (file.exists(DownFile)) {
-            FileOkay <- system2(
-              "unzip", args = c("-t", DownFile),
-              stdout = TRUE, stderr = TRUE) %>%
+            FileOkay <- tryCatch({
+              system2(
+                "unzip", args = c("-t", DownFile), stdout = TRUE, stderr = TRUE)
+            }, error = function(e) {
+              message("Error during file validation: ", conditionMessage(e))
+              return(NULL)
+            }) %>%
               stringr::str_detect("No errors detected in compressed data") %>%
               any()
 
@@ -522,14 +592,7 @@ Efforts_Download <- function(NCores, Path_Raw, Path_Interim, Path_Efforts) {
 
           return(DownFile)
 
-        }, .options = furrr::furrr_options(seed = TRUE)),
-
-      PathCSV = purrr::map_chr(
-        .x = DownPath,
-        .f = ~{
-          stringr::str_replace(basename(.x), "zip", "csv") %>%
-            file.path(Path_Interim, .)
-        }))
+        }, .options = furrr::furrr_options(seed = TRUE)))
 
   save(Efforts_AllRequests,
        file = file.path(Path_Efforts, "Efforts_AllRequests.RData"))
@@ -569,34 +632,39 @@ Efforts_Download <- function(NCores, Path_Raw, Path_Interim, Path_Efforts) {
 #' @param NCores Numeric. The number of cores to use for parallel processing.
 #' @param Path_Efforts Character. Path where the final processed data will be
 #'   saved.
-#' @param Path_Interim Character. The directory path to save interim data.
-#' @param Path_Data Character. The directory path to save detailed effort data
-#'   as `RData`.
+#' @param Path_Efforts_Interim Character. The directory path to save interim
+#'   data.
+#' @param Path_Efforts_Data Character. The directory path to save detailed
+#'   effort data as `RData`.
 #' @param Path_Grid Character. The directory path to load the grid data.
 #' @param IAS_List A list of invasive alien species keys.
 #' @param Efforts_AllRequests A data frame containing the details of the GBIF
 #'   download, including paths to CSV files, zip files, order, class, and total
 #'   records.
+#' @param ChunkSize Integer. The number of rows per chunk file. Default:
+#'   `100,000`. See [Efforts_Split] for more details.
 #' @return The function returns and saves the GBIF data summary.
 #' @author Ahmed El-Gabbas
 #' @name Efforts_Process
 #' @export
 
 Efforts_Process <- function(
-    NCores, Path_Efforts, Path_Interim, Path_Data, Path_Grid,
-    IAS_List, Efforts_AllRequests) {
+    NCores, Path_Efforts, Path_Efforts_Interim, Path_Efforts_Data, Path_Grid,
+    IAS_List, Efforts_AllRequests, ChunkSize = 100000) {
 
   .StartTimeProcess <- lubridate::now(tzone = "CET")
 
   # # ..................................................................... ###
 
-  if (missing(NCores) || !is.numeric(NCores) || NCores <= 0) {
-    stop("NCores must be a positive integer.", call. = FALSE)
+  if (!is.numeric(NCores) || length(NCores) != 1 || NCores <= 0) {
+    stop("NCores must be a single positive integer.", call. = FALSE)
   }
 
-  if (missing(Path_Data) || !is.character(Path_Data) ||
-      !dir.exists(Path_Data)) {
-    stop("Path_Data must be a valid directory path.", call. = FALSE)
+  if (!is.character(Path_Efforts_Data) || length(Path_Efforts_Data) != 1 ||
+      !dir.exists(Path_Efforts_Data)) {
+    stop(
+      "Path_Efforts_Data must be a single valid directory path.",
+      call. = FALSE)
   }
 
   if (missing(Path_Grid) || !is.character(Path_Grid) ||
@@ -604,8 +672,9 @@ Efforts_Process <- function(
     stop("Path_Grid must be a valid directory path.", call. = FALSE)
   }
 
-  if (missing(Path_Interim) || !is.character(Path_Interim) || !dir.exists(Path_Interim)) {
-    stop("Path_Interim must be a valid directory path.", call. = FALSE)
+  if (missing(Path_Efforts_Interim) || !is.character(Path_Efforts_Interim) ||
+      !dir.exists(Path_Efforts_Interim)) {
+    stop("Path_Efforts_Interim must be a valid directory path.", call. = FALSE)
   }
 
   if (missing(Path_Efforts) || !is.character(Path_Efforts) ||
@@ -617,9 +686,9 @@ Efforts_Process <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  speciesKey <- CellCode <- coordinateUncertaintyInMeters <- ObsN <-
-    decimalLongitude <- decimalLatitude <- year <- UncertainKm <-
-    Latitude <- Longitude <- taxonRank <- NULL
+  speciesKey <- CellCode <- ObsN <- year <- UncertainKm <- Latitude <-
+    Longitude <- taxonRank <- ID <- DownPath <- Chunks <- TotalRecords <-
+    ClassOrder <- Path_DT <- NULL
 
   # # ..................................................................... ###
 
@@ -644,7 +713,9 @@ Efforts_Process <- function(
   # # ..................................................................... ###
 
   # Prepare working on parallel -----
+
   IASDT.R::CatTime("Prepare working on parallel", Level = 1)
+  withr::local_options(future.globals.maxSize = 8000 * 1024^2)
   c1 <- snow::makeSOCKcluster(NCores)
   on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
   future::plan(future::cluster, workers = c1, gc = TRUE)
@@ -652,113 +723,112 @@ Efforts_Process <- function(
     snow::clusterEvalQ(
       cl = c1,
       IASDT.R::LoadPackages(
-        List = c(
-          "terra", "IASDT.R", "stringr", "fs", "sf", "readr", "dplyr"))))
+        List = c("terra", "IASDT.R", "stringr", "fs", "sf", "readr", "dplyr"))))
 
   snow::clusterExport(
     cl = c1,
     list = c(
-      "Path_Efforts", "Path_Interim", "Efforts_AllRequests", "Path_Grid_R",
-      "Path_Data", "Grid_SF", "IAS_List"),
+      "Path_Efforts", "Path_Efforts_Interim", "Efforts_AllRequests",
+      "Path_Grid_R", "Path_Efforts_Data", "Grid_SF", "IAS_List", "ChunkSize"),
     envir = environment())
 
   # # ..................................................................... ###
 
-  # Processing efforts data ------
-  IASDT.R::CatTime("Processing efforts data", Level = 1)
+  # Reading data from the zipped archive -----
+  IASDT.R::CatTime("Reading data from the zipped archive", Level = 1)
 
-  Efforts_Summary0 <- future.apply::future_lapply(
-    X = seq_len(nrow(Efforts_AllRequests)),
-    FUN = function(x) {
+  Efforts_Summary <- Efforts_AllRequests %>%
+    dplyr::select(
+      tidyselect::all_of(
+        c("class", "order", "Request", "DownLink",
+          "TotalRecords", "DownPath"))) %>%
+    dplyr::mutate(
+      ClassOrder = purrr::map2_chr(class, order, ~paste0(.x, "_", .y)),
+      Path_DT = furrr::future_pmap_chr(
+        .l = list(DownPath, TotalRecords, ClassOrder),
+        .f = function(DownPath, TotalRecords, ClassOrder) {
 
-      CSV_File <- Efforts_AllRequests$PathCSV[x]
-      Zip_File <- Efforts_AllRequests$DownPath[x]
-      order <- Efforts_AllRequests$order[x]
-      class <- Efforts_AllRequests$class[x]
-      TotalRecords <- Efforts_AllRequests$TotalRecords[x]
-      ClassOrder <- paste0(class, "_", order)
+          Path_DT <- file.path(Path_Efforts_Data, paste0(ClassOrder, ".RData"))
 
-      Summary_Path <- file.path(
-        Path_Interim, paste0("Summary_", ClassOrder, ".RData"))
-      Path_DT <- file.path(Path_Data, paste0(ClassOrder, ".RData"))
-      Grid_R <- terra::unwrap(IASDT.R::LoadAs(Path_Grid_R))
+          if (file.exists(Path_DT)) {
+            return(Path_DT)
+          }
 
-      # Exclude processed Order
-      if (file.exists(Summary_Path)) {
-        return(Summary_Path)
-      }
+          # Split data into chunks
+          Chunks <- IASDT.R::Efforts_Split(
+            Path_Zip = DownPath, Path_Output = Path_Efforts_Interim,
+            ChunkSize = ChunkSize)
 
-      # Exclude Orders without any observations
-      if (TotalRecords == 0) {
-        tibble::tibble(
-          ObsN = 0, ObsN_Native = 0,
-          NObs_R = list(NA_integer_), NObs_Native_R = list(NA_integer_),
-          NSp_R = list(NA_integer_), NSp_Native_R = list(NA_integer_),
-          Path_DT = NA_character_) %>%
-          IASDT.R::SaveAs(OutObj = ClassOrder, Summary_Path)
-        return(Summary_Path)
-      }
+          if (TotalRecords == 0 || length(Chunks) == 0) {
 
-      # # ................................... ###
+            return(NA_character_)
 
-      # Extract observations file
-      if (!file.exists(CSV_File)) {
-        paste0("unzip -qqo ", Zip_File, " -d ", Path_Interim) %>%
-          system() %>%
-          invisible()
-      }
+          } else {
 
-      # # ................................... ###
+            DT <- readr::read_tsv(
+              file = Chunks,
+              col_names = c(
+                "taxonRank", "Latitude", "Longitude",
+                "UncertainKm", "year", "speciesKey"),
+              progress = FALSE, show_col_types = FALSE,
+              col_types = readr::cols(
+                UncertainKm = readr::col_double(),
+                Longitude = readr::col_double(),
+                Latitude = readr::col_double(),
+                year = readr::col_integer(),
+                speciesKey = readr::col_integer(),
+                taxonRank = readr::col_character(),
+                .default = readr::col_double())) %>%
+              dplyr::mutate(UncertainKm = UncertainKm / 1000) %>%
+              dplyr::filter(
+                !is.na(Latitude), !is.na(Longitude),
+                speciesKey != "",  year > 1980,
+                taxonRank %in% c("FORM", "SPECIES", "SUBSPECIES", "VARIETY"),
+                UncertainKm <= 100 | is.na(UncertainKm)) %>%
+              sf::st_as_sf(
+                coords = c("Longitude", "Latitude"),
+                crs = 4326, remove  = FALSE) %>%
+              # project to 3035
+              sf::st_transform(3035) %>%
+              sf::st_join(Grid_SF) %>%
+              dplyr::filter(magrittr::not(is.na(CellCode)))
 
-      Success <- FALSE
-      Attempt <- 1
-      Attempts <- 5
-
-      while (!Success && (Attempt <= Attempts)) {
-        tryCatch({
-
-          DT <- readr::read_tsv(
-            file = CSV_File,
-            col_select = tidyselect::all_of(
-              c("coordinateUncertaintyInMeters", "decimalLongitude",
-                "decimalLatitude", "year", "speciesKey", "taxonRank")),
-            progress = FALSE, show_col_types = FALSE,
-            col_types = readr::cols(
-              coordinateUncertaintyInMeters = readr::col_double(),
-              decimalLongitude = readr::col_double(),
-              decimalLatitude = readr::col_double(),
-              year = readr::col_integer(),
-              speciesKey = readr::col_integer(),
-              taxonRank = readr::col_character(),
-              .default = readr::col_double()))
-
-          DT <- dplyr::rename(
-            DT,
-            UncertainKm = coordinateUncertaintyInMeters,
-            Longitude = decimalLongitude, Latitude = decimalLatitude) %>%
-            dplyr::mutate(
-              year = as.integer(year), UncertainKm = UncertainKm / 1000) %>%
-            dplyr::filter(
-              !is.na(Latitude), !is.na(Longitude),
-              speciesKey != "",  year > 1980,
-              taxonRank %in% c("FORM", "SPECIES", "SUBSPECIES", "VARIETY"),
-              UncertainKm <= 100 | is.na(UncertainKm)) %>%
-            sf::st_as_sf(
-              coords = c("Longitude", "Latitude"),
-              crs = 4326, remove  = FALSE) %>%
-            # project to 3035
-            sf::st_transform(3035) %>%
-            sf::st_join(Grid_SF) %>%
-            dplyr::filter(magrittr::not(is.na(CellCode)))
-
-          ObsN <- nrow(DT)
-
-          # # ................................... ###
-
-          if (ObsN > 0) {
-
-            # Save order data as RData
             IASDT.R::SaveAs(InObj = DT, OutObj = ClassOrder, OutPath = Path_DT)
+
+            fs::file_delete(Chunks)
+            return(Path_DT)
+          }
+        },
+        .options = furrr::furrr_options(seed = TRUE)
+      ))
+
+  # # ..................................................................... ###
+
+  # Number of observations and species per order ----
+  IASDT.R::CatTime("Number of observations and species per order", Level = 1)
+
+  Efforts_Summary <- Efforts_Summary %>%
+    dplyr::mutate(
+      NObs_NSp_R = furrr::future_map2(
+        .x = Path_DT, .y = ClassOrder,
+        .f = ~{
+
+          if (is.na(.x)) {
+            ObsN <- 0
+          } else {
+            DT <- IASDT.R::LoadAs(.x)
+            ObsN <- nrow(DT)
+          }
+
+          Grid_R <- terra::unwrap(IASDT.R::LoadAs(Path_Grid_R))
+
+          if (ObsN == 0) {
+            NObs_R <- NSp_R <- terra::classify(Grid_R, cbind(1, 0))
+            NObs_R <- setNames(NObs_R, paste0("NObs_", .y)) %>%
+              terra::wrap()
+            NSp_R <- setNames(NSp_R, paste0("NSp_", .y)) %>%
+              terra::wrap()
+          } else {
 
             # Number of observations
             NObs_R <- sf::st_drop_geometry(DT) %>%
@@ -770,10 +840,8 @@ Efforts_Process <- function(
               terra::mask(Grid_R) %>%
               IASDT.R::setRastCRS() %>%
               IASDT.R::setRastVals() %>%
-              stats::setNames(paste0("NObs_", ClassOrder)) %>%
+              stats::setNames(paste0("NObs_", .y)) %>%
               terra::wrap()
-
-            # # ................................... ###
 
             # Number of species
             NSp_R <- sf::st_drop_geometry(DT) %>%
@@ -786,97 +854,93 @@ Efforts_Process <- function(
               terra::mask(Grid_R) %>%
               IASDT.R::setRastCRS() %>%
               IASDT.R::setRastVals() %>%
-              stats::setNames(paste0("NSp_", ClassOrder)) %>%
+              stats::setNames(paste0("NSp_", .y)) %>%
+              terra::wrap()
+          }
+
+          invisible(gc())
+
+          tibble::tibble(
+            ObsN = ObsN, NObs_R = list(NObs_R), NSp_R = list(NSp_R)) %>%
+            return()
+        },
+        .options = furrr::furrr_options(seed = TRUE))) %>%
+    tidyr::unnest_wider("NObs_NSp_R") %>%
+    tidyr::unnest(c("NObs_R", "NSp_R"))
+
+  # # ..................................................................... ###
+
+  # Number of observations and species per order - native species ----
+  IASDT.R::CatTime(
+    "Number of observations and species per order - native species", Level = 1)
+
+  Efforts_Summary <- Efforts_Summary %>%
+    dplyr::mutate(
+      Native = purrr::map2(
+        .x = Path_DT, .y = ClassOrder,
+        .f = ~{
+
+          if (is.na(.x)) {
+            ObsN_Native <- 0
+          } else {
+            # Data on native species
+            DT_Native <- IASDT.R::LoadAs(.x) %>%
+              dplyr::filter(!(speciesKey %in% IAS_List))
+            ObsN_Native <- nrow(DT_Native)
+          }
+
+          Grid_R <- terra::unwrap(IASDT.R::LoadAs(Path_Grid_R))
+
+          if (ObsN_Native == 0) {
+            NObs_Native_R <- NSp_Native_R <- terra::classify(Grid_R, cbind(1, 0))
+            NObs_Native_R <- NSp_Native_R <- terra::classify(Grid_R, cbind(1, 0))
+            NObs_Native_R <- setNames(
+              NObs_Native_R, paste0("NObsNative_", .y)) %>%
+              terra::wrap()
+            NSp_Native_R <- setNames(
+              NSp_Native_R, paste0("NSpNative_", .y)) %>%
+              terra::wrap()
+
+          } else {
+
+            # Number of observations of native species
+            NObs_Native_R <- sf::st_drop_geometry(DT_Native) %>%
+              dplyr::count(CellCode, name = "NObs_Native") %>%
+              dplyr::left_join(Grid_SF, by = "CellCode") %>%
+              sf::st_as_sf() %>%
+              terra::rasterize(Grid_R, field = "NObs_Native") %>%
+              terra::classify(cbind(NA, 0)) %>%
+              terra::mask(Grid_R) %>%
+              IASDT.R::setRastCRS() %>%
+              IASDT.R::setRastVals() %>%
+              stats::setNames(paste0("NObsNative_", .y)) %>%
               terra::wrap()
 
             # # ................................... ###
 
-            # Data on native species
-            DT_Native <- dplyr::filter(DT, !(speciesKey %in% IAS_List))
-
-            rm(DT)
-
-            if (nrow(DT_Native) > 0) {
-
-              ObsN_Native <- nrow(DT_Native)
-
-              # # ................................... ###
-
-              # Number of observations of native species
-              NObs_Native_R <- sf::st_drop_geometry(DT_Native) %>%
-                dplyr::count(CellCode, name = "NObs_Native") %>%
-                dplyr::left_join(Grid_SF, by = "CellCode") %>%
-                sf::st_as_sf() %>%
-                terra::rasterize(Grid_R, field = "NObs_Native") %>%
-                terra::classify(cbind(NA, 0)) %>%
-                terra::mask(Grid_R) %>%
-                IASDT.R::setRastCRS() %>%
-                IASDT.R::setRastVals() %>%
-                stats::setNames(paste0("NObsNative_", ClassOrder)) %>%
-                terra::wrap()
-
-              # # ................................... ###
-
-              # Number of native species
-              NSp_Native_R <- sf::st_drop_geometry(DT_Native) %>%
-                dplyr::distinct(CellCode, speciesKey) %>%
-                dplyr::count(CellCode, name = "NSp_Native") %>%
-                dplyr::left_join(Grid_SF, by = "CellCode") %>%
-                sf::st_as_sf() %>%
-                terra::rasterize(Grid_R, field = "NSp_Native") %>%
-                terra::classify(cbind(NA, 0)) %>%
-                terra::mask(Grid_R) %>%
-                IASDT.R::setRastCRS() %>%
-                IASDT.R::setRastVals() %>%
-                stats::setNames(paste0("NSpNative_", ClassOrder)) %>%
-                terra::wrap()
-
-            } else {
-              ObsN_Native <- 0
-              NObs_Native_R <- NSp_Native_R <- list()
-            }
-
-          } else {
-            ObsN <- ObsN_Native <- 0
-            Path_DT <- NA_character_
-            NObs_R <- NSp_R <- NObs_Native_R <- NSp_Native_R <- NA_real_
+            # Number of native species
+            NSp_Native_R <- sf::st_drop_geometry(DT_Native) %>%
+              dplyr::distinct(CellCode, speciesKey) %>%
+              dplyr::count(CellCode, name = "NSp_Native") %>%
+              dplyr::left_join(Grid_SF, by = "CellCode") %>%
+              sf::st_as_sf() %>%
+              terra::rasterize(Grid_R, field = "NSp_Native") %>%
+              terra::classify(cbind(NA, 0)) %>%
+              terra::mask(Grid_R) %>%
+              IASDT.R::setRastCRS() %>%
+              IASDT.R::setRastVals() %>%
+              stats::setNames(paste0("NSpNative_", .y)) %>%
+              terra::wrap()
           }
 
           tibble::tibble(
-            ObsN = ObsN, ObsN_Native = ObsN_Native,
-            NObs_R = list(NObs_R), NObs_Native_R = list(NObs_Native_R),
-            NSp_R = list(NSp_R), NSp_Native_R = list(NSp_Native_R),
-            Path_DT = Path_DT) %>%
-            IASDT.R::SaveAs(OutObj = ClassOrder, OutPath = Summary_Path)
-
-          Success <- TRUE
-
-        },
-        error = function(e) {
-          IASDT.R::CatTime(
-            paste0("Error on attempt #", Attempt, ": ", conditionMessage(e)),
-            Level = 2)
-
-          if (Attempt < Attempts) {
-            Attempt <- Attempt + 1
-          } else {
-            stop(
-              paste0(
-                "Failed to Process efforts data after ", Attempts,
-                " attempts: ", conditionMessage(e)),
-              call. = FALSE)
-          }
+            ObsN_Native = ObsN_Native, NObs_Native_R = list(NObs_Native_R),
+            NSp_Native_R = list(NSp_Native_R)) %>%
+            return()
         })
-      }
-
-      fs::file_delete(CSV_File)
-
-      return(Summary_Path)
-    },
-    future.scheduling = Inf, future.seed = TRUE)
-
-  Efforts_Summary <- purrr::map_dfr(Efforts_Summary0, IASDT.R::LoadAs) %>%
-    dplyr::bind_cols(Efforts_AllRequests, .)
+    ) %>%
+    tidyr::unnest_wider("Native") %>%
+    tidyr::unnest(c("NObs_Native_R", "NSp_Native_R"))
 
   # # ..................................................................... ###
 
@@ -905,6 +969,7 @@ Efforts_Process <- function(
       stats::setNames(Name)
   }
 
+  # # ..................................................................... ###
 
   # Exclude orders with no data
   Efforts_SummaryR <- dplyr::filter(Efforts_Summary, ObsN > 0)
@@ -947,7 +1012,6 @@ Efforts_Process <- function(
   return(invisible(NULL))
 }
 
-
 ## ............................................ ------
 ## ............................................ ------
 
@@ -960,9 +1024,10 @@ Efforts_Process <- function(
 #' This function generates and saves multiple plots of plant observation
 #' efforts, both in raw and log10 scales, using provided spatial boundary and
 #' summary data.
-#' @param Path_Efforts Character. Path where the final processed data will be
-#'   saved.
-#' @param EU_Bound Character. Path to file containing country boundaries.
+#' @param Path_Efforts Character. Path to the directory where the generated
+#'   plots will be saved. The directory must exist.
+#' @param EU_Bound Character. Path to `RData` file containing country
+#'   boundaries.
 #' @return The function saves generated plots as JPEG files in the specified
 #'   directory and returns NULL invisibly.
 #' @author Ahmed El-Gabbas
@@ -973,6 +1038,8 @@ Efforts_Process <- function(
 #' @export
 
 Efforts_Plot <- function(Path_Efforts, EU_Bound) {
+
+  # # ..................................................................... ###
 
   File_SummaryR <- file.path(Path_Efforts, "Efforts_SummaryR.RData")
   if (!file.exists(File_SummaryR)) {
@@ -986,16 +1053,8 @@ Efforts_Plot <- function(Path_Efforts, EU_Bound) {
 
   PlottingTheme <- ggplot2::theme_bw() +
     ggplot2::theme(
-      plot.margin = ggplot2::margin(0, 0, 0, 0, "cm"),
-      plot.title = ggplot2::element_text(
-        size = 14, color = "blue", face = "bold", hjust = 0.5,
-        margin = ggplot2::margin(0, 0, 0, 0)),
-      plot.subtitle = ggplot2::element_text(
-        size = 9.5, color = "black", face = "italic", hjust = 0.5,
-        vjust = 1, margin = ggplot2::margin(0, 0, 0, 0)),
-      strip.text = ggplot2::element_text(size = 5.5, face = "bold"),
-      strip.background = ggplot2::element_rect(
-        fill = "transparent", colour = "transparent"),
+      plot.margin = ggplot2::margin(0.02, 0, 0.02, 0, "cm"),
+      plot.title = ggplot2::element_blank(),
       legend.key.size = grid::unit(0.6, "cm"),
       legend.key.width = grid::unit(0.45, "cm"),
       legend.background = ggplot2::element_rect(fill = "transparent"),
@@ -1004,33 +1063,22 @@ Efforts_Plot <- function(Path_Efforts, EU_Bound) {
       legend.position.inside = c(0.925, 0.85),
       legend.title = ggplot2::element_text(
         color = "black", size = 8, face = "bold"),
-      legend.spacing.x = grid::unit(0.2, "cm"),
+      # legend.spacing.x = grid::unit(0.2, "cm"),
       axis.text.x = ggplot2::element_blank(),
       axis.text.y = ggplot2::element_blank(),
       axis.ticks = ggplot2::element_blank(),
-      plot.tag.position = c(0.94, 0.011),
-      plot.tag = ggtext::element_markdown(colour = "grey", size = 4),
-      panel.ontop = TRUE,
-      panel.spacing = grid::unit(0.05, "lines"),
-      panel.grid.minor = ggplot2::element_blank(),
-      panel.grid.major = ggplot2::element_blank(),
       panel.border = ggplot2::element_blank(),
-      panel.background = ggplot2::element_rect(fill = NA))
+      panel.background = ggplot2::element_rect(fill = NA)
+    )
 
   EurBound <- IASDT.R::LoadAs(EU_Bound) %>%
     magrittr::extract2("Bound_sf_Eur_s") %>%
     magrittr::extract2("L_03")
 
-  MapLabel <- c(
-    "Number of plant observations",
-    "Number of plant observations (native species)",
-    "Number of plant species",
-    "Number of native species")
-
   # # ..................................................................... ###
 
-  Efforts_GBIF_Plots <- purrr::map(
-    .x = seq_len(4),
+  Efforts_Plots <- purrr::map(
+    .x = seq_len(terra::nlyr(Efforts_SummaryR)),
     .f = ~{
       ggplot2::ggplot() +
         ggplot2::geom_sf(
@@ -1049,15 +1097,15 @@ Efforts_Plot <- function(Path_Efforts, EU_Bound) {
         ggplot2::scale_y_continuous(
           expand = ggplot2::expansion(mult = c(0, 0)),
           limits = c(1450000, 5420000)) +
-        ggplot2::labs(title = MapLabel[.x], fill = NULL) +
+        ggplot2::labs(fill = NULL) +
         PlottingTheme
     }) %>%
     stats::setNames(names(Efforts_SummaryR))
 
   # # ..................................................................... ###
 
-  Efforts_GBIF_Plots_Log <- purrr::map(
-    .x = seq_len(4),
+  Efforts_Plots_Log <- purrr::map(
+    .x = seq_len(terra::nlyr(Efforts_SummaryR)),
     .f  = ~{
       ggplot2::ggplot() +
         ggplot2::geom_sf(
@@ -1076,34 +1124,131 @@ Efforts_Plot <- function(Path_Efforts, EU_Bound) {
         ggplot2::scale_y_continuous(
           expand = ggplot2::expansion(mult = c(0, 0)),
           limits = c(1450000, 5420000)) +
-        ggplot2::labs(
-          title = paste0(MapLabel[.x], " - log10 scale"), fill = NULL) +
+        ggplot2::labs(fill = "log10") +
         PlottingTheme
     }) %>%
     stats::setNames(names(Efforts_SummaryR))
 
   # # ..................................................................... ###
 
-  plots <- list(
-    list(Efforts_GBIF_Plots$NObs, Efforts_GBIF_Plots_Log$NObs),
-    list(Efforts_GBIF_Plots$NObs_Native, Efforts_GBIF_Plots_Log$NObs_Native),
-    list(Efforts_GBIF_Plots$NSp, Efforts_GBIF_Plots_Log$NSp),
-    list(Efforts_GBIF_Plots$NSp_Native, Efforts_GBIF_Plots_Log$NSp_Native))
+  PlotDF <- tibble::tibble(
+    Plots = list(
+      list(Efforts_Plots$NObs, Efforts_Plots_Log$NObs),
+      list(Efforts_Plots$NObs_Native, Efforts_Plots_Log$NObs_Native),
+      list(Efforts_Plots$NSp, Efforts_Plots_Log$NSp),
+      list(Efforts_Plots$NSp_Native, Efforts_Plots_Log$NSp_Native))) %>%
+    dplyr::mutate(
+      FileName = c(
+        "Efforts_GBIF_NObs.jpeg", "Efforts_GBIF_NObs_Native.jpeg",
+        "Efforts_GBIF_NSp.jpeg", "Efforts_GBIF_NSp_Native.jpeg"),
+      Title =  c(
+        "Number of plant observations",
+        "Number of plant observations (native species)",
+        "Number of plant species",
+        "Number of native species"))
 
-  filenames <- c(
-    "Efforts_GBIF_NObs.jpeg", "Efforts_GBIF_NObs_Native.jpeg",
-    "Efforts_GBIF_NSp.jpeg", "Efforts_GBIF_NSp_Native.jpeg")
-
-  purrr::walk2(
-    .x = plots, .y = filenames,
+  purrr::walk(
+    .x = seq_len(nrow(PlotDF)),
     .f = ~{
-      patchwork::wrap_plots(.x, ncol = 2, nrow = 1) %>%
-        ggplot2::ggsave(
-          filename = file.path(Path_Efforts, .y),
-          width = 31, height = 16, units = "cm", dpi = 600)
+      CurrPlot <- patchwork::wrap_plots(
+        PlotDF$Plots[[.x]], ncol = 2, nrow = 1) +
+        patchwork::plot_annotation(
+          title = PlotDF$Title[[.x]],
+          theme = ggplot2::theme(
+            plot.title = ggplot2::element_text(
+              size = 14, face = "bold", hjust = 0.5, colour = "blue",
+              margin = ggplot2::margin(0.25, 0, 0.5, 0))))
+
+      ggplot2::ggsave(
+        plot = CurrPlot,
+        filename = file.path(Path_Efforts, PlotDF$FileName[[.x]]),
+        width = 31, height = 16.25, units = "cm", dpi = 600)
     })
 
   # # ..................................................................... ###
 
   return(invisible(NULL))
 }
+
+## ............................................ ------
+## ............................................ ------
+
+## |------------------------------------------------------------------------| #
+# Efforts_Split ----
+## |------------------------------------------------------------------------| #
+
+#' Split Order data into smaller chunks
+#'
+#' This function extracts Order data without extracting the zipped archive. The
+#' function reads CSV files inside the zipped file, selects specified columns,
+#' and splits the data into smaller chunks of specified row size, saving each
+#' chunk as a separate file.
+#' @param Path_Zip Character. The file path to the zip archive containing the
+#'   CSV file. The file must be a ZIP archive containing a single CSV file.
+#' @param Path_Output Character. The directory where the split files will be
+#'   saved. The directory must exist.
+#' @param ChunkSize Integer. The number of rows per chunk file. Default:
+#'   `100,000`. Note: Larger chunk sizes may require significant memory and
+#'   processing power.
+#' @return A character vector of file path(s) to the created chunk files.
+#' @name Efforts_Split
+#' @author Ahmed El-Gabbas
+#' @export
+
+Efforts_Split <- function(Path_Zip, Path_Output, ChunkSize = 100000) {
+
+  ID <- Col <- NULL
+
+  # Check if ChunkSize is valid (greater than zero)
+  if (!is.numeric(ChunkSize) || ChunkSize <= 0) {
+    stop("ChunkSize must be a positive number.")
+  }
+
+  # Checking required bash tools
+  IASDT.R::CheckCommands(c("unzip", "cut", "sed", "split"))
+
+  # ensure that `ChunkSize` is not formatted in scientific notation
+  ChunkSize <- format(ChunkSize, scientific = FALSE)
+
+  CSV_File <- stringr::str_replace(basename(Path_Zip), ".zip$", ".csv")
+  OutPrefix <- stringr::str_replace(basename(Path_Zip), ".zip$", "_") %>%
+    file.path(Path_Output, .)
+
+  # extract column names and their numbers from the zipped file without
+  # extraction read first line
+  SelectedCols <- stringr::str_glue(
+    "unzip -p {Path_Zip} {CSV_File} | head -n 1") %>%
+    IASDT.R::System() %>%
+    # Split the first row into column names. Data is tab-separated
+    stringr::str_split("\t") %>%
+    magrittr::extract2(1) %>%
+    dplyr::tibble(Col = .) %>%
+    # column number in the original data
+    dplyr::mutate(ID = seq_len(dplyr::n())) %>%
+    # Only keep selected columns
+    dplyr::filter(
+      Col %in% c(
+        "taxonRank", "decimalLatitude", "decimalLongitude",
+        "coordinateUncertaintyInMeters", "year", "speciesKey")) %>%
+    dplyr::pull(ID) %>%
+    paste0(collapse = ",")
+
+  Command <- stringr::str_glue(
+    'unzip -p {Path_Zip} {CSV_File} | cut -f{SelectedCols} -d "\t" | ',
+    'sed -n "1!p" | split -l {ChunkSize} ',
+    "-a 3 -d - {OutPrefix} --additional-suffix=.txt")
+
+  Path_Chunks <- tryCatch({
+    IASDT.R::System(Command, RObj = FALSE)
+  }, error = function(e) {
+    stop("Failed to execute system command: ", e$message)
+  })
+
+  list.files(
+    Path_Output, pattern = paste0(basename(OutPrefix), ".+txt"),
+    full.names = TRUE) %>%
+    return()
+}
+
+## ............................................ ------
+## ............................................ ------

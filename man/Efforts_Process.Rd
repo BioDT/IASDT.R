@@ -7,11 +7,12 @@
 Efforts_Process(
   NCores,
   Path_Efforts,
-  Path_Interim,
-  Path_Data,
+  Path_Efforts_Interim,
+  Path_Efforts_Data,
   Path_Grid,
   IAS_List,
-  Efforts_AllRequests
+  Efforts_AllRequests,
+  ChunkSize = 1e+05
 )
 }
 \arguments{
@@ -20,10 +21,11 @@ Efforts_Process(
 \item{Path_Efforts}{Character. Path where the final processed data will be
 saved.}
 
-\item{Path_Interim}{Character. The directory path to save interim data.}
+\item{Path_Efforts_Interim}{Character. The directory path to save interim
+data.}
 
-\item{Path_Data}{Character. The directory path to save detailed effort data
-as \code{RData}.}
+\item{Path_Efforts_Data}{Character. The directory path to save detailed
+effort data as \code{RData}.}
 
 \item{Path_Grid}{Character. The directory path to load the grid data.}
 
@@ -32,6 +34,9 @@ as \code{RData}.}
 \item{Efforts_AllRequests}{A data frame containing the details of the GBIF
 download, including paths to CSV files, zip files, order, class, and total
 records.}
+
+\item{ChunkSize}{Integer. The number of rows per chunk file. Default:
+\verb{100,000}. See \link{Efforts_Split} for more details.}
 }
 \value{
 The function returns and saves the GBIF data summary.

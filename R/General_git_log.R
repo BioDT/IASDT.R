@@ -44,6 +44,9 @@
 
 git_log <- function(Path = ".", Num = NULL, ReturnLog = FALSE) {
 
+  # Check system commands
+  IASDT.R::CheckCommands("git")
+
   if (!dir.exists(Path)) {
     stop("The provided path does not exist.", call. = FALSE)
   }

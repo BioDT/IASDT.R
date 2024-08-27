@@ -36,9 +36,7 @@ CheckTiff <- function(x = NULL) {
     stop("Input file does not exist", call. = FALSE)
   }
 
-  x %>%
-    terra::describe() %>%
-    as.character() %>%
+  as.character(terra::describe(x = x)) %>%
     stringr::str_detect("Driver") %>%
     any() %>%
     return()

@@ -53,6 +53,11 @@ Railway_Intensity <- function(
 
   # # ..................................................................... ###
 
+  IASDT.R::CatTime("Check system commands")
+  IASDT.R::CheckCommands("unzip")
+
+  # # ..................................................................... ###
+
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Path_Railways <- Path_Railways_Raw <- Path_Railways_Interim <- RefGrid <-

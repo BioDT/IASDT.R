@@ -7,10 +7,11 @@
 Efforts_Plot(Path_Efforts, EU_Bound)
 }
 \arguments{
-\item{Path_Efforts}{Character. Path where the final processed data will be
-saved.}
+\item{Path_Efforts}{Character. Path to the directory where the generated
+plots will be saved. The directory must exist.}
 
-\item{EU_Bound}{Character. Path to file containing country boundaries.}
+\item{EU_Bound}{Character. Path to \code{RData} file containing country
+boundaries.}
 }
 \value{
 The function saves generated plots as JPEG files in the specified

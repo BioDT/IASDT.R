@@ -31,6 +31,9 @@ Chelsa_Prepare_List <- function(
     Down = FALSE, DownParallel = TRUE, DwnPath = NULL, OutPath = NULL,
     UpdateExisting = FALSE, Path_Chelsa = "Data/Chelsa") {
 
+  # Check system commands
+  IASDT.R::CheckCommands("curl")
+
   if (Down && (is.null(DwnPath) || is.null(OutPath))) {
     stop("DwnPath and OutPath cannot be NULL", call. = FALSE)
   }

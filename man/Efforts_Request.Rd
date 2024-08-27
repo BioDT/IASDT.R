@@ -7,7 +7,8 @@
 Efforts_Request(NCores, Path_Requests, Path_Efforts, StartYear, Boundaries)
 }
 \arguments{
-\item{NCores}{Integer. The number of cores to use for parallel processing (1 to 3). Must be a positive integer, up to a maximum of 3.}
+\item{NCores}{Integer. The number of cores to use for parallel processing
+(between 1 and 3). Must be a positive integer.}
 
 \item{Path_Requests}{Character. The directory path to save individual request
 files.}

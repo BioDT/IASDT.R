@@ -20,6 +20,10 @@
 #' FileType(Path = f)
 
 FileType <- function(Path) {
+
+  # Check system commands
+  IASDT.R::CheckCommands("file")
+
   if (is.null(Path)) {
     stop("Path cannot be NULL", call. = FALSE)
   }

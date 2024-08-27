@@ -12,7 +12,8 @@ Sampling_Efforts(
   DownloadData = TRUE,
   NCores = 6,
   StartYear = 1980,
-  Boundaries = c(-30, 50, 25, 75)
+  Boundaries = c(-30, 50, 25, 75),
+  ChunkSize = 10000
 )
 }
 \arguments{
@@ -41,16 +42,26 @@ records from this year onward will be requested from GBIF. Default: \code{1980}.
 \item{Boundaries}{Numeric vector of length 4. Specifies geographical
 boundaries for the requested GBIF data in the order: Left, Right, Bottom,
 Top. Default: \code{c(-30, 50, 25, 75)}.}
+
+\item{ChunkSize}{Integer. The number of rows per chunk file. Default:
+\verb{100,000}. See \link{Efforts_Split} and \link{Efforts_Process} for more details.}
+}
+\value{
+Returns \code{NULL} invisibly. The function generates various output
+files, maps, and logs, and it is designed to be used for its side effects.
 }
 \description{
-This script download GBIF data for all vascular plants (grouped by order) in
-the study area. Data is converted to raster to represent the number of
-vascular plant observation per grid
+This function downloads GBIF data for all vascular plants within a specified
+geographical area (Europe), grouped by order, and converts the data to raster
+format to represent the number of vascular plant observations and species per
+grid cell.
 }
 \note{
-The function is expected to take substantial amount of time (> 9 hours
-on a Windows PC running with 6 cores). The data request is expected to take
-5 hours, as it includes waiting for the GBIF data to be ready.
+This function is expected to take a substantial amount of time (>9
+hours on a Windows PC with 6 cores). The data request from GBIF may take
+around 5 hours to be ready. The function requests GBIF data for each
+vascular plant order and waits for the data to be ready before processing
+them.
 }
 \author{
 Ahmed El-Gabbas

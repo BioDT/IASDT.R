@@ -4,18 +4,20 @@
 \alias{Efforts_Download}
 \title{Download and Manage GBIF Data for Vascular Plant Orders}
 \usage{
-Efforts_Download(NCores, Path_Raw, Path_Interim, Path_Efforts)
+Efforts_Download(NCores = 6, Path_Raw, Path_Interim, Path_Efforts)
 }
 \arguments{
-\item{NCores}{Integer. Number of cores to use for parallel processing.}
+\item{NCores}{Integer. Number of cores to use for parallel processing.  Must
+be a positive integer. This directory must exist or be created beforehand.}
 
-\item{Path_Raw}{Character. Path where the raw downloaded data will be saved.}
+\item{Path_Raw}{Character. Path where the raw downloaded data will be saved.
+This directory must exist or be created beforehand.}
 
 \item{Path_Interim}{Character. Path where the interim CSV files will be
-saved.}
+saved. This directory must exist or be created beforehand.}
 
 \item{Path_Efforts}{Character. Path where the final processed data will be
-saved.}
+saved. This directory must exist or be created beforehand.}
 }
 \value{
 A data frame (\code{Efforts_AllRequests}) with updated download paths and

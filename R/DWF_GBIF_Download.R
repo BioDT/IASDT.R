@@ -91,6 +91,11 @@ GBIF_Download <- function(
 
   # # ..................................................................... ###
 
+  IASDT.R::CatTime("Check system commands")
+  IASDT.R::CheckCommands(c("unzip", "nl", "head", "cut", "sed", "split"))
+
+  # # ..................................................................... ###
+
   # Environment variables ----
   IASDT.R::CatTime("Environment variables")
 

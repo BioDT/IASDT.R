@@ -185,10 +185,11 @@ IAS_Processing <- function(
   ## Species-specific data on parallel ----
   IASDT.R::CatTime("Species-specific data on parallel", Level = 1)
 
-  Sp_PA_Data <- snow::parLapply(
-    cl = c1, x = sort(unique(TaxaList$Species_name)),
-    fun = IASDT.R::IAS_Distribution, FromHPC = FromHPC,
-    EnvFile = EnvFile, Verbose = FALSE)
+  Sp_PA_Data <- future.apply::future_lapply(
+    X = sort(unique(TaxaList$Species_name)),
+    FUN = IASDT.R::IAS_Distribution, FromHPC = FromHPC,
+    EnvFile = EnvFile, Verbose = FALSE,
+    future.scheduling = Inf, future.seed = TRUE)
 
   # # .................................... ###
 
@@ -281,10 +282,10 @@ IAS_Processing <- function(
 
   ## Plotting species maps -----
   IASDT.R::CatTime("Plotting species maps", Level = 1)
-  snow::parLapply(
-    cl = c1, x = sort(Sp_PA_Summary_DF$Species_name),
-    fun = IASDT.R::IAS_Plot, FromHPC = FromHPC, EnvFile = EnvFile,
-    Overwrite = Overwrite) %>%
+  future.apply::future_lapply(
+    X = sort(Sp_PA_Summary_DF$Species_name),
+    FUN = IASDT.R::IAS_Plot, FromHPC = FromHPC, EnvFile = EnvFile,
+    Overwrite = Overwrite, future.scheduling = Inf, future.seed = TRUE) %>%
     invisible()
 
   rm(Sp_PA_Summary_DF)

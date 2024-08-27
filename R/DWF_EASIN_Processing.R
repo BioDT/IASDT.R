@@ -296,7 +296,7 @@ EASIN_Processing <- function(
 
       IASDT.R::CatTime(
         paste0("There are ", length(NotProcessed),
-        " EASIN taxa to be downloaded"),
+               " EASIN taxa to be downloaded"),
         Level = 1)
 
       if (length(NotProcessed) == 0 || Try > NDownTries) {
@@ -324,10 +324,12 @@ EASIN_Processing <- function(
                    "DeleteChunks", "SleepTime"),
           envir = environment())
 
-        Down <- snow::parLapply(
-          cl = c1, x = NotProcessed, fun = IASDT.R::EASIN_Down,
+        Down <- future.apply::future_lapply(
+          X = NotProcessed, FUN = IASDT.R::EASIN_Down,
           Path_Raw = Path_EASIN_Interim, DeleteChunks = DeleteChunks,
-          NSearch = NSearch, SleepTime = SleepTime)
+          NSearch = NSearch, SleepTime = SleepTime,
+          future.scheduling = Inf, future.seed = TRUE)
+
         rm(Down)
       }
       Sys.sleep(SleepTime)
@@ -379,8 +381,9 @@ EASIN_Processing <- function(
   future::plan(future::cluster, workers = c1, gc = TRUE)
   snow::clusterExport(cl = c1, list = "EASIN_Files", envir = environment())
 
-  EASIN_Data_Orig <- snow::parLapply(
-    cl = c1, x = EASIN_Files, fun = IASDT.R::LoadAs) %>%
+  EASIN_Data_Orig <- future.apply::future_lapply(
+    X = EASIN_Files, FUN = IASDT.R::LoadAs,
+    future.scheduling = Inf, future.seed = TRUE) %>%
     dplyr::bind_rows()
 
   ## Save merged EASIN data -----
@@ -415,11 +418,12 @@ EASIN_Processing <- function(
   WKTs <- EASIN_Data %>%
     dplyr::distinct(WKT) %>%
     dplyr::pull(WKT) %>%
-    snow::parLapply(
-      cl = c1, x = .,
-      fun = function(x) {
+    future.apply::future_lapply(
+      X = .,
+      FUN = function(x) {
         tibble::tibble(WKT = x, IASDT.R::Text2Coords(x))
-      }) %>%
+      },
+      future.scheduling = Inf, future.seed = TRUE) %>%
     dplyr::bind_rows() %>%
     dplyr::mutate(dplyr::across(
       .cols = c("Longitude", "Latitude"), .fns = ~round(.x, 5)))

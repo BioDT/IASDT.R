@@ -32,7 +32,6 @@
 #' @name Sampling_Efforts
 #' @export
 
-
 Sampling_Efforts <- function(
     FromHPC = TRUE, EnvFile = ".env", Renviron = ".Renviron",
     RequestData = TRUE, DownloadData = TRUE, NCores = 6, StartYear = 1980,
@@ -653,7 +652,8 @@ Efforts_Process <- function(
     snow::clusterEvalQ(
       cl = c1,
       IASDT.R::LoadPackages(
-        List = c("terra", "IASDT.R", "stringr", "fs", "sf", "readr", "dplyr"))))
+        List = c(
+          "terra", "IASDT.R", "stringr", "fs", "sf", "readr", "dplyr"))))
 
   snow::clusterExport(
     cl = c1,
@@ -667,9 +667,48 @@ Efforts_Process <- function(
   # Processing efforts data ------
   IASDT.R::CatTime("Processing efforts data", Level = 1)
 
-  Efforts_Summary0 <- snow::parLapply(
-    cl = c1, x = seq_len(nrow(Efforts_AllRequests)),
-    fun = function(x) {
+  Efforts_Summary0 <- future.apply::future_lapply(
+    X = seq_len(nrow(Efforts_AllRequests)),
+    FUN = function(x) {
+
+      CSV_File <- Efforts_AllRequests$PathCSV[x]
+      Zip_File <- Efforts_AllRequests$DownPath[x]
+      order <- Efforts_AllRequests$order[x]
+      class <- Efforts_AllRequests$class[x]
+      TotalRecords <- Efforts_AllRequests$TotalRecords[x]
+      ClassOrder <- paste0(class, "_", order)
+
+      Summary_Path <- file.path(
+        Path_Interim, paste0("Summary_", ClassOrder, ".RData"))
+      Path_DT <- file.path(Path_Data, paste0(ClassOrder, ".RData"))
+      Grid_R <- terra::unwrap(IASDT.R::LoadAs(Path_Grid_R))
+
+      # Exclude processed Order
+      if (file.exists(Summary_Path)) {
+        return(Summary_Path)
+      }
+
+      # Exclude Orders without any observations
+      if (TotalRecords == 0) {
+        tibble::tibble(
+          ObsN = 0, ObsN_Native = 0,
+          NObs_R = list(NA_integer_), NObs_Native_R = list(NA_integer_),
+          NSp_R = list(NA_integer_), NSp_Native_R = list(NA_integer_),
+          Path_DT = NA_character_) %>%
+          IASDT.R::SaveAs(OutObj = ClassOrder, Summary_Path)
+        return(Summary_Path)
+      }
+
+      # # ................................... ###
+
+      # Extract observations file
+      if (!file.exists(CSV_File)) {
+        paste0("unzip -qqo ", Zip_File, " -d ", Path_Interim) %>%
+          system() %>%
+          invisible()
+      }
+
+      # # ................................... ###
 
       Success <- FALSE
       Attempt <- 1
@@ -678,51 +717,12 @@ Efforts_Process <- function(
       while (!Success && (Attempt <= Attempts)) {
         tryCatch({
 
-          CSV_File <- Efforts_AllRequests$PathCSV[x]
-          Zip_File <- Efforts_AllRequests$DownPath[x]
-          order <- Efforts_AllRequests$order[x]
-          class <- Efforts_AllRequests$class[x]
-          TotalRecords <- Efforts_AllRequests$TotalRecords[x]
-          ClassOrder <- paste0(class, "_", order)
-
-          Summary_Path <- file.path(
-            Path_Interim, paste0("Summary_", ClassOrder, ".RData"))
-          Path_DT <- file.path(Path_Data, paste0(ClassOrder, ".RData"))
-          Grid_R <- terra::unwrap(IASDT.R::LoadAs(Path_Grid_R))
-
-          # # ................................... ###
-
-          # Exclude processed Order
-          if (file.exists(Summary_Path)) {
-            return(Summary_Path)
-          }
-
-          # Exclude Orders without any observations
-          if (TotalRecords == 0) {
-            tibble::tibble(
-              ObsN = 0, ObsN_Native = 0,
-              NObs_R = list(NA_integer_), NObs_Native_R = list(NA_integer_),
-              NSp_R = list(NA_integer_), NSp_Native_R = list(NA_integer_),
-              Path_DT = NA_character_) %>%
-              IASDT.R::SaveAs(OutObj = ClassOrder, Summary_Path)
-            return(Summary_Path)
-          }
-
-          # # ................................... ###
-
-          paste0("unzip -qqo ", Zip_File, " -d ", Path_Interim) %>%
-            system() %>%
-            invisible()
-
-          # # ................................... ###
-
           DT <- readr::read_tsv(
             file = CSV_File,
             col_select = tidyselect::all_of(
               c("coordinateUncertaintyInMeters", "decimalLongitude",
                 "decimalLatitude", "year", "speciesKey", "taxonRank")),
-            progress = FALSE,
-            show_col_types = FALSE,
+            progress = FALSE, show_col_types = FALSE,
             col_types = readr::cols(
               coordinateUncertaintyInMeters = readr::col_double(),
               decimalLongitude = readr::col_double(),
@@ -730,10 +730,12 @@ Efforts_Process <- function(
               year = readr::col_integer(),
               speciesKey = readr::col_integer(),
               taxonRank = readr::col_character(),
-              .default = readr::col_double())) %>%
-            dplyr::rename(
-              UncertainKm = coordinateUncertaintyInMeters,
-              Longitude = decimalLongitude, Latitude = decimalLatitude) %>%
+              .default = readr::col_double()))
+
+          DT <- dplyr::rename(
+            DT,
+            UncertainKm = coordinateUncertaintyInMeters,
+            Longitude = decimalLongitude, Latitude = decimalLatitude) %>%
             dplyr::mutate(
               year = as.integer(year), UncertainKm = UncertainKm / 1000) %>%
             dplyr::filter(
@@ -741,26 +743,24 @@ Efforts_Process <- function(
               speciesKey != "",  year > 1980,
               taxonRank %in% c("FORM", "SPECIES", "SUBSPECIES", "VARIETY"),
               UncertainKm <= 100 | is.na(UncertainKm)) %>%
-            sf::st_as_sf(coords = c("Longitude", "Latitude"), crs = 4326) %>%
+            sf::st_as_sf(
+              coords = c("Longitude", "Latitude"),
+              crs = 4326, remove  = FALSE) %>%
             # project to 3035
             sf::st_transform(3035) %>%
             sf::st_join(Grid_SF) %>%
             dplyr::filter(magrittr::not(is.na(CellCode)))
 
-          invisible(gc())
-          fs::file_delete(CSV_File)
-
           ObsN <- nrow(DT)
+
+          # # ................................... ###
 
           if (ObsN > 0) {
 
             # Save order data as RData
             IASDT.R::SaveAs(InObj = DT, OutObj = ClassOrder, OutPath = Path_DT)
 
-            # # ................................... ###
-
             # Number of observations
-
             NObs_R <- sf::st_drop_geometry(DT) %>%
               dplyr::count(CellCode, name = "NObs") %>%
               dplyr::left_join(Grid_SF, by = "CellCode") %>%
@@ -768,6 +768,8 @@ Efforts_Process <- function(
               terra::rasterize(y = Grid_R, field = "NObs") %>%
               terra::classify(cbind(NA, 0)) %>%
               terra::mask(Grid_R) %>%
+              IASDT.R::setRastCRS() %>%
+              IASDT.R::setRastVals() %>%
               stats::setNames(paste0("NObs_", ClassOrder)) %>%
               terra::wrap()
 
@@ -782,6 +784,8 @@ Efforts_Process <- function(
               terra::rasterize(y = Grid_R, field = "NSp") %>%
               terra::classify(cbind(NA, 0)) %>%
               terra::mask(Grid_R) %>%
+              IASDT.R::setRastCRS() %>%
+              IASDT.R::setRastVals() %>%
               stats::setNames(paste0("NSp_", ClassOrder)) %>%
               terra::wrap()
 
@@ -791,7 +795,6 @@ Efforts_Process <- function(
             DT_Native <- dplyr::filter(DT, !(speciesKey %in% IAS_List))
 
             rm(DT)
-            invisible(gc())
 
             if (nrow(DT_Native) > 0) {
 
@@ -807,6 +810,8 @@ Efforts_Process <- function(
                 terra::rasterize(Grid_R, field = "NObs_Native") %>%
                 terra::classify(cbind(NA, 0)) %>%
                 terra::mask(Grid_R) %>%
+                IASDT.R::setRastCRS() %>%
+                IASDT.R::setRastVals() %>%
                 stats::setNames(paste0("NObsNative_", ClassOrder)) %>%
                 terra::wrap()
 
@@ -821,6 +826,8 @@ Efforts_Process <- function(
                 terra::rasterize(Grid_R, field = "NSp_Native") %>%
                 terra::classify(cbind(NA, 0)) %>%
                 terra::mask(Grid_R) %>%
+                IASDT.R::setRastCRS() %>%
+                IASDT.R::setRastVals() %>%
                 stats::setNames(paste0("NSpNative_", ClassOrder)) %>%
                 terra::wrap()
 
@@ -842,29 +849,31 @@ Efforts_Process <- function(
             Path_DT = Path_DT) %>%
             IASDT.R::SaveAs(OutObj = ClassOrder, OutPath = Summary_Path)
 
-          invisible(gc())
-
-          return(Summary_Path)
-
-
           Success <- TRUE
+
         },
         error = function(e) {
           IASDT.R::CatTime(
             paste0("Error on attempt #", Attempt, ": ", conditionMessage(e)),
             Level = 2)
+
           if (Attempt < Attempts) {
             Attempt <- Attempt + 1
           } else {
             stop(
               paste0(
-                "Failed to Process efforts data after ", Attempts, " attempts: ",
-                conditionMessage(e)),
+                "Failed to Process efforts data after ", Attempts,
+                " attempts: ", conditionMessage(e)),
               call. = FALSE)
           }
         })
       }
-    })
+
+      fs::file_delete(CSV_File)
+
+      return(Summary_Path)
+    },
+    future.scheduling = Inf, future.seed = TRUE)
 
   Efforts_Summary <- purrr::map_dfr(Efforts_Summary0, IASDT.R::LoadAs) %>%
     dplyr::bind_cols(Efforts_AllRequests, .)
@@ -891,6 +900,8 @@ Efforts_Process <- function(
     purrr::map(.x = unlist(List), .f = terra::unwrap) %>%
       terra::rast() %>%
       sum(na.rm = TRUE) %>%
+      IASDT.R::setRastCRS() %>%
+      IASDT.R::setRastVals() %>%
       stats::setNames(Name)
   }
 
@@ -903,7 +914,9 @@ Efforts_Process <- function(
     CalcNObsNSp(Efforts_SummaryR$NObs_Native_R, "NObs_Native"),
     CalcNObsNSp(Efforts_SummaryR$NSp_R, "NSp"),
     CalcNObsNSp(Efforts_SummaryR$NSp_Native_R, "NSp_Native")) %>%
-    terra::rast()
+    terra::rast() %>%
+    IASDT.R::setRastCRS() %>%
+    IASDT.R::setRastVals()
 
   # # ..................................................................... ###
 

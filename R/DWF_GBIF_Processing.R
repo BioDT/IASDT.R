@@ -154,13 +154,13 @@ GBIF_Processing <- function(
     path = Path_GBIF_Interim, pattern = "Chunk_.+.txt", full.names = TRUE)
   ChunkListRData <- stringr::str_replace_all(ChunkList, ".txt$", ".RData")
 
-  GBIF_Data <- snow::parLapply(
-    cl = c1, x = ChunkList,
-    fun = function(x) {
+  GBIF_Data <- future.apply::future_lapply(
+    X = ChunkList,
+    FUN = function(x) {
       IASDT.R::GBIF_ReadChunk(
         ChunkFile = x, EnvFile = EnvFile, FromHPC = FromHPC,
         SaveRData = TRUE, ReturnData = FALSE, Overwrite = Overwrite)
-    })
+    }, future.scheduling = Inf, future.seed = TRUE)
 
   IASDT.R::CatDiff(
     InitTime = .StartTimeChunks, CatInfo = FALSE,

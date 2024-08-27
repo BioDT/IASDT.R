@@ -218,9 +218,9 @@ Railway_Intensity <- function(
     snow::clusterExport(
       cl = c1, list = c("Railways_Links", "CheckZip"), envir = environment())
 
-    DownRail <- snow::parLapply(
-      cl = c1, x = seq_len(nrow(Railways_Links)),
-      fun = function(ID) {
+    DownRail <- future.apply::future_lapply(
+      X = seq_len(nrow(Railways_Links)),
+      FUN = function(ID) {
 
         URL <- Railways_Links$URL2[[ID]]
         Path <- Railways_Links$Path[[ID]]
@@ -280,7 +280,8 @@ Railway_Intensity <- function(
           })
         }
         return(invisible(NULL))
-      })
+      },
+      future.scheduling = Inf, future.seed = TRUE)
 
     rm(DownRail)
 

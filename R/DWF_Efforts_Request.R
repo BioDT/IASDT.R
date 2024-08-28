@@ -99,8 +99,7 @@ Efforts_Request <- function(
     dplyr::mutate(
       Request = furrr::future_map(
         .x = orderKey,
-        .f = ~{
-
+        .f = ~ {
           Request_ID <- paste0("Request_", .x)
           Request_Path <- file.path(Path_Requests, paste0(Request_ID, ".RData"))
 
@@ -109,32 +108,39 @@ Efforts_Request <- function(
             Down <- IASDT.R::LoadAs(Request_Path)
           } else {
             # Attempt the request with error handling
-            tryCatch({
-              # Make data request
-              Down <- rgbif::occ_download(
-                rgbif::pred_in("taxonKey", .x),
-                # Only with coordinates & no spatial issues
-                rgbif::pred("hasCoordinate", TRUE),
-                rgbif::pred("hasGeospatialIssue", FALSE),
-                # Only after (>=) a certain year
-                rgbif::pred_gte("year", StartYear),
-                # Only within specific boundaries
-                rgbif::pred_within(
-                  value = IASDT.R::DownBoundary(
-                    Left = Boundaries[1], Right = Boundaries[2],
-                    Bottom = Boundaries[3], Top = Boundaries[4])),
-                format = "SIMPLE_CSV")
+            tryCatch(
+              {
+                # Make data request
+                Down <- rgbif::occ_download(
+                  rgbif::pred_in("taxonKey", .x),
+                  # Only with coordinates & no spatial issues
+                  rgbif::pred("hasCoordinate", TRUE),
+                  rgbif::pred("hasGeospatialIssue", FALSE),
+                  # Only after (>=) a certain year
+                  rgbif::pred_gte("year", StartYear),
+                  # Only within specific boundaries
+                  rgbif::pred_within(
+                    value = IASDT.R::DownBoundary(
+                      Left = Boundaries[1], Right = Boundaries[2],
+                      Bottom = Boundaries[3], Top = Boundaries[4])
+                  ),
+                  format = "SIMPLE_CSV"
+                )
 
-              IASDT.R::SaveAs(
-                InObj = Down, OutObj = Request_ID, OutPath = Request_Path)
+                IASDT.R::SaveAs(
+                  InObj = Down, OutObj = Request_ID, OutPath = Request_Path)
 
-            },
-            error = function(e) {
-              stop(paste0(
-                "Failed to request data for taxonKey ", .x, ": ",
-                conditionMessage(e)),
-                call. = FALSE)
-            })
+              },
+              error = function(e) {
+                stop(
+                  paste0(
+                    "Failed to request data for taxonKey ", .x, ": ",
+                    conditionMessage(e)
+                  ),
+                  call. = FALSE
+                )
+              }
+            )
           }
 
           # Waiting for data to be ready
@@ -142,9 +148,10 @@ Efforts_Request <- function(
 
           return(Down)
         },
-        .options = furrr::furrr_options(seed = TRUE, scheduling = Inf))) %>%
+        .options = furrr::furrr_options(seed = TRUE, scheduling = Inf)
+      )
+    ) %>%
     dplyr::rowwise() %>%
-
     # Add columns for metadata
     dplyr::mutate(
       DownDetails = list(rgbif::occ_download_wait(Request, quiet = TRUE)),
@@ -167,7 +174,7 @@ Efforts_Request <- function(
       dplyr::across(TotalRecords:NumberDatasets, as.integer),
       # Convert some columns to date type
       dplyr::across(c(Created, Modified, EraseAfter), lubridate::as_date)) %>%
-    dplyr::ungroup()  %>%
+    dplyr::ungroup() %>%
     # how to cite data
     dplyr::mutate(Citation = purrr::map_chr(Request, attr, "citation"))
 
@@ -177,7 +184,7 @@ Efforts_Request <- function(
   IASDT.R::CatTime("Save efforts request data", Level = 1)
 
   save(Efforts_AllRequests,
-       file = file.path(Path_Efforts, "Efforts_AllRequests.RData"))
+    file = file.path(Path_Efforts, "Efforts_AllRequests.RData"))
 
   # # ..................................................................... ###
 
@@ -195,5 +202,4 @@ Efforts_Request <- function(
   # # ..................................................................... ###
 
   return(Efforts_AllRequests)
-
 }

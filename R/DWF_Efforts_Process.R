@@ -32,7 +32,6 @@
 Efforts_Process <- function(
     NCores, Path_Efforts, Path_Efforts_Interim, Path_Efforts_Data, Path_Grid,
     IAS_List, Efforts_AllRequests, ChunkSize = 100000) {
-
   .StartTimeProcess <- lubridate::now(tzone = "CET")
 
   # # ..................................................................... ###
@@ -45,7 +44,8 @@ Efforts_Process <- function(
       !dir.exists(Path_Efforts_Data)) {
     stop(
       "Path_Efforts_Data must be a single valid directory path.",
-      call. = FALSE)
+      call. = FALSE
+    )
   }
 
   if (missing(Path_Grid) || !is.character(Path_Grid) ||
@@ -79,14 +79,17 @@ Efforts_Process <- function(
   if (!file.exists(Path_Grid_R)) {
     stop(
       paste0(
-        "Reference grid was not found at the specified path: ", Path_Grid_R),
-      call. = FALSE)
+        "Reference grid was not found at the specified path: ", Path_Grid_R
+      ),
+      call. = FALSE
+    )
   }
 
   if (!file.exists(Path_Grid_SF)) {
     stop(
       paste0("The path for the reference grid does not exist: ", Path_Grid_SF),
-      call. = FALSE)
+      call. = FALSE
+    )
   }
 
   Grid_SF <- IASDT.R::LoadAs(Path_Grid_SF)
@@ -118,17 +121,16 @@ Efforts_Process <- function(
   # Reading data from zipped archives -----
   IASDT.R::CatTime("Reading data from zipped archives", Level = 1)
 
+  RequestsCols <- c(
+    "class", "order", "Request", "DownLink", "TotalRecords", "DownPath")
+
   Efforts_Summary <- Efforts_AllRequests %>%
-    dplyr::select(
-      tidyselect::all_of(
-        c("class", "order", "Request", "DownLink",
-          "TotalRecords", "DownPath"))) %>%
+    dplyr::select(tidyselect::all_of(RequestsCols)) %>%
     dplyr::mutate(
-      ClassOrder = purrr::map2_chr(class, order, ~paste0(.x, "_", .y)),
+      ClassOrder = purrr::map2_chr(class, order, ~ paste0(.x, "_", .y)),
       Path_DT = furrr::future_pmap_chr(
         .l = list(DownPath, TotalRecords, ClassOrder),
         .f = function(DownPath, TotalRecords, ClassOrder) {
-
           if (TotalRecords == 0) {
             return(NA_character_)
           }
@@ -155,7 +157,8 @@ Efforts_Process <- function(
           Chunks <- list.files(
             path = Path_Efforts_Interim,
             pattern = stringr::str_remove(basename(DownPath), ".zip"),
-            full.names = TRUE)
+            full.names = TRUE
+          )
 
           if (length(Chunks) > 0) {
             # Total number of lines in all chunk files
@@ -177,7 +180,8 @@ Efforts_Process <- function(
             # Split data into chunks
             Chunks <- IASDT.R::Efforts_Split(
               Path_Zip = DownPath, Path_Output = Path_Efforts_Interim,
-              ChunkSize = ChunkSize)
+              ChunkSize = ChunkSize
+            )
           }
 
           if (length(Chunks) == 0) {
@@ -188,79 +192,80 @@ Efforts_Process <- function(
           max_attempts <- 3
           attempt <- 1
           OrderOkay <- FALSE
+          AcceptedRanks <- c("FORM", "SPECIES", "SUBSPECIES", "VARIETY")
 
           while (!OrderOkay && (attempt <= max_attempts)) {
-            tryCatch({
-              DT <- purrr::map_dfr(
-                .x = Chunks,
-                .f = ~{
-                  readr::read_tsv(
-                    file = .x,
-                    col_names = c(
-                      "taxonRank", "Latitude", "Longitude",
-                      "UncertainKm", "speciesKey"),
-                    progress = FALSE, show_col_types = FALSE,
-                    col_types = readr::cols(
-                      UncertainKm = readr::col_double(),
-                      Longitude = readr::col_double(),
-                      Latitude = readr::col_double(),
-                      speciesKey = readr::col_integer(),
-                      taxonRank = readr::col_character(),
-                      .default = readr::col_double())) %>%
-                    dplyr::mutate(UncertainKm = UncertainKm / 1000) %>%
-                    dplyr::filter(
-                      !is.na(Latitude), !is.na(Longitude),
-                      speciesKey != "",
-                      taxonRank %in% c("FORM", "SPECIES", "SUBSPECIES", "VARIETY"),
-                      UncertainKm <= 100 | is.na(UncertainKm))
+            tryCatch(
+              {
+                DT <- purrr::map_dfr(
+                  .x = Chunks,
+                  .f = ~ {
+                    readr::read_tsv(
+                      file = .x,
+                      col_names = c(
+                        "taxonRank", "Latitude", "Longitude",
+                        "UncertainKm", "speciesKey"),
+                      progress = FALSE, show_col_types = FALSE,
+                      col_types = readr::cols(
+                        UncertainKm = readr::col_double(),
+                        Longitude = readr::col_double(),
+                        Latitude = readr::col_double(),
+                        speciesKey = readr::col_integer(),
+                        taxonRank = readr::col_character(),
+                        .default = readr::col_double())) %>%
+                      dplyr::mutate(UncertainKm = UncertainKm / 1000) %>%
+                      dplyr::filter(
+                        !is.na(Latitude), !is.na(Longitude),
+                        speciesKey != "", taxonRank %in% AcceptedRanks,
+                        UncertainKm <= 100 | is.na(UncertainKm))
+                  }
+                )
+
+                if (nrow(DT) == 0) {
+                  return(NA_character_)
                 }
-              )
 
-              if (nrow(DT) == 0) {
-                return(NA_character_)
-              }
+                DT <- sf::st_as_sf(
+                  x = DT, coords = c("Longitude", "Latitude"),
+                  crs = 4326, remove = FALSE) %>%
+                  # project to 3035
+                  sf::st_transform(3035) %>%
+                  sf::st_join(Grid_SF) %>%
+                  dplyr::filter(magrittr::not(is.na(CellCode)))
 
-              DT <- sf::st_as_sf(
-                x = DT, coords = c("Longitude", "Latitude"),
-                crs = 4326, remove  = FALSE) %>%
-                # project to 3035
-                sf::st_transform(3035) %>%
-                sf::st_join(Grid_SF) %>%
-                dplyr::filter(magrittr::not(is.na(CellCode)))
+                if (nrow(DT) == 0) {
+                  return(NA_character_)
+                }
 
-              if (nrow(DT) == 0) {
-                return(NA_character_)
-              }
+                IASDT.R::SaveAs(
+                  InObj = DT, OutObj = ClassOrder, OutPath = Path_DT)
 
-              IASDT.R::SaveAs(
-                InObj = DT, OutObj = ClassOrder, OutPath = Path_DT)
-
-              if (file.exists(Path_DT)) {
-                if (IASDT.R::CheckRData(Path_DT)) {
-                  OrderOkay <- TRUE
-                  break
+                if (file.exists(Path_DT)) {
+                  if (IASDT.R::CheckRData(Path_DT)) {
+                    OrderOkay <- TRUE
+                    break
+                  } else {
+                    OrderOkay <- FALSE
+                  }
                 } else {
                   OrderOkay <- FALSE
                 }
-              } else {
-                OrderOkay <- FALSE
+              },
+              error = function(e) {
+                attempt <- attempt + 1
+                if (attempt > max_attempts) {
+                  stop("Failed after 3 attempts. Aborting.")
+                }
               }
-
-            }, error = function(e) {
-              message(paste("Attempt", attempt, "failed:", conditionMessage(e)))
-              attempt <- attempt + 1
-              if (attempt > max_attempts) {
-                stop("Failed after 3 attempts. Aborting.")
-              }
-            })
+            )
           }
 
           fs::file_delete(Chunks)
           return(Path_DT)
-
         },
         .options = furrr::furrr_options(seed = TRUE, scheduling = Inf)
-      ))
+      )
+    )
 
   invisible(gc())
 
@@ -273,7 +278,7 @@ Efforts_Process <- function(
     dplyr::mutate(
       NObs_NSp_R = furrr::future_map2(
         .x = Path_DT, .y = ClassOrder,
-        .f = ~{
+        .f = ~ {
 
           if (is.na(.x)) {
             ObsN <- 0
@@ -285,11 +290,13 @@ Efforts_Process <- function(
           Grid_R <- terra::unwrap(IASDT.R::LoadAs(Path_Grid_R))
 
           if (ObsN == 0) {
+
             NObs_R <- NSp_R <- terra::classify(Grid_R, cbind(1, 0))
             NObs_R <- setNames(NObs_R, paste0("NObs_", .y)) %>%
               terra::wrap()
             NSp_R <- setNames(NSp_R, paste0("NSp_", .y)) %>%
               terra::wrap()
+
           } else {
 
             # Number of observations
@@ -320,12 +327,14 @@ Efforts_Process <- function(
               terra::wrap()
           }
 
-          tibble::tibble(
-            ObsN = ObsN, NObs_R = list(NObs_R), NSp_R = list(NSp_R)) %>%
-            return()
+          return(
+            tibble::tibble(
+              ObsN = ObsN, NObs_R = list(NObs_R), NSp_R = list(NSp_R)))
+
         },
         .options = furrr::furrr_options(seed = TRUE, scheduling = Inf)
-      )) %>%
+      )
+    ) %>%
     tidyr::unnest_wider("NObs_NSp_R") %>%
     tidyr::unnest(c("NObs_R", "NSp_R"))
 
@@ -335,14 +344,15 @@ Efforts_Process <- function(
 
   # Number of observations and species per order - native species ----
   IASDT.R::CatTime(
-    "Number of observations and species per order - native species", Level = 1)
+    "Number of observations and species per order - native species",
+    Level = 1
+  )
 
   Efforts_Summary <- Efforts_Summary %>%
     dplyr::mutate(
       Native = furrr::future_map2(
         .x = Path_DT, .y = ClassOrder,
-        .f = ~{
-
+        .f = ~ {
           if (is.na(.x)) {
             ObsN_Native <- 0
           } else {
@@ -360,12 +370,9 @@ Efforts_Process <- function(
             NObs_Native_R <- setNames(
               NObs_Native_R, paste0("NObsNative_", .y)) %>%
               terra::wrap()
-            NSp_Native_R <- setNames(
-              NSp_Native_R, paste0("NSpNative_", .y)) %>%
+            NSp_Native_R <- setNames(NSp_Native_R, paste0("NSpNative_", .y)) %>%
               terra::wrap()
-
           } else {
-
             # Number of observations of native species
             NObs_Native_R <- sf::st_drop_geometry(DT_Native) %>%
               dplyr::count(CellCode, name = "NObs_Native") %>%
@@ -401,7 +408,8 @@ Efforts_Process <- function(
             NSp_Native_R = list(NSp_Native_R)) %>%
             return()
         },
-        .options = furrr::furrr_options(seed = TRUE, scheduling = Inf))
+        .options = furrr::furrr_options(seed = TRUE, scheduling = Inf)
+      )
     ) %>%
     tidyr::unnest_wider("Native") %>%
     tidyr::unnest(c("NObs_Native_R", "NSp_Native_R"))
@@ -418,8 +426,7 @@ Efforts_Process <- function(
 
   # Save Efforts_Summary ----
   IASDT.R::CatTime("Save `Efforts_Summary`", Level = 1)
-  save(Efforts_Summary,
-       file = file.path(Path_Efforts, "Efforts_Summary.RData"))
+  save(Efforts_Summary, file = file.path(Path_Efforts, "Efforts_Summary.RData"))
 
   # # ..................................................................... ###
 
@@ -461,10 +468,10 @@ Efforts_Process <- function(
   # Save summary data as tif ----
   IASDT.R::CatTime("Save as tif", Level = 1)
   terra::writeRaster(
-    Efforts_SummaryR, overwrite = TRUE,
+    Efforts_SummaryR,
+    overwrite = TRUE,
     filename = file.path(
-      Path_Efforts,
-      paste0("Efforts_GBIF_", names(Efforts_SummaryR), ".tif")))
+      Path_Efforts, paste0("Efforts_GBIF_", names(Efforts_SummaryR), ".tif")))
 
   # # ..................................................................... ###
 

@@ -23,7 +23,6 @@
 #' @export
 
 Efforts_Split <- function(Path_Zip, Path_Output, ChunkSize = 100000) {
-
   ID <- Col <- NULL
 
   # Check if ChunkSize is valid (greater than zero)
@@ -43,8 +42,13 @@ Efforts_Split <- function(Path_Zip, Path_Output, ChunkSize = 100000) {
 
   # extract column names and their numbers from the zipped file without
   # extraction read first line
-  SelectedCols <- stringr::str_glue(
-    "unzip -p {Path_Zip} {CSV_File} | head -n 1") %>%
+  SelectedColNames <- c(
+    "taxonRank", "decimalLatitude", "decimalLongitude",
+    "coordinateUncertaintyInMeters", "speciesKey"
+  )
+
+  SelectedCols <- "unzip -p {Path_Zip} {CSV_File} | head -n 1" %>%
+    stringr::str_glue() %>%
     IASDT.R::System() %>%
     # Split the first row into column names. Data is tab-separated
     stringr::str_split("\t") %>%
@@ -53,26 +57,28 @@ Efforts_Split <- function(Path_Zip, Path_Output, ChunkSize = 100000) {
     # column number in the original data
     dplyr::mutate(ID = seq_len(dplyr::n())) %>%
     # Only keep selected columns
-    dplyr::filter(
-      Col %in% c(
-        "taxonRank", "decimalLatitude", "decimalLongitude",
-        "coordinateUncertaintyInMeters", "speciesKey")) %>%
+    dplyr::filter(Col %in% SelectedColNames) %>%
     dplyr::pull(ID) %>%
     paste0(collapse = ",")
 
   Command <- stringr::str_glue(
     'unzip -p {Path_Zip} {CSV_File} | cut -f{SelectedCols} -d "\t" | ',
     'sed -n "1!p" | split -l {ChunkSize} ',
-    "-a 4 -d - {OutPrefix} --additional-suffix=.txt")
+    "-a 4 -d - {OutPrefix} --additional-suffix=.txt"
+  )
 
-  Path_Chunks <- tryCatch({
-    IASDT.R::System(Command, RObj = FALSE)
-  }, error = function(e) {
-    stop("Failed to execute system command: ", e$message)
-  })
+  Path_Chunks <- tryCatch(
+    IASDT.R::System(Command, RObj = FALSE),
+    error = function(e) {
+      stop("Failed to execute system command: ", e$message)
+    }
+  )
 
-  list.files(
-    Path_Output, pattern = paste0(basename(OutPrefix), ".+txt"),
-    full.names = TRUE) %>%
-    return()
+  return(
+    list.files(
+      Path_Output,
+      full.names = TRUE,
+      pattern = paste0(basename(OutPrefix), ".+txt")
+    )
+  )
 }

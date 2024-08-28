@@ -44,25 +44,25 @@
 #' @name Sampling_Efforts
 #' @export
 
+
 Sampling_Efforts <- function(
     FromHPC = TRUE, EnvFile = ".env", Renviron = ".Renviron",
     RequestData = TRUE, DownloadData = TRUE, NCores = 6, StartYear = 1980,
     Boundaries = c(-30, 50, 25, 75), ChunkSize = 100000) {
-
   .StartTime <- lubridate::now(tzone = "CET")
 
-  # # ..................................................................... ###
   # # ..................................................................... ###
 
   # Checking arguments ----
   IASDT.R::CatTime("Checking arguments")
 
   AllArgs <- ls()
-  AllArgs <- purrr::map(AllArgs, ~get(.x, envir = environment())) %>%
+  AllArgs <- purrr::map(AllArgs, ~ get(.x, envir = environment())) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "character", Args = c("Renviron", "EnvFile"))
+    AllArgs = AllArgs, Type = "character", Args = c("Renviron", "EnvFile")
+  )
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "logical",
     Args = c("FromHPC", "RequestData", "DownloadData"))
@@ -100,11 +100,11 @@ Sampling_Efforts <- function(
   # # ..................................................................... ###
 
   IASDT.R::CatTime(
-    "Ensure that GBIF access information is available or can be read")
+    "Ensure that GBIF access information is available or can be read"
+  )
 
   IASDT.R::Check_GBIF(Renviron = Renviron)
 
-  # # ..................................................................... ###
   # # ..................................................................... ###
 
   # Environment variables ----
@@ -134,7 +134,6 @@ Sampling_Efforts <- function(
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
   # # ..................................................................... ###
-  # # ..................................................................... ###
 
   # Loading input data ------
   IASDT.R::CatTime("Loading input data")
@@ -154,22 +153,23 @@ Sampling_Efforts <- function(
   missing_grids <- Grids[!file.exists(Grids)]
   if (length(missing_grids) > 0) {
     stop(
-      paste0("The following grid file(s) do not exist:\n",
-             paste0(" >>> ", missing_grids, collapse = "\n")),
-      call. = FALSE)
+      paste0(
+        "The following grid file(s) do not exist:\n",
+        paste0(" >>> ", missing_grids, collapse = "\n")
+      ),
+      call. = FALSE
+    )
   }
 
   ## IAS species list ----
   IAS_List <- unique(dplyr::pull(readRDS(Taxa_Stand), "speciesKey"))
 
   # # ..................................................................... ###
-  # # ..................................................................... ###
 
   # Request efforts data ------
   IASDT.R::CatTime("Request efforts data")
 
   if (RequestData) {
-
     IASDT.R::CatTime("Requesting efforts data")
 
     Efforts_AllRequests <- IASDT.R::Efforts_Request(
@@ -178,34 +178,29 @@ Sampling_Efforts <- function(
       Boundaries = Boundaries)
 
   } else {
-
     IASDT.R::CatTime("Efforts data was not requested, but loaded", Level = 1)
     Efforts_AllRequests <- IASDT.R::LoadAs(
-      file.path(Path_Efforts, "Efforts_AllRequests.RData"))
-
+      file.path(Path_Efforts, "Efforts_AllRequests.RData")
+    )
   }
 
-  # # ..................................................................... ###
   # # ..................................................................... ###
 
   # Download efforts data ------
   IASDT.R::CatTime("Download efforts data")
 
   if (DownloadData) {
-
     Efforts_AllRequests <- IASDT.R::Efforts_Download(
       NCores = NCores, Path_Raw = Path_Efforts_Raw,
       Path_Interim = Path_Efforts_Interim, Path_Efforts = Path_Efforts)
 
   } else {
-
     IASDT.R::CatTime("Efforts data was not downloaded", Level = 1)
     Efforts_AllRequests <- IASDT.R::LoadAs(
-      file.path(Path_Efforts, "Efforts_AllRequests.RData"))
-
+      file.path(Path_Efforts, "Efforts_AllRequests.RData")
+    )
   }
 
-  # # ..................................................................... ###
   # # ..................................................................... ###
 
   # Processing efforts data ------
@@ -218,7 +213,6 @@ Sampling_Efforts <- function(
     Path_Grid = Path_Grid, IAS_List = IAS_List,
     Efforts_AllRequests = Efforts_AllRequests, ChunkSize = ChunkSize)
 
-  # # ..................................................................... ###
   # # ..................................................................... ###
 
   # # Plotting ----

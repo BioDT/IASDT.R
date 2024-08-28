@@ -340,9 +340,9 @@ Efforts_Summarize <- function(
 
       if (ObsN == 0) {
         NObs_R <- NSp_R <- terra::classify(Grid_R, cbind(1, 0))
-        NObs_R <- setNames(NObs_R, paste0("NObs_", ClassOrder)) %>%
+        NObs_R <- stats::setNames(NObs_R, paste0("NObs_", ClassOrder)) %>%
           terra::wrap()
-        NSp_R <- setNames(NSp_R, paste0("NSp_", ClassOrder)) %>%
+        NSp_R <- stats::setNames(NSp_R, paste0("NSp_", ClassOrder)) %>%
           terra::wrap()
 
       } else {
@@ -364,10 +364,10 @@ Efforts_Summarize <- function(
       if (ObsN_Native == 0) {
         NObs_Native_R <- NSp_Native_R <- terra::classify(Grid_R, cbind(1, 0))
         NObs_Native_R <- NSp_Native_R <- terra::classify(Grid_R, cbind(1, 0))
-        NObs_Native_R <- setNames(
+        NObs_Native_R <- stats::setNames(
           NObs_Native_R, paste0("NObsNative_", ClassOrder)) %>%
           terra::wrap()
-        NSp_Native_R <- setNames(NSp_Native_R, paste0("NSpNative_", ClassOrder)) %>%
+        NSp_Native_R <- stats::setNames(NSp_Native_R, paste0("NSpNative_", ClassOrder)) %>%
           terra::wrap()
       } else {
         # Number of observations of native species

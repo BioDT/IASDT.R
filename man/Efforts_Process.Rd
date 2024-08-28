@@ -13,7 +13,8 @@ Efforts_Process(
   NCores = 6,
   StartYear = 1980,
   Boundaries = c(-30, 50, 25, 75),
-  ChunkSize = 1e+05
+  ChunkSize = 1e+05,
+  DeleteChunks = TRUE
 )
 }
 \arguments{
@@ -45,6 +46,9 @@ Top. Default: \code{c(-30, 50, 25, 75)}.}
 
 \item{ChunkSize}{Integer. The number of rows per chunk file. Default:
 \verb{100,000}. See \link{Efforts_Split} and \link{Efforts_Summarize} for more details.}
+
+\item{DeleteChunks}{logical, indicating whether to remove file chunks after
+processing the data. Defaults to \code{TRUE}.}
 }
 \value{
 Returns \code{NULL} invisibly. The function generates various output
@@ -63,9 +67,9 @@ hours on a Windows PC with 6 cores). The data request from GBIF may take
 around 5 hours to be ready. The function requests GBIF data for each vascular
 plant order and waits for the data to be ready before processing them.
 \item This function should be the only function to be called to prepare sampling
-efforts data. It calls other functions \link{Efforts_Request} to request data
-from GBIF, \link{Efforts_Download} to download zipped archive for each vascular
-plant order, \link{Efforts_Summarize} and \link{Efforts_Split} to process data in small
+efforts data. It calls other functions \link{Efforts_Request} to request data from
+GBIF, \link{Efforts_Download} to download zipped archive for each vascular plant
+order, \link{Efforts_Summarize} and \link{Efforts_Split} to process data in small
 chunks, and \link{Efforts_Plot} for plotting.
 }
 }

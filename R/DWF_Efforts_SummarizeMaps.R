@@ -15,6 +15,7 @@
 #'   and the prefix for the final raster layer's name.
 #' @param ClassOrder A character string specifying the class and order
 #'   combination (separated by an underscore) represented in the `Data`.
+#' @param Grid_SF,Grid_R Reference grid in the form of simple feature and raster.
 #' @return A processed `terra` raster object representing the summarized data.
 #' @note This function is not intended to be used directly by the user or in the
 #'   IAS-pDT, but only used inside the [Efforts_Process] and [Efforts_Summarize]

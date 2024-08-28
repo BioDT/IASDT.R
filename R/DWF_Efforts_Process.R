@@ -28,15 +28,17 @@
 #'   records from this year onward will be requested from GBIF. Default: `1980`.
 #' @param ChunkSize Integer. The number of rows per chunk file. Default:
 #'   `100,000`. See [Efforts_Split] and [Efforts_Summarize] for more details.
+#' @param DeleteChunks logical, indicating whether to remove file chunks after
+#'   processing the data. Defaults to `TRUE`.
 #' @note
 #' - This function is expected to take a substantial amount of time (>9
 #' hours on a Windows PC with 6 cores). The data request from GBIF may take
 #' around 5 hours to be ready. The function requests GBIF data for each vascular
 #' plant order and waits for the data to be ready before processing them.
 #' - This function should be the only function to be called to prepare sampling
-#' efforts data. It calls other functions [Efforts_Request] to request data
-#' from GBIF, [Efforts_Download] to download zipped archive for each vascular
-#' plant order, [Efforts_Summarize] and [Efforts_Split] to process data in small
+#' efforts data. It calls other functions [Efforts_Request] to request data from
+#' GBIF, [Efforts_Download] to download zipped archive for each vascular plant
+#' order, [Efforts_Summarize] and [Efforts_Split] to process data in small
 #' chunks, and [Efforts_Plot] for plotting.
 #' @return Returns `NULL` invisibly. The function generates various output
 #'   files, maps, and logs, and it is designed to be used for its side effects.
@@ -48,7 +50,9 @@
 Efforts_Process <- function(
     FromHPC = TRUE, EnvFile = ".env", Renviron = ".Renviron",
     RequestData = TRUE, DownloadData = TRUE, NCores = 6, StartYear = 1980,
-    Boundaries = c(-30, 50, 25, 75), ChunkSize = 100000) {
+    Boundaries = c(-30, 50, 25, 75), ChunkSize = 100000,
+    DeleteChunks = TRUE) {
+
   .StartTime <- lubridate::now(tzone = "CET")
 
   # # ..................................................................... ###
@@ -211,7 +215,8 @@ Efforts_Process <- function(
     Path_Efforts_Interim = Path_Efforts_Interim,
     Path_Efforts_Data = Path_Efforts_Data,
     Path_Grid = Path_Grid, IAS_List = IAS_List,
-    Efforts_AllRequests = Efforts_AllRequests, ChunkSize = ChunkSize)
+    Efforts_AllRequests = Efforts_AllRequests, ChunkSize = ChunkSize,
+    DeleteChunks = DeleteChunks)
 
   # # ..................................................................... ###
 

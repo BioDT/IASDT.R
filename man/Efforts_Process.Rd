@@ -2,53 +2,72 @@
 % Please edit documentation in R/DWF_Efforts_Process.R
 \name{Efforts_Process}
 \alias{Efforts_Process}
-\title{Process and Summarize GBIF Data for vascular plants}
+\title{Download and Process sampling efforts data}
 \usage{
 Efforts_Process(
-  NCores,
-  Path_Efforts,
-  Path_Efforts_Interim,
-  Path_Efforts_Data,
-  Path_Grid,
-  IAS_List,
-  Efforts_AllRequests,
+  FromHPC = TRUE,
+  EnvFile = ".env",
+  Renviron = ".Renviron",
+  RequestData = TRUE,
+  DownloadData = TRUE,
+  NCores = 6,
+  StartYear = 1980,
+  Boundaries = c(-30, 50, 25, 75),
   ChunkSize = 1e+05
 )
 }
 \arguments{
-\item{NCores}{Numeric. The number of cores to use for parallel processing.}
+\item{FromHPC}{Logical indicating whether the work is being done from HPC, to
+adjust file paths accordingly. Default: \code{TRUE}.}
 
-\item{Path_Efforts}{Character. Path where the final processed data will be
-saved.}
+\item{EnvFile}{Character. The path to the environment file containing
+variables required by the function. Default: \code{.env}.}
 
-\item{Path_Efforts_Interim}{Character. The directory path to save interim
-data.}
+\item{Renviron}{Character. The path to the \code{.Renviron} file containing GBIF
+login credentials (email, user, password). Default: \code{.Renviron}.}
 
-\item{Path_Efforts_Data}{Character. The directory path to save detailed
-effort data as \code{RData}.}
+\item{RequestData}{Logical. If \code{TRUE}, the function requests data from GBIF.
+If \code{FALSE}, previously requested data is loaded from disk. Defaults to
+\code{TRUE}.}
 
-\item{Path_Grid}{Character. The directory path to load the grid data.}
+\item{DownloadData}{Logical. If \code{TRUE}, the function downloads data and
+stores it on disk. If \code{FALSE}, it skips the download step. Defaults to
+\code{TRUE}.}
 
-\item{IAS_List}{A list of invasive alien species keys.}
+\item{NCores}{Integer. The number of cores to use for parallel processing.}
 
-\item{Efforts_AllRequests}{A data frame containing the details of the GBIF
-download, including paths to CSV files, zip files, order, class, and total
-records.}
+\item{StartYear}{Numeric. The starting year for the occurrence data. Only
+records from this year onward will be requested from GBIF. Default: \code{1980}.}
+
+\item{Boundaries}{Numeric vector of length 4. Specifies geographical
+boundaries for the requested GBIF data in the order: Left, Right, Bottom,
+Top. Default: \code{c(-30, 50, 25, 75)}.}
 
 \item{ChunkSize}{Integer. The number of rows per chunk file. Default:
-\verb{100,000}. See \link{Efforts_Split} for more details.}
+\verb{100,000}. See \link{Efforts_Split} and \link{Efforts_Summarize} for more details.}
 }
 \value{
-The function returns and saves the GBIF data summary.
+Returns \code{NULL} invisibly. The function generates various output
+files, maps, and logs, and it is designed to be used for its side effects.
 }
 \description{
-This function processes GBIF data for vascular plants by extracting,
-summarizing, and saving the data. It also creates summary maps and saves them
-in both \code{RData} and \code{TIFF} formats.
+This function downloads GBIF data for all vascular plants within a specified
+geographical area (Europe), grouped by order, and converts the data to raster
+format to represent the number of vascular plant observations and species per
+grid cell.
 }
 \note{
-This function is not intended to be used directly by the user or in the
-IAS-pDT, but only used inside the \link{Sampling_Efforts} function.
+\itemize{
+\item This function is expected to take a substantial amount of time (>9
+hours on a Windows PC with 6 cores). The data request from GBIF may take
+around 5 hours to be ready. The function requests GBIF data for each vascular
+plant order and waits for the data to be ready before processing them.
+\item This function should be the only function to be called to prepare sampling
+efforts data. It calls other functions \link{Efforts_Request} to request data
+from GBIF, \link{Efforts_Download} to download zipped archive for each vascular
+plant order, \link{Efforts_Summarize} and \link{Efforts_Split} to process data in small
+chunks, and \link{Efforts_Plot} for plotting.
+}
 }
 \author{
 Ahmed El-Gabbas

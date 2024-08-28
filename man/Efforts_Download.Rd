@@ -31,7 +31,7 @@ downloading them again.
 }
 \note{
 This function is not intended to be used directly by the user or in the
-IAS-pDT, but only used inside the \link{Sampling_Efforts} function.
+IAS-pDT, but only used inside the \link{Efforts_Process} function.
 }
 \author{
 Ahmed El-Gabbas

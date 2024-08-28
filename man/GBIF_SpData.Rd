@@ -34,7 +34,7 @@ grids, rasters, and visual maps.
 }
 \note{
 This function is not intended to be used directly by the user or in the
-IAS-pDT, but only used inside the \link{GBIF_Processing} function.
+IAS-pDT, but only used inside the \link{GBIF_Process} function.
 }
 \author{
 Ahmed El-Gabbas

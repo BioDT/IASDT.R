@@ -58,7 +58,7 @@ chunk file if the \verb{*.RData} file for this chunk already exist and
 \code{Overwrite} is set as \code{FALSE} (default). If \code{Overwrite} is set to \code{TRUE},
 the data for the current chunk will be re-processed irrespective of the
 existence of the RData file. This helps to continue working on previously
-processed chunks if a previous run of \link{GBIF_Processing} failed, e.g. due to
+processed chunks if a previous run of \link{GBIF_Process} failed, e.g. due to
 memory issue.
 }
 \description{
@@ -69,7 +69,7 @@ taxonomic rank and returns only selected columns.
 }
 \note{
 This function is not intended to be used directly by the user or in the
-IAS-pDT, but only used inside the \link{GBIF_Processing} function.
+IAS-pDT, but only used inside the \link{GBIF_Process} function.
 }
 \author{
 Ahmed El-Gabbas

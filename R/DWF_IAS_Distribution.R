@@ -20,7 +20,7 @@
 #'   number of presence grid cells, presence by data provider, and summary
 #'   statistics for biogeographical regions.
 #' @note This function is not intended to be used directly by the user or in the
-#'   IAS-pDT, but only called from the [IAS_Processing] function.
+#'   IAS-pDT, but only used inside the [IAS_Processing] function.
 #' @author Ahmed El-Gabbas
 #' @name IAS_Distribution
 #' @export

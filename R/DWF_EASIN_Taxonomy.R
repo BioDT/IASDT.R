@@ -22,7 +22,7 @@
 #' @author Ahmed El-Gabbas and Marina Golivets
 #' @export
 #' @note This function is not intended to be used directly by the user or in the
-#'   IAS-pDT, but only called from the [EASIN_Processing] function.
+#'   IAS-pDT, but only used inside the [EASIN_Processing] function.
 #' @details This function loops through the EASIN API, retrieving data in chunks
 #'   until all available data for the specified kingdom and phylum are
 #'   collected. The results are returned as a tibble after filtering for the

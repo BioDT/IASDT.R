@@ -21,7 +21,7 @@
 #'   generate and save plots as JPEG files. The plots include the number of
 #'   observations and species and their distribution per data partner.
 #' @note This function is not intended to be used directly by the user or in the
-#'   IAS-pDT, but only called from the [EASIN_Processing] function.
+#'   IAS-pDT, but only used inside the [EASIN_Processing] function.
 #' @name EASIN_Plot
 #' @author Ahmed El-Gabbas
 #' @export

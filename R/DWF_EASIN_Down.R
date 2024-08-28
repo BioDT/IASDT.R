@@ -31,12 +31,12 @@
 #'   disk and the function will invisibly return `NULL`.
 #' @name EASIN_Down
 #' @author Ahmed El-Gabbas
-#' @return If ReturnData is `TRUE`, returns a dataframe containing all the data
-#'   retrieved for the specified EASIN ID. If ReturnData is `FALSE`, returns
+#' @return If `ReturnData` is `TRUE`, returns a dataframe containing all the data
+#'   retrieved for the specified EASIN ID. If `ReturnData` is `FALSE`, returns
 #'   `NULL`.
 #' @export
 #' @note This function is not intended to be used directly by the user or in the
-#'   IAS-pDT, but only called from the [EASIN_Processing] function.
+#'   IAS-pDT, but only used inside the [EASIN_Processing] function.
 #' @details This function extracts EASIN data for a given EASIN_ID, handles
 #'   pagination, and ensures that data retrieval is efficient by managing
 #'   retries and pauses.

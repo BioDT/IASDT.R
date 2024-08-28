@@ -29,7 +29,7 @@
 #'   records from this year onward will be requested from GBIF. Defaults to
 #'   1980.
 #' @note This function is not intended to be used directly by the user or in the
-#'   IAS-pDT, but only called from the [GBIF_Processing] function.
+#'   IAS-pDT, but only used inside the [GBIF_Processing] function.
 #' @return The function does not return any value. The function is called for
 #'   its side effects, including saving GBIF data and metadata.
 #' @author Ahmed El-Gabbas

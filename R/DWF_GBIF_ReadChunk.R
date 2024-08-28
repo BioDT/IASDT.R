@@ -29,7 +29,7 @@
 #'   continue working on previously processed chunks if the previous try failed,
 #'   e.g. due to memory issue.
 #' @note This function is not intended to be used directly by the user or in the
-#'   IAS-pDT, but only called from the [GBIF_Processing] function.
+#'   IAS-pDT, but only used inside the [GBIF_Processing] function.
 #' @return The output of the function is a tibble (sf) object containing the
 #'   processed and filtered GBIF data for the input chunk file. Whether the
 #'   tibble is exported or saved as `*.RData` file depends on the values of the

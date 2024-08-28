@@ -1,5 +1,5 @@
 # # |------------------------------------------------------------------------| #
-# GBIF_Processing ----
+# elTER_Process ----
 ## |------------------------------------------------------------------------| #
 
 #' eLTER Data Processing Function
@@ -13,10 +13,10 @@
 #'   records from this year onward will be processed. Defaults to 1980.
 #' @return Returns `NULL` invisibly after saving the processed data.
 #' @author Ahmed El-Gabbas & Marina Golivets
-#' @name elTER_Processing
+#' @name elTER_Process
 #' @export
 
-elTER_Processing <- function(
+elTER_Process <- function(
     FromHPC = TRUE, EnvFile = ".env", StartYear = 1980) {
 
   # # ..................................................................... ###

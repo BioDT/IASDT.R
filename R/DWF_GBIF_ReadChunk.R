@@ -29,7 +29,7 @@
 #'   continue working on previously processed chunks if the previous try failed,
 #'   e.g. due to memory issue.
 #' @note This function is not intended to be used directly by the user or in the
-#'   IAS-pDT, but only used inside the [GBIF_Processing] function.
+#'   IAS-pDT, but only used inside the [GBIF_Process] function.
 #' @return The output of the function is a tibble (sf) object containing the
 #'   processed and filtered GBIF data for the input chunk file. Whether the
 #'   tibble is exported or saved as `*.RData` file depends on the values of the
@@ -44,7 +44,7 @@
 #'   `Overwrite` is set as `FALSE` (default). If `Overwrite` is set to `TRUE`,
 #'   the data for the current chunk will be re-processed irrespective of the
 #'   existence of the RData file. This helps to continue working on previously
-#'   processed chunks if a previous run of [GBIF_Processing] failed, e.g. due to
+#'   processed chunks if a previous run of [GBIF_Process] failed, e.g. due to
 #'   memory issue.
 #' @name GBIF_ReadChunk
 #' @author Ahmed El-Gabbas
@@ -250,7 +250,7 @@ GBIF_ReadChunk <- function(
 
     # If there are no observations after filtering and SaveData = TRUE, return
     # an empty tibble. This is useful to indicate that this chunk was processed
-    # to avoid errors from GBIF_Processing function
+    # to avoid errors from GBIF_Process function
 
     if (SaveRData) {
       ChunkOutName <- stringr::str_remove_all(basename(ChunkFile), ".txt$")

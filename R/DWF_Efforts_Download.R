@@ -21,7 +21,7 @@
 #' @return A data frame (`Efforts_AllRequests`) with updated download paths and
 #'   interim file paths.
 #' @note This function is not intended to be used directly by the user or in the
-#'   IAS-pDT, but only used inside the [Sampling_Efforts] function.
+#'   IAS-pDT, but only used inside the [Efforts_Process] function.
 #' @export
 
 Efforts_Download <- function(NCores = 6, Path_Raw, Path_Interim, Path_Efforts) {

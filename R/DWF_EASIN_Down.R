@@ -36,7 +36,7 @@
 #'   `NULL`.
 #' @export
 #' @note This function is not intended to be used directly by the user or in the
-#'   IAS-pDT, but only used inside the [EASIN_Processing] function.
+#'   IAS-pDT, but only used inside the [EASIN_Process] function.
 #' @details This function extracts EASIN data for a given EASIN_ID, handles
 #'   pagination, and ensures that data retrieval is efficient by managing
 #'   retries and pauses.

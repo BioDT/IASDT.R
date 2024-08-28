@@ -1,5 +1,5 @@
 ## |------------------------------------------------------------------------| #
-# Sampling_Efforts ----
+# Efforts_Process ----
 ## |------------------------------------------------------------------------| #
 
 #' Download and Process sampling efforts data
@@ -27,7 +27,7 @@
 #' @param StartYear Numeric. The starting year for the occurrence data. Only
 #'   records from this year onward will be requested from GBIF. Default: `1980`.
 #' @param ChunkSize Integer. The number of rows per chunk file. Default:
-#'   `100,000`. See [Efforts_Split] and [Efforts_Process] for more details.
+#'   `100,000`. See [Efforts_Split] and [Efforts_Summarize] for more details.
 #' @note
 #' - This function is expected to take a substantial amount of time (>9
 #' hours on a Windows PC with 6 cores). The data request from GBIF may take
@@ -36,16 +36,16 @@
 #' - This function should be the only function to be called to prepare sampling
 #' efforts data. It calls other functions [Efforts_Request] to request data
 #' from GBIF, [Efforts_Download] to download zipped archive for each vascular
-#' plant order, [Efforts_Process] and [Efforts_Split] to process data in small
+#' plant order, [Efforts_Summarize] and [Efforts_Split] to process data in small
 #' chunks, and [Efforts_Plot] for plotting.
 #' @return Returns `NULL` invisibly. The function generates various output
 #'   files, maps, and logs, and it is designed to be used for its side effects.
 #' @author Ahmed El-Gabbas
-#' @name Sampling_Efforts
+#' @name Efforts_Process
 #' @export
 
 
-Sampling_Efforts <- function(
+Efforts_Process <- function(
     FromHPC = TRUE, EnvFile = ".env", Renviron = ".Renviron",
     RequestData = TRUE, DownloadData = TRUE, NCores = 6, StartYear = 1980,
     Boundaries = c(-30, 50, 25, 75), ChunkSize = 100000) {
@@ -206,7 +206,7 @@ Sampling_Efforts <- function(
   # Processing efforts data ------
 
   IASDT.R::CatTime("Processing efforts data")
-  IASDT.R::Efforts_Process(
+  IASDT.R::Efforts_Summarize(
     NCores = NCores, Path_Efforts = Path_Efforts,
     Path_Efforts_Interim = Path_Efforts_Interim,
     Path_Efforts_Data = Path_Efforts_Data,

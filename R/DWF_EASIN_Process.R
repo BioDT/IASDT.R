@@ -1,5 +1,5 @@
 # # |------------------------------------------------------------------------| #
-# EASIN_Processing ----
+# EASIN_Process ----
 ## |------------------------------------------------------------------------| #
 
 #' Extracts and processes EASIN data
@@ -33,7 +33,7 @@
 #' @param Plot Logical. If `TRUE`, the function will generate summary plots of
 #'   the processed data using [EASIN_Plot]. Default is `TRUE`.
 #' @author Ahmed El-Gabbas
-#' @name EASIN_Processing
+#' @name EASIN_Process
 #' @return The function Returns `NULL` invisibly after completing the data
 #'   extraction, processing, and optional plotting. The function saves multiple
 #'   outputs to disk, including the extracted and processed EASIN data,
@@ -64,7 +64,7 @@
 #'   dataset; and [EASIN_Plot] for plotting.
 #' @export
 
-EASIN_Processing <- function(
+EASIN_Process <- function(
     ExtractTaxa = TRUE, ExtractData = TRUE, NDownTries = 10,
     NCores = 6, SleepTime = 10, NSearch = 1000, FromHPC = TRUE,
     EnvFile = ".env", DeleteChunks = FALSE, MinYear = 1981, Plot = TRUE) {

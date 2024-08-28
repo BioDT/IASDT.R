@@ -1,5 +1,5 @@
 # # |------------------------------------------------------------------------| #
-# GBIF_Processing ----
+# GBIF_Process ----
 ## |------------------------------------------------------------------------| #
 
 #' GBIF Data Processing Function
@@ -23,11 +23,11 @@
 #' @note This function depends on the following functions: [GBIF_Download]  for
 #'   requesting, downloading and splitting data into chunks; [GBIF_ReadChunk] to
 #'   process chunk files; and [GBIF_SpData] to prepare species-specific data.
-#' @name GBIF_Processing
+#' @name GBIF_Process
 #' @author Ahmed El-Gabbas
 #' @export
 
-GBIF_Processing <- function(
+GBIF_Process <- function(
     FromHPC = TRUE, EnvFile = ".env", Renviron = ".Renviron", NCores = 6,
     RequestData = TRUE, DownloadData = TRUE, SplitChunks = TRUE,
     Overwrite = FALSE, RemChunks = FALSE, ChunkSize = 50000,

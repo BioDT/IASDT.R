@@ -19,7 +19,7 @@
 #' @return The function uses `ggplot2` to generate a JPEG file containing the
 #'   species distribution map. No object is returned.
 #' @note This function is not intended to be used directly by the user or in the
-#'   IAS-pDT, but only used inside the [IAS_Processing] function.
+#'   IAS-pDT, but only used inside the [IAS_Process] function.
 #' @author Ahmed El-Gabbas
 #' @name IAS_Plot
 #' @export

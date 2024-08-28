@@ -12,7 +12,8 @@ Efforts_Summarize(
   Path_Grid,
   IAS_List,
   Efforts_AllRequests,
-  ChunkSize = 1e+05
+  ChunkSize = 1e+05,
+  DeleteChunks = TRUE
 )
 }
 \arguments{
@@ -37,6 +38,9 @@ records.}
 
 \item{ChunkSize}{Integer. The number of rows per chunk file. Default:
 \verb{100,000}. See \link{Efforts_Split} for more details.}
+
+\item{DeleteChunks}{logical, indicating whether to remove file chunks after
+processing the data. Defaults to \code{TRUE}.}
 }
 \value{
 The function returns and saves the GBIF data summary.

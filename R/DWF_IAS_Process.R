@@ -1,12 +1,12 @@
 # # |------------------------------------------------------------------------| #
-# IAS_Processing ----
+# IAS_Process ----
 ## |------------------------------------------------------------------------| #
 
 #' Process IAS data
 #'
 #' This function processes Invasive Alien Species (IAS) data. The function
 #' merges pre-processed distribution data from 3 data sources: GBIF
-#' ([GBIF_Processing]), EASIN ([EASIN_Processing]), eLTER ([elTER_Processing]).
+#' ([GBIF_Process]), EASIN ([EASIN_Process]), eLTER ([elTER_Process]).
 #' The function prepares final species outputs in the form of 1) species
 #' distribution as SpatRaster (`.RData`) and `.tif` using [IAS_Distribution]; 2)
 #' summary table on the distribution of the species; and 3) JPEG files for the
@@ -19,20 +19,20 @@
 #' @param NCores Numeric. Number of cores to use for parallel processing.
 #' @param Overwrite Logical. If `TRUE`, existing JPEG files will be overwritten
 #'   during processing. See [IAS_Plot]
-#' @name IAS_Processing
+#' @name IAS_Process
 #' @export
 #' @author Ahmed El-Gabbas
 #' @return The function returns `NULL` invisibly.
 #' @note
 #'   - The function should be used only after data from the three data sources
-#' were processed: GBIF ([GBIF_Processing]), EASIN ([EASIN_Processing]), eLTER
-#' ([elTER_Processing]).
+#' were processed: GBIF ([GBIF_Process]), EASIN ([EASIN_Process]), eLTER
+#' ([elTER_Process]).
 #'   - The function depends on the following functions: [IAS_Distribution] for
 #' prepare species-specific final maps and [IAS_Plot] for plotting species
 #' distribution as JPEG.
 
 
-IAS_Processing <- function(
+IAS_Process <- function(
     FromHPC = TRUE, EnvFile = ".env", NCores = 6, Overwrite = TRUE) {
 
   .StartTime <- lubridate::now(tzone = "CET")

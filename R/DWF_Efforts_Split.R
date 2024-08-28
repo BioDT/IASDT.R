@@ -19,7 +19,7 @@
 #' @name Efforts_Split
 #' @author Ahmed El-Gabbas
 #' @note This function is not intended to be used directly by the user or in the
-#'   IAS-pDT, but only used inside the [Sampling_Efforts] function.
+#'   IAS-pDT, but only used inside the [Efforts_Process] function.
 #' @export
 
 Efforts_Split <- function(Path_Zip, Path_Output, ChunkSize = 100000) {

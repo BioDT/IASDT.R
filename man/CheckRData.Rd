@@ -18,8 +18,6 @@ This function checks if a given file is a valid RData file by verifying its
 extension and attempting to load it. It uses the \link{LoadAs} to load the file.
 If the file loads successfully and the object exists, it returns \code{TRUE}. If
 the file cannot be loaded or the object does not exist, it returns \code{FALSE}.
-If the file extension is not "RData", the function stops with an error
-message indicating an unsupported file type.
 }
 \author{
 Ahmed El-Gabbas

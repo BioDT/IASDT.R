@@ -22,7 +22,7 @@
 #' @return The function returns the GBIF data requests processed and stored in
 #'   the specified directories.
 #' @note This function is not intended to be used directly by the user or in the
-#'   IAS-pDT, but only used inside the [Sampling_Efforts] function.
+#'   IAS-pDT, but only used inside the [Efforts_Process] function.
 #' @author Ahmed El-Gabbas
 #' @name Efforts_Request
 #' @export

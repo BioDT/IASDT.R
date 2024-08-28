@@ -16,7 +16,7 @@
 #' @author Ahmed El-Gabbas
 #' @name Efforts_Plot
 #' @note This function is not intended to be used directly by the user or in the
-#'   IAS-pDT, but only used inside the [Sampling_Efforts] function.
+#'   IAS-pDT, but only used inside the [Efforts_Process] function.
 #' @details This function generates and saves effort maps visualizing the number
 #'   of plant observations and species, including both native and non-native
 #'   species, within Europe. It produces both standard and log10-scaled plots.

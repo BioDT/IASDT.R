@@ -17,7 +17,7 @@
 #' @param LastUpdate A character string specifying the last update date to be
 #'   displayed on the plots.
 #' @note This function is not intended to be used directly by the user or in the
-#'   IAS-pDT, but only used inside the [GBIF_Processing] function.
+#'   IAS-pDT, but only used inside the [GBIF_Process] function.
 #' @name GBIF_SpData
 #' @author Ahmed El-Gabbas
 #' @export

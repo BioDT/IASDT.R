@@ -212,7 +212,7 @@ Efforts_Summarize <- function(
           taxonRank = readr::col_character(),
           .default = readr::col_double())
 
-        while (attempt <= 5 || isFALSE(Done)) {
+        while (attempt <= 5 && isFALSE(Done)) {
           attempt <- attempt + 1
           DT <- try(
             expr = {
@@ -250,7 +250,6 @@ Efforts_Summarize <- function(
             },
             silent = TRUE)
 
-
           if (inherits(DT, "try-error")) {
             next
           }
@@ -261,6 +260,7 @@ Efforts_Summarize <- function(
           }
 
           IASDT.R::SaveAs(InObj = DT, OutObj = ClassOrder, OutPath = Path_DT)
+          Done <- TRUE
 
           if (file.exists(Path_DT)) {
             if (IASDT.R::CheckRData(Path_DT)) {

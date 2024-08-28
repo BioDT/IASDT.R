@@ -125,7 +125,7 @@ Efforts_Download <- function(NCores = 6, Path_Raw, Path_Interim, Path_Efforts) {
           Attempt <- 1
           Attempts <- 3
 
-          while (!Success && (Attempt <= Attempts)) {
+          while (isFALSE(Success) && (Attempt <= Attempts)) {
             tryCatch({
               suppressMessages(
                 rgbif::occ_download_get(

@@ -157,10 +157,10 @@ Efforts_Process <- function(
           Chunks <- list.files(
             path = Path_Efforts_Interim,
             pattern = stringr::str_remove(basename(DownPath), ".zip"),
-            full.names = TRUE
-          )
+            full.names = TRUE)
 
           if (length(Chunks) > 0) {
+
             # Total number of lines in all chunk files
             NLines <- sum(purrr::map_int(Chunks, R.utils::countLines))
 
@@ -168,6 +168,7 @@ Efforts_Process <- function(
             # the chunk files
             if (NLines < TotalRecords) {
               fs::file_delete(Chunks)
+              rm(Chunks)
             }
 
             # if all records are in the chunk files, skip the splitting
@@ -180,8 +181,7 @@ Efforts_Process <- function(
             # Split data into chunks
             Chunks <- IASDT.R::Efforts_Split(
               Path_Zip = DownPath, Path_Output = Path_Efforts_Interim,
-              ChunkSize = ChunkSize
-            )
+              ChunkSize = ChunkSize)
           }
 
           if (length(Chunks) == 0) {
@@ -194,7 +194,7 @@ Efforts_Process <- function(
           OrderOkay <- FALSE
           AcceptedRanks <- c("FORM", "SPECIES", "SUBSPECIES", "VARIETY")
 
-          while (!OrderOkay && (attempt <= max_attempts)) {
+          while (isFALSE(OrderOkay) && (attempt <= max_attempts)) {
             tryCatch(
               {
                 DT <- purrr::map_dfr(
@@ -243,7 +243,6 @@ Efforts_Process <- function(
                 if (file.exists(Path_DT)) {
                   if (IASDT.R::CheckRData(Path_DT)) {
                     OrderOkay <- TRUE
-                    break
                   } else {
                     OrderOkay <- FALSE
                   }

@@ -112,7 +112,7 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env", Download = TRUE) {
     Attempts <- 3
     Success <- FALSE
 
-    while (!Success && Attempt <= Attempts) {
+    while (isFALSE(Success) && Attempt <= Attempts) {
       tryCatch({
         utils::download.file(
           url = Road_URL, destfile = Path_DownFile, mode = "wb", quiet = TRUE)

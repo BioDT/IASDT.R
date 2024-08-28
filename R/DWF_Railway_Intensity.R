@@ -261,7 +261,7 @@ Railway_Intensity <- function(
         Attempt <- 1
         Attempts <- 3
 
-        while (!Success && (Attempt <= Attempts)) {
+        while (isFALSE(Success) && (Attempt <= Attempts)) {
           tryCatch({
             utils::download.file(
               url = URL, destfile = Path, mode = "wb", quiet = TRUE)

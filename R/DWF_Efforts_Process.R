@@ -102,9 +102,7 @@ Efforts_Process <- function(
 
   # # ..................................................................... ###
 
-  IASDT.R::CatTime(
-    "Ensure that GBIF access information is available or can be read")
-
+  IASDT.R::CatTime("Ensure that GBIF access information is available")
   IASDT.R::GBIF_Check(Renviron = Renviron)
 
   # # ..................................................................... ###
@@ -171,7 +169,7 @@ Efforts_Process <- function(
   IASDT.R::CatTime("Request efforts data")
 
   if (RequestData) {
-    IASDT.R::CatTime("Requesting efforts data")
+    IASDT.R::CatTime("Requesting efforts data", Level = 1)
 
     Efforts_AllRequests <- IASDT.R::Efforts_Request(
       NCores = NCores, Path_Requests = Path_Efforts_Requests,

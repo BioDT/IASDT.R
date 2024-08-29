@@ -129,9 +129,7 @@ Efforts_Summarize <- function(
 
   if (DeleteChunks) {
     IASDT.R::CatTime(
-      paste0(
-        "`DeleteChunks` is TRUE; chunk files will be deleted ",
-        "after finishing processing"), Level = 2)
+      "Chunk files will be deleted after finishing processing", Level = 2)
   }
 
   # Earlier attempts with `furrr::future_map()` failed
@@ -455,7 +453,7 @@ Efforts_Summarize <- function(
   # # ..................................................................... ###
 
   IASDT.R::CatDiff(
-    InitTime = .StartTimeProcess, 
+    InitTime = .StartTimeProcess,
     Prefix = "Processing Efforts data took ", Level = 1)
 
   # # ..................................................................... ###

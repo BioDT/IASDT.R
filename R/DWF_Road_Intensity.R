@@ -104,6 +104,7 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env", Download = TRUE) {
   if (Download) {
 
     .StartTimeDown <- lubridate::now(tzone = "CET")
+    withr::local_options(timeout = 1200)
 
     Path_DownFile <- file.path(Path_Roads_Raw, basename(Road_URL))
 
@@ -119,36 +120,41 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env", Download = TRUE) {
 
     # Try downloading data for a max of 3 attempts
     Attempt <- 1
-    Attempts <- 3
+    Attempts <- 5
 
     while (isFALSE(Success) && Attempt <= Attempts) {
-      tryCatch({
+      Down <- try(
+        expr = {
+          suppressWarnings(
+            utils::download.file(
+              url = Road_URL, destfile = Path_DownFile,
+              mode = "wb", quiet = TRUE))
 
-        utils::download.file(
-          url = Road_URL, destfile = Path_DownFile, mode = "wb", quiet = TRUE)
+          Success <- file.exists(Path_DownFile) &&
+            IASDT.R::CheckZip(Path_DownFile)
 
-        Success <- file.exists(Path_DownFile) &&
-          IASDT.R::CheckZip(Path_DownFile)
-      },
-      error = function(e) {
-        if (Attempt < Attempts) {
-          IASDT.R::CatTime(
-            paste0(
-              "Retrying download (Attempt ", Attempt, " of ", Attempts, ")"))
-          Attempt <- Attempt + 1
-        } else {
-          stop(
-            paste0(
-              "Failed to download road data from ", Road_URL, " after ",
-              Attempts, " attempts: ", conditionMessage(e)),
-            call. = FALSE)
-        }
-      })
+        }, silent = TRUE)
+
+      if (inherits(Down, "try-error")) {
+        Success <- FALSE
+      }
+
+      Attempt <- Attempt + 1
+    }
+
+    if (isFALSE(Success)) {
+      stop(
+        paste0(
+          "Failed to download road data after ", Attempts, " attempts:\n",
+          Road_URL),
+        call. = FALSE)
     }
 
     IASDT.R::CatDiff(
       InitTime = .StartTimeDown,
       Prefix = "Downloading GRIP data took ", NLines = 1, Level = 1)
+
+    rm(Down)
 
     # # .................................... ###
 
@@ -390,7 +396,7 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env", Download = TRUE) {
         ggplot2::labs(
           title = {
             names(.x) %>%
-              stringr::str_remove(, "Road_Distance_") %>%
+              stringr::str_remove("Road_Distance_") %>%
               stringr::str_replace("_", " - ") %>%
               paste(" roads")
           },

@@ -4,7 +4,7 @@
 \alias{elTER_Process}
 \title{eLTER Data Processing Function}
 \usage{
-elTER_Process(FromHPC = TRUE, EnvFile = ".env", StartYear = 1980)
+elTER_Process(FromHPC = TRUE, EnvFile = ".env", StartYear = 1981)
 }
 \arguments{
 \item{FromHPC}{Logical indicating whether the work is being done from HPC, to
@@ -14,7 +14,8 @@ adjust file paths accordingly. Default: \code{TRUE}.}
 variables required by the function. Default is ".env".}
 
 \item{StartYear}{Numeric. The starting year for the occurrence data. Only
-records from this year onward will be processed. Defaults to 1980.}
+records from this year onward will be processed. Default is \code{1981}, which
+matches the year ranges of CHELSA current climate data.}
 }
 \value{
 Returns \code{NULL} invisibly after saving the processed data.

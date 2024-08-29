@@ -14,7 +14,7 @@ EASIN_Process(
   FromHPC = TRUE,
   EnvFile = ".env",
   DeleteChunks = FALSE,
-  MinYear = 1981,
+  StartYear = 1981,
   Plot = TRUE
 )
 }
@@ -46,8 +46,9 @@ variables required by the function. Default is ".env".}
 \item{DeleteChunks}{Logical. If \code{TRUE}, the function will delete intermediate
 files after processing. Default is \code{FALSE}.}
 
-\item{MinYear}{Integer. Minimum year for filtering species occurrence data.
-Records before this year will be excluded. Default is 1981.}
+\item{StartYear}{Integer. Minimum year for filtering species occurrence data.
+Records before this year will be excluded. Default is \code{1981}, which matches
+the year ranges of CHELSA current climate data.}
 
 \item{Plot}{Logical. If \code{TRUE}, the function will generate summary plots of
 the processed data using \link{EASIN_Plot}. Default is \code{TRUE}.}

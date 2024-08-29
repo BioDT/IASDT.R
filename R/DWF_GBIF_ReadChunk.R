@@ -18,7 +18,7 @@
 #'   is ".env".
 #' @param MaxUncert A numeric value specifying the maximum accepted spatial
 #'   uncertainty in kilometers. Default is 10 km.
-#' @param MinYear An integer specifying the earliest collection year to be
+#' @param StartYear An integer specifying the earliest collection year to be
 #'   included. Default is 1981.
 #' @param SaveRData Logical; indicating whether to save the cleaned data for the
 #'   current chunk as `*.RData` file.
@@ -52,7 +52,7 @@
 
 GBIF_ReadChunk <- function(
     ChunkFile, EnvFile = ".env", FromHPC = TRUE, MaxUncert = 10,
-    MinYear = 1981, SaveRData = TRUE, ReturnData = FALSE, Overwrite = FALSE) {
+    StartYear = 1981, SaveRData = TRUE, ReturnData = FALSE, Overwrite = FALSE) {
 
   if (!SaveRData && !ReturnData) {
     stop(
@@ -75,7 +75,7 @@ GBIF_ReadChunk <- function(
     AllArgs = AllArgs, Type = "logical",
     Args = c("FromHPC", "SaveRData", "ReturnData", "Overwrite"))
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "numeric", Args = c("MaxUncert", "MinYear"))
+    AllArgs = AllArgs, Type = "numeric", Args = c("MaxUncert", "StartYear"))
 
   # # ..................................................................... ###
 
@@ -186,7 +186,7 @@ GBIF_ReadChunk <- function(
       # exclude occurrences if either latitude/longitude has no decimals (integer)
       (NDecLong > 0 & NDecLat > 0),
       # keep only occurrences recorder after specific year
-      year >= MinYear,
+      year >= StartYear,
       # only "PRESENT" data (i.e. exclude ABSENT)
       occurrenceStatus == "PRESENT" | is.na(occurrenceStatus),
       # only vascular plants (not necessary as all requested data are for

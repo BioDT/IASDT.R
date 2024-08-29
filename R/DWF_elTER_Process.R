@@ -10,14 +10,15 @@
 #' @param EnvFile Character. The path to the environment file containing
 #'   variables required by the function. Default is ".env".
 #' @param StartYear Numeric. The starting year for the occurrence data. Only
-#'   records from this year onward will be processed. Defaults to 1980.
+#'   records from this year onward will be processed. Default is `1981`, which
+#'   matches the year ranges of CHELSA current climate data.
 #' @return Returns `NULL` invisibly after saving the processed data.
 #' @author Ahmed El-Gabbas & Marina Golivets
 #' @name elTER_Process
 #' @export
 
 elTER_Process <- function(
-    FromHPC = TRUE, EnvFile = ".env", StartYear = 1980) {
+    FromHPC = TRUE, EnvFile = ".env", StartYear = 1981) {
 
   # # ..................................................................... ###
 

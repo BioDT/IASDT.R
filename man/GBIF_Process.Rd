@@ -13,10 +13,10 @@ GBIF_Process(
   DownloadData = TRUE,
   SplitChunks = TRUE,
   Overwrite = FALSE,
-  RemChunks = FALSE,
+  DeleteChunks = FALSE,
   ChunkSize = 50000,
   Boundaries = c(-30, 50, 25, 75),
-  StartYear = 1980
+  StartYear = 1981
 )
 }
 \arguments{
@@ -46,7 +46,7 @@ file if it has already processed and saved as \verb{*.RData} file. This helps to
 continue working on previously processed chunks if the previous try failed,
 e.g. due to memory issue.}
 
-\item{RemChunks}{Logical. If \code{TRUE}, delete the chunk files.}
+\item{DeleteChunks}{Logical. If \code{TRUE}, delete the chunk files.}
 
 \item{ChunkSize}{Integer. The number of records per chunk when splitting the
 data. Default is 50,000.}
@@ -56,8 +56,8 @@ boundaries for the requested GBIF data in the order: Left, Right, Bottom,
 Top. Defaults to c(-30, 50, 25, 75).}
 
 \item{StartYear}{Numeric. The starting year for the occurrence data. Only
-records from this year onward will be requested from GBIF. Defaults to
-1980.}
+records from this year onward will be requested from GBIF. Default is
+\code{1981}, which matches the year ranges of CHELSA current climate data.}
 }
 \value{
 Saves multiple RData and Excel files containing the processed data

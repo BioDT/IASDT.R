@@ -13,7 +13,7 @@ GBIF_Download(
   SplitChunks = TRUE,
   ChunkSize = 50000,
   Boundaries = c(-30, 50, 25, 75),
-  StartYear = 1980
+  StartYear = 1981
 )
 }
 \arguments{
@@ -43,8 +43,8 @@ boundaries for the requested GBIF data in the order: Left, Right, Bottom,
 Top. Defaults to c(-30, 50, 25, 75).}
 
 \item{StartYear}{Numeric. The starting year for the occurrence data. Only
-records from this year onward will be requested from GBIF. Defaults to
-1980.}
+records from this year onward will be requested from GBIF. Default is
+\code{1981}, which matches the year ranges of CHELSA current climate data.}
 }
 \value{
 The function does not return any value. The function is called for

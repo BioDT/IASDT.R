@@ -28,8 +28,9 @@
 #'   variables required by the function. Default is ".env".
 #' @param DeleteChunks Logical. If `TRUE`, the function will delete intermediate
 #'   files after processing. Default is `FALSE`.
-#' @param MinYear Integer. Minimum year for filtering species occurrence data.
-#'   Records before this year will be excluded. Default is 1981.
+#' @param StartYear Integer. Minimum year for filtering species occurrence data.
+#'   Records before this year will be excluded. Default is `1981`, which matches
+#'   the year ranges of CHELSA current climate data.
 #' @param Plot Logical. If `TRUE`, the function will generate summary plots of
 #'   the processed data using [EASIN_Plot]. Default is `TRUE`.
 #' @author Ahmed El-Gabbas
@@ -67,7 +68,7 @@
 EASIN_Process <- function(
     ExtractTaxa = TRUE, ExtractData = TRUE, NDownTries = 10,
     NCores = 6, SleepTime = 10, NSearch = 1000, FromHPC = TRUE,
-    EnvFile = ".env", DeleteChunks = FALSE, MinYear = 1981, Plot = TRUE) {
+    EnvFile = ".env", DeleteChunks = FALSE, StartYear = 1981, Plot = TRUE) {
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -87,7 +88,7 @@ EASIN_Process <- function(
              "Plot", "DeleteChunks"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric",
-    Args = c("DownTries", "NCores", "SleepTime", "NSearch", "MinYear"))
+    Args = c("DownTries", "NCores", "SleepTime", "NSearch", "StartYear"))
 
   # # ..................................................................... ###
 
@@ -408,8 +409,8 @@ EASIN_Process <- function(
   EASIN_Data <- EASIN_Data_Orig %>%
     dplyr::mutate(Year = as.integer(Year), SpeciesName = NULL) %>%
     dplyr::rename(EASINID = SpeciesId) %>%
-    # exclude observations with no spatial information or < MinYear
-    dplyr::filter(!is.na(WKT), Year >= MinYear) %>%
+    # exclude observations with no spatial information or < StartYear
+    dplyr::filter(!is.na(WKT), Year >= StartYear) %>%
     # Join with EASIN Taxa information
     dplyr::left_join(EASIN_Taxa, by = "EASINID")
 

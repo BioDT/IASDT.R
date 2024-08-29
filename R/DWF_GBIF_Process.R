@@ -15,7 +15,7 @@
 #'   variables required by the function. Default is ".env".
 #' @param NCores Numeric. Number of cores to use for parallel processing.
 #'   Defaults to 6.
-#' @param RemChunks Logical. If `TRUE`, delete the chunk files.
+#' @param DeleteChunks Logical. If `TRUE`, delete the chunk files.
 #' @inheritParams GBIF_Download
 #' @inheritParams GBIF_ReadChunk
 #' @return Saves multiple RData and Excel files containing the processed data
@@ -30,8 +30,8 @@
 GBIF_Process <- function(
     FromHPC = TRUE, EnvFile = ".env", Renviron = ".Renviron", NCores = 6,
     RequestData = TRUE, DownloadData = TRUE, SplitChunks = TRUE,
-    Overwrite = FALSE, RemChunks = FALSE, ChunkSize = 50000,
-    Boundaries = c(-30, 50, 25, 75), StartYear = 1980) {
+    Overwrite = FALSE, DeleteChunks = FALSE, ChunkSize = 50000,
+    Boundaries = c(-30, 50, 25, 75), StartYear = 1981) {
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -49,7 +49,7 @@ GBIF_Process <- function(
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "logical",
     Args = c("FromHPC", "RequestData", "DownloadData", "SplitChunks",
-             "Overwrite", "RemChunks"))
+             "Overwrite", "DeleteChunks"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric",
     Args = c("StartYear", "Boundaries", "ChunkSize", "NCores"))
@@ -526,7 +526,7 @@ GBIF_Process <- function(
   # # ..................................................................... ###
 
   # Clean up chunk files ----
-  if (RemChunks) {
+  if (DeleteChunks) {
     IASDT.R::CatTime("Clean up - remove temporary chunk files")
     list.files(Path_GBIF_Interim, full.names = TRUE) %>%
       fs::file_delete()

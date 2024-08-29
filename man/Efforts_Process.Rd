@@ -11,7 +11,7 @@ Efforts_Process(
   RequestData = TRUE,
   DownloadData = TRUE,
   NCores = 6,
-  StartYear = 1980,
+  StartYear = 1981,
   Boundaries = c(-30, 50, 25, 75),
   ChunkSize = 1e+05,
   DeleteChunks = TRUE
@@ -38,7 +38,8 @@ stores it on disk. If \code{FALSE}, it skips the download step. Defaults to
 \item{NCores}{Integer. The number of cores to use for parallel processing.}
 
 \item{StartYear}{Numeric. The starting year for the occurrence data. Only
-records from this year onward will be requested from GBIF. Default: \code{1980}.}
+records from this year onward will be requested from GBIF. Default is
+\code{1981}, which matches the year ranges of CHELSA current climate data.}
 
 \item{Boundaries}{Numeric vector of length 4. Specifies geographical
 boundaries for the requested GBIF data in the order: Left, Right, Bottom,

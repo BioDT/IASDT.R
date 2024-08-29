@@ -9,7 +9,7 @@ GBIF_ReadChunk(
   EnvFile = ".env",
   FromHPC = TRUE,
   MaxUncert = 10,
-  MinYear = 1981,
+  StartYear = 1981,
   SaveRData = TRUE,
   ReturnData = FALSE,
   Overwrite = FALSE
@@ -29,7 +29,7 @@ Default is TRUE.}
 \item{MaxUncert}{A numeric value specifying the maximum accepted spatial
 uncertainty in kilometers. Default is 10 km.}
 
-\item{MinYear}{An integer specifying the earliest collection year to be
+\item{StartYear}{An integer specifying the earliest collection year to be
 included. Default is 1981.}
 
 \item{SaveRData}{Logical; indicating whether to save the cleaned data for the

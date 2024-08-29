@@ -8,14 +8,14 @@
 #' in parallel, and manages the data download and storage. If data is already
 #' available, it loads the data instead of making new requests.
 #' @param NCores Integer. The number of cores to use for parallel processing
-#'   (between 1 and 3). Must be a positive integer.
+#'   (between 1 and 3). Must be a positive integer. Defaults to 3.
 #' @param Path_Requests Character. The directory path to save individual request
 #'   files.
 #' @param Path_Efforts Character. The directory path to save the final compiled
 #'   data.
 #' @param StartYear Numeric. The starting year for the occurrence data. Only
-#'   records from this year onward will be requested from GBIF. Defaults to
-#'   1980.
+#'   records from this year onward will be requested from GBIF. Default is
+#'   `1981`, which matches the year ranges of CHELSA current climate data.
 #' @param Boundaries Numeric vector of length 4. Specifies geographical
 #'   boundaries for the requested GBIF data in the order: Left, Right, Bottom,
 #'   Top. Defaults to c(-30, 50, 25, 75).
@@ -28,7 +28,8 @@
 #' @export
 
 Efforts_Request <- function(
-    NCores, Path_Requests, Path_Efforts, StartYear, Boundaries) {
+    NCores = 3, Path_Requests, Path_Efforts,
+    StartYear = 1981, Boundaries = c(-30, 50, 25, 75)) {
 
   # In earlier tries, requesting all vascular plants occurrences in a single
   # request returned 80 GB compressed file. The extracted "occurrences.txt" is

@@ -26,8 +26,8 @@
 #'   boundaries for the requested GBIF data in the order: Left, Right, Bottom,
 #'   Top. Defaults to c(-30, 50, 25, 75).
 #' @param StartYear Numeric. The starting year for the occurrence data. Only
-#'   records from this year onward will be requested from GBIF. Defaults to
-#'   1980.
+#'   records from this year onward will be requested from GBIF. Default is
+#'   `1981`, which matches the year ranges of CHELSA current climate data.
 #' @note This function is not intended to be used directly by the user or in the
 #'   IAS-pDT, but only used inside the [GBIF_Process] function.
 #' @return The function does not return any value. The function is called for
@@ -54,7 +54,7 @@
 GBIF_Download <- function(
     FromHPC = TRUE, EnvFile = ".env", Renviron = ".Renviron",
     RequestData = TRUE, DownloadData = TRUE, SplitChunks = TRUE,
-    ChunkSize = 50000, Boundaries = c(-30, 50, 25, 75), StartYear = 1980) {
+    ChunkSize = 50000, Boundaries = c(-30, 50, 25, 75), StartYear = 1981) {
 
   .StartTime <- lubridate::now(tzone = "CET")
 

@@ -25,7 +25,8 @@
 #'   Top. Default: `c(-30, 50, 25, 75)`.
 #' @param NCores Integer. The number of cores to use for parallel processing.
 #' @param StartYear Numeric. The starting year for the occurrence data. Only
-#'   records from this year onward will be requested from GBIF. Default: `1980`.
+#'   records from this year onward will be requested from GBIF. Default is
+#'   `1981`, which matches the year ranges of CHELSA current climate data.
 #' @param ChunkSize Integer. The number of rows per chunk file. Default:
 #'   `100,000`. See [Efforts_Split] and [Efforts_Summarize] for more details.
 #' @param DeleteChunks logical, indicating whether to remove file chunks after
@@ -49,7 +50,7 @@
 
 Efforts_Process <- function(
     FromHPC = TRUE, EnvFile = ".env", Renviron = ".Renviron",
-    RequestData = TRUE, DownloadData = TRUE, NCores = 6, StartYear = 1980,
+    RequestData = TRUE, DownloadData = TRUE, NCores = 6, StartYear = 1981,
     Boundaries = c(-30, 50, 25, 75), ChunkSize = 100000,
     DeleteChunks = TRUE) {
 

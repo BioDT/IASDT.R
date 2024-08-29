@@ -111,7 +111,7 @@ Railway_Intensity <- function(
 
   withr::local_options(
     future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, timeout = 1200)
-    
+
   # # ..................................................................... ###
 
   c1 <- snow::makeSOCKcluster(NCores)
@@ -235,28 +235,11 @@ Railway_Intensity <- function(
         URL <- Railways_Links$URL2[[ID]]
         Path <- Railways_Links$Path[[ID]]
 
-        if (file.exists(Path)) {
+        # Check if zip file is a valid file
+        Success <- IASDT.R::CheckZip(Path)
 
-          # Check if zip file is a valid file
-          if (CheckZip) {
-            ZipStatus <- system2(
-              "unzip", args = c("-t", Path), stdout = TRUE, stderr = TRUE) %>%
-              stringr::str_detect("No errors detected in compressed data") %>%
-              any()
-
-            if (ZipStatus) {
-              Success <- TRUE
-            } else {
-              Success <- FALSE
-              fs::file_delete(Path)
-            }
-
-          } else {
-            Success <- TRUE
-          }
-
-        } else {
-          Success <- FALSE
+        if (file.exists(Path) && isFALSE(Success)) {
+          fs::file_delete(Path)
         }
 
         # Try downloading data for a max of 3 attempts, each with 20 mins time
@@ -271,11 +254,7 @@ Railway_Intensity <- function(
             utils::download.file(
               url = URL, destfile = Path, mode = "wb", quiet = TRUE)
 
-            ZipStatus <- system2(
-              "unzip", args = c("-t", Path), stdout = TRUE, stderr = TRUE) %>%
-              stringr::str_detect("No errors detected in compressed data") %>%
-              any()
-            Success <- all(ZipStatus, file.exists(Path))
+            Success <- IASDT.R::CheckZip(Path)
           },
           error = function(e) {
             if (Attempt < Attempts) {
@@ -352,7 +331,7 @@ Railway_Intensity <- function(
       dplyr::mutate(bridge = as.logical(bridge), tunnel = as.logical(tunnel))
 
     IASDT.R::CatDiff(
-      InitTime = .StartTimeExtract, 
+      InitTime = .StartTimeExtract,
       Prefix = "Extracting railway data took ", NLines = 1, Level = 2)
 
     # # .................................... ###
@@ -575,7 +554,7 @@ Railway_Intensity <- function(
   # Function Summary ----
 
   IASDT.R::CatDiff(
-    InitTime = .StartTime, 
+    InitTime = .StartTime,
     Prefix = "\nProcessing railway data was finished in ", ... = "\n")
 
   return(invisible(NULL))

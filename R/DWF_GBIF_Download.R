@@ -87,7 +87,8 @@ GBIF_Download <- function(
 
   IASDT.R::CatTime(
     "Ensure that GBIF access information is available or can be read")
-  IASDT.R::Check_GBIF()
+  
+  IASDT.R::GBIF_Check(Renviron = Renviron)
 
   # # ..................................................................... ###
 

@@ -20,6 +20,11 @@ CheckZip <- function(File) {
   # Check if the unzip command is available
   IASDT.R::CheckCommands("unzip")
 
+  if (length(File) != 1 && !inherits(File, "character") && nzchar(File)) {
+    stop(
+      paste0("Input file has to be a single character string"), call. = FALSE)
+  }
+
   # Verify the file exists
   if (!file.exists(File)) {
     message(paste0("File does not exist: ", File))
@@ -42,6 +47,8 @@ CheckZip <- function(File) {
       message("Error during file validation: ", conditionMessage(e))
       return(FALSE)
     })
+
+  FileOkay <- (FileOkay && file.info(File)$size > 0)
 
   # Ensure the result is a logical value
   return(inherits(FileOkay, "logical") && FileOkay)

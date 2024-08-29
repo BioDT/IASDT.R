@@ -101,8 +101,15 @@ Efforts_Download <- function(NCores = 6, Path_Raw, Path_Interim, Path_Efforts) {
 
           DownFile <- file.path(Path_Raw, paste0(as.character(.x), ".zip"))
 
-          # Check zip file if exist, if not exist download it
-          Success <- IASDT.R::CheckZip(DownFile)
+          # Check zip file if exist, if not download it
+          if (file.exists(DownFile)) {
+            Success <- IASDT.R::CheckZip(DownFile)
+            if (isFALSE(Success)) {
+              fs::file_delete(DownFile)
+            }
+          } else {
+            Success <- FALSE
+          }
 
           # Try downloading data for a max of 3 attempts, each with 20 mins
           # time out
@@ -117,15 +124,9 @@ Efforts_Download <- function(NCores = 6, Path_Raw, Path_Interim, Path_Efforts) {
                 rgbif::occ_download_get(
                   key = .x, path = Path_Raw, overwrite = TRUE))
 
-              ZipStatus <- system2(
-                "unzip", args = c("-t", DownFile),
-                stdout = TRUE, stderr = TRUE) %>%
-                stringr::str_detect("No errors detected in compressed data") %>%
-                any()
-
               # Ensure Success is only TRUE if both the zip file exists and
               # passes integrity check
-              Success <- file.exists(DownFile) && ZipStatus
+              Success <- file.exists(DownFile) && IASDT.R::CheckZip(DownFile)
 
             },
             error = function(e) {

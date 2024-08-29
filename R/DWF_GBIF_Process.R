@@ -116,8 +116,6 @@ GBIF_Process <- function(
 
   # # ..................................................................... ###
 
-  # Path_GBIF_Chunks <- file.path(Path_GBIF_Interim, "Chunks")
-
   GBIF_Metadata <- IASDT.R::LoadAs(file.path(Path_GBIF, "GBIF_Metadata.RData"))
 
   TaxaList <- IASDT.R::LoadAs(TaxaInfo)

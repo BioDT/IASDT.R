@@ -25,7 +25,8 @@
 #'   plants (Tracheophyta) and excluding non-matches and higher rank matches.
 #'   The results are further refined based on the confidence score and the
 #'   status (ACCEPTED, SYNONYM, DOUBTFUL) of the matches.
-#' @export
+#' @noRd
+#' @note This function is currently neither exported or used by other functions.
 #' @details as input, provide a vector of verbatim taxon names (preferably with
 #' authorship) and a vector of existing local identifiers for those names
 

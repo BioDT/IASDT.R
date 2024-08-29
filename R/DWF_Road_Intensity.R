@@ -107,17 +107,28 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env", Download = TRUE) {
 
     Path_DownFile <- file.path(Path_Roads_Raw, basename(Road_URL))
 
+    # Check if zip file is a valid file
+    if (file.exists(Path_DownFile)) {
+      Success <- IASDT.R::CheckZip(Path_DownFile)
+      if (isFALSE(Success)) {
+        fs::file_delete(Path_DownFile)
+      }
+    } else {
+      Success <- FALSE
+    }
+
     # Try downloading data for a max of 3 attempts
     Attempt <- 1
     Attempts <- 3
-    Success <- FALSE
 
     while (isFALSE(Success) && Attempt <= Attempts) {
       tryCatch({
+
         utils::download.file(
           url = Road_URL, destfile = Path_DownFile, mode = "wb", quiet = TRUE)
+
         Success <- file.exists(Path_DownFile) &&
-          file.info(Path_DownFile)$size > 0
+          IASDT.R::CheckZip(Path_DownFile)
       },
       error = function(e) {
         if (Attempt < Attempts) {
@@ -127,15 +138,16 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env", Download = TRUE) {
           Attempt <- Attempt + 1
         } else {
           stop(
-            paste0("Failed to download road data from ", Road_URL, " after ",
-                    Attempts, " attempts: ", conditionMessage(e)),
+            paste0(
+              "Failed to download road data from ", Road_URL, " after ",
+              Attempts, " attempts: ", conditionMessage(e)),
             call. = FALSE)
         }
       })
     }
 
     IASDT.R::CatDiff(
-      InitTime = .StartTimeDown, 
+      InitTime = .StartTimeDown,
       Prefix = "Downloading GRIP data took ", NLines = 1, Level = 1)
 
     # # .................................... ###
@@ -148,7 +160,7 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env", Download = TRUE) {
       suppressMessages()
 
     IASDT.R::CatDiff(
-      InitTime = .StartTimeExt, 
+      InitTime = .StartTimeExt,
       Prefix = "Extracting GRIP data took ", NLines = 1, Level = 1)
 
     rm(Path_DownFile, .StartTimeDown, .StartTimeExt)
@@ -169,8 +181,10 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env", Download = TRUE) {
     path = Path_Roads_Interim, pattern = ".gdb$", full.names = TRUE)
 
   if (length(Road_GDB_Files) == 0) {
-    stop(paste0("No `.gdb` files found in the directory after extraction: ",
-                Path_Roads_Interim), call. = FALSE)
+    stop(
+      paste0("No `.gdb` files found in the directory after extraction: ",
+             Path_Roads_Interim),
+      call. = FALSE)
   }
 
   Road_sf <- Road_GDB_Files[1] %>%

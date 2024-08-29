@@ -1,5 +1,5 @@
 # # |------------------------------------------------------------------------| #
-# Check_GBIF ----
+# GBIF_Check ----
 ## |------------------------------------------------------------------------| #
 
 #' Check if GBIF login credentials exist
@@ -11,11 +11,11 @@
 #'   - `GBIF_EMAIL=your_email`
 #'   - `GBIF_USER=your_username`
 #'   - `GBIF_PWD=your_password`
-#' @name Check_GBIF
+#' @name GBIF_Check
 #' @author Ahmed El-Gabbas
 #' @export
 
-Check_GBIF <- function(Renviron = ".Renviron") {
+GBIF_Check <- function(Renviron = ".Renviron") {
   # Check if the accessing information already read
   Missing_Account <- purrr::map_lgl(
     .x = c("GBIF_EMAIL", "GBIF_PWD", "GBIF_USER"),

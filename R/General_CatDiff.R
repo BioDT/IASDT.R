@@ -71,7 +71,7 @@ CatDiff <- function(
         stringr::str_pad(lubridate::minute(.), width = 2, pad = "0"), ":",
         stringr::str_pad(round(lubridate::second(.)), width = 2, pad = "0"))
     } %>%
-    paste0(Prefix, ., " hours") %>%
+    paste0(Prefix, .) %>%
     IASDT.R::CatTime(Level = Level, ...)
 
   return(invisible(NULL))

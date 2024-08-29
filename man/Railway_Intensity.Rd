@@ -2,7 +2,7 @@
 % Please edit documentation in R/DWF_Railway_Intensity.R
 \name{Railway_Intensity}
 \alias{Railway_Intensity}
-\title{Calculate Railway Intensity Based on \code{OpenStreetMap} Data}
+\title{Calculate railway intensity based on \code{OpenStreetMap} data}
 \usage{
 Railway_Intensity(
   FromHPC = TRUE,

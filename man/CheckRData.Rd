@@ -2,7 +2,7 @@
 % Please edit documentation in R/General_CheckRData.R
 \name{CheckRData}
 \alias{CheckRData}
-\title{Check if a file is a valid RData file}
+\title{Check the Integrity of an \code{RData} File}
 \usage{
 CheckRData(File)
 }

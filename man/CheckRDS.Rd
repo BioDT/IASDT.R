@@ -2,7 +2,7 @@
 % Please edit documentation in R/General_CheckRDS.R
 \name{CheckRDS}
 \alias{CheckRDS}
-\title{Check if an RDS file can be successfully read}
+\title{Check the Integrity of an \code{RDS} File}
 \usage{
 CheckRDS(File)
 }

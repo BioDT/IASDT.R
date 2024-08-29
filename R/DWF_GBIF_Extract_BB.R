@@ -16,7 +16,8 @@
 #' @author Ahmed El-Gabbas
 #' @return Returns the content of the specified column `var` from the input `x`.
 #'   If `var` is not found within `x`, the function returns `NA_character_`.
-#' @export
+#' @noRd 
+#' @note This function is currently neither exported or used by other functions.
 #' @details
 #' Extract a specific column from the output of GBIF
 #' @examples

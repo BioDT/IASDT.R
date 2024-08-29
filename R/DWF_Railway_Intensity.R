@@ -2,7 +2,7 @@
 # Railway_Intensity ----
 ## |------------------------------------------------------------------------| #
 
-#' Calculate Railway Intensity Based on `OpenStreetMap` Data
+#' Calculate railway intensity based on `OpenStreetMap` data
 #'
 #' This function downloads, processes, and analyzes railway data extracted from
 #' [OpenRailwayMap](https://www.openrailwaymap.org) available from
@@ -236,10 +236,13 @@ Railway_Intensity <- function(
         Path <- Railways_Links$Path[[ID]]
 
         # Check if zip file is a valid file
-        Success <- IASDT.R::CheckZip(Path)
-
-        if (file.exists(Path) && isFALSE(Success)) {
-          fs::file_delete(Path)
+        if (file.exists(Path)) {
+          Success <- IASDT.R::CheckZip(Path)
+          if (isFALSE(Success)) {
+            fs::file_delete(Path)
+          }
+        } else {
+          Success <- FALSE
         }
 
         # Try downloading data for a max of 3 attempts, each with 20 mins time
@@ -277,11 +280,15 @@ Railway_Intensity <- function(
     IASDT.R::CatDiff(
       InitTime = .StartTimeDown,
       Prefix = "Downloading railway data took ", NLines = 1, Level = 2)
+
+  } else {
+    IASDT.R::CatTime("Railways data was not downloaded", Level = 1)
   }
 
   # # ..................................................................... ###
 
   # Extract shape files for railways ----
+
   IASDT.R::CatTime("Extract shape files for railways")
   RefGrid <- terra::unwrap(IASDT.R::LoadAs(RefGrid))
 

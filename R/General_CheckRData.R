@@ -2,7 +2,7 @@
 # CheckRData ----
 ## |------------------------------------------------------------------------| #
 
-#' Check if a file is a valid RData file
+#' Check the Integrity of an `RData` File
 #'
 #' This function checks if a given file is a valid RData file by verifying its
 #' extension and attempting to load it. It uses the [LoadAs] to load the file.

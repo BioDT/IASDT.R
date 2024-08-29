@@ -47,7 +47,6 @@
 #' @name Efforts_Process
 #' @export
 
-
 Efforts_Process <- function(
     FromHPC = TRUE, EnvFile = ".env", Renviron = ".Renviron",
     RequestData = TRUE, DownloadData = TRUE, NCores = 6, StartYear = 1981,
@@ -106,7 +105,7 @@ Efforts_Process <- function(
   IASDT.R::CatTime(
     "Ensure that GBIF access information is available or can be read")
 
-  IASDT.R::Check_GBIF(Renviron = Renviron)
+  IASDT.R::GBIF_Check(Renviron = Renviron)
 
   # # ..................................................................... ###
 
@@ -224,7 +223,7 @@ Efforts_Process <- function(
   # # ..................................................................... ###
 
   IASDT.R::CatDiff(
-    InitTime = .StartTime, 
+    InitTime = .StartTime,
     Prefix = "\nProcessing efforts data took ", ... = "\n")
 
   return(invisible(NULL))

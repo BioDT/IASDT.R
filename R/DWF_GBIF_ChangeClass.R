@@ -13,6 +13,7 @@
 #' @author Ahmed El-Gabbas
 #' @return A data frame with the same data as `DF` but with specified columns
 #'   converted to their designated data types.
+#' @note This function is currently neither exported or used by other functions.
 #' @keywords internal
 #' @noRd
 

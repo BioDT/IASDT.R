@@ -1,4 +1,8 @@
-#' Check if an RDS file can be successfully read
+## |------------------------------------------------------------------------| #
+# CheckRDS ----
+## |------------------------------------------------------------------------| #
+
+#' Check the Integrity of an `RDS` File
 #'
 #' This function checks if the specified file is an RDS file and attempts to
 #' read it. It returns `TRUE` if the file is an RDS file and contains a non-null

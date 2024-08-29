@@ -20,7 +20,7 @@ CheckZip <- function(File) {
   # Check if the unzip command is available
   IASDT.R::CheckCommands("unzip")
 
-  if (length(File) != 1 && !inherits(File, "character") && nzchar(File)) {
+  if (length(File) != 1 || !inherits(File, "character") || !nzchar(File)) {
     stop(
       paste0("Input file has to be a single character string"), call. = FALSE)
   }
@@ -37,7 +37,8 @@ CheckZip <- function(File) {
       system2(
         command = "unzip", args = c("-t", File),
         stdout = TRUE, stderr = TRUE) %>%
-        stringr::str_detect("No errors detected in compressed data")
+        stringr::str_detect("No errors detected in compressed data") %>%
+        any()
     },
     warning = function(w) {
       message("Warning during file validation: ", conditionMessage(w))
@@ -48,8 +49,6 @@ CheckZip <- function(File) {
       return(FALSE)
     })
 
-  FileOkay <- (FileOkay && file.info(File)$size > 0)
-
   # Ensure the result is a logical value
-  return(inherits(FileOkay, "logical") && FileOkay)
+  return(inherits(FileOkay, "logical") && FileOkay && file.info(File)$size > 0)
 }

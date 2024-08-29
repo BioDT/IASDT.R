@@ -102,7 +102,8 @@ Efforts_Summarize <- function(
   # Prepare working on parallel -----
 
   IASDT.R::CatTime("Prepare working on parallel", Level = 1)
-  withr::local_options(future.globals.maxSize = 8000 * 1024^2)
+  withr::local_options(
+    future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
   c1 <- snow::makeSOCKcluster(NCores)
   on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
   future::plan(future::cluster, workers = c1, gc = TRUE)
@@ -124,8 +125,6 @@ Efforts_Summarize <- function(
   # Cleaning data from zipped archives -----
   IASDT.R::CatTime("Cleaning data from zipped archives", Level = 1)
 
-
-
   # Earlier attempts with `furrr::future_map()` failed
 
   DT_Paths <- future.apply::future_lapply(
@@ -139,31 +138,20 @@ Efforts_Summarize <- function(
       ClassOrder <- paste0(class, "_", order)
 
       Path_DT <- file.path(Path_Efforts_Data, paste0(ClassOrder, ".RData"))
-      ReturnNoData <- FALSE
-      Done <- FALSE
+      ReturnNoData <- dplyr::if_else(TotalRecords == 0, TRUE, FALSE)
 
       # Check if the RData file for the current order exists and valid
-      if (file.exists(Path_DT)) {
-        if (IASDT.R::CheckRData(Path_DT)) {
-          Done <- TRUE
-        } else {
-          # If the file exists but not valid, delete the file and reprocess it
-          fs::file_delete(Path_DT)
-        }
-      }
+      FileOkay <- suppressWarnings(IASDT.R::CheckRData(Path_DT))
 
-      if (isFALSE(Done) && TotalRecords > 0) {
-
+      if (isFALSE(FileOkay) && TotalRecords > 0) {
         # Check if previous chunk files for the current order exist and contain
         # the total number of observations. If this is true, do not split the data
         # and use the chunk files directly; otherwise, split the data first into
         # small chunks. This helps to continue working on the same data should
         # previous function try failed.
-        SplitChunks <- TRUE
         Chunks <- list.files(
-          path = Path_Efforts_Interim,
-          pattern = stringr::str_remove(basename(DownPath), ".zip"),
-          full.names = TRUE)
+          path = Path_Efforts_Interim, full.names = TRUE,
+          pattern = stringr::str_remove(basename(DownPath), ".zip"))
 
         if (length(Chunks) > 0) {
 
@@ -173,16 +161,15 @@ Efforts_Summarize <- function(
           # if they are less than the total records, delete them and recreate the
           # chunk files
           if (NLines < TotalRecords) {
-            fs::file_delete(Chunks)
+            purrr::walk(Chunks, file.remove)
             rm(Chunks)
           }
 
           # if all records are in the chunk files, skip the splitting
-          if (NLines == TotalRecords) {
-            SplitChunks <- FALSE
-          }
+          SplitChunks <- dplyr::if_else(NLines == TotalRecords, FALSE, TRUE)
+
         } else {
-          ReturnNoData <- TRUE
+          SplitChunks <- FALSE
         }
 
         if (SplitChunks) {
@@ -192,18 +179,9 @@ Efforts_Summarize <- function(
             ChunkSize = ChunkSize)
         }
 
-        if (length(Chunks) == 0) {
-          Done <- TRUE
-        }
-
-        # Processing order data for a maximum of 5 attempts
-        attempt <- 0
-
         AcceptedRanks <- c("FORM", "SPECIES", "SUBSPECIES", "VARIETY")
-
         ColNames <- c(
           "taxonRank", "Latitude", "Longitude", "UncertainKm", "speciesKey")
-
         Col_Types <- readr::cols(
           UncertainKm = readr::col_double(),
           Longitude = readr::col_double(),
@@ -212,86 +190,45 @@ Efforts_Summarize <- function(
           taxonRank = readr::col_character(),
           .default = readr::col_double())
 
-        while (attempt <= 5 && isFALSE(Done)) {
-          attempt <- attempt + 1
-          DT <- try(
-            expr = {
-              purrr::map_dfr(
-                .x = Chunks,
-                .f = ~ {
-                  readr::read_tsv(
-                    file = .x, col_names = ColNames, progress = FALSE,
-                    show_col_types = FALSE, col_types = Col_Types) %>%
-                    dplyr::mutate(UncertainKm = UncertainKm / 1000) %>%
-                    dplyr::filter(
-                      !is.na(Latitude), !is.na(Longitude),
-                      speciesKey != "", taxonRank %in% AcceptedRanks,
-                      UncertainKm <= 100 | is.na(UncertainKm))
-                })},
-            silent = TRUE)
-
-          if (inherits(DT, "try-error")) {
-            next
-          }
-
-          if (nrow(DT) == 0) {
-            Path_DT <- NA_character_
-            break
-          }
-
-          DT <- try(
-            expr = {
+        DT <- purrr::map_dfr(
+          .x = Chunks,
+          .f = ~ {
+            readr::read_tsv(
+              file = .x, col_names = ColNames, progress = FALSE,
+              show_col_types = FALSE, col_types = Col_Types) %>%
+              dplyr::mutate(UncertainKm = UncertainKm / 1000) %>%
+              dplyr::filter(
+                !is.na(Latitude), !is.na(Longitude),
+                speciesKey != "", taxonRank %in% AcceptedRanks,
+                UncertainKm <= 100 | is.na(UncertainKm)) %>%
               sf::st_as_sf(
-                x = DT, coords = c("Longitude", "Latitude"),
+                coords = c("Longitude", "Latitude"),
                 crs = 4326, remove = FALSE) %>%
-                sf::st_transform(3035) %>%
-                sf::st_join(Grid_SF) %>%
-                dplyr::filter(magrittr::not(is.na(CellCode)))
-            },
-            silent = TRUE)
+              sf::st_transform(3035) %>%
+              sf::st_join(Grid_SF) %>%
+              dplyr::filter(magrittr::not(is.na(CellCode)))
+          })
 
-          if (inherits(DT, "try-error")) {
-            next
-          }
-
-          if (nrow(DT) == 0) {
-            Path_DT <- NA_character_
-            break
-          }
-
+        if (nrow(DT) > 0) {
           IASDT.R::SaveAs(InObj = DT, OutObj = ClassOrder, OutPath = Path_DT)
-          Done <- TRUE
-
-          if (file.exists(Path_DT)) {
-            if (IASDT.R::CheckRData(Path_DT)) {
-              break
-            } else {
-              next
-            }
-          } else {
-            next
-          }
+        } else {
+          ReturnNoData <- TRUE
         }
-        # End of while loop
+        rm(DT)
       }
 
       # delete chunk files for the current order
       if (DeleteChunks) {
-        fs::file_delete(Chunks)
+        purrr::walk(Chunks, file.remove)
       }
 
-      if (ReturnNoData) {
-        return(
-          tibble::tibble(
-            ClassOrder = ClassOrder, Path_DT = NA_character_,
-            NPoints = 0L, class = class, order = order)
-        )
-      } else {
-        return(
-          tibble::tibble(
-            ClassOrder = ClassOrder, Path_DT = Path_DT,
-            NPoints = nrow(Path_DT), class = class, order = order))
-      }
+      Path_DT <- dplyr::if_else(ReturnNoData, NA_character_, Path_DT)
+
+      invisible(gc())
+      return(
+        tibble::tibble(
+          ClassOrder = ClassOrder, Path_DT = Path_DT,
+          class = class, order = order))
     },
     future.scheduling = Inf, future.seed = TRUE) %>%
     dplyr::bind_rows()
@@ -310,7 +247,6 @@ Efforts_Summarize <- function(
   invisible(gc())
 
   # # ..................................................................... ###
-
 
   # Number of observations and species per order ----
   IASDT.R::CatTime("Number of observations and species per order", Level = 1)
@@ -339,6 +275,7 @@ Efforts_Summarize <- function(
       # All species ----
 
       if (ObsN == 0) {
+
         NObs_R <- NSp_R <- terra::classify(Grid_R, cbind(1, 0))
         NObs_R <- stats::setNames(NObs_R, paste0("NObs_", ClassOrder)) %>%
           terra::wrap()
@@ -346,43 +283,50 @@ Efforts_Summarize <- function(
           terra::wrap()
 
       } else {
+
         # Number of observations
-        NObs_R <- Efforts_SummarizeMaps(
+        NObs_R <- IASDT.R::Efforts_SummarizeMaps(
           Data = DT, NSp = FALSE, Name = "NObs", ClassOrder = ClassOrder,
           Grid_SF = Grid_SF, Grid_R = Grid_R)
 
         # Number of species
-        NSp_R <- Efforts_SummarizeMaps(
+        NSp_R <- IASDT.R::Efforts_SummarizeMaps(
           Data = DT, NSp = TRUE, Name = "NSp", ClassOrder = ClassOrder,
           Grid_SF = Grid_SF, Grid_R = Grid_R)
+        rm(DT)
+
       }
-      rm(DT)
 
       # # ++++++++++++++++++++++++++++++++++ ###
 
       # Only native species ----
+
       if (ObsN_Native == 0) {
-        NObs_Native_R <- NSp_Native_R <- terra::classify(Grid_R, cbind(1, 0))
+
         NObs_Native_R <- NSp_Native_R <- terra::classify(Grid_R, cbind(1, 0))
         NObs_Native_R <- stats::setNames(
           NObs_Native_R, paste0("NObsNative_", ClassOrder)) %>%
           terra::wrap()
-        NSp_Native_R <- stats::setNames(NSp_Native_R, paste0("NSpNative_", ClassOrder)) %>%
+        NSp_Native_R <- stats::setNames(
+          NSp_Native_R, paste0("NSpNative_", ClassOrder)) %>%
           terra::wrap()
+
       } else {
+
         # Number of observations of native species
-        NObs_Native_R <- Efforts_SummarizeMaps(
+        NObs_Native_R <- IASDT.R::Efforts_SummarizeMaps(
           Data = DT_Native, NSp = FALSE, Name = "NObs_Native",
           ClassOrder = ClassOrder,
           Grid_SF = Grid_SF, Grid_R = Grid_R)
 
         # Number of native species
-        NSp_Native_R <- Efforts_SummarizeMaps(
+        NSp_Native_R <- IASDT.R::Efforts_SummarizeMaps(
           Data = DT_Native, NSp = TRUE, Name = "NSp_Native",
           ClassOrder = ClassOrder,
           Grid_SF = Grid_SF, Grid_R = Grid_R)
+        rm(DT_Native)
+
       }
-      rm(DT_Native)
 
       # # ++++++++++++++++++++++++++++++++++ ###
 

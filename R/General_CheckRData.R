@@ -17,18 +17,26 @@
 
 CheckRData <- function(File) {
 
-  if (!file.exists(File) || is.null(File) || nzchar(File)) {
+  if (!file.exists(File) || is.null(File) || !nzchar(File)) {
     warning(paste0("The provided file does not exist: `", File, "`"))
     return(FALSE)
   }
 
   if (tools::file_ext(File) == "RData") {
-    Obj <- IASDT.R::LoadAs(File)
+
+    Obj <- try(IASDT.R::LoadAs(File), silent = TRUE)
+
+    if (inherits(Obj, "try-error")) {
+      return(FALSE)
+
+    }
+
     if (exists("Obj") && !is.null(Obj)) {
       return(TRUE)
     } else {
       return(FALSE)
     }
+
   } else {
     warning("The provided file is not an RData file")
     return(FALSE)

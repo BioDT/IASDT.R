@@ -17,7 +17,7 @@ Efforts_Summarize(
 )
 }
 \arguments{
-\item{NCores}{Numeric. The number of cores to use for parallel processing.}
+\item{NCores}{Integer. Number of CPU cores to use for parallel processing.}
 
 \item{Path_Efforts}{Character. Path where the final processed data will be
 saved.}

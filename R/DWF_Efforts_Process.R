@@ -65,8 +65,7 @@ Efforts_Process <- function(
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "character", Args = c("Renviron", "EnvFile")
-  )
+    AllArgs = AllArgs, Type = "character", Args = c("Renviron", "EnvFile"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "logical",
     Args = c("FromHPC", "RequestData", "DownloadData"))
@@ -104,8 +103,7 @@ Efforts_Process <- function(
   # # ..................................................................... ###
 
   IASDT.R::CatTime(
-    "Ensure that GBIF access information is available or can be read"
-  )
+    "Ensure that GBIF access information is available or can be read")
 
   IASDT.R::Check_GBIF(Renviron = Renviron)
 
@@ -161,8 +159,7 @@ Efforts_Process <- function(
         "The following grid file(s) do not exist:\n",
         paste0(" >>> ", missing_grids, collapse = "\n")
       ),
-      call. = FALSE
-    )
+      call. = FALSE)
   }
 
   ## IAS species list ----
@@ -184,8 +181,7 @@ Efforts_Process <- function(
   } else {
     IASDT.R::CatTime("Efforts data was not requested, but loaded", Level = 1)
     Efforts_AllRequests <- IASDT.R::LoadAs(
-      file.path(Path_Efforts, "Efforts_AllRequests.RData")
-    )
+      file.path(Path_Efforts, "Efforts_AllRequests.RData"))
   }
 
   # # ..................................................................... ###
@@ -201,8 +197,7 @@ Efforts_Process <- function(
   } else {
     IASDT.R::CatTime("Efforts data was not downloaded", Level = 1)
     Efforts_AllRequests <- IASDT.R::LoadAs(
-      file.path(Path_Efforts, "Efforts_AllRequests.RData")
-    )
+      file.path(Path_Efforts, "Efforts_AllRequests.RData"))
   }
 
   # # ..................................................................... ###
@@ -222,7 +217,7 @@ Efforts_Process <- function(
 
   # # Plotting ----
 
-  IASDT.R::CatTime("\nPlotting efforts data")
+  IASDT.R::CatTime("Plotting sampling efforts")
   IASDT.R::Efforts_Plot(Path_Efforts = Path_Efforts, EU_Bound = EU_Bound)
 
   # # ..................................................................... ###

@@ -79,7 +79,14 @@ IAS_Process <- function(
       "Path_PA", "DP_R_PA", FALSE, FALSE,
       "Path_HabAff", "DP_R_HabAff", FALSE, TRUE,
       "Path_TaxaStand", "DP_R_TaxaStand", FALSE, TRUE,
-      "Path_TaxaInfo_RData", "DP_R_TaxaInfo_RData", FALSE, TRUE)
+      "Path_TaxaInfo_RData", "DP_R_TaxaInfo_RData", FALSE, TRUE,
+
+      # The following are needed for other called functions
+      "Path_Grid", "DP_R_Grid", TRUE, FALSE,
+      "Path_Grid_Ref", "DP_R_Grid_Ref", TRUE, FALSE,
+      "Path_TaxaCNT", "DP_R_Taxa_Country", FALSE, TRUE,
+      "Path_TaxaInfo", "DP_R_TaxaInfo", FALSE, TRUE,
+      "Path_BioReg", "DP_R_BioReg", FALSE, TRUE)
   } else {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
@@ -90,8 +97,31 @@ IAS_Process <- function(
       "Path_PA", "DP_R_PA_Local", FALSE, FALSE,
       "Path_HabAff", "DP_R_HabAff_Local", FALSE, TRUE,
       "Path_TaxaStand", "DP_R_TaxaStand_Local", FALSE, TRUE,
-      "Path_TaxaInfo_RData", "DP_R_TaxaInfo_RData_Local", FALSE, TRUE)
+      "Path_TaxaInfo_RData", "DP_R_TaxaInfo_RData_Local", FALSE, TRUE,
+
+      # The following are needed for other called functions
+      "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE,
+      "Path_Grid_Ref", "DP_R_Grid_Ref_Local", TRUE, FALSE,
+      "Path_TaxaCNT", "DP_R_Taxa_Country_Local", FALSE, TRUE,
+      "Path_TaxaInfo", "DP_R_TaxaInfo_Local", FALSE, TRUE,
+      "Path_BioReg", "DP_R_BioReg_Local", FALSE, TRUE)
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
@@ -202,7 +232,7 @@ IAS_Process <- function(
   snow::stopCluster(c1)
 
   IASDT.R::CatDiff(
-    InitTime = .StartTimeDist, 
+    InitTime = .StartTimeDist,
     Prefix = "Processing Species-specific data took ", NLines = 1, Level = 2)
 
   # # ..................................................................... ###
@@ -277,7 +307,7 @@ IAS_Process <- function(
   IASDT.R::CatTime(
     paste0("Prepare working on parallel using `", NCores, "` cores."),
     Level = 1)
-  
+
   c1 <- snow::makeSOCKcluster(NCores)
   on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
   future::plan(future::cluster, workers = c1, gc = TRUE)
@@ -675,7 +705,7 @@ IAS_Process <- function(
 
   # Function Summary ----
   IASDT.R::CatDiff(
-    InitTime = .StartTime, 
+    InitTime = .StartTime,
     Prefix = "\nProcessing species data was finished in ", ... = "\n")
 
   return(invisible(NULL))

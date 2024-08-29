@@ -23,6 +23,7 @@
 #' @export
 
 Efforts_Plot <- function(Path_Efforts, EU_Bound) {
+
   File_SummaryR <- file.path(Path_Efforts, "Efforts_SummaryR.RData")
   if (!file.exists(File_SummaryR)) {
     stop(

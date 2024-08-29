@@ -79,7 +79,12 @@ GBIF_Process <- function(
       "Path_GBIF_Interim", "DP_R_GBIF_Interim", FALSE, FALSE,
       "EU_Bound", "DP_R_EUBound_sf", FALSE, TRUE,
       "CountryCodes", "DP_R_CountryCodes", FALSE, TRUE,
-      "TaxaInfo", "DP_R_TaxaInfo_RData", FALSE, TRUE)
+      "TaxaInfo", "DP_R_TaxaInfo_RData", FALSE, TRUE,
+
+      # The following are needed for other called functions
+      "Path_GBIF_Raw", "DP_R_GBIF_Raw", FALSE, FALSE,
+      "CLC_Tif", "DP_R_CLC_tif", FALSE, TRUE,
+      "CLC_CW", "DP_R_CLC_CW", FALSE, TRUE)
   } else {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
@@ -88,7 +93,12 @@ GBIF_Process <- function(
       "Path_GBIF_Interim", "DP_R_GBIF_Interim_Local", FALSE, FALSE,
       "EU_Bound", "DP_R_EUBound_sf_Local", FALSE, TRUE,
       "CountryCodes", "DP_R_CountryCodes_Local", FALSE, TRUE,
-      "TaxaInfo", "DP_R_TaxaInfo_RData_Local", FALSE, TRUE)
+      "TaxaInfo", "DP_R_TaxaInfo_RData_Local", FALSE, TRUE,
+
+      # The following are needed for other called functions
+      "Path_GBIF_Raw", "DP_R_GBIF_Raw_Local", FALSE, FALSE,
+      "CLC_Tif", "DP_R_CLC_tif_Local", FALSE, TRUE,
+      "CLC_CW", "DP_R_CLC_CW_Local", FALSE, TRUE)
   }
 
   # Assign environment variables and check file and paths
@@ -144,7 +154,7 @@ GBIF_Process <- function(
   IASDT.R::CatTime(
     paste0("Prepare working on parallel using `", NCores, "` cores."),
     Level = 1)
-    
+
   c1 <- snow::makeSOCKcluster(NCores)
   on.exit({
     invisible(try(snow::stopCluster(c1), silent = TRUE))

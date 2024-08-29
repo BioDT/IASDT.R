@@ -112,7 +112,11 @@ EASIN_Process <- function(
       "Path_EASIN", "DP_R_EASIN", FALSE, FALSE,
       "Path_EASIN_Interim", "DP_R_EASIN_Interim", FALSE, FALSE,
       "TaxaInfoFile", "DP_R_TaxaInfo_RData", FALSE, TRUE,
-      "EASIN_Ref", "DP_R_TaxaInfo_EASIN", FALSE, TRUE)
+      "EASIN_Ref", "DP_R_TaxaInfo_EASIN", FALSE, TRUE,
+
+      # The following are needed for other called functions
+      "EU_Bound", "DP_R_EUBound_sf", FALSE, TRUE,
+      "Path_EASIN_Summary", "DP_R_EASIN_Summary", TRUE, FALSE)
   } else {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
@@ -121,7 +125,11 @@ EASIN_Process <- function(
       "Path_EASIN", "DP_R_EASIN_Local", FALSE, FALSE,
       "Path_EASIN_Interim", "DP_R_EASIN_Interim_Local", FALSE, FALSE,
       "TaxaInfoFile", "DP_R_TaxaInfo_RData_Local", FALSE, TRUE,
-      "EASIN_Ref", "DP_R_TaxaInfo_EASIN_Local", FALSE, TRUE)
+      "EASIN_Ref", "DP_R_TaxaInfo_EASIN_Local", FALSE, TRUE,
+
+      # The following are needed for other called functions
+      "EU_Bound", "DP_R_EUBound_sf_Local", FALSE, TRUE,
+      "Path_EASIN_Summary", "DP_R_EASIN_Summary_Local", TRUE, FALSE)
   }
 
   # Assign environment variables and check file and paths
@@ -280,7 +288,7 @@ EASIN_Process <- function(
       Level = 1)
 
     withr::local_options(
-        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
+      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
     c1 <- snow::makeSOCKcluster(NCores)
     on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
@@ -345,7 +353,7 @@ EASIN_Process <- function(
     }
 
     IASDT.R::CatDiff(
-      TimeStartData, 
+      TimeStartData,
       Prefix = "Downloading EASIN data was finished in ", Level = 1)
 
     # Stop cluster ----
@@ -385,7 +393,7 @@ EASIN_Process <- function(
 
   ## Merging EASIN data -----
   IASDT.R::CatTime("Merging EASIN data", Level = 1)
-  
+
   IASDT.R::CatTime(
     paste0("Prepare working on parallel using `", NCores, "` cores."),
     Level = 2)
@@ -623,7 +631,7 @@ EASIN_Process <- function(
   rm(EASIN_Data2)
 
   IASDT.R::CatDiff(
-    TimeStartData, 
+    TimeStartData,
     Prefix = "Preparing Species-specific data was finished in ", Level = 1)
 
   # # ..................................................................... ###

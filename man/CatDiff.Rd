@@ -8,7 +8,7 @@ CatDiff(
   InitTime,
   ChunkText = "Session summary",
   Prefix = "Completed in ",
-  CatInfo = TRUE,
+  CatInfo = FALSE,
   Level = 0,
   ...
 )
@@ -23,7 +23,7 @@ calculated.}
 difference. Defaults to "Completed in ".}
 
 \item{CatInfo}{logical; If \code{TRUE}, prints a session summary using
-\link{InfoChunk} ("Session summary"). Defaults to \code{TRUE}.}
+\link{InfoChunk} ("Session summary"). Defaults to \code{FALSE}.}
 
 \item{Level}{integer; the level at which the message will be printed. If e.g.
 Level = 1, the following string will be printed at the beginning of the
@@ -41,9 +41,31 @@ current time and prints it with a specified prefix. Optionally, it can also
 print a session summary.
 }
 \examples{
-# Assuming the current time, it prints the time difference
-# from one minute ago.
-CatDiff(Sys.time() - 60)
+RefTime <- (lubridate::now() - lubridate::seconds(45))
+CatDiff(RefTime)
+# Completed in 00:00:45 hours
+
+RefTime <- (lubridate::now() -
+    (lubridate::minutes(50) + lubridate::seconds(45)))
+CatDiff(RefTime)
+# Completed in 00:50:46 hours
+
+RefTime <- (lubridate::now() - lubridate::minutes(50))
+CatDiff(RefTime)
+# Completed in 00:50:01 hours
+
+RefTime <- (lubridate::now() - lubridate::minutes(70))
+CatDiff(RefTime)
+# Completed in 01:10:00 hours
+
+RefTime <- (lubridate::now() - lubridate::hours(4))
+CatDiff(RefTime)
+# Completed in 04:00:01 hours
+
+RefTime <- lubridate::now() -
+  (lubridate::hours(4) + lubridate::minutes(50) + lubridate::seconds(45))
+  CatDiff(RefTime)
+# Completed in 04:50:45 hours
 }
 \author{
 Ahmed El-Gabbas

@@ -101,7 +101,7 @@ EASIN_Taxonomy <- function(
 
 
   IASDT.R::CatDiff(
-    InitTime = TimeStartTaxa, CatInfo = FALSE,
+    InitTime = TimeStartTaxa, 
     Prefix = "Extracting EASIN taxonomy was finished in ", Level = 1)
 
   return(EASIN_Taxa)

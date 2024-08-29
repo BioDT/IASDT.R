@@ -102,13 +102,18 @@ Railway_Intensity <- function(
       call. = FALSE)
   }
 
-  withr::local_options(
-    list(timeout = 1200, future.globals.maxSize = 8000 * 1024^2))
-
   # # ..................................................................... ###
 
   # Prepare working on parallel ----
-  IASDT.R::CatTime("Prepare working on parallel")
+  IASDT.R::CatTime(
+    paste0("Prepare working on parallel using `", NCores, "` cores."),
+    Level = 1)
+
+  withr::local_options(
+    future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, timeout = 1200)
+    
+  # # ..................................................................... ###
+
   c1 <- snow::makeSOCKcluster(NCores)
   on.exit({
     invisible(try(snow::stopCluster(c1), silent = TRUE))
@@ -199,8 +204,8 @@ Railway_Intensity <- function(
 
 
     IASDT.R::CatDiff(
-      InitTime = .StartTimeDown, CatInfo = FALSE,
-      Prefix = "Preparing railways download links took ", NLines = 1, Level = 1)
+      InitTime = .StartTimeDown, NLines = 1, Level = 1,
+      Prefix = "Preparing railways download links took ")
 
   } else {
     IASDT.R::CatTime("Loading download links")
@@ -291,7 +296,7 @@ Railway_Intensity <- function(
     rm(DownRail)
 
     IASDT.R::CatDiff(
-      InitTime = .StartTimeDown, CatInfo = FALSE,
+      InitTime = .StartTimeDown,
       Prefix = "Downloading railway data took ", NLines = 1, Level = 2)
   }
 
@@ -347,7 +352,7 @@ Railway_Intensity <- function(
       dplyr::mutate(bridge = as.logical(bridge), tunnel = as.logical(tunnel))
 
     IASDT.R::CatDiff(
-      InitTime = .StartTimeExtract, CatInfo = FALSE,
+      InitTime = .StartTimeExtract, 
       Prefix = "Extracting railway data took ", NLines = 1, Level = 2)
 
     # # .................................... ###
@@ -570,7 +575,7 @@ Railway_Intensity <- function(
   # Function Summary ----
 
   IASDT.R::CatDiff(
-    InitTime = .StartTime, CatInfo = FALSE,
+    InitTime = .StartTime, 
     Prefix = "\nProcessing railway data was finished in ", ... = "\n")
 
   return(invisible(NULL))

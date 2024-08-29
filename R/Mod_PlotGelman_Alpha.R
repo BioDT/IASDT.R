@@ -43,6 +43,8 @@ PlotGelman_Alpha <- function(CodaObj, NCores, PlottingAlpha = 0.25) {
 
   # # ..................................................................... ###
 
+  withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
+  
   c1 <- snow::makeSOCKcluster(NCores)
   on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
   future::plan(future::cluster, workers = c1, gc = TRUE)

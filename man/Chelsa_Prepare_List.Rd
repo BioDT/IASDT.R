@@ -6,7 +6,7 @@
 \usage{
 Chelsa_Prepare_List(
   Down = FALSE,
-  DownParallel = TRUE,
+  NCores = 1,
   DwnPath = NULL,
   OutPath = NULL,
   UpdateExisting = FALSE,
@@ -16,8 +16,8 @@ Chelsa_Prepare_List(
 \arguments{
 \item{Down}{Logical, whether to download the CHELSA files.}
 
-\item{DownParallel}{Logical, whether to download files in parallel (if \code{Down}
-is \code{TRUE}).}
+\item{NCores}{Integer. Number of CPU cores to use for parallel processing.
+Defaults to 1.}
 
 \item{DwnPath}{String, the path where downloaded files should be saved.}
 

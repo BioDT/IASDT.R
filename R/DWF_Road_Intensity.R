@@ -135,7 +135,7 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env", Download = TRUE) {
     }
 
     IASDT.R::CatDiff(
-      InitTime = .StartTimeDown, CatInfo = FALSE,
+      InitTime = .StartTimeDown, 
       Prefix = "Downloading GRIP data took ", NLines = 1, Level = 1)
 
     # # .................................... ###
@@ -148,7 +148,7 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env", Download = TRUE) {
       suppressMessages()
 
     IASDT.R::CatDiff(
-      InitTime = .StartTimeExt, CatInfo = FALSE,
+      InitTime = .StartTimeExt, 
       Prefix = "Extracting GRIP data took ", NLines = 1, Level = 1)
 
     rm(Path_DownFile, .StartTimeDown, .StartTimeExt)
@@ -440,7 +440,7 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env", Download = TRUE) {
   # Function Summary ----
 
   IASDT.R::CatDiff(
-    InitTime = .StartTime, CatInfo = FALSE,
+    InitTime = .StartTime,
     Prefix = "\nProcessing road data was finished in ", ... = "\n")
 
   return(invisible(NULL))

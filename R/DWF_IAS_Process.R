@@ -53,6 +53,8 @@ IAS_Process <- function(
 
   rm(AllArgs)
 
+  withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
+
   # # ..................................................................... ###
 
   # Avoid "no visible binding for global variable" message
@@ -171,7 +173,9 @@ IAS_Process <- function(
   .StartTimeDist <- lubridate::now(tzone = "CET")
 
   ## Prepare working on parallel -----
-  IASDT.R::CatTime("Prepare working on parallel", Level = 1)
+  IASDT.R::CatTime(
+    paste0("Prepare working on parallel using `", NCores, "` cores."),
+    Level = 1)
   c1 <- snow::makeSOCKcluster(NCores)
   on.exit({
     invisible(try(snow::stopCluster(c1), silent = TRUE))
@@ -198,7 +202,7 @@ IAS_Process <- function(
   snow::stopCluster(c1)
 
   IASDT.R::CatDiff(
-    InitTime = .StartTimeDist, CatInfo = FALSE,
+    InitTime = .StartTimeDist, 
     Prefix = "Processing Species-specific data took ", NLines = 1, Level = 2)
 
   # # ..................................................................... ###
@@ -270,7 +274,10 @@ IAS_Process <- function(
   .StartTimeMaps <- lubridate::now(tzone = "CET")
 
   ## Prepare working on parallel -----
-  IASDT.R::CatTime("Prepare working on parallel", Level = 1)
+  IASDT.R::CatTime(
+    paste0("Prepare working on parallel using `", NCores, "` cores."),
+    Level = 1)
+  
   c1 <- snow::makeSOCKcluster(NCores)
   on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
   future::plan(future::cluster, workers = c1, gc = TRUE)
@@ -298,7 +305,7 @@ IAS_Process <- function(
   future::plan(future::sequential, gc = TRUE)
 
   IASDT.R::CatDiff(
-    InitTime = .StartTimeMaps, CatInfo = FALSE,
+    InitTime = .StartTimeMaps,
     Prefix = "Processing Species-specific maps took ", NLines = 1, Level = 2)
 
   # # ..................................................................... ###
@@ -668,7 +675,7 @@ IAS_Process <- function(
 
   # Function Summary ----
   IASDT.R::CatDiff(
-    InitTime = .StartTime, CatInfo = FALSE,
+    InitTime = .StartTime, 
     Prefix = "\nProcessing species data was finished in ", ... = "\n")
 
   return(invisible(NULL))

@@ -309,7 +309,7 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
   ## |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatDiff(
-    InitTime = .PlotStartTime, CatInfo = FALSE,
+    InitTime = .PlotStartTime, 
     Prefix = "Plotting EASIN data was finished in ", Level = 1)
 
   return(invisible(NULL))

@@ -175,7 +175,7 @@ GBIF_Download <- function(
     StatusDetailed <- rgbif::occ_download_wait(GBIF_Request)
 
     IASDT.R::CatDiff(
-      InitTime = .StartTimeRequest, CatInfo = FALSE,
+      InitTime = .StartTimeRequest, 
       Prefix = "Requesting GBIF data took ", Level = 1)
 
     IASDT.R::CatTime("Save status details", Level = 1)
@@ -224,7 +224,7 @@ GBIF_Download <- function(
       GBIF_Request, path = Path_GBIF_Raw, overwrite = FALSE)
 
     IASDT.R::CatDiff(
-      InitTime = .StartTimeDownload, CatInfo = FALSE,
+      InitTime = .StartTimeDownload,
       Prefix = "Downloading GBIF data took ", Level = 1)
 
     # Extract/save metadata info
@@ -385,9 +385,9 @@ GBIF_Download <- function(
   # # ..................................................................... ###
 
   IASDT.R::CatDiff(
-    InitTime = .StartTime, CatInfo = FALSE,
-    Prefix = paste0("Requesting/downloading GBIF data and split ",
-                    "data into chunks took "))
+    InitTime = .StartTime, 
+    Prefix = paste0(
+      "Requesting/downloading GBIF data and split data into chunks took "))
 
   return(invisible(NULL))
 }

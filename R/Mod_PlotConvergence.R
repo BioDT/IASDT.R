@@ -53,6 +53,9 @@ PlotConvergence <- function(
     IAS_ID <- Species <- Variable <- data <- PlotID <- Var <- PlotFixedY <-
     Path_Scratch <- File <- Page <- Iter <- Value <- Chain <- y <- label <-
     Var_Sp <- NULL
+  
+  withr::local_options(
+        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Check input arguments ------

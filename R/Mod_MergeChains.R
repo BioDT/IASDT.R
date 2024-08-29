@@ -110,6 +110,8 @@ Mod_MergeChains <- function(
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Prepare working on parallel
+ 
+  withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
   c1 <- snow::makeSOCKcluster(NCores)
   on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)

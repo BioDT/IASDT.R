@@ -275,6 +275,13 @@ EASIN_Process <- function(
     TimeStartData <- lubridate::now(tzone = "CET")
 
     ## Prepare working on parallel ----
+    IASDT.R::CatTime(
+      paste0("Prepare working on parallel using `", NCores, "` cores."),
+      Level = 1)
+
+    withr::local_options(
+        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
+
     c1 <- snow::makeSOCKcluster(NCores)
     on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
     future::plan(future::cluster, workers = c1, gc = TRUE)
@@ -337,7 +344,7 @@ EASIN_Process <- function(
     }
 
     IASDT.R::CatDiff(
-      TimeStartData, CatInfo = FALSE,
+      TimeStartData, 
       Prefix = "Downloading EASIN data was finished in ", Level = 1)
 
     # Stop cluster ----
@@ -377,6 +384,13 @@ EASIN_Process <- function(
 
   ## Merging EASIN data -----
   IASDT.R::CatTime("Merging EASIN data", Level = 1)
+  
+  IASDT.R::CatTime(
+    paste0("Prepare working on parallel using `", NCores, "` cores."),
+    Level = 2)
+
+  withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
+
   c1 <- snow::makeSOCKcluster(NCores)
   on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
   future::plan(future::cluster, workers = c1, gc = TRUE)
@@ -608,7 +622,7 @@ EASIN_Process <- function(
   rm(EASIN_Data2)
 
   IASDT.R::CatDiff(
-    TimeStartData, CatInfo = FALSE,
+    TimeStartData, 
     Prefix = "Preparing Species-specific data was finished in ", Level = 1)
 
   # # ..................................................................... ###
@@ -627,8 +641,7 @@ EASIN_Process <- function(
   ## ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatDiff(
-    InitTime = .StartTime, CatInfo = FALSE,
-    Prefix = "Processing EASIN data was finished in ")
+    InitTime = .StartTime, Prefix = "Processing EASIN data was finished in ")
 
   return(invisible(NULL))
 }

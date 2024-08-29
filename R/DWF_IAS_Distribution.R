@@ -691,7 +691,7 @@ IAS_Distribution <- function(
         Path_PA_Summary, paste0(Sp_File, "_Summary.RData")))
 
   IASDT.R::CatDiff(
-    InitTime = .StartTime, CatInfo = FALSE,
+    InitTime = .StartTime, 
     Prefix = "\nProcessing species data was finished in ", ... = "\n")
 
   return(dplyr::select(Results, -GBIF_Gr100, -EASIN_Gr100, -eLTER_Gr100))

@@ -28,7 +28,7 @@ Mod_Prep4HPC(
   PhyloTree = TRUE,
   NoPhyloTree = TRUE,
   OverwriteInitMod = TRUE,
-  NParallel = 8L,
+  NCores = 8L,
   nChains = 4L,
   thin = NULL,
   samples = NULL,
@@ -137,7 +137,7 @@ for both options will be fitted. At least one of \code{PhyloTree} and
 \item{OverwriteInitMod}{Logical. Indicating whether to overwrite previously
 exported RDS files for initial models. Default: \code{TRUE}.}
 
-\item{NParallel}{Integer specifying the number of parallel cores for
+\item{NCores}{Integer specifying the number of parallel cores for
 parallelization. Default: 8 cores.}
 
 \item{nChains}{Integer specifying the number of model chains. Default: 4.}

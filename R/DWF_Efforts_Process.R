@@ -224,7 +224,7 @@ Efforts_Process <- function(
   # # ..................................................................... ###
 
   IASDT.R::CatDiff(
-    InitTime = .StartTime, CatInfo = FALSE,
+    InitTime = .StartTime, 
     Prefix = "\nProcessing efforts data took ", ... = "\n")
 
   return(invisible(NULL))

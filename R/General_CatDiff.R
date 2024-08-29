@@ -16,20 +16,42 @@
 #' @param Prefix character; A prefix string to prepend to the printed time
 #'   difference. Defaults to "Completed in ".
 #' @param CatInfo logical; If `TRUE`, prints a session summary using
-#'   [IASDT.R::InfoChunk] ("Session summary"). Defaults to `TRUE`.
+#'   [IASDT.R::InfoChunk] ("Session summary"). Defaults to `FALSE`.
 #' @param ... Additional arguments for [CatTime].
 #' @return The function is used for its side effect of printing to the console
 #'   and does not return any value.
 #' @inheritParams CatTime
-#' @examples
-#' # Assuming the current time, it prints the time difference
-#' # from one minute ago.
-#' CatDiff(Sys.time() - 60)
 #' @export
+#' @examples
+#' RefTime <- (lubridate::now() - lubridate::seconds(45))
+#' CatDiff(RefTime)
+#' # Completed in 00:00:45 hours
+#'
+#' RefTime <- (lubridate::now() -
+#'     (lubridate::minutes(50) + lubridate::seconds(45)))
+#' CatDiff(RefTime)
+#' # Completed in 00:50:46 hours
+#'
+#' RefTime <- (lubridate::now() - lubridate::minutes(50))
+#' CatDiff(RefTime)
+#' # Completed in 00:50:01 hours
+#'
+#' RefTime <- (lubridate::now() - lubridate::minutes(70))
+#' CatDiff(RefTime)
+#' # Completed in 01:10:00 hours
+#'
+#' RefTime <- (lubridate::now() - lubridate::hours(4))
+#' CatDiff(RefTime)
+#' # Completed in 04:00:01 hours
+#'
+#' RefTime <- lubridate::now() -
+#'   (lubridate::hours(4) + lubridate::minutes(50) + lubridate::seconds(45))
+#'   CatDiff(RefTime)
+#' # Completed in 04:50:45 hours
 
 CatDiff <- function(
     InitTime, ChunkText = "Session summary", Prefix = "Completed in ",
-    CatInfo = TRUE, Level = 0, ...) {
+    CatInfo = FALSE, Level = 0, ...) {
 
   if (is.null(InitTime)) {
     stop("InitTime cannot be NULL", call. = FALSE)
@@ -40,10 +62,16 @@ CatDiff <- function(
     Prefix <- paste0("\n", Prefix)
   }
 
-  (lubridate::now(tzone = "CET") - InitTime) %>%
-    lubridate::time_length(unit = "min") %>%
-    round(2) %>%
-    paste0(Prefix, ., " minutes") %>%
+  lubridate::time_length(lubridate::now(tzone = "CET") - InitTime) %>%
+    lubridate::seconds_to_period() %>% {
+      paste0(
+        stringr::str_pad(
+          (lubridate::hour(.) + 24 * lubridate::day(.)), width = 2, pad = "0"),
+          ":",
+        stringr::str_pad(lubridate::minute(.), width = 2, pad = "0"), ":",
+        stringr::str_pad(round(lubridate::second(.)), width = 2, pad = "0"))
+    } %>%
+    paste0(Prefix, ., " hours") %>%
     IASDT.R::CatTime(Level = Level, ...)
 
   return(invisible(NULL))

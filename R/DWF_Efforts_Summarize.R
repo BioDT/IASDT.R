@@ -99,9 +99,12 @@ Efforts_Summarize <- function(
 
   # Prepare working on parallel -----
 
-  IASDT.R::CatTime("Prepare working on parallel", Level = 1)
-  withr::local_options(
-    future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
+  IASDT.R::CatTime(
+    paste0("Prepare working on parallel using `", NCores, "` cores."),
+    Level = 1)
+
+  withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
+
   c1 <- snow::makeSOCKcluster(NCores)
   on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
   future::plan(future::cluster, workers = c1, gc = TRUE)
@@ -120,8 +123,15 @@ Efforts_Summarize <- function(
 
   # # ..................................................................... ###
 
-  # Cleaning data from zipped archives -----
-  IASDT.R::CatTime("Cleaning data from zipped archives", Level = 1)
+  # Processing data from zipped archives -----
+  IASDT.R::CatTime("Processing data from zipped archives", Level = 1)
+
+  if (DeleteChunks) {
+    IASDT.R::CatTime(
+      paste0(
+        "`DeleteChunks` is TRUE; chunk files will be deleted ",
+        "after finishing processing"), Level = 2)
+  }
 
   # Earlier attempts with `furrr::future_map()` failed
 
@@ -273,8 +283,9 @@ Efforts_Summarize <- function(
 
   # # ..................................................................... ###
 
-  # Number of observations and species per order ----
-  IASDT.R::CatTime("Number of observations and species per order", Level = 1)
+  # Prepare summary maps: # observations and species per order ----
+  IASDT.R::CatTime(
+    "Prepare summary maps: # observations and species per order", Level = 1)
 
   SummaryMaps <- future.apply::future_lapply(
     X = seq_len(nrow(Efforts_Summary)),
@@ -394,8 +405,8 @@ Efforts_Summarize <- function(
 
   # # ..................................................................... ###
 
-  # Save Efforts_Summary ----
-  IASDT.R::CatTime("Save `Efforts_Summary`", Level = 1)
+  # Save summary results: `Efforts_Summary` ----
+  IASDT.R::CatTime("Save summary results: `Efforts_Summary`", Level = 1)
   save(
     Efforts_Summary, file = file.path(Path_Efforts, "Efforts_Summary.RData"))
 
@@ -403,6 +414,7 @@ Efforts_Summarize <- function(
 
   # Prepare summary maps ----
   IASDT.R::CatTime("Prepare summary maps", Level = 1)
+
   CalcNObsNSp <- function(List, Name) {
     purrr::map(.x = unlist(List), .f = terra::unwrap) %>%
       terra::rast() %>%
@@ -426,18 +438,14 @@ Efforts_Summarize <- function(
     IASDT.R::setRastCRS() %>%
     IASDT.R::setRastVals()
 
-  # # ..................................................................... ###
-
-  # Save summary data as RData ----
-  IASDT.R::CatTime("Save as RData", Level = 1)
+  ## Save summary maps as `RData` ----
+  IASDT.R::CatTime("Save summary maps as `RData`", Level = 2)
   IASDT.R::SaveAs(
     InObj = terra::wrap(Efforts_SummaryR), OutObj = "Efforts_SummaryR",
     OutPath = file.path(Path_Efforts, "Efforts_SummaryR.RData"))
 
-  # # ..................................................................... ###
-
-  # Save summary data as tif ----
-  IASDT.R::CatTime("Save as tif", Level = 1)
+  ## Save summary maps as `tif` ----
+  IASDT.R::CatTime("Save summary maps as `tif`", Level = 2)
   terra::writeRaster(
     Efforts_SummaryR, overwrite = TRUE,
     filename = file.path(
@@ -446,7 +454,7 @@ Efforts_Summarize <- function(
   # # ..................................................................... ###
 
   IASDT.R::CatDiff(
-    InitTime = .StartTimeProcess, CatInfo = FALSE,
+    InitTime = .StartTimeProcess, 
     Prefix = "Processing Efforts data took ", Level = 1)
 
   # # ..................................................................... ###

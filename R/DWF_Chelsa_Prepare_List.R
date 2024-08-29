@@ -9,8 +9,8 @@
 #' and downloaded files to disk.
 #' @name Chelsa_Prepare_List
 #' @param Down Logical, whether to download the CHELSA files.
-#' @param DownParallel Logical, whether to download files in parallel (if `Down`
-#'   is `TRUE`).
+#' @param NCores Integer. Number of CPU cores to use for parallel processing. 
+#'    Defaults to 1.
 #' @param DwnPath String, the path where downloaded files should be saved.
 #' @param OutPath String, the path where output files should be saved.
 #' @param UpdateExisting Logical, whether to re-download and process files that
@@ -28,7 +28,7 @@
 #' 46 variables available at 46 options (current and 45 future scenarios)
 
 Chelsa_Prepare_List <- function(
-    Down = FALSE, DownParallel = TRUE, DwnPath = NULL, OutPath = NULL,
+    Down = FALSE, NCores = 1, DwnPath = NULL, OutPath = NULL,
     UpdateExisting = FALSE, Path_Chelsa = "Data/Chelsa") {
 
   # Check system commands
@@ -186,15 +186,26 @@ Chelsa_Prepare_List <- function(
     }
 
     # Download in parallel
-    if (DownParallel && nrow(Data2Down) > 0) {
+    if ((NCores > 1) && nrow(Data2Down) > 0) {
+
+      withr::local_options(
+        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
+        
+      c1 <- snow::makeSOCKcluster(NCores)
+      on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
+      future::plan(future::cluster, workers = c1, gc = TRUE)
+
       dplyr::pull(Data2Down, .data$DownCommand) %>%
         furrr::future_walk(
           IASDT.R::System, RObj = FALSE,
           .options = furrr::furrr_options(seed = TRUE), .progress = FALSE)
+
+      snow::stopCluster(c1)
+      future::plan(future::sequential, gc = TRUE)
     }
 
     # Download sequentially
-    if (!DownParallel && nrow(Data2Down) > 0) {
+    if ((NCores == 1) && nrow(Data2Down) > 0) {
       dplyr::pull(Data2Down, .data$DownCommand) %>%
         purrr::walk(IASDT.R::System, RObj = FALSE, .progress = FALSE)
     }

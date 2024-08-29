@@ -44,15 +44,18 @@ GBIF_Process <- function(
   AllArgs <- purrr::map(AllArgs, ~get(.x, envir = environment())) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character",
-                     Args = c("EnvFile", "Renviron1"))
+  IASDT.R::CheckArgs(
+      AllArgs = AllArgs, Type = "character", Args = c("EnvFile", "Renviron1"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "logical",
-    Args = c("FromHPC", "RequestData", "DownloadData", "SplitChunks",
-             "Overwrite", "DeleteChunks"))
+    Args = c(
+      "FromHPC", "RequestData", "DownloadData", "SplitChunks",
+      "Overwrite", "DeleteChunks"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric",
     Args = c("StartYear", "Boundaries", "ChunkSize", "NCores"))
+
+  withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
   # # ..................................................................... ###
 
@@ -138,7 +141,10 @@ GBIF_Process <- function(
 
   IASDT.R::CatTime("Processing data chunks")
 
-  IASDT.R::CatTime("Prepare working on parallel", Level = 1)
+  IASDT.R::CatTime(
+    paste0("Prepare working on parallel using `", NCores, "` cores."),
+    Level = 1)
+    
   c1 <- snow::makeSOCKcluster(NCores)
   on.exit({
     invisible(try(snow::stopCluster(c1), silent = TRUE))
@@ -163,8 +169,7 @@ GBIF_Process <- function(
     }, future.scheduling = Inf, future.seed = TRUE)
 
   IASDT.R::CatDiff(
-    InitTime = .StartTimeChunks, CatInfo = FALSE,
-    Prefix = "Finished in ", Level = 2)
+    InitTime = .StartTimeChunks, Prefix = "Finished in ", Level = 2)
 
   IASDT.R::CatTime("Reading processed chunks into a single dataset", Level = 1)
   if (all(file.exists(ChunkListRData))) {
@@ -183,8 +188,7 @@ GBIF_Process <- function(
       stop(call. = FALSE)
   }
   IASDT.R::CatDiff(
-    InitTime = .StartTimeChunks, CatInfo = FALSE,
-    Prefix = "Finished in ", Level = 2)
+    InitTime = .StartTimeChunks, Prefix = "Finished in ", Level = 2)
 
   IASDT.R::CatTime(
     paste0("A total of ", format(nrow(GBIF_Data), big.mark = ","),
@@ -535,8 +539,7 @@ GBIF_Process <- function(
   # # ..................................................................... ###
 
   IASDT.R::CatDiff(
-    InitTime = .StartTime, CatInfo = FALSE,
-    Prefix = "Processing GBIF data was finished in ")
+    InitTime = .StartTime, Prefix = "Processing GBIF data was finished in ")
 
   return(invisible(NULL))
 }

@@ -46,7 +46,7 @@
 #'   `NoPhyloTree` should be `TRUE`.
 #' @param OverwriteInitMod Logical. Indicating whether to overwrite previously
 #'   exported RDS files for initial models. Default: `TRUE`.
-#' @param NParallel Integer specifying the number of parallel cores for
+#' @param NCores Integer specifying the number of parallel cores for
 #'   parallelization. Default: 8 cores.
 #' @param nChains Integer specifying the number of model chains. Default: 4.
 #' @param thin Integer specifying the value(s) for thinning in MCMC sampling. If
@@ -136,7 +136,7 @@ Mod_Prep4HPC <- function(
     EffortsAsPredictor = FALSE, RoadRailAsPredictor = TRUE,
     HabAsPredictor = TRUE, NspPerGrid = 1L, NFolds = 4L,
     NGrids = 20L, NR = 2L, NC = 2L, PlotCV = TRUE, PhyloTree = TRUE,
-    NoPhyloTree = TRUE, OverwriteInitMod = TRUE, NParallel = 8L, nChains = 4L,
+    NoPhyloTree = TRUE, OverwriteInitMod = TRUE, NCores = 8L, nChains = 4L,
     thin = NULL, samples = NULL, transientFactor = 300L, verbose = 200L,
     SkipFitted = TRUE, MaxJobCounts = 210L, ModelCountry = NULL,
     VerboseProgress = FALSE, FromHPC = TRUE, PrepSLURM = TRUE, MemPerCpu = NULL,
@@ -271,7 +271,7 @@ Mod_Prep4HPC <- function(
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = LogicArgs, Type = "logical")
 
   NumericArgs <- c(
-    "GPP_Dists", "NParallel", "nChains", "thin", "samples", "verbose",
+    "GPP_Dists", "NCores", "nChains", "thin", "samples", "verbose",
     "PresPerVar", "MinEffortsSp", "transientFactor", "NFolds", "NGrids",
     "NR", "NC")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = NumericArgs, Type = "numeric")
@@ -642,10 +642,19 @@ Mod_Prep4HPC <- function(
   # # Preparing working on parallel -----
   # # |||||||||||||||||||||||||||||||||||
 
-  if (NParallel > 1) {
+  if (NCores > 1) {
+
+    IASDT.R::CatTime(
+      paste0("Prepare working on parallel using `", NCores, "` cores."),
+      Level = 1)
+    
     IASDT.R::CatTime(paste0(
-      "Preparing working on parallel (", NParallel, " cores)"))
-    c1 <- snow::makeSOCKcluster(NParallel)
+      "Preparing working on parallel (", NCores, " cores)"))
+    
+    withr::local_options(
+        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
+    
+    c1 <- snow::makeSOCKcluster(NCores)
     on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
     future::plan(future::cluster, workers = c1, gc = TRUE)
   } else {
@@ -667,7 +676,7 @@ Mod_Prep4HPC <- function(
   # Prepare GPP knots
   IASDT.R::CatTime("Preparing GPP knots", Level = 1)
 
-  if (NParallel > 1) {
+  if (NCores > 1) {
     invisible(snow::clusterEvalQ(
       cl = c1,
       IASDT.R::LoadPackages(
@@ -884,7 +893,7 @@ Mod_Prep4HPC <- function(
   }
 
   # Implement `InitFitFun` function: start sampling and save output files
-  if (NParallel > 1) {
+  if (NCores > 1) {
     invisible(snow::clusterEvalQ(
       cl = c1, IASDT.R::LoadPackages(List = c("Hmsc", "jsonify", "IASDT.R"))))
     snow::clusterExport(
@@ -920,7 +929,7 @@ Mod_Prep4HPC <- function(
   # # # Stopping cluster -----
   # # # |||||||||||||||||||||||||||||||||||
 
-  if (NParallel > 1) {
+  if (NCores > 1) {
     IASDT.R::CatTime("Stopping cluster")
     snow::stopCluster(c1)
     future::plan(future::sequential, gc = TRUE)

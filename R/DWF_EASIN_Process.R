@@ -303,8 +303,8 @@ EASIN_Process <- function(
       IASDT.R::CatTime(paste0("Try number: ", Try), Level = 1)
 
       IASDT.R::CatTime(
-        paste0("There are ", length(NotProcessed),
-               " EASIN taxa to be downloaded"),
+        paste0(
+          "There are ", length(NotProcessed), " EASIN taxa to be downloaded"),
         Level = 1)
 
       if (length(NotProcessed) == 0 || Try > NDownTries) {
@@ -328,8 +328,9 @@ EASIN_Process <- function(
           cl = c1, IASDT.R::LoadPackages(List = c("dplyr", "jsonlite"))))
         snow::clusterExport(
           cl = c1,
-          list = c("Path_EASIN_Interim", "NotProcessed", "NSearch",
-                   "DeleteChunks", "SleepTime"),
+          list = c(
+            "Path_EASIN_Interim", "NotProcessed", "NSearch",
+            "DeleteChunks", "SleepTime"),
           envir = environment())
 
         Down <- future.apply::future_lapply(

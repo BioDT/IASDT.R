@@ -197,7 +197,7 @@ Mod_Prep4HPC <- function(
     Path_Grid <- EU_Bound <- Path_PA <- SpeciesID <- Species_name <- PA <-
     Species_File <- NAME_ENGL <- NULL
 
-  if (!VerboseProgress) {
+  if (isFALSE(VerboseProgress)) {
     sink(file = nullfile())
     on.exit(sink(), add = TRUE)
   }
@@ -282,7 +282,7 @@ Mod_Prep4HPC <- function(
   }
 
   # Phylogenetic tree options
-  if (PhyloTree == FALSE && NoPhyloTree == FALSE) {
+  if (isFALSE(PhyloTree) && isFALSE(NoPhyloTree)) {
     stop(
       "At least one of PhyloTree or NoPhyloTree has to be true", call. = FALSE)
   }

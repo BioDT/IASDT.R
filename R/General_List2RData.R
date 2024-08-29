@@ -68,7 +68,7 @@ List2RData <- function(List, Prefix = "", Dir = getwd(), Overwrite = FALSE) {
       # check if the file already exists. If it does and Overwrite is FALSE, it
       # prints a message indicating that the file already exists and will not be
       # overwritten.
-      if (file.exists(File) && !Overwrite) {
+      if (file.exists(File) && isFALSE(Overwrite)) {
         stringr::str_glue(
           "\n\nFile: {File} already exists. No files were created.") %>%
           IASDT.R::CatTime()

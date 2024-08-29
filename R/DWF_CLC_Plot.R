@@ -36,8 +36,9 @@ CLC_Plot <- function(
   if (is.null(CLC_Name) || is.null(EU_Map) || is.null(CrossWalk) ||
       is.null(Path_JPEG) || is.null(Path_JPEG_Free)) {
     stop(
-      paste0("CLC_Name, EU_Map, CrossWalk, Path_JPEG, and ",
-             "Path_JPEG_Free can not be empty"),
+      paste0(
+        "CLC_Name, EU_Map, CrossWalk, Path_JPEG, and ",
+        "Path_JPEG_Free can not be empty"),
       call. = FALSE)
   }
 

@@ -99,10 +99,12 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
   SummaryMapsMissing <- !file.exists(PathSummaryMaps)
 
   if (any(SummaryMapsMissing)) {
-    stop(paste0(
-      "The following input files are missing: \n",
-      paste0(" >> ", PathSummaryMaps[which(SummaryMapsMissing)],
-             collapse = "\n")), call. = FALSE)
+    stop(
+      paste0(
+        "The following input files are missing: \n",
+        paste0(
+          " >> ", PathSummaryMaps[which(SummaryMapsMissing)],collapse = "\n")),
+      call. = FALSE)
   }
 
   # # |||||||||||||||||||||||||||||||||||

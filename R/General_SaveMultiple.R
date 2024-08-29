@@ -102,7 +102,7 @@ SaveMultiple <- function(
     .f = file.exists) %>%
     any()
 
-  if (FilesExist && !Overwrite) {
+  if (FilesExist && isFALSE(Overwrite)) {
     message(paste0(
       "Some files already exist. No files are saved. ",
       "Please use overwrite = TRUE"))

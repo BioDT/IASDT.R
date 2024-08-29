@@ -186,7 +186,7 @@ Chelsa_Prepare_List <- function(
     }
 
     # Download in parallel
-    if ((NCores > 1) && nrow(Data2Down) > 0) {
+    if ((NCores > 1) && (nrow(Data2Down) > 0)) {
 
       withr::local_options(
         future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
@@ -205,7 +205,7 @@ Chelsa_Prepare_List <- function(
     }
 
     # Download sequentially
-    if ((NCores == 1) && nrow(Data2Down) > 0) {
+    if ((NCores == 1) && (nrow(Data2Down) > 0)) {
       dplyr::pull(Data2Down, .data$DownCommand) %>%
         purrr::walk(IASDT.R::System, RObj = FALSE, .progress = FALSE)
     }

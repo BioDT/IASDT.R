@@ -55,17 +55,20 @@ git_log <- function(Path = ".", Num = NULL, ReturnLog = FALSE) {
   os <- IASDT.R::CurrOS()
 
   if (!os %in% c("Windows", "Linux")) {
-    stop("Unsupported OS. This function supports only Windows and Linux.",
-         call. = FALSE)
+    stop(
+      "Unsupported OS. This function supports only Windows and Linux.",
+      call. = FALSE)
   }
 
   # Construct the command to check if the directory is a Git repo
   git_check_command <- if (os == "Windows") {
-    paste0('cmd.exe /c "cd /d ', shQuote(Path),
-           ' && git rev-parse --is-inside-work-tree"')
+    paste0(
+      'cmd.exe /c "cd /d ', shQuote(Path),
+      ' && git rev-parse --is-inside-work-tree"')
   } else {
-    paste0('sh -c "cd ', shQuote(Path),
-           ' && git rev-parse --is-inside-work-tree"')
+    paste0(
+      'sh -c "cd ', shQuote(Path),
+      ' && git rev-parse --is-inside-work-tree"')
   }
 
   # Check if the directory is a Git repo
@@ -109,7 +112,7 @@ git_log <- function(Path = ".", Num = NULL, ReturnLog = FALSE) {
         call. = FALSE)
     })
 
-    if (!ReturnLog) {
+    if (isFALSE(ReturnLog)) {
       # Print the log output
       if (is.null(Num)) {
         cat(log_output, sep = "\n")

@@ -102,26 +102,7 @@ Efforts_Download <- function(NCores = 6, Path_Raw, Path_Interim, Path_Efforts) {
           DownFile <- file.path(Path_Raw, paste0(as.character(.x), ".zip"))
 
           # Check zip file if exist, if not exist download it
-          if (file.exists(DownFile)) {
-            FileOkay <- tryCatch({
-              system2(
-                "unzip", args = c("-t", DownFile), stdout = TRUE, stderr = TRUE)
-            }, error = function(e) {
-              message("Error during file validation: ", conditionMessage(e))
-              return(NULL)
-            }) %>%
-              stringr::str_detect("No errors detected in compressed data") %>%
-              any()
-
-            if (FileOkay) {
-              Success <- TRUE
-            } else {
-              Success <- FALSE
-            }
-
-          } else {
-            Success <- FALSE
-          }
+          Success <- IASDT.R::CheckZip(DownFile)
 
           # Try downloading data for a max of 3 attempts, each with 20 mins
           # time out
@@ -177,7 +158,7 @@ Efforts_Download <- function(NCores = 6, Path_Raw, Path_Interim, Path_Efforts) {
   # # ..................................................................... ###
 
   IASDT.R::CatDiff(
-    InitTime = .StartTimeDown, 
+    InitTime = .StartTimeDown,
     Prefix = "Downloading efforts data took ", Level = 1)
 
   # # ..................................................................... ###

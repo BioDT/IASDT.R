@@ -114,7 +114,7 @@ Mod_PrepData <- function(
 
   Hab_Abb <- as.character(Hab_Abb)
 
-  if (!VerboseProgress) {
+  if (isFALSE(VerboseProgress)) {
     sink(file = nullfile())
     on.exit(sink(), add = TRUE)
   }

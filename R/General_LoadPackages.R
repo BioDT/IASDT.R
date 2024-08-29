@@ -62,7 +62,7 @@ LoadPackages <- function(
       suppressMessages() %>%
       suppressWarnings()
 
-  }  else if (length(Pkg_ToInst) > 0) {
+  } else if (length(Pkg_ToInst) > 0) {
     message(
       paste0("The following packages are neither available nor installed ",
              "as InstallMissing = FALSE:\n",

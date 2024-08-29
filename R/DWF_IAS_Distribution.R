@@ -34,7 +34,7 @@ IAS_Distribution <- function(
     stop("Species cannot be empty", call. = FALSE)
   }
 
-  if (!Verbose) {
+  if (isFALSE(Verbose)) {
     sink(file = nullfile())
     on.exit(sink(), add = TRUE)
   }

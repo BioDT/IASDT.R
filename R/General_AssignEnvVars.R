@@ -52,7 +52,7 @@ AssignEnvVars <- function(EnvFile = ".env", EnvVarDT = NULL) {
   ExpClasses <- c("character", "character", "logical", "logical")
   MatchClass <- all(InClasses == ExpClasses)
 
-  if (!MatchClass) {
+  if (isFALSE(MatchClass)) {
     Diff <- which(InClasses != ExpClasses)
     purrr::map_chr(
       .x = Diff,

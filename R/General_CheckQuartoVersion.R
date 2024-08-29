@@ -36,7 +36,7 @@ CheckQuartoVersion <- function() {
 
   InstalledVersion <- system("quarto --version", intern = TRUE)
 
-  if (identical(OnlineVersion, InstalledVersion) == FALSE) {
+  if (isFALSE(identical(OnlineVersion, InstalledVersion))) {
     cat(
       crayon::blue(
         "Quarto version:",

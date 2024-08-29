@@ -42,7 +42,7 @@ Mod_Pred2Array <- function(
     stop("Model cannot be empty when Predict is TRUE", call. = FALSE)
   }
 
-  if (!Predict && is.null(Preds)) {
+  if (isFALSE(Predict) && is.null(Preds)) {
     stop("Preds cannot be empty when Predict is FALSE", call. = FALSE)
   }
 

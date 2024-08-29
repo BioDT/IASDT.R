@@ -188,7 +188,7 @@ PlotAlpha <- function(
       nrow = NRC[1], ncol = NRC[2])
   }
 
-  if (AddTitle && !AddFooter) {
+  if (AddTitle && isFALSE(AddFooter)) {
     Plots <- gridExtra::marrangeGrob(
       Plots,
       bottom = NULL,
@@ -197,14 +197,14 @@ PlotAlpha <- function(
       nrow = NRC[1], ncol = NRC[2])
   }
 
-  if (!AddTitle && AddFooter) {
+  if (isFALSE(AddTitle) && AddFooter) {
     Plots <- gridExtra::marrangeGrob(
       Plots,
       bottom = bquote(paste0("page ", g, " of ", npages)),
       top = NULL, nrow = NRC[1], ncol = NRC[2])
   }
 
-  if (!AddTitle && !AddFooter) {
+  if (isFALSE(AddTitle) && isFALSE(AddFooter)) {
     Plots <- cowplot::plot_grid(
       plotlist = Plots, ncol = NRC[2], nrow = NRC[1], align = "hv")
   }

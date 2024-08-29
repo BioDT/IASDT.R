@@ -67,7 +67,7 @@ PlotGelman <- function(
     stop("InputCoda and NCores cannot be empty", call. = FALSE)
   }
 
-  if (!SavePlot && !ReturnPlots) {
+  if (isFALSE(SavePlot) && isFALSE(ReturnPlots)) {
     stop("At least one of SavePlot or ReturnPlots must be TRUE", call. = FALSE)
   }
 

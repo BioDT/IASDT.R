@@ -115,7 +115,7 @@ IAS_Plot <- function(
     dplyr::distinct()
 
   OutPath <- file.path(Path_JPEG, paste0(SpInfo$Species_name2[1], ".jpeg"))
-  if (file.exists(OutPath) && !Overwrite) {
+  if (file.exists(OutPath) && isFALSE(Overwrite)) {
     return(invisible(NULL))
   }
 

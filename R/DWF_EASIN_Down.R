@@ -97,7 +97,7 @@ EASIN_Down <- function(
     }
   }
 
-  if (!OutFileExist) {
+  if (isFALSE(OutFileExist)) {
     # See https://easin.jrc.ec.europa.eu/apixg/home/geoqueries/ for help on how
     # to formulate the URL. `exclude/dps/1/` excludes GBIF data
 

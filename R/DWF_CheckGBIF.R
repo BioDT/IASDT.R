@@ -38,8 +38,9 @@ Check_GBIF <- function(Renviron = ".Renviron") {
 
   if (Missing_Account) {
     stop(
-      paste0("GBIF access information is not available or read from ",
-             "the `.Renviron` file"),
+      paste0(
+        "GBIF access information is not available or read from ",
+        "the `.Renviron` file"),
       call. = FALSE)
   }
   return(invisible(NULL))

@@ -211,7 +211,7 @@ Chelsa_Project <- function(
 
     terra::writeRaster(x = Rstr, filename = OutFileTif, overwrite = TRUE)
 
-    if (Remote && !KeepDownloaded) {
+    if (Remote && isFALSE(KeepDownloaded)) {
       file.remove(DownPath)
     }
   }

@@ -88,8 +88,9 @@ Efforts_Summarize <- function(
 
   if (!file.exists(Path_Grid_SF)) {
     stop(
-      paste0("Reference grid file was not found at the specified path: ",
-             Path_Grid_SF),
+      paste0(
+        "Reference grid file was not found at the specified path: ",
+        Path_Grid_SF),
       call. = FALSE)
   }
 

@@ -81,7 +81,7 @@ GetCV <- function(
 
   AllVars <- c("x", "y", XVars)
   AllVarsInDT <- all(AllVars %in% names(DT))
-  if (!AllVarsInDT) {
+  if (isFALSE(AllVarsInDT)) {
     MissingVars <- setdiff(AllVars, names(DT))
     stop(
       paste0(
@@ -200,11 +200,11 @@ GetCV <- function(
       report = FALSE)
 
     # Check `folds_ids` exists in each of the cross-validation strategies
-    if (!("folds_ids" %in% names(CV_SAC) && "folds_ids" %in% names(CV_Dist) &&
-      "folds_ids" %in% names(CV_Large))) {
+    if (!(("folds_ids" %in% names(CV_SAC)) && 
+        ("folds_ids" %in% names(CV_Dist)) &&
+        ("folds_ids" %in% names(CV_Large)))) {
       stop(
-        "Cross-validation results do not contain 'folds_ids'.",
-        call. = FALSE)
+        "Cross-validation results do not contain 'folds_ids'.", call. = FALSE)
     }
   }
 

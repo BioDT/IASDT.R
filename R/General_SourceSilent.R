@@ -31,7 +31,7 @@ SourceSilent <- function(File, Messages = TRUE, Warnings = TRUE, ...) {
       utils::capture.output(file = nullfile())
   }
 
-  if (!Messages && !Warnings) {
+  if (isFALSE(Messages) && isFALSE(Warnings)) {
     File %>%
       source(...) %>%
       utils::capture.output(file = nullfile()) %>%
@@ -39,14 +39,14 @@ SourceSilent <- function(File, Messages = TRUE, Warnings = TRUE, ...) {
       suppressWarnings()
   }
 
-  if (Messages && !Warnings) {
+  if (Messages && isFALSE(Warnings)) {
     File %>%
       source(...) %>%
       utils::capture.output(file = nullfile()) %>%
       suppressWarnings()
   }
 
-  if (!Messages && Warnings) {
+  if (isFALSE(Messages) && Warnings) {
     File %>%
       source(...) %>%
       utils::capture.output(file = nullfile()) %>%

@@ -89,7 +89,7 @@ RespCurv_PrepData <- function(
       file.exists() %>%
       all()
 
-    if (!OutFilesExists) {
+    if (isFALSE(OutFilesExists)) {
 
       if (file.exists(RC_DT_Path_Orig)) {
         RC_Data_Orig <- IASDT.R::LoadAs(RC_DT_Path_Orig)

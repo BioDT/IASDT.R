@@ -118,7 +118,7 @@ Match_to_GBIF <- function(
     taxon_list <- dplyr::bind_rows(matched, matched_alternative)
   }
 
-  if (include_genus == FALSE) {
+  if (isFALSE(include_genus)) {
     taxon_list <- taxon_list %>%
       dplyr::filter(rank != "GENUS")
   }
@@ -141,7 +141,7 @@ Match_to_GBIF <- function(
     dplyr::summarise(
       has_accepted = dplyr::n_distinct(.data$status == "ACCEPTED") > 1) %>%
     dplyr::full_join(taxon_list, by = "taxon_id") %>%
-    dplyr::filter(.data$has_accepted == FALSE) %>%
+    dplyr::filter(isFALSE(.data$has_accepted)) %>%
     dplyr::filter(.data$status == "SYNONYM")
   if (nrow(synonyms) > 0) {
     synonyms <- synonyms %>%
@@ -158,7 +158,7 @@ Match_to_GBIF <- function(
     dplyr::summarise(
       has_accepted = dplyr::n_distinct(.data$status == "ACCEPTED") > 1) %>%
     dplyr::full_join(taxon_list, by = "taxon_id") %>%
-    dplyr::filter(.data$has_accepted == FALSE) %>%
+    dplyr::filter(isFALSE(.data$has_accepted)) %>%
     dplyr::group_by(taxon_id) %>%
     dplyr::filter(.data$status == "DOUBTFUL")
   if (nrow(doubtful) > 0) {

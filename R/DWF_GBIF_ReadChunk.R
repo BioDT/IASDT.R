@@ -54,7 +54,7 @@ GBIF_ReadChunk <- function(
     ChunkFile, EnvFile = ".env", FromHPC = TRUE, MaxUncert = 10,
     StartYear = 1981, SaveRData = TRUE, ReturnData = FALSE, Overwrite = FALSE) {
 
-  if (!SaveRData && !ReturnData) {
+  if (isFALSE(SaveRData) && isFALSE(ReturnData)) {
     stop(
       "At least one of SaveRData and ReturnData has to be `TRUE`",
       call. = FALSE)
@@ -81,7 +81,7 @@ GBIF_ReadChunk <- function(
 
   ChunkOutPath <- stringr::str_replace(ChunkFile, ".txt$", ".RData")
 
-  if (!Overwrite && file.exists(ChunkOutPath)) {
+  if (isFALSE(Overwrite) && file.exists(ChunkOutPath)) {
     if (IASDT.R::CheckRData(ChunkOutPath)) {
       if (ReturnData) {
         return(IASDT.R::LoadAs(ChunkOutPath))

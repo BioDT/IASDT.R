@@ -22,7 +22,7 @@ returns the first value encountered.
 This function calculates the mode of a given numeric vector.
 }
 \examples{
-GetMode(c(1:10,1,1,3,3,3,3))
+GetMode(c(seq_len(10), 1, 1, 3, 3, 3, 3))
 
 GetMode(c(1, 2, 2, 3, 4)) # Returns 2
 

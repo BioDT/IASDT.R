@@ -26,11 +26,11 @@ chunks. It is useful for partitioning data into more manageable pieces or for
 parallel processing tasks.
 }
 \examples{
-SplitVector(Vector = 1:100, NSplit = 3)
+SplitVector(Vector = seq_len(100), NSplit = 3)
 
 # -------------------------------------------
 
-SplitVector(Vector = 1:100, NSplit = 2, Prefix = "T")
+SplitVector(Vector = seq_len(100), NSplit = 2, Prefix = "T")
 
 }
 \author{

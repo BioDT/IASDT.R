@@ -258,7 +258,7 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
       min(terra::global(Map, min, na.rm = TRUE), na.rm = TRUE),
       max(terra::global(Map, max, na.rm = TRUE), na.rm = TRUE))
 
-    for (i in 1:2) {
+    for (i in seq_len(2)) {
       Start_Lyr <- (i - 1) * 8 + 1
       End_Lyr <- min(i * 8, terra::nlyr(Map))
 

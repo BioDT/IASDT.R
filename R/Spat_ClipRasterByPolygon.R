@@ -30,7 +30,7 @@
 #'
 #' # Example RasterLayer
 #' r <- raster::raster(nrow = 1e3, ncol = 1e3, crs = proj4string(SPDF))
-#' r[] <- 1:length(r)
+#' r[] <- seq_len(length(r))
 #' plot(r)
 #' plot(SPDF, add = TRUE)
 #'

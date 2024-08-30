@@ -480,8 +480,8 @@ Mod_Prep4HPC <- function(
           " presence grid cells in the selected country/countries are shown")) +
       ggplot2::geom_sf(
         data = EU_Bound_sub, fill = "transparent", colour = "black") +
-      ggplot2::scale_y_continuous(expand = c(0, 0), limits = Limits[3:4]) +
-      ggplot2::scale_x_continuous(expand = c(0, 0), limits = Limits[1:2]) +
+      ggplot2::scale_y_continuous(expand = c(0, 0), limits = Limits[c(3, 4)]) +
+      ggplot2::scale_x_continuous(expand = c(0, 0), limits = Limits[c(1, 2)]) +
       ggplot2::theme_minimal() +
       ggplot2::theme(
         plot.margin = ggplot2::margin(0.05, 0, 0, 0, "cm"),

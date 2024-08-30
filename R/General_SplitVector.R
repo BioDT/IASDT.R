@@ -18,11 +18,11 @@
 #'   original vector. The names of the list elements are generated using the
 #'   specified prefix followed by an underscore and the chunk number.
 #' @examples
-#' SplitVector(Vector = 1:100, NSplit = 3)
+#' SplitVector(Vector = seq_len(100), NSplit = 3)
 #'
 #' # -------------------------------------------
 #'
-#' SplitVector(Vector = 1:100, NSplit = 2, Prefix = "T")
+#' SplitVector(Vector = seq_len(100), NSplit = 2, Prefix = "T")
 #'
 #' @export
 
@@ -39,7 +39,7 @@ SplitVector <- function(Vector = NULL, NSplit = NULL, Prefix = "Chunk") {
   split(
     Vector,
     cut(seq_along(Vector), breaks = NSplit,
-        labels = paste0(Prefix, "_", 1:NSplit),
+        labels = paste0(Prefix, "_", seq_len(NSplit)),
         include.lowest = TRUE)) %>%
     return()
 }

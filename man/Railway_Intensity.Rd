@@ -4,15 +4,7 @@
 \alias{Railway_Intensity}
 \title{Calculate railway intensity based on \code{OpenStreetMap} data}
 \usage{
-Railway_Intensity(
-  FromHPC = TRUE,
-  EnvFile = ".env",
-  Download = TRUE,
-  Extract = TRUE,
-  GetDownLinks = TRUE,
-  CheckZip = TRUE,
-  NCores = 6
-)
+Railway_Intensity(FromHPC = TRUE, EnvFile = ".env", NCores = 6)
 }
 \arguments{
 \item{FromHPC}{Logical indicating whether the work is being done from HPC, to
@@ -20,17 +12,6 @@ adjust file paths accordingly. Default: \code{TRUE}.}
 
 \item{EnvFile}{Character. The path to the environment file containing
 variables required by the function. Default is ".env".}
-
-\item{Download}{Logical. If \code{TRUE} (default), downloads railway data from the
-specified source.}
-
-\item{Extract}{Logical. If \code{TRUE} (default), extracts railway data.}
-
-\item{GetDownLinks}{Logical. If \code{TRUE}, fetches download links for railway
-data. Default is \code{TRUE}.}
-
-\item{CheckZip}{Logical. If \code{TRUE} (default), validates the integrity of
-downloaded ZIP files.}
 
 \item{NCores}{Numeric. Number of CPU cores to use for parallel processing.
 Default is 6.}

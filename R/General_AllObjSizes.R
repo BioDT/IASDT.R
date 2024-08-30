@@ -30,8 +30,8 @@
 #' @export
 #' @name AllObjSizes
 #' @examples
-#' AA1 <<- rep(1:1000, 10000)
-#' AA2 <<- rep(1:1000, 100)
+#' AA1 <<- rep(seq_len(1000), 10000)
+#' AA2 <<- rep(seq_len(1000), 100)
 #'
 #' AllObjSizes()
 #'
@@ -46,7 +46,7 @@
 #' # When called with another function, it shows the objects only available within the function
 #' TestFun <- function(XX = 10) {
 #'   Y <- 20
-#'   C <- matrix(data = 1:10000, nrow = 100, ncol = 100)
+#'   C <- matrix(data = seq_len(10000), nrow = 100, ncol = 100)
 #'   AllObjSizes(InFunction = TRUE)
 #' }
 #'

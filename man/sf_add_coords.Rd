@@ -38,7 +38,7 @@ specified names already exist, the function will issue a warning and append
 \examples{
 pt1 = sf::st_point(c(0,1))
 pt2 = sf::st_point(c(1,1))
-d = data.frame(a = 1:2)
+d = data.frame(a = c(1, 2))
 d$geom = sf::st_sfc(pt1, pt2)
 df = sf::st_as_sf(d)
 df

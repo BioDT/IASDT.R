@@ -25,16 +25,14 @@ If any are missing, it adds these columns to the data frame, filling them
 with a specified value.
 }
 \examples{
-mtcars \%>\%
- dplyr::select(1:3) \%>\%
+dplyr::select(mtcars, seq_len(3)) \%>\%
  AddMissingCols(FillVal = NA_character_, A, B, C) \%>\%
  AddMissingCols(FillVal = as.integer(10), D)
 
 # -------------------------------------------
 
 AddCols <- c("Add1", "Add2")
-mtcars \%>\%
- dplyr::select(1:3) \%>\%
+dplyr::select(mtcars, seq_len(3)) \%>\%
  AddMissingCols(FillVal = NA_real_, AddCols)
 }
 \author{

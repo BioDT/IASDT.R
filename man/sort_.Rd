@@ -49,7 +49,7 @@ function.
 }
 \examples{
 # example code
-(AA <- paste0("V", 1:12))
+(AA <- paste0("V", seq_len(12)))
 
 sort(x = AA)
 

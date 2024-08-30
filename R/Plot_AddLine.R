@@ -22,7 +22,7 @@
 #' @examples
 #' # Horizontal line
 #' par(oma = c(1, 1, 1, 1), mar = c(3, 3, 1, 1))
-#' plot(1:100)
+#' plot(seq_len(100))
 #' AddLine(at = 0.75)
 #' AddLine(at = 0.25, Outer = TRUE, lwd = 2)
 #' AddLine(at = 0.5, Outer = TRUE, lwd = 2, col = "red")
@@ -30,7 +30,7 @@
 #' # ---------------------------------------------
 #'
 #' # Vertical line
-#' plot(1:100)
+#' plot(seq_len(100))
 #' AddLine(H = FALSE, at = 0.75)
 #' AddLine(H = FALSE, at = 0.25, Outer = TRUE, lwd = 2)
 #' AddLine(H = FALSE, at = 0.5, Outer = TRUE, lwd = 2, col = "red")

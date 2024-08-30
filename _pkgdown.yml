@@ -26,6 +26,68 @@ reference:
   contents:
   - IASDT.R-package
 
+
+- title: Data workflow
+  desc: Functions for preparing data, running the models, and postprocessing of model outputs
+- subtitle: Data preparation
+  desc:
+  contents:
+  - GBIF_Process
+  - GBIF_Download
+  - GBIF_SpData
+  - GBIF_ReadChunk
+  - GBIF_Check
+  - elTER_Process
+  - EASIN_Process
+  - EASIN_Taxonomy
+  - EASIN_Down
+  - EASIN_Plot
+  - IAS_Process
+  - IAS_Distribution
+  - IAS_Plot
+  - CLC_Process
+  - Chelsa_Extract_Matching
+  - Chelsa_Prepare_List
+  - Chelsa_Vars
+  - Chelsa_Info
+  - Chelsa_Project
+  - Railway_Intensity
+  - Road_Intensity
+  - Efforts_Download
+  - Efforts_Plot
+  - Efforts_Process
+  - Efforts_Request
+  - Efforts_Split
+  - Efforts_Summarize
+  - Efforts_SummarizeMaps
+  - GetAcceptedName
+  - GetSpeciesName
+
+- title: Modelling functions
+  desc: Functions for preparing data, running the models, and postprocessing of model outputs
+- subtitle: Data preparation
+  desc:
+  contents:
+  - Mod_PrepData
+  - Mod_Prep4HPC
+  - GetCV
+  - PrepKnots
+- subtitle: Model fitting
+  desc:
+  contents:
+  - Mod_SLURM
+  - Mod_SLURM_Refit
+  - Mod_Fit_WS
+  - Mod_CV
+- subtitle: Model postprocessing
+  desc:
+  contents:
+  - Coda_to_tibble
+  - GetPosts
+  - Mod_MergeChains
+  - Mod_Summary
+  - RespCurv_PrepData
+
 - title: General functions
   desc: Data management / utility functions
 - subtitle: Packages management
@@ -37,6 +99,7 @@ reference:
   - LoadedPackages
   - Package_RemoteSha
   - AssignEnvVars
+  - CheckCommands
 - subtitle: File operations
   desc:
   contents:
@@ -47,6 +110,9 @@ reference:
   - LoadMultiple
   - SaveAs
   - SaveMultiple
+  - CheckRData
+  - CheckZip
+  - CheckRDS
 - subtitle: Plotting
   desc:
   contents:
@@ -102,49 +168,6 @@ reference:
   - GetBashVars
   - CheckArgs
 
-
-- title: Data workflow
-  desc: Functions for preparing data, running the models, and postprocessing of model outputs
-- subtitle: Data preparation
-  desc:
-  contents:
-  - CLC_Process
-  - Chelsa_Extract_Matching
-  - Chelsa_Prepare_List
-  - Chelsa_Vars
-  - Chelsa_Info
-  - Chelsa_Project
-  - Match_to_GBIF
-  - Get_EASIN_Data
-  - GetAcceptedName
-  - Extract_BB
-  - GetSpeciesName
-
-- title: Modelling functions
-  desc: Functions for preparing data, running the models, and postprocessing of model outputs
-- subtitle: Data preparation
-  desc:
-  contents:
-  - Mod_PrepData
-  - Mod_Prep4HPC
-  - GetCV
-  - PrepKnots
-- subtitle: Model fitting
-  desc:
-  contents:
-  - Mod_SLURM
-  - Mod_SLURM_Refit
-  - Mod_Fit_WS
-  - Mod_CV
-- subtitle: Model postprocessing
-  desc:
-  contents:
-  - Coda_to_tibble
-  - GetPosts
-  - Mod_MergeChains
-  - Mod_Summary
-  - RespCurv_PrepData
-
 - subtitle: Plotting
   desc:
   contents:
@@ -187,4 +210,4 @@ reference:
   - NetCDFGlobalAttrs
   - Scale_0_1
   - setRastCRS
-
+  - setRastVals

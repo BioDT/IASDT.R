@@ -325,8 +325,8 @@ Mod_PrepData <- function(
         ") and species with ",
         "&#8805;", MinPresGrids, " presence grid cells (", terra::nlyr(R_Sp),
         ") are considered")) +
-    ggplot2::scale_y_continuous(expand = c(0, 0), limits = Limits[3:4]) +
-    ggplot2::scale_x_continuous(expand = c(0, 0), limits = Limits[1:2]) +
+    ggplot2::scale_y_continuous(expand = c(0, 0), limits = Limits[c(3, 4)]) +
+    ggplot2::scale_x_continuous(expand = c(0, 0), limits = Limits[c(1, 2)]) +
     ggplot2::theme_minimal() +
     ggplot2::theme(
       plot.margin = ggplot2::margin(0.25, 0, 0.25, 0, "cm"),

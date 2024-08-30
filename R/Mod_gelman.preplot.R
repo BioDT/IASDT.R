@@ -39,7 +39,7 @@ gelman.preplot <- function(
     last.iter, coda::varnames(x),
     c("median", paste(50 * (confidence + 1), "%", sep = "")))
 
-  for (i in 1:(nbin + 1)) {
+  for (i in seq_len(nbin + 1)) {
     shrink[i, , ] <- coda::gelman.diag(
       stats::window(x, end = last.iter[i]),
       confidence = confidence,

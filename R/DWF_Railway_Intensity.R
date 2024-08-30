@@ -13,13 +13,6 @@
 #'   adjust file paths accordingly. Default: `TRUE`.
 #' @param EnvFile Character. The path to the environment file containing
 #'   variables required by the function. Default is ".env".
-#' @param Download Logical. If `TRUE` (default), downloads railway data from the
-#'   specified source.
-#' @param Extract Logical. If `TRUE` (default), extracts railway data.
-#' @param GetDownLinks Logical. If `TRUE`, fetches download links for railway
-#'   data. Default is `TRUE`.
-#' @param CheckZip Logical. If `TRUE` (default), validates the integrity of
-#'   downloaded ZIP files.
 #' @param NCores Numeric. Number of CPU cores to use for parallel processing.
 #'   Default is 6.
 #' @return `NULL`. Outputs processed files to the directories specified in the
@@ -28,9 +21,7 @@
 #' @export
 #' @author Ahmed El-Gabbas
 
-Railway_Intensity <- function(
-    FromHPC = TRUE, EnvFile = ".env", Download = TRUE, Extract = TRUE,
-    GetDownLinks = TRUE, CheckZip = TRUE, NCores = 6) {
+Railway_Intensity <- function(FromHPC = TRUE, EnvFile = ".env", NCores = 6) {
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -46,14 +37,13 @@ Railway_Intensity <- function(
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = "EnvFile")
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "logical",
-    Args = c("FromHPC", "Download", "GetDownLinks", "CheckZip"))
+    Args = c("FromHPC", "Download"))
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "numeric", Args = "NCores")
 
   rm(AllArgs)
 
   # # ..................................................................... ###
-
-  IASDT.R::CatTime("Check system commands")
+  # Check system commands
   IASDT.R::CheckCommands("unzip")
 
   # # ..................................................................... ###
@@ -61,8 +51,8 @@ Railway_Intensity <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Path_Railways <- Path_Railways_Raw <- Path_Railways_Interim <- RefGrid <-
-    Country <- URL <- URL2 <- Path <- Shp <- bridge <- tunnel <- EU_Bound <-
-    fclass <- Path_Grid <- CellCode <- NULL
+    Country <- URL <- URL2 <- Path <- EU_Bound <- fclass <- Path_Grid <-
+    CellCode <- Name <- OldName <- NewName <- DT <- NULL
 
   # # ..................................................................... ###
 
@@ -101,15 +91,110 @@ Railway_Intensity <- function(
       paste0("The reference grid file does not exist: ", RefGrid),
       call. = FALSE)
   }
+  RefGrid <- terra::unwrap(IASDT.R::LoadAs(RefGrid))
+
+
+  RefGridSF <- file.path(Path_Grid, "Grid_10_Land_Crop_SF.RData")
+  if (!file.exists(RefGridSF)) {
+    stop(
+      paste0("The reference grid file does not exist: ", RefGridSF),
+      call. = FALSE)
+  }
+  RefGridSF <- IASDT.R::LoadAs(RefGridSF)
+
 
   # # ..................................................................... ###
 
-  # Prepare working on parallel ----
+  # Scrap download links -----
+  IASDT.R::CatTime("Scrap download links")
+  .StartTimeDown <- lubridate::now(tzone = "CET")
+
+  # OpenStreetMap Data Extracts
+  BaseURL <- "https://download.geofabrik.de/"
+
+  # We download European data at country level. For most countries, the data are
+  # available in single file, while for others the data are divided into
+  # sub-regions. Data on 3 federal states in Germany are not available in single
+  # link but at one level below state
+
+  German_L3 <- dplyr::tribble(
+    ~URL, ~Country,
+    "europe/germany/baden-wuerttemberg.html", "Germany",
+    "europe/germany/bayern.html", "Germany",
+    "europe/germany/nordrhein-westfalen.html", "Germany") %>%
+    dplyr::mutate(URL = paste0(BaseURL, URL))
+
+  Railways_Links <- paste0(BaseURL, "europe.html") %>%
+    rvest::session() %>%
+    rvest::html_elements(css = "table") %>%
+    magrittr::extract(2) %>%
+    rvest::html_elements(css = "a") %>%
+    rvest::html_attr("href") %>%
+    stringr::str_subset(".html$") %>%
+    dplyr::tibble(URL = .) %>%
+    dplyr::mutate(
+      Country = purrr::map_chr(
+        .x = URL,
+        .f = ~{
+          stringr::str_remove_all(.x, "europe/|.html") %>%
+            stringr::str_to_title()
+        }),
+      URL = paste0(BaseURL, URL)) %>%
+    dplyr::bind_rows(German_L3) %>%
+    dplyr::arrange(Country, URL) %>%
+    dplyr::mutate(
+      URL2 = purrr::map(
+        .x = URL,
+        .f = ~{
+          BaseURL2 <- stringr::str_extract(.x, "^.+/")
+          rvest::session(.x) %>%
+            rvest::html_elements(css = "a") %>%
+            rvest::html_attr(name = "href") %>%
+            stringr::str_subset("-latest-free.shp.zip$") %>%
+            paste0(BaseURL2, .) %>%
+            unique()
+        })) %>%
+    tidyr::unnest(cols = "URL2") %>%
+    dplyr::mutate(
+      Path = purrr::map2(
+        .x = URL2, .y = Country,
+        .f = ~{
+          stringr::str_remove_all(.x, "^.+/|-latest-free.shp") %>%
+            paste0(.y, "_", .) %>%
+            file.path(Path_Railways_Raw, .)
+        }),
+      ModDate = purrr::map(
+        .x = URL2,
+        .f = ~{
+          system(paste0("curl -sI ", .x), intern = TRUE) %>%
+            stringr::str_subset("Last-Modified") %>%
+            stringr::str_remove_all("Last-Modified: ") %>%
+            readr::parse_datetime(format = "%a, %d %b %Y %H:%M:%S %Z") %>%
+            lubridate::as_date()
+        })) %>%
+    tidyr::unnest(c = "ModDate")
+
+  IASDT.R::CatTime(
+    paste0("There are ", nrow(Railways_Links), " files to be downloaded"),
+    Level = 1)
+
+  save(
+    Railways_Links, file = file.path(Path_Railways, "Railways_Links.RData"))
+
+  IASDT.R::CatDiff(
+    InitTime = .StartTimeDown, NLines = 1, Level = 1,
+    Prefix = "Preparing railways download links took ")
+
+  # # ..................................................................... ###
+
+  # Processing railway data ------
+  IASDT.R::CatTime("Processing railway data")
+  .StartTimeProcess <- lubridate::now(tzone = "CET")
+
+  ## Prepare working on parallel ----
   IASDT.R::CatTime(
     paste0("Prepare working on parallel using `", NCores, "` cores."),
     Level = 1)
-
-  # # ..................................................................... ###
 
   c1 <- snow::makeSOCKcluster(NCores)
   on.exit({
@@ -118,271 +203,148 @@ Railway_Intensity <- function(
   }, add = TRUE)
   future::plan(future::cluster, workers = c1, gc = TRUE)
 
-  # # ..................................................................... ###
-
-  # Prepare download links -----
-
-  if (GetDownLinks) {
-
-    IASDT.R::CatTime("Prepare download links")
-    .StartTimeDown <- lubridate::now(tzone = "CET")
-
-    # OpenStreetMap Data Extracts
-    BaseURL <- "https://download.geofabrik.de/"
-
-    # We download European data at country level. For most countries, the data
-    # are available in single file, while for others the data are divided into
-    # sub-regions. Data on 3 federal states in Germany are not available in
-    # single link but at one level below state
-
-    German_L3 <- dplyr::tribble(
-      ~URL, ~Country,
-      "europe/germany/baden-wuerttemberg.html", "Germany",
-      "europe/germany/bayern.html", "Germany",
-      "europe/germany/nordrhein-westfalen.html", "Germany") %>%
-      dplyr::mutate(URL = paste0(BaseURL, URL))
-
-    Railways_Links <- paste0(BaseURL, "europe.html") %>%
-      rvest::session() %>%
-      rvest::html_elements(css = "table") %>%
-      magrittr::extract(2) %>%
-      rvest::html_elements(css = "a") %>%
-      rvest::html_attr("href") %>%
-      stringr::str_subset(".html$") %>%
-      dplyr::tibble(URL = .) %>%
-      dplyr::mutate(
-        Country = purrr::map_chr(
-          .x = URL,
-          .f = ~{
-            stringr::str_remove_all(.x, "europe/|.html") %>%
-              stringr::str_to_title()
-          }),
-        URL = paste0(BaseURL, URL)) %>%
-      dplyr::bind_rows(German_L3) %>%
-      dplyr::arrange(Country, URL) %>%
-      dplyr::mutate(
-        URL2 = purrr::map(
-          .x = URL,
-          .f = ~{
-            BaseURL2 <- stringr::str_extract(.x, "^.+/")
-            rvest::session(.x) %>%
-              rvest::html_elements(css = "a") %>%
-              rvest::html_attr(name = "href") %>%
-              stringr::str_subset("-latest-free.shp.zip$") %>%
-              paste0(BaseURL2, .) %>%
-              unique()
-          })) %>%
-      tidyr::unnest(cols = "URL2") %>%
-      dplyr::mutate(
-        Path = purrr::map2(
-          .x = URL2, .y = Country,
-          .f = ~{
-            stringr::str_remove_all(.x, "^.+/|-latest-free.shp") %>%
-              paste0(.y, "_", .) %>%
-              file.path(Path_Railways_Raw, .)
-          }),
-        ModDate = purrr::map(
-          .x = URL2,
-          .f = ~{
-            system(paste0("curl -sI ", .x), intern = TRUE) %>%
-              stringr::str_subset("Last-Modified") %>%
-              stringr::str_remove_all("Last-Modified: ") %>%
-              readr::parse_datetime(format = "%a, %d %b %Y %H:%M:%S %Z") %>%
-              lubridate::as_date()
-          })) %>%
-      tidyr::unnest(c = "ModDate")
-
-    IASDT.R::CatTime(
-      paste0("There are ", nrow(Railways_Links), " files to be downloaded"),
-      Level = 1)
-
-    save(
-      Railways_Links, file = file.path(Path_Railways, "Railways_Links.RData"))
+  invisible(snow::clusterEvalQ(
+    cl = c1,
+    IASDT.R::LoadPackages(List = c("dplyr", "fs", "sf", "IASDT.R", "stringr"))))
+  snow::clusterExport(
+    cl = c1, list = c("Railways_Links", "RefGridSF"), envir = environment())
 
 
-    IASDT.R::CatDiff(
-      InitTime = .StartTimeDown, NLines = 1, Level = 1,
-      Prefix = "Preparing railways download links took ")
+  ## Processing railway data ----
+  IASDT.R::CatTime("Processing railway data", Level = 1)
 
-  } else {
-    IASDT.R::CatTime("Loading download links")
-    Railways_Links <- IASDT.R::LoadAs(
-      file.path(Path_Railways, "Railways_Links.RData"))
-  }
+  Railways_3035 <- future.apply::future_lapply(
+    X = seq_len(nrow(Railways_Links)),
+    FUN = function(ID) {
 
-  # # ..................................................................... ###
+      URL <- Railways_Links$URL2[[ID]]
+      Path <- Railways_Links$Path[[ID]]
+      Country <- Railways_Links$Country[[ID]]
+      Prefix <- stringr::str_remove_all(basename(Path), ".zip$")
+      Path_Temp <- file.path(
+        Path_Railways_Interim, paste0(Prefix, ".RData"))
 
-  # Download railway data ------
-  IASDT.R::CatTime("Download railway data")
+      withr::local_options(
+        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
+        timeout = 1200)
 
-  if (Download) {
+      # Check if zip file is a valid file
+      if (file.exists(Path)) {
+        Success <- IASDT.R::CheckZip(Path)
+        if (isFALSE(Success)) {
+          fs::file_delete(Path)
+        }
+      } else {
+        Success <- FALSE
+      }
 
-    IASDT.R::CatTime("Downloading files", Level = 1)
-    .StartTimeDown <- lubridate::now(tzone = "CET")
+      # Try downloading data for a max of 5 attempts
+      Attempt <- 1
+      Attempts <- 5
 
-    invisible(snow::clusterEvalQ(
-      cl = c1, IASDT.R::LoadPackages(List = c("dplyr"))))
-    snow::clusterExport(
-      cl = c1, list = c("Railways_Links", "CheckZip"), envir = environment())
+      while (isFALSE(Success) && Attempt <= Attempts) {
+        Down <- try(
+          expr = {
+            utils::download.file(
+              url = URL, destfile = Path, mode = "wb", quiet = TRUE) %>%
+              suppressWarnings()
 
-    DownRail <- future.apply::future_lapply(
-      X = seq_len(nrow(Railways_Links)),
-      FUN = function(ID) {
+            Success <- IASDT.R::CheckZip(Path)
+            Success
+          }, silent = TRUE)
 
-        URL <- Railways_Links$URL2[[ID]]
-        Path <- Railways_Links$Path[[ID]]
-
-        withr::local_options(
-          future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
-          timeout = 1200)
-
-        # Check if zip file is a valid file
-        if (file.exists(Path)) {
-          Success <- IASDT.R::CheckZip(Path)
-          if (isFALSE(Success)) {
-            fs::file_delete(Path)
-          }
-        } else {
+        if (inherits(Down, "try-error")) {
           Success <- FALSE
         }
+        Attempt <- Attempt + 1
+      }
 
-        # Try downloading data for a max of 5 attempts
-        Attempt <- 1
-        Attempts <- 5
-        while (isFALSE(Success) && Attempt <= Attempts) {
-          Down <- try(
-            expr = {
-              utils::download.file(
-                url = URL, destfile = Path, mode = "wb", quiet = TRUE) %>%
-                suppressWarnings()
 
-              Success <- IASDT.R::CheckZip(Path)
-              Success
-            }, silent = TRUE)
+      # Filter only railways files
+      InFileN <- dplyr::tibble(utils::unzip(Path, list = TRUE)) %>%
+        dplyr::filter(stringr::str_detect(Name, "railways")) %>%
+        dplyr::pull(Name) %>%
+        unique()
 
-          if (inherits(Down, "try-error")) {
-            Success <- FALSE
-          }
-          Attempt <- Attempt + 1
-        }
+      utils::unzip(
+        zipfile = Path, files = InFileN,
+        exdir = file.path(Path_Railways_Interim, Prefix))
 
-        return(invisible(NULL))
-      },
-      future.scheduling = Inf, future.seed = TRUE)
+      Path_Extract <- dplyr::tibble(
+        OldName = file.path(Path_Railways_Interim, Prefix, InFileN),
+        NewName = file.path(
+          Path_Railways_Interim,
+          paste0(Prefix, ".", tools::file_ext(InFileN)))) %>%
+        dplyr::mutate(Ren = purrr::map2(OldName, NewName, file.rename))
 
-    rm(DownRail)
+      Railway <- dplyr::pull(Path_Extract, NewName) %>%
+        stringr::str_subset(".shp$") %>%
+        sf::st_read(quiet = TRUE) %>%
+        tibble::tibble() %>%
+        sf::st_as_sf() %>%
+        sf::st_transform(crs = 3035) %>%
+        dplyr::select(
+          -tidyselect::all_of(c("bridge", "tunnel", "layer", "name"))) %>%
+        sf::st_filter(y = RefGridSF, .predicate = sf::st_intersects)
 
-    IASDT.R::CatDiff(
-      InitTime = .StartTimeDown,
-      Prefix = "Downloading railway data took ", NLines = 1, Level = 2)
+      save(Railway, file = Path_Temp)
 
-  } else {
-    IASDT.R::CatTime("Railways data was not downloaded", Level = 1)
-  }
+      fs::dir_delete(
+        c(file.path(Path_Railways_Interim, Prefix),
+          Path_Extract$NewName, Path))
 
-  # # ..................................................................... ###
+      tibble::tibble(
+        URL = URL, Country = Country, Area = Prefix, Path = Path_Temp) %>%
+        return()
+    },
+    future.scheduling = Inf, future.seed = TRUE) %>%
+    dplyr::bind_rows() %>%
+    dplyr::mutate(DT = purrr::map(Path, IASDT.R::LoadAs)) %>%
+    tidyr::unnest(DT) %>%
+    sf::st_as_sf()
 
-  # Extract shape files for railways ----
+  # # .................................... ###
 
-  IASDT.R::CatTime("Extract shape files for railways")
-  RefGrid <- terra::unwrap(IASDT.R::LoadAs(RefGrid))
+  ## Saving - RData -----
+  IASDT.R::CatTime("Saving - RData", Level = 1)
+  save(Railways_3035, file = file.path(Path_Railways, "Railways_3035.RData"))
 
-  if (Extract) {
-    .StartTimeExtract <- lubridate::now(tzone = "CET")
+  # # .................................... ###
 
-    ## Extracting / project railways files ----
-    IASDT.R::CatTime("Extracting / project railways files", Level = 1)
+  ## Railways_3035_2plot ----
+  Railways_3035_2plot <- dplyr::filter(Railways_3035, fclass == "rail") %>%
+    sf::st_join(RefGridSF) %>%
+    dplyr::filter(!is.na(CellCode)) %>%
+    dplyr::select("geometry")
 
-    Railways_3035 <- dplyr::mutate(
-      Railways_Links,
-      Shp = furrr::future_map2_chr(
-        .x = Path, .y = Country,
-        .f = ~{
+  save(
+    Railways_3035_2plot,
+    file = file.path(Path_Railways, "Railways_3035_2plot.RData"))
 
-          Prefix <- stringr::str_remove_all(.x, "^.+/|.zip")
+  # # .................................... ###
 
-          # Filter only railways files
-          InFileN <- dplyr::tibble(unzip(.x, list = TRUE)) %>%
-            dplyr::filter(stringr::str_detect(Name, "railways")) %>%
-            dplyr::pull(Name) %>%
-            unique()
+  ## Each railway class to separate file ----
+  IASDT.R::CatTime("Each railway class to separate file", Level = 1)
 
-          # Extract selected files
-          unzip(zipfile = .x, files = InFileN, exdir = Path_Railways_Interim)
+  sf::st_drop_geometry(Railways_3035) %>%
+    dplyr::distinct(fclass) %>%
+    dplyr::pull(fclass) %>%
+    purrr::walk(
+      .f = ~{
+        IASDT.R::CatTime(.x, Level = 2)
+        dplyr::filter(Railways_3035, fclass == .x) %>%
+          IASDT.R::SaveAs(
+            OutObj = paste0("Railways_sf_", .x),
+            OutPath = file.path(
+              Path_Railways, paste0("Railways_sf_", .x, ".RData")))
+      })
 
-          Path_Shp <- dplyr::tibble(
-            OldName = file.path(Path_Railways_Interim, InFileN),
-            NewName = file.path(
-              Path_Railways_Interim,
-              paste0(Prefix, ".", tools::file_ext(InFileN)))) %>%
-            dplyr::mutate(Ren = purrr::map2(OldName, NewName, file.rename)) %>%
-            dplyr::pull(NewName) %>%
-            stringr::str_subset(".shp$")
-
-          return(Path_Shp)
-        }, .options = furrr::furrr_options(seed = TRUE))) %>%
-      dplyr::mutate(
-        Rail = purrr::map(
-          .x = Shp,
-          .f = ~sf::st_transform(
-            sf::st_read(.x, quiet = TRUE), crs = 3035))) %>%
-      tidyr::unnest(cols = "Rail") %>%
-      dplyr::select(
-        -tidyselect::all_of(c("URL", "Path", "Shp", "ModDate", "layer"))) %>%
-      sf::st_as_sf() %>%
-      dplyr::mutate(bridge = as.logical(bridge), tunnel = as.logical(tunnel))
-
-    IASDT.R::CatDiff(
-      InitTime = .StartTimeExtract,
-      Prefix = "Extracting railway data took ", NLines = 1, Level = 2)
-
-    # # .................................... ###
-
-    ## Saving - RData -----
-    IASDT.R::CatTime("Saving - RData", Level = 1)
-    save(Railways_3035, file = file.path(Path_Railways, "Railways_3035.RData"))
-
-    # # .................................... ###
-
-    ## Railways_3035_2plot ----
-    RefGridSF <- IASDT.R::LoadAs(file.path(Path_Grid, "Grid_10_Land_sf.RData"))
-    Railways_3035_2plot <- dplyr::filter(Railways_3035, fclass == "rail") %>%
-      sf::st_join(RefGridSF) %>%
-      dplyr::filter(!is.na(CellCode)) %>%
-      dplyr::select("geometry")
-    save(
-      Railways_3035_2plot,
-      file = file.path(Path_Railways, "Railways_3035_2plot.RData"))
-
-    # # .................................... ###
-
-    ## Each railway class to separate file ----
-    IASDT.R::CatTime("Each railway class to separate file", Level = 1)
-
-    sf::st_drop_geometry(Railways_3035) %>%
-      dplyr::distinct(fclass) %>%
-      dplyr::pull(fclass) %>%
-      purrr::walk(
-        .f = ~{
-          IASDT.R::CatTime(.x, Level = 2)
-          dplyr::filter(Railways_3035, fclass == .x) %>%
-            IASDT.R::SaveAs(
-              OutObj = paste0("Railways_sf_", .x),
-              OutPath = file.path(
-                Path_Railways, paste0("Railways_sf_", .x, ".RData")))
-        })
-
-    rm(Railways_3035, RefGridSF)
-
-  } else {
-
-    Railways_3035_2plot <- IASDT.R::LoadAs(file.path(Path_Railways, "Railways_3035_2plot.RData"))
-
-  }
-
-  snow::stopCluster(c1)
-  future::plan(future::sequential, gc = TRUE)
+  rm(Railways_3035, RefGridSF)
   invisible(gc())
+
+  IASDT.R::CatDiff(
+    InitTime = .StartTimeProcess,
+    Prefix = "Processing railway data took ", NLines = 1, Level = 2)
 
   # # ..................................................................... ###
 
@@ -401,7 +363,6 @@ Railway_Intensity <- function(
           terra::rasterizeGeom(y = RefGrid, fun = "length", unit = "km") %>%
           terra::mask(mask = RefGrid) %>%
           stats::setNames(Name) %>%
-          # Ensure that values are read from memory
           IASDT.R::setRastVals()
       }, .progress = FALSE) %>%
     terra::rast()
@@ -451,12 +412,15 @@ Railway_Intensity <- function(
   IASDT.R::CatTime("Save distance to railways as tif files", Level = 1)
   terra::writeRaster(
     x = Railways_Distance, overwrite = TRUE,
-    filename = file.path(Path_Railways, paste0(names(Railways_Distance), ".tif")))
+    filename = file.path(
+      Path_Railways, paste0(names(Railways_Distance), ".tif")))
 
   IASDT.R::CatTime("Save distance to railways as RData", Level = 1)
   IASDT.R::SaveAs(
     InObj = terra::wrap(Railways_Distance), OutObj = "Railways_Distance",
     OutPath = file.path(Path_Railways, "Railways_Distance.RData"))
+
+  rm(RefGrid)
 
   # # ..................................................................... ###
 

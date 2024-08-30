@@ -19,16 +19,14 @@
 #' @return a data frame with the missing columns added, if any were missing.
 #' @export
 #' @examples
-#' mtcars %>%
-#'  dplyr::select(1:3) %>%
+#' dplyr::select(mtcars, seq_len(3)) %>%
 #'  AddMissingCols(FillVal = NA_character_, A, B, C) %>%
 #'  AddMissingCols(FillVal = as.integer(10), D)
 #'
 #' # -------------------------------------------
 #'
 #' AddCols <- c("Add1", "Add2")
-#' mtcars %>%
-#'  dplyr::select(1:3) %>%
+#' dplyr::select(mtcars, seq_len(3)) %>%
 #'  AddMissingCols(FillVal = NA_real_, AddCols)
 
 AddMissingCols <- function(DT, FillVal = NA_character_, ...) {

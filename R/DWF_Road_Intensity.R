@@ -118,21 +118,20 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env", Download = TRUE) {
       Success <- FALSE
     }
 
-    # Try downloading data for a max of 3 attempts
+    # Try downloading data for a max of 5 attempts
     Attempt <- 1
     Attempts <- 5
 
     while (isFALSE(Success) && Attempt <= Attempts) {
       Down <- try(
         expr = {
-          suppressWarnings(
-            utils::download.file(
-              url = Road_URL, destfile = Path_DownFile,
-              mode = "wb", quiet = TRUE))
+          utils::download.file(
+            url = Road_URL, destfile = Path_DownFile,
+            mode = "wb", quiet = TRUE) %>%
+            suppressWarnings()
 
-          Success <- file.exists(Path_DownFile) &&
-            IASDT.R::CheckZip(Path_DownFile)
-
+          Success <- IASDT.R::CheckZip(Path_DownFile)
+          Success
         }, silent = TRUE)
 
       if (inherits(Down, "try-error")) {

@@ -109,9 +109,6 @@ Railway_Intensity <- function(
     paste0("Prepare working on parallel using `", NCores, "` cores."),
     Level = 1)
 
-  withr::local_options(
-    future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, timeout = 1200)
-
   # # ..................................................................... ###
 
   c1 <- snow::makeSOCKcluster(NCores)
@@ -235,6 +232,10 @@ Railway_Intensity <- function(
         URL <- Railways_Links$URL2[[ID]]
         Path <- Railways_Links$Path[[ID]]
 
+        withr::local_options(
+          future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
+          timeout = 1200)
+
         # Check if zip file is a valid file
         if (file.exists(Path)) {
           Success <- IASDT.R::CheckZip(Path)
@@ -245,32 +246,26 @@ Railway_Intensity <- function(
           Success <- FALSE
         }
 
-        # Try downloading data for a max of 3 attempts, each with 20 mins time
-        # out
-        withr::local_options(list(timeout = 1200))
-
+        # Try downloading data for a max of 5 attempts
         Attempt <- 1
-        Attempts <- 3
+        Attempts <- 5
+        while (isFALSE(Success) && Attempt <= Attempts) {
+          Down <- try(
+            expr = {
+              utils::download.file(
+                url = URL, destfile = Path, mode = "wb", quiet = TRUE) %>%
+                suppressWarnings()
 
-        while (isFALSE(Success) && (Attempt <= Attempts)) {
-          tryCatch({
-            utils::download.file(
-              url = URL, destfile = Path, mode = "wb", quiet = TRUE)
+              Success <- IASDT.R::CheckZip(Path)
+              Success
+            }, silent = TRUE)
 
-            Success <- IASDT.R::CheckZip(Path)
-          },
-          error = function(e) {
-            if (Attempt < Attempts) {
-              Attempt <- Attempt + 1
-            } else {
-              stop(
-                paste0(
-                  "Failed to download data from ", URL, " after ", Attempts,
-                  " attempts: ", conditionMessage(e)),
-                call. = FALSE)
-            }
-          })
+          if (inherits(Down, "try-error")) {
+            Success <- FALSE
+          }
+          Attempt <- Attempt + 1
         }
+
         return(invisible(NULL))
       },
       future.scheduling = Inf, future.seed = TRUE)

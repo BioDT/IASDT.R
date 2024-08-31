@@ -4,7 +4,12 @@
 \alias{Railway_Intensity}
 \title{Calculate railway intensity based on \code{OpenStreetMap} data}
 \usage{
-Railway_Intensity(FromHPC = TRUE, EnvFile = ".env", NCores = 6)
+Railway_Intensity(
+  FromHPC = TRUE,
+  EnvFile = ".env",
+  NCores = 6,
+  DeleteProcessed = TRUE
+)
 }
 \arguments{
 \item{FromHPC}{Logical indicating whether the work is being done from HPC, to
@@ -15,6 +20,10 @@ variables required by the function. Default is ".env".}
 
 \item{NCores}{Numeric. Number of CPU cores to use for parallel processing.
 Default is 6.}
+
+\item{DeleteProcessed}{Logical indicating whether to delete the raw
+downloaded railways files after processing them. This helps to free large
+unnecessary file space (> 55 GB). Defaults to \code{TRUE}.}
 }
 \value{
 \code{NULL}. Outputs processed files to the directories specified in the

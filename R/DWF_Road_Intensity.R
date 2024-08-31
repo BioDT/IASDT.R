@@ -6,33 +6,33 @@
 #'
 #' This function downloads, processes, and analyzes [GRIP global roads
 #' data](https://www.globio.info/download-grip-dataset) ([Meijer et al.
-#' 2018](https://iopscience.iop.org/article/10.1088/1748-9326/aabd42/meta)),
-#' calculates road lengths by type, and computes the distance to the nearest
-#' road for a given grid.
+#' 2018](https://iopscience.iop.org/article/10.1088/1748-9326/aabd42/meta)). The
+#' function calculates the total road lengths and the distance to the nearest
+#' road per grid cell (for any road type and per road type).
 #'
 #' @param FromHPC Logical indicating whether the work is being done from HPC, to
 #'   adjust file paths accordingly. Default: `TRUE`.
 #' @param EnvFile Character. The path to the environment file containing
 #'   variables required by the function. Default is ".env".
-#' @param Download Logical. If `TRUE`, downloads and extracts road data from the
-#'   specified source. Default: `TRUE`.
 #' @return `NULL`. The function outputs processed files to the specified
 #'   directories.
 #' @note
-#'   - The function downloads the most recent version of GRIP data from the URL
-#' specified in the environment variable `DP_R_Roads_URL`. Original data format
-#' is a zipped file containing global road data in the form of `fgdb`
-#' (`EPSG:3246`).
-#'   - On LUMI HPC, loading the `libarchive` module is necessary to use the `archive` R package: `module load libarchive/3.6.2-cpeGNU-23.09`
+#' - The function downloads the most recent version of Global Roads Inventory
+#'   Project (`GRIP`) data from the URL specified in the environment variable
+#'   `DP_R_Roads_URL`. Original data format is a zipped file containing global
+#'   road data in the form of `fgdb` (`EPSG:3246`).
+#' - On LUMI HPC, loading the `libarchive` module is necessary to use the
+#'   `archive` R package: `module load libarchive/3.6.2-cpeGNU-23.09`
 #' - The distance to roads is calculated by determining the distance from each grid
-#' cell to the nearest grid cell that overlaps with a road. Note that this is
-#' different from calculating the actual distance to the nearest road line,
-#' which is computationally intensive and not performed in this function.
+#'   cell to the nearest grid cell that overlaps with a road (not to the nearest
+#'   road line). Note that this is different from calculating the actual
+#'   distance to the nearest road line, which is computationally intensive and
+#'   not performed in this function.
 #' @name Road_Intensity
 #' @export
 #' @author Ahmed El-Gabbas
 
-Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env", Download = TRUE) {
+Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -100,79 +100,72 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env", Download = TRUE) {
   # Download road data ------
   IASDT.R::CatTime("Download road data")
 
-  # Download global road data
-  if (Download) {
+  .StartTimeDown <- lubridate::now(tzone = "CET")
+  withr::local_options(timeout = 1200)
 
-    .StartTimeDown <- lubridate::now(tzone = "CET")
-    withr::local_options(timeout = 1200)
+  Path_DownFile <- file.path(Path_Roads_Raw, basename(Road_URL))
 
-    Path_DownFile <- file.path(Path_Roads_Raw, basename(Road_URL))
+  # Check if zip file is a valid file
+  if (file.exists(Path_DownFile)) {
+    Success <- IASDT.R::CheckZip(Path_DownFile)
+    if (isFALSE(Success)) {
+      fs::file_delete(Path_DownFile)
+    }
+  } else {
+    Success <- FALSE
+  }
 
-    # Check if zip file is a valid file
-    if (file.exists(Path_DownFile)) {
-      Success <- IASDT.R::CheckZip(Path_DownFile)
-      if (isFALSE(Success)) {
-        fs::file_delete(Path_DownFile)
-      }
-    } else {
+  # Try downloading data for a max of 5 attempts
+  Attempt <- 1
+  Attempts <- 5
+
+  while (isFALSE(Success) && Attempt <= Attempts) {
+    Down <- try(
+      expr = {
+        utils::download.file(
+          url = Road_URL, destfile = Path_DownFile,
+          mode = "wb", quiet = TRUE) %>%
+          suppressWarnings()
+
+        Success <- IASDT.R::CheckZip(Path_DownFile)
+        Success
+      }, silent = TRUE)
+
+    if (inherits(Down, "try-error")) {
       Success <- FALSE
     }
 
-    # Try downloading data for a max of 5 attempts
-    Attempt <- 1
-    Attempts <- 5
-
-    while (isFALSE(Success) && Attempt <= Attempts) {
-      Down <- try(
-        expr = {
-          utils::download.file(
-            url = Road_URL, destfile = Path_DownFile,
-            mode = "wb", quiet = TRUE) %>%
-            suppressWarnings()
-
-          Success <- IASDT.R::CheckZip(Path_DownFile)
-          Success
-        }, silent = TRUE)
-
-      if (inherits(Down, "try-error")) {
-        Success <- FALSE
-      }
-
-      Attempt <- Attempt + 1
-    }
-
-    if (isFALSE(Success)) {
-      stop(
-        paste0(
-          "Failed to download road data after ", Attempts, " attempts:\n",
-          Road_URL),
-        call. = FALSE)
-    }
-
-    IASDT.R::CatDiff(
-      InitTime = .StartTimeDown,
-      Prefix = "Downloading GRIP data took ", NLines = 1, Level = 1)
-
-    rm(Down)
-
-    # # .................................... ###
-
-    IASDT.R::CatTime("Extracting files")
-    .StartTimeExt <- lubridate::now(tzone = "CET")
-
-    archive::archive_extract(
-      archive = Path_DownFile, dir = Path_Roads_Interim) %>%
-      suppressMessages()
-
-    IASDT.R::CatDiff(
-      InitTime = .StartTimeExt,
-      Prefix = "Extracting GRIP data took ", NLines = 1, Level = 1)
-
-    rm(Path_DownFile, .StartTimeDown, .StartTimeExt)
-
-  } else {
-    IASDT.R::CatTime("GRIP data was not downloaded")
+    Attempt <- Attempt + 1
   }
+
+  if (isFALSE(Success)) {
+    stop(
+      paste0(
+        "Failed to download road data after ", Attempts, " attempts:\n",
+        Road_URL),
+      call. = FALSE)
+  }
+
+  IASDT.R::CatDiff(
+    InitTime = .StartTimeDown,
+    Prefix = "Downloading GRIP data took ", NLines = 1, Level = 1)
+
+  rm(Down)
+
+  # # .................................... ###
+
+  IASDT.R::CatTime("Extracting files")
+  .StartTimeExt <- lubridate::now(tzone = "CET")
+
+  archive::archive_extract(
+    archive = Path_DownFile, dir = Path_Roads_Interim) %>%
+    suppressMessages()
+
+  IASDT.R::CatDiff(
+    InitTime = .StartTimeExt,
+    Prefix = "Extracting GRIP data took ", NLines = 1, Level = 1)
+
+  rm(Path_DownFile, .StartTimeDown, .StartTimeExt)
 
   # # ..................................................................... ###
 
@@ -453,6 +446,15 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env", Download = TRUE) {
     plot = Plots_Distance,
     filename = file.path(Path_Roads, "Road_Distance.jpeg"),
     width = 30, height = 21, units = "cm", dpi = 600)
+
+  # ..................................................................... ###
+
+  # Cleanup ------
+  IASDT.R::CatTime("Cleanup")
+
+  # Delete extracted GRIP files
+  list.files(Path_Roads_Interim, full.names = TRUE, pattern = "^GRIP") %>%
+    fs::file_delete()
 
   # ..................................................................... ###
 

@@ -46,13 +46,12 @@ for ranges.
 \examples{
 # Vector
 
-Range2NewVal(x =  1:10, Between = c(5, 8), NewVal = NA)
-
+Range2NewVal(x = seq_len(10), Between = c(5, 8), NewVal = NA)
 
 Range2NewVal(
-x =  1:10, Between = c(5, 8), NewVal = NA, InvertSelection = TRUE)
+   x =  seq_len(10), Between = c(5, 8), NewVal = NA, InvertSelection = TRUE)
 
-Range2NewVal(x =  1:10, Between = c(5, 8), NewVal = NA, MoreThan = 4)
+Range2NewVal(x =  seq_len(10), Between = c(5, 8), NewVal = NA, MoreThan = 4)
 
 # ---------------------------------------------
 

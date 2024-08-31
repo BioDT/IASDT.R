@@ -15,13 +15,17 @@
 #'   variables required by the function. Default is ".env".
 #' @param NCores Numeric. Number of CPU cores to use for parallel processing.
 #'   Default is 6.
+#' @param DeleteProcessed Logical indicating whether to delete the raw
+#'   downloaded railways files after processing them. This helps to free large  
+#'   unnecessary file space (> 55 GB). Defaults to `TRUE`.
 #' @return `NULL`. Outputs processed files to the directories specified in the
 #'   environment file.
 #' @name Railway_Intensity
 #' @export
 #' @author Ahmed El-Gabbas
 
-Railway_Intensity <- function(FromHPC = TRUE, EnvFile = ".env", NCores = 6) {
+Railway_Intensity <- function(
+    FromHPC = TRUE, EnvFile = ".env", NCores = 6, DeleteProcessed = TRUE) {
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -289,9 +293,13 @@ Railway_Intensity <- function(FromHPC = TRUE, EnvFile = ".env", NCores = 6) {
 
       save(Railway, file = Path_Temp)
 
-      fs::dir_delete(
-        c(file.path(Path_Railways_Interim, Prefix),
-          Path_Extract$NewName, Path))
+
+      # Clean up
+      fs::dir_delete(file.path(Path_Railways_Interim, Prefix))
+      fs::file_delete(Path_Extract$NewName)
+      if (DeleteProcessed) {
+        fs::file_delete(Path)
+      }
 
       tibble::tibble(
         URL = URL, Country = Country, Area = Prefix, Path = Path_Temp) %>%

@@ -4,7 +4,7 @@
 \alias{Road_Intensity}
 \title{Calculate road intensity}
 \usage{
-Road_Intensity(FromHPC = TRUE, EnvFile = ".env", Download = TRUE)
+Road_Intensity(FromHPC = TRUE, EnvFile = ".env")
 }
 \arguments{
 \item{FromHPC}{Logical indicating whether the work is being done from HPC, to
@@ -12,30 +12,29 @@ adjust file paths accordingly. Default: \code{TRUE}.}
 
 \item{EnvFile}{Character. The path to the environment file containing
 variables required by the function. Default is ".env".}
-
-\item{Download}{Logical. If \code{TRUE}, downloads and extracts road data from the
-specified source. Default: \code{TRUE}.}
 }
 \value{
 \code{NULL}. The function outputs processed files to the specified
 directories.
 }
 \description{
-This function downloads, processes, and analyzes \href{https://www.globio.info/download-grip-dataset}{GRIP global roads data} (\href{https://iopscience.iop.org/article/10.1088/1748-9326/aabd42/meta}{Meijer et al. 2018}),
-calculates road lengths by type, and computes the distance to the nearest
-road for a given grid.
+This function downloads, processes, and analyzes \href{https://www.globio.info/download-grip-dataset}{GRIP global roads data} (\href{https://iopscience.iop.org/article/10.1088/1748-9326/aabd42/meta}{Meijer et al. 2018}). The
+function calculates the total road lengths and the distance to the nearest
+road per grid cell (for any road type and per road type).
 }
 \note{
 \itemize{
-\item The function downloads the most recent version of GRIP data from the URL
-specified in the environment variable \code{DP_R_Roads_URL}. Original data format
-is a zipped file containing global road data in the form of \code{fgdb}
-(\code{EPSG:3246}).
-\item On LUMI HPC, loading the \code{libarchive} module is necessary to use the \code{archive} R package: \verb{module load libarchive/3.6.2-cpeGNU-23.09}
+\item The function downloads the most recent version of Global Roads Inventory
+Project (\code{GRIP}) data from the URL specified in the environment variable
+\code{DP_R_Roads_URL}. Original data format is a zipped file containing global
+road data in the form of \code{fgdb} (\code{EPSG:3246}).
+\item On LUMI HPC, loading the \code{libarchive} module is necessary to use the
+\code{archive} R package: \verb{module load libarchive/3.6.2-cpeGNU-23.09}
 \item The distance to roads is calculated by determining the distance from each grid
-cell to the nearest grid cell that overlaps with a road. Note that this is
-different from calculating the actual distance to the nearest road line,
-which is computationally intensive and not performed in this function.
+cell to the nearest grid cell that overlaps with a road (not to the nearest
+road line). Note that this is different from calculating the actual
+distance to the nearest road line, which is computationally intensive and
+not performed in this function.
 }
 }
 \author{

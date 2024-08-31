@@ -16,7 +16,7 @@
 #' @param NCores Numeric. Number of CPU cores to use for parallel processing.
 #'   Default is 6.
 #' @param DeleteProcessed Logical indicating whether to delete the raw
-#'   downloaded railways files after processing them. This helps to free large  
+#'   downloaded railways files after processing them. This helps to free large
 #'   unnecessary file space (> 55 GB). Defaults to `TRUE`.
 #' @return `NULL`. Outputs processed files to the directories specified in the
 #'   environment file.
@@ -56,7 +56,7 @@ Railway_Intensity <- function(
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Path_Railways <- Path_Railways_Raw <- Path_Railways_Interim <- RefGrid <-
     Country <- URL <- URL2 <- Path <- EU_Bound <- fclass <- Path_Grid <-
-    CellCode <- Name <- OldName <- NewName <- DT <- NULL
+    CellCode <- Name <- OldName <- NewName <- DT <- Railways_URL <- NULL
 
   # # ..................................................................... ###
 
@@ -106,15 +106,17 @@ Railway_Intensity <- function(
   }
   RefGridSF <- IASDT.R::LoadAs(RefGridSF)
 
-
   # # ..................................................................... ###
 
   # Scrap download links -----
   IASDT.R::CatTime("Scrap download links")
   .StartTimeDown <- lubridate::now(tzone = "CET")
 
-  # OpenStreetMap Data Extracts
-  BaseURL <- "https://download.geofabrik.de/"
+  if (!IASDT.R::Valid_URL(Railways_URL)) {
+    stop(
+      paste0("The base URL for railways data is not valid: ", Railways_URL),
+      call. = FALSE)
+  }
 
   # We download European data at country level. For most countries, the data are
   # available in single file, while for others the data are divided into
@@ -126,40 +128,93 @@ Railway_Intensity <- function(
     "europe/germany/baden-wuerttemberg.html", "Germany",
     "europe/germany/bayern.html", "Germany",
     "europe/germany/nordrhein-westfalen.html", "Germany") %>%
-    dplyr::mutate(URL = paste0(BaseURL, URL))
+    dplyr::mutate(URL = paste0(Railways_URL, URL))
 
-  Railways_Links <- paste0(BaseURL, "europe.html") %>%
-    rvest::session() %>%
-    rvest::html_elements(css = "table") %>%
-    magrittr::extract(2) %>%
-    rvest::html_elements(css = "a") %>%
-    rvest::html_attr("href") %>%
-    stringr::str_subset(".html$") %>%
-    dplyr::tibble(URL = .) %>%
-    dplyr::mutate(
-      Country = purrr::map_chr(
-        .x = URL,
-        .f = ~{
-          stringr::str_remove_all(.x, "europe/|.html") %>%
-            stringr::str_to_title()
-        }),
-      URL = paste0(BaseURL, URL)) %>%
-    dplyr::bind_rows(German_L3) %>%
-    dplyr::arrange(Country, URL) %>%
+
+  # scrap initial railways links
+  Attempt <- 1
+  Attempts <- 5
+  Success <- FALSE
+  while (isFALSE(Success) && Attempt <= Attempts) {
+    Railways_Links <- try(
+      expr = {
+        paste0(Railways_URL, "europe.html") %>%
+          rvest::session() %>%
+          rvest::html_elements(css = "table") %>%
+          magrittr::extract(2) %>%
+          rvest::html_elements(css = "a") %>%
+          rvest::html_attr("href") %>%
+          stringr::str_subset(".html$") %>%
+          dplyr::tibble(URL = .) %>%
+          dplyr::mutate(
+            Country = purrr::map_chr(
+              .x = URL,
+              .f = ~{
+                stringr::str_remove_all(.x, "europe/|.html") %>%
+                  stringr::str_to_title()
+              }),
+            URL = paste0(Railways_URL, URL)) %>%
+          dplyr::bind_rows(German_L3) %>%
+          dplyr::arrange(Country, URL)
+
+      }, silent = TRUE)
+
+    if (inherits(Railways_Links, "tibble")) {
+      Success <- TRUE
+    } else if (inherits(Railways_Links, "try-error")) {
+      Success <- FALSE
+      if (Attempt == Attempts) {
+        stop(
+          paste0("Initial scraping of railways link failed after ", Attempts),
+          call. = FALSE)
+      }
+    }
+    Attempt <- Attempt + 1
+  }
+
+  # Scraping final railways links
+  Railways_Links <- Railways_Links %>%
     dplyr::mutate(
       URL2 = purrr::map(
         .x = URL,
         .f = ~{
-          BaseURL2 <- stringr::str_extract(.x, "^.+/")
-          rvest::session(.x) %>%
-            rvest::html_elements(css = "a") %>%
-            rvest::html_attr(name = "href") %>%
-            stringr::str_subset("-latest-free.shp.zip$") %>%
-            paste0(BaseURL2, .) %>%
-            unique()
+          Success <- FALSE
+          Attempt <- 1
+          while (isFALSE(Success) && Attempt <= Attempts) {
+            ScrapedLinks <- try(
+              expr = {
+                BaseURL2 <- stringr::str_extract(.x, "^.+/")
+                rvest::session(.x) %>%
+                  rvest::html_elements(css = "a") %>%
+                  rvest::html_attr(name = "href") %>%
+                  stringr::str_subset("-latest-free.shp.zip$") %>%
+                  paste0(BaseURL2, .) %>%
+                  unique()
+              }, silent = TRUE)
+
+            if (inherits(ScrapedLinks, "character")) {
+              Success <- TRUE
+            } else if (inherits(ScrapedLinks, "try-error")) {
+              Success <- FALSE
+              if (Attempt == Attempts) {
+                stop(
+                  paste0(
+                    "Scraping railways links failed for: ", ScrapedLinks,
+                    "after ", Attempts),
+                  call. = FALSE)
+              }
+            }
+            Attempt <- Attempt + 1
+          }
+
+          print(paste(.x, " - ", Attempt-1))
+
+          return(ScrapedLinks)
+
         })) %>%
     tidyr::unnest(cols = "URL2") %>%
     dplyr::mutate(
+      # Download path
       Path = purrr::map2(
         .x = URL2, .y = Country,
         .f = ~{
@@ -167,10 +222,13 @@ Railway_Intensity <- function(
             paste0(.y, "_", .) %>%
             file.path(Path_Railways_Raw, .)
         }),
+
       ModDate = purrr::map(
         .x = URL2,
         .f = ~{
-          system(paste0("curl -sI ", .x), intern = TRUE) %>%
+          # Last modified date
+          paste0("curl -sI ", .x) %>%
+            system(intern = TRUE) %>%
             stringr::str_subset("Last-Modified") %>%
             stringr::str_remove_all("Last-Modified: ") %>%
             readr::parse_datetime(format = "%a, %d %b %Y %H:%M:%S %Z") %>%

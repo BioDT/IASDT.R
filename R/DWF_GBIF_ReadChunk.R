@@ -63,8 +63,6 @@ GBIF_ReadChunk <- function(
   # # ..................................................................... ###
 
   # Checking arguments ----
-  IASDT.R::CatTime("Checking arguments")
-
   AllArgs <- ls()
   AllArgs <- purrr::map(AllArgs, ~get(.x, envir = environment())) %>%
     stats::setNames(AllArgs)

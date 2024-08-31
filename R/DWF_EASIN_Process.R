@@ -116,7 +116,7 @@ EASIN_Process <- function(
 
       # The following are needed for other called functions
       "EU_Bound", "DP_R_EUBound_sf", FALSE, TRUE,
-      "Path_EASIN_Summary", "DP_R_EASIN_Summary", TRUE, FALSE)
+      "Path_EASIN_Summary", "DP_R_EASIN_Summary", FALSE, FALSE)
   } else {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
@@ -129,7 +129,7 @@ EASIN_Process <- function(
 
       # The following are needed for other called functions
       "EU_Bound", "DP_R_EUBound_sf_Local", FALSE, TRUE,
-      "Path_EASIN_Summary", "DP_R_EASIN_Summary_Local", TRUE, FALSE)
+      "Path_EASIN_Summary", "DP_R_EASIN_Summary_Local", FALSE, FALSE)
   }
 
   # Assign environment variables and check file and paths

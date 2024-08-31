@@ -228,7 +228,8 @@ GBIF_Process <- function(
       institutionCode = dplyr::if_else(
         institutionCode, "iNaturalist", "Others"))
 
-  IASDT.R::CatTime("# unique iNaturalist grid cells per species", Level = 1)
+  IASDT.R::CatTime(
+      "Number of unique iNaturalist grid cells per species", Level = 1)
   iNaturalist_Unique <- iNaturalist_Others %>%
     dplyr::group_by(species, CellCode) %>%
     tidyr::pivot_wider(
@@ -240,18 +241,18 @@ GBIF_Process <- function(
     dplyr::rename(iNaturalist_Unique = n)
 
   IASDT.R::CatTime(
-    "# grid cells for iNaturalist and other data sources", Level = 1)
+      "Number of grid cells for iNaturalist and other data sources", Level = 1)
   iNaturalist_Count <- iNaturalist_Others %>%
     dplyr::count(species, institutionCode) %>%
-    tidyr::pivot_wider(
-      names_from = institutionCode, values_from = n) %>%
+    tidyr::pivot_wider(names_from = institutionCode, values_from = n) %>%
     dplyr::select(species, iNaturalist, Others) %>%
     dplyr::left_join(iNaturalist_Unique, by = "species") %>%
     dplyr::select(species, Others, tidyselect::everything())
 
   IASDT.R::CatTime("Save iNaturalist summary data", Level = 1)
-  save(iNaturalist_Count,
-       file = file.path(Path_GBIF, "iNaturalist_Count.RData"))
+  save(
+    iNaturalist_Count,
+    file = file.path(Path_GBIF, "iNaturalist_Count.RData"))
 
   rm(iNaturalist_Others, iNaturalist_Unique, iNaturalist_Count)
   invisible(gc())
@@ -313,7 +314,7 @@ GBIF_Process <- function(
 
   ## Number of observations per grid  ----
 
-  IASDT.R::CatTime("# observations per cell", Level = 1)
+  IASDT.R::CatTime("Number of observations per grid cell", Level = 1)
   GBIF_NObs <- sf::st_drop_geometry(GBIF_Data) %>%
     dplyr::count(CellCode) %>%
     dplyr::left_join(GridSf, by = "CellCode") %>%
@@ -325,7 +326,8 @@ GBIF_Process <- function(
     IASDT.R::setRastCRS() %>%
     terra::wrap()
 
-  IASDT.R::CatTime("# observations per cell - log scale", Level = 1)
+  IASDT.R::CatTime(
+      "Number of observations per grid cell (log scale)", Level = 1)
   GBIF_NObs_log <- terra::unwrap(GBIF_NObs) %>%
     log10() %>%
     IASDT.R::setRastCRS() %>%
@@ -340,7 +342,7 @@ GBIF_Process <- function(
 
   ## Number of species per grid cell -----
 
-  IASDT.R::CatTime("# IAS per cell", Level = 1)
+  IASDT.R::CatTime("Number of IAS per grid cell", Level = 1)
   GBIF_NSp <- sf::st_drop_geometry(GBIF_Grid) %>%
     dplyr::count(CellCode) %>%
     dplyr::left_join(GridSf, by = "CellCode") %>%
@@ -352,7 +354,7 @@ GBIF_Process <- function(
     IASDT.R::setRastCRS() %>%
     terra::wrap()
 
-  IASDT.R::CatTime("# IAS per cell - log", Level = 1)
+  IASDT.R::CatTime("Number of IAS per grid cell (log)", Level = 1)
   GBIF_NSp_Log <- terra::unwrap(GBIF_NSp) %>%
     log10() %>%
     IASDT.R::setRastCRS() %>%
@@ -525,7 +527,7 @@ GBIF_Process <- function(
   future::plan(future::cluster, workers = c1, gc = TRUE)
   invisible(snow::clusterEvalQ(cl = c1, IASDT.R::LoadPackages(List = "dplyr")))
 
-  IASDT.R::CatTime("Split species data on parallel", Level = 2)
+  IASDT.R::CatTime("Splitting species data on parallel", Level = 2)
   furrr::future_walk(
     .x = SpList, .f = IASDT.R::GBIF_SpData, EnvFile = EnvFile,
     Verbose = FALSE, FromHPC = FromHPC, LastUpdate = LastUpdate,

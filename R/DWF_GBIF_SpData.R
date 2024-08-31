@@ -29,7 +29,9 @@ GBIF_SpData <- function(
   # # ..................................................................... ###
 
   # Checking arguments ----
-  IASDT.R::CatTime("Checking arguments")
+  if (Verbose) {
+    IASDT.R::CatTime("Checking arguments")
+  }
 
   AllArgs <- ls()
   AllArgs <- purrr::map(AllArgs, ~get(.x, envir = environment())) %>%

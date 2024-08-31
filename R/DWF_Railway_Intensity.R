@@ -118,6 +118,8 @@ Railway_Intensity <- function(
       call. = FALSE)
   }
 
+  IASDT.R::CatTime(paste0("Base URL is: ", Railways_URL), Level = 1)
+
   # We download European data at country level. For most countries, the data are
   # available in single file, while for others the data are divided into
   # sub-regions. Data on 3 federal states in Germany are not available in single
@@ -129,7 +131,6 @@ Railway_Intensity <- function(
     "europe/germany/bayern.html", "Germany",
     "europe/germany/nordrhein-westfalen.html", "Germany") %>%
     dplyr::mutate(URL = paste0(Railways_URL, URL))
-
 
   # scrap initial railways links
   Attempt <- 1
@@ -154,6 +155,7 @@ Railway_Intensity <- function(
                   stringr::str_to_title()
               }),
             URL = paste0(Railways_URL, URL)) %>%
+          dplyr::filter(!(Country %in% c("Russia", "Turkey", "Ukraine"))) %>%
           dplyr::bind_rows(German_L3) %>%
           dplyr::arrange(Country, URL)
 
@@ -165,7 +167,7 @@ Railway_Intensity <- function(
       Success <- FALSE
       if (Attempt == Attempts) {
         stop(
-          paste0("Initial scraping of railways link failed after ", Attempts),
+          paste0("Initial scraping of railways links failed after ", Attempts),
           call. = FALSE)
       }
     }
@@ -206,8 +208,6 @@ Railway_Intensity <- function(
             }
             Attempt <- Attempt + 1
           }
-
-          print(paste(.x, " - ", Attempt-1))
 
           return(ScrapedLinks)
 

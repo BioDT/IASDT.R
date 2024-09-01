@@ -29,7 +29,7 @@ RespCurv_PlotSR <- function(Path_Model) {
     Pred <- Q975 <- Q25 <- Q50 <- X <- Y <- NULL
 
   IASDT.R::CatTime("Check input arguments")
-  AllArgs <- ls()
+  AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(
     AllArgs,
     function(x) get(x, envir = parent.env(env = environment()))) %>%

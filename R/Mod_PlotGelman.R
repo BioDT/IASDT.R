@@ -71,7 +71,7 @@ PlotGelman <- function(
     stop("At least one of SavePlot or ReturnPlots must be TRUE", call. = FALSE)
   }
 
-  AllArgs <- ls()
+  AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(
     AllArgs,
     function(x) get(x, envir = parent.env(env = environment()))) %>%

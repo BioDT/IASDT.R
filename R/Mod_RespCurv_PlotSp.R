@@ -42,7 +42,7 @@ RespCurv_PlotSp <- function(
     VariableDesc <- Pred <- XVals <- PlotData_Quant <- Quantile <-
     Observed_PA <- Col <- Q975 <- Q25 <- Q50 <- X <- Y <- IAS_ID <- NULL
 
-  AllArgs <- ls()
+  AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(
     AllArgs,
     function(x) get(x, envir = parent.env(env = environment()))) %>%

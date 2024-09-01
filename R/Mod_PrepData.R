@@ -127,7 +127,7 @@ Mod_PrepData <- function(
     NGrids <- NSp <- EU_Bound <- NCells <- SpPA <- NPres <- Grid_R <- NULL
 
   IASDT.R::CatTime("Checking input arguments")
-  AllArgs <- ls()
+  AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(
     AllArgs,
     function(x) get(x, envir = parent.env(env = environment()))) %>%

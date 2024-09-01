@@ -97,7 +97,7 @@ Mod_CV <- function(
       call. = FALSE)
   }
 
-  AllArgs <- ls()
+  AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(
     .x = AllArgs,
     .f = function(x) get(x, envir = parent.env(env = environment()))) %>%

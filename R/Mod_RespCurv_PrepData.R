@@ -41,7 +41,7 @@ RespCurv_PrepData <- function(
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Check input arguments")
-  AllArgs <- ls()
+  AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(.x = AllArgs, .f = ~get(.x, envir = environment())) %>%
     stats::setNames(AllArgs)
 

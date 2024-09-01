@@ -77,7 +77,7 @@ EASIN_Process <- function(
   # Checking arguments ----
   IASDT.R::CatTime("Checking arguments")
 
-  AllArgs <- ls()
+  AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(AllArgs, ~get(.x, envir = environment())) %>%
     stats::setNames(AllArgs)
 
@@ -283,24 +283,15 @@ EASIN_Process <- function(
     withr::local_options(
       future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
-    # c1 <- snow::makeSOCKcluster(NCores)
-    # on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
     future::plan(future::cluster, workers = NCores, gc = TRUE)
     on.exit(future::plan(future::sequential(), add = TRUE))
-
-    # invisible(snow::clusterEvalQ(
-    #   cl = c1, IASDT.R::LoadPackages(List = c("dplyr", "jsonlite"))))
-    # snow::clusterExport(
-    #   cl = c1,
-    #   list = c("Path_EASIN_Interim", "NSearch", "DeleteChunks", "SleepTime"),
-    #   envir = environment())
-
 
     # Start downloading, allow for a maximum of `NumDownTries` trials
     Try <- 0
 
     # Start downloading ----
     while (TRUE) {
+      Try <- Try + 1
       NotProcessed <- list.files(Path_EASIN_Interim, pattern = ".RData$") %>%
         stringr::str_remove(".RData") %>%
         setdiff(EASIN_Taxa$EASINID, .)
@@ -310,13 +301,11 @@ EASIN_Process <- function(
         break
       }
 
-      Try <- Try + 1
       IASDT.R::CatTime(paste0("Try number: ", Try), Level = 1)
-
       IASDT.R::CatTime(
         paste0(
           "There are ", length(NotProcessed), " EASIN taxa to be downloaded"),
-        Level = 1)
+        Level = 2)
 
       if (Try > NDownTries) {
         IASDT.R::CatTime(
@@ -338,7 +327,6 @@ EASIN_Process <- function(
             "Path_EASIN_Interim", "NSearch", "DeleteChunks", "SleepTime"),
           future.packages = c("dplyr", "jsonlite")),
         silent = TRUE)
-      # [1] "R08986" "R07719" "R18201"
 
       if (inherits(Down, "try-error")) {
         next
@@ -353,7 +341,6 @@ EASIN_Process <- function(
       Prefix = "Downloading EASIN data was finished in ", Level = 1)
 
     # Stop cluster ----
-    snow::stopCluster(cl = c1)
     future::plan(future::sequential, gc = TRUE)
   }
 
@@ -396,14 +383,13 @@ EASIN_Process <- function(
 
   withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
-  c1 <- snow::makeSOCKcluster(NCores)
-  on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
-  future::plan(future::cluster, workers = c1, gc = TRUE)
-  snow::clusterExport(cl = c1, list = "EASIN_Files", envir = environment())
+  future::plan(future::cluster, workers = NCores, gc = TRUE)
+  on.exit(future::plan(future::sequential()), add = TRUE)
 
   EASIN_Data_Orig <- future.apply::future_lapply(
     X = EASIN_Files, FUN = IASDT.R::LoadAs,
-    future.scheduling = Inf, future.seed = TRUE) %>%
+    future.scheduling = Inf, future.seed = TRUE,
+    future.globals = "EASIN_Files") %>%
     dplyr::bind_rows()
 
   ## Save merged EASIN data -----
@@ -462,7 +448,8 @@ EASIN_Process <- function(
     # exclude observations not overlapping with the study area
     dplyr::filter(CellCode %in% LandGrids)
 
-  snow::stopCluster(cl = c1)
+
+  future::plan(future::sequential()
   rm(LandGrids, WKTs)
 
   ## Save cleaned EASIN Data ----

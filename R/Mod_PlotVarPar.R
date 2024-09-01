@@ -64,7 +64,7 @@ PlotVarPar <- function(
 
   IASDT.R::CatTime("Check input arguments")
 
-  AllArgs <- ls()
+  AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(
     AllArgs,
     function(x) get(x, envir = parent.env(env = environment()))) %>%

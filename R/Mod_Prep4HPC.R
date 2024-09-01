@@ -256,7 +256,7 @@ Mod_Prep4HPC <- function(
 
   IASDT.R::CatTime("Checking input arguments")
 
-  AllArgs <- ls()
+  AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(
     AllArgs,
     function(x) get(x, envir = parent.env(env = environment()))) %>%

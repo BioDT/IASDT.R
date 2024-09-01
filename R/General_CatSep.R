@@ -34,7 +34,7 @@ CatSep <- function(
     Rep = 1L, Extra1 = 0L, Extra2 = 0L, Char = "-",  CharReps = 50L) {
 
   # Check input arguments
-  AllArgs <- ls()
+  AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(
     AllArgs,
     function(x) get(x, envir = parent.env(env = environment()))) %>%

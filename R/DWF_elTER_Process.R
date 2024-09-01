@@ -23,7 +23,7 @@ elTER_Process <- function(
   # # ..................................................................... ###
 
   # Checking arguments ----
-  AllArgs <- ls()
+  AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(AllArgs, ~get(.x, envir = environment())) %>%
     stats::setNames(AllArgs)
 

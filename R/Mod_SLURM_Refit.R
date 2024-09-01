@@ -70,7 +70,7 @@ Mod_SLURM_Refit <- function(
   }
 
   # checking arguments
-  AllArgs <- ls()
+  AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(.x = AllArgs, .f = ~get(.x, envir = environment())) %>%
     stats::setNames(AllArgs)
 

@@ -35,7 +35,6 @@ EASIN_Taxonomy <- function(
   # # ..................................................................... ###
 
   # Checking arguments ----
-  IASDT.R::CatTime("Checking arguments")
 
   AllArgs <- ls()
   AllArgs <- purrr::map(AllArgs, ~get(.x, envir = environment())) %>%
@@ -102,7 +101,7 @@ EASIN_Taxonomy <- function(
 
   IASDT.R::CatDiff(
     InitTime = TimeStartTaxa, 
-    Prefix = "Extracting EASIN taxonomy was finished in ", Level = 1)
+    Prefix = "Extracting EASIN taxonomy was finished in ", Level = 2)
 
   return(EASIN_Taxa)
 }

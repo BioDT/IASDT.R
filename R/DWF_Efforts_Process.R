@@ -31,6 +31,9 @@
 #'   `100,000`. See [Efforts_Split] and [Efforts_Summarize] for more details.
 #' @param DeleteChunks logical, indicating whether to remove file chunks after
 #'   processing the data. Defaults to `TRUE`.
+#' @param DeleteProcessed Logical indicating whether to delete the raw
+#'   downloaded GBIF data after processing them. This helps to free large
+#'   unnecessary file space (> 22 GB). Defaults to `TRUE`.
 #' @note
 #' - This function is expected to take a substantial amount of time (>9
 #' hours on a Windows PC with 6 cores). The data request from GBIF may take
@@ -51,7 +54,7 @@ Efforts_Process <- function(
     FromHPC = TRUE, EnvFile = ".env", Renviron = ".Renviron",
     RequestData = TRUE, DownloadData = TRUE, NCores = 6, StartYear = 1981,
     Boundaries = c(-30, 50, 25, 75), ChunkSize = 100000,
-    DeleteChunks = TRUE) {
+    DeleteChunks = TRUE, DeleteProcessed = TRUE) {
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -218,6 +221,15 @@ Efforts_Process <- function(
   IASDT.R::CatTime("Plotting sampling efforts")
   IASDT.R::Efforts_Plot(Path_Efforts = Path_Efforts, EU_Bound = EU_Bound)
 
+  # # ..................................................................... ###
+
+  # # Cleaning up ----
+
+  if (DeleteProcessed) {
+    IASDT.R::CatTime("Cleaning up")
+    fs::file_delete(list.files(Path_Efforts_Raw,  full.names = TRUE))   
+  }
+  
   # # ..................................................................... ###
 
   IASDT.R::CatDiff(

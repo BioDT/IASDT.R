@@ -204,7 +204,6 @@ EASIN_Process <- function(
 
 
     IASDT.R::CatTime("Loading pre-standardized EASIN taxonomy", Level = 1)
-
     # Update 08.2024: While writing this function, I noticed that there 4 taxa
     # in EASIN taxonomy list that is not matched at the most recent
     # pre-standardization (2024-02-07). These four names are temporarily
@@ -220,19 +219,19 @@ EASIN_Process <- function(
     #    "Pueraria montana var. lobata", "R12644", 2977636)
 
     EASIN_Ref <- readRDS(EASIN_Ref) %>%
-      dplyr::select(Name, speciesKey) %>%
+      dplyr::select(Name, speciesKey, EASINID) %>%
       # Add missing species
       dplyr::bind_rows(
         tibble::tribble(
-          ~Name, ~speciesKey,
-          "Cenchrus setaceus", 5828232,
-          "Neltuma juliflora", 5358460,
-          "Persicaria perfoliata", 4033648,
-          "Pueraria montana (Lour.) Merr. var. lobata", 2977636))
+          ~Name, ~speciesKey, ~EASINID,
+          "Cenchrus setaceus", 5828232, "R03000",
+          "Neltuma juliflora", 5358460, "R12278",
+          "Persicaria perfoliata", 4033648, "R19287",
+          "Pueraria montana (Lour.) Merr. var. lobata", 2977636, "R12644"))
 
     EASIN_Taxa <- EASIN_Taxa_Orig %>%
       # Merge with EASIN reference list of taxonomy standardization
-      dplyr::left_join(EASIN_Ref, by = "Name") %>%
+      dplyr::left_join(EASIN_Ref, by = c("Name", "EASINID")) %>%
       dplyr::select(dplyr::all_of(c("EASINID", "Name", "speciesKey"))) %>%
       # Merge with final standardized taxa list
       dplyr::left_join(TaxaList, by = "speciesKey") %>%
@@ -244,7 +243,7 @@ EASIN_Process <- function(
       dplyr::mutate(Species_name = stringr::word(taxon_name, 1, 2)) %>%
       dplyr::rename(EASIN_Name = Name)
 
-    IASDT.R::CatTime("Check EASIN taxa not in the list")
+    IASDT.R::CatTime("Check EASIN taxa not in the list",  Level = 1)
     # EASIN taxa not in the reference list
     New_EASIN_Taxa <- setdiff(EASIN_Taxa$EASIN_Name, EASIN_Ref$Name)
     if (length(New_EASIN_Taxa) > 0) {
@@ -253,22 +252,15 @@ EASIN_Process <- function(
           file = file.path(Path_EASIN, "New_EASIN_Taxa.txt"),
           progress = FALSE)
     }
-    # Changed or deleted
-    Changed_EASIN_Taxa <- setdiff(EASIN_Ref$Name, EASIN_Taxa$EASIN_Name)
-    if (length(Changed_EASIN_Taxa) > 0) {
-      tibble::tibble(NewTaxa = Changed_EASIN_Taxa) %>%
-        readr::write_tsv(
-          file = file.path(Path_EASIN, "Changed_EASIN_Taxa.txt"),
-          progress = FALSE)
-    }
     ## Save EASIN taxa to disk ----
-    IASDT.R::CatTime("Save EASIN taxa to disk")
+    IASDT.R::CatTime("Save EASIN taxa to disk",  Level = 1)
     save(EASIN_Taxa, file = file.path(Path_EASIN, "EASIN_Taxa.RData"))
 
   } else {
 
     IASDT.R::CatTime("Loading EASIN taxa list")
     load(file.path(Path_EASIN, "EASIN_Taxa.RData"))
+
   }
 
   # # ..................................................................... ###
@@ -280,6 +272,7 @@ EASIN_Process <- function(
   IASDT.R::CatTime("Download EASIN data")
 
   if (ExtractData) {
+
     TimeStartData <- lubridate::now(tzone = "CET")
 
     ## Prepare working on parallel ----
@@ -304,6 +297,7 @@ EASIN_Process <- function(
         setdiff(EASIN_Taxa$EASINID, .)
 
       if (length(NotProcessed) == 0) {
+        IASDT.R::CatTime("Data for all EASIN taxa were downloaded", Level = 1)
         break
       }
 
@@ -315,40 +309,32 @@ EASIN_Process <- function(
           "There are ", length(NotProcessed), " EASIN taxa to be downloaded"),
         Level = 1)
 
-      if (length(NotProcessed) == 0 || Try > NDownTries) {
-        if (Try > NDownTries) {
-          IASDT.R::CatTime(
-            paste0(
-              "Download failed for ", length(NotProcessed),
-              " EASIN taxa after ", NDownTries, " download attempts"),
-            Level = 1)
-        }
-
-        if (length(NotProcessed) == 0) {
-          IASDT.R::CatTime("Data for all EASIN taxa were downloaded", Level = 1)
-        }
-
+      if (Try > NDownTries) {
+        IASDT.R::CatTime(
+          paste0(
+            "Download failed for ", length(NotProcessed),
+            " EASIN taxa after ", NDownTries, " download attempts"),
+          Level = 1)
         break
-
-      } else {
-
-        invisible(snow::clusterEvalQ(
-          cl = c1, IASDT.R::LoadPackages(List = c("dplyr", "jsonlite"))))
-        snow::clusterExport(
-          cl = c1,
-          list = c(
-            "Path_EASIN_Interim", "NotProcessed", "NSearch",
-            "DeleteChunks", "SleepTime"),
-          envir = environment())
-
-        Down <- future.apply::future_lapply(
-          X = NotProcessed, FUN = IASDT.R::EASIN_Down,
-          Path_Raw = Path_EASIN_Interim, DeleteChunks = DeleteChunks,
-          NSearch = NSearch, SleepTime = SleepTime,
-          future.scheduling = Inf, future.seed = TRUE)
-
-        rm(Down)
       }
+
+      invisible(snow::clusterEvalQ(
+        cl = c1, IASDT.R::LoadPackages(List = c("dplyr", "jsonlite"))))
+      snow::clusterExport(
+        cl = c1,
+        list = c(
+          "Path_EASIN_Interim", "NotProcessed", "NSearch",
+          "DeleteChunks", "SleepTime"),
+        envir = environment())
+
+      Down <- future.apply::future_lapply(
+        X = NotProcessed, FUN = IASDT.R::EASIN_Down,
+        Path_Raw = Path_EASIN_Interim, DeleteChunks = DeleteChunks,
+        NSearch = NSearch, SleepTime = SleepTime,
+        future.scheduling = Inf, future.seed = TRUE)
+
+
+      rm(Down)
       Sys.sleep(SleepTime)
     }
 

@@ -48,6 +48,7 @@ EASIN_Down <- function(
     Path_Raw = "datasets/interim/EASIN",
     DeleteChunks = TRUE, ReturnData = FALSE) {
 
+
   if (is.null(SpKey)) {
     stop("SpKey cannot be NULL", call. = FALSE)
   }
@@ -55,9 +56,11 @@ EASIN_Down <- function(
   # # ..................................................................... ###
 
   # Checking arguments ----
-  IASDT.R::CatTime("Checking arguments")
+  if (Verbose) {
+    IASDT.R::CatTime("Checking arguments")
+  }
 
-  AllArgs <- ls()
+  AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(AllArgs, ~get(.x, envir = environment())) %>%
     stats::setNames(AllArgs)
 
@@ -69,7 +72,7 @@ EASIN_Down <- function(
     Args = c("ReturnData", "Verbose", "DeleteChunks"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric",
-    Args = c("Timeout", "NSearch", "Attempts", "SleepTime"))
+    Args = c("Timeout", "NSearch", "SleepTime"))
 
   # # ..................................................................... ###
 
@@ -82,144 +85,139 @@ EASIN_Down <- function(
   # Ensure that the directory for temporary files exist
   fs::dir_create(file.path(Path_Raw, "FileParts"))
 
-  SpeciesOkay <- TRUE
-
   # Check if species data already available
   OutFileExist <- file.exists(Path_Out)
 
-  if (OutFileExist) {
-    if (IASDT.R::CheckRData(Path_Out)) {
-      if (Verbose) {
-        IASDT.R::CatTime("Output file already exists")
-      }
-    } else {
-      OutFileExist <- FALSE
+  if (OutFileExist && IASDT.R::CheckRData(Path_Out)) {
+    if (Verbose) {
+      IASDT.R::CatTime("Output file already exists")
     }
+  } else {
+    OutFileExist <- FALSE
   }
+
+  # # ..................................................................... ###
 
   if (isFALSE(OutFileExist)) {
-    # See https://easin.jrc.ec.europa.eu/apixg/home/geoqueries/ for help on how
-    # to formulate the URL. `exclude/dps/1/` excludes GBIF data
 
-    # Looping over data chunks
-    Skip <- 0         # Skip = 0; start at the first presence grid
-    Chunk <- 0        # iteration ID
+    # Get the number of chunks to download
 
-    while (TRUE) {
-      Chunk <- Chunk + 1
-      Obj_Out <- paste0(SpKey, "_", Chunk)
-      Path_Part <- file.path(Path_Raw, "FileParts", paste0(Obj_Out, ".RData"))
-
-      if (!file.exists(Path_Part)) {
-        # download only observation in this chunk to check for error or if there
-        # is no observations or
-        ChunkDT_URL1 <- stringr::str_glue(
-          "{BaseURL}/{SpKey}/exclude/dps/1/{Skip}/1")
-
-        # downloading data chunks for a maximum of `Attempts` times
-        DownTry <- 0
-        while (TRUE) {
-          DownTry <- DownTry + 1
-
-          if (Verbose) {
-            IASDT.R::CatTime(
-              paste0(SpKey, ": Chunk ", Chunk, " - attempt ", DownTry))
-          }
-
-          # Download only one observation for this chunk. `.mapUnicode` = FALSE
-          # to ignore encoding issues in some references
-          ChunkDT1 <- try(
-            RCurl::getURL(ChunkDT_URL1, .mapUnicode = FALSE), silent = TRUE)
-
-          # Break if there is no observations and save empty tibble
-          NoObs <- stringr::str_detect(
-            string = ChunkDT1, pattern = "There are no results based ")
-          if (NoObs) {
-            SpeciesOkay <- FALSE
-            IASDT.R::SaveAs(
-              InObj = tibble::tibble(), OutObj = SpKey, OutPath = Path_Out)
-            break
-          }
-
-          # Download the current chunk
-          ChunkDT_URL <- stringr::str_glue(
-            "{BaseURL}/{SpKey}/exclude/dps/1/{Skip}/{NSearch}")
-          ChunkDT <- try(
-            RCurl::getURL(ChunkDT_URL, .mapUnicode = FALSE), silent = TRUE)
-
-          if (
-            (inherits(ChunkDT, "try-error") ||
-             stringr::str_detect(
-               string = ChunkDT,
-               pattern = "An error occurred while retrieving")) &&
-            DownTry < Attempts) {
-            next
-          } else {
-            break
-          }
-
-          if (DownTry >= Attempts) {
-            SpeciesOkay <- FALSE
-            break
-          }
-
-          # sleep at each chunk download
-          Sys.sleep(SleepTime)
-        }
-
-        # If species is okay, save current chunk data as tibble
-        if (SpeciesOkay) {
-
-          ChunkDT <- jsonlite::fromJSON(ChunkDT, flatten = TRUE)
-
-          if (nrow(ChunkDT) > 0) {
-            ChunkDT <- tibble::tibble(ChunkDT)
-          } else {
-            ChunkDT <- tibble::tibble()
-          }
-
-          IASDT.R::SaveAs(
-            InObj = ChunkDT, OutObj = Obj_Out, OutPath = Path_Part)
-
-          if (nrow(ChunkDT) < NSearch) {
-            break
-          } else {
-            Skip <- Skip + NSearch
-          }
-        } else {
-          break
-        }
-      }
+    if (Verbose) {
+      IASDT.R::CatTime("Get the number of chunks to download")
     }
 
-    if (SpeciesOkay) {
-      # Merge chunk data together in a single tibble
-      Tiles <- list.files(
-        path = file.path(Path_Raw, "FileParts"), full.names = TRUE,
-        pattern = paste0(SpKey, "_.+.RData")) %>%
-        gtools::mixedsort()
-
-      DT <- purrr::map_dfr(Tiles, IASDT.R::LoadAs) %>%
-        dplyr::distinct()
-
+    Skip <- Chunk <- 0
+    while (TRUE) {
+      Chunk <- Chunk + 1
       if (Verbose) {
-        IASDT.R::CatTime(
-          paste0(SpKey, ": ", nrow(DT), " observations"), Level = 1)
+        IASDT.R::CatTime(paste0("Inspecting chunk # ", Chunk), Level = 1)
       }
-
-      IASDT.R::SaveAs(InObj = DT, OutObj = SpKey, OutPath = Path_Out)
-
-      if (DeleteChunks) {
-        fs::file_delete(Tiles)
+      ChunkDT_URL1 <- stringr::str_glue(
+        "{BaseURL}/{SpKey}/exclude/dps/1/{Skip}/1")
+      NoObs <- try(
+        RCurl::getURL(ChunkDT_URL1, .mapUnicode = FALSE), silent = TRUE) %>%
+        stringr::str_detect(pattern = "There are no results based ")
+      if (NoObs) {
+        break
       }
+      Skip <- Skip + NSearch
+    }
+
+    # ---------------------------------- #
+
+    # Download chunk data
+    if (Verbose) {
+      IASDT.R::CatTime("Download chunk data")
+    }
+
+    DT_Chunks <- tibble::tibble(ID = seq_len(Chunk - 1)) %>%
+      dplyr::mutate(
+        ChunkDT = purrr::map_chr(
+          .x = ID,
+          .f = ~{
+            Obj_Out <- paste0(
+              SpKey, "_", stringr::str_pad(.x, width = 5, pad = "0"))
+            Path_Part <- file.path(
+              Path_Raw, "FileParts", paste0(Obj_Out, ".RData"))
+
+            if (file.exists(Path_Part)) {
+              return(Path_Part)
+            }
+
+            Skip <- (.x - 1) * NSearch
+            URL <- stringr::str_glue(
+              "{BaseURL}/{SpKey}/exclude/dps/1/{Skip}/{NSearch}")
+            DownTry <- 0
+
+            while (DownTry <= Attempts) {
+              DownTry <- DownTry + 1
+              if (Verbose) {
+                IASDT.R::CatTime(
+                  paste0("Chunk ", .x, " - attempt ", DownTry), Level = 1)
+              }
+
+              ChunkDT <- try(
+                RCurl::getURL(URL, .mapUnicode = FALSE), silent = TRUE)
+
+              if (
+                inherits(ChunkDT, "try-error") ||
+                stringr::str_detect(
+                  string = ChunkDT,
+                  pattern = "An error occurred while retrieving")) {
+                next
+              }
+
+              ChunkDT <- jsonlite::fromJSON(ChunkDT, flatten = TRUE)
+
+              if (nrow(ChunkDT) > 0) {
+                ChunkDT <- tibble::tibble(ChunkDT)
+              } else {
+                ChunkDT <- tibble::tibble()
+              }
+
+              # sleep at each chunk download
+              Sys.sleep(SleepTime)
+
+              if (inherits(ChunkDT, "data.frame")) {
+                break
+              }
+            }
+
+            # sleep at each chunk download
+            Sys.sleep(SleepTime)
+
+            IASDT.R::SaveAs(
+              InObj = ChunkDT, OutObj = Obj_Out, OutPath = Path_Part)
+
+            return(Path_Part)
+          }))
+
+
+    # Merge chunk data
+    if (Verbose) {
+      IASDT.R::CatTime("Merge chunk data")
+    }
+
+    DT <- dplyr::pull(DT_Chunks, ChunkDT) %>%
+      purrr::map_dfr(IASDT.R::LoadAs) %>%
+      dplyr::distinct()
+
+    if (Verbose) {
+      IASDT.R::CatTime(
+        paste0(SpKey, ": ", nrow(DT), " observations"), Level = 1)
+    }
+
+    IASDT.R::SaveAs(InObj = DT, OutObj = SpKey, OutPath = Path_Out)
+
+    if (DeleteChunks) {
+      fs::file_delete(DT_Chunks$ChunkDT)
     }
   }
 
-  if (ReturnData && SpeciesOkay) {
-    if (OutFileExist) {
-      DT <- IASDT.R::LoadAs(Path_Out)
-    }
-    return(DT)
+  # # ..................................................................... ###
+
+  if (ReturnData && file.exists(Path_Out)) {
+    return(IASDT.R::LoadAs(Path_Out))
   } else {
     return(invisible(NULL))
   }

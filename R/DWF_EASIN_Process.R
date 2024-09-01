@@ -68,7 +68,7 @@
 EASIN_Process <- function(
     ExtractTaxa = TRUE, ExtractData = TRUE, NDownTries = 10,
     NCores = 6, SleepTime = 10, NSearch = 1000, FromHPC = TRUE,
-    EnvFile = ".env", DeleteChunks = FALSE, StartYear = 1981, Plot = TRUE) {
+    EnvFile = ".env", DeleteChunks = TRUE, StartYear = 1981, Plot = TRUE) {
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -283,9 +283,18 @@ EASIN_Process <- function(
     withr::local_options(
       future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
-    c1 <- snow::makeSOCKcluster(NCores)
-    on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
-    future::plan(future::cluster, workers = c1, gc = TRUE)
+    # c1 <- snow::makeSOCKcluster(NCores)
+    # on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
+    future::plan(future::cluster, workers = NCores, gc = TRUE)
+    on.exit(future::plan(future::sequential(), add = TRUE))
+
+    # invisible(snow::clusterEvalQ(
+    #   cl = c1, IASDT.R::LoadPackages(List = c("dplyr", "jsonlite"))))
+    # snow::clusterExport(
+    #   cl = c1,
+    #   list = c("Path_EASIN_Interim", "NSearch", "DeleteChunks", "SleepTime"),
+    #   envir = environment())
+
 
     # Start downloading, allow for a maximum of `NumDownTries` trials
     Try <- 0
@@ -314,25 +323,26 @@ EASIN_Process <- function(
           paste0(
             "Download failed for ", length(NotProcessed),
             " EASIN taxa after ", NDownTries, " download attempts"),
-          Level = 1)
+          Level = 2)
         break
       }
 
-      invisible(snow::clusterEvalQ(
-        cl = c1, IASDT.R::LoadPackages(List = c("dplyr", "jsonlite"))))
-      snow::clusterExport(
-        cl = c1,
-        list = c(
-          "Path_EASIN_Interim", "NotProcessed", "NSearch",
-          "DeleteChunks", "SleepTime"),
-        envir = environment())
+      IASDT.R::CatTime("Processing EASIN data", Level = 1)
+      Down <- try(
+        future.apply::future_lapply(
+          X = NotProcessed, FUN = IASDT.R::EASIN_Down,
+          Path_Raw = Path_EASIN_Interim, DeleteChunks = DeleteChunks,
+          NSearch = NSearch, SleepTime = SleepTime,
+          future.scheduling = Inf, future.seed = TRUE,
+          future.globals = c(
+            "Path_EASIN_Interim", "NSearch", "DeleteChunks", "SleepTime"),
+          future.packages = c("dplyr", "jsonlite")),
+        silent = TRUE)
+      # [1] "R08986" "R07719" "R18201"
 
-      Down <- future.apply::future_lapply(
-        X = NotProcessed, FUN = IASDT.R::EASIN_Down,
-        Path_Raw = Path_EASIN_Interim, DeleteChunks = DeleteChunks,
-        NSearch = NSearch, SleepTime = SleepTime,
-        future.scheduling = Inf, future.seed = TRUE)
-
+      if (inherits(Down, "try-error")) {
+        next
+      }
 
       rm(Down)
       Sys.sleep(SleepTime)

@@ -63,12 +63,12 @@ CatDiff <- function(
   }
 
   lubridate::time_length(lubridate::now(tzone = "CET") - InitTime) %>%
-    lubridate::seconds_to_period() %>% {
+    lubridate::seconds_to_period() %>%
+    {
       paste0(
         stringr::str_pad(
           (lubridate::hour(.) + 24 * lubridate::day(.)), width = 2, pad = "0"),
-          ":",
-        stringr::str_pad(lubridate::minute(.), width = 2, pad = "0"), ":",
+        ":", stringr::str_pad(lubridate::minute(.), width = 2, pad = "0"), ":",
         stringr::str_pad(round(lubridate::second(.)), width = 2, pad = "0"))
     } %>%
     paste0(Prefix, .) %>%

@@ -14,7 +14,8 @@ Efforts_Process(
   StartYear = 1981,
   Boundaries = c(-30, 50, 25, 75),
   ChunkSize = 1e+05,
-  DeleteChunks = TRUE
+  DeleteChunks = TRUE,
+  DeleteProcessed = TRUE
 )
 }
 \arguments{
@@ -50,6 +51,10 @@ Top. Default: \code{c(-30, 50, 25, 75)}.}
 
 \item{DeleteChunks}{logical, indicating whether to remove file chunks after
 processing the data. Defaults to \code{TRUE}.}
+
+\item{DeleteProcessed}{Logical indicating whether to delete the raw
+downloaded GBIF data after processing them. This helps to free large
+unnecessary file space (> 22 GB). Defaults to \code{TRUE}.}
 }
 \value{
 Returns \code{NULL} invisibly. The function generates various output

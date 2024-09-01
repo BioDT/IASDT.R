@@ -13,7 +13,7 @@ EASIN_Process(
   NSearch = 1000,
   FromHPC = TRUE,
   EnvFile = ".env",
-  DeleteChunks = FALSE,
+  DeleteChunks = TRUE,
   StartYear = 1981,
   Plot = TRUE
 )

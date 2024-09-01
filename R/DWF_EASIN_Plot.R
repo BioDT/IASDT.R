@@ -103,7 +103,8 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
       paste0(
         "The following input files are missing: \n",
         paste0(
-          " >> ", PathSummaryMaps[which(SummaryMapsMissing)],collapse = "\n")),
+          " >> ", PathSummaryMaps[which(SummaryMapsMissing)],
+          collapse = "\n")),
       call. = FALSE)
   }
 
@@ -311,7 +312,7 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
   ## |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatDiff(
-    InitTime = .PlotStartTime, 
+    InitTime = .PlotStartTime,
     Prefix = "Plotting EASIN data was finished in ", Level = 1)
 
   return(invisible(NULL))

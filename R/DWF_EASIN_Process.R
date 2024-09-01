@@ -284,7 +284,7 @@ EASIN_Process <- function(
       future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
     future::plan(future::cluster, workers = NCores, gc = TRUE)
-    on.exit(future::plan(future::sequential(), add = TRUE))
+    on.exit(future::plan(future::sequential))
 
     # Start downloading, allow for a maximum of `NumDownTries` trials
     Try <- 0
@@ -384,7 +384,7 @@ EASIN_Process <- function(
   withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
   future::plan(future::cluster, workers = NCores, gc = TRUE)
-  on.exit(future::plan(future::sequential()), add = TRUE)
+  on.exit(future::plan(future::sequential), add = TRUE)
 
   EASIN_Data_Orig <- future.apply::future_lapply(
     X = EASIN_Files, FUN = IASDT.R::LoadAs,
@@ -449,7 +449,7 @@ EASIN_Process <- function(
     dplyr::filter(CellCode %in% LandGrids)
 
 
-  future::plan(future::sequential()
+  future::plan(future::sequential)
   rm(LandGrids, WKTs)
 
   ## Save cleaned EASIN Data ----

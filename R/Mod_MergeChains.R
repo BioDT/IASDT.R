@@ -91,8 +91,9 @@ Mod_MergeChains <- function(
 
   if (length(tempFiles) > 0) {
     IASDT.R::CatTime(
-      paste0("There are ", length(tempFiles),
-             " unsuccessful model variants to be removed"))
+      paste0(
+        "There are ", length(tempFiles),
+        " unsuccessful model variants to be removed"))
     tempFilesRDs <- stringr::str_replace_all(tempFiles, ".rds_temp$", ".rds")
     tempFilesProgress <- stringr::str_replace_all(
       tempFiles, "_post.rds_temp", "_Progress.txt")
@@ -110,12 +111,10 @@ Mod_MergeChains <- function(
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Prepare working on parallel
- 
   withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
-  c1 <- snow::makeSOCKcluster(NCores)
-  on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
-  future::plan(future::cluster, workers = c1, gc = TRUE)
+  future::plan(future::cluster, workers = NCores, gc = TRUE)
+  on.exit(future::plan(future::sequential), add = TRUE)
 
   Path_Fitted_Models <- file.path(Path_Model, "Model_Fitted")
   Path_Coda <- file.path(Path_Model, "Model_Coda")
@@ -135,13 +134,9 @@ Mod_MergeChains <- function(
 
   # Merge posteriors and save as Hmsc model / coda object
 
-  invisible(snow::clusterEvalQ(
-    cl = c1, IASDT.R::LoadPackages(List = c("Hmsc", "coda"))))
-  snow::clusterExport(cl = c1, list = c("Model_Info2"), envir = environment())
-
-  Model_Info3 <- snow::parLapply(
-    cl = c1, x = seq_len(nrow(Model_Info2)),
-    fun = function(x) {
+  Model_Info3 <- future.apply::future_lapply(
+    X = seq_len(nrow(Model_Info2)),
+    FUN = function(x) {
 
       M_Name_Fit <- Model_Info2$M_Name_Fit[[x]]
       if (Model_Info2$Post_Missing[[x]]) {
@@ -228,7 +223,9 @@ Mod_MergeChains <- function(
         Path_FittedMod = Path_FittedMod, Path_Coda = Path_Coda,
         Post_Aligned2 = Post_Aligned2) %>%
         return()
-    })
+    },
+      future.scheduling = Inf, future.seed = TRUE,
+      future.globals = "Model_Info2", future.packages = c("Hmsc", "coda"))
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -277,8 +274,7 @@ Mod_MergeChains <- function(
           }
         }))
 
-  snow::stopCluster(c1)
-  future::plan(future::sequential, gc = TRUE)
+  future::plan(future::sequential)
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

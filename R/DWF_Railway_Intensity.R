@@ -258,19 +258,8 @@ Railway_Intensity <- function(
     paste0("Prepare working on parallel using `", NCores, "` cores."),
     Level = 1)
 
-  c1 <- snow::makeSOCKcluster(NCores)
-  on.exit({
-    invisible(try(snow::stopCluster(c1), silent = TRUE))
-    future::plan(future::sequential, gc = TRUE)
-  }, add = TRUE)
-  future::plan(future::cluster, workers = c1, gc = TRUE)
-
-  invisible(snow::clusterEvalQ(
-    cl = c1,
-    IASDT.R::LoadPackages(List = c("dplyr", "fs", "sf", "IASDT.R", "stringr"))))
-  snow::clusterExport(
-    cl = c1, list = c("Railways_Links", "RefGridSF"), envir = environment())
-
+  future::plan(future::cluster, workers = NCores, gc = TRUE)
+  on.exit(future::plan(future::sequential), add = TRUE)
 
   ## Processing railway data ----
   IASDT.R::CatTime("Processing railway data", Level = 1)
@@ -363,7 +352,9 @@ Railway_Intensity <- function(
         URL = URL, Country = Country, Area = Prefix, Path = Path_Temp) %>%
         return()
     },
-    future.scheduling = Inf, future.seed = TRUE) %>%
+    future.scheduling = Inf, future.seed = TRUE,
+    future.packages = c("dplyr", "fs", "sf", "IASDT.R", "stringr"),
+    future.globals = c("Railways_Links", "RefGridSF")) %>%
     dplyr::bind_rows() %>%
     dplyr::mutate(DT = purrr::map(Path, IASDT.R::LoadAs)) %>%
     tidyr::unnest(DT) %>%

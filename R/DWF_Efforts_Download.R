@@ -79,13 +79,8 @@ Efforts_Download <- function(NCores = 6, Path_Raw, Path_Interim, Path_Efforts) {
 
   withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
-  c1 <- snow::makeSOCKcluster(NCores)
-  on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
-  future::plan(future::cluster, workers = c1, gc = TRUE)
-  snow::clusterEvalQ(
-    cl = c1,
-    expr = IASDT.R::LoadPackages(
-      List = c("dplyr", "IASDT.R", "rgbif", "stringr")))
+  future::plan(future::cluster, workers = NCores, gc = TRUE)
+  on.exit(future::plan(future::sequential), add = TRUE)
 
   # # ..................................................................... ###
 
@@ -144,7 +139,10 @@ Efforts_Download <- function(NCores = 6, Path_Raw, Path_Interim, Path_Efforts) {
 
           return(DownFile)
 
-        }, .options = furrr::furrr_options(seed = TRUE, scheduling = Inf)))
+        },
+        .options = furrr::furrr_options(
+          seed = TRUE, scheduling = Inf,
+          packages = c("dplyr", "IASDT.R", "rgbif", "stringr"))))
 
   save(Efforts_AllRequests,
        file = file.path(Path_Efforts, "Efforts_AllRequests.RData"))
@@ -153,8 +151,7 @@ Efforts_Download <- function(NCores = 6, Path_Raw, Path_Interim, Path_Efforts) {
 
   # Stopping cluster ------
   IASDT.R::CatTime("Stopping cluster", Level = 1)
-  snow::stopCluster(c1)
-  future::plan(future::sequential, gc = TRUE)
+  future::plan(future::sequential)
 
   # # ..................................................................... ###
 

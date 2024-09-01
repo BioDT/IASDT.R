@@ -328,13 +328,8 @@ RespCurv_PrepData <- function(
     withr::local_options(
         future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
     
-    c1 <- snow::makeSOCKcluster(NCores)
-    on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
-    future::plan(future::cluster, workers = c1, gc = TRUE)
-    invisible(snow::clusterEvalQ(
-      cl = c1, IASDT.R::LoadPackages(List = c("dplyr", "purrr", "tidyr"))))
-    snow::clusterExport(
-      cl = c1, list = c("ResCurvDT", "Model"), envir = environment())
+    future::plan(future::cluster, workers = NCores, gc = TRUE)
+    on.exit(future::plan(future::sequential), add = TRUE)
 
     # +++++++++++++++++++++++++++++++++
     # Prepare response curve data on parallel
@@ -345,17 +340,16 @@ RespCurv_PrepData <- function(
     ResCurvDT <- future.apply::future_lapply(
       X = seq_len(nrow(ResCurvDT)),
       FUN = PrepRCData_Int,
-      future.scheduling = Inf, future.seed = TRUE) %>%
+      future.scheduling = Inf, future.seed = TRUE,
+      future.packages = c("dplyr", "purrr", "tidyr"),
+      future.globals = c("ResCurvDT", "Model")) %>%
       dplyr::bind_rows()
 
-    snow::stopCluster(c1)
-    future::plan(future::sequential, gc = TRUE)
-
+    future::plan(future::sequential)
   }
 
   IASDT.R::CatTime("Saving data to desk")
   save(ResCurvDT, file = file.path(Path_RespCurvDT, "ResCurvDT.RData"))
-
 
   IASDT.R::CatDiff(
     InitTime = .StartTime, ChunkText = "Function summary", CatInfo = TRUE)

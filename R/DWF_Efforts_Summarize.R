@@ -106,21 +106,8 @@ Efforts_Summarize <- function(
 
   withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
-  c1 <- snow::makeSOCKcluster(NCores)
-  on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
-  future::plan(future::cluster, workers = c1, gc = TRUE)
-  invisible(
-    snow::clusterEvalQ(
-      cl = c1,
-      IASDT.R::LoadPackages(
-        List = c("terra", "IASDT.R", "stringr", "fs", "sf", "readr", "dplyr"))))
-
-  snow::clusterExport(
-    cl = c1,
-    list = c(
-      "Path_Efforts", "Path_Efforts_Interim", "Efforts_AllRequests",
-      "Path_Grid_R", "Path_Efforts_Data", "Grid_SF", "IAS_List", "ChunkSize"),
-    envir = environment())
+  future::plan(future::cluster, workers = NCores, gc = TRUE)
+  on.exit(future::plan(future::sequential), add = TRUE)
 
   # # ..................................................................... ###
 
@@ -263,7 +250,13 @@ Efforts_Summarize <- function(
           ClassOrder = ClassOrder, Path_DT = Path_DT,
           class = class, order = order))
     },
-    future.scheduling = Inf, future.seed = TRUE) %>%
+    future.scheduling = Inf, future.seed = TRUE,
+    future.packages = c(
+      "terra", "IASDT.R", "stringr", "fs", "sf", "readr", "dplyr"),
+    future.globals = c(
+      "Path_Efforts", "Path_Efforts_Interim", "Efforts_AllRequests",
+      "Path_Grid_R", "Path_Efforts_Data", "Grid_SF", "IAS_List", "ChunkSize")
+    ) %>%
     dplyr::bind_rows()
 
   # # ++++++++++++++++++++++++++++++ ###
@@ -384,7 +377,13 @@ Efforts_Summarize <- function(
           ObsN_Native = ObsN_Native, NObs_Native_R = list(NObs_Native_R),
           NSp_Native_R = list(NSp_Native_R)))
     },
-    future.scheduling = Inf, future.seed = TRUE) %>%
+    future.scheduling = Inf, future.seed = TRUE,
+    future.packages = c(
+      "terra", "IASDT.R", "stringr", "fs", "sf", "readr", "dplyr"),
+    future.globals = c(
+      "Path_Efforts", "Path_Efforts_Interim", "Efforts_AllRequests",
+      "Path_Grid_R", "Path_Efforts_Data", "Grid_SF", "IAS_List", "ChunkSize")
+      ) %>%
     dplyr::bind_rows()
 
   # join data with requests summary
@@ -398,8 +397,7 @@ Efforts_Summarize <- function(
 
   # Stopping cluster ------
   IASDT.R::CatTime("Stopping cluster", Level = 1)
-  snow::stopCluster(c1)
-  future::plan(future::sequential, gc = TRUE)
+  future::plan(future::sequential)
   invisible(gc())
 
   # # ..................................................................... ###

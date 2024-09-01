@@ -45,14 +45,8 @@ PlotGelman_Alpha <- function(CodaObj, NCores, PlottingAlpha = 0.25) {
 
   withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
   
-  c1 <- snow::makeSOCKcluster(NCores)
-  on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
-  future::plan(future::cluster, workers = c1, gc = TRUE)
-
-  invisible(snow::clusterEvalQ(
-    cl = c1,
-    IASDT.R::LoadPackages(List = c("dplyr", "coda", "tibble", "magrittr"))))
-  snow::clusterExport(cl = c1, list = "CodaObj", envir = environment())
+  future::plan(future::cluster, workers = NCores, gc = TRUE)
+  on.exit(future::plan(future::sequential), add = TRUE)
 
   # # ..................................................................... ###
 
@@ -60,9 +54,9 @@ PlotGelman_Alpha <- function(CodaObj, NCores, PlottingAlpha = 0.25) {
     attr("dimnames") %>%
     magrittr::extract2(2) %>%
     sort() %>%
-    snow::parLapply(
-      cl = c1, x = .,
-      fun = function(x) {
+    future.apply::future_lapply(
+      X = .,
+      FUN = function(x) {
         lapply(CodaObj, function(Y) {
           Y[, x, drop = TRUE]
         }) %>%
@@ -78,7 +72,10 @@ PlotGelman_Alpha <- function(CodaObj, NCores, PlottingAlpha = 0.25) {
             cols = -Iter, names_to = "Type", values_to = "ShrinkFactor") %>%
           dplyr::arrange(Type, Iter) %>%
           dplyr::mutate(Type = factor(Type), Var_LV = x)
-      }) %>%
+      },
+      future.scheduling = Inf, future.seed = TRUE,
+      future.globals = "CodaObj", 
+      future.packages = c("dplyr", "coda", "tibble", "magrittr")) %>%
     dplyr::bind_rows() %>%
     dplyr::mutate(
       group = paste0(Var_LV, "_", Type),
@@ -132,8 +129,7 @@ PlotGelman_Alpha <- function(CodaObj, NCores, PlottingAlpha = 0.25) {
 
   # # ..................................................................... ###
 
-  snow::stopCluster(c1)
-  future::plan(future::sequential, gc = TRUE)
+  future::plan(future::sequential)
 
   # # ..................................................................... ###
 

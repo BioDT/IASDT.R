@@ -342,6 +342,7 @@ EASIN_Process <- function(
 
     # Stop cluster ----
     IASDT.R::CatTime("Stop cluster", Level = 1)
+
     future::plan(future::sequential, gc = TRUE)
   }
 
@@ -377,21 +378,8 @@ EASIN_Process <- function(
 
   ## Merging EASIN data -----
   IASDT.R::CatTime("Merging EASIN data", Level = 1)
-
-  IASDT.R::CatTime(
-    paste0("Prepare working on parallel using `", NCores, "` cores."),
-    Level = 2)
-
-  withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
-
-  future::plan(future::cluster, workers = NCores, gc = TRUE)
-  on.exit(future::plan(future::sequential), add = TRUE)
-
-  EASIN_Data_Orig <- future.apply::future_lapply(
-    X = EASIN_Files, FUN = IASDT.R::LoadAs,
-    future.scheduling = Inf, future.seed = TRUE,
-    future.globals = "EASIN_Files") %>%
-    dplyr::bind_rows()
+  EASIN_Data_Orig <- purrr::map_dfr(
+    .x = EASIN_Files, .f = IASDT.R::LoadAs)
 
   ## Save merged EASIN data -----
   IASDT.R::CatTime("Save merged EASIN data", Level = 1)
@@ -405,13 +393,6 @@ EASIN_Process <- function(
   # # |||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Cleaning EASIN data")
-
-  GridSf <- IASDT.R::LoadAs(GridSf) %>%
-    magrittr::extract2("Grid_10_sf_s")
-  LandGrids <- IASDT.R::LoadAs(LandGrids) %>%
-    sf::st_drop_geometry() %>%
-    dplyr::pull("CellCode")
-
   EASIN_Data <- EASIN_Data_Orig %>%
     dplyr::mutate(Year = as.integer(Year), SpeciesName = NULL) %>%
     dplyr::rename(EASINID = SpeciesId) %>%
@@ -422,21 +403,20 @@ EASIN_Process <- function(
 
   ## Extract coordinates from WKT ----
   IASDT.R::CatTime("Extract coordinates from WKT", Level = 1)
-  WKTs <- EASIN_Data %>%
-    dplyr::distinct(WKT) %>%
-    dplyr::pull(WKT) %>%
-    future.apply::future_lapply(
-      X = .,
-      FUN = function(x) {
-        tibble::tibble(WKT = x, IASDT.R::Text2Coords(x))
-      },
-      future.scheduling = Inf, future.seed = TRUE) %>%
-    dplyr::bind_rows() %>%
+  WKTs <- dplyr::distinct(EASIN_Data, WKT) %>%
+    dplyr::mutate(Coords = purrr::map(WKT, IASDT.R::Text2Coords)) %>%
+    tidyr::unnest_wider(Coords) %>%
     dplyr::mutate(dplyr::across(
       .cols = c("Longitude", "Latitude"), .fns = ~round(.x, 5)))
 
   ## Add coordinates to data and convert to sf ----
   IASDT.R::CatTime("Add coordinates to data and convert to sf", Level = 1)
+  GridSf <- IASDT.R::LoadAs(GridSf) %>%
+    magrittr::extract2("Grid_10_sf_s")
+  LandGrids <- IASDT.R::LoadAs(LandGrids) %>%
+    sf::st_drop_geometry() %>%
+    dplyr::pull("CellCode")
+
   EASIN_Data <- EASIN_Data %>%
     dplyr::left_join(WKTs, by = "WKT") %>%
     # convert to sf object, while keeping original coordinates as columns
@@ -449,8 +429,6 @@ EASIN_Process <- function(
     # exclude observations not overlapping with the study area
     dplyr::filter(CellCode %in% LandGrids)
 
-
-  future::plan(future::sequential)
   rm(LandGrids, WKTs)
 
   ## Save cleaned EASIN Data ----

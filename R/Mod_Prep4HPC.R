@@ -654,9 +654,9 @@ Mod_Prep4HPC <- function(
     withr::local_options(
         future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
     
-    c1 <- snow::makeSOCKcluster(NCores)
-    on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
-    future::plan(future::cluster, workers = c1, gc = TRUE)
+    future::plan(future::cluster, workers = NCores, gc = TRUE)
+    on.exit(future::plan(future::sequential), add = TRUE)
+
   } else {
     IASDT.R::CatTime("Working sequentially")
   }
@@ -676,22 +676,21 @@ Mod_Prep4HPC <- function(
   # Prepare GPP knots
   IASDT.R::CatTime("Preparing GPP knots", Level = 1)
 
-  if (NCores > 1) {
-    invisible(snow::clusterEvalQ(
-      cl = c1,
-      IASDT.R::LoadPackages(
-        List = c("dplyr", "sf", "Hmsc", "jsonify", "magrittr"))))
-    snow::clusterExport(
-      cl = c1, list = c("DT_xy", "GPP_Dists", "MaxLF", "MinLF"),
-      envir = environment())
+  if (NCores > 1) { 
 
-    GPP_Knots <- snow::parLapply(
-      cl = c1, x = GPP_Dists * 1000,
-      fun = function(x) {
+    GPP_Knots <- future.apply::future_lapply(
+      X = GPP_Dists * 1000,
+      FUN = function(x) {
         IASDT.R::PrepKnots(
           Coords = DT_xy, MinDist = x, MinLF = MinLF, MaxLF = MaxLF)
-      }) %>%
+      },
+      future.scheduling = Inf, future.seed = TRUE,
+      future.globals = c("DT_xy", "GPP_Dists", "MaxLF", "MinLF"), 
+      future.packages = c("dplyr", "sf", "Hmsc", "jsonify", "magrittr")) %>%
       stats::setNames(paste0("GPP_", GPP_Dists))
+    
+    future::plan(future::sequential)
+    
   } else {
     GPP_Knots <- purrr::map(
       .x = GPP_Dists * 1000,
@@ -894,15 +893,16 @@ Mod_Prep4HPC <- function(
 
   # Implement `InitFitFun` function: start sampling and save output files
   if (NCores > 1) {
-    invisible(snow::clusterEvalQ(
-      cl = c1, IASDT.R::LoadPackages(List = c("Hmsc", "jsonify", "IASDT.R"))))
-    snow::clusterExport(
-      cl = c1, envir = environment(),
-      list = c("InitFitFun", "Model_Info", "OverwriteInitMod",
-               "verbose", "nChains", "ToJSON"))
 
-    Model_Process <- snow::parLapply(
-      cl = c1, x = seq_len(nrow(Model_Info)), fun = InitFitFun)
+    Model_Process <- future.apply::future_lapply(
+      X = seq_len(nrow(Model_Info)), FUN = InitFitFun,
+      future.scheduling = Inf, future.seed = TRUE,
+      future.globals = c(
+        "InitFitFun", "Model_Info", "OverwriteInitMod",
+        "verbose", "nChains", "ToJSON"), 
+      future.packages = c("Hmsc", "jsonify", "IASDT.R"))
+  
+  future::plan(future::sequential)
 
   } else {
     Model_Process <- purrr::map(
@@ -931,8 +931,7 @@ Mod_Prep4HPC <- function(
 
   if (NCores > 1) {
     IASDT.R::CatTime("Stopping cluster")
-    snow::stopCluster(c1)
-    future::plan(future::sequential, gc = TRUE)
+    future::plan(future::sequential)
   }
 
   # # |||||||||||||||||||||||||||||||||||

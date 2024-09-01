@@ -153,13 +153,8 @@ GBIF_Process <- function(
     paste0("Prepare working on parallel using `", NCores, "` cores."),
     Level = 1)
 
-  c1 <- snow::makeSOCKcluster(NCores)
-  on.exit({
-    invisible(try(snow::stopCluster(c1), silent = TRUE))
-    future::plan(future::sequential, gc = TRUE)
-  }, add = TRUE)
-  future::plan(future::cluster, workers = c1, gc = TRUE)
-  invisible(snow::clusterEvalQ(cl = c1, IASDT.R::LoadPackages(List = "dplyr")))
+  future::plan(future::cluster, workers = NCores, gc = TRUE)
+  on.exit(future::plan(future::sequential), add = TRUE)
 
   IASDT.R::CatTime(
     "Processing chunks on parallel, save each as RData files", Level = 1)
@@ -174,7 +169,7 @@ GBIF_Process <- function(
       IASDT.R::GBIF_ReadChunk(
         ChunkFile = x, EnvFile = EnvFile, FromHPC = FromHPC,
         SaveRData = TRUE, ReturnData = FALSE, Overwrite = Overwrite)
-    }, future.scheduling = Inf, future.seed = TRUE)
+    }, future.scheduling = Inf, future.seed = TRUE, future.packages = "dplyr")
 
   IASDT.R::CatDiff(
     InitTime = .StartTimeChunks, Prefix = "Finished in ", Level = 2)
@@ -183,7 +178,8 @@ GBIF_Process <- function(
   if (all(file.exists(ChunkListRData))) {
     GBIF_Data <- furrr::future_map_dfr(
       .x = ChunkListRData, .f = IASDT.R::LoadAs,
-      .options = furrr::furrr_options(seed = TRUE), .progress = FALSE)   %>%
+      .options = furrr::furrr_options(seed = TRUE, packages = "dplyr"),
+      .progress = FALSE)   %>%
       dplyr::bind_rows() %>%
       # merge with taxa standardization results
       dplyr::left_join(TaxaList, by = "speciesKey") %>%
@@ -199,13 +195,12 @@ GBIF_Process <- function(
     InitTime = .StartTimeChunks, Prefix = "Finished in ", Level = 2)
 
   IASDT.R::CatTime(
-    paste0("A total of ", format(nrow(GBIF_Data), big.mark = ","),
-           " observations"),
+    paste0("A total of ", format(nrow(GBIF_Data), big.mark = ","), 
+          " observations"),
     Level = 2)
 
   IASDT.R::CatTime("Stopping cluster", Level = 1)
-  invisible(snow::stopCluster(c1))
-  future::plan(future::sequential, gc = TRUE)
+  future::plan(future::sequential)
 
   IASDT.R::CatTime("Saving `GBIF_Data` to disk", Level = 1)
   save(GBIF_Data, file = file.path(Path_GBIF, "GBIF_Data.RData"))
@@ -522,20 +517,17 @@ GBIF_Process <- function(
   IASDT.R::CatTime("Split species data - grid/raster/plot", Level = 1)
 
   IASDT.R::CatTime("Prepare working on parallel", Level = 2)
-  c1 <- snow::makeSOCKcluster(NCores)
-  on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
-  future::plan(future::cluster, workers = c1, gc = TRUE)
-  invisible(snow::clusterEvalQ(cl = c1, IASDT.R::LoadPackages(List = "dplyr")))
+  future::plan(future::cluster, workers = NCores, gc = TRUE)
+  on.exit(future::plan(future::sequential), add = TRUE)
 
   IASDT.R::CatTime("Splitting species data on parallel", Level = 2)
   furrr::future_walk(
     .x = SpList, .f = IASDT.R::GBIF_SpData, EnvFile = EnvFile,
     Verbose = FALSE, FromHPC = FromHPC, LastUpdate = LastUpdate,
-    .options = furrr::furrr_options(seed = TRUE), .progress = FALSE)
+    .options = furrr::furrr_options(seed = TRUE, packages = "dplyr"))
 
   IASDT.R::CatTime("Stopping cluster", Level = 2)
-  invisible(snow::stopCluster(c1))
-  future::plan(future::sequential, gc = TRUE)
+  future::plan(future::sequential)
 
   # # ..................................................................... ###
 

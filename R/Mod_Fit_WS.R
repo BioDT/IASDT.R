@@ -85,11 +85,8 @@ Mod_Fit_WS <- function(Path_Model, EnvFile = ".env", NCores = NULL) {
     withr::local_options(
         future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
-    c1 <- snow::makeSOCKcluster(NCores)
-    on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
-    future::plan(future::cluster, workers = c1, gc = TRUE)
-    snow::clusterExport(
-      cl = c1, list = c("Path_Hmsc_WS", "Model2Run"), envir = environment())
+    future::plan(future::cluster, workers = NCores, gc = TRUE)
+    on.exit(future::plan(future::sequential), add = TRUE)
 
     RunCommands <- future.apply::future_lapply(
       X = seq_len(nrow(Model2Run)),
@@ -99,10 +96,10 @@ Mod_Fit_WS <- function(Path_Model, EnvFile = ".env", NCores = NULL) {
           stdout = Model2Run$Path_ModProg[x],
           stderr = Model2Run$Path_ModProg[x])
       },
-      future.scheduling = Inf, future.seed = TRUE)
+      future.scheduling = Inf, future.seed = TRUE,
+      future.globals = c("Path_Hmsc_WS", "Model2Run"))
 
-    snow::stopCluster(c1)
-    future::plan(future::sequential, gc = TRUE)
+    future::plan(future::sequential)
 
   } else {
     IASDT.R::CatTime("All model variants were already fitted.")

@@ -53,7 +53,7 @@ PlotConvergence <- function(
     IAS_ID <- Species <- Variable <- data <- PlotID <- Var <- PlotFixedY <-
     Path_Scratch <- File <- Page <- Iter <- Value <- Chain <- y <- label <-
     Var_Sp <- NULL
-  
+
   withr::local_options(
         future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
@@ -95,10 +95,10 @@ PlotConvergence <- function(
 
   IASDT.R::CatTime("Prepare convergence data")
 
-  IASDT.R::CatTime("  >>  Loading coda object")
+  IASDT.R::CatTime("Loading coda object", Level = 1)
   Coda_Obj <- IASDT.R::LoadAs(Path_Coda)
 
-  IASDT.R::CatTime("  >>  Loading fitted model object")
+  IASDT.R::CatTime("Loading fitted model object", Level = 1)
   Model <- IASDT.R::LoadAs(Path_FittedModel)
 
   ModVars <- Model$covNames
@@ -113,22 +113,22 @@ PlotConvergence <- function(
     FileConv_Rho <- file.path(Path_Convergence, "Convergence_Rho.RData")
 
     if (file.exists(FileConv_Rho)) {
-      IASDT.R::CatTime("  >>  Loading plotting data")
+      IASDT.R::CatTime("Loading plotting data", Level = 1)
       PlotObj_Rho <- IASDT.R::LoadAs(FileConv_Rho)
     } else {
-      IASDT.R::CatTime("  >>  Prepare plot")
+      IASDT.R::CatTime("Prepare plot", Level = 1)
       PlotObj_Rho <- IASDT.R::PlotRho(
         Post = Coda_Obj, Model = Model, Title = Title, Cols = Cols)
 
       if (SavePlotData) {
-        IASDT.R::CatTime("  >>  Save plotting data")
+        IASDT.R::CatTime("Save plotting data", Level = 1)
         IASDT.R::SaveAs(
           InObj = PlotObj_Rho, OutObj = "Convergence_Rho",
           OutPath = FileConv_Rho)
       }
     }
 
-    IASDT.R::CatTime("  >>  Save plot")
+    IASDT.R::CatTime("Save plot", Level = 1)
     ggplot2::ggsave(
       plot = PlotObj_Rho, dpi = 600, device = "pdf", width = 18, height = 12,
       filename = file.path(Path_Convergence, "Convergence_Rho.pdf"))
@@ -144,23 +144,23 @@ PlotConvergence <- function(
   FileConv_Alpha <- file.path(Path_Convergence, "Convergence_Alpha.RData")
 
   if (file.exists(FileConv_Alpha)) {
-    IASDT.R::CatTime("  >>  Loading plotting data")
+    IASDT.R::CatTime("Loading plotting data", Level = 1)
     PlotObj_Alpha <- IASDT.R::LoadAs(FileConv_Alpha)
   } else {
-    IASDT.R::CatTime("  >>  Prepare plot")
+    IASDT.R::CatTime("Prepare plot", Level = 1)
     PlotObj_Alpha <- IASDT.R::PlotAlpha(
       Post = Coda_Obj, Model = Model, Title = Title, NRC = NRC,
       AddFooter = FALSE, AddTitle = FALSE, Cols = Cols)
 
     if (SavePlotData) {
-      IASDT.R::CatTime("  >>  Save plotting data")
+      IASDT.R::CatTime("Save plotting data", Level = 1)
       IASDT.R::SaveAs(
         InObj = PlotObj_Alpha, OutObj = "Convergence_Alpha",
         OutPath = file.path(Path_Convergence, "Convergence_Alpha.RData"))
     }
   }
 
-  IASDT.R::CatTime("  >>  Save plot")
+  IASDT.R::CatTime("Save plot", Level = 1)
   ggplot2::ggsave(
     plot = PlotObj_Alpha, dpi = 600, device = "pdf", width = 18, height = 10,
     filename = file.path(Path_Convergence, "Convergence_Alpha.pdf"))
@@ -180,18 +180,18 @@ PlotConvergence <- function(
   FileConv_Omega <- file.path(Path_Convergence, "Convergence_Omega.RData")
 
   if (file.exists(FileConv_Omega)) {
-    IASDT.R::CatTime("  >>  Loading plotting data")
+    IASDT.R::CatTime("Loading plotting data", Level = 1)
     PlotObj_Omega <- IASDT.R::LoadAs(FileConv_Omega)
   } else {
 
-    IASDT.R::CatTime("  >>  Coda to tibble")
+    IASDT.R::CatTime("Coda to tibble", Level = 1)
     OmegaDF <- IASDT.R::Coda_to_tibble(
       CodaObj = Obj_Omega, Type = "omega", NOmega = NOmega,
       EnvFile = EnvFile, FromHPC = FromHPC)
 
     SelectedCombs <- unique(OmegaDF$SpComb)
 
-    IASDT.R::CatTime("  >>  Prepare confidence interval data")
+    IASDT.R::CatTime("Prepare confidence interval data", Level = 1)
     CI <- purrr::map(.x  = Obj_Omega, .f = ~ .x[, SelectedCombs]) %>%
       coda::mcmc.list() %>%
       summary(quantiles = c(0.025, 0.975)) %>%
@@ -199,22 +199,14 @@ PlotConvergence <- function(
       as.data.frame() %>%
       tibble::as_tibble(rownames = "SpComb")
 
-    IASDT.R::CatTime("  >>  Prepare working in parallel")
-    c1 <- snow::makeSOCKcluster(NCores)
-    on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
-    future::plan(future::cluster, workers = c1, gc = TRUE)
-    invisible(snow::clusterEvalQ(
-      cl = c1,
-      IASDT.R::LoadPackages(
-        List = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext"))))
-    snow::clusterExport(
-      cl = c1, list = c("NOmega", "CI", "SelectedCombs", "OmegaDF", "Cols"),
-      envir = environment())
+    IASDT.R::CatTime("Prepare working in parallel", Level = 1)
+    future::plan(future::cluster, workers = NCores, gc = TRUE)
+    on.exit(future::plan(future::sequential), add = TRUE)
 
-    IASDT.R::CatTime("  >>  Prepare trace plots data")
-    PlotObj_Omega <- snow::parLapply(
-      cl = c1, x = seq_len(NOmega),
-      fun = function(x) {
+    IASDT.R::CatTime("Prepare trace plots data", Level = 1)
+    PlotObj_Omega <- future.apply::future_lapply(
+      X = seq_len(NOmega),
+      FUN = function(x) {
 
         CI0 <- dplyr::filter(CI, SpComb == SelectedCombs[x]) %>%
           dplyr::select(-SpComb) %>%
@@ -281,13 +273,15 @@ PlotConvergence <- function(
           color = "steelblue4")
 
         return(Plot)
-      })
+      },
+      future.scheduling = Inf, future.seed = TRUE,
+      future.globals = c("NOmega", "CI", "SelectedCombs", "OmegaDF", "Cols"),
+      future.packages = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext"))
 
-    snow::stopCluster(c1)
-    future::plan(future::sequential, gc = TRUE)
+    future::plan(future::sequential)
 
     if (SavePlotData) {
-      IASDT.R::CatTime("  >>  Save plot data")
+      IASDT.R::CatTime("Save plot data", Level = 1)
       IASDT.R::SaveAs(
         InObj = PlotObj_Omega, OutObj = "Convergence_Omega",
         OutPath = file.path(Path_Convergence, "Convergence_Omega.RData"))
@@ -356,24 +350,25 @@ PlotConvergence <- function(
   FileConv_Beta <- file.path(Path_Convergence, "Convergence_Beta.RData")
 
   if (file.exists(FileConv_Beta)) {
-    IASDT.R::CatTime("  >>  Loading plotting data")
+    IASDT.R::CatTime("Loading plotting data", Level = 1)
     PlotObj_Beta <- IASDT.R::LoadAs(FileConv_Beta)
 
   } else {
 
-    IASDT.R::CatTime("  >>  Prepare trace plot data")
+    IASDT.R::CatTime("Prepare trace plot data", Level = 1)
 
-    IASDT.R::CatTime("  >> >> Prepare working in parallel")
-    c1 <- snow::makeSOCKcluster(NCores)
-    future::plan(future::cluster, workers = c1, gc = TRUE)
+    IASDT.R::CatTime(
+      paste0("Prepare working in parallel using `", NCores, "`"), Level = 2)
+    future::plan(future::cluster, workers = NCores, gc = TRUE)
+    on.exit(future::plan(future::sequential), add = TRUE)
 
-    IASDT.R::CatTime("  >> >> Prepare 95% credible interval data")
+    IASDT.R::CatTime("Prepare 95% credible interval data", Level = 2)
     CI <- summary(Obj_Beta, quantiles = c(0.025, 0.975))$quantiles %>%
       as.data.frame() %>%
       tibble::as_tibble(rownames = "Var_Sp") %>%
       dplyr::rename(CI_025 = `2.5%`, CI_975 = `97.5%`)
 
-    IASDT.R::CatTime("  >> >> Coda to tibble")
+    IASDT.R::CatTime("Coda to tibble", Level = 2)
     PlotObj_Beta <- IASDT.R::Coda_to_tibble(
       CodaObj = Obj_Beta, Type = "beta", EnvFile = EnvFile,
       FromHPC = FromHPC) %>%
@@ -398,20 +393,10 @@ PlotConvergence <- function(
       dplyr::select(-data) %>%
       tidyr::unnest_wider("Range")
 
-    IASDT.R::CatTime("  >> >> Export objects to cores")
-    invisible(snow::clusterEvalQ(
-      cl = c1,
-      IASDT.R::LoadPackages(
-        List = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext"))))
-    snow::clusterExport(
-      cl = c1,
-      list = c("PlotObj_Beta", "Cols", "VarRanges", "EnvFile", "FromHPC"),
-      envir = environment())
-
-    IASDT.R::CatTime("  >> >> Prepare data in parallel")
-    PlotObj_Beta <- snow::parLapply(
-      cl = c1, x = PlotObj_Beta$Var_Sp,
-      fun = function(x) {
+    IASDT.R::CatTime("Prepare data in parallel", Level = 2)
+    PlotObj_Beta <- future.apply::future_lapply(
+      X = PlotObj_Beta$Var_Sp,
+      FUN = function(x) {
 
         SubDT <- dplyr::filter(PlotObj_Beta, Var_Sp == x)
         Species <- SubDT$Species
@@ -506,15 +491,18 @@ PlotConvergence <- function(
         return(
           tibble::tibble(
             Var_Sp = x, Plot = list(Plot), PlotFixedY = list(Plot2)))
-      }) %>%
+      },
+      future.scheduling = Inf, future.seed = TRUE,
+      future.globals = c(
+        "PlotObj_Beta", "Cols", "VarRanges", "EnvFile", "FromHPC"),
+      future.packages = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext")) %>%
       dplyr::bind_rows() %>%
       dplyr::right_join(PlotObj_Beta, by = "Var_Sp")
 
-    snow::stopCluster(c1)
-    future::plan(future::sequential, gc = TRUE)
+    future::plan(future::sequential)
 
     if (SavePlotData) {
-      IASDT.R::CatTime("  >>  Save trace plot data")
+      IASDT.R::CatTime("Save trace plot data", Level = 1)
       IASDT.R::SaveAs(
         InObj = PlotObj_Beta, OutObj = "Convergence_Beta",
         OutPath = file.path(Path_Convergence, "Convergence_Beta.RData"))
@@ -525,28 +513,20 @@ PlotConvergence <- function(
   # Beta - 2. by variable ------
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatTime("  >>  Trace plots, grouped by variables")
+  IASDT.R::CatTime("Trace plots, grouped by variables", Level = 1)
 
-  IASDT.R::CatTime("  >>  >>  Preparing data")
+  IASDT.R::CatTime("Preparing data", Level = 2)
   BetaTracePlots_ByVar <- dplyr::arrange(PlotObj_Beta, Variable, IAS_ID) %>%
     dplyr::select(Variable, Plot, PlotFixedY) %>%
     tidyr::nest(data = c("Plot", "PlotFixedY"))
 
-  c1 <- snow::makeSOCKcluster(NCores)
-  future::plan(future::cluster, workers = c1, gc = TRUE)
-  invisible(snow::clusterEvalQ(
-    cl = c1, IASDT.R::LoadPackages(
-      List = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext"))))
-  snow::clusterExport(
-    cl = c1,
-    list = c("BetaTracePlots_ByVar", "Path_Convergence", "NRC", "Cols"),
-    envir = environment())
+  future::plan(future::cluster, workers = NCores, gc = TRUE)
+  on.exit(future::plan(future::sequential), add = TRUE)
 
-  IASDT.R::CatTime("  >>  >>  Save plots in parallel")
-  BetaTracePlots_ByVar0 <- snow::parLapply(
-    cl = c1,
-    x = BetaTracePlots_ByVar$Variable,
-    fun = function(x) {
+  IASDT.R::CatTime("Save plots in parallel", Level = 2)
+  BetaTracePlots_ByVar0 <- future.apply::future_lapply(
+    X = BetaTracePlots_ByVar$Variable,
+    FUN = function(x) {
 
       VarName <- dplyr::case_when(
         x == "HabLog" ~ "% Habitat coverage",
@@ -574,8 +554,9 @@ PlotConvergence <- function(
             face = "bold", size = 24, hjust = 0.5))
       PlotTitleFixed <- ggplot2::ggplot() +
         ggplot2::labs(
-          title = paste0("Convergence of the beta parameter - ", VarName,
-                         " (fixed y-axis range)")) +
+          title = paste0(
+            "Convergence of the beta parameter - ", VarName,
+            " (fixed y-axis range)")) +
         ggplot2::theme_minimal() +
         ggplot2::theme(
           plot.title = ggplot2::element_text(
@@ -621,10 +602,13 @@ PlotConvergence <- function(
           .x = BetaPlotList$PlotFixedY, .f = grid::grid.draw)
         grDevices::dev.off()
       })
-    })
+    },
+      future.scheduling = Inf, future.seed = TRUE,
+      future.globals = c(
+        "BetaTracePlots_ByVar", "Path_Convergence", "NRC", "Cols"),
+      future.packages = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext"))
 
-  snow::stopCluster(c1)
-  future::plan(future::sequential, gc = TRUE)
+  future::plan(future::sequential)
 
   rm(BetaTracePlots_ByVar0, BetaTracePlots_ByVar)
 
@@ -632,30 +616,23 @@ PlotConvergence <- function(
   # Beta - 3. by species ------
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatTime("  >>  Trace plots, grouped by species")
+  IASDT.R::CatTime("Trace plots, grouped by species", Level = 1)
 
-  IASDT.R::CatTime("  >>  >>  Preparing data")
+  IASDT.R::CatTime("Preparing data", Level = 2)
   Order <- stringr::str_remove_all(ModVars, "\\(|\\)")
   BetaTracePlots_BySp <- PlotObj_Beta %>%
     dplyr::slice(order(factor(Variable, levels = Order))) %>%
     dplyr::select(Species, IAS_ID, Plot, Variable) %>%
     tidyr::nest(data = -c("Species", "IAS_ID"))
 
-  IASDT.R::CatTime("  >>  >>  Preparing working in parallel")
-  c1 <- snow::makeSOCKcluster(NCores)
-  future::plan(future::cluster, workers = c1, gc = TRUE)
+  IASDT.R::CatTime("Preparing working in parallel", Level = 2)
+  future::plan(future::cluster, workers = NCores, gc = TRUE)
+  on.exit(future::plan(future::sequential), add = TRUE)
 
-  invisible(snow::clusterEvalQ(
-    cl = c1, IASDT.R::LoadPackages(
-      List = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext"))))
-  snow::clusterExport(
-    cl = c1, list = c("BetaTracePlots_BySp", "Path_Convergence_BySp"),
-    envir = environment())
-
-  IASDT.R::CatTime("  >>  >>  Save plots in parallel")
-  BetaTracePlots_BySp0 <- snow::parLapply(
-    cl = c1, x = BetaTracePlots_BySp$Species,
-    fun = function(x) {
+  IASDT.R::CatTime("Save plots in parallel", Level = 2)
+  BetaTracePlots_BySp0 <- future.apply::future_lapply(
+    X = BetaTracePlots_BySp$Species,
+    FUN = function(x) {
 
       VarName <- dplyr::case_when(
         x == "HabLog" ~ "% Habitat coverage",
@@ -685,15 +662,21 @@ PlotConvergence <- function(
         grDevices::pdf(
           file = file.path(
             Path_Convergence_BySp,
-            paste0("Convergence_Beta_", SpDT$IAS_ID, "_",
-                   IASDT.R::ReplaceSpace(x), ".pdf")),
+            paste0(
+              "Convergence_Beta_", SpDT$IAS_ID, "_",
+              IASDT.R::ReplaceSpace(x), ".pdf")),
           width = 18, height = 15)
         grid::grid.draw(SpPlots)
         grDevices::dev.off()
       })
 
       return(invisible(NULL))
-    })
+    },
+      future.scheduling = Inf, future.seed = TRUE,
+      future.globals = c("BetaTracePlots_BySp", "Path_Convergence_BySp"),
+      future.packages = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext"))
+
+  future::plan(future::sequential)
 
   rm(BetaTracePlots_BySp0)
 

@@ -47,9 +47,8 @@ PlotGelman_Omega <- function(
   withr::local_options(
         future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
   
-  c1 <- snow::makeSOCKcluster(NCores)
-  on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
-  future::plan(future::cluster, workers = c1, gc = TRUE)
+  future::plan(future::cluster, workers = NCores, gc = TRUE)
+  on.exit(future::plan(future::sequential), add = TRUE)
 
   OmegaNames <- magrittr::extract2(CodaObj, 1) %>%
     attr("dimnames") %>%
@@ -57,14 +56,9 @@ PlotGelman_Omega <- function(
     sample(min(NOmega, length(.))) %>%
     sort()
 
-  invisible(snow::clusterEvalQ(
-    cl = c1,
-    IASDT.R::LoadPackages(List = c("dplyr", "coda", "tibble", "magrittr"))))
-  snow::clusterExport(cl = c1, list = "CodaObj", envir = environment())
-
-  Gelman_OmegaDT <- snow::parLapply(
-    cl = c1, x = OmegaNames,
-    fun = function(x) {
+  Gelman_OmegaDT <- future.apply::future_lapply(
+    X = OmegaNames,
+    FUN = function(x) {
       lapply(CodaObj, function(Y) {
         Y[, x, drop = TRUE]
       }) %>%
@@ -80,12 +74,14 @@ PlotGelman_Omega <- function(
           cols = -Iter, names_to = "Type", values_to = "ShrinkFactor") %>%
         dplyr::arrange(Type, Iter) %>%
         dplyr::mutate(Type = factor(Type), Sp_comb = x)
-    }) %>%
+    },
+      future.scheduling = Inf, future.seed = TRUE,
+      future.globals = "CodaObj", 
+      future.packages = c("dplyr", "coda", "tibble", "magrittr")) %>%
     dplyr::bind_rows() %>%
     dplyr::mutate(group = paste0(Sp_comb, "_", Type))
 
-  snow::stopCluster(c1)
-  future::plan(future::sequential, gc = TRUE)
+  future::plan(future::sequential)
 
   Gelman_Omega_Plot <- Gelman_OmegaDT %>%
     ggplot2::ggplot() +
@@ -105,8 +101,9 @@ PlotGelman_Omega <- function(
     ggplot2::coord_cartesian(expand = FALSE) +
     ggplot2::theme_bw() +
     ggplot2::labs(
-      title = paste0("Gelman-Rubin-Brooks plot - Omega - ",
-                     NOmega, " species combination samples"),
+      title = paste0(
+        "Gelman-Rubin-Brooks plot - Omega - ",
+        NOmega, " species combination samples"),
       subtitle = NULL,
       caption = paste0(
         "This plot shows the evolution of Gelman and Rubin's shrink factor as ",

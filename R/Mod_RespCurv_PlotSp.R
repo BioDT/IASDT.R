@@ -64,9 +64,8 @@ RespCurv_PlotSp <- function(
   withr::local_options(
         future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
   
-  c1 <- snow::makeSOCKcluster(NCores)
-  on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
-  future::plan(future::cluster, workers = c1, gc = TRUE)
+  future::plan(future::cluster, workers = NCores, gc = TRUE)
+  on.exit(future::plan(future::sequential), add = TRUE)
 
   SR_DT_All <- file.path(
     Path_Model, "Model_Postprocessing", "RespCurv_DT", "ResCurvDT.RData") %>%
@@ -230,8 +229,7 @@ RespCurv_PlotSp <- function(
     dplyr::select(-DT) %>%
     tidyr::unnest(cols = "Plot")
 
-  snow::stopCluster(c1)
-  future::plan(future::sequential, gc = TRUE)
+  future::plan(future::sequential)
 
   if (ReturnData) {
     return(SR_DT_All)

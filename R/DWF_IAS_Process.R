@@ -206,14 +206,9 @@ IAS_Process <- function(
   IASDT.R::CatTime(
     paste0("Prepare working on parallel using `", NCores, "` cores."),
     Level = 1)
-  c1 <- snow::makeSOCKcluster(NCores)
-  on.exit({
-    invisible(try(snow::stopCluster(c1), silent = TRUE))
-    future::plan(future::sequential, gc = TRUE)
-  }, add = TRUE)
-  future::plan(future::cluster, workers = c1, gc = TRUE)
-  invisible(snow::clusterEvalQ(cl = c1, IASDT.R::LoadPackages(List = "dplyr")))
-
+  future::plan(future::cluster, workers = NCores, gc = TRUE)
+  on.exit(future::plan(future::sequential), add = TRUE)
+  
   # # .................................... ###
 
   ## Species-specific data on parallel ----
@@ -223,13 +218,13 @@ IAS_Process <- function(
     X = sort(unique(TaxaList$Species_name)),
     FUN = IASDT.R::IAS_Distribution, FromHPC = FromHPC,
     EnvFile = EnvFile, Verbose = FALSE,
-    future.scheduling = Inf, future.seed = TRUE)
+    future.scheduling = Inf, future.seed = TRUE, future.packages = "dplyr")
 
   # # .................................... ###
 
   ## Stopping cluster ----
   IASDT.R::CatTime("Stopping cluster", Level = 1)
-  snow::stopCluster(c1)
+  future::plan(future::sequential)
 
   IASDT.R::CatDiff(
     InitTime = .StartTimeDist,
@@ -308,13 +303,9 @@ IAS_Process <- function(
     paste0("Prepare working on parallel using `", NCores, "` cores."),
     Level = 1)
 
-  c1 <- snow::makeSOCKcluster(NCores)
-  on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
-  future::plan(future::cluster, workers = c1, gc = TRUE)
-  snow::clusterEvalQ(cl = c1, IASDT.R::LoadPackages(List = "dplyr", "sf"))
-  snow::clusterExport(
-    cl = c1, c("EnvFile", "Overwrite", "FromHPC"), envir = environment())
-
+  future::plan(future::cluster, workers = NCores, gc = TRUE)
+  on.exit(future::plan(future::sequential), add = TRUE)
+  
   # # .................................... ###
 
   ## Plotting species maps -----
@@ -322,7 +313,9 @@ IAS_Process <- function(
   future.apply::future_lapply(
     X = sort(Sp_PA_Summary_DF$Species_name),
     FUN = IASDT.R::IAS_Plot, FromHPC = FromHPC, EnvFile = EnvFile,
-    Overwrite = Overwrite, future.scheduling = Inf, future.seed = TRUE) %>%
+    Overwrite = Overwrite, future.scheduling = Inf, future.seed = TRUE, 
+    future.packages = c("dplyr", "sf"),
+    future.globals = c("EnvFile", "Overwrite", "FromHPC")) %>%
     invisible()
 
   rm(Sp_PA_Summary_DF)
@@ -331,9 +324,8 @@ IAS_Process <- function(
 
   ## Stopping cluster ----
   IASDT.R::CatTime("Stopping cluster", Level = 1)
-  snow::stopCluster(c1)
-  future::plan(future::sequential, gc = TRUE)
-
+  future::plan(future::sequential)
+  
   IASDT.R::CatDiff(
     InitTime = .StartTimeMaps,
     Prefix = "Processing Species-specific maps took ", NLines = 1, Level = 2)
@@ -546,7 +538,7 @@ IAS_Process <- function(
   # # +++++++++++++++++++++++++++++++++ ###
 
   rm(IAS_NumSp, Plot_Nsp, Plot_Nsp_log, PlottingTheme, EUBound, MapLimX,
-     MapLimY, Plot_Nsp_Masked_log, Plot_Nsp_Masked)
+    MapLimY, Plot_Nsp_Masked_log, Plot_Nsp_Masked)
 
   # # .................................... ###
 

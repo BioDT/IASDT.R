@@ -65,9 +65,8 @@ PlotConvergence_All <- function(
   
   withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
   
-  c1 <- snow::makeSOCKcluster(NCores)
-  on.exit(invisible(try(snow::stopCluster(c1), silent = TRUE)), add = TRUE)
-  future::plan(future::cluster, workers = c1, gc = TRUE)
+  future::plan(future::cluster, workers = NCores, gc = TRUE)
+  on.exit(future::plan(future::sequential), add = TRUE)
 
   Model_Info <- file.path(Path_Model, "Model_Info.RData")
   if (!file.exists(Model_Info)) {
@@ -208,17 +207,13 @@ PlotConvergence_All <- function(
       return()
   }
 
-  invisible(snow::clusterEvalQ(
-    cl = c1,
-    IASDT.R::LoadPackages(List = c("dplyr", "sf", "Hmsc", "coda", "magrittr"))))
-  snow::clusterExport(
-    cl = c1, envir = environment(),
-    list = c("Model_Info", "Path_ConvDT", "maxOmega"))
-
   Convergence_DT <- Model_Info %>%
     dplyr::mutate(
-      Plots = snow::parLapply(
-        cl = c1, x = seq_len(nrow(Model_Info)), fun = PrepConvergence)) %>%
+      Plots = future.apply::future_lapply(
+        X = seq_len(nrow(Model_Info)), FUN = PrepConvergence,
+        future.scheduling = Inf, future.seed = TRUE,
+        future.packages = c("dplyr", "sf", "Hmsc", "coda", "magrittr"),
+        future.globals = c("Model_Info", "Path_ConvDT", "maxOmega"))) %>%
     dplyr::select(tidyselect::all_of(c("M_Name_Fit", "Plots"))) %>%
     tidyr::unnest_wider("Plots") %>%
     # arrange data alphanumerically by model name
@@ -230,8 +225,7 @@ PlotConvergence_All <- function(
     Convergence_DT,
     file = file.path(Path_Convergence_All, "Convergence_DT.RData"))
 
-  snow::stopCluster(c1)
-  future::plan(future::sequential, gc = TRUE)
+  future::plan(future::sequential)
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Plotting theme -----

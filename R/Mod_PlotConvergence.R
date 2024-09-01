@@ -200,8 +200,8 @@ PlotConvergence <- function(
       tibble::as_tibble(rownames = "SpComb")
 
     IASDT.R::CatTime("Prepare working in parallel", Level = 1)
-    future::plan(future::cluster, workers = NCores, gc = TRUE)
-    on.exit(future::plan(future::sequential), add = TRUE)
+    future::plan("multisession", workers = NCores, gc = TRUE)
+    on.exit(future::plan("sequential"), add = TRUE)
 
     IASDT.R::CatTime("Prepare trace plots data", Level = 1)
     PlotObj_Omega <- future.apply::future_lapply(
@@ -278,7 +278,7 @@ PlotConvergence <- function(
       future.globals = c("NOmega", "CI", "SelectedCombs", "OmegaDF", "Cols"),
       future.packages = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext"))
 
-    future::plan(future::sequential)
+    future::plan("sequential")
 
     if (SavePlotData) {
       IASDT.R::CatTime("Save plot data", Level = 1)
@@ -359,8 +359,8 @@ PlotConvergence <- function(
 
     IASDT.R::CatTime(
       paste0("Prepare working in parallel using `", NCores, "`"), Level = 2)
-    future::plan(future::cluster, workers = NCores, gc = TRUE)
-    on.exit(future::plan(future::sequential), add = TRUE)
+    future::plan("multisession", workers = NCores, gc = TRUE)
+    on.exit(future::plan("sequential"), add = TRUE)
 
     IASDT.R::CatTime("Prepare 95% credible interval data", Level = 2)
     CI <- summary(Obj_Beta, quantiles = c(0.025, 0.975))$quantiles %>%
@@ -499,7 +499,7 @@ PlotConvergence <- function(
       dplyr::bind_rows() %>%
       dplyr::right_join(PlotObj_Beta, by = "Var_Sp")
 
-    future::plan(future::sequential)
+    future::plan("sequential")
 
     if (SavePlotData) {
       IASDT.R::CatTime("Save trace plot data", Level = 1)
@@ -520,8 +520,8 @@ PlotConvergence <- function(
     dplyr::select(Variable, Plot, PlotFixedY) %>%
     tidyr::nest(data = c("Plot", "PlotFixedY"))
 
-  future::plan(future::cluster, workers = NCores, gc = TRUE)
-  on.exit(future::plan(future::sequential), add = TRUE)
+  future::plan("multisession", workers = NCores, gc = TRUE)
+  on.exit(future::plan("sequential"), add = TRUE)
 
   IASDT.R::CatTime("Save plots in parallel", Level = 2)
   BetaTracePlots_ByVar0 <- future.apply::future_lapply(
@@ -608,7 +608,7 @@ PlotConvergence <- function(
         "BetaTracePlots_ByVar", "Path_Convergence", "NRC", "Cols"),
       future.packages = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext"))
 
-  future::plan(future::sequential)
+  future::plan("sequential")
 
   rm(BetaTracePlots_ByVar0, BetaTracePlots_ByVar)
 
@@ -626,8 +626,8 @@ PlotConvergence <- function(
     tidyr::nest(data = -c("Species", "IAS_ID"))
 
   IASDT.R::CatTime("Preparing working in parallel", Level = 2)
-  future::plan(future::cluster, workers = NCores, gc = TRUE)
-  on.exit(future::plan(future::sequential), add = TRUE)
+  future::plan("multisession", workers = NCores, gc = TRUE)
+  on.exit(future::plan("sequential"), add = TRUE)
 
   IASDT.R::CatTime("Save plots in parallel", Level = 2)
   BetaTracePlots_BySp0 <- future.apply::future_lapply(
@@ -676,7 +676,7 @@ PlotConvergence <- function(
       future.globals = c("BetaTracePlots_BySp", "Path_Convergence_BySp"),
       future.packages = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext"))
 
-  future::plan(future::sequential)
+  future::plan("sequential")
 
   rm(BetaTracePlots_BySp0)
 

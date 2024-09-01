@@ -113,8 +113,8 @@ Mod_MergeChains <- function(
   # Prepare working on parallel
   withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
-  future::plan(future::cluster, workers = NCores, gc = TRUE)
-  on.exit(future::plan(future::sequential), add = TRUE)
+  future::plan("multisession", workers = NCores, gc = TRUE)
+  on.exit(future::plan("sequential"), add = TRUE)
 
   Path_Fitted_Models <- file.path(Path_Model, "Model_Fitted")
   Path_Coda <- file.path(Path_Model, "Model_Coda")
@@ -274,7 +274,7 @@ Mod_MergeChains <- function(
           }
         }))
 
-  future::plan(future::sequential)
+  future::plan("sequential")
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

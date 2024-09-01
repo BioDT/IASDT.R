@@ -258,8 +258,8 @@ Railway_Intensity <- function(
     paste0("Prepare working on parallel using `", NCores, "` cores."),
     Level = 1)
 
-  future::plan(future::cluster, workers = NCores, gc = TRUE)
-  on.exit(future::plan(future::sequential), add = TRUE)
+  future::plan("multisession", workers = NCores, gc = TRUE)
+  on.exit(future::plan("sequential"), add = TRUE)
 
   ## Processing railway data ----
   IASDT.R::CatTime("Processing railway data", Level = 1)

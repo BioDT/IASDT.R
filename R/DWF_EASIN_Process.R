@@ -97,7 +97,7 @@ EASIN_Process <- function(
   Path_Grid <- TaxaInfoFile <- Name <- speciesKey <- EASINID <- taxon_name <-
     SpeciesId <- CellCode <- DataPartnerName <- Species_name <- Species_File <-
     EASIN_Ref <- Year <- WKT <- Path_EASIN <- Path_EASIN_Interim <-
-    n <- x <- Path_Grid_Ref <- NULL
+    n <- x <- Path_Grid_Ref <- Coords <- NULL
 
   # # |||||||||||||||||||||||||||||||||||
   # # Environment variables ----
@@ -283,8 +283,8 @@ EASIN_Process <- function(
     withr::local_options(
       future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
-    future::plan(future::cluster, workers = NCores, gc = TRUE)
-    on.exit(future::plan(future::sequential))
+    future::plan("multisession", workers = NCores)
+    on.exit(future::plan("sequential"))
 
     # Start downloading, allow for a maximum of `NumDownTries` trials
     Try <- 0
@@ -343,7 +343,7 @@ EASIN_Process <- function(
     # Stop cluster ----
     IASDT.R::CatTime("Stop cluster", Level = 1)
 
-    future::plan(future::sequential, gc = TRUE)
+    future::plan("sequential", gc = TRUE)
   }
 
   # # ..................................................................... ###

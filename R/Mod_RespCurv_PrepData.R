@@ -328,8 +328,8 @@ RespCurv_PrepData <- function(
     withr::local_options(
         future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
     
-    future::plan(future::cluster, workers = NCores, gc = TRUE)
-    on.exit(future::plan(future::sequential), add = TRUE)
+    future::plan("multisession", workers = NCores, gc = TRUE)
+    on.exit(future::plan("sequential"), add = TRUE)
 
     # +++++++++++++++++++++++++++++++++
     # Prepare response curve data on parallel
@@ -345,7 +345,7 @@ RespCurv_PrepData <- function(
       future.globals = c("ResCurvDT", "Model")) %>%
       dplyr::bind_rows()
 
-    future::plan(future::sequential)
+    future::plan("sequential")
   }
 
   IASDT.R::CatTime("Saving data to desk")

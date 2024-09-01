@@ -153,8 +153,8 @@ GBIF_Process <- function(
     paste0("Prepare working on parallel using `", NCores, "` cores."),
     Level = 1)
 
-  future::plan(future::cluster, workers = NCores, gc = TRUE)
-  on.exit(future::plan(future::sequential), add = TRUE)
+  future::plan("multisession", workers = NCores, gc = TRUE)
+  on.exit(future::plan("sequential"), add = TRUE)
 
   IASDT.R::CatTime(
     "Processing chunks on parallel, save each as RData files", Level = 1)
@@ -200,7 +200,7 @@ GBIF_Process <- function(
     Level = 2)
 
   IASDT.R::CatTime("Stopping cluster", Level = 1)
-  future::plan(future::sequential)
+  future::plan("sequential")
 
   IASDT.R::CatTime("Saving `GBIF_Data` to disk", Level = 1)
   save(GBIF_Data, file = file.path(Path_GBIF, "GBIF_Data.RData"))
@@ -517,8 +517,8 @@ GBIF_Process <- function(
   IASDT.R::CatTime("Split species data - grid/raster/plot", Level = 1)
 
   IASDT.R::CatTime("Prepare working on parallel", Level = 2)
-  future::plan(future::cluster, workers = NCores, gc = TRUE)
-  on.exit(future::plan(future::sequential), add = TRUE)
+  future::plan("multisession", workers = NCores, gc = TRUE)
+  on.exit(future::plan("sequential"), add = TRUE)
 
   IASDT.R::CatTime("Splitting species data on parallel", Level = 2)
   furrr::future_walk(
@@ -527,7 +527,7 @@ GBIF_Process <- function(
     .options = furrr::furrr_options(seed = TRUE, packages = "dplyr"))
 
   IASDT.R::CatTime("Stopping cluster", Level = 2)
-  future::plan(future::sequential)
+  future::plan("sequential")
 
   # # ..................................................................... ###
 

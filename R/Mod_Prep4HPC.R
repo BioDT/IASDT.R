@@ -639,31 +639,6 @@ Mod_Prep4HPC <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # # |||||||||||||||||||||||||||||||||||
-  # # Preparing working on parallel -----
-  # # |||||||||||||||||||||||||||||||||||
-
-  if (NCores > 1) {
-
-    IASDT.R::CatTime(
-      paste0("Prepare working on parallel using `", NCores, "` cores."),
-      Level = 1)
-    
-    IASDT.R::CatTime(paste0(
-      "Preparing working on parallel (", NCores, " cores)"))
-    
-    withr::local_options(
-        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
-    
-    future::plan(future::cluster, workers = NCores, gc = TRUE)
-    on.exit(future::plan(future::sequential), add = TRUE)
-
-  } else {
-    IASDT.R::CatTime("Working sequentially")
-  }
-
-  ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-  # # |||||||||||||||||||||||||||||||||||
   # # Spatial info / random effect ------
   # # |||||||||||||||||||||||||||||||||||
 
@@ -678,6 +653,16 @@ Mod_Prep4HPC <- function(
 
   if (NCores > 1) { 
 
+    IASDT.R::CatTime(
+      paste0("Prepare working on parallel using `", NCores, "` cores."),
+      Level = 1)
+    
+    withr::local_options(
+        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
+    
+    future::plan("multisession", workers = NCores, gc = TRUE)
+    on.exit(future::plan("sequential"), add = TRUE)
+
     GPP_Knots <- future.apply::future_lapply(
       X = GPP_Dists * 1000,
       FUN = function(x) {
@@ -689,10 +674,12 @@ Mod_Prep4HPC <- function(
       future.packages = c("dplyr", "sf", "Hmsc", "jsonify", "magrittr")) %>%
       stats::setNames(paste0("GPP_", GPP_Dists))
     
-    future::plan(future::sequential)
+    future::plan("sequential")
     
   } else {
-    GPP_Knots <- purrr::map(
+      IASDT.R::CatTime("Working sequentially")
+      
+      GPP_Knots <- purrr::map(
       .x = GPP_Dists * 1000,
       .f = ~IASDT.R::PrepKnots(
         Coords = DT_xy, MinDist = .x, MinLF = MinLF, MaxLF = MaxLF)) %>%
@@ -894,6 +881,9 @@ Mod_Prep4HPC <- function(
   # Implement `InitFitFun` function: start sampling and save output files
   if (NCores > 1) {
 
+    future::plan("multisession", workers = NCores, gc = TRUE)
+    on.exit(future::plan("sequential"), add = TRUE)
+
     Model_Process <- future.apply::future_lapply(
       X = seq_len(nrow(Model_Info)), FUN = InitFitFun,
       future.scheduling = Inf, future.seed = TRUE,
@@ -902,7 +892,7 @@ Mod_Prep4HPC <- function(
         "verbose", "nChains", "ToJSON"), 
       future.packages = c("Hmsc", "jsonify", "IASDT.R"))
   
-  future::plan(future::sequential)
+    future::plan("sequential")
 
   } else {
     Model_Process <- purrr::map(
@@ -923,15 +913,6 @@ Mod_Prep4HPC <- function(
     save(Failed2Export, file = file.path(Path_Model, "Failed2Export.RData"))
     readr::write_tsv(
       x = Failed2Export, file = file.path(Path_Model, "Failed2Export.txt"))
-  }
-
-  # # # |||||||||||||||||||||||||||||||||||
-  # # # Stopping cluster -----
-  # # # |||||||||||||||||||||||||||||||||||
-
-  if (NCores > 1) {
-    IASDT.R::CatTime("Stopping cluster")
-    future::plan(future::sequential)
   }
 
   # # |||||||||||||||||||||||||||||||||||

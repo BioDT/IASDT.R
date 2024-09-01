@@ -79,8 +79,8 @@ Efforts_Request <- function(
 
   withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
-  future::plan(future::cluster, workers = min(NCores, 3), gc = TRUE)
-  on.exit(future::plan(future::sequential), add = TRUE)
+  future::plan("multisession", workers = min(NCores, 3), gc = TRUE)
+  on.exit(future::plan("sequential"), add = TRUE)
 
   # # ..................................................................... ###
 
@@ -193,7 +193,7 @@ Efforts_Request <- function(
 
   # Stopping cluster ------
   IASDT.R::CatTime("Stopping cluster", Level = 1)
-  future::plan(future::sequential)
+  future::plan("sequential")
 
   # # ..................................................................... ###
 

@@ -79,8 +79,8 @@ Efforts_Download <- function(NCores = 6, Path_Raw, Path_Interim, Path_Efforts) {
 
   withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
-  future::plan(future::cluster, workers = NCores, gc = TRUE)
-  on.exit(future::plan(future::sequential), add = TRUE)
+  future::plan("multisession", workers = NCores, gc = TRUE)
+  on.exit(future::plan("sequential"), add = TRUE)
 
   # # ..................................................................... ###
 
@@ -151,7 +151,7 @@ Efforts_Download <- function(NCores = 6, Path_Raw, Path_Interim, Path_Efforts) {
 
   # Stopping cluster ------
   IASDT.R::CatTime("Stopping cluster", Level = 1)
-  future::plan(future::sequential)
+  future::plan("sequential")
 
   # # ..................................................................... ###
 

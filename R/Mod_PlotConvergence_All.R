@@ -65,8 +65,8 @@ PlotConvergence_All <- function(
   
   withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
   
-  future::plan(future::cluster, workers = NCores, gc = TRUE)
-  on.exit(future::plan(future::sequential), add = TRUE)
+  future::plan("multisession", workers = NCores, gc = TRUE)
+  on.exit(future::plan("sequential"), add = TRUE)
 
   Model_Info <- file.path(Path_Model, "Model_Info.RData")
   if (!file.exists(Model_Info)) {
@@ -225,7 +225,7 @@ PlotConvergence_All <- function(
     Convergence_DT,
     file = file.path(Path_Convergence_All, "Convergence_DT.RData"))
 
-  future::plan(future::sequential)
+  future::plan("sequential")
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Plotting theme -----

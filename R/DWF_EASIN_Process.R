@@ -341,6 +341,7 @@ EASIN_Process <- function(
       Prefix = "Downloading EASIN data was finished in ", Level = 1)
 
     # Stop cluster ----
+    IASDT.R::CatTime("Stop cluster", Level = 1)
     future::plan(future::sequential, gc = TRUE)
   }
 

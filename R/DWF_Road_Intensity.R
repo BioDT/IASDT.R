@@ -152,7 +152,7 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
   archive::archive_extract(
     archive = Path_DownFile, dir = Path_Roads_Interim) %>%
     suppressMessages()
-  rm(Path_DownFile, .StartTimeExt)
+  rm(Path_DownFile)
 
   # # ..................................................................... ###
 
@@ -397,7 +397,7 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
         plot.title = ggplot2::element_text(
           size = 18, face = "bold", hjust = 0.5,
           margin = ggplot2::margin(0, 0, 0.5, 0))))
-  
+
   ggplot2::ggsave(
     plot = Plots_Length,
     filename = file.path(Path_Roads, "Road_Length.jpeg"),

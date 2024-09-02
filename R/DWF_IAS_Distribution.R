@@ -658,7 +658,7 @@ IAS_Distribution <- function(
     GBIF = N_GBIF,
     GBIF_Unique = N_GBIF_Unique,
     GBIF_Masked = N_GBIF_Masked,
-    GBIF_Masked_Unique = N_GBIF_Unique_Masked,s
+    GBIF_Masked_Unique = N_GBIF_Unique_Masked,
     GBIF_Path = GBIF_Path,
     GBIF_Gr100 = list(GBIF_Gr100),
     EASIN = N_EASIN,

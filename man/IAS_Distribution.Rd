@@ -31,8 +31,14 @@ biogeographical region, and outputs results as tif, RData, and tibble
 formats.
 }
 \note{
-This function is not intended to be used directly by the user or in the
+\itemize{
+\item This function is not intended to be used directly by the user or in the
 IAS-pDT, but only used inside the \link{IAS_Process} function.
+\item The function returns two sets of presence-absence maps: 1) at the European
+scale giving the data in the three data sources; and 2) the same maps, but
+with assigning grid cells from countries with only cultivated or casual
+observations.
+}
 }
 \author{
 Ahmed El-Gabbas

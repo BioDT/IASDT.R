@@ -19,14 +19,21 @@
 #' @return A tibble containing species distribution information, including the
 #'   number of presence grid cells, presence by data provider, and summary
 #'   statistics for biogeographical regions.
-#' @note This function is not intended to be used directly by the user or in the
+#' @note
+#' - This function is not intended to be used directly by the user or in the
 #'   IAS-pDT, but only used inside the [IAS_Process] function.
+#' - The function returns two sets of presence-absence maps: 1) at the European
+#'   scale giving the data in the three data sources; and 2) the same maps, but
+#'   with assigning grid cells from countries with only cultivated or casual
+#'   observations.
 #' @author Ahmed El-Gabbas
 #' @name IAS_Distribution
 #' @export
 
 IAS_Distribution <- function(
     Species, FromHPC = TRUE, EnvFile = ".env", Verbose = FALSE) {
+
+  # # ..................................................................... ###
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -47,9 +54,8 @@ IAS_Distribution <- function(
   IASDT.R::CatTime("Checking arguments")
 
   AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, ~get(.x, envir = environment())) %>%
+  AllArgs <- purrr::map(AllArgs, ~ get(.x, envir = environment())) %>%
     stats::setNames(AllArgs)
-
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "character", Args = c("Species", "EnvFile"))
   IASDT.R::CheckArgs(
@@ -115,7 +121,8 @@ IAS_Distribution <- function(
   Species2 <- IASDT.R::ReplaceSpace(Species)
 
   IASDT.R::CatTime("eLTER data", Level = 1)
-  eLTER_IAS <- IASDT.R::LoadAs(Path_eLTER)
+  eLTER_DT <- IASDT.R::LoadAs(Path_eLTER) %>%
+    dplyr::filter(Species_name == Species)
 
   # # ................................ ###
 
@@ -123,7 +130,8 @@ IAS_Distribution <- function(
   IASDT.R::CatTime("Loading reference grids", Level = 1)
   GridsPath <- file.path(
     Path_Grid_Ref,
-    c("Grid_100_sf.RData", "Grid_10_Land_Crop.RData",
+    c(
+      "Grid_100_sf.RData", "Grid_10_Land_Crop.RData",
       "Grid_10_Land_sf.RData"))
 
   if (!all(file.exists(GridsPath))) {
@@ -142,8 +150,7 @@ IAS_Distribution <- function(
 
   ### sf - 10 km ----
   IASDT.R::CatTime("sf - 10 km - CNT", Level = 2)
-  Grid_10_CNT <- file.path(
-    Path_Grid, "Grid_10_Land_Crop_sf_Country.RData") %>%
+  Grid_10_CNT <- file.path(Path_Grid, "Grid_10_Land_Crop_sf_Country.RData") %>%
     IASDT.R::LoadAs()
 
   ### raster - 10 km ----
@@ -178,7 +185,6 @@ IAS_Distribution <- function(
   # # ................................ ###
 
   ## Check directories ----
-
   IASDT.R::CatTime("Check directories", Level = 1)
 
   IASDT.R::CatTime("Check path for EASIN and GBIF data", Level = 2)
@@ -223,30 +229,39 @@ IAS_Distribution <- function(
 
   ## Exclude countries with only cultivated or casual observations ----
   IASDT.R::CatTime(
-    "Exclude countries with only cultivated or casual observations", Level = 1)
+    "Exclude countries with only cultivated or casual observations",
+    Level = 1)
 
-  Countries2Exclude <- readxl::read_xlsx(
-    path = Path_TaxaCNT, sheet = 1) %>%
+  # List of countries to be excluded for the current species
+  Countries2Exclude <- readxl::read_xlsx(path = Path_TaxaCNT, sheet = 1) %>%
     dplyr::rename(status_decision = `status-decision`) %>%
+    # filter data on the current species and only keep countries with `cult+cas`
+    # or `delete` status
+    dplyr::filter(
+      gbif_key %in% GBIF_Keys, status_decision %in% c("cult+cas", "delete")
+    ) %>%
+    # rename countries to match country names of the countries boundaries
     dplyr::mutate(
       country = dplyr::case_when(
-        country ==  "United_Kingdom" ~ "United Kingdom",
-        country ==  "North_Macedonia" ~ "North Macedonia",
-        country ==  "Isle_of_Man" ~ "Isle of Man",
-        country ==  "Bosnia_and_Herzegovina" ~ "Bosnia and Herzegovina",
-        .default = country)) %>%
-    dplyr::filter(
-      gbif_key %in% GBIF_Keys, country != "Turkey",
-      status_decision %in% c("cult+cas", "delete")) %>%
+        country == "United_Kingdom" ~ "United Kingdom",
+        country == "North_Macedonia" ~ "North Macedonia",
+        country == "Isle_of_Man" ~ "Isle of Man",
+        country == "Bosnia_and_Herzegovina" ~ "Bosnia and Herzegovina",
+        .default = country)
+    ) %>%
+    # Exclude Turkey, as it is currently not in the current study area
+    dplyr::filter(country != "Turkey") %>%
     dplyr::pull("country")
 
   IASDT.R::CatTime(
-    paste0("There are ", length(Countries2Exclude),
-           " countries to exclude:"), Level = 2)
+    paste0("There are ", length(Countries2Exclude), " countries to exclude:"),
+    Level = 2)
   IASDT.R::CatTime(
-    paste0(sort(Countries2Exclude), collapse =  " + "), Level = 3)
+    paste0(sort(Countries2Exclude), collapse = " + "), Level = 3)
 
-  # Mask grid to exclude countries
+  # Mask grid to exclude countries - `TRUE` for grid cells to be considered as
+  # presence if present in any of the data source; `FALSE` for grid cells need
+  # to be masked as 0 in species distribution maps (1 becomes 0)
   if (length(Countries2Exclude) > 0) {
     Mask_Keep <- Grid_10_CNT %>%
       dplyr::mutate(Keep = !(Country %in% Countries2Exclude)) %>%
@@ -256,13 +271,12 @@ IAS_Distribution <- function(
       IASDT.R::setRastVals() %>%
       stats::setNames("Mask_Keep")
   } else {
-    Mask_Keep <- RefGrid %>%
-      terra::as.bool() %>%
+    Mask_Keep <- terra::as.bool(RefGrid) %>%
       IASDT.R::setRastVals() %>%
       stats::setNames("Mask_Keep")
   }
-  rm(Grid_10_CNT)
 
+  rm(Grid_10_CNT)
   GBIF_Keys <- paste0(GBIF_Keys, collapse = "_")
 
   # # ..................................................................... ###
@@ -273,17 +287,17 @@ IAS_Distribution <- function(
   ## 1. GBIF -----
   IASDT.R::CatTime("1. GBIF", Level = 1)
 
+  # Path for the current species GBIF data
   Path_GBIF_D <- file.path(Path_GBIF_DT, paste0(Sp_File, ".RData"))
+  Path_GBIF_R <- file.path(
+    Path_GBIF, "Sp_Raster", paste0(Sp_File, "_Raster.RData"))
 
-  if (file.exists(Path_GBIF_D)) {
-
-    # data
+  if (all(file.exists(Path_GBIF_D, Path_GBIF_R))) {
+    # GBIF data as sf object
     GBIF_DT <- IASDT.R::LoadAs(Path_GBIF_D)
 
-    # raster map
-    GBIF_R <- dirname(Path_GBIF_DT) %>%
-      file.path("Sp_Raster", paste0(Sp_File, "_Raster.RData")) %>%
-      IASDT.R::LoadAs() %>%
+    # GBIF data as raster map
+    GBIF_R <- IASDT.R::LoadAs(Path_GBIF_R) %>%
       terra::unwrap() %>%
       # convert raster map into binary (1/0)
       IASDT.R::RastPA() %>%
@@ -299,9 +313,7 @@ IAS_Distribution <- function(
       list()
 
     GBIF_Path <- Path_GBIF_D
-
   } else {
-
     GBIF_R <- terra::classify(RefGrid, cbind(1, 0)) %>%
       stats::setNames("GBIF")
 
@@ -311,7 +323,6 @@ IAS_Distribution <- function(
 
     GBIF_Gr100 <- Grid100Empty
     GBIF_Path <- NA_character_
-
   }
 
   # # .................................... ###
@@ -322,7 +333,6 @@ IAS_Distribution <- function(
   Path_EASIN_D <- file.path(Path_EASIN, paste0(Sp_File, "_DT.RData"))
 
   if (file.exists(Path_EASIN_D)) {
-
     EASIN_DT <- IASDT.R::LoadAs(Path_EASIN_D)
 
     # raster map
@@ -339,9 +349,7 @@ IAS_Distribution <- function(
       list()
 
     EASIN_Path <- Path_EASIN_D
-
   } else {
-
     EASIN_R <- terra::classify(RefGrid, cbind(1, 0)) %>%
       stats::setNames("EASIN")
 
@@ -351,7 +359,6 @@ IAS_Distribution <- function(
 
     EASIN_Gr100 <- Grid100Empty
     EASIN_Path <- NA_character_
-
   }
 
   # # .................................... ###
@@ -359,10 +366,7 @@ IAS_Distribution <- function(
   ## 3. eLTER -----
   IASDT.R::CatTime("3. eLTER", Level = 1)
 
-  eLTER_DT <- dplyr::filter(eLTER_IAS, Species_name == Species)
-
   if (nrow(eLTER_DT) > 0) {
-
     eLTER_R <- dplyr::select(eLTER_DT, "Species_name") %>%
       terra::rasterize(RefGrid) %>%
       IASDT.R::RastPA() %>%
@@ -374,9 +378,7 @@ IAS_Distribution <- function(
     eLTER_R_Out <- stats::setNames(eLTER_R, Sp_File) %>%
       terra::wrap() %>%
       list()
-
   } else {
-
     eLTER_R <- terra::classify(RefGrid, cbind(1, 0)) %>%
       stats::setNames("eLTER")
 
@@ -385,13 +387,13 @@ IAS_Distribution <- function(
       list()
 
     eLTER_Gr100 <- Grid100Empty
-
   }
 
   # # ..................................................................... ###
 
   ## 4. Merging data from the 3 data sources -----
   IASDT.R::CatTime("Merging data from the 3 data sources", Level = 1)
+
   Sp_PA <- sum(GBIF_R, EASIN_R, eLTER_R) %>%
     IASDT.R::RastPA() %>%
     stats::setNames("PA") %>%
@@ -402,7 +404,8 @@ IAS_Distribution <- function(
     IASDT.R::setRastVals()
 
   # number of cells with values
-  PA_NCells_All <- as.integer(terra::global(Sp_PA$PA == 1, sum, na.rm = TRUE))
+  PA_NCells_All <- terra::global(Sp_PA$PA == 1, sum, na.rm = TRUE) %>%
+    as.integer()
   PA_NCells_Naturalized <- terra::global(
     x = Sp_PA$PA_Masked == 1, sum, na.rm = TRUE) %>%
     as.integer()
@@ -412,6 +415,7 @@ IAS_Distribution <- function(
   # Processing species data ----
   IASDT.R::CatTime("Processing species data")
 
+  # If there is no presence grid cell for the current species, return NULL early
   if (PA_NCells_All == 0) {
     return(invisible(NULL))
   }
@@ -433,7 +437,8 @@ IAS_Distribution <- function(
   IASDT.R::CatTime("`.tif` - all presence grid cells", Level = 2)
   terra::writeRaster(
     x = Sp_PA$PA, overwrite = TRUE,
-    filename = file.path(Path_PA_tif, paste0(Sp_File, "_All.tif")))
+    filename = file.path(Path_PA_tif, paste0(Sp_File, "_All.tif"))
+  )
 
   ### tif - Excluding cultivated or casual observations -----
   IASDT.R::CatTime(
@@ -443,14 +448,12 @@ IAS_Distribution <- function(
     filename = file.path(Path_PA_tif, paste0(Sp_File, "_Masked.tif")))
 
   ### NetCDF -----
-
   # NOT IMPLEMENTED YET
 
   # # .................................... ###
 
   ## Biogeographical regions ----
   IASDT.R::CatTime("Analysis per biogeographical regions", Level = 1)
-
 
   ### All -----
   IASDT.R::CatTime("all data", Level = 2)
@@ -475,16 +478,17 @@ IAS_Distribution <- function(
     dplyr::rename(BiogReg = "short_name") %>%
     dplyr::count(BiogReg) %>%
     tidyr::pivot_wider(names_from = BiogReg, values_from = n) %>%
-    dplyr::rename_all(~stringr::str_c("BioReg_", .x)) %>%
+    dplyr::rename_all(~ stringr::str_c("BioReg_", .x)) %>%
     IASDT.R::AddMissingCols(0L, BioReg_Names) %>%
+    # Sort columns
     dplyr::select(tidyselect::all_of(BioReg_Names))
 
-  BioRegSumm_Min <- min(Sp_BiogeoRegions, na.rm = TRUE)
-  BioRegSumm_Max <- max(Sp_BiogeoRegions, na.rm = TRUE)
-  BioRegSumm_Mean <- unlist(Sp_BiogeoRegions) %>%
+  BioRegsSumm_Min <- min(Sp_BiogeoRegions, na.rm = TRUE)
+  BioRegsSumm_Max <- max(Sp_BiogeoRegions, na.rm = TRUE)
+  BioRegsSumm_Mean <- unlist(Sp_BiogeoRegions) %>%
     mean(na.rm = TRUE) %>%
     round(1)
-  BioRegSumm_N <- sum(Sp_BiogeoRegions > 0)
+  BioRegsSumm_N <- sum(Sp_BiogeoRegions > 0)
 
   ### Masked -----
   IASDT.R::CatTime("Excluding cultivated or casual observations", Level = 2)
@@ -499,16 +503,16 @@ IAS_Distribution <- function(
     dplyr::rename(BiogReg = "short_name") %>%
     dplyr::count(BiogReg) %>%
     tidyr::pivot_wider(names_from = BiogReg, values_from = n) %>%
-    dplyr::rename_all(~stringr::str_c("BioReg_Masked_", .x)) %>%
+    dplyr::rename_all(~ stringr::str_c("BioReg_Masked_", .x)) %>%
     IASDT.R::AddMissingCols(0L, BioReg_Names2) %>%
     dplyr::select(tidyselect::all_of(BioReg_Names2))
 
-  BioRegMaskSumm_Min <- min(Sp_BiogeoRegions_Masked, na.rm = TRUE)
-  BioRegMaskSumm_Max <- max(Sp_BiogeoRegions_Masked, na.rm = TRUE)
-  BioRegMaskSumm_Mean <- unlist(Sp_BiogeoRegions_Masked) %>%
+  BioRegsMaskSumm_Min <- min(Sp_BiogeoRegions_Masked, na.rm = TRUE)
+  BioRegsMaskSumm_Max <- max(Sp_BiogeoRegions_Masked, na.rm = TRUE)
+  BioRegsMaskSumm_Mean <- unlist(Sp_BiogeoRegions_Masked) %>%
     mean(na.rm = TRUE) %>%
     round(1)
-  BioRegMaskSumm_N <- sum(Sp_BiogeoRegions_Masked > 0)
+  BioRegsMaskSumm_N <- sum(Sp_BiogeoRegions_Masked > 0)
 
   # # .................................... ###
 
@@ -519,6 +523,7 @@ IAS_Distribution <- function(
   RVals <- c(GBIF_R, EASIN_R, eLTER_R) %>%
     as.data.frame(na.rm = TRUE) %>%
     tibble::tibble() %>%
+    # Keep only grid cells present for any data provider
     dplyr::filter_all(dplyr::any_vars(. > 0))
 
   RVals_Masked <- c(GBIF_R, EASIN_R, eLTER_R) %>%
@@ -545,16 +550,16 @@ IAS_Distribution <- function(
     dplyr::pull("EASIN") %>%
     sum()
 
-  N_EASIN_Masked <- as.integer(terra::global(
-    (Sp_PA$EASIN * Sp_PA$Mask_Keep), sum, na.rm = TRUE))
+  N_EASIN_Masked <- terra::global(
+    (Sp_PA$EASIN * Sp_PA$Mask_Keep), sum, na.rm = TRUE) %>%
+    as.integer()
   N_EASIN_Unique_Masked <- dplyr::filter(
     RVals_Masked, GBIF == 0, EASIN == 1, eLTER == 0) %>%
     dplyr::pull("EASIN") %>%
     sum()
 
   N_eLTER <- as.integer(terra::global(eLTER_R, sum, na.rm = TRUE))
-  N_eLTER_Unique <- dplyr::filter(
-    RVals_Masked, GBIF == 0, EASIN == 0, eLTER == 1) %>%
+  N_eLTER_Unique <- dplyr::filter(RVals, GBIF == 0, EASIN == 0, eLTER == 1) %>%
     dplyr::pull("eLTER") %>%
     sum()
 
@@ -599,7 +604,7 @@ IAS_Distribution <- function(
     dplyr::mutate(Country = IASDT.R::ReplaceSpace(Country)) %>%
     dplyr::count(Country) %>%
     tidyr::pivot_wider(names_from = Country, values_from = n) %>%
-    dplyr::rename_all(~stringr::str_c("CNT_", .x)) %>%
+    dplyr::rename_all(~ stringr::str_c("CNT_", .x)) %>%
     IASDT.R::AddMissingCols(0L, CountryList) %>%
     dplyr::select(tidyselect::all_of(CountryList))
 
@@ -641,8 +646,8 @@ IAS_Distribution <- function(
     "GBIF", "GBIF_Unique", "GBIF_Masked", "GBIF_Masked_Unique",
     "EASIN", "EASIN_Unique", "EASIN_Masked", "EASIN_Masked_Unique",
     "eLTER", "eLTER_Unique", "eLTER_Masked", "eLTER_Masked_Unique",
-    "BioRegSumm_Min", "BioRegSumm_Max", "BioRegSumm_N",
-    "BioRegMaskSumm_Min", "BioRegMaskSumm_Max", "BioRegMaskSumm_N",
+    "BioRegsSumm_Min", "BioRegsSumm_Max", "BioRegsSumm_N",
+    "BioRegsMaskSumm_Min", "BioRegsMaskSumm_Max", "BioRegsMaskSumm_N",
     "iNaturalist_Unique")
 
   Results <- tibble::tibble(
@@ -650,48 +655,53 @@ IAS_Distribution <- function(
     SpeciesID = IAS_ID,
     NCells_All = PA_NCells_All,
     NCells_Naturalized = PA_NCells_Naturalized,
-
-    GBIF = N_GBIF, GBIF_Unique = N_GBIF_Unique,
-    GBIF_Masked = N_GBIF_Masked, GBIF_Masked_Unique = N_GBIF_Unique_Masked,
-    GBIF_Path = GBIF_Path, GBIF_Gr100 = list(GBIF_Gr100),
-
-    EASIN = N_EASIN, EASIN_Unique = N_EASIN_Unique,
-    EASIN_Masked = N_EASIN_Masked, EASIN_Masked_Unique = N_EASIN_Unique_Masked,
-    EASIN_Path = EASIN_Path, EASIN_Gr100 = list(EASIN_Gr100),
-
-    eLTER = N_eLTER, eLTER_Unique = N_eLTER_Unique,
-    eLTER_Masked = N_eLTER_Masked, eLTER_Masked_Unique = N_eLTER_Unique_Masked,
+    GBIF = N_GBIF,
+    GBIF_Unique = N_GBIF_Unique,
+    GBIF_Masked = N_GBIF_Masked,
+    GBIF_Masked_Unique = N_GBIF_Unique_Masked,s
+    GBIF_Path = GBIF_Path,
+    GBIF_Gr100 = list(GBIF_Gr100),
+    EASIN = N_EASIN,
+    EASIN_Unique = N_EASIN_Unique,
+    EASIN_Masked = N_EASIN_Masked,
+    EASIN_Masked_Unique = N_EASIN_Unique_Masked,
+    EASIN_Path = EASIN_Path,
+    EASIN_Gr100 = list(EASIN_Gr100),
+    eLTER = N_eLTER,
+    eLTER_Unique = N_eLTER_Unique,
+    eLTER_Masked = N_eLTER_Masked,
+    eLTER_Masked_Unique = N_eLTER_Unique_Masked,
     eLTER_Gr100 = list(eLTER_Gr100),
-
-    PA_Map = Binary_R_Out, PA_Masked_Map = Binary_R_Masked_Out,
+    PA_Map = Binary_R_Out,
+    PA_Masked_Map = Binary_R_Masked_Out,
     Mask_Keep = Binary_R_Mask_Keep,
-    GBIF_R = GBIF_R_Out, EASIN_R = EASIN_R_Out, eLTER_R = eLTER_R_Out,
-
+    GBIF_R = GBIF_R_Out,
+    EASIN_R = EASIN_R_Out,
+    eLTER_R = eLTER_R_Out,
     SpCountry = list(SpCountry),
     BioRegs_DT = list(Sp_BiogeoRegions),
-    BioRegSumm_Min = BioRegSumm_Min, BioRegSumm_Max = BioRegSumm_Max,
-    BioRegSumm_Mean = BioRegSumm_Mean, BioRegSumm_N = BioRegSumm_N,
-
+    BioRegsSumm_Min = BioRegsSumm_Min,
+    BioRegsSumm_Max = BioRegsSumm_Max,
+    BioRegsSumm_Mean = BioRegsSumm_Mean,
+    BioRegsSumm_N = BioRegsSumm_N,
     BioRegsMask_DT = list(Sp_BiogeoRegions_Masked),
-    BioRegMaskSumm_Min = BioRegMaskSumm_Min,
-    BioRegMaskSumm_Max = BioRegMaskSumm_Max,
-    BioRegMaskSumm_Mean = BioRegMaskSumm_Mean,
-    BioRegMaskSumm_N = BioRegMaskSumm_N,
-
-    iNaturalist_Unique = iNatur_Unique, iNatur_Perc = iNatur_Perc,
+    BioRegsMaskSumm_Min = BioRegsMaskSumm_Min,
+    BioRegsMaskSumm_Max = BioRegsMaskSumm_Max,
+    BioRegsMaskSumm_Mean = BioRegsMaskSumm_Mean,
+    BioRegsMaskSumm_N = BioRegsMaskSumm_N,
+    iNaturalist_Unique = iNatur_Unique,
+    iNatur_Perc = iNatur_Perc,
     Countries2Exclude = list(Countries2Exclude)) %>%
-    dplyr::mutate_at(IntegerCols, ~as.integer(.))
+    dplyr::mutate_at(IntegerCols, ~ as.integer(.))
 
 
   dplyr::select(Results, -GBIF_R, -EASIN_R, -eLTER_R) %>%
     IASDT.R::SaveAs(
-      InObj = .,
-      OutObj = paste0(Sp_File, "_Summary"),
-      OutPath = file.path(
-        Path_PA_Summary, paste0(Sp_File, "_Summary.RData")))
+      InObj = ., OutObj = paste0(Sp_File, "_Summary"),
+      OutPath = file.path(Path_PA_Summary, paste0(Sp_File, "_Summary.RData")))
 
   IASDT.R::CatDiff(
-    InitTime = .StartTime, 
+    InitTime = .StartTime,
     Prefix = "\nProcessing species data was finished in ", ... = "\n")
 
   return(dplyr::select(Results, -GBIF_Gr100, -EASIN_Gr100, -eLTER_Gr100))

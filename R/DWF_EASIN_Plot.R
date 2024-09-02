@@ -174,7 +174,7 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
     if (addTag) {
       Plot <- Plot +
         ggplot2::labs(
-          title = Title, fill = "log<sub>10</sub>", 
+          title = Title, fill = "log<sub>10</sub>",
           tag = LastUpdate)
     } else {
       Plot <- Plot +
@@ -199,8 +199,8 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
   IASDT.R::CatTime(
     Text = "Merge maps side by side and save as JPEG", Level = 2)
   (ggpubr::ggarrange(
-    Plot_NObs, 
-    (ggplot2::ggplot() + ggplot2::theme_void()), 
+    Plot_NObs,
+    (ggplot2::ggplot() + ggplot2::theme_void()),
     Plot_NSp,
     widths = c(1, 0, 1), nrow = 1) +
     patchwork::plot_annotation(
@@ -277,7 +277,7 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
         ggplot2::geom_sf(
           EuroBound, inherit.aes = TRUE,
           mapping = ggplot2::aes(), color = "grey30",
-          linewidth = 0.04, fill = scales::alpha("grey80", 0.2),) +
+          linewidth = 0.04, fill = scales::alpha("grey80", 0.2)) +
         ggplot2::scale_x_continuous(
           expand = ggplot2::expansion(mult = c(0, 0)),
           limits = c(2600000, 6700000)) +
@@ -286,7 +286,7 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
           limits = c(1450000, 5420000)) +
         ggplot2::labs(
           title = paste(Title, "[p", i, "]", sep = ""),
-          fill = "log<sub>10</sub>", 
+          fill = "log<sub>10</sub>",
           tag = LastUpdate) +
         PlottingTheme2
 

@@ -26,16 +26,16 @@
 
 IAS_Plot <- function(
     Species, FromHPC = TRUE, EnvFile = ".env", Overwrite = FALSE) {
+  # # ..................................................................... ###
+
+  # Checking arguments ----
 
   if (is.null(Species)) {
     stop("Species cannot be empty", call. = FALSE)
   }
 
-  # # ..................................................................... ###
-
-  # Checking arguments ----
   AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, ~get(.x, envir = environment())) %>%
+  AllArgs <- purrr::map(AllArgs, ~ get(.x, envir = environment())) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
@@ -102,7 +102,6 @@ IAS_Plot <- function(
   CountryBound <- IASDT.R::LoadAs(EU_Bound) %>%
     magrittr::extract2("Bound_sf_Eur_s") %>%
     magrittr::extract2("L_10")
-
   LastUpdate <- paste0("Last update: ", format(Sys.Date(), "%d %B %Y"))
 
   # Summary information for the current species
@@ -137,9 +136,8 @@ IAS_Plot <- function(
   EASIN_Gr100 <- SpData$EASIN_Gr100[[1]]
   eLTER_Gr100 <- SpData$eLTER_Gr100[[1]]
 
-  SpData <- SpData %>%
-    dplyr::select(
-      -tidyselect::all_of(c("GBIF_Gr100", "EASIN_Gr100", "eLTER_Gr100")))
+  SpData <- dplyr::select(
+    SpData, -tidyselect::all_of(c("GBIF_Gr100", "EASIN_Gr100", "eLTER_Gr100")))
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -200,7 +198,8 @@ IAS_Plot <- function(
   BoundExclude <- IASDT.R::LoadAs(EU_Bound) %>%
     magrittr::extract2("Bound_sf_Eur") %>%
     magrittr::extract2("L_10") %>%
-    dplyr::filter(NAME_ENGL %in% SpData$Countries2Exclude[[1]])
+    dplyr::filter(NAME_ENGL %in% SpData$Countries2Exclude[[1]]) %>%
+    dplyr::select("NAME_ENGL")
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -216,7 +215,6 @@ IAS_Plot <- function(
     scales::label_comma()(SpData$EASIN_Unique), ") \U2014 <b>eLTER</b> (",
     scales::label_comma()(SpData$eLTER), " / ",
     scales::label_comma()(SpData$eLTER_Unique), ")<br>",
-
     "<span style='font-size: 12pt; color:red;'><b>Final data: </span>",
     scales::label_comma()(SpData$NCells_Naturalized),
     " presence grid cells</b> \U2014 <b>GBIF</b> (",
@@ -300,13 +298,13 @@ IAS_Plot <- function(
 
   # Save the plot as JPEG file ----
 
-  (cowplot::ggdraw(Plot) +
-     cowplot::draw_label(
-       label = LastUpdate, x = 0.975, y = 0.98, hjust = 1, vjust = 1,
-       color = "grey65", size = 12) +
-     cowplot::draw_label(
-       label = BioRegAnnotation, x = 0.02, y = 0.91, hjust = 0, vjust = 0,
-       color = "grey65", size = 10)) %>%
+  (cowplot::ggdraw(Plot) + 
+    cowplot::draw_label(
+      label = LastUpdate, x = 0.975, y = 0.98, hjust = 1, vjust = 1,
+      color = "grey65", size = 12) + 
+    cowplot::draw_label(
+      label = BioRegAnnotation, x = 0.02, y = 0.91, hjust = 0, vjust = 0,
+      color = "grey65", size = 10)) %>%
     ggplot2::ggsave(
       filename = OutPath, width = 25, height = 26.5, units = "cm", dpi = 600)
 

@@ -28,7 +28,7 @@
 
 CLC_Plot <- function(
     CLC_Name, CLC_Map, EU_Map, CrossWalk, Path_JPEG, Path_JPEG_Free) {
-  
+
   # # ..................................................................... ###
 
   # Avoid "no visible binding for global variable" message
@@ -198,7 +198,7 @@ CLC_Plot <- function(
               mapping = ggplot2::aes(), color = "grey60",
               linewidth = 0.25, inherit.aes = TRUE) +
             paletteer::scale_fill_paletteer_c(
-              na.value = "transparent", "viridis::plasma", 
+              na.value = "transparent", "viridis::plasma",
               limits = c(0, 100)) +
             ggplot2::scale_x_continuous(
               expand = ggplot2::expansion(mult = c(0, 0)),
@@ -207,8 +207,8 @@ CLC_Plot <- function(
               expand = ggplot2::expansion(mult = c(0, 0)),
               limits = Ylim) +
             ggplot2::labs(
-              title = TitleLab, 
-              fill = NULL, 
+              title = TitleLab,
+              fill = NULL,
               tag = LastUpdate) +
             Theme2) %>%
             ggplot2::ggsave(
@@ -229,7 +229,7 @@ CLC_Plot <- function(
             ggplot2::geom_sf(
               EU_Map, fill = "transparent",
               mapping = ggplot2::aes(), color = "grey60",
-              linewidth = 0.25, inherit.aes = TRUE,) +
+              linewidth = 0.25, inherit.aes = TRUE) +
             paletteer::scale_fill_paletteer_c(
               na.value = "transparent", palette = "viridis::plasma") +
             ggplot2::scale_x_continuous(
@@ -237,8 +237,8 @@ CLC_Plot <- function(
             ggplot2::scale_y_continuous(
               expand = ggplot2::expansion(mult = c(0, 0)), limits = Ylim) +
             ggplot2::labs(
-              title = TitleLab, 
-              fill = NULL, 
+              title = TitleLab,
+              fill = NULL,
               tag = LastUpdate) +
             Theme2) %>%
             ggplot2::ggsave(

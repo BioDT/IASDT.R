@@ -66,7 +66,7 @@ GBIF_ReadChunk <- function(
 
   # Checking arguments ----
   AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, ~get(.x, envir = environment())) %>%
+  AllArgs <- purrr::map(AllArgs, ~ get(.x, envir = environment())) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
@@ -141,7 +141,8 @@ GBIF_ReadChunk <- function(
   GridSf <- file.path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
   if (!file.exists(GridSf)) {
     stop(
-      paste0("Reference grid file (sf) not found at: ", GridSf), call. = FALSE)
+      paste0("Reference grid file (sf) not found at: ", GridSf),
+      call. = FALSE)
   }
   GridSf <- IASDT.R::LoadAs(GridSf)
 
@@ -162,7 +163,7 @@ GBIF_ReadChunk <- function(
     # Convert classes for some columns
     dplyr::mutate(
       # convert empty strings to NA
-      dplyr::across(tidyselect::everything(), ~dplyr::na_if(., "")),
+      dplyr::across(tidyselect::everything(), ~ dplyr::na_if(., "")),
       # number of decimal places for longitude / latitude
       NDecLong = purrr::map_int(Longitude, IASDT.R::NDecimals),
       NDecLat = purrr::map_int(Latitude, IASDT.R::NDecimals),
@@ -194,7 +195,6 @@ GBIF_ReadChunk <- function(
       phylum == "Tracheophyta", phylumKey == 7707728,
       # only accepted taxonomy ranks (species level and below)
       taxonRank %in% c("FORM", "SPECIES", "SUBSPECIES", "VARIETY")) %>%
-
     # re-order columns
     dplyr::select(tidyselect::all_of(SortCols), tidyselect::everything()) %>%
     # convert to sf object (keep original coordinate columns)
@@ -247,7 +247,6 @@ GBIF_ReadChunk <- function(
       return(invisible(NULL))
     }
   } else {
-
     # If there are no observations after filtering and SaveData = TRUE, return
     # an empty tibble. This is useful to indicate that this chunk was processed
     # to avoid errors from GBIF_Process function
@@ -255,7 +254,8 @@ GBIF_ReadChunk <- function(
     if (SaveRData) {
       ChunkOutName <- stringr::str_remove_all(basename(ChunkFile), ".txt$")
       IASDT.R::SaveAs(
-        InObj = tibble::tibble(), OutObj = ChunkOutName, OutPath = ChunkOutPath)
+        InObj = tibble::tibble(), 
+        OutObj = ChunkOutName, OutPath = ChunkOutPath)
     }
 
     return(invisible(NULL))

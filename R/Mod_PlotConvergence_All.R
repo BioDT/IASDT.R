@@ -213,7 +213,8 @@ PlotConvergence_All <- function(
         X = seq_len(nrow(Model_Info)), FUN = PrepConvergence,
         future.scheduling = Inf, future.seed = TRUE,
         future.packages = c("dplyr", "sf", "Hmsc", "coda", "magrittr"),
-        future.globals = c("Model_Info", "Path_ConvDT", "maxOmega"))) %>%
+        future.globals = c(
+          "Model_Info", "Path_ConvDT", "maxOmega", "PrepConvergence"))) %>%
     dplyr::select(tidyselect::all_of(c("M_Name_Fit", "Plots"))) %>%
     tidyr::unnest_wider("Plots") %>%
     # arrange data alphanumerically by model name

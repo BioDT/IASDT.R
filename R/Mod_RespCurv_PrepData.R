@@ -342,7 +342,8 @@ RespCurv_PrepData <- function(
       FUN = PrepRCData_Int,
       future.scheduling = Inf, future.seed = TRUE,
       future.packages = c("dplyr", "purrr", "tidyr"),
-      future.globals = c("ResCurvDT", "Model")) %>%
+      future.globals = c(
+        "ResCurvDT", "Model", "PrepRCData_Int")) %>%
       dplyr::bind_rows()
 
     future::plan("sequential")

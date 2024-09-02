@@ -33,19 +33,19 @@ GBIF_Process <- function(
     Overwrite = FALSE, DeleteChunks = FALSE, ChunkSize = 50000,
     Boundaries = c(-30, 50, 25, 75), StartYear = 1981) {
 
-  .StartTime <- lubridate::now(tzone = "CET")
-
   # # ..................................................................... ###
+
+  .StartTime <- lubridate::now(tzone = "CET")
 
   # Checking arguments ----
 
   IASDT.R::CatTime("Checking arguments")
   AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, ~get(.x, envir = environment())) %>%
+  AllArgs <- purrr::map(AllArgs, ~ get(.x, envir = environment())) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
-      AllArgs = AllArgs, Type = "character", Args = c("EnvFile", "Renviron1"))
+    AllArgs = AllArgs, Type = "character", Args = c("EnvFile", "Renviron1"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "logical",
     Args = c(
@@ -126,7 +126,8 @@ GBIF_Process <- function(
   GridSf <- file.path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
   if (!file.exists(GridSf)) {
     stop(
-      paste0("Reference grid (sf) file not found at: ", GridSf), call. = FALSE)
+      paste0("Reference grid (sf) file not found at: ", GridSf),
+      call. = FALSE)
   }
   GridSf <- IASDT.R::LoadAs(GridSf)
 
@@ -157,31 +158,32 @@ GBIF_Process <- function(
   IASDT.R::CatTime(
     paste0("Prepare working on parallel using `", NCores, "` cores."),
     Level = 1)
+  
   future::plan("multisession", workers = NCores, gc = TRUE)
   on.exit(future::plan("sequential"), add = TRUE)
 
   IASDT.R::CatTime(
-    "Processing chunks on parallel, save each as RData files", Level = 1)
-    
+    "Processing chunks on parallel, save each as RData files",
+    Level = 1)
+
   GBIF_Data <- future.apply::future_lapply(
     X = ChunkList,
-    FUN = IASDT.R::GBIF_ReadChunk,
-    EnvFile = EnvFile, FromHPC = FromHPC, SaveRData = TRUE,
-    ReturnData = FALSE, Overwrite = Overwrite,
-    future.scheduling = Inf,
-    future.seed = TRUE,
-    future.packages = c("dplyr", "IASDT.R"),
-    future.globals = c("EnvFile", "FromHPC", "Overwrite"))
+    FUN = function(x) {
+      IASDT.R::GBIF_ReadChunk(
+        ChunkFile = x, EnvFile = EnvFile, FromHPC = FromHPC, SaveRData = TRUE,
+        ReturnData = FALSE, Overwrite = Overwrite)
+    },
+    future.scheduling = Inf, future.seed = TRUE)
+
 
   IASDT.R::CatDiff(
     InitTime = .StartTimeChunks, Prefix = "Finished in ", Level = 2)
 
   IASDT.R::CatTime("Reading processed chunks into a single dataset", Level = 1)
   if (all(file.exists(ChunkListRData))) {
-    GBIF_Data <- furrr::future_map_dfr(
-      .x = ChunkListRData, .f = IASDT.R::LoadAs,
-      .options = furrr::furrr_options(seed = TRUE, packages = "dplyr"),
-      .progress = FALSE)   %>%
+    GBIF_Data <- future.apply::future_lapply(
+      X = ChunkListRData, FUN = IASDT.R::LoadAs,
+      future.scheduling = Inf, future.seed = TRUE) %>%
       dplyr::bind_rows() %>%
       # merge with taxa standardization results
       dplyr::left_join(TaxaList, by = "speciesKey") %>%
@@ -193,12 +195,15 @@ GBIF_Process <- function(
       paste0("The following chunks were not processed\n", .) %>%
       stop(call. = FALSE)
   }
+
   IASDT.R::CatDiff(
-    InitTime = .StartTimeChunks, Prefix = "Finished in ", Level = 2)
+    InitTime = .StartTimeChunks,
+    Prefix = "Processing data chunks was finished in ", Level = 2)
 
   IASDT.R::CatTime(
-    paste0("A total of ", format(nrow(GBIF_Data), big.mark = ","),
-          " observations"),
+    paste0(
+      "A total of ", format(nrow(GBIF_Data), big.mark = ","),
+      " observations"),
     Level = 2)
 
   IASDT.R::CatTime("Stopping cluster", Level = 1)
@@ -226,7 +231,8 @@ GBIF_Process <- function(
         institutionCode, "iNaturalist", "Others"))
 
   IASDT.R::CatTime(
-      "Number of unique iNaturalist grid cells per species", Level = 1)
+    "Number of unique iNaturalist grid cells per species",
+    Level = 1)
   iNaturalist_Unique <- iNaturalist_Others %>%
     dplyr::group_by(species, CellCode) %>%
     tidyr::pivot_wider(
@@ -238,7 +244,9 @@ GBIF_Process <- function(
     dplyr::rename(iNaturalist_Unique = n)
 
   IASDT.R::CatTime(
-      "Number of grid cells for iNaturalist and other data sources", Level = 1)
+    "Number of grid cells for iNaturalist and other data sources",
+    Level = 1)
+  
   iNaturalist_Count <- iNaturalist_Others %>%
     dplyr::count(species, institutionCode) %>%
     tidyr::pivot_wider(names_from = institutionCode, values_from = n) %>%
@@ -290,9 +298,11 @@ GBIF_Process <- function(
     dplyr::rename(GBIF_NumGrids = n)
 
   IASDT.R::CatTime(
-    "Merge number of observations and grids per species", Level = 1)
+    "Merge number of observations and grids per species",
+    Level = 1)
   GBIF_NObsNGrid <- dplyr::full_join(
-    SpNObs, SpNGrids, by = c("IAS_ID", "taxon_name", "Species_name"))
+    SpNObs, SpNGrids,
+    by = c("IAS_ID", "taxon_name", "Species_name"))
 
   IASDT.R::CatTime("Save as RData", Level = 1)
   save(GBIF_NObsNGrid, file = file.path(Path_GBIF, "GBIF_NObsNGrid.RData"))
@@ -324,7 +334,7 @@ GBIF_Process <- function(
     terra::wrap()
 
   IASDT.R::CatTime(
-      "Number of observations per grid cell (log scale)", Level = 1)
+    "Number of observations per grid cell (log scale)", Level = 1)
   GBIF_NObs_log <- terra::unwrap(GBIF_NObs) %>%
     log10() %>%
     IASDT.R::setRastCRS() %>%
@@ -380,8 +390,7 @@ GBIF_Process <- function(
   rm(GBIF_date, GBIF_DOI, GBIF_Grid, GBIF_Metadata)
 
   Plot_GBIF_Summary <- function(
-    RstrMap, Title, LegendLabel = NULL, EU_Map = EuroBound) {
-
+      RstrMap, Title, LegendLabel = NULL, EU_Map = EuroBound) {
     # Plotting limits
     Xlim <- c(2600000, 6700000)
     Ylim <- c(1450000, 5420000)
@@ -415,14 +424,16 @@ GBIF_Process <- function(
 
     OutMap <- ggplot2::ggplot() +
       ggplot2::geom_sf(
-        EU_Map, mapping = ggplot2::aes(), color = "grey30", linewidth = 0.1,
+        EU_Map,
+        mapping = ggplot2::aes(), color = "grey30", linewidth = 0.1,
         fill = "grey95", inherit.aes = TRUE) +
       tidyterra::geom_spatraster(data = terra::trim(RstrMap), maxcell = Inf) +
       paletteer::scale_fill_paletteer_c(
         na.value = "transparent", "viridis::plasma",
         breaks = IASDT.R::integer_breaks()) +
       ggplot2::geom_sf(
-        EU_Map, mapping = ggplot2::aes(), color = "grey40", linewidth = 0.075,
+        EU_Map,
+        mapping = ggplot2::aes(), color = "grey40", linewidth = 0.075,
         fill = "transparent", inherit.aes = TRUE) +
       ggplot2::scale_x_continuous(
         expand = ggplot2::expansion(mult = c(0, 0)), limits = Xlim) +
@@ -459,7 +470,9 @@ GBIF_Process <- function(
         .l = list(SummMap, Title, LegendLabel),
         .f = function(SummMap, Title, LegendLabel) {
           Plot_GBIF_Summary(SummMap, Title, LegendLabel)
-        })) %>%
+        }
+      )
+    ) %>%
     dplyr::pull(SummMapGG) %>%
     # Plot the four panels together on a single figure
     cowplot::plot_grid(plotlist = ., ncol = 2, nrow = 2) %>%
@@ -501,7 +514,7 @@ GBIF_Process <- function(
         stringr::str_replace_all("\u00D7", "x") %>%
         stringr::str_replace_all("-", "")
 
-      SpData <-  dplyr::filter(GBIF_Data, Species_name == .x)
+      SpData <- dplyr::filter(GBIF_Data, Species_name == .x)
       OutFileSF <- file.path(Path_SpData, paste0(SpName, ".RData"))
 
       # Save if there is data
@@ -509,7 +522,8 @@ GBIF_Process <- function(
         IASDT.R::SaveAs(InObj = SpData, OutObj = SpName, OutPath = OutFileSF)
       }
       return(invisible(NULL))
-    }, .progress = FALSE)
+    },
+    .progress = FALSE)
 
   rm(GBIF_Data, GBIF_NObs, GBIF_NObs_log, GBIF_NSp, GBIF_NSp_Log)
   invisible(gc())
@@ -526,7 +540,8 @@ GBIF_Process <- function(
   furrr::future_walk(
     .x = SpList, .f = IASDT.R::GBIF_SpData, EnvFile = EnvFile,
     Verbose = FALSE, FromHPC = FromHPC, LastUpdate = LastUpdate,
-    .options = furrr::furrr_options(seed = TRUE, packages = "dplyr"))
+    .options = furrr::furrr_options(seed = TRUE, packages = "dplyr")
+  )
 
   IASDT.R::CatTime("Stopping cluster", Level = 2)
   future::plan("sequential")
@@ -543,7 +558,7 @@ GBIF_Process <- function(
   # # ..................................................................... ###
 
   IASDT.R::CatDiff(
-    InitTime = .StartTime, Prefix = "Processing GBIF data was finished in ")
+    InitTime = .StartTime, Prefix = "\nProcessing GBIF data was finished in ")
 
   return(invisible(NULL))
 }

@@ -16,6 +16,7 @@
 #' @export
 
 GBIF_Check <- function(Renviron = ".Renviron") {
+
   # Check if the accessing information already read
   Missing_Account <- purrr::map_lgl(
     .x = c("GBIF_EMAIL", "GBIF_PWD", "GBIF_USER"),
@@ -43,5 +44,6 @@ GBIF_Check <- function(Renviron = ".Renviron") {
         "the `.Renviron` file"),
       call. = FALSE)
   }
+  
   return(invisible(NULL))
 }

@@ -86,7 +86,8 @@ GBIF_Download <- function(
   # # ..................................................................... ###
 
   IASDT.R::CatTime(
-    "Ensure that GBIF access information is available", Level = 1)
+    "Ensure that GBIF access information is available",
+    Level = 1)
   IASDT.R::GBIF_Check(Renviron = Renviron)
 
   # # ..................................................................... ###
@@ -178,7 +179,7 @@ GBIF_Download <- function(
     StatusDetailed <- rgbif::occ_download_wait(GBIF_Request)
 
     IASDT.R::CatDiff(
-      InitTime = .StartTimeRequest, 
+      InitTime = .StartTimeRequest,
       Prefix = "Requesting GBIF data took ", Level = 1)
 
     IASDT.R::CatTime("Save status details", Level = 1)
@@ -203,7 +204,7 @@ GBIF_Download <- function(
 
     if (file.exists(Path_Status)) {
       IASDT.R::CatTime(
-        "Loading `status` information from the previous data request",
+        "Loading `status` information from a previous data request",
         Level = 1)
       StatusDetailed <- IASDT.R::LoadAs(Path_Status)
     } else {
@@ -225,11 +226,15 @@ GBIF_Download <- function(
     .StartTimeDownload <- lubridate::now(tzone = "CET")
 
     Dwn <- rgbif::occ_download_get(
-      GBIF_Request, path = Path_GBIF_Raw, overwrite = FALSE)
+      GBIF_Request, path = Path_GBIF_Raw, overwrite = FALSE) %>%
+      suppressMessages()
 
+    IASDT.R::CatTime(
+      "GBIF data was downloaded at the following path:", Level = 2)
+    IASDT.R::CatTime(as.character(Dwn), Level = 2)
     IASDT.R::CatDiff(
       InitTime = .StartTimeDownload,
-      Prefix = "Downloading GBIF data took ", Level = 1)
+      Prefix = "Downloading GBIF data took ", Level = 2)
 
     # Extract/save metadata info
     IASDT.R::CatTime("Extract/save metadata info", Level = 1)
@@ -348,8 +353,8 @@ GBIF_Download <- function(
     dplyr::mutate(ID = as.integer(ID + 1), SortID = as.integer(SortID + 1)) %>%
     dplyr::bind_rows(
       tibble::tibble(
-        Col = "LineNum", ID = 1L, SortID = 1L, Class = "integer"
-      ), .)
+        Col = "LineNum", ID = 1L, SortID = 1L, Class = "integer"),
+      .)
 
   SortCols <- dplyr::pull(dplyr::arrange(SelectedCols, SortID), Col)
 
@@ -384,7 +389,7 @@ GBIF_Download <- function(
       IASDT.R::System(RObj = FALSE) %>%
       invisible()
   } else {
-    IASDT.R::CatTime("No data split was made")
+    IASDT.R::CatTime("`SplitChunks = FALSE`; no data split was made")
   }
 
   # # ..................................................................... ###

@@ -27,18 +27,22 @@ ChangeClass <- function(DF) {
     "year", "month", "day", "coordinateUncertaintyInMeters",
     "acceptedNameUsageID", "taxonKey", "acceptedTaxonKey", "kingdomKey",
     "phylumKey", "classKey", "orderKey", "familyKey", "genusKey", "speciesKey")
-  VarsInt64 <- c("gbifID", "catalogNumber", "recordNumber", "taxonID",
+  
+  VarsInt64 <- c(
+    "gbifID", "catalogNumber", "recordNumber", "taxonID",
     "identificationID")
+
   VarsDbl <- c("decimalLatitude", "decimalLongitude")
   VarsLgl <- c("hasCoordinate", "hasGeospatialIssues", "repatriated")
-  VarsDte <- c("modified", "eventDate", "dateIdentified", "lastInterpreted",
+  VarsDte <- c(
+    "modified", "eventDate", "dateIdentified", "lastInterpreted",
     "lastParsed", "lastCrawled")
 
   DF %>%
     dplyr::mutate(dplyr::across(VarsInt, as.integer)) %>%
     dplyr::mutate(dplyr::across(VarsInt64, bit64::as.integer64)) %>%
-    dplyr::mutate(dplyr::across(VarsDbl, as.double))  %>%
-    dplyr::mutate(dplyr::across(VarsLgl, as.logical))  %>%
+    dplyr::mutate(dplyr::across(VarsDbl, as.double)) %>%
+    dplyr::mutate(dplyr::across(VarsLgl, as.logical)) %>%
     dplyr::mutate(dplyr::across(VarsDte, lubridate::as_date)) %>%
     return()
 }

@@ -34,7 +34,7 @@ GBIF_SpData <- function(
   }
 
   AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, ~get(.x, envir = environment())) %>%
+  AllArgs <- purrr::map(AllArgs, ~ get(.x, envir = environment())) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
@@ -79,7 +79,8 @@ GBIF_SpData <- function(
   GridSf <- file.path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
   if (!file.exists(GridSf)) {
     stop(
-      paste0("Reference grid file (sf) not found at: ", GridSf), call. = FALSE)
+      paste0("Reference grid file (sf) not found at: ", GridSf),
+      call. = FALSE)
   }
   GridSf <- IASDT.R::LoadAs(GridSf)
 
@@ -113,7 +114,7 @@ GBIF_SpData <- function(
   SpPath <- file.path(Path_SpData, paste0(SpName, ".RData"))
 
   if (file.exists(SpPath)) {
-
+    
     SpData <- IASDT.R::LoadAs(SpPath)
 
     # ****************************************************
@@ -149,7 +150,8 @@ GBIF_SpData <- function(
 
     FilePath_R <- file.path(Path_Raster, paste0(Obj_Name_Raster, ".RData"))
     IASDT.R::SaveAs(
-      InObj = terra::wrap(Sp_R), OutObj = Obj_Name_Raster, OutPath = FilePath_R)
+      InObj = terra::wrap(Sp_R), OutObj = Obj_Name_Raster, OutPath = FilePath_R
+    )
 
     # ****************************************************
     ## Plotting species data
@@ -167,7 +169,7 @@ GBIF_SpData <- function(
         legend.background = ggplot2::element_rect(fill = "transparent"),
         legend.text = ggplot2::element_text(size = 8),
         legend.box.spacing = grid::unit(0, "pt"),
-        legend.position	= "inside",
+        legend.position = "inside",
         legend.position.inside = c(0.935, 0.9),
         axis.title = ggplot2::element_blank(),
         axis.text.x = ggplot2::element_text(size = 7),
@@ -191,11 +193,13 @@ GBIF_SpData <- function(
 
     SpPlot <- ggplot2::ggplot() +
       ggplot2::geom_sf(
-        EuroBound, mapping = ggplot2::aes(), color = "grey30",
+        EuroBound,
+        mapping = ggplot2::aes(), color = "grey30",
         linewidth = 0.1, fill = "grey95", inherit.aes = TRUE) +
       tidyterra::geom_spatraster(data = Sp_R, maxcell = Inf) +
       ggplot2::geom_sf(
-        EuroBound, mapping = ggplot2::aes(), color = "grey40",
+        EuroBound,
+        mapping = ggplot2::aes(), color = "grey40",
         linewidth = 0.075, fill = "transparent", inherit.aes = TRUE) +
       paletteer::scale_fill_paletteer_c(
         na.value = "transparent", "viridis::plasma",
@@ -208,15 +212,17 @@ GBIF_SpData <- function(
         expand = ggplot2::expansion(mult = c(0, 0))) +
       ggplot2::labs(
         title = stringr::str_replace_all(Species, "_", " "),
-        fill = "# observations", tag = LastUpdate) +
+        fill = "# observations", 
+        tag = LastUpdate) +
       PlottingTheme
 
     SpPlot <- cowplot::ggdraw(SpPlot) +
       cowplot::draw_label(
-        NDataGrids, x = 0.0775, y = 0.95, size = 8, color = "red") +
+        NDataGrids,
+        x = 0.0775, y = 0.95, size = 8, color = "red") +
       cowplot::draw_label(
-        "GBIF", x = 0.05, y = 0.03, size = 12, color = "red",
-        fontface = "bold")
+        "GBIF",
+        x = 0.05, y = 0.03, size = 12, color = "red", fontface = "bold")
 
     ggplot2::ggsave(
       plot = SpPlot, filename = FilePath_Plot, width = 25, height = 25,

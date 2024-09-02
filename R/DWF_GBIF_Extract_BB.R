@@ -16,28 +16,26 @@
 #' @author Ahmed El-Gabbas
 #' @return Returns the content of the specified column `var` from the input `x`.
 #'   If `var` is not found within `x`, the function returns `NA_character_`.
-#' @noRd 
+#' @noRd
 #' @note This function is currently neither exported or used by other functions.
 #' @details
 #' Extract a specific column from the output of GBIF
 #' @examples
-#'
 #' \dontrun{
 #' rgbif::name_backbone(name = "Helianthus annuus", kingdom = "plants") %>%
-#'    Extract_BB(status)
+#'   Extract_BB(status)
 #'
 #' # ------------------------
 #'
 #' c("Helianthus annuus", "Tagetes patula L.") %>%
-#'    tibble::tibble(Taxa = .) %>%
-#'    dplyr::mutate(
-#'       BB = purrr::map(Taxa, rgbif::name_backbone),
-#'       status = purrr::map_chr(BB, Extract_BB, status),
-#'       SpKey = purrr::map_int(BB, Extract_BB, speciesKey))
+#'   tibble::tibble(Taxa = .) %>%
+#'   dplyr::mutate(
+#'     BB = purrr::map(Taxa, rgbif::name_backbone),
+#'     status = purrr::map_chr(BB, Extract_BB, status),
+#'     SpKey = purrr::map_int(BB, Extract_BB, speciesKey)
+#'   )
 #' }
-
 Extract_BB <- function(x, var) {
-
   if (is.null(x) || is.null(var)) {
     stop("x, and var cannot be NULL", call. = FALSE)
   }

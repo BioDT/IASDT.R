@@ -56,15 +56,15 @@ GBIF_Download <- function(
     RequestData = TRUE, DownloadData = TRUE, SplitChunks = TRUE,
     ChunkSize = 50000, Boundaries = c(-30, 50, 25, 75), StartYear = 1981) {
 
-  .StartTime <- lubridate::now(tzone = "CET")
-
   # # ..................................................................... ###
+
+  .StartTime <- lubridate::now(tzone = "CET")
 
   # Checking arguments ----
   IASDT.R::CatTime("Checking arguments")
 
   AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, ~get(.x, envir = environment())) %>%
+  AllArgs <- purrr::map(AllArgs, ~ get(.x, envir = environment())) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
@@ -86,8 +86,7 @@ GBIF_Download <- function(
   # # ..................................................................... ###
 
   IASDT.R::CatTime(
-    "Ensure that GBIF access information is available or can be read")
-  
+    "Ensure that GBIF access information is available", Level = 1)
   IASDT.R::GBIF_Check(Renviron = Renviron)
 
   # # ..................................................................... ###
@@ -144,13 +143,14 @@ GBIF_Download <- function(
 
   # Request GBIF data ------
 
-  if (RequestData) {
+  IASDT.R::CatTime("Request GBIF data")
 
+  if (RequestData) {
     # This can take 1-3 hours for the data to be ready
     .StartTimeRequest <- lubridate::now(tzone = "CET")
 
     ## Request GBIF data -----
-    IASDT.R::CatTime("Request GBIF data")
+    IASDT.R::CatTime("Requesting GBIF data", Level = 1)
 
     # a new DOI will be created; a couple of hours waiting time is expected
 
@@ -166,7 +166,9 @@ GBIF_Download <- function(
       rgbif::pred_within(
         IASDT.R::DownBoundary(
           Left = Boundaries[1], Right = Boundaries[2],
-          Bottom = Boundaries[3], Top = Boundaries[4])))
+          Bottom = Boundaries[3], Top = Boundaries[4])
+      )
+    )
 
     IASDT.R::CatTime("Save data request", Level = 1)
     save(GBIF_Request, file = file.path(Path_GBIF, "GBIF_Request.RData"))
@@ -184,15 +186,11 @@ GBIF_Download <- function(
 
     IASDT.R::CatTime("Data is ready - status summary:", ... = "\n", Level = 1)
     print(rgbif::occ_download_meta(key = StatusDetailed$key))
-
   } else {
-
-    IASDT.R::CatTime("New GBIF data was NOT requested")
-
     Path_Request <- file.path(Path_GBIF, "GBIF_Request.RData")
+
     if (file.exists(Path_Request)) {
-      IASDT.R::CatTime(
-        "Loading information from the previous data request", Level = 1)
+      IASDT.R::CatTime("Loading previous GBIF request", Level = 1)
       GBIF_Request <- IASDT.R::LoadAs(Path_Request)
     } else {
       stop(
@@ -202,13 +200,16 @@ GBIF_Download <- function(
     }
 
     Path_Status <- file.path(Path_GBIF, "StatusDetailed.RData")
+
     if (file.exists(Path_Status)) {
       IASDT.R::CatTime(
-        "Loading `status` information from the previous data request", Level = 1)
+        "Loading `status` information from the previous data request",
+        Level = 1)
       StatusDetailed <- IASDT.R::LoadAs(Path_Status)
     } else {
-      stop(paste0("Path to status info does not exist:", Path_Status),
-           call. = FALSE)
+      stop(
+        paste0("Path to status info does not exist:", Path_Status),
+        call. = FALSE)
     }
   }
 
@@ -216,8 +217,10 @@ GBIF_Download <- function(
 
   # Download the data to disk ----
 
+  IASDT.R::CatTime("Download GBIF data")
+
   if (DownloadData) {
-    IASDT.R::CatTime("\nDownload GBIF data")
+    IASDT.R::CatTime("Downloading GBIF data", Level = 1)
 
     .StartTimeDownload <- lubridate::now(tzone = "CET")
 
@@ -229,7 +232,7 @@ GBIF_Download <- function(
       Prefix = "Downloading GBIF data took ", Level = 1)
 
     # Extract/save metadata info
-    IASDT.R::CatTime("Extract/save metadata info")
+    IASDT.R::CatTime("Extract/save metadata info", Level = 1)
     GBIF_Metadata <- list(
       GBIF_Request = GBIF_Request,
       StatusDetailed = StatusDetailed,
@@ -246,9 +249,8 @@ GBIF_Download <- function(
       DwnPath = as.character(Dwn))
 
     save(GBIF_Metadata, file = file.path(Path_GBIF, "GBIF_Metadata.RData"))
-
   } else {
-    IASDT.R::CatTime("Data was NOT downloaded")
+    IASDT.R::CatTime("Data was NOT downloaded", Level = 1)
     GBIF_Metadata <- IASDT.R::LoadAs(
       file.path(Path_GBIF, "GBIF_Metadata.RData"))
   }
@@ -338,14 +340,16 @@ GBIF_Download <- function(
         Col == "decimalLongitude" ~ "Longitude",
         Col == "decimalLatitude" ~ "Latitude",
         Col == "coordinateUncertaintyInMeters" ~ "UncertainKm",
-        .default = Col)) %>%
+        .default = Col)
+    ) %>%
     # arrange by column number in the original data
     dplyr::arrange(ID) %>%
     # add a new column representing the line number of original data
     dplyr::mutate(ID = as.integer(ID + 1), SortID = as.integer(SortID + 1)) %>%
     dplyr::bind_rows(
       tibble::tibble(
-        Col = "LineNum", ID = 1L, SortID = 1L, Class = "integer"), .)
+        Col = "LineNum", ID = 1L, SortID = 1L, Class = "integer"
+      ), .)
 
   SortCols <- dplyr::pull(dplyr::arrange(SelectedCols, SortID), Col)
 
@@ -386,7 +390,7 @@ GBIF_Download <- function(
   # # ..................................................................... ###
 
   IASDT.R::CatDiff(
-    InitTime = .StartTime, 
+    InitTime = .StartTime,
     Prefix = paste0(
       "Requesting/downloading GBIF data and split data into chunks took "))
 

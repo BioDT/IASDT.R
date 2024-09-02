@@ -157,7 +157,7 @@ Efforts_Download <- function(NCores = 6, Path_Raw, Path_Interim, Path_Efforts) {
 
   IASDT.R::CatDiff(
     InitTime = .StartTimeDown,
-    Prefix = "Downloading efforts data took ", Level = 1)
+    Prefix = "Downloading efforts data took ", Level = 2)
 
   # # ..................................................................... ###
 

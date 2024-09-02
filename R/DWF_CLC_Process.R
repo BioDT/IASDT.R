@@ -54,6 +54,8 @@
 CLC_Process <- function(
     EnvFile = ".env", FromHPC = TRUE, MinLandPerc = 15, PlotCLC = TRUE) {
 
+  # # ..................................................................... ###
+
   .StartTime <- lubridate::now(tzone = "CET")
 
   # Avoid warning while reading CLC data
@@ -72,24 +74,32 @@ CLC_Process <- function(
 
   if (!is.numeric(MinLandPerc) || !dplyr::between(MinLandPerc, 0, 100)) {
     stop(
-      "MinLandPerc must be a numeric value between 0 and 100.", call. = FALSE)
+      "MinLandPerc must be a numeric value between 0 and 100.",
+      call. = FALSE)
   }
 
   if (!file.exists(EnvFile)) {
-    stop(paste0("Path for environment variables (`EnvFile`): ",
-                EnvFile, " was not found"), call. = FALSE)
+    stop(
+      paste0(
+        "Path for environment variables (`EnvFile`): ",
+        EnvFile, " was not found"),
+      call. = FALSE)
   }
+
+  # # ..................................................................... ###
 
   ## ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪
   # Loading data ------
   ## ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪
 
-  IASDT.R::InfoChunk("Loading data")
+  IASDT.R::CatTime("Loading data")
 
   # # ||||||||||||||||||||||||||||||||||||||||||||
   # Environment variables
   # # ||||||||||||||||||||||||||||||||||||||||||||
+
   IASDT.R::CatTime("Loading and checking environment variables", Level = 1)
+
   if (FromHPC) {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
@@ -131,7 +141,8 @@ CLC_Process <- function(
       if (!file.exists(path)) {
         stop(paste0("Required path does not exist: ", path), call. = FALSE)
       }
-    })
+    }
+  )
 
   # # ||||||||||||||||||||||||||||||||||||||||||||
   # Cross-walk
@@ -183,7 +194,8 @@ CLC_Process <- function(
   Path_CLC_Summary_RData <- file.path(Path_CLC, "Summary_RData")
 
   # Create folders when necessary
-  c(Path_CLC, Path_CLC_Summary_Tif, Path_CLC_Summary_Tif_Crop,
+  c(
+    Path_CLC, Path_CLC_Summary_Tif, Path_CLC_Summary_Tif_Crop,
     Path_CLC_Summary_RData) %>%
     purrr::walk(fs::dir_create)
 
@@ -191,22 +203,20 @@ CLC_Process <- function(
   if (PlotCLC) {
     # sub-folders to store JPEG files
     Path_CLC_Summary_JPEG <- file.path(Path_CLC, "Summary_JPEG")
-    Path_CLC_Summary_JPEG_Free <- file.path(
-      Path_CLC_Summary_JPEG, "FreeLegend")
+    Path_CLC_Summary_JPEG_Free <- file.path(Path_CLC_Summary_JPEG, "FreeLegend")
 
-    c(Path_CLC_Summary_JPEG, Path_CLC_Summary_JPEG_Free) %>%
-      purrr::walk(fs::dir_create)
+  purrr::walk(
+    .x = c(Path_CLC_Summary_JPEG, Path_CLC_Summary_JPEG_Free),
+    .f = fs::dir_create)
   }
 
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
   # ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪
   # Calculate fraction of each CLC class at each grid cell ----
   # ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪
 
-  IASDT.R::InfoChunk(
-    Message = "Calculate fraction of each CLC class at each grid cell")
+  IASDT.R::CatTime("Calculate fraction of each CLC class at each grid cell")
 
   # # ||||||||||||||||||||||||||||||||||||||||||||
   # Loading CLC tif file
@@ -221,7 +231,8 @@ CLC_Process <- function(
   # # ||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime(
-    "Processing using exactextractr::exact_extract function", Level = 1)
+    "Processing using exactextractr::exact_extract function",
+    Level = 1)
 
   CLC_Fracs <- Grid_sf %>%
     # Ensure that the projection of x and y parameters of
@@ -241,7 +252,7 @@ CLC_Process <- function(
 
   IASDT.R::CatTime("Save fraction results", Level = 1)
   save(CLC_Fracs,
-       file = file.path(Path_CLC_Summary_RData, "CLC_Fracs.RData"))
+    file = file.path(Path_CLC_Summary_RData, "CLC_Fracs.RData"))
 
   # # ||||||||||||||||||||||||||||||||||||||||||||
   # Convert fractions to raster
@@ -255,7 +266,7 @@ CLC_Process <- function(
     # Exclude processing CLC values of NODATA "frac_48"
     setdiff(y = c("CellCode", "geometry", "frac_48")) %>%
     purrr::map(
-      .f = ~{
+      .f = ~ {
         Map <- terra::rasterize(
           x = CLC_Fracs_vect, y = terra::rast(Grid_R), field = .x) %>%
           magrittr::multiply_by(100) %>%
@@ -271,21 +282,21 @@ CLC_Process <- function(
             terra::extend(terra::rast(Grid_R), fill = 100)
         }
         return(Map)
-      }) %>%
+      }
+    ) %>%
     terra::rast()
 
   rm(CLC_Fracs_vect, CLC_Fracs)
   invisible(gc())
 
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
   # ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪
   # Calculate % coverage of different cross-walks per grid cell ----
   # ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪
 
-  IASDT.R::InfoChunk(
-    Message = "Calculate % coverage of different cross-walks per grid cell")
+  IASDT.R::CatTime(
+    "Calculate % coverage of different cross-walks per grid cell")
 
   PercCovMaps <- purrr::map_dfr(
     .x = c("SynHab", "CLC_L1", "CLC_L2", "CLC_L3", "EUNIS_2019"),
@@ -293,14 +304,13 @@ CLC_Process <- function(
     CLC_CrossWalk = CLC_CrossWalk, CLC_FracsR = CLC_FracsR,
     Path_Tif = Path_CLC_Summary_Tif, Path_RData = Path_CLC_Summary_RData)
 
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
   # ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪
   # Prepare reference grid --- Exclude areas from the study area ----
   # ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪
 
-  IASDT.R::InfoChunk("Reference grid --- Exclude areas from the study area")
+  IASDT.R::CatTime("Reference grid --- Exclude areas from the study area")
 
   ### |||||||||||||||||||||||||||||||||||||||
   # Islands to exclude
@@ -312,11 +322,12 @@ CLC_Process <- function(
     ceuta = c(3098000, 3219000, 1411000, 1493000),
     AtlanticIslands = c(342000, 2419000, 687000, 2990000)) %>%
     purrr::map(
-      .f = ~{
+      .f = ~ {
         raster::extent(.x) %>%
           methods::as("SpatialPolygons") %>%
           sf::st_as_sf()
-      }) %>%
+      }
+    ) %>%
     dplyr::bind_rows() %>%
     sf::st_set_crs(3035)
 
@@ -353,8 +364,8 @@ CLC_Process <- function(
     smoothr::fill_holes(units::set_units(100000, km^2)) %>%
     terra::vect() %>%
     terra::rasterize(terra::rast(Grid_R)) %>%
-    #   # Suppress the warning: attribute variables are assumed to be spatially
-    #   # constant throughout all geometries
+    # Suppress the warning: attribute variables are assumed to be spatially
+    # constant throughout all geometries
     suppressWarnings()
 
   rm(Grid_R)
@@ -368,8 +379,10 @@ CLC_Process <- function(
     dplyr::pull(Map) %>%
     magrittr::extract2(1) %>%
     magrittr::extract2(
-      c("CLC_L3_423", "CLC_L3_511", "CLC_L3_512",
-        "CLC_L3_521", "CLC_L3_522", "CLC_L3_523")) %>%
+      c(
+        "CLC_L3_423", "CLC_L3_511", "CLC_L3_512",
+        "CLC_L3_521", "CLC_L3_522", "CLC_L3_523")
+    ) %>%
     # calculate the sum of these classes
     sum() %>%
     stats::setNames("Grid_10_Land") %>%
@@ -416,10 +429,10 @@ CLC_Process <- function(
   fs::dir_create(Path_Grid)
   save(Grid_10_Land, file = file.path(Path_Grid, "Grid_10_Land.RData"))
   save(Grid_10_Land_Crop,
-       file = file.path(Path_Grid, "Grid_10_Land_Crop.RData"))
+    file = file.path(Path_Grid, "Grid_10_Land_Crop.RData"))
   save(Grid_10_Land_sf, file = file.path(Path_Grid, "Grid_10_Land_sf.RData"))
   save(Grid_10_Land_Crop_sf,
-       file = file.path(Path_Grid, "Grid_10_Land_Crop_sf.RData"))
+    file = file.path(Path_Grid, "Grid_10_Land_Crop_sf.RData"))
 
   ## ||||||||||||||||||||||||||||||||||||||||
   # Save calculated % coverage
@@ -428,7 +441,7 @@ CLC_Process <- function(
   IASDT.R::CatTime("Save calculated % coverage", Level = 1)
   CLC_FracsR <- terra::wrap(CLC_FracsR)
   save(CLC_FracsR,
-       file = file.path(Path_CLC_Summary_RData, "CLC_FracsR.RData"))
+    file = file.path(Path_CLC_Summary_RData, "CLC_FracsR.RData"))
 
   rm(CLC_FracsR)
   invisible(gc())
@@ -441,12 +454,12 @@ CLC_Process <- function(
   terra::writeRaster(
     terra::unwrap(Grid_10_Land), overwrite = TRUE,
     filename = file.path(Path_Grid, "Grid_10_Land.tif"))
+
   terra::writeRaster(
     terra::unwrap(Grid_10_Land_Crop), overwrite = TRUE,
     filename = file.path(Path_Grid, "Grid_10_Land_Crop.tif"))
 
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
   ## ||||||||||||||||||||||||||||||||||||||||
   # Add country name to grid cells
@@ -487,24 +500,25 @@ CLC_Process <- function(
     InObj = Grid_CNT, OutObj = "Grid_10_Land_Crop_sf_Country",
     OutPath = file.path(Path_Grid, "Grid_10_Land_Crop_sf_Country.RData"))
 
-  rm(Grid_10_Land_Crop_sf, Grid_10_Land_sf, Exclude_Area,
-     TR, Grid_CNT, Grid_CNT_Near)
+  rm(
+    Grid_10_Land_Crop_sf, Grid_10_Land_sf, Exclude_Area,
+    TR, Grid_CNT, Grid_CNT_Near)
+
   invisible(gc())
 
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
   # ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪
   # Crop % coverage results ----
   # ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪
 
-  IASDT.R::InfoChunk("Crop % coverage results")
+  IASDT.R::CatTime("Crop % coverage results")
 
   PercCovMaps <- dplyr::mutate(
     PercCovMaps,
     Map_Crop = purrr::map2(
       .x = Name, .y = Map,
-      .f = ~{
+      .f = ~ {
         Type <- stringr::str_remove(.x, "PercCov_")
         IASDT.R::CatTime(Type, Level = 2)
 
@@ -524,16 +538,17 @@ CLC_Process <- function(
             Path_CLC_Summary_RData, paste0(OutObjName, ".RData")))
 
         return(Map)
-      }))
+      }
+    )
+  )
 
-  ## |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  ## |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
   # ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪
   # Majority per grid cell ----
   # ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪
 
-  IASDT.R::InfoChunk("Identify major CLC class per per grid cell")
+  IASDT.R::CatTime("Identify major CLC class per per grid cell")
 
   ## ||||||||||||||||||||||||||||||||||||||||
   # Processing using exactextractr::exact_extract
@@ -564,7 +579,7 @@ CLC_Process <- function(
 
   IASDT.R::CatTime("Save majority results", Level = 1)
   save(CLC_Majority,
-       file = file.path(Path_CLC_Summary_RData, "CLC_Majority.RData"))
+    file = file.path(Path_CLC_Summary_RData, "CLC_Majority.RData"))
 
   invisible(gc())
 
@@ -585,33 +600,32 @@ CLC_Process <- function(
   rm(CLC_Majority, Grid_10_Land, Grid_10_Land_Crop, MajorityMaps)
   invisible(gc())
 
-  ## |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  ## |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
   # ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪
   # Plotting ----
   # ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪
 
   if (PlotCLC) {
-    IASDT.R::InfoChunk("Plotting")
-    c("PercCov_SynHab", "PercCov_CLC_L1", "PercCov_CLC_L2",
+    IASDT.R::CatTime("Plotting")
+    c(
+      "PercCov_SynHab", "PercCov_CLC_L1", "PercCov_CLC_L2",
       "PercCov_CLC_L3", "PercCov_EUNIS_2019") %>%
       purrr::walk(
         .f = CLC_Plot,
-        CLC_Map = PercCovMaps, EU_Map = EUBound_sf$L_03,
+        CLC_Map = PercCovMaps,
+        EU_Map = EUBound_sf$L_03,
         CrossWalk = CLC_CrossWalk,
         Path_JPEG = Path_CLC_Summary_JPEG,
         Path_JPEG_Free = Path_CLC_Summary_JPEG_Free)
   }
 
-  ## |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  ## |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
   IASDT.R::CatDiff(
     InitTime = .StartTime, ChunkText = "Function summary", CatInfo = TRUE)
 
   return(invisible(NULL))
-
 }
 
 # ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪ ####
@@ -640,10 +654,13 @@ CLC_Process <- function(
 #' @return A tibble containing the processed raster object.
 #' @author Ahmed El-Gabbas
 
-CLC_GetPerc <- function(Type, CLC_CrossWalk, CLC_FracsR, Path_Tif, Path_RData) {
+CLC_GetPerc <- function(
+    Type, CLC_CrossWalk, CLC_FracsR, Path_Tif, Path_RData) {
+
+  # # ..................................................................... ###
 
   if (is.null(Type) || is.null(CLC_CrossWalk) || is.null(CLC_FracsR) ||
-      is.null(Path_Tif) || is.null(Path_RData)) {
+    is.null(Path_Tif) || is.null(Path_RData)) {
     stop("None of the input parameters can be empty", call. = FALSE)
   }
 
@@ -653,8 +670,13 @@ CLC_GetPerc <- function(Type, CLC_CrossWalk, CLC_FracsR, Path_Tif, Path_RData) {
       "Type has to be one of SynHab, CLC_L1, CLC_L2, CLC_L3, and EUNIS_2019",
       call. = FALSE)
   }
+  # # ..................................................................... ###
 
+  # Avoid "no visible binding for global variable" message
+  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Fracs <- Class <- HabPerc <- NULL
+
+  # # ..................................................................... ###
 
   IASDT.R::CatTime(Type, Level = 1)
   OutObjName <- paste0("PercCov_", Type)
@@ -665,10 +687,10 @@ CLC_GetPerc <- function(Type, CLC_CrossWalk, CLC_FracsR, Path_Tif, Path_RData) {
     tidyr::nest(Fracs = -Class) %>%
     dplyr::slice(gtools::mixedorder(Class)) %>%
     dplyr::mutate(
-      Fracs = purrr::map(.x = Fracs, .f = ~as.vector(unlist(.x))),
+      Fracs = purrr::map(.x = Fracs, .f = ~ as.vector(unlist(.x))),
       HabPerc = purrr::map2(
         .x = Fracs, .y = Class,
-        .f = ~{
+        .f = ~ {
           RName <- paste0(Type, "_", .y) %>%
             stringr::str_replace_all("\\.", "") %>%
             stringr::str_trim()
@@ -676,7 +698,8 @@ CLC_GetPerc <- function(Type, CLC_CrossWalk, CLC_FracsR, Path_Tif, Path_RData) {
           CLC_FracsR[[paste0("frac_", .x)]] %>%
             sum() %>%
             stats::setNames(RName)
-        })) %>%
+        }
+      )) %>%
     dplyr::pull(HabPerc) %>%
     terra::rast()
 
@@ -726,9 +749,11 @@ CLC_ProcessMajority <- function(
     Type, CLC_Majority, Path_Tif, Path_Tif_Crop, Path_RData,
     Grid_10_Land, Grid_10_Land_Crop) {
 
+  # # ..................................................................... ###
+
   if (is.null(Type) || is.null(CLC_Majority) || is.null(Path_Tif) ||
-      is.null(Path_Tif_Crop) || is.null(Path_RData) || is.null(Grid_10_Land) ||
-      is.null(Grid_10_Land_Crop)) {
+    is.null(Path_Tif_Crop) || is.null(Path_RData) || is.null(Grid_10_Land) ||
+    is.null(Grid_10_Land_Crop)) {
     stop("None of the input parameters can be empty", call. = FALSE)
   }
 
@@ -739,7 +764,14 @@ CLC_ProcessMajority <- function(
       call. = FALSE)
   }
 
+  # # ..................................................................... ###
+
+  # Avoid "no visible binding for global variable" message
+  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
+
   Label <- Class <- ID <- NULL
+
+  # # ..................................................................... ###
 
   IASDT.R::CatTime(Type, Level = 2)
   OutObjName <- paste0("Majority_", Type)

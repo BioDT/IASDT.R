@@ -31,12 +31,16 @@ Efforts_Request <- function(
     NCores = 3, Path_Requests, Path_Efforts,
     StartYear = 1981, Boundaries = c(-30, 50, 25, 75)) {
 
+  # # ..................................................................... ###
+
   # In earlier tries, requesting all vascular plants occurrences in a single
   # request returned 80 GB compressed file. The extracted "occurrences.txt" is
   # >280 GB (220M observations).
   #
   # The following makes individual request for each vascular plant order. This
   # can take up to 5 hours for the data to be ready
+
+  # # ..................................................................... ###
 
   .StartTimeRequest <- lubridate::now(tzone = "CET")
 
@@ -65,12 +69,12 @@ Efforts_Request <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Request <- DownDetails <- orderKey <- Size <- NumberDatasets <-
-    TotalRecords <- Created <- Modified <- EraseAfter <- NULL
+    TotalRecords <-  NULL
 
   # # ..................................................................... ###
 
   # Prepare working on parallel -----
-  
+
   # GBIF allows only 3 parallel requests. Here I wait until previous request
   # is finished.
   IASDT.R::CatTime(
@@ -131,7 +135,6 @@ Efforts_Request <- function(
 
                 IASDT.R::SaveAs(
                   InObj = Down, OutObj = Request_ID, OutPath = Request_Path)
-
               },
               error = function(e) {
                 stop(
@@ -151,9 +154,10 @@ Efforts_Request <- function(
           return(Down)
         },
         .options = furrr::furrr_options(
-          seed = TRUE, scheduling = Inf, 
+          seed = TRUE, scheduling = Inf,
           packages = c("dplyr", "IASDT.R", "rgbif"))
-      )) %>%
+      )
+    ) %>%
     dplyr::rowwise() %>%
     # Add columns for metadata
     dplyr::mutate(
@@ -176,7 +180,9 @@ Efforts_Request <- function(
       # Convert some columns to integer
       dplyr::across(TotalRecords:NumberDatasets, as.integer),
       # Convert some columns to date type
-      dplyr::across(c(Created, Modified, EraseAfter), lubridate::as_date)) %>%
+      dplyr::across(
+        c("Created", "Modified", "EraseAfter"), 
+        lubridate::as_date)) %>%
     dplyr::ungroup() %>%
     # how to cite data
     dplyr::mutate(Citation = purrr::map_chr(Request, attr, "citation"))
@@ -198,7 +204,7 @@ Efforts_Request <- function(
   # # ..................................................................... ###
 
   IASDT.R::CatDiff(
-    InitTime = .StartTimeRequest, 
+    InitTime = .StartTimeRequest,
     Prefix = "Requesting efforts data took ", Level = 1)
 
   # # ..................................................................... ###

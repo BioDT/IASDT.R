@@ -54,6 +54,8 @@ GBIF_ReadChunk <- function(
     ChunkFile, EnvFile = ".env", FromHPC = TRUE, MaxUncert = 10,
     StartYear = 1981, SaveRData = TRUE, ReturnData = FALSE, Overwrite = FALSE) {
 
+  # # ..................................................................... ###
+
   if (isFALSE(SaveRData) && isFALSE(ReturnData)) {
     stop(
       "At least one of SaveRData and ReturnData has to be `TRUE`",

@@ -37,7 +37,7 @@ EASIN_Taxonomy <- function(
   # Checking arguments ----
 
   AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, ~get(.x, envir = environment())) %>%
+  AllArgs <- purrr::map(AllArgs, ~ get(.x, envir = environment())) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
@@ -86,7 +86,7 @@ EASIN_Taxonomy <- function(
     Skip <- Skip + NSearch
 
     # If the number of rows of the data < NSearch, break the loop
-    if (nrow(Data) < NSearch)  {
+    if (nrow(Data) < NSearch) {
       break
     }
     rm(Data, URL)
@@ -100,7 +100,7 @@ EASIN_Taxonomy <- function(
 
 
   IASDT.R::CatDiff(
-    InitTime = TimeStartTaxa, 
+    InitTime = TimeStartTaxa,
     Prefix = "Extracting EASIN taxonomy was finished in ", Level = 2)
 
   return(EASIN_Taxa)

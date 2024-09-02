@@ -35,16 +35,16 @@ Efforts_Summarize <- function(
     NCores, Path_Efforts, Path_Efforts_Interim, Path_Efforts_Data, Path_Grid,
     IAS_List, Efforts_AllRequests, ChunkSize = 100000, DeleteChunks = TRUE) {
 
-  .StartTimeProcess <- lubridate::now(tzone = "CET")
-
   # # ..................................................................... ###
+
+  .StartTimeProcess <- lubridate::now(tzone = "CET")
 
   if (!is.numeric(NCores) || length(NCores) != 1 || NCores <= 0) {
     stop("NCores must be a single positive integer.", call. = FALSE)
   }
 
   if (!is.character(Path_Efforts_Data) || length(Path_Efforts_Data) != 1 ||
-      !dir.exists(Path_Efforts_Data)) {
+    !dir.exists(Path_Efforts_Data)) {
     stop(
       "`Path_Efforts_Data` must be a single valid directory path.",
       call. = FALSE
@@ -52,17 +52,17 @@ Efforts_Summarize <- function(
   }
 
   if (!is.character(Path_Grid) || length(Path_Grid) != 1 ||
-      !dir.exists(Path_Grid)) {
+    !dir.exists(Path_Grid)) {
     stop("`Path_Grid` must be a single valid directory path.", call. = FALSE)
   }
 
   if (missing(Path_Efforts_Interim) || !is.character(Path_Efforts_Interim) ||
-      !dir.exists(Path_Efforts_Interim)) {
+    !dir.exists(Path_Efforts_Interim)) {
     stop("`Path_Efforts_Interim` must be a valid directory path.", call. = FALSE)
   }
 
   if (missing(Path_Efforts) || !is.character(Path_Efforts) ||
-      !dir.exists(Path_Efforts)) {
+    !dir.exists(Path_Efforts)) {
     stop("`Path_Efforts` must be a valid directory path.", call. = FALSE)
   }
 
@@ -116,7 +116,8 @@ Efforts_Summarize <- function(
 
   if (DeleteChunks) {
     IASDT.R::CatTime(
-      "Chunk files will be deleted after finishing processing", Level = 2)
+      "Chunk files will be deleted after finishing processing",
+      Level = 2)
   }
 
   # Earlier attempts with `furrr::future_map()` failed
@@ -124,7 +125,6 @@ Efforts_Summarize <- function(
   DT_Paths <- future.apply::future_lapply(
     X = seq_len(nrow(Efforts_AllRequests)),
     FUN = function(ID) {
-
       DownPath <- Efforts_AllRequests$DownPath[ID]
       TotalRecords <- Efforts_AllRequests$TotalRecords[ID]
       class <- Efforts_AllRequests$class[ID]
@@ -147,7 +147,6 @@ Efforts_Summarize <- function(
       # Process current order data if the output file is not okay and the order
       # have observations
       if (isFALSE(FileOkay) && TotalRecords > 0) {
-
         if (file.exists(Path_DT)) {
           fs::file_delete(Path_DT)
         }
@@ -166,7 +165,6 @@ Efforts_Summarize <- function(
         # If there are chunk files on disk, count their total number of
         # observations
         if (length(Chunks) > 0) {
-
           # Total number of lines in all chunk files
           NLines <- sum(purrr::map_int(Chunks, R.utils::countLines))
 
@@ -179,7 +177,6 @@ Efforts_Summarize <- function(
           } else {
             SplitChunks <- FALSE
           }
-
         } else {
           # If there is no chunk files available, split into chunks
           SplitChunks <- TRUE
@@ -222,7 +219,8 @@ Efforts_Summarize <- function(
               sf::st_transform(3035) %>%
               sf::st_join(Grid_SF) %>%
               dplyr::filter(magrittr::not(is.na(CellCode)))
-          })
+          }
+        )
 
         # if there are observations after the filtering, save the data to disk
         # and return the saved path, otherwise return no path
@@ -256,7 +254,7 @@ Efforts_Summarize <- function(
     future.globals = c(
       "Path_Efforts", "Path_Efforts_Interim", "Efforts_AllRequests",
       "Path_Grid_R", "Path_Efforts_Data", "Grid_SF", "IAS_List", "ChunkSize")
-    ) %>%
+  ) %>%
     dplyr::bind_rows()
 
   # # ++++++++++++++++++++++++++++++ ###
@@ -275,14 +273,12 @@ Efforts_Summarize <- function(
 
   # # ..................................................................... ###
 
-  # Prepare summary maps: # observations and species per order ----
-  IASDT.R::CatTime(
-    "Prepare summary maps: # observations and species per order", Level = 1)
+  # Prepare summary maps per order ----
+  IASDT.R::CatTime("Prepare summary maps per order", Level = 1)
 
   SummaryMaps <- future.apply::future_lapply(
     X = seq_len(nrow(Efforts_Summary)),
     FUN = function(ID) {
-
       Path_DT <- Efforts_Summary$Path_DT[ID]
       ClassOrder <- Efforts_Summary$ClassOrder[ID]
 
@@ -291,7 +287,6 @@ Efforts_Summarize <- function(
         # If there is no data for the current order
         ObsN <- ObsN_Native <- 0L
       } else {
-
         # Load data on current order
         DT <- IASDT.R::LoadAs(Path_DT)
         # Number of observation in the cleaned data
@@ -310,7 +305,6 @@ Efforts_Summarize <- function(
       # All species ----
 
       if (ObsN == 0) {
-
         # Create dummy maps for the number of species and records
         NObs_R <- terra::classify(Grid_R, cbind(1, 0)) %>%
           stats::setNames(paste0("NObs_", ClassOrder)) %>%
@@ -319,9 +313,7 @@ Efforts_Summarize <- function(
         NSp_R <- terra::classify(Grid_R, cbind(1, 0)) %>%
           stats::setNames(paste0("NSp_", ClassOrder)) %>%
           terra::wrap()
-
       } else {
-
         # Number of observations
         NObs_R <- IASDT.R::Efforts_SummarizeMaps(
           Data = DT, NSp = FALSE, Name = "NObs", ClassOrder = ClassOrder,
@@ -333,7 +325,6 @@ Efforts_Summarize <- function(
           Grid_SF = Grid_SF, Grid_R = Grid_R)
 
         rm(DT)
-
       }
 
       # # ++++++++++++++++++++++++++++++++++ ###
@@ -341,7 +332,6 @@ Efforts_Summarize <- function(
       # Only native species ----
 
       if (ObsN_Native == 0) {
-
         # Create dummy maps for the number of species and records
 
         NObs_Native_R <- terra::classify(Grid_R, cbind(1, 0)) %>%
@@ -351,9 +341,7 @@ Efforts_Summarize <- function(
         NSp_Native_R <- terra::classify(Grid_R, cbind(1, 0)) %>%
           stats::setNames(paste0("NSpNative_", ClassOrder)) %>%
           terra::wrap()
-
       } else {
-
         # Number of observations of native species
         NObs_Native_R <- IASDT.R::Efforts_SummarizeMaps(
           Data = DT_Native, NSp = FALSE, Name = "NObs_Native",
@@ -365,7 +353,6 @@ Efforts_Summarize <- function(
           ClassOrder = ClassOrder, Grid_SF = Grid_SF, Grid_R = Grid_R)
 
         rm(DT_Native)
-
       }
 
       # # ++++++++++++++++++++++++++++++++++ ###
@@ -383,7 +370,7 @@ Efforts_Summarize <- function(
     future.globals = c(
       "Path_Efforts", "Path_Efforts_Interim", "Efforts_AllRequests",
       "Path_Grid_R", "Path_Efforts_Data", "Grid_SF", "IAS_List", "ChunkSize")
-      ) %>%
+  ) %>%
     dplyr::bind_rows()
 
   # join data with requests summary
@@ -405,12 +392,13 @@ Efforts_Summarize <- function(
   # Save summary results: `Efforts_Summary` ----
   IASDT.R::CatTime("Save summary results: `Efforts_Summary`", Level = 1)
   save(
-    Efforts_Summary, file = file.path(Path_Efforts, "Efforts_Summary.RData"))
+    Efforts_Summary,
+    file = file.path(Path_Efforts, "Efforts_Summary.RData"))
 
   # # ..................................................................... ###
 
-  # Prepare summary maps ----
-  IASDT.R::CatTime("Prepare summary maps", Level = 1)
+  # Prepare summary maps - all sampling efforts ----
+  IASDT.R::CatTime("Prepare summary maps - all sampling efforts", Level = 1)
 
   CalcNObsNSp <- function(List, Name) {
     purrr::map(.x = unlist(List), .f = terra::unwrap) %>%
@@ -435,16 +423,19 @@ Efforts_Summarize <- function(
     IASDT.R::setRastCRS() %>%
     IASDT.R::setRastVals()
 
-  ## Save summary maps as `RData` ----
-  IASDT.R::CatTime("Save summary maps as `RData`", Level = 2)
+  ## Save summary maps - `RData` ----
+  IASDT.R::CatTime("Save summary maps", Level = 1)
+
+  IASDT.R::CatTime("`RData`", Level = 2)
   IASDT.R::SaveAs(
     InObj = terra::wrap(Efforts_SummaryR), OutObj = "Efforts_SummaryR",
     OutPath = file.path(Path_Efforts, "Efforts_SummaryR.RData"))
 
-  ## Save summary maps as `tif` ----
-  IASDT.R::CatTime("Save summary maps as `tif`", Level = 2)
+  ## Save summary maps - `tif` ----
+  IASDT.R::CatTime("`tif`", Level = 2)
   terra::writeRaster(
-    Efforts_SummaryR, overwrite = TRUE,
+    Efforts_SummaryR,
+    overwrite = TRUE,
     filename = file.path(
       Path_Efforts, paste0("Efforts_GBIF_", names(Efforts_SummaryR), ".tif")))
 

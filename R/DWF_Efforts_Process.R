@@ -56,9 +56,9 @@ Efforts_Process <- function(
     Boundaries = c(-30, 50, 25, 75), ChunkSize = 100000,
     DeleteChunks = TRUE, DeleteProcessed = TRUE) {
 
-  .StartTime <- lubridate::now(tzone = "CET")
-
   # # ..................................................................... ###
+
+  .StartTime <- lubridate::now(tzone = "CET")
 
   # Checking arguments ----
   IASDT.R::CatTime("Checking arguments")
@@ -68,13 +68,16 @@ Efforts_Process <- function(
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "character", Args = c("Renviron", "EnvFile"))
+    AllArgs = AllArgs, Type = "character", Args = c("Renviron", "EnvFile")
+  )
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "logical",
-    Args = c("FromHPC", "RequestData", "DownloadData"))
+    Args = c("FromHPC", "RequestData", "DownloadData")
+  )
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric",
-    Args = c("NCores", "Boundaries", "StartYear"))
+    Args = c("NCores", "Boundaries", "StartYear")
+  )
 
   # Validate Boundaries argument
   if (length(Boundaries) != 4) {
@@ -105,7 +108,8 @@ Efforts_Process <- function(
 
   # # ..................................................................... ###
 
-  IASDT.R::CatTime("Ensure that GBIF access information is available")
+  IASDT.R::CatTime(
+    "Ensure that GBIF access information is available", Level = 1)
   IASDT.R::GBIF_Check(Renviron = Renviron)
 
   # # ..................................................................... ###
@@ -145,9 +149,10 @@ Efforts_Process <- function(
   Path_Efforts_Requests <- file.path(Path_Efforts, "Requests")
   Path_Efforts_Data <- file.path(Path_Efforts_Interim, "CleanedData")
   # Create required directories
-  fs::dir_create(c(
-    Path_Efforts, Path_Efforts_Raw, Path_Efforts_Interim, Path_Efforts_Data,
-    Path_Efforts_Requests))
+  fs::dir_create(
+    c(
+      Path_Efforts, Path_Efforts_Raw, Path_Efforts_Interim, Path_Efforts_Data,
+      Path_Efforts_Requests))
 
   ## Reference grid ----
   Grids <- Path_Grid %>%
@@ -178,7 +183,6 @@ Efforts_Process <- function(
       NCores = NCores, Path_Requests = Path_Efforts_Requests,
       Path_Efforts = Path_Efforts, StartYear = StartYear,
       Boundaries = Boundaries)
-
   } else {
     IASDT.R::CatTime("Efforts data was not requested, but loaded", Level = 1)
     Efforts_AllRequests <- IASDT.R::LoadAs(
@@ -194,7 +198,6 @@ Efforts_Process <- function(
     Efforts_AllRequests <- IASDT.R::Efforts_Download(
       NCores = NCores, Path_Raw = Path_Efforts_Raw,
       Path_Interim = Path_Efforts_Interim, Path_Efforts = Path_Efforts)
-
   } else {
     IASDT.R::CatTime("Efforts data was not downloaded", Level = 1)
     Efforts_AllRequests <- IASDT.R::LoadAs(
@@ -226,14 +229,14 @@ Efforts_Process <- function(
   # # Cleaning up ----
 
   if (DeleteProcessed) {
-    IASDT.R::CatTime("Cleaning up")
-    fs::file_delete(list.files(Path_Efforts_Raw,  full.names = TRUE))   
+    IASDT.R::CatTime("Cleaning up - delete downloaded GBIF data")
+    fs::file_delete(list.files(Path_Efforts_Raw, full.names = TRUE))
   }
-  
+
   # # ..................................................................... ###
 
   IASDT.R::CatDiff(
-    InitTime = .StartTime,
+    InitTime = .StartTime, 
     Prefix = "\nProcessing efforts data took ", ... = "\n")
 
   return(invisible(NULL))

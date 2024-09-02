@@ -28,17 +28,21 @@
 
 CLC_Plot <- function(
     CLC_Name, CLC_Map, EU_Map, CrossWalk, Path_JPEG, Path_JPEG_Free) {
+  
+  # # ..................................................................... ###
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Level <- Map_Crop <- ID <- Label <- Name <- NULL
 
+  # # ..................................................................... ###
+
   if (is.null(CLC_Name) || is.null(EU_Map) || is.null(CrossWalk) ||
-      is.null(Path_JPEG) || is.null(Path_JPEG_Free)) {
+    is.null(Path_JPEG) || is.null(Path_JPEG_Free)) {
     stop(
       paste0(
-        "CLC_Name, EU_Map, CrossWalk, Path_JPEG, and ",
-        "Path_JPEG_Free can not be empty"),
+        "`CLC_Name`, `EU_Map`, `CrossWalk`, `Path_JPEG`, and ",
+        "`Path_JPEG_Free` can not be empty"),
       call. = FALSE)
   }
 
@@ -83,8 +87,7 @@ CLC_Plot <- function(
 
   MAPS <- purrr::map(
     .x = seq_len(length(split_vector)),
-    .f = ~{
-
+    .f = ~ {
       purrr::map(
         .x = split_vector[[.x]],
         .f = function(YY) {
@@ -108,7 +111,8 @@ CLC_Plot <- function(
               na.value = "transparent", palette = "viridis::plasma",
               limits = c(0, 100)) +
             ggplot2::geom_sf(
-              EU_Map, mapping = ggplot2::aes(), color = "grey60",
+              EU_Map,
+              mapping = ggplot2::aes(), color = "grey60",
               linewidth = 0.25, inherit.aes = TRUE,
               fill = scales::alpha("grey80", 0.2)) +
             ggplot2::scale_x_continuous(
@@ -184,27 +188,29 @@ CLC_Plot <- function(
           }
 
           (ggplot2::ggplot() +
-              ggplot2::geom_sf(
-                EU_Map, mapping = ggplot2::aes(),
-                color = "grey60", linewidth = 0.25, inherit.aes = TRUE,
-                fill = scales::alpha("grey80", 0.4)) +
-              tidyterra::geom_spatraster(data = CurrMap) +
-              ggplot2::geom_sf(
-                EU_Map, mapping = ggplot2::aes(), color = "grey60",
-                linewidth = 0.25, inherit.aes = TRUE,
-                fill = "transparent") +
-              paletteer::scale_fill_paletteer_c(
-                na.value = "transparent", "viridis::plasma",
-                limits = c(0, 100)) +
-              ggplot2::scale_x_continuous(
-                expand = ggplot2::expansion(mult = c(0, 0)),
-                limits = Xlim) +
-              ggplot2::scale_y_continuous(
-                expand = ggplot2::expansion(mult = c(0, 0)),
-                limits = Ylim) +
-              ggplot2::labs(
-                title = TitleLab, fill = NULL, tag = LastUpdate) +
-              Theme2) %>%
+            ggplot2::geom_sf(
+              EU_Map, mapping = ggplot2::aes(),
+              color = "grey60", linewidth = 0.25, inherit.aes = TRUE,
+              fill = scales::alpha("grey80", 0.4)) +
+            tidyterra::geom_spatraster(data = CurrMap) +
+            ggplot2::geom_sf(
+              EU_Map, fill = "transparent",
+              mapping = ggplot2::aes(), color = "grey60",
+              linewidth = 0.25, inherit.aes = TRUE) +
+            paletteer::scale_fill_paletteer_c(
+              na.value = "transparent", "viridis::plasma", 
+              limits = c(0, 100)) +
+            ggplot2::scale_x_continuous(
+              expand = ggplot2::expansion(mult = c(0, 0)),
+              limits = Xlim) +
+            ggplot2::scale_y_continuous(
+              expand = ggplot2::expansion(mult = c(0, 0)),
+              limits = Ylim) +
+            ggplot2::labs(
+              title = TitleLab, 
+              fill = NULL, 
+              tag = LastUpdate) +
+            Theme2) %>%
             ggplot2::ggsave(
               filename = TilePath, width = 25, height = 23, units = "cm",
               dpi = 600, create.dir = TRUE)
@@ -215,57 +221,59 @@ CLC_Plot <- function(
             file.path(Path_JPEG_Free, .)
 
           (ggplot2::ggplot() +
-              ggplot2::geom_sf(
-                EU_Map, mapping = ggplot2::aes(), color = "grey60",
-                linewidth = 0.25, inherit.aes = TRUE,
-                fill = scales::alpha("grey80", 0.4)) +
-              tidyterra::geom_spatraster(data = CurrMap) +
-              ggplot2::geom_sf(
-                EU_Map, mapping = ggplot2::aes(), color = "grey60",
-                linewidth = 0.25, inherit.aes = TRUE,
-                fill = "transparent") +
-              paletteer::scale_fill_paletteer_c(
-                na.value = "transparent", palette = "viridis::plasma") +
-              ggplot2::scale_x_continuous(
-                expand = ggplot2::expansion(mult = c(0, 0)),
-                limits = Xlim) +
-              ggplot2::scale_y_continuous(
-                expand = ggplot2::expansion(mult = c(0, 0)),
-                limits = Ylim) +
-              ggplot2::labs(
-                title = TitleLab, fill = NULL, tag = LastUpdate) +
-              Theme2) %>%
+            ggplot2::geom_sf(
+              EU_Map, mapping = ggplot2::aes(), color = "grey60",
+              linewidth = 0.25, inherit.aes = TRUE,
+              fill = scales::alpha("grey80", 0.4)) +
+            tidyterra::geom_spatraster(data = CurrMap) +
+            ggplot2::geom_sf(
+              EU_Map, fill = "transparent",
+              mapping = ggplot2::aes(), color = "grey60",
+              linewidth = 0.25, inherit.aes = TRUE,) +
+            paletteer::scale_fill_paletteer_c(
+              na.value = "transparent", palette = "viridis::plasma") +
+            ggplot2::scale_x_continuous(
+              expand = ggplot2::expansion(mult = c(0, 0)), limits = Xlim) +
+            ggplot2::scale_y_continuous(
+              expand = ggplot2::expansion(mult = c(0, 0)), limits = Ylim) +
+            ggplot2::labs(
+              title = TitleLab, 
+              fill = NULL, 
+              tag = LastUpdate) +
+            Theme2) %>%
             ggplot2::ggsave(
               filename = TilePathFree, width = 25, height = 23,
               units = "cm", dpi = 600, create.dir = TRUE)
 
           return(CurrMapPlot)
-        })
-    })
+        }
+      )
+    }
+  )
 
   IASDT.R::CatTime("        Multiple panels per file ")
 
   CommonLegend <- cowplot::get_legend(
     (ggplot2::ggplot() +
-       tidyterra::geom_spatraster(
-         data = terra::rast(CLC_MapR[[1]]),
-         maxcell = terra::ncell(CLC_MapR)) +
-       paletteer::scale_fill_paletteer_c(
-         na.value = "transparent", palette = "viridis::plasma",
-         limits = c(0, 100)) +
-       ggplot2::theme(
-         legend.box.margin = ggplot2::margin(0, 0, 0, 0),
-         legend.key.size = grid::unit(0.4, "cm"),
-         legend.key.width = grid::unit(0.4, "cm"),
-         legend.text = ggplot2::element_text(size = 6),
-         legend.background = ggplot2::element_rect(fill = "transparent")) +
-       ggplot2::labs(fill = NULL))) %>%
+      tidyterra::geom_spatraster(
+        data = terra::rast(CLC_MapR[[1]]), maxcell = terra::ncell(CLC_MapR)) +
+      paletteer::scale_fill_paletteer_c(
+        na.value = "transparent", palette = "viridis::plasma",
+        limits = c(0, 100)) +
+      ggplot2::theme(
+        legend.box.margin = ggplot2::margin(0, 0, 0, 0),
+        legend.key.size = grid::unit(0.4, "cm"),
+        legend.key.width = grid::unit(0.4, "cm"),
+        legend.text = ggplot2::element_text(size = 6),
+        legend.background = ggplot2::element_rect(fill = "transparent")) +
+      ggplot2::labs(fill = NULL))
+  ) %>%
     suppressWarnings()
 
   # arrange map tiles together into figures (4 columns * 2 rows)
   purrr::walk(
     .x = seq_along(MAPS),
-    .f = ~{
+    .f = ~ {
       # main title of the figure - {("\U00D7")} prints the multiplication symbol
       MainTitle <- stringr::str_glue(
         "Percent coverage of {Prefix} per 10\u00D710 km grid cell") %>%
@@ -281,11 +289,12 @@ CLC_Plot <- function(
       cowplot::plot_grid(plotlist = MAPS[[.x]], ncol = 4, nrow = 2) %>%
         cowplot::plot_grid(CommonLegend, rel_widths = c(4, .2)) %>%
         cowplot::plot_grid(
-          MainTitle, ., ncol = 1, rel_heights = c(0.05, 1))  %>%
+          MainTitle, ., ncol = 1, rel_heights = c(0.05, 1)) %>%
         ggplot2::ggsave(
           filename = OutPath[.x], width = 28, height = 15, units = "cm",
           dpi = 600, create.dir = TRUE)
-    })
+    }
+  )
 
   return(invisible(NULL))
 }

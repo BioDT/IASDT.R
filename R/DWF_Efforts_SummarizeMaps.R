@@ -24,9 +24,16 @@
 #' @name Efforts_SummarizeMaps
 #' @export
 
-Efforts_SummarizeMaps <- function(Data, NSp, Name, ClassOrder, Grid_SF, Grid_R) {
+Efforts_SummarizeMaps <- function(
+    Data, NSp, Name, ClassOrder, Grid_SF, Grid_R) {
 
+  # # ..................................................................... ###
+
+  # Avoid "no visible binding for global variable" message
+  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   CellCode <- speciesKey <- NULL
+
+  # # ..................................................................... ###
 
   # Validate if Data is an sf object
   if (!inherits(Data, "sf")) {
@@ -49,9 +56,10 @@ Efforts_SummarizeMaps <- function(Data, NSp, Name, ClassOrder, Grid_SF, Grid_R) 
 
   # Validate the Name parameter
   if (is.null(Name)) {
-    stop("The parameter `Name` can not be empty", call. = FALSE
-    )
+    stop("The parameter `Name` can not be empty", call. = FALSE)
   }
+
+  # # ..................................................................... ###
 
   # Drop geometry from Data
   Data <- sf::st_drop_geometry(Data)

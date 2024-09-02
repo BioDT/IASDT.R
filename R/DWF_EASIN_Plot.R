@@ -28,15 +28,15 @@
 
 EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
 
-  .PlotStartTime <- lubridate::now(tzone = "CET")
-
   # # ..................................................................... ###
 
+  .PlotStartTime <- lubridate::now(tzone = "CET")
+
   # Checking arguments ----
-  IASDT.R::CatTime("Checking arguments")
+  IASDT.R::CatTime("Checking arguments", Level = 1)
 
   AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, ~get(.x, envir = environment())) %>%
+  AllArgs <- purrr::map(AllArgs, ~ get(.x, envir = environment())) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = "EnvFile")
@@ -84,8 +84,8 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
     magrittr::extract2("Bound_sf_Eur_s") %>%
     magrittr::extract2("L_03")
 
-  ## Check input summary maps -----
-  IASDT.R::CatTime("Check input summary maps", Level = 2)
+  ## EASIN summary maps -----
+  IASDT.R::CatTime("EASIN summary maps", Level = 2)
   Path_NSp <- file.path(Path_EASIN_Summary, "EASIN_NSp.RData")
   Path_NSp_PerPartner <- file.path(
     Path_EASIN_Summary, "EASIN_NSp_PerPartner.RData")
@@ -104,7 +104,8 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
         "The following input files are missing: \n",
         paste0(
           " >> ", PathSummaryMaps[which(SummaryMapsMissing)],
-          collapse = "\n")),
+          collapse = "\n")
+      ),
       call. = FALSE)
   }
 
@@ -114,11 +115,10 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
 
   ## NObs + NSp ----
 
-  IASDT.R::CatTime("Number of observations and species", Level = 1)
+  IASDT.R::CatTime("Number of species/observations", Level = 1)
 
   Plot_EASIN_All <- function(
-    MapPath, Title, EuroBound, addTag = FALSE, Legend = FALSE) {
-
+      MapPath, Title, EuroBound, addTag = FALSE, Legend = FALSE) {
     LastUpdate <- paste0(
       "<b>Last update:</b> <i>", format(Sys.Date(), "%d %B %Y"), "</i>")
 
@@ -141,7 +141,7 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
         legend.box.spacing = grid::unit(0, "pt"),
         legend.title = ggtext::element_markdown(
           color = "blue", size = 6, face = "bold"),
-        legend.position	= "inside",
+        legend.position = "inside",
         legend.position.inside = c(0.92, 0.85),
         axis.text.x = ggplot2::element_text(size = 4),
         axis.text.y = ggplot2::element_text(size = 4, hjust = 0.5, angle = 90),
@@ -152,16 +152,17 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
         panel.grid.major = ggplot2::element_line(linewidth = 0.25),
         panel.border = ggplot2::element_blank(),
         plot.tag.position = c(0.88, 0.999),
-        plot.tag = ggtext::element_markdown(colour = "grey", size = 5))
+        plot.tag = ggtext::element_markdown(colour = "grey", size = 5)
+      )
 
     Plot <- ggplot2::ggplot() +
       tidyterra::geom_spatraster(data = Map, maxcell = NCells) +
       paletteer::scale_fill_paletteer_c(
         na.value = "transparent", "viridis::plasma") +
       ggplot2::geom_sf(
-        EuroBound, mapping = ggplot2::aes(), color = "grey30",
-        linewidth = 0.04, fill = scales::alpha("grey80", 0.2),
-        inherit.aes = TRUE) +
+        EuroBound, inherit.aes = TRUE,
+        mapping = ggplot2::aes(), color = "grey30",
+        linewidth = 0.04, fill = scales::alpha("grey80", 0.2)) +
       ggplot2::scale_x_continuous(
         expand = ggplot2::expansion(mult = c(0, 0)),
         limits = c(2600000, 6700000)) +
@@ -173,7 +174,8 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
     if (addTag) {
       Plot <- Plot +
         ggplot2::labs(
-          title = Title, fill = "log<sub>10</sub>", tag = LastUpdate)
+          title = Title, fill = "log<sub>10</sub>", 
+          tag = LastUpdate)
     } else {
       Plot <- Plot +
         ggplot2::labs(title = Title, fill = "log<sub>10</sub>")
@@ -197,15 +199,18 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
   IASDT.R::CatTime(
     Text = "Merge maps side by side and save as JPEG", Level = 2)
   (ggpubr::ggarrange(
-    Plot_NObs, (ggplot2::ggplot() + ggplot2::theme_void()), Plot_NSp,
+    Plot_NObs, 
+    (ggplot2::ggplot() + ggplot2::theme_void()), 
+    Plot_NSp,
     widths = c(1, 0, 1), nrow = 1) +
-      patchwork::plot_annotation(
-        title = "EASIN data",
-        theme = ggplot2::theme(
-          plot.margin = ggplot2::margin(0.1, 0, 0, 0, "cm"),
-          plot.title = ggtext::element_markdown(
-            size = 9, face = "bold", hjust = 0.5,
-            margin = ggplot2::margin(0, 0, 0, 0))))) %>%
+    patchwork::plot_annotation(
+      title = "EASIN data",
+      theme = ggplot2::theme(
+        plot.margin = ggplot2::margin(0.1, 0, 0, 0, "cm"),
+        plot.title = ggtext::element_markdown(
+          size = 9, face = "bold", hjust = 0.5,
+          margin = ggplot2::margin(0, 0, 0, 0)))
+    )) %>%
     ggplot2::ggsave(
       filename = file.path(Path_EASIN_Summary, "EASIN_Data.jpeg"),
       width = 20, height = 10.3, units = "cm", dpi = 600)
@@ -219,11 +224,10 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
   IASDT.R::CatTime("Number of species/observations per partner", Level = 1)
 
   Plot_EASIN_Partner <- function(MapPath, File_prefix, Title) {
-
     LastUpdate <- paste0(
       "<b>Last update:</b> <i>", format(Sys.Date(), "%d %B %Y"), "</i>")
 
-    PlottingTheme2 <-  ggplot2::theme_bw() +
+    PlottingTheme2 <- ggplot2::theme_bw() +
       ggplot2::theme(
         plot.margin = ggplot2::margin(0.125, 0, 0, 0, "cm"),
         plot.title = ggtext::element_markdown(
@@ -241,14 +245,15 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
         legend.text = ggplot2::element_text(size = 6),
         legend.title = ggtext::element_markdown(
           color = "blue", size = 9, face = "bold"),
-        legend.position	= "inside",
+        legend.position = "inside",
         legend.position.inside = c(0.97, 0.90),
         legend.key.size = grid::unit(0.35, "cm"),
         legend.key.width = grid::unit(0.4, "cm"),
         legend.background = ggplot2::element_rect(fill = "transparent"),
         legend.box.spacing = grid::unit(0, "pt"),
         plot.tag.position = c(0.92, 0.975),
-        plot.tag = ggtext::element_markdown(colour = "grey", size = 9))
+        plot.tag = ggtext::element_markdown(colour = "grey", size = 9)
+      )
 
     Map <- IASDT.R::LoadAs(MapPath) %>%
       terra::unwrap() %>%
@@ -270,9 +275,9 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
         paletteer::scale_fill_paletteer_c(
           na.value = "transparent", "viridis::plasma", limits = LegLimit) +
         ggplot2::geom_sf(
-          EuroBound, mapping = ggplot2::aes(), color = "grey30",
-          linewidth = 0.04, fill = scales::alpha("grey80", 0.2),
-          inherit.aes = TRUE) +
+          EuroBound, inherit.aes = TRUE,
+          mapping = ggplot2::aes(), color = "grey30",
+          linewidth = 0.04, fill = scales::alpha("grey80", 0.2),) +
         ggplot2::scale_x_continuous(
           expand = ggplot2::expansion(mult = c(0, 0)),
           limits = c(2600000, 6700000)) +
@@ -281,7 +286,8 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
           limits = c(1450000, 5420000)) +
         ggplot2::labs(
           title = paste(Title, "[p", i, "]", sep = ""),
-          fill = "log<sub>10</sub>", tag = LastUpdate) +
+          fill = "log<sub>10</sub>", 
+          tag = LastUpdate) +
         PlottingTheme2
 
       ggplot2::ggsave(

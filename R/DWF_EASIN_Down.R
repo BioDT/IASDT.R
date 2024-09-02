@@ -62,11 +62,11 @@ EASIN_Down <- function(
   }
 
   AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, ~get(.x, envir = environment())) %>%
+  AllArgs <- purrr::map(AllArgs, ~ get(.x, envir = environment())) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "character",
+    AllArgs = AllArgs, Type = "character", 
     Args = c("SpKey", "BaseURL", "Path_Raw"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "logical",
@@ -98,7 +98,6 @@ EASIN_Down <- function(
   # # ..................................................................... ###
 
   if (isFALSE(OutFileExist)) {
-
     # Download chunk data
     if (Verbose) {
       IASDT.R::CatTime("Download chunk data")
@@ -113,6 +112,7 @@ EASIN_Down <- function(
 
       Obj_Out <- paste0(
         SpKey, "_", stringr::str_pad(Chunk, width = 5, pad = "0"))
+
       Path_Part <- file.path(Path_Raw, "FileParts", paste0(Obj_Out, ".RData"))
       if (file.exists(Path_Part) && IASDT.R::CheckRData(Path_Part)) {
         next
@@ -125,15 +125,16 @@ EASIN_Down <- function(
       while (DownTry <= Attempts) {
         DownTry <- DownTry + 1
 
-        ChunkDT <- try({
-          ChunkDT0 <- RCurl::getURL(URL, .mapUnicode = FALSE)
-          Error <- stringr::str_detect(
-            ChunkDT0, pattern = "An error occurred while")
-          NoObs <- stringr::str_detect(
-            ChunkDT0, pattern = "There are no results based on your")
-          ChunkDT0
-        },
-        silent = TRUE)
+        ChunkDT <- try(
+          {
+            ChunkDT0 <- RCurl::getURL(URL, .mapUnicode = FALSE)
+            Error <- stringr::str_detect(
+              ChunkDT0, pattern = "An error occurred while")
+            NoObs <- stringr::str_detect(
+              ChunkDT0, pattern = "There are no results based on your")
+            ChunkDT0
+          },
+          silent = TRUE)
 
         if (NoObs) {
           break

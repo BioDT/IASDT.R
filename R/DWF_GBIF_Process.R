@@ -148,28 +148,30 @@ GBIF_Process <- function(
   # Processing data chunks -----
 
   IASDT.R::CatTime("Processing data chunks")
+  .StartTimeChunks <- lubridate::now(tzone = "CET")
+
+  ChunkList <- list.files(
+    path = Path_GBIF_Interim, pattern = "Chunk_.+.txt", full.names = TRUE)
+  ChunkListRData <- stringr::str_replace_all(ChunkList, ".txt$", ".RData")
 
   IASDT.R::CatTime(
     paste0("Prepare working on parallel using `", NCores, "` cores."),
     Level = 1)
-
   future::plan("multisession", workers = NCores, gc = TRUE)
   on.exit(future::plan("sequential"), add = TRUE)
 
   IASDT.R::CatTime(
     "Processing chunks on parallel, save each as RData files", Level = 1)
-  .StartTimeChunks <- lubridate::now(tzone = "CET")
-  ChunkList <- list.files(
-    path = Path_GBIF_Interim, pattern = "Chunk_.+.txt", full.names = TRUE)
-  ChunkListRData <- stringr::str_replace_all(ChunkList, ".txt$", ".RData")
-
+    
   GBIF_Data <- future.apply::future_lapply(
     X = ChunkList,
-    FUN = function(x) {
-      IASDT.R::GBIF_ReadChunk(
-        ChunkFile = x, EnvFile = EnvFile, FromHPC = FromHPC,
-        SaveRData = TRUE, ReturnData = FALSE, Overwrite = Overwrite)
-    }, future.scheduling = Inf, future.seed = TRUE, future.packages = "dplyr")
+    FUN = IASDT.R::GBIF_ReadChunk,
+    EnvFile = EnvFile, FromHPC = FromHPC, SaveRData = TRUE,
+    ReturnData = FALSE, Overwrite = Overwrite,
+    future.scheduling = Inf,
+    future.seed = TRUE,
+    future.packages = c("dplyr", "IASDT.R"),
+    future.globals = c("EnvFile", "FromHPC", "Overwrite"))
 
   IASDT.R::CatDiff(
     InitTime = .StartTimeChunks, Prefix = "Finished in ", Level = 2)
@@ -195,7 +197,7 @@ GBIF_Process <- function(
     InitTime = .StartTimeChunks, Prefix = "Finished in ", Level = 2)
 
   IASDT.R::CatTime(
-    paste0("A total of ", format(nrow(GBIF_Data), big.mark = ","), 
+    paste0("A total of ", format(nrow(GBIF_Data), big.mark = ","),
           " observations"),
     Level = 2)
 

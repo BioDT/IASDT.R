@@ -34,15 +34,15 @@
 
 Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
 
-  .StartTime <- lubridate::now(tzone = "CET")
-
   # # ..................................................................... ###
+
+  .StartTime <- lubridate::now(tzone = "CET")
 
   # Checking arguments ----
   IASDT.R::CatTime("Checking arguments")
 
   AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, ~get(.x, envir = environment())) %>%
+  AllArgs <- purrr::map(AllArgs, ~ get(.x, envir = environment())) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = "EnvFile")
@@ -100,9 +100,7 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
   # Download road data ------
   IASDT.R::CatTime("Download road data")
 
-  .StartTimeDown <- lubridate::now(tzone = "CET")
   withr::local_options(timeout = 1200)
-
   Path_DownFile <- file.path(Path_Roads_Raw, basename(Road_URL))
 
   # Check if zip file is a valid file
@@ -146,26 +144,15 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
       call. = FALSE)
   }
 
-  IASDT.R::CatDiff(
-    InitTime = .StartTimeDown,
-    Prefix = "Downloading GRIP data took ", NLines = 1, Level = 1)
-
   rm(Down)
 
   # # .................................... ###
 
   IASDT.R::CatTime("Extracting files")
-  .StartTimeExt <- lubridate::now(tzone = "CET")
-
   archive::archive_extract(
     archive = Path_DownFile, dir = Path_Roads_Interim) %>%
     suppressMessages()
-
-  IASDT.R::CatDiff(
-    InitTime = .StartTimeExt,
-    Prefix = "Extracting GRIP data took ", NLines = 1, Level = 1)
-
-  rm(Path_DownFile, .StartTimeDown, .StartTimeExt)
+  rm(Path_DownFile, .StartTimeExt)
 
   # # ..................................................................... ###
 
@@ -180,8 +167,9 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
 
   if (length(Road_GDB_Files) == 0) {
     stop(
-      paste0("No `.gdb` files found in the directory after extraction: ",
-             Path_Roads_Interim),
+      paste0(
+        "No `.gdb` files found in the directory after extraction: ",
+        Path_Roads_Interim),
       call. = FALSE)
   }
 
@@ -218,7 +206,7 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
     dplyr::mutate(
       A = purrr::walk2(
         .x = RoadType, .y = VarName,
-        .f = ~{
+        .f = ~ {
           IASDT.R::CatTime(paste0(.x, " - ", .y), Level = 2)
           dplyr::filter(Road_sf, GP_RTP %in% .x) %>%
             dplyr::select(-GP_RTP) %>%
@@ -230,7 +218,9 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
                 Path_Roads, paste0("Road_sf_", .x, "_", .y, ".RData")))
           invisible(gc())
           return(invisible(NULL))
-        })) %>%
+        }
+      )
+    ) %>%
     invisible()
 
   rm(Road_sf)
@@ -303,7 +293,7 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
 
   Road_Distance <- purrr::map(
     .x = as.list(Road_Length),
-    .f = ~{
+    .f = ~ {
       IASDT.R::CatTime(names(.x), Level = 2)
       Road_Points <- terra::as.points(terra::classify(.x, cbind(0, NA)))
       terra::distance(x = .x, y = Road_Points, unit = "km") %>%
@@ -311,7 +301,8 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
         stats::setNames(paste0("Road_Distance_", names(.x))) %>%
         # Ensure that values are read from memory
         IASDT.R::setRastVals()
-    }) %>%
+    }
+  ) %>%
     terra::rast()
 
   IASDT.R::CatTime("Save distance to road - tif", Level = 1)
@@ -343,7 +334,7 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
       legend.key.width = grid::unit(0.4, "cm"),
       legend.background = ggplot2::element_rect(fill = "transparent"),
       legend.text = ggplot2::element_text(size = 8),
-      legend.position	= "inside",
+      legend.position = "inside",
       legend.position.inside = c(0.9, 0.85),
       legend.title = ggplot2::element_text(
         color = "black", size = 8, face = "bold"),
@@ -367,15 +358,17 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
 
   Plots_Length <- purrr::map(
     .x = terra::as.list(Road_Length),
-    .f = ~{
+    .f = ~ {
       Road <- log10(terra::classify(.x, cbind(0, NA)))
       ggplot2::ggplot() +
         ggplot2::geom_sf(
-          EU_Bound, mapping = ggplot2::aes(), color = "grey75",
+          EU_Bound,
+          mapping = ggplot2::aes(), color = "grey75",
           linewidth = 0.075, fill = "grey98") +
         tidyterra::geom_spatraster(data = Road, maxcell = Inf) +
         ggplot2::geom_sf(
-          EU_Bound, mapping = ggplot2::aes(), color = "grey30",
+          EU_Bound,
+          mapping = ggplot2::aes(), color = "grey30",
           linewidth = 0.075, fill = "transparent", inherit.aes = TRUE) +
         paletteer::scale_fill_paletteer_c(
           na.value = "transparent", "viridis::plasma") +
@@ -394,7 +387,9 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
           },
           fill = "log10") +
         PlottingTheme
-    })
+    }
+  )
+
   Plots_Length <- patchwork::wrap_plots(Plots_Length, ncol = 3, nrow = 2) +
     patchwork::plot_annotation(
       title = "Road length per grid cell",
@@ -402,6 +397,7 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
         plot.title = ggplot2::element_text(
           size = 18, face = "bold", hjust = 0.5,
           margin = ggplot2::margin(0, 0, 0.5, 0))))
+  
   ggplot2::ggsave(
     plot = Plots_Length,
     filename = file.path(Path_Roads, "Road_Length.jpeg"),
@@ -413,14 +409,16 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
   IASDT.R::CatTime("Distance to roads", Level = 1)
   Plots_Distance <- purrr::map(
     .x = terra::as.list(Road_Distance),
-    .f = ~{
+    .f = ~ {
       ggplot2::ggplot() +
         ggplot2::geom_sf(
-          EU_Bound, mapping = ggplot2::aes(), color = "grey75",
+          EU_Bound,
+          mapping = ggplot2::aes(), color = "grey75",
           linewidth = 0.075, fill = "grey98") +
         tidyterra::geom_spatraster(data = .x, maxcell = Inf) +
         ggplot2::geom_sf(
-          EU_Bound, mapping = ggplot2::aes(), color = "grey30",
+          EU_Bound,
+          mapping = ggplot2::aes(), color = "grey30",
           linewidth = 0.075, fill = "transparent", inherit.aes = TRUE) +
         paletteer::scale_fill_paletteer_c(
           na.value = "transparent", "viridis::plasma") +
@@ -432,7 +430,8 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
           limits = c(1450000, 5420000)) +
         ggplot2::labs(title = paste0(names(.x), " roads"), fill = "km") +
         PlottingTheme
-    })
+    }
+  )
 
   Plots_Distance <- patchwork::wrap_plots(Plots_Distance, ncol = 3, nrow = 2) +
     patchwork::plot_annotation(

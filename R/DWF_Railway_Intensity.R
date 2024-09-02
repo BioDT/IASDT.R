@@ -26,7 +26,6 @@
 
 Railway_Intensity <- function(
     FromHPC = TRUE, EnvFile = ".env", NCores = 6, DeleteProcessed = TRUE) {
-
   .StartTime <- lubridate::now(tzone = "CET")
 
   # # ..................................................................... ###
@@ -35,13 +34,12 @@ Railway_Intensity <- function(
   IASDT.R::CatTime("Checking arguments")
 
   AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, ~get(.x, envir = environment())) %>%
+  AllArgs <- purrr::map(AllArgs, ~ get(.x, envir = environment())) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = "EnvFile")
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "logical",
-    Args = c("FromHPC", "Download"))
+    AllArgs = AllArgs, Type = "logical", Args = c("FromHPC", "Download"))
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "numeric", Args = "NCores")
 
   rm(AllArgs)
@@ -87,7 +85,8 @@ Railway_Intensity <- function(
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
   fs::dir_create(
-    c(Path_Railways, Path_Railways_Raw, Path_Railways_Interim))
+    c(Path_Railways, Path_Railways_Raw, Path_Railways_Interim)
+  )
 
   RefGrid <- file.path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(RefGrid)) {
@@ -150,15 +149,16 @@ Railway_Intensity <- function(
           dplyr::mutate(
             Country = purrr::map_chr(
               .x = URL,
-              .f = ~{
+              .f = ~ {
                 stringr::str_remove_all(.x, "europe/|.html") %>%
                   stringr::str_to_title()
-              }),
-            URL = paste0(Railways_URL, URL)) %>%
+              }
+            ),
+            URL = paste0(Railways_URL, URL)
+          ) %>%
           dplyr::filter(!(Country %in% c("Russia", "Turkey", "Ukraine"))) %>%
           dplyr::bind_rows(German_L3) %>%
           dplyr::arrange(Country, URL)
-
       }, silent = TRUE)
 
     if (inherits(Railways_Links, "tibble")) {
@@ -171,6 +171,7 @@ Railway_Intensity <- function(
           call. = FALSE)
       }
     }
+
     Attempt <- Attempt + 1
   }
 
@@ -179,7 +180,7 @@ Railway_Intensity <- function(
     dplyr::mutate(
       URL2 = purrr::map(
         .x = URL,
-        .f = ~{
+        .f = ~ {
           Success <- FALSE
           Attempt <- 1
           while (isFALSE(Success) && Attempt <= Attempts) {
@@ -210,22 +211,23 @@ Railway_Intensity <- function(
           }
 
           return(ScrapedLinks)
-
-        })) %>%
+        }
+      )
+    ) %>%
     tidyr::unnest(cols = "URL2") %>%
     dplyr::mutate(
       # Download path
       Path = purrr::map2(
         .x = URL2, .y = Country,
-        .f = ~{
+        .f = ~ {
           stringr::str_remove_all(.x, "^.+/|-latest-free.shp") %>%
             paste0(.y, "_", .) %>%
             file.path(Path_Railways_Raw, .)
-        }),
-
+        }
+      ),
       ModDate = purrr::map(
         .x = URL2,
-        .f = ~{
+        .f = ~ {
           # Last modified date
           paste0("curl -sI ", .x) %>%
             system(intern = TRUE) %>%
@@ -233,7 +235,9 @@ Railway_Intensity <- function(
             stringr::str_remove_all("Last-Modified: ") %>%
             readr::parse_datetime(format = "%a, %d %b %Y %H:%M:%S %Z") %>%
             lubridate::as_date()
-        })) %>%
+        }
+      )
+    ) %>%
     tidyr::unnest(c = "ModDate")
 
   IASDT.R::CatTime(
@@ -241,7 +245,8 @@ Railway_Intensity <- function(
     Level = 1)
 
   save(
-    Railways_Links, file = file.path(Path_Railways, "Railways_Links.RData"))
+    Railways_Links,
+    file = file.path(Path_Railways, "Railways_Links.RData"))
 
   IASDT.R::CatDiff(
     InitTime = .StartTimeDown, NLines = 1, Level = 1,
@@ -267,13 +272,11 @@ Railway_Intensity <- function(
   Railways_3035 <- future.apply::future_lapply(
     X = seq_len(nrow(Railways_Links)),
     FUN = function(ID) {
-
       URL <- Railways_Links$URL2[[ID]]
       Path <- Railways_Links$Path[[ID]]
       Country <- Railways_Links$Country[[ID]]
       Prefix <- stringr::str_remove_all(basename(Path), ".zip$")
-      Path_Temp <- file.path(
-        Path_Railways_Interim, paste0(Prefix, ".RData"))
+      Path_Temp <- file.path(Path_Railways_Interim, paste0(Prefix, ".RData"))
 
       withr::local_options(
         future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
@@ -325,7 +328,8 @@ Railway_Intensity <- function(
         OldName = file.path(Path_Railways_Interim, Prefix, InFileN),
         NewName = file.path(
           Path_Railways_Interim,
-          paste0(Prefix, ".", tools::file_ext(InFileN)))) %>%
+          paste0(Prefix, ".", tools::file_ext(InFileN)))
+      ) %>%
         dplyr::mutate(Ren = purrr::map2(OldName, NewName, file.rename))
 
       Railway <- dplyr::pull(Path_Extract, NewName) %>%
@@ -354,7 +358,8 @@ Railway_Intensity <- function(
     },
     future.scheduling = Inf, future.seed = TRUE,
     future.packages = c("dplyr", "fs", "sf", "IASDT.R", "stringr"),
-    future.globals = c("Railways_Links", "RefGridSF")) %>%
+    future.globals = c("Railways_Links", "RefGridSF")
+  ) %>%
     dplyr::bind_rows() %>%
     dplyr::mutate(DT = purrr::map(Path, IASDT.R::LoadAs)) %>%
     tidyr::unnest(DT) %>%
@@ -380,38 +385,40 @@ Railway_Intensity <- function(
 
   # # .................................... ###
 
-  ## Each railway class to separate file ----
-  IASDT.R::CatTime("Each railway class to separate file", Level = 1)
+  ## Saving each railway class to separate file ----
+  IASDT.R::CatTime("Saving each railway class to separate file", Level = 1)
 
   sf::st_drop_geometry(Railways_3035) %>%
     dplyr::distinct(fclass) %>%
     dplyr::pull(fclass) %>%
     purrr::walk(
-      .f = ~{
+      .f = ~ {
         IASDT.R::CatTime(.x, Level = 2)
         dplyr::filter(Railways_3035, fclass == .x) %>%
           IASDT.R::SaveAs(
             OutObj = paste0("Railways_sf_", .x),
             OutPath = file.path(
               Path_Railways, paste0("Railways_sf_", .x, ".RData")))
-      })
+      }
+    )
 
   rm(Railways_3035, RefGridSF)
   invisible(gc())
 
   IASDT.R::CatDiff(
     InitTime = .StartTimeProcess,
-    Prefix = "Processing railway data took ", NLines = 1, Level = 2)
+    Prefix = "Processing railway data took ", NLines = 1, Level = 1)
 
   # # ..................................................................... ###
 
-  # Calculate length of railways -----
-  IASDT.R::CatTime("Calculate length of railways")
+  # Calculate length of railways for each railway class per grid cell -----
+  IASDT.R::CatTime(
+    "Calculate length of railways for each railway class per grid cell")
 
   Railways_Length <- Path_Railways %>%
     list.files(pattern = "^Railways_sf_", full.names = TRUE) %>%
     purrr::map(
-      .f = ~{
+      .f = ~ {
         Name <- stringr::str_remove_all(basename(.x), "Railways_sf_|.RData")
 
         IASDT.R::CatTime(Name, Level = 2)
@@ -421,7 +428,8 @@ Railway_Intensity <- function(
           terra::mask(mask = RefGrid) %>%
           stats::setNames(Name) %>%
           IASDT.R::setRastVals()
-      }, .progress = FALSE) %>%
+      }, .progress = FALSE
+    ) %>%
     terra::rast()
 
   # Sum of railways length of any type
@@ -438,7 +446,8 @@ Railway_Intensity <- function(
   terra::writeRaster(
     x = Railways_Length, overwrite = TRUE,
     filename = file.path(
-      Path_Railways, paste0("Railways_Length_", names(Railways_Length), ".tif")))
+      Path_Railways,
+      paste0("Railways_Length_", names(Railways_Length), ".tif")))
 
   # # ..................................................................... ###
 
@@ -452,8 +461,7 @@ Railway_Intensity <- function(
 
   Railways_Distance <- purrr::map(
     .x = as.list(Railways_Length),
-    .f = ~{
-
+    .f = ~ {
       IASDT.R::CatTime(names(.x), Level = 2)
 
       Railways_Points <- terra::as.points(terra::classify(.x, cbind(0, NA)))
@@ -463,16 +471,17 @@ Railway_Intensity <- function(
         stats::setNames(paste0("Railways_Distance_", names(.x))) %>%
         # Ensure that values are read from memory
         IASDT.R::setRastVals()
-    }) %>%
+    }
+  ) %>%
     terra::rast()
 
-  IASDT.R::CatTime("Save distance to railways as tif files", Level = 1)
+  IASDT.R::CatTime("Save distance to railways - tif", Level = 1)
   terra::writeRaster(
     x = Railways_Distance, overwrite = TRUE,
     filename = file.path(
       Path_Railways, paste0(names(Railways_Distance), ".tif")))
 
-  IASDT.R::CatTime("Save distance to railways as RData", Level = 1)
+  IASDT.R::CatTime("Save distance to railways - RData", Level = 1)
   IASDT.R::SaveAs(
     InObj = terra::wrap(Railways_Distance), OutObj = "Railways_Distance",
     OutPath = file.path(Path_Railways, "Railways_Distance.RData"))
@@ -501,7 +510,7 @@ Railway_Intensity <- function(
       legend.key.width = grid::unit(0.8, "cm"),
       legend.background = ggplot2::element_rect(fill = "transparent"),
       legend.text = ggplot2::element_text(size = 12),
-      legend.position	= "inside",
+      legend.position = "inside",
       legend.position.inside = c(0.94, 0.9),
       legend.title = ggplot2::element_text(
         color = "black", size = 12, face = "bold"),
@@ -551,14 +560,15 @@ Railway_Intensity <- function(
   # # .................................. ###
 
   ## Plotting railways -----
+  IASDT.R::CatTime("Plotting European railways", Level = 1)
 
   RailPlotShp <- ggplot2::ggplot() +
     ggplot2::geom_sf(
       EU_Bound, mapping = ggplot2::aes(), color = "grey75",
       linewidth = 0.075, fill = "grey98") +
     ggplot2::geom_sf(
-      Railways_3035_2plot, mapping = ggplot2::aes(), color = "blue",
-      linewidth = 0.05) +
+      Railways_3035_2plot,
+      mapping = ggplot2::aes(), color = "blue", linewidth = 0.05) +
     ggplot2::scale_x_continuous(
       expand = ggplot2::expansion(mult = c(0, 0)),
       limits = c(2600000, 6700000)) +

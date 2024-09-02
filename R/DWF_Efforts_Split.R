@@ -23,7 +23,14 @@
 #' @export
 
 Efforts_Split <- function(Path_Zip, Path_Output, ChunkSize = 100000) {
+
+  # # ..................................................................... ###
+
+  # Avoid "no visible binding for global variable" message
+  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   ID <- Col <- NULL
+
+  # # ..................................................................... ###
 
   # Check if ChunkSize is valid (greater than zero)
   if (!is.numeric(ChunkSize) || ChunkSize <= 0) {
@@ -44,8 +51,7 @@ Efforts_Split <- function(Path_Zip, Path_Output, ChunkSize = 100000) {
   # extraction read first line
   SelectedColNames <- c(
     "taxonRank", "decimalLatitude", "decimalLongitude",
-    "coordinateUncertaintyInMeters", "speciesKey"
-  )
+    "coordinateUncertaintyInMeters", "speciesKey")
 
   SelectedCols <- "unzip -p {Path_Zip} {CSV_File} | head -n 1" %>%
     stringr::str_glue() %>%

@@ -256,8 +256,15 @@ GBIF_Download <- function(
     save(GBIF_Metadata, file = file.path(Path_GBIF, "GBIF_Metadata.RData"))
   } else {
     IASDT.R::CatTime("Data was NOT downloaded", Level = 1)
-    GBIF_Metadata <- IASDT.R::LoadAs(
-      file.path(Path_GBIF, "GBIF_Metadata.RData"))
+
+    GBIF_Metadata <- file.path(Path_GBIF, "GBIF_Metadata.RData")
+    if (!file.exists(GBIF_Metadata)) {
+      stop(
+        paste0("GBIF metadata file does not exist: ", GBIF_Metadata),
+        call. = FALSE)
+    }
+
+    GBIF_Metadata <- IASDT.R::LoadAs(GBIF_Metadata)
   }
 
   # # ..................................................................... ###

@@ -116,7 +116,13 @@ GBIF_Process <- function(
 
   # # ..................................................................... ###
 
-  GBIF_Metadata <- IASDT.R::LoadAs(file.path(Path_GBIF, "GBIF_Metadata.RData"))
+  GBIF_Metadata <- file.path(Path_GBIF, "GBIF_Metadata.RData")
+  if (!file.exists(GBIF_Metadata)) {
+    stop(
+      paste0("GBIF metadata file does not exist: ", GBIF_Metadata), 
+      call. = FALSE)
+  }
+  GBIF_Metadata <- IASDT.R::LoadAs(GBIF_Metadata)
 
   TaxaList <- IASDT.R::LoadAs(TaxaInfo)
   Path_SpData <- file.path(Path_GBIF, "Sp_Data")
@@ -174,7 +180,6 @@ GBIF_Process <- function(
         ReturnData = FALSE, Overwrite = Overwrite)
     },
     future.scheduling = Inf, future.seed = TRUE)
-
 
   IASDT.R::CatDiff(
     InitTime = .StartTimeChunks, Prefix = "Finished in ", Level = 2)

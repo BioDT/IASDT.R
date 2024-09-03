@@ -14,7 +14,7 @@ Mod_PrepData(
   Path_Model = NULL,
   VerboseProgress = TRUE,
   FromHPC = TRUE,
-  SaveData = FALSE,
+  SaveData = TRUE,
   ExcludeCult = TRUE
 )
 }
@@ -56,7 +56,7 @@ displayed. Defaults to \code{TRUE}.}
 adjust file paths accordingly. Default: \code{TRUE}.}
 
 \item{SaveData}{Logical. Indicates whether the processed data should be saved
-as RData file. Defaults to \code{FALSE}.}
+as RData file. Defaults to \code{TRUE}.}
 
 \item{ExcludeCult}{Logical. Indicates whether to exclude countries with
 cultivated or casual observations per species. Defaults to \code{TRUE}.}
@@ -91,14 +91,10 @@ containing the \code{St_1981_2010.RData} file. This file contains processed
 \code{CHELSA} data for the current climate.
 \item \strong{\code{DP_R_Roads}} / \strong{\code{DP_R_Roads_Local}}: Path for processed road data.
 The function reads the contents of: \code{Road_Length.RData} for the total
-length of any road type per grid cell and \code{Road_Distance.RData} for the
-minimum distance between the centroid of each grid cell and the nearest
-road.
+length of any road type per grid cell.
 \item \strong{\code{DP_R_Railway}} / \strong{\code{DP_R_Railway_Local}}: Path for processed
 railway data. The function reads the contents of: \code{Railway_Length.RData}
-for the total length of any railway type per grid cell and
-\code{Dist2Rail.RData} for the minimum distance between the centroid of each
-grid cell and the nearest railway.
+for the total length of any railway type per grid cell.
 \item \strong{\code{DP_R_Efforts}} / \strong{\code{DP_R_Efforts_Local}}: Path for processed
 sampling efforts analysis. The function reads the content of
 \code{Bias_GBIF_SummaryR.RData} file containing the total number of GBIF

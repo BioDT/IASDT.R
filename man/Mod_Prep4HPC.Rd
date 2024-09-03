@@ -27,6 +27,8 @@ Mod_Prep4HPC(
   CV_NC = 2L,
   CV_Plot = TRUE,
   PhyloTree = TRUE,
+  SaveData = TRUE,
+  ToSingle = TRUE,
   NoPhyloTree = TRUE,
   OverwriteRDS = TRUE,
   NCores = 8L,
@@ -139,6 +141,12 @@ arguments is \code{TRUE}, which means to fit a model variant with the respective
 option. If both \code{PhyloTree} and \code{NoPhyloTree} are \code{TRUE} (Default), models
 for both options will be fitted. At least one of \code{PhyloTree} and
 \code{NoPhyloTree} should be \code{TRUE}.}
+
+\item{SaveData}{Logical. Indicates whether the processed data should be saved
+as RData file. Defaults to \code{TRUE}.}
+
+\item{ToSingle}{Logical. Indicating whether to convert to the distance
+matrices to single using \link[float:converters]{float::fl}. This is experimental.}
 
 \item{OverwriteRDS}{Logical. Indicating whether to overwrite previously
 exported RDS files for initial models. Default: \code{TRUE}.}

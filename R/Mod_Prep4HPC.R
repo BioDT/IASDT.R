@@ -45,6 +45,8 @@
 #'   option. If both `PhyloTree` and `NoPhyloTree` are `TRUE` (Default), models
 #'   for both options will be fitted. At least one of `PhyloTree` and
 #'   `NoPhyloTree` should be `TRUE`.
+#' @param ToSingle Logical. Indicating whether to convert to the distance
+#'   matrices to single using [float::fl]. This is experimental.
 #' @param OverwriteRDS Logical. Indicating whether to overwrite previously
 #'   exported RDS files for initial models. Default: `TRUE`.
 #' @param NCores Integer specifying the number of parallel cores for
@@ -137,7 +139,7 @@ Mod_Prep4HPC <- function(
     EffortsAsPredictor = FALSE, RoadRailAsPredictor = TRUE,
     HabAsPredictor = TRUE, NspPerGrid = 1L, ExcludeCult = TRUE,
     CV_NFolds = 4L, CV_NGrids = 20L, CV_NR = 2L, CV_NC = 2L, CV_Plot = TRUE,
-    PhyloTree = TRUE,
+    PhyloTree = TRUE, SaveData = TRUE, ToSingle = TRUE,
     NoPhyloTree = TRUE, OverwriteRDS = TRUE, NCores = 8L, NChains = 4L,
     thin = NULL, samples = 1000L, transientFactor = 300L, verbose = 200L,
     SkipFitted = TRUE, NArrayJobs = 210L, ModelCountry = NULL,
@@ -372,7 +374,7 @@ Mod_Prep4HPC <- function(
     Hab_Abb = Hab_Abb, MinEffortsSp = MinEffortsSp, PresPerVar = PresPerVar,
     NVars = length(XVars), EnvFile = EnvFile, BioVars = BioVars,
     Path_Model = Path_Model, VerboseProgress = VerboseProgress,
-    FromHPC = FromHPC, SaveData = FALSE, ExcludeCult = ExcludeCult)
+    FromHPC = FromHPC, SaveData = SaveData, ExcludeCult = ExcludeCult)
 
   IASDT.R::CatSep(Rep = 1, Extra1 = 0, Extra2 = 1)
 
@@ -532,7 +534,8 @@ Mod_Prep4HPC <- function(
 
   if (is.null(NspPerGrid) || NspPerGrid == 1) {
     IASDT.R::CatTime(
-      "All grid cells will be included in the analysis", Level = 1)
+      "All grid cells with at least single species presence will be considered",
+      Level = 1)
   } else {
     if (NspPerGrid > 1) {
       EmptyGridsID <- dplyr::select(DT_All, tidyselect::starts_with("Sp_")) %>%
@@ -559,8 +562,8 @@ Mod_Prep4HPC <- function(
 
   DT_All <- IASDT.R::GetCV(
     DT = DT_All, EnvFile = EnvFile, XVars = XVars,
-    CV_NFolds = CV_NFolds, FromHPC = FromHPC, CV_NGrids = CV_NGrids, CV_NR = CV_NR,
-    CV_NC = CV_NC, OutPath = Path_Model, CV_Plot = CV_Plot)
+    CV_NFolds = CV_NFolds, FromHPC = FromHPC, CV_NGrids = CV_NGrids,
+    CV_NR = CV_NR, CV_NC = CV_NC, OutPath = Path_Model, CV_Plot = CV_Plot)
 
   # Save cross-validation data
   DT_CV <- DT_All %>%
@@ -642,7 +645,7 @@ Mod_Prep4HPC <- function(
 
   IASDT.R::CatTime(
     paste0(
-      "Models will be fitted using ", length(paste0(Tree, collapse = " & "))),
+      "Models will be fitted using ", paste0(Tree, collapse = " & ")),
     Level = 1)
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -667,7 +670,7 @@ Mod_Prep4HPC <- function(
       Level = 1)
 
     withr::local_options(
-        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
+      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
     future::plan("multisession", workers = NCores, gc = TRUE)
     on.exit(future::plan("sequential"), add = TRUE)
@@ -682,13 +685,12 @@ Mod_Prep4HPC <- function(
       future.globals = c("DT_xy", "GPP_Dists", "MaxLF", "MinLF"),
       future.packages = c("dplyr", "sf", "Hmsc", "jsonify", "magrittr")) %>%
       stats::setNames(paste0("GPP_", GPP_Dists))
-
     future::plan("sequential")
 
   } else {
-      IASDT.R::CatTime("Working sequentially")
+    IASDT.R::CatTime("Working sequentially")
 
-      GPP_Knots <- purrr::map(
+    GPP_Knots <- purrr::map(
       .x = GPP_Dists * 1000,
       .f = ~IASDT.R::PrepKnots(
         Coords = DT_xy, MinDist = .x, MinLF = MinLF, MaxLF = MaxLF)) %>%
@@ -826,8 +828,7 @@ Mod_Prep4HPC <- function(
           M_Name_Fit <- paste0(M_Name_init, "_samp", M_samples, "_th", M_thin)
 
           M4HPC_Path <- file.path(
-            Path_Model, "InitMod4HPC",
-            paste0("InitMod_", M_Name_Fit, ".rds"))
+            Path_Model, "InitMod4HPC", paste0("InitMod_", M_Name_Fit, ".rds"))
 
           return(list(M_Name_Fit = M_Name_Fit, M4HPC_Path = M4HPC_Path))
 
@@ -862,28 +863,44 @@ Mod_Prep4HPC <- function(
     CurrPath <- Model_Info$M4HPC_Path[ID]
 
     if (OverwriteRDS && file.exists(CurrPath)) {
-      file.remove(CurrPath)
+      fs::file_delete(CurrPath)
+    }
+
+    if (isFALSE(OverwriteRDS) && file.exists(CurrPath) &&
+        IASDT.R::CheckRDS(CurrPath)) {
+      return(invisible(NULL))
     }
 
     Try <- 0
-    while (Try < 6 && !file.exists(CurrPath)) {
+    while (Try < 6) {
       Try <- Try + 1
       Model <- Hmsc::sampleMcmc(
         hM = IASDT.R::LoadAs(Model_Info$M_Init_Path[ID]),
         samples = Model_Info$M_samples[ID],
-        thin = Model_Info$M_thin[ID], transient = Model_Info$M_transient[ID],
-        NChains = NChains, verbose = verbose, engine = "HPC")
+        thin = Model_Info$M_thin[ID],
+        transient = Model_Info$M_transient[ID],
+        nChains = NChains, verbose = verbose, engine = "HPC")
+
+      # Experimentally change distances to single type
+
+      if (ToSingle) {
+        Model$dataParList$rLPar[[1]]$distMat12 <-
+          float::fl(Model$dataParList$rLPar[[1]]$distMat12)
+        Model$dataParList$rLPar[[1]]$distMat22 <-
+          float::fl(Model$dataParList$rLPar[[1]]$distMat22)
+      }
 
       if (ToJSON) {
         Model <- jsonify::to_json(Model)
       }
 
       saveRDS(Model, file = CurrPath)
-      if (file.exists(CurrPath)) {
+
+      if (file.exists(CurrPath) && IASDT.R::CheckRDS(CurrPath)) {
         break
       }
-
     }
+    invisible(gc())
     return(invisible(NULL))
   }
 
@@ -894,7 +911,8 @@ Mod_Prep4HPC <- function(
     on.exit(future::plan("sequential"), add = TRUE)
 
     Model_Process <- future.apply::future_lapply(
-      X = seq_len(nrow(Model_Info)), FUN = InitFitFun,
+      X = seq_len(nrow(Model_Info)),
+      FUN = InitFitFun,
       future.scheduling = Inf, future.seed = TRUE,
       future.globals = c(
         "InitFitFun", "Model_Info", "OverwriteRDS",
@@ -909,7 +927,7 @@ Mod_Prep4HPC <- function(
   }
 
 
-  # Which models failed to be exported as RDS files after 6 trials
+  # Which models failed to be exported as RDS files after 5 trials
   Failed2Export <- dplyr::filter(Model_Info, !file.exists(M4HPC_Path))
   if (nrow(Failed2Export) == 0) {
     IASDT.R::CatTime("All model variants were exported as RDS files", Level = 1)
@@ -940,6 +958,9 @@ Mod_Prep4HPC <- function(
         .f = function(M_Name_Fit, M4HPC_Path, Chain,
                       M_transient, M_samples, M_thin) {
 
+          # Turn off scientific notation
+          withr::local_options(list(scipen = 999))
+
           # Input model
           M4HPC_Path2 <- file.path(
             Path_Model, "InitMod4HPC", basename(M4HPC_Path))
@@ -969,7 +990,8 @@ Mod_Prep4HPC <- function(
             " >& ", shQuote(Path_ModProg))
 
           Command_WS <- paste0(
-            "-m hmsc.run_gibbs_sampler",
+            Path_Python,
+            " -m hmsc.run_gibbs_sampler",
             " --input ", shQuote(M4HPC_Path2),
             " --output ", shQuote(Post_Path),
             " --samples ", M_samples,
@@ -1010,6 +1032,16 @@ Mod_Prep4HPC <- function(
 
   IASDT.R::CatTime("Save model fitting commands to text file(s)")
 
+  IASDT.R::CatTime("Save fitting commands for windows PC", Level = 1)
+  f <- file(
+    description = file.path(Path_Model, "Commands_All_Windows.txt"),
+    open = "wb")
+  on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
+  cat(Models2Fit_WS, sep = "\n", append = FALSE, file = f)
+  close(f)
+
+
+  IASDT.R::CatTime("Save fitting commands for HPC", Level = 1)
   NJobs <- length(Models2Fit_HPC)
 
   if (NJobs > NArrayJobs) {
@@ -1117,7 +1149,7 @@ Mod_Prep4HPC <- function(
       "10_Wetland", "12a_Ruderal_habitats",
       "12b_Agricultural_habitats") %>%
       stringr::str_subset(paste0("^", as.character(Hab_Abb), "_")) %>%
-      paste0("ModDT_", ., "_All")
+      paste0("ModDT_", ., "_subset")
   }
 
   IASDT.R::SaveAs(

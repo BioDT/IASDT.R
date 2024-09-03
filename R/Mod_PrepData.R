@@ -40,7 +40,7 @@
 #' @param FromHPC Logical indicating whether the work is being done from HPC, to
 #'   adjust file paths accordingly. Default: `TRUE`.
 #' @param SaveData Logical. Indicates whether the processed data should be saved
-#'   as RData file. Defaults to `FALSE`.
+#'   as RData file. Defaults to `TRUE`.
 #' @param ExcludeCult Logical. Indicates whether to exclude countries with
 #' cultivated or casual observations per species. Defaults to `TRUE`.
 #' @name Mod_PrepData
@@ -63,14 +63,10 @@
 #'   `CHELSA` data for the current climate.
 #'    - **`DP_R_Roads`** / **`DP_R_Roads_Local`**: Path for processed road data.
 #'   The function reads the contents of: `Road_Length.RData` for the total
-#'   length of any road type per grid cell and `Road_Distance.RData` for the
-#'   minimum distance between the centroid of each grid cell and the nearest
-#'   road.
+#'   length of any road type per grid cell.
 #'    - **`DP_R_Railway`** / **`DP_R_Railway_Local`**: Path for processed
 #'   railway data. The function reads the contents of: `Railway_Length.RData`
-#'   for the total length of any railway type per grid cell and
-#'   `Dist2Rail.RData` for the minimum distance between the centroid of each
-#'   grid cell and the nearest railway.
+#'   for the total length of any railway type per grid cell.
 #'    - **`DP_R_Efforts`** / **`DP_R_Efforts_Local`**: Path for processed
 #'    sampling efforts analysis. The function reads the content of
 #'   `Bias_GBIF_SummaryR.RData` file containing the total number of GBIF
@@ -82,7 +78,7 @@ Mod_PrepData <- function(
     EnvFile = ".env",
     BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
     Path_Model = NULL, VerboseProgress = TRUE, FromHPC = TRUE,
-    SaveData = FALSE, ExcludeCult = TRUE) {
+    SaveData = TRUE, ExcludeCult = TRUE) {
 
   # # ..................................................................... ###
 

@@ -19,10 +19,10 @@
 #'   argument determines the size of the blocks (how many grid cells in both
 #'   directions).
 #' @param CV_NFolds Number of cross-validation folds. Default: 4.
-#' @param CV_NR,CV_NC Integer, the number of rows and columns used in the 
-#'   `CV_Large` cross-validation strategy (see below), in which the study area 
-#'   is divided into large blocks given the provided `CV_NR` and `CV_NC` 
-#'   values. Both default to 2 which means to split the study area into four 
+#' @param CV_NR,CV_NC Integer, the number of rows and columns used in the
+#'   `CV_Large` cross-validation strategy (see below), in which the study area
+#'   is divided into large blocks given the provided `CV_NR` and `CV_NC`
+#'   values. Both default to 2 which means to split the study area into four
 #'   large blocks at the median latitude and longitude.
 #' @param OutPath String specifying the folder path to save the cross-validation
 #'   results. Default: `NULL`.
@@ -182,8 +182,9 @@ GetCV <- function(
 
   if (CV_SAC_Range$range > MinDist) {
     IASDT.R::CatTime(
-      paste0("`CV_SAC` was NOT implemented; median SAC: ",
-             round(CV_SAC_Range$range, 2), "m"), Level = 2)
+      paste0(
+        "`CV_SAC` was NOT implemented; median SAC: ",
+        round(CV_SAC_Range$range / 1000, 2), "km"), Level = 2)
     CV_SAC <- NULL
 
     # Check `folds_ids` exists in each of the cross-validation strategies
@@ -200,7 +201,7 @@ GetCV <- function(
       report = FALSE)
 
     # Check `folds_ids` exists in each of the cross-validation strategies
-    if (!(("folds_ids" %in% names(CV_SAC)) && 
+    if (!(("folds_ids" %in% names(CV_SAC)) &&
         ("folds_ids" %in% names(CV_Dist)) &&
         ("folds_ids" %in% names(CV_Large)))) {
       stop(

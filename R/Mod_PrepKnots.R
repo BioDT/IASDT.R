@@ -34,10 +34,10 @@ PrepKnots <- function(
          call. = FALSE)
   }
 
-  if (!is.null(MaxLF) && !is.integer(MaxLF)) {
+  if (is.null(MaxLF) || !is.numeric(MaxLF)) {
     stop("MaxLF is not NULL or integer", call. = FALSE)
   }
-  if (!is.null(MinLF) && !is.integer(MinLF)) {
+  if (is.null(MinLF) || !is.numeric(MinLF)) {
     stop("MinLF is not NULL or integer", call. = FALSE)
   }
 

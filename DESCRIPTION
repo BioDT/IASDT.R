@@ -44,6 +44,7 @@ Suggests:
     data.table (>= 1.15.4),
     devtools (>= 2.4.5),
     exactextractr (>= 0.10.0),
+    float (>= 0.3-2),
     forcats (>= 1.0.0),
     foreign (>= 0.8-86),
     fs (>= 1.6.4),

@@ -316,7 +316,7 @@ IAS_Process <- function(
     future.packages = c(
       "dplyr", "lubridate", "IASDT.R", "purrr", "stringr", "readr", "fs",
       "sf", "terra", "readxl", "tidyr", "tidyselect", "ggplot2", "ggtext",
-      "grid", "tidyterra", "cowplot", "scales")
+      "grid", "tidyterra", "cowplot", "scales"),
     future.globals = c("FromHPC", "EnvFile", "Overwrite")) %>%
     dplyr::bind_rows()
 

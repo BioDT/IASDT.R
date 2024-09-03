@@ -201,7 +201,8 @@ IAS_Process <- function(
     X = sort(unique(TaxaList$Species_name)),
     FUN = function(x) {
       IASDT.R::IAS_Distribution(
-        Species = x, FromHPC = FromHPC, EnvFile = EnvFile, Verbose = FALSE)
+        Species = x, FromHPC = FromHPC, EnvFile = EnvFile, Verbose = FALSE,
+        Overwrite = Overwrite)
     },
     future.scheduling = Inf,
     future.seed = TRUE,
@@ -209,7 +210,7 @@ IAS_Process <- function(
       "dplyr", "lubridate", "IASDT.R", "purrr", "stringr", "readr", "fs",
       "sf", "terra", "readxl", "tidyr", "tidyselect", "ggplot2", "ggtext",
       "grid", "tidyterra", "cowplot", "scales"),
-    future.globals = c("FromHPC", "EnvFile")) %>%
+    future.globals = c("FromHPC", "EnvFile", "Overwrite")) %>%
     dplyr::bind_rows()
 
   # # .................................... ###

@@ -16,6 +16,8 @@
 #'   variables required by the function. Default is ".env".
 #' @param Verbose Logical. If TRUE, detailed output is printed. Default is
 #'   `FALSE`.
+#' @param Overwrite Logical. If `TRUE`, the function will overwrite existing
+#'   files (default: `FALSE`).
 #' @return A tibble containing species distribution information, including the
 #'   number of presence grid cells, presence by data provider, and summary
 #'   statistics for biogeographical regions.
@@ -31,7 +33,8 @@
 #' @export
 
 IAS_Distribution <- function(
-    Species, FromHPC = TRUE, EnvFile = ".env", Verbose = FALSE) {
+    Species, FromHPC = TRUE, EnvFile = ".env", Verbose = FALSE,
+    Overwrite = FALSE) {
 
   # # ..................................................................... ###
 
@@ -88,7 +91,8 @@ IAS_Distribution <- function(
       "Path_TaxaCNT", "DP_R_Taxa_Country", FALSE, TRUE,
       "Path_TaxaInfo_RData", "DP_R_TaxaInfo_RData", FALSE, TRUE,
       "Path_TaxaInfo", "DP_R_TaxaInfo", FALSE, TRUE,
-      "Path_BioReg", "DP_R_BioReg", FALSE, TRUE)
+      "Path_BioReg", "DP_R_BioReg", FALSE, TRUE,
+      "EU_Bound", "DP_R_EUBound_sf", FALSE, TRUE)
   } else {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
@@ -101,7 +105,8 @@ IAS_Distribution <- function(
       "Path_TaxaCNT", "DP_R_Taxa_Country_Local", FALSE, TRUE,
       "Path_TaxaInfo_RData", "DP_R_TaxaInfo_RData_Local", FALSE, TRUE,
       "Path_TaxaInfo", "DP_R_TaxaInfo_Local", FALSE, TRUE,
-      "Path_BioReg", "DP_R_BioReg_Local", FALSE, TRUE)
+      "Path_BioReg", "DP_R_BioReg_Local", FALSE, TRUE,
+      "EU_Bound", "DP_R_EUBound_sf_Local", FALSE, TRUE)
   }
 
   # Assign environment variables and check file and paths
@@ -114,11 +119,73 @@ IAS_Distribution <- function(
   # Preparing input data ----
   IASDT.R::CatTime("Preparing input data")
 
-  IASDT.R::CatTime("IAS info", Level = 1)
-  SpeciesID <- readr::read_tsv(
-    file = Path_TaxaInfo, show_col_types = FALSE, progress = FALSE)
-  TaxaList <- IASDT.R::LoadAs(Path_TaxaInfo_RData)
+  # # ................................ ###
+
+  ## Current species info
+  IASDT.R::CatTime("Current species info", Level = 1)
+
   Species2 <- IASDT.R::ReplaceSpace(Species)
+  IAS_ID <- readr::read_tsv(
+    file = Path_TaxaInfo, show_col_types = FALSE, progress = FALSE) %>%
+    dplyr::filter(Species_name2 == Species2)
+  Sp_File <- unique(IAS_ID$Species_File)
+  IAS_ID <- dplyr::pull(IAS_ID, "IAS_ID") %>%
+    unique() %>%
+    stringr::str_pad(width = 4, pad = "0")
+  GBIF_Keys <- IASDT.R::LoadAs(Path_TaxaInfo_RData) %>%
+    dplyr::filter(Species_name == Species) %>%
+    dplyr::pull("speciesKey")
+
+  # # ................................ ###
+
+  ## Check directories ----
+  IASDT.R::CatTime("Check directories", Level = 1)
+
+  IASDT.R::CatTime("Check/create directories", Level = 2)
+  Path_PA_Summary <- file.path(Path_PA, "SpSummary")
+  Path_PA_tif <- file.path(Path_PA, "tif")
+  Path_PA_RData <- file.path(Path_PA, "RData")
+  Path_PA_JPEG <- file.path(Path_PA, "JPEG_Maps")
+  Path_PA_All <- c(
+    Path_PA_Summary, Path_PA_tif, Path_PA_RData, Path_PA_JPEG)
+  Path_PA_Missing <- any(!dir.exists(Path_PA_All))
+  if (Path_PA_Missing) {
+    Missing <- which(!dir.exists(Path_PA_All))
+    fs::dir_create(Path_PA_All[Missing])
+  }
+
+  Out_PA <- file.path(Path_PA_RData, paste0(Sp_File, "_PA.RData"))
+  Out_Summary <- file.path(Path_PA_Summary, paste0(Sp_File, "_Summary.RData"))
+  Out_tif_All <- file.path(Path_PA_tif, paste0(Sp_File, "_All.tif"))
+  Out_tif_Masked <- file.path(Path_PA_tif, paste0(Sp_File, "_Masked.tif"))
+  Out_JPEG <- file.path(Path_PA_JPEG, paste0(Sp_File, ".jpeg"))
+  Out_Exists <- c(
+    Out_PA, Out_Summary, Out_tif_All, Out_tif_Masked, Out_JPEG) %>%
+    file.exists() %>%
+    all()
+  if (isFALSE(Overwrite) && Out_Exists) {
+    return(NULL)
+  }
+
+  # # ................................ ###
+
+  IASDT.R::CatTime("Check path for EASIN and GBIF data", Level = 2)
+  Path_GBIF_DT <- file.path(Path_GBIF, "Sp_Data")
+  Path_EASIN <- file.path(Path_EASIN, "Sp_DT")
+
+  if (!dir.exists(Path_GBIF_DT)) {
+    stop(
+      paste0("Required path for GBIF data do not exist: ", Path_GBIF_DT),
+      call. = FALSE)
+  }
+
+  if (!dir.exists(Path_EASIN)) {
+    stop(
+      paste0("Required path for EASIN data do not exist: ", Path_EASIN),
+      call. = FALSE)
+  }
+
+  # # ................................ ###
 
   IASDT.R::CatTime("eLTER data", Level = 1)
   eLTER_DT <- IASDT.R::LoadAs(Path_eLTER) %>%
@@ -181,49 +248,6 @@ IAS_Distribution <- function(
       dplyr::distinct() %>%
       sf::st_as_sf()
   }
-
-  # # ................................ ###
-
-  ## Check directories ----
-  IASDT.R::CatTime("Check directories", Level = 1)
-
-  IASDT.R::CatTime("Check path for EASIN and GBIF data", Level = 2)
-  Path_GBIF_DT <- file.path(Path_GBIF, "Sp_Data")
-  Path_EASIN <- file.path(Path_EASIN, "Sp_DT")
-
-  if (!dir.exists(Path_GBIF_DT)) {
-    stop(
-      paste0("Required path for GBIF data do not exist: ", Path_GBIF_DT),
-      call. = FALSE)
-  }
-
-  if (!dir.exists(Path_EASIN)) {
-    stop(
-      paste0("Required path for EASIN data do not exist: ", Path_EASIN),
-      call. = FALSE)
-  }
-
-  IASDT.R::CatTime("Check/create directories", Level = 2)
-  Path_PA_Summary <- file.path(Path_PA, "SpSummary")
-  Path_PA_tif <- file.path(Path_PA, "tif")
-  Path_PA_RData <- file.path(Path_PA, "RData")
-  if (any(!dir.exists(c(Path_PA_Summary, Path_PA_tif, Path_PA_RData)))) {
-    fs::dir_create(c(Path_PA_Summary, Path_PA_tif, Path_PA_RData))
-  }
-
-  # # ................................ ###
-
-  ## Current species info
-  IASDT.R::CatTime("Current species info", Level = 1)
-  SpeciesID <- dplyr::filter(TaxaList, Species_name2 == Species2) %>%
-    dplyr::pull("IAS_ID") %>%
-    unique()
-  IAS_ID <- stringr::str_pad(string = SpeciesID, width = 4, pad = "0")
-  Sp_File <- dplyr::filter(TaxaList, Species_name2 == Species2) %>%
-    dplyr::pull("Species_File") %>%
-    unique()
-  GBIF_Keys <- dplyr::filter(TaxaList, Species_name == Species) %>%
-    dplyr::pull("speciesKey")
 
   # # ................................ ###
 
@@ -626,6 +650,15 @@ IAS_Distribution <- function(
 
   # # ..................................................................... ###
 
+  # Plotting species distribution -----
+  IASDT.R::CatTime("Plotting species distribution")
+
+  IASDT.R::IAS_Plot(
+    Species = Species, FromHPC = FromHPC,
+    EnvFile = EnvFile, Overwrite = Overwrite)
+
+  # # ..................................................................... ###
+
   # Prepare/export species summary info -------
   IASDT.R::CatTime("Prepare/export species summary info")
 
@@ -651,33 +684,39 @@ IAS_Distribution <- function(
     "iNaturalist_Unique")
 
   Results <- tibble::tibble(
-    Species = Species, GBIF_Keys = GBIF_Keys,
+    Species = Species,
+    GBIF_Keys = GBIF_Keys,
     SpeciesID = IAS_ID,
     NCells_All = PA_NCells_All,
     NCells_Naturalized = PA_NCells_Naturalized,
+
     GBIF = N_GBIF,
     GBIF_Unique = N_GBIF_Unique,
     GBIF_Masked = N_GBIF_Masked,
     GBIF_Masked_Unique = N_GBIF_Unique_Masked,
     GBIF_Path = GBIF_Path,
     GBIF_Gr100 = list(GBIF_Gr100),
+    GBIF_R = GBIF_R_Out,
+
     EASIN = N_EASIN,
     EASIN_Unique = N_EASIN_Unique,
     EASIN_Masked = N_EASIN_Masked,
     EASIN_Masked_Unique = N_EASIN_Unique_Masked,
     EASIN_Path = EASIN_Path,
     EASIN_Gr100 = list(EASIN_Gr100),
+    EASIN_R = EASIN_R_Out,
+
     eLTER = N_eLTER,
     eLTER_Unique = N_eLTER_Unique,
     eLTER_Masked = N_eLTER_Masked,
     eLTER_Masked_Unique = N_eLTER_Unique_Masked,
     eLTER_Gr100 = list(eLTER_Gr100),
+    eLTER_R = eLTER_R_Out,
+
     PA_Map = Binary_R_Out,
     PA_Masked_Map = Binary_R_Masked_Out,
     Mask_Keep = Binary_R_Mask_Keep,
-    GBIF_R = GBIF_R_Out,
-    EASIN_R = EASIN_R_Out,
-    eLTER_R = eLTER_R_Out,
+
     SpCountry = list(SpCountry),
     BioRegs_DT = list(Sp_BiogeoRegions),
     BioRegsSumm_Min = BioRegsSumm_Min,
@@ -691,9 +730,9 @@ IAS_Distribution <- function(
     BioRegsMaskSumm_N = BioRegsMaskSumm_N,
     iNaturalist_Unique = iNatur_Unique,
     iNatur_Perc = iNatur_Perc,
-    Countries2Exclude = list(Countries2Exclude)) %>%
+    Countries2Exclude = list(Countries2Exclude),
+    Path_JPEG = Out_JPEG) %>%
     dplyr::mutate_at(IntegerCols, ~ as.integer(.))
-
 
   dplyr::select(Results, -GBIF_R, -EASIN_R, -eLTER_R) %>%
     IASDT.R::SaveAs(
@@ -703,6 +742,8 @@ IAS_Distribution <- function(
   IASDT.R::CatDiff(
     InitTime = .StartTime,
     Prefix = "\nProcessing species data was finished in ", ... = "\n")
+
+  # # ..................................................................... ###
 
   return(dplyr::select(Results, -GBIF_Gr100, -EASIN_Gr100, -eLTER_Gr100))
 }

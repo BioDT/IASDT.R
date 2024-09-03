@@ -205,9 +205,12 @@ IAS_Process <- function(
     },
     future.scheduling = Inf,
     future.seed = TRUE,
-    future.packages = c("dplyr", "sf", "IASDT.R", "terra", "readxl", "tidyr"),
-    future.globals = c("FromHPC", "EnvFile")
-  )
+    future.packages = c(
+      "dplyr", "lubridate", "IASDT.R", "purrr", "stringr", "readr", "fs",
+      "sf", "terra", "readxl", "tidyr", "tidyselect", "ggplot2", "ggtext",
+      "grid", "tidyterra", "cowplot", "scales"),
+    future.globals = c("FromHPC", "EnvFile")) %>%
+    dplyr::bind_rows()
 
   # # .................................... ###
 
@@ -224,7 +227,7 @@ IAS_Process <- function(
   # Merge Species-specific summary info -----
   IASDT.R::CatTime("Merge Species-specific summary info")
 
-  Sp_PA_Data <- dplyr::bind_rows(Sp_PA_Data) %>%
+  Sp_PA_Data <- Sp_PA_Data %>%
     # Split number of grid cell per country / biogeographical region as separate
     # column
     tidyr::unnest_wider(c("BioRegs_DT", "BioRegsMask_DT", "SpCountry")) %>%
@@ -254,7 +257,7 @@ IAS_Process <- function(
     dplyr::select(
       tidyselect::all_of(
         c(
-          "IAS_ID", "taxon_name", "Species_name", 
+          "IAS_ID", "taxon_name", "Species_name",
           "Species_name2", "Species_File")),
       tidyselect::everything()
     ) %>%
@@ -282,52 +285,6 @@ IAS_Process <- function(
 
   IASDT.R::CatTime("RData format", Level = 2)
   save(Sp_PA_Summary_DF, file = file.path(Path_PA, "Sp_PA_Summary_DF.RData"))
-
-  # # ..................................................................... ###
-
-  # Plotting species distribution ------
-
-  IASDT.R::CatTime("Plotting species distribution")
-  .StartTimeMaps <- lubridate::now(tzone = "CET")
-
-  ## Prepare working on parallel -----
-  IASDT.R::CatTime(
-    paste0("Prepare working on parallel using `", NCores, "` cores."),
-    Level = 1)
-
-  future::plan("multisession", workers = NCores, gc = TRUE)
-  on.exit(future::plan("sequential"), add = TRUE)
-
-  # # .................................... ###
-
-  ## Plotting species maps -----
-  IASDT.R::CatTime("Plotting species maps", Level = 1)
-
-  future.apply::future_lapply(
-    X = sort(Sp_PA_Summary_DF$Species_name),
-    FUN = function(x) {
-      IASDT.R::IAS_Plot(
-        Species = x, FromHPC = FromHPC,
-        EnvFile = EnvFile, Overwrite = Overwrite)
-    },
-    future.scheduling = Inf, future.seed = TRUE,
-    future.packages = c(
-      "dplyr", "sf", "fs", "stringr", "terra", "ggplot2", "scales", "cowplot"),
-    future.globals = c("EnvFile", "Overwrite", "FromHPC")
-  ) %>%
-    invisible()
-
-  rm(Sp_PA_Summary_DF)
-
-  # # .................................... ###
-
-  ## Stopping cluster ----
-  IASDT.R::CatTime("Stopping cluster", Level = 1)
-  future::plan("sequential")
-
-  IASDT.R::CatDiff(
-    InitTime = .StartTimeMaps,
-    Prefix = "Processing Species-specific maps took ", NLines = 1, Level = 2)
 
   # # ..................................................................... ###
 
@@ -471,9 +428,9 @@ IAS_Process <- function(
     PlottingTheme
 
   (cowplot::plot_grid(Plot_Nsp, Plot_Nsp_log, ncol = 2, nrow = 1) +
-    cowplot::draw_label(
-      label = LastUpdate, color = "grey", x = 0.99, y = 0.98,
-      size = 7, hjust = 1)) %>%
+      cowplot::draw_label(
+        label = LastUpdate, color = "grey", x = 0.99, y = 0.98,
+        size = 7, hjust = 1)) %>%
     ggplot2::ggsave(
       filename = file.path(Path_PA, "IAS_NumSpecies.jpeg"),
       width = 30, height = 15.5, units = "cm", dpi = 600)
@@ -498,7 +455,7 @@ IAS_Process <- function(
       expand = ggplot2::expansion(mult = c(0, 0)), limits = MapLimY) +
     ggplot2::labs(
       title = "Number of IAS per 10\u00D710 km grid",
-      subtitle = "Excluding cultivated or casual observations", 
+      subtitle = "Excluding cultivated or casual observations",
       fill = "# IAS") +
     PlottingTheme
 
@@ -527,9 +484,9 @@ IAS_Process <- function(
 
   (cowplot::plot_grid(
     Plot_Nsp_Masked, Plot_Nsp_Masked_log, ncol = 2, nrow = 1) +
-    cowplot::draw_label(
-      label = LastUpdate, color = "grey", x = 0.99, y = 0.98,
-      size = 7, hjust = 1)) %>%
+      cowplot::draw_label(
+        label = LastUpdate, color = "grey", x = 0.99, y = 0.98,
+        size = 7, hjust = 1)) %>%
     ggplot2::ggsave(
       filename = file.path(Path_PA, "IAS_NumSpecies_Masked.jpeg"),
       width = 30, height = 15.5, units = "cm", dpi = 600)
@@ -600,7 +557,7 @@ IAS_Process <- function(
       purrr::map_dfr(
         sort(unique(Sp_PA_Data$NCells_All)),
         ~ tibble::tibble(
-          Hab = Hab, Threshold = .x, 
+          Hab = Hab, Threshold = .x,
           NSp = sum(CurrDT$NCells_All >= .x, na.rm = TRUE)))
     }
   ) %>%

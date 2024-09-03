@@ -26,6 +26,7 @@
 
 IAS_Plot <- function(
     Species, FromHPC = TRUE, EnvFile = ".env", Overwrite = FALSE) {
+
   # # ..................................................................... ###
 
   # Checking arguments ----
@@ -298,10 +299,10 @@ IAS_Plot <- function(
 
   # Save the plot as JPEG file ----
 
-  (cowplot::ggdraw(Plot) + 
+  (cowplot::ggdraw(Plot) +
     cowplot::draw_label(
       label = LastUpdate, x = 0.975, y = 0.98, hjust = 1, vjust = 1,
-      color = "grey65", size = 12) + 
+      color = "grey65", size = 12) +
     cowplot::draw_label(
       label = BioRegAnnotation, x = 0.02, y = 0.91, hjust = 0, vjust = 0,
       color = "grey65", size = 10)) %>%

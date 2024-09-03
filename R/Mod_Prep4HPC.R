@@ -39,8 +39,6 @@
 #'   filtering species by the number of presence grid cells per predictor
 #'   (`PresPerVar`). If `NspPerGrid` = `NULL` or 1 (default), grid cells with
 #'   at least one species presence will be considered in the models.
-#' @param ExcludeCult Logical. Indicates whether to exclude countries with
-#'   cultivated or casual observations. Defaults to `TRUE`.
 #' @param PhyloTree,NoPhyloTree Logical indicating whether to fit model variants
 #'   with or without phylogenetic trees, respectively. The default of both
 #'   arguments is `TRUE`, which means to fit a model variant with the respective

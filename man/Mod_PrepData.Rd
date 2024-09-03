@@ -59,7 +59,7 @@ adjust file paths accordingly. Default: \code{TRUE}.}
 as RData file. Defaults to \code{FALSE}.}
 
 \item{ExcludeCult}{Logical. Indicates whether to exclude countries with
-cultivated or casual observations. Defaults to \code{TRUE}.}
+cultivated or casual observations per species. Defaults to \code{TRUE}.}
 }
 \value{
 a tibble containing modelling data.

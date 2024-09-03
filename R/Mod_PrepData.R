@@ -42,10 +42,11 @@
 #' @param SaveData Logical. Indicates whether the processed data should be saved
 #'   as RData file. Defaults to `FALSE`.
 #' @param ExcludeCult Logical. Indicates whether to exclude countries with
-#' cultivated or casual observations. Defaults to `TRUE`.
+#' cultivated or casual observations per species. Defaults to `TRUE`.
 #' @name Mod_PrepData
 #' @author Ahmed El-Gabbas
 #' @return a tibble containing modelling data.
+#' @importFrom rlang .data
 #' @details The function reads the following environment variables:
 #'    - **`DP_R_Grid`** (if `FromHPC` = `TRUE`) or **`DP_R_Grid_Local`** (if
 #'   `FromHPC` = `FALSE`). The function reads the content of the
@@ -275,7 +276,7 @@ Mod_PrepData <- function(
     # Exclude species with too few presence grid cells. There will be further
     # exclusion of species with few grid cells in this pipeline, but excluding
     # this first may help to reduce processing time
-    dplyr::filter(dplyr::across(dplyr::all_of(NCellsCol)) > MinPresGrids) %>%
+    dplyr::filter(.data[[NCellsCol]] >= MinPresGrids) %>%
     dplyr::select(SpeciesID, Species_name, Species_File) %>%
     # Mask each species map with the filtered grid cells
     dplyr::mutate(

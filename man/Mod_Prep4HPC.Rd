@@ -116,7 +116,7 @@ filtering species by the number of presence grid cells per predictor
 at least one species presence will be considered in the models.}
 
 \item{ExcludeCult}{Logical. Indicates whether to exclude countries with
-cultivated or casual observations. Defaults to \code{TRUE}.}
+cultivated or casual observations per species. Defaults to \code{TRUE}.}
 
 \item{CV_NFolds}{Number of cross-validation folds. Default: 4.}
 

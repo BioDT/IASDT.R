@@ -648,14 +648,14 @@ IAS_Distribution <- function(
     iNatur_Unique <- iNatur_Perc <- 0
   }
 
-  # # ..................................................................... ###
-
-  # Plotting species distribution -----
-  IASDT.R::CatTime("Plotting species distribution")
-
-  IASDT.R::IAS_Plot(
-    Species = Species, FromHPC = FromHPC,
-    EnvFile = EnvFile, Overwrite = Overwrite)
+  # # # ..................................................................... ###
+  #
+  # # Plotting species distribution -----
+  # IASDT.R::CatTime("Plotting species distribution")
+  #
+  # IASDT.R::IAS_Plot(
+  #   Species = Species, FromHPC = FromHPC,
+  #   EnvFile = EnvFile, Overwrite = Overwrite)
 
   # # ..................................................................... ###
 

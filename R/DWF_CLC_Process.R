@@ -331,7 +331,7 @@ CLC_Process <- function(
     sf::st_set_crs(3035)
 
   ## ||||||||||||||||||||||||||||||||||||||||
-  # Turkey --- boundaries / extent 
+  # Turkey --- boundaries / extent
   ## ||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Turkey --- boundaries / extent", Level = 1)
@@ -523,10 +523,10 @@ CLC_Process <- function(
         terra::writeRaster(
           x = Map, overwrite = TRUE,
           filename = file.path(
-            Path_CLC_Summary_Tif_Crop, 
+            Path_CLC_Summary_Tif_Crop,
             paste0("PercCov_", names(Map), ".tif")))
 
-        OutObjName <- paste0(Type, "_Crop")
+        OutObjName <- paste0("PercCov_", Type, "_Crop")
         IASDT.R::SaveAs(
           InObj = terra::wrap(Map), OutObj = OutObjName,
           OutPath = file.path(
@@ -614,7 +614,7 @@ CLC_Process <- function(
   }
 
   # # ..................................................................... ###
-  
+
   IASDT.R::CatDiff(
     InitTime = .StartTime, Prefix = "\nProcessing CLC data was finished in ")
 

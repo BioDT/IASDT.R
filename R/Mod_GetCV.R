@@ -15,20 +15,20 @@
 #'   with a default value of `.env`.
 #' @param XVars Vector of strings specifying variables to be used in the model.
 #'   This argument is mandatory and can not be empty.
-#' @param NGrids For `CV_Dist` cross-validation strategy (see below), this
+#' @param CV_NGrids For `CV_Dist` cross-validation strategy (see below), this
 #'   argument determines the size of the blocks (how many grid cells in both
 #'   directions).
-#' @param NFolds Number of cross-validation folds. Default: 4.
-#' @param NR,NC Integer, the number of rows and columns used in the `CV_Large`
-#'   cross-validation strategy (see below), in which the study area is divided
-#'   into large blocks given the provided `NR` and `NC` values. Both default to
-#'   2 which means to split the study area into four large blocks at the median
-#'   latitude and longitude.
+#' @param CV_NFolds Number of cross-validation folds. Default: 4.
+#' @param CV_NR,CV_NC Integer, the number of rows and columns used in the 
+#'   `CV_Large` cross-validation strategy (see below), in which the study area 
+#'   is divided into large blocks given the provided `CV_NR` and `CV_NC` 
+#'   values. Both default to 2 which means to split the study area into four 
+#'   large blocks at the median latitude and longitude.
 #' @param OutPath String specifying the folder path to save the cross-validation
 #'   results. Default: `NULL`.
 #' @param FromHPC Logical. Indicates whether the function is being run on an HPC
 #'   environment, affecting file path handling. Default: `TRUE`.
-#' @param PlotCV Logical. Indicating whether to plot the block cross-validation
+#' @param CV_Plot Logical. Indicating whether to plot the block cross-validation
 #'   folds.
 #' @name GetCV
 #' @author Ahmed El-Gabbas
@@ -42,11 +42,11 @@
 #'   `automap` R package.
 #'
 #'   2) `CV_Dist` in which the size of spatial cross-validation blocks is
-#'   determined by the `NGrids` argument. The default `NGrids` value is 20,
+#'   determined by the `CV_NGrids` argument. The default `CV_NGrids` value is 20,
 #'   which means blocks of 20x20 grid cell each.
 #'
 #'   3) `CV_Large` which splits the study area into large blocks, as determined
-#'   by the  `NR` and `NC` arguments. if `NR = NC` = 2 (default), four large
+#'   by the  `CV_NR` and `CV_NC` arguments. if `CV_NR = CV_NC` = 2 (default), four large
 #'   blocks will be used, split the study area at the median coordinates..
 #' @details The function reads the following environment variable:
 #'    - **`DP_R_Grid`** (if `FromHPC = TRUE`) or
@@ -58,8 +58,8 @@
 #' @export
 
 GetCV <- function(
-    DT, EnvFile = ".env", XVars, NFolds = 4, NGrids = 20,
-    NR = 2, NC = 2, OutPath = NULL, FromHPC = TRUE, PlotCV = TRUE) {
+    DT, EnvFile = ".env", XVars, CV_NFolds = 4, CV_NGrids = 20,
+    CV_NR = 2, CV_NC = 2, OutPath = NULL, FromHPC = TRUE, CV_Plot = TRUE) {
 
   # # |||||||||||||||||||||||||||||||||||
   # # Initial checking -----
@@ -144,16 +144,16 @@ GetCV <- function(
   # # |||||||||||||||||||||||||||||||||||
   IASDT.R::CatTime("1. CV_Large", Level = 1)
   CV_Large <- blockCV::cv_spatial(
-    x = XY_sf, r = DT_R, hexagon = FALSE, iteration = 1000, k = NFolds,
-    rows_cols = c(NR, NC), plot = FALSE, progress = FALSE, report = FALSE)
+    x = XY_sf, r = DT_R, hexagon = FALSE, iteration = 1000, k = CV_NFolds,
+    rows_cols = c(CV_NR, CV_NC), plot = FALSE, progress = FALSE, report = FALSE)
 
   # # |||||||||||||||||||||||||||||||||||
   # # 2. CV based on number of grid cells -----
   # # |||||||||||||||||||||||||||||||||||
   IASDT.R::CatTime("2. CV_Dist", Level = 1)
   CV_Dist <- blockCV::cv_spatial(
-    x = XY_sf, r = DT_R, hexagon = FALSE, iteration = 1000, k = NFolds,
-    size = NGrids * raster::res(DT_R)[1], plot = FALSE, progress = FALSE,
+    x = XY_sf, r = DT_R, hexagon = FALSE, iteration = 1000, k = CV_NFolds,
+    size = CV_NGrids * raster::res(DT_R)[1], plot = FALSE, progress = FALSE,
     report = FALSE)
 
   # # |||||||||||||||||||||||||||||||||||
@@ -170,7 +170,7 @@ GetCV <- function(
   # If median spatial cross-validation is very large, skip CV_SAC option. This
   # to avoid the following error if the estimated SAC range is very large that
   # disallow the assignation of grid cells into the number of CV folds in the
-  # `NFolds` parameter:
+  # `CV_NFolds` parameter:
   # error in `blockCV::cv_spatial()`: 'k' is bigger than the number of spatial blocks: 1.
 
 
@@ -195,7 +195,7 @@ GetCV <- function(
   } else {
     # CV based on Spatial autocorrelation
     CV_SAC <- blockCV::cv_spatial(
-      x = XY_sf, r = DT_R, hexagon = FALSE, iteration = 1000, k = NFolds,
+      x = XY_sf, r = DT_R, hexagon = FALSE, iteration = 1000, k = CV_NFolds,
       size = CV_SAC_Range$range, plot = FALSE, progress = FALSE,
       report = FALSE)
 
@@ -215,7 +215,7 @@ GetCV <- function(
   # # |||||||||||||||||||||||||||||||||||
   IASDT.R::CatTime("Save cross-validation results as RData", Level = 1)
   CV_data <- list(
-    NGrids = NGrids, NR = NR, NC = NC, CV_SAC_Range = CV_SAC_Range,
+    CV_NGrids = CV_NGrids, CV_NR = CV_NR, CV_NC = CV_NC, CV_SAC_Range = CV_SAC_Range,
     CV_SAC = CV_SAC, CV_Dist = CV_Dist, CV_Large = CV_Large)
 
   save(CV_data, file = file.path(OutPath, "CV_data.RData"))
@@ -223,7 +223,7 @@ GetCV <- function(
   # # |||||||||||||||||||||||||||||||||||
   # # Plot cross-validation folds -----
   # # |||||||||||||||||||||||||||||||||||
-  if (PlotCV) {
+  if (CV_Plot) {
 
     IASDT.R::CatTime("Plot cross-validation folds", Level = 1)
 

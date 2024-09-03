@@ -8,13 +8,13 @@ GetCV(
   DT,
   EnvFile = ".env",
   XVars,
-  NFolds = 4,
-  NGrids = 20,
-  NR = 2,
-  NC = 2,
+  CV_NFolds = 4,
+  CV_NGrids = 20,
+  CV_NR = 2,
+  CV_NC = 2,
   OutPath = NULL,
   FromHPC = TRUE,
-  PlotCV = TRUE
+  CV_Plot = TRUE
 )
 }
 \arguments{
@@ -28,17 +28,17 @@ with a default value of \code{.env}.}
 \item{XVars}{Vector of strings specifying variables to be used in the model.
 This argument is mandatory and can not be empty.}
 
-\item{NFolds}{Number of cross-validation folds. Default: 4.}
+\item{CV_NFolds}{Number of cross-validation folds. Default: 4.}
 
-\item{NGrids}{For \code{CV_Dist} cross-validation strategy (see below), this
+\item{CV_NGrids}{For \code{CV_Dist} cross-validation strategy (see below), this
 argument determines the size of the blocks (how many grid cells in both
 directions).}
 
-\item{NR, NC}{Integer, the number of rows and columns used in the \code{CV_Large}
-cross-validation strategy (see below), in which the study area is divided
-into large blocks given the provided \code{NR} and \code{NC} values. Both default to
-2 which means to split the study area into four large blocks at the median
-latitude and longitude.}
+\item{CV_NR, CV_NC}{Integer, the number of rows and columns used in the
+\code{CV_Large} cross-validation strategy (see below), in which the study area
+is divided into large blocks given the provided \code{CV_NR} and \code{CV_NC}
+values. Both default to 2 which means to split the study area into four
+large blocks at the median latitude and longitude.}
 
 \item{OutPath}{String specifying the folder path to save the cross-validation
 results. Default: \code{NULL}.}
@@ -46,7 +46,7 @@ results. Default: \code{NULL}.}
 \item{FromHPC}{Logical. Indicates whether the function is being run on an HPC
 environment, affecting file path handling. Default: \code{TRUE}.}
 
-\item{PlotCV}{Logical. Indicating whether to plot the block cross-validation
+\item{CV_Plot}{Logical. Indicating whether to plot the block cross-validation
 folds.}
 }
 \value{
@@ -59,10 +59,10 @@ spatial autocorrelation range in the predictor data (estimated using
 \link[blockCV:cv_spatial_autocor]{blockCV::cv_spatial_autocor}). This requires the availability of the
 \code{automap} R package.
 \item \code{CV_Dist} in which the size of spatial cross-validation blocks is
-determined by the \code{NGrids} argument. The default \code{NGrids} value is 20,
+determined by the \code{CV_NGrids} argument. The default \code{CV_NGrids} value is 20,
 which means blocks of 20x20 grid cell each.
 \item \code{CV_Large} which splits the study area into large blocks, as determined
-by the  \code{NR} and \code{NC} arguments. if \code{NR = NC} = 2 (default), four large
+by the  \code{CV_NR} and \code{CV_NC} arguments. if \code{CV_NR = CV_NC} = 2 (default), four large
 blocks will be used, split the study area at the median coordinates..
 }
 }

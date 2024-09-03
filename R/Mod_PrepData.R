@@ -18,12 +18,12 @@
 #'   habitat type. For more details, see [Pysek et
 #'   al.](https://doi.org/10.23855/preslia.2022.447).
 #' @param MinEffortsSp Minimum number of vascular plant species per grid cell in
-#'   GBIF database for a grid cell to be included in the models. This to exclude
+#'   GBIF for a grid cell to be included in the models. This is to exclude
 #'   grid cells with very little sampling efforts. Defaults to `100`.
 #' @param NVars Integer. The number of variables used in the model. This
 #'   argument has to be provided and can not be set to `NULL` (default).
-#' @param PresPerVar Integer. Number of presence grid cells per predictor
-#'   required for a species to be included in the analysis. The number of
+#' @param PresPerVar Integer. Minimum number of presence grid cells per
+#'   predictor for a species to be included in the analysis. The number of
 #'   presence grid cells per species is calculated as the product of this factor
 #'   and the number of variables used in the models `NVars` and is calculated
 #'   after discarding grid cells with low sampling efforts (`MinEffortsSp`).
@@ -31,8 +31,9 @@
 #' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
 #' @param BioVars Character vector. Specifies the Bioclimatic variables to be
-#'   included from the CHELSA dataset. Defaults to a selection of variables:
-#'   `bio4`, `bio6`, `bio8`, `bio12`, `bio15`, and `bio18`.
+#'   included from CHELSA. Defaults to 6 ecologically meaningful and less
+#'   correlated Bioclimatic variables: `bio4`, `bio6`, `bio8`, `bio12`,
+#'   `bio15`, and `bio18`.
 #' @param Path_Model Character. Path where the output file should be saved.
 #' @param VerboseProgress Logical. Indicates whether progress messages should be
 #'   displayed. Defaults to `FALSE`.
@@ -49,8 +50,8 @@
 #'   `Grid_10_Land_Crop.RData` and `Grid_10_Land_Crop_sf_Country.RData` files
 #'    - **`DP_R_Grid_Ref`** or **`DP_R_Grid_Ref_Local`**: The function reads the
 #'   content of `Grid_10_sf.RData` file from this path.
-#'    - **`DP_R_PA`** or **`DP_R_PA_Local`**: The function reads the contents of the
-#'   `Sp_PA_Summary_DF.RData` file from this path.
+#'    - **`DP_R_PA`** or **`DP_R_PA_Local`**: The function reads the contents
+#'    of the `Sp_PA_Summary_DF.RData` file from this path.
 #'    - **`DP_R_CLC_Summary`** / **`DP_R_CLC_Summary_Local`**: Path containing
 #'   the `PercCov_SynHab_Crop.RData` file. This file contains maps for the
 #'   percentage coverage of each SynHab habitat type per grid cell.
@@ -66,8 +67,8 @@
 #'   for the total length of any railway type per grid cell and
 #'   `Dist2Rail.RData` for the minimum distance between the centroid of each
 #'   grid cell and the nearest railway.
-#'    - **`DP_R_Efforts`** / **`DP_R_Efforts_Local`**: Path for processed sampling
-#'   efforts analysis. The function reads the content of
+#'    - **`DP_R_Efforts`** / **`DP_R_Efforts_Local`**: Path for processed
+#'    sampling efforts analysis. The function reads the content of
 #'   `Bias_GBIF_SummaryR.RData` file containing the total number of GBIF
 #'   vascular plant observations per grid cell.
 #' @export
@@ -82,7 +83,7 @@ Mod_PrepData <- function(
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||
   # 2023
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # We decided to exclude the following SynHab habitat types from our analysis:
+  # We decided to exclude the following SynHab habitat types in our analysis:
   # # 4. Grasslands: use 4a and 4b separately
   # # 7. Dryland
   # # 9. Riparian
@@ -109,7 +110,8 @@ Mod_PrepData <- function(
     stop(
       paste0(
         paste0("`", CheckNULL[which(IsNull)], "`", collapse = ", "),
-        " can not be empty"), call. = FALSE)
+        " can not be empty"),
+      call. = FALSE)
   }
 
   Hab_Abb <- as.character(Hab_Abb)
@@ -124,7 +126,7 @@ Mod_PrepData <- function(
   SpeciesID <- Species_name <- Species_File <- PA <-
     cell <- x <- Path_PA <- Path_Grid <- Path_Grid_Ref <- Path_CLC_Summ <-
     Path_Roads <- Path_Rail <- Path_Bias <- Path_Chelsa_Time_CC <-
-    NGrids <- NSp <- EU_Bound <- NCells <- SpPA <- NPres <- Grid_R <- NULL
+    NSp <- EU_Bound <- NCells <- SpPA <- NPres <- Grid_R <- NULL
 
   IASDT.R::CatTime("Checking input arguments")
   AllArgs <- ls(envir = environment())
@@ -193,8 +195,10 @@ Mod_PrepData <- function(
 
   if (!(Hab_Abb %in% ValidHabAbbs)) {
     stop(
-      paste0("Hab_Abb has to be one of the following:\n >> ",
-             paste0(ValidHabAbbs, collapse = ", ")), call. = FALSE)
+      paste0(
+        "Hab_Abb has to be one of the following:\n >> ",
+        paste0(ValidHabAbbs, collapse = ", ")),
+      call. = FALSE)
   }
 
   fs::dir_create(Path_Model)
@@ -224,15 +228,12 @@ Mod_PrepData <- function(
       include.lowest = TRUE, right = FALSE)
 
   ## Species data summary ----
-
   IASDT.R::CatTime("Species data summary", Level = 1)
 
   DT_Sp <- file.path(Path_PA, "Sp_PA_Summary_DF.RData")
-
   if (!file.exists(DT_Sp)) {
     stop(paste0(DT_Sp, " file does not exist"), call. = FALSE)
   }
-
   DT_Sp <- IASDT.R::LoadAs(DT_Sp)
 
   if (Hab_Abb == "0") {

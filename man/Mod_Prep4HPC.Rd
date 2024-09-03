@@ -20,18 +20,18 @@ Mod_Prep4HPC(
   RoadRailAsPredictor = TRUE,
   HabAsPredictor = TRUE,
   NspPerGrid = 1L,
-  NFolds = 4L,
-  NGrids = 20L,
-  NR = 2L,
-  NC = 2L,
-  PlotCV = TRUE,
+  CV_NFolds = 4L,
+  CV_NGrids = 20L,
+  CV_NR = 2L,
+  CV_NC = 2L,
+  CV_Plot = TRUE,
   PhyloTree = TRUE,
   NoPhyloTree = TRUE,
-  OverwriteInitMod = TRUE,
+  OverwriteRDS = TRUE,
   NCores = 8L,
-  nChains = 4L,
+  NChains = 4L,
   thin = NULL,
-  samples = NULL,
+  samples = 1000L,
   transientFactor = 300L,
   verbose = 200L,
   SkipFitted = TRUE,
@@ -59,11 +59,11 @@ habitat type. For more details, see \href{https://doi.org/10.23855/preslia.2022.
 all output, including models to be fitted, will be saved.}
 
 \item{MinEffortsSp}{Minimum number of vascular plant species per grid cell in
-GBIF database for a grid cell to be included in the models. This to exclude
+GBIF for a grid cell to be included in the models. This is to exclude
 grid cells with very little sampling efforts. Defaults to \code{100}.}
 
-\item{PresPerVar}{Integer. Number of presence grid cells per predictor
-required for a species to be included in the analysis. The number of
+\item{PresPerVar}{Integer. Minimum number of presence grid cells per
+predictor for a species to be included in the analysis. The number of
 presence grid cells per species is calculated as the product of this factor
 and the number of variables used in the models \code{NVars} and is calculated
 after discarding grid cells with low sampling efforts (\code{MinEffortsSp}).
@@ -79,7 +79,7 @@ function. The same value will be used for the \code{knotDist} and
 \code{minKnotDist}    arguments of the \link[Hmsc:constructKnots]{Hmsc::constructKnots} function.}
 
 \item{GPP_Save}{Logical indicating whether to save the resulted knots as
-\code{RData} Default: \code{TRUE}.}
+\code{RData} file. Default: \code{TRUE}.}
 
 \item{GPP_Plot}{Logical indicating whether to plot the coordinates of the
 sampling units and the knots in a pdf file. Default: \code{TRUE}.}
@@ -90,8 +90,9 @@ factors will be estimated from the data. If either is provided, the
 respective values will be used as arguments to \link[Hmsc:setPriors]{Hmsc::setPriors}.}
 
 \item{BioVars}{Character vector. Specifies the Bioclimatic variables to be
-included from the CHELSA dataset. Defaults to a selection of variables:
-\code{bio4}, \code{bio6}, \code{bio8}, \code{bio12}, \code{bio15}, and \code{bio18}.}
+included from CHELSA. Defaults to 6 ecologically meaningful and less
+correlated Bioclimatic variables: \code{bio4}, \code{bio6}, \code{bio8}, \code{bio12},
+\code{bio15}, and \code{bio18}.}
 
 \item{EffortsAsPredictor}{Logical indicating whether to include the
 (log\if{html}{\out{<sub>}}10\if{html}{\out{</sub>}}) sampling efforts as predictor to the model. Default:
@@ -104,7 +105,7 @@ model. Default: \code{TRUE}.}
 \item{HabAsPredictor}{Logical indicating whether to include the
 (log\if{html}{\out{<sub>}}10\if{html}{\out{</sub>}}) percentage coverage of respective habitat type per grid
 cell as predictor to the model. Default: \code{TRUE}. Only valid if \code{Hab_Abb}
-not equals to "0".}
+not equals to \code{0}.}
 
 \item{NspPerGrid}{Integer. Indicating the minimum number of species per grid
 cell for a grid cell to be include in the analysis. Default to 1 resulting
@@ -112,19 +113,19 @@ in the exclusion of any grid cell with no species presence. This parameter
 can be set to \code{NULL} to include all grid cells irrespective of the number
 of species.}
 
-\item{NFolds}{Number of cross-validation folds. Default: 4.}
+\item{CV_NFolds}{Number of cross-validation folds. Default: 4.}
 
-\item{NGrids}{For \code{CV_Dist} cross-validation strategy (see below), this
+\item{CV_NGrids}{For \code{CV_Dist} cross-validation strategy (see below), this
 argument determines the size of the blocks (how many grid cells in both
 directions).}
 
-\item{NR, NC}{Integer, the number of rows and columns used in the \code{CV_Large}
-cross-validation strategy (see below), in which the study area is divided
-into large blocks given the provided \code{NR} and \code{NC} values. Both default to
-2 which means to split the study area into four large blocks at the median
-latitude and longitude.}
+\item{CV_NR, CV_NC}{Integer, the number of rows and columns used in the
+\code{CV_Large} cross-validation strategy (see below), in which the study area
+is divided into large blocks given the provided \code{CV_NR} and \code{CV_NC}
+values. Both default to 2 which means to split the study area into four
+large blocks at the median latitude and longitude.}
 
-\item{PlotCV}{Logical. Indicating whether to plot the block cross-validation
+\item{CV_Plot}{Logical. Indicating whether to plot the block cross-validation
 folds.}
 
 \item{PhyloTree, NoPhyloTree}{Logical indicating whether to fit model variants
@@ -134,13 +135,13 @@ option. If both \code{PhyloTree} and \code{NoPhyloTree} are \code{TRUE} (Default
 for both options will be fitted. At least one of \code{PhyloTree} and
 \code{NoPhyloTree} should be \code{TRUE}.}
 
-\item{OverwriteInitMod}{Logical. Indicating whether to overwrite previously
+\item{OverwriteRDS}{Logical. Indicating whether to overwrite previously
 exported RDS files for initial models. Default: \code{TRUE}.}
 
 \item{NCores}{Integer specifying the number of parallel cores for
 parallelization. Default: 8 cores.}
 
-\item{nChains}{Integer specifying the number of model chains. Default: 4.}
+\item{NChains}{Integer specifying the number of model chains. Default: 4.}
 
 \item{thin}{Integer specifying the value(s) for thinning in MCMC sampling. If
 more than one value is provided, a separate model will be fitted at each
@@ -148,7 +149,7 @@ value of thinning.}
 
 \item{samples}{Integer specifying the value(s) for the number of MCMC
 samples. If more than one value is provided, a separate model will be
-fitted at each value of number of samples.}
+fitted at each value of number of samples. Defaults to 1000.}
 
 \item{transientFactor}{Integer specifying the transient multiplication
 factor. The value of \code{transient} will equal  the multiplication of
@@ -162,7 +163,7 @@ Default: \code{TRUE}.}
 
 \item{MaxJobCounts}{Integer specifying the maximum allowed number of array
 jobs per SLURM file. Default: 210. See
-\href{https://docs.lumi-supercomputer.eu/runjobs/scheduled-jobs/partitions}{here}
+\href{https://docs.lumi-supercomputer.eu/runjobs/scheduled-jobs/partitions}{LUMI documentation}
 for more details.}
 
 \item{ModelCountry}{String or vector of strings specifying the country or
@@ -229,7 +230,7 @@ The function provides options for:
 \item whether to include sampling efforts \code{EffortsAsPredictor}, percentage of
 respective habitat type per grid cell \code{HabAsPredictor}, and railway and
 road intensity per grid cell \code{RoadRailAsPredictor}
-\item Hmsc options (\code{nChains}, \code{thin}, \code{samples}, \code{transientFactor}, and \code{verbose})
+\item Hmsc options (\code{NChains}, \code{thin}, \code{samples}, \code{transientFactor}, and \code{verbose})
 \item prepare SLURM commands (\code{PrepSLURM}) and some specifications (e.g.
 \code{MaxJobCounts}, \code{MemPerCpu}, \code{Time}, \code{JobName})
 

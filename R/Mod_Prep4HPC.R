@@ -20,7 +20,7 @@
 #'   function. The same value will be used for the `knotDist` and
 #'   `minKnotDist`	arguments of the [Hmsc::constructKnots] function.
 #' @param GPP_Save Logical indicating whether to save the resulted knots as
-#'   `RData` Default: `TRUE`.
+#'   `RData` file. Default: `TRUE`.
 #' @param GPP_Plot Logical indicating whether to plot the coordinates of the
 #'   sampling units and the knots in a pdf file. Default: `TRUE`.
 #' @param EffortsAsPredictor Logical indicating whether to include the
@@ -32,7 +32,7 @@
 #' @param HabAsPredictor Logical indicating whether to include the
 #'   (log<sub>10</sub>) percentage coverage of respective habitat type per grid
 #'   cell as predictor to the model. Default: `TRUE`. Only valid if `Hab_Abb`
-#'   not equals to "0".
+#'   not equals to `0`.
 #' @param NspPerGrid Integer. Indicating the minimum number of species per grid
 #'   cell for a grid cell to be include in the analysis. Default to 1 resulting
 #'   in the exclusion of any grid cell with no species presence. This parameter
@@ -44,17 +44,17 @@
 #'   option. If both `PhyloTree` and `NoPhyloTree` are `TRUE` (Default), models
 #'   for both options will be fitted. At least one of `PhyloTree` and
 #'   `NoPhyloTree` should be `TRUE`.
-#' @param OverwriteInitMod Logical. Indicating whether to overwrite previously
+#' @param OverwriteRDS Logical. Indicating whether to overwrite previously
 #'   exported RDS files for initial models. Default: `TRUE`.
 #' @param NCores Integer specifying the number of parallel cores for
 #'   parallelization. Default: 8 cores.
-#' @param nChains Integer specifying the number of model chains. Default: 4.
+#' @param NChains Integer specifying the number of model chains. Default: 4.
 #' @param thin Integer specifying the value(s) for thinning in MCMC sampling. If
 #'   more than one value is provided, a separate model will be fitted at each
 #'   value of thinning.
 #' @param samples Integer specifying the value(s) for the number of MCMC
 #'   samples. If more than one value is provided, a separate model will be
-#'   fitted at each value of number of samples.
+#'   fitted at each value of number of samples. Defaults to 1000.
 #' @param transientFactor Integer specifying the transient multiplication
 #'   factor. The value of `transient` will equal  the multiplication of
 #'   `transientFactor` and `thin`. Default: 300.
@@ -64,7 +64,7 @@
 #'   Default: `TRUE`.
 #' @param MaxJobCounts Integer specifying the maximum allowed number of array
 #'   jobs per SLURM file. Default: 210. See
-#'   [here](https://docs.lumi-supercomputer.eu/runjobs/scheduled-jobs/partitions)
+#'   [LUMI documentation](https://docs.lumi-supercomputer.eu/runjobs/scheduled-jobs/partitions)
 #'   for more details.
 #' @param ModelCountry String or vector of strings specifying the country or
 #'   countries to filter observations by. Default: `NULL`, which means prepare
@@ -110,7 +110,7 @@
 #' - whether to include sampling efforts `EffortsAsPredictor`, percentage of
 #'   respective habitat type per grid cell `HabAsPredictor`, and railway and
 #'   road intensity per grid cell `RoadRailAsPredictor`
-#' - Hmsc options (`nChains`, `thin`, `samples`, `transientFactor`, and `verbose`)
+#' - Hmsc options (`NChains`, `thin`, `samples`, `transientFactor`, and `verbose`)
 #' - prepare SLURM commands (`PrepSLURM`) and some specifications (e.g.
 #'   `MaxJobCounts`, `MemPerCpu`, `Time`, `JobName`)
 #'
@@ -134,10 +134,10 @@ Mod_Prep4HPC <- function(
     GPP_Plot = TRUE, MinLF = NULL, MaxLF = NULL,
     BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
     EffortsAsPredictor = FALSE, RoadRailAsPredictor = TRUE,
-    HabAsPredictor = TRUE, NspPerGrid = 1L, NFolds = 4L,
-    NGrids = 20L, NR = 2L, NC = 2L, PlotCV = TRUE, PhyloTree = TRUE,
-    NoPhyloTree = TRUE, OverwriteInitMod = TRUE, NCores = 8L, nChains = 4L,
-    thin = NULL, samples = NULL, transientFactor = 300L, verbose = 200L,
+    HabAsPredictor = TRUE, NspPerGrid = 1L, CV_NFolds = 4L,
+    CV_NGrids = 20L, CV_NR = 2L, CV_NC = 2L, CV_Plot = TRUE, PhyloTree = TRUE,
+    NoPhyloTree = TRUE, OverwriteRDS = TRUE, NCores = 8L, NChains = 4L,
+    thin = NULL, samples = 1000L, transientFactor = 300L, verbose = 200L,
     SkipFitted = TRUE, MaxJobCounts = 210L, ModelCountry = NULL,
     VerboseProgress = FALSE, FromHPC = TRUE, PrepSLURM = TRUE, MemPerCpu = NULL,
     Time = NULL, JobName = NULL, Path_Hmsc = NULL, ToJSON = FALSE, ...) {
@@ -266,14 +266,15 @@ Mod_Prep4HPC <- function(
     "Hab_Abb", "Path_Model", "Path_Hmsc")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = CharArgs, Type = "character")
 
-  LogicArgs <- c("GPP_Save", "GPP_Plot", "PhyloTree",
-                 "NoPhyloTree", "VerboseProgress", "ToJSON")
+  LogicArgs <- c(
+    "GPP_Save", "GPP_Plot", "PhyloTree", "NoPhyloTree",
+    "VerboseProgress", "ToJSON")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = LogicArgs, Type = "logical")
 
   NumericArgs <- c(
-    "GPP_Dists", "NCores", "nChains", "thin", "samples", "verbose",
-    "PresPerVar", "MinEffortsSp", "transientFactor", "NFolds", "NGrids",
-    "NR", "NC")
+    "GPP_Dists", "NCores", "NChains", "thin", "samples", "verbose",
+    "PresPerVar", "MinEffortsSp", "transientFactor", "CV_NFolds", "CV_NGrids",
+    "CV_NR", "CV_NC")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = NumericArgs, Type = "numeric")
 
   if (PrepSLURM) {
@@ -506,8 +507,9 @@ Mod_Prep4HPC <- function(
       units = "cm", dpi = 600,
       filename = file.path(Path_Model, "NSpPerGrid_Sub.jpeg"))
 
-    rm(Limits, NSpPerGridSub, R_Sp_sum, R_Sp_sumP, EU_Bound_sub,
-       DT_Sp, GridSubset)
+    rm(
+      Limits, NSpPerGridSub, R_Sp_sum, R_Sp_sumP,
+      EU_Bound_sub, DT_Sp, GridSubset)
 
   } else {
     IASDT.R::CatTime("No data subsetting was implemented", Level = 1)
@@ -550,8 +552,8 @@ Mod_Prep4HPC <- function(
 
   DT_All <- IASDT.R::GetCV(
     DT = DT_All, EnvFile = EnvFile, XVars = XVars,
-    NFolds = NFolds, FromHPC = FromHPC, NGrids = NGrids, NR = NR,
-    NC = NC, OutPath = Path_Model, PlotCV = PlotCV)
+    CV_NFolds = CV_NFolds, FromHPC = FromHPC, CV_NGrids = CV_NGrids, CV_NR = CV_NR,
+    CV_NC = CV_NC, OutPath = Path_Model, CV_Plot = CV_Plot)
 
   # Save cross-validation data
   DT_CV <- DT_All %>%
@@ -651,15 +653,15 @@ Mod_Prep4HPC <- function(
   # Prepare GPP knots
   IASDT.R::CatTime("Preparing GPP knots", Level = 1)
 
-  if (NCores > 1) { 
+  if (NCores > 1) {
 
     IASDT.R::CatTime(
       paste0("Prepare working on parallel using `", NCores, "` cores."),
       Level = 1)
-    
+
     withr::local_options(
         future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
-    
+
     future::plan("multisession", workers = NCores, gc = TRUE)
     on.exit(future::plan("sequential"), add = TRUE)
 
@@ -670,15 +672,15 @@ Mod_Prep4HPC <- function(
           Coords = DT_xy, MinDist = x, MinLF = MinLF, MaxLF = MaxLF)
       },
       future.scheduling = Inf, future.seed = TRUE,
-      future.globals = c("DT_xy", "GPP_Dists", "MaxLF", "MinLF"), 
+      future.globals = c("DT_xy", "GPP_Dists", "MaxLF", "MinLF"),
       future.packages = c("dplyr", "sf", "Hmsc", "jsonify", "magrittr")) %>%
       stats::setNames(paste0("GPP_", GPP_Dists))
-    
+
     future::plan("sequential")
-    
+
   } else {
       IASDT.R::CatTime("Working sequentially")
-      
+
       GPP_Knots <- purrr::map(
       .x = GPP_Dists * 1000,
       .f = ~IASDT.R::PrepKnots(
@@ -831,7 +833,7 @@ Mod_Prep4HPC <- function(
 
   IASDT.R::CatTime("Save unfitted models")
 
-  if (OverwriteInitMod) {
+  if (OverwriteRDS) {
     IASDT.R::CatTime(paste0("Processing all model variants"), Level = 1)
   } else {
     NMod2Export <- Model_Info %>%
@@ -852,7 +854,7 @@ Mod_Prep4HPC <- function(
   InitFitFun <- function(ID) {
     CurrPath <- Model_Info$M4HPC_Path[ID]
 
-    if (OverwriteInitMod && file.exists(CurrPath)) {
+    if (OverwriteRDS && file.exists(CurrPath)) {
       file.remove(CurrPath)
     }
 
@@ -863,7 +865,7 @@ Mod_Prep4HPC <- function(
         hM = IASDT.R::LoadAs(Model_Info$M_Init_Path[ID]),
         samples = Model_Info$M_samples[ID],
         thin = Model_Info$M_thin[ID], transient = Model_Info$M_transient[ID],
-        nChains = nChains, verbose = verbose, engine = "HPC")
+        NChains = NChains, verbose = verbose, engine = "HPC")
 
       if (ToJSON) {
         Model <- jsonify::to_json(Model)
@@ -888,10 +890,10 @@ Mod_Prep4HPC <- function(
       X = seq_len(nrow(Model_Info)), FUN = InitFitFun,
       future.scheduling = Inf, future.seed = TRUE,
       future.globals = c(
-        "InitFitFun", "Model_Info", "OverwriteInitMod",
-        "verbose", "nChains", "ToJSON"), 
+        "InitFitFun", "Model_Info", "OverwriteRDS",
+        "verbose", "NChains", "ToJSON"),
       future.packages = c("Hmsc", "jsonify", "IASDT.R"))
-  
+
     future::plan("sequential")
 
   } else {
@@ -921,7 +923,7 @@ Mod_Prep4HPC <- function(
 
   IASDT.R::CatTime("Prepare Hmsc-HPC fitting commands")
 
-  Model_Info <- dplyr::mutate(Model_Info, Chain = list(seq_len(nChains))) %>%
+  Model_Info <- dplyr::mutate(Model_Info, Chain = list(seq_len(NChains))) %>%
     tidyr::unnest_longer("Chain") %>%
     dplyr::arrange(M_Name_Fit) %>%
     dplyr::mutate(

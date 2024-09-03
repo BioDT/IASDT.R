@@ -53,7 +53,6 @@
 
 CLC_Process <- function(
     EnvFile = ".env", FromHPC = TRUE, MinLandPerc = 15, PlotCLC = TRUE) {
-
   # # ..................................................................... ###
 
   .StartTime <- lubridate::now(tzone = "CET")
@@ -98,7 +97,7 @@ CLC_Process <- function(
   # Environment variables
   # # ||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatTime("Loading and checking environment variables", Level = 1)
+  IASDT.R::CatTime("Environment variables")
 
   if (FromHPC) {
     EnvVars2Read <- tibble::tribble(
@@ -205,9 +204,9 @@ CLC_Process <- function(
     Path_CLC_Summary_JPEG <- file.path(Path_CLC, "Summary_JPEG")
     Path_CLC_Summary_JPEG_Free <- file.path(Path_CLC_Summary_JPEG, "FreeLegend")
 
-  purrr::walk(
-    .x = c(Path_CLC_Summary_JPEG, Path_CLC_Summary_JPEG_Free),
-    .f = fs::dir_create)
+    purrr::walk(
+      .x = c(Path_CLC_Summary_JPEG, Path_CLC_Summary_JPEG_Free),
+      .f = fs::dir_create)
   }
 
   # # ..................................................................... ###
@@ -332,19 +331,15 @@ CLC_Process <- function(
     sf::st_set_crs(3035)
 
   ## ||||||||||||||||||||||||||||||||||||||||
-  # Turkey --- boundaries
+  # Turkey --- boundaries / extent 
   ## ||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatTime("Turkey --- boundaries", Level = 1)
+  IASDT.R::CatTime("Turkey --- boundaries / extent", Level = 1)
   TR <- EUBound_sf$L_01 %>%
     dplyr::filter(CNTR_ID == "TR") %>%
     dplyr::select(-CNTR_ID)
 
-  ## ||||||||||||||||||||||||||||||||||||||||
-  # Turkey --- extent to exclude some left-over cells in the east of Turkey
-  ## ||||||||||||||||||||||||||||||||||||||||
-
-  IASDT.R::CatTime("Turkey --- extent", Level = 1)
+  # extent to exclude some left-over cells in the east of Turkey
   Extent_TR <- raster::extent(6604000, 7482000, 1707000, 2661000) %>%
     methods::as("SpatialPolygons") %>%
     sf::st_as_sf() %>%
@@ -381,8 +376,7 @@ CLC_Process <- function(
     magrittr::extract2(
       c(
         "CLC_L3_423", "CLC_L3_511", "CLC_L3_512",
-        "CLC_L3_521", "CLC_L3_522", "CLC_L3_523")
-    ) %>%
+        "CLC_L3_521", "CLC_L3_522", "CLC_L3_523")) %>%
     # calculate the sum of these classes
     sum() %>%
     stats::setNames("Grid_10_Land") %>%
@@ -529,7 +523,8 @@ CLC_Process <- function(
         terra::writeRaster(
           x = Map, overwrite = TRUE,
           filename = file.path(
-            Path_CLC_Summary_Tif_Crop, paste0("PercCov_", names(Map), ".tif")))
+            Path_CLC_Summary_Tif_Crop, 
+            paste0("PercCov_", names(Map), ".tif")))
 
         OutObjName <- paste0(Type, "_Crop")
         IASDT.R::SaveAs(
@@ -613,17 +608,15 @@ CLC_Process <- function(
       "PercCov_CLC_L3", "PercCov_EUNIS_2019") %>%
       purrr::walk(
         .f = CLC_Plot,
-        CLC_Map = PercCovMaps,
-        EU_Map = EUBound_sf$L_03,
-        CrossWalk = CLC_CrossWalk,
-        Path_JPEG = Path_CLC_Summary_JPEG,
+        CLC_Map = PercCovMaps, EU_Map = EUBound_sf$L_03,
+        CrossWalk = CLC_CrossWalk, Path_JPEG = Path_CLC_Summary_JPEG,
         Path_JPEG_Free = Path_CLC_Summary_JPEG_Free)
   }
 
   # # ..................................................................... ###
-
+  
   IASDT.R::CatDiff(
-    InitTime = .StartTime, ChunkText = "Function summary", CatInfo = TRUE)
+    InitTime = .StartTime, Prefix = "\nProcessing CLC data was finished in ")
 
   return(invisible(NULL))
 }
@@ -656,7 +649,6 @@ CLC_Process <- function(
 
 CLC_GetPerc <- function(
     Type, CLC_CrossWalk, CLC_FracsR, Path_Tif, Path_RData) {
-
   # # ..................................................................... ###
 
   if (is.null(Type) || is.null(CLC_CrossWalk) || is.null(CLC_FracsR) ||
@@ -699,7 +691,8 @@ CLC_GetPerc <- function(
             sum() %>%
             stats::setNames(RName)
         }
-      )) %>%
+      )
+    ) %>%
     dplyr::pull(HabPerc) %>%
     terra::rast()
 
@@ -748,7 +741,6 @@ CLC_GetPerc <- function(
 CLC_ProcessMajority <- function(
     Type, CLC_Majority, Path_Tif, Path_Tif_Crop, Path_RData,
     Grid_10_Land, Grid_10_Land_Crop) {
-
   # # ..................................................................... ###
 
   if (is.null(Type) || is.null(CLC_Majority) || is.null(Path_Tif) ||
@@ -803,8 +795,7 @@ CLC_ProcessMajority <- function(
   MapLevelsM <- dplyr::left_join(
     x = MapLevels, y = MapLevelsNew, by = names(MapLevels)[2]) %>%
     dplyr::select(
-      tidyselect::all_of(OutObjName),
-      tidyselect::everything())
+      tidyselect::all_of(OutObjName), tidyselect::everything())
 
   Map <- terra::classify(Map, MapLevelsM[, -1])
   levels(Map) <- list(MapLevelsNew)

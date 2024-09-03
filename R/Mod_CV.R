@@ -204,7 +204,7 @@ Mod_CV <- function(
   # # ++++++++++++++++++++++++++++++++++++
   # Number of chains
   # # ++++++++++++++++++++++++++++++++++++
-  nChains <- length(ModFull$postList)
+  NChains <- length(ModFull$postList)
 
   # # ++++++++++++++++++++++++++++++++++++
   # Prepare cross-validated initial models / model fitting commands / SLURM jobs
@@ -302,7 +302,7 @@ Mod_CV <- function(
               ModCV <- Hmsc::sampleMcmc(
                 hM = ModCV, samples = ModFull$samples, thin = ModFull$thin,
                 transient = ModFull$transient, adaptNf = ModFull$adaptNf,
-                initPar = initPar, nChains = nChains, updater = updater,
+                initPar = initPar, NChains = NChains, updater = updater,
                 verbose = verbose, alignPost = alignPost, engine = "HPC")
 
               if (ToJSON) {
@@ -316,7 +316,7 @@ Mod_CV <- function(
 
               # Prepare fitting command for each model chain
               CV_Out <- purrr::map_dfr(
-                .x = seq_len(nChains),
+                .x = seq_len(NChains),
                 .f = function(Chain) {
 
                   # Path to save the posterior of the combination of CV and chain

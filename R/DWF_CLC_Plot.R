@@ -28,7 +28,6 @@
 
 CLC_Plot <- function(
     CLC_Name, CLC_Map, EU_Map, CrossWalk, Path_JPEG, Path_JPEG_Free) {
-
   # # ..................................................................... ###
 
   # Avoid "no visible binding for global variable" message
@@ -54,8 +53,9 @@ CLC_Plot <- function(
   Labels <- stringr::str_remove_all(CLC_Name, "PercCov_|_Crop")
   ClassOrder <- stringr::str_remove_all(names(CLC_MapR), paste0(Labels, "_"))
   Labels <- CrossWalk %>%
-    dplyr::select(tidyselect::matches(
-      match = paste0("^", Labels, "$|^", Labels, "_Label"))) %>%
+    dplyr::select(
+      tidyselect::matches(
+        match = paste0("^", Labels, "$|^", Labels, "_Label"))) %>%
     dplyr::distinct() %>%
     stats::setNames(c("Level", "Label")) %>%
     dplyr::arrange(factor(Level, levels = ClassOrder)) %>%
@@ -68,7 +68,7 @@ CLC_Plot <- function(
   FilePrefix <- stringr::str_remove_all(CLC_Name, "PercCov_|_Crop") %>%
     stringr::str_replace_all("CLC_L", "CLC")
 
-  IASDT.R::CatTime(paste0("\n ", Prefix), Level = 1)
+  IASDT.R::CatTime(Prefix, Level = 1)
 
   # determine which layers will be plotted in each figure (4 columns * 2 rows)
   split_vector <- seq_len(terra::nlyr(CLC_MapR)) %>%
@@ -91,7 +91,6 @@ CLC_Plot <- function(
       purrr::map(
         .x = split_vector[[.x]],
         .f = function(YY) {
-
           CurrMap <- CLC_MapR[[YY]]
 
           IASDT.R::CatTime(paste0(Labels$Label[[YY]]), Level = 2)
@@ -140,8 +139,7 @@ CLC_Plot <- function(
             ggplot2::labs(title = MapTitle, fill = NULL)
 
           LevelTxt <- stringr::str_replace_all(
-            string = Labels$Level[YY], pattern = "\\.",
-            replacement = "_") %>%
+            string = Labels$Level[YY], pattern = "\\.", replacement = "_") %>%
             stringr::str_remove("_$")
 
           TilePath <- paste0(
@@ -251,7 +249,7 @@ CLC_Plot <- function(
     }
   )
 
-  IASDT.R::CatTime("        Multiple panels per file ")
+  IASDT.R::CatTime(paste0(Prefix, "Multiple panels per file "), Level = 1)
 
   CommonLegend <- cowplot::get_legend(
     (ggplot2::ggplot() +

@@ -25,14 +25,14 @@ prepare data for. Valid values are \code{0}, \code{1}, \code{2}, \code{3}, \verb
 habitat type. For more details, see \href{https://doi.org/10.23855/preslia.2022.447}{Pysek et al.}.}
 
 \item{MinEffortsSp}{Minimum number of vascular plant species per grid cell in
-GBIF database for a grid cell to be included in the models. This to exclude
+GBIF for a grid cell to be included in the models. This is to exclude
 grid cells with very little sampling efforts. Defaults to \code{100}.}
 
 \item{NVars}{Integer. The number of variables used in the model. This
 argument has to be provided and can not be set to \code{NULL} (default).}
 
-\item{PresPerVar}{Integer. Number of presence grid cells per predictor
-required for a species to be included in the analysis. The number of
+\item{PresPerVar}{Integer. Minimum number of presence grid cells per
+predictor for a species to be included in the analysis. The number of
 presence grid cells per species is calculated as the product of this factor
 and the number of variables used in the models \code{NVars} and is calculated
 after discarding grid cells with low sampling efforts (\code{MinEffortsSp}).
@@ -42,8 +42,9 @@ Defaults to \code{10}.}
 data sources. Defaults to \code{.env}.}
 
 \item{BioVars}{Character vector. Specifies the Bioclimatic variables to be
-included from the CHELSA dataset. Defaults to a selection of variables:
-\code{bio4}, \code{bio6}, \code{bio8}, \code{bio12}, \code{bio15}, and \code{bio18}.}
+included from CHELSA. Defaults to 6 ecologically meaningful and less
+correlated Bioclimatic variables: \code{bio4}, \code{bio6}, \code{bio8}, \code{bio12},
+\code{bio15}, and \code{bio18}.}
 
 \item{Path_Model}{Character. Path where the output file should be saved.}
 
@@ -76,8 +77,8 @@ The function reads the following environment variables:
 \code{Grid_10_Land_Crop.RData} and \code{Grid_10_Land_Crop_sf_Country.RData} files
 \item \strong{\code{DP_R_Grid_Ref}} or \strong{\code{DP_R_Grid_Ref_Local}}: The function reads the
 content of \code{Grid_10_sf.RData} file from this path.
-\item \strong{\code{DP_R_PA}} or \strong{\code{DP_R_PA_Local}}: The function reads the contents of the
-\code{Sp_PA_Summary_DF.RData} file from this path.
+\item \strong{\code{DP_R_PA}} or \strong{\code{DP_R_PA_Local}}: The function reads the contents
+of the \code{Sp_PA_Summary_DF.RData} file from this path.
 \item \strong{\code{DP_R_CLC_Summary}} / \strong{\code{DP_R_CLC_Summary_Local}}: Path containing
 the \code{PercCov_SynHab_Crop.RData} file. This file contains maps for the
 percentage coverage of each SynHab habitat type per grid cell.
@@ -93,8 +94,8 @@ railway data. The function reads the contents of: \code{Railway_Length.RData}
 for the total length of any railway type per grid cell and
 \code{Dist2Rail.RData} for the minimum distance between the centroid of each
 grid cell and the nearest railway.
-\item \strong{\code{DP_R_Efforts}} / \strong{\code{DP_R_Efforts_Local}}: Path for processed sampling
-efforts analysis. The function reads the content of
+\item \strong{\code{DP_R_Efforts}} / \strong{\code{DP_R_Efforts_Local}}: Path for processed
+sampling efforts analysis. The function reads the content of
 \code{Bias_GBIF_SummaryR.RData} file containing the total number of GBIF
 vascular plant observations per grid cell.
 }

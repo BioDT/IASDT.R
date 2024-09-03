@@ -537,7 +537,9 @@ GBIF_Process <- function(
   # Grid / raster / plotting ----
   IASDT.R::CatTime("Split species data - grid/raster/plot", Level = 1)
 
-  IASDT.R::CatTime("Prepare working on parallel", Level = 2)
+    IASDT.R::CatTime(
+    paste0("Prepare working on parallel using `", NCores, "` cores."),
+    Level = 1)
   future::plan("multisession", workers = NCores, gc = TRUE)
   on.exit(future::plan("sequential"), add = TRUE)
 

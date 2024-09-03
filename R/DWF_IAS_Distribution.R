@@ -531,12 +531,19 @@ IAS_Distribution <- function(
     IASDT.R::AddMissingCols(0L, BioReg_Names2) %>%
     dplyr::select(tidyselect::all_of(BioReg_Names2))
 
-  BioRegsMaskSumm_Min <- min(Sp_BiogeoRegions_Masked, na.rm = TRUE)
-  BioRegsMaskSumm_Max <- max(Sp_BiogeoRegions_Masked, na.rm = TRUE)
-  BioRegsMaskSumm_Mean <- unlist(Sp_BiogeoRegions_Masked) %>%
-    mean(na.rm = TRUE) %>%
-    round(1)
-  BioRegsMaskSumm_N <- sum(Sp_BiogeoRegions_Masked > 0)
+  if (nrow(Sp_BiogeoRegions_Masked) > 0) {
+    BioRegsMaskSumm_Min <- min(Sp_BiogeoRegions_Masked, na.rm = TRUE)
+    BioRegsMaskSumm_Max <- max(Sp_BiogeoRegions_Masked, na.rm = TRUE)
+    BioRegsMaskSumm_Mean <- unlist(Sp_BiogeoRegions_Masked) %>%
+      mean(na.rm = TRUE) %>%
+      round(1)
+    BioRegsMaskSumm_N <- sum(Sp_BiogeoRegions_Masked > 0)
+  } else {
+    BioRegsMaskSumm_Min <- 0
+    BioRegsMaskSumm_Max <- 0
+    BioRegsMaskSumm_Mean <- 0
+    BioRegsMaskSumm_N <- 0
+  }
 
   # # .................................... ###
 
@@ -648,15 +655,6 @@ IAS_Distribution <- function(
     iNatur_Unique <- iNatur_Perc <- 0
   }
 
-  # # # ..................................................................... ###
-  #
-  # # Plotting species distribution -----
-  # IASDT.R::CatTime("Plotting species distribution")
-  #
-  # IASDT.R::IAS_Plot(
-  #   Species = Species, FromHPC = FromHPC,
-  #   EnvFile = EnvFile, Overwrite = Overwrite)
-
   # # ..................................................................... ###
 
   # Prepare/export species summary info -------
@@ -739,11 +737,19 @@ IAS_Distribution <- function(
       InObj = ., OutObj = paste0(Sp_File, "_Summary"),
       OutPath = file.path(Path_PA_Summary, paste0(Sp_File, "_Summary.RData")))
 
+  # # # ..................................................................... ###
+
+  # Plotting species distribution -----
+  IASDT.R::CatTime("Plotting species distribution")
+
+  IASDT.R::IAS_Plot(
+    Species = Species, FromHPC = FromHPC,
+    EnvFile = EnvFile, Overwrite = Overwrite)
+  # # ..................................................................... ###
+
   IASDT.R::CatDiff(
     InitTime = .StartTime,
     Prefix = "\nProcessing species data was finished in ", ... = "\n")
-
-  # # ..................................................................... ###
 
   return(dplyr::select(Results, -GBIF_Gr100, -EASIN_Gr100, -eLTER_Gr100))
 }

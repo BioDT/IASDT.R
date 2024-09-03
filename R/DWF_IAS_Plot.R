@@ -144,10 +144,10 @@ IAS_Plot <- function(
 
   # Biogeographical regions ----
   BioRegAnnotation <- paste0(
-    "Observed from ", SpData$BioRegSumm_N,
+    "Observed from ", SpData$BioRegsSumm_N,
     " biogeographical regions\n# presence grid cells per region ranges from ",
-    SpData$BioRegSumm_Min, " to ", SpData$BioRegSumm_Max, "; mean: ",
-    SpData$BioRegSumm_Mean)
+    SpData$BioRegsSumm_Min, " to ", SpData$BioRegsSumm_Max, "; mean: ",
+    SpData$BioRegsSumm_Mean)
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||
 

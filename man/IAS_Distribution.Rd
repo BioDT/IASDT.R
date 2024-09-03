@@ -4,7 +4,13 @@
 \alias{IAS_Distribution}
 \title{Prepare distribution maps and summary for Invasive Alien Species (IAS)}
 \usage{
-IAS_Distribution(Species, FromHPC = TRUE, EnvFile = ".env", Verbose = FALSE)
+IAS_Distribution(
+  Species,
+  FromHPC = TRUE,
+  EnvFile = ".env",
+  Verbose = FALSE,
+  Overwrite = FALSE
+)
 }
 \arguments{
 \item{Species}{Character. Name of the species to analyze.}
@@ -17,6 +23,9 @@ variables required by the function. Default is ".env".}
 
 \item{Verbose}{Logical. If TRUE, detailed output is printed. Default is
 \code{FALSE}.}
+
+\item{Overwrite}{Logical. If \code{TRUE}, the function will overwrite existing
+files (default: \code{FALSE}).}
 }
 \value{
 A tibble containing species distribution information, including the

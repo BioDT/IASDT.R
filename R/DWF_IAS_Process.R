@@ -206,9 +206,10 @@ IAS_Process <- function(
     },
     future.scheduling = Inf,
     future.seed = TRUE,
-    future.packages = c(
+    future.packages =   c(
       "dplyr", "lubridate", "IASDT.R", "purrr", "stringr", "readr", "fs",
-      "sf", "terra", "readxl", "tidyr", "tidyselect"),
+      "sf", "terra", "readxl", "tidyr", "tidyselect", "ggplot2", "ggtext",
+      "grid", "tidyterra", "cowplot", "scales"),
     future.globals = c("FromHPC", "EnvFile", "Overwrite")) %>%
     dplyr::bind_rows()
 
@@ -285,50 +286,50 @@ IAS_Process <- function(
   IASDT.R::CatTime("RData format", Level = 2)
   save(Sp_PA_Summary_DF, file = file.path(Path_PA, "Sp_PA_Summary_DF.RData"))
 
-  # # ..................................................................... ###
-
-  # Plotting species-specific maps ------
-
-  IASDT.R::CatTime("Plotting species-specific maps")
-  .StartTimeDist <- lubridate::now(tzone = "CET")
-
-  ## Prepare working on parallel -----
-  IASDT.R::CatTime(
-    paste0("Prepare working on parallel using `", NCores, "` cores."),
-    Level = 1)
-  future::plan("multisession", workers = NCores, gc = TRUE)
-  on.exit(future::plan("sequential"), add = TRUE)
-
-  # # .................................... ###
-
-  ## Plotting species-specific maps on parallel ----
-  IASDT.R::CatTime("Plotting species-specific maps on parallel", Level = 1)
-
-  Sp_PA_Data <- future.apply::future_lapply(
-    X = sort(unique(TaxaList$Species_name))[1:20],
-    FUN = function(x) {
-      IASDT.R::IAS_Plot(
-        Species = x, FromHPC = FromHPC, EnvFile = EnvFile,
-        Overwrite = Overwrite)
-    },
-    future.scheduling = Inf,
-    future.seed = TRUE,
-    future.packages = c(
-      "dplyr", "lubridate", "IASDT.R", "purrr", "stringr", "readr", "fs",
-      "sf", "terra", "readxl", "tidyr", "tidyselect", "ggplot2", "ggtext",
-      "grid", "tidyterra", "cowplot", "scales"),
-    future.globals = c("FromHPC", "EnvFile", "Overwrite")) %>%
-    dplyr::bind_rows()
-
-  # # .................................... ###
-
-  ## Stopping cluster ----
-  IASDT.R::CatTime("Stopping cluster", Level = 1)
-  future::plan("sequential")
-
-  IASDT.R::CatDiff(
-    InitTime = .StartTimeDist,
-    Prefix = "Processing Species-specific data took ", NLines = 1, Level = 2)
+  # # # ..................................................................... ###
+  #
+  # # Plotting species-specific maps ------
+  #
+  # IASDT.R::CatTime("Plotting species-specific maps")
+  # .StartTimeDist <- lubridate::now(tzone = "CET")
+  #
+  # ## Prepare working on parallel -----
+  # IASDT.R::CatTime(
+  #   paste0("Prepare working on parallel using `", NCores, "` cores."),
+  #   Level = 1)
+  # future::plan("multisession", workers = NCores, gc = TRUE)
+  # on.exit(future::plan("sequential"), add = TRUE)
+  #
+  # # # .................................... ###
+  #
+  # ## Plotting species-specific maps on parallel ----
+  # IASDT.R::CatTime("Plotting species-specific maps on parallel", Level = 1)
+  #
+  # Sp_PA_Data <- future.apply::future_lapply(
+  #   X = sort(unique(TaxaList$Species_name)),
+  #   FUN = function(x) {
+  #     IASDT.R::IAS_Plot(
+  #       Species = x, FromHPC = FromHPC, EnvFile = EnvFile,
+  #       Overwrite = Overwrite)
+  #   },
+  #   future.scheduling = Inf,
+  #   future.seed = TRUE,
+  #   future.packages = c(
+  #     "dplyr", "lubridate", "IASDT.R", "purrr", "stringr", "readr", "fs",
+  #     "sf", "terra", "readxl", "tidyr", "tidyselect", "ggplot2", "ggtext",
+  #     "grid", "tidyterra", "cowplot", "scales"),
+  #   future.globals = c("FromHPC", "EnvFile", "Overwrite")) %>%
+  #   dplyr::bind_rows()
+  #
+  # # # .................................... ###
+  #
+  # ## Stopping cluster ----
+  # IASDT.R::CatTime("Stopping cluster", Level = 1)
+  # future::plan("sequential")
+  #
+  # IASDT.R::CatDiff(
+  #   InitTime = .StartTimeDist,
+  #   Prefix = "Processing Species-specific data took ", NLines = 1, Level = 2)
 
   # # ..................................................................... ###
 

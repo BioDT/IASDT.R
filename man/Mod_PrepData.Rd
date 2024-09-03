@@ -14,7 +14,8 @@ Mod_PrepData(
   Path_Model = NULL,
   VerboseProgress = FALSE,
   FromHPC = TRUE,
-  SaveData = FALSE
+  SaveData = FALSE,
+  ExcludeCult = TRUE
 )
 }
 \arguments{
@@ -56,6 +57,9 @@ adjust file paths accordingly. Default: \code{TRUE}.}
 
 \item{SaveData}{Logical. Indicates whether the processed data should be saved
 as RData file. Defaults to \code{FALSE}.}
+
+\item{ExcludeCult}{Logical. Indicates whether to exclude countries with
+cultivated or casual observations. Defaults to \code{TRUE}.}
 }
 \value{
 a tibble containing modelling data.

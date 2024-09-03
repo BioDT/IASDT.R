@@ -41,6 +41,8 @@
 #'   adjust file paths accordingly. Default: `TRUE`.
 #' @param SaveData Logical. Indicates whether the processed data should be saved
 #'   as RData file. Defaults to `FALSE`.
+#' @param ExcludeCult Logical. Indicates whether to exclude countries with
+#' cultivated or casual observations. Defaults to `TRUE`.
 #' @name Mod_PrepData
 #' @author Ahmed El-Gabbas
 #' @return a tibble containing modelling data.
@@ -78,7 +80,9 @@ Mod_PrepData <- function(
     EnvFile = ".env",
     BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
     Path_Model = NULL, VerboseProgress = FALSE, FromHPC = TRUE,
-    SaveData = FALSE) {
+    SaveData = FALSE, ExcludeCult = TRUE) {
+
+  # # ..................................................................... ###
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||
   # 2023
@@ -98,7 +102,7 @@ Mod_PrepData <- function(
   # # 6. Rocky
   # # 8. Saline
 
-  ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
   # # |||||||||||||||||||||||||||||||||||
   # Check input parameters ----
@@ -121,12 +125,16 @@ Mod_PrepData <- function(
     on.exit(sink(), add = TRUE)
   }
 
+  # # ..................................................................... ###
+
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   SpeciesID <- Species_name <- Species_File <- PA <-
     cell <- x <- Path_PA <- Path_Grid <- Path_Grid_Ref <- Path_CLC_Summ <-
     Path_Roads <- Path_Rail <- Path_Bias <- Path_Chelsa_Time_CC <-
     NSp <- EU_Bound <- NCells <- SpPA <- NPres <- Grid_R <- NULL
+
+  # # ..................................................................... ###
 
   IASDT.R::CatTime("Checking input arguments")
   AllArgs <- ls(envir = environment())
@@ -140,7 +148,7 @@ Mod_PrepData <- function(
     AllArgs = AllArgs, Args = c("MinEffortsSp", "PresPerVar", "NVars"),
     Type = "numeric")
 
-  ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
   # # |||||||||||||||||||||||||||||||||||
   # Reading/checking environment variables ----
@@ -163,7 +171,7 @@ Mod_PrepData <- function(
       "Path_CLC_Summ", "DP_R_CLC_Summary", TRUE, FALSE,
       "Path_Chelsa_Time_CC", "DP_R_CHELSA_Time_CC", TRUE, FALSE,
       "Path_Roads", "DP_R_Roads", TRUE, FALSE,
-      "Path_Rail", "DP_R_Railway", TRUE, FALSE,
+      "Path_Rail", "DP_R_Railways", TRUE, FALSE,
       "Path_Bias", "DP_R_Efforts", TRUE, FALSE,
       "EU_Bound", "DP_R_EUBound_sf", FALSE, TRUE)
   } else {
@@ -175,7 +183,7 @@ Mod_PrepData <- function(
       "Path_CLC_Summ", "DP_R_CLC_Summary_Local", TRUE, FALSE,
       "Path_Chelsa_Time_CC", "DP_R_CHELSA_Time_CC_Local", TRUE, FALSE,
       "Path_Roads", "DP_R_Roads_Local", TRUE, FALSE,
-      "Path_Rail", "DP_R_Railway_Local", TRUE, FALSE,
+      "Path_Rail", "DP_R_Railways_Local", TRUE, FALSE,
       "Path_Bias", "DP_R_Efforts_Local", TRUE, FALSE,
       "EU_Bound", "DP_R_EUBound_sf_Local", FALSE, TRUE)
   }
@@ -183,7 +191,7 @@ Mod_PrepData <- function(
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
-  ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
   # # |||||||||||||||||||||||||||||||||||
   # Checking arguments ----
@@ -192,7 +200,6 @@ Mod_PrepData <- function(
   IASDT.R::CatTime("Checking arguments")
 
   ValidHabAbbs <- c(0:3, "4a", "4b", 10, "12a", "12b")
-
   if (!(Hab_Abb %in% ValidHabAbbs)) {
     stop(
       paste0(
@@ -203,7 +210,7 @@ Mod_PrepData <- function(
 
   fs::dir_create(Path_Model)
 
-  ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
   # # |||||||||||||||||||||||||||||||||||
   # Loading data ----
@@ -213,11 +220,13 @@ Mod_PrepData <- function(
 
   ## Sampling intensity / efforts ----
   IASDT.R::CatTime("Sampling intensity/efforts", Level = 1)
-  R_Bias <- file.path(Path_Bias, "Bias_GBIF_SummaryR.RData")
+  R_Bias <- file.path(Path_Bias, "Efforts_SummaryR.RData")
   if (!file.exists(R_Bias)) {
     stop(paste0(R_Bias, " file does not exist"), call. = FALSE)
   }
 
+  # This mask layer represents grid cells with minimum accepted efforts
+  # (`MinEffortsSp`). All subsequent maps will be masked to this layer
   EffortsMask <- IASDT.R::LoadAs(R_Bias) %>%
     terra::unwrap() %>%
     magrittr::extract2("NSp") %>%
@@ -227,9 +236,12 @@ Mod_PrepData <- function(
         byrow = TRUE, ncol = 3),
       include.lowest = TRUE, right = FALSE)
 
+  # # ..................................................................... ###
+
   ## Species data summary ----
   IASDT.R::CatTime("Species data summary", Level = 1)
 
+  # Extract the list of species for the current habitat type
   DT_Sp <- file.path(Path_PA, "Sp_PA_Summary_DF.RData")
   if (!file.exists(DT_Sp)) {
     stop(paste0(DT_Sp, " file does not exist"), call. = FALSE)
@@ -249,34 +261,40 @@ Mod_PrepData <- function(
     DT_Sp <- dplyr::filter(DT_Sp, !!as.symbol(Hab_column))
   }
 
-  ## Species Presence-absence data ----
+  # # ..................................................................... ###
 
+  ## Species Presence-absence data ----
   IASDT.R::CatTime("Species Presence-absence data", Level = 1)
 
   # minimum number of presence grids per species
   MinPresGrids <- PresPerVar * NVars
+  NCellsCol <- dplyr::if_else(ExcludeCult, "NCells_Naturalized", "NCells_All")
+  PA_Layer <- dplyr::if_else(ExcludeCult, "PA_Masked", "PA")
 
   R_Sp <- DT_Sp %>%
     # Exclude species with too few presence grid cells. There will be further
     # exclusion of species with few grid cells in this pipeline, but excluding
     # this first may help to reduce processing time
-    dplyr::filter(NCells >= MinPresGrids) %>%
+    dplyr::filter(dplyr::across(dplyr::all_of(NCellsCol)) > MinPresGrids) %>%
     dplyr::select(SpeciesID, Species_name, Species_File) %>%
     # Mask each species map with the filtered grid cells
     dplyr::mutate(
       PA = purrr::map2(
         .x = Species_File, .y = SpeciesID,
         .f = ~{
+
           # Masked raster map
           SpPA <- file.path(
             Path_PA, "RData", stringr::str_c(.x, "_PA.RData")) %>%
             IASDT.R::LoadAs() %>%
             terra::unwrap() %>%
-            magrittr::extract2("PA") %>%
+            magrittr::extract2(PA_Layer) %>%
             terra::mask(EffortsMask) %>%
             stats::setNames(paste0("Sp_", .y))
+
           # Number of presence grid cells after masking
           NPres <- as.integer(terra::global(SpPA, "sum", na.rm = TRUE))
+
           return(tibble::tibble(SpPA = list(SpPA), NPres = NPres))
         })) %>%
     tidyr::unnest_wider(PA) %>%
@@ -291,9 +309,10 @@ Mod_PrepData <- function(
   EffortsMask[ZeroSpGrids] <- NA
   R_Sp[ZeroSpGrids] <- NA
 
-  ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ................................... ###
 
-  IASDT.R::CatTime("Plotting number of grid cells per species", Level = 2)
+  ### Plotting number of IAS per grid cell -----
+  IASDT.R::CatTime("Plotting number of IAS per grid cell", Level = 2)
 
   EU_Bound <- IASDT.R::LoadAs(EU_Bound) %>%
     magrittr::extract2("Bound_sf_Eur") %>%
@@ -307,7 +326,7 @@ Mod_PrepData <- function(
   Limits <- terra::trim(R_Sp_sumP) %>%
     terra::ext() %>%
     as.vector()
-  NSpPerGrid <- ggplot2::ggplot() +
+  NSpPerGrid_gg <- ggplot2::ggplot() +
     tidyterra::geom_spatraster(data = R_Sp_sumP) +
     tidyterra::scale_fill_whitebox_c(
       na.value = "transparent", palette = "bl_yl_rd", name = NULL) +
@@ -344,12 +363,12 @@ Mod_PrepData <- function(
       panel.border = ggplot2::element_blank())
 
   ggplot2::ggsave(
-    plot = NSpPerGrid, width = 25, height = 27, units = "cm", dpi = 600,
+    plot = NSpPerGrid_gg, width = 25, height = 27, units = "cm", dpi = 600,
     filename = file.path(Path_Model, "NSpPerGrid.jpeg"))
 
-  rm(Limits, NSpPerGrid, R_Sp_sum, R_Sp_sumP, EU_Bound)
+  rm(Limits, NSpPerGrid_gg, R_Sp_sum, R_Sp_sumP, EU_Bound)
 
-  ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
   ## CHELSA -----
 
@@ -364,7 +383,7 @@ Mod_PrepData <- function(
     terra::subset(BioVars) %>%
     terra::mask(EffortsMask)
 
-  ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
   ## Reference grid -----
 
@@ -377,7 +396,6 @@ Mod_PrepData <- function(
   Grid_SF <- IASDT.R::LoadAs(Grid_SF) %>%
     magrittr::extract2("Grid_10_sf_s")
 
-
   # Reference grid as sf - country names
   IASDT.R::CatTime("Reference grid - country names", Level = 1)
   Grid_CNT <- file.path(Path_Grid, "Grid_10_Land_Crop_sf_Country.RData")
@@ -385,12 +403,12 @@ Mod_PrepData <- function(
     stop(paste0(Grid_CNT, " file does not exist"), call. = FALSE)
   }
   Grid_CNT <- IASDT.R::LoadAs(Grid_CNT) %>%
-    dplyr::mutate(x = sf::st_coordinates(.)[, 1],
-                  y = sf::st_coordinates(.)[, 2]) %>%
+    dplyr::mutate(
+      x = sf::st_coordinates(.)[, 1], y = sf::st_coordinates(.)[, 2]) %>%
     sf::st_drop_geometry() %>%
     tibble::tibble()
 
-  ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
   ## Habitat coverage -----
 
@@ -417,7 +435,7 @@ Mod_PrepData <- function(
       stats::setNames("HabLog")
   }
 
-  ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
   ## Road ----
   IASDT.R::CatTime("Road intensity", Level = 1)
@@ -447,9 +465,9 @@ Mod_PrepData <- function(
     terra::mask(EffortsMask) %>%
     stats::setNames("RoadDist")
 
-  ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
-  ## Rail ----
+  ## Railways ----
 
   IASDT.R::CatTime("Railway intensity", Level = 1)
 
@@ -478,7 +496,7 @@ Mod_PrepData <- function(
     terra::mask(EffortsMask) %>%
     stats::setNames("RailDist")
 
-  ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
   ## Road + rail ----
 
@@ -488,7 +506,7 @@ Mod_PrepData <- function(
   R_RoadRailLog <- log10(R_RoadRail + 0.1) %>%
     stats::setNames("RoadRailLog")
 
-  ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
   ## Merging data together -----
   IASDT.R::CatTime("Merging data together")
@@ -508,7 +526,7 @@ Mod_PrepData <- function(
     DT_All$Hab <- NA_real_
   }
 
-  ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
   # Save model data to disk -----
 
@@ -524,7 +542,7 @@ Mod_PrepData <- function(
       OutPath = file.path(Path_Model, paste0(OutObjName, ".RData")))
   }
 
-  ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
   return(DT_All)
 }

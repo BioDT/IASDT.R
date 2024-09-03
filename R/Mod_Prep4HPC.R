@@ -34,10 +34,13 @@
 #'   cell as predictor to the model. Default: `TRUE`. Only valid if `Hab_Abb`
 #'   not equals to `0`.
 #' @param NspPerGrid Integer. Indicating the minimum number of species per grid
-#'   cell for a grid cell to be include in the analysis. Default to 1 resulting
-#'   in the exclusion of any grid cell with no species presence. This parameter
-#'   can be set to `NULL` to include all grid cells irrespective of the number
-#'   of species.
+#'   cell for a grid cell to be include in the analysis. This is calculated
+#'   after filtering grid cells by sampling efforts (`MinEffortsSp`) and
+#'   filtering species by the number of presence grid cells per predictor
+#'   (`PresPerVar`). If `NspPerGrid` = `NULL` or 1 (default), grid cells with
+#'   at least one species presence will be considered in the models.
+#' @param ExcludeCult Logical. Indicates whether to exclude countries with
+#'   cultivated or casual observations. Defaults to `TRUE`.
 #' @param PhyloTree,NoPhyloTree Logical indicating whether to fit model variants
 #'   with or without phylogenetic trees, respectively. The default of both
 #'   arguments is `TRUE`, which means to fit a model variant with the respective
@@ -134,14 +137,17 @@ Mod_Prep4HPC <- function(
     GPP_Plot = TRUE, MinLF = NULL, MaxLF = NULL,
     BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
     EffortsAsPredictor = FALSE, RoadRailAsPredictor = TRUE,
-    HabAsPredictor = TRUE, NspPerGrid = 1L, CV_NFolds = 4L,
-    CV_NGrids = 20L, CV_NR = 2L, CV_NC = 2L, CV_Plot = TRUE, PhyloTree = TRUE,
+    HabAsPredictor = TRUE, NspPerGrid = 1L, ExcludeCult = TRUE,
+    CV_NFolds = 4L, CV_NGrids = 20L, CV_NR = 2L, CV_NC = 2L, CV_Plot = TRUE,
+    PhyloTree = TRUE,
     NoPhyloTree = TRUE, OverwriteRDS = TRUE, NCores = 8L, NChains = 4L,
     thin = NULL, samples = 1000L, transientFactor = 300L, verbose = 200L,
     SkipFitted = TRUE, MaxJobCounts = 210L, ModelCountry = NULL,
     VerboseProgress = FALSE, FromHPC = TRUE, PrepSLURM = TRUE, MemPerCpu = NULL,
-    Time = NULL, JobName = NULL, Path_Hmsc = NULL, ToJSON = FALSE, ...) {
+    Time = NULL, JobName = NULL, Path_Hmsc = NULL, ToJSON = FALSE,
+    ...) {
 
+  # # # ..................................................................... ###
 
   # # |||||||||||||||||||||||||||||||||||
   # Initial checking -----
@@ -151,7 +157,7 @@ Mod_Prep4HPC <- function(
 
   CheckNULL <- c(
     "Path_Model", "PresPerVar", "thin", "samples", "GPP_Dists",
-    "MemPerCpu", "Path_Hmsc")
+    "MemPerCpu", "Path_Hmsc", "Hab_Abb")
   IsNull <- purrr::map_lgl(CheckNULL, ~is.null(get(.x)))
 
   if (any(IsNull)) {
@@ -161,6 +167,8 @@ Mod_Prep4HPC <- function(
         " can not be empty"),
       call. = FALSE)
   }
+
+  Hab_Abb <- as.character(Hab_Abb)
 
   if (!all(is.numeric(GPP_Dists)) || any(GPP_Dists <= 0)) {
     stop("GPP_Dists should be numeric and greater than zero", call. = FALSE)
@@ -187,6 +195,7 @@ Mod_Prep4HPC <- function(
       "`NspPerGrid` has to be either `NULL` or positive integer", call. = FALSE)
   }
 
+  # # # ..................................................................... ###
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
@@ -248,7 +257,7 @@ Mod_Prep4HPC <- function(
     }
   }
 
-  ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # # ..................................................................... ###
 
   # # |||||||||||||||||||||||||||||||||||
   # Check input arguments ----
@@ -298,7 +307,7 @@ Mod_Prep4HPC <- function(
 
   rm(AllArgs, CharArgs, LogicArgs, NumericArgs)
 
-  ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # # ..................................................................... ###
 
   # # |||||||||||||||||||||||||||||||||||
   # File paths - Creating missing paths ----
@@ -311,7 +320,7 @@ Mod_Prep4HPC <- function(
   fs::dir_create(file.path(Path_Model, "Model_Fitting_HPC", "JobsLog"))
   Path_ModelDT <- file.path(Path_Model, "Model_Info.RData")
 
-  ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # # ..................................................................... ###
 
   # # |||||||||||||||||||||||||||||||||||
   # # Prepare list of predictors -----
@@ -338,7 +347,7 @@ Mod_Prep4HPC <- function(
   # minimum number of presence grids per species
   MinPresGrids <- PresPerVar * length(XVars)
 
-  ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # # ..................................................................... ###
 
   # # |||||||||||||||||||||||||||||||||||
   # # Preparing input data -----
@@ -365,11 +374,11 @@ Mod_Prep4HPC <- function(
     Hab_Abb = Hab_Abb, MinEffortsSp = MinEffortsSp, PresPerVar = PresPerVar,
     NVars = length(XVars), EnvFile = EnvFile, BioVars = BioVars,
     Path_Model = Path_Model, VerboseProgress = VerboseProgress,
-    FromHPC = FromHPC, SaveData = FALSE)
+    FromHPC = FromHPC, SaveData = FALSE, ExcludeCult = ExcludeCult)
 
   IASDT.R::CatSep(Rep = 1, Extra1 = 0, Extra2 = 1)
 
-  ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # # ..................................................................... ###
 
   # # |||||||||||||||||||||||||||||||||||
   # # Subsetting study area -----
@@ -465,7 +474,7 @@ Mod_Prep4HPC <- function(
     Limits <- terra::trim(R_Sp_sumP) %>%
       terra::ext() %>%
       as.vector()
-    NSpPerGridSub <- ggplot2::ggplot() +
+    NSpPerGrid_Sub <- ggplot2::ggplot() +
       tidyterra::geom_spatraster(data = R_Sp_sumP) +
       tidyterra::scale_fill_whitebox_c(
         na.value = "transparent", palette = "bl_yl_rd", name = NULL) +
@@ -503,12 +512,12 @@ Mod_Prep4HPC <- function(
     PlotHeight <- (DimY * 25) / DimX
 
     ggplot2::ggsave(
-      plot = NSpPerGridSub, width = 25, height = PlotHeight,
+      plot = NSpPerGrid_Sub, width = 25, height = PlotHeight,
       units = "cm", dpi = 600,
       filename = file.path(Path_Model, "NSpPerGrid_Sub.jpeg"))
 
     rm(
-      Limits, NSpPerGridSub, R_Sp_sum, R_Sp_sumP,
+      Limits, NSpPerGrid_Sub, R_Sp_sum, R_Sp_sumP,
       EU_Bound_sub, DT_Sp, GridSubset)
 
   } else {
@@ -523,7 +532,7 @@ Mod_Prep4HPC <- function(
 
   IASDT.R::CatTime("Exclude grid cells with low number of presences")
 
-  if (is.null(NspPerGrid)) {
+  if (is.null(NspPerGrid) || NspPerGrid == 1) {
     IASDT.R::CatTime(
       "All grid cells will be included in the analysis", Level = 1)
   } else {

@@ -20,6 +20,7 @@ Mod_Prep4HPC(
   RoadRailAsPredictor = TRUE,
   HabAsPredictor = TRUE,
   NspPerGrid = 1L,
+  ExcludeCult = TRUE,
   CV_NFolds = 4L,
   CV_NGrids = 20L,
   CV_NR = 2L,
@@ -108,10 +109,14 @@ cell as predictor to the model. Default: \code{TRUE}. Only valid if \code{Hab_Ab
 not equals to \code{0}.}
 
 \item{NspPerGrid}{Integer. Indicating the minimum number of species per grid
-cell for a grid cell to be include in the analysis. Default to 1 resulting
-in the exclusion of any grid cell with no species presence. This parameter
-can be set to \code{NULL} to include all grid cells irrespective of the number
-of species.}
+cell for a grid cell to be include in the analysis. This is calculated
+after filtering grid cells by sampling efforts (\code{MinEffortsSp}) and
+filtering species by the number of presence grid cells per predictor
+(\code{PresPerVar}). If \code{NspPerGrid} = \code{NULL} or 1 (default), grid cells with
+at least one species presence will be considered in the models.}
+
+\item{ExcludeCult}{Logical. Indicates whether to exclude countries with
+cultivated or casual observations. Defaults to \code{TRUE}.}
 
 \item{CV_NFolds}{Number of cross-validation folds. Default: 4.}
 

@@ -6,7 +6,7 @@
 \usage{
 Mod_SLURM_Refit(
   Path_Model = NULL,
-  MaxJobCounts = 210,
+  NArrayJobs = 210,
   JobName = NULL,
   MemPerCpu = NULL,
   Time = NULL,
@@ -26,7 +26,7 @@ Mod_SLURM_Refit(
 \item{Path_Model}{String. Path to the model files directory. Must not end
 with a slash.}
 
-\item{MaxJobCounts}{Integer. Maximum number of batch jobs that can be
+\item{NArrayJobs}{Integer. Maximum number of batch jobs that can be
 submitted in a single SLURM file.}
 
 \item{JobName}{String (optional). Name of the SLURM jobs. If not provided, a

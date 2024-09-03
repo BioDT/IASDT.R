@@ -36,9 +36,9 @@ Mod_Prep4HPC(
   transientFactor = 300L,
   verbose = 200L,
   SkipFitted = TRUE,
-  MaxJobCounts = 210L,
+  NArrayJobs = 210L,
   ModelCountry = NULL,
-  VerboseProgress = FALSE,
+  VerboseProgress = TRUE,
   FromHPC = TRUE,
   PrepSLURM = TRUE,
   MemPerCpu = NULL,
@@ -166,7 +166,7 @@ should be reported. Default: \code{200}.}
 \item{SkipFitted}{Logical indicating whether to skip already fitted models.
 Default: \code{TRUE}.}
 
-\item{MaxJobCounts}{Integer specifying the maximum allowed number of array
+\item{NArrayJobs}{Integer specifying the maximum allowed number of array
 jobs per SLURM file. Default: 210. See
 \href{https://docs.lumi-supercomputer.eu/runjobs/scheduled-jobs/partitions}{LUMI documentation}
 for more details.}
@@ -176,7 +176,7 @@ countries to filter observations by. Default: \code{NULL}, which means prepare
 data for the whole Europe.}
 
 \item{VerboseProgress}{Logical. Indicates whether progress messages should be
-displayed. Defaults to \code{FALSE}.}
+displayed. Defaults to \code{TRUE}.}
 
 \item{FromHPC}{Logical indicating whether the work is being done from HPC, to
 adjust file paths accordingly. Default: \code{TRUE}.}
@@ -237,7 +237,7 @@ respective habitat type per grid cell \code{HabAsPredictor}, and railway and
 road intensity per grid cell \code{RoadRailAsPredictor}
 \item Hmsc options (\code{NChains}, \code{thin}, \code{samples}, \code{transientFactor}, and \code{verbose})
 \item prepare SLURM commands (\code{PrepSLURM}) and some specifications (e.g.
-\code{MaxJobCounts}, \code{MemPerCpu}, \code{Time}, \code{JobName})
+\code{NArrayJobs}, \code{MemPerCpu}, \code{Time}, \code{JobName})
 
 The function reads the following environment variables:
 \itemize{

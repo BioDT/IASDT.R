@@ -36,7 +36,7 @@
 #'   `bio15`, and `bio18`.
 #' @param Path_Model Character. Path where the output file should be saved.
 #' @param VerboseProgress Logical. Indicates whether progress messages should be
-#'   displayed. Defaults to `FALSE`.
+#'   displayed. Defaults to `TRUE`.
 #' @param FromHPC Logical indicating whether the work is being done from HPC, to
 #'   adjust file paths accordingly. Default: `TRUE`.
 #' @param SaveData Logical. Indicates whether the processed data should be saved
@@ -63,8 +63,9 @@
 #'   `CHELSA` data for the current climate.
 #'    - **`DP_R_Roads`** / **`DP_R_Roads_Local`**: Path for processed road data.
 #'   The function reads the contents of: `Road_Length.RData` for the total
-#'   length of any road type per grid cell and `Dist2Road.RData` for the minimum
-#'   distance between the centroid of each grid cell and the nearest road.
+#'   length of any road type per grid cell and `Road_Distance.RData` for the
+#'   minimum distance between the centroid of each grid cell and the nearest
+#'   road.
 #'    - **`DP_R_Railway`** / **`DP_R_Railway_Local`**: Path for processed
 #'   railway data. The function reads the contents of: `Railway_Length.RData`
 #'   for the total length of any railway type per grid cell and
@@ -80,7 +81,7 @@ Mod_PrepData <- function(
     Hab_Abb = NULL, MinEffortsSp = 100L, NVars = NULL, PresPerVar = 10L,
     EnvFile = ".env",
     BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
-    Path_Model = NULL, VerboseProgress = FALSE, FromHPC = TRUE,
+    Path_Model = NULL, VerboseProgress = TRUE, FromHPC = TRUE,
     SaveData = FALSE, ExcludeCult = TRUE) {
 
   # # ..................................................................... ###
@@ -456,16 +457,6 @@ Mod_PrepData <- function(
   R_RoadIntLog <- log10(R_RoadInt + 0.1) %>%
     stats::setNames("RoadIntLog")
 
-  # Distance to roads
-  R_RoadDist <- file.path(Path_Roads, "Dist2Road.RData")
-  if (!file.exists(R_RoadDist)) {
-    stop(paste0(R_RoadDist, " file does not exist"), call. = FALSE)
-  }
-  R_RoadDist <- IASDT.R::LoadAs(R_RoadDist) %>%
-    terra::unwrap() %>%
-    terra::mask(EffortsMask) %>%
-    stats::setNames("RoadDist")
-
   # # ..................................................................... ###
 
   ## Railways ----
@@ -487,16 +478,6 @@ Mod_PrepData <- function(
   R_RailIntLog <- log10(R_RailInt + 0.1) %>%
     stats::setNames("RailIntLog")
 
-  # Distance to nearest rail
-  R_RailDist <- file.path(Path_Rail, "Dist2Rail.RData")
-  if (!file.exists(R_RailDist)) {
-    stop(paste0(R_RailDist, " file does not exist"), call. = FALSE)
-  }
-  R_RailDist <- IASDT.R::LoadAs(R_RailDist) %>%
-    terra::unwrap() %>%
-    terra::mask(EffortsMask) %>%
-    stats::setNames("RailDist")
-
   # # ..................................................................... ###
 
   ## Road + rail ----
@@ -514,8 +495,8 @@ Mod_PrepData <- function(
 
   ColumnsFirst <- c("CellNum", "CellCode", "Country", "Country_Nearest")
   DT_All <- c(
-    R_Chelsa, R_Hab, R_HabLog, R_RoadInt, R_RoadIntLog, R_RoadDist,
-    R_RailInt, R_RailIntLog, R_RailDist, R_RoadRail, R_RoadRailLog, R_Sp) %>%
+    R_Chelsa, R_Hab, R_HabLog, R_RoadInt, R_RoadIntLog,
+    R_RailInt, R_RailIntLog, R_RoadRail, R_RoadRailLog, R_Sp) %>%
     as.data.frame(na.rm = TRUE, xy = TRUE, cells = TRUE) %>%
     tibble::tibble() %>%
     # Add country name

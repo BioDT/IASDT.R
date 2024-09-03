@@ -63,7 +63,7 @@
 #'   should be reported. Default: `200`.
 #' @param SkipFitted Logical indicating whether to skip already fitted models.
 #'   Default: `TRUE`.
-#' @param MaxJobCounts Integer specifying the maximum allowed number of array
+#' @param NArrayJobs Integer specifying the maximum allowed number of array
 #'   jobs per SLURM file. Default: 210. See
 #'   [LUMI documentation](https://docs.lumi-supercomputer.eu/runjobs/scheduled-jobs/partitions)
 #'   for more details.
@@ -113,7 +113,7 @@
 #'   road intensity per grid cell `RoadRailAsPredictor`
 #' - Hmsc options (`NChains`, `thin`, `samples`, `transientFactor`, and `verbose`)
 #' - prepare SLURM commands (`PrepSLURM`) and some specifications (e.g.
-#'   `MaxJobCounts`, `MemPerCpu`, `Time`, `JobName`)
+#'   `NArrayJobs`, `MemPerCpu`, `Time`, `JobName`)
 #'
 #'   The function reads the following environment variables:
 #'   - **`DP_R_Grid`** (if `FromHPC = TRUE`) or
@@ -140,8 +140,8 @@ Mod_Prep4HPC <- function(
     PhyloTree = TRUE,
     NoPhyloTree = TRUE, OverwriteRDS = TRUE, NCores = 8L, NChains = 4L,
     thin = NULL, samples = 1000L, transientFactor = 300L, verbose = 200L,
-    SkipFitted = TRUE, MaxJobCounts = 210L, ModelCountry = NULL,
-    VerboseProgress = FALSE, FromHPC = TRUE, PrepSLURM = TRUE, MemPerCpu = NULL,
+    SkipFitted = TRUE, NArrayJobs = 210L, ModelCountry = NULL,
+    VerboseProgress = TRUE, FromHPC = TRUE, PrepSLURM = TRUE, MemPerCpu = NULL,
     Time = NULL, JobName = NULL, Path_Hmsc = NULL, ToJSON = FALSE,
     ...) {
 
@@ -1012,8 +1012,8 @@ Mod_Prep4HPC <- function(
 
   NJobs <- length(Models2Fit_HPC)
 
-  if (NJobs > MaxJobCounts) {
-    NSplits <- ceiling((NJobs / MaxJobCounts))
+  if (NJobs > NArrayJobs) {
+    NSplits <- ceiling((NJobs / NArrayJobs))
     IDs <- IASDT.R::SplitVector(Vector = seq_len(NJobs), NSplit = NSplits)
   } else {
     NSplits <- 1

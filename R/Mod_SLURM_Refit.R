@@ -10,7 +10,7 @@
 #' environment.
 #' @param Path_Model String. Path to the model files directory. Must not end
 #'   with a slash.
-#' @param MaxJobCounts Integer. Maximum number of batch jobs that can be
+#' @param NArrayJobs Integer. Maximum number of batch jobs that can be
 #'   submitted in a single SLURM file.
 #' @param JobName String (optional). Name of the SLURM jobs. If not provided, a
 #'   default name based on the model path is used.
@@ -43,7 +43,7 @@
 #' @export
 
 Mod_SLURM_Refit <- function(
-    Path_Model = NULL, MaxJobCounts = 210, JobName = NULL, MemPerCpu = NULL,
+    Path_Model = NULL, NArrayJobs = 210, JobName = NULL, MemPerCpu = NULL,
     Time = NULL, Partition = "small-g", EnvFile = ".env", CatJobInfo = TRUE,
     ntasks = 1, CpusPerTask = 1, GpusPerNode = 1, FromHPC = TRUE,
     Path_Hmsc = NULL,
@@ -76,11 +76,12 @@ Mod_SLURM_Refit <- function(
 
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "character",
-    Args = c("Partition", "EnvFile", "Time", "JobName", "MemPerCpu",
-             "Path_Model", "Path_Hmsc", "SLURM_Prefix", "Refit_Prefix"))
+    Args = c(
+      "Partition", "EnvFile", "Time", "JobName", "MemPerCpu",
+      "Path_Model", "Path_Hmsc", "SLURM_Prefix", "Refit_Prefix"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric",
-    Args = c("MaxJobCounts", "ntasks", "CpusPerTask", "GpusPerNode"))
+    Args = c("NArrayJobs", "ntasks", "CpusPerTask", "GpusPerNode"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Args = c("CatJobInfo"), Type = "logical")
   rm(AllArgs)
@@ -116,8 +117,8 @@ Mod_SLURM_Refit <- function(
   NJobs <- length(Commands2Refit)
 
   if (NJobs > 0) {
-    if (NJobs > MaxJobCounts) {
-      NSplits <- ceiling((NJobs / MaxJobCounts))
+    if (NJobs > NArrayJobs) {
+      NSplits <- ceiling((NJobs / NArrayJobs))
       IDs <- IASDT.R::SplitVector(Vector = seq_len(NJobs), NSplit = NSplits)
     } else {
       NSplits <- 1

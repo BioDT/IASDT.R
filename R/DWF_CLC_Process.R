@@ -230,12 +230,12 @@ CLC_Process <- function(
   # # ||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime(
-    "Processing using exactextractr::exact_extract function",
+    "Processing using `exactextractr::exact_extract` function",
     Level = 1)
 
   CLC_Fracs <- Grid_sf %>%
     # Ensure that the projection of x and y parameters of
-    # exactextractr::exact_extract suppress warning: Polygons transformed to
+    # `exactextractr::exact_extract` suppress warning: Polygons transformed to
     # raster CRS (EPSG:3035)
     # https://github.com/isciences/exactextractr/issues/103
     sf::st_transform(sf::st_crs(CLC_Rast)) %>%
@@ -546,14 +546,14 @@ CLC_Process <- function(
   IASDT.R::CatTime("Identify major CLC class per per grid cell")
 
   ## ||||||||||||||||||||||||||||||||||||||||
-  # Processing using exactextractr::exact_extract
+  # Processing using `exactextractr::exact_extract`
   ## ||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatTime("Processing using exactextractr::exact_extract", Level = 1)
+  IASDT.R::CatTime("Processing using `exactextractr::exact_extract`", Level = 1)
 
   CLC_Majority <- Grid_sf %>%
     # Ensure that the projection of x and y parameters of
-    # exactextractr::exact_extract suppress warning: Polygons transformed to
+    # `exactextractr::exact_extract` suppress warning: Polygons transformed to
     # raster CRS (EPSG:3035)
     # https://github.com/isciences/exactextractr/issues/103
     sf::st_transform(sf::st_crs(CLC_Rast)) %>%

@@ -12,7 +12,7 @@ Mod_PrepData(
   EnvFile = ".env",
   BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
   Path_Model = NULL,
-  VerboseProgress = FALSE,
+  VerboseProgress = TRUE,
   FromHPC = TRUE,
   SaveData = FALSE,
   ExcludeCult = TRUE
@@ -50,7 +50,7 @@ correlated Bioclimatic variables: \code{bio4}, \code{bio6}, \code{bio8}, \code{b
 \item{Path_Model}{Character. Path where the output file should be saved.}
 
 \item{VerboseProgress}{Logical. Indicates whether progress messages should be
-displayed. Defaults to \code{FALSE}.}
+displayed. Defaults to \code{TRUE}.}
 
 \item{FromHPC}{Logical indicating whether the work is being done from HPC, to
 adjust file paths accordingly. Default: \code{TRUE}.}
@@ -91,8 +91,9 @@ containing the \code{St_1981_2010.RData} file. This file contains processed
 \code{CHELSA} data for the current climate.
 \item \strong{\code{DP_R_Roads}} / \strong{\code{DP_R_Roads_Local}}: Path for processed road data.
 The function reads the contents of: \code{Road_Length.RData} for the total
-length of any road type per grid cell and \code{Dist2Road.RData} for the minimum
-distance between the centroid of each grid cell and the nearest road.
+length of any road type per grid cell and \code{Road_Distance.RData} for the
+minimum distance between the centroid of each grid cell and the nearest
+road.
 \item \strong{\code{DP_R_Railway}} / \strong{\code{DP_R_Railway_Local}}: Path for processed
 railway data. The function reads the contents of: \code{Railway_Length.RData}
 for the total length of any railway type per grid cell and

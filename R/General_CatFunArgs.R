@@ -10,7 +10,7 @@
 #' environment and can load a specified package before processing.
 #' @param Function A function whose arguments you want to print. Must be a valid
 #'   R function.
-#' @param assign Logical. Whether to assign the arguments as variables in the
+#' @param Assign Logical. Whether to assign the arguments as variables in the
 #'   global environment. Defaults to `FALSE`.
 #' @param Package Character string. The name of the R package to be loaded
 #'   before processing the function. Default is NULL.

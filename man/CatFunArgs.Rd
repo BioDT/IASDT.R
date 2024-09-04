@@ -10,11 +10,11 @@ CatFunArgs(Function, Assign = FALSE, Package = NULL)
 \item{Function}{A function whose arguments you want to print. Must be a valid
 R function.}
 
+\item{Assign}{Logical. Whether to assign the arguments as variables in the
+global environment. Defaults to \code{FALSE}.}
+
 \item{Package}{Character string. The name of the R package to be loaded
 before processing the function. Default is NULL.}
-
-\item{assign}{Logical. Whether to assign the arguments as variables in the
-global environment. Defaults to \code{FALSE}.}
 }
 \value{
 The function prints the formatted arguments to the console. If

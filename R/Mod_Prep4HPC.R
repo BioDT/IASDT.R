@@ -37,8 +37,8 @@
 #'   cell for a grid cell to be include in the analysis. This is calculated
 #'   after filtering grid cells by sampling efforts (`MinEffortsSp`) and
 #'   filtering species by the number of presence grid cells per predictor
-#'   (`PresPerVar`). If `NspPerGrid` = `NULL` or 1 (default), grid cells with
-#'   at least one species presence will be considered in the models.
+#'   (`PresPerVar`). If `NspPerGrid` = `NULL` or 1 (default), grid cells with at
+#'   least one species presence will be considered in the models.
 #' @param PhyloTree,NoPhyloTree Logical indicating whether to fit model variants
 #'   with or without phylogenetic trees, respectively. The default of both
 #'   arguments is `TRUE`, which means to fit a model variant with the respective
@@ -63,9 +63,9 @@
 #'   should be reported. Default: `200`.
 #' @param SkipFitted Logical indicating whether to skip already fitted models.
 #'   Default: `TRUE`.
-#' @param NArrayJobs Integer specifying the maximum allowed number of array
-#'   jobs per SLURM file. Default: 210. See
-#'   [LUMI documentation](https://docs.lumi-supercomputer.eu/runjobs/scheduled-jobs/partitions)
+#' @param NArrayJobs Integer specifying the maximum allowed number of array jobs
+#'   per SLURM file. Default: 210. See [LUMI
+#'   documentation](https://docs.lumi-supercomputer.eu/runjobs/scheduled-jobs/partitions)
 #'   for more details.
 #' @param ModelCountry String or vector of strings specifying the country or
 #'   countries to filter observations by. Default: `NULL`, which means prepare
@@ -90,6 +90,9 @@
 #'   before saving to RDS file. Default: `FALSE`.
 #' @param ... Additional parameters provided to the [IASDT.R::Mod_SLURM]
 #'   function.
+#' @param Precision Integer, either of 32 (default) or 64 for the precision mode
+#'   used for sampling while fitting `Hmsc-HPC` models. In `Hmsc-HPC`, the
+#'   default value is 64.
 #' @name Mod_Prep4HPC
 #' @inheritParams Mod_PrepData
 #' @inheritParams PrepKnots
@@ -143,7 +146,7 @@ Mod_Prep4HPC <- function(
     SkipFitted = TRUE, NArrayJobs = 210L, ModelCountry = NULL,
     VerboseProgress = TRUE, FromHPC = TRUE, PrepSLURM = TRUE, MemPerCpu = NULL,
     Time = NULL, JobName = NULL, Path_Hmsc = NULL, Path_Python = NULL,
-    ToJSON = FALSE, ...) {
+    ToJSON = FALSE, Precision = 32, ...) {
 
   # # ..................................................................... ###
 
@@ -156,13 +159,20 @@ Mod_Prep4HPC <- function(
   CheckNULL <- c(
     "Path_Model", "PresPerVar", "thin", "samples", "GPP_Dists",
     "MemPerCpu", "Path_Hmsc", "Path_Python", "Hab_Abb")
-  IsNull <- purrr::map_lgl(CheckNULL, ~is.null(get(.x)))
+  IsNull <- purrr::map_lgl(CheckNULL, ~ is.null(get(.x)))
 
   if (any(IsNull)) {
     stop(
       paste0(
         paste0("`", CheckNULL[which(IsNull)], "`", collapse = ", "),
         " can not be empty"),
+      call. = FALSE)
+  }
+
+  if (!(Precision %in% c(32,64))) {
+    stop(
+      paste0(
+        "Precision should be either of 32 or 64, not ", Precision),
       call. = FALSE)
   }
 
@@ -990,7 +1000,7 @@ Mod_Prep4HPC <- function(
           # `TF_ENABLE_ONEDNN_OPTS=0`.
           #
           # `export TF_CPP_MIN_LOG_LEVEL=3` is used to reduce debug output from
-          # tensorflow
+          # Tensorflow
 
           Command_HPC <- paste0(
             Exports,
@@ -1004,6 +1014,7 @@ Mod_Prep4HPC <- function(
             " --thin ", M_thin,
             " --verbose ", verbose,
             " --chain ", (Chain - 1),
+            " --fp ", Precision,
             " >& ", shQuote(Path_ModProg))
 
           Command_WS <- paste0(
@@ -1017,7 +1028,9 @@ Mod_Prep4HPC <- function(
             " --thin ", M_thin,
             " --verbose ", verbose,
             " --chain ", (Chain - 1),
+            " --fp ", Precision,
             " >& ", shQuote(Path_ModProg))
+
 
           list(
             M4HPC_Path_LUMI = M4HPC_Path2,

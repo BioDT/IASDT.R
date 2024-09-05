@@ -48,6 +48,7 @@ Mod_Prep4HPC(
   Path_Hmsc = NULL,
   Path_Python = NULL,
   ToJSON = FALSE,
+  Precision = 32,
   ...
 )
 }
@@ -114,8 +115,8 @@ not equals to \code{0}.}
 cell for a grid cell to be include in the analysis. This is calculated
 after filtering grid cells by sampling efforts (\code{MinEffortsSp}) and
 filtering species by the number of presence grid cells per predictor
-(\code{PresPerVar}). If \code{NspPerGrid} = \code{NULL} or 1 (default), grid cells with
-at least one species presence will be considered in the models.}
+(\code{PresPerVar}). If \code{NspPerGrid} = \code{NULL} or 1 (default), grid cells with at
+least one species presence will be considered in the models.}
 
 \item{ExcludeCult}{Logical. Indicates whether to exclude countries with
 cultivated or casual observations per species. Defaults to \code{TRUE}.}
@@ -171,9 +172,8 @@ should be reported. Default: \code{200}.}
 \item{SkipFitted}{Logical indicating whether to skip already fitted models.
 Default: \code{TRUE}.}
 
-\item{NArrayJobs}{Integer specifying the maximum allowed number of array
-jobs per SLURM file. Default: 210. See
-\href{https://docs.lumi-supercomputer.eu/runjobs/scheduled-jobs/partitions}{LUMI documentation}
+\item{NArrayJobs}{Integer specifying the maximum allowed number of array jobs
+per SLURM file. Default: 210. See \href{https://docs.lumi-supercomputer.eu/runjobs/scheduled-jobs/partitions}{LUMI documentation}
 for more details.}
 
 \item{ModelCountry}{String or vector of strings specifying the country or
@@ -209,6 +209,10 @@ provided as the \code{Path_Hmsc} argument of the \link{Mod_SLURM} function.}
 
 \item{ToJSON}{Logical indicating whether to convert unfitted models to JSON
 before saving to RDS file. Default: \code{FALSE}.}
+
+\item{Precision}{Integer, either of 32 (default) or 64 for the precision mode
+used for sampling while fitting \code{Hmsc-HPC} models. In \code{Hmsc-HPC}, the
+default value is 64.}
 
 \item{...}{Additional parameters provided to the \link{Mod_SLURM}
 function.}

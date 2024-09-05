@@ -87,6 +87,7 @@
 #'   and the `Hab_Abb` value. Only effective if `PrepSLURM = TRUE`.
 #' @param Path_Hmsc String specifying the path for the Hmsc-HPC. This will be
 #'   provided as the `Path_Hmsc` argument of the [IASDT.R::Mod_SLURM] function.
+#' @param Path_Python String specifying the path for Python.
 #' @param ToJSON Logical indicating whether to convert unfitted models to JSON
 #'   before saving to RDS file. Default: `FALSE`.
 #' @param ... Additional parameters provided to the [IASDT.R::Mod_SLURM]
@@ -144,8 +145,8 @@ Mod_Prep4HPC <- function(
     thin = NULL, samples = 1000L, transientFactor = 300L, verbose = 200L,
     SkipFitted = TRUE, NArrayJobs = 210L, ModelCountry = NULL,
     VerboseProgress = TRUE, FromHPC = TRUE, PrepSLURM = TRUE, MemPerCpu = NULL,
-    Time = NULL, JobName = NULL, Path_Hmsc = NULL, ToJSON = FALSE,
-    ...) {
+    Time = NULL, JobName = NULL, Path_Hmsc = NULL, Path_Python = NULL, 
+    ToJSON = FALSE, ...) {
 
   # # # ..................................................................... ###
 
@@ -157,7 +158,7 @@ Mod_Prep4HPC <- function(
 
   CheckNULL <- c(
     "Path_Model", "PresPerVar", "thin", "samples", "GPP_Dists",
-    "MemPerCpu", "Path_Hmsc", "Hab_Abb")
+    "MemPerCpu", "Path_Hmsc", "Path_Python", "Hab_Abb")
   IsNull <- purrr::map_lgl(CheckNULL, ~is.null(get(.x)))
 
   if (any(IsNull)) {
@@ -202,7 +203,7 @@ Mod_Prep4HPC <- function(
   NCells <- Sp <- IAS_ID <- x <- y <- Country <- M_thin <- rL <-
     M_Name_init <- rL2 <- M_samples <- M4HPC_Path <- M_transient <-
     M_Init_Path <- M_Name_Fit <- Chain <- Post_Missing <- Command_HPC <-
-    Command_WS <- Post_Path <- Path_ModProg <- TaxaInfoFile <- Path_Python <-
+    Command_WS <- Post_Path <- Path_ModProg <- TaxaInfoFile <- 
     Path_Grid <- EU_Bound <- Path_PA <- SpeciesID <- Species_name <- PA <-
     Species_File <- NAME_ENGL <- NULL
 
@@ -230,7 +231,7 @@ Mod_Prep4HPC <- function(
   if (FromHPC) {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Python", "DP_R_Path_Python", FALSE, FALSE,
+      #"Path_Python", "DP_R_Path_Python", FALSE, FALSE,
       "TaxaInfoFile", "DP_R_TaxaInfo", FALSE, TRUE,
       "EU_Bound", "DP_R_EUBound_sf", FALSE, TRUE,
       "Path_Grid", "DP_R_Grid", TRUE, FALSE,
@@ -238,7 +239,7 @@ Mod_Prep4HPC <- function(
   } else {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Python", "DP_R_Path_Python", FALSE, FALSE,
+      #"Path_Python", "DP_R_Path_Python", FALSE, FALSE,
       "TaxaInfoFile", "DP_R_TaxaInfo_Local", FALSE, TRUE,
       "EU_Bound", "DP_R_EUBound_sf_Local", FALSE, TRUE,
       "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE,
@@ -272,7 +273,7 @@ Mod_Prep4HPC <- function(
     stats::setNames(AllArgs)
 
   CharArgs <- c(
-    "Hab_Abb", "Path_Model", "Path_Hmsc")
+    "Hab_Abb", "Path_Model", "Path_Hmsc", "Path_Python")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = CharArgs, Type = "character")
 
   LogicArgs <- c(
@@ -398,8 +399,8 @@ Mod_Prep4HPC <- function(
     }
 
     IASDT.R::CatTime(
-      paste0("Subsetting data to: ", paste0(sort(ModelCountry),
-                                            collapse = " & ")),
+      paste0(
+        "Subsetting data to: ", paste0(sort(ModelCountry), collapse = " & ")),
       Level = 1)
 
     Sample_ExclSp <- dplyr::filter(DT_All, Country %in% ModelCountry) %>%
@@ -992,8 +993,10 @@ Mod_Prep4HPC <- function(
           Command_WS <- paste0(
             Path_Python,
             " -m hmsc.run_gibbs_sampler",
-            " --input ", shQuote(M4HPC_Path2),
-            " --output ", shQuote(Post_Path),
+            " --input ", 
+            shQuote(stringr::str_replace_all(M4HPC_Path2, "/", "\\\\")),
+            " --output ", 
+            shQuote(stringr::str_replace_all(Post_Path, "/", "\\\\")),
             " --samples ", M_samples,
             " --transient ", M_transient,
             " --thin ", M_thin,

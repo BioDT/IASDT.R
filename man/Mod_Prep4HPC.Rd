@@ -47,6 +47,7 @@ Mod_Prep4HPC(
   Time = NULL,
   JobName = NULL,
   Path_Hmsc = NULL,
+  Path_Python = NULL,
   ToJSON = FALSE,
   ...
 )
@@ -207,6 +208,8 @@ and the \code{Hab_Abb} value. Only effective if \code{PrepSLURM = TRUE}.}
 
 \item{Path_Hmsc}{String specifying the path for the Hmsc-HPC. This will be
 provided as the \code{Path_Hmsc} argument of the \link{Mod_SLURM} function.}
+
+\item{Path_Python}{String specifying the path for Python.}
 
 \item{ToJSON}{Logical indicating whether to convert unfitted models to JSON
 before saving to RDS file. Default: \code{FALSE}.}

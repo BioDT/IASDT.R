@@ -18,13 +18,15 @@
 #' @name Install_Hmsc
 #' @author Ahmed El-Gabbas
 #' @details The function performs the following steps:
-#' - Checks if the virtual environment directory already exists and stops with an error if it does.
-#' - Verifies the Python version and installation.
-#' - Creates a new Python virtual environment.
-#' - Upgrades `pip` in the virtual environment.
-#' - Installs the `Hmsc-HPC` package from the provided Git URL.
-#' - Installs `TensorFlow` version 2.15.
-#' - Checks `TensorFlow` and `Hmsc-HPC` package installations.
+#' - Checks if the virtual environment directory already exists and stops with
+#'   an error if it does
+#' - Verifies the Python version and installation
+#' - Creates a new Python virtual environment
+#' - Upgrades `pip` in the virtual environment
+#' - Installs the `Hmsc-HPC` package from the provided Git URL
+#' - Installs `TensorFlow` version 2.15
+#' - Installs `rdata`
+#' - Checks `TensorFlow` and `Hmsc-HPC` package installations
 
 Install_Hmsc <- function(Path_Python, Path_VE, GitURL) {
 
@@ -79,6 +81,10 @@ Install_Hmsc <- function(Path_Python, Path_VE, GitURL) {
   # Checking TensorFlow
   IASDT.R::InfoChunk("Checking TensorFlow", Extra1 = 1, Extra2 = 2)
   system2(python, '-c "import tensorflow as tf; print(tf.constant(1))"')
+
+  # Install `rdata`
+  IASDT.R::InfoChunk("Installing rdata", Extra1 = 1, Extra2 = 2)
+  system2(python, "-m pip install rdata")
 
   # Checking Hmsc
   IASDT.R::InfoChunk("Checking Hmsc", Extra1 = 1, Extra2 = 2)

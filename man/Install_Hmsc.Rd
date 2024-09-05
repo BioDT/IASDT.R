@@ -27,13 +27,15 @@ verify the installation of Python, the virtual environment, and the packages.
 \details{
 The function performs the following steps:
 \itemize{
-\item Checks if the virtual environment directory already exists and stops with an error if it does.
-\item Verifies the Python version and installation.
-\item Creates a new Python virtual environment.
-\item Upgrades \code{pip} in the virtual environment.
-\item Installs the \code{Hmsc-HPC} package from the provided Git URL.
-\item Installs \code{TensorFlow} version 2.15.
-\item Checks \code{TensorFlow} and \code{Hmsc-HPC} package installations.
+\item Checks if the virtual environment directory already exists and stops with
+an error if it does
+\item Verifies the Python version and installation
+\item Creates a new Python virtual environment
+\item Upgrades \code{pip} in the virtual environment
+\item Installs the \code{Hmsc-HPC} package from the provided Git URL
+\item Installs \code{TensorFlow} version 2.15
+\item Installs \code{rdata}
+\item Checks \code{TensorFlow} and \code{Hmsc-HPC} package installations
 }
 }
 \author{

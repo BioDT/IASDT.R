@@ -28,7 +28,6 @@ Mod_Prep4HPC(
   CV_Plot = TRUE,
   PhyloTree = TRUE,
   SaveData = TRUE,
-  ToSingle = TRUE,
   NoPhyloTree = TRUE,
   OverwriteRDS = TRUE,
   NCores = 8L,
@@ -146,9 +145,6 @@ for both options will be fitted. At least one of \code{PhyloTree} and
 \item{SaveData}{Logical. Indicates whether the processed data should be saved
 as RData file. Defaults to \code{TRUE}.}
 
-\item{ToSingle}{Logical. Indicating whether to convert to the distance
-matrices to single using \link[float:converters]{float::fl}. This is experimental.}
-
 \item{OverwriteRDS}{Logical. Indicating whether to overwrite previously
 exported RDS files for initial models. Default: \code{TRUE}.}
 
@@ -255,7 +251,6 @@ The function reads the following environment variables:
 \item \strong{\code{DP_R_Grid}} (if \code{FromHPC = TRUE}) or
 \strong{\code{DP_R_Grid_Local}} (if \code{FromHPC = FALSE}). The function reads
 the content of the \code{Grid_10_Land_Crop.RData} file from this path.
-\item \strong{\code{DP_R_Path_Python}}: Python path on LUMI
 \item \strong{\code{DP_R_TaxaInfo}} or \strong{\code{DP_R_TaxaInfo_Local}} for the location of the
 \code{Species_List_ID.txt} file representing species information.
 \item \strong{\code{DP_R_EUBound_sf}} or \strong{\code{DP_R_EUBound_sf_Local}} for the path of the

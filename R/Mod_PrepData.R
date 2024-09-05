@@ -107,7 +107,7 @@ Mod_PrepData <- function(
   # # |||||||||||||||||||||||||||||||||||
 
   CheckNULL <- c("Hab_Abb", "Path_Model", "EnvFile", "NVars")
-  IsNull <- purrr::map_lgl(CheckNULL, ~is.null(get(.x)))
+  IsNull <- purrr::map_lgl(CheckNULL, ~ is.null(get(.x)))
   if (any(IsNull)) {
     stop(
       paste0(

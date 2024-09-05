@@ -45,8 +45,6 @@
 #'   option. If both `PhyloTree` and `NoPhyloTree` are `TRUE` (Default), models
 #'   for both options will be fitted. At least one of `PhyloTree` and
 #'   `NoPhyloTree` should be `TRUE`.
-#' @param ToSingle Logical. Indicating whether to convert to the distance
-#'   matrices to single using [float::fl]. This is experimental.
 #' @param OverwriteRDS Logical. Indicating whether to overwrite previously
 #'   exported RDS files for initial models. Default: `TRUE`.
 #' @param NCores Integer specifying the number of parallel cores for
@@ -122,7 +120,6 @@
 #'   - **`DP_R_Grid`** (if `FromHPC = TRUE`) or
 #'    **`DP_R_Grid_Local`** (if `FromHPC = FALSE`). The function reads
 #'   the content of the `Grid_10_Land_Crop.RData` file from this path.
-#'   - **`DP_R_Path_Python`**: Python path on LUMI
 #'   - **`DP_R_TaxaInfo`** or **`DP_R_TaxaInfo_Local`** for the location of the
 #'   `Species_List_ID.txt` file representing species information.
 #'   - **`DP_R_EUBound_sf`** or **`DP_R_EUBound_sf_Local`** for the path of the
@@ -140,15 +137,15 @@ Mod_Prep4HPC <- function(
     EffortsAsPredictor = FALSE, RoadRailAsPredictor = TRUE,
     HabAsPredictor = TRUE, NspPerGrid = 1L, ExcludeCult = TRUE,
     CV_NFolds = 4L, CV_NGrids = 20L, CV_NR = 2L, CV_NC = 2L, CV_Plot = TRUE,
-    PhyloTree = TRUE, SaveData = TRUE, ToSingle = TRUE,
+    PhyloTree = TRUE, SaveData = TRUE,
     NoPhyloTree = TRUE, OverwriteRDS = TRUE, NCores = 8L, NChains = 4L,
     thin = NULL, samples = 1000L, transientFactor = 300L, verbose = 200L,
     SkipFitted = TRUE, NArrayJobs = 210L, ModelCountry = NULL,
     VerboseProgress = TRUE, FromHPC = TRUE, PrepSLURM = TRUE, MemPerCpu = NULL,
-    Time = NULL, JobName = NULL, Path_Hmsc = NULL, Path_Python = NULL, 
+    Time = NULL, JobName = NULL, Path_Hmsc = NULL, Path_Python = NULL,
     ToJSON = FALSE, ...) {
 
-  # # # ..................................................................... ###
+  # # ..................................................................... ###
 
   # # |||||||||||||||||||||||||||||||||||
   # Initial checking -----
@@ -188,22 +185,25 @@ Mod_Prep4HPC <- function(
   }
 
   if (!all(is.numeric(MinEffortsSp)) || MinEffortsSp <= 0) {
-    stop("`MinEffortsSp` should be numeric and greater than zero", call. = FALSE)
+    stop(
+      "`MinEffortsSp` should be numeric and greater than zero",
+      call. = FALSE)
   }
 
   if (!is.null(NspPerGrid) && (!is.numeric(NspPerGrid) || NspPerGrid < 1)) {
     stop(
-      "`NspPerGrid` has to be either `NULL` or positive integer", call. = FALSE)
+      "`NspPerGrid` has to be either `NULL` or positive integer",
+      call. = FALSE)
   }
 
-  # # # ..................................................................... ###
+  # # ..................................................................... ###
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   NCells <- Sp <- IAS_ID <- x <- y <- Country <- M_thin <- rL <-
     M_Name_init <- rL2 <- M_samples <- M4HPC_Path <- M_transient <-
     M_Init_Path <- M_Name_Fit <- Chain <- Post_Missing <- Command_HPC <-
-    Command_WS <- Post_Path <- Path_ModProg <- TaxaInfoFile <- 
+    Command_WS <- Post_Path <- Path_ModProg <- TaxaInfoFile <-
     Path_Grid <- EU_Bound <- Path_PA <- SpeciesID <- Species_name <- PA <-
     Species_File <- NAME_ENGL <- NULL
 
@@ -231,7 +231,6 @@ Mod_Prep4HPC <- function(
   if (FromHPC) {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      #"Path_Python", "DP_R_Path_Python", FALSE, FALSE,
       "TaxaInfoFile", "DP_R_TaxaInfo", FALSE, TRUE,
       "EU_Bound", "DP_R_EUBound_sf", FALSE, TRUE,
       "Path_Grid", "DP_R_Grid", TRUE, FALSE,
@@ -239,11 +238,17 @@ Mod_Prep4HPC <- function(
   } else {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      #"Path_Python", "DP_R_Path_Python", FALSE, FALSE,
       "TaxaInfoFile", "DP_R_TaxaInfo_Local", FALSE, TRUE,
       "EU_Bound", "DP_R_EUBound_sf_Local", FALSE, TRUE,
       "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE,
       "Path_PA", "DP_R_PA_Local", TRUE, FALSE)
+
+    # Check if Python executable exists
+    if (!file.exists(Path_Python)) {
+      stop(
+        paste0("Python executable does not exist: ", Path_Python),
+        call. = FALSE)
+    }
   }
 
   # Assign environment variables and check file and paths
@@ -258,7 +263,7 @@ Mod_Prep4HPC <- function(
     }
   }
 
-  # # # ..................................................................... ###
+  # # ..................................................................... ###
 
   # # |||||||||||||||||||||||||||||||||||
   # Check input arguments ----
@@ -308,7 +313,7 @@ Mod_Prep4HPC <- function(
 
   rm(AllArgs, CharArgs, LogicArgs, NumericArgs)
 
-  # # # ..................................................................... ###
+  # # ..................................................................... ###
 
   # # |||||||||||||||||||||||||||||||||||
   # File paths - Creating missing paths ----
@@ -321,7 +326,7 @@ Mod_Prep4HPC <- function(
   fs::dir_create(file.path(Path_Model, "Model_Fitting_HPC", "JobsLog"))
   Path_ModelDT <- file.path(Path_Model, "Model_Info.RData")
 
-  # # # ..................................................................... ###
+  # # ..................................................................... ###
 
   # # |||||||||||||||||||||||||||||||||||
   # # Prepare list of predictors -----
@@ -348,7 +353,7 @@ Mod_Prep4HPC <- function(
   # minimum number of presence grids per species
   MinPresGrids <- PresPerVar * length(XVars)
 
-  # # # ..................................................................... ###
+  # # ..................................................................... ###
 
   # # |||||||||||||||||||||||||||||||||||
   # # Preparing input data -----
@@ -379,7 +384,7 @@ Mod_Prep4HPC <- function(
 
   IASDT.R::CatSep(Rep = 1, Extra1 = 0, Extra2 = 1)
 
-  # # # ..................................................................... ###
+  # # ..................................................................... ###
 
   # # |||||||||||||||||||||||||||||||||||
   # # Subsetting study area -----
@@ -454,7 +459,8 @@ Mod_Prep4HPC <- function(
         PA = purrr::map2(
           .x = Species_File, .y = SpeciesID,
           .f = ~{
-            R <- file.path(Path_PA, "RData", stringr::str_c(.x, "_PA.RData")) %>%
+            R <- file.path(
+              Path_PA, "RData", stringr::str_c(.x, "_PA.RData")) %>%
               IASDT.R::LoadAs() %>%
               terra::unwrap() %>%
               magrittr::extract2("PA") %>%
@@ -882,15 +888,6 @@ Mod_Prep4HPC <- function(
         transient = Model_Info$M_transient[ID],
         nChains = NChains, verbose = verbose, engine = "HPC")
 
-      # Experimentally change distances to single type
-
-      if (ToSingle) {
-        Model$dataParList$rLPar[[1]]$distMat12 <-
-          float::fl(Model$dataParList$rLPar[[1]]$distMat12)
-        Model$dataParList$rLPar[[1]]$distMat22 <-
-          float::fl(Model$dataParList$rLPar[[1]]$distMat22)
-      }
-
       if (ToJSON) {
         Model <- jsonify::to_json(Model)
       }
@@ -965,11 +962,13 @@ Mod_Prep4HPC <- function(
           # Input model
           M4HPC_Path2 <- file.path(
             Path_Model, "InitMod4HPC", basename(M4HPC_Path))
+          M4HPC_Path2_Win <- stringr::str_replace_all(M4HPC_Path2, "/", "\\\\")
 
           # Path for posterior sampling
           Post_Path <- file.path(
             Path_Model, "Model_Fitting_HPC",
             paste0(M_Name_Fit, "_Chain", Chain, "_post.rds"))
+          Post_Path_Win <- stringr::str_replace_all(Post_Path, "/", "\\\\")
 
           # Path for progress
           Path_ModProg <- file.path(
@@ -978,8 +977,25 @@ Mod_Prep4HPC <- function(
 
           Post_Missing <- !file.exists(Post_Path)
 
+          Exports <- paste0(
+            "export TF_CPP_MIN_LOG_LEVEL=3; ",
+            "export TF_ENABLE_ONEDNN_OPTS=0; ")
+
+          # `TF_ENABLE_ONEDNN_OPTS=0` is used to disable the following warning:
+          #
+          # I tensorflow/core/util/port.cc:113] oneDNN custom operations are on.
+          # You may see slightly different numerical results due to
+          # floating-point round-off errors from different computation orders.
+          # To turn them off, set the environment variable
+          # `TF_ENABLE_ONEDNN_OPTS=0`.
+          #
+          # `export TF_CPP_MIN_LOG_LEVEL=3` is used to reduce debug output from
+          # tensorflow
+
           Command_HPC <- paste0(
-            "export TF_CPP_MIN_LOG_LEVEL=3; /usr/bin/time -v ", Path_Python,
+            Exports,
+            "/usr/bin/time -v ",
+            Path_Python,
             " -m hmsc.run_gibbs_sampler",
             " --input ", shQuote(M4HPC_Path2),
             " --output ", shQuote(Post_Path),
@@ -991,17 +1007,17 @@ Mod_Prep4HPC <- function(
             " >& ", shQuote(Path_ModProg))
 
           Command_WS <- paste0(
+            Exports,
             Path_Python,
             " -m hmsc.run_gibbs_sampler",
-            " --input ", 
-            stringr::str_replace_all(M4HPC_Path2, "/", "\\\\"),
-            " --output ", 
-            stringr::str_replace_all(Post_Path, "/", "\\\\"),
+            " --input ", M4HPC_Path2_Win,
+            " --output ", Post_Path_Win,
             " --samples ", M_samples,
             " --transient ", M_transient,
             " --thin ", M_thin,
             " --verbose ", verbose,
-            " --chain ", (Chain - 1))
+            " --chain ", (Chain - 1),
+            " >& ", shQuote(Path_ModProg))
 
           list(
             M4HPC_Path_LUMI = M4HPC_Path2,
@@ -1009,6 +1025,7 @@ Mod_Prep4HPC <- function(
             Path_ModProg = Path_ModProg, Command_HPC = Command_HPC,
             Command_WS = Command_WS) %>%
             return()
+
         })) %>%
     tidyr::unnest_wider("M_Chain")
 

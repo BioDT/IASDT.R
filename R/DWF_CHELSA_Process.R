@@ -75,8 +75,8 @@ CHELSA_Process <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Path_CHELSA_In <- Path_CHELSA_Out <- Path_Out_NC <- TimePeriod <-
-    ClimateModel <- ClimScenario <- Path_Out_tif <- Processed_Name <-
-    Processed_File <- File_List <- Processed_Maps <- Problematic <-
+    ClimateModel <- ClimScenario <- Path_Out_tif <- Name <-
+    FillePath <- File_List <- Processed_Maps <- Problematic <-
     Path_Down <- NULL
 
   # # ..................................................................... ###
@@ -336,18 +336,18 @@ CHELSA_Process <- function(
       .by = c(TimePeriod, ClimateModel, ClimScenario)) %>%
 
     dplyr::mutate(
-      Processed_Name = paste0(
+      Name = paste0(
         "R_", TimePeriod, "_", ClimateModel, "_", ClimScenario),
-      Processed_Name = stringr::str_replace(
-        Processed_Name, "1981-2010_Current_Current", "Current"),
-      Processed_Name = stringr::str_replace_all(Processed_Name, "-", "_"),
+      Name = stringr::str_replace(
+        Name, "1981-2010_Current_Current", "Current"),
+      Name = stringr::str_replace_all(Name, "-", "_"),
 
-      Processed_File = file.path(
-        Path_CHELSA_Out, "Processed", paste0(Processed_Name, ".RData")),
+      FillePath = file.path(
+        Path_CHELSA_Out, "Processed", paste0(Name, ".RData")),
 
       Processed_Maps = furrr::future_pmap(
-        .l = list(File_List, Processed_File, Processed_Name),
-        .f = function(File_List, Processed_File, Processed_Name) {
+        .l = list(File_List, FillePath, Name),
+        .f = function(File_List, FillePath, Name) {
 
           MapNames <- basename(File_List) %>%
             stringr::str_extract("bio.._|bio._") %>%
@@ -362,7 +362,7 @@ CHELSA_Process <- function(
 
           # save to disk
           IASDT.R::SaveAs(
-            InObj = Map, OutObj = Processed_Name, OutPath = Processed_File)
+            InObj = Map, OutObj = Name, OutPath = FillePath)
 
           return(Map)
 

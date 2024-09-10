@@ -127,7 +127,7 @@ Mod_PrepData <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   SpeciesID <- Species_name <- Species_File <- PA <-
-    cell <- x <- Path_PA <- Path_Grid <- Path_Grid_Ref <- Path_CLC_Summ <-
+    cell <- x <- Path_PA <- Path_Grid <- Path_Grid_Ref <- Path_CLC <-
     Path_Roads <- Path_Rail <- Path_Bias <- Path_CHELSA <-
     NSp <- EU_Bound <- NCells <- SpPA <- NPres <- Grid_R <- NULL
 
@@ -165,7 +165,7 @@ Mod_PrepData <- function(
       "Path_Grid", "DP_R_Grid", FALSE, FALSE,
       "Path_Grid_Ref", "DP_R_Grid_Ref", TRUE, FALSE,
       "Path_PA", "DP_R_PA", TRUE, FALSE,
-      "Path_CLC_Summ", "DP_R_CLC_Summary", TRUE, FALSE,
+      "Path_CLC", "DP_R_CLC", TRUE, FALSE,
       "Path_CHELSA", "DP_R_CHELSA_Output", TRUE, FALSE,
       "Path_Roads", "DP_R_Roads", TRUE, FALSE,
       "Path_Rail", "DP_R_Railways", TRUE, FALSE,
@@ -177,7 +177,7 @@ Mod_PrepData <- function(
       "Path_Grid", "DP_R_Grid_Local", FALSE, FALSE,
       "Path_Grid_Ref", "DP_R_Grid_Ref_Local", TRUE, FALSE,
       "Path_PA", "DP_R_PA_Local", TRUE, FALSE,
-      "Path_CLC_Summ", "DP_R_CLC_Summary_Local", TRUE, FALSE,
+      "Path_CLC", "DP_R_CLC_Local", TRUE, FALSE,
       "Path_CHELSA", "DP_R_CHELSA_Output_Local", TRUE, FALSE,
       "Path_Roads", "DP_R_Roads_Local", TRUE, FALSE,
       "Path_Rail", "DP_R_Railways_Local", TRUE, FALSE,
@@ -409,10 +409,11 @@ Mod_PrepData <- function(
 
   IASDT.R::CatTime("Habitat coverage", Level = 1)
 
-  Path_Hab <- file.path(Path_CLC_Summ, "PercCov_SynHab_Crop.RData")
+  Path_Hab <- file.path(Path_CLC, "Summary_RData", "PercCov_SynHab_Crop.RData")
   if (!file.exists(Path_Hab)) {
     stop(
-      paste0("Path_Hab file: ", Path_Hab, " does not exist"), call. = FALSE)
+      paste0("Path_Hab file: ", Path_Hab, " does not exist"),
+      call. = FALSE)
   }
 
   if (Hab_Abb == "0") {

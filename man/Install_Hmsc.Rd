@@ -4,7 +4,13 @@
 \alias{Install_Hmsc}
 \title{Install Hmsc-HPC in a Python Virtual Environment on Windows}
 \usage{
-Install_Hmsc(Path_Python, Path_VE, GitURL)
+Install_Hmsc(
+  Path_Python,
+  Path_VE,
+  URL_Hmsc = "https://github.com/trossi/hmsc-hpc.git@simplify-io",
+  URL_rdata = "https://github.com/trossi/rdata.git@test-for-hmsc-v2",
+  Force = FALSE
+)
 }
 \arguments{
 \item{Path_Python}{Character string. Path to the Python executable.}
@@ -12,8 +18,16 @@ Install_Hmsc(Path_Python, Path_VE, GitURL)
 \item{Path_VE}{Character string. Path where the virtual environment will be
 created. This can not be an existing folder.}
 
-\item{GitURL}{A character string containing the URL of the Git repository
-(and branch name) for the HMSC-HPC package.}
+\item{URL_Hmsc}{A character string for the Git repository (and branch name)
+of the \code{Hmsc-HPC} package.}
+
+\item{URL_rdata}{A character string for the Git repository (and branch name)
+of the \code{rdata} package. This is temporary to allow \code{rdata} package to write
+rds file. In the near future, this functionality will be pushed to the main
+branch of \code{rdata}.}
+
+\item{Force}{Whether to force the installation of \code{Hmsc-HPC}; i.e. using
+\code{--force-reinstall} as a suffix to the \verb{pip install} command}
 }
 \value{
 The function performs installation steps and returns NULL invisibly.
@@ -36,6 +50,13 @@ an error if it does
 \item Installs \code{TensorFlow} version 2.15
 \item Installs \code{rdata}
 \item Checks \code{TensorFlow} and \code{Hmsc-HPC} package installations
+}
+}
+\examples{
+\dontrun{
+Install_Hmsc(
+   Path_Python = "C:/Python/Python310/python.exe",
+   Path_VE = "D:/Hmsc-HPC")
 }
 }
 \author{

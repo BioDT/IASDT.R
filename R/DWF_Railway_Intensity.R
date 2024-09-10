@@ -46,7 +46,14 @@ Railway_Intensity <- function(
 
   # # ..................................................................... ###
   # Check system commands
-  IASDT.R::CheckCommands("unzip")
+  Commands <- c("unzip")
+  CommandsAvail <- purrr::map_lgl(Commands, IASDT.R::CheckCommands)
+  if (!all(CommandsAvail)) {
+    Missing <- paste0(Commands[!CommandsAvail], collapse = " + ")
+    stop(
+      paste0("The following command(s) are not available: ", Missing),
+      call. = FALSE)
+  }
 
   # # ..................................................................... ###
 
@@ -111,7 +118,7 @@ Railway_Intensity <- function(
   IASDT.R::CatTime("Scrap download links")
   .StartTimeDown <- lubridate::now(tzone = "CET")
 
-  if (!IASDT.R::Valid_URL(Railways_URL)) {
+  if (!IASDT.R::CheckURL(Railways_URL)) {
     stop(
       paste0("The base URL for railways data is not valid: ", Railways_URL),
       call. = FALSE)

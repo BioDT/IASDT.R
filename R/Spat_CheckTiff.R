@@ -31,13 +31,26 @@ CheckTiff <- function(x = NULL) {
     stop("Input file cannot be NULL", call. = FALSE)
   }
 
+  # # ..................................................................... ###
+
   # Check if file exists
   if (!file.exists(x)) {
-    stop("Input file does not exist", call. = FALSE)
+    warning("Input file does not exist")
+    return(FALSE)
   }
 
-  as.character(terra::describe(x = x)) %>%
+  # # ..................................................................... ###
+
+  # Check file metadata using terra's describe
+  MetadataOkay <- as.character(terra::describe(x = x)) %>%
     stringr::str_detect("Driver") %>%
-    any() %>%
-    return()
+    any()
+
+  if (isFALSE(MetadataOkay)) {
+    return(FALSE)
+  }
+
+  # # ..................................................................... ###
+
+  return(terra::hasValues(terra::rast(x)))
 }

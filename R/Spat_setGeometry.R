@@ -1,5 +1,5 @@
 ## |------------------------------------------------------------------------| #
-# Set_geometry ----
+# setGeometry ----
 ## |------------------------------------------------------------------------| #
 
 #' Set the geometry column of a simple feature (sf) data frame in the pipe
@@ -13,14 +13,14 @@
 #'   geometry column will be set or changed.
 #' @param Name A string specifying the name of the geometry column to be used or
 #'   set in the `x` data frame.
-#' @name Set_geometry
+#' @name setGeometry
 #' @return The modified simple feature (sf) data frame with the updated geometry
 #'   column. The function returns the original data frame `x` with its geometry
 #'   column set to `Name`.
 #' @author Ahmed El-Gabbas
 #' @export
 
-Set_geometry <- function(x, Name) {
+setGeometry <- function(x, Name) {
   sf::st_geometry(x) <- Name
   return(x)
 }

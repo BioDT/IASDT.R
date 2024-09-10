@@ -58,9 +58,8 @@
 #'    - **`DP_R_CLC_Summary`** / **`DP_R_CLC_Summary_Local`**: Path containing
 #'   the `PercCov_SynHab_Crop.RData` file. This file contains maps for the
 #'   percentage coverage of each SynHab habitat type per grid cell.
-#'    - **`DP_R_CHELSA_Time_CC`** / **`DP_R_CHELSA_Time_CC_Local`**: Path
-#'   containing the `St_1981_2010.RData` file. This file contains processed
-#'   `CHELSA` data for the current climate.
+#'    - **`DP_R_CHELSA_Output`** / **`DP_R_CHELSA_Output_Local`**: Path
+#'   for processed CHELSA data.
 #'    - **`DP_R_Roads`** / **`DP_R_Roads_Local`**: Path for processed road data.
 #'   The function reads the contents of: `Road_Length.RData` for the total
 #'   length of any road type per grid cell.
@@ -129,7 +128,7 @@ Mod_PrepData <- function(
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   SpeciesID <- Species_name <- Species_File <- PA <-
     cell <- x <- Path_PA <- Path_Grid <- Path_Grid_Ref <- Path_CLC_Summ <-
-    Path_Roads <- Path_Rail <- Path_Bias <- Path_Chelsa_Time_CC <-
+    Path_Roads <- Path_Rail <- Path_Bias <- Path_CHELSA <-
     NSp <- EU_Bound <- NCells <- SpPA <- NPres <- Grid_R <- NULL
 
   # # ..................................................................... ###
@@ -156,7 +155,7 @@ Mod_PrepData <- function(
 
   if (!file.exists(EnvFile)) {
     stop(paste0(
-      "Path for environment variables: ", EnvFile, " was not found"),
+      "Path to environment variables: ", EnvFile, " was not found"),
       call. = FALSE)
   }
 
@@ -167,7 +166,7 @@ Mod_PrepData <- function(
       "Path_Grid_Ref", "DP_R_Grid_Ref", TRUE, FALSE,
       "Path_PA", "DP_R_PA", TRUE, FALSE,
       "Path_CLC_Summ", "DP_R_CLC_Summary", TRUE, FALSE,
-      "Path_Chelsa_Time_CC", "DP_R_CHELSA_Time_CC", TRUE, FALSE,
+      "Path_CHELSA", "DP_R_CHELSA_Output", TRUE, FALSE,
       "Path_Roads", "DP_R_Roads", TRUE, FALSE,
       "Path_Rail", "DP_R_Railways", TRUE, FALSE,
       "Path_Bias", "DP_R_Efforts", TRUE, FALSE,
@@ -179,7 +178,7 @@ Mod_PrepData <- function(
       "Path_Grid_Ref", "DP_R_Grid_Ref_Local", TRUE, FALSE,
       "Path_PA", "DP_R_PA_Local", TRUE, FALSE,
       "Path_CLC_Summ", "DP_R_CLC_Summary_Local", TRUE, FALSE,
-      "Path_Chelsa_Time_CC", "DP_R_CHELSA_Time_CC_Local", TRUE, FALSE,
+      "Path_CHELSA", "DP_R_CHELSA_Output_Local", TRUE, FALSE,
       "Path_Roads", "DP_R_Roads_Local", TRUE, FALSE,
       "Path_Rail", "DP_R_Railways_Local", TRUE, FALSE,
       "Path_Bias", "DP_R_Efforts_Local", TRUE, FALSE,
@@ -371,14 +370,12 @@ Mod_PrepData <- function(
   ## CHELSA -----
 
   IASDT.R::CatTime("CHELSA", Level = 1)
-  R_Chelsa <- file.path(Path_Chelsa_Time_CC, "St_1981_2010.RData")
-  if (!file.exists(R_Chelsa)) {
-    stop(paste0(R_Chelsa, " file does not exist"), call. = FALSE)
+  R_CHELSA <- file.path(Path_CHELSA, "Processed", "R_Current.RData")
+  if (!file.exists(R_CHELSA)) {
+    stop(paste0(R_CHELSA, " file does not exist"), call. = FALSE)
   }
-  R_Chelsa <- IASDT.R::LoadAs(R_Chelsa) %>%
+  R_CHELSA <- IASDT.R::LoadAs(R_CHELSA) %>%
     terra::unwrap() %>%
-    stats::setNames(stringr::str_remove(names(.), "_1981_2010")) %>%
-    terra::subset(BioVars) %>%
     terra::mask(EffortsMask)
 
   # # ..................................................................... ###
@@ -491,7 +488,7 @@ Mod_PrepData <- function(
 
   ColumnsFirst <- c("CellNum", "CellCode", "Country", "Country_Nearest")
   DT_All <- c(
-    R_Chelsa, R_Hab, R_HabLog, R_RoadInt, R_RoadIntLog,
+    R_CHELSA, R_Hab, R_HabLog, R_RoadInt, R_RoadIntLog,
     R_RailInt, R_RailIntLog, R_RoadRail, R_RoadRailLog, R_Sp) %>%
     as.data.frame(na.rm = TRUE, xy = TRUE, cells = TRUE) %>%
     tibble::tibble() %>%

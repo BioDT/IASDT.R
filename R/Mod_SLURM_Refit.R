@@ -61,7 +61,7 @@ Mod_SLURM_Refit <- function(
 
   if (!file.exists(EnvFile)) {
     stop(paste0(
-      "Path for environment variables: ", EnvFile, " was not found"), 
+      "Path to environment variables: ", EnvFile, " was not found"), 
       call. = FALSE)
   }
 

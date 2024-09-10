@@ -1,5 +1,5 @@
 ## |------------------------------------------------------------------------| #
-# Valid_URL ----
+# CheckURL ----
 ## |------------------------------------------------------------------------| #
 #
 #' Check the validity of a URL
@@ -10,7 +10,7 @@
 #' @param url_in A character string specifying the URL to be checked.
 #' @param t A numeric value specifying the timeout in seconds for the connection
 #'   attempt. Default is 2 seconds.
-#' @name Valid_URL
+#' @name CheckURL
 #' @source The source code of this function was taken from this
 #'   [stackoverflow](https://stackoverflow.com/q/52911812) discussion.
 #' @return A logical value: `TRUE` if the URL is valid, `FALSE` if not.
@@ -18,10 +18,10 @@
 #' urls <- c(
 #'      "http://www.amazon.com", "http://this.isafakelink.biz",
 #'      "https://stackoverflow.com", "https://stack-overflow.com")
-#' sapply(urls, Valid_URL)
+#' sapply(urls, CheckURL)
 #' @export
 
-Valid_URL <- function(url_in, t = 2) {
+CheckURL <- function(url_in, t = 2) {
 
   if (is.null(url_in)) {
     stop("url_in cannot be NULL")

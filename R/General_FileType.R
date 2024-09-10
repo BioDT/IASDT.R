@@ -22,8 +22,15 @@
 FileType <- function(Path) {
 
   # Check system commands
-  IASDT.R::CheckCommands("file")
-
+  Commands <- c("file")
+  CommandsAvail <- purrr::map_lgl(Commands, IASDT.R::CheckCommands)
+  if (!all(CommandsAvail)) {
+    Missing <- paste0(Commands[!CommandsAvail], collapse = " + ")
+    stop(
+      paste0("The following command(s) are not available: ", Missing),
+      call. = FALSE)
+  }
+  
   if (is.null(Path)) {
     stop("Path cannot be NULL", call. = FALSE)
   }

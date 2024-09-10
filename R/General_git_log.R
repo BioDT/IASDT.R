@@ -45,7 +45,14 @@
 git_log <- function(Path = ".", Num = NULL, ReturnLog = FALSE) {
 
   # Check system commands
-  IASDT.R::CheckCommands("git")
+  Commands <- c("git")
+  CommandsAvail <- purrr::map_lgl(Commands, IASDT.R::CheckCommands)
+  if (!all(CommandsAvail)) {
+    Missing <- paste0(Commands[!CommandsAvail], collapse = " + ")
+    stop(
+      paste0("The following command(s) are not available: ", Missing),
+      call. = FALSE)
+  }
 
   if (!dir.exists(Path)) {
     stop("The provided path does not exist.", call. = FALSE)

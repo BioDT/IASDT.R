@@ -169,7 +169,7 @@ Mod_Prep4HPC <- function(
       call. = FALSE)
   }
 
-  if (!(Precision %in% c(32,64))) {
+  if (!(Precision %in% c(32, 64))) {
     stop(
       paste0(
         "Precision should be either of 32 or 64, not ", Precision),
@@ -234,7 +234,7 @@ Mod_Prep4HPC <- function(
 
   if (!file.exists(EnvFile)) {
     stop(paste0(
-      "Path for environment variables: ", EnvFile, " was not found"),
+      "Path to environment variables: ", EnvFile, " was not found"),
       call. = FALSE)
   }
 

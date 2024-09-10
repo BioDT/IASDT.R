@@ -20,8 +20,15 @@
 CheckQuartoVersion <- function() {
 
   # Check system commands
-  IASDT.R::CheckCommands("quarto")
-
+  Commands <- c("quarto")
+  CommandsAvail <- purrr::map_lgl(Commands, IASDT.R::CheckCommands)
+  if (!all(CommandsAvail)) {
+    Missing <- paste0(Commands[!CommandsAvail], collapse = " + ")
+    stop(
+      paste0("The following command(s) are not available: ", Missing),
+      call. = FALSE)
+  }
+  
   # # ..................................................................... ###
 
   OnlineVersion <- "https://github.com/quarto-dev/quarto-cli/releases/" %>%

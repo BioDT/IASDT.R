@@ -80,7 +80,7 @@ CLC_Process <- function(
   if (!file.exists(EnvFile)) {
     stop(
       paste0(
-        "Path for environment variables (`EnvFile`): ",
+        "Path to environment variables (`EnvFile`): ",
         EnvFile, " was not found"),
       call. = FALSE)
   }

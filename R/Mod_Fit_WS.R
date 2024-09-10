@@ -37,7 +37,7 @@ Mod_Fit_WS <- function(Path_Model, EnvFile = ".env", NCores = NULL) {
 
   if (!file.exists(EnvFile)) {
     stop(
-      paste0("Path for environment variables: ", EnvFile, " was not found"),
+      paste0("Path to environment variables: ", EnvFile, " was not found"),
       call. = FALSE)
   }
 

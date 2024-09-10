@@ -18,7 +18,15 @@
 CheckZip <- function(File) {
 
   # Check if the unzip command is available
-  IASDT.R::CheckCommands("unzip")
+  Commands <- c("unzip")
+  CommandsAvail <- purrr::map_lgl(Commands, IASDT.R::CheckCommands)
+  if (!all(CommandsAvail)) {
+    Missing <- paste0(Commands[!CommandsAvail], collapse = " + ")
+    stop(
+      paste0("The following command(s) are not available: ", Missing),
+      call. = FALSE)
+  }
+
 
   if (length(File) != 1 || !inherits(File, "character") || !nzchar(File)) {
     stop(

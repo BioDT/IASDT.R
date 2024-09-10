@@ -86,9 +86,8 @@ of the \code{Sp_PA_Summary_DF.RData} file from this path.
 \item \strong{\code{DP_R_CLC_Summary}} / \strong{\code{DP_R_CLC_Summary_Local}}: Path containing
 the \code{PercCov_SynHab_Crop.RData} file. This file contains maps for the
 percentage coverage of each SynHab habitat type per grid cell.
-\item \strong{\code{DP_R_CHELSA_Time_CC}} / \strong{\code{DP_R_CHELSA_Time_CC_Local}}: Path
-containing the \code{St_1981_2010.RData} file. This file contains processed
-\code{CHELSA} data for the current climate.
+\item \strong{\code{DP_R_CHELSA_Output}} / \strong{\code{DP_R_CHELSA_Output_Local}}: Path
+for processed CHELSA data.
 \item \strong{\code{DP_R_Roads}} / \strong{\code{DP_R_Roads_Local}}: Path for processed road data.
 The function reads the contents of: \code{Road_Length.RData} for the total
 length of any road type per grid cell.

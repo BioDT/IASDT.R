@@ -90,7 +90,7 @@ PlotVarPar <- function(
 
   if (!file.exists(EnvFile)) {
     stop(
-      paste0("Path for environment variables: ", EnvFile, " was not found"),
+      paste0("Path to environment variables: ", EnvFile, " was not found"),
       call. = FALSE)
   }
 

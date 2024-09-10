@@ -123,7 +123,7 @@ Coda_to_tibble <- function(
 
     if (!file.exists(EnvFile)) {
       stop(
-        paste0("Path for environment variables: ", EnvFile, " was not found"), 
+        paste0("Path to environment variables: ", EnvFile, " was not found"), 
         call. = FALSE)
     }
 
@@ -199,11 +199,11 @@ Coda_to_tibble <- function(
               purrr::set_names(c("Sp1", "Sp2"))
 
             IAS1 <- IASDT.R::GetSpeciesName(
-              EnvFile = EnvFile, SpID = IAS_N[1], FromHPC = FromHPC) %>%
+              SpID = IAS_N[1], EnvFile = EnvFile, FromHPC = FromHPC) %>%
               dplyr::pull(Species_name)
 
             IAS2 <- IASDT.R::GetSpeciesName(
-              EnvFile = EnvFile, SpID = IAS_N[2], FromHPC = FromHPC) %>%
+              SpID = IAS_N[2], EnvFile = EnvFile, FromHPC = FromHPC) %>%
               dplyr::pull(Species_name)
 
             return(c(IAS_N, IAS1 = IAS1, IAS2 = IAS2))

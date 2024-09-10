@@ -4,15 +4,15 @@
 \alias{GetSpeciesName}
 \title{Get Species Name or Information Based on IASDT Species ID}
 \usage{
-GetSpeciesName(EnvFile = ".env", SpID = NULL, FromHPC = TRUE)
+GetSpeciesName(SpID = NULL, EnvFile = ".env", FromHPC = TRUE)
 }
 \arguments{
+\item{SpID}{optional IASDT species ID for which detailed information is
+required. If not provided, the function returns the entire species list.}
+
 \item{EnvFile}{EnvFile A string specifying the path to the environment
 variables file. Default is ".env". This file must exist in the specified
 path; otherwise, the function will stop with an error message.}
-
-\item{SpID}{optional IASDT species ID for which detailed information is
-required. If not provided, the function returns the entire species list.}
 
 \item{FromHPC}{Logical. Indicates whether the function is being run on an HPC
 environment, affecting file path handling. Default: \code{TRUE}.}

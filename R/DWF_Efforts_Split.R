@@ -38,7 +38,14 @@ Efforts_Split <- function(Path_Zip, Path_Output, ChunkSize = 100000) {
   }
 
   # Checking required bash tools
-  IASDT.R::CheckCommands(c("unzip", "cut", "sed", "split"))
+  Commands <- c("unzip", "cut", "sed", "split")
+  CommandsAvail <- purrr::map_lgl(Commands, IASDT.R::CheckCommands)
+  if (!all(CommandsAvail)) {
+    Missing <- paste0(Commands[!CommandsAvail], collapse = " + ")
+    stop(
+      paste0("The following command(s) are not available: ", Missing),
+      call. = FALSE)
+  }
 
   # ensure that `ChunkSize` is not formatted in scientific notation
   ChunkSize <- format(ChunkSize, scientific = FALSE)

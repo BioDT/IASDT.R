@@ -93,7 +93,14 @@ GBIF_Download <- function(
   # # ..................................................................... ###
 
   IASDT.R::CatTime("Check system commands")
-  IASDT.R::CheckCommands(c("unzip", "nl", "head", "cut", "sed", "split"))
+  Commands <- c("unzip", "nl", "head", "cut", "sed", "split")
+  CommandsAvail <- purrr::map_lgl(Commands, IASDT.R::CheckCommands)
+  if (!all(CommandsAvail)) {
+    Missing <- paste0(Commands[!CommandsAvail], collapse = " + ")
+    stop(
+      paste0("The following command(s) are not available: ", Missing),
+      call. = FALSE)
+  }
 
   # # ..................................................................... ###
 

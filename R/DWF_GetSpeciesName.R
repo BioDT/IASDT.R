@@ -31,16 +31,16 @@
 #'    `Sp_PA_Summary_DF.RData` file from this path.
 #' @export
 
-GetSpeciesName <- function(EnvFile = ".env", SpID = NULL, FromHPC = TRUE) {
+GetSpeciesName <- function(SpID = NULL, EnvFile = ".env", FromHPC = TRUE) {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Path_PA <- IAS_ID <- NCells <- TaxaInfoFile <- NULL
+  Path_PA <- IAS_ID <- TaxaInfoFile <- NULL
 
   # Load environment variables
   if (!file.exists(EnvFile)) {
     stop(
-      paste0("Path for environment variables: ", EnvFile, " was not found"),
+      paste0("Path to environment variables: ", EnvFile, " was not found"),
       call. = FALSE)
   }
 
@@ -60,7 +60,7 @@ GetSpeciesName <- function(EnvFile = ".env", SpID = NULL, FromHPC = TRUE) {
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
   # Reading species info
-   SpNames <- utils::read.delim(TaxaInfoFile, sep = "\t") %>%
+  SpNames <- utils::read.delim(TaxaInfoFile, sep = "\t") %>%
     tibble::tibble() %>%
     dplyr::mutate(
       IAS_ID = paste0("Sp_", stringr::str_pad(IAS_ID, pad = "0", width = 4)))
@@ -68,6 +68,10 @@ GetSpeciesName <- function(EnvFile = ".env", SpID = NULL, FromHPC = TRUE) {
   if (is.null(SpID)) {
     return(SpNames)
   } else {
+
+    if (is.numeric(SpID)) {
+      SpID <- paste0("Sp_", stringr::str_pad(SpID, pad = "0", width = 4))
+    }
 
     NGridCells <- file.path(Path_PA, "Sp_PA_Summary_DF.RData")
 
@@ -83,7 +87,7 @@ GetSpeciesName <- function(EnvFile = ".env", SpID = NULL, FromHPC = TRUE) {
         IAS_ID = paste0(
           "Sp_", stringr::str_pad(IAS_ID, pad = "0", width = 4))) %>%
       dplyr::filter(IAS_ID == SpID) %>%
-      dplyr::pull(NCells)
+      dplyr::pull("NCells_All")
 
     dplyr::filter(SpNames, IAS_ID == SpID) %>%
       dplyr::mutate(NCells = NGridCells) %>%

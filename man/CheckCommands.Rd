@@ -11,9 +11,8 @@ CheckCommands(Commands)
 \code{c("git", "Rscript", "unzip")}).}
 }
 \value{
-The function returns \code{NULL} (invisibly) if all specified commands are
-available on the system. If any commands are missing, the function stops
-with an error and provides a list of the missing tools.
+The function returns \code{TRUE} if all specified commands are available
+on the system, \code{FALSE} if any is not available.
 }
 \description{
 This function checks if a list of system commands are available on the user's

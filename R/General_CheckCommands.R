@@ -9,9 +9,8 @@
 #' informative error message.
 #' @param Commands A character vector of system command names to check (e.g.,
 #'   `c("git", "Rscript", "unzip")`).
-#' @return The function returns `NULL` (invisibly) if all specified commands are
-#'   available on the system. If any commands are missing, the function stops
-#'   with an error and provides a list of the missing tools.
+#' @return The function returns `TRUE` if all specified commands are available
+#'   on the system, `FALSE` if any is not available.
 #' @export
 #' @name CheckCommands
 #' @author Ahmed El-Gabbas
@@ -28,12 +27,13 @@ CheckCommands <- function(Commands) {
 
   # If any tools are missing, stop with an informative error message
   if (length(MissingTools) > 0) {
-    stop(
+    warning(
       paste0(
         "The following tool(s) are missing: ",
         paste0(MissingTools, collapse = ", ")),
       call. = FALSE)
+    return(FALSE)
+  } else {
+    return(TRUE)
   }
-
-  return(invisible(NULL))
 }

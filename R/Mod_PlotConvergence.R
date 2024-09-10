@@ -420,7 +420,7 @@ PlotConvergence <- function(
           label = paste0("<br><b><i>", Species, "</i></b>"))
 
         PanelTitle2 <- IASDT.R::GetSpeciesName(
-          EnvFile = EnvFile, SpID = IAS_ID, FromHPC = FromHPC) %>%
+          SpID = IAS_ID, EnvFile = EnvFile, FromHPC = FromHPC) %>%
           dplyr::select(Class, Order, Family) %>%
           unlist() %>%
           paste0(collapse = " | ") %>%

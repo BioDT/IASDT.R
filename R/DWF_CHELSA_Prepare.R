@@ -38,10 +38,6 @@ CHELSA_Prepare <- function(
 
   # # ..................................................................... ###
 
-  # # ..................................................................... ###
-
-  IASDT.R::CatTime("Checking input arguments")
-
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(
     AllArgs,
@@ -59,7 +55,7 @@ CHELSA_Prepare <- function(
 
   rm(AllArgs, CharArgs, LogicArgs, NumericArgs)
 
-  if (NCores < 1 ) {
+  if (NCores < 1) {
     stop("`NCores` must be a positive integer.", call. = FALSE)
   }
 
@@ -76,8 +72,8 @@ CHELSA_Prepare <- function(
 
   # Environment variables -----
   if (!file.exists(EnvFile)) {
-    stop(paste0(
-      "Path to environment variables: ", EnvFile, " was not found"),
+    stop(
+      paste0("Path to environment variables: ", EnvFile, " was not found"),
       call. = FALSE)
   }
 
@@ -104,14 +100,12 @@ CHELSA_Prepare <- function(
 
   # files containing download links for climatology data
   CHELSA_Metadata <- list.files(
-    path = Path_DwnLinks,
-    pattern = "DwnLinks_Climatologies_.+txt$", recursive = TRUE,
-    full.names = TRUE) %>%
+    path = Path_DwnLinks, recursive = TRUE, full.names = TRUE,
+    pattern = "DwnLinks_Climatologies_.+txt$") %>%
     dplyr::tibble(URL_File = .) %>%
     # Add download links
     dplyr::mutate(
-      URL = purrr::map(
-        .x = URL_File, .f = ~ readr::read_lines(.x)),
+      URL = purrr::map(.x = URL_File, .f = ~ readr::read_lines(.x)),
       URL_File = basename(URL_File)) %>%
     tidyr::unnest_longer("URL") %>%
     dplyr::mutate(
@@ -119,26 +113,29 @@ CHELSA_Prepare <- function(
       Folder = purrr::map_chr(URL, stringr::str_remove_all, pattern = BaseURL),
       File = purrr::map_chr(Folder, basename),
       Folder = purrr::map_chr(Folder, dirname),
+
       # Extract time period
       TimePeriod = purrr::map_chr(
         URL_File, stringr::str_remove_all,
         pattern = "DwnLinks_Climatologies_|.txt"),
+
       # File extension
       Ext = purrr::map_chr(URL, tools::file_ext),
+
       ModelScenario = purrr::map2(
         .x = Folder, .y = TimePeriod,
-        .f = ~{
-
+        .f = ~ {
           # assign "Current" for files represent current climates
           if (.y == "1981-2010") {
             Out <- tibble::tibble(
               ClimateModel = "Current", ClimScenario = "Current")
-          } else {
 
+          } else {
             ClimateModels <- c(
               "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
               "MRI-ESM2-0", "UKESM1-0-LL")
             ClimateScenarios <- c("ssp126", "ssp370", "ssp585")
+
             ClimateModel <- stringr::str_extract(.x, ClimateModels) %>%
               na.omit() %>%
               as.character()
@@ -150,7 +147,8 @@ CHELSA_Prepare <- function(
           }
           return(Out)
         }
-      )) %>%
+      )
+    ) %>%
     tidyr::unnest_wider("ModelScenario") %>%
     dplyr::filter(
       Folder != "climatologies/2011-2040/UKESM1-0-LL/ssp126") %>%
@@ -158,7 +156,6 @@ CHELSA_Prepare <- function(
       Variable = purrr::pmap_chr(
         .l = list(File, TimePeriod, ClimScenario, Ext, ClimateModel),
         .f = function(File, TimePeriod, ClimScenario, Ext, ClimateModel) {
-
           stringr::str_remove_all(
             string = File,
             pattern = paste0(
@@ -167,21 +164,25 @@ CHELSA_Prepare <- function(
             stringr::str_remove_all(
               pattern = stringr::str_glue(
                 "{ClimateModel}|{tolower(ClimateModel)}")) %>%
-
             stringr::str_remove_all(
               pattern = stringr::str_glue(
-                '{TimePeriod}|{stringr::str_replace(TimePeriod, "-", "_")}')) %>%
+                '{TimePeriod}|{stringr::str_replace(TimePeriod, "-", "_")}')
+            ) %>%
             stringr::str_remove_all(pattern = "__|___") %>%
             stringr::str_remove_all(pattern = "^_|_$")
         }
-      )) %>%
+      )
+    ) %>%
     # Only bioclimatic variables
     dplyr::filter(stringr::str_detect(Variable, "^bio")) %>%
     dplyr::mutate(
+
       Path_Down = purrr::map_chr(
         .x = File, .f = ~ file.path(Path_CHELSA_In, .x)),
+
       Path_Out_tif = purrr::map_chr(
         .x = File, .f = ~ file.path(Path_CHELSA_Out, "Tif", .x)),
+
       Path_Out_NC = purrr::map_chr(
         .x = Path_Out_tif, .f = stringr::str_replace_all,
         pattern = "Tif", replacement = "NC"),
@@ -203,17 +204,16 @@ CHELSA_Prepare <- function(
               pattern = "1981-2010_Current_Current",
               replacement = "1981-2010_Current")
         }
-      )) %>%
+      )
+    ) %>%
     dplyr::select(-"Folder") %>%
     dplyr::left_join(IASDT.R::CHELSA_Vars, by = "Variable")
 
   # # ..................................................................... ###
 
   if (Download) {
-
     withr::local_options(
-      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
-      timeout = 1200)
+      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
     if (NCores > 1) {
       future::plan("multisession", workers = NCores, gc = TRUE)
@@ -241,7 +241,6 @@ CHELSA_Prepare <- function(
                 } else {
                   Out <- FALSE
                 }
-
               } else {
                 Out <- TRUE
               }
@@ -250,7 +249,9 @@ CHELSA_Prepare <- function(
               return(Out)
             },
             .options = furrr::furrr_options(seed = TRUE),
-            .progress = FALSE)) %>%
+            .progress = FALSE
+          )
+        ) %>%
         dplyr::filter(Exclude)
     }
 
@@ -261,7 +262,7 @@ CHELSA_Prepare <- function(
     if (nrow(Data2Down) > 0) {
       furrr::future_walk(
         .x = seq_len(nrow(Data2Down)),
-        .f = ~{
+        .f = ~ {
           PathOut <- Data2Down$Path_Down[.x]
           URL <- Data2Down$URL[.x]
 
@@ -292,7 +293,6 @@ CHELSA_Prepare <- function(
     }
 
     future::plan("sequential")
-
   }
 
   # # ..................................................................... ###
@@ -300,9 +300,12 @@ CHELSA_Prepare <- function(
   # Save to disk -----
 
   save(
-    CHELSA_Metadata, file = file.path(Path_CHELSA_Out, "CHELSA_Metadata.RData"))
+    CHELSA_Metadata,
+    file = file.path(Path_CHELSA_Out, "CHELSA_Metadata.RData"))
+
   readr::write_csv(
-    x = CHELSA_Metadata, file = file.path(Path_CHELSA_Out, "CHELSA_Metadata.csv"))
+    x = CHELSA_Metadata,
+    file = file.path(Path_CHELSA_Out, "CHELSA_Metadata.csv"))
 
   # # ..................................................................... ###
 

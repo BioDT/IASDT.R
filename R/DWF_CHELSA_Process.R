@@ -40,6 +40,8 @@ CHELSA_Process <- function(
     BaseURL = "https://os.zhdk.cloud.switch.ch/envicloud/chelsa/chelsa_V2/GLOBAL/",
     Download_NCores = 4, CompressLevel = 5, OverwriteProcessed = FALSE) {
 
+  # # ..................................................................... ###
+
   .StartTime <- lubridate::now(tzone = "CET")
 
   # # ..................................................................... ###
@@ -72,9 +74,10 @@ CHELSA_Process <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Path_CHELSA_In <- Path_CHELSA_Out <- TimePeriod <- ClimateModel <-
-    ClimScenario <- Path_Out_tif <- Processed_Name <- Processed_File <-
-    File_List <- Processed_Maps <- Problematic <- NULL
+  Path_CHELSA_In <- Path_CHELSA_Out <- Path_Out_NC <- TimePeriod <-
+    ClimateModel <- ClimScenario <- Path_Out_tif <- Processed_Name <-
+    Processed_File <- File_List <- Processed_Maps <- Problematic <-
+    Path_Down <- NULL
 
   # # ..................................................................... ###
 
@@ -82,8 +85,8 @@ CHELSA_Process <- function(
   IASDT.R::CatTime("Environment variables")
 
   if (!file.exists(EnvFile)) {
-    stop(paste0(
-      "Path to environment variables: ", EnvFile, " was not found"),
+    stop(
+      paste0("Path to environment variables: ", EnvFile, " was not found"),
       call. = FALSE)
   }
 
@@ -104,14 +107,18 @@ CHELSA_Process <- function(
 
   # Ensure that the output path exists
   fs::dir_create(
-    c(Path_CHELSA_Out,
+    c(
+      Path_CHELSA_Out,
       file.path(Path_CHELSA_Out, c("Tif", "NC", "Processed"))))
+
+  rm(EnvVars2Read)
 
   # # ..................................................................... ###
 
-  # Prepare / download CHELSA data -----
+  # Prepare CHELSA metadata / download CHELSA data -----
 
-  IASDT.R::CatTime("Prepare / download CHELSA data")
+  IASDT.R::CatTime("Prepare CHELSA metadata / download CHELSA data")
+  TimePrepare <- lubridate::now(tzone = "CET")
 
   # 874 files (19 Bioclimatic variables * 46 CC options)
   CHELSA_Data <- IASDT.R::CHELSA_Prepare(
@@ -119,191 +126,205 @@ CHELSA_Process <- function(
     NCores = Download_NCores, Overwrite = Overwrite, BaseURL = BaseURL,
     Download_Attempts = Download_Attempts, Sleep = Sleep)
 
+  IASDT.R::CatDiff(
+    InitTime = TimePrepare, Level = 1,
+    Prefix = "Prepare CHELSA metadata / download CHELSA data was finished in ")
+
   # # ..................................................................... ###
 
-  # Check CHELSA files -----
+  # Check input CHELSA files -----
 
-  IASDT.R::CatTime("Check CHELSA files")
+  if (isFALSE(Download)) {
 
+    # If Download = TRUE, there is no need to re-check the files as these files
+    # were already checked while downloading the files
 
-  withr::local_options(
-    future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
-    timeout = 1200)
+    withr::local_options(
+      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
-  if (NCores > 1) {
-    future::plan("multisession", workers = NCores, gc = TRUE)
-    on.exit(future::plan("sequential"), add = TRUE)
-  } else {
+    if (NCores > 1) {
+      IASDT.R::CatTime("Check input CHELSA files on parallel")
+      future::plan("multisession", workers = NCores, gc = TRUE)
+      on.exit(future::plan("sequential"), add = TRUE)
+    } else {
+      IASDT.R::CatTime("Check input CHELSA files sequentially")
+      future::plan("sequential", gc = TRUE)
+    }
+
+    CHELSA_Data_Checked <- CHELSA_Data %>%
+      dplyr::select(Path_Down) %>%
+      dplyr::mutate(
+        InputOkay = furrr::future_map_lgl(
+          .x = Path_Down,
+          .f = ~ (file.exists(.x) && IASDT.R::CheckTiff(.x)),
+          .options = furrr::furrr_options(
+            seed = TRUE, packages = "IASDT.R"))
+      ) %>%
+      dplyr::filter(isFALSE(InputOkay))
     future::plan("sequential", gc = TRUE)
+
+    if (nrow(CHELSA_Data_Checked) > 0) {
+      readr::write_lines(
+        x = dplyr::pull(CHELSA_Data_Checked, "InputOkay"),
+        file = file.path(Path_CHELSA_Out, "ProblematicTiffs.txt"))
+
+      stop(
+        paste0(
+          "Not all input tiff files are available and valid.",
+          "Check `ProblematicTiffs.txt`"),
+        call. = FALSE
+      )
+    }
+
+    # CHELSA files that will not be processed
+    Diff <- setdiff(
+      list.files(Path_CHELSA_In, pattern = "CHELSA.+.tif$", full.names = TRUE),
+      CHELSA_Data$Path_Down)
+
+    if (length(Diff) > 0) {
+      message(
+        paste0(
+          " >> Only Bioclimatic variables will be processed (",
+          nrow(CHELSA_Data), " files)\n >> ", length(Diff),
+          " files will not be processed.\n",
+          " >> See `NotProcessed.txt` for the list of files"))
+
+      readr::write_lines(
+        x = Diff, file = file.path(Path_CHELSA_Out, "NotProcessed.txt"))
+
+    }
+
+    rm(AllOkay, Diff)
   }
-
-  AllOkay <- future.apply::future_lapply(
-    X = CHELSA_Data$Path_Down,
-    FUN = function(x) {
-      file.exists(x) && IASDT.R::CheckTiff(x)
-    },
-    future.seed = TRUE, future.scheduling = Inf,
-    future.packages = c("IASDT.R", "terra", "stringr")) %>%
-    unlist() %>%
-    all()
-
-  future::plan("sequential", gc = TRUE)
-
-  if (isFALSE(AllOkay)) {
-    stop("Not all tiff files are available on disk")
-  }
-
-  # CHELSA files that will not be processed
-  Diff <- setdiff(
-    list.files(Path_CHELSA_In, pattern = "CHELSA.+.tif$", full.names = TRUE),
-    CHELSA_Data$Path_Down)
-  if (length(Diff) > 0) {
-    message(
-      paste0(
-        " >> Only Bioclimatic variables will be processed (",
-        nrow(CHELSA_Data), " files)\n >> ", length(Diff),
-        " files will not be processed.\n",
-        " >> See `NotProcessed.txt` for the list of files"))
-    readr::write_lines(
-      x = Diff, file = file.path(Path_CHELSA_Out, "NotProcessed.txt"))
-  }
-
-  rm(AllOkay, Diff, EnvVars2Read)
 
   # # ..................................................................... ###
 
   # Processing CHELSA data -----
 
-  IASDT.R::CatTime("Processing CHELSA maps")
-  TimeStart <- lubridate::now(tzone = "CET")
+  TimeProcess <- lubridate::now(tzone = "CET")
 
   if (NCores > 1) {
+    IASDT.R::CatTime("Processing CHELSA maps on parallel")
     future::plan("multisession", workers = NCores, gc = TRUE)
     on.exit(future::plan("sequential"), add = TRUE)
   } else {
+    IASDT.R::CatTime("Processing CHELSA maps sequentially")
     future::plan("sequential", gc = TRUE)
   }
 
-
-  ProcessingIssues <- future.apply::future_lapply(
-    X = seq_len(nrow(CHELSA_Data)),
-    FUN = function(x) {
-
-      FileMetadata <- dplyr::slice(CHELSA_Data, x)
-      FileInput <- FileMetadata$Path_Down
-      Process <- FALSE
-
-      TifOkay <- file.exists(FileMetadata$Path_Out_tif)
-      if (TifOkay) {
-        TifOkay <- IASDT.R::CheckTiff(FileMetadata$Path_Out_tif)
-      }
-
-      NC_Okay <- file.exists(FileMetadata$Path_Out_NC)
-      if (NC_Okay) {
-        NC_Okay <- IASDT.R::CheckTiff(FileMetadata$Path_Out_NC)
-      }
-
-      Processed <- NC_Okay && NC_Okay
-
-      if (isFALSE(Processed) || OverwriteProcessed) {
-        Process <- TRUE
-      }
-
-      if (Process) {
-        if (!file.exists(FileInput)) {
-          stop(
-            paste0(
-              "Input file is either does not exist or corrupted",
-              FileInput),
-            call. = FALSE)
-        }
-
-        Attempt <- 0
-        while (TRUE) {
-          Attempt <- Attempt + 1
-          Try <- try(IASDT.R::CHELSA_Project(
-            Metadata = FileMetadata, EnvFile = EnvFile, FromHPC = FromHPC,
-            CompressLevel = CompressLevel, ReturnMap = FALSE),
-            silent = TRUE)
-
-          if (!inherits(Try, "try-error") || Attempt >= 5) {
-            break
-          }
-
-          if (inherits(Try, "try-error")) {
-            # re-download the file if it fails to be processed
-            system(
-              command = FileMetadata$DownCommand,
-              ignore.stdout = TRUE, ignore.stderr = TRUE)
-          }
-        }
-
-        invisible(gc())
-
-        if (inherits(Try, "try-error")) {
-          return(tibble::tibble(ID = x, Problematic = TRUE))
-        } else {
-          Tif_NC_Okay <- all(
-            file.exists(FileMetadata$Path_Out_tif),
-            IASDT.R::CheckTiff(FileMetadata$Path_Out_tif),
-            file.exists(FileMetadata$Path_Out_NC),
-            IASDT.R::CheckTiff(FileMetadata$Path_Out_NC))
-
-          if (Tif_NC_Okay) {
-            return(tibble::tibble(ID = x, Problematic = FALSE))
-          } else {
-            return(tibble::tibble(ID = x, Problematic = TRUE))
-          }
-        }
-      } else {
-        return(tibble::tibble(ID = x, Problematic = FALSE))
-      }
-    },
-    future.seed = TRUE, future.scheduling = Inf,
-    future.globals = c(
-      "CHELSA_Data", "EnvFile", "FromHPC",
-      "CompressLevel", "OverwriteProcessed"),
-    future.packages = c("dplyr", "terra", "IASDT.R")) %>%
-    dplyr::bind_rows() %>%
-    dplyr::filter(Problematic)
-
-
-  if (nrow(ProcessingIssues) > 0) {
-    FailedProcessing <- CHELSA_Data$Path_Down[ProcessingIssues$ID]
-    readr::write_lines(
-      x = FailedProcessing,
-      file = file.path(Path_CHELSA_Out, "FailedProcessing.txt"))
-    stop(
-      paste(
-        "\n >> ", length(FailedProcessing), " files failed to process.\n",
-        " >> Check `FailedProcessing.txt` for more details"),
-      call. = FALSE)
+  # Exclude previously processed files (after checking)
+  if (OverwriteProcessed) {
+    CHELSA2Process <- CHELSA_Data %>%
+      dplyr::select(Path_Down, Path_Out_NC, Path_Out_tif)
+  } else {
+    CHELSA2Process <- CHELSA_Data %>%
+      dplyr::select(Path_Down, Path_Out_NC, Path_Out_tif) %>%
+      dplyr::mutate(
+        Process = furrr::future_map2_lgl(
+          .x = Path_Out_NC, .y = Path_Out_tif,
+          .f = ~ {
+            NC_Okay <- file.exists(.x) && IASDT.R::CheckTiff(.x)
+            Tif_Okay <- file.exists(.y) && IASDT.R::CheckTiff(.y)
+            return(isFALSE(NC_Okay && Tif_Okay))
+          },
+          .options = furrr::furrr_options(
+            seed = TRUE, packages = "IASDT.R"))
+      ) %>%
+      dplyr::filter(Process) %>%
+      dplyr::select(-"Process")
   }
 
-  rm(ProcessingIssues)
+  # Processing CHELSA files
+
+  if (nrow(CHELSA2Process) > 0) {
+    CHELSA2Process <- CHELSA2Process %>%
+      dplyr::mutate(
+        Failed = furrr::future_pmap_lgl(
+          .l = list(Path_Down, Path_Out_NC, Path_Out_tif),
+          .f = function(Down = Path_Down, Path_Out_NC, Path_Out_tif) {
+            FileMetadata <- dplyr::filter(CHELSA_Data, Path_Down == Down)
+
+            Attempt <- 0
+            while (TRUE) {
+              Attempt <- Attempt + 1
+              Try <- try(
+                IASDT.R::CHELSA_Project(
+                  Metadata = FileMetadata, EnvFile = EnvFile, FromHPC = FromHPC,
+                  CompressLevel = CompressLevel, ReturnMap = FALSE),
+                silent = TRUE)
+
+              if (!inherits(Try, "try-error") || Attempt >= 5) {
+                break
+              }
+
+              if (inherits(Try, "try-error")) {
+                # re-download the file if it fails to be processed
+                system(
+                  command = FileMetadata$DownCommand,
+                  ignore.stdout = TRUE, ignore.stderr = TRUE)
+              }
+            }
+
+            invisible(gc())
+
+            if (inherits(Try, "try-error")) {
+              return(TRUE)
+            } else {
+              if (IASDT.R::CheckTiff(Path_Out_tif) &&
+                  IASDT.R::CheckTiff(Path_Out_NC)) {
+                return(FALSE)
+              } else {
+                return(TRUE)
+              }
+            }
+          },
+          .options = furrr::furrr_options(
+            seed = TRUE,
+            packages = c("dplyr", "terra", "IASDT.R", "tibble", "ncdf4"),
+            globals = c("CHELSA_Data", "EnvFile", "FromHPC", "CompressLevel"))
+        )
+      ) %>%
+      dplyr::filter(Failed)
+
+    if (nrow(CHELSA2Process) > 0) {
+      readr::write_lines(
+        x = CHELSA2Process$Path_Down,
+        file = file.path(Path_CHELSA_Out, "FailedProcessing.txt"))
+
+      stop(
+        paste(
+          "\n >> ", nrow(CHELSA2Process), " files failed to process.\n",
+          " >> Check `FailedProcessing.txt` for more details"),
+        call. = FALSE)
+    }
+
+    IASDT.R::CatTime("All tiff files were already processed", Level = 1)
+
+  }
+
+  rm(CHELSA2Process)
   future::plan("sequential", gc = TRUE)
 
   IASDT.R::CatDiff(
-    InitTime = TimeStart,
+    InitTime = TimeProcess,
     Prefix = "Processing CHELSA data was finished in ", Level = 1)
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  # Group CHELSA data by scenario
-
-  # Export each time*CC options as separate `*.RData` file
-
-
-  IASDT.R::CatTime("Group CHELSA data by scenario")
+  # Group CHELSA data by time, climate model/scenario
 
   if (NCores > 1) {
+    IASDT.R::CatTime(
+      "Group CHELSA data by time, climate model/scenario on parallel")
     future::plan("multisession", workers = NCores, gc = TRUE)
     on.exit(future::plan("sequential"), add = TRUE)
   } else {
+    IASDT.R::CatTime(
+      "Group CHELSA data by time, climate model/scenario sequentially")
     future::plan("sequential", gc = TRUE)
   }
 
-  CHELSA_Summary <- CHELSA_Data %>%
+  CHELSA_Processed <- CHELSA_Data %>%
     dplyr::select(TimePeriod, ClimateModel, ClimScenario, Path_Out_tif) %>%
     dplyr::slice(gtools::mixedorder(Path_Out_tif)) %>%
     dplyr::summarise(
@@ -327,11 +348,9 @@ CHELSA_Process <- function(
             stringr::str_extract("bio.._|bio._") %>%
             stringr::str_remove_all("_$")
 
-          SortedNames <- gtools::mixedsort(MapNames)
-
           Map <- terra::rast(File_List) %>%
             stats::setNames(MapNames) %>%
-            terra::subset(SortedNames) %>%
+            terra::subset(gtools::mixedsort(MapNames)) %>%
             IASDT.R::setRastCRS() %>%
             IASDT.R::setRastVals() %>%
             terra::wrap()
@@ -341,20 +360,22 @@ CHELSA_Process <- function(
             InObj = Map, OutObj = Processed_Name, OutPath = Processed_File)
 
           return(Map)
+
         },
-        .progress = FALSE,
         .options = furrr::furrr_options(
-          seed = TRUE,
-          packages = c("terra", "IASDT.R", "stringr"),
+          seed = TRUE, packages = c("terra", "IASDT.R", "stringr"),
           globals = "CHELSA_Data")))
 
   future::plan("sequential", gc = TRUE)
 
   save(
-    CHELSA_Summary,
-    file = file.path(Path_CHELSA_Out, "CHELSA_Summary.RData"))
+    CHELSA_Processed,
+    file = file.path(Path_CHELSA_Out, "CHELSA_Processed.RData")
+  )
 
-  CHELSA_Processed_DT <- dplyr::select(CHELSA_Summary, -Processed_Maps)
+  ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  CHELSA_Processed_DT <- dplyr::select(CHELSA_Processed, -Processed_Maps)
 
   save(
     CHELSA_Processed_DT,
@@ -364,12 +385,10 @@ CHELSA_Process <- function(
     x = CHELSA_Processed_DT,
     file = file.path(Path_CHELSA_Out, "CHELSA_Processed_DT.csv"))
 
-
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatDiff(
-    InitTime = .StartTime,
-    ChunkText = "Processing CHELSA data took ")
+    InitTime = .StartTime, Prefix = "\nProcessing CHELSA data took ")
 
   return(invisible(NULL))
 }

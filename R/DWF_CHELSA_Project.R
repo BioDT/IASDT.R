@@ -30,8 +30,6 @@
 CHELSA_Project <- function(
     Metadata = NULL, EnvFile = ".env", FromHPC = TRUE,
     CompressLevel = 5, ReturnMap = FALSE) {
-
-
   # # ..................................................................... ###
 
   IASDT.R::CatTime("Checking input arguments")
@@ -43,11 +41,10 @@ CHELSA_Project <- function(
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = "EnvFile", Type = "character")
-
   LogicArgs <- c("FromHPC", "ReturnMap")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = LogicArgs, Type = "logical")
-
-  IASDT.R::CheckArgs(AllArgs = AllArgs, Args = "CompressLevel", Type = "numeric")
+  IASDT.R::CheckArgs(
+    AllArgs = AllArgs, Args = "CompressLevel", Type = "numeric")
 
   rm(AllArgs, LogicArgs)
 
@@ -74,7 +71,8 @@ CHELSA_Project <- function(
   if (!file.exists(Metadata$Path_Down)) {
     stop(
       paste0("Input file does not exist: ", Metadata$Path_Down),
-      call. = FALSE)
+      call. = FALSE
+    )
   }
 
   # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use official
@@ -86,8 +84,8 @@ CHELSA_Project <- function(
   # Environment variables -----
 
   if (!file.exists(EnvFile)) {
-    stop(paste0(
-      "Path for environment variables: ", EnvFile, " was not found"),
+    stop(
+      paste0("Path for environment variables: ", EnvFile, " was not found"),
       call. = FALSE)
   }
 
@@ -132,7 +130,7 @@ CHELSA_Project <- function(
     "extdata", "LandMask.nc", package = "IASDT.R", mustWork = TRUE) %>%
     terra::rast() %>%
     terra::crop(CropExtent) %>%
-    suppressWarnings() %>%  # suppress warning on LUMI while cropping
+    suppressWarnings() %>% # suppress warning on LUMI while cropping
     terra::classify(cbind(0, NA))
 
   # # ..................................................................... ###
@@ -167,8 +165,12 @@ CHELSA_Project <- function(
 
   # For `npp` layers, all tiff maps except for current climate does have a
   # scaling factor all scale and offset information were set manually
-  if (Metadata$scale != 1) Rstr <- Rstr * Metadata$scale
-  if (Metadata$offset != 0) Rstr <- Rstr + Metadata$offset
+  if (Metadata$scale != 1) {
+    Rstr <- Rstr * Metadata$scale
+  }
+  if (Metadata$offset != 0) {
+    Rstr <- Rstr + Metadata$offset
+  }
 
   # # ..................................................................... ###
 
@@ -215,7 +217,8 @@ CHELSA_Project <- function(
 
   # save as *.nc file
   terra::writeCDF(
-    Rstr, filename = Metadata$Path_Out_NC, varname = VarName4NC,
+    Rstr,
+    filename = Metadata$Path_Out_NC, varname = VarName4NC,
     unit = Metadata$unit, zname = Metadata$TimePeriod,
     atts = Attrs, overwrite = TRUE, compression = CompressLevel)
 

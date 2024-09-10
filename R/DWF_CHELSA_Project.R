@@ -30,9 +30,8 @@
 CHELSA_Project <- function(
     Metadata = NULL, EnvFile = ".env", FromHPC = TRUE,
     CompressLevel = 5, ReturnMap = FALSE) {
-  # # ..................................................................... ###
 
-  IASDT.R::CatTime("Checking input arguments")
+  # Checking input arguments -----
 
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(

@@ -298,7 +298,11 @@ CHELSA_Process <- function(
         call. = FALSE)
     }
 
-    IASDT.R::CatTime("All tiff files were already processed", Level = 1)
+    IASDT.R::CatTime("All tiff files were processed", Level = 1)
+
+  } else {
+
+    IASDT.R::CatTime("All tiff files were already processed.", Level = 1)
 
   }
 
@@ -315,12 +319,12 @@ CHELSA_Process <- function(
 
   if (NCores > 1) {
     IASDT.R::CatTime(
-      "Group CHELSA data by time, climate model/scenario on parallel")
+      "Group CHELSA data by time and climate model/scenario on parallel")
     future::plan("multisession", workers = NCores, gc = TRUE)
     on.exit(future::plan("sequential"), add = TRUE)
   } else {
     IASDT.R::CatTime(
-      "Group CHELSA data by time, climate model/scenario sequentially")
+      "Group CHELSA data by time and climate model/scenario sequentially")
     future::plan("sequential", gc = TRUE)
   }
 
@@ -330,6 +334,7 @@ CHELSA_Process <- function(
     dplyr::summarise(
       File_List = list(Path_Out_tif),
       .by = c(TimePeriod, ClimateModel, ClimScenario)) %>%
+
     dplyr::mutate(
       Processed_Name = paste0(
         "R_", TimePeriod, "_", ClimateModel, "_", ClimScenario),

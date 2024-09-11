@@ -75,9 +75,8 @@ CHELSA_Process <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Path_CHELSA_In <- Path_CHELSA_Out <- Path_Out_NC <- TimePeriod <-
-    ClimateModel <- ClimScenario <- Path_Out_tif <- Name <-
-    FillePath <- File_List <- Processed_Maps <- Problematic <-
-    Path_Down <- NULL
+    ClimateModel <- ClimateScenario <- Path_Out_tif <- Name <- FilePath <- 
+    File_List <- Processed_Maps <- Problematic <- Path_Down <- NULL
 
   # # ..................................................................... ###
 
@@ -329,25 +328,25 @@ CHELSA_Process <- function(
   }
 
   CHELSA_Processed <- CHELSA_Data %>%
-    dplyr::select(TimePeriod, ClimateModel, ClimScenario, Path_Out_tif) %>%
+    dplyr::select(TimePeriod, ClimateModel, ClimateScenario, Path_Out_tif) %>%
     dplyr::slice(gtools::mixedorder(Path_Out_tif)) %>%
     dplyr::summarise(
       File_List = list(Path_Out_tif),
-      .by = c(TimePeriod, ClimateModel, ClimScenario)) %>%
+      .by = c(TimePeriod, ClimateModel, ClimateScenario)) %>%
 
     dplyr::mutate(
       Name = paste0(
-        "R_", TimePeriod, "_", ClimateModel, "_", ClimScenario),
+        "R_", TimePeriod, "_", ClimateModel, "_", ClimateScenario),
       Name = stringr::str_replace(
         Name, "1981-2010_Current_Current", "Current"),
       Name = stringr::str_replace_all(Name, "-", "_"),
 
-      FillePath = file.path(
+      FilePath = file.path(
         Path_CHELSA_Out, "Processed", paste0(Name, ".RData")),
 
       Processed_Maps = furrr::future_pmap(
-        .l = list(File_List, FillePath, Name),
-        .f = function(File_List, FillePath, Name) {
+        .l = list(File_List, FilePath, Name),
+        .f = function(File_List, FilePath, Name) {
 
           MapNames <- basename(File_List) %>%
             stringr::str_extract("bio.._|bio._") %>%
@@ -362,7 +361,7 @@ CHELSA_Process <- function(
 
           # save to disk
           IASDT.R::SaveAs(
-            InObj = Map, OutObj = Name, OutPath = FillePath)
+            InObj = Map, OutObj = Name, OutPath = FilePath)
 
           return(Map)
 

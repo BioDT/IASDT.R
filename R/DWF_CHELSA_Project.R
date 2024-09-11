@@ -197,7 +197,7 @@ CHELSA_Project <- function(
 
   # Variable name of the output *.nc file
   VarName4NC <- c(
-    Metadata$TimePeriod, Metadata$ClimateModel, Metadata$ClimScenario) %>%
+    Metadata$TimePeriod, Metadata$ClimateModel, Metadata$ClimateScenario) %>%
     unique() %>%
     paste0(collapse = "__") %>%
     paste0(Metadata$Variable, "__", .)
@@ -208,8 +208,8 @@ CHELSA_Project <- function(
     paste0("OriginalFile=", Metadata$Path_Down),
     paste0("Variable=", Metadata$Variable),
     paste0("TimePeriod=", Metadata$TimePeriod),
-    paste0("ClimModel=", Metadata$ClimateModel),
-    paste0("ClimScenario=", Metadata$ClimScenario),
+    paste0("ClimateModel=", Metadata$ClimateModel),
+    paste0("ClimateScenario=", Metadata$ClimateScenario),
     paste0("Long_name=", Metadata$Long_name),
     paste0("unit=", Metadata$unit),
     paste0("explanation=", Metadata$explanation))

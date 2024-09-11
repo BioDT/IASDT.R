@@ -63,7 +63,7 @@ CHELSA_Prepare <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Variable <- Path_Down <- TimePeriod <- Ext <- ClimScenario <- Variable <-
+  Variable <- Path_Down <- TimePeriod <- Ext <- ClimateScenario <- Variable <-
     Path_CHELSA_In <- File <- Path_Out_tif <- Path_Out_NC <- Path_CHELSA_Out <-
     Path_DwnLinks <- URL <- Folder <- URL_File <- ClimateModel <- Exclude <-
     NULL
@@ -128,7 +128,7 @@ CHELSA_Prepare <- function(
           # assign "Current" for files represent current climates
           if (.y == "1981-2010") {
             Out <- tibble::tibble(
-              ClimateModel = "Current", ClimScenario = "Current")
+              ClimateModel = "Current", ClimateScenario = "Current")
 
           } else {
             ClimateModels <- c(
@@ -139,11 +139,11 @@ CHELSA_Prepare <- function(
             ClimateModel <- stringr::str_extract(.x, ClimateModels) %>%
               na.omit() %>%
               as.character()
-            ClimScenario <- stringr::str_extract(.x, ClimateScenarios) %>%
+            ClimateScenario <- stringr::str_extract(.x, ClimateScenarios) %>%
               na.omit() %>%
               as.character()
             Out <- tibble::tibble(
-              ClimateModel = ClimateModel, ClimScenario = ClimScenario)
+              ClimateModel = ClimateModel, ClimateScenario = ClimateScenario)
           }
           return(Out)
         }
@@ -154,13 +154,13 @@ CHELSA_Prepare <- function(
       Folder != "climatologies/2011-2040/UKESM1-0-LL/ssp126") %>%
     dplyr::mutate(
       Variable = purrr::pmap_chr(
-        .l = list(File, TimePeriod, ClimScenario, Ext, ClimateModel),
-        .f = function(File, TimePeriod, ClimScenario, Ext, ClimateModel) {
+        .l = list(File, TimePeriod, ClimateScenario, Ext, ClimateModel),
+        .f = function(File, TimePeriod, ClimateScenario, Ext, ClimateModel) {
           stringr::str_remove_all(
             string = File,
             pattern = paste0(
               "_r1i1p1f1_w5e5_|_norm|CHELSA_|V.2.1|_V\\.2\\.1|", TimePeriod,
-              "|.", Ext, "|", ClimScenario)) %>%
+              "|.", Ext, "|", ClimateScenario)) %>%
             stringr::str_remove_all(
               pattern = stringr::str_glue(
                 "{ClimateModel}|{tolower(ClimateModel)}")) %>%
@@ -196,10 +196,10 @@ CHELSA_Prepare <- function(
 
       # Unique name for variable / time combination
       OutName = purrr::pmap_chr(
-        .l = list(Variable, TimePeriod, ClimateModel, ClimScenario),
-        .f = function(Variable, TimePeriod, ClimateModel, ClimScenario) {
+        .l = list(Variable, TimePeriod, ClimateModel, ClimateScenario),
+        .f = function(Variable, TimePeriod, ClimateModel, ClimateScenario) {
           OutName <- paste0(
-            Variable, "_", TimePeriod, "_", ClimateModel, "_", ClimScenario) %>%
+            Variable, "_", TimePeriod, "_", ClimateModel, "_", ClimateScenario) %>%
             stringr::str_replace(
               pattern = "1981-2010_Current_Current",
               replacement = "1981-2010_Current")

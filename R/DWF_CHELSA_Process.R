@@ -75,8 +75,9 @@ CHELSA_Process <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Path_CHELSA_In <- Path_CHELSA_Out <- Path_Out_NC <- TimePeriod <-
-    ClimateModel <- ClimateScenario <- Path_Out_tif <- Name <- FilePath <- 
-    File_List <- Processed_Maps <- Problematic <- Path_Down <- NULL
+    ClimateModel <- ClimateScenario <- Path_Out_tif <- Name <- FilePath <-
+    File_List <- Processed_Maps <- Problematic <- Path_Down <-
+    InputOkay <- AllOkay <- Process <- Failed <- NULL
 
   # # ..................................................................... ###
 

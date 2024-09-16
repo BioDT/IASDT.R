@@ -62,11 +62,17 @@ PlotConvergence_All <- function(
   IASDT.R::CatTime(
     paste0("Prepare working on parallel using `", NCores, "` cores."),
     Level = 1)
-  
+
   withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
-  
-  future::plan("multisession", workers = NCores, gc = TRUE)
-  on.exit(future::plan("sequential"), add = TRUE)
+
+  if (NCores == 1) {
+    future::plan("sequential", gc = TRUE)
+  } else {
+    c1 <- snow::makeSOCKcluster(NCores)
+    on.exit(snow::stopCluster(c1), add = TRUE)
+    future::plan("cluster", workers = c1, gc = TRUE)
+    on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+  }
 
   Model_Info <- file.path(Path_Model, "Model_Info.RData")
   if (!file.exists(Model_Info)) {
@@ -226,7 +232,10 @@ PlotConvergence_All <- function(
     Convergence_DT,
     file = file.path(Path_Convergence_All, "Convergence_DT.RData"))
 
-  future::plan("sequential")
+  if (NCores > 1) {
+    snow::stopCluster(c1)
+    future::plan("sequential", gc = TRUE)
+  }
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Plotting theme -----

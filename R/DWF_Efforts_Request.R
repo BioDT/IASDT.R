@@ -83,8 +83,14 @@ Efforts_Request <- function(
 
   withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
-  future::plan("multisession", workers = min(NCores, 3), gc = TRUE)
-  on.exit(future::plan("sequential"), add = TRUE)
+  if (NCores == 1) {
+    future::plan("sequential", gc = TRUE)
+  } else {
+    c1 <- snow::makeSOCKcluster(min(NCores, 3))
+    on.exit(snow::stopCluster(c1), add = TRUE)
+    future::plan("cluster", workers = c1, gc = TRUE)
+    on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+  }
 
   # # ..................................................................... ###
 
@@ -181,7 +187,7 @@ Efforts_Request <- function(
       dplyr::across(TotalRecords:NumberDatasets, as.integer),
       # Convert some columns to date type
       dplyr::across(
-        c("Created", "Modified", "EraseAfter"), 
+        c("Created", "Modified", "EraseAfter"),
         lubridate::as_date)) %>%
     dplyr::ungroup() %>%
     # how to cite data
@@ -193,13 +199,16 @@ Efforts_Request <- function(
   IASDT.R::CatTime("Save efforts request data", Level = 1)
 
   save(Efforts_AllRequests,
-    file = file.path(Path_Efforts, "Efforts_AllRequests.RData"))
+       file = file.path(Path_Efforts, "Efforts_AllRequests.RData"))
 
   # # ..................................................................... ###
 
   # Stopping cluster ------
   IASDT.R::CatTime("Stopping cluster", Level = 1)
-  future::plan("sequential")
+  if (NCores > 1) {
+    snow::stopCluster(c1)
+    future::plan("sequential", gc = TRUE)
+  }
 
   # # ..................................................................... ###
 

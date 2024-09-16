@@ -270,8 +270,14 @@ Railway_Intensity <- function(
     paste0("Prepare working on parallel using `", NCores, "` cores."),
     Level = 1)
 
-  future::plan("multisession", workers = NCores, gc = TRUE)
-  on.exit(future::plan("sequential"), add = TRUE)
+  if (NCores == 1) {
+    future::plan("sequential", gc = TRUE)
+  } else {
+    c1 <- snow::makeSOCKcluster(NCores)
+    on.exit(snow::stopCluster(c1), add = TRUE)
+    future::plan("cluster", workers = c1, gc = TRUE)
+    on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+  }
 
   ## Processing railway data ----
   IASDT.R::CatTime("Processing railway data", Level = 1)
@@ -371,6 +377,11 @@ Railway_Intensity <- function(
     dplyr::mutate(DT = purrr::map(Path, IASDT.R::LoadAs)) %>%
     tidyr::unnest(DT) %>%
     sf::st_as_sf()
+
+  if (NCores > 1) {
+    snow::stopCluster(c1)
+    future::plan("sequential", gc = TRUE)
+  }
 
   # # .................................... ###
 

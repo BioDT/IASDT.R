@@ -154,9 +154,16 @@ Predict_Scenario <- function(
 
     withr::local_options(
       future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
-    future::plan(
-      "multisession", workers = min(NCores, nrow(IncompleteChunks)), gc = TRUE)
-    on.exit(future::plan("sequential"), add = TRUE)
+
+    if (NCores == 1) {
+      future::plan("sequential", gc = TRUE)
+    } else {
+      c1 <- snow::makeSOCKcluster(min(NCores, nrow(IncompleteChunks)))
+      on.exit(snow::stopCluster(c1), add = TRUE)
+      future::plan("cluster", workers = c1, gc = TRUE)
+      on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+    }
+
 
     Predictions_sf0 <- IncompleteChunks %>%
       dplyr::mutate(
@@ -210,7 +217,10 @@ Predict_Scenario <- function(
               "Hmsc", "purrr", "dplyr", "sf", "IASDT.R", "stringr", "terra")
           )))
 
-    future::plan("sequential")
+    if (NCores > 1) {
+      snow::stopCluster(c1)
+      future::plan("sequential", gc = TRUE)
+    }
 
     IncompleteChunks <- IncompleteChunks %>%
       dplyr::mutate(

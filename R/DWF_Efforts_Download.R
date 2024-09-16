@@ -62,7 +62,7 @@ Efforts_Download <- function(NCores = 6, Path_Raw, Path_Interim, Path_Efforts) {
       paste0("The following command(s) are not available: ", Missing),
       call. = FALSE)
   }
-  
+
   # # ..................................................................... ###
 
   Path_Efforts_Request <- file.path(Path_Efforts, "Efforts_AllRequests.RData")
@@ -84,10 +84,17 @@ Efforts_Download <- function(NCores = 6, Path_Raw, Path_Interim, Path_Efforts) {
     paste0("Prepare working on parallel using `", NCores, "` cores."),
     Level = 1)
 
+
   withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
-  future::plan("multisession", workers = NCores, gc = TRUE)
-  on.exit(future::plan("sequential"), add = TRUE)
+  if (NCores == 1) {
+    future::plan("sequential", gc = TRUE)
+  } else {
+    c1 <- snow::makeSOCKcluster(NCores)
+    on.exit(snow::stopCluster(c1), add = TRUE)
+    future::plan("cluster", workers = c1, gc = TRUE)
+    on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+  }
 
   # # ..................................................................... ###
 
@@ -149,7 +156,8 @@ Efforts_Download <- function(NCores = 6, Path_Raw, Path_Interim, Path_Efforts) {
         },
         .options = furrr::furrr_options(
           seed = TRUE, scheduling = Inf,
-          packages = c("dplyr", "IASDT.R", "rgbif", "stringr"))))
+          globals = "Path_Raw",
+          packages = c("dplyr", "IASDT.R", "rgbif", "stringr", "fs", "withr"))))
 
   save(Efforts_AllRequests,
        file = file.path(Path_Efforts, "Efforts_AllRequests.RData"))
@@ -158,7 +166,10 @@ Efforts_Download <- function(NCores = 6, Path_Raw, Path_Interim, Path_Efforts) {
 
   # Stopping cluster ------
   IASDT.R::CatTime("Stopping cluster", Level = 1)
-  future::plan("sequential")
+  if (NCores > 1) {
+    snow::stopCluster(c1)
+    future::plan("sequential", gc = TRUE)
+  }
 
   # # ..................................................................... ###
 

@@ -310,9 +310,15 @@ Predict_Hmsc <- function(
 
   withr::local_options(
     future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
-  future::plan(
-    "multisession", workers = min(NCores, nrow(Predictions)), gc = TRUE)
-  on.exit(future::plan("sequential"), add = TRUE)
+
+  if (NCores == 1) {
+    future::plan("sequential", gc = TRUE)
+  } else {
+    c1 <- snow::makeSOCKcluster(min(NCores, nrow(Predictions)))
+    on.exit(snow::stopCluster(c1), add = TRUE)
+    future::plan("cluster", workers = c1, gc = TRUE)
+    on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+  }
 
   Predictions <- dplyr::mutate(
     Predictions,
@@ -409,7 +415,10 @@ Predict_Hmsc <- function(
       by = c("TimePeriod", "ClimateScenario", "Species_ID")) %>%
     dplyr::select(-Path_Ensemble)
 
-  future::plan("sequential")
+  if (NCores > 1) {
+    snow::stopCluster(c1)
+    future::plan("sequential", gc = TRUE)
+  }
 
   Predictions_Summary <- dplyr::bind_rows(Predictions, Ensemble)
 

@@ -189,8 +189,15 @@ IAS_Process <- function(
   IASDT.R::CatTime(
     paste0("Prepare working on parallel using `", NCores, "` cores."),
     Level = 1)
-  future::plan("multisession", workers = NCores, gc = TRUE)
-  on.exit(future::plan("sequential"), add = TRUE)
+
+  if (NCores == 1) {
+    future::plan("sequential", gc = TRUE)
+  } else {
+    c1 <- snow::makeSOCKcluster(NCores)
+    on.exit(snow::stopCluster(c1), add = TRUE)
+    future::plan("cluster", workers = c1, gc = TRUE)
+    on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+  }
 
   # # .................................... ###
 
@@ -217,7 +224,10 @@ IAS_Process <- function(
 
   ## Stopping cluster ----
   IASDT.R::CatTime("Stopping cluster", Level = 1)
-  future::plan("sequential")
+  if (NCores > 1) {
+    snow::stopCluster(c1)
+    future::plan("sequential", gc = TRUE)
+  }
 
   IASDT.R::CatDiff(
     InitTime = .StartTimeDist,

@@ -32,7 +32,7 @@ PlotGelman_Omega <- function(
   if (!is.numeric(NCores) || NCores <= 0) {
     stop("NCores must be a positive integer.", call. = FALSE)
   }
- if (!is.numeric(NOmega) || NOmega <= 0) {
+  if (!is.numeric(NOmega) || NOmega <= 0) {
     stop("NOmega must be a positive integer.", call. = FALSE)
   }
 
@@ -45,10 +45,16 @@ PlotGelman_Omega <- function(
   Iter <- Type <- Sp_comb <- ShrinkFactor <- group <- NULL
 
   withr::local_options(
-        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
-  
-  future::plan("multisession", workers = NCores, gc = TRUE)
-  on.exit(future::plan("sequential"), add = TRUE)
+    future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
+
+  if (NCores == 1) {
+    future::plan("sequential", gc = TRUE)
+  } else {
+    c1 <- snow::makeSOCKcluster(NCores)
+    on.exit(snow::stopCluster(c1), add = TRUE)
+    future::plan("cluster", workers = c1, gc = TRUE)
+    on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+  }
 
   OmegaNames <- magrittr::extract2(CodaObj, 1) %>%
     attr("dimnames") %>%
@@ -75,13 +81,16 @@ PlotGelman_Omega <- function(
         dplyr::arrange(Type, Iter) %>%
         dplyr::mutate(Type = factor(Type), Sp_comb = x)
     },
-      future.scheduling = Inf, future.seed = TRUE,
-      future.globals = "CodaObj", 
-      future.packages = c("dplyr", "coda", "tibble", "magrittr")) %>%
+    future.scheduling = Inf, future.seed = TRUE, future.globals = "CodaObj",
+    future.packages = c("dplyr", "coda", "tibble", "magrittr")) %>%
     dplyr::bind_rows() %>%
     dplyr::mutate(group = paste0(Sp_comb, "_", Type))
 
-  future::plan("sequential")
+  if (NCores > 1) {
+    snow::stopCluster(c1)
+    future::plan("sequential", gc = TRUE)
+  }
+
 
   Gelman_Omega_Plot <- Gelman_OmegaDT %>%
     ggplot2::ggplot() +

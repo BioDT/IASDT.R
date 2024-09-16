@@ -15,7 +15,7 @@
 #'   variables required by the function. Default is ".env".
 #' @param NCores Numeric. Number of cores to use for parallel processing.
 #'   Defaults to 6.
-#' @param DeleteChunks Logical. If `TRUE`, delete the chunk files. Defaults to 
+#' @param DeleteChunks Logical. If `TRUE`, delete the chunk files. Defaults to
 #'  `TRUE`.
 #' @inheritParams GBIF_Download
 #' @inheritParams GBIF_ReadChunk
@@ -120,7 +120,7 @@ GBIF_Process <- function(
   GBIF_Metadata <- file.path(Path_GBIF, "GBIF_Metadata.RData")
   if (!file.exists(GBIF_Metadata)) {
     stop(
-      paste0("GBIF metadata file does not exist: ", GBIF_Metadata), 
+      paste0("GBIF metadata file does not exist: ", GBIF_Metadata),
       call. = FALSE)
   }
   GBIF_Metadata <- IASDT.R::LoadAs(GBIF_Metadata)
@@ -165,9 +165,15 @@ GBIF_Process <- function(
   IASDT.R::CatTime(
     paste0("Prepare working on parallel using `", NCores, "` cores."),
     Level = 1)
-  
-  future::plan("multisession", workers = NCores, gc = TRUE)
-  on.exit(future::plan("sequential"), add = TRUE)
+
+  if (NCores == 1) {
+    future::plan("sequential", gc = TRUE)
+  } else {
+    c1 <- snow::makeSOCKcluster(NCores)
+    on.exit(snow::stopCluster(c1), add = TRUE)
+    future::plan("cluster", workers = c1, gc = TRUE)
+    on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+  }
 
   IASDT.R::CatTime(
     "Processing chunks on parallel, save each as RData files",
@@ -213,7 +219,10 @@ GBIF_Process <- function(
     Level = 2)
 
   IASDT.R::CatTime("Stopping cluster", Level = 1)
-  future::plan("sequential")
+  if (NCores > 1) {
+    snow::stopCluster(c1)
+    future::plan("sequential", gc = TRUE)
+  }
 
   IASDT.R::CatTime("Saving `GBIF_Data` to disk", Level = 1)
   save(GBIF_Data, file = file.path(Path_GBIF, "GBIF_Data.RData"))
@@ -252,7 +261,7 @@ GBIF_Process <- function(
   IASDT.R::CatTime(
     "Number of grid cells for iNaturalist and other data sources",
     Level = 1)
-  
+
   iNaturalist_Count <- iNaturalist_Others %>%
     dplyr::count(species, institutionCode) %>%
     tidyr::pivot_wider(names_from = institutionCode, values_from = n) %>%
@@ -396,7 +405,7 @@ GBIF_Process <- function(
   rm(GBIF_date, GBIF_DOI, GBIF_Grid, GBIF_Metadata)
 
   Plot_GBIF_Summary <- function(
-      RstrMap, Title, LegendLabel = NULL, EU_Map = EuroBound) {
+    RstrMap, Title, LegendLabel = NULL, EU_Map = EuroBound) {
     # Plotting limits
     Xlim <- c(2600000, 6700000)
     Ylim <- c(1450000, 5420000)
@@ -538,11 +547,19 @@ GBIF_Process <- function(
   # Grid / raster / plotting ----
   IASDT.R::CatTime("Split species data - grid/raster/plot", Level = 1)
 
-    IASDT.R::CatTime(
+  IASDT.R::CatTime(
     paste0("Prepare working on parallel using `", NCores, "` cores."),
     Level = 1)
-  future::plan("multisession", workers = NCores, gc = TRUE)
-  on.exit(future::plan("sequential"), add = TRUE)
+
+  if (NCores == 1) {
+    future::plan("sequential", gc = TRUE)
+  } else {
+    c1 <- snow::makeSOCKcluster(NCores)
+    on.exit(snow::stopCluster(c1), add = TRUE)
+    future::plan("cluster", workers = c1, gc = TRUE)
+    on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+  }
+
 
   IASDT.R::CatTime("Splitting species data on parallel", Level = 2)
   furrr::future_walk(
@@ -552,7 +569,10 @@ GBIF_Process <- function(
   )
 
   IASDT.R::CatTime("Stopping cluster", Level = 2)
-  future::plan("sequential")
+  if (NCores > 1) {
+    snow::stopCluster(c1)
+    future::plan("sequential", gc = TRUE)
+  }
 
   # # ..................................................................... ###
 

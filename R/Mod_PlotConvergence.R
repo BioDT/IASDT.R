@@ -55,7 +55,7 @@ PlotConvergence <- function(
     Var_Sp <- NULL
 
   withr::local_options(
-        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
+    future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Check input arguments ------
@@ -200,8 +200,14 @@ PlotConvergence <- function(
       tibble::as_tibble(rownames = "SpComb")
 
     IASDT.R::CatTime("Prepare working in parallel", Level = 1)
-    future::plan("multisession", workers = NCores, gc = TRUE)
-    on.exit(future::plan("sequential"), add = TRUE)
+    if (NCores == 1) {
+      future::plan("sequential", gc = TRUE)
+    } else {
+      c1 <- snow::makeSOCKcluster(NCores)
+      on.exit(snow::stopCluster(c1), add = TRUE)
+      future::plan("cluster", workers = c1, gc = TRUE)
+      on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+    }
 
     IASDT.R::CatTime("Prepare trace plots data", Level = 1)
     PlotObj_Omega <- future.apply::future_lapply(
@@ -278,7 +284,11 @@ PlotConvergence <- function(
       future.globals = c("NOmega", "CI", "SelectedCombs", "OmegaDF", "Cols"),
       future.packages = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext"))
 
-    future::plan("sequential")
+    if (NCores > 1) {
+      snow::stopCluster(c1)
+      future::plan("sequential", gc = TRUE)
+    }
+
 
     if (SavePlotData) {
       IASDT.R::CatTime("Save plot data", Level = 1)
@@ -359,8 +369,15 @@ PlotConvergence <- function(
 
     IASDT.R::CatTime(
       paste0("Prepare working in parallel using `", NCores, "`"), Level = 2)
-    future::plan("multisession", workers = NCores, gc = TRUE)
-    on.exit(future::plan("sequential"), add = TRUE)
+    if (NCores == 1) {
+      future::plan("sequential", gc = TRUE)
+    } else {
+      c1 <- snow::makeSOCKcluster(NCores)
+      on.exit(snow::stopCluster(c1), add = TRUE)
+      future::plan("cluster", workers = c1, gc = TRUE)
+      on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+    }
+
 
     IASDT.R::CatTime("Prepare 95% credible interval data", Level = 2)
     CI <- summary(Obj_Beta, quantiles = c(0.025, 0.975))$quantiles %>%
@@ -499,7 +516,11 @@ PlotConvergence <- function(
       dplyr::bind_rows() %>%
       dplyr::right_join(PlotObj_Beta, by = "Var_Sp")
 
-    future::plan("sequential")
+    if (NCores > 1) {
+      snow::stopCluster(c1)
+      future::plan("sequential", gc = TRUE)
+    }
+
 
     if (SavePlotData) {
       IASDT.R::CatTime("Save trace plot data", Level = 1)
@@ -520,8 +541,14 @@ PlotConvergence <- function(
     dplyr::select(Variable, Plot, PlotFixedY) %>%
     tidyr::nest(data = c("Plot", "PlotFixedY"))
 
-  future::plan("multisession", workers = NCores, gc = TRUE)
-  on.exit(future::plan("sequential"), add = TRUE)
+  if (NCores == 1) {
+    future::plan("sequential", gc = TRUE)
+  } else {
+    c1 <- snow::makeSOCKcluster(NCores)
+    on.exit(snow::stopCluster(c1), add = TRUE)
+    future::plan("cluster", workers = c1, gc = TRUE)
+    on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+  }
 
   IASDT.R::CatTime("Save plots in parallel", Level = 2)
   BetaTracePlots_ByVar0 <- future.apply::future_lapply(
@@ -603,12 +630,15 @@ PlotConvergence <- function(
         grDevices::dev.off()
       })
     },
-      future.scheduling = Inf, future.seed = TRUE,
-      future.globals = c(
-        "BetaTracePlots_ByVar", "Path_Convergence", "NRC", "Cols"),
-      future.packages = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext"))
+    future.scheduling = Inf, future.seed = TRUE,
+    future.globals = c(
+      "BetaTracePlots_ByVar", "Path_Convergence", "NRC", "Cols"),
+    future.packages = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext"))
 
-  future::plan("sequential")
+  if (NCores > 1) {
+    snow::stopCluster(c1)
+    future::plan("sequential", gc = TRUE)
+  }
 
   rm(BetaTracePlots_ByVar0, BetaTracePlots_ByVar)
 
@@ -626,8 +656,15 @@ PlotConvergence <- function(
     tidyr::nest(data = -c("Species", "IAS_ID"))
 
   IASDT.R::CatTime("Preparing working in parallel", Level = 2)
-  future::plan("multisession", workers = NCores, gc = TRUE)
-  on.exit(future::plan("sequential"), add = TRUE)
+  if (NCores == 1) {
+    future::plan("sequential", gc = TRUE)
+  } else {
+    c1 <- snow::makeSOCKcluster(NCores)
+    on.exit(snow::stopCluster(c1), add = TRUE)
+    future::plan("cluster", workers = c1, gc = TRUE)
+    on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+  }
+
 
   IASDT.R::CatTime("Save plots in parallel", Level = 2)
   BetaTracePlots_BySp0 <- future.apply::future_lapply(
@@ -672,11 +709,15 @@ PlotConvergence <- function(
 
       return(invisible(NULL))
     },
-      future.scheduling = Inf, future.seed = TRUE,
-      future.globals = c("BetaTracePlots_BySp", "Path_Convergence_BySp"),
-      future.packages = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext"))
+    future.scheduling = Inf, future.seed = TRUE,
+    future.globals = c("BetaTracePlots_BySp", "Path_Convergence_BySp"),
+    future.packages = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext"))
 
-  future::plan("sequential")
+  if (NCores > 1) {
+    snow::stopCluster(c1)
+    future::plan("sequential", gc = TRUE)
+  }
+
 
   rm(BetaTracePlots_BySp0)
 

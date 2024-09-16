@@ -689,8 +689,14 @@ Mod_Prep4HPC <- function(
     withr::local_options(
       future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
-    future::plan("multisession", workers = NCores, gc = TRUE)
-    on.exit(future::plan("sequential"), add = TRUE)
+    if (NCores == 1) {
+      future::plan("sequential", gc = TRUE)
+    } else {
+      c1 <- snow::makeSOCKcluster(NCores)
+      on.exit(snow::stopCluster(c1), add = TRUE)
+      future::plan("cluster", workers = c1, gc = TRUE)
+      on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+    }
 
     GPP_Knots <- future.apply::future_lapply(
       X = GPP_Dists * 1000,
@@ -702,7 +708,11 @@ Mod_Prep4HPC <- function(
       future.globals = c("DT_xy", "GPP_Dists", "MaxLF", "MinLF"),
       future.packages = c("dplyr", "sf", "Hmsc", "jsonify", "magrittr")) %>%
       stats::setNames(paste0("GPP_", GPP_Dists))
-    future::plan("sequential")
+
+    if (NCores > 1) {
+      snow::stopCluster(c1)
+      future::plan("sequential", gc = TRUE)
+    }
 
   } else {
     IASDT.R::CatTime("Working sequentially")
@@ -915,8 +925,10 @@ Mod_Prep4HPC <- function(
   # Implement `InitFitFun` function: start sampling and save output files
   if (NCores > 1) {
 
-    future::plan("multisession", workers = NCores, gc = TRUE)
-    on.exit(future::plan("sequential"), add = TRUE)
+    c1 <- snow::makeSOCKcluster(NCores)
+    on.exit(snow::stopCluster(c1), add = TRUE)
+    future::plan("cluster", workers = c1, gc = TRUE)
+    on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
 
     Model_Process <- future.apply::future_lapply(
       X = seq_len(nrow(Model_Info)),
@@ -927,7 +939,8 @@ Mod_Prep4HPC <- function(
         "verbose", "NChains", "ToJSON"),
       future.packages = c("Hmsc", "jsonify", "IASDT.R"))
 
-    future::plan("sequential")
+    snow::stopCluster(c1)
+    future::plan("sequential", gc = TRUE)
 
   } else {
     Model_Process <- purrr::map(

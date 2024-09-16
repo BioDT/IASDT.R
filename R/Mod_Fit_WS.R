@@ -83,10 +83,16 @@ Mod_Fit_WS <- function(Path_Model, EnvFile = ".env", NCores = NULL) {
       paste0("There are ", nrow(Model2Run), " model variants to be fitted."))
 
     withr::local_options(
-        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
+      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
-    future::plan("multisession", workers = NCores, gc = TRUE)
-    on.exit(future::plan("sequential"), add = TRUE)
+    if (NCores == 1) {
+      future::plan("sequential", gc = TRUE)
+    } else {
+      c1 <- snow::makeSOCKcluster(NCores)
+      on.exit(snow::stopCluster(c1), add = TRUE)
+      future::plan("cluster", workers = c1, gc = TRUE)
+      on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+    }
 
     RunCommands <- future.apply::future_lapply(
       X = seq_len(nrow(Model2Run)),
@@ -99,7 +105,10 @@ Mod_Fit_WS <- function(Path_Model, EnvFile = ".env", NCores = NULL) {
       future.scheduling = Inf, future.seed = TRUE,
       future.globals = c("Path_Hmsc_WS", "Model2Run"))
 
-    future::plan("sequential")
+    if (NCores > 1) {
+      snow::stopCluster(c1)
+      future::plan("sequential", gc = TRUE)
+    }
 
   } else {
     IASDT.R::CatTime("All model variants were already fitted.")

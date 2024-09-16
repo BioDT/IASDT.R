@@ -113,8 +113,14 @@ Mod_MergeChains <- function(
   # Prepare working on parallel
   withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
-  future::plan("multisession", workers = NCores, gc = TRUE)
-  on.exit(future::plan("sequential"), add = TRUE)
+  if (NCores == 1) {
+    future::plan("sequential", gc = TRUE)
+  } else {
+    c1 <- snow::makeSOCKcluster(NCores)
+    on.exit(snow::stopCluster(c1), add = TRUE)
+    future::plan("cluster", workers = c1, gc = TRUE)
+    on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+  }
 
   Path_Fitted_Models <- file.path(Path_Model, "Model_Fitted")
   Path_Coda <- file.path(Path_Model, "Model_Coda")
@@ -224,8 +230,8 @@ Mod_MergeChains <- function(
         Post_Aligned2 = Post_Aligned2) %>%
         return()
     },
-      future.scheduling = Inf, future.seed = TRUE,
-      future.globals = "Model_Info2", future.packages = c("Hmsc", "coda"))
+    future.scheduling = Inf, future.seed = TRUE,
+    future.globals = "Model_Info2", future.packages = c("Hmsc", "coda"))
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -274,7 +280,10 @@ Mod_MergeChains <- function(
           }
         }))
 
-  future::plan("sequential")
+  if (NCores > 1) {
+    snow::stopCluster(c1)
+    future::plan("sequential", gc = TRUE)
+  }
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

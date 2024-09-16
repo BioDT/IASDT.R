@@ -93,12 +93,12 @@ CHELSA_Process <- function(
   if (FromHPC) {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_CHELSA_In", "DP_R_CHELSA_Input", TRUE, FALSE,
+      "Path_CHELSA_In", "DP_R_CHELSA_Input", FALSE, FALSE,
       "Path_CHELSA_Out", "DP_R_CHELSA_Output", FALSE, FALSE)
   } else {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_CHELSA_In", "DP_R_CHELSA_Input_Local", TRUE, FALSE,
+      "Path_CHELSA_In", "DP_R_CHELSA_Input_Local", FALSE, FALSE,
       "Path_CHELSA_Out", "DP_R_CHELSA_Output_Local", FALSE, FALSE)
   }
 
@@ -108,7 +108,7 @@ CHELSA_Process <- function(
   # Ensure that the output path exists
   fs::dir_create(
     c(
-      Path_CHELSA_Out,
+      Path_CHELSA_In, Path_CHELSA_Out,
       file.path(Path_CHELSA_Out, c("Tif", "NC", "Processed"))))
 
   rm(EnvVars2Read)

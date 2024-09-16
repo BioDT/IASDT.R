@@ -15,7 +15,8 @@
 #'   variables required by the function. Default is ".env".
 #' @param NCores Numeric. Number of cores to use for parallel processing.
 #'   Defaults to 6.
-#' @param DeleteChunks Logical. If `TRUE`, delete the chunk files.
+#' @param DeleteChunks Logical. If `TRUE`, delete the chunk files. Defaults to 
+#'  `TRUE`.
 #' @inheritParams GBIF_Download
 #' @inheritParams GBIF_ReadChunk
 #' @return Saves multiple RData and Excel files containing the processed data
@@ -30,7 +31,7 @@
 GBIF_Process <- function(
     FromHPC = TRUE, EnvFile = ".env", Renviron = ".Renviron", NCores = 6,
     RequestData = TRUE, DownloadData = TRUE, SplitChunks = TRUE,
-    Overwrite = FALSE, DeleteChunks = FALSE, ChunkSize = 50000,
+    Overwrite = FALSE, DeleteChunks = TRUE, ChunkSize = 50000,
     Boundaries = c(-30, 50, 25, 75), StartYear = 1981) {
 
   # # ..................................................................... ###

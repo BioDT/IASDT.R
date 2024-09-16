@@ -13,7 +13,7 @@ GBIF_Process(
   DownloadData = TRUE,
   SplitChunks = TRUE,
   Overwrite = FALSE,
-  DeleteChunks = FALSE,
+  DeleteChunks = TRUE,
   ChunkSize = 50000,
   Boundaries = c(-30, 50, 25, 75),
   StartYear = 1981
@@ -46,7 +46,8 @@ file if it has already processed and saved as \verb{*.RData} file. This helps to
 continue working on previously processed chunks if the previous try failed,
 e.g. due to memory issue.}
 
-\item{DeleteChunks}{Logical. If \code{TRUE}, delete the chunk files.}
+\item{DeleteChunks}{Logical. If \code{TRUE}, delete the chunk files. Defaults to
+\code{TRUE}.}
 
 \item{ChunkSize}{Integer. The number of records per chunk when splitting the
 data. Default is 50,000.}

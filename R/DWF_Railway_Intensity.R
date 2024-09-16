@@ -104,7 +104,7 @@ Railway_Intensity <- function(
   RefGrid <- terra::unwrap(IASDT.R::LoadAs(RefGrid))
 
 
-  RefGridSF <- file.path(Path_Grid, "Grid_10_Land_Crop_SF.RData")
+  RefGridSF <- file.path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
   if (!file.exists(RefGridSF)) {
     stop(
       paste0("The reference grid file does not exist: ", RefGridSF),

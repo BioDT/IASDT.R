@@ -159,8 +159,7 @@ CHELSA_Process <- function(
         InputOkay = furrr::future_map_lgl(
           .x = Path_Down,
           .f = ~ (file.exists(.x) && IASDT.R::CheckTiff(.x)),
-          .options = furrr::furrr_options(
-            seed = TRUE, packages = "IASDT.R"))
+          .options = furrr::furrr_options(seed = TRUE, packages = "IASDT.R"))
       ) %>%
       dplyr::filter(isFALSE(InputOkay))
 
@@ -237,8 +236,7 @@ CHELSA_Process <- function(
             Tif_Okay <- file.exists(.y) && IASDT.R::CheckTiff(.y)
             return(isFALSE(NC_Okay && Tif_Okay))
           },
-          .options = furrr::furrr_options(
-            seed = TRUE, packages = "IASDT.R"))
+          .options = furrr::furrr_options(seed = TRUE, packages = "IASDT.R"))
       ) %>%
       dplyr::filter(Process) %>%
       dplyr::select(-"Process")

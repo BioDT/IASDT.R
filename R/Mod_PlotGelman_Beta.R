@@ -96,8 +96,7 @@ PlotGelman_Beta <- function(
         dplyr::arrange(Type, Iter) %>%
         dplyr::mutate(Type = factor(Type), Var_Sp = x)
     },
-      future.scheduling = Inf, future.seed = TRUE,
-      future.globals = "CodaObj",
+      future.scheduling = Inf, future.seed = TRUE, future.globals = "CodaObj",
       future.packages = c("dplyr", "coda", "tibble", "magrittr")) %>%
     dplyr::bind_rows() %>%
     dplyr::mutate(group = paste0(Var_Sp, "_", Type))

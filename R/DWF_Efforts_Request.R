@@ -160,7 +160,7 @@ Efforts_Request <- function(
           return(Down)
         },
         .options = furrr::furrr_options(
-          seed = TRUE, scheduling = Inf,
+          seed = TRUE, scheduling = Inf, 
           packages = c("dplyr", "IASDT.R", "rgbif"))
       )
     ) %>%

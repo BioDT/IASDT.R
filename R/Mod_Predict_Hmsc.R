@@ -402,7 +402,7 @@ Predict_Hmsc <- function(
         },
         .options = furrr::furrr_options(
           seed = TRUE, scheduling = Inf,
-          globals = "Path_Predictions",
+          globals = "Path_Predictions", 
           packages = c("purrr", "IASDT.R", "terra"))
       )) %>%
     dplyr::select(-"Tif_Path") %>%

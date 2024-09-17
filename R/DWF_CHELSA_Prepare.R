@@ -255,8 +255,9 @@ CHELSA_Prepare <- function(
               invisible(gc())
               return(Out)
             },
-            .options = furrr::furrr_options(seed = TRUE),
-            .progress = FALSE, .packages = c("IASDT.R", "fs")
+            .options = furrr::furrr_options(
+              seed = TRUE, packages = c("IASDT.R", "fs")),
+            .progress = FALSE
           )
         ) %>%
         dplyr::filter(Exclude)
@@ -298,7 +299,7 @@ CHELSA_Prepare <- function(
         },
         .options = furrr::furrr_options(
           seed = TRUE, globals = c("Data2Down", "Sleep"),
-          .packages = c("IASDT.R", "fs")))
+          packages = c("IASDT.R", "fs")))
     }
 
     if (NCores > 1) {

@@ -84,7 +84,6 @@ Efforts_Download <- function(NCores = 6, Path_Raw, Path_Interim, Path_Efforts) {
     paste0("Prepare working on parallel using `", NCores, "` cores."),
     Level = 1)
 
-
   withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
   if (NCores == 1) {
@@ -175,7 +174,7 @@ Efforts_Download <- function(NCores = 6, Path_Raw, Path_Interim, Path_Efforts) {
 
   IASDT.R::CatDiff(
     InitTime = .StartTimeDown,
-    Prefix = "Downloading efforts data took ", Level = 2)
+    Prefix = "Downloading efforts data took ", Level = 1)
 
   # # ..................................................................... ###
 

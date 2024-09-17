@@ -15,7 +15,7 @@
 #' @param Renviron Character. The path to the `.Renviron` file containing GBIF
 #'   login credentials (email, user, password).
 #' @param RequestData Logical. If `TRUE`, requests data from GBIF. If `FALSE`,
-#'   loads a previously requested data set. Defaults to `TRUE`.
+#'   loads a previously requested data set from `GBIF_Request.RData` and `StatusDetailed.RData` files. Defaults to `TRUE`.
 #' @param DownloadData Logical. If `TRUE`, downloaded data is stored on disk.
 #'   Defaults to `TRUE`.
 #' @param SplitChunks Logical. If `TRUE`, splits the downloaded data into

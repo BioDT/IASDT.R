@@ -29,7 +29,7 @@ species occurrence data using \link{EASIN_Down}. Default is \code{TRUE}.}
 case of failure. Default is 10.}
 
 \item{NCores}{Integer. Number of CPU cores to use for parallel processing.
-Default is 6.}
+The maximum number of allowed cores are 8. Default is 6.}
 
 \item{SleepTime}{Numeric. Time in seconds to wait between download attempts
 and between chunks. Default is 10 seconds.}

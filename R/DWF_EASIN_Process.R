@@ -17,7 +17,7 @@
 #' @param NDownTries Integer. Number of attempts to retry downloading data in
 #'   case of failure. Default is 10.
 #' @param NCores Integer. Number of CPU cores to use for parallel processing.
-#'   Default is 6.
+#'   The maximum number of allowed cores are 8. Default is 6.
 #' @param SleepTime Numeric. Time in seconds to wait between download attempts
 #'   and between chunks. Default is 10 seconds.
 #' @param NSearch Integer. Number of observations or species to download during
@@ -61,8 +61,8 @@
 #' Skipping processing available data can help not to re-download already
 #' available data from the EASIN server.
 #'   - This function depends on the following functions: [EASIN_Taxonomy] for
-#'   getting the most recent EASIN taxonomy; [EASIN_Down] for processing EASIN
-#'   dataset; and [EASIN_Plot] for plotting.
+#' getting the most recent EASIN taxonomy; [EASIN_Down] for processing EASIN
+#' dataset; and [EASIN_Plot] for plotting.
 #' @export
 
 EASIN_Process <- function(
@@ -90,6 +90,12 @@ EASIN_Process <- function(
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric",
     Args = c("DownTries", "NCores", "SleepTime", "NSearch", "StartYear"))
+
+  if (NCores > 8) {
+    message(paste0(
+      "Number of cores were reset from ", NCores, " to 8"))
+    NCores <- 8
+  }
 
   # # ..................................................................... ###
 
@@ -275,6 +281,7 @@ EASIN_Process <- function(
     TimeStartData <- lubridate::now(tzone = "CET")
 
     ## Prepare working on parallel ----
+
     IASDT.R::CatTime(
       paste0("Prepare working on parallel using `", NCores, "` cores."),
       Level = 1)

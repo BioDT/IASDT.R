@@ -110,7 +110,7 @@ Efforts_Summarize <- function(
     future::plan("sequential", gc = TRUE)
   } else {
     c1 <- snow::makeSOCKcluster(NCores)
-    on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
+    on.exit(snow::stopCluster(c1), add = TRUE)
     future::plan("cluster", workers = c1, gc = TRUE)
     on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
   }
@@ -256,7 +256,8 @@ Efforts_Summarize <- function(
     },
     future.scheduling = Inf, future.seed = TRUE,
     future.packages = c(
-      "terra", "IASDT.R", "stringr", "fs", "sf", "readr", "dplyr", "purrr"),
+      "terra", "IASDT.R", "stringr", "fs", "sf", "readr", "dplyr", 
+      "purrr", "tibble", "R.utils"),
     future.globals = c(
       "Path_Efforts", "Path_Efforts_Interim", "Efforts_AllRequests",
       "Path_Grid_R", "Path_Efforts_Data", "Grid_SF", "IAS_List", "ChunkSize")
@@ -375,6 +376,7 @@ Efforts_Summarize <- function(
       "terra", "IASDT.R", "stringr", "fs", "sf", "readr", "dplyr"),
     future.globals = c(
       "Path_Efforts", "Path_Efforts_Interim", "Efforts_AllRequests",
+      "Efforts_Summary",
       "Path_Grid_R", "Path_Efforts_Data", "Grid_SF", "IAS_List", "ChunkSize")
   ) %>%
     dplyr::bind_rows()

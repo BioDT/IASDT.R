@@ -186,7 +186,10 @@ GBIF_Process <- function(
         ChunkFile = x, EnvFile = EnvFile, FromHPC = FromHPC, SaveRData = TRUE,
         ReturnData = FALSE, Overwrite = Overwrite)
     },
-    future.scheduling = Inf, future.seed = TRUE)
+    future.scheduling = Inf, future.seed = TRUE,
+    future.packages = c(
+      "IASDT.R", "purrr", "tibble", "terra", "tidyr", "dplyr", "sf"),
+    future.globals = c("EnvFile", "FromHPC", "Overwrite"))
 
   IASDT.R::CatDiff(
     InitTime = .StartTimeChunks, Prefix = "Finished in ", Level = 2)

@@ -98,7 +98,8 @@ CHELSA_Prepare <- function(
 
   fs::dir_create(c(Path_CHELSA_In, Path_CHELSA_Out))
 
-  # files containing download links for climatology data
+
+  IASDT.R::CatTime("Prepare CHELSA metadata", Level = 1)
   CHELSA_Metadata <- list.files(
     path = Path_DwnLinks, recursive = TRUE, full.names = TRUE,
     pattern = "DwnLinks_Climatologies_.+txt$") %>%
@@ -212,6 +213,9 @@ CHELSA_Prepare <- function(
   # # ..................................................................... ###
 
   if (Download) {
+
+    IASDT.R::CatTime("Downloading CHELSA files", Level = 1)
+
     withr::local_options(
       future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
@@ -226,11 +230,12 @@ CHELSA_Prepare <- function(
 
     # # |||||||||||||||||||||||||||||||| ###
 
-    # Exclude available and valid Tiff files
-
     if (Overwrite) {
       Data2Down <- CHELSA_Metadata
     } else {
+
+      IASDT.R::CatTime("Exclude available and valid Tiff files", Level = 1)
+
       Data2Down <- CHELSA_Metadata %>%
         dplyr::mutate(
           Exclude = furrr::future_map_lgl(
@@ -251,7 +256,7 @@ CHELSA_Prepare <- function(
               return(Out)
             },
             .options = furrr::furrr_options(seed = TRUE),
-            .progress = FALSE
+            .progress = FALSE, .packages = c("IASDT.R", "fs")
           )
         ) %>%
         dplyr::filter(Exclude)
@@ -260,6 +265,7 @@ CHELSA_Prepare <- function(
     # # |||||||||||||||||||||||||||||||| ###
 
     # Download missing files
+    IASDT.R::CatTime("Download missing CHELSA files", Level = 1)
 
     if (nrow(Data2Down) > 0) {
       furrr::future_walk(
@@ -291,7 +297,8 @@ CHELSA_Prepare <- function(
           Sys.sleep(Sleep)
         },
         .options = furrr::furrr_options(
-          seed = TRUE, globals = c("Data2Down", "Sleep")))
+          seed = TRUE, globals = c("Data2Down", "Sleep"),
+          .packages = c("IASDT.R", "fs")))
     }
 
     if (NCores > 1) {
@@ -304,6 +311,8 @@ CHELSA_Prepare <- function(
   # # ..................................................................... ###
 
   # Save to disk -----
+
+  IASDT.R::CatTime("Save metadat to disk", Level = 1)
 
   save(
     CHELSA_Metadata,

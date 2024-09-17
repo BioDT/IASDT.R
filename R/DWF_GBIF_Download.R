@@ -237,7 +237,7 @@ GBIF_Download <- function(
       suppressMessages()
 
     IASDT.R::CatTime(
-      "GBIF data was downloaded at the following path:", Level = 2)
+      "GBIF data was downloaded at the following path:", Level = 3)
     IASDT.R::CatTime(as.character(Dwn), Level = 2)
     IASDT.R::CatDiff(
       InitTime = .StartTimeDownload,

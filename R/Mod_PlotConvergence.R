@@ -204,7 +204,7 @@ PlotConvergence <- function(
       future::plan("sequential", gc = TRUE)
     } else {
       c1 <- snow::makeSOCKcluster(NCores)
-      on.exit(snow::stopCluster(c1), add = TRUE)
+      on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
       future::plan("cluster", workers = c1, gc = TRUE)
       on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
     }
@@ -373,7 +373,7 @@ PlotConvergence <- function(
       future::plan("sequential", gc = TRUE)
     } else {
       c1 <- snow::makeSOCKcluster(NCores)
-      on.exit(snow::stopCluster(c1), add = TRUE)
+      on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
       future::plan("cluster", workers = c1, gc = TRUE)
       on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
     }
@@ -545,7 +545,7 @@ PlotConvergence <- function(
     future::plan("sequential", gc = TRUE)
   } else {
     c1 <- snow::makeSOCKcluster(NCores)
-    on.exit(snow::stopCluster(c1), add = TRUE)
+    on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
     future::plan("cluster", workers = c1, gc = TRUE)
     on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
   }
@@ -660,7 +660,7 @@ PlotConvergence <- function(
     future::plan("sequential", gc = TRUE)
   } else {
     c1 <- snow::makeSOCKcluster(NCores)
-    on.exit(snow::stopCluster(c1), add = TRUE)
+    on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
     future::plan("cluster", workers = c1, gc = TRUE)
     on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
   }

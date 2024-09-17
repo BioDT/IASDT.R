@@ -46,7 +46,7 @@ IAS_Distribution <- function(
 
   if (isFALSE(Verbose)) {
     sink(file = nullfile())
-    on.exit(sink(), add = TRUE)
+    on.exit(try(sink(), silent = TRUE), add = TRUE)
   }
 
   IASDT.R::InfoChunk(Species, Extra2 = 0)

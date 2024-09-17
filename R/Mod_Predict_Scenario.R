@@ -84,19 +84,32 @@ Predict_Scenario <- function(
 
   # # ..................................................................... ###
 
+  # Check if the results of the current climate option were already finished
   Name2 <- stringr::str_remove(Name, "^R_")
-  IASDT.R::InfoChunk(
-    Message = paste0("Climate option: ", Name2),
-    Date = TRUE, Extra1 = 2, Extra2 = 1)
-
   Path_Predictions <- file.path(
     dirname(dirname(Path_Model)), "Predictions", Name2)
   fs::dir_create(Path_Predictions)
 
   Path_Metadata <- file.path(Path_Predictions, "Predictions_Metadata.RData")
-  if (file.exists(Path_Metadata)) {
+  Path_Metadata_DT <- file.path(
+    Path_Predictions, "Predictions_Metadata_DT.RData")
+  Path_Predictions_R <- file.path(Path_Predictions, "Predictions_R.RData")
+  Path_Predictions_sf <- file.path(Path_Predictions, "Predictions_sf.RData")
+
+  AllExported <- purrr::map_lgl(
+    .x = c(
+      Path_Metadata, Path_Metadata_DT, Path_Predictions_R, Path_Predictions_sf),
+    .f = ~ file.exists(.x) && IASDT.R::CheckRData(.x)) %>%
+    all()
+
+  if (AllExported) {
     return(Path_Metadata)
   }
+
+
+  IASDT.R::InfoChunk(
+    Message = paste0("Climate option: ", Name2),
+    Date = TRUE, Extra1 = 2, Extra2 = 1)
 
   IASDT.R::CatTime("Predictions will be saved to:", Level = 2)
   IASDT.R::CatTime(Path_Predictions, Level = 3)
@@ -305,6 +318,9 @@ Predict_Scenario <- function(
         "Species_ID", "taxon_name", "Class", "Order", "Family", "Species_name",
         "Species_name2", "Species_File", "Genus", "Species"),
       names_from = "Stats", values_from = c("Predictions", "Tif_Path"))
+
+  IASDT.R::CatTime("Save predictions metadata", Level = 2)
+  save(Predictions_Metadata, file = Path_Metadata)
 
   # # ..................................................................... ###
 

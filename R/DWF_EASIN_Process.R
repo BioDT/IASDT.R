@@ -316,8 +316,7 @@ EASIN_Process <- function(
       IASDT.R::CatTime(paste0("Try number: ", Try), Level = 1)
       IASDT.R::CatTime(
         paste0(
-          "There are ", length(NotProcessed),
-          " EASIN taxa to be downloaded"),
+          "There are ", length(NotProcessed), " EASIN taxa to be downloaded"),
         Level = 2)
 
       if (Try > NDownTries) {

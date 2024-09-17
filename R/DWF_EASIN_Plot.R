@@ -120,7 +120,7 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
   Plot_EASIN_All <- function(
       MapPath, Title, EuroBound, addTag = FALSE, Legend = FALSE) {
     LastUpdate <- paste0(
-      "<b>Last update:</b> <i>", format(Sys.Date(), "%d %B %Y"), "</i>")
+      "<b>Last update:</b></br><i>", format(Sys.Date(), "%d %B %Y"), "</i>")
 
     Map <- IASDT.R::LoadAs(MapPath) %>%
       terra::unwrap() %>%

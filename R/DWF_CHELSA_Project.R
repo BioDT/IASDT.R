@@ -74,8 +74,9 @@ CHELSA_Project <- function(
     )
   }
 
-  # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use official
-  # parameters (overriding the ones from GeoTIFF keys)
+  # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use 
+  # official parameters (overriding the ones from GeoTIFF keys)
+  # see: https://stackoverflow.com/questions/78007307
   terra::setGDALconfig("GTIFF_SRS_SOURCE", "EPSG")
 
   # # ..................................................................... ###

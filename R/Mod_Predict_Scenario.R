@@ -112,7 +112,8 @@ Predict_Scenario <- function(
     Date = TRUE, Extra1 = 2, Extra2 = 1)
 
   IASDT.R::CatTime("Predictions will be saved to:", Level = 2)
-  IASDT.R::CatTime(Path_Predictions, Level = 3)
+  IASDT.R::CatTime(
+    Path_Predictions <- file.path("Predictions", Name2), Level = 3)
 
   # # ..................................................................... ###
 

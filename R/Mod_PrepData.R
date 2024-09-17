@@ -119,7 +119,7 @@ Mod_PrepData <- function(
 
   if (isFALSE(VerboseProgress)) {
     sink(file = nullfile())
-    on.exit(sink(), add = TRUE)
+    on.exit(try(sink(), silent = TRUE), add = TRUE)
   }
 
   # # ..................................................................... ###

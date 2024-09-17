@@ -252,6 +252,11 @@ CHELSA_Process <- function(
           .f = function(Down = Path_Down, Path_Out_NC, Path_Out_tif) {
             FileMetadata <- dplyr::filter(CHELSA_Data, Path_Down == Down)
 
+            # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use 
+            # official parameters (overriding the ones from GeoTIFF keys)
+            # see: https://stackoverflow.com/questions/78007307
+            terra::setGDALconfig("GTIFF_SRS_SOURCE", "EPSG")
+
             Attempt <- 0
             while (TRUE) {
               Attempt <- Attempt + 1

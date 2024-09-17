@@ -73,6 +73,13 @@ GBIF_SpData <- function(
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
+
+  # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use 
+  # official parameters (overriding the ones from GeoTIFF keys)
+  # see: https://stackoverflow.com/questions/78007307
+  terra::setGDALconfig("GTIFF_SRS_SOURCE", "EPSG")
+
+
   # # ..................................................................... ###
 
   # # Grid_10_Land_Crop_sf

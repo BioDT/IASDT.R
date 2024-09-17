@@ -357,7 +357,6 @@ Railway_Intensity <- function(
 
       save(Railway, file = Path_Temp)
 
-
       # Clean up
       fs::dir_delete(file.path(Path_Railways_Interim, Prefix))
       fs::file_delete(Path_Extract$NewName)
@@ -381,6 +380,12 @@ Railway_Intensity <- function(
   if (NCores > 1) {
     snow::stopCluster(c1)
     future::plan("sequential", gc = TRUE)
+  }
+
+  # Delete raw directory if empty
+  RawFileList <- list.files(Path_Railways_Raw, full.names = TRUE)
+  if (length(RawFileList) == 0) {
+    fs::dir_delete(Path_Railways_Raw)
   }
 
   # # .................................... ###

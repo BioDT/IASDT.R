@@ -584,6 +584,7 @@ GBIF_Process <- function(
     IASDT.R::CatTime("Clean up - remove temporary chunk files")
     list.files(Path_GBIF_Interim, full.names = TRUE) %>%
       fs::file_delete()
+    fs::dir_delete(Path_GBIF_Interim)
   }
 
   # # ..................................................................... ###

@@ -326,7 +326,7 @@ CHELSA_Process <- function(
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  # Group CHELSA data by time, climate model/scenario
+  # Group CHELSA data by time, climate model/scenario ----
 
   if (NCores == 1) {
     IASDT.R::CatTime(

@@ -454,7 +454,9 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
   # Delete extracted GRIP files
   list.files(Path_Roads_Interim, full.names = TRUE, pattern = "^GRIP") %>%
     fs::file_delete()
-
+  
+  fs::dir_delete(c(Path_Roads_Interim, Path_Roads_Raw))
+  
   # ..................................................................... ###
 
   # Function Summary ----

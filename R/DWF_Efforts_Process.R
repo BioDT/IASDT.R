@@ -231,6 +231,7 @@ Efforts_Process <- function(
   if (DeleteProcessed) {
     IASDT.R::CatTime("Cleaning up - delete downloaded GBIF data")
     fs::file_delete(list.files(Path_Efforts_Raw, full.names = TRUE))
+    fs::dir_delete(Path_Efforts_Raw)
   }
 
   # # ..................................................................... ###

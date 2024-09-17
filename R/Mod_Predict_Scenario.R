@@ -256,9 +256,7 @@ Predict_Scenario <- function(
     "Merge and save chunk data into a single RData file", Level = 2)
 
   Predictions_sf <- purrr::map_dfr(Chunks$Chunk_File, IASDT.R::LoadAs)
-  save(
-    Predictions_sf,
-    file = file.path(Path_Predictions, "Predictions_sf.RData"))
+  save(Predictions_sf, file = Path_Predictions_sf)
 
   # # ..................................................................... ###
 
@@ -330,9 +328,7 @@ Predict_Scenario <- function(
   Predictions_Metadata_DT <- dplyr::select(
     Predictions_Metadata, -tidyselect::starts_with("Predictions"))
 
-  save(
-    Predictions_Metadata_DT,
-    file = file.path(Path_Predictions, "Predictions_Metadata_DT.RData"))
+  save(Predictions_Metadata_DT, file = Path_Metadata_DT)
 
   readr::write_csv(
     x = Predictions_Metadata_DT,
@@ -341,9 +337,7 @@ Predict_Scenario <- function(
   # # ..................................................................... ###
 
   Predictions_R <- terra::wrap(Predictions_R)
-  save(
-    Predictions_R,
-    file = file.path(Path_Predictions, "Predictions_R.RData"))
+  save(Predictions_R, file = Path_Predictions_R)
 
   # # ..................................................................... ###
 

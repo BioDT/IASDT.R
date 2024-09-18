@@ -37,7 +37,7 @@ CLC_Plot <- function(
   # # ..................................................................... ###
 
   if (is.null(CLC_Name) || is.null(EU_Map) || is.null(CrossWalk) ||
-    is.null(Path_JPEG) || is.null(Path_JPEG_Free)) {
+      is.null(Path_JPEG) || is.null(Path_JPEG_Free)) {
     stop(
       paste0(
         "`CLC_Name`, `EU_Map`, `CrossWalk`, `Path_JPEG`, and ",
@@ -173,10 +173,10 @@ CLC_Plot <- function(
                 colour = "grey", size = 7, hjust = 1))
 
           TitleLab <- paste0(
-            FilePrefix, " \U2014 ", Labels$Level[YY],
+            FilePrefix, " \u2014 ", Labels$Level[YY],
             ".", Labels$Label[[YY]]) %>%
-            stringr::str_replace("CLC", "CLC \U2014 Level ") %>%
-            stringr::str_replace(" - ", " \U2014 ") %>%
+            stringr::str_replace("CLC", "CLC \u2014 Level ") %>%
+            stringr::str_replace(" - ", " \u2014 ") %>%
             stringr::str_replace("\\.\\.", ".") %>%
             stringi::stri_wrap(75) %>%
             stringr::str_c(collapse = "\n")
@@ -185,7 +185,7 @@ CLC_Plot <- function(
             TitleLab <- paste0(TitleLab, "\n")
           }
 
-          (ggplot2::ggplot() +
+          Plot <- ggplot2::ggplot() +
             ggplot2::geom_sf(
               EU_Map, mapping = ggplot2::aes(),
               color = "grey60", linewidth = 0.25, inherit.aes = TRUE,
@@ -199,26 +199,28 @@ CLC_Plot <- function(
               na.value = "transparent", "viridis::plasma",
               limits = c(0, 100)) +
             ggplot2::scale_x_continuous(
-              expand = ggplot2::expansion(mult = c(0, 0)),
-              limits = Xlim) +
+              expand = ggplot2::expansion(mult = c(0, 0)), limits = Xlim) +
             ggplot2::scale_y_continuous(
-              expand = ggplot2::expansion(mult = c(0, 0)),
-              limits = Ylim) +
-            ggplot2::labs(
-              title = TitleLab,
-              fill = NULL,
-              tag = LastUpdate) +
-            Theme2) %>%
-            ggplot2::ggsave(
-              filename = TilePath, width = 25, height = 23, units = "cm",
-              dpi = 600, create.dir = TRUE)
+              expand = ggplot2::expansion(mult = c(0, 0)), limits = Ylim) +
+            ggplot2::labs(title = TitleLab, fill = NULL, tag = LastUpdate) +
+            Theme2
+
+          # Using ggplot2::ggsave directly does not show non-ascii characters
+          # correctly
+          grDevices::jpeg(
+            filename = TilePath, width = 25, height = 23, units = "cm",
+            quality = 100, res = 600)
+          Plot
+          grDevices::dev.off()
+
+          # |||||||||||||||||||||||||||||||||||||||||||||||
 
           TilePathFree <- paste0(
             "PercCover_", FilePrefix, "_", Labels$Label[YY], ".jpeg") %>%
             stringr::str_replace_all("/", "_") %>%
             file.path(Path_JPEG_Free, .)
 
-          (ggplot2::ggplot() +
+          Plot <- ggplot2::ggplot() +
             ggplot2::geom_sf(
               EU_Map, mapping = ggplot2::aes(), color = "grey60",
               linewidth = 0.25, inherit.aes = TRUE,
@@ -234,14 +236,16 @@ CLC_Plot <- function(
               expand = ggplot2::expansion(mult = c(0, 0)), limits = Xlim) +
             ggplot2::scale_y_continuous(
               expand = ggplot2::expansion(mult = c(0, 0)), limits = Ylim) +
-            ggplot2::labs(
-              title = TitleLab,
-              fill = NULL,
-              tag = LastUpdate) +
-            Theme2) %>%
-            ggplot2::ggsave(
-              filename = TilePathFree, width = 25, height = 23,
-              units = "cm", dpi = 600, create.dir = TRUE)
+            ggplot2::labs(title = TitleLab, fill = NULL, tag = LastUpdate) +
+            Theme2
+
+          # Using ggplot2::ggsave directly does not show non-ascii characters
+          # correctly
+          grDevices::jpeg(
+            filename = TilePathFree, width = 25, height = 23, units = "cm",
+            quality = 100, res = 600)
+          Plot
+          grDevices::dev.off()
 
           return(CurrMapPlot)
         }
@@ -252,9 +256,9 @@ CLC_Plot <- function(
   IASDT.R::CatTime(paste0(Prefix, " - Multiple panels per file "), Level = 1)
 
   CommonLegend <- cowplot::get_legend(
-    (ggplot2::ggplot() +
+    (ggplot2::ggplot() + 
       tidyterra::geom_spatraster(
-        data = terra::rast(CLC_MapR[[1]]), maxcell = terra::ncell(CLC_MapR)) +
+        data = terra::rast(CLC_MapR[[1]]), maxcell = terra::ncell(CLC_MapR)) + 
       paletteer::scale_fill_paletteer_c(
         na.value = "transparent", palette = "viridis::plasma",
         limits = c(0, 100)) +
@@ -263,7 +267,7 @@ CLC_Plot <- function(
         legend.key.size = grid::unit(0.4, "cm"),
         legend.key.width = grid::unit(0.4, "cm"),
         legend.text = ggplot2::element_text(size = 6),
-        legend.background = ggplot2::element_rect(fill = "transparent")) +
+        legend.background = ggplot2::element_rect(fill = "transparent")) + 
       ggplot2::labs(fill = NULL))
   ) %>%
     suppressWarnings()
@@ -272,7 +276,7 @@ CLC_Plot <- function(
   purrr::walk(
     .x = seq_along(MAPS),
     .f = ~ {
-      # main title of the figure - {("\U00D7")} prints the multiplication symbol
+      # main title of the figure - {("\u00D7")} prints the multiplication symbol
       MainTitle <- stringr::str_glue(
         "Percent coverage of {Prefix} per 10\u00D710 km grid cell") %>%
         as.character()
@@ -284,13 +288,18 @@ CLC_Plot <- function(
           x = 0.935, size = 3) +
         ggplot2::theme(plot.margin = ggplot2::margin(0, 0, 0, 0))
 
-      cowplot::plot_grid(plotlist = MAPS[[.x]], ncol = 4, nrow = 2) %>%
+      Plot <- cowplot::plot_grid(plotlist = MAPS[[.x]], ncol = 4, nrow = 2) %>%
         cowplot::plot_grid(CommonLegend, rel_widths = c(4, .2)) %>%
-        cowplot::plot_grid(
-          MainTitle, ., ncol = 1, rel_heights = c(0.05, 1)) %>%
-        ggplot2::ggsave(
-          filename = OutPath[.x], width = 28, height = 15, units = "cm",
-          dpi = 600, create.dir = TRUE)
+        cowplot::plot_grid(MainTitle, ., ncol = 1, rel_heights = c(0.05, 1))
+
+      # Using ggplot2::ggsave directly does not show non-ascii characters
+      # correctly
+      grDevices::jpeg(
+        filename = OutPath[.x], width = 28, height = 15, units = "cm",
+        quality = 100, res = 600)
+      Plot
+      grDevices::dev.off()
+
     }
   )
 

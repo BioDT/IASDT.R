@@ -109,7 +109,7 @@ PlotBetaGG <- function(
     .default = paste0("\n\n", Model$covNames, "\n"))
 
   PosSign <- '<span style="font-size: 8pt"><b>  +  </b></span>'
-  NegSign <- '<span style="font-size: 8pt"><b>  \U2212  </b></span>'
+  NegSign <- '<span style="font-size: 8pt"><b>  \u2212  </b></span>'
   LegendTitle <- paste0('<span style="font-size: 12pt"><b>Beta</b></span>",
                         "<br><span style="font-size: 9pt">(sign)</span>')
 
@@ -136,13 +136,18 @@ PlotBetaGG <- function(
     # scale for fill, which will replace the existing scale.
     suppressMessages()
 
-  cowplot::plot_grid(
+  Plot <- cowplot::plot_grid(
     (Plot_Sign + ggplot2::theme(legend.position = "none")),
     ggpubr::as_ggplot(ggpubr::get_legend(Plot_Sign)),
-    rel_widths = c(0.91, 0.09)) %>%
-    ggplot2::ggsave(
-      filename = file.path(Path_Out, "Parameter_Beta_Sign.jpeg"),
-      width = PlotWidth, height = PlotHeight, units = "cm", dpi = 600)
+    rel_widths = c(0.91, 0.09))
+  
+  # Using ggplot2::ggsave directly does not show non-ascii characters correctly
+  grDevices::jpeg(
+    filename = file.path(Path_Out, "Parameter_Beta_Sign.jpeg"),
+    width = PlotWidth, height = PlotHeight, units = "cm", quality = 100, 
+    res = 600)
+  Plot
+  grDevices::dev.off()
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Mean -----
@@ -181,13 +186,18 @@ PlotBetaGG <- function(
     # scale for fill, which will replace the existing scale.
     suppressMessages()
 
-  cowplot::plot_grid(
+  Plot <- cowplot::plot_grid(
     (Plot_Mean + ggplot2::theme(legend.position = "none")),
     ggpubr::as_ggplot(ggpubr::get_legend(Plot_Mean)),
-    rel_widths = c(0.9, 0.1)) %>%
-    ggplot2::ggsave(
-      filename = file.path(Path_Out, "Parameter_Beta_Mean1.jpeg"),
-      width = PlotWidth, height = PlotHeight, units = "cm", dpi = 600)
+    rel_widths = c(0.9, 0.1))
+
+  # Using ggplot2::ggsave directly does not show non-ascii characters correctly
+  grDevices::jpeg(
+    filename = file.path(Path_Out, "Parameter_Beta_Mean1.jpeg"),
+    width = PlotWidth, height = PlotHeight, units = "cm", quality = 100, 
+    res = 600)
+  Plot
+  grDevices::dev.off()
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Mean - without intercept -----
@@ -219,13 +229,18 @@ PlotBetaGG <- function(
     # scale for fill, which will replace the existing scale.
     suppressMessages()
 
-  cowplot::plot_grid(
+  Plot <- cowplot::plot_grid(
     (Plot_Mean + ggplot2::theme(legend.position = "none")),
     ggpubr::as_ggplot(ggpubr::get_legend(Plot_Mean)),
-    rel_widths = c(0.9, 0.1)) %>%
-    ggplot2::ggsave(
-      filename = file.path(Path_Out, "Parameter_Beta_Mean2.jpeg"),
-      width = PlotWidth, height = PlotHeight, units = "cm", dpi = 600)
+    rel_widths = c(0.9, 0.1))
+
+  # Using ggplot2::ggsave directly does not show non-ascii characters correctly
+  grDevices::jpeg(
+    filename = file.path(Path_Out, "Parameter_Beta_Mean2.jpeg"),
+    width = PlotWidth, height = PlotHeight, units = "cm", quality = 100, 
+    res = 600)
+  Plot
+  grDevices::dev.off()
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Support ------
@@ -266,13 +281,18 @@ PlotBetaGG <- function(
     # scale for fill, which will replace the existing scale.
     suppressMessages()
 
-  cowplot::plot_grid(
+  Plot <- cowplot::plot_grid(
     (Plot_Support + ggplot2::theme(legend.position = "none")),
     ggpubr::as_ggplot(ggpubr::get_legend(Plot_Support)),
-    rel_widths = c(0.9, 0.1)) %>%
-    ggplot2::ggsave(
-      filename = file.path(Path_Out, "Parameter_Beta_Support.jpeg"),
-      width = PlotWidth, height = PlotHeight, units = "cm", dpi = 600)
+    rel_widths = c(0.9, 0.1))
+
+  # Using ggplot2::ggsave directly does not show non-ascii characters correctly
+  grDevices::jpeg(
+    filename = file.path(Path_Out, "Parameter_Beta_Support.jpeg"),
+    width = PlotWidth, height = PlotHeight, units = "cm", quality = 100, 
+    res = 600)
+  Plot
+  grDevices::dev.off()
 
   return(invisible(NULL))
 }

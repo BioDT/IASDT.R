@@ -106,7 +106,7 @@ PlotOmegaGG <- function(
   PostMean[!Support] <- NA_real_
 
   PosSign <- '<span style="font-size: 8pt"><b>  +  </b></span>'
-  NegSign <- '<span style="font-size: 8pt"><b>  \U2212  </b></span>'
+  NegSign <- '<span style="font-size: 8pt"><b>  \u2212  </b></span>'
   LegendTitle <- paste0(
     '<span style="font-size: 12pt"><b>Beta</b></span><br>',
     '<span style="font-size: 9pt">(sign)</span>')
@@ -134,13 +134,18 @@ PlotOmegaGG <- function(
     # scale for fill, which will replace the existing scale.
     suppressMessages()
 
-  cowplot::plot_grid(
+  Plot <- cowplot::plot_grid(
     (Plot_Sign + ggplot2::theme(legend.position = "none")),
     ggpubr::as_ggplot(ggpubr::get_legend(Plot_Sign)),
-    rel_widths = c(0.91, 0.09)) %>%
-    ggplot2::ggsave(
-      filename = file.path(Path_Out, "Parameter_Omega_Sign.jpeg"),
-      width = PlotWidth, height = PlotHeight, units = "cm", dpi = 600)
+    rel_widths = c(0.91, 0.09))
+
+  # Using ggplot2::ggsave directly does not show non-ascii characters correctly
+  grDevices::jpeg(
+    filename = file.path(Path_Out, "Parameter_Omega_Sign.jpeg"),
+    width = PlotWidth, height = PlotHeight, units = "cm", quality = 100, 
+    res = 600)
+  Plot
+  grDevices::dev.off()
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Mean -----
@@ -172,13 +177,18 @@ PlotOmegaGG <- function(
     # scale for fill, which will replace the existing scale.
     suppressMessages()
 
-  cowplot::plot_grid(
+  Plot <- cowplot::plot_grid(
     (Plot_Mean + ggplot2::theme(legend.position = "none")),
     ggpubr::as_ggplot(ggpubr::get_legend(Plot_Mean)),
-    rel_widths = c(0.91, 0.09)) %>%
-    ggplot2::ggsave(
-      filename = file.path(Path_Out, "Parameter_Omega_Mean.jpeg"),
-      width = PlotWidth, height = PlotHeight, units = "cm", dpi = 600)
+    rel_widths = c(0.91, 0.09))
+
+  # Using ggplot2::ggsave directly does not show non-ascii characters correctly
+  grDevices::jpeg(
+    filename = file.path(Path_Out, "Parameter_Omega_Mean.jpeg"),
+    width = PlotWidth, height = PlotHeight, units = "cm", quality = 100, 
+    res = 600)
+  Plot
+  grDevices::dev.off()
 
   return(invisible(NULL))
 }

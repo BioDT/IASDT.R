@@ -172,13 +172,13 @@ GBIF_Process <- function(
   } else {
     c1 <- snow::makeSOCKcluster(NCores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-    
-    # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use 
+
+    # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use
     # official parameters (overriding the ones from GeoTIFF keys)
     # see: https://stackoverflow.com/questions/78007307
     snow::clusterEvalQ(
-    cl = c1, expr = terra::setGDALconfig("GTIFF_SRS_SOURCE", "EPSG")) %>% 
-    invisible()
+      cl = c1, expr = terra::setGDALconfig("GTIFF_SRS_SOURCE", "EPSG")) %>%
+      invisible()
 
     future::plan("cluster", workers = c1, gc = TRUE)
     on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
@@ -480,7 +480,7 @@ GBIF_Process <- function(
     ggplot2::theme(plot.margin = ggplot2::margin(0, 0, 0.4, 0))
 
   # Plotting summary maps
-  tibble::tibble(
+  Plot <- tibble::tibble(
     # tibble for plotting information
     SummMap = list(
       terra::unwrap(GBIF_NObs) / 1000, terra::unwrap(GBIF_NObs_log),
@@ -502,11 +502,14 @@ GBIF_Process <- function(
     # Plot the four panels together on a single figure
     cowplot::plot_grid(plotlist = ., ncol = 2, nrow = 2) %>%
     # add the common title
-    cowplot::plot_grid(MainTitle, ., ncol = 1, rel_heights = c(0.035, 1)) %>%
-    # save figure to disk
-    ggplot2::ggsave(
-      filename = file.path(Path_GBIF, "GBIF_Summary.jpeg"),
-      width = 25, height = 25.8, units = "cm", dpi = 600)
+    cowplot::plot_grid(MainTitle, ., ncol = 1, rel_heights = c(0.035, 1))
+
+  # Using ggplot2::ggsave directly does not show non-ascii characters correctly
+  grDevices::jpeg(
+    filename = file.path(Path_GBIF, "GBIF_Summary.jpeg"),
+    width = 25, height = 25.8, units = "cm", quality = 100, res = 600)
+  Plot
+  grDevices::dev.off()
 
   rm(EuroBound)
   invisible(gc())

@@ -162,7 +162,7 @@ IAS_Plot <- function(
     stringr::str_c(collapse = " / ") %>%
     paste0(
       "   <span style='font-size: 14pt; color:blue;'><b><i>", IAS_ID,
-      " \U2014 ", Species, "</i></b></span>   (", ., ")")
+      " \u2014 ", Species, "</i></b></span>   (", ., ")")
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -209,22 +209,22 @@ IAS_Plot <- function(
   NGrids_All <- paste0(
     "<span style='font-size: 12pt; color:red;'><b>All data:</b></span> ",
     scales::label_comma()(SpData$NCells_All),
-    " presence grid cells</b> \U2014 <b>GBIF</b> (",
+    " presence grid cells</b> \u2014 <b>GBIF</b> (",
     scales::label_comma()(SpData$GBIF), " / ",
-    scales::label_comma()(SpData$GBIF_Unique), ") \U2014 <b>EASIN</b> (",
+    scales::label_comma()(SpData$GBIF_Unique), ") \u2014 <b>EASIN</b> (",
     scales::label_comma()(SpData$EASIN), " / ",
-    scales::label_comma()(SpData$EASIN_Unique), ") \U2014 <b>eLTER</b> (",
+    scales::label_comma()(SpData$EASIN_Unique), ") \u2014 <b>eLTER</b> (",
     scales::label_comma()(SpData$eLTER), " / ",
     scales::label_comma()(SpData$eLTER_Unique), ")<br>",
     "<span style='font-size: 12pt; color:red;'><b>Final data: </span>",
     scales::label_comma()(SpData$NCells_Naturalized),
-    " presence grid cells</b> \U2014 <b>GBIF</b> (",
+    " presence grid cells</b> \u2014 <b>GBIF</b> (",
     scales::label_comma()(SpData$GBIF_Masked), " / ",
     scales::label_comma()(SpData$GBIF_Masked_Unique),
-    ") \U2014 <b>EASIN</b> (",
+    ") \u2014 <b>EASIN</b> (",
     scales::label_comma()(SpData$EASIN_Masked), " / ",
     scales::label_comma()(SpData$EASIN_Masked_Unique),
-    ") \U2014 <b>eLTER</b> (",
+    ") \u2014 <b>eLTER</b> (",
     scales::label_comma()(SpData$eLTER_Masked), " / ",
     scales::label_comma()(SpData$eLTER_Masked_Unique), ")\n")
 
@@ -299,15 +299,20 @@ IAS_Plot <- function(
 
   # Save the plot as JPEG file ----
 
-  (cowplot::ggdraw(Plot) +
-    cowplot::draw_label(
-      label = LastUpdate, x = 0.975, y = 0.98, hjust = 1, vjust = 1,
-      color = "grey65", size = 12) +
-    cowplot::draw_label(
-      label = BioRegAnnotation, x = 0.02, y = 0.91, hjust = 0, vjust = 0,
-      color = "grey65", size = 10)) %>%
-    ggplot2::ggsave(
-      filename = OutPath, width = 25, height = 26.5, units = "cm", dpi = 600)
+  Plot <- (cowplot::ggdraw(Plot) +
+             cowplot::draw_label(
+               label = LastUpdate, x = 0.975, y = 0.98, hjust = 1, vjust = 1,
+               color = "grey65", size = 12) +
+             cowplot::draw_label(
+               label = BioRegAnnotation, x = 0.02, y = 0.91, hjust = 0, vjust = 0,
+               color = "grey65", size = 10))
+
+  # Using ggplot2::ggsave directly does not show non-ascii characters correctly
+  grDevices::jpeg(
+    filename = OutPath, width = 25, height = 26.5, units = "cm",
+    quality = 100, res = 600)
+  Plot
+  grDevices::dev.off()
 
   return(invisible(NULL))
 }

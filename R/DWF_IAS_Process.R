@@ -437,13 +437,18 @@ IAS_Process <- function(
       fill = "# IAS\n(log10)") +
     PlottingTheme
 
-  (cowplot::plot_grid(Plot_Nsp, Plot_Nsp_log, ncol = 2, nrow = 1) +
-      cowplot::draw_label(
-        label = LastUpdate, color = "grey", x = 0.99, y = 0.98,
-        size = 7, hjust = 1)) %>%
-    ggplot2::ggsave(
-      filename = file.path(Path_PA, "IAS_NumSpecies.jpeg"),
-      width = 30, height = 15.5, units = "cm", dpi = 600)
+  Plot <- cowplot::plot_grid(Plot_Nsp, Plot_Nsp_log, ncol = 2, nrow = 1) +
+    cowplot::draw_label(
+      label = LastUpdate, color = "grey", x = 0.99, y = 0.98,
+      size = 7, hjust = 1)
+
+  # Using ggplot2::ggsave directly does not show non-ascii characters
+  # correctly
+  grDevices::jpeg(
+    filename = file.path(Path_PA, "IAS_NumSpecies.jpeg"),
+    width = 30, height = 15.5, units = "cm", quality = 100, res = 600)
+  Plot
+  grDevices::dev.off()
 
   # # +++++++++++++++++++++++++++++++++ ###
 
@@ -492,14 +497,18 @@ IAS_Process <- function(
       fill = "# IAS\n(log10)") +
     PlottingTheme
 
-  (cowplot::plot_grid(
+  Plot <- cowplot::plot_grid(
     Plot_Nsp_Masked, Plot_Nsp_Masked_log, ncol = 2, nrow = 1) +
-      cowplot::draw_label(
-        label = LastUpdate, color = "grey", x = 0.99, y = 0.98,
-        size = 7, hjust = 1)) %>%
-    ggplot2::ggsave(
-      filename = file.path(Path_PA, "IAS_NumSpecies_Masked.jpeg"),
-      width = 30, height = 15.5, units = "cm", dpi = 600)
+    cowplot::draw_label(
+      label = LastUpdate, color = "grey", x = 0.99, y = 0.98,
+      size = 7, hjust = 1)
+
+  # Using ggplot2::ggsave directly does not show non-ascii characters correctly
+  grDevices::jpeg(
+    filename = file.path(Path_PA, "IAS_NumSpecies_Masked.jpeg"),
+    width = 30, height = 15.5, units = "cm", quality = 100, res = 600)
+  Plot
+  grDevices::dev.off()
 
   # # +++++++++++++++++++++++++++++++++ ###
 
@@ -651,18 +660,21 @@ IAS_Process <- function(
         "selection of # of presence grid cells per species"),
       fontface = "bold", colour = "blue")
 
-  cowplot::plot_grid(
+  Plot <- cowplot::plot_grid(
     title,
     cowplot::plot_grid(
       (NSp_Hab_DT + ggplot2::theme(legend.position = "none")),
       NSp_Hab_Masked_DT,
       ncol = 2, nrow = 1),
     Legend,
-    ncol = 1, rel_heights = c(0.05, 1, 0.05)
-  ) %>%
-    ggplot2::ggsave(
-      filename = file.path(Path_PA, "IAS_NSp_threshold_Hab.jpeg"),
-      width = 30, height = 17, units = "cm", dpi = 600)
+    ncol = 1, rel_heights = c(0.05, 1, 0.05))
+
+  # Using ggplot2::ggsave directly does not show non-ascii characters correctly
+  grDevices::jpeg(
+    filename = file.path(Path_PA, "IAS_NSp_threshold_Hab.jpeg"),
+    width = 30, height = 17, units = "cm", quality = 100, res = 600)
+  Plot
+  grDevices::dev.off()
 
   # # ..................................................................... ###
 

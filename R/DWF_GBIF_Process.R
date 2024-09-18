@@ -167,10 +167,19 @@ GBIF_Process <- function(
     Level = 1)
 
   if (NCores == 1) {
+    terra::setGDALconfig("GTIFF_SRS_SOURCE", "EPSG")
     future::plan("sequential", gc = TRUE)
   } else {
     c1 <- snow::makeSOCKcluster(NCores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
+    
+    # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use 
+    # official parameters (overriding the ones from GeoTIFF keys)
+    # see: https://stackoverflow.com/questions/78007307
+    snow::clusterEvalQ(
+    cl = c1, expr = terra::setGDALconfig("GTIFF_SRS_SOURCE", "EPSG")) %>% 
+    invisible()
+
     future::plan("cluster", workers = c1, gc = TRUE)
     on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
   }
@@ -217,8 +226,7 @@ GBIF_Process <- function(
 
   IASDT.R::CatTime(
     paste0(
-      "A total of ", format(nrow(GBIF_Data), big.mark = ","),
-      " observations"),
+      "A total of ", format(nrow(GBIF_Data), big.mark = ","), " observations"),
     Level = 2)
 
   IASDT.R::CatTime("Stopping cluster", Level = 1)
@@ -249,8 +257,7 @@ GBIF_Process <- function(
         institutionCode, "iNaturalist", "Others"))
 
   IASDT.R::CatTime(
-    "Number of unique iNaturalist grid cells per species",
-    Level = 1)
+    "Number of unique iNaturalist grid cells per species", Level = 1)
   iNaturalist_Unique <- iNaturalist_Others %>%
     dplyr::group_by(species, CellCode) %>%
     tidyr::pivot_wider(

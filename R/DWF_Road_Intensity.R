@@ -291,6 +291,9 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
 
   IASDT.R::CatTime("Calculate distance to roads", Level = 1)
 
+  # suppress progress bar
+  terra::terraOptions(progress=0)
+  
   Road_Distance <- purrr::map(
     .x = as.list(Road_Length),
     .f = ~ {

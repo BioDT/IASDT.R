@@ -195,10 +195,16 @@ IAS_Distribution <- function(
 
   # Loading reference grids ----
   IASDT.R::CatTime("Loading reference grids", Level = 1)
+  if (!file.exists(file.path(Path_Grid_Ref, "Grid_100_sf.RData"))) {
+    stop(
+      "The following grid file does not exist: Grid_100_sf.RData",
+      call. = FALSE)
+  }
+
   GridsPath <- file.path(
-    Path_Grid_Ref,
+    Path_Grid,
     c(
-      "Grid_100_sf.RData", "Grid_10_Land_Crop.RData",
+      "Grid_10_Land_Crop_sf_Country.RData", "Grid_10_Land_Crop.RData",
       "Grid_10_Land_sf.RData"))
 
   if (!all(file.exists(GridsPath))) {

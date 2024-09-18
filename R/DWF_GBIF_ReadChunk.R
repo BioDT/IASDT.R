@@ -62,6 +62,11 @@ GBIF_ReadChunk <- function(
       call. = FALSE)
   }
 
+  # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use 
+  # official parameters (overriding the ones from GeoTIFF keys)
+  # see: https://stackoverflow.com/questions/78007307
+  terra::setGDALconfig("GTIFF_SRS_SOURCE", "EPSG")
+
   # # ..................................................................... ###
 
   # Checking arguments ----
@@ -153,11 +158,6 @@ GBIF_ReadChunk <- function(
   # CLC cross-walk to match observations
   CLC_Levels <- readr::read_delim(file = CLC_CW, show_col_types = FALSE) %>%
     dplyr::select(-SynHab_desc)
-
-  # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use 
-  # official parameters (overriding the ones from GeoTIFF keys)
-  # see: https://stackoverflow.com/questions/78007307
-  terra::setGDALconfig("GTIFF_SRS_SOURCE", "EPSG")
 
   ChunkData <- readr::read_lines(ChunkFile, progress = FALSE) %>%
     # read the data by lines and convert to tibble

@@ -487,6 +487,9 @@ Railway_Intensity <- function(
     .f = ~ {
       IASDT.R::CatTime(names(.x), Level = 2)
 
+      # suppress progress bar
+      terra::terraOptions(progress=0)
+      
       Railways_Points <- terra::as.points(terra::classify(.x, cbind(0, NA)))
 
       terra::distance(x = .x, y = Railways_Points, unit = "km") %>%

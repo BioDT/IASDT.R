@@ -142,9 +142,9 @@ PlotOmegaGG <- function(
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   grDevices::jpeg(
     filename = file.path(Path_Out, "Parameter_Omega_Sign.jpeg"),
-    width = PlotWidth, height = PlotHeight, units = "cm", quality = 100, 
+    width = PlotWidth, height = PlotHeight, units = "cm", quality = 100,
     res = 600)
-  Plot
+  print(Plot)
   grDevices::dev.off()
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -185,9 +185,9 @@ PlotOmegaGG <- function(
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   grDevices::jpeg(
     filename = file.path(Path_Out, "Parameter_Omega_Mean.jpeg"),
-    width = PlotWidth, height = PlotHeight, units = "cm", quality = 100, 
+    width = PlotWidth, height = PlotHeight, units = "cm", quality = 100,
     res = 600)
-  Plot
+  print(Plot)
   grDevices::dev.off()
 
   return(invisible(NULL))

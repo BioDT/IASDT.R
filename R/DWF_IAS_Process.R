@@ -447,7 +447,7 @@ IAS_Process <- function(
   grDevices::jpeg(
     filename = file.path(Path_PA, "IAS_NumSpecies.jpeg"),
     width = 30, height = 15.5, units = "cm", quality = 100, res = 600)
-  Plot
+  print(Plot)
   grDevices::dev.off()
 
   # # +++++++++++++++++++++++++++++++++ ###
@@ -507,7 +507,7 @@ IAS_Process <- function(
   grDevices::jpeg(
     filename = file.path(Path_PA, "IAS_NumSpecies_Masked.jpeg"),
     width = 30, height = 15.5, units = "cm", quality = 100, res = 600)
-  Plot
+  print(Plot)
   grDevices::dev.off()
 
   # # +++++++++++++++++++++++++++++++++ ###
@@ -673,7 +673,7 @@ IAS_Process <- function(
   grDevices::jpeg(
     filename = file.path(Path_PA, "IAS_NSp_threshold_Hab.jpeg"),
     width = 30, height = 17, units = "cm", quality = 100, res = 600)
-  Plot
+  print(Plot)
   grDevices::dev.off()
 
   # # ..................................................................... ###

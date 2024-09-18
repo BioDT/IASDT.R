@@ -204,9 +204,7 @@ CLC_Process <- function(
     Path_CLC_Summary_JPEG <- file.path(Path_CLC, "Summary_JPEG")
     Path_CLC_Summary_JPEG_Free <- file.path(Path_CLC_Summary_JPEG, "FreeLegend")
 
-    purrr::walk(
-      .x = c(Path_CLC_Summary_JPEG, Path_CLC_Summary_JPEG_Free),
-      .f = fs::dir_create)
+    fs::dir_create(c(Path_CLC_Summary_JPEG, Path_CLC_Summary_JPEG_Free))
   }
 
   # # ..................................................................... ###

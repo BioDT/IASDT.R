@@ -508,7 +508,7 @@ GBIF_Process <- function(
   grDevices::jpeg(
     filename = file.path(Path_GBIF, "GBIF_Summary.jpeg"),
     width = 25, height = 25.8, units = "cm", quality = 100, res = 600)
-  Plot
+  print(Plot)
   grDevices::dev.off()
 
   rm(EuroBound)

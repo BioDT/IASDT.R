@@ -210,7 +210,7 @@ CLC_Plot <- function(
           grDevices::jpeg(
             filename = TilePath, width = 25, height = 23, units = "cm",
             quality = 100, res = 600)
-          Plot
+          print(Plot)
           grDevices::dev.off()
 
           # |||||||||||||||||||||||||||||||||||||||||||||||
@@ -244,7 +244,7 @@ CLC_Plot <- function(
           grDevices::jpeg(
             filename = TilePathFree, width = 25, height = 23, units = "cm",
             quality = 100, res = 600)
-          Plot
+          print(Plot)
           grDevices::dev.off()
 
           return(CurrMapPlot)
@@ -256,9 +256,9 @@ CLC_Plot <- function(
   IASDT.R::CatTime(paste0(Prefix, " - Multiple panels per file "), Level = 1)
 
   CommonLegend <- cowplot::get_legend(
-    (ggplot2::ggplot() + 
+    (ggplot2::ggplot() +
       tidyterra::geom_spatraster(
-        data = terra::rast(CLC_MapR[[1]]), maxcell = terra::ncell(CLC_MapR)) + 
+        data = terra::rast(CLC_MapR[[1]]), maxcell = terra::ncell(CLC_MapR)) +
       paletteer::scale_fill_paletteer_c(
         na.value = "transparent", palette = "viridis::plasma",
         limits = c(0, 100)) +
@@ -267,7 +267,7 @@ CLC_Plot <- function(
         legend.key.size = grid::unit(0.4, "cm"),
         legend.key.width = grid::unit(0.4, "cm"),
         legend.text = ggplot2::element_text(size = 6),
-        legend.background = ggplot2::element_rect(fill = "transparent")) + 
+        legend.background = ggplot2::element_rect(fill = "transparent")) +
       ggplot2::labs(fill = NULL))
   ) %>%
     suppressWarnings()
@@ -297,7 +297,7 @@ CLC_Plot <- function(
       grDevices::jpeg(
         filename = OutPath[.x], width = 28, height = 15, units = "cm",
         quality = 100, res = 600)
-      Plot
+      print(Plot)
       grDevices::dev.off()
 
     }

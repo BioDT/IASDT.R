@@ -140,13 +140,13 @@ PlotBetaGG <- function(
     (Plot_Sign + ggplot2::theme(legend.position = "none")),
     ggpubr::as_ggplot(ggpubr::get_legend(Plot_Sign)),
     rel_widths = c(0.91, 0.09))
-  
+
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   grDevices::jpeg(
     filename = file.path(Path_Out, "Parameter_Beta_Sign.jpeg"),
-    width = PlotWidth, height = PlotHeight, units = "cm", quality = 100, 
+    width = PlotWidth, height = PlotHeight, units = "cm", quality = 100,
     res = 600)
-  Plot
+  print(Plot)
   grDevices::dev.off()
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -194,9 +194,9 @@ PlotBetaGG <- function(
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   grDevices::jpeg(
     filename = file.path(Path_Out, "Parameter_Beta_Mean1.jpeg"),
-    width = PlotWidth, height = PlotHeight, units = "cm", quality = 100, 
+    width = PlotWidth, height = PlotHeight, units = "cm", quality = 100,
     res = 600)
-  Plot
+  print(Plot)
   grDevices::dev.off()
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -237,9 +237,9 @@ PlotBetaGG <- function(
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   grDevices::jpeg(
     filename = file.path(Path_Out, "Parameter_Beta_Mean2.jpeg"),
-    width = PlotWidth, height = PlotHeight, units = "cm", quality = 100, 
+    width = PlotWidth, height = PlotHeight, units = "cm", quality = 100,
     res = 600)
-  Plot
+  print(Plot)
   grDevices::dev.off()
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -289,9 +289,9 @@ PlotBetaGG <- function(
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   grDevices::jpeg(
     filename = file.path(Path_Out, "Parameter_Beta_Support.jpeg"),
-    width = PlotWidth, height = PlotHeight, units = "cm", quality = 100, 
+    width = PlotWidth, height = PlotHeight, units = "cm", quality = 100,
     res = 600)
-  Plot
+  print(Plot)
   grDevices::dev.off()
 
   return(invisible(NULL))

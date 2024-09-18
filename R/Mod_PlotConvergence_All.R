@@ -30,7 +30,7 @@ PlotConvergence_All <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  GPP_Thin <- Path_Coda <- Path_FittedMod <- M_Name_Fit <- Tree <- rL <-
+  GPP_Thin <- M_Name_Fit <- Tree <- rL <-
     M_thin <- M_samples <- Omega_Gelman <- Omega_ESS <- Beta_Gelman <-
     Beta_ESS <- ESS2 <- Path_Trace_Rho <- Rho <- Path_Trace_Alpha <-
     Path_Trace_Rho <- NULL
@@ -282,7 +282,7 @@ PlotConvergence_All <- function(
 
   IASDT.R::CatTime("Rho - trace plots")
 
-  Convergence_DT %>%
+  Plot <- Convergence_DT %>%
     dplyr::filter(stringr::str_detect(M_Name_Fit, "_Tree_")) %>%
     dplyr::mutate(
       Rho = purrr::map_if(
@@ -296,11 +296,15 @@ PlotConvergence_All <- function(
       top = grid::textGrob(
         label = "Convergence of the rho parameter",
         gp = grid::gpar(fontface = "bold", fontsize = 20)),
-      nrow = 2, ncol = 3) %>%
-    ggplot2::ggsave(
-      dpi = 600, device = "pdf", width = 18, height = 12,
-      filename = file.path(
-        Path_Convergence_All, "TracePlots_Rho_Phylogenetic.pdf"))
+      nrow = 2, ncol = 3)
+
+  # Using ggplot2::ggsave directly does not show non-ascii characters correctly
+  grDevices::pdf(
+    file = file.path(
+      Path_Convergence_All, "TracePlots_Rho_Phylogenetic.pdf"),
+    width = 18, height = 12)
+  print(Plot)
+  grDevices::dev.off()
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   ## Omega - Gelman convergence ------
@@ -340,11 +344,13 @@ PlotConvergence_All <- function(
       ggplot2::ylab("Gelman and Rubin's convergence diagnostic - (cropped)") +
       ggplot2::ylim(c(0.995, 1.05))
 
-    ggplot2::ggsave(
-      filename = Plot_Path,
-      plot = gridExtra::marrangeGrob(
-        grobs = list(Plot, Plot2), nrow = 1, ncol = 1, top = NULL),
-      width = 18, height = 12)
+    # Using ggplot2::ggsave directly does not show non-ascii characters
+    # correctly
+    grDevices::pdf(file = Plot_Path, width = 18, height = 12)
+    print(gridExtra::marrangeGrob(
+      grobs = list(Plot, Plot2), nrow = 1, ncol = 1, top = NULL))
+    grDevices::dev.off()
+
   }))
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -397,11 +403,12 @@ PlotConvergence_All <- function(
     ggplot2::coord_flip(expand = FALSE) +
     Theme
 
-  ggplot2::ggsave(
-    filename = Plot_Path,
-    plot = gridExtra::marrangeGrob(
-      grobs = list(Plot, Plot2), nrow = 1, ncol = 1, top = NULL),
-    width = 18, height = 12)
+  # Using ggplot2::ggsave directly does not show non-ascii characters
+  # correctly
+  grDevices::pdf(file = Plot_Path, width = 18, height = 12)
+  print(gridExtra::marrangeGrob(
+    grobs = list(Plot, Plot2), nrow = 1, ncol = 1, top = NULL))
+  grDevices::dev.off()
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   ## Beta - Gelman convergence ------
@@ -439,11 +446,13 @@ PlotConvergence_All <- function(
       ggplot2::ylab("Gelman and Rubin's convergence diagnostic - (cropped)") +
       ggplot2::ylim(c(0.995, 1.05))
 
-    ggplot2::ggsave(
-      filename = Plot_Path,
-      plot = gridExtra::marrangeGrob(
-        grobs = list(Plot, Plot2), nrow = 1, ncol = 1, top = NULL),
-      width = 18, height = 12)
+    # Using ggplot2::ggsave directly does not show non-ascii characters
+    # correctly
+    grDevices::pdf(file = Plot_Path, width = 18, height = 12)
+    print(gridExtra::marrangeGrob(
+      grobs = list(Plot, Plot2), nrow = 1, ncol = 1, top = NULL))
+    grDevices::dev.off()
+
   }))
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -495,11 +504,12 @@ PlotConvergence_All <- function(
     ggplot2::coord_flip(expand = FALSE) +
     Theme
 
-  ggplot2::ggsave(
-    filename = Plot_Path,
-    plot = gridExtra::marrangeGrob(
-      grobs = list(Plot, Plot2), nrow = 1, ncol = 1, top = NULL),
-    width = 18, height = 12)
+  # Using ggplot2::ggsave directly does not show non-ascii characters
+  # correctly
+  grDevices::pdf(file = Plot_Path, width = 18, height = 12)
+  print(gridExtra::marrangeGrob(
+    grobs = list(Plot, Plot2), nrow = 1, ncol = 1, top = NULL))
+  grDevices::dev.off()
 
   IASDT.R::CatDiff(
     InitTime = .StartTime, ChunkText = "Function summary", CatInfo = TRUE)

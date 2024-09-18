@@ -12,7 +12,8 @@
 #' @author Ahmed El-Gabbas
 #' @param InitTime POSIXct; The initial time from which the difference is
 #'   calculated.
-#' @param ChunkText character. The message printed as chunk info. Default value: `Session summary`. See: [InfoChunk] for more information.
+#' @param ChunkText character. The message printed as chunk info. Default
+#'   value: `Session summary`. See: [InfoChunk] for more information.
 #' @param Prefix character; A prefix string to prepend to the printed time
 #'   difference. Defaults to "Completed in ".
 #' @param CatInfo logical; If `TRUE`, prints a session summary using

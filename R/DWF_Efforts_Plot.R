@@ -158,24 +158,22 @@ Efforts_Plot <- function(Path_Efforts, EU_Bound) {
     .x = seq_len(nrow(PlotDF)),
     .f = ~ {
       CurrPlot <- patchwork::wrap_plots(
-        PlotDF$Plots[[.x]],
-        ncol = 2, nrow = 1
-      ) +
+        PlotDF$Plots[[.x]], ncol = 2, nrow = 1) +
         patchwork::plot_annotation(
           title = PlotDF$Title[[.x]],
           theme = ggplot2::theme(
             plot.title = ggplot2::element_text(
               size = 14, face = "bold", hjust = 0.5, colour = "blue",
-              margin = ggplot2::margin(0.25, 0, 0.5, 0)
-            )
-          )
-        )
+              margin = ggplot2::margin(0.25, 0, 0.5, 0))))
 
-      ggplot2::ggsave(
-        plot = CurrPlot,
+      # Using ggplot2::ggsave directly does not show non-ascii characters
+      # correctly
+      grDevices::jpeg(
         filename = file.path(Path_Efforts, PlotDF$FileName[[.x]]),
-        width = 31, height = 16.25, units = "cm", dpi = 600
-      )
+        width = 31, height = 16.25, units = "cm", quality = 100, res = 600)
+      print(CurrPlot)
+      grDevices::dev.off()
+
     }
   )
 

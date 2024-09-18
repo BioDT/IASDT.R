@@ -26,7 +26,8 @@
 #' @export
 #' @details The function reads the following environment variables:
 #'   - **`DP_R_TaxaInfo`** (if `FromHPC` = `TRUE`) or
-#'     **`DP_R_TaxaInfo_Local`** (if `FromHPC` = `FALSE`) for the location of the `Species_List_ID.txt` file containing species information.
+#'     **`DP_R_TaxaInfo_Local`** (if `FromHPC` = `FALSE`) for the location of
+#'     the `Species_List_ID.txt` file containing species information.
 #' @name Mod_Summary
 
 Mod_Summary <- function(

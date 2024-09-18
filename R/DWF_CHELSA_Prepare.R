@@ -34,7 +34,9 @@
 CHELSA_Prepare <- function(
     EnvFile = ".env", FromHPC = TRUE, Download = FALSE, NCores = 4,
     Overwrite = FALSE, Download_Attempts = 10, Sleep = 5,
-    BaseURL = "https://os.zhdk.cloud.switch.ch/envicloud/chelsa/chelsa_V2/GLOBAL/") {
+    BaseURL = paste0(
+      "https://os.zhdk.cloud.switch.ch/envicloud/",
+      "chelsa/chelsa_V2/GLOBAL/")) {
 
   # # ..................................................................... ###
 
@@ -199,14 +201,14 @@ CHELSA_Prepare <- function(
       OutName = purrr::pmap_chr(
         .l = list(Variable, TimePeriod, ClimateModel, ClimateScenario),
         .f = function(Variable, TimePeriod, ClimateModel, ClimateScenario) {
-          OutName <- paste0(
-            Variable, "_", TimePeriod, "_", ClimateModel, "_", ClimateScenario) %>%
+          paste0(
+            Variable, "_", TimePeriod, "_",
+            ClimateModel, "_", ClimateScenario) %>%
             stringr::str_replace(
               pattern = "1981-2010_Current_Current",
               replacement = "1981-2010_Current")
         }
-      )
-    ) %>%
+      )) %>%
     dplyr::select(-"Folder") %>%
     dplyr::left_join(IASDT.R::CHELSA_Vars, by = "Variable")
 

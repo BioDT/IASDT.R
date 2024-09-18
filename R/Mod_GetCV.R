@@ -42,12 +42,13 @@
 #'   `automap` R package.
 #'
 #'   2) `CV_Dist` in which the size of spatial cross-validation blocks is
-#'   determined by the `CV_NGrids` argument. The default `CV_NGrids` value is 20,
-#'   which means blocks of 20x20 grid cell each.
+#'   determined by the `CV_NGrids` argument. The default `CV_NGrids` value is
+#'   20, which means blocks of 20x20 grid cell each.
 #'
 #'   3) `CV_Large` which splits the study area into large blocks, as determined
-#'   by the  `CV_NR` and `CV_NC` arguments. if `CV_NR = CV_NC` = 2 (default), four large
-#'   blocks will be used, split the study area at the median coordinates..
+#'   by the  `CV_NR` and `CV_NC` arguments. if `CV_NR = CV_NC` = 2 (default),
+#'   four large blocks will be used, split the study area at the median
+#'   coordinates.
 #' @details The function reads the following environment variable:
 #'    - **`DP_R_Grid`** (if `FromHPC = TRUE`) or
 #'    **`DP_R_Grid_Local`** (if `FromHPC = FALSE`). The function reads
@@ -171,7 +172,8 @@ GetCV <- function(
   # to avoid the following error if the estimated SAC range is very large that
   # disallow the assignation of grid cells into the number of CV folds in the
   # `CV_NFolds` parameter:
-  # error in `blockCV::cv_spatial()`: 'k' is bigger than the number of spatial blocks: 1.
+  # error in `blockCV::cv_spatial()`: 'k' is bigger than the number of spatial
+  # blocks: 1.
 
 
   # Size of the large spatial blocks that split the study area into four large
@@ -188,7 +190,8 @@ GetCV <- function(
     CV_SAC <- NULL
 
     # Check `folds_ids` exists in each of the cross-validation strategies
-    if (!("folds_ids" %in% names(CV_Dist) && "folds_ids" %in% names(CV_Large))) {
+    if (!("folds_ids" %in% names(CV_Dist) &&
+          "folds_ids" %in% names(CV_Large))) {
       stop(
         "Cross-validation results do not contain 'folds_ids'.",
         call. = FALSE)
@@ -202,8 +205,8 @@ GetCV <- function(
 
     # Check `folds_ids` exists in each of the cross-validation strategies
     if (!(("folds_ids" %in% names(CV_SAC)) &&
-        ("folds_ids" %in% names(CV_Dist)) &&
-        ("folds_ids" %in% names(CV_Large)))) {
+          ("folds_ids" %in% names(CV_Dist)) &&
+          ("folds_ids" %in% names(CV_Large)))) {
       stop(
         "Cross-validation results do not contain 'folds_ids'.", call. = FALSE)
     }
@@ -216,8 +219,9 @@ GetCV <- function(
   # # |||||||||||||||||||||||||||||||||||
   IASDT.R::CatTime("Save cross-validation results as RData", Level = 1)
   CV_data <- list(
-    CV_NGrids = CV_NGrids, CV_NR = CV_NR, CV_NC = CV_NC, CV_SAC_Range = CV_SAC_Range,
-    CV_SAC = CV_SAC, CV_Dist = CV_Dist, CV_Large = CV_Large)
+    CV_NGrids = CV_NGrids, CV_NR = CV_NR, CV_NC = CV_NC,
+    CV_SAC_Range = CV_SAC_Range, CV_SAC = CV_SAC, CV_Dist = CV_Dist,
+    CV_Large = CV_Large)
 
   save(CV_data, file = file.path(OutPath, "CV_data.RData"))
 
@@ -289,11 +293,14 @@ GetCV <- function(
         return(Plot)
       })
 
-    ggplot2::ggsave(
-      filename = file.path(OutPath, "CV_Blocks.pdf"),
-      plot = gridExtra::marrangeGrob(
-        CV_Plots, nrow = 1, ncol = 1, top = NULL),
-      width = 25 * (AspectRatio), height = 25, unit = "in")
+    # Using ggplot2::ggsave directly does not show non-ascii characters
+    # correctly
+    grDevices::pdf(
+      file = file.path(OutPath, "CV_Blocks.pdf"),
+      width = 25 * (AspectRatio), height = 25)
+    print(gridExtra::marrangeGrob(CV_Plots, nrow = 1, ncol = 1, top = NULL))
+    grDevices::dev.off()
+
   }
 
   # # |||||||||||||||||||||||||||||||||||

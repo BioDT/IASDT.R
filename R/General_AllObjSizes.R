@@ -43,7 +43,8 @@
 #' AllObjSizes(InFunction = TRUE)
 #' AllObjSizes(InFunction = FALSE)
 #'
-#' # When called with another function, it shows the objects only available within the function
+#' # When called with another function, it shows the objects only available
+#' # within the function
 #' TestFun <- function(XX = 10) {
 #'   Y <- 20
 #'   C <- matrix(data = seq_len(10000), nrow = 100, ncol = 100)

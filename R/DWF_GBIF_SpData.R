@@ -74,7 +74,7 @@ GBIF_SpData <- function(
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
 
-  # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use 
+  # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use
   # official parameters (overriding the ones from GeoTIFF keys)
   # see: https://stackoverflow.com/questions/78007307
   terra::setGDALconfig("GTIFF_SRS_SOURCE", "EPSG")
@@ -121,7 +121,7 @@ GBIF_SpData <- function(
   SpPath <- file.path(Path_SpData, paste0(SpName, ".RData"))
 
   if (file.exists(SpPath)) {
-    
+
     SpData <- IASDT.R::LoadAs(SpPath)
 
     # ****************************************************
@@ -219,21 +219,24 @@ GBIF_SpData <- function(
         expand = ggplot2::expansion(mult = c(0, 0))) +
       ggplot2::labs(
         title = stringr::str_replace_all(Species, "_", " "),
-        fill = "# observations", 
-        tag = LastUpdate) +
+        fill = "# observations", tag = LastUpdate) +
       PlottingTheme
 
     SpPlot <- cowplot::ggdraw(SpPlot) +
       cowplot::draw_label(
-        NDataGrids,
-        x = 0.0775, y = 0.95, size = 8, color = "red") +
+        NDataGrids, x = 0.0775, y = 0.95, size = 8, color = "red") +
       cowplot::draw_label(
         "GBIF",
         x = 0.05, y = 0.03, size = 12, color = "red", fontface = "bold")
 
-    ggplot2::ggsave(
-      plot = SpPlot, filename = FilePath_Plot, width = 25, height = 25,
-      units = "cm", dpi = 600)
+    # Using ggplot2::ggsave directly does not show non-ascii characters
+    # correctly
+    grDevices::jpeg(
+      filename = FilePath_Plot,
+      width = 25, height = 25, units = "cm", quality = 100, res = 600)
+    print(SpPlot)
+    grDevices::dev.off()
+
   }
   return(invisible(NULL))
 }

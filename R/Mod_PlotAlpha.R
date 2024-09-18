@@ -44,7 +44,7 @@ PlotAlpha <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  SampleSize <- ESS <- x <- Factor <- NULL
+  x <- Factor <- NULL
 
   # Checking arguments
   AllArgs <- ls(envir = environment())

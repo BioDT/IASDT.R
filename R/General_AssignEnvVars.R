@@ -88,7 +88,8 @@ AssignEnvVars <- function(EnvFile = ".env", EnvVarDT = NULL) {
       if (nchar(Val) == 0) {
         stop(
           paste0(
-            "`", EV_Name, "` environment variable was not set in the .env file"),
+            "`", EV_Name,
+            "` environment variable was not set in the .env file"),
           call. = FALSE)
       }
 

@@ -579,9 +579,15 @@ Railway_Intensity <- function(
     ggplot2::labs(title = "Railways length", fill = "log10") +
     PlottingTheme
 
-  ggplot2::ggsave(
+  # Using ggplot2::ggsave directly does not show non-ascii characters
+  # correctly
+  grDevices::jpeg(
     filename = file.path(Path_Railways, "Railways_Length.jpeg"),
-    plot = RailPlot, width = 31, height = 30, units = "cm", dpi = 600)
+    width = 31, height = 30, units = "cm", quality = 100, res = 600)
+  print(RailPlot)
+  grDevices::dev.off()
+
+  rm(RailPlot)
 
   # # .................................. ###
 
@@ -604,9 +610,15 @@ Railway_Intensity <- function(
     ggplot2::labs(title = "Railways in Europe", fill = NA) +
     PlottingTheme
 
-  ggplot2::ggsave(
+  # Using ggplot2::ggsave directly does not show non-ascii characters
+  # correctly
+  grDevices::jpeg(
     filename = file.path(Path_Railways, "Railways_Lines.jpeg"),
-    plot = RailPlotShp, width = 31, height = 30, units = "cm", dpi = 900)
+    width = 31, height = 30, units = "cm", quality = 100, res = 600)
+  print(RailPlotShp)
+  grDevices::dev.off()
+
+  rm(RailPlotShp)
 
   # # ..................................................................... ###
 

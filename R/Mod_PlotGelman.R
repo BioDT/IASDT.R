@@ -174,11 +174,13 @@ PlotGelman <- function(
     PlotList4Plot <- purrr::list_flatten(purrr::discard(PlotList, is.null))
 
     if (length(PlotList4Plot) > 0) {
-      ggplot2::ggsave(
-        filename = file.path(OutPath, "GelmanPlots.pdf"),
-        plot = gridExtra::marrangeGrob(
-          grobs = PlotList4Plot, nrow = 1, ncol = 1, top = NULL),
-        width = 13, height = 7)
+      # Using ggplot2::ggsave directly does not show non-ascii characters
+      # correctly
+      grDevices::pdf(
+        file = file.path(OutPath, "GelmanPlots.pdf"), width = 13, height = 7)
+      print(gridExtra::marrangeGrob(
+        grobs = PlotList4Plot, nrow = 1, ncol = 1, top = NULL))
+      grDevices::dev.off()
     } else {
       warning("No plots to save")
     }

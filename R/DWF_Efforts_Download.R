@@ -32,7 +32,7 @@ Efforts_Download <- function(NCores = 6, Path_Raw, Path_Interim, Path_Efforts) {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  DownPath <- Request <- NULL
+  Request <- NULL
 
   # # ..................................................................... ###
 

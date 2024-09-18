@@ -58,7 +58,9 @@ Efforts_Summarize <- function(
 
   if (missing(Path_Efforts_Interim) || !is.character(Path_Efforts_Interim) ||
     !dir.exists(Path_Efforts_Interim)) {
-    stop("`Path_Efforts_Interim` must be a valid directory path.", call. = FALSE)
+    stop(
+      "`Path_Efforts_Interim` must be a valid directory path.",
+      call. = FALSE)
   }
 
   if (missing(Path_Efforts) || !is.character(Path_Efforts) ||
@@ -256,7 +258,7 @@ Efforts_Summarize <- function(
     },
     future.scheduling = Inf, future.seed = TRUE,
     future.packages = c(
-      "terra", "IASDT.R", "stringr", "fs", "sf", "readr", "dplyr", 
+      "terra", "IASDT.R", "stringr", "fs", "sf", "readr", "dplyr",
       "purrr", "tibble", "R.utils"),
     future.globals = c(
       "Path_Efforts", "Path_Efforts_Interim", "Efforts_AllRequests",

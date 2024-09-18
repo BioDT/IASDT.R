@@ -30,7 +30,8 @@ Project (\code{GRIP}) data from the URL specified in the environment variable
 road data in the form of \code{fgdb} (\code{EPSG:3246}).
 \item On LUMI HPC, loading the \code{libarchive} module is necessary to use the
 \code{archive} R package: \verb{module load libarchive/3.6.2-cpeGNU-23.09}
-\item The distance to roads is calculated by determining the distance from each grid
+\item The distance to roads is calculated by determining the distance from each
+grid
 cell to the nearest grid cell that overlaps with a road (not to the nearest
 road line). Note that this is different from calculating the actual
 distance to the nearest road line, which is computationally intensive and

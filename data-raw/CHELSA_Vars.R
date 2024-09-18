@@ -192,5 +192,3 @@ CHELSA_Vars <- tibble::tribble(
   "g C m-2 yr-1", 0.1, 0,
   "Calculated based on the `Miami model`, Lieth, H., 1972."
 )
-
-# usethis::use_data(CHELSA_Vars)

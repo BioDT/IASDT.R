@@ -230,6 +230,7 @@ Predict_Scenario <- function(
             packages = c(
               "Hmsc", "purrr", "dplyr", "sf", "IASDT.R", "stringr", "terra")
           )))
+    rm(Predictions_sf0)
 
     if (NCores > 1) {
       snow::stopCluster(c1)

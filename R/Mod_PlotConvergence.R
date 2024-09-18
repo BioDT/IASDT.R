@@ -51,7 +51,7 @@ PlotConvergence <- function(
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   SpComb <- `2.5%` <- `97.5%` <- Class <- Order <- Family <- Plot <- DT <-
     IAS_ID <- Species <- Variable <- data <- PlotID <- Var <- PlotFixedY <-
-    Path_Scratch <- File <- Page <- Iter <- Value <- Chain <- y <- label <-
+    File <- Page <- Iter <- Value <- Chain <- y <- label <-
     Var_Sp <- NULL
 
   withr::local_options(
@@ -129,9 +129,14 @@ PlotConvergence <- function(
     }
 
     IASDT.R::CatTime("Save plot", Level = 1)
-    ggplot2::ggsave(
-      plot = PlotObj_Rho, dpi = 600, device = "pdf", width = 18, height = 12,
-      filename = file.path(Path_Convergence, "Convergence_Rho.pdf"))
+    # Using ggplot2::ggsave directly does not show non-ascii characters
+    # correctly
+    grDevices::pdf(
+      file = file.path(Path_Convergence, "Convergence_Rho.pdf"),
+      width = 18, height = 12)
+    print(PlotObj_Rho)
+    grDevices::dev.off()
+
     rm(PlotObj_Rho)
   }
 
@@ -161,9 +166,13 @@ PlotConvergence <- function(
   }
 
   IASDT.R::CatTime("Save plot", Level = 1)
-  ggplot2::ggsave(
-    plot = PlotObj_Alpha, dpi = 600, device = "pdf", width = 18, height = 10,
-    filename = file.path(Path_Convergence, "Convergence_Alpha.pdf"))
+  # Using ggplot2::ggsave directly does not show non-ascii characters
+  # correctly
+  grDevices::pdf(
+    file = file.path(Path_Convergence, "Convergence_Alpha.pdf"),
+    width = 18, height = 10)
+  print(PlotObj_Alpha)
+  grDevices::dev.off()
 
   Obj_Omega <- Coda_Obj$Omega[[1]]
   Obj_Beta <- Coda_Obj$Beta
@@ -671,11 +680,11 @@ PlotConvergence <- function(
     X = BetaTracePlots_BySp$Species,
     FUN = function(x) {
 
-      VarName <- dplyr::case_when(
-        x == "HabLog" ~ "% Habitat coverage",
-        x == "RoadRailLog" ~ "Road + Rail intensity",
-        x == "BiasLog" ~ "Sampling intensity",
-        .default = x)
+      # VarName <- dplyr::case_when(
+      #   x == "HabLog" ~ "% Habitat coverage",
+      #   x == "RoadRailLog" ~ "Road + Rail intensity",
+      #   x == "BiasLog" ~ "Sampling intensity",
+      #   .default = x)
 
       PlotTitle <- ggplot2::ggplot() +
         ggplot2::labs(

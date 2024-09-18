@@ -42,10 +42,9 @@ Mod_MergeChains <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Post_Path <- Post_Missing <- Post_Path <- M_Init_Path <- M_samples <-
-    M_thin <- M_transient <- M_Name_Fit <- Path_FittedMod <- Path_Coda <-
+  Post_Path <- Post_Path <- M_Name_Fit <- Path_FittedMod <- Path_Coda <-
     NMissingChains <- MissingModels <- Model_Finished <- Path_ModProg <-
-    Post_Aligned <- Post_Aligned2 <- FittingTime <- NULL
+    Post_Aligned2 <- FittingTime <- NULL
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

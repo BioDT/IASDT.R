@@ -17,7 +17,8 @@ CatDiff(
 \item{InitTime}{POSIXct; The initial time from which the difference is
 calculated.}
 
-\item{ChunkText}{character. The message printed as chunk info. Default value: \verb{Session summary}. See: \link{InfoChunk} for more information.}
+\item{ChunkText}{character. The message printed as chunk info. Default
+value: \verb{Session summary}. See: \link{InfoChunk} for more information.}
 
 \item{Prefix}{character; A prefix string to prepend to the printed time
 difference. Defaults to "Completed in ".}

@@ -28,7 +28,8 @@
 #' @param FromHPC Logical. Indicates if the operation is being performed from an
 #'   HPC environment. This adjusts file paths accordingly. Default: `TRUE`.
 #' @param Path_Hmsc String. Path for the Hmsc-HPC.
-#' @param Command_Prefix String. Prefix for the bash commands to be executed. Default: `Commands2Fit`.
+#' @param Command_Prefix String. Prefix for the bash commands to be executed.
+#'   Default: `Commands2Fit`.
 #' @param SLURM_Prefix String. Prefix for the exported SLURM file.
 #' @param Path_SLURM_Out String indicating the directory where the SLURM file(s)
 #'   will be saved. Defaults to `NULL`, which means to identify the path from
@@ -40,7 +41,7 @@
 #' @details The function reads the following environment variables:
 #'    - **`LUMI_ProjNum`** for the BioDT LUMI project number.
 #'    - **`DP_R_Path_GPU_Check`** for the path of the python for reporting if
-#'    the GPU was used in the running SLURM job.
+#'   the GPU was used in the running SLURM job.
 #' @export
 
 Mod_SLURM <- function(

@@ -98,24 +98,53 @@ RespCurv_PlotSp <- function(
           DT <- DT %>%
             dplyr::mutate(
               VariableDesc = dplyr::case_when(
-                Variable == "bio4" ~ "<span style='font-size: 10pt;'><b>Bio4</b></span><br/><span style='font-size: 8pt;'>temperature seasonality</span>",
-                Variable == "bio6" ~ "<span style='font-size: 10pt;'><b>Bio6</b></span><br/><span style='font-size: 8pt;'>temperature of the coldest month</span>",
-                Variable == "bio8" ~ "<span style='font-size: 10pt;'><b>Bio8</b></span><br/><span style='font-size: 8pt;'>temperatures of the wettest quarter</span>",
-                Variable == "bio12" ~ "<span style='font-size: 10pt;'><b>Bio12</b></span><br/><span style='font-size: 8pt;'>annual precipitation amount</span>",
-                Variable == "bio15" ~ "<span style='font-size: 10pt;'><b>Bio15</b></span><br/><span style='font-size: 8pt;'>precipitation seasonality</span>",
-                Variable == "bio18" ~ "<span style='font-size: 10pt;'><b>Bio18</b></span><br/><span style='font-size: 8pt;'>monthly precipitation amount of the warmest quarter</span>",
-                Variable == "RoadRailLog" ~ "<span style='font-size: 10pt;'><b>Road + Rail intensity</b></span><br/><span style='font-size: 8pt;'> (log<sub>10</sub>(x + 0.1))</span>",
-                Variable == "BiasLog" ~ "<span style='font-size: 10pt;'><b>Sampling intensity</b></span><br/><span style='font-size: 8pt;'> (log<sub>10</sub>(x + 0.1))</span>",
-                Variable == "HabLog" ~ "<span style='font-size: 10pt;'><b>% habitat coverage</b></span><br/><span style='font-size: 8pt;'> (log<sub>10</sub>(x + 0.1))</span>",
+                Variable == "bio4" ~ paste0(
+                  "<span style='font-size: 10pt;'><b>Bio4</b></span><br/>",
+                  "<span style='font-size: 8pt;'>temperature seasonality",
+                  "</span>"),
+                Variable == "bio6" ~ paste0(
+                  "<span style='font-size: 10pt;'><b>Bio6</b></span><br/>",
+                  "<span style='font-size: 8pt;'>temperature of the coldest ",
+                  "month</span>"),
+                Variable == "bio8" ~ paste0(
+                  "<span style='font-size: 10pt;'><b>Bio8</b></span><br/>",
+                  "<span style='font-size: 8pt;'>temperatures of the wettest ",
+                  "quarter</span>"),
+                Variable == "bio12" ~ paste0(
+                  "<span style='font-size: 10pt;'><b>Bio12</b></span><br/>",
+                  "<span style='font-size: 8pt;'>annual precipitation amount",
+                  "</span>"),
+                Variable == "bio15" ~ paste0(
+                  "<span style='font-size: 10pt;'><b>Bio15</b></span><br/>",
+                  "<span style='font-size: 8pt;'>precipitation seasonality",
+                  "</span>"),
+                Variable == "bio18" ~ paste0(
+                  "<span style='font-size: 10pt;'><b>Bio18</b></span><br/>",
+                  "<span style='font-size: 8pt;'>monthly precipitation amount ",
+                  "of the warmest quarter</span>"),
+                Variable == "RoadRailLog" ~ paste0(
+                  "<span style='font-size: 10pt;'><b>Road + Rail intensity</b>",
+                  "</span><br/><span style='font-size: 8pt;'> (log<sub>10",
+                  "</sub>(x + 0.1))</span>"),
+                Variable == "BiasLog" ~ paste0(
+                  "<span style='font-size: 10pt;'><b>Sampling intensity</b>",
+                  "</span><br/><span style='font-size: 8pt;'> (log<sub>10",
+                  "</sub>(x + 0.1))</span>"),
+                Variable == "HabLog" ~ paste0(
+                  "<span style='font-size: 10pt;'><b>% habitat coverage</b>",
+                  "</span><br/><span style='font-size: 8pt;'> (log<sub>10",
+                  "</sub>(x + 0.1))</span>"),
 
                 .default = Variable),
               VariableDesc = factor(VariableDesc, levels = VariableDesc))
 
           Trend <- DT %>%
-            dplyr::select(Variable, VariableDesc, Trend = PositiveTrendProb) %>%
+            dplyr::select(
+              Variable, VariableDesc, Trend = PositiveTrendProb) %>%
             dplyr::mutate(
               Trend2 = stringr::str_glue(
-                "\n     Pr[pred(Var=max)] > Pr[pred(Var=min)] = {round(Trend, 2)}"),
+                "\n     Pr[pred(Var=max)] > Pr[pred(Var=min)] = ",
+                "{round(Trend, 2)}"),
               X = -Inf, Y = Inf, Trend2 = as.character(Trend2))
 
           Quant <- DT %>%
@@ -139,8 +168,13 @@ RespCurv_PlotSp <- function(
 
           NFV_Label <- dplyr::if_else(
             NFV == 1,
-            "non-focal variables are set to most likely value <i>[non.focalVariables = 1]</i>",
-            "non-focal variables are set to most likely value given the value of focal variable <i>[non.focalVariables = 2]</i>")
+            paste0(
+              "non-focal variables are set to most likely value <i>",
+              "[non.focalVariables = 1]</i>"),
+            paste0(
+              "non-focal variables are set to most likely value given ",
+              "the value of focal variable <i>[non.focalVariables = ",
+              "2]</i>"))
 
           Coords_Label <- dplyr::if_else(
             Coords == "c",
@@ -156,7 +190,8 @@ RespCurv_PlotSp <- function(
             '<span style="font-size:8pt;"> (<b>Class:</b> ', Species2$Class,
             "  &#8212; <b>Order:</b> ", Species2$Order,
             "  &#8212; <b>Family:</b> ", Species2$Family,
-            '  &#8212; <b>ID:</b></span><span style="font-size:8pt; color:blue;"> ',
+            "  &#8212; <b>ID:</b></span>",
+            '<span style="font-size:8pt; color:blue;"> ',
             Species,  '</span><span style="font-size:8pt;">)</span>')
           SubTitleTxt <- paste0(
             Coords_Label, "  &#8212;&#8212;  ",
@@ -180,10 +215,12 @@ RespCurv_PlotSp <- function(
               mapping = ggplot2::aes(x = XVals, y = Q50), data = Quant,
               linetype = 1, linewidth = 0.6, colour = "blue") +
             ggplot2::geom_text(
-              data = Trend, mapping = ggplot2::aes(x = X, y = Y, label = Trend2),
+              data = Trend,
+              mapping = ggplot2::aes(x = X, y = Y, label = Trend2),
               colour = "grey30", size = 2.75, vjust = 1.4, hjust = -0.05) +
             ggplot2::scale_y_continuous(
-              limits = c(-0.005, 1.05), oob = scales::squish, expand = c(0, 0)) +
+              limits = c(-0.005, 1.05), oob = scales::squish,
+              expand = c(0, 0)) +
             ggplot2::scale_x_continuous(expand = c(0.015, 0.015)) +
             ggplot2::facet_wrap(
               ggplot2::vars(VariableDesc),
@@ -212,9 +249,13 @@ RespCurv_PlotSp <- function(
               panel.spacing = ggplot2::unit(0.15, "lines"),
               plot.margin = ggplot2::unit(c(0.1, 0.2, 0.1, 0.2), "lines"))
 
-          ggplot2::ggsave(
-            filename = Path_JPEG, plot = Plot, width = 24, height = 22,
-            dpi = 600, units = "cm")
+          # Using ggplot2::ggsave directly does not show non-ascii characters
+          # correctly
+          grDevices::jpeg(
+            filename = Path_JPEG,
+            width = 24, height = 22, units = "cm", quality = 100, res = 600)
+          print(Plot)
+          grDevices::dev.off()
 
           if (SaveGG) {
             PathGG <- file.path(

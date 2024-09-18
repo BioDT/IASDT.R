@@ -37,7 +37,9 @@
 CHELSA_Process <- function(
     FromHPC = TRUE, EnvFile = ".env", NCores = 8, Download = FALSE,
     Overwrite = FALSE, Download_Attempts = 10, Sleep = 5,
-    BaseURL = "https://os.zhdk.cloud.switch.ch/envicloud/chelsa/chelsa_V2/GLOBAL/",
+    BaseURL = paste0(
+      "https://os.zhdk.cloud.switch.ch/envicloud/",
+      "chelsa/chelsa_V2/GLOBAL/"),
     Download_NCores = 4, CompressLevel = 5, OverwriteProcessed = FALSE) {
 
   # # ..................................................................... ###
@@ -76,7 +78,7 @@ CHELSA_Process <- function(
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Path_CHELSA_In <- Path_CHELSA_Out <- Path_Out_NC <- TimePeriod <-
     ClimateModel <- ClimateScenario <- Path_Out_tif <- Name <- FilePath <-
-    File_List <- Processed_Maps <- Problematic <- Path_Down <-
+    File_List <- Processed_Maps <- Path_Down <-
     InputOkay <- AllOkay <- Process <- Failed <- NULL
 
   # # ..................................................................... ###
@@ -252,7 +254,7 @@ CHELSA_Process <- function(
           .f = function(Down = Path_Down, Path_Out_NC, Path_Out_tif) {
             FileMetadata <- dplyr::filter(CHELSA_Data, Path_Down == Down)
 
-            # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use 
+            # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use
             # official parameters (overriding the ones from GeoTIFF keys)
             # see: https://stackoverflow.com/questions/78007307
             terra::setGDALconfig("GTIFF_SRS_SOURCE", "EPSG")

@@ -28,7 +28,7 @@
 #' @param EnvFile String specifying the path to read environment variables from,
 #'   with a default value of `.env`.
 #' @param initPar a named list of parameter values used for initialization of
-#'   MCMC states. See [Hmsc::computePredictedValues] for more information. 
+#'   MCMC states. See [Hmsc::computePredictedValues] for more information.
 #'   Default: `NULL`.
 #' @param PrepSLURM Logical indicating whether to prepare SLURM command files.
 #'   If `TRUE` (default), the SLURM commands will be saved to disk using the
@@ -92,8 +92,9 @@ Mod_CV <- function(
   if (is.null(Model) || is.null(Path_Hmsc) || is.null(MemPerCpu) ||
       is.null(Time) || is.null(EnvFile)) {
     stop(
-      paste0("The following arguments cannot be empty: ",
-          "Model, Path_Hmsc, MemPerCpu, Time, EnvFile"), 
+      paste0(
+        "The following arguments cannot be empty: ",
+        "Model, Path_Hmsc, MemPerCpu, Time, EnvFile"),
       call. = FALSE)
   }
 
@@ -120,7 +121,7 @@ Mod_CV <- function(
 
   if (!file.exists(EnvFile)) {
     stop(
-      paste0("Path to environment variables: ", EnvFile, " was not found"), 
+      paste0("Path to environment variables: ", EnvFile, " was not found"),
       call. = FALSE)
   }
 
@@ -146,7 +147,9 @@ Mod_CV <- function(
     ModFull <- IASDT.R::LoadAs(Model)
   } else {
     if (is.null(Path_CV)) {
-      stop("Path_CV cannot be empty if the Model is provided as Hmsc object", call. = FALSE)
+      stop(
+        "Path_CV cannot be empty if the Model is provided as Hmsc object",
+        call. = FALSE)
     }
     ModFull <- Model
     rm(Model)
@@ -171,8 +174,9 @@ Mod_CV <- function(
     } else {
       # if any of the column names does not exist, stop the function
       stop(
-        paste0("partition was not defined and column(s) for CV folds ",
-               "can not be found in species data"), 
+        paste0(
+          "partition was not defined and column(s) for CV folds ",
+          "can not be found in species data"),
         call. = FALSE)
     }
   } else {
@@ -250,10 +254,10 @@ Mod_CV <- function(
 
               if (ModFull$ncRRR > 0) {
                 XRRRTrain <- ModFull$XRRR[train, , drop = FALSE]
-                XRRRVal <- ModFull$XRRR[val, , drop = FALSE]
+                # XRRRVal <- ModFull$XRRR[val, , drop = FALSE]
               } else {
                 XRRRTrain <- NULL
-                XRRRVal <- NULL
+                # XRRRVal <- NULL
               }
 
               # Initial models

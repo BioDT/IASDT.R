@@ -26,7 +26,8 @@
 #'   parameter.
 #' @details The function reads the following environment variables:
 #'   - **`DP_R_TaxaInfo`** (if `FromHPC` = `TRUE`) or
-#'     **`DP_R_TaxaInfo_Local`** (if `FromHPC` = `FALSE`) for the location of the `Species_List_ID.txt` file containing species information.
+#'     **`DP_R_TaxaInfo_Local`** (if `FromHPC` = `FALSE`) for the location of
+#'     the `Species_List_ID.txt` file containing species information.
 #' @export
 #' @examples
 #' library(Hmsc)
@@ -64,7 +65,9 @@ Coda_to_tibble <- function(
   }
 
   if (!(inherits(CodaObj, "mcmc.list") || inherits(CodaObj, "mcmc"))) {
-    stop("Input Coda object has to be of class mcmc.list or mcmc", call. = FALSE)
+    stop(
+      "Input Coda object has to be of class mcmc.list or mcmc",
+      call. = FALSE)
   }
 
   # # |||||||||||||||||||||||||||||||||||||||
@@ -123,7 +126,7 @@ Coda_to_tibble <- function(
 
     if (!file.exists(EnvFile)) {
       stop(
-        paste0("Path to environment variables: ", EnvFile, " was not found"), 
+        paste0("Path to environment variables: ", EnvFile, " was not found"),
         call. = FALSE)
     }
 

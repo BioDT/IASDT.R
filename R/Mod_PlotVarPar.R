@@ -38,7 +38,8 @@
 #' @author Ahmed El-Gabbas
 #' @details The function reads the following environment variables:
 #'   - **`DP_R_TaxaInfo_RData`** (if `FromHPC` = `TRUE`) or
-#'     **`DP_R_TaxaInfo_RData_Local`** (if `FromHPC` = `FALSE`) for the location of the `TaxaList.RData` file containing species information.
+#'     **`DP_R_TaxaInfo_RData_Local`** (if `FromHPC` = `FALSE`) for the
+#'     location of the `TaxaList.RData` file containing species information.
 #' @return If `ReturnGG` is `TRUE`, returns a ggplot object of the variance
 #'   partitioning plots. Otherwise, returns `NULL`.
 #' @export
@@ -148,7 +149,7 @@ PlotVarPar <- function(
 
       } else {
         stop(
-          "The Model has to be an Hmsc model or a path to a saved model", 
+          "The Model has to be an Hmsc model or a path to a saved model",
           call. = FALSE)
       }
     }
@@ -189,7 +190,8 @@ PlotVarPar <- function(
       IASDT.R::CatTime("  >>  >>  Evaluate model fit")
       # Suppress the warning: In cor(lbeta[[i]][k, ], lmu[[i]][k, ]) : the
       # standard deviation is zero
-      invisible(ModelEval <- suppressWarnings(Hmsc::evaluateModelFit(hM = Model, predY = preds)))
+      invisible(ModelEval <- suppressWarnings(
+        Hmsc::evaluateModelFit(hM = Model, predY = preds)))
 
       if (SaveModelEval) {
         save(
@@ -329,8 +331,9 @@ PlotVarPar <- function(
     }
   } else {
     stop(
-      paste0("Mismatch between the length of ModelEval$TjurR2 and the ",
-             "number of columns in VarPar$vals"), 
+      paste0(
+        "Mismatch between the length of ModelEval$TjurR2 and the ",
+        "number of columns in VarPar$vals"),
       call. = FALSE)
   }
 
@@ -440,8 +443,13 @@ PlotVarPar <- function(
       Legend, nrow = 2, heights = c(15, 1),
       top = grid::textGrob(
         PlotTitle, gp = grid::gpar(fontsize = 30, font = 2)))
-  ggplot2::ggsave(
-    plot = VarParPlot, filename = PlotPath2, height = 16, width = 24, dpi = 600)
+
+  # Using ggplot2::ggsave directly does not show non-ascii characters correctly
+  grDevices::jpeg(
+    filename = PlotPath2,
+    width = 16, height = 24, units = "cm", quality = 100, res = 600)
+  print(VarParPlot)
+  grDevices::dev.off()
 
   PlotPath2 <- file.path(Path_Plot, "VariancePartitioning_Orig.jpeg")
   VarParPlot <- gridExtra::arrangeGrob(Plot_Orig, Plot_raw_Orig, nrow = 1) %>%
@@ -449,8 +457,13 @@ PlotVarPar <- function(
       Legend, nrow = 2, heights = c(15, 1),
       top = grid::textGrob(
         PlotTitle, gp = grid::gpar(fontsize = 30, font = 2)))
-  ggplot2::ggsave(
-    plot = VarParPlot, filename = PlotPath2, height = 16, width = 24, dpi = 600)
+
+  # Using ggplot2::ggsave directly does not show non-ascii characters correctly
+  grDevices::jpeg(
+    filename = PlotPath2,
+    width = 16, height = 24, units = "cm", quality = 100, res = 600)
+  print(VarParPlot)
+  grDevices::dev.off()
 
   IASDT.R::CatDiff(
     InitTime = .StartTime, ChunkText = "Function summary", CatInfo = TRUE)

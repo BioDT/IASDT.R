@@ -59,11 +59,12 @@ spatial autocorrelation range in the predictor data (estimated using
 \link[blockCV:cv_spatial_autocor]{blockCV::cv_spatial_autocor}). This requires the availability of the
 \code{automap} R package.
 \item \code{CV_Dist} in which the size of spatial cross-validation blocks is
-determined by the \code{CV_NGrids} argument. The default \code{CV_NGrids} value is 20,
-which means blocks of 20x20 grid cell each.
+determined by the \code{CV_NGrids} argument. The default \code{CV_NGrids} value is
+20, which means blocks of 20x20 grid cell each.
 \item \code{CV_Large} which splits the study area into large blocks, as determined
-by the  \code{CV_NR} and \code{CV_NC} arguments. if \code{CV_NR = CV_NC} = 2 (default), four large
-blocks will be used, split the study area at the median coordinates..
+by the  \code{CV_NR} and \code{CV_NC} arguments. if \code{CV_NR = CV_NC} = 2 (default),
+four large blocks will be used, split the study area at the median
+coordinates.
 }
 }
 \description{

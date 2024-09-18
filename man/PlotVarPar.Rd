@@ -72,7 +72,8 @@ predictions.
 The function reads the following environment variables:
 \itemize{
 \item \strong{\code{DP_R_TaxaInfo_RData}} (if \code{FromHPC} = \code{TRUE}) or
-\strong{\code{DP_R_TaxaInfo_RData_Local}} (if \code{FromHPC} = \code{FALSE}) for the location of the \code{TaxaList.RData} file containing species information.
+\strong{\code{DP_R_TaxaInfo_RData_Local}} (if \code{FromHPC} = \code{FALSE}) for the
+location of the \code{TaxaList.RData} file containing species information.
 }
 }
 \author{

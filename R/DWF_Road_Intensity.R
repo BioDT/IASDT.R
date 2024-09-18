@@ -23,7 +23,8 @@
 #'   road data in the form of `fgdb` (`EPSG:3246`).
 #' - On LUMI HPC, loading the `libarchive` module is necessary to use the
 #'   `archive` R package: `module load libarchive/3.6.2-cpeGNU-23.09`
-#' - The distance to roads is calculated by determining the distance from each grid
+#' - The distance to roads is calculated by determining the distance from each
+#'   grid
 #'   cell to the nearest grid cell that overlaps with a road (not to the nearest
 #'   road line). Note that this is different from calculating the actual
 #'   distance to the nearest road line, which is computationally intensive and
@@ -286,8 +287,10 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
 
   # Distance to roads ------
   IASDT.R::CatTime("Distance to roads")
-  # This calculates the distance from each grid cell to the nearest grid cell overlapping with a road
-  # This can be different than calculating the actual distance to nearest road line; which is expected to take too much time to calculate
+  # This calculates the distance from each grid cell to the nearest grid cell
+  # overlapping with a road This can be different than calculating the actual
+  # distance to nearest road line; which is expected to take too much time to
+  # calculate
 
   IASDT.R::CatTime("Calculate distance to roads", Level = 1)
 
@@ -401,10 +404,14 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
           size = 18, face = "bold", hjust = 0.5,
           margin = ggplot2::margin(0, 0, 0.5, 0))))
 
-  ggplot2::ggsave(
-    plot = Plots_Length,
+  # Using ggplot2::ggsave directly does not show non-ascii characters correctly
+  grDevices::jpeg(
     filename = file.path(Path_Roads, "Road_Length.jpeg"),
-    width = 30, height = 21, units = "cm", dpi = 600)
+    width = 30, height = 21, units = "cm", quality = 100, res = 600)
+  print(Plots_Length)
+  grDevices::dev.off()
+
+  rm(Plots_Length)
 
   # # ..................................... ###
 
@@ -444,10 +451,14 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
           size = 18, face = "bold", hjust = 0.5,
           margin = ggplot2::margin(0, 0, 1, 0))))
 
-  ggplot2::ggsave(
-    plot = Plots_Distance,
+  # Using ggplot2::ggsave directly does not show non-ascii characters correctly
+  grDevices::jpeg(
     filename = file.path(Path_Roads, "Road_Distance.jpeg"),
-    width = 30, height = 21, units = "cm", dpi = 600)
+    width = 30, height = 21, units = "cm", quality = 100, res = 600)
+  print(Plots_Distance)
+  grDevices::dev.off()
+
+  rm(Plots_Distance)
 
   # ..................................................................... ###
 

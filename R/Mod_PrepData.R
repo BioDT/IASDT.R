@@ -127,9 +127,9 @@ Mod_PrepData <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   SpeciesID <- Species_name <- Species_File <- PA <-
-    cell <- x <- Path_PA <- Path_Grid <- Path_Grid_Ref <- Path_CLC <-
+    cell <- Path_PA <- Path_Grid <- Path_Grid_Ref <- Path_CLC <-
     Path_Roads <- Path_Rail <- Path_Bias <- Path_CHELSA <-
-    NSp <- EU_Bound <- NCells <- SpPA <- NPres <- Grid_R <- NULL
+    EU_Bound <- SpPA <- NPres <- Grid_R <- NULL
 
   # # ..................................................................... ###
 
@@ -359,9 +359,12 @@ Mod_PrepData <- function(
       axis.text = ggplot2::element_blank(),
       panel.border = ggplot2::element_blank())
 
-  ggplot2::ggsave(
-    plot = NSpPerGrid_gg, width = 25, height = 27, units = "cm", dpi = 600,
-    filename = file.path(Path_Model, "NSpPerGrid.jpeg"))
+  # Using ggplot2::ggsave directly does not show non-ascii characters correctly
+  grDevices::jpeg(
+    filename = file.path(Path_Model, "NSpPerGrid.jpeg"),
+    width = 25, height = 27, units = "cm", quality = 100, res = 600)
+  print(NSpPerGrid_gg)
+  grDevices::dev.off()
 
   rm(Limits, NSpPerGrid_gg, R_Sp_sum, R_Sp_sumP, EU_Bound)
 

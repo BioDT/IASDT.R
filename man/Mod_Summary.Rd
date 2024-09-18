@@ -42,7 +42,8 @@ data.
 The function reads the following environment variables:
 \itemize{
 \item \strong{\code{DP_R_TaxaInfo}} (if \code{FromHPC} = \code{TRUE}) or
-\strong{\code{DP_R_TaxaInfo_Local}} (if \code{FromHPC} = \code{FALSE}) for the location of the \code{Species_List_ID.txt} file containing species information.
+\strong{\code{DP_R_TaxaInfo_Local}} (if \code{FromHPC} = \code{FALSE}) for the location of
+the \code{Species_List_ID.txt} file containing species information.
 }
 }
 \author{

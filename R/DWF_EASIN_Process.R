@@ -104,7 +104,7 @@ EASIN_Process <- function(
   Path_Grid <- TaxaInfoFile <- Name <- speciesKey <- EASINID <- taxon_name <-
     SpeciesId <- CellCode <- DataPartnerName <- Species_name <- Species_File <-
     EASIN_Ref <- Year <- WKT <- Path_EASIN <- Path_EASIN_Interim <-
-    n <- x <- Path_Grid_Ref <- Coords <- NULL
+    n <- Path_Grid_Ref <- Coords <- NULL
 
   # # |||||||||||||||||||||||||||||||||||
   # # Environment variables ----
@@ -631,7 +631,7 @@ EASIN_Process <- function(
 
   # # ..................................................................... ###
 
-  ## ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  ## |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatDiff(
     InitTime = .StartTime, Prefix = "\nProcessing EASIN data was finished in ")

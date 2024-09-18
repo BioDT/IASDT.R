@@ -61,7 +61,8 @@ Install_Hmsc <- function(
   # Checking Python installation
 
   IASDT.R::InfoChunk("Checking Python", Extra1 = 1, Extra2 = 2)
-  PythonVersion <- system2(Path_Python, "--version", stdout = TRUE, stderr = TRUE)
+  PythonVersion <- system2(
+    Path_Python, "--version", stdout = TRUE, stderr = TRUE)
 
   if (stringr::str_detect(PythonVersion, "^Python")) {
     cat(paste0("  >>  ", PythonVersion, "\n"))

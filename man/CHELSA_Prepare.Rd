@@ -12,7 +12,8 @@ CHELSA_Prepare(
   Overwrite = FALSE,
   Download_Attempts = 10,
   Sleep = 5,
-  BaseURL = "https://os.zhdk.cloud.switch.ch/envicloud/chelsa/chelsa_V2/GLOBAL/"
+  BaseURL = paste0("https://os.zhdk.cloud.switch.ch/envicloud/",
+    "chelsa/chelsa_V2/GLOBAL/")
 )
 }
 \arguments{

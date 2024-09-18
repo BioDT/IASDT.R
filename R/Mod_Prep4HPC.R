@@ -115,7 +115,8 @@
 #' - whether to include sampling efforts `EffortsAsPredictor`, percentage of
 #'   respective habitat type per grid cell `HabAsPredictor`, and railway and
 #'   road intensity per grid cell `RoadRailAsPredictor`
-#' - Hmsc options (`NChains`, `thin`, `samples`, `transientFactor`, and `verbose`)
+#' - Hmsc options (`NChains`, `thin`, `samples`, `transientFactor`,
+#'   and `verbose`)
 #' - prepare SLURM commands (`PrepSLURM`) and some specifications (e.g.
 #'   `NArrayJobs`, `MemPerCpu`, `Time`, `JobName`)
 #'
@@ -212,7 +213,7 @@ Mod_Prep4HPC <- function(
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   NCells <- Sp <- IAS_ID <- x <- y <- Country <- M_thin <- rL <-
     M_Name_init <- rL2 <- M_samples <- M4HPC_Path <- M_transient <-
-    M_Init_Path <- M_Name_Fit <- Chain <- Post_Missing <- Command_HPC <-
+    M_Name_Fit <- Chain <- Post_Missing <- Command_HPC <-
     Command_WS <- Post_Path <- Path_ModProg <- TaxaInfoFile <-
     Path_Grid <- EU_Bound <- Path_PA <- SpeciesID <- Species_name <- PA <-
     Species_File <- NAME_ENGL <- NULL
@@ -528,10 +529,13 @@ Mod_Prep4HPC <- function(
     DimY <- Limits[4] - Limits[3]
     PlotHeight <- (DimY * 25) / DimX
 
-    ggplot2::ggsave(
-      plot = NSpPerGrid_Sub, width = 25, height = PlotHeight,
-      units = "cm", dpi = 600,
-      filename = file.path(Path_Model, "NSpPerGrid_Sub.jpeg"))
+    # Using ggplot2::ggsave directly does not show non-ascii characters
+    # correctly
+    grDevices::jpeg(
+      filename = file.path(Path_Model, "NSpPerGrid_Sub.jpeg"),
+      width = 25, height = PlotHeight, units = "cm", quality = 100, res = 600)
+    print(NSpPerGrid_Sub)
+    grDevices::dev.off()
 
     rm(
       Limits, NSpPerGrid_Sub, R_Sp_sum, R_Sp_sumP,
@@ -789,11 +793,15 @@ Mod_Prep4HPC <- function(
         return(Plot)
       })
 
-    ggplot2::ggsave(
-      filename = file.path(Path_Model, "knot_Locations.pdf"),
-      plot = gridExtra::marrangeGrob(
-        Knots_Plots, nrow = 1, ncol = 1, top = NULL),
-      width = 25 * AspectRatio, height = 25, unit = "in")
+    # Using ggplot2::ggsave directly does not show non-ascii characters
+    # correctly
+    grDevices::pdf(
+      file = file.path(Path_Model, "knot_Locations.pdf"),
+      width = 25 * AspectRatio, height = 25)
+    print(gridExtra::marrangeGrob(Knots_Plots, nrow = 1, ncol = 1, top = NULL))
+    grDevices::dev.off()
+
+
   }
 
   if (GPP_Save) {
@@ -946,7 +954,7 @@ Mod_Prep4HPC <- function(
     Model_Process <- purrr::map(
       .x = seq_len(nrow(Model_Info)), .f = InitFitFun)
   }
-
+  rm(Model_Process)
 
   # Which models failed to be exported as RDS files after 5 trials
   Failed2Export <- dplyr::filter(Model_Info, !file.exists(M4HPC_Path))

@@ -59,7 +59,7 @@ IAS_Process <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Path_PA <- Path_TaxaInfo_RData <- taxon_name <- Path_TaxaStand <-
-    Path_HabAff <- Species <- PA_Map <- NCells <- Species_name <- NCells_All <-
+    Path_HabAff <- Species <- PA_Map <- Species_name <- NCells_All <-
     synhab_name <- IAS_ID <- Count <- Hab <- EU_Bound <- Threshold <- NSp <-
     taxon_name <- PA_Masked_Map <- NCells_Naturalized <- NULL
 
@@ -572,7 +572,6 @@ IAS_Process <- function(
       "Hab_12b_Agricultural_habitats"),
     .f = function(Hab) {
       CurrDT <- dplyr::filter(Sp_PA_Data, !!as.symbol(Hab))
-      NCells <- sort(unique(Sp_PA_Data$NCells_All))
       purrr::map_dfr(
         sort(unique(Sp_PA_Data$NCells_All)),
         ~ tibble::tibble(
@@ -618,7 +617,6 @@ IAS_Process <- function(
       "Hab_12b_Agricultural_habitats"),
     .f = function(Hab) {
       CurrDT <- dplyr::filter(Sp_PA_Data, !!as.symbol(Hab))
-      NCells <- sort(unique(Sp_PA_Data$NCells_Naturalized))
       purrr::map_dfr(
         sort(unique(Sp_PA_Data$NCells_Naturalized)),
         ~ tibble::tibble(

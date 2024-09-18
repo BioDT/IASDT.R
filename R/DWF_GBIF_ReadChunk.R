@@ -62,7 +62,7 @@ GBIF_ReadChunk <- function(
       call. = FALSE)
   }
 
-  # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use 
+  # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use
   # official parameters (overriding the ones from GeoTIFF keys)
   # see: https://stackoverflow.com/questions/78007307
   terra::setGDALconfig("GTIFF_SRS_SOURCE", "EPSG")
@@ -189,7 +189,8 @@ GBIF_ReadChunk <- function(
       UncertainKm <= MaxUncert | is.na(UncertainKm),
       # exclude occurrences with less precision (keep empty precision values)
       coordinatePrecision <= 0.05 | is.na(coordinatePrecision),
-      # exclude occurrences if either latitude/longitude has no decimals (integer)
+      # exclude occurrences if either latitude/longitude has no decimals
+      # (integer)
       (NDecLong > 0 & NDecLat > 0),
       # keep only occurrences recorder after specific year
       year >= StartYear,
@@ -259,7 +260,7 @@ GBIF_ReadChunk <- function(
     if (SaveRData) {
       ChunkOutName <- stringr::str_remove_all(basename(ChunkFile), ".txt$")
       IASDT.R::SaveAs(
-        InObj = tibble::tibble(), 
+        InObj = tibble::tibble(),
         OutObj = ChunkOutName, OutPath = ChunkOutPath)
     }
 

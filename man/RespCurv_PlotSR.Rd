@@ -7,8 +7,9 @@
 RespCurv_PlotSR(Path_Model)
 }
 \arguments{
-\item{Path_Model}{String. The path to the directory containing the models. The function reads data from the \code{Model_Postprocessing/RespCurv_SR} sub-directory,
-resulted from \link{RespCurv_PrepData}.}
+\item{Path_Model}{String. The path to the directory containing the models.
+The function reads data from the \code{Model_Postprocessing/RespCurv_SR}
+sub-directory, resulted from \link{RespCurv_PrepData}.}
 }
 \value{
 This function does not return a value but saves JPEG images of the

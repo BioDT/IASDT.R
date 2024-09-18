@@ -50,9 +50,9 @@ data as a dataframe. If \code{FALSE} (default), the data will only be saved to
 disk and the function will invisibly return \code{NULL}.}
 }
 \value{
-If \code{ReturnData} is \code{TRUE}, returns a dataframe containing all the data
-retrieved for the specified EASIN ID. If \code{ReturnData} is \code{FALSE}, returns
-\code{NULL}.
+If \code{ReturnData} is \code{TRUE}, returns a dataframe containing all the
+data retrieved for the specified EASIN ID. If \code{ReturnData} is \code{FALSE},
+returns \code{NULL}.
 }
 \description{
 This function downloads data for a specified species from the EASIN database.

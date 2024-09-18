@@ -31,9 +31,9 @@
 #'   disk and the function will invisibly return `NULL`.
 #' @name EASIN_Down
 #' @author Ahmed El-Gabbas
-#' @return If `ReturnData` is `TRUE`, returns a dataframe containing all the data
-#'   retrieved for the specified EASIN ID. If `ReturnData` is `FALSE`, returns
-#'   `NULL`.
+#' @return If `ReturnData` is `TRUE`, returns a dataframe containing all the
+#'   data retrieved for the specified EASIN ID. If `ReturnData` is `FALSE`,
+#'   returns `NULL`.
 #' @export
 #' @note This function is not intended to be used directly by the user or in the
 #'   IAS-pDT, but only used inside the [EASIN_Process] function.
@@ -66,7 +66,7 @@ EASIN_Down <- function(
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "character", 
+    AllArgs = AllArgs, Type = "character",
     Args = c("SpKey", "BaseURL", "Path_Raw"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "logical",
@@ -103,9 +103,9 @@ EASIN_Down <- function(
       IASDT.R::CatTime("Download chunk data")
     }
     Chunk <- 0L
-    PrevChunks <- list.files(file.path(Path_Raw, "FileParts"), SpKey) %>%
-      stringr::str_remove_all(paste0(".RData|", SpKey, "_")) %>%
-      as.integer()
+    # PrevChunks <- list.files(file.path(Path_Raw, "FileParts"), SpKey) %>%
+    #   stringr::str_remove_all(paste0(".RData|", SpKey, "_")) %>%
+    #   as.integer()
 
     while (TRUE) {
       Chunk <- Chunk + 1
@@ -128,8 +128,8 @@ EASIN_Down <- function(
         ChunkDT <- try(
           {
             ChunkDT0 <- RCurl::getURL(URL, .mapUnicode = FALSE)
-            Error <- stringr::str_detect(
-              ChunkDT0, pattern = "An error occurred while")
+            # Error <- stringr::str_detect(
+            #   ChunkDT0, pattern = "An error occurred while")
             NoObs <- stringr::str_detect(
               ChunkDT0, pattern = "There are no results based on your")
             ChunkDT0

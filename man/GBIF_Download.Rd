@@ -27,7 +27,8 @@ variables required by the function. Default is ".env".}
 login credentials (email, user, password).}
 
 \item{RequestData}{Logical. If \code{TRUE}, requests data from GBIF. If \code{FALSE},
-loads a previously requested data set from \code{GBIF_Request.RData} and \code{StatusDetailed.RData} files. Defaults to \code{TRUE}.}
+loads a previously requested data set from \code{GBIF_Request.RData} and
+\code{StatusDetailed.RData} files. Defaults to \code{TRUE}.}
 
 \item{DownloadData}{Logical. If \code{TRUE}, downloaded data is stored on disk.
 Defaults to \code{TRUE}.}

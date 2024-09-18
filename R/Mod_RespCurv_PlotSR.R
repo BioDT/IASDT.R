@@ -6,8 +6,9 @@
 #'
 #' This function generates and saves species richness response curves as JPEG
 #' images for each variable in the dataset.
-#' @param Path_Model String. The path to the directory containing the models. The function reads data from the `Model_Postprocessing/RespCurv_SR` sub-directory,
-#' resulted from [RespCurv_PrepData].
+#' @param Path_Model String. The path to the directory containing the models.
+#'   The function reads data from the `Model_Postprocessing/RespCurv_SR`
+#'   sub-directory, resulted from [RespCurv_PrepData].
 #' @return This function does not return a value but saves JPEG images of the
 #'   response curves in a subdirectory within the specified path.
 #' @name RespCurv_PlotSR
@@ -111,19 +112,41 @@ RespCurv_PlotSR <- function(Path_Model) {
           DT_Trend <- Trend %>%
             dplyr::mutate(
               Trend2 = stringr::str_glue(
-                "\n     Pr[pred(Var=max)] > Pr[pred(Var=min)] = {round(Trend, 2)}"),
+                "\n     Pr[pred(Var=max)] > ",
+                "Pr[pred(Var=min)] = {round(Trend, 2)}"),
               Trend2 = as.character(Trend2), X = -Inf, Y = Inf)
 
           # Variable long name (x-axis label)
           Variable2 <- dplyr::case_when(
-            Variable == "bio4" ~ "<span style='font-size: 12pt;'><b>Bio4</b></span><span style='font-size: 9pt;'> (temperature seasonality)</span>",
-            Variable == "bio6" ~ "<span style='font-size: 12pt;'><b>Bio6</b></span><span style='font-size: 9pt;'> (temperature of the coldest month)</span>",
-            Variable == "bio8" ~ "<span style='font-size: 12pt;'><b>Bio8</b></span><span style='font-size: 9pt;'> (temperatures of the wettest quarter)</span>",
-            Variable == "bio12" ~ "<span style='font-size: 12pt;'><b>Bio12</b></span><span style='font-size: 9pt;'> (annual precipitation amount)</span>",
-            Variable == "bio15" ~ "<span style='font-size: 12pt;'><b>Bio15</b></span><span style='font-size: 9pt;'> (precipitation seasonality)</span>",
-            Variable == "bio18" ~ "<span style='font-size: 12pt;'><b>Bio18</b></span><span style='font-size: 9pt;'> (monthly precipitation amount of the warmest quarter)</span>",
-            Variable == "RoadRailLog" ~ "<span style='font-size: 12pt;'><b>Road + Rail intensity</b></span><span style='font-size: 9pt;'> (log<sub>10</sub>(x + 0.1))</span>",
-            Variable == "BiasLog" ~ "<span style='font-size: 12pt;'><b>Sampling intensity</b></span><span style='font-size: 9pt;'> (log<sub>10</sub>(x + 0.1))</span>",
+            Variable == "bio4" ~ paste0(
+              "<span style='font-size: 12pt;'><b>Bio4</b></span><span ",
+              "style='font-size: 9pt;'> (temperature seasonality)</span>"),
+            Variable == "bio6" ~ paste0(
+              "<span style='font-size: 12pt;'><b>Bio6</b></span><span ",
+              "style='font-size: 9pt;'> (temperature of the coldest ",
+              "month)</span>"),
+            Variable == "bio8" ~ paste0(
+              "<span style='font-size: 12pt;'><b>Bio8</b></span><span ",
+              "style='font-size: 9pt;'> (temperatures of the wettest ",
+              "quarter)</span>"),
+            Variable == "bio12" ~ paste0(
+              "<span style='font-size: 12pt;'><b>Bio12</b></span><span ",
+              "style='font-size: 9pt;'> (annual precipitation amount)</span>"),
+            Variable == "bio15" ~ paste0(
+              "<span style='font-size: 12pt;'><b>Bio15</b></span><span ",
+              "style='font-size: 9pt;'> (precipitation seasonality)</span>"),
+            Variable == "bio18" ~ paste0(
+              "<span style='font-size: 12pt;'><b>Bio18</b></span><span ",
+              "style='font-size: 9pt;'> (monthly precipitation amount of ",
+              "the warmest quarter)</span>"),
+            Variable == "RoadRailLog" ~ paste0(
+              "<span style='font-size: 12pt;'><b>Road + Rail intensity</b>",
+              "</span><span style='font-size: 9pt;'> (log<sub>10</sub>(x + ",
+              "0.1))</span>"),
+            Variable == "BiasLog" ~ paste0(
+              "<span style='font-size: 12pt;'><b>Sampling intensity</b>",
+              "</span><span style='font-size: 9pt;'> (log<sub>10</sub>(x + ",
+              "0.1))</span>"),
             .default = Variable)
 
           VarName <- dplyr::case_when(
@@ -134,14 +157,26 @@ RespCurv_PlotSR <- function(Path_Model) {
 
           # facetting labels
           FacetLabel <- ggplot2::as_labeller(c(
-            `1` = '<span style="font-size:12pt; color:red;"><b>non.focalVariables = 1</b></span><br><span style="font-size:7pt;">values of non-focal variables are set to the most likely value</span>',
-            `2` = '<span style="font-size:12pt; color:red;"><b>non.focalVariables = 2</b></span><br><span style="font-size:7pt;">values of non-focal variables are set to the most likely value given the value of focal variable</span>',
-            `c` = '<span style="font-size:10pt; color:red;"><b>Predictions at mean coordinates</b></span>',
-            `i` = '<span style="font-size:10pt; color:red;"><b>Predictions without effect of spatial dependence</b></span>'))
+            `1` = paste0(
+              '<span style="font-size:12pt; color:red;"><b>non.focalVariables ",
+              "= 1</b></span><br><span style="font-size:7pt;">values of ",
+              "non-focal variables are set to the most likely value</span>'),
+            `2` = paste0(
+              '<span style="font-size:12pt; color:red;"><b>non.focalVariables",
+              " = 2</b></span><br><span style="font-size:7pt;">values of ",
+              "non-focal variables are set to the most likely value given the",
+              " value of focal variable</span>'),
+            `c` = paste0(
+              '<span style="font-size:10pt; color:red;"><b>Predictions at ",
+              "mean coordinates</b></span>'),
+            `i` = paste0(
+              '<span style="font-size:10pt; color:red;"><b>Predictions ",
+              "without effect of spatial dependence</b></span>')))
 
           # Plot title
           TitleTxt <- paste0(
-            '<span style="font-size:14pt; color:blue;"><b>Response curve  (predicted species richness) for ',
+            '<span style="font-size:14pt; color:blue;"><b>',
+            "Response curve  (predicted species richness) for ",
             VarName, "</b></span>")
 
           # Plot
@@ -192,16 +227,21 @@ RespCurv_PlotSR <- function(Path_Model) {
               panel.spacing = ggplot2::unit(0.15, "lines"),
               plot.margin = ggplot2::unit(c(0.1, 0.2, 0.1, 0.2), "lines"))
 
-          Path_JPEG <- file.path(
-            Path_Model, "Model_Postprocessing/RespCurv_SR",
-            paste0("RespCurv_SR_", Variable, ".jpeg"))
-          ggplot2::ggsave(
-            filename = Path_JPEG, plot = Plot, width = 22, height = 21,
-            dpi = 600, units = "cm")
+          # Using ggplot2::ggsave directly does not show non-ascii characters
+          # correctly
+          grDevices::jpeg(
+            filename = file.path(
+              Path_Model, "Model_Postprocessing/RespCurv_SR",
+              paste0("RespCurv_SR_", Variable, ".jpeg")),
+            width = 22, height = 21, units = "cm", quality = 100, res = 600)
+          print(Plot)
+          grDevices::dev.off()
 
           return(invisible(NULL))
         }
       ))
+
+  rm(SR_DT_All)
 
   return(invisible(NULL))
 }

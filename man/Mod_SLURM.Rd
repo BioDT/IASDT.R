@@ -55,7 +55,8 @@ HPC environment. This adjusts file paths accordingly. Default: \code{TRUE}.}
 
 \item{Path_Hmsc}{String. Path for the Hmsc-HPC.}
 
-\item{Command_Prefix}{String. Prefix for the bash commands to be executed. Default: \code{Commands2Fit}.}
+\item{Command_Prefix}{String. Prefix for the bash commands to be executed.
+Default: \code{Commands2Fit}.}
 
 \item{SLURM_Prefix}{String. Prefix for the exported SLURM file.}
 

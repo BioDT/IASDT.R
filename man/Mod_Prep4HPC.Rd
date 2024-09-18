@@ -246,7 +246,8 @@ The function provides options for:
 \item whether to include sampling efforts \code{EffortsAsPredictor}, percentage of
 respective habitat type per grid cell \code{HabAsPredictor}, and railway and
 road intensity per grid cell \code{RoadRailAsPredictor}
-\item Hmsc options (\code{NChains}, \code{thin}, \code{samples}, \code{transientFactor}, and \code{verbose})
+\item Hmsc options (\code{NChains}, \code{thin}, \code{samples}, \code{transientFactor},
+and \code{verbose})
 \item prepare SLURM commands (\code{PrepSLURM}) and some specifications (e.g.
 \code{NArrayJobs}, \code{MemPerCpu}, \code{Time}, \code{JobName})
 

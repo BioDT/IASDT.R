@@ -158,8 +158,8 @@ RespCurv_PrepData <- function(
             .f = ~{
               dplyr::reframe(
                 .x,
-                Pred = stats::quantile(Pred, Probabilities), Quantile = Probabilities,
-                .by	= XVals)
+                Pred = stats::quantile(Pred, Probabilities),
+                Quantile = Probabilities, .by	= XVals)
             }),
 
           # Values at observed presence and absences

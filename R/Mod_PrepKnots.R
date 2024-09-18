@@ -27,7 +27,8 @@
 #' @export
 
 PrepKnots <- function(
-    Coords = NULL, MinDist = NULL, JitterDist = 100, MinLF = NULL, MaxLF = NULL) {
+    Coords = NULL, MinDist = NULL, JitterDist = 100,
+    MinLF = NULL, MaxLF = NULL) {
 
   if (is.null(Coords) || is.null(MinDist)) {
     stop("Both 'Coords' and 'MinDist' must be provided and cannot be NULL",

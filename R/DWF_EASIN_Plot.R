@@ -198,7 +198,8 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
   ### Combine maps ----
   IASDT.R::CatTime(
     Text = "Merge maps side by side and save as JPEG", Level = 2)
-  (ggpubr::ggarrange(
+  
+  Plot <- ggpubr::ggarrange(
     Plot_NObs,
     (ggplot2::ggplot() + ggplot2::theme_void()),
     Plot_NSp,
@@ -209,13 +210,16 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
         plot.margin = ggplot2::margin(0.1, 0, 0, 0, "cm"),
         plot.title = ggtext::element_markdown(
           size = 9, face = "bold", hjust = 0.5,
-          margin = ggplot2::margin(0, 0, 0, 0)))
-    )) %>%
-    ggplot2::ggsave(
-      filename = file.path(Path_EASIN_Summary, "EASIN_Data.jpeg"),
-      width = 20, height = 10.3, units = "cm", dpi = 600)
+          margin = ggplot2::margin(0, 0, 0, 0))))
+    
+  # Using ggplot2::ggsave directly does not show non-ascii characters correctly
+  grDevices::jpeg(
+    filename = file.path(Path_EASIN_Summary, "EASIN_Data.jpeg"),
+    width = 20, height = 10.3, units = "cm", quality = 100, res = 600)
+  print(Plot)
+  grDevices::dev.off()
 
-  rm(Plot_NSp, Plot_NObs)
+  rm(Plot_NSp, Plot_NObs, Plot)
 
   ## |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -268,7 +272,7 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
       Start_Lyr <- (i - 1) * 8 + 1
       End_Lyr <- min(i * 8, terra::nlyr(Map))
 
-      plot <- ggplot2::ggplot() +
+      Plot <- ggplot2::ggplot() +
         tidyterra::geom_spatraster(
           data = Map[[Start_Lyr:End_Lyr]], maxcell = NCells) +
         ggplot2::facet_wrap(~lyr, nrow = 2, ncol = 4) +
@@ -290,10 +294,15 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
           tag = LastUpdate) +
         PlottingTheme2
 
-      ggplot2::ggsave(
-        filename = file.path(
-          Path_EASIN_Summary, paste0(File_prefix, "_p", i, ".jpeg")),
-        width = 30, height = 16.5, units = "cm", dpi = 600)
+    # Using ggplot2::ggsave directly does not show non-ascii characters 
+    # correctly
+    grDevices::jpeg(
+      filename = file.path(
+            Path_EASIN_Summary, paste0(File_prefix, "_p", i, ".jpeg")),
+      width = 30, height = 16.5, units = "cm", quality = 100, res = 600)
+    print(Plot)
+    grDevices::dev.off()
+
     }
 
     return(invisible(NULL))

@@ -54,8 +54,6 @@ GridCross <- function(DT = NULL) {
     stop("Input DT  cannot be NULL", call. = FALSE)
   }
 
-  InputCRS <- sf::st_crs(DT)
-
   DT %>%
     dplyr::pull("geometry") %>%
     purrr::map(
@@ -83,7 +81,7 @@ GridCross <- function(DT = NULL) {
         list(Horiz, Vert) %>%
           sf::st_multilinestring() %>%
           sf::st_geometry()  %>%
-          sf::st_set_crs(InputCRS) %>%
+          sf::st_set_crs(sf::st_crs(DT)) %>%
           sf::st_sfc() %>%
           return()
       }) %>%

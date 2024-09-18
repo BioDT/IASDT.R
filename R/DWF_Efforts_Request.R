@@ -44,8 +44,8 @@ Efforts_Request <- function(
 
   .StartTimeRequest <- lubridate::now(tzone = "CET")
 
-  if (missing(NCores) || !is.numeric(NCores) || NCores < 1 || NCores > 3) {
-    stop("`NCores` must be a positive integer between 1 and 3.", call. = FALSE)
+  if (missing(NCores) || !is.numeric(NCores) || NCores < 1) {
+    stop("`NCores` must be a positive integer.", call. = FALSE)
   }
 
   if (!is.character(Path_Requests) || !dir.exists(Path_Requests)) {
@@ -78,7 +78,7 @@ Efforts_Request <- function(
   # GBIF allows only 3 parallel requests. Here I wait until previous request
   # is finished.
   IASDT.R::CatTime(
-    paste0("Prepare working on parallel using `", NCores, "` cores."),
+    paste0("Prepare working on parallel using `", min(NCores, 3), "` cores."),
     Level = 1)
 
   withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
@@ -160,7 +160,7 @@ Efforts_Request <- function(
           return(Down)
         },
         .options = furrr::furrr_options(
-          seed = TRUE, scheduling = Inf, 
+          seed = TRUE, scheduling = Inf,
           packages = c("dplyr", "IASDT.R", "rgbif"))
       )
     ) %>%

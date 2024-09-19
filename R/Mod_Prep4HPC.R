@@ -782,7 +782,7 @@ Mod_Prep4HPC <- function(
               "<span style='font-size: 35pt;'>GPP knots</span><br>",
               "<span style='font-size: 30pt;'>  Minimum distance between ",
               "knots and between knots and grid ",
-              " cells is ", .x, " km  &#8212; ", NKnots, " knots</span>")) +
+              " cells is ", .x, " km \u2014 ", NKnots, " knots</span>")) +
           ggplot2::scale_fill_continuous(na.value = "transparent") +
           ggplot2::theme_void() +
           ggplot2::theme(

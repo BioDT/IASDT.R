@@ -288,7 +288,7 @@ GetCV <- function(
           ggplot2::theme_void() +
           ggplot2::theme(
             plot.title = ggplot2::element_text(
-              size = 18, face = "bold", color = "blue"),
+              size = 28, face = "bold", color = "blue"),
             legend.position = "none")
 
         return(Plot)

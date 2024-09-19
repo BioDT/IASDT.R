@@ -787,9 +787,9 @@ Mod_Prep4HPC <- function(
           ggplot2::theme(
             plot.margin = ggplot2::margin(0, 0, 0, 0, "cm"),
             plot.title = ggplot2::element_text(
-              size = 18, face = "bold", color = "blue"),
+              size = 28, face = "bold", color = "blue"),
             plot.subtitle = ggplot2::element_text(
-              size = 12, color = "darkgrey"),
+              size = 22, color = "darkgrey"),
             legend.position = "none")
 
         return(Plot)

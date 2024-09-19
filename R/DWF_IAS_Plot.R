@@ -299,15 +299,8 @@ IAS_Plot <- function(
 
   # Save the plot as JPEG file ----
 
-  Plot <- cowplot::ggdraw(Plot) +
-    cowplot::draw_label(
-      label = LastUpdate, x = 0.975, y = 0.98, hjust = 1, vjust = 1,
-      color = "grey65", size = 12) +
-    cowplot::draw_label(
-      label = BioRegAnnotation, x = 0.02, y = 0.91, hjust = 0, vjust = 0,
-      color = "grey65", size = 10)
-
-  # Setting set_null_device to cairo to avoid the following warnings
+  # Use `grid::grid.text` instead of `cowplot::draw_label` to avoid these
+  # warnings
   #
   # 1: In grid.Call(C_textBounds, as.graphicsAnnot(x$label),  ... :
   # conversion failure on '—' in 'mbcsToSbcs': dot substituted for <e2>
@@ -315,13 +308,21 @@ IAS_Plot <- function(
   # conversion failure on '—' in 'mbcsToSbcs': dot substituted for <80>
   # 3: In grid.Call(C_textBounds, as.graphicsAnnot(x$label),  ... :
   # conversion failure on '—' in 'mbcsToSbcs': dot substituted for <94>
-  cowplot::set_null_device("cairo")
-
+  #
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
+
   grDevices::jpeg(
     filename = OutPath, width = 25, height = 26.5, units = "cm",
     quality = 100, res = 600)
+
   print(Plot)
+  grid::grid.text(
+    label = LastUpdate, x = 0.98, y = 0.975, hjust = 1, vjust = 1,
+    gp = grid::gpar(col = "grey65", fontsize = 12))
+  grid::grid.text(
+    label = BioRegAnnotation, x = 0.02, y = 0.9, hjust = 0, vjust = 0,
+    gp = grid::gpar(col = "grey65", fontsize = 10, lineheight = 0.7))
+
   grDevices::dev.off()
 
   return(invisible(NULL))

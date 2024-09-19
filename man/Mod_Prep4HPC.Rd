@@ -210,9 +210,9 @@ provided as the \code{Path_Hmsc} argument of the \link{Mod_SLURM} function.}
 \item{ToJSON}{Logical indicating whether to convert unfitted models to JSON
 before saving to RDS file. Default: \code{FALSE}.}
 
-\item{Precision}{Integer, either of 32 (default) or 64 for the precision mode
-used for sampling while fitting \code{Hmsc-HPC} models (\verb{-fp 64} argument). In
-\code{Hmsc-HPC}, the default value is 64.}
+\item{Precision}{Integer, either of 32 (default; \verb{--fp 32}) or 64 for the
+precision mode used for sampling while fitting \code{Hmsc-HPC} models (\verb{--fp  64} argument). In \code{Hmsc-HPC}, the default value is 64. This is still under
+testing.}
 
 \item{...}{Additional parameters provided to the \link{Mod_SLURM}
 function.}
@@ -227,8 +227,8 @@ involves data preparation, define spatial block cross-validation folds, model
 initialization, GPP knots, and generating commands for running models on HPC.
 It supports parallel processing, options to include/not include phylogenetic
 tree data. The models will be fitted using Gaussian Predictive Process (GPP;
-see \href{https://doi.org/10.1002/ecy.2929}{Tikhonov et al.}) for more details)
-via the \href{https://doi.org/10.1101/2024.02.13.580046}{Hmsc-HPC} extension.
+see \href{https://doi.org/10.1002/ecy.2929}{Tikhonov et al.} for more details)
+via the \href{https://doi.org/10.1371/journal.pcbi.1011914}{Hmsc-HPC} extension.
 }
 \details{
 The function provides options for:

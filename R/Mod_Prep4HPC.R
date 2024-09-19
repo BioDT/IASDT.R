@@ -9,8 +9,8 @@
 #' initialization, GPP knots, and generating commands for running models on HPC.
 #' It supports parallel processing, options to include/not include phylogenetic
 #' tree data. The models will be fitted using Gaussian Predictive Process (GPP;
-#' see [Tikhonov et al.](https://doi.org/10.1002/ecy.2929)) for more details)
-#' via the [Hmsc-HPC](https://doi.org/10.1101/2024.02.13.580046) extension.
+#' see [Tikhonov et al.](https://doi.org/10.1002/ecy.2929) for more details)
+#' via the [Hmsc-HPC](https://doi.org/10.1371/journal.pcbi.1011914) extension.
 #'
 #' @param Path_Model String (without trailing slash) specifying the path where
 #'   all output, including models to be fitted, will be saved.
@@ -89,9 +89,10 @@
 #'   before saving to RDS file. Default: `FALSE`.
 #' @param ... Additional parameters provided to the [IASDT.R::Mod_SLURM]
 #'   function.
-#' @param Precision Integer, either of 32 (default) or 64 for the precision mode
-#'   used for sampling while fitting `Hmsc-HPC` models (`-fp 64` argument). In
-#'   `Hmsc-HPC`, the default value is 64.
+#' @param Precision Integer, either of 32 (default; `--fp 32`) or 64 for the 
+#'   precision mode used for sampling while fitting `Hmsc-HPC` models (`--fp 
+#'   64` argument). In `Hmsc-HPC`, the default value is 64. This is still under 
+#'   testing.
 #' @name Mod_Prep4HPC
 #' @inheritParams Mod_PrepData
 #' @inheritParams PrepKnots
@@ -797,10 +798,8 @@ Mod_Prep4HPC <- function(
     grDevices::pdf(
       file = file.path(Path_Model, "knot_Locations.pdf"),
       width = 25 * AspectRatio, height = 25)
-    print(gridExtra::marrangeGrob(Knots_Plots, nrow = 1, ncol = 1, top = NULL))
+    invisible(purrr::map(Knots_Plots, print))
     grDevices::dev.off()
-
-
   }
 
   if (GPP_Save) {

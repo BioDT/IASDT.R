@@ -298,7 +298,7 @@ GetCV <- function(
     grDevices::pdf(
       file = file.path(OutPath, "CV_Blocks.pdf"),
       width = 25 * (AspectRatio), height = 25)
-    print(gridExtra::marrangeGrob(CV_Plots, nrow = 1, ncol = 1, top = NULL))
+    invisible(purrr::map(CV_Plots, print))
     grDevices::dev.off()
 
   }

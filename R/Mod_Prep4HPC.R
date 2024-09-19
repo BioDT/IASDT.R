@@ -781,15 +781,15 @@ Mod_Prep4HPC <- function(
             title = "GPP knots",
             subtitle = paste0(
               "Minimum distance between knots and between knots and grid ",
-              "cells is ", .x, " km (", NKnots, ") knots")) +
+              "cells is ", .x, " km (", NKnots, " knots)")) +
           ggplot2::scale_fill_continuous(na.value = "transparent") +
           ggplot2::theme_void() +
           ggplot2::theme(
             plot.margin = ggplot2::margin(0, 0, 0, 0, "cm"),
             plot.title = ggplot2::element_text(
-              size = 40, face = "bold", color = "blue"),
+              size = 50, face = "bold", color = "blue"),
             plot.subtitle = ggplot2::element_text(
-              size = 30, color = "darkgrey"),
+              size = 35, color = "darkgrey"),
             legend.position = "none")
 
         return(Plot)

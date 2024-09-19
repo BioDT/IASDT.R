@@ -465,8 +465,7 @@ PlotVarPar <- function(
   print(VarParPlot)
   grDevices::dev.off()
 
-  IASDT.R::CatDiff(
-    InitTime = .StartTime, ChunkText = "Function summary", CatInfo = TRUE)
+  IASDT.R::CatDiff(InitTime = .StartTime)
 
   if (ReturnGG) {
     return(VarParPlot)

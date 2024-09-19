@@ -360,8 +360,7 @@ RespCurv_PrepData <- function(
   IASDT.R::CatTime("Saving data to desk")
   save(ResCurvDT, file = file.path(Path_RespCurvDT, "ResCurvDT.RData"))
 
-  IASDT.R::CatDiff(
-    InitTime = .StartTime, ChunkText = "Function summary", CatInfo = TRUE)
+  IASDT.R::CatDiff(InitTime = .StartTime)
 
   if (ReturnData) {
     return(ResCurvDT)

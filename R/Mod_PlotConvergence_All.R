@@ -515,8 +515,7 @@ PlotConvergence_All <- function(
     grobs = list(Plot, Plot2), nrow = 1, ncol = 1, top = NULL))
   grDevices::dev.off()
 
-  IASDT.R::CatDiff(
-    InitTime = .StartTime, ChunkText = "Function summary", CatInfo = TRUE)
+  IASDT.R::CatDiff(InitTime = .StartTime)
 
   return(invisible(NULL))
 }

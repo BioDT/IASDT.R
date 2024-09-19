@@ -89,9 +89,9 @@
 #'   before saving to RDS file. Default: `FALSE`.
 #' @param ... Additional parameters provided to the [IASDT.R::Mod_SLURM]
 #'   function.
-#' @param Precision Integer, either of 32 (default; `--fp 32`) or 64 for the 
-#'   precision mode used for sampling while fitting `Hmsc-HPC` models (`--fp 
-#'   64` argument). In `Hmsc-HPC`, the default value is 64. This is still under 
+#' @param Precision Integer, either of 32 (default; `--fp 32`) or 64 for the
+#'   precision mode used for sampling while fitting `Hmsc-HPC` models (`--fp
+#'   64` argument). In `Hmsc-HPC`, the default value is 64. This is still under
 #'   testing.
 #' @name Mod_Prep4HPC
 #' @inheritParams Mod_PrepData
@@ -492,6 +492,7 @@ Mod_Prep4HPC <- function(
     Limits <- terra::trim(R_Sp_sumP) %>%
       terra::ext() %>%
       as.vector()
+
     NSpPerGrid_Sub <- ggplot2::ggplot() +
       tidyterra::geom_spatraster(data = R_Sp_sumP) +
       tidyterra::scale_fill_whitebox_c(
@@ -504,7 +505,7 @@ Mod_Prep4HPC <- function(
           '<span style="color:black; font-size:16px;"> (',
           stringr::str_remove(Hab_column, "Hab_"), ")</span>"),
         subtitle = paste0(
-          "Only species within &#8805;", MinPresGrids,
+          "Only species within \u2265", MinPresGrids,
           " presence grid cells in the selected country/countries are shown")) +
       ggplot2::geom_sf(
         data = EU_Bound_sub, fill = "transparent", colour = "black") +
@@ -514,9 +515,8 @@ Mod_Prep4HPC <- function(
       ggplot2::theme(
         plot.margin = ggplot2::margin(0.05, 0, 0, 0, "cm"),
         plot.title = ggtext::element_markdown(
-          size = 16, hjust = 0,
-          margin = ggplot2::margin(0, 0, 0.1, 0, "cm")),
-        plot.subtitle = ggtext::element_markdown(size = 14, hjust = 0),
+          size = 16, hjust = 0, margin = ggplot2::margin(0, 0, 0.1, 0, "cm")),
+        plot.subtitle = ggplot2::element_text(size = 14, color = "darkgrey"),
         axis.title = ggplot2::element_blank(),
         axis.text = ggplot2::element_blank(),
         panel.border = ggplot2::element_blank(),
@@ -741,8 +741,8 @@ Mod_Prep4HPC <- function(
       sf::st_bbox()
     AspectRatio <- (KnotExt[3] - KnotExt[1]) / (KnotExt[4] - KnotExt[2])
 
-    GridR <- IASDT.R::LoadAs(Path_GridR) %>%
-      terra::unwrap()
+    GridR <- terra::unwrap(IASDT.R::LoadAs(Path_GridR))
+
     GridR <- sf::st_as_sf(
       x = data.frame(DT_xy), coords = c("x", "y"), crs = 3035) %>%
       terra::rasterize(GridR) %>%
@@ -777,17 +777,19 @@ Mod_Prep4HPC <- function(
             limits = sf::st_bbox(EU_Bound)[c(1, 3)], expand = c(0, 0)) +
           ggplot2::scale_y_continuous(
             limits = sf::st_bbox(EU_Bound)[c(2, 4)], expand = c(0, 0)) +
-          ggplot2::ggtitle(
-            paste0(
-              "<span style='font-size: 35pt;'>GPP knots</span><br>",
-              "<span style='font-size: 30pt;'>  Minimum distance between ",
-              "knots and between knots and grid ",
-              " cells is ", .x, " km \u2014 ", NKnots, " knots</span>")) +
+          ggplot2::labs(
+            title = "GPP knots",
+            subtitle = paste0(
+              "Minimum distance between knots and between knots and grid ",
+              "cells is ", .x, " km (", NKnots, ") knots")) +
           ggplot2::scale_fill_continuous(na.value = "transparent") +
           ggplot2::theme_void() +
           ggplot2::theme(
             plot.margin = ggplot2::margin(0, 0, 0, 0, "cm"),
-            plot.title = ggtext::element_markdown(),
+            plot.title = ggplot2::element_text(
+              size = 18, face = "bold", color = "blue"),
+            plot.subtitle = ggplot2::element_text(
+              size = 12, color = "darkgrey"),
             legend.position = "none")
 
         return(Plot)
@@ -1210,8 +1212,7 @@ Mod_Prep4HPC <- function(
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatDiff(
-    InitTime = .StartTime, ChunkText = "Function summary", CatInfo = TRUE)
+  IASDT.R::CatDiff(InitTime = .StartTime)
 
   return(invisible(NULL))
 }

@@ -732,8 +732,7 @@ PlotConvergence <- function(
 
   rm(BetaTracePlots_BySp0)
 
-  IASDT.R::CatDiff(
-    InitTime = .StartTime, ChunkText = "Function summary", CatInfo = TRUE)
+  IASDT.R::CatDiff(InitTime = .StartTime)
 
   return(invisible(NULL))
 }

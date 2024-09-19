@@ -284,11 +284,12 @@ GetCV <- function(
           ggplot2::geom_sf_text(
             data = blocks, ggplot2::aes(label = folds), size = 16,
             fontface = "bold") +
-          ggplot2::ggtitle(
-            paste0("<span style='font-size: 40pt;'>", .x, "</font>")) +
+          ggplot2::labs(title = .x) +
           ggplot2::theme_void() +
           ggplot2::theme(
-            plot.title = ggtext::element_markdown(), legend.position = "none")
+            plot.title = ggplot2::element_text(
+              size = 18, face = "bold", color = "blue"),
+            legend.position = "none")
 
         return(Plot)
       })

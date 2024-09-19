@@ -44,7 +44,7 @@ PlotAlpha <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  x <- Factor <- NULL
+  Factor <- NULL
 
   # Checking arguments
   AllArgs <- ls(envir = environment())
@@ -70,13 +70,17 @@ PlotAlpha <- function(
     Model <- IASDT.R::LoadAs(Model)
   }
 
+  # nolint start
   SampleSize <- Model$samples
+  # nolint end
+
   NChains <- length(Model$postList)
   rm(Model)
 
   NLV <- ncol(Post[[1]])
 
   ## Gelman convergence diagnostic
+  # nolint start
   Gelman <- coda::gelman.diag(x = Post, multivariate = FALSE) %>%
     magrittr::extract2("psrf") %>%
     as.data.frame() %>%
@@ -104,6 +108,7 @@ PlotAlpha <- function(
             stringr::str_remove("factor") %>%
             as.integer()
         }))
+  # nolint end
 
   if (is.null(NRC)) {
     NRC <- dplyr::case_when(

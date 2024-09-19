@@ -45,7 +45,8 @@ argument. Example: \verb{32G} to request 32 gigabytes.}
 \item{Time}{String. The value for the requested time for each job in the bash
 arrays. Example: \code{01:00:00} to request an hour.}
 
-\item{Partition}{String. The name of the partition. Default: \code{small-g}.}
+\item{Partition}{String. The name of the partition. Default: \code{small-g} for
+running the array jobs on the GPU.}
 
 \item{EnvFile}{String. Path to read the environment variables. Default value:
 \code{.env}.}

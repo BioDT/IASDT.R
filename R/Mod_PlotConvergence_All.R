@@ -183,7 +183,11 @@ PlotConvergence_All <- function(
         Omega_ESS <- coda::effectiveSize(Omega)
 
         # OMEGA - gelman.diag
+
+        # nolint start
         sel <- sample(seq_len(dim(Omega[[1]])[2]), size = maxOmega)
+        # nolint end
+
         Omega_Gelman <- Omega %>%
           purrr::map(~ .x[, sel]) %>%
           coda::gelman.diag(multivariate = FALSE) %>%

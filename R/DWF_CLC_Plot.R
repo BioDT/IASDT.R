@@ -74,16 +74,22 @@ CLC_Plot <- function(
   split_vector <- seq_len(terra::nlyr(CLC_MapR)) %>%
     split(., ceiling(seq_along(.) / 8))
 
+  # nolint start
+  
   # Plotting boundaries
   Xlim <- c(2600000, 6550000)
   Ylim <- c(1450000, 5420000)
 
-  LastUpdate <- paste0("Last update: ", format(Sys.Date(), "%d %B %Y"))
+  
+  LastUpdate <- paste0(
+    "Last update: ", format(Sys.Date(), "%d %B %Y"))
 
   OutPath <- paste0(
     "Summary_PercCover_", FilePrefix, "_",
     seq_len(length(split_vector)), ".jpeg") %>%
     file.path(Path_JPEG, .)
+  
+  # nolint end
 
   MAPS <- purrr::map(
     .x = seq_len(length(split_vector)),
@@ -255,6 +261,7 @@ CLC_Plot <- function(
 
   IASDT.R::CatTime(paste0(Prefix, " - Multiple panels per file "), Level = 1)
 
+  # nolint start
   CommonLegend <- cowplot::get_legend(
     (ggplot2::ggplot() +
       tidyterra::geom_spatraster(
@@ -268,9 +275,10 @@ CLC_Plot <- function(
         legend.key.width = grid::unit(0.4, "cm"),
         legend.text = ggplot2::element_text(size = 6),
         legend.background = ggplot2::element_rect(fill = "transparent")) +
-      ggplot2::labs(fill = NULL))
-  ) %>%
+      ggplot2::labs(fill = NULL))) %>%
     suppressWarnings()
+  # nolint end
+
 
   # arrange map tiles together into figures (4 columns * 2 rows)
   purrr::walk(

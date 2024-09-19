@@ -230,7 +230,11 @@ Mod_CV <- function(
 
               # The following is copied from Hmsc::computePredictedValues()
               train <- (CV_Fold != k)
+
+              # nolint start
               val <- (CV_Fold == k)
+              # nolint end
+
               dfPi <- as.data.frame(matrix(NA, sum(train), ModFull$nr))
               colnames(dfPi) <- ModFull$rLNames
 
@@ -242,13 +246,13 @@ Mod_CV <- function(
                 class(ModFull$X)[1L],
                 matrix = {
                   XTrain <- ModFull$X[train, , drop = FALSE]
-                  XVal <- ModFull$X[val, , drop = FALSE]
+                  # XVal <- ModFull$X[val, , drop = FALSE]
                 },
                 list = {
                   XTrain <- purrr::map(
                     .x = ModFull$X, .f = ~.x[train, , drop = FALSE])
-                  XVal <- purrr::map(
-                    .x = ModFull$X, .f = ~.x[val, , drop = FALSE])
+                  # XVal <- purrr::map(
+                  #   .x = ModFull$X, .f = ~.x[val, , drop = FALSE])
                 }
               )
 
@@ -259,6 +263,8 @@ Mod_CV <- function(
                 XRRRTrain <- NULL
                 # XRRRVal <- NULL
               }
+
+              # nolint start
 
               # Initial models
               ModCV <- Hmsc::Hmsc(
@@ -302,11 +308,14 @@ Mod_CV <- function(
               ModCV$TrScalePar <- ModFull$TrScalePar
               ModCV$TrScaled <- (ModCV$Tr - matrix(ModCV$TrScalePar[1, ], ModCV$ns, ModCV$nt, byrow = TRUE)) / matrix(ModCV$TrScalePar[2, ], ModCV$ns, ModCV$nt, byrow = TRUE)
 
+              # nolint end
+
+
               # initiate sampling and save initial models to
               ModCV <- Hmsc::sampleMcmc(
                 hM = ModCV, samples = ModFull$samples, thin = ModFull$thin,
                 transient = ModFull$transient, adaptNf = ModFull$adaptNf,
-                initPar = initPar, NChains = NChains, updater = updater,
+                initPar = initPar, nChains = NChains, updater = updater,
                 verbose = verbose, alignPost = alignPost, engine = "HPC")
 
               if (ToJSON) {
@@ -323,7 +332,8 @@ Mod_CV <- function(
                 .x = seq_len(NChains),
                 .f = function(Chain) {
 
-                  # Path to save the posterior of the combination of CV and chain
+                  # Path to save the posterior of the combination of
+                  # CV and chain
                   Path_Post <- file.path(
                     Path_CV,
                     paste0("Mod_", CV_Name, "_", k, "_Ch", Chain, "_post.rds"))

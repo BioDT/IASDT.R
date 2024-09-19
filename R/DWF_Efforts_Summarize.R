@@ -72,9 +72,10 @@ Efforts_Summarize <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  speciesKey <- CellCode <- ObsN <- year <- UncertainKm <- Latitude <-
-    Longitude <- taxonRank <- ID <- DownPath <- Chunks <- TotalRecords <-
-    ClassOrder <- Path_DT <- NULL
+  # speciesKey <- CellCode <- year <- UncertainKm <- Latitude <-
+  #   Longitude <- taxonRank <- ID <- DownPath <- Chunks <- TotalRecords <-
+  #   ClassOrder <- Path_DT <- NULL
+  speciesKey <- ObsN <- NULL
 
   # # ..................................................................... ###
 
@@ -199,6 +200,7 @@ Efforts_Summarize <- function(
         }
 
         # Process chunk files
+        # nolint start
         AcceptedRanks <- c("FORM", "SPECIES", "SUBSPECIES", "VARIETY")
         ColNames <- c(
           "taxonRank", "Latitude", "Longitude", "UncertainKm", "speciesKey")
@@ -209,6 +211,7 @@ Efforts_Summarize <- function(
           speciesKey = readr::col_integer(),
           taxonRank = readr::col_character(),
           .default = readr::col_double())
+        # nolint end
 
         DT <- purrr::map_dfr(
           .x = Chunks,

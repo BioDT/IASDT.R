@@ -13,7 +13,8 @@
 #'   link, and `url` containing  the absolute URL of each link. The tibble is
 #'   sorted by URL and then by link text, and only unique links are included.
 #' @importFrom rlang .data
-#' @source The source code of this function was taken from this
+#' @source
+#' The source code of this function was taken from this
 #'   [gist](https://gist.github.com/paulrougieux/e1ee769577b40cd9ed9db7f75e9a2cc2).
 #' @examples
 #' ScrapLinks("https://github.com/")

@@ -35,7 +35,9 @@ types) and prepares reference grid for models. The function optionally plots
 \details{
 \itemize{
 \item \href{https://land.copernicus.eu/pan-european/corine-land-cover/clc2018}{Data source}
-\item Citation](https://doi.org/10.2909/960998c1-1870-4e82-8051-6485205ebbac)
+nolint start
+\item \href{https://doi.org/10.2909/960998c1-1870-4e82-8051-6485205ebbac}{Citation}
+nolint end
 }
 
 The function reads the following environment variable:

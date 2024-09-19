@@ -27,8 +27,8 @@ Mod_Prep4HPC(
   CV_NC = 2L,
   CV_Plot = TRUE,
   PhyloTree = TRUE,
-  SaveData = TRUE,
   NoPhyloTree = TRUE,
+  SaveData = TRUE,
   OverwriteRDS = TRUE,
   NCores = 8L,
   NChains = 4L,
@@ -37,7 +37,7 @@ Mod_Prep4HPC(
   transientFactor = 300L,
   verbose = 200L,
   SkipFitted = TRUE,
-  NArrayJobs = 210L,
+  NumArrayJobs = 210L,
   ModelCountry = NULL,
   VerboseProgress = TRUE,
   FromHPC = TRUE,
@@ -172,8 +172,8 @@ should be reported. Default: \code{200}.}
 \item{SkipFitted}{Logical indicating whether to skip already fitted models.
 Default: \code{TRUE}.}
 
-\item{NArrayJobs}{Integer specifying the maximum allowed number of array jobs
-per SLURM file. Default: 210. See \href{https://docs.lumi-supercomputer.eu/runjobs/scheduled-jobs/partitions}{LUMI documentation}
+\item{NumArrayJobs}{Integer specifying the maximum allowed number of array
+jobs per SLURM file. Default: 210. See \href{https://docs.lumi-supercomputer.eu/runjobs/scheduled-jobs/partitions}{LUMI documentation}
 for more details.}
 
 \item{ModelCountry}{String or vector of strings specifying the country or
@@ -211,8 +211,8 @@ provided as the \code{Path_Hmsc} argument of the \link{Mod_SLURM} function.}
 before saving to RDS file. Default: \code{FALSE}.}
 
 \item{Precision}{Integer, either of 32 (default) or 64 for the precision mode
-used for sampling while fitting \code{Hmsc-HPC} models. In \code{Hmsc-HPC}, the
-default value is 64.}
+used for sampling while fitting \code{Hmsc-HPC} models (\verb{-fp 64} argument). In
+\code{Hmsc-HPC}, the default value is 64.}
 
 \item{...}{Additional parameters provided to the \link{Mod_SLURM}
 function.}
@@ -249,7 +249,7 @@ road intensity per grid cell \code{RoadRailAsPredictor}
 \item Hmsc options (\code{NChains}, \code{thin}, \code{samples}, \code{transientFactor},
 and \code{verbose})
 \item prepare SLURM commands (\code{PrepSLURM}) and some specifications (e.g.
-\code{NArrayJobs}, \code{MemPerCpu}, \code{Time}, \code{JobName})
+\code{NumArrayJobs}, \code{MemPerCpu}, \code{Time}, \code{JobName})
 
 The function reads the following environment variables:
 \itemize{

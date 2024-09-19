@@ -50,9 +50,11 @@ Efforts_Split <- function(Path_Zip, Path_Output, ChunkSize = 100000) {
   # ensure that `ChunkSize` is not formatted in scientific notation
   ChunkSize <- format(ChunkSize, scientific = FALSE)
 
-  CSV_File <- stringr::str_replace(basename(Path_Zip), ".zip$", ".csv")
   OutPrefix <- stringr::str_replace(basename(Path_Zip), ".zip$", "_") %>%
     file.path(Path_Output, .)
+
+  # nolint start
+  CSV_File <- stringr::str_replace(basename(Path_Zip), ".zip$", ".csv")
 
   # extract column names and their numbers from the zipped file without
   # extraction read first line
@@ -73,6 +75,7 @@ Efforts_Split <- function(Path_Zip, Path_Output, ChunkSize = 100000) {
     dplyr::filter(Col %in% SelectedColNames) %>%
     dplyr::pull(ID) %>%
     paste0(collapse = ",")
+  # nolint end
 
   Command <- stringr::str_glue(
     'unzip -p {Path_Zip} {CSV_File} | cut -f{SelectedCols} -d "\t" | ',

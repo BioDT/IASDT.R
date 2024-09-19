@@ -37,7 +37,9 @@ DirCreate <- function(Path, Verbose = TRUE) {
     stop("Path cannot be NULL", call. = FALSE)
   }
 
+  # nolint start
   Path2 <- gsub("\\\\", "/", Path)
+  # nolint end
 
   if (dir.exists(Path) && Verbose) {
     IASDT.R::CatTime(

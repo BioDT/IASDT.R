@@ -571,7 +571,11 @@ IAS_Process <- function(
       "Hab_10_Wetland", "Hab_12a_Ruderal_habitats",
       "Hab_12b_Agricultural_habitats"),
     .f = function(Hab) {
+
+      # nolint start
       CurrDT <- dplyr::filter(Sp_PA_Data, !!as.symbol(Hab))
+      # nolint end
+
       purrr::map_dfr(
         sort(unique(Sp_PA_Data$NCells_All)),
         ~ tibble::tibble(
@@ -616,7 +620,11 @@ IAS_Process <- function(
       "Hab_10_Wetland", "Hab_12a_Ruderal_habitats",
       "Hab_12b_Agricultural_habitats"),
     .f = function(Hab) {
+
+      # nolint start
       CurrDT <- dplyr::filter(Sp_PA_Data, !!as.symbol(Hab))
+      # nolint end
+
       purrr::map_dfr(
         sort(unique(Sp_PA_Data$NCells_Naturalized)),
         ~ tibble::tibble(

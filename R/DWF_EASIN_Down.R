@@ -117,7 +117,11 @@ EASIN_Down <- function(
       if (file.exists(Path_Part) && IASDT.R::CheckRData(Path_Part)) {
         next
       }
+
+      # nolint start
       Skip <- (Chunk - 1) * NSearch
+      # nolint end
+
       URL <- stringr::str_glue(
         "{BaseURL}/{SpKey}/exclude/dps/1/{Skip}/{NSearch}")
 

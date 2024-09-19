@@ -47,9 +47,11 @@ PrepKnots <- function(
   Var1 <- Var2 <- Identical <- geometry <- NULL
 
   # coordinates of the sampling units as sf object
+  # nolint start
   SU_Sf <- tibble::as_tibble(Coords) %>%
     stats::setNames(c("x", "y")) %>%
     sf::st_as_sf(coords = c("x", "y"), remove = FALSE, crs = 3035)
+  # nolint end
 
   # Prepare knots
   Knots <- Hmsc::constructKnots(

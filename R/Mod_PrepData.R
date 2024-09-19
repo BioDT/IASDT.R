@@ -266,7 +266,10 @@ Mod_PrepData <- function(
   # minimum number of presence grids per species
   MinPresGrids <- PresPerVar * NVars
   NCellsCol <- dplyr::if_else(ExcludeCult, "NCells_Naturalized", "NCells_All")
+
+  # nolint start
   PA_Layer <- dplyr::if_else(ExcludeCult, "PA_Masked", "PA")
+  # nolint end
 
   R_Sp <- DT_Sp %>%
     # Exclude species with too few presence grid cells. There will be further

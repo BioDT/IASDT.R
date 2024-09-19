@@ -307,6 +307,16 @@ IAS_Plot <- function(
       label = BioRegAnnotation, x = 0.02, y = 0.91, hjust = 0, vjust = 0,
       color = "grey65", size = 10)
 
+  # Setting set_null_device to cairo to avoid the following warnings
+  #
+  # 1: In grid.Call(C_textBounds, as.graphicsAnnot(x$label),  ... :
+  # conversion failure on '—' in 'mbcsToSbcs': dot substituted for <e2>
+  # 2: In grid.Call(C_textBounds, as.graphicsAnnot(x$label),  ... :
+  # conversion failure on '—' in 'mbcsToSbcs': dot substituted for <80>
+  # 3: In grid.Call(C_textBounds, as.graphicsAnnot(x$label),  ... :
+  # conversion failure on '—' in 'mbcsToSbcs': dot substituted for <94>
+  cowplot::set_null_device("cairo")
+
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   grDevices::jpeg(
     filename = OutPath, width = 25, height = 26.5, units = "cm",

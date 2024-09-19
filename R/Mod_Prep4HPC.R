@@ -63,9 +63,8 @@
 #'   should be reported. Default: `200`.
 #' @param SkipFitted Logical indicating whether to skip already fitted models.
 #'   Default: `TRUE`.
-#' @param NArrayJobs Integer specifying the maximum allowed number of array jobs
-#'   per SLURM file. Default: 210. See [LUMI
-#'   documentation](https://docs.lumi-supercomputer.eu/runjobs/scheduled-jobs/partitions)
+#' @param NumArrayJobs Integer specifying the maximum allowed number of array
+#'   jobs per SLURM file. Default: 210. See [LUMI documentation](https://docs.lumi-supercomputer.eu/runjobs/scheduled-jobs/partitions)
 #'   for more details.
 #' @param ModelCountry String or vector of strings specifying the country or
 #'   countries to filter observations by. Default: `NULL`, which means prepare
@@ -91,8 +90,8 @@
 #' @param ... Additional parameters provided to the [IASDT.R::Mod_SLURM]
 #'   function.
 #' @param Precision Integer, either of 32 (default) or 64 for the precision mode
-#'   used for sampling while fitting `Hmsc-HPC` models. In `Hmsc-HPC`, the
-#'   default value is 64.
+#'   used for sampling while fitting `Hmsc-HPC` models (`-fp 64` argument). In
+#'   `Hmsc-HPC`, the default value is 64.
 #' @name Mod_Prep4HPC
 #' @inheritParams Mod_PrepData
 #' @inheritParams PrepKnots
@@ -118,7 +117,7 @@
 #' - Hmsc options (`NChains`, `thin`, `samples`, `transientFactor`,
 #'   and `verbose`)
 #' - prepare SLURM commands (`PrepSLURM`) and some specifications (e.g.
-#'   `NArrayJobs`, `MemPerCpu`, `Time`, `JobName`)
+#'   `NumArrayJobs`, `MemPerCpu`, `Time`, `JobName`)
 #'
 #'   The function reads the following environment variables:
 #'   - **`DP_R_Grid`** (if `FromHPC = TRUE`) or
@@ -141,10 +140,10 @@ Mod_Prep4HPC <- function(
     EffortsAsPredictor = FALSE, RoadRailAsPredictor = TRUE,
     HabAsPredictor = TRUE, NspPerGrid = 1L, ExcludeCult = TRUE,
     CV_NFolds = 4L, CV_NGrids = 20L, CV_NR = 2L, CV_NC = 2L, CV_Plot = TRUE,
-    PhyloTree = TRUE, SaveData = TRUE,
-    NoPhyloTree = TRUE, OverwriteRDS = TRUE, NCores = 8L, NChains = 4L,
+    PhyloTree = TRUE, NoPhyloTree = TRUE, SaveData = TRUE,
+    OverwriteRDS = TRUE, NCores = 8L, NChains = 4L,
     thin = NULL, samples = 1000L, transientFactor = 300L, verbose = 200L,
-    SkipFitted = TRUE, NArrayJobs = 210L, ModelCountry = NULL,
+    SkipFitted = TRUE, NumArrayJobs = 210L, ModelCountry = NULL,
     VerboseProgress = TRUE, FromHPC = TRUE, PrepSLURM = TRUE, MemPerCpu = NULL,
     Time = NULL, JobName = NULL, Path_Hmsc = NULL, Path_Python = NULL,
     ToJSON = FALSE, Precision = 32, ...) {
@@ -1098,8 +1097,8 @@ Mod_Prep4HPC <- function(
   IASDT.R::CatTime("Save fitting commands for HPC", Level = 1)
   NJobs <- length(Models2Fit_HPC)
 
-  if (NJobs > NArrayJobs) {
-    NSplits <- ceiling((NJobs / NArrayJobs))
+  if (NJobs > NumArrayJobs) {
+    NSplits <- ceiling((NJobs / NumArrayJobs))
     IDs <- IASDT.R::SplitVector(Vector = seq_len(NJobs), NSplit = NSplits)
   } else {
     NSplits <- 1

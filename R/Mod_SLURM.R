@@ -22,7 +22,8 @@
 #'   argument. Example: `32G` to request 32 gigabytes.
 #' @param Time String. The value for the requested time for each job in the bash
 #'   arrays. Example: `01:00:00` to request an hour.
-#' @param Partition String. The name of the partition. Default: `small-g`.
+#' @param Partition String. The name of the partition. Default: `small-g` for
+#'   running the array jobs on the GPU.
 #' @param EnvFile String. Path to read the environment variables. Default value:
 #'   `.env`.
 #' @param FromHPC Logical. Indicates if the operation is being performed from an

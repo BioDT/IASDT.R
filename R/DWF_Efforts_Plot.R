@@ -39,6 +39,7 @@ Efforts_Plot <- function(Path_Efforts, EU_Bound) {
 
   # # ..................................................................... ###
 
+  # nolint start
   PlottingTheme <- ggplot2::theme_bw() +
     ggplot2::theme(
       plot.margin = ggplot2::margin(0.02, 0, 0.02, 0, "cm"),
@@ -56,12 +57,12 @@ Efforts_Plot <- function(Path_Efforts, EU_Bound) {
       axis.text.y = ggplot2::element_blank(),
       axis.ticks = ggplot2::element_blank(),
       panel.border = ggplot2::element_blank(),
-      panel.background = ggplot2::element_rect(fill = NA)
-    )
+      panel.background = ggplot2::element_rect(fill = NA))
 
   EurBound <- IASDT.R::LoadAs(EU_Bound) %>%
     magrittr::extract2("Bound_sf_Eur_s") %>%
     magrittr::extract2("L_03")
+  # nolint end
 
   # # ..................................................................... ###
 

@@ -575,6 +575,7 @@ PlotConvergence <- function(
         magrittr::extract2(1) %>%
         dplyr::pull("Plot")
 
+      # nolint start
       BetaPlotsFixedY <- dplyr::filter(
         BetaTracePlots_ByVar, Variable == x) %>%
         dplyr::pull(data) %>%
@@ -597,6 +598,7 @@ PlotConvergence <- function(
         ggplot2::theme(
           plot.title = ggplot2::element_text(
             face = "bold", size = 24, hjust = 0.5))
+      # nolint end
 
       BetaPlotList <- tibble::tibble(PlotID = seq_len(length(BetaPlots))) %>%
         dplyr::mutate(Page = ceiling(PlotID / (NRC[2] * NRC[1]))) %>%

@@ -211,7 +211,7 @@ provided as the \code{Path_Hmsc} argument of the \link{Mod_SLURM} function.}
 before saving to RDS file. Default: \code{FALSE}.}
 
 \item{Precision}{Integer, either of 32 (default; \verb{--fp 32}) or 64 for the
-precision mode used for sampling while fitting \code{Hmsc-HPC} models (\verb{--fp  64} argument). In \code{Hmsc-HPC}, the default value is 64. This is still under
+precision mode used for sampling while fitting \code{Hmsc-HPC} models (\verb{--fp 64} argument). In \code{Hmsc-HPC}, the default value is 64. This is still under
 testing.}
 
 \item{...}{Additional parameters provided to the \link{Mod_SLURM}

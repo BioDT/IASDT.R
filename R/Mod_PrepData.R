@@ -305,7 +305,7 @@ Mod_PrepData <- function(
     terra::rast()
 
   # Change the efforts mask to exclude grid cells with no species
-  ZeroSpGrids <- (sum(R_Sp) == 0)
+  ZeroSpGrids <- (sum(R_Sp, na.rm = TRUE) == 0)
   EffortsMask[ZeroSpGrids] <- NA
   R_Sp[ZeroSpGrids] <- NA
 
@@ -326,6 +326,7 @@ Mod_PrepData <- function(
   Limits <- terra::trim(R_Sp_sumP) %>%
     terra::ext() %>%
     as.vector()
+
   NSpPerGrid_gg <- ggplot2::ggplot() +
     tidyterra::geom_spatraster(data = R_Sp_sumP) +
     tidyterra::scale_fill_whitebox_c(
@@ -341,10 +342,9 @@ Mod_PrepData <- function(
         stringr::str_remove(Hab_column, "Hab_"), ")</span>"),
       caption  = paste0(
         "Only grid cells with &#8805;", MinEffortsSp,
-        " vascular plant species in GBIF (", NGridsWzSpecies,
-        ") and species with ",
-        "&#8805;", MinPresGrids, " presence grid cells (", terra::nlyr(R_Sp),
-        ") are considered")) +
+        " vascular plant species in GBIF and IAS with ",
+        "&#8805;", MinPresGrids, " presence grid cells are considered (",
+        NGridsWzSpecies, " grid cells & ", terra::nlyr(R_Sp), " IAS)")) +
     ggplot2::scale_y_continuous(expand = c(0, 0), limits = Limits[c(3, 4)]) +
     ggplot2::scale_x_continuous(expand = c(0, 0), limits = Limits[c(1, 2)]) +
     ggplot2::theme_minimal() +
@@ -354,7 +354,7 @@ Mod_PrepData <- function(
         size = 16, color = "blue",
         margin = ggplot2::margin(0, 0, 0.1, 0, "cm")),
       plot.caption = ggtext::element_markdown(
-        size = 12, colour = "grey40", hjust = 0.3),
+        size = 11, colour = "grey40", hjust = 0.3),
       legend.position = "inside",
       legend.position.inside = c(0.95, 0.9),
       legend.key.size = grid::unit(0.8, "cm"),

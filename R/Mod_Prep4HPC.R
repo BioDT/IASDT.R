@@ -215,8 +215,7 @@ Mod_Prep4HPC <- function(
     M_Name_init <- rL2 <- M_samples <- M4HPC_Path <- M_transient <-
     M_Name_Fit <- Chain <- Post_Missing <- Command_HPC <-
     Command_WS <- Post_Path <- Path_ModProg <- TaxaInfoFile <-
-    Path_Grid <- EU_Bound <- Path_PA <- SpeciesID <- Species_name <- PA <-
-    Species_File <- NAME_ENGL <- NULL
+    Path_Grid <- EU_Bound <- Path_PA <- NAME_ENGL <- NSp <- NULL
 
   if (isFALSE(VerboseProgress)) {
     sink(file = nullfile())
@@ -438,15 +437,19 @@ Mod_Prep4HPC <- function(
     # # |||||||||||||||||||||||||||||||||||
 
     IASDT.R::CatTime("Plotting subsetted data", Level = 1)
-    GridSubset <- terra::rasterize(
-      x = as.matrix(DT_All[, c("x", "y")]),
-      y = terra::unwrap(IASDT.R::LoadAs(Path_GridR)))
-
-    DT_Sp <- file.path(Path_PA, "Sp_PA_Summary_DF.RData")
-    if (!file.exists(DT_Sp)) {
-      stop(paste0(DT_Sp, " file does not exist"), call. = FALSE)
-    }
-    DT_Sp <- IASDT.R::LoadAs(DT_Sp)
+    
+    NSpSubset <- DT_All %>%
+      dplyr::mutate(
+        NSp = rowSums(
+          dplyr::select(., tidyselect::starts_with('Sp_')),
+          na.rm = TRUE),
+        NSp = as.integer(NSp)) %>%
+      dplyr::select("x", "y", "NSp") %>%
+      sf::st_as_sf(coords = c("x", "y"), crs = 3035) %>%
+      terra::rasterize(
+        y = terra::unwrap(IASDT.R::LoadAs(Path_GridR)),
+        field = "NSp") %>%
+      terra::trim()
 
     if (Hab_Abb == "0") {
       Hab_column <- NULL
@@ -456,78 +459,62 @@ Mod_Prep4HPC <- function(
         "Hab_4a_Natural_grasslands", "Hab_4b_Human_maintained_grasslands",
         "Hab_10_Wetland", "Hab_12a_Ruderal_habitats",
         "Hab_12b_Agricultural_habitats") %>%
-        stringr::str_subset(paste0("_", as.character(Hab_Abb), "_"))
-
-      DT_Sp <- dplyr::filter(DT_Sp, !!as.symbol(Hab_column))
+        stringr::str_subset(paste0("_", as.character(Hab_Abb), "_")) %>%
+        stringr::str_remove("Hab_")
     }
-
-    R_Sp_sum <- DT_Sp %>%
-      dplyr::mutate(SpeciesID = paste0("Sp_", SpeciesID)) %>%
-      dplyr::select(SpeciesID, Species_name, Species_File) %>%
-      dplyr::filter(
-        SpeciesID %in% stringr::str_subset(names(DT_All), "^Sp_")) %>%
-      dplyr::mutate(
-        PA = purrr::map2(
-          .x = Species_File, .y = SpeciesID,
-          .f = ~{
-            R <- file.path(
-              Path_PA, "RData", stringr::str_c(.x, "_PA.RData")) %>%
-              IASDT.R::LoadAs() %>%
-              terra::unwrap() %>%
-              magrittr::extract2("PA") %>%
-              stats::setNames(paste0("Sp_", .y))
-          })) %>%
-      dplyr::pull(PA) %>%
-      terra::rast() %>%
-      sum(na.rm = TRUE) %>%
-      terra::crop(GridSubset) %>%
-      terra::mask(GridSubset)
 
     EU_Bound_sub <- IASDT.R::LoadAs(EU_Bound) %>%
       magrittr::extract2("Bound_sf_Eur") %>%
       magrittr::extract2("L_03") %>%
       dplyr::filter(NAME_ENGL %in% ModelCountry)
 
-    R_Sp_sumP <- terra::classify(R_Sp_sum, cbind(0, NA))
-    Limits <- terra::trim(R_Sp_sumP) %>%
-      terra::ext() %>%
-      as.vector()
+    Limits <- as.vector(terra::ext(NSpSubset))
+    # Relative JPEG height
+    DimX <- Limits[2] - Limits[1]
+    DimY <- Limits[4] - Limits[3]
+    PlotHeight <- (DimY * 25) / (DimX*0.95)
+    NGrids <- format(nrow(DT_All), big.mark = ",")
+    NSp <- length(stringr::str_subset(names(DT_All), "Sp_"))
+
+    Caption <- paste0(sort(ModelCountry), collapse = "; ") %>%
+      stringr::str_wrap(width = 110) %>%
+      paste0("<strong>Selected countries</strong>: <br/>", .) %>%
+      stringr::str_replace_all("\n", "<br/>")
+    Subtitle <- paste0(
+      NSp, " IAS within \u2265", MinPresGrids,
+      " presence grid cells in the selected country/countries (",
+      NGrids, " grid cells)")
 
     NSpPerGrid_Sub <- ggplot2::ggplot() +
-      tidyterra::geom_spatraster(data = R_Sp_sumP) +
+      tidyterra::geom_spatraster(data = NSpSubset) +
       tidyterra::scale_fill_whitebox_c(
         na.value = "transparent", palette = "bl_yl_rd", name = NULL) +
       ggplot2::labs(
-        # title = "Number of presence species per grid cell",
         title = paste0(
-          '<span style="color:blue; font-size:20px;"><b>',
+          '<span style="color:blue; font-size:24px;"><b>',
           "Number of IAS per grid cell to be used in the models</b></span>",
-          '<span style="color:black; font-size:16px;"> (',
-          stringr::str_remove(Hab_column, "Hab_"), ")</span>"),
-        subtitle = paste0(
-          "Only species within \u2265", MinPresGrids,
-          " presence grid cells in the selected country/countries are shown")) +
+          '<span style="color:black; font-size:18px;"> (',
+          Hab_column, ")</span>"),
+        subtitle = Subtitle, caption = Caption) +
       ggplot2::geom_sf(
         data = EU_Bound_sub, fill = "transparent", colour = "black") +
       ggplot2::scale_y_continuous(expand = c(0, 0), limits = Limits[c(3, 4)]) +
       ggplot2::scale_x_continuous(expand = c(0, 0), limits = Limits[c(1, 2)]) +
       ggplot2::theme_minimal() +
       ggplot2::theme(
-        plot.margin = ggplot2::margin(0.05, 0, 0, 0, "cm"),
+        plot.margin = ggplot2::margin(0.1, 0, 0.1, 0, "cm"),
         plot.title = ggtext::element_markdown(
           size = 16, hjust = 0, margin = ggplot2::margin(0, 0, 0.1, 0, "cm")),
-        plot.subtitle = ggplot2::element_text(size = 14, color = "darkgrey"),
+        plot.subtitle = ggplot2::element_text(
+          size = 14, color = "darkgrey"),
+        plot.caption = ggtext::element_markdown(
+          size = 14, colour = "grey40", hjust = 0),
         axis.title = ggplot2::element_blank(),
         axis.text = ggplot2::element_blank(),
         panel.border = ggplot2::element_blank(),
         legend.position = "inside",
         legend.position.inside = c(0.95, 0.9),
         legend.key.size = grid::unit(0.8, "cm"))
-
-    # Relative JPEG height
-    DimX <- Limits[2] - Limits[1]
-    DimY <- Limits[4] - Limits[3]
-    PlotHeight <- (DimY * 25) / DimX
 
     # Using ggplot2::ggsave directly does not show non-ascii characters
     # correctly
@@ -537,9 +524,7 @@ Mod_Prep4HPC <- function(
     print(NSpPerGrid_Sub)
     grDevices::dev.off()
 
-    rm(
-      Limits, NSpPerGrid_Sub, R_Sp_sum, R_Sp_sumP,
-      EU_Bound_sub, DT_Sp, GridSubset)
+    rm(Limits, NSpPerGrid_Sub, EU_Bound_sub)
 
   } else {
     IASDT.R::CatTime("No data subsetting was implemented", Level = 1)
@@ -1008,6 +993,8 @@ Mod_Prep4HPC <- function(
 
           Post_Missing <- !file.exists(Post_Path)
 
+
+          # Not needed now as this now added to the `setup-env.sh` file
           Exports <- paste0(
             "export TF_CPP_MIN_LOG_LEVEL=3; ",
             "export TF_ENABLE_ONEDNN_OPTS=0; ")
@@ -1024,10 +1011,15 @@ Mod_Prep4HPC <- function(
           # Tensorflow
 
           Command_HPC <- paste0(
-            Exports,
+            # Not needed now as this now added to the `setup-env.sh` file
+            # Exports,
+
             "/usr/bin/time -v ",
-            Path_Python,
-            " -m hmsc.run_gibbs_sampler",
+
+            # Not needed as the python path is exported - check `setup-env.sh`
+            # Path_Python,
+
+            "python3 -m hmsc.run_gibbs_sampler",
             " --input ", shQuote(M4HPC_Path2),
             " --output ", shQuote(Post_Path),
             " --samples ", M_samples,

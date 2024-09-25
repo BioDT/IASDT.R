@@ -49,20 +49,19 @@ Predict_Scenario <- function(
 
   # # ..................................................................... ###
 
-  Vars2CheckNULL <- c(
+  NullVarsNames <- c(
     "Name", "File", "Path_Model", "Path_Grid", "TimePeriod", "ClimateModel",
     "ClimateScenario", "StaticPredictors")
-  NullVars <- which(purrr::map_lgl(.x = Vars2CheckNULL, .f = ~ is.null(get(.x))))
+  NullVars <- which(purrr::map_lgl(.x = NullVarsNames, .f = ~ is.null(get(.x))))
 
   if (length(NullVars) > 0) {
-    Vars2CheckNULL[NullVars]
+    NullVarsNames[NullVars]
     stop(
       paste0(
-        paste0(Vars2CheckNULL[NullVars], collapse = ", "),
+        paste0(NullVarsNames[NullVars], collapse = ", "),
         " cannot be missing."),
       call. = FALSE)
   }
-
 
   if (!file.exists(File)) {
     stop("Input file does not exist.", call. = FALSE)
@@ -111,13 +110,9 @@ Predict_Scenario <- function(
     return(Path_Metadata)
   }
 
-
   IASDT.R::InfoChunk(
     Message = paste0("Climate option: ", Name2),
-    Date = TRUE, Extra1 = 2, Extra2 = 1)
-
-  IASDT.R::CatTime("Predictions will be saved to:", Level = 2)
-  IASDT.R::CatTime(file.path("Predictions", Name2), Level = 3)
+    Date = TRUE, Extra1 = 1, Extra2 = 0)
 
   # # ..................................................................... ###
 
@@ -292,7 +287,9 @@ Predict_Scenario <- function(
 
   # Prepare predictions metadata -----
 
-  IASDT.R::CatTime("Prepare predictions metadata", Level = 2)
+  IASDT.R::CatTime("Predictions metadata", Level = 2)
+
+  IASDT.R::CatTime("Prepare predictions metadata", Level = 3)
 
   SpInfo <- IASDT.R::GetSpeciesName(
     SpID = NULL, EnvFile = EnvFile, FromHPC = FromHPC) %>%
@@ -335,16 +332,17 @@ Predict_Scenario <- function(
     tidyr::pivot_wider(
       id_cols = c(
         "hab_abb", "time_period", "climate_model", "climate_scenario",
-        "ias_id", "taxon_name", "class", "order", "family", "species_name"),
+        "ias_id", "hab_name", "taxon_name", "class", "order", "family",
+        "species_name"),
       names_from = "Stats", values_from = c("predictions", "tif_path"))
 
-  IASDT.R::CatTime("Save predictions metadata", Level = 2)
+  IASDT.R::CatTime("Save predictions metadata", Level = 3)
   save(Predictions_Metadata, file = Path_Metadata)
 
   # # ..................................................................... ###
 
   # Save prediction metadata without maps -----
-  IASDT.R::CatTime("Save prediction metadata without maps", Level = 2)
+  IASDT.R::CatTime("Save prediction metadata without maps", Level = 3)
 
   Predictions_Metadata_DT <- dplyr::select(
     Predictions_Metadata, -tidyselect::starts_with("Predictions"))

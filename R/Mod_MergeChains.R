@@ -342,7 +342,7 @@ Mod_MergeChains <- function(
                     "\t|:|Maximum resident set size \\(kbytes\\)") %>%
                   stringr::str_trim() %>%
                   as.numeric() %>%
-                  magrittr::divide_by(1024*1024) %>%
+                  magrittr::divide_by(1024 * 1024) %>%
                   round(2)
               } else {
                 NA_real_

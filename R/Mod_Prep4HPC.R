@@ -437,11 +437,11 @@ Mod_Prep4HPC <- function(
     # # |||||||||||||||||||||||||||||||||||
 
     IASDT.R::CatTime("Plotting subsetted data", Level = 1)
-    
+
     NSpSubset <- DT_All %>%
       dplyr::mutate(
         NSp = rowSums(
-          dplyr::select(., tidyselect::starts_with('Sp_')),
+          dplyr::select(., tidyselect::starts_with("Sp_")),
           na.rm = TRUE),
         NSp = as.integer(NSp)) %>%
       dplyr::select("x", "y", "NSp") %>%
@@ -472,7 +472,7 @@ Mod_Prep4HPC <- function(
     # Relative JPEG height
     DimX <- Limits[2] - Limits[1]
     DimY <- Limits[4] - Limits[3]
-    PlotHeight <- (DimY * 25) / (DimX*0.95)
+    PlotHeight <- (DimY * 25) / (DimX * 0.95)
     NGrids <- format(nrow(DT_All), big.mark = ",")
     NSp <- length(stringr::str_subset(names(DT_All), "Sp_"))
 

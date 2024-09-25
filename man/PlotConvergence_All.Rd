@@ -4,16 +4,25 @@
 \alias{PlotConvergence_All}
 \title{Plot model convergence of multiple modelling alternatives}
 \usage{
-PlotConvergence_All(Path_Model = NULL, maxOmega = 1000, NCores = NULL)
+PlotConvergence_All(
+  Path_Model = NULL,
+  maxOmega = 1000,
+  NCores = NULL,
+  FromHPC = TRUE
+)
 }
 \arguments{
-\item{Path_Model}{String. Path to save all the output, including the to be
-fitted models (without trailing slash). Must not be \code{NULL}.}
+\item{Path_Model}{String. Path to the root directory of the fitted models
+without the trailing slash. The convergence outputs will be saved to the
+\code{Model_Convergence_All} subfolder.}
 
 \item{maxOmega}{Integer. Maximum number of species interactions to sample for
 convergence diagnostics.}
 
 \item{NCores}{Integer. Number of cores to use for parallel processing.}
+
+\item{FromHPC}{Logical. Indicates whether the function is being run on an HPC
+environment, affecting file path handling. Default: \code{TRUE}.}
 }
 \value{
 The function does not return anything but saves a series of

@@ -17,6 +17,7 @@ Mod_SLURM_Refit(
   CpusPerTask = 1,
   GpusPerNode = 1,
   FromHPC = TRUE,
+  PrepareSLURM = TRUE,
   Path_Hmsc = NULL,
   Refit_Prefix = "Commands2Refit",
   SLURM_Prefix = "Bash_Refit"
@@ -56,6 +57,9 @@ the SLURM job. Defaults to 1.}
 
 \item{FromHPC}{Logical. Indicates whether the function is being called from
 an HPC environment. Adjusts file paths accordingly.}
+
+\item{PrepareSLURM}{Logical. Whether to prepare SLURM files. Defaults to
+\code{TRUE}.}
 
 \item{Path_Hmsc}{String. Path to the \code{Hmsc-HPC} directory.}
 

@@ -14,9 +14,9 @@ Mod_MergeChains(
 )
 }
 \arguments{
-\item{Path_Model}{String. Path to the directory where model outputs are
-stored. This should include the path to the fitted models but should not
-have a trailing slash.}
+\item{Path_Model}{String. Path to the root directory of the fitted models
+without the trailing slash. Two folders will be created \code{Model_Fitted} and
+\code{Model_Coda} to store merged model and coda objects, respectively.}
 
 \item{NCores}{Integer. The number of cores to use for parallel processing.
 This should be a positive integer.}

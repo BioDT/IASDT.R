@@ -3,7 +3,7 @@ Package: IASDT.R
 Title: IASDT.R: Helper R functions for the Invasive Alien Species
     prototype Digital Twin (IAS-pDT)
 Version: 0.0.9
-Date: 2024-09-20
+Date: 2024-09-25
 Authors@R: 
     person("Ahmed", "El-Gabbas", , "ahmed.el-gabbas@ufz.de", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-2225-088X"))
@@ -57,6 +57,7 @@ Suggests:
     grid (>= 4.4.1),
     gridExtra (>= 2.3),
     gtools (>= 3.9.5),
+    janitor (>= 2.2.0),
     jsonify (>= 1.2.2),
     jsonlite (>= 1.8.8),
     kableExtra (>= 1.4.0),

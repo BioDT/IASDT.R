@@ -82,7 +82,7 @@ Predict_Hmsc <- function(
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Path_Grid <- Path_Roads <- Path_Rail <- Path_Bias <- Name <- FilePath <-
     TimePeriod <- ClimateModel <- ClimateScenario <- Path_CHELSA <- Path_CLC <-
-    Tif_Path <- Path_Ensemble <- Path_Prediction <- Folder <- Time <-
+    Tif_Path <- Path_Ensemble <- path_prediction <- Folder <- Time <-
     Species_ID <- Species_ID <- taxon_name <- Class <- Order <- Family <-
     Species_name <- Species_name2 <- Species_File <- Genus <- Species <-
     Scenario <- Tif_Path_mean <- NULL
@@ -276,7 +276,7 @@ Predict_Hmsc <- function(
 
   Predictions <- CHELSA_Data %>%
     dplyr::mutate(
-      Path_Prediction = purrr::pmap_chr(
+      path_prediction = purrr::pmap_chr(
         .l = list(Name, FilePath, TimePeriod, ClimateModel, ClimateScenario),
         .f = function(Name, FilePath, TimePeriod,
                       ClimateModel, ClimateScenario) {
@@ -305,8 +305,11 @@ Predict_Hmsc <- function(
         }
       )
     ) %>%
-    dplyr::select(-c("File_List", "Name", "FilePath"))
-
+    dplyr::select(-c("File_List", "Name", "FilePath")) %>%
+    dplyr::rename(
+      time_period = TimePeriod,
+      climate_model = ClimateModel,
+      climate_scenario = ClimateScenario)
 
   withr::local_options(
     future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
@@ -323,14 +326,14 @@ Predict_Hmsc <- function(
   Predictions <- dplyr::mutate(
     Predictions,
     Predictions2 = furrr::future_map(
-      .x  = Path_Prediction,
+      .x  = path_prediction,
       .f = ~{
         if (file.exists(.x)) {
           IASDT.R::LoadAs(.x) %>%
             dplyr::select(
               -tidyselect::all_of(c(
-                "TimePeriod", "ClimateModel", "ClimateScenario",
-                "Predictions_mean", "Predictions_sd", "Predictions_cov")))
+                "time_period", "climate_model", "climate_scenario",
+                "predictions_mean", "predictions_sd", "predictions_cov")))
         } else {
           warning(paste0("File not found: ", .x))
           return(NULL)
@@ -402,7 +405,7 @@ Predict_Hmsc <- function(
         },
         .options = furrr::furrr_options(
           seed = TRUE, scheduling = Inf,
-          globals = "Path_Predictions", 
+          globals = "Path_Predictions",
           packages = c("purrr", "IASDT.R", "terra"))
       )) %>%
     dplyr::select(-"Tif_Path") %>%

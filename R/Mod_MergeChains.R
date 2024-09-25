@@ -8,9 +8,9 @@
 #' chains, checks for missing or incomplete model runs, and optionally prints
 #' information about incomplete models. It can work with models run on HPC
 #' environments and supports parallel processing.
-#' @param Path_Model String. Path to the directory where model outputs are
-#'   stored. This should include the path to the fitted models but should not
-#'   have a trailing slash.
+#' @param Path_Model String. Path to the root directory of the fitted models
+#'   without the trailing slash. Two folders will be created `Model_Fitted` and
+#'   `Model_Coda` to store merged model and coda objects, respectively.
 #' @param NCores Integer. The number of cores to use for parallel processing.
 #'   This should be a positive integer.
 #' @param ModInfoName String. The name of the file (without extension) where the
@@ -34,21 +34,24 @@ Mod_MergeChains <- function(
     Path_Model = NULL, NCores = NULL, ModInfoName = NULL,
     PrintIncomplete = TRUE, FromHPC = TRUE, FromJSON = FALSE) {
 
-  .StartTime <- lubridate::now(tzone = "CET")
+  # # ..................................................................... ###
 
-  if (is.null(Path_Model) || is.null(NCores)) {
-    stop("Path_Model, and NCores cannot be empty", call. = FALSE)
-  }
+  .StartTime <- lubridate::now(tzone = "CET")
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Post_Path <- Post_Path <- M_Name_Fit <- Path_FittedMod <- Path_Coda <-
     NMissingChains <- MissingModels <- Model_Finished <- Path_ModProg <-
-    Post_Aligned2 <- FittingTime <- NULL
+    Post_Aligned2 <- FittingTime <- FittingMemory <- NULL
 
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
   # Checking arguments ----
+
+  if (is.null(Path_Model) || is.null(NCores)) {
+    stop("Path_Model, and NCores cannot be empty", call. = FALSE)
+  }
+
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(
     AllArgs,
@@ -72,6 +75,18 @@ Mod_MergeChains <- function(
       call. = FALSE)
   }
 
+  # # ..................................................................... ###
+
+  # Creating paths -----
+
+  Path_Fitted_Models <- file.path(Path_Model, "Model_Fitted")
+  Path_Coda <- file.path(Path_Model, "Model_Coda")
+  fs::dir_create(c(Path_Fitted_Models, Path_Coda))
+
+  # # ..................................................................... ###
+
+  # Loading model info ----
+
   Path_ModInfo <- file.path(Path_Model, "Model_Info.RData")
 
   if (!file.exists(Path_ModInfo)) {
@@ -79,8 +94,7 @@ Mod_MergeChains <- function(
       "ModInfo file `", Path_ModInfo, "` does not exist"), call. = FALSE)
   }
 
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
   # Remove temp files and incomplete RDs files ----
 
@@ -93,6 +107,7 @@ Mod_MergeChains <- function(
       paste0(
         "There are ", length(tempFiles),
         " unsuccessful model variants to be removed"))
+
     tempFilesRDs <- stringr::str_replace_all(tempFiles, ".rds_temp$", ".rds")
     tempFilesProgress <- stringr::str_replace_all(
       tempFiles, "_post.rds_temp", "_Progress.txt")
@@ -106,10 +121,9 @@ Mod_MergeChains <- function(
       })
   }
 
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
-  # Prepare working on parallel
+  # Prepare working on parallel -----
   withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
   if (NCores == 1) {
@@ -121,21 +135,15 @@ Mod_MergeChains <- function(
     on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
   }
 
-  Path_Fitted_Models <- file.path(Path_Model, "Model_Fitted")
-  Path_Coda <- file.path(Path_Model, "Model_Coda")
-  fs::dir_create(c(Path_Fitted_Models, Path_Coda))
-
   Model_Info2 <- IASDT.R::LoadAs(Path_ModInfo) %>%
-    # Check if any posterior files is missing
     dplyr::mutate(
+      # Check if any posterior files is missing
       Post_Missing = purrr::map_lgl(
-        .x = Post_Path, .f = ~ !all(file.exists(.x))),
-
+        .x = Post_Path, .f = ~ all(!file.exists(.x))),
       # delete these columns if already exist from previous function execution
       Path_FittedMod = NULL, Path_Coda = NULL)
 
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
   # Merge posteriors and save as Hmsc model / coda object
 
@@ -143,25 +151,41 @@ Mod_MergeChains <- function(
     X = seq_len(nrow(Model_Info2)),
     FUN = function(x) {
 
-      M_Name_Fit <- Model_Info2$M_Name_Fit[[x]]
       if (Model_Info2$Post_Missing[[x]]) {
-        return(list(Path_FittedMod = NA, Path_Coda = NA, Post_Aligned2 = NA))
+        return(list(
+          Path_FittedMod = NA_character_,
+          Path_Coda = NA_character_,
+          Post_Aligned2 = NA)
+        )
       }
 
       # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
       # Merge fitted models
       # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
+      M_Name_Fit <- Model_Info2$M_Name_Fit[[x]]
+
       Path_FittedMod <- file.path(
         Path_Fitted_Models, paste0(M_Name_Fit, "_Model.RData"))
 
-      if (!file.exists(Path_FittedMod)) {
+      # Check if model exists and RData is valid
+      ModelFileOkay <- file.exists(Path_FittedMod) &&
+        IASDT.R::CheckRData(Path_FittedMod)
+
+      if (isFALSE(ModelFileOkay)) {
+
+        # delete corrupted file
+        if (file.exists(Path_FittedMod)) {
+          fs::file_delete(Path_FittedMod)
+        }
+
         # Get posteriors
         Posts <- purrr::map(
           .x = as.character(Model_Info2$Post_Path[[x]]),
           .f = IASDT.R::GetPosts, FromJSON = FromJSON)
 
-        # Convert to Hmsc object - Try with `alignPost = TRUE`
+        # Convert to Hmsc object
+        # Try with `alignPost = TRUE`
         Model_Fit <- Hmsc::importPosteriorFromHPC(
           m = IASDT.R::LoadAs(Model_Info2$M_Init_Path[[x]]),
           postList = Posts, nSamples = Model_Info2$M_samples[[x]],
@@ -170,13 +194,12 @@ Mod_MergeChains <- function(
           alignPost = TRUE) %>%
           try(silent = TRUE)
 
-        # Convert to Hmsc object - If failed, use `alignPost = FALSE`
+        # If failed, use `alignPost = FALSE`
         if (inherits(Model_Fit, "try-error")) {
           Model_Fit <- try(
             Hmsc::importPosteriorFromHPC(
               m = IASDT.R::LoadAs(Model_Info2$M_Init_Path[[x]]),
-              postList = Posts,
-              nSamples = Model_Info2$M_samples[[x]],
+              postList = Posts, nSamples = Model_Info2$M_samples[[x]],
               thin = Model_Info2$M_thin[[x]],
               transient = Model_Info2$M_transient[[x]], alignPost = FALSE),
             silent = TRUE)
@@ -184,9 +207,15 @@ Mod_MergeChains <- function(
         } else {
           Post_Aligned2 <- TRUE
         }
+
         rm(Posts)
+        invisible(gc())
+
         if (inherits(Model_Fit, "try-error")) {
-          return(list(Path_FittedMod = NA, Path_Coda = NA, Post_Aligned2 = NA))
+          return(list(
+            Path_FittedMod = NA_character_,
+            Path_Coda = NA_character_,
+            Post_Aligned2 = NA))
         } else {
           IASDT.R::SaveAs(
             InObj = Model_Fit, OutObj = paste0(M_Name_Fit, "_Model"),
@@ -201,39 +230,59 @@ Mod_MergeChains <- function(
       # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
       Path_Coda <- file.path(Path_Coda, paste0(M_Name_Fit, "_Coda.RData"))
-      CodaMissing <- !file.exists(Path_Coda)
 
       if (!exists("Model_Fit") && !file.exists(Path_FittedMod)) {
-        return(list(Path_FittedMod = NA, Path_Coda = NA, Post_Aligned2 = NA))
+        list(
+          Path_FittedMod = NA_character_,
+          Path_Coda = NA_character_,
+          Post_Aligned2 = NA) %>%
+          return()
       }
+
       if (!exists("Model_Fit")) {
         Model_Fit <- IASDT.R::LoadAs(Path_FittedMod)
       }
 
-      if (CodaMissing) {
+      # Check if coda file exists and RData is valid
+      CodaFileOkay <- file.exists(Path_Coda) && IASDT.R::CheckRData(Path_Coda)
+
+      if (isFALSE(CodaFileOkay)) {
+
+        if (file.exists(Path_Coda)) {
+          fs::file_delete(Path_Coda)
+        }
+
         Mod_Coda <- Hmsc::convertToCodaObject(
           Model_Fit, spNamesNumbers = c(TRUE, FALSE),
           covNamesNumbers = c(TRUE, FALSE))
+
         IASDT.R::SaveAs(
           InObj = Mod_Coda, OutObj = paste0(M_Name_Fit, "_Coda"),
           OutPath = Path_Coda)
+
+        rm(Mod_Coda)
       }
 
-      rm(Mod_Coda, Model_Fit)
+      rm(Model_Fit)
+      invisible(gc())
 
-      # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
       # Return list of objects
-      # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
       list(
         Path_FittedMod = Path_FittedMod, Path_Coda = Path_Coda,
         Post_Aligned2 = Post_Aligned2) %>%
         return()
     },
     future.scheduling = Inf, future.seed = TRUE,
-    future.globals = "Model_Info2", future.packages = c("Hmsc", "coda"))
+    future.globals = c(
+      "Model_Info2", "Path_Fitted_Models", "FromJSON", "Path_Coda"),
+    future.packages = c("Hmsc", "coda", "purrr", "IASDT.R", "dplyr"))
 
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  if (NCores > 1) {
+    snow::stopCluster(c1)
+    future::plan("sequential", gc = TRUE)
+  }
+
+  # # ..................................................................... ###
 
   Model_Info2 <- dplyr::mutate(Model_Info2, ModelPosts = Model_Info3) %>%
     tidyr::unnest_wider("ModelPosts") %>%
@@ -277,12 +326,42 @@ Mod_MergeChains <- function(
           } else {
             NA
           }
-        }))
+        }),
 
-  if (NCores > 1) {
-    snow::stopCluster(c1)
-    future::plan("sequential", gc = TRUE)
-  }
+      # Maximum memory
+      FittingMemory = purrr::map(
+        .x = Path_ModProg,
+        .f = ~{
+          purrr::map(
+            .x = .x,
+            .f = function(File) {
+              if (file.exists(File)) {
+                readr::read_lines(file = File) %>%
+                  stringr::str_subset("Maximum resident set size") %>%
+                  stringr::str_remove_all(
+                    "\t|:|Maximum resident set size \\(kbytes\\)") %>%
+                  stringr::str_trim() %>%
+                  as.numeric() %>%
+                  magrittr::divide_by(1024*1024) %>%
+                  round(2)
+              } else {
+                NA_real_
+              }
+            }) %>%
+            unlist()
+        }),
+
+
+      # Mean memory
+      FittingMemoryMean = purrr::map2_dbl(
+        .x =  Model_Finished, .y = FittingMemory,
+        .f = ~{
+          if (.x) {
+            mean(.y)
+          } else {
+            NA
+          }
+        }))
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -301,10 +380,8 @@ Mod_MergeChains <- function(
       IASDT.R::sort_()
 
     if (length(MissingModelVars) > 0) {
-      IASDT.R::InfoChunk("Unsuccessful models")
-      MissingModelVars %>%
-        paste0("   >>  ", ., collapse = "\n") %>%
-        cat()
+      IASDT.R::InfoChunk("Unsuccessful models", Extra2 = 0)
+      purrr::walk(MissingModelVars, IASDT.R::CatTime, Level = 1)
     }
   }
 

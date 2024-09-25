@@ -60,7 +60,10 @@ GetSpeciesName <- function(SpID = NULL, EnvFile = ".env", FromHPC = TRUE) {
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
   # Reading species info
-  SpNames <- utils::read.delim(TaxaInfoFile, sep = "\t") %>%
+
+  # using encoding = "UTF-8" to keep non-ascii characters
+
+  SpNames <- utils::read.delim(TaxaInfoFile, sep = "\t", encoding = "UTF-8") %>%
     tibble::tibble() %>%
     dplyr::mutate(
       IAS_ID = paste0("Sp_", stringr::str_pad(IAS_ID, pad = "0", width = 4)))

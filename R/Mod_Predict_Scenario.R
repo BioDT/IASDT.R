@@ -49,16 +49,20 @@ Predict_Scenario <- function(
 
   # # ..................................................................... ###
 
-  if (is.null(Name) || is.null(File) || is.null(Path_Model) ||
-      is.null(Path_Grid) || is.null(TimePeriod) || is.null(ClimateModel) ||
-      is.null(ClimateScenario) || is.null(StaticPredictors)) {
+  Vars2CheckNULL <- c(
+    "Name", "File", "Path_Model", "Path_Grid", "TimePeriod", "ClimateModel",
+    "ClimateScenario", "StaticPredictors")
+  NullVars <- which(purrr::map_lgl(.x = Vars2CheckNULL, .f = ~ is.null(get(.x))))
+
+  if (length(NullVars) > 0) {
+    Vars2CheckNULL[NullVars]
     stop(
       paste0(
-        "Required parameters: `Name`, `File`, `Path_Model`, ",
-        "`Path_Grid`, `TimePeriod`, `ClimateModel`, and ",
-        "`ClimateScenario` cannot be missing."),
+        paste0(Vars2CheckNULL[NullVars], collapse = ", "),
+        " cannot be missing."),
       call. = FALSE)
   }
+
 
   if (!file.exists(File)) {
     stop("Input file does not exist.", call. = FALSE)
@@ -70,6 +74,7 @@ Predict_Scenario <- function(
   if (!file.exists(Path_Grid)) {
     stop("Grid reference file does not exist.", call. = FALSE)
   }
+
   if (!is.numeric(ChunkSize) || ChunkSize <= 0) {
     stop("ChunkSize must be a positive number.", call. = FALSE)
   }
@@ -79,8 +84,8 @@ Predict_Scenario <- function(
 
   # # ..................................................................... ###
 
-  Chunk <- Predictions <- LayerName <- Stats <- Chunk_File <-
-    ChunkExist <- ChunkData <- Species_ID <- IAS_ID <- NULL
+  Chunk <- predictions <- LayerName <- Stats <- Chunk_File <-
+    ChunkExist <- ChunkData <- NULL
 
   # # ..................................................................... ###
 
@@ -112,8 +117,7 @@ Predict_Scenario <- function(
     Date = TRUE, Extra1 = 2, Extra2 = 1)
 
   IASDT.R::CatTime("Predictions will be saved to:", Level = 2)
-  IASDT.R::CatTime(
-    Path_Predictions <- file.path("Predictions", Name2), Level = 3)
+  IASDT.R::CatTime(file.path("Predictions", Name2), Level = 3)
 
   # # ..................................................................... ###
 
@@ -159,6 +163,7 @@ Predict_Scenario <- function(
   # # ..................................................................... ###
 
   # Processing chunks as simple features -----
+
   IASDT.R::CatTime("Processing chunks and converting to sf", Level = 2)
 
   # Chunks not yet processed
@@ -286,20 +291,35 @@ Predict_Scenario <- function(
   # # ..................................................................... ###
 
   # Prepare predictions metadata -----
+
   IASDT.R::CatTime("Prepare predictions metadata", Level = 2)
 
-  SpInfo <- GetSpeciesName(SpID = NULL, EnvFile = EnvFile, FromHPC = FromHPC)
+  SpInfo <- IASDT.R::GetSpeciesName(
+    SpID = NULL, EnvFile = EnvFile, FromHPC = FromHPC) %>%
+    dplyr::select(
+      -tidyselect::all_of(
+        c("Species_name2", "Species_File", "Genus", "Species"))) %>%
+    janitor::clean_names()
+
+  hab_name <- c(
+    "0_All", "1_Forests", "2_Open_forests", "3_Scrub",
+    "4a_Natural_grasslands", "4b_Human_maintained_grasslands",
+    "10_Wetland", "12a_Ruderal_habitats", "12b_Agricultural_habitats") %>%
+    stringr::str_subset(paste0("^", as.character(Hab_Abb), "_")) %>%
+    stringr::str_remove(paste0("^", as.character(Hab_Abb), "_")) %>%
+    stringr::str_replace_all("_", " ")
 
   Predictions_Metadata <- terra::as.list(Predictions_R) %>%
-    tibble::tibble(Predictions = .) %>%
+    tibble::tibble(predictions = .) %>%
     dplyr::mutate(
-      Hab_Abb = Hab_Abb,
-      TimePeriod = TimePeriod,
-      ClimateModel = ClimateModel,
-      ClimateScenario = ClimateScenario,
-      LayerName = purrr::map_chr(.x = Predictions, .f = names),
-      Predictions = purrr::map(Predictions, terra::wrap),
-      Tif_Path = file.path(Path_Predictions, paste0(LayerName, ".tif")),
+      hab_abb = Hab_Abb,
+      hab_name = hab_name,
+      time_period = TimePeriod,
+      climate_model = ClimateModel,
+      climate_scenario = ClimateScenario,
+      LayerName = purrr::map_chr(.x = predictions, .f = names),
+      predictions = purrr::map(predictions, terra::wrap),
+      tif_path = file.path(Path_Predictions, paste0(LayerName, ".tif")),
 
       Stats = purrr::map_chr(
         .x = LayerName,
@@ -308,16 +328,15 @@ Predict_Scenario <- function(
           Stats[stringr::str_detect(.x, Stats)]
         }),
 
-      Species_ID = purrr::map2_chr(
+      ias_id = purrr::map2_chr(
         .x = LayerName, .y = Stats,
         .f = ~ stringr::str_remove_all(.x, paste0("_", .y)))) %>%
-    dplyr::left_join(SpInfo, by = dplyr::join_by(Species_ID == IAS_ID)) %>%
+    dplyr::left_join(SpInfo, by = "ias_id") %>%
     tidyr::pivot_wider(
       id_cols = c(
-        "Hab_Abb", "TimePeriod", "ClimateModel", "ClimateScenario",
-        "Species_ID", "taxon_name", "Class", "Order", "Family", "Species_name",
-        "Species_name2", "Species_File", "Genus", "Species"),
-      names_from = "Stats", values_from = c("Predictions", "Tif_Path"))
+        "hab_abb", "time_period", "climate_model", "climate_scenario",
+        "ias_id", "taxon_name", "class", "order", "family", "species_name"),
+      names_from = "Stats", values_from = c("predictions", "tif_path"))
 
   IASDT.R::CatTime("Save predictions metadata", Level = 2)
   save(Predictions_Metadata, file = Path_Metadata)

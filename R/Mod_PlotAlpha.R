@@ -136,7 +136,6 @@ PlotAlpha <- function(
         "<b><i>Gelman convergence diagnostic:</i></b> ", Gelman[.x])
 
       Title2 <- data.frame(x = Inf, y = Inf, label = Gelman0)
-
       Title3 <- data.frame(x = -Inf, y = Inf, label = paste0("Factor", .x))
 
       PlotDT <- dplyr::filter(AlphaDF, Factor2 == .x)

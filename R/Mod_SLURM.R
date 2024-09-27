@@ -18,10 +18,11 @@
 #'   SLURM argument. Default: 1.
 #' @param GpusPerNode Integer. The value for the `#SBATCH --gpus-per-node=`
 #'   SLURM argument. Default: 1.
-#' @param MemPerCpu String. The value for the `#SBATCH --mem-per-cpu=` SLURM
-#'   argument. Example: `32G` to request 32 gigabytes.
-#' @param Time String. The value for the requested time for each job in the bash
-#'   arrays. Example: `01:00:00` to request an hour.
+#' @param MemPerCpu String. Memory per CPU allocation for the SLURM job.
+#'   Example: `32G` for 32 gigabytes. Defaults to `NULL`. If not provided, the 
+#'   function will throw an error.
+#' @param Time String. Duration for which the job should run. Example:
+#'   `01:00:00` for one hour. If not provided, the function will throw an error.
 #' @param Partition String. The name of the partition. Default: `small-g` for
 #'   running the array jobs on the GPU.
 #' @param EnvFile String. Path to read the environment variables. Default value:

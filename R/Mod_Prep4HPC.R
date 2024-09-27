@@ -147,7 +147,7 @@ Mod_Prep4HPC <- function(
     SkipFitted = TRUE, NumArrayJobs = 210L, ModelCountry = NULL,
     VerboseProgress = TRUE, FromHPC = TRUE, PrepSLURM = TRUE, MemPerCpu = NULL,
     Time = NULL, JobName = NULL, Path_Hmsc = NULL, Path_Python = NULL,
-    ToJSON = FALSE, Precision = 32, ...) {
+    ToJSON = FALSE, Precision = 64, ...) {
 
   # # ..................................................................... ###
 

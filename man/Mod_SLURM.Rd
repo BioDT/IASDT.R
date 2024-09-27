@@ -39,11 +39,12 @@ SLURM argument. Default: 1.}
 \item{GpusPerNode}{Integer. The value for the \verb{#SBATCH --gpus-per-node=}
 SLURM argument. Default: 1.}
 
-\item{MemPerCpu}{String. The value for the \verb{#SBATCH --mem-per-cpu=} SLURM
-argument. Example: \verb{32G} to request 32 gigabytes.}
+\item{MemPerCpu}{String. Memory per CPU allocation for the SLURM job.
+Example: \verb{32G} for 32 gigabytes. Defaults to \code{NULL}. If not provided, the
+function will throw an error.}
 
-\item{Time}{String. The value for the requested time for each job in the bash
-arrays. Example: \code{01:00:00} to request an hour.}
+\item{Time}{String. Duration for which the job should run. Example:
+\code{01:00:00} for one hour. If not provided, the function will throw an error.}
 
 \item{Partition}{String. The name of the partition. Default: \code{small-g} for
 running the array jobs on the GPU.}

@@ -6,7 +6,7 @@
 \usage{
 Mod_SLURM_Refit(
   Path_Model = NULL,
-  NArrayJobs = 210,
+  NumArrayJobs = 210,
   JobName = NULL,
   MemPerCpu = NULL,
   Time = NULL,
@@ -17,7 +17,7 @@ Mod_SLURM_Refit(
   CpusPerTask = 1,
   GpusPerNode = 1,
   FromHPC = TRUE,
-  PrepareSLURM = TRUE,
+  PrepSLURM = TRUE,
   Path_Hmsc = NULL,
   Refit_Prefix = "Commands2Refit",
   SLURM_Prefix = "Bash_Refit"
@@ -27,46 +27,50 @@ Mod_SLURM_Refit(
 \item{Path_Model}{String. Path to the model files directory. Must not end
 with a slash.}
 
-\item{NArrayJobs}{Integer. Maximum number of batch jobs that can be
-submitted in a single SLURM file.}
+\item{NumArrayJobs}{Integer specifying the maximum allowed number of array
+jobs per SLURM file. Default: 210. See \href{https://docs.lumi-supercomputer.eu/runjobs/scheduled-jobs/partitions}{LUMI documentation}
+for more details.}
 
-\item{JobName}{String (optional). Name of the SLURM jobs. If not provided, a
-default name based on the model path is used.}
+\item{JobName}{String. The name of the submitted job(s).}
 
 \item{MemPerCpu}{String. Memory per CPU allocation for the SLURM job.
-Example: \verb{32G} for 32 gigabytes.}
+Example: \verb{32G} for 32 gigabytes. Defaults to \code{NULL}. If not provided, the
+function will throw an error.}
 
 \item{Time}{String. Duration for which the job should run. Example:
-\code{01:00:00} for one hour.}
+\code{01:00:00} for one hour. If not provided, the function will throw an error.}
 
-\item{Partition}{String. The SLURM partition to submit the job to. Default is
-"small-g".}
+\item{Partition}{String. The name of the partition. Default: \code{small-g} for
+running the array jobs on the GPU.}
 
-\item{EnvFile}{String. Path to the environment variables file. Defaults to
+\item{EnvFile}{String. Path to read the environment variables. Default value:
 \code{.env}.}
 
-\item{CatJobInfo}{Logical. Whether to include commands in the SLURM script to
-print job information. Defaults to TRUE.}
+\item{CatJobInfo}{Logical. Add bash lines to print information on the
+submitted job. Default: \code{TRUE}.}
 
-\item{ntasks}{Integer. Number of tasks to request (\verb{#SBATCH --ntasks=}) for
-the SLURM job. Defaults to 1.}
+\item{ntasks}{Integer. The value for the \verb{#SBATCH --ntasks=} SLURM argument.
+Default: 1.}
 
-\item{CpusPerTask}{Integer. Number of CPUs per task (\verb{#SBATCH --cpus-per-task=}) to request. Defaults to 1.}
+\item{CpusPerTask}{Integer. The value for the \verb{#SBATCH --cpus-per-task=}
+SLURM argument. Default: 1.}
 
-\item{GpusPerNode}{Integer. Number of GPUs per node to request (\verb{#SBATCH --gpus-per-node=}). Defaults to 1.}
+\item{GpusPerNode}{Integer. The value for the \verb{#SBATCH --gpus-per-node=}
+SLURM argument. Default: 1.}
 
-\item{FromHPC}{Logical. Indicates whether the function is being called from
-an HPC environment. Adjusts file paths accordingly.}
+\item{FromHPC}{Logical. Indicates if the operation is being performed from an
+HPC environment. This adjusts file paths accordingly. Default: \code{TRUE}.}
 
-\item{PrepareSLURM}{Logical. Whether to prepare SLURM files. Defaults to
-\code{TRUE}.}
+\item{PrepSLURM}{Logical indicating whether to prepare SLURM command files.
+If \code{TRUE} (default), the SLURM commands will be saved to disk using the
+\link{Mod_SLURM} function.}
 
-\item{Path_Hmsc}{String. Path to the \code{Hmsc-HPC} directory.}
+\item{Path_Hmsc}{String. Path for the Hmsc-HPC.}
 
 \item{Refit_Prefix}{String. Prefix for the files that contain the commands to
 refit the models.}
 
-\item{SLURM_Prefix}{String. Prefix for the generated SLURM batch files.}
+\item{SLURM_Prefix}{String. Prefix for the exported SLURM file.}
 }
 \value{
 The function does not return any value but creates command and SLURM

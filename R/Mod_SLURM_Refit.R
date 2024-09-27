@@ -10,45 +10,21 @@
 #' environment.
 #' @param Path_Model String. Path to the model files directory. Must not end
 #'   with a slash.
-#' @param NArrayJobs Integer. Maximum number of batch jobs that can be
-#'   submitted in a single SLURM file.
-#' @param JobName String (optional). Name of the SLURM jobs. If not provided, a
-#'   default name based on the model path is used.
-#' @param MemPerCpu String. Memory per CPU allocation for the SLURM job.
-#'   Example: `32G` for 32 gigabytes.
-#' @param Time String. Duration for which the job should run. Example:
-#'   `01:00:00` for one hour.
-#' @param Partition String. The SLURM partition to submit the job to. Default is
-#'   "small-g".
-#' @param EnvFile String. Path to the environment variables file. Defaults to
-#'   `.env`.
-#' @param CatJobInfo Logical. Whether to include commands in the SLURM script to
-#'   print job information. Defaults to TRUE.
-#' @param ntasks Integer. Number of tasks to request (`#SBATCH --ntasks=`) for
-#'   the SLURM job. Defaults to 1.
-#' @param CpusPerTask Integer. Number of CPUs per task (`#SBATCH
-#'   --cpus-per-task=`) to request. Defaults to 1.
-#' @param GpusPerNode Integer. Number of GPUs per node to request (`#SBATCH
-#'   --gpus-per-node=`). Defaults to 1.
-#' @param FromHPC Logical. Indicates whether the function is being called from
-#'   an HPC environment. Adjusts file paths accordingly.
-#' @param PrepareSLURM Logical. Whether to prepare SLURM files. Defaults to
-#'  `TRUE`.
-#' @param Path_Hmsc String. Path to the `Hmsc-HPC` directory.
 #' @param Refit_Prefix String. Prefix for the files that contain the commands to
 #'   refit the models.
-#' @param SLURM_Prefix String. Prefix for the generated SLURM batch files.
 #' @name Mod_SLURM_Refit
 #' @author Ahmed El-Gabbas
 #' @return The function does not return any value but creates command and SLURM
 #'   batch files for refitting models.
+#' @inheritParams Mod_SLURM
+#' @inheritParams Mod_Prep4HPC
 #' @export
 
 Mod_SLURM_Refit <- function(
-    Path_Model = NULL, NArrayJobs = 210, JobName = NULL, MemPerCpu = NULL,
+    Path_Model = NULL, NumArrayJobs = 210, JobName = NULL, MemPerCpu = NULL,
     Time = NULL, Partition = "small-g", EnvFile = ".env", CatJobInfo = TRUE,
     ntasks = 1, CpusPerTask = 1, GpusPerNode = 1, FromHPC = TRUE,
-    PrepareSLURM = TRUE, Path_Hmsc = NULL,
+    PrepSLURM = TRUE, Path_Hmsc = NULL,
     Refit_Prefix = "Commands2Refit", SLURM_Prefix = "Bash_Refit") {
 
   # # ..................................................................... ###
@@ -99,7 +75,7 @@ Mod_SLURM_Refit <- function(
       "Path_Model", "Path_Hmsc", "SLURM_Prefix", "Refit_Prefix"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric",
-    Args = c("NArrayJobs", "ntasks", "CpusPerTask", "GpusPerNode"))
+    Args = c("NumArrayJobs", "ntasks", "CpusPerTask", "GpusPerNode"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Args = c("CatJobInfo"), Type = "logical")
   rm(AllArgs)
@@ -162,12 +138,12 @@ Mod_SLURM_Refit <- function(
 
   # # ..................................................................... ###
 
-  if (PrepareSLURM && NJobs > 0) {
+  if (PrepSLURM && NJobs > 0) {
 
     IASDT.R::CatTime("Preparing SLURM script(s) for failed models")
 
-    if (NJobs > NArrayJobs) {
-      NSplits <- ceiling((NJobs / NArrayJobs))
+    if (NJobs > NumArrayJobs) {
+      NSplits <- ceiling((NJobs / NumArrayJobs))
       IDs <- IASDT.R::SplitVector(Vector = seq_len(NJobs), NSplit = NSplits)
     } else {
       NSplits <- 1

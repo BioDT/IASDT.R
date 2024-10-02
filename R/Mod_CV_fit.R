@@ -18,9 +18,9 @@
 #'   will be fitted for each column. Currently, there are three cross-validation
 #'   strategies, created using the [IASDT.R::Mod_PrepData]: `CV_SAC`, `CV_Dist`,
 #'   and `CV_Large` (see [IASDT.R::GetCV]).
-#' @param partition A vector for cross-validation created by
+#' @param partitions A vector for cross-validation created by
 #'   [Hmsc::createPartition] or similar. Defaults to `NULL`, which means to use
-#'   column name(s) provided in the `CVNames` argument. If the `partition`
+#'   column name(s) provided in the `CVNames` argument. If the `partitions`
 #'   vector
 #'   is provided, the label used in the output files will be `CV_Custom`.
 #' @param Path_CV The directory path where cross-validation models and outputs
@@ -61,7 +61,7 @@
 
 Mod_CV_fit <- function(
     Model = NULL, ModelData = NULL,
-    CVNames = c("CV_SAC", "CV_Dist", "CV_Large"), partition = NULL,
+    CVNames = c("CV_SAC", "CV_Dist", "CV_Large"), partitions = NULL,
     Path_CV = NULL, EnvFile = ".env", initPar = NULL, JobName = "CV_Models",
     updater = list(Gamma2 = FALSE, GammaEta = FALSE),
     alignPost = TRUE, ToJSON = FALSE, FromHPC = TRUE, PrepSLURM = TRUE,
@@ -71,7 +71,7 @@ Mod_CV_fit <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  nfolds <- CV_DT0 <- NULL
+  nfolds <- Path_ModInit_rds <- CV <- partition <- NULL
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -146,29 +146,30 @@ Mod_CV_fit <- function(
   IASDT.R::CatTime("Creating paths")
 
   Path_Init <- file.path(Path_CV, "InitMod")
-  fs::dir_create(c(Path_CV, Path_Init))
+  Path_Fitted <- file.path(Path_CV, "Model_Fitted")
+  fs::dir_create(c(Path_CV, Path_Init, Path_Fitted))
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Cross-validation partitions ----
   IASDT.R::CatTime("Cross-validation partitions")
 
-  if (is.null(partition)) {
-    # if custom partition is not provided, extract the CV column(s) available in
-    # the modelling data
+  if (is.null(partitions)) {
+    # if custom partitions is not provided, extract the CV column(s) available
+    # in the modelling data
 
     CV_Data <- IASDT.R::LoadAs(ModelData)$DT_CV
 
     if (all(CVNames %in% names(CV_Data))) {
       # Extract CV folds from the CV column(s)
-      partition <- purrr::map(CVNames, ~ dplyr::pull(CV_Data, .x))
-      names(partition) <- CVNames
+      partitions <- purrr::map(CVNames, ~ dplyr::pull(CV_Data, .x))
+      names(partitions) <- CVNames
     } else {
       # if any of the column names does not exist, stop the function
       MissingCV <- CVNames[CVNames %in% names(CV_Data) == FALSE]
       stop(
         paste0(
-          "`partition` was not defined (NULL) and column(s) for CV folds ",
+          "`partitions` was not defined (NULL) and column(s) for CV folds ",
           paste(MissingCV, collapse = " + "),
           " can not be found in species data"
         ),
@@ -176,14 +177,14 @@ Mod_CV_fit <- function(
       )
     }
   } else {
-    # If partition is provided directly to the function, use "CV_Custom" as CV
+    # If partitions is provided directly to the function, use "CV_Custom" as CV
     # name
     CVNames <- "CV_Custom"
   }
 
   # Check the length of CV data equals the number of sampling units in the model
-  if (any(sapply(partition, length) != ModFull$ny)) {
-    stop("partition parameter must be a vector of length ny", call. = FALSE)
+  if (any(sapply(partitions, length) != ModFull$ny)) {
+    stop("partitions parameter must be a vector of length ny", call. = FALSE)
   }
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -214,32 +215,27 @@ Mod_CV_fit <- function(
 
   Coords <- IASDT.R::LoadAs(ModelData)$DT_xy
 
-  CV_DT <- tibble::tibble(partition = partition, CVNames = names(partition)) %>%
+  CV_DT <- tibble::tibble(
+    partition = partitions, CVNames = names(partitions)) %>%
     dplyr::mutate(
       nfolds = purrr::map_int(.x = partition, .f = ~ length(unique(.x))),
 
       # Loop over all cross-validation partitions used
-      CV_DT0 = purrr::pmap(
+      CV_Info = purrr::pmap(
         .l = list(partition, CVNames, nfolds),
-        .f = function(CV_Fold, CV_Name, CV_Folds) {
+        .f = function(partition, CVNames, nfolds) {
+
           # prepare data for each cross-validation strategy
 
           CV_DT0 <- purrr::map_dfr(
-            .x = seq_len(CV_Folds),
+            .x = seq_len(nfolds),
             .f = function(k) {
 
               # The following is adapted from Hmsc::computePredictedValues()
 
-              train <- (CV_Fold != k)
-              val <- (CV_Fold == k)
+              train <- (partition != k)
+              val <- (partition == k)
               valCoords <- Coords[val, ]
-
-              dfPi <- as.data.frame(matrix(NA, sum(train), ModFull$nr))
-              colnames(dfPi) <- ModFull$rLNames
-
-              for (r in seq_len(ModFull$nr)) {
-                dfPi[, r] <- factor(ModFull$dfPi[train, r])
-              }
 
               LoffVal <- ModFull$LoffVal[val, , drop = FALSE]
 
@@ -263,6 +259,8 @@ Mod_CV_fit <- function(
                 XRRRTrain <- XRRRVal <- NULL
               }
 
+              dfPi <- droplevels(ModFull$dfPi[train, , drop = FALSE])
+
               # Initial models
               Mod_CV <- Hmsc::Hmsc(
                 Y = ModFull$Y[train, , drop = FALSE],
@@ -278,66 +276,41 @@ Mod_CV_fit <- function(
                   rhopw = ModFull$rhowp)
 
               Mod_CV$YScalePar <- ModFull$YScalePar
-              Mod_CV$YScaled <- (
-                Mod_CV$Y -
-                  matrix(
-                    Mod_CV$YScalePar[1, ], Mod_CV$ny, Mod_CV$ns,
-                    byrow = TRUE)) /
-                matrix(
-                  Mod_CV$YScalePar[2, ], Mod_CV$ny, Mod_CV$ns, byrow = TRUE)
+              Mod_CV$YScaled <- scale(
+                Mod_CV$Y, Mod_CV$YScalePar[1, ], Mod_CV$YScalePar[2, ])
+              # attr(Mod_CV$YScaled, "scaled:center") <- NULL
+              # attr(Mod_CV$YScaled, "scaled:scale") <- NULL
+
               Mod_CV$XInterceptInd <- ModFull$XInterceptInd
               Mod_CV$XScalePar <- ModFull$XScalePar
+              Mod_CV$XScaled <- scale(
+                Mod_CV$X, Mod_CV$XScalePar[1, ], Mod_CV$XScalePar[2, ])
+              # attr(Mod_CV$XScaled, "scaled:center") <- NULL
+              # attr(Mod_CV$XScaled, "scaled:scale") <- NULL
 
-              switch(
-                class(ModFull$X)[1L],
-                matrix = {
-                  Mod_CV$XScaled <- (
-                    Mod_CV$X - matrix(
-                      Mod_CV$XScalePar[1, ], Mod_CV$ny, Mod_CV$ncNRRR,
-                      byrow = TRUE)) /
-                    matrix(
-                      Mod_CV$XScalePar[2, ], Mod_CV$ny, Mod_CV$ncNRRR,
-                      byrow = TRUE)
-                },
-                list = {
-                  Mod_CV$XScaled <- list()
-                  for (zz in seq_len(length(Mod_CV$X))) {
-                    Mod_CV$XScaled[[zz]] <- (
-                      Mod_CV$X[[zz]] - matrix(
-                        Mod_CV$XScalePar[1, ], Mod_CV$ny, Mod_CV$ncNRRR,
-                        byrow = TRUE)) /
-                      matrix(Mod_CV$XScalePar[2, ], Mod_CV$ny, Mod_CV$ncNRRR,
-                             byrow = TRUE)
-                  }
-                }
-              )
 
               if (Mod_CV$ncRRR > 0) {
                 Mod_CV$XRRRScalePar <- ModFull$XRRRScalePar
-                Mod_CV$XRRRScaled <- (
-                  Mod_CV$XRRR - matrix(
-                    Mod_CV$XRRRScalePar[1, ], Mod_CV$ny, Mod_CV$ncORRR,
-                    byrow = TRUE)) /
-                  matrix(
-                    Mod_CV$XRRRScalePar[2, ], Mod_CV$ny, Mod_CV$ncORRR,
-                    byrow = TRUE)
+                Mod_CV$XRRRScaled <- scale(
+                  Mod_CV$XRRR,
+                  Mod_CV$XRRRScalePar[1, ], Mod_CV$XRRRScalePar[2, ])
+                # attr(Mod_CV$TrScaled, "scaled:center") <- NULL
+                # attr(Mod_CV$TrScaled, "scaled:scale") <- NULL
               }
 
               Mod_CV$TrInterceptInd <- ModFull$TrInterceptInd
               Mod_CV$TrScalePar <- ModFull$TrScalePar
-              Mod_CV$TrScaled <- (
-                Mod_CV$Tr - matrix(
-                  Mod_CV$TrScalePar[1, ], Mod_CV$ns,
-                  Mod_CV$nt, byrow = TRUE)) /
-                matrix(
-                  Mod_CV$TrScalePar[2, ], Mod_CV$ns, Mod_CV$nt, byrow = TRUE)
+              Mod_CV$TrScaled <- scale(
+                Mod_CV$Tr, Mod_CV$TrScalePar[1, ], Mod_CV$TrScalePar[2, ])
+              # attr(Mod_CV$TrScaled, "scaled:center") <- NULL
+              # attr(Mod_CV$TrScaled, "scaled:scale") <- NULL
 
               # Save unfitted model
               Path_ModInit <- file.path(
-                Path_Init, paste0("InitMod_", CV_Name, "_k", k, ".RData"))
+                Path_Init, paste0("InitMod_", CVNames, "_k", k, ".RData"))
               IASDT.R::SaveAs(
                 InObj = Mod_CV,
-                OutObj = paste0("InitMod_", CV_Name, "_k", k),
+                OutObj = paste0("InitMod_", CVNames, "_k", k),
                 OutPath = Path_ModInit)
 
               # initiate sampling and save initial models to
@@ -350,60 +323,93 @@ Mod_CV_fit <- function(
               if (ToJSON) {
                 Mod_CV <- jsonify::to_json(Mod_CV)
               }
+
               # Save model input as rds file
               Path_ModInit_rds <- file.path(
-                Path_Init, paste0("InitMod_", CV_Name, "_k", k, ".rds"))
+                Path_Init, paste0("InitMod_", CVNames, "_k", k, ".rds"))
               saveRDS(Mod_CV, file = Path_ModInit_rds)
 
-              # Prepare fitting command for each model chain
-              CV_Out <- purrr::map_dfr(
-                .x = seq_len(NChains),
-                .f = function(Chain) {
-                  # Path to save the posterior of the combination of CV and
-                  # chain
-                  Path_Post <- file.path(
-                    Path_CV,
-                    paste0("Mod_", CV_Name, "_k", k, "_Ch", Chain, "_post.rds"))
+              Path_ModFull <- dplyr::if_else(
+                inherits(Model, "character"), Model, NA_character_)
 
-                  # Path to save the progress of model fitting
-                  Path_ModProg <- stringr::str_replace_all(
-                    Path_Post, "post.rds$", "Progress.txt")
-                  
-                  # Model fitting command
-                  Command_HPC <- paste0(
-                    "/usr/bin/time -v python3 -m hmsc.run_gibbs_sampler",
-                    " --input ", shQuote(Path_ModInit_rds),
-                    " --output ", shQuote(Path_Post),
-                    " --samples ", ModFull$samples,
-                    " --transient ", ModFull$transient,
-                    " --thin ", ModFull$thin,
-                    " --verbose ", verbose,
-                    " --chain ", (Chain - 1),
-                    " --fp ", Precision,
-                    " >& ", shQuote(Path_ModProg))
+              Path_ModFitted <- file.path(
+                Path_Fitted,
+                paste0("Model_Fitted_", CVNames, "_k", k, ".RData"))
 
-                  FullModel <- dplyr::if_else(
-                    inherits(Model, "character"), Model, NA_character_)
+              dfPi <- as.data.frame(
+                matrix(NA, sum(val), ModFull$nr), stringsAsFactors = TRUE)
+              colnames(dfPi) <- ModFull$rLNames
+              for (r in seq_len(ModFull$nr)) {
+                dfPi[, r] <- factor(ModFull$dfPi[val, r])
+              }
+              rownames(dfPi) <- dfPi$sample
 
-                  # data to be returned for each combination of CV and Chain
-                  tibble::tibble(
-                    FullModel = FullModel,
-                    CV = k, Chain = Chain,
-                    Path_ModInit = Path_ModInit,
-                    Path_ModInit_rds = Path_ModInit_rds,
-                    Path_Post = Path_Post, Path_ModProg = Path_ModProg,
-                    Command_HPC = Command_HPC,
-                    val = list(val), valCoords = list(valCoords),
-                    LoffVal = list(LoffVal),
-                    XVal = list(XVal), XRRRVal = list(XRRRVal)) %>%
-                    return()
-                })
-              return(CV_Out)
+
+              tibble::tibble(
+                Path_ModFull = Path_ModFull,
+                CV = k,
+                Path_ModInit = Path_ModInit,
+                Path_ModInit_rds = Path_ModInit_rds,
+                Path_ModFitted = Path_ModFitted,
+                val = list(val),
+                valCoords = list(valCoords),
+                LoffVal = list(LoffVal),
+                XVal = list(XVal),
+                XRRRVal = list(XRRRVal),
+                dfPi = list(dfPi)) %>%
+                return()
             }
           )
           return(CV_DT0)
         })) %>%
-    tidyr::unnest(CV_DT0)
+    dplyr::select(-"partition") %>%
+    tidyr::unnest("CV_Info")
+
+  # Prepare fitting command for each model chain
+  CV_DT <- CV_DT %>%
+    dplyr::mutate(
+      ModelPrep = purrr::pmap(
+        .l = list(Path_ModInit_rds, CV, CVNames),
+        .f = function(Path_ModInit_rds, CV, CVNames) {
+
+          CV_Out <- purrr::map_dfr(
+            .x = seq_len(NChains),
+            .f = function(Chain) {
+
+              # Path to save the posterior of the combination of CV and chain
+              Path_Post <- file.path(
+                Path_CV,
+                paste0("Mod_", CVNames, "_k", CV, "_Ch", Chain, "_post.rds"))
+
+              # Path to save the progress of model fitting
+              Path_ModProg <- stringr::str_replace_all(
+                Path_Post, "post.rds$", "Progress.txt")
+
+              # Model fitting command
+              Command_HPC <- paste0(
+                "/usr/bin/time -v python3 -m hmsc.run_gibbs_sampler",
+                " --input ", shQuote(Path_ModInit_rds),
+                " --output ", shQuote(Path_Post),
+                " --samples ", ModFull$samples,
+                " --transient ", ModFull$transient,
+                " --thin ", ModFull$thin,
+                " --verbose ", verbose,
+                " --chain ", (Chain - 1),
+                " --fp ", Precision,
+                " >& ", shQuote(Path_ModProg))
+
+              # data to be returned for each combination of CV and Chain
+              tibble::tibble(
+                Path_Post = Path_Post,
+                Path_ModProg = Path_ModProg,
+                Command_HPC = Command_HPC) %>%
+                return()
+            })
+
+          return(dplyr::summarise_all(CV_Out, list))
+
+        })) %>%
+    tidyr::unnest("ModelPrep")
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -413,7 +419,7 @@ Mod_CV_fit <- function(
   CommandFile <- file.path(Path_CV, "Commands2Fit.txt")
   f <- file(CommandFile, open = "wb")
   on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
-  cat(CV_DT$Command_HPC, sep = "\n", append = FALSE, file = f)
+  cat(unlist(CV_DT$Command_HPC), sep = "\n", append = FALSE, file = f)
   close(f)
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

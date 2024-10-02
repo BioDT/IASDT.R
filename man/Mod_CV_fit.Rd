@@ -8,7 +8,7 @@ Mod_CV_fit(
   Model = NULL,
   ModelData = NULL,
   CVNames = c("CV_SAC", "CV_Dist", "CV_Large"),
-  partition = NULL,
+  partitions = NULL,
   Path_CV = NULL,
   EnvFile = ".env",
   initPar = NULL,
@@ -40,9 +40,9 @@ will be fitted for each column. Currently, there are three cross-validation
 strategies, created using the \link{Mod_PrepData}: \code{CV_SAC}, \code{CV_Dist},
 and \code{CV_Large} (see \link{GetCV}).}
 
-\item{partition}{A vector for cross-validation created by
+\item{partitions}{A vector for cross-validation created by
 \link[Hmsc:createPartition]{Hmsc::createPartition} or similar. Defaults to \code{NULL}, which means to use
-column name(s) provided in the \code{CVNames} argument. If the \code{partition}
+column name(s) provided in the \code{CVNames} argument. If the \code{partitions}
 vector
 is provided, the label used in the output files will be \code{CV_Custom}.}
 

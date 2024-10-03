@@ -261,10 +261,13 @@ Mod_CV_fit <- function(
 
               dfPi <- droplevels(ModFull$dfPi[train, , drop = FALSE])
 
+              YTrain <- ModFull$Y[train, , drop = FALSE]
+              rownames(YTrain) <- rownames(dfPi)
+
+
               # Initial models
               Mod_CV <- Hmsc::Hmsc(
-                Y = ModFull$Y[train, , drop = FALSE],
-                Loff = ModFull$Loff[train, , drop = FALSE],
+                Y = YTrain, Loff = ModFull$Loff[train, , drop = FALSE],
                 X = XTrain, XRRR = XRRRTrain, ncRRR = ModFull$ncRRR,
                 XSelect = ModFull$XSelect, distr = ModFull$distr,
                 studyDesign = dfPi, Tr = ModFull$Tr, C = ModFull$C,
@@ -275,35 +278,37 @@ Mod_CV_fit <- function(
                   aSigma = ModFull$aSigma, bSigma = ModFull$bSigma,
                   rhopw = ModFull$rhowp)
 
+              Mod_CV$XInterceptInd <- ModFull$XInterceptInd
+
+              # remove scaled attributes
+              RemAttr <- function(x) {
+                attr(x, "scaled:center") <- NULL
+                attr(x, "scaled:scale") <- NULL
+                return(x)
+              }
+
               Mod_CV$YScalePar <- ModFull$YScalePar
               Mod_CV$YScaled <- scale(
                 Mod_CV$Y, Mod_CV$YScalePar[1, ], Mod_CV$YScalePar[2, ])
-              # attr(Mod_CV$YScaled, "scaled:center") <- NULL
-              # attr(Mod_CV$YScaled, "scaled:scale") <- NULL
 
-              Mod_CV$XInterceptInd <- ModFull$XInterceptInd
               Mod_CV$XScalePar <- ModFull$XScalePar
               Mod_CV$XScaled <- scale(
                 Mod_CV$X, Mod_CV$XScalePar[1, ], Mod_CV$XScalePar[2, ])
-              # attr(Mod_CV$XScaled, "scaled:center") <- NULL
-              # attr(Mod_CV$XScaled, "scaled:scale") <- NULL
-
 
               if (Mod_CV$ncRRR > 0) {
                 Mod_CV$XRRRScalePar <- ModFull$XRRRScalePar
                 Mod_CV$XRRRScaled <- scale(
                   Mod_CV$XRRR,
                   Mod_CV$XRRRScalePar[1, ], Mod_CV$XRRRScalePar[2, ])
-                # attr(Mod_CV$TrScaled, "scaled:center") <- NULL
-                # attr(Mod_CV$TrScaled, "scaled:scale") <- NULL
+                Mod_CV$XRRRScaled <- RemAttr(Mod_CV$XRRRScaled)
               }
 
               Mod_CV$TrInterceptInd <- ModFull$TrInterceptInd
               Mod_CV$TrScalePar <- ModFull$TrScalePar
               Mod_CV$TrScaled <- scale(
                 Mod_CV$Tr, Mod_CV$TrScalePar[1, ], Mod_CV$TrScalePar[2, ])
-              # attr(Mod_CV$TrScaled, "scaled:center") <- NULL
-              # attr(Mod_CV$TrScaled, "scaled:scale") <- NULL
+              Mod_CV$TrScaled <- RemAttr(Mod_CV$TrScaled)
+
 
               # Save unfitted model
               Path_ModInit <- file.path(
@@ -312,6 +317,7 @@ Mod_CV_fit <- function(
                 InObj = Mod_CV,
                 OutObj = paste0("InitMod_", CVNames, "_k", k),
                 OutPath = Path_ModInit)
+
 
               # initiate sampling and save initial models to
               Mod_CV <- Hmsc::sampleMcmc(
@@ -342,8 +348,9 @@ Mod_CV_fit <- function(
               for (r in seq_len(ModFull$nr)) {
                 dfPi[, r] <- factor(ModFull$dfPi[val, r])
               }
-              rownames(dfPi) <- dfPi$sample
 
+              rownames(dfPi) <- rownames(valCoords) <-
+                rownames(XVal) <- dfPi$sample
 
               tibble::tibble(
                 Path_ModFull = Path_ModFull,

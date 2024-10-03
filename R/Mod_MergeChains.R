@@ -187,10 +187,10 @@ Mod_MergeChains <- function(
         # Convert to Hmsc object
         # Try with `alignPost = TRUE`
         Model_Fit <- Hmsc::importPosteriorFromHPC(
-          m = IASDT.R::LoadAs(Model_Info2$M_Init_Path[[x]]),
-          postList = Posts, nSamples = Model_Info2$M_samples[[x]],
-          thin = Model_Info2$M_thin[[x]],
-          transient = Model_Info2$M_transient[[x]],
+          m = IASDT.R::LoadAs(Model_Info2$M_Init_Path[x]),
+          postList = Posts, nSamples = Model_Info2$M_samples[x],
+          thin = Model_Info2$M_thin[x],
+          transient = Model_Info2$M_transient[x],
           alignPost = TRUE) %>%
           try(silent = TRUE)
 
@@ -198,10 +198,10 @@ Mod_MergeChains <- function(
         if (inherits(Model_Fit, "try-error")) {
           Model_Fit <- try(
             Hmsc::importPosteriorFromHPC(
-              m = IASDT.R::LoadAs(Model_Info2$M_Init_Path[[x]]),
-              postList = Posts, nSamples = Model_Info2$M_samples[[x]],
-              thin = Model_Info2$M_thin[[x]],
-              transient = Model_Info2$M_transient[[x]], alignPost = FALSE),
+              m = IASDT.R::LoadAs(Model_Info2$M_Init_Path[x]),
+              postList = Posts, nSamples = Model_Info2$M_samples[x],
+              thin = Model_Info2$M_thin[x],
+              transient = Model_Info2$M_transient[x], alignPost = FALSE),
             silent = TRUE)
           Post_Aligned2 <- FALSE
         } else {

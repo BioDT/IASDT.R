@@ -129,7 +129,7 @@ Mod_PrepData <- function(
   SpeciesID <- Species_name <- Species_File <- PA <-
     cell <- Path_PA <- Path_Grid <- Path_Grid_Ref <- Path_CLC <-
     Path_Roads <- Path_Rail <- Path_Bias <- Path_CHELSA <-
-    EU_Bound <- SpPA <- NPres <- Grid_R <- NULL
+    EU_Bound <- SpPA <- NPres <- Grid_R <- IAS_ID <- NULL
 
   # # ..................................................................... ###
 
@@ -243,7 +243,8 @@ Mod_PrepData <- function(
   if (!file.exists(DT_Sp)) {
     stop(paste0(DT_Sp, " file does not exist"), call. = FALSE)
   }
-  DT_Sp <- IASDT.R::LoadAs(DT_Sp)
+  DT_Sp <- IASDT.R::LoadAs(DT_Sp) %>%
+    dplyr::arrange(IAS_ID)
 
   if (Hab_Abb == "0") {
     Hab_column <- NULL

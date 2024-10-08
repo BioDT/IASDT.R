@@ -91,7 +91,8 @@ function will throw an error.}
 \item{Path_Hmsc}{String. Path for the Hmsc-HPC.}
 
 \item{Precision}{Integer, either of 32 (default; \verb{--fp 32}) or 64 for the
-precision mode used for sampling while fitting \code{Hmsc-HPC} models (\verb{--fp 64} argument). In \code{Hmsc-HPC}, the default value is 64. This is still under
+precision mode used for sampling while fitting \code{Hmsc-HPC} models (\verb{--fp 64}
+argument). In \code{Hmsc-HPC}, the default value is 64. This is still under
 testing.}
 
 \item{...}{Additional arguments passed to the \link{Mod_SLURM} function.}

@@ -22,3 +22,6 @@ merges posterior chains, and makes predictions for cross-validation folds. It
 evaluates the model fit either for internal evaluation or on
 cross-validation.
 }
+\author{
+Ahmed El-Gabbas
+}

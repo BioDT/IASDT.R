@@ -9,12 +9,15 @@
 #' initialization, GPP knots, and generating commands for running models on HPC.
 #' It supports parallel processing, options to include/not include phylogenetic
 #' tree data. The models will be fitted using Gaussian Predictive Process (GPP;
-#' see [Tikhonov et al.](https://doi.org/10.1002/ecy.2929) for more details)
-#' via the [Hmsc-HPC](https://doi.org/10.1371/journal.pcbi.1011914) extension.
+#' see [Tikhonov et al.](https://doi.org/10.1002/ecy.2929) for more details) via
+#' the [Hmsc-HPC](https://doi.org/10.1371/journal.pcbi.1011914) extension.
 #'
 #' @param Path_Model String (without trailing slash) specifying the path where
 #'   all output, including models to be fitted, will be saved.
-#' @param GPP_Dists Integer specifying the distance in kilometers for both the
+#' @param GPP Logical indicating whether to fit spatial random effect using
+#'   Gaussian Predictive Process. Defaults to `TRUE`. If `FALSE`, non-spatial
+#'   models will be fitted.
+#' @param GPP_Dists Integer specifying the distance in *kilometers* for both the
 #'   distance between knots and the minimum distance of a knot to the nearest
 #'   data point. The GPP knots are prepared by the [IASDT.R::PrepKnots]
 #'   function. The same value will be used for the `knotDist` and
@@ -64,7 +67,8 @@
 #' @param SkipFitted Logical indicating whether to skip already fitted models.
 #'   Default: `TRUE`.
 #' @param NumArrayJobs Integer specifying the maximum allowed number of array
-#'   jobs per SLURM file. Default: 210. See [LUMI documentation](https://docs.lumi-supercomputer.eu/runjobs/scheduled-jobs/partitions)
+#'   jobs per SLURM file. Default: 210. See [LUMI
+#'   documentation](https://docs.lumi-supercomputer.eu/runjobs/scheduled-jobs/partitions)
 #'   for more details.
 #' @param ModelCountry String or vector of strings specifying the country or
 #'   countries to filter observations by. Default: `NULL`, which means prepare
@@ -87,12 +91,14 @@
 #' @param Path_Python String specifying the path for Python.
 #' @param ToJSON Logical indicating whether to convert unfitted models to JSON
 #'   before saving to RDS file. Default: `FALSE`.
+#' @param CheckPython Logical indicating whether to check if the Python
+#'   executable exists. Only valid if FromHPC = `FALSE`.
+#' @param Precision Integer, either of 32 (default; `--fp 32`) or 64 for the
+#'   precision mode used for sampling while fitting `Hmsc-HPC` models (`--fp 64`
+#'   argument). In `Hmsc-HPC`, the default value is 64. This is still under
+#'   testing.
 #' @param ... Additional parameters provided to the [IASDT.R::Mod_SLURM]
 #'   function.
-#' @param Precision Integer, either of 32 (default; `--fp 32`) or 64 for the
-#'   precision mode used for sampling while fitting `Hmsc-HPC` models (`--fp
-#'   64` argument). In `Hmsc-HPC`, the default value is 64. This is still under
-#'   testing.
 #' @name Mod_Prep4HPC
 #' @inheritParams Mod_PrepData
 #' @inheritParams PrepKnots
@@ -134,9 +140,13 @@
 
 Mod_Prep4HPC <- function(
     Hab_Abb = NULL, Path_Model = NULL,
-    MinEffortsSp = 100L, PresPerVar = 10L,
-    EnvFile = ".env", GPP_Dists = NULL, GPP_Save = TRUE,
+    MinEffortsSp = 100L, PresPerVar = 10L, EnvFile = ".env",
+    GPP = TRUE, GPP_Dists = NULL, GPP_Save = TRUE,
     GPP_Plot = TRUE, MinLF = NULL, MaxLF = NULL,
+    SetAlphapw = TRUE,
+    AlphapwPar = list(
+      N_samples = 200, ProbNorm = 0.8, tr_mean = 200,
+      tr_sd = 50, tr_min = 5, tr_max = 400, Seed = NULL),
     BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
     EffortsAsPredictor = FALSE, RoadRailAsPredictor = TRUE,
     HabAsPredictor = TRUE, NspPerGrid = 1L, ExcludeCult = TRUE,
@@ -147,7 +157,7 @@ Mod_Prep4HPC <- function(
     SkipFitted = TRUE, NumArrayJobs = 210L, ModelCountry = NULL,
     VerboseProgress = TRUE, FromHPC = TRUE, PrepSLURM = TRUE, MemPerCpu = NULL,
     Time = NULL, JobName = NULL, Path_Hmsc = NULL, Path_Python = NULL,
-    ToJSON = FALSE, Precision = 64, ...) {
+    CheckPython = FALSE, ToJSON = FALSE, Precision = 64, ...) {
 
   # # ..................................................................... ###
 
@@ -158,7 +168,7 @@ Mod_Prep4HPC <- function(
   .StartTime <- lubridate::now(tzone = "CET")
 
   CheckNULL <- c(
-    "Path_Model", "PresPerVar", "thin", "samples", "GPP_Dists",
+    "Path_Model", "PresPerVar", "thin", "samples",
     "MemPerCpu", "Path_Hmsc", "Path_Python", "Hab_Abb")
   IsNull <- purrr::map_lgl(CheckNULL, ~ is.null(get(.x)))
 
@@ -179,9 +189,6 @@ Mod_Prep4HPC <- function(
 
   Hab_Abb <- as.character(Hab_Abb)
 
-  if (!all(is.numeric(GPP_Dists)) || any(GPP_Dists <= 0)) {
-    stop("GPP_Dists should be numeric and greater than zero", call. = FALSE)
-  }
 
   if (!all(is.numeric(samples)) || any(samples <= 0)) {
     stop("samples should be numeric and greater than zero", call. = FALSE)
@@ -254,22 +261,33 @@ Mod_Prep4HPC <- function(
       "Path_PA", "DP_R_PA_Local", TRUE, FALSE)
 
     # Check if Python executable exists
-    if (!file.exists(Path_Python)) {
-      stop(
-        paste0("Python executable does not exist: ", Path_Python),
-        call. = FALSE)
+    if (CheckPython) {
+      if (!file.exists(Path_Python)) {
+        stop(
+          paste0("Python executable does not exist: ", Path_Python),
+          call. = FALSE)
+      }
     }
   }
 
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
-  if (GPP_Plot) {
-    Path_GridR <- file.path(Path_Grid, "Grid_10_Land_Crop.RData")
-    if (!file.exists(Path_GridR)) {
-      stop(
-        paste0("Path for the Europe boundaries does not exist: ", Path_GridR),
-        call. = FALSE)
+  if (GPP) {
+    if (is.null(GPP_Dists)) {
+      stop("`GPP_Dists` can not be empty", call. = FALSE)
+    }
+    if (!all(is.numeric(GPP_Dists)) || any(GPP_Dists <= 0)) {
+      stop("`GPP_Dists` should be numeric and greater than zero", call. = FALSE)
+    }
+
+    if (GPP_Plot) {
+      Path_GridR <- file.path(Path_Grid, "Grid_10_Land_Crop.RData")
+      if (!file.exists(Path_GridR)) {
+        stop(
+          paste0("Path for the Europe boundaries does not exist: ", Path_GridR),
+          call. = FALSE)
+      }
     }
   }
 
@@ -297,9 +315,12 @@ Mod_Prep4HPC <- function(
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = LogicArgs, Type = "logical")
 
   NumericArgs <- c(
-    "GPP_Dists", "NCores", "NChains", "thin", "samples", "verbose",
+    "NCores", "NChains", "thin", "samples", "verbose",
     "PresPerVar", "MinEffortsSp", "transientFactor", "CV_NFolds", "CV_NGrids",
     "CV_NR", "CV_NC")
+  if (GPP) {
+    NumericArgs <- c(NumericArgs, "GPP_Dists")
+  }
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = NumericArgs, Type = "numeric")
 
   if (PrepSLURM) {
@@ -334,6 +355,7 @@ Mod_Prep4HPC <- function(
   fs::dir_create(file.path(Path_Model, "Model_Fitting_HPC"))
   # Also create directory for SLURM outputs
   fs::dir_create(file.path(Path_Model, "Model_Fitting_HPC", "JobsLog"))
+
   Path_ModelDT <- file.path(Path_Model, "Model_Info.RData")
 
   # # ..................................................................... ###
@@ -386,7 +408,7 @@ Mod_Prep4HPC <- function(
   IASDT.R::CatTime("Preparing input data using IASDT.R::Mod_PrepData")
   IASDT.R::CatSep(Rep = 1, Extra1 = 0, Extra2 = 0)
 
-  DT_All <- IASDT.R::Mod_PrepData(
+  DT_All <- Mod_PrepData(
     Hab_Abb = Hab_Abb, MinEffortsSp = MinEffortsSp, PresPerVar = PresPerVar,
     NVars = length(XVars), EnvFile = EnvFile, BioVars = BioVars,
     Path_Model = Path_Model, VerboseProgress = VerboseProgress,
@@ -593,6 +615,7 @@ Mod_Prep4HPC <- function(
     stop(paste0(SpSummary, " file does not exist"), call. = FALSE)
   }
   SpSummary <- IASDT.R::LoadAs(SpSummary) %>%
+    dplyr::arrange(IAS_ID) %>%
     dplyr::mutate(
       IAS_ID = stringr::str_pad(IAS_ID, pad = "0", width = 4),
       IAS_ID = paste0("Sp_", IAS_ID)) %>%
@@ -660,138 +683,141 @@ Mod_Prep4HPC <- function(
   # # Spatial info / random effect ------
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatTime("Spatial info / random effect")
-  studyDesign <- data.frame(sample = as.factor(seq_len(nrow(DT_x))))
+  if (GPP) {
 
-  DT_xy <- as.matrix(dplyr::select(DT_All, x, y))
-  rownames(DT_xy) <- studyDesign$sample
+    IASDT.R::CatTime("Spatial info / random effect")
+    studyDesign <- data.frame(sample = as.factor(seq_len(nrow(DT_x))))
 
-  # Prepare GPP knots
-  IASDT.R::CatTime("Preparing GPP knots", Level = 1)
+    DT_xy <- as.matrix(dplyr::select(DT_All, x, y))
+    rownames(DT_xy) <- studyDesign$sample
 
-  if (NCores > 1) {
+    # Prepare GPP knots
+    IASDT.R::CatTime("Preparing GPP knots", Level = 1)
 
-    IASDT.R::CatTime(
-      paste0("Prepare working on parallel using `", NCores, "` cores."),
-      Level = 1)
+    if (NCores > 1) {
 
-    withr::local_options(
-      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
+      IASDT.R::CatTime(
+        paste0("Prepare working on parallel using `", NCores, "` cores."),
+        Level = 1)
 
-    if (NCores == 1) {
-      future::plan("sequential", gc = TRUE)
-    } else {
+      withr::local_options(
+        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
       c1 <- snow::makeSOCKcluster(NCores)
       on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
       future::plan("cluster", workers = c1, gc = TRUE)
       on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
-    }
 
-    GPP_Knots <- future.apply::future_lapply(
-      X = GPP_Dists * 1000,
-      FUN = function(x) {
-        IASDT.R::PrepKnots(
-          Coords = DT_xy, MinDist = x, MinLF = MinLF, MaxLF = MaxLF)
-      },
-      future.scheduling = Inf, future.seed = TRUE,
-      future.globals = c("DT_xy", "GPP_Dists", "MaxLF", "MinLF"),
-      future.packages = c("dplyr", "sf", "Hmsc", "jsonify", "magrittr")) %>%
-      stats::setNames(paste0("GPP_", GPP_Dists))
+      GPP_Knots <- future.apply::future_lapply(
+        X = GPP_Dists * 1000,
+        FUN = function(x) {
+          IASDT.R::PrepKnots(
+            Coords = DT_xy, MinDist = x, MinLF = MinLF, MaxLF = MaxLF,
+            SetAlphapw = SetAlphapw, AlphapwPar = AlphapwPar)
+        },
+        future.scheduling = Inf, future.seed = TRUE,
+        future.globals = c("DT_xy", "GPP_Dists", "MaxLF", "MinLF"),
+        future.packages = c("dplyr", "sf", "Hmsc", "jsonify", "magrittr")) %>%
+        stats::setNames(paste0("GPP_", GPP_Dists))
 
-    if (NCores > 1) {
+      # Stopping cluster
       snow::stopCluster(c1)
       future::plan("sequential", gc = TRUE)
+
+    } else {
+      IASDT.R::CatTime("Working sequentially")
+
+      GPP_Knots <- purrr::map(
+        .x = GPP_Dists * 1000,
+        .f = ~IASDT.R::PrepKnots(
+          Coords = DT_xy, MinDist = .x, MinLF = MinLF, MaxLF = MaxLF,
+          SetAlphapw = SetAlphapw, AlphapwPar = AlphapwPar)) %>%
+        stats::setNames(paste0("GPP_", GPP_Dists))
     }
 
+    ## Plotting knot location ----
+    if (GPP_Plot) {
+      IASDT.R::CatTime("Plotting GPP knots", Level = 1)
+
+      KnotExt <- rbind(
+        as.matrix(purrr::map_dfr(GPP_Knots, ~.x$sKnot)), as.matrix(DT_xy)) %>%
+        as.data.frame() %>%
+        stats::setNames(c("x", "y")) %>%
+        sf::st_as_sf(coords = c("x", "y"), crs = 3035) %>%
+        sf::st_buffer(10000) %>%
+        sf::st_bbox()
+      AspectRatio <- (KnotExt[3] - KnotExt[1]) / (KnotExt[4] - KnotExt[2])
+
+      GridR <- terra::unwrap(IASDT.R::LoadAs(Path_GridR))
+
+      GridR <- sf::st_as_sf(
+        x = data.frame(DT_xy), coords = c("x", "y"), crs = 3035) %>%
+        terra::rasterize(GridR) %>%
+        terra::trim() %>%
+        stats::setNames("GridR")
+
+      EU_Bound <- IASDT.R::LoadAs(EU_Bound) %>%
+        magrittr::extract2("Bound_sf_Eur_s") %>%
+        magrittr::extract2("L_03") %>%
+        sf::st_crop(KnotExt) %>%
+        suppressWarnings()
+
+      Knots_Plots <- purrr::map(
+        .x = GPP_Dists,
+        .f = ~{
+
+          Knot_sf <- GPP_Knots[[paste0("GPP_", .x)]]$sKnot %>%
+            sf::st_as_sf(coords = c("Var1", "Var2"), crs = 3035)
+
+          NKnots <- nrow(GPP_Knots[[paste0("GPP_", .x)]]$sKnot) %>%
+            formatC(format = "d", big.mark = ",")
+
+          Plot <- ggplot2::ggplot() +
+            tidyterra::geom_spatraster(data = GridR) +
+            ggplot2::geom_sf(
+              data = EU_Bound, fill = "transparent", colour = "darkgrey",
+              linewidth = 1.5) +
+            ggplot2::geom_sf(
+              data = Knot_sf, colour = "black", shape = 19,
+              stroke = 1.75, size = dplyr::if_else(.x < 50, 1.5, 3)) +
+            ggplot2::scale_x_continuous(
+              limits = sf::st_bbox(EU_Bound)[c(1, 3)], expand = c(0, 0)) +
+            ggplot2::scale_y_continuous(
+              limits = sf::st_bbox(EU_Bound)[c(2, 4)], expand = c(0, 0)) +
+            ggplot2::labs(
+              title = "GPP knots",
+              subtitle = paste0(
+                "Minimum distance between knots and between knots and grid ",
+                "cells is ", .x, " km (", NKnots, " knots)")) +
+            ggplot2::scale_fill_continuous(na.value = "transparent") +
+            ggplot2::theme_void() +
+            ggplot2::theme(
+              plot.margin = ggplot2::margin(0, 0, 0, 0, "cm"),
+              plot.title = ggplot2::element_text(
+                size = 50, face = "bold", color = "blue"),
+              plot.subtitle = ggplot2::element_text(
+                size = 35, color = "darkgrey"),
+              legend.position = "none")
+
+          return(Plot)
+        })
+
+      # Using ggplot2::ggsave directly does not show non-ascii characters
+      # correctly
+      grDevices::pdf(
+        file = file.path(Path_Model, "knot_Locations.pdf"),
+        width = 25 * AspectRatio, height = 25)
+      invisible(purrr::map(Knots_Plots, print))
+      grDevices::dev.off()
+    }
+
+    if (GPP_Save) {
+      IASDT.R::CatTime("Saving GPP knots data", Level = 1)
+      save(GPP_Knots, file = file.path(Path_Model, "GPP_Knots.RData"))
+    }
   } else {
-    IASDT.R::CatTime("Working sequentially")
 
-    GPP_Knots <- purrr::map(
-      .x = GPP_Dists * 1000,
-      .f = ~IASDT.R::PrepKnots(
-        Coords = DT_xy, MinDist = .x, MinLF = MinLF, MaxLF = MaxLF)) %>%
-      stats::setNames(paste0("GPP_", GPP_Dists))
-  }
-
-  ## Plotting knot location ----
-  if (GPP_Plot) {
-    IASDT.R::CatTime("Plotting GPP knots", Level = 1)
-
-    KnotExt <- rbind(
-      as.matrix(purrr::map_dfr(GPP_Knots, ~.x$sKnot)), as.matrix(DT_xy)) %>%
-      as.data.frame() %>%
-      stats::setNames(c("x", "y")) %>%
-      sf::st_as_sf(coords = c("x", "y"), crs = 3035) %>%
-      sf::st_buffer(10000) %>%
-      sf::st_bbox()
-    AspectRatio <- (KnotExt[3] - KnotExt[1]) / (KnotExt[4] - KnotExt[2])
-
-    GridR <- terra::unwrap(IASDT.R::LoadAs(Path_GridR))
-
-    GridR <- sf::st_as_sf(
-      x = data.frame(DT_xy), coords = c("x", "y"), crs = 3035) %>%
-      terra::rasterize(GridR) %>%
-      terra::trim() %>%
-      stats::setNames("GridR")
-
-    EU_Bound <- IASDT.R::LoadAs(EU_Bound) %>%
-      magrittr::extract2("Bound_sf_Eur_s") %>%
-      magrittr::extract2("L_03") %>%
-      sf::st_crop(KnotExt) %>%
-      suppressWarnings()
-
-    Knots_Plots <- purrr::map(
-      .x = GPP_Dists,
-      .f = ~{
-
-        Knot_sf <- GPP_Knots[[paste0("GPP_", .x)]]$sKnot %>%
-          sf::st_as_sf(coords = c("Var1", "Var2"), crs = 3035)
-
-        NKnots <- nrow(GPP_Knots[[paste0("GPP_", .x)]]$sKnot) %>%
-          formatC(format = "d", big.mark = ",")
-
-        Plot <- ggplot2::ggplot() +
-          tidyterra::geom_spatraster(data = GridR) +
-          ggplot2::geom_sf(
-            data = EU_Bound, fill = "transparent", colour = "darkgrey",
-            linewidth = 1.5) +
-          ggplot2::geom_sf(
-            data = Knot_sf, colour = "black", shape = 19,
-            stroke = 1.75, size = dplyr::if_else(.x < 50, 1.5, 3)) +
-          ggplot2::scale_x_continuous(
-            limits = sf::st_bbox(EU_Bound)[c(1, 3)], expand = c(0, 0)) +
-          ggplot2::scale_y_continuous(
-            limits = sf::st_bbox(EU_Bound)[c(2, 4)], expand = c(0, 0)) +
-          ggplot2::labs(
-            title = "GPP knots",
-            subtitle = paste0(
-              "Minimum distance between knots and between knots and grid ",
-              "cells is ", .x, " km (", NKnots, " knots)")) +
-          ggplot2::scale_fill_continuous(na.value = "transparent") +
-          ggplot2::theme_void() +
-          ggplot2::theme(
-            plot.margin = ggplot2::margin(0, 0, 0, 0, "cm"),
-            plot.title = ggplot2::element_text(
-              size = 50, face = "bold", color = "blue"),
-            plot.subtitle = ggplot2::element_text(
-              size = 35, color = "darkgrey"),
-            legend.position = "none")
-
-        return(Plot)
-      })
-
-    # Using ggplot2::ggsave directly does not show non-ascii characters
-    # correctly
-    grDevices::pdf(
-      file = file.path(Path_Model, "knot_Locations.pdf"),
-      width = 25 * AspectRatio, height = 25)
-    invisible(purrr::map(Knots_Plots, print))
-    grDevices::dev.off()
-  }
-
-  if (GPP_Save) {
-    IASDT.R::CatTime("Saving GPP knots data", Level = 1)
-    save(GPP_Knots, file = file.path(Path_Model, "GPP_Knots.RData"))
+    IASDT.R::CatTime("Models will be fitted without spatial random effect")
+    GPP_Knots <- studyDesign <- DT_xy <- NULL
   }
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -802,58 +828,111 @@ Mod_Prep4HPC <- function(
 
   IASDT.R::CatTime("Define the initial models")
 
-  ModelVariants <- tidyr::expand_grid(M_thin = thin, M_samples = samples) %>%
-    dplyr::mutate(M_transient = M_thin * transientFactor)
+  if (GPP) {
 
-  Model_Info <- tibble::tibble(rL = GPP_Dists, rL2 = GPP_Knots) %>%
-    # Combinations of rL and Tree
-    tidyr::expand_grid(Tree = Tree) %>%
-    dplyr::mutate(
-      # Model name
-      M_Name_init = paste0("GPP", rL, "_", Tree),
-      # Save initial models
-      M_Init_Path = purrr::map2_chr(
-        .x = M_Name_init, .y = rL2,
-        .f = ~{
+    ModelVariants <- tidyr::expand_grid(M_thin = thin, M_samples = samples) %>%
+      dplyr::mutate(M_transient = M_thin * transientFactor)
 
-          PathOut <- file.path(Path_Model, paste0("InitMod_", .x, ".RData"))
+    Model_Info <- tibble::tibble(rL = GPP_Dists, rL2 = GPP_Knots) %>%
+      # Combinations of rL and Tree
+      tidyr::expand_grid(Tree = Tree) %>%
+      dplyr::mutate(
+        # Model name
+        M_Name_init = paste0("GPP", rL, "_", Tree),
+        # Save initial models
+        M_Init_Path = purrr::map2_chr(
+          .x = M_Name_init, .y = rL2,
+          .f = ~{
 
-          if (!file.exists(PathOut)) {
-            if (stringr::str_detect(.x, "_Tree$")) {
-              Tree <- plant.tree
-            } else {
-              Tree <- NULL
+            PathOut <- file.path(Path_Model, paste0("InitMod_", .x, ".RData"))
+
+            if (!file.exists(PathOut)) {
+              if (stringr::str_detect(.x, "_Tree$")) {
+                Tree <- plant.tree
+              } else {
+                Tree <- NULL
+              }
+
+              InitModel <- Hmsc::Hmsc(
+                Y = DT_y, XFormula = Form_x, XData = DT_x, distr = "probit",
+                studyDesign = studyDesign, ranLevels = list("sample" = .y),
+                phyloTree = Tree)
+
+              IASDT.R::SaveAs(
+                InObj = InitModel, OutObj = paste0("InitMod_", .x),
+                OutPath = PathOut)
             }
 
-            InitModel <- Hmsc::Hmsc(
-              Y = DT_y, XFormula = Form_x, XData = DT_x, distr = "probit",
-              studyDesign = studyDesign, ranLevels = list("sample" = .y),
-              phyloTree = Tree)
+            return(PathOut)
+          }),
+        rL2 = NULL) %>%
+      # add all combinations of thinning, number of samples and transient
+      tidyr::expand_grid(ModelVariants) %>%
+      dplyr::mutate(
+        M_HPC = purrr::pmap(
+          .l = list(M_Name_init, M_thin, M_samples),
+          .f = function(M_Name_init, M_thin, M_samples) {
 
-            IASDT.R::SaveAs(
-              InObj = InitModel, OutObj = paste0("InitMod_", .x),
-              OutPath = PathOut)
-          }
+            M_Name_Fit <- paste0(M_Name_init, "_samp", M_samples, "_th", M_thin)
 
-          return(PathOut)
-        }),
-      rL2 = NULL) %>%
-    # add all combinations of thinning, number of samples and transient
-    tidyr::expand_grid(ModelVariants) %>%
-    dplyr::mutate(
-      M_HPC = purrr::pmap(
-        .l = list(M_Name_init, M_thin, M_samples),
-        .f = function(M_Name_init, M_thin, M_samples) {
+            M4HPC_Path <- file.path(
+              Path_Model, "InitMod4HPC", paste0("InitMod_", M_Name_Fit, ".rds"))
 
-          M_Name_Fit <- paste0(M_Name_init, "_samp", M_samples, "_th", M_thin)
+            return(list(M_Name_Fit = M_Name_Fit, M4HPC_Path = M4HPC_Path))
 
-          M4HPC_Path <- file.path(
-            Path_Model, "InitMod4HPC", paste0("InitMod_", M_Name_Fit, ".rds"))
+          })) %>%
+      tidyr::unnest_wider("M_HPC")
+  } else {
 
-          return(list(M_Name_Fit = M_Name_Fit, M4HPC_Path = M4HPC_Path))
+    # Non-spatial model
+    Model_Info <- tidyr::expand_grid(M_thin = thin, M_samples = samples) %>%
+      dplyr::mutate(M_transient = M_thin * transientFactor) %>%
+      tidyr::expand_grid(Tree = Tree) %>%
+      dplyr::mutate(
+        # Model name
+        M_Name_init = paste0("NonSpatial_", Tree),
+        # Save initial models
+        M_Init_Path = purrr::map_chr(
+          .x = M_Name_init,
+          .f = ~{
+            PathOut <- file.path(Path_Model, paste0("InitMod_", .x, ".RData"))
 
-        })) %>%
-    tidyr::unnest_wider("M_HPC")
+            InitModExists <- file.exists(PathOut) &&
+              IASDT.R::CheckRData(PathOut)
+
+            if (isFALSE(InitModExists)) {
+              if (stringr::str_detect(.x, "_Tree$")) {
+                Tree <- plant.tree
+              } else {
+                Tree <- NULL
+              }
+
+              InitModel <- Hmsc::Hmsc(
+                Y = DT_y, XFormula = Form_x, XData = DT_x,
+                distr = "probit", phyloTree = Tree)
+
+              IASDT.R::SaveAs(
+                InObj = InitModel, OutObj = paste0("InitMod_", .x),
+                OutPath = PathOut)
+            }
+            return(PathOut)
+          }),
+
+        M_HPC = purrr::pmap(
+          .l = list(M_Name_init, M_thin, M_samples),
+          .f = function(M_Name_init, M_thin, M_samples) {
+
+            M_Name_Fit <- paste0(M_Name_init, "_samp", M_samples, "_th", M_thin)
+
+            M4HPC_Path <- file.path(
+              Path_Model, "InitMod4HPC",
+              paste0("InitMod_", M_Name_Fit, ".rds"))
+
+            return(list(M_Name_Fit = M_Name_Fit, M4HPC_Path = M4HPC_Path))
+
+          })) %>%
+      tidyr::unnest_wider("M_HPC")
+  }
 
   # # |||||||||||||||||||||||||||||||||||
   # # Prepare and save unfitted models -----
@@ -925,8 +1004,7 @@ Mod_Prep4HPC <- function(
 
     Model_Process <- future.apply::future_lapply(
       X = seq_len(nrow(Model_Info)),
-      FUN = InitFitFun,
-      future.scheduling = Inf, future.seed = TRUE,
+      FUN = InitFitFun, future.scheduling = Inf, future.seed = TRUE,
       future.globals = c(
         "InitFitFun", "Model_Info", "OverwriteRDS",
         "verbose", "NChains", "ToJSON"),

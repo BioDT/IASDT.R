@@ -16,6 +16,7 @@
 #' @param NCores Integer specifying the number of parallel cores for
 #'   parallelization. Default: 8 cores.
 #' @name Mod_Evaluate
+#' @author Ahmed El-Gabbas
 #' @export
 
 Mod_Evaluate <- function(Path_CV = NULL, predictEtaMean = TRUE, NCores = 8) {
@@ -74,7 +75,7 @@ Mod_Evaluate <- function(Path_CV = NULL, predictEtaMean = TRUE, NCores = 8) {
     dplyr::mutate(
       Pred = purrr::pmap(
         .l = list(
-          Model_Name, Path_Pred, Path_Model_Full, 
+          Model_Name, Path_Pred, Path_Model_Full,
           Path_ModFitted, val, valCoords),
         .f = function(Model_Name, Path_Pred, Path_Model_Full,
                       Path_ModFitted, val, valCoords) {

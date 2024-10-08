@@ -10,11 +10,15 @@ Mod_Prep4HPC(
   MinEffortsSp = 100L,
   PresPerVar = 10L,
   EnvFile = ".env",
+  GPP = TRUE,
   GPP_Dists = NULL,
   GPP_Save = TRUE,
   GPP_Plot = TRUE,
   MinLF = NULL,
   MaxLF = NULL,
+  SetAlphapw = TRUE,
+  AlphapwPar = list(N_samples = 200, ProbNorm = 0.8, tr_mean = 200, tr_sd = 50, tr_min =
+    5, tr_max = 400, Seed = NULL),
   BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
   EffortsAsPredictor = FALSE,
   RoadRailAsPredictor = TRUE,
@@ -47,6 +51,7 @@ Mod_Prep4HPC(
   JobName = NULL,
   Path_Hmsc = NULL,
   Path_Python = NULL,
+  CheckPython = FALSE,
   ToJSON = FALSE,
   Precision = 64,
   ...
@@ -76,7 +81,11 @@ Defaults to \code{10}.}
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
 
-\item{GPP_Dists}{Integer specifying the distance in kilometers for both the
+\item{GPP}{Logical indicating whether to fit spatial random effect using
+Gaussian Predictive Process. Defaults to \code{TRUE}. If \code{FALSE}, non-spatial
+models will be fitted.}
+
+\item{GPP_Dists}{Integer specifying the distance in \emph{kilometers} for both the
 distance between knots and the minimum distance of a knot to the nearest
 data point. The GPP knots are prepared by the \link{PrepKnots}
 function. The same value will be used for the \code{knotDist} and
@@ -92,6 +101,12 @@ sampling units and the knots in a pdf file. Default: \code{TRUE}.}
 be used. Both default to \code{NULL} which means that the number of latent
 factors will be estimated from the data. If either is provided, the
 respective values will be used as arguments to \link[Hmsc:setPriors]{Hmsc::setPriors}.}
+
+\item{SetAlphapw}{Logical; whether to set the prior for alphapw using
+\link{PriorAlpha}. Default: \code{TRUE}.}
+
+\item{AlphapwPar}{List; parameters for generating prior distribution using
+\code{PriorAlpha} function. Default values are as follows:  \code{list(n_samples = 300, prob_norm = 0.8, tr_mean = 200, tr_sd = 50, tr_min = 5, tr_max = 400, seed = NULL)}. See \link{PriorAlpha} for more details.}
 
 \item{BioVars}{Character vector. Specifies the Bioclimatic variables to be
 included from CHELSA. Defaults to 6 ecologically meaningful and less
@@ -207,11 +222,15 @@ provided as the \code{Path_Hmsc} argument of the \link{Mod_SLURM} function.}
 
 \item{Path_Python}{String specifying the path for Python.}
 
+\item{CheckPython}{Logical indicating whether to check if the Python
+executable exists. Only valid if FromHPC = \code{FALSE}.}
+
 \item{ToJSON}{Logical indicating whether to convert unfitted models to JSON
 before saving to RDS file. Default: \code{FALSE}.}
 
 \item{Precision}{Integer, either of 32 (default; \verb{--fp 32}) or 64 for the
-precision mode used for sampling while fitting \code{Hmsc-HPC} models (\verb{--fp 64} argument). In \code{Hmsc-HPC}, the default value is 64. This is still under
+precision mode used for sampling while fitting \code{Hmsc-HPC} models (\verb{--fp 64}
+argument). In \code{Hmsc-HPC}, the default value is 64. This is still under
 testing.}
 
 \item{...}{Additional parameters provided to the \link{Mod_SLURM}
@@ -227,8 +246,8 @@ involves data preparation, define spatial block cross-validation folds, model
 initialization, GPP knots, and generating commands for running models on HPC.
 It supports parallel processing, options to include/not include phylogenetic
 tree data. The models will be fitted using Gaussian Predictive Process (GPP;
-see \href{https://doi.org/10.1002/ecy.2929}{Tikhonov et al.} for more details)
-via the \href{https://doi.org/10.1371/journal.pcbi.1011914}{Hmsc-HPC} extension.
+see \href{https://doi.org/10.1002/ecy.2929}{Tikhonov et al.} for more details) via
+the \href{https://doi.org/10.1371/journal.pcbi.1011914}{Hmsc-HPC} extension.
 }
 \details{
 The function provides options for:

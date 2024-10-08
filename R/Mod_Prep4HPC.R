@@ -145,8 +145,8 @@ Mod_Prep4HPC <- function(
     GPP_Plot = TRUE, MinLF = NULL, MaxLF = NULL,
     SetAlphapw = TRUE,
     AlphapwPar = list(
-      N_samples = 200, ProbNorm = 0.8, tr_mean = 200,
-      tr_sd = 50, tr_min = 5, tr_max = 400, Seed = NULL),
+      n_samples = 300, prob_norm = 0.8, tr_mean = 200, tr_sd = 50,
+      tr_min = 5, tr_max = 400, seed = NULL),
     BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
     EffortsAsPredictor = FALSE, RoadRailAsPredictor = TRUE,
     HabAsPredictor = TRUE, NspPerGrid = 1L, ExcludeCult = TRUE,

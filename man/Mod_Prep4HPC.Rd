@@ -30,6 +30,7 @@ Mod_Prep4HPC(
   CV_NR = 2L,
   CV_NC = 2L,
   CV_Plot = TRUE,
+  CV_SAC = FALSE,
   PhyloTree = TRUE,
   NoPhyloTree = TRUE,
   SaveData = TRUE,
@@ -147,12 +148,15 @@ directions).}
 
 \item{CV_NR, CV_NC}{Integer, the number of rows and columns used in the
 \code{CV_Large} cross-validation strategy (see below), in which the study area
-is divided into large blocks given the provided \code{CV_NR} and \code{CV_NC}
-values. Both default to 2 which means to split the study area into four
-large blocks at the median latitude and longitude.}
+is divided into large blocks given the provided \code{CV_NR} and \code{CV_NC} values.
+Both default to 2 which means to split the study area into four large
+blocks at the median latitude and longitude.}
 
 \item{CV_Plot}{Logical. Indicating whether to plot the block cross-validation
 folds.}
+
+\item{CV_SAC}{Logical. Indicating whether to use the spatial autocorrelation
+to determine the block size. Defaults to \code{FALSE},}
 
 \item{PhyloTree, NoPhyloTree}{Logical indicating whether to fit model variants
 with or without phylogenetic trees, respectively. The default of both

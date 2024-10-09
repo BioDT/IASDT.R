@@ -19,7 +19,7 @@
 #' @param GpusPerNode Integer. The value for the `#SBATCH --gpus-per-node=`
 #'   SLURM argument. Default: 1.
 #' @param MemPerCpu String. Memory per CPU allocation for the SLURM job.
-#'   Example: `32G` for 32 gigabytes. Defaults to `NULL`. If not provided, the 
+#'   Example: `32G` for 32 gigabytes. Defaults to `NULL`. If not provided, the
 #'   function will throw an error.
 #' @param Time String. Duration for which the job should run. Example:
 #'   `01:00:00` for one hour. If not provided, the function will throw an error.
@@ -235,6 +235,9 @@ Mod_SLURM <- function(
 
       # close connection to the file
       close(f)
+
+      # Print the command to submit the job
+      cat(paste0("\t sbatch ", file.path(Path_Model, OutFile)))
   })
 
   return(invisible(NULL))

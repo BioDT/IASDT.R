@@ -5,9 +5,8 @@
 #' Prepare spatial-block cross-validation folds for spatial analysis
 #'
 #' This function assign modelling input data into spatial-block cross-validation
-#' folds. The function uses [blockCV::cv_spatial] to assign grid cells to
-#' cross-validation folds using three strategies (see below). The function is
-#' planned to be used inside the [IASDT.R::Mod_Prep4HPC] function.
+#' folds using three strategies (see below) using [blockCV::cv_spatial]. The
+#' function is planned to be used inside the [IASDT.R::Mod_Prep4HPC] function.
 #' @param DT A data frame or tibble containing the input dataset. This data
 #'   frame should include two columns for `x` and `y` coordinates as long as
 #'   other columns matching the names of predictors listed in `XVars` argument.
@@ -21,9 +20,11 @@
 #' @param CV_NFolds Number of cross-validation folds. Default: 4.
 #' @param CV_NR,CV_NC Integer, the number of rows and columns used in the
 #'   `CV_Large` cross-validation strategy (see below), in which the study area
-#'   is divided into large blocks given the provided `CV_NR` and `CV_NC`
-#'   values. Both default to 2 which means to split the study area into four
-#'   large blocks at the median latitude and longitude.
+#'   is divided into large blocks given the provided `CV_NR` and `CV_NC` values.
+#'   Both default to 2 which means to split the study area into four large
+#'   blocks at the median latitude and longitude.
+#' @param CV_SAC Logical. Indicating whether to use the spatial autocorrelation
+#'   to determine the block size. Defaults to `FALSE`,
 #' @param OutPath String specifying the folder path to save the cross-validation
 #'   results. Default: `NULL`.
 #' @param FromHPC Logical. Indicates whether the function is being run on an HPC
@@ -55,12 +56,13 @@
 #'   the content of the `Grid_10_Land_Crop.RData` file from this path.
 #'   - **`DP_R_EUBound_sf`** (if `FromHPC` = `TRUE`) or
 #'     **`DP_R_EUBound_sf_Local`** (if `FromHPC` = `FALSE`): path for the
-#'     `RData` file containing the country boundaries (`sf` object).
+#'   `RData` file containing the country boundaries (`sf` object).
 #' @export
 
 GetCV <- function(
     DT, EnvFile = ".env", XVars, CV_NFolds = 4, CV_NGrids = 20,
-    CV_NR = 2, CV_NC = 2, OutPath = NULL, FromHPC = TRUE, CV_Plot = TRUE) {
+    CV_NR = 2, CV_NC = 2, CV_SAC = FALSE, OutPath = NULL,
+    FromHPC = TRUE, CV_Plot = TRUE) {
 
   # # |||||||||||||||||||||||||||||||||||
   # # Initial checking -----
@@ -117,10 +119,10 @@ GetCV <- function(
   }
   RefGrid <- terra::unwrap(IASDT.R::LoadAs(Path_Grid))
 
-
   # # |||||||||||||||||||||||||||||||||||
   # # Coordinates as raster -----
   # # |||||||||||||||||||||||||||||||||||
+
   DT_R <- dplyr::select(DT, "x", "y") %>%
     as.matrix() %>%
     terra::rasterize(RefGrid) %>%
@@ -129,12 +131,14 @@ GetCV <- function(
   # # |||||||||||||||||||||||||||||||||||
   # # input data as sf -----
   # # |||||||||||||||||||||||||||||||||||
+
   XY_sf <- dplyr::select(DT, "x", "y") %>%
     sf::st_as_sf(coords = c("x", "y"), crs = 3035)
 
   # # |||||||||||||||||||||||||||||||||||
   # # data as raster stack -----
   # # |||||||||||||||||||||||||||||||||||
+
   DT_R <- dplyr::select(DT, dplyr::all_of(AllVars)) %>%
     sf::st_as_sf(coords = c("x", "y"), crs = 3035) %>%
     terra::rasterize(y = RefGrid, field = names(.)[-length(.)]) %>%
@@ -143,6 +147,7 @@ GetCV <- function(
   # # |||||||||||||||||||||||||||||||||||
   # # 1. CV using large blocks -----
   # # |||||||||||||||||||||||||||||||||||
+
   IASDT.R::CatTime("1. CV_Large", Level = 1)
   CV_Large <- blockCV::cv_spatial(
     x = XY_sf, r = DT_R, hexagon = FALSE, iteration = 1000, k = CV_NFolds,
@@ -151,6 +156,7 @@ GetCV <- function(
   # # |||||||||||||||||||||||||||||||||||
   # # 2. CV based on number of grid cells -----
   # # |||||||||||||||||||||||||||||||||||
+
   IASDT.R::CatTime("2. CV_Dist", Level = 1)
   CV_Dist <- blockCV::cv_spatial(
     x = XY_sf, r = DT_R, hexagon = FALSE, iteration = 1000, k = CV_NFolds,
@@ -160,56 +166,62 @@ GetCV <- function(
   # # |||||||||||||||||||||||||||||||||||
   # # 3. CV based on spatial autocorrelation in predictor raster files -----
   # # |||||||||||||||||||||||||||||||||||
-  IASDT.R::CatTime("3. CV_SAC", Level = 1)
 
-  # Measure spatial autocorrelation in predictor raster files
-  IASDT.R::CatTime("Calculating median SAC range", Level = 2)
-  CV_SAC_Range <- blockCV::cv_spatial_autocor(
-    r = DT_R, num_sample = min(10000, nrow(DT)), plot = FALSE,
-    progress = FALSE)
+  if (CV_SAC) {
 
-  # If median spatial cross-validation is very large, skip CV_SAC option. This
-  # to avoid the following error if the estimated SAC range is very large that
-  # disallow the assignation of grid cells into the number of CV folds in the
-  # `CV_NFolds` parameter:
-  # error in `blockCV::cv_spatial()`: 'k' is bigger than the number of spatial
-  # blocks: 1.
+    IASDT.R::CatTime("3. CV_SAC", Level = 1)
 
+    # Measure spatial autocorrelation in predictor raster files
+    IASDT.R::CatTime("Calculating median SAC range", Level = 2)
+    CV_SAC_Range <- blockCV::cv_spatial_autocor(
+      r = DT_R, num_sample = min(10000, nrow(DT)), plot = FALSE,
+      progress = FALSE)
 
-  # Size of the large spatial blocks that split the study area into four large
-  # blocks; the same as `CV_Large` method
-  MinDist <- min(
-    (terra::nrow(RefGrid) * terra::res(RefGrid)[1] / 2),
-    (terra::ncol(RefGrid) * terra::res(RefGrid)[1] / 2))
+    # If median spatial cross-validation is very large, skip CV_SAC option. This
+    # to avoid the following error if the estimated SAC range is very large that
+    # disallow the assignation of grid cells into the number of CV folds in the
+    # `CV_NFolds` parameter:
+    # error in `blockCV::cv_spatial()`: 'k' is bigger than the number of spatial
+    # blocks: 1.
 
-  if (CV_SAC_Range$range > MinDist) {
-    IASDT.R::CatTime(
-      paste0(
-        "`CV_SAC` was NOT implemented; median SAC: ",
-        round(CV_SAC_Range$range / 1000, 2), "km"), Level = 2)
-    CV_SAC <- NULL
+    # Size of the large spatial blocks that split the study area into four large
+    # blocks; the same as `CV_Large` method
+    MinDist <- min(
+      (terra::nrow(RefGrid) * terra::res(RefGrid)[1] / 2),
+      (terra::ncol(RefGrid) * terra::res(RefGrid)[1] / 2))
 
-    # Check `folds_ids` exists in each of the cross-validation strategies
-    if (!("folds_ids" %in% names(CV_Dist) &&
-          "folds_ids" %in% names(CV_Large))) {
-      stop(
-        "Cross-validation results do not contain 'folds_ids'.",
-        call. = FALSE)
+    if (CV_SAC_Range$range > MinDist) {
+      IASDT.R::CatTime(
+        paste0(
+          "`CV_SAC` was NOT implemented; median SAC: ",
+          round(CV_SAC_Range$range / 1000, 2), "km"), Level = 2)
+      CV_SAC <- NULL
+
+      # Check `folds_ids` exists in each of the cross-validation strategies
+      if (!("folds_ids" %in% names(CV_Dist) &&
+            "folds_ids" %in% names(CV_Large))) {
+        stop(
+          "Cross-validation results do not contain 'folds_ids'.",
+          call. = FALSE)
+      }
+    } else {
+      # CV based on Spatial autocorrelation
+      CV_SAC <- blockCV::cv_spatial(
+        x = XY_sf, r = DT_R, hexagon = FALSE, iteration = 1000, k = CV_NFolds,
+        size = CV_SAC_Range$range, plot = FALSE, progress = FALSE,
+        report = FALSE)
+
+      # Check `folds_ids` exists in each of the cross-validation strategies
+      if (!(("folds_ids" %in% names(CV_SAC)) &&
+            ("folds_ids" %in% names(CV_Dist)) &&
+            ("folds_ids" %in% names(CV_Large)))) {
+        stop(
+          "Cross-validation results do not contain 'folds_ids'.",
+          call. = FALSE)
+      }
     }
   } else {
-    # CV based on Spatial autocorrelation
-    CV_SAC <- blockCV::cv_spatial(
-      x = XY_sf, r = DT_R, hexagon = FALSE, iteration = 1000, k = CV_NFolds,
-      size = CV_SAC_Range$range, plot = FALSE, progress = FALSE,
-      report = FALSE)
-
-    # Check `folds_ids` exists in each of the cross-validation strategies
-    if (!(("folds_ids" %in% names(CV_SAC)) &&
-          ("folds_ids" %in% names(CV_Dist)) &&
-          ("folds_ids" %in% names(CV_Large)))) {
-      stop(
-        "Cross-validation results do not contain 'folds_ids'.", call. = FALSE)
-    }
+    CV_SAC <- NULL
   }
 
   rm(XY_sf)
@@ -217,6 +229,7 @@ GetCV <- function(
   # # |||||||||||||||||||||||||||||||||||
   # # Save cross-validation results as RData -----
   # # |||||||||||||||||||||||||||||||||||
+
   IASDT.R::CatTime("Save cross-validation results as RData", Level = 1)
   CV_data <- list(
     CV_NGrids = CV_NGrids, CV_NR = CV_NR, CV_NC = CV_NC,
@@ -228,6 +241,7 @@ GetCV <- function(
   # # |||||||||||||||||||||||||||||||||||
   # # Plot cross-validation folds -----
   # # |||||||||||||||||||||||||||||||||||
+
   if (CV_Plot) {
 
     IASDT.R::CatTime("Plot cross-validation folds", Level = 1)
@@ -301,15 +315,13 @@ GetCV <- function(
       width = 25 * (AspectRatio), height = 25)
     invisible(purrr::map(CV_Plots, print))
     grDevices::dev.off()
-
   }
 
   # # |||||||||||||||||||||||||||||||||||
   # # Add cross-validation columns to the data -----
   # # |||||||||||||||||||||||||||||||||||
-  if (is.null(CV_SAC)) {
-    DT$CV_SAC <- NA_integer_
-  } else {
+
+  if (!is.null(CV_SAC)) {
     DT$CV_SAC <- magrittr::extract2(CV_SAC, "folds_ids")
   }
   DT$CV_Dist <- magrittr::extract2(CV_Dist, "folds_ids")

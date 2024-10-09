@@ -151,6 +151,7 @@ Mod_Prep4HPC <- function(
     EffortsAsPredictor = FALSE, RoadRailAsPredictor = TRUE,
     HabAsPredictor = TRUE, NspPerGrid = 1L, ExcludeCult = TRUE,
     CV_NFolds = 4L, CV_NGrids = 20L, CV_NR = 2L, CV_NC = 2L, CV_Plot = TRUE,
+    CV_SAC = FALSE,
     PhyloTree = TRUE, NoPhyloTree = TRUE, SaveData = TRUE,
     OverwriteRDS = TRUE, NCores = 8L, NChains = 4L,
     thin = NULL, samples = 1000L, transientFactor = 300L, verbose = 200L,
@@ -273,24 +274,6 @@ Mod_Prep4HPC <- function(
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
-  if (GPP) {
-    if (is.null(GPP_Dists)) {
-      stop("`GPP_Dists` can not be empty", call. = FALSE)
-    }
-    if (!all(is.numeric(GPP_Dists)) || any(GPP_Dists <= 0)) {
-      stop("`GPP_Dists` should be numeric and greater than zero", call. = FALSE)
-    }
-
-    if (GPP_Plot) {
-      Path_GridR <- file.path(Path_Grid, "Grid_10_Land_Crop.RData")
-      if (!file.exists(Path_GridR)) {
-        stop(
-          paste0("Path for the Europe boundaries does not exist: ", Path_GridR),
-          call. = FALSE)
-      }
-    }
-  }
-
   # # ..................................................................... ###
 
   # # |||||||||||||||||||||||||||||||||||
@@ -306,22 +289,25 @@ Mod_Prep4HPC <- function(
     stats::setNames(AllArgs)
 
   CharArgs <- c(
-    "Hab_Abb", "Path_Model", "Path_Hmsc", "Path_Python")
+    "Hab_Abb", "Path_Model", "Path_Hmsc", "Path_Python", "EnvFile")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = CharArgs, Type = "character")
 
   LogicArgs <- c(
-    "GPP_Save", "GPP_Plot", "PhyloTree", "NoPhyloTree",
-    "VerboseProgress", "ToJSON")
+    "GPP_Save", "GPP_Plot", "PhyloTree", "NoPhyloTree", "SaveData",
+    "SkipFitted", "VerboseProgress", "ToJSON", "CV_SAC", "CheckPython",
+    "OverwriteRDS", "SetAlphapw", "PrepSLURM", "ExcludeCult", "GPP",
+    "EffortsAsPredictor", "RoadRailAsPredictor", "HabAsPredictor")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = LogicArgs, Type = "logical")
 
   NumericArgs <- c(
-    "NCores", "NChains", "thin", "samples", "verbose",
+    "NCores", "NChains", "thin", "samples", "verbose", "NumArrayJobs",
     "PresPerVar", "MinEffortsSp", "transientFactor", "CV_NFolds", "CV_NGrids",
-    "CV_NR", "CV_NC")
+    "CV_NR", "CV_NC", "Precision")
   if (GPP) {
     NumericArgs <- c(NumericArgs, "GPP_Dists")
   }
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = NumericArgs, Type = "numeric")
+
 
   if (PrepSLURM) {
     IASDT.R::CheckArgs(
@@ -343,6 +329,26 @@ Mod_Prep4HPC <- function(
   }
 
   rm(AllArgs, CharArgs, LogicArgs, NumericArgs)
+
+  # # ..................................................................... ###
+
+  if (GPP) {
+    if (is.null(GPP_Dists)) {
+      stop("`GPP_Dists` can not be empty", call. = FALSE)
+    }
+    if (!all(is.numeric(GPP_Dists)) || any(GPP_Dists <= 0)) {
+      stop("`GPP_Dists` should be numeric and greater than zero", call. = FALSE)
+    }
+
+    if (GPP_Plot) {
+      Path_GridR <- file.path(Path_Grid, "Grid_10_Land_Crop.RData")
+      if (!file.exists(Path_GridR)) {
+        stop(
+          paste0("Path for the Europe boundaries does not exist: ", Path_GridR),
+          call. = FALSE)
+      }
+    }
+  }
 
   # # ..................................................................... ###
 
@@ -591,7 +597,8 @@ Mod_Prep4HPC <- function(
   DT_All <- IASDT.R::GetCV(
     DT = DT_All, EnvFile = EnvFile, XVars = XVars,
     CV_NFolds = CV_NFolds, FromHPC = FromHPC, CV_NGrids = CV_NGrids,
-    CV_NR = CV_NR, CV_NC = CV_NC, OutPath = Path_Model, CV_Plot = CV_Plot)
+    CV_NR = CV_NR, CV_NC = CV_NC, OutPath = Path_Model, CV_Plot = CV_Plot,
+    CV_SAC = CV_SAC)
 
   # Save cross-validation data
   DT_CV <- DT_All %>%

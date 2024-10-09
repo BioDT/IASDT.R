@@ -12,6 +12,7 @@ GetCV(
   CV_NGrids = 20,
   CV_NR = 2,
   CV_NC = 2,
+  CV_SAC = FALSE,
   OutPath = NULL,
   FromHPC = TRUE,
   CV_Plot = TRUE
@@ -36,9 +37,12 @@ directions).}
 
 \item{CV_NR, CV_NC}{Integer, the number of rows and columns used in the
 \code{CV_Large} cross-validation strategy (see below), in which the study area
-is divided into large blocks given the provided \code{CV_NR} and \code{CV_NC}
-values. Both default to 2 which means to split the study area into four
-large blocks at the median latitude and longitude.}
+is divided into large blocks given the provided \code{CV_NR} and \code{CV_NC} values.
+Both default to 2 which means to split the study area into four large
+blocks at the median latitude and longitude.}
+
+\item{CV_SAC}{Logical. Indicating whether to use the spatial autocorrelation
+to determine the block size. Defaults to \code{FALSE},}
 
 \item{OutPath}{String specifying the folder path to save the cross-validation
 results. Default: \code{NULL}.}
@@ -69,9 +73,8 @@ coordinates.
 }
 \description{
 This function assign modelling input data into spatial-block cross-validation
-folds. The function uses \link[blockCV:cv_spatial]{blockCV::cv_spatial} to assign grid cells to
-cross-validation folds using three strategies (see below). The function is
-planned to be used inside the \link{Mod_Prep4HPC} function.
+folds using three strategies (see below) using \link[blockCV:cv_spatial]{blockCV::cv_spatial}. The
+function is planned to be used inside the \link{Mod_Prep4HPC} function.
 }
 \details{
 The function reads the following environment variable:

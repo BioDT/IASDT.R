@@ -22,10 +22,12 @@
 #'   respective values will be used as arguments to [Hmsc::setPriors].
 #' @param SetAlphapw Logical; whether to set the prior for alphapw using
 #'   [PriorAlpha]. Default: `TRUE`.
-#' @param AlphapwPar List; parameters for generating prior distribution using
-#'   `PriorAlpha` function. Default values are as follows:  `list(n_samples =
-#'   300, prob_norm = 0.8, tr_mean = 200, tr_sd = 50, tr_min = 5, tr_max = 400,
-#'   seed = NULL)`. See [PriorAlpha] for more details.
+#' @param AlphapwPar List; parameters for generating prior distribution. If the
+#'   list item `Alphapw` is provided, it will be used as the prior for alphapw.
+#'   Otherwise, the prior will be generated using `PriorAlpha` function. Default
+#'   values are as follows:  `list(n_samples = 300, prob_norm = 0.8, tr_mean =
+#'   200, tr_sd = 50, tr_min = 5, tr_max = 400, seed = NULL, Alphapw = NULL)`.
+#'   See [PriorAlpha] for more details.
 #' @name PrepKnots
 #' @author Ahmed El-Gabbas
 #' @return An object suitable for specifying the random level in HMSC GPP
@@ -37,7 +39,7 @@ PrepKnots <- function(
     MinLF = NULL, MaxLF = NULL, SetAlphapw = TRUE,
     AlphapwPar = list(
       n_samples = 300, prob_norm = 0.8, tr_mean = 200, tr_sd = 50, tr_min = 5,
-      tr_max = 400, seed = NULL)) {
+      tr_max = 400, seed = NULL, Alphapw = NULL)) {
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -47,28 +49,66 @@ PrepKnots <- function(
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  # Validate AlphapwPar prior ----
+  # Validate AlphapwPar input ----
 
   if (SetAlphapw) {
-    if (AlphapwPar$n_samples <= 0) {
-      stop("`AlphapwPar$n_samples` must be a positive number.", call. = FALSE)
-    }
-    if (AlphapwPar$prob_norm < 0 || AlphapwPar$prob_norm > 1) {
-      stop("`prob_norm` must be between 0 and 1.", call. = FALSE)
-    }
-    if (AlphapwPar$tr_mean <= 0) {
-      stop("`AlphapwPar$tr_mean` must be a positive number.", call. = FALSE)
-    }
-    if (AlphapwPar$tr_sd <= 0) {
-      stop("`AlphapwPar$tr_sd` must be a positive number.", call. = FALSE)
-    }
-    if (AlphapwPar$tr_min <= 0) {
-      stop("`AlphapwPar$tr_min` must be a positive number.", call. = FALSE)
-    }
-    if (AlphapwPar$tr_max <= AlphapwPar$tr_min) {
-      stop(
-        "`AlphapwPar$tr_max` must be greater than `AlphapwPar$tr_min`.",
-        call. = FALSE)
+
+    if (is.null(AlphapwPar$Alphapw)) {
+      if (AlphapwPar$n_samples <= 0) {
+        stop("`AlphapwPar$n_samples` must be a positive number.", call. = FALSE)
+      }
+      if (AlphapwPar$prob_norm < 0 || AlphapwPar$prob_norm > 1) {
+        stop("`prob_norm` must be between 0 and 1.", call. = FALSE)
+      }
+      if (AlphapwPar$tr_mean <= 0) {
+        stop("`AlphapwPar$tr_mean` must be a positive number.", call. = FALSE)
+      }
+      if (AlphapwPar$tr_sd <= 0) {
+        stop("`AlphapwPar$tr_sd` must be a positive number.", call. = FALSE)
+      }
+      if (AlphapwPar$tr_min <= 0) {
+        stop("`AlphapwPar$tr_min` must be a positive number.", call. = FALSE)
+      }
+      if (AlphapwPar$tr_max <= AlphapwPar$tr_min) {
+        stop(
+          "`AlphapwPar$tr_max` must be greater than `AlphapwPar$tr_min`.",
+          call. = FALSE)
+      }
+    } else {
+
+      # Check if AlphapwPar$Alphapw is a matrix
+      if (!inherits(AlphapwPar$Alphapw, "matrix")) {
+        stop("`AlphapwPar$Alphapw` must be a matrix", call. = FALSE)
+      }
+
+      # Check if AlphapwPar$Alphapw has 2 columns
+      if (ncol(AlphapwPar$Alphapw) != 2) {
+        stop("`AlphapwPar$Alphapw` should have exactly 2 columns.",
+             call. = FALSE)
+      }
+
+      # Check if AlphapwPar$Alphapw has at least 100 rows
+      if (nrow(AlphapwPar$Alphapw) < 100) {
+        stop("`AlphapwPar$Alphapw` must have > 100 rows.", call. = FALSE)
+      }
+
+      # Check if the first element of the second column is 0.5
+      if (AlphapwPar$Alphapw[1, 2] != 0.5) {
+        stop("The first element of the second column is not 0.5.",
+             call. = FALSE)
+      }
+
+      # Check if all values are positive
+      if (any(as.vector(AlphapwPar$Alphapw) < 0)) {
+        stop("`AlphapwPar$Alphapw` can not contain negative numbers",
+             call. = FALSE)
+      }
+
+      # Check if the sum of the second column is equal to 1
+      if (sum(AlphapwPar$Alphapw[, 2]) != 1) {
+        stop("The sum of the second column is not equal to 1.", call. = FALSE)
+      }
+
     }
   }
 
@@ -114,8 +154,7 @@ PrepKnots <- function(
 
   # Prepare knots ----
   Knots <- Hmsc::constructKnots(
-    sData = Coords, knotDist = MinDist, minKnotDist = MinDist
-  ) %>%
+    sData = Coords, knotDist = MinDist, minKnotDist = MinDist) %>%
     tibble::as_tibble() %>%
     # Hmsc::constructKnots may return duplicated points; discard them
     dplyr::distinct() %>%
@@ -154,7 +193,6 @@ PrepKnots <- function(
   if (!is.null(MinLF) && is.null(MaxLF)) {
     rL <- Hmsc::setPriors(rL, nfMin = MinLF)
   }
-
   if (!is.null(MinLF) && !is.null(MaxLF)) {
     rL <- Hmsc::setPriors(rL, nfMin = MinLF, nfMax = MaxLF)
   }
@@ -164,14 +202,18 @@ PrepKnots <- function(
   # Set prior for alphapw ----
 
   if (SetAlphapw) {
-    rL <- Hmsc::setPriors(
-      rL,
-      alphapw = PriorAlpha(
-        n_samples = AlphapwPar$n_samples, prob_norm = AlphapwPar$prob_norm,
-        tr_mean = AlphapwPar$tr_mean, tr_sd = AlphapwPar$tr_sd,
-        tr_min = AlphapwPar$tr_min, tr_max = AlphapwPar$tr_max,
-        dist_max = max(rL$alphapw[, 1]) / 1000,
-        seed = AlphapwPar$seed))
+    if (is.null(AlphapwPar$Alphapw)) {
+      rL <- Hmsc::setPriors(
+        rL,
+        alphapw = PriorAlpha(
+          n_samples = AlphapwPar$n_samples, prob_norm = AlphapwPar$prob_norm,
+          tr_mean = AlphapwPar$tr_mean, tr_sd = AlphapwPar$tr_sd,
+          tr_min = AlphapwPar$tr_min, tr_max = AlphapwPar$tr_max,
+          dist_max = max(rL$alphapw[, 1]) / 1000,
+          seed = AlphapwPar$seed))
+    } else {
+      rL <- Hmsc::setPriors(rL, alphapw = AlphapwPar$Alphapw)
+    }
   }
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -180,8 +222,6 @@ PrepKnots <- function(
 
   return(rL)
 }
-
-
 
 ## |------------------------------------------------------------------------| #
 # PriorAlpha ----

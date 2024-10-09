@@ -18,7 +18,7 @@ Mod_Prep4HPC(
   MaxLF = NULL,
   SetAlphapw = TRUE,
   AlphapwPar = list(n_samples = 300, prob_norm = 0.8, tr_mean = 200, tr_sd = 50, tr_min =
-    5, tr_max = 400, seed = NULL),
+    5, tr_max = 400, seed = NULL, Alphapw = NULL),
   BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
   EffortsAsPredictor = FALSE,
   RoadRailAsPredictor = TRUE,
@@ -105,8 +105,11 @@ respective values will be used as arguments to \link[Hmsc:setPriors]{Hmsc::setPr
 \item{SetAlphapw}{Logical; whether to set the prior for alphapw using
 \link{PriorAlpha}. Default: \code{TRUE}.}
 
-\item{AlphapwPar}{List; parameters for generating prior distribution using
-\code{PriorAlpha} function. Default values are as follows:  \code{list(n_samples = 300, prob_norm = 0.8, tr_mean = 200, tr_sd = 50, tr_min = 5, tr_max = 400, seed = NULL)}. See \link{PriorAlpha} for more details.}
+\item{AlphapwPar}{List; parameters for generating prior distribution. If the
+list item \code{Alphapw} is provided, it will be used as the prior for alphapw.
+Otherwise, the prior will be generated using \code{PriorAlpha} function. Default
+values are as follows:  \code{list(n_samples = 300, prob_norm = 0.8, tr_mean = 200, tr_sd = 50, tr_min = 5, tr_max = 400, seed = NULL, Alphapw = NULL)}.
+See \link{PriorAlpha} for more details.}
 
 \item{BioVars}{Character vector. Specifies the Bioclimatic variables to be
 included from CHELSA. Defaults to 6 ecologically meaningful and less

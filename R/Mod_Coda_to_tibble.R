@@ -191,6 +191,9 @@ Coda_to_tibble <- function(
       tidyr::pivot_longer(
         -c(Chain, Iter), names_to = "SpComb", values_to = "Value")
 
+    IAS <- IASDT.R::GetSpeciesName(EnvFile = EnvFile, FromHPC = FromHPC) %>%
+      dplyr::select(IAS_ID, Species_name)
+
     Coda <- tibble::tibble(SpComb = SampleOmega) %>%
       dplyr::mutate(
         SP = purrr::map(
@@ -201,16 +204,12 @@ Coda_to_tibble <- function(
               as.character() %>%
               purrr::set_names(c("Sp1", "Sp2"))
 
-            IAS1 <- IASDT.R::GetSpeciesName(
-              SpID = IAS_N[1], EnvFile = EnvFile, FromHPC = FromHPC) %>%
-              dplyr::pull(Species_name)
-
-            IAS2 <- IASDT.R::GetSpeciesName(
-              SpID = IAS_N[2], EnvFile = EnvFile, FromHPC = FromHPC) %>%
-              dplyr::pull(Species_name)
+            IAS1 <- dplyr::filter(IAS, IAS_ID == IAS_N[1])$Species_name
+            IAS2 <- dplyr::filter(IAS, IAS_ID == IAS_N[2])$Species_name
 
             return(c(IAS_N, IAS1 = IAS1, IAS2 = IAS2))
-          })) %>%
+          },
+          .progress = TRUE)) %>%
       tidyr::unnest_wider("SP") %>%
       dplyr::right_join(Coda, by = "SpComb") %>%
       dplyr::select(

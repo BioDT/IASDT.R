@@ -49,7 +49,7 @@ Mod_MergeChains <- function(
   # Checking arguments ----
 
   if (is.null(Path_Model) || is.null(NCores)) {
-    stop("Path_Model, and NCores cannot be empty", call. = FALSE)
+    stop("`Path_Model` and `NCores` cannot be empty", call. = FALSE)
   }
 
   AllArgs <- ls(envir = environment())
@@ -123,18 +123,6 @@ Mod_MergeChains <- function(
 
   # # ..................................................................... ###
 
-  # Prepare working on parallel -----
-  withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
-
-  if (NCores == 1) {
-    future::plan("sequential", gc = TRUE)
-  } else {
-    c1 <- snow::makeSOCKcluster(NCores)
-    on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-    future::plan("cluster", workers = c1, gc = TRUE)
-    on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
-  }
-
   Model_Info2 <- IASDT.R::LoadAs(Path_ModInfo) %>%
     dplyr::mutate(
       # Check if any posterior files is missing
@@ -142,6 +130,18 @@ Mod_MergeChains <- function(
         .x = Post_Path, .f = ~ all(!file.exists(.x))),
       # delete these columns if already exist from previous function execution
       Path_FittedMod = NULL, Path_Coda = NULL)
+
+  # Prepare working on parallel -----
+  withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
+
+  if (NCores == 1) {
+    future::plan("sequential", gc = TRUE)
+  } else {
+    c1 <- snow::makeSOCKcluster(min(NCores, nrow(Model_Info2)))
+    on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
+    future::plan("cluster", workers = c1, gc = TRUE)
+    on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+  }
 
   # # ..................................................................... ###
 
@@ -154,9 +154,7 @@ Mod_MergeChains <- function(
       if (Model_Info2$Post_Missing[[x]]) {
         return(list(
           Path_FittedMod = NA_character_,
-          Path_Coda = NA_character_,
-          Post_Aligned2 = NA)
-        )
+          Path_Coda = NA_character_, Post_Aligned2 = NA))
       }
 
       # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

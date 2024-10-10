@@ -14,7 +14,6 @@
 #'   environment variables. Default: ".env".
 #' @param FromHPC Logical. Indicates whether the function is being run on an HPC
 #'   environment, affecting file path handling. Default: `TRUE`.
-#' @param NChains Integer. Number of MCMC chains used in the model. Default: 4.
 #' @param Title String. Title for the rho and alpha plots. Default: " ".
 #' @param NOmega Integer. Number of species interactions to sample for omega
 #'   parameter convergence diagnostics. Default: 1000.
@@ -35,10 +34,11 @@
 
 PlotConvergence <- function(
     Path_Coda = NULL, Path_FittedModel = NULL, EnvFile = ".env",
-    FromHPC = TRUE, NChains = 4, Title = " ", NOmega = 1000, NCores = NULL,
-    NRC = c(2, 3), SavePlotData = TRUE, PagePerFile = 20,
+    FromHPC = TRUE, Title = " ", NOmega = 1000, NCores = NULL,
+    NRC = c(2, 2), SavePlotData = TRUE, PagePerFile = 20,
     Cols = c("red", "blue", "darkgreen", "darkgrey")) {
 
+  # # ..................................................................... ###
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -46,6 +46,8 @@ PlotConvergence <- function(
     stop(
       "Path_Coda, Path_FittedModel, and NCores cannot be empty", call. = FALSE)
   }
+
+  # # ..................................................................... ###
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
@@ -57,9 +59,9 @@ PlotConvergence <- function(
   withr::local_options(
     future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
+
   # Check input arguments ------
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Check input arguments")
 
@@ -75,13 +77,12 @@ PlotConvergence <- function(
 
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "logical", Args = "FromHPC")
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "numeric",
-    Args = c("NChains", "NOmega", "NCores", "NRC"))
+    AllArgs = AllArgs, Type = "numeric", Args = c("NOmega", "NCores", "NRC"))
   rm(AllArgs)
 
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
+
   # Create path ------
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Create path")
   Path_Convergence <- dirname(dirname(Path_Coda)) %>%
@@ -89,11 +90,19 @@ PlotConvergence <- function(
   Path_Convergence_BySp <- file.path(Path_Convergence, "Beta_BySpecies")
   fs::dir_create(c(Path_Convergence, Path_Convergence_BySp))
 
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
+
   # Prepare convergence data ------
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Prepare convergence data")
+
+
+  if (!file.exists(Path_FittedModel)) {
+    stop("`Path_FittedModel` does not exist", call. = FALSE)
+  }
+  if (!file.exists(Path_Coda)) {
+    stop("`Path_Coda` does not exist", call. = FALSE)
+  }
 
   IASDT.R::CatTime("Loading coda object", Level = 1)
   Coda_Obj <- IASDT.R::LoadAs(Path_Coda)
@@ -102,22 +111,24 @@ PlotConvergence <- function(
   Model <- IASDT.R::LoadAs(Path_FittedModel)
 
   ModVars <- Model$covNames
+  NChains <- length(Model$postList)
 
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
+
   # Rho ------
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   if ("Rho" %in% names(Coda_Obj)) {
     IASDT.R::CatTime("Rho")
 
     FileConv_Rho <- file.path(Path_Convergence, "Convergence_Rho.RData")
 
-    if (file.exists(FileConv_Rho)) {
+    if (file.exists(FileConv_Rho) && IASDT.R::CheckRData(FileConv_Rho)) {
       IASDT.R::CatTime("Loading plotting data", Level = 1)
       PlotObj_Rho <- IASDT.R::LoadAs(FileConv_Rho)
     } else {
       IASDT.R::CatTime("Prepare plot", Level = 1)
-      PlotObj_Rho <- IASDT.R::PlotRho(
+      # PlotObj_Rho <- IASDT.R::PlotRho(
+      PlotObj_Rho <- PlotRho(
         Post = Coda_Obj, Model = Model, Title = Title, Cols = Cols)
 
       if (SavePlotData) {
@@ -140,9 +151,9 @@ PlotConvergence <- function(
     rm(PlotObj_Rho)
   }
 
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
+
   # Alpha  ------
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Alpha")
 
@@ -170,7 +181,7 @@ PlotConvergence <- function(
   # correctly
   grDevices::pdf(
     file = file.path(Path_Convergence, "Convergence_Alpha.pdf"),
-    width = 18, height = 10)
+    width = 18, height = 14)
   print(PlotObj_Alpha)
   grDevices::dev.off()
 
@@ -180,9 +191,9 @@ PlotConvergence <- function(
   rm(Model, Coda_Obj, PlotObj_Alpha)
   invisible(gc())
 
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
+
   # Omega  ------
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Omega")
 
@@ -360,9 +371,9 @@ PlotConvergence <- function(
   rm(OmegaPlotList, Obj_Omega)
   invisible(gc())
 
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
+
   # Beta - 1. Prepare data ------
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Beta")
 
@@ -539,9 +550,9 @@ PlotConvergence <- function(
     }
   }
 
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
+
   # Beta - 2. by variable ------
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Trace plots, grouped by variables", Level = 1)
 
@@ -653,9 +664,9 @@ PlotConvergence <- function(
 
   rm(BetaTracePlots_ByVar0, BetaTracePlots_ByVar)
 
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
+
   # Beta - 3. by species ------
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Trace plots, grouped by species", Level = 1)
 
@@ -729,8 +740,9 @@ PlotConvergence <- function(
     future::plan("sequential", gc = TRUE)
   }
 
-
   rm(BetaTracePlots_BySp0)
+
+  # # ..................................................................... ###
 
   IASDT.R::CatDiff(InitTime = .StartTime)
 

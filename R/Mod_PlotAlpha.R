@@ -37,14 +37,19 @@ PlotAlpha <- function(
     AddTitle = TRUE, Cols = c("red", "blue", "darkgreen", "darkgrey"),
     FromHPC = TRUE) {
 
+  # # ..................................................................... ###
 
   if (is.null(Post) || is.null(Model)) {
     stop("Post and Model cannot be empty", call. = FALSE)
   }
 
+  # # ..................................................................... ###
+
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Factor <- NULL
+
+  # # ..................................................................... ###
 
   # Checking arguments
   AllArgs <- ls(envir = environment())
@@ -53,6 +58,7 @@ PlotAlpha <- function(
 
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = c("Title"))
 
+  # # ..................................................................... ###
 
   # Load coda object
   if (inherits(Post, "character")) {
@@ -79,7 +85,10 @@ PlotAlpha <- function(
 
   NLV <- ncol(Post[[1]])
 
+  # # ..................................................................... ###
+
   ## Gelman convergence diagnostic
+
   # nolint start
   Gelman <- coda::gelman.diag(x = Post, multivariate = FALSE) %>%
     magrittr::extract2("psrf") %>%
@@ -117,6 +126,8 @@ PlotAlpha <- function(
       .default = c(2, 3))
   }
 
+  # # ..................................................................... ###
+
   Plots <- purrr::map(
     .x = seq_len(NLV),
     .f = ~{
@@ -153,7 +164,7 @@ PlotAlpha <- function(
         ggplot2::scale_color_manual(values = Cols) +
         ggplot2::scale_x_continuous(expand = c(0, 0)) +
         ggplot2::scale_y_continuous(
-          limits = c(0, max(PlotDT$Value)), expand = c(0, 0)) +
+          limits = c(0, max(PlotDT$Value) * 1.05), expand = c(0, 0)) +
         ggplot2::theme_bw() +
         ggplot2::xlab(NULL) +
         ggplot2::ylab(NULL) +

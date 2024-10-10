@@ -11,8 +11,6 @@
 #' line at 1.1 indicating the threshold for convergence. This function is not
 #' planned to be used in isolation but rather within [IASDT.R::PlotGelman].
 #' @param CodaObj An object of class `mcmc.list`, representing the Hmsc samples.
-#' @param NCores An integer specifying the number of cores to use for parallel
-#'   processing.
 #' @param PlottingAlpha A double specifying the alpha (transparency) level for
 #'   the plot lines. Default is 0.25.
 #' @name PlotGelman_Alpha
@@ -21,15 +19,7 @@
 #'   `beta` parameters.
 #' @export
 
-PlotGelman_Alpha <- function(CodaObj, NCores, PlottingAlpha = 0.25) {
-
-  if (is.null(CodaObj) || is.null(NCores)) {
-    stop("CodaObj and NCores cannot be empty", call. = FALSE)
-  }
-
-  if (!is.numeric(NCores) || NCores <= 0) {
-    stop("NCores must be a positive integer.", call. = FALSE)
-  }
+PlotGelman_Alpha <- function(CodaObj, PlottingAlpha = 0.25) {
 
   if (!inherits(CodaObj, "mcmc.list")) {
     stop("CodaObj has to be of class mcmc.list", call. = FALSE)
@@ -43,45 +33,28 @@ PlotGelman_Alpha <- function(CodaObj, NCores, PlottingAlpha = 0.25) {
 
   # # ..................................................................... ###
 
-  withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
-
-  if (NCores == 1) {
-    future::plan("sequential", gc = TRUE)
-  } else {
-    c1 <- snow::makeSOCKcluster(NCores)
-    on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-    future::plan("cluster", workers = c1, gc = TRUE)
-    on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
-  }
-
-  # # ..................................................................... ###
-
   Gelman_Alpha_Plot <- magrittr::extract2(CodaObj, 1) %>%
     attr("dimnames") %>%
     magrittr::extract2(2) %>%
     sort() %>%
-    future.apply::future_lapply(
-      X = .,
-      FUN = function(x) {
-        lapply(CodaObj, function(Y) {
-          Y[, x, drop = TRUE]
-        }) %>%
-          coda::mcmc.list() %>%
-          gelman.preplot(
-            bin.width = 10, max.bins = 50, confidence = 0.95,
-            transform = FALSE, autoburnin = TRUE) %>%
-          magrittr::extract2("shrink") %>%
-          tibble::as_tibble(rownames = "Iter") %>%
-          purrr::set_names(c("Iter", "Median", "Q97_5")) %>%
-          dplyr::mutate(Iter = as.integer(Iter)) %>%
-          tidyr::pivot_longer(
-            cols = -Iter, names_to = "Type", values_to = "ShrinkFactor") %>%
-          dplyr::arrange(Type, Iter) %>%
-          dplyr::mutate(Type = factor(Type), Var_LV = x)
-      },
-      future.scheduling = Inf, future.seed = TRUE, future.globals = "CodaObj",
-      future.packages = c("dplyr", "coda", "tibble", "magrittr")) %>%
-    dplyr::bind_rows() %>%
+    purrr::map_dfr(
+    .f = function(x) {
+      lapply(CodaObj, function(Y) {
+        Y[, x, drop = TRUE]
+      }) %>%
+        coda::mcmc.list() %>%
+        gelman.preplot(
+          bin.width = 10, max.bins = 50, confidence = 0.95,
+          transform = FALSE, autoburnin = TRUE) %>%
+        magrittr::extract2("shrink") %>%
+        tibble::as_tibble(rownames = "Iter") %>%
+        purrr::set_names(c("Iter", "Median", "Q97_5")) %>%
+        dplyr::mutate(Iter = as.integer(Iter)) %>%
+        tidyr::pivot_longer(
+          cols = -Iter, names_to = "Type", values_to = "ShrinkFactor") %>%
+        dplyr::arrange(Type, Iter) %>%
+        dplyr::mutate(Type = factor(Type), Var_LV = x)
+    }) %>%
     dplyr::mutate(
       group = paste0(Var_LV, "_", Type),
       Var_LV = purrr::map_chr(
@@ -131,15 +104,6 @@ PlotGelman_Alpha <- function(CodaObj, NCores, PlottingAlpha = 0.25) {
         })
     ) %>%
     dplyr::pull(Plot)
-
-  # # ..................................................................... ###
-
-  if (NCores > 1) {
-    snow::stopCluster(c1)
-    future::plan("sequential", gc = TRUE)
-  }
-
-  # # ..................................................................... ###
 
   return(Gelman_Alpha_Plot)
 }

@@ -10,7 +10,7 @@
 #' convergence of Hmsc model by visualizing the shrink factor over iterations.
 #' The function supports parallel processing and can handle multiple parameters
 #' simultaneously.
-#' @param InputCoda Path to RData file containing the coda object.
+#' @param InputCoda coda object or path to RData file containing the coda object.
 #' @param Alpha Logical indicating whether to plot the Gelman-Rubin statistic
 #'   for the Alpha parameter. If `TRUE` (default), the function executes the
 #'   [IASDT.R::PlotGelman_Alpha] function.
@@ -23,8 +23,6 @@
 #' @param Rho Logical indicating whether to plot the Gelman-Rubin statistic for
 #'   the Rho parameter.  If `TRUE` (default), the function executes the
 #'   [IASDT.R::PlotGelman_Rho] function.
-#' @param NCores Integer specifying the number of cores to use for parallel
-#'   processing.
 #' @param FromHPC Logical. Indicates whether the function is being run on an HPC
 #'   environment, affecting file path handling. Default: `TRUE`.
 #' @param NOmega Integer specifying the number of species to be sampled for the
@@ -49,22 +47,22 @@
 
 PlotGelman <- function(
     InputCoda = NULL, Alpha = TRUE, Beta = TRUE, Omega = TRUE, Rho = TRUE,
-    NCores = NULL, NOmega = 1000, FromHPC = TRUE, PlottingAlpha = 0.25,
+    NOmega = 1000, FromHPC = TRUE, PlottingAlpha = 0.25,
     EnvFile = ".env", SavePlot = TRUE, ReturnPlots = FALSE) {
+
+  # # ..................................................................... ###
 
   .StartTime <- lubridate::now(tzone = "CET")
 
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # Checking arguments
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # Checking arguments --------
 
   if (sum(Alpha, Beta, Omega, Rho) == 0) {
     stop("At least one of Alpha, Beta, Omega, and Rho must be `TRUE`",
          call. = FALSE)
   }
 
-  if (is.null(InputCoda) || is.null(NCores)) {
-    stop("InputCoda and NCores cannot be empty", call. = FALSE)
+  if (is.null(InputCoda)) {
+    stop("InputCoda cannot be empty", call. = FALSE)
   }
 
   if (isFALSE(SavePlot) && isFALSE(ReturnPlots)) {
@@ -77,7 +75,7 @@ PlotGelman <- function(
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::CheckArgs(AllArgs, c("NCores", "NOmega", "PlottingAlpha"), "numeric")
+  IASDT.R::CheckArgs(AllArgs, c("NOmega", "PlottingAlpha"), "numeric")
   IASDT.R::CheckArgs(
     AllArgs, c("Beta", "Rho", "Omega", "Alpha", "SavePlot", "ReturnPlots"),
     "logical")
@@ -91,68 +89,71 @@ PlotGelman <- function(
 
   rm(AllArgs)
 
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
+
   # Loading coda object ------
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   if (inherits(InputCoda, "character")) {
     IASDT.R::CatTime("Loading coda object")
     CodaObj <- IASDT.R::LoadAs(InputCoda)
   } else {
+
+    if (!inherits(InputCoda, "list")) {
+      stop("`InputCoda` is neither character path or a list", call. = FALSE)
+    }
+    if (!inherits(InputCoda[[1]], "mcmc.list")) {
+      stop("`InputCoda` has no mcmc.list items", call. = FALSE)
+    }
+
     CodaObj <- InputCoda
     rm(InputCoda)
   }
 
-  OutPath <- dirname(dirname(InputCoda)) %>%
-    file.path("Model_Convergence")
+  OutPath <- file.path(dirname(dirname(InputCoda)), "Model_Convergence")
   fs::dir_create(OutPath)
 
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
+
   # Alpha -----
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   if (Alpha) {
     IASDT.R::CatTime("Alpha")
-    PlotObj_Alpha <- magrittr::extract2(CodaObj, "Alpha") %>%
-      magrittr::extract2(1) %>%
-      IASDT.R::PlotGelman_Alpha(
-        CodaObj = ., NCores = NCores, PlottingAlpha = PlottingAlpha)
+    PlotObj_Alpha <- IASDT.R::PlotGelman_Alpha(
+      CodaObj = CodaObj$Alpha[[1]], PlottingAlpha = PlottingAlpha)
   } else {
     PlotObj_Alpha <- NULL
   }
 
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
+
   # Beta -----
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   if (Beta) {
     IASDT.R::CatTime("Beta")
     PlotObj_Beta <- IASDT.R::PlotGelman_Beta(
-      CodaObj = magrittr::extract2(CodaObj, "Beta"),
-      NCores = NCores, EnvFile = EnvFile, PlottingAlpha = PlottingAlpha,
-      FromHPC = FromHPC)
+      CodaObj = CodaObj$Beta, EnvFile = EnvFile,
+      PlottingAlpha = PlottingAlpha, FromHPC = FromHPC)
   } else {
     PlotObj_Beta <- NULL
   }
 
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  # # ..................................................................... ###
+
   # Omega -----
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   if (Omega) {
     IASDT.R::CatTime("Omega")
-    PlotObj_Omega <- magrittr::extract2(CodaObj, "Omega") %>%
-      magrittr::extract2(1) %>%
-      IASDT.R::PlotGelman_Omega(
-        CodaObj = ., NCores = NCores,
-        NOmega = NOmega, PlottingAlpha = PlottingAlpha)
+    PlotObj_Omega <- IASDT.R::PlotGelman_Omega(
+      CodaObj = CodaObj$Omega[[1]], NOmega = NOmega,
+      PlottingAlpha = PlottingAlpha)
   } else {
     PlotObj_Omega <- NULL
   }
 
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
+
   # Rho -----
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   if (Rho && ("Rho" %in% names(CodaObj))) {
     IASDT.R::CatTime("Rho")
@@ -162,15 +163,15 @@ PlotGelman <- function(
     PlotObj_Rho <- NULL
   }
 
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # Saving plots -----
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
-  PlotList <- list(
-    Alpha = PlotObj_Alpha, Beta = PlotObj_Beta, Omega = PlotObj_Omega,
-    Rho = PlotObj_Rho)
+  # Saving plots -----
 
   if (SavePlot) {
+    PlotList <- list(
+      Alpha = PlotObj_Alpha, Beta = PlotObj_Beta, Omega = PlotObj_Omega,
+      Rho = PlotObj_Rho)
+
     PlotList4Plot <- purrr::list_flatten(purrr::discard(PlotList, is.null))
 
     if (length(PlotList4Plot) > 0) {
@@ -192,5 +193,7 @@ PlotGelman <- function(
     } else {
       return(invisible(NULL))
     }
+  } else {
+    return(invisible(NULL))
   }
 }

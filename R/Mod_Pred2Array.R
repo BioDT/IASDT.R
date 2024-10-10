@@ -22,6 +22,8 @@
 #'   See `Hmsc:::predict.Hmsc` for more info.
 #' @param NCores Integer; specifies the number of cores to use for parallel
 #'   computation of predicted values. Must be a positive integer.
+#' @param predictEtaMean Logical; whether to predict the mean value of the
+#'   latent variable.
 #' @name Mod_Pred2Array
 #' @author Ahmed El-Gabbas
 #' @return An array of predictions.
@@ -36,7 +38,8 @@
 #' @export
 
 Mod_Pred2Array <- function(
-    Predict, Model, Preds = NULL, expected = TRUE, NCores = 1) {
+    Model, Predict = TRUE, Preds = NULL, expected = TRUE, NCores = 1,
+    predictEtaMean = TRUE) {
 
   if (Predict && is.null(Model)) {
     stop("Model cannot be empty when Predict is TRUE", call. = FALSE)
@@ -56,7 +59,8 @@ Mod_Pred2Array <- function(
     }
 
     Preds <- stats::predict(
-      object = Model, expected = expected, nParallel = NCores)
+      object = Model, expected = expected, nParallel = NCores,
+      predictEtaMean = predictEtaMean)
   }
 
   array(

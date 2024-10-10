@@ -13,8 +13,6 @@
 #' convergence. This function is not planned to be used in isolation but rather
 #' within [IASDT.R::PlotGelman].
 #' @param CodaObj An object of class `mcmc.list`, representing the Hmsc samples.
-#' @param NCores Integer indicating the number of parallel processes to be used
-#'   for computation.
 #' @param EnvFile String specifying the path to read the environment variables.
 #'   Default value is `.env`.
 #' @param PlottingAlpha Double indicating the alpha (transparency) level for the
@@ -28,15 +26,12 @@
 #' @export
 
 PlotGelman_Beta <- function(
-    CodaObj, NCores, EnvFile = ".env", PlottingAlpha = 0.25, FromHPC = TRUE) {
+    CodaObj, EnvFile = ".env", PlottingAlpha = 0.25, FromHPC = TRUE) {
 
+  # # ..................................................................... ###
 
-  if (is.null(CodaObj) || is.null(NCores)) {
-    stop("CodaObj and NCores cannot be empty", call. = FALSE)
-  }
-
-  if (!is.numeric(NCores) || NCores <= 0) {
-    stop("NCores must be a positive integer.", call. = FALSE)
+  if (is.null(CodaObj)) {
+    stop("CodaObj cannot be empty", call. = FALSE)
   }
 
   if (!inherits(CodaObj, "mcmc.list")) {
@@ -48,20 +43,6 @@ PlotGelman_Beta <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Iter <- Type <- Var_Sp <- ShrinkFactor <- group <- NULL
-
-  # # ..................................................................... ###
-
-  withr::local_options(
-        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
-
-  if (NCores == 1) {
-    future::plan("sequential", gc = TRUE)
-  } else {
-    c1 <- snow::makeSOCKcluster(NCores)
-    on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-    future::plan("cluster", workers = c1, gc = TRUE)
-    on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
-  }
 
   # # ..................................................................... ###
 
@@ -77,35 +58,27 @@ PlotGelman_Beta <- function(
     attr("dimnames") %>%
     magrittr::extract2(2) %>%
     sort() %>%
-    future.apply::future_lapply(
-    X = .,
-    FUN = function(x) {
-      lapply(CodaObj, function(Y) {
-        Y[, x, drop = TRUE]
+    purrr::map_dfr(
+      .f = function(x) {
+        lapply(CodaObj, function(Y) {
+          Y[, x, drop = TRUE]
+        }) %>%
+          coda::mcmc.list() %>%
+          gelman.preplot(
+            bin.width = 10, max.bins = 50, confidence = 0.95,
+            transform = FALSE, autoburnin = TRUE) %>%
+          magrittr::extract2("shrink") %>%
+          tibble::as_tibble(rownames = "Iter") %>%
+          purrr::set_names(c("Iter", "Median", "Q97_5")) %>%
+          dplyr::mutate(Iter = as.integer(Iter)) %>%
+          tidyr::pivot_longer(
+            cols = -Iter, names_to = "Type", values_to = "ShrinkFactor") %>%
+          dplyr::arrange(Type, Iter) %>%
+          dplyr::mutate(Type = factor(Type), Var_Sp = x)
       }) %>%
-        coda::mcmc.list() %>%
-        gelman.preplot(
-          bin.width = 10, max.bins = 50, confidence = 0.95,
-          transform = FALSE, autoburnin = TRUE) %>%
-        magrittr::extract2("shrink") %>%
-        tibble::as_tibble(rownames = "Iter") %>%
-        purrr::set_names(c("Iter", "Median", "Q97_5")) %>%
-        dplyr::mutate(Iter = as.integer(Iter)) %>%
-        tidyr::pivot_longer(
-          cols = -Iter, names_to = "Type", values_to = "ShrinkFactor") %>%
-        dplyr::arrange(Type, Iter) %>%
-        dplyr::mutate(Type = factor(Type), Var_Sp = x)
-    },
-      future.scheduling = Inf, future.seed = TRUE, future.globals = "CodaObj",
-      future.packages = c("dplyr", "coda", "tibble", "magrittr")) %>%
-    dplyr::bind_rows() %>%
     dplyr::mutate(group = paste0(Var_Sp, "_", Type))
 
-  if (NCores > 1) {
-    snow::stopCluster(c1)
-    future::plan("sequential", gc = TRUE)
-  }
-
+  # # ..................................................................... ###
 
   Gelman_Beta_Plot <- Gelman_Beta_Vals %>%
     ggplot2::ggplot() +

@@ -34,6 +34,8 @@
 #'   Default: `TRUE`.
 #' @param FromHPC Logical. Indicates whether the function is being run on an HPC
 #'   environment, affecting file path handling. Default: `TRUE`.
+#' @param predictEtaMean Logical; whether to predict the mean value of the
+#'   latent variable.
 #' @name PlotVarPar
 #' @author Ahmed El-Gabbas
 #' @details The function reads the following environment variables:
@@ -47,7 +49,9 @@
 PlotVarPar <- function(
     Model, Path_Plot, PlotTitlePrefix = NULL, ModelEval = NULL, NCores,
     VarPar = NULL, EnvFile = ".env", SaveVarPar = TRUE, SaveModelEval = TRUE,
-    ReturnGG = FALSE, SaveGG = TRUE, FromHPC = TRUE) {
+    predictEtaMean = TRUE, ReturnGG = FALSE, SaveGG = TRUE, FromHPC = TRUE) {
+
+  # # ..................................................................... ###
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -55,13 +59,15 @@ PlotVarPar <- function(
     stop("Model, Path_Plot, and NCores cannot be empty", call. = FALSE)
   }
 
+  # # ..................................................................... ###
+
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   IAS_ID <- Species_name <- Species <- variable <- value <- TaxaInfoFile <- NULL
 
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
+
   # Check input arguments ------
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Check input arguments")
 
@@ -81,13 +87,13 @@ PlotVarPar <- function(
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "numeric", Args = "NCores")
   rm(AllArgs)
 
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # Loading species list -----
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
-  fs::dir_create(Path_Plot)
+  # Loading species list -----
 
   IASDT.R::CatTime("Loading species list")
+
+  fs::dir_create(Path_Plot)
 
   if (!file.exists(EnvFile)) {
     stop(
@@ -114,28 +120,29 @@ PlotVarPar <- function(
       Species = stringr::str_pad(string = Species, width = 4, pad = "0"),
       Species = paste0("Sp_", Species))
 
+  # # ..................................................................... ###
 
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Processing ModelEval and VarPar -----
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  if (purrr::some(list(ModelEval, VarPar), is.null)) {
+  if (is.null(ModelEval) || is.null(VarPar)) {
+
     if (is.null(ModelEval)) {
       IASDT.R::CatTime(
-        "ModelEval was not provided and has to be calculated")
+        "`ModelEval` was not provided and will be calculated", Level = 1)
     }
+
     if (is.null(VarPar)) {
       IASDT.R::CatTime(
-        "VarPar was not provided and has to be calculated")
+        "`VarPar` was not provided and will be calculated", Level = 1)
     }
 
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
     # Loading model ----
-    # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
     if (!inherits(Model, "Hmsc")) {
 
-      IASDT.R::CatTime("  >>  Loading model object from file")
+      IASDT.R::CatTime("Loading model object from file")
 
       if (inherits(Model, "character")) {
         if (!file.exists(Model)) {
@@ -155,28 +162,32 @@ PlotVarPar <- function(
     }
 
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
     # Calculate variance partitioning -----
-    # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
     if (is.null(VarPar)) {
-      IASDT.R::CatTime("  >>  Calculate variance partitioning")
+      IASDT.R::CatTime("Calculate variance partitioning")
       VarPar <- Hmsc::computeVariancePartitioning(hM = Model)
-
       if (SaveVarPar) {
         save(VarPar,
              file = file.path(Path_Plot, "VariancePartitioning_DT.RData"))
       }
     }
 
+    if (inherits(VarPar, "character")) {
+      IASDT.R::CatTime("Loading VarPar from RData file")
+      VarPar <- IASDT.R::LoadAs(VarPar)
+    }
+
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
     # Compute predicted Values -----
-    # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
     if (is.null(ModelEval)) {
 
-      IASDT.R::CatTime("  >>  Compute R2")
+      IASDT.R::CatTime("Compute R2")
 
-      IASDT.R::CatTime("  >>  >>  Compute predicted Values")
+      IASDT.R::CatTime("Compute predicted Values", Level = 1)
       # 06.07.2024 - This uses the updated predict function, currently available
       # on my forked version of the package github.com/elgabbas/Hmsc The
       # Hmsc::evaluateModelFit function expects an array object returned from
@@ -184,33 +195,35 @@ PlotVarPar <- function(
       # not work on parallel, so I used the updated predict function on parallel
       # then converted the output to array
 
-      preds <- IASDT.R::Mod_Pred2Array(
-        Predict = TRUE, Model = Model, expected = TRUE, NCores = NCores)
+      Preds <- stats::predict(
+        object = Model, expected = expected, nParallel = NCores,
+        predictEtaMean = predictEtaMean)
+      save(Preds, file = file.path(Path_Plot, "Preds.RData"))
 
-      IASDT.R::CatTime("  >>  >>  Evaluate model fit")
+      PredsArray <- array(
+        unlist(Preds),
+        dim = c(dim(Preds[[1]])[1], dim(Preds[[1]])[2], length(Preds)))
+
+      rm(preds)
+
+      IASDT.R::CatTime("Evaluate model fit", Level = 1)
       # Suppress the warning: In cor(lbeta[[i]][k, ], lmu[[i]][k, ]) : the
       # standard deviation is zero
       invisible(ModelEval <- suppressWarnings(
-        Hmsc::evaluateModelFit(hM = Model, predY = preds)))
+        Hmsc::evaluateModelFit(hM = Model, predY = PredsArray)))
 
       if (SaveModelEval) {
         save(
           ModelEval, file = file.path(Path_Plot, "ModelEval_explanatory.RData"))
       }
 
-      rm(preds)
+    } else {
+      if (inherits(ModelEval, "character")) {
+        IASDT.R::CatTime("Loading ModelEval from RData file")
+        ModelEval <- IASDT.R::LoadAs(ModelEval)
+      }
     }
     rm(Model)
-  }
-
-  if (inherits(ModelEval, "character")) {
-    IASDT.R::CatTime("Loading ModelEval from RData file")
-    ModelEval <- IASDT.R::LoadAs(ModelEval)
-  }
-
-  if (inherits(VarPar, "character")) {
-    IASDT.R::CatTime("Loading VarPar from RData file")
-    VarPar <- IASDT.R::LoadAs(VarPar)
   }
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

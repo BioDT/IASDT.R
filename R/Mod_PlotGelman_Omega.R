@@ -10,8 +10,6 @@
 #' iterations for a subset of species' omega parameters. This function is not
 #' planned to be used in isolation but rather within [IASDT.R::PlotGelman].
 #' @param CodaObj n object of class `mcmc.list` representing the MCMC chains.
-#' @param NCores An integer specifying the number of cores to use for parallel
-#'   processing.
 #' @param NOmega An optional integer indicating the number of species' omega
 #'   parameters to sample and plot. Defaults to 1000.
 #' @param PlottingAlpha A numeric value between 0 and 1 indicating the
@@ -22,16 +20,14 @@
 #'   sampled omega parameters.
 #' @export
 
-PlotGelman_Omega <- function(
-    CodaObj, NCores, NOmega = 1000, PlottingAlpha = 0.25) {
+PlotGelman_Omega <- function(CodaObj, NOmega = 1000, PlottingAlpha = 0.25) {
 
-  if (is.null(CodaObj) || is.null(NCores)) {
-    stop("CodaObj and NCores cannot be empty", call. = FALSE)
+  # # ..................................................................... ###
+
+  if (is.null(CodaObj)) {
+    stop("CodaObj cannot be empty", call. = FALSE)
   }
 
-  if (!is.numeric(NCores) || NCores <= 0) {
-    stop("NCores must be a positive integer.", call. = FALSE)
-  }
   if (!is.numeric(NOmega) || NOmega <= 0) {
     stop("NOmega must be a positive integer.", call. = FALSE)
   }
@@ -40,57 +36,40 @@ PlotGelman_Omega <- function(
     stop("CodaObj has to be of class mcmc.list", call. = FALSE)
   }
 
+  # # ..................................................................... ###
+
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Iter <- Type <- Sp_comb <- ShrinkFactor <- group <- NULL
 
-  withr::local_options(
-    future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
+  # # ..................................................................... ###
 
-  if (NCores == 1) {
-    future::plan("sequential", gc = TRUE)
-  } else {
-    c1 <- snow::makeSOCKcluster(NCores)
-    on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-    future::plan("cluster", workers = c1, gc = TRUE)
-    on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
-  }
-
-  OmegaNames <- magrittr::extract2(CodaObj, 1) %>%
+  Gelman_OmegaDT <- magrittr::extract2(CodaObj, 1) %>%
     attr("dimnames") %>%
     magrittr::extract2(2) %>%
     sample(min(NOmega, length(.))) %>%
-    sort()
-
-  Gelman_OmegaDT <- future.apply::future_lapply(
-    X = OmegaNames,
-    FUN = function(x) {
-      lapply(CodaObj, function(Y) {
-        Y[, x, drop = TRUE]
+    sort() %>%
+    purrr::map_dfr(
+      .f = function(x) {
+        lapply(CodaObj, function(Y) {
+          Y[, x, drop = TRUE]
+        }) %>%
+          coda::mcmc.list() %>%
+          gelman.preplot(
+            bin.width = 10, max.bins = 50, confidence = 0.95,
+            transform = FALSE, autoburnin = TRUE) %>%
+          magrittr::extract2("shrink") %>%
+          tibble::as_tibble(rownames = "Iter") %>%
+          purrr::set_names(c("Iter", "Median", "Q97_5")) %>%
+          dplyr::mutate(Iter = as.integer(Iter)) %>%
+          tidyr::pivot_longer(
+            cols = -Iter, names_to = "Type", values_to = "ShrinkFactor") %>%
+          dplyr::arrange(Type, Iter) %>%
+          dplyr::mutate(Type = factor(Type), Sp_comb = x)
       }) %>%
-        coda::mcmc.list() %>%
-        gelman.preplot(
-          bin.width = 10, max.bins = 50, confidence = 0.95,
-          transform = FALSE, autoburnin = TRUE) %>%
-        magrittr::extract2("shrink") %>%
-        tibble::as_tibble(rownames = "Iter") %>%
-        purrr::set_names(c("Iter", "Median", "Q97_5")) %>%
-        dplyr::mutate(Iter = as.integer(Iter)) %>%
-        tidyr::pivot_longer(
-          cols = -Iter, names_to = "Type", values_to = "ShrinkFactor") %>%
-        dplyr::arrange(Type, Iter) %>%
-        dplyr::mutate(Type = factor(Type), Sp_comb = x)
-    },
-    future.scheduling = Inf, future.seed = TRUE, future.globals = "CodaObj",
-    future.packages = c("dplyr", "coda", "tibble", "magrittr")) %>%
-    dplyr::bind_rows() %>%
     dplyr::mutate(group = paste0(Sp_comb, "_", Type))
 
-  if (NCores > 1) {
-    snow::stopCluster(c1)
-    future::plan("sequential", gc = TRUE)
-  }
-
+  # # ..................................................................... ###
 
   Gelman_Omega_Plot <- Gelman_OmegaDT %>%
     ggplot2::ggplot() +

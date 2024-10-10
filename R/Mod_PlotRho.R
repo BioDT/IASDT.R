@@ -26,13 +26,19 @@
 PlotRho <- function(
     Post, Model, Title, Cols = c("red", "blue", "darkgreen", "darkgrey")) {
 
+  # # ..................................................................... ###
+
   if (is.null(Post) || is.null(Model) || is.null(Title)) {
     stop("Post, Model, and Title cannot be empty", call. = FALSE)
   }
 
+  # # ..................................................................... ###
+
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Chain <- ID <- Value <- x <- y <- label <- NULL
+
+  # # ..................................................................... ###
 
   # Load coda object
   if (inherits(Post, "character")) {
@@ -40,10 +46,14 @@ PlotRho <- function(
   }
   Post <- Post$Rho
 
+  # # ..................................................................... ###
+
   # Load model object
   if (inherits(Model, "character")) {
     Model <- IASDT.R::LoadAs(Model)
   }
+
+  # # ..................................................................... ###
 
   SampleSize <- Model$samples
   NChains <- length(Model$postList)
@@ -62,9 +72,8 @@ PlotRho <- function(
     round(1) %>%
     paste0("<i>Mean effective sample size:</i> ", ., " / ", SampleSize)
 
-  ## quantiles
-  CI <- summary(Post, quantiles = c(0.25, 0.75))$quantiles
-  CI2 <- paste0("<i>50% credible interval:</i> ", CI, collapse = " - ")
+  CI <- summary(Post, quantiles = c(0.025, 0.975))$quantiles
+  CI2 <- paste0("<i>95% credible interval:</i> ", paste0(CI, collapse = " - "))
 
   RhoDF <- purrr::map(.x = Post, .f = tibble::as_tibble, rownames = "ID") %>%
     dplyr::bind_rows(.id = "Chain") %>%
@@ -73,8 +82,9 @@ PlotRho <- function(
 
   Title2 <- data.frame(
     x = Inf, y = Inf,
-    label = paste0('<b><span style="color:blue">',
-                   Title, "</span></b><br>", Gelman))
+    label = paste0(
+      '<b><span style="color:blue">', Title, "</span></b><br>", Gelman))
+
   ESS_CI <- data.frame(
     x = -Inf, y = -Inf, label = paste0(ESS, "<br>", CI2))
 

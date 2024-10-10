@@ -100,6 +100,7 @@ PlotConvergence <- function(
   if (!file.exists(Path_FittedModel)) {
     stop("`Path_FittedModel` does not exist", call. = FALSE)
   }
+
   if (!file.exists(Path_Coda)) {
     stop("`Path_Coda` does not exist", call. = FALSE)
   }
@@ -362,7 +363,7 @@ PlotConvergence <- function(
         grDevices::pdf(
           file = file.path(
             Path_Convergence, paste0("Convergence_Omega_", .x, ".pdf")),
-          width = 18, height = 12)
+          width = 18, height = 14)
         purrr::map(CurrPlotOrder$PlotID, grid::grid.draw, recording = FALSE)
         grDevices::dev.off()
       })
@@ -646,7 +647,7 @@ PlotConvergence <- function(
         grDevices::pdf(
           file = file.path(
             Path_Convergence, paste0("Convergence_Beta_", x, "_FixedY.pdf")),
-          width = 18, height = 12)
+          width = 18, height = 15)
         purrr::map(
           .x = BetaPlotList$PlotFixedY, .f = grid::grid.draw)
         grDevices::dev.off()

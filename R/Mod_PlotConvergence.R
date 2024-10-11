@@ -119,6 +119,7 @@ PlotConvergence <- function(
   # Rho ------
 
   if ("Rho" %in% names(Coda_Obj)) {
+
     IASDT.R::CatTime("Rho")
 
     FileConv_Rho <- file.path(Path_Convergence, "Convergence_Rho.RData")
@@ -128,8 +129,7 @@ PlotConvergence <- function(
       PlotObj_Rho <- IASDT.R::LoadAs(FileConv_Rho)
     } else {
       IASDT.R::CatTime("Prepare plot", Level = 1)
-      # PlotObj_Rho <- IASDT.R::PlotRho(
-      PlotObj_Rho <- PlotRho(
+      PlotObj_Rho <- IASDT.R::PlotRho(
         Post = Coda_Obj, Model = Model, Title = Title, Cols = Cols)
 
       if (SavePlotData) {
@@ -146,7 +146,7 @@ PlotConvergence <- function(
     grDevices::pdf(
       file = file.path(Path_Convergence, "Convergence_Rho.pdf"),
       width = 18, height = 12)
-    print(PlotObj_Rho)
+    plot(PlotObj_Rho)
     grDevices::dev.off()
 
     rm(PlotObj_Rho)
@@ -209,6 +209,7 @@ PlotConvergence <- function(
     OmegaDF <- IASDT.R::Coda_to_tibble(
       CodaObj = Obj_Omega, Type = "omega", NOmega = NOmega,
       EnvFile = EnvFile, FromHPC = FromHPC)
+    invisible(gc())
 
     SelectedCombs <- unique(OmegaDF$SpComb)
 
@@ -220,15 +221,109 @@ PlotConvergence <- function(
       as.data.frame() %>%
       tibble::as_tibble(rownames = "SpComb")
 
-    IASDT.R::CatTime("Prepare working in parallel", Level = 1)
-    if (NCores == 1) {
-      future::plan("sequential", gc = TRUE)
-    } else {
-      c1 <- snow::makeSOCKcluster(NCores)
-      on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-      future::plan("cluster", workers = c1, gc = TRUE)
-      on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
-    }
+
+    # OmegaDF %>%
+    #   tidyr::unnest(cols = c(DT))
+    #
+    #
+    # CHECK
+    #
+    #
+
+
+    PlotObj_Omega <- purrr::map_dfr(
+      .x = seq_len(NOmega),
+      # .x = 1:10,
+      .f = function(x) {
+
+        CI0 <- dplyr::filter(CI, SpComb == SelectedCombs[x]) %>%
+          dplyr::select(-SpComb) %>%
+          round(2) %>%
+          unlist()
+
+        CI1 <- paste0(CI0, collapse = "-") %>%
+          paste0("<i><b>95% credible interval:</b></i> ", .) %>%
+          data.frame(x = -Inf, y = -Inf, label = .)
+
+        PanelTitle <- data.frame(
+          x = Inf, y = Inf,
+          label = {
+            sort(c(OmegaDF$IAS1[[x]], OmegaDF$IAS2[[x]])) %>%
+              paste0("<i>", ., "</i>") %>%
+              paste0(collapse = " & <br>") %>%
+              paste0(., " ")
+          })
+
+        OmegaDF2 <- dplyr::filter(OmegaDF, SpComb == SelectedCombs[x]) %>%
+          dplyr::pull("DT") %>%
+          magrittr::extract2(1)
+
+        ValRange <- range(OmegaDF2$Value)
+
+        Plot <- ggplot2::ggplot(
+          data = OmegaDF2,
+          mapping = ggplot2::aes(
+            x = Iter, y = Value, color = factor(Chain))) +
+          ggplot2::geom_line(linewidth = 0.15, alpha = 0.6) +
+          ggplot2::geom_smooth(
+            method = "loess", formula = y ~ x, se = FALSE, linewidth = 0.8) +
+          ggplot2::geom_point(alpha = 0) +
+          ggplot2::geom_hline(
+            yintercept = CI0, linetype = "dashed", color = "black",
+            linewidth = 1) +
+          ggplot2::scale_color_manual(values = Cols) +
+          ggplot2::scale_x_continuous(expand = c(0, 0)) +
+          ggtext::geom_richtext(
+            mapping = ggplot2::aes(x = x, y = y, label = label), size = 4,
+            data = CI1, inherit.aes = FALSE, hjust = 0, vjust = 0,
+            lineheight = 0, fill = NA, label.color = NA) +
+          ggtext::geom_richtext(
+            mapping = ggplot2::aes(x = x, y = y, label = label), size = 5,
+            data = PanelTitle, inherit.aes = FALSE, colour = "blue",
+            hjust = 1, vjust = 1, lineheight = 0, fill = NA,
+            label.color = NA) +
+          ggplot2::theme_bw() +
+          ggplot2::xlab(NULL) +
+          ggplot2::ylab(NULL) +
+          ggplot2::theme(
+            axis.text = ggplot2::element_text(size = 12),
+            legend.position = "none")
+
+        if (dplyr::between(0, ValRange[1], ValRange[2])) {
+          Plot <- Plot +
+            ggplot2::geom_hline(
+              yintercept = 0, linetype = "solid",
+              color = "green", linewidth = 0.6)
+        }
+
+        Plot <- ggExtra::ggMarginal(
+          p = Plot, type = "density", margins = "y", size = 5,
+          color = "steelblue4")
+
+        return(Plot)
+      },
+      future.scheduling = Inf, future.seed = TRUE,
+      future.globals = c("NOmega", "CI", "SelectedCombs", "OmegaDF", "Cols"),
+      future.packages = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext"))
+
+
+
+
+
+
+
+
+
+
+    # IASDT.R::CatTime("Prepare working in parallel", Level = 1)
+    # if (NCores == 1) {
+    #   future::plan("sequential", gc = TRUE)
+    # } else {
+    #   c1 <- snow::makeSOCKcluster(NCores)
+    #   on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
+    #   future::plan("cluster", workers = c1, gc = TRUE)
+    #   on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+    # }
 
     IASDT.R::CatTime("Prepare trace plots data", Level = 1)
     PlotObj_Omega <- future.apply::future_lapply(

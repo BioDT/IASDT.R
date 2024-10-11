@@ -74,11 +74,25 @@ Coda_to_tibble <- function(
   # Convert to tibble ----
   # # |||||||||||||||||||||||||||||||||||||||
 
-  Coda <- as.matrix(CodaObj, iter = TRUE, chain = TRUE) %>%
-    tibble::as_tibble() %>%
-    dplyr::rename(Chain = CHAIN, Iter = ITER) %>%
-    dplyr::mutate(Chain = factor(Chain), Iter = as.integer(Iter)) %>%
-    dplyr::arrange(Chain, Iter)
+  if (Type == "omega") {
+    CombSample <- sample(seq_len(dim(CodaObj[[1]])[2]), NOmega)
+    Coda <- purrr::map(CodaObj, ~.x[, CombSample]) %>%
+      coda::as.mcmc.list() %>%
+      as.matrix(iter = TRUE, chain = TRUE) %>%
+      tibble::as_tibble() %>%
+      dplyr::rename(Chain = CHAIN, Iter = ITER) %>%
+      dplyr::mutate(Chain = factor(Chain), Iter = as.integer(Iter)) %>%
+      dplyr::arrange(Chain, Iter) %>%
+      tidyr::pivot_longer(
+        -c(Chain, Iter), names_to = "SpComb", values_to = "Value")
+  } else {
+    Coda <- as.matrix(CodaObj, iter = TRUE, chain = TRUE) %>%
+      tibble::as_tibble() %>%
+      dplyr::rename(Chain = CHAIN, Iter = ITER) %>%
+      dplyr::mutate(Chain = factor(Chain), Iter = as.integer(Iter)) %>%
+      dplyr::arrange(Chain, Iter)
+  }
+
 
   # # |||||||||||||||||||||||||||||||||||||||
   # Rho parameter ----
@@ -143,7 +157,6 @@ Coda_to_tibble <- function(
     # Assign environment variables and check file and paths
     IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
-
     SpeciesNames <- readr::read_tsv(
       file = TaxaInfoFile, show_col_types = FALSE) %>%
       dplyr::select(IAS_ID, Species = Species_name) %>%
@@ -183,33 +196,24 @@ Coda_to_tibble <- function(
 
   if (Type == "omega") {
 
-    SampleOmega <- setdiff(names(Coda), c("Chain", "Iter")) %>%
-      sample(size = min((ncol(Coda) - 2), NOmega))
-
-    Coda <- Coda %>%
-      dplyr::select(Chain, Iter, dplyr::all_of(SampleOmega)) %>%
-      tidyr::pivot_longer(
-        -c(Chain, Iter), names_to = "SpComb", values_to = "Value")
-
     IAS <- IASDT.R::GetSpeciesName(EnvFile = EnvFile, FromHPC = FromHPC) %>%
       dplyr::select(IAS_ID, Species_name)
 
-    Coda <- tibble::tibble(SpComb = SampleOmega) %>%
+    Coda <- tibble::tibble(SpComb = unique(Coda$SpComb)) %>%
       dplyr::mutate(
         SP = purrr::map(
           .x = SpComb,
           .f = ~{
             IAS_N <- stringr::str_remove_all(.x, "Omega1\\[|\\]") %>%
-              stringr::str_split(", ", simplify = TRUE) %>%
+              stringr::str_split(",| ", simplify = TRUE) %>%
               as.character() %>%
+              stringr::str_subset("^Sp_") %>%
               purrr::set_names(c("Sp1", "Sp2"))
-
             IAS1 <- dplyr::filter(IAS, IAS_ID == IAS_N[1])$Species_name
             IAS2 <- dplyr::filter(IAS, IAS_ID == IAS_N[2])$Species_name
 
             return(c(IAS_N, IAS1 = IAS1, IAS2 = IAS2))
-          },
-          .progress = TRUE)) %>%
+          })) %>%
       tidyr::unnest_wider("SP") %>%
       dplyr::right_join(Coda, by = "SpComb") %>%
       dplyr::select(

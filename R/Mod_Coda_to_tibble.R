@@ -164,7 +164,6 @@ Coda_to_tibble <- function(
         IAS_ID = stringr::str_pad(IAS_ID, pad = "0", width = 4),
         IAS_ID = paste0("Sp_", IAS_ID))
 
-
     Coda <- tidyr::pivot_longer(
       Coda, -c(Chain, Iter), names_to = "Var_Sp", values_to = "Value")
 
@@ -175,8 +174,9 @@ Coda_to_tibble <- function(
           .f = ~{
             .x %>%
               stringr::str_remove_all("B\\[|\\(|\\)|\\]") %>%
-              stringr::str_split(", ", simplify = TRUE) %>%
+              stringr::str_split(" |\\)", simplify = TRUE) %>%
               as.vector() %>%
+              magrittr::extract(c(1, 3)) %>%
               as.list() %>%
               purrr::set_names(c("Variable", "IAS_ID"))
           })) %>%

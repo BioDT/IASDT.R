@@ -19,9 +19,7 @@
 #'   numbers to each plot page. Defaults to `TRUE`.
 #' @param AddTitle A logical value indicating whether to add the main title
 #'   (specified by `Title`) to the plot. Defaults to `TRUE`.
-#' @param Cols A character vector specifying the colors to be used for each
-#'   chain in the plots. Defaults to `c("red", "blue", "darkgreen",
-#'   "darkgrey")`.
+#' @param Cols Character vector for chain colours [optional]. Default: `NULL`.
 #' @param FromHPC Logical. Indicates whether the function is being run on an HPC
 #'   environment, affecting file path handling. Default: `TRUE`.
 #' @name PlotAlpha
@@ -34,8 +32,7 @@
 
 PlotAlpha <- function(
     Post = NULL, Model = NULL, Title = NULL, NRC = NULL, AddFooter = TRUE,
-    AddTitle = TRUE, Cols = c("red", "blue", "darkgreen", "darkgrey"),
-    FromHPC = TRUE) {
+    AddTitle = TRUE, Cols = NULL, FromHPC = TRUE) {
 
   # # ..................................................................... ###
 
@@ -81,8 +78,24 @@ PlotAlpha <- function(
   # nolint end
 
   NChains <- length(Model$postList)
+
+  #  Plotting colours
+  if (is.null(Cols) || length(Cols) != NChains) {
+
+    if (length(Cols) != NChains) {
+      IASDT.R::CatTime(
+        "The length of provided colours does not equal to the number of chains",
+        Level = 1)
+    }
+
+    Cols <- c(
+      "black", "grey60",
+      RColorBrewer::brewer.pal(n = NChains - 2, name = "Set1"))
+  }
+
   rm(Model)
 
+  # Number of latent factors
   NLV <- ncol(Post[[1]])
 
   # # ..................................................................... ###
@@ -105,6 +118,7 @@ PlotAlpha <- function(
   CI <- summary(Post, quantiles = c(0.025, 0.975)) %>%
     magrittr::extract2("quantiles") %>%
     matrix(ncol = 2) %>%
+    magrittr::divide_by(1000) %>%
     round(3)
 
   AlphaDF <- IASDT.R::Coda_to_tibble(
@@ -116,7 +130,8 @@ PlotAlpha <- function(
           as.character(.x) %>%
             stringr::str_remove("factor") %>%
             as.integer()
-        }))
+        })) %>%
+    dplyr::mutate(Value = Value / 1000)
   # nolint end
 
   if (is.null(NRC)) {
@@ -125,6 +140,8 @@ PlotAlpha <- function(
       NLV == 3 ~ c(1, 3), NLV == 4 ~ c(2, 2),
       .default = c(2, 3))
   }
+
+  MaxDist <- max(AlphaDF$Value) * 1.05
 
   # # ..................................................................... ###
 
@@ -136,8 +153,7 @@ PlotAlpha <- function(
         "<b><i>Mean effective sample size:</i></b> ", ESS[.x],
         " / ", SampleSize, " samples")
 
-      CI0 <- round(CI[.x, ] / 1000, 2) %>%
-        paste0(collapse = " - ") %>%
+      CI0 <- paste0(round(CI[.x, ], 2), collapse = " to ") %>%
         paste0("<b><i>95% credible interval:</i></b> ", ., " km")
 
       ESS_CI <- data.frame(
@@ -147,7 +163,8 @@ PlotAlpha <- function(
         "<b><i>Gelman convergence diagnostic:</i></b> ", Gelman[.x])
 
       Title2 <- data.frame(x = Inf, y = Inf, label = Gelman0)
-      Title3 <- data.frame(x = -Inf, y = Inf, label = paste0("Factor", .x))
+      Title3 <- data.frame(
+        x = -Inf, y = Inf, label = paste0("<b>Factor", .x, "</b>"))
 
       PlotDT <- dplyr::filter(AlphaDF, Factor2 == .x)
 
@@ -163,18 +180,17 @@ PlotAlpha <- function(
           linewidth = 1) +
         ggplot2::scale_color_manual(values = Cols) +
         ggplot2::scale_x_continuous(expand = c(0, 0)) +
-        ggplot2::scale_y_continuous(
-          limits = c(0, max(PlotDT$Value) * 1.05), expand = c(0, 0)) +
+        ggplot2::scale_y_continuous(limits = c(0, MaxDist), expand = c(0, 0)) +
         ggplot2::theme_bw() +
         ggplot2::xlab(NULL) +
-        ggplot2::ylab(NULL) +
+        ggplot2::ylab("Distance (km)") +
         ggtext::geom_richtext(
           mapping = ggplot2::aes(x = x, y = y, label = label),
           data = Title2, inherit.aes = FALSE, size = 4, hjust = 1, vjust = 1,
           lineheight = 0, fill = NA, label.color = NA) +
         ggtext::geom_richtext(
           mapping = ggplot2::aes(x = x, y = y, label = label),
-          data = Title3, inherit.aes = FALSE, size = 4,
+          data = Title3, inherit.aes = FALSE, size = 5,
           hjust = -0.1, vjust = 1, color = "blue",
           lineheight  = 0, fill = NA, label.color = NA) +
         ggtext::geom_richtext(
@@ -183,12 +199,16 @@ PlotAlpha <- function(
           hjust = 0, vjust = 0, lineheight  = 0, fill = NA, label.color = NA) +
         ggplot2::theme(
           legend.position = "none",
-          axis.text = ggplot2::element_text(size = 12),
-          axis.title = ggplot2::element_blank())
+          axis.text = ggplot2::element_text(size = 12))
 
       Plot <- ggExtra::ggMarginal(
-        p = Plot, type = "density", margins = "y", size = 4,
+        p = Plot, type = "density", margins = "y", size = 6,
         color = "steelblue4")
+
+      # Making marginal background matching the plot background
+      # https://stackoverflow.com/a/78196022/3652584
+      Plot$layout$t[1] <- 1
+      Plot$layout$r[1] <- max(Plot$layout$r)
 
       return(Plot)
     })

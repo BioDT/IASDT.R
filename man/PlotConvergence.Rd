@@ -9,14 +9,14 @@ PlotConvergence(
   Path_FittedModel = NULL,
   EnvFile = ".env",
   FromHPC = TRUE,
-  NChains = 4,
   Title = " ",
   NOmega = 1000,
   NCores = NULL,
-  NRC = c(2, 3),
+  NRC = c(2, 2),
+  Beta_NRC = c(3, 3),
   SavePlotData = TRUE,
   PagePerFile = 20,
-  Cols = c("red", "blue", "darkgreen", "darkgrey")
+  Cols = NULL
 )
 }
 \arguments{
@@ -30,8 +30,6 @@ environment variables. Default: ".env".}
 \item{FromHPC}{Logical. Indicates whether the function is being run on an HPC
 environment, affecting file path handling. Default: \code{TRUE}.}
 
-\item{NChains}{Integer. Number of MCMC chains used in the model. Default: 4.}
-
 \item{Title}{String. Title for the rho and alpha plots. Default: " ".}
 
 \item{NOmega}{Integer. Number of species interactions to sample for omega
@@ -40,7 +38,10 @@ parameter convergence diagnostics. Default: 1000.}
 \item{NCores}{Integer. Number of cores to use for parallel processing.}
 
 \item{NRC}{Numeric Vector. Specifies the number of rows and columns for
-arranging multiple plots on a page. Default: c(2, 3).}
+arranging multiple plots on a page. Default: c(2, 2).}
+
+\item{Beta_NRC}{Numeric Vector. Specifies the number of rows and columns for
+arranging panels for the beta parameter. Default: c(3, 3).}
 
 \item{SavePlotData}{Logical. Indicates whether to save the plot data as RData
 files. Default: TRUE.}
@@ -48,8 +49,7 @@ files. Default: TRUE.}
 \item{PagePerFile}{Integer. Indicates the number of pages per single pdf page
 for the \code{Omega} parameter. Default: 20.}
 
-\item{Cols}{Character Vector. Specifies the colors to use for each chain in
-the plots. Default: c("red", "blue", "darkgreen", "darkgrey").}
+\item{Cols}{Character vector for chain colours \link{optional}. Default: \code{NULL}.}
 }
 \value{
 The function does not return a value but generates and saves plots to

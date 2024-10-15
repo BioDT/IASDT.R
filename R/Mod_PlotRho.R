@@ -63,8 +63,8 @@ PlotRho <- function(Post, Model, Title, Cols = NULL) {
     paste0("<b><i>Mean effective sample size:</i></b> ", ., " / ", SampleSize)
 
   CI <- summary(Post, quantiles = c(0.025, 0.975))$quantiles
-  CI2 <- paste0("<b><i>95% credible interval:</i></b> ",
-                paste0(CI, collapse = " to "))
+  CI2 <- paste0(
+    "<b><i>95% credible interval:</i></b> ", paste0(CI, collapse = " to "))
 
   RhoDF <- purrr::map(.x = Post, .f = tibble::as_tibble, rownames = "ID") %>%
     dplyr::bind_rows(.id = "Chain") %>%
@@ -74,9 +74,11 @@ PlotRho <- function(Post, Model, Title, Cols = NULL) {
   ## Gelman convergence diagnostic
   Gelman <- coda::gelman.diag(x = Post, multivariate = FALSE) %>%
     magrittr::extract2("psrf") %>%
-    magrittr::extract(1) %>%
-    round(3) %>%
-    paste0('<span style="color:blue"><b><i>Gelman convergence diagnostic:</i></b></span> ', .)
+    round(2) %>%
+    paste0(collapse = " / ") %>%
+    paste0(
+      '<span style="color:blue"><b><i>',
+      "Gelman convergence diagnostic:</i></b></span> ", .)
   Title2 <- data.frame(x = Inf, y = Inf, label = Gelman)
 
   ESS_CI <- data.frame(
@@ -103,11 +105,11 @@ PlotRho <- function(Post, Model, Title, Cols = NULL) {
     ggtext::geom_richtext(
       mapping = ggplot2::aes(x = x, y = y, label = label),
       data = Title2, inherit.aes = FALSE, size = 6,
-      hjust = 1, vjust = 1, lineheight  = 0, fill = NA, label.color = NA) +
+      hjust = 1, vjust = 1, lineheight = 0, fill = NA, label.color = NA) +
     ggtext::geom_richtext(
       mapping = ggplot2::aes(x = x, y = y, label = label),
       data = ESS_CI, inherit.aes = FALSE, size = 6,
-      hjust = 0, vjust = 0, lineheight  = 0, fill = NA, label.color = NA) +
+      hjust = 0, vjust = 0, lineheight = 0, fill = NA, label.color = NA) +
     ggplot2::theme_bw() +
     ggplot2::theme(
       legend.position = "none", axis.text = ggplot2::element_text(size = 14))

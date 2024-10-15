@@ -11,7 +11,7 @@ PlotAlpha(
   NRC = NULL,
   AddFooter = TRUE,
   AddTitle = TRUE,
-  Cols = c("red", "blue", "darkgreen", "darkgrey"),
+  Cols = NULL,
   FromHPC = TRUE
 )
 }
@@ -34,8 +34,7 @@ numbers to each plot page. Defaults to \code{TRUE}.}
 \item{AddTitle}{A logical value indicating whether to add the main title
 (specified by \code{Title}) to the plot. Defaults to \code{TRUE}.}
 
-\item{Cols}{A character vector specifying the colors to be used for each
-chain in the plots. Defaults to \code{c("red", "blue", "darkgreen", "darkgrey")}.}
+\item{Cols}{Character vector for chain colours \link{optional}. Default: \code{NULL}.}
 
 \item{FromHPC}{Logical. Indicates whether the function is being run on an HPC
 environment, affecting file path handling. Default: \code{TRUE}.}

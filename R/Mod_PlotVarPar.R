@@ -63,7 +63,8 @@ PlotVarPar <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  IAS_ID <- Species_name <- Species <- variable <- value <- TaxaInfoFile <- NULL
+  IAS_ID <- Species_name <- Species <- variable <- value <- TaxaInfoFile <-
+    expected <- preds <- NULL
 
   # # ..................................................................... ###
 

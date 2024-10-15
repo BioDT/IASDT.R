@@ -4,13 +4,10 @@
 \alias{PlotGelman_Omega}
 \title{Creates a Gelman-Rubin-Brooks plot for \code{omega} parameters.}
 \usage{
-PlotGelman_Omega(CodaObj, NCores, NOmega = 1000, PlottingAlpha = 0.25)
+PlotGelman_Omega(CodaObj, NOmega = 1000, PlottingAlpha = 0.25)
 }
 \arguments{
 \item{CodaObj}{n object of class \code{mcmc.list} representing the MCMC chains.}
-
-\item{NCores}{An integer specifying the number of cores to use for parallel
-processing.}
 
 \item{NOmega}{An optional integer indicating the number of species' omega
 parameters to sample and plot. Defaults to 1000.}

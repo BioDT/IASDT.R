@@ -4,7 +4,7 @@
 \alias{PlotRho}
 \title{Plot convergence traceplots for the rho parameter}
 \usage{
-PlotRho(Post, Model, Title, Cols = c("red", "blue", "darkgreen", "darkgrey"))
+PlotRho(Post, Model, Title, Cols = NULL)
 }
 \arguments{
 \item{Post}{A \code{coda} object containing MCMC samples of the rho parameter or a
@@ -15,9 +15,7 @@ path to such an object.}
 
 \item{Title}{A character string specifying the title of the plot.}
 
-\item{Cols}{A character vector specifying the colors to be used for the lines
-representing each chain in the plot. Defaults to c("red", "blue",
-"darkgreen", "darkgrey").}
+\item{Cols}{Character vector for chain colours \link{optional}. Default: \code{NULL}.}
 }
 \value{
 A ggplot object representing the traceplot of the rho parameter,

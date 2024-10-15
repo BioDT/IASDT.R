@@ -19,13 +19,14 @@
 #'   parameter convergence diagnostics. Default: 1000.
 #' @param NCores Integer. Number of cores to use for parallel processing.
 #' @param NRC Numeric Vector. Specifies the number of rows and columns for
-#'   arranging multiple plots on a page. Default: c(2, 3).
+#'   arranging multiple plots on a page. Default: c(2, 2).
+#' @param Beta_NRC Numeric Vector. Specifies the number of rows and columns for
+#'   arranging panels for the beta parameter. Default: c(3, 3).
 #' @param SavePlotData Logical. Indicates whether to save the plot data as RData
 #'   files. Default: TRUE.
 #' @param PagePerFile Integer. Indicates the number of pages per single pdf page
 #'   for the `Omega` parameter. Default: 20.
-#' @param Cols Character Vector. Specifies the colors to use for each chain in
-#'   the plots. Default: c("red", "blue", "darkgreen", "darkgrey").
+#' @param Cols Character vector for chain colours [optional]. Default: `NULL`.
 #' @name PlotConvergence
 #' @author Ahmed El-Gabbas
 #' @return The function does not return a value but generates and saves plots to
@@ -35,8 +36,8 @@
 PlotConvergence <- function(
     Path_Coda = NULL, Path_FittedModel = NULL, EnvFile = ".env",
     FromHPC = TRUE, Title = " ", NOmega = 1000, NCores = NULL,
-    NRC = c(2, 2), SavePlotData = TRUE, PagePerFile = 20,
-    Cols = c("red", "blue", "darkgreen", "darkgrey")) {
+    NRC = c(2, 2), Beta_NRC = c(3, 3), SavePlotData = TRUE, PagePerFile = 20,
+    Cols = NULL) {
 
   # # ..................................................................... ###
 
@@ -51,13 +52,10 @@ PlotConvergence <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  SpComb <- `2.5%` <- `97.5%` <- Class <- Order <- Family <- Plot <- DT <-
-    IAS_ID <- Species <- Variable <- data <- PlotID <- Var <- PlotFixedY <-
-    File <- Page <- Iter <- Value <- Chain <- y <- label <-
-    Var_Sp <- NULL
-
-  withr::local_options(
-    future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
+  SpComb <- `2.5%` <- `97.5%` <- Class <- Order <- Family <- DT <- IAS_ID <-
+    Species <- Variable <- data <- PlotID <- File <- Page <- Iter <- Value <-
+    Chain <- y <- label <- Var_Sp <- CI_025 <- CI_975 <- Var_Min <- Var_Max <-
+    Variable2 <- Plot_File <- Var_Sp2 <- NULL
 
   # # ..................................................................... ###
 
@@ -74,7 +72,6 @@ PlotConvergence <- function(
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "character",
     Args = c("Path_Coda", "Path_FittedModel"))
-
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "logical", Args = "FromHPC")
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric", Args = c("NOmega", "NCores", "NRC"))
@@ -87,15 +84,15 @@ PlotConvergence <- function(
   IASDT.R::CatTime("Create path")
   Path_Convergence <- dirname(dirname(Path_Coda)) %>%
     file.path("Model_Convergence")
+  Pah_Beta_Data <- file.path(Path_Convergence, "Beta_Data")
   Path_Convergence_BySp <- file.path(Path_Convergence, "Beta_BySpecies")
-  fs::dir_create(c(Path_Convergence, Path_Convergence_BySp))
+  fs::dir_create(c(Path_Convergence, Path_Convergence_BySp, Pah_Beta_Data))
 
   # # ..................................................................... ###
 
   # Prepare convergence data ------
 
   IASDT.R::CatTime("Prepare convergence data")
-
 
   if (!file.exists(Path_FittedModel)) {
     stop("`Path_FittedModel` does not exist", call. = FALSE)
@@ -111,15 +108,34 @@ PlotConvergence <- function(
   IASDT.R::CatTime("Loading fitted model object", Level = 1)
   Model <- IASDT.R::LoadAs(Path_FittedModel)
 
+  # Model variables
   ModVars <- Model$covNames
+
+  # Number of chains
   NChains <- length(Model$postList)
+
+  # Number of samples
+  SampleSize <- Model$samples
+
+  #  Plotting colours
+  if (is.null(Cols)) {
+    Cols <- c(
+      "black", "grey60",
+      RColorBrewer::brewer.pal(n = NChains - 2, name = "Set1"))
+  }
+  if (length(Cols) != NChains) {
+    IASDT.R::CatTime(
+      "The length of provided colours != number of chains", Level = 1)
+    Cols <- c(
+      "black", "grey60",
+      RColorBrewer::brewer.pal(n = NChains - 2, name = "Set1"))
+  }
 
   # # ..................................................................... ###
 
   # Rho ------
 
   if ("Rho" %in% names(Coda_Obj)) {
-
     IASDT.R::CatTime("Rho")
 
     FileConv_Rho <- file.path(Path_Convergence, "Convergence_Rho.RData")
@@ -143,8 +159,8 @@ PlotConvergence <- function(
     IASDT.R::CatTime("Save plot", Level = 1)
     # Using ggplot2::ggsave directly does not show non-ascii characters
     # correctly
-    grDevices::pdf(
-      file = file.path(Path_Convergence, "Convergence_Rho.pdf"),
+    grDevices::cairo_pdf(
+      filename = file.path(Path_Convergence, "Convergence_Rho.pdf"),
       width = 18, height = 12)
     plot(PlotObj_Rho)
     grDevices::dev.off()
@@ -180,8 +196,8 @@ PlotConvergence <- function(
   IASDT.R::CatTime("Save plot", Level = 1)
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
-  grDevices::pdf(
-    file = file.path(Path_Convergence, "Convergence_Alpha.pdf"),
+  grDevices::cairo_pdf(
+    filename = file.path(Path_Convergence, "Convergence_Alpha.pdf"),
     width = 18, height = 14)
   print(PlotObj_Alpha)
   grDevices::dev.off()
@@ -204,64 +220,67 @@ PlotConvergence <- function(
     IASDT.R::CatTime("Loading plotting data", Level = 1)
     PlotObj_Omega <- IASDT.R::LoadAs(FileConv_Omega)
   } else {
-
     IASDT.R::CatTime("Coda to tibble", Level = 1)
     OmegaDF <- IASDT.R::Coda_to_tibble(
       CodaObj = Obj_Omega, Type = "omega", NOmega = NOmega,
       EnvFile = EnvFile, FromHPC = FromHPC)
     invisible(gc())
-
     SelectedCombs <- unique(OmegaDF$SpComb)
 
     IASDT.R::CatTime("Prepare confidence interval data", Level = 1)
-    CI <- purrr::map(.x  = Obj_Omega, .f = ~ .x[, SelectedCombs]) %>%
+    CI <- purrr::map(.x = Obj_Omega, .f = ~ .x[, SelectedCombs]) %>%
       coda::mcmc.list() %>%
       summary(quantiles = c(0.025, 0.975)) %>%
       magrittr::extract2("quantiles") %>%
       as.data.frame() %>%
-      tibble::as_tibble(rownames = "SpComb")
+      tibble::as_tibble(rownames = "SpComb") %>%
+      stats::setNames(c("SpComb", "CI_25", "CI_975"))
 
+    OmegaDF <- dplyr::left_join(OmegaDF, CI, by = "SpComb")
+    OmegaNames <- attr(Obj_Omega[[1]], "dimnames")[[2]]
 
-    # OmegaDF %>%
-    #   tidyr::unnest(cols = c(DT))
-    #
-    #
-    # CHECK
-    #
-    #
-
-
+    IASDT.R::CatTime("Prepare Plots", Level = 1)
     PlotObj_Omega <- purrr::map_dfr(
       .x = seq_len(NOmega),
-      # .x = 1:10,
       .f = function(x) {
+        CombData <- dplyr::filter(OmegaDF, SpComb == SelectedCombs[x])
+        CurrPost <- purrr::map(
+          .x = Obj_Omega,
+          .f = ~ .x[, which(OmegaNames == CombData$SpComb)]) %>%
+          coda::as.mcmc.list()
 
-        CI0 <- dplyr::filter(CI, SpComb == SelectedCombs[x]) %>%
-          dplyr::select(-SpComb) %>%
+        ## Gelman convergence diagnostic
+        Label_Gelman <- coda::gelman.diag(CurrPost, multivariate = FALSE) %>%
+          magrittr::extract2("psrf") %>%
+          magrittr::extract(1) %>%
+          round(3) %>%
+          paste0("<b><i>Gelman convergence diagnostic:</i></b> ", .) %>%
+          data.frame(x = -Inf, y = Inf, label = .)
+
+        ## Effective sample size
+        Label_ESS <- coda::effectiveSize(CurrPost) %>%
+          magrittr::divide_by(NChains) %>%
+          round(1) %>%
+          paste0(
+            "<b><i>Mean effective sample size:</i></b> ", ., " / ", SampleSize)
+        CurrCI <- dplyr::select(CombData, c("CI_25", "CI_975")) %>%
           round(2) %>%
           unlist()
+        Label_CI <- CurrCI %>%
+          paste0(collapse = " to ") %>%
+          paste0("<b><i>95% credible interval:</i></b> ", .)
+        Label_ESS_CI <- data.frame(
+          x = -Inf, y = -Inf, label = paste0(Label_ESS, "<br>", Label_CI))
 
-        CI1 <- paste0(CI0, collapse = "-") %>%
-          paste0("<i><b>95% credible interval:</b></i> ", .) %>%
-          data.frame(x = -Inf, y = -Inf, label = .)
-
-        PanelTitle <- data.frame(
-          x = Inf, y = Inf,
-          label = {
-            sort(c(OmegaDF$IAS1[[x]], OmegaDF$IAS2[[x]])) %>%
-              paste0("<i>", ., "</i>") %>%
-              paste0(collapse = " & <br>") %>%
-              paste0(., " ")
-          })
-
-        OmegaDF2 <- dplyr::filter(OmegaDF, SpComb == SelectedCombs[x]) %>%
-          dplyr::pull("DT") %>%
-          magrittr::extract2(1)
-
-        ValRange <- range(OmegaDF2$Value)
+        Label_Panel <- c(CombData$IAS1, CombData$IAS2) %>%
+          sort() %>%
+          paste0("<i>", ., "</i>") %>%
+          paste0(collapse = " & <br>") %>%
+          paste0(., " ") %>%
+          data.frame(x = Inf, y = Inf, label = .)
 
         Plot <- ggplot2::ggplot(
-          data = OmegaDF2,
+          data = CombData$DT[[1]],
           mapping = ggplot2::aes(
             x = Iter, y = Value, color = factor(Chain))) +
           ggplot2::geom_line(linewidth = 0.15, alpha = 0.6) +
@@ -269,113 +288,27 @@ PlotConvergence <- function(
             method = "loess", formula = y ~ x, se = FALSE, linewidth = 0.8) +
           ggplot2::geom_point(alpha = 0) +
           ggplot2::geom_hline(
-            yintercept = CI0, linetype = "dashed", color = "black",
+            yintercept = CurrCI, linetype = "dashed", color = "black",
             linewidth = 1) +
-          ggplot2::scale_color_manual(values = Cols) +
-          ggplot2::scale_x_continuous(expand = c(0, 0)) +
-          ggtext::geom_richtext(
-            mapping = ggplot2::aes(x = x, y = y, label = label), size = 4,
-            data = CI1, inherit.aes = FALSE, hjust = 0, vjust = 0,
-            lineheight = 0, fill = NA, label.color = NA) +
-          ggtext::geom_richtext(
-            mapping = ggplot2::aes(x = x, y = y, label = label), size = 5,
-            data = PanelTitle, inherit.aes = FALSE, colour = "blue",
-            hjust = 1, vjust = 1, lineheight = 0, fill = NA,
-            label.color = NA) +
-          ggplot2::theme_bw() +
-          ggplot2::xlab(NULL) +
-          ggplot2::ylab(NULL) +
-          ggplot2::theme(
-            axis.text = ggplot2::element_text(size = 12),
-            legend.position = "none")
-
-        if (dplyr::between(0, ValRange[1], ValRange[2])) {
-          Plot <- Plot +
-            ggplot2::geom_hline(
-              yintercept = 0, linetype = "solid",
-              color = "green", linewidth = 0.6)
-        }
-
-        Plot <- ggExtra::ggMarginal(
-          p = Plot, type = "density", margins = "y", size = 5,
-          color = "steelblue4")
-
-        return(Plot)
-      },
-      future.scheduling = Inf, future.seed = TRUE,
-      future.globals = c("NOmega", "CI", "SelectedCombs", "OmegaDF", "Cols"),
-      future.packages = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext"))
-
-
-
-
-
-
-
-
-
-
-    # IASDT.R::CatTime("Prepare working in parallel", Level = 1)
-    # if (NCores == 1) {
-    #   future::plan("sequential", gc = TRUE)
-    # } else {
-    #   c1 <- snow::makeSOCKcluster(NCores)
-    #   on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-    #   future::plan("cluster", workers = c1, gc = TRUE)
-    #   on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
-    # }
-
-    IASDT.R::CatTime("Prepare trace plots data", Level = 1)
-    PlotObj_Omega <- future.apply::future_lapply(
-      X = seq_len(NOmega),
-      FUN = function(x) {
-
-        CI0 <- dplyr::filter(CI, SpComb == SelectedCombs[x]) %>%
-          dplyr::select(-SpComb) %>%
-          round(2) %>%
-          unlist()
-
-        CI1 <- paste0(CI0, collapse = "-") %>%
-          paste0("<i><b>95% credible interval:</b></i> ", .) %>%
-          data.frame(x = -Inf, y = -Inf, label = .)
-
-        PanelTitle <- data.frame(
-          x = Inf, y = Inf,
-          label = {
-            sort(c(OmegaDF$IAS1[[x]], OmegaDF$IAS2[[x]])) %>%
-              paste0("<i>", ., "</i>") %>%
-              paste0(collapse = " & <br>") %>%
-              paste0(., " ")
-          })
-
-        OmegaDF2 <- dplyr::filter(OmegaDF, SpComb == SelectedCombs[x]) %>%
-          dplyr::pull("DT") %>%
-          magrittr::extract2(1)
-
-        ValRange <- range(OmegaDF2$Value)
-
-        Plot <- ggplot2::ggplot(
-          data = OmegaDF2,
-          mapping = ggplot2::aes(
-            x = Iter, y = Value, color = factor(Chain))) +
-          ggplot2::geom_line(linewidth = 0.15, alpha = 0.6) +
-          ggplot2::geom_smooth(
-            method = "loess", formula = y ~ x, se = FALSE, linewidth = 0.8) +
-          ggplot2::geom_point(alpha = 0) +
+          # Ensure that y-axis always show 0
           ggplot2::geom_hline(
-            yintercept = CI0, linetype = "dashed", color = "black",
-            linewidth = 1) +
+            yintercept = 0, linetype = "dashed",
+            color = "transparent", linewidth = 0.6) +
           ggplot2::scale_color_manual(values = Cols) +
           ggplot2::scale_x_continuous(expand = c(0, 0)) +
-          ggtext::geom_richtext(
-            mapping = ggplot2::aes(x = x, y = y, label = label), size = 4,
-            data = CI1, inherit.aes = FALSE, hjust = 0, vjust = 0,
-            lineheight = 0, fill = NA, label.color = NA) +
+          ggplot2::scale_y_continuous(expand = c(0, 0)) +
           ggtext::geom_richtext(
             mapping = ggplot2::aes(x = x, y = y, label = label), size = 5,
-            data = PanelTitle, inherit.aes = FALSE, colour = "blue",
-            hjust = 1, vjust = 1, lineheight = 0, fill = NA,
-            label.color = NA) +
+            data = Label_Panel, inherit.aes = FALSE, colour = "blue",
+            hjust = 1, vjust = 1, lineheight = 0, fill = NA, label.color = NA) +
+          ggtext::geom_richtext(
+            mapping = ggplot2::aes(x = x, y = y, label = label),
+            data = Label_Gelman, inherit.aes = FALSE, size = 6, hjust = 0,
+            vjust = 1, lineheight = 0, fill = NA, label.color = NA) +
+          ggtext::geom_richtext(
+            mapping = ggplot2::aes(x = x, y = y, label = label),
+            data = Label_ESS_CI, inherit.aes = FALSE, size = 6, hjust = 0,
+            vjust = 0, lineheight = 0, fill = NA, label.color = NA) +
           ggplot2::theme_bw() +
           ggplot2::xlab(NULL) +
           ggplot2::ylab(NULL) +
@@ -383,28 +316,18 @@ PlotConvergence <- function(
             axis.text = ggplot2::element_text(size = 12),
             legend.position = "none")
 
-        if (dplyr::between(0, ValRange[1], ValRange[2])) {
-          Plot <- Plot +
-            ggplot2::geom_hline(
-              yintercept = 0, linetype = "solid",
-              color = "green", linewidth = 0.6)
-        }
-
         Plot <- ggExtra::ggMarginal(
           p = Plot, type = "density", margins = "y", size = 5,
           color = "steelblue4")
 
-        return(Plot)
-      },
-      future.scheduling = Inf, future.seed = TRUE,
-      future.globals = c("NOmega", "CI", "SelectedCombs", "OmegaDF", "Cols"),
-      future.packages = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext"))
+        # Making marginal background matching the plot background
+        # https://stackoverflow.com/a/78196022/3652584
+        Plot$layout$t[1] <- 1
+        Plot$layout$r[1] <- max(Plot$layout$r)
 
-    if (NCores > 1) {
-      snow::stopCluster(c1)
-      future::plan("sequential", gc = TRUE)
-    }
-
+        return(tibble::tibble(SpComb = CombData$SpComb, Plot = list(Plot)))
+      }
+    )
 
     if (SavePlotData) {
       IASDT.R::CatTime("Save plot data", Level = 1)
@@ -412,19 +335,21 @@ PlotConvergence <- function(
         InObj = PlotObj_Omega, OutObj = "Convergence_Omega",
         OutPath = file.path(Path_Convergence, "Convergence_Omega.RData"))
     }
-    rm(Obj_Omega, OmegaDF, SelectedCombs, CI)
+    rm(Obj_Omega, OmegaDF, SelectedCombs, CI, OmegaNames)
+    invisible(gc())
   }
 
-  OmegaPlotList <- tibble::tibble(PlotID = seq_len(length(PlotObj_Omega))) %>%
+  IASDT.R::CatTime("Arrange plots", Level = 1)
+  OmegaPlotList <- tibble::tibble(PlotID = seq_len(nrow(PlotObj_Omega))) %>%
     dplyr::mutate(
       File = ceiling(PlotID / (PagePerFile * NRC[2] * NRC[1])),
       Page = ceiling(PlotID / (NRC[2] * NRC[1]))) %>%
     tidyr::nest(.by = c("File", "Page"), .key = "PlotID") %>%
     dplyr::mutate(
+      PlotID = purrr::map(PlotID, ~ unlist(as.vector(.x))),
       PlotID = purrr::pmap(
         .l = list(File, Page, PlotID),
         .f = function(File, Page, PlotID) {
-
           PlotTitle <- ggplot2::ggplot() +
             ggplot2::labs(
               title = paste0(
@@ -441,22 +366,21 @@ PlotConvergence <- function(
                 size = 12, colour = "grey",
                 margin = ggplot2::margin(-5, 0, 0, 0)))
 
-          PlotObj_Omega[unlist(as.vector(PlotID))] %>%
-            cowplot::plot_grid(
-              plotlist = ., ncol = NRC[2], nrow = NRC[1], align = "hv") %>%
-            cowplot::plot_grid(
-              PlotTitle, ., ncol = 1, rel_heights = c(0.05, 1))
-        }))
+          cowplot::plot_grid(
+            plotlist = PlotObj_Omega$Plot[PlotID],
+            ncol = NRC[2], nrow = NRC[1], align = "hv") %>%
+            cowplot::plot_grid(PlotTitle, ., ncol = 1, rel_heights = c(0.05, 1))
+        }
+      ))
 
-  rm(PlotObj_Omega)
-
+  IASDT.R::CatTime("Save plots", Level = 1)
   purrr::walk(
     .x = seq_along(unique(OmegaPlotList$File)),
-    .f = ~{
+    .f = ~ {
       invisible({
         CurrPlotOrder <- dplyr::filter(OmegaPlotList, File == .x)
-        grDevices::pdf(
-          file = file.path(
+        grDevices::cairo_pdf(
+          filename = file.path(
             Path_Convergence, paste0("Convergence_Omega_", .x, ".pdf")),
           width = 18, height = 14)
         purrr::map(CurrPlotOrder$PlotID, grid::grid.draw, recording = FALSE)
@@ -464,7 +388,7 @@ PlotConvergence <- function(
       })
     })
 
-  rm(OmegaPlotList, Obj_Omega)
+  rm(OmegaPlotList, PlotObj_Omega)
   invisible(gc())
 
   # # ..................................................................... ###
@@ -478,22 +402,10 @@ PlotConvergence <- function(
   if (file.exists(FileConv_Beta)) {
     IASDT.R::CatTime("Loading plotting data", Level = 1)
     PlotObj_Beta <- IASDT.R::LoadAs(FileConv_Beta)
-
   } else {
+    IASDT.R::CatTime("Prepare trace plots", Level = 1)
 
-    IASDT.R::CatTime("Prepare trace plot data", Level = 1)
-
-    IASDT.R::CatTime(
-      paste0("Prepare working in parallel using `", NCores, "`"), Level = 2)
-    if (NCores == 1) {
-      future::plan("sequential", gc = TRUE)
-    } else {
-      c1 <- snow::makeSOCKcluster(NCores)
-      on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-      future::plan("cluster", workers = c1, gc = TRUE)
-      on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
-    }
-
+    BetaNames <- attr(Obj_Beta[[1]], "dimnames")[[2]]
 
     IASDT.R::CatTime("Prepare 95% credible interval data", Level = 2)
     CI <- summary(Obj_Beta, quantiles = c(0.025, 0.975))$quantiles %>%
@@ -502,14 +414,15 @@ PlotConvergence <- function(
       dplyr::rename(CI_025 = `2.5%`, CI_975 = `97.5%`)
 
     IASDT.R::CatTime("Coda to tibble", Level = 2)
-    PlotObj_Beta <- IASDT.R::Coda_to_tibble(
-      CodaObj = Obj_Beta, Type = "beta", EnvFile = EnvFile,
-      FromHPC = FromHPC) %>%
+    Beta_DF <- IASDT.R::Coda_to_tibble(
+      CodaObj = Obj_Beta, Type = "beta",
+      EnvFile = EnvFile, FromHPC = FromHPC) %>%
       dplyr::left_join(CI, by = "Var_Sp")
-    rm(CI)
 
-    VarRanges <- dplyr::arrange(PlotObj_Beta, Variable, IAS_ID) %>%
-      dplyr::select(Var = Variable, DT) %>%
+    # Variable ranges
+    IASDT.R::CatTime("Variable ranges", Level = 2)
+    VarRanges <- dplyr::arrange(Beta_DF, Variable, IAS_ID) %>%
+      dplyr::select(Variable = Variable, DT) %>%
       dplyr::mutate(
         Range = purrr::map(.x = DT, .f = ~ range(dplyr::pull(.x, Value)))) %>%
       dplyr::select(-DT) %>%
@@ -517,74 +430,151 @@ PlotConvergence <- function(
       dplyr::mutate(
         Range = purrr::map(
           .x = data,
-          .f = ~{
+          .f = ~ {
             dplyr::pull(.x, Range) %>%
               as.vector() %>%
               range() %>%
-              purrr::set_names(c("Min", "Max"))
+              purrr::set_names(c("Var_Min", "Var_Max"))
           })) %>%
       dplyr::select(-data) %>%
       tidyr::unnest_wider("Range")
 
-    IASDT.R::CatTime("Prepare data in parallel", Level = 2)
+    # Species taxonomy
+    IASDT.R::CatTime("Species taxonomy", Level = 2)
+    SpeciesTaxonomy <- IASDT.R::GetSpeciesName(
+      EnvFile = EnvFile, FromHPC = FromHPC) %>%
+      dplyr::select(IAS_ID, Class, Order, Family)
+
+    Beta_DF <- Beta_DF %>%
+      dplyr::left_join(VarRanges, by = "Variable") %>%
+      dplyr::left_join(SpeciesTaxonomy, by = "IAS_ID") %>%
+      dplyr::mutate(
+        Var_Sp2 = paste0(Variable, "_", IAS_ID),
+        Var_Sp_File = file.path(Pah_Beta_Data, paste0(Var_Sp2, ".RData")),
+        DT = purrr::pmap(
+          .l = list(
+            Var_Sp, DT, CI_025, CI_975, Var_Min,
+            Var_Max, Class, Order, Family),
+          .f = function(Var_Sp, DT, CI_025, CI_975, Var_Min,
+                        Var_Max, Class, Order, Family) {
+            Beta_ID <- which(BetaNames == Var_Sp)
+            Post <- coda::as.mcmc.list(Obj_Beta[, Beta_ID])
+            Gelman <- coda::gelman.diag(Post, multivariate = FALSE)
+            ESS <- coda::effectiveSize(Post)
+            list(
+              DT = DT, CI_025 = CI_025, CI_975 = CI_975,
+              Var_Min = Var_Min, Var_Max = Var_Max,
+              Class = Class, Order = Order, Family = Family,
+              Beta_ID = Beta_ID, Post = Post, Gelman = Gelman, ESS = ESS)
+          }
+        )) %>%
+      dplyr::select(
+        -tidyselect::all_of(
+          c(
+            "CI_025", "CI_975", "Var_Min", "Var_Max",
+            "Class", "Order", "Family")))
+
+    Beta_DF %>%
+      dplyr::group_by(Var_Sp) %>%
+      dplyr::group_split() %>%
+      purrr::walk(
+        .f = ~ IASDT.R::SaveAs(
+          InObj = .x$DT[[1]], OutObj = .x$Var_Sp2, OutPath = .x$Var_Sp_File))
+
+    Beta_DF <- dplyr::select(Beta_DF, -DT)
+    rm(CI, VarRanges, SpeciesTaxonomy, Obj_Beta)
+    invisible(gc())
+
+    # Prepare working on parallel
+    IASDT.R::CatTime("Prepare working on parallel", Level = 2)
+    if (NCores > 1) {
+      withr::local_options(
+        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
+      c1 <- snow::makeSOCKcluster(NCores)
+      on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
+      future::plan("cluster", workers = c1, gc = TRUE)
+      on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+    } else {
+      future::plan("sequential", gc = TRUE)
+    }
+
+
+    # Prepare plots
+    IASDT.R::CatTime("Prepare plots", Level = 2)
     PlotObj_Beta <- future.apply::future_lapply(
-      X = PlotObj_Beta$Var_Sp,
+      X = seq_len(nrow(Beta_DF)),
       FUN = function(x) {
+        Var_Sp <- Beta_DF$Var_Sp[x]
+        Species <- Beta_DF$Species[x]
+        Curr_IAS <- Beta_DF$IAS_ID[x]
+        Var_Sp_File <- Beta_DF$Var_Sp_File[x]
+        Plot_File <- stringr::str_replace(
+          Var_Sp_File, ".RData$", "_Plots.RData")
 
-        SubDT <- dplyr::filter(PlotObj_Beta, Var_Sp == x)
-        Species <- SubDT$Species
-        IAS_ID <- SubDT$IAS_ID
-        DT <- SubDT$DT[[1]]
+        DT_all <- IASDT.R::LoadAs(Var_Sp_File)
+        DT_all$Post <- NULL
 
-        Variable <- SubDT$Variable
-        ValRange <- range(DT$Value)
+        ## Gelman convergence diagnostic
+        Label_Gelman <- round(DT_all$Gelman$psrf, 3) %>%
+          paste0(collapse = " / ") %>%
+          paste0("<b><i>Gelman convergence diagnostic:</i></b> ", .) %>%
+          data.frame(x = Inf, y = -Inf, label = .)
 
-        ValRangeByVar <- dplyr::filter(VarRanges, Var == Variable) %>%
-          dplyr::select(-Var) %>%
-          unlist()
+        ## Effective sample size / CI
+        Label_ESS <- round(DT_all$ESS / NChains) %>%
+          paste0(
+            "<b><i>Mean effective sample size:</i></b> ", ., " / ",
+            SampleSize)
+        CurrCI <- c(DT_all$CI_025, DT_all$CI_975)
+        Label_CI <- paste0(round(CurrCI, 4), collapse = " to ") %>%
+          paste0("<b><i>95% credible interval:</i></b> ", .)
+        Label_ESS_CI <- data.frame(
+          x = -Inf, y = -Inf, label = paste0(Label_ESS, "<br>", Label_CI))
 
-        CI0 <- round(c(SubDT$CI_025, SubDT$CI_975), 2)
-        CI1 <- paste0(CI0, collapse = "  -  ") %>%
-          paste0("<i><b>95% credible interval:</b><br></i>", .) %>%
-          data.frame(x = -Inf, y = -Inf, label = .)
-
-        PanelTitle <- data.frame(
+        Label_Panel <- data.frame(
           x = Inf, y = Inf,
           label = paste0("<br><b><i>", Species, "</i></b>"))
 
-        PanelTitle2 <- IASDT.R::GetSpeciesName(
-          SpID = IAS_ID, EnvFile = EnvFile, FromHPC = FromHPC) %>%
-          dplyr::select(Class, Order, Family) %>%
-          unlist() %>%
+        PanelTitle <- c(DT_all$Class, DT_all$Order, DT_all$Family) %>%
           paste0(collapse = " | ") %>%
           paste0("<b>", ., "</b>") %>%
-          paste0("<br>", IAS_ID) %>%
+          paste0("<br>", Curr_IAS) %>%
           data.frame(x = -Inf, y = Inf, label = .)
 
         Plot <- ggplot2::ggplot(
-          data = DT,
-          mapping = ggplot2::aes(x = Iter, y = Value, color = factor(Chain))) +
+          data = DT_all$DT,
+          mapping = ggplot2::aes(
+            x = Iter, y = Value, color = factor(Chain))) +
           ggplot2::geom_line(linewidth = 0.15, alpha = 0.6) +
           ggplot2::geom_smooth(
-            method = "loess", formula = y ~ x, se = FALSE, linewidth = 0.8) +
+            method = "loess", formula = y ~ x,
+            se = FALSE, linewidth = 0.8) +
           ggplot2::geom_point(alpha = 0) +
           ggplot2::geom_hline(
-            yintercept = CI0, linetype = "dashed", color = "black",
+            yintercept = CurrCI, linetype = "dashed", color = "black",
             linewidth = 1) +
+          # Ensure that y-axis always show 0
+          ggplot2::geom_hline(
+            yintercept = 0, linetype = "dashed",
+            color = "transparent", linewidth = 0.6) +
           ggplot2::scale_color_manual(values = Cols) +
           ggplot2::scale_x_continuous(expand = c(0, 0)) +
-          ggplot2::scale_y_continuous(limits = ValRange) +
-          ggtext::geom_richtext(
-            mapping = ggplot2::aes(x = x, y = y, label = label), data = CI1,
-            inherit.aes = FALSE, hjust = 0, vjust = 0, lineheight = 0,
-            fill = NA, label.color = NA) +
+          # ggplot2::scale_y_continuous(expand = c(0, 0)) +
           ggtext::geom_richtext(
             mapping = ggplot2::aes(x = x, y = y, label = label),
-            data = PanelTitle, inherit.aes = FALSE, colour = "blue", hjust = 1,
-            vjust = 1, lineheight = 0, fill = NA, label.color = NA) +
+            data = Label_Gelman, inherit.aes = FALSE, size = 3.5, hjust = 1,
+            vjust = -0, lineheight = 0, fill = NA, label.color = NA) +
           ggtext::geom_richtext(
             mapping = ggplot2::aes(x = x, y = y, label = label),
-            data = PanelTitle2, inherit.aes = FALSE, hjust = 0, vjust = 1,
+            data = Label_ESS_CI, inherit.aes = FALSE, size = 3.5, hjust = 0,
+            vjust = 0, lineheight = 0, fill = NA, label.color = NA) +
+          ggtext::geom_richtext(
+            mapping = ggplot2::aes(x = x, y = y, label = label),
+            data = Label_Panel, inherit.aes = FALSE, colour = "blue",
+            hjust = 1, vjust = 1, lineheight = 0, fill = NA, label.color = NA) +
+          ggtext::geom_richtext(
+            mapping = ggplot2::aes(x = x, y = y, label = label),
+            data = PanelTitle, inherit.aes = FALSE, hjust = 0, vjust = 1,
             lineheight = 0, fill = NA, label.color = NA) +
           ggplot2::theme_bw() +
           ggplot2::xlab(NULL) +
@@ -595,51 +585,55 @@ PlotConvergence <- function(
 
         suppressMessages({
           Plot2 <- Plot +
-            ggplot2::scale_y_continuous(limits = ValRangeByVar)
+            ggplot2::scale_y_continuous(
+              limits = c(DT_all$Var_Min, DT_all$Var_Max))
         })
 
-        if (dplyr::between(0, ValRangeByVar[1], ValRangeByVar[2])) {
-          Plot2 <- Plot2 +
-            ggplot2::geom_hline(
-              yintercept = 0, linetype = "solid",
-              color = "green", linewidth = 0.6)
-        }
-
-        if (dplyr::between(0, ValRange[1], ValRange[2])) {
-          Plot <- Plot +
-            ggplot2::geom_hline(
-              yintercept = 0, linetype = "solid",
-              color = "green", linewidth = 0.6)
-        }
-
-        Plot <- ggExtra::ggMarginal(
+        Plot_Marginal <- ggExtra::ggMarginal(
           p = Plot, type = "density", margins = "y", size = 5,
           color = "steelblue4")
-        Plot2 <- ggExtra::ggMarginal(
+        # Making marginal background matching the plot background
+        # https://stackoverflow.com/a/78196022/3652584
+        Plot_Marginal$layout$t[1] <- 1
+        Plot_Marginal$layout$r[1] <- max(Plot_Marginal$layout$r)
+
+        Plot2_Marginal <- ggExtra::ggMarginal(
           p = Plot2, type = "density", margins = "y", size = 5,
           color = "steelblue4")
+        # Making marginal background matching the plot background
+        # https://stackoverflow.com/a/78196022/3652584
+        Plot2_Marginal$layout$t[1] <- 1
+        Plot2_Marginal$layout$r[1] <- max(Plot2_Marginal$layout$r)
 
-        invisible(gc())
+        IASDT.R::SaveAs(
+          InObj = list(
+            Plot = Plot, Plot_Marginal = Plot_Marginal,
+            PlotFixedY_Marginal = Plot2_Marginal),
+          OutObj = paste0(Beta_DF$Var_Sp2[x], "_Plots"),
+          OutPath = Plot_File)
 
-        return(
-          tibble::tibble(
-            Var_Sp = x, Plot = list(Plot), PlotFixedY = list(Plot2)))
+        return(tibble::tibble(Var_Sp = Var_Sp, Plot_File = Plot_File))
       },
-      future.scheduling = Inf, future.seed = TRUE,
-      future.globals = c(
-        "PlotObj_Beta", "Cols", "VarRanges", "EnvFile", "FromHPC"),
-      future.packages = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext")) %>%
+      future.seed = TRUE,
+      future.globals = c("Beta_DF", "NChains", "SampleSize", "Cols"),
+      future.packages = c(
+        "dplyr", "ggplot2", "ggtext", "magrittr", "coda", "IASDT.R")) %>%
       dplyr::bind_rows() %>%
-      dplyr::right_join(PlotObj_Beta, by = "Var_Sp")
+      dplyr::left_join(Beta_DF, ., by = "Var_Sp")
 
+    # Stopping cluster
     if (NCores > 1) {
+      IASDT.R::CatTime("Stopping cluster", Level = 2)
       snow::stopCluster(c1)
       future::plan("sequential", gc = TRUE)
+      rm(c1)
     }
 
+    rm(Beta_DF, BetaNames)
+    invisible(gc())
 
     if (SavePlotData) {
-      IASDT.R::CatTime("Save trace plot data", Level = 1)
+      IASDT.R::CatTime("Save trace plot data", Level = 2)
       IASDT.R::SaveAs(
         InObj = PlotObj_Beta, OutObj = "Convergence_Beta",
         OutPath = file.path(Path_Convergence, "Convergence_Beta.RData"))
@@ -654,48 +648,57 @@ PlotConvergence <- function(
 
   IASDT.R::CatTime("Preparing data", Level = 2)
   BetaTracePlots_ByVar <- dplyr::arrange(PlotObj_Beta, Variable, IAS_ID) %>%
-    dplyr::select(Variable, Plot, PlotFixedY) %>%
-    tidyr::nest(data = c("Plot", "PlotFixedY"))
+    dplyr::select(Variable, Plot_File) %>%
+    tidyr::nest(Plot_File = c("Plot_File")) %>%
+    dplyr::mutate(Plot_File = purrr::map(Plot_File, unlist))
 
-  if (NCores == 1) {
-    future::plan("sequential", gc = TRUE)
-  } else {
-    c1 <- snow::makeSOCKcluster(NCores)
+  # Prepare working on parallel
+  IASDT.R::CatTime("Prepare working on parallel", Level = 2)
+  if (NCores > 1) {
+    withr::local_options(
+      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
+    c1 <- snow::makeSOCKcluster(min(NCores, nrow(BetaTracePlots_ByVar)))
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
     future::plan("cluster", workers = c1, gc = TRUE)
     on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+  } else {
+    future::plan("sequential", gc = TRUE)
   }
 
-  IASDT.R::CatTime("Save plots in parallel", Level = 2)
+  IASDT.R::CatTime("Save plots", Level = 2)
   BetaTracePlots_ByVar0 <- future.apply::future_lapply(
     X = BetaTracePlots_ByVar$Variable,
     FUN = function(x) {
-
       VarName <- dplyr::case_when(
         x == "HabLog" ~ "% Habitat coverage",
         x == "RoadRailLog" ~ "Road + Rail intensity",
         x == "BiasLog" ~ "Sampling intensity",
         .default = x)
 
-      BetaPlots <- dplyr::filter(BetaTracePlots_ByVar, Variable == x) %>%
-        dplyr::pull(data) %>%
+      Plots <- dplyr::filter(BetaTracePlots_ByVar, Variable == x) %>%
+        dplyr::pull(Plot_File) %>%
         magrittr::extract2(1) %>%
-        dplyr::pull("Plot")
+        purrr::map(
+          .f = ~ {
+            IASDT.R::LoadAs(.x) %>%
+              magrittr::extract(c("Plot_Marginal", "PlotFixedY_Marginal"))
+          })
 
-      # nolint start
-      BetaPlotsFixedY <- dplyr::filter(
-        BetaTracePlots_ByVar, Variable == x) %>%
-        dplyr::pull(data) %>%
-        magrittr::extract2(1) %>%
-        dplyr::pull("PlotFixedY")
+      BetaPlots <- purrr::map(
+        .x = Plots, .f = ~ magrittr::extract2(.x, "Plot_Marginal"))
+      BetaPlotsFixedY <- purrr::map(
+        .x = Plots, .f = ~ magrittr::extract2(.x, "PlotFixedY_Marginal"))
+      rm(Plots)
 
       PlotTitle <- ggplot2::ggplot() +
         ggplot2::labs(
-          title = paste0("Convergence of the beta parameter - ", VarName)) +
+          title = paste0("Convergence of the beta parameter - ", VarName)
+        ) +
         ggplot2::theme_minimal() +
         ggplot2::theme(
           plot.title = ggplot2::element_text(
             face = "bold", size = 24, hjust = 0.5))
+
       PlotTitleFixed <- ggplot2::ggplot() +
         ggplot2::labs(
           title = paste0(
@@ -705,7 +708,6 @@ PlotConvergence <- function(
         ggplot2::theme(
           plot.title = ggplot2::element_text(
             face = "bold", size = 24, hjust = 0.5))
-      # nolint end
 
       BetaPlotList <- tibble::tibble(PlotID = seq_len(length(BetaPlots))) %>%
         dplyr::mutate(Page = ceiling(PlotID / (NRC[2] * NRC[1]))) %>%
@@ -714,51 +716,62 @@ PlotConvergence <- function(
           Plot = purrr::map(
             .x = PlotID,
             .f = ~ {
-              BetaPlots[unlist(as.vector(.x))] %>%
-                cowplot::plot_grid(
-                  plotlist = ., ncol = NRC[2], nrow = NRC[1], align = "hv") %>%
+              ID <- unlist(as.vector(.x))
+              cowplot::plot_grid(
+                plotlist = BetaPlots[ID],
+                ncol = NRC[2], nrow = NRC[1], align = "hv") %>%
                 cowplot::plot_grid(
                   PlotTitle, ., ncol = 1, rel_heights = c(0.04, 1))
             }),
           PlotFixedY = purrr::map(
             .x = PlotID,
             .f = ~ {
-              BetaPlotsFixedY[unlist(as.vector(.x))] %>%
+              ID <- unlist(as.vector(.x))
+              cowplot::plot_grid(
+                plotlist = BetaPlotsFixedY[ID],
+                ncol = NRC[2], nrow = NRC[1], align = "hv") %>%
                 cowplot::plot_grid(
-                  plotlist = ., ncol = NRC[2], nrow = NRC[1], align = "hv") %>%
-                cowplot::plot_grid(
-                  PlotTitleFixed, ., ncol = 1, rel_heights = c(0.04, 1))
-            }),
-          PlotID = NULL)
+                  PlotTitleFixed, .,
+                  ncol = 1, rel_heights = c(0.04, 1))
+            }))
 
       invisible({
-        grDevices::pdf(
-          file = file.path(
+        grDevices::cairo_pdf(
+          filename = file.path(
             Path_Convergence, paste0("Convergence_Beta_", x, "_FreeY.pdf")),
-          width = 18, height = 12)
+          width = 18, height = 13)
         purrr::map(BetaPlotList$Plot, grid::grid.draw, recording = FALSE)
         grDevices::dev.off()
 
-        grDevices::pdf(
-          file = file.path(
+        grDevices::cairo_pdf(
+          filename = file.path(
             Path_Convergence, paste0("Convergence_Beta_", x, "_FixedY.pdf")),
-          width = 18, height = 15)
-        purrr::map(
-          .x = BetaPlotList$PlotFixedY, .f = grid::grid.draw)
+          width = 18, height = 13)
+        purrr::map(.x = BetaPlotList$PlotFixedY, .f = grid::grid.draw)
         grDevices::dev.off()
       })
-    },
-    future.scheduling = Inf, future.seed = TRUE,
-    future.globals = c(
-      "BetaTracePlots_ByVar", "Path_Convergence", "NRC", "Cols"),
-    future.packages = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext"))
 
-  if (NCores > 1) {
-    snow::stopCluster(c1)
-    future::plan("sequential", gc = TRUE)
-  }
+      rm(PlotTitle, PlotTitleFixed, BetaPlotsFixedY, BetaPlots, BetaPlotList)
+
+      invisible(gc())
+      return(NULL)
+    },
+    future.seed = TRUE,
+    future.globals = c("BetaTracePlots_ByVar", "NRC", "Path_Convergence"),
+    future.packages = c(
+      "dplyr", "ggplot2", "magrittr", "purrr", "IASDT.R",
+      "tibble", "tidyr", "cowplot"))
 
   rm(BetaTracePlots_ByVar0, BetaTracePlots_ByVar)
+  invisible(gc())
+
+  # Stopping cluster
+  if (NCores > 1) {
+    IASDT.R::CatTime("Stopping cluster", Level = 2)
+    snow::stopCluster(c1)
+    future::plan("sequential", gc = TRUE)
+    rm(c1)
+  }
 
   # # ..................................................................... ###
 
@@ -769,32 +782,27 @@ PlotConvergence <- function(
   IASDT.R::CatTime("Preparing data", Level = 2)
   Order <- stringr::str_remove_all(ModVars, "\\(|\\)")
   BetaTracePlots_BySp <- PlotObj_Beta %>%
-    dplyr::slice(order(factor(Variable, levels = Order))) %>%
-    dplyr::select(Species, IAS_ID, Plot, Variable) %>%
+    dplyr::arrange(Species, factor(Variable, levels = Order)) %>%
+    dplyr::select(Species, IAS_ID, Plot_File, Variable) %>%
     tidyr::nest(data = -c("Species", "IAS_ID"))
 
-  IASDT.R::CatTime("Preparing working in parallel", Level = 2)
-  if (NCores == 1) {
-    future::plan("sequential", gc = TRUE)
-  } else {
+  # Prepare working on parallel
+  IASDT.R::CatTime("Prepare working on parallel", Level = 2)
+  if (NCores > 1) {
+    withr::local_options(
+      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
     c1 <- snow::makeSOCKcluster(NCores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
     future::plan("cluster", workers = c1, gc = TRUE)
     on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+  } else {
+    future::plan("sequential", gc = TRUE)
   }
 
-
-  IASDT.R::CatTime("Save plots in parallel", Level = 2)
+  IASDT.R::CatTime("Save plots", Level = 2)
   BetaTracePlots_BySp0 <- future.apply::future_lapply(
     X = BetaTracePlots_BySp$Species,
     FUN = function(x) {
-
-      # VarName <- dplyr::case_when(
-      #   x == "HabLog" ~ "% Habitat coverage",
-      #   x == "RoadRailLog" ~ "Road + Rail intensity",
-      #   x == "BiasLog" ~ "Sampling intensity",
-      #   .default = x)
-
       PlotTitle <- ggplot2::ggplot() +
         ggplot2::labs(
           title = paste0(
@@ -805,22 +813,47 @@ PlotConvergence <- function(
             face = "bold", size = 24, hjust = 0.5))
 
       SpDT <- dplyr::filter(BetaTracePlots_BySp, Species == x)
-      SpPlots <- dplyr::pull(SpDT, "data") %>%
-        magrittr::extract2(1) %>%
+      SpPlots <- SpDT$data[[1]] %>%
+        dplyr::mutate(
+          Variable2 = purrr::map_chr(
+            .x = Variable,
+            .f = ~ {
+              dplyr::case_when(
+                .x == "HabLog" ~ "% Habitat coverage",
+                .x == "RoadRailLog" ~ "Road + Rail intensity",
+                .x == "BiasLog" ~ "Sampling intensity",
+                .default = .x)
+            }),
+          Plot = purrr::map2(
+            .x = Plot_File, .y = Variable2,
+            .f = ~ {
+              Plot <- IASDT.R::LoadAs(.x)$Plot +
+                ggplot2::ggtitle(.y) +
+                ggplot2::theme(
+                  plot.title = ggplot2::element_text(
+                    hjust = 0.5, size = 22, face = "bold", colour = "red",
+                    margin = ggplot2::margin(0, 0, -2.5, 0)))
+              Plot <- ggExtra::ggMarginal(
+                p = Plot, type = "density", margins = "y", size = 6,
+                color = "steelblue4")
+              Plot$layout$t[1] <- 1
+              Plot$layout$r[1] <- max(Plot$layout$r)
+              return(Plot)
+            })) %>%
         dplyr::pull("Plot") %>%
         cowplot::plot_grid(
-          plotlist = ., ncol = 4, nrow = 3, align = "hv") %>%
-        cowplot::plot_grid(
-          PlotTitle, ., ncol = 1, rel_heights = c(0.04, 1))
+          plotlist = ., ncol = Beta_NRC[2],
+          nrow = Beta_NRC[1], align = "hv") %>%
+        cowplot::plot_grid(PlotTitle, ., ncol = 1, rel_heights = c(0.03, 1))
 
       invisible({
-        grDevices::pdf(
-          file = file.path(
+        grDevices::cairo_pdf(
+          filename = file.path(
             Path_Convergence_BySp,
             paste0(
               "Convergence_Beta_", SpDT$IAS_ID, "_",
               IASDT.R::ReplaceSpace(x), ".pdf")),
-          width = 18, height = 15)
+          width = 23, height = 17)
         grid::grid.draw(SpPlots)
         grDevices::dev.off()
       })
@@ -828,7 +861,8 @@ PlotConvergence <- function(
       return(invisible(NULL))
     },
     future.scheduling = Inf, future.seed = TRUE,
-    future.globals = c("BetaTracePlots_BySp", "Path_Convergence_BySp"),
+    future.globals = c(
+      "BetaTracePlots_BySp", "Path_Convergence_BySp", "Beta_NRC"),
     future.packages = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext"))
 
   if (NCores > 1) {

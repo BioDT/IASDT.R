@@ -5,13 +5,10 @@
 \title{Creates a Gelman-Rubin-Brooks plot for \code{alpha} parameters from an Hmsc
 object.}
 \usage{
-PlotGelman_Alpha(CodaObj, NCores, PlottingAlpha = 0.25)
+PlotGelman_Alpha(CodaObj, PlottingAlpha = 0.25)
 }
 \arguments{
 \item{CodaObj}{An object of class \code{mcmc.list}, representing the Hmsc samples.}
-
-\item{NCores}{An integer specifying the number of cores to use for parallel
-processing.}
 
 \item{PlottingAlpha}{A double specifying the alpha (transparency) level for
 the plot lines. Default is 0.25.}

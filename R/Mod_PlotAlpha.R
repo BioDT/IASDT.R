@@ -44,13 +44,13 @@ PlotAlpha <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Factor <- NULL
+  Factor <- Value <- PointEst <- UpperCI <- NULL
 
   # # ..................................................................... ###
 
   # Checking arguments
   AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, ~get(.x, envir = environment())) %>%
+  AllArgs <- purrr::map(AllArgs, ~ get(.x, envir = environment())) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = c("Title"))
@@ -73,15 +73,11 @@ PlotAlpha <- function(
     Model <- IASDT.R::LoadAs(Model)
   }
 
-  # nolint start
   SampleSize <- Model$samples
-  # nolint end
-
   NChains <- length(Model$postList)
 
   #  Plotting colours
   if (is.null(Cols) || length(Cols) != NChains) {
-
     if (length(Cols) != NChains) {
       IASDT.R::CatTime(
         "The length of provided colours does not equal to the number of chains",
@@ -102,12 +98,13 @@ PlotAlpha <- function(
 
   ## Gelman convergence diagnostic
 
-  # nolint start
   Gelman <- coda::gelman.diag(x = Post, multivariate = FALSE) %>%
     magrittr::extract2("psrf") %>%
     as.data.frame() %>%
-    dplyr::pull(1) %>%
-    round(2)
+    stats::setNames(c("PointEst", "UpperCI")) %>%
+    round(2) %>%
+    dplyr::mutate(Gelman = paste0(PointEst, " / ", UpperCI)) %>%
+    dplyr::pull(Gelman)
 
   ## Effective sample size
   ESS <- coda::effectiveSize(x = Post) %>%
@@ -126,13 +123,12 @@ PlotAlpha <- function(
     dplyr::mutate(
       Factor2 = purrr::map_int(
         .x = Factor,
-        .f = ~{
+        .f = ~ {
           as.character(.x) %>%
             stringr::str_remove("factor") %>%
             as.integer()
         })) %>%
     dplyr::mutate(Value = Value / 1000)
-  # nolint end
 
   if (is.null(NRC)) {
     NRC <- dplyr::case_when(
@@ -141,14 +137,11 @@ PlotAlpha <- function(
       .default = c(2, 3))
   }
 
-  MaxDist <- max(AlphaDF$Value) * 1.05
-
   # # ..................................................................... ###
 
   Plots <- purrr::map(
     .x = seq_len(NLV),
-    .f = ~{
-
+    .f = ~ {
       ESS0 <- paste0(
         "<b><i>Mean effective sample size:</i></b> ", ESS[.x],
         " / ", SampleSize, " samples")
@@ -180,30 +173,31 @@ PlotAlpha <- function(
           linewidth = 1) +
         ggplot2::scale_color_manual(values = Cols) +
         ggplot2::scale_x_continuous(expand = c(0, 0)) +
-        ggplot2::scale_y_continuous(limits = c(0, MaxDist), expand = c(0, 0)) +
+        ggplot2::scale_y_continuous(
+          limits = c(0, max(AlphaDF$Value) * 1.05), expand = c(0, 0)) +
         ggplot2::theme_bw() +
         ggplot2::xlab(NULL) +
         ggplot2::ylab("Distance (km)") +
         ggtext::geom_richtext(
-          mapping = ggplot2::aes(x = x, y = y, label = label),
-          data = Title2, inherit.aes = FALSE, size = 4, hjust = 1, vjust = 1,
-          lineheight = 0, fill = NA, label.color = NA) +
+          mapping = ggplot2::aes(x = x, y = y, label = label), data = Title2,
+          inherit.aes = FALSE, size = 4, hjust = 1, vjust = 1, lineheight = 0,
+          fill = NA, label.color = NA) +
         ggtext::geom_richtext(
-          mapping = ggplot2::aes(x = x, y = y, label = label),
-          data = Title3, inherit.aes = FALSE, size = 5,
-          hjust = -0.1, vjust = 1, color = "blue",
-          lineheight  = 0, fill = NA, label.color = NA) +
+          mapping = ggplot2::aes(x = x, y = y, label = label), data = Title3,
+          inherit.aes = FALSE, size = 5, hjust = -0.1, vjust = 1,
+          color = "blue", lineheight = 0, fill = NA, label.color = NA) +
         ggtext::geom_richtext(
           mapping = ggplot2::aes(x = x, y = y, label = label),
           data = ESS_CI, inherit.aes = FALSE, size = 4,
-          hjust = 0, vjust = 0, lineheight  = 0, fill = NA, label.color = NA) +
+          hjust = 0, vjust = 0, lineheight = 0, fill = NA, label.color = NA) +
         ggplot2::theme(
           legend.position = "none",
           axis.text = ggplot2::element_text(size = 12))
 
       Plot <- ggExtra::ggMarginal(
         p = Plot, type = "density", margins = "y", size = 6,
-        color = "steelblue4")
+        color = "steelblue4"
+      )
 
       # Making marginal background matching the plot background
       # https://stackoverflow.com/a/78196022/3652584
@@ -216,8 +210,7 @@ PlotAlpha <- function(
 
   if (AddTitle && AddFooter) {
     Plots <- gridExtra::marrangeGrob(
-      Plots,
-      bottom = bquote(paste0("page ", g, " of ", npages)),
+      Plots, bottom = bquote(paste0("page ", g, " of ", npages)),
       top = grid::textGrob(
         label = Title, gp = grid::gpar(fontface = "bold", fontsize = 20)),
       nrow = NRC[1], ncol = NRC[2])
@@ -225,8 +218,7 @@ PlotAlpha <- function(
 
   if (AddTitle && isFALSE(AddFooter)) {
     Plots <- gridExtra::marrangeGrob(
-      Plots,
-      bottom = NULL,
+      Plots, bottom = NULL,
       top = grid::textGrob(
         label = Title, gp = grid::gpar(fontface = "bold", fontsize = 20)),
       nrow = NRC[1], ncol = NRC[2])
@@ -234,8 +226,7 @@ PlotAlpha <- function(
 
   if (isFALSE(AddTitle) && AddFooter) {
     Plots <- gridExtra::marrangeGrob(
-      Plots,
-      bottom = bquote(paste0("page ", g, " of ", npages)),
+      Plots, bottom = bquote(paste0("page ", g, " of ", npages)),
       top = NULL, nrow = NRC[1], ncol = NRC[2])
   }
 

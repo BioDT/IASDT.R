@@ -10,7 +10,6 @@ PlotGelman(
   Beta = TRUE,
   Omega = TRUE,
   Rho = TRUE,
-  NCores = NULL,
   NOmega = 1000,
   FromHPC = TRUE,
   PlottingAlpha = 0.25,
@@ -20,7 +19,7 @@ PlotGelman(
 )
 }
 \arguments{
-\item{InputCoda}{Path to RData file containing the coda object.}
+\item{InputCoda}{coda object or path to RData file containing the coda object.}
 
 \item{Alpha}{Logical indicating whether to plot the Gelman-Rubin statistic
 for the Alpha parameter. If \code{TRUE} (default), the function executes the
@@ -37,9 +36,6 @@ for the Omega parameter. If \code{TRUE} (default), the function executes the
 \item{Rho}{Logical indicating whether to plot the Gelman-Rubin statistic for
 the Rho parameter.  If \code{TRUE} (default), the function executes the
 \link{PlotGelman_Rho} function.}
-
-\item{NCores}{Integer specifying the number of cores to use for parallel
-processing.}
 
 \item{NOmega}{Integer specifying the number of species to be sampled for the
 Omega parameter.}

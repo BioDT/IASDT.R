@@ -14,6 +14,7 @@ PlotVarPar(
   EnvFile = ".env",
   SaveVarPar = TRUE,
   SaveModelEval = TRUE,
+  predictEtaMean = TRUE,
   ReturnGG = FALSE,
   SaveGG = TRUE,
   FromHPC = TRUE
@@ -49,6 +50,9 @@ partitioning be saved as an RData file?  Default: \code{TRUE}.}
 
 \item{SaveModelEval}{Logical. If \code{ModelEval = NULL}, should the calculated
 model evaluation be saved as an RData file?  Default: \code{TRUE}.}
+
+\item{predictEtaMean}{Logical; whether to predict the mean value of the
+latent variable.}
 
 \item{ReturnGG}{Logical. Return the ggplot object. Default: \code{FALSE}.}
 

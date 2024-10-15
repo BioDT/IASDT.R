@@ -6,7 +6,6 @@
 \usage{
 PlotGelman_Beta(
   CodaObj,
-  NCores,
   EnvFile = ".env",
   PlottingAlpha = 0.25,
   FromHPC = TRUE
@@ -14,9 +13,6 @@ PlotGelman_Beta(
 }
 \arguments{
 \item{CodaObj}{An object of class \code{mcmc.list}, representing the Hmsc samples.}
-
-\item{NCores}{Integer indicating the number of parallel processes to be used
-for computation.}
 
 \item{EnvFile}{String specifying the path to read the environment variables.
 Default value is \code{.env}.}

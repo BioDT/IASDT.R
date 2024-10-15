@@ -4,16 +4,23 @@
 \alias{Mod_Pred2Array}
 \title{Convert results from \code{Hmsc:::predict.Hmsc} function to array}
 \usage{
-Mod_Pred2Array(Predict, Model, Preds = NULL, expected = TRUE, NCores = 1)
+Mod_Pred2Array(
+  Model,
+  Predict = TRUE,
+  Preds = NULL,
+  expected = TRUE,
+  NCores = 1,
+  predictEtaMean = TRUE
+)
 }
 \arguments{
-\item{Predict}{Logical; if \code{TRUE}, predictions are made using the Model
-parameter before conversion. If \code{FALSE}, uses pre-computed predictions
-provided in \code{Preds}.}
-
 \item{Model}{Hmsc object or character for path to a saved model file. If
 \code{Predict} is \code{True}, the model object will be used to make predictions
 first.}
+
+\item{Predict}{Logical; if \code{TRUE}, predictions are made using the Model
+parameter before conversion. If \code{FALSE}, uses pre-computed predictions
+provided in \code{Preds}.}
 
 \item{Preds}{pre-computed predictions, resulted from \code{Hmsc:::predict.Hmsc},
 to be converted into an array. Required if \code{Predict} is \code{FALSE}.}
@@ -24,6 +31,9 @@ See \code{Hmsc:::predict.Hmsc} for more info.}
 
 \item{NCores}{Integer; specifies the number of cores to use for parallel
 computation of predicted values. Must be a positive integer.}
+
+\item{predictEtaMean}{Logical; whether to predict the mean value of the
+latent variable.}
 }
 \value{
 An array of predictions.

@@ -14,7 +14,6 @@ PlotGelman(
   FromHPC = TRUE,
   PlottingAlpha = 0.25,
   EnvFile = ".env",
-  SavePlot = TRUE,
   ReturnPlots = FALSE
 )
 }
@@ -49,24 +48,18 @@ transparency level of the plot lines. Defaults to 0.25.}
 \item{EnvFile}{String specifying the path to the environment variables file.
 The default value is ".env".}
 
-\item{SavePlot}{Logical indicating whether to save the generated plots as a
-PDF file.}
-
 \item{ReturnPlots}{String specifying the folder path where output figures
-should be saved. This parameter is mandatory if \code{SavePlot} is TRUE.}
+should be saved.}
 }
 \value{
 If \code{ReturnPlots} is \code{TRUE}, returns a list of ggplot objects
-corresponding to the generated plots. Otherwise, returns \code{NULL}. If
-\code{SavePlot} is \code{TRUE}, pdf file for the plots will be saved.
+corresponding to the generated plots. Otherwise, returns \code{NULL}.
 }
 \description{
 This function generates and optionally saves a series of plots showing the
 evolution of Gelman and Rubin's shrink factor for various model parameters as
 the number of iterations increases. It is designed to help assess the
 convergence of Hmsc model by visualizing the shrink factor over iterations.
-The function supports parallel processing and can handle multiple parameters
-simultaneously.
 }
 \seealso{
 \link{PlotGelman_Alpha}\if{html}{\out{<br>}}\link{PlotGelman_Beta}\if{html}{\out{<br>}}

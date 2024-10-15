@@ -8,8 +8,6 @@
 #' evolution of Gelman and Rubin's shrink factor for various model parameters as
 #' the number of iterations increases. It is designed to help assess the
 #' convergence of Hmsc model by visualizing the shrink factor over iterations.
-#' The function supports parallel processing and can handle multiple parameters
-#' simultaneously.
 #' @param InputCoda coda object or path to RData file containing the coda object.
 #' @param Alpha Logical indicating whether to plot the Gelman-Rubin statistic
 #'   for the Alpha parameter. If `TRUE` (default), the function executes the
@@ -31,15 +29,12 @@
 #'   transparency level of the plot lines. Defaults to 0.25.
 #' @param EnvFile String specifying the path to the environment variables file.
 #'   The default value is ".env".
-#' @param SavePlot Logical indicating whether to save the generated plots as a
-#'   PDF file.
 #' @param ReturnPlots String specifying the folder path where output figures
-#'   should be saved. This parameter is mandatory if `SavePlot` is TRUE.
+#'   should be saved.
 #' @name PlotGelman
 #' @author Ahmed El-Gabbas
 #' @return If `ReturnPlots` is `TRUE`, returns a list of ggplot objects
-#'   corresponding to the generated plots. Otherwise, returns `NULL`. If
-#'   `SavePlot` is `TRUE`, pdf file for the plots will be saved.
+#'   corresponding to the generated plots. Otherwise, returns `NULL`.
 #' @export
 #' @seealso
 #' [IASDT.R::PlotGelman_Alpha]<br>[IASDT.R::PlotGelman_Beta]<br>
@@ -48,7 +43,7 @@
 PlotGelman <- function(
     InputCoda = NULL, Alpha = TRUE, Beta = TRUE, Omega = TRUE, Rho = TRUE,
     NOmega = 1000, FromHPC = TRUE, PlottingAlpha = 0.25,
-    EnvFile = ".env", SavePlot = TRUE, ReturnPlots = FALSE) {
+    EnvFile = ".env", ReturnPlots = FALSE) {
 
   # # ..................................................................... ###
 
@@ -65,10 +60,6 @@ PlotGelman <- function(
     stop("InputCoda cannot be empty", call. = FALSE)
   }
 
-  if (isFALSE(SavePlot) && isFALSE(ReturnPlots)) {
-    stop("At least one of SavePlot or ReturnPlots must be TRUE", call. = FALSE)
-  }
-
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(
     AllArgs,
@@ -77,15 +68,8 @@ PlotGelman <- function(
 
   IASDT.R::CheckArgs(AllArgs, c("NOmega", "PlottingAlpha"), "numeric")
   IASDT.R::CheckArgs(
-    AllArgs, c("Beta", "Rho", "Omega", "Alpha", "SavePlot", "ReturnPlots"),
+    AllArgs, c("Beta", "Rho", "Omega", "Alpha", "ReturnPlots"),
     "logical")
-
-  if (SavePlot) {
-    if (Beta) IASDT.R::CheckArgs(AllArgs, "Beta_File", "character")
-    if (Rho) IASDT.R::CheckArgs(AllArgs, "Rho_File", "character")
-    if (Omega) IASDT.R::CheckArgs(AllArgs, "Omega_File", "character")
-    if (Alpha) IASDT.R::CheckArgs(AllArgs, "Alpha_File", "character")
-  }
 
   rm(AllArgs)
 
@@ -164,34 +148,38 @@ PlotGelman <- function(
 
   # # ..................................................................... ###
 
-  # Saving plots -----
+  # Saving plots as PDF -----
 
-  if (SavePlot) {
-    PlotList <- list(
-      Alpha = PlotObj_Alpha, Beta = PlotObj_Beta, Omega = PlotObj_Omega,
-      Rho = PlotObj_Rho)
+  PlotList <- list(
+    Alpha = PlotObj_Alpha, Beta = PlotObj_Beta,
+    Omega = PlotObj_Omega, Rho = PlotObj_Rho)
 
-    PlotList4Plot <- purrr::list_flatten(purrr::discard(PlotList, is.null))
+  PlotList4Plot <- purrr::list_flatten(purrr::discard(PlotList, is.null))
 
-    if (length(PlotList4Plot) > 0) {
-      # Using ggplot2::ggsave directly does not show non-ascii characters
-      # correctly
-      grDevices::pdf(
-        file = file.path(OutPath, "GelmanPlots.pdf"), width = 13, height = 7)
-      print(gridExtra::marrangeGrob(
-        grobs = PlotList4Plot, nrow = 1, ncol = 1, top = NULL))
-      grDevices::dev.off()
-    } else {
-      warning("No plots to save")
-    }
+  if (length(PlotList4Plot) > 0) {
+    # Using ggplot2::ggsave directly does not show non-ascii characters
+    # correctly
+    grDevices::cairo_pdf(
+      filename = file.path(OutPath, "GelmanPlots.pdf"), width = 13, height = 7)
+    purrr::walk(PlotList4Plot, grid::grid.draw)
+    grDevices::dev.off()
+  } else {
+    warning("No plots to save")
+  }
 
-    IASDT.R::CatDiff(InitTime = .StartTime)
+  # # ..................................................................... ###
 
-    if (ReturnPlots) {
-      return(PlotList)
-    } else {
-      return(invisible(NULL))
-    }
+  # Saving plots as RData -----
+  IASDT.R::SaveAs(
+    InObj = PlotList, OutObj = "GelmanPlots",
+    OutPath = file.path(OutPath, "GelmanPlots.RData"))
+
+  # # ..................................................................... ###
+
+  IASDT.R::CatDiff(InitTime = .StartTime)
+
+  if (ReturnPlots) {
+    return(PlotList)
   } else {
     return(invisible(NULL))
   }

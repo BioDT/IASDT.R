@@ -10,37 +10,31 @@ PrepKnots(
   JitterDist = 100,
   MinLF = NULL,
   MaxLF = NULL,
-  SetAlphapw = TRUE,
-  AlphapwPar = list(n_samples = 300, prob_norm = 0.8, tr_mean = 200, tr_sd = 50, tr_min =
-    5, tr_max = 400, seed = NULL, Alphapw = NULL)
+  Alphapw = list(Prior = NULL, Min = 20, Max = 1200, Samples = 200)
 )
 }
 \arguments{
-\item{Coords}{A matrix or data frame containing the coordinates (x, y) of the
-sampling units.}
+\item{Coords}{A numeric matrix or data frame containing the (x, y)
+coordinates of sampling units.}
 
-\item{MinDist}{A numeric value specifying the minimum distance (in the same
-units as Coords; here in meters) between knots. This distance is used for
-both \code{knotDist} and \code{minKnotDist} parameters of the \link[Hmsc:constructKnots]{Hmsc::constructKnots}
-function.}
+\item{MinDist}{A numeric value specifying the minimum distance between knots
+in meters. This distance is used for both \code{knotDist} and \code{minKnotDist}
+parameters of the \link[Hmsc:constructKnots]{Hmsc::constructKnots} function.}
 
-\item{JitterDist}{A numeric value specifying the distance (in the same units
-as Coords; here in meters) for jittering identical coordinates. Defaults to
-100.}
+\item{JitterDist}{A numeric value for the jitter distance applied to
+overlapping coordinates to avoid exact duplicates. Defaults to 100 meters.}
 
 \item{MinLF, MaxLF}{integer. Minimum and maximum number of latent factors to
 be used. Both default to \code{NULL} which means that the number of latent
 factors will be estimated from the data. If either is provided, the
 respective values will be used as arguments to \link[Hmsc:setPriors]{Hmsc::setPriors}.}
 
-\item{SetAlphapw}{Logical; whether to set the prior for alphapw using
-\link{PriorAlpha}. Default: \code{TRUE}.}
-
-\item{AlphapwPar}{List; parameters for generating prior distribution. If the
-list item \code{Alphapw} is provided, it will be used as the prior for alphapw.
-Otherwise, the prior will be generated using \code{PriorAlpha} function. Default
-values are as follows:  \code{list(n_samples = 300, prob_norm = 0.8, tr_mean = 200, tr_sd = 50, tr_min = 5, tr_max = 400, seed = NULL, Alphapw = NULL)}.
-See \link{PriorAlpha} for more details.}
+\item{Alphapw}{Prior for the alpha parameter. Defaults to a list with \code{Prior = NULL}, \code{Min = 20}, \code{Max = 1200}, and \code{Samples = 200}. If all list items
+are NULL, the default prior will be used. If \code{Prior} is a matrix, it will
+be used as the prior. If \code{Prior} is \code{NULL}, the prior will be generated
+using \code{Min}, \code{Max}, and \code{Samples}. \code{Min} and \code{Max} are the minimum and
+maximum values of the alpha parameter (in kilometer). \code{Samples} is the
+number of samples to be used in the prior.}
 }
 \value{
 An object suitable for specifying the random level in HMSC GPP

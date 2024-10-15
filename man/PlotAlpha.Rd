@@ -34,7 +34,7 @@ numbers to each plot page. Defaults to \code{TRUE}.}
 \item{AddTitle}{A logical value indicating whether to add the main title
 (specified by \code{Title}) to the plot. Defaults to \code{TRUE}.}
 
-\item{Cols}{Character vector for chain colours \link{optional}. Default: \code{NULL}.}
+\item{Cols}{Character vector for chain colours (optional). Default: \code{NULL}.}
 
 \item{FromHPC}{Logical. Indicates whether the function is being run on an HPC
 environment, affecting file path handling. Default: \code{TRUE}.}

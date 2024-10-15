@@ -18,22 +18,18 @@
 #'   habitat type. For more details, see [Pysek et
 #'   al.](https://doi.org/10.23855/preslia.2022.447).
 #' @param MinEffortsSp Minimum number of vascular plant species per grid cell in
-#'   GBIF for a grid cell to be included in the models. This is to exclude
-#'   grid cells with very little sampling efforts. Defaults to `100`.
-#' @param NVars Integer. The number of variables used in the model. This
-#'   argument has to be provided and can not be set to `NULL` (default).
-#' @param PresPerVar Integer. Minimum number of presence grid cells per
-#'   predictor for a species to be included in the analysis. The number of
-#'   presence grid cells per species is calculated as the product of this factor
-#'   and the number of variables used in the models `NVars` and is calculated
-#'   after discarding grid cells with low sampling efforts (`MinEffortsSp`).
-#'   Defaults to `10`.
+#'   GBIF for a grid cell to be included in the models. This is to exclude grid
+#'   cells with very little sampling efforts. Defaults to `100`.
+#' @param PresPerSpecies Integer. The minimum number of presence grid cells for a
+#'   species to be included in the analysis. The number of presence grid cells
+#'   per species is calculated after discarding grid cells with low sampling
+#'   efforts (`MinEffortsSp`). Defaults to `80`.
 #' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
 #' @param BioVars Character vector. Specifies the Bioclimatic variables to be
 #'   included from CHELSA. Defaults to 6 ecologically meaningful and less
-#'   correlated Bioclimatic variables: `bio4`, `bio6`, `bio8`, `bio12`,
-#'   `bio15`, and `bio18`.
+#'   correlated Bioclimatic variables: `bio4`, `bio6`, `bio8`, `bio12`, `bio15`,
+#'   and `bio18`.
 #' @param Path_Model Character. Path where the output file should be saved.
 #' @param VerboseProgress Logical. Indicates whether progress messages should be
 #'   displayed. Defaults to `TRUE`.
@@ -42,7 +38,7 @@
 #' @param SaveData Logical. Indicates whether the processed data should be saved
 #'   as RData file. Defaults to `TRUE`.
 #' @param ExcludeCult Logical. Indicates whether to exclude countries with
-#' cultivated or casual observations per species. Defaults to `TRUE`.
+#'   cultivated or casual observations per species. Defaults to `TRUE`.
 #' @name Mod_PrepData
 #' @author Ahmed El-Gabbas
 #' @return a tibble containing modelling data.
@@ -54,7 +50,7 @@
 #'    - **`DP_R_Grid_Ref`** or **`DP_R_Grid_Ref_Local`**: The function reads the
 #'   content of `Grid_10_sf.RData` file from this path.
 #'    - **`DP_R_PA`** or **`DP_R_PA_Local`**: The function reads the contents
-#'    of the `Sp_PA_Summary_DF.RData` file from this path.
+#'   of the `Sp_PA_Summary_DF.RData` file from this path.
 #'    - **`DP_R_CLC_Summary`** / **`DP_R_CLC_Summary_Local`**: Path containing
 #'   the `PercCov_SynHab_Crop.RData` file. This file contains maps for the
 #'   percentage coverage of each SynHab habitat type per grid cell.
@@ -67,14 +63,13 @@
 #'   railway data. The function reads the contents of: `Railway_Length.RData`
 #'   for the total length of any railway type per grid cell.
 #'    - **`DP_R_Efforts`** / **`DP_R_Efforts_Local`**: Path for processed
-#'    sampling efforts analysis. The function reads the content of
+#'   sampling efforts analysis. The function reads the content of
 #'   `Bias_GBIF_SummaryR.RData` file containing the total number of GBIF
 #'   vascular plant observations per grid cell.
 #' @export
 
 Mod_PrepData <- function(
-    Hab_Abb = NULL, MinEffortsSp = 100L, NVars = NULL, PresPerVar = 10L,
-    EnvFile = ".env",
+    Hab_Abb = NULL, MinEffortsSp = 100L, PresPerSpecies = 80L, EnvFile = ".env",
     BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
     Path_Model = NULL, VerboseProgress = TRUE, FromHPC = TRUE,
     SaveData = TRUE, ExcludeCult = TRUE) {
@@ -105,7 +100,7 @@ Mod_PrepData <- function(
   # Check input parameters ----
   # # |||||||||||||||||||||||||||||||||||
 
-  CheckNULL <- c("Hab_Abb", "Path_Model", "EnvFile", "NVars")
+  CheckNULL <- c("Hab_Abb", "Path_Model", "EnvFile")
   IsNull <- purrr::map_lgl(CheckNULL, ~ is.null(get(.x)))
   if (any(IsNull)) {
     stop(
@@ -142,7 +137,7 @@ Mod_PrepData <- function(
   CharArgs <- c("EnvFile", "Hab_Abb", "Path_Model")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = CharArgs, Type = "character")
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Args = c("MinEffortsSp", "PresPerVar", "NVars"),
+    AllArgs = AllArgs, Args = c("MinEffortsSp", "PresPerSpecies"),
     Type = "numeric")
 
   # # ..................................................................... ###
@@ -229,8 +224,7 @@ Mod_PrepData <- function(
     magrittr::extract2("NSp") %>%
     terra::classify(
       rcl = matrix(
-        c(0, MinEffortsSp, NA, MinEffortsSp, Inf, 1),
-        byrow = TRUE, ncol = 3),
+        c(0, MinEffortsSp, NA, MinEffortsSp, Inf, 1), byrow = TRUE, ncol = 3),
       include.lowest = TRUE, right = FALSE)
 
   # # ..................................................................... ###
@@ -265,18 +259,14 @@ Mod_PrepData <- function(
   IASDT.R::CatTime("Species Presence-absence data", Level = 1)
 
   # minimum number of presence grids per species
-  MinPresGrids <- PresPerVar * NVars
   NCellsCol <- dplyr::if_else(ExcludeCult, "NCells_Naturalized", "NCells_All")
-
-  # nolint start
   PA_Layer <- dplyr::if_else(ExcludeCult, "PA_Masked", "PA")
-  # nolint end
 
   R_Sp <- DT_Sp %>%
     # Exclude species with too few presence grid cells. There will be further
     # exclusion of species with few grid cells in this pipeline, but excluding
     # this first may help to reduce processing time
-    dplyr::filter(.data[[NCellsCol]] >= MinPresGrids) %>%
+    dplyr::filter(.data[[NCellsCol]] >= PresPerSpecies) %>%
     dplyr::select(SpeciesID, Species_name, Species_File) %>%
     # Mask each species map with the filtered grid cells
     dplyr::mutate(
@@ -301,14 +291,21 @@ Mod_PrepData <- function(
     tidyr::unnest_wider(PA) %>%
     dplyr::mutate(SpPA = unlist(SpPA)) %>%
     # filter species with too few observations (after masking)
-    dplyr::filter(NPres >= MinPresGrids) %>%
+    dplyr::filter(NPres >= PresPerSpecies) %>%
     dplyr::pull(SpPA) %>%
     terra::rast()
 
+  # # ................................... ###
+
   # Change the efforts mask to exclude grid cells with no species
-  ZeroSpGrids <- (sum(R_Sp, na.rm = TRUE) == 0)
-  EffortsMask[ZeroSpGrids] <- NA
-  R_Sp[ZeroSpGrids] <- NA
+  #
+  # This is not necessary anymore. By excluding less sampled grid cells, there
+  # is no need to further exclude grid cells with no species as this could be
+  # for an ecological reason
+  #
+  # ZeroSpGrids <- (sum(R_Sp, na.rm = TRUE) == 0)
+  # EffortsMask[ZeroSpGrids] <- NA
+  # R_Sp[ZeroSpGrids] <- NA
 
   # # ................................... ###
 
@@ -319,17 +316,16 @@ Mod_PrepData <- function(
     magrittr::extract2("Bound_sf_Eur") %>%
     magrittr::extract2("L_03")
   R_Sp_sum <- sum(R_Sp, na.rm = TRUE)
-  R_Sp_sumP <- terra::classify(R_Sp_sum, cbind(0, NA))
-  NGridsWzSpecies <- terra::classify(R_Sp_sumP, cbind(1, Inf, 1)) %>%
-    terra::global("sum", na.rm = TRUE) %>%
+
+  NGridsWzSpecies <- terra::global(R_Sp_sum, fun = "notNA") %>%
     as.integer() %>%
     format(big.mark = ",")
-  Limits <- terra::trim(R_Sp_sumP) %>%
+  Limits <- terra::trim(R_Sp_sum) %>%
     terra::ext() %>%
     as.vector()
 
   NSpPerGrid_gg <- ggplot2::ggplot() +
-    tidyterra::geom_spatraster(data = R_Sp_sumP) +
+    tidyterra::geom_spatraster(data = R_Sp_sum) +
     tidyterra::scale_fill_whitebox_c(
       na.value = "transparent", palette = "bl_yl_rd", name = NULL) +
     ggplot2::geom_sf(
@@ -344,7 +340,7 @@ Mod_PrepData <- function(
       caption  = paste0(
         "Only grid cells with &#8805;", MinEffortsSp,
         " vascular plant species in GBIF and IAS with ",
-        "&#8805;", MinPresGrids, " presence grid cells are considered (",
+        "&#8805;", PresPerSpecies, " presence grid cells are considered (",
         NGridsWzSpecies, " grid cells & ", terra::nlyr(R_Sp), " IAS)")) +
     ggplot2::scale_y_continuous(expand = c(0, 0), limits = Limits[c(3, 4)]) +
     ggplot2::scale_x_continuous(expand = c(0, 0), limits = Limits[c(1, 2)]) +
@@ -370,7 +366,7 @@ Mod_PrepData <- function(
   print(NSpPerGrid_gg)
   grDevices::dev.off()
 
-  rm(Limits, NSpPerGrid_gg, R_Sp_sum, R_Sp_sumP, EU_Bound)
+  rm(Limits, NSpPerGrid_gg, R_Sp_sum, EU_Bound)
 
   # # ..................................................................... ###
 
@@ -461,7 +457,6 @@ Mod_PrepData <- function(
   # # ..................................................................... ###
 
   ## Railways ----
-
   IASDT.R::CatTime("Railway intensity", Level = 1)
 
   # Railway intensity
@@ -491,13 +486,26 @@ Mod_PrepData <- function(
 
   # # ..................................................................... ###
 
+  ## Sampling effort ----
+  IASDT.R::CatTime("Sampling effort", Level = 1)
+
+  R_Efforts <- IASDT.R::LoadAs(R_Bias) %>%
+    terra::unwrap() %>%
+    magrittr::extract2("NObs") %>%
+    stats::setNames("Efforts")
+  R_EffortsLog <- log10(R_Efforts + 0.1) %>%
+    stats::setNames("EffortsLog")
+
+  # # ..................................................................... ###
+
   ## Merging data together -----
   IASDT.R::CatTime("Merging data together")
 
   ColumnsFirst <- c("CellNum", "CellCode", "Country", "Country_Nearest")
   DT_All <- c(
     R_CHELSA, R_Hab, R_HabLog, R_RoadInt, R_RoadIntLog,
-    R_RailInt, R_RailIntLog, R_RoadRail, R_RoadRailLog, R_Sp) %>%
+    R_RailInt, R_RailIntLog, R_RoadRail, R_RoadRailLog,
+    R_Efforts, R_EffortsLog, R_Sp) %>%
     as.data.frame(na.rm = TRUE, xy = TRUE, cells = TRUE) %>%
     tibble::tibble() %>%
     # Add country name

@@ -19,7 +19,7 @@
 #'   numbers to each plot page. Defaults to `TRUE`.
 #' @param AddTitle A logical value indicating whether to add the main title
 #'   (specified by `Title`) to the plot. Defaults to `TRUE`.
-#' @param Cols Character vector for chain colours [optional]. Default: `NULL`.
+#' @param Cols Character vector for chain colours (optional). Default: `NULL`.
 #' @param FromHPC Logical. Indicates whether the function is being run on an HPC
 #'   environment, affecting file path handling. Default: `TRUE`.
 #' @name PlotAlpha

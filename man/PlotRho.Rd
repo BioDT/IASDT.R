@@ -15,7 +15,7 @@ path to such an object.}
 
 \item{Title}{A character string specifying the title of the plot.}
 
-\item{Cols}{Character vector for chain colours \link{optional}. Default: \code{NULL}.}
+\item{Cols}{Character vector for chain colours (optional). Default: \code{NULL}.}
 }
 \value{
 A ggplot object representing the traceplot of the rho parameter,

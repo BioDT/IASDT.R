@@ -26,6 +26,8 @@
 #'   `RData` file. Default: `TRUE`.
 #' @param GPP_Plot Logical indicating whether to plot the coordinates of the
 #'   sampling units and the knots in a pdf file. Default: `TRUE`.
+#' @param QuadraticVars Character vector for variables for which quadratic terms
+#'   are used.
 #' @param EffortsAsPredictor Logical indicating whether to include the
 #'   (log<sub>10</sub>) sampling efforts as predictor to the model. Default:
 #'   `FALSE`.
@@ -39,9 +41,10 @@
 #' @param NspPerGrid Integer. Indicating the minimum number of species per grid
 #'   cell for a grid cell to be include in the analysis. This is calculated
 #'   after filtering grid cells by sampling efforts (`MinEffortsSp`) and
-#'   filtering species by the number of presence grid cells per predictor
-#'   (`PresPerVar`). If `NspPerGrid` = `NULL` or 1 (default), grid cells with at
-#'   least one species presence will be considered in the models.
+#'   filtering species by the number of presence grid cells (`PresPerSpecies`).
+#'   If `NspPerGrid` = `0` (default), all grid cells will be used in the models.
+#'   If `NspPerGrid` > 0, only grid cells with >= `NspPerGrid` species presence
+#'   will be considered in the models.
 #' @param PhyloTree,NoPhyloTree Logical indicating whether to fit model variants
 #'   with or without phylogenetic trees, respectively. The default of both
 #'   arguments is `TRUE`, which means to fit a model variant with the respective
@@ -61,7 +64,7 @@
 #'   fitted at each value of number of samples. Defaults to 1000.
 #' @param transientFactor Integer specifying the transient multiplication
 #'   factor. The value of `transient` will equal  the multiplication of
-#'   `transientFactor` and `thin`. Default: 300.
+#'   `transientFactor` and `thin`. Default: 500.
 #' @param verbose Integer specifying how often the results of the MCMC sampling
 #'   should be reported. Default: `200`.
 #' @param SkipFitted Logical indicating whether to skip already fitted models.
@@ -110,8 +113,7 @@
 #'
 #' - for which habitat types the models will be fitted
 #' - excluding grid cells with very low sampling efforts (`MinEffortsSp`)
-#' - selection of species based on minimum number of presence-grid cells
-#'   (`PresPerVar` * number of predictors)
+#' - selection of species based on minimum number of presence-grid cells: `PresPerSpecies`.
 #' - optionally model fitting on specified list of countries: (`ModelCountry`)
 #' - whether to exclude grid cells with few species (`NspPerGrid`)
 #' - number of cross-validation folds
@@ -140,16 +142,16 @@
 
 Mod_Prep4HPC <- function(
     Hab_Abb = NULL, Path_Model = NULL,
-    MinEffortsSp = 100L, PresPerVar = 10L, EnvFile = ".env",
+    MinEffortsSp = 100L, PresPerSpecies = 80L, EnvFile = ".env",
     GPP = TRUE, GPP_Dists = NULL, GPP_Save = TRUE,
     GPP_Plot = TRUE, MinLF = NULL, MaxLF = NULL,
-    SetAlphapw = TRUE,
-    AlphapwPar = list(
-      n_samples = 300, prob_norm = 0.8, tr_mean = 200, tr_sd = 50,
-      tr_min = 5, tr_max = 400, seed = NULL, Alphapw = NULL),
+    Alphapw = list(Prior = NULL, Min = 20, Max = 1200, Samples = 200),
     BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
+    QuadraticVars = c(
+      "bio4", "bio6", "bio8", "bio12", "bio15", "bio18",
+      "EffortsLog", "RoadRailLog", "HabLog"),
     EffortsAsPredictor = FALSE, RoadRailAsPredictor = TRUE,
-    HabAsPredictor = TRUE, NspPerGrid = 1L, ExcludeCult = TRUE,
+    HabAsPredictor = TRUE, NspPerGrid = 0L, ExcludeCult = TRUE,
     CV_NFolds = 4L, CV_NGrids = 20L, CV_NR = 2L, CV_NC = 2L, CV_Plot = TRUE,
     CV_SAC = FALSE,
     PhyloTree = TRUE, NoPhyloTree = TRUE, SaveData = TRUE,
@@ -169,7 +171,7 @@ Mod_Prep4HPC <- function(
   .StartTime <- lubridate::now(tzone = "CET")
 
   CheckNULL <- c(
-    "Path_Model", "PresPerVar", "thin", "samples",
+    "Path_Model", "PresPerSpecies", "thin", "samples",
     "MemPerCpu", "Path_Hmsc", "Path_Python", "Hab_Abb")
   IsNull <- purrr::map_lgl(CheckNULL, ~ is.null(get(.x)))
 
@@ -199,8 +201,9 @@ Mod_Prep4HPC <- function(
     stop("thin should be numeric and greater than zero", call. = FALSE)
   }
 
-  if (!all(is.numeric(PresPerVar)) || PresPerVar <= 0) {
-    stop("`PresPerVar` should be numeric and greater than zero", call. = FALSE)
+  if (!all(is.numeric(PresPerSpecies)) || PresPerSpecies <= 0) {
+    stop("`PresPerSpecies` should be numeric and greater than zero",
+         call. = FALSE)
   }
 
   if (!all(is.numeric(MinEffortsSp)) || MinEffortsSp <= 0) {
@@ -209,10 +212,9 @@ Mod_Prep4HPC <- function(
       call. = FALSE)
   }
 
-  if (!is.null(NspPerGrid) && (!is.numeric(NspPerGrid) || NspPerGrid < 1)) {
+  if (!is.numeric(NspPerGrid) || NspPerGrid < 0) {
     stop(
-      "`NspPerGrid` has to be either `NULL` or positive integer",
-      call. = FALSE)
+      "`NspPerGrid` has to be integer >= 0", call. = FALSE)
   }
 
   # # ..................................................................... ###
@@ -295,14 +297,14 @@ Mod_Prep4HPC <- function(
   LogicArgs <- c(
     "GPP_Save", "GPP_Plot", "PhyloTree", "NoPhyloTree", "SaveData",
     "SkipFitted", "VerboseProgress", "ToJSON", "CV_SAC", "CheckPython",
-    "OverwriteRDS", "SetAlphapw", "PrepSLURM", "ExcludeCult", "GPP",
+    "OverwriteRDS", "PrepSLURM", "ExcludeCult", "GPP",
     "EffortsAsPredictor", "RoadRailAsPredictor", "HabAsPredictor")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = LogicArgs, Type = "logical")
 
   NumericArgs <- c(
     "NCores", "NChains", "thin", "samples", "verbose", "NumArrayJobs",
-    "PresPerVar", "MinEffortsSp", "transientFactor", "CV_NFolds", "CV_NGrids",
-    "CV_NR", "CV_NC", "Precision")
+    "PresPerSpecies", "MinEffortsSp", "transientFactor", "CV_NFolds",
+    "CV_NGrids", "CV_NR", "CV_NC", "Precision")
   if (GPP) {
     NumericArgs <- c(NumericArgs, "GPP_Dists")
   }
@@ -379,7 +381,7 @@ Mod_Prep4HPC <- function(
   XVars <- BioVars
 
   if (EffortsAsPredictor) {
-    XVars <- c(XVars, "BiasLog")
+    XVars <- c(XVars, "EffortsLog")
   }
   if (RoadRailAsPredictor) {
     XVars <- c(XVars, "RoadRailLog")
@@ -387,9 +389,6 @@ Mod_Prep4HPC <- function(
   if (Hab_Abb != "0" && HabAsPredictor) {
     XVars <- c(XVars, "HabLog")
   }
-
-  # minimum number of presence grids per species
-  MinPresGrids <- PresPerVar * length(XVars)
 
   # # ..................................................................... ###
 
@@ -414,9 +413,9 @@ Mod_Prep4HPC <- function(
   IASDT.R::CatTime("Preparing input data using IASDT.R::Mod_PrepData")
   IASDT.R::CatSep(Rep = 1, Extra1 = 0, Extra2 = 0)
 
-  DT_All <- Mod_PrepData(
-    Hab_Abb = Hab_Abb, MinEffortsSp = MinEffortsSp, PresPerVar = PresPerVar,
-    NVars = length(XVars), EnvFile = EnvFile, BioVars = BioVars,
+  DT_All <- IASDT.R::Mod_PrepData(
+    Hab_Abb = Hab_Abb, MinEffortsSp = MinEffortsSp,
+    PresPerSpecies = PresPerSpecies, EnvFile = EnvFile, BioVars = BioVars,
     Path_Model = Path_Model, VerboseProgress = VerboseProgress,
     FromHPC = FromHPC, SaveData = SaveData, ExcludeCult = ExcludeCult)
 
@@ -452,7 +451,7 @@ Mod_Prep4HPC <- function(
       tidyr::pivot_longer(
         cols = tidyselect::everything(),
         names_to = "Sp", values_to = "NCells") %>%
-      dplyr::filter(NCells < MinPresGrids) %>%
+      dplyr::filter(NCells < PresPerSpecies) %>%
       dplyr::pull(Sp)
 
     IASDT.R::CatTime(
@@ -509,7 +508,7 @@ Mod_Prep4HPC <- function(
       paste0("<strong>Selected countries</strong>: <br/>", .) %>%
       stringr::str_replace_all("\n", "<br/>")
     Subtitle <- paste0(
-      NSp, " IAS within \u2265", MinPresGrids,
+      NSp, " IAS within \u2265", PresPerSpecies,
       " presence grid cells in the selected country/countries (",
       NGrids, " grid cells)")
 
@@ -566,23 +565,23 @@ Mod_Prep4HPC <- function(
 
   IASDT.R::CatTime("Exclude grid cells with low number of presences")
 
-  if (is.null(NspPerGrid) || NspPerGrid == 1) {
+  if (NspPerGrid == 0) {
     IASDT.R::CatTime(
-      "All grid cells with at least single species presence will be considered",
+      paste0("All grid cells, irrespective of number of species ",
+             "presence, will be considered"),
       Level = 1)
   } else {
-    if (NspPerGrid > 1) {
-      EmptyGridsID <- dplyr::select(DT_All, tidyselect::starts_with("Sp_")) %>%
-        rowSums() %>%
-        magrittr::is_less_than(as.integer(NspPerGrid)) %>%
-        which() %>%
-        magrittr::multiply_by(-1)
+    EmptyGridsID <- dplyr::select(DT_All, tidyselect::starts_with("Sp_")) %>%
+      rowSums() %>%
+      magrittr::is_less_than(as.integer(NspPerGrid)) %>%
+      which() %>%
+      magrittr::multiply_by(-1)
 
-      if (length(EmptyGridsID) > 0) {
-        IASDT.R::CatTime(
-          paste0("Excluding grid cells with < ", NspPerGrid), Level = 1)
-        DT_All <- dplyr::slice(DT_All, EmptyGridsID)
-      }
+    if (length(EmptyGridsID) > 0) {
+      IASDT.R::CatTime(
+        paste0("Excluding grid cells with < ", NspPerGrid, " species presence"),
+        Level = 1)
+      DT_All <- dplyr::slice(DT_All, EmptyGridsID)
     }
   }
 
@@ -639,17 +638,37 @@ Mod_Prep4HPC <- function(
   # The formula object becomes too large (up to > 2GB!) if created within a
   # function. Setting the environment of the formula as an empty environment
   # release this unnecessary size. https://stackoverflow.com/questions/66241212
+
   IASDT.R::CatTime("Xformula")
-  Form_x <- stringr::str_c(XVars, collapse = " + ") %>%
+
+  if (is.null(QuadraticVars)) {
+    FormVars <- XVars
+    IASDT.R::CatTime(
+      paste0("Models will be fitted using ", length(XVars), " predictors: ",
+             paste0(XVars, collapse = " + ")), Level = 1)
+  } else {
+    OnlyLinear <- setdiff(XVars, QuadraticVars)
+    FormVars <- c(
+      OnlyLinear,
+      paste0("stats::poly(", QuadraticVars, ", degree = 2, raw = TRUE)"))
+
+    IASDT.R::CatTime("Models will be fitted using:", Level = 1)
+    IASDT.R::CatTime(
+      paste0(length(OnlyLinear), " linear effect: ",
+             paste0(OnlyLinear, collapse = " + ")),
+      Level = 2)
+    IASDT.R::CatTime(
+      paste0(length(QuadraticVars), " linear and quadraric effects: ",
+             paste0(QuadraticVars, collapse = " + ")),
+      Level = 2)
+  }
+
+  Form_x <- stringr::str_c(FormVars, collapse = " + ") %>%
     stringr::str_c("~ ", .) %>%
     stats::as.formula(env = baseenv())
+
   DT_x <- dplyr::select(DT_All, tidyselect::all_of(XVars)) %>%
     as.data.frame()
-
-  IASDT.R::CatTime(
-    paste0("Models will be fitted using ", length(XVars), " predictors"),
-    Level = 1)
-  IASDT.R::CatTime(paste0(XVars, collapse = " + "), Level = 1)
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -719,10 +738,10 @@ Mod_Prep4HPC <- function(
         FUN = function(x) {
           IASDT.R::PrepKnots(
             Coords = DT_xy, MinDist = x, MinLF = MinLF, MaxLF = MaxLF,
-            SetAlphapw = SetAlphapw, AlphapwPar = AlphapwPar)
+            Alphapw = Alphapw)
         },
         future.scheduling = Inf, future.seed = TRUE,
-        future.globals = c("DT_xy", "GPP_Dists", "MaxLF", "MinLF"),
+        future.globals = c("DT_xy", "GPP_Dists", "MaxLF", "MinLF", "Alphapw"),
         future.packages = c("dplyr", "sf", "Hmsc", "jsonify", "magrittr")) %>%
         stats::setNames(paste0("GPP_", GPP_Dists))
 
@@ -737,9 +756,10 @@ Mod_Prep4HPC <- function(
         .x = GPP_Dists * 1000,
         .f = ~IASDT.R::PrepKnots(
           Coords = DT_xy, MinDist = .x, MinLF = MinLF, MaxLF = MaxLF,
-          SetAlphapw = SetAlphapw, AlphapwPar = AlphapwPar)) %>%
+          Alphapw = Alphapw)) %>%
         stats::setNames(paste0("GPP_", GPP_Dists))
     }
+
 
     ## Plotting knot location ----
     if (GPP_Plot) {
@@ -889,6 +909,7 @@ Mod_Prep4HPC <- function(
 
           })) %>%
       tidyr::unnest_wider("M_HPC")
+
   } else {
 
     # Non-spatial model

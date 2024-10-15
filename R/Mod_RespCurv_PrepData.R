@@ -10,11 +10,14 @@
 #' @param Path_Model String specifying the path to the .RData file containing
 #'   the model to be used.
 #' @param ngrid Integer specifying the number of points along the gradient for
-#'   continuous focal variables. Defaults to 50.
+#'   continuous focal variables. Defaults to 50. See [Hmsc::constructGradient]
+#'   for more details.
 #' @param NCores Integer specifying the number of cores to use for parallel
 #'   processing. Defaults to 15.
 #' @param ReturnData Logical indicating whether the processed response curve
 #'   data should be returned as an R object. Defaults to `FALSE`.
+#' @param predictEtaMean Logical; whether to predict the mean value of the
+#'   latent variable. Defaults to `TRUE`.
 #' @seealso RespCurv_PlotSp RespCurv_PlotSR
 #' @return Depending on the value of `ReturnData`, either returns response curve
 #'   data or `NULL` invisibly.
@@ -22,13 +25,16 @@
 #' @name RespCurv_PrepData
 
 RespCurv_PrepData <- function(
-    Path_Model = NULL, ngrid = 50, NCores = 15, ReturnData = FALSE) {
+    Path_Model = NULL, ngrid = 50, NCores = 15, ReturnData = FALSE,
+    predictEtaMean = TRUE) {
+
+  # # ..................................................................... ###
+
+  .StartTime <- lubridate::now(tzone = "CET")
 
   if (is.null(Path_Model)) {
     stop("Path_Model cannot be NULL", call. = FALSE)
   }
-
-  .StartTime <- lubridate::now(tzone = "CET")
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
@@ -36,9 +42,9 @@ RespCurv_PrepData <- function(
     SR <- MM <- PlotData <- NFV <- Coords <- RC_DT_Path_Orig <-
     RC_DT_Path_Prob <- RC_DT_Path_SR <- NULL
 
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
+
   # Check input arguments ------
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Check input arguments")
   AllArgs <- ls(envir = environment())
@@ -50,9 +56,9 @@ RespCurv_PrepData <- function(
     AllArgs = AllArgs, Type = "numeric", Args = c("NCores", "ngrid"))
   rm(AllArgs)
 
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
+
   # Loading model object ------
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Loading model object")
   if (file.exists(Path_Model) &&
@@ -62,9 +68,9 @@ RespCurv_PrepData <- function(
     stop("Path of the model object was not found", call. = FALSE)
   }
 
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
+
   # PrepRCData_Int -------
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   PrepRCData_Int <- function(ID) {
 
@@ -100,30 +106,38 @@ RespCurv_PrepData <- function(
 
       } else {
 
-        # +++++++++++++++++++++++++++++++++
+        # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
         # constructGradient
-        # +++++++++++++++++++++++++++++++++
+        # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
         Gradient <- Hmsc::constructGradient(
           hM = Model, focalVariable = Variable, non.focalVariables = NFV,
           ngrid = ngrid, coordinates = list(sample = Coords))
 
         XVals <- Gradient$XDataNew[, Variable]
 
-        # +++++++++++++++++++++++++++++++++
-        # Predicting
-        # +++++++++++++++++++++++++++++++++
+        # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+        # Predicting - probability of occurrence
+        # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
         # probability of occurrence
         Pred_Expected <- stats::predict(
-          object = Model, Gradient = Gradient, expected = TRUE)
+          object = Model, Gradient = Gradient,
+          # nParallel = min(NCores, ngrid),
+          expected = TRUE, predictEtaMean = predictEtaMean)
 
-        # Species richness
+        # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+        # Predicting - Species richness
+        # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
         Pred_SR <- stats::predict(
-          object = Model, Gradient = Gradient, expected = FALSE)
+          object = Model, Gradient = Gradient,
+          # nParallel = min(NCores, ngrid),
+          expected = FALSE, predictEtaMean = predictEtaMean)
 
-        # +++++++++++++++++++++++++++++++++
+        # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
         # Save gradient and original prediction values
-        # +++++++++++++++++++++++++++++++++
+        # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
         RC_Data_Orig <- list(
           Variable = Variable, Coords = Coords, NFV = NFV,
@@ -135,11 +149,12 @@ RespCurv_PrepData <- function(
 
       rm(RC_Data_Orig)
 
-      # +++++++++++++++++++++++++++++++++
+      # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
       # Prepare plotting data: probability of occurrence
-      # +++++++++++++++++++++++++++++++++
+      # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-      Probabilities <- c(0.025, 0.5, 0.975) # quantiles to be calculated
+      # quantiles to be calculated
+      Probabilities <- c(0.025, 0.5, 0.975)
 
       RC_Data_Prob <- purrr::map_dfr(
         .x = seq_len(length(Pred_Expected)),
@@ -187,9 +202,9 @@ RespCurv_PrepData <- function(
 
       rm(Pred_Expected, RC_Data_Prob)
 
-      # +++++++++++++++++++++++++++++++++
+      # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
       # Prepare plotting data: Species richness
-      # +++++++++++++++++++++++++++++++++
+      # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
       # predicted species richness
       RC_Data_SR <- purrr::map(
@@ -232,9 +247,9 @@ RespCurv_PrepData <- function(
     return(OutputTibble)
   }
 
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
+
   # Prepare response curve data -------
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Prepare response curve data")
 
@@ -243,17 +258,17 @@ RespCurv_PrepData <- function(
   Path_RespCurvDT <- file.path(Path_ResCurve, "RespCurv_DT")
   fs::dir_create(Path_RespCurvDT)
 
-  # +++++++++++++++++++++++++++++++++
+  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Extract names of the variables
-  # +++++++++++++++++++++++++++++++++
+  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   IASDT.R::CatTime("Extract names of the variables", Level = 1)
   ModelVars <- stringr::str_split(
     as.character(Model$XFormula)[2], "\\+", simplify = TRUE) %>%
     stringr::str_trim()
 
-  # +++++++++++++++++++++++++++++++++
+  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Predictions variants
-  # +++++++++++++++++++++++++++++++++
+  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Coords
   # Value of the `coordinates` argument of the `constructGradient` function
@@ -289,9 +304,9 @@ RespCurv_PrepData <- function(
             all()
         }))
 
-  # +++++++++++++++++++++++++++++++++
+  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Checking file existence
-  # +++++++++++++++++++++++++++++++++
+  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   MissingRows <- sum(!ResCurvDT$FileExists)
 
@@ -315,9 +330,9 @@ RespCurv_PrepData <- function(
         Level = 1)
     }
 
-    # +++++++++++++++++++++++++++++++++
+    # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
     # Prepare working on parallel
-    # +++++++++++++++++++++++++++++++++
+    # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
     NCores <- max(min(NCores, MissingRows), 1)
 
@@ -337,9 +352,9 @@ RespCurv_PrepData <- function(
       on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
     }
 
-    # +++++++++++++++++++++++++++++++++
+    # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
     # Prepare response curve data on parallel
-    # +++++++++++++++++++++++++++++++++
+    # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
     IASDT.R::CatTime("Prepare response curve data on parallel", Level = 2)
 
@@ -348,7 +363,8 @@ RespCurv_PrepData <- function(
       FUN = PrepRCData_Int,
       future.scheduling = Inf, future.seed = TRUE,
       future.packages = c("dplyr", "purrr", "tidyr"),
-      future.globals = c("ResCurvDT", "Model", "PrepRCData_Int")) %>%
+      future.globals = c(
+        "ResCurvDT", "Model", "PrepRCData_Int", "ngrid", "predictEtaMean")) %>%
       dplyr::bind_rows()
 
     if (NCores > 1) {
@@ -357,8 +373,13 @@ RespCurv_PrepData <- function(
     }
   }
 
+  # # ..................................................................... ###
+
   IASDT.R::CatTime("Saving data to desk")
   save(ResCurvDT, file = file.path(Path_RespCurvDT, "ResCurvDT.RData"))
+
+  # # ..................................................................... ###
+
 
   IASDT.R::CatDiff(InitTime = .StartTime)
 

@@ -13,7 +13,7 @@
 #' @param Model A fitted Hmsc model object or a character string specifying the
 #'   path to such an object.
 #' @param Title A character string specifying the title of the plot.
-#' @param Cols Character vector for chain colours [optional]. Default: `NULL`.
+#' @param Cols Character vector for chain colours (optional). Default: `NULL`.
 #' @name PlotRho
 #' @author Ahmed El-Gabbas
 #' @return A ggplot object representing the traceplot of the rho parameter,

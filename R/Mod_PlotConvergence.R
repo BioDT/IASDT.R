@@ -26,7 +26,7 @@
 #'   files. Default: TRUE.
 #' @param PagePerFile Integer. Indicates the number of pages per single pdf page
 #'   for the `Omega` parameter. Default: 20.
-#' @param Cols Character vector for chain colours [optional]. Default: `NULL`.
+#' @param Cols Character vector for chain colours (optional). Default: `NULL`.
 #' @name PlotConvergence
 #' @author Ahmed El-Gabbas
 #' @return The function does not return a value but generates and saves plots to

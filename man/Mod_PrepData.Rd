@@ -7,8 +7,7 @@
 Mod_PrepData(
   Hab_Abb = NULL,
   MinEffortsSp = 100L,
-  NVars = NULL,
-  PresPerVar = 10L,
+  PresPerSpecies = 80L,
   EnvFile = ".env",
   BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
   Path_Model = NULL,
@@ -26,26 +25,21 @@ prepare data for. Valid values are \code{0}, \code{1}, \code{2}, \code{3}, \verb
 habitat type. For more details, see \href{https://doi.org/10.23855/preslia.2022.447}{Pysek et al.}.}
 
 \item{MinEffortsSp}{Minimum number of vascular plant species per grid cell in
-GBIF for a grid cell to be included in the models. This is to exclude
-grid cells with very little sampling efforts. Defaults to \code{100}.}
+GBIF for a grid cell to be included in the models. This is to exclude grid
+cells with very little sampling efforts. Defaults to \code{100}.}
 
-\item{NVars}{Integer. The number of variables used in the model. This
-argument has to be provided and can not be set to \code{NULL} (default).}
-
-\item{PresPerVar}{Integer. Minimum number of presence grid cells per
-predictor for a species to be included in the analysis. The number of
-presence grid cells per species is calculated as the product of this factor
-and the number of variables used in the models \code{NVars} and is calculated
-after discarding grid cells with low sampling efforts (\code{MinEffortsSp}).
-Defaults to \code{10}.}
+\item{PresPerSpecies}{Integer. The minimum number of presence grid cells for a
+species to be included in the analysis. The number of presence grid cells
+per species is calculated after discarding grid cells with low sampling
+efforts (\code{MinEffortsSp}). Defaults to \code{80}.}
 
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
 
 \item{BioVars}{Character vector. Specifies the Bioclimatic variables to be
 included from CHELSA. Defaults to 6 ecologically meaningful and less
-correlated Bioclimatic variables: \code{bio4}, \code{bio6}, \code{bio8}, \code{bio12},
-\code{bio15}, and \code{bio18}.}
+correlated Bioclimatic variables: \code{bio4}, \code{bio6}, \code{bio8}, \code{bio12}, \code{bio15},
+and \code{bio18}.}
 
 \item{Path_Model}{Character. Path where the output file should be saved.}
 

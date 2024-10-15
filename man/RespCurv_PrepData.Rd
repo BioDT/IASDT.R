@@ -8,7 +8,8 @@ RespCurv_PrepData(
   Path_Model = NULL,
   ngrid = 50,
   NCores = 15,
-  ReturnData = FALSE
+  ReturnData = FALSE,
+  predictEtaMean = TRUE
 )
 }
 \arguments{
@@ -16,13 +17,17 @@ RespCurv_PrepData(
 the model to be used.}
 
 \item{ngrid}{Integer specifying the number of points along the gradient for
-continuous focal variables. Defaults to 50.}
+continuous focal variables. Defaults to 50. See \link[Hmsc:constructGradient]{Hmsc::constructGradient}
+for more details.}
 
 \item{NCores}{Integer specifying the number of cores to use for parallel
 processing. Defaults to 15.}
 
 \item{ReturnData}{Logical indicating whether the processed response curve
 data should be returned as an R object. Defaults to \code{FALSE}.}
+
+\item{predictEtaMean}{Logical; whether to predict the mean value of the
+latent variable. Defaults to \code{TRUE}.}
 }
 \value{
 Depending on the value of \code{ReturnData}, either returns response curve

@@ -8,7 +8,7 @@ Mod_Prep4HPC(
   Hab_Abb = NULL,
   Path_Model = NULL,
   MinEffortsSp = 100L,
-  PresPerVar = 10L,
+  PresPerSpecies = 80L,
   EnvFile = ".env",
   GPP = TRUE,
   GPP_Dists = NULL,
@@ -16,14 +16,14 @@ Mod_Prep4HPC(
   GPP_Plot = TRUE,
   MinLF = NULL,
   MaxLF = NULL,
-  SetAlphapw = TRUE,
-  AlphapwPar = list(n_samples = 300, prob_norm = 0.8, tr_mean = 200, tr_sd = 50, tr_min =
-    5, tr_max = 400, seed = NULL, Alphapw = NULL),
+  Alphapw = list(Prior = NULL, Min = 20, Max = 1200, Samples = 200),
   BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
+  QuadraticVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18", "EffortsLog",
+    "RoadRailLog", "HabLog"),
   EffortsAsPredictor = FALSE,
   RoadRailAsPredictor = TRUE,
   HabAsPredictor = TRUE,
-  NspPerGrid = 1L,
+  NspPerGrid = 0L,
   ExcludeCult = TRUE,
   CV_NFolds = 4L,
   CV_NGrids = 20L,
@@ -69,15 +69,13 @@ habitat type. For more details, see \href{https://doi.org/10.23855/preslia.2022.
 all output, including models to be fitted, will be saved.}
 
 \item{MinEffortsSp}{Minimum number of vascular plant species per grid cell in
-GBIF for a grid cell to be included in the models. This is to exclude
-grid cells with very little sampling efforts. Defaults to \code{100}.}
+GBIF for a grid cell to be included in the models. This is to exclude grid
+cells with very little sampling efforts. Defaults to \code{100}.}
 
-\item{PresPerVar}{Integer. Minimum number of presence grid cells per
-predictor for a species to be included in the analysis. The number of
-presence grid cells per species is calculated as the product of this factor
-and the number of variables used in the models \code{NVars} and is calculated
-after discarding grid cells with low sampling efforts (\code{MinEffortsSp}).
-Defaults to \code{10}.}
+\item{PresPerSpecies}{Integer. The minimum number of presence grid cells for a
+species to be included in the analysis. The number of presence grid cells
+per species is calculated after discarding grid cells with low sampling
+efforts (\code{MinEffortsSp}). Defaults to \code{80}.}
 
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
@@ -103,19 +101,20 @@ be used. Both default to \code{NULL} which means that the number of latent
 factors will be estimated from the data. If either is provided, the
 respective values will be used as arguments to \link[Hmsc:setPriors]{Hmsc::setPriors}.}
 
-\item{SetAlphapw}{Logical; whether to set the prior for alphapw using
-\link{PriorAlpha}. Default: \code{TRUE}.}
-
-\item{AlphapwPar}{List; parameters for generating prior distribution. If the
-list item \code{Alphapw} is provided, it will be used as the prior for alphapw.
-Otherwise, the prior will be generated using \code{PriorAlpha} function. Default
-values are as follows:  \code{list(n_samples = 300, prob_norm = 0.8, tr_mean = 200, tr_sd = 50, tr_min = 5, tr_max = 400, seed = NULL, Alphapw = NULL)}.
-See \link{PriorAlpha} for more details.}
+\item{Alphapw}{Prior for the alpha parameter. Defaults to a list with \code{Prior = NULL}, \code{Min = 20}, \code{Max = 1200}, and \code{Samples = 200}. If all list items
+are NULL, the default prior will be used. If \code{Prior} is a matrix, it will
+be used as the prior. If \code{Prior} is \code{NULL}, the prior will be generated
+using \code{Min}, \code{Max}, and \code{Samples}. \code{Min} and \code{Max} are the minimum and
+maximum values of the alpha parameter (in kilometer). \code{Samples} is the
+number of samples to be used in the prior.}
 
 \item{BioVars}{Character vector. Specifies the Bioclimatic variables to be
 included from CHELSA. Defaults to 6 ecologically meaningful and less
-correlated Bioclimatic variables: \code{bio4}, \code{bio6}, \code{bio8}, \code{bio12},
-\code{bio15}, and \code{bio18}.}
+correlated Bioclimatic variables: \code{bio4}, \code{bio6}, \code{bio8}, \code{bio12}, \code{bio15},
+and \code{bio18}.}
+
+\item{QuadraticVars}{Character vector for variables for which quadratic terms
+are used.}
 
 \item{EffortsAsPredictor}{Logical indicating whether to include the
 (log\if{html}{\out{<sub>}}10\if{html}{\out{</sub>}}) sampling efforts as predictor to the model. Default:
@@ -133,9 +132,10 @@ not equals to \code{0}.}
 \item{NspPerGrid}{Integer. Indicating the minimum number of species per grid
 cell for a grid cell to be include in the analysis. This is calculated
 after filtering grid cells by sampling efforts (\code{MinEffortsSp}) and
-filtering species by the number of presence grid cells per predictor
-(\code{PresPerVar}). If \code{NspPerGrid} = \code{NULL} or 1 (default), grid cells with at
-least one species presence will be considered in the models.}
+filtering species by the number of presence grid cells (\code{PresPerSpecies}).
+If \code{NspPerGrid} = \code{0} (default), all grid cells will be used in the models.
+If \code{NspPerGrid} > 0, only grid cells with >= \code{NspPerGrid} species presence
+will be considered in the models.}
 
 \item{ExcludeCult}{Logical. Indicates whether to exclude countries with
 cultivated or casual observations per species. Defaults to \code{TRUE}.}
@@ -186,7 +186,7 @@ fitted at each value of number of samples. Defaults to 1000.}
 
 \item{transientFactor}{Integer specifying the transient multiplication
 factor. The value of \code{transient} will equal  the multiplication of
-\code{transientFactor} and \code{thin}. Default: 300.}
+\code{transientFactor} and \code{thin}. Default: 500.}
 
 \item{verbose}{Integer specifying how often the results of the MCMC sampling
 should be reported. Default: \code{200}.}
@@ -261,8 +261,7 @@ The function provides options for:
 \itemize{
 \item for which habitat types the models will be fitted
 \item excluding grid cells with very low sampling efforts (\code{MinEffortsSp})
-\item selection of species based on minimum number of presence-grid cells
-(\code{PresPerVar} * number of predictors)
+\item selection of species based on minimum number of presence-grid cells: \code{PresPerSpecies}.
 \item optionally model fitting on specified list of countries: (\code{ModelCountry})
 \item whether to exclude grid cells with few species (\code{NspPerGrid})
 \item number of cross-validation folds

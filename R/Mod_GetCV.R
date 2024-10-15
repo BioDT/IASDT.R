@@ -221,7 +221,7 @@ GetCV <- function(
       }
     }
   } else {
-    CV_SAC <- NULL
+    CV_SAC <- CV_SAC_Range <- NULL
   }
 
   rm(XY_sf)

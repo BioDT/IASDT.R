@@ -49,7 +49,7 @@ files. Default: TRUE.}
 \item{PagePerFile}{Integer. Indicates the number of pages per single pdf page
 for the \code{Omega} parameter. Default: 20.}
 
-\item{Cols}{Character vector for chain colours \link{optional}. Default: \code{NULL}.}
+\item{Cols}{Character vector for chain colours (optional). Default: \code{NULL}.}
 }
 \value{
 The function does not return a value but generates and saves plots to

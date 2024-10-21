@@ -65,12 +65,12 @@ RespCurv_PlotSp <- function(
     future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
   if (NCores == 1) {
-    future::plan("sequential", gc = TRUE)
+    future::plan("future::sequential", gc = TRUE)
   } else {
     c1 <- snow::makeSOCKcluster(NCores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-    future::plan("cluster", workers = c1, gc = TRUE)
-    on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+    future::plan("future::cluster", workers = c1, gc = TRUE)
+    on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
   }
 
   SR_DT_All <- file.path(
@@ -126,8 +126,8 @@ RespCurv_PlotSp <- function(
                   "<span style='font-size: 10pt;'><b>Road + Rail intensity</b>",
                   "</span><br/><span style='font-size: 8pt;'> (log<sub>10",
                   "</sub>(x + 0.1))</span>"),
-                Variable == "BiasLog" ~ paste0(
-                  "<span style='font-size: 10pt;'><b>Sampling intensity</b>",
+                Variable == "EffortsLog" ~ paste0(
+                  "<span style='font-size: 10pt;'><b>Sampling efforts</b>",
                   "</span><br/><span style='font-size: 8pt;'> (log<sub>10",
                   "</sub>(x + 0.1))</span>"),
                 Variable == "HabLog" ~ paste0(
@@ -278,7 +278,7 @@ RespCurv_PlotSp <- function(
 
   if (NCores > 1) {
     snow::stopCluster(c1)
-    future::plan("sequential", gc = TRUE)
+    future::plan("future::sequential", gc = TRUE)
   }
 
   if (ReturnData) {

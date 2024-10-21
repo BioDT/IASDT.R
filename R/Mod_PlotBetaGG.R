@@ -104,7 +104,7 @@ PlotBetaGG <- function(
 
   rownames(Plot_SignD) <- dplyr::case_when(
     Model$covNames == "(Intercept)" ~ "\n\nIntercept\n",
-    Model$covNames == "BiasLog" ~ "\n\nSampling\nintensity",
+    Model$covNames == "EffortsLog" ~ "\n\nSampling\nefforts",
     Model$covNames == "RoadRailLog" ~ "\n\nRoad&Rail\nintensity",
     .default = paste0("\n\n", Model$covNames, "\n"))
 
@@ -162,7 +162,7 @@ PlotBetaGG <- function(
 
   rownames(Plot_MeanD) <- dplyr::case_when(
     Model$covNames == "(Intercept)" ~ "\n\nIntercept\n",
-    Model$covNames == "BiasLog" ~ "\n\nSampling\nintensity",
+    Model$covNames == "EffortsLog" ~ "\n\nSampling\nefforts",
     Model$covNames == "RoadRailLog" ~ "\n\nRoad&Rail\nintensity",
     .default = paste0("\n\n", Model$covNames, "\n"))
 
@@ -255,7 +255,7 @@ PlotBetaGG <- function(
 
   rownames(Plot_SupportD) <- dplyr::case_when(
     Model$covNames == "(Intercept)" ~ "\n\nIntercept\n",
-    Model$covNames == "BiasLog" ~ "\n\nSampling\nintensity",
+    Model$covNames == "EffortsLog" ~ "\n\nSampling\nefforts",
     Model$covNames == "RoadRailLog" ~ "\n\nRoad&Rail\nintensity",
     .default = paste0("\n\n", Model$covNames, "\n"))
 

@@ -279,7 +279,7 @@ PlotVarPar <- function(
         variable,
         "Habitat coverage" = "HabLog",
         "Road + Rail intensity" = "RoadRailLog",
-        "Sampling intensity" = "BiasLog",
+        "Sampling efforts" = "EffortsLog",
         "Spatial random effect" = "Random: sample"),
       Species_name = factor(Species_name, SpOrder)) %>%
     # suppress warning: ! Unknown levels in `f`: HabLog; if habitat is not used
@@ -314,7 +314,7 @@ PlotVarPar <- function(
         variable,
         "Habitat coverage" = "HabLog",
         "Road + Rail intensity" = "RoadRailLog",
-        "Sampling intensity" = "BiasLog",
+        "Sampling efforts" = "EffortsLog",
         "Spatial random effect" = "Random: sample"),
       Species_name = factor(Species_name, SpOrder_Orig)) %>%
     # suppress warning: ! Unknown levels in `f`: HabLog; if habitat is not used
@@ -373,7 +373,7 @@ PlotVarPar <- function(
         variable,
         "Habitat coverage" = "HabLog",
         "Road + Rail intensity" = "RoadRailLog",
-        "Sampling intensity" = "BiasLog",
+        "Sampling efforts" = "EffortsLog",
         "Spatial random effect" = "Random: sample"),
       Species_name = factor(Species_name, SpOrder)) %>%
     # suppress warning: ! Unknown levels in `f`: HabLog; if habitat is not used
@@ -401,7 +401,7 @@ PlotVarPar <- function(
         variable,
         "Habitat coverage" = "HabLog",
         "Road + Rail intensity" = "RoadRailLog",
-        "Sampling intensity" = "BiasLog",
+        "Sampling efforts" = "EffortsLog",
         "Spatial random effect" = "Random: sample"),
       Species_name = factor(Species_name, SpOrder_Orig)) %>%
     # suppress warning: ! Unknown levels in `f`: HabLog; if habitat is not used

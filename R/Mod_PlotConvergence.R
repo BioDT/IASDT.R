@@ -492,10 +492,10 @@ PlotConvergence <- function(
         future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
       c1 <- snow::makeSOCKcluster(NCores)
       on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-      future::plan("cluster", workers = c1, gc = TRUE)
-      on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+      future::plan("future::cluster", workers = c1, gc = TRUE)
+      on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
     } else {
-      future::plan("sequential", gc = TRUE)
+      future::plan("future::sequential", gc = TRUE)
     }
 
 
@@ -625,7 +625,7 @@ PlotConvergence <- function(
     if (NCores > 1) {
       IASDT.R::CatTime("Stopping cluster", Level = 2)
       snow::stopCluster(c1)
-      future::plan("sequential", gc = TRUE)
+      future::plan("future::sequential", gc = TRUE)
       rm(c1)
     }
 
@@ -659,10 +659,10 @@ PlotConvergence <- function(
       future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
     c1 <- snow::makeSOCKcluster(min(NCores, nrow(BetaTracePlots_ByVar)))
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-    future::plan("cluster", workers = c1, gc = TRUE)
-    on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+    future::plan("future::cluster", workers = c1, gc = TRUE)
+    on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
   } else {
-    future::plan("sequential", gc = TRUE)
+    future::plan("future::sequential", gc = TRUE)
   }
 
   IASDT.R::CatTime("Save plots", Level = 2)
@@ -672,7 +672,7 @@ PlotConvergence <- function(
       VarName <- dplyr::case_when(
         x == "HabLog" ~ "% Habitat coverage",
         x == "RoadRailLog" ~ "Road + Rail intensity",
-        x == "BiasLog" ~ "Sampling intensity",
+        x == "EffortsLog" ~ "Sampling efforts",
         .default = x)
 
       Plots <- dplyr::filter(BetaTracePlots_ByVar, Variable == x) %>%
@@ -769,7 +769,7 @@ PlotConvergence <- function(
   if (NCores > 1) {
     IASDT.R::CatTime("Stopping cluster", Level = 2)
     snow::stopCluster(c1)
-    future::plan("sequential", gc = TRUE)
+    future::plan("future::sequential", gc = TRUE)
     rm(c1)
   }
 
@@ -793,10 +793,10 @@ PlotConvergence <- function(
       future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
     c1 <- snow::makeSOCKcluster(NCores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-    future::plan("cluster", workers = c1, gc = TRUE)
-    on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+    future::plan("future::cluster", workers = c1, gc = TRUE)
+    on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
   } else {
-    future::plan("sequential", gc = TRUE)
+    future::plan("future::sequential", gc = TRUE)
   }
 
   IASDT.R::CatTime("Save plots", Level = 2)
@@ -821,7 +821,7 @@ PlotConvergence <- function(
               dplyr::case_when(
                 .x == "HabLog" ~ "% Habitat coverage",
                 .x == "RoadRailLog" ~ "Road + Rail intensity",
-                .x == "BiasLog" ~ "Sampling intensity",
+                .x == "EffortsLog" ~ "Sampling efforts",
                 .default = .x)
             }),
           Plot = purrr::map2(
@@ -867,7 +867,7 @@ PlotConvergence <- function(
 
   if (NCores > 1) {
     snow::stopCluster(c1)
-    future::plan("sequential", gc = TRUE)
+    future::plan("future::sequential", gc = TRUE)
   }
 
   rm(BetaTracePlots_BySp0)

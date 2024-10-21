@@ -110,12 +110,12 @@ Efforts_Summarize <- function(
   withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
   if (NCores == 1) {
-    future::plan("sequential", gc = TRUE)
+    future::plan("future::sequential", gc = TRUE)
   } else {
     c1 <- snow::makeSOCKcluster(NCores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-    future::plan("cluster", workers = c1, gc = TRUE)
-    on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+    future::plan("future::cluster", workers = c1, gc = TRUE)
+    on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
   }
 
   # # ..................................................................... ###
@@ -399,7 +399,7 @@ Efforts_Summarize <- function(
   IASDT.R::CatTime("Stopping cluster", Level = 1)
   if (NCores > 1) {
     snow::stopCluster(c1)
-    future::plan("sequential", gc = TRUE)
+    future::plan("future::sequential", gc = TRUE)
   }
   invisible(gc())
 

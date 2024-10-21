@@ -215,7 +215,7 @@ Predict_Hmsc <- function(
 
   ## Habitat information ----
 
-  if ("Hab" %in% OtherVars) {
+  if ("HabLog" %in% OtherVars) {
 
     IASDT.R::CatTime("Habitat information", Level = 1)
 
@@ -230,7 +230,7 @@ Predict_Hmsc <- function(
       magrittr::extract2(paste0("SynHab_", Hab_Abb)) %>%
       magrittr::add(0.1) %>%
       log10() %>%
-      stats::setNames("Hab")
+      stats::setNames("HabLog")
 
     StaticPredictors <- c(StaticPredictors, R_Hab)
 
@@ -241,7 +241,7 @@ Predict_Hmsc <- function(
 
   ## Sampling efforts -----
 
-  if ("BiasLog" %in% OtherVars) {
+  if ("EffortsLog" %in% OtherVars) {
 
     IASDT.R::CatTime("Sampling efforts", Level = 1)
 
@@ -257,7 +257,7 @@ Predict_Hmsc <- function(
       magrittr::extract2("NObs") %>%
       magrittr::add(0.1) %>%
       log10() %>%
-      stats::setNames("BiasLog")
+      stats::setNames("EffortsLog")
 
     StaticPredictors <- c(StaticPredictors, R_Bias)
     rm(R_Bias)
@@ -317,12 +317,12 @@ Predict_Hmsc <- function(
     future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
   if (NCores == 1) {
-    future::plan("sequential", gc = TRUE)
+    future::plan("future::sequential", gc = TRUE)
   } else {
     c1 <- snow::makeSOCKcluster(min(NCores, nrow(Predictions)))
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-    future::plan("cluster", workers = c1, gc = TRUE)
-    on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+    future::plan("future::cluster", workers = c1, gc = TRUE)
+    on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
   }
 
   Predictions <- dplyr::mutate(
@@ -417,7 +417,7 @@ Predict_Hmsc <- function(
 
   if (NCores > 1) {
     snow::stopCluster(c1)
-    future::plan("sequential", gc = TRUE)
+    future::plan("future::sequential", gc = TRUE)
   }
 
   Predictions_Summary <- dplyr::bind_rows(Predictions, Ensemble) %>%

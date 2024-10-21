@@ -9,7 +9,7 @@
 #' environment variables from a file, verifies paths, loads and filters species
 #' data based on habitat type and minimum presence grid cells per species, and
 #' merges various environmental layers (e.g., CHELSA Bioclimatic variables,
-#' habitat coverage, road and railway intensity, sampling intensity) into a
+#' habitat coverage, road and railway intensity, sampling efforts) into a
 #' single dataset. The processed data can be saved to disk as `*.RData` file .
 #' @param Hab_Abb Character. Habitat abbreviation indicating the specific
 #'   [SynHab](https://www.preslia.cz/article/pdf?id=11548) habitat type to
@@ -210,8 +210,8 @@ Mod_PrepData <- function(
 
   IASDT.R::CatTime("Loading data")
 
-  ## Sampling intensity / efforts ----
-  IASDT.R::CatTime("Sampling intensity/efforts", Level = 1)
+  ## Sampling efforts ----
+  IASDT.R::CatTime("Sampling efforts", Level = 1)
   R_Bias <- file.path(Path_Bias, "Efforts_SummaryR.RData")
   if (!file.exists(R_Bias)) {
     stop(paste0(R_Bias, " file does not exist"), call. = FALSE)

@@ -146,13 +146,13 @@ CHELSA_Process <- function(
 
     if (NCores == 1) {
       IASDT.R::CatTime("Check input CHELSA files sequentially")
-      future::plan("sequential", gc = TRUE)
+      future::plan("future::sequential", gc = TRUE)
     } else {
       IASDT.R::CatTime("Check input CHELSA files on parallel")
       c1 <- snow::makeSOCKcluster(NCores)
       on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-      future::plan("cluster", workers = c1, gc = TRUE)
-      on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+      future::plan("future::cluster", workers = c1, gc = TRUE)
+      on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
     }
 
     CHELSA_Data_Checked <- CHELSA_Data %>%
@@ -167,7 +167,7 @@ CHELSA_Process <- function(
 
     if (NCores > 1) {
       snow::stopCluster(c1)
-      future::plan("sequential", gc = TRUE)
+      future::plan("future::sequential", gc = TRUE)
     }
 
 
@@ -214,13 +214,13 @@ CHELSA_Process <- function(
 
   if (NCores == 1) {
     IASDT.R::CatTime("Processing CHELSA maps sequentially")
-    future::plan("sequential", gc = TRUE)
+    future::plan("future::sequential", gc = TRUE)
   } else {
     IASDT.R::CatTime("Processing CHELSA maps on parallel")
     c1 <- snow::makeSOCKcluster(NCores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-    future::plan("cluster", workers = c1, gc = TRUE)
-    on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+    future::plan("future::cluster", workers = c1, gc = TRUE)
+    on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
   }
 
   # Exclude previously processed files (after checking)
@@ -324,7 +324,7 @@ CHELSA_Process <- function(
   rm(CHELSA2Process)
   if (NCores > 1) {
     snow::stopCluster(c1)
-    future::plan("sequential", gc = TRUE)
+    future::plan("future::sequential", gc = TRUE)
   }
 
   IASDT.R::CatDiff(
@@ -338,14 +338,14 @@ CHELSA_Process <- function(
   if (NCores == 1) {
     IASDT.R::CatTime(
       "Group CHELSA data by time and climate model/scenario sequentially")
-    future::plan("sequential", gc = TRUE)
+    future::plan("future::sequential", gc = TRUE)
   } else {
     IASDT.R::CatTime(
       "Group CHELSA data by time and climate model/scenario on parallel")
     c1 <- snow::makeSOCKcluster(NCores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-    future::plan("cluster", workers = c1, gc = TRUE)
-    on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+    future::plan("future::cluster", workers = c1, gc = TRUE)
+    on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
   }
 
 
@@ -394,7 +394,7 @@ CHELSA_Process <- function(
 
   if (NCores > 1) {
     snow::stopCluster(c1)
-    future::plan("sequential", gc = TRUE)
+    future::plan("future::sequential", gc = TRUE)
   }
 
   save(

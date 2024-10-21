@@ -30,7 +30,7 @@
 #'   are used.
 #' @param EffortsAsPredictor Logical indicating whether to include the
 #'   (log<sub>10</sub>) sampling efforts as predictor to the model. Default:
-#'   `FALSE`.
+#'   `TRUE`.
 #' @param RoadRailAsPredictor Logical indicating whether to include the
 #'   (log<sub>10</sub>) sum of road and railway intensity as predictor to the
 #'   model. Default: `TRUE`.
@@ -46,10 +46,10 @@
 #'   If `NspPerGrid` > 0, only grid cells with >= `NspPerGrid` species presence
 #'   will be considered in the models.
 #' @param PhyloTree,NoPhyloTree Logical indicating whether to fit model variants
-#'   with or without phylogenetic trees, respectively. The default of both
-#'   arguments is `TRUE`, which means to fit a model variant with the respective
-#'   option. If both `PhyloTree` and `NoPhyloTree` are `TRUE` (Default), models
-#'   for both options will be fitted. At least one of `PhyloTree` and
+#'   with or without phylogenetic trees, respectively. The default values are
+#'   `TRUE` and `FALSE`, respectively, which means to fit only models with
+#'   phylogenetic trees. If both `PhyloTree` and `NoPhyloTree` are `TRUE`,
+#'   models for both options will be fitted. At least one of `PhyloTree` and
 #'   `NoPhyloTree` should be `TRUE`.
 #' @param OverwriteRDS Logical. Indicating whether to overwrite previously
 #'   exported RDS files for initial models. Default: `TRUE`.
@@ -147,16 +147,14 @@ Mod_Prep4HPC <- function(
     GPP_Plot = TRUE, MinLF = NULL, MaxLF = NULL,
     Alphapw = list(Prior = NULL, Min = 20, Max = 1200, Samples = 200),
     BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
-    QuadraticVars = c(
-      "bio4", "bio6", "bio8", "bio12", "bio15", "bio18",
-      "EffortsLog", "RoadRailLog", "HabLog"),
-    EffortsAsPredictor = FALSE, RoadRailAsPredictor = TRUE,
+    QuadraticVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
+    EffortsAsPredictor = TRUE, RoadRailAsPredictor = TRUE,
     HabAsPredictor = TRUE, NspPerGrid = 0L, ExcludeCult = TRUE,
     CV_NFolds = 4L, CV_NGrids = 20L, CV_NR = 2L, CV_NC = 2L, CV_Plot = TRUE,
     CV_SAC = FALSE,
     PhyloTree = TRUE, NoPhyloTree = TRUE, SaveData = TRUE,
     OverwriteRDS = TRUE, NCores = 8L, NChains = 4L,
-    thin = NULL, samples = 1000L, transientFactor = 300L, verbose = 200L,
+    thin = NULL, samples = 1000L, transientFactor = 500L, verbose = 200L,
     SkipFitted = TRUE, NumArrayJobs = 210L, ModelCountry = NULL,
     VerboseProgress = TRUE, FromHPC = TRUE, PrepSLURM = TRUE, MemPerCpu = NULL,
     Time = NULL, JobName = NULL, Path_Hmsc = NULL, Path_Python = NULL,
@@ -644,8 +642,9 @@ Mod_Prep4HPC <- function(
   if (is.null(QuadraticVars)) {
     FormVars <- XVars
     IASDT.R::CatTime(
-      paste0("Models will be fitted using ", length(XVars), " predictors: ",
-             paste0(XVars, collapse = " + ")), Level = 1)
+      paste0(
+        "Models will be fitted using ", length(XVars), " predictors: ",
+        paste0(XVars, collapse = " + ")), Level = 1)
   } else {
     OnlyLinear <- setdiff(XVars, QuadraticVars)
     FormVars <- c(
@@ -654,12 +653,14 @@ Mod_Prep4HPC <- function(
 
     IASDT.R::CatTime("Models will be fitted using:", Level = 1)
     IASDT.R::CatTime(
-      paste0(length(OnlyLinear), " linear effect: ",
-             paste0(OnlyLinear, collapse = " + ")),
+      paste0(
+        length(OnlyLinear), " linear effect: ",
+        paste0(OnlyLinear, collapse = " + ")),
       Level = 2)
     IASDT.R::CatTime(
-      paste0(length(QuadraticVars), " linear and quadraric effects: ",
-             paste0(QuadraticVars, collapse = " + ")),
+      paste0(
+        length(QuadraticVars), " linear and quadraric effects: ",
+        paste0(QuadraticVars, collapse = " + ")),
       Level = 2)
   }
 
@@ -730,8 +731,8 @@ Mod_Prep4HPC <- function(
         future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
       c1 <- snow::makeSOCKcluster(NCores)
       on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-      future::plan("cluster", workers = c1, gc = TRUE)
-      on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+      future::plan("future::cluster", workers = c1, gc = TRUE)
+      on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
 
       GPP_Knots <- future.apply::future_lapply(
         X = GPP_Dists * 1000,
@@ -747,7 +748,7 @@ Mod_Prep4HPC <- function(
 
       # Stopping cluster
       snow::stopCluster(c1)
-      future::plan("sequential", gc = TRUE)
+      future::plan("future::sequential", gc = TRUE)
 
     } else {
       IASDT.R::CatTime("Working sequentially")
@@ -1027,8 +1028,8 @@ Mod_Prep4HPC <- function(
 
     c1 <- snow::makeSOCKcluster(NCores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-    future::plan("cluster", workers = c1, gc = TRUE)
-    on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+    future::plan("future::cluster", workers = c1, gc = TRUE)
+    on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
 
     Model_Process <- future.apply::future_lapply(
       X = seq_len(nrow(Model_Info)),
@@ -1039,7 +1040,7 @@ Mod_Prep4HPC <- function(
       future.packages = c("Hmsc", "jsonify", "IASDT.R"))
 
     snow::stopCluster(c1)
-    future::plan("sequential", gc = TRUE)
+    future::plan("future::sequential", gc = TRUE)
 
   } else {
     Model_Process <- purrr::map(

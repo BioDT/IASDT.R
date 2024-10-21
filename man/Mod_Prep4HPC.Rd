@@ -18,9 +18,8 @@ Mod_Prep4HPC(
   MaxLF = NULL,
   Alphapw = list(Prior = NULL, Min = 20, Max = 1200, Samples = 200),
   BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
-  QuadraticVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18", "EffortsLog",
-    "RoadRailLog", "HabLog"),
-  EffortsAsPredictor = FALSE,
+  QuadraticVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
+  EffortsAsPredictor = TRUE,
   RoadRailAsPredictor = TRUE,
   HabAsPredictor = TRUE,
   NspPerGrid = 0L,
@@ -39,7 +38,7 @@ Mod_Prep4HPC(
   NChains = 4L,
   thin = NULL,
   samples = 1000L,
-  transientFactor = 300L,
+  transientFactor = 500L,
   verbose = 200L,
   SkipFitted = TRUE,
   NumArrayJobs = 210L,
@@ -118,7 +117,7 @@ are used.}
 
 \item{EffortsAsPredictor}{Logical indicating whether to include the
 (log\if{html}{\out{<sub>}}10\if{html}{\out{</sub>}}) sampling efforts as predictor to the model. Default:
-\code{FALSE}.}
+\code{TRUE}.}
 
 \item{RoadRailAsPredictor}{Logical indicating whether to include the
 (log\if{html}{\out{<sub>}}10\if{html}{\out{</sub>}}) sum of road and railway intensity as predictor to the
@@ -159,10 +158,10 @@ folds.}
 to determine the block size. Defaults to \code{FALSE},}
 
 \item{PhyloTree, NoPhyloTree}{Logical indicating whether to fit model variants
-with or without phylogenetic trees, respectively. The default of both
-arguments is \code{TRUE}, which means to fit a model variant with the respective
-option. If both \code{PhyloTree} and \code{NoPhyloTree} are \code{TRUE} (Default), models
-for both options will be fitted. At least one of \code{PhyloTree} and
+with or without phylogenetic trees, respectively. The default values are
+\code{TRUE} and \code{FALSE}, respectively, which means to fit only models with
+phylogenetic trees. If both \code{PhyloTree} and \code{NoPhyloTree} are \code{TRUE},
+models for both options will be fitted. At least one of \code{PhyloTree} and
 \code{NoPhyloTree} should be \code{TRUE}.}
 
 \item{SaveData}{Logical. Indicates whether the processed data should be saved

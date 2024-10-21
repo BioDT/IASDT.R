@@ -64,7 +64,7 @@ environmental and species presence data. It checks input arguments, reads
 environment variables from a file, verifies paths, loads and filters species
 data based on habitat type and minimum presence grid cells per species, and
 merges various environmental layers (e.g., CHELSA Bioclimatic variables,
-habitat coverage, road and railway intensity, sampling intensity) into a
+habitat coverage, road and railway intensity, sampling efforts) into a
 single dataset. The processed data can be saved to disk as \verb{*.RData} file .
 }
 \details{

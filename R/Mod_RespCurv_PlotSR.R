@@ -143,8 +143,8 @@ RespCurv_PlotSR <- function(Path_Model) {
               "<span style='font-size: 12pt;'><b>Road + Rail intensity</b>",
               "</span><span style='font-size: 9pt;'> (log<sub>10</sub>(x + ",
               "0.1))</span>"),
-            Variable == "BiasLog" ~ paste0(
-              "<span style='font-size: 12pt;'><b>Sampling intensity</b>",
+            Variable == "EffortsLog" ~ paste0(
+              "<span style='font-size: 12pt;'><b>Sampling efforts</b>",
               "</span><span style='font-size: 9pt;'> (log<sub>10</sub>(x + ",
               "0.1))</span>"),
             .default = Variable)
@@ -152,7 +152,7 @@ RespCurv_PlotSR <- function(Path_Model) {
           VarName <- dplyr::case_when(
             Variable == "HabLog" ~ "% Habitat coverage",
             Variable == "RoadRailLog" ~ "Road + Rail intensity",
-            Variable == "BiasLog" ~ "Sampling intensity",
+            Variable == "EffortsLog" ~ "Sampling efforts",
             .default = Variable)
 
           # facetting labels

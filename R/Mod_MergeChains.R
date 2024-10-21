@@ -135,12 +135,12 @@ Mod_MergeChains <- function(
   withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
   if (NCores == 1) {
-    future::plan("sequential", gc = TRUE)
+    future::plan("future::sequential", gc = TRUE)
   } else {
     c1 <- snow::makeSOCKcluster(min(NCores, nrow(Model_Info2)))
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-    future::plan("cluster", workers = c1, gc = TRUE)
-    on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+    future::plan("future::cluster", workers = c1, gc = TRUE)
+    on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
   }
 
   # # ..................................................................... ###
@@ -277,7 +277,7 @@ Mod_MergeChains <- function(
 
   if (NCores > 1) {
     snow::stopCluster(c1)
-    future::plan("sequential", gc = TRUE)
+    future::plan("future::sequential", gc = TRUE)
   }
 
   # # ..................................................................... ###

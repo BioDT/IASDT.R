@@ -168,7 +168,7 @@ GBIF_Process <- function(
 
   if (NCores == 1) {
     terra::setGDALconfig("GTIFF_SRS_SOURCE", "EPSG")
-    future::plan("sequential", gc = TRUE)
+    future::plan("future::sequential", gc = TRUE)
   } else {
     c1 <- snow::makeSOCKcluster(NCores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
@@ -180,8 +180,8 @@ GBIF_Process <- function(
       cl = c1, expr = terra::setGDALconfig("GTIFF_SRS_SOURCE", "EPSG")) %>%
       invisible()
 
-    future::plan("cluster", workers = c1, gc = TRUE)
-    on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+    future::plan("future::cluster", workers = c1, gc = TRUE)
+    on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
   }
 
   IASDT.R::CatTime(
@@ -232,7 +232,7 @@ GBIF_Process <- function(
   IASDT.R::CatTime("Stopping cluster", Level = 1)
   if (NCores > 1) {
     snow::stopCluster(c1)
-    future::plan("sequential", gc = TRUE)
+    future::plan("future::sequential", gc = TRUE)
   }
 
   IASDT.R::CatTime("Saving `GBIF_Data` to disk", Level = 1)
@@ -565,12 +565,12 @@ GBIF_Process <- function(
     Level = 1)
 
   if (NCores == 1) {
-    future::plan("sequential", gc = TRUE)
+    future::plan("future::sequential", gc = TRUE)
   } else {
     c1 <- snow::makeSOCKcluster(NCores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-    future::plan("cluster", workers = c1, gc = TRUE)
-    on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
+    future::plan("future::cluster", workers = c1, gc = TRUE)
+    on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
   }
 
 
@@ -584,7 +584,7 @@ GBIF_Process <- function(
   IASDT.R::CatTime("Stopping cluster", Level = 2)
   if (NCores > 1) {
     snow::stopCluster(c1)
-    future::plan("sequential", gc = TRUE)
+    future::plan("future::sequential", gc = TRUE)
   }
 
   # # ..................................................................... ###

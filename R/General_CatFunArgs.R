@@ -39,6 +39,7 @@ CatFunArgs <- function(Function, Assign = FALSE, Package = NULL) {
   formatted_args <- purrr::map_chr(
     .x = seq_along(args_list),
     .f = function(i) {
+
       arg_name <- names(args_list)[i]
 
       if (is.name(args_list[[i]])) {
@@ -57,8 +58,10 @@ CatFunArgs <- function(Function, Assign = FALSE, Package = NULL) {
 
       if (PostProcess) {
         arg_value <- deparse(args_list[[i]]) %>%
+          stringr::str_c(collapse = "") %>%
           stringr::str_replace_all('^\"|\"$', "") %>%
-          stringr::str_replace_all('\"', '"')
+          stringr::str_replace_all('\"', '"') %>%
+          stringr::str_replace_all("  +", " ")
       }
 
       Output <- if (is.null(arg_value)) {

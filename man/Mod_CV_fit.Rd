@@ -7,7 +7,7 @@
 Mod_CV_Fit(
   Model = NULL,
   ModelData = NULL,
-  CVNames = c("CV_SAC", "CV_Dist", "CV_Large"),
+  CVName = c("CV_Dist", "CV_Large"),
   partitions = NULL,
   Path_CV = NULL,
   EnvFile = ".env",
@@ -31,7 +31,7 @@ object. If a path is provided, the model is loaded from the file.}
 
 \item{ModelData}{Character. Path to input data used to fit the model.}
 
-\item{CVNames}{Character vector specifying the name of the column(s) in the
+\item{CVName}{Character vector specifying the name of the column(s) in the
 model input data (see \link{Mod_PrepData} and \link{GetCV}) to be
 used to cross-validate the models. The function allows the possibility of
 using more than one way of assigning grid cells into cross-validation
@@ -42,9 +42,8 @@ and \code{CV_Large} (see \link{GetCV}).}
 
 \item{partitions}{A vector for cross-validation created by
 \link[Hmsc:createPartition]{Hmsc::createPartition} or similar. Defaults to \code{NULL}, which means to use
-column name(s) provided in the \code{CVNames} argument. If the \code{partitions}
-vector
-is provided, the label used in the output files will be \code{CV_Custom}.}
+column name(s) provided in the \code{CVName} argument. If the \code{partitions}
+vector is provided, the label used in the output files will be \code{CV_Custom}.}
 
 \item{Path_CV}{The directory path where cross-validation models and outputs
 will be stored. If \code{Model} argument is a character vector, it will be
@@ -98,9 +97,9 @@ testing.}
 \item{...}{Additional arguments passed to the \link{Mod_SLURM} function.}
 }
 \description{
-This function prepares initial cross-validated Hmsc models in R for fitting
-by Hmsc-HPC. It includes data preparation, model initialization, and command
-generation for running models on HPC.
+This function prepares cross-validated Hmsc models for fitting using HPC. It
+handles data preparation, model initialization, and generation of SLURM
+commands.
 }
 \details{
 The function copies part of the \link[Hmsc:computePredictedValues]{Hmsc::computePredictedValues}

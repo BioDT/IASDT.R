@@ -4,13 +4,14 @@
 
 #' Prepare Cross-Validated Hmsc Models for HPC Fitting
 #'
-#' This function prepares initial cross-validated Hmsc models in R for fitting
-#' by Hmsc-HPC. It includes data preparation, model initialization, and command
-#' generation for running models on HPC.
+#' This function prepares cross-validated Hmsc models for fitting using HPC. It
+#' handles data preparation, model initialization, and generation of SLURM
+#' commands.
+#'
 #' @param Model Either a path to a saved model file (character) or an Hmsc model
 #'   object. If a path is provided, the model is loaded from the file.
 #' @param ModelData Character. Path to input data used to fit the model.
-#' @param CVNames Character vector specifying the name of the column(s) in the
+#' @param CVName Character vector specifying the name of the column(s) in the
 #'   model input data (see [IASDT.R::Mod_PrepData] and [IASDT.R::GetCV]) to be
 #'   used to cross-validate the models. The function allows the possibility of
 #'   using more than one way of assigning grid cells into cross-validation
@@ -20,9 +21,8 @@
 #'   and `CV_Large` (see [IASDT.R::GetCV]).
 #' @param partitions A vector for cross-validation created by
 #'   [Hmsc::createPartition] or similar. Defaults to `NULL`, which means to use
-#'   column name(s) provided in the `CVNames` argument. If the `partitions`
-#'   vector
-#'   is provided, the label used in the output files will be `CV_Custom`.
+#'   column name(s) provided in the `CVName` argument. If the `partitions`
+#'   vector is provided, the label used in the output files will be `CV_Custom`.
 #' @param Path_CV The directory path where cross-validation models and outputs
 #'   will be stored. If `Model` argument is a character vector, it will be
 #'   estimated from the model path. If `Model` is an Hmsc model object, it has
@@ -61,7 +61,7 @@
 
 Mod_CV_Fit <- function(
     Model = NULL, ModelData = NULL,
-    CVNames = c("CV_SAC", "CV_Dist", "CV_Large"), partitions = NULL,
+    CVName = c("CV_Dist", "CV_Large"), partitions = NULL,
     Path_CV = NULL, EnvFile = ".env", initPar = NULL, JobName = "CV_Models",
     updater = list(Gamma2 = FALSE, GammaEta = FALSE),
     alignPost = TRUE, ToJSON = FALSE, FromHPC = TRUE, PrepSLURM = TRUE,
@@ -71,7 +71,7 @@ Mod_CV_Fit <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  nfolds <- Path_ModInit_rds <- CV <- partition <- Model_Name <- NULL
+  nfolds <- Path_ModInit_rds <- CV <- partition <- ModName <- NULL
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -162,13 +162,13 @@ Mod_CV_Fit <- function(
 
     CV_Data <- IASDT.R::LoadAs(ModelData)$DT_CV
 
-    if (all(CVNames %in% names(CV_Data))) {
+    if (all(CVName %in% names(CV_Data))) {
       # Extract CV folds from the CV column(s)
-      partitions <- purrr::map(CVNames, ~ dplyr::pull(CV_Data, .x))
-      names(partitions) <- CVNames
+      partitions <- purrr::map(CVName, ~ dplyr::pull(CV_Data, .x))
+      names(partitions) <- stringr::str_remove(CVName, "^CV_")
     } else {
       # if any of the column names does not exist, stop the function
-      MissingCV <- CVNames[CVNames %in% names(CV_Data) == FALSE]
+      MissingCV <- CVName[CVName %in% names(CV_Data) == FALSE]
       stop(
         paste0(
           "`partitions` was not defined (NULL) and column(s) for CV folds ",
@@ -181,7 +181,7 @@ Mod_CV_Fit <- function(
   } else {
     # If partitions is provided directly to the function, use "CV_Custom" as CV
     # name
-    CVNames <- "CV_Custom"
+    CVName <- "CV_Custom"
   }
 
   # Check the length of CV data equals the number of sampling units in the model
@@ -196,18 +196,14 @@ Mod_CV_Fit <- function(
   # If not provided explicitly as model argument, the verbose value should be
   # read directly from the model object. It seems that models fitted with
   # Hmsc-HPC have NULL verbose value; however, I did not test this. if the
-  # verbose value stored in the model object is NULL, the following assign a
+  # verbose value stored in the model object is NULL, the following assigns a
   # value of 1000 to it.
-  if (is.null(Model_Full$verbose)) {
-    verbose <- 1000
-  } else {
-    verbose <- Model_Full$verbose
-  }
+
+  verbose <- Model_Full$verbose %||% 1000
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Number of chains ----
-
   NChains <- length(Model_Full$postList)
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -215,17 +211,18 @@ Mod_CV_Fit <- function(
   # Prepare cross-validated initial models -----
   IASDT.R::CatTime("Prepare cross-validated initial models")
 
+  # Load coordinates
   Coords <- IASDT.R::LoadAs(ModelData)$DT_xy
 
   CV_DT <- tibble::tibble(
-    partition = partitions, CVNames = names(partitions)) %>%
+    partition = partitions, CVName = names(partitions)) %>%
     dplyr::mutate(
       nfolds = purrr::map_int(.x = partition, .f = ~ length(unique(.x))),
 
       # Loop over all cross-validation partitions used
       CV_Info = purrr::pmap(
-        .l = list(partition, CVNames, nfolds),
-        .f = function(partition, CVNames, nfolds) {
+        .l = list(partition, CVName, nfolds),
+        .f = function(partition, CVName, nfolds) {
 
           # prepare data for each cross-validation strategy
 
@@ -242,7 +239,6 @@ Mod_CV_Fit <- function(
                 class(Model_Full$X)[1L],
                 matrix = {
                   XTrain <- Model_Full$X[train, , drop = FALSE]
-
                 },
                 list = {
                   XTrain <- purrr::map(
@@ -277,7 +273,7 @@ Mod_CV_Fit <- function(
               Model_CV$XFormula <- Model_Full$XFormula
               Model_CV$XInterceptInd <- Model_Full$XInterceptInd
 
-              # remove scaled attributes
+              # function to remove scaled attributes
               RemAttr <- function(x) {
                 attr(x, "scaled:center") <- NULL
                 attr(x, "scaled:scale") <- NULL
@@ -309,10 +305,10 @@ Mod_CV_Fit <- function(
 
               # Save unfitted model
               Path_ModInit <- file.path(
-                Path_Init, paste0("InitMod_", CVNames, "_k", k, ".RData"))
+                Path_Init, paste0("InitMod_", CVName, "_k", k, ".RData"))
               IASDT.R::SaveAs(
                 InObj = Model_CV,
-                OutObj = paste0("InitMod_", CVNames, "_k", k),
+                OutObj = paste0("InitMod_", CVName, "_k", k),
                 OutPath = Path_ModInit)
 
 
@@ -330,22 +326,21 @@ Mod_CV_Fit <- function(
 
               # Save model input as rds file
               Path_ModInit_rds <- file.path(
-                Path_Init, paste0("InitMod_", CVNames, "_k", k, ".rds"))
+                Path_Init, paste0("InitMod_", CVName, "_k", k, ".rds"))
               saveRDS(Model_CV, file = Path_ModInit_rds)
 
-              Path_Model_Full <- dplyr::if_else(
+              Path_ModFull <- dplyr::if_else(
                 inherits(Model, "character"), Model, NA_character_)
 
               Path_ModFitted <- file.path(
-                Path_Fitted,
-                paste0("Model_Fitted_", CVNames, "_k", k, ".RData"))
+                Path_Fitted, paste0("Model_", CVName, "_k", k, ".RData"))
 
               dfPi <- droplevels(Model_Full$dfPi[val, , drop = FALSE])
               valCoords <- Coords[val, ]
               rownames(dfPi) <- rownames(valCoords) <- dfPi$sample
 
               tibble::tibble(
-                Path_Model_Full = Path_Model_Full,
+                Path_ModFull = Path_ModFull,
                 CV = k,
                 Path_ModInit = Path_ModInit,
                 Path_ModInit_rds = Path_ModInit_rds,
@@ -364,14 +359,11 @@ Mod_CV_Fit <- function(
 
   # Prepare fitting command for each model chain
   CV_DT <- CV_DT %>%
-    dplyr::mutate(
-      Model_Name = paste0(CVNames, "_CV", CV),
-      Path_Pred = file.path(Dir_Pred, paste0("Pred_", Model_Name, ".RData")),
-      .after = CV) %>%
+    dplyr::mutate(ModName = paste0(CVName, CV), .after = CV) %>%
     dplyr::mutate(
       ModelPrep = purrr::pmap(
-        .l = list(Path_ModInit_rds, CV, CVNames),
-        .f = function(Path_ModInit_rds, CV, CVNames) {
+        .l = list(Path_ModInit_rds, CV, ModName),
+        .f = function(Path_ModInit_rds, CV, ModName) {
 
           CV_Out <- purrr::map_dfr(
             .x = seq_len(NChains),
@@ -380,7 +372,7 @@ Mod_CV_Fit <- function(
               # Path to save the posterior of the combination of CV and chain
               Path_Post <- file.path(
                 Path_Post,
-                paste0("Mod_", CVNames, "_k", CV, "_Ch", Chain, "_post.rds"))
+                paste0("Mod_", ModName, "_Ch", Chain, "_post.rds"))
 
               # Path to save the progress of model fitting
               Path_ModProg <- stringr::str_replace_all(

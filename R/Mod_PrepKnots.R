@@ -19,12 +19,12 @@
 #'   factors will be estimated from the data. If either is provided, the
 #'   respective values will be used as arguments to [Hmsc::setPriors].
 #' @param Alphapw Prior for the alpha parameter. Defaults to a list with `Prior
-#'   = NULL`, `Min = 20`, `Max = 1200`, and `Samples = 200`. If all list items
-#'   are NULL, the default prior will be used. If `Prior` is a matrix, it will
-#'   be used as the prior. If `Prior` is `NULL`, the prior will be generated
-#'   using `Min`, `Max`, and `Samples`. `Min` and `Max` are the minimum and
-#'   maximum values of the alpha parameter (in kilometer). `Samples` is the
-#'   number of samples to be used in the prior.
+#'   = NULL`, `Min = 20`, `Max = 1200`, and `Samples = 200`. If `Alphapw` is
+#'   NULL or a list with all NULL list items, the default prior will be used. If
+#'   `Prior` is a matrix, it will be used as the prior. If `Prior` is `NULL`,
+#'   the prior will be generated using `Min`, `Max`, and `Samples`. `Min` and
+#'   `Max` are the minimum and maximum values of the alpha parameter (in
+#'   kilometer). `Samples` is the number of samples to be used in the prior.
 #'
 #' @name PrepKnots
 #' @author Ahmed El-Gabbas
@@ -56,44 +56,61 @@ PrepKnots <- function(
 
   # Validate Alphapw input ----
 
-  if (all(purrr::map_lgl(Alphapw, is.null))) {
+  if (is.null(Alphapw)) {
     Prior <- NULL
   } else {
-    if (is.null(Alphapw$Prior)) {
-      Prior <- AlphaPrior(
-        MinVal = Alphapw$Min, MaxVal = Alphapw$Max, NSamples = Alphapw$Samples)
+    if (all(purrr::map_lgl(Alphapw, is.null))) {
+      Prior <- NULL
     } else {
-      Prior <- Alphapw$Prior
+      if (is.null(Alphapw$Prior)) {
 
-      # Check if Prior is a matrix
-      if (!inherits(Prior, "matrix")) {
-        stop("`Prior` must be a matrix", call. = FALSE)
-      }
+        if (is.null(Alphapw$Min) || !is.numeric(Alphapw$Min)) {
+          stop("`Alphapw$Min` must be numeric", call. = FALSE)
+        }
+        if (is.null(Alphapw$Samples) || !is.numeric(Alphapw$Samples)) {
+          stop("`Alphapw$Samples` must be numeric", call. = FALSE)
+        }
+        if (is.null(Alphapw$Max) || !is.numeric(Alphapw$Max)) {
+          stop("`Alphapw$Max` must be numeric", call. = FALSE)
+        }
 
-      # Check if Prior has 2 columns
-      if (ncol(Prior) != 2) {
-        stop("`Prior` should have exactly 2 columns.", call. = FALSE)
-      }
+        Prior <- AlphaPrior(
+          MinVal = Alphapw$Min, MaxVal = Alphapw$Max,
+          NSamples = Alphapw$Samples)
 
-      # Check if Prior has at least 100 rows
-      if (nrow(Prior) < 100) {
-        stop("`Prior` must have >= 100 rows.", call. = FALSE)
-      }
+      } else {
+        Prior <- Alphapw$Prior
 
-      # Check if the first element of the second column is 0.5
-      # if (Prior[1, 2] != 0.5) {
-      #   stop("The first element of the second column is not 0.5.",
-      #        call. = FALSE)
-      # }
+        # Check if Prior is a matrix
+        if (!inherits(Prior, "matrix")) {
+          stop("`Prior` must be a matrix", call. = FALSE)
+        }
 
-      # Check if all values are positive
-      if (any(as.vector(Prior) < 0)) {
-        stop("`Prior` can not contain negative numbers", call. = FALSE)
-      }
+        # Check if Prior has 2 columns
+        if (ncol(Prior) != 2) {
+          stop("`Prior` should have exactly 2 columns.", call. = FALSE)
+        }
 
-      # Check if the sum of the second column is equal to 1
-      if (sum(Prior[, 2]) != 1) {
-        stop("The sum of the second column is not equal to 1.", call. = FALSE)
+        # Check if Prior has at least 100 rows
+        if (nrow(Prior) < 100) {
+          stop("`Prior` must have >= 100 rows.", call. = FALSE)
+        }
+
+        # Check if the first element of the second column is 0.5
+        # if (Prior[1, 2] != 0.5) {
+        #   stop("The first element of the second column is not 0.5.",
+        #        call. = FALSE)
+        # }
+
+        # Check if all values are positive
+        if (any(as.vector(Prior) < 0)) {
+          stop("`Prior` can not contain negative numbers", call. = FALSE)
+        }
+
+        # Check if the sum of the second column is equal to 1
+        if (sum(Prior[, 2]) != 1) {
+          stop("The sum of the second column is not equal to 1.", call. = FALSE)
+        }
       }
     }
   }

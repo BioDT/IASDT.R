@@ -31,16 +31,26 @@ RespCurv_PlotSp <- function(
     Path_Model = NULL, NCores = 20, EnvFile = ".env", SaveGG = FALSE,
     ShowProgress = FALSE, FromHPC = TRUE, ReturnData = FALSE) {
 
+  # # ..................................................................... ###
+
+  .StartTime <- lubridate::now(tzone = "CET")
+
+  # # ..................................................................... ###
+
   if (is.null(Path_Model)) {
     stop("Path_Model cannot be NULL", call. = FALSE)
   }
 
+  # # ..................................................................... ###
+
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  RC_Path_Orig <- RC_Path_SR <- RC_Path_Prob <- Coords <- NFV <- Species <-
+  RC_Path_Orig <- RC_Path_SR <- RC_Path_Prob <- NFV <- Species <-
     DT <- Variable <- VariableDesc <- Trend2 <- PositiveTrendProb <-
     VariableDesc <- Pred <- XVals <- PlotData_Quant <- Quantile <-
     Observed_PA <- Col <- Q975 <- Q25 <- Q50 <- X <- Y <- IAS_ID <- NULL
+
+  # # ..................................................................... ###
 
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(
@@ -59,7 +69,12 @@ RespCurv_PlotSp <- function(
 
   fs::dir_create(file.path(Path_Model, "Model_Postprocessing", "RespCurv_Sp"))
 
+  # # ..................................................................... ###
+
+  # Load species names
   SpeciesNames <- IASDT.R::GetSpeciesName(EnvFile = EnvFile, FromHPC = FromHPC)
+
+  # # ..................................................................... ###
 
   withr::local_options(
     future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
@@ -73,7 +88,11 @@ RespCurv_PlotSp <- function(
     on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
   }
 
-  SR_DT_All <- file.path(
+  Path_RespCurv_Sp <- file.path(
+    Path_Model, "Model_Postprocessing", "RespCurv_Sp")
+  fs::dir_create(Path_RespCurv_Sp)
+
+  Sp_DT_All <- file.path(
     Path_Model, "Model_Postprocessing", "RespCurv_DT", "ResCurvDT.RData") %>%
     IASDT.R::LoadAs() %>%
     dplyr::select(-RC_Path_Orig, -RC_Path_SR) %>%
@@ -83,21 +102,22 @@ RespCurv_PlotSp <- function(
       .options = furrr::furrr_options(seed = TRUE, scheduling = Inf),
       .progress = ShowProgress) %>%
     tidyr::nest(
-      DT = tidyselect::everything(), .by = c(Coords, NFV, Species)) %>%
+      DT = tidyselect::everything(), .by = c(NFV, Species)) %>%
     dplyr::mutate(
       Plot = furrr::future_pmap(
-        .l = list(Coords, NFV, Species, DT),
-        .f = function(Coords, NFV, Species, DT) {
+        .l = list(NFV, Species, DT),
+        .f = function(NFV, Species, DT) {
 
-          FilePrefix <- paste0(
-            "RespCurv_", Species, "_Coords_", Coords, "_NFV_", NFV)
-          Path_JPEG <- file.path(
-            Path_Model, "Model_Postprocessing", "RespCurv_Sp",
-            paste0(FilePrefix, ".jpeg"))
+          FilePrefix <- paste0("RespCurv_", Species, "_NFV_", NFV)
+          Path_JPEG <- file.path(Path_RespCurv_Sp, paste0(FilePrefix, ".jpeg"))
 
           DT <- DT %>%
             dplyr::mutate(
               VariableDesc = dplyr::case_when(
+                Variable == "bio2" ~ paste0(
+                  "<span style='font-size: 10pt;'><b>Bio2</b></span><br/>",
+                  "<span style='font-size: 8pt;'>Mean Diurnal Range",
+                  "</span>"),
                 Variable == "bio4" ~ paste0(
                   "<span style='font-size: 10pt;'><b>Bio4</b></span><br/>",
                   "<span style='font-size: 8pt;'>temperature seasonality",
@@ -134,7 +154,6 @@ RespCurv_PlotSp <- function(
                   "<span style='font-size: 10pt;'><b>% habitat coverage</b>",
                   "</span><br/><span style='font-size: 8pt;'> (log<sub>10",
                   "</sub>(x + 0.1))</span>"),
-
                 .default = Variable),
               VariableDesc = factor(VariableDesc, levels = VariableDesc))
 
@@ -166,7 +185,7 @@ RespCurv_PlotSp <- function(
 
           Species2 <- dplyr::filter(SpeciesNames, IAS_ID == !!Species)
 
-          NFV_Label <- dplyr::if_else(
+          SubTitleTxt <- dplyr::if_else(
             NFV == 1,
             paste0(
               "non-focal variables are set to most likely value <i>",
@@ -175,12 +194,6 @@ RespCurv_PlotSp <- function(
               "non-focal variables are set to most likely value given ",
               "the value of focal variable <i>[non.focalVariables = ",
               "2]</i>"))
-
-          Coords_Label <- dplyr::if_else(
-            Coords == "c",
-            'Predictions at mean coordinates <i>[coordinates = "c"]</i>',
-            " Predictions without effect of spatial ",
-            'dependence <i>[coordinates = "i"]</i>')
 
           TitleTxt <- paste0(
             '<span style="font-size:13pt;">',
@@ -193,15 +206,12 @@ RespCurv_PlotSp <- function(
             "  &#8212; <b>ID:</b></span>",
             '<span style="font-size:8pt; color:blue;"> ',
             Species,  '</span><span style="font-size:8pt;">)</span>')
-          SubTitleTxt <- paste0(
-            Coords_Label, "  &#8212;&#8212;  ",
-            NFV_Label, "</span>")
 
           Plot <- ggplot2::ggplot(
             data = ObsPA,
             mapping = ggplot2::aes(x = XVals, y = Pred, colour = Col)) +
             ggplot2::geom_jitter(
-              shape = 16, width = 0, height = 0.02, alpha = 0.4, size = 0.8) +
+              shape = 16, width = 0, height = 0.02, alpha = 0.4, size = 1) +
             ggplot2::geom_line(
               ggplot2::aes(x = XVals, y = Q975), data = Quant,
               linetype = 2, linewidth = 0.3, colour = "blue") +
@@ -219,7 +229,7 @@ RespCurv_PlotSp <- function(
               mapping = ggplot2::aes(x = X, y = Y, label = Trend2),
               colour = "grey30", size = 2.75, vjust = 1.4, hjust = -0.05) +
             ggplot2::scale_y_continuous(
-              limits = c(-0.005, 1.05), oob = scales::squish,
+              limits = c(-0.005, 1.025), oob = scales::squish,
               expand = c(0, 0)) +
             ggplot2::scale_x_continuous(expand = c(0.015, 0.015)) +
             ggplot2::facet_wrap(
@@ -231,7 +241,7 @@ RespCurv_PlotSp <- function(
             ggplot2::theme_bw() +
             ggplot2::theme(
               strip.text = ggtext::element_markdown(
-                hjust = 0,
+                hjust = 0, size = 16,
                 margin = ggplot2::margin(0.05, 0.1, 0.05, 0.1, "cm")),
               strip.background = ggplot2::element_rect(
                 colour = NA, fill = "white"),
@@ -239,11 +249,10 @@ RespCurv_PlotSp <- function(
               axis.title = ggtext::element_markdown(size = 12, face = "bold"),
               axis.text = ggplot2::element_text(size = 8),
               plot.title = ggtext::element_markdown(
-                margin = ggplot2::margin(1, 0, 1, 0), hjust = 0.1),
-              plot.title.position = "plot",
+                size = 24, margin = ggplot2::margin(1, 0, 1, 0), hjust = 0),
               plot.subtitle = ggtext::element_markdown(
-                size = 8, colour = "darkgrey", hjust = 0.1,
-                margin = ggplot2::margin(4, 0, 4, 0)),
+                size = 10, colour = "darkgrey", hjust = 0,
+                margin = ggplot2::margin(2, 0, 2, 0)),
               panel.grid.major = ggplot2::element_line(linewidth = 0.25),
               panel.grid.minor = ggplot2::element_line(linewidth = 0.1),
               panel.spacing = ggplot2::unit(0.15, "lines"),
@@ -276,13 +285,21 @@ RespCurv_PlotSp <- function(
     dplyr::select(-DT) %>%
     tidyr::unnest(cols = "Plot")
 
+  save(Sp_DT_All, file = file.path(Path_RespCurv_Sp, "Sp_DT_All.RData"))
+
   if (NCores > 1) {
     snow::stopCluster(c1)
     future::plan("future::sequential", gc = TRUE)
   }
 
+  # # ..................................................................... ###
+
+  IASDT.R::CatDiff(InitTime = .StartTime)
+
+  # # ..................................................................... ###
+
   if (ReturnData) {
-    return(SR_DT_All)
+    return(Sp_DT_All)
   } else {
     return(invisible(NULL))
   }

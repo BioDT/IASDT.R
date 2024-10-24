@@ -16,16 +16,23 @@
 #' @seealso RespCurv_PlotSp RespCurv_PrepData
 #' @export
 
-
 RespCurv_PlotSR <- function(Path_Model) {
+
+  # # ..................................................................... ###
+
+  .StartTime <- lubridate::now(tzone = "CET")
+
+  # # ..................................................................... ###
 
   if (is.null(Path_Model)) {
     stop("Path_Model cannot be NULL", call. = FALSE)
   }
 
+  # # ..................................................................... ###
+
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Trend2 <- Variable <- Quant <- Observed <- Trend <- Coords <- NFV <-
+  Trend2 <- Variable <- Quant <- Observed <- Trend <- NFV <-
     RC_Path_SR <- RC_Path_Orig <- RC_Path_Prob <- DT <- data <- XVals <-
     Pred <- Q975 <- Q25 <- Q50 <- X <- Y <- NULL
 
@@ -55,7 +62,10 @@ RespCurv_PlotSR <- function(Path_Model) {
 
   fs::dir_create(file.path(Path_Model, "Model_Postprocessing", "RespCurv_SR"))
 
+  # # ..................................................................... ###
+
   IASDT.R::CatTime("Sequentially create species richness response curves")
+
   SR_DT_All <- file.path(
     Path_Model, "Model_Postprocessing/RespCurv_DT/ResCurvDT.RData") %>%
     IASDT.R::LoadAs() %>%
@@ -63,50 +73,53 @@ RespCurv_PlotSR <- function(Path_Model) {
     dplyr::mutate(
       DT = purrr::map(
         .x = RC_Path_SR,
-        .f = ~{
+        .f = ~ {
           DT <- IASDT.R::LoadAs(.x) %>%
             magrittr::inset(c("RC_Data_SR"), NULL)
 
           Quant <- DT$RC_Data_SR_Quant %>%
             dplyr::mutate(
-              Variable = DT$Variable, Coords = DT$Coords, NFV = DT$NFV,
-              .before = 1) %>%
+              Variable = DT$Variable, NFV = DT$NFV, .before = 1) %>%
             tidyr::pivot_wider(
-              id_cols = c("Variable", "Coords", "NFV", "XVals"),
+              id_cols = c("Variable", "NFV", "XVals"),
               names_from = Quantile, values_from = SR) %>%
-            setNames(c("Variable", "Coords", "NFV", "XVals",
-                       "Q25", "Q50", "Q975"))
+            setNames(c("Variable", "NFV", "XVals", "Q25", "Q50", "Q975"))
 
           Observed <- DT$Observed_SR %>%
-            dplyr::mutate(
-              Variable = DT$Variable, Coords = DT$Coords, NFV = DT$NFV,
-              .before = 1)
+            dplyr::mutate(Variable = DT$Variable, NFV = DT$NFV, .before = 1)
           Trend <- tibble::tibble(
-            Variable = DT$Variable, Coords = DT$Coords, NFV = DT$NFV,
+            Variable = DT$Variable, NFV = DT$NFV,
             Trend = DT$SR_PositiveTrendProb)
 
           return(list(Quant = Quant, Observed = Observed, Trend = list(Trend)))
         })) %>%
-    dplyr::select(-Coords, -NFV, -RC_Path_SR) %>%
+    dplyr::select(-NFV, -RC_Path_SR) %>%
     tidyr::unnest_wider(DT) %>%
     tidyr::nest(.by = Variable) %>%
     dplyr::mutate(
-      Quant = purrr::map(.x = data, .f = ~dplyr::bind_rows(.x$Quant)),
-      Observed = purrr::map(.x = data, .f = ~dplyr::bind_rows(.x$Observed)),
-      Trend = purrr::map(.x = data, .f = ~dplyr::bind_rows(.x$Trend))) %>%
-    dplyr::select(-data) %>%
+      Quant = purrr::map(.x = data, .f = ~ dplyr::bind_rows(.x$Quant)),
+      Observed = purrr::map(.x = data, .f = ~ dplyr::bind_rows(.x$Observed)),
+      Trend = purrr::map(.x = data, .f = ~ dplyr::bind_rows(.x$Trend))) %>%
+    dplyr::select(-data)
+
+  # # ..................................................................... ###
+  # Plot species richness response curves
+
+  SR_DT_All <- SR_DT_All %>%
     dplyr::mutate(
       Plot = purrr::pmap(
         .l = list(Variable, Quant, Observed, Trend),
         .f = function(Variable, Quant, Observed, Trend) {
 
           IASDT.R::CatTime(paste0("  >>  ", Variable))
+
           # Maximum value on the y-axis
-          PlotMax <- max(Observed$Pred, Quant$Q975 + 3)
+          PlotMax <- max(Observed$Pred, Quant$Q975) * 1.05
 
           # Label on the y axis
-          YAxisLabel <- paste0("<span style='font-size: 12pt;'><b>Predicted ",
-                               "species richness</span></b>")
+          YAxisLabel <- paste0(
+            "<span style='font-size: 12pt;'><b>Predicted ",
+            "species richness</span></b>")
 
           # Trend text
           DT_Trend <- Trend %>%
@@ -118,34 +131,37 @@ RespCurv_PlotSR <- function(Path_Model) {
 
           # Variable long name (x-axis label)
           Variable2 <- dplyr::case_when(
+            Variable == "bio2" ~ paste0(
+              "<span style='font-size: 10pt;'><b>Bio2</b></span><span ",
+              "style='font-size: 7pt;'> (Mean Diurnal Range)</span>"),
             Variable == "bio4" ~ paste0(
-              "<span style='font-size: 12pt;'><b>Bio4</b></span><span ",
-              "style='font-size: 9pt;'> (temperature seasonality)</span>"),
+              "<span style='font-size: 10pt;'><b>Bio4</b></span><span ",
+              "style='font-size: 7pt;'> (temperature seasonality)</span>"),
             Variable == "bio6" ~ paste0(
-              "<span style='font-size: 12pt;'><b>Bio6</b></span><span ",
-              "style='font-size: 9pt;'> (temperature of the coldest ",
+              "<span style='font-size: 10pt;'><b>Bio6</b></span><span ",
+              "style='font-size: 7pt;'> (temperature of the coldest ",
               "month)</span>"),
             Variable == "bio8" ~ paste0(
-              "<span style='font-size: 12pt;'><b>Bio8</b></span><span ",
-              "style='font-size: 9pt;'> (temperatures of the wettest ",
+              "<span style='font-size: 10pt;'><b>Bio8</b></span><span ",
+              "style='font-size: 7pt;'> (temperatures of the wettest ",
               "quarter)</span>"),
             Variable == "bio12" ~ paste0(
-              "<span style='font-size: 12pt;'><b>Bio12</b></span><span ",
-              "style='font-size: 9pt;'> (annual precipitation amount)</span>"),
+              "<span style='font-size: 10pt;'><b>Bio12</b></span><span ",
+              "style='font-size: 7pt;'> (annual precipitation amount)</span>"),
             Variable == "bio15" ~ paste0(
-              "<span style='font-size: 12pt;'><b>Bio15</b></span><span ",
-              "style='font-size: 9pt;'> (precipitation seasonality)</span>"),
+              "<span style='font-size: 10pt;'><b>Bio15</b></span><span ",
+              "style='font-size: 7pt;'> (precipitation seasonality)</span>"),
             Variable == "bio18" ~ paste0(
-              "<span style='font-size: 12pt;'><b>Bio18</b></span><span ",
-              "style='font-size: 9pt;'> (monthly precipitation amount of ",
+              "<span style='font-size: 10pt;'><b>Bio18</b></span><span ",
+              "style='font-size: 7pt;'> (monthly precipitation amount of ",
               "the warmest quarter)</span>"),
             Variable == "RoadRailLog" ~ paste0(
-              "<span style='font-size: 12pt;'><b>Road + Rail intensity</b>",
-              "</span><span style='font-size: 9pt;'> (log<sub>10</sub>(x + ",
+              "<span style='font-size: 10pt;'><b>Road + Rail intensity</b>",
+              "</span><span style='font-size: 7pt;'> (log<sub>10</sub>(x + ",
               "0.1))</span>"),
             Variable == "EffortsLog" ~ paste0(
-              "<span style='font-size: 12pt;'><b>Sampling efforts</b>",
-              "</span><span style='font-size: 9pt;'> (log<sub>10</sub>(x + ",
+              "<span style='font-size: 10pt;'><b>Sampling efforts</b>",
+              "</span><span style='font-size: 7pt;'> (log<sub>10</sub>(x + ",
               "0.1))</span>"),
             .default = Variable)
 
@@ -156,28 +172,21 @@ RespCurv_PlotSR <- function(Path_Model) {
             .default = Variable)
 
           # facetting labels
-          FacetLabel <- ggplot2::as_labeller(c(
-            `1` = paste0(
-              '<span style="font-size:12pt; color:red;"><b>non.focalVariables ",
-              "= 1</b></span><br><span style="font-size:7pt;">values of ",
-              "non-focal variables are set to the most likely value</span>'),
-            `2` = paste0(
-              '<span style="font-size:12pt; color:red;"><b>non.focalVariables",
-              " = 2</b></span><br><span style="font-size:7pt;">values of ",
-              "non-focal variables are set to the most likely value given the",
-              " value of focal variable</span>'),
-            `c` = paste0(
-              '<span style="font-size:10pt; color:red;"><b>Predictions at ",
-              "mean coordinates</b></span>'),
-            `i` = paste0(
-              '<span style="font-size:10pt; color:red;"><b>Predictions ",
-              "without effect of spatial dependence</b></span>')))
+          Label1 <- paste0(
+            '<span style="font-size:7pt; color:red;"><b>non.focalVariables',
+            '= 1</b></span><br><span style="font-size:5pt;">values of ',
+            "non-focal variables are set to the most likely value</span>")
+          Label2 <- paste0(
+            '<span style="font-size:7pt; color:red;"><b>non.focalVariables',
+            '= 2</b></span><br><span style="font-size:5pt;">values of ',
+            "non-focal variables are set to the most likely value given the",
+            " value of focal variable</span>")
+          FacetLabel <- ggplot2::as_labeller(c(`1` = Label1, `2` = Label2))
 
           # Plot title
           TitleTxt <- paste0(
-            '<span style="font-size:14pt; color:blue;"><b>',
-            "Response curve  (predicted species richness) for ",
-            VarName, "</b></span>")
+            '<span style="font-size:12pt; color:blue;"><b>',
+            "Predicted species richness for ", VarName, "</b></span>")
 
           # Plot
           Plot <- ggplot2::ggplot(
@@ -186,11 +195,11 @@ RespCurv_PlotSR <- function(Path_Model) {
               shape = 16, width = 0, height = 0.02, alpha = 0.2, size = 1,
               colour = "blue") +
             ggplot2::geom_line(
-              ggplot2::aes(x = XVals, y = Q975), data = Quant,
-              linetype = 2, linewidth = 0.3, colour = "blue") +
+              ggplot2::aes(x = XVals, y = Q975),
+              data = Quant, linetype = 2, linewidth = 0.3, colour = "blue") +
             ggplot2::geom_line(
-              ggplot2::aes(x = XVals, y = Q25), data = Quant,
-              linetype = 2, linewidth = 0.3, colour = "blue") +
+              ggplot2::aes(x = XVals, y = Q25),
+              data = Quant, linetype = 2, linewidth = 0.3, colour = "blue") +
             ggplot2::geom_ribbon(
               data = Quant, ggplot2::aes(x = XVals, ymin = Q25, ymax = Q975),
               inherit.aes = FALSE, fill = "blue", alpha = 0.1) +
@@ -200,8 +209,8 @@ RespCurv_PlotSR <- function(Path_Model) {
             ggplot2::geom_text(
               data = DT_Trend,
               mapping = ggplot2::aes(x = X, y = Y, label = Trend2),
-              colour = "darkgrey", size = 2.75, vjust = 1.4, hjust = -0.05) +
-            ggplot2::facet_grid(Coords ~ NFV, labeller = FacetLabel) +
+              colour = "darkgrey", size = 2.5, vjust = 1.4, hjust = -0.05) +
+            ggplot2::facet_grid(~NFV, labeller = FacetLabel) +
             ggplot2::scale_y_continuous(
               limits = c(-1, PlotMax), oob = scales::squish, expand = c(0, 0)) +
             ggplot2::scale_x_continuous(expand = c(0.015, 0.015)) +
@@ -211,17 +220,18 @@ RespCurv_PlotSR <- function(Path_Model) {
             ggplot2::theme_bw() +
             ggplot2::theme(
               strip.text = ggtext::element_markdown(
+                hjust = 0,
                 margin = ggplot2::margin(0.05, 0.1, 0.05, 0.1, "cm")),
               strip.background = ggplot2::element_rect(
                 colour = NA, fill = "white"),
               legend.position = "none",
-              axis.title = ggtext::element_markdown(size = 10),
+              axis.title = ggtext::element_markdown(),
+              axis.text = ggplot2::element_text(size = 8),
               plot.title = ggtext::element_markdown(
-                margin = ggplot2::margin(2, 0, 6, 0)),
+                margin = ggplot2::margin(1, 0, 1, 0)),
               plot.subtitle = ggtext::element_markdown(
                 size = 7, colour = "darkgrey",
                 margin = ggplot2::margin(4, 0, 4, 0)),
-              axis.text = ggplot2::element_text(size = 8),
               panel.grid.major = ggplot2::element_line(linewidth = 0.25),
               panel.grid.minor = ggplot2::element_line(linewidth = 0.1),
               panel.spacing = ggplot2::unit(0.15, "lines"),
@@ -233,15 +243,20 @@ RespCurv_PlotSR <- function(Path_Model) {
             filename = file.path(
               Path_Model, "Model_Postprocessing/RespCurv_SR",
               paste0("RespCurv_SR_", Variable, ".jpeg")),
-            width = 22, height = 21, units = "cm", quality = 100, res = 600)
+            width = 22, height = 12.5, units = "cm", quality = 100, res = 600)
           print(Plot)
           grDevices::dev.off()
-
           return(invisible(NULL))
-        }
-      ))
+        }))
 
-  rm(SR_DT_All)
+  save(
+    SR_DT_All,
+    file = file.path(
+      Path_Model, "Model_Postprocessing/RespCurv_SR/SR_DT_All.RData"))
+
+  # # ..................................................................... ###
+
+  IASDT.R::CatDiff(InitTime = .StartTime)
 
   return(invisible(NULL))
 }

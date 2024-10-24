@@ -100,17 +100,16 @@ be used. Both default to \code{NULL} which means that the number of latent
 factors will be estimated from the data. If either is provided, the
 respective values will be used as arguments to \link[Hmsc:setPriors]{Hmsc::setPriors}.}
 
-\item{Alphapw}{Prior for the alpha parameter. Defaults to a list with \code{Prior = NULL}, \code{Min = 20}, \code{Max = 1200}, and \code{Samples = 200}. If all list items
-are NULL, the default prior will be used. If \code{Prior} is a matrix, it will
-be used as the prior. If \code{Prior} is \code{NULL}, the prior will be generated
-using \code{Min}, \code{Max}, and \code{Samples}. \code{Min} and \code{Max} are the minimum and
-maximum values of the alpha parameter (in kilometer). \code{Samples} is the
-number of samples to be used in the prior.}
+\item{Alphapw}{Prior for the alpha parameter. Defaults to a list with \code{Prior = NULL}, \code{Min = 20}, \code{Max = 1200}, and \code{Samples = 200}. If \code{Alphapw} is
+NULL or a list with all NULL list items, the default prior will be used. If
+\code{Prior} is a matrix, it will be used as the prior. If \code{Prior} is \code{NULL},
+the prior will be generated using \code{Min}, \code{Max}, and \code{Samples}. \code{Min} and
+\code{Max} are the minimum and maximum values of the alpha parameter (in
+kilometer). \code{Samples} is the number of samples to be used in the prior.}
 
 \item{BioVars}{Character vector. Specifies the Bioclimatic variables to be
 included from CHELSA. Defaults to 6 ecologically meaningful and less
-correlated Bioclimatic variables: \code{bio4}, \code{bio6}, \code{bio8}, \code{bio12}, \code{bio15},
-and \code{bio18}.}
+correlated Bioclimatic variables: \code{c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18")}.}
 
 \item{QuadraticVars}{Character vector for variables for which quadratic terms
 are used.}

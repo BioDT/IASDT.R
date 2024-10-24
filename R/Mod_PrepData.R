@@ -26,10 +26,6 @@
 #'   efforts (`MinEffortsSp`). Defaults to `80`.
 #' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
-#' @param BioVars Character vector. Specifies the Bioclimatic variables to be
-#'   included from CHELSA. Defaults to 6 ecologically meaningful and less
-#'   correlated Bioclimatic variables: `bio4`, `bio6`, `bio8`, `bio12`, `bio15`,
-#'   and `bio18`.
 #' @param Path_Model Character. Path where the output file should be saved.
 #' @param VerboseProgress Logical. Indicates whether progress messages should be
 #'   displayed. Defaults to `TRUE`.
@@ -70,7 +66,6 @@
 
 Mod_PrepData <- function(
     Hab_Abb = NULL, MinEffortsSp = 100L, PresPerSpecies = 80L, EnvFile = ".env",
-    BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
     Path_Model = NULL, VerboseProgress = TRUE, FromHPC = TRUE,
     SaveData = TRUE, ExcludeCult = TRUE) {
 

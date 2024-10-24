@@ -26,6 +26,10 @@
 #'   `RData` file. Default: `TRUE`.
 #' @param GPP_Plot Logical indicating whether to plot the coordinates of the
 #'   sampling units and the knots in a pdf file. Default: `TRUE`.
+#' @param BioVars Character vector. Specifies the Bioclimatic variables to be
+#'   included from CHELSA. Defaults to 6 ecologically meaningful and less
+#'   correlated Bioclimatic variables: `c("bio4", "bio6", "bio8", "bio12",
+#'   "bio15", "bio18")`.
 #' @param QuadraticVars Character vector for variables for which quadratic terms
 #'   are used.
 #' @param EffortsAsPredictor Logical indicating whether to include the
@@ -376,6 +380,16 @@ Mod_Prep4HPC <- function(
       "bio4", "bio6", "bio8", "bio12", "bio15", "bio18")
   }
 
+  # Check BioVars values
+  if (!all(BioVars %in% paste0("bio", 1:19))) {
+    WrongBio <- BioVars[which(!(BioVars %in% paste0("bio", 1:19)))]
+    stop(
+      paste0(
+        "The following are invalid Bioclimatic variables: ",
+        paste0(WrongBio, collapse = " | ")),
+      call. = FALSE)
+  }
+
   XVars <- BioVars
 
   if (EffortsAsPredictor) {
@@ -659,7 +673,7 @@ Mod_Prep4HPC <- function(
       Level = 2)
     IASDT.R::CatTime(
       paste0(
-        length(QuadraticVars), " linear and quadraric effects: ",
+        length(QuadraticVars), " linear and quadratic effects: ",
         paste0(QuadraticVars, collapse = " + ")),
       Level = 2)
   }

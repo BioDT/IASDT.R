@@ -29,12 +29,12 @@ be used. Both default to \code{NULL} which means that the number of latent
 factors will be estimated from the data. If either is provided, the
 respective values will be used as arguments to \link[Hmsc:setPriors]{Hmsc::setPriors}.}
 
-\item{Alphapw}{Prior for the alpha parameter. Defaults to a list with \code{Prior = NULL}, \code{Min = 20}, \code{Max = 1200}, and \code{Samples = 200}. If all list items
-are NULL, the default prior will be used. If \code{Prior} is a matrix, it will
-be used as the prior. If \code{Prior} is \code{NULL}, the prior will be generated
-using \code{Min}, \code{Max}, and \code{Samples}. \code{Min} and \code{Max} are the minimum and
-maximum values of the alpha parameter (in kilometer). \code{Samples} is the
-number of samples to be used in the prior.}
+\item{Alphapw}{Prior for the alpha parameter. Defaults to a list with \code{Prior = NULL}, \code{Min = 20}, \code{Max = 1200}, and \code{Samples = 200}. If \code{Alphapw} is
+NULL or a list with all NULL list items, the default prior will be used. If
+\code{Prior} is a matrix, it will be used as the prior. If \code{Prior} is \code{NULL},
+the prior will be generated using \code{Min}, \code{Max}, and \code{Samples}. \code{Min} and
+\code{Max} are the minimum and maximum values of the alpha parameter (in
+kilometer). \code{Samples} is the number of samples to be used in the prior.}
 }
 \value{
 An object suitable for specifying the random level in HMSC GPP

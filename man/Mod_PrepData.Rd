@@ -9,7 +9,6 @@ Mod_PrepData(
   MinEffortsSp = 100L,
   PresPerSpecies = 80L,
   EnvFile = ".env",
-  BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
   Path_Model = NULL,
   VerboseProgress = TRUE,
   FromHPC = TRUE,
@@ -35,11 +34,6 @@ efforts (\code{MinEffortsSp}). Defaults to \code{80}.}
 
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
-
-\item{BioVars}{Character vector. Specifies the Bioclimatic variables to be
-included from CHELSA. Defaults to 6 ecologically meaningful and less
-correlated Bioclimatic variables: \code{bio4}, \code{bio6}, \code{bio8}, \code{bio12}, \code{bio15},
-and \code{bio18}.}
 
 \item{Path_Model}{Character. Path where the output file should be saved.}
 

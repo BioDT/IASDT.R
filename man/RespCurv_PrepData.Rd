@@ -7,8 +7,9 @@
 RespCurv_PrepData(
   Path_Model = NULL,
   ngrid = 50,
-  NCores = 15,
+  NCores = 8,
   ReturnData = FALSE,
+  Probabilities = c(0.025, 0.5, 0.975),
   predictEtaMean = TRUE
 )
 }
@@ -21,13 +22,16 @@ continuous focal variables. Defaults to 50. See \link[Hmsc:constructGradient]{Hm
 for more details.}
 
 \item{NCores}{Integer specifying the number of cores to use for parallel
-processing. Defaults to 15.}
+processing. Defaults to 8.}
 
 \item{ReturnData}{Logical indicating whether the processed response curve
 data should be returned as an R object. Defaults to \code{FALSE}.}
 
+\item{Probabilities}{quantiles to be calculated. Defaults to \code{c(0.025, 0.5, 0.975)}. See \link[stats:quantile]{stats::quantile} for more details.}
+
 \item{predictEtaMean}{Logical; whether to predict the mean value of the
-latent variable. Defaults to \code{TRUE}.}
+latent variable. Defaults to \code{TRUE}. See \code{Hmsc:::predict.Hmsc} for more
+details.}
 }
 \value{
 Depending on the value of \code{ReturnData}, either returns response curve

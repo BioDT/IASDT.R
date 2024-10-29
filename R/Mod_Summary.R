@@ -65,8 +65,7 @@ Mod_Summary <- function(
 
   # DataPrep helper function -------
   DataPrep <- function(DT) {
-    DT %>%
-      as.data.frame() %>%
+      as.data.frame(DT) %>%
       tibble::rownames_to_column(var = "VarSp") %>%
       tibble::as_tibble() %>%
       dplyr::rename(
@@ -79,33 +78,44 @@ Mod_Summary <- function(
   # Loading coda object ------
   IASDT.R::CatTime("Loading coda object")
   Coda <- IASDT.R::LoadAs(Path_Coda)
+  Beta_Summary <- summary(Coda$Beta)
+  Alpha_Summary <- summary(Coda$Alpha[[1]])
+  Omega_Summary <- summary(Coda$Omega[[1]])
+  Rho_Summary <- summary(Coda$Rho)
+  rm(Coda)
 
   # Beta ------
   IASDT.R::CatTime("Beta")
-  Beta_Summary <- summary(Coda$Beta)
   Beta_Summary <- DataPrep(Beta_Summary$statistics) %>%
     dplyr::full_join(DataPrep(Beta_Summary$quantiles), by = "VarSp") %>%
     dplyr::mutate(
       VarSp = purrr::map(
         .x = VarSp,
         .f = ~{
-          stringr::str_split(string = .x, pattern = ",", simplify = TRUE) %>%
-            as.vector() %>%
-            stringr::str_trim() %>%
-            stats::setNames(c("Variable", "Species"))
+          .x %>%
+            stringr::str_remove_all("B\\[|B\\[|\\(|\\)|\\]|stats::poly") %>%
+            stringr::str_replace_all(", degree = 2, raw = TRUE", "_") %>%
+            stringr::str_split(",", simplify = TRUE) %>%
+            as.data.frame() %>%
+            tibble::as_tibble() %>%
+            stats::setNames(c("Variable", "IAS_ID")) %>%
+            dplyr::mutate_all(stringr::str_trim) %>%
+            dplyr::mutate(
+              Variable = purrr::map_chr(
+                .x = Variable,
+                .f = function(V){
+                  V %>%
+                    stringr::str_replace_all("_1$", "_L") %>%
+                    stringr::str_replace_all("_2$", "_Q")
+                }))
         })) %>%
     tidyr::unnest_wider(col = VarSp) %>%
     dplyr::mutate(
-      Variable = stringr::str_remove_all(Variable, "B\\[| \\(.+\\)|\\(|\\)"),
-      Species = stringr::str_remove_all(
-        Species, "^Species_| \\(S.+\\)\\]|\\]"),
       CI_Overlap_0 = purrr::map2_lgl(
         .x = Q2_5, .y = Q97_5, ~dplyr::between(x = 0, left = .x, right = .y)))
 
   # Alpha -----
-
   IASDT.R::CatTime("Alpha")
-  Alpha_Summary <- summary(Coda$Alpha[[1]])
   Alpha_Summary <- DataPrep(Alpha_Summary$statistics) %>%
     dplyr::full_join(DataPrep(Alpha_Summary$quantiles), by = "VarSp") %>%
     dplyr::mutate(
@@ -125,7 +135,6 @@ Mod_Summary <- function(
 
   # Rho ----
   IASDT.R::CatTime("Rho")
-  Rho_Summary <- summary(Coda$Rho)
   Rho_Summary <- dplyr::bind_rows(
     as.data.frame(as.matrix(Rho_Summary$statistics)),
     as.data.frame(as.matrix(Rho_Summary$quantiles))) %>%
@@ -155,7 +164,6 @@ Mod_Summary <- function(
       Sp_abb = IAS_ID, taxon_name, Species_name, tidyselect::everything())
 
   # Prepare summary for the omega parameter
-  Omega_Summary <- summary(Coda$Omega[[1]])
   Omega_Summary <- DataPrep(Omega_Summary$statistics) %>%
     dplyr::full_join(DataPrep(Omega_Summary$quantiles), by = "VarSp") %>%
     dplyr::mutate(

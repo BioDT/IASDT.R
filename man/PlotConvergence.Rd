@@ -6,7 +6,7 @@
 \usage{
 PlotConvergence(
   Path_Coda = NULL,
-  Path_FittedModel = NULL,
+  Path_Model = NULL,
   EnvFile = ".env",
   FromHPC = TRUE,
   Title = " ",
@@ -22,7 +22,7 @@ PlotConvergence(
 \arguments{
 \item{Path_Coda}{String. Path to the coda object containing MCMC samples.}
 
-\item{Path_FittedModel}{String. Path to the fitted Hmsc model object.}
+\item{Path_Model}{String. Path to the fitted Hmsc model object.}
 
 \item{EnvFile}{String. Path to the environment file containing necessary
 environment variables. Default: ".env".}

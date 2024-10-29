@@ -167,22 +167,37 @@ Coda_to_tibble <- function(
     Coda <- tidyr::pivot_longer(
       Coda, -c(Chain, Iter), names_to = "Var_Sp", values_to = "Value")
 
-    Coda <- dplyr::distinct(Coda, Var_Sp) %>%
+
+    VarSp <- Coda %>%
+      dplyr::distinct(Var_Sp) %>%
       dplyr::mutate(
-        Betas = purrr::map(
+        Species = purrr::map(
           .x = Var_Sp,
           .f = ~{
             .x %>%
-              stringr::str_remove_all("B\\[|\\(|\\)|\\]") %>%
-              stringr::str_split(" |\\)", simplify = TRUE) %>%
-              as.vector() %>%
-              magrittr::extract(c(1, 3)) %>%
-              as.list() %>%
-              purrr::set_names(c("Variable", "IAS_ID"))
+              stringr::str_remove_all("B\\[|B\\[|\\(|\\)|\\]|stats::poly") %>%
+              stringr::str_replace_all(", degree = 2, raw = TRUE", "_") %>%
+              stringr::str_split(",", simplify = TRUE) %>%
+              as.data.frame() %>%
+              tibble::as_tibble() %>%
+              stats::setNames(c("Variable", "IAS_ID")) %>%
+              dplyr::mutate_all(stringr::str_trim) %>%
+              dplyr::mutate(
+                Variable = purrr::map_chr(
+                  .x = Variable,
+                  .f = function(V){
+                    V %>%
+                      stringr::str_replace_all("_1$", "_L") %>%
+                      stringr::str_replace_all("_2$", "_Q")
+                  }))
           })) %>%
-      tidyr::unnest_wider("Betas") %>%
+      tidyr::unnest_wider("Species") %>%
+      dplyr::left_join(SpeciesNames, by = "IAS_ID")
+
+
+
+    Coda <- VarSp %>%
       dplyr::right_join(Coda, by = "Var_Sp") %>%
-      dplyr::left_join(SpeciesNames, by = "IAS_ID") %>%
       dplyr::select(
         Var_Sp, Variable, Species, IAS_ID, Chain, Iter, Value,
         dplyr::everything()) %>%

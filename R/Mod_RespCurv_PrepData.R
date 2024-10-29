@@ -89,6 +89,7 @@ RespCurv_PrepData <- function(
   # PrepRCData_Int -------
 
   PrepRCData_Int <- function(ID) {
+
     Variable <- ResCurvDT$VarName[[ID]]
     RC_DT_Name <- ResCurvDT$RC_DT_Name[[ID]]
 
@@ -131,6 +132,7 @@ RespCurv_PrepData <- function(
 
         # Predicting probability of occurrence
         Preds <- stats::predict(
+        # Preds <- predict.Hmsc(
           object = Model, Gradient = Gradient, nParallel = 1, expected = TRUE,
           predictEtaMean = predictEtaMean, RC = TRUE)
 
@@ -286,21 +288,28 @@ RespCurv_PrepData <- function(
   ResCurvDT <- tidyr::expand_grid(
     Variable = ModelVars, Coords = "i", NFV = c(1, 2)) %>%
     dplyr::mutate(
-      VarName = stringr::str_remove_all(Variable, "poly\\(|, 2, raw = TRUE\\)"),
-      RC_DT_Name = paste0("RC_", VarName, "_NFV", NFV),
-      RC_DT_Path_Orig = file.path(
-        Path_RespCurvDT, paste0(RC_DT_Name, "_Orig.RData")),
-      RC_DT_Path_Prob = file.path(
-        Path_RespCurvDT, paste0(RC_DT_Name, "_Prob.RData")),
-      RC_DT_Path_SR = file.path(
-        Path_RespCurvDT, paste0(RC_DT_Name, "_SR.RData")),
-      FileExists = purrr::pmap_lgl(
-        .l = list(RC_DT_Path_Orig, RC_DT_Path_Prob, RC_DT_Path_SR),
-        .f = function(RC_DT_Path_Orig, RC_DT_Path_Prob, RC_DT_Path_SR) {
-          c(RC_DT_Path_Orig, RC_DT_Path_Prob, RC_DT_Path_SR) %>%
-            file.exists() %>%
-            all()
-        }))
+      VarName = purrr::map_chr(
+        .x = Variable,
+        .f = ~ {
+          stringr::str_remove_all(
+            .x ,
+            "stats::poly\\(|, degree = 2, raw = TRUE\\)")
+        }
+      ),
+    RC_DT_Name = paste0("RC_", VarName, "_NFV", NFV),
+    RC_DT_Path_Orig = file.path(
+      Path_RespCurvDT, paste0(RC_DT_Name, "_Orig.RData")),
+    RC_DT_Path_Prob = file.path(
+      Path_RespCurvDT, paste0(RC_DT_Name, "_Prob.RData")),
+    RC_DT_Path_SR = file.path(
+      Path_RespCurvDT, paste0(RC_DT_Name, "_SR.RData")),
+    FileExists = purrr::pmap_lgl(
+      .l = list(RC_DT_Path_Orig, RC_DT_Path_Prob, RC_DT_Path_SR),
+      .f = function(RC_DT_Path_Orig, RC_DT_Path_Prob, RC_DT_Path_SR) {
+        c(RC_DT_Path_Orig, RC_DT_Path_Prob, RC_DT_Path_SR) %>%
+          file.exists() %>%
+          all()
+      }))
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Checking file existence

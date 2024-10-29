@@ -9,7 +9,7 @@
 #' processing for faster execution and can work with models fitted on
 #' High-Performance Computing HPC environments.
 #' @param Path_Coda String. Path to the coda object containing MCMC samples.
-#' @param Path_FittedModel String. Path to the fitted Hmsc model object.
+#' @param Path_Model String. Path to the fitted Hmsc model object.
 #' @param EnvFile String. Path to the environment file containing necessary
 #'   environment variables. Default: ".env".
 #' @param FromHPC Logical. Indicates whether the function is being run on an HPC
@@ -34,7 +34,7 @@
 #' @export
 
 PlotConvergence <- function(
-    Path_Coda = NULL, Path_FittedModel = NULL, EnvFile = ".env",
+    Path_Coda = NULL, Path_Model = NULL, EnvFile = ".env",
     FromHPC = TRUE, Title = " ", NOmega = 1000, NCores = NULL,
     NRC = c(2, 2), Beta_NRC = c(3, 3), SavePlotData = TRUE, PagePerFile = 20,
     Cols = NULL) {
@@ -43,9 +43,9 @@ PlotConvergence <- function(
 
   .StartTime <- lubridate::now(tzone = "CET")
 
-  if (is.null(Path_Coda) || is.null(Path_FittedModel) || is.null(NCores)) {
+  if (is.null(Path_Coda) || is.null(Path_Model) || is.null(NCores)) {
     stop(
-      "Path_Coda, Path_FittedModel, and NCores cannot be empty", call. = FALSE)
+      "Path_Coda, Path_Model, and NCores cannot be empty", call. = FALSE)
   }
 
   # # ..................................................................... ###
@@ -71,7 +71,7 @@ PlotConvergence <- function(
 
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "character",
-    Args = c("Path_Coda", "Path_FittedModel"))
+    Args = c("Path_Coda", "Path_Model"))
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "logical", Args = "FromHPC")
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric", Args = c("NOmega", "NCores", "NRC"))
@@ -94,8 +94,8 @@ PlotConvergence <- function(
 
   IASDT.R::CatTime("Prepare convergence data")
 
-  if (!file.exists(Path_FittedModel)) {
-    stop("`Path_FittedModel` does not exist", call. = FALSE)
+  if (!file.exists(Path_Model)) {
+    stop("`Path_Model` does not exist", call. = FALSE)
   }
 
   if (!file.exists(Path_Coda)) {
@@ -106,7 +106,7 @@ PlotConvergence <- function(
   Coda_Obj <- IASDT.R::LoadAs(Path_Coda)
 
   IASDT.R::CatTime("Loading fitted model object", Level = 1)
-  Model <- IASDT.R::LoadAs(Path_FittedModel)
+  Model <- IASDT.R::LoadAs(Path_Model)
 
   # Model variables
   ModVars <- Model$covNames
@@ -422,7 +422,7 @@ PlotConvergence <- function(
     # Variable ranges
     IASDT.R::CatTime("Variable ranges", Level = 2)
     VarRanges <- dplyr::arrange(Beta_DF, Variable, IAS_ID) %>%
-      dplyr::select(Variable = Variable, DT) %>%
+      dplyr::select(Variable, DT) %>%
       dplyr::mutate(
         Range = purrr::map(.x = DT, .f = ~ range(dplyr::pull(.x, Value)))) %>%
       dplyr::select(-DT) %>%
@@ -813,7 +813,14 @@ PlotConvergence <- function(
             face = "bold", size = 24, hjust = 0.5))
 
       SpDT <- dplyr::filter(BetaTracePlots_BySp, Species == x)
+
+      VarOrder <- SpDT$data[[1]]$Variable %>%
+        stringr::str_subset("Intercept", negate = TRUE) %>%
+        gtools::mixedsort() %>%
+        c("Intercept", .)
+
       SpPlots <- SpDT$data[[1]] %>%
+        dplyr::arrange(factor(Variable, levels = VarOrder)) %>%
         dplyr::mutate(
           Variable2 = purrr::map_chr(
             .x = Variable,
@@ -840,11 +847,22 @@ PlotConvergence <- function(
               Plot$layout$r[1] <- max(Plot$layout$r)
               return(Plot)
             })) %>%
-        dplyr::pull("Plot") %>%
-        cowplot::plot_grid(
-          plotlist = ., ncol = Beta_NRC[2],
-          nrow = Beta_NRC[1], align = "hv") %>%
-        cowplot::plot_grid(PlotTitle, ., ncol = 1, rel_heights = c(0.03, 1))
+        dplyr::pull("Plot")
+
+      NumPages <- length(SpPlots) / (Beta_NRC[1] * Beta_NRC[2])
+
+      SpPlots2 <- IASDT.R::SplitVector(
+        Vector = seq_len(length(SpPlots)), NSplit = NumPages) %>%
+        purrr::map(
+          .f = ~ {
+            SpPlots[.x] %>%
+              cowplot::plot_grid(
+                plotlist = ., ncol = Beta_NRC[2],
+                nrow = Beta_NRC[1], align = "hv") %>%
+              cowplot::plot_grid(
+                PlotTitle, ., ncol = 1, rel_heights = c(0.03, 1))
+          })
+
 
       invisible({
         grDevices::cairo_pdf(
@@ -854,7 +872,7 @@ PlotConvergence <- function(
               "Convergence_Beta_", SpDT$IAS_ID, "_",
               IASDT.R::ReplaceSpace(x), ".pdf")),
           width = 23, height = 17)
-        grid::grid.draw(SpPlots)
+        purrr::walk(SpPlots2, grid::grid.draw)
         grDevices::dev.off()
       })
 

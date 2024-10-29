@@ -27,7 +27,12 @@ NULL
 
   # Display the startup message
   packageStartupMessage(
-    paste0("IASDT.R v", packageVersionInfo,
-           " - Last updated on ", packageDateInfo))
+    paste0(
+      "IASDT.R v", packageVersionInfo,
+      " - Last updated on ", packageDateInfo))
 
 }
+
+
+#' @useDynLib IASDT.R, .registration=TRUE
+NULL

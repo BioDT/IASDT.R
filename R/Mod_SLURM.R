@@ -237,7 +237,7 @@ Mod_SLURM <- function(
       close(f)
 
       # Print the command to submit the job
-      cat(paste0("\t sbatch ", file.path(Path_Model, OutFile)))
+      cat(paste0("\t sbatch ", file.path(Path_Model, OutFile), "\n"))
   })
 
   return(invisible(NULL))

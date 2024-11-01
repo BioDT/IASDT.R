@@ -1,7 +1,7 @@
 ## |------------------------------------------------------------------------| #
 # LoadAs ----
 ## |------------------------------------------------------------------------| #
-#
+
 #' Load RData file and return its contents as a list or a single object
 #'
 #' This function loads an `RData` file specified by the `File` parameter. If the
@@ -9,8 +9,10 @@
 #' the file contains multiple objects, they are returned as a list with each
 #' object accessible by its name. This allows for flexible handling of loaded
 #' data without needing to know the names of the objects stored within the RData
-#' file ahead of time.
+#' file ahead of time. The function also supports loading `qs` and `rds` files.
 #' @param File character; the file path of the `.RData` file to be loaded.
+#' @param nthreads Number of threads to use when reading `qs` files. Default 5;
+#'   see [qs::qread].
 #' @author Ahmed El-Gabbas
 #' @return Depending on the contents of the `RData` file, this function returns
 #'   either a single R object or a named list of R objects. The names of the
@@ -58,22 +60,33 @@
 #' names(mtcars_all)
 #' names(mtcars_all2)
 
-LoadAs <- function(File) {
+LoadAs <- function(File, nthreads = 5) {
 
   if (is.null(File)) {
     stop("File cannot be NULL", call. = FALSE)
   }
 
-  # Load the .RData file and capture the names of loaded objects
-  InFile0 <- load(File)
+  Ext <- fs::path_ext(File)
 
-  if (length(InFile0) == 1) {
-    OutFile <- get(paste0(InFile0))
-  } else {
-    OutFile <- lapply(InFile0, function(x) {
-      get(paste0(x))
-    })
-    names(OutFile) <- InFile0
-  }
+  OutFile <- switch(
+    Ext,
+    qs = qs::qread(File, nthreads = nthreads),
+    RData = {
+      # Load the .RData file and capture the names of loaded objects
+      InFile0 <- load(File)
+
+      if (length(InFile0) == 1) {
+        OutFile <- get(paste0(InFile0))
+      } else {
+        OutFile <- lapply(InFile0, function(x) {
+          get(paste0(x))
+        })
+        names(OutFile) <- InFile0
+      }
+      return(OutFile)
+    },
+    rds = readRDS(File),
+    stop("Unknown file extension", call. = FALSE))
+
   return(OutFile)
 }

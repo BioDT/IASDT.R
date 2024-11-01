@@ -113,8 +113,9 @@ AllObjSizes <- function(
           paste0(collapse = " | ")
 
         cat(crayon::blue(
-          paste0("`lobstr::obj_size` was not able to get the object ",
-                 "size of the following object(s): ", NA_Var, "\n"), sep = ""),
+          paste0(
+            "`lobstr::obj_size` was not able to get the object ",
+            "size of the following object(s): ", NA_Var, "\n"), sep = ""),
           sep = "")
       }
 
@@ -124,7 +125,7 @@ AllObjSizes <- function(
         sep = "")
     } else {
       cat(crayon::red(
-        paste0("No variables have Size > ", GreaterThan, " MB\n")), sep = "")
+        paste0("No object has Size > ", GreaterThan, " MB\n")), sep = "")
     }
   }
 }

@@ -126,3 +126,12 @@ Tjur's
 HmscRandomLevel
 lengthscale
 predictLatentFactor
+CPP
+TF
+pnorm
+vect
+hM
+mcmc
+predictHmsc
+PredictLF
+XData

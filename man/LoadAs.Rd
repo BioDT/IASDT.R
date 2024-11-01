@@ -4,10 +4,13 @@
 \alias{LoadAs}
 \title{Load RData file and return its contents as a list or a single object}
 \usage{
-LoadAs(File)
+LoadAs(File, nthreads = 5)
 }
 \arguments{
 \item{File}{character; the file path of the \code{.RData} file to be loaded.}
+
+\item{nthreads}{Number of threads to use when reading \code{qs} files. Default 5;
+see \link[qs:qread]{qs::qread}.}
 }
 \value{
 Depending on the contents of the \code{RData} file, this function returns
@@ -21,7 +24,7 @@ This function loads an \code{RData} file specified by the \code{File} parameter.
 the file contains multiple objects, they are returned as a list with each
 object accessible by its name. This allows for flexible handling of loaded
 data without needing to know the names of the objects stored within the RData
-file ahead of time.
+file ahead of time. The function also supports loading \code{qs} and \code{rds} files.
 }
 \examples{
 

@@ -14,10 +14,7 @@ predictHmsc(
   Gradient = NULL,
   Yc = NULL,
   mcmcStep = 1,
-  expected = FALSE,
-  predictEtaMean = FALSE,
-  predictEtaMeanField = FALSE,
-  useSocket = TRUE,
+  expected = TRUE,
   NCores = 1,
   TempDir = "TEMP2Pred",
   PredDir = "Model_Predictions",
@@ -33,7 +30,7 @@ predictHmsc(
   EnvPath = NULL,
   use_single = FALSE,
   Path_postEtaPred = NULL,
-  return_postEtaPred = TRUE,
+  Return_postEtaPred = TRUE,
   File_LF = NULL,
   nthreads = 5,
   ...
@@ -68,18 +65,6 @@ effects}
 \item{expected}{boolean flag indicating whether to return the location
 parameter of the observation models or sample the values from those.}
 
-\item{predictEtaMean}{boolean flag indicating whether to use the estimated
-mean values of posterior predictive distribution for random effects
-corresponding for the new units.}
-
-\item{predictEtaMeanField}{boolean flag indicating whether to use draws from
-the mean-field of the posterior predictive distribution for random effects
-corresponding for the new units.}
-
-\item{useSocket}{(logical) Use socket clusters in parallel processing; these
-are the only alternative in Windows, but in other systems this should be
-usually set \code{FALSE} for forking.}
-
 \item{NCores}{Integer specifying the number of cores to use for parallel
 processing. Defaults to 8.}
 
@@ -106,6 +91,11 @@ TF calculations. Defaults to \code{FALSE}.}
 \item{Path_postEtaPred}{Character string specifying the path to save the
 outputs. If \code{NULL} (default), the predicted latent factors are not saved to
 a file.}
+
+\item{Return_postEtaPred}{Logical. Indicates if the output should be
+returned. Defaults to \code{TRUE}. If \code{Path_postEtaPred} is \code{NULL}, this
+parameter cannot be set to \code{FALSE} because the function needs to return the
+result if it is not saved to a file.}
 
 \item{nthreads}{Number of threads to use when reading \code{qs} files. Default 5;
 see \link[qs:qread]{qs::qread}.}

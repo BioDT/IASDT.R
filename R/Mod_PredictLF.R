@@ -77,7 +77,11 @@ predictLF <- function(
     PythonScript = NULL, EnvPath = NULL, use_single = FALSE,
     Path_postEtaPred = NULL, Return_postEtaPred = TRUE, nthreads = 5) {
 
+  # # ..................................................................... ###
+
   .StartTime <- lubridate::now(tzone = "CET")
+
+  IASDT.R::CatTime("Starting `PredictLF` function", Level = 1)
 
   # # ..................................................................... ###
 
@@ -94,6 +98,7 @@ predictLF <- function(
   # Load postEta if it is a file path
 
   if (inherits(postEta, "character")) {
+    IASDT.R::CatTime("Load postEta", Level = 1)
     if (!file.exists(postEta)) {
       stop(
         paste0(
@@ -108,7 +113,6 @@ predictLF <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-
   SampleID <- Unit_ID <- LF <- LF_ID <- etaPred <- Sample_IDs <- File <-
     crossprod_solve <- Alpha_ID <- NULL
 
@@ -127,7 +131,7 @@ predictLF <- function(
     }
 
     if (is.null(PythonScript)) {
-      system.file("crossprod_solve.py", package = "IASDT.R")
+      PythonScript <- system.file("crossprod_solve.py", package = "IASDT.R")
     }
 
     # Check if PythonScript exists
@@ -139,6 +143,10 @@ predictLF <- function(
 
     # Suppress TensorFlow warnings and disable optimizations
     Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3", TF_ENABLE_ONEDNN_OPTS = "0")
+
+    IASDT.R::CatTime("Computations will be made using TensorFlow", Level = 1)
+  } else {
+    IASDT.R::CatTime("Computations will be made using R/CPP", Level = 1)
   }
 
   # Extension for temporary files
@@ -168,6 +176,8 @@ predictLF <- function(
   # # ..................................................................... ###
 
   # Calculate D11 and D12 only once
+
+  IASDT.R::CatTime("Calculate/save D11 and D12 distance matrices", Level = 1)
 
   alphapw <- rL$alphapw
   s1 <- rL$s[modelunits, , drop = FALSE]
@@ -209,6 +219,9 @@ predictLF <- function(
   # # ..................................................................... ###
 
   # Convert postAlpha to tibble
+  IASDT.R::CatTime(
+    paste0("Prepare data for parallel processing using ", NCores, " cores"),
+    Level = 1)
   postAlpha_tibble <- do.call(rbind, postAlpha) %>%
     as.data.frame() %>%
     tibble::tibble() %>%
@@ -225,6 +238,8 @@ predictLF <- function(
 
   # Prepare data for parallel processing
   Unique_Alpha <- postAlpha_unique %>%
+    # This may help to distribute heavy jobs first on parallel
+    dplyr::arrange(dplyr::desc(sapply(Sample_IDs, length))) %>%
     dplyr::select(-Sample_IDs) %>%
     tidyr::pivot_longer(
       cols = names(.), values_to = "Alpha_ID", names_to = "LF") %>%
@@ -261,6 +276,7 @@ predictLF <- function(
           }
         }),
       Export = NULL)
+
 
   # # ..................................................................... ###
 
@@ -376,8 +392,8 @@ predictLF <- function(
 
   # # ..................................................................... ###
 
-  # Execute calculations in parallel using the specified number of cores
-  # (`NCores`).
+  #
+  IASDT.R::CatTime(paste0("Predicting Latent Factor in parallel"), Level = 1)
 
   withr::local_options(
     future.globals.maxSize = 8000 * 1024^2,
@@ -390,8 +406,7 @@ predictLF <- function(
   # Calculate etaPred
   etaPreds <- future.apply::future_lapply(
     X = seq_len(nrow(Unique_Alpha)),
-    FUN = calc_eta_pred,
-    future.seed = TRUE, future.chunk.size = floor(nrow(Unique_Alpha) / NCores),
+    FUN = calc_eta_pred, future.seed = TRUE, future.chunk.size = 1,
     future.globals = c(
       "Unique_Alpha", "Path_D11", "Path_D12", "indNew", "unitsPred",
       "indOld", "modelunits", "EnvPath", "PythonScript", "UseTF", "use_single"),
@@ -399,6 +414,7 @@ predictLF <- function(
       "Rcpp", "RcppArmadillo", "dplyr", "tidyr", "tibble",
       "Matrix", "Hmsc", "qs", "fs", "purrr"))
 
+  IASDT.R::CatTime("Merge results", Level = 1)
   # Merge results
   postEtaPred <- Unique_Alpha %>%
     dplyr::select(LF, LF_ID) %>%
@@ -423,6 +439,8 @@ predictLF <- function(
   # Save postEtaPred
 
   if (!is.null(Path_postEtaPred)) {
+    IASDT.R::CatTime(
+      paste0("Save postEtaPred to `", Path_postEtaPred, "`"), Level = 1)
     fs::dir_create(fs::path_dir(Path_postEtaPred))
     switch(
       fs::path_ext(Path_postEtaPred),
@@ -433,7 +451,8 @@ predictLF <- function(
 
   # # ..................................................................... ###
 
-  IASDT.R::CatDiff(InitTime = .StartTime)
+  IASDT.R::CatDiff(
+    InitTime = .StartTime, Prefix = "PredictLF was finished in ", Level = 1)
 
   # # ..................................................................... ###
 

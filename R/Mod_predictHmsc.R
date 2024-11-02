@@ -29,15 +29,6 @@
 #'   effects
 #' @param expected boolean flag indicating whether to return the location
 #'   parameter of the observation models or sample the values from those.
-#' @param predictEtaMean boolean flag indicating whether to use the estimated
-#'   mean values of posterior predictive distribution for random effects
-#'   corresponding for the new units.
-#' @param predictEtaMeanField boolean flag indicating whether to use draws from
-#'   the mean-field of the posterior predictive distribution for random effects
-#'   corresponding for the new units.
-#' @param useSocket (logical) Use socket clusters in parallel processing; these
-#'   are the only alternative in Windows, but in other systems this should be
-#'   usually set \code{FALSE} for forking.
 #' @param \dots other arguments passed to functions.
 #' @inheritParams predictLF
 #' @export
@@ -49,9 +40,7 @@
 predictHmsc <- function(
     object,
     Loff = NULL, XData = NULL, X = NULL, XRRRData = NULL, XRRR = NULL,
-    Gradient = NULL, Yc = NULL, mcmcStep = 1, expected = FALSE,
-    predictEtaMean = FALSE, predictEtaMeanField = FALSE,
-    useSocket = TRUE,
+    Gradient = NULL, Yc = NULL, mcmcStep = 1, expected = TRUE,
 
     NCores = 1,
     TempDir = "TEMP2Pred", PredDir = "Model_Predictions",
@@ -60,29 +49,53 @@ predictHmsc <- function(
 
     UseTF = TRUE, PythonScript = NULL, EnvPath = NULL, use_single = FALSE,
     Path_postEtaPred = NULL,
-    return_postEtaPred = TRUE, #CHECK if needed
+    Return_postEtaPred = TRUE,
     File_LF = NULL, nthreads = 5, ...) {
 
+  .StartTime <- lubridate::now(tzone = "CET")
 
-  ID <- Chunk <- Sp <- IAS_ID <- Path_pred <- Sp_data <- data <- File_LF <-
+  # To avoid non-standard evaluation
+  Pred_XY <- Pred_XY
+  Pred_PA <- Pred_PA
+
+  # # ..................................................................... ###
+
+  # Avoid "no visible binding for global variable" message
+  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
+  ID <- Chunk <- Sp <- IAS_ID <- Path_pred <- Sp_data <- data <-
     geometry <- x <- y <- NULL
 
+  # # ..................................................................... ###
+
+  if (!is.null(RC) && !RC %in% c("c", "i")) {
+    stop("`RC` must be either NULL or one of 'c' or 'i'", call. = FALSE)
+  }
+
   if (is.null(RC) || RC == "c") {
+    IASDT.R::CatTime("Creating/checking output paths")
     fs::dir_create(c(TempDir, PredDir))
     if (Evaluate) {
       fs::dir_create(EvalDir)
     }
   }
 
+  # # ..................................................................... ###
+
   # Load model if it is a character
   if (inherits(object, "character")) {
+    IASDT.R::CatTime("Load model object")
     object <- IASDT.R::LoadAs(object)
   }
 
+  # # ..................................................................... ###
+
   # Combines a list of single or several MCMC chains into a single chain
+  IASDT.R::CatTime("Combines list of posteriors")
   post <- Hmsc::poolMcmcChains(object$postList)
   studyDesign <- object$studyDesign
   ranLevels <- object$ranLevels
+
+  # # ..................................................................... ###
 
   # Clean up
   on.exit({
@@ -95,19 +108,11 @@ predictHmsc <- function(
     )},
     add = TRUE)
 
+  # # ..................................................................... ###
 
-  ## check valid NCores
-  NCores <- min(NCores, parallel::detectCores())
-  if (NCores > 1) {
-    if (.Platform$OS.type == "windows" && !useSocket) {
-      useSocket <- TRUE
-      message("setting useSocket=TRUE; the only choice in Windows")
-    }
-  }
+  IASDT.R::CatTime("Check input parameters")
 
   if (!is.null(Gradient)) {
-    ## don't know what to do if there is also Yc, and spatial models
-    ## will trigger an error in updateEta (github issue #135)
     if (!is.null(Yc)) {
       stop(
         paste0(
@@ -124,12 +129,6 @@ predictHmsc <- function(
   }
   if (!is.null(XRRRData) && !is.null(XRRR)) {
     stop("only one of XRRRData and XRRR arguments can be specified")
-  }
-  if (predictEtaMean == TRUE && predictEtaMeanField == TRUE) {
-    stop(
-      paste0(
-        "predictEtaMean and predictEtaMeanField arguments cannot be TRUE ",
-        " simultaneously"))
   }
 
   if (!is.null(XData)) {
@@ -230,12 +229,18 @@ predictHmsc <- function(
 
   predN <- length(post)
 
+  # # ..................................................................... ###
+
   # free some memory
+  IASDT.R::CatTime("Free some memory")
   object$postList <- object$YScaled <- object$X <- object$XScaled <- NULL
+
+  # # ..................................................................... ###
+
+  IASDT.R::CatTime("Predict Latent Factor")
 
   predPostEta <- vector("list", object$nr)
   PiNew <- matrix(NA, nrow(dfPiNew), object$nr)
-
 
   # Whether to use predictLatentFactor or read its results from file
   if (!is.null(object$nr)) {
@@ -247,14 +252,16 @@ predictHmsc <- function(
   }
 
 
-
-  if (CalcLF) {
-
-    for (r in seq_len(object$nr)) {
-      if (RC == "i") {
-
-        # Do not use `predictLatentFactor` when predicting values for response
-        # curves when using coordinates = "i" in constructGradient
+  # Do not use `predictLatentFactor` when predicting values for response
+  # curves when using coordinates = "i" in constructGradient
+  if (!is.null(RC)) {
+    if (RC == "i") {
+      for (r in seq_len(object$nr)) {
+        if (r == 1) {
+          IASDT.R::CatTime(
+            "LF prediction for response curve with infinite coordinates",
+            Level = 1)
+        }
         nLF <- length(post[[1]]$Alpha[[1]])
         predPostEta[[r]] <- replicate(
           n = predN,
@@ -262,44 +269,58 @@ predictHmsc <- function(
             rep(0, nLF), dim = c(1L, nLF), dimnames = list("new_unit", NULL)),
           simplify = FALSE)
 
-      } else {
-
-        postEta <- lapply(post, function(c) c$Eta[[r]])
-        postAlpha <- lapply(post, function(c) c$Alpha[[r]])
-
-        if (r == object$nr) {
-          # free some memory
-          post <- lapply(post, function(x) {
-            x$Eta <- x$Psi <- x$V <- x$Delta <- x$Gamma <- x$rho <- NULL
-            x
-          })
-
-          # Save post to file and load it later
-          post_file <- file.path(TempDir, paste0(ModelName, "_post.qs"))
-          qs::qsave(post, file = post_file, preset = "fast")
-          rm(post)
-          invisible(gc())
-        }
-
-        # Save postEta to file and load it from predictLatentFactor This helps
-        # to avoid the unnecessary copying of the postEta object to all cores
-        postEta_file <- file.path(TempDir, paste0(ModelName, "_postEta.qs"))
-        qs::qsave(postEta, file = postEta_file, preset = "fast")
-        rm(postEta)
-        invisible(gc())
-
-        predPostEta[[r]] <- IASDT.R::predictLF(
-          unitsPred = levels(dfPiNew[, r]),
-          modelunits = levels(object$dfPi[, r]),
-          postEta = postEta_file, postAlpha = postAlpha, rL = rL[[r]],
-          NCores = NCores, TempDir = TempDir, ModelName = ModelName,
-          UseTF = UseTF, PythonScript = PythonScript, EnvPath = EnvPath,
-          use_single = use_single, Path_postEtaPred = Path_postEtaPred,
-          return_postEtaPred = return_postEtaPred)
-
-        fs::file_delete(postEta_file)
-        rm(postEta_file)
+        # print(str(predPostEta,2))
       }
+      CalcLF <- FALSE
+    }
+  }
+
+
+  if (CalcLF) {
+
+    for (r in seq_len(object$nr)) {
+      postEta <- lapply(post, function(c) c$Eta[[r]])
+      postAlpha <- lapply(post, function(c) c$Alpha[[r]])
+
+      if (r == object$nr) {
+        # free some memory
+        post <- lapply(post, function(x) {
+          x$Eta <- x$Psi <- x$V <- x$Delta <- x$Gamma <- x$rho <- NULL
+          x
+        })
+
+        # Save post to file and load it later
+        IASDT.R::CatTime("Save post to file and load it later", Level = 1)
+        post_file <- file.path(TempDir, paste0(ModelName, "_post.qs"))
+        qs::qsave(post, file = post_file, preset = "fast")
+        rm(post)
+        invisible(gc())
+      }
+
+      # Save postEta to file and load it from predictLatentFactor. This helps
+      # to avoid the unnecessary copying of the postEta object to all cores
+      IASDT.R::CatTime("Save postEta to file", Level = 1)
+      postEta_file <- file.path(TempDir, paste0(ModelName, "_postEta.qs"))
+      qs::qsave(postEta, file = postEta_file, preset = "fast")
+      rm(postEta)
+      invisible(gc())
+
+      if (r == 1) {
+        IASDT.R::CatTime("LF prediction using `predictLF`", Level = 1)
+      }
+
+      # IASDT.R::
+      predPostEta[[r]] <- predictLF(
+        unitsPred = levels(dfPiNew[, r]),
+        modelunits = levels(object$dfPi[, r]),
+        postEta = postEta_file, postAlpha = postAlpha, rL = rL[[r]],
+        NCores = NCores, TempDir = TempDir, ModelName = ModelName,
+        UseTF = UseTF, PythonScript = PythonScript, EnvPath = EnvPath,
+        use_single = use_single, Path_postEtaPred = Path_postEtaPred,
+        Return_postEtaPred = Return_postEtaPred, nthreads = nthreads)
+
+      fs::file_delete(postEta_file)
+      rm(postEta_file)
 
       rowNames <- rownames(predPostEta[[r]][[1]])
       # PiNew[,r] = sapply(dfPiNew[,r], function(s) which(rowNames==s))
@@ -307,11 +328,14 @@ predictHmsc <- function(
     }
 
   } else {
-
-    for (r in seq_len(object$nr)) {
-      predPostEta[[r]] <- IASDT.R::LoadAs(File_LF[[r]], nthreads = nthreads)
-      rowNames <- rownames(predPostEta[[r]][[1]])
-      PiNew[, r] <- fastmatch::fmatch(dfPiNew[, r], rowNames)
+    if (is.null(RC) || RC == "c") {
+      IASDT.R::CatTime(
+        paste0("Loading LF prediction from disk: `", File_LF, "`"), Level = 1)
+      for (r in seq_len(object$nr)) {
+        predPostEta[[r]] <- IASDT.R::LoadAs(File_LF[[r]], nthreads = nthreads)
+        rowNames <- rownames(predPostEta[[r]][[1]])
+        PiNew[, r] <- fastmatch::fmatch(dfPiNew[, r], rowNames)
+      }
     }
   }
 
@@ -324,272 +348,296 @@ predictHmsc <- function(
   # free some memory
   try(rm(predPostEta), silent = TRUE)
 
+  invisible(gc())
+
+  # # ..................................................................... ###
+
+  IASDT.R::CatTime("Predicting")
+
   if (!exists("post")) {
+    IASDT.R::CatTime("Loading post from disk", Level = 1)
     post <- qs::qread(post_file, nthreads = 5)
   }
 
-  invisible(gc())
-
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-  if (RC %in% c("i", "c")) {
-    lapply(
+  if (!is.null(RC)) {
+    IASDT.R::CatTime(
+      "Predicting data for response curve (sequentially)", Level = 1)
+    preds <- lapply(
       seq_len(predN),
       function(pN, ...) {
         IASDT.R::get1prediction(
           object, X, XRRR, Yc, Loff, rL, rLPar, post[[pN]],
-          ppEta[pN, ], PiNew, dfPiNew, nyNew, expected, mcmcStep
-        )
+          ppEta[pN, ], PiNew, dfPiNew, nyNew, expected, mcmcStep)
       })
+    IASDT.R::CatDiff(
+      InitTime = .StartTime, Prefix = "Prediction was finished in ", Level = 1)
+    return(preds)
+
   } else {
-    if (NCores == 1) { # non-Parallel
-      pred <- lapply(seq_len(predN), function(pN, ...) {
-        IASDT.R::get1prediction(
-          object, X, XRRR, Yc, Loff, rL, rLPar, post[[pN]], ppEta[pN, ],
-          PiNew, dfPiNew, nyNew, expected, mcmcStep)
+
+    # Save ppEta / post as small chunks
+    IASDT.R::CatTime("Save ppEta / post as small chunks", Level = 1)
+    chunk_size <- 25
+    ChunkIDs <- ceiling(seq_along(post) / chunk_size)
+    Chunks <- purrr::map_chr(
+      .x = seq_len(max(ChunkIDs)),
+      .f = ~ {
+        IDs <- which(ChunkIDs == .x)
+        Ch <- list(ppEta = ppEta[IDs], post = post[IDs])
+        ChunkFile <- file.path(
+          TempDir, paste0(ModelName, "_ppEta_ch", .x, ".qs"))
+        qs::qsave(Ch, file = ChunkFile, preset = "fast")
+        return(ChunkFile)
       })
-    } else if (useSocket) { # socket cluster (Windows, mac, Linux)
 
-      # Save ppEta / post as small chunks
-      chunk_size <- 25
-      ChunkIDs <- ceiling(seq_along(post) / chunk_size)
-      Chunks <- purrr::map_chr(
-        .x = seq_len(max(ChunkIDs)),
-        .f = ~ {
-          IDs <- which(ChunkIDs == .x)
-          Ch <- list(ppEta = ppEta[IDs], post = post[IDs])
-          ChunkFile <- file.path(
-            TempDir, paste0(ModelName, "_ppEta_ch", .x, ".qs"))
-          qs::qsave(Ch, file = ChunkFile, preset = "fast")
-          return(ChunkFile)
-        })
+    rm(ChunkIDs, post, ppEta)
+    invisible(gc())
 
-      rm(ChunkIDs, post, ppEta)
-      invisible(gc())
+    IASDT.R::CatTime(
+      paste0("Preparing working on parallel using ", NCores, " cores"),
+      Level = 1)
 
-      seeds <- sample.int(.Machine$integer.max, predN)
-
-      c1 <- snow::makeSOCKcluster(NCores)
-      on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-      snow::clusterExport(
-        cl = c1,
-        list = c(
-          "object", "X", "XRRR", "Yc", "Loff", "rL", "rLPar", "PiNew",
-          "dfPiNew", "nyNew", "expected", "mcmcStep", "seeds", "chunk_size",
-          "Chunks", "TempDir", "ModelName"),
-        envir = environment())
-
-      invisible(snow::clusterEvalQ(
-        cl = c1,
-        expr = {
-          sapply(
-            c(
-              "dplyr", "Rcpp", "RcppArmadillo", "Matrix", "float",
-              "qs", "Hmsc", "purrr"),
-            library, character.only = TRUE)
-        }))
-
-      pred <- snow::parLapply(
-        cl = c1,
-        x = seq_len(length(Chunks)),
-        fun = function(Chunk) {
-          ChunkFile <- Chunks[Chunk]
-          Ch <- qs::qread(ChunkFile)
-          ppEta <- Ch$ppEta
-          post <- Ch$post
-          rm(Ch)
-          Seed <- (Chunk - 1) * chunk_size
-          Seed <- seq(Seed + 1, Seed + chunk_size)
-          Seed <- seeds[Seed]
-
-          PredChunk <- purrr::map(
-            .x = seq_len(chunk_size),
-            .f = function(pN) {
-              IASDT.R::get1prediction(
-                object = object, X = X, XRRR = XRRR, Yc = Yc,
-                Loff = Loff, rL = rL, rLPar = rLPar, sam = post[[pN]],
-                predPostEta = ppEta[pN], PiNew = PiNew,
-                dfPiNew = dfPiNew, nyNew = nyNew, expected = expected,
-                mcmcStep = mcmcStep, seed = Seed[pN])
-            })
-
-          ChunkSp <- purrr::map_dfr(
-            .x = seq_len(length(object$spNames)),
-            .f = function(Sp) {
-              SpD <- purrr::map(PredChunk, ~ .x[, Sp], ncol = 1) %>%
-                simplify2array() %>%
-                float::fl()
-              dimnames(SpD) <- NULL
-
-              ChunkSpFile <- file.path(
-                TempDir,
-                paste0("Pred_", ModelName, "_ch", Chunk, "_Sp", Sp, ".qs"))
-
-              qs::qsave(SpD, file = ChunkSpFile, preset = "fast")
-
-              cbind.data.frame(
-                Chunk = Chunk, Sp = Sp, IAS_ID = object$spNames[Sp],
-                ChunkSpFile = ChunkSpFile) %>%
-                return()
-            })
-
-          fs::file_delete(ChunkFile)
-          rm(PredChunk)
-
-          return(ChunkSp)
-        })
-
-      snow::stopCluster(c1)
-      invisible(gc())
-
-      pred <- tibble::tibble(dplyr::bind_rows(pred))
-
-    } else { # fork (mac, Linux)
-      seed <- sample.int(.Machine$integer.max, predN)
-      pred <- parallel::mclapply(
-        seq_len(predN), function(pN, ...) {
-          IASDT.R::get1prediction(
-            object, X, XRRR, Yc, Loff, rL, rLPar, post[[pN]],
-            ppEta[pN, ], PiNew, dfPiNew, nyNew, expected,
-            mcmcStep, seed = seed[pN])
-        },
-        mc.cores = NCores)
-    }
-
-    # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-    # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+    seeds <- sample.int(.Machine$integer.max, predN)
 
     c1 <- snow::makeSOCKcluster(NCores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-    future::plan("future::cluster", workers = c1, gc = TRUE)
-    on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
+    snow::clusterExport(
+      cl = c1,
+      list = c(
+        "object", "X", "XRRR", "Yc", "Loff", "rL", "rLPar", "PiNew",
+        "dfPiNew", "nyNew", "expected", "mcmcStep", "seeds", "chunk_size",
+        "Chunks", "TempDir", "ModelName"),
+      envir = environment())
 
-    Eval_DT <- dplyr::select(pred, -Chunk) %>%
-      dplyr::group_nest(Sp, IAS_ID) %>%
-      dplyr::mutate(data = purrr::map(data, unlist))
+    invisible(snow::clusterEvalQ(
+      cl = c1,
+      expr = {
+        sapply(
+          c(
+            "dplyr", "Rcpp", "RcppArmadillo", "Matrix", "float",
+            "qs", "Hmsc", "purrr"),
+          library, character.only = TRUE)
+      }))
 
-    Eval_DT <- future.apply::future_lapply(
-      X = seq_len(nrow(Eval_DT)),
-      FUN = function(ID) {
-        Sp <- Eval_DT$Sp[[ID]]
-        IAS_ID <- Eval_DT$IAS_ID[[ID]]
-        data <- Eval_DT$data[[ID]]
+    pred <- snow::parLapply(
+      cl = c1,
+      x = seq_len(length(Chunks)),
+      fun = function(Chunk) {
+        ChunkFile <- Chunks[Chunk]
+        Ch <- qs::qread(ChunkFile)
+        ppEta <- Ch$ppEta
+        post <- Ch$post
+        rm(Ch)
+        Seed <- (Chunk - 1) * chunk_size
+        Seed <- seq(Seed + 1, Seed + chunk_size)
+        Seed <- seeds[Seed]
 
-        SpDT <- purrr::map(data, qs::qread) %>%
-          do.call(cbind, .) %>%
-          as.double()
+        PredChunk <- purrr::map(
+          .x = seq_len(chunk_size),
+          .f = function(pN) {
+            IASDT.R::get1prediction(
+              object = object, X = X, XRRR = XRRR, Yc = Yc,
+              Loff = Loff, rL = rL, rLPar = rLPar, sam = post[[pN]],
+              predPostEta = ppEta[pN], PiNew = PiNew,
+              dfPiNew = dfPiNew, nyNew = nyNew, expected = expected,
+              mcmcStep = mcmcStep, seed = Seed[pN])
+          })
 
-        SpDT_Mean <- Rfast::rowmeans(SpDT)
-        SpDT_SD <- Rfast::rowVars(SpDT, std = TRUE)
-        SpDT_Cov <- SpDT_SD / SpDT_Mean
-        rm(SpDT)
+        ChunkSp <- purrr::map_dfr(
+          .x = seq_len(length(object$spNames)),
+          .f = function(Sp) {
+            SpD <- purrr::map(PredChunk, ~ .x[, Sp], ncol = 1) %>%
+              simplify2array() %>%
+              float::fl()
+            dimnames(SpD) <- NULL
 
-        if (is.null(Pred_XY)) {
-          Pred_XY <- object$rL$sample$s
+            ChunkSpFile <- file.path(
+              TempDir,
+              paste0("Pred_", ModelName, "_ch", Chunk, "_Sp", Sp, ".qs"))
+
+            qs::qsave(SpD, file = ChunkSpFile, preset = "fast")
+
+            cbind.data.frame(
+              Chunk = Chunk, Sp = Sp, IAS_ID = object$spNames[Sp],
+              ChunkSpFile = ChunkSpFile) %>%
+              return()
+          })
+
+        fs::file_delete(ChunkFile)
+        rm(PredChunk)
+
+        return(ChunkSp)
+      })
+
+    snow::stopCluster(c1)
+    invisible(gc())
+
+    pred <- tibble::tibble(dplyr::bind_rows(pred))
+
+  }
+
+  # # ..................................................................... ###
+
+  IASDT.R::CatTime("Summarizing prediction outputs / Evaluation", Level = 1)
+
+  c1 <- snow::makeSOCKcluster(NCores)
+  on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
+  future::plan("future::cluster", workers = c1, gc = TRUE)
+  on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
+
+  Eval_DT <- dplyr::select(pred, -Chunk) %>%
+    dplyr::group_nest(Sp, IAS_ID) %>%
+    dplyr::mutate(data = purrr::map(data, unlist))
+
+  Eval_DT <- future.apply::future_lapply(
+    X = seq_len(nrow(Eval_DT)),
+    FUN = function(ID) {
+      Sp <- Eval_DT$Sp[[ID]]
+      IAS_ID <- Eval_DT$IAS_ID[[ID]]
+      data <- Eval_DT$data[[ID]]
+
+      SpDT <- purrr::map(data, qs::qread) %>%
+        do.call(cbind, .) %>%
+        as.double()
+
+      SpDT_Mean <- Rfast::rowmeans(SpDT)
+      SpDT_SD <- Rfast::rowVars(SpDT, std = TRUE)
+      SpDT_Cov <- SpDT_SD / SpDT_Mean
+      rm(SpDT)
+
+      if (is.null(Pred_XY)) {
+        Pred_XY <- object$rL$sample$s
+      }
+
+      PredSummary <- tibble::tibble(
+        as.data.frame(Pred_XY),
+        Mean = SpDT_Mean, SD = SpDT_SD, Cov = SpDT_Cov) %>%
+        stats::setNames(
+          c(
+            "x", "y", paste0(IAS_ID, "_mean"),
+            paste0(IAS_ID, "_sd"), paste0(IAS_ID, "_cov"))) %>%
+        sf::st_as_sf(coords = c("x", "y"), crs = 3035, remove = FALSE)
+
+      PredSummaryFile <- file.path(
+        PredDir, paste0("Pred_", ModelName, "_Sp", Sp, ".qs"))
+
+      qs::qsave(PredSummary, file = PredSummaryFile, preset = "fast")
+      fs::file_delete(data)
+
+      if (Evaluate) {
+        if (is.null(Pred_PA)) {
+          PresAbs <- object$Y[, Sp]
+        } else {
+          PresAbs <- Pred_PA[, Sp]
         }
 
-        PredSummary <- tibble::tibble(
-          as.data.frame(Pred_XY),
-          Mean = SpDT_Mean, SD = SpDT_SD, Cov = SpDT_Cov) %>%
-          stats::setNames(
-            c(
-              "x", "y", paste0(IAS_ID, "_mean"),
-              paste0(IAS_ID, "_sd"), paste0(IAS_ID, "_cov"))) %>%
-          sf::st_as_sf(coords = c("x", "y"), crs = 3035, remove = FALSE)
-
-        PredSummaryFile <- file.path(
-          PredDir, paste0("Pred_", ModelName, "_Sp", Sp, ".qs"))
-
-        qs::qsave(PredSummary, file = PredSummaryFile, preset = "fast")
-        fs::file_delete(data)
-
-        if (Evaluate) {
-          if (is.null(Pred_PA)) {
-            PresAbs <- object$Y[, Sp]
-          } else {
-            PresAbs <- Pred_PA[, Sp]
-          }
-
-          if (length(unique(PresAbs)) == 2) {
-            # Calculate evaluation metrics if there are two both presence and
-            # absence info in (testing) data
-            RMSE <- caret::RMSE(PresAbs, SpDT_Mean)
-            MeanPres <- mean(SpDT_Mean[which(PresAbs == 1)])
-            MeanAbs <- mean(SpDT_Mean[which(PresAbs == 0)])
-            TjurR2 <- MeanPres - MeanAbs
-            AUC <- pROC::auc(
-              response = PresAbs, predictor = SpDT_Mean,
-              levels = c(0, 1), direction = "<") %>%
-              as.numeric()
-            Boyce <- ecospat::ecospat.boyce(
-              fit = SpDT_Mean, obs = SpDT_Mean[PresAbs == 1],
-              PEplot = FALSE)$cor
-          } else {
-            RMSE <- TjurR2 <- AUC <- Boyce <- NA_real_
-          }
+        if (length(unique(PresAbs)) == 2) {
+          # Calculate evaluation metrics if there are two both presence and
+          # absence info in (testing) data
+          RMSE <- caret::RMSE(PresAbs, SpDT_Mean)
+          MeanPres <- mean(SpDT_Mean[which(PresAbs == 1)])
+          MeanAbs <- mean(SpDT_Mean[which(PresAbs == 0)])
+          TjurR2 <- MeanPres - MeanAbs
+          AUC <- pROC::auc(
+            response = PresAbs, predictor = SpDT_Mean,
+            levels = c(0, 1), direction = "<") %>%
+            as.numeric()
+          Boyce <- ecospat::ecospat.boyce(
+            fit = SpDT_Mean, obs = SpDT_Mean[PresAbs == 1],
+            PEplot = FALSE)$cor
         } else {
           RMSE <- TjurR2 <- AUC <- Boyce <- NA_real_
         }
-
-        tibble::tibble(
-          Sp = Sp, IAS_ID = IAS_ID, Path_pred = PredSummaryFile,
-          RMSE = RMSE, AUC = AUC, Boyce = Boyce, TjurR2 = TjurR2) %>%
-          return()
-      },
-      future.seed = TRUE,
-      future.globals = c(
-        "Eval_DT", "Evaluate", "object", "PredDir", "ModelName",
-        "Pred_PA", "Pred_XY"
-      ),
-      future.packages = c(
-        "dplyr", "Matrix", "purrr", "tibble", "Hmsc", "float", "qs",
-        "Rfast", "caret", "pROC", "ecospat", "sf"))
-
-    snow::stopCluster(c1)
-    future::plan("future::sequential", gc = TRUE)
-
-    # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-    Eval_DT <- dplyr::bind_rows(Eval_DT)
-
-    # Save predictions for all species in a single file
-    Predictions <- dplyr::select(Eval_DT, Path_pred, Sp, IAS_ID) %>%
-      dplyr::mutate(
-        Sp_data = purrr::map(
-          .x = Path_pred,
-          .f = ~ {
-            qs::qread(.x) %>%
-              tidyr::pivot_longer(
-                cols = starts_with("Sp_"),
-                names_to = "Species", values_to = "Prediction")
-          })) %>%
-      dplyr::pull(Sp_data) %>%
-      dplyr::bind_rows() %>%
-      tidyr::pivot_wider(names_from = "Species", values_from = "Prediction") %>%
-      dplyr::relocate(gtools::mixedsort(names(.))) %>%
-      dplyr::select(x, y, geometry, tidyselect::everything())
-
-    Pred_File <- file.path(PredDir, paste0("Preds_", ModelName, ".qs"))
-    qs::qsave(Predictions, file = Pred_File, preset = "fast")
-    fs::file_delete(Eval_DT$Path_pred)
-
-    if (Evaluate) {
-      Eval_DT <- dplyr::select(Eval_DT, -Path_pred)
-      if (is.null(Evaluate_Name)) {
-        save(Eval_DT, file = file.path(EvalDir, "Eval_DT.RData"))
       } else {
-        save(
-          Eval_DT,
-          file = file.path(EvalDir, paste0(Evaluate_Name, ".RData"))
-        )
+        RMSE <- TjurR2 <- AUC <- Boyce <- NA_real_
       }
-    }
-    fs::file_delete(post_file)
 
-    invisible(return(NULL))
+      tibble::tibble(
+        Sp = Sp, IAS_ID = IAS_ID, Path_pred = PredSummaryFile,
+        RMSE = RMSE, AUC = AUC, Boyce = Boyce, TjurR2 = TjurR2) %>%
+        return()
+    },
+    future.seed = TRUE, future.chunk.size = 1,
+    future.globals = c(
+      "Eval_DT", "Evaluate", "object", "PredDir", "ModelName",
+      "Pred_PA", "Pred_XY"),
+    future.packages = c(
+      "dplyr", "Matrix", "purrr", "tibble", "Hmsc", "float", "qs",
+      "Rfast", "caret", "pROC", "ecospat", "sf"))
+
+  snow::stopCluster(c1)
+  future::plan("future::sequential", gc = TRUE)
+
+  # # ..................................................................... ###
+
+  # Save predictions for all species in a single file
+  IASDT.R::CatTime("Save predictions for all species in a single file")
+
+  Eval_DT <- dplyr::bind_rows(Eval_DT)
+
+  Predictions <- dplyr::select(Eval_DT, Path_pred, Sp, IAS_ID) %>%
+    dplyr::mutate(
+      Sp_data = purrr::map(
+        .x = Path_pred,
+        .f = ~ {
+          qs::qread(.x) %>%
+            tidyr::pivot_longer(
+              cols = starts_with("Sp_"),
+              names_to = "Species", values_to = "Prediction")
+        })) %>%
+    dplyr::pull(Sp_data) %>%
+    dplyr::bind_rows() %>%
+    tidyr::pivot_wider(names_from = "Species", values_from = "Prediction") %>%
+    dplyr::relocate(gtools::mixedsort(names(.))) %>%
+    dplyr::select(x, y, geometry, tidyselect::everything())
+
+  Pred_File <- file.path(PredDir, paste0("Prediction_", ModelName, ".qs"))
+  qs::qsave(Predictions, file = Pred_File, preset = "fast")
+  fs::file_delete(Eval_DT$Path_pred)
+  IASDT.R::CatTime(
+    paste0("Predictions were saved to `", Pred_File, "`"), Level = 1)
+
+  if (Evaluate) {
+    if (is.null(Evaluate_Name)) {
+      Eval_Path <- file.path(EvalDir, paste0("Eval_", ModelName, ".RData"))
+    } else {
+      Eval_Path <- file.path(
+        EvalDir, paste0("Eval_", ModelName, "_", Evaluate_Name, ".RData"))
+    }
+
+    Eval_DT <- dplyr::select(Eval_DT, -Path_pred)
+    save(Eval_DT, file = Eval_Path)
+    IASDT.R::CatTime(
+      paste0(
+        "Evaluation results were saved to `",
+        file.path(EvalDir, "Eval_DT.RData"), "`"),
+      Level = 1)
+  } else {
+    Eval_Path <- NULL
   }
+
+  if (exists("post_file")) {
+    fs::file_delete(post_file)
+  }
+
+  # # ..................................................................... ###
+
+  IASDT.R::CatDiff(
+    InitTime = .StartTime, Prefix = "Prediction was finished in ")
+
+  # # ..................................................................... ###
+
+  if (is.null(Path_postEtaPred)) {
+    LF_Path <- File_LF
+  } else {
+    LF_Path <- Path_postEtaPred
+  }
+
+  tibble::tibble(
+    Pred_Path = Pred_File, Eval_Path = Eval_Path, LF_Path = LF_Path) %>%
+    return()
 }
+
 
 ## ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 ## ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -621,24 +669,25 @@ get1prediction <- function(
     XB <- XRRR %*% t(sam$wRRR)
   }
 
-  switch(class(X)[1L],
-         matrix = {
-           X1 <- X
-           if (object$ncRRR > 0) {
-             X1 <- cbind(X1, XB)
-           }
-           LFix <- X1 %*% sam$Beta
-         },
-         list = {
-           LFix <- matrix(NA, nyNew, object$ns)
-           for (j in 1:object$ns) {
-             X1 <- X[[j]]
-             if (object$ncRRR > 0) {
-               X1 <- cbind(X1, XB)
-             }
-             LFix[, j] <- X1 %*% sam$Beta[, j]
-           }
-         }
+  switch(
+    class(X)[1L],
+    matrix = {
+      X1 <- X
+      if (object$ncRRR > 0) {
+        X1 <- cbind(X1, XB)
+      }
+      LFix <- X1 %*% sam$Beta
+    },
+    list = {
+      LFix <- matrix(NA, nyNew, object$ns)
+      for (j in 1:object$ns) {
+        X1 <- X[[j]]
+        if (object$ncRRR > 0) {
+          X1 <- cbind(X1, XB)
+        }
+        LFix[, j] <- X1 %*% sam$Beta[, j]
+      }
+    }
   )
 
   LRan <- vector("list", object$nr)
@@ -654,7 +703,7 @@ get1prediction <- function(
       for (k in 1:rL[[r]]$xDim) {
         LRan[[r]] <- LRan[[r]] +
           (Eta[[r]][as.character(dfPiNew[, r]), ] *
-             rL[[r]]$x[as.character(dfPiNew[, r]), k]) %*%
+            rL[[r]]$x[as.character(dfPiNew[, r]), k]) %*%
           sam$Lambda[[r]][, , k]
       }
     }
@@ -694,7 +743,7 @@ get1prediction <- function(
         for (k in 1:rL[[r]]$xDim) {
           LRan[[r]] <- LRan[[r]] +
             (Eta[[r]][as.character(dfPiNew[, r]), ] *
-               rL[[r]]$x[as.character(dfPiNew[, r]), k]) %*%
+              rL[[r]]$x[as.character(dfPiNew[, r]), k]) %*%
             sam$Lambda[[r]][, , k]
         }
       }

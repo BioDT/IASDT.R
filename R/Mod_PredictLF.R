@@ -43,6 +43,8 @@
 #'   returned. Defaults to `TRUE`. If `Path_postEtaPred` is `NULL`, this
 #'   parameter cannot be set to `FALSE` because the function needs to return the
 #'   result if it is not saved to a file.
+#' @param Verbose Logical. If TRUE, detailed output is printed. Default is
+#'   `FALSE`.
 #' @export
 #' @author This script was adapted from the [Hmsc::predictLatentFactor] function
 #'   in the `Hmsc` package.
@@ -75,9 +77,15 @@ predictLF <- function(
     unitsPred, modelunits, postEta, postAlpha, rL, NCores = 8,
     TempDir = "TEMP2Pred", ModelName = NULL, UseTF = TRUE,
     PythonScript = NULL, EnvPath = NULL, use_single = FALSE,
-    Path_postEtaPred = NULL, Return_postEtaPred = TRUE, nthreads = 5) {
+    Path_postEtaPred = NULL, Return_postEtaPred = TRUE, nthreads = 5,
+    Verbose = TRUE) {
 
   # # ..................................................................... ###
+
+  if (isFALSE(Verbose)) {
+    sink(file = nullfile())
+    on.exit(try(sink(), silent = TRUE), add = TRUE)
+  }
 
   .StartTime <- lubridate::now(tzone = "CET")
 

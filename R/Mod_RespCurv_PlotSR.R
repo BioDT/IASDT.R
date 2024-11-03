@@ -6,8 +6,8 @@
 #'
 #' This function generates and saves species richness response curves as JPEG
 #' images for each variable in the dataset.
-#' @param Path_Model String. The path to the directory containing the models.
-#'   The function reads data from the `Model_Postprocessing/RespCurv_SR`
+#' @param Path_Postprocessing String. The path to the directory for model
+#'   postprocessing. The function reads data from the `RespCurv_SR`
 #'   sub-directory, resulted from [RespCurv_PrepData].
 #' @return This function does not return a value but saves JPEG images of the
 #'   response curves in a subdirectory within the specified path.
@@ -16,7 +16,7 @@
 #' @seealso RespCurv_PlotSp RespCurv_PrepData
 #' @export
 
-RespCurv_PlotSR <- function(Path_Model) {
+RespCurv_PlotSR <- function(Path_Postprocessing) {
 
   # # ..................................................................... ###
 
@@ -24,15 +24,15 @@ RespCurv_PlotSR <- function(Path_Model) {
 
   # # ..................................................................... ###
 
-  if (is.null(Path_Model)) {
-    stop("Path_Model cannot be NULL", call. = FALSE)
+  if (is.null(Path_Postprocessing)) {
+    stop("`Path_Postprocessing` cannot be NULL", call. = FALSE)
   }
 
   # # ..................................................................... ###
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Trend2 <- Variable <- Quant <- Observed <- Trend <- NFV <-
+  Trend2 <- Variable <- Quant <- Observed <- Trend <- NFV <- Coords <-
     RC_Path_SR <- RC_Path_Orig <- RC_Path_Prob <- DT <- data <- XVals <-
     Pred <- Q975 <- Q25 <- Q50 <- X <- Y <- NULL
 
@@ -42,13 +42,14 @@ RespCurv_PlotSR <- function(Path_Model) {
     AllArgs,
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
-  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = "Path_Model")
+  IASDT.R::CheckArgs(
+    AllArgs = AllArgs, Type = "character", Args = "Path_Postprocessing")
   rm(AllArgs)
 
   IASDT.R::CatTime("Check the existence of response curve directory")
   DirsMissing <- c(
-    Path_Model,
-    file.path(Path_Model, "Model_Postprocessing", "RespCurv_DT")) %>%
+    Path_Postprocessing,
+    file.path(Path_Postprocessing, "RespCurv_DT")) %>%
     dir.exists() %>%
     all() %>%
     magrittr::not()
@@ -60,14 +61,13 @@ RespCurv_PlotSR <- function(Path_Model) {
   }
   rm(DirsMissing)
 
-  fs::dir_create(file.path(Path_Model, "Model_Postprocessing", "RespCurv_SR"))
+  fs::dir_create(file.path(Path_Postprocessing, "RespCurv_SR"))
 
   # # ..................................................................... ###
 
   IASDT.R::CatTime("Sequentially create species richness response curves")
 
-  SR_DT_All <- file.path(
-    Path_Model, "Model_Postprocessing/RespCurv_DT/ResCurvDT.RData") %>%
+  SR_DT_All <- file.path(Path_Postprocessing, "RespCurv_DT/ResCurvDT.RData") %>%
     IASDT.R::LoadAs() %>%
     dplyr::select(-RC_Path_Orig, -RC_Path_Prob) %>%
     dplyr::mutate(
@@ -95,7 +95,7 @@ RespCurv_PlotSR <- function(Path_Model) {
         })) %>%
     dplyr::select(-NFV, -RC_Path_SR) %>%
     tidyr::unnest_wider(DT) %>%
-    tidyr::nest(.by = Variable) %>%
+    tidyr::nest(.by = c(Variable, Coords)) %>%
     dplyr::mutate(
       Quant = purrr::map(.x = data, .f = ~ dplyr::bind_rows(.x$Quant)),
       Observed = purrr::map(.x = data, .f = ~ dplyr::bind_rows(.x$Observed)),
@@ -103,15 +103,15 @@ RespCurv_PlotSR <- function(Path_Model) {
     dplyr::select(-data)
 
   # # ..................................................................... ###
+
   # Plot species richness response curves
 
   SR_DT_All <- SR_DT_All %>%
     dplyr::mutate(
       Plot = purrr::pmap(
-        .l = list(Variable, Quant, Observed, Trend),
-        .f = function(Variable, Quant, Observed, Trend) {
-
-          IASDT.R::CatTime(paste0("  >>  ", Variable))
+        .l = list(Variable, Quant, Observed, Trend, Coords),
+        .f = function(Variable, Quant, Observed, Trend, Coords) {
+          IASDT.R::CatTime(paste0("  >>  ", Variable, " - coords=", Coords))
 
           # Maximum value on the y-axis
           PlotMax <- max(Observed$Pred, Quant$Q975) * 1.05
@@ -173,12 +173,12 @@ RespCurv_PlotSR <- function(Path_Model) {
 
           # facetting labels
           Label1 <- paste0(
-            '<span style="font-size:7pt; color:red;"><b>non.focalVariables',
-            '= 1</b></span><br><span style="font-size:5pt;">values of ',
+            '<span style="font-size:8pt; color:red;"><b>non.focalVariables',
+            '= 1</b></span><br><span style="font-size:6pt;">values of ',
             "non-focal variables are set to the most likely value</span>")
           Label2 <- paste0(
-            '<span style="font-size:7pt; color:red;"><b>non.focalVariables',
-            '= 2</b></span><br><span style="font-size:5pt;">values of ',
+            '<span style="font-size:8pt; color:red;"><b>non.focalVariables',
+            '= 2</b></span><br><span style="font-size:6pt;">values of ',
             "non-focal variables are set to the most likely value given the",
             " value of focal variable</span>")
           FacetLabel <- ggplot2::as_labeller(c(`1` = Label1, `2` = Label2))
@@ -187,6 +187,13 @@ RespCurv_PlotSR <- function(Path_Model) {
           TitleTxt <- paste0(
             '<span style="font-size:12pt; color:blue;"><b>',
             "Predicted species richness for ", VarName, "</b></span>")
+
+          Caption <- dplyr::if_else(
+            Coords == "c",
+            "Predictions are made at mean coordinates",
+            paste0(
+              "Predictions are made for infinite coordinates ",
+              "without effect of spatial dependence"))
 
           # Plot
           Plot <- ggplot2::ggplot(
@@ -216,7 +223,7 @@ RespCurv_PlotSR <- function(Path_Model) {
             ggplot2::scale_x_continuous(expand = c(0.015, 0.015)) +
             ggplot2::xlab(Variable2) +
             ggplot2::ylab(YAxisLabel) +
-            ggplot2::labs(title = TitleTxt) +
+            ggplot2::labs(title = TitleTxt, caption = Caption) +
             ggplot2::theme_bw() +
             ggplot2::theme(
               strip.text = ggtext::element_markdown(
@@ -225,6 +232,8 @@ RespCurv_PlotSR <- function(Path_Model) {
               strip.background = ggplot2::element_rect(
                 colour = NA, fill = "white"),
               legend.position = "none",
+              plot.caption = ggplot2::element_text(
+                size = 8, color = "grey", hjust = 0),
               axis.title = ggtext::element_markdown(),
               axis.text = ggplot2::element_text(size = 8),
               plot.title = ggtext::element_markdown(
@@ -241,9 +250,9 @@ RespCurv_PlotSR <- function(Path_Model) {
           # correctly
           grDevices::jpeg(
             filename = file.path(
-              Path_Model, "Model_Postprocessing/RespCurv_SR",
-              paste0("RespCurv_SR_", Variable, ".jpeg")),
-            width = 22, height = 12.5, units = "cm", quality = 100, res = 600)
+              Path_Postprocessing, "RespCurv_SR",
+              paste0("RespCurv_SR_", Variable, "_Coords_", Coords, ".jpeg")),
+            width = 20, height = 12.5, units = "cm", quality = 100, res = 600)
           print(Plot)
           grDevices::dev.off()
           return(invisible(NULL))
@@ -251,8 +260,7 @@ RespCurv_PlotSR <- function(Path_Model) {
 
   save(
     SR_DT_All,
-    file = file.path(
-      Path_Model, "Model_Postprocessing/RespCurv_SR/SR_DT_All.RData"))
+    file = file.path(Path_Postprocessing, "RespCurv_SR/SR_DT_All.RData"))
 
   # # ..................................................................... ###
 

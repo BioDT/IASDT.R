@@ -7,8 +7,8 @@
 #' Generates and saves response curve plots for species based on environmental
 #' variables and other factors. Plots show predicted habitat suitability across
 #' different values of each variable.
-#' @param Path_Model String. The path to the directory containing the models.
-#'   The function reads data from the `Model_Postprocessing/RespCurv_SR`
+#' @param Path_Postprocessing String. The path to the directory for model
+#'   postprocessing. The function reads data from the `RespCurv_Sp`
 #'   sub-directory, resulted from [RespCurv_PrepData].
 #' @param NCores Integer. Number of cores to use for parallel processing.
 #'   Defaults to 20.
@@ -28,7 +28,7 @@
 #' @name RespCurv_PlotSp
 
 RespCurv_PlotSp <- function(
-    Path_Model = NULL, NCores = 20, EnvFile = ".env", SaveGG = FALSE,
+    Path_Postprocessing = NULL, NCores = 20, EnvFile = ".env", SaveGG = FALSE,
     ShowProgress = FALSE, FromHPC = TRUE, ReturnData = FALSE) {
 
   # # ..................................................................... ###
@@ -37,15 +37,15 @@ RespCurv_PlotSp <- function(
 
   # # ..................................................................... ###
 
-  if (is.null(Path_Model)) {
-    stop("Path_Model cannot be NULL", call. = FALSE)
+  if (is.null(Path_Postprocessing)) {
+    stop("`Path_Postprocessing` cannot be NULL", call. = FALSE)
   }
 
   # # ..................................................................... ###
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  RC_Path_Orig <- RC_Path_SR <- RC_Path_Prob <- NFV <- Species <-
+  RC_Path_Prob <- NFV <- Species <- Coords <- Data <- PlotData <-
     DT <- Variable <- VariableDesc <- Trend2 <- PositiveTrendProb <-
     VariableDesc <- Pred <- XVals <- PlotData_Quant <- Quantile <-
     Observed_PA <- Col <- Q975 <- Q25 <- Q50 <- X <- Y <- IAS_ID <- NULL
@@ -59,7 +59,8 @@ RespCurv_PlotSp <- function(
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "character", Args = c("Path_Model", "EnvFile"))
+    AllArgs = AllArgs, Type = "character",
+    Args = c("Path_Postprocessing", "EnvFile"))
 
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "numeric", Args = "NCores")
 
@@ -67,7 +68,7 @@ RespCurv_PlotSp <- function(
     AllArgs = AllArgs, Type = "logical", Args = c("SaveGG", "ShowProgress"))
   rm(AllArgs)
 
-  fs::dir_create(file.path(Path_Model, "Model_Postprocessing", "RespCurv_Sp"))
+  fs::dir_create(file.path(Path_Postprocessing, "RespCurv_Sp"))
 
   # # ..................................................................... ###
 
@@ -88,27 +89,29 @@ RespCurv_PlotSp <- function(
     on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
   }
 
-  Path_RespCurv_Sp <- file.path(
-    Path_Model, "Model_Postprocessing", "RespCurv_Sp")
+  Path_RespCurv_Sp <- file.path(Path_Postprocessing, "RespCurv_Sp")
   fs::dir_create(Path_RespCurv_Sp)
 
+
   Sp_DT_All <- file.path(
-    Path_Model, "Model_Postprocessing", "RespCurv_DT", "ResCurvDT.RData") %>%
+    Path_Postprocessing, "RespCurv_DT", "ResCurvDT.RData") %>%
     IASDT.R::LoadAs() %>%
-    dplyr::select(-RC_Path_Orig, -RC_Path_SR) %>%
-    dplyr::pull(RC_Path_Prob) %>%
-    furrr::future_map_dfr(
-      .f =  ~dplyr::select(IASDT.R::LoadAs(.x), -PlotData),
-      .options = furrr::furrr_options(seed = TRUE, scheduling = Inf),
-      .progress = ShowProgress) %>%
+    dplyr::select(Coords, RC_Path_Prob) %>%
+    dplyr::mutate(
+      Data = furrr::future_map(
+        .x = RC_Path_Prob, .f = IASDT.R::LoadAs,
+        .options = furrr::furrr_options(seed = TRUE, scheduling = Inf),
+        .progress = ShowProgress)) %>%
+    tidyr::unnest(Data) %>%
+    dplyr::select(-RC_Path_Prob, -PlotData) %>%
     tidyr::nest(
-      DT = tidyselect::everything(), .by = c(NFV, Species)) %>%
+      DT = tidyselect::everything(), .by = c(NFV, Coords, Species)) %>%
     dplyr::mutate(
       Plot = furrr::future_pmap(
-        .l = list(NFV, Species, DT),
-        .f = function(NFV, Species, DT) {
-
-          FilePrefix <- paste0("RespCurv_", Species, "_NFV_", NFV)
+        .l = list(NFV, Coords, Species, DT),
+        .f = function(NFV, Coords, Species, DT) {
+          FilePrefix <- paste0(
+            "RespCurv_", Species, "_NFV_", NFV, "_Coords_", Coords)
           Path_JPEG <- file.path(Path_RespCurv_Sp, paste0(FilePrefix, ".jpeg"))
 
           DT <- DT %>%
@@ -176,7 +179,7 @@ RespCurv_PlotSp <- function(
               c("Variable", "VariableDesc", "XVals", "Q25", "Q50", "Q975"))
 
           ObsPA <- DT %>%
-            dplyr::select(Variable,  VariableDesc, PA = Observed_PA) %>%
+            dplyr::select(Variable, VariableDesc, PA = Observed_PA) %>%
             tidyr::unnest(cols = "PA") %>%
             dplyr::mutate(
               Col = dplyr::if_else(Pred == 1, "red", "darkgreen"),
@@ -184,16 +187,6 @@ RespCurv_PlotSp <- function(
                 Pred == 1 ~ 0.97, Pred == 0 ~ 0.03, .default = Pred))
 
           Species2 <- dplyr::filter(SpeciesNames, IAS_ID == !!Species)
-
-          SubTitleTxt <- dplyr::if_else(
-            NFV == 1,
-            paste0(
-              "non-focal variables are set to most likely value <i>",
-              "[non.focalVariables = 1]</i>"),
-            paste0(
-              "non-focal variables are set to most likely value given ",
-              "the value of focal variable <i>[non.focalVariables = ",
-              "2]</i>"))
 
           TitleTxt <- paste0(
             '<span style="font-size:13pt;">',
@@ -205,7 +198,24 @@ RespCurv_PlotSp <- function(
             "  &#8212; <b>Family:</b> ", Species2$Family,
             "  &#8212; <b>ID:</b></span>",
             '<span style="font-size:8pt; color:blue;"> ',
-            Species,  '</span><span style="font-size:8pt;">)</span>')
+            Species, '</span><span style="font-size:8pt;">)</span>')
+
+          SubTitleTxt <- dplyr::if_else(
+            NFV == 1,
+            paste0(
+              "Non-focal variables are set to most likely value <i>",
+              "[non.focalVariables = 1]</i>"),
+            paste0(
+              "Non-focal variables are set to most likely value given ",
+              "the value of focal variable <i>[non.focalVariables = ",
+              "2]</i>"))
+
+          Caption <- dplyr::if_else(
+            Coords == "c", "Predictions are made at mean coordinates",
+            paste0(
+              "Predictions are made for infinite coordinates ",
+              "without effect of spatial dependence"))
+          Caption <- paste0(Caption, "<br>", SubTitleTxt)
 
           Plot <- ggplot2::ggplot(
             data = ObsPA,
@@ -213,11 +223,11 @@ RespCurv_PlotSp <- function(
             ggplot2::geom_jitter(
               shape = 16, width = 0, height = 0.02, alpha = 0.4, size = 1) +
             ggplot2::geom_line(
-              ggplot2::aes(x = XVals, y = Q975), data = Quant,
-              linetype = 2, linewidth = 0.3, colour = "blue") +
+              ggplot2::aes(x = XVals, y = Q975), data = Quant, linetype = 2,
+              linewidth = 0.3, colour = "blue") +
             ggplot2::geom_line(
-              ggplot2::aes(x = XVals, y = Q25), data = Quant,
-              linetype = 2, linewidth = 0.3, colour = "blue") +
+              ggplot2::aes(x = XVals, y = Q25), data = Quant, linetype = 2,
+              linewidth = 0.3, colour = "blue") +
             ggplot2::geom_ribbon(
               data = Quant, ggplot2::aes(x = XVals, ymin = Q25, ymax = Q975),
               inherit.aes = FALSE, fill = "blue", alpha = 0.1) +
@@ -237,7 +247,7 @@ RespCurv_PlotSp <- function(
               scales = "free_x", nrow = 3, ncol = 3) +
             ggplot2::xlab("Predictor value") +
             ggplot2::ylab("Predicted habitat suitability") +
-            ggplot2::labs(title = TitleTxt, subtitle = SubTitleTxt) +
+            ggplot2::labs(title = TitleTxt, caption = Caption) +
             ggplot2::theme_bw() +
             ggplot2::theme(
               strip.text = ggtext::element_markdown(
@@ -250,6 +260,8 @@ RespCurv_PlotSp <- function(
               axis.text = ggplot2::element_text(size = 8),
               plot.title = ggtext::element_markdown(
                 size = 24, margin = ggplot2::margin(1, 0, 1, 0), hjust = 0),
+              plot.caption = ggtext::element_markdown(
+                size = 12, color = "grey", hjust = 0),
               plot.subtitle = ggtext::element_markdown(
                 size = 10, colour = "darkgrey", hjust = 0,
                 margin = ggplot2::margin(2, 0, 2, 0)),
@@ -257,6 +269,7 @@ RespCurv_PlotSp <- function(
               panel.grid.minor = ggplot2::element_line(linewidth = 0.1),
               panel.spacing = ggplot2::unit(0.15, "lines"),
               plot.margin = ggplot2::unit(c(0.1, 0.2, 0.1, 0.2), "lines"))
+
 
           # Using ggplot2::ggsave directly does not show non-ascii characters
           # correctly
@@ -267,8 +280,7 @@ RespCurv_PlotSp <- function(
           grDevices::dev.off()
 
           if (SaveGG) {
-            PathGG <- file.path(
-              Path_Model, "Model_Postprocessing", "RespCurv_Sp_GG")
+            PathGG <- file.path(Path_Postprocessing, "RespCurv_Sp_GG")
             fs::dir_create(PathGG)
             Path_GG <- file.path(PathGG, paste0(FilePrefix, ".RData"))
             IASDT.R::SaveAs(
@@ -281,7 +293,8 @@ RespCurv_PlotSp <- function(
           return(OutDF)
         },
         .options = furrr::furrr_options(seed = TRUE, scheduling = Inf),
-        .progress = ShowProgress)) %>%
+        .progress = ShowProgress
+      )) %>%
     dplyr::select(-DT) %>%
     tidyr::unnest(cols = "Plot")
 

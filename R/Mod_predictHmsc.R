@@ -30,12 +30,11 @@
 #' @param expected boolean flag indicating whether to return the location
 #'   parameter of the observation models or sample the values from those.
 #' @param \dots other arguments passed to functions.
+#' @param Verbose Logical. If TRUE, detailed output is printed. Default is
+#'   `FALSE`.
 #' @inheritParams predictLF
 #' @export
 
-# 'Loff' 'PredDir' 'Evaluate' 'Evaluate_Name' 'EvalDir' 'RC_I'
-# 'Pred_PA' 'Pred_XY'
-# File_LF
 
 predictHmsc <- function(
     object,
@@ -50,7 +49,15 @@ predictHmsc <- function(
     UseTF = TRUE, PythonScript = NULL, EnvPath = NULL, use_single = FALSE,
     Path_postEtaPred = NULL,
     Return_postEtaPred = TRUE,
-    File_LF = NULL, nthreads = 5, ...) {
+    File_LF = NULL, nthreads = 5, Verbose = TRUE, ...) {
+
+
+  # # ..................................................................... ###
+
+  if (isFALSE(Verbose)) {
+    sink(file = nullfile())
+    on.exit(try(sink(), silent = TRUE), add = TRUE)
+  }
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -268,8 +275,6 @@ predictHmsc <- function(
           expr = structure(
             rep(0, nLF), dim = c(1L, nLF), dimnames = list("new_unit", NULL)),
           simplify = FALSE)
-
-        # print(str(predPostEta,2))
       }
       CalcLF <- FALSE
     }
@@ -309,8 +314,7 @@ predictHmsc <- function(
         IASDT.R::CatTime("LF prediction using `predictLF`", Level = 1)
       }
 
-      # IASDT.R::
-      predPostEta[[r]] <- predictLF(
+      predPostEta[[r]] <- IASDT.R::predictLF(
         unitsPred = levels(dfPiNew[, r]),
         modelunits = levels(object$dfPi[, r]),
         postEta = postEta_file, postAlpha = postAlpha, rL = rL[[r]],
@@ -323,7 +327,6 @@ predictHmsc <- function(
       rm(postEta_file)
 
       rowNames <- rownames(predPostEta[[r]][[1]])
-      # PiNew[,r] = sapply(dfPiNew[,r], function(s) which(rowNames==s))
       PiNew[, r] <- fastmatch::fmatch(dfPiNew[, r], rowNames)
     }
 

@@ -92,9 +92,9 @@ RespCurv_PrepData <- function(
 
   # # ..................................................................... ###
 
-  # PrepRCData_Int -------
+  # PrepRCData -------
 
-  PrepRCData_Int <- function(ID) {
+  PrepRCData <- function(ID) {
     Variable <- ResCurvDT$VarName[[ID]]
     RC_DT_Name <- ResCurvDT$RC_DT_Name[[ID]]
     Coords <- ResCurvDT$Coords[[ID]]
@@ -104,13 +104,21 @@ RespCurv_PrepData <- function(
     RC_DT_Path_Orig <- ResCurvDT$RC_DT_Path_Orig[[ID]]
     # Path for plotting data: probability of occurrence
     RC_DT_Path_Prob <- ResCurvDT$RC_DT_Path_Prob[[ID]]
+    RC_DT_Path_Prob_Samples <- stringr::str_replace(
+      RC_DT_Path_Prob, ".RData$", "_Samples.RData")
+
     # Path for plotting data: Species richness
     RC_DT_Path_SR <- ResCurvDT$RC_DT_Path_SR[[ID]]
+    RC_DT_Path_SR_Samples <- stringr::str_replace(
+      RC_DT_Path_SR, ".RData$", "_Samples.RData")
 
     OutputTibble <- tibble::tibble(
       Variable = Variable, NFV = NFV, Coords = Coords,
-      RC_Path_Orig = RC_DT_Path_Orig, RC_Path_Prob = RC_DT_Path_Prob,
-      RC_Path_SR = RC_DT_Path_SR)
+      RC_Path_Orig = RC_DT_Path_Orig,
+      RC_Path_Prob = RC_DT_Path_Prob,
+      RC_DT_Path_Prob_Samples = RC_DT_Path_Prob_Samples,
+      RC_Path_SR = RC_DT_Path_SR,
+      RC_DT_Path_SR_Samples = RC_DT_Path_SR_Samples)
 
     OutFilesExists <- c(RC_DT_Path_Orig, RC_DT_Path_Prob, RC_DT_Path_SR) %>%
       file.exists() %>%
@@ -175,10 +183,10 @@ RespCurv_PrepData <- function(
           cols = c(-XVals, -SampleID),
           names_to = "Species", values_to = "Pred") %>%
         dplyr::arrange(Species, XVals, SampleID) %>%
-        tidyr::nest(PlotData = -Species) %>%
+        tidyr::nest(SamplesData = -Species) %>%
         dplyr::mutate(
           PlotData_Quant = purrr::map(
-            .x = PlotData,
+            .x = SamplesData,
             .f = ~ {
               dplyr::reframe(
                 .x, Pred = stats::quantile(Pred, Probabilities),
@@ -193,7 +201,7 @@ RespCurv_PrepData <- function(
 
           # Positive trend probability
           PositiveTrendProb = purrr::map_dbl(
-            .x = PlotData,
+            .x = SamplesData,
             .f = ~ {
               dplyr::group_by(.x, SampleID) %>%
                 dplyr::reframe(MM = dplyr::last(Pred) > dplyr::first(Pred)) %>%
@@ -204,18 +212,25 @@ RespCurv_PrepData <- function(
           Variable = Variable, NFV = ResCurvDT$NFV[[ID]], .before = 1)
 
       # Save data
+      RC_Data_Prob_Samples <- RC_Data_Prob
+      IASDT.R::SaveAs(
+        InObj = RC_Data_Prob_Samples,
+        OutObj = paste0(RC_DT_Name, "_Prob_Samples"),
+        OutPath = RC_DT_Path_Prob_Samples)
+
+      RC_Data_Prob <- dplyr::select(RC_Data_Prob, -SamplesData)
       IASDT.R::SaveAs(
         InObj = RC_Data_Prob, OutObj = paste0(RC_DT_Name, "_Prob"),
         OutPath = RC_DT_Path_Prob)
 
-      rm(Preds, RC_Data_Prob)
+      rm(Preds, RC_Data_Prob, RC_Data_Prob_Samples)
 
       # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
       # Prepare plotting data: Species richness
       # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
       # predicted species richness
-      RC_Data_SR <- purrr::map_dfr(
+      SamplesData <- purrr::map_dfr(
         .x = seq_len(ncol(Pred_SR)),
         .f = ~ tibble::tibble(
           XVals = XVals, SampleID = .x, SR = Pred_SR[, .x])) %>%
@@ -223,12 +238,12 @@ RespCurv_PrepData <- function(
 
       # Quantiles of species richness
       RC_Data_SR_Quant <- dplyr::reframe(
-        RC_Data_SR,
+        SamplesData,
         SR = stats::quantile(SR, Probabilities),
         Quantile = Probabilities, .by = XVals)
 
       # Trend of the species richness
-      SR_PositiveTrendProb <- RC_Data_SR %>%
+      SR_PositiveTrendProb <- SamplesData %>%
         dplyr::group_by(SampleID) %>%
         dplyr::reframe(MM = dplyr::last(SR) > dplyr::first(SR)) %>%
         dplyr::pull(MM) %>%
@@ -240,7 +255,7 @@ RespCurv_PrepData <- function(
 
       # Save species richness data
       RC_Data_SR <- list(
-        Variable = Variable, NFV = ResCurvDT$NFV[[ID]], RC_Data_SR = RC_Data_SR,
+        Variable = Variable, NFV = ResCurvDT$NFV[[ID]],
         RC_Data_SR_Quant = RC_Data_SR_Quant, Observed_SR = Observed_SR,
         SR_PositiveTrendProb = SR_PositiveTrendProb)
 
@@ -248,7 +263,19 @@ RespCurv_PrepData <- function(
         InObj = RC_Data_SR, OutObj = paste0(RC_DT_Name, "_SR"),
         OutPath = RC_DT_Path_SR)
 
-      rm(RC_Data_SR, RC_Data_SR_Quant, Observed_SR, SR_PositiveTrendProb)
+      RC_Data_SR_Samples <- list(
+        Variable = Variable, NFV = ResCurvDT$NFV[[ID]],
+        RC_Data_SR = RC_Data_SR,
+        RC_Data_SR_Quant = RC_Data_SR_Quant, Observed_SR = Observed_SR,
+        SR_PositiveTrendProb = SR_PositiveTrendProb)
+
+      IASDT.R::SaveAs(
+        InObj = RC_Data_SR_Samples, OutObj = paste0(RC_DT_Name, "_SR_Samples"),
+        OutPath = RC_DT_Path_SR_Samples)
+
+
+      rm(RC_Data_SR, RC_Data_SR_Quant, Observed_SR,
+         RC_Data_SR_Samples, SR_PositiveTrendProb)
     }
 
     invisible(gc())
@@ -322,8 +349,7 @@ RespCurv_PrepData <- function(
     IASDT.R::CatTime(
       "All response curve data files were already available on disk",
       Level = 1)
-    ResCurvDT <- purrr::map_dfr(
-      .x = seq_len(nrow(ResCurvDT)), .f = PrepRCData_Int)
+    ResCurvDT <- purrr::map_dfr(.x = seq_len(nrow(ResCurvDT)), .f = PrepRCData)
   } else {
     if (all(!ResCurvDT$FileExists)) {
       IASDT.R::CatTime(
@@ -389,12 +415,11 @@ RespCurv_PrepData <- function(
 
     ResCurvDT <- future.apply::future_lapply(
       X = seq_len(nrow(ResCurvDT)),
-      FUN = PrepRCData_Int,
-      future.seed = TRUE,
+      FUN = PrepRCData, future.seed = TRUE,
       future.packages = c(
         "dplyr", "purrr", "tidyr", "abind", "Hmsc", "parallel"),
       future.globals = c(
-        "ResCurvDT", "Model", "PrepRCData_Int", "ngrid", "Probabilities",
+        "ResCurvDT", "Model", "PrepRCData", "ngrid", "Probabilities",
         "File_LF", "UseTF", "EnvPath")) %>%
       dplyr::bind_rows()
 

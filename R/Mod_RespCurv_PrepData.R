@@ -377,12 +377,24 @@ RespCurv_PrepData <- function(
       hM = Model, focalVariable = ResCurvDT$Variable[1],
       non.focalVariables = 1, ngrid = 20, coordinates = list(sample = "c"))
 
+    # The `Model` object is distributed twice to cores when available on the
+    # function environment. Here, I delete the Model object and it will be
+    # loaded later after finishing the `predictHmsc` function.
+    rm(Model)
+    invisible(gc())
+
     File_LF <- file.path(Path_RespCurvDT, "ResCurvLF.RData")
     Model_LF <- IASDT.R::predictHmsc(
-      object = Model, Gradient = Gradient_c, expected = TRUE, NCores = NCores,
-      TempDir = TempDir, ModelName = "RC_c", RC = "c", UseTF = UseTF,
-      EnvPath = EnvPath, Path_postEtaPred = File_LF, Verbose = Verbose)
+      object = Path_Model, Gradient = Gradient_c, expected = TRUE,
+      NCores = NCores, TempDir = TempDir, ModelName = "RC_c", RC = "c",
+      UseTF = UseTF, EnvPath = EnvPath, Path_postEtaPred = File_LF,
+      Verbose = Verbose)
+
+    invisible(gc())
     rm(Model_LF, Gradient_c)
+
+    # Loading the model object again
+    Model <- IASDT.R::LoadAs(Path_Model)
 
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
     # Prepare working on parallel

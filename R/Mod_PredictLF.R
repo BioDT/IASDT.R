@@ -227,9 +227,9 @@ predictLF <- function(
   # # ..................................................................... ###
 
   # Convert postAlpha to tibble
-  IASDT.R::CatTime(
-    paste0("Prepare data for parallel processing using ", NCores, " cores"),
-    Level = 1)
+
+  IASDT.R::CatTime("Prepare data for parallel processing", Level = 1)
+
   postAlpha_tibble <- do.call(rbind, postAlpha) %>%
     as.data.frame() %>%
     tibble::tibble() %>%
@@ -409,7 +409,9 @@ predictLF <- function(
   # # ..................................................................... ###
 
   #
-  IASDT.R::CatTime(paste0("Predicting Latent Factor in parallel"), Level = 1)
+  IASDT.R::CatTime(
+    paste0("Predicting Latent Factor in parallel using ", NCores, " cores"),
+    Level = 1)
 
   withr::local_options(
     future.globals.maxSize = 8000 * 1024^2,

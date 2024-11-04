@@ -305,6 +305,7 @@ predictLF <- function(
 
     if (Denom > 0) {
       if (UseTF) {
+
         # Use TensorFlow
 
         # Activate the python environment
@@ -340,6 +341,9 @@ predictLF <- function(
           dplyr::select(c("SampleID", "etaPred", "Unit_ID")) %>%
           dplyr::mutate(Unit_ID = factor(Unit_ID, levels = unitsPred)) %>%
           dplyr::arrange(SampleID, Unit_ID, etaPred)
+
+        return(etaPred)
+
       } else {
         # Use R / CPP
 
@@ -371,11 +375,12 @@ predictLF <- function(
           }) %>%
           dplyr::mutate(Unit_ID = factor(Unit_ID, levels = unitsPred)) %>%
           dplyr::arrange(SampleID, Unit_ID, etaPred)
+
+        return(etaPred)
       }
     } else {
 
       # Handle cases where Denom is zero by setting `eta_indNew` to zero
-
       postEta0 <- IASDT.R::LoadAs(File, nthreads = nthreads)
 
       etaPred <- purrr::map_dfr(
@@ -390,9 +395,12 @@ predictLF <- function(
         }) %>%
         dplyr::mutate(Unit_ID = factor(Unit_ID, levels = unitsPred)) %>%
         dplyr::arrange(SampleID, Unit_ID, etaPred)
+
+      return(etaPred)
     }
 
     # clean up
+    invisible(gc())
     fs::file_delete(File)
 
     return(etaPred)
@@ -421,6 +429,9 @@ predictLF <- function(
     future.packages = c(
       "Rcpp", "RcppArmadillo", "dplyr", "tidyr", "tibble",
       "Matrix", "Hmsc", "qs", "fs", "purrr"))
+
+  snow::stopCluster(c1)
+  future::plan("future::sequential", gc = TRUE)
 
   IASDT.R::CatTime("Merge results", Level = 1)
   # Merge results

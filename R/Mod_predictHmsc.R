@@ -573,6 +573,8 @@ predictHmsc <- function(
         RMSE <- TjurR2 <- AUC <- Boyce <- NA_real_
       }
 
+      invisible(gc())
+
       tibble::tibble(
         Sp = Sp, IAS_ID = IAS_ID, Path_pred = PredSummaryFile,
         RMSE = RMSE, AUC = AUC, Boyce = Boyce, TjurR2 = TjurR2) %>%

@@ -250,6 +250,9 @@ RespCurv_PrepData <- function(
 
       rm(RC_Data_SR, RC_Data_SR_Quant, Observed_SR, SR_PositiveTrendProb)
     }
+
+    invisible(gc())
+
     return(OutputTibble)
   }
 
@@ -342,7 +345,8 @@ RespCurv_PrepData <- function(
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
     IASDT.R::InfoChunk(
-      Message = "Get LF prediction for the model", Date = FALSE, Extra2 = 1)
+      Message = "Get LF prediction at mean coordinates",
+      Date = FALSE, Extra2 = 1)
     Gradient_c <- Hmsc::constructGradient(
       hM = Model, focalVariable = ResCurvDT$Variable[1],
       non.focalVariables = 1, ngrid = 20, coordinates = list(sample = "c"))
@@ -362,7 +366,6 @@ RespCurv_PrepData <- function(
       Message = "Prepare response curve data", Date = FALSE, Extra2 = 1)
 
     NCores <- max(min(NCores, MissingRows), 1)
-
     IASDT.R::CatTime(
       paste0("Prepare working on parallel, using ", NCores, " cores"))
 
@@ -399,6 +402,7 @@ RespCurv_PrepData <- function(
       snow::stopCluster(c1)
       future::plan("future::sequential", gc = TRUE)
     }
+    invisible(gc())
   }
 
   # # ..................................................................... ###

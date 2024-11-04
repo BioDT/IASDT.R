@@ -120,6 +120,10 @@ RespCurv_PlotSR <- function(Path_Postprocessing, Verbose = TRUE, NCores = 8) {
       Trend = purrr::map(.x = data, .f = ~ dplyr::bind_rows(.x$Trend))) %>%
     dplyr::select(-data)
 
+  snow::stopCluster(c1)
+  future::plan("future::sequential", gc = TRUE)
+  invisible(gc())
+
   # # ..................................................................... ###
 
   # Plot species richness response curves
@@ -370,7 +374,7 @@ RespCurv_PlotSR <- function(Path_Postprocessing, Verbose = TRUE, NCores = 8) {
               width = 20, height = 12.5, units = "cm", quality = 100, res = 600)
             print(Plot2)
             grDevices::dev.off()
-            }
+          }
 
           return(invisible(NULL))
         }))

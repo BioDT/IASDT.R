@@ -109,6 +109,7 @@ RespCurv_PlotSp <- function(
 
   snow::stopCluster(c1)
   future::plan("future::sequential", gc = TRUE)
+  invisible(gc())
 
   # # ..................................................................... ###
 
@@ -357,6 +358,8 @@ RespCurv_PlotSp <- function(
     snow::stopCluster(c1)
     future::plan("future::sequential", gc = TRUE)
   }
+
+  invisible(gc())
 
   # # ..................................................................... ###
 

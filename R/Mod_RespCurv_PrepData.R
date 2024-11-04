@@ -370,31 +370,49 @@ RespCurv_PrepData <- function(
     # Get LF prediction for the model
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-    IASDT.R::InfoChunk(
-      Message = "Get LF prediction at mean coordinates",
-      Date = FALSE, Extra2 = 1)
-    Gradient_c <- Hmsc::constructGradient(
-      hM = Model, focalVariable = ResCurvDT$Variable[1],
-      non.focalVariables = 1, ngrid = 20, coordinates = list(sample = "c"))
+    File_LF <- file.path(Path_RespCurvDT, "ResCurv_LF.RData")
 
-    # The `Model` object is distributed twice to cores when available on the
-    # function environment. Here, I delete the Model object and it will be
-    # loaded later after finishing the `predictHmsc` function.
-    rm(Model)
-    invisible(gc())
+    if (isFALSE(IASDT.R::CheckRData(File_LF))) {
 
-    File_LF <- file.path(Path_RespCurvDT, "ResCurvLF.RData")
-    Model_LF <- IASDT.R::predictHmsc(
-      object = Path_Model, Gradient = Gradient_c, expected = TRUE,
-      NCores = NCores, TempDir = TempDir, ModelName = "RC_c", RC = "c",
-      UseTF = UseTF, EnvPath = EnvPath, Path_postEtaPred = File_LF,
-      Verbose = Verbose)
+      IASDT.R::InfoChunk(
+        Message = "Get LF prediction at mean coordinates",
+        Date = FALSE, Extra2 = 1)
 
-    invisible(gc())
-    rm(Model_LF, Gradient_c)
+      IASDT.R::CatTime("Create gradient")
+      Gradient_c <- Hmsc::constructGradient(
+        hM = Model, focalVariable = ResCurvDT$Variable[1],
+        non.focalVariables = 1, ngrid = 20, coordinates = list(sample = "c"))
 
-    # Loading the model object again
-    Model <- IASDT.R::LoadAs(Path_Model)
+      # The `Model` object is distributed twice to cores when available on the
+      # function environment. Here, I delete the Model object and it will be
+      # loaded later after finishing the `predictHmsc` function.
+      IASDT.R::CatTime("Remove model object to improve parallel computations")
+      rm(Model)
+      invisible(gc())
+
+      IASDT.R::CatTime(
+        "Get Latent Factor prediction at mean coordinates", ... = "\n")
+      Model_LF <- IASDT.R::predictHmsc(
+        object = Path_Model, Gradient = Gradient_c, expected = TRUE,
+        NCores = NCores, TempDir = TempDir, ModelName = "RC_c", RC = "c",
+        UseTF = UseTF, EnvPath = EnvPath, LF_OutFile = File_LF,
+        Verbose = Verbose)
+
+      invisible(gc())
+      rm(Model_LF, Gradient_c)
+
+      # Loading the model object again
+      IASDT.R::CatTime("Loading the model object", ... = "\n")
+      Model <- IASDT.R::LoadAs(Path_Model)
+
+    } else {
+
+      IASDT.R::CatTime(
+        paste0(
+          "File containing LF prediction is available and will be used ",
+          "for predicting response curves"))
+    }
+
 
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
     # Prepare working on parallel

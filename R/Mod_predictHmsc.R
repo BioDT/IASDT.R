@@ -58,17 +58,13 @@
 predictHmsc <- function(
     object,
     Loff = NULL, XData = NULL, X = NULL, XRRRData = NULL, XRRR = NULL,
-    Gradient = NULL, Yc = NULL, mcmcStep = 1, expected = TRUE,
-
-    NCores = 1,
+    Gradient = NULL, Yc = NULL, mcmcStep = 1, expected = TRUE, NCores = 8,
     TempDir = "TEMP2Pred", PredDir = "Model_Predictions",
     Evaluate = FALSE, Evaluate_Name = NULL, EvalDir = "Eval",
     ModelName = "Train", RC = NULL, Pred_PA = NULL, Pred_XY = NULL,
-
     UseTF = TRUE, PythonScript = NULL, EnvPath = NULL, use_single = FALSE,
-    LF_OutFile = NULL,
-    LF_Return = TRUE,
-    LF_InputFile = NULL, nthreads = 5, Verbose = TRUE, ...) {
+    LF_OutFile = NULL, LF_Return = TRUE, LF_InputFile = NULL, nthreads = 5,
+    Verbose = TRUE, ...) {
 
   # # ..................................................................... ###
 

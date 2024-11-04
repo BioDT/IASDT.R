@@ -11,15 +11,13 @@ predictLF(
   postAlpha,
   rL,
   NCores = 8,
-  TempDir = "TEMP2Pred",
-  ModelName = NULL,
+  Temp_Dir = "TEMP2Pred",
+  Model_Name = NULL,
   UseTF = TRUE,
-  PythonScript = NULL,
-  EnvPath = NULL,
-  use_single = FALSE,
+  TF_Environ = NULL,
+  TF_use_single = FALSE,
   LF_OutFile = NULL,
   LF_Return = TRUE,
-  nthreads = 5,
   Verbose = TRUE
 )
 }
@@ -42,24 +40,20 @@ structure}
 \item{NCores}{Integer specifying the number of cores to use for parallel
 processing. Defaults to 8.}
 
-\item{TempDir}{Character string specifying the path for temporary storage of
+\item{Temp_Dir}{Character string specifying the path for temporary storage of
 intermediate files.}
 
-\item{ModelName}{Character string used as a prefix for temporary file names.
+\item{Model_Name}{Character string used as a prefix for temporary file names.
 Defaults to NULL, in which case no prefix is used.}
 
 \item{UseTF}{Logical indicating whether to use TensorFlow for calculations.
 Defaults to TRUE.}
 
-\item{PythonScript}{Character string specifying the path to the Python script
-file containing the \code{crossprod_solve} function. Defaults to the path of the
-file included in the package.}
-
-\item{EnvPath}{Character string specifying the path to the Python
+\item{TF_Environ}{Character string specifying the path to the Python
 environment. Defaults to NULL. This argument is required if \code{UseTF} is
 TRUE.}
 
-\item{use_single}{Logical indicating whether to use single precision for the
+\item{TF_use_single}{Logical indicating whether to use single precision for the
 TF calculations. Defaults to \code{FALSE}.}
 
 \item{LF_OutFile}{Character string specifying the path to save the outputs.
@@ -70,9 +64,6 @@ file. This should end with either \code{qs} or \code{RData}.}
 returned. Defaults to \code{TRUE}. If \code{LF_OutFile} is \code{NULL}, this parameter
 cannot be set to \code{FALSE} because the function needs to return the result if
 it is not saved to a file.}
-
-\item{nthreads}{Number of threads to use when reading \code{qs} files. Default 5;
-see \link[qs:qread]{qs::qread}.}
 
 \item{Verbose}{Logical. If TRUE, detailed output is printed. Default is
 \code{FALSE}.}
@@ -95,10 +86,8 @@ The main difference is that this function:
 \item it is possible to use TensorFlow (\code{UseTF} argument) to make matrix
 calculations faster, particularly when used on GPU. The following modules
 are needed: \code{numpy}, \code{os}, \code{tensorflow}, \code{rdata}, \code{xarray}, and \code{pandas}.
-To use \code{TensorFlow}, the argument \code{EnvPath} should be set to the path of a
-Python environment with TensorFlow installed and \code{PythonScript} can
-optionally be set to the path of the Python script file containing the
-\code{crossprod_solve} function; otherwise, it will be loaded from the package;
+To use \code{TensorFlow}, the argument \code{TF_Environ} should be set to the path of a
+Python environment with TensorFlow installed;
 \item if \code{UseTF} is set to \code{FALSE}, the function uses R / CPP code in the
 calculations;
 \item the input \code{postEta} can be either a list or a file path for it, which can

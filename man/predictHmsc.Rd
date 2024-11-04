@@ -15,26 +15,23 @@ predictHmsc(
   Yc = NULL,
   mcmcStep = 1,
   expected = TRUE,
-  NCores = 1,
-  TempDir = "TEMP2Pred",
-  PredDir = "Model_Predictions",
-  Evaluate = FALSE,
-  Evaluate_Name = NULL,
-  EvalDir = "Eval",
-  ModelName = "Train",
+  NCores = 8,
+  Model_Name = "Train",
+  Temp_Dir = "TEMP2Pred",
   RC = NULL,
-  Pred_PA = NULL,
-  Pred_XY = NULL,
   UseTF = TRUE,
-  PythonScript = NULL,
-  EnvPath = NULL,
-  use_single = FALSE,
+  TF_Environ = NULL,
+  TF_use_single = FALSE,
   LF_OutFile = NULL,
   LF_Return = TRUE,
   LF_InputFile = NULL,
-  nthreads = 5,
-  Verbose = TRUE,
-  ...
+  Pred_Dir = "Model_Predictions",
+  Pred_PA = NULL,
+  Pred_XY = NULL,
+  Evaluate = FALSE,
+  Eval_Name = NULL,
+  Eval_Dir = "Evaluation",
+  Verbose = TRUE
 )
 }
 \arguments{
@@ -69,48 +66,25 @@ parameter of the observation models or sample the values from those.}
 \item{NCores}{Integer specifying the number of cores to use for parallel
 processing. Defaults to 8.}
 
-\item{TempDir}{Character string specifying the path for temporary storage of
-intermediate files.}
-
-\item{PredDir}{a character string specifying the directory where the
-predictions will be saved.}
-
-\item{Evaluate}{a logical flag indicating whether to evaluate the model
-predictions. Defaults to \code{FALSE}.}
-
-\item{Evaluate_Name}{a character string specifying the name of the evaluation
-results. If \code{NULL}, the default name is used (\code{Eval_ModelName.RData}).}
-
-\item{EvalDir}{a character string specifying the directory where the
-evaluation results will be saved. Defaults to \code{Eval}.}
-
-\item{ModelName}{Character string used as a prefix for temporary file names.
+\item{Model_Name}{Character string used as a prefix for temporary file names.
 Defaults to NULL, in which case no prefix is used.}
+
+\item{Temp_Dir}{Character string specifying the path for temporary storage of
+intermediate files.}
 
 \item{RC}{a character string specifying the type of predictions to be made.
 If \code{NULL} (default), predictions are made for the latent factors. If \code{c},
 predictions are made for response curves at mean coordinates. If \code{i},
 predictions are made for response curves at infinite coordinates.}
 
-\item{Pred_PA}{a matrix of presence-absence data for evaluation. If \code{NULL}
-(default), the presence-absence data from the model object is used. This
-argument is used only when \code{Evaluate} is \code{TRUE}.}
-
-\item{Pred_XY}{a matrix of coordinates to be added to predicted values. If
-\code{NULL} (default), the coordinates from the model object is used.}
-
 \item{UseTF}{Logical indicating whether to use TensorFlow for calculations.
 Defaults to TRUE.}
 
-\item{PythonScript}{Character string specifying the path to the Python script
-file containing the \code{crossprod_solve} function. Defaults to the path of the
-file included in the package.}
-
-\item{EnvPath}{Character string specifying the path to the Python
+\item{TF_Environ}{Character string specifying the path to the Python
 environment. Defaults to NULL. This argument is required if \code{UseTF} is
 TRUE.}
 
-\item{use_single}{Logical indicating whether to use single precision for the
+\item{TF_use_single}{Logical indicating whether to use single precision for the
 TF calculations. Defaults to \code{FALSE}.}
 
 \item{LF_OutFile}{Character string specifying the path to save the outputs.
@@ -126,13 +100,27 @@ it is not saved to a file.}
 latent factor predictions are saved. If \code{NULL}, the predictions are
 saved to a temporary file. This argument is used only when \code{RC} is \code{NULL}.}
 
-\item{nthreads}{Number of threads to use when reading \code{qs} files. Default 5;
-see \link[qs:qread]{qs::qread}.}
+\item{Pred_Dir}{a character string specifying the directory where the
+predictions will be saved.}
+
+\item{Pred_PA}{a matrix of presence-absence data for evaluation. If \code{NULL}
+(default), the presence-absence data from the model object is used. This
+argument is used only when \code{Evaluate} is \code{TRUE}.}
+
+\item{Pred_XY}{a matrix of coordinates to be added to predicted values. If
+\code{NULL} (default), the coordinates from the model object is used.}
+
+\item{Evaluate}{a logical flag indicating whether to evaluate the model
+predictions. Defaults to \code{FALSE}.}
+
+\item{Eval_Name}{a character string specifying the name of the evaluation
+results. If \code{NULL}, the default name is used (\code{Eval_Model_Name.RData}).}
+
+\item{Eval_Dir}{a character string specifying the directory where the
+evaluation results will be saved. Defaults to \code{Evaluation}.}
 
 \item{Verbose}{Logical. If TRUE, detailed output is printed. Default is
 \code{FALSE}.}
-
-\item{\dots}{other arguments passed to functions.}
 }
 \description{
 Calculates predicted values from a fitted \code{Hmsc} model. This function

@@ -29,14 +29,14 @@
 #'   effects
 #' @param expected boolean flag indicating whether to return the location
 #'   parameter of the observation models or sample the values from those.
-#' @param PredDir a character string specifying the directory where the
+#' @param Pred_Dir a character string specifying the directory where the
 #'   predictions will be saved.
 #' @param Evaluate a logical flag indicating whether to evaluate the model
 #'   predictions. Defaults to `FALSE`.
-#' @param Evaluate_Name a character string specifying the name of the evaluation
-#'   results. If `NULL`, the default name is used (`Eval_ModelName.RData`).
-#' @param EvalDir a character string specifying the directory where the
-#'   evaluation results will be saved. Defaults to `Eval`.
+#' @param Eval_Name a character string specifying the name of the evaluation
+#'   results. If `NULL`, the default name is used (`Eval_Model_Name.RData`).
+#' @param Eval_Dir a character string specifying the directory where the
+#'   evaluation results will be saved. Defaults to `Evaluation`.
 #' @param RC a character string specifying the type of predictions to be made.
 #'   If `NULL` (default), predictions are made for the latent factors. If `c`,
 #'   predictions are made for response curves at mean coordinates. If `i`,
@@ -49,7 +49,6 @@
 #' @param LF_InputFile a character string specifying the file name where the
 #' latent factor predictions are saved. If `NULL`, the predictions are
 #' saved to a temporary file. This argument is used only when `RC` is `NULL`.
-#' @param \dots other arguments passed to functions.
 #' @param Verbose Logical. If TRUE, detailed output is printed. Default is
 #'   `FALSE`.
 #' @inheritParams predictLF
@@ -59,12 +58,12 @@ predictHmsc <- function(
     object,
     Loff = NULL, XData = NULL, X = NULL, XRRRData = NULL, XRRR = NULL,
     Gradient = NULL, Yc = NULL, mcmcStep = 1, expected = TRUE, NCores = 8,
-    TempDir = "TEMP2Pred", PredDir = "Model_Predictions",
-    Evaluate = FALSE, Evaluate_Name = NULL, EvalDir = "Eval",
-    ModelName = "Train", RC = NULL, Pred_PA = NULL, Pred_XY = NULL,
-    UseTF = TRUE, PythonScript = NULL, EnvPath = NULL, use_single = FALSE,
-    LF_OutFile = NULL, LF_Return = TRUE, LF_InputFile = NULL, nthreads = 5,
-    Verbose = TRUE, ...) {
+    Model_Name = "Train", Temp_Dir = "TEMP2Pred", RC = NULL,
+    UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE, LF_OutFile = NULL,
+    LF_Return = TRUE, LF_InputFile = NULL,
+    Pred_Dir = "Model_Predictions", Pred_PA = NULL, Pred_XY = NULL,
+    Evaluate = FALSE, Eval_Name = NULL, Eval_Dir = "Evaluation",
+    Verbose = TRUE) {
 
   # # ..................................................................... ###
 
@@ -94,9 +93,9 @@ predictHmsc <- function(
 
   if (is.null(RC) || RC == "c") {
     IASDT.R::CatTime("Creating/checking output paths")
-    fs::dir_create(c(TempDir, PredDir))
+    fs::dir_create(c(Temp_Dir, Pred_Dir))
     if (Evaluate) {
-      fs::dir_create(EvalDir)
+      fs::dir_create(Eval_Dir)
     }
   }
 
@@ -123,8 +122,8 @@ predictHmsc <- function(
     try(
       fs::file_delete(
         list.files(
-          TempDir,
-          pattern = paste0("^", ModelName, "_.+"), full.names = TRUE)),
+          Temp_Dir,
+          pattern = paste0("^", Model_Name, "_.+"), full.names = TRUE)),
       silent = TRUE
     )},
     add = TRUE)
@@ -310,7 +309,7 @@ predictHmsc <- function(
 
         # Save post to file and load it later
         IASDT.R::CatTime("Save post to file and load it later", Level = 1)
-        post_file <- file.path(TempDir, paste0(ModelName, "_post.qs"))
+        post_file <- file.path(Temp_Dir, paste0(Model_Name, "_post.qs"))
         qs::qsave(post, file = post_file, preset = "fast")
         rm(post)
         invisible(gc())
@@ -319,7 +318,7 @@ predictHmsc <- function(
       # Save postEta to file and load it from predictLatentFactor. This helps
       # to avoid the unnecessary copying of the postEta object to all cores
       IASDT.R::CatTime("Save postEta to file", Level = 1)
-      postEta_file <- file.path(TempDir, paste0(ModelName, "_postEta.qs"))
+      postEta_file <- file.path(Temp_Dir, paste0(Model_Name, "_postEta.qs"))
       qs::qsave(postEta, file = postEta_file, preset = "fast")
       rm(postEta)
       invisible(gc())
@@ -332,10 +331,9 @@ predictHmsc <- function(
         unitsPred = levels(dfPiNew[, r]),
         modelunits = levels(object$dfPi[, r]),
         postEta = postEta_file, postAlpha = postAlpha, rL = rL[[r]],
-        NCores = NCores, TempDir = TempDir, ModelName = ModelName,
-        UseTF = UseTF, PythonScript = PythonScript, EnvPath = EnvPath,
-        use_single = use_single, LF_OutFile = LF_OutFile,
-        LF_Return = LF_Return, nthreads = nthreads)
+        NCores = NCores, Temp_Dir = Temp_Dir, Model_Name = Model_Name,
+        UseTF = UseTF, TF_Environ = TF_Environ, TF_use_single = TF_use_single,
+        LF_OutFile = LF_OutFile, LF_Return = LF_Return)
 
       fs::file_delete(postEta_file)
       rm(postEta_file)
@@ -345,11 +343,13 @@ predictHmsc <- function(
     }
 
   } else {
+
     if (is.null(RC) || RC == "c") {
       IASDT.R::CatTime(
-        paste0("Loading LF prediction from disk: `", LF_InputFile, "`"), Level = 1)
+        paste0("Loading LF prediction from disk: `", LF_InputFile, "`"),
+        Level = 1)
       for (r in seq_len(object$nr)) {
-        predPostEta[[r]] <- IASDT.R::LoadAs(LF_InputFile[[r]], nthreads = nthreads)
+        predPostEta[[r]] <- IASDT.R::LoadAs(LF_InputFile[[r]], nthreads = 5)
         rowNames <- rownames(predPostEta[[r]][[1]])
         PiNew[, r] <- fastmatch::fmatch(dfPiNew[, r], rowNames)
       }
@@ -402,7 +402,7 @@ predictHmsc <- function(
         IDs <- which(ChunkIDs == .x)
         Ch <- list(ppEta = ppEta[IDs], post = post[IDs])
         ChunkFile <- file.path(
-          TempDir, paste0(ModelName, "_ppEta_ch", .x, ".qs"))
+          Temp_Dir, paste0(Model_Name, "_ppEta_ch", .x, ".qs"))
         qs::qsave(Ch, file = ChunkFile, preset = "fast")
         return(ChunkFile)
       })
@@ -423,7 +423,7 @@ predictHmsc <- function(
       list = c(
         "object", "X", "XRRR", "Yc", "Loff", "rL", "rLPar", "PiNew",
         "dfPiNew", "nyNew", "expected", "mcmcStep", "seeds", "chunk_size",
-        "Chunks", "TempDir", "ModelName"),
+        "Chunks", "Temp_Dir", "Model_Name"),
       envir = environment())
 
     invisible(snow::clusterEvalQ(
@@ -435,6 +435,8 @@ predictHmsc <- function(
             "qs", "Hmsc", "purrr"),
           library, character.only = TRUE)
       }))
+
+    IASDT.R::CatTime("Making predictions on parallel", Level = 1)
 
     pred <- snow::parLapply(
       cl = c1,
@@ -469,8 +471,8 @@ predictHmsc <- function(
             dimnames(SpD) <- NULL
 
             ChunkSpFile <- file.path(
-              TempDir,
-              paste0("Pred_", ModelName, "_ch", Chunk, "_Sp", Sp, ".qs"))
+              Temp_Dir,
+              paste0("Pred_", Model_Name, "_ch", Chunk, "_Sp", Sp, ".qs"))
 
             qs::qsave(SpD, file = ChunkSpFile, preset = "fast")
 
@@ -536,7 +538,7 @@ predictHmsc <- function(
         sf::st_as_sf(coords = c("x", "y"), crs = 3035, remove = FALSE)
 
       PredSummaryFile <- file.path(
-        PredDir, paste0("Pred_", ModelName, "_Sp", Sp, ".qs"))
+        Pred_Dir, paste0("Pred_", Model_Name, "_Sp", Sp, ".qs"))
 
       qs::qsave(PredSummary, file = PredSummaryFile, preset = "fast")
       fs::file_delete(data)
@@ -578,7 +580,7 @@ predictHmsc <- function(
     },
     future.seed = TRUE, future.chunk.size = 1,
     future.globals = c(
-      "Eval_DT", "Evaluate", "object", "PredDir", "ModelName",
+      "Eval_DT", "Evaluate", "object", "Pred_Dir", "Model_Name",
       "Pred_PA", "Pred_XY"),
     future.packages = c(
       "dplyr", "Matrix", "purrr", "tibble", "Hmsc", "float", "qs",
@@ -610,18 +612,18 @@ predictHmsc <- function(
     dplyr::relocate(gtools::mixedsort(names(.))) %>%
     dplyr::select(x, y, geometry, tidyselect::everything())
 
-  Pred_File <- file.path(PredDir, paste0("Prediction_", ModelName, ".qs"))
+  Pred_File <- file.path(Pred_Dir, paste0("Prediction_", Model_Name, ".qs"))
   qs::qsave(Predictions, file = Pred_File, preset = "fast")
   fs::file_delete(Eval_DT$Path_pred)
   IASDT.R::CatTime(
     paste0("Predictions were saved to `", Pred_File, "`"), Level = 1)
 
   if (Evaluate) {
-    if (is.null(Evaluate_Name)) {
-      Eval_Path <- file.path(EvalDir, paste0("Eval_", ModelName, ".RData"))
+    if (is.null(Eval_Name)) {
+      Eval_Path <- file.path(Eval_Dir, paste0("Eval_", Model_Name, ".RData"))
     } else {
       Eval_Path <- file.path(
-        EvalDir, paste0("Eval_", ModelName, "_", Evaluate_Name, ".RData"))
+        Eval_Dir, paste0("Eval_", Model_Name, "_", Eval_Name, ".RData"))
     }
 
     Eval_DT <- dplyr::select(Eval_DT, -Path_pred)
@@ -629,7 +631,7 @@ predictHmsc <- function(
     IASDT.R::CatTime(
       paste0(
         "Evaluation results were saved to `",
-        file.path(EvalDir, "Eval_DT.RData"), "`"),
+        file.path(Eval_Dir, "Eval_DT.RData"), "`"),
       Level = 1)
   } else {
     Eval_Path <- NULL

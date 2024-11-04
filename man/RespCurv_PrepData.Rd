@@ -11,9 +11,8 @@ RespCurv_PrepData(
   ReturnData = FALSE,
   Probabilities = c(0.025, 0.5, 0.975),
   UseTF = TRUE,
-  EnvPath = NULL,
-  PythonScript = NULL,
-  TempDir = "TEMP2Pred",
+  TF_Environ = NULL,
+  Temp_Dir = "TEMP2Pred",
   Verbose = TRUE
 )
 }
@@ -35,15 +34,11 @@ as an R object. Default is \code{FALSE}.}
 \item{UseTF}{Logical indicating whether to use TensorFlow for calculations.
 Defaults to TRUE.}
 
-\item{EnvPath}{Character string specifying the path to the Python
+\item{TF_Environ}{Character string specifying the path to the Python
 environment. Defaults to NULL. This argument is required if \code{UseTF} is
 TRUE.}
 
-\item{PythonScript}{Character string specifying the path to the Python script
-file containing the \code{crossprod_solve} function. Defaults to the path of the
-file included in the package.}
-
-\item{TempDir}{Character string specifying the path for temporary storage of
+\item{Temp_Dir}{Character string specifying the path for temporary storage of
 intermediate files.}
 
 \item{Verbose}{Logical. If TRUE, detailed output is printed. Default is

@@ -26,8 +26,8 @@
 
 RespCurv_PrepData <- function(
     Path_Model = NULL, ngrid = 50, NCores = 8, ReturnData = FALSE,
-    Probabilities = c(0.025, 0.5, 0.975), UseTF = TRUE, EnvPath = NULL,
-    PythonScript = NULL, TempDir = "TEMP2Pred", Verbose = TRUE) {
+    Probabilities = c(0.025, 0.5, 0.975), UseTF = TRUE, TF_Environ = NULL,
+    Temp_Dir = "TEMP2Pred", Verbose = TRUE) {
 
   # # ..................................................................... ###
 
@@ -58,7 +58,7 @@ RespCurv_PrepData <- function(
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "character", Args = c("Path_Model", "EnvPath"))
+    AllArgs = AllArgs, Type = "character", Args = c("Path_Model", "TF_Environ"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric",
     Args = c("NCores", "ngrid", "Probabilities"))
@@ -87,7 +87,8 @@ RespCurv_PrepData <- function(
       stop("Model object is not of class 'hmsc'", call. = FALSE)
     }
   } else {
-    stop("The model file does not exist or is not a .RData file.", call. = FALSE)
+    stop(
+      "The model file does not exist or is not a .RData file.", call. = FALSE)
   }
 
   # # ..................................................................... ###
@@ -95,6 +96,7 @@ RespCurv_PrepData <- function(
   # PrepRCData -------
 
   PrepRCData <- function(ID) {
+
     Variable <- ResCurvDT$VarName[[ID]]
     RC_DT_Name <- ResCurvDT$RC_DT_Name[[ID]]
     Coords <- ResCurvDT$Coords[[ID]]
@@ -135,6 +137,8 @@ RespCurv_PrepData <- function(
 
       } else {
 
+        Model <- IASDT.R::LoadAs(Path_Model)
+
         # constructGradient
         Gradient <- Hmsc::constructGradient(
           hM = Model, focalVariable = Variable, non.focalVariables = NFV,
@@ -143,13 +147,15 @@ RespCurv_PrepData <- function(
         # Values of the current predictor
         XVals <- Gradient$XDataNew[, Variable]
 
+        rm(Model)
+
         # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
         # Predicting probability of occurrence
         Preds <- IASDT.R::predictHmsc(
-          object = Model, Gradient = Gradient, expected = TRUE, NCores = 1,
-          ModelName = paste0("RC_", Coords), RC = Coords, UseTF = UseTF,
-          EnvPath = EnvPath, File_LF = File_LF, Verbose = FALSE)
+          object = Path_Model, Gradient = Gradient, expected = TRUE, NCores = 1,
+          Model_Name = paste0("RC_", Coords), RC = Coords, UseTF = UseTF,
+          TF_Environ = TF_Environ, LF_InputFile = File_LF, Verbose = FALSE)
 
         # Species richness
         Pred_SR <- abind::abind(lapply(Preds, rowSums), along = 2)
@@ -172,6 +178,8 @@ RespCurv_PrepData <- function(
       # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
       # Prepare plotting data: probability of occurrence
       # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+      Model <- IASDT.R::LoadAs(Path_Model)
 
       RC_Data_Prob <- purrr::map_dfr(
         .x = seq_len(length(Preds)),
@@ -374,10 +382,6 @@ RespCurv_PrepData <- function(
 
     if (isFALSE(IASDT.R::CheckRData(File_LF))) {
 
-      IASDT.R::InfoChunk(
-        Message = "Get LF prediction at mean coordinates",
-        Date = FALSE, Extra2 = 1)
-
       IASDT.R::CatTime("Create gradient")
       Gradient_c <- Hmsc::constructGradient(
         hM = Model, focalVariable = ResCurvDT$Variable[1],
@@ -385,32 +389,26 @@ RespCurv_PrepData <- function(
 
       # The `Model` object is distributed twice to cores when available on the
       # function environment. Here, I delete the Model object and it will be
-      # loaded later after finishing the `predictHmsc` function.
-      IASDT.R::CatTime("Remove model object to improve parallel computations")
+      # loaded later after when using `predictHmsc` function.
       rm(Model)
       invisible(gc())
 
-      IASDT.R::CatTime(
-        "Get Latent Factor prediction at mean coordinates", ... = "\n")
+      IASDT.R::InfoChunk(
+        Message = "Get LF prediction at mean coordinates",
+        Date = FALSE, Extra2 = 1)
       Model_LF <- IASDT.R::predictHmsc(
         object = Path_Model, Gradient = Gradient_c, expected = TRUE,
-        NCores = NCores, TempDir = TempDir, ModelName = "RC_c", RC = "c",
-        UseTF = UseTF, EnvPath = EnvPath, LF_OutFile = File_LF,
+        NCores = NCores, Temp_Dir = Temp_Dir, Model_Name = "RC_c", RC = "c",
+        UseTF = UseTF, TF_Environ = TF_Environ, LF_OutFile = File_LF,
         Verbose = Verbose)
 
       invisible(gc())
       rm(Model_LF, Gradient_c)
 
-      # Loading the model object again
-      IASDT.R::CatTime("Loading the model object", ... = "\n")
-      Model <- IASDT.R::LoadAs(Path_Model)
-
     } else {
-
       IASDT.R::CatTime(
-        paste0(
-          "File containing LF prediction is available and will be used ",
-          "for predicting response curves"))
+        paste0("LF prediction will be loaded from available file: \n   >>>  ",
+               File_LF))
     }
 
 
@@ -421,7 +419,10 @@ RespCurv_PrepData <- function(
     IASDT.R::InfoChunk(
       Message = "Prepare response curve data", Date = FALSE, Extra2 = 1)
 
+    rm(Model)
+    invisible(gc())
     NCores <- max(min(NCores, MissingRows), 1)
+
     IASDT.R::CatTime(
       paste0("Prepare working on parallel, using ", NCores, " cores"))
 
@@ -449,8 +450,8 @@ RespCurv_PrepData <- function(
       future.packages = c(
         "dplyr", "purrr", "tidyr", "abind", "Hmsc", "parallel"),
       future.globals = c(
-        "ResCurvDT", "Model", "PrepRCData", "ngrid", "Probabilities",
-        "File_LF", "UseTF", "EnvPath")) %>%
+        "ResCurvDT", "Path_Model", "PrepRCData", "ngrid", "Probabilities",
+        "File_LF", "UseTF", "TF_Environ")) %>%
       dplyr::bind_rows()
 
     if (NCores > 1) {

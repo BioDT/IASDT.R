@@ -342,8 +342,6 @@ predictLF <- function(
           dplyr::mutate(Unit_ID = factor(Unit_ID, levels = unitsPred)) %>%
           dplyr::arrange(SampleID, Unit_ID, etaPred)
 
-        return(etaPred)
-
       } else {
         # Use R / CPP
 
@@ -375,8 +373,6 @@ predictLF <- function(
           }) %>%
           dplyr::mutate(Unit_ID = factor(Unit_ID, levels = unitsPred)) %>%
           dplyr::arrange(SampleID, Unit_ID, etaPred)
-
-        return(etaPred)
       }
     } else {
 
@@ -396,7 +392,6 @@ predictLF <- function(
         dplyr::mutate(Unit_ID = factor(Unit_ID, levels = unitsPred)) %>%
         dplyr::arrange(SampleID, Unit_ID, etaPred)
 
-      return(etaPred)
     }
 
     # clean up
@@ -434,6 +429,7 @@ predictLF <- function(
 
   snow::stopCluster(c1)
   future::plan("future::sequential", gc = TRUE)
+
 
   IASDT.R::CatTime("Merge results", Level = 1)
   # Merge results

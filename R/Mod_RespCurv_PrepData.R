@@ -7,15 +7,14 @@
 #' This function prepares and processes data for generating response curves for
 #' Hmsc models. It supports parallel processing and can return the processed
 #' data.
-#' @param Path_Model String specifying the path to the .RData file containing
-#'   the model to be used.
+#' @param Path_Model Character. Path to the `.RData` file containing the model.
 #' @param ngrid Integer specifying the number of points along the gradient for
 #'   continuous focal variables. Defaults to 50. See [Hmsc::constructGradient]
 #'   for more details.
 #' @param NCores Integer specifying the number of cores to use for parallel
 #'   processing. Defaults to 8.
-#' @param ReturnData Logical indicating whether the processed response curve
-#'   data should be returned as an R object. Defaults to `FALSE`.
+#' @param ReturnData Logical. If `TRUE`, returns processed response curve data
+#'   as an R object. Default is `FALSE`.
 #' @param Probabilities quantiles to be calculated. Defaults to `c(0.025, 0.5,
 #'   0.975)`. See [stats::quantile] for more details.
 #' @seealso RespCurv_PlotSp RespCurv_PlotSR
@@ -28,9 +27,14 @@
 RespCurv_PrepData <- function(
     Path_Model = NULL, ngrid = 50, NCores = 8, ReturnData = FALSE,
     Probabilities = c(0.025, 0.5, 0.975), UseTF = TRUE, EnvPath = NULL,
-    PythonScript = NULL) {
+    PythonScript = NULL, TempDir = "TEMP2Pred", Verbose = TRUE) {
 
   # # ..................................................................... ###
+
+  if (isFALSE(Verbose)) {
+    sink(file = nullfile())
+    on.exit(try(sink(), silent = TRUE), add = TRUE)
+  }
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -83,7 +87,7 @@ RespCurv_PrepData <- function(
       stop("Model object is not of class 'hmsc'", call. = FALSE)
     }
   } else {
-    stop("Path of the model object was not found", call. = FALSE)
+    stop("The model file does not exist or is not a .RData file.", call. = FALSE)
   }
 
   # # ..................................................................... ###
@@ -253,8 +257,6 @@ RespCurv_PrepData <- function(
 
   # Prepare response curve data -------
 
-  IASDT.R::CatTime("Prepare response curve data")
-
   Path_ResCurve <- dirname(dirname(Path_Model)) %>%
     file.path("Model_Postprocessing")
   Path_RespCurvDT <- file.path(Path_ResCurve, "RespCurv_DT")
@@ -264,7 +266,7 @@ RespCurv_PrepData <- function(
   # Extract names of the variables
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatTime("Extract names of the variables", Level = 1)
+  IASDT.R::CatTime("Extract names of the variables")
   ModelVars <- stringr::str_split(
     as.character(Model$XFormula)[2], "\\+", simplify = TRUE) %>%
     stringr::str_trim()
@@ -339,6 +341,8 @@ RespCurv_PrepData <- function(
     # Get LF prediction for the model
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
+    IASDT.R::InfoChunk(
+      Message = "Get LF prediction for the model", Date = FALSE, Extra2 = 1)
     Gradient_c <- Hmsc::constructGradient(
       hM = Model, focalVariable = ResCurvDT$Variable[1],
       non.focalVariables = 1, ngrid = 20, coordinates = list(sample = "c"))
@@ -346,19 +350,21 @@ RespCurv_PrepData <- function(
     File_LF <- file.path(Path_RespCurvDT, "ResCurvLF.RData")
     Model_LF <- IASDT.R::predictHmsc(
       object = Model, Gradient = Gradient_c, expected = TRUE, NCores = NCores,
-      TempDir = "TEMP2Pred", ModelName = "RC_c", RC = "c", UseTF = UseTF,
-      EnvPath = EnvPath, Path_postEtaPred = File_LF, Verbose = FALSE)
+      TempDir = TempDir, ModelName = "RC_c", RC = "c", UseTF = UseTF,
+      EnvPath = EnvPath, Path_postEtaPred = File_LF, Verbose = Verbose)
     rm(Model_LF, Gradient_c)
 
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
     # Prepare working on parallel
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
+    IASDT.R::InfoChunk(
+      Message = "Prepare response curve data", Date = FALSE, Extra2 = 1)
+
     NCores <- max(min(NCores, MissingRows), 1)
 
     IASDT.R::CatTime(
-      paste0("Prepare working on parallel, using ", NCores, " cores"),
-      Level = 2)
+      paste0("Prepare working on parallel, using ", NCores, " cores"))
 
     withr::local_options(
       future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
@@ -376,7 +382,7 @@ RespCurv_PrepData <- function(
     # Prepare response curve data on parallel
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-    IASDT.R::CatTime("Prepare response curve data on parallel", Level = 2)
+    IASDT.R::CatTime("Prepare response curve data on parallel")
 
     ResCurvDT <- future.apply::future_lapply(
       X = seq_len(nrow(ResCurvDT)),
@@ -397,12 +403,13 @@ RespCurv_PrepData <- function(
 
   # # ..................................................................... ###
 
-  IASDT.R::CatTime("Saving data to desk")
+  IASDT.R::CatTime("Saving data to desk", ... = "\n")
   save(ResCurvDT, file = file.path(Path_RespCurvDT, "ResCurvDT.RData"))
 
   # # ..................................................................... ###
 
-  IASDT.R::CatDiff(InitTime = .StartTime)
+  IASDT.R::CatDiff(
+    InitTime = .StartTime, Prefix = "Preparing response curve data took ")
 
   if (ReturnData) {
     return(ResCurvDT)

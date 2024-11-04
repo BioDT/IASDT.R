@@ -10,12 +10,15 @@ RespCurv_PrepData(
   NCores = 8,
   ReturnData = FALSE,
   Probabilities = c(0.025, 0.5, 0.975),
-  predictEtaMean = TRUE
+  UseTF = TRUE,
+  EnvPath = NULL,
+  PythonScript = NULL,
+  TempDir = "TEMP2Pred",
+  Verbose = TRUE
 )
 }
 \arguments{
-\item{Path_Model}{String specifying the path to the .RData file containing
-the model to be used.}
+\item{Path_Model}{Character. Path to the \code{.RData} file containing the model.}
 
 \item{ngrid}{Integer specifying the number of points along the gradient for
 continuous focal variables. Defaults to 50. See \link[Hmsc:constructGradient]{Hmsc::constructGradient}
@@ -24,14 +27,27 @@ for more details.}
 \item{NCores}{Integer specifying the number of cores to use for parallel
 processing. Defaults to 8.}
 
-\item{ReturnData}{Logical indicating whether the processed response curve
-data should be returned as an R object. Defaults to \code{FALSE}.}
+\item{ReturnData}{Logical. If \code{TRUE}, returns processed response curve data
+as an R object. Default is \code{FALSE}.}
 
 \item{Probabilities}{quantiles to be calculated. Defaults to \code{c(0.025, 0.5, 0.975)}. See \link[stats:quantile]{stats::quantile} for more details.}
 
-\item{predictEtaMean}{Logical; whether to predict the mean value of the
-latent variable. Defaults to \code{TRUE}. See \code{Hmsc:::predict.Hmsc} for more
-details.}
+\item{UseTF}{Logical indicating whether to use TensorFlow for calculations.
+Defaults to TRUE.}
+
+\item{EnvPath}{Character string specifying the path to the Python
+environment. Defaults to NULL. This argument is required if \code{UseTF} is
+TRUE.}
+
+\item{PythonScript}{Character string specifying the path to the Python script
+file containing the \code{crossprod_solve} function. Defaults to the path of the
+file included in the package.}
+
+\item{TempDir}{Character string specifying the path for temporary storage of
+intermediate files.}
+
+\item{Verbose}{Logical. If TRUE, detailed output is printed. Default is
+\code{FALSE}.}
 }
 \value{
 Depending on the value of \code{ReturnData}, either returns response curve

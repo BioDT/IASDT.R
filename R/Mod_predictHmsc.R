@@ -10,31 +10,50 @@
 #' Calculates predicted values from a fitted \code{Hmsc} model. This function
 #' modifies the `Hmsc:::predict.Hmsc` function.
 #'
-#' @param object a fitted \code{Hmsc} model object
+#' @param object a fitted `Hmsc` model object or a character string specifying a
+#'   file name where the model object is saved.
 #' @param XData a dataframe specifying the unpreprocessed covariates for the
-#'   predictions to be made. Works only if the \code{XFormula} argument was
-#'   specified in the \code{Hmsc()} model constructor call. Requirements are
-#'   similar to those in the \code{Hmsc} model constructor.
+#'   predictions to be made. Works only if the `XFormula` argument was specified
+#'   in the [Hmsc::Hmsc] model constructor call. Requirements are similar to
+#'   those in the `Hmsc` model constructor.
 #' @param X a matrix specifying the covariates for the predictions to be made.
-#'   Only one of XData and X arguments may be provided.
-#' @param XRRRData a dataframe of covariates for reduced-rank regression
-#' @param XRRR a matrix of covariates for reduced-rank regression
-#' @param Gradient an object returned by \code{\link{constructGradient}}.
-#'   Providing \code{Gradient} is an alternative for providing \code{XData},
-#'   \code{studyDesign} and \code{ranLevels}. Cannot be used together with
-#'   \code{Yc}.
+#'   Only one of `XData` and `X` arguments may be provided.
+#' @param XRRRData a dataframe of covariates for reduced-rank regression.
+#' @param XRRR a matrix of covariates for reduced-rank regression.
+#' @param Gradient an object returned by [Hmsc::constructGradient]. Providing
+#'   `Gradient` is an alternative for providing `XData`, `studyDesign` and
+#'   `ranLevels`. Cannot be used together with `Yc`.
 #' @param Yc a matrix of the outcomes that are assumed to be known for
-#'   conditional predictions. Cannot be used together with \code{Gradient}.
+#'   conditional predictions. Cannot be used together with `Gradient`.
 #' @param mcmcStep the number of extra mcmc steps used for updating the random
 #'   effects
 #' @param expected boolean flag indicating whether to return the location
 #'   parameter of the observation models or sample the values from those.
+#' @param PredDir a character string specifying the directory where the
+#'   predictions will be saved.
+#' @param Evaluate a logical flag indicating whether to evaluate the model
+#'   predictions. Defaults to `FALSE`.
+#' @param Evaluate_Name a character string specifying the name of the evaluation
+#'   results. If `NULL`, the default name is used (`Eval_ModelName.RData`).
+#' @param EvalDir a character string specifying the directory where the
+#'   evaluation results will be saved. Defaults to `Eval`.
+#' @param RC a character string specifying the type of predictions to be made.
+#'   If `NULL` (default), predictions are made for the latent factors. If `c`,
+#'   predictions are made for response curves at mean coordinates. If `i`,
+#'   predictions are made for response curves at infinite coordinates.
+#' @param Pred_PA a matrix of presence-absence data for evaluation. If `NULL`
+#'   (default), the presence-absence data from the model object is used. This
+#'   argument is used only when `Evaluate` is `TRUE`.
+#' @param Pred_XY a matrix of coordinates to be added to predicted values. If
+#'   `NULL` (default), the coordinates from the model object is used.
+#' @param LF_InputFile a character string specifying the file name where the
+#' latent factor predictions are saved. If `NULL`, the predictions are
+#' saved to a temporary file. This argument is used only when `RC` is `NULL`.
 #' @param \dots other arguments passed to functions.
 #' @param Verbose Logical. If TRUE, detailed output is printed. Default is
 #'   `FALSE`.
 #' @inheritParams predictLF
 #' @export
-
 
 predictHmsc <- function(
     object,
@@ -47,10 +66,9 @@ predictHmsc <- function(
     ModelName = "Train", RC = NULL, Pred_PA = NULL, Pred_XY = NULL,
 
     UseTF = TRUE, PythonScript = NULL, EnvPath = NULL, use_single = FALSE,
-    Path_postEtaPred = NULL,
-    Return_postEtaPred = TRUE,
-    File_LF = NULL, nthreads = 5, Verbose = TRUE, ...) {
-
+    LF_OutFile = NULL,
+    LF_Return = TRUE,
+    LF_InputFile = NULL, nthreads = 5, Verbose = TRUE, ...) {
 
   # # ..................................................................... ###
 
@@ -251,7 +269,7 @@ predictHmsc <- function(
 
   # Whether to use predictLatentFactor or read its results from file
   if (!is.null(object$nr)) {
-    if (is.null(File_LF) || length(File_LF) != object$nr) {
+    if (is.null(LF_InputFile) || length(LF_InputFile) != object$nr) {
       CalcLF <- TRUE
     } else {
       CalcLF <- FALSE
@@ -320,8 +338,8 @@ predictHmsc <- function(
         postEta = postEta_file, postAlpha = postAlpha, rL = rL[[r]],
         NCores = NCores, TempDir = TempDir, ModelName = ModelName,
         UseTF = UseTF, PythonScript = PythonScript, EnvPath = EnvPath,
-        use_single = use_single, Path_postEtaPred = Path_postEtaPred,
-        Return_postEtaPred = Return_postEtaPred, nthreads = nthreads)
+        use_single = use_single, LF_OutFile = LF_OutFile,
+        LF_Return = LF_Return, nthreads = nthreads)
 
       fs::file_delete(postEta_file)
       rm(postEta_file)
@@ -333,9 +351,9 @@ predictHmsc <- function(
   } else {
     if (is.null(RC) || RC == "c") {
       IASDT.R::CatTime(
-        paste0("Loading LF prediction from disk: `", File_LF, "`"), Level = 1)
+        paste0("Loading LF prediction from disk: `", LF_InputFile, "`"), Level = 1)
       for (r in seq_len(object$nr)) {
-        predPostEta[[r]] <- IASDT.R::LoadAs(File_LF[[r]], nthreads = nthreads)
+        predPostEta[[r]] <- IASDT.R::LoadAs(LF_InputFile[[r]], nthreads = nthreads)
         rowNames <- rownames(predPostEta[[r]][[1]])
         PiNew[, r] <- fastmatch::fmatch(dfPiNew[, r], rowNames)
       }
@@ -368,7 +386,7 @@ predictHmsc <- function(
     preds <- lapply(
       seq_len(predN),
       function(pN, ...) {
-        IASDT.R::get1prediction(
+        get1prediction(
           object, X, XRRR, Yc, Loff, rL, rLPar, post[[pN]],
           ppEta[pN, ], PiNew, dfPiNew, nyNew, expected, mcmcStep)
       })
@@ -438,7 +456,7 @@ predictHmsc <- function(
         PredChunk <- purrr::map(
           .x = seq_len(chunk_size),
           .f = function(pN) {
-            IASDT.R::get1prediction(
+            get1prediction(
               object = object, X = X, XRRR = XRRR, Yc = Yc,
               Loff = Loff, rL = rL, rLPar = rLPar, sam = post[[pN]],
               predPostEta = ppEta[pN], PiNew = PiNew,
@@ -630,10 +648,10 @@ predictHmsc <- function(
 
   # # ..................................................................... ###
 
-  if (is.null(Path_postEtaPred)) {
-    LF_Path <- File_LF
+  if (is.null(LF_OutFile)) {
+    LF_Path <- LF_InputFile
   } else {
-    LF_Path <- Path_postEtaPred
+    LF_Path <- LF_OutFile
   }
 
   tibble::tibble(
@@ -656,7 +674,7 @@ predictHmsc <- function(
 ##  Needs following variables or arguments that must be passed:
 ##  PiNew X XRRR Yc dfPiNew expected mcmcStep nyNew object pN post
 ##  predPostEta rL rLPar
-#' @export
+#' @noRd
 
 get1prediction <- function(
     object, X, XRRR, Yc, Loff, rL, rLPar, sam, predPostEta, PiNew, dfPiNew,

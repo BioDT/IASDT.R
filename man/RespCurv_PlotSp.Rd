@@ -5,19 +5,17 @@
 \title{Plot species response curves}
 \usage{
 RespCurv_PlotSp(
-  Path_Model = NULL,
+  Path_Postprocessing = NULL,
   NCores = 20,
   EnvFile = ".env",
-  SaveGG = FALSE,
-  ShowProgress = FALSE,
   FromHPC = TRUE,
   ReturnData = FALSE
 )
 }
 \arguments{
-\item{Path_Model}{String. The path to the directory containing the models.
-The function reads data from the \code{Model_Postprocessing/RespCurv_SR}
-sub-directory, resulted from \link{RespCurv_PrepData}.}
+\item{Path_Postprocessing}{String. The path to the directory for model
+post-processing. The function reads data from the \code{RespCurv_Sp}
+sub-directory, created by \link{RespCurv_PrepData}.}
 
 \item{NCores}{Integer. Number of cores to use for parallel processing.
 Defaults to 20.}
@@ -25,21 +23,11 @@ Defaults to 20.}
 \item{EnvFile}{String. Path to the environment variables file. Defaults to
 ".env".}
 
-\item{SaveGG}{Logical. Indicates whether to save the ggplot objects as RData
-files. Defaults to \code{FALSE}.}
-
-\item{ShowProgress}{Logical. Indicates whether to show a progress bar during
-execution. Defaults to FALSE.}
-
 \item{FromHPC}{Logical. Indicates whether the function is being run on an HPC
 environment, affecting file path handling. Default: \code{TRUE}.}
 
 \item{ReturnData}{Logical. Indicates whether the output data be returned as
 an R object.}
-}
-\value{
-A data frame containing paths to the JPEG images and, if requested,
-the ggplot objects saved as RData files.
 }
 \description{
 Generates and saves response curve plots for species based on environmental

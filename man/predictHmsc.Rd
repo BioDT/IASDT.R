@@ -29,32 +29,33 @@ predictHmsc(
   PythonScript = NULL,
   EnvPath = NULL,
   use_single = FALSE,
-  Path_postEtaPred = NULL,
-  Return_postEtaPred = TRUE,
-  File_LF = NULL,
+  LF_OutFile = NULL,
+  LF_Return = TRUE,
+  LF_InputFile = NULL,
   nthreads = 5,
+  Verbose = TRUE,
   ...
 )
 }
 \arguments{
-\item{object}{a fitted \code{Hmsc} model object}
+\item{object}{a fitted \code{Hmsc} model object or a character string specifying a
+file name where the model object is saved.}
 
 \item{XData}{a dataframe specifying the unpreprocessed covariates for the
-predictions to be made. Works only if the \code{XFormula} argument was
-specified in the \code{Hmsc()} model constructor call. Requirements are
-similar to those in the \code{Hmsc} model constructor.}
+predictions to be made. Works only if the \code{XFormula} argument was specified
+in the \link[Hmsc:Hmsc]{Hmsc::Hmsc} model constructor call. Requirements are similar to
+those in the \code{Hmsc} model constructor.}
 
 \item{X}{a matrix specifying the covariates for the predictions to be made.
-Only one of XData and X arguments may be provided.}
+Only one of \code{XData} and \code{X} arguments may be provided.}
 
-\item{XRRRData}{a dataframe of covariates for reduced-rank regression}
+\item{XRRRData}{a dataframe of covariates for reduced-rank regression.}
 
-\item{XRRR}{a matrix of covariates for reduced-rank regression}
+\item{XRRR}{a matrix of covariates for reduced-rank regression.}
 
-\item{Gradient}{an object returned by \code{\link{constructGradient}}.
-Providing \code{Gradient} is an alternative for providing \code{XData},
-\code{studyDesign} and \code{ranLevels}. Cannot be used together with
-\code{Yc}.}
+\item{Gradient}{an object returned by \link[Hmsc:constructGradient]{Hmsc::constructGradient}. Providing
+\code{Gradient} is an alternative for providing \code{XData}, \code{studyDesign} and
+\code{ranLevels}. Cannot be used together with \code{Yc}.}
 
 \item{Yc}{a matrix of the outcomes that are assumed to be known for
 conditional predictions. Cannot be used together with \code{Gradient}.}
@@ -71,8 +72,32 @@ processing. Defaults to 8.}
 \item{TempDir}{Character string specifying the path for temporary storage of
 intermediate files.}
 
+\item{PredDir}{a character string specifying the directory where the
+predictions will be saved.}
+
+\item{Evaluate}{a logical flag indicating whether to evaluate the model
+predictions. Defaults to \code{FALSE}.}
+
+\item{Evaluate_Name}{a character string specifying the name of the evaluation
+results. If \code{NULL}, the default name is used (\code{Eval_ModelName.RData}).}
+
+\item{EvalDir}{a character string specifying the directory where the
+evaluation results will be saved. Defaults to \code{Eval}.}
+
 \item{ModelName}{Character string used as a prefix for temporary file names.
 Defaults to NULL, in which case no prefix is used.}
+
+\item{RC}{a character string specifying the type of predictions to be made.
+If \code{NULL} (default), predictions are made for the latent factors. If \code{c},
+predictions are made for response curves at mean coordinates. If \code{i},
+predictions are made for response curves at infinite coordinates.}
+
+\item{Pred_PA}{a matrix of presence-absence data for evaluation. If \code{NULL}
+(default), the presence-absence data from the model object is used. This
+argument is used only when \code{Evaluate} is \code{TRUE}.}
+
+\item{Pred_XY}{a matrix of coordinates to be added to predicted values. If
+\code{NULL} (default), the coordinates from the model object is used.}
 
 \item{UseTF}{Logical indicating whether to use TensorFlow for calculations.
 Defaults to TRUE.}
@@ -88,17 +113,24 @@ TRUE.}
 \item{use_single}{Logical indicating whether to use single precision for the
 TF calculations. Defaults to \code{FALSE}.}
 
-\item{Path_postEtaPred}{Character string specifying the path to save the
-outputs. If \code{NULL} (default), the predicted latent factors are not saved to
-a file.}
+\item{LF_OutFile}{Character string specifying the path to save the outputs.
+If \code{NULL} (default), the predicted latent factors are not saved to a
+file. This should end with either \code{qs} or \code{RData}.}
 
-\item{Return_postEtaPred}{Logical. Indicates if the output should be
-returned. Defaults to \code{TRUE}. If \code{Path_postEtaPred} is \code{NULL}, this
-parameter cannot be set to \code{FALSE} because the function needs to return the
-result if it is not saved to a file.}
+\item{LF_Return}{Logical. Indicates if the output should be
+returned. Defaults to \code{TRUE}. If \code{LF_OutFile} is \code{NULL}, this parameter
+cannot be set to \code{FALSE} because the function needs to return the result if
+it is not saved to a file.}
+
+\item{LF_InputFile}{a character string specifying the file name where the
+latent factor predictions are saved. If \code{NULL}, the predictions are
+saved to a temporary file. This argument is used only when \code{RC} is \code{NULL}.}
 
 \item{nthreads}{Number of threads to use when reading \code{qs} files. Default 5;
 see \link[qs:qread]{qs::qread}.}
+
+\item{Verbose}{Logical. If TRUE, detailed output is printed. Default is
+\code{FALSE}.}
 
 \item{\dots}{other arguments passed to functions.}
 }

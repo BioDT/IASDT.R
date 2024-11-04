@@ -36,13 +36,13 @@
 #'   TRUE.
 #' @param use_single Logical indicating whether to use single precision for the
 #'   TF calculations. Defaults to `FALSE`.
-#' @param Path_postEtaPred Character string specifying the path to save the
-#'   outputs. If `NULL` (default), the predicted latent factors are not saved to
-#'   a file.
-#' @param Return_postEtaPred Logical. Indicates if the output should be
-#'   returned. Defaults to `TRUE`. If `Path_postEtaPred` is `NULL`, this
-#'   parameter cannot be set to `FALSE` because the function needs to return the
-#'   result if it is not saved to a file.
+#' @param LF_OutFile Character string specifying the path to save the outputs.
+#'   If `NULL` (default), the predicted latent factors are not saved to a
+#'   file. This should end with either `qs` or `RData`.
+#' @param LF_Return Logical. Indicates if the output should be
+#'   returned. Defaults to `TRUE`. If `LF_OutFile` is `NULL`, this parameter
+#'   cannot be set to `FALSE` because the function needs to return the result if
+#'   it is not saved to a file.
 #' @param Verbose Logical. If TRUE, detailed output is printed. Default is
 #'   `FALSE`.
 #' @export
@@ -77,7 +77,7 @@ predictLF <- function(
     unitsPred, modelunits, postEta, postAlpha, rL, NCores = 8,
     TempDir = "TEMP2Pred", ModelName = NULL, UseTF = TRUE,
     PythonScript = NULL, EnvPath = NULL, use_single = FALSE,
-    Path_postEtaPred = NULL, Return_postEtaPred = TRUE, nthreads = 5,
+    LF_OutFile = NULL, LF_Return = TRUE, nthreads = 5,
     Verbose = TRUE) {
 
   # # ..................................................................... ###
@@ -95,9 +95,9 @@ predictLF <- function(
 
   # Check inputs
 
-  if (is.null(Path_postEtaPred) && isFALSE(Return_postEtaPred)) {
+  if (is.null(LF_OutFile) && isFALSE(LF_Return)) {
     stop(
-      "`Return_postEtaPred` must be TRUE when `Path_postEtaPred` is NULL.",
+      "`LF_Return` must be TRUE when `LF_OutFile` is NULL.",
       call. = FALSE)
   }
 
@@ -446,15 +446,15 @@ predictLF <- function(
 
   # Save postEtaPred
 
-  if (!is.null(Path_postEtaPred)) {
+  if (!is.null(LF_OutFile)) {
     IASDT.R::CatTime(
-      paste0("Save postEtaPred to `", Path_postEtaPred, "`"), Level = 1)
-    fs::dir_create(fs::path_dir(Path_postEtaPred))
+      paste0("Save postEtaPred to `", LF_OutFile, "`"), Level = 1)
+    fs::dir_create(fs::path_dir(LF_OutFile))
     switch(
-      fs::path_ext(Path_postEtaPred),
-      "qs" = qs::qsave(postEtaPred, file = Path_postEtaPred, preset = "fast"),
-      "RData" = save(postEtaPred, file = Path_postEtaPred),
-      stop("Unsupported file extension in `Path_postEtaPred`.", call. = FALSE))
+      fs::path_ext(LF_OutFile),
+      "qs" = qs::qsave(postEtaPred, file = LF_OutFile, preset = "fast"),
+      "RData" = save(postEtaPred, file = LF_OutFile),
+      stop("Unsupported file extension in `LF_OutFile`.", call. = FALSE))
   }
 
   # # ..................................................................... ###
@@ -464,9 +464,9 @@ predictLF <- function(
 
   # # ..................................................................... ###
 
-  if (Return_postEtaPred) {
+  if (LF_Return) {
     return(postEtaPred)
   } else {
-    return(Path_postEtaPred)
+    return(LF_OutFile)
   }
 }

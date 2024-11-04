@@ -4,20 +4,25 @@
 \alias{RespCurv_PlotSR}
 \title{Plot species richness response curves}
 \usage{
-RespCurv_PlotSR(Path_Model)
+RespCurv_PlotSR(Path_Postprocessing, Verbose = TRUE, NCores = 8)
 }
 \arguments{
-\item{Path_Model}{String. The path to the directory containing the models.
-The function reads data from the \code{Model_Postprocessing/RespCurv_SR}
-sub-directory, resulted from \link{RespCurv_PrepData}.}
+\item{Path_Postprocessing}{String. Path to the post-processing directory.
+Reads from the \code{RespCurv_SR} subdirectory created by \link{RespCurv_PrepData}.}
+
+\item{Verbose}{Logical. If TRUE, detailed output is printed. Default is
+\code{FALSE}.}
+
+\item{NCores}{Integer. Number of cores to use for parallel processing.
+Defaults to 8.}
 }
 \value{
 This function does not return a value but saves JPEG images of the
 response curves in a subdirectory within the specified path.
 }
 \description{
-This function generates and saves species richness response curves as JPEG
-images for each variable in the dataset.
+Generate species richness response curves as JPEG images for each variable
+used in the model.
 }
 \seealso{
 RespCurv_PlotSp RespCurv_PrepData

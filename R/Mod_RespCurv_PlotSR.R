@@ -4,28 +4,30 @@
 
 #' Plot species richness response curves
 #'
-#' This function generates and saves species richness response curves as JPEG
-#' images for each variable in the dataset.
-#' @param Path_Postprocessing String. The path to the directory for model
-#'   postprocessing. The function reads data from the `RespCurv_SR`
-#'   sub-directory, resulted from [RespCurv_PrepData].
+#' Generate species richness response curves as JPEG images for each variable
+#' used in the model.
+#'
+#' @param Path_Postprocessing String. Path to the post-processing directory.
+#'   Reads from the `RespCurv_SR` subdirectory created by [RespCurv_PrepData].
+#' @param NCores Integer. Number of cores to use for parallel processing.
+#'   Defaults to 8.
 #' @return This function does not return a value but saves JPEG images of the
 #'   response curves in a subdirectory within the specified path.
 #' @name RespCurv_PlotSR
+#' @inheritParams RespCurv_PrepData
 #' @author Ahmed El-Gabbas
 #' @seealso RespCurv_PlotSp RespCurv_PrepData
 #' @export
 
-RespCurv_PlotSR <- function(Path_Postprocessing) {
+RespCurv_PlotSR <- function(Path_Postprocessing, Verbose = TRUE, NCores = 8) {
 
   # # ..................................................................... ###
 
   .StartTime <- lubridate::now(tzone = "CET")
 
-  # # ..................................................................... ###
-
-  if (is.null(Path_Postprocessing)) {
-    stop("`Path_Postprocessing` cannot be NULL", call. = FALSE)
+  if (isFALSE(Verbose)) {
+    sink(file = nullfile())
+    on.exit(try(sink(), silent = TRUE), add = TRUE)
   }
 
   # # ..................................................................... ###
@@ -35,6 +37,8 @@ RespCurv_PlotSR <- function(Path_Postprocessing) {
   Trend2 <- Variable <- Quant <- Observed <- Trend <- NFV <- Coords <-
     RC_Path_SR <- RC_Path_Orig <- RC_Path_Prob <- DT <- data <- XVals <-
     Pred <- Q975 <- Q25 <- Q50 <- X <- Y <- NULL
+
+  # # ..................................................................... ###
 
   IASDT.R::CatTime("Check input arguments")
   AllArgs <- ls(envir = environment())
@@ -46,32 +50,44 @@ RespCurv_PlotSR <- function(Path_Postprocessing) {
     AllArgs = AllArgs, Type = "character", Args = "Path_Postprocessing")
   rm(AllArgs)
 
-  IASDT.R::CatTime("Check the existence of response curve directory")
-  DirsMissing <- c(
-    Path_Postprocessing,
-    file.path(Path_Postprocessing, "RespCurv_DT")) %>%
-    dir.exists() %>%
-    all() %>%
-    magrittr::not()
 
-  if (DirsMissing) {
+  IASDT.R::CatTime("Check the existence of response curve directory")
+
+  if (!dir.exists(file.path(Path_Postprocessing, "RespCurv_DT"))) {
     stop(
-      "Response curve directory or data subfolder does not exist",
+      "Response curve directory or data subfolder is missing.",
       call. = FALSE)
   }
-  rm(DirsMissing)
 
   fs::dir_create(file.path(Path_Postprocessing, "RespCurv_SR"))
 
   # # ..................................................................... ###
 
-  IASDT.R::CatTime("Sequentially create species richness response curves")
+  IASDT.R::CatTime("Create species richness response curves")
 
   SR_DT_All <- file.path(Path_Postprocessing, "RespCurv_DT/ResCurvDT.RData") %>%
     IASDT.R::LoadAs() %>%
-    dplyr::select(-RC_Path_Orig, -RC_Path_Prob) %>%
+    dplyr::select(-RC_Path_Orig, -RC_Path_Prob)
+
+  NCores <- max(min(NCores, nrow(SR_DT_All)), 1)
+
+  IASDT.R::CatTime(
+    paste0("Prepare working on parallel, using ", NCores, " cores"),
+    Level = 1)
+
+  withr::local_options(
+    future.globals.maxSize = 8000 * 1024^2,
+    future.gc = TRUE, future.seed = TRUE)
+  c1 <- snow::makeSOCKcluster(NCores)
+  on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
+  future::plan("future::cluster", workers = c1, gc = TRUE)
+  on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
+
+  IASDT.R::CatTime("Prepare data", Level = 1)
+
+  SR_DT_All <- SR_DT_All %>%
     dplyr::mutate(
-      DT = purrr::map(
+      DT = furrr::future_map(
         .x = RC_Path_SR,
         .f = ~ {
           DT <- IASDT.R::LoadAs(.x) %>%
@@ -87,12 +103,14 @@ RespCurv_PlotSR <- function(Path_Postprocessing) {
 
           Observed <- DT$Observed_SR %>%
             dplyr::mutate(Variable = DT$Variable, NFV = DT$NFV, .before = 1)
+
           Trend <- tibble::tibble(
             Variable = DT$Variable, NFV = DT$NFV,
             Trend = DT$SR_PositiveTrendProb)
 
           return(list(Quant = Quant, Observed = Observed, Trend = list(Trend)))
-        })) %>%
+        },
+        .options = furrr::furrr_options(seed = TRUE, chunk_size = 1))) %>%
     dplyr::select(-NFV, -RC_Path_SR) %>%
     tidyr::unnest_wider(DT) %>%
     tidyr::nest(.by = c(Variable, Coords)) %>%
@@ -106,12 +124,13 @@ RespCurv_PlotSR <- function(Path_Postprocessing) {
 
   # Plot species richness response curves
 
+  IASDT.R::CatTime("Plot species richness response curves", Level = 1)
+
   SR_DT_All <- SR_DT_All %>%
     dplyr::mutate(
       Plot = purrr::pmap(
         .l = list(Variable, Quant, Observed, Trend, Coords),
         .f = function(Variable, Quant, Observed, Trend, Coords) {
-          IASDT.R::CatTime(paste0("  >>  ", Variable, " - coords=", Coords))
 
           # Maximum value on the y-axis
           PlotMax <- max(Observed$Pred, Quant$Q975) * 1.05
@@ -133,10 +152,12 @@ RespCurv_PlotSR <- function(Path_Postprocessing) {
           Variable2 <- dplyr::case_when(
             Variable == "bio2" ~ paste0(
               "<span style='font-size: 10pt;'><b>Bio2</b></span><span ",
-              "style='font-size: 7pt;'> (Mean Diurnal Range)</span>"),
+              "style='font-size: 7pt;'> (Mean diurnal range [mean of monthly ",
+              "(max temperature - min temperature)])</span>"),
             Variable == "bio4" ~ paste0(
               "<span style='font-size: 10pt;'><b>Bio4</b></span><span ",
-              "style='font-size: 7pt;'> (temperature seasonality)</span>"),
+              "style='font-size: 7pt;'> (temperature seasonality [standard ",
+              "deviation &times;100])</span>"),
             Variable == "bio6" ~ paste0(
               "<span style='font-size: 10pt;'><b>Bio6</b></span><span ",
               "style='font-size: 7pt;'> (temperature of the coldest ",
@@ -150,7 +171,8 @@ RespCurv_PlotSR <- function(Path_Postprocessing) {
               "style='font-size: 7pt;'> (annual precipitation amount)</span>"),
             Variable == "bio15" ~ paste0(
               "<span style='font-size: 10pt;'><b>Bio15</b></span><span ",
-              "style='font-size: 7pt;'> (precipitation seasonality)</span>"),
+              "style='font-size: 7pt;'> (precipitation seasonality ",
+              "[Coefficient of Variation])</span>"),
             Variable == "bio18" ~ paste0(
               "<span style='font-size: 10pt;'><b>Bio18</b></span><span ",
               "style='font-size: 7pt;'> (monthly precipitation amount of ",
@@ -159,6 +181,10 @@ RespCurv_PlotSR <- function(Path_Postprocessing) {
               "<span style='font-size: 10pt;'><b>Road + Rail intensity</b>",
               "</span><span style='font-size: 7pt;'> (log<sub>10</sub>(x + ",
               "0.1))</span>"),
+            Variable == "HabLog" ~ paste0(
+              "<span style='font-size: 10pt;'><b>% habitat coverage</b></span>",
+              "<span style='font-size: 8pt;'> (log<sub>10",
+              "</sub>(x + 0.1))</span>"),
             Variable == "EffortsLog" ~ paste0(
               "<span style='font-size: 10pt;'><b>Sampling efforts</b>",
               "</span><span style='font-size: 7pt;'> (log<sub>10</sub>(x + ",
@@ -185,8 +211,8 @@ RespCurv_PlotSR <- function(Path_Postprocessing) {
 
           # Plot title
           TitleTxt <- paste0(
-            '<span style="font-size:12pt; color:blue;"><b>',
-            "Predicted species richness for ", VarName, "</b></span>")
+            '<span style="font-size:12pt; color:blue;">',
+            "Predicted species richness for <b>", VarName, "</b></span>")
 
           Caption <- dplyr::if_else(
             Coords == "c",
@@ -255,6 +281,97 @@ RespCurv_PlotSR <- function(Path_Postprocessing) {
             width = 20, height = 12.5, units = "cm", quality = 100, res = 600)
           print(Plot)
           grDevices::dev.off()
+
+
+          # Back-transforming variables
+          if (Variable %in% c("EffortsLog", "RoadRailLog", "HabLog")) {
+
+            Observed2 <- dplyr::mutate(Observed, XVals = 10 ^ XVals - 0.1)
+            Quant2 <- dplyr::mutate(Quant, XVals = 10 ^ XVals - 0.1)
+
+            # Maximum value on the y-axis
+            PlotMax <- max(Observed2$Pred, Quant2$Q975) * 1.05
+
+            # Variable long name (x-axis label)
+            Variable2 <- dplyr::case_when(
+              Variable == "RoadRailLog" ~ paste0(
+                "<span style='font-size: 10pt;'><b>Road + Rail intensity</b>",
+                "</span><span style='font-size: 7pt;'> (back-transformed)",
+                "</span>"),
+              Variable == "HabLog" ~ paste0(
+                "<span style='font-size: 10pt;'><b>% habitat coverage</b></span>",
+                "<span style='font-size: 8pt;'> (back-transformed)</span>"),
+              Variable == "EffortsLog" ~ paste0(
+                "<span style='font-size: 10pt;'><b>Sampling efforts</b>",
+                "</span><span style='font-size: 7pt;'> (back-transformed)",
+                "</span>"),
+              .default = Variable)
+
+            Plot2 <- ggplot2::ggplot(
+              data = Observed2, mapping = ggplot2::aes(x = XVals, y = Pred)) +
+              ggplot2::geom_jitter(
+                shape = 16, width = 0, height = 0.02, alpha = 0.2, size = 1,
+                colour = "blue") +
+              ggplot2::geom_line(
+                ggplot2::aes(x = XVals, y = Q975),
+                data = Quant2, linetype = 2, linewidth = 0.3, colour = "blue") +
+              ggplot2::geom_line(
+                ggplot2::aes(x = XVals, y = Q25),
+                data = Quant2, linetype = 2, linewidth = 0.3, colour = "blue") +
+              ggplot2::geom_ribbon(
+                data = Quant2, ggplot2::aes(x = XVals, ymin = Q25, ymax = Q975),
+                inherit.aes = FALSE, fill = "blue", alpha = 0.1) +
+              ggplot2::geom_line(
+                mapping = ggplot2::aes(x = XVals, y = Q50), data = Quant2,
+                linetype = 1, linewidth = 0.6, colour = "blue") +
+              ggplot2::geom_text(
+                data = DT_Trend,
+                mapping = ggplot2::aes(x = X, y = Y, label = Trend2),
+                colour = "darkgrey", size = 2.5, vjust = 1.4, hjust = -0.05) +
+              ggplot2::facet_grid(~NFV, labeller = FacetLabel) +
+              ggplot2::scale_y_continuous(
+                limits = c(-1, PlotMax), oob = scales::squish, expand = c(0, 0)) +
+              ggplot2::scale_x_continuous(
+                expand = c(0.015, 0.015), labels = scales::comma) +
+              ggplot2::xlab(Variable2) +
+              ggplot2::ylab(YAxisLabel) +
+              ggplot2::labs(title = TitleTxt, caption = Caption) +
+              ggplot2::theme_bw() +
+              ggplot2::theme(
+                strip.text = ggtext::element_markdown(
+                  hjust = 0,
+                  margin = ggplot2::margin(0.05, 0.1, 0.05, 0.1, "cm")),
+                strip.background = ggplot2::element_rect(
+                  colour = NA, fill = "white"),
+                legend.position = "none",
+                plot.caption = ggplot2::element_text(
+                  size = 8, color = "grey", hjust = 0),
+                axis.title = ggtext::element_markdown(),
+                axis.text = ggplot2::element_text(size = 8),
+                plot.title = ggtext::element_markdown(
+                  margin = ggplot2::margin(1, 0, 1, 0)),
+                plot.subtitle = ggtext::element_markdown(
+                  size = 7, colour = "darkgrey",
+                  margin = ggplot2::margin(4, 0, 4, 0)),
+                panel.grid.major = ggplot2::element_line(linewidth = 0.25),
+                panel.grid.minor = ggplot2::element_line(linewidth = 0.1),
+                panel.spacing = ggplot2::unit(0.15, "lines"),
+                plot.margin = ggplot2::unit(c(0.1, 0.2, 0.1, 0.2), "lines"))
+
+
+            # Using ggplot2::ggsave directly does not show non-ascii characters
+            # correctly
+            grDevices::jpeg(
+              filename = file.path(
+                Path_Postprocessing, "RespCurv_SR",
+                paste0(
+                  "RespCurv_SR_", Variable, "_Coords_", Coords,
+                  "_OriginalScale.jpeg")),
+              width = 20, height = 12.5, units = "cm", quality = 100, res = 600)
+            print(Plot2)
+            grDevices::dev.off()
+            }
+
           return(invisible(NULL))
         }))
 

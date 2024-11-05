@@ -47,8 +47,12 @@
 #' @param Pred_XY a matrix of coordinates to be added to predicted values. If
 #'   `NULL` (default), the coordinates from the model object is used.
 #' @param LF_InputFile a character string specifying the file name where the
-#' latent factor predictions are saved. If `NULL`, the predictions are
-#' saved to a temporary file. This argument is used only when `RC` is `NULL`.
+#'   latent factor predictions are saved. If `NULL`, the predictions are saved
+#'   to a temporary file. This argument is used only when `RC` is `NULL`.
+#' @param LF_Only a logical flag indicating whether to return the latent factor
+#'   predictions only. Defaults to `FALSE`. This helps in predicting to new
+#'   sites, allowing to predicting the latent factors only once, then the output
+#'   can be loaded in other predictions when needed.
 #' @param Verbose Logical. If TRUE, detailed output is printed. Default is
 #'   `FALSE`.
 #' @inheritParams predictLF
@@ -60,7 +64,7 @@ predictHmsc <- function(
     Gradient = NULL, Yc = NULL, mcmcStep = 1, expected = TRUE, NCores = 8,
     Model_Name = "Train", Temp_Dir = "TEMP2Pred", RC = NULL,
     UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE, LF_OutFile = NULL,
-    LF_Return = TRUE, LF_InputFile = NULL,
+    LF_Return = TRUE, LF_InputFile = NULL, LF_Only = FALSE,
     Pred_Dir = "Model_Predictions", Pred_PA = NULL, Pred_XY = NULL,
     Evaluate = FALSE, Eval_Name = NULL, Eval_Dir = "Evaluation",
     Verbose = TRUE) {
@@ -77,6 +81,17 @@ predictHmsc <- function(
   # To avoid non-standard evaluation
   Pred_XY <- Pred_XY
   Pred_PA <- Pred_PA
+
+  if (LF_Only && is.null(LF_OutFile)) {
+    stop(
+      "`LF_OutFile` must be specified when `LF_Only` is `TRUE`",
+      call. = FALSE)
+  }
+  if (!is.null(LF_OutFile) && !is.null(LF_InputFile)) {
+    stop(
+      "only one of `LF_OutFile` and `LF_InputFile` arguments can be specified",
+      call. = FALSE)
+  }
 
   # # ..................................................................... ###
 
@@ -137,7 +152,8 @@ predictHmsc <- function(
       stop(
         paste0(
           "predict with arguments 'Yc' and 'Gradient' jointly is not ",
-          "implemented (yet)"))
+          "implemented (yet)"),
+        call. = FALSE)
     }
     XData <- Gradient$XDataNew
     studyDesign <- Gradient$studyDesignNew
@@ -145,10 +161,14 @@ predictHmsc <- function(
   }
 
   if (!is.null(XData) && !is.null(X)) {
-    stop("only one of XData and X arguments can be specified")
+    stop(
+      "only one of XData and X arguments can be specified",
+      call. = FALSE)
   }
   if (!is.null(XRRRData) && !is.null(XRRR)) {
-    stop("only one of XRRRData and XRRR arguments can be specified")
+    stop(
+      "only one of XRRRData and XRRR arguments can be specified",
+      call. = FALSE)
   }
 
   if (!is.null(XData)) {
@@ -156,7 +176,7 @@ predictHmsc <- function(
       class(XData)[1L],
       list = {
         if (any(unlist(lapply(XData, is.na)))) {
-          stop("NA values are not allowed in 'XData'")
+          stop("NA values are not allowed in 'XData'", call. = FALSE)
         }
         xlev <- lapply(Reduce(rbind, object$XData), levels)
         xlev <- xlev[unlist(lapply(Reduce(rbind, object$XData), is.factor))]
@@ -166,7 +186,9 @@ predictHmsc <- function(
           })
       },
       data.frame = {
-        if (any(is.na(XData))) stop("NA values are not allowed in 'XData'")
+        if (any(is.na(XData))) {
+          stop("NA values are not allowed in 'XData'", call. = FALSE)
+        }
         xlev <- lapply(object$XData, levels)
         xlev <- xlev[unlist(lapply(object$XData, is.factor))]
         X <- stats::model.matrix(object$XFormula, XData, xlev = xlev)
@@ -202,28 +224,29 @@ predictHmsc <- function(
 
   if (!is.null(Yc)) {
     if (ncol(Yc) != object$ns) {
-      stop("number of columns in Yc must be equal to ns")
+      stop("number of columns in Yc must be equal to ns", call. = FALSE)
     }
     if (nrow(Yc) != nyNew) {
-      stop("number of rows in Yc and X must be equal")
+      stop("number of rows in Yc and X must be equal", call. = FALSE)
     }
   }
 
   if (!is.null(Loff)) {
     if (ncol(Loff) != object$ns) {
-      stop("number of columns in Loff must be equal to ns")
+      stop("number of columns in Loff must be equal to ns", call. = FALSE)
     }
     if (nrow(Loff) != nyNew) {
-      stop("number of rows in Loff and X must be equal")
+      stop("number of rows in Loff and X must be equal", call. = FALSE)
     }
   }
 
   if (!all(object$rLNames %in% colnames(studyDesign))) {
-    stop("dfPiNew does not contain all the necessary named columns")
+    stop(
+      "dfPiNew does not contain all the necessary named columns", call. = FALSE)
   }
 
   if (!all(object$rLNames %in% names(ranLevels))) {
-    stop("rL does not contain all the necessary named levels")
+    stop("rL does not contain all the necessary named levels", call. = FALSE)
   }
 
   if (!is.null(studyDesign)) {
@@ -366,6 +389,10 @@ predictHmsc <- function(
   try(rm(predPostEta), silent = TRUE)
 
   invisible(gc())
+
+  if (LF_Only) {
+    return(LF_OutFile)
+  }
 
   # # ..................................................................... ###
 

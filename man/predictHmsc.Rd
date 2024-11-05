@@ -84,17 +84,17 @@ Defaults to TRUE.}
 environment. Defaults to NULL. This argument is required if \code{UseTF} is
 TRUE.}
 
-\item{TF_use_single}{Logical indicating whether to use single precision for the
-TF calculations. Defaults to \code{FALSE}.}
+\item{TF_use_single}{Logical indicating whether to use single precision for
+the TF calculations. Defaults to \code{FALSE}.}
 
 \item{LF_OutFile}{Character string specifying the path to save the outputs.
-If \code{NULL} (default), the predicted latent factors are not saved to a
-file. This should end with either \code{qs} or \code{RData}.}
+If \code{NULL} (default), the predicted latent factors are not saved to a file.
+This should end with either \code{qs} or \code{RData}.}
 
-\item{LF_Return}{Logical. Indicates if the output should be
-returned. Defaults to \code{TRUE}. If \code{LF_OutFile} is \code{NULL}, this parameter
-cannot be set to \code{FALSE} because the function needs to return the result if
-it is not saved to a file.}
+\item{LF_Return}{Logical. Indicates if the output should be returned.
+Defaults to \code{TRUE}. If \code{LF_OutFile} is \code{NULL}, this parameter cannot be set
+to \code{FALSE} because the function needs to return the result if it is not
+saved to a file.}
 
 \item{LF_InputFile}{a character string specifying the file name where the
 latent factor predictions are saved. If \code{NULL}, the predictions are

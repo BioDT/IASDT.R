@@ -82,8 +82,8 @@ predictHmsc <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  ID <- Chunk <- Sp <- IAS_ID <- Path_pred <- Sp_data <- data <-
-    geometry <- x <- y <- NULL
+  Chunk <- Sp <- IAS_ID <- Path_pred <- Sp_data <- data <- geometry <- x <-
+    y <- SR_mean <- SR_sd <- SR_cov <- NULL
 
   # # ..................................................................... ###
 
@@ -402,7 +402,7 @@ predictHmsc <- function(
         IDs <- which(ChunkIDs == .x)
         Ch <- list(ppEta = ppEta[IDs], post = post[IDs])
         ChunkFile <- file.path(
-          Temp_Dir, paste0(Model_Name, "_ppEta_ch", .x, ".qs"))
+          Temp_Dir, paste0(Model_Name, "_preds_ch", .x, ".qs"))
         qs::qsave(Ch, file = ChunkFile, preset = "fast")
         return(ChunkFile)
       })
@@ -423,7 +423,8 @@ predictHmsc <- function(
       list = c(
         "object", "X", "XRRR", "Yc", "Loff", "rL", "rLPar", "PiNew",
         "dfPiNew", "nyNew", "expected", "mcmcStep", "seeds", "chunk_size",
-        "Chunks", "Temp_Dir", "Model_Name"),
+        "Chunks", "Temp_Dir", "Model_Name",
+        "get1prediction"),
       envir = environment())
 
     invisible(snow::clusterEvalQ(
@@ -442,8 +443,9 @@ predictHmsc <- function(
       cl = c1,
       x = seq_len(length(Chunks)),
       fun = function(Chunk) {
+
         ChunkFile <- Chunks[Chunk]
-        Ch <- qs::qread(ChunkFile)
+        Ch <- qs::qread(ChunkFile, nthreads = 5)
         ppEta <- Ch$ppEta
         post <- Ch$post
         rm(Ch)
@@ -462,6 +464,16 @@ predictHmsc <- function(
               mcmcStep = mcmcStep, seed = Seed[pN])
           })
 
+        # Species richness
+        ChunkSR <-  simplify2array(lapply(X = PredChunk, FUN = rowSums)) %>%
+          float::fl()
+        dimnames(ChunkSR) <- NULL
+        ChunkSR_File <- file.path(
+          Temp_Dir, paste0("Pred_", Model_Name, "_ch", Chunk, "_SR.qs"))
+        qs::qsave(ChunkSR, file = ChunkSR_File, preset = "fast")
+        rm(ChunkSR)
+
+        # Species predictions
         ChunkSp <- purrr::map_dfr(
           .x = seq_len(length(object$spNames)),
           .f = function(Sp) {
@@ -470,17 +482,22 @@ predictHmsc <- function(
               float::fl()
             dimnames(SpD) <- NULL
 
-            ChunkSpFile <- file.path(
+            ChunkSp_File <- file.path(
               Temp_Dir,
-              paste0("Pred_", Model_Name, "_ch", Chunk, "_Sp", Sp, ".qs"))
+              paste0("Pred_", Model_Name, "_ch", Chunk, "_tax", Sp, ".qs"))
 
-            qs::qsave(SpD, file = ChunkSpFile, preset = "fast")
+            qs::qsave(SpD, file = ChunkSp_File, preset = "fast")
 
             cbind.data.frame(
               Chunk = Chunk, Sp = Sp, IAS_ID = object$spNames[Sp],
-              ChunkSpFile = ChunkSpFile) %>%
+              ChunkSp_File = ChunkSp_File) %>%
               return()
-          })
+          }) %>%
+          dplyr::bind_rows(
+            tibble::tibble(
+              Chunk = Chunk, Sp = 0, IAS_ID = "SR",
+              ChunkSp_File = ChunkSR_File),
+            .)
 
         fs::file_delete(ChunkFile)
         rm(PredChunk)
@@ -511,9 +528,15 @@ predictHmsc <- function(
   Eval_DT <- future.apply::future_lapply(
     X = seq_len(nrow(Eval_DT)),
     FUN = function(ID) {
+
       Sp <- Eval_DT$Sp[[ID]]
+      if (Sp == 0) {
+        Sp <- "SR"
+      } else {
+        Sp <- paste0("Sp", Sp)
+      }
       IAS_ID <- Eval_DT$IAS_ID[[ID]]
-      data <- Eval_DT$data[[ID]]
+      data <- as.vector(Eval_DT$data[[ID]])
 
       SpDT <- purrr::map(data, qs::qread) %>%
         do.call(cbind, .) %>%
@@ -538,12 +561,12 @@ predictHmsc <- function(
         sf::st_as_sf(coords = c("x", "y"), crs = 3035, remove = FALSE)
 
       PredSummaryFile <- file.path(
-        Pred_Dir, paste0("Pred_", Model_Name, "_Sp", Sp, ".qs"))
+        Pred_Dir, paste0("Pred_", Model_Name, "_", Sp, ".qs"))
 
       qs::qsave(PredSummary, file = PredSummaryFile, preset = "fast")
       fs::file_delete(data)
 
-      if (Evaluate) {
+      if (Evaluate && Sp != "SR") {
         if (is.null(Pred_PA)) {
           PresAbs <- object$Y[, Sp]
         } else {
@@ -603,14 +626,16 @@ predictHmsc <- function(
         .f = ~ {
           qs::qread(.x) %>%
             tidyr::pivot_longer(
-              cols = starts_with("Sp_"),
+              cols = tidyselect::starts_with(c("Sp_", "SR_")),
               names_to = "Species", values_to = "Prediction")
         })) %>%
     dplyr::pull(Sp_data) %>%
     dplyr::bind_rows() %>%
     tidyr::pivot_wider(names_from = "Species", values_from = "Prediction") %>%
     dplyr::relocate(gtools::mixedsort(names(.))) %>%
-    dplyr::select(x, y, geometry, tidyselect::everything())
+    dplyr::select(
+      x, y, geometry, SR_mean, SR_sd, SR_cov, tidyselect::everything()) %>%
+    dplyr::mutate(Model_Name = Model_Name, .before = "SR_mean")
 
   Pred_File <- file.path(Pred_Dir, paste0("Prediction_", Model_Name, ".qs"))
   qs::qsave(Predictions, file = Pred_File, preset = "fast")
@@ -620,18 +645,18 @@ predictHmsc <- function(
 
   if (Evaluate) {
     if (is.null(Eval_Name)) {
-      Eval_Path <- file.path(Eval_Dir, paste0("Eval_", Model_Name, ".RData"))
+      Eval_Path <- file.path(Eval_Dir, paste0("Eval_", Model_Name, ".qs"))
     } else {
       Eval_Path <- file.path(
-        Eval_Dir, paste0("Eval_", Model_Name, "_", Eval_Name, ".RData"))
+        Eval_Dir, paste0("Eval_", Model_Name, "_", Eval_Name, ".qs"))
     }
 
     Eval_DT <- dplyr::select(Eval_DT, -Path_pred)
-    save(Eval_DT, file = Eval_Path)
+    qs::qsave(Eval_DT, file = Eval_Path, preset = "fast")
     IASDT.R::CatTime(
       paste0(
         "Evaluation results were saved to `",
-        file.path(Eval_Dir, "Eval_DT.RData"), "`"),
+        file.path(Eval_Dir, "Eval_DT.qs"), "`"),
       Level = 1)
   } else {
     Eval_Path <- NULL
@@ -724,7 +749,7 @@ get1prediction <- function(
       for (k in 1:rL[[r]]$xDim) {
         LRan[[r]] <- LRan[[r]] +
           (Eta[[r]][as.character(dfPiNew[, r]), ] *
-            rL[[r]]$x[as.character(dfPiNew[, r]), k]) %*%
+             rL[[r]]$x[as.character(dfPiNew[, r]), k]) %*%
           sam$Lambda[[r]][, , k]
       }
     }
@@ -764,7 +789,7 @@ get1prediction <- function(
         for (k in 1:rL[[r]]$xDim) {
           LRan[[r]] <- LRan[[r]] +
             (Eta[[r]][as.character(dfPiNew[, r]), ] *
-              rL[[r]]$x[as.character(dfPiNew[, r]), k]) %*%
+               rL[[r]]$x[as.character(dfPiNew[, r]), k]) %*%
             sam$Lambda[[r]][, , k]
         }
       }

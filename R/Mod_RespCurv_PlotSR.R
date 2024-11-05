@@ -303,7 +303,8 @@ RespCurv_PlotSR <- function(Path_Postprocessing, Verbose = TRUE, NCores = 8) {
                 "</span><span style='font-size: 7pt;'> (back-transformed)",
                 "</span>"),
               Variable == "HabLog" ~ paste0(
-                "<span style='font-size: 10pt;'><b>% habitat coverage</b></span>",
+                "<span style='font-size: 10pt;'>",
+                "<b>% habitat coverage</b></span>",
                 "<span style='font-size: 8pt;'> (back-transformed)</span>"),
               Variable == "EffortsLog" ~ paste0(
                 "<span style='font-size: 10pt;'><b>Sampling efforts</b>",
@@ -334,7 +335,8 @@ RespCurv_PlotSR <- function(Path_Postprocessing, Verbose = TRUE, NCores = 8) {
                 colour = "darkgrey", size = 2.5, vjust = 1.4, hjust = -0.05) +
               ggplot2::facet_grid(~NFV, labeller = FacetLabel) +
               ggplot2::scale_y_continuous(
-                limits = c(-1, PlotMax), oob = scales::squish, expand = c(0, 0)) +
+                limits = c(-1, PlotMax),
+                oob = scales::squish, expand = c(0, 0)) +
               ggplot2::scale_x_continuous(
                 expand = c(0.015, 0.015), labels = scales::comma) +
               ggplot2::xlab(Variable2) +

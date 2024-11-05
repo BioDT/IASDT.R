@@ -4,11 +4,14 @@
 \alias{CheckRData}
 \title{Check the Integrity of an \code{RData} File}
 \usage{
-CheckRData(File)
+CheckRData(File, Warning = TRUE)
 }
 \arguments{
 \item{File}{character. The file path of the file to be checked. This can not
 be empty.}
+
+\item{Warning}{logical. If \code{TRUE} (default), warnings will be printed if the
+file does not exist.}
 }
 \value{
 A logical value indicating if the file is a valid RData file

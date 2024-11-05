@@ -380,7 +380,11 @@ RespCurv_PrepData <- function(
 
     File_LF <- file.path(Path_RespCurvDT, "ResCurv_LF.RData")
 
-    if (isFALSE(IASDT.R::CheckRData(File_LF))) {
+    if (isFALSE(IASDT.R::CheckRData(File_LF, Warning = FALSE))) {
+
+      IASDT.R::InfoChunk(
+        Message = "Get LF prediction at mean coordinates",
+        Date = FALSE, Extra2 = 1)
 
       IASDT.R::CatTime("Create gradient")
       Gradient_c <- Hmsc::constructGradient(
@@ -393,9 +397,6 @@ RespCurv_PrepData <- function(
       rm(Model)
       invisible(gc())
 
-      IASDT.R::InfoChunk(
-        Message = "Get LF prediction at mean coordinates",
-        Date = FALSE, Extra2 = 1)
       Model_LF <- IASDT.R::predictHmsc(
         object = Path_Model, Gradient = Gradient_c, expected = TRUE,
         NCores = NCores, Temp_Dir = Temp_Dir, Model_Name = "RC_c", RC = "c",
@@ -419,8 +420,6 @@ RespCurv_PrepData <- function(
     IASDT.R::InfoChunk(
       Message = "Prepare response curve data", Date = FALSE, Extra2 = 1)
 
-    rm(Model)
-    invisible(gc())
     NCores <- max(min(NCores, MissingRows), 1)
 
     IASDT.R::CatTime(

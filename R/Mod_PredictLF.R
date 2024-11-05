@@ -31,15 +31,15 @@
 #' @param TF_Environ Character string specifying the path to the Python
 #'   environment. Defaults to NULL. This argument is required if `UseTF` is
 #'   TRUE.
-#' @param TF_use_single Logical indicating whether to use single precision for the
-#'   TF calculations. Defaults to `FALSE`.
+#' @param TF_use_single Logical indicating whether to use single precision for
+#'   the TF calculations. Defaults to `FALSE`.
 #' @param LF_OutFile Character string specifying the path to save the outputs.
-#'   If `NULL` (default), the predicted latent factors are not saved to a
-#'   file. This should end with either `qs` or `RData`.
-#' @param LF_Return Logical. Indicates if the output should be
-#'   returned. Defaults to `TRUE`. If `LF_OutFile` is `NULL`, this parameter
-#'   cannot be set to `FALSE` because the function needs to return the result if
-#'   it is not saved to a file.
+#'   If `NULL` (default), the predicted latent factors are not saved to a file.
+#'   This should end with either `qs` or `RData`.
+#' @param LF_Return Logical. Indicates if the output should be returned.
+#'   Defaults to `TRUE`. If `LF_OutFile` is `NULL`, this parameter cannot be set
+#'   to `FALSE` because the function needs to return the result if it is not
+#'   saved to a file.
 #' @param Verbose Logical. If TRUE, detailed output is printed. Default is
 #'   `FALSE`.
 #' @export
@@ -56,8 +56,8 @@
 #' - it is possible to use TensorFlow (`UseTF` argument) to make matrix
 #'   calculations faster, particularly when used on GPU. The following modules
 #'   are needed: `numpy`, `os`, `tensorflow`, `rdata`, `xarray`, and `pandas`.
-#'   To use `TensorFlow`, the argument `TF_Environ` should be set to the path of a
-#'   Python environment with TensorFlow installed;
+#'   To use `TensorFlow`, the argument `TF_Environ` should be set to the path of
+#'   a Python environment with TensorFlow installed;
 #' - if `UseTF` is set to `FALSE`, the function uses R / CPP code in the
 #'   calculations;
 #' - the input `postEta` can be either a list or a file path for it, which can
@@ -70,7 +70,8 @@
 predictLF <- function(
     unitsPred, modelunits, postEta, postAlpha, rL, NCores = 8,
     Temp_Dir = "TEMP2Pred", Model_Name = NULL, UseTF = TRUE, TF_Environ = NULL,
-    TF_use_single = FALSE, LF_OutFile = NULL, LF_Return = TRUE, Verbose = TRUE) {
+    TF_use_single = FALSE, LF_OutFile = NULL, LF_Return = TRUE,
+    Verbose = TRUE) {
 
   # # ..................................................................... ###
 
@@ -129,9 +130,10 @@ predictLF <- function(
     # directly
     IASDT.R::CatTime("All input sites are training sites", Level = 1)
 
-    postEtaPred <- postEta %>%
-      purrr::map(~ {
-        Out <- .x[match(unitsPred[indOld], modelunits),]
+    postEtaPred <- purrr::map(
+      .x = postEta,
+      .f = ~ {
+        Out <- .x[match(unitsPred[indOld], modelunits), ]
         rownames(Out) <- modelunits
         return(Out)
       })
@@ -179,7 +181,6 @@ predictLF <- function(
     } else {
       Model_Name <- paste0(Model_Name, "_")
     }
-
 
     # Create a temporary directory to store intermediate results. This directory
     # will be used to save D11, D12, and intermediate postEta files, reducing

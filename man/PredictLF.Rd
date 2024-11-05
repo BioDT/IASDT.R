@@ -53,17 +53,17 @@ Defaults to TRUE.}
 environment. Defaults to NULL. This argument is required if \code{UseTF} is
 TRUE.}
 
-\item{TF_use_single}{Logical indicating whether to use single precision for the
-TF calculations. Defaults to \code{FALSE}.}
+\item{TF_use_single}{Logical indicating whether to use single precision for
+the TF calculations. Defaults to \code{FALSE}.}
 
 \item{LF_OutFile}{Character string specifying the path to save the outputs.
-If \code{NULL} (default), the predicted latent factors are not saved to a
-file. This should end with either \code{qs} or \code{RData}.}
+If \code{NULL} (default), the predicted latent factors are not saved to a file.
+This should end with either \code{qs} or \code{RData}.}
 
-\item{LF_Return}{Logical. Indicates if the output should be
-returned. Defaults to \code{TRUE}. If \code{LF_OutFile} is \code{NULL}, this parameter
-cannot be set to \code{FALSE} because the function needs to return the result if
-it is not saved to a file.}
+\item{LF_Return}{Logical. Indicates if the output should be returned.
+Defaults to \code{TRUE}. If \code{LF_OutFile} is \code{NULL}, this parameter cannot be set
+to \code{FALSE} because the function needs to return the result if it is not
+saved to a file.}
 
 \item{Verbose}{Logical. If TRUE, detailed output is printed. Default is
 \code{FALSE}.}
@@ -86,8 +86,8 @@ The main difference is that this function:
 \item it is possible to use TensorFlow (\code{UseTF} argument) to make matrix
 calculations faster, particularly when used on GPU. The following modules
 are needed: \code{numpy}, \code{os}, \code{tensorflow}, \code{rdata}, \code{xarray}, and \code{pandas}.
-To use \code{TensorFlow}, the argument \code{TF_Environ} should be set to the path of a
-Python environment with TensorFlow installed;
+To use \code{TensorFlow}, the argument \code{TF_Environ} should be set to the path of
+a Python environment with TensorFlow installed;
 \item if \code{UseTF} is set to \code{FALSE}, the function uses R / CPP code in the
 calculations;
 \item the input \code{postEta} can be either a list or a file path for it, which can

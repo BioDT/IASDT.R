@@ -1,5 +1,5 @@
 ## |------------------------------------------------------------------------| #
-# Predict_Hmsc ----
+# Predict_Maps ----
 ## |------------------------------------------------------------------------| #
 
 #' Predicts habitat suitability of `Hmsc` model at different climate scenarios
@@ -10,6 +10,7 @@
 #' exports three maps representing the mean, standard deviation (sd), and
 #' coefficient of variation (cov).
 #'
+#' @param Path_Model Character. Path to fitted `Hmsc` model object.
 #' @param Hab_Abb Character. Habitat abbreviation indicating the specific
 #'   [SynHab](https://www.preslia.cz/article/pdf?id=11548) habitat type to
 #'   prepare data for. Valid values are `0`, `1`, `2`, `3`, `4a`, `4b`, `10`,
@@ -25,19 +26,20 @@
 #'   for parallel processing. Predictor rasters are converted into data frame
 #'   (tibble) then split into small chunks for processing on parallel. Default:
 #'   `500`.
-#' @param Path_Model Character. Path to fitted `Hmsc` model object.
 #' @param RemoveChunks Logical. Whether to remove intermediate chunk files after
 #'   prediction.
 #' @export
-#' @name Predict_Hmsc
+#' @name Predict_Maps
 #' @author Ahmed El-Gabbas
+#' @inheritParams predictHmsc
 #' @return Returns a tibble with the prediction summary and file paths for
 #'   output tif files.
 #' @export
 
-Predict_Hmsc <- function(
-    Hab_Abb = NULL, EnvFile = ".env", FromHPC = TRUE, NCores = 8,
-    ChunkSize = 500, Path_Model = NULL, RemoveChunks = TRUE) {
+Predict_Maps <- function(
+    Path_Model = NULL, Hab_Abb = NULL, EnvFile = ".env", FromHPC = TRUE,
+    NCores = 8, ChunkSize = 500, RemoveChunks = TRUE, TF_Environ = NULL,
+    UseTF = TRUE) {
 
   # # ..................................................................... ###
 
@@ -85,7 +87,7 @@ Predict_Hmsc <- function(
     Path_CLC <- Tif_Path <- path_prediction <- ias_id <- taxon_name <-
     class <- order <- family <- species_name <- tif_path_mean <-
     tif_path_cov <- tif_path_sd <- hab_abb <- hab_name <- TimePeriod <-
-    ClimateModel <- ClimateScenario <- Time <- Scenario <- NULL
+    ClimateModel <- ClimateScenario <- Time <- Scenario <- Train <- NULL
 
   # # ..................................................................... ###
 
@@ -153,9 +155,16 @@ Predict_Hmsc <- function(
   Model <- IASDT.R::LoadAs(Path_Model)
 
   OtherVars <- stringr::str_subset(names(Model$XData), "^bio|CV", negate = TRUE)
-  Path_Predictions <- file.path(dirname(dirname(Path_Model)), "Predictions")
+  BioVars <- stringr::str_subset(names(Model$XData), "^bio", negate = FALSE)
+  Path_Predictions <- file.path(dirname(dirname(Path_Model)), "Model_Predictions")
+  Path_Eval <- file.path(dirname(dirname(Path_Model)), "Evaluation")
+  fs::dir_create(c(Path_Predictions, Path_Eval))
 
-  rm(Model)
+  Model_Coords <- Model$rL$sample$s %>%
+    as.data.frame() %>%
+    tibble::tibble() %>%
+    sf::st_as_sf(coords = c("x", "y"), crs = 3035) %>%
+    dplyr::mutate(Train = TRUE)
 
   # # |||||||||||||||||||||||||||||||||||||||| #
 
@@ -272,176 +281,268 @@ Predict_Hmsc <- function(
 
   # # ..................................................................... ###
 
-  # Predicting ------
+  # Predictions - current ------
 
-  IASDT.R::CatTime("\nMaking predictions", ... = "\n")
+  Name <- "Current"
 
-  Predictions <- CHELSA_Data %>%
-    dplyr::mutate(
-      path_prediction = purrr::pmap_chr(
-        .l = list(Name, FilePath, TimePeriod, ClimateModel, ClimateScenario),
-        .f = function(Name, FilePath, TimePeriod,
-                      ClimateModel, ClimateScenario) {
+  Predict_DF <- CHELSA_Data %>%
+    dplyr::filter(ClimateModel == "Current") %>%
+    dplyr::pull(FilePath) %>%
+    IASDT.R::LoadAs() %>%
+    terra::unwrap() %>%
+    terra::subset(BioVars) %>%
+    c(StaticPredictors) %>%
+    terra::as.data.frame(xy = TRUE, cells = TRUE, na.rm = TRUE) %>%
+    tibble::tibble() %>%
+    sf::st_as_sf(remove = FALSE, coords = c("x", "y"), crs = 3035) %>%
+    sf::st_join(Model_Coords) %>%
+    tidyr::replace_na(list(Train = FALSE))
 
-          Try <- 0
-          while (TRUE) {
-            Try <- Try + 1
-            Path <- Predict_Scenario(
-              Name = Name, File = FilePath,
-              Hab_Abb = Hab_Abb, ChunkSize = ChunkSize, NCores = NCores,
-              StaticPredictors = StaticPredictors, Path_Model = Path_Model,
-              Path_Grid = Path_GridR, EnvFile = EnvFile, FromHPC = FromHPC,
-              RemoveChunks = RemoveChunks, TimePeriod = TimePeriod,
-              ClimateModel = ClimateModel, ClimateScenario = ClimateScenario)
+  ## training locations -----
+  Model_Name_Train <- paste0(Name, "_", Hab_Abb, "_Train")
+  Predict_DF_Train <- dplyr::filter(Predict_DF, Train)
+  Train_XY <- sf::st_drop_geometry(Predict_DF_Train[, c("x", "y")])
+  Train_PA <- as.data.frame(Model$Y)
+  Train_X <- Predict_DF_Train %>%
+    dplyr::select(tidyselect::all_of(names(Model$XData))) %>%
+    sf::st_drop_geometry() %>%
+    stats::model.matrix(Model$XFormula, ., xlev = NULL)
 
-            if (file.exists(Path) && IASDT.R::CheckRData(Path)) {
-              break
-            }
+  # Testing Locations ----
+  Model_Name_Test <- paste0(Name, "_", Hab_Abb, "_Test")
+  Predict_DF_Test <- dplyr::filter(Predict_DF, !Train)
+  Path_Test_LF <- file.path(Path_Predictions, "Test_LF.qs")
+  Test_XY <- sf::st_drop_geometry(Predict_DF_Test[, c("x", "y")])
+  Test_X <- Predict_DF_Test %>%
+    dplyr::select(tidyselect::all_of(names(Model$XData))) %>%
+    sf::st_drop_geometry()
+  Gradient <- Hmsc::prepareGradient(
+    hM = Model, XDataNew = as.data.frame(Test_X),
+    sDataNew = list(sample = as.data.frame(Test_XY)))
+  Test_X <- Test_X %>%
+    stats::model.matrix(Model$XFormula, ., xlev = NULL)
 
-            if (Try > 5) {
-              Path <- ""
-              break
-            }
+  rm(Model, Predict_DF_Test, Predict_DF)
+  invisible(gc())
+
+
+  Preds_Current_Train <- IASDT.R::predictHmsc(
+    object = Path_Model,
+    X = Train_X,
+    Gradient = NULL,
+    expected = TRUE,
+    NCores = NCores,
+    Model_Name = Model_Name_Train,
+    Temp_Dir = "TEMP2Pred",
+    UseTF = UseTF,
+    TF_Environ = TF_Environ,
+    LF_Return = TRUE,
+    Pred_Dir = Path_Predictions,
+    Pred_PA = Train_PA,
+    Pred_XY = Train_XY,
+    Evaluate = TRUE,
+    Eval_Name = "Training",
+    Eval_Dir = Path_Eval,
+    # Verbose = FALSE
+  ) %>%
+    dplyr::mutate(Scenario = Model_Name_Train)
+
+  Preds_Current_Test <- IASDT.R::predictHmsc(
+    object = Path_Model,
+    # X = Test_X,
+    Gradient = Gradient,
+    expected = TRUE,
+    NCores = NCores,
+    Model_Name = Model_Name_Test,
+    Temp_Dir = "TEMP2Pred",
+    UseTF = UseTF,
+    TF_Environ = TF_Environ,
+    LF_Return = TRUE,
+    LF_OutFile = Path_Test_LF,
+    Pred_Dir = Path_Predictions,
+    # Pred_PA = Train_PA,
+    Pred_XY = Test_XY,
+    Evaluate = FALSE,
+    # Eval_Name = "Training",
+    # Eval_Dir = Path_Eval,
+    # Verbose = FALSE
+  ) %>%
+    dplyr::mutate(Scenario = Model_Name_Test)
+
+
+
+# # ..................................................................... ###
+
+# Predicting ------
+
+IASDT.R::CatTime("\nMaking predictions", ... = "\n")
+
+Predictions <- CHELSA_Data %>%
+  dplyr::mutate(
+    path_prediction = purrr::pmap_chr(
+      .l = list(Name, FilePath, TimePeriod, ClimateModel, ClimateScenario),
+      .f = function(Name, FilePath, TimePeriod,
+                    ClimateModel, ClimateScenario) {
+
+        Try <- 0
+        while (TRUE) {
+          Try <- Try + 1
+          Path <- Predict_Scenario(
+            Name = Name, File = FilePath,
+            Hab_Abb = Hab_Abb, ChunkSize = ChunkSize, NCores = NCores,
+            StaticPredictors = StaticPredictors, Path_Model = Path_Model,
+            Path_Grid = Path_GridR, EnvFile = EnvFile, FromHPC = FromHPC,
+            RemoveChunks = RemoveChunks, TimePeriod = TimePeriod,
+            ClimateModel = ClimateModel, ClimateScenario = ClimateScenario)
+
+          if (file.exists(Path) && IASDT.R::CheckRData(Path)) {
+            break
           }
-          return(Path)
+
+          if (Try > 5) {
+            Path <- ""
+            break
+          }
         }
-      )
-    ) %>%
-    dplyr::select(-c("File_List", "Name", "FilePath")) %>%
-    dplyr::rename(
-      time_period = TimePeriod, climate_model = ClimateModel,
-      climate_scenario = ClimateScenario)
+        return(Path)
+      }
+    )
+  ) %>%
+  dplyr::select(-c("File_List", "Name", "FilePath")) %>%
+  dplyr::rename(
+    time_period = TimePeriod, climate_model = ClimateModel,
+    climate_scenario = ClimateScenario)
 
 
-  withr::local_options(
-    future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
+withr::local_options(
+  future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
-  if (NCores == 1) {
-    future::plan("future::sequential", gc = TRUE)
-  } else {
-    c1 <- snow::makeSOCKcluster(min(NCores, nrow(Predictions)))
-    on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-    future::plan("future::cluster", workers = c1, gc = TRUE)
-    on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
-  }
+if (NCores == 1) {
+  future::plan("future::sequential", gc = TRUE)
+} else {
+  c1 <- snow::makeSOCKcluster(min(NCores, nrow(Predictions)))
+  on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
+  future::plan("future::cluster", workers = c1, gc = TRUE)
+  on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
+}
 
-  Predictions <- dplyr::mutate(
-    Predictions,
-    Predictions2 = furrr::future_map(
-      .x  = path_prediction,
-      .f = ~{
-        if (file.exists(.x)) {
-          IASDT.R::LoadAs(.x) %>%
-            dplyr::select(
-              -tidyselect::all_of(c(
-                "time_period", "climate_model", "climate_scenario",
-                "predictions_mean", "predictions_sd", "predictions_cov")))
-        } else {
-          warning(paste0("File not found: ", .x))
-          return(NULL)
-        }
+Predictions <- dplyr::mutate(
+  Predictions,
+  Predictions2 = furrr::future_map(
+    .x  = path_prediction,
+    .f = ~{
+      if (file.exists(.x)) {
+        IASDT.R::LoadAs(.x) %>%
+          dplyr::select(
+            -tidyselect::all_of(c(
+              "time_period", "climate_model", "climate_scenario",
+              "predictions_mean", "predictions_sd", "predictions_cov")))
+      } else {
+        warning(paste0("File not found: ", .x))
+        return(NULL)
+      }
+    },
+    .options = furrr::furrr_options(
+      seed = TRUE, scheduling = Inf,
+      packages = c("tidyselect", "dplyr", "IASDT.R", "terra")
+    ))) %>%
+  tidyr::unnest("Predictions2")
+
+# # ................................................................... ###
+
+# Ensemble of climate models ------
+
+IASDT.R::CatTime("\nEnsemble of climate models", ... = "\n")
+
+# Create ensemble paths
+expand.grid(
+  Time = c("2011_2040", "2041_2070", "2071_2100"),
+  Scenario = c("ssp126", "ssp370", "ssp585")) %>%
+  dplyr::mutate(Folder = paste0("Ensemble_", Time, "_", Scenario)) %>%
+  dplyr::pull("Folder") %>%
+  file.path(Path_Predictions, .) %>%
+  fs::dir_create()
+
+Ensemble <- dplyr::filter(Predictions, time_period != "1981-2010") %>%
+  dplyr::select(
+    tidyselect::all_of(c(
+      "time_period", "climate_scenario", "ias_id",
+      "tif_path_mean", "hab_abb", "hab_name"))) %>%
+  dplyr::mutate(climate_model = "Ensemble", .before = "ias_id") %>%
+  dplyr::group_by(
+    time_period, climate_scenario, climate_model,
+    ias_id, hab_abb, hab_name) %>%
+  dplyr::summarize(Tif_Path = list(tif_path_mean), .groups = "keep") %>%
+  dplyr::ungroup() %>%
+  dplyr::mutate(
+    Data_Ensemble = furrr::future_pmap(
+      .l = list(ias_id, time_period, climate_scenario, Tif_Path),
+      .f = function(ias_id, time_period, climate_scenario, Tif_Path) {
+
+        Name_Ensemble <- paste0(
+          "Ensemble_", time_period, "_", climate_scenario) %>%
+          stringr::str_replace_all("-", "_")
+
+        Maps <- terra::rast(purrr::map(Tif_Path, terra::rast))
+
+        Map_mean <- terra::app(Maps, fun = "mean")
+        Path_mean <- file.path(
+          Path_Predictions, Name_Ensemble, paste0(ias_id, "_mean.tif"))
+        terra::writeRaster(
+          x = Map_mean, overwrite = TRUE, filename = Path_mean)
+
+        Map_sd <- terra::app(Maps, fun = "sd")
+        Path_sd <- file.path(
+          Path_Predictions, Name_Ensemble, paste0(ias_id, "_sd.tif"))
+        terra::writeRaster(x = Map_sd, overwrite = TRUE, filename = Path_sd)
+
+        Map_cov <- Map_sd / Map_mean
+        Path_cov <- file.path(
+          Path_Predictions, Name_Ensemble, paste0(ias_id, "_cov.tif"))
+        terra::writeRaster(x = Map_cov, overwrite = TRUE, filename = Path_cov)
+
+        return(list(
+          tif_path_mean = Path_mean, tif_path_sd = Path_sd,
+          tif_path_cov = Path_cov))
       },
       .options = furrr::furrr_options(
-        seed = TRUE, scheduling = Inf,
-        packages = c("tidyselect", "dplyr", "IASDT.R", "terra")
-      ))) %>%
-    tidyr::unnest("Predictions2")
+        seed = TRUE, scheduling = Inf, globals = "Path_Predictions",
+        packages = c("purrr", "IASDT.R", "terra")))) %>%
+  dplyr::select(-"Tif_Path") %>%
+  tidyr::unnest_wider("Data_Ensemble") %>%
+  dplyr::left_join(
+    dplyr::distinct(
+      Predictions, time_period, climate_scenario, ias_id, taxon_name,
+      class, order, family, species_name),
+    by = c("time_period", "climate_scenario", "ias_id"))
 
-  # # ................................................................... ###
+if (NCores > 1) {
+  snow::stopCluster(c1)
+  future::plan("future::sequential", gc = TRUE)
+}
 
-  # Ensemble of climate models ------
+Predictions_Summary <- dplyr::bind_rows(Predictions, Ensemble) %>%
+  dplyr::select(
+    hab_abb, hab_name, time_period, climate_model, climate_scenario, ias_id,
+    taxon_name, species_name, class, order, family, tif_path_mean,
+    tif_path_sd, tif_path_cov)
 
-  IASDT.R::CatTime("\nEnsemble of climate models", ... = "\n")
+# Save Predictions_Summary as text file
+utils::write.table(
+  x = Predictions_Summary,
+  file = file.path(Path_Predictions, "Predictions_Summary.txt"),
+  sep = "\t", row.names = FALSE, col.names = TRUE,
+  quote = FALSE, fileEncoding = "UTF-8")
 
-  # Create ensemble paths
-  expand.grid(
-    Time = c("2011_2040", "2041_2070", "2071_2100"),
-    Scenario = c("ssp126", "ssp370", "ssp585")) %>%
-    dplyr::mutate(Folder = paste0("Ensemble_", Time, "_", Scenario)) %>%
-    dplyr::pull("Folder") %>%
-    file.path(Path_Predictions, .) %>%
-    fs::dir_create()
+# Save Predictions_Summary as RData
+save(
+  Predictions_Summary,
+  file = file.path(Path_Predictions, "Predictions_Summary.RData"))
 
-  Ensemble <- dplyr::filter(Predictions, time_period != "1981-2010") %>%
-    dplyr::select(
-      tidyselect::all_of(c(
-        "time_period", "climate_scenario", "ias_id",
-        "tif_path_mean", "hab_abb", "hab_name"))) %>%
-    dplyr::mutate(climate_model = "Ensemble", .before = "ias_id") %>%
-    dplyr::group_by(
-      time_period, climate_scenario, climate_model,
-      ias_id, hab_abb, hab_name) %>%
-    dplyr::summarize(Tif_Path = list(tif_path_mean), .groups = "keep") %>%
-    dplyr::ungroup() %>%
-    dplyr::mutate(
-      Data_Ensemble = furrr::future_pmap(
-        .l = list(ias_id, time_period, climate_scenario, Tif_Path),
-        .f = function(ias_id, time_period, climate_scenario, Tif_Path) {
+# # ................................................................... ###
 
-          Name_Ensemble <- paste0(
-            "Ensemble_", time_period, "_", climate_scenario) %>%
-            stringr::str_replace_all("-", "_")
+IASDT.R::CatDiff(
+  InitTime = .StartTime, Prefix = "\nPrediction took ")
 
-          Maps <- terra::rast(purrr::map(Tif_Path, terra::rast))
-
-          Map_mean <- terra::app(Maps, fun = "mean")
-          Path_mean <- file.path(
-            Path_Predictions, Name_Ensemble, paste0(ias_id, "_mean.tif"))
-          terra::writeRaster(
-            x = Map_mean, overwrite = TRUE, filename = Path_mean)
-
-          Map_sd <- terra::app(Maps, fun = "sd")
-          Path_sd <- file.path(
-            Path_Predictions, Name_Ensemble, paste0(ias_id, "_sd.tif"))
-          terra::writeRaster(x = Map_sd, overwrite = TRUE, filename = Path_sd)
-
-          Map_cov <- Map_sd / Map_mean
-          Path_cov <- file.path(
-            Path_Predictions, Name_Ensemble, paste0(ias_id, "_cov.tif"))
-          terra::writeRaster(x = Map_cov, overwrite = TRUE, filename = Path_cov)
-
-          return(list(
-            tif_path_mean = Path_mean, tif_path_sd = Path_sd,
-            tif_path_cov = Path_cov))
-        },
-        .options = furrr::furrr_options(
-          seed = TRUE, scheduling = Inf, globals = "Path_Predictions",
-          packages = c("purrr", "IASDT.R", "terra")))) %>%
-    dplyr::select(-"Tif_Path") %>%
-    tidyr::unnest_wider("Data_Ensemble") %>%
-    dplyr::left_join(
-      dplyr::distinct(
-        Predictions, time_period, climate_scenario, ias_id, taxon_name,
-        class, order, family, species_name),
-      by = c("time_period", "climate_scenario", "ias_id"))
-
-  if (NCores > 1) {
-    snow::stopCluster(c1)
-    future::plan("future::sequential", gc = TRUE)
-  }
-
-  Predictions_Summary <- dplyr::bind_rows(Predictions, Ensemble) %>%
-    dplyr::select(
-      hab_abb, hab_name, time_period, climate_model, climate_scenario, ias_id,
-      taxon_name, species_name, class, order, family, tif_path_mean,
-      tif_path_sd, tif_path_cov)
-
-  # Save Predictions_Summary as text file
-  utils::write.table(
-    x = Predictions_Summary,
-    file = file.path(Path_Predictions, "Predictions_Summary.txt"),
-    sep = "\t", row.names = FALSE, col.names = TRUE,
-    quote = FALSE, fileEncoding = "UTF-8")
-
-  # Save Predictions_Summary as RData
-  save(
-    Predictions_Summary,
-    file = file.path(Path_Predictions, "Predictions_Summary.RData"))
-
-  # # ................................................................... ###
-
-  IASDT.R::CatDiff(
-    InitTime = .StartTime, Prefix = "\nPrediction took ")
-
-  return(Predictions_Summary)
+return(Predictions_Summary)
 }

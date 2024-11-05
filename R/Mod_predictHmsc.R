@@ -511,7 +511,7 @@ predictHmsc <- function(
 
             ChunkSp_File <- file.path(
               Temp_Dir,
-              paste0("Pred_", Model_Name, "_ch", Chunk, "_tax", Sp, ".qs"))
+              paste0("Pred_", Model_Name, "_ch", Chunk, "_taxon", Sp, ".qs"))
 
             qs::qsave(SpD, file = ChunkSp_File, preset = "fast")
 
@@ -558,9 +558,9 @@ predictHmsc <- function(
 
       Sp <- Eval_DT$Sp[[ID]]
       if (Sp == 0) {
-        Sp <- "SR"
+        Sp2 <- "SR"
       } else {
-        Sp <- paste0("Sp", Sp)
+        Sp2 <- paste0("taxon", Sp)
       }
       IAS_ID <- Eval_DT$IAS_ID[[ID]]
       data <- as.vector(Eval_DT$data[[ID]])
@@ -588,12 +588,12 @@ predictHmsc <- function(
         sf::st_as_sf(coords = c("x", "y"), crs = 3035, remove = FALSE)
 
       PredSummaryFile <- file.path(
-        Pred_Dir, paste0("Pred_", Model_Name, "_", Sp, ".qs"))
+        Pred_Dir, paste0("Pred_", Model_Name, "_", Sp2, ".qs"))
 
       qs::qsave(PredSummary, file = PredSummaryFile, preset = "fast")
       fs::file_delete(data)
 
-      if (Evaluate && Sp != "SR") {
+      if (Evaluate && Sp2 != "SR") {
         if (is.null(Pred_PA)) {
           PresAbs <- object$Y[, Sp]
         } else {

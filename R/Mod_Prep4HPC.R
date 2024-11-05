@@ -204,8 +204,9 @@ Mod_Prep4HPC <- function(
   }
 
   if (!all(is.numeric(PresPerSpecies)) || PresPerSpecies <= 0) {
-    stop("`PresPerSpecies` should be numeric and greater than zero",
-         call. = FALSE)
+    stop(
+      "`PresPerSpecies` should be numeric and greater than zero", 
+      call. = FALSE)
   }
 
   if (!all(is.numeric(MinEffortsSp)) || MinEffortsSp <= 0) {

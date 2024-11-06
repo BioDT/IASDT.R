@@ -10,10 +10,14 @@ Predict_Maps(
   EnvFile = ".env",
   FromHPC = TRUE,
   NCores = 8,
-  ChunkSize = 500,
-  RemoveChunks = TRUE,
+  Pred_Clamp = TRUE,
+  FixEfforts = "mean",
+  Pred_NewSites = TRUE,
   TF_Environ = NULL,
-  UseTF = TRUE
+  UseTF = TRUE,
+  CC_Models = c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0",
+    "UKESM1-0-LL"),
+  CC_Scenario = c("ssp126", "ssp370", "ssp585")
 )
 }
 \arguments{
@@ -33,13 +37,18 @@ adjust file paths accordingly. Default: \code{TRUE}.}
 \item{NCores}{Integer specifying the number of parallel cores for
 parallelization. Default: 8 cores.}
 
-\item{ChunkSize}{Integer. The size of chunks used to split the input raster
-for parallel processing. Predictor rasters are converted into data frame
-(tibble) then split into small chunks for processing on parallel. Default:
-\code{500}.}
+\item{Pred_Clamp}{Logical indicating whether to clamp the sampling efforts at
+a single value. Defaults to \code{TRUE}. If \code{TRUE}, the \code{FixEfforts} argument
+must be provided.}
 
-\item{RemoveChunks}{Logical. Whether to remove intermediate chunk files after
-prediction.}
+\item{FixEfforts}{Numeric or character. Value to fix the sampling efforts at.
+If numeric, the value will be used as is. If character, it can be one of
+the following: \code{median}, \code{mean}, or \code{max}. Default: \code{mean}. This argument
+is required when \code{Pred_Clamp} is \code{TRUE}.}
+
+\item{Pred_NewSites}{Logical indicating whether to predict habitat
+suitability at new sites. Default: \code{TRUE}. This argument is only temporary
+to make predictions for the workflow and will be removed in the future.}
 
 \item{TF_Environ}{Character string specifying the path to the Python
 environment. Defaults to NULL. This argument is required if \code{UseTF} is
@@ -47,6 +56,16 @@ TRUE.}
 
 \item{UseTF}{Logical indicating whether to use TensorFlow for calculations.
 Defaults to TRUE.}
+
+\item{CC_Models}{Character vector specifying the climate models to use for
+future predictions. Default: \code{c("GFDL-ESM4", "IPSL-CM6A-LR" , "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL")}. This argument is only
+temporary to make predictions for the workflow and will be removed in the
+future.}
+
+\item{CC_Scenario}{Character vector specifying the climate scenarios to use
+for future predictions. Default: \code{c("ssp126", "ssp370", "ssp585")}. This
+argument is only temporary to make predictions for the workflow and will be
+removed in the future.}
 }
 \value{
 Returns a tibble with the prediction summary and file paths for

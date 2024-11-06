@@ -358,7 +358,7 @@ predictHmsc <- function(
         UseTF = UseTF, TF_Environ = TF_Environ, TF_use_single = TF_use_single,
         LF_OutFile = LF_OutFile, LF_Return = LF_Return)
 
-      fs::file_delete(postEta_file)
+      try(fs::file_delete(postEta_file), silent = TRUE)
       rm(postEta_file)
 
       rowNames <- rownames(predPostEta[[r]][[1]])
@@ -526,7 +526,7 @@ predictHmsc <- function(
               ChunkSp_File = ChunkSR_File),
             .)
 
-        fs::file_delete(ChunkFile)
+        try(fs::file_delete(ChunkFile))
         rm(PredChunk)
 
         return(ChunkSp)
@@ -591,7 +591,7 @@ predictHmsc <- function(
         Pred_Dir, paste0("Pred_", Model_Name, "_", Sp2, ".qs"))
 
       qs::qsave(PredSummary, file = PredSummaryFile, preset = "fast")
-      fs::file_delete(data)
+      try(fs::file_delete(data), silent = TRUE)
 
       if (Evaluate && Sp2 != "SR") {
         if (is.null(Pred_PA)) {
@@ -666,7 +666,7 @@ predictHmsc <- function(
 
   Pred_File <- file.path(Pred_Dir, paste0("Prediction_", Model_Name, ".qs"))
   qs::qsave(Predictions, file = Pred_File, preset = "fast")
-  fs::file_delete(Eval_DT$Path_pred)
+  try(fs::file_delete(Eval_DT$Path_pred), silent = TRUE)
   IASDT.R::CatTime(
     paste0("Predictions were saved to `", Pred_File, "`"), Level = 1)
 
@@ -690,7 +690,7 @@ predictHmsc <- function(
   }
 
   if (exists("post_file")) {
-    fs::file_delete(post_file)
+    try(fs::file_delete(post_file), silent = TRUE)
   }
 
   # # ..................................................................... ###

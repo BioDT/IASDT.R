@@ -3,26 +3,9 @@
 \name{PlotVarPar}
 \alias{PlotVarPar}
 \title{Plot variance partitioning of Hmsc model using ggplot2.}
-\usage{
-PlotVarPar(
-  Model,
-  Path_Plot,
-  PlotTitlePrefix = NULL,
-  ModelEval = NULL,
-  NCores,
-  VarPar = NULL,
-  EnvFile = ".env",
-  SaveVarPar = TRUE,
-  SaveModelEval = TRUE,
-  predictEtaMean = TRUE,
-  ReturnGG = FALSE,
-  SaveGG = TRUE,
-  FromHPC = TRUE
-)
-}
 \arguments{
-\item{Model}{an object of class \code{Hmsc} or a path for the model file. Only
-needed if one of \code{ModelEval} and \code{VarPar} arguments are \code{NULL}.}
+\item{Path_Model}{Character path for the model file. Only needed if one of
+\code{ModelEval} and \code{VarPar} arguments are \code{NULL}.}
 
 \item{Path_Plot}{String. Path where the output file(s) will be saved.}
 
@@ -51,9 +34,6 @@ partitioning be saved as an RData file?  Default: \code{TRUE}.}
 \item{SaveModelEval}{Logical. If \code{ModelEval = NULL}, should the calculated
 model evaluation be saved as an RData file?  Default: \code{TRUE}.}
 
-\item{predictEtaMean}{Logical; whether to predict the mean value of the
-latent variable.}
-
 \item{ReturnGG}{Logical. Return the ggplot object. Default: \code{FALSE}.}
 
 \item{SaveGG}{Logical. Should the plots be exported as an RData object?
@@ -61,6 +41,9 @@ Default: \code{TRUE}.}
 
 \item{FromHPC}{Logical. Indicates whether the function is being run on an HPC
 environment, affecting file path handling. Default: \code{TRUE}.}
+
+\item{predictEtaMean}{Logical; whether to predict the mean value of the
+latent variable.}
 }
 \value{
 If \code{ReturnGG} is \code{TRUE}, returns a ggplot object of the variance

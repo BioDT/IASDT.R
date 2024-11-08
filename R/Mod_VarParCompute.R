@@ -145,7 +145,7 @@ ComputeVarPar <- function(
         call. = FALSE)
     }
 
-    PythonScript <- system.file("crossprod_solve.py", package = "IASDT.R")
+    PythonScript <- system.file("VarPar.py", package = "IASDT.R")
 
     # Check if PythonScript exists
     if (!file.exists(PythonScript)) {

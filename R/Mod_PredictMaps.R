@@ -120,8 +120,8 @@ Predict_Maps <- function(
     Name <- File_Pred_sf <- class <- order <- family <- species_name <-
     tif_path_mean <- tif_path_cov <- tif_path_sd <- hab_abb <- hab_name <-
     Train <- Ensemble_File <- Ensemble_Maps <- tifs <- layer_name <-
-    TimePeriod <- File_Pred_summary <- Ensemble_DT <- Path_Ensemble <-
-    File_Pred_R <- NULL
+    TimePeriod <- File_Pred_summary <- Ensemble_DT <- Dir_Ensemble <-
+    File_Pred_R <- tif_path_anomaly <- NULL
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -239,7 +239,10 @@ Predict_Maps <- function(
       ClimateModel %in% c("Current", CC_Models),
       # filter only for the following future climate scenarios
       ClimateScenario %in% c("Current", CC_Scenario)) %>%
-    dplyr::mutate(Name = stringr::str_remove(Name, "^R_"))
+    dplyr::mutate(
+      Name = paste0(TimePeriod, "_", ClimateScenario, "_", ClimateModel),
+      Name = stringr::str_replace(Name, "1981-2010_Current_Current", "Current"),
+      Name = stringr::str_replace_all(Name, "-", "_"))
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
 
@@ -328,6 +331,8 @@ Predict_Maps <- function(
 
     # Check if the FixEfforts value is valid
     if (!is.null(FixEfforts)) {
+
+      # Check if FixEfforts is a single value
       if (length(FixEfforts) != 1) {
         stop(
           paste0(
@@ -336,7 +341,11 @@ Predict_Maps <- function(
           call. = FALSE)
       }
 
+
       if (is.numeric(FixEfforts)) {
+
+        # If `FixEfforts` is numeric value, check if it is within the range of
+        # the observed efforts
         EffortsRange <- terra::global(R_Efforts, fun = range, na.rm = TRUE) %>%
           unlist() %>%
           as.vector()
@@ -349,6 +358,9 @@ Predict_Maps <- function(
             call. = FALSE)
         }
       } else {
+
+        # If `FixEfforts` is character, check if it is one of the valid values:
+        # median, mean, max
         FixEfforts <- stringr::str_to_lower(FixEfforts)
         if (!(FixEfforts %in% c("median", "mean", "max"))) {
           stop(
@@ -361,23 +373,27 @@ Predict_Maps <- function(
       }
     }
 
-    # Value to fix efforts at
+    # Fix at single value
+
     if (is.numeric(FixEfforts)) {
       EffortsVal <- FixEfforts
     } else {
       EffortsVal <- dplyr::case_when(
         is.null(FixEfforts) ~ NA_real_,
+        # Fix at median value
         FixEfforts == "median" ~ {
           terra::global(
             R_Efforts, fun = function(x) median(x, na.rm = TRUE)) %>%
             unlist() %>%
             as.numeric()
         },
+        # Fix at mean value
         FixEfforts == "mean" ~ {
           terra::global(R_Efforts, fun = mean, na.rm = TRUE) %>%
             unlist() %>%
             as.numeric()
         },
+        # Fix at max value
         FixEfforts == "max" ~ {
           terra::global(R_Efforts, fun = max, na.rm = TRUE) %>%
             unlist() %>%
@@ -413,9 +429,11 @@ Predict_Maps <- function(
 
   Path_Test_LF <- file.path(Path_Prediction, "Test_LF.qs")
 
+  IASDT.R::CatTime("Predict latent factor for new locations")
+
   if (!file.exists(Path_Test_LF) && Pred_NewSites) {
 
-    IASDT.R::CatTime("Predict latent factor for new sites")
+    IASDT.R::CatTime("Predicting latent factor", Line = 1)
 
     Predict_DF_Test <- Prediction_Options %>%
       dplyr::filter(ClimateModel == "Current") %>%
@@ -442,39 +460,38 @@ Predict_Maps <- function(
     rm(Model, Predict_DF_Test, Test_X, Test_XY)
     invisible(gc())
 
-    # Predicting latent factor
-    Preds_Current_Test <- IASDT.R::predictHmsc(
+    # Predicting latent factor only -- no predictions are made
+    Preds_LF <- IASDT.R::predictHmsc(
       object = Path_Model, Gradient = Gradient, expected = TRUE,
       NCores = NCores, Model_Name = paste0("LF_", Hab_Abb, "_Test"),
       Temp_Dir = "TEMP2Pred", UseTF = UseTF, TF_Environ = TF_Environ,
       LF_OutFile = Path_Test_LF, LF_Only = TRUE, Evaluate = FALSE,
       Verbose = FALSE)
 
-    rm(Gradient, Preds_Current_Test)
+    rm(Gradient, Preds_LF)
 
   } else {
     if (Pred_NewSites) {
-      IASDT.R::CatTime(
-        "Latent factor prediction for new sites is already available on disk")
+      IASDT.R::CatTime("LF prediction is already available on disk", Level = 1)
     } else {
-      IASDT.R::CatTime(
-        "Latent factor prediction for new sites will NOT be made")
+      IASDT.R::CatTime("LF prediction will NOT be made", Level = 1)
     }
   }
 
   # # ..................................................................... ###
   # # ..................................................................... ###
 
-  # PredictInternal ------
+  # Predict_Internal ------
 
-  IASDT.R::CatTime("PredictInternal function")
+  Predict_Internal <- function(ID) {
 
-  PredictInternal <- function(ID) {
-
+    # Name of the current option
     Option_Name <- Prediction_Options$Name[[ID]]
     Model_Name <- paste0(Option_Name, "_", Hab_Abb)
     cat("\n")
-    IASDT.R::CatTime(Model_Name, NLines = 2)
+    IASDT.R::CatSep(Char = "-")
+    IASDT.R::CatTime(Model_Name)
+    IASDT.R::CatSep(Char = "-")
 
     if (Pred_Clamp) {
 
@@ -513,6 +530,9 @@ Predict_Maps <- function(
     Path_Prediction_tif <- file.path(Path_Prediction, Option_Name)
     fs::dir_create(Path_Prediction_tif)
 
+    # ______________________________________________
+    # ______________________________________________
+
     # Making predictions if not already processed ----
     OutMissing <- file.exists(
       c(Path_Prediction_R, Path_Prediction_sf, Path_Prediction_summary)) %>%
@@ -524,7 +544,13 @@ Predict_Maps <- function(
       # Load model
       Model <- IASDT.R::LoadAs(Path_Model)
 
-      if (!file.exists(Path_Prediction_sf)) {
+      # Skip predictions if the predictions as sf object is already on disk
+      if (file.exists(Path_Prediction_sf)) {
+
+        IASDT.R::CatTime("Loading predictions `sf` from disk", Level = 1)
+        Prediction_sf <- IASDT.R::LoadAs(Path_Prediction_sf)
+
+      } else {
 
         # Extracting data at training and new sites ------
         IASDT.R::CatTime("Extracting data at training and new sites", Level = 1)
@@ -564,6 +590,7 @@ Predict_Maps <- function(
         rm(Model, Predict_DF_Test, Predict_DF_Train, Predict_DF)
         invisible(gc())
 
+        # ______________________________________________
 
         # Predictions at training sites ----
         IASDT.R::CatTime("Predictions at training sites", Level = 1)
@@ -573,10 +600,9 @@ Predict_Maps <- function(
 
         if (file.exists(Path_Current_Train)) {
           IASDT.R::CatTime("Loading predictions from disk", Level = 2)
-          Preds_Current_Train <- tibble::tibble(
-            Pred_Path = Path_Current_Train)
+          Preds_ModFitSites <- tibble::tibble(Pred_Path = Path_Current_Train)
         } else {
-          Preds_Current_Train <- IASDT.R::predictHmsc(
+          Preds_ModFitSites <- IASDT.R::predictHmsc(
             object = Path_Model, X = Train_X, Gradient = NULL, expected = TRUE,
             NCores = NCores, Model_Name = Model_Name_Train,
             Temp_Dir = "TEMP2Pred", UseTF = UseTF, TF_Environ = TF_Environ,
@@ -584,6 +610,8 @@ Predict_Maps <- function(
             Pred_XY = Train_XY, Evaluate = Evaluate, Eval_Name = NULL,
             Eval_Dir = Path_Eval, Verbose = FALSE)
         }
+
+        # ______________________________________________
 
         # Predictions at new sites ----
 
@@ -596,12 +624,11 @@ Predict_Maps <- function(
 
           if (file.exists(Path_Current_Test)) {
             IASDT.R::CatTime("Loading predictions from disk", Level = 2)
-            Preds_Current_Test <- tibble::tibble(
-              Pred_Path = Path_Current_Test)
+            Preds_NewSites <- tibble::tibble(Pred_Path = Path_Current_Test)
 
           } else {
 
-            Preds_Current_Test <- IASDT.R::predictHmsc(
+            Preds_NewSites <- IASDT.R::predictHmsc(
               object = Path_Model, Gradient = Gradient, expected = TRUE,
               NCores = NCores, Model_Name = Model_Name_Test,
               Temp_Dir = "TEMP2Pred", UseTF = UseTF, TF_Environ = TF_Environ,
@@ -611,16 +638,18 @@ Predict_Maps <- function(
               Evaluate = FALSE, Verbose = FALSE)
           }
 
+          # ______________________________________________
+
           # Merge & save predictions - sf ------
           IASDT.R::CatTime(
             "Merge & save predictions at training and new sites", Level = 1)
           Prediction_sf <- dplyr::bind_rows(
-            IASDT.R::LoadAs(Preds_Current_Train$Pred_Path),
-            IASDT.R::LoadAs(Preds_Current_Test$Pred_Path))
+            IASDT.R::LoadAs(Preds_ModFitSites$Pred_Path),
+            IASDT.R::LoadAs(Preds_NewSites$Pred_Path))
 
           try(
             fs::file_delete(
-              c(Preds_Current_Train$Pred_Path, Preds_Current_Test$Pred_Path)),
+              c(Preds_ModFitSites$Pred_Path, Preds_NewSites$Pred_Path)),
             silent = TRUE)
 
         } else {
@@ -629,7 +658,7 @@ Predict_Maps <- function(
             "Predictions at new sites will NOT be made", Level = 1)
 
           # Get column names from predictions at training sites
-          ColsToAdd <- IASDT.R::LoadAs(Preds_Current_Train$Pred_Path) %>%
+          ColsToAdd <- IASDT.R::LoadAs(Preds_ModFitSites$Pred_Path) %>%
             names() %>%
             stringr::str_subset("^Sp_|^SR_|Model_Name")
 
@@ -639,33 +668,28 @@ Predict_Maps <- function(
             IASDT.R::AddMissingCols(FillVal = NA_real_, ColsToAdd)
 
           # combine predictions
-          Prediction_sf <- IASDT.R::LoadAs(Preds_Current_Train$Pred_Path) %>%
+          Prediction_sf <- IASDT.R::LoadAs(Preds_ModFitSites$Pred_Path) %>%
             dplyr::bind_rows(Preds_New_NA)
 
-          try(fs::file_delete(Preds_Current_Train$Pred_Path), silent = TRUE)
+          try(fs::file_delete(Preds_ModFitSites$Pred_Path), silent = TRUE)
           rm(Preds_New_NA, ColsToAdd)
         }
+
+        # ______________________________________________
 
         # Save predictions as sf object
         qs::qsave(Prediction_sf, Path_Prediction_sf, preset = "fast")
 
         try(
           fs::file_delete(
-            c(Preds_Current_Train$Pred_Path, Preds_Current_Test$Pred_Path)),
-          silent = TRUE)
-
-      } else {
-
-        IASDT.R::CatTime("Reading predictions `sf` from disk", Level = 1)
-        Prediction_sf <- IASDT.R::LoadAs(Path_Prediction_sf)
-
-        try(
-          fs::file_delete(Preds_Current_Train$Pred_Path),
+            c(Preds_ModFitSites$Pred_Path, Preds_NewSites$Pred_Path)),
           silent = TRUE)
       }
 
+      # ______________________________________________
+      # ______________________________________________
 
-      # Predictions as spatRaster / tif -----
+      ### Predictions as spatRaster / tif -----
 
       IASDT.R::CatTime("Rasterization & prepare summary data", Level = 1)
 
@@ -675,6 +699,37 @@ Predict_Maps <- function(
 
       Prediction_R <- terra::rasterize(
         Prediction_sf, Grid10, field = Fields2Raster)
+
+      # Calculate prediction anomaly for future projections
+      if (Option_Name != "Current") {
+
+        # Names of current taxa (and SR) for the current model
+        MeanNames <- stringr::str_subset(Fields2Raster, "_mean")
+
+        # Loading mean predictions at current climates
+        CurrentMean <- list.files(
+          path = Path_Prediction, pattern = "Prediction_Current.*_R.qs",
+          full.names = TRUE) %>%
+          IASDT.R::LoadAs() %>%
+          terra::unwrap() %>%
+          terra::subset(MeanNames)
+
+        # Calculate anomaly as difference in predicted value between future and
+        # current climate (future - current)
+        Preds_Anomaly <- terra::subset(Prediction_R, MeanNames) - CurrentMean
+        # Assign names to anomaly maps
+        AnomalyNames <- names(Preds_Anomaly) %>%
+          stringr::str_replace_all("_mean", "_anomaly")
+        names(Preds_Anomaly) <- AnomalyNames
+
+        # Add anomaly maps to the list of predictions
+        Fields2Raster <- c(Fields2Raster, AnomalyNames)
+        Prediction_R <- c(Prediction_R, Preds_Anomaly)
+
+        # clean up
+        rm(Preds_Anomaly, CurrentMean)
+
+      }
 
       Out_Summary <- tibble::tibble(
         hab_abb = Hab_Abb, hab_name = Hab_Name,
@@ -687,19 +742,22 @@ Predict_Maps <- function(
             stringr::str_detect(layer_name, "_mean$") ~ "tif_path_mean",
             stringr::str_detect(layer_name, "_sd$") ~ "tif_path_sd",
             stringr::str_detect(layer_name, "_cov$") ~ "tif_path_cov",
+            stringr::str_detect(layer_name, "_anomaly$") ~ "tif_path_anomaly",
             .default = NULL),
-          ias_id = stringr::str_remove(layer_name, "_mean$|_sd$|_cov$"),
+          ias_id = stringr::str_remove(
+            layer_name, "_mean$|_sd$|_cov$|_anomaly"),
           tif_path = file.path(Path_Prediction_tif, paste0(layer_name, ".tif")))
 
       # Save as tif
-      IASDT.R::CatTime("Save maps as tif", Level = 1)
+      IASDT.R::CatTime("Save as tif", Level = 1)
       Out_Summary0 <- Out_Summary %>%
         dplyr::mutate(
           Map = purrr::map2(
             .x = layer_name, .y = tif_path,
             .f = ~{
               terra::writeRaster(
-                x = Prediction_R[[.x]], filename = .y, overwrite = TRUE)
+                x = Prediction_R[[.x]], filename = .y, overwrite = TRUE,
+                gdal = c("COMPRESS=DEFLATE", "TILED=YES"))
             }))
       rm(Out_Summary0)
 
@@ -713,10 +771,10 @@ Predict_Maps <- function(
         dplyr::select(
           hab_abb, hab_name, time_period, climate_model, climate_scenario,
           ias_id, taxon_name, species_name, class, order, family,
-          tif_path_mean, tif_path_sd, tif_path_cov)
+          tif_path_mean, tif_path_sd, tif_path_cov, tif_path_anomaly)
 
       # save as spatRaster - qs
-      IASDT.R::CatTime("Save maps as spatRaster - qs", Level = 1)
+      IASDT.R::CatTime("Save as spatRaster - qs", Level = 1)
       Prediction_R <- terra::wrap(Prediction_R)
       qs::qsave(Prediction_R, Path_Prediction_R, preset = "fast")
 
@@ -744,19 +802,27 @@ Predict_Maps <- function(
   }
 
   # # ..................................................................... ###
+  # # ..................................................................... ###
 
   # Predicting ------
-  IASDT.R::InfoChunk("Making predictions", Extra2 = 1)
+
+  IASDT.R::CatSep(Char = "=")
+  IASDT.R::CatTime("   Making predictions")
+  IASDT.R::CatSep(Char = "=", Extra2 = 2)
 
   Grid10 <- terra::unwrap(IASDT.R::LoadAs(Path_GridR))
+
   Prediction_Summary <- purrr::map_dfr(
-    seq_len(nrow(Prediction_Options)), PredictInternal) %>%
+    seq_len(nrow(Prediction_Options)), Predict_Internal) %>%
     dplyr::full_join(Prediction_Options, ., by = "Name") %>%
     dplyr::select(-"FilePath")
 
   # # ..................................................................... ###
+  # # ..................................................................... ###
 
   # Ensemble model predictions ------
+
+  IASDT.R::CatTime("Ensemble model predictions")
 
   withr::local_options(
     future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
@@ -770,6 +836,13 @@ Predict_Maps <- function(
     on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
   }
 
+  # Mean predictions at current climates
+  CurrentMean <- list.files(
+    path = Path_Prediction, pattern = "Prediction_Current.*_R.qs",
+    full.names = TRUE) %>%
+    IASDT.R::LoadAs() %>%
+    terra::unwrap()
+  CurrentMean <- terra::wrap(CurrentMean["_mean"])
 
   Prediction_Ensemble <- Prediction_Summary %>%
     dplyr::filter(ClimateModel != "Current")  %>%
@@ -781,7 +854,8 @@ Predict_Maps <- function(
           if (file.exists(.x)) {
             IASDT.R::LoadAs(.x) %>%
               dplyr::select(
-                -tidyselect::all_of(c("tif_path_sd", "tif_path_cov")))
+                -tidyselect::all_of(
+                  c("tif_path_sd", "tif_path_cov", "tif_path_anomaly")))
           } else {
             warning(paste0("File not found: ", .x))
             return(NULL)
@@ -794,57 +868,79 @@ Predict_Maps <- function(
     tidyr::unnest("Prediction2") %>%
     dplyr::mutate(
       climate_model = "Ensemble",
-      Path_Ensemble = file.path(
+      Dir_Ensemble = file.path(
         dirname(dirname(tif_path_mean)),
         paste0(time_period, "_Ensemble_", climate_scenario))) %>%
     dplyr::group_by(dplyr::across(-tif_path_mean)) %>%
     dplyr::summarise(tifs = list(tif_path_mean), .groups = "drop") %>%
     dplyr::mutate(
-      tif_path_mean = file.path(Path_Ensemble, paste0(ias_id, "_mean.tif")),
-      tif_path_sd = file.path(Path_Ensemble, paste0(ias_id, "_sd.tif")),
-      tif_path_cov = file.path(Path_Ensemble, paste0(ias_id, "_cov.tif")))
+      tif_path_mean = file.path(Dir_Ensemble, paste0(ias_id, "_mean.tif")),
+      tif_path_anomaly = file.path(
+        Dir_Ensemble, paste0(ias_id, "_anomaly.tif")),
+      tif_path_sd = file.path(Dir_Ensemble, paste0(ias_id, "_sd.tif")),
+      tif_path_cov = file.path(Dir_Ensemble, paste0(ias_id, "_cov.tif")))
 
-  fs::dir_create(unique(Prediction_Ensemble$Path_Ensemble))
+  fs::dir_create(unique(Prediction_Ensemble$Dir_Ensemble))
 
   Prediction_Ensemble <- Prediction_Ensemble %>%
     dplyr::mutate(
       Ensemble_Maps = furrr::future_pmap(
-        .l = list(tifs, tif_path_mean, tif_path_sd, tif_path_cov, ias_id),
-        .f = function(tifs, tif_path_mean, tif_path_sd, tif_path_cov, ias_id) {
+        .l = list(tifs, tif_path_mean, tif_path_anomaly,
+                  tif_path_sd, tif_path_cov, ias_id),
+        .f = function(tifs, tif_path_mean, tif_path_anomaly,
+                      tif_path_sd, tif_path_cov, ias_id) {
 
+          # load maps for future climate option
           tiffs_R <- terra::rast(tifs)
 
           # Mean maps
           Ensemble_mean <- terra::app(tiffs_R, "mean", na.rm = TRUE) %>%
             stats::setNames(paste0(ias_id, "_mean"))
           terra::writeRaster(
-            x = Ensemble_mean, filename = tif_path_mean, overwrite = TRUE)
+            x = Ensemble_mean, filename = tif_path_mean,
+            overwrite = TRUE, gdal = c("COMPRESS=DEFLATE", "TILED=YES"))
+
+          # Anomaly maps: calculate prediction anomaly for ensemble future
+          # projection
+          CurrentMean0 <- terra::unwrap(CurrentMean) %>%
+            terra::subset(paste0(ias_id, "_mean"))
+          Ensemble_anomaly <- (Ensemble_mean - CurrentMean0) %>%
+            stats::setNames(paste0(ias_id, "_anomaly"))
+          terra::writeRaster(
+            x = Ensemble_anomaly, filename = tif_path_anomaly,
+            overwrite = TRUE, gdal = c("COMPRESS=DEFLATE", "TILED=YES"))
+          rm(CurrentMean0)
 
           # Standard deviation
           Ensemble_sd <- terra::app(tiffs_R, "sd", na.rm = TRUE) %>%
             stats::setNames(paste0(ias_id, "_sd"))
           terra::writeRaster(
-            x = Ensemble_sd, filename = tif_path_sd, overwrite = TRUE)
+            x = Ensemble_sd, filename = tif_path_sd,
+            overwrite = TRUE, gdal = c("COMPRESS=DEFLATE", "TILED=YES"))
 
           # coefficient of variation
           Ensemble_cov <- (Ensemble_sd / Ensemble_mean) %>%
             stats::setNames(paste0(ias_id, "_cov"))
           terra::writeRaster(
-            x = Ensemble_cov, filename = tif_path_cov, overwrite = TRUE)
+            x = Ensemble_cov, filename = tif_path_cov,
+            overwrite = TRUE, gdal = c("COMPRESS=DEFLATE", "TILED=YES"))
 
-          c(Ensemble_mean, Ensemble_sd, Ensemble_cov) %>%
+          c(Ensemble_mean, Ensemble_sd, Ensemble_cov, Ensemble_anomaly) %>%
             terra::wrap() %>%
             return()
         },
         .options = furrr::furrr_options(
-          seed = TRUE, scheduling = 1, packages = "terra")),
-      Path_Ensemble = NULL, tifs = NULL)
+          seed = TRUE, scheduling = 1, packages = "terra",
+          globals = "CurrentMean")),
+      Dir_Ensemble = NULL, tifs = NULL)
 
   snow::stopCluster(c1)
   future::plan("future::sequential", gc = TRUE)
 
 
   # Save ensemble maps as SpatRast
+  IASDT.R::CatTime("Save ensemble maps as SpatRast", Level = 1)
+
   Prediction_Ensemble_R <- Prediction_Ensemble %>%
     dplyr::mutate(
       Ensemble_File = file.path(
@@ -864,8 +960,7 @@ Predict_Maps <- function(
             purrr::map(c) %>%
             terra::rast() %>%
             terra::wrap()
-        })) %>%
-    dplyr::mutate(
+        }),
       Save = purrr::map2(
         .x = Ensemble_Maps, .y = Ensemble_File,
         .f = qs::qsave, preset = "fast"))
@@ -877,8 +972,8 @@ Predict_Maps <- function(
     dplyr::mutate(
       Ensemble_File = file.path(
         Path_Prediction, paste0(
-          "Prediction_", time_period, "_Ensemble_",
-          climate_scenario, "_Summary.RData"))) %>%
+          "Prediction_", time_period, "_Ensemble_", climate_scenario,
+          "_Summary.RData"))) %>%
     tidyr::nest(Ensemble_DT = -Ensemble_File) %>%
     dplyr::mutate(
       Ensemble_Save = purrr::map2(
@@ -902,7 +997,11 @@ Predict_Maps <- function(
         File_Pred_summary, "_Summary.RData", "_R.qs")) %>%
     dplyr::distinct()
 
+  # # ..................................................................... ###
+  # # ..................................................................... ###
+
   # Overall summary -----
+
   Prediction_Summary <- Prediction_Summary %>%
     dplyr::rename(
       time_period = TimePeriod, climate_model = ClimateModel,

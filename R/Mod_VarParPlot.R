@@ -8,8 +8,8 @@
 #' partitioning of a Hmsc model. It can calculate variance partitioning and
 #' model evaluation if not provided and supports parallel computation for model
 #' predictions.
-#' @param Model an object of class `Hmsc` or a path for the model file. Only
-#'   needed if one of `ModelEval` and `VarPar` arguments are `NULL`.
+#' @param Path_Model Character path for the model file. Only needed if one of
+#'   `ModelEval` and `VarPar` arguments are `NULL`.
 #' @param Path_Plot String. Path where the output file(s) will be saved.
 #' @param PlotTitlePrefix String (optional). Prefix to add to the title of the
 #'   plot. Default: `NULL`, which means only 'Variance partitioning' will be
@@ -41,22 +41,42 @@
 #' @details The function reads the following environment variables:
 #'   - **`DP_R_TaxaInfo_RData`** (if `FromHPC` = `TRUE`) or
 #'     **`DP_R_TaxaInfo_RData_Local`** (if `FromHPC` = `FALSE`) for the
-#'     location of the `TaxaList.RData` file containing species information.
+#'   location of the `TaxaList.RData` file containing species information.
 #' @return If `ReturnGG` is `TRUE`, returns a ggplot object of the variance
 #'   partitioning plots. Otherwise, returns `NULL`.
 #' @export
 
+
+require(dplyr)
+require(Hmsc)
+Path_Model <- "S:/datasets/processed/model_fitting/DE_SW_CV_12b/Model_Fitted/GPP25_Tree_samp1000_th100_Model.RData"
+Path_Eval <- "S:/datasets/processed/model_fitting/DE_SW_CV_12b/Model_Evaluation/Eval_Current_12b_Clamp_Train.qs"
+
+# Path_Plot = "D:/BioDT_IAS/IASDT_Model_Test/SW_1_Forests/Eval_VarPar"
+# PlotTitlePrefix = "AAAA"
+# ModelEval = NULL
+NCores = 8
+# VarPar = NULL
+# VarPar = "D:/BioDT_IAS/IASDT_Model_Test/SW_1_Forests/Eval_VarPar/VariancePartitioning_DT.RData"
+EnvFile = ".env"
+SaveVarPar = TRUE
+SaveModelEval = TRUE
+ReturnGG = FALSE
+SaveGG = TRUE
+FromHPC = FALSE
+
 PlotVarPar <- function(
-    Model, Path_Plot, PlotTitlePrefix = NULL, ModelEval = NULL, NCores,
-    VarPar = NULL, EnvFile = ".env", SaveVarPar = TRUE, SaveModelEval = TRUE,
-    predictEtaMean = TRUE, ReturnGG = FALSE, SaveGG = TRUE, FromHPC = TRUE) {
+    # Path_Model, Path_Plot, PlotTitlePrefix = NULL, ModelEval = NULL, NCores,
+  # VarPar = NULL, EnvFile = ".env", SaveVarPar = TRUE, SaveModelEval = TRUE,
+  # predictEtaMean = TRUE, ReturnGG = FALSE, SaveGG = TRUE, FromHPC = TRUE
+) {
 
   # # ..................................................................... ###
 
   .StartTime <- lubridate::now(tzone = "CET")
 
-  if (is.null(Model) || is.null(Path_Plot) || is.null(NCores)) {
-    stop("Model, Path_Plot, and NCores cannot be empty", call. = FALSE)
+  if (is.null(Path_Model) || is.null(NCores)) {
+    stop("`Path_Model` and `NCores` cannot be empty", call. = FALSE)
   }
 
   # # ..................................................................... ###
@@ -94,7 +114,7 @@ PlotVarPar <- function(
 
   IASDT.R::CatTime("Loading species list")
 
-  fs::dir_create(Path_Plot)
+  # fs::dir_create(Path_Plot)
 
   if (!file.exists(EnvFile)) {
     stop(
@@ -123,62 +143,58 @@ PlotVarPar <- function(
 
   # # ..................................................................... ###
 
+  IASDT.R::CatTime("Loading model internal evaluation", Level = 1)
+  Model_Eval <- IASDT.R::LoadAs(Path_Eval) %>%
+    dplyr::filter(stringr::str_starts(IAS_ID, "Sp_")) %>%
+    dplyr::select(IAS_ID, RMSE)
+
+
+  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  # Loading model ----
+
+  IASDT.R::CatTime("Loading model object")
+
+  if (!file.exists(Path_Model)) {
+    stop("The provided path for the model does not exist", call. = FALSE)
+  }
+  Model <- IASDT.R::LoadAs(Path_Model)
+
+  if (!inherits(Model, "Hmsc")) {
+    stop("The loaded model is not of an Hmsc object", call. = FALSE)
+  }
+
+  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  # Calculate variance partitioning ----
+  IASDT.R::CatTime("Calculating variance partitioning", Level = 1)
+
+
+  IASDT.R::CatTime("Calculate variance partitioning")
+  VarPar <- Hmsc::computeVariancePartitioning(hM = Model)
+
+
+  VarPar
+
+  if (SaveVarPar) {
+    save(
+      VarPar,
+      file = file.path(Path_Plot, "VariancePartitioning_DT.RData"))
+  }
+
+  if (inherits(VarPar, "character")) {
+    IASDT.R::CatTime("Loading VarPar from RData file")
+    VarPar <- IASDT.R::LoadAs(VarPar)
+  }
+
+
   # Processing ModelEval and VarPar -----
 
   if (is.null(ModelEval) || is.null(VarPar)) {
 
-    if (is.null(ModelEval)) {
-      IASDT.R::CatTime(
-        "`ModelEval` was not provided and will be calculated", Level = 1)
-    }
-
-    if (is.null(VarPar)) {
-      IASDT.R::CatTime(
-        "`VarPar` was not provided and will be calculated", Level = 1)
-    }
-
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-    # Loading model ----
 
-    if (!inherits(Model, "Hmsc")) {
-
-      IASDT.R::CatTime("Loading model object from file")
-
-      if (inherits(Model, "character")) {
-        if (!file.exists(Model)) {
-          stop("The provided path for the model does not exist", call. = FALSE)
-        }
-        Model <- IASDT.R::LoadAs(Model)
-
-        if (!inherits(Model, "Hmsc")) {
-          stop("The loaded model is not of an Hmsc object", call. = FALSE)
-        }
-
-      } else {
-        stop(
-          "The Model has to be an Hmsc model or a path to a saved model",
-          call. = FALSE)
-      }
-    }
-
-    # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-    # Calculate variance partitioning -----
-
-    if (is.null(VarPar)) {
-      IASDT.R::CatTime("Calculate variance partitioning")
-      VarPar <- Hmsc::computeVariancePartitioning(hM = Model)
-      if (SaveVarPar) {
-        save(VarPar,
-             file = file.path(Path_Plot, "VariancePartitioning_DT.RData"))
-      }
-    }
-
-    if (inherits(VarPar, "character")) {
-      IASDT.R::CatTime("Loading VarPar from RData file")
-      VarPar <- IASDT.R::LoadAs(VarPar)
-    }
 
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -197,7 +213,7 @@ PlotVarPar <- function(
       # then converted the output to array
 
       Preds <- stats::predict(
-        object = Model, expected = expected, nParallel = NCores,
+        object = Path_Model, expected = expected, nParallel = NCores,
         predictEtaMean = predictEtaMean)
       save(Preds, file = file.path(Path_Plot, "Preds.RData"))
 

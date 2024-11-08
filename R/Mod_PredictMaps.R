@@ -415,7 +415,7 @@ Predict_Maps <- function(
 
   if (!file.exists(Path_Test_LF) && Pred_NewSites) {
 
-    IASDT.R::InfoChunk("Predict latent factor for new sites", Extra2 = 1)
+    IASDT.R::CatTime("Predict latent factor for new sites")
 
     Predict_DF_Test <- Prediction_Options %>%
       dplyr::filter(ClimateModel == "Current") %>%
@@ -568,14 +568,22 @@ Predict_Maps <- function(
         # Predictions at training sites ----
         IASDT.R::CatTime("Predictions at training sites", Level = 1)
 
-        Preds_Current_Train <- IASDT.R::predictHmsc(
-          object = Path_Model, X = Train_X, Gradient = NULL, expected = TRUE,
-          NCores = NCores, Model_Name = Model_Name_Train,
-          Temp_Dir = "TEMP2Pred", UseTF = UseTF, TF_Environ = TF_Environ,
-          LF_Return = TRUE, Pred_Dir = Path_Prediction, Pred_PA = Train_PA,
-          Pred_XY = Train_XY, Evaluate = Evaluate, Eval_Name = NULL,
-          Eval_Dir = Path_Eval, Verbose = FALSE) %>%
-          dplyr::mutate(Scenario = Model_Name_Train)
+        Path_Current_Train <- file.path(
+          Path_Prediction, paste0("Prediction_", Model_Name_Train, ".qs"))
+
+        if (file.exists(Path_Current_Train)) {
+          IASDT.R::CatTime("Loading predictions from disk", Level = 2)
+          Preds_Current_Train <- tibble::tibble(
+            Pred_Path = Path_Current_Train)
+        } else {
+          Preds_Current_Train <- IASDT.R::predictHmsc(
+            object = Path_Model, X = Train_X, Gradient = NULL, expected = TRUE,
+            NCores = NCores, Model_Name = Model_Name_Train,
+            Temp_Dir = "TEMP2Pred", UseTF = UseTF, TF_Environ = TF_Environ,
+            LF_Return = TRUE, Pred_Dir = Path_Prediction, Pred_PA = Train_PA,
+            Pred_XY = Train_XY, Evaluate = Evaluate, Eval_Name = NULL,
+            Eval_Dir = Path_Eval, Verbose = FALSE)
+        }
 
         # Predictions at new sites ----
 
@@ -583,14 +591,25 @@ Predict_Maps <- function(
 
           IASDT.R::CatTime("Predictions at new sites", Level = 1)
 
-          Preds_Current_Test <- IASDT.R::predictHmsc(
-            object = Path_Model, Gradient = Gradient, expected = TRUE,
-            NCores = NCores, Model_Name = Model_Name_Test,
-            Temp_Dir = "TEMP2Pred", UseTF = UseTF, TF_Environ = TF_Environ,
-            LF_Return = TRUE, LF_InputFile = Path_Test_LF,
-            Pred_Dir = Path_Prediction, Pred_XY = sf::st_drop_geometry(Test_XY),
-            Evaluate = FALSE, Verbose = FALSE) %>%
-            dplyr::mutate(Scenario = Model_Name_Test)
+          Path_Current_Test <- file.path(
+            Path_Prediction, paste0("Prediction_", Model_Name_Test, ".qs"))
+
+          if (file.exists(Path_Current_Test)) {
+            IASDT.R::CatTime("Loading predictions from disk", Level = 2)
+            Preds_Current_Test <- tibble::tibble(
+              Pred_Path = Path_Current_Test)
+
+          } else {
+
+            Preds_Current_Test <- IASDT.R::predictHmsc(
+              object = Path_Model, Gradient = Gradient, expected = TRUE,
+              NCores = NCores, Model_Name = Model_Name_Test,
+              Temp_Dir = "TEMP2Pred", UseTF = UseTF, TF_Environ = TF_Environ,
+              LF_Return = TRUE, LF_InputFile = Path_Test_LF,
+              Pred_Dir = Path_Prediction,
+              Pred_XY = sf::st_drop_geometry(Test_XY),
+              Evaluate = FALSE, Verbose = FALSE)
+          }
 
           # Merge & save predictions - sf ------
           IASDT.R::CatTime(

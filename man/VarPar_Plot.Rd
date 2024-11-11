@@ -10,7 +10,9 @@ VarPar_Plot(
   FromHPC = TRUE,
   UseTF = TRUE,
   TF_Environ = NULL,
-  NCores = 1
+  NCores = 1,
+  Fig_width = 30,
+  Fig_height = 15
 )
 }
 \arguments{
@@ -32,12 +34,18 @@ TRUE.}
 \item{NCores}{Integer. Number of parallel computations for computing variance
 partitioning using TensorFlow. See \link{VarPar_Compute} for more details.
 Default: \code{1}.}
+
+\item{Fig_width, Fig_height}{Numeric. Width and height of the output plot in
+centimeters. Default: \code{30} and \code{15}, respectively.}
 }
 \description{
-This function generates and optionally saves plots visualizing the variance
-partitioning of a Hmsc model. It can calculate variance partitioning and
-model evaluation if not provided and supports parallel computation for model
-predictions.
+This function generates plots for the variance partitioning of an Hmsc model.
+It can optionally compute the variance partitioning if not available on disk,
+supporting parallel computation and using TensorFlow; see \link{VarPar_Compute}.
+It plots the relative variance partitioning sorted by the mean value per
+predictor or by the original species order. It also plots the raw variance
+partitioning (relative variance partitioning multiplied by the Tjur-R^2
+value). The plots are saved as JPEG files.
 }
 \details{
 The function reads the following environment variables:

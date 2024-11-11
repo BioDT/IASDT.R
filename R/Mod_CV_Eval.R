@@ -4,7 +4,7 @@
 
 #' Evaluate cross-validated Hmsc Model
 #'
-#' #' This function evaluates Hmsc models trained via cross-validation using. It
+#' This function evaluates Hmsc models trained via cross-validation using. It
 #' merges posterior chains, makes predictions, and computes 4 evaluation
 #' metrics: AUC, RMSE, Tjur's R2, and Boyce Index.
 #'

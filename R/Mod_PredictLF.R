@@ -1,8 +1,8 @@
 ## |------------------------------------------------------------------------| #
-# predictLF ----
+# PredictLF ----
 ## |------------------------------------------------------------------------| #
 
-#' predictLF
+#' PredictLF
 #'
 #' Draws samples from the conditional predictive distribution of latent factors.
 #' #' This function is optimized for speed using parallel processing and
@@ -46,7 +46,7 @@
 #' @author This script was adapted from the [Hmsc::predictLatentFactor] function
 #'   in the `Hmsc` package.
 #' @seealso [Hmsc::predictLatentFactor]
-#' @name predictLF
+#' @name PredictLF
 #' @details The function is expected to be faster than the original function in
 #'   the `Hmsc` package, especially when using TensorFlow for calculations and
 #'   when working on parallel.
@@ -67,7 +67,7 @@
 #' - calculates `D11` and `D12` matrices only once and save them to disk and
 #'   call them when needed.
 
-predictLF <- function(
+PredictLF <- function(
     unitsPred, modelunits, postEta, postAlpha, rL, NCores = 8,
     Temp_Dir = "TEMP2Pred", Model_Name = NULL, UseTF = TRUE, TF_Environ = NULL,
     TF_use_single = FALSE, LF_OutFile = NULL, LF_Return = TRUE,

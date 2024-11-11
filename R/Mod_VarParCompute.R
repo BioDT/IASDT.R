@@ -1,7 +1,9 @@
 ## |------------------------------------------------------------------------| #
-# ComputeVarPar ----
+# VarParCompute ----
 ## |------------------------------------------------------------------------| #
 
+#' Computes variance partitioning of Hmsc models
+#'
 #' Computes variance components with respect to given grouping of fixed effects
 #' and levels of random effects. This function is a wrapper around the
 #' `Hmsc::computeVariancePartitioning`, but with the added functionality of
@@ -20,18 +22,27 @@
 #'   species
 #' @param NCores Integer specifying the number of parallel cores for
 #'   parallelization. This is only used when `UseTF` is TRUE.
+#' @param VerboseProgress Logical. Indicates whether progress messages should be
+#'   displayed. Defaults to `TRUE`.
+#' @param OutFileName
 #' @export
-#' @name ComputeVarPar
+#' @name VarParCompute
 #' @author Ahmed El-Gabbas
 #' @inheritParams predictHmsc
-#' @inheritParams predictLF
+#' @inheritParams PredictLF
 #' @export
 
-ComputeVarPar <- function(
+VarParCompute <- function(
     Path_Model, group = NULL, groupnames = NULL, start = 1, na.ignore = FALSE,
-    NCores = 6, UseTF = TRUE, TF_Environ = NULL, use_single = TRUE) {
+    NCores = 6, UseTF = TRUE, TF_Environ = NULL, use_single = TRUE,
+    Verbose = TRUE, OutFileName = "VarPar_DT") {
 
   # # .................................................................... ###
+
+  if (isFALSE(Verbose)) {
+    sink(file = nullfile())
+    on.exit(sink(), add = TRUE)
+  }
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -140,8 +151,8 @@ ComputeVarPar <- function(
     if (is.null(TF_Environ) || !dir.exists(TF_Environ)) {
       stop(
         paste0(
-          "When `UseTF` is TRUE, `TF_Environ` must be specified ",
-          "and should point to an existing directory with a Python environment"),
+          "When `UseTF` is TRUE, `TF_Environ` must be specified and should ",
+          "point to an existing directory with a Python environment"),
         call. = FALSE)
     }
 
@@ -157,8 +168,6 @@ ComputeVarPar <- function(
     # Suppress TensorFlow warnings and disable optimizations
     Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3", TF_ENABLE_ONEDNN_OPTS = "0")
 
-    IASDT.R::CatTime(
-      "Computations will be made using TensorFlow", Level = 1)
     reticulate::use_virtualenv(TF_Environ)
     reticulate::source_python(PythonScript)
 
@@ -182,9 +191,6 @@ ComputeVarPar <- function(
     invisible(gc())
 
   } else {
-    IASDT.R::CatTime(
-      "Computations will be made sequentially using R", Level = 1
-    )
 
     geta <- function(a) {
       switch(
@@ -244,10 +250,15 @@ ComputeVarPar <- function(
   poolN <- length(postList) # pooled chains
 
   for (i in seq_len(poolN)) {
-    for (k in 1:nc) {
-      R2T.Beta[k] <- R2T.Beta[k] +
-        stats::cor(lbeta[[i]][k, ], lmu[[i]][k, ])^2
-    }
+
+    # Suppress warnings when no trait information is used in the models
+    # cor(Beta[k, ], lmu[k, ]) : the standard deviation is zero
+    suppressWarnings({
+      for (k in 1:nc) {
+        R2T.Beta[k] <- R2T.Beta[k] +
+          stats::cor(lbeta[[i]][k, ], lmu[[i]][k, ])^2
+      }
+    })
 
     fixed1 <- matrix(0, nrow = ns, ncol = 1)
     fixedsplit1 <- matrix(0, nrow = ns, ncol = ngroups)
@@ -339,8 +350,8 @@ ComputeVarPar <- function(
   # # .................................................................... ###
 
   # Save the results
-  File_VarPar <- file.path(Path_VarPar, "VarPar_DT.RData")
-  IASDT.R::SaveAs(VP, VarPar_DT, File_VarPar)
+  File_VarPar <- file.path(Path_VarPar, paste0(OutFileName, ".RData"))
+  IASDT.R::SaveAs(InObj = VP, OutObj = OutFileName, OutPath = File_VarPar)
 
   VP$File <- File_VarPar
 

@@ -55,7 +55,7 @@
 #'   can be loaded in other predictions when needed.
 #' @param Verbose Logical. If TRUE, detailed output is printed. Default is
 #'   `FALSE`.
-#' @inheritParams predictLF
+#' @inheritParams PredictLF
 #' @export
 
 predictHmsc <- function(
@@ -347,10 +347,10 @@ predictHmsc <- function(
       invisible(gc())
 
       if (r == 1) {
-        IASDT.R::CatTime("LF prediction using `predictLF`", Level = 1)
+        IASDT.R::CatTime("LF prediction using `PredictLF`", Level = 1)
       }
 
-      predPostEta[[r]] <- IASDT.R::predictLF(
+      predPostEta[[r]] <- IASDT.R::PredictLF(
         unitsPred = levels(dfPiNew[, r]),
         modelunits = levels(object$dfPi[, r]),
         postEta = postEta_file, postAlpha = postAlpha, rL = rL[[r]],
@@ -569,9 +569,19 @@ predictHmsc <- function(
         do.call(cbind, .) %>%
         as.double()
 
+      # Mean prediction
       SpDT_Mean <- Rfast::rowmeans(SpDT)
+
+      # standard deviaion of prediction
       SpDT_SD <- Rfast::rowVars(SpDT, std = TRUE)
-      SpDT_Cov <- SpDT_SD / SpDT_Mean
+
+      # Coefficient of variation
+      SpDT_Mean0 <- SpDT_Mean
+      # Replace very small mean values with reasonably small number to avoid
+      # overflow warning
+      SpDT_Mean0[SpDT_Mean0 < 1e-8] <- 1e-8
+      SpDT_Cov <- SpDT_SD / SpDT_Mean0
+
       rm(SpDT)
 
       if (is.null(Pred_XY)) {

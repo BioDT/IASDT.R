@@ -9,13 +9,12 @@
 #' model evaluation if not provided and supports parallel computation for model
 #' predictions.
 #' @param Path_Model Character path for the model file. Only needed if one of
-#'   `ModelEval` and `VarPar` arguments are `NULL`.
-#' @param Path_Plot String. Path where the output file(s) will be saved.
+#'   `Model_Eval` and `VarPar` arguments are `NULL`.
 #' @param PlotTitlePrefix String (optional). Prefix to add to the title of the
 #'   plot. Default: `NULL`, which means only 'Variance partitioning' will be
 #'   used in the title.
-#' @param ModelEval Result of the [Hmsc::evaluateModelFit] function. If
-#'   `ModelEval = NULL` (default), [Hmsc::evaluateModelFit] will be executed on
+#' @param Model_Eval Result of the [Hmsc::evaluateModelFit] function. If
+#'   `Model_Eval = NULL` (default), [Hmsc::evaluateModelFit] will be executed on
 #'   the model object to compute measures of model fit.
 #' @param NCores Integer. Number of parallel computations for computing
 #'   predicted values. This is used as the `nParallel` argument of the
@@ -25,52 +24,20 @@
 #'   [Hmsc::computeVariancePartitioning] will be executed on the model object.
 #' @param EnvFile String. Path to read the environment variables. Default value:
 #'   `.env`
-#' @param SaveVarPar Logical. If `VarPar = NULL`, should the calculated variance
-#'   partitioning be saved as an RData file?  Default: `TRUE`.
-#' @param SaveModelEval Logical. If `ModelEval = NULL`, should the calculated
-#'   model evaluation be saved as an RData file?  Default: `TRUE`.
-#' @param ReturnGG Logical. Return the ggplot object. Default: `FALSE`.
-#' @param SaveGG Logical. Should the plots be exported as an RData object?
-#'   Default: `TRUE`.
 #' @param FromHPC Logical. Indicates whether the function is being run on an HPC
 #'   environment, affecting file path handling. Default: `TRUE`.
-#' @param predictEtaMean Logical; whether to predict the mean value of the
-#'   latent variable.
 #' @name PlotVarPar
 #' @author Ahmed El-Gabbas
 #' @details The function reads the following environment variables:
 #'   - **`DP_R_TaxaInfo_RData`** (if `FromHPC` = `TRUE`) or
 #'     **`DP_R_TaxaInfo_RData_Local`** (if `FromHPC` = `FALSE`) for the
 #'   location of the `TaxaList.RData` file containing species information.
-#' @return If `ReturnGG` is `TRUE`, returns a ggplot object of the variance
-#'   partitioning plots. Otherwise, returns `NULL`.
 #' @export
 
 
-require(dplyr)
-require(Hmsc)
-Path_Model <- "S:/datasets/processed/model_fitting/DE_SW_CV_12b/Model_Fitted/GPP25_Tree_samp1000_th100_Model.RData"
-Path_Eval <- "S:/datasets/processed/model_fitting/DE_SW_CV_12b/Model_Evaluation/Eval_Current_12b_Clamp_Train.qs"
-
-# Path_Plot = "D:/BioDT_IAS/IASDT_Model_Test/SW_1_Forests/Eval_VarPar"
-# PlotTitlePrefix = "AAAA"
-# ModelEval = NULL
-NCores = 8
-# VarPar = NULL
-# VarPar = "D:/BioDT_IAS/IASDT_Model_Test/SW_1_Forests/Eval_VarPar/VariancePartitioning_DT.RData"
-EnvFile = ".env"
-SaveVarPar = TRUE
-SaveModelEval = TRUE
-ReturnGG = FALSE
-SaveGG = TRUE
-FromHPC = FALSE
-
 PlotVarPar <- function(
-    # Path_Model, Path_Plot, PlotTitlePrefix = NULL, ModelEval = NULL, NCores,
-  # VarPar = NULL, EnvFile = ".env", SaveVarPar = TRUE, SaveModelEval = TRUE,
-  # predictEtaMean = TRUE, ReturnGG = FALSE, SaveGG = TRUE, FromHPC = TRUE
-) {
-
+    Path_Model, EnvFile = ".env", FromHPC = TRUE, UseTF = TRUE,
+    TF_Environ = NULL, NCores = 1) {
   # # ..................................................................... ###
 
   .StartTime <- lubridate::now(tzone = "CET")
@@ -83,38 +50,26 @@ PlotVarPar <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  IAS_ID <- Species_name <- Species <- variable <- value <- TaxaInfoFile <-
-    expected <- preds <- NULL
+  IAS_ID <- Species_name <- Species <- Variable <- VP_Value <-
+    TaxaInfoFile <- Sp <- TjurR2 <- Label <- NULL
 
   # # ..................................................................... ###
 
   # Check input arguments ------
 
-  IASDT.R::CatTime("Check input arguments")
-
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(
-    AllArgs,
-    function(x) get(x, envir = parent.env(env = environment()))) %>%
+    AllArgs, function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
-
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "character", Args = c("Path_Plot", "EnvFile"))
-
-  IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "logical",
-    Args = c("SaveVarPar", "SaveModelEval", "ReturnGG", "SaveGG"))
-
+    AllArgs = AllArgs, Type = "character", Args = c("EnvFile")
+  )
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "numeric", Args = "NCores")
   rm(AllArgs)
 
   # # ..................................................................... ###
 
   # Loading species list -----
-
-  IASDT.R::CatTime("Loading species list")
-
-  # fs::dir_create(Path_Plot)
 
   if (!file.exists(EnvFile)) {
     stop(
@@ -135,371 +90,591 @@ PlotVarPar <- function(
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
+  # # ..................................................................... ###
+
+  # Loading species info -----
+
   SpList <- IASDT.R::LoadAs(TaxaInfoFile) %>%
     dplyr::select(Species = IAS_ID, Species_name) %>%
+    dplyr::distinct() %>%
     dplyr::mutate(
       Species = stringr::str_pad(string = Species, width = 4, pad = "0"),
       Species = paste0("Sp_", Species))
 
   # # ..................................................................... ###
 
-  IASDT.R::CatTime("Loading model internal evaluation", Level = 1)
-  Model_Eval <- IASDT.R::LoadAs(Path_Eval) %>%
+  # Loading model evaluation ----
+
+  Path_Root <- dirname(dirname(Path_Model))
+  Path_VarPar <- file.path(
+    Path_Root, "Model_Postprocessing/Variance_Partitioning")
+
+  Path_Eval <- file.path(Path_Root, "Model_Evaluation") %>%
+    list.files("Eval_.+.qs", full.names = TRUE)
+
+  if (length(Path_Eval) != 1) {
+    stop(
+      paste0(
+        "The number of model evaluation files in the directory: ", Path_Root,
+        " is not equal to 1"),
+      call. = FALSE)
+  }
+
+  Model_Eval <- Path_Eval %>%
+    IASDT.R::LoadAs() %>%
+    # filter out the species that are not in the model
     dplyr::filter(stringr::str_starts(IAS_ID, "Sp_")) %>%
-    dplyr::select(IAS_ID, RMSE)
+    dplyr::rename(Species = IAS_ID) %>%
+    dplyr::select(-Sp)
 
-
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-  # Loading model ----
-
-  IASDT.R::CatTime("Loading model object")
-
-  if (!file.exists(Path_Model)) {
-    stop("The provided path for the model does not exist", call. = FALSE)
-  }
-  Model <- IASDT.R::LoadAs(Path_Model)
-
-  if (!inherits(Model, "Hmsc")) {
-    stop("The loaded model is not of an Hmsc object", call. = FALSE)
-  }
-
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
+  # # ..................................................................... ###
 
   # Calculate variance partitioning ----
-  IASDT.R::CatTime("Calculating variance partitioning", Level = 1)
 
+  File_VarPar <- file.path(Path_VarPar, "VarPar_DT.RData")
+  File_VarPar_all <- file.path(Path_VarPar, "VarPar_DT_all.RData")
 
-  IASDT.R::CatTime("Calculate variance partitioning")
-  VarPar <- Hmsc::computeVariancePartitioning(hM = Model)
+  if (!file.exists(File_VarPar) || !file.exists(File_VarPar_all)) {
 
+    if (!file.exists(Path_Model)) {
+      stop("The provided path for the model does not exist", call. = FALSE)
+    }
+    Model <- IASDT.R::LoadAs(Path_Model)
 
-  VarPar
-
-  if (SaveVarPar) {
-    save(
-      VarPar,
-      file = file.path(Path_Plot, "VariancePartitioning_DT.RData"))
+    if (!inherits(Model, "Hmsc")) {
+      stop("The loaded model is not of an Hmsc object", call. = FALSE)
+    }
   }
 
-  if (inherits(VarPar, "character")) {
-    IASDT.R::CatTime("Loading VarPar from RData file")
-    VarPar <- IASDT.R::LoadAs(VarPar)
-  }
+  if (!file.exists(File_VarPar)) {
+    # names of variables used in the model
+    groupnames <- names(Model$XData)
+    # actual variables used in the model, including the intercept and quadratic
+    # terms
+    ModelVars <- dimnames(Model$X)[[2]][-1]
+    # group variable to combine variable and its quadratic terms together
+    group <- purrr::map(
+      ModelVars, ~ which(stringr::str_detect(.x, groupnames))) %>%
+      unlist() %>%
+      # add intercept to the first group
+      c(.[1], .)
 
+    VarPar <- IASDT.R::VarParCompute(
+      Path_Model = Path_Model, group = group, groupnames = groupnames,
+      NCores = NCores, UseTF = UseTF, TF_Environ = TF_Environ,
+      Verbose = FALSE, OutFileName = "VarPar_DT")
 
-  # Processing ModelEval and VarPar -----
-
-  if (is.null(ModelEval) || is.null(VarPar)) {
-
-    # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-
-
-    # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-    # Compute predicted Values -----
-
-    if (is.null(ModelEval)) {
-
-      IASDT.R::CatTime("Compute R2")
-
-      IASDT.R::CatTime("Compute predicted Values", Level = 1)
-      # 06.07.2024 - This uses the updated predict function, currently available
-      # on my forked version of the package github.com/elgabbas/Hmsc The
-      # Hmsc::evaluateModelFit function expects an array object returned from
-      # Hmsc::computePredictedValues. The `computePredictedValues` function does
-      # not work on parallel, so I used the updated predict function on parallel
-      # then converted the output to array
-
-      Preds <- stats::predict(
-        object = Path_Model, expected = expected, nParallel = NCores,
-        predictEtaMean = predictEtaMean)
-      save(Preds, file = file.path(Path_Plot, "Preds.RData"))
-
-      PredsArray <- array(
-        unlist(Preds),
-        dim = c(dim(Preds[[1]])[1], dim(Preds[[1]])[2], length(Preds)))
-
-      rm(preds)
-
-      IASDT.R::CatTime("Evaluate model fit", Level = 1)
-      # Suppress the warning: In cor(lbeta[[i]][k, ], lmu[[i]][k, ]) : the
-      # standard deviation is zero
-      invisible(ModelEval <- suppressWarnings(
-        Hmsc::evaluateModelFit(hM = Model, predY = PredsArray)))
-
-      if (SaveModelEval) {
-        save(
-          ModelEval, file = file.path(Path_Plot, "ModelEval_explanatory.RData"))
-      }
+    rm(ModelVars, groupnames, group)
 
     } else {
-      if (inherits(ModelEval, "character")) {
-        IASDT.R::CatTime("Loading ModelEval from RData file")
-        ModelEval <- IASDT.R::LoadAs(ModelEval)
-      }
+
+    VarPar <- IASDT.R::LoadAs(File_VarPar)
+
     }
+
+  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
+
+  if (!file.exists(File_VarPar)) {
+    groupnames_all <- dimnames(Model$X)[[2]][-1] %>%
+      stringr::str_remove_all("stats::poly\\(") %>%
+      stringr::str_replace_all(", degree = 2, raw = TRUE\\)", "_")
+    group_all <- c(1, seq_along(groupnames_all))
+
+    VarPar_all <- IASDT.R::VarParCompute(
+      Path_Model = Path_Model, group = group_all, groupnames = groupnames_all,
+      NCores = NCores, UseTF = UseTF, TF_Environ = TF_Environ,
+      Verbose = FALSE, OutFileName = "VarPar_DT_all")
+
+    rm(groupnames_all, group_all)
+
+  } else {
+
+    VarPar_all <- IASDT.R::LoadAs(File_VarPar_all)
+
+  }
+
+  if (exists("Model")) {
     rm(Model)
   }
 
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  ## Plot theme ----
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  invisible(gc())
+
+  # # ..................................................................... ###
+  # # ..................................................................... ###
+
+  # Plot theme ----
 
   Theme <- ggplot2::theme(
+    plot.title = ggtext::element_markdown(size = 14, hjust = 0.5),
+    plot.title.position = "plot",
     legend.title = ggplot2::element_blank(),
-    legend.position = "none",
-    axis.text.y = ggplot2::element_text(face = "italic"),
-    axis.title.y = ggplot2::element_text(size = 25),
-    axis.title.x = ggplot2::element_text(size = 25),
-    legend.text = ggplot2::element_text(size = 28),
-    legend.key.spacing.x = ggplot2::unit(0.7, "cm"))
+    plot.margin = ggplot2::margin(0.1, 0.3, 0.2, 0.05, "cm"),
+    axis.text.x = ggplot2::element_text(
+      face = "italic", size = 5, angle = 90, hjust = 1, vjust = 0.3),
+    axis.title.x = ggplot2::element_blank(),
+    axis.title.y = ggplot2::element_blank(),
+    axis.ticks = ggplot2::element_blank(),
+    legend.text = ggtext::element_markdown(
+      size = 9, hjust = 0.5, lineheight = 1.15),
+    legend.key.size = ggplot2::unit(0.4, "cm"),
+    legend.key.height = ggplot2::unit(0.4, "cm"),
+    legend.key.width = ggplot2::unit(0.6, "cm"),
+    legend.key.spacing.x = ggplot2::unit(0.4, "cm"),
+    legend.position = "bottom",
+    legend.margin = ggplot2::margin(0, 2, 0, 1, unit = "cm"))
 
-  # Add a common Legend for combined ggplot plots
-  # Source: https://stackoverflow.com/a/13650878/3652584
-  g_legend <- function(Plot) {
-    tmp <- ggplot2::ggplot_gtable(ggplot2::ggplot_build(Plot))
-    leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
-    legend <- tmp$grobs[[leg]]
-    return(legend)
-  }
+  # # ..................................................................... ###
+  # # ..................................................................... ###
 
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # Relative variance partitioning ----
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # Grouped data and plots ------
 
-  IASDT.R::CatTime("Plotting relative variance partitioning")
+  ## Plotting data ----
 
-  vp_df <- tibble::as_tibble(VarPar$vals, rownames = "variable") %>%
+  ### Relative variance partitioning ----
+  VarPar_DF <- tibble::as_tibble(VarPar$vals, rownames = "Variable") %>%
     tidyr::pivot_longer(
-      cols = -variable, names_to = "Species", values_to = "value")
+      cols = -Variable, names_to = "Species", values_to = "VP_Value")
 
-  VarOrder <- dplyr::summarise(vp_df, value = mean(value)) %>%
-    dplyr::arrange(dplyr::desc(value)) %>%
-    dplyr::pull(variable)
+  # Calculate the mean variance partitioning per variable
+  VarPar_Mean <- VarPar_DF %>%
+    dplyr::summarise(VP_Value = mean(VP_Value), .by = "Variable") %>%
+    dplyr::arrange(dplyr::desc(VP_Value)) %>%
+    dplyr::mutate(VP_Value = VP_Value * 100) %>%
+    dplyr::mutate(
+      Label = forcats::fct_recode(
+        Variable,
+        "Habitat coverage" = "HabLog",
+        "Road+Rail intensity" = "RoadRailLog",
+        "Sampling efforts" = "EffortsLog",
+        "Spatial effect" = "Random: sample"),
+      Label = stringr::str_to_title(Label),
+      Label = paste0(
+        "<b>", as.character(Label), "</b><br>(", round(VP_Value, 1), "%)"),
+      Label = factor(Label, .data$Label),
+      VP_Value = NULL)
 
-  # Order species by the mean variance partitioning per variable
-  SpOrder <- dplyr::left_join(vp_df, SpList, by = "Species") %>%
-    dplyr::mutate(variable = factor(variable, VarOrder)) %>%
-    dplyr::summarise(value = sum(value), .by = c(Species_name, variable)) %>%
-    dplyr::arrange(variable, dplyr::desc(value)) %>%
+  # Order variables by the mean variance partitioning
+  VarOrder <- dplyr::pull(VarPar_Mean, Variable)
+
+  # Order species by the mean variance partitioning per Variable
+  SpOrder <- dplyr::left_join(VarPar_DF, SpList, by = "Species") %>%
+    dplyr::mutate(Variable = factor(Variable, VarOrder)) %>%
+    dplyr::summarise(
+      VP_Value = sum(VP_Value), .by = c(Species_name, Variable)) %>%
+    dplyr::arrange(Variable, dplyr::desc(VP_Value)) %>%
     dplyr::pull(Species_name) %>%
     unique()
 
-  Plot_DT <- dplyr::left_join(vp_df, SpList, by = "Species") %>%
-    dplyr::arrange(variable, value) %>%
-    dplyr::mutate(
-      variable = factor(variable, VarOrder),
-      variable = forcats::fct_recode(
-        variable,
-        "Habitat coverage" = "HabLog",
-        "Road + Rail intensity" = "RoadRailLog",
-        "Sampling efforts" = "EffortsLog",
-        "Spatial random effect" = "Random: sample"),
-      Species_name = factor(Species_name, SpOrder)) %>%
-    # suppress warning: ! Unknown levels in `f`: HabLog; if habitat is not used
-    # as predictor
-    suppressWarnings()
+  # Plotting data for raw variance partitioning - ordered by mean variance
+  # partitioning per Variable
+  DT_Relative <- dplyr::left_join(VarPar_DF, SpList, by = "Species") %>%
+    dplyr::arrange(Variable, VP_Value) %>%
+    dplyr::mutate(Species_name = factor(Species_name, SpOrder)) %>%
+    dplyr::left_join(VarPar_Mean, by = "Variable")
 
-  Plot <- ggplot2::ggplot(
-    data = Plot_DT,
-    mapping = ggplot2::aes(x = value, y = Species_name, fill = variable)) +
-    ggplot2::geom_bar(stat = "identity", width = 1) +
-    ggplot2::theme_classic() +
-    ggplot2::ylab("Species") +
-    ggplot2::xlab("Proportion of variance explained") +
-    ggplot2::scale_fill_brewer(palette = "Paired") +
-    ggplot2::coord_cartesian(xlim = c(0, 1.0125), expand = FALSE) +
-    Theme
-
-
-  ## Use original species order -----
-
-  SpOrder_Orig <- dplyr::left_join(vp_df, SpList, by = "Species") %>%
+  # Plotting data for raw variance partitioning - original species order
+  SpOrder_Orig <- dplyr::left_join(VarPar_DF, SpList, by = "Species") %>%
     dplyr::distinct(Species, Species_name) %>%
     dplyr::arrange(Species) %>%
     dplyr::pull(Species_name) %>%
     unique()
 
-  Plot_DT_Orig <- dplyr::left_join(vp_df, SpList, by = "Species") %>%
-    dplyr::arrange(variable, value) %>%
-    dplyr::mutate(
-      variable = factor(variable, VarOrder),
-      variable = forcats::fct_recode(
-        variable,
-        "Habitat coverage" = "HabLog",
-        "Road + Rail intensity" = "RoadRailLog",
-        "Sampling efforts" = "EffortsLog",
-        "Spatial random effect" = "Random: sample"),
-      Species_name = factor(Species_name, SpOrder_Orig)) %>%
-    # suppress warning: ! Unknown levels in `f`: HabLog; if habitat is not used
-    # as predictor
-    suppressWarnings()
+  DT_Relative_Orig <- DT_Relative %>%
+    dplyr::mutate(Species_name = factor(Species_name, SpOrder_Orig))
 
-  Plot_Orig <- ggplot2::ggplot(
-    data = Plot_DT_Orig,
-    mapping = ggplot2::aes(x = value, y = Species_name, fill = variable)) +
-    ggplot2::geom_bar(stat = "identity", width = 1) +
-    ggplot2::theme_classic() +
-    ggplot2::ylab("Species (original order)") +
-    ggplot2::xlab("Proportion of variance explained") +
-    ggplot2::scale_fill_brewer(palette = "Paired") +
-    ggplot2::coord_cartesian(xlim = c(0, 1.0125), expand = FALSE) +
-    Theme
+  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
 
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # Raw variance partitioning ----
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  ### Raw variance partitioning ----
 
-  IASDT.R::CatTime("Plotting raw variance partitioning")
 
-  if (!is.null(ModelEval$TjurR2) &&
-      length(ModelEval$TjurR2) == ncol(VarPar$vals)) {
-    for (ii in seq_along(ModelEval$TjurR2)) {
-      VarPar$vals[, ii] <- ModelEval$TjurR2[ii] * VarPar$vals[, ii]
-    }
+  if (!is.null(Model_Eval$TjurR2) &&
+      length(Model_Eval$TjurR2) == ncol(VarPar$vals)) {
+
+    VarPar_DF_Raw <- tibble::as_tibble(VarPar$vals, rownames = "Variable") %>%
+      tidyr::pivot_longer(
+        cols = -Variable, names_to = "Species", values_to = "VP_Value") %>%
+      dplyr::left_join(Model_Eval, by = "Species") %>%
+      dplyr::mutate(VP_Value = VP_Value * TjurR2)
+
   } else {
+
     stop(
       paste0(
-        "Mismatch between the length of ModelEval$TjurR2 and the ",
-        "number of columns in VarPar$vals"),
+        "Mismatch between the length of Model_Eval$TjurR2 and the number of ",
+        " columns in VarPar$vals"),
       call. = FALSE)
+
   }
 
-  vp_df_R <- tibble::as_tibble(VarPar$vals, rownames = "variable") %>%
-    tidyr::pivot_longer(
-      cols = -variable, names_to = "Species", values_to = "value")
 
-  MaxVal <- dplyr::group_by(vp_df_R, Species) %>%
-    dplyr::summarize(value = sum(value)) %>%
-    dplyr::pull(value) %>%
+  # Calculate the maximum value for the x-axis
+  MaxVal <- dplyr::group_by(VarPar_DF_Raw, Species) %>%
+    dplyr::summarize(VP_Value = sum(VP_Value)) %>%
+    dplyr::pull(VP_Value) %>%
     max() %>%
     magrittr::multiply_by(100) %>%
     ceiling(x = .) %>%
     magrittr::divide_by(100)
 
-  # Order species by the mean variance partitioning per variable
-
-  Plot_R_DT <- dplyr::left_join(vp_df_R, SpList, by = "Species") %>%
-    dplyr::arrange(variable, value) %>%
+  VarPar_Raw_Mean <- VarPar_DF_Raw %>%
+    dplyr::summarise(VP_Value = mean(VP_Value), .by = "Variable") %>%
+    dplyr::arrange(dplyr::desc(VP_Value)) %>%
+    dplyr::mutate(VP_Value = VP_Value * 100) %>%
     dplyr::mutate(
-      variable = factor(variable, VarOrder),
-      variable = forcats::fct_recode(
-        variable,
+      Label = forcats::fct_recode(
+        Variable,
         "Habitat coverage" = "HabLog",
-        "Road + Rail intensity" = "RoadRailLog",
+        "Road+Rail intensity" = "RoadRailLog",
         "Sampling efforts" = "EffortsLog",
-        "Spatial random effect" = "Random: sample"),
-      Species_name = factor(Species_name, SpOrder)) %>%
-    # suppress warning: ! Unknown levels in `f`: HabLog; if habitat is not used
-    # as predictor
-    suppressWarnings()
+        "Spatial effect" = "Random: sample"),
+      Label = stringr::str_to_title(Label),
+      Label = paste0(
+        "<b>", as.character(Label), "</b><br>(", round(VP_Value, 1), "%)"),
+      Label = factor(Label, .data$Label),
+      VP_Value = NULL)
 
-  Plot_raw <- ggplot2::ggplot(
-    data = Plot_R_DT,
-    ggplot2::aes(x = value, y = Species_name, fill = variable)) +
+  # Plotting data for relative variance partitioning - ordered by mean variance
+  # partitioning per Variable
+  DT_Raw <- dplyr::left_join(VarPar_DF_Raw, SpList, by = "Species") %>%
+    dplyr::arrange(Variable, VP_Value) %>%
+    dplyr::mutate(Species_name = factor(Species_name, SpOrder)) %>%
+    dplyr::left_join(VarPar_Raw_Mean, by = "Variable")
+
+  # Plotting data for relative variance partitioning - original species order
+  SpOrder_Raw_Orig <- dplyr::left_join(
+    VarPar_DF_Raw, SpList, by = "Species") %>%
+    dplyr::distinct(Species, Species_name) %>%
+    dplyr::arrange(Species) %>%
+    dplyr::pull(Species_name) %>%
+    unique()
+
+  DT_Raw_Orig <- DT_Raw %>%
+    dplyr::mutate(Species_name = factor(Species_name, SpOrder_Raw_Orig))
+
+  # # ..................................................................... ###
+
+  ## Plotting ----
+
+  ### Relative variance partitioning plot -----
+
+  # ordered by mean variance partitioning
+  Title_Relative <- c(
+    "<b>Variance partitioning</b> (sorted by mean value per predictor)")
+
+  Plot_Relative <- DT_Relative %>%
+    ggplot2::ggplot(
+      mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label)) +
     ggplot2::geom_bar(stat = "identity", width = 1) +
     ggplot2::theme_classic() +
     ggplot2::ylab("Species") +
-    ggplot2::xlab("Variance explained (raw)") +
+    ggplot2::xlab("Proportion of variance explained") +
     ggplot2::scale_fill_brewer(palette = "Paired") +
-    ggplot2::coord_cartesian(xlim = c(0, MaxVal), expand = FALSE) +
-    Theme
+    ggplot2::coord_flip(xlim = c(0, 1), expand = FALSE) +
+    ggplot2::scale_x_continuous(labels = scales::percent_format(scale = 100)) +
+    ggplot2::labs(title = Title_Relative) +
+    Theme +
+    ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1, byrow = TRUE))
 
-  ## Use original species order -----
+  # Using ggplot2::ggsave directly does not show non-ascii characters correctly
+  grDevices::jpeg(
+    filename = file.path(Path_VarPar, "VarPar_Grouped_Relative_Ordered.jpeg"),
+    width = 30, height = 20, units = "cm", quality = 100, res = 600)
+  plot(Plot_Relative)
+  grDevices::dev.off()
 
-  Plot_R_DT_Orig <- dplyr::left_join(vp_df_R, SpList, by = "Species") %>%
-    dplyr::arrange(variable, value) %>%
-    dplyr::mutate(
-      variable = factor(variable, VarOrder),
-      variable = forcats::fct_recode(
-        variable,
-        "Habitat coverage" = "HabLog",
-        "Road + Rail intensity" = "RoadRailLog",
-        "Sampling efforts" = "EffortsLog",
-        "Spatial random effect" = "Random: sample"),
-      Species_name = factor(Species_name, SpOrder_Orig)) %>%
-    # suppress warning: ! Unknown levels in `f`: HabLog; if habitat is not used
-    # as predictor
-    suppressWarnings()
+  # ordered by original species order
+  Title_Relative_Orig <- paste0(
+    "<b>Variance partitioning</b> (original species order)")
 
-  Plot_raw_Orig <- ggplot2::ggplot(
-    data = Plot_R_DT_Orig,
-    ggplot2::aes(x = value, y = Species_name, fill = variable)) +
+  Plot_Relative_Orig <- DT_Relative_Orig %>%
+    ggplot2::ggplot(
+      mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label)) +
     ggplot2::geom_bar(stat = "identity", width = 1) +
     ggplot2::theme_classic() +
-    ggplot2::ylab("Species (original order)") +
-    ggplot2::xlab("Variance explained (raw)") +
+    ggplot2::ylab("Species") +
+    ggplot2::xlab("Proportion of variance explained") +
     ggplot2::scale_fill_brewer(palette = "Paired") +
-    ggplot2::coord_cartesian(xlim = c(0, MaxVal), expand = FALSE) +
-    Theme
+    ggplot2::coord_flip(xlim = c(0, 1), expand = FALSE) +
+    ggplot2::scale_x_continuous(labels = scales::percent_format(scale = 100)) +
+    ggplot2::labs(title = Title_Relative_Orig) +
+    Theme +
+    ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1, byrow = TRUE))
 
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # Combine plots -----
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  grDevices::jpeg(
+    filename = file.path(
+      Path_VarPar, "VarPar_Grouped_Relative_Original.jpeg"),
+    width = 30, height = 20, units = "cm", quality = 100, res = 600)
+  plot(Plot_Relative_Orig)
+  grDevices::dev.off()
 
-  IASDT.R::CatTime("Combine plots")
+  # # ..................................................................... ###
 
-  Legend <- Plot +
-    ggplot2::theme(legend.position = "bottom") +
-    ggplot2::guides(
-      fill = ggplot2::guide_legend(nrow = 1, override.aes = list(size = 10)))
-  Legend <- g_legend(Legend)
+  ### Raw variance partitioning plot ----
 
-  if (is.null(PlotTitlePrefix)) {
-    PlotTitle <- "Variance partitioning"
+  ## ordered by mean variance partitioning
+  Title_Raw <- paste0(
+    "<b>Raw variance partitioning</b> ",
+    "(relative variance partitioning  &times; Tjur-R<sup>2</sup>)")
+
+  Plot_Raw <- DT_Raw_Orig %>%
+    ggplot2::ggplot(
+      mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label)) +
+    ggplot2::geom_bar(stat = "identity", width = 1) +
+    ggplot2::theme_classic() +
+    ggplot2::ylab("Species") +
+    ggplot2::xlab("Raw variance explained") +
+    ggplot2::scale_fill_brewer(palette = "Paired") +
+    ggplot2::coord_flip(xlim = c(0, MaxVal), expand = FALSE) +
+    ggplot2::scale_x_continuous(labels = scales::percent_format(scale = 100)) +
+    ggplot2::labs(title = Title_Raw) +
+    Theme +
+    ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1, byrow = TRUE))
+
+  # Using ggplot2::ggsave directly does not show non-ascii characters correctly
+  grDevices::jpeg(
+    filename = file.path(
+      Path_VarPar, "VarPar_Grouped_Raw_Ordered.jpeg"),
+    width = 30, height = 20, units = "cm", quality = 100, res = 600)
+  plot(Plot_Raw)
+  grDevices::dev.off()
+
+  # # ..................................................................... ###
+  # # ..................................................................... ###
+  # # ..................................................................... ###
+
+  # Ungrouped data and plots -----
+
+  ## Plotting data ----
+
+  ### Relative variance partitioning ----
+  VarPar_all_DF <- tibble::as_tibble(
+    VarPar_all$vals, rownames = "Variable") %>%
+    tidyr::pivot_longer(
+      cols = -Variable, names_to = "Species", values_to = "VP_Value")
+
+  # Calculate the mean variance partitioning per variable
+  VarPar_all_Mean <- VarPar_all_DF %>%
+    dplyr::summarise(VP_Value = mean(VP_Value), .by = "Variable") %>%
+    dplyr::arrange(dplyr::desc(VP_Value)) %>%
+    dplyr::mutate(VP_Value = VP_Value * 100) %>%
+    dplyr::mutate(
+      Label = forcats::fct_recode(
+        Variable,
+        "Habitat coverage" = "HabLog",
+        "Road+Rail intensity" = "RoadRailLog",
+        "Sampling efforts" = "EffortsLog",
+        "Spatial effect" = "Random: sample"),
+      Label = stringr::str_to_title(Label),
+      Label = paste0(
+        "<b>", as.character(Label), "</b><br>(", round(VP_Value, 1), "%)"),
+      Label = stringr::str_replace_all(Label, "_1", ""),
+      Label = stringr::str_replace_all(Label, "_2", "^2"),
+      Label = factor(Label, .data$Label),
+      VP_Value = NULL)
+
+  # Order variables by the mean variance partitioning
+  VarOrder_all <- dplyr::pull(VarPar_all_Mean, Variable)
+
+  # Order species by the mean variance partitioning per Variable
+  SpOrder_all <- dplyr::left_join(VarPar_all_DF, SpList, by = "Species") %>%
+    dplyr::mutate(Variable = factor(Variable, VarOrder_all)) %>%
+    dplyr::summarise(
+      VP_Value = sum(VP_Value), .by = c(Species_name, Variable)) %>%
+    dplyr::arrange(Variable, dplyr::desc(VP_Value)) %>%
+    dplyr::pull(Species_name) %>%
+    unique()
+
+  # Plotting data for raw variance partitioning - ordered by mean variance
+  # partitioning per Variable
+  DT_Relative_all <- dplyr::left_join(
+    VarPar_all_DF, SpList, by = "Species") %>%
+    dplyr::arrange(Variable, VP_Value) %>%
+    dplyr::mutate(Species_name = factor(Species_name, SpOrder_all)) %>%
+    dplyr::left_join(VarPar_all_Mean, by = "Variable")
+
+  # Plotting data for raw variance partitioning - original species order
+  SpOrder_all_Orig <- VarPar_all_DF %>%
+    dplyr::left_join(SpList, by = "Species") %>%
+    dplyr::distinct(Species, Species_name) %>%
+    dplyr::arrange(Species) %>%
+    dplyr::pull(Species_name) %>%
+    unique()
+
+  DT_Relative_all_Orig <- DT_Relative_all %>%
+    dplyr::mutate(Species_name = factor(Species_name, SpOrder_all_Orig))
+
+  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
+
+  ### Raw variance partitioning ----
+
+  if (!is.null(Model_Eval$TjurR2) &&
+      length(Model_Eval$TjurR2) == ncol(VarPar_all$vals)) {
+
+    VarPar_all_DF_Raw <- tibble::as_tibble(
+      VarPar_all$vals, rownames = "Variable") %>%
+      tidyr::pivot_longer(
+        cols = -Variable, names_to = "Species", values_to = "VP_Value") %>%
+      dplyr::left_join(Model_Eval, by = "Species") %>%
+      dplyr::mutate(VP_Value = VP_Value * TjurR2)
+
   } else {
-    PlotTitle <- paste0("Variance partitioning (", PlotTitlePrefix, ")")
+
+    stop(
+      paste0(
+        "Mismatch between the length of Model_Eval$TjurR2 and the number of ",
+        " columns in VarPar_all$vals"),
+      call. = FALSE)
+
   }
 
-  if (SaveGG) {
-    IASDT.R::CatTime("Save plots as RData")
-    PlotList <- list(
-      Plot = Plot, Plot_raw = Plot_raw,
-      Plot_Orig = Plot_Orig, Plot_raw_Orig = Plot_raw_Orig)
-    save(PlotList, file = file.path(Path_Plot, "VariancePartitioning_GG.RData"))
-  }
 
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # Calculate the maximum value for the x-axis
+  MaxVal <- dplyr::group_by(VarPar_all_DF_Raw, Species) %>%
+    dplyr::summarize(VP_Value = sum(VP_Value)) %>%
+    dplyr::pull(VP_Value) %>%
+    max() %>%
+    magrittr::multiply_by(100) %>%
+    ceiling(x = .) %>%
+    magrittr::divide_by(100)
+
+  VarPar_all_Raw_Mean <- VarPar_all_DF_Raw %>%
+    dplyr::summarise(VP_Value = mean(VP_Value), .by = "Variable") %>%
+    dplyr::arrange(dplyr::desc(VP_Value)) %>%
+    dplyr::mutate(VP_Value = VP_Value * 100) %>%
+    dplyr::mutate(
+      Label = forcats::fct_recode(
+        Variable,
+        "Habitat coverage" = "HabLog",
+        "Road+Rail intensity" = "RoadRailLog",
+        "Sampling efforts" = "EffortsLog",
+        "Spatial effect" = "Random: sample"),
+      Label = stringr::str_to_title(Label),
+      Label = paste0(
+        "<b>", as.character(Label), "</b><br>(", round(VP_Value, 1), "%)"),
+      Label = stringr::str_replace_all(Label, "_1", ""),
+      Label = stringr::str_replace_all(Label, "_2", "^2"),
+      Label = factor(Label, .data$Label),
+      VP_Value = NULL)
+
+  # Plotting data for relative variance partitioning - ordered by mean variance
+  # partitioning per Variable
+  DT_Raw_all <- dplyr::left_join(VarPar_all_DF_Raw, SpList, by = "Species") %>%
+    dplyr::arrange(Variable, VP_Value) %>%
+    dplyr::mutate(Species_name = factor(Species_name, SpOrder_all)) %>%
+    dplyr::left_join(VarPar_all_Raw_Mean, by = "Variable")
+
+  # Plotting data for relative variance partitioning - original species order
+  SpOrder_all_Raw_Orig <- dplyr::left_join(
+    VarPar_all_DF_Raw, SpList, by = "Species") %>%
+    dplyr::distinct(Species, Species_name) %>%
+    dplyr::arrange(Species) %>%
+    dplyr::pull(Species_name) %>%
+    unique()
+
+  DT_Raw_all_Orig <- DT_Raw_all %>%
+    dplyr::mutate(Species_name = factor(Species_name, SpOrder_all_Raw_Orig))
+
+  # # ..................................................................... ###
+
+  ## Plotting ----
+
+  ### Relative variance partitioning plot -----
+
+  # ordered by mean variance partitioning
+  Title_Relative_all <- paste0(
+    "<b>Variance partitioning</b> (sorted by mean value per predictor)")
+
+  Colours <- paletteer::paletteer_d(
+    "ggthemes::Tableau_20", n = nrow(VarPar_all_Raw_Mean))
+
+  Plot_Relative <- DT_Relative_all %>%
+    ggplot2::ggplot(
+      mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label)) +
+    ggplot2::geom_bar(stat = "identity", width = 1) +
+    ggplot2::theme_classic() +
+    ggplot2::ylab("Species") +
+    ggplot2::xlab("Proportion of variance explained") +
+    ggplot2::scale_fill_manual(values = Colours) +
+    ggplot2::coord_flip(xlim = c(0, 1), expand = FALSE) +
+    ggplot2::scale_x_continuous(labels = scales::percent_format(scale = 100)) +
+    ggplot2::labs(title = Title_Relative_all) +
+    Theme +
+    ggplot2::guides(fill = ggplot2::guide_legend(nrow = 2, byrow = TRUE))
+
+  # Using ggplot2::ggsave directly does not show non-ascii characters correctly
+  grDevices::jpeg(
+    filename = file.path(Path_VarPar, "VarPar_all_Relative_Ordered.jpeg"),
+    width = 30, height = 20, units = "cm", quality = 100, res = 600)
+  plot(Plot_Relative)
+  grDevices::dev.off()
+
+  # ordered by original species order
+  Title_Relative_all_Orig <- paste0(
+    "<b>Variance partitioning</b> (original species order)")
+
+  Plot_Relative_Orig <- DT_Relative_all_Orig %>%
+    ggplot2::ggplot(
+      mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label)) +
+    ggplot2::geom_bar(stat = "identity", width = 1) +
+    ggplot2::theme_classic() +
+    ggplot2::ylab("Species") +
+    ggplot2::xlab("Proportion of variance explained") +
+    ggplot2::scale_fill_manual(values = Colours) +
+    ggplot2::coord_flip(xlim = c(0, 1), expand = FALSE) +
+    ggplot2::scale_x_continuous(labels = scales::percent_format(scale = 100)) +
+    ggplot2::labs(title = Title_Relative_all_Orig) +
+    Theme +
+    ggplot2::guides(fill = ggplot2::guide_legend(nrow = 2, byrow = TRUE))
+
+  grDevices::jpeg(
+    filename = file.path(Path_VarPar, "VarPar_all_Relative_Original.jpeg"),
+    width = 30, height = 20, units = "cm", quality = 100, res = 600)
+  plot(Plot_Relative_Orig)
+  grDevices::dev.off()
+
+  # # ..................................................................... ###
+
+  ### Raw variance partitioning plot ----
+
+  ## ordered by mean variance partitioning
+  Title_Raw <- paste0(
+    "<b>Raw variance partitioning</b> ",
+    "(relative variance partitioning  &times; Tjur-R<sup>2</sup>)")
+
+  Plot_Raw <- DT_Raw_all_Orig %>%
+    ggplot2::ggplot(
+      mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label)) +
+    ggplot2::geom_bar(stat = "identity", width = 1) +
+    ggplot2::theme_classic() +
+    ggplot2::ylab("Species") +
+    ggplot2::xlab("Raw variance explained") +
+    ggplot2::scale_fill_manual(values = Colours) +
+    ggplot2::coord_flip(xlim = c(0, MaxVal), expand = FALSE) +
+    ggplot2::scale_x_continuous(labels = scales::percent_format(scale = 100)) +
+    ggplot2::labs(title = Title_Raw) +
+    Theme +
+    ggplot2::guides(fill = ggplot2::guide_legend(nrow = 2, byrow = TRUE))
+
+  # Using ggplot2::ggsave directly does not show non-ascii characters correctly
+  grDevices::jpeg(
+    filename = file.path(Path_VarPar, "VarPar_all_Raw_Ordered.jpeg"),
+    width = 30, height = 20, units = "cm", quality = 100, res = 600)
+  plot(Plot_Raw)
+  grDevices::dev.off()
+
+  # # ..................................................................... ###
+
   # Save plot to disk -----
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-  IASDT.R::CatTime("Save plot to disk")
-
-  PlotPath2 <- file.path(Path_Plot, "VariancePartitioning.jpeg")
-  VarParPlot <- gridExtra::arrangeGrob(Plot, Plot_raw, nrow = 1) %>%
-    gridExtra::arrangeGrob(
-      Legend, nrow = 2, heights = c(15, 1),
-      top = grid::textGrob(
-        PlotTitle, gp = grid::gpar(fontsize = 30, font = 2)))
-
-  # Using ggplot2::ggsave directly does not show non-ascii characters correctly
-  grDevices::jpeg(
-    filename = PlotPath2,
-    width = 16, height = 24, units = "cm", quality = 100, res = 600)
-  print(VarParPlot)
-  grDevices::dev.off()
-
-  PlotPath2 <- file.path(Path_Plot, "VariancePartitioning_Orig.jpeg")
-  VarParPlot <- gridExtra::arrangeGrob(Plot_Orig, Plot_raw_Orig, nrow = 1) %>%
-    gridExtra::arrangeGrob(
-      Legend, nrow = 2, heights = c(15, 1),
-      top = grid::textGrob(
-        PlotTitle, gp = grid::gpar(fontsize = 30, font = 2)))
-
-  # Using ggplot2::ggsave directly does not show non-ascii characters correctly
-  grDevices::jpeg(
-    filename = PlotPath2,
-    width = 16, height = 24, units = "cm", quality = 100, res = 600)
-  print(VarParPlot)
-  grDevices::dev.off()
 
   IASDT.R::CatDiff(InitTime = .StartTime)
-
-  if (ReturnGG) {
-    return(VarParPlot)
-  } else {
-    return(invisible(NULL))
-  }
+  return(invisible(NULL))
 }
+
+
+# setwd("D:/BioDT_IAS/")
+#
+# PlotVarPar(
+#     Path_Model = "Z:/datasets/processed/model_fitting/DE_SW_CV_12b/Model_Fitted/GPP25_Tree_samp1000_th100_Model.RData",
+#     EnvFile = ".env", FromHPC = FALSE, UseTF = TRUE,
+#     TF_Environ = "D:/r-tensorflow/", NCores = 1)

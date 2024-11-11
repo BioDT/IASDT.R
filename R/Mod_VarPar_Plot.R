@@ -1,5 +1,5 @@
 ## |------------------------------------------------------------------------| #
-# PlotVarPar ----
+# VarPar_Plot ----
 ## |------------------------------------------------------------------------| #
 
 #' Plot variance partitioning of Hmsc model using ggplot2.
@@ -8,34 +8,25 @@
 #' partitioning of a Hmsc model. It can calculate variance partitioning and
 #' model evaluation if not provided and supports parallel computation for model
 #' predictions.
-#' @param Path_Model Character path for the model file. Only needed if one of
-#'   `Model_Eval` and `VarPar` arguments are `NULL`.
-#' @param PlotTitlePrefix String (optional). Prefix to add to the title of the
-#'   plot. Default: `NULL`, which means only 'Variance partitioning' will be
-#'   used in the title.
-#' @param Model_Eval Result of the [Hmsc::evaluateModelFit] function. If
-#'   `Model_Eval = NULL` (default), [Hmsc::evaluateModelFit] will be executed on
-#'   the model object to compute measures of model fit.
-#' @param NCores Integer. Number of parallel computations for computing
-#'   predicted values. This is used as the `nParallel` argument of the
-#'   [Hmsc::computePredictedValues] function.
-#' @param VarPar Variance partitioning object resulted from
-#'   [Hmsc::computeVariancePartitioning]. If `VarPar = NULL` (default),
-#'   [Hmsc::computeVariancePartitioning] will be executed on the model object.
+#' @param Path_Model Character path for the model file.
+#' @param NCores Integer. Number of parallel computations for computing variance
+#'   partitioning using TensorFlow. See [VarPar_Compute] for more details.
+#'   Default: `1`.
 #' @param EnvFile String. Path to read the environment variables. Default value:
 #'   `.env`
 #' @param FromHPC Logical. Indicates whether the function is being run on an HPC
 #'   environment, affecting file path handling. Default: `TRUE`.
-#' @name PlotVarPar
+#' @name VarPar_Plot
 #' @author Ahmed El-Gabbas
 #' @details The function reads the following environment variables:
 #'   - **`DP_R_TaxaInfo_RData`** (if `FromHPC` = `TRUE`) or
 #'     **`DP_R_TaxaInfo_RData_Local`** (if `FromHPC` = `FALSE`) for the
 #'   location of the `TaxaList.RData` file containing species information.
+#' @inheritParams Predict_Hmsc
 #' @export
 
 
-PlotVarPar <- function(
+VarPar_Plot <- function(
     Path_Model, EnvFile = ".env", FromHPC = TRUE, UseTF = TRUE,
     TF_Environ = NULL, NCores = 1) {
   # # ..................................................................... ###
@@ -160,7 +151,7 @@ PlotVarPar <- function(
       # add intercept to the first group
       c(.[1], .)
 
-    VarPar <- IASDT.R::VarParCompute(
+    VarPar <- IASDT.R::VarPar_Compute(
       Path_Model = Path_Model, group = group, groupnames = groupnames,
       NCores = NCores, UseTF = UseTF, TF_Environ = TF_Environ,
       Verbose = FALSE, OutFileName = "VarPar_DT")
@@ -181,7 +172,7 @@ PlotVarPar <- function(
       stringr::str_replace_all(", degree = 2, raw = TRUE\\)", "_")
     group_all <- c(1, seq_along(groupnames_all))
 
-    VarPar_all <- IASDT.R::VarParCompute(
+    VarPar_all <- IASDT.R::VarPar_Compute(
       Path_Model = Path_Model, group = group_all, groupnames = groupnames_all,
       NCores = NCores, UseTF = UseTF, TF_Environ = TF_Environ,
       Verbose = FALSE, OutFileName = "VarPar_DT_all")
@@ -674,7 +665,7 @@ PlotVarPar <- function(
 
 # setwd("D:/BioDT_IAS/")
 #
-# PlotVarPar(
+# VarPar_Plot(
 #     Path_Model = "Z:/datasets/processed/model_fitting/DE_SW_CV_12b/Model_Fitted/GPP25_Tree_samp1000_th100_Model.RData",
 #     EnvFile = ".env", FromHPC = FALSE, UseTF = TRUE,
 #     TF_Environ = "D:/r-tensorflow/", NCores = 1)

@@ -2,10 +2,10 @@
 ## ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 ## |------------------------------------------------------------------------| #
-# predict_Hmsc ----
+# Predict_Hmsc ----
 ## |------------------------------------------------------------------------| #
 
-#' predict_Hmsc
+#' Predict_Hmsc
 #'
 #' Calculates predicted values from a fitted \code{Hmsc} model. This function
 #' modifies the `Hmsc:::predict.Hmsc` function.
@@ -56,9 +56,10 @@
 #' @param Verbose Logical. If TRUE, detailed output is printed. Default is
 #'   `FALSE`.
 #' @inheritParams Predict_LF
+#' @name Predict_Hmsc
 #' @export
 
-predict_Hmsc <- function(
+Predict_Hmsc <- function(
     object,
     Loff = NULL, XData = NULL, X = NULL, XRRRData = NULL, XRRR = NULL,
     Gradient = NULL, Yc = NULL, mcmcStep = 1, expected = TRUE, NCores = 8,

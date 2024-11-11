@@ -1,5 +1,5 @@
 ## |------------------------------------------------------------------------| #
-# VarParCompute ----
+# VarPar_Compute ----
 ## |------------------------------------------------------------------------| #
 
 #' Computes variance partitioning of Hmsc models
@@ -22,19 +22,19 @@
 #'   species
 #' @param NCores Integer specifying the number of parallel cores for
 #'   parallelization. This is only used when `UseTF` is TRUE.
-#' @param VerboseProgress Logical. Indicates whether progress messages should be
+#' @param Verbose Logical. Indicates whether progress messages should be
 #'   displayed. Defaults to `TRUE`.
 #' @param OutFileName Character. Name of the output file to save the results.
 #' @export
-#' @name VarParCompute
+#' @name VarPar_Compute
 #' @author Ahmed El-Gabbas
-#' @inheritParams predict_Hmsc
+#' @inheritParams Predict_Hmsc
 #' @inheritParams Predict_LF
 #' @export
 
-VarParCompute <- function(
+VarPar_Compute <- function(
     Path_Model, group = NULL, groupnames = NULL, start = 1, na.ignore = FALSE,
-    NCores = 6, UseTF = TRUE, TF_Environ = NULL, use_single = TRUE,
+    NCores = 6, UseTF = TRUE, TF_Environ = NULL, TF_use_single = TRUE,
     Verbose = TRUE, OutFileName = "VarPar_DT") {
 
   # # .................................................................... ###
@@ -174,12 +174,12 @@ VarParCompute <- function(
     if (NCores > 1) {
       results <- VarPar_Parallel(
         hM_X = hM$X, hM_Tr = hM$Tr,
-        postList = postList, use_single = use_single,
+        postList = postList, use_single = TF_use_single,
         num_threads = NCores)
     } else {
       results <- VarPar_Sequential(
         hM_X = hM$X, hM_Tr = hM$Tr,
-        postList = postList, use_single = use_single)
+        postList = postList, use_single = TF_use_single)
     }
 
     la <- purrr::map(results, ~ .x$la)

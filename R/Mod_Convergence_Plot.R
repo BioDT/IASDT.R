@@ -1,5 +1,5 @@
 ## |------------------------------------------------------------------------| #
-# PlotConvergence ----
+# Convergence_Plot ----
 ## |------------------------------------------------------------------------| #
 
 #' Plot model convergence of a selected model
@@ -27,13 +27,13 @@
 #' @param PagePerFile Integer. Indicates the number of pages per single pdf page
 #'   for the `Omega` parameter. Default: 20.
 #' @param Cols Character vector for chain colours (optional). Default: `NULL`.
-#' @name PlotConvergence
+#' @name Convergence_Plot
 #' @author Ahmed El-Gabbas
 #' @return The function does not return a value but generates and saves plots to
 #'   disk.
 #' @export
 
-PlotConvergence <- function(
+Convergence_Plot <- function(
     Path_Coda = NULL, Path_Model = NULL, EnvFile = ".env",
     FromHPC = TRUE, Title = " ", NOmega = 1000, NCores = NULL,
     NRC = c(2, 2), Beta_NRC = c(3, 3), SavePlotData = TRUE, PagePerFile = 20,

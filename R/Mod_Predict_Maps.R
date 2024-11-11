@@ -460,7 +460,7 @@ Predict_Maps <- function(
     rm(Predict_DF_Test, Test_X, Test_XY)
 
     # Predicting latent factor only -- no predictions are made
-    Preds_LF <- IASDT.R::predict_Hmsc(
+    Preds_LF <- IASDT.R::Predict_Hmsc(
       object = Path_Model, Gradient = Gradient, expected = TRUE,
       NCores = NCores, Model_Name = paste0("LF_", Hab_Abb, "_Test"),
       Temp_Dir = "TEMP2Pred", UseTF = UseTF, TF_Environ = TF_Environ,
@@ -606,7 +606,7 @@ Predict_Maps <- function(
           IASDT.R::CatTime("Loading predictions from disk", Level = 2)
           Preds_ModFitSites <- tibble::tibble(Pred_Path = Path_Current_Train)
         } else {
-          Preds_ModFitSites <- IASDT.R::predictHmsc(
+          Preds_ModFitSites <- IASDT.R::Predict_Hmsc(
             object = Path_Model, X = Train_X, Gradient = NULL, expected = TRUE,
             NCores = NCores, Model_Name = Model_Name_Train,
             Temp_Dir = "TEMP2Pred", UseTF = UseTF, TF_Environ = TF_Environ,
@@ -632,7 +632,7 @@ Predict_Maps <- function(
 
           } else {
 
-            Preds_NewSites <- IASDT.R::predict_Hmsc(
+            Preds_NewSites <- IASDT.R::Predict_Hmsc(
               object = Path_Model, Gradient = Gradient, expected = TRUE,
               NCores = NCores, Model_Name = Model_Name_Test,
               Temp_Dir = "TEMP2Pred", UseTF = UseTF, TF_Environ = TF_Environ,

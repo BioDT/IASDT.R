@@ -1,5 +1,5 @@
 ## |------------------------------------------------------------------------| #
-# Mod_MergeChains ----
+# Merge_Chains ----
 ## |------------------------------------------------------------------------| #
 
 #' Post-processing of model outputs
@@ -24,13 +24,13 @@
 #'   environment. This affects how file paths are handled. Defaults to `TRUE`.
 #' @param FromJSON Logical. Indicates whether to convert loaded models from JSON
 #'   format before reading. Defaults to `FALSE`.
-#' @name Mod_MergeChains
+#' @name Merge_Chains
 #' @author Ahmed El-Gabbas
 #' @return The function does not return anything but saves the processed model
 #'   information to disk.
 #' @export
 
-Mod_MergeChains <- function(
+Merge_Chains <- function(
     Path_Model = NULL, NCores = NULL, ModInfoName = NULL,
     PrintIncomplete = TRUE, FromHPC = TRUE, FromJSON = FALSE) {
 

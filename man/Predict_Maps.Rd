@@ -50,6 +50,13 @@ is required when \code{Pred_Clamp} is \code{TRUE}.}
 suitability at new sites. Default: \code{TRUE}. This argument is only temporary
 to make predictions for the workflow and will be removed in the future.}
 
+\item{TF_Environ}{Character string specifying the path to the Python
+environment. Defaults to NULL. This argument is required if \code{UseTF} is
+TRUE.}
+
+\item{UseTF}{Logical indicating whether to use TensorFlow for calculations.
+Defaults to TRUE.}
+
 \item{CC_Models}{Character vector specifying the climate models to use for
 future predictions. Default: \code{c("GFDL-ESM4", "IPSL-CM6A-LR" , "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL")}. This argument is only
 temporary to make predictions for the workflow and will be removed in the

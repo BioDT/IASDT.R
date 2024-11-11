@@ -1,5 +1,5 @@
 ## |------------------------------------------------------------------------| #
-# PlotConvergence_All ----
+# Convergence_Plot_All ----
 ## |------------------------------------------------------------------------| #
 
 #' Plot model convergence of multiple modelling alternatives
@@ -8,19 +8,25 @@
 #' convergence of Hmsc models across multiple modelling alternatives. It checks
 #' model convergence using trace plots and Gelman-Rubin diagnostics for key
 #' model parameters.
-#' @param Path_Model String. Path to save all the output, including the to be
-#'   fitted models (without trailing slash). Must not be `NULL`.
+#'
+#' @param Path_Model String. Path to the root directory of the fitted models
+#'   without the trailing slash. The convergence outputs will be saved to the
+#'   `Model_Convergence_All` subfolder.
 #' @param maxOmega Integer. Maximum number of species interactions to sample for
 #'   convergence diagnostics.
 #' @param NCores Integer. Number of cores to use for parallel processing.
-#' @name PlotConvergence_All
+#' @param FromHPC Logical. Indicates whether the function is being run on an HPC
+#'   environment, affecting file path handling. Default: `TRUE`.
+#' @name Convergence_Plot_All
 #' @author Ahmed El-Gabbas
 #' @return The function does not return anything but saves a series of
 #'   diagnostic plots in the specified path.
 #' @export
 
-PlotConvergence_All <- function(
-    Path_Model = NULL, maxOmega = 1000, NCores = NULL) {
+Convergence_Plot_All <- function(
+    Path_Model = NULL, maxOmega = 1000, NCores = NULL, FromHPC = TRUE) {
+
+  # # ..................................................................... ###
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -28,16 +34,18 @@ PlotConvergence_All <- function(
     stop("Path_Model and NCores must not be NULL", call. = FALSE)
   }
 
+  # # ..................................................................... ###
+
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   GPP_Thin <- M_Name_Fit <- Tree <- rL <-
     M_thin <- M_samples <- Omega_Gelman <- Omega_ESS <- Beta_Gelman <-
     Beta_ESS <- ESS2 <- Path_Trace_Rho <- Rho <- Path_Trace_Alpha <-
-    Path_Trace_Rho <- NULL
+    Path_Trace_Rho <- Model_Finished <- NULL
 
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # Check input arguments
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
+
+  # Check input arguments ------
 
   IASDT.R::CatTime("Check input arguments")
   AllArgs <- ls(envir = environment())
@@ -49,30 +57,15 @@ PlotConvergence_All <- function(
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric", Args = c("maxOmega", "NCores"))
 
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  ## Prepare/load convergence data ------
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
+
+  # Prepare/load convergence data ------
 
   IASDT.R::CatTime("Prepare/load convergence data")
 
   Path_Convergence_All <- file.path(Path_Model, "Model_Convergence_All")
   Path_ConvDT <- file.path(Path_Convergence_All, "DT")
   fs::dir_create(c(Path_ConvDT, Path_Convergence_All))
-
-  IASDT.R::CatTime(
-    paste0("Prepare working on parallel using `", NCores, "` cores."),
-    Level = 1)
-
-  withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
-
-  if (NCores == 1) {
-    future::plan("sequential", gc = TRUE)
-  } else {
-    c1 <- snow::makeSOCKcluster(NCores)
-    on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-    future::plan("cluster", workers = c1, gc = TRUE)
-    on.exit(future::plan("sequential", gc = TRUE), add = TRUE)
-  }
 
   Model_Info <- file.path(Path_Model, "Model_Info.RData")
   if (!file.exists(Model_Info)) {
@@ -83,10 +76,31 @@ PlotConvergence_All <- function(
   Model_Info <- IASDT.R::LoadAs(Model_Info)
 
   # Extract number of chains
-  NChains <- IASDT.R::LoadAs(Model_Info$Path_FittedMod[[1]]) %>%
+  NChains <- dplyr::filter(Model_Info, Model_Finished) %>%
+    utils::head(1) %>%
+    dplyr::pull("Path_FittedMod") %>%
+    IASDT.R::LoadAs() %>%
     magrittr::extract2("postList") %>%
     length()
 
+  # # ..................................................................... ###
+
+  IASDT.R::CatTime(
+    paste0("Prepare working on parallel using `", NCores, "` cores."),
+    Level = 1)
+
+  withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
+
+  if (NCores == 1) {
+    future::plan("future::sequential", gc = TRUE)
+  } else {
+    c1 <- snow::makeSOCKcluster(NCores)
+    on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
+    future::plan("future::cluster", workers = c1, gc = TRUE)
+    on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
+  }
+
+  # # ..................................................................... ###
 
   PrepConvergence <- function(ID) {
 
@@ -98,19 +112,18 @@ PlotConvergence_All <- function(
     CodaModelExist <- all(file.exists(c(Path_Coda, Path_FittedMod)))
 
     # prepare traceplot ----
+
     if (CodaModelExist) {
 
-      ObjName_Rho <- paste0(M_Name_Fit, "_TraceRho")
-      Path_Trace_Rho <- file.path(
-        Path_ConvDT, paste0(ObjName_Rho, ".RData"))
+      Obj_Rho <- paste0(M_Name_Fit, "_TraceRho")
+      Path_Trace_Rho <- file.path(Path_ConvDT, paste0(Obj_Rho, ".RData"))
 
-      ObjName_Alpha <- paste0(M_Name_Fit, "_TraceAlpha")
-      Path_Trace_Alpha <- file.path(
-        Path_ConvDT, paste0(ObjName_Alpha, ".RData"))
+      Obj_Alpha <- paste0(M_Name_Fit, "_TraceAlpha")
+      Path_Trace_Alpha <- file.path(Path_ConvDT, paste0(Obj_Alpha, ".RData"))
 
-      ObjName_Beta_Omega <- paste0(M_Name_Fit, "_Beta_Omega")
+      Obj_Beta_Omega <- paste0(M_Name_Fit, "_Beta_Omega")
       Path_Beta_Omega <- file.path(
-        Path_ConvDT, paste0(ObjName_Beta_Omega, ".RData"))
+        Path_ConvDT, paste0(Obj_Beta_Omega, ".RData"))
 
 
       if ((Tree == "Tree" && !file.exists(Path_Trace_Rho)) ||
@@ -129,10 +142,10 @@ PlotConvergence_All <- function(
             Post = Coda_Obj, Model = Model_Obj, Title = RhoTitle)
 
           IASDT.R::SaveAs(
-            InObj = PlotObj_Rho, OutObj = ObjName_Rho,
-            OutPath = Path_Trace_Rho)
+            InObj = PlotObj_Rho, OutObj = Obj_Rho, OutPath = Path_Trace_Rho)
 
           rm(PlotObj_Rho)
+
         } else {
           Path_Trace_Rho <- NULL
         }
@@ -141,19 +154,34 @@ PlotConvergence_All <- function(
       # Alpha -----
       if (!file.exists(Path_Trace_Alpha)) {
         PlotObj_Alpha <- IASDT.R::PlotAlpha(
-          Post = Coda_Obj, Model = Model_Obj, NRC = c(2, 3),
+          Post = Coda_Obj, Model = Model_Obj,
           Title = stringr::str_remove_all(
-            basename(Path_Coda), "_Tree|_Coda.RData$"))
+            basename(Path_Coda), "_Tree|_Coda.RData$"),
+          NRC = c(2, 3), FromHPC = FromHPC)
 
+        # AddFooter = TRUE
+        # AddTitle = TRUE
+        # Cols = c("red", "blue", "darkgreen", "darkgrey")
+        # FromHPC = TRUE
+        #
+        # Warning messages:
+        #   1: Removed 24 rows containing missing values or values outside
+        # the scale range (`geom_smooth()`).
+        # 2: Removed 48 rows containing missing values or values outside
+        # the scale range (`geom_smooth()`).
+        # 3: Removed 124 rows containing missing values or values outside
+        # the scale range (`geom_smooth()`).
+        # 4: Removed 2 rows containing missing values or values outside
+        # the scale range (`geom_hline()`).
+        #
         IASDT.R::SaveAs(
-          InObj = PlotObj_Alpha, OutObj = ObjName_Alpha,
+          InObj = PlotObj_Alpha, OutObj = Obj_Alpha,
           OutPath = Path_Trace_Alpha)
 
         rm(PlotObj_Alpha, Model_Obj)
       }
 
       # Beta + Omega -----
-
       if (file.exists(Path_Beta_Omega)) {
         Beta_Omega <- IASDT.R::LoadAs(Path_Beta_Omega)
         Beta_Gelman <- Beta_Omega$Beta_Gelman
@@ -166,14 +194,14 @@ PlotConvergence_All <- function(
         Beta <- magrittr::extract2(Coda_Obj, "Beta")
         Omega <- magrittr::extract2(Coda_Obj, "Omega") %>%
           magrittr::extract2(1)
+
         rm(Coda_Obj)
 
         # BETA - effectiveSize
         Beta_ESS <- coda::effectiveSize(Beta)
 
         # BETA - gelman.diag
-        Beta_Gelman <- Beta %>%
-          coda::gelman.diag(multivariate = FALSE) %>%
+        Beta_Gelman <- coda::gelman.diag(Beta, multivariate = FALSE) %>%
           magrittr::extract2("psrf") %>%
           as.data.frame() %>%
           dplyr::pull(1) %>%
@@ -183,13 +211,11 @@ PlotConvergence_All <- function(
         Omega_ESS <- coda::effectiveSize(Omega)
 
         # OMEGA - gelman.diag
-
         # nolint start
         sel <- sample(seq_len(dim(Omega[[1]])[2]), size = maxOmega)
         # nolint end
 
-        Omega_Gelman <- Omega %>%
-          purrr::map(~ .x[, sel]) %>%
+        Omega_Gelman <- purrr::map(.x = Omega, .f = ~ .x[, sel]) %>%
           coda::gelman.diag(multivariate = FALSE) %>%
           magrittr::extract2("psrf") %>%
           as.data.frame() %>%
@@ -217,12 +243,17 @@ PlotConvergence_All <- function(
       return()
   }
 
+  # # ..................................................................... ###
+
+  # Processing convergence data -----
+
   Convergence_DT <- Model_Info %>%
     dplyr::mutate(
       Plots = future.apply::future_lapply(
         X = seq_len(nrow(Model_Info)), FUN = PrepConvergence,
         future.scheduling = Inf, future.seed = TRUE,
-        future.packages = c("dplyr", "sf", "Hmsc", "coda", "magrittr"),
+        future.packages = c(
+          "dplyr", "sf", "Hmsc", "coda", "magrittr", "magrittr", "IASDT.R"),
         future.globals = c(
           "Model_Info", "Path_ConvDT", "maxOmega", "PrepConvergence"))) %>%
     dplyr::select(tidyselect::all_of(c("M_Name_Fit", "Plots"))) %>%
@@ -238,12 +269,12 @@ PlotConvergence_All <- function(
 
   if (NCores > 1) {
     snow::stopCluster(c1)
-    future::plan("sequential", gc = TRUE)
+    future::plan("future::sequential", gc = TRUE)
   }
 
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
+
   # Plotting theme -----
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   Theme <-  ggplot2::theme(
     strip.text = ggplot2::element_text(size = 16, face = "bold"),
@@ -264,10 +295,9 @@ PlotConvergence_All <- function(
     `Tree` = "Phylogenetic (taxonomic) tree",
     `NoTree` = "No phylogenetic (taxonomic) tree"))
 
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  ## Alpha - trace plots ------
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
+  # Alpha - trace plots ------
   IASDT.R::CatTime("Alpha - trace plots")
 
   grDevices::pdf(
@@ -280,10 +310,9 @@ PlotConvergence_All <- function(
     }))
   grDevices::dev.off()
 
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  ## Rho - trace plots ------
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
+  # Rho - trace plots ------
   IASDT.R::CatTime("Rho - trace plots")
 
   Plot <- Convergence_DT %>%
@@ -310,10 +339,9 @@ PlotConvergence_All <- function(
   print(Plot)
   grDevices::dev.off()
 
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  ## Omega - Gelman convergence ------
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
+  # Omega - Gelman convergence ------
   IASDT.R::CatTime("Omega - Gelman convergence")
 
   Plot_Path <- file.path(
@@ -357,10 +385,9 @@ PlotConvergence_All <- function(
 
   }))
 
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  ## Omega - Effective sample size -----
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
+  # Omega - Effective sample size -----
   IASDT.R::CatTime("Omega - Effective sample size")
 
   Plot_Path <- file.path(
@@ -414,10 +441,9 @@ PlotConvergence_All <- function(
     grobs = list(Plot, Plot2), nrow = 1, ncol = 1, top = NULL))
   grDevices::dev.off()
 
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  ## Beta - Gelman convergence ------
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
+  # Beta - Gelman convergence ------
   IASDT.R::CatTime("Beta - Gelman convergence")
 
   Plot_Title <- paste0("Gelman convergence diagnostic - Beta")
@@ -459,10 +485,9 @@ PlotConvergence_All <- function(
 
   }))
 
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  ## Beta - Effective sample size -----
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
+  # Beta - Effective sample size -----
   IASDT.R::CatTime("Beta - Effective sample size")
 
   Plot_Path <- file.path(
@@ -507,6 +532,8 @@ PlotConvergence_All <- function(
     ggplot2::ylab("Mean effective sample size (%)") +
     ggplot2::coord_flip(expand = FALSE) +
     Theme
+
+  # # ..................................................................... ###
 
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly

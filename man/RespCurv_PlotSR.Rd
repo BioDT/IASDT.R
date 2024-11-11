@@ -10,9 +10,6 @@ RespCurv_PlotSR(Path_Postprocessing, Verbose = TRUE, NCores = 8)
 \item{Path_Postprocessing}{String. Path to the post-processing directory.
 Reads from the \code{RespCurv_SR} subdirectory created by \link{RespCurv_PrepData}.}
 
-\item{Verbose}{Logical. If TRUE, detailed output is printed. Default is
-\code{FALSE}.}
-
 \item{NCores}{Integer. Number of cores to use for parallel processing.
 Defaults to 8.}
 }

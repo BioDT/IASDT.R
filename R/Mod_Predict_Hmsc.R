@@ -2,10 +2,10 @@
 ## ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 ## |------------------------------------------------------------------------| #
-# predictHmsc ----
+# predict_Hmsc ----
 ## |------------------------------------------------------------------------| #
 
-#' predictHmsc
+#' predict_Hmsc
 #'
 #' Calculates predicted values from a fitted \code{Hmsc} model. This function
 #' modifies the `Hmsc:::predict.Hmsc` function.
@@ -55,10 +55,10 @@
 #'   can be loaded in other predictions when needed.
 #' @param Verbose Logical. If TRUE, detailed output is printed. Default is
 #'   `FALSE`.
-#' @inheritParams PredictLF
+#' @inheritParams Predict_LF
 #' @export
 
-predictHmsc <- function(
+predict_Hmsc <- function(
     object,
     Loff = NULL, XData = NULL, X = NULL, XRRRData = NULL, XRRR = NULL,
     Gradient = NULL, Yc = NULL, mcmcStep = 1, expected = TRUE, NCores = 8,
@@ -347,10 +347,10 @@ predictHmsc <- function(
       invisible(gc())
 
       if (r == 1) {
-        IASDT.R::CatTime("LF prediction using `PredictLF`", Level = 1)
+        IASDT.R::CatTime("LF prediction using `Predict_LF`", Level = 1)
       }
 
-      predPostEta[[r]] <- IASDT.R::PredictLF(
+      predPostEta[[r]] <- IASDT.R::Predict_LF(
         unitsPred = levels(dfPiNew[, r]),
         modelunits = levels(object$dfPi[, r]),
         postEta = postEta_file, postAlpha = postAlpha, rL = rL[[r]],

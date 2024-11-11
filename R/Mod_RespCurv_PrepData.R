@@ -21,7 +21,7 @@
 #' @return Depending on the value of `ReturnData`, either returns response curve
 #'   data or `NULL` invisibly.
 #' @export
-#' @inheritParams predictHmsc
+#' @inheritParams Predict_Hmsc
 #' @name RespCurv_PrepData
 
 RespCurv_PrepData <- function(
@@ -152,7 +152,7 @@ RespCurv_PrepData <- function(
         # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
         # Predicting probability of occurrence
-        Preds <- IASDT.R::predictHmsc(
+        Preds <- IASDT.R::Predict_Hmsc(
           object = Path_Model, Gradient = Gradient, expected = TRUE, NCores = 1,
           Model_Name = paste0("RC_", Coords), RC = Coords, UseTF = UseTF,
           TF_Environ = TF_Environ, LF_InputFile = File_LF, Verbose = FALSE)
@@ -393,11 +393,11 @@ RespCurv_PrepData <- function(
 
       # The `Model` object is distributed twice to cores when available on the
       # function environment. Here, I delete the Model object and it will be
-      # loaded later after when using `predictHmsc` function.
+      # loaded later after when using `Predict_Hmsc` function.
       rm(Model)
       invisible(gc())
 
-      Model_LF <- IASDT.R::predictHmsc(
+      Model_LF <- IASDT.R::Predict_Hmsc(
         object = Path_Model, Gradient = Gradient_c, expected = TRUE,
         NCores = NCores, Temp_Dir = Temp_Dir, Model_Name = "RC_c", RC = "c",
         UseTF = UseTF, TF_Environ = TF_Environ, LF_OutFile = File_LF,

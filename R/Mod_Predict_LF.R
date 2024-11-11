@@ -1,8 +1,8 @@
 ## |------------------------------------------------------------------------| #
-# PredictLF ----
+# Predict_LF ----
 ## |------------------------------------------------------------------------| #
 
-#' PredictLF
+#' Predict_LF
 #'
 #' Draws samples from the conditional predictive distribution of latent factors.
 #' #' This function is optimized for speed using parallel processing and
@@ -46,7 +46,7 @@
 #' @author This script was adapted from the [Hmsc::predictLatentFactor] function
 #'   in the `Hmsc` package.
 #' @seealso [Hmsc::predictLatentFactor]
-#' @name PredictLF
+#' @name Predict_LF
 #' @details The function is expected to be faster than the original function in
 #'   the `Hmsc` package, especially when using TensorFlow for calculations and
 #'   when working on parallel.
@@ -67,7 +67,7 @@
 #' - calculates `D11` and `D12` matrices only once and save them to disk and
 #'   call them when needed.
 
-PredictLF <- function(
+Predict_LF <- function(
     unitsPred, modelunits, postEta, postAlpha, rL, NCores = 8,
     Temp_Dir = "TEMP2Pred", Model_Name = NULL, UseTF = TRUE, TF_Environ = NULL,
     TF_use_single = FALSE, LF_OutFile = NULL, LF_Return = TRUE,
@@ -82,7 +82,7 @@ PredictLF <- function(
 
   .StartTime <- lubridate::now(tzone = "CET")
 
-  IASDT.R::CatTime("Starting `PredictLF` function", Level = 1)
+  IASDT.R::CatTime("Starting `Predict_LF` function", Level = 1)
 
   # # ..................................................................... ###
 
@@ -475,7 +475,7 @@ PredictLF <- function(
   # # ..................................................................... ###
 
   IASDT.R::CatDiff(
-    InitTime = .StartTime, Prefix = "PredictLF was finished in ", Level = 1)
+    InitTime = .StartTime, Prefix = "Predict_LF was finished in ", Level = 1)
 
   # # ..................................................................... ###
 

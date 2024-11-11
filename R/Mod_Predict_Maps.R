@@ -44,7 +44,7 @@
 #' @export
 #' @name Predict_Maps
 #' @author Ahmed El-Gabbas
-#' @inheritParams predictHmsc
+#' @inheritParams Predict_Hmsc
 #' @return Returns a tibble with the prediction summary and file paths for
 #'   output tif files.
 #' @export
@@ -460,7 +460,7 @@ Predict_Maps <- function(
     rm(Predict_DF_Test, Test_X, Test_XY)
 
     # Predicting latent factor only -- no predictions are made
-    Preds_LF <- IASDT.R::predictHmsc(
+    Preds_LF <- IASDT.R::predict_Hmsc(
       object = Path_Model, Gradient = Gradient, expected = TRUE,
       NCores = NCores, Model_Name = paste0("LF_", Hab_Abb, "_Test"),
       Temp_Dir = "TEMP2Pred", UseTF = UseTF, TF_Environ = TF_Environ,
@@ -632,7 +632,7 @@ Predict_Maps <- function(
 
           } else {
 
-            Preds_NewSites <- IASDT.R::predictHmsc(
+            Preds_NewSites <- IASDT.R::predict_Hmsc(
               object = Path_Model, Gradient = Gradient, expected = TRUE,
               NCores = NCores, Model_Name = Model_Name_Test,
               Temp_Dir = "TEMP2Pred", UseTF = UseTF, TF_Environ = TF_Environ,

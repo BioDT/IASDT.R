@@ -24,12 +24,12 @@
 #'   parallelization. This is only used when `UseTF` is TRUE.
 #' @param VerboseProgress Logical. Indicates whether progress messages should be
 #'   displayed. Defaults to `TRUE`.
-#' @param OutFileName
+#' @param OutFileName Character. Name of the output file to save the results.
 #' @export
 #' @name VarParCompute
 #' @author Ahmed El-Gabbas
-#' @inheritParams predictHmsc
-#' @inheritParams PredictLF
+#' @inheritParams predict_Hmsc
+#' @inheritParams Predict_LF
 #' @export
 
 VarParCompute <- function(

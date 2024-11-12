@@ -2,7 +2,7 @@
 # VarPar_Plot ----
 ## |------------------------------------------------------------------------| #
 
-#' Plot variance partitioning of Hmsc model using ggplot2.
+#' Plot variance partitioning of Hmsc model
 #'
 #' This function generates plots for the variance partitioning of an Hmsc model.
 #' It can optionally compute the variance partitioning if not available on disk,
@@ -171,7 +171,7 @@ VarPar_Plot <- function(
     VarPar <- IASDT.R::VarPar_Compute(
       Path_Model = Path_Model, group = group, groupnames = groupnames,
       NCores = NCores, UseTF = UseTF, TF_Environ = TF_Environ,
-      Verbose = FALSE, OutFileName = "VarPar_DT")
+      Verbose = FALSE, OutFileName = "VarPar")
 
     rm(ModelVars, groupnames, group)
 

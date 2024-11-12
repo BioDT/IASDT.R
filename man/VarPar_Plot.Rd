@@ -2,7 +2,7 @@
 % Please edit documentation in R/Mod_VarPar_Plot.R
 \name{VarPar_Plot}
 \alias{VarPar_Plot}
-\title{Plot variance partitioning of Hmsc model using ggplot2.}
+\title{Plot variance partitioning of Hmsc model}
 \usage{
 VarPar_Plot(
   Path_Model,

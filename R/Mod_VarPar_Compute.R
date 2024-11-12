@@ -35,7 +35,7 @@
 VarPar_Compute <- function(
     Path_Model, group = NULL, groupnames = NULL, start = 1, na.ignore = FALSE,
     NCores = 6, UseTF = TRUE, TF_Environ = NULL, TF_use_single = TRUE,
-    Verbose = TRUE, OutFileName = "VarPar_DT") {
+    Verbose = TRUE, OutFileName = "VarPar") {
 
   # # .................................................................... ###
 

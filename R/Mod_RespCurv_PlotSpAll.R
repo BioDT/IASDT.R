@@ -1,29 +1,23 @@
 ## |------------------------------------------------------------------------| #
-# RespCurv_PlotSp ----
+# RespCurv_PlotSpAll ----
 ## |------------------------------------------------------------------------| #
 
-#' Plot species response curves
+#' Plot all species response curves
 #'
-#' Generates and saves response curve plots for species based on environmental
-#' variables and other factors. Plots show predicted habitat suitability across
-#' different values of each variable.
+#' Generates and saves response curve plots for all species together in a single
+#' plot.
 #' @param Path_Postprocessing String. The path to the directory for model
 #'   post-processing. The function reads data from the `RespCurv_Sp`
 #'   sub-directory, created by [RespCurv_PrepData].
 #' @param NCores Integer. Number of cores to use for parallel processing.
 #'   Defaults to 20.
-#' @param EnvFile String. Path to the environment variables file. Defaults to
-#'   ".env".
-#' @param FromHPC Logical. Indicates whether the function is being run on an HPC
-#'   environment, affecting file path handling. Default: `TRUE`.
 #' @param ReturnData Logical. Indicates whether the output data be returned as
 #'   an R object.
 #' @export
-#' @name RespCurv_PlotSp
+#' @name RespCurv_PlotSpAll
 
-RespCurv_PlotSp <- function(
-    Path_Postprocessing = NULL, NCores = 20, EnvFile = ".env",
-    FromHPC = TRUE, ReturnData = FALSE) {
+RespCurv_PlotSpAll <- function(
+    Path_Postprocessing = NULL, NCores = 20, ReturnData = FALSE) {
 
   # # ..................................................................... ###
 
@@ -35,16 +29,13 @@ RespCurv_PlotSp <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  RC_Path_Prob <- NFV <- Species <- Coords <- Data <- PlotData <-
-    DT <- Variable <- VarDesc <- Trend2 <- PositiveTrendProb <-
-    VarDesc2 <- Pred <- XVals <- PlotData_Quant <- Quantile <-
-    Observed_PA <- Col <- Q975 <- Q25 <- Q50 <- X <- Y <- IAS_ID <- NULL
+  Coords <- RC_Path_Prob <- NFV <- Data <- DT <- Variable <- NULL
 
   # # ..................................................................... ###
 
   # Check arguments
 
-  IASDT.R::CatTime("Check arguments")
+  IASDT.R::CatTime("Check arguments", Level = 1)
 
   if (is.null(Path_Postprocessing)) {
     stop("`Path_Postprocessing` cannot be NULL", call. = FALSE)
@@ -57,26 +48,21 @@ RespCurv_PlotSp <- function(
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "character",
-    Args = c("Path_Postprocessing", "EnvFile"))
-
+    AllArgs = AllArgs, Type = "character", Args = "Path_Postprocessing")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "numeric", Args = "NCores")
   rm(AllArgs)
 
-  Path_RespCurv_Sp <- file.path(Path_Postprocessing, "RespCurv_Sp")
-  fs::dir_create(Path_RespCurv_Sp)
-
   # # ..................................................................... ###
 
-  # Load species names
-  IASDT.R::CatTime("Load species names")
-  SpeciesNames <- IASDT.R::GetSpeciesName(EnvFile = EnvFile, FromHPC = FromHPC)
+  Path_RespCurv_All <- file.path(Path_Postprocessing, "RespCurv_All")
+  fs::dir_create(c(Path_RespCurv_All))
 
   # # ..................................................................... ###
 
   # Loading / process species response curve data on parallel
 
-  IASDT.R::CatTime("Loading / process species response curve data on parallel")
+  IASDT.R::CatTime(
+    "Loading / process species response curve data on parallel", Level = 1)
 
   Sp_DT_All <- file.path(
     Path_Postprocessing, "RespCurv_DT", "ResCurvDT.RData") %>%
@@ -99,12 +85,15 @@ RespCurv_PlotSp <- function(
     dplyr::mutate(
       Data = furrr::future_map(
         .x = RC_Path_Prob,
-        .f = ~ dplyr::select(IASDT.R::LoadAs(.x), -PlotData),
+        .f = ~ {
+          IASDT.R::LoadAs(.x) %>%
+            dplyr::select(
+              Variable, NFV, Species, PlotData_Quant, Observed_PA)
+        },
         .options = furrr::furrr_options(seed = TRUE, chunk_size = 1))) %>%
     tidyr::unnest(Data) %>%
     dplyr::select(-RC_Path_Prob) %>%
-    tidyr::nest(
-      DT = tidyselect::everything(), .by = c(NFV, Coords, Species))
+    tidyr::nest(DT = -c(NFV, Coords))
 
   snow::stopCluster(c1)
   future::plan("future::sequential", gc = TRUE)
@@ -112,22 +101,19 @@ RespCurv_PlotSp <- function(
 
   # # ..................................................................... ###
 
-  # Plot species response curves
+  # Plot all species response curves
 
-  IASDT.R::CatTime("Plot species response curves")
+  IASDT.R::CatTime("Plot all species response curves", Level = 1)
 
-  PlotSpRC <- function(ID) {
+  PlotAllSpRC <- function(ID) {
 
     NFV <- Sp_DT_All$NFV[[ID]]
     Coords <- Sp_DT_All$Coords[[ID]]
-    Species <- Sp_DT_All$Species[[ID]]
-    DT <- Sp_DT_All$DT[[ID]]
 
-    FilePrefix <- paste0("RespCurv_", Species, "_NFV_", NFV, "_Coords_", Coords)
-    Path_JPEG <- file.path(Path_RespCurv_Sp, paste0(FilePrefix, ".jpeg"))
+    FilePrefix <- paste0("RespCurv_All_NFV_", NFV, "_Coords_", Coords)
+    Path_JPEG <- file.path(Path_RespCurv_All, paste0(FilePrefix, ".jpeg"))
 
-    DT <- DT %>%
-      dplyr::slice(gtools::mixedorder(Variable)) %>%
+    DT <- Sp_DT_All$DT[[ID]] %>%
       dplyr::mutate(
         VarDesc = dplyr::case_when(
           Variable == "bio2" ~ paste0(
@@ -180,19 +166,8 @@ RespCurv_PlotSp <- function(
             "</sub>(x + 0.1))</span>"),
           Variable == "HabLog" ~ paste0(
             "<span style='font-size: 8pt;'> (log<sub>10",
-            "</sub>(x + 0.1))</span>")))
-
-    Species2 <- dplyr::filter(SpeciesNames, IAS_ID == !!Species)
-    TitleTxt <- paste0(
-      '<span style="font-size:13pt;"><b> Response curves of </b></span>',
-      '<span style="color:blue; font-size:13pt;"><b><i>',
-      Species2$Species_name, "</i></b></span>",
-      '<span style="font-size:8pt;"> (<b>Class:</b> ', Species2$Class,
-      "  &#8212; <b>Order:</b> ", Species2$Order,
-      "  &#8212; <b>Family:</b> ", Species2$Family,
-      "  &#8212; <b>ID:</b></span>",
-      '<span style="font-size:8pt; color:blue;"> ',
-      Species, '</span><span style="font-size:8pt;">)</span>')
+            "</sub>(x + 0.1))</span>"))) %>%
+      dplyr::group_split(Variable)
 
     SubTitleTxt <- dplyr::if_else(
       NFV == 1,
@@ -209,7 +184,7 @@ RespCurv_PlotSp <- function(
         "without effect of spatial dependence"))
     Caption <- paste0(Caption, " --- ", SubTitleTxt)
 
-    if (nrow(DT) <= 9) {
+    if (length(DT) <= 9) {
       NR <- NC <- 3
       PlotWidth <- 24
       PlotHeight <- 22
@@ -220,98 +195,68 @@ RespCurv_PlotSp <- function(
       PlotHeight <- 22
     }
 
-    Plots <- DT %>%
-      dplyr::mutate(
-        Plots = purrr::pmap(
-          .l = list(PlotData_Quant, Observed_PA, PositiveTrendProb,
-                    VarDesc, VarDesc2),
-          .f = function(PlotData_Quant, Observed_PA, PositiveTrendProb,
-                        VarDesc, VarDesc2) {
+    Plots <- purrr::map(
+      .x = DT,
+      .f = ~ {
 
-            Trend <- tibble::tibble(
-              Trend2 = stringr::str_glue(
-                "\n     Pr[pred(Var=max)] > Pr[pred(Var=min)] = ",
-                "{round(PositiveTrendProb, 2)}"),
-              X = -Inf, Y = Inf)
+        # Observed_PA <- dplyr::bind_rows(.x$Observed_PA) %>%
+        #   dplyr::mutate(
+        #     Col = dplyr::if_else(Pred == 1, "red", "darkgreen"),
+        #     Pred = dplyr::case_when(
+        #       Pred == 1 ~ 0.97, Pred == 0 ~ 0.03, .default = Pred))
 
-            Quant <- PlotData_Quant %>%
-              tidyr::pivot_wider(
-                id_cols = c(XVals), names_from = Quantile,
-                values_from = Pred) %>%
-              stats::setNames(c("XVals", "Q25", "Q50", "Q975"))
-
-            ObsPA <- Observed_PA %>%
-              dplyr::mutate(
-                Col = dplyr::if_else(Pred == 1, "red", "darkgreen"),
-                Pred = dplyr::case_when(
-                  Pred == 1 ~ 0.97, Pred == 0 ~ 0.03, .default = Pred))
-
-            Plot <- ggplot2::ggplot(
-              data = ObsPA,
-              mapping = ggplot2::aes(x = XVals, y = Pred, colour = Col)) +
-              ggplot2::geom_jitter(
-                shape = 16, width = 0, height = 0.02,
-                alpha = 0.4, size = 1) +
-              ggplot2::geom_line(
-                ggplot2::aes(x = XVals, y = Q975), data = Quant,
-                linetype = 2, linewidth = 0.3, colour = "blue") +
-              ggplot2::geom_line(
-                ggplot2::aes(x = XVals, y = Q25), data = Quant,
-                linetype = 2, linewidth = 0.3, colour = "blue") +
-              ggplot2::geom_ribbon(
-                data = Quant, ggplot2::aes(x = XVals, ymin = Q25, ymax = Q975),
-                inherit.aes = FALSE, fill = "blue", alpha = 0.1) +
-              ggplot2::geom_line(
-                mapping = ggplot2::aes(x = XVals, y = Q50), data = Quant,
-                linetype = 1, linewidth = 0.6, colour = "blue") +
-              ggplot2::geom_text(
-                data = Trend, vjust = 1.4, hjust = -0.05,
-                mapping = ggplot2::aes(x = X, y = Y, label = Trend2),
-                colour = "grey30", size = 2.75) +
-              ggplot2::scale_y_continuous(
-                limits = c(-0.005, 1.075), oob = scales::squish,
-                expand = c(0, 0)) +
-              ggplot2::scale_x_continuous(expand = c(0.015, 0.015)) +
-              ggplot2::labs(
-                x = NULL, y = NULL, title = VarDesc, subtitle = VarDesc2) +
-              ggplot2::theme_bw() +
-              ggplot2::theme(
-                legend.position = "none",
-                axis.title = ggtext::element_markdown(
-                  size = 12, face = "bold"),
-                axis.text = ggplot2::element_text(size = 8),
-                plot.title = ggtext::element_markdown(
-                  size = 24, hjust = 0,
-                  margin = ggplot2::margin(-5, 0, -5, 0)),
-                plot.subtitle = ggtext::element_markdown(
-                  margin = ggplot2::margin(0, 0, 0, 0), hjust = 0),
-                plot.caption = ggtext::element_markdown(
-                  size = 12, color = "grey", hjust = 0),
-                panel.grid.major = ggplot2::element_line(linewidth = 0.25),
-                panel.grid.minor = ggplot2::element_line(linewidth = 0.1),
-                plot.margin = ggplot2::unit(c(0.1, 0.2, 0.1, 0.2), "lines"))
-
-            return(Plot)
-
-          })) %>%
-      dplyr::pull(Plots)
-
-    Plot <- patchwork::wrap_plots(Plots, nrow = NR, ncol = NC) +
+        .x %>%
+          dplyr::select(Species, PlotData_Quant) %>%
+          tidyr::unnest("PlotData_Quant") %>%
+          dplyr::filter(Quantile == 0.5) %>%
+          ggplot2::ggplot(
+            mapping = ggplot2::aes(x = XVals, y = Pred, group = Species)) +
+          ggplot2::geom_line(
+            linetype = 1, linewidth = 0.3, colour = "blue", alpha = 0.3) +
+          # ggplot2::geom_jitter(
+          #   data = Observed_PA, mapping = ggplot2::aes(colour = Col),
+          #   shape = 19, width = 0, height = 0.02,
+          #   alpha = 0.4, size = 1) +
+          ggplot2::scale_y_continuous(
+            limits = c(-0.01, 1.01), oob = scales::squish,
+            expand = c(0, 0)) +
+          ggplot2::scale_x_continuous(expand = c(0.015, 0.015)) +
+          ggplot2::labs(
+            x = NULL, y = NULL,
+            title = .x$VarDesc[[1]], subtitle = .x$VarDesc2[[1]]) +
+          ggplot2::theme_bw() +
+          ggplot2::theme(
+            legend.position = "none",
+            axis.title = ggtext::element_markdown(
+              size = 12, face = "bold"),
+            axis.text = ggplot2::element_text(size = 8),
+            plot.title = ggtext::element_markdown(
+              size = 24, hjust = 0,
+              margin = ggplot2::margin(-5, 0, -5, 0)),
+            plot.subtitle = ggtext::element_markdown(
+              margin = ggplot2::margin(0, 0, 0, 0), hjust = 0),
+            plot.caption = ggtext::element_markdown(
+              size = 12, color = "grey", hjust = 0),
+            panel.grid.major = ggplot2::element_line(linewidth = 0.25),
+            panel.grid.minor = ggplot2::element_line(linewidth = 0.1),
+            plot.margin = ggplot2::unit(c(0.1, 0.2, 0.1, 0.2), "lines"))
+      }) %>%
+      patchwork::wrap_plots(nrow = NR, ncol = NC) +
       patchwork::plot_annotation(
-        title = TitleTxt,
+        title = "Response curves for all species",
         caption = Caption,
         theme = ggplot2::theme(
           plot.margin = ggplot2::margin(0.1, 0, 0, 0, "cm"),
-          plot.title = ggtext::element_markdown(),
+          plot.title = ggtext::element_markdown(face = "bold"),
           plot.caption = ggtext::element_markdown(
             size = 12, color = "grey", hjust = 0))) +
       patchwork::plot_layout(axes = "collect")
 
-    Plot <- patchwork::wrap_elements(panel = Plot) +
+    Plots <- patchwork::wrap_elements(Plots) +
       ggplot2::labs(tag = "<b>Predicted habitat suitability</b>") +
       ggplot2::theme(
         plot.tag = ggtext::element_markdown(
-          size = ggplot2::rel(1), angle = 90),
+          size = ggplot2::rel(1.25), angle = 90),
         plot.tag.position = "left")
 
 
@@ -320,7 +265,7 @@ RespCurv_PlotSp <- function(
     grDevices::jpeg(
       filename = Path_JPEG, width = PlotWidth, height = PlotHeight,
       units = "cm", quality = 100, res = 600)
-    print(Plot)
+    print(Plots)
     grDevices::dev.off()
 
     OutDF <- tibble::tibble(
@@ -334,7 +279,7 @@ RespCurv_PlotSp <- function(
   if (NCores == 1) {
     future::plan("future::sequential", gc = TRUE)
   } else {
-    c1 <- snow::makeSOCKcluster(NCores)
+    c1 <- snow::makeSOCKcluster(min(NCores, nrow(Sp_DT_All)))
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
     future::plan("future::cluster", workers = c1, gc = TRUE)
     on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
@@ -342,14 +287,13 @@ RespCurv_PlotSp <- function(
 
   Plots <- future.apply::future_lapply(
     X = seq_len(nrow(Sp_DT_All)),
-    FUN = PlotSpRC, future.seed = TRUE,
+    FUN = PlotAllSpRC, future.seed = TRUE,
     future.chunk.size = 1,
     future.packages = c(
       "dplyr", "purrr", "tidyr", "gtools", "ggtext", "patchwork",
       "ggplot2", "tibble", "IASDT.R"),
     future.globals = c(
-      "Sp_DT_All", "Path_RespCurv_Sp", "SpeciesNames",
-      "Path_Postprocessing", "PlotSpRC")) %>%
+      "Sp_DT_All", "Path_RespCurv_All", "PlotAllSpRC")) %>%
     dplyr::bind_rows()
 
   if (NCores > 1) {
@@ -362,17 +306,18 @@ RespCurv_PlotSp <- function(
   # # ..................................................................... ###
 
   # Save data
-  IASDT.R::CatTime("Save data")
+  IASDT.R::CatTime("Save data", Level = 1)
 
   Sp_DT_All <- dplyr::select(Sp_DT_All, -DT) %>%
     dplyr::bind_cols(Plots = Plots)
 
-  save(Sp_DT_All, file = file.path(Path_RespCurv_Sp, "Sp_DT_All.RData"))
+  save(Sp_DT_All, file = file.path(Path_RespCurv_All, "Sp_DT_All.RData"))
 
   # # ..................................................................... ###
 
   IASDT.R::CatDiff(
-    InitTime = .StartTime, Prefix = "Plotting species response curves took ")
+    InitTime = .StartTime,
+    Prefix = "Plotting all species response curves took ", Level = 1)
 
   # # ..................................................................... ###
 

@@ -56,6 +56,7 @@ Convergence_Plot_All <- function(
     AllArgs = AllArgs, Type = "character", Args = "Path_Model")
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric", Args = c("maxOmega", "NCores"))
+  rm(AllArgs)
 
   # # ..................................................................... ###
 
@@ -76,12 +77,7 @@ Convergence_Plot_All <- function(
   Model_Info <- IASDT.R::LoadAs(Model_Info)
 
   # Extract number of chains
-  NChains <- dplyr::filter(Model_Info, Model_Finished) %>%
-    utils::head(1) %>%
-    dplyr::pull("Path_FittedMod") %>%
-    IASDT.R::LoadAs() %>%
-    magrittr::extract2("postList") %>%
-    length()
+  NChains <- length(Model_Info$Chain[[1]] )
 
   # # ..................................................................... ###
 
@@ -113,7 +109,12 @@ Convergence_Plot_All <- function(
 
     # prepare traceplot ----
 
-    if (CodaModelExist) {
+    if (isFALSE(CodaModelExist)) {
+
+      Path_Trace_Rho <- Path_Trace_Alpha <- Beta_Gelman <-
+        Beta_ESS <- Omega_Gelman <- Omega_ESS  <- NULL
+
+    } else {
 
       Obj_Rho <- paste0(M_Name_Fit, "_TraceRho")
       Path_Trace_Rho <- file.path(Path_ConvDT, paste0(Obj_Rho, ".RData"))
@@ -157,23 +158,8 @@ Convergence_Plot_All <- function(
           Post = Coda_Obj, Model = Model_Obj,
           Title = stringr::str_remove_all(
             basename(Path_Coda), "_Tree|_Coda.RData$"),
-          NRC = c(2, 3), FromHPC = FromHPC)
+          FromHPC = FromHPC)
 
-        # AddFooter = TRUE
-        # AddTitle = TRUE
-        # Cols = c("red", "blue", "darkgreen", "darkgrey")
-        # FromHPC = TRUE
-        #
-        # Warning messages:
-        #   1: Removed 24 rows containing missing values or values outside
-        # the scale range (`geom_smooth()`).
-        # 2: Removed 48 rows containing missing values or values outside
-        # the scale range (`geom_smooth()`).
-        # 3: Removed 124 rows containing missing values or values outside
-        # the scale range (`geom_smooth()`).
-        # 4: Removed 2 rows containing missing values or values outside
-        # the scale range (`geom_hline()`).
-        #
         IASDT.R::SaveAs(
           InObj = PlotObj_Alpha, OutObj = Obj_Alpha,
           OutPath = Path_Trace_Alpha)
@@ -211,9 +197,7 @@ Convergence_Plot_All <- function(
         Omega_ESS <- coda::effectiveSize(Omega)
 
         # OMEGA - gelman.diag
-        # nolint start
         sel <- sample(seq_len(dim(Omega[[1]])[2]), size = maxOmega)
-        # nolint end
 
         Omega_Gelman <- purrr::map(.x = Omega, .f = ~ .x[, sel]) %>%
           coda::gelman.diag(multivariate = FALSE) %>%
@@ -228,9 +212,6 @@ Convergence_Plot_All <- function(
         save(Beta_Omega, file = Path_Beta_Omega)
         rm(Beta_Omega)
       }
-    } else {
-      Path_Trace_Rho <- Path_Trace_Alpha <- Beta_Gelman <-
-        Beta_ESS <- Omega_Gelman <- Omega_ESS  <- NULL
     }
 
     invisible(gc())
@@ -329,14 +310,14 @@ Convergence_Plot_All <- function(
       top = grid::textGrob(
         label = "Convergence of the rho parameter",
         gp = grid::gpar(fontface = "bold", fontsize = 20)),
-      nrow = 2, ncol = 3)
+      nrow = 2, ncol = 2)
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   grDevices::pdf(
     file = file.path(
       Path_Convergence_All, "TracePlots_Rho_Phylogenetic.pdf"),
-    width = 18, height = 12)
-  print(Plot)
+    width = 18, height = 15)
+  invisible(print(Plot))
   grDevices::dev.off()
 
   # # ..................................................................... ###
@@ -373,14 +354,14 @@ Convergence_Plot_All <- function(
   # another scale for y, which will replace the existing scale.
   suppressMessages(suppressWarnings({
     Plot2 <- Plot +
-      ggplot2::ylab("Gelman and Rubin's convergence diagnostic - (cropped)") +
+      ggplot2::ylab("Gelman and Rubin's convergence diagnostic (cropped)") +
       ggplot2::ylim(c(0.995, 1.05))
 
     # Using ggplot2::ggsave directly does not show non-ascii characters
     # correctly
     grDevices::pdf(file = Plot_Path, width = 18, height = 12)
-    print(gridExtra::marrangeGrob(
-      grobs = list(Plot, Plot2), nrow = 1, ncol = 1, top = NULL))
+    print(Plot)
+    print(Plot2)
     grDevices::dev.off()
 
   }))
@@ -410,7 +391,7 @@ Convergence_Plot_All <- function(
     ggplot2::facet_grid(Tree ~ M_samples, labeller = Label) +
     ggplot2::labs(title = Plot_Title) +
     ggplot2::xlab(NULL) +
-    ggplot2::ylab(paste0("Effective sample size - ", NChains, " chains")) +
+    ggplot2::ylab(paste0("Effective sample size (", NChains, " chains)")) +
     ggplot2::coord_flip(expand = FALSE) +
     Theme
 
@@ -437,8 +418,8 @@ Convergence_Plot_All <- function(
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
   grDevices::pdf(file = Plot_Path, width = 18, height = 12)
-  print(gridExtra::marrangeGrob(
-    grobs = list(Plot, Plot2), nrow = 1, ncol = 1, top = NULL))
+  print(Plot)
+  print(Plot2)
   grDevices::dev.off()
 
   # # ..................................................................... ###
@@ -473,14 +454,14 @@ Convergence_Plot_All <- function(
 
   suppressMessages(suppressWarnings({
     Plot2 <- Plot +
-      ggplot2::ylab("Gelman and Rubin's convergence diagnostic - (cropped)") +
+      ggplot2::ylab("Gelman and Rubin's convergence diagnostic (cropped)") +
       ggplot2::ylim(c(0.995, 1.05))
 
     # Using ggplot2::ggsave directly does not show non-ascii characters
     # correctly
     grDevices::pdf(file = Plot_Path, width = 18, height = 12)
-    print(gridExtra::marrangeGrob(
-      grobs = list(Plot, Plot2), nrow = 1, ncol = 1, top = NULL))
+    print(Plot)
+    print(Plot2)
     grDevices::dev.off()
 
   }))
@@ -509,7 +490,7 @@ Convergence_Plot_All <- function(
     ggplot2::facet_grid(Tree ~ M_samples, labeller = Label) +
     ggplot2::labs(title = Plot_Title) +
     ggplot2::xlab(NULL) +
-    ggplot2::ylab(paste0("Effective sample size - ", NChains, " chains")) +
+    ggplot2::ylab(paste0("Effective sample size (", NChains, " chains)")) +
     ggplot2::coord_flip(expand = FALSE) +
     Theme
 
@@ -538,8 +519,8 @@ Convergence_Plot_All <- function(
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
   grDevices::pdf(file = Plot_Path, width = 18, height = 12)
-  print(gridExtra::marrangeGrob(
-    grobs = list(Plot, Plot2), nrow = 1, ncol = 1, top = NULL))
+  print(Plot)
+  print(Plot2)
   grDevices::dev.off()
 
   IASDT.R::CatDiff(InitTime = .StartTime)

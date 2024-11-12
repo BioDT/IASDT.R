@@ -84,6 +84,21 @@ PlotRho <- function(Post, Model, Title, Cols = NULL) {
   ESS_CI <- data.frame(
     x = -Inf, y = -Inf, label = paste0(ESS, "<br>", CI2))
 
+  #  Plotting colours
+  if (is.null(Cols) || length(Cols) != NChains) {
+    if (length(Cols) != NChains) {
+      warning(
+        paste0(
+          "The length of provided colours != the number of chains. ",
+          "Colours will be overwritten"),
+        call. = FALSE)
+    }
+
+    Cols <- c(
+      "black", "grey60",
+      RColorBrewer::brewer.pal(n = NChains - 2, name = "Set1"))
+  }
+
   Plot <- ggplot2::ggplot(
     data = RhoDF,
     mapping = ggplot2::aes(x = ID, y = Value, color = factor(Chain))) +

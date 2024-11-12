@@ -79,9 +79,11 @@ PlotAlpha <- function(
   #  Plotting colours
   if (is.null(Cols) || length(Cols) != NChains) {
     if (length(Cols) != NChains) {
-      IASDT.R::CatTime(
-        "The length of provided colours does not equal to the number of chains",
-        Level = 1)
+      warning(
+        paste0(
+          "The length of provided colours != the number of chains. ",
+          "Colours will be overwritten"),
+        call. = FALSE)
     }
 
     Cols <- c(
@@ -161,12 +163,18 @@ PlotAlpha <- function(
 
       PlotDT <- dplyr::filter(AlphaDF, Factor2 == .x)
 
+      # Pre-calculate smoothed lines
+      summary_data <- PlotDT %>%
+        group_by(Chain) %>%
+        mutate(Smoothed = pmax(predict(loess(Value ~ Iter)), 0))
+
       Plot <- ggplot2::ggplot(
         data = PlotDT,
-        mapping = ggplot2::aes(x = Iter, y = Value, color = Chain)) +
+        mapping = ggplot2::aes(x = Iter, y = Value, color = Chain, group = Chain)) +
         ggplot2::geom_line(linewidth = 0.125, alpha = 0.6) +
-        ggplot2::geom_smooth(
-          method = "loess", formula = y ~ x, se = FALSE, linewidth = 0.8) +
+        ggplot2::geom_line(
+          data = summary_data, linewidth = 0.8, alpha = 0.6,
+          mapping = aes(x = Iter, y = Smoothed, color = Chain)) +
         ggplot2::geom_point(alpha = 0) +
         ggplot2::geom_hline(
           yintercept = CI[.x, ], linetype = "dashed", color = "black",
@@ -174,7 +182,8 @@ PlotAlpha <- function(
         ggplot2::scale_color_manual(values = Cols) +
         ggplot2::scale_x_continuous(expand = c(0, 0)) +
         ggplot2::scale_y_continuous(
-          limits = c(0, max(AlphaDF$Value) * 1.05), expand = c(0, 0)) +
+          limits = c(0, max(AlphaDF$Value) * 1.05),
+          expand = c(0, 0), oob = scales::squish) +
         ggplot2::theme_bw() +
         ggplot2::xlab(NULL) +
         ggplot2::ylab("Distance (km)") +
@@ -196,8 +205,7 @@ PlotAlpha <- function(
 
       Plot <- ggExtra::ggMarginal(
         p = Plot, type = "density", margins = "y", size = 6,
-        color = "steelblue4"
-      )
+        color = "steelblue4")
 
       # Making marginal background matching the plot background
       # https://stackoverflow.com/a/78196022/3652584

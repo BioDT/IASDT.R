@@ -15,7 +15,7 @@ VarPar_Compute(
   TF_Environ = NULL,
   TF_use_single = TRUE,
   Verbose = TRUE,
-  OutFileName = "VarPar_DT"
+  OutFileName = "VarPar"
 )
 }
 \arguments{

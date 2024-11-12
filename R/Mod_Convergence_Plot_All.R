@@ -18,13 +18,15 @@
 #' @param FromHPC Logical. Indicates whether the function is being run on an HPC
 #'   environment, affecting file path handling. Default: `TRUE`.
 #' @name Convergence_Plot_All
+#' @inheritParams PlotAlpha
 #' @author Ahmed El-Gabbas
 #' @return The function does not return anything but saves a series of
 #'   diagnostic plots in the specified path.
 #' @export
 
 Convergence_Plot_All <- function(
-    Path_Model = NULL, maxOmega = 1000, NCores = NULL, FromHPC = TRUE) {
+    Path_Model = NULL, maxOmega = 1000, NCores = NULL,
+    FromHPC = TRUE, MarginType = "histogram") {
 
   # # ..................................................................... ###
 
@@ -57,6 +59,16 @@ Convergence_Plot_All <- function(
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric", Args = c("maxOmega", "NCores"))
   rm(AllArgs)
+
+
+  if (length(MarginType) != 1) {
+    stop("MarginType must be a single value.", call. = FALSE)
+  }
+
+  if (!MarginType %in% c("histogram", "density")) {
+    stop(
+      "MarginType must be either 'histogram' or 'density'.", call. = FALSE)
+  }
 
   # # ..................................................................... ###
 
@@ -140,7 +152,8 @@ Convergence_Plot_All <- function(
             string = basename(Path_Coda), pattern = "_Tree|_Coda.RData$")
 
           PlotObj_Rho <- IASDT.R::PlotRho(
-            Post = Coda_Obj, Model = Model_Obj, Title = RhoTitle)
+            Post = Coda_Obj, Model = Model_Obj, Title = RhoTitle,
+            MarginType = MarginType)
 
           IASDT.R::SaveAs(
             InObj = PlotObj_Rho, OutObj = Obj_Rho, OutPath = Path_Trace_Rho)
@@ -158,7 +171,7 @@ Convergence_Plot_All <- function(
           Post = Coda_Obj, Model = Model_Obj,
           Title = stringr::str_remove_all(
             basename(Path_Coda), "_Tree|_Coda.RData$"),
-          FromHPC = FromHPC)
+          FromHPC = FromHPC, MarginType = MarginType)
 
         IASDT.R::SaveAs(
           InObj = PlotObj_Alpha, OutObj = Obj_Alpha,

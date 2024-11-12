@@ -8,7 +8,8 @@ Convergence_Plot_All(
   Path_Model = NULL,
   maxOmega = 1000,
   NCores = NULL,
-  FromHPC = TRUE
+  FromHPC = TRUE,
+  MarginType = "histogram"
 )
 }
 \arguments{
@@ -23,6 +24,9 @@ convergence diagnostics.}
 
 \item{FromHPC}{Logical. Indicates whether the function is being run on an HPC
 environment, affecting file path handling. Default: \code{TRUE}.}
+
+\item{MarginType}{A string specifying the type of marginal plot to add to the
+main plot. Must be either "histogram" or "density". Default: "histogram".}
 }
 \value{
 The function does not return anything but saves a series of

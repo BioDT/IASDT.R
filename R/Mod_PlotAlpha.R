@@ -42,6 +42,14 @@ PlotAlpha <- function(
     stop("Post and Model cannot be empty", call. = FALSE)
   }
 
+  if (length(MarginType) != 1) {
+    stop("MarginType must be either 'histogram' or 'density'.")
+  }
+
+  if (!MarginType %in% c("histogram", "density")) {
+    stop("MarginType must be either 'histogram' or 'density'.")
+  }
+
   # # ..................................................................... ###
 
   # Avoid "no visible binding for global variable" message
@@ -205,14 +213,6 @@ PlotAlpha <- function(
           legend.position = "none",
           axis.text = ggplot2::element_text(size = 12))
 
-
-      if (length(MarginType) != 1) {
-        stop("MarginType must be either 'histogram' or 'density'.")
-      }
-
-      if (!MarginType %in% c("histogram", "density")) {
-        stop("MarginType must be either 'histogram' or 'density'.")
-      }
 
       if(MarginType == "histogram") {
         Plot <- ggExtra::ggMarginal(

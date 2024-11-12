@@ -16,17 +16,27 @@
 #' @param Cols Character vector for chain colours (optional). Default: `NULL`.
 #' @name PlotRho
 #' @author Ahmed El-Gabbas
+#' @inheritParams PlotAlpha
 #' @return A ggplot object representing the traceplot of the rho parameter,
 #'   including annotations for the Gelman-Rubin diagnostic, effective sample
 #'   size, and credible intervals.
 #' @export
 
-PlotRho <- function(Post, Model, Title, Cols = NULL) {
+PlotRho <- function(Post, Model, Title, Cols = NULL, MarginType = "histogram") {
 
   # # ..................................................................... ###
 
   if (is.null(Post) || is.null(Model) || is.null(Title)) {
     stop("Post, Model, and Title cannot be empty", call. = FALSE)
+  }
+
+  if (length(MarginType) != 1) {
+    stop("MarginType must be a single value.", call. = FALSE)
+  }
+
+  if (!MarginType %in% c("histogram", "density")) {
+    stop(
+      "MarginType must be either 'histogram' or 'density'.", call. = FALSE)
   }
 
   # # ..................................................................... ###
@@ -85,15 +95,14 @@ PlotRho <- function(Post, Model, Title, Cols = NULL) {
     x = -Inf, y = -Inf, label = paste0(ESS, "<br>", CI2))
 
   #  Plotting colours
-  if (is.null(Cols) || length(Cols) != NChains) {
-    if (length(Cols) != NChains) {
-      warning(
-        paste0(
-          "The length of provided colours != the number of chains. ",
-          "Colours will be overwritten"),
-        call. = FALSE)
-    }
-
+  if (is.null(Cols)) {
+    Cols <- c(
+      "black", "grey60",
+      RColorBrewer::brewer.pal(n = NChains - 2, name = "Set1"))
+  }
+  if (length(Cols) != NChains) {
+    warning(
+      "The length of provided colours != number of chains", .call. = FALSE)
     Cols <- c(
       "black", "grey60",
       RColorBrewer::brewer.pal(n = NChains - 2, name = "Set1"))
@@ -129,8 +138,15 @@ PlotRho <- function(Post, Model, Title, Cols = NULL) {
     ggplot2::theme(
       legend.position = "none", axis.text = ggplot2::element_text(size = 14))
 
-  Plot1 <- ggExtra::ggMarginal(
-    p = Plot, type = "density", margins = "y", size = 6, color = "steelblue4")
+  if(MarginType == "histogram") {
+    Plot1 <- ggExtra::ggMarginal(
+      p = Plot, type = MarginType, margins = "y", size = 6,
+      color = "steelblue4", bins = 100)
+  } else {
+    Plot1 <- ggExtra::ggMarginal(
+      p = Plot, type = MarginType, margins = "y", size = 6,
+      color = "steelblue4")
+  }
 
   # Making marginal background matching the plot background
   # https://stackoverflow.com/a/78196022/3652584

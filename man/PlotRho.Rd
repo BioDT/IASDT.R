@@ -4,7 +4,7 @@
 \alias{PlotRho}
 \title{Plot convergence traceplots for the rho parameter}
 \usage{
-PlotRho(Post, Model, Title, Cols = NULL)
+PlotRho(Post, Model, Title, Cols = NULL, MarginType = "histogram")
 }
 \arguments{
 \item{Post}{A \code{coda} object containing MCMC samples of the rho parameter or a
@@ -16,6 +16,9 @@ path to such an object.}
 \item{Title}{A character string specifying the title of the plot.}
 
 \item{Cols}{Character vector for chain colours (optional). Default: \code{NULL}.}
+
+\item{MarginType}{A string specifying the type of marginal plot to add to the
+main plot. Must be either "histogram" or "density". Default: "histogram".}
 }
 \value{
 A ggplot object representing the traceplot of the rho parameter,

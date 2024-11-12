@@ -22,6 +22,8 @@
 #' @param Cols Character vector for chain colours (optional). Default: `NULL`.
 #' @param FromHPC Logical. Indicates whether the function is being run on an HPC
 #'   environment, affecting file path handling. Default: `TRUE`.
+#' @param MarginType A string specifying the type of marginal plot to add to the
+#'   main plot. Must be either "histogram" or "density". Default: "histogram".
 #' @name PlotAlpha
 #' @author Ahmed El-Gabbas
 #' @return A grid of `ggplot2` objects representing the traceplots for the alpha
@@ -32,7 +34,7 @@
 
 PlotAlpha <- function(
     Post = NULL, Model = NULL, Title = NULL, NRC = NULL, AddFooter = TRUE,
-    AddTitle = TRUE, Cols = NULL, FromHPC = TRUE) {
+    AddTitle = TRUE, Cols = NULL, FromHPC = TRUE, MarginType = "histogram") {
 
   # # ..................................................................... ###
 
@@ -77,15 +79,14 @@ PlotAlpha <- function(
   NChains <- length(Model$postList)
 
   #  Plotting colours
-  if (is.null(Cols) || length(Cols) != NChains) {
-    if (length(Cols) != NChains) {
-      warning(
-        paste0(
-          "The length of provided colours != the number of chains. ",
-          "Colours will be overwritten"),
-        call. = FALSE)
-    }
-
+  if (is.null(Cols)) {
+    Cols <- c(
+      "black", "grey60",
+      RColorBrewer::brewer.pal(n = NChains - 2, name = "Set1"))
+  }
+  if (length(Cols) != NChains) {
+    warning(
+      "The length of provided colours != number of chains", .call. = FALSE)
     Cols <- c(
       "black", "grey60",
       RColorBrewer::brewer.pal(n = NChains - 2, name = "Set1"))
@@ -170,11 +171,12 @@ PlotAlpha <- function(
 
       Plot <- ggplot2::ggplot(
         data = PlotDT,
-        mapping = ggplot2::aes(x = Iter, y = Value, color = Chain, group = Chain)) +
+        mapping = ggplot2::aes(
+          x = Iter, y = Value, color = Chain, group = Chain)) +
         ggplot2::geom_line(linewidth = 0.125, alpha = 0.6) +
         ggplot2::geom_line(
           data = summary_data, linewidth = 0.8, alpha = 0.6,
-          mapping = aes(x = Iter, y = Smoothed, color = Chain)) +
+          mapping = ggplot2::aes(x = Iter, y = Smoothed, color = Chain)) +
         ggplot2::geom_point(alpha = 0) +
         ggplot2::geom_hline(
           yintercept = CI[.x, ], linetype = "dashed", color = "black",
@@ -203,9 +205,24 @@ PlotAlpha <- function(
           legend.position = "none",
           axis.text = ggplot2::element_text(size = 12))
 
-      Plot <- ggExtra::ggMarginal(
-        p = Plot, type = "density", margins = "y", size = 6,
-        color = "steelblue4")
+
+      if (length(MarginType) != 1) {
+        stop("MarginType must be either 'histogram' or 'density'.")
+      }
+
+      if (!MarginType %in% c("histogram", "density")) {
+        stop("MarginType must be either 'histogram' or 'density'.")
+      }
+
+      if(MarginType == "histogram") {
+        Plot <- ggExtra::ggMarginal(
+          p = Plot, type = MarginType, margins = "y", size = 6,
+          color = "steelblue4", bins = 100)
+      } else {
+        Plot <- ggExtra::ggMarginal(
+          p = Plot, type = MarginType, margins = "y", size = 6,
+          color = "steelblue4")
+      }
 
       # Making marginal background matching the plot background
       # https://stackoverflow.com/a/78196022/3652584

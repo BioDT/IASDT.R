@@ -16,7 +16,8 @@ Convergence_Plot(
   Beta_NRC = c(3, 3),
   SavePlotData = TRUE,
   PagePerFile = 20,
-  Cols = NULL
+  Cols = NULL,
+  MarginType = "histogram"
 )
 }
 \arguments{
@@ -50,6 +51,9 @@ files. Default: TRUE.}
 for the \code{Omega} parameter. Default: 20.}
 
 \item{Cols}{Character vector for chain colours (optional). Default: \code{NULL}.}
+
+\item{MarginType}{A string specifying the type of marginal plot to add to the
+main plot. Must be either "histogram" or "density". Default: "histogram".}
 }
 \value{
 The function does not return a value but generates and saves plots to

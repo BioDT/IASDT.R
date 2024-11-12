@@ -152,7 +152,7 @@ VarPar_Plot <- function(
 
   if (!file.exists(File_VarPar)) {
 
-    IASDT.R::CatTime("Calculating", Level = 2)
+    IASDT.R::CatTime("Computing variance partitioning", Level = 1)
 
     # names of variables used in the model
     groupnames <- names(Model$XData)
@@ -439,6 +439,9 @@ VarPar_Plot <- function(
 
   # Save plot to disk -----
 
-  IASDT.R::CatDiff(InitTime = .StartTime)
+  IASDT.R::CatDiff(
+    InitTime = .StartTime,
+    Prefix = "Computing and ploting variance paritioning took ")
+
   return(invisible(NULL))
 }

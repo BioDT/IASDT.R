@@ -228,13 +228,17 @@ Convergence_Plot_All <- function(
 
   # Processing convergence data -----
 
+
+  IASDT.R::CatTime("Processing convergence data", Level = 1)
+
   Convergence_DT <- Model_Info %>%
     dplyr::mutate(
       Plots = future.apply::future_lapply(
         X = seq_len(nrow(Model_Info)), FUN = PrepConvergence,
         future.scheduling = Inf, future.seed = TRUE,
         future.packages = c(
-          "dplyr", "sf", "Hmsc", "coda", "magrittr", "magrittr", "IASDT.R"),
+          "dplyr", "sf", "Hmsc", "coda", "magrittr", "ggplot2",
+          "magrittr", "IASDT.R"),
         future.globals = c(
           "Model_Info", "Path_ConvDT", "maxOmega", "PrepConvergence"))) %>%
     dplyr::select(tidyselect::all_of(c("M_Name_Fit", "Plots"))) %>%
@@ -259,7 +263,7 @@ Convergence_Plot_All <- function(
 
   Theme <-  ggplot2::theme(
     strip.text = ggplot2::element_text(size = 16, face = "bold"),
-    axis.title = ggplot2::element_text(
+    axis.title = ggtext::element_markdown(
       size = 20, colour = "darkgrey", face = "bold"),
     axis.text = ggplot2::element_text(size = 16),
     title = ggplot2::element_text(size = 20, face = "bold", color = "blue"),
@@ -346,7 +350,8 @@ Convergence_Plot_All <- function(
     ggplot2::facet_grid(Tree ~ M_samples, labeller = Label) +
     ggplot2::labs(title = Plot_Title) +
     ggplot2::xlab(NULL) +
-    ggplot2::ylab("Gelman and Rubin's convergence diagnostic (log10)") +
+    ggplot2::ylab(
+      "Gelman and Rubin's convergence diagnostic (log<sub>10</sub>)") +
     ggplot2::coord_flip(expand = FALSE) +
     Theme
 
@@ -354,7 +359,10 @@ Convergence_Plot_All <- function(
   # another scale for y, which will replace the existing scale.
   suppressMessages(suppressWarnings({
     Plot2 <- Plot +
-      ggplot2::ylab("Gelman and Rubin's convergence diagnostic (cropped)") +
+      ggplot2::ylab(
+        paste0(
+          "Gelman and Rubin's convergence diagnostic ",
+          "<sub>(only values between 0.995 and 1.05)</sub>")) +
       ggplot2::ylim(c(0.995, 1.05))
 
     # Using ggplot2::ggsave directly does not show non-ascii characters
@@ -448,13 +456,17 @@ Convergence_Plot_All <- function(
     ggplot2::facet_grid(Tree ~ M_samples, labeller = Label) +
     ggplot2::labs(title = Plot_Title) +
     ggplot2::xlab(NULL) +
-    ggplot2::ylab("Gelman and Rubin's convergence diagnostic (log10)") +
+    ggplot2::ylab(
+      "Gelman and Rubin's convergence diagnostic (log<sub>10</sub>)") +
     ggplot2::coord_flip(expand = FALSE) +
     Theme
 
   suppressMessages(suppressWarnings({
     Plot2 <- Plot +
-      ggplot2::ylab("Gelman and Rubin's convergence diagnostic (cropped)") +
+      ggplot2::ylab(
+        paste0(
+          "Gelman and Rubin's convergence diagnostic ",
+          "<sub>(only values between 0.995 and 1.05)</sub>")) +
       ggplot2::ylim(c(0.995, 1.05))
 
     # Using ggplot2::ggsave directly does not show non-ascii characters

@@ -28,6 +28,7 @@
 #'   for the `Omega` parameter. Default: 20.
 #' @param Cols Character vector for chain colours (optional). Default: `NULL`.
 #' @name Convergence_Plot
+#' @inheritParams PlotAlpha
 #' @author Ahmed El-Gabbas
 #' @return The function does not return a value but generates and saves plots to
 #'   disk.
@@ -37,7 +38,7 @@ Convergence_Plot <- function(
     Path_Coda = NULL, Path_Model = NULL, EnvFile = ".env",
     FromHPC = TRUE, Title = " ", NOmega = 1000, NCores = NULL,
     NRC = c(2, 2), Beta_NRC = c(3, 3), SavePlotData = TRUE, PagePerFile = 20,
-    Cols = NULL) {
+    Cols = NULL, MarginType = "histogram") {
 
   # # ..................................................................... ###
 
@@ -46,6 +47,15 @@ Convergence_Plot <- function(
   if (is.null(Path_Coda) || is.null(Path_Model) || is.null(NCores)) {
     stop(
       "Path_Coda, Path_Model, and NCores cannot be empty", call. = FALSE)
+  }
+
+  if (length(MarginType) != 1) {
+    stop("MarginType must be a single value.", call. = FALSE)
+  }
+
+  if (!MarginType %in% c("histogram", "density")) {
+    stop(
+      "MarginType must be either 'histogram' or 'density'.", call. = FALSE)
   }
 
   # # ..................................................................... ###
@@ -124,8 +134,8 @@ Convergence_Plot <- function(
       RColorBrewer::brewer.pal(n = NChains - 2, name = "Set1"))
   }
   if (length(Cols) != NChains) {
-    IASDT.R::CatTime(
-      "The length of provided colours != number of chains", Level = 1)
+    warning(
+      "The length of provided colours != number of chains", .call. = FALSE)
     Cols <- c(
       "black", "grey60",
       RColorBrewer::brewer.pal(n = NChains - 2, name = "Set1"))
@@ -316,10 +326,15 @@ Convergence_Plot <- function(
             axis.text = ggplot2::element_text(size = 12),
             legend.position = "none")
 
-        Plot <- ggExtra::ggMarginal(
-          p = Plot, type = "density", margins = "y", size = 5,
-          color = "steelblue4")
-
+        if(MarginType == "histogram") {
+          Plot <- ggExtra::ggMarginal(
+            p = Plot, type = MarginType, margins = "y", size = 6,
+            color = "steelblue4", bins = 100)
+        } else {
+          Plot <- ggExtra::ggMarginal(
+            p = Plot, type = MarginType, margins = "y", size = 6,
+            color = "steelblue4")
+        }
         # Making marginal background matching the plot background
         # https://stackoverflow.com/a/78196022/3652584
         Plot$layout$t[1] <- 1
@@ -589,17 +604,29 @@ Convergence_Plot <- function(
               limits = c(DT_all$Var_Min, DT_all$Var_Max))
         })
 
-        Plot_Marginal <- ggExtra::ggMarginal(
-          p = Plot, type = "density", margins = "y", size = 5,
-          color = "steelblue4")
+        if(MarginType == "histogram") {
+          Plot_Marginal <- ggExtra::ggMarginal(
+            p = Plot, type = MarginType, margins = "y", size = 6,
+            color = "steelblue4", bins = 100)
+        } else {
+          Plot_Marginal <- ggExtra::ggMarginal(
+            p = Plot, type = MarginType, margins = "y", size = 6,
+            color = "steelblue4")
+        }
         # Making marginal background matching the plot background
         # https://stackoverflow.com/a/78196022/3652584
         Plot_Marginal$layout$t[1] <- 1
         Plot_Marginal$layout$r[1] <- max(Plot_Marginal$layout$r)
 
-        Plot2_Marginal <- ggExtra::ggMarginal(
-          p = Plot2, type = "density", margins = "y", size = 5,
-          color = "steelblue4")
+        if(MarginType == "histogram") {
+          Plot2_Marginal <- ggExtra::ggMarginal(
+            p = Plot2, type = MarginType, margins = "y", size = 6,
+            color = "steelblue4", bins = 100)
+        } else {
+          Plot2_Marginal <- ggExtra::ggMarginal(
+            p = Plot2, type = MarginType, margins = "y", size = 6,
+            color = "steelblue4")
+        }
         # Making marginal background matching the plot background
         # https://stackoverflow.com/a/78196022/3652584
         Plot2_Marginal$layout$t[1] <- 1
@@ -840,9 +867,16 @@ Convergence_Plot <- function(
                   plot.title = ggplot2::element_text(
                     hjust = 0.5, size = 22, face = "bold", colour = "red",
                     margin = ggplot2::margin(0, 0, -2.5, 0)))
-              Plot <- ggExtra::ggMarginal(
-                p = Plot, type = "density", margins = "y", size = 6,
-                color = "steelblue4")
+
+              if(MarginType == "histogram") {
+                Plot <- ggExtra::ggMarginal(
+                  p = Plot, type = MarginType, margins = "y", size = 6,
+                  color = "steelblue4", bins = 100)
+              } else {
+                Plot <- ggExtra::ggMarginal(
+                  p = Plot, type = MarginType, margins = "y", size = 6,
+                  color = "steelblue4")
+              }
               Plot$layout$t[1] <- 1
               Plot$layout$r[1] <- max(Plot$layout$r)
               return(Plot)

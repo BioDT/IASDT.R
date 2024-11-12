@@ -12,7 +12,8 @@ PlotAlpha(
   AddFooter = TRUE,
   AddTitle = TRUE,
   Cols = NULL,
-  FromHPC = TRUE
+  FromHPC = TRUE,
+  MarginType = "histogram"
 )
 }
 \arguments{
@@ -38,6 +39,9 @@ numbers to each plot page. Defaults to \code{TRUE}.}
 
 \item{FromHPC}{Logical. Indicates whether the function is being run on an HPC
 environment, affecting file path handling. Default: \code{TRUE}.}
+
+\item{MarginType}{A string specifying the type of marginal plot to add to the
+main plot. Must be either "histogram" or "density". Default: "histogram".}
 }
 \value{
 A grid of \code{ggplot2} objects representing the traceplots for the alpha

@@ -13,11 +13,14 @@
 #'   Defaults to 20.
 #' @param ReturnData Logical. Indicates whether the output data be returned as
 #'   an R object.
+#' @param PlotAlpha Numeric. The alpha value (transparency) for the response
+#'   curve lines. Defaults to 0.3.
 #' @export
 #' @name RespCurv_PlotSpAll
 
 RespCurv_PlotSpAll <- function(
-    Path_Postprocessing = NULL, NCores = 20, ReturnData = FALSE) {
+    Path_Postprocessing = NULL, NCores = 20,
+    ReturnData = FALSE, PlotAlpha = 0.3) {
 
   # # ..................................................................... ###
 
@@ -49,8 +52,13 @@ RespCurv_PlotSpAll <- function(
 
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "character", Args = "Path_Postprocessing")
-  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "numeric", Args = "NCores")
+  IASDT.R::CheckArgs(
+    AllArgs = AllArgs, Type = "numeric", Args = c("NCores", "PlotAlpha"))
   rm(AllArgs)
+
+  if (PlotAlpha < 0 || PlotAlpha > 1) {
+    stop("`PlotAlpha` must be between 0 and 1", call. = FALSE)
+  }
 
   # # ..................................................................... ###
 
@@ -212,7 +220,7 @@ RespCurv_PlotSpAll <- function(
           ggplot2::ggplot(
             mapping = ggplot2::aes(x = XVals, y = Pred, group = Species)) +
           ggplot2::geom_line(
-            linetype = 1, linewidth = 0.3, colour = "blue", alpha = 0.3) +
+            linetype = 1, linewidth = 0.3, colour = "blue", alpha = PlotAlpha) +
           # ggplot2::geom_jitter(
           #   data = Observed_PA, mapping = ggplot2::aes(colour = Col),
           #   shape = 19, width = 0, height = 0.02,

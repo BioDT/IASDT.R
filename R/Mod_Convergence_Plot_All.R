@@ -43,7 +43,7 @@ Convergence_Plot_All <- function(
   GPP_Thin <- M_Name_Fit <- Tree <- rL <-
     M_thin <- M_samples <- Omega_Gelman <- Omega_ESS <- Beta_Gelman <-
     Beta_ESS <- ESS2 <- Path_Trace_Rho <- Rho <- Path_Trace_Alpha <-
-    Path_Trace_Rho <- Model_Finished <- NULL
+    Path_Trace_Rho <- NULL
 
   # # ..................................................................... ###
 
@@ -89,7 +89,7 @@ Convergence_Plot_All <- function(
   Model_Info <- IASDT.R::LoadAs(Model_Info)
 
   # Extract number of chains
-  NChains <- length(Model_Info$Chain[[1]] )
+  NChains <- length(Model_Info$Chain[[1]])
 
   # # ..................................................................... ###
 

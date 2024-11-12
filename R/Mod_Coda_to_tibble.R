@@ -185,7 +185,7 @@ Coda_to_tibble <- function(
               dplyr::mutate(
                 Variable = purrr::map_chr(
                   .x = Variable,
-                  .f = function(V){
+                  .f = function(V) {
                     V %>%
                       stringr::str_replace_all("_1$", "_L") %>%
                       stringr::str_replace_all("_2$", "_Q")

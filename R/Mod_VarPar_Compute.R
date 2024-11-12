@@ -46,7 +46,7 @@ VarPar_Compute <- function(
 
   .StartTime <- lubridate::now(tzone = "CET")
 
-  VarPar_DT <- VarPar_Parallel <- VarPar_Sequential <- NULL
+  VarPar_Parallel <- VarPar_Sequential <- NULL
 
   # # .................................................................... ###
 
@@ -139,7 +139,8 @@ VarPar_Compute <- function(
   names_to_remove <- c(
     "postList", "Y", "XScaled", "rL", "ranLevels", "XData", "dfPi",
     "studyDesign", "C", "Pi", "phyloTree", "XFormula", "XScalePar",
-    "aSigma", "bSigma", "TrScaled", "YScalePar", "call", "rhopw", "distr", "V0", "UGamma", "YScaled")
+    "aSigma", "bSigma", "TrScaled", "YScalePar", "call", "rhopw",
+    "distr", "V0", "UGamma", "YScaled")
   hM[names_to_remove] <- NULL
 
   invisible(gc())

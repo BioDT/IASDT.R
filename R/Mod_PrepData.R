@@ -9,8 +9,8 @@
 #' environment variables from a file, verifies paths, loads and filters species
 #' data based on habitat type and minimum presence grid cells per species, and
 #' merges various environmental layers (e.g., CHELSA Bioclimatic variables,
-#' habitat coverage, road and railway intensity, sampling efforts) into a
-#' single dataset. The processed data can be saved to disk as `*.RData` file .
+#' habitat coverage, road and railway intensity, sampling efforts) into a single
+#' dataset. The processed data can be saved to disk as `*.RData` file .
 #' @param Hab_Abb Character. Habitat abbreviation indicating the specific
 #'   [SynHab](https://www.preslia.cz/article/pdf?id=11548) habitat type to
 #'   prepare data for. Valid values are `0`, `1`, `2`, `3`, `4a`, `4b`, `10`,
@@ -20,8 +20,8 @@
 #' @param MinEffortsSp Minimum number of vascular plant species per grid cell in
 #'   GBIF for a grid cell to be included in the models. This is to exclude grid
 #'   cells with very little sampling efforts. Defaults to `100`.
-#' @param PresPerSpecies Integer. The minimum number of presence grid cells for a
-#'   species to be included in the analysis. The number of presence grid cells
+#' @param PresPerSpecies Integer. The minimum number of presence grid cells for
+#'   a species to be included in the analysis. The number of presence grid cells
 #'   per species is calculated after discarding grid cells with low sampling
 #'   efforts (`MinEffortsSp`). Defaults to `80`.
 #' @param EnvFile Character. Path to the environment file containing paths to
@@ -255,7 +255,6 @@ Mod_PrepData <- function(
 
   # minimum number of presence grids per species
   NCellsCol <- dplyr::if_else(ExcludeCult, "NCells_Naturalized", "NCells_All")
-  PA_Layer <- dplyr::if_else(ExcludeCult, "PA_Masked", "PA")
 
   R_Sp <- DT_Sp %>%
     # Exclude species with too few presence grid cells. There will be further
@@ -268,6 +267,8 @@ Mod_PrepData <- function(
       PA = purrr::map2(
         .x = Species_File, .y = SpeciesID,
         .f = ~{
+
+          PA_Layer <- dplyr::if_else(ExcludeCult, "PA_Masked", "PA")
 
           # Masked raster map
           SpPA <- file.path(

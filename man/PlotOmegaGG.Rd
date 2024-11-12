@@ -5,7 +5,7 @@
 \title{Creates heatmaps of parameter estimates or posterior support values for
 species' residual association (\code{Omega} parameters).}
 \usage{
-PlotOmegaGG(Path_Model, supportLevel = 0.95, PlotWidth = 22, PlotHeight = 20)
+PlotOmegaGG(Path_Model, supportLevel = 0.95, PlotWidth = 25, PlotHeight = 22.5)
 }
 \arguments{
 \item{Path_Model}{String. Specifies the path to the \code{.RData} file containing
@@ -18,7 +18,7 @@ below 1 - threshold for negative associations) will be visualized. Defaults
 to 0.95.}
 
 \item{PlotWidth, PlotHeight}{Integer. Specifies the width and height of the
-generated plot in centimeters. Defaults to \code{22} x \code{20}.}
+generated plot in centimeters. Defaults to \code{25} x \code{22.5}.}
 }
 \value{
 Generates two JPEG files containing the heatmaps of Omega parameter:

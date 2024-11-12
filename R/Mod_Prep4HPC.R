@@ -117,7 +117,8 @@
 #'
 #' - for which habitat types the models will be fitted
 #' - excluding grid cells with very low sampling efforts (`MinEffortsSp`)
-#' - selection of species based on minimum number of presence-grid cells: `PresPerSpecies`.
+#' - selection of species based on minimum number of presence-grid
+#'   cells: `PresPerSpecies`.
 #' - optionally model fitting on specified list of countries: (`ModelCountry`)
 #' - whether to exclude grid cells with few species (`NspPerGrid`)
 #' - number of cross-validation folds
@@ -205,7 +206,7 @@ Mod_Prep4HPC <- function(
 
   if (!all(is.numeric(PresPerSpecies)) || PresPerSpecies <= 0) {
     stop(
-      "`PresPerSpecies` should be numeric and greater than zero", 
+      "`PresPerSpecies` should be numeric and greater than zero",
       call. = FALSE)
   }
 

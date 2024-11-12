@@ -138,10 +138,10 @@ PlotRho <- function(Post, Model, Title, Cols = NULL, MarginType = "histogram") {
     ggplot2::theme(
       legend.position = "none", axis.text = ggplot2::element_text(size = 14))
 
-  if(MarginType == "histogram") {
+  if (MarginType == "histogram") {
     Plot1 <- ggExtra::ggMarginal(
       p = Plot, type = MarginType, margins = "y", size = 6,
-      color = "steelblue4", bins = 100)
+      color = "steelblue4", fill = "steelblue4", bins = 100)
   } else {
     Plot1 <- ggExtra::ggMarginal(
       p = Plot, type = MarginType, margins = "y", size = 6,

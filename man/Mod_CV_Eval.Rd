@@ -7,7 +7,8 @@
 Mod_CV_Eval(Path_CV = NULL, predictEtaMean = TRUE, NCores = 8)
 }
 \arguments{
-\item{Path_CV}{Character. The directory path where cross-validation models and outputs are stored.}
+\item{Path_CV}{Character. The directory path where cross-validation models
+and outputs are stored.}
 
 \item{predictEtaMean}{boolean flag indicating whether to use the estimated
 mean values of posterior predictive distribution for random effects

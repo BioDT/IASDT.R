@@ -27,8 +27,8 @@ habitat type. For more details, see \href{https://doi.org/10.23855/preslia.2022.
 GBIF for a grid cell to be included in the models. This is to exclude grid
 cells with very little sampling efforts. Defaults to \code{100}.}
 
-\item{PresPerSpecies}{Integer. The minimum number of presence grid cells for a
-species to be included in the analysis. The number of presence grid cells
+\item{PresPerSpecies}{Integer. The minimum number of presence grid cells for
+a species to be included in the analysis. The number of presence grid cells
 per species is calculated after discarding grid cells with low sampling
 efforts (\code{MinEffortsSp}). Defaults to \code{80}.}
 
@@ -58,8 +58,8 @@ environmental and species presence data. It checks input arguments, reads
 environment variables from a file, verifies paths, loads and filters species
 data based on habitat type and minimum presence grid cells per species, and
 merges various environmental layers (e.g., CHELSA Bioclimatic variables,
-habitat coverage, road and railway intensity, sampling efforts) into a
-single dataset. The processed data can be saved to disk as \verb{*.RData} file .
+habitat coverage, road and railway intensity, sampling efforts) into a single
+dataset. The processed data can be saved to disk as \verb{*.RData} file .
 }
 \details{
 The function reads the following environment variables:

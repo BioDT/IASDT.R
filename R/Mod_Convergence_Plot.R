@@ -326,10 +326,10 @@ Convergence_Plot <- function(
             axis.text = ggplot2::element_text(size = 12),
             legend.position = "none")
 
-        if(MarginType == "histogram") {
+        if (MarginType == "histogram") {
           Plot <- ggExtra::ggMarginal(
             p = Plot, type = MarginType, margins = "y", size = 6,
-            color = "steelblue4", bins = 100)
+            color = "steelblue4", fill = "steelblue4", bins = 100)
         } else {
           Plot <- ggExtra::ggMarginal(
             p = Plot, type = MarginType, margins = "y", size = 6,
@@ -604,10 +604,10 @@ Convergence_Plot <- function(
               limits = c(DT_all$Var_Min, DT_all$Var_Max))
         })
 
-        if(MarginType == "histogram") {
+        if (MarginType == "histogram") {
           Plot_Marginal <- ggExtra::ggMarginal(
             p = Plot, type = MarginType, margins = "y", size = 6,
-            color = "steelblue4", bins = 100)
+            color = "steelblue4", fill = "steelblue4", bins = 100)
         } else {
           Plot_Marginal <- ggExtra::ggMarginal(
             p = Plot, type = MarginType, margins = "y", size = 6,
@@ -618,10 +618,10 @@ Convergence_Plot <- function(
         Plot_Marginal$layout$t[1] <- 1
         Plot_Marginal$layout$r[1] <- max(Plot_Marginal$layout$r)
 
-        if(MarginType == "histogram") {
+        if (MarginType == "histogram") {
           Plot2_Marginal <- ggExtra::ggMarginal(
             p = Plot2, type = MarginType, margins = "y", size = 6,
-            color = "steelblue4", bins = 100)
+            color = "steelblue4", fill = "steelblue4", bins = 100)
         } else {
           Plot2_Marginal <- ggExtra::ggMarginal(
             p = Plot2, type = MarginType, margins = "y", size = 6,
@@ -868,10 +868,10 @@ Convergence_Plot <- function(
                     hjust = 0.5, size = 22, face = "bold", colour = "red",
                     margin = ggplot2::margin(0, 0, -2.5, 0)))
 
-              if(MarginType == "histogram") {
+              if (MarginType == "histogram") {
                 Plot <- ggExtra::ggMarginal(
                   p = Plot, type = MarginType, margins = "y", size = 6,
-                  color = "steelblue4", bins = 100)
+                  color = "steelblue4", fill = "steelblue4", bins = 100)
               } else {
                 Plot <- ggExtra::ggMarginal(
                   p = Plot, type = MarginType, margins = "y", size = 6,
@@ -910,6 +910,7 @@ Convergence_Plot <- function(
         grDevices::dev.off()
       })
 
+      rm(PlotTitle)
       return(invisible(NULL))
     },
     future.scheduling = Inf, future.seed = TRUE,

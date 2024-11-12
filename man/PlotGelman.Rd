@@ -18,7 +18,8 @@ PlotGelman(
 )
 }
 \arguments{
-\item{InputCoda}{coda object or path to RData file containing the coda object.}
+\item{InputCoda}{coda object or path to RData file containing the coda
+object.}
 
 \item{Alpha}{Logical indicating whether to plot the Gelman-Rubin statistic
 for the Alpha parameter. If \code{TRUE} (default), the function executes the

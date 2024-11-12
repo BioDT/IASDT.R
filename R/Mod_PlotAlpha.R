@@ -214,10 +214,10 @@ PlotAlpha <- function(
           axis.text = ggplot2::element_text(size = 12))
 
 
-      if(MarginType == "histogram") {
+      if (MarginType == "histogram") {
         Plot <- ggExtra::ggMarginal(
           p = Plot, type = MarginType, margins = "y", size = 6,
-          color = "steelblue4", bins = 100)
+          color = "steelblue4", fill = "steelblue4", bins = 100)
       } else {
         Plot <- ggExtra::ggMarginal(
           p = Plot, type = MarginType, margins = "y", size = 6,

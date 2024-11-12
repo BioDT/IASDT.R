@@ -35,7 +35,7 @@ RespCurv_PlotSp <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  RC_Path_Prob <- NFV <- Species <- Coords <- Data <- PlotData <-
+  RC_Path_Prob <- NFV <- Species <- Coords <- Data <-
     DT <- Variable <- VarDesc <- Trend2 <- PositiveTrendProb <-
     VarDesc2 <- Pred <- XVals <- PlotData_Quant <- Quantile <-
     Observed_PA <- Col <- Q975 <- Q25 <- Q50 <- X <- Y <- IAS_ID <- NULL
@@ -99,7 +99,7 @@ RespCurv_PlotSp <- function(
     dplyr::mutate(
       Data = furrr::future_map(
         .x = RC_Path_Prob,
-        .f = ~ dplyr::select(IASDT.R::LoadAs(.x), -PlotData),
+        .f = ~ dplyr::select(IASDT.R::LoadAs(.x), -"PlotData"),
         .options = furrr::furrr_options(seed = TRUE, chunk_size = 1))) %>%
     tidyr::unnest(Data) %>%
     dplyr::select(-RC_Path_Prob) %>%

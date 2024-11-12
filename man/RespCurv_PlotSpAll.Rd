@@ -4,7 +4,12 @@
 \alias{RespCurv_PlotSpAll}
 \title{Plot all species response curves}
 \usage{
-RespCurv_PlotSpAll(Path_Postprocessing = NULL, NCores = 20, ReturnData = FALSE)
+RespCurv_PlotSpAll(
+  Path_Postprocessing = NULL,
+  NCores = 20,
+  ReturnData = FALSE,
+  PlotAlpha = 0.3
+)
 }
 \arguments{
 \item{Path_Postprocessing}{String. The path to the directory for model
@@ -16,6 +21,9 @@ Defaults to 20.}
 
 \item{ReturnData}{Logical. Indicates whether the output data be returned as
 an R object.}
+
+\item{PlotAlpha}{Numeric. The alpha value (transparency) for the response
+curve lines. Defaults to 0.3.}
 }
 \description{
 Generates and saves response curve plots for all species together in a single

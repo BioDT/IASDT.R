@@ -157,8 +157,7 @@ PrepKnots <- function(
 
   # Prepare knots ----
   Knots <- Hmsc::constructKnots(
-    sData = Coords, knotDist = MinDist, minKnotDist = MinDist
-  ) %>%
+    sData = Coords, knotDist = MinDist, minKnotDist = MinDist) %>%
     tibble::as_tibble() %>%
     # Hmsc::constructKnots may return duplicated points; discard them
     dplyr::distinct() %>%

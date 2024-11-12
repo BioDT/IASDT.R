@@ -45,7 +45,7 @@ RespCurv_PrepData <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   ResCurvDT <- Variable <- RC_DT_Name <- SampleID <- Species <- SR <- MM <-
-    PlotData <- NFV <- RC_DT_Path_Orig <- VarName <- RC_DT_Path_Prob <-
+    NFV <- RC_DT_Path_Orig <- VarName <- RC_DT_Path_Prob <-
     RC_DT_Path_SR <- Coords <- NULL
 
   # # ..................................................................... ###

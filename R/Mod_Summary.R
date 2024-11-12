@@ -43,9 +43,9 @@ Mod_Summary <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  VarSp <- Variable <- Species <- Sp1_abb <- Sp2_abb <- IAS_ID <- Val <-
-    taxon_name <- Species_name <- Sp1_Species_name <- Sp2_Species_name <-
-    Q2_5 <- Q97_5 <- Sp1_Sp_abb <- Sp2_Sp_abb <- TaxaInfoFile <- NULL
+  VarSp <- Sp1_abb <- Sp2_abb <- IAS_ID <- Val <- taxon_name <- Species_name <-
+    Sp1_Species_name <- Sp2_Species_name <- Q2_5 <- Q97_5 <- Sp1_Sp_abb <-
+    Sp2_Sp_abb <- TaxaInfoFile <- NULL
 
 
   # Prepare Species list
@@ -103,7 +103,7 @@ Mod_Summary <- function(
             dplyr::mutate(
               Variable = purrr::map_chr(
                 .x = Variable,
-                .f = function(V){
+                .f = function(V) {
                   V %>%
                     stringr::str_replace_all("_1$", "_L") %>%
                     stringr::str_replace_all("_2$", "_Q")

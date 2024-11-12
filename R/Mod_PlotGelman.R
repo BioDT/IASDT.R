@@ -8,7 +8,8 @@
 #' evolution of Gelman and Rubin's shrink factor for various model parameters as
 #' the number of iterations increases. It is designed to help assess the
 #' convergence of Hmsc model by visualizing the shrink factor over iterations.
-#' @param InputCoda coda object or path to RData file containing the coda object.
+#' @param InputCoda coda object or path to RData file containing the coda
+#'   object.
 #' @param Alpha Logical indicating whether to plot the Gelman-Rubin statistic
 #'   for the Alpha parameter. If `TRUE` (default), the function executes the
 #'   [IASDT.R::PlotGelman_Alpha] function.
@@ -36,9 +37,8 @@
 #' @return If `ReturnPlots` is `TRUE`, returns a list of ggplot objects
 #'   corresponding to the generated plots. Otherwise, returns `NULL`.
 #' @export
-#' @seealso
-#' [IASDT.R::PlotGelman_Alpha]<br>[IASDT.R::PlotGelman_Beta]<br>
-#' [IASDT.R::PlotGelman_Rho]<br>[IASDT.R::PlotGelman_Omega]
+#' @seealso [IASDT.R::PlotGelman_Alpha]<br>[IASDT.R::PlotGelman_Beta]<br>
+#'   [IASDT.R::PlotGelman_Rho]<br>[IASDT.R::PlotGelman_Omega]
 
 PlotGelman <- function(
     InputCoda = NULL, Alpha = TRUE, Beta = TRUE, Omega = TRUE, Rho = TRUE,

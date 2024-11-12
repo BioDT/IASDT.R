@@ -18,7 +18,7 @@
 #'   below 1 - threshold for negative associations) will be visualized. Defaults
 #'   to 0.95.
 #' @param PlotWidth,PlotHeight Integer. Specifies the width and height of the
-#'   generated plot in centimeters. Defaults to `22` x `20`.
+#'   generated plot in centimeters. Defaults to `25` x `22.5`.
 #' @return Generates two JPEG files containing the heatmaps of Omega parameter:
 #'   signs and mean values. These files are saved in a directory named
 #'   'Model_Postprocessing' within the parent directory of the provided model
@@ -27,7 +27,7 @@
 #' @export
 
 PlotOmegaGG <- function(
-    Path_Model, supportLevel = 0.95, PlotWidth = 22, PlotHeight = 20) {
+    Path_Model, supportLevel = 0.95, PlotWidth = 25, PlotHeight = 22.5) {
 
   # devtools::install_github("YuLab-SMU/ggtree")
 
@@ -75,16 +75,15 @@ PlotOmegaGG <- function(
 
   IASDT.R::CatTime("Plotting theme")
   Theme <- ggplot2::theme(
-    # legend.title = ggplot2::element_text(size = 7, face = "bold"),
     legend.title = ggtext::element_markdown(),
     legend.spacing = ggplot2::unit(0, "cm"),
     legend.key.size = ggplot2::unit(0.5, "cm"),
     legend.key.width = ggplot2::unit(0.4, "cm"),
-    legend.box.margin = ggplot2::margin(0, -8, 0, 0),
+    legend.box.margin = ggplot2::margin(0, -30, 0, -15),
     legend.box.spacing = ggplot2::unit(0, "pt"),
     panel.grid.major = ggplot2::element_blank(),
     panel.grid.minor = ggplot2::element_blank(),
-    plot.margin = ggplot2::unit(c(-2.1, -2.75, 1.25, -1.65), "lines"))
+    plot.margin = ggplot2::unit(c(0, -3, 1.35, -2), "lines"))
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # computeAssociations -----
@@ -108,7 +107,7 @@ PlotOmegaGG <- function(
   PosSign <- '<span style="font-size: 8pt"><b>  +  </b></span>'
   NegSign <- '<span style="font-size: 8pt"><b>  \u2212  </b></span>'
   LegendTitle <- paste0(
-    '<span style="font-size: 12pt"><b>Beta</b></span><br>',
+    '<span style="font-size: 12pt"><b>Omega</b></span><br>',
     '<span style="font-size: 9pt">(sign)</span>')
 
   Plot_Sign <- (
@@ -141,9 +140,8 @@ PlotOmegaGG <- function(
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   grDevices::jpeg(
-    filename = file.path(Path_Out, "Parameter_Omega_Sign.jpeg"),
-    width = PlotWidth, height = PlotHeight, units = "cm", quality = 100,
-    res = 600)
+    filename = file.path(Path_Out, "Parameter_Omega_Sign.jpeg"), res = 600,
+    width = PlotWidth, height = PlotHeight, units = "cm", quality = 100)
   print(Plot)
   grDevices::dev.off()
 
@@ -154,7 +152,7 @@ PlotOmegaGG <- function(
   IASDT.R::CatTime("2. mean")
 
   LegendTitle <- paste0(
-    '<span style="font-size: 12pt"><b>Beta</span><br>',
+    '<span style="font-size: 12pt"><b>Omega</span><br>',
     '<span style="font-size: 9pt">(mean)</span>')
 
   Plot_Mean <- (
@@ -184,9 +182,8 @@ PlotOmegaGG <- function(
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   grDevices::jpeg(
-    filename = file.path(Path_Out, "Parameter_Omega_Mean.jpeg"),
-    width = PlotWidth, height = PlotHeight, units = "cm", quality = 100,
-    res = 600)
+    filename = file.path(Path_Out, "Parameter_Omega_Mean.jpeg"), res = 600,
+    width = PlotWidth, height = PlotHeight, units = "cm", quality = 100)
   print(Plot)
   grDevices::dev.off()
 

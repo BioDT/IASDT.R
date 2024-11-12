@@ -71,8 +71,8 @@ all output, including models to be fitted, will be saved.}
 GBIF for a grid cell to be included in the models. This is to exclude grid
 cells with very little sampling efforts. Defaults to \code{100}.}
 
-\item{PresPerSpecies}{Integer. The minimum number of presence grid cells for a
-species to be included in the analysis. The number of presence grid cells
+\item{PresPerSpecies}{Integer. The minimum number of presence grid cells for
+a species to be included in the analysis. The number of presence grid cells
 per species is calculated after discarding grid cells with low sampling
 efforts (\code{MinEffortsSp}). Defaults to \code{80}.}
 
@@ -259,7 +259,8 @@ The function provides options for:
 \itemize{
 \item for which habitat types the models will be fitted
 \item excluding grid cells with very low sampling efforts (\code{MinEffortsSp})
-\item selection of species based on minimum number of presence-grid cells: \code{PresPerSpecies}.
+\item selection of species based on minimum number of presence-grid
+cells: \code{PresPerSpecies}.
 \item optionally model fitting on specified list of countries: (\code{ModelCountry})
 \item whether to exclude grid cells with few species (\code{NspPerGrid})
 \item number of cross-validation folds

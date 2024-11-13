@@ -524,7 +524,7 @@ VarPar_Plot <- function(
 
   IASDT.R::CatDiff(
     InitTime = .StartTime,
-    Prefix = "Computing and ploting variance paritioning took ")
+    Prefix = "Computing and plotting variance partitioning took ")
 
   return(invisible(NULL))
 }

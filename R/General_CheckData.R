@@ -22,7 +22,9 @@
 CheckData <- function(File, warning = TRUE, qs_nthreads = 5) {
 
   if (!file.exists(File) || is.null(File) || !nzchar(File)) {
-    warning(paste0("The provided file does not exist: `", File, "`"))
+    if (warning) {
+      warning(paste0("The provided file does not exist: `", File, "`"))
+    }
     return(FALSE)
   }
 

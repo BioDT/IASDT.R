@@ -375,8 +375,8 @@ Convergence_Plot_All <- function(
       ggplot2::ylab(
         paste0(
           "Gelman and Rubin's convergence diagnostic ",
-          "<sub>(only values between 0.995 and 1.05)</sub>")) +
-      ggplot2::ylim(c(0.995, 1.05))
+          "<sub>(only values between 0.9 and 1.1)</sub>")) +
+      ggplot2::ylim(c(0.9, 1.1))
 
     # Using ggplot2::ggsave directly does not show non-ascii characters
     # correctly
@@ -479,8 +479,8 @@ Convergence_Plot_All <- function(
       ggplot2::ylab(
         paste0(
           "Gelman and Rubin's convergence diagnostic ",
-          "<sub>(only values between 0.995 and 1.05)</sub>")) +
-      ggplot2::ylim(c(0.995, 1.05))
+          "<sub>(only values between 0.9 and 1.1)</sub>")) +
+      ggplot2::ylim(c(0.9, 1.1))
 
     # Using ggplot2::ggsave directly does not show non-ascii characters
     # correctly

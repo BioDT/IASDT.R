@@ -4,11 +4,12 @@
 \alias{RespCurv_PlotSR}
 \title{Plot species richness response curves}
 \usage{
-RespCurv_PlotSR(Path_Postprocessing, Verbose = TRUE, NCores = 8)
+RespCurv_PlotSR(ModelDir, Verbose = TRUE, NCores = 8)
 }
 \arguments{
-\item{Path_Postprocessing}{String. Path to the post-processing directory.
-Reads from the \code{RespCurv_SR} subdirectory created by \link{RespCurv_PrepData}.}
+\item{ModelDir}{String. Path to the root directory of the fitted models
+without the trailing slash. The function reads data from \code{RespCurv_DT}
+subdirectory created by \link{RespCurv_PrepData}.}
 
 \item{Verbose}{Logical. If TRUE, detailed output is printed. Default is
 \code{FALSE}.}

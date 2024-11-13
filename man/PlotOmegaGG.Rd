@@ -8,8 +8,7 @@ species' residual association (\code{Omega} parameters).}
 PlotOmegaGG(Path_Model, supportLevel = 0.95, PlotWidth = 25, PlotHeight = 22.5)
 }
 \arguments{
-\item{Path_Model}{String. Specifies the path to the \code{.RData} file containing
-the selected model.}
+\item{Path_Model}{String. Path to the fitted Hmsc model object.}
 
 \item{supportLevel}{Numeric. The threshold for posterior support values used
 to determine which associations are strong enough to be plotted. Only

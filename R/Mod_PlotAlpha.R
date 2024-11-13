@@ -43,11 +43,11 @@ PlotAlpha <- function(
   }
 
   if (length(MarginType) != 1) {
-    stop("MarginType must be either 'histogram' or 'density'.")
+    stop("`MarginType` must be a single string.")
   }
 
   if (!MarginType %in% c("histogram", "density")) {
-    stop("MarginType must be either 'histogram' or 'density'.")
+    stop("`MarginType` must be either 'histogram' or 'density'.")
   }
 
   # # ..................................................................... ###

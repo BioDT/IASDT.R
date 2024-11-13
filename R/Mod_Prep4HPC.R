@@ -942,8 +942,7 @@ Mod_Prep4HPC <- function(
           .f = ~{
             PathOut <- file.path(Path_Model, paste0("InitMod_", .x, ".RData"))
 
-            InitModExists <- file.exists(PathOut) &&
-              IASDT.R::CheckRData(PathOut)
+            InitModExists <- IASDT.R::CheckData(PathOut)
 
             if (isFALSE(InitModExists)) {
               if (stringr::str_detect(.x, "_Tree$")) {
@@ -1011,7 +1010,7 @@ Mod_Prep4HPC <- function(
     }
 
     if (isFALSE(OverwriteRDS) && file.exists(CurrPath) &&
-        IASDT.R::CheckRDS(CurrPath)) {
+        IASDT.R::CheckData(CurrPath)) {
       return(invisible(NULL))
     }
 
@@ -1293,7 +1292,7 @@ Mod_Prep4HPC <- function(
     }
 
     IASDT.R::Mod_SLURM(
-      Path_Model = Path_Model, JobName = JobName, MemPerCpu = MemPerCpu,
+      ModelDir = Path_Model, JobName = JobName, MemPerCpu = MemPerCpu,
       Time = Time, EnvFile = EnvFile, FromHPC = FromHPC,
       Path_Hmsc = Path_Hmsc, ...)
   }

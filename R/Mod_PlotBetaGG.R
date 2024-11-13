@@ -10,8 +10,7 @@
 #' It is designed to visualize how species (Y) respond to various covariates (X)
 #' using `ggplot2` for plotting. The function is an adaptation of
 #' [Hmsc::plotBeta], focusing on `ggplot2`-based visualizations.
-#' @param Path_Model String. The path to the `.RData` file containing the
-#'   selected model.
+#' @param Path_Model String. Path to the fitted Hmsc model object.
 #' @param supportLevel Numeric. The threshold for posterior support used in
 #'   plotting. Values above this threshold (and below 1 - threshold) are
 #'   considered significant and will be plotted. The default value is 0.95,

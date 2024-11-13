@@ -5,7 +5,7 @@
 \title{Prepare SLURM file for failed / Unfitted Models}
 \usage{
 Mod_SLURM_Refit(
-  Path_Model = NULL,
+  ModelDir = NULL,
   NumArrayJobs = 210,
   JobName = NULL,
   MemPerCpu = NULL,
@@ -24,7 +24,7 @@ Mod_SLURM_Refit(
 )
 }
 \arguments{
-\item{Path_Model}{String. Path to the model files directory. Must not end
+\item{ModelDir}{String. Path to the model files directory. Must not end
 with a slash.}
 
 \item{NumArrayJobs}{Integer specifying the maximum allowed number of array

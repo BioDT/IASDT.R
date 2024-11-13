@@ -10,8 +10,7 @@
 #' parameters). It is designed to work with model output files and produces two
 #' types of visualizations: one indicating the sign (positive or negative) of
 #' the associations and another showing the mean values of these associations.
-#' @param Path_Model String. Specifies the path to the `.RData` file containing
-#'   the selected model.
+#' @param Path_Model String. Path to the fitted Hmsc model object.
 #' @param supportLevel Numeric. The threshold for posterior support values used
 #'   to determine which associations are strong enough to be plotted. Only
 #'   associations with posterior support exceeding this threshold (or falling
@@ -78,7 +77,7 @@ PlotOmegaGG <- function(
     legend.title = ggtext::element_markdown(),
     legend.spacing = ggplot2::unit(0, "cm"),
     legend.key.size = ggplot2::unit(0.5, "cm"),
-    legend.key.width = ggplot2::unit(0.4, "cm"),
+    legend.key.width = ggplot2::unit(0.5, "cm"),
     legend.box.margin = ggplot2::margin(0, -30, 0, -15),
     legend.box.spacing = ggplot2::unit(0, "pt"),
     panel.grid.major = ggplot2::element_blank(),

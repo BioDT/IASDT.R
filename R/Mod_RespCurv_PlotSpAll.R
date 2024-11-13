@@ -6,9 +6,10 @@
 #'
 #' Generates and saves response curve plots for all species together in a single
 #' plot.
-#' @param Path_Postprocessing String. The path to the directory for model
-#'   post-processing. The function reads data from the `RespCurv_Sp`
-#'   sub-directory, created by [RespCurv_PrepData].
+#'
+#' @param ModelDir String. Path to the root directory of the fitted models
+#'   without the trailing slash. The function reads data from `RespCurv_DT`
+#'   subdirectory created by [RespCurv_PrepData].
 #' @param NCores Integer. Number of cores to use for parallel processing.
 #'   Defaults to 20.
 #' @param ReturnData Logical. Indicates whether the output data be returned as
@@ -19,8 +20,7 @@
 #' @name RespCurv_PlotSpAll
 
 RespCurv_PlotSpAll <- function(
-    Path_Postprocessing = NULL, NCores = 20,
-    ReturnData = FALSE, PlotAlpha = 0.3) {
+    ModelDir = NULL, NCores = 20, ReturnData = FALSE, PlotAlpha = 0.3) {
 
   # # ..................................................................... ###
 
@@ -40,8 +40,8 @@ RespCurv_PlotSpAll <- function(
 
   IASDT.R::CatTime("Check arguments", Level = 1)
 
-  if (is.null(Path_Postprocessing)) {
-    stop("`Path_Postprocessing` cannot be NULL", call. = FALSE)
+  if (is.null(ModelDir)) {
+    stop("`ModelDir` cannot be NULL", call. = FALSE)
   }
 
   AllArgs <- ls(envir = environment())
@@ -50,8 +50,7 @@ RespCurv_PlotSpAll <- function(
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "character", Args = "Path_Postprocessing")
+  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = "ModelDir")
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric", Args = c("NCores", "PlotAlpha"))
   rm(AllArgs)
@@ -62,8 +61,15 @@ RespCurv_PlotSpAll <- function(
 
   # # ..................................................................... ###
 
-  Path_RespCurv_All <- file.path(Path_Postprocessing, "RespCurv_All")
-  fs::dir_create(c(Path_RespCurv_All))
+
+  Path_RC_DT <- file.path(ModelDir, "Model_Postprocessing", "RespCurv_DT")
+  Path_RC_All <- file.path(ModelDir, "Model_Postprocessing", "RespCurv_All")
+
+  if (!dir.exists(Path_RC_DT)) {
+    stop("Response curve data subfolder is missing.", call. = FALSE)
+  }
+
+  fs::dir_create(Path_RC_All)
 
   # # ..................................................................... ###
 
@@ -72,8 +78,7 @@ RespCurv_PlotSpAll <- function(
   IASDT.R::CatTime(
     "Loading / process species response curve data on parallel", Level = 1)
 
-  Sp_DT_All <- file.path(
-    Path_Postprocessing, "RespCurv_DT", "ResCurvDT.RData") %>%
+  Sp_DT_All <- file.path(Path_RC_DT, "ResCurvDT.RData") %>%
     IASDT.R::LoadAs() %>%
     dplyr::select(Coords, RC_Path_Prob)
 
@@ -119,7 +124,7 @@ RespCurv_PlotSpAll <- function(
     Coords <- Sp_DT_All$Coords[[ID]]
 
     FilePrefix <- paste0("RespCurv_All_NFV_", NFV, "_Coords_", Coords)
-    Path_JPEG <- file.path(Path_RespCurv_All, paste0(FilePrefix, ".jpeg"))
+    Path_JPEG <- file.path(Path_RC_All, paste0(FilePrefix, ".jpeg"))
 
     DT <- Sp_DT_All$DT[[ID]] %>%
       dplyr::mutate(
@@ -300,8 +305,7 @@ RespCurv_PlotSpAll <- function(
     future.packages = c(
       "dplyr", "purrr", "tidyr", "gtools", "ggtext", "patchwork",
       "ggplot2", "tibble", "IASDT.R"),
-    future.globals = c(
-      "Sp_DT_All", "Path_RespCurv_All", "PlotAllSpRC")) %>%
+    future.globals = c("Sp_DT_All", "Path_RC_All", "PlotAllSpRC")) %>%
     dplyr::bind_rows()
 
   if (NCores > 1) {
@@ -319,7 +323,7 @@ RespCurv_PlotSpAll <- function(
   Sp_DT_All <- dplyr::select(Sp_DT_All, -DT) %>%
     dplyr::bind_cols(Plots = Plots)
 
-  save(Sp_DT_All, file = file.path(Path_RespCurv_All, "Sp_DT_All.RData"))
+  save(Sp_DT_All, file = file.path(Path_RC_All, "Sp_DT_All.RData"))
 
   # # ..................................................................... ###
 

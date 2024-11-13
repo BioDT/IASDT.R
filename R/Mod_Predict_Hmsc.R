@@ -787,7 +787,7 @@ get1prediction <- function(
       for (k in 1:rL[[r]]$xDim) {
         LRan[[r]] <- LRan[[r]] +
           (Eta[[r]][as.character(dfPiNew[, r]), ] *
-             rL[[r]]$x[as.character(dfPiNew[, r]), k]) %*%
+            rL[[r]]$x[as.character(dfPiNew[, r]), k]) %*%
           sam$Lambda[[r]][, , k]
       }
     }
@@ -827,7 +827,7 @@ get1prediction <- function(
         for (k in 1:rL[[r]]$xDim) {
           LRan[[r]] <- LRan[[r]] +
             (Eta[[r]][as.character(dfPiNew[, r]), ] *
-               rL[[r]]$x[as.character(dfPiNew[, r]), k]) %*%
+              rL[[r]]$x[as.character(dfPiNew[, r]), k]) %*%
             sam$Lambda[[r]][, , k]
         }
       }

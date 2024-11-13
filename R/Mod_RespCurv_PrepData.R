@@ -295,10 +295,10 @@ RespCurv_PrepData <- function(
 
   # Prepare response curve data -------
 
-  Path_ResCurve <- dirname(dirname(Path_Model)) %>%
+  Path_RC <- dirname(dirname(Path_Model)) %>%
     file.path("Model_Postprocessing")
-  Path_RespCurvDT <- file.path(Path_ResCurve, "RespCurv_DT")
-  fs::dir_create(Path_RespCurvDT)
+  Path_RC_DT <- file.path(Path_RC, "RespCurv_DT")
+  fs::dir_create(Path_RC_DT)
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Extract names of the variables
@@ -329,16 +329,14 @@ RespCurv_PrepData <- function(
     Variable = ModelVars, Coords = c("c", "i"), NFV = c(1, 2)) %>%
     dplyr::mutate(
       VarName = purrr::map_chr(
-        .x = Variable,
-        .f = stringr::str_remove_all,
+        .x = Variable, .f = stringr::str_remove_all,
         pattern = "stats::poly\\(|, degree = 2, raw = TRUE\\)"),
       RC_DT_Name = paste0("RC_", VarName, "_coord_", Coords, "_NFV", NFV),
       RC_DT_Path_Orig = file.path(
-        Path_RespCurvDT, paste0(RC_DT_Name, "_Orig.RData")),
+        Path_RC_DT, paste0(RC_DT_Name, "_Orig.RData")),
       RC_DT_Path_Prob = file.path(
-        Path_RespCurvDT, paste0(RC_DT_Name, "_Prob.RData")),
-      RC_DT_Path_SR = file.path(
-        Path_RespCurvDT, paste0(RC_DT_Name, "_SR.RData")),
+        Path_RC_DT, paste0(RC_DT_Name, "_Prob.RData")),
+      RC_DT_Path_SR = file.path(Path_RC_DT, paste0(RC_DT_Name, "_SR.RData")),
       FileExists = purrr::pmap_lgl(
         .l = list(RC_DT_Path_Orig, RC_DT_Path_Prob, RC_DT_Path_SR),
         .f = function(RC_DT_Path_Orig, RC_DT_Path_Prob, RC_DT_Path_SR) {
@@ -378,9 +376,9 @@ RespCurv_PrepData <- function(
     # Get LF prediction for the model
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-    File_LF <- file.path(Path_RespCurvDT, "ResCurv_LF.RData")
+    File_LF <- file.path(Path_RC_DT, "ResCurv_LF.RData")
 
-    if (isFALSE(IASDT.R::CheckRData(File_LF, Warning = FALSE))) {
+    if (isFALSE(IASDT.R::CheckData(File_LF, Warning = FALSE))) {
 
       IASDT.R::InfoChunk(
         Message = "Get LF prediction at mean coordinates",
@@ -463,7 +461,7 @@ RespCurv_PrepData <- function(
   # # ..................................................................... ###
 
   IASDT.R::CatTime("Saving data to desk", ... = "\n")
-  save(ResCurvDT, file = file.path(Path_RespCurvDT, "ResCurvDT.RData"))
+  save(ResCurvDT, file = file.path(Path_RC_DT, "ResCurvDT.RData"))
 
   # # ..................................................................... ###
 

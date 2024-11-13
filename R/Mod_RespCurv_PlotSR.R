@@ -7,8 +7,9 @@
 #' Generate species richness response curves as JPEG images for each variable
 #' used in the model.
 #'
-#' @param Path_Postprocessing String. Path to the post-processing directory.
-#'   Reads from the `RespCurv_SR` subdirectory created by [RespCurv_PrepData].
+#' @param ModelDir String. Path to the root directory of the fitted models
+#'   without the trailing slash. The function reads data from `RespCurv_DT`
+#'   subdirectory created by [RespCurv_PrepData].
 #' @param NCores Integer. Number of cores to use for parallel processing.
 #'   Defaults to 8.
 #' @return This function does not return a value but saves JPEG images of the
@@ -19,7 +20,7 @@
 #' @seealso RespCurv_PlotSp RespCurv_PrepData
 #' @export
 
-RespCurv_PlotSR <- function(Path_Postprocessing, Verbose = TRUE, NCores = 8) {
+RespCurv_PlotSR <- function(ModelDir, Verbose = TRUE, NCores = 8) {
 
   # # ..................................................................... ###
 
@@ -47,25 +48,27 @@ RespCurv_PlotSR <- function(Path_Postprocessing, Verbose = TRUE, NCores = 8) {
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "character", Args = "Path_Postprocessing")
+    AllArgs = AllArgs, Type = "character", Args = "ModelDir")
   rm(AllArgs)
 
+  # # ..................................................................... ###
 
   IASDT.R::CatTime("Check the existence of response curve directory")
 
-  if (!dir.exists(file.path(Path_Postprocessing, "RespCurv_DT"))) {
-    stop(
-      "Response curve directory or data subfolder is missing.",
-      call. = FALSE)
+  Path_RC_DT <- file.path(ModelDir, "Model_Postprocessing", "RespCurv_DT")
+  Path_RC_SR <- file.path(ModelDir, "Model_Postprocessing", "RespCurv_SR")
+
+  if (!dir.exists(Path_RC_DT)) {
+    stop("Response curve data subfolder is missing.", call. = FALSE)
   }
 
-  fs::dir_create(file.path(Path_Postprocessing, "RespCurv_SR"))
+  fs::dir_create(Path_RC_SR)
 
   # # ..................................................................... ###
 
   IASDT.R::CatTime("Create species richness response curves")
 
-  SR_DT_All <- file.path(Path_Postprocessing, "RespCurv_DT/ResCurvDT.RData") %>%
+  SR_DT_All <- file.path(Path_RC_DT, "ResCurvDT.RData") %>%
     IASDT.R::LoadAs() %>%
     dplyr::select(-RC_Path_Orig, -RC_Path_Prob)
 
@@ -280,7 +283,7 @@ RespCurv_PlotSR <- function(Path_Postprocessing, Verbose = TRUE, NCores = 8) {
           # correctly
           grDevices::jpeg(
             filename = file.path(
-              Path_Postprocessing, "RespCurv_SR",
+              Path_RC_SR,
               paste0("RespCurv_SR_", Variable, "_Coords_", Coords, ".jpeg")),
             width = 20, height = 12.5, units = "cm", quality = 100, res = 600)
           print(Plot)
@@ -369,7 +372,7 @@ RespCurv_PlotSR <- function(Path_Postprocessing, Verbose = TRUE, NCores = 8) {
             # correctly
             grDevices::jpeg(
               filename = file.path(
-                Path_Postprocessing, "RespCurv_SR",
+                Path_RC_SR,
                 paste0(
                   "RespCurv_SR_", Variable, "_Coords_", Coords,
                   "_OriginalScale.jpeg")),
@@ -383,7 +386,7 @@ RespCurv_PlotSR <- function(Path_Postprocessing, Verbose = TRUE, NCores = 8) {
 
   save(
     SR_DT_All,
-    file = file.path(Path_Postprocessing, "RespCurv_SR/SR_DT_All.RData"))
+    file = file.path(Path_RC_SR, "SR_DT_All.RData"))
 
   # # ..................................................................... ###
 

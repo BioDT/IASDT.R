@@ -8,7 +8,7 @@
 #' jobs on an HPC environment. It dynamically generates bash scripts based on
 #' the provided parameters, which are then used to submit jobs to the SLURM
 #' workload manager.
-#' @param Path_Model String. Path to the model files (without trailing slash).
+#' @param ModelDir String. Path to the model files (without trailing slash).
 #' @param JobName String. The name of the submitted job(s).
 #' @param CatJobInfo Logical. Add bash lines to print information on the
 #'   submitted job. Default: `TRUE`.
@@ -35,7 +35,7 @@
 #' @param SLURM_Prefix String. Prefix for the exported SLURM file.
 #' @param Path_SLURM_Out String indicating the directory where the SLURM file(s)
 #'   will be saved. Defaults to `NULL`, which means to identify the path from
-#'   `Path_Model`.
+#'   `ModelDir`.
 #' @name Mod_SLURM
 #' @author Ahmed El-Gabbas
 #' @return The function does not return any value but writes SLURM script files
@@ -47,7 +47,7 @@
 #' @export
 
 Mod_SLURM <- function(
-    Path_Model = NULL, JobName = NULL, CatJobInfo = TRUE, ntasks = 1,
+    ModelDir = NULL, JobName = NULL, CatJobInfo = TRUE, ntasks = 1,
     CpusPerTask = 1, GpusPerNode = 1, MemPerCpu = NULL, Time = NULL,
     Partition = "small-g", EnvFile = ".env", FromHPC = TRUE,
     Path_Hmsc = NULL, Command_Prefix = "Commands2Fit",
@@ -57,10 +57,10 @@ Mod_SLURM <- function(
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   ProjNum <- Path_GPU_Check <- NULL
 
-  if (is.null(Path_Model) || is.null(JobName) || is.null(MemPerCpu) ||
+  if (is.null(ModelDir) || is.null(JobName) || is.null(MemPerCpu) ||
       is.null(Time) || is.null(Path_Hmsc)) {
     stop(
-      "Path_Model, JobName, MemPerCpu, Time, and Path_Hmsc cannot be empty",
+      "ModelDir, JobName, MemPerCpu, Time, and Path_Hmsc cannot be empty",
       call. = FALSE)
   }
 
@@ -90,7 +90,7 @@ Mod_SLURM <- function(
 
   # character arguments
   CharArgs <- c(
-    "Path_Model", "JobName", "EnvFile", "Time", "MemPerCpu", "Partition",
+    "ModelDir", "JobName", "EnvFile", "Time", "MemPerCpu", "Partition",
     "Path_Hmsc", "ProjNum", "Path_GPU_Check",
     "Command_Prefix", "SLURM_Prefix")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = CharArgs, Type = "character")
@@ -104,7 +104,7 @@ Mod_SLURM <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   ListCommands <- list.files(
-    Path_Model, pattern = Command_Prefix, full.names = TRUE)
+    ModelDir, pattern = Command_Prefix, full.names = TRUE)
   NCommandFiles <- length(ListCommands)
   if (NCommandFiles == 0) {
     stop("The file containing the bash commands does not exist", call. = FALSE)
@@ -112,7 +112,7 @@ Mod_SLURM <- function(
 
   if (is.null(Path_SLURM_Out)) {
     # This folder was created in the Mod_Prep4HPC function
-    Path_SLURM_Out <- file.path(Path_Model, "Model_Fitting_HPC", "JobsLog")
+    Path_SLURM_Out <- file.path(ModelDir, "Model_Fitting_HPC", "JobsLog")
   }
 
   purrr::walk(
@@ -133,7 +133,7 @@ Mod_SLURM <- function(
 
       # This is better than using sink to have a platform independent file
       # (here, to maintain a linux-like new line ending)
-      f <- file(file.path(Path_Model, OutFile), open = "wb")
+      f <- file(file.path(ModelDir, OutFile), open = "wb")
       on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
 
       # a wrapper function of cat with new line separator
@@ -237,7 +237,7 @@ Mod_SLURM <- function(
       close(f)
 
       # Print the command to submit the job
-      cat(paste0("\t sbatch ", file.path(Path_Model, OutFile), "\n"))
+      cat(paste0("\t sbatch ", file.path(ModelDir, OutFile), "\n"))
   })
 
   return(invisible(NULL))

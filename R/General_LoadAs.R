@@ -2,7 +2,7 @@
 # LoadAs ----
 ## |------------------------------------------------------------------------| #
 
-#' Load RData file and return its contents as a list or a single object
+#' Load objects from `RData` / `qs` / `rds` file
 #'
 #' This function loads an `RData` file specified by the `File` parameter. If the
 #' `RData` file contains a single object, that object is returned directly. If
@@ -66,10 +66,10 @@ LoadAs <- function(File, nthreads = 5) {
     stop("File cannot be NULL", call. = FALSE)
   }
 
-  Ext <- fs::path_ext(File)
+  Extension <- tools::file_ext(File)
 
   OutFile <- switch(
-    Ext,
+    Extension,
     qs = qs::qread(File, nthreads = nthreads),
     RData = {
       # Load the .RData file and capture the names of loaded objects

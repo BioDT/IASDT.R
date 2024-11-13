@@ -9,7 +9,7 @@
 #' model convergence using trace plots and Gelman-Rubin diagnostics for key
 #' model parameters.
 #'
-#' @param Path_Model String. Path to the root directory of the fitted models
+#' @param ModelDir String. Path to the root directory of the fitted models
 #'   without the trailing slash. The convergence outputs will be saved to the
 #'   `Model_Convergence_All` subfolder.
 #' @param maxOmega Integer. Maximum number of species interactions to sample for
@@ -25,15 +25,15 @@
 #' @export
 
 Convergence_Plot_All <- function(
-    Path_Model = NULL, maxOmega = 1000, NCores = NULL,
+    ModelDir = NULL, maxOmega = 1000, NCores = NULL,
     FromHPC = TRUE, MarginType = "histogram") {
 
   # # ..................................................................... ###
 
   .StartTime <- lubridate::now(tzone = "CET")
 
-  if (is.null(Path_Model) || is.null(NCores)) {
-    stop("Path_Model and NCores must not be NULL", call. = FALSE)
+  if (is.null(ModelDir) || is.null(NCores)) {
+    stop("ModelDir and NCores must not be NULL", call. = FALSE)
   }
 
   # # ..................................................................... ###
@@ -55,19 +55,19 @@ Convergence_Plot_All <- function(
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "character", Args = "Path_Model")
+    AllArgs = AllArgs, Type = "character", Args = "ModelDir")
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric", Args = c("maxOmega", "NCores"))
   rm(AllArgs)
 
 
   if (length(MarginType) != 1) {
-    stop("MarginType must be a single value.", call. = FALSE)
+    stop("`MarginType` must be a single value.", call. = FALSE)
   }
 
   if (!MarginType %in% c("histogram", "density")) {
     stop(
-      "MarginType must be either 'histogram' or 'density'.", call. = FALSE)
+      "`MarginType` must be either 'histogram' or 'density'.", call. = FALSE)
   }
 
   # # ..................................................................... ###
@@ -76,11 +76,11 @@ Convergence_Plot_All <- function(
 
   IASDT.R::CatTime("Prepare/load convergence data")
 
-  Path_Convergence_All <- file.path(Path_Model, "Model_Convergence_All")
+  Path_Convergence_All <- file.path(ModelDir, "Model_Convergence_All")
   Path_ConvDT <- file.path(Path_Convergence_All, "DT")
   fs::dir_create(c(Path_ConvDT, Path_Convergence_All))
 
-  Model_Info <- file.path(Path_Model, "Model_Info.RData")
+  Model_Info <- file.path(ModelDir, "Model_Info.RData")
   if (!file.exists(Model_Info)) {
     stop(
       paste0("Model info file `", Model_Info, "` does not exist"),

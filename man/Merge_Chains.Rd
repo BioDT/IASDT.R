@@ -5,16 +5,17 @@
 \title{Post-processing of model outputs}
 \usage{
 Merge_Chains(
-  Path_Model = NULL,
+  ModelDir = NULL,
   NCores = NULL,
   ModInfoName = NULL,
   PrintIncomplete = TRUE,
   FromHPC = TRUE,
-  FromJSON = FALSE
+  FromJSON = FALSE,
+  FileFormat = "qs"
 )
 }
 \arguments{
-\item{Path_Model}{String. Path to the root directory of the fitted models
+\item{ModelDir}{String. Path to the root directory of the fitted models
 without the trailing slash. Two folders will be created \code{Model_Fitted} and
 \code{Model_Coda} to store merged model and coda objects, respectively.}
 
@@ -23,7 +24,7 @@ This should be a positive integer.}
 
 \item{ModInfoName}{String. The name of the file (without extension) where the
 processed model information will be saved. If \code{NULL}, it overwrites the
-\code{Model_Info.RData} file in the \code{Path_Model} directory. If provided, a new
+\code{Model_Info.RData} file in the \code{ModelDir} directory. If provided, a new
 \code{.RData} file will be created with this name.}
 
 \item{PrintIncomplete}{Logical. Indicates whether to print the names of
@@ -35,6 +36,9 @@ environment. This affects how file paths are handled. Defaults to \code{TRUE}.}
 
 \item{FromJSON}{Logical. Indicates whether to convert loaded models from JSON
 format before reading. Defaults to \code{FALSE}.}
+
+\item{FileFormat}{Character. The format to save the fitted model and coda
+objects. It can be either "qs" or "RData". Defaults to "qs".}
 }
 \value{
 The function does not return anything but saves the processed model

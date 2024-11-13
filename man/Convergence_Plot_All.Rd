@@ -5,7 +5,7 @@
 \title{Plot model convergence of multiple modelling alternatives}
 \usage{
 Convergence_Plot_All(
-  Path_Model = NULL,
+  ModelDir = NULL,
   maxOmega = 1000,
   NCores = NULL,
   FromHPC = TRUE,
@@ -13,7 +13,7 @@ Convergence_Plot_All(
 )
 }
 \arguments{
-\item{Path_Model}{String. Path to the root directory of the fitted models
+\item{ModelDir}{String. Path to the root directory of the fitted models
 without the trailing slash. The convergence outputs will be saved to the
 \code{Model_Convergence_All} subfolder.}
 

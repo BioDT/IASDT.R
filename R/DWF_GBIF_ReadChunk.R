@@ -87,7 +87,7 @@ GBIF_ReadChunk <- function(
   ChunkOutPath <- stringr::str_replace(ChunkFile, ".txt$", ".RData")
 
   if (isFALSE(Overwrite) && file.exists(ChunkOutPath)) {
-    if (IASDT.R::CheckRData(ChunkOutPath)) {
+    if (IASDT.R::CheckData(ChunkOutPath)) {
       if (ReturnData) {
         return(IASDT.R::LoadAs(ChunkOutPath))
       } else {

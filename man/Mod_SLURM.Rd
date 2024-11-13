@@ -5,7 +5,7 @@
 \title{Prepare SLURM Files for Hmsc-HPC Model Fitting}
 \usage{
 Mod_SLURM(
-  Path_Model = NULL,
+  ModelDir = NULL,
   JobName = NULL,
   CatJobInfo = TRUE,
   ntasks = 1,
@@ -23,7 +23,7 @@ Mod_SLURM(
 )
 }
 \arguments{
-\item{Path_Model}{String. Path to the model files (without trailing slash).}
+\item{ModelDir}{String. Path to the model files (without trailing slash).}
 
 \item{JobName}{String. The name of the submitted job(s).}
 
@@ -64,7 +64,7 @@ Default: \code{Commands2Fit}.}
 
 \item{Path_SLURM_Out}{String indicating the directory where the SLURM file(s)
 will be saved. Defaults to \code{NULL}, which means to identify the path from
-\code{Path_Model}.}
+\code{ModelDir}.}
 }
 \value{
 The function does not return any value but writes SLURM script files

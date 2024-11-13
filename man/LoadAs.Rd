@@ -2,7 +2,7 @@
 % Please edit documentation in R/General_LoadAs.R
 \name{LoadAs}
 \alias{LoadAs}
-\title{Load RData file and return its contents as a list or a single object}
+\title{Load objects from \code{RData} / \code{qs} / \code{rds} file}
 \usage{
 LoadAs(File, nthreads = 5)
 }

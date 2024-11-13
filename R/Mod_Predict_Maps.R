@@ -52,7 +52,7 @@
 Predict_Maps <- function(
     Path_Model = NULL, Hab_Abb = NULL, EnvFile = ".env", FromHPC = TRUE,
     NCores = 8, Pred_Clamp = TRUE, FixEfforts = "mean", Pred_NewSites = TRUE,
-    TF_Environ = NULL, UseTF = TRUE,
+    UseTF = TRUE, TF_Environ = NULL, 
     CC_Models = c(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
       "MRI-ESM2-0", "UKESM1-0-LL"),

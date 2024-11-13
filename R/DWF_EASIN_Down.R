@@ -87,7 +87,7 @@ EASIN_Down <- function(
   fs::dir_create(file.path(Path_Raw, "FileParts"))
 
   # Check if species data already available
-  OutFileExist <- file.exists(Path_Out) && IASDT.R::CheckRData(Path_Out)
+  OutFileExist <- IASDT.R::CheckData(Path_Out, warning = FALSE)
 
   if (OutFileExist) {
     if (Verbose) {
@@ -114,7 +114,7 @@ EASIN_Down <- function(
         SpKey, "_", stringr::str_pad(Chunk, width = 5, pad = "0"))
 
       Path_Part <- file.path(Path_Raw, "FileParts", paste0(Obj_Out, ".RData"))
-      if (file.exists(Path_Part) && IASDT.R::CheckRData(Path_Part)) {
+      if (IASDT.R::CheckData(Path_Part, warning = FALSE)) {
         next
       }
 

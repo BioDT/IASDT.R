@@ -8,8 +8,7 @@
 #' evolution of Gelman and Rubin's shrink factor for various model parameters as
 #' the number of iterations increases. It is designed to help assess the
 #' convergence of Hmsc model by visualizing the shrink factor over iterations.
-#' @param InputCoda coda object or path to RData file containing the coda
-#'   object.
+#' @param Path_Coda coda object or path to file containing the coda object.
 #' @param Alpha Logical indicating whether to plot the Gelman-Rubin statistic
 #'   for the Alpha parameter. If `TRUE` (default), the function executes the
 #'   [IASDT.R::PlotGelman_Alpha] function.
@@ -41,7 +40,7 @@
 #'   [IASDT.R::PlotGelman_Rho]<br>[IASDT.R::PlotGelman_Omega]
 
 PlotGelman <- function(
-    InputCoda = NULL, Alpha = TRUE, Beta = TRUE, Omega = TRUE, Rho = TRUE,
+    Path_Coda = NULL, Alpha = TRUE, Beta = TRUE, Omega = TRUE, Rho = TRUE,
     NOmega = 1000, FromHPC = TRUE, PlottingAlpha = 0.25,
     EnvFile = ".env", ReturnPlots = FALSE) {
 
@@ -52,12 +51,13 @@ PlotGelman <- function(
   # Checking arguments --------
 
   if (sum(Alpha, Beta, Omega, Rho) == 0) {
-    stop("At least one of Alpha, Beta, Omega, and Rho must be `TRUE`",
-         call. = FALSE)
+    stop(
+      "At least one of Alpha, Beta, Omega, and Rho must be `TRUE`",
+      call. = FALSE)
   }
 
-  if (is.null(InputCoda)) {
-    stop("InputCoda cannot be empty", call. = FALSE)
+  if (is.null(Path_Coda)) {
+    stop("Path_Coda cannot be empty", call. = FALSE)
   }
 
   AllArgs <- ls(envir = environment())
@@ -77,23 +77,23 @@ PlotGelman <- function(
 
   # Loading coda object ------
 
-  if (inherits(InputCoda, "character")) {
+  if (inherits(Path_Coda, "character")) {
     IASDT.R::CatTime("Loading coda object")
-    CodaObj <- IASDT.R::LoadAs(InputCoda)
+    CodaObj <- IASDT.R::LoadAs(Path_Coda)
   } else {
 
-    if (!inherits(InputCoda, "list")) {
-      stop("`InputCoda` is neither character path or a list", call. = FALSE)
+    if (!inherits(Path_Coda, "list")) {
+      stop("`Path_Coda` is neither character path or a list", call. = FALSE)
     }
-    if (!inherits(InputCoda[[1]], "mcmc.list")) {
-      stop("`InputCoda` has no mcmc.list items", call. = FALSE)
+    if (!inherits(Path_Coda[[1]], "mcmc.list")) {
+      stop("`Path_Coda` has no mcmc.list items", call. = FALSE)
     }
 
-    CodaObj <- InputCoda
-    rm(InputCoda)
+    CodaObj <- Path_Coda
+    rm(Path_Coda)
   }
 
-  OutPath <- file.path(dirname(dirname(InputCoda)), "Model_Convergence")
+  OutPath <- file.path(dirname(dirname(Path_Coda)), "Model_Convergence")
   fs::dir_create(OutPath)
 
   # # ..................................................................... ###

@@ -148,10 +148,8 @@ Efforts_Summarize <- function(
       # left after processing
       ReturnNoData <- dplyr::if_else(TotalRecords == 0, TRUE, FALSE)
 
-      # Check if the RData file for the current order exists and valid. The
-      # `CheckRData` function gives `FALSE` if the file is corrupted or if the
-      # file does not exist
-      FileOkay <- suppressWarnings(IASDT.R::CheckRData(Path_DT))
+      # Check if the RData file for the current order exists and valid.
+      FileOkay <- IASDT.R::CheckData(Path_DT, warning = FALSE)
 
       # Process current order data if the output file is not okay and the order
       # have observations

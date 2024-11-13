@@ -12,7 +12,7 @@
 #'   be empty.
 #' @param Warning logical. If `TRUE` (default), warnings will be printed if the
 #'   file does not exist.
-#' @return A logical value indicating if the file is a valid RData file
+#' @return A logical value indicating if the file is a valid `RData` file
 #' @name CheckRData
 #' @author Ahmed El-Gabbas
 #' @export
@@ -26,7 +26,9 @@ CheckRData <- function(File, Warning = TRUE) {
     return(FALSE)
   }
 
-  if (tools::file_ext(File) == "RData") {
+  Extension <- stringr::str_to_lower(tools::file_ext(File))
+
+  if (Extension == "rdata") {
 
     Obj <- try(IASDT.R::LoadAs(File), silent = TRUE)
 
@@ -41,7 +43,9 @@ CheckRData <- function(File, Warning = TRUE) {
     }
 
   } else {
-    warning("The provided file is not an RData file")
+    if (Warning) {
+      warning("The provided file is not an RData file", call. = FALSE)
+    }
     return(FALSE)
   }
 }

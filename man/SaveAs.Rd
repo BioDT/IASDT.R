@@ -4,7 +4,7 @@
 \alias{SaveAs}
 \title{Save an object to a file with a new name}
 \usage{
-SaveAs(InObj, OutObj, OutPath)
+SaveAs(InObj, OutObj, OutPath, qs_preset = "fast", ...)
 }
 \arguments{
 \item{InObj}{The input object to be saved. This can be an actual R object or
@@ -15,6 +15,11 @@ object. This name is used when the object is loaded back into R.}
 
 \item{OutPath}{A character string specifying the file path (\verb{*.RData}) where
 the object should be saved. This includes the directory and the file name.}
+
+\item{qs_preset}{A character string specifying the preset to use when saving
+the object in the \code{qs} format. The default is "fast". See \link[qs:qsave]{qs::qsave}.}
+
+\item{...}{Additional arguments to be passed to the \code{save} function.}
 }
 \value{
 The function does not return a value but saves an object to the
@@ -22,7 +27,8 @@ specified file path.
 }
 \description{
 This function saves an R object to a specified file path with a potentially
-new name. It is useful for renaming objects during the save process.
+new name. It is useful for renaming objects during the save process. The
+function also supports saving objects in the \code{qs} format.
 }
 \examples{
 TMP_Folder <- file.path(tempdir(), stringi::stri_rand_strings(1, 5))

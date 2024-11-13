@@ -4,20 +4,25 @@
 \alias{CheckRDS}
 \title{Check the Integrity of an \code{RDS} File}
 \usage{
-CheckRDS(File)
+CheckRDS(File, Warning = TRUE)
 }
 \arguments{
-\item{File}{A character string specifying the path to the file to be checked.}
+\item{File}{A character string specifying the path to the file to be checked.
+This can not be empty. The function will attempt to determine the file type
+based on the file extension. If the file extension is not \code{RDS}, the
+function will return \code{FALSE}.}
+
+\item{Warning}{logical. If \code{TRUE} (default), warnings will be printed if the
+file does not exist.}
 }
 \value{
-A logical value: \code{TRUE} if the file is an RDS file and contains a
+A logical value: \code{TRUE} if the file is an \code{RDS} file and contains a
 non-null object, \code{FALSE} otherwise.
 }
 \description{
-This function checks if the specified file is an RDS file and attempts to
-read it. It returns \code{TRUE} if the file is an RDS file and contains a non-null
-object, otherwise \code{FALSE.} If the file is not an RDS file, the function stops
-with an error message.
+This function checks if the specified file is an \code{RDS} file and attempts to
+read it. It returns \code{TRUE} if the file is an \code{RDS} file and contains a
+non-null object, otherwise \code{FALSE.}
 }
 \author{
 Ahmed El-Gabbas

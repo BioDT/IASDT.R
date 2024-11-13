@@ -8,7 +8,7 @@
 #' fitted yet. It generates command files for refitting and creates
 #' corresponding SLURM batch files to execute these commands on a HPC
 #' environment.
-#' @param Path_Model String. Path to the model files directory. Must not end
+#' @param ModelDir String. Path to the model files directory. Must not end
 #'   with a slash.
 #' @param Refit_Prefix String. Prefix for the files that contain the commands to
 #'   refit the models.
@@ -21,7 +21,7 @@
 #' @export
 
 Mod_SLURM_Refit <- function(
-    Path_Model = NULL, NumArrayJobs = 210, JobName = NULL, MemPerCpu = NULL,
+    ModelDir = NULL, NumArrayJobs = 210, JobName = NULL, MemPerCpu = NULL,
     Time = NULL, Partition = "small-g", EnvFile = ".env", CatJobInfo = TRUE,
     ntasks = 1, CpusPerTask = 1, GpusPerNode = 1, FromHPC = TRUE,
     PrepSLURM = TRUE, Path_Hmsc = NULL,
@@ -30,7 +30,7 @@ Mod_SLURM_Refit <- function(
   # # ..................................................................... ###
 
   NullVarsNames <- c(
-    "Path_Model", "MemPerCpu", "Time", "Path_Hmsc")
+    "ModelDir", "MemPerCpu", "Time", "Path_Hmsc")
   NullVars <- which(purrr::map_lgl(.x = NullVarsNames, .f = ~ is.null(get(.x))))
 
   if (length(NullVars) > 0) {
@@ -57,7 +57,7 @@ Mod_SLURM_Refit <- function(
   }
 
   if (is.null(JobName)) {
-    JobName <- paste0(basename(Path_Model), "_RF")
+    JobName <- paste0(basename(ModelDir), "_RF")
   }
 
   # # ..................................................................... ###
@@ -72,7 +72,7 @@ Mod_SLURM_Refit <- function(
     AllArgs = AllArgs, Type = "character",
     Args = c(
       "Partition", "EnvFile", "Time", "JobName", "MemPerCpu",
-      "Path_Model", "Path_Hmsc", "SLURM_Prefix", "Refit_Prefix"))
+      "ModelDir", "Path_Hmsc", "SLURM_Prefix", "Refit_Prefix"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric",
     Args = c("NumArrayJobs", "ntasks", "CpusPerTask", "GpusPerNode"))
@@ -83,7 +83,7 @@ Mod_SLURM_Refit <- function(
   # # ..................................................................... ###
 
   # Remove temp files and incomplete RDs files -----
-  Path_Model_Fit <- file.path(Path_Model, "Model_Fitting_HPC")
+  Path_Model_Fit <- file.path(ModelDir, "Model_Fitting_HPC")
   tempFiles <- list.files(
     path = Path_Model_Fit, pattern = ".rds_temp$", full.names = TRUE)
   if (length(tempFiles) > 0) {
@@ -104,7 +104,7 @@ Mod_SLURM_Refit <- function(
   # # ..................................................................... ###
 
   # List of unfitted model variants -----
-  FailedModels <- file.path(Path_Model, "Model_Info.RData") %>%
+  FailedModels <- file.path(ModelDir, "Model_Info.RData") %>%
     IASDT.R::LoadAs() %>%
     tidyr::unnest_longer(c(Post_Path, Command_HPC)) %>%
     dplyr::filter(!file.exists(Post_Path))
@@ -165,14 +165,14 @@ Mod_SLURM_Refit <- function(
         # create connection to SLURM file
         # This is better than using sink to have a platform independent file
         # (here, to maintain a linux-like new line ending)
-        f <- file(file.path(Path_Model, OutCommandFile), open = "wb")
+        f <- file(file.path(ModelDir, OutCommandFile), open = "wb")
         on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
         cat(Commands2Refit[CurrIDs], sep = "\n", append = FALSE, file = f)
         close(f)
       })
 
     IASDT.R::Mod_SLURM(
-      Path_Model = Path_Model, JobName = JobName,
+      ModelDir = ModelDir, JobName = JobName,
       MemPerCpu = MemPerCpu, Time = Time, Partition = Partition,
       EnvFile = EnvFile, GpusPerNode = GpusPerNode,
       CatJobInfo = CatJobInfo, ntasks = ntasks, CpusPerTask = CpusPerTask,

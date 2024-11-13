@@ -5,7 +5,8 @@
 #' Save an object to a file with a new name
 #'
 #' This function saves an R object to a specified file path with a potentially
-#' new name. It is useful for renaming objects during the save process.
+#' new name. It is useful for renaming objects during the save process. The
+#' function also supports saving objects in the `qs` format.
 #'
 #' @param InObj The input object to be saved. This can be an actual R object or
 #'   a character string representing the name of an object.
@@ -13,6 +14,9 @@
 #'   object. This name is used when the object is loaded back into R.
 #' @param OutPath A character string specifying the file path (`*.RData`) where
 #'   the object should be saved. This includes the directory and the file name.
+#' @param qs_preset A character string specifying the preset to use when saving
+#'   the object in the `qs` format. The default is "fast". See [qs::qsave].
+#' @param ... Additional arguments to be passed to the `save` function.
 #' @name SaveAs
 #' @author Ahmed El-Gabbas
 #' @return The function does not return a value but saves an object to the
@@ -31,7 +35,7 @@
 #'
 #' tibble::tibble(iris2)
 
-SaveAs <- function(InObj, OutObj, OutPath) {
+SaveAs <- function(InObj, OutObj, OutPath, qs_preset = "fast", ...) {
 
   if (is.null(InObj) || is.null(OutObj) || is.null(OutPath)) {
     stop("InObj, OutObj, OutPath cannot be NULL", call. = FALSE)
@@ -41,10 +45,24 @@ SaveAs <- function(InObj, OutObj, OutPath) {
     InObj <- get(InObj)
   }
 
-  # Create directory if not available
-  fs::dir_create(dirname(OutPath))
+  Extension <- tools::file_ext(OutPath)
+
+  if (!Extension %in% c("qs", "RData")) {
+    stop(
+      "Extension of `OutPath` must be either 'qs' or 'RData'.", .call = FALSE)
+  }
 
   OutObj <- eval(OutObj)
   assign(OutObj, InObj)
-  save(list = OutObj, file = OutPath)
+
+  # Create directory if not available
+  fs::dir_create(dirname(OutPath))
+
+  if (Extension == "RData") {
+    save(list = OutObj, file = OutPath, ...)
+  } else {
+    qs::qsave(x = InObj, file = OutPath, preset = qs_preset)
+  }
+
+  return(invisible())
 }

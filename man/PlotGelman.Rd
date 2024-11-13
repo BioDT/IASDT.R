@@ -5,7 +5,7 @@
 \title{Plot Gelman-Rubin-Brooks}
 \usage{
 PlotGelman(
-  InputCoda = NULL,
+  Path_Coda = NULL,
   Alpha = TRUE,
   Beta = TRUE,
   Omega = TRUE,
@@ -18,8 +18,7 @@ PlotGelman(
 )
 }
 \arguments{
-\item{InputCoda}{coda object or path to RData file containing the coda
-object.}
+\item{Path_Coda}{coda object or path to file containing the coda object.}
 
 \item{Alpha}{Logical indicating whether to plot the Gelman-Rubin statistic
 for the Alpha parameter. If \code{TRUE} (default), the function executes the

@@ -5,7 +5,7 @@
 \title{Plot species response curves}
 \usage{
 RespCurv_PlotSp(
-  Path_Postprocessing = NULL,
+  ModelDir = NULL,
   NCores = 20,
   EnvFile = ".env",
   FromHPC = TRUE,
@@ -13,9 +13,9 @@ RespCurv_PlotSp(
 )
 }
 \arguments{
-\item{Path_Postprocessing}{String. The path to the directory for model
-post-processing. The function reads data from the \code{RespCurv_Sp}
-sub-directory, created by \link{RespCurv_PrepData}.}
+\item{ModelDir}{String. Path to the root directory of the fitted models
+without the trailing slash. The function reads data from \code{RespCurv_DT}
+subdirectory created by \link{RespCurv_PrepData}.}
 
 \item{NCores}{Integer. Number of cores to use for parallel processing.
 Defaults to 20.}

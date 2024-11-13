@@ -50,12 +50,12 @@ Convergence_Plot <- function(
   }
 
   if (length(MarginType) != 1) {
-    stop("MarginType must be a single value.", call. = FALSE)
+    stop("`MarginType` must be a single value.", call. = FALSE)
   }
 
   if (!MarginType %in% c("histogram", "density")) {
     stop(
-      "MarginType must be either 'histogram' or 'density'.", call. = FALSE)
+      "`MarginType` must be either 'histogram' or 'density'.", call. = FALSE)
   }
 
   # # ..................................................................... ###
@@ -150,7 +150,7 @@ Convergence_Plot <- function(
 
     FileConv_Rho <- file.path(Path_Convergence, "Convergence_Rho.RData")
 
-    if (file.exists(FileConv_Rho) && IASDT.R::CheckRData(FileConv_Rho)) {
+    if (IASDT.R::CheckData(FileConv_Rho, warning = FALSE)) {
       IASDT.R::CatTime("Loading plotting data", Level = 1)
       PlotObj_Rho <- IASDT.R::LoadAs(FileConv_Rho)
     } else {

@@ -8,14 +8,14 @@
 #' chains, checks for missing or incomplete model runs, and optionally prints
 #' information about incomplete models. It can work with models run on HPC
 #' environments and supports parallel processing.
-#' @param Path_Model String. Path to the root directory of the fitted models
+#' @param ModelDir String. Path to the root directory of the fitted models
 #'   without the trailing slash. Two folders will be created `Model_Fitted` and
 #'   `Model_Coda` to store merged model and coda objects, respectively.
 #' @param NCores Integer. The number of cores to use for parallel processing.
 #'   This should be a positive integer.
 #' @param ModInfoName String. The name of the file (without extension) where the
 #'   processed model information will be saved. If `NULL`, it overwrites the
-#'   `Model_Info.RData` file in the `Path_Model` directory. If provided, a new
+#'   `Model_Info.RData` file in the `ModelDir` directory. If provided, a new
 #'   `.RData` file will be created with this name.
 #' @param PrintIncomplete Logical. Indicates whether to print the names of
 #'   models that were not successfully fitted to the console. Defaults to
@@ -24,6 +24,8 @@
 #'   environment. This affects how file paths are handled. Defaults to `TRUE`.
 #' @param FromJSON Logical. Indicates whether to convert loaded models from JSON
 #'   format before reading. Defaults to `FALSE`.
+#' @param FileFormat Character. The format to save the fitted model and coda
+#'   objects. It can be either "qs" or "RData". Defaults to "qs".
 #' @name Merge_Chains
 #' @author Ahmed El-Gabbas
 #' @return The function does not return anything but saves the processed model
@@ -31,8 +33,9 @@
 #' @export
 
 Merge_Chains <- function(
-    Path_Model = NULL, NCores = NULL, ModInfoName = NULL,
-    PrintIncomplete = TRUE, FromHPC = TRUE, FromJSON = FALSE) {
+    ModelDir = NULL, NCores = NULL, ModInfoName = NULL,
+    PrintIncomplete = TRUE, FromHPC = TRUE, FromJSON = FALSE,
+    FileFormat = "qs") {
 
   # # ..................................................................... ###
 
@@ -48,8 +51,8 @@ Merge_Chains <- function(
 
   # Checking arguments ----
 
-  if (is.null(Path_Model) || is.null(NCores)) {
-    stop("`Path_Model` and `NCores` cannot be empty", call. = FALSE)
+  if (is.null(ModelDir) || is.null(NCores)) {
+    stop("`ModelDir` and `NCores` cannot be empty", call. = FALSE)
   }
 
   AllArgs <- ls(envir = environment())
@@ -59,7 +62,7 @@ Merge_Chains <- function(
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Args = "Path_Model", Type = "character")
+    AllArgs = AllArgs, Args = c("ModelDir", "FileFormat"), Type = "character")
 
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = "NCores", Type = "numeric")
 
@@ -69,25 +72,33 @@ Merge_Chains <- function(
 
   rm(AllArgs)
 
-  if (!dir.exists(Path_Model)) {
+  if (!dir.exists(ModelDir)) {
     stop(paste0(
-      "Path_Model directory (`", Path_Model, "`) does not exist"),
+      "ModelDir directory (`", ModelDir, "`) does not exist"),
       call. = FALSE)
+  }
+
+  if (length(FileFormat) != 1) {
+    stop("`FileFormat` must be a single string.")
+  }
+
+  if (!FileFormat %in% c("qs", "RData")) {
+    stop("`FileFormat` must be either 'qs' or 'RData'.")
   }
 
   # # ..................................................................... ###
 
   # Creating paths -----
 
-  Path_Fitted_Models <- file.path(Path_Model, "Model_Fitted")
-  Path_Coda <- file.path(Path_Model, "Model_Coda")
+  Path_Fitted_Models <- file.path(ModelDir, "Model_Fitted")
+  Path_Coda <- file.path(ModelDir, "Model_Coda")
   fs::dir_create(c(Path_Fitted_Models, Path_Coda))
 
   # # ..................................................................... ###
 
   # Loading model info ----
 
-  Path_ModInfo <- file.path(Path_Model, "Model_Info.RData")
+  Path_ModInfo <- file.path(ModelDir, "Model_Info.RData")
 
   if (!file.exists(Path_ModInfo)) {
     stop(paste0(
@@ -98,7 +109,7 @@ Merge_Chains <- function(
 
   # Remove temp files and incomplete RDs files ----
 
-  Path_Model_Fit <- file.path(Path_Model, "Model_Fitting_HPC")
+  Path_Model_Fit <- file.path(ModelDir, "Model_Fitting_HPC")
   tempFiles <- list.files(
     path = Path_Model_Fit, pattern = ".rds_temp$", full.names = TRUE)
 
@@ -164,11 +175,10 @@ Merge_Chains <- function(
       M_Name_Fit <- Model_Info2$M_Name_Fit[[x]]
 
       Path_FittedMod <- file.path(
-        Path_Fitted_Models, paste0(M_Name_Fit, "_Model.RData"))
+        Path_Fitted_Models, paste0(M_Name_Fit, "_Model.", FileFormat))
 
-      # Check if model exists and RData is valid
-      ModelFileOkay <- file.exists(Path_FittedMod) &&
-        IASDT.R::CheckRData(Path_FittedMod)
+      # Check if model exists and is valid
+      ModelFileOkay <- IASDT.R::CheckData(Path_FittedMod, warning = FALSE)
 
       if (isFALSE(ModelFileOkay)) {
 
@@ -215,9 +225,11 @@ Merge_Chains <- function(
             Path_Coda = NA_character_,
             Post_Aligned2 = NA))
         } else {
+
           IASDT.R::SaveAs(
             InObj = Model_Fit, OutObj = paste0(M_Name_Fit, "_Model"),
             OutPath = Path_FittedMod)
+
         }
       } else {
         Post_Aligned2 <- Model_Info2$Post_Aligned[[x]]
@@ -227,7 +239,8 @@ Merge_Chains <- function(
       # Convert to Coda object
       # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-      Path_Coda <- file.path(Path_Coda, paste0(M_Name_Fit, "_Coda.RData"))
+      Path_Coda <- file.path(
+        Path_Coda, paste0(M_Name_Fit, "_Coda.", FileFormat))
 
       if (!exists("Model_Fit") && !file.exists(Path_FittedMod)) {
         list(
@@ -241,10 +254,8 @@ Merge_Chains <- function(
         Model_Fit <- IASDT.R::LoadAs(Path_FittedMod)
       }
 
-      # Check if coda file exists and RData is valid
-      CodaFileOkay <- file.exists(Path_Coda) && IASDT.R::CheckRData(Path_Coda)
-
-      if (isFALSE(CodaFileOkay)) {
+      # Check if coda file exists and is valid
+      if (isFALSE(IASDT.R::CheckData(Path_Coda, warning = FALSE))) {
 
         if (file.exists(Path_Coda)) {
           fs::file_delete(Path_Coda)
@@ -393,7 +404,7 @@ Merge_Chains <- function(
   } else {
     IASDT.R::SaveAs(
       InObj = Model_Info2, OutObj = ModInfoName,
-      OutPath = file.path(Path_Model, paste0(ModInfoName, ".RData")))
+      OutPath = file.path(ModelDir, paste0(ModInfoName, ".RData")))
   }
 
   IASDT.R::CatDiff(InitTime = .StartTime)

@@ -427,7 +427,7 @@ Mod_CV_Fit <- function(
 
     # Prepare SLURM file to submit ALL commands to HPC
     IASDT.R::Mod_SLURM(
-      Path_Model = Path_CV, JobName = JobName, MemPerCpu = MemPerCpu,
+      ModelDir = Path_CV, JobName = JobName, MemPerCpu = MemPerCpu,
       Time = Time, EnvFile = EnvFile, FromHPC = FromHPC, Path_Hmsc = Path_Hmsc,
       Path_SLURM_Out = Path_Post, ...)
   }

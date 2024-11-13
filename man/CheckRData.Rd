@@ -14,7 +14,7 @@ be empty.}
 file does not exist.}
 }
 \value{
-A logical value indicating if the file is a valid RData file
+A logical value indicating if the file is a valid \code{RData} file
 }
 \description{
 This function checks if a given file is a valid RData file by verifying its

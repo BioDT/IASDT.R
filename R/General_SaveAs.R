@@ -37,19 +37,23 @@
 
 SaveAs <- function(InObj, OutObj, OutPath, qs_preset = "fast", ...) {
 
-  if (is.null(InObj) || is.null(OutObj) || is.null(OutPath)) {
-    stop("InObj, OutObj, OutPath cannot be NULL", call. = FALSE)
+  if (is.null(InObj) || is.null(OutPath)) {
+    stop("`InObj` and `OutPath` cannot be NULL", call. = FALSE)
   }
 
   if (inherits(InObj, "character")) {
     InObj <- get(InObj)
   }
 
-  Extension <- tools::file_ext(OutPath)
+  Extension <- stringr::str_to_lower(tools::file_ext(OutPath))
 
-  if (!Extension %in% c("qs", "RData")) {
+  if (!Extension %in% c("qs", "rdata")) {
     stop(
       "Extension of `OutPath` must be either 'qs' or 'RData'.", .call = FALSE)
+  }
+
+  if (Extension == "rdata" && is.null(OutObj)) {
+    stop("`OutObj` cannot be NULL for saving RData files", call. = FALSE)
   }
 
   OutObj <- eval(OutObj)
@@ -58,7 +62,7 @@ SaveAs <- function(InObj, OutObj, OutPath, qs_preset = "fast", ...) {
   # Create directory if not available
   fs::dir_create(dirname(OutPath))
 
-  if (Extension == "RData") {
+  if (Extension == "rdata") {
     save(list = OutObj, file = OutPath, ...)
   } else {
     qs::qsave(x = InObj, file = OutPath, preset = qs_preset)

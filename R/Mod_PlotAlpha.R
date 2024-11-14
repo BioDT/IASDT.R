@@ -232,13 +232,15 @@ PlotAlpha <- function(
       return(Plot)
     })
 
+  layout_matrix <- matrix(
+    seq_len(NRC[1] * NRC[2]), nrow = NRC[1], byrow = TRUE)
 
   if (AddTitle && AddFooter) {
     Plots <- gridExtra::marrangeGrob(
       Plots, bottom = bquote(paste0("page ", g, " of ", npages)),
       top = grid::textGrob(
         label = Title, gp = grid::gpar(fontface = "bold", fontsize = 20)),
-      nrow = NRC[1], ncol = NRC[2])
+      nrow = NRC[1], ncol = NRC[2], layout_matrix = layout_matrix)
   }
 
   if (AddTitle && isFALSE(AddFooter)) {
@@ -246,18 +248,19 @@ PlotAlpha <- function(
       Plots, bottom = NULL,
       top = grid::textGrob(
         label = Title, gp = grid::gpar(fontface = "bold", fontsize = 20)),
-      nrow = NRC[1], ncol = NRC[2])
+      nrow = NRC[1], ncol = NRC[2], layout_matrix = layout_matrix)
   }
 
   if (isFALSE(AddTitle) && AddFooter) {
     Plots <- gridExtra::marrangeGrob(
       Plots, bottom = bquote(paste0("page ", g, " of ", npages)),
-      top = NULL, nrow = NRC[1], ncol = NRC[2])
+      top = NULL, nrow = NRC[1], ncol = NRC[2], layout_matrix = layout_matrix)
   }
 
   if (isFALSE(AddTitle) && isFALSE(AddFooter)) {
     Plots <- cowplot::plot_grid(
-      plotlist = Plots, ncol = NRC[2], nrow = NRC[1], align = "hv")
+      plotlist = Plots, ncol = NRC[2], nrow = NRC[1],
+      align = "hv", byrow = TRUE)
   }
 
   return(Plots)

@@ -52,7 +52,7 @@
 Predict_Maps <- function(
     Path_Model = NULL, Hab_Abb = NULL, EnvFile = ".env", FromHPC = TRUE,
     NCores = 8, Pred_Clamp = TRUE, FixEfforts = "mean", Pred_NewSites = TRUE,
-    UseTF = TRUE, TF_Environ = NULL, 
+    UseTF = TRUE, TF_Environ = NULL, Temp_Dir = "TEMP2Pred",
     CC_Models = c(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
       "MRI-ESM2-0", "UKESM1-0-LL"),
@@ -463,7 +463,7 @@ Predict_Maps <- function(
     Preds_LF <- IASDT.R::Predict_Hmsc(
       object = Path_Model, Gradient = Gradient, expected = TRUE,
       NCores = NCores, Model_Name = paste0("LF_", Hab_Abb, "_Test"),
-      Temp_Dir = "TEMP2Pred", UseTF = UseTF, TF_Environ = TF_Environ,
+      Temp_Dir = Temp_Dir, UseTF = UseTF, TF_Environ = TF_Environ,
       LF_OutFile = Path_Test_LF, LF_Only = TRUE, Evaluate = FALSE,
       Verbose = FALSE)
 
@@ -609,7 +609,7 @@ Predict_Maps <- function(
           Preds_ModFitSites <- IASDT.R::Predict_Hmsc(
             object = Path_Model, X = Train_X, Gradient = NULL, expected = TRUE,
             NCores = NCores, Model_Name = Model_Name_Train,
-            Temp_Dir = "TEMP2Pred", UseTF = UseTF, TF_Environ = TF_Environ,
+            Temp_Dir = Temp_Dir, UseTF = UseTF, TF_Environ = TF_Environ,
             LF_Return = TRUE, Pred_Dir = Path_Prediction, Pred_PA = Train_PA,
             Pred_XY = Train_XY, Evaluate = Evaluate, Eval_Name = NULL,
             Eval_Dir = Path_Eval, Verbose = FALSE)
@@ -635,7 +635,7 @@ Predict_Maps <- function(
             Preds_NewSites <- IASDT.R::Predict_Hmsc(
               object = Path_Model, Gradient = Gradient, expected = TRUE,
               NCores = NCores, Model_Name = Model_Name_Test,
-              Temp_Dir = "TEMP2Pred", UseTF = UseTF, TF_Environ = TF_Environ,
+              Temp_Dir = Temp_Dir, UseTF = UseTF, TF_Environ = TF_Environ,
               LF_Return = TRUE, LF_InputFile = Path_Test_LF,
               Pred_Dir = Path_Prediction,
               Pred_XY = sf::st_drop_geometry(Test_XY),

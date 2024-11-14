@@ -8,6 +8,7 @@
 #' chains, checks for missing or incomplete model runs, and optionally prints
 #' information about incomplete models. It can work with models run on HPC
 #' environments and supports parallel processing.
+#'
 #' @param ModelDir String. Path to the root directory of the fitted models
 #'   without the trailing slash. Two folders will be created `Model_Fitted` and
 #'   `Model_Coda` to store merged model and coda objects, respectively.
@@ -407,7 +408,9 @@ Merge_Chains <- function(
       OutPath = file.path(ModelDir, paste0(ModInfoName, ".RData")))
   }
 
-  IASDT.R::CatDiff(InitTime = .StartTime)
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  IASDT.R::CatDiff(InitTime = .StartTime, Prefix = "Merging chains took ")
 
   return(invisible(NULL))
 }

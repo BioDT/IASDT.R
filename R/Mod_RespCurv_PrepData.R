@@ -7,7 +7,7 @@
 #' This function prepares and processes data for generating response curves for
 #' Hmsc models. It supports parallel processing and can return the processed
 #' data.
-#' @param Path_Model Character. Path to the `.RData` file containing the model.
+#' @param Path_Model Character. Path file containing the model.
 #' @param ngrid Integer specifying the number of points along the gradient for
 #'   continuous focal variables. Defaults to 50. See [Hmsc::constructGradient]
 #'   for more details.
@@ -80,8 +80,7 @@ RespCurv_PrepData <- function(
   # Loading model object ------
 
   IASDT.R::CatTime("Loading model object")
-  if (file.exists(Path_Model) &&
-      stringr::str_detect(Path_Model, ".+.RData$")) {
+  if (file.exists(Path_Model)) {
     Model <- IASDT.R::LoadAs(Path_Model)
     if (!inherits(Model, "Hmsc")) {
       stop("Model object is not of class 'hmsc'", call. = FALSE)
@@ -378,7 +377,7 @@ RespCurv_PrepData <- function(
 
     File_LF <- file.path(Path_RC_DT, "ResCurv_LF.RData")
 
-    if (isFALSE(IASDT.R::CheckData(File_LF, Warning = FALSE))) {
+    if (isFALSE(IASDT.R::CheckData(File_LF, warning = FALSE))) {
 
       IASDT.R::InfoChunk(
         Message = "Get LF prediction at mean coordinates",

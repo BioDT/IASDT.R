@@ -28,31 +28,32 @@
 PlotOmegaGG <- function(
     Path_Model, supportLevel = 0.95, PlotWidth = 25, PlotHeight = 22.5) {
 
+  # # ..................................................................... ###
+
   # devtools::install_github("YuLab-SMU/ggtree")
 
   if (is.null(Path_Model)) {
     stop("Path_Model cannot be empty", call. = FALSE)
   }
 
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # Out path
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
+
+  # Out path -----
 
   Path_Out <- dirname(dirname(Path_Model)) %>%
     file.path("Model_Postprocessing", "Parameters_Summary")
   fs::dir_create(Path_Out)
 
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # Loading model object
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
+  # Loading model object ------
   IASDT.R::CatTime("Loading model object")
+
   Model <- IASDT.R::LoadAs(Path_Model)
 
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # Plot phylogenetic tree -----
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
+  # Plot phylogenetic tree -----
   IASDT.R::CatTime("Phylogenetic tree plot")
 
   Tree <- Model$phyloTree
@@ -68,11 +69,11 @@ PlotOmegaGG <- function(
       axis.text.y = ggplot2::element_blank(),
       plot.margin = ggplot2::unit(c(0.2, 0, 0, 0), "lines"))
 
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # Plotting theme ----
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
+  # Plotting theme ----
   IASDT.R::CatTime("Plotting theme")
+
   Theme <- ggplot2::theme(
     legend.title = ggtext::element_markdown(),
     legend.spacing = ggplot2::unit(0, "cm"),
@@ -84,17 +85,16 @@ PlotOmegaGG <- function(
     panel.grid.minor = ggplot2::element_blank(),
     plot.margin = ggplot2::unit(c(0, -3, 1.35, -2), "lines"))
 
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # computeAssociations -----
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
-  IASDT.R::CatTime("ComputeAssociations")
+  # ComputeAssociations -----
+  IASDT.R::CatTime("Compute associations")
+
   post <- Hmsc::computeAssociations(Model)[[1]]
 
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # Sign ------
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
+  # Sign ------
   IASDT.R::CatTime("1. sign")
 
   Support <- (post$support > supportLevel) %>%
@@ -144,10 +144,9 @@ PlotOmegaGG <- function(
   print(Plot)
   grDevices::dev.off()
 
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # Mean -----
-  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # # ..................................................................... ###
 
+  # Mean -----
   IASDT.R::CatTime("2. mean")
 
   LegendTitle <- paste0(
@@ -185,6 +184,8 @@ PlotOmegaGG <- function(
     width = PlotWidth, height = PlotHeight, units = "cm", quality = 100)
   print(Plot)
   grDevices::dev.off()
+
+  # # ..................................................................... ###
 
   return(invisible(NULL))
 }

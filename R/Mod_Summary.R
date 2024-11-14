@@ -33,6 +33,8 @@
 Mod_Summary <- function(
     Path_Coda = NULL, EnvFile = ".env", ReturnData = FALSE, FromHPC = TRUE) {
 
+  # # ..................................................................... ###
+
   if (is.null(Path_Coda)) {
     stop("Path_Coda cannot be empty", call. = FALSE)
   }
@@ -41,14 +43,19 @@ Mod_Summary <- function(
     stop(paste("Environment file not found:", EnvFile), call. = FALSE)
   }
 
+  # # ..................................................................... ###
+
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   VarSp <- Sp1_abb <- Sp2_abb <- IAS_ID <- Val <- taxon_name <- Species_name <-
     Sp1_Species_name <- Sp2_Species_name <- Q2_5 <- Q97_5 <- Sp1_Sp_abb <-
     Sp2_Sp_abb <- TaxaInfoFile <- NULL
 
+  # # ..................................................................... ###
 
-  # Prepare Species list
+  # Prepare Species list -----
+  IASDT.R::CatTime("Prepare Species list")
+
   if (FromHPC) {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
@@ -62,6 +69,7 @@ Mod_Summary <- function(
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
+  # # ..................................................................... ###
 
   # DataPrep helper function -------
   DataPrep <- function(DT) {
@@ -75,17 +83,32 @@ Mod_Summary <- function(
           Q97_5 = "97.5%")))
   }
 
+  # # ..................................................................... ###
+
   # Loading coda object ------
   IASDT.R::CatTime("Loading coda object")
   Coda <- IASDT.R::LoadAs(Path_Coda)
+
+  IASDT.R::CatTime("Beta summary", Level = 1)
   Beta_Summary <- summary(Coda$Beta)
+
+  IASDT.R::CatTime("Alpha summary", Level = 1)
   Alpha_Summary <- summary(Coda$Alpha[[1]])
+
+  IASDT.R::CatTime("Omega summary", Level = 1)
   Omega_Summary <- summary(Coda$Omega[[1]])
+
+  IASDT.R::CatTime("Rho summary", Level = 1)
   Rho_Summary <- summary(Coda$Rho)
+
   rm(Coda)
 
+  # # ..................................................................... ###
+
+  IASDT.R::CatTime("Extracting summary data")
+
   # Beta ------
-  IASDT.R::CatTime("Beta")
+  IASDT.R::CatTime("Beta", Level = 1)
   Beta_Summary <- DataPrep(Beta_Summary$statistics) %>%
     dplyr::full_join(DataPrep(Beta_Summary$quantiles), by = "VarSp") %>%
     dplyr::mutate(
@@ -115,7 +138,7 @@ Mod_Summary <- function(
         .x = Q2_5, .y = Q97_5, ~dplyr::between(x = 0, left = .x, right = .y)))
 
   # Alpha -----
-  IASDT.R::CatTime("Alpha")
+  IASDT.R::CatTime("Alpha", Level = 1)
   Alpha_Summary <- DataPrep(Alpha_Summary$statistics) %>%
     dplyr::full_join(DataPrep(Alpha_Summary$quantiles), by = "VarSp") %>%
     dplyr::mutate(
@@ -134,7 +157,7 @@ Mod_Summary <- function(
         .x = Q2_5, .y = Q97_5, ~dplyr::between(x = 0, left = .x, right = .y)))
 
   # Rho ----
-  IASDT.R::CatTime("Rho")
+  IASDT.R::CatTime("Rho", Level = 1)
   Rho_Summary <- dplyr::bind_rows(
     as.data.frame(as.matrix(Rho_Summary$statistics)),
     as.data.frame(as.matrix(Rho_Summary$quantiles))) %>%
@@ -153,7 +176,7 @@ Mod_Summary <- function(
         .x = Q2_5, .y = Q97_5, ~dplyr::between(x = 0, left = .x, right = .y)))
 
   # Omega ------
-  IASDT.R::CatTime("Omega")
+  IASDT.R::CatTime("Omega", Level = 1)
 
   ListSp <- utils::read.delim(TaxaInfoFile, sep = "\t") %>%
     tibble::tibble() %>%
@@ -194,6 +217,8 @@ Mod_Summary <- function(
       CI_Overlap_0 = purrr::map2_lgl(
         .x = Q2_5, .y = Q97_5, ~dplyr::between(x = 0, left = .x, right = .y)))
 
+  # # ..................................................................... ###
+
   # Saving ------
   IASDT.R::CatTime("Saving")
   Path_Out <- dirname(dirname(Path_Coda)) %>%
@@ -206,6 +231,8 @@ Mod_Summary <- function(
       Rho = Rho_Summary, Omega = Omega_Summary),
     OutObj = "Parameters_Summary",
     OutPath = file.path(Path_Out, "Parameters_Summary.RData"))
+
+  # # ..................................................................... ###
 
   if (ReturnData) {
     return(InObj = list(

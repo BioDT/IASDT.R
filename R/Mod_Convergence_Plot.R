@@ -203,7 +203,7 @@ Convergence_Plot <- function(
     }
   }
 
-  IASDT.R::CatTime("Save plot", Level = 1)
+  IASDT.R::CatTime("Save plots", Level = 1)
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
   grDevices::cairo_pdf(
@@ -249,7 +249,7 @@ Convergence_Plot <- function(
     OmegaDF <- dplyr::left_join(OmegaDF, CI, by = "SpComb")
     OmegaNames <- attr(Obj_Omega[[1]], "dimnames")[[2]]
 
-    IASDT.R::CatTime("Prepare Plots", Level = 1)
+    IASDT.R::CatTime("Prepare plots", Level = 1)
     PlotObj_Omega <- purrr::map_dfr(
       .x = seq_len(NOmega),
       .f = function(x) {
@@ -347,8 +347,8 @@ Convergence_Plot <- function(
     if (SavePlotData) {
       IASDT.R::CatTime("Save plot data", Level = 1)
       IASDT.R::SaveAs(
-        InObj = PlotObj_Omega, OutObj = "Convergence_Omega",
-        OutPath = file.path(Path_Convergence, "Convergence_Omega.RData"))
+        InObj = PlotObj_Omega,
+        OutPath = file.path(Path_Convergence, "Convergence_Omega.qs"))
     }
     rm(Obj_Omega, OmegaDF, SelectedCombs, CI, OmegaNames)
     invisible(gc())
@@ -460,6 +460,7 @@ Convergence_Plot <- function(
       EnvFile = EnvFile, FromHPC = FromHPC) %>%
       dplyr::select(IAS_ID, Class, Order, Family)
 
+    IASDT.R::CatTime("Prepare Beta data", Level = 2)
     Beta_DF <- Beta_DF %>%
       dplyr::left_join(VarRanges, by = "Variable") %>%
       dplyr::left_join(SpeciesTaxonomy, by = "IAS_ID") %>%
@@ -505,7 +506,7 @@ Convergence_Plot <- function(
     if (NCores > 1) {
       withr::local_options(
         future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
-      c1 <- snow::makeSOCKcluster(NCores)
+      c1 <- snow::makeSOCKcluster(min(NCores, nrow(Beta_DF)))
       on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
       future::plan("future::cluster", workers = c1, gc = TRUE)
       on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
@@ -818,7 +819,7 @@ Convergence_Plot <- function(
   if (NCores > 1) {
     withr::local_options(
       future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
-    c1 <- snow::makeSOCKcluster(NCores)
+    c1 <- snow::makeSOCKcluster(min(NCores, nrow(BetaTracePlots_BySp)))
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
     future::plan("future::cluster", workers = c1, gc = TRUE)
     on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)

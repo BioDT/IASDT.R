@@ -102,7 +102,7 @@ Convergence_Plot_All <- function(
   if (NCores == 1) {
     future::plan("future::sequential", gc = TRUE)
   } else {
-    c1 <- snow::makeSOCKcluster(NCores)
+    c1 <- snow::makeSOCKcluster(min(NCores, nrow(Model_Info)))
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
     future::plan("future::cluster", workers = c1, gc = TRUE)
     on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
@@ -119,7 +119,7 @@ Convergence_Plot_All <- function(
 
     CodaModelExist <- all(file.exists(c(Path_Coda, Path_FittedMod)))
 
-    # prepare traceplot ----
+    # Prepare traceplot ----
 
     if (isFALSE(CodaModelExist)) {
 
@@ -241,7 +241,6 @@ Convergence_Plot_All <- function(
 
   # Processing convergence data -----
 
-
   IASDT.R::CatTime("Processing convergence data", Level = 1)
 
   Convergence_DT <- Model_Info %>%
@@ -298,13 +297,16 @@ Convergence_Plot_All <- function(
   # Alpha - trace plots ------
   IASDT.R::CatTime("Alpha - trace plots")
 
+  layout_matrix <- matrix(seq_len(2 * 2), nrow = 2, byrow = TRUE)
+
   grDevices::pdf(
     file = file.path(Path_Convergence_All, "TracePlots_Alpha.pdf"),
     width = 18, height = 12)
   purrr::walk(
     .x = Convergence_DT$Path_Trace_Alpha,
     .f = purrr::safely(~{
-      gridExtra::grid.arrange(IASDT.R::LoadAs(.x)[[1]])
+      gridExtra::grid.arrange(IASDT.R::LoadAs(.x)[[1]],
+                              layout_matrix = layout_matrix)
     }))
   grDevices::dev.off()
 
@@ -312,6 +314,8 @@ Convergence_Plot_All <- function(
 
   # Rho - trace plots ------
   IASDT.R::CatTime("Rho - trace plots")
+
+  layout_matrix <- matrix(seq_len(2 * 2), nrow = 2, byrow = TRUE)
 
   Plot <- Convergence_DT %>%
     dplyr::filter(stringr::str_detect(M_Name_Fit, "_Tree_")) %>%
@@ -327,7 +331,7 @@ Convergence_Plot_All <- function(
       top = grid::textGrob(
         label = "Convergence of the rho parameter",
         gp = grid::gpar(fontface = "bold", fontsize = 20)),
-      nrow = 2, ncol = 2)
+      nrow = 2, ncol = 2, layout_matrix = layout_matrix)
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   grDevices::pdf(

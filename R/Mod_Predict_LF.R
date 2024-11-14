@@ -155,52 +155,52 @@ Predict_LF <- function(
           call. = FALSE)
       }
 
-      PythonScript <- c(system.file("Utilities.py", package = "IASDT.R"))
-
-      # Check if PythonScript exists
-      if (!file.exists(PythonScript)) {
-        stop(
-          "Necessary Python script does not exist in the package files",
-          call. = FALSE)
-      }
-
-      # Suppress TensorFlow warnings and disable optimizations
-      Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3", TF_ENABLE_ONEDNN_OPTS = "0")
-
-
-      # Activate the python environment
-      reticulate::use_virtualenv(TF_Environ, required = TRUE)
-      reticulate::source_python(PythonScript)
-
-      # Check if all necessary python modules exist
-      MissingModules <- check_modules(
-        module_list = c(
-          "os", "tensorflow", "numpy", "rdata", "xarray", "pandas"),
-        print_status = TRUE)
-
-      if (length(MissingModules) > 0) {
-        stop(
-          paste0(
-            "The following module(s) are missing: ",
-            paste0(MissingModules, collapse = "; ")),
-          call. = FALSE)
-      } else {
-        IASDT.R::CatTime(
-          "All necessary python modules are available", Level = 2)
-      }
-
-      # Check GPU availability
-      GPU <- is_gpu_available(print_status = FALSE)
-
-      if (GPU) {
-        IASDT.R::CatTime("GPU is available", Level = 2)
-      } else {
-        IASDT.R::CatTime("No GPU is available", Level = 2)
-      }
-
-      reticulate::py_run_string("del is_gpu_available; del check_modules")
-      rm(is_gpu_available, check_modules, PythonScript)
-      invisible(gc())
+      # PythonScript <- c(system.file("Utilities.py", package = "IASDT.R"))
+      #
+      # # Check if PythonScript exists
+      # if (!file.exists(PythonScript)) {
+      #   stop(
+      #     "Necessary Python script does not exist in the package files",
+      #     call. = FALSE)
+      # }
+      #
+      # # Suppress TensorFlow warnings and disable optimizations
+      # Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3", TF_ENABLE_ONEDNN_OPTS = "0")
+      #
+      #
+      # # Activate the python environment
+      # reticulate::use_virtualenv(TF_Environ, required = TRUE)
+      # reticulate::source_python(PythonScript)
+      #
+      # # Check if all necessary python modules exist
+      # MissingModules <- check_modules(
+      #   module_list = c(
+      #     "os", "tensorflow", "numpy", "rdata", "xarray", "pandas"),
+      #   print_status = TRUE)
+      #
+      # if (length(MissingModules) > 0) {
+      #   stop(
+      #     paste0(
+      #       "The following module(s) are missing: ",
+      #       paste0(MissingModules, collapse = "; ")),
+      #     call. = FALSE)
+      # } else {
+      #   IASDT.R::CatTime(
+      #     "All necessary python modules are available", Level = 2)
+      # }
+      #
+      # # Check GPU availability
+      # GPU <- is_gpu_available(print_status = FALSE)
+      #
+      # if (GPU) {
+      #   IASDT.R::CatTime("GPU is available", Level = 2)
+      # } else {
+      #   IASDT.R::CatTime("No GPU is available", Level = 2)
+      # }
+      #
+      # reticulate::py_run_string("del is_gpu_available; del check_modules")
+      # rm(is_gpu_available, check_modules, PythonScript)
+      # invisible(gc())
 
       IASDT.R::CatTime("Computations will be made using TensorFlow", Level = 1)
     } else {
@@ -379,8 +379,6 @@ Predict_LF <- function(
           }
           return(obj_class)
         })
-        print(object_classes)
-
 
         # Current denominator
         Denom <- Unique_Alpha$Denom[[RowNum]]

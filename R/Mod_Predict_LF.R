@@ -155,14 +155,12 @@ Predict_LF <- function(
           call. = FALSE)
       }
 
-      PythonScripts <- c(
-        system.file("crossprod_solve.py", package = "IASDT.R"),
-        system.file("Utilities.py", package = "IASDT.R"))
+      PythonScript <- c(system.file("Utilities.py", package = "IASDT.R"))
 
-      # Check if PythonScripts exists
-      if (!all(file.exists(PythonScripts))) {
+      # Check if PythonScript exists
+      if (!file.exists(PythonScript)) {
         stop(
-          "Necessary Python scripts do not exist in the package files",
+          "Necessary Python script does not exist in the package files",
           call. = FALSE)
       }
 
@@ -172,7 +170,7 @@ Predict_LF <- function(
 
       # Activate the python environment
       reticulate::use_virtualenv(TF_Environ, required = TRUE)
-      reticulate::source_python(PythonScripts[2])
+      reticulate::source_python(PythonScript)
 
       # Check if all necessary python modules exist
       MissingModules <- check_modules(
@@ -201,7 +199,7 @@ Predict_LF <- function(
       }
 
       reticulate::py_run_string("del is_gpu_available; del check_modules")
-      rm(is_gpu_available, check_modules)
+      rm(is_gpu_available, check_modules, PythonScript)
       invisible(gc())
 
       IASDT.R::CatTime("Computations will be made using TensorFlow", Level = 1)
@@ -337,122 +335,6 @@ Predict_LF <- function(
 
     # # .................................................................... ###
 
-    # calculate etaPred for each unique alpha
-
-    calc_eta_pred <- function(RowNum) {
-      # Current denominator
-      Denom <- Unique_Alpha$Denom[[RowNum]]
-      # ID for latent factor
-      LF_ID <- Unique_Alpha$LF_ID[[RowNum]]
-      # ID for posterior sample
-      SampleID <- Unique_Alpha$SampleID[[RowNum]]
-      # File path for current alpha
-      File <- Unique_Alpha$File[[RowNum]]
-
-      # If the denominator is positive, perform calculations; otherwise, set
-      # `eta_indNew` to zero.
-
-      if (Denom > 0) {
-        if (UseTF) {
-
-          # Use TensorFlow
-
-          # Activate the python environment
-          reticulate::use_virtualenv(TF_Environ, required = TRUE)
-          # Source the script file containing the crossprod_solve function
-          reticulate::source_python(PythonScripts[1])
-
-          eta_indNew <- crossprod_solve(
-            Dist1 = Path_D11, Dist2 = Path_D12, Denom = Denom,
-            List = File, use_single = TF_use_single)
-          eta_indNew <- purrr::map(
-            .x = seq_along(eta_indNew),
-            .f = ~ {
-              tibble::tibble(etaPred = as.vector(eta_indNew[[.x]])) %>%
-                dplyr::mutate(
-                  Unit_ID = unitsPred[indNew], SampleID = SampleID[.x])
-            }) %>%
-            dplyr::bind_rows()
-
-          eta_indOld <- postEta[SampleID] %>%
-            purrr::map(~ .x[match(unitsPred[indOld], modelunits), LF_ID])
-          eta_indOld <- purrr::map(
-            .x = seq_along(eta_indOld),
-            .f = ~ {
-              eta_indOld[[.x]] %>%
-                tibble::tibble(etaPred = .) %>%
-                dplyr::mutate(
-                  Unit_ID = unitsPred[indOld], SampleID = SampleID[.x])
-            }) %>%
-            dplyr::bind_rows()
-
-          etaPred <- dplyr::bind_rows(eta_indOld, eta_indNew) %>%
-            dplyr::select(c("SampleID", "etaPred", "Unit_ID")) %>%
-            dplyr::mutate(Unit_ID = factor(Unit_ID, levels = unitsPred)) %>%
-            dplyr::arrange(SampleID, Unit_ID, etaPred)
-
-        } else {
-          # Use R / CPP
-
-          # Reading postEta from file
-          postEta0 <- IASDT.R::LoadAs(File, nthreads = 5)
-
-          # Read D11 and D12
-          D11 <- IASDT.R::LoadAs(Path_D11, nthreads = 5)
-          D12 <- IASDT.R::LoadAs(Path_D12, nthreads = 5)
-
-          K11 <- IASDT.R::exp_neg_div(D11, Denom)
-          K12 <- IASDT.R::exp_neg_div(D12, Denom)
-
-          etaPred <- purrr::map_dfr(
-            .x = seq_along(SampleID),
-            .f = function(ID) {
-              eta <- postEta0[, , ID]
-              eta_indNew <- IASDT.R::Solve2vect(K11, eta) %>%
-                as.vector() %>%
-                Matrix::crossprod(K12, .) %>%
-                as.vector()
-
-              etaPred <- rep(NA, length(unitsPred))
-              etaPred[indOld] <- eta[match(unitsPred[indOld], modelunits)]
-              etaPred[indNew] <- eta_indNew
-
-              tibble::tibble(
-                SampleID = SampleID[ID], etaPred = etaPred, Unit_ID = unitsPred)
-            }) %>%
-            dplyr::mutate(Unit_ID = factor(Unit_ID, levels = unitsPred)) %>%
-            dplyr::arrange(SampleID, Unit_ID, etaPred)
-        }
-      } else {
-
-        # Handle cases where Denom is zero by setting `eta_indNew` to zero
-        postEta0 <- IASDT.R::LoadAs(File, nthreads = 5)
-
-        etaPred <- purrr::map_dfr(
-          .x = seq_len(length(SampleID)),
-          .f = function(ID) {
-            eta <- postEta0[, , ID]
-            etaPred <- rep(NA, length(unitsPred))
-            etaPred[indOld] <- eta[match(unitsPred[indOld], modelunits)]
-            etaPred[indNew] <- 0
-            tibble::tibble(
-              SampleID = SampleID[ID], etaPred = etaPred, Unit_ID = unitsPred)
-          }) %>%
-          dplyr::mutate(Unit_ID = factor(Unit_ID, levels = unitsPred)) %>%
-          dplyr::arrange(SampleID, Unit_ID, etaPred)
-
-      }
-
-      # clean up
-      invisible(gc())
-      fs::file_delete(File)
-
-      return(etaPred)
-    }
-
-    # # .................................................................... ###
-
-    #
     IASDT.R::CatTime(
       paste0("Predicting Latent Factor in parallel using ", NCores, " cores"),
       Level = 1)
@@ -461,7 +343,10 @@ Predict_LF <- function(
 
     withr::local_options(
       future.globals.maxSize = 8000 * 1024^2,
-      future.gc = TRUE, future.seed = TRUE)
+      future.gc = TRUE, future.seed = TRUE,
+      future.globals.onReference = "error"
+      )
+
     c1 <- snow::makeSOCKcluster(NCores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
     future::plan("future::cluster", workers = c1, gc = TRUE)
@@ -470,10 +355,125 @@ Predict_LF <- function(
     # Calculate etaPred
     etaPreds <- future.apply::future_lapply(
       X = seq_len(nrow(Unique_Alpha)),
-      FUN = calc_eta_pred, future.seed = TRUE, future.chunk.size = 1,
+      FUN = function(RowNum) {
+
+        # Current denominator
+        Denom <- Unique_Alpha$Denom[[RowNum]]
+        # ID for latent factor
+        LF_ID <- Unique_Alpha$LF_ID[[RowNum]]
+        # ID for posterior sample
+        SampleID <- Unique_Alpha$SampleID[[RowNum]]
+        # File path for current alpha
+        File <- Unique_Alpha$File[[RowNum]]
+
+        # If the denominator is positive, perform calculations; otherwise, set
+        # `eta_indNew` to zero.
+
+        if (Denom > 0) {
+          if (UseTF) {
+
+            # Use TensorFlow
+
+            # Activate the python environment
+            reticulate::use_virtualenv(TF_Environ, required = TRUE)
+            PythonScript <- system.file(
+              "crossprod_solve.py", package = "IASDT.R")
+
+            # Source the script file containing the crossprod_solve function
+            reticulate::source_python(PythonScript)
+
+            eta_indNew <- crossprod_solve(
+              Dist1 = Path_D11, Dist2 = Path_D12, Denom = Denom,
+              List = File, use_single = TF_use_single)
+            eta_indNew <- purrr::map(
+              .x = seq_along(eta_indNew),
+              .f = ~ {
+                tibble::tibble(etaPred = as.vector(eta_indNew[[.x]])) %>%
+                  dplyr::mutate(
+                    Unit_ID = unitsPred[indNew], SampleID = SampleID[.x])
+              }) %>%
+              dplyr::bind_rows()
+
+            eta_indOld <- postEta[SampleID] %>%
+              purrr::map(~ .x[match(unitsPred[indOld], modelunits), LF_ID])
+            eta_indOld <- purrr::map(
+              .x = seq_along(eta_indOld),
+              .f = ~ {
+                eta_indOld[[.x]] %>%
+                  tibble::tibble(etaPred = .) %>%
+                  dplyr::mutate(
+                    Unit_ID = unitsPred[indOld], SampleID = SampleID[.x])
+              }) %>%
+              dplyr::bind_rows()
+
+            etaPred <- dplyr::bind_rows(eta_indOld, eta_indNew) %>%
+              dplyr::select(c("SampleID", "etaPred", "Unit_ID")) %>%
+              dplyr::mutate(Unit_ID = factor(Unit_ID, levels = unitsPred)) %>%
+              dplyr::arrange(SampleID, Unit_ID, etaPred)
+
+          } else {
+            # Use R / CPP
+
+            # Reading postEta from file
+            postEta0 <- IASDT.R::LoadAs(File, nthreads = 5)
+
+            # Read D11 and D12
+            D11 <- IASDT.R::LoadAs(Path_D11, nthreads = 5)
+            D12 <- IASDT.R::LoadAs(Path_D12, nthreads = 5)
+
+            K11 <- IASDT.R::exp_neg_div(D11, Denom)
+            K12 <- IASDT.R::exp_neg_div(D12, Denom)
+
+            etaPred <- purrr::map_dfr(
+              .x = seq_along(SampleID),
+              .f = function(ID) {
+                eta <- postEta0[, , ID]
+                eta_indNew <- IASDT.R::Solve2vect(K11, eta) %>%
+                  as.vector() %>%
+                  Matrix::crossprod(K12, .) %>%
+                  as.vector()
+
+                etaPred <- rep(NA, length(unitsPred))
+                etaPred[indOld] <- eta[match(unitsPred[indOld], modelunits)]
+                etaPred[indNew] <- eta_indNew
+
+                tibble::tibble(
+                  SampleID = SampleID[ID], etaPred = etaPred, Unit_ID = unitsPred)
+              }) %>%
+              dplyr::mutate(Unit_ID = factor(Unit_ID, levels = unitsPred)) %>%
+              dplyr::arrange(SampleID, Unit_ID, etaPred)
+          }
+        } else {
+
+          # Handle cases where Denom is zero by setting `eta_indNew` to zero
+          postEta0 <- IASDT.R::LoadAs(File, nthreads = 5)
+
+          etaPred <- purrr::map_dfr(
+            .x = seq_len(length(SampleID)),
+            .f = function(ID) {
+              eta <- postEta0[, , ID]
+              etaPred <- rep(NA, length(unitsPred))
+              etaPred[indOld] <- eta[match(unitsPred[indOld], modelunits)]
+              etaPred[indNew] <- 0
+              tibble::tibble(
+                SampleID = SampleID[ID], etaPred = etaPred, Unit_ID = unitsPred)
+            }) %>%
+            dplyr::mutate(Unit_ID = factor(Unit_ID, levels = unitsPred)) %>%
+            dplyr::arrange(SampleID, Unit_ID, etaPred)
+
+        }
+
+        # clean up
+        invisible(gc())
+        fs::file_delete(File)
+
+        return(etaPred)
+      },
+      future.seed = TRUE, future.chunk.size = 1,
       future.globals = c(
         "Unique_Alpha", "Path_D11", "Path_D12", "indNew", "unitsPred",
-        "indOld", "modelunits", "TF_Environ", "UseTF", "TF_use_single"),
+        "indOld", "modelunits", "TF_Environ", "UseTF", "TF_use_single",
+        "postEta"),
       future.packages = c(
         "Rcpp", "RcppArmadillo", "dplyr", "tidyr", "tibble",
         "Matrix", "Hmsc", "qs", "fs", "purrr"))

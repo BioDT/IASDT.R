@@ -155,53 +155,6 @@ Predict_LF <- function(
           call. = FALSE)
       }
 
-      # PythonScript <- c(system.file("Utilities.py", package = "IASDT.R"))
-      #
-      # # Check if PythonScript exists
-      # if (!file.exists(PythonScript)) {
-      #   stop(
-      #     "Necessary Python script does not exist in the package files",
-      #     call. = FALSE)
-      # }
-      #
-      # # Suppress TensorFlow warnings and disable optimizations
-      # Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3", TF_ENABLE_ONEDNN_OPTS = "0")
-      #
-      #
-      # # Activate the python environment
-      # reticulate::use_virtualenv(TF_Environ, required = TRUE)
-      # reticulate::source_python(PythonScript)
-      #
-      # # Check if all necessary python modules exist
-      # MissingModules <- check_modules(
-      #   module_list = c(
-      #     "os", "tensorflow", "numpy", "rdata", "xarray", "pandas"),
-      #   print_status = TRUE)
-      #
-      # if (length(MissingModules) > 0) {
-      #   stop(
-      #     paste0(
-      #       "The following module(s) are missing: ",
-      #       paste0(MissingModules, collapse = "; ")),
-      #     call. = FALSE)
-      # } else {
-      #   IASDT.R::CatTime(
-      #     "All necessary python modules are available", Level = 2)
-      # }
-      #
-      # # Check GPU availability
-      # GPU <- is_gpu_available(print_status = FALSE)
-      #
-      # if (GPU) {
-      #   IASDT.R::CatTime("GPU is available", Level = 2)
-      # } else {
-      #   IASDT.R::CatTime("No GPU is available", Level = 2)
-      # }
-      #
-      # reticulate::py_run_string("del is_gpu_available; del check_modules")
-      # rm(is_gpu_available, check_modules, PythonScript)
-      # invisible(gc())
-
       IASDT.R::CatTime("Computations will be made using TensorFlow", Level = 1)
     } else {
       IASDT.R::CatTime("Computations will be made using R/CPP", Level = 1)
@@ -230,8 +183,6 @@ Predict_LF <- function(
     # Calculate D11 and D12 only once
 
     IASDT.R::CatTime("Calculate/save D11 and D12 distance matrices", Level = 1)
-
-    AllObjSizes(InFunction = TRUE)
 
     alphapw <- rL$alphapw
     s1 <- rL$s[modelunits, , drop = FALSE]
@@ -275,8 +226,6 @@ Predict_LF <- function(
     # Convert postAlpha to tibble
 
     IASDT.R::CatTime("Prepare data for parallel processing", Level = 1)
-
-    AllObjSizes(InFunction = TRUE)
 
     postAlpha_tibble <- do.call(rbind, postAlpha) %>%
       as.data.frame() %>%
@@ -339,8 +288,6 @@ Predict_LF <- function(
       paste0("Predicting Latent Factor in parallel using ", NCores, " cores"),
       Level = 1)
 
-    AllObjSizes(InFunction = TRUE)
-
     withr::local_options(
       future.globals.maxSize = 8000 * 1024^2,
       future.gc = TRUE, future.seed = TRUE,
@@ -352,33 +299,10 @@ Predict_LF <- function(
     future::plan("future::cluster", workers = c1, gc = TRUE)
     on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
 
-
-    c(
-      Unique_Alpha, Path_D11, Path_D12, indNew, unitsPred,
-      indOld, modelunits, TF_Environ, UseTF, TF_use_single, postEta) %>%
-      lapply(class) %>%
-      print()
-
-    print(Unique_Alpha)
-
     # Calculate etaPred
     etaPreds <- future.apply::future_lapply(
       X = seq_len(nrow(Unique_Alpha)),
       FUN = function(RowNum) {
-
-
-        AllObjSizes(InFunction = TRUE)
-
-
-        # Check the class of all objects at the beginning of the function
-        all_objects <- ls()
-        object_classes <- lapply(all_objects, function(obj) {
-          obj_class <- class(get(obj))
-          if (inherits(get(obj), "externalptr")) {
-            cat("Found externalptr object:", obj, "\n")
-          }
-          return(obj_class)
-        })
 
         # Current denominator
         Denom <- Unique_Alpha$Denom[[RowNum]]
@@ -388,8 +312,6 @@ Predict_LF <- function(
         SampleID <- Unique_Alpha$SampleID[[RowNum]]
         # File path for current alpha
         File <- Unique_Alpha$File[[RowNum]]
-
-
 
         # If the denominator is positive, perform calculations; otherwise, set
         # `eta_indNew` to zero.
@@ -411,8 +333,6 @@ Predict_LF <- function(
               Dist1 = Path_D11, Dist2 = Path_D12, Denom = Denom,
               List = File, use_single = TF_use_single)
 
-            print(paste("eta_indNew type:", class(eta_indNew)))
-
             eta_indNew <- purrr::map(
               .x = seq_along(eta_indNew),
               .f = ~ {
@@ -422,13 +342,8 @@ Predict_LF <- function(
               }) %>%
               dplyr::bind_rows()
 
-            print(paste("eta_indNew type:", class(eta_indNew)))
-
-
             eta_indOld <- postEta[SampleID] %>%
               purrr::map(~ .x[match(unitsPred[indOld], modelunits), LF_ID])
-
-            print(paste("eta_indOld type:", class(eta_indOld)))
 
             eta_indOld <- purrr::map(
               .x = seq_along(eta_indOld),
@@ -440,14 +355,13 @@ Predict_LF <- function(
               }) %>%
               dplyr::bind_rows()
 
-            print(paste("eta_indOld type:", class(eta_indOld)))
-
             etaPred <- dplyr::bind_rows(eta_indOld, eta_indNew) %>%
               dplyr::select(c("SampleID", "etaPred", "Unit_ID")) %>%
               dplyr::mutate(Unit_ID = factor(Unit_ID, levels = unitsPred)) %>%
               dplyr::arrange(SampleID, Unit_ID, etaPred)
 
           } else {
+
             # Use R / CPP
 
             # Reading postEta from file

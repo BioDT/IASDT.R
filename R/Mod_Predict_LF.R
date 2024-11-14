@@ -463,9 +463,7 @@ Predict_LF <- function(
     # Calculate etaPred
     etaPreds <- future.apply::future_lapply(
       X = seq_len(nrow(Unique_Alpha)),
-      FUN = calc_eta_pred, future.seed = TRUE,
-      future.scheduling = Inf,
-      # future.chunk.size = 1,
+      FUN = calc_eta_pred, future.seed = TRUE, future.chunk.size = 1,
       future.globals = c(
         "Unique_Alpha", "Path_D11", "Path_D12", "indNew", "unitsPred",
         "indOld", "modelunits", "TF_Environ", "UseTF", "TF_use_single"),

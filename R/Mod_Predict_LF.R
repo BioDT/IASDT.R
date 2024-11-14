@@ -352,6 +352,33 @@ Predict_LF <- function(
     future::plan("future::cluster", workers = c1, gc = TRUE)
     on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
 
+
+
+
+
+    f <- future::future({
+      future.apply::future_lapply(
+      X = 1:250,
+      FUN = function(RowNum) {
+        return(job)
+      },
+      future.seed = TRUE, future.chunk.size = 1,
+      future.globals = c(
+        "Unique_Alpha", "Path_D11", "Path_D12", "indNew", "unitsPred",
+        "indOld", "modelunits", "TF_Environ", "UseTF", "TF_use_single",
+        "postEta"),
+      future.packages = c(
+        "Rcpp", "RcppArmadillo", "dplyr", "tidyr", "tibble",
+        "Matrix", "Hmsc", "qs", "fs", "purrr"))
+    }, globals = TRUE)
+
+    # List the globals
+    globals <- future::getGlobalsAndPackages(f)$globals
+    print(globals)
+
+
+
+
     # Calculate etaPred
     etaPreds <- future.apply::future_lapply(
       X = seq_len(nrow(Unique_Alpha)),
@@ -438,7 +465,8 @@ Predict_LF <- function(
                 etaPred[indNew] <- eta_indNew
 
                 tibble::tibble(
-                  SampleID = SampleID[ID], etaPred = etaPred, Unit_ID = unitsPred)
+                  SampleID = SampleID[ID], etaPred = etaPred,
+                  Unit_ID = unitsPred)
               }) %>%
               dplyr::mutate(Unit_ID = factor(Unit_ID, levels = unitsPred)) %>%
               dplyr::arrange(SampleID, Unit_ID, etaPred)
@@ -456,7 +484,8 @@ Predict_LF <- function(
               etaPred[indOld] <- eta[match(unitsPred[indOld], modelunits)]
               etaPred[indNew] <- 0
               tibble::tibble(
-                SampleID = SampleID[ID], etaPred = etaPred, Unit_ID = unitsPred)
+                SampleID = SampleID[ID], etaPred = etaPred,
+                Unit_ID = unitsPred)
             }) %>%
             dplyr::mutate(Unit_ID = factor(Unit_ID, levels = unitsPred)) %>%
             dplyr::arrange(SampleID, Unit_ID, etaPred)

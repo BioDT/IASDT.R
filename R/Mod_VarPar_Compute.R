@@ -205,6 +205,8 @@ VarPar_Compute <- function(
     } else {
       IASDT.R::CatTime("No GPU is available", Level = 2)
     }
+
+    reticulate::py_run_string("del is_gpu_available; del check_modules")
     rm(check_modules, is_gpu_available)
     invisible(gc())
 

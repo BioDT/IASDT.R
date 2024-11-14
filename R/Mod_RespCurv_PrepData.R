@@ -377,6 +377,10 @@ RespCurv_PrepData <- function(
 
     File_LF <- file.path(Path_RC_DT, "ResCurv_LF.RData")
 
+
+    AllObjSizes(InFunction = TRUE)
+
+
     if (isFALSE(IASDT.R::CheckData(File_LF, warning = FALSE))) {
 
       IASDT.R::InfoChunk(
@@ -393,6 +397,9 @@ RespCurv_PrepData <- function(
       # loaded later after when using `Predict_Hmsc` function.
       rm(Model)
       invisible(gc())
+
+      AllObjSizes(InFunction = TRUE)
+
 
       Model_LF <- IASDT.R::Predict_Hmsc(
         object = Path_Model, Gradient = Gradient_c, expected = TRUE,

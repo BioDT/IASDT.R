@@ -200,6 +200,7 @@ Predict_LF <- function(
         IASDT.R::CatTime("No GPU is available", Level = 2)
       }
 
+      reticulate::py_run_string("del is_gpu_available; del check_modules")
       rm(is_gpu_available, check_modules)
       invisible(gc())
 
@@ -231,6 +232,8 @@ Predict_LF <- function(
     # Calculate D11 and D12 only once
 
     IASDT.R::CatTime("Calculate/save D11 and D12 distance matrices", Level = 1)
+
+    AllObjSizes(InFunction = TRUE)
 
     alphapw <- rL$alphapw
     s1 <- rL$s[modelunits, , drop = FALSE]
@@ -274,6 +277,8 @@ Predict_LF <- function(
     # Convert postAlpha to tibble
 
     IASDT.R::CatTime("Prepare data for parallel processing", Level = 1)
+
+    AllObjSizes(InFunction = TRUE)
 
     postAlpha_tibble <- do.call(rbind, postAlpha) %>%
       as.data.frame() %>%
@@ -451,6 +456,8 @@ Predict_LF <- function(
     IASDT.R::CatTime(
       paste0("Predicting Latent Factor in parallel using ", NCores, " cores"),
       Level = 1)
+
+    AllObjSizes(InFunction = TRUE)
 
     withr::local_options(
       future.globals.maxSize = 8000 * 1024^2,

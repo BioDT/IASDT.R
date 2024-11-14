@@ -200,6 +200,9 @@ Predict_LF <- function(
         IASDT.R::CatTime("No GPU is available", Level = 2)
       }
 
+      rm(is_gpu_available, check_modules)
+      invisible(gc())
+
       IASDT.R::CatTime("Computations will be made using TensorFlow", Level = 1)
     } else {
       IASDT.R::CatTime("Computations will be made using R/CPP", Level = 1)
@@ -460,7 +463,9 @@ Predict_LF <- function(
     # Calculate etaPred
     etaPreds <- future.apply::future_lapply(
       X = seq_len(nrow(Unique_Alpha)),
-      FUN = calc_eta_pred, future.seed = TRUE, future.chunk.size = 1,
+      FUN = calc_eta_pred, future.seed = TRUE,
+      future.scheduling = Inf,
+      # future.chunk.size = 1,
       future.globals = c(
         "Unique_Alpha", "Path_D11", "Path_D12", "indNew", "unitsPred",
         "indOld", "modelunits", "TF_Environ", "UseTF", "TF_use_single"),

@@ -205,7 +205,8 @@ VarPar_Compute <- function(
     } else {
       IASDT.R::CatTime("No GPU is available", Level = 2)
     }
-
+    rm(check_modules, is_gpu_available)
+    invisible(gc())
 
     if (NCores > 1) {
       results <- VarPar_Parallel(

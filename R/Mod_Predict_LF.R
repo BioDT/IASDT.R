@@ -336,7 +336,7 @@ Predict_LF <- function(
 
     IASDT.R::CatTime("Making predictions on parallel", Level = 1)
 
-    etaPreds <- snow::parLapply(
+    etaPreds <- snow::clusterApplyLB(
       cl = c1,
       x = seq_len(nrow(Unique_Alpha)),
       fun = function(RowNum) {

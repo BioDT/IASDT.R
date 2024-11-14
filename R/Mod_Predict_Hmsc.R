@@ -10,8 +10,8 @@
 #' Calculates predicted values from a fitted \code{Hmsc} model. This function
 #' modifies the `Hmsc:::predict.Hmsc` function.
 #'
-#' @param object a fitted `Hmsc` model object or a character string specifying a
-#'   file name where the model object is saved.
+#' @param Path_Model character string specifying a file name where the model
+#'   object is saved.
 #' @param XData a dataframe specifying the unpreprocessed covariates for the
 #'   predictions to be made. Works only if the `XFormula` argument was specified
 #'   in the [Hmsc::Hmsc] model constructor call. Requirements are similar to
@@ -60,7 +60,7 @@
 #' @export
 
 Predict_Hmsc <- function(
-    object,
+    Path_Model,
     Loff = NULL, XData = NULL, X = NULL, XRRRData = NULL, XRRR = NULL,
     Gradient = NULL, Yc = NULL, mcmcStep = 1, expected = TRUE, NCores = 8,
     Model_Name = "Train", Temp_Dir = "TEMP2Pred", RC = NULL,
@@ -107,6 +107,8 @@ Predict_Hmsc <- function(
     stop("`RC` must be either NULL or one of 'c' or 'i'", call. = FALSE)
   }
 
+  Pred_Dir <- file.path(dirname(dirname(Path_Model)), Pred_Dir)
+
   if (is.null(RC) || RC == "c") {
     IASDT.R::CatTime("Creating/checking output paths")
     fs::dir_create(c(Temp_Dir, Pred_Dir))
@@ -118,18 +120,18 @@ Predict_Hmsc <- function(
   # # ..................................................................... ###
 
   # Load model if it is a character
-  if (inherits(object, "character")) {
+  if (inherits(Path_Model, "character")) {
     IASDT.R::CatTime("Load model object")
-    object <- IASDT.R::LoadAs(object)
+    Model <- IASDT.R::LoadAs(Path_Model)
   }
 
   # # ..................................................................... ###
 
   # Combines a list of single or several MCMC chains into a single chain
   IASDT.R::CatTime("Combines list of posteriors")
-  post <- Hmsc::poolMcmcChains(object$postList)
-  studyDesign <- object$studyDesign
-  ranLevels <- object$ranLevels
+  post <- Hmsc::poolMcmcChains(Model$postList)
+  studyDesign <- Model$studyDesign
+  ranLevels <- Model$ranLevels
 
   # # ..................................................................... ###
 
@@ -179,37 +181,37 @@ Predict_Hmsc <- function(
         if (any(unlist(lapply(XData, is.na)))) {
           stop("NA values are not allowed in 'XData'", call. = FALSE)
         }
-        xlev <- lapply(Reduce(rbind, object$XData), levels)
-        xlev <- xlev[unlist(lapply(Reduce(rbind, object$XData), is.factor))]
+        xlev <- lapply(Reduce(rbind, Model$XData), levels)
+        xlev <- xlev[unlist(lapply(Reduce(rbind, Model$XData), is.factor))]
         X <- lapply(
           XData, function(a) {
-            stats::model.matrix(object$XFormula, a, xlev = xlev)
+            stats::model.matrix(Model$XFormula, a, xlev = xlev)
           })
       },
       data.frame = {
         if (any(is.na(XData))) {
           stop("NA values are not allowed in 'XData'", call. = FALSE)
         }
-        xlev <- lapply(object$XData, levels)
-        xlev <- xlev[unlist(lapply(object$XData, is.factor))]
-        X <- stats::model.matrix(object$XFormula, XData, xlev = xlev)
+        xlev <- lapply(Model$XData, levels)
+        xlev <- xlev[unlist(lapply(Model$XData, is.factor))]
+        X <- stats::model.matrix(Model$XFormula, XData, xlev = xlev)
       })
   } else {
     if (is.null(X)) {
-      X <- object$X
+      X <- Model$X
     }
   }
 
   if (!is.null(XRRRData)) {
-    xlev <- lapply(object$XRRRData, levels)
-    xlev <- xlev[unlist(lapply(object$XRRRData, is.factor))]
-    XRRR <- stats::model.matrix(object$XRRRFormula, XRRRData, xlev = xlev)
+    xlev <- lapply(Model$XRRRData, levels)
+    xlev <- xlev[unlist(lapply(Model$XRRRData, is.factor))]
+    XRRR <- stats::model.matrix(Model$XRRRFormula, XRRRData, xlev = xlev)
   } else {
-    if (is.null(object$ncRRR)) {
-      object$ncRRR <- 0
+    if (is.null(Model$ncRRR)) {
+      Model$ncRRR <- 0
     }
-    if (is.null(XRRR) && object$ncRRR > 0) {
-      XRRR <- object$XRRR
+    if (is.null(XRRR) && Model$ncRRR > 0) {
+      XRRR <- Model$XRRR
     }
   }
 
@@ -224,7 +226,7 @@ Predict_Hmsc <- function(
 
 
   if (!is.null(Yc)) {
-    if (ncol(Yc) != object$ns) {
+    if (ncol(Yc) != Model$ns) {
       stop("number of columns in Yc must be equal to ns", call. = FALSE)
     }
     if (nrow(Yc) != nyNew) {
@@ -233,7 +235,7 @@ Predict_Hmsc <- function(
   }
 
   if (!is.null(Loff)) {
-    if (ncol(Loff) != object$ns) {
+    if (ncol(Loff) != Model$ns) {
       stop("number of columns in Loff must be equal to ns", call. = FALSE)
     }
     if (nrow(Loff) != nyNew) {
@@ -241,31 +243,31 @@ Predict_Hmsc <- function(
     }
   }
 
-  if (!all(object$rLNames %in% colnames(studyDesign))) {
+  if (!all(Model$rLNames %in% colnames(studyDesign))) {
     stop(
       "dfPiNew does not contain all the necessary named columns", call. = FALSE)
   }
 
-  if (!all(object$rLNames %in% names(ranLevels))) {
+  if (!all(Model$rLNames %in% names(ranLevels))) {
     stop("rL does not contain all the necessary named levels", call. = FALSE)
   }
 
   if (!is.null(studyDesign)) {
-    dfPiNew <- studyDesign[, object$rLNames, drop = FALSE]
+    dfPiNew <- studyDesign[, Model$rLNames, drop = FALSE]
   } else {
     dfPiNew <- matrix(NA, nyNew, 0)
   }
-  rL <- ranLevels[object$rLNames]
+  rL <- ranLevels[Model$rLNames]
 
 
   if (!is.null(Yc)) {
     ## object can have pre-computed data parameters, but not
     ## necessarily. These are needed only in updateEta(), but get it
     ## here anyway...
-    if (is.null(object$rLPar)) {
-      rLPar <- Hmsc::computeDataParameters(object)$rLPar
+    if (is.null(Model$rLPar)) {
+      rLPar <- Hmsc::computeDataParameters(Model)$rLPar
     } else {
-      rLPar <- object$rLPar
+      rLPar <- Model$rLPar
     }
   } else {
     rLPar <- NULL
@@ -277,18 +279,18 @@ Predict_Hmsc <- function(
 
   # free some memory
   IASDT.R::CatTime("Free some memory")
-  object$postList <- object$YScaled <- object$X <- object$XScaled <- NULL
+  Model$postList <- Model$YScaled <- Model$X <- Model$XScaled <- NULL
 
   # # ..................................................................... ###
 
   IASDT.R::CatTime("Predict Latent Factor")
 
-  predPostEta <- vector("list", object$nr)
-  PiNew <- matrix(NA, nrow(dfPiNew), object$nr)
+  predPostEta <- vector("list", Model$nr)
+  PiNew <- matrix(NA, nrow(dfPiNew), Model$nr)
 
   # Whether to use predictLatentFactor or read its results from file
-  if (!is.null(object$nr)) {
-    if (is.null(LF_InputFile) || length(LF_InputFile) != object$nr) {
+  if (!is.null(Model$nr)) {
+    if (is.null(LF_InputFile) || length(LF_InputFile) != Model$nr) {
       CalcLF <- TRUE
     } else {
       CalcLF <- FALSE
@@ -300,7 +302,7 @@ Predict_Hmsc <- function(
   # curves when using coordinates = "i" in constructGradient
   if (!is.null(RC)) {
     if (RC == "i") {
-      for (r in seq_len(object$nr)) {
+      for (r in seq_len(Model$nr)) {
         if (r == 1) {
           IASDT.R::CatTime(
             "LF prediction for response curve with infinite coordinates",
@@ -320,11 +322,11 @@ Predict_Hmsc <- function(
 
   if (CalcLF) {
 
-    for (r in seq_len(object$nr)) {
+    for (r in seq_len(Model$nr)) {
       postEta <- lapply(post, function(c) c$Eta[[r]])
       postAlpha <- lapply(post, function(c) c$Alpha[[r]])
 
-      if (r == object$nr) {
+      if (r == Model$nr) {
         # free some memory
         post <- lapply(post, function(x) {
           x$Eta <- x$Psi <- x$V <- x$Delta <- x$Gamma <- x$rho <- NULL
@@ -353,7 +355,7 @@ Predict_Hmsc <- function(
 
       predPostEta[[r]] <- IASDT.R::Predict_LF(
         unitsPred = levels(dfPiNew[, r]),
-        modelunits = levels(object$dfPi[, r]),
+        modelunits = levels(Model$dfPi[, r]),
         postEta = postEta_file, postAlpha = postAlpha, rL = rL[[r]],
         NCores = NCores, Temp_Dir = Temp_Dir, Model_Name = Model_Name,
         UseTF = UseTF, TF_Environ = TF_Environ, TF_use_single = TF_use_single,
@@ -372,7 +374,7 @@ Predict_Hmsc <- function(
       IASDT.R::CatTime(
         paste0("Loading LF prediction from disk: `", LF_InputFile, "`"),
         Level = 1)
-      for (r in seq_len(object$nr)) {
+      for (r in seq_len(Model$nr)) {
         predPostEta[[r]] <- IASDT.R::LoadAs(LF_InputFile[[r]], nthreads = 5)
         rowNames <- rownames(predPostEta[[r]][[1]])
         PiNew[, r] <- fastmatch::fmatch(dfPiNew[, r], rowNames)
@@ -380,7 +382,7 @@ Predict_Hmsc <- function(
     }
   }
 
-  if (object$nr > 0) {
+  if (Model$nr > 0) {
     ppEta <- simplify2array(predPostEta)
   } else {
     ppEta <- matrix(list(), predN, 0)
@@ -411,7 +413,7 @@ Predict_Hmsc <- function(
       seq_len(predN),
       function(pN, ...) {
         get1prediction(
-          object, X, XRRR, Yc, Loff, rL, rLPar, post[[pN]],
+          Model, X, XRRR, Yc, Loff, rL, rLPar, post[[pN]],
           ppEta[pN, ], PiNew, dfPiNew, nyNew, expected, mcmcStep)
       })
     IASDT.R::CatDiff(
@@ -449,7 +451,7 @@ Predict_Hmsc <- function(
     snow::clusterExport(
       cl = c1,
       list = c(
-        "object", "X", "XRRR", "Yc", "Loff", "rL", "rLPar", "PiNew",
+        "Model", "X", "XRRR", "Yc", "Loff", "rL", "rLPar", "PiNew",
         "dfPiNew", "nyNew", "expected", "mcmcStep", "seeds", "chunk_size",
         "Chunks", "Temp_Dir", "Model_Name",
         "get1prediction"),
@@ -485,7 +487,7 @@ Predict_Hmsc <- function(
           .x = seq_len(chunk_size),
           .f = function(pN) {
             get1prediction(
-              object = object, X = X, XRRR = XRRR, Yc = Yc,
+              object = Model, X = X, XRRR = XRRR, Yc = Yc,
               Loff = Loff, rL = rL, rLPar = rLPar, sam = post[[pN]],
               predPostEta = ppEta[pN], PiNew = PiNew,
               dfPiNew = dfPiNew, nyNew = nyNew, expected = expected,
@@ -503,7 +505,7 @@ Predict_Hmsc <- function(
 
         # Species predictions
         ChunkSp <- purrr::map_dfr(
-          .x = seq_len(length(object$spNames)),
+          .x = seq_len(length(Model$spNames)),
           .f = function(Sp) {
             SpD <- purrr::map(PredChunk, ~ .x[, Sp], ncol = 1) %>%
               simplify2array() %>%
@@ -517,7 +519,7 @@ Predict_Hmsc <- function(
             qs::qsave(SpD, file = ChunkSp_File, preset = "fast")
 
             cbind.data.frame(
-              Chunk = Chunk, Sp = Sp, IAS_ID = object$spNames[Sp],
+              Chunk = Chunk, Sp = Sp, IAS_ID = Model$spNames[Sp],
               ChunkSp_File = ChunkSp_File) %>%
               return()
           }) %>%
@@ -573,7 +575,7 @@ Predict_Hmsc <- function(
       # Mean prediction
       SpDT_Mean <- Rfast::rowmeans(SpDT)
 
-      # standard deviaion of prediction
+      # standard deviation of prediction
       SpDT_SD <- Rfast::rowVars(SpDT, std = TRUE)
 
       # Coefficient of variation
@@ -586,7 +588,7 @@ Predict_Hmsc <- function(
       rm(SpDT)
 
       if (is.null(Pred_XY)) {
-        Pred_XY <- object$rL$sample$s
+        Pred_XY <- Model$rL$sample$s
       }
 
       PredSummary <- tibble::tibble(
@@ -606,7 +608,7 @@ Predict_Hmsc <- function(
 
       if (Evaluate && Sp2 != "SR") {
         if (is.null(Pred_PA)) {
-          PresAbs <- object$Y[, Sp]
+          PresAbs <- Model$Y[, Sp]
         } else {
           PresAbs <- Pred_PA[, Sp]
         }
@@ -641,7 +643,7 @@ Predict_Hmsc <- function(
     },
     future.seed = TRUE, future.chunk.size = 1,
     future.globals = c(
-      "Eval_DT", "Evaluate", "object", "Pred_Dir", "Model_Name",
+      "Eval_DT", "Evaluate", "Model", "Pred_Dir", "Model_Name",
       "Pred_PA", "Pred_XY"),
     future.packages = c(
       "dplyr", "Matrix", "purrr", "tibble", "Hmsc", "float", "qs",

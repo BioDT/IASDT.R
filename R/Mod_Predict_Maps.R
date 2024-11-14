@@ -203,11 +203,11 @@ Predict_Maps <- function(
   OtherVars <- stringr::str_subset(names(Model$XData), "^bio|CV", negate = TRUE)
   BioVars <- stringr::str_subset(names(Model$XData), "^bio", negate = FALSE)
 
-  Path_Prediction <- dplyr::if_else(
-    Pred_Clamp, "Model_Prediction_Clamp", "Model_Prediction") %>%
-    file.path(dirname(dirname(Path_Model)), .)
+  Pred_Dir <- dplyr::if_else(
+    Pred_Clamp, "Model_Prediction_Clamp", "Model_Prediction")
+  Path_Prediction <- file.path(dirname(dirname(Path_Model)), Pred_Dir)
   Path_Eval <- file.path(dirname(dirname(Path_Model)), "Model_Evaluation")
-  fs::dir_create(c(Path_Prediction, Path_Eval))
+  fs::dir_create(c(Path_Eval, Path_Prediction))
 
   if (Pred_Clamp && is.null(FixEfforts)) {
     stop("`FixEfforts` can not be NULL when Clamping is implemented")
@@ -461,7 +461,7 @@ Predict_Maps <- function(
 
     # Predicting latent factor only -- no predictions are made
     Preds_LF <- IASDT.R::Predict_Hmsc(
-      object = Path_Model, Gradient = Gradient, expected = TRUE,
+      Path_Model = Path_Model, Gradient = Gradient, expected = TRUE,
       NCores = NCores, Model_Name = paste0("LF_", Hab_Abb, "_Test"),
       Temp_Dir = Temp_Dir, UseTF = UseTF, TF_Environ = TF_Environ,
       LF_OutFile = Path_Test_LF, LF_Only = TRUE, Evaluate = FALSE,
@@ -607,10 +607,11 @@ Predict_Maps <- function(
           Preds_ModFitSites <- tibble::tibble(Pred_Path = Path_Current_Train)
         } else {
           Preds_ModFitSites <- IASDT.R::Predict_Hmsc(
-            object = Path_Model, X = Train_X, Gradient = NULL, expected = TRUE,
+            Path_Model = Path_Model, X = Train_X, Gradient = NULL,
+            expected = TRUE,
             NCores = NCores, Model_Name = Model_Name_Train,
             Temp_Dir = Temp_Dir, UseTF = UseTF, TF_Environ = TF_Environ,
-            LF_Return = TRUE, Pred_Dir = Path_Prediction, Pred_PA = Train_PA,
+            LF_Return = TRUE, Pred_Dir = Pred_Dir, Pred_PA = Train_PA,
             Pred_XY = Train_XY, Evaluate = Evaluate, Eval_Name = NULL,
             Eval_Dir = Path_Eval, Verbose = FALSE)
         }
@@ -633,12 +634,11 @@ Predict_Maps <- function(
           } else {
 
             Preds_NewSites <- IASDT.R::Predict_Hmsc(
-              object = Path_Model, Gradient = Gradient, expected = TRUE,
+              Path_Model = Path_Model, Gradient = Gradient, expected = TRUE,
               NCores = NCores, Model_Name = Model_Name_Test,
               Temp_Dir = Temp_Dir, UseTF = UseTF, TF_Environ = TF_Environ,
               LF_Return = TRUE, LF_InputFile = Path_Test_LF,
-              Pred_Dir = Path_Prediction,
-              Pred_XY = sf::st_drop_geometry(Test_XY),
+              Pred_Dir = Pred_Dir, Pred_XY = sf::st_drop_geometry(Test_XY),
               Evaluate = FALSE, Verbose = FALSE)
           }
 
@@ -1004,7 +1004,8 @@ Predict_Maps <- function(
     dplyr::select(-Ensemble_Maps) %>%
     dplyr::mutate(
       Ensemble_File = file.path(
-        Path_Prediction, paste0(
+        Path_Prediction,
+        paste0(
           "Prediction_", stringr::str_replace(time_period, "-", "_"), "_",
           climate_scenario, "_Ensemble_Summary.RData"))) %>%
     tidyr::nest(Ensemble_DT = -Ensemble_File) %>%

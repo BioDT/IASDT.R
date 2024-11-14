@@ -46,8 +46,7 @@ VarPar_Compute <- function(
 
   .StartTime <- lubridate::now(tzone = "CET")
 
-  VarPar_Parallel <- VarPar_Sequential <- is_gpu_available <-
-    check_modules <- NULL
+  VarPar_Parallel <- VarPar_Sequential <- NULL
 
   # # .................................................................... ###
 
@@ -149,9 +148,6 @@ VarPar_Compute <- function(
   # # .................................................................... ###
 
   if (UseTF) {
-
-    IASDT.R::CatTime("Check TensorFlow settings", Level = 1)
-
     # Check if TF_Environ directory exists
     if (is.null(TF_Environ) || !dir.exists(TF_Environ)) {
       stop(
@@ -161,54 +157,20 @@ VarPar_Compute <- function(
         call. = FALSE)
     }
 
-    PythonScripts <- c(
-      system.file("VarPar.py", package = "IASDT.R"),
-      system.file("Utilities.py", package = "IASDT.R"))
+    PythonScript <- system.file("VarPar.py", package = "IASDT.R")
 
-    # Check if PythonScripts exists
-    if (!all(file.exists(PythonScripts))) {
+    # Check if PythonScript exists
+    if (!file.exists(PythonScript)) {
       stop(
-        "Necessary Python scripts do not exist in the package files",
+        "Specified `PythonScript` does not exist at the provided path.",
         call. = FALSE)
     }
 
     # Suppress TensorFlow warnings and disable optimizations
     Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3", TF_ENABLE_ONEDNN_OPTS = "0")
 
-    # Activate the python environment
-    reticulate::use_virtualenv(TF_Environ, required = TRUE)
-    purrr::walk(PythonScripts, reticulate::source_python)
-
-    # Check if all necessary python modules exist
-    MissingModules <- check_modules(
-      module_list = c(
-        "os", "tensorflow", "numpy", "logging",
-        "concurrent.futures", "functools"),
-      print_status = TRUE)
-
-    if (length(MissingModules) > 0) {
-      stop(
-        paste0(
-          "The following module(s) are missing: ",
-          paste0(MissingModules, collapse = "; ")),
-        call. = FALSE)
-    } else {
-      IASDT.R::CatTime(
-        "All necessary python modules are available", Level = 2)
-    }
-
-    # Check GPU availability
-    GPU <- is_gpu_available(print_status = FALSE)
-
-    if (GPU) {
-      IASDT.R::CatTime("GPU is available", Level = 2)
-    } else {
-      IASDT.R::CatTime("No GPU is available", Level = 2)
-    }
-
-    reticulate::py_run_string("del is_gpu_available; del check_modules")
-    rm(check_modules, is_gpu_available)
-    invisible(gc())
+    reticulate::use_virtualenv(TF_Environ)
+    reticulate::source_python(PythonScript)
 
     if (NCores > 1) {
       results <- VarPar_Parallel(

@@ -377,10 +377,6 @@ RespCurv_PrepData <- function(
 
     File_LF <- file.path(Path_RC_DT, "ResCurv_LF.RData")
 
-
-    AllObjSizes(InFunction = TRUE)
-
-
     if (isFALSE(IASDT.R::CheckData(File_LF, warning = FALSE))) {
 
       IASDT.R::InfoChunk(
@@ -398,9 +394,6 @@ RespCurv_PrepData <- function(
       rm(Model)
       invisible(gc())
 
-      AllObjSizes(InFunction = TRUE)
-
-
       Model_LF <- IASDT.R::Predict_Hmsc(
         object = Path_Model, Gradient = Gradient_c, expected = TRUE,
         NCores = NCores, Temp_Dir = Temp_Dir, Model_Name = "RC_c", RC = "c",
@@ -412,8 +405,8 @@ RespCurv_PrepData <- function(
 
     } else {
       IASDT.R::CatTime(
-        paste0(
-          "LF prediction will be loaded from available file: \n   >>>  ",File_LF))
+        paste0("LF prediction will be loaded from available file: \n   >>>  ",
+               File_LF))
     }
 
 

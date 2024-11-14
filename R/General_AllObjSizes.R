@@ -67,7 +67,7 @@ AllObjSizes <- function(
     stop("GreaterThan must be a non-negative number", call. = FALSE)
   }
 
-  AllVars <- ls(envir = Environment)
+  AllVars <- ls(envir = Environment, all.names = TRUE)
 
   if (length(AllVars) == 0) {
     cat("No Objects are available in the global environment!\n")

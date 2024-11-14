@@ -345,13 +345,21 @@ Predict_LF <- function(
       future.globals.maxSize = 8000 * 1024^2,
       future.gc = TRUE, future.seed = TRUE,
       future.globals.onReference = "error"
-      )
+    )
 
     c1 <- snow::makeSOCKcluster(NCores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
     future::plan("future::cluster", workers = c1, gc = TRUE)
     on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
 
+
+    c(
+      Unique_Alpha, Path_D11, Path_D12, indNew, unitsPred,
+      indOld, modelunits, TF_Environ, UseTF, TF_use_single, postEta) %>%
+      lapply(class) %>%
+      print()
+
+    print(Unique_Alpha)
 
     # Calculate etaPred
     etaPreds <- future.apply::future_lapply(
@@ -360,7 +368,6 @@ Predict_LF <- function(
 
 
         AllObjSizes(InFunction = TRUE)
-
 
 
         # Check the class of all objects at the beginning of the function
@@ -383,13 +390,6 @@ Predict_LF <- function(
         SampleID <- Unique_Alpha$SampleID[[RowNum]]
         # File path for current alpha
         File <- Unique_Alpha$File[[RowNum]]
-
-
-
-        print(paste("Denom type:", class(Denom)))
-        print(paste("LF_ID type:", class(LF_ID)))
-        print(paste("SampleID type:", class(SampleID)))
-        print(paste("File type:", class(File)))
 
 
 

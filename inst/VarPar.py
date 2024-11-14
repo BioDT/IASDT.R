@@ -24,9 +24,6 @@ tf.get_logger().setLevel('ERROR')
 # Disable oneDNN optimizations, which may add performance overhead for this use case
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
-# Check GPU availability
-# print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
-
 # ==============================================================================
 # VarPar - Core Function for Matrix Computations with TensorFlow
 # ==============================================================================

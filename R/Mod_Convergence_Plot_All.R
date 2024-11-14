@@ -149,7 +149,7 @@ Convergence_Plot_All <- function(
       if (!file.exists(Path_Trace_Rho)) {
         if (Tree == "Tree") {
           RhoTitle <- stringr::str_remove_all(
-            string = basename(Path_Coda), pattern = "_Tree|_Coda.RData$")
+            string = basename(Path_Coda), pattern = "_Tree|_Coda|.RData$|.qs")
 
           PlotObj_Rho <- IASDT.R::PlotRho(
             Post = Coda_Obj, Model = Model_Obj, Title = RhoTitle,
@@ -170,7 +170,7 @@ Convergence_Plot_All <- function(
         PlotObj_Alpha <- IASDT.R::PlotAlpha(
           Post = Coda_Obj, Model = Model_Obj,
           Title = stringr::str_remove_all(
-            basename(Path_Coda), "_Tree|_Coda.RData$"),
+            basename(Path_Coda), "_Tree|_Coda|.RData$|.qs"),
           FromHPC = FromHPC, MarginType = MarginType)
 
         IASDT.R::SaveAs(
@@ -297,16 +297,13 @@ Convergence_Plot_All <- function(
   # Alpha - trace plots ------
   IASDT.R::CatTime("Alpha - trace plots")
 
-  layout_matrix <- matrix(seq_len(2 * 2), nrow = 2, byrow = TRUE)
-
   grDevices::pdf(
     file = file.path(Path_Convergence_All, "TracePlots_Alpha.pdf"),
     width = 18, height = 12)
   purrr::walk(
     .x = Convergence_DT$Path_Trace_Alpha,
     .f = purrr::safely(~{
-      gridExtra::grid.arrange(IASDT.R::LoadAs(.x)[[1]],
-                              layout_matrix = layout_matrix)
+      gridExtra::grid.arrange(IASDT.R::LoadAs(.x)[[1]])
     }))
   grDevices::dev.off()
 

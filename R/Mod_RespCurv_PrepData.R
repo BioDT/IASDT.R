@@ -405,8 +405,8 @@ RespCurv_PrepData <- function(
 
     } else {
       IASDT.R::CatTime(
-        paste0("LF prediction will be loaded from available file: \n   >>>  ",
-               File_LF))
+        paste0(
+          "LF prediction will be loaded from available file: \n   >>>  ",File_LF))
     }
 
 

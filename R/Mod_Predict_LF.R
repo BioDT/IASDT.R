@@ -86,7 +86,7 @@ Predict_LF <- function(
 
   # # ..................................................................... ###
 
-  # Check inputs
+  # Check inputs ----
 
   if (is.null(LF_OutFile) && isFALSE(LF_Return)) {
     stop(
@@ -96,7 +96,7 @@ Predict_LF <- function(
 
   # # ..................................................................... ###
 
-  # Load postEta if it is a file path
+  # Load postEta if it is a file path -----
 
   if (inherits(postEta, "character")) {
     IASDT.R::CatTime("Load postEta", Level = 1)
@@ -115,11 +115,11 @@ Predict_LF <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   SampleID <- Unit_ID <- LF <- LF_ID <- etaPred <- Sample_IDs <- File <-
-    crossprod_solve <- Alpha_ID <- NULL
+    crossprod_solve <- Alpha_ID <- check_modules <- is_gpu_available <- NULL
 
   # # ..................................................................... ###
 
-  # indices of unitsPred in modelunits
+  # indices of unitsPred in modelunits -----
   indOld <- (unitsPred %in% modelunits)
   # indices of new unitsPred
   indNew <- !(indOld)
@@ -140,9 +140,12 @@ Predict_LF <- function(
 
   } else {
 
-    # Check TensorFlow settings
+    # Check TensorFlow settings ----
 
     if (UseTF) {
+
+      IASDT.R::CatTime("Check TensorFlow settings", Level = 1)
+
       # Check if TF_Environ directory exists
       if (is.null(TF_Environ) || !dir.exists(TF_Environ)) {
         stop(
@@ -152,17 +155,50 @@ Predict_LF <- function(
           call. = FALSE)
       }
 
-      PythonScript <- system.file("crossprod_solve.py", package = "IASDT.R")
+      PythonScripts <- c(
+        system.file("crossprod_solve.py", package = "IASDT.R"),
+        system.file("Utilities.py", package = "IASDT.R"))
 
-      # Check if PythonScript exists
-      if (!file.exists(PythonScript)) {
+      # Check if PythonScripts exists
+      if (!all(file.exists(PythonScripts))) {
         stop(
-          "Specified `PythonScript` does not exist at the provided path.",
+          "Necessary Python scripts do not exist in the package files",
           call. = FALSE)
       }
 
       # Suppress TensorFlow warnings and disable optimizations
       Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3", TF_ENABLE_ONEDNN_OPTS = "0")
+
+
+      # Activate the python environment
+      reticulate::use_virtualenv(TF_Environ, required = TRUE)
+      reticulate::source_python(PythonScripts[2])
+
+      # Check if all necessary python modules exist
+      MissingModules <- check_modules(
+        module_list = c(
+          "os", "tensorflow", "numpy", "rdata", "xarray", "pandas"),
+        print_status = TRUE)
+
+      if (length(MissingModules) > 0) {
+        stop(
+          paste0(
+            "The following module(s) are missing: ",
+            paste0(MissingModules, collapse = "; ")),
+          call. = FALSE)
+      } else {
+        IASDT.R::CatTime(
+          "All necessary python modules are available", Level = 2)
+      }
+
+      # Check GPU availability
+      GPU <- is_gpu_available(print_status = FALSE)
+
+      if (GPU) {
+        IASDT.R::CatTime("GPU is available", Level = 2)
+      } else {
+        IASDT.R::CatTime("No GPU is available", Level = 2)
+      }
 
       IASDT.R::CatTime("Computations will be made using TensorFlow", Level = 1)
     } else {
@@ -316,7 +352,7 @@ Predict_LF <- function(
           # Activate the python environment
           reticulate::use_virtualenv(TF_Environ, required = TRUE)
           # Source the script file containing the crossprod_solve function
-          reticulate::source_python(PythonScript)
+          reticulate::source_python(PythonScripts[1])
 
           eta_indNew <- crossprod_solve(
             Dist1 = Path_D11, Dist2 = Path_D12, Denom = Denom,

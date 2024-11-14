@@ -17,10 +17,6 @@ tf.get_logger().setLevel('ERROR')
 # Disable oneDNN optimizations to prevent additional warnings
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
-# check GPU availability
-# print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
-
-
 # =======================================================
 # load_rds
 # =======================================================

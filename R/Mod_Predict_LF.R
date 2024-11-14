@@ -291,6 +291,8 @@ Predict_LF <- function(
           }),
         Export = NULL)
 
+    invisible(gc())
+
     # # .................................................................... ###
 
     IASDT.R::CatTime(
@@ -321,13 +323,14 @@ Predict_LF <- function(
         "Unique_Alpha", "Path_D11", "Path_D12", "indNew", "unitsPred",
         "indOld", "modelunits", "TF_Environ", "UseTF", "TF_use_single"),
       envir = environment())
+
     invisible(snow::clusterEvalQ(
       cl = c1,
       expr = {
         sapply(
           c(
             "Rcpp", "RcppArmadillo", "dplyr", "tidyr", "tibble",
-            "Matrix", "Hmsc", "qs", "fs", "purrr"),
+            "Matrix", "Hmsc", "qs", "fs", "purrr", "IASDT.R", "reticulate"),
           library, character.only = TRUE)
       }))
 
@@ -351,6 +354,7 @@ Predict_LF <- function(
         # `eta_indNew` to zero.
 
         if (Denom > 0) {
+
           if (UseTF) {
 
             # Use TensorFlow
@@ -363,6 +367,7 @@ Predict_LF <- function(
             eta_indNew <- crossprod_solve(
               Dist1 = Path_D11, Dist2 = Path_D12, Denom = Denom,
               List = File, use_single = TF_use_single)
+
             eta_indNew <- purrr::map(
               .x = seq_along(eta_indNew),
               .f = ~ {

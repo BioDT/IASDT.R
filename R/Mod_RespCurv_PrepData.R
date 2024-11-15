@@ -94,6 +94,8 @@ RespCurv_PrepData <- function(
 
   # PrepRCData -------
 
+  Path_Prediction <- file.path(dirname(dirname(Path_Model)), "Model_Prediction")
+
   PrepRCData <- function(ID) {
 
     Variable <- ResCurvDT$VarName[[ID]]
@@ -153,7 +155,7 @@ RespCurv_PrepData <- function(
         # Predicting probability of occurrence
         Preds <- IASDT.R::Predict_Hmsc(
           Path_Model = Path_Model, Gradient = Gradient, expected = TRUE,
-          NCores = 1,
+          NCores = 1, Pred_Dir = Path_Prediction,
           Model_Name = paste0("RC_", Coords), RC = Coords, UseTF = UseTF,
           TF_Environ = TF_Environ, LF_InputFile = File_LF, Verbose = FALSE)
 

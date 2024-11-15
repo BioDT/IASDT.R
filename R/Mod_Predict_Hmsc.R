@@ -543,116 +543,129 @@ Predict_Hmsc <- function(
     pred <- tibble::tibble(dplyr::bind_rows(pred))
 
   }
+  
+  snow::stopCluster(c1)
 
   # # ..................................................................... ###
 
   IASDT.R::CatTime("Summarizing prediction outputs / Evaluation", Level = 1)
 
-  c1 <- snow::makeSOCKcluster(NCores)
-  on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-  future::plan("future::cluster", workers = c1, gc = TRUE)
-  on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
-
   Eval_DT <- dplyr::select(pred, -Chunk) %>%
     dplyr::group_nest(Sp, IAS_ID) %>%
     dplyr::mutate(data = purrr::map(data, unlist))
 
-  Eval_DT <- future.apply::future_lapply(
-    X = seq_len(nrow(Eval_DT)),
-    FUN = function(ID) {
 
-      Sp <- Eval_DT$Sp[[ID]]
-      if (Sp == 0) {
-        Sp2 <- "SR"
-      } else {
-        Sp2 <- paste0("taxon", Sp)
-      }
-      IAS_ID <- Eval_DT$IAS_ID[[ID]]
-      data <- as.vector(Eval_DT$data[[ID]])
 
-      SpDT <- purrr::map(data, qs::qread) %>%
-        do.call(cbind, .) %>%
-        as.double()
+  c1 <- snow::makeSOCKcluster(NCores)
+  on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
 
-      # Mean prediction
-      SpDT_Mean <- Rfast::rowmeans(SpDT)
-
-      # standard deviation of prediction
-      SpDT_SD <- Rfast::rowVars(SpDT, std = TRUE)
-
-      # Coefficient of variation
-      SpDT_Mean0 <- SpDT_Mean
-      # Replace very small mean values with reasonably small number to avoid
-      # overflow warning
-      SpDT_Mean0[SpDT_Mean0 < 1e-8] <- 1e-8
-      SpDT_Cov <- SpDT_SD / SpDT_Mean0
-
-      rm(SpDT, envir = environment())
-
-      if (is.null(Pred_XY)) {
-        Pred_XY <- Model$rL$sample$s
-      }
-
-      PredSummary <- tibble::tibble(
-        as.data.frame(Pred_XY),
-        Mean = SpDT_Mean, SD = SpDT_SD, Cov = SpDT_Cov) %>%
-        stats::setNames(
-          c(
-            "x", "y", paste0(IAS_ID, "_mean"),
-            paste0(IAS_ID, "_sd"), paste0(IAS_ID, "_cov"))) %>%
-        sf::st_as_sf(coords = c("x", "y"), crs = 3035, remove = FALSE)
-
-      PredSummaryFile <- file.path(
-        Pred_Dir, paste0("Pred_", Model_Name, "_", Sp2, ".qs"))
-
-      qs::qsave(PredSummary, file = PredSummaryFile, preset = "fast")
-      try(fs::file_delete(data), silent = TRUE)
-
-      if (Evaluate && Sp2 != "SR") {
-        if (is.null(Pred_PA)) {
-          PresAbs <- Model$Y[, Sp]
-        } else {
-          PresAbs <- Pred_PA[, Sp]
-        }
-
-        if (length(unique(PresAbs)) == 2) {
-          # Calculate evaluation metrics if there are two both presence and
-          # absence info in (testing) data
-          RMSE <- caret::RMSE(PresAbs, SpDT_Mean)
-          MeanPres <- mean(SpDT_Mean[which(PresAbs == 1)])
-          MeanAbs <- mean(SpDT_Mean[which(PresAbs == 0)])
-          TjurR2 <- MeanPres - MeanAbs
-          AUC <- pROC::auc(
-            response = PresAbs, predictor = SpDT_Mean,
-            levels = c(0, 1), direction = "<") %>%
-            as.numeric()
-          Boyce <- ecospat::ecospat.boyce(
-            fit = SpDT_Mean, obs = SpDT_Mean[PresAbs == 1],
-            PEplot = FALSE)$cor
-        } else {
-          RMSE <- TjurR2 <- AUC <- Boyce <- NA_real_
-        }
-      } else {
-        RMSE <- TjurR2 <- AUC <- Boyce <- NA_real_
-      }
-
-      invisible(gc())
-
-      tibble::tibble(
-        Sp = Sp, IAS_ID = IAS_ID, Path_pred = PredSummaryFile,
-        RMSE = RMSE, AUC = AUC, Boyce = Boyce, TjurR2 = TjurR2) %>%
-        return()
-    },
-    future.seed = TRUE, future.chunk.size = 1,
-    future.globals = c(
+  snow::clusterExport(
+    cl = c1,
+    list = c(
       "Eval_DT", "Evaluate", "Model", "Pred_Dir", "Model_Name",
       "Pred_PA", "Pred_XY"),
-    future.packages = c(
+    envir = environment())
+
+  invisible(snow::clusterEvalQ(
+    cl = c1,
+    expr = {
+      sapply(
+        c(
       "dplyr", "Matrix", "purrr", "tibble", "Hmsc", "float", "qs",
-      "Rfast", "caret", "pROC", "ecospat", "sf"))
+      "Rfast", "caret", "pROC", "ecospat", "sf"),
+        library, character.only = TRUE)
+    }))
+  
+  Eval_DT <- snow::clusterApplyLB(
+        cl = c1,
+        x = seq_len(nrow(Eval_DT)),
+        fun = function(ID) {
+              
+          Sp <- Eval_DT$Sp[[ID]]
+          if (Sp == 0) {
+            Sp2 <- "SR"
+          } else {
+            Sp2 <- paste0("taxon", Sp)
+          }
+          IAS_ID <- Eval_DT$IAS_ID[[ID]]
+          data <- as.vector(Eval_DT$data[[ID]])
+
+          SpDT <- purrr::map(data, qs::qread) %>%
+            do.call(cbind, .) %>%
+            as.double()
+
+          # Mean prediction
+          SpDT_Mean <- Rfast::rowmeans(SpDT)
+
+          # standard deviation of prediction
+          SpDT_SD <- Rfast::rowVars(SpDT, std = TRUE)
+
+          # Coefficient of variation
+          SpDT_Mean0 <- SpDT_Mean
+          # Replace very small mean values with reasonably small number to avoid
+          # overflow warning
+          SpDT_Mean0[SpDT_Mean0 < 1e-8] <- 1e-8
+          SpDT_Cov <- SpDT_SD / SpDT_Mean0
+
+          rm(SpDT, envir = environment())
+
+          if (is.null(Pred_XY)) {
+            Pred_XY <- Model$rL$sample$s
+          }
+
+          PredSummary <- tibble::tibble(
+            as.data.frame(Pred_XY),
+            Mean = SpDT_Mean, SD = SpDT_SD, Cov = SpDT_Cov) %>%
+            stats::setNames(
+              c(
+                "x", "y", paste0(IAS_ID, "_mean"),
+                paste0(IAS_ID, "_sd"), paste0(IAS_ID, "_cov"))) %>%
+            sf::st_as_sf(coords = c("x", "y"), crs = 3035, remove = FALSE)
+
+          PredSummaryFile <- file.path(
+            Pred_Dir, paste0("Pred_", Model_Name, "_", Sp2, ".qs"))
+
+          qs::qsave(PredSummary, file = PredSummaryFile, preset = "fast")
+          try(fs::file_delete(data), silent = TRUE)
+
+          if (Evaluate && Sp2 != "SR") {
+            if (is.null(Pred_PA)) {
+              PresAbs <- Model$Y[, Sp]
+            } else {
+              PresAbs <- Pred_PA[, Sp]
+            }
+
+            if (length(unique(PresAbs)) == 2) {
+              # Calculate evaluation metrics if there are two both presence and
+              # absence info in (testing) data
+              RMSE <- caret::RMSE(PresAbs, SpDT_Mean)
+              MeanPres <- mean(SpDT_Mean[which(PresAbs == 1)])
+              MeanAbs <- mean(SpDT_Mean[which(PresAbs == 0)])
+              TjurR2 <- MeanPres - MeanAbs
+              AUC <- pROC::auc(
+                response = PresAbs, predictor = SpDT_Mean,
+                levels = c(0, 1), direction = "<") %>%
+                as.numeric()
+              Boyce <- ecospat::ecospat.boyce(
+                fit = SpDT_Mean, obs = SpDT_Mean[PresAbs == 1],
+                PEplot = FALSE)$cor
+            } else {
+              RMSE <- TjurR2 <- AUC <- Boyce <- NA_real_
+            }
+          } else {
+            RMSE <- TjurR2 <- AUC <- Boyce <- NA_real_
+          }
+
+          invisible(gc())
+
+          tibble::tibble(
+            Sp = Sp, IAS_ID = IAS_ID, Path_pred = PredSummaryFile,
+            RMSE = RMSE, AUC = AUC, Boyce = Boyce, TjurR2 = TjurR2) %>%
+            return()
+        
+        })
 
   snow::stopCluster(c1)
-  future::plan("future::sequential", gc = TRUE)
 
   # # ..................................................................... ###
 

@@ -17,7 +17,7 @@ RespCurv_PrepData(
 )
 }
 \arguments{
-\item{Path_Model}{Character. Path to the \code{.RData} file containing the model.}
+\item{Path_Model}{Character. Path file containing the model.}
 
 \item{ngrid}{Integer specifying the number of points along the gradient for
 continuous focal variables. Defaults to 50. See \link[Hmsc:constructGradient]{Hmsc::constructGradient}

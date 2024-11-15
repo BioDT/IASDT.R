@@ -334,7 +334,7 @@ Mod_Prep4HPC <- function(
       stop(call. = FALSE)
   }
 
-  rm(AllArgs, CharArgs, LogicArgs, NumericArgs)
+  rm(AllArgs, CharArgs, LogicArgs, NumericArgs, envir = environment())
 
   # # ..................................................................... ###
 
@@ -565,7 +565,7 @@ Mod_Prep4HPC <- function(
     print(NSpPerGrid_Sub)
     grDevices::dev.off()
 
-    rm(Limits, NSpPerGrid_Sub, EU_Bound_sub)
+    rm(Limits, NSpPerGrid_Sub, EU_Bound_sub, envir = environment())
 
   } else {
     IASDT.R::CatTime("No data subsetting was implemented", Level = 1)
@@ -1061,7 +1061,7 @@ Mod_Prep4HPC <- function(
     Model_Process <- purrr::map(
       .x = seq_len(nrow(Model_Info)), .f = InitFitFun)
   }
-  rm(Model_Process)
+  rm(Model_Process, envir = environment())
 
   # Which models failed to be exported as RDS files after 5 trials
   Failed2Export <- dplyr::filter(Model_Info, !file.exists(M4HPC_Path))

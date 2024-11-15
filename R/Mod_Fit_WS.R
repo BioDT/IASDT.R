@@ -105,7 +105,7 @@ Mod_Fit_WS <- function(Path_Model, EnvFile = ".env", NCores = NULL) {
       future.scheduling = Inf, future.seed = TRUE,
       future.globals = c("Path_Hmsc_WS", "Model2Run"))
 
-    rm(RunCommands)
+    rm(RunCommands, envir = environment())
 
     if (NCores > 1) {
       snow::stopCluster(c1)

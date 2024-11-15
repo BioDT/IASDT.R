@@ -45,7 +45,7 @@ CHELSA_Project <- function(
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Args = "CompressLevel", Type = "numeric")
 
-  rm(AllArgs, LogicArgs)
+  rm(AllArgs, LogicArgs, envir = environment())
 
   if (!inherits(Metadata, "tbl_df")) {
     stop("Input metadata has to be a tibble")
@@ -157,7 +157,7 @@ CHELSA_Project <- function(
     # replace extreme values with NA
     terra::classify(cbind(420000000, Inf, NA))
 
-  rm(LandMaskL, CropExtent)
+  rm(LandMaskL, CropExtent, envir = environment())
 
   # # ..................................................................... ###
 

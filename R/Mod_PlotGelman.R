@@ -48,6 +48,8 @@ PlotGelman <- function(
 
   .StartTime <- lubridate::now(tzone = "CET")
 
+  # # ..................................................................... ###
+
   # Checking arguments --------
 
   if (sum(Alpha, Beta, Omega, Rho) == 0) {
@@ -71,15 +73,17 @@ PlotGelman <- function(
     AllArgs, c("Beta", "Rho", "Omega", "Alpha", "ReturnPlots"),
     "logical")
 
-  rm(AllArgs)
+  rm(AllArgs, envir = environment())
 
   # # ..................................................................... ###
 
   # Loading coda object ------
 
   if (inherits(Path_Coda, "character")) {
+
     IASDT.R::CatTime("Loading coda object")
     CodaObj <- IASDT.R::LoadAs(Path_Coda)
+
   } else {
 
     if (!inherits(Path_Coda, "list")) {
@@ -90,8 +94,10 @@ PlotGelman <- function(
     }
 
     CodaObj <- Path_Coda
-    rm(Path_Coda)
+    rm(Path_Coda, envir = environment())
   }
+
+  # # ..................................................................... ###
 
   OutPath <- file.path(dirname(dirname(Path_Coda)), "Model_Convergence")
   fs::dir_create(OutPath)
@@ -102,7 +108,7 @@ PlotGelman <- function(
 
   if (Alpha) {
     IASDT.R::CatTime("Alpha")
-    PlotObj_Alpha <- IASDT.R::PlotGelman_Alpha(
+    PlotObj_Alpha <- PlotGelman_Alpha(
       CodaObj = CodaObj$Alpha[[1]], PlottingAlpha = PlottingAlpha)
   } else {
     PlotObj_Alpha <- NULL

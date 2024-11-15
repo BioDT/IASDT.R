@@ -30,7 +30,7 @@ PlotOmegaGG <- function(
 
   # # ..................................................................... ###
 
-  # devtools::install_github("YuLab-SMU/ggtree")
+  .StartTime <- lubridate::now(tzone = "CET")
 
   if (is.null(Path_Model)) {
     stop("Path_Model cannot be empty", call. = FALSE)
@@ -184,6 +184,10 @@ PlotOmegaGG <- function(
     width = PlotWidth, height = PlotHeight, units = "cm", quality = 100)
   print(Plot)
   grDevices::dev.off()
+
+  # # ..................................................................... ###
+
+  IASDT.R::CatDiff(InitTime = .StartTime, Prefix = "Plotting took ")
 
   # # ..................................................................... ###
 

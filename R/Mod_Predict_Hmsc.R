@@ -66,7 +66,7 @@ Predict_Hmsc <- function(
     Model_Name = "Train", Temp_Dir = "TEMP2Pred", RC = NULL,
     UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE, LF_OutFile = NULL,
     LF_Return = TRUE, LF_InputFile = NULL, LF_Only = FALSE,
-    Pred_Dir = "Model_Predictions", Pred_PA = NULL, Pred_XY = NULL,
+    Pred_Dir = "Model_Prediction", Pred_PA = NULL, Pred_XY = NULL,
     Evaluate = FALSE, Eval_Name = NULL, Eval_Dir = "Evaluation",
     Verbose = TRUE) {
 
@@ -106,8 +106,6 @@ Predict_Hmsc <- function(
   if (!is.null(RC) && !RC %in% c("c", "i")) {
     stop("`RC` must be either NULL or one of 'c' or 'i'", call. = FALSE)
   }
-
-  Pred_Dir <- file.path(dirname(dirname(Path_Model)), Pred_Dir)
 
   if (is.null(RC) || RC == "c") {
     IASDT.R::CatTime("Creating/checking output paths")
@@ -337,7 +335,7 @@ Predict_Hmsc <- function(
         IASDT.R::CatTime("Save post to file and load it later", Level = 1)
         post_file <- file.path(Temp_Dir, paste0(Model_Name, "_post.qs"))
         qs::qsave(post, file = post_file, preset = "fast")
-        rm(post)
+        rm(post, envir = environment())
         invisible(gc())
       }
 
@@ -346,7 +344,7 @@ Predict_Hmsc <- function(
       IASDT.R::CatTime("Save postEta to file", Level = 1)
       postEta_file <- file.path(Temp_Dir, paste0(Model_Name, "_postEta.qs"))
       qs::qsave(postEta, file = postEta_file, preset = "fast")
-      rm(postEta)
+      rm(postEta, envir = environment())
       invisible(gc())
 
       if (r == 1) {
@@ -362,7 +360,7 @@ Predict_Hmsc <- function(
         LF_OutFile = LF_OutFile, LF_Return = LF_Return)
 
       try(fs::file_delete(postEta_file), silent = TRUE)
-      rm(postEta_file)
+      rm(postEta_file, envir = environment())
 
       rowNames <- rownames(predPostEta[[r]][[1]])
       PiNew[, r] <- fastmatch::fmatch(dfPiNew[, r], rowNames)
@@ -389,7 +387,7 @@ Predict_Hmsc <- function(
   }
 
   # free some memory
-  try(rm(predPostEta), silent = TRUE)
+  rm(predPostEta, envir = environment())
 
   invisible(gc())
 
@@ -437,7 +435,7 @@ Predict_Hmsc <- function(
         return(ChunkFile)
       })
 
-    rm(ChunkIDs, post, ppEta)
+    rm(ChunkIDs, post, ppEta, envir = environment())
     invisible(gc())
 
     IASDT.R::CatTime(
@@ -448,6 +446,7 @@ Predict_Hmsc <- function(
 
     c1 <- snow::makeSOCKcluster(NCores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
+
     snow::clusterExport(
       cl = c1,
       list = c(
@@ -467,18 +466,20 @@ Predict_Hmsc <- function(
           library, character.only = TRUE)
       }))
 
+
     IASDT.R::CatTime("Making predictions on parallel", Level = 1)
 
-    pred <- snow::parLapply(
+    pred <- snow::clusterApplyLB(
       cl = c1,
       x = seq_len(length(Chunks)),
       fun = function(Chunk) {
 
         ChunkFile <- Chunks[Chunk]
         Ch <- qs::qread(ChunkFile, nthreads = 5)
+
         ppEta <- Ch$ppEta
         post <- Ch$post
-        rm(Ch)
+        rm(Ch, envir = environment())
         Seed <- (Chunk - 1) * chunk_size
         Seed <- seq(Seed + 1, Seed + chunk_size)
         Seed <- seeds[Seed]
@@ -501,12 +502,13 @@ Predict_Hmsc <- function(
         ChunkSR_File <- file.path(
           Temp_Dir, paste0("Pred_", Model_Name, "_ch", Chunk, "_SR.qs"))
         qs::qsave(ChunkSR, file = ChunkSR_File, preset = "fast")
-        rm(ChunkSR)
+        rm(ChunkSR, envir = environment())
 
         # Species predictions
         ChunkSp <- purrr::map_dfr(
           .x = seq_len(length(Model$spNames)),
           .f = function(Sp) {
+
             SpD <- purrr::map(PredChunk, ~ .x[, Sp], ncol = 1) %>%
               simplify2array() %>%
               float::fl()
@@ -530,7 +532,7 @@ Predict_Hmsc <- function(
             .)
 
         try(fs::file_delete(ChunkFile))
-        rm(PredChunk)
+        rm(PredChunk, envir = environment())
 
         return(ChunkSp)
       })
@@ -585,7 +587,7 @@ Predict_Hmsc <- function(
       SpDT_Mean0[SpDT_Mean0 < 1e-8] <- 1e-8
       SpDT_Cov <- SpDT_SD / SpDT_Mean0
 
-      rm(SpDT)
+      rm(SpDT, envir = environment())
 
       if (is.null(Pred_XY)) {
         Pred_XY <- Model$rL$sample$s
@@ -678,6 +680,8 @@ Predict_Hmsc <- function(
     dplyr::mutate(Model_Name = Model_Name, .before = "SR_mean")
 
   Pred_File <- file.path(Pred_Dir, paste0("Prediction_", Model_Name, ".qs"))
+
+
   qs::qsave(Predictions, file = Pred_File, preset = "fast")
   try(fs::file_delete(Eval_DT$Path_pred), silent = TRUE)
   IASDT.R::CatTime(

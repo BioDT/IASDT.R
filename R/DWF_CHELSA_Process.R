@@ -66,7 +66,7 @@ CHELSA_Process <- function(
     "Download_NCores", "CompressLevel", "Sleep", "Download_Attempts", "NCores")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = NumericArgs, Type = "numeric")
 
-  rm(AllArgs, CharArgs, LogicArgs, NumericArgs)
+  rm(AllArgs, CharArgs, LogicArgs, NumericArgs, envir = environment())
 
   if (NCores < 1 || Download_NCores < 1) {
     stop("`NCores` must be a positive integer.", call. = FALSE)
@@ -113,7 +113,7 @@ CHELSA_Process <- function(
       Path_CHELSA_In, Path_CHELSA_Out,
       file.path(Path_CHELSA_Out, c("Tif", "NC", "Processed"))))
 
-  rm(EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   # # ..................................................................... ###
 
@@ -203,7 +203,7 @@ CHELSA_Process <- function(
 
     }
 
-    rm(AllOkay, Diff)
+    rm(AllOkay, Diff, envir = environment())
   }
 
   # # ..................................................................... ###
@@ -321,7 +321,8 @@ CHELSA_Process <- function(
 
   }
 
-  rm(CHELSA2Process)
+  rm(CHELSA2Process, envir = environment())
+  
   if (NCores > 1) {
     snow::stopCluster(c1)
     future::plan("future::sequential", gc = TRUE)

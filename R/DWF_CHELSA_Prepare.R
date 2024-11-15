@@ -55,7 +55,7 @@ CHELSA_Prepare <- function(
   NumericArgs <- c("Sleep", "Download_Attempts", "NCores")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = NumericArgs, Type = "numeric")
 
-  rm(AllArgs, CharArgs, LogicArgs, NumericArgs)
+  rm(AllArgs, CharArgs, LogicArgs, NumericArgs, envir = environment())
 
   if (NCores < 1) {
     stop("`NCores` must be a positive integer.", call. = FALSE)

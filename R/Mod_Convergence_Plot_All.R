@@ -58,7 +58,7 @@ Convergence_Plot_All <- function(
     AllArgs = AllArgs, Type = "character", Args = "ModelDir")
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric", Args = c("maxOmega", "NCores"))
-  rm(AllArgs)
+  rm(AllArgs, envir = environment())
 
 
   if (length(MarginType) != 1) {
@@ -158,7 +158,7 @@ Convergence_Plot_All <- function(
           IASDT.R::SaveAs(
             InObj = PlotObj_Rho, OutObj = Obj_Rho, OutPath = Path_Trace_Rho)
 
-          rm(PlotObj_Rho)
+          rm(PlotObj_Rho, envir = environment())
 
         } else {
           Path_Trace_Rho <- NULL
@@ -177,7 +177,7 @@ Convergence_Plot_All <- function(
           InObj = PlotObj_Alpha, OutObj = Obj_Alpha,
           OutPath = Path_Trace_Alpha)
 
-        rm(PlotObj_Alpha, Model_Obj)
+        rm(PlotObj_Alpha, Model_Obj, envir = environment())
       }
 
       # Beta + Omega -----
@@ -187,14 +187,15 @@ Convergence_Plot_All <- function(
         Beta_ESS <- Beta_Omega$Beta_ESS
         Omega_ESS <- Beta_Omega$Omega_ESS
         Omega_Gelman <- Beta_Omega$Omega_Gelman
-        rm(Beta_Omega)
+        rm(Beta_Omega, envir = environment())
+      
       } else {
 
         Beta <- magrittr::extract2(Coda_Obj, "Beta")
         Omega <- magrittr::extract2(Coda_Obj, "Omega") %>%
           magrittr::extract2(1)
 
-        rm(Coda_Obj)
+        rm(Coda_Obj, envir = environment())
 
         # BETA - effectiveSize
         Beta_ESS <- coda::effectiveSize(Beta)
@@ -223,7 +224,7 @@ Convergence_Plot_All <- function(
           Beta_Gelman = Beta_Gelman, Beta_ESS = Beta_ESS,
           Omega_Gelman = Omega_Gelman, Omega_ESS = Omega_ESS)
         save(Beta_Omega, file = Path_Beta_Omega)
-        rm(Beta_Omega)
+        rm(Beta_Omega, envir = environment())
       }
     }
 
@@ -549,7 +550,12 @@ Convergence_Plot_All <- function(
   print(Plot2)
   grDevices::dev.off()
 
-  IASDT.R::CatDiff(InitTime = .StartTime)
+  # # ..................................................................... ###
+
+  IASDT.R::CatDiff(
+    InitTime = .StartTime, Prefix = "Plotting model convergence took ")
+
+  # # ..................................................................... ###
 
   return(invisible(NULL))
 }

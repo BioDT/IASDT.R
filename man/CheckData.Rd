@@ -12,7 +12,7 @@ be empty. The function will attempt to determine the file type based on the
 file extension. If the file extension is not recognized, the function will
 return \code{FALSE}. The recognized file extensions are \code{RData} (using
 \link{CheckRData}), \code{qs} (\link{CheckQs}), and \code{rds}
-(\link{CheckRds}).}
+(\link{CheckRDS}).}
 
 \item{warning}{logical. If \code{TRUE} (default), warnings will be printed if the
 file does not exist.}

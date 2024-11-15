@@ -238,7 +238,7 @@ GBIF_Process <- function(
   IASDT.R::CatTime("Saving `GBIF_Data` to disk", Level = 1)
   save(GBIF_Data, file = file.path(Path_GBIF, "GBIF_Data.RData"))
 
-  rm(TaxaList)
+  rm(TaxaList, envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###
@@ -284,7 +284,9 @@ GBIF_Process <- function(
     iNaturalist_Count,
     file = file.path(Path_GBIF, "iNaturalist_Count.RData"))
 
-  rm(iNaturalist_Others, iNaturalist_Unique, iNaturalist_Count)
+  rm(
+    iNaturalist_Others, iNaturalist_Unique, iNaturalist_Count, 
+    envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###
@@ -336,7 +338,7 @@ GBIF_Process <- function(
   writexl::write_xlsx(
     x = GBIF_NObsNGrid, path = file.path(Path_GBIF, "GBIF_NObsNGrid.xlsx"))
 
-  rm(GBIF_NObsNGrid, SpNObs, SpNGrids)
+  rm(GBIF_NObsNGrid, SpNObs, SpNGrids, envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###
@@ -395,7 +397,7 @@ GBIF_Process <- function(
   IASDT.R::CatTime("Save as RData", Level = 2)
   save(GBIF_NSp, GBIF_NSp_Log, file = file.path(Path_GBIF, "GBIF_NSp.RData"))
 
-  rm(GridSf, GridR)
+  rm(GridSf, GridR, envir = environment())
   invisible(gc())
 
   # # ................................... ###
@@ -412,7 +414,7 @@ GBIF_Process <- function(
   LastUpdate <- stringr::str_glue(
     "DOI: {GBIF_DOI} ({GBIF_date})\nLast update: {LastUpdate}")
 
-  rm(GBIF_date, GBIF_DOI, GBIF_Grid, GBIF_Metadata)
+  rm(GBIF_date, GBIF_DOI, GBIF_Grid, GBIF_Metadata, envir = environment())
 
   Plot_GBIF_Summary <- function(
     RstrMap, Title, LegendLabel = NULL, EU_Map = EuroBound) {
@@ -511,7 +513,7 @@ GBIF_Process <- function(
   print(Plot)
   grDevices::dev.off()
 
-  rm(EuroBound)
+  rm(EuroBound, envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###
@@ -553,7 +555,9 @@ GBIF_Process <- function(
     },
     .progress = FALSE)
 
-  rm(GBIF_Data, GBIF_NObs, GBIF_NObs_log, GBIF_NSp, GBIF_NSp_Log)
+  rm(
+    GBIF_Data, GBIF_NObs, GBIF_NObs_log, GBIF_NSp, GBIF_NSp_Log,
+    envir = environment())
   invisible(gc())
 
 

@@ -219,7 +219,7 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
   print(Plot)
   grDevices::dev.off()
 
-  rm(Plot_NSp, Plot_NObs, Plot)
+  rm(Plot_NSp, Plot_NObs, Plot, envir = environment())
 
   ## |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

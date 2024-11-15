@@ -11,10 +11,11 @@ Predict_Maps(
   FromHPC = TRUE,
   NCores = 8,
   Pred_Clamp = TRUE,
-  FixEfforts = "mean",
+  Fix_Efforts = "mean",
   Pred_NewSites = TRUE,
   UseTF = TRUE,
   TF_Environ = NULL,
+  Temp_Dir = "TEMP2Pred",
   CC_Models = c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0",
     "UKESM1-0-LL"),
   CC_Scenario = c("ssp126", "ssp370", "ssp585")
@@ -38,10 +39,10 @@ adjust file paths accordingly. Default: \code{TRUE}.}
 parallelization. Default: 8 cores.}
 
 \item{Pred_Clamp}{Logical indicating whether to clamp the sampling efforts at
-a single value. Defaults to \code{TRUE}. If \code{TRUE}, the \code{FixEfforts} argument
+a single value. Defaults to \code{TRUE}. If \code{TRUE}, the \code{Fix_Efforts} argument
 must be provided.}
 
-\item{FixEfforts}{Numeric or character. Value to fix the sampling efforts at.
+\item{Fix_Efforts}{Numeric or character. Value to fix the sampling efforts at.
 If numeric, the value will be used as is. If character, it can be one of
 the following: \code{median}, \code{mean}, or \code{max}. Default: \code{mean}. This argument
 is required when \code{Pred_Clamp} is \code{TRUE}.}
@@ -56,6 +57,9 @@ Defaults to TRUE.}
 \item{TF_Environ}{Character string specifying the path to the Python
 environment. Defaults to NULL. This argument is required if \code{UseTF} is
 TRUE.}
+
+\item{Temp_Dir}{Character string specifying the path for temporary storage of
+intermediate files.}
 
 \item{CC_Models}{Character vector specifying the climate models to use for
 future predictions. Default: \code{c("GFDL-ESM4", "IPSL-CM6A-LR" , "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL")}. This argument is only

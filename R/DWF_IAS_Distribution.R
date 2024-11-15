@@ -112,7 +112,7 @@ IAS_Distribution <- function(
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
-  rm(EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   # # ..................................................................... ###
 
@@ -306,7 +306,8 @@ IAS_Distribution <- function(
       stats::setNames("Mask_Keep")
   }
 
-  rm(Grid_10_CNT)
+  rm(Grid_10_CNT, envir = environment())
+  
   GBIF_Keys <- paste0(GBIF_Keys, collapse = "_")
 
   # # ..................................................................... ###

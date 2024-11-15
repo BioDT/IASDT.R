@@ -78,7 +78,7 @@ Mod_SLURM_Refit <- function(
     Args = c("NumArrayJobs", "ntasks", "CpusPerTask", "GpusPerNode"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Args = c("CatJobInfo"), Type = "logical")
-  rm(AllArgs)
+  rm(AllArgs, envir = environment())
 
   # # ..................................................................... ###
 

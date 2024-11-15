@@ -283,7 +283,7 @@ CLC_Process <- function(
     ) %>%
     terra::rast()
 
-  rm(CLC_Fracs_vect, CLC_Fracs)
+  rm(CLC_Fracs_vect, CLC_Fracs, envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###
@@ -361,7 +361,7 @@ CLC_Process <- function(
     # constant throughout all geometries
     suppressWarnings()
 
-  rm(Grid_R)
+  rm(Grid_R, envir = environment())
 
   ## ||||||||||||||||||||||||||||||||||||||||
   # Percentage of water habitats per grid cells
@@ -435,7 +435,7 @@ CLC_Process <- function(
   save(CLC_FracsR,
     file = file.path(Path_CLC_Summary_RData, "CLC_FracsR.RData"))
 
-  rm(CLC_FracsR)
+  rm(CLC_FracsR, envir = environment())
   invisible(gc())
 
   ## ||||||||||||||||||||||||||||||||||||||||
@@ -494,7 +494,7 @@ CLC_Process <- function(
 
   rm(
     Grid_10_Land_Crop_sf, Grid_10_Land_sf, Exclude_Area,
-    TR, Grid_CNT, Grid_CNT_Near)
+    TR, Grid_CNT, Grid_CNT_Near, envir = environment())
 
   invisible(gc())
 
@@ -564,7 +564,7 @@ CLC_Process <- function(
     sf::st_as_sf() %>%
     sf::st_transform(crs = 3035)
 
-  rm(CLC_Rast, Grid_sf)
+  rm(CLC_Rast, Grid_sf, envir = environment())
 
   ## ||||||||||||||||||||||||||||||||||||||||
   # Save majority results
@@ -590,7 +590,9 @@ CLC_Process <- function(
     Path_RData = Path_CLC_Summary_RData,
     Grid_10_Land = Grid_10_Land, Grid_10_Land_Crop = Grid_10_Land_Crop)
 
-  rm(CLC_Majority, Grid_10_Land, Grid_10_Land_Crop, MajorityMaps)
+  rm(
+    CLC_Majority, Grid_10_Land, Grid_10_Land_Crop, MajorityMaps,
+    envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###

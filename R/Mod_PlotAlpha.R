@@ -100,7 +100,7 @@ PlotAlpha <- function(
       RColorBrewer::brewer.pal(n = NChains - 2, name = "Set1"))
   }
 
-  rm(Model)
+  rm(Model, envir = environment())
 
   # Number of latent factors
   NLV <- ncol(Post[[1]])

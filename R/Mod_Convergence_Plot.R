@@ -85,7 +85,7 @@ Convergence_Plot <- function(
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "logical", Args = "FromHPC")
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric", Args = c("NOmega", "NCores", "NRC"))
-  rm(AllArgs)
+  rm(AllArgs, envir = environment())
 
   # # ..................................................................... ###
 
@@ -175,7 +175,7 @@ Convergence_Plot <- function(
     plot(PlotObj_Rho)
     grDevices::dev.off()
 
-    rm(PlotObj_Rho)
+    rm(PlotObj_Rho, envir = environment())
   }
 
   # # ..................................................................... ###
@@ -215,7 +215,7 @@ Convergence_Plot <- function(
   Obj_Omega <- Coda_Obj$Omega[[1]]
   Obj_Beta <- Coda_Obj$Beta
 
-  rm(Model, Coda_Obj, PlotObj_Alpha)
+  rm(Model, Coda_Obj, PlotObj_Alpha, envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###
@@ -350,7 +350,7 @@ Convergence_Plot <- function(
         InObj = PlotObj_Omega,
         OutPath = file.path(Path_Convergence, "Convergence_Omega.qs"))
     }
-    rm(Obj_Omega, OmegaDF, SelectedCombs, CI, OmegaNames)
+    rm(Obj_Omega, OmegaDF, SelectedCombs, CI, OmegaNames, envir = environment())
     invisible(gc())
   }
 
@@ -403,7 +403,7 @@ Convergence_Plot <- function(
       })
     })
 
-  rm(OmegaPlotList, PlotObj_Omega)
+  rm(OmegaPlotList, PlotObj_Omega, envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###
@@ -498,7 +498,8 @@ Convergence_Plot <- function(
           InObj = .x$DT[[1]], OutObj = .x$Var_Sp2, OutPath = .x$Var_Sp_File))
 
     Beta_DF <- dplyr::select(Beta_DF, -DT)
-    rm(CI, VarRanges, SpeciesTaxonomy, Obj_Beta)
+
+    rm(CI, VarRanges, SpeciesTaxonomy, Obj_Beta, envir = environment())
     invisible(gc())
 
     # Prepare working on parallel
@@ -654,10 +655,9 @@ Convergence_Plot <- function(
       IASDT.R::CatTime("Stopping cluster", Level = 2)
       snow::stopCluster(c1)
       future::plan("future::sequential", gc = TRUE)
-      rm(c1)
     }
 
-    rm(Beta_DF, BetaNames)
+    rm(Beta_DF, BetaNames, envir = environment())
     invisible(gc())
 
     if (SavePlotData) {
@@ -716,12 +716,11 @@ Convergence_Plot <- function(
         .x = Plots, .f = ~ magrittr::extract2(.x, "Plot_Marginal"))
       BetaPlotsFixedY <- purrr::map(
         .x = Plots, .f = ~ magrittr::extract2(.x, "PlotFixedY_Marginal"))
-      rm(Plots)
+      rm(Plots, envir = environment())
 
       PlotTitle <- ggplot2::ggplot() +
         ggplot2::labs(
-          title = paste0("Convergence of the beta parameter - ", VarName)
-        ) +
+          title = paste0("Convergence of the beta parameter - ", VarName)) +
         ggplot2::theme_minimal() +
         ggplot2::theme(
           plot.title = ggplot2::element_text(
@@ -790,7 +789,7 @@ Convergence_Plot <- function(
       "dplyr", "ggplot2", "magrittr", "purrr", "IASDT.R",
       "tibble", "tidyr", "cowplot"))
 
-  rm(BetaTracePlots_ByVar0, BetaTracePlots_ByVar)
+  rm(BetaTracePlots_ByVar0, BetaTracePlots_ByVar, envir = environment())
   invisible(gc())
 
   # Stopping cluster
@@ -798,7 +797,6 @@ Convergence_Plot <- function(
     IASDT.R::CatTime("Stopping cluster", Level = 2)
     snow::stopCluster(c1)
     future::plan("future::sequential", gc = TRUE)
-    rm(c1)
   }
 
   # # ..................................................................... ###
@@ -911,7 +909,7 @@ Convergence_Plot <- function(
         grDevices::dev.off()
       })
 
-      rm(PlotTitle)
+      rm(PlotTitle, envir = environment())
       return(invisible(NULL))
     },
     future.scheduling = Inf, future.seed = TRUE,
@@ -924,11 +922,14 @@ Convergence_Plot <- function(
     future::plan("future::sequential", gc = TRUE)
   }
 
-  rm(BetaTracePlots_BySp0)
+  rm(BetaTracePlots_BySp0, envir = environment())
 
   # # ..................................................................... ###
 
-  IASDT.R::CatDiff(InitTime = .StartTime)
+  IASDT.R::CatDiff(
+    InitTime = .StartTime, Prefix = "Plot model convergence took ")
+
+  # # ..................................................................... ###
 
   return(invisible(NULL))
 }

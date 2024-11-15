@@ -52,7 +52,7 @@ PlotGelman_Beta <- function(
   NVars <- length(unique(Beta_Coda$Variable))
   NSp <- length(unique(Beta_Coda$Species))
   SubTitle <- paste0(NVars, " covariates - ", NSp, " species")
-  rm(Beta_Coda)
+  rm(Beta_Coda, envir = environment())
 
   Gelman_Beta_Vals <- magrittr::extract2(CodaObj, 1) %>%
     attr("dimnames") %>%

@@ -180,7 +180,7 @@ Efforts_Summarize <- function(
           if (NLines != TotalRecords) {
             purrr::walk(Chunks, file.remove)
             SplitChunks <- TRUE
-            rm(Chunks)
+            rm(Chunks, envir = environment())
           } else {
             SplitChunks <- FALSE
           }
@@ -239,7 +239,7 @@ Efforts_Summarize <- function(
           ReturnNoData <- TRUE
         }
 
-        rm(DT)
+        rm(DT, envir = environment())
       }
 
       # delete chunk files for the current order
@@ -278,7 +278,7 @@ Efforts_Summarize <- function(
     dplyr::select(tidyselect::all_of(RequestsCols)) %>%
     dplyr::left_join(DT_Paths, by = c("class", "order"))
 
-  rm(DT_Paths)
+  rm(DT_Paths, envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###
@@ -334,7 +334,7 @@ Efforts_Summarize <- function(
           Data = DT, NSp = TRUE, Name = "NSp", ClassOrder = ClassOrder,
           Grid_SF = Grid_SF, Grid_R = Grid_R)
 
-        rm(DT)
+        rm(DT, envir = environment())
       }
 
       # # ++++++++++++++++++++++++++++++++++ ###
@@ -362,7 +362,7 @@ Efforts_Summarize <- function(
           Data = DT_Native, NSp = TRUE, Name = "NSp_Native",
           ClassOrder = ClassOrder, Grid_SF = Grid_SF, Grid_R = Grid_R)
 
-        rm(DT_Native)
+        rm(DT_Native, envir = environment())
       }
 
       # # ++++++++++++++++++++++++++++++++++ ###
@@ -388,7 +388,7 @@ Efforts_Summarize <- function(
   Efforts_Summary <- dplyr::left_join(
     Efforts_Summary, SummaryMaps, by = c("ClassOrder"))
 
-  rm(SummaryMaps)
+  rm(SummaryMaps, envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###

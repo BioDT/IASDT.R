@@ -50,7 +50,7 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "logical", Args = c("FromHPC", "Download"))
 
-  rm(AllArgs)
+  rm(AllArgs, envir = environment())
 
   # # ..................................................................... ###
 
@@ -145,7 +145,7 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
       call. = FALSE)
   }
 
-  rm(Down)
+  rm(Down, envir = environment())
 
   # # .................................... ###
 
@@ -153,7 +153,7 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
   archive::archive_extract(
     archive = Path_DownFile, dir = Path_Roads_Interim) %>%
     suppressMessages()
-  rm(Path_DownFile)
+  rm(Path_DownFile, envir = environment())
 
   # # ..................................................................... ###
 
@@ -224,7 +224,7 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
     ) %>%
     invisible()
 
-  rm(Road_sf)
+  rm(Road_sf, envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###
@@ -413,7 +413,7 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
   print(Plots_Length)
   grDevices::dev.off()
 
-  rm(Plots_Length)
+  rm(Plots_Length, envir = environment())
 
   # # ..................................... ###
 
@@ -460,7 +460,7 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
   print(Plots_Distance)
   grDevices::dev.off()
 
-  rm(Plots_Distance)
+  rm(Plots_Distance, envir = environment())
 
   # ..................................................................... ###
 

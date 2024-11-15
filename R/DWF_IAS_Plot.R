@@ -127,7 +127,7 @@ IAS_Plot <- function(
   Legend_GBIF <- dplyr::filter(Grid_100_sf, CellCode == "100kmE27N45")
   Legend_EASIN <- dplyr::filter(Grid_100_sf, CellCode == "100kmE27N44")
   Legend_eLTER <- dplyr::filter(Grid_100_sf, CellCode == "100kmE27N43")
-  rm(Grid_100_sf)
+  rm(Grid_100_sf, envir = environment())
 
   # the study area as simple feature object for plotting
   Grid10_Sf <- file.path(Path_Grid, "Grid_10_Land_Crop_sf.RData") %>%

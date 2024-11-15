@@ -89,7 +89,7 @@ Efforts_Split <- function(Path_Zip, Path_Output, ChunkSize = 100000) {
       stop("Failed to execute system command: ", e$message)
     }
   )
-  rm(Path_Chunks)
+  rm(Path_Chunks, envir = environment())
 
   return(
     list.files(

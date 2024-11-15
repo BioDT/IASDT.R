@@ -35,6 +35,10 @@ Mod_Summary <- function(
 
   # # ..................................................................... ###
 
+  .StartTime <- lubridate::now(tzone = "CET")
+
+  # # ..................................................................... ###
+
   if (is.null(Path_Coda)) {
     stop("Path_Coda cannot be empty", call. = FALSE)
   }
@@ -101,7 +105,7 @@ Mod_Summary <- function(
   IASDT.R::CatTime("Rho summary", Level = 1)
   Rho_Summary <- summary(Coda$Rho)
 
-  rm(Coda)
+  rm(Coda, envir = environment())
 
   # # ..................................................................... ###
 
@@ -231,6 +235,11 @@ Mod_Summary <- function(
       Rho = Rho_Summary, Omega = Omega_Summary),
     OutObj = "Parameters_Summary",
     OutPath = file.path(Path_Out, "Parameters_Summary.RData"))
+
+  # # ..................................................................... ###
+
+  IASDT.R::CatDiff(
+    InitTime = .StartTime, Prefix = "Extracting model summary took ")
 
   # # ..................................................................... ###
 

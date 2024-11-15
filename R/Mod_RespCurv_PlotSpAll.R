@@ -53,7 +53,7 @@ RespCurv_PlotSpAll <- function(
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = "ModelDir")
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric", Args = c("NCores", "PlotAlpha"))
-  rm(AllArgs)
+  rm(AllArgs, envir = environment())
 
   if (PlotAlpha < 0 || PlotAlpha > 1) {
     stop("`PlotAlpha` must be between 0 and 1", call. = FALSE)
@@ -73,10 +73,10 @@ RespCurv_PlotSpAll <- function(
 
   # # ..................................................................... ###
 
-  # Loading / process species response curve data on parallel
+  # Loading & processing response curve data on parallel
 
   IASDT.R::CatTime(
-    "Loading / process species response curve data on parallel", Level = 1)
+    "Loading & processing response curve data on parallel", Level = 1)
 
   Sp_DT_All <- file.path(Path_RC_DT, "ResCurvDT.RData") %>%
     IASDT.R::LoadAs() %>%
@@ -275,9 +275,9 @@ RespCurv_PlotSpAll <- function(
 
     # Using ggplot2::ggsave directly does not show non-ascii characters
     # correctly
-    grDevices::jpeg(
-      filename = Path_JPEG, width = PlotWidth, height = PlotHeight,
-      units = "cm", quality = 100, res = 600)
+    ragg::agg_jpeg(
+      filename = Path_JPEG, width = PlotWidth, height = PlotHeight, res = 600,
+      quality = 100, units = "cm")
     print(Plots)
     grDevices::dev.off()
 

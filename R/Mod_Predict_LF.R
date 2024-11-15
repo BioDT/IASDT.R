@@ -211,7 +211,7 @@ Predict_LF <- function(
     }
 
     # Clean up
-    rm(rL, s1, s2, D11, D12)
+    rm(rL, s1, s2, D11, D12, envir = environment())
     invisible(gc())
 
     if (!is.null(Model_Name)) {
@@ -240,7 +240,7 @@ Predict_LF <- function(
       as.data.frame() %>%
       tibble::tibble() %>%
       stats::setNames(paste0("LF_", seq_len(ncol(.))))
-    rm(postAlpha)
+    rm(postAlpha, envir = environment())
 
     # Unique values alpha and their respective sample IDs
     postAlpha_unique <- postAlpha_tibble %>%
@@ -304,18 +304,6 @@ Predict_LF <- function(
       future.gc = TRUE, future.seed = TRUE)
     c1 <- snow::makeSOCKcluster(NCores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-    # future::plan("future::cluster", workers = c1, gc = TRUE)
-    # on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
-    #
-    # Calculate etaPred
-    # etaPreds <- future.apply::future_lapply(
-    #   X = seq_len(nrow(Unique_Alpha)),
-    #   FUN = calc_eta_pred, future.seed = TRUE, future.chunk.size = 1,
-    #   future.globals = c(
-    #     "Unique_Alpha", "Path_D11", "Path_D12", "indNew", "unitsPred",
-    #     "indOld", "modelunits", "TF_Environ", "UseTF", "TF_use_single"),
-    #   future.packages = c())
-
 
     snow::clusterExport(
       cl = c1,

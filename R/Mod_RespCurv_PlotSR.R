@@ -49,7 +49,7 @@ RespCurv_PlotSR <- function(ModelDir, Verbose = TRUE, NCores = 8) {
     stats::setNames(AllArgs)
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "character", Args = "ModelDir")
-  rm(AllArgs)
+  rm(AllArgs, envir = environment())
 
   # # ..................................................................... ###
 
@@ -81,6 +81,7 @@ RespCurv_PlotSR <- function(ModelDir, Verbose = TRUE, NCores = 8) {
   withr::local_options(
     future.globals.maxSize = 8000 * 1024^2,
     future.gc = TRUE, future.seed = TRUE)
+
   c1 <- snow::makeSOCKcluster(NCores)
   on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
   future::plan("future::cluster", workers = c1, gc = TRUE)
@@ -259,6 +260,7 @@ RespCurv_PlotSR <- function(ModelDir, Verbose = TRUE, NCores = 8) {
             ggplot2::labs(title = TitleTxt, caption = Caption) +
             ggplot2::theme_bw() +
             ggplot2::theme(
+              plot.margin = ggplot2::margin(5, 20, 5, 5),
               strip.text = ggtext::element_markdown(
                 hjust = 0,
                 margin = ggplot2::margin(0.05, 0.1, 0.05, 0.1, "cm")),
@@ -276,16 +278,15 @@ RespCurv_PlotSR <- function(ModelDir, Verbose = TRUE, NCores = 8) {
                 margin = ggplot2::margin(4, 0, 4, 0)),
               panel.grid.major = ggplot2::element_line(linewidth = 0.25),
               panel.grid.minor = ggplot2::element_line(linewidth = 0.1),
-              panel.spacing = ggplot2::unit(0.15, "lines"),
-              plot.margin = ggplot2::unit(c(0.1, 0.2, 0.1, 0.2), "lines"))
+              panel.spacing = ggplot2::unit(0.15, "lines"))
 
           # Using ggplot2::ggsave directly does not show non-ascii characters
           # correctly
-          grDevices::jpeg(
+          ragg::agg_jpeg(
             filename = file.path(
               Path_RC_SR,
               paste0("RespCurv_SR_", Variable, "_Coords_", Coords, ".jpeg")),
-            width = 20, height = 12.5, units = "cm", quality = 100, res = 600)
+            width = 20, height = 12.5, res = 600, quality = 100, units = "cm")
           print(Plot)
           grDevices::dev.off()
 
@@ -370,13 +371,13 @@ RespCurv_PlotSR <- function(ModelDir, Verbose = TRUE, NCores = 8) {
 
             # Using ggplot2::ggsave directly does not show non-ascii characters
             # correctly
-            grDevices::jpeg(
+            ragg::agg_jpeg(
               filename = file.path(
                 Path_RC_SR,
                 paste0(
                   "RespCurv_SR_", Variable, "_Coords_", Coords,
                   "_OriginalScale.jpeg")),
-              width = 20, height = 12.5, units = "cm", quality = 100, res = 600)
+              width = 20, height = 12.5, res = 600, quality = 100, units = "cm")
             print(Plot2)
             grDevices::dev.off()
           }
@@ -390,7 +391,11 @@ RespCurv_PlotSR <- function(ModelDir, Verbose = TRUE, NCores = 8) {
 
   # # ..................................................................... ###
 
-  IASDT.R::CatDiff(InitTime = .StartTime)
+  IASDT.R::CatDiff(
+    InitTime = .StartTime,
+    Prefix = "Plotting response curves for species richness took ")
+
+  # # ..................................................................... ###
 
   return(invisible(NULL))
 }

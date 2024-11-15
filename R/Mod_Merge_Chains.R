@@ -71,7 +71,7 @@ Merge_Chains <- function(
     AllArgs = AllArgs, Args = c("PrintIncomplete", "FromHPC", "PlotVP"),
     Type = "logical")
 
-  rm(AllArgs)
+  rm(AllArgs, envir = environment())
 
   if (!dir.exists(ModelDir)) {
     stop(paste0(
@@ -217,7 +217,7 @@ Merge_Chains <- function(
           Post_Aligned2 <- TRUE
         }
 
-        rm(Posts)
+        rm(Posts, envir = environment())
         invisible(gc())
 
         if (inherits(Model_Fit, "try-error")) {
@@ -270,10 +270,10 @@ Merge_Chains <- function(
           InObj = Mod_Coda, OutObj = paste0(M_Name_Fit, "_Coda"),
           OutPath = Path_Coda)
 
-        rm(Mod_Coda)
+        rm(Mod_Coda, envir = environment())
       }
 
-      rm(Model_Fit)
+      rm(Model_Fit, envir = environment())
       invisible(gc())
 
       # Return list of objects

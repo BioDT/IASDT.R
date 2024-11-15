@@ -5,7 +5,7 @@
 \title{Predict_Hmsc}
 \usage{
 Predict_Hmsc(
-  object,
+  Path_Model,
   Loff = NULL,
   XData = NULL,
   X = NULL,
@@ -26,7 +26,7 @@ Predict_Hmsc(
   LF_Return = TRUE,
   LF_InputFile = NULL,
   LF_Only = FALSE,
-  Pred_Dir = "Model_Predictions",
+  Pred_Dir = "Model_Prediction",
   Pred_PA = NULL,
   Pred_XY = NULL,
   Evaluate = FALSE,
@@ -36,8 +36,8 @@ Predict_Hmsc(
 )
 }
 \arguments{
-\item{object}{a fitted \code{Hmsc} model object or a character string specifying a
-file name where the model object is saved.}
+\item{Path_Model}{character string specifying a file name where the model
+object is saved.}
 
 \item{XData}{a dataframe specifying the unpreprocessed covariates for the
 predictions to be made. Works only if the \code{XFormula} argument was specified

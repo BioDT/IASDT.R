@@ -188,7 +188,7 @@ VarPar_Compute <- function(
     lmu <- purrr::map(results, ~ .x$lmu)
     lbeta <- purrr::map(results, ~ .x$lbeta)
 
-    rm(results)
+    rm(results, envir = environment())
     invisible(gc())
 
   } else {

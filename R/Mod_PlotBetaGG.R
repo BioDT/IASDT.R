@@ -28,6 +28,8 @@ PlotBetaGG <- function(
 
   # # ..................................................................... ###
 
+  .StartTime <- lubridate::now(tzone = "CET")
+
   if (is.null(Path_Model)) {
     stop("Path_Model cannot be empty", call. = FALSE)
   }
@@ -124,25 +126,27 @@ PlotBetaGG <- function(
     '<span style="font-size: 12pt"><b>Beta</b></span>',
     '<br><span style="font-size: 9pt">(sign)</span>')
 
-  Plot_Sign <- Plot_SignD %>%
-    sign(x = .) %>%
-    t() %>%
-    as.data.frame() %>%
-    dplyr::mutate_all(as.character) %>%
-    replace(., . == "1", PosSign) %>%
-    replace(., . == "-1", NegSign) %>%
-    replace(., . == "0", NA_character_) %>%
-    ggtree::gheatmap(
-      PhyloPlot, ., offset = 0.75, width = 12, font.size = 2.5, hjust = 0.5) +
-    ggplot2::scale_fill_manual(
-      values = c("red", "blue"), na.value = "transparent",
-      breaks = c(PosSign, NegSign)) +
-    ggtree::scale_x_ggtree() +
-    ggplot2::coord_cartesian(clip = "off")  +
-    ggplot2::labs(fill = LegendTitle) +
-    Theme +
-    ggplot2::theme(
-      legend.text = ggtext::element_markdown(size = 6))
+  Plot_Sign <- (
+    Plot_SignD %>%
+      sign(x = .) %>%
+      t() %>%
+      as.data.frame() %>%
+      dplyr::mutate_all(as.character) %>%
+      replace(., . == "1", PosSign) %>%
+      replace(., . == "-1", NegSign) %>%
+      replace(., . == "0", NA_character_) %>%
+      ggtree::gheatmap(
+        PhyloPlot, ., offset = 0.75, width = 12, font.size = 2.5, hjust = 0.5) +
+      ggplot2::scale_fill_manual(
+        values = c("red", "blue"), na.value = "transparent",
+        breaks = c(PosSign, NegSign)) +
+      ggtree::scale_x_ggtree() +
+      ggplot2::coord_cartesian(clip = "off")  +
+      ggplot2::labs(fill = LegendTitle) +
+      Theme +
+      ggplot2::theme(legend.text = ggtext::element_markdown(size = 6))
+  ) %>%
+    suppressMessages()
 
   Plot <- cowplot::plot_grid(
     (Plot_Sign + ggplot2::theme(legend.position = "none")),
@@ -170,7 +174,8 @@ PlotBetaGG <- function(
     '<span style="font-size: 12pt"><b>Beta</span><br>',
     '<span style="font-size: 9pt">(mean)</span>')
 
-  Plot_Mean <- Plot_MeanD %>%
+  Plot_Mean <- (
+    Plot_MeanD %>%
       t() %>%
       as.data.frame() %>%
       ggtree::gheatmap(
@@ -182,6 +187,8 @@ PlotBetaGG <- function(
       ggplot2::labs(fill = LegendTitle) +
       Theme +
       ggplot2::theme(legend.text = ggplot2::element_text(size = 8))
+  ) %>%
+    suppressMessages()
 
   Plot <- cowplot::plot_grid(
     (Plot_Mean + ggplot2::theme(legend.position = "none")),
@@ -207,7 +214,8 @@ PlotBetaGG <- function(
     '<span style="font-size: 9pt">(mean)</span><br><br>',
     '<span style="font-size: 7pt">[excl.<br/>Intercept]</span>')
 
-  Plot_Mean <- Plot_MeanD %>%
+  Plot_Mean <- (
+    Plot_MeanD %>%
       t() %>%
       as.data.frame() %>%
       ggtree::gheatmap(
@@ -219,6 +227,9 @@ PlotBetaGG <- function(
       ggplot2::labs(fill = LegendTitle) +
       Theme +
       ggplot2::theme(legend.text = ggplot2::element_text(size = 8))
+  ) %>%
+    suppressMessages()
+
 
   Plot <- cowplot::plot_grid(
     (Plot_Mean + ggplot2::theme(legend.position = "none")),
@@ -246,7 +257,8 @@ PlotBetaGG <- function(
     '<span style="font-size: 12pt"><b>Beta</span><br>',
     '<span style="font-size: 7pt">(support)</span>')
 
-  Plot_Support <- Plot_SupportD %>%
+  Plot_Support <- (
+    Plot_SupportD %>%
       t() %>%
       as.data.frame() %>%
       replace(., . == 0, NA_real_) %>%
@@ -259,6 +271,8 @@ PlotBetaGG <- function(
       ggplot2::labs(fill = LegendTitle) +
       Theme +
       ggplot2::theme(legend.text = ggplot2::element_text(size = 8))
+  ) %>%
+    suppressMessages()
 
   Plot <- cowplot::plot_grid(
     (Plot_Support + ggplot2::theme(legend.position = "none")),
@@ -271,6 +285,10 @@ PlotBetaGG <- function(
     width = PlotWidth, height = PlotHeight, units = "cm", quality = 100)
   print(Plot)
   grDevices::dev.off()
+
+  # # ..................................................................... ###
+
+  IASDT.R::CatDiff(InitTime = .StartTime, Prefix = "Plotting took ")
 
   # # ..................................................................... ###
 

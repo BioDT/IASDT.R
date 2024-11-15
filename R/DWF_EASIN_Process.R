@@ -348,7 +348,7 @@ EASIN_Process <- function(
         break
       }
 
-      rm(Down)
+      rm(Down, envir = environment())
       Sys.sleep(SleepTime)
     }
 
@@ -448,7 +448,7 @@ EASIN_Process <- function(
     # exclude observations not overlapping with the study area
     dplyr::filter(CellCode %in% LandGrids)
 
-  rm(LandGrids, WKTs)
+  rm(LandGrids, WKTs, envir = environment())
 
   ## Save cleaned EASIN Data - RData ----
   IASDT.R::CatTime("Save cleaned EASIN Data - RData", Level = 1)
@@ -612,7 +612,7 @@ EASIN_Process <- function(
         return(invisible(NULL))
       }, .progress = FALSE)
 
-  rm(EASIN_Data2)
+  rm(EASIN_Data2, envir = environment())
 
   IASDT.R::CatDiff(
     TimeStartData,

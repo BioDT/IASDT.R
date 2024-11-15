@@ -113,7 +113,7 @@ Mod_CV_Fit <- function(
       call. = FALSE)
   }
 
-  rm(AllArgs, NullVarsNames, NullVars)
+  rm(AllArgs, NullVarsNames, NullVars, envir = environment())
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -137,7 +137,7 @@ Mod_CV_Fit <- function(
         call. = FALSE)
     }
     Model_Full <- Model
-    rm(Model)
+    rm(Model, envir = environment())
   }
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -148,7 +148,7 @@ Mod_CV_Fit <- function(
   Path_Init <- file.path(Path_CV, "Model_Init")
   Path_Fitted <- file.path(Path_CV, "Model_Fitted")
   Path_Post <- file.path(Path_CV, "Model_Posterior")
-  Dir_Pred <- file.path(Path_CV, "Model_Predictions")
+  Dir_Pred <- file.path(Path_CV, "Model_Prediction")
   fs::dir_create(c(Path_CV, Path_Init, Path_Fitted, Path_Post, Dir_Pred))
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

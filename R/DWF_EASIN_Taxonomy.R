@@ -89,7 +89,7 @@ EASIN_Taxonomy <- function(
     if (nrow(Data) < NSearch) {
       break
     }
-    rm(Data, URL)
+    rm(Data, URL, envir = environment())
   }
 
   # Merging data ----

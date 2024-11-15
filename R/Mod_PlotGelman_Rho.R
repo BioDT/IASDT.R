@@ -51,7 +51,6 @@ PlotGelman_Rho <- function(CodaObj) {
       labeller = ggplot2::as_labeller(
         c(`Median` = "Median", `Q97_5` = "97.5%"))) +
     ggplot2::coord_cartesian(expand = FALSE) +
-    ggplot2::theme_bw() +
     ggplot2::labs(
       title = "Gelman-Rubin-Brooks plot - Rho",
       subtitle = NULL,
@@ -60,7 +59,9 @@ PlotGelman_Rho <- function(CodaObj) {
         "shrink factor as the number of iterations increases.")) +
     ggplot2::xlab(NULL) +
     ggplot2::ylab("Shrink factor") +
+    ggplot2::theme_bw() +
     ggplot2::theme(
+      plot.margin = ggplot2::margin(5, 20, 5, 5),
       legend.position = "none",
       legend.background = ggplot2::element_blank(),
       legend.title = ggplot2::element_blank(),

@@ -50,7 +50,7 @@ IAS_Process <- function(
     AllArgs = AllArgs, Type = "logical", Args = c("FromHPC", "Overwrite"))
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "numeric", Args = "NCores")
 
-  rm(AllArgs)
+  rm(AllArgs, envir = environment())
 
   withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
 
@@ -109,7 +109,7 @@ IAS_Process <- function(
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
-  rm(EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   # # ..................................................................... ###
 
@@ -176,7 +176,7 @@ IAS_Process <- function(
     dplyr::distinct() %>%
     dplyr::arrange(IAS_ID)
 
-  rm(TaxaList_Original, TaxaList_Distinct)
+  rm(TaxaList_Original, TaxaList_Distinct, envir = environment())
 
   # # ..................................................................... ###
 
@@ -274,7 +274,7 @@ IAS_Process <- function(
     ) %>%
     dplyr::left_join(Sp_SynHab, by = "IAS_ID")
 
-  rm(TaxaList)
+  rm(TaxaList, envir = environment())
 
   ## Save summary results -----
   IASDT.R::CatTime("Save summary results", Level = 1)
@@ -514,7 +514,8 @@ IAS_Process <- function(
 
   rm(
     IAS_NumSp, Plot_Nsp, Plot_Nsp_log, PlottingTheme, EUBound, MapLimX,
-    MapLimY, Plot_Nsp_Masked_log, Plot_Nsp_Masked)
+    MapLimY, Plot_Nsp_Masked_log, Plot_Nsp_Masked,
+    envir = environment())
 
   # # .................................... ###
 

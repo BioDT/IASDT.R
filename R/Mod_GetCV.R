@@ -224,7 +224,7 @@ GetCV <- function(
     CV_SAC <- CV_SAC_Range <- NULL
   }
 
-  rm(XY_sf)
+  rm(XY_sf, envir = environment())
 
   # # |||||||||||||||||||||||||||||||||||
   # # Save cross-validation results as RData -----

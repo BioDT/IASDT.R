@@ -23,9 +23,9 @@
 #' @param NCores Integer specifying the number of parallel cores for
 #'   parallelization. Default: 8 cores.
 #' @param Pred_Clamp Logical indicating whether to clamp the sampling efforts at
-#'   a single value. Defaults to `TRUE`. If `TRUE`, the `FixEfforts` argument
+#'   a single value. Defaults to `TRUE`. If `TRUE`, the `Fix_Efforts` argument
 #'   must be provided.
-#' @param FixEfforts Numeric or character. Value to fix the sampling efforts at.
+#' @param Fix_Efforts Numeric or character. Value to fix the sampling efforts at.
 #'   If numeric, the value will be used as is. If character, it can be one of
 #'   the following: `median`, `mean`, or `max`. Default: `mean`. This argument
 #'   is required when `Pred_Clamp` is `TRUE`.
@@ -51,7 +51,7 @@
 
 Predict_Maps <- function(
     Path_Model = NULL, Hab_Abb = NULL, EnvFile = ".env", FromHPC = TRUE,
-    NCores = 8, Pred_Clamp = TRUE, FixEfforts = "mean", Pred_NewSites = TRUE,
+    NCores = 8, Pred_Clamp = TRUE, Fix_Efforts = "mean", Pred_NewSites = TRUE,
     UseTF = TRUE, TF_Environ = NULL, Temp_Dir = "TEMP2Pred",
     CC_Models = c(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
@@ -95,7 +95,7 @@ Predict_Maps <- function(
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Args = c("NCores", "ChunkSize"), Type = "numeric")
 
-  rm(AllArgs, CharArgs)
+  rm(AllArgs, CharArgs, envir = environment())
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -203,14 +203,15 @@ Predict_Maps <- function(
   OtherVars <- stringr::str_subset(names(Model$XData), "^bio|CV", negate = TRUE)
   BioVars <- stringr::str_subset(names(Model$XData), "^bio", negate = FALSE)
 
-  Pred_Dir <- dplyr::if_else(
-    Pred_Clamp, "Model_Prediction_Clamp", "Model_Prediction")
-  Path_Prediction <- file.path(dirname(dirname(Path_Model)), Pred_Dir)
+  Pred_Dir <- dplyr::if_else(Pred_Clamp, "Clamp", "NoClamp")
+  Path_Prediction1 <- file.path(
+    dirname(dirname(Path_Model)), "Model_Prediction")
+  Path_Prediction <- file.path(Path_Prediction1, Pred_Dir)
   Path_Eval <- file.path(dirname(dirname(Path_Model)), "Model_Evaluation")
   fs::dir_create(c(Path_Eval, Path_Prediction))
 
-  if (Pred_Clamp && is.null(FixEfforts)) {
-    stop("`FixEfforts` can not be NULL when Clamping is implemented")
+  if (Pred_Clamp && is.null(Fix_Efforts)) {
+    stop("`Fix_Efforts` can not be NULL when Clamping is implemented")
   }
 
   Model_Coords <- Model$rL$sample$s %>%
@@ -280,7 +281,7 @@ Predict_Maps <- function(
       stats::setNames("RoadRailLog")
 
     StaticPredictors <- c(StaticPredictors, R_RoadRail)
-    rm(R_RoadRail, R_Roads, R_Railways)
+    rm(R_RoadRail, R_Roads, R_Railways, envir = environment())
   }
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
@@ -304,7 +305,7 @@ Predict_Maps <- function(
       stats::setNames("HabLog")
 
     StaticPredictors <- c(StaticPredictors, R_Hab)
-    rm(R_Hab)
+    rm(R_Hab, envir = environment())
   }
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
@@ -329,45 +330,45 @@ Predict_Maps <- function(
       log10() %>%
       stats::setNames("EffortsLog")
 
-    # Check if the FixEfforts value is valid
-    if (!is.null(FixEfforts)) {
+    # Check if the Fix_Efforts value is valid
+    if (!is.null(Fix_Efforts)) {
 
-      # Check if FixEfforts is a single value
-      if (length(FixEfforts) != 1) {
+      # Check if Fix_Efforts is a single value
+      if (length(Fix_Efforts) != 1) {
         stop(
           paste0(
-            "`FixEfforts` must be a single value. The current value is: ",
-            paste0(FixEfforts, collapse = " & ")),
+            "`Fix_Efforts` must be a single value. The current value is: ",
+            paste0(Fix_Efforts, collapse = " & ")),
           call. = FALSE)
       }
 
 
-      if (is.numeric(FixEfforts)) {
+      if (is.numeric(Fix_Efforts)) {
 
-        # If `FixEfforts` is numeric value, check if it is within the range of
+        # If `Fix_Efforts` is numeric value, check if it is within the range of
         # the observed efforts
         EffortsRange <- terra::global(R_Efforts, fun = range, na.rm = TRUE) %>%
           unlist() %>%
           as.vector()
-        if (!dplyr::between(FixEfforts, EffortsRange[1], EffortsRange[2])) {
+        if (!dplyr::between(Fix_Efforts, EffortsRange[1], EffortsRange[2])) {
           stop(
             paste0(
-              "`FixEfforts` value (", FixEfforts, ") is out of the range of ",
+              "`Fix_Efforts` value (", Fix_Efforts, ") is out of the range of ",
               "the observed efforts: From ",
               paste0(round(EffortsRange, 2), collapse = " to ")),
             call. = FALSE)
         }
       } else {
 
-        # If `FixEfforts` is character, check if it is one of the valid values:
+        # If `Fix_Efforts` is character, check if it is one of the valid values:
         # median, mean, max
-        FixEfforts <- stringr::str_to_lower(FixEfforts)
-        if (!(FixEfforts %in% c("median", "mean", "max"))) {
+        Fix_Efforts <- stringr::str_to_lower(Fix_Efforts)
+        if (!(Fix_Efforts %in% c("median", "mean", "max"))) {
           stop(
             paste0(
-              "`FixEfforts` has to be either NULL, single numeric ",
+              "`Fix_Efforts` has to be either NULL, single numeric ",
               "value, or one of the following: 'median', 'mean', or 'max'. ",
-              "The current value is: ", FixEfforts),
+              "The current value is: ", Fix_Efforts),
             call. = FALSE)
         }
       }
@@ -375,26 +376,26 @@ Predict_Maps <- function(
 
     # Fix at single value
 
-    if (is.numeric(FixEfforts)) {
-      EffortsVal <- FixEfforts
+    if (is.numeric(Fix_Efforts)) {
+      EffortsVal <- Fix_Efforts
     } else {
       EffortsVal <- dplyr::case_when(
-        is.null(FixEfforts) ~ NA_real_,
+        is.null(Fix_Efforts) ~ NA_real_,
         # Fix at median value
-        FixEfforts == "median" ~ {
+        Fix_Efforts == "median" ~ {
           terra::global(
             R_Efforts, fun = function(x) median(x, na.rm = TRUE)) %>%
             unlist() %>%
             as.numeric()
         },
         # Fix at mean value
-        FixEfforts == "mean" ~ {
+        Fix_Efforts == "mean" ~ {
           terra::global(R_Efforts, fun = mean, na.rm = TRUE) %>%
             unlist() %>%
             as.numeric()
         },
         # Fix at max value
-        FixEfforts == "max" ~ {
+        Fix_Efforts == "max" ~ {
           terra::global(R_Efforts, fun = max, na.rm = TRUE) %>%
             unlist() %>%
             as.numeric()
@@ -408,10 +409,10 @@ Predict_Maps <- function(
       R_Efforts_Clamp <- terra::clamp(R_Efforts, EffortsVal, EffortsVal) %>%
         stats::setNames("EffortsLog_Clamp")
       StaticPredictors <- c(StaticPredictors, R_Efforts, R_Efforts_Clamp)
-      rm(R_Efforts, R_Efforts_Clamp)
+      rm(R_Efforts, R_Efforts_Clamp, envir = environment())
     } else {
       StaticPredictors <- c(StaticPredictors, R_Efforts)
-      rm(R_Efforts)
+      rm(R_Efforts, envir = environment())
     }
   }
 
@@ -427,7 +428,7 @@ Predict_Maps <- function(
 
   # Predict latent factor for new locations ------
 
-  Path_Test_LF <- file.path(Path_Prediction, "Test_LF.qs")
+  Path_Test_LF <- file.path(Path_Prediction1, "Test_LF.qs")
 
   IASDT.R::CatTime("Predict latent factor for new locations")
 
@@ -457,7 +458,7 @@ Predict_Maps <- function(
       hM = Model, XDataNew = as.data.frame(Test_X),
       sDataNew = list(sample = as.data.frame(Test_XY)))
 
-    rm(Predict_DF_Test, Test_X, Test_XY)
+    rm(Predict_DF_Test, Test_X, Test_XY, envir = environment())
 
     # Predicting latent factor only -- no predictions are made
     Preds_LF <- IASDT.R::Predict_Hmsc(
@@ -467,7 +468,7 @@ Predict_Maps <- function(
       LF_OutFile = Path_Test_LF, LF_Only = TRUE, Evaluate = FALSE,
       Verbose = FALSE)
 
-    rm(Gradient, Preds_LF)
+    rm(Gradient, Preds_LF, envir = environment())
 
   } else {
 
@@ -478,7 +479,7 @@ Predict_Maps <- function(
     }
   }
 
-  rm(Model)
+  rm(Model, envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###
@@ -591,7 +592,9 @@ Predict_Maps <- function(
           sDataNew = list(
             sample = as.data.frame(sf::st_drop_geometry(Test_XY))))
 
-        rm(Model, Predict_DF_Test, Predict_DF_Train, Predict_DF)
+        rm(
+          Model, Predict_DF_Test, Predict_DF_Train, Predict_DF, 
+          envir = environment())
         invisible(gc())
 
         # ______________________________________________
@@ -614,6 +617,7 @@ Predict_Maps <- function(
             LF_Return = TRUE, Pred_Dir = Pred_Dir, Pred_PA = Train_PA,
             Pred_XY = Train_XY, Evaluate = Evaluate, Eval_Name = NULL,
             Eval_Dir = Path_Eval, Verbose = FALSE)
+
         }
 
         # ______________________________________________
@@ -676,7 +680,7 @@ Predict_Maps <- function(
             dplyr::bind_rows(Preds_New_NA)
 
           try(fs::file_delete(Preds_ModFitSites$Pred_Path), silent = TRUE)
-          rm(Preds_New_NA, ColsToAdd)
+          rm(Preds_New_NA, ColsToAdd, envir = environment())
         }
 
         # ______________________________________________
@@ -731,7 +735,7 @@ Predict_Maps <- function(
         Prediction_R <- c(Prediction_R, Preds_Anomaly)
 
         # clean up
-        rm(Preds_Anomaly, CurrentMean)
+        rm(Preds_Anomaly, CurrentMean, envir = environment())
 
       }
 
@@ -763,7 +767,8 @@ Predict_Maps <- function(
                 x = Prediction_R[[.x]], filename = .y, overwrite = TRUE,
                 gdal = c("COMPRESS=DEFLATE", "TILED=YES"))
             }))
-      rm(Out_Summary0)
+      
+      rm(Out_Summary0, envir = environment())
 
       Out_Summary <- Out_Summary %>%
         tidyr::pivot_wider(
@@ -817,11 +822,11 @@ Predict_Maps <- function(
   Grid10 <- terra::unwrap(IASDT.R::LoadAs(Path_GridR))
 
   Prediction_Summary <- purrr::map_dfr(
-    seq_len(nrow(Prediction_Options)), Predict_Internal) %>%
+    .x = seq_len(nrow(Prediction_Options)), .f = Predict_Internal) %>%
     dplyr::full_join(Prediction_Options, ., by = "Name") %>%
     dplyr::select(-"FilePath")
 
-  rm(Predict_Internal, StaticPredictors, Grid10)
+  rm(Predict_Internal, StaticPredictors, Grid10, envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###
@@ -934,7 +939,8 @@ Predict_Maps <- function(
           terra::writeRaster(
             x = Ensemble_anomaly, filename = tif_path_anomaly,
             overwrite = TRUE, gdal = c("COMPRESS=DEFLATE", "TILED=YES"))
-          rm(CurrentMean0)
+          
+          rm(CurrentMean0, envir = environment())
 
           # Standard deviation
           Ensemble_sd <- terra::app(tiffs_R, "sd", na.rm = TRUE) %>%
@@ -994,7 +1000,8 @@ Predict_Maps <- function(
       Save = purrr::map2(
         .x = Ensemble_Maps, .y = Ensemble_File,
         .f = qs::qsave, preset = "fast"))
-  rm(Prediction_Ensemble_R)
+      
+  rm(Prediction_Ensemble_R, envir = environment())
 
   # --------------------------------------------------------- #
 

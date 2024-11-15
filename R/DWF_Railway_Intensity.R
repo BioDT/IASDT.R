@@ -42,7 +42,7 @@ Railway_Intensity <- function(
     AllArgs = AllArgs, Type = "logical", Args = c("FromHPC", "Download"))
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "numeric", Args = "NCores")
 
-  rm(AllArgs)
+  rm(AllArgs, envir = environment())
 
   # # ..................................................................... ###
   # Check system commands
@@ -425,7 +425,7 @@ Railway_Intensity <- function(
       }
     )
 
-  rm(Railways_3035, RefGridSF)
+  rm(Railways_3035, RefGridSF, envir = environment())
   invisible(gc())
 
   IASDT.R::CatDiff(
@@ -512,7 +512,7 @@ Railway_Intensity <- function(
     InObj = terra::wrap(Railways_Distance), OutObj = "Railways_Distance",
     OutPath = file.path(Path_Railways, "Railways_Distance.RData"))
 
-  rm(RefGrid)
+  rm(RefGrid, envir = environment())
 
   # # ..................................................................... ###
 
@@ -587,7 +587,7 @@ Railway_Intensity <- function(
   print(RailPlot)
   grDevices::dev.off()
 
-  rm(RailPlot)
+  rm(RailPlot, envir = environment())
 
   # # .................................. ###
 
@@ -618,7 +618,7 @@ Railway_Intensity <- function(
   print(RailPlotShp)
   grDevices::dev.off()
 
-  rm(RailPlotShp)
+  rm(RailPlotShp, envir = environment())
 
   # # ..................................................................... ###
 

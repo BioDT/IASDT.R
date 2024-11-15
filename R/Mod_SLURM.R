@@ -99,7 +99,7 @@ Mod_SLURM <- function(
   NumericArgs <- c("GpusPerNode", "CpusPerTask", "ntasks")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = NumericArgs, Type = "numeric")
 
-  rm(AllArgs)
+  rm(AllArgs, envir = environment())
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

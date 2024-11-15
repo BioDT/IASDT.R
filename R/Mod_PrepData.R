@@ -362,7 +362,7 @@ Mod_PrepData <- function(
   print(NSpPerGrid_gg)
   grDevices::dev.off()
 
-  rm(Limits, NSpPerGrid_gg, R_Sp_sum, EU_Bound)
+  rm(Limits, NSpPerGrid_gg, R_Sp_sum, EU_Bound, envir = environment())
 
   # # ..................................................................... ###
 

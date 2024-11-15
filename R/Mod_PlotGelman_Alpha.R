@@ -21,6 +21,8 @@
 
 PlotGelman_Alpha <- function(CodaObj, PlottingAlpha = 0.25) {
 
+  # # ..................................................................... ###
+
   if (!inherits(CodaObj, "mcmc.list")) {
     stop("CodaObj has to be of class mcmc.list", call. = FALSE)
   }
@@ -29,16 +31,17 @@ PlotGelman_Alpha <- function(CodaObj, PlottingAlpha = 0.25) {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Var_LV <- Type <- Iter <- Plot <- data <- NULL
+  Var_LV <- Type <- Iter <- Plot <- data <- Median <- NULL
 
   # # ..................................................................... ###
 
-  Gelman_Alpha_Plot <- magrittr::extract2(CodaObj, 1) %>%
+  Gelman_Alpha_DT <- magrittr::extract2(CodaObj, 1) %>%
     attr("dimnames") %>%
     magrittr::extract2(2) %>%
     sort() %>%
     purrr::map_dfr(
     .f = function(x) {
+
       lapply(CodaObj, function(Y) {
         Y[, x, drop = TRUE]
       }) %>%
@@ -49,12 +52,17 @@ PlotGelman_Alpha <- function(CodaObj, PlottingAlpha = 0.25) {
         magrittr::extract2("shrink") %>%
         tibble::as_tibble(rownames = "Iter") %>%
         purrr::set_names(c("Iter", "Median", "Q97_5")) %>%
+        dplyr::filter(!is.nan(Median)) %>%
         dplyr::mutate(Iter = as.integer(Iter)) %>%
         tidyr::pivot_longer(
           cols = -Iter, names_to = "Type", values_to = "ShrinkFactor") %>%
         dplyr::arrange(Type, Iter) %>%
         dplyr::mutate(Type = factor(Type), Var_LV = x)
-    }) %>%
+    })
+
+  Xlim <- range(Gelman_Alpha_DT$Iter)
+
+  Gelman_Alpha_Plot <- Gelman_Alpha_DT %>%
     dplyr::mutate(
       group = paste0(Var_LV, "_", Type),
       Var_LV = purrr::map_chr(
@@ -76,8 +84,8 @@ PlotGelman_Alpha <- function(CodaObj, PlottingAlpha = 0.25) {
               yintercept = 1.1, linetype = "dashed", col = "darkgrey",
               linewidth = 0.8) +
             ggplot2::facet_grid(~ Type, labeller = ggplot2::label_parsed) +
-            ggplot2::coord_cartesian(expand = FALSE) +
-            ggplot2::theme_bw() +
+            ggplot2::scale_x_continuous(limits = Xlim, expand = c(0, 0)) +
+            ggplot2::coord_cartesian(expand = FALSE, clip = "off") +
             ggplot2::labs(
               title = "Gelman-Rubin-Brooks plot - Alpha",
               subtitle = .x,
@@ -86,7 +94,9 @@ PlotGelman_Alpha <- function(CodaObj, PlottingAlpha = 0.25) {
                 "factor as the number of iterations increases.")) +
             ggplot2::xlab(NULL) +
             ggplot2::ylab("Shrink factor") +
+            ggplot2::theme_bw() +
             ggplot2::theme(
+              plot.margin = ggplot2::margin(5, 20, 5, 5),
               legend.position = "none",
               legend.background = ggplot2::element_blank(),
               legend.title = ggplot2::element_blank(),

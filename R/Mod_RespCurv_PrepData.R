@@ -63,7 +63,7 @@ RespCurv_PrepData <- function(
     AllArgs = AllArgs, Type = "numeric",
     Args = c("NCores", "ngrid", "Probabilities"))
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "logical", Args = "UseTF")
-  rm(AllArgs)
+  rm(AllArgs, envir = environment())
 
   if (!is.numeric(NCores) || NCores < 1) {
     stop("NCores must be greater than 0", call. = FALSE)
@@ -146,7 +146,7 @@ RespCurv_PrepData <- function(
         # Values of the current predictor
         XVals <- Gradient$XDataNew[, Variable]
 
-        rm(Model)
+        rm(Model, envir = environment())
 
         # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -173,7 +173,7 @@ RespCurv_PrepData <- function(
           OutPath = RC_DT_Path_Orig)
       }
 
-      rm(RC_Data_Orig)
+      rm(RC_Data_Orig, envir = environment())
 
       # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
       # Prepare plotting data: probability of occurrence
@@ -231,7 +231,7 @@ RespCurv_PrepData <- function(
         InObj = RC_Data_Prob, OutObj = paste0(RC_DT_Name, "_Prob"),
         OutPath = RC_DT_Path_Prob)
 
-      rm(Preds, RC_Data_Prob, RC_Data_Prob_Samples)
+      rm(Preds, RC_Data_Prob, RC_Data_Prob_Samples, envir = environment())
 
       # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
       # Prepare plotting data: Species richness
@@ -282,8 +282,9 @@ RespCurv_PrepData <- function(
         OutPath = RC_DT_Path_SR_Samples)
 
 
-      rm(RC_Data_SR, RC_Data_SR_Quant, Observed_SR,
-         RC_Data_SR_Samples, SR_PositiveTrendProb)
+      rm(
+        RC_Data_SR, RC_Data_SR_Quant, Observed_SR,
+        RC_Data_SR_Samples, SR_PositiveTrendProb, envir = environment())
     }
 
     invisible(gc())
@@ -392,7 +393,7 @@ RespCurv_PrepData <- function(
       # The `Model` object is distributed twice to cores when available on the
       # function environment. Here, I delete the Model object and it will be
       # loaded later after when using `Predict_Hmsc` function.
-      rm(Model)
+      rm(Model, envir = environment())
       invisible(gc())
 
       Model_LF <- IASDT.R::Predict_Hmsc(
@@ -402,7 +403,7 @@ RespCurv_PrepData <- function(
         Verbose = Verbose)
 
       invisible(gc())
-      rm(Model_LF, Gradient_c)
+      rm(Model_LF, Gradient_c, envir = environment())
 
     } else {
       IASDT.R::CatTime(

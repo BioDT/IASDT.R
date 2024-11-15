@@ -40,7 +40,7 @@ VarPar_Plot <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   IAS_ID <- Species_name <- Species <- Variable <- VP_Value <-
-    TaxaInfoFile <- Sp <- TjurR2 <- Label <- NULL
+    TaxaInfoFile <- Sp <- TjurR2 <- Label <- VP_Sum <- NULL
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -56,7 +56,7 @@ VarPar_Plot <- function(
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "logical", Args = c("FromHPC", "UseTF"))
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "numeric", Args = "NCores")
-  rm(AllArgs)
+  rm(AllArgs, envir = environment())
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -173,7 +173,7 @@ VarPar_Plot <- function(
       NCores = NCores, UseTF = UseTF, TF_Environ = TF_Environ,
       Verbose = FALSE, OutFileName = "VarPar")
 
-    rm(ModelVars, groupnames, group)
+    rm(ModelVars, groupnames, group, envir = environment())
 
   } else {
 
@@ -183,7 +183,7 @@ VarPar_Plot <- function(
   }
 
   if (exists("Model")) {
-    rm(Model)
+    rm(Model, envir = environment())
   }
 
   invisible(gc())

@@ -9,7 +9,7 @@
 #'   file extension. If the file extension is not recognized, the function will
 #'   return `FALSE`. The recognized file extensions are `RData` (using
 #'   [IASDT.R::CheckRData]), `qs` ([IASDT.R::CheckQs]), and `rds`
-#'   ([IASDT.R::CheckRds]).
+#'   ([IASDT.R::CheckRDS]).
 #' @param warning logical. If `TRUE` (default), warnings will be printed if the
 #'   file does not exist.
 #' @param qs_nthreads integer. The number of threads to use when reading the

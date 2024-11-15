@@ -64,7 +64,7 @@ PlotRho <- function(Post, Model, Title, Cols = NULL, MarginType = "histogram") {
 
   SampleSize <- Model$samples
   NChains <- length(Model$postList)
-  rm(Model)
+  rm(Model, envir = environment())
 
   ## Effective sample size
   ESS <- coda::effectiveSize(Post) %>%

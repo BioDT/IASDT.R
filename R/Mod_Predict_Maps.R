@@ -593,7 +593,7 @@ Predict_Maps <- function(
             sample = as.data.frame(sf::st_drop_geometry(Test_XY))))
 
         rm(
-          Model, Predict_DF_Test, Predict_DF_Train, Predict_DF, 
+          Model, Predict_DF_Test, Predict_DF_Train, Predict_DF,
           envir = environment())
         invisible(gc())
 
@@ -614,10 +614,9 @@ Predict_Maps <- function(
             expected = TRUE,
             NCores = NCores, Model_Name = Model_Name_Train,
             Temp_Dir = Temp_Dir, UseTF = UseTF, TF_Environ = TF_Environ,
-            LF_Return = TRUE, Pred_Dir = Pred_Dir, Pred_PA = Train_PA,
+            LF_Return = TRUE, Pred_Dir = Path_Prediction, Pred_PA = Train_PA,
             Pred_XY = Train_XY, Evaluate = Evaluate, Eval_Name = NULL,
             Eval_Dir = Path_Eval, Verbose = FALSE)
-
         }
 
         # ______________________________________________
@@ -642,7 +641,8 @@ Predict_Maps <- function(
               NCores = NCores, Model_Name = Model_Name_Test,
               Temp_Dir = Temp_Dir, UseTF = UseTF, TF_Environ = TF_Environ,
               LF_Return = TRUE, LF_InputFile = Path_Test_LF,
-              Pred_Dir = Pred_Dir, Pred_XY = sf::st_drop_geometry(Test_XY),
+              Pred_Dir = Path_Prediction,
+              Pred_XY = sf::st_drop_geometry(Test_XY),
               Evaluate = FALSE, Verbose = FALSE)
           }
 
@@ -767,7 +767,7 @@ Predict_Maps <- function(
                 x = Prediction_R[[.x]], filename = .y, overwrite = TRUE,
                 gdal = c("COMPRESS=DEFLATE", "TILED=YES"))
             }))
-      
+
       rm(Out_Summary0, envir = environment())
 
       Out_Summary <- Out_Summary %>%
@@ -939,7 +939,7 @@ Predict_Maps <- function(
           terra::writeRaster(
             x = Ensemble_anomaly, filename = tif_path_anomaly,
             overwrite = TRUE, gdal = c("COMPRESS=DEFLATE", "TILED=YES"))
-          
+
           rm(CurrentMean0, envir = environment())
 
           # Standard deviation
@@ -1000,7 +1000,7 @@ Predict_Maps <- function(
       Save = purrr::map2(
         .x = Ensemble_Maps, .y = Ensemble_File,
         .f = qs::qsave, preset = "fast"))
-      
+
   rm(Prediction_Ensemble_R, envir = environment())
 
   # --------------------------------------------------------- #

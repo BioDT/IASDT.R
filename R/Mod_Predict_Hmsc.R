@@ -30,7 +30,8 @@
 #' @param expected boolean flag indicating whether to return the location
 #'   parameter of the observation models or sample the values from those.
 #' @param Pred_Dir a character string specifying the directory where the
-#'   predictions will be saved.
+#'   predictions will be saved. Defaults to `NULL`, which saves model
+#'   predictions to "Model_Prediction" folder of the current working directory.
 #' @param Evaluate a logical flag indicating whether to evaluate the model
 #'   predictions. Defaults to `FALSE`.
 #' @param Eval_Name a character string specifying the name of the evaluation
@@ -66,7 +67,7 @@ Predict_Hmsc <- function(
     Model_Name = "Train", Temp_Dir = "TEMP2Pred", RC = NULL,
     UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE, LF_OutFile = NULL,
     LF_Return = TRUE, LF_InputFile = NULL, LF_Only = FALSE,
-    Pred_Dir = "Model_Prediction", Pred_PA = NULL, Pred_XY = NULL,
+    Pred_Dir = NULL, Pred_PA = NULL, Pred_XY = NULL,
     Evaluate = FALSE, Eval_Name = NULL, Eval_Dir = "Evaluation",
     Verbose = TRUE) {
 
@@ -105,6 +106,15 @@ Predict_Hmsc <- function(
 
   if (!is.null(RC) && !RC %in% c("c", "i")) {
     stop("`RC` must be either NULL or one of 'c' or 'i'", call. = FALSE)
+  }
+
+  if (is.null(Pred_Dir)) {
+    IASDT.R::CatTime(
+      paste0(
+        "Predictions will be saved to the ",
+        "`Model_Prediction` folder in the working directory"),
+      Level = 1)
+    Pred_Dir <- "Model_Prediction"
   }
 
   if (is.null(RC) || RC == "c") {
@@ -386,14 +396,13 @@ Predict_Hmsc <- function(
     ppEta <- matrix(list(), predN, 0)
   }
 
-  # free some memory
-  rm(predPostEta, envir = environment())
-
-  invisible(gc())
-
   if (LF_Only) {
     return(LF_OutFile)
   }
+
+  # free some memory
+  rm(predPostEta, envir = environment())
+  invisible(gc())
 
   # # ..................................................................... ###
 
@@ -673,6 +682,7 @@ Predict_Hmsc <- function(
     dplyr::mutate(Model_Name = Model_Name, .before = "SR_mean")
 
   Pred_File <- file.path(Pred_Dir, paste0("Prediction_", Model_Name, ".qs"))
+
   qs::qsave(Predictions, file = Pred_File, preset = "fast")
   try(fs::file_delete(Eval_DT$Path_pred), silent = TRUE)
   IASDT.R::CatTime(

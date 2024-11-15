@@ -557,6 +557,8 @@ Predict_Maps <- function(
 
       } else {
 
+        .OptionStartTime <- lubridate::now(tzone = "CET")
+
         # Extracting data at training and new sites ------
         IASDT.R::CatTime("Extracting data at training and new sites", Level = 1)
         Predict_DF <- Prediction_Options$FilePath[[ID]] %>%
@@ -692,6 +694,10 @@ Predict_Maps <- function(
           fs::file_delete(
             c(Preds_ModFitSites$Pred_Path, Preds_NewSites$Pred_Path)),
           silent = TRUE)
+
+        IASDT.R::CatDiff(
+          InitTime = .OptionStartTime, Prefix = "Prediction took ")
+
       }
 
       # ______________________________________________

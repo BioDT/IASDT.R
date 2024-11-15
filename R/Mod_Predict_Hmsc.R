@@ -404,6 +404,7 @@ Predict_Hmsc <- function(
     post <- qs::qread(post_file, nthreads = 5)
   }
 
+  # prediction data for response cuves
   if (!is.null(RC)) {
     IASDT.R::CatTime(
       "Predicting data for response curve (sequentially)", Level = 1)
@@ -417,134 +418,130 @@ Predict_Hmsc <- function(
     IASDT.R::CatDiff(
       InitTime = .StartTime, Prefix = "Prediction was finished in ", Level = 1)
     return(preds)
-
-  } else {
-
-    # Save ppEta / post as small chunks
-    IASDT.R::CatTime("Save ppEta / post as small chunks", Level = 1)
-    chunk_size <- 25
-    ChunkIDs <- ceiling(seq_along(post) / chunk_size)
-    Chunks <- purrr::map_chr(
-      .x = seq_len(max(ChunkIDs)),
-      .f = ~ {
-        IDs <- which(ChunkIDs == .x)
-        Ch <- list(ppEta = ppEta[IDs], post = post[IDs])
-        ChunkFile <- file.path(
-          Temp_Dir, paste0(Model_Name, "_preds_ch", .x, ".qs"))
-        qs::qsave(Ch, file = ChunkFile, preset = "fast")
-        return(ChunkFile)
-      })
-
-    rm(ChunkIDs, post, ppEta, envir = environment())
-    invisible(gc())
-
-    IASDT.R::CatTime(
-      paste0("Preparing working on parallel using ", NCores, " cores"),
-      Level = 1)
-
-    seeds <- sample.int(.Machine$integer.max, predN)
-
-    c1 <- snow::makeSOCKcluster(NCores)
-    on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-
-    snow::clusterExport(
-      cl = c1,
-      list = c(
-        "Model", "X", "XRRR", "Yc", "Loff", "rL", "rLPar", "PiNew",
-        "dfPiNew", "nyNew", "expected", "mcmcStep", "seeds", "chunk_size",
-        "Chunks", "Temp_Dir", "Model_Name",
-        "get1prediction"),
-      envir = environment())
-
-    invisible(snow::clusterEvalQ(
-      cl = c1,
-      expr = {
-        sapply(
-          c(
-            "dplyr", "Rcpp", "RcppArmadillo", "Matrix", "float",
-            "qs", "Hmsc", "purrr"),
-          library, character.only = TRUE)
-      }))
-
-
-    IASDT.R::CatTime("Making predictions on parallel", Level = 1)
-
-    pred <- snow::clusterApplyLB(
-      cl = c1,
-      x = seq_len(length(Chunks)),
-      fun = function(Chunk) {
-
-        ChunkFile <- Chunks[Chunk]
-        Ch <- qs::qread(ChunkFile, nthreads = 5)
-
-        ppEta <- Ch$ppEta
-        post <- Ch$post
-        rm(Ch, envir = environment())
-        Seed <- (Chunk - 1) * chunk_size
-        Seed <- seq(Seed + 1, Seed + chunk_size)
-        Seed <- seeds[Seed]
-
-        PredChunk <- purrr::map(
-          .x = seq_len(chunk_size),
-          .f = function(pN) {
-            get1prediction(
-              object = Model, X = X, XRRR = XRRR, Yc = Yc,
-              Loff = Loff, rL = rL, rLPar = rLPar, sam = post[[pN]],
-              predPostEta = ppEta[pN], PiNew = PiNew,
-              dfPiNew = dfPiNew, nyNew = nyNew, expected = expected,
-              mcmcStep = mcmcStep, seed = Seed[pN])
-          })
-
-        # Species richness
-        ChunkSR <-  simplify2array(lapply(X = PredChunk, FUN = rowSums)) %>%
-          float::fl()
-        dimnames(ChunkSR) <- NULL
-        ChunkSR_File <- file.path(
-          Temp_Dir, paste0("Pred_", Model_Name, "_ch", Chunk, "_SR.qs"))
-        qs::qsave(ChunkSR, file = ChunkSR_File, preset = "fast")
-        rm(ChunkSR, envir = environment())
-
-        # Species predictions
-        ChunkSp <- purrr::map_dfr(
-          .x = seq_len(length(Model$spNames)),
-          .f = function(Sp) {
-
-            SpD <- purrr::map(PredChunk, ~ .x[, Sp], ncol = 1) %>%
-              simplify2array() %>%
-              float::fl()
-            dimnames(SpD) <- NULL
-
-            ChunkSp_File <- file.path(
-              Temp_Dir,
-              paste0("Pred_", Model_Name, "_ch", Chunk, "_taxon", Sp, ".qs"))
-
-            qs::qsave(SpD, file = ChunkSp_File, preset = "fast")
-
-            cbind.data.frame(
-              Chunk = Chunk, Sp = Sp, IAS_ID = Model$spNames[Sp],
-              ChunkSp_File = ChunkSp_File) %>%
-              return()
-          }) %>%
-          dplyr::bind_rows(
-            tibble::tibble(
-              Chunk = Chunk, Sp = 0, IAS_ID = "SR",
-              ChunkSp_File = ChunkSR_File),
-            .)
-
-        try(fs::file_delete(ChunkFile))
-        rm(PredChunk, envir = environment())
-
-        return(ChunkSp)
-      })
-
-    snow::stopCluster(c1)
-    invisible(gc())
-
-    pred <- tibble::tibble(dplyr::bind_rows(pred))
-
   }
-  
-  snow::stopCluster(c1)
+
+  # Save ppEta / post as small chunks
+  IASDT.R::CatTime("Save ppEta / post as small chunks", Level = 1)
+  chunk_size <- 25
+  ChunkIDs <- ceiling(seq_along(post) / chunk_size)
+  Chunks <- purrr::map_chr(
+    .x = seq_len(max(ChunkIDs)),
+    .f = ~ {
+      IDs <- which(ChunkIDs == .x)
+      Ch <- list(ppEta = ppEta[IDs], post = post[IDs])
+      ChunkFile <- file.path(
+        Temp_Dir, paste0(Model_Name, "_preds_ch", .x, ".qs"))
+      qs::qsave(Ch, file = ChunkFile, preset = "fast")
+      return(ChunkFile)
+    })
+
+  rm(ChunkIDs, post, ppEta, envir = environment())
+  invisible(gc())
+
+  IASDT.R::CatTime(
+    paste0("Preparing working on parallel using ", NCores, " cores"),
+    Level = 1)
+
+  seeds <- sample.int(.Machine$integer.max, predN)
+
+  c1 <- snow::makeSOCKcluster(NCores)
+  on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
+
+  snow::clusterExport(
+    cl = c1,
+    list = c(
+      "Model", "X", "XRRR", "Yc", "Loff", "rL", "rLPar", "PiNew",
+      "dfPiNew", "nyNew", "expected", "mcmcStep", "seeds", "chunk_size",
+      "Chunks", "Temp_Dir", "Model_Name",
+      "get1prediction"),
+    envir = environment())
+
+  invisible(snow::clusterEvalQ(
+    cl = c1,
+    expr = {
+      sapply(
+        c(
+          "dplyr", "Rcpp", "RcppArmadillo", "Matrix", "float",
+          "qs", "Hmsc", "purrr", "tibble", "Hmsc", "float", "qs",
+          "Rfast", "caret", "pROC", "ecospat", "sf"),
+        library, character.only = TRUE)
+    }))
+
+
+  IASDT.R::CatTime("Making predictions on parallel", Level = 1)
+
+  pred <- snow::clusterApplyLB(
+    cl = c1,
+    x = seq_len(length(Chunks)),
+    fun = function(Chunk) {
+
+      ChunkFile <- Chunks[Chunk]
+      Ch <- qs::qread(ChunkFile, nthreads = 5)
+
+      ppEta <- Ch$ppEta
+      post <- Ch$post
+      rm(Ch, envir = environment())
+      Seed <- (Chunk - 1) * chunk_size
+      Seed <- seq(Seed + 1, Seed + chunk_size)
+      Seed <- seeds[Seed]
+
+      PredChunk <- purrr::map(
+        .x = seq_len(chunk_size),
+        .f = function(pN) {
+          get1prediction(
+            object = Model, X = X, XRRR = XRRR, Yc = Yc,
+            Loff = Loff, rL = rL, rLPar = rLPar, sam = post[[pN]],
+            predPostEta = ppEta[pN], PiNew = PiNew,
+            dfPiNew = dfPiNew, nyNew = nyNew, expected = expected,
+            mcmcStep = mcmcStep, seed = Seed[pN])
+        })
+
+      # Species richness
+      ChunkSR <-  simplify2array(lapply(X = PredChunk, FUN = rowSums)) %>%
+        float::fl()
+      dimnames(ChunkSR) <- NULL
+      ChunkSR_File <- file.path(
+        Temp_Dir, paste0("Pred_", Model_Name, "_ch", Chunk, "_SR.qs"))
+      qs::qsave(ChunkSR, file = ChunkSR_File, preset = "fast")
+      rm(ChunkSR, envir = environment())
+
+      # Species predictions
+      ChunkSp <- purrr::map_dfr(
+        .x = seq_len(length(Model$spNames)),
+        .f = function(Sp) {
+
+          SpD <- purrr::map(PredChunk, ~ .x[, Sp], ncol = 1) %>%
+            simplify2array() %>%
+            float::fl()
+          dimnames(SpD) <- NULL
+
+          ChunkSp_File <- file.path(
+            Temp_Dir,
+            paste0("Pred_", Model_Name, "_ch", Chunk, "_taxon", Sp, ".qs"))
+
+          qs::qsave(SpD, file = ChunkSp_File, preset = "fast")
+
+          cbind.data.frame(
+            Chunk = Chunk, Sp = Sp, IAS_ID = Model$spNames[Sp],
+            ChunkSp_File = ChunkSp_File) %>%
+            return()
+        }) %>%
+        dplyr::bind_rows(
+          tibble::tibble(
+            Chunk = Chunk, Sp = 0, IAS_ID = "SR",
+            ChunkSp_File = ChunkSR_File),
+          .)
+
+      try(fs::file_delete(ChunkFile))
+      rm(PredChunk, envir = environment())
+
+      invisible(gc())
+      return(ChunkSp)
+    })
+
+  pred <- tibble::tibble(dplyr::bind_rows(pred))
+
+  invisible(snow::clusterEvalQ(cl = c1, expr = invisible(gc())))
 
   # # ..................................................................... ###
 
@@ -554,118 +551,102 @@ Predict_Hmsc <- function(
     dplyr::group_nest(Sp, IAS_ID) %>%
     dplyr::mutate(data = purrr::map(data, unlist))
 
-
-
-  c1 <- snow::makeSOCKcluster(NCores)
-  on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-
   snow::clusterExport(
     cl = c1,
     list = c(
-      "Eval_DT", "Evaluate", "Model", "Pred_Dir", "Model_Name",
-      "Pred_PA", "Pred_XY"),
+      "Eval_DT", "Evaluate", "Pred_Dir", "Model_Name", "Pred_PA", "Pred_XY"),
     envir = environment())
 
-  invisible(snow::clusterEvalQ(
-    cl = c1,
-    expr = {
-      sapply(
-        c(
-      "dplyr", "Matrix", "purrr", "tibble", "Hmsc", "float", "qs",
-      "Rfast", "caret", "pROC", "ecospat", "sf"),
-        library, character.only = TRUE)
-    }))
-  
   Eval_DT <- snow::clusterApplyLB(
-        cl = c1,
-        x = seq_len(nrow(Eval_DT)),
-        fun = function(ID) {
-              
-          Sp <- Eval_DT$Sp[[ID]]
-          if (Sp == 0) {
-            Sp2 <- "SR"
-          } else {
-            Sp2 <- paste0("taxon", Sp)
-          }
-          IAS_ID <- Eval_DT$IAS_ID[[ID]]
-          data <- as.vector(Eval_DT$data[[ID]])
+    cl = c1,
+    x = seq_len(nrow(Eval_DT)),
+    fun = function(ID) {
 
-          SpDT <- purrr::map(data, qs::qread) %>%
-            do.call(cbind, .) %>%
-            as.double()
+      Sp <- Eval_DT$Sp[[ID]]
+      if (Sp == 0) {
+        Sp2 <- "SR"
+      } else {
+        Sp2 <- paste0("taxon", Sp)
+      }
+      IAS_ID <- Eval_DT$IAS_ID[[ID]]
+      data <- as.vector(Eval_DT$data[[ID]])
 
-          # Mean prediction
-          SpDT_Mean <- Rfast::rowmeans(SpDT)
+      SpDT <- purrr::map(data, qs::qread) %>%
+        do.call(cbind, .) %>%
+        as.double()
 
-          # standard deviation of prediction
-          SpDT_SD <- Rfast::rowVars(SpDT, std = TRUE)
+      # Mean prediction
+      SpDT_Mean <- Rfast::rowmeans(SpDT)
 
-          # Coefficient of variation
-          SpDT_Mean0 <- SpDT_Mean
-          # Replace very small mean values with reasonably small number to avoid
-          # overflow warning
-          SpDT_Mean0[SpDT_Mean0 < 1e-8] <- 1e-8
-          SpDT_Cov <- SpDT_SD / SpDT_Mean0
+      # standard deviation of prediction
+      SpDT_SD <- Rfast::rowVars(SpDT, std = TRUE)
 
-          rm(SpDT, envir = environment())
+      # Coefficient of variation
+      SpDT_Mean0 <- SpDT_Mean
+      # Replace very small mean values with reasonably small number to avoid
+      # overflow warning
+      SpDT_Mean0[SpDT_Mean0 < 1e-8] <- 1e-8
+      SpDT_Cov <- SpDT_SD / SpDT_Mean0
 
-          if (is.null(Pred_XY)) {
-            Pred_XY <- Model$rL$sample$s
-          }
+      rm(SpDT, envir = environment())
+      invisible(gc())
 
-          PredSummary <- tibble::tibble(
-            as.data.frame(Pred_XY),
-            Mean = SpDT_Mean, SD = SpDT_SD, Cov = SpDT_Cov) %>%
-            stats::setNames(
-              c(
-                "x", "y", paste0(IAS_ID, "_mean"),
-                paste0(IAS_ID, "_sd"), paste0(IAS_ID, "_cov"))) %>%
-            sf::st_as_sf(coords = c("x", "y"), crs = 3035, remove = FALSE)
+      if (is.null(Pred_XY)) {
+        Pred_XY <- Model$rL$sample$s
+      }
 
-          PredSummaryFile <- file.path(
-            Pred_Dir, paste0("Pred_", Model_Name, "_", Sp2, ".qs"))
+      PredSummary <- tibble::tibble(
+        as.data.frame(Pred_XY),
+        Mean = SpDT_Mean, SD = SpDT_SD, Cov = SpDT_Cov) %>%
+        stats::setNames(
+          c(
+            "x", "y", paste0(IAS_ID, "_mean"),
+            paste0(IAS_ID, "_sd"), paste0(IAS_ID, "_cov"))) %>%
+        sf::st_as_sf(coords = c("x", "y"), crs = 3035, remove = FALSE)
 
-          qs::qsave(PredSummary, file = PredSummaryFile, preset = "fast")
-          try(fs::file_delete(data), silent = TRUE)
+      PredSummaryFile <- file.path(
+        Pred_Dir, paste0("Pred_", Model_Name, "_", Sp2, ".qs"))
 
-          if (Evaluate && Sp2 != "SR") {
-            if (is.null(Pred_PA)) {
-              PresAbs <- Model$Y[, Sp]
-            } else {
-              PresAbs <- Pred_PA[, Sp]
-            }
+      qs::qsave(PredSummary, file = PredSummaryFile, preset = "fast")
+      try(fs::file_delete(data), silent = TRUE)
 
-            if (length(unique(PresAbs)) == 2) {
-              # Calculate evaluation metrics if there are two both presence and
-              # absence info in (testing) data
-              RMSE <- caret::RMSE(PresAbs, SpDT_Mean)
-              MeanPres <- mean(SpDT_Mean[which(PresAbs == 1)])
-              MeanAbs <- mean(SpDT_Mean[which(PresAbs == 0)])
-              TjurR2 <- MeanPres - MeanAbs
-              AUC <- pROC::auc(
-                response = PresAbs, predictor = SpDT_Mean,
-                levels = c(0, 1), direction = "<") %>%
-                as.numeric()
-              Boyce <- ecospat::ecospat.boyce(
-                fit = SpDT_Mean, obs = SpDT_Mean[PresAbs == 1],
-                PEplot = FALSE)$cor
-            } else {
-              RMSE <- TjurR2 <- AUC <- Boyce <- NA_real_
-            }
-          } else {
-            RMSE <- TjurR2 <- AUC <- Boyce <- NA_real_
-          }
+      if (Evaluate && Sp2 != "SR") {
+        if (is.null(Pred_PA)) {
+          PresAbs <- Model$Y[, Sp]
+        } else {
+          PresAbs <- Pred_PA[, Sp]
+        }
 
-          invisible(gc())
+        if (length(unique(PresAbs)) == 2) {
+          # Calculate evaluation metrics if there are two both presence and
+          # absence info in (testing) data
+          RMSE <- caret::RMSE(PresAbs, SpDT_Mean)
+          MeanPres <- mean(SpDT_Mean[which(PresAbs == 1)])
+          MeanAbs <- mean(SpDT_Mean[which(PresAbs == 0)])
+          TjurR2 <- MeanPres - MeanAbs
+          AUC <- pROC::auc(
+            response = PresAbs, predictor = SpDT_Mean,
+            levels = c(0, 1), direction = "<") %>%
+            as.numeric()
+          Boyce <- ecospat::ecospat.boyce(
+            fit = SpDT_Mean, obs = SpDT_Mean[PresAbs == 1],
+            PEplot = FALSE)$cor
+        } else {
+          RMSE <- TjurR2 <- AUC <- Boyce <- NA_real_
+        }
+      } else {
+        RMSE <- TjurR2 <- AUC <- Boyce <- NA_real_
+      }
 
-          tibble::tibble(
-            Sp = Sp, IAS_ID = IAS_ID, Path_pred = PredSummaryFile,
-            RMSE = RMSE, AUC = AUC, Boyce = Boyce, TjurR2 = TjurR2) %>%
-            return()
-        
-        })
+      tibble::tibble(
+        Sp = Sp, IAS_ID = IAS_ID, Path_pred = PredSummaryFile,
+        RMSE = RMSE, AUC = AUC, Boyce = Boyce, TjurR2 = TjurR2) %>%
+        return()
+
+    })
 
   snow::stopCluster(c1)
+  invisible(gc())
 
   # # ..................................................................... ###
 
@@ -806,7 +787,7 @@ get1prediction <- function(
       for (k in 1:rL[[r]]$xDim) {
         LRan[[r]] <- LRan[[r]] +
           (Eta[[r]][as.character(dfPiNew[, r]), ] *
-            rL[[r]]$x[as.character(dfPiNew[, r]), k]) %*%
+             rL[[r]]$x[as.character(dfPiNew[, r]), k]) %*%
           sam$Lambda[[r]][, , k]
       }
     }
@@ -846,7 +827,7 @@ get1prediction <- function(
         for (k in 1:rL[[r]]$xDim) {
           LRan[[r]] <- LRan[[r]] +
             (Eta[[r]][as.character(dfPiNew[, r]), ] *
-              rL[[r]]$x[as.character(dfPiNew[, r]), k]) %*%
+               rL[[r]]$x[as.character(dfPiNew[, r]), k]) %*%
             sam$Lambda[[r]][, , k]
         }
       }

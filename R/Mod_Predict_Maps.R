@@ -815,9 +815,9 @@ Predict_Maps <- function(
 
   # Predicting ------
 
-  IASDT.R::CatSep(Char = "=")
+  IASDT.R::CatSep(Char = "=", Extra1 = 1)
   IASDT.R::CatTime("   Making predictions")
-  IASDT.R::CatSep(Char = "=", Extra2 = 1)
+  IASDT.R::CatSep(Char = "=")
 
   Grid10 <- terra::unwrap(IASDT.R::LoadAs(Path_GridR))
 

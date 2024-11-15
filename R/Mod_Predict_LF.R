@@ -409,7 +409,8 @@ Predict_LF <- function(
                 etaPred[indNew] <- eta_indNew
 
                 tibble::tibble(
-                  SampleID = SampleID[ID], etaPred = etaPred, Unit_ID = unitsPred)
+                  SampleID = SampleID[ID], etaPred = etaPred,
+                  Unit_ID = unitsPred)
               }) %>%
               dplyr::mutate(Unit_ID = factor(Unit_ID, levels = unitsPred)) %>%
               dplyr::arrange(SampleID, Unit_ID, etaPred)

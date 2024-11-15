@@ -186,7 +186,8 @@ RespCurv_PlotSp <- function(
             Variable == "EffortsLog" ~ paste0(
               "<span style='font-size: 10pt;'><b>Sampling efforts</b></span>"),
             Variable == "HabLog" ~ paste0(
-              "<span style='font-size: 10pt;'><b>% habitat coverage</b></span>"),
+              "<span style='font-size: 10pt;'>",
+              "<b>% habitat coverage</b></span>"),
             .default = Variable),
 
           VarDesc2 = dplyr::case_when(
@@ -295,8 +296,9 @@ RespCurv_PlotSp <- function(
                   ggplot2::aes(x = XVals, y = Q25), data = Quant,
                   linetype = 2, linewidth = 0.3, colour = "blue") +
                 ggplot2::geom_ribbon(
-                  data = Quant, ggplot2::aes(x = XVals, ymin = Q25, ymax = Q975),
-                  inherit.aes = FALSE, fill = "blue", alpha = 0.1) +
+                  mapping = ggplot2::aes(x = XVals, ymin = Q25, ymax = Q975),
+                  data = Quant, inherit.aes = FALSE,
+                  fill = "blue", alpha = 0.1) +
                 ggplot2::geom_line(
                   mapping = ggplot2::aes(x = XVals, y = Q50), data = Quant,
                   linetype = 1, linewidth = 0.6, colour = "blue") +

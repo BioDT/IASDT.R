@@ -467,10 +467,9 @@ Predict_Hmsc <- function(
         library, character.only = TRUE)
     }))
 
-
   IASDT.R::CatTime("Making predictions on parallel", Level = 1)
 
-  pred <- snow::clusterApplyLB(
+  pred <- snow::parLapply(
     cl = c1,
     x = seq_len(length(Chunks)),
     fun = function(Chunk) {
@@ -557,7 +556,7 @@ Predict_Hmsc <- function(
       "Eval_DT", "Evaluate", "Pred_Dir", "Model_Name", "Pred_PA", "Pred_XY"),
     envir = environment())
 
-  Eval_DT <- snow::clusterApplyLB(
+  Eval_DT <- snow::parLapply(
     cl = c1,
     x = seq_len(nrow(Eval_DT)),
     fun = function(ID) {
@@ -674,8 +673,6 @@ Predict_Hmsc <- function(
     dplyr::mutate(Model_Name = Model_Name, .before = "SR_mean")
 
   Pred_File <- file.path(Pred_Dir, paste0("Prediction_", Model_Name, ".qs"))
-
-
   qs::qsave(Predictions, file = Pred_File, preset = "fast")
   try(fs::file_delete(Eval_DT$Path_pred), silent = TRUE)
   IASDT.R::CatTime(

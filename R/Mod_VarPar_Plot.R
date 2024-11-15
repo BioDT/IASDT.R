@@ -259,7 +259,7 @@ VarPar_Plot <- function(
     dplyr::pull(Species_name)
 
   # Order species by the mean variance partitioning per Variable
-  SpOrder_TjurR2<- Model_Eval %>%
+  SpOrder_TjurR2 <- Model_Eval %>%
     dplyr::arrange(dplyr::desc(TjurR2)) %>%
     dplyr::pull(Species_name)
 
@@ -295,7 +295,7 @@ VarPar_Plot <- function(
   Title_Relative <- paste0(
     "<b>Proportion of explained variance</b> ",
     '<span style="font-size:12pt">',
-    '(species sorted by mean value per predictor)</span>')
+    "(species sorted by mean value per predictor)</span>")
 
   Plot_Relative <- DT_Relative %>%
     ggplot2::ggplot(
@@ -325,7 +325,7 @@ VarPar_Plot <- function(
   Title_Relative_Orig <- paste0(
     "<b>Proportion of explained variance</b> ",
     '<span style="font-size:12pt">',
-    '(species sorted by species taxonomy)</span>')
+    "(species sorted by species taxonomy)</span>")
 
   Plot_Relative_Orig <- DT_Relative_Orig %>%
     ggplot2::ggplot(
@@ -355,7 +355,7 @@ VarPar_Plot <- function(
   Title_Relative_TjurR2 <- paste0(
     "<b>Proportion of explained variance</b> ",
     '<span style="font-size:12pt">',
-    '(species sorted by Tjur-R<sup>2</sup>)</span>')
+    "(species sorted by Tjur-R<sup>2</sup>)</span>")
 
   Plot_Relative_TjurR2 <- DT_Relative_TjurR2 %>%
     ggplot2::ggplot(
@@ -460,8 +460,8 @@ VarPar_Plot <- function(
   Title_Raw <- paste0(
     "<b>Proportion of raw variance</b> ",
     '<span style="font-size:12pt">',
-    '(proportion of explained variance &times; Tjur-R<sup>2</sup>',
-    ' --- species sorted by species taxonomy)</span>')
+    "(proportion of explained variance &times; Tjur-R<sup>2</sup>",
+    " --- species sorted by species taxonomy)</span>")
 
   Plot_Raw <- DT_Raw_Orig %>%
     ggplot2::ggplot(
@@ -492,8 +492,8 @@ VarPar_Plot <- function(
   Title_Raw_TotalRaw <- paste0(
     "<b>Proportion of raw variance</b> ",
     '<span style="font-size:12pt">',
-    '(proportion of explained variance &times; Tjur-R<sup>2</sup>',
-    ' --- species sorted by total explained variance)</span>')
+    "(proportion of explained variance &times; Tjur-R<sup>2</sup>",
+    " --- species sorted by total explained variance)</span>")
 
   Plot_Raw_TotalRaw <- DT_Raw_TotalRaw %>%
     ggplot2::ggplot(

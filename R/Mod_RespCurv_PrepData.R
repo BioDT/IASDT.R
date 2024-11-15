@@ -152,7 +152,7 @@ RespCurv_PrepData <- function(
 
         # Predicting probability of occurrence
         Preds <- IASDT.R::Predict_Hmsc(
-          Path_Model = Path_Model, Gradient = Gradient, expected = TRUE, 
+          Path_Model = Path_Model, Gradient = Gradient, expected = TRUE,
           NCores = 1,
           Model_Name = paste0("RC_", Coords), RC = Coords, UseTF = UseTF,
           TF_Environ = TF_Environ, LF_InputFile = File_LF, Verbose = FALSE)
@@ -408,7 +408,8 @@ RespCurv_PrepData <- function(
     } else {
       IASDT.R::CatTime(
         paste0(
-          "LF prediction will be loaded from available file: \n   >>>  ",File_LF))
+          "LF prediction will be loaded from available file: \n   >>>  ",
+          File_LF))
     }
 
 

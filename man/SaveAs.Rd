@@ -4,17 +4,19 @@
 \alias{SaveAs}
 \title{Save an object to a file with a new name}
 \usage{
-SaveAs(InObj, OutObj, OutPath, qs_preset = "fast", ...)
+SaveAs(InObj, OutObj = NULL, OutPath, qs_preset = "fast", ...)
 }
 \arguments{
 \item{InObj}{The input object to be saved. This can be an actual R object or
 a character string representing the name of an object.}
 
 \item{OutObj}{A character string specifying the new name for the saved
-object. This name is used when the object is loaded back into R.}
+\code{RData} object. This name is used when the object is loaded back into R.
+Default is \code{NULL}. This is required when saving \code{RData} files.}
 
-\item{OutPath}{A character string specifying the file path (\verb{*.RData}) where
-the object should be saved. This includes the directory and the file name.}
+\item{OutPath}{A character string specifying the file path (ends with either
+\verb{*.RData} or \verb{*.qs}) where the object should be saved. This includes the
+directory and the file name.}
 
 \item{qs_preset}{A character string specifying the preset to use when saving
 the object in the \code{qs} format. The default is "fast". See \link[qs:qsave]{qs::qsave}.}

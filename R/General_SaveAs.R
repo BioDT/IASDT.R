@@ -11,9 +11,11 @@
 #' @param InObj The input object to be saved. This can be an actual R object or
 #'   a character string representing the name of an object.
 #' @param OutObj A character string specifying the new name for the saved
-#'   object. This name is used when the object is loaded back into R.
-#' @param OutPath A character string specifying the file path (`*.RData`) where
-#'   the object should be saved. This includes the directory and the file name.
+#'   `RData` object. This name is used when the object is loaded back into R.
+#'   Default is `NULL`. This is required when saving `RData` files.
+#' @param OutPath A character string specifying the file path (ends with either
+#'   `*.RData` or `*.qs`) where the object should be saved. This includes the
+#'   directory and the file name.
 #' @param qs_preset A character string specifying the preset to use when saving
 #'   the object in the `qs` format. The default is "fast". See [qs::qsave].
 #' @param ... Additional arguments to be passed to the `save` function.
@@ -35,7 +37,7 @@
 #'
 #' tibble::tibble(iris2)
 
-SaveAs <- function(InObj, OutObj, OutPath, qs_preset = "fast", ...) {
+SaveAs <- function(InObj, OutObj = NULL, OutPath, qs_preset = "fast", ...) {
 
   if (is.null(InObj) || is.null(OutPath)) {
     stop("`InObj` and `OutPath` cannot be NULL", call. = FALSE)
@@ -53,16 +55,15 @@ SaveAs <- function(InObj, OutObj, OutPath, qs_preset = "fast", ...) {
   }
 
   if (Extension == "rdata" && is.null(OutObj)) {
-    stop("`OutObj` cannot be NULL for saving RData files", call. = FALSE)
+    stop("`OutObj` cannot be `NULL` for saving RData files", call. = FALSE)
   }
-
-  OutObj <- eval(OutObj)
-  assign(OutObj, InObj)
 
   # Create directory if not available
   fs::dir_create(dirname(OutPath))
 
   if (Extension == "rdata") {
+    OutObj <- eval(OutObj)
+    assign(OutObj, InObj)
     save(list = OutObj, file = OutPath, ...)
   } else {
     qs::qsave(x = InObj, file = OutPath, preset = qs_preset)

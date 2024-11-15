@@ -26,7 +26,7 @@ Predict_Hmsc(
   LF_Return = TRUE,
   LF_InputFile = NULL,
   LF_Only = FALSE,
-  Pred_Dir = "Model_Prediction",
+  Pred_Dir = NULL,
   Pred_PA = NULL,
   Pred_XY = NULL,
   Evaluate = FALSE,
@@ -107,7 +107,8 @@ sites, allowing to predicting the latent factors only once, then the output
 can be loaded in other predictions when needed.}
 
 \item{Pred_Dir}{a character string specifying the directory where the
-predictions will be saved.}
+predictions will be saved. Defaults to \code{NULL}, which saves model
+predictions to "Model_Prediction" folder of the current working directory.}
 
 \item{Pred_PA}{a matrix of presence-absence data for evaluation. If \code{NULL}
 (default), the presence-absence data from the model object is used. This

@@ -71,7 +71,7 @@ Mod_Postprocess <- function(
 
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "character",
-    Args = c("Hab_Abb", "EnvFile", "ModelDir", "CVName", "Tree", "Path_Hmsc"))
+    Args = c("Hab_Abb", "EnvFile", "ModelDir", "Tree", "Path_Hmsc"))
 
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "logical",
@@ -135,6 +135,14 @@ Mod_Postprocess <- function(
       paste0(
         "Invalid value for Tree argument. Valid values ",
         "are: 'Tree' or 'NoTree'"),
+      call. = FALSE)
+  }
+
+  if (CVName %in% c("CV_Dist", "CV_Large")) {
+    stop(
+      paste0(
+        "Invalid value for CVName argument. Valid values ",
+        "are: 'CV_Dist' or 'CV_Large'"),
       call. = FALSE)
   }
 

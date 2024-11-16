@@ -60,13 +60,27 @@ PlotGelman_Beta <- function(
     sort() %>%
     purrr::map_dfr(
       .f = function(x) {
-        lapply(CodaObj, function(Y) {
+
+        Alpha_Preplot1 <- lapply(CodaObj, function(Y) {
           Y[, x, drop = TRUE]
         }) %>%
-          coda::mcmc.list() %>%
+          coda::mcmc.list()
+
+        Alpha_Preplot2 <- try(
           gelman.preplot(
+            x = Alpha_Preplot1,
             bin.width = 10, max.bins = 50, confidence = 0.95,
-            transform = FALSE, autoburnin = TRUE) %>%
+            transform = FALSE, autoburnin = TRUE),
+          silent = TRUE)
+
+        if (inherits(Alpha_Preplot, "try-error")) {
+          Alpha_Preplot2 <- gelman.preplot(
+            x = Alpha_Preplot1,
+            bin.width = 10, max.bins = 50, confidence = 0.95,
+            transform = FALSE, autoburnin = FALSE)
+        }
+
+        Alpha_Preplot2 %>%
           magrittr::extract2("shrink") %>%
           tibble::as_tibble(rownames = "Iter") %>%
           purrr::set_names(c("Iter", "Median", "Q97_5")) %>%

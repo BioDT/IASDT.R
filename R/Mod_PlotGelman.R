@@ -146,8 +146,7 @@ PlotGelman <- function(
 
   if (Rho && ("Rho" %in% names(CodaObj))) {
     IASDT.R::CatTime("Rho")
-    PlotObj_Rho <- magrittr::extract2(CodaObj, "Rho") %>%
-      IASDT.R::PlotGelman_Rho()
+    PlotObj_Rho <- IASDT.R::PlotGelman_Rho(CodaObj$Rho)
   } else {
     PlotObj_Rho <- NULL
   }

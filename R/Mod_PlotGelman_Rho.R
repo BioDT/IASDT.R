@@ -26,10 +26,19 @@ PlotGelman_Rho <- function(CodaObj) {
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Iter <- Type <- ShrinkFactor <- NULL
 
-  Gelman_Rho_Plot <- CodaObj %>%
+  Gelman_Rho_Plot <- try(
     gelman.preplot(
-      bin.width = 10, max.bins = 50, confidence = 0.95,
-      transform = FALSE, autoburnin = TRUE) %>%
+      x = CodaObj, bin.width = 10, max.bins = 50, confidence = 0.95,
+      transform = FALSE, autoburnin = TRUE),
+    silent = TRUE)
+  
+  if (inherits(Gelman_Rho_Plot, "try-error")) {
+    Gelman_Rho_Plot <- gelman.preplot(
+      x = CodaObj, bin.width = 10, max.bins = 50, confidence = 0.95,
+      transform = FALSE, autoburnin = FALSE)
+  }
+
+  Gelman_Rho_Plot <- Gelman_Rho_Plot %>%
     magrittr::extract2("shrink") %>%
     tibble::as_tibble(rownames = "Iter") %>%
     purrr::set_names(c("Iter", "Median", "Q97_5")) %>%

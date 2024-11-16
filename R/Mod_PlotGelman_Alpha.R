@@ -40,25 +40,38 @@ PlotGelman_Alpha <- function(CodaObj, PlottingAlpha = 0.25) {
     magrittr::extract2(2) %>%
     sort() %>%
     purrr::map_dfr(
-    .f = function(x) {
+      .f = function(x) {
 
-      lapply(CodaObj, function(Y) {
-        Y[, x, drop = TRUE]
-      }) %>%
-        coda::mcmc.list() %>%
-        gelman.preplot(
-          bin.width = 10, max.bins = 50, confidence = 0.95,
-          transform = FALSE, autoburnin = TRUE) %>%
-        magrittr::extract2("shrink") %>%
-        tibble::as_tibble(rownames = "Iter") %>%
-        purrr::set_names(c("Iter", "Median", "Q97_5")) %>%
-        dplyr::filter(!is.nan(Median)) %>%
-        dplyr::mutate(Iter = as.integer(Iter)) %>%
-        tidyr::pivot_longer(
-          cols = -Iter, names_to = "Type", values_to = "ShrinkFactor") %>%
-        dplyr::arrange(Type, Iter) %>%
-        dplyr::mutate(Type = factor(Type), Var_LV = x)
-    })
+        Alpha_Preplot1 <- lapply(CodaObj, function(Y) {
+          Y[, x, drop = TRUE]
+        }) %>%
+          coda::mcmc.list()
+
+        Alpha_Preplot2 <- try(
+          gelman.preplot(
+            x = Alpha_Preplot1,
+            bin.width = 10, max.bins = 50, confidence = 0.95,
+            transform = FALSE, autoburnin = TRUE),
+          silent = TRUE)
+
+        if (inherits(Alpha_Preplot, "try-error")) {
+          Alpha_Preplot2 <- gelman.preplot(
+            x = Alpha_Preplot1,
+            bin.width = 10, max.bins = 50, confidence = 0.95,
+            transform = FALSE, autoburnin = FALSE)
+        }
+
+        Alpha_Preplot2 %>%
+          magrittr::extract2("shrink") %>%
+          tibble::as_tibble(rownames = "Iter") %>%
+          purrr::set_names(c("Iter", "Median", "Q97_5")) %>%
+          dplyr::filter(!is.nan(Median)) %>%
+          dplyr::mutate(Iter = as.integer(Iter)) %>%
+          tidyr::pivot_longer(
+            cols = -Iter, names_to = "Type", values_to = "ShrinkFactor") %>%
+          dplyr::arrange(Type, Iter) %>%
+          dplyr::mutate(Type = factor(Type), Var_LV = x)
+      })
 
   Xlim <- range(Gelman_Alpha_DT$Iter)
 

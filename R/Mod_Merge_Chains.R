@@ -390,7 +390,7 @@ Merge_Chains <- function(
       IASDT.R::sort_()
 
     if (length(MissingModelVars) > 0) {
-      IASDT.R::InfoChunk("Unsuccessful models", Extra2 = 0)
+      IASDT.R::CatTime("Unsuccessful models")
       purrr::walk(MissingModelVars, IASDT.R::CatTime, Level = 1)
     }
   }

@@ -130,7 +130,12 @@ VarPar_Plot <- function(
 
   if (!file.exists(File_VarPar)) {
 
-    IASDT.R::CatTime("Variance partitioning will be calculated", Level = 1)
+    IASDT.R::CatTime(
+      paste0(
+        "Variance partitioning will be computed using ", NCores, " cores ",
+        dplyr::if_else(
+          UseTF, "and TensorFlow.", "without TensorFlow.")),
+      Level = 1)
 
     IASDT.R::CatTime("Loading fitted model", Level = 1)
     if (!file.exists(Path_Model)) {

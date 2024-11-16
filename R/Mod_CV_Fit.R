@@ -60,10 +60,9 @@
 #' @name Mod_CV_Fit
 
 Mod_CV_Fit <- function(
-    Model = NULL, ModelData = NULL,
-    CVName = c("CV_Dist", "CV_Large"), partitions = NULL,
-    Path_CV = NULL, EnvFile = ".env", initPar = NULL, JobName = "CV_Models",
-    updater = list(Gamma2 = FALSE, GammaEta = FALSE),
+    Model = NULL, ModelData = NULL, CVName = c("CV_Dist", "CV_Large"),
+    partitions = NULL, Path_CV = NULL, EnvFile = ".env", initPar = NULL,
+    JobName = "CV_Models", updater = list(Gamma2 = FALSE, GammaEta = FALSE),
     alignPost = TRUE, ToJSON = FALSE, FromHPC = TRUE, PrepSLURM = TRUE,
     MemPerCpu = NULL, Time = NULL, Path_Hmsc = NULL, Precision = 64, ...) {
 

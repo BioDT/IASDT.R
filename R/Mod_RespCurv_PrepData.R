@@ -8,7 +8,7 @@
 #' Hmsc models. It supports parallel processing and can return the processed
 #' data.
 #' @param Path_Model Character. Path file containing the model.
-#' @param ngrid Integer specifying the number of points along the gradient for
+#' @param N_Grid Integer specifying the number of points along the gradient for
 #'   continuous focal variables. Defaults to 50. See [Hmsc::constructGradient]
 #'   for more details.
 #' @param NCores Integer specifying the number of cores to use for parallel
@@ -25,7 +25,7 @@
 #' @name RespCurv_PrepData
 
 RespCurv_PrepData <- function(
-    Path_Model = NULL, ngrid = 50, NCores = 8, ReturnData = FALSE,
+    Path_Model = NULL, N_Grid = 50, NCores = 8, ReturnData = FALSE,
     Probabilities = c(0.025, 0.5, 0.975), UseTF = TRUE, TF_Environ = NULL,
     Temp_Dir = "TEMP2Pred", Verbose = TRUE) {
 
@@ -61,7 +61,7 @@ RespCurv_PrepData <- function(
     AllArgs = AllArgs, Type = "character", Args = c("Path_Model", "TF_Environ"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric",
-    Args = c("NCores", "ngrid", "Probabilities"))
+    Args = c("NCores", "N_Grid", "Probabilities"))
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "logical", Args = "UseTF")
   rm(AllArgs, envir = environment())
 
@@ -143,7 +143,7 @@ RespCurv_PrepData <- function(
         # constructGradient
         Gradient <- Hmsc::constructGradient(
           hM = Model, focalVariable = Variable, non.focalVariables = NFV,
-          ngrid = ngrid, coordinates = list(sample = Coords))
+          ngrid = N_Grid, coordinates = list(sample = Coords))
 
         # Values of the current predictor
         XVals <- Gradient$XDataNew[, Variable]
@@ -451,7 +451,7 @@ RespCurv_PrepData <- function(
       future.packages = c(
         "dplyr", "purrr", "tidyr", "abind", "Hmsc", "parallel"),
       future.globals = c(
-        "ResCurvDT", "Path_Model", "PrepRCData", "ngrid", "Probabilities",
+        "ResCurvDT", "Path_Model", "PrepRCData", "N_Grid", "Probabilities",
         "File_LF", "UseTF", "TF_Environ")) %>%
       dplyr::bind_rows()
 

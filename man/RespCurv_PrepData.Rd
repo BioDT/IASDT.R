@@ -6,7 +6,7 @@
 \usage{
 RespCurv_PrepData(
   Path_Model = NULL,
-  ngrid = 50,
+  N_Grid = 50,
   NCores = 8,
   ReturnData = FALSE,
   Probabilities = c(0.025, 0.5, 0.975),
@@ -19,7 +19,7 @@ RespCurv_PrepData(
 \arguments{
 \item{Path_Model}{Character. Path file containing the model.}
 
-\item{ngrid}{Integer specifying the number of points along the gradient for
+\item{N_Grid}{Integer specifying the number of points along the gradient for
 continuous focal variables. Defaults to 50. See \link[Hmsc:constructGradient]{Hmsc::constructGradient}
 for more details.}
 

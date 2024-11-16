@@ -177,7 +177,7 @@ Mod_Postprocess <- function(
     path = ModelDir, full.names = TRUE,
     pattern = paste0("^ModDT_", Hab_Abb, "_.+_subset.RData"))
 
-  if (length(ModelData) != 0) {
+  if (length(ModelData) != 1) {
     stop("Model data was not found", call. = FALSE)
   }
 

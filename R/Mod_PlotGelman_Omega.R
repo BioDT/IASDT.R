@@ -65,7 +65,7 @@ PlotGelman_Omega <- function(CodaObj, NOmega = 1000, PlottingAlpha = 0.25) {
           silent = TRUE)
 
         if (inherits(Omega_Preplot2, "try-error")) {
-          Alpha_Preplot2 <- gelman.preplot(
+          Omega_Preplot2 <- gelman.preplot(
             x = Omega_Preplot1,
             bin.width = 10, max.bins = 50, confidence = 0.95,
             transform = FALSE, autoburnin = FALSE)

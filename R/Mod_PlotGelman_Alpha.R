@@ -54,7 +54,7 @@ PlotGelman_Alpha <- function(CodaObj, PlottingAlpha = 0.25) {
             transform = FALSE, autoburnin = TRUE),
           silent = TRUE)
 
-        if (inherits(Alpha_Preplot, "try-error")) {
+        if (inherits(Alpha_Preplot2, "try-error")) {
           Alpha_Preplot2 <- gelman.preplot(
             x = Alpha_Preplot1,
             bin.width = 10, max.bins = 50, confidence = 0.95,

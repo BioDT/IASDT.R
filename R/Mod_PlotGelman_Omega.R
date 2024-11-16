@@ -52,26 +52,26 @@ PlotGelman_Omega <- function(CodaObj, NOmega = 1000, PlottingAlpha = 0.25) {
     purrr::map_dfr(
       .f = function(x) {
 
-        Alpha_Preplot1 <- lapply(CodaObj, function(Y) {
+        Omega_Preplot1 <- lapply(CodaObj, function(Y) {
           Y[, x, drop = TRUE]
         }) %>%
           coda::mcmc.list()
 
-        Alpha_Preplot2 <- try(
+        Omega_Preplot2 <- try(
           gelman.preplot(
-            x = Alpha_Preplot1,
+            x = Omega_Preplot1,
             bin.width = 10, max.bins = 50, confidence = 0.95,
             transform = FALSE, autoburnin = TRUE),
           silent = TRUE)
 
-        if (inherits(Alpha_Preplot, "try-error")) {
+        if (inherits(Omega_Preplot2, "try-error")) {
           Alpha_Preplot2 <- gelman.preplot(
-            x = Alpha_Preplot1,
+            x = Omega_Preplot1,
             bin.width = 10, max.bins = 50, confidence = 0.95,
             transform = FALSE, autoburnin = FALSE)
         }
 
-        Alpha_Preplot2 %>%
+        Omega_Preplot2 %>%
           magrittr::extract2("shrink") %>%
           tibble::as_tibble(rownames = "Iter") %>%
           purrr::set_names(c("Iter", "Median", "Q97_5")) %>%

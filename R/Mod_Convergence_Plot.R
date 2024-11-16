@@ -253,6 +253,7 @@ Convergence_Plot <- function(
     PlotObj_Omega <- purrr::map_dfr(
       .x = seq_len(NOmega),
       .f = function(x) {
+
         CombData <- dplyr::filter(OmegaDF, SpComb == SelectedCombs[x])
         CurrPost <- purrr::map(
           .x = Obj_Omega,
@@ -260,7 +261,16 @@ Convergence_Plot <- function(
           coda::as.mcmc.list()
 
         ## Gelman convergence diagnostic
-        Label_Gelman <- coda::gelman.diag(CurrPost, multivariate = FALSE) %>%
+        Label_Gelman <- try(
+          coda::gelman.diag(CurrPost, multivariate = FALSE),
+          silent = TRUE)
+
+        if (inherits(Label_Gelman, "try-error")) {
+          Label_Gelman <- coda::gelman.diag(
+            CurrPost, multivariate = FALSE, autoburnin = FALSE)
+        }
+
+        Label_Gelman <- Label_Gelman %>%
           magrittr::extract2("psrf") %>%
           magrittr::extract(1) %>%
           round(3) %>%
@@ -475,8 +485,16 @@ Convergence_Plot <- function(
                         Var_Max, Class, Order, Family) {
             Beta_ID <- which(BetaNames == Var_Sp)
             Post <- coda::as.mcmc.list(Obj_Beta[, Beta_ID])
-            Gelman <- coda::gelman.diag(Post, multivariate = FALSE)
+
+            Gelman <- try(
+              coda::gelman.diag(Post, multivariate = FALSE), silent = TRUE)
+            if (inherits(Gelman, "try-error")) {
+              Gelman <- coda::gelman.diag(
+                Post, multivariate = FALSE, autoburnin = FALSE)
+            }
+
             ESS <- coda::effectiveSize(Post)
+
             list(
               DT = DT, CI_025 = CI_025, CI_975 = CI_975,
               Var_Min = Var_Min, Var_Max = Var_Max,
@@ -644,7 +662,8 @@ Convergence_Plot <- function(
         return(tibble::tibble(Var_Sp = Var_Sp, Plot_File = Plot_File))
       },
       future.seed = TRUE,
-      future.globals = c("Beta_DF", "NChains", "SampleSize", "Cols"),
+      future.globals = c(
+        "Beta_DF", "NChains", "SampleSize", "Cols", "MarginType"),
       future.packages = c(
         "dplyr", "ggplot2", "ggtext", "magrittr", "coda", "IASDT.R")) %>%
       dplyr::bind_rows() %>%
@@ -914,7 +933,7 @@ Convergence_Plot <- function(
     },
     future.scheduling = Inf, future.seed = TRUE,
     future.globals = c(
-      "BetaTracePlots_BySp", "Path_Convergence_BySp", "Beta_NRC"),
+      "BetaTracePlots_BySp", "Path_Convergence_BySp", "Beta_NRC", "MarginType"),
     future.packages = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext"))
 
   if (NCores > 1) {

@@ -264,7 +264,7 @@ Convergence_Plot <- function(
         Label_Gelman <- try(
           coda::gelman.diag(CurrPost, multivariate = FALSE),
           silent = TRUE)
-
+        
         if (inherits(Label_Gelman, "try-error")) {
           Label_Gelman <- coda::gelman.diag(
             CurrPost, multivariate = FALSE, autoburnin = FALSE)
@@ -487,7 +487,9 @@ Convergence_Plot <- function(
             Post <- coda::as.mcmc.list(Obj_Beta[, Beta_ID])
 
             Gelman <- try(
-              coda::gelman.diag(Post, multivariate = FALSE), silent = TRUE)
+              coda::gelman.diag(Post, multivariate = FALSE), 
+              silent = TRUE)
+            
             if (inherits(Gelman, "try-error")) {
               Gelman <- coda::gelman.diag(
                 Post, multivariate = FALSE, autoburnin = FALSE)
@@ -933,7 +935,7 @@ Convergence_Plot <- function(
     },
     future.scheduling = Inf, future.seed = TRUE,
     future.globals = c(
-      "BetaTracePlots_BySp", "Path_Convergence_BySp", "Beta_NRC", "MarginType"),
+      "BetaTracePlots_BySp", "Path_Convergence_BySp", "Beta_NRC"),
     future.packages = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext"))
 
   if (NCores > 1) {

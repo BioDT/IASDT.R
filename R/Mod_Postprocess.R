@@ -186,7 +186,6 @@ Mod_Postprocess <- function(
   # ****************************************************************
 
   Ch2("Merge chains and saving RData files")
-  IASDT.R::Merge_Chains(ModelDir = ModelDir, NCores = NCores, FromHPC = FromHPC)
 
   IASDT.R::Merge_Chains(
     ModelDir = ModelDir, NCores = NCores,

@@ -138,7 +138,7 @@ Mod_Postprocess <- function(
       call. = FALSE)
   }
 
-  if (!(CVName %in% c("CV_Dist", "CV_Large"))) {
+  if (!all(CVName %in% c("CV_Dist", "CV_Large"))) {
     stop(
       paste0(
         "Invalid value for CVName argument. Valid values ",

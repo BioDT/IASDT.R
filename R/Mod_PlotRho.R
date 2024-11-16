@@ -82,7 +82,15 @@ PlotRho <- function(Post, Model, Title, Cols = NULL, MarginType = "histogram") {
     dplyr::mutate(Chain = factor(Chain), ID = as.integer(ID))
 
   ## Gelman convergence diagnostic
-  Gelman <- coda::gelman.diag(x = Post, multivariate = FALSE) %>%
+  Gelman <- try(
+    coda::gelman.diag(x = Post, multivariate = FALSE),
+    silent = TRUE)
+  if (inherits(Gelman, "try-error")) {
+    Gelman <- try(
+      coda::gelman.diag(x = Post, multivariate = FALSE, autoburnin = FALSE),
+      silent = TRUE)
+  }
+  Gelman <- Gelman %>%
     magrittr::extract2("psrf") %>%
     round(2) %>%
     paste0(collapse = " / ") %>%

@@ -71,9 +71,7 @@ Mod_Postprocess <- function(
 
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "character",
-    Args = c(
-      "Hab_Abb", "EnvFile", "ModelDir", "CC_Models", "CC_Scenario",
-      "CVName", "Tree", "Path_Hmsc"))
+    Args = c("Hab_Abb", "EnvFile", "ModelDir", "CVName", "Tree", "Path_Hmsc"))
 
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "logical",

@@ -130,7 +130,7 @@ Mod_Postprocess <- function(
   }
 
 
-  if (Tree %in% c("Tree", "NoTree")) {
+  if (!(Tree %in% c("Tree", "NoTree"))) {
     stop(
       paste0(
         "Invalid value for Tree argument. Valid values ",
@@ -138,7 +138,7 @@ Mod_Postprocess <- function(
       call. = FALSE)
   }
 
-  if (CVName %in% c("CV_Dist", "CV_Large")) {
+  if (!(CVName %in% c("CV_Dist", "CV_Large"))) {
     stop(
       paste0(
         "Invalid value for CVName argument. Valid values ",

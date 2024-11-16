@@ -41,6 +41,7 @@ Mod_Postprocess <- function(
     CVName = c("CV_Dist", "CV_Large")) {
 
   # # ..................................................................... ###
+  # # ..................................................................... ###
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -57,7 +58,7 @@ Mod_Postprocess <- function(
   }
 
   # # ..................................................................... ###
-
+  # # ..................................................................... ###
 
   # Check input arguments ----
 
@@ -167,10 +168,22 @@ Mod_Postprocess <- function(
       "\n  >>> Python environment: ", TF_Environ,
       "\n  >>> .libPaths(): \n",
       paste0("\t", .libPaths(), collapse = "\n"),
-      "\n  >>> Loaded packages: \n", LoadedPackages
-    ))
+      "\n  >>> Loaded packages: \n", LoadedPackages))
 
-  # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  Temp_Dir <- file.path(ModelDir, "TEMP2Pred")
+
+  ModelData <- list.files(
+    path = ModelDir, full.names = TRUE,
+    pattern = paste0("^ModDT_", Hab_Abb, "_.+_subset.RData"))
+
+  if (length(ModelData) != 0) {
+    stop("Model data was not found", call. = FALSE)
+  }
+
+
+  # # ..................................................................... ###
+  # # ..................................................................... ###
 
   # Check unsuccessful models -----
   Ch1("Check unsuccessful models")
@@ -203,26 +216,12 @@ Mod_Postprocess <- function(
 
   invisible(gc())
 
-  # ****************************************************************
-
-
-  Temp_Dir <- file.path(ModelDir, "TEMP2Pred")
-
-  ModelData <- list.files(
-    path = ModelDir, pattern = paste0("^ModDT_", Hab_Abb, "_.+_subset.RData"))
-
-  if (length(ModelData) != 0) {
-    stop("Model data was not found", call. = FALSE)
-  }
-
   # # ..................................................................... ###
   # # ..................................................................... ###
 
 
-  # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Path of selected model -----
   Ch1("Path of selected model")
-  # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   Path_Model <- file.path(
     ModelDir, "Model_Fitted",
@@ -244,10 +243,9 @@ Mod_Postprocess <- function(
   # # ..................................................................... ###
 
 
-  # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Convergence ----
   Ch1("Convergence")
-  # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
 
   ## Gelman_Plot -----
   Ch2("Gelman_Plot")
@@ -274,10 +272,8 @@ Mod_Postprocess <- function(
   # # ..................................................................... ###
 
 
-  # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Response curves -----
   Ch1("Response curves")
-  # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   ## Prepare data ------
   Ch2("Prepare data")
@@ -317,10 +313,8 @@ Mod_Postprocess <- function(
   # # ..................................................................... ###
 
 
-  # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Model summary ------
   Ch1("Model summary")
-  # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::Mod_Summary(
     Path_Coda = Path_Coda, EnvFile = EnvFile, FromHPC = FromHPC)
@@ -331,10 +325,9 @@ Mod_Postprocess <- function(
   # # ..................................................................... ###
 
 
-  # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Plotting model parameters -----
   Ch1("Plotting model parameters")
-  # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
 
   ## Omega -----
   Ch2("Plotting Omega parameter")
@@ -360,12 +353,10 @@ Mod_Postprocess <- function(
   # # ..................................................................... ###
 
 
-  # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Spatial predictions / evaluation ---------
   Ch1("Spatial predictions / evaluation")
-  # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::Predict_Maps(
+  Model_Predictions <- IASDT.R::Predict_Maps(
     Path_Model = Path_Model, Hab_Abb = Hab_Abb, EnvFile = EnvFile,
     FromHPC = FromHPC, NCores = NCores, Pred_Clamp = Pred_Clamp,
     Fix_Efforts = Fix_Efforts, Pred_NewSites = Pred_NewSites, UseTF = UseTF,
@@ -378,10 +369,8 @@ Mod_Postprocess <- function(
   # # ..................................................................... ###
 
 
-  # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Variance paritioning ------
   Ch1("Variance paritioning")
-  # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::VarPar_Plot(
     Path_Model = Path_Model, EnvFile = EnvFile, FromHPC = FromHPC,
@@ -392,9 +381,7 @@ Mod_Postprocess <- function(
   # # ..................................................................... ###
 
 
-  # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Cross-validation -------
-  # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   IASDT.R::InfoChunk("Prepare input data for cross-validation")
 
   IASDT.R::Mod_CV_Fit(
@@ -409,6 +396,9 @@ Mod_Postprocess <- function(
   CatTime()
   IASDT.R::CatDiff(
     InitTime = .StartTime, Prefix = "\nPostprocessing took ")
+
+  # # ..................................................................... ###
+  # # ..................................................................... ###
 
   return(invisible(NULL))
 

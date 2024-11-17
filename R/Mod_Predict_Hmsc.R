@@ -109,12 +109,7 @@ Predict_Hmsc <- function(
   }
 
   if (is.null(Pred_Dir)) {
-    IASDT.R::CatTime(
-      paste0(
-        "Predictions will be saved to the ",
-        "`Model_Prediction` folder in the working directory"),
-      Level = 1)
-    Pred_Dir <- "Model_Prediction"
+    Pred_Dir <- file.path(dirname(dirname(Path_Model)), "Model_Prediction")
   }
 
   if (is.null(RC) || RC == "c") {

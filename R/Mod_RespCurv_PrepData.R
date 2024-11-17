@@ -96,8 +96,6 @@ RespCurv_PrepData <- function(
 
   # PrepRCData -------
 
-  Path_Prediction <- file.path(dirname(dirname(Path_Model)), "Model_Prediction")
-
   PrepRCData <- function(ID) {
 
     Variable <- ResCurvDT$VarName[[ID]]
@@ -157,9 +155,9 @@ RespCurv_PrepData <- function(
         # Predicting probability of occurrence
         Preds <- IASDT.R::Predict_Hmsc(
           Path_Model = Path_Model, Gradient = Gradient, expected = TRUE,
-          NCores = 1, Pred_Dir = Path_Prediction,
-          Model_Name = paste0("RC_", Coords), RC = Coords, UseTF = UseTF,
-          TF_Environ = TF_Environ, LF_InputFile = File_LF, Verbose = FALSE)
+          NCores = 1, Model_Name = paste0("RC_", Coords), RC = Coords,
+          UseTF = UseTF, TF_Environ = TF_Environ, LF_InputFile = File_LF,
+          Temp_Dir = Temp_Dir, Verbose = FALSE)
 
         # Species richness
         Pred_SR <- abind::abind(lapply(Preds, rowSums), along = 2)
@@ -456,7 +454,7 @@ RespCurv_PrepData <- function(
         "dplyr", "purrr", "tidyr", "abind", "Hmsc", "parallel"),
       future.globals = c(
         "ResCurvDT", "Path_Model", "PrepRCData", "N_Grid", "Probabilities",
-        "File_LF", "UseTF", "TF_Environ")) %>%
+        "File_LF", "UseTF", "TF_Environ", "Temp_Dir")) %>%
       dplyr::bind_rows()
 
     if (NCores > 1) {

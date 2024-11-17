@@ -14,8 +14,8 @@
 #'   predictions are to be made
 #' @param modelunits a factor vector with random level units that are
 #'   conditioned on
-#' @param postEta a list containing samples of random factors at conditioned
-#'   units
+#' @param postEta Character string specifying the path forpostEta; a list
+#'   containing samples of random factors at conditioned units
 #' @param postAlpha a list containing samples of range (lengthscale) parameters
 #'   for latent factors
 #' @param rL a HmscRandomLevel-class object that describes the random level
@@ -60,10 +60,6 @@
 #'   a Python environment with TensorFlow installed;
 #' - if `UseTF` is set to `FALSE`, the function uses R / CPP code in the
 #'   calculations;
-#' - the input `postEta` can be either a list or a file path for it, which can
-#'   save memory, particularly when working on parallel. The function splits the
-#'   `postEta` into smaller chunks, each for a combination of alpha value and
-#'   latent factor and loop over them on parallel.
 #' - calculates `D11` and `D12` matrices only once and save them to disk and
 #'   call them when needed.
 
@@ -100,6 +96,7 @@ Predict_LF <- function(
   # Load postEta if it is a file path
 
   if (inherits(postEta, "character")) {
+    postEta_File <- postEta
     IASDT.R::CatTime("Load postEta", Level = 1)
     if (!file.exists(postEta)) {
       stop("The specified path for `postEta` does not exist. ", call. = FALSE)
@@ -269,7 +266,7 @@ Predict_LF <- function(
     # Prepare data for parallel processing
     Unique_Alpha <- postAlpha_unique %>%
       # This may help to distribute heavy jobs first on parallel
-      dplyr::arrange(dplyr::desc(sapply(Sample_IDs, length))) %>%
+      # dplyr::arrange(dplyr::desc(sapply(Sample_IDs, length))) %>%
       dplyr::select(-Sample_IDs) %>%
       tidyr::pivot_longer(
         cols = names(.), values_to = "Alpha_ID", names_to = "LF") %>%
@@ -313,6 +310,7 @@ Predict_LF <- function(
           }),
         Export = NULL)
 
+    rm(postEta, envir = environment())
     invisible(gc())
 
     # # .................................................................... ###
@@ -331,7 +329,7 @@ Predict_LF <- function(
       cl = c1,
       list = c(
         "Unique_Alpha", "Path_D11", "Path_D12", "indNew", "unitsPred",
-        "postEta", "indOld", "modelunits", "TF_Environ", "UseTF",
+        "postEta_File", "indOld", "modelunits", "TF_Environ", "UseTF",
         "TF_use_single"),
       envir = environment())
 
@@ -347,7 +345,8 @@ Predict_LF <- function(
 
     IASDT.R::CatTime("Making predictions on parallel", Level = 1)
 
-    etaPreds <- snow::clusterApplyLB(
+    # snow::clusterApplyLB
+    etaPreds <- snow::parLapply(
       cl = c1,
       x = seq_len(nrow(Unique_Alpha)),
       fun = function(RowNum) {
@@ -397,6 +396,8 @@ Predict_LF <- function(
                     Unit_ID = unitsPred[indNew], SampleID = SampleID[.x])
               }) %>%
               dplyr::bind_rows()
+
+            postEta <- IASDT.R::LoadAs(postEta_File, nthreads = 5)
 
             eta_indOld <- postEta[SampleID] %>%
               purrr::map(~ .x[match(unitsPred[indOld], modelunits), LF_ID])
@@ -453,9 +454,6 @@ Predict_LF <- function(
         } else {
 
           # Handle cases where Denom is zero by setting `eta_indNew` to zero
-
-
-
 
           if (isFALSE(IASDT.R::CheckData(File_etaPred, warning = FALSE))) {
 

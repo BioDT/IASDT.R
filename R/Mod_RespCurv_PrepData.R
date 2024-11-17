@@ -88,7 +88,8 @@ RespCurv_PrepData <- function(
     }
   } else {
     stop(
-      "The model file does not exist or is not a .RData file.", call. = FALSE)
+      "The model file does not exist or is not a .RData/.qs file.",
+      call. = FALSE)
   }
 
   # # ..................................................................... ###
@@ -109,12 +110,12 @@ RespCurv_PrepData <- function(
     # Path for plotting data: probability of occurrence
     RC_DT_Path_Prob <- ResCurvDT$RC_DT_Path_Prob[[ID]]
     RC_DT_Path_Prob_Samples <- stringr::str_replace(
-      RC_DT_Path_Prob, ".RData$", "_Samples.RData")
+      RC_DT_Path_Prob, ".qs$", "_Samples.qs")
 
     # Path for plotting data: Species richness
     RC_DT_Path_SR <- ResCurvDT$RC_DT_Path_SR[[ID]]
     RC_DT_Path_SR_Samples <- stringr::str_replace(
-      RC_DT_Path_SR, ".RData$", "_Samples.RData")
+      RC_DT_Path_SR, ".qs$", "_Samples.qs")
 
     OutputTibble <- tibble::tibble(
       Variable = Variable, NFV = NFV, Coords = Coords,
@@ -156,7 +157,7 @@ RespCurv_PrepData <- function(
         # Predicting probability of occurrence
         Preds <- IASDT.R::Predict_Hmsc(
           Path_Model = Path_Model, Gradient = Gradient, expected = TRUE,
-          NCores = 1, Pred_Dir = Path_Prediction, Temp_Cleanup = Temp_Cleanup,
+          NCores = 1, Pred_Dir = Path_Prediction,
           Model_Name = paste0("RC_", Coords), RC = Coords, UseTF = UseTF,
           TF_Environ = TF_Environ, LF_InputFile = File_LF, Verbose = FALSE)
 
@@ -337,10 +338,10 @@ RespCurv_PrepData <- function(
         pattern = "stats::poly\\(|, degree = 2, raw = TRUE\\)"),
       RC_DT_Name = paste0("RC_", VarName, "_coord_", Coords, "_NFV", NFV),
       RC_DT_Path_Orig = file.path(
-        Path_RC_DT, paste0(RC_DT_Name, "_Orig.RData")),
+        Path_RC_DT, paste0(RC_DT_Name, "_Orig.qs")),
       RC_DT_Path_Prob = file.path(
-        Path_RC_DT, paste0(RC_DT_Name, "_Prob.RData")),
-      RC_DT_Path_SR = file.path(Path_RC_DT, paste0(RC_DT_Name, "_SR.RData")),
+        Path_RC_DT, paste0(RC_DT_Name, "_Prob.qs")),
+      RC_DT_Path_SR = file.path(Path_RC_DT, paste0(RC_DT_Name, "_SR.qs")),
       FileExists = purrr::pmap_lgl(
         .l = list(RC_DT_Path_Orig, RC_DT_Path_Prob, RC_DT_Path_SR),
         .f = function(RC_DT_Path_Orig, RC_DT_Path_Prob, RC_DT_Path_SR) {

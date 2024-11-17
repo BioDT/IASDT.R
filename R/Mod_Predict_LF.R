@@ -453,24 +453,34 @@ Predict_LF <- function(
         } else {
 
           # Handle cases where Denom is zero by setting `eta_indNew` to zero
-          postEta0 <- IASDT.R::LoadAs(File, nthreads = 5)
 
-          etaPred <- purrr::map_dfr(
-            .x = seq_len(length(SampleID)),
-            .f = function(ID) {
-              eta <- postEta0[, , ID]
-              etaPred <- rep(NA, length(unitsPred))
-              etaPred[indOld] <- eta[match(unitsPred[indOld], modelunits)]
-              etaPred[indNew] <- 0
-              tibble::tibble(
-                SampleID = SampleID[ID], etaPred = etaPred, Unit_ID = unitsPred)
-            }) %>%
-            dplyr::mutate(Unit_ID = factor(Unit_ID, levels = unitsPred)) %>%
-            dplyr::arrange(SampleID, Unit_ID, etaPred)
 
+
+
+          if (isFALSE(IASDT.R::CheckData(File_etaPred, warning = FALSE))) {
+
+            postEta0 <- IASDT.R::LoadAs(File, nthreads = 5)
+
+            etaPred <- purrr::map_dfr(
+              .x = seq_len(length(SampleID)),
+              .f = function(ID) {
+                eta <- postEta0[, , ID]
+                etaPred <- rep(NA, length(unitsPred))
+                etaPred[indOld] <- eta[match(unitsPred[indOld], modelunits)]
+                etaPred[indNew] <- 0
+                tibble::tibble(
+                  SampleID = SampleID[ID], etaPred = etaPred, Unit_ID = unitsPred)
+              }) %>%
+              dplyr::mutate(Unit_ID = factor(Unit_ID, levels = unitsPred)) %>%
+              dplyr::arrange(SampleID, Unit_ID, etaPred)
+
+            saveRDS(etaPred, file = File_etaPred)
+
+          } else {
+            etaPred <- IASDT.R::LoadAs(File_etaPred)
+          }
         }
 
-        # clean up
         invisible(gc())
         return(etaPred)
       })

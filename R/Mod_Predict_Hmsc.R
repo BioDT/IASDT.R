@@ -64,7 +64,7 @@ Predict_Hmsc <- function(
     Path_Model,
     Loff = NULL, XData = NULL, X = NULL, XRRRData = NULL, XRRR = NULL,
     Gradient = NULL, Yc = NULL, mcmcStep = 1, expected = TRUE, NCores = 8,
-    Model_Name = "Train", Temp_Dir = "TEMP2Pred", Temp_Cleanup = TRUE, 
+    Model_Name = "Train", Temp_Dir = "TEMP2Pred", Temp_Cleanup = TRUE,
     RC = NULL, UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE,
     LF_OutFile = NULL, LF_Return = TRUE, LF_InputFile = NULL, LF_Only = FALSE,
     Pred_Dir = NULL, Pred_PA = NULL, Pred_XY = NULL,
@@ -144,15 +144,17 @@ Predict_Hmsc <- function(
   # # ..................................................................... ###
 
   # Clean up
-  on.exit({
-    try(
-      fs::file_delete(
-        list.files(
-          Temp_Dir,
-          pattern = paste0("^", Model_Name, "_.+"), full.names = TRUE)),
-      silent = TRUE
-    )},
-    add = TRUE)
+  if (Temp_Cleanup) {
+    on.exit({
+      try(
+        fs::file_delete(
+          list.files(
+            Temp_Dir,
+            pattern = paste0("^", Model_Name, "_.+"), full.names = TRUE)),
+        silent = TRUE
+      )},
+      add = TRUE)
+  }
 
   # # ..................................................................... ###
 
@@ -370,7 +372,10 @@ Predict_Hmsc <- function(
         UseTF = UseTF, TF_Environ = TF_Environ, TF_use_single = TF_use_single,
         LF_OutFile = LF_OutFile, LF_Return = LF_Return)
 
-      try(fs::file_delete(postEta_file), silent = TRUE)
+      if (Temp_Cleanup) {
+        try(fs::file_delete(postEta_file), silent = TRUE)
+      }
+
       rm(postEta_file, envir = environment())
 
       rowNames <- rownames(predPostEta[[r]][[1]])
@@ -462,8 +467,7 @@ Predict_Hmsc <- function(
     list = c(
       "Model", "X", "XRRR", "Yc", "Loff", "rL", "rLPar", "PiNew",
       "dfPiNew", "nyNew", "expected", "mcmcStep", "seeds", "chunk_size",
-      "Chunks", "Temp_Dir", "Model_Name",
-      "get1prediction"),
+      "Chunks", "Temp_Dir", "Model_Name", "Temp_Cleanup", "get1prediction"),
     envir = environment())
 
   invisible(snow::clusterEvalQ(
@@ -541,7 +545,10 @@ Predict_Hmsc <- function(
             ChunkSp_File = ChunkSR_File),
           .)
 
-      try(fs::file_delete(ChunkFile))
+      if (Temp_Cleanup) {
+        try(fs::file_delete(ChunkFile))
+      }
+
       rm(PredChunk, envir = environment())
 
       invisible(gc())
@@ -563,7 +570,8 @@ Predict_Hmsc <- function(
   snow::clusterExport(
     cl = c1,
     list = c(
-      "Eval_DT", "Evaluate", "Pred_Dir", "Model_Name", "Pred_PA", "Pred_XY"),
+      "Eval_DT", "Evaluate", "Pred_Dir", "Model_Name",
+      "Pred_PA", "Pred_XY", "Temp_Cleanup"),
     envir = environment())
 
   Eval_DT <- snow::parLapply(
@@ -617,7 +625,9 @@ Predict_Hmsc <- function(
         Pred_Dir, paste0("Pred_", Model_Name, "_", Sp2, ".qs"))
 
       qs::qsave(PredSummary, file = PredSummaryFile, preset = "fast")
-      try(fs::file_delete(data), silent = TRUE)
+      if (Temp_Cleanup) {
+        try(fs::file_delete(data), silent = TRUE)
+      }
 
       if (Evaluate && Sp2 != "SR") {
         if (is.null(Pred_PA)) {
@@ -685,7 +695,9 @@ Predict_Hmsc <- function(
   Pred_File <- file.path(Pred_Dir, paste0("Prediction_", Model_Name, ".qs"))
 
   qs::qsave(Predictions, file = Pred_File, preset = "fast")
-  try(fs::file_delete(Eval_DT$Path_pred), silent = TRUE)
+  if (Temp_Cleanup) {
+    try(fs::file_delete(Eval_DT$Path_pred), silent = TRUE)
+  }
   IASDT.R::CatTime(
     paste0("Predictions were saved to `", Pred_File, "`"), Level = 1)
 
@@ -708,7 +720,7 @@ Predict_Hmsc <- function(
     Eval_Path <- NULL
   }
 
-  if (exists("post_file")) {
+  if (exists("post_file") && Temp_Cleanup) {
     try(fs::file_delete(post_file), silent = TRUE)
   }
 

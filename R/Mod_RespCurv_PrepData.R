@@ -156,7 +156,7 @@ RespCurv_PrepData <- function(
         # Predicting probability of occurrence
         Preds <- IASDT.R::Predict_Hmsc(
           Path_Model = Path_Model, Gradient = Gradient, expected = TRUE,
-          NCores = 1, Pred_Dir = Path_Prediction,
+          NCores = 1, Pred_Dir = Path_Prediction, Temp_Cleanup = Temp_Cleanup,
           Model_Name = paste0("RC_", Coords), RC = Coords, UseTF = UseTF,
           TF_Environ = TF_Environ, LF_InputFile = File_LF, Verbose = FALSE)
 
@@ -399,11 +399,13 @@ RespCurv_PrepData <- function(
       rm(Model, envir = environment())
       invisible(gc())
 
+      IASDT.R::CatTime("Get LF")
       Model_LF <- IASDT.R::Predict_Hmsc(
         Path_Model = Path_Model, Gradient = Gradient_c, expected = TRUE,
         NCores = NCores, Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup,
         Model_Name = "RC_c", RC = "c", UseTF = UseTF, TF_Environ = TF_Environ,
-        LF_OutFile = File_LF, TF_use_single = TF_use_single, Verbose = Verbose)
+        LF_OutFile = File_LF, TF_use_single = TF_use_single, Verbose = Verbose,
+        Pred_Dir = Temp_Dir)
 
       invisible(gc())
       rm(Model_LF, Gradient_c, envir = environment())

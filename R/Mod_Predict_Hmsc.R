@@ -64,9 +64,9 @@ Predict_Hmsc <- function(
     Path_Model,
     Loff = NULL, XData = NULL, X = NULL, XRRRData = NULL, XRRR = NULL,
     Gradient = NULL, Yc = NULL, mcmcStep = 1, expected = TRUE, NCores = 8,
-    Model_Name = "Train", Temp_Dir = "TEMP2Pred", RC = NULL,
-    UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE, LF_OutFile = NULL,
-    LF_Return = TRUE, LF_InputFile = NULL, LF_Only = FALSE,
+    Model_Name = "Train", Temp_Dir = "TEMP2Pred", Temp_Cleanup = TRUE, 
+    RC = NULL, UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE,
+    LF_OutFile = NULL, LF_Return = TRUE, LF_InputFile = NULL, LF_Only = FALSE,
     Pred_Dir = NULL, Pred_PA = NULL, Pred_XY = NULL,
     Evaluate = FALSE, Eval_Name = NULL, Eval_Dir = "Evaluation",
     Verbose = TRUE) {
@@ -365,7 +365,8 @@ Predict_Hmsc <- function(
         unitsPred = levels(dfPiNew[, r]),
         modelunits = levels(Model$dfPi[, r]),
         postEta = postEta_file, postAlpha = postAlpha, rL = rL[[r]],
-        NCores = NCores, Temp_Dir = Temp_Dir, Model_Name = Model_Name,
+        NCores = NCores, Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup,
+        Model_Name = Model_Name,
         UseTF = UseTF, TF_Environ = TF_Environ, TF_use_single = TF_use_single,
         LF_OutFile = LF_OutFile, LF_Return = LF_Return)
 

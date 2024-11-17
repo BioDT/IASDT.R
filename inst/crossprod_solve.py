@@ -4,7 +4,7 @@ import numpy as np
 import rdata
 import xarray as xr
 import pandas as pd
-
+import pyreadr
 
 # =======================================================
 # TensorFlow and Environment Configuration
@@ -126,51 +126,10 @@ def load_tensor(file_or_array, dtype):
     """
     if isinstance(file_or_array, str):
         file_or_array = load_rds(file_or_array)
-    return tf.convert_to_tensor(file_or_array, dtype=dtype)
-
-
-# =======================================================
-
-@tf.function
-def compute_k_matrices(Dist1, Dist2, Denom_tensor):
-    """
-    Compute K matrices as element-wise exponentials.
-    """
-    return tf.exp(-Dist1 / Denom_tensor), tf.exp(-Dist2 / Denom_tensor)
+    tensor = tf.convert_to_tensor(file_or_array, dtype=dtype)
+    return tensor
 
 # =======================================================
-
-def crossprod_solve(Dist1, Dist2, Denom, List, use_single=False, save=False, file_path=None):
-    
-    import tensorflow as tf
-import rdata
-
-# =======================================================
-# Helper Functions
-# =======================================================
-
-def load_rds(file_path):
-    """
-    Load an RDS file using the rdata module.
-    """
-    try:
-        with open(file_path, 'rb') as f:
-            rds_data = rdata.read_rds(f)
-        return rds_data
-    except (FileNotFoundError, rdata.errors.ReadError) as e:
-        print(f"Error loading RDS file at {file_path}: {e}")
-        return None
-
-
-@tf.function
-def load_tensor(file_or_array, dtype):
-    """
-    Convert file or array to a TensorFlow tensor.
-    """
-    if isinstance(file_or_array, str):
-        file_or_array = load_rds(file_or_array)
-    return tf.convert_to_tensor(file_or_array, dtype=dtype)
-
 
 @tf.function
 def compute_k_matrices(Dist1, Dist2, Denom_tensor):
@@ -210,8 +169,8 @@ def crossprod_solve(Dist1, Dist2, Denom, List, use_single=False, save=False, fil
     Dist1 = load_tensor(Dist1, dtype)
     Dist2 = load_tensor(Dist2, dtype)
     if isinstance(List, str):
-        List = load_rds(List)
-
+        List = tf.convert_to_tensor(load_rds(List), dtype=dtype)
+    
     # Check if loading was successful
     if Dist1 is None or Dist2 is None or List is None:
         print("Error: One or more input files could not be loaded.")
@@ -247,7 +206,7 @@ def crossprod_solve(Dist1, Dist2, Denom, List, use_single=False, save=False, fil
             raise ValueError("A valid file_path must be provided when save=True.")
         try:
             rdata.write_rds(file_path, final_results)
-            #print(f"Results saved to {file_path}.")
+            
         except Exception as e:
             print(f"Error saving results to {file_path}: {e}")
 

@@ -69,7 +69,8 @@
 
 Predict_LF <- function(
     unitsPred, modelunits, postEta, postAlpha, rL, NCores = 8,
-    Temp_Dir = "TEMP2Pred", Model_Name = NULL, UseTF = TRUE, TF_Environ = NULL,
+    Temp_Dir = "TEMP2Pred", Temp_Cleanup = TRUE,
+    Model_Name = NULL, UseTF = TRUE, TF_Environ = NULL,
     TF_use_single = FALSE, LF_OutFile = NULL, LF_Return = TRUE,
     Verbose = TRUE) {
 
@@ -101,11 +102,7 @@ Predict_LF <- function(
   if (inherits(postEta, "character")) {
     IASDT.R::CatTime("Load postEta", Level = 1)
     if (!file.exists(postEta)) {
-      stop(
-        paste0(
-          "The specified path for `postEta` does not exist. ",
-          "Please verify the file path."),
-        call. = FALSE)
+      stop("The specified path for `postEta` does not exist. ", call. = FALSE)
     }
     postEta <- IASDT.R::LoadAs(postEta, nthreads = 5)
   }
@@ -140,9 +137,12 @@ Predict_LF <- function(
 
   } else {
 
+    IASDT.R::CatTime("At least some of input sites are new sites", Level = 1)
+
     # Check TensorFlow settings
 
     if (UseTF) {
+
       # Check if TF_Environ directory exists
       if (is.null(TF_Environ) || !dir.exists(TF_Environ)) {
         stop(
@@ -156,21 +156,24 @@ Predict_LF <- function(
 
       # Check if PythonScript exists
       if (!file.exists(PythonScript)) {
-        stop(
-          "Specified `PythonScript` does not exist at the provided path.",
-          call. = FALSE)
+        stop("Necessary python script does not exist", call. = FALSE)
       }
 
       # Suppress TensorFlow warnings and disable optimizations
       Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3", TF_ENABLE_ONEDNN_OPTS = "0")
 
       IASDT.R::CatTime("Computations will be made using TensorFlow", Level = 1)
-    } else {
-      IASDT.R::CatTime("Computations will be made using R/CPP", Level = 1)
-    }
 
-    # Extension for temporary files
-    TempExt <- dplyr::if_else(UseTF, "rds", "qs")
+      # Extension for temporary files
+      TempExt <- "rds"
+
+    } else {
+
+      IASDT.R::CatTime("Computations will be made using R/CPP", Level = 1)
+
+      # Extension for temporary files
+      TempExt <- "qs"
+    }
 
     # # .................................................................... ###
 
@@ -194,41 +197,54 @@ Predict_LF <- function(
     IASDT.R::CatTime("Calculate/save D11 and D12 distance matrices", Level = 1)
 
     alphapw <- rL$alphapw
-    s1 <- rL$s[modelunits, , drop = FALSE]
-    s2 <- rL$s[unitsPred[indNew], , drop = FALSE]
-    D11 <- Rfast::Dist(s1)
-    D12 <- Rfast::dista(s1, s2)
 
     # Save D11 and D12 as qs/rds files
     Path_D11 <- file.path(Temp_Dir, paste0(Model_Name, "D11.", TempExt))
     Path_D12 <- file.path(Temp_Dir, paste0(Model_Name, "D12.", TempExt))
-    if (UseTF) {
-      saveRDS(D11, file = Path_D11)
-      saveRDS(D12, file = Path_D12)
+
+    if (file.exists(Path_D11) && file.exists(Path_D12)) {
+
+      IASDT.R::CatTime(
+        "D11 and D12 distance matrices are already saved", Level = 2)
+
     } else {
-      qs::qsave(D11, file = Path_D11, preset = "fast")
-      qs::qsave(D12, file = Path_D12, preset = "fast")
+
+      s1 <- rL$s[modelunits, , drop = FALSE]
+      s2 <- rL$s[unitsPred[indNew], , drop = FALSE]
+      D11 <- Rfast::Dist(s1)
+      D12 <- Rfast::dista(s1, s2)
+
+      if (UseTF) {
+        saveRDS(D11, file = Path_D11)
+        saveRDS(D12, file = Path_D12)
+      } else {
+        qs::qsave(D11, file = Path_D11, preset = "fast")
+        qs::qsave(D12, file = Path_D12, preset = "fast")
+      }
+
+      # Clean up
+      rm(rL, s1, s2, D11, D12, envir = environment())
     }
 
-    # Clean up
-    rm(rL, s1, s2, D11, D12, envir = environment())
+    if (Temp_Cleanup) {
+      if (Model_Name != "") {
+        on.exit(
+          try({
+            list.files(
+              Temp_Dir,
+              pattern = paste0("^", Model_Name, "_postEta"),
+              full.names = TRUE) %>%
+              c(Path_D11, Path_D12) %>%
+              fs::file_delete()
+          }, silent = TRUE), add = TRUE)
+      } else {
+        on.exit(
+          try(fs::file_delete(c(Path_D11, Path_D12)), silent = TRUE),
+          add = TRUE)
+      }
+    }
+
     invisible(gc())
-
-    if (!is.null(Model_Name)) {
-      on.exit(
-        try({
-          list.files(
-            Temp_Dir,
-            pattern = paste0("^", Model_Name, "_postEta"),
-            full.names = TRUE) %>%
-            c(Path_D11, Path_D12) %>%
-            fs::file_delete()
-        }, silent = TRUE), add = TRUE)
-    } else {
-      on.exit(
-        try(fs::file_delete(c(Path_D11, Path_D12)), silent = TRUE),
-        add = TRUE)
-    }
 
     # # .................................................................... ###
 
@@ -277,16 +293,22 @@ Predict_LF <- function(
         File = file.path(
           Temp_Dir,
           paste0(Model_Name, "postEta_ch", dplyr::row_number(), ".", TempExt)),
+        File_etaPred = stringr::str_replace_all(
+          File, "_postEta_ch", "_etaPred_ch"),
         Export = purrr::pmap(
           .l = list(SampleID, LF_ID, File),
           .f = function(SampleID, LF_ID, File) {
-            Out <- postEta[SampleID] %>%
-              purrr::map(~ .x[, LF_ID, drop = FALSE]) %>%
-              simplify2array()
-            if (UseTF) {
-              saveRDS(Out, file = File)
-            } else {
-              qs::qsave(Out, file = File, preset = "fast")
+
+            # do not export file if already exists and is valid
+            if (isFALSE(IASDT.R::CheckData(File, warning = FALSE))) {
+              Out <- postEta[SampleID] %>%
+                purrr::map(~ .x[, LF_ID, drop = FALSE]) %>%
+                simplify2array()
+              if (UseTF) {
+                saveRDS(Out, file = File)
+              } else {
+                qs::qsave(Out, file = File, preset = "fast")
+              }
             }
           }),
         Export = NULL)
@@ -309,7 +331,8 @@ Predict_LF <- function(
       cl = c1,
       list = c(
         "Unique_Alpha", "Path_D11", "Path_D12", "indNew", "unitsPred",
-        "indOld", "modelunits", "TF_Environ", "UseTF", "TF_use_single"),
+        "postEta", "indOld", "modelunits", "TF_Environ", "UseTF",
+        "TF_use_single"),
       envir = environment())
 
     invisible(snow::clusterEvalQ(
@@ -337,6 +360,7 @@ Predict_LF <- function(
         SampleID <- Unique_Alpha$SampleID[[RowNum]]
         # File path for current alpha
         File <- Unique_Alpha$File[[RowNum]]
+        File_etaPred <- Unique_Alpha$File_etaPred[[RowNum]]
 
         # If the denominator is positive, perform calculations; otherwise, set
         # `eta_indNew` to zero.
@@ -347,14 +371,23 @@ Predict_LF <- function(
 
             # Use TensorFlow
 
-            # Activate the python environment
-            reticulate::use_virtualenv(TF_Environ, required = TRUE)
-            # Source the script file containing the crossprod_solve function
-            reticulate::source_python(PythonScript)
+            if (isFALSE(IASDT.R::CheckData(File_etaPred, warning = FALSE))) {
 
-            eta_indNew <- crossprod_solve(
-              Dist1 = Path_D11, Dist2 = Path_D12, Denom = Denom,
-              List = File, use_single = TF_use_single)
+              # Activate the python environment
+              reticulate::use_virtualenv(TF_Environ, required = TRUE)
+
+              # Source the script file containing the crossprod_solve function
+              reticulate::source_python(PythonScript)
+
+              eta_indNew <- crossprod_solve(
+                Dist1 = Path_D11, Dist2 = Path_D12, Denom = Denom,
+                List = File, use_single = TF_use_single)
+
+              saveRDS(eta_indNew, file = File_etaPred)
+
+            } else {
+              eta_indNew <- IASDT.R::LoadAs(File_etaPred)
+            }
 
             eta_indNew <- purrr::map(
               .x = seq_along(eta_indNew),
@@ -383,6 +416,7 @@ Predict_LF <- function(
               dplyr::arrange(SampleID, Unit_ID, etaPred)
 
           } else {
+
             # Use R / CPP
 
             # Reading postEta from file
@@ -415,6 +449,7 @@ Predict_LF <- function(
               dplyr::mutate(Unit_ID = factor(Unit_ID, levels = unitsPred)) %>%
               dplyr::arrange(SampleID, Unit_ID, etaPred)
           }
+
         } else {
 
           # Handle cases where Denom is zero by setting `eta_indNew` to zero
@@ -437,19 +472,11 @@ Predict_LF <- function(
 
         # clean up
         invisible(gc())
-        fs::file_delete(File)
-
         return(etaPred)
-
       })
-
-
 
     snow::stopCluster(c1)
     invisible(gc())
-    # snow::stopCluster(c1)
-    # future::plan("future::sequential", gc = TRUE)
-
 
     IASDT.R::CatTime("Merge results", Level = 1)
     # Merge results

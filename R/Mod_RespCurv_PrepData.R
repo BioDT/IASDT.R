@@ -27,7 +27,8 @@
 RespCurv_PrepData <- function(
     Path_Model = NULL, N_Grid = 50, NCores = 8, ReturnData = FALSE,
     Probabilities = c(0.025, 0.5, 0.975), UseTF = TRUE, TF_Environ = NULL,
-    Temp_Dir = "TEMP2Pred", Verbose = TRUE) {
+    TF_use_single = FALSE, Temp_Dir = "TEMP2Pred", Temp_Cleanup = TRUE,
+    Verbose = TRUE) {
 
   # # ..................................................................... ###
 
@@ -400,9 +401,9 @@ RespCurv_PrepData <- function(
 
       Model_LF <- IASDT.R::Predict_Hmsc(
         Path_Model = Path_Model, Gradient = Gradient_c, expected = TRUE,
-        NCores = NCores, Temp_Dir = Temp_Dir, Model_Name = "RC_c", RC = "c",
-        UseTF = UseTF, TF_Environ = TF_Environ, LF_OutFile = File_LF,
-        Verbose = Verbose)
+        NCores = NCores, Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup,
+        Model_Name = "RC_c", RC = "c", UseTF = UseTF, TF_Environ = TF_Environ,
+        LF_OutFile = File_LF, TF_use_single = TF_use_single, Verbose = Verbose)
 
       invisible(gc())
       rm(Model_LF, Gradient_c, envir = environment())

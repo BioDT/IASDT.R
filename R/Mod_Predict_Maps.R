@@ -163,7 +163,7 @@ Predict_Maps <- function(
   # # ..................................................................... ###
 
   # Loading input data -----
-  IASDT.R::CatTime("Loading Loading input data")
+  IASDT.R::CatTime("Loading input data")
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
 

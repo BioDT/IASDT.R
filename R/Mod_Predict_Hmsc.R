@@ -419,7 +419,7 @@ Predict_Hmsc <- function(
     post <- qs::qread(post_file, nthreads = 5)
   }
 
-  # prediction data for response cuves
+  # prediction data for response curves
   if (!is.null(RC)) {
     IASDT.R::CatTime(
       "Predicting data for response curve (sequentially)", Level = 1)

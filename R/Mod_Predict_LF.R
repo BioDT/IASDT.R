@@ -253,7 +253,6 @@ Predict_LF <- function(
       as.data.frame() %>%
       tibble::tibble() %>%
       stats::setNames(paste0("LF_", seq_len(ncol(.))))
-    rm(postAlpha, envir = environment())
 
     # Unique values alpha and their respective sample IDs
     postAlpha_unique <- postAlpha_tibble %>%
@@ -266,7 +265,7 @@ Predict_LF <- function(
     # Prepare data for parallel processing
     Unique_Alpha <- postAlpha_unique %>%
       # This may help to distribute heavy jobs first on parallel
-      # dplyr::arrange(dplyr::desc(sapply(Sample_IDs, length))) %>%
+      dplyr::arrange(dplyr::desc(sapply(Sample_IDs, length))) %>%
       dplyr::select(-Sample_IDs) %>%
       tidyr::pivot_longer(
         cols = names(.), values_to = "Alpha_ID", names_to = "LF") %>%
@@ -310,7 +309,7 @@ Predict_LF <- function(
           }),
         Export = NULL)
 
-    rm(postEta, envir = environment())
+    rm(postEta, postAlpha, envir = environment())
     invisible(gc())
 
     # # .................................................................... ###
@@ -376,6 +375,7 @@ Predict_LF <- function(
               reticulate::use_virtualenv(TF_Environ, required = TRUE)
 
               # Source the script file containing the crossprod_solve function
+              PythonScript <- system.file("crossprod_solve.py", package = "IASDT.R")
               reticulate::source_python(PythonScript)
 
               eta_indNew <- crossprod_solve(
@@ -385,7 +385,7 @@ Predict_LF <- function(
               saveRDS(eta_indNew, file = File_etaPred)
 
             } else {
-              eta_indNew <- IASDT.R::LoadAs(File_etaPred)
+              eta_indNew <- readRDS(File_etaPred)
             }
 
             eta_indNew <- purrr::map(
@@ -475,7 +475,7 @@ Predict_LF <- function(
             saveRDS(etaPred, file = File_etaPred)
 
           } else {
-            etaPred <- IASDT.R::LoadAs(File_etaPred)
+            etaPred <- readRDS(File_etaPred)
           }
         }
 

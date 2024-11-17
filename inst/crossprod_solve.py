@@ -141,9 +141,68 @@ def compute_k_matrices(Dist1, Dist2, Denom_tensor):
 # =======================================================
 
 def crossprod_solve(Dist1, Dist2, Denom, List, use_single=False, save=False, file_path=None):
+    
+    import tensorflow as tf
+import rdata
+
+# =======================================================
+# Helper Functions
+# =======================================================
+
+def load_rds(file_path):
+    """
+    Load an RDS file using the rdata module.
+    """
+    try:
+        with open(file_path, 'rb') as f:
+            rds_data = rdata.read_rds(f)
+        return rds_data
+    except (FileNotFoundError, rdata.errors.ReadError) as e:
+        print(f"Error loading RDS file at {file_path}: {e}")
+        return None
+
+
+@tf.function
+def load_tensor(file_or_array, dtype):
+    """
+    Convert file or array to a TensorFlow tensor.
+    """
+    if isinstance(file_or_array, str):
+        file_or_array = load_rds(file_or_array)
+    return tf.convert_to_tensor(file_or_array, dtype=dtype)
+
+
+@tf.function
+def compute_k_matrices(Dist1, Dist2, Denom_tensor):
+    """
+    Compute K matrices as element-wise exponentials.
+    """
+    return tf.exp(-Dist1 / Denom_tensor), tf.exp(-Dist2 / Denom_tensor)
+
+
+# =======================================================
+# Main Function
+# =======================================================
+
+def crossprod_solve(Dist1, Dist2, Denom, List, use_single=False, save=False, file_path=None):
+    
     """
     Compute cross-product and solve matrix systems in TensorFlow.
+    Optionally save the output to an RDS file.
+    
+    Parameters:
+    - Dist1 (str or array-like): Distance matrix 1 or its file path.
+    - Dist2 (str or array-like): Distance matrix 2 or its file path.
+    - Denom (float): Denominator for exponent scaling.
+    - List (str or array-like): 3D matrix (n x m x k) or its file path.
+    - use_single (bool): If True, use float32 precision; otherwise, use float64.
+    - save (bool): If True, save results to an RDS file.
+    - file_path (str): File path to save the results if `save` is True.
+
+    Returns:
+    - results (list of np.ndarray): Flattened arrays containing results for each submatrix in List.
     """
+
     # Set data type based on user input
     dtype = tf.float32 if use_single else tf.float64
 

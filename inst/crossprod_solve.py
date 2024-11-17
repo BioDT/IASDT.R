@@ -140,7 +140,7 @@ def compute_k_matrices(Dist1, Dist2, Denom_tensor):
 
 # =======================================================
 
-def crossprod_solve(Dist1, Dist2, Denom, List, use_single=False):
+def crossprod_solve(Dist1, Dist2, Denom, List, use_single=False, save=False, file_path=None):
     """
     Compute cross-product and solve matrix systems in TensorFlow.
     """
@@ -179,5 +179,17 @@ def crossprod_solve(Dist1, Dist2, Denom, List, use_single=False):
     # Reshape results back to the original structure
     results = tf.reshape(results, [num_matrices, -1])
 
-    # Convert results to numpy arrays for further processing if needed
-    return [res.numpy().flatten() for res in tf.split(results, num_matrices)]
+    # Convert results to numpy arrays
+    final_results = [res.numpy().flatten() for res in tf.split(results, num_matrices)]
+
+    # Save to RDS if requested
+    if save:
+        if not file_path:
+            raise ValueError("A valid file_path must be provided when save=True.")
+        try:
+            rdata.write_rds(file_path, final_results)
+            #print(f"Results saved to {file_path}.")
+        except Exception as e:
+            print(f"Error saving results to {file_path}: {e}")
+
+    return final_results

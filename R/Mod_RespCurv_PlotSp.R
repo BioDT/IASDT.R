@@ -237,13 +237,10 @@ RespCurv_PlotSp <- function(
           "Non-focal variables are set to most likely value <i>",
           "[non.focalVariables = 1]</i>"),
         paste0(
-          "Non-focal variables are set to most likely value given ",
-          "the value of focal variable <i>[non.focalVariables = 2]</i>"))
+          "Non-focal variables = most likely value given ",
+          "value of focal variable <i>[non.focalVariables = 2]</i>"))
       Caption <- dplyr::if_else(
-        Coords == "c", "Predictions are made at mean coordinates",
-        paste0(
-          "Predictions are made for infinite coordinates ",
-          "without effect of spatial dependence"))
+        Coords == "c", "Mean coordinates", "No spatial dependence")
       Caption <- paste0(Caption, " --- ", SubTitleTxt)
 
       if (nrow(DT) <= 9) {
@@ -324,7 +321,7 @@ RespCurv_PlotSp <- function(
                   plot.subtitle = ggtext::element_markdown(
                     margin = ggplot2::margin(0, 0, 0, 0), hjust = 0),
                   plot.caption = ggtext::element_markdown(
-                    size = 12, color = "grey", hjust = 0),
+                    size = 10, color = "grey", hjust = 0),
                   panel.grid.major = ggplot2::element_line(linewidth = 0.25),
                   panel.grid.minor = ggplot2::element_line(linewidth = 0.1),
                   plot.margin = ggplot2::unit(c(0.1, 0.2, 0.1, 0.2), "lines"))

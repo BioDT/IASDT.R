@@ -229,6 +229,28 @@ RespCurv_PlotSR <- function(ModelDir, Verbose = TRUE, NCores = 8) {
               "Predictions are made for infinite coordinates ",
               "without effect of spatial dependence"))
 
+          # Plotting theme
+          Theme <- ggplot2::theme(
+            plot.margin = ggplot2::margin(2.5, 10, 2.5, 5),
+            strip.text = ggtext::element_markdown(
+              hjust = 0,
+              margin = ggplot2::margin(0.05, 0.1, 0.05, 0.1, "cm")),
+            strip.background = ggplot2::element_rect(
+              colour = NA, fill = "white"),
+            legend.position = "none",
+            plot.caption = ggplot2::element_text(
+              size = 8, color = "grey", hjust = 0),
+            axis.title = ggtext::element_markdown(),
+            axis.text = ggplot2::element_text(size = 8),
+            plot.title = ggtext::element_markdown(
+              margin = ggplot2::margin(1, 0, 1, 0)),
+            plot.subtitle = ggtext::element_markdown(
+              size = 7, colour = "darkgrey",
+              margin = ggplot2::margin(4, 0, 4, 0)),
+            panel.grid.major = ggplot2::element_line(linewidth = 0.25),
+            panel.grid.minor = ggplot2::element_line(linewidth = 0.1),
+            panel.spacing = ggplot2::unit(0.15, "lines"))
+
           # Plot
           Plot <- ggplot2::ggplot(
             data = Observed, mapping = ggplot2::aes(x = XVals, y = Pred)) +
@@ -259,26 +281,7 @@ RespCurv_PlotSR <- function(ModelDir, Verbose = TRUE, NCores = 8) {
             ggplot2::ylab(YAxisLabel) +
             ggplot2::labs(title = TitleTxt, caption = Caption) +
             ggplot2::theme_bw() +
-            ggplot2::theme(
-              plot.margin = ggplot2::margin(5, 20, 5, 5),
-              strip.text = ggtext::element_markdown(
-                hjust = 0,
-                margin = ggplot2::margin(0.05, 0.1, 0.05, 0.1, "cm")),
-              strip.background = ggplot2::element_rect(
-                colour = NA, fill = "white"),
-              legend.position = "none",
-              plot.caption = ggplot2::element_text(
-                size = 8, color = "grey", hjust = 0),
-              axis.title = ggtext::element_markdown(),
-              axis.text = ggplot2::element_text(size = 8),
-              plot.title = ggtext::element_markdown(
-                margin = ggplot2::margin(1, 0, 1, 0)),
-              plot.subtitle = ggtext::element_markdown(
-                size = 7, colour = "darkgrey",
-                margin = ggplot2::margin(4, 0, 4, 0)),
-              panel.grid.major = ggplot2::element_line(linewidth = 0.25),
-              panel.grid.minor = ggplot2::element_line(linewidth = 0.1),
-              panel.spacing = ggplot2::unit(0.15, "lines"))
+            Theme
 
           # Using ggplot2::ggsave directly does not show non-ascii characters
           # correctly
@@ -347,27 +350,7 @@ RespCurv_PlotSR <- function(ModelDir, Verbose = TRUE, NCores = 8) {
               ggplot2::ylab(YAxisLabel) +
               ggplot2::labs(title = TitleTxt, caption = Caption) +
               ggplot2::theme_bw() +
-              ggplot2::theme(
-                strip.text = ggtext::element_markdown(
-                  hjust = 0,
-                  margin = ggplot2::margin(0.05, 0.1, 0.05, 0.1, "cm")),
-                strip.background = ggplot2::element_rect(
-                  colour = NA, fill = "white"),
-                legend.position = "none",
-                plot.caption = ggplot2::element_text(
-                  size = 8, color = "grey", hjust = 0),
-                axis.title = ggtext::element_markdown(),
-                axis.text = ggplot2::element_text(size = 8),
-                plot.title = ggtext::element_markdown(
-                  margin = ggplot2::margin(1, 0, 1, 0)),
-                plot.subtitle = ggtext::element_markdown(
-                  size = 7, colour = "darkgrey",
-                  margin = ggplot2::margin(4, 0, 4, 0)),
-                panel.grid.major = ggplot2::element_line(linewidth = 0.25),
-                panel.grid.minor = ggplot2::element_line(linewidth = 0.1),
-                panel.spacing = ggplot2::unit(0.15, "lines"),
-                plot.margin = ggplot2::unit(c(0.1, 0.2, 0.1, 0.2), "lines"))
-
+              Theme
 
             # Using ggplot2::ggsave directly does not show non-ascii characters
             # correctly

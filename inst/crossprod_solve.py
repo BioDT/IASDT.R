@@ -158,8 +158,10 @@ def crossprod_solve(Dist1, Dist2, Denom, List, use_single=False):
         print("Error: One or more input files could not be loaded.")
         return None
 
-    # Convert Denom to a TensorFlow tensor
+    # Convert Denom to a TensorFlow tensor and ensure it's on the correct device
     Denom_tensor = tf.convert_to_tensor(Denom, dtype=dtype)
+    # Ensure tensor is on the correct device
+    Denom_tensor = tf.identity(Denom_tensor) 
 
     # Calculate the K matrices
     K11, K12 = compute_k_matrices(Dist1, Dist2, Denom_tensor)

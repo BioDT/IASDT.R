@@ -163,7 +163,7 @@ def load_tensor_chunked(file_or_array, dtype, chunk_size=1000, threshold_mb=2000
     chunk_size = int(chunk_size)
 
     # If the array is too large, split into chunks
-    if isinstance(file_or_array, np.ndarray) and file_or_array.nbytes > threshold_bytes
+    if isinstance(file_or_array, np.ndarray) and file_or_array.nbytes > threshold_bytes:
         chunks = []
         for i in range(0, file_or_array.shape[0], chunk_size):
             chunk = file_or_array[i : i + chunk_size]

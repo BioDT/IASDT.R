@@ -455,9 +455,6 @@ Predict_LF <- function(
 
     # Predict latent factors
 
-    IASDT.R::AllObjSizes(GreaterThan = 1, InFunction = TRUE)
-
-
     if (LF_NCores == 1) {
 
       # Sequential processing

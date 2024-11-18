@@ -15,7 +15,9 @@ Predict_Maps(
   Pred_NewSites = TRUE,
   UseTF = TRUE,
   TF_Environ = NULL,
+  TF_use_single = FALSE,
   Temp_Dir = "TEMP2Pred",
+  Temp_Cleanup = FALSE,
   CC_Models = c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0",
     "UKESM1-0-LL"),
   CC_Scenario = c("ssp126", "ssp370", "ssp585")
@@ -42,10 +44,10 @@ parallelization. Default: 8 cores.}
 a single value. Defaults to \code{TRUE}. If \code{TRUE}, the \code{Fix_Efforts} argument
 must be provided.}
 
-\item{Fix_Efforts}{Numeric or character. Value to fix the sampling efforts at.
-If numeric, the value will be used as is. If character, it can be one of
-the following: \code{median}, \code{mean}, or \code{max}. Default: \code{mean}. This argument
-is required when \code{Pred_Clamp} is \code{TRUE}.}
+\item{Fix_Efforts}{Numeric or character. Value to fix the sampling efforts
+at. If numeric, the value will be used as is. If character, it can be one
+of the following: \code{median}, \code{mean}, or \code{max}. Default: \code{mean}. This
+argument is required when \code{Pred_Clamp} is \code{TRUE}.}
 
 \item{Pred_NewSites}{Logical indicating whether to predict habitat
 suitability at new sites. Default: \code{TRUE}. This argument is only temporary
@@ -58,8 +60,16 @@ Defaults to TRUE.}
 environment. Defaults to NULL. This argument is required if \code{UseTF} is
 TRUE.}
 
+\item{TF_use_single}{Logical indicating whether to use single precision for
+the TF calculations. Defaults to \code{FALSE}.}
+
 \item{Temp_Dir}{Character string specifying the path for temporary storage of
 intermediate files.}
+
+\item{Temp_Cleanup}{Logical indicating whether to delete temporary files in
+the \code{Temp_Dir} after finishing the calculations. Defaults to \code{FALSE}; i.e.,
+the temporary files will be kept, enabling continue working on unfinished
+calculations, if the function failed, e.g. due to OOM.}
 
 \item{CC_Models}{Character vector specifying the climate models to use for
 future predictions. Default: \code{c("GFDL-ESM4", "IPSL-CM6A-LR" , "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL")}. This argument is only

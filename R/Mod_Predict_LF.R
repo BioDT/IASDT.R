@@ -14,7 +14,7 @@
 #'   predictions are to be made
 #' @param modelunits a factor vector with random level units that are
 #'   conditioned on
-#' @param postEta Character string specifying the path forpostEta; a list
+#' @param postEta Character string specifying the path for postEta; a list
 #'   containing samples of random factors at conditioned units
 #' @param postAlpha a list containing samples of range (lengthscale) parameters
 #'   for latent factors
@@ -24,6 +24,10 @@
 #'   processing. Defaults to 8.
 #' @param Temp_Dir Character string specifying the path for temporary storage of
 #'   intermediate files.
+#' @param Temp_Cleanup Logical indicating whether to delete temporary files in
+#'   the `Temp_Dir` after finishing the calculations. Defaults to `FALSE`; i.e.,
+#'   the temporary files will be kept, enabling continue working on unfinished
+#'   calculations, if the function failed, e.g. due to OOM.
 #' @param Model_Name Character string used as a prefix for temporary file names.
 #'   Defaults to NULL, in which case no prefix is used.
 #' @param UseTF Logical indicating whether to use TensorFlow for calculations.
@@ -65,7 +69,7 @@
 
 Predict_LF <- function(
     unitsPred, modelunits, postEta, postAlpha, rL, NCores = 8,
-    Temp_Dir = "TEMP2Pred", Temp_Cleanup = TRUE,
+    Temp_Dir = "TEMP2Pred", Temp_Cleanup = FALSE,
     Model_Name = NULL, UseTF = TRUE, TF_Environ = NULL,
     TF_use_single = FALSE, LF_OutFile = NULL, LF_Return = TRUE,
     Verbose = TRUE) {
@@ -109,7 +113,7 @@ Predict_LF <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   SampleID <- Unit_ID <- LF <- LF_ID <- etaPred <- Sample_IDs <- File <-
-    crossprod_solve <- Alpha_ID <- NULL
+    crossprod_solve <- Alpha_ID <- warmup <- NULL
 
   # # ..................................................................... ###
 
@@ -340,6 +344,22 @@ Predict_LF <- function(
             "Rcpp", "RcppArmadillo", "dplyr", "tidyr", "tibble",
             "Matrix", "Hmsc", "qs", "fs", "purrr", "IASDT.R", "reticulate"),
           library, character.only = TRUE)
+
+        if (UseTF) {
+
+          # Suppress TensorFlow warnings and disable optimizations
+          Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3", TF_ENABLE_ONEDNN_OPTS = "0")
+
+          # Activate the python environment
+          reticulate::use_virtualenv(TF_Environ, required = TRUE)
+
+          # Source the script file containing the crossprod_solve function
+          PythonScript <- system.file("crossprod_solve.py", package = "IASDT.R")
+          reticulate::source_python(PythonScript)
+
+          # A lightweight function to initialize necessary modules.
+          warmup()
+        }
       }))
 
     IASDT.R::CatTime("Making predictions on parallel", Level = 1)
@@ -369,14 +389,6 @@ Predict_LF <- function(
             # Use TensorFlow
 
             if (isFALSE(IASDT.R::CheckData(File_etaPred, warning = FALSE))) {
-
-              # Activate the python environment
-              reticulate::use_virtualenv(TF_Environ, required = TRUE)
-
-              # Source the script file containing the crossprod_solve function
-              PythonScript <- system.file("crossprod_solve.py", package = "IASDT.R")
-              reticulate::source_python(PythonScript)
-
               eta_indNew <- crossprod_solve(
                 Dist1 = Path_D11, Dist2 = Path_D12, Denom = Denom,
                 List = File, use_single = TF_use_single)
@@ -466,7 +478,8 @@ Predict_LF <- function(
                 etaPred[indOld] <- eta[match(unitsPred[indOld], modelunits)]
                 etaPred[indNew] <- 0
                 tibble::tibble(
-                  SampleID = SampleID[ID], etaPred = etaPred, Unit_ID = unitsPred)
+                  SampleID = SampleID[ID], etaPred = etaPred,
+                  Unit_ID = unitsPred)
               }) %>%
               dplyr::mutate(Unit_ID = factor(Unit_ID, levels = unitsPred)) %>%
               dplyr::arrange(SampleID, Unit_ID, etaPred)
@@ -478,7 +491,6 @@ Predict_LF <- function(
           }
         }
 
-        invisible(gc())
         return(etaPred)
       })
 

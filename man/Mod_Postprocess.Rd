@@ -16,8 +16,8 @@ Mod_Postprocess(
   FromJSON = FALSE,
   GPP_Dist = NULL,
   Tree = "Tree",
-  samples = 1000,
-  thin = NULL,
+  Samples = 1000,
+  Thin = NULL,
   N_Grid = 50,
   NOmega = 1000,
   UseTF = TRUE,
@@ -68,11 +68,10 @@ for GPP models.}
 \item{Tree}{Character string specifying if phylogenetic tree was used in the
 model. Valid values are "Tree" or "NoTree". Default is "Tree".}
 
-\item{samples}{Integer specifying the value(s) for the number of MCMC
-samples. If more than one value is provided, a separate model will be
-fitted at each value of number of samples. Defaults to 1000.}
+\item{Samples}{Integer specifying the value for the number of MCMC samples in
+the selected model. Defaults to 1000.}
 
-\item{thin}{Integer specifying the value for thinning in the selected model.}
+\item{Thin}{Integer specifying the value for thinning in the selected model.}
 
 \item{N_Grid}{Integer specifying the number of points along the gradient for
 continuous focal variables. Defaults to 50. See \link[Hmsc:constructGradient]{Hmsc::constructGradient}
@@ -102,10 +101,10 @@ removed in the future.}
 a single value. Defaults to \code{TRUE}. If \code{TRUE}, the \code{Fix_Efforts} argument
 must be provided.}
 
-\item{Fix_Efforts}{Numeric or character. Value to fix the sampling efforts at.
-If numeric, the value will be used as is. If character, it can be one of
-the following: \code{median}, \code{mean}, or \code{max}. Default: \code{mean}. This argument
-is required when \code{Pred_Clamp} is \code{TRUE}.}
+\item{Fix_Efforts}{Numeric or character. Value to fix the sampling efforts
+at. If numeric, the value will be used as is. If character, it can be one
+of the following: \code{median}, \code{mean}, or \code{max}. Default: \code{mean}. This
+argument is required when \code{Pred_Clamp} is \code{TRUE}.}
 
 \item{Pred_NewSites}{Logical indicating whether to predict habitat
 suitability at new sites. Default: \code{TRUE}. This argument is only temporary
@@ -119,9 +118,6 @@ folders. If multiple names are provided, separate cross-validation models
 will be fitted for each column. Currently, there are three cross-validation
 strategies, created using the \link{Mod_PrepData}: \code{CV_SAC}, \code{CV_Dist},
 and \code{CV_Large} (see \link{GetCV}).}
-
-\item{Samples}{Integer specifying the value for the number of MCMC samples in
-the selected model. Defaults to 1000.}
 }
 \description{
 This function sets up and runs an analysis pipeline for Hmsc models. It

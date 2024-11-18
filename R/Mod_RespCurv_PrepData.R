@@ -27,7 +27,7 @@
 RespCurv_PrepData <- function(
     Path_Model = NULL, N_Grid = 50, NCores = 8, ReturnData = FALSE,
     Probabilities = c(0.025, 0.5, 0.975), UseTF = TRUE, TF_Environ = NULL,
-    TF_use_single = FALSE, Temp_Dir = "TEMP2Pred", Temp_Cleanup = TRUE,
+    TF_use_single = FALSE, Temp_Dir = "TEMP2Pred", Temp_Cleanup = FALSE,
     Verbose = TRUE) {
 
   # # ..................................................................... ###

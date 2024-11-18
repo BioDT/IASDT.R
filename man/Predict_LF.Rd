@@ -12,6 +12,7 @@ Predict_LF(
   rL,
   NCores = 8,
   Temp_Dir = "TEMP2Pred",
+  Temp_Cleanup = FALSE,
   Model_Name = NULL,
   UseTF = TRUE,
   TF_Environ = NULL,
@@ -28,8 +29,8 @@ predictions are to be made}
 \item{modelunits}{a factor vector with random level units that are
 conditioned on}
 
-\item{postEta}{a list containing samples of random factors at conditioned
-units}
+\item{postEta}{Character string specifying the path for postEta; a list
+containing samples of random factors at conditioned units}
 
 \item{postAlpha}{a list containing samples of range (lengthscale) parameters
 for latent factors}
@@ -42,6 +43,11 @@ processing. Defaults to 8.}
 
 \item{Temp_Dir}{Character string specifying the path for temporary storage of
 intermediate files.}
+
+\item{Temp_Cleanup}{Logical indicating whether to delete temporary files in
+the \code{Temp_Dir} after finishing the calculations. Defaults to \code{FALSE}; i.e.,
+the temporary files will be kept, enabling continue working on unfinished
+calculations, if the function failed, e.g. due to OOM.}
 
 \item{Model_Name}{Character string used as a prefix for temporary file names.
 Defaults to NULL, in which case no prefix is used.}
@@ -90,10 +96,6 @@ To use \code{TensorFlow}, the argument \code{TF_Environ} should be set to the pa
 a Python environment with TensorFlow installed;
 \item if \code{UseTF} is set to \code{FALSE}, the function uses R / CPP code in the
 calculations;
-\item the input \code{postEta} can be either a list or a file path for it, which can
-save memory, particularly when working on parallel. The function splits the
-\code{postEta} into smaller chunks, each for a combination of alpha value and
-latent factor and loop over them on parallel.
 \item calculates \code{D11} and \code{D12} matrices only once and save them to disk and
 call them when needed.
 }

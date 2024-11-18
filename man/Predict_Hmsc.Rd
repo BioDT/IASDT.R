@@ -18,6 +18,7 @@ Predict_Hmsc(
   NCores = 8,
   Model_Name = "Train",
   Temp_Dir = "TEMP2Pred",
+  Temp_Cleanup = FALSE,
   RC = NULL,
   UseTF = TRUE,
   TF_Environ = NULL,
@@ -72,6 +73,11 @@ Defaults to NULL, in which case no prefix is used.}
 
 \item{Temp_Dir}{Character string specifying the path for temporary storage of
 intermediate files.}
+
+\item{Temp_Cleanup}{Logical indicating whether to delete temporary files in
+the \code{Temp_Dir} after finishing the calculations. Defaults to \code{FALSE}; i.e.,
+the temporary files will be kept, enabling continue working on unfinished
+calculations, if the function failed, e.g. due to OOM.}
 
 \item{RC}{a character string specifying the type of predictions to be made.
 If \code{NULL} (default), predictions are made for the latent factors. If \code{c},

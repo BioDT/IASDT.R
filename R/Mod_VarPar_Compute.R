@@ -46,7 +46,7 @@ VarPar_Compute <- function(
 
   .StartTime <- lubridate::now(tzone = "CET")
 
-  VarPar_Parallel <- VarPar_Sequential <- NULL
+  VarPar_Parallel <- VarPar_Sequential <- warmup <- NULL
 
   # # .................................................................... ###
 
@@ -171,6 +171,9 @@ VarPar_Compute <- function(
 
     reticulate::use_virtualenv(TF_Environ)
     reticulate::source_python(PythonScript)
+
+    # A lightweight function to initialize necessary modules.
+    warmup()
 
     if (NCores > 1) {
       results <- VarPar_Parallel(

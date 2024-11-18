@@ -174,3 +174,33 @@ def VarPar_Sequential(hM_X, hM_Tr, postList, use_single=False):
         result = process_post(post_data, hM_X, hM_Tr, use_single)
         results.append(result)
     return results
+
+# ==============================================================================
+# warmup
+# ==============================================================================
+
+def warmup():
+    """A lightweight function to initialize necessary modules."""
+    # Use os to list the current directory
+    _ = os.listdir('.')
+    
+    # Create a small TensorFlow tensor
+    tf.constant([0], dtype=tf.float32)
+    
+    # Perform a lightweight numpy operation
+    _ = np.array([1, 2, 3]).mean()
+    
+    # Initialize logging
+    logger = logging.getLogger("warmup_logger")
+    logger.setLevel(logging.INFO)
+    logger.info("Warm-up complete for logging")
+    
+    # Use ThreadPoolExecutor with a simple function
+    def dummy_function(x):
+        return x * 2
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        _ = list(executor.map(partial(dummy_function), [1, 2]))
+    
+    # do not return objects
+    pass

@@ -64,7 +64,7 @@ Predict_Hmsc <- function(
     Path_Model,
     Loff = NULL, XData = NULL, X = NULL, XRRRData = NULL, XRRR = NULL,
     Gradient = NULL, Yc = NULL, mcmcStep = 1, expected = TRUE, NCores = 8,
-    Model_Name = "Train", Temp_Dir = "TEMP2Pred", Temp_Cleanup = TRUE,
+    Model_Name = "Train", Temp_Dir = "TEMP2Pred", Temp_Cleanup = FALSE,
     RC = NULL, UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE,
     LF_OutFile = NULL, LF_Return = TRUE, LF_InputFile = NULL, LF_Only = FALSE,
     Pred_Dir = NULL, Pred_PA = NULL, Pred_XY = NULL,

@@ -32,7 +32,7 @@ RespCurv_PlotSpAll <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Coords <- RC_Path_Prob <- NFV <- Data <- DT <- Variable <- NULL
+  Coords <- RC_Path_Prob <- NFV <- Data <- DT <- Variable <- Variable2 <- NULL
 
   # # ..................................................................... ###
 
@@ -153,7 +153,8 @@ RespCurv_PlotSpAll <- function(
             Variable == "EffortsLog" ~ paste0(
               "<span style='font-size: 10pt;'><b>Sampling efforts</b></span>"),
             Variable == "HabLog" ~ paste0(
-              "<span style='font-size: 10pt;'><b>% habitat coverage</b></span>"),
+              "<span style='font-size: 10pt;'>",
+              "<b>% habitat coverage</b></span>"),
             .default = Variable),
 
           VarDesc2 = dplyr::case_when(
@@ -220,7 +221,8 @@ RespCurv_PlotSpAll <- function(
             ggplot2::ggplot(
               mapping = ggplot2::aes(x = XVals, y = Pred, group = Species)) +
             ggplot2::geom_line(
-              linetype = 1, linewidth = 0.3, colour = "blue", alpha = PlotAlpha) +
+              linetype = 1, linewidth = 0.3,
+              colour = "blue", alpha = PlotAlpha) +
             ggplot2::scale_y_continuous(
               limits = c(-0.01, 1.01), oob = scales::squish,
               expand = c(0, 0)) +

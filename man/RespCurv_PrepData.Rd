@@ -12,7 +12,9 @@ RespCurv_PrepData(
   Probabilities = c(0.025, 0.5, 0.975),
   UseTF = TRUE,
   TF_Environ = NULL,
+  TF_use_single = FALSE,
   Temp_Dir = "TEMP2Pred",
+  Temp_Cleanup = FALSE,
   Verbose = TRUE
 )
 }
@@ -38,8 +40,16 @@ Defaults to TRUE.}
 environment. Defaults to NULL. This argument is required if \code{UseTF} is
 TRUE.}
 
+\item{TF_use_single}{Logical indicating whether to use single precision for
+the TF calculations. Defaults to \code{FALSE}.}
+
 \item{Temp_Dir}{Character string specifying the path for temporary storage of
 intermediate files.}
+
+\item{Temp_Cleanup}{Logical indicating whether to delete temporary files in
+the \code{Temp_Dir} after finishing the calculations. Defaults to \code{FALSE}; i.e.,
+the temporary files will be kept, enabling continue working on unfinished
+calculations, if the function failed, e.g. due to OOM.}
 
 \item{Verbose}{Logical. If TRUE, detailed output is printed. Default is
 \code{FALSE}.}

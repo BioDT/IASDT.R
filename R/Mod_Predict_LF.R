@@ -271,6 +271,9 @@ Predict_LF <- function(
         Sample_IDs = purrr::map(Sample_IDs, ~ as.vector(sort(unlist(.x)))))
 
 
+    withr::local_options(
+      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
+
     if (NCores == 1) {
       future::plan("future::sequential", gc = TRUE)
     } else {

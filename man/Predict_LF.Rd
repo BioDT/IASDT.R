@@ -10,7 +10,7 @@ Predict_LF(
   postEta,
   postAlpha,
   rL,
-  NCores = 8,
+  LF_NCores = 8,
   Temp_Dir = "TEMP2Pred",
   Temp_Cleanup = FALSE,
   Model_Name = NULL,
@@ -38,7 +38,7 @@ for latent factors}
 \item{rL}{a HmscRandomLevel-class object that describes the random level
 structure}
 
-\item{NCores}{Integer specifying the number of cores to use for parallel
+\item{LF_NCores}{Integer specifying the number of cores to use for parallel
 processing. Defaults to 8.}
 
 \item{Temp_Dir}{Character string specifying the path for temporary storage of
@@ -88,7 +88,7 @@ when working on parallel.
 
 The main difference is that this function:
 \itemize{
-\item allow for parallel processing (\code{NCores} argument);
+\item allow for parallel processing (\code{LF_NCores} argument);
 \item it is possible to use TensorFlow (\code{UseTF} argument) to make matrix
 calculations faster, particularly when used on GPU. The following modules
 are needed: \code{numpy}, \code{os}, \code{tensorflow}, \code{rdata}, \code{xarray}, and \code{pandas}.

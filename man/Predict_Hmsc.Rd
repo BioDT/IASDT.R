@@ -27,6 +27,7 @@ Predict_Hmsc(
   LF_Return = TRUE,
   LF_InputFile = NULL,
   LF_Only = FALSE,
+  LF_NCores = NCores,
   Pred_Dir = NULL,
   Pred_PA = NULL,
   Pred_XY = NULL,
@@ -64,9 +65,6 @@ effects}
 
 \item{expected}{boolean flag indicating whether to return the location
 parameter of the observation models or sample the values from those.}
-
-\item{NCores}{Integer specifying the number of cores to use for parallel
-processing. Defaults to 8.}
 
 \item{Model_Name}{Character string used as a prefix for temporary file names.
 Defaults to NULL, in which case no prefix is used.}
@@ -111,6 +109,9 @@ to a temporary file. This argument is used only when \code{RC} is \code{NULL}.}
 predictions only. Defaults to \code{FALSE}. This helps in predicting to new
 sites, allowing to predicting the latent factors only once, then the output
 can be loaded in other predictions when needed.}
+
+\item{LF_NCores}{Integer specifying the number of cores to use for parallel
+processing. Defaults to 8.}
 
 \item{Pred_Dir}{a character string specifying the directory where the
 predictions will be saved. Defaults to \code{NULL}, which saves model

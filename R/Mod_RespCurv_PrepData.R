@@ -27,8 +27,8 @@
 RespCurv_PrepData <- function(
     Path_Model = NULL, N_Grid = 50, NCores = 8, ReturnData = FALSE,
     Probabilities = c(0.025, 0.5, 0.975), UseTF = TRUE, TF_Environ = NULL,
-    TF_use_single = FALSE, Temp_Dir = "TEMP2Pred", Temp_Cleanup = FALSE,
-    Verbose = TRUE) {
+    TF_use_single = FALSE, LF_NCores = NCores, Temp_Dir = "TEMP2Pred",
+    Temp_Cleanup = FALSE, Verbose = TRUE) {
 
   # # ..................................................................... ###
 
@@ -62,14 +62,16 @@ RespCurv_PrepData <- function(
     AllArgs = AllArgs, Type = "character", Args = c("Path_Model", "TF_Environ"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric",
-    Args = c("NCores", "N_Grid", "Probabilities"))
+    Args = c("NCores", "LF_NCores", "N_Grid", "Probabilities"))
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "logical", Args = "UseTF")
   rm(AllArgs, envir = environment())
 
   if (!is.numeric(NCores) || NCores < 1) {
     stop("NCores must be greater than 0", call. = FALSE)
   }
-
+  if (!is.numeric(LF_NCores) || LF_NCores < 1) {
+    stop("LF_NCores must be greater than 0", call. = FALSE)
+  }
   if (any(Probabilities > 1) || any(Probabilities < 0)) {
     stop("Probabilities must be between 0 and 1", call. = FALSE)
   }
@@ -157,7 +159,8 @@ RespCurv_PrepData <- function(
           Path_Model = Path_Model, Gradient = Gradient, expected = TRUE,
           NCores = 1, Model_Name = paste0("RC_", Coords), RC = Coords,
           UseTF = UseTF, TF_Environ = TF_Environ, LF_InputFile = File_LF,
-          Temp_Dir = Temp_Dir, Verbose = FALSE, Temp_Cleanup = Temp_Cleanup)
+          LF_NCores = LF_NCores, Temp_Dir = Temp_Dir, Verbose = FALSE,
+          TF_use_single = TF_use_single, Temp_Cleanup = Temp_Cleanup)
 
         # Species richness
         Pred_SR <- abind::abind(lapply(Preds, rowSums), along = 2)

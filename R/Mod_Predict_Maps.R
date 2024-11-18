@@ -52,7 +52,7 @@
 Predict_Maps <- function(
     Path_Model = NULL, Hab_Abb = NULL, EnvFile = ".env", FromHPC = TRUE,
     NCores = 8, Pred_Clamp = TRUE, Fix_Efforts = "mean", Pred_NewSites = TRUE,
-    UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE,
+    UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE, LF_NCores = NCores,
     Temp_Dir = "TEMP2Pred", Temp_Cleanup = FALSE,
     CC_Models = c(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
@@ -94,7 +94,8 @@ Predict_Maps <- function(
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Args = c("FromHPC", "RemoveChunks"), Type = "logical")
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Args = c("NCores", "ChunkSize"), Type = "numeric")
+    AllArgs = AllArgs, Args = c("NCores", "LF_NCores", "ChunkSize"), 
+    Type = "numeric")
 
   rm(AllArgs, CharArgs, envir = environment())
 
@@ -466,8 +467,9 @@ Predict_Maps <- function(
       Path_Model = Path_Model, Gradient = Gradient, expected = TRUE,
       NCores = NCores, Model_Name = paste0("LF_", Hab_Abb, "_Test"),
       Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup, UseTF = UseTF,
-      TF_Environ = TF_Environ, LF_OutFile = Path_Test_LF, LF_Only = TRUE,
-      TF_use_single = TF_use_single, Evaluate = FALSE, Verbose = FALSE)
+      TF_Environ = TF_Environ, LF_OutFile = Path_Test_LF, LF_Only = TRUE, 
+      LF_NCores = LF_NCores, TF_use_single = TF_use_single, Evaluate = FALSE, 
+      Verbose = FALSE)
 
     rm(Gradient, Preds_LF, envir = environment())
 
@@ -617,9 +619,10 @@ Predict_Maps <- function(
             expected = TRUE, NCores = NCores, Model_Name = Model_Name_Train,
             Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup, UseTF = UseTF,
             TF_Environ = TF_Environ, TF_use_single = TF_use_single,
-            LF_Return = TRUE, Pred_Dir = Path_Prediction, Pred_PA = Train_PA,
-            Pred_XY = Train_XY, Evaluate = Evaluate, Eval_Name = NULL,
-            Eval_Dir = Path_Eval, Verbose = FALSE)
+            LF_Return = TRUE, LF_NCores = LF_NCores, 
+            Pred_Dir = Path_Prediction, Pred_PA = Train_PA, Pred_XY = Train_XY, 
+            Evaluate = Evaluate, Eval_Name = NULL, Eval_Dir = Path_Eval, 
+            Verbose = FALSE)
         }
 
         # ______________________________________________
@@ -644,7 +647,8 @@ Predict_Maps <- function(
               NCores = NCores, Model_Name = Model_Name_Test,
               Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup, UseTF = UseTF,
               TF_Environ = TF_Environ, TF_use_single = TF_use_single,
-              LF_Return = TRUE, LF_InputFile = Path_Test_LF, Verbose = FALSE,
+              LF_Return = TRUE, LF_InputFile = Path_Test_LF, 
+              LF_NCores = LF_NCores, Verbose = FALSE, 
               Pred_Dir = Path_Prediction, Evaluate = FALSE,
               Pred_XY = sf::st_drop_geometry(Test_XY))
           }
@@ -658,11 +662,12 @@ Predict_Maps <- function(
             IASDT.R::LoadAs(Preds_ModFitSites$Pred_Path),
             IASDT.R::LoadAs(Preds_NewSites$Pred_Path))
 
-          try(
-            fs::file_delete(
-              c(Preds_ModFitSites$Pred_Path, Preds_NewSites$Pred_Path)),
-            silent = TRUE)
-
+          if (Temp_Cleanup) {
+            try(
+              fs::file_delete(
+                c(Preds_ModFitSites$Pred_Path, Preds_NewSites$Pred_Path)),
+              silent = TRUE)
+          }
         } else {
 
           IASDT.R::CatTime(
@@ -682,7 +687,9 @@ Predict_Maps <- function(
           Prediction_sf <- IASDT.R::LoadAs(Preds_ModFitSites$Pred_Path) %>%
             dplyr::bind_rows(Preds_New_NA)
 
-          try(fs::file_delete(Preds_ModFitSites$Pred_Path), silent = TRUE)
+          if (Temp_Cleanup) {
+            try(fs::file_delete(Preds_ModFitSites$Pred_Path), silent = TRUE)
+          }
           rm(Preds_New_NA, ColsToAdd, envir = environment())
         }
 
@@ -691,10 +698,12 @@ Predict_Maps <- function(
         # Save predictions as sf object
         qs::qsave(Prediction_sf, Path_Prediction_sf, preset = "fast")
 
-        try(
+        if (Temp_Cleanup) {
+          try(
           fs::file_delete(
             c(Preds_ModFitSites$Pred_Path, Preds_NewSites$Pred_Path)),
           silent = TRUE)
+        }
 
         IASDT.R::CatDiff(
           InitTime = .OptionStartTime, Prefix = "Prediction took ")

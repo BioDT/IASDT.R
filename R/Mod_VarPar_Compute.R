@@ -177,13 +177,12 @@ VarPar_Compute <- function(
 
     if (NCores > 1) {
       results <- VarPar_Parallel(
-        hM_X = hM$X, hM_Tr = hM$Tr,
-        postList = postList, use_single = TF_use_single,
-        num_threads = NCores)
+        hM_X = hM$X, hM_Tr = hM$Tr, postList = postList, 
+        use_single = TF_use_single, num_threads = NCores)
     } else {
       results <- VarPar_Sequential(
-        hM_X = hM$X, hM_Tr = hM$Tr,
-        postList = postList, use_single = TF_use_single)
+        hM_X = hM$X, hM_Tr = hM$Tr, postList = postList, 
+        use_single = TF_use_single)
     }
 
     la <- purrr::map(results, ~ .x$la)

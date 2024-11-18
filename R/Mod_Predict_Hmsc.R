@@ -67,7 +67,7 @@ Predict_Hmsc <- function(
     Model_Name = "Train", Temp_Dir = "TEMP2Pred", Temp_Cleanup = FALSE,
     RC = NULL, UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE,
     LF_OutFile = NULL, LF_Return = TRUE, LF_InputFile = NULL, LF_Only = FALSE,
-    Pred_Dir = NULL, Pred_PA = NULL, Pred_XY = NULL,
+    LF_NCores = NCores, Pred_Dir = NULL, Pred_PA = NULL, Pred_XY = NULL,
     Evaluate = FALSE, Eval_Name = NULL, Eval_Dir = "Evaluation",
     Verbose = TRUE) {
 
@@ -293,7 +293,7 @@ Predict_Hmsc <- function(
   predPostEta <- vector("list", Model$nr)
   PiNew <- matrix(NA, nrow(dfPiNew), Model$nr)
 
-  # Whether to use predictLatentFactor or read its results from file
+  # Whether to use `Predict_LF` or read its results from file
   if (!is.null(Model$nr)) {
     if (is.null(LF_InputFile) || length(LF_InputFile) != Model$nr) {
       CalcLF <- TRUE
@@ -302,9 +302,8 @@ Predict_Hmsc <- function(
     }
   }
 
-
-  # Do not use `predictLatentFactor` when predicting values for response
-  # curves when using coordinates = "i" in constructGradient
+  # Do not use `Predict_LF` when predicting values for response curves when
+  # using coordinates = "i" in constructGradient
   if (!is.null(RC)) {
     if (RC == "i") {
       for (r in seq_len(Model$nr)) {
@@ -324,35 +323,41 @@ Predict_Hmsc <- function(
     }
   }
 
-
+  # Calculate latent factors
   if (CalcLF) {
 
     for (r in seq_len(Model$nr)) {
-      postEta <- lapply(post, function(c) c$Eta[[r]])
+
       postAlpha <- lapply(post, function(c) c$Alpha[[r]])
 
-      if (r == Model$nr) {
-        # free some memory
-        post <- lapply(post, function(x) {
-          x$Eta <- x$Psi <- x$V <- x$Delta <- x$Gamma <- x$rho <- NULL
-          x
-        })
-
-        # Save post to file and load it later
-        IASDT.R::CatTime("Save post to file and load it later", Level = 1)
-        post_file <- file.path(Temp_Dir, paste0(Model_Name, "_post.qs"))
-        qs::qsave(post, file = post_file, preset = "fast")
-        rm(post, envir = environment())
+      # Save postEta to file and load it from Predict_LF. This helps to avoid
+      # the unnecessary copying of the postEta object to all cores
+      postEta_file <- file.path(
+        Temp_Dir, paste0(Model_Name, "_r", r, "_postEta.qs"))
+      if (isFALSE(IASDT.R::CheckData(postEta_file, warning = FALSE))) {
+        IASDT.R::CatTime("Save postEta to file", Level = 1)
+        postEta <- lapply(post, function(c) c$Eta[[r]])
+        qs::qsave(postEta, file = postEta_file, preset = "fast")
+        rm(postEta, envir = environment())
         invisible(gc())
       }
 
-      # Save postEta to file and load it from predictLatentFactor. This helps
-      # to avoid the unnecessary copying of the postEta object to all cores
-      IASDT.R::CatTime("Save postEta to file", Level = 1)
-      postEta_file <- file.path(Temp_Dir, paste0(Model_Name, "_postEta.qs"))
-      qs::qsave(postEta, file = postEta_file, preset = "fast")
-      rm(postEta, envir = environment())
-      invisible(gc())
+      # Save post to file and load it later
+      if (r == Model$nr) {
+        post_file <- file.path(Temp_Dir, paste0(Model_Name, "_post.qs"))
+
+        if (isFALSE(IASDT.R::CheckData(post_file, warning = FALSE))) {
+          # free some memory
+          post <- lapply(post, function(x) {
+            x$Eta <- x$Psi <- x$V <- x$Delta <- x$Gamma <- x$rho <- NULL
+            x
+          })
+          IASDT.R::CatTime("Save post to file", Level = 1)
+          qs::qsave(post, file = post_file, preset = "fast")
+        }
+        rm(post, envir = environment())
+        invisible(gc())
+      }
 
       if (r == 1) {
         IASDT.R::CatTime("LF prediction using `Predict_LF`", Level = 1)
@@ -362,7 +367,7 @@ Predict_Hmsc <- function(
         unitsPred = levels(dfPiNew[, r]),
         modelunits = levels(Model$dfPi[, r]),
         postEta = postEta_file, postAlpha = postAlpha, rL = rL[[r]],
-        NCores = NCores, Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup,
+        LF_NCores = LF_NCores, Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup,
         Model_Name = Model_Name,
         UseTF = UseTF, TF_Environ = TF_Environ, TF_use_single = TF_use_single,
         LF_OutFile = LF_OutFile, LF_Return = LF_Return)

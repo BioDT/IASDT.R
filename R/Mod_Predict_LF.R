@@ -20,7 +20,7 @@
 #'   for latent factors
 #' @param rL a HmscRandomLevel-class object that describes the random level
 #'   structure
-#' @param NCores Integer specifying the number of cores to use for parallel
+#' @param LF_NCores Integer specifying the number of cores to use for parallel
 #'   processing. Defaults to 8.
 #' @param Temp_Dir Character string specifying the path for temporary storage of
 #'   intermediate files.
@@ -56,7 +56,7 @@
 #'   when working on parallel.
 #'
 #'   The main difference is that this function:
-#' - allow for parallel processing (`NCores` argument);
+#' - allow for parallel processing (`LF_NCores` argument);
 #' - it is possible to use TensorFlow (`UseTF` argument) to make matrix
 #'   calculations faster, particularly when used on GPU. The following modules
 #'   are needed: `numpy`, `os`, `tensorflow`, `rdata`, `xarray`, and `pandas`.
@@ -68,11 +68,10 @@
 #'   call them when needed.
 
 Predict_LF <- function(
-    unitsPred, modelunits, postEta, postAlpha, rL, NCores = 8,
-    Temp_Dir = "TEMP2Pred", Temp_Cleanup = FALSE,
-    Model_Name = NULL, UseTF = TRUE, TF_Environ = NULL,
-    TF_use_single = FALSE, LF_OutFile = NULL, LF_Return = TRUE,
-    Verbose = TRUE) {
+    unitsPred, modelunits, postEta, postAlpha, rL, LF_NCores = 8,
+    Temp_Dir = "TEMP2Pred", Temp_Cleanup = FALSE, Model_Name = NULL,
+    UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE, LF_OutFile = NULL,
+    LF_Return = TRUE, Verbose = TRUE) {
 
   # # ..................................................................... ###
 
@@ -199,7 +198,7 @@ Predict_LF <- function(
 
     alphapw <- rL$alphapw
 
-    # Save D11 and D12 as qs/rds files
+    # Save D11 and D12 as qs/rds files, if not already exist on disk
     Path_D11 <- file.path(Temp_Dir, paste0(Model_Name, "D11.", TempExt))
     Path_D12 <- file.path(Temp_Dir, paste0(Model_Name, "D12.", TempExt))
 
@@ -230,14 +229,17 @@ Predict_LF <- function(
     if (Temp_Cleanup) {
       if (Model_Name != "") {
         on.exit(
-          try({
-            list.files(
-              Temp_Dir,
-              pattern = paste0("^", Model_Name, "_postEta"),
-              full.names = TRUE) %>%
-              c(Path_D11, Path_D12) %>%
-              fs::file_delete()
-          }, silent = TRUE), add = TRUE)
+          try(
+            expr = {
+              list.files(
+                Temp_Dir,
+                pattern = paste0("^", Model_Name, "_postEta"),
+                full.names = TRUE) %>%
+                c(Path_D11, Path_D12) %>%
+                fs::file_delete()
+            },
+            silent = TRUE),
+          add = TRUE)
       } else {
         on.exit(
           try(fs::file_delete(c(Path_D11, Path_D12)), silent = TRUE),
@@ -320,13 +322,14 @@ Predict_LF <- function(
     # # .................................................................... ###
 
     IASDT.R::CatTime(
-      paste0("Predicting Latent Factor in parallel using ", NCores, " cores"),
+      paste0(
+        "Predicting Latent Factor in parallel using ", LF_NCores, " cores"),
       Level = 1)
 
     withr::local_options(
       future.globals.maxSize = 8000 * 1024^2,
       future.gc = TRUE, future.seed = TRUE)
-    c1 <- snow::makeSOCKcluster(NCores)
+    c1 <- snow::makeSOCKcluster(LF_NCores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
 
     snow::clusterExport(

@@ -13,6 +13,7 @@ RespCurv_PrepData(
   UseTF = TRUE,
   TF_Environ = NULL,
   TF_use_single = FALSE,
+  LF_NCores = NCores,
   Temp_Dir = "TEMP2Pred",
   Temp_Cleanup = FALSE,
   Verbose = TRUE
@@ -42,6 +43,9 @@ TRUE.}
 
 \item{TF_use_single}{Logical indicating whether to use single precision for
 the TF calculations. Defaults to \code{FALSE}.}
+
+\item{LF_NCores}{Integer specifying the number of cores to use for parallel
+processing. Defaults to 8.}
 
 \item{Temp_Dir}{Character string specifying the path for temporary storage of
 intermediate files.}

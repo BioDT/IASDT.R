@@ -130,6 +130,7 @@ RespCurv_PrepData <- function(
       all()
 
     if (isFALSE(OutFilesExists)) {
+
       if (file.exists(RC_DT_Path_Orig)) {
 
         RC_Data_Orig <- IASDT.R::LoadAs(RC_DT_Path_Orig)
@@ -159,7 +160,7 @@ RespCurv_PrepData <- function(
           Path_Model = Path_Model, Gradient = Gradient, expected = TRUE,
           NCores = 1, Model_Name = paste0("RC_", Coords), RC = Coords,
           UseTF = UseTF, TF_Environ = TF_Environ, LF_InputFile = File_LF,
-          LF_NCores = LF_NCores, Temp_Dir = Temp_Dir, Verbose = FALSE,
+          LF_NCores = 1, Temp_Dir = Temp_Dir, Verbose = FALSE,
           TF_use_single = TF_use_single, Temp_Cleanup = Temp_Cleanup)
 
         # Species richness
@@ -406,8 +407,8 @@ RespCurv_PrepData <- function(
         Path_Model = Path_Model, Gradient = Gradient_c, expected = TRUE,
         NCores = NCores, Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup,
         Model_Name = "RC_c", RC = "c", UseTF = UseTF, TF_Environ = TF_Environ,
-        LF_OutFile = File_LF, TF_use_single = TF_use_single, Verbose = Verbose,
-        Pred_Dir = Temp_Dir)
+        LF_OutFile = File_LF, LF_NCores = LF_NCores, 
+        TF_use_single = TF_use_single, Verbose = Verbose, Pred_Dir = Temp_Dir)
 
       invisible(gc())
       rm(Model_LF, Gradient_c, envir = environment())

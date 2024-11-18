@@ -243,7 +243,7 @@ def crossprod_solve(Dist1, Dist2, Denom, List, use_single=False, save=False, fil
     List_reshaped = tf.reshape(List, [List.shape[0], List.shape[1] * num_matrices])
 
     # Free memory
-    del Dist1, Dist2, Denom_tensor List
+    del Dist1, Dist2, Denom_tensor, List
     gc.collect()
 
     # Solve linear systems in batch

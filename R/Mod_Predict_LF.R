@@ -303,7 +303,8 @@ Predict_LF <- function(
           .f = function(SampleID, LF_ID, File) {
 
             # do not export file if already exists and is valid
-            if (isFALSE(IASDT.R::CheckData(File, warning = FALSE))) {
+            # if (isFALSE(IASDT.R::CheckData(File, warning = FALSE))) {
+            if (!file.exists(File)) {
               Out <- postEta[SampleID] %>%
                 purrr::map(~ .x[, LF_ID, drop = FALSE]) %>%
                 simplify2array()
@@ -447,6 +448,8 @@ Predict_LF <- function(
       return(etaPred)
     }
 
+    invisible(gc())
+
     # # .................................................................... ###
     # # .................................................................... ###
 
@@ -547,8 +550,9 @@ Predict_LF <- function(
 
     # Check if all files are created
     IASDT.R::CatTime("Check if all files are created", Level = 1)
-    AllEtaFiles <- all(file.exists(Unique_Alpha$File_etaPred))
-    if (isFALSE(AllEtaFiles)) {
+    AllEtaFiles <- Unique_Alpha$File_etaPred
+    AllEtaFilesExist <- all(file.exists(AllEtaFiles))
+    if (isFALSE(AllEtaFilesExist)) {
       FailedFiles <- AllEtaFiles[!file.exists(AllEtaFiles)]
       stop(
         paste0(

@@ -68,7 +68,8 @@
 #'   call them when needed.
 
 Predict_LF <- function(
-    unitsPred, modelunits, postEta, postAlpha, rL, LF_NCores = 8,
+    unitsPred, modelunits, postEta, postAlpha, rL, NCores = 8, 
+    LF_NCores = NCores,
     Temp_Dir = "TEMP2Pred", Temp_Cleanup = FALSE, Model_Name = NULL,
     UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE, LF_OutFile = NULL,
     LF_Return = TRUE, Verbose = TRUE) {

@@ -448,37 +448,12 @@ Predict_LF <- function(
     }
 
     # # .................................................................... ###
-
-    # etaPreds_F_Safe <- function(x, max_tries = 5) {
-    #   attempt <- 1
-    #   while (attempt <= max_tries) {
-    #     result <- tryCatch({
-    #       return(etaPreds_F(x))  # If successful, return the result
-    #     }, error = function(e) {
-    #       message(sprintf("Attempt %d failed: %s", attempt, e$message))
-    #       # Return NULL on error to retry
-    #       NULL
-    #     })
-    #
-    #     # If successful, exit the loop
-    #     if (!is.null(result)) {
-    #       return(result)
-    #     }
-    #
-    #     attempt <- attempt + 1
-    #     # Wait before retrying
-    #     Sys.sleep(1)
-    #   }
-    #
-    #   # Stop if all attempts fail
-    #   stop(sprintf("Failed after %d attempts", max_tries))
-    #   return(NULL)
-    # }
-
-    # # .................................................................... ###
     # # .................................................................... ###
 
     # Predict latent factors
+
+    IASDT.R::AllObjSizes(GreaterThan = 1, InFunction = TRUE)
+
 
     if (LF_NCores == 1) {
 
@@ -512,14 +487,14 @@ Predict_LF <- function(
           "Predicting Latent Factor in parallel using ", LF_NCores, " cores"),
         Level = 1)
 
-      # Prepare for parallel processing
+      IASDT.R::CatTime("Prepare for parallel processing", Level = 2)
       withr::local_options(
         future.globals.maxSize = 8000 * 1024^2, cluster.timeout = 10 * 60,
         future.gc = TRUE, future.seed = TRUE)
       c1 <- snow::makeSOCKcluster(LF_NCores)
       on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
 
-      # Export objects to cores
+      IASDT.R::CatTime("Export objects to cores", Level = 2)
       snow::clusterExport(
         cl = c1,
         list = c(
@@ -529,6 +504,8 @@ Predict_LF <- function(
         envir = environment())
 
       # Load necessary libraries and load environment if using TensorFlow
+      IASDT.R::CatTime(
+        "Load necessary libraries and load environment", Level = 2)
       invisible(snow::clusterEvalQ(
         cl = c1,
         expr = {
@@ -557,24 +534,26 @@ Predict_LF <- function(
         }))
 
       # Making predictions on parallel
-      IASDT.R::CatTime("Making predictions on parallel", Level = 1)
+      IASDT.R::CatTime("Making predictions on parallel", Level = 2)
       etaPreds <- snow::clusterApplyLB(
         cl = c1, x = seq_len(nrow(Unique_Alpha)),
         fun = purrr::possibly(etaPreds_F))
 
       # Stop the cluster
+      IASDT.R::CatTime("Stop the cluster", Level = 2)
       snow::stopCluster(c1)
       invisible(gc())
     }
 
     # Check if all files are created
-
+    IASDT.R::CatTime("Check if all files are created", Level = 1)
     AllEtaFiles <- all(file.exists(Unique_Alpha$File_etaPred))
     if (isFALSE(AllEtaFiles)) {
       FailedFiles <- AllEtaFiles[!file.exists(AllEtaFiles)]
       stop(
-        paste0(length(FailedFiles), " files are missing: \n",
-               paste0("  >>  ", basename(FailedFiles), collapse = "\n")),
+        paste0(
+          length(FailedFiles), " files are missing: \n",
+          paste0("  >>  ", basename(FailedFiles), collapse = "\n")),
         call. = FALSE)
     }
 

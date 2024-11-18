@@ -495,7 +495,7 @@ Predict_LF <- function(
     }
 
     AllEtaFiles <- Unique_Alpha$File_etaPred
-    if (!all(file.exists(AllEtaFiles)) {
+    if (!all(file.exists(AllEtaFiles))) {
       FailedFiles <- AllEtaFiles[!file.exists(AllEtaFiles)]
       stop(
         sprintf(

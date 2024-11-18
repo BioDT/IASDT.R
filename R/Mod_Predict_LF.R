@@ -313,8 +313,8 @@ Predict_LF <- function(
                 qs::qsave(Out, file = File, preset = "fast")
               }
             }
-          },
-          Export = NULL))
+          }),
+        Export = NULL)
 
     rm(postEta, postAlpha, envir = environment())
     invisible(gc())

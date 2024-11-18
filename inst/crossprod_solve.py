@@ -109,9 +109,9 @@ def crossprod_solve_old(Dist1, Dist2, Denom, List, use_single=False):
         # Attempt to solve the linear system for this slice
         try:
             # Solve K11 * x = Vect_tensor
-            result = tf.linalg.solve(K11, Vect_tensor)
+            solved_vector = tf.linalg.solve(K11, Vect_tensor)
             # Compute cross-product with K12
-            result = tf.matmul(K12, result, transpose_a=True)
+            result = tf.matmul(K12, solved_vector, transpose_a=True)
             # Append the flattened result
             results.append(result.numpy().flatten())
         except tf.errors.InvalidArgumentError as e:
@@ -153,7 +153,7 @@ def load_tensor_chunked(file_or_array, dtype, chunk_size=1000, threshold_mb=2000
     Returns:
     - tensor (tf.Tensor): Combined tensor from chunks.
     """
-    
+
     threshold_bytes = threshold_mb * 1024**2
     
     if isinstance(file_or_array, str):
@@ -163,12 +163,13 @@ def load_tensor_chunked(file_or_array, dtype, chunk_size=1000, threshold_mb=2000
     chunk_size = int(chunk_size)
 
     # If the array is too large, split into chunks
+    # 2 GB threshold
     if isinstance(file_or_array, np.ndarray) and file_or_array.nbytes > threshold_bytes:
         chunks = []
         for i in range(0, file_or_array.shape[0], chunk_size):
             chunk = file_or_array[i : i + chunk_size]
             chunks.append(tf.convert_to_tensor(chunk, dtype=dtype))
-            del chunk    
+            del chunk
         return tf.concat(chunks, axis=0)
     else:
         return tf.convert_to_tensor(file_or_array, dtype=dtype)
@@ -237,23 +238,24 @@ def crossprod_solve(Dist1, Dist2, Denom, List, use_single=False, save=False, fil
 
     # Calculate the K matrices
     K11, K12 = compute_k_matrices(Dist1, Dist2, Denom_tensor)
+    
+    # Free memory
+    del Dist1, Dist2, Denom_tensor
+    gc.collect()
 
     # Reshape List for batch processing
     num_matrices = List.shape[2]
     List_reshaped = tf.reshape(List, [List.shape[0], List.shape[1] * num_matrices])
 
     # Free memory
-    del Dist1, Dist2, Denom_tensor, List
+    del List
     gc.collect()
 
     # Solve linear systems in batch
-    solved_vectors = tf.linalg.solve(K11, List_reshaped)
-    
-    del K11, List_reshaped
-    gc.collect()
+    results = tf.linalg.solve(K11, List_reshaped)
 
     # Compute cross-products in batch
-    results = tf.matmul(K12, solved_vectors, transpose_a=True)
+    results = tf.matmul(K12, results, transpose_a=True)
 
     # Reshape results back to the original structure
     results = tf.reshape(results, [num_matrices, -1])

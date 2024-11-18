@@ -131,6 +131,25 @@ def load_tensor(file_or_array, dtype):
 
 # =======================================================
 
+def load_tensor_chunked(file_or_array, dtype, chunk_size=1000):
+    """
+    Convert file or array to a TensorFlow tensor in chunks to handle large data.
+    """
+    if isinstance(file_or_array, str):
+        file_or_array = load_rds(file_or_array)
+    
+    # If the array is too large, split into chunks
+    if isinstance(file_or_array, np.ndarray) and file_or_array.nbytes > 2 * 1024**3:
+        chunks = []
+        for i in range(0, file_or_array.shape[0], chunk_size):
+            chunk = file_or_array[i : i + chunk_size]
+            chunks.append(tf.convert_to_tensor(chunk, dtype=dtype))
+        return tf.concat(chunks, axis=0)
+    else:
+        return tf.convert_to_tensor(file_or_array, dtype=dtype)
+
+# =======================================================
+
 @tf.function
 def compute_k_matrices(Dist1, Dist2, Denom_tensor):
     """
@@ -166,11 +185,11 @@ def crossprod_solve(Dist1, Dist2, Denom, List, use_single=False, save=False, fil
     dtype = tf.float32 if use_single else tf.float64
 
     # Load and convert input matrices
-    Dist1 = load_tensor(Dist1, dtype)
-    Dist2 = load_tensor(Dist2, dtype)
+    Dist1 = load_tensor_chunked(Dist1, dtype)
+    Dist2 = load_tensor_chunked(Dist2, dtype)
     if isinstance(List, str):
-        List = tf.convert_to_tensor(load_rds(List), dtype=dtype)
-    
+        List = load_tensor_chunked(load_rds(List), dtype)
+
     # Check if loading was successful
     if Dist1 is None or Dist2 is None or List is None:
         print("Error: One or more input files could not be loaded.")

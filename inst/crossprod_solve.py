@@ -3,6 +3,7 @@ import tensorflow as tf
 import numpy as np
 import rdata
 import warnings # Suppress warnings during warm-up
+import gc
 
 # ======================================================================
 # TensorFlow and Environment Configuration
@@ -108,9 +109,9 @@ def crossprod_solve_old(Dist1, Dist2, Denom, List, use_single=False):
         # Attempt to solve the linear system for this slice
         try:
             # Solve K11 * x = Vect_tensor
-            solved_vector = tf.linalg.solve(K11, Vect_tensor)
+            result = tf.linalg.solve(K11, Vect_tensor)
             # Compute cross-product with K12
-            result = tf.matmul(K12, solved_vector, transpose_a=True)
+            result = tf.matmul(K12, result, transpose_a=True)
             # Append the flattened result
             results.append(result.numpy().flatten())
         except tf.errors.InvalidArgumentError as e:
@@ -139,7 +140,7 @@ def load_tensor(file_or_array, dtype):
 # load_tensor_chunked
 # ======================================================================
 
-def load_tensor_chunked(file_or_array, dtype, chunk_size=1000):
+def load_tensor_chunked(file_or_array, dtype, chunk_size=1000, threshold_mb=2000):
     """
     Convert file or array to a TensorFlow tensor in chunks to handle large data.
     
@@ -147,10 +148,14 @@ def load_tensor_chunked(file_or_array, dtype, chunk_size=1000):
     - file_or_array (str or array-like): Input data or file path.
     - dtype (tf.DType): TensorFlow data type (e.g., tf.float64).
     - chunk_size (int): Size of chunks to process at a time.
+    - threshold_mb (int): Threshold for chunking in megabytes (default 2000 MB).
 
     Returns:
     - tensor (tf.Tensor): Combined tensor from chunks.
     """
+    
+    threshold_bytes = threshold_mb * 1024**2
+    
     if isinstance(file_or_array, str):
         file_or_array = rdata.read_rds(file_or_array)
 
@@ -158,11 +163,12 @@ def load_tensor_chunked(file_or_array, dtype, chunk_size=1000):
     chunk_size = int(chunk_size)
 
     # If the array is too large, split into chunks
-    if isinstance(file_or_array, np.ndarray) and file_or_array.nbytes > 2 * 1024**3:  # 2 GB threshold
+    if isinstance(file_or_array, np.ndarray) and file_or_array.nbytes > threshold_bytes
         chunks = []
         for i in range(0, file_or_array.shape[0], chunk_size):
             chunk = file_or_array[i : i + chunk_size]
             chunks.append(tf.convert_to_tensor(chunk, dtype=dtype))
+            del chunk    
         return tf.concat(chunks, axis=0)
     else:
         return tf.convert_to_tensor(file_or_array, dtype=dtype)
@@ -190,7 +196,7 @@ def compute_k_matrices(Dist1, Dist2, Denom_tensor):
 # crossprod_solve
 # ======================================================================
 
-def crossprod_solve(Dist1, Dist2, Denom, List, use_single=False, save=False, file_path=None, chunk_size=1000):
+def crossprod_solve(Dist1, Dist2, Denom, List, use_single=False, save=False, file_path=None, chunk_size=1000, threshold_mb=2000):
     """
     Compute cross-product and solve matrix systems in TensorFlow.
     Optionally save the output to an RDS file.
@@ -216,11 +222,10 @@ def crossprod_solve(Dist1, Dist2, Denom, List, use_single=False, save=False, fil
     dtype = tf.float32 if use_single else tf.float64
 
     # Load and convert input matrices
-    Dist1 = load_tensor_chunked(Dist1, dtype, chunk_size=chunk_size)
-    Dist2 = load_tensor_chunked(Dist2, dtype, chunk_size=chunk_size)
+    Dist1 = load_tensor_chunked(Dist1, dtype, chunk_size=chunk_size, threshold_mb = threshold_mb)
+    Dist2 = load_tensor_chunked(Dist2, dtype, chunk_size=chunk_size, threshold_mb = threshold_mb)
     if isinstance(List, str):
-        #List = load_tensor_chunked(rdata.read_rds(List), dtype, chunk_size=chunk_size)
-        List = load_tensor_chunked(load_rds(List), dtype, chunk_size=chunk_size)
+        List = load_tensor_chunked(load_rds(List), dtype, chunk_size=chunk_size, threshold_mb = threshold_mb)
 
     # Check if loading was successful
     if Dist1 is None or Dist2 is None or List is None:
@@ -237,8 +242,15 @@ def crossprod_solve(Dist1, Dist2, Denom, List, use_single=False, save=False, fil
     num_matrices = List.shape[2]
     List_reshaped = tf.reshape(List, [List.shape[0], List.shape[1] * num_matrices])
 
+    # Free memory
+    del Dist1, Dist2, Denom_tensor List
+    gc.collect()
+
     # Solve linear systems in batch
     solved_vectors = tf.linalg.solve(K11, List_reshaped)
+    
+    del K11, List_reshaped
+    gc.collect()
 
     # Compute cross-products in batch
     results = tf.matmul(K12, solved_vectors, transpose_a=True)
@@ -247,7 +259,7 @@ def crossprod_solve(Dist1, Dist2, Denom, List, use_single=False, save=False, fil
     results = tf.reshape(results, [num_matrices, -1])
 
     # Convert results to numpy arrays
-    final_results = [res.numpy().flatten() for res in tf.split(results, num_matrices)]
+    results = [res.numpy().flatten() for res in tf.split(results, num_matrices)]
 
     # Save to RDS if requested
     if save:
@@ -255,11 +267,11 @@ def crossprod_solve(Dist1, Dist2, Denom, List, use_single=False, save=False, fil
             raise ValueError("A valid file_path must be provided when save=True.")
         try:
             with open(file_path, 'wb') as f:
-                rdata.write_rds(final_results, f)
+                rdata.write_rds(results, f)
         except Exception as e:
             print(f"Error saving results to {file_path}: {e}")
 
-    return final_results
+    return results
 
 # ==============================================================================
 # warmup

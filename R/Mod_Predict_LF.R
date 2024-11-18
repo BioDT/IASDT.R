@@ -475,16 +475,6 @@ Predict_LF <- function(
       return(NULL)
     }
 
-    AllEtaFiles <- Unique_Alpha$File_etaPred
-    if (!all(file.exists(AllEtaFiles))) {
-      FailedFiles <- AllEtaFiles[!file.exists(AllEtaFiles)]
-      stop(
-        sprintf(
-          "Failed to create all necessary files: %s",
-          paste0(FailedFiles, collapse = ", ")),
-        call. = FALSE)
-    }
-
     # # .................................................................... ###
     # # .................................................................... ###
 
@@ -574,6 +564,17 @@ Predict_LF <- function(
       # Stop the cluster
       snow::stopCluster(c1)
       invisible(gc())
+    }
+
+    # Check if all files are created
+
+    AllEtaFiles <- all(file.exists(Unique_Alpha$File_etaPred))
+    if (isFALSE(AllEtaFiles)) {
+      FailedFiles <- AllEtaFiles[!file.exists(AllEtaFiles)]
+      stop(
+        paste0(length(FailedFiles), " files are missing: \n",
+               paste0("  >>  ", basename(FailedFiles), collapse = "\n")),
+        call. = FALSE)
     }
 
     # # .................................................................... ###

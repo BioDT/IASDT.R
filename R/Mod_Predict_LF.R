@@ -68,8 +68,7 @@
 #'   call them when needed.
 
 Predict_LF <- function(
-    unitsPred, modelunits, postEta, postAlpha, rL, NCores = 8, 
-    LF_NCores = NCores,
+    unitsPred, modelunits, postEta, postAlpha, rL, LF_NCores = 8,
     Temp_Dir = "TEMP2Pred", Temp_Cleanup = FALSE, Model_Name = NULL,
     UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE, LF_OutFile = NULL,
     LF_Return = TRUE, Verbose = TRUE) {
@@ -270,19 +269,6 @@ Predict_LF <- function(
       dplyr::mutate(
         Sample_IDs = purrr::map(Sample_IDs, ~ as.vector(sort(unlist(.x)))))
 
-
-    withr::local_options(
-      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
-
-    if (NCores == 1) {
-      future::plan("future::sequential", gc = TRUE)
-    } else {
-      c1 <- snow::makeSOCKcluster(NCores)
-      on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-      future::plan("future::cluster", workers = c1, gc = TRUE)
-      on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
-    }
-
     # Prepare data for parallel processing
     Unique_Alpha <- postAlpha_unique %>%
       # This may help to distribute heavy jobs first on parallel
@@ -312,7 +298,7 @@ Predict_LF <- function(
           paste0(Model_Name, "postEta_ch", dplyr::row_number(), ".", TempExt)),
         File_etaPred = stringr::str_replace_all(
           File, "_postEta_ch", "_etaPred_ch"),
-        Export = furrr::future_pmap(
+        Export = purrr::pmap(
           .l = list(SampleID, LF_ID, File),
           .f = function(SampleID, LF_ID, File) {
 
@@ -328,16 +314,7 @@ Predict_LF <- function(
               }
             }
           },
-          future.scheduling = Inf, future.seed = TRUE,
-          future.packages =   c("IASDT.R","purrr", "qs", "dplyr"),
-          future.globals = c("postEta", "UseTF")),
         Export = NULL)
-
-    ## Stopping cluster
-    if (NCores > 1) {
-      snow::stopCluster(c1)
-      future::plan("future::sequential", gc = TRUE)
-    }
 
     rm(postEta, postAlpha, envir = environment())
     invisible(gc())

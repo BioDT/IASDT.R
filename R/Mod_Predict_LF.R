@@ -251,7 +251,8 @@ Predict_LF <- function(
 
     # Convert postAlpha to tibble
 
-    IASDT.R::CatTime("Prepare data for parallel processing", Level = 1)
+    IASDT.R::CatTime(
+      "Splitting and saving `postAlpha` to small chunks", Level = 1)
 
     postAlpha_tibble <- do.call(rbind, postAlpha) %>%
       as.data.frame() %>%

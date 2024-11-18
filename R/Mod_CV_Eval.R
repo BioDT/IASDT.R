@@ -8,7 +8,8 @@
 #' merges posterior chains, makes predictions, and computes 4 evaluation
 #' metrics: AUC, RMSE, Tjur's R2, and Boyce Index.
 #'
-#' @param Path_CV Character. The directory path where cross-validation models and outputs are stored.
+#' @param Path_CV Character. The directory path where cross-validation models
+#'   and outputs are stored.
 #' @param predictEtaMean boolean flag indicating whether to use the estimated
 #'   mean values of posterior predictive distribution for random effects
 #'   corresponding for the new units. See `Hmsc:::predict.Hmsc` for more
@@ -40,7 +41,7 @@ Mod_CV_Eval <- function(Path_CV = NULL, predictEtaMean = TRUE, NCores = 8) {
   IASDT.R::CatTime("Merging posterior chains")
 
   CV_DT <- IASDT.R::LoadAs(file.path(Path_CV, "CV_DT.RData"))
-  PredDir <- file.path(Path_CV, "Model_Predictions")
+  PredDir <- file.path(Path_CV, "Model_Prediction")
   EvalDir <- file.path(Path_CV, "Evaluation")
   TempDir <- file.path(PredDir, "Preds_Temp")
   fs::dir_create(c(PredDir, EvalDir, TempDir))
@@ -49,12 +50,12 @@ Mod_CV_Eval <- function(Path_CV = NULL, predictEtaMean = TRUE, NCores = 8) {
     .x = seq_len(nrow(CV_DT)),
     .f = ~ {
       ObjName <- stringr::str_remove_all(
-        basename(CV_DT$Path_ModFitted[.x]), "Model_Fitted_|.RData")
+        basename(CV_DT$Path_ModFitted[.x]), "Model_Fitted_|.RData|.qs")
 
       IASDT.R::CatTime(ObjName, Level = 1)
       Model_Out <- CV_DT$Path_ModFitted[.x]
 
-      if (!file.exists(Model_Out) || !IASDT.R::CheckRData(Model_Out)) {
+      if (!IASDT.R::CheckData(Model_Out, warning = FALSE)) {
         Init <- IASDT.R::LoadAs(CV_DT$Path_ModInit[.x])
         Posts <- purrr::map(
           .x = CV_DT$Path_Post[[.x]],
@@ -86,32 +87,31 @@ Mod_CV_Eval <- function(Path_CV = NULL, predictEtaMean = TRUE, NCores = 8) {
           Path_Eval <- file.path(EvalDir, paste0("Eval_", ModName, ".RData"))
           Path_Pred <- file.path(PredDir, paste0("Preds_", ModName, ".qs"))
 
-          PredsOkay <- file.exists(Path_Pred) &&
-            IASDT.R::CheckRData(Path_Eval) && IASDT.R::CheckRData(Path_Eval)
+          PredsOkay <- IASDT.R::CheckData(Path_Eval, warning = FALSE)
 
           if (isFALSE(PredsOkay)) {
             Model_Full <- IASDT.R::LoadAs(Path_ModFull)
             Model_CV <- IASDT.R::LoadAs(Path_ModFitted)
             XVal <- droplevels(Model_Full$XData[val, , drop = FALSE])
-            Pred_PA <- Model_Full$Y[val, ]
-            Pred_XY <- Model_Full$rL$sample$s[val, ]
+            # Pred_PA <- Model_Full$Y[val, ]
+            # Pred_XY <- Model_Full$rL$sample$s[val, ]
 
             # prepareGradient
-            Gradient <- Hmsc::prepareGradient(
-              hM = Model_CV, XDataNew = as.data.frame(XVal),
-              sDataNew = list(sample = as.data.frame(valCoords)))
+            # Gradient <- Hmsc::prepareGradient(
+            #   hM = Model_CV, XDataNew = as.data.frame(XVal),
+            #   sDataNew = list(sample = as.data.frame(valCoords)))
 
-            rm(Model_Full, XVal, val, valCoords)
+            rm(Model_Full, XVal, val, valCoords, envir = environment())
             invisible(gc())
 
             # predict / evaluate
-            Eval <- stats::predict(
-              object = Model_CV, Gradient = Gradient, nParallel = NCores,
-              expected = TRUE, predictEtaMean = predictEtaMean,
-              TempDir = TempDir, PredDir = PredDir, Evaluate = TRUE,
-              Evaluate_Name = paste0("Eval_", ModName), EvalDir = EvalDir,
-              ModelName = ModName, RC = FALSE, Pred_PA = Pred_PA,
-              Pred_XY = Pred_XY)
+            # Eval <- stats::predict(
+            #   object = Model_CV, Gradient = Gradient, nParallel = NCores,
+            #   expected = TRUE, predictEtaMean = predictEtaMean,
+            #   TempDir = TempDir, PredDir = PredDir, Evaluate = TRUE,
+            #   Evaluate_Name = paste0("Eval_", ModName), EvalDir = EvalDir,
+            #   ModelName = ModName, RC = FALSE, Pred_PA = Pred_PA,
+            #   Pred_XY = Pred_XY)
           }
 
           tibble::tibble(Path_Pred = Path_Pred, Path_Eval = Path_Eval) %>%

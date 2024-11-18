@@ -157,7 +157,7 @@ RespCurv_PrepData <- function(
           Path_Model = Path_Model, Gradient = Gradient, expected = TRUE,
           NCores = 1, Model_Name = paste0("RC_", Coords), RC = Coords,
           UseTF = UseTF, TF_Environ = TF_Environ, LF_InputFile = File_LF,
-          Temp_Dir = Temp_Dir, Verbose = FALSE)
+          Temp_Dir = Temp_Dir, Verbose = FALSE, Temp_Cleanup = Temp_Cleanup)
 
         # Species richness
         Pred_SR <- abind::abind(lapply(Preds, rowSums), along = 2)

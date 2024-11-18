@@ -269,6 +269,16 @@ Predict_LF <- function(
       dplyr::mutate(
         Sample_IDs = purrr::map(Sample_IDs, ~ as.vector(sort(unlist(.x)))))
 
+
+    if (NCores == 1) {
+      future::plan("future::sequential", gc = TRUE)
+    } else {
+      c1 <- snow::makeSOCKcluster(NCores)
+      on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
+      future::plan("future::cluster", workers = c1, gc = TRUE)
+      on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
+    }
+
     # Prepare data for parallel processing
     Unique_Alpha <- postAlpha_unique %>%
       # This may help to distribute heavy jobs first on parallel
@@ -298,7 +308,7 @@ Predict_LF <- function(
           paste0(Model_Name, "postEta_ch", dplyr::row_number(), ".", TempExt)),
         File_etaPred = stringr::str_replace_all(
           File, "_postEta_ch", "_etaPred_ch"),
-        Export = purrr::pmap(
+        Export = furrr::future_pmap(
           .l = list(SampleID, LF_ID, File),
           .f = function(SampleID, LF_ID, File) {
 
@@ -313,15 +323,24 @@ Predict_LF <- function(
                 qs::qsave(Out, file = File, preset = "fast")
               }
             }
-          }),
+          },
+          future.scheduling = Inf, future.seed = TRUE,
+          future.packages =   c("IASDT.R","purrr", "qs"),
+          future.globals = c("postEta", "UseTF")),
         Export = NULL)
+
+    ## Stopping cluster
+    if (NCores > 1) {
+      snow::stopCluster(c1)
+      future::plan("future::sequential", gc = TRUE)
+    }
 
     rm(postEta, postAlpha, envir = environment())
     invisible(gc())
 
     # # .................................................................... ###
 
-    # Function to predict latent factors
+    # Internal functions to predict latent factors
 
     etaPreds_F <- function(RowNum) {
       # Current denominator
@@ -460,8 +479,8 @@ Predict_LF <- function(
           NULL
         })
 
+        # If successful, exit the loop
         if (!is.null(result)) {
-          # If successful, exit the loop
           return(result)
         }
 
@@ -472,8 +491,20 @@ Predict_LF <- function(
 
       # Stop if all attempts fail
       stop(sprintf("Failed after %d attempts", max_tries))
+      return(NULL)
     }
 
+    AllEtaFiles <- Unique_Alpha$File_etaPred
+    if (!all(file.exists(AllEtaFiles)) {
+      FailedFiles <- AllEtaFiles[!file.exists(AllEtaFiles)]
+      stop(
+        sprintf(
+          "Failed to create all necessary files: %s", 
+          paste0(FailedFiles, collapse = ", ")),
+        call. = FALSE)
+    }
+
+    # # .................................................................... ###
     # # .................................................................... ###
 
     # Predict latent factors
@@ -481,7 +512,6 @@ Predict_LF <- function(
     if (LF_NCores == 1) {
 
       # Sequential processing
-
       IASDT.R::CatTime("Predicting Latent Factor sequentially", Level = 1)
 
       if (UseTF) {
@@ -499,24 +529,26 @@ Predict_LF <- function(
         warmup()
       }
 
+      # Making predictions sequentially
       etaPreds <- purrr::map(
         .x = seq_len(nrow(Unique_Alpha)), .f = etaPreds_F_Safe)
 
     } else {
 
       # Parallel processing
-
       IASDT.R::CatTime(
         paste0(
           "Predicting Latent Factor in parallel using ", LF_NCores, " cores"),
         Level = 1)
 
+      # Prepare for parallel processing
       withr::local_options(
-        future.globals.maxSize = 8000 * 1024^2, cluster.timeout = 5*60,
+        future.globals.maxSize = 8000 * 1024^2, cluster.timeout = 10 * 60,
         future.gc = TRUE, future.seed = TRUE)
       c1 <- snow::makeSOCKcluster(LF_NCores)
       on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
 
+      # Export objects to cores
       snow::clusterExport(
         cl = c1,
         list = c(
@@ -525,6 +557,7 @@ Predict_LF <- function(
           "TF_use_single", "etaPreds_F_Safe", "etaPreds_F"),
         envir = environment())
 
+      # Load necessary libraries and load environment if using TensorFlow
       invisible(snow::clusterEvalQ(
         cl = c1,
         expr = {
@@ -552,15 +585,15 @@ Predict_LF <- function(
           }
         }))
 
+      # Making predictions on parallel
       IASDT.R::CatTime("Making predictions on parallel", Level = 1)
-
       etaPreds <- snow::clusterApplyLB(
         cl = c1, x = seq_len(nrow(Unique_Alpha)), fun = etaPreds_F_Safe)
 
+      # Stop the cluster
       snow::stopCluster(c1)
       invisible(gc())
     }
-
 
     # # .................................................................... ###
 

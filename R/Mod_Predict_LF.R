@@ -314,7 +314,7 @@ Predict_LF <- function(
               }
             }
           },
-        Export = NULL)
+          Export = NULL))
 
     rm(postEta, postAlpha, envir = environment())
     invisible(gc())
@@ -480,7 +480,7 @@ Predict_LF <- function(
       FailedFiles <- AllEtaFiles[!file.exists(AllEtaFiles)]
       stop(
         sprintf(
-          "Failed to create all necessary files: %s", 
+          "Failed to create all necessary files: %s",
           paste0(FailedFiles, collapse = ", ")),
         call. = FALSE)
     }

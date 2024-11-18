@@ -449,31 +449,31 @@ Predict_LF <- function(
 
     # # .................................................................... ###
 
-    etaPreds_F_Safe <- function(x, max_tries = 5) {
-      attempt <- 1
-      while (attempt <= max_tries) {
-        result <- tryCatch({
-          return(etaPreds_F(x))  # If successful, return the result
-        }, error = function(e) {
-          message(sprintf("Attempt %d failed: %s", attempt, e$message))
-          # Return NULL on error to retry
-          NULL
-        })
-
-        # If successful, exit the loop
-        if (!is.null(result)) {
-          return(result)
-        }
-
-        attempt <- attempt + 1
-        # Wait before retrying
-        Sys.sleep(1)
-      }
-
-      # Stop if all attempts fail
-      stop(sprintf("Failed after %d attempts", max_tries))
-      return(NULL)
-    }
+    # etaPreds_F_Safe <- function(x, max_tries = 5) {
+    #   attempt <- 1
+    #   while (attempt <= max_tries) {
+    #     result <- tryCatch({
+    #       return(etaPreds_F(x))  # If successful, return the result
+    #     }, error = function(e) {
+    #       message(sprintf("Attempt %d failed: %s", attempt, e$message))
+    #       # Return NULL on error to retry
+    #       NULL
+    #     })
+    #
+    #     # If successful, exit the loop
+    #     if (!is.null(result)) {
+    #       return(result)
+    #     }
+    #
+    #     attempt <- attempt + 1
+    #     # Wait before retrying
+    #     Sys.sleep(1)
+    #   }
+    #
+    #   # Stop if all attempts fail
+    #   stop(sprintf("Failed after %d attempts", max_tries))
+    #   return(NULL)
+    # }
 
     # # .................................................................... ###
     # # .................................................................... ###
@@ -502,7 +502,7 @@ Predict_LF <- function(
 
       # Making predictions sequentially
       etaPreds <- purrr::map(
-        .x = seq_len(nrow(Unique_Alpha)), .f = etaPreds_F_Safe)
+        .x = seq_len(nrow(Unique_Alpha)), .f = purrr::possibly(etaPreds_F))
 
     } else {
 
@@ -525,7 +525,7 @@ Predict_LF <- function(
         list = c(
           "Unique_Alpha", "Path_D11", "Path_D12", "indNew", "unitsPred",
           "postEta_File", "indOld", "modelunits", "TF_Environ", "UseTF",
-          "TF_use_single", "etaPreds_F_Safe", "etaPreds_F"),
+          "TF_use_single", "etaPreds_F"),
         envir = environment())
 
       # Load necessary libraries and load environment if using TensorFlow
@@ -559,7 +559,8 @@ Predict_LF <- function(
       # Making predictions on parallel
       IASDT.R::CatTime("Making predictions on parallel", Level = 1)
       etaPreds <- snow::clusterApplyLB(
-        cl = c1, x = seq_len(nrow(Unique_Alpha)), fun = etaPreds_F_Safe)
+        cl = c1, x = seq_len(nrow(Unique_Alpha)),
+        fun = purrr::possibly(etaPreds_F))
 
       # Stop the cluster
       snow::stopCluster(c1)

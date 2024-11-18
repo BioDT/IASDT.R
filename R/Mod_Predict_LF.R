@@ -326,7 +326,7 @@ Predict_LF <- function(
             }
           },
           future.scheduling = Inf, future.seed = TRUE,
-          future.packages =   c("IASDT.R","purrr", "qs"),
+          future.packages =   c("IASDT.R","purrr", "qs", "dplyr"),
           future.globals = c("postEta", "UseTF")),
         Export = NULL)
 

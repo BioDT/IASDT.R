@@ -502,10 +502,12 @@ Predict_LF <- function(
       # Making predictions sequentially
       etaPreds <- purrr::map(
         .x = seq_len(nrow(Unique_Alpha)),
-        .f = ~ {
-          print(.x)
-          purrr::possibly(etaPreds_F, otherwise = NULL)(.x)
-        })
+        .f = purrr::possibly(
+          .f = function(x) {
+            print(x)
+            etaPreds_F(x)
+          },
+          otherwise = NULL))
 
     } else {
 
@@ -565,26 +567,28 @@ Predict_LF <- function(
       IASDT.R::CatTime("Making predictions on parallel", Level = 2)
       etaPreds <- snow::clusterApplyLB(
         cl = c1, x = seq_len(nrow(Unique_Alpha)),
-        fun = purrr::possibly(
-          function(x) {
-            max_tries <- 5
-            attempt <- 1
-            while (attempt <= max_tries) {
-              result <- tryCatch({
-                return(etaPreds_F(x))
-                # If successful, return the result
-              }, error = function(e) {
-                # Return NULL on error to retry
-                NULL
-              })
-            }
+        fun = function(x) {
+          max_tries <- 5
+          attempt <- 1
+          result <- NULL  # Initialize result
 
+          while (attempt <= max_tries) {
+            result <- tryCatch({
+              # Try to run etaPreds_F and return result if successful
+              return(purrr::possibly(etaPreds_F, otherwise = NULL)(x))
+            }, error = function(e) {
+              # Return NULL on error to retry
+              NULL
+            })
+
+            # Exit loop if successful
             if (!is.null(result)) {
-              # If successful, exit the loop
-              return(result)
+              break
             }
+            attempt <- attempt + 1
           }
-        ))
+          return(result)  # Return the result after max_tries or successful execution
+        })
 
       # Stop the cluster
       IASDT.R::CatTime("Stop the cluster", Level = 2)

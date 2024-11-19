@@ -537,7 +537,26 @@ Predict_LF <- function(
       IASDT.R::CatTime("Making predictions on parallel", Level = 2)
       etaPreds <- snow::clusterApplyLB(
         cl = c1, x = seq_len(nrow(Unique_Alpha)),
-        fun = purrr::possibly(etaPreds_F))
+        fun = purrr::possibly(
+          function(x) {
+            max_tries = 5
+            attempt <- 1
+            while (attempt <= max_tries) {
+              result <- tryCatch({
+                return(etaPreds_F(x))
+                # If successful, return the result
+              }, error = function(e) {
+                # Return NULL on error to retry
+                NULL
+              })
+            }
+
+            if (!is.null(result)) {
+              # If successful, exit the loop
+              return(result)
+            }
+          }
+        ))
 
       # Stop the cluster
       IASDT.R::CatTime("Stop the cluster", Level = 2)

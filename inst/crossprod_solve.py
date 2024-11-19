@@ -4,22 +4,50 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 # Disable oneDNN optimizations to prevent additional warnings
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
-# disable Additional Logs Set the TensorFlow logger - show only critical errors
 import logging
+# disable Additional Logs Set the TensorFlow logger - show only critical errors
+logging.getLogger('tensorflow').setLevel(logging.ERROR)
+
 import tensorflow as tf
+#tf.compat.v1.reset_default_graph()
+#tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+# Reset all devices before making changes
+tf.keras.backend.clear_session()
+#tf.get_logger().setLevel(logging.ERROR)
+#tf.get_logger().setLevel('ERROR')
+
 import numpy as np
 import rdata
 import warnings # Suppress warnings during warm-up
+# Suppress all TensorFlow warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="tensorflow")
+
 import gc
 import time
+import argparse
+#import json  # For formatting output as JSON if needed
+#import sys
+#print("Received arguments:", sys.argv)
 
 # ======================================================================
 # TensorFlow and Environment Configuration
 # ======================================================================
 
-# Reset all devices before making changes
-tf.keras.backend.clear_session()
-tf.get_logger().setLevel(logging.ERROR)
+
+
+# Use compatibility mode to avoid deprecated calls
+#tf.compat.v1.reset_default_graph()  # This avoids the warning
+#The name tf.reset_default_graph is deprecated. Please use tf.compat.v1.reset_default_graph instead."
+
+
+# Flush the logger
+#sys.stdout.flush()  # Ensure immediate output
+
+
+
+
+
+
 
 gpus = tf.config.experimental.list_physical_devices('GPU')
 
@@ -30,10 +58,10 @@ if gpus:
             tf.config.experimental.set_memory_growth(gpu, True)
         
         # Set a fixed memory limit (e.g., 64 GB) to avoid exceeding the GPU memory
-        tf.config.experimental.set_virtual_device_configuration(
-            gpus[0],
-            [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=64000)]
-        )
+        #tf.config.experimental.set_virtual_device_configuration(
+            #gpus[0],
+            #[tf.config.experimental.VirtualDeviceConfiguration(memory_limit=64000)]
+        #)
         
     except RuntimeError as e:
         print(f"Error setting memory configurations: {e}")
@@ -230,7 +258,7 @@ def compute_k_matrices(Dist1, Dist2, Denom_tensor):
 # crossprod_solve_old2 - faster than crossprod_solve2, but sill slow
 # ======================================================================
 
-def crossprod_solve_old2(Dist1, Dist2, Denom, postEta, use_single=False, save=False, file_path=None, chunk_size=1000, threshold_mb=2000):
+def crossprod_solve_old2(Dist1, Dist2, Denom, postEta, use_single=False, save=False, path_out=None, chunk_size=1000, threshold_mb=2000):
     
     """
     Compute cross-product and solve matrix systems in TensorFlow.
@@ -243,7 +271,7 @@ def crossprod_solve_old2(Dist1, Dist2, Denom, postEta, use_single=False, save=Fa
     - postEta (str or array-like): 3D matrix (n x m x k) or its file path.
     - use_single (bool): If True, use float32 precision; otherwise, use float64.
     - save (bool): If True, save results to an RDS file.
-    - file_path (str): File path to save the results if `save` is True.
+    - path_out (str): File path to save the results if `save` is True.
     - chunk_size (int): Size of chunks for loading large matrices.
 
     Returns:
@@ -300,13 +328,13 @@ def crossprod_solve_old2(Dist1, Dist2, Denom, postEta, use_single=False, save=Fa
 
     # Save to RDS if requested
     if save:
-        if not file_path:
-            raise ValueError("A valid file_path must be provided when save=True.")
+        if not path_out:
+            raise ValueError("A valid path_out must be provided when save=True.")
         try:
-            with open(file_path, 'wb') as f:
+            with open(path_out, 'wb') as f:
                 rdata.write_rds(results, f)
         except Exception as e:
-            print_time(f"Error saving results to {file_path}: {e}")
+            print_time(f"Error saving results to {path_out}: {e}")
 
     return results
 
@@ -385,7 +413,7 @@ def compute_distances_chunked(s1, s2=None, dtype=tf.float64, chunk_size=1000):
 # crossprod_solve
 # ======================================================================
 
-def crossprod_solve(s1, s2, denom, postEta, use_single=False, save=False, file_path=None, chunk_size=1000, threshold_mb=2000, verbose=False):
+def crossprod_solve(s1, s2, denom, postEta, use_single=False, save=False, path_out=None, chunk_size=1000, threshold_mb=2000, verbose=False):
     
     """
     Compute cross-product and solve matrix systems in TensorFlow.
@@ -398,7 +426,7 @@ def crossprod_solve(s1, s2, denom, postEta, use_single=False, save=False, file_p
     - postEta (str or array-like): 3D matrix (n x m x k) or its file path.
     - use_single (bool): If True, use float32 precision; otherwise, use float64.
     - save (bool): If True, save results to an RDS file.
-    - file_path (str): File path to save the results if save is True.
+    - path_out (str): File path to save the results if save is True.
     - chunk_size (int): Size of chunks for loading large matrices.
     - verbose (bool): If True, print execution time messages; otherwise, suppress them.
     
@@ -406,8 +434,12 @@ def crossprod_solve(s1, s2, denom, postEta, use_single=False, save=False, file_p
     - results (list of np.ndarray): Flattened arrays containing results for each submatrix in postEta.
     """
     
-    print_time("Starting processing", verbose)
-    
+    print_time(f"Starting processing (TensorFlow v{tf.__version__})", verbose)
+    if gpus:
+        print_time(f"  >>  GPUs detected: {len(gpus)}", verbose)
+    else:
+        print_time("  >>  No GPUs detected; using CPU.", verbose)
+
     # Record the start time
     start_time = time.time()
         
@@ -416,7 +448,6 @@ def crossprod_solve(s1, s2, denom, postEta, use_single=False, save=False, file_p
 
     # Set data type based on user input
     dtype = tf.float32 if use_single else tf.float64
-
 
     # |||||||||||||||||||||||||||||||||||
     # Reading coordinate matrices 
@@ -449,15 +480,22 @@ def crossprod_solve(s1, s2, denom, postEta, use_single=False, save=False, file_p
     # Load and convert postEta
     # |||||||||||||||||||||||||||||||||||
     print_time("Load and convert postEta", verbose)
-    if isinstance(postEta, str):
-        postEta = load_tensor_chunked(postEta, dtype, chunk_size, threshold_mb)
+    #if isinstance(postEta, str):
+        #postEta = load_tensor_chunked(postEta, dtype, chunk_size, threshold_mb)
 
+    if isinstance(postEta, str):
+        try:
+            postEta = load_tensor_chunked(postEta, dtype, chunk_size, threshold_mb)
+        except Exception as e:
+            print_time(f"Error loading postEta: {e}", verbose)
+            sys.exit(1)
+    
     # |||||||||||||||||||||||||||||||||||
     # Convert denom to a TensorFlow tensor
     # |||||||||||||||||||||||||||||||||||
     print_time("Convert denom to a TensorFlow tensor", verbose)
     Denom_tensor = tf.convert_to_tensor(denom, dtype=dtype)
-
+    
     # |||||||||||||||||||||||||||||||||||
     # Check if data was loaded successfully
     # |||||||||||||||||||||||||||||||||||
@@ -474,7 +512,7 @@ def crossprod_solve(s1, s2, denom, postEta, use_single=False, save=False, file_p
     K11 = tf.exp(-Dist1 / Denom_tensor)
     print_time("  >>  k12", verbose)
     K12 = tf.exp(-Dist2 / Denom_tensor)
-
+    
     # Free memory
     print_time("Free memory", verbose)
     del Dist1, Dist2, Denom_tensor, denom
@@ -486,7 +524,7 @@ def crossprod_solve(s1, s2, denom, postEta, use_single=False, save=False, file_p
     print_time("Reshape postEta for batch processing", verbose)
     num_matrices = postEta.shape[2]
     postEta_reshaped = tf.reshape(postEta, [postEta.shape[0], postEta.shape[1] * num_matrices])
-
+    
     # Free memory
     print_time("Free memory", verbose)
     del postEta
@@ -527,20 +565,20 @@ def crossprod_solve(s1, s2, denom, postEta, use_single=False, save=False, file_p
     # |||||||||||||||||||||||||||||||||||
 
     if save:
-        if not file_path:
-            raise ValueError("A valid file_path must be provided when save=True.")
+        if not path_out:
+            raise ValueError("A valid path_out must be provided when save=True.")
         try:
             # Flatten arrays before saving
             results2 = [arr[0] for arr in results]
-            rdata.write_rds(file_path, results2)
+            rdata.write_rds(path_out, results2)
         except Exception as e:
-            print_time(f"Error saving results to {file_path}: {e}", verbose)
+            print_time(f"Error saving results to {path_out}: {e}", verbose)
 
     # |||||||||||||||||||||||||||||||||||
     # Print processing time
     # |||||||||||||||||||||||||||||||||||
     elapsed_time = time.time() - start_time
-    print_time(f"  >>  Finished in {elapsed_time:.1f} seconds", verbose)
+    print_time(f"Finished in {elapsed_time:.1f} seconds", verbose)
 
     return results
 
@@ -580,3 +618,41 @@ def warmup():
     
     # Do not return objects
     pass
+
+# ==============================================================================
+# ==============================================================================
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Run crossprod_solve function.")
+    parser.add_argument("--s1", type=str, required=True, help="Path to s1 file.")
+    parser.add_argument("--s2", type=str, required=True, help="Path to s2 file.")
+    parser.add_argument("--postEta", type=str, required=True, help="Path to postEta file.")
+    parser.add_argument("--path_out", type=str, required=True, help="Path to output file.")
+    parser.add_argument("--denom", type=float, required=True, help="Denominator value.")
+    parser.add_argument("--chunk_size", type=int, default=1000, help="Chunk size.")
+    parser.add_argument("--threshold_mb", type=int, default=2000, help="Threshold in MB.")
+    parser.add_argument("--use_single", action="store_true", help="Use single precision.")
+    parser.add_argument("--save", action="store_true", help="Save the output.")
+    parser.add_argument("--verbose", action="store_true", help="Enable verbose output.")
+    args = parser.parse_args()
+
+    try:
+        result = crossprod_solve(
+            s1=args.s1,
+            s2=args.s2,
+            denom=args.denom,
+            postEta=args.postEta,
+            use_single=args.use_single,
+            save=args.save,
+            path_out=args.path_out,
+            chunk_size=args.chunk_size,
+            threshold_mb=args.threshold_mb,
+            verbose=args.verbose,
+        )
+
+        if result is None:
+            raise ValueError("crossprod_solve returned None.")
+        print("Done")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        sys.exit(1)

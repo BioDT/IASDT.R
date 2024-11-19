@@ -375,11 +375,15 @@ Predict_LF <- function(
         if (UseTF) {
           # Use TensorFlow
           if (CalcPredLF) {
-            eta_indNew <- crossprod_solve(
-              s1 = Path_s1, s2 = Path_s2, denom = Denom,
-              postEta = File, use_single = TF_use_single, save = TRUE,
-              file_path = File_etaPred, verbose = FALSE)
-            # saveRDS(eta_indNew, file = File_etaPred)
+
+            PythonScript <- system.file(
+              "crossprod_solve.py", package = "IASDT.R")
+
+            eta_indNew0 <- run_crossprod_solve(
+              virtual_env_path = TF_Environ, script_path = PythonScript,
+              s1 = Path_s1, s2 = Path_s2, denom = Denom, postEta = File,
+              path_out = File_etaPred, use_single = TF_use_single)
+            eta_indNew <- readRDS(eta_indNew0)
           } else {
             eta_indNew <- readRDS(File_etaPred)
           }
@@ -488,21 +492,6 @@ Predict_LF <- function(
 
     if (LF_NCores == 1) {
 
-      if (UseTF) {
-        # Suppress TensorFlow warnings and disable optimizations
-        Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3", TF_ENABLE_ONEDNN_OPTS = "0")
-
-        # Activate the python environment
-        reticulate::use_virtualenv(TF_Environ, required = TRUE)
-
-        # Source the script file containing the crossprod_solve function
-        PythonScript <- system.file("crossprod_solve.py", package = "IASDT.R")
-        reticulate::source_python(PythonScript)
-
-        # A lightweight function to initialize necessary modules.
-        warmup()
-      }
-
       # Sequential processing
       IASDT.R::CatTime("Predicting Latent Factor sequentially", Level = 1)
 
@@ -564,7 +553,7 @@ Predict_LF <- function(
           "Unique_Alpha", "Path_D11", "Path_D12", "Path_s1", "Path_s2",
           "indNew", "unitsPred", "postEta_File", "indOld", "modelunits",
           "TF_Environ", "UseTF", "TF_use_single", "etaPreds_F",
-          "LF_Check"),
+          "LF_Check", "run_crossprod_solve"),
         envir = environment())
 
       # Load necessary libraries and load environment if using TensorFlow
@@ -577,32 +566,9 @@ Predict_LF <- function(
           sapply(
             c(
               "Rcpp", "RcppArmadillo", "dplyr", "tidyr", "tibble",
-              "Matrix", "Hmsc", "qs", "fs", "purrr", "IASDT.R", "reticulate"),
+              "Matrix", "Hmsc", "qs", "fs", "purrr", "IASDT.R"),
             library, character.only = TRUE)
-
-          if (UseTF) {
-
-            # Suppress TensorFlow warnings and disable optimizations
-            Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3", TF_ENABLE_ONEDNN_OPTS = "0")
-
-            # Activate the python environment
-            reticulate::use_virtualenv(TF_Environ, required = TRUE)
-
-            # Source the script file containing the crossprod_solve function
-            PythonScript <- system.file(
-              "crossprod_solve.py", package = "IASDT.R")
-            reticulate::source_python(PythonScript)
-
-            # A lightweight function to initialize necessary modules.
-            warmup()
-          }
-          invisible(gc())
         }))
-
-      try(
-        on.exit(reticulate::use_python(Sys.which("python")), add = TRUE),
-        silent = TRUE)
-
 
       # Making predictions on parallel
       IASDT.R::CatTime("Making predictions on parallel", Level = 2)
@@ -707,5 +673,144 @@ Predict_LF <- function(
     return(postEtaPred)
   } else {
     return(LF_OutFile)
+  }
+}
+
+## |------------------------------------------------------------------------| #
+# run_crossprod_solve ----
+## |------------------------------------------------------------------------| #
+
+#' run_crossprod_solve
+
+#' Run Crossprod Solve
+#'
+#' Internal function to executes a Python script that performs matrix
+#' computations using TensorFlow with provided inputs. Retries up to three times
+#' if the output file validation fails.
+#'
+#' @param virtual_env_path character. Path to the virtual environment containing
+#'   Python and required dependencies.
+#' @param script_path character. Path to the Python script to execute.
+#' @param s1 character. Path to the input file containing s1 coordinates.
+#' @param s2 character Path to the input file containing s2 coordinates.
+#' @param postEta character. Path to the file containing the `postEta` matrix
+#'   data.
+#' @param path_out character. Path to rds file where the output results will be
+#'   saved.
+#' @param denom numeric. A denominator value used in the computation.
+#' @param chunk_size numeric (Optional). Size of chunks to process at a time.
+#'   Default is 1000.
+#' @param threshold_mb numeric (Optional). Memory threshold (in MB) to manage
+#'   processing. Default is 2000.
+#' @param use_single logical. Indicates whether to use single precision.
+#'   Defaults to `TRUE`.
+#' @param verbose logical (Optional). If `TRUE`, logs detailed information
+#'   during execution. Default is `TRUE`.
+#' @return Returns the `path_out` if successful. Returns `NULL` if all attempts
+#'   fail.
+#'
+#' @details
+#' - The function checks for the existence of required input files and the
+#' Python executable in the specified virtual environment.
+#' - Executes the Python script using `system2`.
+#' - Verifies the output file validity using `IASDT.R::CheckData`. Retries up
+#' to 3 times if the output is invalid.
+#' - Generates detailed logs if `verbose` is set to `TRUE`.
+#'
+#' @noRD
+
+run_crossprod_solve <- function(
+    virtual_env_path, script_path, s1, s2, postEta, path_out,
+    denom, chunk_size = 1000, threshold_mb = 2000,
+    use_single = TRUE, verbose = TRUE) {
+
+  Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3")
+
+  # Ensure the paths are valid
+  paths <- list(virtual_env_path, script_path, s1, s2, postEta)
+  names(paths) <- c(
+    "Virtual Environment", "Python Script", "s1", "s2", "postEta")
+  lapply(names(paths), function(p) {
+    if (!file.exists(paths[[p]])) {
+      stop(paste0(p, " does not exist: ", paths[[p]]))
+    }
+  })
+
+  # Determine the Python executable path
+  python_executable <- if (.Platform$OS.type == "windows") {
+    file.path(virtual_env_path, "Scripts", "python.exe")
+  } else {
+    file.path(virtual_env_path, "bin", "python")
+  }
+  if (!file.exists(python_executable)) {
+    stop(
+      "Python executable not found in the virtual environment.",
+      call. = FALSE)
+  }
+
+  # Construct the command to run the Python script
+  args <- c(
+    script_path,
+    "--s1", normalizePath(s1),
+    "--s2", normalizePath(s2),
+    "--postEta", normalizePath(postEta),
+    "--path_out", normalizePath(path_out),
+    "--denom", as.character(denom),
+    "--chunk_size", as.character(chunk_size),
+    "--threshold_mb", as.character(threshold_mb),
+    "--save")
+
+  # Add boolean flags conditionally
+  if (use_single) {
+    args <- c(args, "--use_single")
+  }
+  if (verbose) {
+    args <- c(args, "--verbose")
+  }
+
+  # Initialize retry logic
+  max_attempts <- 3
+  attempt <- 1
+  success <- FALSE
+
+  while (attempt <= max_attempts && !success) {
+    # Run the command and capture stdout/stderr
+    result <- system2(
+      command = python_executable, args = args,
+      stdout = TRUE, stderr = TRUE)
+
+    # Check for errors
+    if (!inherits(result, "error") || !length(result) == 0) {
+      # Check if file is valid using IASDT.R::CheckData
+      FileOkay <- IASDT.R::CheckData(path_out)
+      if (FileOkay) {
+        success <- TRUE
+      }
+    }
+
+    attempt <- attempt + 1
+  }
+
+  if (verbose) {
+    path_log <- stringr::str_replace(path_out, ".rds", ".log")
+    f <- file(path_log, open = "wb")
+    on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
+    cat(
+      "Running command:\n",
+      paste(python_executable, paste(args, collapse = " "), "\n\n"),
+      sep = "\n", file = f)
+    cat(result[-length(result)], sep = "\n", file = f)
+    # close connection to the file
+    close(f)
+  }
+
+  # If all attempts fail, return NULL
+  if (!success) {
+    if (verbose) {
+      cat("All attempts failed. Returning NULL.\n")
+    }
+    return(NULL)
+  } else {
+    return(path_out)
   }
 }

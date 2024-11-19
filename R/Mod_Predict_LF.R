@@ -201,17 +201,20 @@ Predict_LF <- function(
     Path_s1 <- file.path(Temp_Dir, paste0(Model_Name, "s1.rds"))
     Path_s2 <- file.path(Temp_Dir, paste0(Model_Name, "s2.rds"))
 
-    if (file.exists(Path_s1) && file.exists(Path_s1)) {
+    if (file.exists(Path_s1) && file.exists(Path_s2)) {
+      IASDT.R::CatTime(
+        "s1 and s2 distance matrices are already saved", Level = 2)
+    } else {
       s1 <- rL$s[modelunits, , drop = FALSE]
       s2 <- rL$s[unitsPred[indNew], , drop = FALSE]
       saveRDS(s1, file = Path_s1)
       saveRDS(s2, file = Path_s2)
     }
-    
+
     # Save D11 and D12 as qs/rds files, if not already exist on disk
     Path_D11 <- file.path(Temp_Dir, paste0(Model_Name, "D11.", TempExt))
     Path_D12 <- file.path(Temp_Dir, paste0(Model_Name, "D12.", TempExt))
-    
+
     if (file.exists(Path_D11) && file.exists(Path_D12)) {
 
       IASDT.R::CatTime(

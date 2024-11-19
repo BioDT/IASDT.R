@@ -481,9 +481,6 @@ Predict_LF <- function(
 
     if (LF_NCores == 1) {
 
-      # Sequential processing
-      IASDT.R::CatTime("Predicting Latent Factor sequentially", Level = 1)
-
       if (UseTF) {
         # Suppress TensorFlow warnings and disable optimizations
         Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3", TF_ENABLE_ONEDNN_OPTS = "0")
@@ -499,9 +496,16 @@ Predict_LF <- function(
         warmup()
       }
 
+      # Sequential processing
+      IASDT.R::CatTime("Predicting Latent Factor sequentially", Level = 1)
+
       # Making predictions sequentially
       etaPreds <- purrr::map(
-        .x = seq_len(nrow(Unique_Alpha)), .f = purrr::possibly(etaPreds_F))
+        .x = seq_len(nrow(Unique_Alpha)),
+        .f = ~ {
+          print(.x)
+          purrr::possibly(etaPreds_F(.x))
+        })
 
     } else {
 

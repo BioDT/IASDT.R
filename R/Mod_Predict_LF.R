@@ -549,13 +549,18 @@ Predict_LF <- function(
       withr::local_options(
         future.globals.maxSize = 8000 * 1024^2, cluster.timeout = 10 * 60,
         future.gc = TRUE, future.seed = TRUE)
-      c1 <- snow::makeSOCKcluster(LF_NCores)
-      on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
+      # c1 <- snow::makeSOCKcluster(LF_NCores)
+      # on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
+      c1 <- parallel::makeCluster(LF_NCores)
+      on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
+
 
       IASDT.R::CatTime("Export objects to cores", Level = 2)
-      snow::clusterExport(
+      # snow::clusterExport(
+      parallel::clusterExport(
         cl = c1,
-        list = c(
+        # list = c(
+        varlist = c(
           "Unique_Alpha", "Path_D11", "Path_D12", "Path_s1", "Path_s2",
           "indNew", "unitsPred", "postEta_File", "indOld", "modelunits",
           "TF_Environ", "UseTF", "TF_use_single", "etaPreds_F",
@@ -565,7 +570,8 @@ Predict_LF <- function(
       # Load necessary libraries and load environment if using TensorFlow
       IASDT.R::CatTime(
         "Load necessary libraries and virtual environment", Level = 2)
-      invisible(snow::clusterEvalQ(
+      # invisible(snow::clusterEvalQ(
+      invisible(parallel::clusterEvalQ(
         cl = c1,
         expr = {
           sapply(
@@ -590,11 +596,18 @@ Predict_LF <- function(
             # A lightweight function to initialize necessary modules.
             warmup()
           }
+          invisible(gc())
         }))
+
+      try(
+        on.exit(reticulate::use_python(Sys.which("python")), add = TRUE),
+        silent = TRUE)
+
 
       # Making predictions on parallel
       IASDT.R::CatTime("Making predictions on parallel", Level = 2)
-      etaPreds <- snow::clusterApplyLB(
+      # etaPreds <- snow::clusterApplyLB(
+      etaPreds <- parallel::clusterApplyLB(
         cl = c1, x = seq_len(nrow(Unique_Alpha)),
         fun = function(x) {
           # maximum number of attemtps
@@ -626,7 +639,8 @@ Predict_LF <- function(
 
       # Stop the cluster
       IASDT.R::CatTime("Stop the cluster", Level = 2)
-      snow::stopCluster(c1)
+      # snow::stopCluster(c1)
+      parallel::stopCluster(c1)
       invisible(gc())
     }
 

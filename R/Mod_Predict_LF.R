@@ -509,7 +509,33 @@ Predict_LF <- function(
       # Making predictions sequentially
       etaPreds <- purrr::map(
         .x = seq_len(nrow(Unique_Alpha)),
-        .f = ~ etaPreds_F(.x, LF_Check = LF_Check))
+        .f = function(x) {
+          # maximum number of attemtps
+          max_tries <- 5
+          attempt <- 1
+          # Initialize result
+          result <- NULL
+
+          while (attempt <= max_tries) {
+            result <- tryCatch({
+              # Use purrr::possibly around etaPreds_F call to handle errors
+              etaPreds_F(x, LF_Check = LF_Check)
+            },
+            error = function(e) {
+              # Return NULL on error to retry
+              NULL
+            })
+
+            # Exit loop if result is not NULL (successful)
+            if (!is.null(result)) {
+              break
+            }
+
+            attempt <- attempt + 1
+          }
+          # Return the result after max_tries or successful execution
+          return(result)
+        })
 
     } else {
 

@@ -504,7 +504,7 @@ Predict_LF <- function(
         .x = seq_len(nrow(Unique_Alpha)),
         .f = ~ {
           print(.x)
-          purrr::possibly(etaPreds_F(.x))
+          purrr::possibly(etaPreds_F, otherwise = NULL)(.x)
         })
 
     } else {

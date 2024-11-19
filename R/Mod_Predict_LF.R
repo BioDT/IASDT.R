@@ -364,11 +364,10 @@ Predict_LF <- function(
 
       # If the denominator is positive, perform calculations; otherwise, set
       # `eta_indNew` to zero.
-
       if (LF_Check) {
         CalcPredLF <- isFALSE(IASDT.R::CheckData(File_etaPred, warning = FALSE))
       } else {
-        CalcPredLF <- !file.exists(File_etaPred, warning = FALSE)
+        CalcPredLF <- !file.exists(File_etaPred)
       }
 
       if (Denom > 0) {

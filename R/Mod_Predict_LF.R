@@ -198,46 +198,58 @@ Predict_LF <- function(
 
     alphapw <- rL$alphapw
 
-    Path_s1 <- file.path(Temp_Dir, paste0(Model_Name, "s1.rds"))
-    Path_s2 <- file.path(Temp_Dir, paste0(Model_Name, "s2.rds"))
+    if (UseTF) {
 
-    if (file.exists(Path_s1) && file.exists(Path_s2)) {
-      IASDT.R::CatTime(
-        "s1 and s2 distance matrices are already saved", Level = 2)
-    } else {
-      s1 <- rL$s[modelunits, , drop = FALSE]
-      s2 <- rL$s[unitsPred[indNew], , drop = FALSE]
-      saveRDS(s1, file = Path_s1)
-      saveRDS(s2, file = Path_s2)
-    }
+      # Save s1 and s2 as rds files, if not already exist on disk
+      Path_s1 <- file.path(Temp_Dir, paste0(Model_Name, "s1.rds"))
+      Path_s2 <- file.path(Temp_Dir, paste0(Model_Name, "s2.rds"))
 
-    # Save D11 and D12 as qs/rds files, if not already exist on disk
-    Path_D11 <- file.path(Temp_Dir, paste0(Model_Name, "D11.", TempExt))
-    Path_D12 <- file.path(Temp_Dir, paste0(Model_Name, "D12.", TempExt))
-
-    if (file.exists(Path_D11) && file.exists(Path_D12)) {
-
-      IASDT.R::CatTime(
-        "D11 and D12 distance matrices are already saved", Level = 2)
-
-    } else {
-
-      s1 <- rL$s[modelunits, , drop = FALSE]
-      s2 <- rL$s[unitsPred[indNew], , drop = FALSE]
-      D11 <- Rfast::Dist(s1)
-      D12 <- Rfast::dista(s1, s2)
-
-      if (UseTF) {
-        saveRDS(D11, file = Path_D11)
-        saveRDS(D12, file = Path_D12)
+      if (file.exists(Path_s1) && file.exists(Path_s2)) {
+        IASDT.R::CatTime("s1 and s2 matrices are already saved", Level = 2)
       } else {
-        qs::qsave(D11, file = Path_D11, preset = "fast")
-        qs::qsave(D12, file = Path_D12, preset = "fast")
+        IASDT.R::CatTime("Saving s1 and s2 matrices", Level = 2)
+        s1 <- rL$s[modelunits, , drop = FALSE]
+        s2 <- rL$s[unitsPred[indNew], , drop = FALSE]
+        saveRDS(s1, file = Path_s1)
+        saveRDS(s2, file = Path_s2)
+        rm(rL, D11, D12, envir = environment())
       }
+      rm(rL, envir = environment())
 
-      # Clean up
-      rm(rL, s1, s2, D11, D12, envir = environment())
+      Path_D11 <- Path_D12 <- NULL
+
+    } else {
+
+      # Save D11 and D12 as qs/rds files, if not already exist on disk
+      Path_D11 <- file.path(Temp_Dir, paste0(Model_Name, "D11.", TempExt))
+      Path_D12 <- file.path(Temp_Dir, paste0(Model_Name, "D12.", TempExt))
+
+      if (file.exists(Path_D11) && file.exists(Path_D12)) {
+
+        IASDT.R::CatTime(
+          "D11 and D12 distance matrices are already saved", Level = 2)
+
+      } else {
+
+        s1 <- rL$s[modelunits, , drop = FALSE]
+        s2 <- rL$s[unitsPred[indNew], , drop = FALSE]
+        D11 <- Rfast::Dist(s1)
+        D12 <- Rfast::dista(s1, s2)
+
+        if (UseTF) {
+          saveRDS(D11, file = Path_D11)
+          saveRDS(D12, file = Path_D12)
+        } else {
+          qs::qsave(D11, file = Path_D11, preset = "fast")
+          qs::qsave(D12, file = Path_D12, preset = "fast")
+        }
+
+        # Clean up
+        rm(rL, s1, s2, D11, D12, envir = environment())
+      }
+      Path_s1 <- Path_s2 <- NULL
     }
+
 
     if (Temp_Cleanup) {
       if (Model_Name != "") {
@@ -248,14 +260,14 @@ Predict_LF <- function(
                 Temp_Dir,
                 pattern = paste0("^", Model_Name, "_postEta"),
                 full.names = TRUE) %>%
-                c(Path_D11, Path_D12) %>%
+                c(Path_s1, Path_s2) %>%
                 fs::file_delete()
             },
             silent = TRUE),
           add = TRUE)
       } else {
         on.exit(
-          try(fs::file_delete(c(Path_D11, Path_D12)), silent = TRUE),
+          try(fs::file_delete(c(Path_s1, Path_s2)), silent = TRUE),
           add = TRUE)
       }
     }
@@ -357,11 +369,10 @@ Predict_LF <- function(
           # Use TensorFlow
           if (isFALSE(IASDT.R::CheckData(File_etaPred, warning = FALSE))) {
             eta_indNew <- crossprod_solve(
-              Dist1 = Path_D11, Dist2 = Path_D12, Denom = Denom,
-              List = File, use_single = TF_use_single)
-
-            saveRDS(eta_indNew, file = File_etaPred)
-
+              s1 = Path_s1, s2 = Path_s2, denom = Denom,
+              postEta = File, use_single = TF_use_single, save = TRUE,
+              file_path = File_etaPred, verbose = FALSE)
+            # saveRDS(eta_indNew, file = File_etaPred)
           } else {
             eta_indNew <- readRDS(File_etaPred)
           }
@@ -511,9 +522,9 @@ Predict_LF <- function(
       snow::clusterExport(
         cl = c1,
         list = c(
-          "Unique_Alpha", "Path_D11", "Path_D12", "indNew", "unitsPred",
-          "postEta_File", "indOld", "modelunits", "TF_Environ", "UseTF",
-          "TF_use_single", "etaPreds_F"),
+          "Unique_Alpha", "Path_D11", "Path_D12", "Path_s1", "Path_s2",
+          "indNew", "unitsPred", "postEta_File", "indOld", "modelunits",
+          "TF_Environ", "UseTF", "TF_use_single", "etaPreds_F"),
         envir = environment())
 
       # Load necessary libraries and load environment if using TensorFlow
@@ -552,7 +563,7 @@ Predict_LF <- function(
         cl = c1, x = seq_len(nrow(Unique_Alpha)),
         fun = purrr::possibly(
           function(x) {
-            max_tries = 5
+            max_tries <- 5
             attempt <- 1
             while (attempt <= max_tries) {
               result <- tryCatch({

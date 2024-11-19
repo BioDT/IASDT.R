@@ -44,6 +44,9 @@
 #'   Defaults to `TRUE`. If `LF_OutFile` is `NULL`, this parameter cannot be set
 #'   to `FALSE` because the function needs to return the result if it is not
 #'   saved to a file.
+#' @param LF_Check Logical. If TRUE, the function checks if the output
+#'   files are already created and valid. If FALSE, the function will only check
+#'   if the files exist without checking their integrity. Default is `FALSE`.
 #' @param Verbose Logical. If TRUE, detailed output is printed. Default is
 #'   `FALSE`.
 #' @export
@@ -71,7 +74,7 @@ Predict_LF <- function(
     unitsPred, modelunits, postEta, postAlpha, rL, LF_NCores = 8,
     Temp_Dir = "TEMP2Pred", Temp_Cleanup = FALSE, Model_Name = NULL,
     UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE, LF_OutFile = NULL,
-    LF_Return = TRUE, Verbose = TRUE) {
+    LF_Return = TRUE, LF_Check = FALSE, Verbose = TRUE) {
 
   # # ..................................................................... ###
 
@@ -349,7 +352,7 @@ Predict_LF <- function(
 
     # Internal functions to predict latent factors
 
-    etaPreds_F <- function(RowNum) {
+    etaPreds_F <- function(RowNum, LF_Check = FALSE) {
       # Current denominator
       Denom <- Unique_Alpha$Denom[[RowNum]]
       # ID for latent factor
@@ -363,11 +366,17 @@ Predict_LF <- function(
       # If the denominator is positive, perform calculations; otherwise, set
       # `eta_indNew` to zero.
 
+      if (LF_Check) {
+        CalcPredLF <- isFALSE(IASDT.R::CheckData(File_etaPred, warning = FALSE))
+      } else {
+        CalcPredLF <- !file.exists(File_etaPred, warning = FALSE)
+      }
+
       if (Denom > 0) {
 
         if (UseTF) {
           # Use TensorFlow
-          if (isFALSE(IASDT.R::CheckData(File_etaPred, warning = FALSE))) {
+          if (CalcPredLF) {
             eta_indNew <- crossprod_solve(
               s1 = Path_s1, s2 = Path_s2, denom = Denom,
               postEta = File, use_single = TF_use_single, save = TRUE,
@@ -444,7 +453,7 @@ Predict_LF <- function(
 
         # Handle cases where Denom is zero by setting `eta_indNew` to zero
 
-        if (isFALSE(IASDT.R::CheckData(File_etaPred, warning = FALSE))) {
+        if (CalcPredLF) {
 
           postEta0 <- IASDT.R::LoadAs(File, nthreads = 5)
 
@@ -504,8 +513,7 @@ Predict_LF <- function(
         .x = seq_len(nrow(Unique_Alpha)),
         .f = purrr::possibly(
           .f = function(x) {
-            print(x)
-            etaPreds_F(x)
+            etaPreds_F(x, LF_Check = LF_Check)
           },
           otherwise = NULL))
 
@@ -530,7 +538,8 @@ Predict_LF <- function(
         list = c(
           "Unique_Alpha", "Path_D11", "Path_D12", "Path_s1", "Path_s2",
           "indNew", "unitsPred", "postEta_File", "indOld", "modelunits",
-          "TF_Environ", "UseTF", "TF_use_single", "etaPreds_F"),
+          "TF_Environ", "UseTF", "TF_use_single", "etaPreds_F",
+          "LF_Check"),
         envir = environment())
 
       # Load necessary libraries and load environment if using TensorFlow
@@ -568,26 +577,34 @@ Predict_LF <- function(
       etaPreds <- snow::clusterApplyLB(
         cl = c1, x = seq_len(nrow(Unique_Alpha)),
         fun = function(x) {
+          # maximum number of attemtps
           max_tries <- 5
           attempt <- 1
-          result <- NULL  # Initialize result
+          # Initialize result
+          result <- NULL
 
           while (attempt <= max_tries) {
             result <- tryCatch({
-              # Try to run etaPreds_F and return result if successful
-              return(purrr::possibly(etaPreds_F, otherwise = NULL)(x))
+              # Use purrr::possibly around etaPreds_F call to handle errors
+              purrr::possibly(
+                .f = function(y) {
+                  etaPreds_F(y, LF_Check = LF_Check)
+                },
+                otherwise = NULL)(x)
             }, error = function(e) {
               # Return NULL on error to retry
               NULL
             })
 
-            # Exit loop if successful
+            # Exit loop if result is not NULL (successful)
             if (!is.null(result)) {
               break
             }
+
             attempt <- attempt + 1
           }
-          return(result)  # Return the result after max_tries or successful execution
+          # Return the result after max_tries or successful execution
+          return(result)
         })
 
       # Stop the cluster

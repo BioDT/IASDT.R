@@ -28,6 +28,7 @@ Predict_Hmsc(
   LF_InputFile = NULL,
   LF_Only = FALSE,
   LF_NCores = NCores,
+  LF_Check = FALSE,
   Pred_Dir = NULL,
   Pred_PA = NULL,
   Pred_XY = NULL,
@@ -65,6 +66,9 @@ effects}
 
 \item{expected}{boolean flag indicating whether to return the location
 parameter of the observation models or sample the values from those.}
+
+\item{NCores}{Integer specifying the number of cores to use for parallel
+processing. Defaults to 8.}
 
 \item{Model_Name}{Character string used as a prefix for temporary file names.
 Defaults to NULL, in which case no prefix is used.}
@@ -112,6 +116,10 @@ can be loaded in other predictions when needed.}
 
 \item{LF_NCores}{Integer specifying the number of cores to use for parallel
 processing. Defaults to 8.}
+
+\item{LF_Check}{Logical. If TRUE, the function checks if the output
+files are already created and valid. If FALSE, the function will only check
+if the files exist without checking their integrity. Default is \code{FALSE}.}
 
 \item{Pred_Dir}{a character string specifying the directory where the
 predictions will be saved. Defaults to \code{NULL}, which saves model

@@ -29,6 +29,8 @@
 #'   effects
 #' @param expected boolean flag indicating whether to return the location
 #'   parameter of the observation models or sample the values from those.
+#' @param NCores Integer specifying the number of cores to use for parallel
+#'   processing. Defaults to 8.
 #' @param Pred_Dir a character string specifying the directory where the
 #'   predictions will be saved. Defaults to `NULL`, which saves model
 #'   predictions to "Model_Prediction" folder of the current working directory.
@@ -67,9 +69,9 @@ Predict_Hmsc <- function(
     Model_Name = "Train", Temp_Dir = "TEMP2Pred", Temp_Cleanup = FALSE,
     RC = NULL, UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE,
     LF_OutFile = NULL, LF_Return = TRUE, LF_InputFile = NULL, LF_Only = FALSE,
-    LF_NCores = NCores, Pred_Dir = NULL, Pred_PA = NULL, Pred_XY = NULL,
-    Evaluate = FALSE, Eval_Name = NULL, Eval_Dir = "Evaluation",
-    Verbose = TRUE) {
+    LF_NCores = NCores, LF_Check = FALSE, Pred_Dir = NULL,
+    Pred_PA = NULL, Pred_XY = NULL, Evaluate = FALSE, Eval_Name = NULL,
+    Eval_Dir = "Evaluation", Verbose = TRUE) {
 
   # # ..................................................................... ###
 
@@ -370,7 +372,7 @@ Predict_Hmsc <- function(
         LF_NCores = LF_NCores, Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup,
         Model_Name = Model_Name,
         UseTF = UseTF, TF_Environ = TF_Environ, TF_use_single = TF_use_single,
-        LF_OutFile = LF_OutFile, LF_Return = LF_Return)
+        LF_OutFile = LF_OutFile, LF_Return = LF_Return, LF_Check = LF_Check)
 
       if (Temp_Cleanup) {
         try(fs::file_delete(postEta_file), silent = TRUE)

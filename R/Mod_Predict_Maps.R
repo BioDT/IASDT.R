@@ -53,7 +53,7 @@ Predict_Maps <- function(
     Path_Model = NULL, Hab_Abb = NULL, EnvFile = ".env", FromHPC = TRUE,
     NCores = 8, Pred_Clamp = TRUE, Fix_Efforts = "mean", Pred_NewSites = TRUE,
     UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE, LF_NCores = NCores,
-    Temp_Dir = "TEMP2Pred", Temp_Cleanup = FALSE,
+    LF_Check = FALSE, Temp_Dir = "TEMP2Pred", Temp_Cleanup = FALSE,
     CC_Models = c(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
       "MRI-ESM2-0", "UKESM1-0-LL"),
@@ -467,9 +467,9 @@ Predict_Maps <- function(
       Path_Model = Path_Model, Gradient = Gradient, expected = TRUE,
       NCores = NCores, Model_Name = paste0("LF_", Hab_Abb, "_Test"),
       Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup, UseTF = UseTF,
-      TF_Environ = TF_Environ, LF_OutFile = Path_Test_LF, LF_Only = TRUE, 
-      LF_NCores = LF_NCores, TF_use_single = TF_use_single, Evaluate = FALSE, 
-      Verbose = FALSE)
+      TF_Environ = TF_Environ, LF_OutFile = Path_Test_LF, 
+      TF_use_single = TF_use_single, LF_Only = TRUE, LF_NCores = LF_NCores, 
+      LF_Check = LF_Check, Evaluate = FALSE, Verbose = FALSE)
 
     rm(Gradient, Preds_LF, envir = environment())
 
@@ -619,7 +619,7 @@ Predict_Maps <- function(
             expected = TRUE, NCores = NCores, Model_Name = Model_Name_Train,
             Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup, UseTF = UseTF,
             TF_Environ = TF_Environ, TF_use_single = TF_use_single,
-            LF_Return = TRUE, LF_NCores = LF_NCores, 
+            LF_Return = TRUE, LF_NCores = LF_NCores, LF_Check = LF_Check,
             Pred_Dir = Path_Prediction, Pred_PA = Train_PA, Pred_XY = Train_XY, 
             Evaluate = Evaluate, Eval_Name = NULL, Eval_Dir = Path_Eval, 
             Verbose = FALSE)
@@ -648,7 +648,7 @@ Predict_Maps <- function(
               Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup, UseTF = UseTF,
               TF_Environ = TF_Environ, TF_use_single = TF_use_single,
               LF_Return = TRUE, LF_InputFile = Path_Test_LF, 
-              LF_NCores = LF_NCores, Verbose = FALSE, 
+              LF_NCores = LF_NCores, LF_Check = LF_Check, Verbose = FALSE, 
               Pred_Dir = Path_Prediction, Evaluate = FALSE,
               Pred_XY = sf::st_drop_geometry(Test_XY))
           }

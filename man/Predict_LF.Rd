@@ -19,6 +19,7 @@ Predict_LF(
   TF_use_single = FALSE,
   LF_OutFile = NULL,
   LF_Return = TRUE,
+  LF_Check = FALSE,
   Verbose = TRUE
 )
 }
@@ -70,6 +71,10 @@ This should end with either \code{qs} or \code{RData}.}
 Defaults to \code{TRUE}. If \code{LF_OutFile} is \code{NULL}, this parameter cannot be set
 to \code{FALSE} because the function needs to return the result if it is not
 saved to a file.}
+
+\item{LF_Check}{Logical. If TRUE, the function checks if the output
+files are already created and valid. If FALSE, the function will only check
+if the files exist without checking their integrity. Default is \code{FALSE}.}
 
 \item{Verbose}{Logical. If TRUE, detailed output is printed. Default is
 \code{FALSE}.}

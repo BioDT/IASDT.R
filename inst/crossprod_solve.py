@@ -540,7 +540,7 @@ def crossprod_solve(s1, s2, denom, postEta, use_single=False, save=False, file_p
     # Print processing time
     # |||||||||||||||||||||||||||||||||||
     elapsed_time = time.time() - start_time
-    print_time(f"  >>  Finished in {elapsed_time:.1f} seconds", True)
+    print_time(f"  >>  Finished in {elapsed_time:.1f} seconds", verbose)
 
     return results
 

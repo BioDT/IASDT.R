@@ -17,6 +17,7 @@ Predict_Maps(
   TF_Environ = NULL,
   TF_use_single = FALSE,
   LF_NCores = NCores,
+  LF_Check = FALSE,
   Temp_Dir = "TEMP2Pred",
   Temp_Cleanup = FALSE,
   CC_Models = c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0",
@@ -66,6 +67,10 @@ the TF calculations. Defaults to \code{FALSE}.}
 
 \item{LF_NCores}{Integer specifying the number of cores to use for parallel
 processing. Defaults to 8.}
+
+\item{LF_Check}{Logical. If TRUE, the function checks if the output
+files are already created and valid. If FALSE, the function will only check
+if the files exist without checking their integrity. Default is \code{FALSE}.}
 
 \item{Temp_Dir}{Character string specifying the path for temporary storage of
 intermediate files.}

@@ -197,7 +197,7 @@ Predict_LF <- function(
 
     # Calculate D11 and D12 only once
 
-    IASDT.R::CatTime("Calculate/save D11 and D12 distance matrices", Level = 1)
+    IASDT.R::CatTime("Calculate/save necessary matrices", Level = 1)
 
     alphapw <- rL$alphapw
 
@@ -215,7 +215,6 @@ Predict_LF <- function(
         s2 <- rL$s[unitsPred[indNew], , drop = FALSE]
         saveRDS(s1, file = Path_s1)
         saveRDS(s2, file = Path_s2)
-        rm(rL, D11, D12, envir = environment())
       }
       rm(rL, envir = environment())
 
@@ -511,11 +510,7 @@ Predict_LF <- function(
       # Making predictions sequentially
       etaPreds <- purrr::map(
         .x = seq_len(nrow(Unique_Alpha)),
-        .f = purrr::possibly(
-          .f = function(x) {
-            etaPreds_F(x, LF_Check = LF_Check)
-          },
-          otherwise = NULL))
+        .f = ~ etaPreds_F(.x, LF_Check = LF_Check))
 
     } else {
 
@@ -544,7 +539,7 @@ Predict_LF <- function(
 
       # Load necessary libraries and load environment if using TensorFlow
       IASDT.R::CatTime(
-        "Load necessary libraries and load environment", Level = 2)
+        "Load necessary libraries and virtual environment", Level = 2)
       invisible(snow::clusterEvalQ(
         cl = c1,
         expr = {
@@ -586,12 +581,9 @@ Predict_LF <- function(
           while (attempt <= max_tries) {
             result <- tryCatch({
               # Use purrr::possibly around etaPreds_F call to handle errors
-              purrr::possibly(
-                .f = function(y) {
-                  etaPreds_F(y, LF_Check = LF_Check)
-                },
-                otherwise = NULL)(x)
-            }, error = function(e) {
+              etaPreds_F(x, LF_Check = LF_Check)
+            },
+            error = function(e) {
               # Return NULL on error to retry
               NULL
             })

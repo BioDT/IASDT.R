@@ -288,16 +288,26 @@ Predict_Hmsc <- function(
   IASDT.R::CatTime("Free some memory")
   Model$postList <- Model$YScaled <- Model$X <- Model$XScaled <- NULL
 
+  Mod_nr <- Model$nr
+  Mod_dfPi <- Model$dfPi
+
+  IASDT.R::CatTime("Save smaller version of the model object", Level = 1)
+  # Save smaller version of the model object for later use
+  Model_File_small <- file.path(Temp_Dir, "Model_small.qs")
+  qs::qsave(Model, file = Model_File_small, preset = "fast")
+  rm(Model, envir = environment())
+  invisible(gc())
+  
   # # ..................................................................... ###
 
   IASDT.R::CatTime("Predict Latent Factor")
 
-  predPostEta <- vector("list", Model$nr)
-  PiNew <- matrix(NA, nrow(dfPiNew), Model$nr)
+  predPostEta <- vector("list", Mod_nr)
+  PiNew <- matrix(NA, nrow(dfPiNew), Mod_nr)
 
   # Whether to use `Predict_LF` or read its results from file
-  if (!is.null(Model$nr)) {
-    if (is.null(LF_InputFile) || length(LF_InputFile) != Model$nr) {
+  if (!is.null(Mod_nr)) {
+    if (is.null(LF_InputFile) || length(LF_InputFile) != Mod_nr) {
       CalcLF <- TRUE
     } else {
       CalcLF <- FALSE
@@ -308,7 +318,7 @@ Predict_Hmsc <- function(
   # using coordinates = "i" in constructGradient
   if (!is.null(RC)) {
     if (RC == "i") {
-      for (r in seq_len(Model$nr)) {
+      for (r in seq_len(Mod_nr)) {
         if (r == 1) {
           IASDT.R::CatTime(
             "LF prediction for response curve with infinite coordinates",
@@ -325,10 +335,15 @@ Predict_Hmsc <- function(
     }
   }
 
+
+
+# Path_Model
+
+
   # Calculate latent factors
   if (CalcLF) {
 
-    for (r in seq_len(Model$nr)) {
+    for (r in seq_len(Mod_nr)) {
 
       postAlpha <- lapply(post, function(c) c$Alpha[[r]])
 
@@ -345,7 +360,7 @@ Predict_Hmsc <- function(
       }
 
       # Save post to file and load it later
-      if (r == Model$nr) {
+      if (r == Mod_nr) {
         post_file <- file.path(Temp_Dir, paste0(Model_Name, "_post.qs"))
 
         if (isFALSE(IASDT.R::CheckData(post_file, warning = FALSE))) {
@@ -370,7 +385,7 @@ Predict_Hmsc <- function(
 
       predPostEta[[r]] <- IASDT.R::Predict_LF(
         unitsPred = levels(dfPiNew[, r]),
-        modelunits = levels(Model$dfPi[, r]),
+        modelunits = levels(Mod_dfPi[, r]),
         postEta = postEta_file, postAlpha = postAlpha, rL = rL[[r]],
         LF_NCores = LF_NCores, Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup,
         Model_Name = Model_Name,
@@ -393,7 +408,7 @@ Predict_Hmsc <- function(
       IASDT.R::CatTime(
         paste0("Loading LF prediction from disk: `", LF_InputFile, "`"),
         Level = 1)
-      for (r in seq_len(Model$nr)) {
+      for (r in seq_len(Mod_nr)) {
         predPostEta[[r]] <- IASDT.R::LoadAs(LF_InputFile[[r]], nthreads = 5)
         rowNames <- rownames(predPostEta[[r]][[1]])
         PiNew[, r] <- fastmatch::fmatch(dfPiNew[, r], rowNames)
@@ -401,7 +416,7 @@ Predict_Hmsc <- function(
     }
   }
 
-  if (Model$nr > 0) {
+  if (Mod_nr > 0) {
     ppEta <- simplify2array(predPostEta)
   } else {
     ppEta <- matrix(list(), predN, 0)
@@ -423,6 +438,9 @@ Predict_Hmsc <- function(
     IASDT.R::CatTime("Loading post from disk", Level = 1)
     post <- qs::qread(post_file, nthreads = 5)
   }
+  
+  # Read model object from disk
+  Model <- qs::qread(Model_File_small, nthreads = 5)
 
   # prediction data for response curves
   if (!is.null(RC)) {
@@ -799,10 +817,10 @@ get1prediction <- function(
     }
   )
 
-  LRan <- vector("list", object$nr)
-  Eta <- vector("list", object$nr)
+  LRan <- vector("list", Mod_nr)
+  Eta <- vector("list", Mod_nr)
 
-  for (r in seq_len(object$nr)) {
+  for (r in seq_len(Mod_nr)) {
     Eta[[r]] <- predPostEta[[r]]
 
     if (rL[[r]]$xDim == 0) {
@@ -843,7 +861,7 @@ get1prediction <- function(
         distr = object$distr, rL = rL
       )
     }
-    for (r in seq_len(object$nr)) {
+    for (r in seq_len(Mod_nr)) {
       if (rL[[r]]$xDim == 0) {
         LRan[[r]] <- Eta[[r]][as.character(dfPiNew[, r]), ] %*%
           sam$Lambda[[r]]

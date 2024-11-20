@@ -434,10 +434,6 @@ Predict_Maps <- function(
 
   IASDT.R::CatTime("Predict latent factor for new locations")
 
-  # For debugging
-  IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
-
-
   if (!file.exists(Path_Test_LF) && Pred_NewSites) {
 
     IASDT.R::CatTime("Predicting latent factor", Line = 1)
@@ -846,9 +842,6 @@ Predict_Maps <- function(
   IASDT.R::CatTime("   Making predictions")
   IASDT.R::CatSep(Char = "=")
 
-  # For debgging
-  IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
-
   Grid10 <- terra::unwrap(IASDT.R::LoadAs(Path_GridR))
 
   Prediction_Summary <- purrr::map_dfr(
@@ -866,10 +859,6 @@ Predict_Maps <- function(
   # Ensemble model predictions ------
 
   IASDT.R::CatTime("\nEnsemble model predictions")
-
-  # For debgging
-  IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
-
 
   IASDT.R::CatTime("Prepare working on parallel", Level = 1)
 

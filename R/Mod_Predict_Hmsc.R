@@ -290,11 +290,12 @@ Predict_Hmsc <- function(
 
   Mod_nr <- Model$nr
   Mod_dfPi <- Model$dfPi
-
-  IASDT.R::CatTime("Save smaller version of the model object", Level = 1)
+  
   # Save smaller version of the model object for later use
   Model_File_small <- file.path(Temp_Dir, "Model_small.qs")
-  qs::qsave(Model, file = Model_File_small, preset = "fast")
+  if (!file.exists(Model_File_small)) {
+    IASDT.R::CatTime("Save smaller version of the model object", Level = 1)qs::qsave(Model, file = Model_File_small, preset = "fast")
+  }
   rm(Model, envir = environment())
   invisible(gc())
   
@@ -376,9 +377,6 @@ Predict_Hmsc <- function(
         IASDT.R::CatTime("LF prediction using `Predict_LF`", Level = 1)
       }
 
-      # For debugging
-      IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
-
       predPostEta[[r]] <- IASDT.R::Predict_LF(
         unitsPred = levels(dfPiNew[, r]),
         modelunits = levels(Mod_dfPi[, r]),
@@ -430,9 +428,6 @@ Predict_Hmsc <- function(
 
   IASDT.R::CatTime("Predicting")
 
-  # For debugging
-  IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
-
   if (!exists("post")) {
     IASDT.R::CatTime("Loading post from disk", Level = 1)
     post <- qs::qread(post_file, nthreads = 5)
@@ -479,9 +474,6 @@ Predict_Hmsc <- function(
     paste0("Preparing working on parallel using ", NCores, " cores"),
     Level = 1)
 
-  # For debugging
-  IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
-
   seeds <- sample.int(.Machine$integer.max, predN)
 
   c1 <- snow::makeSOCKcluster(NCores)
@@ -490,7 +482,7 @@ Predict_Hmsc <- function(
   snow::clusterExport(
     cl = c1,
     list = c(
-      "Model", "X", "XRRR", "Yc", "Loff", "rL", "rLPar", "PiNew",
+      "Model", "X", "XRRR", "Yc", "Loff", "rL", "rLPar", "PiNew", 
       "dfPiNew", "nyNew", "expected", "mcmcStep", "seeds", "chunk_size",
       "Chunks", "Temp_Dir", "Model_Name", "Temp_Cleanup", "get1prediction"),
     envir = environment())
@@ -507,9 +499,6 @@ Predict_Hmsc <- function(
     }))
 
   IASDT.R::CatTime("Making predictions on parallel", Level = 1)
-
-  # For debugging
-  IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
 
   pred <- snow::parLapply(
     cl = c1,
@@ -590,9 +579,6 @@ Predict_Hmsc <- function(
   # # ..................................................................... ###
 
   IASDT.R::CatTime("Summarizing prediction outputs / Evaluation", Level = 1)
-
-  # For debugging
-  IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
 
   Eval_DT <- dplyr::select(pred, -Chunk) %>%
     dplyr::group_nest(Sp, IAS_ID) %>%
@@ -702,9 +688,6 @@ Predict_Hmsc <- function(
 
   # Save predictions for all species in a single file
   IASDT.R::CatTime("Save predictions for all species in a single file")
-
-  # For debugging
-  IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
 
   Eval_DT <- dplyr::bind_rows(Eval_DT)
 
@@ -828,6 +811,7 @@ get1prediction <- function(
     }
   )
 
+  Mod_nr <- Model$nr
   LRan <- vector("list", Mod_nr)
   Eta <- vector("list", Mod_nr)
 
@@ -841,7 +825,7 @@ get1prediction <- function(
       for (k in 1:rL[[r]]$xDim) {
         LRan[[r]] <- LRan[[r]] +
           (Eta[[r]][as.character(dfPiNew[, r]), ] *
-             rL[[r]]$x[as.character(dfPiNew[, r]), k]) %*%
+            rL[[r]]$x[as.character(dfPiNew[, r]), k]) %*%
           sam$Lambda[[r]][, , k]
       }
     }
@@ -881,7 +865,7 @@ get1prediction <- function(
         for (k in 1:rL[[r]]$xDim) {
           LRan[[r]] <- LRan[[r]] +
             (Eta[[r]][as.character(dfPiNew[, r]), ] *
-               rL[[r]]$x[as.character(dfPiNew[, r]), k]) %*%
+              rL[[r]]$x[as.character(dfPiNew[, r]), k]) %*%
             sam$Lambda[[r]][, , k]
         }
       }

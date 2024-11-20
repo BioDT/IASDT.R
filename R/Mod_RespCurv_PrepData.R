@@ -385,10 +385,6 @@ RespCurv_PrepData <- function(
 
     File_LF <- file.path(Path_RC_DT, "ResCurv_LF.RData")
 
-
-    # For debgging
-    IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
-
     if (isFALSE(IASDT.R::CheckData(File_LF, warning = FALSE))) {
 
       IASDT.R::InfoChunk(
@@ -406,19 +402,16 @@ RespCurv_PrepData <- function(
       rm(Model, envir = environment())
       invisible(gc())
 
-      IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
-
-
       IASDT.R::CatTime("Predicting LF")
       Model_LF <- IASDT.R::Predict_Hmsc(
         Path_Model = Path_Model, Gradient = Gradient_c, expected = TRUE,
         NCores = NCores, Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup,
         Model_Name = "RC_c", RC = "c", UseTF = UseTF, TF_Environ = TF_Environ,
-        LF_OutFile = File_LF, LF_NCores = LF_NCores,
+        LF_OutFile = File_LF, LF_NCores = LF_NCores, LF_Check = LF_Check,
         TF_use_single = TF_use_single, Verbose = Verbose, Pred_Dir = Temp_Dir)
 
-      invisible(gc())
       rm(Model_LF, Gradient_c, envir = environment())
+      invisible(gc())
 
     } else {
       IASDT.R::CatTime(

@@ -377,9 +377,6 @@ Predict_LF <- function(
             PythonScript <- system.file(
               "crossprod_solve.py", package = "IASDT.R")
 
-            # For debugging
-            IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
-
             eta_indNew0 <- run_crossprod_solve(
               virtual_env_path = TF_Environ, script_path = PythonScript,
               s1 = Path_s1, s2 = Path_s2, denom = Denom, postEta = File,
@@ -388,9 +385,6 @@ Predict_LF <- function(
           } else {
             eta_indNew <- readRDS(File_etaPred)
           }
-
-          # For debugging
-          IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
 
           eta_indNew <- purrr::map(
             .x = seq_along(eta_indNew),
@@ -458,7 +452,6 @@ Predict_LF <- function(
       } else {
 
         # Handle cases where Denom is zero by setting `eta_indNew` to zero
-
         if (CalcPredLF) {
 
           postEta0 <- IASDT.R::LoadAs(File, nthreads = 5)
@@ -493,9 +486,6 @@ Predict_LF <- function(
     # # .................................................................... ###
 
     # Predict latent factors
-
-    # For debgging
-    IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
 
     if (LF_NCores == 1) {
 
@@ -549,10 +539,6 @@ Predict_LF <- function(
       # on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
       c1 <- parallel::makeCluster(LF_NCores)
       on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
-
-
-      # For debugging
-      IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
 
       IASDT.R::CatTime("Export objects to cores", Level = 2)
       # snow::clusterExport(
@@ -737,6 +723,11 @@ run_crossprod_solve <- function(
 
   Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3")
 
+  if (is.null(script_path)) {
+    script_path <- system.file("crossprod_solve.py", package = "IASDT.R")
+  }
+
+
   # Ensure the paths are valid
   paths <- list(virtual_env_path, script_path, s1, s2, postEta)
   names(paths) <- c(
@@ -746,9 +737,6 @@ run_crossprod_solve <- function(
       stop(paste0(p, " does not exist: ", paths[[p]]))
     }
   })
-
-  # For debugging
-  IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
 
   # Determine the Python executable path
   python_executable <- if (.Platform$OS.type == "windows") {
@@ -786,9 +774,6 @@ run_crossprod_solve <- function(
   max_attempts <- 3
   attempt <- 1
   success <- FALSE
-
-  # For debugging
-  IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
 
   while (attempt <= max_attempts && !success) {
     # Run the command and capture stdout/stderr

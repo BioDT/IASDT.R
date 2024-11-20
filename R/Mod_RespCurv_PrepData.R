@@ -406,6 +406,9 @@ RespCurv_PrepData <- function(
       rm(Model, envir = environment())
       invisible(gc())
 
+      IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
+
+
       IASDT.R::CatTime("Predicting LF")
       Model_LF <- IASDT.R::Predict_Hmsc(
         Path_Model = Path_Model, Gradient = Gradient_c, expected = TRUE,

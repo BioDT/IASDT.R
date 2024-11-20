@@ -335,11 +335,6 @@ Predict_Hmsc <- function(
     }
   }
 
-
-
-# Path_Model
-
-
   # Calculate latent factors
   if (CalcLF) {
 
@@ -351,6 +346,7 @@ Predict_Hmsc <- function(
       # the unnecessary copying of the postEta object to all cores
       postEta_file <- file.path(
         Temp_Dir, paste0(Model_Name, "_r", r, "_postEta.qs"))
+      
       if (isFALSE(IASDT.R::CheckData(postEta_file, warning = FALSE))) {
         IASDT.R::CatTime("Save postEta to file", Level = 1)
         postEta <- lapply(post, function(c) c$Eta[[r]])
@@ -380,7 +376,7 @@ Predict_Hmsc <- function(
         IASDT.R::CatTime("LF prediction using `Predict_LF`", Level = 1)
       }
 
-      # For debgging
+      # For debugging
       IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
 
       predPostEta[[r]] <- IASDT.R::Predict_LF(
@@ -434,6 +430,9 @@ Predict_Hmsc <- function(
 
   IASDT.R::CatTime("Predicting")
 
+  # For debugging
+  IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
+
   if (!exists("post")) {
     IASDT.R::CatTime("Loading post from disk", Level = 1)
     post <- qs::qread(post_file, nthreads = 5)
@@ -480,6 +479,9 @@ Predict_Hmsc <- function(
     paste0("Preparing working on parallel using ", NCores, " cores"),
     Level = 1)
 
+  # For debugging
+  IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
+
   seeds <- sample.int(.Machine$integer.max, predN)
 
   c1 <- snow::makeSOCKcluster(NCores)
@@ -505,6 +507,9 @@ Predict_Hmsc <- function(
     }))
 
   IASDT.R::CatTime("Making predictions on parallel", Level = 1)
+
+  # For debugging
+  IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
 
   pred <- snow::parLapply(
     cl = c1,
@@ -585,6 +590,9 @@ Predict_Hmsc <- function(
   # # ..................................................................... ###
 
   IASDT.R::CatTime("Summarizing prediction outputs / Evaluation", Level = 1)
+
+  # For debugging
+  IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
 
   Eval_DT <- dplyr::select(pred, -Chunk) %>%
     dplyr::group_nest(Sp, IAS_ID) %>%
@@ -694,6 +702,9 @@ Predict_Hmsc <- function(
 
   # Save predictions for all species in a single file
   IASDT.R::CatTime("Save predictions for all species in a single file")
+
+  # For debugging
+  IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
 
   Eval_DT <- dplyr::bind_rows(Eval_DT)
 

@@ -812,7 +812,7 @@ get1prediction <- function(
     }
   )
 
-  Mod_nr <- Model$nr
+  Mod_nr <- object$nr
   LRan <- vector("list", Mod_nr)
   Eta <- vector("list", Mod_nr)
 

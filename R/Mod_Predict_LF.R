@@ -253,25 +253,19 @@ Predict_LF <- function(
     }
 
 
+    # Clean up temporary files after finishing calculations
     if (Temp_Cleanup) {
-      if (Model_Name != "") {
-        on.exit(
-          try(
-            expr = {
-              list.files(
-                Temp_Dir,
-                pattern = paste0("^", Model_Name, "_postEta"),
-                full.names = TRUE) %>%
-                c(Path_s1, Path_s2) %>%
-                fs::file_delete()
-            },
-            silent = TRUE),
-          add = TRUE)
-      } else {
-        on.exit(
-          try(fs::file_delete(c(Path_s1, Path_s2)), silent = TRUE),
-          add = TRUE)
-      }
+      on.exit(
+        try(
+          expr = {
+            list.files(
+              Temp_Dir, pattern = paste0("^", Model_Name, "_postEta"),
+              full.names = TRUE) %>%
+              c(Path_s1, Path_s2) %>%
+              fs::file_delete()
+          },
+          silent = TRUE),
+        add = TRUE)
     }
 
     invisible(gc())
@@ -373,6 +367,10 @@ Predict_LF <- function(
       if (Denom > 0) {
 
         if (UseTF) {
+          
+          # Suppress TensorFlow warnings and disable optimizations
+          Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3", TF_ENABLE_ONEDNN_OPTS = "0")
+
           # Use TensorFlow
           if (CalcPredLF) {
 
@@ -490,6 +488,9 @@ Predict_LF <- function(
 
     # Predict latent factors
 
+    # For debgging
+    IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
+
     if (LF_NCores == 1) {
 
       # Sequential processing
@@ -544,6 +545,9 @@ Predict_LF <- function(
       on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
 
 
+      # For debgging
+      IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
+
       IASDT.R::CatTime("Export objects to cores", Level = 2)
       # snow::clusterExport(
       parallel::clusterExport(
@@ -557,8 +561,7 @@ Predict_LF <- function(
         envir = environment())
 
       # Load necessary libraries and load environment if using TensorFlow
-      IASDT.R::CatTime(
-        "Load necessary libraries and virtual environment", Level = 2)
+      IASDT.R::CatTime("Load necessary libraries", Level = 2)
       # invisible(snow::clusterEvalQ(
       invisible(parallel::clusterEvalQ(
         cl = c1,
@@ -568,6 +571,7 @@ Predict_LF <- function(
               "Rcpp", "RcppArmadillo", "dplyr", "tidyr", "tibble",
               "Matrix", "Hmsc", "qs", "fs", "purrr", "IASDT.R"),
             library, character.only = TRUE)
+            invisible(gc())
         }))
 
       # Making predictions on parallel
@@ -599,6 +603,7 @@ Predict_LF <- function(
 
             attempt <- attempt + 1
           }
+          
           # Return the result after max_tries or successful execution
           return(result)
         })

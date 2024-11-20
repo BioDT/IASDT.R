@@ -365,6 +365,9 @@ Predict_Hmsc <- function(
         IASDT.R::CatTime("LF prediction using `Predict_LF`", Level = 1)
       }
 
+      # For debgging
+      IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
+
       predPostEta[[r]] <- IASDT.R::Predict_LF(
         unitsPred = levels(dfPiNew[, r]),
         modelunits = levels(Model$dfPi[, r]),
@@ -548,7 +551,7 @@ Predict_Hmsc <- function(
           .)
 
       if (Temp_Cleanup) {
-        try(fs::file_delete(ChunkFile))
+        try(fs::file_delete(ChunkFile), silent = TRUE)
       }
 
       rm(PredChunk, envir = environment())

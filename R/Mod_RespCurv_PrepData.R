@@ -385,6 +385,10 @@ RespCurv_PrepData <- function(
 
     File_LF <- file.path(Path_RC_DT, "ResCurv_LF.RData")
 
+
+    # For debgging
+    IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
+
     if (isFALSE(IASDT.R::CheckData(File_LF, warning = FALSE))) {
 
       IASDT.R::InfoChunk(

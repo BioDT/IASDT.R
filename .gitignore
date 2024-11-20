@@ -8,3 +8,4 @@ S_*.txt
 S_*.RData
 .Renviron
 IASDT.R.code-workspace
+.Rprofile

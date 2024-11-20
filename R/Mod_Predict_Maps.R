@@ -434,7 +434,7 @@ Predict_Maps <- function(
 
   IASDT.R::CatTime("Predict latent factor for new locations")
 
-  # For debgging
+  # For debugging
   IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
 
 
@@ -464,7 +464,8 @@ Predict_Maps <- function(
       hM = Model, XDataNew = as.data.frame(Test_X),
       sDataNew = list(sample = as.data.frame(Test_XY)))
 
-    rm(Predict_DF_Test, Test_X, Test_XY, envir = environment())
+    rm(Predict_DF_Test, Test_X, Test_XY, Model, envir = environment())
+    invisible(gc())
 
     # Predicting latent factor only -- no predictions are made
     Preds_LF <- IASDT.R::Predict_Hmsc(
@@ -478,16 +479,16 @@ Predict_Maps <- function(
     rm(Gradient, Preds_LF, envir = environment())
 
   } else {
-
     if (Pred_NewSites) {
       IASDT.R::CatTime("LF prediction is already available on disk", Level = 1)
     } else {
       IASDT.R::CatTime("LF prediction will NOT be made", Level = 1)
     }
+    
+    rm(Model, envir = environment())
+    invisible(gc())
   }
 
-  rm(Model, envir = environment())
-  invisible(gc())
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -541,6 +542,9 @@ Predict_Maps <- function(
     # Path for saving tif files of the current option
     Path_Prediction_tif <- file.path(Path_Prediction, Option_Name)
     fs::dir_create(Path_Prediction_tif)
+
+    rm(StaticPredictors, envir = environment())
+    invisible(gc())
 
     # ______________________________________________
     # ______________________________________________
@@ -830,6 +834,9 @@ Predict_Maps <- function(
       return()
   }
 
+  rm(Model_Coords)
+  invisible(gc())
+
   # # ..................................................................... ###
   # # ..................................................................... ###
 
@@ -849,7 +856,7 @@ Predict_Maps <- function(
     dplyr::full_join(Prediction_Options, ., by = "Name") %>%
     dplyr::select(-"FilePath")
 
-  rm(Predict_Internal, StaticPredictors, Grid10, envir = environment())
+  rm(Predict_Internal, Grid10, envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###

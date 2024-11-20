@@ -377,6 +377,9 @@ Predict_LF <- function(
             PythonScript <- system.file(
               "crossprod_solve.py", package = "IASDT.R")
 
+            # For debugging
+            IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
+
             eta_indNew0 <- run_crossprod_solve(
               virtual_env_path = TF_Environ, script_path = PythonScript,
               s1 = Path_s1, s2 = Path_s2, denom = Denom, postEta = File,
@@ -385,6 +388,9 @@ Predict_LF <- function(
           } else {
             eta_indNew <- readRDS(File_etaPred)
           }
+
+          # For debugging
+          IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
 
           eta_indNew <- purrr::map(
             .x = seq_along(eta_indNew),
@@ -545,7 +551,7 @@ Predict_LF <- function(
       on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
 
 
-      # For debgging
+      # For debugging
       IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
 
       IASDT.R::CatTime("Export objects to cores", Level = 2)
@@ -741,6 +747,9 @@ run_crossprod_solve <- function(
     }
   })
 
+  # For debugging
+  IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
+
   # Determine the Python executable path
   python_executable <- if (.Platform$OS.type == "windows") {
     file.path(virtual_env_path, "Scripts", "python.exe")
@@ -777,6 +786,9 @@ run_crossprod_solve <- function(
   max_attempts <- 3
   attempt <- 1
   success <- FALSE
+
+  # For debugging
+  IASDT.R::AllObjSizes(InFunction = TRUE, GreaterThan = 1)
 
   while (attempt <= max_attempts && !success) {
     # Run the command and capture stdout/stderr

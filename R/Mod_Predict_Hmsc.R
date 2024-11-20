@@ -133,7 +133,7 @@ Predict_Hmsc <- function(
   # # ..................................................................... ###
 
   # Combines a list of single or several MCMC chains into a single chain
-  IASDT.R::CatTime("Combines list of posteriors")
+  IASDT.R::CatTime("Combine list of posteriors")
   post <- Hmsc::poolMcmcChains(Model$postList)
   studyDesign <- Model$studyDesign
   ranLevels <- Model$ranLevels

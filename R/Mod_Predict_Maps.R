@@ -58,7 +58,6 @@ Predict_Maps <- function(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
       "MRI-ESM2-0", "UKESM1-0-LL"),
     CC_Scenario = c("ssp126", "ssp370", "ssp585")) {
-
   # # ..................................................................... ###
   # # ..................................................................... ###
 
@@ -94,7 +93,7 @@ Predict_Maps <- function(
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Args = c("FromHPC", "RemoveChunks"), Type = "logical")
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Args = c("NCores", "LF_NCores", "ChunkSize"), 
+    AllArgs = AllArgs, Args = c("NCores", "LF_NCores", "ChunkSize"),
     Type = "numeric")
 
   rm(AllArgs, CharArgs, envir = environment())
@@ -261,7 +260,8 @@ Predict_Maps <- function(
 
     if (!file.exists(R_Railways)) {
       stop(
-        paste0("Railways data does not exist at: ", R_Railways), call. = FALSE)
+        paste0("Railways data does not exist at: ", R_Railways),
+        call. = FALSE)
     }
 
     if (!file.exists(R_Roads)) {
@@ -296,7 +296,8 @@ Predict_Maps <- function(
     R_Hab <- file.path(Path_CLC, "Summary_RData", "PercCov_SynHab_Crop.RData")
     if (!file.exists(R_Hab)) {
       stop(
-        paste0("Habitat data: '", R_Hab, "' does not exist"), call. = FALSE)
+        paste0("Habitat data: '", R_Hab, "' does not exist"),  
+        call. = FALSE)
     }
 
     R_Hab <- IASDT.R::LoadAs(R_Hab) %>%
@@ -343,7 +344,6 @@ Predict_Maps <- function(
             paste0(Fix_Efforts, collapse = " & ")),
           call. = FALSE)
       }
-
 
       if (is.numeric(Fix_Efforts)) {
 
@@ -429,14 +429,15 @@ Predict_Maps <- function(
   # # ..................................................................... ###
 
   # Predict latent factor for new locations ------
-  
+
   Path_Test_LF <- file.path(Path_Prediction1, "Test_LF.qs")
 
   IASDT.R::CatTime("Predict latent factor for new locations")
 
   if (!file.exists(Path_Test_LF) && Pred_NewSites) {
-
-    IASDT.R::CatTime("Predicting latent factor", Line = 1)
+    
+    IASDT.R::CatTime(
+      "Preparing input data for predicting latent factor", Line = 1)
 
     Predict_DF_Test <- Prediction_Options %>%
       dplyr::filter(ClimateModel == "Current") %>%
@@ -463,13 +464,14 @@ Predict_Maps <- function(
     rm(Predict_DF_Test, Test_X, Test_XY, Model, envir = environment())
     invisible(gc())
 
+    IASDT.R::CatTime("Predicting latent factor", Line = 1)
     # Predicting latent factor only -- no predictions are made
     Preds_LF <- IASDT.R::Predict_Hmsc(
       Path_Model = Path_Model, Gradient = Gradient, expected = TRUE,
       NCores = NCores, Model_Name = paste0("LF_", Hab_Abb, "_Test"),
       Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup, UseTF = UseTF,
-      TF_Environ = TF_Environ, LF_OutFile = Path_Test_LF, 
-      TF_use_single = TF_use_single, LF_Only = TRUE, LF_NCores = LF_NCores, 
+      TF_Environ = TF_Environ, LF_OutFile = Path_Test_LF,
+      TF_use_single = TF_use_single, LF_Only = TRUE, LF_NCores = LF_NCores,
       LF_Check = LF_Check, Evaluate = FALSE, Verbose = FALSE)
 
     rm(Gradient, Preds_LF, envir = environment())
@@ -480,7 +482,7 @@ Predict_Maps <- function(
     } else {
       IASDT.R::CatTime("LF prediction will NOT be made", Level = 1)
     }
-    
+
     rm(Model, envir = environment())
     invisible(gc())
   }
@@ -527,7 +529,8 @@ Predict_Maps <- function(
       Path_Prediction_R <- file.path(
         Path_Prediction, paste0("Prediction_", Option_Name, "_R.qs"))
       Path_Prediction_summary <- file.path(
-        Path_Prediction, paste0("Prediction_", Option_Name, "_Summary.RData"))
+        Path_Prediction, 
+        paste0("Prediction_", Option_Name, "_Summary.RData"))
 
       # use original effort data
       StaticPreds <- terra::subset(
@@ -624,8 +627,8 @@ Predict_Maps <- function(
             Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup, UseTF = UseTF,
             TF_Environ = TF_Environ, TF_use_single = TF_use_single,
             LF_Return = TRUE, LF_NCores = LF_NCores, LF_Check = LF_Check,
-            Pred_Dir = Path_Prediction, Pred_PA = Train_PA, Pred_XY = Train_XY, 
-            Evaluate = Evaluate, Eval_Name = NULL, Eval_Dir = Path_Eval, 
+            Pred_Dir = Path_Prediction, Pred_PA = Train_PA, Pred_XY = Train_XY,
+            Evaluate = Evaluate, Eval_Name = NULL, Eval_Dir = Path_Eval,
             Verbose = FALSE)
         }
 
@@ -651,8 +654,8 @@ Predict_Maps <- function(
               NCores = NCores, Model_Name = Model_Name_Test,
               Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup, UseTF = UseTF,
               TF_Environ = TF_Environ, TF_use_single = TF_use_single,
-              LF_Return = TRUE, LF_InputFile = Path_Test_LF, 
-              LF_NCores = LF_NCores, LF_Check = LF_Check, Verbose = FALSE, 
+              LF_Return = TRUE, LF_InputFile = Path_Test_LF,
+              LF_NCores = LF_NCores, LF_Check = LF_Check, Verbose = FALSE,
               Pred_Dir = Path_Prediction, Evaluate = FALSE,
               Pred_XY = sf::st_drop_geometry(Test_XY))
           }
@@ -661,7 +664,9 @@ Predict_Maps <- function(
 
           # Merge & save predictions - sf ------
           IASDT.R::CatTime(
-            "Merge & save predictions at training and new sites", Level = 1)
+            "Merge & save predictions at training and new sites", 
+            Level = 1)
+          
           Prediction_sf <- dplyr::bind_rows(
             IASDT.R::LoadAs(Preds_ModFitSites$Pred_Path),
             IASDT.R::LoadAs(Preds_NewSites$Pred_Path))
@@ -704,9 +709,9 @@ Predict_Maps <- function(
 
         if (Temp_Cleanup) {
           try(
-          fs::file_delete(
-            c(Preds_ModFitSites$Pred_Path, Preds_NewSites$Pred_Path)),
-          silent = TRUE)
+            fs::file_delete(
+              c(Preds_ModFitSites$Pred_Path, Preds_NewSites$Pred_Path)),
+            silent = TRUE)
         }
 
         IASDT.R::CatDiff(
@@ -782,7 +787,7 @@ Predict_Maps <- function(
         dplyr::mutate(
           Map = purrr::map2(
             .x = layer_name, .y = tif_path,
-            .f = ~{
+            .f = ~ {
               terra::writeRaster(
                 x = Prediction_R[[.x]], filename = .y, overwrite = TRUE,
                 gdal = c("COMPRESS=DEFLATE", "TILED=YES"))
@@ -878,13 +883,14 @@ Predict_Maps <- function(
 
   IASDT.R::CatTime(
     "Prepare input data to calculate ensemble predictions", Level = 1)
+  
   Prediction_Ensemble <- Prediction_Summary %>%
-    dplyr::filter(ClimateModel != "Current")  %>%
+    dplyr::filter(ClimateModel != "Current") %>%
     dplyr::select(-File_Pred_sf, -File_Pred_R, -Name, -ClimateModel) %>%
     dplyr::mutate(
       Prediction2 = furrr::future_map(
-        .x  = File_Pred_summary,
-        .f = ~{
+        .x = File_Pred_summary,
+        .f = ~ {
           if (file.exists(.x)) {
             IASDT.R::LoadAs(.x) %>%
               dplyr::select(
@@ -938,11 +944,11 @@ Predict_Maps <- function(
   Prediction_Ensemble <- Prediction_Ensemble %>%
     dplyr::mutate(
       Ensemble_Maps = furrr::future_pmap(
-        .l = list(tifs, tif_path_mean, tif_path_anomaly,
-                  tif_path_sd, tif_path_cov, ias_id),
+        .l = list(
+          tifs, tif_path_mean, tif_path_anomaly,
+          tif_path_sd, tif_path_cov, ias_id),
         .f = function(tifs, tif_path_mean, tif_path_anomaly,
                       tif_path_sd, tif_path_cov, ias_id) {
-
           # load maps for future climate option
           tiffs_R <- terra::rast(tifs)
 
@@ -988,7 +994,7 @@ Predict_Maps <- function(
             return()
         },
         .options = furrr::furrr_options(
-          seed = TRUE, scheduling = 1, packages = "terra",
+          seed = TRUE, scheduling = 1, packages = "terra", 
           globals = "CurrentMean")),
       Dir_Ensemble = NULL, tifs = NULL)
 
@@ -1014,14 +1020,14 @@ Predict_Maps <- function(
     dplyr::mutate(
       Ensemble_Maps = purrr::map(
         .x = Ensemble_Maps,
-        .f = ~{
+        .f = ~ {
           purrr::map(.x$Ensemble_Maps, terra::unwrap) %>%
             purrr::map(c) %>%
             terra::rast() %>%
             terra::wrap()
         }),
       Save = purrr::map2(
-        .x = Ensemble_Maps, .y = Ensemble_File,
+        .x = Ensemble_Maps, .y = Ensemble_File, 
         .f = qs::qsave, preset = "fast"))
 
   rm(Prediction_Ensemble_R, envir = environment())
@@ -1079,6 +1085,7 @@ Predict_Maps <- function(
   save(
     Prediction_Summary,
     file = file.path(Path_Prediction, "Prediction_Summary.RData"))
+  
   utils::write.table(
     x = Prediction_Summary, sep = "\t", row.names = FALSE, col.names = TRUE,
     file = file.path(Path_Prediction, "Prediction_Summary.txt"),

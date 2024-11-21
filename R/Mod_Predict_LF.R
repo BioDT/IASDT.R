@@ -115,7 +115,7 @@ Predict_LF <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   SampleID <- Unit_ID <- LF <- LF_ID <- etaPred <- Sample_IDs <- File <-
-    crossprod_solve <- Alpha_ID <- warmup <- NULL
+    Alpha_ID <- NULL
 
   # # ..................................................................... ###
 
@@ -124,8 +124,26 @@ Predict_LF <- function(
   # indices of new unitsPred
   indNew <- !(indOld)
 
-  if (sum(indNew) == 0 && sum(indOld) == length(modelunits)) {
+  # In the original Hmsc::predictLatentFactor function, the function is used
+  # irrespective if the provided locations are new or not, then values at new
+  # sites were replaced from model posterior. This can make the computations
+  # complex when predicting at too many locations at large scale. In the
+  # modified functions here, LF predictions are made only for new sites and
+  # loaded at locations for model fitting. This distinction facilitate the
+  # processing.
 
+  AllTraining <- sum(indNew) == 0 && sum(indOld) == length(modelunits)
+  AllNew <- sum(indNew) == length(modelunits) && sum(indOld) == 0
+
+  # Either AllTraining or AllNew should be TRUE
+  if (sum(AllTraining, AllNew) != 1) {
+    stop(
+      "The input sites should be either all training sites or all new sites.",
+      call. = FALSE
+    )
+  }
+
+  if (AllTraining) {
     # If all input sites are for training sites, use LF info from the model
     # directly
     IASDT.R::CatTime("All input sites are training sites", Level = 1)
@@ -140,7 +158,7 @@ Predict_LF <- function(
 
   } else {
 
-    IASDT.R::CatTime("At least some of input sites are new sites", Level = 1)
+    IASDT.R::CatTime("All input sites are new sites", Level = 1)
 
     # Check TensorFlow settings
 
@@ -367,7 +385,7 @@ Predict_LF <- function(
       if (Denom > 0) {
 
         if (UseTF) {
-          
+
           # Suppress TensorFlow warnings and disable optimizations
           Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3", TF_ENABLE_ONEDNN_OPTS = "0")
 
@@ -376,105 +394,66 @@ Predict_LF <- function(
 
             PythonScript <- system.file(
               "crossprod_solve.py", package = "IASDT.R")
-
+            
             eta_indNew0 <- run_crossprod_solve(
               virtual_env_path = TF_Environ, script_path = PythonScript,
               s1 = Path_s1, s2 = Path_s2, denom = Denom, postEta = File,
               path_out = File_etaPred, use_single = TF_use_single)
-            eta_indNew <- readRDS(eta_indNew0)
-          } else {
-            eta_indNew <- readRDS(File_etaPred)
           }
 
-          eta_indNew <- purrr::map(
-            .x = seq_along(eta_indNew),
-            .f = ~ {
-              tibble::tibble(etaPred = as.vector(eta_indNew[[.x]])) %>%
-                dplyr::mutate(
-                  Unit_ID = unitsPred[indNew], SampleID = SampleID[.x])
-            }) %>%
-            dplyr::bind_rows()
-
-          postEta <- IASDT.R::LoadAs(postEta_File, nthreads = 5)
-
-          eta_indOld <- postEta[SampleID] %>%
-            purrr::map(~ .x[match(unitsPred[indOld], modelunits), LF_ID])
-          eta_indOld <- purrr::map(
-            .x = seq_along(eta_indOld),
-            .f = ~ {
-              eta_indOld[[.x]] %>%
-                tibble::tibble(etaPred = .) %>%
-                dplyr::mutate(
-                  Unit_ID = unitsPred[indOld], SampleID = SampleID[.x])
-            }) %>%
-            dplyr::bind_rows()
-
-          etaPred <- dplyr::bind_rows(eta_indOld, eta_indNew) %>%
-            dplyr::select(c("SampleID", "etaPred", "Unit_ID")) %>%
-            dplyr::mutate(Unit_ID = factor(Unit_ID, levels = unitsPred)) %>%
-            dplyr::arrange(SampleID, Unit_ID, etaPred)
+          etaPred <- IASDT.R::LoadAs(File_etaPred) %>%
+            purrr::map( ~ tibble::tibble(Post = unlist(.x))) %>%
+            tibble::tibble(DT = .) %>%
+            dplyr::mutate(SampleID = SampleID) %>%
+            tidyr::unnest(DT)
 
         } else {
 
           # Use R / CPP
 
-          # Reading postEta from file
-          postEta0 <- IASDT.R::LoadAs(File, nthreads = 5)
+          if (CalcPredLF) {
+            
+            # Reading postEta from file
+            postEta0 <- IASDT.R::LoadAs(File, nthreads = 5)
 
-          # Read D11 and D12
-          D11 <- IASDT.R::LoadAs(Path_D11, nthreads = 5)
-          D12 <- IASDT.R::LoadAs(Path_D12, nthreads = 5)
+            # Read D11 and D12
+            D11 <- IASDT.R::LoadAs(Path_D11, nthreads = 5)
+            D12 <- IASDT.R::LoadAs(Path_D12, nthreads = 5)
 
-          K11 <- IASDT.R::exp_neg_div(D11, Denom)
-          K12 <- IASDT.R::exp_neg_div(D12, Denom)
+            K11 <- IASDT.R::exp_neg_div(D11, Denom)
+            K12 <- IASDT.R::exp_neg_div(D12, Denom)
 
-          etaPred <- purrr::map_dfr(
-            .x = seq_along(SampleID),
-            .f = function(ID) {
-              eta <- postEta0[, , ID]
-              eta_indNew <- IASDT.R::Solve2vect(K11, eta) %>%
-                as.vector() %>%
-                Matrix::crossprod(K12, .) %>%
-                as.vector()
 
-              etaPred <- rep(NA, length(unitsPred))
-              etaPred[indOld] <- eta[match(unitsPred[indOld], modelunits)]
-              etaPred[indNew] <- eta_indNew
+            # NEED TO REVISE OUTPUT COLUMNS
 
-              tibble::tibble(
-                SampleID = SampleID[ID], etaPred = etaPred,
-                Unit_ID = unitsPred)
-            }) %>%
-            dplyr::mutate(Unit_ID = factor(Unit_ID, levels = unitsPred)) %>%
-            dplyr::arrange(SampleID, Unit_ID, etaPred)
+            etaPred <- purrr::map_dfr(
+              .x = seq_along(SampleID),
+              .f = function(ID) {
+                eta <- postEta0[, , ID]
+                etaPred <- IASDT.R::Solve2vect(K11, eta) %>%
+                  as.vector() %>%
+                  Matrix::crossprod(K12, .) %>%
+                  as.vector() %>%
+                  tibble::tibble(etaPred = ., SampleID = SampleID)
+              }) %>%
+              dplyr::mutate(Unit_ID = factor(Unit_ID, levels = unitsPred)) %>%
+              dplyr::arrange(SampleID, Unit_ID, etaPred)
+
+            qs::qsave(etaPred, file = File_etaPred, preset = "fast")
+
+          } else {
+            
+            etaPred <- IASDT.R::LoadAs(File_etaPred)
+
+          }
         }
 
       } else {
+        # When Denom is zero, set `eta_indNew` to zero
 
-        # Handle cases where Denom is zero by setting `eta_indNew` to zero
-        if (CalcPredLF) {
+        # NEED TO REVISE OUTPUT COLUMNS
 
-          postEta0 <- IASDT.R::LoadAs(File, nthreads = 5)
-
-          etaPred <- purrr::map_dfr(
-            .x = seq_len(length(SampleID)),
-            .f = function(ID) {
-              eta <- postEta0[, , ID]
-              etaPred <- rep(NA, length(unitsPred))
-              etaPred[indOld] <- eta[match(unitsPred[indOld], modelunits)]
-              etaPred[indNew] <- 0
-              tibble::tibble(
-                SampleID = SampleID[ID], etaPred = etaPred,
-                Unit_ID = unitsPred)
-            }) %>%
-            dplyr::mutate(Unit_ID = factor(Unit_ID, levels = unitsPred)) %>%
-            dplyr::arrange(SampleID, Unit_ID, etaPred)
-
-          saveRDS(etaPred, file = File_etaPred)
-
-        } else {
-          etaPred <- readRDS(File_etaPred)
-        }
+        etaPred <- tibble::tibble(etaPred = 0, SampleID = SampleID)
       }
 
       return(etaPred)
@@ -496,7 +475,7 @@ Predict_LF <- function(
       etaPreds <- purrr::map(
         .x = seq_len(nrow(Unique_Alpha)),
         .f = function(x) {
-          # maximum number of attemtps
+          # maximum number of attempts
           max_tries <- 5
           attempt <- 1
           # Initialize result
@@ -504,13 +483,13 @@ Predict_LF <- function(
 
           while (attempt <= max_tries) {
             result <- tryCatch({
-              # Use purrr::possibly around etaPreds_F call to handle errors
-              etaPreds_F(x, LF_Check = LF_Check)
-            },
-            error = function(e) {
-              # Return NULL on error to retry
-              NULL
-            })
+                # Use purrr::possibly around etaPreds_F call to handle errors
+                etaPreds_F(x, LF_Check = LF_Check)
+              },
+              error = function(e) {
+                # Return NULL on error to retry
+                NULL
+              })
 
             # Exit loop if result is not NULL (successful)
             if (!is.null(result)) {
@@ -528,23 +507,20 @@ Predict_LF <- function(
       # Parallel processing
       IASDT.R::CatTime(
         paste0(
-          "Predicting Latent Factor in parallel using ", LF_NCores, " cores"),
+          "Predicting Latent Factor in parallel using ", 
+          LF_NCores, " cores"),
         Level = 1)
 
       IASDT.R::CatTime("Prepare for parallel processing", Level = 2)
       withr::local_options(
         future.globals.maxSize = 8000 * 1024^2, cluster.timeout = 10 * 60,
         future.gc = TRUE, future.seed = TRUE)
-      # c1 <- snow::makeSOCKcluster(LF_NCores)
-      # on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
       c1 <- parallel::makeCluster(LF_NCores)
       on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
 
       IASDT.R::CatTime("Export objects to cores", Level = 2)
-      # snow::clusterExport(
       parallel::clusterExport(
         cl = c1,
-        # list = c(
         varlist = c(
           "Unique_Alpha", "Path_D11", "Path_D12", "Path_s1", "Path_s2",
           "indNew", "unitsPred", "postEta_File", "indOld", "modelunits",
@@ -554,7 +530,6 @@ Predict_LF <- function(
 
       # Load necessary libraries and load environment if using TensorFlow
       IASDT.R::CatTime("Load necessary libraries", Level = 2)
-      # invisible(snow::clusterEvalQ(
       invisible(parallel::clusterEvalQ(
         cl = c1,
         expr = {
@@ -563,16 +538,15 @@ Predict_LF <- function(
               "Rcpp", "RcppArmadillo", "dplyr", "tidyr", "tibble",
               "Matrix", "Hmsc", "qs", "fs", "purrr", "IASDT.R"),
             library, character.only = TRUE)
-            invisible(gc())
+          invisible(gc())
         }))
 
       # Making predictions on parallel
       IASDT.R::CatTime("Making predictions on parallel", Level = 2)
-      # etaPreds <- snow::clusterApplyLB(
       etaPreds <- parallel::clusterApplyLB(
         cl = c1, x = seq_len(nrow(Unique_Alpha)),
         fun = function(x) {
-          # maximum number of attemtps
+          # maximum number of attempts
           max_tries <- 5
           attempt <- 1
           # Initialize result
@@ -580,13 +554,13 @@ Predict_LF <- function(
 
           while (attempt <= max_tries) {
             result <- tryCatch({
-              # Use purrr::possibly around etaPreds_F call to handle errors
-              etaPreds_F(x, LF_Check = LF_Check)
-            },
-            error = function(e) {
-              # Return NULL on error to retry
-              NULL
-            })
+                # Use purrr::possibly around etaPreds_F call to handle errors
+                etaPreds_F(x, LF_Check = LF_Check)
+              },
+              error = function(e) {
+                # Return NULL on error to retry
+                NULL
+              })
 
             # Exit loop if result is not NULL (successful)
             if (!is.null(result)) {
@@ -595,14 +569,13 @@ Predict_LF <- function(
 
             attempt <- attempt + 1
           }
-          
+
           # Return the result after max_tries or successful execution
           return(result)
         })
 
       # Stop the cluster
       IASDT.R::CatTime("Stop the cluster", Level = 2)
-      # snow::stopCluster(c1)
       parallel::stopCluster(c1)
       invisible(gc())
     }
@@ -611,7 +584,12 @@ Predict_LF <- function(
     IASDT.R::CatTime("Check if all files are created", Level = 1)
     AllEtaFiles <- Unique_Alpha$File_etaPred
     AllEtaFilesExist <- all(file.exists(AllEtaFiles))
-    if (isFALSE(AllEtaFilesExist)) {
+    if (AllEtaFilesExist) {
+      
+      IASDT.R::CatTime("All files were created", Level = 2)
+
+    } else {
+      
       FailedFiles <- AllEtaFiles[!file.exists(AllEtaFiles)]
       stop(
         paste0(
@@ -778,7 +756,7 @@ run_crossprod_solve <- function(
   while (attempt <= max_attempts && !success) {
     # Run the command and capture stdout/stderr
     result <- system2(
-      command = python_executable, args = args,
+      command = python_executable, args = args, 
       stdout = TRUE, stderr = TRUE)
 
     # Check for errors

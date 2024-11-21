@@ -50,8 +50,10 @@
 #' @param Pred_XY a matrix of coordinates to be added to predicted values. If
 #'   `NULL` (default), the coordinates from the model object is used.
 #' @param LF_InputFile a character string specifying the file name where the
-#'   latent factor predictions are saved. If `NULL`, the predictions are saved
-#'   to a temporary file. This argument is used only when `RC` is `NULL`.
+#'   latent factor predictions are saved. If `NULL` (default), latent factor
+#'   predictions will be made. If specified, the latent factor predictions are
+#'   read from the file. This allows to predicting the latent factors for new
+#'   sites only once.
 #' @param LF_Only a logical flag indicating whether to return the latent factor
 #'   predictions only. Defaults to `FALSE`. This helps in predicting to new
 #'   sites, allowing to predicting the latent factors only once, then the output
@@ -143,13 +145,13 @@ Predict_Hmsc <- function(
   # Clean up
   if (Temp_Cleanup) {
     on.exit({
-      try(
-        fs::file_delete(
-          list.files(
-            Temp_Dir,
-            pattern = paste0("^", Model_Name, "_.+"), full.names = TRUE)),
-        silent = TRUE
-      )},
+        try(
+          fs::file_delete(
+            list.files(
+              Temp_Dir,
+              pattern = paste0("^", Model_Name, "_.+"), full.names = TRUE)),
+          silent = TRUE
+        )},
       add = TRUE)
   }
 
@@ -203,6 +205,7 @@ Predict_Hmsc <- function(
         xlev <- xlev[unlist(lapply(Model$XData, is.factor))]
         X <- stats::model.matrix(Model$XFormula, XData, xlev = xlev)
       })
+    
   } else {
     if (is.null(X)) {
       X <- Model$X
@@ -252,7 +255,8 @@ Predict_Hmsc <- function(
 
   if (!all(Model$rLNames %in% colnames(studyDesign))) {
     stop(
-      "dfPiNew does not contain all the necessary named columns", call. = FALSE)
+      "dfPiNew does not contain all the necessary named columns",
+      call. = FALSE)
   }
 
   if (!all(Model$rLNames %in% names(ranLevels))) {
@@ -290,7 +294,7 @@ Predict_Hmsc <- function(
 
   Mod_nr <- Model$nr
   Mod_dfPi <- Model$dfPi
-  
+
   # Save smaller version of the model object for later use
   Model_File_small <- file.path(Temp_Dir, "Model_small.qs")
   if (!file.exists(Model_File_small)) {
@@ -299,7 +303,7 @@ Predict_Hmsc <- function(
   }
   rm(Model, envir = environment())
   invisible(gc())
-  
+
   # # ..................................................................... ###
 
   IASDT.R::CatTime("Predict Latent Factor")
@@ -330,7 +334,8 @@ Predict_Hmsc <- function(
         predPostEta[[r]] <- replicate(
           n = predN,
           expr = structure(
-            rep(0, nLF), dim = c(1L, nLF), dimnames = list("new_unit", NULL)),
+            rep(0, nLF), dim = c(1L, nLF), 
+            dimnames = list("new_unit", NULL)),
           simplify = FALSE)
       }
       CalcLF <- FALSE
@@ -341,14 +346,14 @@ Predict_Hmsc <- function(
   if (CalcLF) {
 
     for (r in seq_len(Mod_nr)) {
-
+    
       postAlpha <- lapply(post, function(c) c$Alpha[[r]])
 
       # Save postEta to file and load it from Predict_LF. This helps to avoid
       # the unnecessary copying of the postEta object to all cores
       postEta_file <- file.path(
         Temp_Dir, paste0(Model_Name, "_r", r, "_postEta.qs"))
-      
+
       if (isFALSE(IASDT.R::CheckData(postEta_file, warning = FALSE))) {
         IASDT.R::CatTime("Save postEta to file", Level = 1)
         postEta <- lapply(post, function(c) c$Eta[[r]])
@@ -398,7 +403,7 @@ Predict_Hmsc <- function(
     }
 
   } else {
-
+    
     if (is.null(RC) || RC == "c") {
       IASDT.R::CatTime(
         paste0("Loading LF prediction from disk: `", LF_InputFile, "`"),
@@ -417,6 +422,8 @@ Predict_Hmsc <- function(
     ppEta <- matrix(list(), predN, 0)
   }
 
+  # Only predicting latent factor for new sites or for response curves at
+  # median site
   if (LF_Only) {
     return(LF_OutFile)
   }
@@ -433,14 +440,16 @@ Predict_Hmsc <- function(
     IASDT.R::CatTime("Loading post from disk", Level = 1)
     post <- qs::qread(post_file, nthreads = 5)
   }
-  
+
   # Read model object from disk
   Model <- qs::qread(Model_File_small, nthreads = 5)
 
   # prediction data for response curves
   if (!is.null(RC)) {
     IASDT.R::CatTime(
-      "Predicting data for response curve (sequentially)", Level = 1)
+      "Predicting data for response curve (sequentially)",
+      Level = 1)
+
     preds <- lapply(
       seq_len(predN),
       function(pN, ...) {
@@ -448,6 +457,7 @@ Predict_Hmsc <- function(
           Model, X, XRRR, Yc, Loff, rL, rLPar, post[[pN]],
           ppEta[pN, ], PiNew, dfPiNew, nyNew, expected, mcmcStep)
       })
+
     IASDT.R::CatDiff(
       InitTime = .StartTime, Prefix = "Prediction was finished in ", Level = 1)
     return(preds)
@@ -483,7 +493,7 @@ Predict_Hmsc <- function(
   snow::clusterExport(
     cl = c1,
     list = c(
-      "Model", "X", "XRRR", "Yc", "Loff", "rL", "rLPar", "PiNew", 
+      "Model", "X", "XRRR", "Yc", "Loff", "rL", "rLPar", "PiNew",
       "dfPiNew", "nyNew", "expected", "mcmcStep", "seeds", "chunk_size",
       "Chunks", "Temp_Dir", "Model_Name", "Temp_Cleanup", "get1prediction"),
     envir = environment())
@@ -528,7 +538,7 @@ Predict_Hmsc <- function(
         })
 
       # Species richness
-      ChunkSR <-  simplify2array(lapply(X = PredChunk, FUN = rowSums)) %>%
+      ChunkSR <- simplify2array(lapply(X = PredChunk, FUN = rowSums)) %>%
         float::fl()
       dimnames(ChunkSR) <- NULL
       ChunkSR_File <- file.path(
@@ -561,7 +571,7 @@ Predict_Hmsc <- function(
           tibble::tibble(
             Chunk = Chunk, Sp = 0, IAS_ID = "SR",
             ChunkSp_File = ChunkSR_File),
-          .)
+            .)
 
       if (Temp_Cleanup) {
         try(fs::file_delete(ChunkFile), silent = TRUE)
@@ -596,7 +606,7 @@ Predict_Hmsc <- function(
     cl = c1,
     x = seq_len(nrow(Eval_DT)),
     fun = function(ID) {
-
+      
       Sp <- Eval_DT$Sp[[ID]]
       if (Sp == 0) {
         Sp2 <- "SR"
@@ -756,7 +766,8 @@ Predict_Hmsc <- function(
   }
 
   tibble::tibble(
-    Pred_Path = Pred_File, Eval_Path = Eval_Path, LF_Path = LF_Path) %>%
+    Pred_Path = Pred_File,  Eval_Path = Eval_Path, 
+    LF_Path = LF_Path) %>%
     return()
 }
 
@@ -780,7 +791,7 @@ Predict_Hmsc <- function(
 get1prediction <- function(
     object, X, XRRR, Yc, Loff, rL, rLPar, sam, predPostEta, PiNew, dfPiNew,
     nyNew, expected, mcmcStep, seed = NULL) {
-
+  
   updateZ <- updateEta <- NULL
 
 

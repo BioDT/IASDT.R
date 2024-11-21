@@ -5,49 +5,35 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
 import logging
-# disable Additional Logs Set the TensorFlow logger - show only critical errors
+# Disable Additional Logs Set the TensorFlow logger - show only critical errors
+# https://stackoverflow.com/questions/55081911/
 logging.getLogger('tensorflow').setLevel(logging.ERROR)
 
 import tensorflow as tf
-#tf.compat.v1.reset_default_graph()
-#tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 # Reset all devices before making changes
 tf.keras.backend.clear_session()
-#tf.get_logger().setLevel(logging.ERROR)
-#tf.get_logger().setLevel('ERROR')
+# show only errors, no warnings
+# https://www.tensorflow.org/api_docs/python/tf/get_logger
+tf.get_logger().setLevel('ERROR')
 
-import numpy as np
-import rdata
-import warnings # Suppress warnings during warm-up
+# https://www.tensorflow.org/api_docs/python/tf/compat/v1/reset_default_graph
+# tf.compat.v1.reset_default_graph()
+# tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+
+import warnings
 # Suppress all TensorFlow warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="tensorflow")
 
+import numpy as np
+import rdata
 import gc
+import sys
 import time
 import argparse
-#import json  # For formatting output as JSON if needed
-#import sys
-#print("Received arguments:", sys.argv)
 
 # ======================================================================
 # TensorFlow and Environment Configuration
 # ======================================================================
-
-
-
-# Use compatibility mode to avoid deprecated calls
-#tf.compat.v1.reset_default_graph()  # This avoids the warning
-#The name tf.reset_default_graph is deprecated. Please use tf.compat.v1.reset_default_graph instead."
-
-
-# Flush the logger
-#sys.stdout.flush()  # Ensure immediate output
-
-
-
-
-
-
 
 gpus = tf.config.experimental.list_physical_devices('GPU')
 
@@ -65,7 +51,6 @@ if gpus:
         
     except RuntimeError as e:
         print(f"Error setting memory configurations: {e}")
-
 
 # ======================================================================
 # load_rds
@@ -191,7 +176,6 @@ def crossprod_solve_old(Dist1, Dist2, Denom, postEta, use_single=False):
     # Return the list of results for all slices
     return results
 
-
 # ======================================================================
 # load_tensor_chunked
 # ======================================================================
@@ -210,7 +194,6 @@ def load_tensor_chunked(file_or_array, dtype, chunk_size=1000, threshold_mb=2000
     Returns:
     - tensor (tf.Tensor): Combined tensor from chunks.
     """
-
     
     if isinstance(file_or_array, str):
         file_or_array = rdata.read_rds(file_or_array)
@@ -222,8 +205,7 @@ def load_tensor_chunked(file_or_array, dtype, chunk_size=1000, threshold_mb=2000
     if isinstance(file_or_array, str):
         file_or_array = load_rds(file_or_array)
     
-    # If the array is too large, split into chunks
-    # 2 GB threshold
+    # If the array is too large, split into chunks - 2 GB threshold
     if isinstance(file_or_array, np.ndarray) and file_or_array.nbytes > threshold_bytes:
         chunks = []
         for i in range(0, file_or_array.shape[0], chunk_size):
@@ -255,7 +237,7 @@ def compute_k_matrices(Dist1, Dist2, Denom_tensor):
     return tf.exp(-Dist1 / Denom_tensor), tf.exp(-Dist2 / Denom_tensor)
 
 # ======================================================================
-# crossprod_solve_old2 - faster than crossprod_solve2, but sill slow
+# crossprod_solve_old2 - faster than crossprod_solve_old, but sill slow
 # ======================================================================
 
 def crossprod_solve_old2(Dist1, Dist2, Denom, postEta, use_single=False, save=False, path_out=None, chunk_size=1000, threshold_mb=2000):
@@ -410,6 +392,25 @@ def compute_distances_chunked(s1, s2=None, dtype=tf.float64, chunk_size=1000):
     return Dist
 
 # ======================================================================
+# solve_in_chunks
+# ======================================================================
+
+def solve_in_chunks(K11, B, chunk_size):
+    """Solve K11 * X = B in chunks."""
+    num_columns = B.shape[1]
+    results = []
+    
+    for start in range(0, num_columns, chunk_size):
+        end = min(start + chunk_size, num_columns)
+        B_chunk = B[:, start:end]
+        X_chunk = tf.linalg.solve(K11, B_chunk)
+        results.append(X_chunk)
+        del B_chunk, X_chunk
+    
+    gc.collect()
+    return tf.concat(results, axis=1)
+
+# ======================================================================
 # crossprod_solve
 # ======================================================================
 
@@ -435,6 +436,13 @@ def crossprod_solve(s1, s2, denom, postEta, use_single=False, save=False, path_o
     """
     
     print_time(f"Starting processing (TensorFlow v{tf.__version__})", verbose)
+
+    # Check if write_rds is available in the rdata package
+    # This is currently only available in the development version of it.
+    if not hasattr(rdata, 'write_rds'):
+        if verbose:
+            raise ImportError("'write_rds' is not available in the rdata package.")
+
     if gpus:
         print_time(f"  >>  GPUs detected: {len(gpus)}", verbose)
     else:
@@ -458,9 +466,9 @@ def crossprod_solve(s1, s2, denom, postEta, use_single=False, save=False, path_o
         s1_tensor = load_rds(s1)
         print_time("  >>  Convert to tensor", verbose)
         s1_tensor = tf.convert_to_tensor(s1_tensor, dtype=dtype)
+        gc.collect()
         print_time("  >>  Compute d11", verbose)
-        Dist1 = compute_distances_chunked(
-            s1=s1_tensor, dtype=dtype, chunk_size=chunk_size)
+        Dist1 = compute_distances_chunked(s1=s1_tensor, dtype=dtype, chunk_size=chunk_size)
 
     print_time("Processing coordinate matrix - s2", verbose)
     if isinstance(s2, str):
@@ -469,8 +477,7 @@ def crossprod_solve(s1, s2, denom, postEta, use_single=False, save=False, path_o
         print_time("  >>  Convert to tensor", verbose)
         s2_tensor = tf.convert_to_tensor(s2_tensor, dtype=dtype)
         print_time("  >>  Compute d12", verbose)
-        Dist2 = compute_distances_chunked(
-            s1=s1_tensor, s2=s2_tensor, dtype=dtype, chunk_size=chunk_size)
+        Dist2 = compute_distances_chunked(s1=s1_tensor, s2=s2_tensor, dtype=dtype, chunk_size=chunk_size)
     
     print_time("  >>  Free memory", verbose)
     del s1_tensor, s2_tensor, s1, s2
@@ -480,9 +487,6 @@ def crossprod_solve(s1, s2, denom, postEta, use_single=False, save=False, path_o
     # Load and convert postEta
     # |||||||||||||||||||||||||||||||||||
     print_time("Load and convert postEta", verbose)
-    #if isinstance(postEta, str):
-        #postEta = load_tensor_chunked(postEta, dtype, chunk_size, threshold_mb)
-
     if isinstance(postEta, str):
         try:
             postEta = load_tensor_chunked(postEta, dtype, chunk_size, threshold_mb)
@@ -510,12 +514,13 @@ def crossprod_solve(s1, s2, denom, postEta, use_single=False, save=False, path_o
     print_time("Calculate the K matrices", verbose)
     print_time("  >>  k11", verbose)
     K11 = tf.exp(-Dist1 / Denom_tensor)
+    del Dist1
     print_time("  >>  k12", verbose)
     K12 = tf.exp(-Dist2 / Denom_tensor)
     
     # Free memory
     print_time("Free memory", verbose)
-    del Dist1, Dist2, Denom_tensor, denom
+    del Dist2, Denom_tensor, denom
     gc.collect()
 
     # |||||||||||||||||||||||||||||||||||
@@ -534,23 +539,27 @@ def crossprod_solve(s1, s2, denom, postEta, use_single=False, save=False, path_o
     # Solve linear systems in batch
     # |||||||||||||||||||||||||||||||||||
     print_time("Solve linear systems in batch", verbose)
-    results = tf.linalg.solve(K11, postEta_reshaped)
+    # results = tf.linalg.solve(K11, postEta_reshaped)
+    results = solve_in_chunks(K11, postEta_reshaped, chunk_size)
+    del K11, postEta_reshaped
+    gc.collect()
 
     # |||||||||||||||||||||||||||||||||||
     # Compute cross-products in batch
     # |||||||||||||||||||||||||||||||||||
     print_time("Compute cross-products in batch", verbose)
     results = tf.matmul(K12, results, transpose_a=True)
-
+    
+    # Free memory
+    print_time("Free memory", verbose)
+    del K12
+    gc.collect()
+    
     # |||||||||||||||||||||||||||||||||||
     # Reshape results back to the original structure
     # |||||||||||||||||||||||||||||||||||
     print_time("Reshape results back to the original structure", verbose)
     results = tf.reshape(results, [num_matrices, -1])
-
-    # Free memory
-    print_time("Free memory", verbose)
-    del postEta_reshaped, K11, K12
     gc.collect()
 
     # |||||||||||||||||||||||||||||||||||
@@ -559,18 +568,15 @@ def crossprod_solve(s1, s2, denom, postEta, use_single=False, save=False, path_o
     print_time("Convert results to numpy arrays", verbose)
     results = [res.numpy().flatten() for res in tf.split(results, num_matrices)]
     results = [arr.flatten().tolist() for arr in results]
-
+    
     # |||||||||||||||||||||||||||||||||||
     # Save to RDS if requested
     # |||||||||||||||||||||||||||||||||||
-
     if save:
         if not path_out:
             raise ValueError("A valid path_out must be provided when save=True.")
         try:
-            # Flatten arrays before saving
-            results2 = [arr[0] for arr in results]
-            rdata.write_rds(path_out, results2)
+            rdata.write_rds(path_out, results)
         except Exception as e:
             print_time(f"Error saving results to {path_out}: {e}", verbose)
 
@@ -583,44 +589,9 @@ def crossprod_solve(s1, s2, denom, postEta, use_single=False, save=False, path_o
     return results
 
 # ==============================================================================
-# warmup
 # ==============================================================================
 
-def warmup():
-    """A lightweight function to initialize necessary modules and resources."""
-    start_time = time.time()  # Record the start time
-    
-    # Use os to get the current working directory
-    _ = os.getcwd()
-    
-    # Create a small TensorFlow tensor
-    tf.constant([0], dtype=tf.float32)
-    
-    # Perform a lightweight numpy operation
-    _ = np.array([0, 1, 2]).sum()
-    
-    # Suppress rdata warnings during warm-up
-    dummy_rds = b'x\x9cK\xccK.\xca\xcf+I\xd5Q(\xc9H-.QHI,IT\xc8/.-\xceHL\xb1\x00\xb2\xd1\x19\xb4'
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        try:
-            _ = rdata.parser.parse_data(dummy_rds)
-        except Exception:
-            # Catch exceptions since we're not using a real RDS file
-            pass
-    
-    # Perform garbage collection
-    gc.collect()
-    
-    # Log the elapsed time
-    elapsed_time = time.time() - start_time
-    del elapsed_time
-    
-    # Do not return objects
-    pass
-
-# ==============================================================================
-# ==============================================================================
+# Allow `crossprod_solve` function from the command line (system / system2 in R).
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run crossprod_solve function.")

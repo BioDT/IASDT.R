@@ -132,8 +132,8 @@ Predict_LF <- function(
   # loaded at locations for model fitting. This distinction facilitate the
   # processing.
 
-  AllTraining <- sum(indNew) == 0 && sum(indOld) == length(modelunits)
-  AllNew <- sum(indNew) == length(modelunits) && sum(indOld) == 0
+  AllTraining <- sum(indNew) == 0
+  AllNew <- sum(indOld) == 0
 
   # Either AllTraining or AllNew should be TRUE
   if (sum(AllTraining, AllNew) != 1) {
@@ -394,7 +394,7 @@ Predict_LF <- function(
 
             PythonScript <- system.file(
               "crossprod_solve.py", package = "IASDT.R")
-            
+
             eta_indNew0 <- run_crossprod_solve(
               virtual_env_path = TF_Environ, script_path = PythonScript,
               s1 = Path_s1, s2 = Path_s2, denom = Denom, postEta = File,
@@ -412,7 +412,7 @@ Predict_LF <- function(
           # Use R / CPP
 
           if (CalcPredLF) {
-            
+
             # Reading postEta from file
             postEta0 <- IASDT.R::LoadAs(File, nthreads = 5)
 
@@ -442,7 +442,7 @@ Predict_LF <- function(
             qs::qsave(etaPred, file = File_etaPred, preset = "fast")
 
           } else {
-            
+
             etaPred <- IASDT.R::LoadAs(File_etaPred)
 
           }
@@ -507,7 +507,7 @@ Predict_LF <- function(
       # Parallel processing
       IASDT.R::CatTime(
         paste0(
-          "Predicting Latent Factor in parallel using ", 
+          "Predicting Latent Factor in parallel using ",
           LF_NCores, " cores"),
         Level = 1)
 
@@ -585,11 +585,11 @@ Predict_LF <- function(
     AllEtaFiles <- Unique_Alpha$File_etaPred
     AllEtaFilesExist <- all(file.exists(AllEtaFiles))
     if (AllEtaFilesExist) {
-      
+
       IASDT.R::CatTime("All files were created", Level = 2)
 
     } else {
-      
+
       FailedFiles <- AllEtaFiles[!file.exists(AllEtaFiles)]
       stop(
         paste0(
@@ -756,7 +756,7 @@ run_crossprod_solve <- function(
   while (attempt <= max_attempts && !success) {
     # Run the command and capture stdout/stderr
     result <- system2(
-      command = python_executable, args = args, 
+      command = python_executable, args = args,
       stdout = TRUE, stderr = TRUE)
 
     # Check for errors

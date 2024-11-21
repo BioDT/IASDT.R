@@ -359,11 +359,14 @@ RespCurv_PrepData <- function(
   MissingRows <- sum(!ResCurvDT$FileExists)
 
   if (MissingRows == 0) {
+
     IASDT.R::CatTime(
       "All response curve data files were already available on disk",
       Level = 1)
     ResCurvDT <- purrr::map_dfr(.x = seq_len(nrow(ResCurvDT)), .f = PrepRCData)
+
   } else {
+
     if (all(!ResCurvDT$FileExists)) {
       IASDT.R::CatTime(
         paste0(

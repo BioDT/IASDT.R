@@ -12,20 +12,20 @@
 #'   This can not be empty. The function will attempt to determine the file type
 #'   based on the file extension. If the file extension is not `qs`, the
 #'   function will return `FALSE`.
-#' @param Warning logical. If `TRUE` (default), warnings will be printed if the
+#' @param warning logical. If `TRUE` (default), warnings will be printed if the
 #'   file does not exist.
 #' @param qs_nthreads integer. The number of threads to use when reading the
 #'   `qs` file. Default is 5.
-#' @return A logical value: `TRUE` if the file is an RDS file and contains a
+#' @return A logical value: `TRUE` if the file is an qs file and contains a
 #'   non-null object, `FALSE` otherwise.
 #' @name CheckQs
 #' @author Ahmed El-Gabbas
 #' @export
 
-CheckQs <- function(File, Warning = TRUE, qs_nthreads = 5) {
+CheckQs <- function(File, warning = TRUE, qs_nthreads = 5) {
 
   if (!file.exists(File) || is.null(File) || !nzchar(File)) {
-    if (Warning) {
+    if (warning) {
       warning(paste0("The provided file does not exist: `", File, "`"))
     }
     return(FALSE)
@@ -47,7 +47,7 @@ CheckQs <- function(File, Warning = TRUE, qs_nthreads = 5) {
       return(FALSE)
     }
   } else {
-    if (Warning) {
+    if (warning) {
       warning("Unsupported file type. Please provide a qs file.", call. = FALSE)
     }
     return(FALSE)

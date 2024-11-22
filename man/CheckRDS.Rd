@@ -4,7 +4,7 @@
 \alias{CheckRDS}
 \title{Check the Integrity of an \code{RDS} File}
 \usage{
-CheckRDS(File, Warning = TRUE)
+CheckRDS(File, warning = TRUE)
 }
 \arguments{
 \item{File}{A character string specifying the path to the file to be checked.
@@ -12,7 +12,7 @@ This can not be empty. The function will attempt to determine the file type
 based on the file extension. If the file extension is not \code{RDS}, the
 function will return \code{FALSE}.}
 
-\item{Warning}{logical. If \code{TRUE} (default), warnings will be printed if the
+\item{warning}{logical. If \code{TRUE} (default), warnings will be printed if the
 file does not exist.}
 }
 \value{

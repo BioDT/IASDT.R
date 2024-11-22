@@ -10,17 +10,17 @@
 #' the file cannot be loaded or the object does not exist, it returns `FALSE`.
 #' @param File character. The file path of the file to be checked. This can not
 #'   be empty.
-#' @param Warning logical. If `TRUE` (default), warnings will be printed if the
+#' @param warning logical. If `TRUE` (default), warnings will be printed if the
 #'   file does not exist.
 #' @return A logical value indicating if the file is a valid `RData` file
 #' @name CheckRData
 #' @author Ahmed El-Gabbas
 #' @export
 
-CheckRData <- function(File, Warning = TRUE) {
+CheckRData <- function(File, warning = TRUE) {
 
   if (!file.exists(File) || is.null(File) || !nzchar(File)) {
-    if (Warning) {
+    if (warning) {
       warning(paste0("The provided file does not exist: `", File, "`"))
     }
     return(FALSE)
@@ -43,7 +43,7 @@ CheckRData <- function(File, Warning = TRUE) {
     }
 
   } else {
-    if (Warning) {
+    if (warning) {
       warning("The provided file is not an RData file", call. = FALSE)
     }
     return(FALSE)

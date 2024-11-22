@@ -2,7 +2,7 @@
 % Please edit documentation in R/General_CheckData.R
 \name{CheckData}
 \alias{CheckData}
-\title{Check the Integrity of \code{RData} / \code{qs} / \code{rds} Files}
+\title{Check the Integrity of \code{RData} / \code{qs} / \code{rds} / \code{feather} Files}
 \usage{
 CheckData(File, warning = TRUE, qs_nthreads = 5)
 }
@@ -11,8 +11,8 @@ CheckData(File, warning = TRUE, qs_nthreads = 5)
 be empty. The function will attempt to determine the file type based on the
 file extension. If the file extension is not recognized, the function will
 return \code{FALSE}. The recognized file extensions are \code{RData} (using
-\link{CheckRData}), \code{qs} (\link{CheckQs}), and \code{rds}
-(\link{CheckRDS}).}
+\link{CheckRData}), \code{qs} (\link{CheckQs}), \code{rds}
+(\link{CheckRDS}), and \code{feather} (\link{CheckFeather}).}
 
 \item{warning}{logical. If \code{TRUE} (default), warnings will be printed if the
 file does not exist.}
@@ -24,7 +24,7 @@ file does not exist.}
 A logical value indicating if the file is a valid RData file
 }
 \description{
-Check the Integrity of \code{RData} / \code{qs} / \code{rds} Files
+Check the Integrity of \code{RData} / \code{qs} / \code{rds} / \code{feather} Files
 }
 \author{
 Ahmed El-Gabbas

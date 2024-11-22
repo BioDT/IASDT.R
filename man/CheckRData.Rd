@@ -4,13 +4,13 @@
 \alias{CheckRData}
 \title{Check the Integrity of an \code{RData} File}
 \usage{
-CheckRData(File, Warning = TRUE)
+CheckRData(File, warning = TRUE)
 }
 \arguments{
 \item{File}{character. The file path of the file to be checked. This can not
 be empty.}
 
-\item{Warning}{logical. If \code{TRUE} (default), warnings will be printed if the
+\item{warning}{logical. If \code{TRUE} (default), warnings will be printed if the
 file does not exist.}
 }
 \value{

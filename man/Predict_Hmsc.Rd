@@ -106,8 +106,10 @@ to \code{FALSE} because the function needs to return the result if it is not
 saved to a file.}
 
 \item{LF_InputFile}{a character string specifying the file name where the
-latent factor predictions are saved. If \code{NULL}, the predictions are saved
-to a temporary file. This argument is used only when \code{RC} is \code{NULL}.}
+latent factor predictions are saved. If \code{NULL} (default), latent factor
+predictions will be made. If specified, the latent factor predictions are
+read from the file. This allows to predicting the latent factors for new
+sites only once.}
 
 \item{LF_Only}{a logical flag indicating whether to return the latent factor
 predictions only. Defaults to \code{FALSE}. This helps in predicting to new

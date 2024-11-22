@@ -222,18 +222,22 @@ Predict_LF <- function(
     if (UseTF) {
 
       # Save s1 and s2 as rds files, if not already exist on disk
-      Path_s1 <- file.path(Temp_Dir, paste0(Model_Name, "s1.rds"))
-      Path_s2 <- file.path(Temp_Dir, paste0(Model_Name, "s2.rds"))
+      Path_s1 <- file.path(Temp_Dir, paste0(Model_Name, "s1.feather"))
+      Path_s2 <- file.path(Temp_Dir, paste0(Model_Name, "s2.feather"))
 
       if (file.exists(Path_s1) && file.exists(Path_s2)) {
         IASDT.R::CatTime("s1 and s2 matrices are already saved", Level = 2)
       } else {
+
         IASDT.R::CatTime("Saving s1 and s2 matrices", Level = 2)
-        s1 <- rL$s[modelunits, , drop = FALSE]
-        s2 <- rL$s[unitsPred[indNew], , drop = FALSE]
-        saveRDS(s1, file = Path_s1)
-        saveRDS(s2, file = Path_s2)
+        s1 <- as.data.frame(rL$s[modelunits, , drop = FALSE])
+        arrow::write_feather(x = s1, sink = Path_s1, compression = "zstd")
+
+        s2 <- as.data.frame(rL$s[unitsPred[indNew], , drop = FALSE])
+        arrow::write_feather(x = s2, sink = Path_s2, compression = "zstd")
+        rm(s1, s2, envir = environment())
       }
+
       rm(rL, envir = environment())
 
       Path_D11 <- Path_D12 <- NULL
@@ -713,7 +717,7 @@ Predict_LF <- function(
 #' to 3 times if the output is invalid.
 #' - Generates detailed logs if `verbose` is set to `TRUE`.
 #'
-#' @noRD
+#' @keywords internal
 
 run_crossprod_solve <- function(
     virtual_env_path, script_path, s1, s2, postEta, path_out,
@@ -722,9 +726,13 @@ run_crossprod_solve <- function(
 
   Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3")
 
+  # do not use scientific notation
+  withr::local_options(scipen = 99)
+
   if (is.null(script_path)) {
     script_path <- system.file("crossprod_solve.py", package = "IASDT.R")
   }
+
 
   # Ensure the paths are valid
   paths <- list(virtual_env_path, script_path, s1, s2, postEta)

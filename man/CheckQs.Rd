@@ -4,7 +4,7 @@
 \alias{CheckQs}
 \title{Check the Integrity of an \code{qs} File}
 \usage{
-CheckQs(File, Warning = TRUE, qs_nthreads = 5)
+CheckQs(File, warning = TRUE, qs_nthreads = 5)
 }
 \arguments{
 \item{File}{A character string specifying the path to the file to be checked.
@@ -12,14 +12,14 @@ This can not be empty. The function will attempt to determine the file type
 based on the file extension. If the file extension is not \code{qs}, the
 function will return \code{FALSE}.}
 
-\item{Warning}{logical. If \code{TRUE} (default), warnings will be printed if the
+\item{warning}{logical. If \code{TRUE} (default), warnings will be printed if the
 file does not exist.}
 
 \item{qs_nthreads}{integer. The number of threads to use when reading the
 \code{qs} file. Default is 5.}
 }
 \value{
-A logical value: \code{TRUE} if the file is an RDS file and contains a
+A logical value: \code{TRUE} if the file is an qs file and contains a
 non-null object, \code{FALSE} otherwise.
 }
 \description{

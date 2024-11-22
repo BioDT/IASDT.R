@@ -437,7 +437,7 @@ Predict_Maps <- function(
   if (!file.exists(Path_Test_LF) && Pred_NewSites) {
     
     IASDT.R::CatTime(
-      "Preparing input data for predicting latent factor", Line = 1)
+      "Preparing input data for predicting latent factor", Level = 1)
 
     Predict_DF_Test <- Prediction_Options %>%
       dplyr::filter(ClimateModel == "Current") %>%
@@ -464,7 +464,7 @@ Predict_Maps <- function(
     rm(Predict_DF_Test, Test_X, Test_XY, Model, envir = environment())
     invisible(gc())
 
-    IASDT.R::CatTime("Predicting latent factor", Line = 1)
+    IASDT.R::CatTime("Predicting latent factor", Level = 1)
     # Predicting latent factor only -- no predictions are made
     Preds_LF <- IASDT.R::Predict_Hmsc(
       Path_Model = Path_Model, Gradient = Gradient, expected = TRUE,

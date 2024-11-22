@@ -452,7 +452,6 @@ Predict_LF <- function(
               }) %>%
               dplyr::arrange(SampleID, Site, etaPred)
 
-
             qs::qsave(etaPred, file = File_etaPred, preset = "fast")
 
           } else {
@@ -793,9 +792,11 @@ run_crossprod_solve <- function(
 
   while (attempt <= max_attempts && !success) {
 
-    cat(
-      paste0("Attempt ", attempt, " of ", max_attempts, "\n"),
-      sep = "\n", file = f, append = TRUE)
+    IASDT.R::CatSep(file = f, append = TRUE, Extra2 = 1)
+    IASDT.R::CatTime(
+      paste0("Attempt ", attempt, " of ", max_attempts), sep = "\n", NLines = 2,
+      file = f, append = TRUE)
+    IASDT.R::CatSep(file = f, append = TRUE, Extra2 = 2)
 
     # Run the command and capture stdout/stderr to a log file
     result <- system2(

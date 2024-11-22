@@ -14,6 +14,7 @@
 #'   Default is `"-"`.
 #' @param CharReps integer; the number of times the character is repeated to
 #'   form a separator line. Default is `50`.
+#' @param ... additional arguments to be passed to `cat()`.
 #' @name CatSep
 #' @author Ahmed El-Gabbas
 #' @return The function is called for its side effect (printing to the console)
@@ -31,7 +32,7 @@
 #' @export
 
 CatSep <- function(
-    Rep = 1L, Extra1 = 0L, Extra2 = 0L, Char = "-",  CharReps = 50L) {
+    Rep = 1L, Extra1 = 0L, Extra2 = 0L, Char = "-",  CharReps = 50L, ...) {
 
   # Check input arguments
   AllArgs <- ls(envir = environment())
@@ -44,14 +45,13 @@ CatSep <- function(
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = "Char", Type = "character")
 
   if (Extra1 > 0) {
-    replicate(n = Extra1, expr = cat("\n"))
+    cat(paste0(rep("\n", Extra1), collapse = ""), ...)
   }
 
-  S <- paste0(rep(Char, CharReps), collapse = "")
-  replicate(n = Rep, expr = cat(S, sep = "\n"))
+  cat(paste0(rep(Char, CharReps), collapse = ""), ...)
 
   if (Extra2 > 0) {
-    replicate(n = Extra2, expr = cat("\n"))
+    cat(paste0(rep("\n", Extra2), collapse = ""), ...)
   }
   return(invisible(NULL))
 }

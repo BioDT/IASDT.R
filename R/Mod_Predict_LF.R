@@ -737,11 +737,13 @@ run_crossprod_solve <- function(
   paths <- list(virtual_env_path, script_path, s1, s2, postEta)
   names(paths) <- c(
     "Virtual Environment", "Python Script", "s1", "s2", "postEta")
-  lapply(names(paths), function(p) {
-    if (!file.exists(paths[[p]])) {
-      stop(paste0(p, " does not exist: ", paths[[p]]))
-    }
-  })
+  purrr::walk(
+    .x = names(paths),
+    .f = function(p) {
+      if (!file.exists(paths[[p]])) {
+        stop(paste0(p, " does not exist: ", paths[[p]]))
+      }
+    })
 
   # Determine the Python executable path
   python_executable <- if (.Platform$OS.type == "windows") {
@@ -755,9 +757,9 @@ run_crossprod_solve <- function(
       "Python executable not found in the virtual environment.", call. = FALSE)
   }
 
-
   # Construct the command to run the Python script
   args <- c(
+    python_executable,
     script_path,
     "--s1", normalizePath(s1, winslash = "/"),
     "--s2", normalizePath(s2, winslash = "/"),
@@ -776,9 +778,8 @@ run_crossprod_solve <- function(
     args <- c(args, "--verbose")
   }
 
-
   path_log <- stringr::str_replace(path_out, ".feather", ".log")
-  f <- file(path_log, open = "wb")
+  f <- file(path_log, open = "a")
   on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
   cat(
     "Running command:\n",
@@ -795,16 +796,14 @@ run_crossprod_solve <- function(
     IASDT.R::CatSep(file = f, append = TRUE, Extra2 = 1)
     IASDT.R::CatTime(
       paste0("Attempt ", attempt, " of ", max_attempts), sep = "\n",
-      NLines = 2, file = f, append = TRUE)
-    IASDT.R::CatSep(file = f, append = TRUE, Extra2 = 2)
+      NLines = 1, file = f, append = TRUE)
+    IASDT.R::CatSep(file = f, append = TRUE, Extra2 = 1)
 
     # Run the command and capture stdout/stderr to a log file
-    result <- system2(
-      command = python_executable, args = args,
-      stdout = path_log, stderr = path_log)
+    result <- system(paste0(args, collapse = " "), intern = TRUE)
 
     # Check for errors
-    if (!inherits(result, "error") || !length(result) == 0) {
+    if (!inherits(result, "error") || length(result) != 0 || result == "Done") {
       # Check if file is valid using IASDT.R::CheckData
       FileOkay <- IASDT.R::CheckData(path_out)
       if (FileOkay) {

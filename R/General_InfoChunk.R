@@ -32,7 +32,7 @@ InfoChunk <- function(
   }
 
   IASDT.R::CatSep(..., Extra1 = Extra1)
-  IASDT.R::CatTime(Message, Date = Date)
+  IASDT.R::CatTime(paste("\n", Message), Date = Date)
   IASDT.R::CatSep(..., Extra2 = Extra2)
 
   return(invisible(NULL))

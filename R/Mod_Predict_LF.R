@@ -783,7 +783,7 @@ run_crossprod_solve <- function(
   on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
   cat(
     "Running command:\n",
-    paste(python_executable, paste(args, collapse = " "), "\n\n"),
+    paste(paste(args, collapse = " "), "\n\n"),
     sep = "\n", file = f, append = TRUE)
 
   # Initialize retry logic

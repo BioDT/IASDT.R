@@ -766,8 +766,7 @@ run_crossprod_solve <- function(
     "--path_out", normalizePath(path_out, winslash = "/"),
     "--denom", as.character(denom),
     "--chunk_size", as.character(chunk_size),
-    "--threshold_mb", as.character(threshold_mb),
-    "--save")
+    "--threshold_mb", as.character(threshold_mb))
 
   # Add boolean flags conditionally
   if (use_single) {

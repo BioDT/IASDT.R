@@ -443,7 +443,7 @@ Predict_LF <- function(
               .f = function(ID) {
 
                 eta <- postEta0[, , ID]
-                etaPred <- IASDT.R::Solve2vect(K11, eta) %>%
+                IASDT.R::Solve2vect(K11, eta) %>%
                   as.vector() %>%
                   Matrix::crossprod(K12, .) %>%
                   as.vector() %>%
@@ -777,7 +777,7 @@ run_crossprod_solve <- function(
   }
 
 
-  path_log <- stringr::str_replace(path_out, ".feather", "_R.log")
+  path_log <- stringr::str_replace(path_out, ".feather", ".log")
   f <- file(path_log, open = "wb")
   on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
   cat(
@@ -794,8 +794,8 @@ run_crossprod_solve <- function(
 
     IASDT.R::CatSep(file = f, append = TRUE, Extra2 = 1)
     IASDT.R::CatTime(
-      paste0("Attempt ", attempt, " of ", max_attempts), sep = "\n", NLines = 2,
-      file = f, append = TRUE)
+      paste0("Attempt ", attempt, " of ", max_attempts), sep = "\n",
+      NLines = 2, file = f, append = TRUE)
     IASDT.R::CatSep(file = f, append = TRUE, Extra2 = 2)
 
     # Run the command and capture stdout/stderr to a log file

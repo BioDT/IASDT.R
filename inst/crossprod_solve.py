@@ -284,7 +284,7 @@ def crossprod_solve(s1, s2, denom, postEta, use_single=False, path_out=None, chu
     - path_out: File path to save the results.
     """
 
-    log_file = path_out.replace(".feather", "_TF.log")
+    log_file = path_out.replace(".feather", ".log")
     
     with open(log_file, "a") as log:
         with contextlib.redirect_stdout(log), contextlib.redirect_stderr(log):

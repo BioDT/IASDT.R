@@ -114,7 +114,7 @@ Predict_LF <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  SampleID <- Unit_ID <- LF <- LF_ID <- etaPred <- Sample_IDs <- File <-
+  SampleID <- Site <- LF <- LF_ID <- etaPred <- Sample_IDs <- File <-
     Alpha_ID <- NULL
 
   # # ..................................................................... ###
@@ -186,7 +186,7 @@ Predict_LF <- function(
       IASDT.R::CatTime("Computations will be made using TensorFlow", Level = 1)
 
       # Extension for temporary files
-      TempExt <- "rds"
+      TempExt <- "feather"
 
     } else {
 
@@ -348,7 +348,8 @@ Predict_LF <- function(
                 purrr::map(~ .x[, LF_ID, drop = FALSE]) %>%
                 simplify2array()
               if (UseTF) {
-                saveRDS(Out, file = File)
+                arrow::write_feather(
+                  x = as.data.frame(Out), sink = File, compression = "zstd")
               } else {
                 qs::qsave(Out, file = File, preset = "fast")
               }
@@ -364,6 +365,7 @@ Predict_LF <- function(
     # Internal functions to predict latent factors
 
     etaPreds_F <- function(RowNum, LF_Check = FALSE) {
+
       # Current denominator
       Denom <- Unique_Alpha$Denom[[RowNum]]
       # ID for latent factor
@@ -374,13 +376,16 @@ Predict_LF <- function(
       File <- Unique_Alpha$File[[RowNum]]
       File_etaPred <- Unique_Alpha$File_etaPred[[RowNum]]
 
-      # If the denominator is positive, perform calculations; otherwise, set
-      # `eta_indNew` to zero.
+
       if (LF_Check) {
         CalcPredLF <- isFALSE(IASDT.R::CheckData(File_etaPred, warning = FALSE))
       } else {
         CalcPredLF <- !file.exists(File_etaPred)
       }
+
+      # If the denominator is positive, perform calculations; otherwise, set
+      # `eta_indNew` to zero.
+
 
       if (Denom > 0) {
 
@@ -401,11 +406,15 @@ Predict_LF <- function(
               path_out = File_etaPred, use_single = TF_use_single)
           }
 
-          etaPred <- IASDT.R::LoadAs(File_etaPred) %>%
-            purrr::map( ~ tibble::tibble(Post = unlist(.x))) %>%
-            tibble::tibble(DT = .) %>%
-            dplyr::mutate(SampleID = SampleID) %>%
-            tidyr::unnest(DT)
+          etaPred <- arrow::read_feather(File_etaPred) %>%
+            as.list() %>%
+            unname()
+
+          etaPred <- purrr::map_dfr(
+            .x = seq_len(length(etaPred)),
+            .f = ~ tibble::tibble(
+              etaPred = etaPred[[.x]], Site = unitsPred,
+              SampleID = SampleID[.x]))
 
         } else {
 
@@ -423,28 +432,27 @@ Predict_LF <- function(
             K11 <- IASDT.R::exp_neg_div(D11, Denom)
             K12 <- IASDT.R::exp_neg_div(D12, Denom)
 
-
             # NEED TO REVISE OUTPUT COLUMNS
 
             etaPred <- purrr::map_dfr(
               .x = seq_along(SampleID),
               .f = function(ID) {
+
                 eta <- postEta0[, , ID]
                 etaPred <- IASDT.R::Solve2vect(K11, eta) %>%
                   as.vector() %>%
                   Matrix::crossprod(K12, .) %>%
                   as.vector() %>%
-                  tibble::tibble(etaPred = ., SampleID = SampleID)
+                  tibble::tibble(
+                    etaPred = ., Site = unitsPred, SampleID = SampleID[ID])
               }) %>%
-              dplyr::mutate(Unit_ID = factor(Unit_ID, levels = unitsPred)) %>%
-              dplyr::arrange(SampleID, Unit_ID, etaPred)
+              dplyr::arrange(SampleID, Site, etaPred)
+
 
             qs::qsave(etaPred, file = File_etaPred, preset = "fast")
 
           } else {
-
             etaPred <- IASDT.R::LoadAs(File_etaPred)
-
           }
         }
 
@@ -453,7 +461,20 @@ Predict_LF <- function(
 
         # NEED TO REVISE OUTPUT COLUMNS
 
-        etaPred <- tibble::tibble(etaPred = 0, SampleID = SampleID)
+        if (CalcPredLF) {
+
+          etaPred <- tibble::tibble(etaPred = 0, Site = unitsPred) %>%
+            tidyr::expand_grid(SampleID = SampleID)
+
+          IASDT.R::SaveAs(
+            InObj = etaPred, outObj = "etaPred",
+            OutPath = File_etaPred, preset = "fast")
+
+        } else {
+
+          etaPred <- IASDT.R::LoadAs(File_etaPred)
+
+        }
       }
 
       return(etaPred)
@@ -483,13 +504,13 @@ Predict_LF <- function(
 
           while (attempt <= max_tries) {
             result <- tryCatch({
-                # Use purrr::possibly around etaPreds_F call to handle errors
-                etaPreds_F(x, LF_Check = LF_Check)
-              },
-              error = function(e) {
-                # Return NULL on error to retry
-                NULL
-              })
+              # Use purrr::possibly around etaPreds_F call to handle errors
+              etaPreds_F(x, LF_Check = LF_Check)
+            },
+            error = function(e) {
+              # Return NULL on error to retry
+              NULL
+            })
 
             # Exit loop if result is not NULL (successful)
             if (!is.null(result)) {
@@ -554,13 +575,13 @@ Predict_LF <- function(
 
           while (attempt <= max_tries) {
             result <- tryCatch({
-                # Use purrr::possibly around etaPreds_F call to handle errors
-                etaPreds_F(x, LF_Check = LF_Check)
-              },
-              error = function(e) {
-                # Return NULL on error to retry
-                NULL
-              })
+              # Use purrr::possibly around etaPreds_F call to handle errors
+              etaPreds_F(x, LF_Check = LF_Check)
+            },
+            error = function(e) {
+              # Return NULL on error to retry
+              NULL
+            })
 
             # Exit loop if result is not NULL (successful)
             if (!is.null(result)) {
@@ -608,9 +629,9 @@ Predict_LF <- function(
       dplyr::mutate(etaPred = etaPreds) %>%
       tidyr::unnest("etaPred") %>%
       tidyr::pivot_wider(
-        id_cols = c(SampleID, Unit_ID),
+        id_cols = c(SampleID, Site),
         names_from = LF, values_from = etaPred) %>%
-      dplyr::arrange(SampleID, Unit_ID) %>%
+      dplyr::arrange(SampleID, Site) %>%
       dplyr::group_split(SampleID) %>%
       purrr::map(
         .f = ~ {
@@ -705,7 +726,6 @@ run_crossprod_solve <- function(
     script_path <- system.file("crossprod_solve.py", package = "IASDT.R")
   }
 
-
   # Ensure the paths are valid
   paths <- list(virtual_env_path, script_path, s1, s2, postEta)
   names(paths) <- c(
@@ -722,19 +742,19 @@ run_crossprod_solve <- function(
   } else {
     file.path(virtual_env_path, "bin", "python")
   }
+
   if (!file.exists(python_executable)) {
     stop(
-      "Python executable not found in the virtual environment.",
-      call. = FALSE)
+      "Python executable not found in the virtual environment.", call. = FALSE)
   }
 
   # Construct the command to run the Python script
   args <- c(
     script_path,
-    "--s1", normalizePath(s1),
-    "--s2", normalizePath(s2),
-    "--postEta", normalizePath(postEta),
-    "--path_out", normalizePath(path_out),
+    "--s1", normalizePath(s1, winslash = "/"),
+    "--s2", normalizePath(s2, winslash = "/"),
+    "--postEta", normalizePath(postEta, winslash = "/"),
+    "--path_out", normalizePath(path_out, winslash = "/"),
     "--denom", as.character(denom),
     "--chunk_size", as.character(chunk_size),
     "--threshold_mb", as.character(threshold_mb),
@@ -744,6 +764,7 @@ run_crossprod_solve <- function(
   if (use_single) {
     args <- c(args, "--use_single")
   }
+
   if (verbose) {
     args <- c(args, "--verbose")
   }

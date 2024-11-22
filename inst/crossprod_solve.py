@@ -25,11 +25,12 @@ import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="tensorflow")
 
 import numpy as np
-import rdata
+import pandas as pd
 import gc
 import sys
 import time
 import argparse
+import pyarrow.feather as feather
 
 # ======================================================================
 # TensorFlow and Environment Configuration
@@ -53,34 +54,32 @@ if gpus:
         print(f"Error setting memory configurations: {e}")
 
 # ======================================================================
-# load_rds
+# file_path
 # ======================================================================
 
-def load_rds(file_path):
+def load_feather(file_path):
     
     """
-    Load an RDS file using the rdata module.
+    Load a Feather file and return its data as a NumPy array.
 
     Parameters:
-    - file_path (str): Path to the RDS file.
+    - file_path (str): Path to the Feather file.
 
     Returns:
-    - rds_data (dict): Loaded data from the RDS file.
-    
+    - np.ndarray: Data loaded from the Feather file.
+
     Raises:
-    - FileNotFoundError: If the specified file does not exist.
-    - ValueError: If there is an issue reading the RDS file or it is malformed.
+    - FileNotFoundError: If the file does not exist.
+    - ValueError: If the Feather file cannot be read.
     """
 
     if not os.path.exists(file_path):
-        raise FileNotFoundError(f"The specified file does not exist: {file_path}")
-    
+        raise FileNotFoundError(f"File not found:: {file_path}")
     try:
-        with open(file_path, 'rb') as f:
-            rds_data = rdata.read_rds(f)
-        return rds_data
+        feather_data = feather.read_feather(file_path).to_numpy()
+        return feather_data
     except ValueError as e:
-        raise ValueError(f"Error reading RDS file at {file_path}: {e}")
+        raise ValueError(f"Failed to read Feather file at {file_path}: {e}")
 
 # ======================================================================
 # print_time
@@ -89,92 +88,16 @@ def load_rds(file_path):
 def print_time(message, verbose=True):
     
     """
-    Print the current time along with a provided message.
+    Print the current time along with a provided message  (optional).
 
     Parameters:
     - message (str): The message to print along with the current time.
+    - verbose (bool, optional): If True, print the message. Defaults to True.
     """
-    
+
     if verbose:
         current_time = time.strftime("%I:%M:%S %p", time.localtime())
         print(f"{message} - {current_time}")
-
-# ======================================================================
-# crossprod_solve_old
-# ======================================================================
-
-# This is the old version of the function. This worked nicely on a small-scale
-# models, but it needs to be optimized for larger data. See the new 
-# version below.
-
-def crossprod_solve_old(Dist1, Dist2, Denom, postEta, use_single=False):
-    
-    """
-    Compute cross-product and solve matrix systems in TensorFlow.
-    
-    Parameters:
-    - Dist1 (str or array-like): Distance matrix 1 or its file path.
-    - Dist2 (str or array-like): Distance matrix 2 or its file path.
-    - Denom (float): Denominator for exponent scaling.
-    - postEta (str or array-like): 3D matrix (n x m x k) or its file path.
-    - use_single (bool): If True, use float32 precision; otherwise, use float64.
-
-    Returns:
-    - results (list of np.ndarray): Flattened arrays containing results 
-    for each submatrix in postEta.
-    """
-    
-    # Set data type based on user input
-    dtype = tf.float32 if use_single else tf.float64
-    
-    # Load and convert Dist1, Dist2, and postEta if they are file paths
-    if isinstance(Dist1, str):
-        Dist1 = load_rds(Dist1)
-    if isinstance(Dist2, str):
-        Dist2 = load_rds(Dist2)
-    if isinstance(postEta, str):
-        postEta = load_rds(postEta)
-    
-    # Check if loading was successful
-    if Dist1 is None or Dist2 is None or postEta is None:
-        print_time("Error: One or more input files could not be loaded.")
-        return None
-    
-    # Convert distance matrices and denominator to TensorFlow tensors
-    Dist1 = tf.convert_to_tensor(Dist1, dtype=dtype)
-    Dist2 = tf.convert_to_tensor(Dist2, dtype=dtype)
-    Denom_tensor = tf.convert_to_tensor(Denom, dtype=dtype)
-        
-    # Calculate the K matrices with element-wise exponential
-    K11 = tf.exp(-Dist1 / Denom_tensor)
-    K12 = tf.exp(-Dist2 / Denom_tensor)
-
-    # Prepare an empty list to store results for each matrix in postEta
-    results = []
-    
-    # Loop through each "slice" in the third dimension of postEta
-    # (e.g., postEta[:, :, i])
-    num_matrices = postEta.shape[2]  # Number of matrices (should be 32)
-    
-    for i in range(num_matrices):
-        # Extract and convert the i-th 2D matrix from postEta
-        Vect_tensor = tf.convert_to_tensor(postEta[:, :, i], dtype=dtype)
-
-        # Attempt to solve the linear system for this slice
-        try:
-            # Solve K11 * x = Vect_tensor
-            solved_vector = tf.linalg.solve(K11, Vect_tensor)
-            # Compute cross-product with K12
-            result = tf.matmul(K12, solved_vector, transpose_a=True)
-            # Append the flattened result
-            results.append(result.numpy().flatten())
-        except tf.errors.InvalidArgumentError as e:
-            print_time(f"Error solving for matrix {i} in postEta: {e}. Check dimensions and matrix properties.")
-            # Append None if an error occurs for this slice
-            results.append(None)
-    
-    # Return the list of results for all slices
-    return results
 
 # ======================================================================
 # load_tensor_chunked
@@ -183,28 +106,26 @@ def crossprod_solve_old(Dist1, Dist2, Denom, postEta, use_single=False):
 def load_tensor_chunked(file_or_array, dtype, chunk_size=1000, threshold_mb=2000):
     
     """
-    Convert file or array to a TensorFlow tensor in chunks to handle large data.
-    
+    Convert file or array to a TensorFlow tensor in chunks for large data handling.
+
     Parameters:
     - file_or_array (str or array-like): Input data or file path.
     - dtype (tf.DType): TensorFlow data type (e.g., tf.float64).
-    - chunk_size (int): Size of chunks to process at a time.
-    - threshold_mb (int): Threshold for chunking in megabytes (default 2000 MB).
+    - chunk_size (int, optional): Size of chunks to process at a time.
+    - threshold_mb (int, optional): Threshold for chunking in megabytes (default 2000 MB).
 
     Returns:
     - tensor (tf.Tensor): Combined tensor from chunks.
     """
-    
-    if isinstance(file_or_array, str):
-        file_or_array = rdata.read_rds(file_or_array)
 
+    if isinstance(file_or_array, str):
+        #file_or_array = rdata.read_rds(file_or_array)
+        file_or_array = load_feather(file_or_array)
+    
     # Ensure positive integer chunk size
     chunk_size = max(1, int(chunk_size))
     threshold_bytes = threshold_mb * 1024**2
 
-    if isinstance(file_or_array, str):
-        file_or_array = load_rds(file_or_array)
-    
     # If the array is too large, split into chunks - 2 GB threshold
     if isinstance(file_or_array, np.ndarray) and file_or_array.nbytes > threshold_bytes:
         chunks = []
@@ -216,128 +137,23 @@ def load_tensor_chunked(file_or_array, dtype, chunk_size=1000, threshold_mb=2000
         return tf.convert_to_tensor(file_or_array, dtype=dtype)
 
 # ======================================================================
-# compute_k_matrices
-# ======================================================================
-
-@tf.function
-def compute_k_matrices(Dist1, Dist2, Denom_tensor):
-    
-    """
-    Compute K matrices as element-wise exponentials.
-    
-    Parameters:
-    - Dist1 (tf.Tensor): Distance matrix 1.
-    - Dist2 (tf.Tensor): Distance matrix 2.
-    - Denom_tensor (tf.Tensor): Denominator for scaling.
-
-    Returns:
-    - K11, K12 (tf.Tensor, tf.Tensor): Computed matrices.
-    """
-    
-    return tf.exp(-Dist1 / Denom_tensor), tf.exp(-Dist2 / Denom_tensor)
-
-# ======================================================================
-# crossprod_solve_old2 - faster than crossprod_solve_old, but sill slow
-# ======================================================================
-
-def crossprod_solve_old2(Dist1, Dist2, Denom, postEta, use_single=False, save=False, path_out=None, chunk_size=1000, threshold_mb=2000):
-    
-    """
-    Compute cross-product and solve matrix systems in TensorFlow.
-    Optionally save the output to an RDS file.
-
-    Parameters:
-    - Dist1 (str or array-like): Distance matrix 1 or its file path.
-    - Dist2 (str or array-like): Distance matrix 2 or its file path.
-    - Denom (float): Denominator for exponent scaling.
-    - postEta (str or array-like): 3D matrix (n x m x k) or its file path.
-    - use_single (bool): If True, use float32 precision; otherwise, use float64.
-    - save (bool): If True, save results to an RDS file.
-    - path_out (str): File path to save the results if `save` is True.
-    - chunk_size (int): Size of chunks for loading large matrices.
-
-    Returns:
-    - results (list of np.ndarray): Flattened arrays containing results for 
-        each submatrix in postEta.
-    """
-
-    # Ensure chunk_size is an integer
-    chunk_size = int(chunk_size)
-
-    # Set data type based on user input
-    dtype = tf.float32 if use_single else tf.float64
-
-    # Load and convert input matrices
-    Dist1 = load_tensor_chunked(Dist1, dtype, chunk_size=chunk_size, threshold_mb = threshold_mb)
-    Dist2 = load_tensor_chunked(Dist2, dtype, chunk_size=chunk_size, threshold_mb = threshold_mb)
-    if isinstance(postEta, str):
-        postEta = load_tensor_chunked(load_rds(postEta), dtype, chunk_size=chunk_size, threshold_mb = threshold_mb)
-
-    # Check if loading was successful
-    if Dist1 is None or Dist2 is None or postEta is None:
-        print_time("Error: One or more input files could not be loaded.")
-        return None
-
-    # Convert Denom to a TensorFlow tensor
-    Denom_tensor = tf.convert_to_tensor(Denom, dtype=dtype)
-
-    # Calculate the K matrices
-    K11, K12 = compute_k_matrices(Dist1, Dist2, Denom_tensor)
-    
-    # Free memory
-    del Dist1, Dist2, Denom_tensor
-    gc.collect()
-
-    # Reshape postEta for batch processing
-    num_matrices = postEta.shape[2]
-    postEta_reshaped = tf.reshape(postEta, [postEta.shape[0], postEta.shape[1] * num_matrices])
-
-    # Free memory
-    del postEta
-    gc.collect()
-
-    # Solve linear systems in batch
-    results = tf.linalg.solve(K11, postEta_reshaped)
-
-    # Compute cross-products in batch
-    results = tf.matmul(K12, results, transpose_a=True)
-
-    # Reshape results back to the original structure
-    results = tf.reshape(results, [num_matrices, -1])
-
-    # Convert results to numpy arrays
-    results = [res.numpy().flatten() for res in tf.split(results, num_matrices)]
-
-    # Save to RDS if requested
-    if save:
-        if not path_out:
-            raise ValueError("A valid path_out must be provided when save=True.")
-        try:
-            with open(path_out, 'wb') as f:
-                rdata.write_rds(results, f)
-        except Exception as e:
-            print_time(f"Error saving results to {path_out}: {e}")
-
-    return results
-
-# ======================================================================
 # compute_pairwise_distances
 # ======================================================================
 
 def compute_pairwise_distances(s1_chunk, s2, dtype=tf.float64):
     
     """
-    Compute pairwise distances between rows of s1_chunk and s2.
+    Compute Euclidean distances between rows of s1_chunk and s2.
 
     Parameters:
-    - s1_chunk (tensor): A 2D tensor of coordinates (n_chunk x d).
+    - s1_chunk: A 2D tensor of shape (n, 2), where n is the number of rows.
     - s2 (tensor): A 2D tensor of coordinates (m x d).
     - dtype (tf.DType): Data type for the computation.
 
     Returns:
     - dist_matrix (tensor): A 2D tensor of pairwise distances (n_chunk x m).
     """
-    
+
     # Compute squared Euclidean distance
     squared_diff = tf.expand_dims(s1_chunk, 1) - tf.expand_dims(s2, 0)
     squared_dist = tf.reduce_sum(tf.square(squared_diff), axis=-1)
@@ -347,7 +163,6 @@ def compute_pairwise_distances(s1_chunk, s2, dtype=tf.float64):
 
     return dist_matrix
 
-
 # ======================================================================
 # compute_distances_chunked
 # ======================================================================
@@ -355,11 +170,11 @@ def compute_pairwise_distances(s1_chunk, s2, dtype=tf.float64):
 def compute_distances_chunked(s1, s2=None, dtype=tf.float64, chunk_size=1000):
     
     """
-    Compute pairwise distances between rows of s1 and s2 in chunks to manage memory usage.
+    Compute Euclidean distances between rows of s1 and s2 in chunks to manage memory usage.
 
     Parameters:
     - s1 (tensor): A 2D tensor of coordinates (n x d).
-    - s2 (tensor): Optional; A 2D tensor of coordinates (m x d) to compute distances against.
+    - s2 (tensor): Optional; A 2D tensor of coordinates (m x d) to compute distances against. If not provided, `s1` is used.
     - dtype (tf.DType): Data type for computations.
     - chunk_size (int): Number of rows to process in each chunk to avoid memory overload.
 
@@ -392,33 +207,65 @@ def compute_distances_chunked(s1, s2=None, dtype=tf.float64, chunk_size=1000):
     return Dist
 
 # ======================================================================
-# solve_in_chunks
+# solve_and_multiply
 # ======================================================================
 
-def solve_in_chunks(K11, B, chunk_size):
-    """Solve K11 * X = B in chunks."""
-    num_columns = B.shape[1]
-    results = []
+def solve_and_multiply(K11, K12, postEta):
+    """
+    Solve K11 * X = postEta for each column of postEta, extracting the first 
+    item of each list, then compute tf.matmul(K12, X, transpose_a=True) for 
+    each column.
+
+    Parameters:
+    - K11: TensorFlow tensor of shape [n, n].
+    - K12: TensorFlow tensor of shape [n, p].
+    - postEta: TensorFlow tensor of shape [n, m].
+
+    Returns:
+    - TensorFlow tensor: A 2D tensor of shape (p, m) for combined result after tf.matmul for all columns of postEta.
+    """
     
-    for start in range(0, num_columns, chunk_size):
-        end = min(start + chunk_size, num_columns)
-        B_chunk = B[:, start:end]
-        X_chunk = tf.linalg.solve(K11, B_chunk)
-        results.append(X_chunk)
-        del B_chunk, X_chunk
-    
-    gc.collect()
-    return tf.concat(results, axis=1)
+    num_columns = postEta.shape[1]  # Number of columns in postEta
+    final_results = []  # To store the results of tf.matmul for each column
+
+    for col in range(num_columns):
+        # Extract the column as a 1D tensor (shape: [n])
+        postEta_col = postEta[:, col]
+
+        # Expand dimensions to match input requirements for tf.linalg.solve
+        # Shape: [n, 1]
+        postEta_col_expanded = tf.expand_dims(postEta_col, axis=1)
+
+        # Solve K11 * X = postEta_col
+        # Shape: [n, 1]
+        X = tf.linalg.solve(K11, postEta_col_expanded)
+
+        # Perform tf.matmul(K12, X, transpose_a=True)
+        # Shape: [p, 1]
+        result = tf.matmul(K12, X, transpose_a=True)
+
+        # Append the result
+        final_results.append(result)
+
+        # Clean up memory
+        del postEta_col, postEta_col_expanded, X, result
+        gc.collect()
+
+    # Merge all results into a single tensor
+    # Shape: [p, m]
+    final_results = tf.concat(final_results, axis=1)
+
+    return final_results
 
 # ======================================================================
 # crossprod_solve
 # ======================================================================
 
-def crossprod_solve(s1, s2, denom, postEta, use_single=False, save=False, path_out=None, chunk_size=1000, threshold_mb=2000, verbose=False):
+def crossprod_solve(s1, s2, denom, postEta, use_single=False, path_out=None, chunk_size=1000, threshold_mb=2000, verbose=False):
     
     """
-    Compute cross-product and solve matrix systems in TensorFlow.
-    Optionally save the output to an RDS file.
+    Compute cross-product and solve matrix systems in TensorFlow and save the 
+    output to an feather file.
 
     Parameters:
     - s1 (str or array-like): Distance matrix 1 or its file path.
@@ -426,22 +273,16 @@ def crossprod_solve(s1, s2, denom, postEta, use_single=False, save=False, path_o
     - denom (float): Denominator for exponent scaling.
     - postEta (str or array-like): 3D matrix (n x m x k) or its file path.
     - use_single (bool): If True, use float32 precision; otherwise, use float64.
-    - save (bool): If True, save results to an RDS file.
-    - path_out (str): File path to save the results if save is True.
+    - path_out (str): File path to save the results.
     - chunk_size (int): Size of chunks for loading large matrices.
+    - threshold_mb: Threshold in megabytes for chunking.
     - verbose (bool): If True, print execution time messages; otherwise, suppress them.
     
     Returns:
-    - results (list of np.ndarray): Flattened arrays containing results for each submatrix in postEta.
+    - path_out: File path to save the results.
     """
     
     print_time(f"Starting processing (TensorFlow v{tf.__version__})", verbose)
-
-    # Check if write_rds is available in the rdata package
-    # This is currently only available in the development version of it.
-    if not hasattr(rdata, 'write_rds'):
-        if verbose:
-            raise ImportError("'write_rds' is not available in the rdata package.")
 
     if gpus:
         print_time(f"  >>  GPUs detected: {len(gpus)}", verbose)
@@ -463,7 +304,7 @@ def crossprod_solve(s1, s2, denom, postEta, use_single=False, save=False, path_o
     print_time("Processing coordinate matrix - s1", verbose)
     if isinstance(s1, str):
         print_time("  >>  Reading data", verbose)
-        s1_tensor = load_rds(s1)
+        s1_tensor = load_feather(s1)
         print_time("  >>  Convert to tensor", verbose)
         s1_tensor = tf.convert_to_tensor(s1_tensor, dtype=dtype)
         gc.collect()
@@ -473,7 +314,7 @@ def crossprod_solve(s1, s2, denom, postEta, use_single=False, save=False, path_o
     print_time("Processing coordinate matrix - s2", verbose)
     if isinstance(s2, str):
         print_time("  >>  Reading data", verbose)
-        s2_tensor = load_rds(s2)
+        s2_tensor = load_feather(s2)
         print_time("  >>  Convert to tensor", verbose)
         s2_tensor = tf.convert_to_tensor(s2_tensor, dtype=dtype)
         print_time("  >>  Compute d12", verbose)
@@ -489,7 +330,8 @@ def crossprod_solve(s1, s2, denom, postEta, use_single=False, save=False, path_o
     print_time("Load and convert postEta", verbose)
     if isinstance(postEta, str):
         try:
-            postEta = load_tensor_chunked(postEta, dtype, chunk_size, threshold_mb)
+            postEta = load_feather(postEta)
+            postEta  = load_tensor_chunked(postEta , dtype, chunk_size, threshold_mb)
         except Exception as e:
             print_time(f"Error loading postEta: {e}", verbose)
             sys.exit(1)
@@ -512,73 +354,51 @@ def crossprod_solve(s1, s2, denom, postEta, use_single=False, save=False, path_o
     # Calculate the K matrices
     # |||||||||||||||||||||||||||||||||||
     print_time("Calculate the K matrices", verbose)
+    
     print_time("  >>  k11", verbose)
     K11 = tf.exp(-Dist1 / Denom_tensor)
     del Dist1
+    
     print_time("  >>  k12", verbose)
     K12 = tf.exp(-Dist2 / Denom_tensor)
-    
+    # Retrieve the shape as a list [rows, columns]
+    K12_shape = K12.shape.as_list()
+    # Dynamically ensure the tensor's shape
+    K12 = tf.ensure_shape(K12, K12_shape)
+
     # Free memory
-    print_time("Free memory", verbose)
+    print_time("  >>  Free memory", verbose)
     del Dist2, Denom_tensor, denom
     gc.collect()
 
     # |||||||||||||||||||||||||||||||||||
-    # Reshape postEta for batch processing
+    # Solve & cross-product
     # |||||||||||||||||||||||||||||||||||
-    print_time("Reshape postEta for batch processing", verbose)
-    num_matrices = postEta.shape[2]
-    postEta_reshaped = tf.reshape(postEta, [postEta.shape[0], postEta.shape[1] * num_matrices])
+    print_time("Solve & cross-product", verbose)
+    results = solve_and_multiply(K11, K12, postEta)
     
     # Free memory
-    print_time("Free memory", verbose)
-    del postEta
-    gc.collect()
-
-    # |||||||||||||||||||||||||||||||||||
-    # Solve linear systems in batch
-    # |||||||||||||||||||||||||||||||||||
-    print_time("Solve linear systems in batch", verbose)
-    # results = tf.linalg.solve(K11, postEta_reshaped)
-    results = solve_in_chunks(K11, postEta_reshaped, chunk_size)
-    del K11, postEta_reshaped
-    gc.collect()
-
-    # |||||||||||||||||||||||||||||||||||
-    # Compute cross-products in batch
-    # |||||||||||||||||||||||||||||||||||
-    print_time("Compute cross-products in batch", verbose)
-    results = tf.matmul(K12, results, transpose_a=True)
-    
-    # Free memory
-    print_time("Free memory", verbose)
-    del K12
+    print_time("  >>  Free memory", verbose)
+    del K11, K12, postEta
     gc.collect()
     
-    # |||||||||||||||||||||||||||||||||||
-    # Reshape results back to the original structure
-    # |||||||||||||||||||||||||||||||||||
-    print_time("Reshape results back to the original structure", verbose)
-    results = tf.reshape(results, [num_matrices, -1])
-    gc.collect()
-
     # |||||||||||||||||||||||||||||||||||
     # Convert results to numpy arrays
     # |||||||||||||||||||||||||||||||||||
-    print_time("Convert results to numpy arrays", verbose)
-    results = [res.numpy().flatten() for res in tf.split(results, num_matrices)]
-    results = [arr.flatten().tolist() for arr in results]
+    print_time("Convert results to pandas dataframe", verbose)
+    results = pd.DataFrame(results)
     
     # |||||||||||||||||||||||||||||||||||
-    # Save to RDS if requested
+    # Save to feather
     # |||||||||||||||||||||||||||||||||||
-    if save:
-        if not path_out:
-            raise ValueError("A valid path_out must be provided when save=True.")
-        try:
-            rdata.write_rds(path_out, results)
-        except Exception as e:
-            print_time(f"Error saving results to {path_out}: {e}", verbose)
+    print_time("Save to feather", verbose)
+
+    if not path_out:
+        raise ValueError("A valid path_out must be provided.")
+    try:
+        results.to_feather(path_out)
+    except Exception as e:
+        print_time(f"Error saving results to {path_out}: {e}", verbose)
 
     # |||||||||||||||||||||||||||||||||||
     # Print processing time
@@ -586,7 +406,7 @@ def crossprod_solve(s1, s2, denom, postEta, use_single=False, save=False, path_o
     elapsed_time = time.time() - start_time
     print_time(f"Finished in {elapsed_time:.1f} seconds", verbose)
 
-    return results
+    return path_out
 
 # ==============================================================================
 # ==============================================================================
@@ -595,15 +415,19 @@ def crossprod_solve(s1, s2, denom, postEta, use_single=False, save=False, path_o
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run crossprod_solve function.")
+
+    parser = argparse.ArgumentParser(
+    description=(
+        "Run crossprod_solve to compute cross-product and solve linear systems "
+        "using TensorFlow, and save the output in Feather format."))
     parser.add_argument("--s1", type=str, required=True, help="Path to s1 file.")
     parser.add_argument("--s2", type=str, required=True, help="Path to s2 file.")
     parser.add_argument("--postEta", type=str, required=True, help="Path to postEta file.")
     parser.add_argument("--path_out", type=str, required=True, help="Path to output file.")
     parser.add_argument("--denom", type=float, required=True, help="Denominator value.")
-    parser.add_argument("--chunk_size", type=int, default=1000, help="Chunk size.")
-    parser.add_argument("--threshold_mb", type=int, default=2000, help="Threshold in MB.")
+    parser.add_argument("--chunk_size", type=int, default=1000, help="Chunk size for processing data in memory.")
+    parser.add_argument("--threshold_mb", type=int, default=2000, help="Memory threshold in MB for chunking large data.")
     parser.add_argument("--use_single", action="store_true", help="Use single precision.")
-    parser.add_argument("--save", action="store_true", help="Save the output.")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose output.")
     args = parser.parse_args()
 
@@ -614,12 +438,10 @@ if __name__ == "__main__":
             denom=args.denom,
             postEta=args.postEta,
             use_single=args.use_single,
-            save=args.save,
             path_out=args.path_out,
             chunk_size=args.chunk_size,
             threshold_mb=args.threshold_mb,
-            verbose=args.verbose,
-        )
+            verbose=args.verbose)
 
         if result is None:
             raise ValueError("crossprod_solve returned None.")

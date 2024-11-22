@@ -6,7 +6,7 @@
 #'
 #' This function checks if the specified file is an `feather` file and attempts
 #' to read it using [arrow::read_feather]. It returns `TRUE` if the file is an
-#' `qs` file and contains a non-null object, otherwise `FALSE.`
+#' `feather` file and contains a non-null object, otherwise `FALSE.`
 #'
 #' @param File A character string specifying the path to the file to be checked.
 #'   This can not be empty. The function will attempt to determine the file type

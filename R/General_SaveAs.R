@@ -6,7 +6,8 @@
 #'
 #' This function saves an R object to a specified file path with a potentially
 #' new name. It is useful for renaming objects during the save process. The
-#' function also supports saving objects in the `qs` format.
+#' function supports saving objects in `RData`, `qs2`, `feather`, and `rds`
+#' formats. The format is determined by the extension of the file path.
 #'
 #' @param InObj The input object to be saved. This can be an actual R object or
 #'   a character string representing the name of an object.
@@ -14,11 +15,17 @@
 #'   `RData` object. This name is used when the object is loaded back into R.
 #'   Default is `NULL`. This is required when saving `RData` files.
 #' @param OutPath A character string specifying the file path (ends with either
-#'   `*.RData` or `*.qs`) where the object should be saved. This includes the
-#'   directory and the file name.
-#' @param qs_preset A character string specifying the preset to use when saving
-#'   the object in the `qs` format. The default is "fast". See [qs::qsave].
-#' @param ... Additional arguments to be passed to the `save` function.
+#'   `*.RData`, `*.qs2`, `feather`, and `rds`) where the object should be saved.
+#'   This includes the directory and the file name.
+#' @param nthreads A character string specifying the number of threads to use
+#'   when compressing data. See [qs2::qs_save].
+#' @param feather_compression A character string specifying the compression
+#'   algorithm to use when saving the object in the `feather` format. The
+#'   default is "zstd". See [arrow::write_feather].
+#' @param ... Additional arguments to be passed to the respective save
+#'   functions. [base::save] for `RData` files; [qs2::qs_save] for `qs2` files;
+#'   [arrow::write_feather] for `feather` files; and [base::saveRDS] for `rds`
+#'   files.
 #' @name SaveAs
 #' @author Ahmed El-Gabbas
 #' @return The function does not return a value but saves an object to the
@@ -37,7 +44,9 @@
 #'
 #' tibble::tibble(iris2)
 
-SaveAs <- function(InObj, OutObj = NULL, OutPath, qs_preset = "fast", ...) {
+SaveAs <- function(
+    InObj, OutObj = NULL, OutPath, nthreads = 5,
+    feather_compression = "zstd", ...) {
 
   if (is.null(InObj) || is.null(OutPath)) {
     stop("`InObj` and `OutPath` cannot be NULL", call. = FALSE)
@@ -49,25 +58,39 @@ SaveAs <- function(InObj, OutObj = NULL, OutPath, qs_preset = "fast", ...) {
 
   Extension <- stringr::str_to_lower(tools::file_ext(OutPath))
 
-  if (!Extension %in% c("qs", "rdata")) {
+  if (!Extension %in% c("qs2", "rdata", "feather", "rds")) {
     stop(
-      "Extension of `OutPath` must be either 'qs' or 'RData'.", .call = FALSE)
-  }
-
-  if (Extension == "rdata" && is.null(OutObj)) {
-    stop("`OutObj` cannot be `NULL` for saving RData files", call. = FALSE)
+      paste0(
+        "Extension of `OutPath` must be either 'qs2', ",
+        "'rdata', 'feather', or 'rds' (case-insensitive)."),
+      .call = FALSE)
   }
 
   # Create directory if not available
   fs::dir_create(dirname(OutPath))
 
-  if (Extension == "rdata") {
-    OutObj <- eval(OutObj)
-    assign(OutObj, InObj)
-    save(list = OutObj, file = OutPath, ...)
-  } else {
-    qs::qsave(x = InObj, file = OutPath, preset = qs_preset)
-  }
+  switch(
+    Extension,
+    qs2 = {
+      qs2::qs_save(object = InObj, file = OutPath, nthreads = nthreads, ...)
+    },
+    rdata = {
+      if (is.null(OutObj)) {
+        stop("`OutObj` cannot be `NULL` for saving RData files", call. = FALSE)
+      }
+      OutObj <- eval(OutObj)
+      assign(OutObj, InObj)
+      save(list = OutObj, file = OutPath, ...)
+    },
+    feather = {
+      arrow::write_feather(
+        x = InObj, sink = OutPath, compression = feather_compression, ...)
+    },
+    rds = {
+      saveRDS(object = InObj, file = OutPath, ...)
+    },
+    stop("Invalid file extension", call. = FALSE)
+  )
 
   return(invisible())
 }

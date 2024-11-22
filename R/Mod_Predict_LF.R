@@ -5,11 +5,11 @@
 #' Predict_LF
 #'
 #' Draws samples from the conditional predictive distribution of latent factors.
-#' #' This function is optimized for speed using parallel processing and
+#' This function is optimized for speed using parallel processing and
 #' optionally TensorFlow for matrix operations. This function is adapted from
 #' [Hmsc::predictLatentFactor] with equivalent results to the original function
 #' when `predictMean = TRUE`.
-#'
+#' 
 #' @param unitsPred a factor vector with random level units for which
 #'   predictions are to be made
 #' @param modelunits a factor vector with random level units that are
@@ -39,7 +39,7 @@
 #'   the TF calculations. Defaults to `FALSE`.
 #' @param LF_OutFile Character string specifying the path to save the outputs.
 #'   If `NULL` (default), the predicted latent factors are not saved to a file.
-#'   This should end with either `qs` or `RData`.
+#'   This should end with either `*.qs2` or `*.RData`.
 #' @param LF_Return Logical. Indicates if the output should be returned.
 #'   Defaults to `TRUE`. If `LF_OutFile` is `NULL`, this parameter cannot be set
 #'   to `FALSE` because the function needs to return the result if it is not
@@ -49,6 +49,8 @@
 #'   if the files exist without checking their integrity. Default is `FALSE`.
 #' @param Verbose Logical. If TRUE, detailed output is printed. Default is
 #'   `FALSE`.
+#' @param solve_max_attempts numeric (Optional). Maximum number of attempts to
+#'   run solve and crossprod functions. Default is 5.
 #' @export
 #' @author This script was adapted from the [Hmsc::predictLatentFactor] function
 #'   in the `Hmsc` package.
@@ -74,7 +76,8 @@ Predict_LF <- function(
     unitsPred, modelunits, postEta, postAlpha, rL, LF_NCores = 8,
     Temp_Dir = "TEMP2Pred", Temp_Cleanup = FALSE, Model_Name = NULL,
     UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE, LF_OutFile = NULL,
-    LF_Return = TRUE, LF_Check = FALSE, Verbose = TRUE) {
+    LF_Return = TRUE, LF_Check = FALSE, solve_max_attempts = 5,
+    Verbose = TRUE) {
 
   # # ..................................................................... ###
 
@@ -102,12 +105,11 @@ Predict_LF <- function(
   # Load postEta if it is a file path
 
   if (inherits(postEta, "character")) {
-    postEta_File <- postEta
     IASDT.R::CatTime("Load postEta", Level = 1)
     if (!file.exists(postEta)) {
       stop("The specified path for `postEta` does not exist. ", call. = FALSE)
     }
-    postEta <- IASDT.R::LoadAs(postEta, nthreads = 5)
+    postEta <- IASDT.R::LoadAs(postEta)
   }
 
   # # ..................................................................... ###
@@ -115,7 +117,7 @@ Predict_LF <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   SampleID <- Site <- LF <- LF_ID <- etaPred <- Sample_IDs <- File <-
-    Alpha_ID <- NULL
+    Alpha_ID <- File_etaPred <- Denom <- NSamples <- NULL
 
   # # ..................................................................... ###
 
@@ -184,16 +186,8 @@ Predict_LF <- function(
       Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3", TF_ENABLE_ONEDNN_OPTS = "0")
 
       IASDT.R::CatTime("Computations will be made using TensorFlow", Level = 1)
-
-      # Extension for temporary files
-      TempExt <- "feather"
-
     } else {
-
       IASDT.R::CatTime("Computations will be made using R/CPP", Level = 1)
-
-      # Extension for temporary files
-      TempExt <- "qs"
     }
 
     # # .................................................................... ###
@@ -207,8 +201,8 @@ Predict_LF <- function(
     }
 
     # Create a temporary directory to store intermediate results. This directory
-    # will be used to save D11, D12, and intermediate postEta files, reducing
-    # memory usage.
+    # will be used to save s1/s2 or D11/D12, and intermediate postEta files,
+    # reducing memory usage.
     fs::dir_create(Temp_Dir)
 
     # # .................................................................... ###
@@ -221,20 +215,28 @@ Predict_LF <- function(
 
     if (UseTF) {
 
-      # Save s1 and s2 as rds files, if not already exist on disk
+      # Save s1 and s2 for coordinates at training and testing sites as feather
+      # files, if not already exist on disk
       Path_s1 <- file.path(Temp_Dir, paste0(Model_Name, "s1.feather"))
       Path_s2 <- file.path(Temp_Dir, paste0(Model_Name, "s2.feather"))
 
-      if (file.exists(Path_s1) && file.exists(Path_s2)) {
+      s1_s2_Okay <- IASDT.R::CheckData(Path_s1, warning = TRUE) &&
+        IASDT.R::CheckData(Path_s2, warning = TRUE)
+
+      if (s1_s2_Okay) {
         IASDT.R::CatTime("s1 and s2 matrices are already saved", Level = 2)
       } else {
 
         IASDT.R::CatTime("Saving s1 and s2 matrices", Level = 2)
-        s1 <- as.data.frame(rL$s[modelunits, , drop = FALSE])
-        arrow::write_feather(x = s1, sink = Path_s1, compression = "zstd")
 
+        # s1
+        s1 <- as.data.frame(rL$s[modelunits, , drop = FALSE])
+        IASDT.R::SaveAs(InObj = s1, OutPath = Path_s1)
+
+        # s2
         s2 <- as.data.frame(rL$s[unitsPred[indNew], , drop = FALSE])
-        arrow::write_feather(x = s2, sink = Path_s2, compression = "zstd")
+        IASDT.R::SaveAs(InObj = s2, OutPath = Path_s2)
+
         rm(s1, s2, envir = environment())
       }
 
@@ -244,9 +246,9 @@ Predict_LF <- function(
 
     } else {
 
-      # Save D11 and D12 as qs/rds files, if not already exist on disk
-      Path_D11 <- file.path(Temp_Dir, paste0(Model_Name, "D11.", TempExt))
-      Path_D12 <- file.path(Temp_Dir, paste0(Model_Name, "D12.", TempExt))
+      # Save D11 and D12 as feather files, if not already exist on disk
+      Path_D11 <- file.path(Temp_Dir, paste0(Model_Name, "D11.feather"))
+      Path_D12 <- file.path(Temp_Dir, paste0(Model_Name, "D12.feather"))
 
       if (file.exists(Path_D11) && file.exists(Path_D12)) {
 
@@ -257,23 +259,20 @@ Predict_LF <- function(
 
         s1 <- rL$s[modelunits, , drop = FALSE]
         s2 <- rL$s[unitsPred[indNew], , drop = FALSE]
-        D11 <- Rfast::Dist(s1)
-        D12 <- Rfast::dista(s1, s2)
 
-        if (UseTF) {
-          saveRDS(D11, file = Path_D11)
-          saveRDS(D12, file = Path_D12)
-        } else {
-          qs::qsave(D11, file = Path_D11, preset = "fast")
-          qs::qsave(D12, file = Path_D12, preset = "fast")
-        }
+        # D11
+        D11 <- Rfast::Dist(s1)
+        IASDT.R::SaveAs(InObj = D11, OutPath = Path_D11)
+
+        # D12
+        D12 <- Rfast::dista(s1, s2)
+        IASDT.R::SaveAs(InObj = D12, OutPath = Path_D12)
 
         # Clean up
         rm(rL, s1, s2, D11, D12, envir = environment())
       }
       Path_s1 <- Path_s2 <- NULL
     }
-
 
     # Clean up temporary files after finishing calculations
     if (Temp_Cleanup) {
@@ -338,7 +337,7 @@ Predict_LF <- function(
         SampleID = purrr::map(SampleID, unlist),
         File = file.path(
           Temp_Dir,
-          paste0(Model_Name, "postEta_ch", dplyr::row_number(), ".", TempExt)),
+          paste0(Model_Name, "postEta_ch", dplyr::row_number(), ".feather")),
         File_etaPred = stringr::str_replace_all(
           File, "_postEta_ch", "_etaPred_ch"),
         Export = purrr::pmap(
@@ -350,16 +349,16 @@ Predict_LF <- function(
             if (!file.exists(File)) {
               Out <- postEta[SampleID] %>%
                 purrr::map(~ .x[, LF_ID, drop = FALSE]) %>%
-                simplify2array()
-              if (UseTF) {
-                arrow::write_feather(
-                  x = as.data.frame(Out), sink = File, compression = "zstd")
-              } else {
-                qs::qsave(Out, file = File, preset = "fast")
-              }
+                simplify2array() %>%
+                as.data.frame()
+              IASDT.R::SaveAs(InObj = Out, OutPath = File)
             }
           }),
-        Export = NULL)
+        Export = NULL,
+        # number of samples to be processed in each file
+        NSamples = purrr::map_int(SampleID, length)) %>%
+      # Arrange parallel jobs by their expected running time
+      dplyr::arrange(Denom == 0, dplyr::desc(NSamples))
 
     rm(postEta, postAlpha, envir = environment())
     invisible(gc())
@@ -370,6 +369,9 @@ Predict_LF <- function(
 
     etaPreds_F <- function(RowNum, LF_Check = FALSE) {
 
+      # do not use scientific notation
+      withr::local_options(scipen = 99)
+
       # Current denominator
       Denom <- Unique_Alpha$Denom[[RowNum]]
       # ID for latent factor
@@ -379,17 +381,17 @@ Predict_LF <- function(
       # File path for current alpha
       File <- Unique_Alpha$File[[RowNum]]
       File_etaPred <- Unique_Alpha$File_etaPred[[RowNum]]
-
+      NSamples <- Unique_Alpha$NSamples[[RowNum]]
 
       if (LF_Check) {
-        CalcPredLF <- isFALSE(IASDT.R::CheckData(File_etaPred, warning = FALSE))
+        Eta_NCols <- ncol(IASDT.R::LoadAs(File_etaPred))
+        CalcPredLF <- dplyr::if_else(Eta_NCols == NSamples, FALSE, TRUE)
       } else {
         CalcPredLF <- !file.exists(File_etaPred)
       }
 
       # If the denominator is positive, perform calculations; otherwise, set
       # `eta_indNew` to zero.
-
 
       if (Denom > 0) {
 
@@ -407,41 +409,42 @@ Predict_LF <- function(
             eta_indNew0 <- run_crossprod_solve(
               virtual_env_path = TF_Environ, script_path = PythonScript,
               s1 = Path_s1, s2 = Path_s2, denom = Denom, postEta = File,
-              path_out = File_etaPred, use_single = TF_use_single)
+              path_out = File_etaPred, use_single = TF_use_single,
+              solve_max_attempts = solve_max_attempts)
+            
+            rm(eta_indNew0, envir = environment())
           }
 
-          etaPred <- arrow::read_feather(File_etaPred) %>%
+          etaPred <- IASDT.R::LoadAs(File_etaPred) %>%
             as.list() %>%
             unname()
 
           etaPred <- purrr::map_dfr(
             .x = seq_len(length(etaPred)),
             .f = ~ tibble::tibble(
-              etaPred = etaPred[[.x]], Site = unitsPred,
-              SampleID = SampleID[.x]))
+              etaPred = etaPred[[.x]], 
+              Site = unitsPred,
+              SampleID = SampleID[.x],
+              File_etaPred = File_etaPred))
 
         } else {
 
           # Use R / CPP
-
           if (CalcPredLF) {
 
             # Reading postEta from file
-            postEta0 <- IASDT.R::LoadAs(File, nthreads = 5)
+            postEta0 <- IASDT.R::LoadAs(File)
 
             # Read D11 and D12
-            D11 <- IASDT.R::LoadAs(Path_D11, nthreads = 5)
-            D12 <- IASDT.R::LoadAs(Path_D12, nthreads = 5)
+            D11 <- IASDT.R::LoadAs(Path_D11)
+            D12 <- IASDT.R::LoadAs(Path_D12)
 
             K11 <- IASDT.R::exp_neg_div(D11, Denom)
             K12 <- IASDT.R::exp_neg_div(D12, Denom)
 
-            # NEED TO REVISE OUTPUT COLUMNS
-
             etaPred <- purrr::map_dfr(
               .x = seq_along(SampleID),
               .f = function(ID) {
-
                 eta <- postEta0[, , ID]
                 IASDT.R::Solve2vect(K11, eta) %>%
                   as.vector() %>%
@@ -450,9 +453,10 @@ Predict_LF <- function(
                   tibble::tibble(
                     etaPred = ., Site = unitsPred, SampleID = SampleID[ID])
               }) %>%
-              dplyr::arrange(SampleID, Site, etaPred)
+              dplyr::arrange(SampleID, Site, etaPred) %>%
+              dplyr::mutate(File_etaPred = File_etaPred)
 
-            qs::qsave(etaPred, file = File_etaPred, preset = "fast")
+            IASDT.R::SaveAs(InObj = etaPred, OutPath = File_etaPred)
 
           } else {
             etaPred <- IASDT.R::LoadAs(File_etaPred)
@@ -461,22 +465,12 @@ Predict_LF <- function(
 
       } else {
         # When Denom is zero, set `eta_indNew` to zero
-
-        # NEED TO REVISE OUTPUT COLUMNS
-
         if (CalcPredLF) {
-
           etaPred <- tibble::tibble(etaPred = 0, Site = unitsPred) %>%
-            tidyr::expand_grid(SampleID = SampleID)
-
-          IASDT.R::SaveAs(
-            InObj = etaPred, outObj = "etaPred",
-            OutPath = File_etaPred, preset = "fast")
-
+            tidyr::expand_grid(SampleID = SampleID, File_etaPred = File_etaPred)
+          IASDT.R::SaveAs(InObj = etaPred, OutPath = File_etaPred)
         } else {
-
           etaPred <- IASDT.R::LoadAs(File_etaPred)
-
         }
       }
 
@@ -499,31 +493,15 @@ Predict_LF <- function(
       etaPreds <- purrr::map(
         .x = seq_len(nrow(Unique_Alpha)),
         .f = function(x) {
-          # maximum number of attempts
-          max_tries <- 5
-          attempt <- 1
-          # Initialize result
-          result <- NULL
 
-          while (attempt <= max_tries) {
-            result <- tryCatch({
-              # Use purrr::possibly around etaPreds_F call to handle errors
-              etaPreds_F(x, LF_Check = LF_Check)
-            },
-            error = function(e) {
-              # Return NULL on error to retry
-              NULL
-            })
+          result <- try(etaPreds_F(x, LF_Check = LF_Check), silent = TRUE)
 
-            # Exit loop if result is not NULL (successful)
-            if (!is.null(result)) {
-              break
-            }
-
-            attempt <- attempt + 1
+          if (inherits(result, "try-error")) {
+            return(NULL)
+          } else {
+            return(result)
           }
-          # Return the result after max_tries or successful execution
-          return(result)
+
         })
 
     } else {
@@ -547,9 +525,9 @@ Predict_LF <- function(
         cl = c1,
         varlist = c(
           "Unique_Alpha", "Path_D11", "Path_D12", "Path_s1", "Path_s2",
-          "indNew", "unitsPred", "postEta_File", "indOld", "modelunits",
-          "TF_Environ", "UseTF", "TF_use_single", "etaPreds_F",
-          "LF_Check", "run_crossprod_solve"),
+          "indNew", "unitsPred", "indOld", "modelunits", "TF_Environ", "UseTF",
+          "TF_use_single", "etaPreds_F", "LF_Check", "run_crossprod_solve",
+          "solve_max_attempts"),
         envir = environment())
 
       # Load necessary libraries and load environment if using TensorFlow
@@ -560,7 +538,7 @@ Predict_LF <- function(
           sapply(
             c(
               "Rcpp", "RcppArmadillo", "dplyr", "tidyr", "tibble", "arrow",
-              "Matrix", "Hmsc", "qs", "fs", "purrr", "IASDT.R"),
+              "Matrix", "Hmsc", "qs2", "fs", "purrr", "IASDT.R"),
             library, character.only = TRUE)
           invisible(gc())
         }))
@@ -570,32 +548,12 @@ Predict_LF <- function(
       etaPreds <- parallel::clusterApplyLB(
         cl = c1, x = seq_len(nrow(Unique_Alpha)),
         fun = function(x) {
-          # maximum number of attempts
-          max_tries <- 5
-          attempt <- 1
-          # Initialize result
-          result <- NULL
-
-          while (attempt <= max_tries) {
-            result <- tryCatch({
-              # Use purrr::possibly around etaPreds_F call to handle errors
-              etaPreds_F(x, LF_Check = LF_Check)
-            },
-            error = function(e) {
-              # Return NULL on error to retry
-              NULL
-            })
-
-            # Exit loop if result is not NULL (successful)
-            if (!is.null(result)) {
-              break
-            }
-
-            attempt <- attempt + 1
+          result <- try(etaPreds_F(x, LF_Check = LF_Check), silent = TRUE)
+          if (inherits(result, "try-error")) {
+            return(NULL)
+          } else {
+            return(result)
           }
-
-          # Return the result after max_tries or successful execution
-          return(result)
         })
 
       # Stop the cluster
@@ -608,12 +566,10 @@ Predict_LF <- function(
     IASDT.R::CatTime("Check if all files are created", Level = 1)
     AllEtaFiles <- Unique_Alpha$File_etaPred
     AllEtaFilesExist <- all(file.exists(AllEtaFiles))
+
     if (AllEtaFilesExist) {
-
       IASDT.R::CatTime("All files were created", Level = 2)
-
     } else {
-
       FailedFiles <- AllEtaFiles[!file.exists(AllEtaFiles)]
       stop(
         paste0(
@@ -627,10 +583,12 @@ Predict_LF <- function(
     # Merge results
     IASDT.R::CatTime("Merge results", Level = 1)
 
-    postEtaPred <- Unique_Alpha %>%
-      dplyr::select(LF, LF_ID) %>%
-      dplyr::mutate(etaPred = etaPreds) %>%
-      tidyr::unnest("etaPred") %>%
+    postEtaPred <- dplyr::bind_rows(etaPreds) %>%
+      tidyr::nest(data = -File_etaPred) %>%
+      dplyr::full_join(
+        dplyr::select(Unique_Alpha, LF, LF_ID, File_etaPred),
+        by = "File_etaPred") %>%
+      tidyr::unnest("data") %>%
       tidyr::pivot_wider(
         id_cols = c(SampleID, Site),
         names_from = LF, values_from = etaPred) %>%
@@ -640,7 +598,7 @@ Predict_LF <- function(
         .f = ~ {
           Mat <- dplyr::select(.x, tidyselect::starts_with("LF_")) %>%
             as.matrix()
-          rownames(Mat) <- unitsPred
+          rownames(Mat) <- .x$Site
           colnames(Mat) <- NULL
           return(Mat)
         })
@@ -654,11 +612,7 @@ Predict_LF <- function(
     IASDT.R::CatTime(
       paste0("Save postEtaPred to `", LF_OutFile, "`"), Level = 1)
     fs::dir_create(fs::path_dir(LF_OutFile))
-    switch(
-      fs::path_ext(LF_OutFile),
-      "qs" = qs::qsave(postEtaPred, file = LF_OutFile, preset = "fast"),
-      "RData" = save(postEtaPred, file = LF_OutFile),
-      stop("Unsupported file extension in `LF_OutFile`.", call. = FALSE))
+    IASDT.R::SaveAs(InObj = postEtaPred, OutPath = LF_OutFile)
   }
 
   # # ..................................................................... ###
@@ -705,9 +659,10 @@ Predict_LF <- function(
 #'   Defaults to `TRUE`.
 #' @param verbose logical (Optional). If `TRUE`, logs detailed information
 #'   during execution. Default is `TRUE`.
+#' @param solve_max_attempts numeric (Optional). Maximum number of attempts to
+#'   run solve and crossprod functions. Default is 5.
 #' @return Returns the `path_out` if successful. Returns `NULL` if all attempts
 #'   fail.
-#'
 #' @details
 #' - The function checks for the existence of required input files and the
 #' Python executable in the specified virtual environment.
@@ -719,9 +674,9 @@ Predict_LF <- function(
 #' @keywords internal
 
 run_crossprod_solve <- function(
-    virtual_env_path, script_path, s1, s2, postEta, path_out,
-    denom, chunk_size = 1000, threshold_mb = 2000,
-    use_single = TRUE, verbose = TRUE) {
+    virtual_env_path, script_path, s1, s2, postEta, path_out, denom,
+    chunk_size = 1000, threshold_mb = 2000, use_single = TRUE, verbose = TRUE,
+    solve_max_attempts = 5) {
 
   Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3")
 
@@ -731,7 +686,6 @@ run_crossprod_solve <- function(
   if (is.null(script_path)) {
     script_path <- system.file("crossprod_solve.py", package = "IASDT.R")
   }
-
 
   # Ensure the paths are valid
   paths <- list(virtual_env_path, script_path, s1, s2, postEta)
@@ -787,15 +741,14 @@ run_crossprod_solve <- function(
     sep = "\n", file = f, append = TRUE)
 
   # Initialize retry logic
-  max_attempts <- 3
   attempt <- 1
   success <- FALSE
 
-  while (attempt <= max_attempts && !success) {
+  while (attempt <= solve_max_attempts && !success) {
 
     IASDT.R::CatSep(file = f, append = TRUE, Extra2 = 1)
     IASDT.R::CatTime(
-      paste0("Attempt ", attempt, " of ", max_attempts), sep = "\n",
+      paste0("Attempt ", attempt, " of ", solve_max_attempts), sep = "\n",
       NLines = 1, file = f, append = TRUE)
     IASDT.R::CatSep(file = f, append = TRUE, Extra2 = 1)
 

@@ -98,7 +98,7 @@ the TF calculations. Defaults to \code{FALSE}.}
 
 \item{LF_OutFile}{Character string specifying the path to save the outputs.
 If \code{NULL} (default), the predicted latent factors are not saved to a file.
-This should end with either \code{qs} or \code{RData}.}
+This should end with either \verb{*.qs2} or \verb{*.RData}.}
 
 \item{LF_Return}{Logical. Indicates if the output should be returned.
 Defaults to \code{TRUE}. If \code{LF_OutFile} is \code{NULL}, this parameter cannot be set

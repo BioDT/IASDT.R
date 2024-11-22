@@ -26,7 +26,7 @@
 #' @param FromJSON Logical. Indicates whether to convert loaded models from JSON
 #'   format before reading. Defaults to `FALSE`.
 #' @param FileFormat Character. The format to save the fitted model and coda
-#'   objects. It can be either "qs" or "RData". Defaults to "qs".
+#'   objects. It can be either "qs2" or "RData". Defaults to "qs2".
 #' @name Merge_Chains
 #' @author Ahmed El-Gabbas
 #' @return The function does not return anything but saves the processed model
@@ -36,7 +36,7 @@
 Merge_Chains <- function(
     ModelDir = NULL, NCores = NULL, ModInfoName = NULL,
     PrintIncomplete = TRUE, FromHPC = TRUE, FromJSON = FALSE,
-    FileFormat = "qs") {
+    FileFormat = "qs2") {
 
   # # ..................................................................... ###
 
@@ -83,8 +83,8 @@ Merge_Chains <- function(
     stop("`FileFormat` must be a single string.")
   }
 
-  if (!FileFormat %in% c("qs", "RData")) {
-    stop("`FileFormat` must be either 'qs' or 'RData'.")
+  if (!FileFormat %in% c("qs2", "RData")) {
+    stop("`FileFormat` must be either 'qs2' or 'RData'.")
   }
 
   # # ..................................................................... ###

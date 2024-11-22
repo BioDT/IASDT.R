@@ -2,29 +2,29 @@
 % Please edit documentation in R/General_CheckData.R
 \name{CheckData}
 \alias{CheckData}
-\title{Check the Integrity of \code{RData} / \code{qs} / \code{rds} / \code{feather} Files}
+\title{Check the Integrity of \code{RData} / \code{qs2} / \code{rds} / \code{feather} Files}
 \usage{
-CheckData(File, warning = TRUE, qs_nthreads = 5)
+CheckData(File, warning = TRUE, nthreads = 5)
 }
 \arguments{
 \item{File}{character. The file path of the file to be checked. This can not
 be empty. The function will attempt to determine the file type based on the
 file extension. If the file extension is not recognized, the function will
 return \code{FALSE}. The recognized file extensions are \code{RData} (using
-\link{CheckRData}), \code{qs} (\link{CheckQs}), \code{rds}
+\link{CheckRData}), \code{qs2} (\link{CheckQs}), \code{rds}
 (\link{CheckRDS}), and \code{feather} (\link{CheckFeather}).}
 
 \item{warning}{logical. If \code{TRUE} (default), warnings will be printed if the
 file does not exist.}
 
-\item{qs_nthreads}{integer. The number of threads to use when reading the
-\code{qs} file. Default is 5.}
+\item{nthreads}{integer. The number of threads to use when reading the
+\code{qs2} file. Default is 5.}
 }
 \value{
 A logical value indicating if the file is a valid RData file
 }
 \description{
-Check the Integrity of \code{RData} / \code{qs} / \code{rds} / \code{feather} Files
+Check the Integrity of \code{RData} / \code{qs2} / \code{rds} / \code{feather} Files
 }
 \author{
 Ahmed El-Gabbas

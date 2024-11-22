@@ -16,7 +16,8 @@ run_crossprod_solve(
   chunk_size = 1000,
   threshold_mb = 2000,
   use_single = TRUE,
-  verbose = TRUE
+  verbose = TRUE,
+  solve_max_attempts = 5
 )
 }
 \arguments{
@@ -48,6 +49,9 @@ Defaults to \code{TRUE}.}
 
 \item{verbose}{logical (Optional). If \code{TRUE}, logs detailed information
 during execution. Default is \code{TRUE}.}
+
+\item{solve_max_attempts}{numeric (Optional). Maximum number of attempts to
+run solve and crossprod functions. Default is 5.}
 }
 \value{
 Returns the \code{path_out} if successful. Returns \code{NULL} if all attempts

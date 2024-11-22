@@ -37,6 +37,7 @@ Suggests:
     abind (>= 1.4-8),
     ape (>= 5.8),
     archive (>= 1.1.8),
+    arrow (>= 17.0.0.1),
     automap (>= 1.1-9),
     bit64 (>= 4.0.5),
     blockCV (>= 3.1.4),
@@ -78,7 +79,7 @@ Suggests:
     pbapply (>= 1.7.2),
     png (>= 0.1.8),
     pROC (>= 1.18.5),
-    qs (>= 0.27.2),
+    qs2 (>= 0.1.1),
     R.utils (>= 2.12.3),
     ragg (>= 1.3.3),
     raster (>= 3.6.26),
@@ -108,8 +109,7 @@ Suggests:
     units (>= 0.8-5),
     withr (>= 3.0.0),
     writexl (>= 1.5.0),
-    xml2 (>= 1.3.6),
-    arrow (>= 17.0.0.1)
+    xml2 (>= 1.3.6)
 LinkingTo:
     Rcpp,
     RcppArmadillo

@@ -149,7 +149,7 @@ Convergence_Plot_All <- function(
       if (!file.exists(Path_Trace_Rho)) {
         if (Tree == "Tree") {
           RhoTitle <- stringr::str_remove_all(
-            string = basename(Path_Coda), pattern = "_Tree|_Coda|.RData$|.qs")
+            string = basename(Path_Coda), pattern = "_Tree|_Coda|.RData$|.qs2")
 
           PlotObj_Rho <- IASDT.R::PlotRho(
             Post = Coda_Obj, Model = Model_Obj, Title = RhoTitle,
@@ -170,7 +170,7 @@ Convergence_Plot_All <- function(
         PlotObj_Alpha <- IASDT.R::PlotAlpha(
           Post = Coda_Obj, Model = Model_Obj,
           Title = stringr::str_remove_all(
-            basename(Path_Coda), "_Tree|_Coda|.RData$|.qs"),
+            basename(Path_Coda), "_Tree|_Coda|.RData$|.qs2"),
           FromHPC = FromHPC, MarginType = MarginType)
 
         IASDT.R::SaveAs(

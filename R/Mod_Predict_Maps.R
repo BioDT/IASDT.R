@@ -430,7 +430,7 @@ Predict_Maps <- function(
 
   # Predict latent factor for new locations ------
 
-  Path_Test_LF <- file.path(Path_Prediction1, "Test_LF.qs")
+  Path_Test_LF <- file.path(Path_Prediction1, "Test_LF.qs2")
 
   IASDT.R::CatTime("Predict latent factor for new locations")
 
@@ -508,9 +508,9 @@ Predict_Maps <- function(
 
       Evaluate <- dplyr::if_else(Option_Name == "Current", TRUE, FALSE)
       Path_Prediction_sf <- file.path(
-        Path_Prediction, paste0("Prediction_", Option_Name, "_Clamp_sf.qs"))
+        Path_Prediction, paste0("Prediction_", Option_Name, "_Clamp_sf.qs2"))
       Path_Prediction_R <- file.path(
-        Path_Prediction, paste0("Prediction_", Option_Name, "_Clamp_R.qs"))
+        Path_Prediction, paste0("Prediction_", Option_Name, "_Clamp_R.qs2"))
       Path_Prediction_summary <- file.path(
         Path_Prediction,
         paste0("Prediction_", Option_Name, "_Clamp_Summary.RData"))
@@ -525,9 +525,9 @@ Predict_Maps <- function(
 
       Evaluate <- FALSE
       Path_Prediction_sf <- file.path(
-        Path_Prediction, paste0("Prediction_", Option_Name, "_sf.qs"))
+        Path_Prediction, paste0("Prediction_", Option_Name, "_sf.qs2"))
       Path_Prediction_R <- file.path(
-        Path_Prediction, paste0("Prediction_", Option_Name, "_R.qs"))
+        Path_Prediction, paste0("Prediction_", Option_Name, "_R.qs2"))
       Path_Prediction_summary <- file.path(
         Path_Prediction, 
         paste0("Prediction_", Option_Name, "_Summary.RData"))
@@ -615,7 +615,7 @@ Predict_Maps <- function(
         IASDT.R::CatTime("Predictions at training sites", Level = 1)
 
         Path_Current_Train <- file.path(
-          Path_Prediction, paste0("Prediction_", Model_Name_Train, ".qs"))
+          Path_Prediction, paste0("Prediction_", Model_Name_Train, ".qs2"))
 
         if (file.exists(Path_Current_Train)) {
           IASDT.R::CatTime("Loading predictions from disk", Level = 2)
@@ -641,7 +641,7 @@ Predict_Maps <- function(
           IASDT.R::CatTime("Predictions at new sites", Level = 1)
 
           Path_Current_Test <- file.path(
-            Path_Prediction, paste0("Prediction_", Model_Name_Test, ".qs"))
+            Path_Prediction, paste0("Prediction_", Model_Name_Test, ".qs2"))
 
           if (file.exists(Path_Current_Test)) {
             IASDT.R::CatTime("Loading predictions from disk", Level = 2)
@@ -705,7 +705,7 @@ Predict_Maps <- function(
         # ______________________________________________
 
         # Save predictions as sf object
-        qs::qsave(Prediction_sf, Path_Prediction_sf, preset = "fast")
+        IASDT.R::SaveAs(InObj = Prediction_sf, OutPath = Path_Prediction_sf)
 
         if (Temp_Cleanup) {
           try(
@@ -741,7 +741,7 @@ Predict_Maps <- function(
 
         # Loading mean predictions at current climates
         CurrentMean <- list.files(
-          path = Path_Prediction, pattern = "Prediction_Current.*_R.qs",
+          path = Path_Prediction, pattern = "Prediction_Current.*_R.qs2",
           full.names = TRUE) %>%
           IASDT.R::LoadAs() %>%
           terra::unwrap() %>%
@@ -807,10 +807,10 @@ Predict_Maps <- function(
           ias_id, taxon_name, species_name, class, order, family,
           tif_path_mean, tif_path_sd, tif_path_cov, tif_path_anomaly)
 
-      # save as spatRaster - qs
-      IASDT.R::CatTime("Save as spatRaster - qs", Level = 1)
+      # save as spatRaster - qs2
+      IASDT.R::CatTime("Save as spatRaster - qs2", Level = 1)
       Prediction_R <- terra::wrap(Prediction_R)
-      qs::qsave(Prediction_R, Path_Prediction_R, preset = "fast")
+      IASDT.R::SaveAs(InObj = Prediction_R, OutPath = Path_Prediction_R)
 
       # Save summary - RData
       IASDT.R::CatTime("Save summary - RData", Level = 1)
@@ -932,7 +932,7 @@ Predict_Maps <- function(
   # Loading mean predictions at current climates
   IASDT.R::CatTime("Loading mean predictions at current climates", Level = 1)
   CurrentMean <- list.files(
-    path = Path_Prediction, pattern = "Prediction_Current.*_R.qs",
+    path = Path_Prediction, pattern = "Prediction_Current.*_R.qs2",
     full.names = TRUE) %>%
     IASDT.R::LoadAs() %>%
     terra::unwrap()
@@ -1012,7 +1012,7 @@ Predict_Maps <- function(
         Path_Prediction,
         paste0(
           "Prediction_", stringr::str_replace(time_period, "-", "_"), "_",
-          climate_scenario, "_Ensemble_R.qs"))) %>%
+          climate_scenario, "_Ensemble_R.qs2"))) %>%
     dplyr::select(Ensemble_File, Ensemble_Maps) %>%
     dplyr::group_by(Ensemble_File) %>%
     tidyr::nest(Ensemble_Maps = Ensemble_Maps) %>%
@@ -1027,8 +1027,7 @@ Predict_Maps <- function(
             terra::wrap()
         }),
       Save = purrr::map2(
-        .x = Ensemble_Maps, .y = Ensemble_File, 
-        .f = qs::qsave, preset = "fast"))
+        .x = Ensemble_Maps, .y = Ensemble_File, .f = IASDT.R::SaveAs))
 
   rm(Prediction_Ensemble_R, envir = environment())
 
@@ -1066,7 +1065,7 @@ Predict_Maps <- function(
         climate_scenario, "_Ensemble"),
       File_Pred_sf = NA_character_,
       File_Pred_R = stringr::str_replace(
-        File_Pred_summary, "_Summary.RData", "_R.qs")) %>%
+        File_Pred_summary, "_Summary.RData", "_R.qs2")) %>%
     dplyr::distinct()
 
   # # ..................................................................... ###

@@ -226,11 +226,11 @@ Mod_Postprocess <- function(
   Path_Model <- file.path(
     ModelDir, "Model_Fitted",
     paste0(
-      "GPP", GPP_Dist, "_", Tree, "_samp", Samples, "_th", Thin, "_Model.qs"))
+      "GPP", GPP_Dist, "_", Tree, "_samp", Samples, "_th", Thin, "_Model.qs2"))
   Path_Coda <- file.path(
     ModelDir, "Model_Coda",
     paste0(
-      "GPP", GPP_Dist, "_", Tree, "_samp", Samples, "_th", Thin, "_Coda.qs"))
+      "GPP", GPP_Dist, "_", Tree, "_samp", Samples, "_th", Thin, "_Coda.qs2"))
 
   cat(paste0("Path_Model:\n\t", Path_Model, "\nPath_Coda:\n\t", Path_Coda))
 
@@ -369,8 +369,8 @@ Mod_Postprocess <- function(
   # # ..................................................................... ###
 
 
-  # Variance paritioning ------
-  Ch1("Variance paritioning")
+  # Variance partitioning ------
+  Ch1("Variance partitioning")
 
   IASDT.R::VarPar_Plot(
     Path_Model = Path_Model, EnvFile = EnvFile, FromHPC = FromHPC,

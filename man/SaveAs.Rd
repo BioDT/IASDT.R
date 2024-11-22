@@ -4,7 +4,14 @@
 \alias{SaveAs}
 \title{Save an object to a file with a new name}
 \usage{
-SaveAs(InObj, OutObj = NULL, OutPath, qs_preset = "fast", ...)
+SaveAs(
+  InObj,
+  OutObj = NULL,
+  OutPath,
+  nthreads = 5,
+  feather_compression = "zstd",
+  ...
+)
 }
 \arguments{
 \item{InObj}{The input object to be saved. This can be an actual R object or
@@ -15,13 +22,20 @@ a character string representing the name of an object.}
 Default is \code{NULL}. This is required when saving \code{RData} files.}
 
 \item{OutPath}{A character string specifying the file path (ends with either
-\verb{*.RData} or \verb{*.qs}) where the object should be saved. This includes the
-directory and the file name.}
+\verb{*.RData}, \verb{*.qs2}, \code{feather}, and \code{rds}) where the object should be saved.
+This includes the directory and the file name.}
 
-\item{qs_preset}{A character string specifying the preset to use when saving
-the object in the \code{qs} format. The default is "fast". See \link[qs:qsave]{qs::qsave}.}
+\item{nthreads}{A character string specifying the number of threads to use
+when compressing data. See \link[qs2:qs_save]{qs2::qs_save}.}
 
-\item{...}{Additional arguments to be passed to the \code{save} function.}
+\item{feather_compression}{A character string specifying the compression
+algorithm to use when saving the object in the \code{feather} format. The
+default is "zstd". See \link[arrow:write_feather]{arrow::write_feather}.}
+
+\item{...}{Additional arguments to be passed to the respective save
+functions. \link[base:save]{base::save} for \code{RData} files; \link[qs2:qs_save]{qs2::qs_save} for \code{qs2} files;
+\link[arrow:write_feather]{arrow::write_feather} for \code{feather} files; and \link[base:readRDS]{base::saveRDS} for \code{rds}
+files.}
 }
 \value{
 The function does not return a value but saves an object to the
@@ -30,7 +44,8 @@ specified file path.
 \description{
 This function saves an R object to a specified file path with a potentially
 new name. It is useful for renaming objects during the save process. The
-function also supports saving objects in the \code{qs} format.
+function supports saving objects in \code{RData}, \code{qs2}, \code{feather}, and \code{rds}
+formats. The format is determined by the extension of the file path.
 }
 \examples{
 TMP_Folder <- file.path(tempdir(), stringi::stri_rand_strings(1, 5))

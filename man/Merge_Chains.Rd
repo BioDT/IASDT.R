@@ -11,7 +11,7 @@ Merge_Chains(
   PrintIncomplete = TRUE,
   FromHPC = TRUE,
   FromJSON = FALSE,
-  FileFormat = "qs"
+  FileFormat = "qs2"
 )
 }
 \arguments{
@@ -38,7 +38,7 @@ environment. This affects how file paths are handled. Defaults to \code{TRUE}.}
 format before reading. Defaults to \code{FALSE}.}
 
 \item{FileFormat}{Character. The format to save the fitted model and coda
-objects. It can be either "qs" or "RData". Defaults to "qs".}
+objects. It can be either "qs2" or "RData". Defaults to "qs2".}
 }
 \value{
 The function does not return anything but saves the processed model

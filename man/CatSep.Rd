@@ -4,7 +4,7 @@
 \alias{CatSep}
 \title{Print separator(s) to the console}
 \usage{
-CatSep(Rep = 1L, Extra1 = 0L, Extra2 = 0L, Char = "-", CharReps = 50L)
+CatSep(Rep = 1L, Extra1 = 0L, Extra2 = 0L, Char = "-", CharReps = 50L, ...)
 }
 \arguments{
 \item{Rep}{integer; the number of separator lines to print. Default is \code{1}.}
@@ -17,6 +17,8 @@ Default is \code{"-"}.}
 
 \item{CharReps}{integer; the number of times the character is repeated to
 form a separator line. Default is \code{50}.}
+
+\item{...}{additional arguments to be passed to \code{cat()}.}
 }
 \value{
 The function is called for its side effect (printing to the console)

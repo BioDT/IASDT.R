@@ -50,7 +50,7 @@ Mod_CV_Eval <- function(Path_CV = NULL, predictEtaMean = TRUE, NCores = 8) {
     .x = seq_len(nrow(CV_DT)),
     .f = ~ {
       ObjName <- stringr::str_remove_all(
-        basename(CV_DT$Path_ModFitted[.x]), "Model_Fitted_|.RData|.qs")
+        basename(CV_DT$Path_ModFitted[.x]), "Model_Fitted_|.RData|.qs2")
 
       IASDT.R::CatTime(ObjName, Level = 1)
       Model_Out <- CV_DT$Path_ModFitted[.x]
@@ -85,7 +85,7 @@ Mod_CV_Eval <- function(Path_CV = NULL, predictEtaMean = TRUE, NCores = 8) {
           IASDT.R::CatTime(ModName, Level = 1)
 
           Path_Eval <- file.path(EvalDir, paste0("Eval_", ModName, ".RData"))
-          Path_Pred <- file.path(PredDir, paste0("Preds_", ModName, ".qs"))
+          Path_Pred <- file.path(PredDir, paste0("Preds_", ModName, ".qs2"))
 
           PredsOkay <- IASDT.R::CheckData(Path_Eval, warning = FALSE)
 
@@ -130,7 +130,7 @@ Mod_CV_Eval <- function(Path_CV = NULL, predictEtaMean = TRUE, NCores = 8) {
         .f = function(CVName, Path_Pred, Path_Eval) {
           Path_Preds <- file.path(
             PredDir, paste0("Preds_", CVName, "_all.RData"))
-          Preds <- purrr::map_dfr(.x = Path_Pred, .f = qs::qread)
+          Preds <- purrr::map_dfr(.x = Path_Pred, .f = IASDT.R::LoadAs) %>%
           IASDT.R::SaveAs(
             InObj = Preds, OutObj = paste0("Preds_", CVName, "_all"),
             OutPath = Path_Preds)

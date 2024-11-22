@@ -358,7 +358,7 @@ Convergence_Plot <- function(
       IASDT.R::CatTime("Save plot data", Level = 1)
       IASDT.R::SaveAs(
         InObj = PlotObj_Omega,
-        OutPath = file.path(Path_Convergence, "Convergence_Omega.qs"))
+        OutPath = file.path(Path_Convergence, "Convergence_Omega.qs2"))
     }
     rm(Obj_Omega, OmegaDF, SelectedCombs, CI, OmegaNames, envir = environment())
     invisible(gc())

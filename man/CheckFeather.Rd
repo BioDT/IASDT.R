@@ -22,7 +22,7 @@ a non-null object, \code{FALSE} otherwise.
 \description{
 This function checks if the specified file is an \code{feather} file and attempts
 to read it using \link[arrow:read_feather]{arrow::read_feather}. It returns \code{TRUE} if the file is an
-\code{qs} file and contains a non-null object, otherwise \code{FALSE.}
+\code{feather} file and contains a non-null object, otherwise \code{FALSE.}
 }
 \author{
 Ahmed El-Gabbas

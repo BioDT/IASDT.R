@@ -20,6 +20,7 @@ Predict_LF(
   LF_OutFile = NULL,
   LF_Return = TRUE,
   LF_Check = FALSE,
+  solve_max_attempts = 5,
   Verbose = TRUE
 )
 }
@@ -65,7 +66,7 @@ the TF calculations. Defaults to \code{FALSE}.}
 
 \item{LF_OutFile}{Character string specifying the path to save the outputs.
 If \code{NULL} (default), the predicted latent factors are not saved to a file.
-This should end with either \code{qs} or \code{RData}.}
+This should end with either \verb{*.qs2} or \verb{*.RData}.}
 
 \item{LF_Return}{Logical. Indicates if the output should be returned.
 Defaults to \code{TRUE}. If \code{LF_OutFile} is \code{NULL}, this parameter cannot be set
@@ -76,12 +77,15 @@ saved to a file.}
 files are already created and valid. If FALSE, the function will only check
 if the files exist without checking their integrity. Default is \code{FALSE}.}
 
+\item{solve_max_attempts}{numeric (Optional). Maximum number of attempts to
+run solve and crossprod functions. Default is 5.}
+
 \item{Verbose}{Logical. If TRUE, detailed output is printed. Default is
 \code{FALSE}.}
 }
 \description{
 Draws samples from the conditional predictive distribution of latent factors.
-#' This function is optimized for speed using parallel processing and
+This function is optimized for speed using parallel processing and
 optionally TensorFlow for matrix operations. This function is adapted from
 \link[Hmsc:predictLatentFactor]{Hmsc::predictLatentFactor} with equivalent results to the original function
 when \code{predictMean = TRUE}.

@@ -2,27 +2,27 @@
 # CheckQs ----
 ## |------------------------------------------------------------------------| #
 
-#' Check the Integrity of an `qs` File
+#' Check the Integrity of an `qs2` File
 #'
-#' This function checks if the specified file is an `qs` file and attempts to
-#' read it using [qs::qread]. It returns `TRUE` if the file is an `qs` file and
-#' contains a non-null object, otherwise `FALSE.`
+#' This function checks if the specified file is an `qs2` file and attempts to
+#' read it using [qs2::qs_read]. It returns `TRUE` if the file is an `qs2` file
+#' and contains a non-null object, otherwise `FALSE.`
 #'
 #' @param File A character string specifying the path to the file to be checked.
 #'   This can not be empty. The function will attempt to determine the file type
-#'   based on the file extension. If the file extension is not `qs`, the
+#'   based on the file extension. If the file extension is not `qs2`, the
 #'   function will return `FALSE`.
 #' @param warning logical. If `TRUE` (default), warnings will be printed if the
 #'   file does not exist.
-#' @param qs_nthreads integer. The number of threads to use when reading the
-#'   `qs` file. Default is 5.
-#' @return A logical value: `TRUE` if the file is an qs file and contains a
+#' @param nthreads integer. The number of threads to use when reading the `qs2`
+#'   file. Default is 5.
+#' @return A logical value: `TRUE` if the file is an `qs2` file and contains a
 #'   non-null object, `FALSE` otherwise.
 #' @name CheckQs
 #' @author Ahmed El-Gabbas
 #' @export
 
-CheckQs <- function(File, warning = TRUE, qs_nthreads = 5) {
+CheckQs <- function(File, warning = TRUE, nthreads = 5) {
 
   if (!file.exists(File) || is.null(File) || !nzchar(File)) {
     if (warning) {
@@ -33,9 +33,9 @@ CheckQs <- function(File, warning = TRUE, qs_nthreads = 5) {
 
   Extension <- stringr::str_to_lower(tools::file_ext(File))
 
-  if (Extension == "qs") {
+  if (Extension == "qs2") {
 
-    Obj <- try(qs::qread(File, nthreads = qs_nthreads), silent = TRUE)
+    Obj <- try(qs2::qs_read(file = File, nthreads = nthreads), silent = TRUE)
 
     if (inherits(Obj, "try-error")) {
       return(FALSE)
@@ -48,7 +48,9 @@ CheckQs <- function(File, warning = TRUE, qs_nthreads = 5) {
     }
   } else {
     if (warning) {
-      warning("Unsupported file type. Please provide a qs file.", call. = FALSE)
+      warning(
+        "Unsupported file type. Please provide a `qs2` file.",
+        call. = FALSE)
     }
     return(FALSE)
 

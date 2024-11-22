@@ -2,30 +2,30 @@
 % Please edit documentation in R/General_CheckQs.R
 \name{CheckQs}
 \alias{CheckQs}
-\title{Check the Integrity of an \code{qs} File}
+\title{Check the Integrity of an \code{qs2} File}
 \usage{
-CheckQs(File, warning = TRUE, qs_nthreads = 5)
+CheckQs(File, warning = TRUE, nthreads = 5)
 }
 \arguments{
 \item{File}{A character string specifying the path to the file to be checked.
 This can not be empty. The function will attempt to determine the file type
-based on the file extension. If the file extension is not \code{qs}, the
+based on the file extension. If the file extension is not \code{qs2}, the
 function will return \code{FALSE}.}
 
 \item{warning}{logical. If \code{TRUE} (default), warnings will be printed if the
 file does not exist.}
 
-\item{qs_nthreads}{integer. The number of threads to use when reading the
-\code{qs} file. Default is 5.}
+\item{nthreads}{integer. The number of threads to use when reading the \code{qs2}
+file. Default is 5.}
 }
 \value{
-A logical value: \code{TRUE} if the file is an qs file and contains a
+A logical value: \code{TRUE} if the file is an \code{qs2} file and contains a
 non-null object, \code{FALSE} otherwise.
 }
 \description{
-This function checks if the specified file is an \code{qs} file and attempts to
-read it using \link[qs:qread]{qs::qread}. It returns \code{TRUE} if the file is an \code{qs} file and
-contains a non-null object, otherwise \code{FALSE.}
+This function checks if the specified file is an \code{qs2} file and attempts to
+read it using \link[qs2:qs_read]{qs2::qs_read}. It returns \code{TRUE} if the file is an \code{qs2} file
+and contains a non-null object, otherwise \code{FALSE.}
 }
 \author{
 Ahmed El-Gabbas

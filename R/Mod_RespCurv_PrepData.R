@@ -90,7 +90,7 @@ RespCurv_PrepData <- function(
     }
   } else {
     stop(
-      "The model file does not exist or is not a .RData/.qs file.",
+      "The model file does not exist or is not a .RData/.qs2 file.",
       call. = FALSE)
   }
 
@@ -110,12 +110,12 @@ RespCurv_PrepData <- function(
     # Path for plotting data: probability of occurrence
     RC_DT_Path_Prob <- ResCurvDT$RC_DT_Path_Prob[[ID]]
     RC_DT_Path_Prob_Samples <- stringr::str_replace(
-      RC_DT_Path_Prob, ".qs$", "_Samples.qs")
+      RC_DT_Path_Prob, ".qs2$", "_Samples.qs2")
 
     # Path for plotting data: Species richness
     RC_DT_Path_SR <- ResCurvDT$RC_DT_Path_SR[[ID]]
     RC_DT_Path_SR_Samples <- stringr::str_replace(
-      RC_DT_Path_SR, ".qs$", "_Samples.qs")
+      RC_DT_Path_SR, ".qs2$", "_Samples.qs2")
 
     OutputTibble <- tibble::tibble(
       Variable = Variable, NFV = NFV, Coords = Coords,
@@ -340,10 +340,10 @@ RespCurv_PrepData <- function(
         pattern = "stats::poly\\(|, degree = 2, raw = TRUE\\)"),
       RC_DT_Name = paste0("RC_", VarName, "_coord_", Coords, "_NFV", NFV),
       RC_DT_Path_Orig = file.path(
-        Path_RC_DT, paste0(RC_DT_Name, "_Orig.qs")),
+        Path_RC_DT, paste0(RC_DT_Name, "_Orig.qs2")),
       RC_DT_Path_Prob = file.path(
-        Path_RC_DT, paste0(RC_DT_Name, "_Prob.qs")),
-      RC_DT_Path_SR = file.path(Path_RC_DT, paste0(RC_DT_Name, "_SR.qs")),
+        Path_RC_DT, paste0(RC_DT_Name, "_Prob.qs2")),
+      RC_DT_Path_SR = file.path(Path_RC_DT, paste0(RC_DT_Name, "_SR.qs2")),
       FileExists = purrr::pmap_lgl(
         .l = list(RC_DT_Path_Orig, RC_DT_Path_Prob, RC_DT_Path_SR),
         .f = function(RC_DT_Path_Orig, RC_DT_Path_Prob, RC_DT_Path_SR) {
@@ -386,7 +386,7 @@ RespCurv_PrepData <- function(
     # Get LF prediction for the model
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-    File_LF <- file.path(Path_RC_DT, "ResCurv_LF.RData")
+    File_LF <- file.path(Path_RC_DT, "ResCurv_LF.qs2")
 
     if (isFALSE(IASDT.R::CheckData(File_LF, warning = FALSE))) {
 
@@ -411,7 +411,8 @@ RespCurv_PrepData <- function(
         NCores = NCores, Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup,
         Model_Name = "RC_c", RC = "c", UseTF = UseTF, TF_Environ = TF_Environ,
         LF_OutFile = File_LF, LF_NCores = LF_NCores, LF_Check = LF_Check,
-        TF_use_single = TF_use_single, Verbose = Verbose, Pred_Dir = Temp_Dir)
+        LF_Return = FALSE, LF_Only = TRUE, TF_use_single = TF_use_single,
+        Verbose = Verbose, Pred_Dir = Temp_Dir)
 
       rm(Model_LF, Gradient_c, envir = environment())
       invisible(gc())

@@ -2,15 +2,20 @@
 % Please edit documentation in R/General_LoadAs.R
 \name{LoadAs}
 \alias{LoadAs}
-\title{Load objects from \code{RData} / \code{qs} / \code{rds} file}
+\title{Load objects from \code{RData} / \code{qs2} / \code{rds} / \code{feather} file}
 \usage{
-LoadAs(File, nthreads = 5)
+LoadAs(File, nthreads = 5, ...)
 }
 \arguments{
-\item{File}{character; the file path of the \code{.RData} file to be loaded.}
+\item{File}{character; the file path of the file to be loaded.}
 
-\item{nthreads}{Number of threads to use when reading \code{qs} files. Default 5;
-see \link[qs:qread]{qs::qread}.}
+\item{nthreads}{Number of threads to use when reading \code{qs2} files. Default 5;
+see \link[qs2:qs_read]{qs2::qs_read}.}
+
+\item{...}{Additional arguments to be passed to the respective load
+functions. \link[base:load]{base::load} for \code{RData} files; \link[qs2:qs_read]{qs2::qs_read} for \code{qs2} files;
+\link[arrow:read_feather]{arrow::read_feather} for \code{feather} files; and \link[base:readRDS]{base::readRDS} for \code{rds}
+files.}
 }
 \value{
 Depending on the contents of the \code{RData} file, this function returns
@@ -24,7 +29,8 @@ This function loads an \code{RData} file specified by the \code{File} parameter.
 the file contains multiple objects, they are returned as a list with each
 object accessible by its name. This allows for flexible handling of loaded
 data without needing to know the names of the objects stored within the RData
-file ahead of time. The function also supports loading \code{qs} and \code{rds} files.
+file ahead of time. The function also supports loading \code{feather}, \code{qs2} and
+\code{rds} files.
 }
 \examples{
 

@@ -263,7 +263,7 @@ def solve_and_multiply(K11, K12, postEta):
 # crossprod_solve
 # ======================================================================
 
-def crossprod_solve(s1, s2, denom, postEta, use_single=False, path_out=None, chunk_size=1000, threshold_mb=2000, verbose=False):
+def crossprod_solve(s1, s2, denom, postEta, use_single=False, path_out=None, chunk_size=1000, threshold_mb=2000, verbose=True):
     
     """
     Compute cross-product and solve matrix systems in TensorFlow and save the 
@@ -284,7 +284,7 @@ def crossprod_solve(s1, s2, denom, postEta, use_single=False, path_out=None, chu
     - path_out: File path to save the results.
     """
 
-    log_file = path_out.replace(".feather", ".log")
+    log_file = path_out.replace(".feather", "_TF.log")
     
     with open(log_file, "a") as log:
         with contextlib.redirect_stdout(log), contextlib.redirect_stderr(log):

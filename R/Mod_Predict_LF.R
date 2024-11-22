@@ -756,6 +756,7 @@ run_crossprod_solve <- function(
       "Python executable not found in the virtual environment.", call. = FALSE)
   }
 
+
   # Construct the command to run the Python script
   args <- c(
     script_path,
@@ -777,28 +778,30 @@ run_crossprod_solve <- function(
     args <- c(args, "--verbose")
   }
 
+
+  path_log <- stringr::str_replace(path_out, ".feather", "_R.log")
+  f <- file(path_log, open = "wb")
+  on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
+  cat(
+    "Running command:\n",
+    paste(python_executable, paste(args, collapse = " "), "\n\n"),
+    sep = "\n", file = f, append = TRUE)
+
   # Initialize retry logic
   max_attempts <- 3
   attempt <- 1
   success <- FALSE
 
-  if (verbose) {
-    path_log <- stringr::str_replace(path_out, ".rds", ".log")
-    f <- file(path_log, open = "wb")
-    on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
-    cat(
-      "Running command:\n",
-      paste(python_executable, paste(args, collapse = " "), "\n\n"),
-      sep = "\n", file = f, append = TRUE)
-    # close connection to the file
-    close(f)
-  }
-
   while (attempt <= max_attempts && !success) {
-    # Run the command and capture stdout/stderr
+
+    cat(
+      paste0("Attempt ", attempt, " of ", max_attempts, "\n"),
+      sep = "\n", file = f, append = TRUE)
+
+    # Run the command and capture stdout/stderr to a log file
     result <- system2(
       command = python_executable, args = args,
-      stdout = TRUE, stderr = TRUE)
+      stdout = path_log, stderr = path_log)
 
     # Check for errors
     if (!inherits(result, "error") || !length(result) == 0) {
@@ -808,17 +811,21 @@ run_crossprod_solve <- function(
         success <- TRUE
       }
     }
-
     attempt <- attempt + 1
   }
 
   # If all attempts fail, return NULL
   if (!success) {
     if (verbose) {
-      cat("All attempts failed. Returning NULL.\n")
+      cat("All attempts failed. Returning NULL.\n",
+          sep = "\n", file = f, append = TRUE)
+      # close connection to the file
+      close(f)
     }
     return(NULL)
   } else {
+    # close connection to the file
+    close(f)
     return(path_out)
   }
 }

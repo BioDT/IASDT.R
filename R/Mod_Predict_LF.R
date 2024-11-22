@@ -560,7 +560,7 @@ Predict_LF <- function(
         expr = {
           sapply(
             c(
-              "Rcpp", "RcppArmadillo", "dplyr", "tidyr", "tibble",
+              "Rcpp", "RcppArmadillo", "dplyr", "tidyr", "tibble", "arrow",
               "Matrix", "Hmsc", "qs", "fs", "purrr", "IASDT.R"),
             library, character.only = TRUE)
           invisible(gc())
@@ -782,6 +782,18 @@ run_crossprod_solve <- function(
   attempt <- 1
   success <- FALSE
 
+  if (verbose) {
+    path_log <- stringr::str_replace(path_out, ".rds", ".log")
+    f <- file(path_log, open = "wb")
+    on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
+    cat(
+      "Running command:\n",
+      paste(python_executable, paste(args, collapse = " "), "\n\n"),
+      sep = "\n", file = f, append = TRUE)
+    # close connection to the file
+    close(f)
+  }
+
   while (attempt <= max_attempts && !success) {
     # Run the command and capture stdout/stderr
     result <- system2(
@@ -798,19 +810,6 @@ run_crossprod_solve <- function(
     }
 
     attempt <- attempt + 1
-  }
-
-  if (verbose) {
-    path_log <- stringr::str_replace(path_out, ".rds", ".log")
-    f <- file(path_log, open = "wb")
-    on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
-    cat(
-      "Running command:\n",
-      paste(python_executable, paste(args, collapse = " "), "\n\n"),
-      sep = "\n", file = f)
-    cat(result[-length(result)], sep = "\n", file = f)
-    # close connection to the file
-    close(f)
   }
 
   # If all attempts fail, return NULL

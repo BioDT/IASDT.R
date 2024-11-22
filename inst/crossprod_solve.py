@@ -31,6 +31,8 @@ import sys
 import time
 import argparse
 import pyarrow.feather as feather
+import contextlib
+
 
 # ======================================================================
 # TensorFlow and Environment Configuration
@@ -281,131 +283,141 @@ def crossprod_solve(s1, s2, denom, postEta, use_single=False, path_out=None, chu
     Returns:
     - path_out: File path to save the results.
     """
+
+    log_file = path_out.replace(".feather", ".log")
     
-    print_time(f"Starting processing (TensorFlow v{tf.__version__})", verbose)
+    with open(log_file, "a") as log:
+        with contextlib.redirect_stdout(log), contextlib.redirect_stderr(log):
+            
+            print("\n")
+            print("=" * 80)  # Horizontal line
 
-    if gpus:
-        print_time(f"  >>  GPUs detected: {len(gpus)}", verbose)
-    else:
-        print_time("  >>  No GPUs detected; using CPU.", verbose)
-
-    # Record the start time
-    start_time = time.time()
+            print_time(f"Starting processing (TensorFlow v{tf.__version__})", verbose)
         
-    # Ensure chunk_size is an integer
-    chunk_size = int(chunk_size)
-
-    # Set data type based on user input
-    dtype = tf.float32 if use_single else tf.float64
-
-    # |||||||||||||||||||||||||||||||||||
-    # Reading coordinate matrices 
-    # |||||||||||||||||||||||||||||||||||
-    print_time("Processing coordinate matrix - s1", verbose)
-    if isinstance(s1, str):
-        print_time("  >>  Reading data", verbose)
-        s1_tensor = load_feather(s1)
-        print_time("  >>  Convert to tensor", verbose)
-        s1_tensor = tf.convert_to_tensor(s1_tensor, dtype=dtype)
-        gc.collect()
-        print_time("  >>  Compute d11", verbose)
-        Dist1 = compute_distances_chunked(s1=s1_tensor, dtype=dtype, chunk_size=chunk_size)
-
-    print_time("Processing coordinate matrix - s2", verbose)
-    if isinstance(s2, str):
-        print_time("  >>  Reading data", verbose)
-        s2_tensor = load_feather(s2)
-        print_time("  >>  Convert to tensor", verbose)
-        s2_tensor = tf.convert_to_tensor(s2_tensor, dtype=dtype)
-        print_time("  >>  Compute d12", verbose)
-        Dist2 = compute_distances_chunked(s1=s1_tensor, s2=s2_tensor, dtype=dtype, chunk_size=chunk_size)
+            if gpus:
+                print_time(f"  >>  GPUs detected: {len(gpus)}", verbose)
+            else:
+                print_time("  >>  No GPUs detected; using CPU.", verbose)
+        
+            # Record the start time
+            start_time = time.time()
+                
+            # Ensure chunk_size is an integer
+            chunk_size = int(chunk_size)
+        
+            # Set data type based on user input
+            dtype = tf.float32 if use_single else tf.float64
+        
+            # |||||||||||||||||||||||||||||||||||
+            # Reading coordinate matrices 
+            # |||||||||||||||||||||||||||||||||||
+            print_time("Processing coordinate matrix - s1", verbose)
+            if isinstance(s1, str):
+                print_time("  >>  Reading data", verbose)
+                s1_tensor = load_feather(s1)
+                print_time("  >>  Convert to tensor", verbose)
+                s1_tensor = tf.convert_to_tensor(s1_tensor, dtype=dtype)
+                gc.collect()
+                print_time("  >>  Compute d11", verbose)
+                Dist1 = compute_distances_chunked(s1=s1_tensor, dtype=dtype, chunk_size=chunk_size)
+        
+            print_time("Processing coordinate matrix - s2", verbose)
+            if isinstance(s2, str):
+                print_time("  >>  Reading data", verbose)
+                s2_tensor = load_feather(s2)
+                print_time("  >>  Convert to tensor", verbose)
+                s2_tensor = tf.convert_to_tensor(s2_tensor, dtype=dtype)
+                print_time("  >>  Compute d12", verbose)
+                Dist2 = compute_distances_chunked(s1=s1_tensor, s2=s2_tensor, dtype=dtype, chunk_size=chunk_size)
+            
+            print_time("  >>  Free memory", verbose)
+            del s1_tensor, s2_tensor
+            gc.collect()
+            
+            # |||||||||||||||||||||||||||||||||||
+            # Load and convert postEta
+            # |||||||||||||||||||||||||||||||||||
+            print_time("Load and convert postEta", verbose)
+            if isinstance(postEta, str):
+                try:
+                    postEta = load_feather(postEta)
+                    postEta  = load_tensor_chunked(postEta , dtype, chunk_size, threshold_mb)
+                except Exception as e:
+                    print_time(f"Error loading postEta: {e}", verbose)
+                    sys.exit(1)
+            
+            # |||||||||||||||||||||||||||||||||||
+            # Convert denom to a TensorFlow tensor
+            # |||||||||||||||||||||||||||||||||||
+            print_time("Convert denom to a TensorFlow tensor", verbose)
+            Denom_tensor = tf.convert_to_tensor(denom, dtype=dtype)
+            
+            # |||||||||||||||||||||||||||||||||||
+            # Check if data was loaded successfully
+            # |||||||||||||||||||||||||||||||||||
+            print_time("Check if data was loaded successfully", verbose)
+            if Dist1 is None or Dist2 is None or postEta is None or Denom_tensor is None:
+                raise ValueError("Error: One or more input files could not be loaded.")
+        
+            # |||||||||||||||||||||||||||||||||||
+            # Calculate the K matrices
+            # |||||||||||||||||||||||||||||||||||
+            print_time("Calculate the K matrices", verbose)
+            
+            print_time("  >>  k11", verbose)
+            K11 = tf.exp(-Dist1 / Denom_tensor)
+            del Dist1
+            
+            print_time("  >>  k12", verbose)
+            K12 = tf.exp(-Dist2 / Denom_tensor)
+            # Retrieve the shape as a list [rows, columns]
+            K12_shape = K12.shape.as_list()
+            # Dynamically ensure the tensor's shape
+            K12 = tf.ensure_shape(K12, K12_shape)
+        
+            # Free memory
+            print_time("  >>  Free memory", verbose)
+            del Dist2, Denom_tensor
+            gc.collect()
+        
+            # |||||||||||||||||||||||||||||||||||
+            # Solve & cross-product
+            # |||||||||||||||||||||||||||||||||||
+            print_time("Solve & cross-product", verbose)
+            results = solve_and_multiply(K11, K12, postEta)
+            
+            # Free memory
+            print_time("  >>  Free memory", verbose)
+            del K11, K12, postEta
+            gc.collect()
+            
+            # |||||||||||||||||||||||||||||||||||
+            # Convert results to numpy arrays
+            # |||||||||||||||||||||||||||||||||||
+            print_time("Convert results to pandas dataframe", verbose)
+            results = pd.DataFrame(results)
+            
+            # |||||||||||||||||||||||||||||||||||
+            # Save to feather
+            # |||||||||||||||||||||||||||||||||||
+            print_time("Save to feather", verbose)
+        
+            if not path_out:
+                raise ValueError("A valid path_out must be provided.")
+            try:
+                results.to_feather(path_out)
+            except Exception as e:
+                print_time(f"Error saving results to {path_out}: {e}", verbose)
+        
+            # |||||||||||||||||||||||||||||||||||
+            # Print processing time
+            # |||||||||||||||||||||||||||||||||||
+            elapsed_time = time.time() - start_time
+            print_time(f"Finished in {elapsed_time:.1f} seconds", verbose)
+        
+            print("=" * 80)  # Horizontal line
+            print("\n")
     
-    print_time("  >>  Free memory", verbose)
-    del s1_tensor, s2_tensor, s1, s2
-    gc.collect()
-    
-    # |||||||||||||||||||||||||||||||||||
-    # Load and convert postEta
-    # |||||||||||||||||||||||||||||||||||
-    print_time("Load and convert postEta", verbose)
-    if isinstance(postEta, str):
-        try:
-            postEta = load_feather(postEta)
-            postEta  = load_tensor_chunked(postEta , dtype, chunk_size, threshold_mb)
-        except Exception as e:
-            print_time(f"Error loading postEta: {e}", verbose)
-            sys.exit(1)
-    
-    # |||||||||||||||||||||||||||||||||||
-    # Convert denom to a TensorFlow tensor
-    # |||||||||||||||||||||||||||||||||||
-    print_time("Convert denom to a TensorFlow tensor", verbose)
-    Denom_tensor = tf.convert_to_tensor(denom, dtype=dtype)
-    
-    # |||||||||||||||||||||||||||||||||||
-    # Check if data was loaded successfully
-    # |||||||||||||||||||||||||||||||||||
-    print_time("Check if data was loaded successfully", verbose)
-    if Dist1 is None or Dist2 is None or postEta is None or Denom_tensor is None:
-        print_time("Error: One or more input files could not be loaded.", verbose)
-        return None
-
-    # |||||||||||||||||||||||||||||||||||
-    # Calculate the K matrices
-    # |||||||||||||||||||||||||||||||||||
-    print_time("Calculate the K matrices", verbose)
-    
-    print_time("  >>  k11", verbose)
-    K11 = tf.exp(-Dist1 / Denom_tensor)
-    del Dist1
-    
-    print_time("  >>  k12", verbose)
-    K12 = tf.exp(-Dist2 / Denom_tensor)
-    # Retrieve the shape as a list [rows, columns]
-    K12_shape = K12.shape.as_list()
-    # Dynamically ensure the tensor's shape
-    K12 = tf.ensure_shape(K12, K12_shape)
-
-    # Free memory
-    print_time("  >>  Free memory", verbose)
-    del Dist2, Denom_tensor, denom
-    gc.collect()
-
-    # |||||||||||||||||||||||||||||||||||
-    # Solve & cross-product
-    # |||||||||||||||||||||||||||||||||||
-    print_time("Solve & cross-product", verbose)
-    results = solve_and_multiply(K11, K12, postEta)
-    
-    # Free memory
-    print_time("  >>  Free memory", verbose)
-    del K11, K12, postEta
-    gc.collect()
-    
-    # |||||||||||||||||||||||||||||||||||
-    # Convert results to numpy arrays
-    # |||||||||||||||||||||||||||||||||||
-    print_time("Convert results to pandas dataframe", verbose)
-    results = pd.DataFrame(results)
-    
-    # |||||||||||||||||||||||||||||||||||
-    # Save to feather
-    # |||||||||||||||||||||||||||||||||||
-    print_time("Save to feather", verbose)
-
-    if not path_out:
-        raise ValueError("A valid path_out must be provided.")
-    try:
-        results.to_feather(path_out)
-    except Exception as e:
-        print_time(f"Error saving results to {path_out}: {e}", verbose)
-
-    # |||||||||||||||||||||||||||||||||||
-    # Print processing time
-    # |||||||||||||||||||||||||||||||||||
-    elapsed_time = time.time() - start_time
-    print_time(f"Finished in {elapsed_time:.1f} seconds", verbose)
-
     return path_out
 
 # ==============================================================================

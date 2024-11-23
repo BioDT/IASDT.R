@@ -95,7 +95,6 @@
 #'   and the `Hab_Abb` value. Only effective if `PrepSLURM = TRUE`.
 #' @param Path_Hmsc String specifying the path for the Hmsc-HPC. This will be
 #'   provided as the `Path_Hmsc` argument of the [IASDT.R::Mod_SLURM] function.
-#' @param Path_Python String specifying the path for Python.
 #' @param ToJSON Logical indicating whether to convert unfitted models to JSON
 #'   before saving to RDS file. Default: `FALSE`.
 #' @param CheckPython Logical indicating whether to check if the Python
@@ -162,7 +161,7 @@ Mod_Prep4HPC <- function(
     thin = NULL, samples = 1000L, transientFactor = 500L, verbose = 200L,
     SkipFitted = TRUE, NumArrayJobs = 210L, ModelCountry = NULL,
     VerboseProgress = TRUE, FromHPC = TRUE, PrepSLURM = TRUE, MemPerCpu = NULL,
-    Time = NULL, JobName = NULL, Path_Hmsc = NULL, Path_Python = NULL,
+    Time = NULL, JobName = NULL, Path_Hmsc = NULL,
     CheckPython = FALSE, ToJSON = FALSE, Precision = 64, ...) {
 
   # # ..................................................................... ###
@@ -175,7 +174,7 @@ Mod_Prep4HPC <- function(
 
   CheckNULL <- c(
     "Path_Model", "PresPerSpecies", "thin", "samples",
-    "MemPerCpu", "Path_Hmsc", "Path_Python", "Hab_Abb")
+    "MemPerCpu", "Path_Hmsc", "Hab_Abb")
   IsNull <- purrr::map_lgl(CheckNULL, ~ is.null(get(.x)))
 
   if (any(IsNull)) {
@@ -267,18 +266,19 @@ Mod_Prep4HPC <- function(
       "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE,
       "Path_PA", "DP_R_PA_Local", TRUE, FALSE)
 
-    # Check if Python executable exists
-    if (CheckPython) {
-      if (!file.exists(Path_Python)) {
-        stop(
-          paste0("Python executable does not exist: ", Path_Python),
-          call. = FALSE)
-      }
-    }
   }
 
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+
+  Path_Python <- file.path(Path_Hmsc, "Scripts/python.exe")
+  # Check if Python executable exists
+  if (CheckPython && !file.exists(Path_Python)) {
+      stop(
+        paste0("Python executable does not exist: ", Path_Python),
+        call. = FALSE)
+    }
+  }
 
   # # ..................................................................... ###
 

@@ -48,10 +48,6 @@
 #'   changes](https://github.com/aniskhan25/hmsc-hpc/issues/14) to the
 #'   [Hmsc::computePredictedValues] to make it possible to use Hmsc-HPC, this
 #'   does not help as our intention is to use the Hmsc-HPC using GPU.
-#'
-#'   The function reads the following environment variables:
-#'   - **`DP_R_Path_Python`** for Python path on LUMI.
-#'   project on LUMI.
 #' @author Ahmed El-Gabbas
 #' @inheritParams Mod_SLURM
 #' @inheritParams Mod_PrepData

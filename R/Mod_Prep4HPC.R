@@ -236,7 +236,7 @@ Mod_Prep4HPC <- function(
     on.exit(sink(), add = TRUE)
   }
 
-  IASDT.R::CatSep(Rep = 1, Extra1 = 1, Extra2 = 0, Char = "=")
+  IASDT.R::CatSep(Rep = 1, Extra1 = 1, Extra2 = 1, Char = "=")
   IASDT.R::CatTime("Preparing data for Hmsc-HPC models")
   IASDT.R::CatSep(Rep = 1, Extra1 = 0, Extra2 = 1, Char = "=")
 
@@ -433,7 +433,7 @@ Mod_Prep4HPC <- function(
     Path_Model = Path_Model, VerboseProgress = VerboseProgress,
     FromHPC = FromHPC, SaveData = SaveData, ExcludeCult = ExcludeCult)
 
-  IASDT.R::CatSep(Rep = 1, Extra1 = 0, Extra2 = 1)
+  IASDT.R::CatSep(Rep = 1, Extra1 = 1, Extra2 = 1)
 
   # # ..................................................................... ###
 
@@ -668,16 +668,15 @@ Mod_Prep4HPC <- function(
       paste0("stats::poly(", QuadraticVars, ", degree = 2, raw = TRUE)"))
 
     IASDT.R::CatTime("Models will be fitted using:", Level = 1)
+    
+    IASDT.R::CatTime(paste0(length(OnlyLinear), " linear effect: "), Level = 2)
+    IASDT.R::CatTime(paste0(OnlyLinear, collapse = " + "), Level = 3)
+    
     IASDT.R::CatTime(
-      paste0(
-        length(OnlyLinear), " linear effect: ",
-        paste0(OnlyLinear, collapse = " + ")),
+      paste0(length(QuadraticVars), " linear and quadratic effects: "),
       Level = 2)
-    IASDT.R::CatTime(
-      paste0(
-        length(QuadraticVars), " linear and quadratic effects: ",
-        paste0(QuadraticVars, collapse = " + ")),
-      Level = 2)
+    IASDT.R::CatTime(paste0(QuadraticVars, collapse = " + "), Level = 3)
+  
   }
 
   Form_x <- stringr::str_c(FormVars, collapse = " + ") %>%
@@ -739,17 +738,20 @@ Mod_Prep4HPC <- function(
 
     if (NCores > 1) {
 
+      NCores_GPP <- length(GPP_Dists)
+
       IASDT.R::CatTime(
-        paste0("Prepare working on parallel using `", NCores, "` cores."),
+        paste0("Prepare working on parallel using `", NCores_GPP, "` cores."),
         Level = 1)
 
       withr::local_options(
         future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
-      c1 <- snow::makeSOCKcluster(NCores)
+      c1 <- snow::makeSOCKcluster(NCores_GPP)
       on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
       future::plan("future::cluster", workers = c1, gc = TRUE)
       on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
-
+      
+      IASDT.R::CatTime("Prepare GPP knots", Level = 2)
       GPP_Knots <- future.apply::future_lapply(
         X = GPP_Dists * 1000,
         FUN = function(x) {
@@ -767,6 +769,7 @@ Mod_Prep4HPC <- function(
       future::plan("future::sequential", gc = TRUE)
 
     } else {
+
       IASDT.R::CatTime("Working sequentially")
 
       GPP_Knots <- purrr::map(
@@ -985,7 +988,7 @@ Mod_Prep4HPC <- function(
   IASDT.R::CatTime("Save unfitted models")
 
   if (OverwriteRDS) {
-    IASDT.R::CatTime(paste0("Processing all model variants"), Level = 1)
+    IASDT.R::CatTime("Processing all model variants", Level = 1)
   } else {
     NMod2Export <- Model_Info %>%
       dplyr::filter(!file.exists(M4HPC_Path)) %>%
@@ -1041,7 +1044,7 @@ Mod_Prep4HPC <- function(
   # Implement `InitFitFun` function: start sampling and save output files
   if (NCores > 1) {
 
-    c1 <- snow::makeSOCKcluster(NCores)
+    c1 <- snow::makeSOCKcluster(min(NCores, nrow(Model_Info)))
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
     future::plan("future::cluster", workers = c1, gc = TRUE)
     on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)

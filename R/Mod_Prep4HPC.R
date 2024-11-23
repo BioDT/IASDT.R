@@ -668,15 +668,15 @@ Mod_Prep4HPC <- function(
       paste0("stats::poly(", QuadraticVars, ", degree = 2, raw = TRUE)"))
 
     IASDT.R::CatTime("Models will be fitted using:", Level = 1)
-    
+
     IASDT.R::CatTime(paste0(length(OnlyLinear), " linear effect: "), Level = 2)
     IASDT.R::CatTime(paste0(OnlyLinear, collapse = " + "), Level = 3)
-    
+
     IASDT.R::CatTime(
       paste0(length(QuadraticVars), " linear and quadratic effects: "),
       Level = 2)
     IASDT.R::CatTime(paste0(QuadraticVars, collapse = " + "), Level = 3)
-  
+
   }
 
   Form_x <- stringr::str_c(FormVars, collapse = " + ") %>%
@@ -750,7 +750,7 @@ Mod_Prep4HPC <- function(
       on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
       future::plan("future::cluster", workers = c1, gc = TRUE)
       on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
-      
+
       IASDT.R::CatTime("Prepare GPP knots", Level = 2)
       GPP_Knots <- future.apply::future_lapply(
         X = GPP_Dists * 1000,
@@ -1102,27 +1102,29 @@ Mod_Prep4HPC <- function(
 
           # Input model
           M4HPC_Path2 <- file.path(
-            Path_Model, "InitMod4HPC", basename(M4HPC_Path))
-          M4HPC_Path2_Win <- stringr::str_replace_all(M4HPC_Path2, "/", "\\\\")
+            Path_Model, "InitMod4HPC", basename(M4HPC_Path)) %>%
+            normalizePath(winslash = "/", mustWork = FALSE) %>%
+            shQuote()
 
           # Path for posterior sampling
           Post_Path <- file.path(
             Path_Model, "Model_Fitting_HPC",
-            paste0(M_Name_Fit, "_Chain", Chain, "_post.rds"))
-          Post_Path_Win <- stringr::str_replace_all(Post_Path, "/", "\\\\")
+            paste0(M_Name_Fit, "_Chain", Chain, "_post.rds")) %>%
+            normalizePath(winslash = "/", mustWork = FALSE) %>%
+            shQuote()
 
           # Path for progress
           Path_ModProg <- file.path(
             Path_Model, "Model_Fitting_HPC",
-            paste0(M_Name_Fit, "_Chain", Chain, "_Progress.txt"))
+            paste0(M_Name_Fit, "_Chain", Chain, "_Progress.txt")) %>%
+            normalizePath(winslash = "/", mustWork = FALSE) %>%
+            shQuote()
+
+          Path_Python <- Path_Python %>%
+            normalizePath(winslash = "/", mustWork = FALSE) %>%
+            shQuote()
 
           Post_Missing <- !file.exists(Post_Path)
-
-
-          # Not needed now as this now added to the `setup-env.sh` file
-          Exports <- paste0(
-            "export TF_CPP_MIN_LOG_LEVEL=3; ",
-            "export TF_ENABLE_ONEDNN_OPTS=0; ")
 
           # `TF_ENABLE_ONEDNN_OPTS=0` is used to disable the following warning:
           #
@@ -1137,7 +1139,7 @@ Mod_Prep4HPC <- function(
 
           Command_HPC <- paste0(
             # Not needed now as this now added to the `setup-env.sh` file
-            # Exports,
+            # "export TF_CPP_MIN_LOG_LEVEL=3; export TF_ENABLE_ONEDNN_OPTS=0; ",
 
             "/usr/bin/time -v ",
 
@@ -1145,30 +1147,30 @@ Mod_Prep4HPC <- function(
             # Path_Python,
 
             "python3 -m hmsc.run_gibbs_sampler",
-            " --input ", shQuote(M4HPC_Path2),
-            " --output ", shQuote(Post_Path),
+            " --input ", M4HPC_Path2,
+            " --output ", Post_Path,
             " --samples ", M_samples,
             " --transient ", M_transient,
             " --thin ", M_thin,
             " --verbose ", verbose,
             " --chain ", (Chain - 1),
             " --fp ", Precision,
-            " >& ", shQuote(Path_ModProg))
+            " >& ", Path_ModProg)
 
           Command_WS <- paste0(
-            Exports,
+            "set TF_CPP_MIN_LOG_LEVEL=3 && set TF_ENABLE_ONEDNN_OPTS=0 && ",
             Path_Python,
             " -m hmsc.run_gibbs_sampler",
-            " --input ", M4HPC_Path2_Win,
-            " --output ", Post_Path_Win,
+            " --input ", M4HPC_Path2,
+            " --output ", Post_Path,
             " --samples ", M_samples,
             " --transient ", M_transient,
             " --thin ", M_thin,
             " --verbose ", verbose,
             " --chain ", (Chain - 1),
             " --fp ", Precision,
-            " >& ", shQuote(Path_ModProg))
-
+            " > ", Path_ModProg,
+            " 2>&1")
 
           list(
             M4HPC_Path_LUMI = M4HPC_Path2,

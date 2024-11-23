@@ -157,7 +157,7 @@ Mod_Prep4HPC <- function(
     HabAsPredictor = TRUE, NspPerGrid = 0L, ExcludeCult = TRUE,
     CV_NFolds = 4L, CV_NGrids = 20L, CV_NR = 2L, CV_NC = 2L, CV_Plot = TRUE,
     CV_SAC = FALSE,
-    PhyloTree = TRUE, NoPhyloTree = TRUE, SaveData = TRUE,
+    PhyloTree = TRUE, NoPhyloTree = FALSE, SaveData = TRUE,
     OverwriteRDS = TRUE, NCores = 8L, NChains = 4L,
     thin = NULL, samples = 1000L, transientFactor = 500L, verbose = 200L,
     SkipFitted = TRUE, NumArrayJobs = 210L, ModelCountry = NULL,
@@ -423,13 +423,13 @@ Mod_Prep4HPC <- function(
     "10_Wetland", "12a_Ruderal_habitats", "12b_Agricultural_habitats") %>%
     stringr::str_subset(paste0("^", as.character(Hab_Abb), "_"))
 
-  IASDT.R::CatSep(Rep = 1, Extra1 = 1, Extra2 = 0)
+  IASDT.R::CatSep(Rep = 1, Extra1 = 1, Extra2 = 1)
   IASDT.R::CatTime("Preparing input data using IASDT.R::Mod_PrepData")
-  IASDT.R::CatSep(Rep = 1, Extra1 = 0, Extra2 = 0)
+  IASDT.R::CatSep(Rep = 1, Extra1 = 0, Extra2 = 1)
 
   DT_All <- IASDT.R::Mod_PrepData(
     Hab_Abb = Hab_Abb, MinEffortsSp = MinEffortsSp,
-    PresPerSpecies = PresPerSpecies, EnvFile = EnvFile, BioVars = BioVars,
+    PresPerSpecies = PresPerSpecies, EnvFile = EnvFile,
     Path_Model = Path_Model, VerboseProgress = VerboseProgress,
     FromHPC = FromHPC, SaveData = SaveData, ExcludeCult = ExcludeCult)
 

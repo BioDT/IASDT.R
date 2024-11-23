@@ -274,10 +274,9 @@ Mod_Prep4HPC <- function(
   Path_Python <- file.path(Path_Hmsc, "Scripts/python.exe")
   # Check if Python executable exists
   if (CheckPython && !file.exists(Path_Python)) {
-      stop(
-        paste0("Python executable does not exist: ", Path_Python),
-        call. = FALSE)
-    }
+    stop(
+      paste0("Python executable does not exist: ", Path_Python),
+      call. = FALSE)
   }
 
   # # ..................................................................... ###

@@ -735,9 +735,9 @@ Mod_Prep4HPC <- function(
     # Prepare GPP knots
     IASDT.R::CatTime("Preparing GPP knots", Level = 1)
 
-    if (NCores > 1) {
+    NCores_GPP <- length(GPP_Dists)
 
-      NCores_GPP <- length(GPP_Dists)
+    if (NCores_GPP > 1) {
 
       IASDT.R::CatTime(
         paste0("Prepare working on parallel using `", NCores_GPP, "` cores."),
@@ -1113,7 +1113,7 @@ Mod_Prep4HPC <- function(
             Path_Model, "Model_Fitting_HPC",
             paste0(M_Name_Fit, "_Chain", Chain, "_Progress.txt"))
 
-          Post_Missing <- !file.exists(Post_Path)
+          Post_Missing <- !file.exists(Path_Post)
 
           # File path for the python script
           Path_Model2_4cmd <- Path_Model2 %>%

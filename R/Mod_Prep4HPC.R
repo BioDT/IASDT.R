@@ -1100,30 +1100,34 @@ Mod_Prep4HPC <- function(
           withr::local_options(list(scipen = 999))
 
           # Input model
-          M4HPC_Path2 <- file.path(
-            Path_Model, "InitMod4HPC", basename(M4HPC_Path)) %>%
-            normalizePath(winslash = "/", mustWork = FALSE) %>%
-            shQuote()
+          Path_Model2 <- file.path(
+            Path_Model, "InitMod4HPC", basename(M4HPC_Path))
 
           # Path for posterior sampling
-          Post_Path <- file.path(
+          Path_Post <- file.path(
             Path_Model, "Model_Fitting_HPC",
-            paste0(M_Name_Fit, "_Chain", Chain, "_post.rds")) %>%
-            normalizePath(winslash = "/", mustWork = FALSE) %>%
-            shQuote()
+            paste0(M_Name_Fit, "_Chain", Chain, "_post.rds"))
 
           # Path for progress
-          Path_ModProg <- file.path(
+          Path_Prog <- file.path(
             Path_Model, "Model_Fitting_HPC",
-            paste0(M_Name_Fit, "_Chain", Chain, "_Progress.txt")) %>%
+            paste0(M_Name_Fit, "_Chain", Chain, "_Progress.txt"))
+
+          Post_Missing <- !file.exists(Post_Path)
+
+          # File path for the python script
+          Path_Model2_4cmd <- Path_Model2 %>%
             normalizePath(winslash = "/", mustWork = FALSE) %>%
             shQuote()
-
+          Path_Post_4cmd <- Path_Post %>%
+            normalizePath(winslash = "/", mustWork = FALSE) %>%
+            shQuote()
+          Path_Prog_4cmd <- Path_Prog %>%
+            normalizePath(winslash = "/", mustWork = FALSE) %>%
+            shQuote()
           Path_Python <- Path_Python %>%
             normalizePath(winslash = "/", mustWork = FALSE) %>%
             shQuote()
-
-          Post_Missing <- !file.exists(Post_Path)
 
           # `TF_ENABLE_ONEDNN_OPTS=0` is used to disable the following warning:
           #
@@ -1146,36 +1150,35 @@ Mod_Prep4HPC <- function(
             # Path_Python,
 
             "python3 -m hmsc.run_gibbs_sampler",
-            " --input ", M4HPC_Path2,
-            " --output ", Post_Path,
+            " --input ", Path_Model2_4cmd,
+            " --output ", Path_Post_4cmd,
             " --samples ", M_samples,
             " --transient ", M_transient,
             " --thin ", M_thin,
             " --verbose ", verbose,
             " --chain ", (Chain - 1),
             " --fp ", Precision,
-            " >& ", Path_ModProg)
+            " >& ", Path_Prog_4cmd)
 
           Command_WS <- paste0(
             "set TF_CPP_MIN_LOG_LEVEL=3 && set TF_ENABLE_ONEDNN_OPTS=0 && ",
             Path_Python,
             " -m hmsc.run_gibbs_sampler",
-            " --input ", M4HPC_Path2,
-            " --output ", Post_Path,
+            " --input ", Path_Model2_4cmd,
+            " --output ", Path_Post_4cmd,
             " --samples ", M_samples,
             " --transient ", M_transient,
             " --thin ", M_thin,
             " --verbose ", verbose,
             " --chain ", (Chain - 1),
             " --fp ", Precision,
-            " > ", Path_ModProg,
+            " > ", Path_Prog_4cmd,
             " 2>&1")
 
           list(
-            M4HPC_Path_LUMI = M4HPC_Path2,
-            Post_Path = Post_Path, Post_Missing = Post_Missing,
-            Path_ModProg = Path_ModProg, Command_HPC = Command_HPC,
-            Command_WS = Command_WS) %>%
+            M4HPC_Path_LUMI = Path_Model2, Post_Path = Path_Post,
+            Post_Missing = Post_Missing, Path_ModProg = Path_Prog,
+            Command_HPC = Command_HPC, Command_WS = Command_WS) %>%
             return()
 
         })) %>%

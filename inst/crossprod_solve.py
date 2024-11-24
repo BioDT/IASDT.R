@@ -416,7 +416,7 @@ def crossprod_solve(
             log_and_flush2(f"    solve_chunk_size: {solve_chunk_size}", verbose)
             
             # Check for GPUs
-            log_and_flush2(\n\n"Checking GPU", verbose)
+            log_and_flush2("\n\nChecking GPU", verbose)
             if gpus:
                 log_and_flush(f"  >>  GPUs detected: {len(gpus)}\n", verbose)
             else:

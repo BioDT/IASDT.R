@@ -418,9 +418,9 @@ def crossprod_solve(
             # Check for GPUs
             log_and_flush2("\n\nChecking GPU", verbose)
             if gpus:
-                log_and_flush(f"  >>  GPUs detected: {len(gpus)}\n", verbose)
+                log_and_flush2(f"  >>  GPUs detected: {len(gpus)}\n", verbose)
             else:
-                log_and_flush("  >>  No GPUs detected; using CPU.\n", verbose)
+                log_and_flush2("  >>  No GPUs detected; using CPU.\n", verbose)
         
             # Ensure chunk_size is an integer
             chunk_size = int(chunk_size)

@@ -9,7 +9,7 @@
 #' optionally TensorFlow for matrix operations. This function is adapted from
 #' [Hmsc::predictLatentFactor] with equivalent results to the original function
 #' when `predictMean = TRUE`.
-#' 
+#'
 #' @param unitsPred a factor vector with random level units for which
 #'   predictions are to be made
 #' @param modelunits a factor vector with random level units that are
@@ -77,7 +77,7 @@ Predict_LF <- function(
     Temp_Dir = "TEMP2Pred", Temp_Cleanup = FALSE, Model_Name = NULL,
     UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE, LF_OutFile = NULL,
     LF_Return = TRUE, LF_Check = FALSE, solve_max_attempts = 5,
-    Verbose = TRUE) {
+    solve_chunk_size = 50, Verbose = TRUE) {
 
   # # ..................................................................... ###
 
@@ -247,8 +247,8 @@ Predict_LF <- function(
     } else {
 
       # Save D11 and D12 as feather files, if not already exist on disk
-      Path_D11 <- file.path(Temp_Dir, paste0(Model_Name, "D11.feather"))
-      Path_D12 <- file.path(Temp_Dir, paste0(Model_Name, "D12.feather"))
+      Path_D11 <- file.path(Temp_Dir, paste0(Model_Name, "D11.qs2"))
+      Path_D12 <- file.path(Temp_Dir, paste0(Model_Name, "D12.qs2"))
 
       if (file.exists(Path_D11) && file.exists(Path_D12)) {
 
@@ -298,67 +298,58 @@ Predict_LF <- function(
     IASDT.R::CatTime(
       "Splitting and saving `postAlpha` to small chunks", Level = 1)
 
-    postAlpha_tibble <- do.call(rbind, postAlpha) %>%
+    # Unique combination of LF / alphapw / sample IDs
+    LF_Data <- do.call(rbind, postAlpha) %>%
       as.data.frame() %>%
       tibble::tibble() %>%
-      stats::setNames(paste0("LF_", seq_len(ncol(.))))
-
-    # Unique values alpha and their respective sample IDs
-    postAlpha_unique <- postAlpha_tibble %>%
+      stats::setNames(paste0("LF_", seq_len(ncol(.)))) %>%
       # ID column represents the original row number
       dplyr::mutate(Sample_IDs = dplyr::row_number()) %>%
       tidyr::nest(Sample_IDs = Sample_IDs) %>%
       dplyr::mutate(
-        Sample_IDs = purrr::map(Sample_IDs, ~ as.vector(sort(unlist(.x)))))
-
-    # Prepare data for parallel processing
-    Unique_Alpha <- postAlpha_unique %>%
-      # This may help to distribute heavy jobs first on parallel
-      dplyr::arrange(dplyr::desc(sapply(Sample_IDs, length))) %>%
-      dplyr::select(-Sample_IDs) %>%
+        Sample_IDs = purrr::map(Sample_IDs, ~ as.vector(unlist(.x)))) %>%
       tidyr::pivot_longer(
-        cols = names(.), values_to = "Alpha_ID", names_to = "LF") %>%
+        cols = -Sample_IDs, values_to = "Alpha_ID", names_to = "LF") %>%
       dplyr::mutate(
         LF_ID = as.integer(stringr::str_remove(LF, "LF_")),
         .before = "Alpha_ID") %>%
-      dplyr::distinct() %>%
       dplyr::mutate(
-        Denom = purrr::map_dbl(Alpha_ID, ~ alphapw[.x, 1]),
-        SampleID = purrr::map2(
-          .x = LF, .y = Alpha_ID,
+        Denom = purrr::map_dbl(Alpha_ID, ~ alphapw[.x, 1])) %>%
+      tidyr::nest(Sample_IDs = -c("Denom", "LF_ID", "Alpha_ID", "LF")) %>%
+      dplyr::mutate(
+        Sample_IDs = purrr::map(Sample_IDs, ~unname(sort(unlist(.x)))),
+        # number of samples to be processed in each file
+        NSamples = purrr::map_int(Sample_IDs, length)) %>%
+      dplyr::arrange(Denom == 0, dplyr::desc(NSamples)) %>%
+      dplyr::mutate(
+        ChunkID = dplyr::row_number(),
+        File = purrr::map_chr(
+          .x = ChunkID,
           .f = ~ {
-            postAlpha_unique %>%
-              dplyr::filter(.[[.x]] == .y) %>%
-              dplyr::pull(Sample_IDs) %>%
-              unlist() %>%
-              as.vector() %>%
-              sort()
+            ChunkID0 = stringr::str_pad(.x, width = nchar(n()), pad = 0)
+            file.path(
+              Temp_Dir,
+              paste0(Model_Name, "postEta_ch", ChunkID0, ".feather"))
           }),
-        SampleID = purrr::map(SampleID, unlist),
-        File = file.path(
-          Temp_Dir,
-          paste0(Model_Name, "postEta_ch", dplyr::row_number(), ".feather")),
         File_etaPred = stringr::str_replace_all(
           File, "_postEta_ch", "_etaPred_ch"),
         Export = purrr::pmap(
-          .l = list(SampleID, LF_ID, File),
-          .f = function(SampleID, LF_ID, File) {
+          .l = list(Sample_IDs, LF_ID, File),
+          .f = function(Sample_IDs, LF_ID, File) {
 
             # do not export file if already exists and is valid
             # if (isFALSE(IASDT.R::CheckData(File, warning = FALSE))) {
             if (!file.exists(File)) {
-              Out <- postEta[SampleID] %>%
+              Out <- postEta[Sample_IDs] %>%
                 purrr::map(~ .x[, LF_ID, drop = FALSE]) %>%
                 simplify2array() %>%
-                as.data.frame()
+                as.data.frame() %>%
+                stats::setNames(paste0("Eta_", Sample_IDs))
               IASDT.R::SaveAs(InObj = Out, OutPath = File)
+              return(NULL)
             }
           }),
-        Export = NULL,
-        # number of samples to be processed in each file
-        NSamples = purrr::map_int(SampleID, length)) %>%
-      # Arrange parallel jobs by their expected running time
-      dplyr::arrange(Denom == 0, dplyr::desc(NSamples))
+        Export = NULL)
 
     rm(postEta, postAlpha, envir = environment())
     invisible(gc())
@@ -373,21 +364,21 @@ Predict_LF <- function(
       withr::local_options(scipen = 99)
 
       # Current denominator
-      Denom <- Unique_Alpha$Denom[[RowNum]]
+      Denom <- LF_Data$Denom[[RowNum]]
       # ID for latent factor
-      LF_ID <- Unique_Alpha$LF_ID[[RowNum]]
+      LF_ID <- LF_Data$LF_ID[[RowNum]]
       # ID for posterior sample
-      SampleID <- Unique_Alpha$SampleID[[RowNum]]
+      SampleID <- LF_Data$Sample_IDs[[RowNum]]
       # File path for current alpha
-      File <- Unique_Alpha$File[[RowNum]]
-      File_etaPred <- Unique_Alpha$File_etaPred[[RowNum]]
-      NSamples <- Unique_Alpha$NSamples[[RowNum]]
+      File <- LF_Data$File[[RowNum]]
+      File_etaPred <- LF_Data$File_etaPred[[RowNum]]
+      NSamples <- LF_Data$NSamples[[RowNum]]
 
-      if (LF_Check) {
+      CalcPredLF <- !file.exists(File_etaPred)
+
+      if (LF_Check && isFALSE(CalcPredLF)) {
         Eta_NCols <- ncol(IASDT.R::LoadAs(File_etaPred))
         CalcPredLF <- dplyr::if_else(Eta_NCols == NSamples, FALSE, TRUE)
-      } else {
-        CalcPredLF <- !file.exists(File_etaPred)
       }
 
       # If the denominator is positive, perform calculations; otherwise, set
@@ -403,15 +394,13 @@ Predict_LF <- function(
           # Use TensorFlow
           if (CalcPredLF) {
 
-            PythonScript <- system.file(
-              "crossprod_solve.py", package = "IASDT.R")
-
             eta_indNew0 <- run_crossprod_solve(
-              virtual_env_path = TF_Environ, script_path = PythonScript,
+              virtual_env_path = TF_Environ,
               s1 = Path_s1, s2 = Path_s2, denom = Denom, postEta = File,
               path_out = File_etaPred, use_single = TF_use_single,
-              solve_max_attempts = solve_max_attempts)
-            
+              solve_max_attempts = solve_max_attempts,
+              solve_chunk_size = solve_chunk_size)
+
             rm(eta_indNew0, envir = environment())
           }
 
@@ -422,7 +411,7 @@ Predict_LF <- function(
           etaPred <- purrr::map_dfr(
             .x = seq_len(length(etaPred)),
             .f = ~ tibble::tibble(
-              etaPred = etaPred[[.x]], 
+              etaPred = etaPred[[.x]],
               Site = unitsPred,
               SampleID = SampleID[.x],
               File_etaPred = File_etaPred))
@@ -445,7 +434,7 @@ Predict_LF <- function(
             etaPred <- purrr::map_dfr(
               .x = seq_along(SampleID),
               .f = function(ID) {
-                eta <- postEta0[, , ID]
+                eta <- as.matrix(postEta0[, ID])
                 IASDT.R::Solve2vect(K11, eta) %>%
                   as.vector() %>%
                   Matrix::crossprod(K12, .) %>%
@@ -464,10 +453,11 @@ Predict_LF <- function(
         }
 
       } else {
+
         # When Denom is zero, set `eta_indNew` to zero
         if (CalcPredLF) {
-          etaPred <- tibble::tibble(etaPred = 0, Site = unitsPred) %>%
-            tidyr::expand_grid(SampleID = SampleID, File_etaPred = File_etaPred)
+          etaPred <- tibble::tibble(etaPred = 0, File_etaPred = File_etaPred) %>%
+            tidyr::expand_grid(SampleID = SampleID, Site = unitsPred)
           IASDT.R::SaveAs(InObj = etaPred, OutPath = File_etaPred)
         } else {
           etaPred <- IASDT.R::LoadAs(File_etaPred)
@@ -491,10 +481,10 @@ Predict_LF <- function(
 
       # Making predictions sequentially
       etaPreds <- purrr::map(
-        .x = seq_len(nrow(Unique_Alpha)),
+        .x = seq_len(nrow(LF_Data)),
         .f = function(x) {
 
-          result <- try(etaPreds_F(x, LF_Check = LF_Check), silent = TRUE)
+          result <- try(etaPreds_F(RowNum = x, LF_Check = LF_Check), silent = TRUE)
 
           if (inherits(result, "try-error")) {
             return(NULL)
@@ -524,10 +514,10 @@ Predict_LF <- function(
       parallel::clusterExport(
         cl = c1,
         varlist = c(
-          "Unique_Alpha", "Path_D11", "Path_D12", "Path_s1", "Path_s2",
+          "LF_Data", "Path_D11", "Path_D12", "Path_s1", "Path_s2",
           "indNew", "unitsPred", "indOld", "modelunits", "TF_Environ", "UseTF",
           "TF_use_single", "etaPreds_F", "LF_Check", "run_crossprod_solve",
-          "solve_max_attempts"),
+          "solve_max_attempts", "solve_chunk_size"),
         envir = environment())
 
       # Load necessary libraries and load environment if using TensorFlow
@@ -546,7 +536,7 @@ Predict_LF <- function(
       # Making predictions on parallel
       IASDT.R::CatTime("Making predictions on parallel", Level = 2)
       etaPreds <- parallel::clusterApplyLB(
-        cl = c1, x = seq_len(nrow(Unique_Alpha)),
+        cl = c1, x = seq_len(nrow(LF_Data)),
         fun = function(x) {
           result <- try(etaPreds_F(x, LF_Check = LF_Check), silent = TRUE)
           if (inherits(result, "try-error")) {
@@ -564,7 +554,7 @@ Predict_LF <- function(
 
     # Check if all files are created
     IASDT.R::CatTime("Check if all files are created", Level = 1)
-    AllEtaFiles <- Unique_Alpha$File_etaPred
+    AllEtaFiles <- LF_Data$File_etaPred
     AllEtaFilesExist <- all(file.exists(AllEtaFiles))
 
     if (AllEtaFilesExist) {
@@ -586,7 +576,7 @@ Predict_LF <- function(
     postEtaPred <- dplyr::bind_rows(etaPreds) %>%
       tidyr::nest(data = -File_etaPred) %>%
       dplyr::full_join(
-        dplyr::select(Unique_Alpha, LF, LF_ID, File_etaPred),
+        dplyr::select(LF_Data, LF, LF_ID, File_etaPred),
         by = "File_etaPred") %>%
       tidyr::unnest("data") %>%
       tidyr::pivot_wider(
@@ -674,9 +664,9 @@ Predict_LF <- function(
 #' @keywords internal
 
 run_crossprod_solve <- function(
-    virtual_env_path, script_path, s1, s2, postEta, path_out, denom,
+    virtual_env_path, script_path = NULL, s1, s2, postEta, path_out, denom,
     chunk_size = 1000, threshold_mb = 2000, use_single = TRUE, verbose = TRUE,
-    solve_max_attempts = 5) {
+    solve_chunk_size = 50, solve_max_attempts = 5) {
 
   Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3")
 
@@ -712,24 +702,25 @@ run_crossprod_solve <- function(
   }
 
   # Construct the command to run the Python script
-  args <- c(
+  LF_Args <- c(
     python_executable,
     script_path,
     "--s1", normalizePath(s1, winslash = "/"),
     "--s2", normalizePath(s2, winslash = "/"),
     "--postEta", normalizePath(postEta, winslash = "/"),
-    "--path_out", normalizePath(path_out, winslash = "/"),
+    "--path_out", normalizePath(path_out, winslash = "/", mustWork = FALSE),
     "--denom", as.character(denom),
     "--chunk_size", as.character(chunk_size),
-    "--threshold_mb", as.character(threshold_mb))
+    "--threshold_mb", as.character(threshold_mb),
+    "--solve_chunk_size", as.character(solve_chunk_size))
 
   # Add boolean flags conditionally
   if (use_single) {
-    args <- c(args, "--use_single")
+    LF_Args <- c(LF_Args, "--use_single")
   }
 
   if (verbose) {
-    args <- c(args, "--verbose")
+    LF_Args <- c(LF_Args, "--verbose")
   }
 
   path_log <- stringr::str_replace(path_out, ".feather", ".log")
@@ -737,7 +728,7 @@ run_crossprod_solve <- function(
   on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
   cat(
     "Running command:\n",
-    paste(paste(args, collapse = " "), "\n\n"),
+    paste(paste(LF_Args, collapse = " "), "\n\n"),
     sep = "\n", file = f, append = TRUE)
 
   # Initialize retry logic
@@ -753,7 +744,7 @@ run_crossprod_solve <- function(
     IASDT.R::CatSep(file = f, append = TRUE, Extra2 = 1)
 
     # Run the command and capture stdout/stderr to a log file
-    result <- system(paste0(args, collapse = " "), intern = TRUE)
+    result <- system(paste0(LF_Args, collapse = " "), intern = TRUE)
 
     # Check for errors
     if (!inherits(result, "error") || length(result) != 0 || result == "Done") {

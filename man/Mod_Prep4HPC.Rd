@@ -31,7 +31,7 @@ Mod_Prep4HPC(
   CV_Plot = TRUE,
   CV_SAC = FALSE,
   PhyloTree = TRUE,
-  NoPhyloTree = TRUE,
+  NoPhyloTree = FALSE,
   SaveData = TRUE,
   OverwriteRDS = TRUE,
   NCores = 8L,
@@ -50,7 +50,6 @@ Mod_Prep4HPC(
   Time = NULL,
   JobName = NULL,
   Path_Hmsc = NULL,
-  Path_Python = NULL,
   CheckPython = FALSE,
   ToJSON = FALSE,
   Precision = 64,
@@ -224,8 +223,6 @@ and the \code{Hab_Abb} value. Only effective if \code{PrepSLURM = TRUE}.}
 
 \item{Path_Hmsc}{String specifying the path for the Hmsc-HPC. This will be
 provided as the \code{Path_Hmsc} argument of the \link{Mod_SLURM} function.}
-
-\item{Path_Python}{String specifying the path for Python.}
 
 \item{CheckPython}{Logical indicating whether to check if the Python
 executable exists. Only valid if FromHPC = \code{FALSE}.}

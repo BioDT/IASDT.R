@@ -107,12 +107,6 @@ function, which currently does not support performing cross-validation
 using Hmsc-HPC. Although it is possible to \href{https://github.com/aniskhan25/hmsc-hpc/issues/14}{make some changes} to the
 \link[Hmsc:computePredictedValues]{Hmsc::computePredictedValues} to make it possible to use Hmsc-HPC, this
 does not help as our intention is to use the Hmsc-HPC using GPU.
-
-The function reads the following environment variables:
-\itemize{
-\item \strong{\code{DP_R_Path_Python}} for Python path on LUMI.
-project on LUMI.
-}
 }
 \author{
 Ahmed El-Gabbas

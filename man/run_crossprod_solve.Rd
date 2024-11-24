@@ -7,7 +7,7 @@ Run Crossprod Solve}
 \usage{
 run_crossprod_solve(
   virtual_env_path,
-  script_path,
+  script_path = NULL,
   s1,
   s2,
   postEta,
@@ -17,6 +17,7 @@ run_crossprod_solve(
   threshold_mb = 2000,
   use_single = TRUE,
   verbose = TRUE,
+  solve_chunk_size = 50,
   solve_max_attempts = 5
 )
 }
@@ -49,6 +50,9 @@ Defaults to \code{TRUE}.}
 
 \item{verbose}{logical (Optional). If \code{TRUE}, logs detailed information
 during execution. Default is \code{TRUE}.}
+
+\item{solve_chunk_size}{numeric. Chunk size for solve_and_multiply python
+function. Default is 50.}
 
 \item{solve_max_attempts}{numeric (Optional). Maximum number of attempts to
 run solve and crossprod functions. Default is 5.}

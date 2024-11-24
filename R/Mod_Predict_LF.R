@@ -56,6 +56,7 @@
 #'   in the `Hmsc` package.
 #' @seealso [Hmsc::predictLatentFactor]
 #' @name Predict_LF
+#' @inheritParams run_crossprod_solve
 #' @details The function is expected to be faster than the original function in
 #'   the `Hmsc` package, especially when using TensorFlow for calculations and
 #'   when working on parallel.
@@ -117,7 +118,7 @@ Predict_LF <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   SampleID <- Site <- LF <- LF_ID <- etaPred <- Sample_IDs <- File <-
-    Alpha_ID <- File_etaPred <- Denom <- NSamples <- NULL
+    Alpha_ID <- File_etaPred <- Denom <- NSamples <- ChunkID <- NULL
 
   # # ..................................................................... ###
 
@@ -241,7 +242,6 @@ Predict_LF <- function(
       }
 
       rm(rL, envir = environment())
-
       Path_D11 <- Path_D12 <- NULL
 
     } else {
@@ -270,8 +270,11 @@ Predict_LF <- function(
 
         # Clean up
         rm(rL, s1, s2, D11, D12, envir = environment())
+
       }
+
       Path_s1 <- Path_s2 <- NULL
+
     }
 
     # Clean up temporary files after finishing calculations
@@ -312,8 +315,6 @@ Predict_LF <- function(
         cols = -Sample_IDs, values_to = "Alpha_ID", names_to = "LF") %>%
       dplyr::mutate(
         LF_ID = as.integer(stringr::str_remove(LF, "LF_")),
-        .before = "Alpha_ID") %>%
-      dplyr::mutate(
         Denom = purrr::map_dbl(Alpha_ID, ~ alphapw[.x, 1])) %>%
       tidyr::nest(Sample_IDs = -c("Denom", "LF_ID", "Alpha_ID", "LF")) %>%
       dplyr::mutate(
@@ -326,7 +327,7 @@ Predict_LF <- function(
         File = purrr::map_chr(
           .x = ChunkID,
           .f = ~ {
-            ChunkID0 = stringr::str_pad(.x, width = nchar(n()), pad = 0)
+            ChunkID0 <- stringr::str_pad(.x, width = nchar(n()), pad = 0)
             file.path(
               Temp_Dir,
               paste0(Model_Name, "postEta_ch", ChunkID0, ".feather"))
@@ -340,14 +341,18 @@ Predict_LF <- function(
             # do not export file if already exists and is valid
             # if (isFALSE(IASDT.R::CheckData(File, warning = FALSE))) {
             if (!file.exists(File)) {
+
               Out <- postEta[Sample_IDs] %>%
                 purrr::map(~ .x[, LF_ID, drop = FALSE]) %>%
                 simplify2array() %>%
                 as.data.frame() %>%
                 stats::setNames(paste0("Eta_", Sample_IDs))
+
               IASDT.R::SaveAs(InObj = Out, OutPath = File)
-              return(NULL)
             }
+
+            return(NULL)
+
           }),
         Export = NULL)
 
@@ -395,9 +400,9 @@ Predict_LF <- function(
           if (CalcPredLF) {
 
             eta_indNew0 <- run_crossprod_solve(
-              virtual_env_path = TF_Environ,
-              s1 = Path_s1, s2 = Path_s2, denom = Denom, postEta = File,
-              path_out = File_etaPred, use_single = TF_use_single,
+              virtual_env_path = TF_Environ, s1 = Path_s1, s2 = Path_s2,
+              denom = Denom, postEta = File, path_out = File_etaPred,
+              use_single = TF_use_single,
               solve_max_attempts = solve_max_attempts,
               solve_chunk_size = solve_chunk_size)
 
@@ -411,10 +416,8 @@ Predict_LF <- function(
           etaPred <- purrr::map_dfr(
             .x = seq_len(length(etaPred)),
             .f = ~ tibble::tibble(
-              etaPred = etaPred[[.x]],
-              Site = unitsPred,
-              SampleID = SampleID[.x],
-              File_etaPred = File_etaPred))
+              etaPred = etaPred[[.x]], Site = unitsPred,
+              SampleID = SampleID[.x], File_etaPred = File_etaPred))
 
         } else {
 
@@ -434,13 +437,16 @@ Predict_LF <- function(
             etaPred <- purrr::map_dfr(
               .x = seq_along(SampleID),
               .f = function(ID) {
+
                 eta <- as.matrix(postEta0[, ID])
+
                 IASDT.R::Solve2vect(K11, eta) %>%
                   as.vector() %>%
                   Matrix::crossprod(K12, .) %>%
                   as.vector() %>%
                   tibble::tibble(
                     etaPred = ., Site = unitsPred, SampleID = SampleID[ID])
+
               }) %>%
               dplyr::arrange(SampleID, Site, etaPred) %>%
               dplyr::mutate(File_etaPred = File_etaPred)
@@ -455,10 +461,14 @@ Predict_LF <- function(
       } else {
 
         # When Denom is zero, set `eta_indNew` to zero
+
         if (CalcPredLF) {
-          etaPred <- tibble::tibble(etaPred = 0, File_etaPred = File_etaPred) %>%
+
+          etaPred <- tibble::tibble(
+            etaPred = 0, File_etaPred = File_etaPred) %>%
             tidyr::expand_grid(SampleID = SampleID, Site = unitsPred)
           IASDT.R::SaveAs(InObj = etaPred, OutPath = File_etaPred)
+
         } else {
           etaPred <- IASDT.R::LoadAs(File_etaPred)
         }
@@ -484,7 +494,9 @@ Predict_LF <- function(
         .x = seq_len(nrow(LF_Data)),
         .f = function(x) {
 
-          result <- try(etaPreds_F(RowNum = x, LF_Check = LF_Check), silent = TRUE)
+          result <- try(
+            expr = etaPreds_F(RowNum = x, LF_Check = LF_Check),
+            silent = TRUE)
 
           if (inherits(result, "try-error")) {
             return(NULL)
@@ -499,8 +511,7 @@ Predict_LF <- function(
       # Parallel processing
       IASDT.R::CatTime(
         paste0(
-          "Predicting Latent Factor in parallel using ",
-          LF_NCores, " cores"),
+          "Predicting Latent Factor in parallel using ", LF_NCores, " cores"),
         Level = 1)
 
       IASDT.R::CatTime("Prepare for parallel processing", Level = 2)
@@ -552,6 +563,8 @@ Predict_LF <- function(
       invisible(gc())
     }
 
+    # # .................................................................... ###
+
     # Check if all files are created
     IASDT.R::CatTime("Check if all files are created", Level = 1)
     AllEtaFiles <- LF_Data$File_etaPred
@@ -574,7 +587,7 @@ Predict_LF <- function(
     IASDT.R::CatTime("Merge results", Level = 1)
 
     postEtaPred <- dplyr::bind_rows(etaPreds) %>%
-      tidyr::nest(data = -File_etaPred) %>%
+      tidyr::nest(data = -"File_etaPred") %>%
       dplyr::full_join(
         dplyr::select(LF_Data, LF, LF_ID, File_etaPred),
         by = "File_etaPred") %>%
@@ -582,6 +595,8 @@ Predict_LF <- function(
       tidyr::pivot_wider(
         id_cols = c(SampleID, Site),
         names_from = LF, values_from = etaPred) %>%
+      # Sort latent factors columns
+      dplyr::select(SampleID, Site, sort(tidyselect::peek_vars())) %>%
       dplyr::arrange(SampleID, Site) %>%
       dplyr::group_split(SampleID) %>%
       purrr::map(
@@ -651,6 +666,8 @@ Predict_LF <- function(
 #'   during execution. Default is `TRUE`.
 #' @param solve_max_attempts numeric (Optional). Maximum number of attempts to
 #'   run solve and crossprod functions. Default is 5.
+#' @param solve_chunk_size numeric. Chunk size for solve_and_multiply python
+#'   function. Default is 50.
 #' @return Returns the `path_out` if successful. Returns `NULL` if all attempts
 #'   fail.
 #' @details
@@ -698,7 +715,8 @@ run_crossprod_solve <- function(
 
   if (!file.exists(python_executable)) {
     stop(
-      "Python executable not found in the virtual environment.", call. = FALSE)
+      "Python executable not found in the virtual environment.",
+      call. = FALSE)
   }
 
   # Construct the command to run the Python script
@@ -748,11 +766,8 @@ run_crossprod_solve <- function(
 
     # Check for errors
     if (!inherits(result, "error") || length(result) != 0 || result == "Done") {
-      # Check if file is valid using IASDT.R::CheckData
-      FileOkay <- IASDT.R::CheckData(path_out)
-      if (FileOkay) {
-        success <- TRUE
-      }
+      # Check the integrity of the file
+      success <- IASDT.R::CheckData(path_out)
     }
     attempt <- attempt + 1
   }

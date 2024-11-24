@@ -21,6 +21,7 @@ Predict_LF(
   LF_Return = TRUE,
   LF_Check = FALSE,
   solve_max_attempts = 5,
+  solve_chunk_size = 50,
   Verbose = TRUE
 )
 }
@@ -79,6 +80,9 @@ if the files exist without checking their integrity. Default is \code{FALSE}.}
 
 \item{solve_max_attempts}{numeric (Optional). Maximum number of attempts to
 run solve and crossprod functions. Default is 5.}
+
+\item{solve_chunk_size}{numeric. Chunk size for solve_and_multiply python
+function. Default is 50.}
 
 \item{Verbose}{Logical. If TRUE, detailed output is printed. Default is
 \code{FALSE}.}

@@ -70,7 +70,7 @@ Predict_Hmsc <- function(
     Gradient = NULL, Yc = NULL, mcmcStep = 1, expected = TRUE, NCores = 8,
     Model_Name = "Train", Temp_Dir = "TEMP2Pred", Temp_Cleanup = FALSE,
     RC = NULL, UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE,
-    LF_OutFile = NULL, LF_Return = TRUE, LF_InputFile = NULL, LF_Only = FALSE,
+    LF_OutFile = NULL, LF_Return = FALSE, LF_InputFile = NULL, LF_Only = FALSE,
     LF_NCores = NCores, LF_Check = FALSE, Pred_Dir = NULL,
     Pred_PA = NULL, Pred_XY = NULL, Evaluate = FALSE, Eval_Name = NULL,
     Eval_Dir = "Evaluation", Verbose = TRUE) {
@@ -93,7 +93,7 @@ Predict_Hmsc <- function(
       "`LF_OutFile` must be specified when `LF_Only` is `TRUE`",
       call. = FALSE)
   }
-  
+
   if (!is.null(LF_OutFile) && !is.null(LF_InputFile)) {
     stop(
       "only one of `LF_OutFile` and `LF_InputFile` arguments can be specified",
@@ -206,7 +206,7 @@ Predict_Hmsc <- function(
         xlev <- xlev[unlist(lapply(Model$XData, is.factor))]
         X <- stats::model.matrix(Model$XFormula, XData, xlev = xlev)
       })
-    
+
   } else {
     if (is.null(X)) {
       X <- Model$X
@@ -335,7 +335,7 @@ Predict_Hmsc <- function(
         predPostEta[[r]] <- replicate(
           n = predN,
           expr = structure(
-            rep(0, nLF), dim = c(1L, nLF), 
+            rep(0, nLF), dim = c(1L, nLF),
             dimnames = list("new_unit", NULL)),
           simplify = FALSE)
       }
@@ -347,7 +347,7 @@ Predict_Hmsc <- function(
   if (CalcLF) {
 
     for (r in seq_len(Mod_nr)) {
-    
+
       postAlpha <- lapply(post, function(c) c$Alpha[[r]])
 
       # Save postEta to file and load it from Predict_LF. This helps to avoid
@@ -374,7 +374,7 @@ Predict_Hmsc <- function(
             x
           })
           IASDT.R::CatTime("Save post to file", Level = 1)
-          IASDT.R::SaveAs(InObj = post, OutPath = post_file)        
+          IASDT.R::SaveAs(InObj = post, OutPath = post_file)
         }
         rm(post, envir = environment())
         invisible(gc())
@@ -387,7 +387,7 @@ Predict_Hmsc <- function(
       predPostEta[[r]] <- IASDT.R::Predict_LF(
         unitsPred = levels(dfPiNew[, r]),
         modelunits = levels(Mod_dfPi[, r]),
-        postEta = postEta_file, postAlpha = postAlpha, rL = rL[[r]],
+        postEta = postEta_file, postAlpha = postAlpha, LF_rL = rL[[r]],
         LF_NCores = LF_NCores, Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup,
         Model_Name = Model_Name,
         UseTF = UseTF, TF_Environ = TF_Environ, TF_use_single = TF_use_single,
@@ -404,7 +404,7 @@ Predict_Hmsc <- function(
     }
 
   } else {
-    
+
     if (is.null(RC) || RC == "c") {
       IASDT.R::CatTime(
         paste0("Loading LF prediction from disk: `", LF_InputFile, "`"),
@@ -603,7 +603,7 @@ Predict_Hmsc <- function(
     cl = c1,
     x = seq_len(nrow(Eval_DT)),
     fun = function(ID) {
-      
+
       Sp <- Eval_DT$Sp[[ID]]
       if (Sp == 0) {
         Sp2 <- "SR"
@@ -648,7 +648,7 @@ Predict_Hmsc <- function(
 
       PredSummaryFile <- file.path(
         Pred_Dir, paste0("Pred_", Model_Name, "_", Sp2, ".qs2"))
-      
+
       IASDT.R::SaveAs(InObj = PredSummary, OutPath = PredSummaryFile)
 
       if (Temp_Cleanup) {
@@ -719,7 +719,7 @@ Predict_Hmsc <- function(
     dplyr::mutate(Model_Name = Model_Name, .before = "SR_mean")
 
   Pred_File <- file.path(Pred_Dir, paste0("Prediction_", Model_Name, ".qs2"))
-  
+
   IASDT.R::SaveAs(InObj = Predictions, OutPath = Pred_File)
 
   if (Temp_Cleanup) {
@@ -766,7 +766,7 @@ Predict_Hmsc <- function(
   }
 
   tibble::tibble(
-    Pred_Path = Pred_File,  Eval_Path = Eval_Path, 
+    Pred_Path = Pred_File,  Eval_Path = Eval_Path,
     LF_Path = LF_Path) %>%
     return()
 }
@@ -791,7 +791,7 @@ Predict_Hmsc <- function(
 get1prediction <- function(
     object, X, XRRR, Yc, Loff, rL, rLPar, sam, predPostEta, PiNew, dfPiNew,
     nyNew, expected, mcmcStep, seed = NULL) {
-  
+
   updateZ <- updateEta <- NULL
 
 

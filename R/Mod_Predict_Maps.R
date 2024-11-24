@@ -296,7 +296,7 @@ Predict_Maps <- function(
     R_Hab <- file.path(Path_CLC, "Summary_RData", "PercCov_SynHab_Crop.RData")
     if (!file.exists(R_Hab)) {
       stop(
-        paste0("Habitat data: '", R_Hab, "' does not exist"),  
+        paste0("Habitat data: '", R_Hab, "' does not exist"),
         call. = FALSE)
     }
 
@@ -435,7 +435,7 @@ Predict_Maps <- function(
   IASDT.R::CatTime("Predict latent factor for new locations")
 
   if (!file.exists(Path_Test_LF) && Pred_NewSites) {
-    
+
     IASDT.R::CatTime(
       "Preparing input data for predicting latent factor", Level = 1)
 
@@ -460,6 +460,21 @@ Predict_Maps <- function(
     Gradient <- Hmsc::prepareGradient(
       hM = Model, XDataNew = as.data.frame(Test_X),
       sDataNew = list(sample = as.data.frame(Test_XY)))
+
+
+
+    # object <- qs2::qs_read("datasets/processed/model_fitting/Test_SW_12a/Model_Fitted/GPP40_Tree_samp1000_th20_Model.qs2")
+    # DT <- LoadAs("U:/Workflow/datasets/processed/model_fitting/Test_SW_12a/ModDT_12a_Ruderal_habitats.RData") %>%
+    #   tibble::tibble() %>%
+    #   dplyr::filter(Country == "Germany")
+    # XDataNew <- dplyr::select(DT, names(object$XData)) %>%
+    #   as.data.frame()
+    # sDataNew <- dplyr::select(DT, x, y) %>%
+    #   as.data.frame() %>%
+    #   as.matrix()
+    # Gradient = prepareGradient(
+    #   hM = object, XDataNew = XDataNew, sDataNew = list(sample = sDataNew))
+    # rm(DT, XDataNew, object, sDataNew)
 
     rm(Predict_DF_Test, Test_X, Test_XY, Model, envir = environment())
     invisible(gc())
@@ -529,7 +544,7 @@ Predict_Maps <- function(
       Path_Prediction_R <- file.path(
         Path_Prediction, paste0("Prediction_", Option_Name, "_R.qs2"))
       Path_Prediction_summary <- file.path(
-        Path_Prediction, 
+        Path_Prediction,
         paste0("Prediction_", Option_Name, "_Summary.RData"))
 
       # use original effort data
@@ -664,9 +679,9 @@ Predict_Maps <- function(
 
           # Merge & save predictions - sf ------
           IASDT.R::CatTime(
-            "Merge & save predictions at training and new sites", 
+            "Merge & save predictions at training and new sites",
             Level = 1)
-          
+
           Prediction_sf <- dplyr::bind_rows(
             IASDT.R::LoadAs(Preds_ModFitSites$Pred_Path),
             IASDT.R::LoadAs(Preds_NewSites$Pred_Path))
@@ -883,7 +898,7 @@ Predict_Maps <- function(
 
   IASDT.R::CatTime(
     "Prepare input data to calculate ensemble predictions", Level = 1)
-  
+
   Prediction_Ensemble <- Prediction_Summary %>%
     dplyr::filter(ClimateModel != "Current") %>%
     dplyr::select(-File_Pred_sf, -File_Pred_R, -Name, -ClimateModel) %>%
@@ -994,7 +1009,7 @@ Predict_Maps <- function(
             return()
         },
         .options = furrr::furrr_options(
-          seed = TRUE, scheduling = 1, packages = "terra", 
+          seed = TRUE, scheduling = 1, packages = "terra",
           globals = "CurrentMean")),
       Dir_Ensemble = NULL, tifs = NULL)
 
@@ -1084,7 +1099,7 @@ Predict_Maps <- function(
   save(
     Prediction_Summary,
     file = file.path(Path_Prediction, "Prediction_Summary.RData"))
-  
+
   utils::write.table(
     x = Prediction_Summary, sep = "\t", row.names = FALSE, col.names = TRUE,
     file = file.path(Path_Prediction, "Prediction_Summary.txt"),

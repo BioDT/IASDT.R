@@ -536,7 +536,7 @@ def crossprod_solve(
             
             elapsed_time = time.time() - start_time
             
-            log_and_flush(f"Elapsed time: {time.strftime('%H:%M:%S', time.gmtime(elapsed_time))}\n", verbose)
+            log_and_flush(f"Elapsed time: {time.strftime('%H:%M:%S', time.gmtime(elapsed_time))}", verbose)
             log_and_flush2("=" * 80, verbose)
             log_and_flush2("\n\n", verbose)
 

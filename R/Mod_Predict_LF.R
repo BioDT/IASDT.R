@@ -18,7 +18,7 @@
 #'   containing samples of random factors at conditioned units
 #' @param postAlpha a list containing samples of range (lengthscale) parameters
 #'   for latent factors
-#' @param rL a HmscRandomLevel-class object that describes the random level
+#' @param LF_rL a HmscRandomLevel-class object that describes the random level
 #'   structure
 #' @param LF_NCores Integer specifying the number of cores to use for parallel
 #'   processing. Defaults to 8.
@@ -41,7 +41,7 @@
 #'   If `NULL` (default), the predicted latent factors are not saved to a file.
 #'   This should end with either `*.qs2` or `*.RData`.
 #' @param LF_Return Logical. Indicates if the output should be returned.
-#'   Defaults to `TRUE`. If `LF_OutFile` is `NULL`, this parameter cannot be set
+#'   Defaults to `FALSE`. If `LF_OutFile` is `NULL`, this parameter cannot be set
 #'   to `FALSE` because the function needs to return the result if it is not
 #'   saved to a file.
 #' @param LF_Check Logical. If TRUE, the function checks if the output
@@ -74,10 +74,10 @@
 #'   call them when needed.
 
 Predict_LF <- function(
-    unitsPred, modelunits, postEta, postAlpha, rL, LF_NCores = 8,
+    unitsPred, modelunits, postEta, postAlpha, LF_rL, LF_NCores = 8,
     Temp_Dir = "TEMP2Pred", Temp_Cleanup = FALSE, Model_Name = NULL,
     UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE, LF_OutFile = NULL,
-    LF_Return = TRUE, LF_Check = FALSE, solve_max_attempts = 5,
+    LF_Return = FALSE, LF_Check = FALSE, solve_max_attempts = 5,
     solve_chunk_size = 50, Verbose = TRUE) {
 
   # # ..................................................................... ###
@@ -212,7 +212,7 @@ Predict_LF <- function(
 
     IASDT.R::CatTime("Calculate/save necessary matrices", Level = 1)
 
-    alphapw <- rL$alphapw
+    alphapw <- LF_rL$alphapw
 
     if (UseTF) {
 
@@ -231,17 +231,17 @@ Predict_LF <- function(
         IASDT.R::CatTime("Saving s1 and s2 matrices", Level = 2)
 
         # s1
-        s1 <- as.data.frame(rL$s[modelunits, , drop = FALSE])
+        s1 <- as.data.frame(LF_rL$s[modelunits, , drop = FALSE])
         IASDT.R::SaveAs(InObj = s1, OutPath = Path_s1)
 
         # s2
-        s2 <- as.data.frame(rL$s[unitsPred[indNew], , drop = FALSE])
+        s2 <- as.data.frame(LF_rL$s[unitsPred[indNew], , drop = FALSE])
         IASDT.R::SaveAs(InObj = s2, OutPath = Path_s2)
 
         rm(s1, s2, envir = environment())
       }
 
-      rm(rL, envir = environment())
+      rm(LF_rL, envir = environment())
       Path_D11 <- Path_D12 <- NULL
 
     } else {
@@ -257,8 +257,8 @@ Predict_LF <- function(
 
       } else {
 
-        s1 <- rL$s[modelunits, , drop = FALSE]
-        s2 <- rL$s[unitsPred[indNew], , drop = FALSE]
+        s1 <- LF_rL$s[modelunits, , drop = FALSE]
+        s2 <- LF_rL$s[unitsPred[indNew], , drop = FALSE]
 
         # D11
         D11 <- Rfast::Dist(s1)
@@ -269,7 +269,7 @@ Predict_LF <- function(
         IASDT.R::SaveAs(InObj = D12, OutPath = Path_D12)
 
         # Clean up
-        rm(rL, s1, s2, D11, D12, envir = environment())
+        rm(LF_rL, s1, s2, D11, D12, envir = environment())
 
       }
 

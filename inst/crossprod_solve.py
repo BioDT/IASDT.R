@@ -263,7 +263,7 @@ def solve_and_multiply(
     # Chunked processing
     if solve_chunk_size > 1:
         if log_fn:
-            log_fn("\n  >>  Processing solve_and_multiply in chunks\n")
+            log_fn("\n  >>  Processing solve_and_multiply in chunks")
 
         for start_col in range(0, num_columns, solve_chunk_size):
             end_col = min(start_col + solve_chunk_size, num_columns)
@@ -271,7 +271,7 @@ def solve_and_multiply(
             # Extract chunk of columns from postEta
             postEta_chunk = postEta[:, start_col:end_col]
             if log_fn:
-                log_fn(f"  >>  Processing columns {start_col + 1} to {end_col} of {num_columns}")
+                log_fn(f"  >>  >>  Processing columns {start_col + 1} to {end_col} of {num_columns}")
 
             # Solve K11 * X = postEta_chunk
             X_chunk = tf.linalg.solve(K11, postEta_chunk)
@@ -374,51 +374,54 @@ def crossprod_solve(
     with open(log_file, "a") as log:
         with contextlib.redirect_stdout(log), contextlib.redirect_stderr(log):
             
-            
+            # Print to file with time stamp
             def log_and_flush(msg, verbose=True):
                 if verbose:
                     print_time(msg)
                     log.flush()
+            
+            # Print to file without time stamp
             def log_and_flush2(msg, verbose=True):
                 if verbose:
                     print(msg)
                     log.flush()
-                    
+            
+            # Record the start time
+            start_time = time.time()
+            
             # Log environment info
-            log_and_flush("\n", verbose)
-            log_and_flush("=" * 80, verbose)
+            log_and_flush2("\n", verbose)
+            log_and_flush2("=" * 80, verbose)
             log_and_flush("Starting crossprod_solve", verbose)
-            log_and_flush("=" * 80, verbose)
+            log_and_flush2("=" * 80, verbose)
             
             # Log environment info
             log_and_flush2("\nEnvironment Info:", verbose)
-            log_and_flush2(f"  Current Working Directory: {os.getcwd()}", verbose)
-            log_and_flush2(f"  Python Version: {sys.version}", verbose)
-            log_and_flush2(f"  TensorFlow Version: {tf.__version__}", verbose)
-            log_and_flush2(f"  OS: {os.name}", verbose)
-            log_and_flush2(f"  Platform: {sys.platform}", verbose)
+            log_and_flush2(f"    Current Working Directory: {os.getcwd()}", verbose)
+            log_and_flush2(f"    Python Version: {sys.version}", verbose)
+            log_and_flush2(f"    TensorFlow Version: {tf.__version__}", verbose)
+            log_and_flush2(f"    OS: {os.name}", verbose)
+            log_and_flush2(f"    Platform: {sys.platform}", verbose)
 
             # Log user inputs
             log_and_flush2("\nUser Inputs:", verbose)
-            log_and_flush2(f"  s1: {s1}", verbose)
-            log_and_flush2(f"  s2: {s2}", verbose)
-            log_and_flush2(f"  denom: {denom}", verbose)
-            log_and_flush2(f"  postEta: {postEta}", verbose)
-            log_and_flush2(f"  use_single: {use_single}", verbose)
-            log_and_flush2(f"  path_out: {path_out}", verbose)
-            log_and_flush2(f"  chunk_size: {chunk_size}", verbose)
-            log_and_flush2(f"  threshold_mb: {threshold_mb}", verbose)
-            log_and_flush2(f"  solve_chunk_size: {solve_chunk_size}", verbose)
+            log_and_flush2(f"    s1: {s1}", verbose)
+            log_and_flush2(f"    s2: {s2}", verbose)
+            log_and_flush2(f"    denom: {denom}", verbose)
+            log_and_flush2(f"    postEta: {postEta}", verbose)
+            log_and_flush2(f"    use_single: {use_single}", verbose)
+            log_and_flush2(f"    path_out: {path_out}", verbose)
+            log_and_flush2(f"    chunk_size: {chunk_size}", verbose)
+            log_and_flush2(f"    threshold_mb: {threshold_mb}", verbose)
+            log_and_flush2(f"    solve_chunk_size: {solve_chunk_size}", verbose)
             
             # Check for GPUs
+            log_and_flush2(\n\n"Checking GPU", verbose)
             if gpus:
-                log_and_flush(f"  >>  GPUs detected: {len(gpus)}", verbose)
+                log_and_flush(f"  >>  GPUs detected: {len(gpus)}\n", verbose)
             else:
-                log_and_flush("  >>  No GPUs detected; using CPU.", verbose)
+                log_and_flush("  >>  No GPUs detected; using CPU.\n", verbose)
         
-            # Record the start time
-            start_time = time.time()
-                
             # Ensure chunk_size is an integer
             chunk_size = int(chunk_size)
         
@@ -503,7 +506,6 @@ def crossprod_solve(
             # |||||||||||||||||||||||||||||||||||
             # Solve and multiply
             # |||||||||||||||||||||||||||||||||||
-             
             log_and_flush("Solving and computing cross-products", verbose)
             
             try:
@@ -534,9 +536,9 @@ def crossprod_solve(
             
             elapsed_time = time.time() - start_time
             
-            log_and_flush(f"Finished in {time.strftime('%H:%M:%S', time.gmtime(elapsed_time))}", verbose)
-            log_and_flush("=" * 80, verbose)
-            log_and_flush("\n", verbose)
+            log_and_flush(f"Elapsed time: {time.strftime('%H:%M:%S', time.gmtime(elapsed_time))}\n", verbose)
+            log_and_flush2("=" * 80, verbose)
+            log_and_flush2("\n\n", verbose)
 
     return path_out
 

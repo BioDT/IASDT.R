@@ -220,8 +220,8 @@ Predict_LF <- function(
       Path_s1 <- file.path(Temp_Dir, paste0(Model_Name, "s1.feather"))
       Path_s2 <- file.path(Temp_Dir, paste0(Model_Name, "s2.feather"))
 
-      s1_s2_Okay <- IASDT.R::CheckData(Path_s1, warning = TRUE) &&
-        IASDT.R::CheckData(Path_s2, warning = TRUE)
+      s1_s2_Okay <- IASDT.R::CheckData(Path_s1, warning = FALSE) &&
+        IASDT.R::CheckData(Path_s2, warning = FALSE)
 
       if (s1_s2_Okay) {
         IASDT.R::CatTime("s1 and s2 matrices are already saved", Level = 2)

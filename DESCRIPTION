@@ -114,7 +114,7 @@ LinkingTo:
     Rcpp,
     RcppArmadillo
 Remotes:
-    elgabbas/HMSC,
+    hmsc-r/HMSC,
     EmilHvitfeldt/paletteer,
     isciences/exactextractr,
     YuLab-SMU/ggtree

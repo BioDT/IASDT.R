@@ -24,7 +24,7 @@ Predict_Hmsc(
   TF_Environ = NULL,
   TF_use_single = FALSE,
   LF_OutFile = NULL,
-  LF_Return = TRUE,
+  LF_Return = FALSE,
   LF_InputFile = NULL,
   LF_Only = FALSE,
   LF_NCores = NCores,
@@ -101,7 +101,7 @@ If \code{NULL} (default), the predicted latent factors are not saved to a file.
 This should end with either \verb{*.qs2} or \verb{*.RData}.}
 
 \item{LF_Return}{Logical. Indicates if the output should be returned.
-Defaults to \code{TRUE}. If \code{LF_OutFile} is \code{NULL}, this parameter cannot be set
+Defaults to \code{FALSE}. If \code{LF_OutFile} is \code{NULL}, this parameter cannot be set
 to \code{FALSE} because the function needs to return the result if it is not
 saved to a file.}
 

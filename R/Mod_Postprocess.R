@@ -26,13 +26,13 @@
 #' @author Ahmed El-Gabbas
 #' @export
 
-# NEED TO REVISE DOCUMENTATION
-
 Mod_Postprocess <- function(
     ModelDir = NULL, Hab_Abb = NULL, NCores = 54, FromHPC = TRUE,
     EnvFile = ".env", Path_Hmsc = NULL, MemPerCpu = NULL, Time = NULL,
     FromJSON = FALSE, GPP_Dist = NULL, Tree = "Tree", Samples = 1000,
     Thin = NULL, N_Grid = 50, NOmega = 1000, UseTF = TRUE, TF_Environ = NULL,
+    TF_use_single = FALSE, LF_NCores = NCores, LF_Check = TRUE,
+    Temp_Cleanup = FALSE,
     CC_Models = c(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
       "MRI-ESM2-0", "UKESM1-0-LL"),
@@ -238,14 +238,12 @@ Mod_Postprocess <- function(
     stop("Selected model files not found", call. = FALSE)
   }
 
-
   # # ..................................................................... ###
   # # ..................................................................... ###
 
 
   # Convergence ----
   Ch1("Convergence")
-
 
   ## Gelman_Plot -----
   Ch2("Gelman_Plot")
@@ -280,7 +278,9 @@ Mod_Postprocess <- function(
 
   IASDT.R::RespCurv_PrepData(
     Path_Model = Path_Model, N_Grid = N_Grid, NCores = NCores, UseTF = UseTF,
-    TF_Environ = TF_Environ, Temp_Dir = Temp_Dir)
+    TF_Environ = TF_Environ, TF_use_single = TF_use_single,
+    LF_NCores = LF_NCores, LF_Check = LF_Check, Temp_Dir = Temp_Dir,
+    Temp_Cleanup = Temp_Cleanup, Verbose = TRUE)
 
   invisible(gc())
 
@@ -361,7 +361,8 @@ Mod_Postprocess <- function(
     FromHPC = FromHPC, NCores = NCores, Pred_Clamp = Pred_Clamp,
     Fix_Efforts = Fix_Efforts, Pred_NewSites = Pred_NewSites, UseTF = UseTF,
     TF_Environ = TF_Environ, CC_Models = CC_Models, CC_Scenario = CC_Scenario,
-    Temp_Dir = Temp_Dir)
+    Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup,
+    TF_use_single = TF_use_single, LF_NCores = LF_NCores, LF_Check = LF_Check)
 
   invisible(gc())
 

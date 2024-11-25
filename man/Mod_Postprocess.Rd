@@ -22,6 +22,10 @@ Mod_Postprocess(
   NOmega = 1000,
   UseTF = TRUE,
   TF_Environ = NULL,
+  TF_use_single = FALSE,
+  LF_NCores = NCores,
+  LF_Check = TRUE,
+  Temp_Cleanup = FALSE,
   CC_Models = c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0",
     "UKESM1-0-LL"),
   CC_Scenario = c("ssp126", "ssp370", "ssp585"),
@@ -86,6 +90,21 @@ Defaults to TRUE.}
 \item{TF_Environ}{Character string specifying the path to the Python
 environment. Defaults to NULL. This argument is required if \code{UseTF} is
 TRUE.}
+
+\item{TF_use_single}{Logical indicating whether to use single precision for
+the TF calculations. Defaults to \code{FALSE}.}
+
+\item{LF_NCores}{Integer specifying the number of cores to use for parallel
+processing. Defaults to 8.}
+
+\item{LF_Check}{Logical. If TRUE, the function checks if the output
+files are already created and valid. If FALSE, the function will only check
+if the files exist without checking their integrity. Default is \code{FALSE}.}
+
+\item{Temp_Cleanup}{Logical indicating whether to delete temporary files in
+the \code{Temp_Dir} after finishing the calculations. Defaults to \code{FALSE}; i.e.,
+the temporary files will be kept, enabling continue working on unfinished
+calculations, if the function failed, e.g. due to OOM.}
 
 \item{CC_Models}{Character vector specifying the climate models to use for
 future predictions. Default: \code{c("GFDL-ESM4", "IPSL-CM6A-LR" , "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL")}. This argument is only

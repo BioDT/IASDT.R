@@ -9,7 +9,7 @@ Predict_LF(
   modelunits,
   postEta,
   postAlpha,
-  rL,
+  LF_rL,
   LF_NCores = 8,
   Temp_Dir = "TEMP2Pred",
   Temp_Cleanup = FALSE,
@@ -18,7 +18,7 @@ Predict_LF(
   TF_Environ = NULL,
   TF_use_single = FALSE,
   LF_OutFile = NULL,
-  LF_Return = TRUE,
+  LF_Return = FALSE,
   LF_Check = FALSE,
   solve_max_attempts = 5,
   solve_chunk_size = 50,
@@ -38,7 +38,7 @@ containing samples of random factors at conditioned units}
 \item{postAlpha}{a list containing samples of range (lengthscale) parameters
 for latent factors}
 
-\item{rL}{a HmscRandomLevel-class object that describes the random level
+\item{LF_rL}{a HmscRandomLevel-class object that describes the random level
 structure}
 
 \item{LF_NCores}{Integer specifying the number of cores to use for parallel
@@ -70,7 +70,7 @@ If \code{NULL} (default), the predicted latent factors are not saved to a file.
 This should end with either \verb{*.qs2} or \verb{*.RData}.}
 
 \item{LF_Return}{Logical. Indicates if the output should be returned.
-Defaults to \code{TRUE}. If \code{LF_OutFile} is \code{NULL}, this parameter cannot be set
+Defaults to \code{FALSE}. If \code{LF_OutFile} is \code{NULL}, this parameter cannot be set
 to \code{FALSE} because the function needs to return the result if it is not
 saved to a file.}
 

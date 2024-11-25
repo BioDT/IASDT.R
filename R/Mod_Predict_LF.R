@@ -614,8 +614,8 @@ Predict_LF <- function(
   # Save postEtaPred
 
   if (!is.null(LF_OutFile)) {
-    IASDT.R::CatTime(
-      paste0("Save postEtaPred to `", LF_OutFile, "`"), Level = 1)
+    IASDT.R::CatTime("Save postEtaPred to: ", Level = 1)
+    IASDT.R::CatTime(paste0("`", LF_OutFile, "`"), Time = FALSE, Level = 2)
     fs::dir_create(fs::path_dir(LF_OutFile))
     IASDT.R::SaveAs(InObj = postEtaPred, OutPath = LF_OutFile)
   }

@@ -12,8 +12,11 @@
 #'   (default), only the timestamp is printed.
 #' @param NLines integer; the number of newline characters to print after the
 #'   message. Default is 1.
-#' @param Date logical; whether to include the date in the timestamp. Default is
-#'   `FALSE`, meaning only the time is printed.
+#' @param Time logical; whether to include the time in the timestamp. Default is
+#'   `TRUE`. If `FALSE`, only the text is printed.
+#' @param Date logical; whether to include the date in the timestamp. Only
+#'   effective if `Time` is `TRUE`. Default is `FALSE`, meaning only the time is
+#'   printed. If `TRUE`, the date is printed in the format "%d/%m/%Y %X".
 #' @param TZ character; the time zone to use for the timestamp. Default is
 #'   `CET`.
 #' @param Level integer; the level at which the message will be printed. If e.g.
@@ -43,16 +46,22 @@
 #' }
 
 CatTime <- function(
-    Text = "", NLines = 1, Date = FALSE, TZ = "CET", Level = 0, ...) {
+    Text = "", NLines = 1, Time = TRUE,
+    Date = FALSE, TZ = "CET", Level = 0, ...) {
 
-  DateFormat <- dplyr::if_else(Date, "%d/%m/%Y %X", "%X")
-  Now <- lubridate::now(tzone = TZ)
+  if (Time) {
+    DateFormat <- dplyr::if_else(Date, "%d/%m/%Y %X", "%X")
+    Now <- lubridate::now(tzone = TZ) %>%
+      format(DateFormat)
+    Now2 <- paste(" - ", Now)
+  } else {
+    Now <- Now2 <- ""
+  }
 
   if (Text == "") {
-    cat(format(Now, DateFormat), ...)
+    cat(Now, ...)
     cat(rep("\n", NLines))
   } else {
-
     if (Level > 0) {
       Prefix <- rep("  >>>", each = Level) %>%
         paste0(collapse = "") %>%
@@ -60,7 +69,7 @@ CatTime <- function(
       Text <- paste0(Prefix, Text)
     }
 
-    cat(paste0(Text, " - ", format(Now, DateFormat)), ...)
+    cat(paste0(Text, Now2), ...)
     cat(rep("\n", NLines))
   }
 }

@@ -474,7 +474,7 @@ RespCurv_PrepData <- function(
 
   # # ..................................................................... ###
 
-  IASDT.R::CatTime("Saving data to desk", ... = "\n")
+  IASDT.R::CatTime("Saving data to desk")
   save(ResCurvDT, file = file.path(Path_RC_DT, "ResCurvDT.RData"))
 
   # # ..................................................................... ###

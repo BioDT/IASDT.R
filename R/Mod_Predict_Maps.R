@@ -461,21 +461,6 @@ Predict_Maps <- function(
       hM = Model, XDataNew = as.data.frame(Test_X),
       sDataNew = list(sample = as.data.frame(Test_XY)))
 
-
-
-    # object <- qs2::qs_read("datasets/processed/model_fitting/Test_SW_12a/Model_Fitted/GPP40_Tree_samp1000_th20_Model.qs2")
-    # DT <- LoadAs("U:/Workflow/datasets/processed/model_fitting/Test_SW_12a/ModDT_12a_Ruderal_habitats.RData") %>%
-    #   tibble::tibble() %>%
-    #   dplyr::filter(Country == "Germany")
-    # XDataNew <- dplyr::select(DT, names(object$XData)) %>%
-    #   as.data.frame()
-    # sDataNew <- dplyr::select(DT, x, y) %>%
-    #   as.data.frame() %>%
-    #   as.matrix()
-    # Gradient = prepareGradient(
-    #   hM = object, XDataNew = XDataNew, sDataNew = list(sample = sDataNew))
-    # rm(DT, XDataNew, object, sDataNew)
-
     rm(Predict_DF_Test, Test_X, Test_XY, Model, envir = environment())
     invisible(gc())
 
@@ -490,6 +475,7 @@ Predict_Maps <- function(
       LF_Check = LF_Check, Evaluate = FALSE, Verbose = FALSE)
 
     rm(Gradient, Preds_LF, envir = environment())
+    IASDT.R::CatTime("Predicting latent factor is finished!", Level = 1)
 
   } else {
     if (Pred_NewSites) {
@@ -513,11 +499,11 @@ Predict_Maps <- function(
     # Name of the current option
     Option_Name <- Prediction_Options$Name[[ID]]
     Model_Name <- paste0(Option_Name, "_", Hab_Abb)
-    cat("\n")
-    IASDT.R::CatSep(Char = "-")
-    IASDT.R::CatTime(
-      paste0(Model_Name, " (", ID, "/", nrow(Prediction_Options), ")"))
-    IASDT.R::CatSep(Char = "-")
+
+    MSG <- paste0(Model_Name, " (", ID, "/", nrow(Prediction_Options), ")")
+    IASDT.R::InfoChunk(
+      paste0("\t", MSG), Extra1 = 1, Extra2 = 1, Rep = 1,
+      Char = "-", CharReps = 60)
 
     if (Pred_Clamp) {
 
@@ -850,17 +836,15 @@ Predict_Maps <- function(
       return()
   }
 
-  rm(Model_Coords)
   invisible(gc())
 
   # # ..................................................................... ###
   # # ..................................................................... ###
 
   # Predicting ------
-
-  IASDT.R::CatSep(Char = "=", Extra1 = 1)
-  IASDT.R::CatTime("   Making predictions")
-  IASDT.R::CatSep(Char = "=")
+  IASDT.R::InfoChunk(
+    paste0("\t", "Making predictions"), Extra1 = 2, Extra2 = 2, Rep = 2,
+    Char = "*", CharReps = 60)
 
   Grid10 <- terra::unwrap(IASDT.R::LoadAs(Path_GridR))
 
@@ -869,7 +853,7 @@ Predict_Maps <- function(
     dplyr::full_join(Prediction_Options, ., by = "Name") %>%
     dplyr::select(-"FilePath")
 
-  rm(Predict_Internal, Grid10, envir = environment())
+  rm(Predict_Internal, Grid10, Model_Coords, envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###

@@ -18,7 +18,7 @@ Predict_Hmsc(
   NCores = 8,
   Model_Name = "Train",
   Temp_Dir = "TEMP2Pred",
-  Temp_Cleanup = FALSE,
+  Temp_Cleanup = TRUE,
   RC = NULL,
   UseTF = TRUE,
   TF_Environ = NULL,
@@ -29,6 +29,7 @@ Predict_Hmsc(
   LF_Only = FALSE,
   LF_NCores = NCores,
   LF_Check = FALSE,
+  LF_Temp_Cleanup = TRUE,
   Pred_Dir = NULL,
   Pred_PA = NULL,
   Pred_XY = NULL,
@@ -76,10 +77,8 @@ Defaults to NULL, in which case no prefix is used.}
 \item{Temp_Dir}{Character string specifying the path for temporary storage of
 intermediate files.}
 
-\item{Temp_Cleanup}{Logical indicating whether to delete temporary files in
-the \code{Temp_Dir} after finishing the calculations. Defaults to \code{FALSE}; i.e.,
-the temporary files will be kept, enabling continue working on unfinished
-calculations, if the function failed, e.g. due to OOM.}
+\item{Temp_Cleanup}{logical, indicating whether to clean up temporary files.
+Defaults to \code{TRUE}.}
 
 \item{RC}{a character string specifying the type of predictions to be made.
 If \code{NULL} (default), predictions are made for the latent factors. If \code{c},
@@ -101,8 +100,8 @@ If \code{NULL} (default), the predicted latent factors are not saved to a file.
 This should end with either \verb{*.qs2} or \verb{*.RData}.}
 
 \item{LF_Return}{Logical. Indicates if the output should be returned.
-Defaults to \code{FALSE}. If \code{LF_OutFile} is \code{NULL}, this parameter cannot be set
-to \code{FALSE} because the function needs to return the result if it is not
+Defaults to \code{FALSE}. If \code{LF_OutFile} is \code{NULL}, this parameter cannot be
+set to \code{FALSE} because the function needs to return the result if it is not
 saved to a file.}
 
 \item{LF_InputFile}{a character string specifying the file name where the
@@ -119,9 +118,12 @@ can be loaded in other predictions when needed.}
 \item{LF_NCores}{Integer specifying the number of cores to use for parallel
 processing. Defaults to 8.}
 
-\item{LF_Check}{Logical. If TRUE, the function checks if the output
-files are already created and valid. If FALSE, the function will only check
-if the files exist without checking their integrity. Default is \code{FALSE}.}
+\item{LF_Check}{Logical. If TRUE, the function checks if the output files are
+already created and valid. If FALSE, the function will only check if the
+files exist without checking their integrity. Default is \code{FALSE}.}
+
+\item{LF_Temp_Cleanup}{Logical indicating whether to delete temporary files
+in the \code{Temp_Dir} after finishing the LF predictions.}
 
 \item{Pred_Dir}{a character string specifying the directory where the
 predictions will be saved. Defaults to \code{NULL}, which saves model

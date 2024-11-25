@@ -5,8 +5,8 @@
 #' Predict_LF
 #'
 #' Draws samples from the conditional predictive distribution of latent factors.
-#' This function is optimized for speed using parallel processing and
-#' optionally TensorFlow for matrix operations. This function is adapted from
+#' This function is optimized for speed using parallel processing and optionally
+#' TensorFlow for matrix operations. This function is adapted from
 #' [Hmsc::predictLatentFactor] with equivalent results to the original function
 #' when `predictMean = TRUE`.
 #'
@@ -24,10 +24,8 @@
 #'   processing. Defaults to 8.
 #' @param Temp_Dir Character string specifying the path for temporary storage of
 #'   intermediate files.
-#' @param Temp_Cleanup Logical indicating whether to delete temporary files in
-#'   the `Temp_Dir` after finishing the calculations. Defaults to `FALSE`; i.e.,
-#'   the temporary files will be kept, enabling continue working on unfinished
-#'   calculations, if the function failed, e.g. due to OOM.
+#' @param LF_Temp_Cleanup Logical indicating whether to delete temporary files
+#'   in the `Temp_Dir` after finishing the LF predictions.
 #' @param Model_Name Character string used as a prefix for temporary file names.
 #'   Defaults to NULL, in which case no prefix is used.
 #' @param UseTF Logical indicating whether to use TensorFlow for calculations.
@@ -41,12 +39,12 @@
 #'   If `NULL` (default), the predicted latent factors are not saved to a file.
 #'   This should end with either `*.qs2` or `*.RData`.
 #' @param LF_Return Logical. Indicates if the output should be returned.
-#'   Defaults to `FALSE`. If `LF_OutFile` is `NULL`, this parameter cannot be set
-#'   to `FALSE` because the function needs to return the result if it is not
+#'   Defaults to `FALSE`. If `LF_OutFile` is `NULL`, this parameter cannot be
+#'   set to `FALSE` because the function needs to return the result if it is not
 #'   saved to a file.
-#' @param LF_Check Logical. If TRUE, the function checks if the output
-#'   files are already created and valid. If FALSE, the function will only check
-#'   if the files exist without checking their integrity. Default is `FALSE`.
+#' @param LF_Check Logical. If TRUE, the function checks if the output files are
+#'   already created and valid. If FALSE, the function will only check if the
+#'   files exist without checking their integrity. Default is `FALSE`.
 #' @param Verbose Logical. If TRUE, detailed output is printed. Default is
 #'   `FALSE`.
 #' @param solve_max_attempts numeric (Optional). Maximum number of attempts to
@@ -75,7 +73,7 @@
 
 Predict_LF <- function(
     unitsPred, modelunits, postEta, postAlpha, LF_rL, LF_NCores = 8,
-    Temp_Dir = "TEMP2Pred", Temp_Cleanup = FALSE, Model_Name = NULL,
+    Temp_Dir = "TEMP2Pred", LF_Temp_Cleanup = TRUE, Model_Name = NULL,
     UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE, LF_OutFile = NULL,
     LF_Return = FALSE, LF_Check = FALSE, solve_max_attempts = 5,
     solve_chunk_size = 50, Verbose = TRUE) {
@@ -275,21 +273,6 @@ Predict_LF <- function(
 
       Path_s1 <- Path_s2 <- NULL
 
-    }
-
-    # Clean up temporary files after finishing calculations
-    if (Temp_Cleanup) {
-      on.exit(
-        try(
-          expr = {
-            list.files(
-              Temp_Dir, pattern = paste0("^", Model_Name, "_postEta"),
-              full.names = TRUE) %>%
-              c(Path_s1, Path_s2) %>%
-              fs::file_delete()
-          },
-          silent = TRUE),
-        add = TRUE)
     }
 
     invisible(gc())
@@ -618,6 +601,26 @@ Predict_LF <- function(
     IASDT.R::CatTime(paste0("`", LF_OutFile, "`"), Time = FALSE, Level = 2)
     fs::dir_create(fs::path_dir(LF_OutFile))
     IASDT.R::SaveAs(InObj = postEtaPred, OutPath = LF_OutFile)
+  }
+
+  # # ..................................................................... ###
+
+  # Clean up temporary files after finishing calculations
+  if (LF_Temp_Cleanup) {
+
+    IASDT.R::CatTime("Cleaning up temporary files", Level = 1)
+
+    try(
+      expr = {
+        Pattern <- paste0(
+          "^", Model_Name,
+          "(postEta|r[0-9]|etaPred|s1|s2|post).+(feather|qs2|log)")
+        file_paths <- list.files(
+          path = normalizePath(Temp_Dir, winslash = "/"),
+          pattern = Pattern, full.names = TRUE)
+        fs::file_delete(file_paths)
+      },
+      silent = TRUE)
   }
 
   # # ..................................................................... ###

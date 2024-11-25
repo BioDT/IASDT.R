@@ -13,7 +13,7 @@ VarPar_Compute(
   NCores = 6,
   UseTF = TRUE,
   TF_Environ = NULL,
-  TF_use_single = TRUE,
+  TF_use_single = FALSE,
   Verbose = TRUE,
   OutFileName = "VarPar"
 )

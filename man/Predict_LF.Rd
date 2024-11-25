@@ -12,7 +12,7 @@ Predict_LF(
   LF_rL,
   LF_NCores = 8,
   Temp_Dir = "TEMP2Pred",
-  Temp_Cleanup = FALSE,
+  LF_Temp_Cleanup = TRUE,
   Model_Name = NULL,
   UseTF = TRUE,
   TF_Environ = NULL,
@@ -47,10 +47,8 @@ processing. Defaults to 8.}
 \item{Temp_Dir}{Character string specifying the path for temporary storage of
 intermediate files.}
 
-\item{Temp_Cleanup}{Logical indicating whether to delete temporary files in
-the \code{Temp_Dir} after finishing the calculations. Defaults to \code{FALSE}; i.e.,
-the temporary files will be kept, enabling continue working on unfinished
-calculations, if the function failed, e.g. due to OOM.}
+\item{LF_Temp_Cleanup}{Logical indicating whether to delete temporary files
+in the \code{Temp_Dir} after finishing the LF predictions.}
 
 \item{Model_Name}{Character string used as a prefix for temporary file names.
 Defaults to NULL, in which case no prefix is used.}
@@ -70,13 +68,13 @@ If \code{NULL} (default), the predicted latent factors are not saved to a file.
 This should end with either \verb{*.qs2} or \verb{*.RData}.}
 
 \item{LF_Return}{Logical. Indicates if the output should be returned.
-Defaults to \code{FALSE}. If \code{LF_OutFile} is \code{NULL}, this parameter cannot be set
-to \code{FALSE} because the function needs to return the result if it is not
+Defaults to \code{FALSE}. If \code{LF_OutFile} is \code{NULL}, this parameter cannot be
+set to \code{FALSE} because the function needs to return the result if it is not
 saved to a file.}
 
-\item{LF_Check}{Logical. If TRUE, the function checks if the output
-files are already created and valid. If FALSE, the function will only check
-if the files exist without checking their integrity. Default is \code{FALSE}.}
+\item{LF_Check}{Logical. If TRUE, the function checks if the output files are
+already created and valid. If FALSE, the function will only check if the
+files exist without checking their integrity. Default is \code{FALSE}.}
 
 \item{solve_max_attempts}{numeric (Optional). Maximum number of attempts to
 run solve and crossprod functions. Default is 5.}
@@ -89,8 +87,8 @@ function. Default is 50.}
 }
 \description{
 Draws samples from the conditional predictive distribution of latent factors.
-This function is optimized for speed using parallel processing and
-optionally TensorFlow for matrix operations. This function is adapted from
+This function is optimized for speed using parallel processing and optionally
+TensorFlow for matrix operations. This function is adapted from
 \link[Hmsc:predictLatentFactor]{Hmsc::predictLatentFactor} with equivalent results to the original function
 when \code{predictMean = TRUE}.
 }

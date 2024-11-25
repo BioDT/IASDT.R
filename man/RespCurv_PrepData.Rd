@@ -15,8 +15,9 @@ RespCurv_PrepData(
   TF_use_single = FALSE,
   LF_NCores = NCores,
   LF_Check = FALSE,
+  LF_Temp_Cleanup = TRUE,
   Temp_Dir = "TEMP2Pred",
-  Temp_Cleanup = FALSE,
+  Temp_Cleanup = TRUE,
   Verbose = TRUE
 )
 }
@@ -48,17 +49,18 @@ the TF calculations. Defaults to \code{FALSE}.}
 \item{LF_NCores}{Integer specifying the number of cores to use for parallel
 processing. Defaults to 8.}
 
-\item{LF_Check}{Logical. If TRUE, the function checks if the output
-files are already created and valid. If FALSE, the function will only check
-if the files exist without checking their integrity. Default is \code{FALSE}.}
+\item{LF_Check}{Logical. If TRUE, the function checks if the output files are
+already created and valid. If FALSE, the function will only check if the
+files exist without checking their integrity. Default is \code{FALSE}.}
+
+\item{LF_Temp_Cleanup}{Logical indicating whether to delete temporary files
+in the \code{Temp_Dir} after finishing the LF predictions.}
 
 \item{Temp_Dir}{Character string specifying the path for temporary storage of
 intermediate files.}
 
-\item{Temp_Cleanup}{Logical indicating whether to delete temporary files in
-the \code{Temp_Dir} after finishing the calculations. Defaults to \code{FALSE}; i.e.,
-the temporary files will be kept, enabling continue working on unfinished
-calculations, if the function failed, e.g. due to OOM.}
+\item{Temp_Cleanup}{logical, indicating whether to clean up temporary files.
+Defaults to \code{TRUE}.}
 
 \item{Verbose}{Logical. If TRUE, detailed output is printed. Default is
 \code{FALSE}.}

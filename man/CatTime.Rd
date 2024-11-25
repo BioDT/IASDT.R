@@ -4,7 +4,15 @@
 \alias{CatTime}
 \title{Print text with time stamp}
 \usage{
-CatTime(Text = "", NLines = 1, Date = FALSE, TZ = "CET", Level = 0, ...)
+CatTime(
+  Text = "",
+  NLines = 1,
+  Time = TRUE,
+  Date = FALSE,
+  TZ = "CET",
+  Level = 0,
+  ...
+)
 }
 \arguments{
 \item{Text}{character; the text to print before the timestamp. If empty
@@ -13,8 +21,12 @@ CatTime(Text = "", NLines = 1, Date = FALSE, TZ = "CET", Level = 0, ...)
 \item{NLines}{integer; the number of newline characters to print after the
 message. Default is 1.}
 
-\item{Date}{logical; whether to include the date in the timestamp. Default is
-\code{FALSE}, meaning only the time is printed.}
+\item{Time}{logical; whether to include the time in the timestamp. Default is
+\code{TRUE}. If \code{FALSE}, only the text is printed.}
+
+\item{Date}{logical; whether to include the date in the timestamp. Only
+effective if \code{Time} is \code{TRUE}. Default is \code{FALSE}, meaning only the time is
+printed. If \code{TRUE}, the date is printed in the format "\%d/\%m/\%Y \%X".}
 
 \item{TZ}{character; the time zone to use for the timestamp. Default is
 \code{CET}.}

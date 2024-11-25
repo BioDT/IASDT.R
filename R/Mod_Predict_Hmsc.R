@@ -31,6 +31,8 @@
 #'   parameter of the observation models or sample the values from those.
 #' @param NCores Integer specifying the number of cores to use for parallel
 #'   processing. Defaults to 8.
+#' @param Temp_Cleanup logical, indicating whether to clean up temporary files. 
+#'   Defaults to `TRUE`.
 #' @param Pred_Dir a character string specifying the directory where the
 #'   predictions will be saved. Defaults to `NULL`, which saves model
 #'   predictions to "Model_Prediction" folder of the current working directory.
@@ -68,12 +70,12 @@ Predict_Hmsc <- function(
     Path_Model,
     Loff = NULL, XData = NULL, X = NULL, XRRRData = NULL, XRRR = NULL,
     Gradient = NULL, Yc = NULL, mcmcStep = 1, expected = TRUE, NCores = 8,
-    Model_Name = "Train", Temp_Dir = "TEMP2Pred", Temp_Cleanup = FALSE,
+    Model_Name = "Train", Temp_Dir = "TEMP2Pred", Temp_Cleanup = TRUE,
     RC = NULL, UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE,
     LF_OutFile = NULL, LF_Return = FALSE, LF_InputFile = NULL, LF_Only = FALSE,
-    LF_NCores = NCores, LF_Check = FALSE, Pred_Dir = NULL,
-    Pred_PA = NULL, Pred_XY = NULL, Evaluate = FALSE, Eval_Name = NULL,
-    Eval_Dir = "Evaluation", Verbose = TRUE) {
+    LF_NCores = NCores, LF_Check = FALSE, LF_Temp_Cleanup = TRUE,
+    Pred_Dir = NULL, Pred_PA = NULL, Pred_XY = NULL, Evaluate = FALSE, 
+    Eval_Name = NULL, Eval_Dir = "Evaluation", Verbose = TRUE) {
 
   # # ..................................................................... ###
 
@@ -140,21 +142,6 @@ Predict_Hmsc <- function(
   post <- Hmsc::poolMcmcChains(Model$postList)
   studyDesign <- Model$studyDesign
   ranLevels <- Model$ranLevels
-
-  # # ..................................................................... ###
-
-  # Clean up
-  if (Temp_Cleanup) {
-    on.exit({
-        try(
-          fs::file_delete(
-            list.files(
-              Temp_Dir,
-              pattern = paste0("^", Model_Name, "_.+"), full.names = TRUE)),
-          silent = TRUE
-        )},
-      add = TRUE)
-  }
 
   # # ..................................................................... ###
 
@@ -388,15 +375,11 @@ Predict_Hmsc <- function(
         unitsPred = levels(dfPiNew[, r]),
         modelunits = levels(Mod_dfPi[, r]),
         postEta = postEta_file, postAlpha = postAlpha, LF_rL = rL[[r]],
-        LF_NCores = LF_NCores, Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup,
-        Model_Name = Model_Name,
-        UseTF = UseTF, TF_Environ = TF_Environ, TF_use_single = TF_use_single,
-        LF_OutFile = LF_OutFile, LF_Return = LF_Return, LF_Check = LF_Check)
-
-      if (Temp_Cleanup) {
-        try(fs::file_delete(postEta_file), silent = TRUE)
-      }
-
+        LF_NCores = LF_NCores, LF_Temp_Cleanup = LF_Temp_Cleanup,
+        LF_OutFile = LF_OutFile, LF_Return = LF_Return, LF_Check = LF_Check,
+        Temp_Dir = Temp_Dir, Model_Name = Model_Name,
+        UseTF = UseTF, TF_Environ = TF_Environ, TF_use_single = TF_use_single)
+      
       rm(postEta_file, envir = environment())
 
       rowNames <- rownames(predPostEta[[r]][[1]])
@@ -496,7 +479,7 @@ Predict_Hmsc <- function(
     list = c(
       "Model", "X", "XRRR", "Yc", "Loff", "rL", "rLPar", "PiNew",
       "dfPiNew", "nyNew", "expected", "mcmcStep", "seeds", "chunk_size",
-      "Chunks", "Temp_Dir", "Model_Name", "Temp_Cleanup", "get1prediction"),
+      "Chunks", "Temp_Dir", "Model_Name", "get1prediction"),
     envir = environment())
 
   invisible(snow::clusterEvalQ(
@@ -568,12 +551,8 @@ Predict_Hmsc <- function(
           tibble::tibble(
             Chunk = Chunk, Sp = 0, IAS_ID = "SR",
             ChunkSp_File = ChunkSR_File),
-            .)
-
-      if (Temp_Cleanup) {
-        try(fs::file_delete(ChunkFile), silent = TRUE)
-      }
-
+          .)
+      
       rm(PredChunk, envir = environment())
 
       invisible(gc())
@@ -595,8 +574,7 @@ Predict_Hmsc <- function(
   snow::clusterExport(
     cl = c1,
     list = c(
-      "Eval_DT", "Evaluate", "Pred_Dir", "Model_Name",
-      "Pred_PA", "Pred_XY", "Temp_Cleanup"),
+      "Eval_DT", "Evaluate", "Pred_Dir", "Model_Name", "Pred_PA", "Pred_XY"),
     envir = environment())
 
   Eval_DT <- snow::parLapply(
@@ -650,10 +628,6 @@ Predict_Hmsc <- function(
         Pred_Dir, paste0("Pred_", Model_Name, "_", Sp2, ".qs2"))
 
       IASDT.R::SaveAs(InObj = PredSummary, OutPath = PredSummaryFile)
-
-      if (Temp_Cleanup) {
-        try(fs::file_delete(data), silent = TRUE)
-      }
 
       if (Evaluate && Sp2 != "SR") {
         if (is.null(Pred_PA)) {
@@ -719,9 +693,7 @@ Predict_Hmsc <- function(
     dplyr::mutate(Model_Name = Model_Name, .before = "SR_mean")
 
   Pred_File <- file.path(Pred_Dir, paste0("Prediction_", Model_Name, ".qs2"))
-
   IASDT.R::SaveAs(InObj = Predictions, OutPath = Pred_File)
-
   if (Temp_Cleanup) {
     try(fs::file_delete(Eval_DT$Path_pred), silent = TRUE)
   }
@@ -748,15 +720,6 @@ Predict_Hmsc <- function(
     Eval_Path <- NULL
   }
 
-  if (exists("post_file") && Temp_Cleanup) {
-    try(fs::file_delete(post_file), silent = TRUE)
-  }
-
-  # # ..................................................................... ###
-
-  IASDT.R::CatDiff(
-    InitTime = .StartTime, Prefix = "Prediction was finished in ")
-
   # # ..................................................................... ###
 
   if (is.null(LF_OutFile)) {
@@ -765,12 +728,35 @@ Predict_Hmsc <- function(
     LF_Path <- LF_OutFile
   }
 
+  # # ..................................................................... ###
+
+  # Clean up
+  if (Temp_Cleanup) {
+
+    IASDT.R::CatTime("Cleaning up temporary files", Level = 1)
+
+    try(
+      {
+        Pattern <- paste0("(Pred_){0,}", Model_Name, ".+qs2")
+        file_paths <- list.files(
+          path = normalizePath(Temp_Dir, winslash = "/"),
+          pattern = Pattern, full.names = TRUE)
+          fs::file_delete(file_paths)
+      },
+      silent = TRUE
+    )
+  }
+
+  # # ..................................................................... ###
+
+  IASDT.R::CatDiff(
+    InitTime = .StartTime, Prefix = "Prediction was finished in ")
+
   tibble::tibble(
     Pred_Path = Pred_File,  Eval_Path = Eval_Path,
     LF_Path = LF_Path) %>%
     return()
 }
-
 
 ## ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 ## ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -837,7 +823,7 @@ get1prediction <- function(
       for (k in 1:rL[[r]]$xDim) {
         LRan[[r]] <- LRan[[r]] +
           (Eta[[r]][as.character(dfPiNew[, r]), ] *
-            rL[[r]]$x[as.character(dfPiNew[, r]), k]) %*%
+             rL[[r]]$x[as.character(dfPiNew[, r]), k]) %*%
           sam$Lambda[[r]][, , k]
       }
     }
@@ -877,7 +863,7 @@ get1prediction <- function(
         for (k in 1:rL[[r]]$xDim) {
           LRan[[r]] <- LRan[[r]] +
             (Eta[[r]][as.character(dfPiNew[, r]), ] *
-              rL[[r]]$x[as.character(dfPiNew[, r]), k]) %*%
+               rL[[r]]$x[as.character(dfPiNew[, r]), k]) %*%
             sam$Lambda[[r]][, , k]
         }
       }

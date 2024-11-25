@@ -32,7 +32,7 @@ Mod_Postprocess <- function(
     FromJSON = FALSE, GPP_Dist = NULL, Tree = "Tree", Samples = 1000,
     Thin = NULL, N_Grid = 50, NOmega = 1000, UseTF = TRUE, TF_Environ = NULL,
     TF_use_single = FALSE, LF_NCores = NCores, LF_Check = TRUE,
-    Temp_Cleanup = FALSE,
+    LF_Temp_Cleanup = TRUE, Temp_Cleanup = TRUE,
     CC_Models = c(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
       "MRI-ESM2-0", "UKESM1-0-LL"),
@@ -279,8 +279,9 @@ Mod_Postprocess <- function(
   IASDT.R::RespCurv_PrepData(
     Path_Model = Path_Model, N_Grid = N_Grid, NCores = NCores, UseTF = UseTF,
     TF_Environ = TF_Environ, TF_use_single = TF_use_single,
-    LF_NCores = LF_NCores, LF_Check = LF_Check, Temp_Dir = Temp_Dir,
-    Temp_Cleanup = Temp_Cleanup, Verbose = TRUE)
+    LF_NCores = LF_NCores, LF_Temp_Cleanup = LF_Temp_Cleanup,
+    LF_Check = LF_Check, Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup, 
+    Verbose = TRUE)
 
   invisible(gc())
 
@@ -361,8 +362,9 @@ Mod_Postprocess <- function(
     FromHPC = FromHPC, NCores = NCores, Pred_Clamp = Pred_Clamp,
     Fix_Efforts = Fix_Efforts, Pred_NewSites = Pred_NewSites, UseTF = UseTF,
     TF_Environ = TF_Environ, CC_Models = CC_Models, CC_Scenario = CC_Scenario,
-    Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup,
-    TF_use_single = TF_use_single, LF_NCores = LF_NCores, LF_Check = LF_Check)
+    Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup, 
+    TF_use_single = TF_use_single, LF_NCores = LF_NCores, LF_Check = LF_Check,
+    LF_Temp_Cleanup = LF_Temp_Cleanup)
 
   invisible(gc())
 

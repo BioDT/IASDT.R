@@ -28,7 +28,8 @@ RespCurv_PrepData <- function(
     Path_Model = NULL, N_Grid = 50, NCores = 8, ReturnData = FALSE,
     Probabilities = c(0.025, 0.5, 0.975), UseTF = TRUE, TF_Environ = NULL,
     TF_use_single = FALSE, LF_NCores = NCores, LF_Check = FALSE,
-    Temp_Dir = "TEMP2Pred", Temp_Cleanup = FALSE, Verbose = TRUE) {
+    LF_Temp_Cleanup = TRUE, Temp_Dir = "TEMP2Pred", Temp_Cleanup = TRUE,
+    Verbose = TRUE) {
 
   # # ..................................................................... ###
 
@@ -160,8 +161,9 @@ RespCurv_PrepData <- function(
           Path_Model = Path_Model, Gradient = Gradient, expected = TRUE,
           NCores = 1, Model_Name = paste0("RC_", Coords), RC = Coords,
           UseTF = UseTF, TF_Environ = TF_Environ, LF_InputFile = File_LF,
-          LF_NCores = 1, LF_Check = LF_Check, TF_use_single = TF_use_single,
-          Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup, Verbose = FALSE)
+          LF_NCores = 1, LF_Check = LF_Check, LF_Temp_Cleanup = LF_Temp_Cleanup,
+          TF_use_single = TF_use_single, Temp_Dir = Temp_Dir, 
+          Temp_Cleanup = Temp_Cleanup, Verbose = FALSE)
 
         # Species richness
         Pred_SR <- abind::abind(lapply(Preds, rowSums), along = 2)
@@ -411,8 +413,8 @@ RespCurv_PrepData <- function(
         NCores = NCores, Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup,
         Model_Name = "RC_c", RC = "c", UseTF = UseTF, TF_Environ = TF_Environ,
         LF_OutFile = File_LF, LF_NCores = LF_NCores, LF_Check = LF_Check,
-        LF_Return = FALSE, LF_Only = TRUE, TF_use_single = TF_use_single,
-        Verbose = Verbose, Pred_Dir = Temp_Dir)
+        LF_Return = FALSE, LF_Only = TRUE, LF_Temp_Cleanup = LF_Temp_Cleanup,
+        TF_use_single = TF_use_single, Verbose = Verbose, Pred_Dir = Temp_Dir)
 
       rm(Model_LF, Gradient_c, envir = environment())
       invisible(gc())

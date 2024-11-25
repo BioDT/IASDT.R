@@ -53,7 +53,8 @@ Predict_Maps <- function(
     Path_Model = NULL, Hab_Abb = NULL, EnvFile = ".env", FromHPC = TRUE,
     NCores = 8, Pred_Clamp = TRUE, Fix_Efforts = "mean", Pred_NewSites = TRUE,
     UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE, LF_NCores = NCores,
-    LF_Check = FALSE, Temp_Dir = "TEMP2Pred", Temp_Cleanup = FALSE,
+    LF_Check = FALSE, LF_Temp_Cleanup = TRUE, Temp_Dir = "TEMP2Pred", 
+    Temp_Cleanup = TRUE,
     CC_Models = c(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
       "MRI-ESM2-0", "UKESM1-0-LL"),
@@ -472,7 +473,8 @@ Predict_Maps <- function(
       Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup, UseTF = UseTF,
       TF_Environ = TF_Environ, LF_OutFile = Path_Test_LF,
       TF_use_single = TF_use_single, LF_Only = TRUE, LF_NCores = LF_NCores,
-      LF_Check = LF_Check, Evaluate = FALSE, Verbose = FALSE)
+      LF_Check = LF_Check, LF_Temp_Cleanup = LF_Temp_Cleanup, Evaluate = FALSE, 
+      Verbose = FALSE)
 
     rm(Gradient, Preds_LF, envir = environment())
     IASDT.R::CatTime("Predicting latent factor is finished!", Level = 1)
@@ -628,9 +630,9 @@ Predict_Maps <- function(
             Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup, UseTF = UseTF,
             TF_Environ = TF_Environ, TF_use_single = TF_use_single,
             LF_Return = TRUE, LF_NCores = LF_NCores, LF_Check = LF_Check,
-            Pred_Dir = Path_Prediction, Pred_PA = Train_PA, Pred_XY = Train_XY,
-            Evaluate = Evaluate, Eval_Name = NULL, Eval_Dir = Path_Eval,
-            Verbose = FALSE)
+            LF_Temp_Cleanup = LF_Temp_Cleanup, Pred_Dir = Path_Prediction, 
+            Pred_PA = Train_PA, Pred_XY = Train_XY, Evaluate = Evaluate, 
+            Eval_Name = NULL, Eval_Dir = Path_Eval, Verbose = FALSE)
         }
 
         # ______________________________________________
@@ -656,7 +658,8 @@ Predict_Maps <- function(
               Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup, UseTF = UseTF,
               TF_Environ = TF_Environ, TF_use_single = TF_use_single,
               LF_Return = TRUE, LF_InputFile = Path_Test_LF,
-              LF_NCores = LF_NCores, LF_Check = LF_Check, Verbose = FALSE,
+              LF_NCores = LF_NCores, LF_Check = LF_Check, 
+              LF_Temp_Cleanup = LF_Temp_Cleanup, Verbose = FALSE,
               Pred_Dir = Path_Prediction, Evaluate = FALSE,
               Pred_XY = sf::st_drop_geometry(Test_XY))
           }
@@ -672,12 +675,6 @@ Predict_Maps <- function(
             IASDT.R::LoadAs(Preds_ModFitSites$Pred_Path),
             IASDT.R::LoadAs(Preds_NewSites$Pred_Path))
 
-          if (Temp_Cleanup) {
-            try(
-              fs::file_delete(
-                c(Preds_ModFitSites$Pred_Path, Preds_NewSites$Pred_Path)),
-              silent = TRUE)
-          }
         } else {
 
           IASDT.R::CatTime(
@@ -696,10 +693,7 @@ Predict_Maps <- function(
           # combine predictions
           Prediction_sf <- IASDT.R::LoadAs(Preds_ModFitSites$Pred_Path) %>%
             dplyr::bind_rows(Preds_New_NA)
-
-          if (Temp_Cleanup) {
-            try(fs::file_delete(Preds_ModFitSites$Pred_Path), silent = TRUE)
-          }
+          
           rm(Preds_New_NA, ColsToAdd, envir = environment())
         }
 
@@ -708,15 +702,8 @@ Predict_Maps <- function(
         # Save predictions as sf object
         IASDT.R::SaveAs(InObj = Prediction_sf, OutPath = Path_Prediction_sf)
 
-        if (Temp_Cleanup) {
-          try(
-            fs::file_delete(
-              c(Preds_ModFitSites$Pred_Path, Preds_NewSites$Pred_Path)),
-            silent = TRUE)
-        }
-
         IASDT.R::CatDiff(
-          InitTime = .OptionStartTime, Prefix = "Prediction took ")
+          InitTime = .OptionStartTime, Prefix = "Prediction took ", Level = 1)
 
       }
 
@@ -1092,7 +1079,7 @@ Predict_Maps <- function(
   # # ................................................................... ###
 
   IASDT.R::CatDiff(
-    InitTime = .StartTime, Prefix = "\nPrediction took ")
+    InitTime = .StartTime, Prefix = "\nThe whole prediction function took ")
 
   return(Prediction_Summary)
 }

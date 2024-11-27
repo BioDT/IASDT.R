@@ -199,7 +199,7 @@ def gemu(file_tr, file_gamma, use_single, file_output, ncores, chunk_size):
     gamma = load_feather_tensor(file_gamma, dtype)
     
     # Split the gamma matrix into chunks
-    tasks = [(tr, chunk, offset, dtype, file_output) for chunk, offset in chunkify(gamma, chunk_size)]
+    tasks = [(tr, chunk, offset, file_output) for chunk, offset in chunkify(gamma, chunk_size)]
     
     # Process each chunk in parallel
     with get_reusable_executor(max_workers=ncores) as executor:

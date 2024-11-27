@@ -116,7 +116,6 @@ def load_feather_tensor(file_path, dtype):
 # ======================================================================
 # ======================================================================
 
-
 def process_column(tr, x, gamma_chunk, col_offset, file_output):
     
     """
@@ -202,7 +201,7 @@ def geta(file_tr, file_x, file_gamma, use_single, file_output, ncores, chunk_siz
     x = load_feather_tensor(file_x, dtype)
     gamma = load_feather_tensor(file_gamma, dtype)
     
-    tasks = [(tr, x, chunk, offset, dtype, file_output) for chunk, offset in chunkify(gamma, chunk_size)]
+    tasks = [(tr, x, chunk, offset, file_output) for chunk, offset in chunkify(gamma, chunk_size)]
     
     with get_reusable_executor(max_workers=ncores) as executor:
         futures = [executor.submit(process_column, *args) for args in tasks]

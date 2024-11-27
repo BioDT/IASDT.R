@@ -14,6 +14,7 @@ VarPar_Compute(
   UseTF = TRUE,
   TF_Environ = NULL,
   TF_use_single = FALSE,
+  Chunk_size = 50,
   Verbose = TRUE,
   OutFileName = "VarPar"
 )
@@ -47,6 +48,9 @@ TRUE.}
 
 \item{TF_use_single}{Logical indicating whether to use single precision for
 the TF calculations. Defaults to \code{FALSE}.}
+
+\item{Chunk_size}{Integer. Number of samples to process in each chunk. This
+is only used when \code{UseTF} is TRUE.}
 
 \item{Verbose}{Logical. Indicates whether progress messages should be
 displayed. Defaults to \code{TRUE}.}

@@ -651,7 +651,6 @@ Predict_LF <- function(
 #'
 #' @param virtual_env_path character. Path to the virtual environment containing
 #'   Python and required dependencies.
-#' @param script_path character. Path to the Python script to execute.
 #' @param s1 character. Path to the input file containing s1 coordinates.
 #' @param s2 character Path to the input file containing s2 coordinates.
 #' @param postEta character. Path to the file containing the `postEta` matrix
@@ -684,7 +683,7 @@ Predict_LF <- function(
 #' @keywords internal
 
 run_crossprod_solve <- function(
-    virtual_env_path, script_path = NULL, s1, s2, postEta, path_out, denom,
+    virtual_env_path, s1, s2, postEta, path_out, denom,
     chunk_size = 1000, threshold_mb = 2000, use_single = TRUE, verbose = TRUE,
     solve_chunk_size = 50, solve_max_attempts = 5) {
 
@@ -693,8 +692,11 @@ run_crossprod_solve <- function(
   # do not use scientific notation
   withr::local_options(scipen = 99)
 
-  if (is.null(script_path)) {
-    script_path <- system.file("crossprod_solve.py", package = "IASDT.R")
+  script_path <- system.file("crossprod_solve.py", package = "IASDT.R")
+  if (!file.exists(script_path)) {
+    stop(
+      "Necessary python script `crossprod_solve.py` does not exist",
+      call. = FALSE)
   }
 
   # Ensure the paths are valid
@@ -728,7 +730,7 @@ run_crossprod_solve <- function(
     script_path,
     "--s1", normalizePath(s1, winslash = "/"),
     "--s2", normalizePath(s2, winslash = "/"),
-    "--postEta", normalizePath(postEta, winslash = "/"),
+    "--post_eta", normalizePath(postEta, winslash = "/"),
     "--path_out", normalizePath(path_out, winslash = "/", mustWork = FALSE),
     "--denom", as.character(denom),
     "--chunk_size", as.character(chunk_size),

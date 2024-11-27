@@ -280,7 +280,7 @@ Mod_Postprocess <- function(
     Path_Model = Path_Model, N_Grid = N_Grid, NCores = NCores, UseTF = UseTF,
     TF_Environ = TF_Environ, TF_use_single = TF_use_single,
     LF_NCores = LF_NCores, LF_Temp_Cleanup = LF_Temp_Cleanup,
-    LF_Check = LF_Check, Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup, 
+    LF_Check = LF_Check, Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup,
     Verbose = TRUE)
 
   invisible(gc())
@@ -362,9 +362,11 @@ Mod_Postprocess <- function(
     FromHPC = FromHPC, NCores = NCores, Pred_Clamp = Pred_Clamp,
     Fix_Efforts = Fix_Efforts, Pred_NewSites = Pred_NewSites, UseTF = UseTF,
     TF_Environ = TF_Environ, CC_Models = CC_Models, CC_Scenario = CC_Scenario,
-    Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup, 
+    Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup,
     TF_use_single = TF_use_single, LF_NCores = LF_NCores, LF_Check = LF_Check,
     LF_Temp_Cleanup = LF_Temp_Cleanup)
+
+  rm(Model_Predictions)
 
   invisible(gc())
 

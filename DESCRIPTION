@@ -3,7 +3,7 @@ Package: IASDT.R
 Title: Helper R functions for the Invasive Alien Species (IAS) prototype
     Digital Twin (IAS-pDT)
 Version: 0.0.11
-Date: 2024-11-25
+Date: 2024-11-27
 Authors@R: 
     person("Ahmed", "El-Gabbas", , "ahmed.el-gabbas@ufz.de", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-2225-088X"))
@@ -88,7 +88,6 @@ Suggests:
     RCurl (>= 1.98.1.16),
     readr (>= 2.1.5),
     readxl (>= 1.4.3),
-    reticulate (>= 1.39),
     Rfast (>= 2.1.0),
     rgbif (>= 3.8.0),
     RNetCDF (>= 2.9.2),

@@ -7,7 +7,6 @@ Run Crossprod Solve}
 \usage{
 run_crossprod_solve(
   virtual_env_path,
-  script_path = NULL,
   s1,
   s2,
   postEta,
@@ -24,8 +23,6 @@ run_crossprod_solve(
 \arguments{
 \item{virtual_env_path}{character. Path to the virtual environment containing
 Python and required dependencies.}
-
-\item{script_path}{character. Path to the Python script to execute.}
 
 \item{s1}{character. Path to the input file containing s1 coordinates.}
 

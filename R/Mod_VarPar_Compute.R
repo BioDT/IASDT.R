@@ -204,21 +204,27 @@ VarPar_Compute <- function(
     # X
     IASDT.R::CatTime("X", Level = 2)
     Path_X <- file.path(Path_Temp, "VP_X.feather")
-    arrow::write_feather(as.data.frame(hM$X), Path_X)
+    if (isFALSE(IASDT.R::CheckData(Path_X, warning = FALSE))) {
+      arrow::write_feather(as.data.frame(hM$X), Path_X)
+    }
 
     # Tr
     IASDT.R::CatTime("Tr", Level = 2)
     Path_Tr <- file.path(Path_Temp, "VP_Tr.feather")
-    arrow::write_feather(as.data.frame(hM$Tr), Path_Tr)
+    if (isFALSE(IASDT.R::CheckData(Path_Tr, warning = FALSE))) {
+      arrow::write_feather(as.data.frame(hM$Tr), Path_Tr)
+    }
 
     # Gamma - convert each list item into a column in a data frame
     IASDT.R::CatTime("Gamma", Level = 2)
     Path_Gamma <- file.path(Path_Temp, "VP_Gamma.feather")
-    Gamma_data <- postList %>%
-      purrr::map(~as.vector(.x[["Gamma"]])) %>%
-      as.data.frame() %>%
-      stats::setNames(paste0("Sample_", seq_len(ncol(.))))
-    arrow::write_feather(Gamma_data, Path_Gamma)
+    if (isFALSE(IASDT.R::CheckData(Path_Gamma, warning = FALSE))) {
+      Gamma_data <- postList %>%
+        purrr::map(~as.vector(.x[["Gamma"]])) %>%
+        as.data.frame() %>%
+        stats::setNames(paste0("Sample_", seq_len(ncol(.))))
+      arrow::write_feather(Gamma_data, Path_Gamma)
+    }
 
     # Beta -- Each element of Beta is a matrix, so each list item is saved to
     # separate feather file
@@ -226,14 +232,16 @@ VarPar_Compute <- function(
     purrr::walk(
       .x = seq_along(postList),
       .f = ~ {
-        Beta <- postList[[.x]][["Beta"]] %>%
-          stats::setNames(paste0("Sample_", .x)) %>%
-          as.data.frame()
 
-        arrow::write_feather(
-          x = Beta,
-          sink = file.path(
-            Path_Temp, paste0("VP_Beta_", sprintf("%04d", .x), ".feather")))
+        Beta_File <- file.path(
+          Path_Temp, paste0("VP_Beta_", sprintf("%04d", .x), ".feather"))
+
+        if (isFALSE(IASDT.R::CheckData(Beta_File, warning = FALSE))) {
+          Beta <- postList[[.x]][["Beta"]] %>%
+            stats::setNames(paste0("Sample_", .x)) %>%
+            as.data.frame()
+          arrow::write_feather(x = Beta, sink = Beta_File)
+        }
         return(NULL)
       }
     )

@@ -195,7 +195,7 @@ VarPar_Compute <- function(
     IASDT.R::CatTime("Prepare la/lf/lmu lists using TensorFlow")
 
     # Create the temporary directory
-    Path_Temp <- file.path(dirname(Path_Model), "TEMP_VP")
+    Path_Temp <- file.path(dirname(dirname(Path_Model)), "TEMP_VP")
     fs::dir_create(Path_Temp)
 
     # Prepare data
@@ -217,20 +217,26 @@ VarPar_Compute <- function(
     Gamma_data <- postList %>%
       purrr::map(~as.vector(.x[["Gamma"]])) %>%
       as.data.frame() %>%
-      stats::setNames(paste0("Sample", seq_len(ncol(.))))
+      stats::setNames(paste0("Sample_", seq_len(ncol(.))))
     arrow::write_feather(Gamma_data, Path_Gamma)
 
     # Beta -- Each element of Beta is a matrix, so each list item is saved to
     # separate feather file
     IASDT.R::CatTime("Beta", Level = 2)
-    Beta_data <- postList %>%
-      purrr::map(~.x[["Beta"]]) %>%
-      stats::setNames(paste0("Sample", seq_len(length(.))))
-    for (i in seq_along(Beta_data)) {
-      feather_file <- file.path(
-        Path_Temp, paste0("VP_Beta_", sprintf("%04d", i), ".feather"))
-      arrow::write_feather(as.data.frame(Beta_data[[i]]), feather_file)
-    }
+    purrr::walk(
+      .x = seq_along(postList),
+      .f = ~ {
+        Beta <- postList[[.x]][["Beta"]] %>%
+          stats::setNames(paste0("Sample_", .x)) %>%
+          as.data.frame()
+
+        arrow::write_feather(
+          x = Beta,
+          sink = file.path(
+            Path_Temp, paste0("VP_Beta_", sprintf("%04d", .x), ".feather")))
+        return(NULL)
+      }
+    )
 
     # |||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

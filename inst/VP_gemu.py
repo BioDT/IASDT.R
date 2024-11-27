@@ -21,7 +21,6 @@
 # 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-
 import multiprocessing
 import argparse
 import logging
@@ -53,7 +52,7 @@ tf.get_logger().setLevel('ERROR')
 
 import numpy as np
 import pandas as pd
-import pyarrow as feather
+import pyarrow.feather as feather
 from loky import get_reusable_executor
 
 # ======================================================================

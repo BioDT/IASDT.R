@@ -116,7 +116,7 @@ def load_feather_tensor(file_path, dtype):
 # ======================================================================
 # ======================================================================
 
-def process_beta_file(x, beta_file, dtype, file_output):
+def process_beta_file(x, beta_file, task_index, dtype, file_output):
     
     """
     Perform matrix multiplication for a Beta chunk and save the results.
@@ -135,8 +135,8 @@ def process_beta_file(x, beta_file, dtype, file_output):
         beta_chunk = load_feather_tensor(beta_file, dtype)
         
         # Dynamically generate file names
-        file_index = os.path.splitext(os.path.basename(beta_file))[0].split('_')[1]
-        feather_file = f"{file_output.replace('.feather', f'_{file_index}.feather')}"
+        file_index = f"{task_index + 1:04d}"
+        feather_file = file_output.replace(".feather", f"_{file_index}.feather")
 
         if os.path.exists(feather_file):
             return
@@ -213,7 +213,6 @@ def validate_and_get_beta_files(beta_dir, prefix="VP_Beta_", extension=".feather
 # ======================================================================
 # ======================================================================
 
-
 def getf(file_x, beta_dir, use_single, file_output, ncores):
     
     """
@@ -234,8 +233,11 @@ def getf(file_x, beta_dir, use_single, file_output, ncores):
     beta_files = validate_and_get_beta_files(beta_dir)
 
     with get_reusable_executor(max_workers=ncores) as executor:
-        futures = [executor.submit(process_beta_file, x, beta_file, dtype, file_output) for beta_file in beta_files]
-        
+        futures = [
+            executor.submit(process_beta_file, X, beta_file, task_index, dtype, file_output)
+            for task_index, beta_file in enumerate(beta_files)
+        ]
+
         for future in futures:
             try:
                 future.result()  # Trigger exception if any occurred

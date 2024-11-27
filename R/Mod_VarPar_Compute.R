@@ -34,6 +34,22 @@
 #' @inheritParams Predict_LF
 #' @export
 
+
+# Path_Model = NULL
+group = NULL
+groupnames = NULL
+start = 1
+na.ignore = FALSE
+NCores = 6
+UseTF = TRUE
+# TF_Environ = NULL
+TF_use_single = FALSE
+Chunk_size = 50
+Verbose = TRUE
+# OutFileName = "VarPar"
+
+
+
 VarPar_Compute <- function(
     Path_Model, group = NULL, groupnames = NULL, start = 1, na.ignore = FALSE,
     NCores = 6, UseTF = TRUE, TF_Environ = NULL,
@@ -218,7 +234,7 @@ VarPar_Compute <- function(
     # Gamma - convert each list item into a column in a data frame
     IASDT.R::CatTime("Gamma", Level = 2)
     Path_Gamma <- file.path(Path_Temp, "VP_Gamma.feather")
-    if (isFALSE(IASDT.R::CheckData(Path_Gamma, warning = FALSE))) {
+    if (!file.exists(Path_Gamma)) {
       Gamma_data <- postList %>%
         purrr::map(~as.vector(.x[["Gamma"]])) %>%
         as.data.frame() %>%
@@ -236,7 +252,7 @@ VarPar_Compute <- function(
         Beta_File <- file.path(
           Path_Temp, paste0("VP_Beta_", sprintf("%04d", .x), ".feather"))
 
-        if (isFALSE(IASDT.R::CheckData(Beta_File, warning = FALSE))) {
+        if (!file.exists(Beta_File )) {
           Beta <- postList[[.x]][["Beta"]] %>%
             stats::setNames(paste0("Sample_", .x)) %>%
             as.data.frame()
@@ -254,10 +270,10 @@ VarPar_Compute <- function(
     Path_Out_a <- file.path(Path_Temp, "VP_A.feather")
     cmd_a <- paste(
       python_executable, Script_geta,
-      "--tr", Path_Tr,
-      "--x", Path_X,
-      "--gamma", Path_Gamma,
-      "--output", Path_Out_a,
+      "--tr", normalizePath(Path_Tr, winslash = "/", mustWork = TRUE),
+      "--x", normalizePath(Path_X, winslash = "/", mustWork = TRUE),
+      "--gamma", normalizePath(Path_Gamma, winslash = "/", mustWork = TRUE),
+      "--output", normalizePath(Path_Out_a, winslash = "/", mustWork = FALSE),
       "--ncores", NCores,
       "--chunk_size", Chunk_size)
 
@@ -269,8 +285,12 @@ VarPar_Compute <- function(
     la <- system(cmd_a, wait = TRUE, intern  = TRUE)
 
     # Check for errors
-    if (!inherits(la, "error") || length(la) != 0 || la[length(la)] == "Done") {
+    if (inherits(la, "error") || la[length(la)] != "Done") {
       stop(paste0("Error in computing geta: ", la), call. = FALSE)
+    }
+
+    if (length(la) != 1) {
+      cat(la, sep = "\n")
     }
 
     # |||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -293,9 +313,14 @@ VarPar_Compute <- function(
 
     # Run the command using system or system2
     lf <- system(cmd_f, wait = TRUE, intern  = TRUE)
+
     # Check for errors
-    if (!inherits(lf, "error") || length(lf) != 0 || lf[length(lf)] == "Done") {
-      stop(paste0("Error in computing getf: ", lf), call. = FALSE)
+    if (inherits(lf, "error") || lf[length(lf)] != "Done") {
+      stop(paste0("Error in computing geta: ", lf), call. = FALSE)
+    }
+
+    if (length(lf) != 1) {
+      cat(lf, sep = "\n")
     }
 
     # |||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -319,9 +344,15 @@ VarPar_Compute <- function(
 
     # Run the command using system or system2
     lmu <- system(cmd_mu, wait = TRUE, intern  = TRUE)
-    if (!inherits(lmu, "error") || length(lmu) != 0 ||
-        lmu[length(lmu)] == "Done") {
-      stop(paste0("Error in computing gemu: ", lmu), call. = FALSE)
+
+
+    # Check for errors
+    if (inherits(lmu, "error") || lmu[length(lmu)] != "Done") {
+      stop(paste0("Error in computing geta: ", lmu), call. = FALSE)
+    }
+
+    if (length(lmu) != 1) {
+      cat(lmu, sep = "\n")
     }
 
     # |||||||||||||||||||||||||||||||||||||||||||||||||||||||

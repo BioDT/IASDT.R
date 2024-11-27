@@ -234,7 +234,7 @@ def getf(file_x, beta_dir, use_single, file_output, ncores):
 
     with get_reusable_executor(max_workers=ncores) as executor:
         futures = [
-            executor.submit(process_beta_file, X, beta_file, task_index, dtype, file_output)
+            executor.submit(process_beta_file, x, beta_file, task_index, dtype, file_output)
             for task_index, beta_file in enumerate(beta_files)
         ]
 

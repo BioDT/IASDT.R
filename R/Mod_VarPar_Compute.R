@@ -22,11 +22,13 @@
 #'   species
 #' @param NCores Integer specifying the number of parallel cores for
 #'   parallelization. This is only used when `UseTF` is TRUE.
-#' @param Chunk_size Integer. Number of samples to process in each chunk. This
-#'   is only used when `UseTF` is TRUE.
+#' @param Chunk_size Integer. Size of each chunk of samples to process in
+#'   parallel. Only relevant for TensorFlow. Default: `50`.
 #' @param Verbose Logical. Indicates whether progress messages should be
 #'   displayed. Defaults to `TRUE`.
-#' @param OutFileName Character. Name of the output file to save the results.
+#' @param Temp_Cleanup Logical. Whether to delete temporary files after
+#'   processing. Default: `TRUE`.
+#' @param VarParFile Character. Name of the output file to save the results.
 #' @export
 #' @name VarPar_Compute
 #' @author Ahmed El-Gabbas
@@ -34,27 +36,11 @@
 #' @inheritParams Predict_LF
 #' @export
 
-
-# Path_Model = NULL
-group = NULL
-groupnames = NULL
-start = 1
-na.ignore = FALSE
-NCores = 6
-UseTF = TRUE
-# TF_Environ = NULL
-TF_use_single = FALSE
-Chunk_size = 50
-Verbose = TRUE
-# OutFileName = "VarPar"
-
-
-
 VarPar_Compute <- function(
     Path_Model, group = NULL, groupnames = NULL, start = 1, na.ignore = FALSE,
-    NCores = 6, UseTF = TRUE, TF_Environ = NULL,
-    TF_use_single = FALSE, Chunk_size = 50, Verbose = TRUE,
-    OutFileName = "VarPar") {
+    NCores = 6, UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE,
+    Temp_Cleanup = TRUE, Chunk_size = 50, Verbose = TRUE,
+    VarParFile = "VarPar") {
 
   # # .................................................................... ###
 
@@ -97,92 +83,87 @@ VarPar_Compute <- function(
     Script_gemu <- system.file("VP_gemu.py", package = "IASDT.R")
     if (!all(file.exists(c(Script_geta, Script_getf, Script_gemu)))) {
       stop(
-        "Necessary python scripts do not exist",
-        call. = FALSE)
+        "Necessary python scripts do not exist", call. = FALSE)
     }
   }
 
   # # .................................................................... ###
 
-  IASDT.R::CatTime("Load the model object")
+  # Load model object ------
+  IASDT.R::CatTime("Load model object")
 
-  # Load the model object
   if (is.null(Path_Model) || !file.exists(Path_Model)) {
     stop(
       paste0("Model path is NULL or does not exist: ", Path_Model),
       call. = FALSE)
   }
 
-  hM <- IASDT.R::LoadAs(Path_Model)
+  Model <- IASDT.R::LoadAs(Path_Model)
 
   # # .................................................................... ###
 
+  # Create folder for variance partitioning results
   Path_VarPar <- file.path(
-    dirname(dirname(Path_Model)),
-    "Model_Postprocessing/Variance_Partitioning")
+    dirname(dirname(Path_Model)), "Model_Postprocessing/Variance_Partitioning")
   fs::dir_create(Path_VarPar)
 
   # # .................................................................... ###
 
-  ny <- hM$ny
-  nc <- hM$nc
-  ns <- hM$ns
-  nr <- hM$nr
+  ny <- Model$ny
+  nc <- Model$nc
+  ns <- Model$ns
+  nr <- Model$nr
 
   if (is.null(group)) {
-    ## default: use terms
-    if (nc > 1) {
-      if (is.null(hM$XFormula)) {
-        stop("no XFormula: you must give 'group' and 'groupnames'")
-      }
-      group <- attr(hM$X, "assign")
-      if (group[1] == 0) { # assign (Intercept) to group
-        group[1] <- 1
-      }
-      groupnames <- attr(
-        stats::terms(hM$XFormula, data = hM$XData), "term.labels")
-    } else {
-      group <- c(1)
-      groupnames <- hM$covNames[1]
-    }
+    # names of variables used in the model
+    groupnames <- names(Model$XData)
+
+    # actual variables used in the model, including the intercept and quadratic
+    # terms
+    ModelVars <- dimnames(Model$X)[[2]][-1]
+
+    # group variable to combine variable and its quadratic terms together
+    group <- purrr::map(
+      ModelVars, ~ which(stringr::str_detect(.x, groupnames))) %>%
+      unlist() %>%
+      # add intercept to the first group
+      c(.[1], .)
   }
-
-  ngroups <- max(group)
-  fixed <- matrix(0, nrow = ns, ncol = 1)
-  fixedsplit <- matrix(0, nrow = ns, ncol = ngroups)
-  random <- matrix(0, nrow = ns, ncol = nr)
-
-  R2T.Y <- 0
-  R2T.Beta <- rep(0, nc)
 
   # If na.ignore=T, convert XData to a list
   if (na.ignore) {
     xl <- list()
-    for (s in 1:ns) {
-      xl[[s]] <- hM$X
+    for (s in seq_len(ns)) {
+      xl[[s]] <- Model$X
     }
-    hM$X <- xl
+    Model$X <- xl
   }
 
   switch(
-    class(hM$X)[1L],
+    class(Model$X)[1L],
     matrix = {
-      cMA <- stats::cov(hM$X)
+      cMA <- stats::cov(Model$X)
     },
     list = {
       if (na.ignore) {
         cMA <- list()
-        for (s in 1:ns) {
-          cMA[[s]] <- stats::cov(hM$X[[s]][which(hM$Y[, s] > -Inf), ])
+        for (s in seq_len(ns)) {
+          cMA[[s]] <- stats::cov(Model$X[[s]][which(Model$Y[, s] > -Inf), ])
         }
       } else {
-        cMA <- lapply(hM$X, stats::cov)
+        cMA <- lapply(Model$X, stats::cov)
       }
     }
   )
 
+
+
+  # # .................................................................... ###
+
+  # Prepare postList-----
+
   IASDT.R::CatTime("Prepare postList")
-  postList <- Hmsc::poolMcmcChains(hM$postList, start = start) %>%
+  postList <- Hmsc::poolMcmcChains(Model$postList, start = start) %>%
     purrr::map(
       ~ {
         Items2Delete <- c(
@@ -194,282 +175,326 @@ VarPar_Compute <- function(
     )
 
   # Remove unnecessary elements from the model object
-  IASDT.R::CatTime("Remove model object elements")
   names_to_remove <- c(
     "postList", "Y", "XScaled", "rL", "ranLevels", "XData", "dfPi",
     "studyDesign", "C", "Pi", "phyloTree", "XFormula", "XScalePar",
     "aSigma", "bSigma", "TrScaled", "YScalePar", "call", "rhopw",
     "distr", "V0", "UGamma", "YScaled")
-  hM[names_to_remove] <- NULL
+  Model[names_to_remove] <- NULL
+
+  poolN <- length(postList)
+  ngroups <- max(group)
 
   invisible(gc())
 
   # # .................................................................... ###
+  # # .................................................................... ###
+
+  # Prepare `la`/`lf`/`lmu` lists -----
 
   if (UseTF) {
-
-    IASDT.R::CatTime("Prepare la/lf/lmu lists using TensorFlow")
 
     # Create the temporary directory
     Path_Temp <- file.path(dirname(dirname(Path_Model)), "TEMP_VP")
     fs::dir_create(Path_Temp)
 
-    # Prepare data
-    IASDT.R::CatTime("Prepare data for TensorFlow", Level = 1)
+    FileSuffix <- stringr::str_pad(
+      string = seq_len(poolN), pad = "0", width = 4)
 
-    # X
-    IASDT.R::CatTime("X", Level = 2)
-    Path_X <- file.path(Path_Temp, "VP_X.feather")
-    if (isFALSE(IASDT.R::CheckData(Path_X, warning = FALSE))) {
-      arrow::write_feather(as.data.frame(hM$X), Path_X)
-    }
+    # List of feather files resulted from `geta` function
+    Files_la <- file.path(Path_Temp, paste0("VP_A_", FileSuffix, ".feather"))
+    Files_la_Exist <- all(file.exists(Files_la))
 
-    # Tr
-    IASDT.R::CatTime("Tr", Level = 2)
-    Path_Tr <- file.path(Path_Temp, "VP_Tr.feather")
-    if (isFALSE(IASDT.R::CheckData(Path_Tr, warning = FALSE))) {
-      arrow::write_feather(as.data.frame(hM$Tr), Path_Tr)
-    }
+    # List of feather files resulted from `getf` function
+    Files_lf <- file.path(Path_Temp, paste0("VP_F_", FileSuffix, ".feather"))
+    Files_lf_Exist <- all(file.exists(Files_lf))
 
-    # Gamma - convert each list item into a column in a data frame
-    IASDT.R::CatTime("Gamma", Level = 2)
-    Path_Gamma <- file.path(Path_Temp, "VP_Gamma.feather")
-    if (!file.exists(Path_Gamma)) {
-      Gamma_data <- postList %>%
-        purrr::map(~as.vector(.x[["Gamma"]])) %>%
-        as.data.frame() %>%
-        stats::setNames(paste0("Sample_", seq_len(ncol(.))))
-      arrow::write_feather(Gamma_data, Path_Gamma)
-    }
+    # List of feather files resulted from `gemu` function
+    Files_lmu <- file.path(Path_Temp, paste0("VP_Mu_", FileSuffix, ".feather"))
+    Files_lmu_Exist <- all(file.exists(Files_lmu))
 
-    # Beta -- Each element of Beta is a matrix, so each list item is saved to
-    # separate feather file
-    IASDT.R::CatTime("Beta", Level = 2)
-    purrr::walk(
-      .x = seq_along(postList),
-      .f = ~ {
+    Beta_Files <- file.path(
+      Path_Temp, paste0("VP_Beta_", FileSuffix, ".feather"))
 
-        Beta_File <- file.path(
-          Path_Temp, paste0("VP_Beta_", sprintf("%04d", .x), ".feather"))
+    if (all(c(Files_la_Exist, Files_lf_Exist, Files_lmu_Exist))) {
 
-        if (!file.exists(Beta_File )) {
-          Beta <- postList[[.x]][["Beta"]] %>%
-            stats::setNames(paste0("Sample_", .x)) %>%
-            as.data.frame()
-          arrow::write_feather(x = Beta, sink = Beta_File)
-        }
-        return(NULL)
-      }
-    )
+      # All feather data are already processed and available on disk
+      IASDT.R::CatTime(
+        "Data for `la`/`lf`/`lmu` lists were already processed")
 
-    # |||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-    # Running geta
-    IASDT.R::CatTime("Running geta", Level = 1)
-
-    Path_Out_a <- file.path(Path_Temp, "VP_A.feather")
-    cmd_a <- paste(
-      python_executable, Script_geta,
-      "--tr", normalizePath(Path_Tr, winslash = "/", mustWork = TRUE),
-      "--x", normalizePath(Path_X, winslash = "/", mustWork = TRUE),
-      "--gamma", normalizePath(Path_Gamma, winslash = "/", mustWork = TRUE),
-      "--output", normalizePath(Path_Out_a, winslash = "/", mustWork = FALSE),
-      "--ncores", NCores,
-      "--chunk_size", Chunk_size)
-
-    if (TF_use_single) {
-      cmd_a <- c(cmd_a, "--use_single")
-    }
-
-    # Run the command using system or system2
-    la <- system(cmd_a, wait = TRUE, intern  = TRUE)
-
-    # Check for errors
-    if (inherits(la, "error") || la[length(la)] != "Done") {
-      stop(paste0("Error in computing geta: ", la), call. = FALSE)
-    }
-
-    if (length(la) != 1) {
-      cat(la, sep = "\n")
-    }
-
-    # |||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-    # Running getf
-    IASDT.R::CatTime("Running getf", Level = 1)
-
-    Path_Out_f <- file.path(Path_Temp, "VP_F.feather")
-
-    cmd_f <- paste(
-      python_executable, Script_getf,
-      "--x", shQuote(Path_X),
-      "--beta_dir", shQuote(Path_Temp),
-      "--output", shQuote(Path_Out_f),
-      "--ncores", NCores)
-
-    if (TF_use_single) {
-      cmd_f <- c(cmd_f, "--use_single")
-    }
-
-    # Run the command using system or system2
-    lf <- system(cmd_f, wait = TRUE, intern  = TRUE)
-
-    # Check for errors
-    if (inherits(lf, "error") || lf[length(lf)] != "Done") {
-      stop(paste0("Error in computing geta: ", lf), call. = FALSE)
-    }
-
-    if (length(lf) != 1) {
-      cat(lf, sep = "\n")
-    }
-
-    # |||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-    # Running gemu
-    IASDT.R::CatTime("Running gemu", Level = 1)
-
-    Path_Out_mu <- file.path(Path_Temp, "VP_Mu.feather")
-
-    cmd_mu <- paste(
-      python_executable, Script_gemu,
-      "--tr", Path_Tr,
-      "--gamma", Path_Gamma,
-      "--output", Path_Out_mu,
-      "--ncores", NCores,
-      "--chunk_size", Chunk_size)
-
-    if (TF_use_single) {
-      cmd_mu <- c(cmd_mu, "--use_single")
-    }
-
-    # Run the command using system or system2
-    lmu <- system(cmd_mu, wait = TRUE, intern  = TRUE)
-
-
-    # Check for errors
-    if (inherits(lmu, "error") || lmu[length(lmu)] != "Done") {
-      stop(paste0("Error in computing geta: ", lmu), call. = FALSE)
-    }
-
-    if (length(lmu) != 1) {
-      cat(lmu, sep = "\n")
-    }
-
-    # |||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-    # Reading the results frpm feather files
-    IASDT.R::CatTime("Reading the results frpm feather files", Level = 1)
-
-    IASDT.R::CatTime("Prepare working on parallel", Level = 2)
-    withr::local_options(
-      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
-
-    if (NCores == 1) {
-      future::plan("future::sequential", gc = TRUE)
     } else {
-      c1 <- snow::makeSOCKcluster(NCores)
-      on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-      future::plan("future::cluster", workers = c1, gc = TRUE)
-      on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
+
+      ## Prepare la/lf/lmu lists using TensorFlow ----
+      IASDT.R::CatTime("Prepare la/lf/lmu lists using TensorFlow")
+
+      ### Prepare data for TensorFlow ----
+      IASDT.R::CatTime("Prepare data for TensorFlow", Level = 1)
+
+      #### X data -----
+      # needed only to calculate `geta` and `getf` functions
+      if (!all(c(Files_la_Exist, Files_lf_Exist))) {
+        IASDT.R::CatTime("X", Level = 2)
+        Path_X <- file.path(Path_Temp, "VP_X.feather")
+        if (!file.exists(Path_X)) {
+          arrow::write_feather(as.data.frame(Model$X), Path_X)
+        }
+      }
+
+      #### Tr / Gamma ------
+      # needed only to calculate `geta` and `gemu` functions
+      if (!all(c(Files_la_Exist, Files_lmu_Exist))) {
+        IASDT.R::CatTime("Tr", Level = 2)
+        Path_Tr <- file.path(Path_Temp, "VP_Tr.feather")
+        if (!file.exists(Path_Tr)) {
+          arrow::write_feather(as.data.frame(Model$Tr), Path_Tr)
+        }
+
+        # Gamma - convert each list item into a column in a data frame
+        IASDT.R::CatTime("Gamma", Level = 2)
+        Path_Gamma <- file.path(Path_Temp, "VP_Gamma.feather")
+        if (!file.exists(Path_Gamma)) {
+          Gamma_data <- postList %>%
+            purrr::map(~as.vector(.x[["Gamma"]])) %>%
+            as.data.frame() %>%
+            stats::setNames(paste0("Sample_", seq_len(ncol(.))))
+          arrow::write_feather(Gamma_data, Path_Gamma)
+        }
+      }
+
+      #### Beta -----
+      # only needed for `getf` function
+      if (!Files_lf_Exist) {
+        # Beta -- Each element of Beta is a matrix, so each list item is saved
+        # to separate feather file
+        IASDT.R::CatTime("Beta", Level = 2)
+
+        IASDT.R::CatTime("Prepare working on parallel", Level = 3)
+        c1 <- parallel::makePSOCKcluster(NCores)
+        on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
+        
+        IASDT.R::CatTime("Export necessary objects to cores", Level = 3)
+        parallel::clusterExport(
+          cl = c1, varlist = c("Beta_Files", "postList"), envir = environment())
+
+        IASDT.R::CatTime("Load libraries on each core", Level = 3)
+        invisible(
+          parallel::clusterEvalQ(
+            cl = c1, expr = sapply("arrow", library, character.only = TRUE)))
+
+        IASDT.R::CatTime("Processing beta on parallel", Level = 3)
+        Beta0 <- parallel::parLapply(
+          cl = c1, 
+          X = seq_along(postList),
+          fun = function(x) {
+            Beta_File <- Beta_Files[x]
+            if (!file.exists(Beta_File)) {
+              Beta <- as.data.frame(postList[[x]][["Beta"]])
+              arrow::write_feather(x = Beta, sink = Beta_File)
+            }
+            return(NULL)
+          })
+        rm(Beta0)
+
+        IASDT.R::CatTime("stop cluster", Level = 3)
+        parallel::stopCluster(c1)
+      }
+
+      invisible(gc())
+
+      # |||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+      ### Processing geta -----
+
+      if (!Files_la_Exist) {
+
+        IASDT.R::CatTime("Processing `geta` function", Level = 1)
+        Path_Out_a <- file.path(Path_Temp, "VP_A.feather") %>%
+          normalizePath(winslash = "/", mustWork = FALSE)
+
+        cmd_a <- paste(
+          python_executable, Script_geta,
+          "--tr", normalizePath(Path_Tr, winslash = "/", mustWork = TRUE),
+          "--x", normalizePath(Path_X, winslash = "/", mustWork = TRUE),
+          "--gamma", normalizePath(Path_Gamma, winslash = "/", mustWork = TRUE),
+          "--output", Path_Out_a,
+          "--ncores", NCores,
+          "--chunk_size", Chunk_size)
+
+        if (TF_use_single) {
+          cmd_a <- c(cmd_a, "--use_single")
+        }
+
+        # Run the command using system
+        la <- system(cmd_a, wait = TRUE, intern  = TRUE)
+
+        # Check for errors
+        if (inherits(la, "error") || la[length(la)] != "Done") {
+          stop(paste0("Error in computing geta: ", la), call. = FALSE)
+        }
+
+        if (length(la) != 1) {
+          cat(la, sep = "\n")
+        }
+
+      } else {
+        IASDT.R::CatTime(
+          "All `la` data were already available on disk", Level = 1)
+      }
+
+      invisible(gc())
+
+      # |||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+      ### Processing getf ----
+
+      if (!Files_la_Exist) {
+
+        IASDT.R::CatTime("Processing `getf` function", Level = 1)
+        Path_Out_f <- file.path(Path_Temp, "VP_F.feather") %>%
+          normalizePath(winslash = "/", mustWork = FALSE)
+
+        cmd_f <- paste(
+          python_executable, Script_getf,
+          "--x", normalizePath(Path_X, winslash = "/", mustWork = TRUE),
+          "--beta_dir",
+          normalizePath(Path_Temp, winslash = "/", mustWork = TRUE),
+          "--output", Path_Out_f,
+          "--ncores", NCores)
+
+        if (TF_use_single) {
+          cmd_f <- c(cmd_f, "--use_single")
+        }
+
+        # Run the command using system
+        lf <- system(cmd_f, wait = TRUE, intern  = TRUE)
+
+        # Check for errors
+        if (inherits(lf, "error") || lf[length(lf)] != "Done") {
+          stop(paste0("Error in computing geta: ", lf), call. = FALSE)
+        }
+
+        if (length(lf) != 1) {
+          cat(lf, sep = "\n")
+        }
+
+      } else {
+        IASDT.R::CatTime(
+          "All `lf` data were already available on disk", Level = 1)
+      }
+
+      invisible(gc())
+
+      # |||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+      ### Processing gemu ----
+
+      if (!Files_lmu_Exist) {
+
+        IASDT.R::CatTime("Processing `gemu` function", Level = 1)
+        Path_Out_mu <- file.path(Path_Temp, "VP_Mu.feather") %>%
+          normalizePath(winslash = "/", mustWork = FALSE)
+
+        cmd_mu <- paste(
+          python_executable, Script_gemu,
+          "--tr", normalizePath(Path_Tr, winslash = "/", mustWork = TRUE),
+          "--gamma", normalizePath(Path_Gamma, winslash = "/", mustWork = TRUE),
+          "--output", Path_Out_mu,
+          "--ncores", NCores,
+          "--chunk_size", Chunk_size)
+
+        if (TF_use_single) {
+          cmd_mu <- c(cmd_mu, "--use_single")
+        }
+
+        # Run the command using system
+        lmu <- system(cmd_mu, wait = TRUE, intern  = TRUE)
+
+        # Check for errors
+        if (inherits(lmu, "error") || lmu[length(lmu)] != "Done") {
+          stop(paste0("Error in computing geta: ", lmu), call. = FALSE)
+        }
+
+        if (length(lmu) != 1) {
+          cat(lmu, sep = "\n")
+        }
+
+      } else {
+        IASDT.R::CatTime(
+          "All `lmu` data were already available on disk", Level = 1)
+      }
     }
 
-    IASDT.R::CatTime("la data", Level = 2)
-    la <- furrr::future_map(
-      .x = seq_along(postList),
-      .f = ~ {
-        stringr::str_pad(string = .x, width = 4, pad = "0") %>%
-          paste0("_", ., ".feather") %>%
-          stringr::str_replace(Path_Out_a, ".feather", .) %>%
-          arrow::read_feather() %>%
-          as.matrix(.x) %>%
-          unname() %>%
-          return()
-      },
-      .options = furrr::furrr_options(seed = TRUE, scheduling = Inf))
-
-    IASDT.R::CatTime("lf data", Level = 2)
-    lf <- furrr::future_map(
-      .x = seq_along(postList),
-      .f = ~ {
-        stringr::str_pad(string = .x, width = 4, pad = "0") %>%
-          paste0("_", ., ".feather") %>%
-          stringr::str_replace(Path_Out_f, ".feather", .) %>%
-          arrow::read_feather() %>%
-          as.matrix(.x) %>%
-          unname() %>%
-          return()
-      },
-      .options = furrr::furrr_options(seed = TRUE, scheduling = Inf))
-
-    IASDT.R::CatTime("lmu data", Level = 2)
-    lmu <- furrr::future_map(
-      .x = seq_along(postList),
-      .f = ~ {
-        stringr::str_pad(string = .x, width = 4, pad = "0") %>%
-          paste0("_", ., ".feather") %>%
-          stringr::str_replace(Path_Out_mu, ".feather", .) %>%
-          arrow::read_feather() %>%
-          as.matrix(.x) %>%
-          unname() %>%
-          return()
-      },
-      .options = furrr::furrr_options(seed = TRUE, scheduling = Inf))
-
-    IASDT.R::CatTime("stop cluster", Level = 2)
-    snow::stopCluster(c1)
-    future::plan("future::sequential", gc = TRUE)
     invisible(gc())
-
-    fs::dir_delete(Path_Temp)
 
   } else {
 
+    # Prepare la/lf/lmu lists using original R code -----
+
     IASDT.R::CatTime("Prepare la/lf/lmu lists using original R code")
 
+    ## geta -----
     IASDT.R::CatTime("Running geta", Level = 1)
     geta <- function(a) {
       switch(
-        class(hM$X)[1L],
+        class(Model$X)[1L],
         matrix = {
-          res <- hM$X %*% (t(hM$Tr %*% t(a$Gamma)))
+          res <- Model$X %*% (t(Model$Tr %*% t(a$Gamma)))
         },
         list = {
           res <- matrix(NA, ny, ns)
-          for (j in 1:hM$ns) {
-            res[, j] <- hM$X[[j]] %*% (t(hM$Tr[j, ] %*% t(a$Gamma)))
+          for (j in seq_len(ns)) {
+            res[, j] <- Model$X[[j]] %*% (t(Model$Tr[j, ] %*% t(a$Gamma)))
           }
         })
       return(res)
     }
+
     la <- lapply(postList, geta)
+
+    invisible(gc())
+
+    # |||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+    ## getf ------
 
     IASDT.R::CatTime("Running getf", Level = 1)
     getf <- function(a) {
       switch(
-        class(hM$X)[1L],
+        class(Model$X)[1L],
         matrix = {
-          res <- hM$X %*% (a$Beta)
+          res <- Model$X %*% (a$Beta)
         },
         list = {
           res <- matrix(NA, ny, ns)
-          for (j in 1:ns) res[, j] <- hM$X[[j]] %*% a$Beta[, j]
+          for (j in seq_len(ns)) res[, j] <- Model$X[[j]] %*% a$Beta[, j]
         })
       return(res)
     }
+
     lf <- lapply(postList, getf)
+
+    invisible(gc())
+
+    # |||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+    ## gemu ------
 
     IASDT.R::CatTime("Running gemu", Level = 1)
     gemu <- function(a) {
-      res <- t(hM$Tr %*% t(a$Gamma))
+      res <- t(Model$Tr %*% t(a$Gamma))
       return(res)
     }
+
     lmu <- lapply(postList, gemu)
+
+    invisible(gc())
 
   }
 
   # # .................................................................... ###
 
-  IASDT.R::CatTime("Running gebeta", Level = 1)
+  # Running gebeta -------
+  IASDT.R::CatTime("Running gebeta")
   gebeta <- function(a) {
     res <- a$Beta
     return(res)
@@ -478,7 +503,7 @@ VarPar_Compute <- function(
 
   # # .................................................................... ###
 
-  # Remove Gamma from postList
+  # Remove Gamma from postList ------
   IASDT.R::CatTime("Remove Gamma from postList")
   postList <- purrr::map(
     postList,
@@ -487,101 +512,243 @@ VarPar_Compute <- function(
       .x
     })
 
+  invisible(gc())
+
+  # # .................................................................... ###
   # # .................................................................... ###
 
-  IASDT.R::CatTime("Compute variance partitioning")
+  # Computing variance partitioning -------
 
-  poolN <- length(postList) # pooled chains
 
-  for (i in seq_len(poolN)) {
+  mm <- methods::getMethod("%*%", "Matrix")
 
-    # Suppress warnings when no trait information is used in the models
-    # cor(Beta[k, ], lmu[k, ]) : the standard deviation is zero
-    suppressWarnings({
-      for (k in 1:nc) {
-        R2T.Beta[k] <- R2T.Beta[k] +
-          stats::cor(lbeta[[i]][k, ], lmu[[i]][k, ])^2
-      }
-    })
+  if (UseTF) {
 
-    fixed1 <- matrix(0, nrow = ns, ncol = 1)
-    fixedsplit1 <- matrix(0, nrow = ns, ncol = ngroups)
-    random1 <- matrix(0, nrow = ns, ncol = nr)
-    Beta <- postList[[i]]$Beta
-    Lambdas <- postList[[i]]$Lambda
+    IASDT.R::CatTime("Computing variance partitioning in parallel")
 
-    f <- lf[[i]]
-    a <- la[[i]]
+    IASDT.R::CatTime("Prepare working on parallel", Level = 1)
+    c1 <- parallel::makePSOCKcluster(NCores)
+    on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
 
-    a <- a - matrix(rep(rowMeans(a), ns), ncol = ns)
-    f <- f - matrix(rep(rowMeans(f), ns), ncol = ns)
-    res1 <- sum((rowSums((a * f)) / (ns - 1))^2)
-    res2 <- sum((rowSums((a * a)) / (ns - 1)) *
-                  (rowSums((f * f)) / (ns - 1)))
-    R2T.Y <- R2T.Y + res1 / res2
+    IASDT.R::CatTime("Load libraries", Level = 1)
+    invisible(
+      parallel::clusterEvalQ(
+        cl = c1,
+        expr = sapply(
+          c("Matrix", "dplyr", "arrow"), library, character.only = TRUE)))
 
-    for (j in 1:ns) {
-      switch(
-        class(hM$X)[1L],
-        matrix = {
-          cM <- cMA
-        },
-        list = {
-          cM <- cMA[[j]]
+    IASDT.R::CatTime("Export objects to cores", Level = 1)
+    parallel::clusterExport(
+      cl = c1, varlist = c(
+        "ngroups", "Files_la", "Files_lf", "Files_lmu", "lbeta",
+        "postList", "poolN", "ns", "nr"),
+      envir = environment())
+
+    IASDT.R::CatTime("Processing on parallel", Level = 1)
+    Res <- parallel::parLapply(
+      cl = c1,
+      X = seq_along(postList),
+      fun = function(i) {
+
+        DT_la <- as.matrix(arrow::read_feather(Files_la[i]))
+        DT_lf <- as.matrix(arrow::read_feather(Files_lf[i]))
+        DT_lmu <- as.matrix(arrow::read_feather(Files_lmu[i]))
+
+        # Suppress warnings when no trait information is used in the models
+        # cor(Beta[k, ], lmu[k, ]) : the standard deviation is zero
+        R2T.Beta <- purrr::map_dbl(
+          .x = seq_len(nc),
+          .f = ~ {
+            suppressWarnings(stats::cor(lbeta[[i]][.x, ], DT_lmu[.x, ])^2)
+          })
+
+        fixed1 <- matrix(0, nrow = ns, ncol = 1)
+        fixedsplit1 <- matrix(0, nrow = ns, ncol = ngroups)
+        random1 <- matrix(0, nrow = ns, ncol = nr)
+        Beta <- postList[[i]]$Beta
+        Lambdas <- postList[[i]]$Lambda
+
+        a <- DT_la - matrix(rep(rowMeans(DT_la), ns), ncol = ns)
+        f <- DT_lf - matrix(rep(rowMeans(DT_lf), ns), ncol = ns)
+
+        res1 <- sum((rowSums((a * f)) / (ns - 1))^2)
+        res2 <- sum((rowSums((a * a)) / (ns - 1)) *
+                      (rowSums((f * f)) / (ns - 1)))
+        R2T.Y <- res1 / res2
+
+        for (j in seq_len(ns)) {
+          switch(
+            class(Model$X)[1L],
+            matrix = {
+              cM <- cMA
+            },
+            list = {
+              cM <- cMA[[j]]
+            }
+          )
+
+          ftotal <- Matrix::crossprod(Beta[, j], mm(cM, Beta[, j]))
+          fixed1[j] <- fixed1[j] + ftotal
+
+          for (k in seq_len(ngroups)) {
+            sel <- (group == k)
+            fpart <- Matrix::crossprod(
+              Beta[sel, j], mm(cM[sel, sel], Beta[sel, j]))
+            fixedsplit1[j, k] <- fixedsplit1[j, k] + fpart
+          }
         }
-      )
-      ftotal <- t(Beta[, j]) %*% cM %*% Beta[, j]
-      fixed1[j] <- fixed1[j] + ftotal
-      for (k in 1:ngroups) {
-        sel <- (group == k)
-        fpart <- t(Beta[sel, j]) %*% cM[sel, sel] %*% Beta[sel, j]
-        fixedsplit1[j, k] <- fixedsplit1[j, k] + fpart
-      }
-    }
 
-    for (level in seq_len(nr)) {
-      Lambda <- Lambdas[[level]]
-      nf <- dim(Lambda)[[1]]
-      for (factor in 1:nf) {
-        random1[, level] <- random1[, level] +
-          t(Lambda[factor, ]) * Lambda[factor, ]
-      }
-    }
+        for (level in seq_len(nr)) {
+          Lambda <- Lambdas[[level]]
+          nf <- dim(Lambda)[[1]]
+          for (factor in seq_len(nf)) {
+            random1[, level] <- random1[, level] +
+              t(Lambda[factor, ]) * Lambda[factor, ]
+          }
+        }
 
-    if (nr > 0) {
-      tot <- fixed1 + rowSums(random1)
-      fixed <- fixed + fixed1 / tot
+        if (nr > 0) {
+          tot <- fixed1 + rowSums(random1)
+          fixed <- fixed1 / tot
+          for (level in seq_len(nr)) {
+            random <- random1[, level] / tot
+          }
+        } else {
+          fixed <- matrix(1, nrow = ns, ncol = 1)
+          random <- random1
+        }
+
+        fixedsplit <- matrix(0, nrow = ns, ncol = ngroups)
+        for (k in seq_len(ngroups)) {
+          fixedsplit[, k] <- fixedsplit1[, k] / rowSums(fixedsplit1)
+        }
+
+        list(
+          fixed = fixed, random = random, fixedsplit = fixedsplit,
+          R2T.Y = R2T.Y, R2T.Beta = R2T.Beta) %>%
+          return()
+      }
+    )
+
+    # Summarize the results
+    IASDT.R::CatTime("Summarize the results", Level = 1)
+    fixed <- Reduce("+", purrr::map(Res, ~ .x$fixed)) / poolN
+    random <- Reduce("+", purrr::map(Res, ~ .x$random)) / poolN
+    fixedsplit <- Reduce("+", purrr::map(Res, ~ .x$fixedsplit)) / poolN
+    R2T.Y <- Reduce("+", purrr::map(Res, ~ .x$R2T.Y)) / poolN
+    R2T.Beta <- Reduce("+", purrr::map(Res, ~ .x$R2T.Beta)) / poolN
+
+  } else {
+
+    IASDT.R::CatTime("Computing variance partitioning sequentially")
+
+    fixed <- matrix(0, nrow = ns, ncol = 1)
+    fixedsplit <- matrix(0, nrow = ns, ncol = ngroups)
+    random <- matrix(0, nrow = ns, ncol = nr)
+    R2T.Y <- 0
+    R2T.Beta <- rep(0, nc)
+
+    for (i in seq_len(poolN)) {
+
+      if (i %% 200 == 0) {
+        IASDT.R::CatTime(sprintf("Processing iteration %d of %d", i, poolN))
+      }
+
+      DT_la <- la[[i]]
+      DT_lf <- lf[[i]]
+      DT_lmu <- lmu[[i]]
+
+      # Suppress warnings when no trait information is used in the models
+      # cor(Beta[k, ], lmu[k, ]) : the standard deviation is zero
+      suppressWarnings({
+        for (k in seq_len(nc)) {
+          R2T.Beta[k] <- R2T.Beta[k] +
+            stats::cor(lbeta[[i]][k, ], DT_lmu[k, ])^2
+        }
+      })
+
+      fixed1 <- matrix(0, nrow = ns, ncol = 1)
+      fixedsplit1 <- matrix(0, nrow = ns, ncol = ngroups)
+      random1 <- matrix(0, nrow = ns, ncol = nr)
+      Beta <- postList[[i]]$Beta
+      Lambdas <- postList[[i]]$Lambda
+
+      a <- DT_la - matrix(rep(rowMeans(DT_la), ns), ncol = ns)
+      f <- DT_lf - matrix(rep(rowMeans(DT_lf), ns), ncol = ns)
+
+      res1 <- sum((rowSums((a * f)) / (ns - 1))^2)
+      res2 <- sum((rowSums((a * a)) / (ns - 1)) *
+                    (rowSums((f * f)) / (ns - 1)))
+      R2T.Y <- R2T.Y + res1 / res2
+
+      for (j in seq_len(ns)) {
+        switch(
+          class(Model$X)[1L],
+          matrix = {
+            cM <- cMA
+          },
+          list = {
+            cM <- cMA[[j]]
+          }
+        )
+
+        ftotal <- Matrix::crossprod(Beta[, j], mm(cM, Beta[, j]))
+        fixed1[j] <- fixed1[j] + ftotal
+
+        for (k in seq_len(ngroups)) {
+          sel <- (group == k)
+          fpart <- Matrix::crossprod(
+            Beta[sel, j], mm(cM[sel, sel], Beta[sel, j]))
+          fixedsplit1[j, k] <- fixedsplit1[j, k] + fpart
+        }
+      }
+
       for (level in seq_len(nr)) {
-        random[, level] <- random[, level] + random1[, level] / tot
+        Lambda <- Lambdas[[level]]
+        nf <- dim(Lambda)[[1]]
+        for (factor in seq_len(nf)) {
+          random1[, level] <- random1[, level] +
+            t(Lambda[factor, ]) * Lambda[factor, ]
+        }
       }
-    } else {
-      fixed <- fixed + matrix(1, nrow = ns, ncol = 1)
+
+      if (nr > 0) {
+        tot <- fixed1 + rowSums(random1)
+        fixed <- fixed + fixed1 / tot
+        for (level in seq_len(nr)) {
+          random[, level] <- random[, level] + random1[, level] / tot
+        }
+      } else {
+        fixed <- fixed + matrix(1, nrow = ns, ncol = 1)
+      }
+
+      for (k in seq_len(ngroups)) {
+        fixedsplit[, k] <- fixedsplit[, k] +
+          fixedsplit1[, k] / rowSums(fixedsplit1)
+      }
     }
-    for (k in 1:ngroups) {
-      fixedsplit[, k] <- fixedsplit[, k] +
-        fixedsplit1[, k] / rowSums(fixedsplit1)
-    }
+    fixed <- fixed / poolN
+    random <- random / poolN
+    fixedsplit <- fixedsplit / poolN
+    R2T.Y <- R2T.Y / poolN
+    R2T.Beta <- R2T.Beta / poolN
   }
 
-  fixed <- fixed / poolN
-  random <- random / poolN
-  fixedsplit <- fixedsplit / poolN
-  R2T.Y <- R2T.Y / poolN
-  R2T.Beta <- R2T.Beta / poolN
+  # # .................................................................... ###
 
   vals <- matrix(0, nrow = ngroups + nr, ncol = ns)
-  for (i in 1:ngroups) {
+  for (i in seq_len(ngroups)) {
     vals[i, ] <- fixed * fixedsplit[, i]
   }
   for (i in seq_len(nr)) {
     vals[ngroups + i, ] <- random[, i]
   }
 
-  names(R2T.Beta) <- hM$covNames
-  colnames(vals) <- hM$spNames
+  names(R2T.Beta) <- Model$covNames
+  colnames(vals) <- Model$spNames
   leg <- groupnames
   for (r in seq_len(nr)) {
-    leg <- c(leg, paste("Random: ", hM$rLNames[r], sep = ""))
+    leg <- c(leg, paste("Random: ", Model$rLNames[r], sep = ""))
   }
   rownames(vals) <- leg
 
@@ -596,10 +763,49 @@ VarPar_Compute <- function(
   # Save the results
   IASDT.R::CatTime("Save the variance partitioning results")
 
-  File_VarPar <- file.path(Path_VarPar, paste0(OutFileName, ".RData"))
-  IASDT.R::SaveAs(InObj = VP, OutObj = OutFileName, OutPath = File_VarPar)
+  File_VarPar <- file.path(Path_VarPar, paste0(VarParFile, ".RData"))
+  IASDT.R::SaveAs(InObj = VP, OutObj = VarParFile, OutPath = File_VarPar)
 
   VP$File <- File_VarPar
+
+  # # .................................................................... ###
+
+  if (UseTF && Temp_Cleanup) {
+
+    IASDT.R::CatTime("Clean up temporary files")
+
+    Path_Temp <- normalizePath(Path_Temp, winslash = "/", mustWork = FALSE)
+
+    if (dir.exists(Path_Temp)) {
+      # Function to delete files or directories
+      delete_files <- function(file_path) {
+        if (.Platform$OS.type == "windows") {
+          # Use rmdir command on Windows
+          system2(
+            "cmd", c("/c", "rmdir /s /q", shQuote(file_path)),
+            stdout = NULL, stderr = NULL)
+        } else {
+          # Use rm command on Linux/macOS
+          system2(
+            "rm", c("-rf", shQuote(file_path)), 
+            stdout = NULL, stderr = NULL)
+        }
+      }
+
+      # List all files to delete
+      files_to_delete <- list.files(Path_Temp, full.names = TRUE)
+
+      if (UseTF) {
+        try(parallel::parLapply(c1, files_to_delete, delete_files))
+        
+        # stop the cluster
+        parallel::stopCluster(c1)
+      } else {
+        try(purrr::walk(files_to_delete, delete_files))
+      }
+      fs::dir_delete(Path_Temp)
+    }
+  }
 
   # # .................................................................... ###
 

@@ -70,16 +70,14 @@ gpus = tf.config.experimental.list_physical_devices('GPU')
 
 if gpus:
     try:
-        # Enable memory growth
         for gpu in gpus:
+            # Set a fixed memory limit (e.g., 64 GB) to avoid exceeding the GPU memory
+            # tf.config.set_logical_device_configuration(
+                #gpu,
+                # [tf.config.LogicalDeviceConfiguration(memory_limit=64000)]
+            # )
             tf.config.experimental.set_memory_growth(gpu, True)
-        
-        # Set a fixed memory limit (e.g., 64 GB) to avoid exceeding the GPU memory
-        #tf.config.experimental.set_virtual_device_configuration(
-            #gpus[0],
-            #[tf.config.experimental.VirtualDeviceConfiguration(memory_limit=64000)]
-        #)
-        
+            
     except RuntimeError as e:
         print(f"Error setting memory configurations: {e}")
 
@@ -132,25 +130,29 @@ def process_beta_file(x, beta_file, task_index, dtype, file_output):
     """
         
     try:
-        beta_chunk = load_feather_tensor(beta_file, dtype)
-        
         # Dynamically generate file names
         file_index = f"{task_index + 1:04d}"
         feather_file = file_output.replace(".feather", f"_{file_index}.feather")
 
         if os.path.exists(feather_file):
             return
+        
+        beta_chunk = load_feather_tensor(beta_file, dtype)
 
         # Check dimensions for compatibility
         if beta_chunk.shape[0] != x.shape[1]:
             raise ValueError(f"Matrix size-incompatible: x columns ({x.shape[1]}) must match Beta rows ({beta_chunk.shape[0]})")
 
-        # Matrix multiplication: x %*% Beta
-        res = tf.matmul(x, beta_chunk)
-        res = pd.DataFrame(res.numpy())
-        
-        # Save as Feather
-        res.to_feather(feather_file)
+        try:
+            # Matrix multiplication: x %*% Beta
+            res = tf.matmul(x, beta_chunk)
+            # Save as Feather
+            pd.DataFrame(res.numpy()).to_feather(feather_file)
+        except ValueError as ve:
+            print(f"Matrix multiplication failed for {beta_file}: {ve}")
+        except Exception as e:
+            print(f"Unexpected error in {beta_file}: {e}")
+            raise
 
     except Exception as e:
         print(f"Job failed with exception: {e}")
@@ -196,7 +198,7 @@ def validate_and_get_beta_files(beta_dir, prefix="VP_Beta_", extension=".feather
     # Check if any files matched
     if not beta_files:
         raise FileNotFoundError(f"No files matching the pattern '{prefix}*{extension}' found in {beta_dir}")
-
+    
     # Validate the range of file indices
     file_indices = sorted(file_indices)
     # Full expected range
@@ -232,17 +234,18 @@ def getf(file_x, beta_dir, use_single, file_output, ncores):
     # Get list of Beta files
     beta_files = validate_and_get_beta_files(beta_dir)
 
-    with get_reusable_executor(max_workers=ncores) as executor:
-        futures = [
-            executor.submit(process_beta_file, x, beta_file, task_index, dtype, file_output)
-            for task_index, beta_file in enumerate(beta_files)
-        ]
+    try:
+        with get_reusable_executor(max_workers=ncores, timeout=600) as executor:
+            futures = [
+                executor.submit(process_beta_file, x, beta_file, task_index, dtype, file_output)
+                for task_index, beta_file in enumerate(beta_files)
+            ]
 
-        for future in futures:
-            try:
-                future.result()  # Trigger exception if any occurred
-            except Exception as e:
-                print(f"Job failed with exception: {e}")
+            for future in futures:
+                future.result()  # Trigger exceptions if any occurred
+    except Exception as e:
+        print(f"Error in parallel processing: {e}")
+        raise
 
 # ======================================================================
 # ======================================================================

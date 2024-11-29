@@ -7,10 +7,12 @@
 VarPar_Plot(
   Path_Model,
   EnvFile = ".env",
+  VarParFile = NULL,
   FromHPC = TRUE,
   UseTF = TRUE,
   TF_Environ = NULL,
   NCores = 1,
+  PlotRaw = TRUE,
   Fig_width = 30,
   Fig_height = 15
 )
@@ -20,6 +22,8 @@ VarPar_Plot(
 
 \item{EnvFile}{String. Path to read the environment variables. Default value:
 \code{.env}}
+
+\item{VarParFile}{Character. Name of the output file to save the results.}
 
 \item{FromHPC}{Logical. Indicates whether the function is being run on an HPC
 environment, affecting file path handling. Default: \code{TRUE}.}

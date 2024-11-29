@@ -14,9 +14,10 @@ VarPar_Compute(
   UseTF = TRUE,
   TF_Environ = NULL,
   TF_use_single = FALSE,
+  Temp_Cleanup = TRUE,
   Chunk_size = 50,
   Verbose = TRUE,
-  OutFileName = "VarPar"
+  VarParFile = "VarPar"
 )
 }
 \arguments{
@@ -49,13 +50,16 @@ TRUE.}
 \item{TF_use_single}{Logical indicating whether to use single precision for
 the TF calculations. Defaults to \code{FALSE}.}
 
-\item{Chunk_size}{Integer. Number of samples to process in each chunk. This
-is only used when \code{UseTF} is TRUE.}
+\item{Temp_Cleanup}{Logical. Whether to delete temporary files after
+processing. Default: \code{TRUE}.}
+
+\item{Chunk_size}{Integer. Size of each chunk of samples to process in
+parallel. Only relevant for TensorFlow. Default: \code{50}.}
 
 \item{Verbose}{Logical. Indicates whether progress messages should be
 displayed. Defaults to \code{TRUE}.}
 
-\item{OutFileName}{Character. Name of the output file to save the results.}
+\item{VarParFile}{Character. Name of the output file to save the results.}
 }
 \description{
 Computes variance components with respect to given grouping of fixed effects

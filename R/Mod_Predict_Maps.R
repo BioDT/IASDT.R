@@ -474,7 +474,7 @@ Predict_Maps <- function(
       TF_Environ = TF_Environ, LF_OutFile = Path_Test_LF,
       TF_use_single = TF_use_single, LF_Only = TRUE, LF_NCores = LF_NCores,
       LF_Check = LF_Check, LF_Temp_Cleanup = LF_Temp_Cleanup, Evaluate = FALSE, 
-      Verbose = FALSE)
+      Verbose = TRUE)
 
     rm(Gradient, Preds_LF, envir = environment())
     IASDT.R::CatTime("Predicting latent factor is finished!", Level = 1)

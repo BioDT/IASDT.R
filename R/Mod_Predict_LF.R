@@ -569,7 +569,6 @@ Predict_LF <- function(
     # Merge results
     IASDT.R::CatTime("Merge results", Level = 1)
 
-
     if (LF_NCores == 1) {
       postEtaPred <- purrr::map(.x = etaPreds, .f = IASDT.R::LoadAs)
     } else {
@@ -579,8 +578,8 @@ Predict_LF <- function(
         cl = c1, varlist = "etaPreds", envir = environment())
       invisible(parallel::clusterEvalQ(
         cl = c1, expr = sapply("IASDT.R", library, character.only = TRUE)))
-      postEtaPred <- parallel::parLapply(
-        cl = c1, X = etaPreds, fun = IASDT.R::LoadAs)
+      postEtaPred <- parallel::clusterApplyLB(
+        cl = c1, x = etaPreds, fun = IASDT.R::LoadAs)
       parallel::stopCluster(c1)
       invisible(gc())
     }

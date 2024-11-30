@@ -577,9 +577,12 @@ Predict_LF <- function(
       parallel::clusterExport(
         cl = c1, varlist = "etaPreds", envir = environment())
       invisible(parallel::clusterEvalQ(
-        cl = c1, expr = sapply("IASDT.R", library, character.only = TRUE)))
-      postEtaPred <- parallel::clusterApplyLB(
-        cl = c1, x = etaPreds, fun = IASDT.R::LoadAs)
+        cl = c1,
+        expr = sapply(
+          c("IASDT.R", "qs2", "dplyr"),
+          library, character.only = TRUE)))
+      postEtaPred <- parallel::parLapplyLB(
+        cl = c1, X = etaPreds, fun = IASDT.R::LoadAs)
       parallel::stopCluster(c1)
       invisible(gc())
     }

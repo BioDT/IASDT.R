@@ -31,7 +31,7 @@ Mod_Postprocess <- function(
     EnvFile = ".env", Path_Hmsc = NULL, MemPerCpu = NULL, Time = NULL,
     FromJSON = FALSE, GPP_Dist = NULL, Tree = "Tree", Samples = 1000,
     Thin = NULL, N_Grid = 50, NOmega = 1000, UseTF = TRUE, TF_Environ = NULL,
-    TF_use_single = FALSE, LF_NCores = NCores, LF_Check = TRUE,
+    TF_use_single = FALSE, LF_NCores = NCores, LF_Check = FALSE,
     LF_Temp_Cleanup = TRUE, Temp_Cleanup = TRUE,
     CC_Models = c(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
@@ -227,6 +227,7 @@ Mod_Postprocess <- function(
     ModelDir, "Model_Fitted",
     paste0(
       "GPP", GPP_Dist, "_", Tree, "_samp", Samples, "_th", Thin, "_Model.qs2"))
+
   Path_Coda <- file.path(
     ModelDir, "Model_Coda",
     paste0(

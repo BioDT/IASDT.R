@@ -307,7 +307,7 @@ Predict_LF <- function(
       dplyr::arrange(dplyr::desc(NSamples)) %>%
       dplyr::mutate(
         ChunkID = dplyr::row_number(),
-        File_TF = purrr::map_chr(
+        File_postEta = purrr::map_chr(
           .x = ChunkID,
           .f = ~ {
             ChunkID0 <- stringr::str_pad(
@@ -316,25 +316,23 @@ Predict_LF <- function(
               Temp_Dir,
               paste0(Model_Name, "postEta_ch", ChunkID0, ".feather"))
           }),
+        File_etaPred_TF = stringr::str_replace_all(
+          File_postEta, "_postEta_ch", "_etaPred_ch"),
         File_etaPred = stringr::str_replace_all(
-          File_TF, "_postEta_ch", "_etaPred_ch"),
-        File_etaPred = stringr::str_replace_all(
-          File_etaPred, ".feather", ".qs2"),
+          File_etaPred_TF, ".feather", ".qs2"),
         Export = purrr::pmap(
-          .l = list(Sample_IDs, LF_ID, File_TF),
-          .f = function(Sample_IDs, LF_ID, File_TF) {
+          .l = list(Sample_IDs, LF_ID, File_postEta),
+          .f = function(Sample_IDs, LF_ID, File_postEta) {
 
-            # do not export file if already exists and is valid
-            # if (isFALSE(IASDT.R::CheckData(File_TF, warning = FALSE))) {
-            if (!file.exists(File_TF)) {
-
+            # do not export file if already exists
+            if (!file.exists(File_postEta)) {
               Out <- postEta[Sample_IDs] %>%
                 purrr::map(~ .x[, LF_ID, drop = FALSE]) %>%
                 simplify2array() %>%
                 as.data.frame() %>%
                 stats::setNames(paste0("Eta_", Sample_IDs))
 
-              IASDT.R::SaveAs(InObj = Out, OutPath = File_TF)
+              IASDT.R::SaveAs(InObj = Out, OutPath = File_postEta)
             }
 
             return(NULL)
@@ -360,9 +358,11 @@ Predict_LF <- function(
       LF_ID <- LF_Data$LF_ID[[RowNum]]
       # ID for posterior sample
       SampleID <- LF_Data$Sample_IDs[[RowNum]]
-      # File path for current alpha
-      File_TF <- LF_Data$File_TF[[RowNum]]
+
+      # File path for current data
+      File_postEta <- LF_Data$File_postEta[[RowNum]]
       File_etaPred <- LF_Data$File_etaPred[[RowNum]]
+      File_etaPred_TF <- LF_Data$File_etaPred_TF[[RowNum]]
 
       NSamples <- LF_Data$NSamples[[RowNum]]
 
@@ -373,21 +373,23 @@ Predict_LF <- function(
         CalcPredLF <- dplyr::if_else(Eta_NCols == NSamples, FALSE, TRUE)
       }
 
-      # If the denominator is positive, perform calculations; otherwise, set
-      # `eta_indNew` to zero.
+      if (CalcPredLF) {
 
-      if (Denom > 0) {
+        # If the denominator is positive, perform calculations; otherwise, set
+        # `eta_indNew` to zero.
 
-        if (UseTF) {
+        if (Denom > 0) {
 
-          # Suppress TensorFlow warnings and disable optimizations
-          Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3", TF_ENABLE_ONEDNN_OPTS = "0")
+          if (UseTF) {
 
-          # Use TensorFlow
-          if (CalcPredLF) {
+            # Use TensorFlow
+
+            # Suppress TensorFlow warnings and disable optimizations
+            Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3", TF_ENABLE_ONEDNN_OPTS = "0")
+
             eta_indNew0 <- run_crossprod_solve(
               virtual_env_path = TF_Environ, s1 = Path_s1, s2 = Path_s2,
-              denom = Denom, postEta = File_TF, path_out = File_etaPred_TF,
+              denom = Denom, postEta = File_postEta, path_out = File_etaPred_TF,
               use_single = TF_use_single,
               solve_max_attempts = solve_max_attempts,
               solve_chunk_size = solve_chunk_size)
@@ -406,15 +408,13 @@ Predict_LF <- function(
 
             IASDT.R::SaveAs(InObj = etaPred, OutPath = File_etaPred)
 
-          }
-        
-        } else {
 
-          # Use R / CPP
-          if (CalcPredLF) {
+          } else {
+
+            # Use R / CPP
 
             # Reading postEta from file
-            postEta0 <- IASDT.R::LoadAs(File_TF)
+            postEta0 <- IASDT.R::LoadAs(File_postEta)
 
             # Read D11 and D12
             D11 <- IASDT.R::LoadAs(Path_D11)
@@ -435,23 +435,16 @@ Predict_LF <- function(
                   as.vector() %>%
                   tibble::tibble(
                     etaPred = ., Site = unitsPred, SampleID = SampleID[ID])
-
               }) %>%
               dplyr::arrange(SampleID, Site, etaPred) %>%
               dplyr::mutate(File_etaPred = File_etaPred)
 
             IASDT.R::SaveAs(InObj = etaPred, OutPath = File_etaPred)
-
           }
-        }
 
-      } else {
+        } else {
 
-        # When Denom is zero, set `eta_indNew` to zero
-
-        if (CalcPredLF) {
-
-          # Create the expanded grid directly
+          # When Denom is zero, set `eta_indNew` to zero
           etaPred <- tidyr::expand_grid(
             SampleID = SampleID, Site = unitsPred) %>%
             dplyr::mutate(

@@ -464,6 +464,8 @@ Predict_LF <- function(
 
     # Predict latent factors
 
+    IASDT.R::AllObjSizes(1, InFunction = TRUE)
+
     if (LF_NCores == 1) {
 
       # Sequential processing
@@ -568,6 +570,8 @@ Predict_LF <- function(
 
     # Merge results
     IASDT.R::CatTime("Merge results", Level = 1)
+
+    IASDT.R::AllObjSizes(1, InFunction = TRUE)
 
     # if (LF_NCores == 1) {
     #   postEtaPred <- purrr::map(.x = etaPreds, .f = IASDT.R::LoadAs)

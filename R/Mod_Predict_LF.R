@@ -569,25 +569,28 @@ Predict_LF <- function(
     # Merge results
     IASDT.R::CatTime("Merge results", Level = 1)
 
-    if (LF_NCores == 1) {
-      postEtaPred <- purrr::map(.x = etaPreds, .f = IASDT.R::LoadAs)
-    } else {
-      c1 <- parallel::makeCluster(LF_NCores)
-      on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
-      parallel::clusterExport(
-        cl = c1, varlist = "etaPreds", envir = environment())
-      invisible(parallel::clusterEvalQ(
-        cl = c1,
-        expr = sapply(
-          c("IASDT.R", "qs2", "dplyr"),
-          library, character.only = TRUE)))
-      postEtaPred <- parallel::parLapplyLB(
-        cl = c1, X = etaPreds, fun = IASDT.R::LoadAs)
-      parallel::stopCluster(c1)
-      invisible(gc())
-    }
+    # if (LF_NCores == 1) {
+    #   postEtaPred <- purrr::map(.x = etaPreds, .f = IASDT.R::LoadAs)
+    # } else {
+    #   c1 <- parallel::makeCluster(LF_NCores)
+    #   on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
+    #   parallel::clusterExport(
+    #     cl = c1, varlist = "etaPreds", envir = environment())
+    #   invisible(parallel::clusterEvalQ(
+    #     cl = c1,
+    #     expr = sapply(
+    #       c("IASDT.R", "qs2", "dplyr"),
+    #       library, character.only = TRUE)))
+    #   postEtaPred <- parallel::parLapplyLB(
+    #     cl = c1, X = etaPreds, fun = IASDT.R::LoadAs)
+    #   parallel::stopCluster(c1)
+    #   invisible(gc())
+    # }
+    # postEtaPred <- dplyr::bind_rows(postEtaPred) %>%
 
-    postEtaPred <- dplyr::bind_rows(postEtaPred) %>%
+    postEtaPred <- purrr::map(
+      .x = etaPreds, .f = qs2::qd_read, nthreads = NCores, .progress = TRUE) %>%
+      dplyr::bind_rows() %>%
       tidyr::nest(data = -"File_etaPred") %>%
       dplyr::full_join(
         dplyr::select(LF_Data, LF, LF_ID, File_etaPred),

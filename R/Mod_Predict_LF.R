@@ -347,7 +347,7 @@ Predict_LF <- function(
 
     # Internal functions to predict latent factors
 
-    etaPreds_F <- function(RowNum, LF_Check = FALSE) {
+    etaPreds_F <- function(RowNum, LF_Check = FALSE, unitsPred) {
 
       # do not use scientific notation
       withr::local_options(scipen = 99)
@@ -464,8 +464,6 @@ Predict_LF <- function(
 
     # Predict latent factors
 
-    IASDT.R::AllObjSizes(1, InFunction = TRUE)
-
     if (LF_NCores == 1) {
 
       # Sequential processing
@@ -477,7 +475,8 @@ Predict_LF <- function(
         .f = function(x) {
 
           result <- try(
-            expr = etaPreds_F(RowNum = x, LF_Check = LF_Check),
+            expr = etaPreds_F(
+              RowNum = x, LF_Check = LF_Check, unitsPred = unitsPred),
             silent = TRUE)
 
           if (inherits(result, "try-error")) {
@@ -532,7 +531,9 @@ Predict_LF <- function(
         cl = c1,
         x = seq_len(nrow(LF_Data)),
         fun = function(x) {
-          result <- try(etaPreds_F(x, LF_Check = LF_Check), silent = TRUE)
+          result <- try(
+            etaPreds_F(x, LF_Check = LF_Check, unitsPred = unitsPred),
+            silent = TRUE)
           invisible(gc())
           if (inherits(result, "try-error")) {
             return(NULL)
@@ -571,8 +572,6 @@ Predict_LF <- function(
     # Merge results
     IASDT.R::CatTime("Merge results", Level = 1)
 
-    IASDT.R::AllObjSizes(1, InFunction = TRUE)
-
     # if (LF_NCores == 1) {
     #   postEtaPred <- purrr::map(.x = etaPreds, .f = IASDT.R::LoadAs)
     # } else {
@@ -593,7 +592,7 @@ Predict_LF <- function(
     # postEtaPred <- dplyr::bind_rows(postEtaPred) %>%
 
     postEtaPred <- purrr::map(
-      .x = etaPreds, .f = qs2::qd_read, nthreads = NCores, .progress = TRUE) %>%
+      .x = etaPreds, .f = qs2::qs_read, nthreads = 10, .progress = TRUE) %>%
       dplyr::bind_rows() %>%
       tidyr::nest(data = -"File_etaPred") %>%
       dplyr::full_join(

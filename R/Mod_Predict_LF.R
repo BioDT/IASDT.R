@@ -203,7 +203,8 @@ Predict_LF <- function(
     # Create a temporary directory to store intermediate results. This directory
     # will be used to save s1/s2 or D11/D12, and intermediate postEta files,
     # reducing memory usage.
-    fs::dir_create(Temp_Dir)
+    Temp_Dir_LF <- file.path(Temp_Dir, "LF_Prediction")
+    fs::dir_create(c(Temp_Dir_LF, Temp_Dir))
 
     # # .................................................................... ###
 
@@ -341,9 +342,6 @@ Predict_LF <- function(
           }),
         Export = NULL)
 
-    Path_LF_Prediction <- file.path(dirname(LF_OutFile), "LF_Prediction")
-    fs::dir_create(Path_LF_Prediction)
-
     rm(postEta, postAlpha, envir = environment())
     invisible(gc())
 
@@ -402,10 +400,12 @@ Predict_LF <- function(
             etaPred <- tibble::tibble(
               SampleID = SampleID,
               LF = LF_ID,
-              Path_Samp_LF = paste0(
-                Path_LF_Prediction, "/LF_Samp_",
-                stringr::str_pad(SampleID, width = 4, pad = "0"),
-                "_LF", LF, ".qs2"),
+              Path_Samp_LF = file.path(
+                Temp_Dir_LF,
+                paste0(
+                  Model_Name, "_LF_Samp_",
+                  stringr::str_pad(SampleID, width = 4, pad = "0"),
+                  "_LF", LF, ".qs2")),
               etaPred = as.list(IASDT.R::LoadAs(File_etaPred_TF))) %>%
               tidyr::nest(eta_DT = -Path_Samp_LF) %>%
               dplyr::mutate(
@@ -445,10 +445,12 @@ Predict_LF <- function(
               .x = seq_along(SampleID),
               .f = function(ID) {
 
-                Path_Samp_LF <- paste0(
-                  Path_LF_Prediction, "/LF_Samp_",
-                  stringr::str_pad(ID, width = 4, pad = "0"),
-                  "_LF", LF_ID, ".qs2")
+                Path_Samp_LF = file.path(
+                  Temp_Dir_LF,
+                  paste0(
+                    Model_Name, "_LF_Samp_",
+                    stringr::str_pad(ID, width = 4, pad = "0"),
+                    "_LF", LF_ID, ".qs2"))
 
                 DT <- as.matrix(postEta0[, ID]) %>%
                   IASDT.R::Solve2vect(K11, .) %>%
@@ -477,10 +479,14 @@ Predict_LF <- function(
           # When Denom is zero, set `eta_indNew` to zero
 
           etaPred <- tibble::tibble(
-            Path_Samp_LF = paste0(
-              Path_LF_Prediction, "/LF_Samp_",
-              stringr::str_pad(SampleID, width = 4, pad = "0"),
-              "_LF", LF_ID, ".qs2"),
+
+            Path_Samp_LF = file.path(
+              Temp_Dir_LF,
+              paste0(
+                Model_Name, "_LF_Samp_",
+                stringr::str_pad(SampleID, width = 4, pad = "0"),
+                "_LF", LF, ".qs2")),
+
             File_etaPred = File_etaPred,
             ChunkID = LF_Data$ChunkID[[RowNum]],
             SampleID = SampleID) %>%
@@ -562,7 +568,7 @@ Predict_LF <- function(
             "LF_Data", "Path_D11", "Path_D12", "Path_s1", "Path_s2", "indNew",
             "unitsPred", "indOld", "modelunits", "TF_Environ", "UseTF",
             "TF_use_single", "etaPreds_F", "LF_Check", "run_crossprod_solve",
-            "solve_max_attempts", "solve_chunk_size", "Path_LF_Prediction"),
+            "solve_max_attempts", "solve_chunk_size", "Temp_Dir_LF"),
           envir = environment())
 
         # Load necessary libraries and load environment if using TensorFlow
@@ -634,7 +640,7 @@ Predict_LF <- function(
       dplyr::arrange(SampleID) %>%
       dplyr::mutate(
         Path_Sample = paste0(
-          Path_LF_Prediction, "/LF_Samp_",
+          Temp_Dir_LF, "/LF_Samp_",
           stringr::str_pad(SampleID, width = 4, pad = "0"), ".qs2")) %>%
       tidyr::nest(data = -c("SampleID", "Path_Sample"))
 

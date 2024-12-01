@@ -430,7 +430,7 @@ Predict_Hmsc <- function(
 
   # Read model object from disk
   Model <- IASDT.R::LoadAs(Model_File_small)
-  
+
   # prediction data for response curves
   if (!is.null(RC)) {
     IASDT.R::CatTime(
@@ -469,23 +469,25 @@ Predict_Hmsc <- function(
   invisible(gc())
 
   IASDT.R::CatTime(
-    paste0("Preparing working on parallel using ", NCores, " cores"),
+    paste0(
+      "Preparing working on parallel using ",
+      min(NCores, length(Chunks)), " cores"),
     Level = 1)
 
   seeds <- sample.int(.Machine$integer.max, predN)
 
-  c1 <- snow::makeSOCKcluster(NCores)
-  on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
+  c1 <- parallel::makePSOCKcluster(min(NCores, length(Chunks)))
+  on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
 
-  snow::clusterExport(
+  parallel::clusterExport(
     cl = c1,
-    list = c(
+    varlist = c(
       "Model", "X", "XRRR", "Yc", "Loff", "rL", "rLPar", "PiNew",
       "dfPiNew", "nyNew", "expected", "mcmcStep", "seeds", "chunk_size",
       "Chunks", "Temp_Dir", "Model_Name", "get1prediction"),
     envir = environment())
 
-  invisible(snow::clusterEvalQ(
+  invisible(parallel::clusterEvalQ(
     cl = c1,
     expr = {
       sapply(
@@ -497,9 +499,9 @@ Predict_Hmsc <- function(
 
   IASDT.R::CatTime("Making predictions on parallel", Level = 1)
 
-  pred <- snow::parLapply(
+  pred <- parallel::parLapplyLB(
     cl = c1,
-    x = seq_len(length(Chunks)),
+    X = seq_len(length(Chunks)),
     fun = function(Chunk) {
 
       ChunkFile <- Chunks[Chunk]
@@ -552,8 +554,7 @@ Predict_Hmsc <- function(
         }) %>%
         dplyr::bind_rows(
           tibble::tibble(
-            Chunk = Chunk, Sp = 0, IAS_ID = "SR",
-            ChunkSp_File = ChunkSR_File),
+            Chunk = Chunk, Sp = 0, IAS_ID = "SR", ChunkSp_File = ChunkSR_File),
           .)
 
       rm(PredChunk, envir = environment())
@@ -564,7 +565,7 @@ Predict_Hmsc <- function(
 
   pred <- tibble::tibble(dplyr::bind_rows(pred))
 
-  invisible(snow::clusterEvalQ(cl = c1, expr = invisible(gc())))
+  invisible(parallel::clusterEvalQ(cl = c1, expr = invisible(gc())))
 
   # # ..................................................................... ###
 
@@ -574,15 +575,15 @@ Predict_Hmsc <- function(
     dplyr::group_nest(Sp, IAS_ID) %>%
     dplyr::mutate(data = purrr::map(data, unlist))
 
-  snow::clusterExport(
+  parallel::clusterExport(
     cl = c1,
-    list = c(
+    varlist = c(
       "Eval_DT", "Evaluate", "Pred_Dir", "Model_Name", "Pred_PA", "Pred_XY"),
     envir = environment())
 
-  Eval_DT <- snow::parLapply(
+  Eval_DT <- parallel::parLapplyLB(
     cl = c1,
-    x = seq_len(nrow(Eval_DT)),
+    X = seq_len(nrow(Eval_DT)),
     fun = function(ID) {
 
       Sp <- Eval_DT$Sp[[ID]]
@@ -667,7 +668,7 @@ Predict_Hmsc <- function(
 
     })
 
-  snow::stopCluster(c1)
+  parallel::stopCluster(c1)
   invisible(gc())
 
   # # ..................................................................... ###
@@ -695,7 +696,12 @@ Predict_Hmsc <- function(
       x, y, geometry, SR_mean, SR_sd, SR_cov, tidyselect::everything()) %>%
     dplyr::mutate(Model_Name = Model_Name, .before = "SR_mean")
 
-  Pred_File <- file.path(Pred_Dir, paste0("Prediction_", Model_Name, ".qs2"))
+  Pred_File <- file.path(
+    Pred_Dir,
+    paste0(
+      "Prediction_",
+      stringr::str_remove(Model_Name, "_Clamping|_NoClamping"), ".qs2"))
+
   IASDT.R::SaveAs(InObj = Predictions, OutPath = Pred_File)
   if (Temp_Cleanup) {
     try(fs::file_delete(Eval_DT$Path_pred), silent = TRUE)
@@ -744,10 +750,10 @@ Predict_Hmsc <- function(
         file_paths <- list.files(
           path = normalizePath(Temp_Dir, winslash = "/"),
           pattern = Pattern, full.names = TRUE)
-          fs::file_delete(file_paths)
+        fs::file_delete(file_paths)
       },
       silent = TRUE)
-      
+
     try(fs::file_delete(Model_File_small), silent = TRUE)
 
   }
@@ -828,7 +834,7 @@ get1prediction <- function(
       for (k in 1:rL[[r]]$xDim) {
         LRan[[r]] <- LRan[[r]] +
           (Eta[[r]][as.character(dfPiNew[, r]), ] *
-            rL[[r]]$x[as.character(dfPiNew[, r]), k]) %*%
+             rL[[r]]$x[as.character(dfPiNew[, r]), k]) %*%
           sam$Lambda[[r]][, , k]
       }
     }
@@ -868,7 +874,7 @@ get1prediction <- function(
         for (k in 1:rL[[r]]$xDim) {
           LRan[[r]] <- LRan[[r]] +
             (Eta[[r]][as.character(dfPiNew[, r]), ] *
-              rL[[r]]$x[as.character(dfPiNew[, r]), k]) %*%
+               rL[[r]]$x[as.character(dfPiNew[, r]), k]) %*%
             sam$Lambda[[r]][, , k]
         }
       }

@@ -550,14 +550,6 @@ Predict_Maps <- function(
       # Make prediction files at `Path_Prediction_Clamp`
       Path_Prediction <- Path_Prediction_Clamp
 
-      Path_Prediction_sf <- file.path(
-        Path_Prediction, paste0("Prediction_", Option_Name, "_Clamp_sf.qs2"))
-      Path_Prediction_R <- file.path(
-        Path_Prediction, paste0("Prediction_", Option_Name, "_Clamp_R.qs2"))
-      Path_Prediction_summary <- file.path(
-        Path_Prediction,
-        paste0("Prediction_", Option_Name, "_Clamp_Summary.RData"))
-
       # use clamped Effort values
       StaticPreds <- terra::subset(
         x = StaticPredictors, subset = "EffortsLog", negate = TRUE)
@@ -572,13 +564,6 @@ Predict_Maps <- function(
       # Make prediction files at `Path_Prediction_NoClamp`
       Path_Prediction <- Path_Prediction_NoClamp
 
-      Path_Prediction_sf <- file.path(
-        Path_Prediction, paste0("Prediction_", Option_Name, "_sf.qs2"))
-      Path_Prediction_R <- file.path(
-        Path_Prediction, paste0("Prediction_", Option_Name, "_R.qs2"))
-      Path_Prediction_summary <- file.path(
-        Path_Prediction, paste0("Prediction_", Option_Name, "_Summary.RData"))
-
       # use original effort data
       if ("EffortsLog_Clamp" %in% names(StaticPredictors)) {
         StaticPreds <- terra::subset(
@@ -587,6 +572,13 @@ Predict_Maps <- function(
         StaticPreds <- StaticPredictors
       }
     }
+
+    Path_Prediction_sf <- file.path(
+      Path_Prediction, paste0("Prediction_", Option_Name, "_sf.qs2"))
+    Path_Prediction_R <- file.path(
+      Path_Prediction, paste0("Prediction_", Option_Name, "_R.qs2"))
+    Path_Prediction_summary <- file.path(
+      Path_Prediction, paste0("Prediction_", Option_Name, "_Summary.RData"))
 
     # Path for saving tif files of the current option
     Path_Prediction_tif <- file.path(Path_Prediction, Option_Name)
@@ -667,12 +659,15 @@ Predict_Maps <- function(
         IASDT.R::CatTime("Predictions at training sites", Level = 1)
 
         Path_Current_Train <- file.path(
-          Path_Prediction, paste0("Prediction_", Model_Name_Train, ".qs2"))
+          Path_Prediction, paste0("Prediction_", Option_Name, "_Train.qs2"))
 
         if (file.exists(Path_Current_Train)) {
+
           IASDT.R::CatTime("Loading predictions from disk", Level = 2)
           Preds_ModFitSites <- tibble::tibble(Pred_Path = Path_Current_Train)
+
         } else {
+
           Preds_ModFitSites <- IASDT.R::Predict_Hmsc(
             Path_Model = Path_Model, X = Train_X, Gradient = NULL,
             expected = TRUE, NCores = NCores, Model_Name = Model_Name_Train,
@@ -682,6 +677,7 @@ Predict_Maps <- function(
             LF_Temp_Cleanup = LF_Temp_Cleanup, Pred_Dir = Path_Prediction,
             Pred_PA = Train_PA, Pred_XY = Train_XY, Evaluate = Evaluate,
             Eval_Name = NULL, Eval_Dir = Path_Eval, Verbose = FALSE)
+
         }
 
         # ______________________________________________
@@ -693,7 +689,7 @@ Predict_Maps <- function(
           IASDT.R::CatTime("Predictions at new sites", Level = 1)
 
           Path_Current_Test <- file.path(
-            Path_Prediction, paste0("Prediction_", Model_Name_Test, ".qs2"))
+            Path_Prediction, paste0("Prediction_", Option_Name, "_Test.qs2"))
 
           if (file.exists(Path_Current_Test)) {
             IASDT.R::CatTime("Loading predictions from disk", Level = 2)
@@ -711,14 +707,14 @@ Predict_Maps <- function(
               LF_Temp_Cleanup = LF_Temp_Cleanup, Verbose = FALSE,
               Pred_Dir = Path_Prediction, Evaluate = FALSE,
               Pred_XY = sf::st_drop_geometry(Test_XY))
+
           }
 
           # ______________________________________________
 
           # Merge & save predictions - sf ------
           IASDT.R::CatTime(
-            "Merge & save predictions at training and new sites",
-            Level = 1)
+            "Merge & save predictions at training and new sites", Level = 1)
 
           Prediction_sf <- dplyr::bind_rows(
             IASDT.R::LoadAs(Preds_ModFitSites$Pred_Path),
@@ -767,6 +763,7 @@ Predict_Maps <- function(
         stringr::str_subset("^Sp_|^SR_") %>%
         gtools::mixedsort()
 
+      Grid10 <- terra::unwrap(IASDT.R::LoadAs(Path_GridR))
       Prediction_R <- terra::rasterize(
         Prediction_sf, Grid10, field = Fields2Raster)
 
@@ -842,7 +839,7 @@ Predict_Maps <- function(
           names_from = "Stats", values_from = "tif_path") %>%
         dplyr::left_join(SpeciesInfo, by = "ias_id") %>%
         dplyr::select(
-          tidyselect::all_of(
+          tidyselect::any_of(
             c(
               "hab_abb", "hab_name", "time_period", "climate_model",
               "climate_scenario", "ias_id", "taxon_name", "species_name",
@@ -884,7 +881,7 @@ Predict_Maps <- function(
 
   # Predicting ------
   IASDT.R::InfoChunk(
-    paste0("\t", "Making predictions"), Extra1 = 2, Extra2 = 2, Rep = 2,
+    paste0("\t", "Making spatial predictions"), Extra1 = 2, Extra2 = 2, Rep = 2,
     Char = "*", CharReps = 60)
 
   Grid10 <- terra::unwrap(IASDT.R::LoadAs(Path_GridR))

@@ -534,11 +534,10 @@ Predict_Maps <- function(
 
     # Name of the current model
     Model_Name <- paste0(
-      Option_Name, "_", Hab_Abb, "_",
-      dplyr::if_else(DoClamp, "clamping", "no clamping"))
+      Option_Name, " - ", dplyr::if_else(DoClamp, "clamping", "no clamping"))
 
     MSG <- paste0(
-      Model_Name, " - (", ID, "/", nrow(Prediction_Options), ")")
+      Model_Name, " (", ID, "/", nrow(Prediction_Options), ")")
     IASDT.R::InfoChunk(
       paste0("\t", MSG), Extra1 = 1, Extra2 = 1, Rep = 1,
       Char = "-", CharReps = 60)
@@ -632,7 +631,9 @@ Predict_Maps <- function(
           tidyr::replace_na(list(Train = FALSE))
 
         # training locations
-        Model_Name_Train <- paste0(Option_Name, "_Train")
+        Model_Name_Train <- paste0(
+          Option_Name, "_",
+          dplyr::if_else(DoClamp, "Clamping", "NoClamping"), "_Train")
         Predict_DF_Train <- dplyr::filter(Predict_DF, Train)
         Train_XY <- sf::st_drop_geometry(Predict_DF_Train[, c("x", "y")])
         Train_PA <- as.data.frame(Model$Y)
@@ -642,7 +643,9 @@ Predict_Maps <- function(
           stats::model.matrix(Model$XFormula, ., xlev = NULL)
 
         # Testing Locations
-        Model_Name_Test <- paste0(Option_Name, "_Test")
+        Model_Name_Test <- paste0(
+          Option_Name, "_",
+          dplyr::if_else(DoClamp, "Clamping", "NoClamping"), "_Test")
         Predict_DF_Test <- dplyr::filter(Predict_DF, !Train)
         Test_XY <- Predict_DF_Test[, c("x", "y")]
         Test_X <- Predict_DF_Test %>%

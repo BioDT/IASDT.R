@@ -31,7 +31,7 @@
 #'   parameter of the observation models or sample the values from those.
 #' @param NCores Integer specifying the number of cores to use for parallel
 #'   processing. Defaults to 8.
-#' @param Temp_Cleanup logical, indicating whether to clean up temporary files. 
+#' @param Temp_Cleanup logical, indicating whether to clean up temporary files.
 #'   Defaults to `TRUE`.
 #' @param Pred_Dir a character string specifying the directory where the
 #'   predictions will be saved. Defaults to `NULL`, which saves model
@@ -74,7 +74,7 @@ Predict_Hmsc <- function(
     RC = NULL, UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE,
     LF_OutFile = NULL, LF_Return = FALSE, LF_InputFile = NULL, LF_Only = FALSE,
     LF_NCores = NCores, LF_Check = FALSE, LF_Temp_Cleanup = TRUE,
-    Pred_Dir = NULL, Pred_PA = NULL, Pred_XY = NULL, Evaluate = FALSE, 
+    Pred_Dir = NULL, Pred_PA = NULL, Pred_XY = NULL, Evaluate = FALSE,
     Eval_Name = NULL, Eval_Dir = "Evaluation", Verbose = TRUE) {
 
   # # ..................................................................... ###
@@ -379,7 +379,7 @@ Predict_Hmsc <- function(
         LF_OutFile = LF_OutFile, LF_Return = LF_Return, LF_Check = LF_Check,
         Temp_Dir = Temp_Dir, Model_Name = Model_Name,
         UseTF = UseTF, TF_Environ = TF_Environ, TF_use_single = TF_use_single)
-      
+
       rm(postEta_file, envir = environment())
 
       rowNames <- rownames(predPostEta[[r]][[1]])
@@ -392,6 +392,7 @@ Predict_Hmsc <- function(
       IASDT.R::CatTime(
         paste0("Loading LF prediction from disk: `", LF_InputFile, "`"),
         Level = 1)
+
       for (r in seq_len(Mod_nr)) {
         predPostEta[[r]] <- IASDT.R::LoadAs(LF_InputFile[[r]])
         rowNames <- rownames(predPostEta[[r]][[1]])
@@ -552,7 +553,7 @@ Predict_Hmsc <- function(
             Chunk = Chunk, Sp = 0, IAS_ID = "SR",
             ChunkSp_File = ChunkSR_File),
           .)
-      
+
       rm(PredChunk, envir = environment())
 
       invisible(gc())

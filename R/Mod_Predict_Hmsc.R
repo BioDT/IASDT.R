@@ -711,10 +711,16 @@ Predict_Hmsc <- function(
 
   if (Evaluate) {
     if (is.null(Eval_Name)) {
-      Eval_Path <- file.path(Eval_Dir, paste0("Eval_", Model_Name, ".qs2"))
+      Eval_Path <- file.path(
+        Eval_Dir,
+        paste0(
+          "Eval_", stringr::str_remove(Model_Name, "_Train|_Current"), ".qs2"))
     } else {
       Eval_Path <- file.path(
-        Eval_Dir, paste0("Eval_", Model_Name, "_", Eval_Name, ".qs2"))
+        Eval_Dir,
+        paste0(
+          "Eval_", stringr::str_remove(Model_Name, "_Train|_Current"),
+          "_", Eval_Name, ".qs2"))
     }
 
     Eval_DT <- dplyr::select(Eval_DT, -Path_pred)

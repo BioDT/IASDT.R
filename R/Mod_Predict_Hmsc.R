@@ -430,7 +430,7 @@ Predict_Hmsc <- function(
 
   # Read model object from disk
   Model <- IASDT.R::LoadAs(Model_File_small)
-
+  
   # prediction data for response curves
   if (!is.null(RC)) {
     IASDT.R::CatTime(
@@ -746,8 +746,10 @@ Predict_Hmsc <- function(
           pattern = Pattern, full.names = TRUE)
           fs::file_delete(file_paths)
       },
-      silent = TRUE
-    )
+      silent = TRUE)
+      
+    try(fs::file_delete(Model_File_small), silent = TRUE)
+
   }
 
   # # ..................................................................... ###
@@ -826,7 +828,7 @@ get1prediction <- function(
       for (k in 1:rL[[r]]$xDim) {
         LRan[[r]] <- LRan[[r]] +
           (Eta[[r]][as.character(dfPiNew[, r]), ] *
-             rL[[r]]$x[as.character(dfPiNew[, r]), k]) %*%
+            rL[[r]]$x[as.character(dfPiNew[, r]), k]) %*%
           sam$Lambda[[r]][, , k]
       }
     }
@@ -866,7 +868,7 @@ get1prediction <- function(
         for (k in 1:rL[[r]]$xDim) {
           LRan[[r]] <- LRan[[r]] +
             (Eta[[r]][as.character(dfPiNew[, r]), ] *
-               rL[[r]]$x[as.character(dfPiNew[, r]), k]) %*%
+              rL[[r]]$x[as.character(dfPiNew[, r]), k]) %*%
             sam$Lambda[[r]][, , k]
         }
       }

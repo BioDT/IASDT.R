@@ -526,17 +526,19 @@ Predict_Maps <- function(
 
   Predict_Internal <- function(ID) {
 
-    # Name of the current option
-    Option_Name <- Prediction_Options$Name[[ID]]
-    # Name of the current model
-    Model_Name <- paste0(Option_Name, "_", Hab_Abb)
     # Whether to clamp the sampling efforts
     DoClamp <- Prediction_Options$Clamp[[ID]]
 
+    # Name of the current option
+    Option_Name <- Prediction_Options$Name[[ID]]
+
+    # Name of the current model
+    Model_Name <- paste0(
+      Option_Name, "_", Hab_Abb, "_",
+      dplyr::if_else(DoClamp, "clamping", "no clamping"))
+
     MSG <- paste0(
-      Model_Name, " - ",
-      dplyr::if_else(DoClamp, "clamping", "no clamping"),
-      " (", ID, "/", nrow(Prediction_Options), ")")
+      Model_Name, " - (", ID, "/", nrow(Prediction_Options), ")")
     IASDT.R::InfoChunk(
       paste0("\t", MSG), Extra1 = 1, Extra2 = 1, Rep = 1,
       Char = "-", CharReps = 60)
@@ -579,16 +581,17 @@ Predict_Maps <- function(
         Path_Prediction, paste0("Prediction_", Option_Name, "_Summary.RData"))
 
       # use original effort data
-      StaticPreds <- terra::subset(
-        x = StaticPredictors, subset = "EffortsLog_Clamp", negate = TRUE)
-
+      if ("EffortsLog_Clamp" %in% names(StaticPredictors)) {
+        StaticPreds <- terra::subset(
+          x = StaticPredictors, subset = "EffortsLog_Clamp", negate = TRUE)
+      } else {
+        StaticPreds <- StaticPredictors
+      }
     }
 
     # Path for saving tif files of the current option
     Path_Prediction_tif <- file.path(Path_Prediction, Option_Name)
     fs::dir_create(Path_Prediction_tif)
-
-    rm(StaticPredictors, envir = environment())
     invisible(gc())
 
     # ______________________________________________
@@ -629,7 +632,7 @@ Predict_Maps <- function(
           tidyr::replace_na(list(Train = FALSE))
 
         # training locations
-        Model_Name_Train <- paste0(Model_Name, "_Train")
+        Model_Name_Train <- paste0(Option_Name, "_Train")
         Predict_DF_Train <- dplyr::filter(Predict_DF, Train)
         Train_XY <- sf::st_drop_geometry(Predict_DF_Train[, c("x", "y")])
         Train_PA <- as.data.frame(Model$Y)
@@ -639,7 +642,7 @@ Predict_Maps <- function(
           stats::model.matrix(Model$XFormula, ., xlev = NULL)
 
         # Testing Locations
-        Model_Name_Test <- paste0(Model_Name, "_Test")
+        Model_Name_Test <- paste0(Option_Name, "_Test")
         Predict_DF_Test <- dplyr::filter(Predict_DF, !Train)
         Test_XY <- Predict_DF_Test[, c("x", "y")]
         Test_X <- Predict_DF_Test %>%
@@ -836,9 +839,12 @@ Predict_Maps <- function(
           names_from = "Stats", values_from = "tif_path") %>%
         dplyr::left_join(SpeciesInfo, by = "ias_id") %>%
         dplyr::select(
-          hab_abb, hab_name, time_period, climate_model, climate_scenario,
-          ias_id, taxon_name, species_name, class, order, family,
-          tif_path_mean, tif_path_sd, tif_path_cov, tif_path_anomaly)
+          tidyselect::all_of(
+            c(
+              "hab_abb", "hab_name", "time_period", "climate_model",
+              "climate_scenario", "ias_id", "taxon_name", "species_name",
+              "class", "order", "family", "tif_path_mean", "tif_path_sd",
+              "tif_path_cov", "tif_path_anomaly")))
 
       # save as spatRaster - qs2
       IASDT.R::CatTime("Save as spatRaster - qs2", Level = 1)

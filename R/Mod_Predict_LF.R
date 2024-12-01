@@ -485,7 +485,7 @@ Predict_LF <- function(
               paste0(
                 Model_Name, "_LF_Samp_",
                 stringr::str_pad(SampleID, width = 4, pad = "0"),
-                "_LF", LF, ".qs2")),
+                "_LF", LF_ID, ".qs2")),
 
             File_etaPred = File_etaPred,
             ChunkID = LF_Data$ChunkID[[RowNum]],
@@ -639,23 +639,20 @@ Predict_LF <- function(
       dplyr::select(-LF, -ChunkID, -File_etaPred) %>%
       dplyr::arrange(SampleID) %>%
       dplyr::mutate(
-        Path_Sample = paste0(
-          Temp_Dir_LF, "/LF_Samp_",
-          stringr::str_pad(SampleID, width = 4, pad = "0"), ".qs2")) %>%
+        Path_Sample = file.path(
+          Temp_Dir_LF,
+          paste0(
+            Model_Name, "_LF_Samp_",
+            stringr::str_pad(SampleID, width = 4, pad = "0"), ".qs2"))) %>%
       tidyr::nest(data = -c("SampleID", "Path_Sample"))
-
 
     IASDT.R::CatTime("Prepare for parallel processing", Level = 2)
     c1 <- parallel::makeCluster(LF_NCores)
     on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
 
-    IASDT.R::CatTime("Export objects to cores", Level = 2)
     parallel::clusterExport(
       cl = c1, varlist = c("postEtaPred_Samp", "LF_Return"),
       envir = environment())
-
-    # Load necessary libraries and load environment if using TensorFlow
-    IASDT.R::CatTime("Load necessary libraries", Level = 2)
     invisible(parallel::clusterEvalQ(
       cl = c1,
       expr = {
@@ -665,8 +662,8 @@ Predict_LF <- function(
         invisible(gc())
       }))
 
-    # Making predictions on parallel
-    IASDT.R::CatTime("Making predictions on parallel", Level = 2)
+    # Merge results on parallel
+    IASDT.R::CatTime("Process results for MCMC samples on parallel", Level = 2)
 
     postEtaPred <- parallel::clusterApplyLB(
       cl = c1,

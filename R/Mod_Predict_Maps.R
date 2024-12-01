@@ -203,15 +203,28 @@ Predict_Maps <- function(
 
   Model <- IASDT.R::LoadAs(Path_Model)
 
+  # `Pred_Clamp` can not be TRUE when `EffortsLog` is not used as predictor
+  if (Pred_Clamp && isFALSE("EffortsLog" %in% names(Model$XData))) {
+    stop(
+      "`Pred_Clamp` can not be used when `EffortsLog` is not used as predictor",
+      call. = FALSE)
+  }
+
   OtherVars <- stringr::str_subset(names(Model$XData), "^bio|CV", negate = TRUE)
   BioVars <- stringr::str_subset(names(Model$XData), "^bio", negate = FALSE)
 
-  Pred_Dir <- dplyr::if_else(Pred_Clamp, "Clamp", "NoClamp")
+  Path_Eval <- file.path(dirname(dirname(Path_Model)), "Model_Evaluation")
+
   Path_Prediction1 <- file.path(
     dirname(dirname(Path_Model)), "Model_Prediction")
-  Path_Prediction <- file.path(Path_Prediction1, Pred_Dir)
-  Path_Eval <- file.path(dirname(dirname(Path_Model)), "Model_Evaluation")
-  fs::dir_create(c(Path_Eval, Path_Prediction))
+  Path_Prediction_Clamp <- file.path(Path_Prediction1, "Clamp")
+  Path_Prediction_NoClamp <- file.path(Path_Prediction1, "NoClamp")
+  fs::dir_create(c(Path_Eval, Path_Prediction_NoClamp))
+
+  if (Pred_Clamp) {
+    # Create folder for clamp results only if Pred_Clamp == TRUE
+    fs::dir_create(Path_Prediction_Clamp)
+  }
 
   if (Pred_Clamp && is.null(Fix_Efforts)) {
     stop("`Fix_Efforts` can not be NULL when Clamping is implemented")
@@ -247,6 +260,17 @@ Predict_Maps <- function(
       Name = paste0(TimePeriod, "_", ClimateScenario, "_", ClimateModel),
       Name = stringr::str_replace(Name, "1981-2010_Current_Current", "Current"),
       Name = stringr::str_replace_all(Name, "-", "_"))
+
+  if (Pred_Clamp) {
+    # Add new prediction options for not-clamped predictions
+    ClampOption <- Prediction_Options %>%
+      dplyr::filter(ClimateModel == "Current") %>%
+      dplyr::mutate(Clamp = FALSE)
+    Prediction_Options <- dplyr::mutate(Prediction_Options, Clamp = TRUE) %>%
+      dplyr::bind_rows(ClampOption, .)
+  } else {
+    Prediction_Options <- dplyr::mutate(Prediction_Options, Clamp = FALSE)
+  }
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
 
@@ -495,7 +519,6 @@ Predict_Maps <- function(
     invisible(gc())
   }
 
-
   # # ..................................................................... ###
   # # ..................................................................... ###
 
@@ -505,16 +528,27 @@ Predict_Maps <- function(
 
     # Name of the current option
     Option_Name <- Prediction_Options$Name[[ID]]
+    # Name of the current model
     Model_Name <- paste0(Option_Name, "_", Hab_Abb)
+    # Whether to clamp the sampling efforts
+    DoClamp <- Prediction_Options$Clamp[[ID]]
 
-    MSG <- paste0(Model_Name, " (", ID, "/", nrow(Prediction_Options), ")")
+    MSG <- paste0(
+      Model_Name, " - ",
+      dplyr::if_else(DoClamp, "clamping", "no clamping"),
+      " (", ID, "/", nrow(Prediction_Options), ")")
     IASDT.R::InfoChunk(
       paste0("\t", MSG), Extra1 = 1, Extra2 = 1, Rep = 1,
       Char = "-", CharReps = 60)
 
-    if (Pred_Clamp) {
+    if (DoClamp) {
 
-      Evaluate <- dplyr::if_else(Option_Name == "Current", TRUE, FALSE)
+      # Do not evaluate for options with clamping
+      Evaluate <- FALSE
+
+      # Make prediction files at `Path_Prediction_Clamp`
+      Path_Prediction <- Path_Prediction_Clamp
+
       Path_Prediction_sf <- file.path(
         Path_Prediction, paste0("Prediction_", Option_Name, "_Clamp_sf.qs2"))
       Path_Prediction_R <- file.path(
@@ -531,14 +565,18 @@ Predict_Maps <- function(
 
     } else {
 
-      Evaluate <- FALSE
+      # Evaluate for "Current" climates, without clamping
+      Evaluate <- dplyr::if_else(Option_Name == "Current", TRUE, FALSE)
+
+      # Make prediction files at `Path_Prediction_NoClamp`
+      Path_Prediction <- Path_Prediction_NoClamp
+
       Path_Prediction_sf <- file.path(
         Path_Prediction, paste0("Prediction_", Option_Name, "_sf.qs2"))
       Path_Prediction_R <- file.path(
         Path_Prediction, paste0("Prediction_", Option_Name, "_R.qs2"))
       Path_Prediction_summary <- file.path(
-        Path_Prediction,
-        paste0("Prediction_", Option_Name, "_Summary.RData"))
+        Path_Prediction, paste0("Prediction_", Option_Name, "_Summary.RData"))
 
       # use original effort data
       StaticPreds <- terra::subset(
@@ -762,7 +800,9 @@ Predict_Maps <- function(
         layer_name = Fields2Raster,
         time_period = Prediction_Options$TimePeriod[[ID]],
         climate_model = Prediction_Options$ClimateModel[[ID]],
-        climate_scenario = Prediction_Options$ClimateScenario[[ID]]) %>%
+        climate_scenario = Prediction_Options$ClimateScenario[[ID]],
+        Clamp = Prediction_Options$Clamp[[ID]],
+        Path_Prediction = Path_Prediction) %>%
         dplyr::mutate(
           Stats = dplyr::case_when(
             stringr::str_detect(layer_name, "_mean$") ~ "tif_path_mean",
@@ -792,7 +832,7 @@ Predict_Maps <- function(
         tidyr::pivot_wider(
           id_cols = c(
             "hab_abb", "hab_name", "time_period", "climate_model",
-            "climate_scenario", "ias_id"),
+            "climate_scenario", "ias_id", "Clamp", "Path_Prediction"),
           names_from = "Stats", values_from = "tif_path") %>%
         dplyr::left_join(SpeciesInfo, by = "ias_id") %>%
         dplyr::select(
@@ -923,7 +963,9 @@ Predict_Maps <- function(
   # Loading mean predictions at current climates
   IASDT.R::CatTime("Loading mean predictions at current climates", Level = 1)
   CurrentMean <- list.files(
-    path = Path_Prediction, pattern = "Prediction_Current.*_R.qs2",
+    path = dplyr::if_else(
+      Pred_Clamp, Path_Prediction_Clamp, Path_Prediction_NoClamp),
+    pattern = "Prediction_Current.*_R.qs2",
     full.names = TRUE) %>%
     IASDT.R::LoadAs() %>%
     terra::unwrap()
@@ -940,6 +982,7 @@ Predict_Maps <- function(
           tif_path_sd, tif_path_cov, ias_id),
         .f = function(tifs, tif_path_mean, tif_path_anomaly,
                       tif_path_sd, tif_path_cov, ias_id) {
+
           # load maps for future climate option
           tiffs_R <- terra::rast(tifs)
 
@@ -1000,7 +1043,8 @@ Predict_Maps <- function(
   Prediction_Ensemble_R <- Prediction_Ensemble %>%
     dplyr::mutate(
       Ensemble_File = file.path(
-        Path_Prediction,
+        dplyr::if_else(
+          Pred_Clamp, Path_Prediction_Clamp, Path_Prediction_NoClamp),
         paste0(
           "Prediction_", stringr::str_replace(time_period, "-", "_"), "_",
           climate_scenario, "_Ensemble_R.qs2"))) %>%
@@ -1030,7 +1074,8 @@ Predict_Maps <- function(
     dplyr::select(-Ensemble_Maps) %>%
     dplyr::mutate(
       Ensemble_File = file.path(
-        Path_Prediction,
+        dplyr::if_else(
+          Pred_Clamp, Path_Prediction_Clamp, Path_Prediction_NoClamp),
         paste0(
           "Prediction_", stringr::str_replace(time_period, "-", "_"), "_",
           climate_scenario, "_Ensemble_Summary.RData"))) %>%
@@ -1074,11 +1119,17 @@ Predict_Maps <- function(
 
   save(
     Prediction_Summary,
-    file = file.path(Path_Prediction, "Prediction_Summary.RData"))
+    file = file.path(
+      dplyr::if_else(
+        Pred_Clamp, Path_Prediction_Clamp, Path_Prediction_NoClamp),
+      "Prediction_Summary.RData"))
 
   utils::write.table(
     x = Prediction_Summary, sep = "\t", row.names = FALSE, col.names = TRUE,
-    file = file.path(Path_Prediction, "Prediction_Summary.txt"),
+    file = file.path(
+      dplyr::if_else(
+        Pred_Clamp, Path_Prediction_Clamp, Path_Prediction_NoClamp),
+      "Prediction_Summary.txt"),
     quote = FALSE, fileEncoding = "UTF-8")
 
   # # ................................................................... ###

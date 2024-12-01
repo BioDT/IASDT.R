@@ -551,14 +551,15 @@ Predict_LF <- function(
         # Parallel processing
         IASDT.R::CatTime(
           paste0(
-            "Predicting Latent Factor in parallel using ", LF_NCores, " cores"),
+            "Predicting Latent Factor in parallel using ", 
+            min(LF_NCores, nrow(LF_Data)), " cores"),
           Level = 1)
 
         IASDT.R::CatTime("Prepare for parallel processing", Level = 2)
         withr::local_options(
           future.globals.maxSize = 8000 * 1024^2, cluster.timeout = 10 * 60,
           future.gc = TRUE, future.seed = TRUE)
-        c1 <- parallel::makeCluster(LF_NCores)
+        c1 <- parallel::makeCluster(min(LF_NCores, nrow(LF_Data)))
         on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
 
         IASDT.R::CatTime("Export objects to cores", Level = 2)
@@ -701,7 +702,7 @@ Predict_LF <- function(
   # Save postEtaPred
 
   if (!is.null(LF_OutFile)) {
-    IASDT.R::CatTime("Save postEtaPred to: ", Level = 1)
+    IASDT.R::CatTime("Saving postEtaPred to: ", Level = 1)
     IASDT.R::CatTime(paste0("`", LF_OutFile, "`"), Time = FALSE, Level = 2)
     fs::dir_create(fs::path_dir(LF_OutFile))
     IASDT.R::SaveAs(

@@ -73,10 +73,10 @@ RespCurv_PlotSpAll <- function(
 
   # # ..................................................................... ###
 
-  # Loading & processing response curve data on parallel
+  # Loading & processing species response curve data on parallel
 
   IASDT.R::CatTime(
-    "Loading & processing response curve data on parallel", Level = 1)
+    "Loading & processing species response curve data on parallel", Level = 1)
 
   Sp_DT_All <- file.path(Path_RC_DT, "ResCurvDT.RData") %>%
     IASDT.R::LoadAs() %>%

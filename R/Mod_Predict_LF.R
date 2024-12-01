@@ -403,7 +403,7 @@ Predict_LF <- function(
               Path_Samp_LF = file.path(
                 Temp_Dir_LF,
                 paste0(
-                  Model_Name, "_LF_Samp_",
+                  Model_Name, "Samp_",
                   stringr::str_pad(SampleID, width = 4, pad = "0"),
                   "_LF", LF, ".qs2")),
               etaPred = as.list(IASDT.R::LoadAs(File_etaPred_TF))) %>%
@@ -448,7 +448,7 @@ Predict_LF <- function(
                 Path_Samp_LF = file.path(
                   Temp_Dir_LF,
                   paste0(
-                    Model_Name, "_LF_Samp_",
+                    Model_Name, "Samp_",
                     stringr::str_pad(ID, width = 4, pad = "0"),
                     "_LF", LF_ID, ".qs2"))
 
@@ -483,7 +483,7 @@ Predict_LF <- function(
             Path_Samp_LF = file.path(
               Temp_Dir_LF,
               paste0(
-                Model_Name, "_LF_Samp_",
+                Model_Name, "Samp_",
                 stringr::str_pad(SampleID, width = 4, pad = "0"),
                 "_LF", LF_ID, ".qs2")),
 
@@ -642,7 +642,7 @@ Predict_LF <- function(
         Path_Sample = file.path(
           Temp_Dir_LF,
           paste0(
-            Model_Name, "_LF_Samp_",
+            Model_Name, "Samp_",
             stringr::str_pad(SampleID, width = 4, pad = "0"), ".qs2"))) %>%
       tidyr::nest(data = -c("SampleID", "Path_Sample"))
 
@@ -665,14 +665,15 @@ Predict_LF <- function(
     # Merge results on parallel
     IASDT.R::CatTime("Process results for MCMC samples on parallel", Level = 2)
 
-    postEtaPred <- parallel::clusterApplyLB(
+    postEtaPred <- parallel::parLapply(
       cl = c1,
-      x = seq_len(nrow(postEtaPred_Samp)),
+      X = seq_len(nrow(postEtaPred_Samp)),
       fun = function(x) {
+
         Path_Sample <- postEtaPred_Samp$Path_Sample[[x]]
-        Path_LF <- dplyr::pull(postEtaPred_Samp$data[[x]], "Path_Samp_LF")
-        SampleDT0 <- sort(Path_LF) %>%
-          purrr::map(qs2::qs_read, nthreads = 5) %>%
+        Path_LF <- postEtaPred_Samp$data[[x]]$Path_Samp_LF
+
+        SampleDT0 <- lapply(sort(Path_LF), qs2::qs_read) %>%
           purrr::reduce(
             .f = dplyr::left_join, by = c("SampleID", "unitsPred")) %>%
           dplyr::arrange(unitsPred) %>%
@@ -703,7 +704,9 @@ Predict_LF <- function(
     IASDT.R::CatTime("Save postEtaPred to: ", Level = 1)
     IASDT.R::CatTime(paste0("`", LF_OutFile, "`"), Time = FALSE, Level = 2)
     fs::dir_create(fs::path_dir(LF_OutFile))
-    IASDT.R::SaveAs(InObj = postEtaPred, OutPath = LF_OutFile)
+    IASDT.R::SaveAs(
+      InObj = postEtaPred, OutPath = LF_OutFile,
+      nthreads = 10, compress_level = 6)
 
     LF_OutFile_Samp <- stringr::str_replace(LF_OutFile, ".qs2", "_Samp.qs2")
     IASDT.R::SaveAs(InObj = postEtaPred_Samp, OutPath = LF_OutFile_Samp)

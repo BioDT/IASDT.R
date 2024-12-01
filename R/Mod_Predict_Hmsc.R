@@ -286,7 +286,9 @@ Predict_Hmsc <- function(
   # Save smaller version of the model object for later use
   Model_File_small <- file.path(Temp_Dir, "Model_small.qs2")
   if (!file.exists(Model_File_small)) {
-    IASDT.R::CatTime("Save smaller version of the model object", Level = 1)
+    IASDT.R::CatTime(
+      "Save smaller version of the model object to disk",
+      Level = 1)
     IASDT.R::SaveAs(InObj = Model, OutPath = Model_File_small)
   }
   rm(Model, envir = environment())

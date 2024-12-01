@@ -467,6 +467,8 @@ Predict_Maps <- function(
     invisible(gc())
 
     IASDT.R::CatTime("Predicting latent factor", Level = 1)
+    IASDT.R::CatSep(Extra1 = 1, Extra2 = 2, Rep = 1, Char = "*")
+
     # Predicting latent factor only -- no predictions are made
     Preds_LF <- IASDT.R::Predict_Hmsc(
       Path_Model = Path_Model, Gradient = Gradient, expected = TRUE,
@@ -478,7 +480,9 @@ Predict_Maps <- function(
       Verbose = TRUE)
 
     rm(Gradient, Preds_LF, envir = environment())
+
     IASDT.R::CatTime("Predicting latent factor is finished!", Level = 1)
+    IASDT.R::CatSep(Extra1 = 1, Extra2 = 2, Rep = 1, Char = "*")
 
   } else {
     if (Pred_NewSites) {

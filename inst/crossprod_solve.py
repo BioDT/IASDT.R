@@ -279,7 +279,7 @@ def solve_and_multiply(k11, k12, post_eta, log_fn=None, solve_chunk_size=50):
     # Chunked processing
     if solve_chunk_size > 1:
         if log_fn:
-            log_fn("\n  >>  Processing solve_and_multiply in chunks")
+            log_fn("  >>  Processing solve_and_multiply in chunks")
 
         for start_col in range(0, num_columns, solve_chunk_size):
             end_col = min(start_col + solve_chunk_size, num_columns)

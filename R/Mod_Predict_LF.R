@@ -823,17 +823,17 @@ run_crossprod_solve <- function(
     })
 
   # Determine the Python executable path
-  python_executable <- if (.Platform$OS.type == "windows") {
-    file.path(virtual_env_path, "Scripts", "python.exe")
+  if (.Platform$OS.type == "windows") {
+    python_executable <- file.path(virtual_env_path, "Scripts", "python.exe")
+    if (!file.exists(python_executable)) {
+      stop(
+        "Python executable not found in the virtual environment.",
+        call. = FALSE)
+    }
   } else {
-    "python3"
+    python_executable <- "python3"
   }
 
-  if (!file.exists(python_executable)) {
-    stop(
-      "Python executable not found in the virtual environment.",
-      call. = FALSE)
-  }
 
   # Check GPU availability
   result <- system(
@@ -891,9 +891,9 @@ run_crossprod_solve <- function(
   while (attempt <= solve_max_attempts && !success) {
 
     IASDT.R::InfoChunk(
-      paste0("Attempt ", attempt, " of ", solve_max_attempts), 
+      paste0("Attempt ", attempt, " of ", solve_max_attempts),
       file = f, append = TRUE)
-    
+
     # Run the command and capture stdout/stderr to a log file
     result <- system(paste0(LF_Args, collapse = " "), intern = TRUE)
 

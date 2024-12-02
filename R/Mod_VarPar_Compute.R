@@ -66,15 +66,34 @@ VarPar_Compute <- function(
 
     # Determine the Python executable path
     python_executable <- if (.Platform$OS.type == "windows") {
+      
       file.path(TF_Environ, "Scripts", "python.exe")
+
+      if (!file.exists(python_executable)) {
+        stop(
+          "Python executable not found in the virtual environment.",
+          call. = FALSE)
+      }
+
     } else {
-      file.path(TF_Environ, "bin", "python")
+      "python3"
     }
 
-    if (!file.exists(python_executable)) {
-      stop(
-        "Python executable not found in the virtual environment.",
-        call. = FALSE)
+    # Check GPU availability
+    result <- system(
+      paste0(
+        python_executable,
+        " -c \"import tensorflow as tf; print(len(",
+        "tf.config.list_physical_devices('GPU')))\""),
+      intern = TRUE)
+    N_GPU <- result[length(result)]
+    if (N_GPU == 0) {
+      IASDT.R::CatTime(
+        "No GPU found; Calculations will use CPU.", Time = FALSE, Level = 1)
+    } else {
+      IASDT.R::CatTime(
+        paste0(N_GPU, " GPUs were found. Calculations will use GPU."),
+        Time = FALSE, Level = 1)
     }
 
     # Paths to the Python scripts

@@ -826,13 +826,32 @@ run_crossprod_solve <- function(
   python_executable <- if (.Platform$OS.type == "windows") {
     file.path(virtual_env_path, "Scripts", "python.exe")
   } else {
-    file.path(virtual_env_path, "bin", "python")
+    "python3"
   }
 
   if (!file.exists(python_executable)) {
     stop(
       "Python executable not found in the virtual environment.",
       call. = FALSE)
+  }
+
+  # Check GPU availability
+  result <- system(
+    paste0(
+      python_executable,
+      " -c \"import tensorflow as tf; print(len(",
+      "tf.config.list_physical_devices('GPU')))\""),
+    intern = TRUE)
+
+  N_GPU <- result[length(result)]
+
+  if (N_GPU == 0) {
+    IASDT.R::CatTime(
+      "No GPU found; Calculations will use CPU.", Time = FALSE, Level = 1)
+  } else {
+    IASDT.R::CatTime(
+      paste0(N_GPU, " GPUs were found. Calculations will use GPU."),
+      Time = FALSE, Level = 1)
   }
 
   # Construct the command to run the Python script
@@ -861,8 +880,7 @@ run_crossprod_solve <- function(
   f <- file(path_log, open = "a")
   on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
   cat(
-    "Running command:\n",
-    paste(paste(LF_Args, collapse = " "), "\n\n"),
+    "Running command:\n", paste(paste(LF_Args, collapse = " "), "\n\n"),
     sep = "\n", file = f, append = TRUE)
 
   # Initialize retry logic

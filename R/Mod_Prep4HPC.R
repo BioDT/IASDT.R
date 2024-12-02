@@ -237,9 +237,7 @@ Mod_Prep4HPC <- function(
 
   Path_Python <- file.path(Path_Hmsc, "Scripts/python.exe")
 
-  IASDT.R::CatSep(Rep = 1, Extra1 = 1, Extra2 = 1, Char = "=")
-  IASDT.R::CatTime("Preparing data for Hmsc-HPC models", Time = FALSE)
-  IASDT.R::CatSep(Rep = 1, Extra1 = 0, Extra2 = 1, Char = "=")
+  InfoChunk("Preparing data for Hmsc-HPC models", Char = "=")
 
   # # |||||||||||||||||||||||||||||||||||
   # Load/check environment variables -----
@@ -421,18 +419,15 @@ Mod_Prep4HPC <- function(
     "10_Wetland", "12a_Ruderal_habitats", "12b_Agricultural_habitats") %>%
     stringr::str_subset(paste0("^", as.character(Hab_Abb), "_"))
 
-  IASDT.R::CatSep(Rep = 1, Extra1 = 1, Extra2 = 1)
-  IASDT.R::CatTime(
-    "Preparing input data using IASDT.R::Mod_PrepData", Time = FALSE)
-  IASDT.R::CatSep(Rep = 1, Extra1 = 0, Extra2 = 1)
-
+  IASDT.R::InfoChunk("Preparing input data using IASDT.R::Mod_PrepData")
+  
   DT_All <- IASDT.R::Mod_PrepData(
     Hab_Abb = Hab_Abb, MinEffortsSp = MinEffortsSp,
     PresPerSpecies = PresPerSpecies, EnvFile = EnvFile,
     Path_Model = Path_Model, VerboseProgress = VerboseProgress,
     FromHPC = FromHPC, SaveData = SaveData, ExcludeCult = ExcludeCult)
 
-  IASDT.R::CatSep(Rep = 1, Extra1 = 0, Extra2 = 2)
+  IASDT.R::CatSep(Rep = 1, Extra1 = 1, Extra2 = 2)
 
   # # ..................................................................... ###
 

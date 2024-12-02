@@ -49,7 +49,7 @@ IAS_Distribution <- function(
     on.exit(try(sink(), silent = TRUE), add = TRUE)
   }
 
-  IASDT.R::InfoChunk(Species, Extra2 = 0)
+  IASDT.R::InfoChunk(Species)
 
   # # ..................................................................... ###
 

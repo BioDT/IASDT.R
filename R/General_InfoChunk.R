@@ -28,18 +28,32 @@
 #' @export
 
 InfoChunk <- function(
-    Message = "", Date = TRUE, Extra1 = 1L, Extra2 = 1L, Bold = FALSE,
+    Message = "", Date = TRUE, Extra1 = 0L, Extra2 = 1L, Bold = FALSE,
     Red = FALSE, Time = FALSE, Level = 0L, NLines = 1L, ...) {
 
   if (is.null(Message)) {
     stop("Message cannot be NULL", call. = FALSE)
   }
 
-  IASDT.R::CatSep(..., Extra2 = Extra2, Red = Red, Bold = Bold)
+  IASDT.R::CatSep(
+    ..., Extra1 = Extra1, Extra2 = Extra2, Red = Red, Bold = Bold)
   IASDT.R::CatTime(
     Text = Message, NLines = NLines,
     Time = Time, Date = Date, Level = Level, Red = Red, Bold = Bold)
-  IASDT.R::CatSep(..., Extra2 = Extra2, Red = Red, Bold = Bold)
+  IASDT.R::CatSep(
+    ..., Extra1 = Extra1, Extra2 = Extra2, Red = Red, Bold = Bold)
 
   return(invisible(NULL))
+}
+
+{
+
+InfoChunk(
+  paste0("\t", "Making spatial predictions"), Extra1 = 0, Extra2 = 1, Rep = 2,
+  Char = "*", CharReps = 70, Red = TRUE, Bold = TRUE, Time = FALSE)
+
+  InfoChunk(
+    paste0("\t", "Making spatial predictions"), Extra1 = 0, Extra2 = 1, Rep = 2,
+    Char = "*", CharReps = 70, Red = TRUE, Bold = TRUE, Time = FALSE)
+cat("A")
 }

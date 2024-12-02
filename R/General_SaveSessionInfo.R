@@ -37,8 +37,9 @@ SaveSessionInfo <- function(Path = getwd(), SessionObj = NULL, Prefix = "S") {
   if (!is.null(SessionObj)) {
     utils::capture.output(
       IASDT.R::InfoChunk(
-        paste0("Objects in the current session (except functions and ",
-               "pre-selected objects; Size in megabytes)")),
+        paste0(
+          "Objects in the current session (except functions and ",
+          "pre-selected objects; Size in megabytes)")),
       file = FileName, append = TRUE)
 
     sink(FileName, append = TRUE)

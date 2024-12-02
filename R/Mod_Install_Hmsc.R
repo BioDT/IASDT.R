@@ -60,7 +60,7 @@ Install_Hmsc <- function(
 
   # Checking Python installation
 
-  IASDT.R::InfoChunk("Checking Python", Extra1 = 1, Extra2 = 2)
+  IASDT.R::InfoChunk("Checking Python")
   PythonVersion <- system2(
     Path_Python, "--version", stdout = TRUE, stderr = TRUE)
 
@@ -78,14 +78,14 @@ Install_Hmsc <- function(
 
   # Creating the virtual environment
 
-  IASDT.R::InfoChunk("Creating virtual environment", Extra1 = 1, Extra2 = 2)
+  IASDT.R::InfoChunk("Creating virtual environment")
   system2(Path_Python, paste0("-m venv ", Path_VE))
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Checking Python version in the virtual environment
 
-  IASDT.R::InfoChunk("Checking virtual environment", Extra1 = 1, Extra2 = 2)
+  IASDT.R::InfoChunk("Checking virtual environment")
   python <- file.path(Path_VE, "Scripts", "python.exe")
   PythonVersion <- system2(python, "--version", stdout = TRUE, stderr = TRUE)
 
@@ -99,7 +99,7 @@ Install_Hmsc <- function(
 
   # Upgrading pip
 
-  IASDT.R::InfoChunk("Upgrading pip", Extra1 = 1, Extra2 = 2)
+  IASDT.R::InfoChunk("Upgrading pip")
   system2(python, "-m pip install --upgrade pip")
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -107,7 +107,7 @@ Install_Hmsc <- function(
   # Installing Hmsc-HPC package from Git
 
   IASDT.R::InfoChunk(
-    "Installing Hmsc-HPC package from Git", Extra1 = 1, Extra2 = 2)
+    "Installing Hmsc-HPC package from Git")
   if (Force) {
     Command <- paste0("-m pip install git+", URL_Hmsc, " --force-reinstall")
   } else {
@@ -123,19 +123,19 @@ Install_Hmsc <- function(
   # TensorFlow Probability requires TensorFlow version >= 2.15; Detected an
   # installation of version 2.13.1. Please upgrade TensorFlow to proceed.
 
-  IASDT.R::InfoChunk("Installing TensorFlow v2.15", Extra1 = 1, Extra2 = 2)
+  IASDT.R::InfoChunk("Installing TensorFlow v2.15")
   system2(python, "-m pip install tensorflow==2.15")
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Checking TensorFlow
-  IASDT.R::InfoChunk("Checking TensorFlow", Extra1 = 1, Extra2 = 2)
+  IASDT.R::InfoChunk("Checking TensorFlow")
   system2(python, '-c "import tensorflow as tf; print(tf.constant(1))"')
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Install `rdata`
-  IASDT.R::InfoChunk("Installing rdata", Extra1 = 1, Extra2 = 2)
+  IASDT.R::InfoChunk("Installing rdata")
   Command <- paste0("-m pip install git+", URL_rdata)
   system2(python, Command)
 
@@ -151,7 +151,7 @@ Install_Hmsc <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Checking Hmsc
-  IASDT.R::InfoChunk("Checking Hmsc", Extra1 = 1, Extra2 = 2)
+  IASDT.R::InfoChunk("Checking Hmsc")
   system2(python, '-c "import hmsc"')
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

@@ -890,12 +890,10 @@ run_crossprod_solve <- function(
 
   while (attempt <= solve_max_attempts && !success) {
 
-    IASDT.R::CatSep(file = f, append = TRUE, Extra2 = 1)
-    IASDT.R::CatTime(
-      paste0("Attempt ", attempt, " of ", solve_max_attempts), sep = "\n",
-      NLines = 1, file = f, append = TRUE)
-    IASDT.R::CatSep(file = f, append = TRUE, Extra2 = 1)
-
+    IASDT.R::InfoChunk(
+      paste0("Attempt ", attempt, " of ", solve_max_attempts), 
+      file = f, append = TRUE)
+    
     # Run the command and capture stdout/stderr to a log file
     result <- system(paste0(LF_Args, collapse = " "), intern = TRUE)
 

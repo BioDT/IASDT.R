@@ -59,7 +59,7 @@ CatDiff <- function(
   }
 
   if (CatInfo) {
-    IASDT.R::InfoChunk(Message = ChunkText, Extra1 = 1, Extra2 = 1)
+    IASDT.R::InfoChunk(Message = ChunkText)
     Prefix <- paste0("\n", Prefix)
   }
 

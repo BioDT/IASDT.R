@@ -82,12 +82,12 @@ Mod_Fit_WS <- function(Path_Model, EnvFile = ".env", NCores = NULL) {
     IASDT.R::CatTime(
       paste0("There are ", nrow(Model2Run), " model variants to be fitted."))
 
-    withr::local_options(
-      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
-
     if (NCores == 1) {
       future::plan("future::sequential", gc = TRUE)
     } else {
+      withr::local_options(
+        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+        future.seed = TRUE)
       c1 <- snow::makeSOCKcluster(NCores)
       on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
       future::plan("future::cluster", workers = c1, gc = TRUE)

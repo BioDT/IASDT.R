@@ -52,7 +52,9 @@ IAS_Process <- function(
 
   rm(AllArgs, envir = environment())
 
-  withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
+  withr::local_options(
+    future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+    future.seed = TRUE)
 
   # # ..................................................................... ###
 
@@ -193,6 +195,9 @@ IAS_Process <- function(
   if (NCores == 1) {
     future::plan("future::sequential", gc = TRUE)
   } else {
+    withr::local_options(
+      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+      future.seed = TRUE)
     c1 <- snow::makeSOCKcluster(NCores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
     future::plan("future::cluster", workers = c1, gc = TRUE)

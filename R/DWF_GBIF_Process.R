@@ -56,7 +56,9 @@ GBIF_Process <- function(
     AllArgs = AllArgs, Type = "numeric",
     Args = c("StartYear", "Boundaries", "ChunkSize", "NCores"))
 
-  withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
+  withr::local_options(
+    future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+    future.seed = TRUE)
 
   # # ..................................................................... ###
 
@@ -170,6 +172,9 @@ GBIF_Process <- function(
     terra::setGDALconfig("GTIFF_SRS_SOURCE", "EPSG")
     future::plan("future::sequential", gc = TRUE)
   } else {
+    withr::local_options(
+      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+      future.seed = TRUE)
     c1 <- snow::makeSOCKcluster(NCores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
 
@@ -571,12 +576,14 @@ GBIF_Process <- function(
   if (NCores == 1) {
     future::plan("future::sequential", gc = TRUE)
   } else {
+    withr::local_options(
+      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+      future.seed = TRUE)
     c1 <- snow::makeSOCKcluster(NCores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
     future::plan("future::cluster", workers = c1, gc = TRUE)
     on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
   }
-
 
   IASDT.R::CatTime("Splitting species data on parallel", Level = 2)
   furrr::future_walk(

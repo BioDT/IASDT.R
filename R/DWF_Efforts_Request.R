@@ -81,11 +81,12 @@ Efforts_Request <- function(
     paste0("Prepare working on parallel using `", min(NCores, 3), "` cores."),
     Level = 1)
 
-  withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
-
   if (NCores == 1) {
     future::plan("future::sequential", gc = TRUE)
   } else {
+    withr::local_options(
+      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+      future.seed = TRUE)
     c1 <- snow::makeSOCKcluster(min(NCores, 3))
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
     future::plan("future::cluster", workers = c1, gc = TRUE)
@@ -198,8 +199,9 @@ Efforts_Request <- function(
   # Save efforts request data ------
   IASDT.R::CatTime("Save efforts request data", Level = 1)
 
-  save(Efforts_AllRequests,
-       file = file.path(Path_Efforts, "Efforts_AllRequests.RData"))
+  save(
+    Efforts_AllRequests,
+    file = file.path(Path_Efforts, "Efforts_AllRequests.RData"))
 
   # # ..................................................................... ###
 

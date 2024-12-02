@@ -273,6 +273,9 @@ Railway_Intensity <- function(
   if (NCores == 1) {
     future::plan("future::sequential", gc = TRUE)
   } else {
+    withr::local_options(
+      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+      future.seed = TRUE)
     c1 <- snow::makeSOCKcluster(NCores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
     future::plan("future::cluster", workers = c1, gc = TRUE)
@@ -293,7 +296,7 @@ Railway_Intensity <- function(
 
       withr::local_options(
         future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
-        timeout = 1200)
+        future.seed = TRUE, timeout = 1200)
 
       # Check if zip file is a valid file
       if (file.exists(Path)) {

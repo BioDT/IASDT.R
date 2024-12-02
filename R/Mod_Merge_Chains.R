@@ -144,11 +144,12 @@ Merge_Chains <- function(
       Path_FittedMod = NULL, Path_Coda = NULL)
 
   # Prepare working on parallel -----
-  withr::local_options(future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
-
   if (NCores == 1) {
     future::plan("future::sequential", gc = TRUE)
   } else {
+    withr::local_options(
+      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+      future.seed = TRUE)
     c1 <- snow::makeSOCKcluster(min(NCores, nrow(Model_Info2)))
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
     future::plan("future::cluster", workers = c1, gc = TRUE)

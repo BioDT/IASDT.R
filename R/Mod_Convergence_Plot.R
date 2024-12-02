@@ -526,7 +526,8 @@ Convergence_Plot <- function(
     IASDT.R::CatTime("Prepare working on parallel", Level = 2)
     if (NCores > 1) {
       withr::local_options(
-        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
+        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+        future.seed = TRUE)
       c1 <- snow::makeSOCKcluster(min(NCores, nrow(Beta_DF)))
       on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
       future::plan("future::cluster", workers = c1, gc = TRUE)
@@ -705,7 +706,8 @@ Convergence_Plot <- function(
   IASDT.R::CatTime("Prepare working on parallel", Level = 2)
   if (NCores > 1) {
     withr::local_options(
-      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
+      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+      future.seed = TRUE)
     c1 <- snow::makeSOCKcluster(min(NCores, nrow(BetaTracePlots_ByVar)))
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
     future::plan("future::cluster", workers = c1, gc = TRUE)
@@ -837,7 +839,8 @@ Convergence_Plot <- function(
   IASDT.R::CatTime("Prepare working on parallel", Level = 2)
   if (NCores > 1) {
     withr::local_options(
-      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE)
+      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+      future.seed = TRUE)
     c1 <- snow::makeSOCKcluster(min(NCores, nrow(BetaTracePlots_BySp)))
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
     future::plan("future::cluster", workers = c1, gc = TRUE)

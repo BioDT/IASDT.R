@@ -26,7 +26,7 @@
 #' @export
 
 InfoChunk <- function(
-    Message = "", Date = TRUE, Extra1 = 1, Extra2 = 2, Bold = FALSE,
+    Message = "", Date = TRUE, Extra1 = 1, Extra2 = 1, Bold = FALSE,
     Red = FALSE,  Time = TRUE, Level = 0, NLines = 1, ...) {
 
   if (is.null(Message)) {

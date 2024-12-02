@@ -47,7 +47,7 @@ Mod_Postprocess <- function(
 
   Ch1 <- function(Text) {
     IASDT.R::InfoChunk(
-      paste0("\t", Text), Extra1 = 2, Extra2 = 2, Rep = 2,
+      paste0("\t", Text), Extra1 = 2, Extra2 = 1, Rep = 2,
       Char = "=", CharReps = 60, Red = TRUE, Bold = TRUE, Time = FALSE)
   }
 

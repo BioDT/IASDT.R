@@ -4,7 +4,18 @@
 \alias{InfoChunk}
 \title{Print Information chunk with time stamp}
 \usage{
-InfoChunk(Message = "", Date = TRUE, Extra1 = 1, Extra2 = 2, ...)
+InfoChunk(
+  Message = "",
+  Date = TRUE,
+  Extra1 = 1,
+  Extra2 = 2,
+  Bold = FALSE,
+  Red = FALSE,
+  Time = TRUE,
+  Level = 0,
+  NLines = 1,
+  ...
+)
 }
 \arguments{
 \item{Message}{A character string representing the main message to be
@@ -15,6 +26,20 @@ timestamped. This parameter is mandatory and cannot be \code{NULL} or empty.}
 
 \item{Extra1, Extra2}{integer; the number of extra empty lines to print before
 and after the separator lines. See \link{CatSep} for more details.}
+
+\item{Bold}{logical; whether to print the text in bold. Default is \code{FALSE}.}
+
+\item{Red}{logical; whether to print the text in red. Default is \code{FALSE}.}
+
+\item{Time}{logical; whether to include the time in the timestamp. Default is
+\code{TRUE}. If \code{FALSE}, only the text is printed.}
+
+\item{Level}{integer; the level at which the message will be printed. If e.g.
+Level = 1, the following string will be printed at the beginning of the
+message: "   >>>   ". Default is \code{0}.}
+
+\item{NLines}{integer; the number of newline characters to print after the
+message. Default is 1.}
 
 \item{...}{Additional arguments passed to \link{CatSep} for customizing
 the separators.}
@@ -29,7 +54,6 @@ separators for better readability in console outputs or logs.
 }
 \examples{
 InfoChunk(Message = "Started")
-
 InfoChunk(Message = "finished", Char = "*", CharReps = 60)
 }
 \author{

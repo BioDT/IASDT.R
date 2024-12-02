@@ -445,7 +445,7 @@ Predict_LF <- function(
               .x = seq_along(SampleID),
               .f = function(ID) {
 
-                Path_Samp_LF = file.path(
+                Path_Samp_LF <- file.path(
                   Temp_Dir_LF,
                   paste0(
                     Model_Name, "Samp_",
@@ -551,7 +551,7 @@ Predict_LF <- function(
         # Parallel processing
         IASDT.R::CatTime(
           paste0(
-            "Predicting Latent Factor in parallel using ", 
+            "Predicting Latent Factor in parallel using ",
             min(LF_NCores, nrow(LF_Data)), " cores"),
           Level = 1)
 

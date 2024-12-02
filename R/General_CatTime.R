@@ -21,7 +21,9 @@
 #'   `CET`.
 #' @param Level integer; the level at which the message will be printed. If e.g.
 #'   Level = 1, the following string will be printed at the beginning of the
-#'   message: "   >>>   ".
+#'   message: "   >>>   ". Default is `0`.
+#' @param Bold logical; whether to print the text in bold. Default is `FALSE`.
+#' @param Red logical; whether to print the text in red. Default is `FALSE`.
 #' @param ... additional arguments passed to `cat`.
 #' @name CatTime
 #' @author Ahmed El-Gabbas
@@ -46,7 +48,7 @@
 #' }
 
 CatTime <- function(
-    Text = "", NLines = 1, Time = TRUE,
+    Text = "", NLines = 1, Time = TRUE, Bold = FALSE, Red = FALSE,
     Date = FALSE, TZ = "CET", Level = 0, ...) {
 
   if (Time) {
@@ -62,6 +64,12 @@ CatTime <- function(
     cat(Now, ...)
     cat(rep("\n", NLines))
   } else {
+    if (Bold) {
+      Text <- crayon::bold(Text)
+    }
+    if (Red) {
+      Text <- crayon::red(Text)
+    }
     if (Level > 0) {
       Prefix <- rep("  >>>", each = Level) %>%
         paste0(collapse = "") %>%

@@ -1,7 +1,7 @@
 ## |------------------------------------------------------------------------| #
 # CatSep ----
 ## |------------------------------------------------------------------------| #
-#
+
 #' Print separator(s) to the console
 #'
 #' This function prints customizable separator lines to the console, optionally
@@ -16,6 +16,7 @@
 #'   form a separator line. Default is `50`.
 #' @param ... additional arguments to be passed to `cat()`.
 #' @name CatSep
+#' @inheritParams CatTime
 #' @author Ahmed El-Gabbas
 #' @return The function is called for its side effect (printing to the console)
 #'   and does not return a meaningful value.
@@ -32,7 +33,8 @@
 #' @export
 
 CatSep <- function(
-    Rep = 1L, Extra1 = 0L, Extra2 = 0L, Char = "-",  CharReps = 50L, ...) {
+    Rep = 1L, Extra1 = 0L, Extra2 = 0L, Char = "-",
+    CharReps = 50L, Bold = FALSE, Red = FALSE, ...) {
 
   # Check input arguments
   AllArgs <- ls(envir = environment())
@@ -43,6 +45,13 @@ CatSep <- function(
   NumericArgs <- c("Rep", "Extra1", "Extra2", "CharReps")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = NumericArgs, Type = "numeric")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = "Char", Type = "character")
+
+  if (Bold) {
+    Char <- crayon::bold(Char)
+  }
+  if (Red) {
+    Char <- crayon::red(Char)
+  }
 
   if (Extra1 > 0) {
     cat(paste0(rep("\n", Extra1), collapse = ""), ...)

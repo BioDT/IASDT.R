@@ -8,6 +8,8 @@ CatTime(
   Text = "",
   NLines = 1,
   Time = TRUE,
+  Bold = FALSE,
+  Red = FALSE,
   Date = FALSE,
   TZ = "CET",
   Level = 0,
@@ -24,6 +26,10 @@ message. Default is 1.}
 \item{Time}{logical; whether to include the time in the timestamp. Default is
 \code{TRUE}. If \code{FALSE}, only the text is printed.}
 
+\item{Bold}{logical; whether to print the text in bold. Default is \code{FALSE}.}
+
+\item{Red}{logical; whether to print the text in red. Default is \code{FALSE}.}
+
 \item{Date}{logical; whether to include the date in the timestamp. Only
 effective if \code{Time} is \code{TRUE}. Default is \code{FALSE}, meaning only the time is
 printed. If \code{TRUE}, the date is printed in the format "\%d/\%m/\%Y \%X".}
@@ -33,7 +39,7 @@ printed. If \code{TRUE}, the date is printed in the format "\%d/\%m/\%Y \%X".}
 
 \item{Level}{integer; the level at which the message will be printed. If e.g.
 Level = 1, the following string will be printed at the beginning of the
-message: "   >>>   ".}
+message: "   >>>   ". Default is \code{0}.}
 
 \item{...}{additional arguments passed to \code{cat}.}
 }

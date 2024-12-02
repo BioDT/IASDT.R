@@ -28,7 +28,7 @@ difference. Defaults to "Completed in ".}
 
 \item{Level}{integer; the level at which the message will be printed. If e.g.
 Level = 1, the following string will be printed at the beginning of the
-message: "   >>>   ".}
+message: "   >>>   ". Default is \code{0}.}
 
 \item{...}{Additional arguments for \link{CatTime}.}
 }

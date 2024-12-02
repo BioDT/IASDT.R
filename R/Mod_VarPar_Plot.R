@@ -351,7 +351,8 @@ VarPar_Plot <- function(
       Theme +
       ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1, byrow = TRUE))
 
-    # Using ggplot2::ggsave directly does not show non-ascii characters correctly
+    # Using ggplot2::ggsave directly does not show non-ascii characters
+    # correctly
     grDevices::jpeg(
       filename = file.path(Path_VarPar, "VarPar_Relative_TjurR2.jpeg"),
       width = Fig_width, height = Fig_height,
@@ -412,8 +413,8 @@ VarPar_Plot <- function(
         Label = factor(Label, .data$Label),
         VP_Value = NULL)
 
-    # Plotting data for relative variance partitioning - ordered by mean variance
-    # partitioning per Variable
+    # Plotting data for relative variance partitioning - ordered by mean
+    # variance partitioning per Variable
     DT_Raw <- VarPar_DF_Raw %>%
       dplyr::arrange(Variable, VP_Value) %>%
       dplyr::mutate(Species_name = factor(Species_name, SpOrder)) %>%
@@ -459,7 +460,8 @@ VarPar_Plot <- function(
       Theme +
       ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1, byrow = TRUE))
 
-    # Using ggplot2::ggsave directly does not show non-ascii characters correctly
+    # Using ggplot2::ggsave directly does not show non-ascii characters
+    # correctly
     grDevices::jpeg(
       filename = file.path(Path_VarPar, "VarPar_Raw_Ordered.jpeg"),
       width = Fig_width, height = Fig_height,
@@ -491,7 +493,8 @@ VarPar_Plot <- function(
       Theme +
       ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1, byrow = TRUE))
 
-    # Using ggplot2::ggsave directly does not show non-ascii characters correctly
+    # Using ggplot2::ggsave directly does not show non-ascii characters
+    # correctly
     grDevices::jpeg(
       filename = file.path(Path_VarPar, "VarPar_Raw_TotalVarExplained.jpeg"),
       width = Fig_width, height = Fig_height,

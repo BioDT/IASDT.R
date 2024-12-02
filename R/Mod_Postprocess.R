@@ -48,13 +48,13 @@ Mod_Postprocess <- function(
   Ch1 <- function(Text) {
     IASDT.R::InfoChunk(
       paste0("\t", Text), Extra1 = 2, Extra2 = 2, Rep = 2,
-      Char = "=", CharReps = 60)
+      Char = "=", CharReps = 60, Red = TRUE, Bold = TRUE, Time = FALSE)
   }
 
   Ch2 <- function(Text) {
     IASDT.R::InfoChunk(
       paste0("\t", Text), Extra1 = 1, Extra2 = 1, Rep = 1,
-      Char = "-", CharReps = 60)
+      Char = "-", CharReps = 60, Red = TRUE, Bold = TRUE, Time = FALSE)
   }
 
   # # ..................................................................... ###
@@ -388,13 +388,14 @@ Mod_Postprocess <- function(
 
 
   # Cross-validation -------
-  IASDT.R::InfoChunk("Prepare input data for cross-validation")
+  IASDT.R::InfoChunk(
+    "Prepare input data for cross-validation", 
+    Red = TRUE, Bold = TRUE, Time = FALSE)
 
   IASDT.R::Mod_CV_Fit(
     Model = Path_Model, ModelData = ModelData, CVName = CVName,
     EnvFile = EnvFile, JobName = paste0("CV_", Hab_Abb), FromHPC = FromHPC,
     MemPerCpu = MemPerCpu, Time = Time, Path_Hmsc = Path_Hmsc)
-
 
   # # ..................................................................... ###
   # # ..................................................................... ###

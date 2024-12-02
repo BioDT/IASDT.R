@@ -394,7 +394,7 @@ RespCurv_PrepData <- function(
 
       IASDT.R::InfoChunk(
         Message = "Get LF prediction at mean coordinates",
-        Date = FALSE, Extra2 = 1)
+        Date = FALSE, Extra2 = 1, Red = TRUE, Bold = TRUE, Time = FALSE)
 
       IASDT.R::CatTime("Create gradient")
       Gradient_c <- Hmsc::constructGradient(
@@ -432,7 +432,8 @@ RespCurv_PrepData <- function(
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
     IASDT.R::InfoChunk(
-      Message = "Prepare response curve data", Date = FALSE, Extra2 = 1)
+      Message = "Prepare response curve data", Date = FALSE, Extra2 = 1,
+      Red = TRUE, Bold = TRUE, Time = FALSE)
 
     NCores <- max(min(NCores, MissingRows), 1)
 

@@ -847,11 +847,12 @@ run_crossprod_solve <- function(
 
   if (N_GPU == 0) {
     IASDT.R::CatTime(
-      "No GPU found; Calculations will use CPU.", Time = FALSE, Level = 1)
+      "No GPU found; Calculations will use CPU.", 
+      Time = FALSE, Bold = TRUE, Red = TRUE)
   } else {
     IASDT.R::CatTime(
       paste0(N_GPU, " GPUs were found. Calculations will use GPU."),
-      Time = FALSE, Level = 1)
+      Time = FALSE, Bold = TRUE, Red = TRUE)
   }
 
   # Construct the command to run the Python script

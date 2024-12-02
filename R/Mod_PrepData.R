@@ -4,22 +4,25 @@
 
 #' Prepare habitat-specific data for Hmsc models
 #'
-#' This function prepares habitat-specific data for Hmsc models by processing
-#' environmental and species presence data. It checks input arguments, reads
-#' environment variables from a file, verifies paths, loads and filters species
-#' data based on habitat type and minimum presence grid cells per species, and
-#' merges various environmental layers (e.g., CHELSA Bioclimatic variables,
-#' habitat coverage, road and railway intensity, sampling efforts) into a single
-#' dataset. The processed data can be saved to disk as `*.RData` file .
-#' @param Hab_Abb Character. Habitat abbreviation indicating the specific
-#'   [SynHab](https://www.preslia.cz/article/pdf?id=11548) habitat type to
-#'   prepare data for. Valid values are `0`, `1`, `2`, `3`, `4a`, `4b`, `10`,
-#'   `12a`, `12b`. If `Hab_Abb` = `0`, data is prepared irrespective of the
-#'   habitat type. For more details, see [Pysek et
+#' This function processes environmental and species presence data to prepare
+#' habitat-specific datasets for use in Hmsc models. It checks input arguments,
+#' reads environment variables from a file, verifies paths, loads and filters
+#' species data based on habitat type and minimum presence grid cells per
+#' species, and merges various environmental layers (e.g., CHELSA Bioclimatic
+#' variables, habitat coverage, road and railway intensity, sampling efforts)
+#' into a single dataset. The processed data can be saved to disk as an
+#' `*.RData` file.
+#'
+#' @param Hab_Abb Character. Abbreviation for the habitat type (based on
+#'   [SynHab](https://www.preslia.cz/article/pdf?id=11548)) for which to prepare
+#'   data. Valid values are `0`, `1`, `2`, `3`, `4a`, `4b`, `10`, `12a`, `12b`.
+#'   If `Hab_Abb` = `0`, data is prepared irrespective of the habitat type. For
+#'   more details, see [Pysek et
 #'   al.](https://doi.org/10.23855/preslia.2022.447).
-#' @param MinEffortsSp Minimum number of vascular plant species per grid cell in
-#'   GBIF for a grid cell to be included in the models. This is to exclude grid
-#'   cells with very little sampling efforts. Defaults to `100`.
+#' @param MinEffortsSp Integer specifying the minimum number of vascular plant
+#'   species per grid cell (from GBIF data) required for inclusion in the
+#'   models. This is to exclude grid cells with very little sampling efforts.
+#'   Defaults to `100`.
 #' @param PresPerSpecies Integer. The minimum number of presence grid cells for
 #'   a species to be included in the analysis. The number of presence grid cells
 #'   per species is calculated after discarding grid cells with low sampling

@@ -2,19 +2,19 @@
 # Predict_Maps ----
 ## |------------------------------------------------------------------------| #
 
-#' Predicts habitat suitability of `Hmsc` model at different climate scenarios
+#' Predicts habitat suitability of `Hmsc` model across different climate options
 #'
-#' This function generates prediction maps of `Hmsc` models under current and
-#' future climates. It also predicts an ensemble predictions for different
-#' climate models used. For each species and for species richness, the function
-#' exports three maps representing the mean, standard deviation (sd), and
-#' coefficient of variation (cov).
+#' This function generates prediction maps of `Hmsc` models for current and
+#' future climate scenarios. It also predicts an ensemble predictions for
+#' different climate models. For each species and overall species richness, the
+#' function exports three maps: mean, standard deviation (sd), and coefficient
+#' of variation (cov).
 #'
 #' @param Path_Model Character. Path to fitted `Hmsc` model object.
 #' @param Hab_Abb Character. Habitat abbreviation indicating the specific
-#'   [SynHab](https://www.preslia.cz/article/pdf?id=11548) habitat type to
-#'   prepare data for. Valid values are `0`, `1`, `2`, `3`, `4a`, `4b`, `10`,
-#'   `12a`, `12b`. For more details, see [Pysek et
+#'   [SynHab](https://www.preslia.cz/article/pdf?id=11548) habitat type for
+#'   which data will be prepared. Valid values are `0`, `1`, `2`, `3`, `4a`,
+#'   `4b`, `10`, `12a`, `12b`. For more details, see [Pysek et
 #'   al.](https://doi.org/10.23855/preslia.2022.447).
 #' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
@@ -25,36 +25,39 @@
 #' @param Pred_Clamp Logical indicating whether to clamp the sampling efforts at
 #'   a single value. Defaults to `TRUE`. If `TRUE`, the `Fix_Efforts` argument
 #'   must be provided.
-#' @param Fix_Efforts Numeric or character. Value to fix the sampling efforts
-#'   at. If numeric, the value will be used as is. If character, it can be one
-#'   of the following: `median`, `mean`, or `max`. Default: `mean`. This
-#'   argument is required when `Pred_Clamp` is `TRUE`.
+#' @param Fix_Efforts Numeric or character. Defines the value to fix sampling
+#'   efforts. If numeric, the value is directly used. If character, it can be
+#'   `median`, `mean` (default), or `max`. This argument is mandatory when
+#'   `Pred_Clamp` is set to `TRUE`.
 #' @param Pred_NewSites Logical indicating whether to predict habitat
-#'   suitability at new sites. Default: `TRUE`. This argument is only temporary
-#'   to make predictions for the workflow and will be removed in the future.
-#' @param CC_Models Character vector specifying the climate models to use for
-#'   future predictions. Default: `c("GFDL-ESM4", "IPSL-CM6A-LR" ,
-#'   "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL")`. This argument is only
-#'   temporary to make predictions for the workflow and will be removed in the
-#'   future.
-#' @param CC_Scenario Character vector specifying the climate scenarios to use
-#'   for future predictions. Default: `c("ssp126", "ssp370", "ssp585")`. This
-#'   argument is only temporary to make predictions for the workflow and will be
-#'   removed in the future.
+#'   suitability at new sites. Default: `TRUE`. Note: This parameter is
+#'   temporary and will be removed in future updates.
+#' @param LF_Only Logical. Indicates whether to predict only the latent factor.
+#'   Useful for distributing processing load between GPU and CPU. When `LF_Only
+#'   = TRUE`, the latent factor prediction can be computed on the GPU. The
+#'   function can then be rerun with `LF_Only = FALSE` to predict habitat
+#'   suitability using the predicted latent factor on the CPU. Default: `FALSE`.
+#' @param CC_Models Character vector. Specifies the climate models for future
+#'   predictions. Default: `c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
+#'   "MRI-ESM2-0", "UKESM1-0-LL")`. Note: This parameter is temporary and may be
+#'   removed in future updates.
+#' @param CC_Scenario Character vector. Specifies the climate scenarios for
+#'   future predictions. Default: `c("ssp126", "ssp370", "ssp585")`. Note: This
+#'   parameter is temporary and may be removed in future updates.
 #' @export
 #' @name Predict_Maps
 #' @author Ahmed El-Gabbas
 #' @inheritParams Predict_Hmsc
-#' @return Returns a tibble with the prediction summary and file paths for
-#'   output tif files.
+#' @return A tibble containing the prediction summary and file paths for output
+#'   `*.tif` files.
 #' @export
 
 Predict_Maps <- function(
     Path_Model = NULL, Hab_Abb = NULL, EnvFile = ".env", FromHPC = TRUE,
     NCores = 8L, Pred_Clamp = TRUE, Fix_Efforts = "mean", Pred_NewSites = TRUE,
     UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE, LF_NCores = NCores,
-    LF_Check = FALSE, LF_Temp_Cleanup = TRUE, Temp_Dir = "TEMP2Pred",
-    Temp_Cleanup = TRUE,
+    LF_Check = FALSE, LF_Temp_Cleanup = TRUE, LF_Only = FALSE,
+    Temp_Dir = "TEMP2Pred", Temp_Cleanup = TRUE,
     CC_Models = c(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
       "MRI-ESM2-0", "UKESM1-0-LL"),
@@ -468,6 +471,11 @@ Predict_Maps <- function(
     Predict_DF_Test <- Prediction_Options %>%
       dplyr::filter(ClimateModel == "Current") %>%
       dplyr::pull("FilePath") %>%
+      # If there are two options for climate data, use the first (both are
+      # identical). If Pred_Clamp is TRUE, two sets of predictions under current
+      # climates will be produced. The additional predictions withoug clamping
+      # is used for model evaluation.
+      head(1) %>%
       IASDT.R::LoadAs() %>%
       terra::unwrap() %>%
       terra::subset(BioVars) %>%
@@ -519,6 +527,13 @@ Predict_Maps <- function(
     invisible(gc())
   }
 
+
+
+  if (LF_Only) {
+    return(invisible())
+  }
+
+
   # # ..................................................................... ###
   # # ..................................................................... ###
 
@@ -540,7 +555,7 @@ Predict_Maps <- function(
       Model_Name, " (", ID, "/", nrow(Prediction_Options), ")")
     cat("\n")
     IASDT.R::InfoChunk(
-      paste0("\t", MSG), Rep = 1, Char = "-", CharReps = 70, Red = TRUE, 
+      paste0("\t", MSG), Rep = 1, Char = "-", CharReps = 70, Red = TRUE,
       Bold = TRUE, Time = FALSE)
 
     if (DoClamp) {
@@ -882,7 +897,7 @@ Predict_Maps <- function(
 
   # Predicting ------
   IASDT.R::InfoChunk(
-    paste0("\t", "Making spatial predictions"), Rep = 2, Char = "*", 
+    paste0("\t", "Making spatial predictions"), Rep = 2, Char = "*",
     CharReps = 70, Red = TRUE, Bold = TRUE, Time = FALSE)
 
   Grid10 <- terra::unwrap(IASDT.R::LoadAs(Path_GridR))
@@ -909,7 +924,7 @@ Predict_Maps <- function(
     future::plan("future::sequential", gc = TRUE)
   } else {
     withr::local_options(
-      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
       future.seed = TRUE)
     c1 <- snow::makeSOCKcluster(min(NCores, nrow(Prediction_Summary)))
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)

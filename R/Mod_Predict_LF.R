@@ -225,7 +225,7 @@ Predict_LF <- function(
         IASDT.R::CheckData(Path_s2, warning = FALSE)
 
       if (s1_s2_Okay) {
-        IASDT.R::CatTime("s1 and s2 matrices are already saved", Level = 2)
+        IASDT.R::CatTime("s1 and s2 matrices were already saved", Level = 2)
       } else {
 
         IASDT.R::CatTime("Saving s1 and s2 matrices", Level = 2)

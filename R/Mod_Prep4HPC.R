@@ -2,26 +2,28 @@
 # Mod_Prep4HPC ----
 ## |------------------------------------------------------------------------| #
 
-#' Prepare initial models in R for model fitting by Hmsc-HPC
+#' Prepare initial models in R for model fitting with Hmsc-HPC
 #'
-#' This function prepares initial models in R for model fitting by Hmsc-HPC. It
-#' involves data preparation, define spatial block cross-validation folds, model
-#' initialization, GPP knots, and generating commands for running models on HPC.
-#' It supports parallel processing, options to include/not include phylogenetic
-#' tree data. The models will be fitted using Gaussian Predictive Process (GPP;
-#' see [Tikhonov et al.](https://doi.org/10.1002/ecy.2929) for more details) via
-#' the [Hmsc-HPC](https://doi.org/10.1371/journal.pcbi.1011914) extension.
+#' This function prepares initial models in R use with Hmsc-HPC. It includes
+#' data preparation, define spatial block cross-validation folds, initializing
+#' models, generating Gaussian Predictive Process (GPP) knots, and creating
+#' commands for HPC execution. It supports parallel processing, options to
+#' include/not include phylogenetic tree data. The models will be fitted using
+#' Gaussian Predictive Process (GPP; see [Tikhonov et
+#' al.](https://doi.org/10.1002/ecy.2929) for more details) via the
+#' [Hmsc-HPC](https://doi.org/10.1371/journal.pcbi.1011914) extension.
 #'
 #' @param Path_Model String (without trailing slash) specifying the path where
 #'   all output, including models to be fitted, will be saved.
 #' @param GPP Logical indicating whether to fit spatial random effect using
 #'   Gaussian Predictive Process. Defaults to `TRUE`. If `FALSE`, non-spatial
 #'   models will be fitted.
-#' @param GPP_Dists Integer specifying the distance in *kilometers* for both the
-#'   distance between knots and the minimum distance of a knot to the nearest
-#'   data point. The GPP knots are prepared by the [IASDT.R::PrepKnots]
-#'   function. The same value will be used for the `knotDist` and
-#'   `minKnotDist`	arguments of the [Hmsc::constructKnots] function.
+#' @param GPP_Dists Integer specifying the distance in *kilometers* used both
+#'   for the spacing between knots and the minimum allowable distance between a
+#'   knot and the nearest sampling point. The GPP knots are prepared by the
+#'   [IASDT.R::PrepKnots] function. The same value will be used for the
+#'   `knotDist` and `minKnotDist`	arguments of the [Hmsc::constructKnots]
+#'   function.
 #' @param GPP_Save Logical indicating whether to save the resulted knots as
 #'   `RData` file. Default: `TRUE`.
 #' @param GPP_Plot Logical indicating whether to plot the coordinates of the
@@ -49,12 +51,11 @@
 #'   If `NspPerGrid` = `0` (default), all grid cells will be used in the models.
 #'   If `NspPerGrid` > 0, only grid cells with >= `NspPerGrid` species presence
 #'   will be considered in the models.
-#' @param PhyloTree,NoPhyloTree Logical indicating whether to fit model variants
-#'   with or without phylogenetic trees, respectively. The default values are
-#'   `TRUE` and `FALSE`, respectively, which means to fit only models with
-#'   phylogenetic trees. If both `PhyloTree` and `NoPhyloTree` are `TRUE`,
-#'   models for both options will be fitted. At least one of `PhyloTree` and
-#'   `NoPhyloTree` should be `TRUE`.
+#' @param PhyloTree,NoPhyloTree Logical parameters indicating whether to fit
+#'   models with (PhyloTree) or without (NoPhyloTree) phylogenetic trees.
+#'   Defaults are `PhyloTree = TRUE` and `NoPhyloTree = FALSE`, meaning only
+#'   models with phylogenetic trees are fitted by default. At least one of
+#'   `PhyloTree` and `NoPhyloTree` should be `TRUE`.
 #' @param OverwriteRDS Logical. Indicating whether to overwrite previously
 #'   exported RDS files for initial models. Default: `TRUE`.
 #' @param NCores Integer specifying the number of parallel cores for
@@ -69,12 +70,12 @@
 #' @param transientFactor Integer specifying the transient multiplication
 #'   factor. The value of `transient` will equal  the multiplication of
 #'   `transientFactor` and `thin`. Default: 500.
-#' @param verbose Integer specifying how often the results of the MCMC sampling
-#'   should be reported. Default: `200`.
+#' @param verbose Integer indicating the interval at which MCMC sampling
+#'   progress is reported. Default: `200`.
 #' @param SkipFitted Logical indicating whether to skip already fitted models.
 #'   Default: `TRUE`.
-#' @param NumArrayJobs Integer specifying the maximum allowed number of array
-#'   jobs per SLURM file. Default: 210. See [LUMI
+#' @param NumArrayJobs Integer specifying the maximum number of array jobs per
+#'   SLURM script. Default: 210. See [LUMI
 #'   documentation](https://docs.lumi-supercomputer.eu/runjobs/scheduled-jobs/partitions)
 #'   for more details.
 #' @param ModelCountry String or vector of strings specifying the country or
@@ -420,7 +421,7 @@ Mod_Prep4HPC <- function(
     stringr::str_subset(paste0("^", as.character(Hab_Abb), "_"))
 
   IASDT.R::InfoChunk("Preparing input data using IASDT.R::Mod_PrepData")
-  
+
   DT_All <- IASDT.R::Mod_PrepData(
     Hab_Abb = Hab_Abb, MinEffortsSp = MinEffortsSp,
     PresPerSpecies = PresPerSpecies, EnvFile = EnvFile,
@@ -739,7 +740,7 @@ Mod_Prep4HPC <- function(
         Level = 1)
 
       withr::local_options(
-        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
         future.seed = TRUE)
       c1 <- snow::makeSOCKcluster(NCores_GPP)
       on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
@@ -1040,7 +1041,7 @@ Mod_Prep4HPC <- function(
   if (NCores > 1) {
 
     withr::local_options(
-      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
       future.seed = TRUE)
     c1 <- snow::makeSOCKcluster(min(NCores, nrow(Model_Info)))
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)

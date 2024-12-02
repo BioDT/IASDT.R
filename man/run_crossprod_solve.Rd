@@ -12,12 +12,12 @@ run_crossprod_solve(
   postEta,
   path_out,
   denom,
-  chunk_size = 1000,
-  threshold_mb = 2000,
+  chunk_size = 1000L,
+  threshold_mb = 2000L,
   use_single = TRUE,
   verbose = TRUE,
-  solve_chunk_size = 50,
-  solve_max_attempts = 5
+  solve_chunk_size = 50L,
+  solve_max_attempts = 5L
 )
 }
 \arguments{

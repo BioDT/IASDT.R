@@ -48,8 +48,8 @@
 #' }
 
 CatTime <- function(
-    Text = "", NLines = 1, Time = TRUE, Bold = FALSE, Red = FALSE,
-    Date = FALSE, TZ = "CET", Level = 0, ...) {
+    Text = "", NLines = 1L, Time = TRUE, Bold = FALSE, Red = FALSE,
+    Date = FALSE, TZ = "CET", Level = 0L, ...) {
 
   if (Time) {
     DateFormat <- dplyr::if_else(Date, "%d/%m/%Y %X", "%X")

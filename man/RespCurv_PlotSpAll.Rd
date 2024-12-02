@@ -6,7 +6,7 @@
 \usage{
 RespCurv_PlotSpAll(
   ModelDir = NULL,
-  NCores = 20,
+  NCores = 8L,
   ReturnData = FALSE,
   PlotAlpha = 0.3
 )

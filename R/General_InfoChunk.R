@@ -13,6 +13,8 @@
 #'   `FALSE`, meaning only the time is printed. See [IASDT.R::CatTime].
 #' @param Extra1,Extra2 integer; the number of extra empty lines to print before
 #'   and after the separator lines. See [IASDT.R::CatSep] for more details.
+#' @param Time logical; whether to include the time in the timestamp. Default is
+#'   `FALSE`.
 #' @param ... Additional arguments passed to [IASDT.R::CatSep] for customizing
 #'   the separators.
 #' @inheritParams CatTime
@@ -26,8 +28,8 @@
 #' @export
 
 InfoChunk <- function(
-    Message = "", Date = TRUE, Extra1 = 1, Extra2 = 1, Bold = FALSE,
-    Red = FALSE,  Time = TRUE, Level = 0, NLines = 1, ...) {
+    Message = "", Date = TRUE, Extra1 = 1L, Extra2 = 1L, Bold = FALSE,
+    Red = FALSE, Time = FALSE, Level = 0L, NLines = 1L, ...) {
 
   if (is.null(Message)) {
     stop("Message cannot be NULL", call. = FALSE)

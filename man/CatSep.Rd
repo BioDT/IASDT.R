@@ -7,7 +7,7 @@
 CatSep(
   Rep = 1L,
   Extra1 = 0L,
-  Extra2 = 0L,
+  Extra2 = 1L,
   Char = "-",
   CharReps = 50L,
   Bold = FALSE,
@@ -19,7 +19,7 @@ CatSep(
 \item{Rep}{integer; the number of separator lines to print. Default is \code{1}.}
 
 \item{Extra1, Extra2}{integer; the number of extra empty lines to print before
-and after the separator lines. Default is \code{0}.}
+and after the separator lines. Default is \code{0} and \code{1}, respectively.}
 
 \item{Char}{character; the character used to construct the separator line.
 Default is \code{"-"}.}

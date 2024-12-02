@@ -52,7 +52,7 @@
 
 CatDiff <- function(
     InitTime, ChunkText = "Session summary", Prefix = "Completed in ",
-    CatInfo = FALSE, Level = 0, ...) {
+    CatInfo = FALSE, Level = 0, Time = FALSE, ...) {
 
   if (is.null(InitTime)) {
     stop("InitTime cannot be NULL", call. = FALSE)
@@ -73,7 +73,7 @@ CatDiff <- function(
         stringr::str_pad(round(lubridate::second(.)), width = 2, pad = "0"))
     } %>%
     paste0(Prefix, .) %>%
-    IASDT.R::CatTime(Level = Level, ...)
+    IASDT.R::CatTime(Level = Level, Time = Time, ...)
 
   return(invisible(NULL))
 }

@@ -9,7 +9,7 @@
 #' readability of console output in R scripts or during interactive sessions.
 #' @param Rep integer; the number of separator lines to print. Default is `1`.
 #' @param Extra1,Extra2 integer; the number of extra empty lines to print before
-#'   and after the separator lines. Default is `0`.
+#'   and after the separator lines. Default is `0` and `1`, respectively.
 #' @param Char character; the character used to construct the separator line.
 #'   Default is `"-"`.
 #' @param CharReps integer; the number of times the character is repeated to
@@ -33,7 +33,7 @@
 #' @export
 
 CatSep <- function(
-    Rep = 1L, Extra1 = 0L, Extra2 = 0L, Char = "-",
+    Rep = 1L, Extra1 = 0L, Extra2 = 1L, Char = "-",
     CharReps = 50L, Bold = FALSE, Red = FALSE, ...) {
 
   # Check input arguments

@@ -10,6 +10,7 @@ CatDiff(
   Prefix = "Completed in ",
   CatInfo = FALSE,
   Level = 0,
+  Time = FALSE,
   ...
 )
 }
@@ -29,6 +30,9 @@ difference. Defaults to "Completed in ".}
 \item{Level}{integer; the level at which the message will be printed. If e.g.
 Level = 1, the following string will be printed at the beginning of the
 message: "   >>>   ". Default is \code{0}.}
+
+\item{Time}{logical; whether to include the time in the timestamp. Default is
+\code{TRUE}. If \code{FALSE}, only the text is printed.}
 
 \item{...}{Additional arguments for \link{CatTime}.}
 }

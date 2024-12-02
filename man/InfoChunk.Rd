@@ -7,13 +7,13 @@
 InfoChunk(
   Message = "",
   Date = TRUE,
-  Extra1 = 1,
-  Extra2 = 2,
+  Extra1 = 1L,
+  Extra2 = 1L,
   Bold = FALSE,
   Red = FALSE,
-  Time = TRUE,
-  Level = 0,
-  NLines = 1,
+  Time = FALSE,
+  Level = 0L,
+  NLines = 1L,
   ...
 )
 }
@@ -32,7 +32,7 @@ and after the separator lines. See \link{CatSep} for more details.}
 \item{Red}{logical; whether to print the text in red. Default is \code{FALSE}.}
 
 \item{Time}{logical; whether to include the time in the timestamp. Default is
-\code{TRUE}. If \code{FALSE}, only the text is printed.}
+\code{FALSE}.}
 
 \item{Level}{integer; the level at which the message will be printed. If e.g.
 Level = 1, the following string will be printed at the beginning of the

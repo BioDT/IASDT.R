@@ -51,7 +51,7 @@
 
 Predict_Maps <- function(
     Path_Model = NULL, Hab_Abb = NULL, EnvFile = ".env", FromHPC = TRUE,
-    NCores = 8, Pred_Clamp = TRUE, Fix_Efforts = "mean", Pred_NewSites = TRUE,
+    NCores = 8L, Pred_Clamp = TRUE, Fix_Efforts = "mean", Pred_NewSites = TRUE,
     UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE, LF_NCores = NCores,
     LF_Check = FALSE, LF_Temp_Cleanup = TRUE, Temp_Dir = "TEMP2Pred",
     Temp_Cleanup = TRUE,

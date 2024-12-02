@@ -235,8 +235,10 @@ Mod_Prep4HPC <- function(
     on.exit(sink(), add = TRUE)
   }
 
+  Path_Python <- file.path(Path_Hmsc, "Scripts/python.exe")
+
   IASDT.R::CatSep(Rep = 1, Extra1 = 1, Extra2 = 1, Char = "=")
-  IASDT.R::CatTime("Preparing data for Hmsc-HPC models")
+  IASDT.R::CatTime("Preparing data for Hmsc-HPC models", Time = FALSE)
   IASDT.R::CatSep(Rep = 1, Extra1 = 0, Extra2 = 1, Char = "=")
 
   # # |||||||||||||||||||||||||||||||||||
@@ -266,18 +268,16 @@ Mod_Prep4HPC <- function(
       "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE,
       "Path_PA", "DP_R_PA_Local", TRUE, FALSE)
 
+    # Check if Python executable exists
+    if (CheckPython && !file.exists(Path_Python)) {
+      stop(
+        paste0("Python executable does not exist: ", Path_Python),
+        call. = FALSE)
+    }
   }
 
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
-
-  Path_Python <- file.path(Path_Hmsc, "Scripts/python.exe")
-  # Check if Python executable exists
-  if (CheckPython && !file.exists(Path_Python)) {
-    stop(
-      paste0("Python executable does not exist: ", Path_Python),
-      call. = FALSE)
-  }
 
   # # ..................................................................... ###
 
@@ -293,8 +293,7 @@ Mod_Prep4HPC <- function(
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
 
-  CharArgs <- c(
-    "Hab_Abb", "Path_Model", "Path_Hmsc", "Path_Python", "EnvFile")
+  CharArgs <- c("Hab_Abb", "Path_Model", "Path_Hmsc", "EnvFile")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = CharArgs, Type = "character")
 
   LogicArgs <- c(
@@ -423,7 +422,8 @@ Mod_Prep4HPC <- function(
     stringr::str_subset(paste0("^", as.character(Hab_Abb), "_"))
 
   IASDT.R::CatSep(Rep = 1, Extra1 = 1, Extra2 = 1)
-  IASDT.R::CatTime("Preparing input data using IASDT.R::Mod_PrepData")
+  IASDT.R::CatTime(
+    "Preparing input data using IASDT.R::Mod_PrepData", Time = FALSE)
   IASDT.R::CatSep(Rep = 1, Extra1 = 0, Extra2 = 1)
 
   DT_All <- IASDT.R::Mod_PrepData(
@@ -432,7 +432,7 @@ Mod_Prep4HPC <- function(
     Path_Model = Path_Model, VerboseProgress = VerboseProgress,
     FromHPC = FromHPC, SaveData = SaveData, ExcludeCult = ExcludeCult)
 
-  IASDT.R::CatSep(Rep = 1, Extra1 = 1, Extra2 = 1)
+  IASDT.R::CatSep(Rep = 1, Extra1 = 0, Extra2 = 2)
 
   # # ..................................................................... ###
 

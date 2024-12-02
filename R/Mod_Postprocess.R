@@ -27,10 +27,10 @@
 #' @export
 
 Mod_Postprocess <- function(
-    ModelDir = NULL, Hab_Abb = NULL, NCores = 54, FromHPC = TRUE,
+    ModelDir = NULL, Hab_Abb = NULL, NCores = 8L, FromHPC = TRUE,
     EnvFile = ".env", Path_Hmsc = NULL, MemPerCpu = NULL, Time = NULL,
-    FromJSON = FALSE, GPP_Dist = NULL, Tree = "Tree", Samples = 1000,
-    Thin = NULL, N_Grid = 50, NOmega = 1000, UseTF = TRUE, TF_Environ = NULL,
+    FromJSON = FALSE, GPP_Dist = NULL, Tree = "Tree", Samples = 1000L,
+    Thin = NULL, N_Grid = 50L, NOmega = 1000L, UseTF = TRUE, TF_Environ = NULL,
     TF_use_single = FALSE, LF_NCores = NCores, LF_Check = FALSE,
     LF_Temp_Cleanup = TRUE, Temp_Cleanup = TRUE,
     CC_Models = c(
@@ -389,7 +389,7 @@ Mod_Postprocess <- function(
 
   # Cross-validation -------
   IASDT.R::InfoChunk(
-    "Prepare input data for cross-validation", 
+    "Prepare input data for cross-validation",
     Red = TRUE, Bold = TRUE, Time = FALSE)
 
   IASDT.R::Mod_CV_Fit(

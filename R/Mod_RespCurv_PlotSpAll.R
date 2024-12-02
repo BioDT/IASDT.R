@@ -20,7 +20,7 @@
 #' @name RespCurv_PlotSpAll
 
 RespCurv_PlotSpAll <- function(
-    ModelDir = NULL, NCores = 20, ReturnData = FALSE, PlotAlpha = 0.3) {
+    ModelDir = NULL, NCores = 8L, ReturnData = FALSE, PlotAlpha = 0.3) {
 
   # # ..................................................................... ###
 

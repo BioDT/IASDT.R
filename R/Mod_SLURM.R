@@ -47,8 +47,8 @@
 #' @export
 
 Mod_SLURM <- function(
-    ModelDir = NULL, JobName = NULL, CatJobInfo = TRUE, ntasks = 1,
-    CpusPerTask = 1, GpusPerNode = 1, MemPerCpu = NULL, Time = NULL,
+    ModelDir = NULL, JobName = NULL, CatJobInfo = TRUE, ntasks = 1L,
+    CpusPerTask = 1L, GpusPerNode = 1L, MemPerCpu = NULL, Time = NULL,
     Partition = "small-g", EnvFile = ".env", FromHPC = TRUE,
     Path_Hmsc = NULL, Command_Prefix = "Commands2Fit",
     SLURM_Prefix = "Bash_Fit", Path_SLURM_Out = NULL) {

@@ -6,13 +6,13 @@
 \usage{
 CatTime(
   Text = "",
-  NLines = 1,
+  NLines = 1L,
   Time = TRUE,
   Bold = FALSE,
   Red = FALSE,
   Date = FALSE,
   TZ = "CET",
-  Level = 0,
+  Level = 0L,
   ...
 )
 }

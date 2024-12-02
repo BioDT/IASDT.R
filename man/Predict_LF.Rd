@@ -10,7 +10,7 @@ Predict_LF(
   postEta,
   postAlpha,
   LF_rL,
-  LF_NCores = 8,
+  LF_NCores = 8L,
   Temp_Dir = "TEMP2Pred",
   LF_Temp_Cleanup = TRUE,
   Model_Name = NULL,
@@ -20,8 +20,8 @@ Predict_LF(
   LF_OutFile = NULL,
   LF_Return = FALSE,
   LF_Check = FALSE,
-  solve_max_attempts = 5,
-  solve_chunk_size = 50,
+  solve_max_attempts = 5L,
+  solve_chunk_size = 50L,
   Verbose = TRUE
 )
 }

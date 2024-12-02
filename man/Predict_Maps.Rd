@@ -9,7 +9,7 @@ Predict_Maps(
   Hab_Abb = NULL,
   EnvFile = ".env",
   FromHPC = TRUE,
-  NCores = 8,
+  NCores = 8L,
   Pred_Clamp = TRUE,
   Fix_Efforts = "mean",
   Pred_NewSites = TRUE,

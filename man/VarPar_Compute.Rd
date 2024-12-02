@@ -8,14 +8,14 @@ VarPar_Compute(
   Path_Model,
   group = NULL,
   groupnames = NULL,
-  start = 1,
+  start = 1L,
   na.ignore = FALSE,
-  NCores = 6,
+  NCores = 8L,
   UseTF = TRUE,
   TF_Environ = NULL,
   TF_use_single = FALSE,
   Temp_Cleanup = TRUE,
-  Chunk_size = 50,
+  Chunk_size = 50L,
   Verbose = TRUE,
   VarParFile = "VarPar"
 )

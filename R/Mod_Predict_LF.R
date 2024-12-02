@@ -72,11 +72,11 @@
 #'   call them when needed.
 
 Predict_LF <- function(
-    unitsPred, modelunits, postEta, postAlpha, LF_rL, LF_NCores = 8,
+    unitsPred, modelunits, postEta, postAlpha, LF_rL, LF_NCores = 8L,
     Temp_Dir = "TEMP2Pred", LF_Temp_Cleanup = TRUE, Model_Name = NULL,
     UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE, LF_OutFile = NULL,
-    LF_Return = FALSE, LF_Check = FALSE, solve_max_attempts = 5,
-    solve_chunk_size = 50, Verbose = TRUE) {
+    LF_Return = FALSE, LF_Check = FALSE, solve_max_attempts = 5L,
+    solve_chunk_size = 50L, Verbose = TRUE) {
 
   # # ..................................................................... ###
 
@@ -795,8 +795,8 @@ Predict_LF <- function(
 
 run_crossprod_solve <- function(
     virtual_env_path, s1, s2, postEta, path_out, denom,
-    chunk_size = 1000, threshold_mb = 2000, use_single = TRUE, verbose = TRUE,
-    solve_chunk_size = 50, solve_max_attempts = 5) {
+    chunk_size = 1000L, threshold_mb = 2000L, use_single = TRUE, verbose = TRUE,
+    solve_chunk_size = 50L, solve_max_attempts = 5L) {
 
   Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3")
 
@@ -847,7 +847,7 @@ run_crossprod_solve <- function(
 
   if (N_GPU == 0) {
     IASDT.R::CatTime(
-      "No GPU found; Calculations will use CPU.", 
+      "No GPU found; Calculations will use CPU.",
       Time = FALSE, Bold = TRUE, Red = TRUE)
   } else {
     IASDT.R::CatTime(

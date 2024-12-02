@@ -37,9 +37,9 @@
 #' @export
 
 VarPar_Compute <- function(
-    Path_Model, group = NULL, groupnames = NULL, start = 1, na.ignore = FALSE,
-    NCores = 6, UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE,
-    Temp_Cleanup = TRUE, Chunk_size = 50, Verbose = TRUE,
+    Path_Model, group = NULL, groupnames = NULL, start = 1L, na.ignore = FALSE,
+    NCores = 8L, UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE,
+    Temp_Cleanup = TRUE, Chunk_size = 50L, Verbose = TRUE,
     VarParFile = "VarPar") {
 
   # # .................................................................... ###
@@ -66,7 +66,7 @@ VarPar_Compute <- function(
 
     # Determine the Python executable path
     python_executable <- if (.Platform$OS.type == "windows") {
-      
+
       file.path(TF_Environ, "Scripts", "python.exe")
 
       if (!file.exists(python_executable)) {
@@ -291,7 +291,7 @@ VarPar_Compute <- function(
         IASDT.R::CatTime("Prepare working on parallel", Level = 3)
         c1 <- parallel::makePSOCKcluster(NCores)
         on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
-        
+
         IASDT.R::CatTime("Export necessary objects to cores", Level = 3)
         parallel::clusterExport(
           cl = c1, varlist = c("Beta_Files", "postList"), envir = environment())
@@ -303,7 +303,7 @@ VarPar_Compute <- function(
 
         IASDT.R::CatTime("Processing beta on parallel", Level = 3)
         Beta0 <- parallel::parLapply(
-          cl = c1, 
+          cl = c1,
           X = seq_along(postList),
           fun = function(x) {
             Beta_File <- Beta_Files[x]
@@ -807,7 +807,7 @@ VarPar_Compute <- function(
         } else {
           # Use rm command on Linux/macOS
           system2(
-            "rm", c("-rf", shQuote(file_path)), 
+            "rm", c("-rf", shQuote(file_path)),
             stdout = NULL, stderr = NULL)
         }
       }
@@ -817,7 +817,7 @@ VarPar_Compute <- function(
 
       if (UseTF) {
         try(parallel::parLapply(c1, files_to_delete, delete_files))
-        
+
         # stop the cluster
         parallel::stopCluster(c1)
       } else {

@@ -538,6 +538,7 @@ Predict_Maps <- function(
 
     MSG <- paste0(
       Model_Name, " (", ID, "/", nrow(Prediction_Options), ")")
+    cat("\n")
     IASDT.R::InfoChunk(
       paste0("\t", MSG), Extra1 = 1, Extra2 = 1, Rep = 1,
       Char = "-", CharReps = 70, Red = TRUE, Bold = TRUE, Time = FALSE)

@@ -836,11 +836,11 @@ run_crossprod_solve <- function(
     #python_executable <- "python3"
     python_executable <- normalizePath(
       file.path(virtual_env_path, "bin", "python3"), winslash = "/")
-    #system("module use /appl/local/csc/modulefiles; module load tensorflow")
-    Sys.setenv(PATH = file.path(virtual_env_path, "bin"))
-    Sys.setenv(PYTHONPATH = file.path(
-      virtual_env_path, "lib/python3.10/site-packages"))
-    Sys.setenv(VIRTUAL_ENV = virtual_env_path)
+    # system("module use /appl/local/csc/modulefiles; module load tensorflow")
+    # Sys.setenv(PATH = file.path(virtual_env_path, "bin"))
+    # Sys.setenv(PYTHONPATH = file.path(
+    #   virtual_env_path, "lib/python3.10/site-packages"))
+    # Sys.setenv(VIRTUAL_ENV = virtual_env_path)
   }
 
   # Check GPU availability

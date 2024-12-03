@@ -424,7 +424,7 @@ Mod_CV_Fit <- function(
     IASDT.R::Mod_SLURM(
       ModelDir = Path_CV, JobName = JobName, MemPerCpu = MemPerCpu,
       Time = Time, EnvFile = EnvFile, FromHPC = FromHPC, Path_Hmsc = Path_Hmsc,
-      Path_SLURM_Out = Path_Post, ...)
+      Path_SLURM_Out = Path_Post, SLURM_Prefix = "CV_Bash_Fit", ...)
   }
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

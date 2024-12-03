@@ -200,7 +200,7 @@ Predict_LF <- function(
       Model_Name <- paste0(Model_Name, "_")
     }
 
-    if (stringr::str_detect(Model_Name, "^Rc_c") && LF_Commands_Only) {
+    if (stringr::str_detect(Model_Name, "^RC_c_") && LF_Commands_Only) {
         CommandFilePrefix <- "LF_RC_Commands_"
     }
     if (nchar(Model_Name) > 0 && !stringr::str_detect(Model_Name, "^Rc_c") && 

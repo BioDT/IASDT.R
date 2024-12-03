@@ -863,7 +863,10 @@ run_crossprod_solve <- function(
 
   # Construct the command to run the Python script
   LF_Args <- c(
-    paste0("source ", virtual_env_path, "/bin/activate &&"),
+    dplyr::if_else(
+      .Platform$OS.type == "windows",
+      paste0("source ", virtual_env_path, "/Scripts/activate &&"),
+      ""),
     python_executable,
     script_path,
     "--s1", normalizePath(s1, winslash = "/"),

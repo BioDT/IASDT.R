@@ -74,6 +74,7 @@ Predict_Hmsc <- function(
     RC = NULL, UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE,
     LF_OutFile = NULL, LF_Return = FALSE, LF_InputFile = NULL, LF_Only = FALSE,
     LF_NCores = NCores, LF_Check = FALSE, LF_Temp_Cleanup = TRUE,
+    LF_Commands_Only = FALSE,
     Pred_Dir = NULL, Pred_PA = NULL, Pred_XY = NULL, Evaluate = FALSE,
     Eval_Name = NULL, Eval_Dir = "Evaluation", Verbose = TRUE) {
 
@@ -379,6 +380,7 @@ Predict_Hmsc <- function(
         postEta = postEta_file, postAlpha = postAlpha, LF_rL = rL[[r]],
         LF_NCores = LF_NCores, LF_Temp_Cleanup = LF_Temp_Cleanup,
         LF_OutFile = LF_OutFile, LF_Return = LF_Return, LF_Check = LF_Check,
+        LF_Commands_Only = LF_Commands_Only,
         Temp_Dir = Temp_Dir, Model_Name = Model_Name,
         UseTF = UseTF, TF_Environ = TF_Environ, TF_use_single = TF_use_single)
 

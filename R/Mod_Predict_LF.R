@@ -75,7 +75,7 @@ Predict_LF <- function(
     unitsPred, modelunits, postEta, postAlpha, LF_rL, LF_NCores = 8L,
     Temp_Dir = "TEMP2Pred", LF_Temp_Cleanup = TRUE, Model_Name = NULL,
     UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE, LF_OutFile = NULL,
-    LF_Return = FALSE, LF_Check = FALSE, Commands_Only = FALSE,
+    LF_Return = FALSE, LF_Check = FALSE, LF_Commands_Only = FALSE,
     solve_max_attempts = 5L, solve_chunk_size = 50L, Verbose = TRUE) {
 
   # # ..................................................................... ###
@@ -391,11 +391,11 @@ Predict_LF <- function(
             eta_indNew0 <- run_crossprod_solve(
               virtual_env_path = TF_Environ, s1 = Path_s1, s2 = Path_s2,
               denom = Denom, postEta = File_postEta, path_out = File_etaPred_TF,
-              use_single = TF_use_single, Commands_Only = Commands_Only,
+              use_single = TF_use_single, LF_Commands_Only = LF_Commands_Only,
               solve_max_attempts = solve_max_attempts,
               solve_chunk_size = solve_chunk_size)
 
-            if (Commands_Only) {
+            if (LF_Commands_Only) {
               return(eta_indNew0)
             } else {
               rm(eta_indNew0, envir = environment())
@@ -482,7 +482,7 @@ Predict_LF <- function(
 
           # When Denom is zero, set `eta_indNew` to zero
 
-          if (isFALSE(Commands_Only)) {
+          if (isFALSE(LF_Commands_Only)) {
 
             etaPred <- tibble::tibble(
 
@@ -518,7 +518,7 @@ Predict_LF <- function(
         etaPred <- IASDT.R::LoadAs(File_etaPred)
       }
 
-      if (isFALSE(Commands_Only)) {
+      if (isFALSE(LF_Commands_Only)) {
         return(etaPred)
       }
     }
@@ -532,7 +532,7 @@ Predict_LF <- function(
 
     if (!all(file.exists(LF_Data$File_etaPred))) {
 
-      if (LF_NCores == 1 || Commands_Only) {
+      if (LF_NCores == 1 || LF_Commands_Only) {
 
         # Sequential processing
         IASDT.R::CatTime("Predicting Latent Factor sequentially", Level = 1)
@@ -555,7 +555,7 @@ Predict_LF <- function(
 
           })
 
-        if (Commands_Only) {
+        if (LF_Commands_Only) {
 
           # Function to save commands to files
           save_commands_to_file <- function(commands, max_lines = 210) {
@@ -608,7 +608,7 @@ Predict_LF <- function(
             "LF_Data", "Path_D11", "Path_D12", "Path_s1", "Path_s2", "indNew",
             "unitsPred", "indOld", "modelunits", "TF_Environ", "UseTF",
             "TF_use_single", "etaPreds_F", "LF_Check", "run_crossprod_solve",
-            "Commands_Only", "solve_max_attempts", "solve_chunk_size",
+            "LF_Commands_Only", "solve_max_attempts", "solve_chunk_size",
             "Temp_Dir_LF"),
           envir = environment())
 
@@ -821,7 +821,7 @@ Predict_LF <- function(
 #'   run solve and crossprod functions. Default is 5.
 #' @param solve_chunk_size numeric. Chunk size for solve_and_multiply python
 #'   function. Default is 50.
-#' @param Commands_Only logical. If `TRUE`, returns the command to run the
+#' @param LF_Commands_Only logical. If `TRUE`, returns the command to run the
 #'   Python script. Default is `FALSE`.
 #' @return Returns the `path_out` if successful. Returns `NULL` if all attempts
 #'   fail.
@@ -838,7 +838,7 @@ Predict_LF <- function(
 run_crossprod_solve <- function(
     virtual_env_path, s1, s2, postEta, path_out, denom,
     chunk_size = 1000L, threshold_mb = 2000L, use_single = TRUE, verbose = TRUE,
-    solve_chunk_size = 50L, solve_max_attempts = 5L, Commands_Only = FALSE) {
+    solve_chunk_size = 50L, solve_max_attempts = 5L, LF_Commands_Only = FALSE) {
 
   Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3")
 
@@ -912,7 +912,7 @@ run_crossprod_solve <- function(
 
   LF_Args <- paste0(LF_Args, collapse = " ")
 
-  if (Commands_Only) {
+  if (LF_Commands_Only) {
     if (.Platform$OS.type != "windows") {
       LF_Args <- paste0("/usr/bin/time -v ", LF_Args)
     }

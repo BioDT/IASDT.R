@@ -536,7 +536,7 @@ Predict_LF <- function(
             result <- try(
               expr = etaPreds_F(
                 RowNum = x, LF_Check = LF_Check, unitsPred = unitsPred),
-              silent = TRUE)
+              silent = FALSE)
 
             if (inherits(result, "try-error")) {
               return(NULL)
@@ -594,7 +594,7 @@ Predict_LF <- function(
           fun = function(x) {
             result <- try(
               etaPreds_F(x, LF_Check = LF_Check, unitsPred = unitsPred),
-              silent = TRUE)
+              silent = FALSE)
             invisible(gc())
             if (inherits(result, "try-error")) {
               return(NULL)
@@ -888,11 +888,14 @@ run_crossprod_solve <- function(
     LF_Args <- c(LF_Args, "--verbose")
   }
 
+
+  LF_Args <- paste0(LF_Args, collapse = " ")
+
   path_log <- stringr::str_replace(path_out, ".feather", ".log")
   f <- file(path_log, open = "a")
   on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
   cat(
-    "Running command:\n", paste(paste(LF_Args, collapse = " "), "\n\n"),
+    "Running command:\n", paste(LF_Args, "\n\n"),
     sep = "\n", file = f, append = TRUE)
 
   # Initialize retry logic
@@ -901,12 +904,12 @@ run_crossprod_solve <- function(
 
   while (attempt <= solve_max_attempts && !success) {
 
-    IASDT.R::InfoChunk(
-      paste0("Attempt ", attempt, " of ", solve_max_attempts),
+    cat(
+      paste0("Attempt ", attempt, " of ", solve_max_attempts, "\n\n"),
       file = f, append = TRUE)
 
     # Run the command and capture stdout/stderr to a log file
-    result <- system(paste0(LF_Args, collapse = " "), intern = TRUE)
+    result <- system(LF_Args, intern = TRUE)
 
     # Check for errors
     if (!inherits(result, "error") || length(result) != 0 || result == "Done") {

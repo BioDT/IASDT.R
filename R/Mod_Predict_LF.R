@@ -75,8 +75,8 @@ Predict_LF <- function(
     unitsPred, modelunits, postEta, postAlpha, LF_rL, LF_NCores = 8L,
     Temp_Dir = "TEMP2Pred", LF_Temp_Cleanup = TRUE, Model_Name = NULL,
     UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE, LF_OutFile = NULL,
-    LF_Return = FALSE, LF_Check = FALSE, solve_max_attempts = 5L,
-    solve_chunk_size = 50L, Verbose = TRUE) {
+    LF_Return = FALSE, LF_Check = FALSE, Commands_Only = FALSE,
+    solve_max_attempts = 5L, solve_chunk_size = 50L, Verbose = TRUE) {
 
   # # ..................................................................... ###
 
@@ -391,41 +391,45 @@ Predict_LF <- function(
             eta_indNew0 <- run_crossprod_solve(
               virtual_env_path = TF_Environ, s1 = Path_s1, s2 = Path_s2,
               denom = Denom, postEta = File_postEta, path_out = File_etaPred_TF,
-              use_single = TF_use_single,
+              use_single = TF_use_single, Commands_Only = Commands_Only,
               solve_max_attempts = solve_max_attempts,
               solve_chunk_size = solve_chunk_size)
 
-            rm(eta_indNew0, envir = environment())
+            if (Commands_Only) {
+              return(eta_indNew0)
+            } else {
+              rm(eta_indNew0, envir = environment())
 
-            etaPred <- tibble::tibble(
-              SampleID = SampleID,
-              LF = LF_ID,
-              Path_Samp_LF = file.path(
-                Temp_Dir_LF,
-                paste0(
-                  Model_Name, "Samp_",
-                  stringr::str_pad(SampleID, width = 4, pad = "0"),
-                  "_LF", LF, ".qs2")),
-              etaPred = as.list(IASDT.R::LoadAs(File_etaPred_TF))) %>%
-              tidyr::nest(eta_DT = -Path_Samp_LF) %>%
-              dplyr::mutate(
-                eta_DT = purrr::map(
-                  .x = eta_DT,
-                  .f = ~ {
-                    tidyr::unnest_longer(.x, "etaPred") %>%
-                      dplyr::mutate(LF = NULL, unitsPred = unitsPred) %>%
-                      stats::setNames(
-                        c("SampleID", paste0("LF_", LF_ID), "unitsPred"))
-                  }),
-                File_etaPred = File_etaPred,
-                ChunkID = LF_Data$ChunkID[[RowNum]],
+              etaPred <- tibble::tibble(
                 SampleID = SampleID,
-                Save = purrr::map2(
-                  .x = eta_DT, .y = Path_Samp_LF,
-                  .f = ~qs2::qs_save(.x, .y, nthreads = 5)),
-                LF = LF_ID, Save = NULL, eta_DT = NULL)
+                LF = LF_ID,
+                Path_Samp_LF = file.path(
+                  Temp_Dir_LF,
+                  paste0(
+                    Model_Name, "Samp_",
+                    stringr::str_pad(SampleID, width = 4, pad = "0"),
+                    "_LF", LF, ".qs2")),
+                etaPred = as.list(IASDT.R::LoadAs(File_etaPred_TF))) %>%
+                tidyr::nest(eta_DT = -Path_Samp_LF) %>%
+                dplyr::mutate(
+                  eta_DT = purrr::map(
+                    .x = eta_DT,
+                    .f = ~ {
+                      tidyr::unnest_longer(.x, "etaPred") %>%
+                        dplyr::mutate(LF = NULL, unitsPred = unitsPred) %>%
+                        stats::setNames(
+                          c("SampleID", paste0("LF_", LF_ID), "unitsPred"))
+                    }),
+                  File_etaPred = File_etaPred,
+                  ChunkID = LF_Data$ChunkID[[RowNum]],
+                  SampleID = SampleID,
+                  Save = purrr::map2(
+                    .x = eta_DT, .y = Path_Samp_LF,
+                    .f = ~qs2::qs_save(.x, .y, nthreads = 5)),
+                  LF = LF_ID, Save = NULL, eta_DT = NULL)
 
-            IASDT.R::SaveAs(InObj = etaPred, OutPath = File_etaPred)
+              IASDT.R::SaveAs(InObj = etaPred, OutPath = File_etaPred)
+            }
 
           } else {
 
@@ -478,40 +482,45 @@ Predict_LF <- function(
 
           # When Denom is zero, set `eta_indNew` to zero
 
-          etaPred <- tibble::tibble(
+          if (isFALSE(Commands_Only)) {
 
-            Path_Samp_LF = file.path(
-              Temp_Dir_LF,
-              paste0(
-                Model_Name, "Samp_",
-                stringr::str_pad(SampleID, width = 4, pad = "0"),
-                "_LF", LF_ID, ".qs2")),
+            etaPred <- tibble::tibble(
 
-            File_etaPred = File_etaPred,
-            ChunkID = LF_Data$ChunkID[[RowNum]],
-            SampleID = SampleID) %>%
-            dplyr::mutate(
-              Save = purrr::map2(
-                .x = Path_Samp_LF, .y = SampleID,
-                .f = ~ {
-                  DT <- tibble::tibble(
-                    SampleID = .y, LF = 0,
-                    unitsPred = unitsPred) %>%
-                    stats::setNames(
-                      c("SampleID", paste0("LF_", LF_ID), "unitsPred"))
-                  qs2::qs_save(object = DT, file = .x, nthreads = 5)
-                  return(NULL)
-                }),
-              Save = NULL, LF = LF_ID)
+              Path_Samp_LF = file.path(
+                Temp_Dir_LF,
+                paste0(
+                  Model_Name, "Samp_",
+                  stringr::str_pad(SampleID, width = 4, pad = "0"),
+                  "_LF", LF_ID, ".qs2")),
 
-          IASDT.R::SaveAs(InObj = etaPred, OutPath = File_etaPred)
+              File_etaPred = File_etaPred,
+              ChunkID = LF_Data$ChunkID[[RowNum]],
+              SampleID = SampleID) %>%
+              dplyr::mutate(
+                Save = purrr::map2(
+                  .x = Path_Samp_LF, .y = SampleID,
+                  .f = ~ {
+                    DT <- tibble::tibble(
+                      SampleID = .y, LF = 0,
+                      unitsPred = unitsPred) %>%
+                      stats::setNames(
+                        c("SampleID", paste0("LF_", LF_ID), "unitsPred"))
+                    qs2::qs_save(object = DT, file = .x, nthreads = 5)
+                    return(NULL)
+                  }),
+                Save = NULL, LF = LF_ID)
+
+            IASDT.R::SaveAs(InObj = etaPred, OutPath = File_etaPred)
+          }
         }
 
       } else {
         etaPred <- IASDT.R::LoadAs(File_etaPred)
       }
 
-      return(etaPred)
+      if (isFALSE(Commands_Only)) {
+        return(etaPred)
+      }
     }
 
     invisible(gc())
@@ -523,7 +532,7 @@ Predict_LF <- function(
 
     if (!all(file.exists(LF_Data$File_etaPred))) {
 
-      if (LF_NCores == 1) {
+      if (LF_NCores == 1 || Commands_Only) {
 
         # Sequential processing
         IASDT.R::CatTime("Predicting Latent Factor sequentially", Level = 1)
@@ -545,6 +554,36 @@ Predict_LF <- function(
             }
 
           })
+
+        if (Commands_Only) {
+
+          # Function to save commands to files
+          save_commands_to_file <- function(commands, max_lines = 210) {
+            # Determine how many files we need
+            num_files <- ceiling(length(commands) / max_lines)
+
+            # Loop through and save chunks of commands to separate files
+            for (i in 1:num_files) {
+              # Calculate the start and end line indices for this chunk
+              start_line <- ((i - 1) * max_lines) + 1
+              end_line <- min(i * max_lines, length(commands))
+
+              # Get the chunk of commands
+              chunk <- commands[start_line:end_line]
+
+              # Define the filename
+              file_name <- file.path(
+                dirname(Temp_Dir), paste0("LF_Commands_", i, ".txt"))
+              # Write the chunk to a file with Linux line endings
+              writeLines(chunk, file_name, useBytes = TRUE)
+            }
+          }
+
+          # Call the function to save commands to file
+          save_commands_to_file(unlist(etaPreds))
+
+          return(NULL)
+        }
 
       } else {
 
@@ -569,7 +608,8 @@ Predict_LF <- function(
             "LF_Data", "Path_D11", "Path_D12", "Path_s1", "Path_s2", "indNew",
             "unitsPred", "indOld", "modelunits", "TF_Environ", "UseTF",
             "TF_use_single", "etaPreds_F", "LF_Check", "run_crossprod_solve",
-            "solve_max_attempts", "solve_chunk_size", "Temp_Dir_LF"),
+            "Commands_Only", "solve_max_attempts", "solve_chunk_size",
+            "Temp_Dir_LF"),
           envir = environment())
 
         # Load necessary libraries and load environment if using TensorFlow
@@ -781,6 +821,8 @@ Predict_LF <- function(
 #'   run solve and crossprod functions. Default is 5.
 #' @param solve_chunk_size numeric. Chunk size for solve_and_multiply python
 #'   function. Default is 50.
+#' @param Commands_Only logical. If `TRUE`, returns the command to run the
+#'   Python script. Default is `FALSE`.
 #' @return Returns the `path_out` if successful. Returns `NULL` if all attempts
 #'   fail.
 #' @details
@@ -796,7 +838,7 @@ Predict_LF <- function(
 run_crossprod_solve <- function(
     virtual_env_path, s1, s2, postEta, path_out, denom,
     chunk_size = 1000L, threshold_mb = 2000L, use_single = TRUE, verbose = TRUE,
-    solve_chunk_size = 50L, solve_max_attempts = 5L) {
+    solve_chunk_size = 50L, solve_max_attempts = 5L, Commands_Only = FALSE) {
 
   Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3")
 
@@ -835,45 +877,24 @@ run_crossprod_solve <- function(
   } else {
     #python_executable <- "python3"
     #python_executable <- normalizePath(
-      #file.path(virtual_env_path, "bin", "python3"), winslash = "/")
+    #file.path(virtual_env_path, "bin", "python3"), winslash = "/")
     # system("module use /appl/local/csc/modulefiles; module load tensorflow")
     # Sys.setenv(PATH = file.path(virtual_env_path, "bin"))
     # Sys.setenv(PYTHONPATH = file.path(
     #   virtual_env_path, "lib/python3.10/site-packages"))
     # Sys.setenv(VIRTUAL_ENV = virtual_env_path)
-    python_executable <- "/pfs/lustrep3/appl/local/csc/soft/ai/bin/python3"
-  }
+    # python_executable <- "/pfs/lustrep3/appl/local/csc/soft/ai/bin/python3"
+    python_executable <- "python3"
 
-  # Check GPU availability
-  # result <- system(
-  #   paste0(
-  #     python_executable,
-  #     " -c \"import tensorflow as tf; print(len(",
-  #     "tf.config.list_physical_devices('GPU')))\""),
-  #   intern = TRUE)
-  # N_GPU <- result[length(result)]
-  # if (N_GPU == 0) {
-  #   IASDT.R::CatTime(
-  #     "No GPU found; Calculations will use CPU.",
-  #     Time = FALSE, Bold = TRUE, Red = TRUE)
-  # } else {
-  #   IASDT.R::CatTime(
-  #     paste0(N_GPU, " GPUs were found. Calculations will use GPU."),
-  #     Time = FALSE, Bold = TRUE, Red = TRUE)
-  # }
+  }
 
   # Construct the command to run the Python script
   LF_Args <- c(
-    # dplyr::if_else(
-    #   .Platform$OS.type != "windows",
-    #   paste0("source ", virtual_env_path, "/Scripts/activate &&"),
-    #   ""),
     python_executable,
     script_path,
     "--s1", normalizePath(s1, winslash = "/"),
     "--s2", normalizePath(s2, winslash = "/"),
     "--post_eta", normalizePath(postEta, winslash = "/"),
-    # "--path_out", normalizePath(path_out, winslash = "/", mustWork = FALSE),
     "--path_out", file.path(getwd(), path_out),
     "--denom", as.character(denom),
     "--chunk_size", as.character(chunk_size),
@@ -889,49 +910,58 @@ run_crossprod_solve <- function(
     LF_Args <- c(LF_Args, "--verbose")
   }
 
-
   LF_Args <- paste0(LF_Args, collapse = " ")
 
-  path_log <- stringr::str_replace(path_out, ".feather", ".log")
-  f <- file(path_log, open = "a")
-  on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
-  cat(
-    "Running command:\n", paste(LF_Args, "\n\n"),
-    sep = "\n", file = f, append = TRUE)
-
-  # Initialize retry logic
-  attempt <- 1
-  success <- FALSE
-
-  while (attempt <= solve_max_attempts && !success) {
-
-    cat(
-      paste0("Attempt ", attempt, " of ", solve_max_attempts, "\n\n"),
-      file = f, append = TRUE)
-
-    # Run the command and capture stdout/stderr to a log file
-    result <- system(LF_Args, intern = TRUE)
-
-    # Check for errors
-    if (!inherits(result, "error") || length(result) != 0 || result == "Done") {
-      # Check the integrity of the file
-      success <- IASDT.R::CheckData(path_out)
+  if (Commands_Only) {
+    if (.Platform$OS.type != "windows") {
+      LF_Args <- paste0("/usr/bin/time -v ", LF_Args)
     }
-    attempt <- attempt + 1
-  }
+    return(LF_Args)
 
-  # If all attempts fail, return NULL
-  if (!success) {
-    if (verbose) {
-      cat("All attempts failed. Returning NULL.\n",
-          sep = "\n", file = f, append = TRUE)
+  } else {
+
+    path_log <- stringr::str_replace(path_out, ".feather", ".log")
+    f <- file(path_log, open = "a")
+    on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
+    cat(
+      "Running command:\n", paste(LF_Args, "\n\n"),
+      sep = "\n", file = f, append = TRUE)
+
+    # Initialize retry logic
+    attempt <- 1
+    success <- FALSE
+
+    while (attempt <= solve_max_attempts && !success) {
+
+      cat(
+        paste0("Attempt ", attempt, " of ", solve_max_attempts, "\n\n"),
+        file = f, append = TRUE)
+
+      # Run the command and capture stdout/stderr to a log file
+      result <- system(LF_Args, intern = TRUE)
+
+      # Check for errors
+      if (!inherits(result, "error") || length(result) != 0 ||
+          result == "Done") {
+        # Check the integrity of the file
+        success <- IASDT.R::CheckData(path_out)
+      }
+      attempt <- attempt + 1
+    }
+
+    # If all attempts fail, return NULL
+    if (!success) {
+      if (verbose) {
+        cat("All attempts failed. Returning NULL.\n",
+            sep = "\n", file = f, append = TRUE)
+        # close connection to the file
+        close(f)
+      }
+      return(NULL)
+    } else {
       # close connection to the file
       close(f)
+      return(path_out)
     }
-    return(NULL)
-  } else {
-    # close connection to the file
-    close(f)
-    return(path_out)
   }
 }

@@ -65,14 +65,11 @@ if gpus:
             tf.config.experimental.set_memory_growth(gpu, True)
         
         # Set a fixed memory limit (e.g., 64 GB) to avoid exceeding the GPU memory
-        #tf.config.experimental.set_virtual_device_configuration(
-            #gpus[0],
-            #[tf.config.experimental.VirtualDeviceConfiguration(memory_limit=64000)]
-        #)
-        
+        tf.config.experimental.set_virtual_device_configuration(
+            gpu,
+            [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=64000)])
     except RuntimeError as e:
-        print(f"Error setting memory configurations: {e}")
-
+        print(f"Error setting up GPU memory configuration: {e}")
 # ======================================================================
 # file_path
 # ======================================================================

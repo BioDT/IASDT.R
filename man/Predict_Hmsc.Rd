@@ -30,6 +30,7 @@ Predict_Hmsc(
   LF_NCores = NCores,
   LF_Check = FALSE,
   LF_Temp_Cleanup = TRUE,
+  LF_Commands_Only = FALSE,
   Pred_Dir = NULL,
   Pred_PA = NULL,
   Pred_XY = NULL,
@@ -124,6 +125,9 @@ files exist without checking their integrity. Default is \code{FALSE}.}
 
 \item{LF_Temp_Cleanup}{Logical indicating whether to delete temporary files
 in the \code{Temp_Dir} after finishing the LF predictions.}
+
+\item{LF_Commands_Only}{logical. If \code{TRUE}, returns the command to run the
+Python script. Default is \code{FALSE}.}
 
 \item{Pred_Dir}{a character string specifying the directory where the
 predictions will be saved. Defaults to \code{NULL}, which saves model

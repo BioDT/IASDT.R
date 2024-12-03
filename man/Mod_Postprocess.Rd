@@ -42,9 +42,9 @@ without the trailing slash. Two folders will be created \code{Model_Fitted} and
 \code{Model_Coda} to store merged model and coda objects, respectively.}
 
 \item{Hab_Abb}{Character. Habitat abbreviation indicating the specific
-\href{https://www.preslia.cz/article/pdf?id=11548}{SynHab} habitat type to
-prepare data for. Valid values are \code{0}, \code{1}, \code{2}, \code{3}, \verb{4a}, \verb{4b}, \code{10},
-\verb{12a}, \verb{12b}. For more details, see \href{https://doi.org/10.23855/preslia.2022.447}{Pysek et al.}.}
+\href{https://www.preslia.cz/article/pdf?id=11548}{SynHab} habitat type for
+which data will be prepared. Valid values are \code{0}, \code{1}, \code{2}, \code{3}, \verb{4a},
+\verb{4b}, \code{10}, \verb{12a}, \verb{12b}. For more details, see \href{https://doi.org/10.23855/preslia.2022.447}{Pysek et al.}.}
 
 \item{NCores}{Integer specifying the number of parallel cores for
 parallelization. Default: 8 cores.}
@@ -108,28 +108,26 @@ in the \code{Temp_Dir} after finishing the LF predictions.}
 \item{Temp_Cleanup}{logical, indicating whether to clean up temporary files.
 Defaults to \code{TRUE}.}
 
-\item{CC_Models}{Character vector specifying the climate models to use for
-future predictions. Default: \code{c("GFDL-ESM4", "IPSL-CM6A-LR" , "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL")}. This argument is only
-temporary to make predictions for the workflow and will be removed in the
-future.}
+\item{CC_Models}{Character vector. Specifies the climate models for future
+predictions. Default: \code{c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL")}. Note: This parameter is temporary and may be
+removed in future updates.}
 
-\item{CC_Scenario}{Character vector specifying the climate scenarios to use
-for future predictions. Default: \code{c("ssp126", "ssp370", "ssp585")}. This
-argument is only temporary to make predictions for the workflow and will be
-removed in the future.}
+\item{CC_Scenario}{Character vector. Specifies the climate scenarios for
+future predictions. Default: \code{c("ssp126", "ssp370", "ssp585")}. Note: This
+parameter is temporary and may be removed in future updates.}
 
 \item{Pred_Clamp}{Logical indicating whether to clamp the sampling efforts at
 a single value. Defaults to \code{TRUE}. If \code{TRUE}, the \code{Fix_Efforts} argument
 must be provided.}
 
-\item{Fix_Efforts}{Numeric or character. Value to fix the sampling efforts
-at. If numeric, the value will be used as is. If character, it can be one
-of the following: \code{median}, \code{mean}, or \code{max}. Default: \code{mean}. This
-argument is required when \code{Pred_Clamp} is \code{TRUE}.}
+\item{Fix_Efforts}{Numeric or character. Defines the value to fix sampling
+efforts. If numeric, the value is directly used. If character, it can be
+\code{median}, \code{mean} (default), or \code{max}. This argument is mandatory when
+\code{Pred_Clamp} is set to \code{TRUE}.}
 
 \item{Pred_NewSites}{Logical indicating whether to predict habitat
-suitability at new sites. Default: \code{TRUE}. This argument is only temporary
-to make predictions for the workflow and will be removed in the future.}
+suitability at new sites. Default: \code{TRUE}. Note: This parameter is
+temporary and will be removed in future updates.}
 
 \item{CVName}{Character vector specifying the name of the column(s) in the
 model input data (see \link{Mod_PrepData} and \link{GetCV}) to be

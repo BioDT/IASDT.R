@@ -27,8 +27,8 @@ Mod_SLURM_Refit(
 \item{ModelDir}{String. Path to the model files directory. Must not end
 with a slash.}
 
-\item{NumArrayJobs}{Integer specifying the maximum allowed number of array
-jobs per SLURM file. Default: 210. See \href{https://docs.lumi-supercomputer.eu/runjobs/scheduled-jobs/partitions}{LUMI documentation}
+\item{NumArrayJobs}{Integer specifying the maximum number of array jobs per
+SLURM script. Default: 210. See \href{https://docs.lumi-supercomputer.eu/runjobs/scheduled-jobs/partitions}{LUMI documentation}
 for more details.}
 
 \item{JobName}{String. The name of the submitted job(s).}

@@ -20,6 +20,7 @@ Predict_LF(
   LF_OutFile = NULL,
   LF_Return = FALSE,
   LF_Check = FALSE,
+  LF_Commands_Only = FALSE,
   solve_max_attempts = 5L,
   solve_chunk_size = 50L,
   Verbose = TRUE
@@ -75,6 +76,9 @@ saved to a file.}
 \item{LF_Check}{Logical. If TRUE, the function checks if the output files are
 already created and valid. If FALSE, the function will only check if the
 files exist without checking their integrity. Default is \code{FALSE}.}
+
+\item{LF_Commands_Only}{logical. If \code{TRUE}, returns the command to run the
+Python script. Default is \code{FALSE}.}
 
 \item{solve_max_attempts}{numeric (Optional). Maximum number of attempts to
 run solve and crossprod functions. Default is 5.}

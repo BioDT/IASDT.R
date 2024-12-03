@@ -162,7 +162,7 @@ RespCurv_PrepData <- function(
           NCores = 1, Model_Name = paste0("RC_", Coords), RC = Coords,
           UseTF = UseTF, TF_Environ = TF_Environ, LF_InputFile = File_LF,
           LF_NCores = 1, LF_Check = LF_Check, LF_Temp_Cleanup = LF_Temp_Cleanup,
-          LF_Commands_Only = LF_Commands_Only, TF_use_single = TF_use_single, 
+          LF_Commands_Only = FALSE, TF_use_single = TF_use_single, 
           Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup, Verbose = FALSE)
 
         # Species richness
@@ -417,6 +417,10 @@ RespCurv_PrepData <- function(
         LF_Commands_Only = LF_Commands_Only,
         TF_use_single = TF_use_single, Verbose = Verbose, Pred_Dir = Temp_Dir)
 
+      if (LF_Commands_Only) {
+        return(invisible(NULL))
+      }
+      
       rm(Model_LF, Gradient_c, envir = environment())
       invisible(gc())
 

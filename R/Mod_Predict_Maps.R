@@ -57,7 +57,7 @@ Predict_Maps <- function(
     NCores = 8L, Pred_Clamp = TRUE, Fix_Efforts = "mean", Pred_NewSites = TRUE,
     UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE, LF_NCores = NCores,
     LF_Check = FALSE, LF_Temp_Cleanup = TRUE, LF_Only = FALSE,
-    LF_Commands_Only = FALSE
+    LF_Commands_Only = FALSE,
     Temp_Dir = "TEMP2Pred", Temp_Cleanup = TRUE,
     CC_Models = c(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
@@ -476,7 +476,7 @@ Predict_Maps <- function(
       # identical). If Pred_Clamp is TRUE, two sets of predictions under current
       # climates will be produced. The additional predictions withoug clamping
       # is used for model evaluation.
-      head(1) %>%
+      utils::head(1) %>%
       IASDT.R::LoadAs() %>%
       terra::unwrap() %>%
       terra::subset(BioVars) %>%
@@ -516,6 +516,10 @@ Predict_Maps <- function(
 
     IASDT.R::CatTime("Predicting latent factor is finished!", Level = 1)
     IASDT.R::CatSep(Extra1 = 1, Extra2 = 2, Rep = 1, Char = "*")
+
+  if (LF_Commands_Only) {
+    return(invisible(NULL))
+  }
 
   } else {
     if (Pred_NewSites) {
@@ -691,10 +695,10 @@ Predict_Maps <- function(
             Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup, UseTF = UseTF,
             TF_Environ = TF_Environ, TF_use_single = TF_use_single,
             LF_Return = TRUE, LF_NCores = LF_NCores, LF_Check = LF_Check,
-            LF_Temp_Cleanup = LF_Temp_Cleanup, 
-            LF_Commands_Only = LF_Commands_Only,
-            Pred_Dir = Path_Prediction, Pred_PA = Train_PA, Pred_XY = Train_XY, 
-            Evaluate = Evaluate, Eval_Name = NULL, Eval_Dir = Path_Eval, 
+            LF_Temp_Cleanup = LF_Temp_Cleanup,
+            LF_Commands_Only = FALSE,
+            Pred_Dir = Path_Prediction, Pred_PA = Train_PA, Pred_XY = Train_XY,
+            Evaluate = Evaluate, Eval_Name = NULL, Eval_Dir = Path_Eval,
             Verbose = FALSE)
 
         }
@@ -723,8 +727,8 @@ Predict_Maps <- function(
               TF_Environ = TF_Environ, TF_use_single = TF_use_single,
               LF_Return = TRUE, LF_InputFile = Path_Test_LF,
               LF_NCores = LF_NCores, LF_Check = LF_Check,
-              LF_Temp_Cleanup = LF_Temp_Cleanup, 
-              LF_Commands_Only = LF_Commands_Only, Verbose = FALSE,
+              LF_Temp_Cleanup = LF_Temp_Cleanup,
+              LF_Commands_Only = FALSE, Verbose = FALSE, 
               Pred_Dir = Path_Prediction, Evaluate = FALSE,
               Pred_XY = sf::st_drop_geometry(Test_XY))
 

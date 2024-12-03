@@ -7,7 +7,7 @@
 InfoChunk(
   Message = "",
   Date = TRUE,
-  Extra1 = 1L,
+  Extra1 = 0L,
   Extra2 = 1L,
   Bold = FALSE,
   Red = FALSE,

@@ -2,7 +2,7 @@
 % Please edit documentation in R/Mod_Prep4HPC.R
 \name{Mod_Prep4HPC}
 \alias{Mod_Prep4HPC}
-\title{Prepare initial models in R for model fitting by Hmsc-HPC}
+\title{Prepare initial models in R for model fitting with Hmsc-HPC}
 \usage{
 Mod_Prep4HPC(
   Hab_Abb = NULL,
@@ -57,18 +57,19 @@ Mod_Prep4HPC(
 )
 }
 \arguments{
-\item{Hab_Abb}{Character. Habitat abbreviation indicating the specific
-\href{https://www.preslia.cz/article/pdf?id=11548}{SynHab} habitat type to
-prepare data for. Valid values are \code{0}, \code{1}, \code{2}, \code{3}, \verb{4a}, \verb{4b}, \code{10},
-\verb{12a}, \verb{12b}. If \code{Hab_Abb} = \code{0}, data is prepared irrespective of the
-habitat type. For more details, see \href{https://doi.org/10.23855/preslia.2022.447}{Pysek et al.}.}
+\item{Hab_Abb}{Character. Abbreviation for the habitat type (based on
+\href{https://www.preslia.cz/article/pdf?id=11548}{SynHab}) for which to prepare
+data. Valid values are \code{0}, \code{1}, \code{2}, \code{3}, \verb{4a}, \verb{4b}, \code{10}, \verb{12a}, \verb{12b}.
+If \code{Hab_Abb} = \code{0}, data is prepared irrespective of the habitat type. For
+more details, see \href{https://doi.org/10.23855/preslia.2022.447}{Pysek et al.}.}
 
 \item{Path_Model}{String (without trailing slash) specifying the path where
 all output, including models to be fitted, will be saved.}
 
-\item{MinEffortsSp}{Minimum number of vascular plant species per grid cell in
-GBIF for a grid cell to be included in the models. This is to exclude grid
-cells with very little sampling efforts. Defaults to \code{100}.}
+\item{MinEffortsSp}{Integer specifying the minimum number of vascular plant
+species per grid cell (from GBIF data) required for inclusion in the
+models. This is to exclude grid cells with very little sampling efforts.
+Defaults to \code{100}.}
 
 \item{PresPerSpecies}{Integer. The minimum number of presence grid cells for
 a species to be included in the analysis. The number of presence grid cells
@@ -82,11 +83,12 @@ data sources. Defaults to \code{.env}.}
 Gaussian Predictive Process. Defaults to \code{TRUE}. If \code{FALSE}, non-spatial
 models will be fitted.}
 
-\item{GPP_Dists}{Integer specifying the distance in \emph{kilometers} for both the
-distance between knots and the minimum distance of a knot to the nearest
-data point. The GPP knots are prepared by the \link{PrepKnots}
-function. The same value will be used for the \code{knotDist} and
-\code{minKnotDist}    arguments of the \link[Hmsc:constructKnots]{Hmsc::constructKnots} function.}
+\item{GPP_Dists}{Integer specifying the distance in \emph{kilometers} used both
+for the spacing between knots and the minimum allowable distance between a
+knot and the nearest sampling point. The GPP knots are prepared by the
+\link{PrepKnots} function. The same value will be used for the
+\code{knotDist} and \code{minKnotDist}    arguments of the \link[Hmsc:constructKnots]{Hmsc::constructKnots}
+function.}
 
 \item{GPP_Save}{Logical indicating whether to save the resulted knots as
 \code{RData} file. Default: \code{TRUE}.}
@@ -155,12 +157,11 @@ folds.}
 \item{CV_SAC}{Logical. Indicating whether to use the spatial autocorrelation
 to determine the block size. Defaults to \code{FALSE},}
 
-\item{PhyloTree, NoPhyloTree}{Logical indicating whether to fit model variants
-with or without phylogenetic trees, respectively. The default values are
-\code{TRUE} and \code{FALSE}, respectively, which means to fit only models with
-phylogenetic trees. If both \code{PhyloTree} and \code{NoPhyloTree} are \code{TRUE},
-models for both options will be fitted. At least one of \code{PhyloTree} and
-\code{NoPhyloTree} should be \code{TRUE}.}
+\item{PhyloTree, NoPhyloTree}{Logical parameters indicating whether to fit
+models with (PhyloTree) or without (NoPhyloTree) phylogenetic trees.
+Defaults are \code{PhyloTree = TRUE} and \code{NoPhyloTree = FALSE}, meaning only
+models with phylogenetic trees are fitted by default. At least one of
+\code{PhyloTree} and \code{NoPhyloTree} should be \code{TRUE}.}
 
 \item{SaveData}{Logical. Indicates whether the processed data should be saved
 as RData file. Defaults to \code{TRUE}.}
@@ -185,14 +186,14 @@ fitted at each value of number of samples. Defaults to 1000.}
 factor. The value of \code{transient} will equal  the multiplication of
 \code{transientFactor} and \code{thin}. Default: 500.}
 
-\item{verbose}{Integer specifying how often the results of the MCMC sampling
-should be reported. Default: \code{200}.}
+\item{verbose}{Integer indicating the interval at which MCMC sampling
+progress is reported. Default: \code{200}.}
 
 \item{SkipFitted}{Logical indicating whether to skip already fitted models.
 Default: \code{TRUE}.}
 
-\item{NumArrayJobs}{Integer specifying the maximum allowed number of array
-jobs per SLURM file. Default: 210. See \href{https://docs.lumi-supercomputer.eu/runjobs/scheduled-jobs/partitions}{LUMI documentation}
+\item{NumArrayJobs}{Integer specifying the maximum number of array jobs per
+SLURM script. Default: 210. See \href{https://docs.lumi-supercomputer.eu/runjobs/scheduled-jobs/partitions}{LUMI documentation}
 for more details.}
 
 \item{ModelCountry}{String or vector of strings specifying the country or
@@ -243,13 +244,13 @@ The function is used for its side effects of preparing data and
 models for HPC and does not return any value.
 }
 \description{
-This function prepares initial models in R for model fitting by Hmsc-HPC. It
-involves data preparation, define spatial block cross-validation folds, model
-initialization, GPP knots, and generating commands for running models on HPC.
-It supports parallel processing, options to include/not include phylogenetic
-tree data. The models will be fitted using Gaussian Predictive Process (GPP;
-see \href{https://doi.org/10.1002/ecy.2929}{Tikhonov et al.} for more details) via
-the \href{https://doi.org/10.1371/journal.pcbi.1011914}{Hmsc-HPC} extension.
+This function prepares initial models in R use with Hmsc-HPC. It includes
+data preparation, define spatial block cross-validation folds, initializing
+models, generating Gaussian Predictive Process (GPP) knots, and creating
+commands for HPC execution. It supports parallel processing, options to
+include/not include phylogenetic tree data. The models will be fitted using
+Gaussian Predictive Process (GPP; see \href{https://doi.org/10.1002/ecy.2929}{Tikhonov et al.} for more details) via the
+\href{https://doi.org/10.1371/journal.pcbi.1011914}{Hmsc-HPC} extension.
 }
 \details{
 The function provides options for:

@@ -17,7 +17,8 @@ run_crossprod_solve(
   use_single = TRUE,
   verbose = TRUE,
   solve_chunk_size = 50L,
-  solve_max_attempts = 5L
+  solve_max_attempts = 5L,
+  LF_Commands_Only = FALSE
 )
 }
 \arguments{
@@ -53,6 +54,9 @@ function. Default is 50.}
 
 \item{solve_max_attempts}{numeric (Optional). Maximum number of attempts to
 run solve and crossprod functions. Default is 5.}
+
+\item{LF_Commands_Only}{logical. If \code{TRUE}, returns the command to run the
+Python script. Default is \code{FALSE}.}
 }
 \value{
 Returns the \code{path_out} if successful. Returns \code{NULL} if all attempts

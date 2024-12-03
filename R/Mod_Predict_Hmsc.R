@@ -385,6 +385,10 @@ Predict_Hmsc <- function(
         UseTF = UseTF, TF_Environ = TF_Environ, TF_use_single = TF_use_single)
 
       rm(postEta_file, envir = environment())
+      
+      if (LF_Commands_Only) {
+        return(invisible(NULL))
+      }
 
       rowNames <- rownames(predPostEta[[r]][[1]])
       PiNew[, r] <- fastmatch::fmatch(dfPiNew[, r], rowNames)

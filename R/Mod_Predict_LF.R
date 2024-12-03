@@ -200,6 +200,14 @@ Predict_LF <- function(
       Model_Name <- paste0(Model_Name, "_")
     }
 
+    if (stringr::str_detect(Model_Name, "^Rc_c") && LF_Commands_Only) {
+        CommandFilePrefix <- "LF_RC_Commands_"
+    }
+    if (nchar(Model_Name) > 0 && !stringr::str_detect(Model_Name, "^Rc_c") && 
+      LF_Commands_Only) {
+      CommandFilePrefix <- "LF_NewSites_Commands_"
+    }   
+
     # Create a temporary directory to store intermediate results. This directory
     # will be used to save s1/s2 or D11/D12, and intermediate postEta files,
     # reducing memory usage.
@@ -534,8 +542,13 @@ Predict_LF <- function(
 
       if (LF_NCores == 1 || LF_Commands_Only) {
 
-        # Sequential processing
-        IASDT.R::CatTime("Predicting Latent Factor sequentially", Level = 1)
+        if (LF_Commands_Only) {
+          IASDT.R::CatTime("Prepare commands for predicting latent factors", 
+          Level = 1)
+        } else {
+          # Sequential processing
+          IASDT.R::CatTime("Predicting Latent Factor sequentially", Level = 1)
+        }
 
         # Making predictions sequentially
         etaPreds <- purrr::map(
@@ -573,7 +586,7 @@ Predict_LF <- function(
 
               # Define the filename
               file_name <- file.path(
-                dirname(Temp_Dir), paste0("LF_Commands_", i, ".txt"))
+                dirname(Temp_Dir), paste0(CommandFilePrefix, i, ".txt"))
               # Write the chunk to a file with Linux line endings
               writeLines(chunk, file_name, useBytes = TRUE)
             }

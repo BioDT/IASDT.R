@@ -2,7 +2,7 @@
 % Please edit documentation in R/Mod_Predict_Maps.R
 \name{Predict_Maps}
 \alias{Predict_Maps}
-\title{Predicts habitat suitability of \code{Hmsc} model at different climate scenarios}
+\title{Predicts habitat suitability of \code{Hmsc} model across different climate options}
 \usage{
 Predict_Maps(
   Path_Model = NULL,
@@ -19,6 +19,8 @@ Predict_Maps(
   LF_NCores = NCores,
   LF_Check = FALSE,
   LF_Temp_Cleanup = TRUE,
+  LF_Only = FALSE,
+  LF_Commands_Only = FALSE,
   Temp_Dir = "TEMP2Pred",
   Temp_Cleanup = TRUE,
   CC_Models = c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0",
@@ -30,9 +32,9 @@ Predict_Maps(
 \item{Path_Model}{Character. Path to fitted \code{Hmsc} model object.}
 
 \item{Hab_Abb}{Character. Habitat abbreviation indicating the specific
-\href{https://www.preslia.cz/article/pdf?id=11548}{SynHab} habitat type to
-prepare data for. Valid values are \code{0}, \code{1}, \code{2}, \code{3}, \verb{4a}, \verb{4b}, \code{10},
-\verb{12a}, \verb{12b}. For more details, see \href{https://doi.org/10.23855/preslia.2022.447}{Pysek et al.}.}
+\href{https://www.preslia.cz/article/pdf?id=11548}{SynHab} habitat type for
+which data will be prepared. Valid values are \code{0}, \code{1}, \code{2}, \code{3}, \verb{4a},
+\verb{4b}, \code{10}, \verb{12a}, \verb{12b}. For more details, see \href{https://doi.org/10.23855/preslia.2022.447}{Pysek et al.}.}
 
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
@@ -47,14 +49,14 @@ parallelization. Default: 8 cores.}
 a single value. Defaults to \code{TRUE}. If \code{TRUE}, the \code{Fix_Efforts} argument
 must be provided.}
 
-\item{Fix_Efforts}{Numeric or character. Value to fix the sampling efforts
-at. If numeric, the value will be used as is. If character, it can be one
-of the following: \code{median}, \code{mean}, or \code{max}. Default: \code{mean}. This
-argument is required when \code{Pred_Clamp} is \code{TRUE}.}
+\item{Fix_Efforts}{Numeric or character. Defines the value to fix sampling
+efforts. If numeric, the value is directly used. If character, it can be
+\code{median}, \code{mean} (default), or \code{max}. This argument is mandatory when
+\code{Pred_Clamp} is set to \code{TRUE}.}
 
 \item{Pred_NewSites}{Logical indicating whether to predict habitat
-suitability at new sites. Default: \code{TRUE}. This argument is only temporary
-to make predictions for the workflow and will be removed in the future.}
+suitability at new sites. Default: \code{TRUE}. Note: This parameter is
+temporary and will be removed in future updates.}
 
 \item{UseTF}{Logical indicating whether to use TensorFlow for calculations.
 Defaults to TRUE.}
@@ -76,32 +78,38 @@ files exist without checking their integrity. Default is \code{FALSE}.}
 \item{LF_Temp_Cleanup}{Logical indicating whether to delete temporary files
 in the \code{Temp_Dir} after finishing the LF predictions.}
 
+\item{LF_Only}{Logical. Indicates whether to predict only the latent factor.
+Useful for distributing processing load between GPU and CPU. When \code{LF_Only = TRUE}, the latent factor prediction can be computed on the GPU. The
+function can then be rerun with \code{LF_Only = FALSE} to predict habitat
+suitability using the predicted latent factor on the CPU. Default: \code{FALSE}.}
+
+\item{LF_Commands_Only}{logical. If \code{TRUE}, returns the command to run the
+Python script. Default is \code{FALSE}.}
+
 \item{Temp_Dir}{Character string specifying the path for temporary storage of
 intermediate files.}
 
 \item{Temp_Cleanup}{logical, indicating whether to clean up temporary files.
 Defaults to \code{TRUE}.}
 
-\item{CC_Models}{Character vector specifying the climate models to use for
-future predictions. Default: \code{c("GFDL-ESM4", "IPSL-CM6A-LR" , "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL")}. This argument is only
-temporary to make predictions for the workflow and will be removed in the
-future.}
+\item{CC_Models}{Character vector. Specifies the climate models for future
+predictions. Default: \code{c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL")}. Note: This parameter is temporary and may be
+removed in future updates.}
 
-\item{CC_Scenario}{Character vector specifying the climate scenarios to use
-for future predictions. Default: \code{c("ssp126", "ssp370", "ssp585")}. This
-argument is only temporary to make predictions for the workflow and will be
-removed in the future.}
+\item{CC_Scenario}{Character vector. Specifies the climate scenarios for
+future predictions. Default: \code{c("ssp126", "ssp370", "ssp585")}. Note: This
+parameter is temporary and may be removed in future updates.}
 }
 \value{
-Returns a tibble with the prediction summary and file paths for
-output tif files.
+A tibble containing the prediction summary and file paths for output
+\verb{*.tif} files.
 }
 \description{
-This function generates prediction maps of \code{Hmsc} models under current and
-future climates. It also predicts an ensemble predictions for different
-climate models used. For each species and for species richness, the function
-exports three maps representing the mean, standard deviation (sd), and
-coefficient of variation (cov).
+This function generates prediction maps of \code{Hmsc} models for current and
+future climate scenarios. It also predicts an ensemble predictions for
+different climate models. For each species and overall species richness, the
+function exports three maps: mean, standard deviation (sd), and coefficient
+of variation (cov).
 }
 \author{
 Ahmed El-Gabbas

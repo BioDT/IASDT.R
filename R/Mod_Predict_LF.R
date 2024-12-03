@@ -834,13 +834,14 @@ run_crossprod_solve <- function(
     }
   } else {
     #python_executable <- "python3"
-    python_executable <- normalizePath(
-      file.path(virtual_env_path, "bin", "python3"), winslash = "/")
+    #python_executable <- normalizePath(
+      #file.path(virtual_env_path, "bin", "python3"), winslash = "/")
     # system("module use /appl/local/csc/modulefiles; module load tensorflow")
     # Sys.setenv(PATH = file.path(virtual_env_path, "bin"))
     # Sys.setenv(PYTHONPATH = file.path(
     #   virtual_env_path, "lib/python3.10/site-packages"))
     # Sys.setenv(VIRTUAL_ENV = virtual_env_path)
+    python_executable <- "/pfs/lustrep3/appl/local/csc/soft/ai/bin/python3"
   }
 
   # Check GPU availability
@@ -863,10 +864,10 @@ run_crossprod_solve <- function(
 
   # Construct the command to run the Python script
   LF_Args <- c(
-    dplyr::if_else(
-      .Platform$OS.type == "windows",
-      paste0("source ", virtual_env_path, "/Scripts/activate &&"),
-      ""),
+    # dplyr::if_else(
+    #   .Platform$OS.type != "windows",
+    #   paste0("source ", virtual_env_path, "/Scripts/activate &&"),
+    #   ""),
     python_executable,
     script_path,
     "--s1", normalizePath(s1, winslash = "/"),

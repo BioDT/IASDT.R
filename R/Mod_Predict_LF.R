@@ -824,36 +824,42 @@ run_crossprod_solve <- function(
 
   # Determine the Python executable path
   if (.Platform$OS.type == "windows") {
-    python_executable <- file.path(virtual_env_path, "Scripts", "python.exe")
+    python_executable <- normalizePath(
+      file.path(virtual_env_path, "Scripts", "python.exe"),
+      winslash = "/")
     if (!file.exists(python_executable)) {
       stop(
         "Python executable not found in the virtual environment.",
         call. = FALSE)
     }
   } else {
-    python_executable <- "python3"
+    #python_executable <- "python3"
+    python_executable <- normalizePath(
+      file.path(virtual_env_path, "bin", "python3"), winslash = "/")
+    system("module use /appl/local/csc/modulefiles; module load tensorflow")
+    Sys.setenv(PATH = file.path(virtual_env_path, "bin"))
+    Sys.setenv(PYTHONPATH = file.path(
+      virtual_env_path, "lib/python3.10/site-packages"))
+    Sys.setenv(VIRTUAL_ENV = virtual_env_path)
   }
-
 
   # Check GPU availability
-  result <- system(
-    paste0(
-      python_executable,
-      " -c \"import tensorflow as tf; print(len(",
-      "tf.config.list_physical_devices('GPU')))\""),
-    intern = TRUE)
-
-  N_GPU <- result[length(result)]
-
-  if (N_GPU == 0) {
-    IASDT.R::CatTime(
-      "No GPU found; Calculations will use CPU.",
-      Time = FALSE, Bold = TRUE, Red = TRUE)
-  } else {
-    IASDT.R::CatTime(
-      paste0(N_GPU, " GPUs were found. Calculations will use GPU."),
-      Time = FALSE, Bold = TRUE, Red = TRUE)
-  }
+  # result <- system(
+  #   paste0(
+  #     python_executable,
+  #     " -c \"import tensorflow as tf; print(len(",
+  #     "tf.config.list_physical_devices('GPU')))\""),
+  #   intern = TRUE)
+  # N_GPU <- result[length(result)]
+  # if (N_GPU == 0) {
+  #   IASDT.R::CatTime(
+  #     "No GPU found; Calculations will use CPU.",
+  #     Time = FALSE, Bold = TRUE, Red = TRUE)
+  # } else {
+  #   IASDT.R::CatTime(
+  #     paste0(N_GPU, " GPUs were found. Calculations will use GPU."),
+  #     Time = FALSE, Bold = TRUE, Red = TRUE)
+  # }
 
   # Construct the command to run the Python script
   LF_Args <- c(
@@ -863,7 +869,8 @@ run_crossprod_solve <- function(
     "--s1", normalizePath(s1, winslash = "/"),
     "--s2", normalizePath(s2, winslash = "/"),
     "--post_eta", normalizePath(postEta, winslash = "/"),
-    "--path_out", normalizePath(path_out, winslash = "/", mustWork = FALSE),
+    # "--path_out", normalizePath(path_out, winslash = "/", mustWork = FALSE),
+    "--path_out", file.path(getwd(), path_out),
     "--denom", as.character(denom),
     "--chunk_size", as.character(chunk_size),
     "--threshold_mb", as.character(threshold_mb),

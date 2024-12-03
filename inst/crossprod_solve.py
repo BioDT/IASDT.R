@@ -381,6 +381,9 @@ def crossprod_solve(
     - str: Path to the saved Feather file.
     """
     
+    # Check if the output file already exists
+    if os.path.exists(path_out):
+        return path_out
     
     log_file = path_out.replace(".feather", ".log")
     

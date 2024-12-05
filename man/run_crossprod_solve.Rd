@@ -77,4 +77,7 @@ to 3 times if the output is invalid.
 \item Generates detailed logs if \code{verbose} is set to \code{TRUE}.
 }
 }
+\author{
+Ahmed El-Gabbas
+}
 \keyword{internal}

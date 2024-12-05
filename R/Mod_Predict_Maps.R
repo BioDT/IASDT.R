@@ -58,7 +58,7 @@ Predict_Maps <- function(
     UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE, LF_NCores = NCores,
     LF_Check = FALSE, LF_Temp_Cleanup = TRUE, LF_Only = FALSE,
     LF_Commands_Only = FALSE,
-    Temp_Dir = "TEMP2Pred", Temp_Cleanup = TRUE,
+    Temp_Dir = "TEMP_Pred", Temp_Cleanup = TRUE,
     CC_Models = c(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
       "MRI-ESM2-0", "UKESM1-0-LL"),
@@ -474,7 +474,7 @@ Predict_Maps <- function(
       dplyr::pull("FilePath") %>%
       # If there are two options for climate data, use the first (both are
       # identical). If Pred_Clamp is TRUE, two sets of predictions under current
-      # climates will be produced. The additional predictions withoug clamping
+      # climates will be produced. The additional predictions without clamping
       # is used for model evaluation.
       utils::head(1) %>%
       IASDT.R::LoadAs() %>%
@@ -799,6 +799,9 @@ Predict_Maps <- function(
 
         # Loading mean predictions at current climates
         CurrentMean <- list.files(
+          # use relevant folder containing the current predictions. This is 
+          # determined by `Path_Prediction`, which is not the same whether 
+          # clamping is used or not
           path = Path_Prediction, pattern = "Prediction_Current.*_R.qs2",
           full.names = TRUE) %>%
           IASDT.R::LoadAs() %>%

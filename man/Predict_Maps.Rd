@@ -21,7 +21,7 @@ Predict_Maps(
   LF_Temp_Cleanup = TRUE,
   LF_Only = FALSE,
   LF_Commands_Only = FALSE,
-  Temp_Dir = "TEMP2Pred",
+  Temp_Dir = "TEMP_Pred",
   Temp_Cleanup = TRUE,
   CC_Models = c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0",
     "UKESM1-0-LL"),

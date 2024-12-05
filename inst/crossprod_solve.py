@@ -24,6 +24,8 @@ import argparse
 import contextlib
 import gc
 import sys
+from datetime import datetime
+import pytz
 
 # Set TensorFlow logging level to show only errors
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -70,6 +72,7 @@ if gpus:
             [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=64000)])
     except RuntimeError as e:
         print(f"Error setting up GPU memory configuration: {e}")
+
 # ======================================================================
 # file_path
 # ======================================================================
@@ -103,17 +106,20 @@ def load_feather(file_path):
 # ======================================================================
 
 def print_time(message, verbose=True):
-    
     """
-    Print the current time along with a provided message  (optional).
+    Print the current time in Germany along with a provided message (optional).
 
     Parameters:
     - message (str): The message to print along with the current time.
     - verbose (bool, optional): If True, print the message. Defaults to True.
     """
-
     if verbose:
-        current_time = time.strftime("%I:%M:%S %p", time.localtime())
+        # Define the timezone for Germany
+        germany_tz = pytz.timezone("Europe/Berlin")
+        
+        # Get the current time in the specified timezone
+        current_time = datetime.now(germany_tz).strftime("%I:%M:%S %p")
+        
         print(f"{message} - {current_time}")
 
 # ======================================================================
@@ -333,6 +339,21 @@ def solve_and_multiply(k11, k12, post_eta, log_fn=None, solve_chunk_size=50):
 
     return final_results
 
+# ==============================================================================
+# ==============================================================================
+
+# Print to file with time stamp
+def log_time(msg, verbose=True):
+    if verbose:
+        print_time(msg)
+
+# ==============================================================================
+
+# Print to file without time stamp
+def log_text(msg, verbose=True):
+    if verbose:
+        print(msg)
+
 # ======================================================================
 # crossprod_solve
 # ======================================================================
@@ -387,56 +408,53 @@ def crossprod_solve(
     
     log_file = path_out.replace(".feather", ".log")
     
-    with open(log_file, "a") as log:
+    # Open the log file once globally
+    try:
+        log = open(log_file, "a")
+    except Exception as e:
+        print(f"Error: Failed to create or open the log file {log_file}: {e}")
+        sys.exit(1)
+
+    
+    try:
         with contextlib.redirect_stdout(log), contextlib.redirect_stderr(log):
-            
-            # Print to file with time stamp
-            def log_and_flush(msg, verbose=True):
-                if verbose:
-                    print_time(msg)
-                    log.flush()
-            
-            # Print to file without time stamp
-            def log_and_flush2(msg, verbose=True):
-                if verbose:
-                    print(msg)
-                    log.flush()
             
             # Record the start time
             start_time = time.time()
-            
+
+            # Log the start of the process only if the file is new or empty
+            # Check if log file is empty
+            if os.stat(log_file).st_size == 0:
+                log_text("=" * 80, verbose)
+                log_time("Starting crossprod_solve", verbose)
+                log_text("=" * 80, verbose)
+
             # Log environment info
-            log_and_flush2("\n", verbose)
-            log_and_flush2("=" * 80, verbose)
-            log_and_flush("Starting crossprod_solve", verbose)
-            log_and_flush2("=" * 80, verbose)
-            
-            # Log environment info
-            log_and_flush2("\nEnvironment Info:", verbose)
-            log_and_flush2(f"    Current Working Directory: {os.getcwd()}", verbose)
-            log_and_flush2(f"    Python Version: {sys.version}", verbose)
-            log_and_flush2(f"    TensorFlow Version: {tf.__version__}", verbose)
-            log_and_flush2(f"    OS: {os.name}", verbose)
-            log_and_flush2(f"    Platform: {sys.platform}", verbose)
+            log_text("\nEnvironment Info:", verbose)
+            log_text(f"    Current Working Directory: {os.getcwd()}", verbose)
+            log_text(f"    Python Version: {sys.version}", verbose)
+            log_text(f"    TensorFlow Version: {tf.__version__}", verbose)
+            log_text(f"    OS: {os.name}", verbose)
+            log_text(f"    Platform: {sys.platform}", verbose)
 
             # Log user inputs
-            log_and_flush2("\nUser Inputs:", verbose)
-            log_and_flush2(f"    s1: {s1}", verbose)
-            log_and_flush2(f"    s2: {s2}", verbose)
-            log_and_flush2(f"    denom: {denom}", verbose)
-            log_and_flush2(f"    post_eta: {post_eta}", verbose)
-            log_and_flush2(f"    use_single: {use_single}", verbose)
-            log_and_flush2(f"    path_out: {path_out}", verbose)
-            log_and_flush2(f"    chunk_size: {chunk_size}", verbose)
-            log_and_flush2(f"    threshold_mb: {threshold_mb}", verbose)
-            log_and_flush2(f"    solve_chunk_size: {solve_chunk_size}", verbose)
+            log_text("\nUser Inputs:", verbose)
+            log_text(f"    s1: {s1}", verbose)
+            log_text(f"    s2: {s2}", verbose)
+            log_text(f"    denom: {denom}", verbose)
+            log_text(f"    post_eta: {post_eta}", verbose)
+            log_text(f"    use_single: {use_single}", verbose)
+            log_text(f"    path_out: {path_out}", verbose)
+            log_text(f"    chunk_size: {chunk_size}", verbose)
+            log_text(f"    threshold_mb: {threshold_mb}", verbose)
+            log_text(f"    solve_chunk_size: {solve_chunk_size}", verbose)
             
             # Check for GPUs
-            log_and_flush2("\n\nChecking GPU", verbose)
+            log_text("\n\nChecking GPU", verbose)
             if gpus:
-                log_and_flush2(f"  >>  GPUs detected: {len(gpus)}\n", verbose)
+                log_text(f"  >>  GPUs detected: {len(gpus)}\n", verbose)
             else:
-                log_and_flush2("  >>  No GPUs detected; using CPU.\n", verbose)
+                log_text("  >>  No GPUs detected; using CPU.\n", verbose)
         
             # Ensure chunk_size is an integer
             chunk_size = int(chunk_size)
@@ -447,7 +465,7 @@ def crossprod_solve(
             # |||||||||||||||||||||||||||||||||||
             # Processing s1
             # |||||||||||||||||||||||||||||||||||
-            log_and_flush("Processing s1", verbose)
+            log_time("Processing s1", verbose)
                 
             try:
                 s1_tensor = load_feather(s1) if isinstance(s1, str) else s1
@@ -456,14 +474,14 @@ def crossprod_solve(
                 dist1 = compute_distances_chunked(
                     s1_tensor, dtype=dtype, chunk_size=chunk_size)
             except Exception as e:
-                log_and_flush(f"Error processing s1: {e}", verbose)
+                log_time(f"Error processing s1: {e}", verbose)
                 raise
         
             # |||||||||||||||||||||||||||||||||||
             # Processing s2
             # |||||||||||||||||||||||||||||||||||
         
-            log_and_flush("Processing s2", verbose)
+            log_time("Processing s2", verbose)
             
             try:
                 s2_tensor = load_feather(s2) if isinstance(s2, str) else s2
@@ -471,7 +489,7 @@ def crossprod_solve(
                 dist2 = compute_distances_chunked(
                     s1_tensor, s2_tensor, dtype=dtype, chunk_size=chunk_size)
             except Exception as e:
-                log_and_flush(f"Error processing s2: {e}", verbose)
+                log_time(f"Error processing s2: {e}", verbose)
                 raise
         
             del s1_tensor, s2_tensor
@@ -481,7 +499,7 @@ def crossprod_solve(
             # Processing post_eta
             # |||||||||||||||||||||||||||||||||||
             
-            log_and_flush("Processing post_eta", verbose)
+            log_time("Processing post_eta", verbose)
             
             try:
                 post_eta = load_feather(post_eta) if isinstance(post_eta, str) else post_eta
@@ -489,61 +507,61 @@ def crossprod_solve(
                     post_eta, dtype=dtype, chunk_size=chunk_size, 
                     threshold_mb=threshold_mb)
             except Exception as e:
-                log_and_flush(f"Error loading post_eta: {e}", verbose)
+                log_time(f"Error loading post_eta: {e}", verbose)
                 raise
             
             # |||||||||||||||||||||||||||||||||||
             # Compute k11 and k12
             # |||||||||||||||||||||||||||||||||||
             
-            log_and_flush("Calculating K matrices", verbose)
+            log_time("Prepare K matrices", verbose)
                         
             try:
                 # Convert denom to a TensorFlow tensor
                 denom_tensor = tf.convert_to_tensor(denom, dtype=dtype)
                 
-                log_and_flush("Calculating k11", verbose)
+                log_time("  >>  k11", verbose)
                 k11 = tf.exp(-dist1 / denom_tensor)
                 del dist1
 
-                log_and_flush("Calculating k12", verbose)
+                log_time("  >>  k12", verbose)
                 k12 = tf.exp(-dist2 / denom_tensor)
-                # Retrieve the shape as a list [rows, columns]
-                #K12_shape = k12.shape.as_list()
-                # Dynamically ensure the tensor's shape
-                #k12 = tf.ensure_shape(k12, K12_shape)
                 del dist2, denom_tensor
+                
                 gc.collect()
 
             except Exception as e:
-                log_and_flush(f"Error calculating K matrices: {e}", verbose)
+                log_time(f"Error calculating K matrices: {e}", verbose)
                 raise
             
             # |||||||||||||||||||||||||||||||||||
             # Solve and multiply
             # |||||||||||||||||||||||||||||||||||
-            log_and_flush("Solving and computing cross-products", verbose)
+
+            log_time("Solving and computing cross-products", verbose)
             
             try:
                 results = solve_and_multiply(
-                    k11, k12, post_eta, log_fn=log_and_flush,
+                    k11, k12, post_eta, log_fn=log_time,
                     solve_chunk_size=solve_chunk_size)
                 del k11, k12, post_eta
                 gc.collect()
             except Exception as e:
-                log_and_flush(f"Error in solve_and_multiply: {e}", verbose)
+                log_time(f"Error in solve_and_multiply: {e}", verbose)
                 raise
 
             # |||||||||||||||||||||||||||||||||||
             # Save results
             # |||||||||||||||||||||||||||||||||||
             
-            log_and_flush("Saving results to Feather file", verbose)
+            log_time("Saving results to Feather file", verbose)
             
             try:
+                # Ensure output directory exists
+                os.makedirs(os.path.dirname(path_out), exist_ok=True)
                 pd.DataFrame(results.numpy()).to_feather(path_out)
             except Exception as e:
-                log_and_flush(f"Error saving results: {e}", verbose)
+                log_time(f"Error saving results: {e}", verbose)
                 raise
             
             # |||||||||||||||||||||||||||||||||||
@@ -552,16 +570,22 @@ def crossprod_solve(
             
             elapsed_time = time.time() - start_time
             
-            log_and_flush(f"Elapsed time: {time.strftime('%H:%M:%S', time.gmtime(elapsed_time))}", verbose)
-            log_and_flush2("=" * 80, verbose)
-            log_and_flush2("\n\n", verbose)
-
+            log_text(f"Elapsed time: {time.strftime('%H:%M:%S', time.gmtime(elapsed_time))}", verbose)
+            log_text("=" * 80, verbose)
+            log_text("\n\n", verbose)
+    except Exception as e:
+        print(f"Error: Failed to redirect output to log file: {e}", file=sys.stderr)
+        raise
+    finally:
+        # Ensure the log file is closed properly
+        log.close()
     return path_out
 
 # ==============================================================================
 # ==============================================================================
 
 # Allow `crossprod_solve` function from the command line (system / system2 in R).
+
 
 if __name__ == "__main__":
     
@@ -599,7 +623,22 @@ if __name__ == "__main__":
         help="Chunk size for solve_and_multiply.")
 
     args = parser.parse_args()
-    
+
+    # Check if the output file already exists
+    if os.path.exists(args.path_out):
+        # Exit silently (no output)
+        sys.exit(0)
+    # Validate input arguments before proceeding
+    if not os.path.exists(args.s1):
+        print(f"Error: Input file {args.s1} does not exist.")
+        sys.exit(1)
+    if not os.path.exists(args.s2):
+        print(f"Error: Input file {args.s2} does not exist.")
+        sys.exit(1)
+    if not os.path.exists(args.post_eta):
+        print(f"Error: Input file {args.post_eta} does not exist.")
+        sys.exit(1)
+
     try:
         result = crossprod_solve(
             s1=args.s1,

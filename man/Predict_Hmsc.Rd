@@ -17,7 +17,7 @@ Predict_Hmsc(
   expected = TRUE,
   NCores = 8L,
   Model_Name = "Train",
-  Temp_Dir = "TEMP2Pred",
+  Temp_Dir = "TEMP_Pred",
   Temp_Cleanup = TRUE,
   RC = NULL,
   UseTF = TRUE,

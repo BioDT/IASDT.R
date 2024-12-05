@@ -28,6 +28,8 @@
 #'   displayed. Defaults to `TRUE`.
 #' @param Temp_Cleanup Logical. Whether to delete temporary files after
 #'   processing. Default: `TRUE`.
+#' @param VP_Commands_Only logical. If `TRUE`, returns the commands to run the
+#'   Python script. Default is `FALSE`. Only relevant when `UseTF` is `TRUE`.
 #' @param VarParFile Character. Name of the output file to save the results.
 #' @export
 #' @name VarPar_Compute
@@ -40,7 +42,7 @@ VarPar_Compute <- function(
     Path_Model, group = NULL, groupnames = NULL, start = 1L, na.ignore = FALSE,
     NCores = 8L, UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE,
     Temp_Cleanup = TRUE, Chunk_size = 50L, Verbose = TRUE,
-    VarParFile = "VarPar") {
+    VarParFile = "VarPar", VP_Commands_Only = FALSE) {
 
   # # .................................................................... ###
 
@@ -56,7 +58,8 @@ VarPar_Compute <- function(
   # Check if the virtual environment and Python scripts exist
 
   if (UseTF) {
-    if (is.null(TF_Environ) || !dir.exists(TF_Environ)) {
+    if (isFALSE(VP_Commands_Only) &&
+        (is.null(TF_Environ) || !dir.exists(TF_Environ))) {
       stop(
         paste0(
           "When `UseTF` is TRUE, `TF_Environ` must be specified and should ",
@@ -66,35 +69,34 @@ VarPar_Compute <- function(
 
     # Determine the Python executable path
     python_executable <- if (.Platform$OS.type == "windows") {
-
-      file.path(TF_Environ, "Scripts", "python.exe")
-
-      if (!file.exists(python_executable)) {
+      if (isFALSE(VP_Commands_Only) && !file.exists(python_executable)) {
         stop(
           "Python executable not found in the virtual environment.",
           call. = FALSE)
       }
-
+      file.path(TF_Environ, "Scripts", "python.exe")
     } else {
-      "python3"
+      "/usr/bin/time -v python3"
     }
 
     # Check GPU availability
-    result <- system(
-      paste0(
-        python_executable,
-        " -c \"import tensorflow as tf; print(len(",
-        "tf.config.list_physical_devices('GPU')))\""),
-      intern = TRUE)
-    N_GPU <- result[length(result)]
-    if (N_GPU == 0) {
-      IASDT.R::CatTime(
-        "No GPU found; Calculations will use CPU.",
-        Time = FALSE, Bold = TRUE, Red = TRUE)
-    } else {
-      IASDT.R::CatTime(
-        paste0(N_GPU, " GPUs were found. Calculations will use GPU."),
-        Time = FALSE, Bold = TRUE, Red = TRUE)
+    if (isFALSE(VP_Commands_Only) && .Platform$OS.type == "windows") {
+      result <- system(
+        paste0(
+          python_executable,
+          " -c \"import tensorflow as tf; print(len(",
+          "tf.config.list_physical_devices('GPU')))\""),
+        intern = TRUE)
+      N_GPU <- result[length(result)]
+      if (N_GPU == 0) {
+        IASDT.R::CatTime(
+          "No GPU found; Calculations will use CPU.",
+          Time = FALSE, Bold = TRUE, Red = TRUE)
+      } else {
+        IASDT.R::CatTime(
+          paste0(N_GPU, " GPUs were found. Calculations will use GPU."),
+          Time = FALSE, Bold = TRUE, Red = TRUE)
+      }
     }
 
     # Paths to the Python scripts
@@ -176,8 +178,6 @@ VarPar_Compute <- function(
     }
   )
 
-
-
   # # .................................................................... ###
 
   # Prepare postList-----
@@ -191,8 +191,7 @@ VarPar_Compute <- function(
           "rho", "wRRR", "PsiRRR", "DeltaRRR")
         .x[Items2Delete] <- NULL
         return(.x)
-      }
-    )
+      })
 
   # Remove unnecessary elements from the model object
   names_to_remove <- c(
@@ -288,39 +287,43 @@ VarPar_Compute <- function(
         # to separate feather file
         IASDT.R::CatTime("Beta", Level = 2)
 
-        IASDT.R::CatTime("Prepare working on parallel", Level = 3)
-        c1 <- parallel::makePSOCKcluster(NCores)
-        on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
+        if (!all(file.exists(Beta_Files))) {
 
-        IASDT.R::CatTime("Export necessary objects to cores", Level = 3)
-        parallel::clusterExport(
-          cl = c1, varlist = c("Beta_Files", "postList"), envir = environment())
 
-        IASDT.R::CatTime("Load libraries on each core", Level = 3)
-        invisible(
-          parallel::clusterEvalQ(
-            cl = c1, expr = sapply("arrow", library, character.only = TRUE)))
 
-        IASDT.R::CatTime("Processing beta on parallel", Level = 3)
-        Beta0 <- parallel::parLapply(
-          cl = c1,
-          X = seq_along(postList),
-          fun = function(x) {
-            Beta_File <- Beta_Files[x]
-            if (!file.exists(Beta_File)) {
-              Beta <- as.data.frame(postList[[x]][["Beta"]])
-              arrow::write_feather(x = Beta, sink = Beta_File)
-            }
-            return(NULL)
-          })
-        rm(Beta0)
+          IASDT.R::CatTime("Prepare working on parallel", Level = 3)
+          c1 <- parallel::makePSOCKcluster(NCores)
+          on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
 
-        IASDT.R::CatTime("stop cluster", Level = 3)
-        parallel::stopCluster(c1)
+          IASDT.R::CatTime("Export necessary objects to cores", Level = 3)
+          parallel::clusterExport(
+            cl = c1, varlist = c("Beta_Files", "postList"),
+            envir = environment())
+
+          IASDT.R::CatTime("Load libraries on each core", Level = 3)
+          invisible(
+            parallel::clusterEvalQ(
+              cl = c1, expr = sapply("arrow", library, character.only = TRUE)))
+
+          IASDT.R::CatTime("Processing beta on parallel", Level = 3)
+          Beta0 <- parallel::parLapply(
+            cl = c1,
+            X = seq_along(postList),
+            fun = function(x) {
+              Beta_File <- Beta_Files[x]
+              if (!file.exists(Beta_File)) {
+                Beta <- as.data.frame(postList[[x]][["Beta"]])
+                arrow::write_feather(x = Beta, sink = Beta_File)
+              }
+              return(NULL)
+            })
+          rm(Beta0)
+
+          IASDT.R::CatTime("stop cluster", Level = 3)
+          parallel::stopCluster(c1)
+        }
       }
-
       invisible(gc())
-
       # |||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
       ### Processing geta -----
@@ -341,19 +344,31 @@ VarPar_Compute <- function(
           "--chunk_size", Chunk_size)
 
         if (TF_use_single) {
-          cmd_a <- c(cmd_a, "--use_single")
+          cmd_a <- paste0(cmd_a, " --use_single")
         }
 
-        # Run the command using system
-        la <- system(cmd_a, wait = TRUE, intern  = TRUE)
+        if (VP_Commands_Only) {
 
-        # Check for errors
-        if (inherits(la, "error") || la[length(la)] != "Done") {
-          stop(paste0("Error in computing geta: ", la), call. = FALSE)
-        }
+          # Save command to file
+          # Redirect results of time to log file
+          path_log_a <- stringr::str_replace(Path_Out_a, ".feather", ".log")
+          cmd_a <- paste0(cmd_a, paste0(" >> ", path_log_a, " 2>&1"))
+          readr::write_lines(
+            x = cmd_a,
+            file = file.path(Path_Temp, "VP_A_Command.txt"), append = FALSE)
 
-        if (length(la) != 1) {
-          cat(la, sep = "\n")
+        } else {
+          # Run the command using system
+          la <- system(cmd_a, wait = TRUE, intern  = TRUE)
+
+          # Check for errors
+          if (inherits(la, "error") || la[length(la)] != "Done") {
+            stop(paste0("Error in computing geta: ", la), call. = FALSE)
+          }
+
+          if (length(la) != 1) {
+            cat(la, sep = "\n")
+          }
         }
 
       } else {
@@ -382,19 +397,32 @@ VarPar_Compute <- function(
           "--ncores", NCores)
 
         if (TF_use_single) {
-          cmd_f <- c(cmd_f, "--use_single")
+          cmd_f <- paste0(cmd_f, " --use_single")
         }
 
-        # Run the command using system
-        lf <- system(cmd_f, wait = TRUE, intern  = TRUE)
+        if (VP_Commands_Only) {
 
-        # Check for errors
-        if (inherits(lf, "error") || lf[length(lf)] != "Done") {
-          stop(paste0("Error in computing geta: ", lf), call. = FALSE)
-        }
+          # Save command to file
+          # Redirect results of time to log file
+          path_log_f <- stringr::str_replace(Path_Out_f, ".feather", ".log")
+          cmd_f <- paste0(cmd_f, paste0(" >> ", path_log_f, " 2>&1"))
+          readr::write_lines(
+            x = cmd_f,
+            file = file.path(Path_Temp, "VP_F_Command.txt"), append = FALSE)
 
-        if (length(lf) != 1) {
-          cat(lf, sep = "\n")
+        } else {
+
+          # Run the command using system
+          lf <- system(cmd_f, wait = TRUE, intern  = TRUE)
+
+          # Check for errors
+          if (inherits(lf, "error") || lf[length(lf)] != "Done") {
+            stop(paste0("Error in computing geta: ", lf), call. = FALSE)
+          }
+
+          if (length(lf) != 1) {
+            cat(lf, sep = "\n")
+          }
         }
 
       } else {
@@ -423,21 +451,33 @@ VarPar_Compute <- function(
           "--chunk_size", Chunk_size)
 
         if (TF_use_single) {
-          cmd_mu <- c(cmd_mu, "--use_single")
+          cmd_mu <- paste0(cmd_mu, " --use_single")
         }
 
-        # Run the command using system
-        lmu <- system(cmd_mu, wait = TRUE, intern  = TRUE)
+        if (VP_Commands_Only) {
 
-        # Check for errors
-        if (inherits(lmu, "error") || lmu[length(lmu)] != "Done") {
-          stop(paste0("Error in computing geta: ", lmu), call. = FALSE)
+          # Save command to file
+          # Redirect results of time to log file
+          path_log_mu <- stringr::str_replace(Path_Out_mu, ".feather", ".log")
+          cmd_mu <- paste0(cmd_mu, paste0(" >> ", path_log_mu, " 2>&1"))
+          readr::write_lines(
+            x = cmd_mu,
+            file = file.path(Path_Temp, "VP_mu_Command.txt"), append = FALSE)
+
+        } else {
+
+          # Run the command using system
+          lmu <- system(cmd_mu, wait = TRUE, intern  = TRUE)
+
+          # Check for errors
+          if (inherits(lmu, "error") || lmu[length(lmu)] != "Done") {
+            stop(paste0("Error in computing geta: ", lmu), call. = FALSE)
+          }
+
+          if (length(lmu) != 1) {
+            cat(lmu, sep = "\n")
+          }
         }
-
-        if (length(lmu) != 1) {
-          cat(lmu, sep = "\n")
-        }
-
       } else {
         IASDT.R::CatTime(
           "All `lmu` data were already available on disk", Level = 1)
@@ -445,6 +485,10 @@ VarPar_Compute <- function(
     }
 
     invisible(gc())
+
+    if (VP_Commands_Only) {
+      return(invisible(NULL))
+    }
 
   } else {
 

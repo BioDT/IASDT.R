@@ -17,7 +17,7 @@ RespCurv_PrepData(
   LF_Check = FALSE,
   LF_Temp_Cleanup = TRUE,
   LF_Commands_Only = FALSE,
-  Temp_Dir = "TEMP2Pred",
+  Temp_Dir = "TEMP_Pred",
   Temp_Cleanup = TRUE,
   Verbose = TRUE
 )

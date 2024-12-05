@@ -11,7 +11,7 @@ Predict_LF(
   postAlpha,
   LF_rL,
   LF_NCores = 8L,
-  Temp_Dir = "TEMP2Pred",
+  Temp_Dir = "TEMP_Pred",
   LF_Temp_Cleanup = TRUE,
   Model_Name = NULL,
   UseTF = TRUE,

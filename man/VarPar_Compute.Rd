@@ -17,7 +17,8 @@ VarPar_Compute(
   Temp_Cleanup = TRUE,
   Chunk_size = 50L,
   Verbose = TRUE,
-  VarParFile = "VarPar"
+  VarParFile = "VarPar",
+  VP_Commands_Only = FALSE
 )
 }
 \arguments{
@@ -60,6 +61,9 @@ parallel. Only relevant for TensorFlow. Default: \code{50}.}
 displayed. Defaults to \code{TRUE}.}
 
 \item{VarParFile}{Character. Name of the output file to save the results.}
+
+\item{VP_Commands_Only}{logical. If \code{TRUE}, returns the commands to run the
+Python script. Default is \code{FALSE}. Only relevant when \code{UseTF} is \code{TRUE}.}
 }
 \description{
 Computes variance components with respect to given grouping of fixed effects

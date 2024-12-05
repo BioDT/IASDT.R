@@ -73,7 +73,7 @@
 
 Predict_LF <- function(
     unitsPred, modelunits, postEta, postAlpha, LF_rL, LF_NCores = 8L,
-    Temp_Dir = "TEMP2Pred", LF_Temp_Cleanup = TRUE, Model_Name = NULL,
+    Temp_Dir = "TEMP_Pred", LF_Temp_Cleanup = TRUE, Model_Name = NULL,
     UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE, LF_OutFile = NULL,
     LF_Return = FALSE, LF_Check = FALSE, LF_Commands_Only = FALSE,
     solve_max_attempts = 5L, solve_chunk_size = 50L, Verbose = TRUE) {
@@ -541,8 +541,8 @@ Predict_LF <- function(
       if (LF_NCores == 1 || LF_Commands_Only) {
 
         if (LF_Commands_Only) {
-          IASDT.R::CatTime("Prepare commands for predicting latent factors", 
-          Level = 1)
+          IASDT.R::CatTime(
+            "Prepare commands for predicting latent factors", Level = 1)
         } else {
           # Sequential processing
           IASDT.R::CatTime("Predicting Latent Factor sequentially", Level = 1)
@@ -799,6 +799,11 @@ Predict_LF <- function(
 
 }
 
+
+# # ========================================================================== #
+# # ========================================================================== #
+
+
 ## |------------------------------------------------------------------------| #
 # run_crossprod_solve ----
 ## |------------------------------------------------------------------------| #
@@ -843,7 +848,7 @@ Predict_LF <- function(
 #' - Verifies the output file validity using `IASDT.R::CheckData`. Retries up
 #' to 3 times if the output is invalid.
 #' - Generates detailed logs if `verbose` is set to `TRUE`.
-#'
+#' @author Ahmed El-Gabbas
 #' @keywords internal
 
 run_crossprod_solve <- function(
@@ -871,7 +876,7 @@ run_crossprod_solve <- function(
     .x = names(paths),
     .f = function(p) {
       if (!file.exists(paths[[p]])) {
-        stop(paste0(p, " does not exist: ", paths[[p]]))
+        stop(paste0(p, " does not exist: ", paths[[p]]), call. = FALSE)
       }
     })
 
@@ -886,16 +891,7 @@ run_crossprod_solve <- function(
         call. = FALSE)
     }
   } else {
-    #python_executable <- "python3"
-    #python_executable <- normalizePath(
-    #file.path(virtual_env_path, "bin", "python3"), winslash = "/")
-    # system("module use /appl/local/csc/modulefiles; module load tensorflow")
-    # Sys.setenv(PATH = file.path(virtual_env_path, "bin"))
-    # Sys.setenv(PYTHONPATH = file.path(
-    #   virtual_env_path, "lib/python3.10/site-packages"))
-    # Sys.setenv(VIRTUAL_ENV = virtual_env_path)
-    # python_executable <- "/pfs/lustrep3/appl/local/csc/soft/ai/bin/python3"
-    python_executable <- "python3"
+    python_executable <- "/usr/bin/time -v python3"
 
   }
 
@@ -919,6 +915,13 @@ run_crossprod_solve <- function(
 
   if (verbose) {
     LF_Args <- c(LF_Args, "--verbose")
+  }
+
+  if (.Platform$OS.type != "windows") {
+    path_log <- stringr::str_replace(
+      file.path(getwd(), path_out), ".feather", ".log")
+    # Redirect results of time to log file
+    LF_Args <- c(LF_Args, paste0(" >> ", path_log, " 2>&1"))
   }
 
   LF_Args <- paste0(LF_Args, collapse = " ")

@@ -29,7 +29,7 @@ RespCurv_PrepData <- function(
     Probabilities = c(0.025, 0.5, 0.975), UseTF = TRUE, TF_Environ = NULL,
     TF_use_single = FALSE, LF_NCores = NCores, LF_Check = FALSE,
     LF_Temp_Cleanup = TRUE, LF_Commands_Only = FALSE, 
-    Temp_Dir = "TEMP2Pred", Temp_Cleanup = TRUE, Verbose = TRUE) {
+    Temp_Dir = "TEMP_Pred", Temp_Cleanup = TRUE, Verbose = TRUE) {
 
   # # ..................................................................... ###
 

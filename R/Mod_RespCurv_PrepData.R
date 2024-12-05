@@ -28,7 +28,7 @@ RespCurv_PrepData <- function(
     Path_Model = NULL, N_Grid = 50, NCores = 8, ReturnData = FALSE,
     Probabilities = c(0.025, 0.5, 0.975), UseTF = TRUE, TF_Environ = NULL,
     TF_use_single = FALSE, LF_NCores = NCores, LF_Check = FALSE,
-    LF_Temp_Cleanup = TRUE, LF_Commands_Only = FALSE, 
+    LF_Temp_Cleanup = TRUE, LF_Commands_Only = FALSE,
     Temp_Dir = "TEMP_Pred", Temp_Cleanup = TRUE, Verbose = TRUE) {
 
   # # ..................................................................... ###
@@ -60,7 +60,7 @@ RespCurv_PrepData <- function(
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "character", Args = c("Path_Model", "TF_Environ"))
+    AllArgs = AllArgs, Type = "character", Args = c("Path_Model", "Temp_Dir"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric",
     Args = c("NCores", "LF_NCores", "N_Grid", "Probabilities"))
@@ -99,7 +99,7 @@ RespCurv_PrepData <- function(
 
   # PrepRCData -------
 
-  PrepRCData <- function(ID) {
+  PrepRCData <- function(ID, File_LF) {
 
     Variable <- ResCurvDT$VarName[[ID]]
     RC_DT_Name <- ResCurvDT$RC_DT_Name[[ID]]
@@ -162,7 +162,7 @@ RespCurv_PrepData <- function(
           NCores = 1, Model_Name = paste0("RC_", Coords), RC = Coords,
           UseTF = UseTF, TF_Environ = TF_Environ, LF_InputFile = File_LF,
           LF_NCores = 1, LF_Check = LF_Check, LF_Temp_Cleanup = LF_Temp_Cleanup,
-          LF_Commands_Only = FALSE, TF_use_single = TF_use_single, 
+          LF_Commands_Only = FALSE, TF_use_single = TF_use_single,
           Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup, Verbose = FALSE)
 
         # Species richness
@@ -359,13 +359,15 @@ RespCurv_PrepData <- function(
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   MissingRows <- sum(!ResCurvDT$FileExists)
+  File_LF <- file.path(Path_RC_DT, "ResCurv_LF.qs2")
 
   if (MissingRows == 0) {
 
     IASDT.R::CatTime(
       "All response curve data files were already available on disk",
       Level = 1)
-    ResCurvDT <- purrr::map_dfr(.x = seq_len(nrow(ResCurvDT)), .f = PrepRCData)
+    ResCurvDT <- purrr::map_dfr(
+      .x = seq_len(nrow(ResCurvDT)), .f = PrepRCData, File_LF = File_LF)
 
   } else {
 
@@ -388,7 +390,6 @@ RespCurv_PrepData <- function(
     # Get LF prediction for the model
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-    File_LF <- file.path(Path_RC_DT, "ResCurv_LF.qs2")
 
     if (isFALSE(IASDT.R::CheckData(File_LF, warning = FALSE))) {
 
@@ -420,7 +421,7 @@ RespCurv_PrepData <- function(
       if (LF_Commands_Only) {
         return(invisible(NULL))
       }
-      
+
       rm(Model_LF, Gradient_c, envir = environment())
       invisible(gc())
 
@@ -437,19 +438,19 @@ RespCurv_PrepData <- function(
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
     IASDT.R::InfoChunk(
-      Message = "Prepare response curve data", Date = FALSE, 
+      Message = "Prepare response curve data", Date = FALSE,
       Red = TRUE, Bold = TRUE, Time = FALSE)
 
     NCores <- max(min(NCores, MissingRows), 1)
 
     IASDT.R::CatTime(
       paste0("Prepare working on parallel, using ", NCores, " cores"))
-    
+
     if (NCores == 1) {
       future::plan("future::sequential", gc = TRUE)
     } else {
       withr::local_options(
-        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
         future.seed = TRUE)
       c1 <- snow::makeSOCKcluster(NCores)
       on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
@@ -465,7 +466,7 @@ RespCurv_PrepData <- function(
 
     ResCurvDT <- future.apply::future_lapply(
       X = seq_len(nrow(ResCurvDT)),
-      FUN = PrepRCData, future.seed = TRUE,
+      FUN = PrepRCData, File_LF = File_LF, future.seed = TRUE,
       future.packages = c(
         "dplyr", "purrr", "tidyr", "abind", "Hmsc", "parallel"),
       future.globals = c(

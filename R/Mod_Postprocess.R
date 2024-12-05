@@ -167,11 +167,14 @@ Mod_Postprocess <- function(
       "\n  >>> NOmega: ", NOmega,
       "\n  >>> Hab_Abb: ", Hab_Abb,
       "\n  >>> UseTF: ", UseTF,
-      "\n  >>> Python environment: ", TF_Environ,
+      if(is.null(TF_Environ)) {
+        TF_Environ
+      } else {
+        c("\n  >>> Python environment: ", TF_Environ)
+      },
       "\n  >>> .libPaths(): \n",
       paste0("\t", .libPaths(), collapse = "\n"),
       "\n  >>> Loaded packages: \n", LoadedPackages))
-
 
   Temp_Dir <- file.path(ModelDir, "TEMP_Pred")
 
@@ -492,7 +495,6 @@ Mod_Postprocess_1_CPU <- function(
       "NCores", "NOmega", "GPP_Dist", "Samples", "Thin", "NCores_VP",
       "LF_NCores", "N_Grid"))
   rm(AllArgs, envir = environment())
-
 
   ValidHabAbbs <- c(as.character(0:3), "4a", "4b", "10", "12a", "12b")
   if (!(Hab_Abb %in% ValidHabAbbs)) {

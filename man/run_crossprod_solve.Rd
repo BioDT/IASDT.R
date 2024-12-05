@@ -6,7 +6,7 @@
 Run Crossprod Solve}
 \usage{
 run_crossprod_solve(
-  virtual_env_path,
+  TF_Environ,
   s1,
   s2,
   postEta,
@@ -22,7 +22,7 @@ run_crossprod_solve(
 )
 }
 \arguments{
-\item{virtual_env_path}{character. Path to the virtual environment containing
+\item{TF_Environ}{character. Path to the virtual environment containing
 Python and required dependencies.}
 
 \item{s1}{character. Path to the input file containing s1 coordinates.}

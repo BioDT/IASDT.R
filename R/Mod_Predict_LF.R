@@ -167,14 +167,20 @@ Predict_LF <- function(
     if (UseTF) {
 
       # Check if TF_Environ directory exists
-      if (is.null(TF_Environ) || !dir.exists(TF_Environ)) {
-        stop(
-          paste0(
-            "When `UseTF` is TRUE, `TF_Environ` must be specified and should ",
-            "point to an existing directory with a Python environment"),
-          call. = FALSE)
+      if (isFALSE(LF_Commands_Only)) {
+        if (is.null(TF_Environ)) {
+          stop("`TF_Environ` is missing", call. = FALSE)
+        }
+        if (!dir.exists(TF_Environ)) {
+          stop(
+            paste0(
+              "The specified `TF_Environ` directory ", 
+              normalizePath(TF_Environ, winslash = "/", mustWork = FALSE),
+              " does not exist"),
+            call. = FALSE)
+        }
       }
-
+      
       PythonScript <- system.file("crossprod_solve.py", package = "IASDT.R")
 
       # Check if PythonScript exists
@@ -198,12 +204,6 @@ Predict_LF <- function(
       Model_Name <- ""
     } else {
       Model_Name <- paste0(Model_Name, "_")
-    }
-
-    if (LF_Commands_Only) {
-      CommandFilePrefix <- dplyr::if_else(
-        stringr::str_detect(Model_Name, "^RC_c_"),
-        "LF_RC_Commands_", "LF_NewSites_Commands_")
     }
 
     # Create a temporary directory to store intermediate results. This directory
@@ -395,7 +395,7 @@ Predict_LF <- function(
             Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3", TF_ENABLE_ONEDNN_OPTS = "0")
 
             eta_indNew0 <- run_crossprod_solve(
-              virtual_env_path = TF_Environ, s1 = Path_s1, s2 = Path_s2,
+              TF_Environ = TF_Environ, s1 = Path_s1, s2 = Path_s2,
               denom = Denom, postEta = File_postEta, path_out = File_etaPred_TF,
               use_single = TF_use_single, LF_Commands_Only = LF_Commands_Only,
               solve_max_attempts = solve_max_attempts,
@@ -567,6 +567,10 @@ Predict_LF <- function(
           })
 
         if (LF_Commands_Only) {
+
+          CommandFilePrefix <- dplyr::if_else(
+            stringr::str_detect(Model_Name, "^RC_c_"),
+            "LF_RC_Commands_", "LF_NewSites_Commands_")
 
           # Function to save commands to files
           save_commands_to_file <- function(commands, max_lines = 210) {
@@ -816,7 +820,7 @@ Predict_LF <- function(
 #' computations using TensorFlow with provided inputs. Retries up to three times
 #' if the output file validation fails.
 #'
-#' @param virtual_env_path character. Path to the virtual environment containing
+#' @param TF_Environ character. Path to the virtual environment containing
 #'   Python and required dependencies.
 #' @param s1 character. Path to the input file containing s1 coordinates.
 #' @param s2 character Path to the input file containing s2 coordinates.
@@ -852,7 +856,7 @@ Predict_LF <- function(
 #' @keywords internal
 
 run_crossprod_solve <- function(
-    virtual_env_path, s1, s2, postEta, path_out, denom,
+    TF_Environ, s1, s2, postEta, path_out, denom,
     chunk_size = 1000L, threshold_mb = 2000L, use_single = TRUE, verbose = TRUE,
     solve_chunk_size = 50L, solve_max_attempts = 5L, LF_Commands_Only = FALSE) {
 
@@ -869,7 +873,7 @@ run_crossprod_solve <- function(
   }
 
   # Ensure the paths are valid
-  paths <- list(virtual_env_path, script_path, s1, s2, postEta)
+  paths <- list(script_path, s1, s2, postEta)
   names(paths) <- c(
     "Virtual Environment", "Python Script", "s1", "s2", "postEta")
   purrr::walk(
@@ -882,15 +886,35 @@ run_crossprod_solve <- function(
 
   # Determine the Python executable path
   if (.Platform$OS.type == "windows") {
+    if (isFALSE(LF_Commands_Only)) {
+      if (is.null(TF_Environ)) {
+        stop(
+          "When running on Windows, `TF_Environ` must be specified",
+          call. = FALSE)
+      }
+      if (!dir.exists(TF_Environ)) {
+        stop(
+          paste0(
+            "The specified `TF_Environ` directory ", 
+            normalizePath(TF_Environ, winslash = "/", mustWork = FALSE),
+            " does not exist"),
+          call. = FALSE)
+      }
+    }
+
     python_executable <- normalizePath(
-      file.path(virtual_env_path, "Scripts", "python.exe"),
-      winslash = "/")
+      file.path(TF_Environ, "Scripts", "python.exe"),
+      winslash = "/", mustWork = TRUE)
+    
     if (!file.exists(python_executable)) {
       stop(
         "Python executable not found in the virtual environment.",
         call. = FALSE)
     }
+  
   } else {
+    # Use `python3`` directly - on LUMI, compatible python installation is 
+    # loaded automatically when loading tensorflow
     python_executable <- "/usr/bin/time -v python3"
 
   }
@@ -899,9 +923,9 @@ run_crossprod_solve <- function(
   LF_Args <- c(
     python_executable,
     script_path,
-    "--s1", normalizePath(s1, winslash = "/"),
-    "--s2", normalizePath(s2, winslash = "/"),
-    "--post_eta", normalizePath(postEta, winslash = "/"),
+    "--s1", normalizePath(s1, winslash = "/", mustWork = TRUE),
+    "--s2", normalizePath(s2, winslash = "/", mustWork = TRUE),
+    "--post_eta", normalizePath(postEta, winslash = "/", mustWork = TRUE),
     "--path_out", file.path(getwd(), path_out),
     "--denom", as.character(denom),
     "--chunk_size", as.character(chunk_size),
@@ -927,11 +951,7 @@ run_crossprod_solve <- function(
   LF_Args <- paste0(LF_Args, collapse = " ")
 
   if (LF_Commands_Only) {
-    if (.Platform$OS.type != "windows") {
-      LF_Args <- paste0("/usr/bin/time -v ", LF_Args)
-    }
     return(LF_Args)
-
   } else {
 
     path_log <- stringr::str_replace(path_out, ".feather", ".log")

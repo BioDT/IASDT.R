@@ -874,8 +874,7 @@ run_crossprod_solve <- function(
 
   # Ensure the paths are valid
   paths <- list(script_path, s1, s2, postEta)
-  names(paths) <- c(
-    "Virtual Environment", "Python Script", "s1", "s2", "postEta")
+  names(paths) <- c("Python Script", "s1", "s2", "postEta")
   purrr::walk(
     .x = names(paths),
     .f = function(p) {

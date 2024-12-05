@@ -538,7 +538,7 @@ Mod_Postprocess_1_CPU <- function(
     stringr::str_wrap(width = 60, indent = 8, exdent = 8)
   cat(
     paste0(
-      "  >>> Working directory: ", getwd(),
+      "\n  >>> Working directory: ", getwd(),
       "\n  >>> Operating system: ", IASDT.R::CurrOS(),
       "\n  >>> Model root: ", ModelDir,
       "\n  >>> NCores: ", NCores,
@@ -551,7 +551,7 @@ Mod_Postprocess_1_CPU <- function(
       "\n  >>> Hab_Abb: ", Hab_Abb,
       "\n  >>> .libPaths(): \n",
       paste0("\t", .libPaths(), collapse = "\n"),
-      "\n  >>> Loaded packages: \n", LoadedPackages))
+      "\n  >>> Loaded packages: \n", LoadedPackages, "\n"))
 
   # ****************************************************************
 

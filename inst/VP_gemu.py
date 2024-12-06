@@ -26,6 +26,7 @@ import argparse
 import logging
 import warnings
 import os
+import traceback
 
 # Disable Additional Logs Set the TensorFlow logger - show only critical errors
 # https://stackoverflow.com/questions/55081911/
@@ -202,14 +203,20 @@ def gemu(file_tr, file_gamma, use_single, file_output, ncores, chunk_size):
     tasks = [(tr, chunk, offset, file_output) for chunk, offset in chunkify(gamma, chunk_size)]
     
     # Process each chunk in parallel
-    with get_reusable_executor(max_workers=ncores) as executor:
-        futures = [executor.submit(process_column, *args) for args in tasks]
-        
+    with get_reusable_executor(max_workers=ncores, timeout=600) as executor:
+        futures = []
+        for args in tasks:
+            try:
+                futures.append(executor.submit(process_column, *args))
+            except Exception as e:
+                print(f"Error submitting task: {e}")
+
         for future in futures:
             try:
                 future.result()
             except Exception as e:
                 print(f"Job failed with exception: {e}")
+                traceback.print_exc()
 
 # ======================================================================
 # ======================================================================

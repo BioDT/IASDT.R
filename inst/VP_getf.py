@@ -33,6 +33,7 @@ import logging
 import warnings
 import os
 import re
+import traceback
 
 # Disable Additional Logs Set the TensorFlow logger - show only critical errors
 # https://stackoverflow.com/questions/55081911/
@@ -133,26 +134,34 @@ def process_beta_file(x, beta_file, task_index, dtype, file_output):
         # Dynamically generate file names
         file_index = f"{task_index + 1:04d}"
         feather_file = file_output.replace(".feather", f"_{file_index}.feather")
-
+        
+        # Skip processing if the output file already exists
         if os.path.exists(feather_file):
             return
         
+        # Load the beta chunk
         beta_chunk = load_feather_tensor(beta_file, dtype)
 
         # Check dimensions for compatibility
         if beta_chunk.shape[0] != x.shape[1]:
             raise ValueError(f"Matrix size-incompatible: x columns ({x.shape[1]}) must match Beta rows ({beta_chunk.shape[0]})")
 
-        try:
-            # Matrix multiplication: x %*% Beta
-            res = tf.matmul(x, beta_chunk)
-            # Save as Feather
-            pd.DataFrame(res.numpy()).to_feather(feather_file)
-        except ValueError as ve:
-            print(f"Matrix multiplication failed for {beta_file}: {ve}")
-        except Exception as e:
-            print(f"Unexpected error in {beta_file}: {e}")
-            raise
+        # Retry logic for failed processing
+        max_retries = 5
+        for attempt in range(1, max_retries + 1):
+            try:
+                # Perform matrix multiplication: x %*% Beta
+                res = tf.matmul(x, beta_chunk)
+                
+                # Save result as Feather
+                pd.DataFrame(res.numpy()).to_feather(feather_file)
+                # Exit the loop if successful
+                return
+
+            except Exception as e:
+                if attempt == max_retries:
+                    print(f"Max retries reached for {feather_file}. Skipping.")
+                    raise
 
     except Exception as e:
         print(f"Job failed with exception: {e}")
@@ -242,7 +251,11 @@ def getf(file_x, beta_dir, use_single, file_output, ncores):
             ]
 
             for future in futures:
-                future.result()  # Trigger exceptions if any occurred
+                try:
+                    future.result()
+                except Exception as e:
+                    print(f"Worker failed with exception: {e}")
+                    traceback.print_exc()
     except Exception as e:
         print(f"Error in parallel processing: {e}")
         raise

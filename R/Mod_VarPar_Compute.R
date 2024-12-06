@@ -289,8 +289,6 @@ VarPar_Compute <- function(
 
         if (!all(file.exists(Beta_Files))) {
 
-
-
           IASDT.R::CatTime("Prepare working on parallel", Level = 3)
           c1 <- parallel::makePSOCKcluster(NCores)
           on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
@@ -791,6 +789,7 @@ VarPar_Compute <- function(
           fixedsplit1[, k] / rowSums(fixedsplit1)
       }
     }
+
     fixed <- fixed / poolN
     random <- random / poolN
     fixedsplit <- fixedsplit / poolN

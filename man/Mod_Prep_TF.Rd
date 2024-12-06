@@ -7,9 +7,13 @@
 Mod_Prep_TF(
   Path = "datasets/processed/model_fitting",
   NumFiles = 210,
-  Pattern = "LF_.+_Commands_.+.txt|LF_.+_Commands_.+txt|VP_.+Command.txt",
+  Pattern = "LF_.+_Commands_.+.txt|LF_.+_Commands_.+txt",
   WD = NULL,
-  Path_Out = "TF_BatchFiles"
+  Path_Out = "TF_BatchFiles",
+  ProjectID = NULL,
+  Partition_Name = "small-g",
+  LF_Time = "01:00:00",
+  VP_Time = "01:30:00"
 )
 }
 \arguments{
@@ -25,6 +29,17 @@ to the current directory.}
 
 \item{Path_Out}{Character. Directory to save output files. Default is
 \code{TF_BatchFiles}.}
+
+\item{ProjectID}{Character. This can not be NULL.}
+
+\item{Partition_Name}{Character. Name of the partition to submit the SLURM
+jobs to. Default is \code{small-g}.}
+
+\item{LF_Time}{Character. Time limit for LF prediction jobs. Default is
+\code{01:00:00}.}
+
+\item{VP_Time}{Character. Time limit for variance partitioning jobs. Default
+is \code{01:00:00}.}
 }
 \value{
 None. Writes batch files to \code{Path_Out}.

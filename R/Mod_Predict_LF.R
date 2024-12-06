@@ -141,8 +141,7 @@ Predict_LF <- function(
   if (sum(AllTraining, AllNew) != 1) {
     stop(
       "The input sites should be either all training sites or all new sites.",
-      call. = FALSE
-    )
+      call. = FALSE)
   }
 
   if (AllTraining) {
@@ -375,16 +374,21 @@ Predict_LF <- function(
           if (UseTF) {
 
             # Use TensorFlow
-                
+
             # Suppress TensorFlow warnings and disable optimizations
             Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3", TF_ENABLE_ONEDNN_OPTS = "0")
 
-            eta_indNew0 <- run_crossprod_solve(
-              TF_Environ = TF_Environ, s1 = Path_s1, s2 = Path_s2,
-              denom = Denom, postEta = File_postEta, path_out = File_etaPred_TF,
-              use_single = TF_use_single, LF_Commands_Only = LF_Commands_Only,
-              solve_max_attempts = solve_max_attempts,
-              solve_chunk_size = solve_chunk_size)
+            if (file.exists(File_etaPred_TF)) {
+              eta_indNew0 <- File_etaPred_TF
+            } else {
+              eta_indNew0 <- run_crossprod_solve(
+                TF_Environ = TF_Environ, s1 = Path_s1, s2 = Path_s2,
+                denom = Denom, postEta = File_postEta,
+                path_out = File_etaPred_TF,
+                use_single = TF_use_single, LF_Commands_Only = LF_Commands_Only,
+                solve_max_attempts = solve_max_attempts,
+                solve_chunk_size = solve_chunk_size)
+            }
 
             if (LF_Commands_Only) {
               return(eta_indNew0)
@@ -870,14 +874,14 @@ run_crossprod_solve <- function(
 
   # Determine the Python executable path
 
-  # On Windows, the TF calculations has to be done through a valid virtual 
-  # environment; the path to the virtual environment must be specified in 
+  # On Windows, the TF calculations has to be done through a valid virtual
+  # environment; the path to the virtual environment must be specified in
   # `TF_Environ`
 
-  # On LUMI, this is not needed as the compatible python installation is 
-  # loaded automatically when loading tensorflow module. When using another 
+  # On LUMI, this is not needed as the compatible python installation is
+  # loaded automatically when loading tensorflow module. When using another
   # HPC system, the function needs to be adapted accordingly.
-  
+
   if (.Platform$OS.type == "windows") {
     if (isFALSE(LF_Commands_Only)) {
       if (is.null(TF_Environ)) {
@@ -888,7 +892,7 @@ run_crossprod_solve <- function(
       if (!dir.exists(TF_Environ)) {
         stop(
           paste0(
-            "The specified `TF_Environ` directory ", 
+            "The specified `TF_Environ` directory ",
             normalizePath(TF_Environ, winslash = "/", mustWork = FALSE),
             " does not exist"),
           call. = FALSE)
@@ -898,15 +902,15 @@ run_crossprod_solve <- function(
     python_executable <- normalizePath(
       file.path(TF_Environ, "Scripts", "python.exe"),
       winslash = "/", mustWork = TRUE)
-    
+
     if (!file.exists(python_executable)) {
       stop(
         "Python executable not found in the virtual environment.",
         call. = FALSE)
     }
-  
+
   } else {
-    # Use `python3`` directly - on LUMI, compatible python installation is 
+    # Use `python3`` directly - on LUMI, compatible python installation is
     # loaded automatically when loading tensorflow
     python_executable <- "/usr/bin/time -v python3"
 

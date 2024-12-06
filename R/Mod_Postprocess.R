@@ -1127,8 +1127,8 @@ Mod_Prep_TF <- function(
 #' function processes Latent Factor predictions, generates spatial predictions
 #' under various climate scenarios, evaluate internal evaluation, prepares and
 #' plots response curves, and computes and visualizes variance partitioning.
-#' 
-#' @params RC_NCores Integer specifying the number of cores to use for response 
+#'
+#' @params RC_NCores Integer specifying the number of cores to use for response
 #' curve prediction. Defaults to `8`.
 #' @name Mod_Postprocess_2_CPU
 #' @inheritParams Predict_Maps
@@ -1152,7 +1152,11 @@ Mod_Postprocess_2_CPU <- function(
       "MRI-ESM2-0", "UKESM1-0-LL"),
     CC_Scenario = c("ssp126", "ssp370", "ssp585"),
     RC_NCores = 8L, Pred_Clamp = TRUE, Fix_Efforts = "mean",
-    Pred_NewSites = TRUE) {
+    Pred_NewSites = TRUE,
+
+    RC = TRUE # Temporarily
+
+) {
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -1259,7 +1263,7 @@ Mod_Postprocess_2_CPU <- function(
       "\n  >>> Model root: ", ModelDir,
       "\n  >>> NCores: ", NCores,
       "\n  >>> RC_NCores: ", RC_NCores,
-      "\n  >>> LF_NCores: ", LF_NCores,      
+      "\n  >>> LF_NCores: ", LF_NCores,
       "\n  >>> FromHPC: ", FromHPC,
       "\n  >>> EnvFile: ", EnvFile,
       "\n  >>> Hab_Abb: ", Hab_Abb,
@@ -1308,47 +1312,50 @@ Mod_Postprocess_2_CPU <- function(
 
   # ****************************************************************
 
-  # Prepare response curve data -----
-  Ch1("Prepare response curve data")
+  if (RC){
 
-  IASDT.R::RespCurv_PrepData(
-    Path_Model = Path_Model, N_Grid = N_Grid, NCores = RC_NCores, UseTF = UseTF,
-    TF_Environ = TF_Environ, TF_use_single = TF_use_single,
-    LF_NCores = LF_NCores, LF_Temp_Cleanup = LF_Temp_Cleanup,
-    LF_Check = LF_Check, Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup,
-    Verbose = TRUE, LF_Commands_Only = FALSE,
-    ReturnData = FALSE, Probabilities = c(0.025, 0.5, 0.975))
+    # Prepare response curve data -----
+    Ch1("Prepare response curve data")
 
-  invisible(gc())
+    IASDT.R::RespCurv_PrepData(
+      Path_Model = Path_Model, N_Grid = N_Grid, NCores = RC_NCores, UseTF = UseTF,
+      TF_Environ = TF_Environ, TF_use_single = TF_use_single,
+      LF_NCores = LF_NCores, LF_Temp_Cleanup = LF_Temp_Cleanup,
+      LF_Check = LF_Check, Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup,
+      Verbose = TRUE, LF_Commands_Only = FALSE,
+      ReturnData = FALSE, Probabilities = c(0.025, 0.5, 0.975))
 
-  # ****************************************************************
+    invisible(gc())
 
-  # Plotting response curves - species richness -----
-  Ch1("Plotting response curves - species richness")
+    # ****************************************************************
 
-  IASDT.R::RespCurv_PlotSR(
-    ModelDir = ModelDir, Verbose = TRUE, NCores = NCores)
+    # Plotting response curves - species richness -----
+    Ch1("Plotting response curves - species richness")
 
-  invisible(gc())
+    IASDT.R::RespCurv_PlotSR(
+      ModelDir = ModelDir, Verbose = TRUE, NCores = RC_NCores)
 
-  # ****************************************************************
+    invisible(gc())
 
-  # ## Plotting response curves - species -----
-  Ch1("Plotting response curves - species")
-  IASDT.R::RespCurv_PlotSp(
-    ModelDir = ModelDir, NCores = NCores, EnvFile = EnvFile, FromHPC = FromHPC)
+    # ****************************************************************
 
-  invisible(gc())
+    # ## Plotting response curves - species -----
+    Ch1("Plotting response curves - species")
+    IASDT.R::RespCurv_PlotSp(
+      ModelDir = ModelDir, NCores = RC_NCores, EnvFile = EnvFile, FromHPC = FromHPC)
 
-  # ****************************************************************
+    invisible(gc())
 
-  # ## Plotting - all species together -----
-  Ch1("Plotting response curves - all species together")
+    # ****************************************************************
 
-  IASDT.R::RespCurv_PlotSpAll(ModelDir = ModelDir, NCores = NCores)
+    # ## Plotting - all species together -----
+    Ch1("Plotting response curves - all species together")
 
-  invisible(gc())
+    IASDT.R::RespCurv_PlotSpAll(ModelDir = ModelDir, NCores = RC_NCores)
 
+    invisible(gc())
+
+  }
   # ****************************************************************
 
   # Prepare scripts for predicting latent factors for new sampling units -------

@@ -147,7 +147,7 @@ RespCurv_PlotSp <- function(
         library, character.only = TRUE)
     }))
 
-  IASDT.R::CatTime("Making predictions on parallel", Level = 1)
+  IASDT.R::CatTime("Plotting on parallel", Level = 1)
 
   Plots <- snow::clusterApplyLB(
     cl = c1, x = seq_len(nrow(Sp_DT_All)),

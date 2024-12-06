@@ -304,8 +304,7 @@ RespCurv_PrepData <- function(
 
   # Prepare response curve data -------
 
-  Path_RC <- dirname(dirname(Path_Model)) %>%
-    file.path("Model_Postprocessing")
+  Path_RC <- file.path(dirname(dirname(Path_Model)), "Model_Postprocessing")
   Path_RC_DT <- file.path(Path_RC, "RespCurv_DT")
   fs::dir_create(Path_RC_DT)
 

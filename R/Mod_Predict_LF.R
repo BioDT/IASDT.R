@@ -166,21 +166,6 @@ Predict_LF <- function(
 
     if (UseTF) {
 
-      # Check if TF_Environ directory exists
-      if (isFALSE(LF_Commands_Only)) {
-        if (is.null(TF_Environ)) {
-          stop("`TF_Environ` is missing", call. = FALSE)
-        }
-        if (!dir.exists(TF_Environ)) {
-          stop(
-            paste0(
-              "The specified `TF_Environ` directory ", 
-              normalizePath(TF_Environ, winslash = "/", mustWork = FALSE),
-              " does not exist"),
-            call. = FALSE)
-        }
-      }
-      
       PythonScript <- system.file("crossprod_solve.py", package = "IASDT.R")
 
       # Check if PythonScript exists
@@ -390,7 +375,7 @@ Predict_LF <- function(
           if (UseTF) {
 
             # Use TensorFlow
-
+                
             # Suppress TensorFlow warnings and disable optimizations
             Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3", TF_ENABLE_ONEDNN_OPTS = "0")
 
@@ -884,6 +869,15 @@ run_crossprod_solve <- function(
     })
 
   # Determine the Python executable path
+
+  # On Windows, the TF calculations has to be done through a valid virtual 
+  # environment; the path to the virtual environment must be specified in 
+  # `TF_Environ`
+
+  # On LUMI, this is not needed as the compatible python installation is 
+  # loaded automatically when loading tensorflow module. When using another 
+  # HPC system, the function needs to be adapted accordingly.
+  
   if (.Platform$OS.type == "windows") {
     if (isFALSE(LF_Commands_Only)) {
       if (is.null(TF_Environ)) {

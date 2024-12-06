@@ -1127,7 +1127,9 @@ Mod_Prep_TF <- function(
 #' function processes Latent Factor predictions, generates spatial predictions
 #' under various climate scenarios, evaluate internal evaluation, prepares and
 #' plots response curves, and computes and visualizes variance partitioning.
-#'
+#' 
+#' @params RC_NCores Integer specifying the number of cores to use for response 
+#' curve prediction. Defaults to `8`.
 #' @name Mod_Postprocess_2_CPU
 #' @inheritParams Predict_Maps
 #' @inheritParams Mod_Postprocess_1_CPU
@@ -1149,7 +1151,7 @@ Mod_Postprocess_2_CPU <- function(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
       "MRI-ESM2-0", "UKESM1-0-LL"),
     CC_Scenario = c("ssp126", "ssp370", "ssp585"),
-    Pred_Clamp = TRUE, Fix_Efforts = "mean",
+    RC_NCores = 8L, Pred_Clamp = TRUE, Fix_Efforts = "mean",
     Pred_NewSites = TRUE) {
 
   .StartTime <- lubridate::now(tzone = "CET")
@@ -1256,6 +1258,8 @@ Mod_Postprocess_2_CPU <- function(
       "\n  >>> Operating system: ", IASDT.R::CurrOS(),
       "\n  >>> Model root: ", ModelDir,
       "\n  >>> NCores: ", NCores,
+      "\n  >>> RC_NCores: ", RC_NCores,
+      "\n  >>> LF_NCores: ", LF_NCores,      
       "\n  >>> FromHPC: ", FromHPC,
       "\n  >>> EnvFile: ", EnvFile,
       "\n  >>> Hab_Abb: ", Hab_Abb,
@@ -1308,7 +1312,7 @@ Mod_Postprocess_2_CPU <- function(
   Ch1("Prepare response curve data")
 
   IASDT.R::RespCurv_PrepData(
-    Path_Model = Path_Model, N_Grid = N_Grid, NCores = NCores, UseTF = UseTF,
+    Path_Model = Path_Model, N_Grid = N_Grid, NCores = RC_NCores, UseTF = UseTF,
     TF_Environ = TF_Environ, TF_use_single = TF_use_single,
     LF_NCores = LF_NCores, LF_Temp_Cleanup = LF_Temp_Cleanup,
     LF_Check = LF_Check, Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup,

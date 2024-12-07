@@ -555,7 +555,7 @@ Predict_Hmsc <- function(
           
           if (attempt == 5) {
             print(str(object, 1)) 
-            save(object, file = stringr::str_replace(File, ".qs2$", ".RData"))
+            save(object, file = stringr::str_replace(file, ".qs2$", ".RData"))
             stop(
               paste0("Failed to read ", file, " after 5 attempts."), 
               call. = FALSE)

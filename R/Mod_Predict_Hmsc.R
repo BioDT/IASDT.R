@@ -536,7 +536,8 @@ Predict_Hmsc <- function(
       dimnames(ChunkSR) <- NULL
       ChunkSR_File <- file.path(
         Temp_Dir, paste0("Pred_", Model_Name, "_ch", Chunk, "_SR.qs2"))
-      IASDT.R::SaveAs(InObj = ChunkSR, OutPath = ChunkSR_File)
+      IASDT.R::SaveAs(
+        InObj = ChunkSR, OutPath = ChunkSR_File, compress_level = 1)
       rm(ChunkSR, envir = environment())
 
       # Species predictions
@@ -552,7 +553,8 @@ Predict_Hmsc <- function(
           ChunkSp_File <- file.path(
             Temp_Dir,
             paste0("Pred_", Model_Name, "_ch", Chunk, "_taxon", Sp, ".qs2"))
-          IASDT.R::SaveAs(InObj = SpD, OutPath = ChunkSp_File)
+          IASDT.R::SaveAs(
+            InObj = SpD, OutPath = ChunkSp_File, compress_level = 1)
           cbind.data.frame(
             Chunk = Chunk, Sp = Sp, IAS_ID = Model$spNames[Sp],
             ChunkSp_File = ChunkSp_File) %>%
@@ -601,7 +603,7 @@ Predict_Hmsc <- function(
       IAS_ID <- Eval_DT$IAS_ID[[ID]]
       data <- as.vector(Eval_DT$data[[ID]])
 
-      SpDT <- purrr::map(data, IASDT.R::LoadAs, nthreads = 1) %>%
+      SpDT <- purrr::map(data, qs2::qs_read) %>%
         do.call(cbind, .) %>%
         as.double()
 
@@ -637,7 +639,8 @@ Predict_Hmsc <- function(
       PredSummaryFile <- file.path(
         Pred_Dir, paste0("Pred_", Model_Name, "_", Sp2, ".qs2"))
 
-      IASDT.R::SaveAs(InObj = PredSummary, OutPath = PredSummaryFile)
+      IASDT.R::SaveAs(
+        InObj = PredSummary, OutPath = PredSummaryFile, compress_level = 1)
 
       if (Evaluate && Sp2 != "SR") {
         if (is.null(Pred_PA)) {

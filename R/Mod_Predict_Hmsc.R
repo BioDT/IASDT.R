@@ -603,7 +603,31 @@ Predict_Hmsc <- function(
       IAS_ID <- Eval_DT$IAS_ID[[ID]]
       data <- as.vector(Eval_DT$data[[ID]])
 
-      SpDT <- purrr::map(data, qs2::qs_read) %>%
+      # SpDT <- purrr::map(data, qs2::qs_read) %>%
+      #   do.call(cbind, .) %>%
+      #   as.double()
+
+      SpDT <- purrr::map(data, function(x) {
+        attempt <- 1
+        max_retries <- 5
+        while (attempt <= max_retries) {
+          result <- tryCatch(
+            qs2::qs_read(x),
+            error = function(e) {
+              if (attempt == max_retries) {
+                stop(
+                  paste0(
+                    "Failed to read ", x, " after ", max_retries,
+                    " attempts: ", x, "\nError: ", e$message), call. = FALSE)
+              }
+              return(NULL)
+            })
+          if (!is.null(result)) {
+            return(result)
+          }
+          attempt <- attempt + 1
+        }
+      }) %>%
         do.call(cbind, .) %>%
         as.double()
 

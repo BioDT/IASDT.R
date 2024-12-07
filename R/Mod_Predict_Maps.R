@@ -26,8 +26,12 @@
 #'   a single value. Defaults to `TRUE`. If `TRUE`, the `Fix_Efforts` argument
 #'   must be provided.
 #' @param Fix_Efforts Numeric or character. Defines the value to fix sampling
-#'   efforts. If numeric, the value is directly used. If character, it can be
-#'   `median`, `mean` (default), or `max`. This argument is mandatory when
+#'   efforts less than the provided value. If numeric, the value is directly
+#'   used. If character, it can be `median`, `mean`, `max`, or `q90` (90%
+#'   Quantile). Using `max` can reflect extreme values caused by rare, highly
+#'   sampled locations (e.g., urban centers or popular natural reserves). While
+#'   using 90% Quantile avoid such extreme grid cells while still capturing
+#'   areas with high sampling effort. This argument is mandatory when
 #'   `Pred_Clamp` is set to `TRUE`.
 #' @param Pred_NewSites Logical indicating whether to predict habitat
 #'   suitability at new sites. Default: `TRUE`. Note: This parameter is
@@ -54,7 +58,7 @@
 
 Predict_Maps <- function(
     Path_Model = NULL, Hab_Abb = NULL, EnvFile = ".env", FromHPC = TRUE,
-    NCores = 8L, Pred_Clamp = TRUE, Fix_Efforts = "mean", Pred_NewSites = TRUE,
+    NCores = 8L, Pred_Clamp = TRUE, Fix_Efforts = "q90", Pred_NewSites = TRUE,
     UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE, LF_NCores = NCores,
     LF_Check = FALSE, LF_Temp_Cleanup = TRUE, LF_Only = FALSE,
     LF_Commands_Only = FALSE,
@@ -393,14 +397,14 @@ Predict_Maps <- function(
       } else {
 
         # If `Fix_Efforts` is character, check if it is one of the valid values:
-        # median, mean, max
+        # median, mean, max, and q90
         Fix_Efforts <- stringr::str_to_lower(Fix_Efforts)
-        if (!(Fix_Efforts %in% c("median", "mean", "max"))) {
+        if (!(Fix_Efforts %in% c("median", "mean", "max", "q90"))) {
           stop(
             paste0(
               "`Fix_Efforts` has to be either NULL, single numeric ",
-              "value, or one of the following: 'median', 'mean', or 'max'. ",
-              "The current value is: ", Fix_Efforts),
+              "value, or one of the following: 'median', 'mean', 'max', ",
+              "or `q90`. The current value is: ", Fix_Efforts),
             call. = FALSE)
         }
       }
@@ -409,10 +413,22 @@ Predict_Maps <- function(
     # Fix at single value
 
     if (is.numeric(Fix_Efforts)) {
+      # Fix at provided value
       EffortsVal <- Fix_Efforts
     } else {
+
       EffortsVal <- dplyr::case_when(
         is.null(Fix_Efforts) ~ NA_real_,
+
+        # Fix at 90% quantile
+        Fix_Efforts == "q90" ~ {
+          terra::global(
+            R_Efforts,
+            fun = function(x) quantile(x, probs = 0.9, na.rm = TRUE)) %>%
+            unlist() %>%
+            as.numeric()
+        },
+
         # Fix at median value
         Fix_Efforts == "median" ~ {
           terra::global(
@@ -420,28 +436,37 @@ Predict_Maps <- function(
             unlist() %>%
             as.numeric()
         },
+
         # Fix at mean value
         Fix_Efforts == "mean" ~ {
           terra::global(R_Efforts, fun = mean, na.rm = TRUE) %>%
             unlist() %>%
             as.numeric()
         },
+
         # Fix at max value
         Fix_Efforts == "max" ~ {
           terra::global(R_Efforts, fun = max, na.rm = TRUE) %>%
             unlist() %>%
             as.numeric()
         },
+
         .default = NA_real_
       )
     }
 
     # Fix at single value
     if (!is.na(EffortsVal)) {
-      R_Efforts_Clamp <- terra::clamp(R_Efforts, EffortsVal, EffortsVal) %>%
+      # Set a minimum value for efforts variable to `EffortsVal`. Using upper =
+      # Inf keep efforts values > EffortsVal as they are.
+      R_Efforts_Clamp <- terra::clamp(
+        x = R_Efforts, lower = EffortsVal, upper = Inf) %>%
         stats::setNames("EffortsLog_Clamp")
+
       StaticPredictors <- c(StaticPredictors, R_Efforts, R_Efforts_Clamp)
+
       rm(R_Efforts, R_Efforts_Clamp, envir = environment())
+
     } else {
       StaticPredictors <- c(StaticPredictors, R_Efforts)
       rm(R_Efforts, envir = environment())
@@ -517,9 +542,9 @@ Predict_Maps <- function(
     IASDT.R::CatTime("Predicting latent factor is finished!", Level = 1)
     IASDT.R::CatSep(Extra1 = 1, Extra2 = 2, Rep = 1, Char = "*")
 
-  if (LF_Commands_Only) {
-    return(invisible(NULL))
-  }
+    if (LF_Commands_Only) {
+      return(invisible(NULL))
+    }
 
   } else {
     if (Pred_NewSites) {
@@ -728,7 +753,7 @@ Predict_Maps <- function(
               LF_Return = TRUE, LF_InputFile = Path_Test_LF,
               LF_NCores = LF_NCores, LF_Check = LF_Check,
               LF_Temp_Cleanup = LF_Temp_Cleanup,
-              LF_Commands_Only = FALSE, Verbose = FALSE, 
+              LF_Commands_Only = FALSE, Verbose = FALSE,
               Pred_Dir = Path_Prediction, Evaluate = FALSE,
               Pred_XY = sf::st_drop_geometry(Test_XY))
 
@@ -799,8 +824,8 @@ Predict_Maps <- function(
 
         # Loading mean predictions at current climates
         CurrentMean <- list.files(
-          # use relevant folder containing the current predictions. This is 
-          # determined by `Path_Prediction`, which is not the same whether 
+          # use relevant folder containing the current predictions. This is
+          # determined by `Path_Prediction`, which is not the same whether
           # clamping is used or not
           path = Path_Prediction, pattern = "Prediction_Current.*_R.qs2",
           full.names = TRUE) %>%

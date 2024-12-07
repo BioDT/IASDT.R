@@ -182,6 +182,7 @@ RespCurv_PrepData <- function(
       }
 
       rm(RC_Data_Orig, envir = environment())
+      invisible(gc())
 
       # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
       # Prepare plotting data: probability of occurrence
@@ -239,7 +240,12 @@ RespCurv_PrepData <- function(
         InObj = RC_Data_Prob, OutObj = paste0(RC_DT_Name, "_Prob"),
         OutPath = RC_DT_Path_Prob)
 
+
       rm(Preds, RC_Data_Prob, RC_Data_Prob_Samples, envir = environment())
+
+      # CHECK
+      # rm(SamplesData, envir = environment())
+
 
       # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
       # Prepare plotting data: Species richness
@@ -293,6 +299,10 @@ RespCurv_PrepData <- function(
       rm(
         RC_Data_SR, RC_Data_SR_Quant, Observed_SR,
         RC_Data_SR_Samples, SR_PositiveTrendProb, envir = environment())
+
+      # CHECK
+      # rm(Pred_SR, envir = environment())
+      invisible(gc())
     }
 
     invisible(gc())
@@ -478,6 +488,7 @@ RespCurv_PrepData <- function(
       snow::stopCluster(c1)
       future::plan("future::sequential", gc = TRUE)
     }
+
     invisible(gc())
   }
 

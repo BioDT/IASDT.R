@@ -37,7 +37,7 @@ Mod_Postprocess <- function(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
       "MRI-ESM2-0", "UKESM1-0-LL"),
     CC_Scenario = c("ssp126", "ssp370", "ssp585"),
-    Pred_Clamp = TRUE, Fix_Efforts = "mean", Pred_NewSites = TRUE,
+    Pred_Clamp = TRUE, Fix_Efforts = "q90", Pred_NewSites = TRUE,
     CVName = c("CV_Dist", "CV_Large")) {
 
   # # ..................................................................... ###
@@ -461,7 +461,7 @@ Mod_Postprocess_1_CPU <- function(
     Thin = NULL, NOmega = 1000L, CVName = c("CV_Dist", "CV_Large"),
     N_Grid = 50L, UseTF = TRUE, TF_use_single = FALSE, LF_NCores = NCores,
     LF_Temp_Cleanup = TRUE, LF_Check = FALSE, Temp_Cleanup = TRUE,
-    TF_Environ = NULL, Pred_Clamp = TRUE, Fix_Efforts = "mean",
+    TF_Environ = NULL, Pred_Clamp = TRUE, Fix_Efforts = "q90",
     Pred_NewSites = TRUE, NCores_VP = 3) {
 
   .StartTime <- lubridate::now(tzone = "CET")
@@ -1151,7 +1151,7 @@ Mod_Postprocess_2_CPU <- function(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
       "MRI-ESM2-0", "UKESM1-0-LL"),
     CC_Scenario = c("ssp126", "ssp370", "ssp585"),
-    RC_NCores = 8L, Pred_Clamp = TRUE, Fix_Efforts = "mean",
+    RC_NCores = 8L, Pred_Clamp = TRUE, Fix_Efforts = "q90",
     Pred_NewSites = TRUE,
 
     RC = TRUE # Temporarily

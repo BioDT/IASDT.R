@@ -92,7 +92,7 @@ RespCurv_PlotSp <- function(
     future::plan("future::sequential", gc = TRUE)
   } else {
     withr::local_options(
-      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
       future.seed = TRUE)
     c1 <- snow::makeSOCKcluster(min(NCores, nrow(Sp_DT_All)))
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)

@@ -1120,7 +1120,10 @@ Predict_Maps <- function(
             terra::wrap()
         }),
       Save = purrr::map2(
-        .x = Ensemble_Maps, .y = Ensemble_File, .f = IASDT.R::SaveAs))
+        .x = Ensemble_Maps, .y = Ensemble_File,
+        .f = function(x, y) {
+          IASDT.R::SaveAs(InObj = x, OutPath = y)
+        }))
 
   rm(Prediction_Ensemble_R, envir = environment())
 

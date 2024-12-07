@@ -73,8 +73,6 @@ PlotGelman_Alpha <- function(CodaObj, PlottingAlpha = 0.25) {
           dplyr::mutate(Type = factor(Type), Var_LV = x)
       })
 
-  Xlim <- range(Gelman_Alpha_DT$Iter)
-
   Gelman_Alpha_Plot <- Gelman_Alpha_DT %>%
     dplyr::mutate(
       group = paste0(Var_LV, "_", Type),
@@ -97,7 +95,8 @@ PlotGelman_Alpha <- function(CodaObj, PlottingAlpha = 0.25) {
               yintercept = 1.1, linetype = "dashed", col = "darkgrey",
               linewidth = 0.8) +
             ggplot2::facet_grid(~ Type, labeller = ggplot2::label_parsed) +
-            ggplot2::scale_x_continuous(limits = Xlim, expand = c(0, 0)) +
+            ggplot2::scale_x_continuous(
+              limits = range(Gelman_Alpha_DT$Iter), expand = c(0, 0)) +
             ggplot2::coord_cartesian(expand = FALSE, clip = "off") +
             ggplot2::labs(
               title = "Gelman-Rubin-Brooks plot - Alpha",

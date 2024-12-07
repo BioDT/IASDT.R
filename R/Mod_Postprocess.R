@@ -1312,14 +1312,14 @@ Mod_Postprocess_2_CPU <- function(
 
   # ****************************************************************
 
-  if (RC){
+  if (RC) {
 
     # Prepare response curve data -----
     Ch1("Prepare response curve data")
 
     IASDT.R::RespCurv_PrepData(
-      Path_Model = Path_Model, N_Grid = N_Grid, NCores = RC_NCores, UseTF = UseTF,
-      TF_Environ = TF_Environ, TF_use_single = TF_use_single,
+      Path_Model = Path_Model, N_Grid = N_Grid, NCores = RC_NCores,
+      UseTF = UseTF, TF_Environ = TF_Environ, TF_use_single = TF_use_single,
       LF_NCores = LF_NCores, LF_Temp_Cleanup = LF_Temp_Cleanup,
       LF_Check = LF_Check, Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup,
       Verbose = TRUE, LF_Commands_Only = FALSE,
@@ -1342,7 +1342,8 @@ Mod_Postprocess_2_CPU <- function(
     # ## Plotting response curves - species -----
     Ch1("Plotting response curves - species")
     IASDT.R::RespCurv_PlotSp(
-      ModelDir = ModelDir, NCores = RC_NCores, EnvFile = EnvFile, FromHPC = FromHPC)
+      ModelDir = ModelDir, NCores = RC_NCores, EnvFile = EnvFile,
+      FromHPC = FromHPC)
 
     invisible(gc())
 

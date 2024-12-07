@@ -129,7 +129,7 @@ Predict_Maps <- function(
     time_period <- climate_model <- climate_scenario <- Path_CHELSA <-
     Path_CLC <- ias_id <- taxon_name <- ClimateModel <- ClimateScenario <-
     Name <- File_Pred_sf <- class <- order <- family <- species_name <-
-    tif_path_mean <- tif_path_cov <- tif_path_sd <- hab_abb <- hab_name <-
+    tif_path_mean <- tif_path_cov <- tif_path_sd <-
     Train <- Ensemble_File <- Ensemble_Maps <- tifs <- layer_name <-
     TimePeriod <- File_Pred_summary <- Ensemble_DT <- Dir_Ensemble <-
     File_Pred_R <- tif_path_anomaly <- NULL

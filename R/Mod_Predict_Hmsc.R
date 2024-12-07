@@ -537,35 +537,8 @@ Predict_Hmsc <- function(
       ChunkSR_File <- file.path(
         Temp_Dir, paste0("Pred_", Model_Name, "_ch", Chunk, "_SR.qs2"))
       IASDT.R::SaveAs(InObj = ChunkSR, OutPath = ChunkSR_File)
-      
+
       rm(ChunkSR, envir = environment())
-      
-      # # |||||||||||||||||||||||||||||||||||||||
-
-      save_qs2 <- function(object, file) {
-        attempt <- 1
-        while (attempt <= 5) {
-          try(qs2::qs_save(object = object, file = file), silent = TRUE)
-          Sys.sleep(2)
-          CheckData <- IASDT.R::CheckData(file)
-          
-          if (CheckData) {
-            break
-          }
-          
-          if (attempt == 5) {
-            print(str(object, 1)) 
-            save(object, file = stringr::str_replace(file, ".qs2$", ".RData"))
-            stop(
-              paste0("Failed to read ", file, " after 5 attempts."), 
-              call. = FALSE)
-          }
-          attempt <- attempt + 1
-        }
-        return(invisible(NULL))
-      }
-
-      # # |||||||||||||||||||||||||||||||||||||||
 
       # Species predictions
       ChunkSp <- purrr::map_dfr(
@@ -581,14 +554,8 @@ Predict_Hmsc <- function(
             Temp_Dir,
             paste0("Pred_", Model_Name, "_ch", Chunk, "_taxon", Sp, ".qs2"))
 
-          # Saving to qs2 failed for many files, breaking the loop and 
-          # function. Here is a workaround to ensure the file is saved and 
-          # verified
-          # IASDT.R::SaveAs(InObj = SpD, OutPath = ChunkSp_File)
-          # qs2::qs_save(object = SpD, file = ChunkSp_File, nthreads = 5L)
-          save_qs2(object = SpD, file = ChunkSp_File)
 
-          invisible(gc())
+          IASDT.R::SaveAs(InObj = SpD, OutPath = ChunkSp_File)
 
           cbind.data.frame(
             Chunk = Chunk, Sp = Sp, IAS_ID = Model$spNames[Sp],
@@ -638,31 +605,7 @@ Predict_Hmsc <- function(
       IAS_ID <- Eval_DT$IAS_ID[[ID]]
       data <- as.vector(Eval_DT$data[[ID]])
 
-      # SpDT <- purrr::map(data, qs2::qs_read) %>%
-      #   do.call(cbind, .) %>%
-      #   as.double()
-
-      SpDT <- purrr::map(data, function(x) {
-        attempt <- 1
-        max_retries <- 5
-        while (attempt <= max_retries) {
-          result <- tryCatch(
-            qs2::qs_read(x),
-            error = function(e) {
-              if (attempt == max_retries) {
-                stop(
-                  paste0(
-                    "Failed to read ", x, " after ", max_retries,
-                    " attempts: ", x, "\nError: ", e$message), call. = FALSE)
-              }
-              return(NULL)
-            })
-          if (!is.null(result)) {
-            return(result)
-          }
-          attempt <- attempt + 1
-        }
-      }) %>%
+      SpDT <- purrr::map(data, qs2::qs_read) %>%
         do.call(cbind, .) %>%
         as.double()
 
@@ -770,7 +713,7 @@ Predict_Hmsc <- function(
       stringr::str_remove(Model_Name, "_Clamping|_NoClamping"), ".qs2"))
 
   IASDT.R::SaveAs(InObj = Predictions, OutPath = Pred_File)
-  
+
   if (Temp_Cleanup) {
     try(fs::file_delete(Eval_DT$Path_pred), silent = TRUE)
   }

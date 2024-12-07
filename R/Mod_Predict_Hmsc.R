@@ -545,17 +545,15 @@ Predict_Hmsc <- function(
             while (attempt <= max_retries) {
               tryCatch(
                 {
-                  # Attempt to save the file
                   qs2::qs_save(object = object, file = file, nthreads = 5L)
-                  
-                  # Attempt to read the file back to verify it
-                  read_back <- qs2::qs_read(file)
-                  
-                  # If the read is successful, return TRUE
-                  return(TRUE)
+                  IASDT.R::CheckData(file)
                 },
                 error = function(e) {
                   if (attempt == max_retries) {
+                    print(str(object, 1))
+                    save(
+                      object, 
+                      file = stringr::str_replace(File, ".qs$", ".RData"))
                     stop("Failed to save and verify file after ", max_retries, " attempts: ", file, "\nError: ", e$message)
                   }
                 }
@@ -585,6 +583,8 @@ Predict_Hmsc <- function(
           # IASDT.R::SaveAs(InObj = SpD, OutPath = ChunkSp_File)
           # qs2::qs_save(object = SpD, file = ChunkSp_File, nthreads = 5L)
           save_qs2(object = SpD, file = ChunkSp_File)
+
+          invisible(gc())
 
           cbind.data.frame(
             Chunk = Chunk, Sp = Sp, IAS_ID = Model$spNames[Sp],

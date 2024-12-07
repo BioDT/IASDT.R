@@ -539,29 +539,33 @@ Predict_Hmsc <- function(
       IASDT.R::SaveAs(InObj = ChunkSR, OutPath = ChunkSR_File)
       
       rm(ChunkSR, envir = environment())
+      
+      # # |||||||||||||||||||||||||||||||||||||||
 
-      save_qs2 <- function(object, file, max_retries = 5) {
-            attempt <- 1
-            while (attempt <= max_retries) {
-              tryCatch(
-                {
-                  qs2::qs_save(object = object, file = file, nthreads = 5L)
-                  IASDT.R::CheckData(file)
-                },
-                error = function(e) {
-                  if (attempt == max_retries) {
-                    print(str(object, 1))
-                    save(
-                      object, 
-                      file = stringr::str_replace(File, ".qs$", ".RData"))
-                    stop("Failed to save and verify file after ", max_retries, " attempts: ", file, "\nError: ", e$message)
-                  }
-                }
-              )
-              attempt <- attempt + 1
-            }
-            return(FALSE)
+      save_qs2 <- function(object, file) {
+        attempt <- 1
+        while (attempt <= 5) {
+          try(qs2::qs_save(object = object, file = file), silent = TRUE)
+          Sys.sleep(2)
+          CheckData <- IASDT.R::CheckData(file)
+          
+          if (CheckData) {
+            break
           }
+          
+          if (attempt == 5) {
+            print(str(object, 1)) 
+            save(object, file = stringr::str_replace(File, ".qs2$", ".RData"))
+            stop(
+              paste0("Failed to read ", file, " after 5 attempts."), 
+              call. = FALSE)
+          }
+          attempt <- attempt + 1
+        }
+        return(invisible(NULL))
+      }
+
+      # # |||||||||||||||||||||||||||||||||||||||
 
       # Species predictions
       ChunkSp <- purrr::map_dfr(

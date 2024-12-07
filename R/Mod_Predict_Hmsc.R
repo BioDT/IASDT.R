@@ -536,8 +536,8 @@ Predict_Hmsc <- function(
       dimnames(ChunkSR) <- NULL
       ChunkSR_File <- file.path(
         Temp_Dir, paste0("Pred_", Model_Name, "_ch", Chunk, "_SR.qs2"))
-      IASDT.R::SaveAs(
-        InObj = ChunkSR, OutPath = ChunkSR_File, compress_level = 1)
+      IASDT.R::SaveAs(InObj = ChunkSR, OutPath = ChunkSR_File)
+      
       rm(ChunkSR, envir = environment())
 
       # Species predictions
@@ -553,8 +553,10 @@ Predict_Hmsc <- function(
           ChunkSp_File <- file.path(
             Temp_Dir,
             paste0("Pred_", Model_Name, "_ch", Chunk, "_taxon", Sp, ".qs2"))
-          IASDT.R::SaveAs(
-            InObj = SpD, OutPath = ChunkSp_File, compress_level = 1)
+
+          #IASDT.R::SaveAs(InObj = SpD, OutPath = ChunkSp_File)
+          qs2::qs_save(object = SpD, file = ChunkSp_File, nthreads = 5L)
+          
           cbind.data.frame(
             Chunk = Chunk, Sp = Sp, IAS_ID = Model$spNames[Sp],
             ChunkSp_File = ChunkSp_File) %>%
@@ -663,8 +665,7 @@ Predict_Hmsc <- function(
       PredSummaryFile <- file.path(
         Pred_Dir, paste0("Pred_", Model_Name, "_", Sp2, ".qs2"))
 
-      IASDT.R::SaveAs(
-        InObj = PredSummary, OutPath = PredSummaryFile, compress_level = 1)
+      IASDT.R::SaveAs(InObj = PredSummary, OutPath = PredSummaryFile)
 
       if (Evaluate && Sp2 != "SR") {
         if (is.null(Pred_PA)) {
@@ -736,6 +737,7 @@ Predict_Hmsc <- function(
       stringr::str_remove(Model_Name, "_Clamping|_NoClamping"), ".qs2"))
 
   IASDT.R::SaveAs(InObj = Predictions, OutPath = Pred_File)
+  
   if (Temp_Cleanup) {
     try(fs::file_delete(Eval_DT$Path_pred), silent = TRUE)
   }

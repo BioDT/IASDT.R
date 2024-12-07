@@ -540,6 +540,31 @@ Predict_Hmsc <- function(
       
       rm(ChunkSR, envir = environment())
 
+      save_qs2 <- function(object, file, max_retries = 5) {
+            attempt <- 1
+            while (attempt <= max_retries) {
+              tryCatch(
+                {
+                  # Attempt to save the file
+                  qs2::qs_save(object = object, file = file, nthreads = 5L)
+                  
+                  # Attempt to read the file back to verify it
+                  read_back <- qs2::qs_read(file)
+                  
+                  # If the read is successful, return TRUE
+                  return(TRUE)
+                },
+                error = function(e) {
+                  if (attempt == max_retries) {
+                    stop("Failed to save and verify file after ", max_retries, " attempts: ", file, "\nError: ", e$message)
+                  }
+                }
+              )
+              attempt <- attempt + 1
+            }
+            return(FALSE)
+          }
+
       # Species predictions
       ChunkSp <- purrr::map_dfr(
         .x = seq_len(length(Model$spNames)),
@@ -554,9 +579,13 @@ Predict_Hmsc <- function(
             Temp_Dir,
             paste0("Pred_", Model_Name, "_ch", Chunk, "_taxon", Sp, ".qs2"))
 
-          #IASDT.R::SaveAs(InObj = SpD, OutPath = ChunkSp_File)
-          qs2::qs_save(object = SpD, file = ChunkSp_File, nthreads = 5L)
-          
+          # Saving to qs2 failed for many files, breaking the loop and 
+          # function. Here is a workaround to ensure the file is saved and 
+          # verified
+          # IASDT.R::SaveAs(InObj = SpD, OutPath = ChunkSp_File)
+          # qs2::qs_save(object = SpD, file = ChunkSp_File, nthreads = 5L)
+          save_qs2(object = SpD, file = ChunkSp_File)
+
           cbind.data.frame(
             Chunk = Chunk, Sp = Sp, IAS_ID = Model$spNames[Sp],
             ChunkSp_File = ChunkSp_File) %>%

@@ -385,7 +385,7 @@ Predict_Hmsc <- function(
         UseTF = UseTF, TF_Environ = TF_Environ, TF_use_single = TF_use_single)
 
       rm(postEta_file, envir = environment())
-      
+
       if (LF_Commands_Only) {
         return(invisible(NULL))
       }
@@ -601,7 +601,7 @@ Predict_Hmsc <- function(
       IAS_ID <- Eval_DT$IAS_ID[[ID]]
       data <- as.vector(Eval_DT$data[[ID]])
 
-      SpDT <- purrr::map(data, IASDT.R::LoadAs) %>%
+      SpDT <- purrr::map(data, IASDT.R::LoadAs, nthreads = 1) %>%
         do.call(cbind, .) %>%
         as.double()
 

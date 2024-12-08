@@ -39,7 +39,7 @@
 #' @param Evaluate a logical flag indicating whether to evaluate the model
 #'   predictions. Defaults to `FALSE`.
 #' @param Eval_Name a character string specifying the name of the evaluation
-#'   results. If `NULL`, the default name is used (`Eval_Model_Name.RData`).
+#'   results. If `NULL`, the default name is used (`Eval_[Model_Name].qs2`).
 #' @param Eval_Dir a character string specifying the directory where the
 #'   evaluation results will be saved. Defaults to `Evaluation`.
 #' @param RC a character string specifying the type of predictions to be made.
@@ -554,7 +554,6 @@ Predict_Hmsc <- function(
             Temp_Dir,
             paste0("Pred_", Model_Name, "_ch", Chunk, "_taxon", Sp, ".qs2"))
 
-
           IASDT.R::SaveAs(InObj = SpD, OutPath = ChunkSp_File)
 
           cbind.data.frame(
@@ -605,7 +604,7 @@ Predict_Hmsc <- function(
       IAS_ID <- Eval_DT$IAS_ID[[ID]]
       data <- as.vector(Eval_DT$data[[ID]])
 
-      SpDT <- purrr::map(data, qs2::qs_read) %>%
+      SpDT <- purrr::map(data, IASDT.R::LoadAs) %>%
         do.call(cbind, .) %>%
         as.double()
 

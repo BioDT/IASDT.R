@@ -58,23 +58,36 @@ VarPar_Compute <- function(
   # Check if the virtual environment and Python scripts exist
 
   if (UseTF) {
-    if (isFALSE(VP_Commands_Only) &&
+
+    # Check python virtual environment
+    if (isFALSE(VP_Commands_Only) && .Platform$OS.type == "windows" &&
         (is.null(TF_Environ) || !dir.exists(TF_Environ))) {
       stop(
         paste0(
-          "When `UseTF` is TRUE, `TF_Environ` must be specified and should ",
-          "point to an existing directory with a Python environment"),
+          "When running on Windows and `UseTF` is TRUE, `TF_Environ` must ",
+          "be specified and point to an existing directory with a ",
+          "Python virtual environment"),
         call. = FALSE)
     }
 
     # Determine the Python executable path
+
+    # On Windows, the TF calculations has to be done through a valid virtual
+    # environment; the path to the virtual environment must be specified in
+    # `TF_Environ`. On LUMI, this is not needed as the compatible python
+    # installation is loaded automatically when loading tensorflow module. When
+    # using another HPC system, the function needs to be adapted accordingly to
+    # point to a valid python virtual environment.
+
     python_executable <- if (.Platform$OS.type == "windows") {
-      if (isFALSE(VP_Commands_Only) && !file.exists(python_executable)) {
+      Py <- file.path(TF_Environ, "Scripts", "python.exe")
+      if (isFALSE(VP_Commands_Only) && !file.exists(Py)) {
         stop(
-          "Python executable not found in the virtual environment.",
+          paste0(
+            "Python executable not found in the virtual environment: ", Py),
           call. = FALSE)
       }
-      file.path(TF_Environ, "Scripts", "python.exe")
+      return(Py)
     } else {
       "/usr/bin/time -v python3"
     }
@@ -322,6 +335,7 @@ VarPar_Compute <- function(
         }
       }
       invisible(gc())
+
       # |||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
       ### Processing geta -----
@@ -348,7 +362,7 @@ VarPar_Compute <- function(
         if (VP_Commands_Only) {
 
           # Save command to file
-          # Redirect results of time to log file
+          # Redirect results of time to a log file
           path_log_a <- stringr::str_replace(Path_Out_a, ".feather", ".log")
           cmd_a <- paste0(cmd_a, paste0(" >> ", path_log_a, " 2>&1"))
           readr::write_lines(
@@ -356,6 +370,7 @@ VarPar_Compute <- function(
             file = file.path(Path_Temp, "VP_A_Command.txt"), append = FALSE)
 
         } else {
+
           # Run the command using system
           la <- system(cmd_a, wait = TRUE, intern  = TRUE)
 
@@ -367,6 +382,7 @@ VarPar_Compute <- function(
           if (length(la) != 1) {
             cat(la, sep = "\n")
           }
+
         }
 
       } else {
@@ -401,7 +417,7 @@ VarPar_Compute <- function(
         if (VP_Commands_Only) {
 
           # Save command to file
-          # Redirect results of time to log file
+          # Redirect results of time to a log file
           path_log_f <- stringr::str_replace(Path_Out_f, ".feather", ".log")
           cmd_f <- paste0(cmd_f, paste0(" >> ", path_log_f, " 2>&1"))
           readr::write_lines(
@@ -421,6 +437,7 @@ VarPar_Compute <- function(
           if (length(lf) != 1) {
             cat(lf, sep = "\n")
           }
+
         }
 
       } else {
@@ -455,7 +472,7 @@ VarPar_Compute <- function(
         if (VP_Commands_Only) {
 
           # Save command to file
-          # Redirect results of time to log file
+          # Redirect results of time to a log file
           path_log_mu <- stringr::str_replace(Path_Out_mu, ".feather", ".log")
           cmd_mu <- paste0(cmd_mu, paste0(" >> ", path_log_mu, " 2>&1"))
           readr::write_lines(
@@ -475,6 +492,7 @@ VarPar_Compute <- function(
           if (length(lmu) != 1) {
             cat(lmu, sep = "\n")
           }
+
         }
       } else {
         IASDT.R::CatTime(
@@ -646,8 +664,7 @@ VarPar_Compute <- function(
             },
             list = {
               cM <- cMA[[j]]
-            }
-          )
+            })
 
           ftotal <- Matrix::crossprod(Beta[, j], mm(cM, Beta[, j]))
           fixed1[j] <- fixed1[j] + ftotal
@@ -751,8 +768,7 @@ VarPar_Compute <- function(
           },
           list = {
             cM <- cMA[[j]]
-          }
-        )
+          })
 
         ftotal <- Matrix::crossprod(Beta[, j], mm(cM, Beta[, j]))
         fixed1[j] <- fixed1[j] + ftotal

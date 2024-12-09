@@ -876,11 +876,9 @@ run_crossprod_solve <- function(
 
   # On Windows, the TF calculations has to be done through a valid virtual
   # environment; the path to the virtual environment must be specified in
-  # `TF_Environ`
-
-  # On LUMI, this is not needed as the compatible python installation is
-  # loaded automatically when loading tensorflow module. When using another
-  # HPC system, the function needs to be adapted accordingly.
+  # `TF_Environ`. On LUMI, this is not needed as the compatible python
+  # installation is loaded automatically when loading tensorflow module. When
+  # using another HPC system, the function needs to be adapted accordingly.
 
   if (.Platform$OS.type == "windows") {
     if (isFALSE(LF_Commands_Only)) {

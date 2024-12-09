@@ -458,7 +458,7 @@ Predict_Maps <- function(
     # Fix at single value
     if (!is.na(EffortsVal)) {
       # Set a minimum value for efforts variable to `EffortsVal`. Using upper =
-      # Inf keep efforts values > EffortsVal as they are.
+      # Inf keeps efforts values > EffortsVal as they are.
       R_Efforts_Clamp <- terra::clamp(
         x = R_Efforts, lower = EffortsVal, upper = Inf) %>%
         stats::setNames("EffortsLog_Clamp")

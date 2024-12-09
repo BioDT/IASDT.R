@@ -577,6 +577,9 @@ Mod_Postprocess_1_CPU <- function(
 
   # ****************************************************************
 
+  # TEMPORARILY
+  if (FALSE) {
+
   # Check unsuccessful models -----
   Ch1("Check unsuccessful models")
 
@@ -607,6 +610,7 @@ Mod_Postprocess_1_CPU <- function(
     FromHPC = FromHPC, MarginType = "histogram")
 
   invisible(gc())
+  }
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -634,6 +638,9 @@ Mod_Postprocess_1_CPU <- function(
   Temp_Dir <- file.path(ModelDir, "TEMP_Pred")
 
   # ****************************************************************
+
+  # TEMPORARILY
+  if (FALSE) {
 
   # Gelman_Plot -----
   Ch1("Gelman_Plot")
@@ -699,6 +706,8 @@ Mod_Postprocess_1_CPU <- function(
     MemPerCpu = MemPerCpu, Time = Time, Path_Hmsc = Path_Hmsc)
 
   invisible(gc())
+  }
+
 
   # ****************************************************************
 
@@ -770,7 +779,6 @@ Mod_Postprocess_1_CPU <- function(
 #' @param Path Character. Directory containing input files with commands.
 #' @param NumFiles Integer. Number of output batch files to create. Must be less
 #'   than or equal to the maximum job limit of the HPC environment.
-#' @param Pattern Character. Regex pattern to match input files.
 #' @param WD Character. Optional. Working directory to be set in batch scripts.
 #'   If If `NULL`, the working directory will not be changed.
 #' @param WD Character. Working directory for batch files. If `NULL`, defaults
@@ -796,7 +804,6 @@ Mod_Postprocess_1_CPU <- function(
 
 Mod_Prep_TF <- function(
     Path = "datasets/processed/model_fitting", NumFiles = 210,
-    Pattern = "LF_.+_Commands_.+.txt|LF_.+_Commands_.+txt",
     WD = NULL, Path_Out = "TF_BatchFiles", ProjectID = NULL,
     Partition_Name = "small-g", LF_Time = "01:00:00", VP_Time = "01:30:00") {
 
@@ -813,7 +820,7 @@ Mod_Prep_TF <- function(
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "character",
     Args = c(
-      "Path", "Pattern", "Path_Out", "ProjectID", "LF_Time",
+      "Path", "Path_Out", "ProjectID", "LF_Time",
       "VP_Time", "Partition_Name"))
 
   IASDT.R::CheckArgs(
@@ -823,10 +830,6 @@ Mod_Prep_TF <- function(
 
   if (!dir.exists(Path)) {
     stop("`Path` must be a valid directory.", call. = FALSE)
-  }
-
-  if (Pattern == "") {
-    stop("`Pattern` must be a non-empty string.", call. = FALSE)
   }
 
   if (NumFiles <= 0) {
@@ -874,20 +877,24 @@ Mod_Prep_TF <- function(
   }
 
   # Find list of files matching the pattern
+  # Regex pattern to match input files
+  LF_Pattern <- "^LF_NewSites_Commands_.+.txt|^LF_RC_Commands_.+txt"
   LF_InFiles <- list.files(
-    path = Path, pattern = Pattern, recursive = TRUE, full.names = TRUE) %>%
+    path = Path, pattern = LF_Pattern, recursive = TRUE, full.names = TRUE) %>%
     gtools::mixedsort()
 
   if (length(LF_InFiles) == 0) {
     stop(
-      paste0("No files found matching the pattern `", Pattern, "` in ", Path),
+      paste0(
+        "No files found matching the pattern `", LF_Pattern,
+        "` in ", Path),
       call. = FALSE)
   }
 
   IASDT.R::CatTime(
     paste0(
       "Found ", length(LF_InFiles), " files matching the pattern `",
-      Pattern, "`"),
+      LF_Pattern, "`"),
     Level = 2, Time = FALSE)
   purrr::walk(LF_InFiles, IASDT.R::CatTime, Level = 3, Time = FALSE)
 

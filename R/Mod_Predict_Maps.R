@@ -68,9 +68,6 @@ Predict_Maps <- function(
       "MRI-ESM2-0", "UKESM1-0-LL"),
     CC_Scenario = c("ssp126", "ssp370", "ssp585")) {
 
-  # # ..................................................................... ###
-  # # ..................................................................... ###
-
   .StartTime <- lubridate::now(tzone = "CET")
 
   # # ..................................................................... ###
@@ -134,6 +131,42 @@ Predict_Maps <- function(
     TimePeriod <- File_Pred_summary <- Ensemble_DT <- Dir_Ensemble <-
     File_Pred_R <- tif_path_anomaly <- NULL
 
+  # # ..................................................................... ###
+  # # ..................................................................... ###
+
+  Path_Eval <- file.path(dirname(dirname(Path_Model)), "Model_Evaluation")
+
+  Path_Prediction1 <- file.path(
+    dirname(dirname(Path_Model)), "Model_Prediction")
+  Path_Prediction_Clamp <- file.path(Path_Prediction1, "Clamp")
+  Path_Prediction_NoClamp <- file.path(Path_Prediction1, "NoClamp")
+  fs::dir_create(c(Path_Eval, Path_Prediction_NoClamp))
+  
+  Path_Summary_RData <- file.path(
+      dplyr::if_else(
+        Pred_Clamp, Path_Prediction_Clamp, Path_Prediction_NoClamp),
+      "Prediction_Summary.RData")
+  Path_Summary_txt <- file.path(
+      dplyr::if_else(
+        Pred_Clamp, Path_Prediction_Clamp, Path_Prediction_NoClamp),
+      "Prediction_Summary.txt")
+
+  # Check if the prediction summary is already available on disk
+  if (all(file.exists(Path_Summary_RData, Path_Summary_txt))) {
+    IASDT.R::CatTime(
+      "Prediction summary is already available on disk")
+    return(invisible())
+  }
+
+  if (Pred_Clamp) {
+    # Create folder for clamp results only if Pred_Clamp == TRUE
+    fs::dir_create(Path_Prediction_Clamp)
+  }
+
+  if (Pred_Clamp && is.null(Fix_Efforts)) {
+    stop("`Fix_Efforts` can not be NULL when Clamping is implemented")
+  }
+  
   # # ..................................................................... ###
   # # ..................................................................... ###
 
@@ -220,23 +253,6 @@ Predict_Maps <- function(
 
   OtherVars <- stringr::str_subset(names(Model$XData), "^bio|CV", negate = TRUE)
   BioVars <- stringr::str_subset(names(Model$XData), "^bio", negate = FALSE)
-
-  Path_Eval <- file.path(dirname(dirname(Path_Model)), "Model_Evaluation")
-
-  Path_Prediction1 <- file.path(
-    dirname(dirname(Path_Model)), "Model_Prediction")
-  Path_Prediction_Clamp <- file.path(Path_Prediction1, "Clamp")
-  Path_Prediction_NoClamp <- file.path(Path_Prediction1, "NoClamp")
-  fs::dir_create(c(Path_Eval, Path_Prediction_NoClamp))
-
-  if (Pred_Clamp) {
-    # Create folder for clamp results only if Pred_Clamp == TRUE
-    fs::dir_create(Path_Prediction_Clamp)
-  }
-
-  if (Pred_Clamp && is.null(Fix_Efforts)) {
-    stop("`Fix_Efforts` can not be NULL when Clamping is implemented")
-  }
 
   Model_Coords <- Model$rL$sample$s %>%
     as.data.frame() %>%
@@ -562,7 +578,6 @@ Predict_Maps <- function(
   if (LF_Only) {
     return(invisible())
   }
-
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -1031,7 +1046,7 @@ Predict_Maps <- function(
 
   # --------------------------------------------------------- #
 
-  IASDT.R::CatTime("Calculate and ensemble predictions", Level = 1)
+  IASDT.R::CatTime("Calculate ensemble predictions", Level = 1)
   Prediction_Ensemble <- Prediction_Ensemble %>%
     dplyr::mutate(
       Ensemble_Maps = furrr::future_pmap(
@@ -1096,7 +1111,7 @@ Predict_Maps <- function(
   # --------------------------------------------------------- #
 
   # Save ensemble maps as SpatRast
-  IASDT.R::CatTime("Save ensemble maps as SpatRast", Level = 1)
+  IASDT.R::CatTime("Save ensemble predictions as SpatRast", Level = 1)
 
   Prediction_Ensemble_R <- Prediction_Ensemble %>%
     dplyr::mutate(
@@ -1178,20 +1193,10 @@ Predict_Maps <- function(
     dplyr::bind_rows(Prediction_Ensemble_Summary) %>%
     dplyr::mutate(hab_abb = Hab_Abb, hab_name = Hab_Name, .before = 1)
 
-  save(
-    Prediction_Summary,
-    file = file.path(
-      dplyr::if_else(
-        Pred_Clamp, Path_Prediction_Clamp, Path_Prediction_NoClamp),
-      "Prediction_Summary.RData"))
-
+  save(Prediction_Summary, file = Path_Summary_RData)
   utils::write.table(
     x = Prediction_Summary, sep = "\t", row.names = FALSE, col.names = TRUE,
-    file = file.path(
-      dplyr::if_else(
-        Pred_Clamp, Path_Prediction_Clamp, Path_Prediction_NoClamp),
-      "Prediction_Summary.txt"),
-    quote = FALSE, fileEncoding = "UTF-8")
+    file = Path_Summary_txt, quote = FALSE, fileEncoding = "UTF-8")
 
   # # ................................................................... ###
 

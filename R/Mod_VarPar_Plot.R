@@ -25,6 +25,7 @@
 #'   containing Tjur-R2, to be available.
 #' @param Fig_width,Fig_height Numeric. Width and height of the output plot in
 #'   centimeters. Default: `30` and `15`, respectively.
+#' @param axis_text Numeric. Size of the axis text. Default: `4`.
 #' @name VarPar_Plot
 #' @author Ahmed El-Gabbas
 #' @details The function reads the following environment variables:
@@ -38,14 +39,14 @@
 VarPar_Plot <- function(
     Path_Model, EnvFile = ".env", VarParFile = NULL, FromHPC = TRUE,
     UseTF = TRUE, TF_Environ = NULL, NCores = 1, PlotRaw = TRUE,
-    Fig_width = 30, Fig_height = 15) {
+    Fig_width = 30, Fig_height = 15, axis_text = 4) {
 
   .StartTime <- lubridate::now(tzone = "CET")
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   IAS_ID <- Species_name <- Species <- Variable <- VP_Value <-
-    TaxaInfoFile <- Sp <- TjurR2 <- Label <- VP_Sum <- NULL
+    TaxaInfoFile <- Sp <- TjurR2 <- Label <- VP_Sum <- Species_File <- NULL
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -175,7 +176,8 @@ VarPar_Plot <- function(
     legend.title = ggplot2::element_blank(),
     plot.margin = ggplot2::margin(0.2, 0.15, 0.2, 0.05, "cm"),
     axis.text.x = ggplot2::element_text(
-      face = "italic", size = 5, angle = 90, hjust = 1, vjust = 0.3),
+      face = "italic", size = axis_text, angle = 90, hjust = 1, vjust = 0.3,
+      margin = ggplot2::margin(t = 0)),
     axis.title.x = ggplot2::element_blank(),
     axis.title.y = ggplot2::element_blank(),
     axis.ticks = ggplot2::element_blank(),
@@ -290,11 +292,11 @@ VarPar_Plot <- function(
     ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1, byrow = TRUE))
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
-  grDevices::jpeg(
+  ragg::agg_jpeg(
     filename = file.path(Path_VarPar, "VarPar_Relative_Ordered.jpeg"),
     width = Fig_width, height = Fig_height,
     units = "cm", quality = 100, res = 600)
-  plot(Plot_Relative)
+  print(Plot_Relative)
   grDevices::dev.off()
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #

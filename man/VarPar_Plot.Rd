@@ -14,7 +14,8 @@ VarPar_Plot(
   NCores = 1,
   PlotRaw = TRUE,
   Fig_width = 30,
-  Fig_height = 15
+  Fig_height = 15,
+  axis_text = 4
 )
 }
 \arguments{
@@ -45,6 +46,8 @@ containing Tjur-R2, to be available.}
 
 \item{Fig_width, Fig_height}{Numeric. Width and height of the output plot in
 centimeters. Default: \code{30} and \code{15}, respectively.}
+
+\item{axis_text}{Numeric. Size of the axis text. Default: \code{4}.}
 }
 \description{
 This function generates plots for the variance partitioning of an Hmsc model.

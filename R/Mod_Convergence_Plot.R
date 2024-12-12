@@ -18,6 +18,7 @@
 #' @param NOmega Integer. Number of species interactions to sample for omega
 #'   parameter convergence diagnostics. Default: 1000.
 #' @param NCores Integer. Number of cores to use for parallel processing.
+#'   Default: 8.
 #' @param NRC Numeric Vector. Specifies the number of rows and columns for
 #'   arranging multiple plots on a page. Default: c(2, 2).
 #' @param Beta_NRC Numeric Vector. Specifies the number of rows and columns for
@@ -36,7 +37,7 @@
 
 Convergence_Plot <- function(
     Path_Coda = NULL, Path_Model = NULL, EnvFile = ".env",
-    FromHPC = TRUE, Title = " ", NOmega = 1000, NCores = NULL,
+    FromHPC = TRUE, Title = " ", NOmega = 1000, NCores = 8,
     NRC = c(2, 2), Beta_NRC = c(3, 3), SavePlotData = TRUE, PagePerFile = 20,
     Cols = NULL, MarginType = "histogram") {
 
@@ -65,7 +66,8 @@ Convergence_Plot <- function(
   SpComb <- `2.5%` <- `97.5%` <- Class <- Order <- Family <- DT <- IAS_ID <-
     Species <- Variable <- data <- PlotID <- File <- Page <- Iter <- Value <-
     Chain <- y <- label <- Var_Sp <- CI_025 <- CI_975 <- Var_Min <- Var_Max <-
-    Variable2 <- Plot_File <- Var_Sp2 <- NULL
+    Variable2 <- Plot_File <- Var_Sp2 <- Species_name <- Species_File <-
+    Path_PA <- NULL
 
   # # ..................................................................... ###
 
@@ -86,6 +88,33 @@ Convergence_Plot <- function(
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric", Args = c("NOmega", "NCores", "NRC"))
   rm(AllArgs, envir = environment())
+
+
+  # # ..................................................................... ###
+
+  # # Load species summary
+  IASDT.R::CatTime("Load species summary")
+
+  if (FromHPC) {
+    EnvVars2Read <- tibble::tribble(
+      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+      "Path_PA", "DP_R_PA", TRUE, FALSE)
+  } else {
+    EnvVars2Read <- tibble::tribble(
+      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+      "Path_PA", "DP_R_PA_Local", TRUE, FALSE)
+  }
+
+  # Assign environment variables and check file and paths
+  IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+
+  SpSummary <- file.path(Path_PA, "Sp_PA_Summary_DF.csv")
+  if (!file.exists(SpSummary)) {
+    stop(paste0(SpSummary, " file does not exist"), call. = FALSE)
+  }
+
+  SpSummary <- readr::read_csv(SpSummary, show_col_types = FALSE) %>%
+    dplyr::select(Species = Species_name, Species_File)
 
   # # ..................................................................... ###
 
@@ -264,7 +293,7 @@ Convergence_Plot <- function(
         Label_Gelman <- try(
           coda::gelman.diag(CurrPost, multivariate = FALSE),
           silent = TRUE)
-        
+
         if (inherits(Label_Gelman, "try-error")) {
           Label_Gelman <- coda::gelman.diag(
             CurrPost, multivariate = FALSE, autoburnin = FALSE)
@@ -487,9 +516,9 @@ Convergence_Plot <- function(
             Post <- coda::as.mcmc.list(Obj_Beta[, Beta_ID])
 
             Gelman <- try(
-              coda::gelman.diag(Post, multivariate = FALSE), 
+              coda::gelman.diag(Post, multivariate = FALSE),
               silent = TRUE)
-            
+
             if (inherits(Gelman, "try-error")) {
               Gelman <- coda::gelman.diag(
                 Post, multivariate = FALSE, autoburnin = FALSE)
@@ -526,7 +555,7 @@ Convergence_Plot <- function(
     IASDT.R::CatTime("Prepare working on parallel", Level = 2)
     if (NCores > 1) {
       withr::local_options(
-        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
         future.seed = TRUE)
       c1 <- snow::makeSOCKcluster(min(NCores, nrow(Beta_DF)))
       on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
@@ -535,7 +564,6 @@ Convergence_Plot <- function(
     } else {
       future::plan("future::sequential", gc = TRUE)
     }
-
 
     # Prepare plots
     IASDT.R::CatTime("Prepare plots", Level = 2)
@@ -706,7 +734,7 @@ Convergence_Plot <- function(
   IASDT.R::CatTime("Prepare working on parallel", Level = 2)
   if (NCores > 1) {
     withr::local_options(
-      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
       future.seed = TRUE)
     c1 <- snow::makeSOCKcluster(min(NCores, nrow(BetaTracePlots_ByVar)))
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
@@ -833,13 +861,14 @@ Convergence_Plot <- function(
   BetaTracePlots_BySp <- PlotObj_Beta %>%
     dplyr::arrange(Species, factor(Variable, levels = Order)) %>%
     dplyr::select(Species, IAS_ID, Plot_File, Variable) %>%
-    tidyr::nest(data = -c("Species", "IAS_ID"))
+    tidyr::nest(data = -c("Species", "IAS_ID")) %>%
+    dplyr::left_join(SpSummary, by = "Species")
 
   # Prepare working on parallel
   IASDT.R::CatTime("Prepare working on parallel", Level = 2)
   if (NCores > 1) {
     withr::local_options(
-      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
       future.seed = TRUE)
     c1 <- snow::makeSOCKcluster(min(NCores, nrow(BetaTracePlots_BySp)))
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
@@ -920,14 +949,13 @@ Convergence_Plot <- function(
                 PlotTitle, ., ncol = 1, rel_heights = c(0.03, 1))
           })
 
-
       invisible({
         grDevices::cairo_pdf(
           filename = file.path(
             Path_Convergence_BySp,
             paste0(
               "Convergence_Beta_", SpDT$IAS_ID, "_",
-              IASDT.R::ReplaceSpace(x), ".pdf")),
+              SpDT$Species_File, ".pdf")),
           width = 23, height = 17)
         purrr::walk(SpPlots2, grid::grid.draw)
         grDevices::dev.off()

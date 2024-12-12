@@ -577,9 +577,6 @@ Mod_Postprocess_1_CPU <- function(
 
   # ****************************************************************
 
-  # TEMPORARILY
-  if (FALSE) {
-
   # Check unsuccessful models -----
   Ch1("Check unsuccessful models")
 
@@ -610,7 +607,6 @@ Mod_Postprocess_1_CPU <- function(
     FromHPC = FromHPC, MarginType = "histogram")
 
   invisible(gc())
-  }
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -638,9 +634,6 @@ Mod_Postprocess_1_CPU <- function(
   Temp_Dir <- file.path(ModelDir, "TEMP_Pred")
 
   # ****************************************************************
-
-  # TEMPORARILY
-  if (FALSE) {
 
   # Gelman_Plot -----
   Ch1("Gelman_Plot")
@@ -706,12 +699,10 @@ Mod_Postprocess_1_CPU <- function(
     MemPerCpu = MemPerCpu, Time = Time, Path_Hmsc = Path_Hmsc)
 
   invisible(gc())
-  }
-
 
   # ****************************************************************
 
-  # Prepare scripts for predicting latent factors of the response curves -------
+  # latent factors of the response curves -------
   Ch1("Prepare scripts for predicting latent factors of the response curves")
 
   IASDT.R::RespCurv_PrepData(
@@ -725,7 +716,7 @@ Mod_Postprocess_1_CPU <- function(
 
   # ****************************************************************
 
-  # Prepare scripts for predicting latent factors for new sampling units -------
+  # latent factors for new sampling units -------
   Ch1("Prepare scripts for predicting latent factors for new sampling units")
 
   IASDT.R::Predict_Maps(
@@ -841,11 +832,94 @@ Mod_Prep_TF <- function(
   Path_Out <- file.path(Path, Path_Out)
   fs::dir_create(Path_Out)
 
+  Path_Log <- normalizePath(
+    file.path(Path, "TMP", "%x-%A-%a.out"),
+    winslash = "/", mustWork = FALSE)
+
+  # ****************************************************************
+  # ****************************************************************
+
+  # Prepare postprocessing data for calculating Variance partitioning
+  IASDT.R::CatTime(
+    "Prepare postprocessing data for calculating Variance partitioning")
+
+  Path_VP_SLURM <- file.path(Path, "VP_SLURM.slurm")
+  Path_VP_Commands <- file.path(Path, "VP_Commands.txt")
+
+  # ****************************************************************
+
+  # Merge and organize TF commands for computing variance partitioning ----
+  IASDT.R::CatTime(
+    "Merge and organize TF commands for computing variance partitioning",
+    Level = 1, Time = FALSE)
+
+  # Find list of files matching the pattern
+  VP_InFiles <- list.files(
+    path = Path, pattern = "VP_.+Command.txt", recursive = TRUE,
+    full.names = TRUE) %>%
+    purrr::map(readr::read_lines) %>%
+    unlist() %>%
+    gtools::mixedsort()
+  readr::write_lines(x = VP_InFiles, file = Path_VP_Commands, append = FALSE)
+
+  # ****************************************************************
+
+  # Prepare VarPar batch files ----
+  IASDT.R::CatTime("Prepare VarPar batch files", Level = 1, Time = FALSE)
+
+  VP_Commands <- c(
+    "#!/bin/bash",
+    "#SBATCH --job-name=VP_TF",
+    "#SBATCH --ntasks=1",
+    "#SBATCH --ntasks-per-node=1",
+    paste0("#SBATCH --account=", ProjectID),
+    "#SBATCH --cpus-per-task=1",
+    "#SBATCH --mem-per-cpu=200G",
+    "#SBATCH --gpus-per-node=1",
+    paste0("#SBATCH --time=", VP_Time),
+    paste0("#SBATCH --partition=", Partition_Name),
+    paste0("#SBATCH --output=", Path_Log),
+    paste0("#SBATCH --error=", Path_Log),
+    paste0("#SBATCH --array=1-", length(VP_InFiles)),
+    "\n# File containing commands to be executed",
+    paste0("File=", Path_VP_Commands),
+    "\n# Load TensorFlow module and configure environment",
+    "ml use /appl/local/csc/modulefiles",
+    "ml tensorflow",
+    "export TF_CPP_MIN_LOG_LEVEL=3",
+    "export TF_ENABLE_ONEDNN_OPTS=0\n",
+    "# Verify GPU availability",
+    paste0(
+      'python3 -c "import tensorflow as tf; ',
+      'print(\\\"Num GPUs Available:\\\", ',
+      'len(tf.config.list_physical_devices(\\\"GPU\\\")))"'),
+    "\n# Run array job",
+    "head -n $SLURM_ARRAY_TASK_ID $File | tail -n 1 | bash",
+    "\necho End of program at `date`\n",
+    paste0("# ", paste0(rep("-", 50), collapse = "")),
+    paste0(
+      "# This script was created on: ",
+      format(lubridate::now(tzone = "CET"), format = "%Y-%m-%d %H:%M"),
+      " CET"),
+    paste0("# ", paste0(rep("-", 50), collapse = "")))
+
+  IASDT.R::CatTime(
+    paste0("Write VP SLURM script to: `", Path_VP_SLURM, "`"),
+    Level = 2, Time = FALSE)
+
+  readr::write_lines(x = VP_Commands, file = Path_VP_SLURM, append = FALSE)
+  # Make the file executable
+  Sys.chmod(Path_VP_SLURM, mode = "755")
+
   # ****************************************************************
   # ****************************************************************
 
   # Prepare postprocessing data for LF predictions
   IASDT.R::CatTime("Prepare postprocessing data for LF predictions")
+
+  # Ensure that the total number of simultaneous jobs (LF + VP) = NumFiles; so
+  # both can be run on the same time.
+  NumFiles <- NumFiles - length(VP_InFiles)
 
   # Merge and organize TF commands for LF predictions ----
   IASDT.R::CatTime(
@@ -954,10 +1028,6 @@ Mod_Prep_TF <- function(
   # Prepare LF batch files ----
   IASDT.R::CatTime("Prepare LF batch files", Level = 1, Time = FALSE)
 
-  Path_Log <- normalizePath(
-    file.path(Path, "TMP", "Job_%x-%A-%a.out"),
-    winslash = "/", mustWork = FALSE)
-
   LF_slurm_script <- c(
     "#!/bin/bash",
     "#SBATCH --job-name=PP_LF",
@@ -1041,81 +1111,6 @@ Mod_Prep_TF <- function(
   # ****************************************************************
   # ****************************************************************
 
-  # Prepare postprocessing data for calculating Variance partitioning
-  IASDT.R::CatTime(
-    "Prepare postprocessing data for calculating Variance partitioning")
-
-  Path_VP_SLURM <- file.path(Path, "VP_SLURM.slurm")
-  Path_VP_Commands <- file.path(Path, "VP_Commands.txt")
-
-  # ****************************************************************
-
-  # Merge and organize TF commands for computing variance partitioning ----
-  IASDT.R::CatTime(
-    "Merge and organize TF commands for computing variance partitioning",
-    Level = 1, Time = FALSE)
-
-  # Find list of files matching the pattern
-  VP_InFiles <- list.files(
-    path = Path, pattern = "VP_.+Command.txt", recursive = TRUE,
-    full.names = TRUE) %>%
-    purrr::map(readr::read_lines) %>%
-    unlist() %>%
-    gtools::mixedsort()
-  readr::write_lines(x = VP_InFiles, file = Path_VP_Commands, append = FALSE)
-
-  # ****************************************************************
-
-  # Prepare VarPar batch files ----
-  IASDT.R::CatTime("Prepare VarPar batch files", Level = 1, Time = FALSE)
-
-  VP_Commands <- c(
-    "#!/bin/bash",
-    "#SBATCH --job-name=VP_TF",
-    "#SBATCH --ntasks=1",
-    "#SBATCH --ntasks-per-node=1",
-    paste0("#SBATCH --account=", ProjectID),
-    "#SBATCH --cpus-per-task=1",
-    "#SBATCH --mem-per-cpu=200G",
-    "#SBATCH --gpus-per-node=1",
-    paste0("#SBATCH --time=", VP_Time),
-    paste0("#SBATCH --partition=", Partition_Name),
-    paste0("#SBATCH --output=", Path_Log),
-    paste0("#SBATCH --error=", Path_Log),
-    paste0("#SBATCH --array=1-", length(VP_InFiles)),
-    "\n# File containing commands to be executed",
-    paste0("File=", Path_VP_Commands),
-    "\n# Load TensorFlow module and configure environment",
-    "ml use /appl/local/csc/modulefiles",
-    "ml tensorflow",
-    "export TF_CPP_MIN_LOG_LEVEL=3",
-    "export TF_ENABLE_ONEDNN_OPTS=0\n",
-    "# Verify GPU availability",
-    paste0(
-      'python3 -c "import tensorflow as tf; ',
-      'print(\\\"Num GPUs Available:\\\", ',
-      'len(tf.config.list_physical_devices(\\\"GPU\\\")))"'),
-    "\n# Run array job",
-    "head -n $SLURM_ARRAY_TASK_ID $File | tail -n 1 | bash",
-    "\necho End of program at `date`\n",
-    paste0("# ", paste0(rep("-", 50), collapse = "")),
-    paste0(
-      "# This script was created on: ",
-      format(lubridate::now(tzone = "CET"), format = "%Y-%m-%d %H:%M"),
-      " CET"),
-    paste0("# ", paste0(rep("-", 50), collapse = "")))
-
-  IASDT.R::CatTime(
-    paste0("Write VP SLURM script to: `", Path_VP_SLURM, "`"),
-    Level = 2, Time = FALSE)
-
-  readr::write_lines(x = VP_Commands, file = Path_VP_SLURM, append = FALSE)
-  # Make the file executable
-  Sys.chmod(Path_VP_SLURM, mode = "755")
-
-  # ****************************************************************
-  # ****************************************************************
-
   return(invisible(NULL))
 }
 
@@ -1135,8 +1130,8 @@ Mod_Prep_TF <- function(
 #' under various climate scenarios, evaluate internal evaluation, prepares and
 #' plots response curves, and computes and visualizes variance partitioning.
 #'
-#' @params RC_NCores Integer specifying the number of cores to use for response
-#' curve prediction. Defaults to `8`.
+#' @param RC_NCores Integer specifying the number of cores to use for response
+#'   curve prediction. Defaults to `8`.
 #' @name Mod_Postprocess_2_CPU
 #' @inheritParams Predict_Maps
 #' @inheritParams Mod_Postprocess_1_CPU
@@ -1159,11 +1154,7 @@ Mod_Postprocess_2_CPU <- function(
       "MRI-ESM2-0", "UKESM1-0-LL"),
     CC_Scenario = c("ssp126", "ssp370", "ssp585"),
     RC_NCores = 8L, Pred_Clamp = TRUE, Fix_Efforts = "q90",
-    Pred_NewSites = TRUE,
-
-    RC = TRUE # Temporarily
-
-) {
+    Pred_NewSites = TRUE) {
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -1246,7 +1237,8 @@ Mod_Postprocess_2_CPU <- function(
         paste0(
           c(
             "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
-            "MRI-ESM2-0", "UKESM1-0-LL"), collapse = ", ")),
+            "MRI-ESM2-0", "UKESM1-0-LL"),
+          collapse = ", ")),
       call. = FALSE)
   }
 
@@ -1319,54 +1311,51 @@ Mod_Postprocess_2_CPU <- function(
 
   # ****************************************************************
 
-  if (RC) {
+  # Prepare response curve data -----
+  Ch1("Prepare response curve data")
 
-    # Prepare response curve data -----
-    Ch1("Prepare response curve data")
+  IASDT.R::RespCurv_PrepData(
+    Path_Model = Path_Model, N_Grid = N_Grid, NCores = RC_NCores,
+    UseTF = UseTF, TF_Environ = TF_Environ, TF_use_single = TF_use_single,
+    LF_NCores = LF_NCores, LF_Temp_Cleanup = LF_Temp_Cleanup,
+    LF_Check = LF_Check, Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup,
+    Verbose = TRUE, LF_Commands_Only = FALSE,
+    ReturnData = FALSE, Probabilities = c(0.025, 0.5, 0.975))
 
-    IASDT.R::RespCurv_PrepData(
-      Path_Model = Path_Model, N_Grid = N_Grid, NCores = RC_NCores,
-      UseTF = UseTF, TF_Environ = TF_Environ, TF_use_single = TF_use_single,
-      LF_NCores = LF_NCores, LF_Temp_Cleanup = LF_Temp_Cleanup,
-      LF_Check = LF_Check, Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup,
-      Verbose = TRUE, LF_Commands_Only = FALSE,
-      ReturnData = FALSE, Probabilities = c(0.025, 0.5, 0.975))
+  invisible(gc())
 
-    invisible(gc())
-
-    # ****************************************************************
-
-    # Plotting response curves - species richness -----
-    Ch1("Plotting response curves - species richness")
-
-    IASDT.R::RespCurv_PlotSR(
-      ModelDir = ModelDir, Verbose = TRUE, NCores = RC_NCores)
-
-    invisible(gc())
-
-    # ****************************************************************
-
-    # ## Plotting response curves - species -----
-    Ch1("Plotting response curves - species")
-    IASDT.R::RespCurv_PlotSp(
-      ModelDir = ModelDir, NCores = RC_NCores, EnvFile = EnvFile,
-      FromHPC = FromHPC)
-
-    invisible(gc())
-
-    # ****************************************************************
-
-    # ## Plotting - all species together -----
-    Ch1("Plotting response curves - all species together")
-
-    IASDT.R::RespCurv_PlotSpAll(ModelDir = ModelDir, NCores = RC_NCores)
-
-    invisible(gc())
-
-  }
   # ****************************************************************
 
-  # Prepare scripts for predicting latent factors for new sampling units -------
+  # Plotting response curves - species richness -----
+  Ch1("Plotting response curves - species richness")
+
+  IASDT.R::RespCurv_PlotSR(
+    ModelDir = ModelDir, Verbose = TRUE, NCores = RC_NCores)
+
+  invisible(gc())
+
+  # ****************************************************************
+
+  # ## Plotting response curves - species -----
+  Ch1("Plotting response curves - species")
+  IASDT.R::RespCurv_PlotSp(
+    ModelDir = ModelDir, NCores = RC_NCores, EnvFile = EnvFile,
+    FromHPC = FromHPC)
+
+  invisible(gc())
+
+  # ****************************************************************
+
+  # ## Plotting - all species together -----
+  Ch1("Plotting response curves - all species together")
+
+  IASDT.R::RespCurv_PlotSpAll(ModelDir = ModelDir, NCores = RC_NCores)
+
+  invisible(gc())
+
+  # ****************************************************************
+
+  # Predicting latent factors for new sampling units -------
   Ch1("Prepare scripts for predicting latent factors for new sampling units")
 
   IASDT.R::Predict_Maps(
@@ -1392,7 +1381,6 @@ Mod_Postprocess_2_CPU <- function(
     Chunk_size = 50L, Verbose = TRUE, VarParFile = "VarPar",
     VP_Commands_Only = FALSE)
 
-
   # ****************************************************************
 
   # Plot Variance partitioning ------
@@ -1402,6 +1390,15 @@ Mod_Postprocess_2_CPU <- function(
     Path_Model = Path_Model, EnvFile = EnvFile, VarParFile = "VarPar",
     FromHPC = FromHPC, UseTF = UseTF, TF_Environ = TF_Environ, NCores = NCores,
     PlotRaw = TRUE, Fig_width = 30, Fig_height = 15)
+
+  # ****************************************************************
+
+  # Plot species & SR predictions as JPEG ------
+  Ch1("Plot species & SR predictions as JPEG")
+
+  IASDT.R::Mod_Predict_Plot(
+    Path_Model = Path_Model, EnvFile =  EnvFile, FromHPC = FromHPC,
+    NCores = NCores)
 
   # ****************************************************************
 

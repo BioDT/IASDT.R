@@ -8,8 +8,8 @@ environmental responses (Beta parameters)}
 PlotBetaGG(
   Path_Model = NULL,
   supportLevel = 0.95,
-  PlotWidth = 26,
-  PlotHeight = 25
+  PlotWidth = 25,
+  PlotHeight = 35
 )
 }
 \arguments{
@@ -22,7 +22,7 @@ indicating 95\% posterior support. For more information, see
 \link[Hmsc:plotBeta]{Hmsc::plotBeta}}
 
 \item{PlotWidth, PlotHeight}{Numeric. The width and height of the plot in
-centimeters. Default is \code{26} cm x \code{25} cm.}
+centimeters. Default is \code{25} cm x \code{35} cm.}
 }
 \value{
 The function does not return a value but saves heatmap plots as JPEG

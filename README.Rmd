@@ -48,4 +48,12 @@ We welcome contributions and bug reports to the package. Please make changes on 
 
 > For questions, please get in touch with [me](https://elgabbas.netlify.app/) at `ahmed.el-gabbas[at]ufz[dot]de`
 
+## Citation
+
+If you use the `IASDT.R` package in your research, please cite it as:
+
+> El-Gabbas, A. (2024) IASDT.R: An R package for the invasive alien species prototype Digital Twin (IAS-pDT). https://github.com/BioDT/IASDT.R. R package version XX.
+
+---
+
 `r kableExtra::text_spec(.Today, color = "grey")`

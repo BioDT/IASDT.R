@@ -140,6 +140,9 @@ RespCurv_PlotSR <- function(ModelDir, Verbose = TRUE, NCores = 8) {
         .l = list(Variable, Quant, Observed, Trend, Coords),
         .f = function(Variable, Quant, Observed, Trend, Coords) {
 
+          IASDT.R::CatTime(
+            paste0(Variable, " - coords = ", Coords), Level = 2)
+
           # Maximum value on the y-axis
           PlotMax <- max(Observed$Pred, Quant$Q975) * 1.05
 
@@ -231,7 +234,7 @@ RespCurv_PlotSR <- function(ModelDir, Verbose = TRUE, NCores = 8) {
 
           # Plotting theme
           Theme <- ggplot2::theme(
-            plot.margin = ggplot2::margin(2.5, 10, 2.5, 5),
+            plot.margin = ggplot2::margin(1.5, 6, -2, 3),
             strip.text = ggtext::element_markdown(
               hjust = 0,
               margin = ggplot2::margin(0.05, 0.1, 0.05, 0.1, "cm")),
@@ -239,7 +242,7 @@ RespCurv_PlotSR <- function(ModelDir, Verbose = TRUE, NCores = 8) {
               colour = NA, fill = "white"),
             legend.position = "none",
             plot.caption = ggplot2::element_text(
-              size = 8, color = "grey", hjust = 0),
+              size = 8, color = "grey", hjust = 0, vjust = 4),
             axis.title = ggtext::element_markdown(),
             axis.text = ggplot2::element_text(size = 8),
             plot.title = ggtext::element_markdown(
@@ -255,8 +258,8 @@ RespCurv_PlotSR <- function(ModelDir, Verbose = TRUE, NCores = 8) {
           Plot <- ggplot2::ggplot(
             data = Observed, mapping = ggplot2::aes(x = XVals, y = Pred)) +
             ggplot2::geom_jitter(
-              shape = 16, width = 0, height = 0.02, alpha = 0.2, size = 1,
-              colour = "blue") +
+              shape = 16, width = 0, height = 0.02, alpha = 0.2, size = 0.75,
+              colour = "darkgrey") +
             ggplot2::geom_line(
               ggplot2::aes(x = XVals, y = Q975),
               data = Quant, linetype = 2, linewidth = 0.3, colour = "blue") +
@@ -297,6 +300,10 @@ RespCurv_PlotSR <- function(ModelDir, Verbose = TRUE, NCores = 8) {
           # Back-transforming variables
           if (Variable %in% c("EffortsLog", "RoadRailLog", "HabLog")) {
 
+            IASDT.R::CatTime(
+              paste0(Variable, " - coords = ", Coords, " - original scale"),
+              Level = 2)
+
             Observed2 <- dplyr::mutate(Observed, XVals = 10 ^ XVals - 0.1)
             Quant2 <- dplyr::mutate(Quant, XVals = 10 ^ XVals - 0.1)
 
@@ -307,23 +314,23 @@ RespCurv_PlotSR <- function(ModelDir, Verbose = TRUE, NCores = 8) {
             Variable2 <- dplyr::case_when(
               Variable == "RoadRailLog" ~ paste0(
                 "<span style='font-size: 10pt;'><b>Road + Rail intensity</b>",
-                "</span><span style='font-size: 7pt;'> (back-transformed)",
+                "</span><span style='font-size: 7pt;'> (original scale)",
                 "</span>"),
               Variable == "HabLog" ~ paste0(
                 "<span style='font-size: 10pt;'>",
                 "<b>% habitat coverage</b></span>",
-                "<span style='font-size: 8pt;'> (back-transformed)</span>"),
+                "<span style='font-size: 8pt;'> (original scale)</span>"),
               Variable == "EffortsLog" ~ paste0(
                 "<span style='font-size: 10pt;'><b>Sampling efforts</b>",
-                "</span><span style='font-size: 7pt;'> (back-transformed)",
+                "</span><span style='font-size: 7pt;'> (original scale)",
                 "</span>"),
               .default = Variable)
 
             Plot2 <- ggplot2::ggplot(
               data = Observed2, mapping = ggplot2::aes(x = XVals, y = Pred)) +
               ggplot2::geom_jitter(
-                shape = 16, width = 0, height = 0.02, alpha = 0.2, size = 1,
-                colour = "blue") +
+                shape = 16, width = 0, height = 0.02, alpha = 0.2, size = 0.75,
+                colour = "darkgrey") +
               ggplot2::geom_line(
                 ggplot2::aes(x = XVals, y = Q975),
                 data = Quant2, linetype = 2, linewidth = 0.3, colour = "blue") +

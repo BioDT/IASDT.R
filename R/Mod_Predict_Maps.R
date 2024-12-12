@@ -141,7 +141,7 @@ Predict_Maps <- function(
   Path_Prediction_Clamp <- file.path(Path_Prediction1, "Clamp")
   Path_Prediction_NoClamp <- file.path(Path_Prediction1, "NoClamp")
   fs::dir_create(c(Path_Eval, Path_Prediction_NoClamp))
-  
+
   Path_Summary_RData <- file.path(
       dplyr::if_else(
         Pred_Clamp, Path_Prediction_Clamp, Path_Prediction_NoClamp),
@@ -154,8 +154,10 @@ Predict_Maps <- function(
   # Check if the prediction summary is already available on disk
   if (all(file.exists(Path_Summary_RData, Path_Summary_txt))) {
     IASDT.R::CatTime(
-      "Prediction summary is already available on disk")
-    return(invisible())
+      paste0(
+        "All model predictions and prediction summary are already available ",
+        "on disk"))
+    return(invisible(NULL))
   }
 
   if (Pred_Clamp) {
@@ -166,7 +168,7 @@ Predict_Maps <- function(
   if (Pred_Clamp && is.null(Fix_Efforts)) {
     stop("`Fix_Efforts` can not be NULL when Clamping is implemented")
   }
-  
+
   # # ..................................................................... ###
   # # ..................................................................... ###
 
@@ -964,10 +966,11 @@ Predict_Maps <- function(
   # # ..................................................................... ###
   # # ..................................................................... ###
 
-
   # Ensemble model predictions ------
 
-  IASDT.R::CatTime("\nEnsemble model predictions")
+  IASDT.R::InfoChunk(
+    "\tEnsemble model predictions", Rep = 1, Char = "-", CharReps = 70, 
+    Red = TRUE, Bold = TRUE, Time = FALSE)
 
   IASDT.R::CatTime("Prepare working on parallel", Level = 1)
 
@@ -1184,7 +1187,9 @@ Predict_Maps <- function(
   # # ..................................................................... ###
 
   # Overall summary -----
-  IASDT.R::CatTime("Overall summary")
+  IASDT.R::InfoChunk(
+    "\tPrepare overall summary", Rep = 1, Char = "-", CharReps = 70, 
+    Red = TRUE, Bold = TRUE, Time = FALSE)
 
   Prediction_Summary <- Prediction_Summary %>%
     dplyr::rename(

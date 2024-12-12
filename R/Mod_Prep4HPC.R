@@ -576,8 +576,9 @@ Mod_Prep4HPC <- function(
 
   if (NspPerGrid == 0) {
     IASDT.R::CatTime(
-      paste0("All grid cells, irrespective of number of species ",
-             "presence, will be considered"),
+      paste0(
+        "All grid cells, irrespective of number of species ",
+        "presence, will be considered"),
       Level = 1)
   } else {
     EmptyGridsID <- dplyr::select(DT_All, tidyselect::starts_with("Sp_")) %>%

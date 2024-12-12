@@ -67,20 +67,61 @@ from loky import get_reusable_executor
 # TensorFlow and Environment Configuration
 # ======================================================================
 
-gpus = tf.config.experimental.list_physical_devices('GPU')
+# Add this near the TensorFlow configuration block
+# Set a fixed memory limit (e.g., 64 GB) to avoid exceeding the GPU memory
 
-if gpus:
-    try:
-        for gpu in gpus:
-            # Set a fixed memory limit (e.g., 64 GB) to avoid exceeding the GPU memory
-            # tf.config.set_logical_device_configuration(
-                #gpu,
-                # [tf.config.LogicalDeviceConfiguration(memory_limit=64000)]
-            # )
-            tf.config.experimental.set_memory_growth(gpu, True)
+
+# TOTAL_MEMORY_MB = 64 * 1024
+
+# gpus = tf.config.list_physical_devices('GPU')
+
+# if gpus:
+#     try:
+#         for gpu in gpus:
+#             # Dynamically calculate memory per worker
+#             if args.ncores > 0:
+#                 memory_limit_per_worker = TOTAL_MEMORY_MB // args.ncores
+#             else:
+#                 raise ValueError("Number of cores (ncores) must be greater than zero.")
             
-    except RuntimeError as e:
-        print(f"Error setting memory configurations: {e}")
+#             # Apply memory limit to the GPU
+#             tf.config.set_logical_device_configuration(
+#                 gpu,
+#                 [tf.config.LogicalDeviceConfiguration(memory_limit=memory_limit_per_worker)])
+            
+#             # Enable memory growth
+#             tf.config.experimental.set_memory_growth(gpu, True)
+#     except RuntimeError as e:
+#         print(f"Error setting memory configurations: {e}")
+
+def configure_gpu_memory(ncores, total_memory_mb=64 * 1024):
+    """
+    Configure GPU memory limits dynamically based on the number of cores.
+    
+    Args:
+        ncores (int): Number of cores for parallel processing.
+        total_memory_mb (int): Total available GPU memory in MB.
+    """
+    gpus = tf.config.list_physical_devices('GPU')
+    
+    if gpus:
+        try:
+            for gpu in gpus:
+                # Validate ncores
+                if ncores > 0:
+                    memory_limit_per_worker = total_memory_mb // ncores
+                else:
+                    raise ValueError("Number of cores (ncores) must be greater than zero.")
+                
+                # Apply memory limit
+                tf.config.set_logical_device_configuration(
+                    gpu,
+                    [tf.config.LogicalDeviceConfiguration(memory_limit=memory_limit_per_worker)]
+                )
+                # Enable memory growth
+                #tf.config.experimental.set_memory_growth(gpu, True)
+        except RuntimeError as e:
+            print(f"Error setting memory configurations: {e}")
 
 # ======================================================================
 # ======================================================================
@@ -244,18 +285,23 @@ def getf(file_x, beta_dir, use_single, file_output, ncores):
     beta_files = validate_and_get_beta_files(beta_dir)
 
     try:
-        with get_reusable_executor(max_workers=ncores, timeout=600) as executor:
-            futures = [
-                executor.submit(process_beta_file, x, beta_file, task_index, dtype, file_output)
-                for task_index, beta_file in enumerate(beta_files)
-            ]
+        if ncores == 1:
+            for task_index, beta_file in enumerate(beta_files):
+                process_beta_file(x, beta_file, task_index, dtype, file_output)
+        else:
+            with get_reusable_executor(max_workers=ncores, timeout=600) as executor:
+                futures = [
+                    executor.submit(process_beta_file, x, beta_file, task_index, dtype, file_output)
+                    for task_index, beta_file in enumerate(beta_files)
+                ]
 
-            for future in futures:
-                try:
-                    future.result()
-                except Exception as e:
-                    print(f"Worker failed with exception: {e}")
-                    traceback.print_exc()
+                for future in futures:
+                    try:
+                        future.result()
+                    except Exception as e:
+                        print(f"Worker failed with exception: {e}")
+                        traceback.print_exc()
+        
     except Exception as e:
         print(f"Error in parallel processing: {e}")
         raise
@@ -282,6 +328,9 @@ def main():
 
     args = parser.parse_args()
     
+    # Configure GPU memory
+    configure_gpu_memory(args.ncores)
+
     getf(args.x, args.beta_dir, args.use_single, args.output, args.ncores)
 
 if __name__ == "__main__":

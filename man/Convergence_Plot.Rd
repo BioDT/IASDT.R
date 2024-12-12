@@ -11,7 +11,7 @@ Convergence_Plot(
   FromHPC = TRUE,
   Title = " ",
   NOmega = 1000,
-  NCores = NULL,
+  NCores = 8,
   NRC = c(2, 2),
   Beta_NRC = c(3, 3),
   SavePlotData = TRUE,
@@ -36,7 +36,8 @@ environment, affecting file path handling. Default: \code{TRUE}.}
 \item{NOmega}{Integer. Number of species interactions to sample for omega
 parameter convergence diagnostics. Default: 1000.}
 
-\item{NCores}{Integer. Number of cores to use for parallel processing.}
+\item{NCores}{Integer. Number of cores to use for parallel processing.
+Default: 8.}
 
 \item{NRC}{Numeric Vector. Specifies the number of rows and columns for
 arranging multiple plots on a page. Default: c(2, 2).}

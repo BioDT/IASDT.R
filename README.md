@@ -51,5 +51,15 @@ changes on a new branch and submit a pull request.
 > For questions, please get in touch with
 > [me](https://elgabbas.netlify.app/) at `ahmed.el-gabbas[at]ufz[dot]de`
 
+## Citation
+
+If you use the `IASDT.R` package in your research, please cite it as:
+
+> El-Gabbas, A. (2024) IASDT.R: An R package for the invasive alien
+> species prototype Digital Twin (IAS-pDT).
+> <https://github.com/BioDT/IASDT.R>. R package version XX.
+
+------------------------------------------------------------------------
+
 <span style="     color: grey !important;">Last update:
-2024-12-06</span>
+2024-12-12</span>

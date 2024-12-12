@@ -25,8 +25,9 @@ Mod_Postprocess_2_CPU(
   CC_Models = c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0",
     "UKESM1-0-LL"),
   CC_Scenario = c("ssp126", "ssp370", "ssp585"),
+  RC_NCores = 8L,
   Pred_Clamp = TRUE,
-  Fix_Efforts = "mean",
+  Fix_Efforts = "q90",
   Pred_NewSites = TRUE
 )
 }
@@ -95,13 +96,20 @@ removed in future updates.}
 future predictions. Default: \code{c("ssp126", "ssp370", "ssp585")}. Note: This
 parameter is temporary and may be removed in future updates.}
 
+\item{RC_NCores}{Integer specifying the number of cores to use for response
+curve prediction. Defaults to \code{8}.}
+
 \item{Pred_Clamp}{Logical indicating whether to clamp the sampling efforts at
 a single value. Defaults to \code{TRUE}. If \code{TRUE}, the \code{Fix_Efforts} argument
 must be provided.}
 
 \item{Fix_Efforts}{Numeric or character. Defines the value to fix sampling
-efforts. If numeric, the value is directly used. If character, it can be
-\code{median}, \code{mean} (default), or \code{max}. This argument is mandatory when
+efforts less than the provided value. If numeric, the value is directly
+used. If character, it can be \code{median}, \code{mean}, \code{max}, or \code{q90} (90\%
+Quantile). Using \code{max} can reflect extreme values caused by rare, highly
+sampled locations (e.g., urban centers or popular natural reserves). While
+using 90\% Quantile avoid such extreme grid cells while still capturing
+areas with high sampling effort. This argument is mandatory when
 \code{Pred_Clamp} is set to \code{TRUE}.}
 
 \item{Pred_NewSites}{Logical indicating whether to predict habitat

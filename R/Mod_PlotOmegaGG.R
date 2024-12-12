@@ -57,13 +57,15 @@ PlotOmegaGG <- function(
   IASDT.R::CatTime("Phylogenetic tree plot")
 
   Tree <- Model$phyloTree
+  # Remove the 'Sp_' prefix from tip labels
+  Tree$tip.label <- stringr::str_remove(Tree$tip.label, "^Sp_")
   if (length(Tree$edge.length) == 2 * nrow(Tree$edge)) {
     Tree$edge.length <- rep(1, length(Tree$edge.length) / 2)
   }
 
   PhyloPlot <- ggtree::ggtree(
     tr = Tree, branch.length = "none", ladderize = FALSE, linewidth = 0.25) +
-    ggtree::geom_tiplab(size = 2) +
+    ggtree::geom_tiplab(size = 1) +
     ggtree::theme_tree() +
     ggplot2::theme(
       axis.text.y = ggplot2::element_blank(),
@@ -77,13 +79,13 @@ PlotOmegaGG <- function(
   Theme <- ggplot2::theme(
     legend.title = ggtext::element_markdown(),
     legend.spacing = ggplot2::unit(0, "cm"),
-    legend.key.size = ggplot2::unit(0.5, "cm"),
+    legend.key.size = ggplot2::unit(0.65, "cm"),
     legend.key.width = ggplot2::unit(0.5, "cm"),
     legend.box.margin = ggplot2::margin(0, -30, 0, -15),
     legend.box.spacing = ggplot2::unit(0, "pt"),
     panel.grid.major = ggplot2::element_blank(),
     panel.grid.minor = ggplot2::element_blank(),
-    plot.margin = ggplot2::unit(c(0, -3, 1.35, -2), "lines"))
+    plot.margin = ggplot2::unit(c(0, -3, 0.25, -2), "lines"))
 
   # # ..................................................................... ###
 
@@ -100,8 +102,15 @@ PlotOmegaGG <- function(
   Support <- (post$support > supportLevel) %>%
     magrittr::add(post$support < (1 - supportLevel)) %>%
     magrittr::is_greater_than(0)
+  # remove prefix "Sp_" from co-occurrence labels
+  dimnames(Support)[[2]] <- dimnames(Support)[[1]] <- stringr::str_remove(
+    dimnames(Support)[[1]], "^Sp_")
+  
   PostMean <- post$mean
   PostMean[!Support] <- NA_real_
+  # remove prefix "Sp_" from co-occurrence labels
+  dimnames(PostMean)[[2]] <- dimnames(PostMean)[[1]] <- stringr::str_remove(
+    dimnames(PostMean)[[1]], "^Sp_")
 
   PosSign <- '<span style="font-size: 8pt"><b>  +  </b></span>'
   NegSign <- '<span style="font-size: 8pt"><b>  \u2212  </b></span>'
@@ -118,8 +127,8 @@ PlotOmegaGG <- function(
       replace(., . == "1", PosSign) %>%
       replace(., . == "-1", NegSign) %>%
       ggtree::gheatmap(
-        PhyloPlot, ., offset = 2.75, width = 12, font.size = 2,
-        colnames_angle = 90, hjust = 1) +
+        PhyloPlot, ., offset = 0.75, width = 12, font.size = 0.75,
+        colnames_offset_y = -1, colnames_angle = 90, hjust = 0.5) +
       ggplot2::scale_fill_manual(
         values = c("red", "blue"), na.value = "transparent",
         breaks = c(PosSign, NegSign)) +
@@ -131,6 +140,7 @@ PlotOmegaGG <- function(
     # suppress the message: Scale for fill is already present. Adding another
     # scale for fill, which will replace the existing scale.
     suppressMessages()
+
 
   Plot <- cowplot::plot_grid(
     (Plot_Sign + ggplot2::theme(legend.position = "none")),
@@ -159,8 +169,8 @@ PlotOmegaGG <- function(
       # replace diagonals with NA
       replace(., col(.) == row(.), NA_real_) %>%
       ggtree::gheatmap(
-        PhyloPlot, ., offset = 2.75, width = 12, font.size = 2,
-        colnames_angle = 90, hjust = 1) +
+        PhyloPlot, ., offset = 0.75, width = 12, font.size = 0.75,
+        colnames_offset_y = -1, colnames_angle = 90, hjust = 1) +
       ggplot2::scale_fill_gradientn(
         na.value = "transparent", colours = colorRamps::matlab.like(200),
         labels = scales::number_format(accuracy = 0.1)) +

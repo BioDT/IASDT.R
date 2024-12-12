@@ -152,9 +152,9 @@ Mod_SLURM <- function(
       cat2(paste0("#SBATCH --job-name=", JobName0))
       cat2(paste0("#SBATCH --ntasks=", ntasks))
       cat2(paste0(
-        "#SBATCH --output=", file.path(Path_SLURM_Out, "Job_%x-%A-%a.out")))
+        "#SBATCH --output=", file.path(Path_SLURM_Out, "%x-%A-%a.out")))
       cat2(paste0(
-        "#SBATCH --error=", file.path(Path_SLURM_Out, "Job_%x-%A-%a.out")))
+        "#SBATCH --error=", file.path(Path_SLURM_Out, "%x-%A-%a.out")))
       cat2(paste0("#SBATCH --account=", ProjNum))
       cat2(paste0("#SBATCH --cpus-per-task=", CpusPerTask))
       cat2(paste0("#SBATCH --mem-per-cpu=", MemPerCpu))

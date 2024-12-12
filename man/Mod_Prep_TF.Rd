@@ -7,7 +7,6 @@
 Mod_Prep_TF(
   Path = "datasets/processed/model_fitting",
   NumFiles = 210,
-  Pattern = "LF_.+_Commands_.+.txt|LF_.+_Commands_.+txt",
   WD = NULL,
   Path_Out = "TF_BatchFiles",
   ProjectID = NULL,
@@ -21,8 +20,6 @@ Mod_Prep_TF(
 
 \item{NumFiles}{Integer. Number of output batch files to create. Must be less
 than or equal to the maximum job limit of the HPC environment.}
-
-\item{Pattern}{Character. Regex pattern to match input files.}
 
 \item{WD}{Character. Working directory for batch files. If \code{NULL}, defaults
 to the current directory.}

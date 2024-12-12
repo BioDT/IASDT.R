@@ -17,14 +17,14 @@
 #'   indicating 95% posterior support. For more information, see
 #'   [Hmsc::plotBeta]
 #' @param PlotWidth,PlotHeight Numeric. The width and height of the plot in
-#'   centimeters. Default is `26` cm x `25` cm.
+#'   centimeters. Default is `25` cm x `35` cm.
 #' @return The function does not return a value but saves heatmap plots as JPEG
 #'   files in a directory related to the model's path.
 #' @name PlotBetaGG
 #' @export
 
 PlotBetaGG <- function(
-    Path_Model = NULL, supportLevel = 0.95, PlotWidth = 26, PlotHeight = 25) {
+    Path_Model = NULL, supportLevel = 0.95, PlotWidth = 25, PlotHeight = 35) {
 
   # # ..................................................................... ###
 
@@ -59,18 +59,19 @@ PlotBetaGG <- function(
   IASDT.R::CatTime("phylogenetic tree plot")
 
   Tree <- Model$phyloTree
-
+  # remove prefix "Sp_" from tip labels
+  Tree$tip.label <- stringr::str_remove(Tree$tip.label, "^Sp_")
   if (length(Tree$edge.length) == 2 * nrow(Tree$edge)) {
     Tree$edge.length <- rep(1, length(Tree$edge.length) / 2)
   }
 
   PhyloPlot <- ggtree::ggtree(
     tr = Tree, branch.length = "none", ladderize = FALSE, linewidth = 0.25) +
-    ggtree::geom_tiplab(size = 2) +
+    ggtree::geom_tiplab(size = 1) +
     ggtree::theme_tree() +
     ggplot2::theme(
       axis.text = ggplot2::element_blank(),
-      plot.margin = ggplot2::unit(c(0.2, 0, 0, 0), "lines"))
+      plot.margin = ggplot2::unit(c(0.3, 0, 0, 0), "lines"))
 
   # # ..................................................................... ###
 
@@ -80,13 +81,13 @@ PlotBetaGG <- function(
   Theme <- ggplot2::theme(
     legend.title = ggtext::element_markdown(),
     legend.spacing = ggplot2::unit(0, "cm"),
-    legend.key.size = ggplot2::unit(0.5, "cm"),
+    legend.key.size = ggplot2::unit(0.65, "cm"),
     legend.key.width = ggplot2::unit(0.6, "cm"),
     legend.box.margin = ggplot2::margin(0, -20, 0, -20),
     legend.box.spacing = ggplot2::unit(0, "pt"),
     panel.grid.major = ggplot2::element_blank(),
     panel.grid.minor = ggplot2::element_blank(),
-    plot.margin = ggplot2::unit(c(0, -2, 1.75, -1), "lines"))
+    plot.margin = ggplot2::unit(c(0, -2, 1.75, -2), "lines"))
 
   # # ..................................................................... ###
 
@@ -106,6 +107,9 @@ PlotBetaGG <- function(
     magrittr::add(post$support < (1 - supportLevel)) %>%
     magrittr::is_greater_than(0) %>%
     magrittr::multiply_by(sign(post$mean))
+  # remove prefix "Sp_" from species labels
+  dimnames(Plot_SignD)[[2]] <- stringr::str_remove(
+    dimnames(Plot_SignD)[[2]], "^Sp_")
 
   CovNames <- Model$covNames %>%
     stringr::str_remove("stats::poly\\(") %>%
@@ -136,7 +140,8 @@ PlotBetaGG <- function(
       replace(., . == "-1", NegSign) %>%
       replace(., . == "0", NA_character_) %>%
       ggtree::gheatmap(
-        PhyloPlot, ., offset = 0.75, width = 12, font.size = 2.5, hjust = 0.5) +
+        PhyloPlot, ., offset = -0.85, width = 12,
+        font.size = 2.5, hjust = 0.5) +
       ggplot2::scale_fill_manual(
         values = c("red", "blue"), na.value = "transparent",
         breaks = c(PosSign, NegSign)) +
@@ -169,6 +174,9 @@ PlotBetaGG <- function(
     magrittr::add(post$support < (1 - supportLevel)) %>%
     magrittr::is_greater_than(0) %>%
     magrittr::multiply_by(post$mean)
+  # remove prefix "Sp_" from species labels
+  dimnames(Plot_MeanD)[[2]] <- stringr::str_remove(
+    dimnames(Plot_MeanD)[[2]], "^Sp_")
   rownames(Plot_MeanD) <- RowNames
   LegendTitle <- paste0(
     '<span style="font-size: 12pt"><b>Beta</span><br>',
@@ -179,7 +187,8 @@ PlotBetaGG <- function(
       t() %>%
       as.data.frame() %>%
       ggtree::gheatmap(
-        PhyloPlot, ., offset = 0.75, width = 12, font.size = 2.5, hjust = 0.5) +
+        PhyloPlot, ., offset = -0.85, width = 12,
+        font.size = 2.5, hjust = 0.5) +
       ggplot2::scale_fill_gradientn(
         na.value = "transparent", colours = colorRamps::matlab.like(200)) +
       ggtree::scale_x_ggtree() +
@@ -219,7 +228,8 @@ PlotBetaGG <- function(
       t() %>%
       as.data.frame() %>%
       ggtree::gheatmap(
-        PhyloPlot, ., offset = 0.75, width = 12, font.size = 2.5, hjust = 0.5) +
+        PhyloPlot, ., offset = -0.85, width = 12,
+        font.size = 2.5, hjust = 0.5) +
       ggplot2::scale_fill_gradientn(
         na.value = "transparent", colours = colorRamps::matlab.like(200)) +
       ggtree::scale_x_ggtree() +
@@ -252,6 +262,10 @@ PlotBetaGG <- function(
     magrittr::add(post$support < (1 - supportLevel)) %>%
     magrittr::is_greater_than(0) %>%
     magrittr::multiply_by((2 * post$support - 1))
+    
+    # remove prefix "Sp_" from species labels
+    dimnames(Plot_SupportD)[[2]] <- stringr::str_remove(
+      dimnames(Plot_SupportD)[[2]], "^Sp_")
   rownames(Plot_SupportD) <- RowNames
   LegendTitle <- paste0(
     '<span style="font-size: 12pt"><b>Beta</span><br>',
@@ -263,7 +277,8 @@ PlotBetaGG <- function(
       as.data.frame() %>%
       replace(., . == 0, NA_real_) %>%
       ggtree::gheatmap(
-        PhyloPlot, ., offset = 0.75, width = 12, font.size = 2.5, hjust = 0.5) +
+        PhyloPlot, ., offset = -0.85, width = 12,
+        font.size = 2.5, hjust = 0.5) +
       ggplot2::scale_fill_gradientn(
         na.value = "transparent", colours = colorRamps::matlab.like(200)) +
       ggtree::scale_x_ggtree() +

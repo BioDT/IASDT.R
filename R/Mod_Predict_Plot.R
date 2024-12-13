@@ -397,18 +397,31 @@ Mod_Predict_Plot <- function(
           call. = FALSE)
       }
 
-      cat2(paste0("Path_observed: ", Path_observed))
-
       Plot_observed <- terra::rast(Path_observed)
+      qs2::qd_save(
+        terra::wrap(Plot_observed),
+        file.path(
+          "datasets/processed/model_fitting/Mod_Q_Hab1",
+          paste0("Plot_observed_", ID, "_1.RData")))
+
       terra::values(Plot_observed) <- terra::values(Plot_observed)
-      cat2(paste0("str(Plot_observed) ", str(Plot_observed)))
+      qs2::qd_save(
+        terra::wrap(Plot_observed),
+        file.path(
+          "datasets/processed/model_fitting/Mod_Q_Hab1",
+          paste0("Plot_observed_", ID, "_2.RData")))
+
 
       Plot_observed <- terra::ifel(
         Plot_observed[[1]] == 0 & Plot_observed[[2]] == 1,
         3, Plot_observed[[1]])
-      cat2(paste0("str(Plot_observed)2: ", str(Plot_observed)))
+      qs2::qd_save(
+        terra::wrap(Plot_observed),
+        file.path(
+          "datasets/processed/model_fitting/Mod_Q_Hab1",
+          paste0("Plot_observed_", ID, "_3.RData")))
 
-      Plot_observed <- as.factor(Plot_observed)
+      Plot_observed <- terra::as.factor(Plot_observed)
       cat2(paste0("str(Plot_observed)3: ", str(Plot_observed)))
 
       Plot_observed <- Plot_observed %>%

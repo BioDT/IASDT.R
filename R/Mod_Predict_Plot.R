@@ -150,6 +150,8 @@ Mod_Predict_Plot <- function(
   Path_Plots <- file.path(ModelDir, "Model_Prediction", "Plots")
   fs::dir_create(Path_Plots)
 
+  IASDT.R::AllObjSizes(1)
+
   # # ..................................................................... ###
   # # ..................................................................... ###
 
@@ -243,6 +245,8 @@ Mod_Predict_Plot <- function(
     return(Plot)
   }
 
+  IASDT.R::AllObjSizes(1)
+
   # # ..................................................................... ###
 
   ## PlotMaps ----
@@ -262,15 +266,29 @@ Mod_Predict_Plot <- function(
     Date <- format(Sys.Date(), "%d %B %Y")
     # nolint end
 
+
+    LogFile <- file.path(
+      "datasets/processed/model_fitting/Mod_Q_Hab1", paste0("TMP_", ID, ".txt"))
+    f <- file(LogFile, open = "wb")
+    on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
+    cat2 <- function(...) {
+      cat(sep = "\n", file = f, ...)
+    }
+
+
+
     # prediction map - mean
+    cat2("prediction map - mean")
     R_mean_NoClamp <- terra::rast(Map_summary$tif_path_mean_no_clamp[[ID]])
     R_mean_Clamp <- terra::rast(Map_summary$tif_path_mean_clamp[[ID]])
 
     # prediction map - sd
+    cat2("prediction map - sd")
     R_sd_NoClamp <- terra::rast(Map_summary$tif_path_sd_no_clamp[[ID]])
     R_sd_Clamp <- terra::rast(Map_summary$tif_path_sd_clamp[[ID]])
 
     # prediction map - cov
+    cat2("prediction map - cov")
     R_cov_NoClamp <- Map_summary$tif_path_cov_no_clamp[[ID]] %>%
       terra::rast() %>%
       "+"(0.001) %>%
@@ -280,18 +298,29 @@ Mod_Predict_Plot <- function(
       "+"(0.001) %>%
       log10()
 
+    cat2(paste0("Species: ", Species))
+
     # Plotting range and breaks
     if (Species) {
+
       Range_Mean <- c(R_mean_Clamp, R_mean_NoClamp) %>%
         terra::global("max", na.rm = TRUE) %>%
         dplyr::pull("max") %>%
         max() %>%
         c(0, .)
+      cat2(paste0("Range_Mean: ", Range_Mean))
+
       Breaks_Mean <- NULL
+      cat2(paste0("Breaks_Mean: ", Breaks_Mean))
+
       SpID2 <- stringr::str_remove(SpID, "^Sp_")
+      cat2(paste0("SpID2: ", SpID2))
+
       Path_JPEG <- file.path(
         Path_Plots, paste0("Pred_Current_Sp", SpID2, "_", SpName, ".jpeg"))
       SpID2 <- as.integer(SpID2)
+      cat2(paste0("SpID2: ", SpID2))
+
     } else {
       Path_JPEG <- file.path(Path_Plots, "Pred_Current_SR.jpeg")
       Range_Mean <- c(terra::unwrap(R_SR), R_mean_NoClamp) %>%
@@ -308,33 +337,41 @@ Mod_Predict_Plot <- function(
     Range_cov <- c(R_cov_NoClamp, R_cov_Clamp) %>%
       terra::global(range, na.rm = TRUE) %>%
       range()
+    cat2(paste0("Range_sd: ", Range_sd))
+    cat2(paste0("Range_cov: ", Range_cov))
 
     # ggplot objects
 
     ## mean_no_clamp
+    cat2("mean_no_clamp")
     Plot_mean_no_clamp <- PrepPlots(
       Map = R_mean_NoClamp, Title = "Mean", ShowLegend = TRUE,
       breaks = Breaks_Mean, limits = Range_Mean)
     ## mean_clamp
+    cat2("mean_clamp")
     Plot_mean_clamp <- PrepPlots(
       Map = R_mean_Clamp, breaks = Breaks_Mean, limits = Range_Mean)
     rm(R_mean_NoClamp, R_mean_Clamp, envir = environment())
 
     ## sd_no_clamp
+    cat2("sd_no_clamp")
     Plot_sd_no_clamp <- PrepPlots(
       Map = R_sd_NoClamp, Title = "Standard deviation", ShowLegend = TRUE,
       breaks = NULL, limits = Range_sd)
     ## sd_clamp
+    cat2("sd_clamp")
     Plot_sd_clamp <- PrepPlots(
       Map = R_sd_Clamp, breaks = NULL, limits = Range_sd)
     rm(R_sd_NoClamp, R_sd_Clamp, envir = environment())
 
     ## cov_no_clamp
+    cat2("cov_no_clamp")
     Plot_cov_no_clamp <- PrepPlots(
       Map = R_cov_NoClamp, Title = "Coefficient of variation",
       ShowLegend = TRUE, breaks = NULL, limits = Range_cov,
       LegendTitle = "log10")
     ## cov_clamp
+    cat2("cov_clamp")
     Plot_cov_clamp <- PrepPlots(
       Map = R_cov_Clamp, breaks = NULL, limits = Range_cov,
       LegendTitle = "log10")
@@ -364,11 +401,20 @@ Mod_Predict_Plot <- function(
           call. = FALSE)
       }
 
+      cat2(paste0("Path_observed: ", Path_observed))
+
       Plot_observed <- terra::rast(Path_observed)
+      cat2(str(Plot_observed))
+
       Plot_observed <- terra::ifel(
         Plot_observed[[1]] == 0 & Plot_observed[[2]] == 1,
-        3, Plot_observed[[1]]) %>%
-        as.factor() %>%
+        3, Plot_observed[[1]])
+      cat2(str(Plot_observed))
+
+      Plot_observed <- as.factor(Plot_observed)
+      cat2(str(Plot_observed))
+
+      Plot_observed <- Plot_observed %>%
         PrepPlots(
           Title = "Species observations", Observed = TRUE,
           ShowLegend = TRUE) +
@@ -435,11 +481,14 @@ Mod_Predict_Plot <- function(
       PlotTitle1 <- stringr::str_glue(
         '<SPAN STYLE="font-size:16pt">Predicted habitat suitability of \\
           <b><i>{SpName}</i></b></SPAN>')
+      cat2(PlotTitle1)
 
       PlotTitle2 <- stringr::str_glue(
         '<SPAN STYLE="font-size:8pt; color: darkgrey"><b>Class:</b> \\
           {ClassName}; <b>Order:</b> {OrderName}; <b>Family:</b> \\
           {FamilyName}; <b>IAS_ID:</b> {SpID2}</SPAN>')
+      cat2(PlotTitle2)
+
     } else {
       PlotTitle1 <- "Predicted level of invasion (mean species richness)"
       PlotTitle2 <- ""
@@ -487,6 +536,8 @@ Mod_Predict_Plot <- function(
     return(invisible(NULL))
   }
 
+  IASDT.R::AllObjSizes(1)
+
   # # ..................................................................... ###
   # # ..................................................................... ###
 
@@ -516,14 +567,17 @@ Mod_Predict_Plot <- function(
         c("dplyr", "terra", "ggplot2", "stringr", "cowplot", "tidyterra",
           "purrr", "ggtext", "ragg", "paletteer", "grid", "scales"),
         library, character.only = TRUE)
-      # Set null device for cairo. This is to properly render the plots using
+      # Set null device for `cairo`. This is to properly render the plots using
       # ggtext::geom_richtext - https://github.com/wilkelab/cowplot/issues/73
       cowplot::set_null_device("cairo")
     }))
 
   IASDT.R::CatTime("Prepare and save plots on parallel", Level = 1)
   Plots <- parallel::parLapply(
-    cl = c1, X = seq_len(nrow(Map_summary)), fun = PlotMaps)
+    cl = c1,
+    X = 1:5,
+    # X = seq_len(nrow(Map_summary)),
+    fun = PlotMaps)
 
   rm(Plots, envir = environment())
 

@@ -21,9 +21,7 @@ Mod_Predict_Plot <- function(
 
   .StartTime <- lubridate::now(tzone = "CET")
 
-  # Set null device for ragg. This is to properly render the plots using
-  # ggtext::geom_richtext
-  cowplot::set_null_device("cairo")
+  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   tif_path_mean <- tif_path_sd <- tif_path_cov <- Path_CLC <- SpeciesID <-
     IAS_ID <- Species_File <- NULL
@@ -197,8 +195,7 @@ Mod_Predict_Plot <- function(
     stop(paste0("R_SR file: ", R_SR, " does not exist"), call. = FALSE)
   }
 
-  R_SR <- R_SR %>%
-    IASDT.R::LoadAs() %>%
+  R_SR <- IASDT.R::LoadAs(R_SR) %>%
     dplyr::filter(SpeciesID %in% AllSpID) %>%
     dplyr::pull("PA_Masked_Map") %>%
     purrr::map(terra::unwrap) %>%
@@ -245,7 +242,8 @@ Mod_Predict_Plot <- function(
   parallel::clusterExport(
     cl = c1,
     varlist = c(
-      "Map_summary", "PrepPlots", "R_SR", "R_habitat", "Path_Plots", "Hab_Name"),
+      "Map_summary", "PrepPlots", "R_SR",
+      "R_habitat", "Path_Plots", "Hab_Name"),
     envir = environment())
 
   IASDT.R::CatTime("Loading packages at parallel cores", Level = 1)
@@ -264,6 +262,10 @@ Mod_Predict_Plot <- function(
     X = seq_len(nrow(Map_summary)),
     fun = function(ID) {
 
+      # Set null device for ragg. This is to properly render the plots using
+      # ggtext::geom_richtext
+      cowplot::set_null_device("cairo")
+
       SpID <- Map_summary$ias_id[[ID]]
       SpName <- Map_summary$species_name[[ID]]
       ClassName <- Map_summary$class[[ID]]
@@ -272,10 +274,15 @@ Mod_Predict_Plot <- function(
       Rank <- dplyr::if_else(SpID == "SR", "SR", "Species")
       Species <- stringr::str_detect(SpID, "^Sp")
 
+      # prediction map - mean
       R_mean_NoClamp <- terra::rast(Map_summary$tif_path_mean_no_clamp[[ID]])
       R_mean_Clamp <- terra::rast(Map_summary$tif_path_mean_clamp[[ID]])
+
+      # prediction map - sd
       R_sd_NoClamp <- terra::rast(Map_summary$tif_path_sd_no_clamp[[ID]])
       R_sd_Clamp <- terra::rast(Map_summary$tif_path_sd_clamp[[ID]])
+
+      # prediction map - cov
       R_cov_NoClamp <- Map_summary$tif_path_cov_no_clamp[[ID]] %>%
         terra::rast() %>%
         "+"(0.001) %>%
@@ -285,24 +292,19 @@ Mod_Predict_Plot <- function(
         "+"(0.001) %>%
         log10()
 
+      # Plotting range and breaks
       if (Species) {
-
         Range_Mean <- c(R_mean_Clamp, R_mean_NoClamp) %>%
           terra::global(max, na.rm = TRUE) %>%
           max() %>%
           c(0, .)
         Breaks_Mean <- NULL
-
         SpID2 <- stringr::str_remove(SpID, "^Sp_")
         Path_JPEG <- file.path(
-          Path_Plots,
-          paste0("Pred_Current_Sp", SpID2, "_", SpName, ".jpeg"))
+          Path_Plots, paste0("Pred_Current_Sp", SpID2, "_", SpName, ".jpeg"))
         SpID2 <- as.integer(SpID2)
-
       } else {
-
         Path_JPEG <- file.path(Path_Plots, "Pred_Current_SR.jpeg")
-
         Range_Mean <- c(terra::unwrap(R_SR), R_mean_NoClamp) %>%
           terra::global(max, na.rm = TRUE) %>%
           max() %>%
@@ -317,31 +319,34 @@ Mod_Predict_Plot <- function(
         terra::global(range, na.rm = TRUE) %>%
         range()
 
-      # mean_no_clamp
+      # ggplot objects
+
+      ## mean_no_clamp
       Plot_mean_no_clamp <- PrepPlots(
         Map = R_mean_NoClamp, Title = "Mean", ShowLegend = TRUE,
         breaks = Breaks_Mean, limits = Range_Mean)
-      # mean_clamp
+      ## mean_clamp
       Plot_mean_clamp <- PrepPlots(
         Map = R_mean_Clamp, breaks = Breaks_Mean, limits = Range_Mean)
 
-      # sd_no_clamp
+      ## sd_no_clamp
       Plot_sd_no_clamp <- PrepPlots(
         Map = R_sd_NoClamp, Title = "Standard deviation", ShowLegend = TRUE,
         breaks = NULL, limits = Range_sd)
-      # sd_clamp
+      ## sd_clamp
       Plot_sd_clamp <- PrepPlots(
         Map = R_sd_Clamp, breaks = NULL, limits = Range_sd)
 
-      # cov_no_clamp
+      ## cov_no_clamp
       Plot_cov_no_clamp <- PrepPlots(
         Map = R_cov_NoClamp, Title = "Coefficient of variation",
         ShowLegend = TRUE, breaks = NULL, limits = Range_cov,
         LegendTitle = "log10")
-      # cov_clamp
+      ## cov_clamp
       Plot_cov_clamp <- PrepPlots(
         Map = R_cov_Clamp, breaks = NULL, limits = Range_cov,
         LegendTitle = "log10")
+
 
       # Observed data
       if (Species) {
@@ -349,13 +354,17 @@ Mod_Predict_Plot <- function(
         # Observed species presence
 
         # Files containing observed data maps
-        Path_observed <- "datasets/processed/IAS_PA/Sp_PA_Summary_DF.RData" %>%
-          IASDT.R::LoadAs() %>%
+        Path_observed <- "datasets/processed/IAS_PA/Sp_PA_Summary_DF.RData"
+        if (!file.exists(Path_observed)) {
+          stop(
+            paste0("Path_observed file: ", Path_observed, " does not exist"),
+            call. = FALSE)
+        }
+        Path_observed <- IASDT.R::LoadAs(Path_observed) %>%
           dplyr::filter(IAS_ID == SpID2) %>%
           dplyr::pull(Species_File) %>%
           paste0(., c("_Masked.tif", "_All.tif")) %>%
           file.path("datasets/processed/IAS_PA/tif", .)
-
         # Check if observed data files exist
         if (!all(file.exists(Path_observed))) {
           stop(
@@ -461,7 +470,7 @@ Mod_Predict_Plot <- function(
             label = stringr::str_glue(
               '<SPAN STYLE="font-size:12.5pt; color: red"><b>{Hab_Name} \\
               habitat</b></SPAN> &#8212; <SPAN STYLE="font-size:12.5pt; \\
-              color: blue"><b>Current climate</b></SPAN>')),
+              color: blue"> <b>current climate</b></SPAN>')),
           fill = NA, label.color = NA, hjust = 1, vjust = 0.5) +
         ggtext::geom_richtext(
           ggplot2::aes(

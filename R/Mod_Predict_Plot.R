@@ -184,7 +184,7 @@ Mod_Predict_Plot <- function(
     }
 
     if (is.null(limits)) {
-      PlotLimits <- unlist(terra::global(Map, range, na.rm = TRUE))
+      PlotLimits <- unlist(terra::global(Map, "range", na.rm = TRUE))
     } else {
       PlotLimits <- limits
     }
@@ -283,7 +283,8 @@ Mod_Predict_Plot <- function(
     # Plotting range and breaks
     if (Species) {
       Range_Mean <- c(R_mean_Clamp, R_mean_NoClamp) %>%
-        terra::global(max, na.rm = TRUE) %>%
+        terra::global("max", na.rm = TRUE) %>%
+        dplyr::pull("max") %>%
         max() %>%
         c(0, .)
       Breaks_Mean <- NULL
@@ -294,7 +295,8 @@ Mod_Predict_Plot <- function(
     } else {
       Path_JPEG <- file.path(Path_Plots, "Pred_Current_SR.jpeg")
       Range_Mean <- c(terra::unwrap(R_SR), R_mean_NoClamp) %>%
-        terra::global(max, na.rm = TRUE) %>%
+        terra::global("max", na.rm = TRUE) %>%
+        dplyr::pull("max") %>%
         max() %>%
         c(0, .)
       Breaks_Mean <- NULL
@@ -362,10 +364,9 @@ Mod_Predict_Plot <- function(
           call. = FALSE)
       }
 
-      Plot_observed <- terra::rast(Path_observed) %>%
-        terra::app(fun = function(vals) {
-          ifelse(vals[1] == 0 & vals[2] == 1, 3, vals[1])
-        }) %>%
+      Plot_observed <- terra::ifel(
+        Plot_observed[[1]] == 0 & Plot_observed[[2]] == 1,
+        3, Plot_observed[[1]]) %>%
         as.factor() %>%
         PrepPlots(
           Title = "Species observations", Observed = TRUE,
@@ -521,11 +522,7 @@ Mod_Predict_Plot <- function(
 
   IASDT.R::CatTime("Prepare and save plots on parallel", Level = 1)
   Plots <- parallel::parLapply(
-    cl = c1, X = seq_len(nrow(Map_summary)),
-    fun = function(ID) {
-      #sapply("terra", library, character.only = TRUE)
-      try(PlotMaps(ID))
-    })
+    cl = c1, X = seq_len(nrow(Map_summary)), fun = PlotMaps)
 
   rm(Plots, envir = environment())
 

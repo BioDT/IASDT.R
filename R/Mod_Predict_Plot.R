@@ -378,8 +378,7 @@ Mod_Predict_Plot <- function(
     } else {
 
       # Observed species richness
-      Plot_observed <- R_SR %>%
-        terra::unwrap() %>%
+      Plot_observed <- terra::unwrap(R_SR) %>%
         PrepPlots(
           Title = "Observed species richness", Observed = FALSE,
           ShowLegend = TRUE, breaks = Breaks_Mean, limits = Range_Mean) +
@@ -524,17 +523,9 @@ Mod_Predict_Plot <- function(
   Plots <- parallel::parLapply(
     cl = c1, X = seq_len(nrow(Map_summary)),
     fun = function(ID) {
-      tryCatch({
-        message("Processing ID: ", ID)
-        PlotMaps(ID)
-        return(list(success = TRUE))
-      }, error = function(e) {
-        message("Error in ID: ", ID, " - ", e)
-        return(list(success = FALSE, error = e))
-      })
-    }
-    # fun = PlotMaps
-    )
+      sapply("terra", library, character.only = TRUE)
+      PlotMaps(ID)
+    })
 
   rm(Plots, envir = environment())
 

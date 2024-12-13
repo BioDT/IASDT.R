@@ -457,8 +457,8 @@ Mod_Predict_Plot <- function(
           x = 1, y = 0.55,
           label = stringr::str_glue(
             '<SPAN STYLE="font-size:12.5pt; color: red"><b>{Hab_Name} \\
-              habitat</b></SPAN> &#8212; <SPAN STYLE="font-size:12.5pt; \\
-              color: blue"> <b>current climate</b></SPAN>')),
+              habitat </b></SPAN>&#8212;<SPAN STYLE="font-size:12.5pt; \\
+              color: blue"><b> current climate</b></SPAN>')),
         fill = NA, label.color = NA, hjust = 1, vjust = 0.5) +
       ggtext::geom_richtext(
         ggplot2::aes(
@@ -523,8 +523,8 @@ Mod_Predict_Plot <- function(
   Plots <- parallel::parLapply(
     cl = c1, X = seq_len(nrow(Map_summary)),
     fun = function(ID) {
-      sapply("terra", library, character.only = TRUE)
-      PlotMaps(ID)
+      #sapply("terra", library, character.only = TRUE)
+      try(PlotMaps(ID))
     })
 
   rm(Plots, envir = environment())

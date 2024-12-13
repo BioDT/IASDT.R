@@ -17,7 +17,7 @@
 #' @export
 
 Mod_Predict_Plot <- function(
-  ModelDir, EnvFile = ".env", FromHPC = TRUE, NCores = 8) {
+    ModelDir, EnvFile = ".env", FromHPC = TRUE, NCores = 8) {
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -192,7 +192,12 @@ Mod_Predict_Plot <- function(
 
   IASDT.R::CatTime("Calculate observed species richness")
 
-  R_SR <- "datasets/processed/IAS_PA/Sp_PA_Data.RData" %>%
+  R_SR <- "datasets/processed/IAS_PA/Sp_PA_Data.RData"
+  if (!file.exists(R_SR)) {
+    stop(paste0("R_SR file: ", R_SR, " does not exist"), call. = FALSE)
+  }
+
+  R_SR <- R_SR %>%
     IASDT.R::LoadAs() %>%
     dplyr::filter(SpeciesID %in% AllSpID) %>%
     dplyr::pull("PA_Masked_Map") %>%
@@ -239,7 +244,8 @@ Mod_Predict_Plot <- function(
   IASDT.R::CatTime("Exporting variables to parallel cores", Level = 1)
   parallel::clusterExport(
     cl = c1,
-    varlist = c("Map_summary", "PrepPlots", "R_SR", "R_habitat"),
+    varlist = c(
+      "Map_summary", "PrepPlots", "R_SR", "R_habitat", "Path_Plots", "Hab_Name"),
     envir = environment())
 
   IASDT.R::CatTime("Loading packages at parallel cores", Level = 1)
@@ -248,7 +254,7 @@ Mod_Predict_Plot <- function(
     expr = {
       sapply(
         c("dplyr", "terra", "ggplot2", "stringr", "cowplot", "tidyterra",
-          "purrr", "ggtext", "ragg", "paletteer", "grid"),
+          "purrr", "ggtext", "ragg", "paletteer", "grid", "scales"),
         library, character.only = TRUE)
     }))
 

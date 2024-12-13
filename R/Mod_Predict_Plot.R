@@ -150,8 +150,6 @@ Mod_Predict_Plot <- function(
   Path_Plots <- file.path(ModelDir, "Model_Prediction", "Plots")
   fs::dir_create(Path_Plots)
 
-  IASDT.R::AllObjSizes(1)
-
   # # ..................................................................... ###
   # # ..................................................................... ###
 
@@ -244,8 +242,6 @@ Mod_Predict_Plot <- function(
 
     return(Plot)
   }
-
-  IASDT.R::AllObjSizes(1)
 
   # # ..................................................................... ###
 
@@ -404,15 +400,16 @@ Mod_Predict_Plot <- function(
       cat2(paste0("Path_observed: ", Path_observed))
 
       Plot_observed <- terra::rast(Path_observed)
-      cat2(str(Plot_observed))
+      terra::values(Plot_observed) <- terra::values(Plot_observed)
+      cat2(paste0("str(Plot_observed) ", str(Plot_observed)))
 
       Plot_observed <- terra::ifel(
         Plot_observed[[1]] == 0 & Plot_observed[[2]] == 1,
         3, Plot_observed[[1]])
-      cat2(str(Plot_observed))
+      cat2(paste0("str(Plot_observed)2: ", str(Plot_observed)))
 
       Plot_observed <- as.factor(Plot_observed)
-      cat2(str(Plot_observed))
+      cat2(paste0("str(Plot_observed)3: ", str(Plot_observed)))
 
       Plot_observed <- Plot_observed %>%
         PrepPlots(
@@ -535,8 +532,6 @@ Mod_Predict_Plot <- function(
 
     return(invisible(NULL))
   }
-
-  IASDT.R::AllObjSizes(1)
 
   # # ..................................................................... ###
   # # ..................................................................... ###

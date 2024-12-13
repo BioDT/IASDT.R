@@ -7,7 +7,7 @@
 #' Generate predictions for species and habitat models and saves the output as
 #' JPEG files.
 #'
-#' @param Path_Model Path to the model directory containing predictions.
+#' @param ModelDir Path to the model directory containing predictions.
 #' @param EnvFile Path to the environment file (`.env`) for setting paths.
 #' @param FromHPC Boolean indicating whether the environment is an HPC system.
 #' @return Saves prediction plots as JPEG files in the specified output
@@ -17,7 +17,7 @@
 #' @export
 
 Mod_Predict_Plot <- function(
-    Path_Model, EnvFile = ".env", FromHPC = TRUE, NCores = 8) {
+  ModelDir, EnvFile = ".env", FromHPC = TRUE, NCores = 8) {
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -151,7 +151,7 @@ Mod_Predict_Plot <- function(
 
   # Without clamping
   Map_summary_NoClamp <- file.path(
-    Path_Model,
+    ModelDir,
     "Model_Prediction/NoClamp/Prediction_Current_Summary.RData") %>%
     IASDT.R::LoadAs() %>%
     dplyr::rename(
@@ -161,7 +161,7 @@ Mod_Predict_Plot <- function(
 
   # With clamping
   Map_summary_Clamp <- file.path(
-    Path_Model,
+    ModelDir,
     "Model_Prediction/Clamp/Prediction_Current_Summary.RData") %>%
     IASDT.R::LoadAs() %>%
     dplyr::rename(
@@ -221,7 +221,7 @@ Mod_Predict_Plot <- function(
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  Path_Plots <- file.path(Path_Model, "Model_Prediction", "Plots")
+  Path_Plots <- file.path(ModelDir, "Model_Prediction", "Plots")
   fs::dir_create(Path_Plots)
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||

@@ -41,10 +41,11 @@ Predict_Hmsc(
   Verbose = TRUE
 )
 
-Mod_Predict_Plot(Path_Model, EnvFile = ".env", FromHPC = TRUE, NCores = 8)
+Mod_Predict_Plot(ModelDir, EnvFile = ".env", FromHPC = TRUE, NCores = 8)
 }
 \arguments{
-\item{Path_Model}{Path to the model directory containing predictions.}
+\item{Path_Model}{character string specifying a file name where the model
+object is saved.}
 
 \item{XData}{a dataframe specifying the unpreprocessed covariates for the
 predictions to be made. Works only if the \code{XFormula} argument was specified
@@ -153,6 +154,8 @@ evaluation results will be saved. Defaults to \code{Evaluation}.}
 
 \item{Verbose}{Logical. If TRUE, detailed output is printed. Default is
 \code{FALSE}.}
+
+\item{ModelDir}{Path to the model directory containing predictions.}
 
 \item{EnvFile}{Path to the environment file (\code{.env}) for setting paths.}
 

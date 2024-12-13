@@ -364,6 +364,7 @@ Mod_Predict_Plot <- function(
           call. = FALSE)
       }
 
+      Plot_observed <- terra::rast(Path_observed)
       Plot_observed <- terra::ifel(
         Plot_observed[[1]] == 0 & Plot_observed[[2]] == 1,
         3, Plot_observed[[1]]) %>%
@@ -515,8 +516,8 @@ Mod_Predict_Plot <- function(
         c("dplyr", "terra", "ggplot2", "stringr", "cowplot", "tidyterra",
           "purrr", "ggtext", "ragg", "paletteer", "grid", "scales"),
         library, character.only = TRUE)
-      # Set null device for ragg. This is to properly render the plots using
-      # ggtext::geom_richtext
+      # Set null device for cairo. This is to properly render the plots using
+      # ggtext::geom_richtext - https://github.com/wilkelab/cowplot/issues/73
       cowplot::set_null_device("cairo")
     }))
 

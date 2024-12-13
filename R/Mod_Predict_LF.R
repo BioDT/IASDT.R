@@ -994,3 +994,135 @@ run_crossprod_solve <- function(
     }
   }
 }
+
+# # ========================================================================== #
+# # ========================================================================== #
+
+
+## |------------------------------------------------------------------------| #
+# Mod_Plot_LF ----
+## |------------------------------------------------------------------------| #
+
+#' Spatial variation in site loadings of HMSC Models
+#'
+#' Generate and save spatial variation in site loadings of HMSC Models' latent
+#' factors as a JPEG file.
+#'
+#' @param Path_Model Path to the model file.
+#' @param EnvFile Path to the environment variables file. Default is ".env".
+#' @param FromHPC Logical flag indicating whether to load environment variables
+#'   from HPC. Default is `TRUE`.
+#' @param Plot_Width Numeric value specifying the width of the output plot in
+#'   cm. Default is 20.
+#' @param Plot_Height Numeric value specifying the height of the output plot in
+#'   cm. Default is 21.
+#'
+#' @return Invisibly returns NULL after saving the plot.
+#' @export
+#' @author Ahmed El-Gabbas
+#' @name Mod_Plot_LF
+
+Mod_Plot_LF <- function(
+    Path_Model = NULL, EnvFile = ".env", FromHPC = TRUE,
+    Plot_Width = 20, Plot_Height = 21) {
+
+  # # ..................................................................... ###
+
+  Path_Grid <- NULL
+
+  # Environment variables ----
+  if (FromHPC) {
+    EnvVars2Read <- tibble::tribble(
+      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+      "Path_Grid", "DP_R_Grid", TRUE, FALSE)
+  } else {
+    EnvVars2Read <- tibble::tribble(
+      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+      "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE)
+  }
+
+  # Assign environment variables and check file and paths
+  IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+
+  Grid10 <- file.path(Path_Grid, "Grid_10_Land_Crop.RData") %>%
+    IASDT.R::LoadAs() %>%
+    terra::unwrap()
+
+  # # ..................................................................... ###
+
+  # Check if the model file exists
+  if (is.null(Path_Model) || !file.exists(Path_Model)) {
+    stop("Selected model files not found", call. = FALSE)
+  }
+
+  Model <- IASDT.R::LoadAs(Path_Model)
+  Model_Coords <- Model$ranLevels$sample$s
+  postEta <- Hmsc::getPostEstimate(Model, parName = "Eta")
+  N_LF <- ncol(postEta$mean)
+  Eta_Mean <- as.data.frame(postEta$mean) %>%
+    stats::setNames(paste("LF", seq_len(N_LF), sep = "_")) %>%
+    cbind.data.frame(Model_Coords, .) %>%
+    sf::st_as_sf(coords = c("x", "y"), crs = 3035)
+  Eta_Mean_R <- terra::rasterize(
+    Eta_Mean, Grid10, field = names(Eta_Mean)[-ncol(Eta_Mean)],
+    fun = "mean") %>%
+    stats::setNames(stringr::str_remove(names(.), "_mean")) %>%
+    stats::setNames(stringr::str_replace(names(.), "LF_", "Latent factor "))
+  rm(Model, Model_Coords, Eta_Mean, envir = environment())
+  invisible(gc())
+
+  # # ..................................................................... ###
+
+  Xlim <- c(2600000, 6700000)
+  Ylim <- c(1450000, 5420000)
+
+  LF_Plot <- ggplot2::ggplot() +
+    tidyterra::geom_spatraster(data = Eta_Mean_R, maxcell = Inf) +
+    ggplot2::facet_wrap(~lyr, ncol = 2) +
+    paletteer::scale_fill_paletteer_c(
+      na.value = "transparent", "viridis::plasma",
+      breaks = IASDT.R::integer_breaks(), name = NULL) +
+    ggplot2::scale_x_continuous(
+      expand = ggplot2::expansion(mult = c(0, 0)), limits = Xlim) +
+    ggplot2::scale_y_continuous(
+      expand = ggplot2::expansion(mult = c(0, 0)), limits = Ylim) +
+    ggplot2::theme_bw() +
+    ggplot2::theme(
+      plot.margin = ggplot2::margin(0, 0, 0, 0.05, "cm"),
+      plot.title = ggplot2::element_text(
+        size = 12, color = "blue", face = "bold", hjust = 0.5,
+        margin = ggplot2::margin(0, 0, 0, 0)),
+      strip.text = ggplot2::element_text(size = 12, face = "bold"),
+      strip.background = ggplot2::element_rect(
+        fill = "transparent", color = "transparent"),
+      legend.key.size = grid::unit(0.8, "cm"),
+      legend.key.width = grid::unit(0.6, "cm"),
+      legend.position = "inside",
+      legend.position.inside = c(0.94, 0.9),
+      legend.background = ggplot2::element_rect(fill = "transparent"),
+      legend.text = ggplot2::element_text(size = 8),
+      legend.box.spacing = grid::unit(0, "pt"),
+      legend.title = ggplot2::element_text(
+        color = "blue", size = 7, face = "bold", hjust = 0.5),
+      axis.text.x = ggplot2::element_text(size = 7),
+      axis.text.y = ggplot2::element_text(size = 7, hjust = 0.5, angle = 90),
+      axis.ticks = ggplot2::element_line(colour = "blue", linewidth = 0.25),
+      axis.ticks.length = grid::unit(0.04, "cm"),
+      panel.spacing = grid::unit(0.3, "lines"),
+      panel.grid.minor = ggplot2::element_blank(),
+      panel.grid.major = ggplot2::element_line(
+        linewidth = 0.1, colour = "grey40", linetype = 2),
+      panel.border = ggplot2::element_blank(),
+      panel.ontop = TRUE, panel.background = ggplot2::element_rect(fill = NA))
+
+  ragg::agg_jpeg(
+    filename = file.path(
+      dirname(dirname(Path_Model)), "Model_Prediction", "LF_Plot.jpeg"),
+    width = Plot_Width, height = Plot_Height, res = 600,
+    quality = 100, units = "cm")
+  print(LF_Plot)
+  grDevices::dev.off()
+
+  return(invisible(NULL))
+
+}

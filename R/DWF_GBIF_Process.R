@@ -423,6 +423,7 @@ GBIF_Process <- function(
 
   Plot_GBIF_Summary <- function(
     RstrMap, Title, LegendLabel = NULL, EU_Map = EuroBound) {
+    
     # Plotting limits
     Xlim <- c(2600000, 6700000)
     Ylim <- c(1450000, 5420000)

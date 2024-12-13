@@ -25,7 +25,7 @@ Mod_Predict_Plot <- function(
   .StartTime <- lubridate::now(tzone = "CET")
 
   tif_path_mean <- tif_path_sd <- tif_path_cov <- Path_CLC <- SpeciesID <-
-    IAS_ID <- Species_File <- NULL
+    IAS_ID <- Species_File <- Observed <- Clamp <- NoClamp <- NULL
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -173,9 +173,10 @@ Mod_Predict_Plot <- function(
     Xlim <- c(2600000, 6500000)
     Ylim <- c(1450000, 5420000)
 
-    Plot <- ggplot2::ggplot() +
-      tidyterra::geom_spatraster(
-        data = Map, maxcell = Inf, show.legend = ShowLegend)
+    # Convert to SpatRaster if character
+    if (inherits(Map, "character")) {
+      Map <- terra::rast(Map)
+    }
 
     if (is.null(breaks)) {
       LegendBreaks <- Legendlabels <- ggplot2::waiver()
@@ -188,6 +189,12 @@ Mod_Predict_Plot <- function(
     } else {
       PlotLimits <- limits
     }
+
+    Plot <- ggplot2::ggplot() +
+      tidyterra::geom_spatraster(
+        data = Map, maxcell = Inf, show.legend = ShowLegend)
+
+    rm(Map, envir = environment())
 
     if (Observed) {
       Plot <- Plot +
@@ -212,7 +219,7 @@ Mod_Predict_Plot <- function(
       ggplot2::labs(title = Title) +
       ggplot2::theme_bw() +
       ggplot2::theme(
-        plot.margin = ggplot2::margin(0, 0.1, 0, 0.1, "cm"),
+        plot.margin = ggplot2::margin(0, 0.05, 0, 0.05, "cm"),
         plot.title = ggplot2::element_text(
           size = 9, color = "grey60", face = "bold", hjust = 0.5,
           margin = ggplot2::margin(0, 0, 0, 0)),
@@ -232,7 +239,7 @@ Mod_Predict_Plot <- function(
         axis.ticks = ggplot2::element_line(colour = "blue", linewidth = 0.25),
         axis.ticks.length = grid::unit(0.04, "cm"),
         axis.title = ggplot2::element_blank(),
-        panel.spacing = grid::unit(0.3, "lines"),
+        panel.spacing = grid::unit(0.2, "lines"),
         panel.grid.minor = ggplot2::element_blank(),
         panel.grid.major = ggplot2::element_line(
           linewidth = 0.05, colour = "grey40", linetype = 2),
@@ -280,7 +287,6 @@ Mod_Predict_Plot <- function(
       "+"(0.001) %>%
       log10()
 
-
     # Plotting range and breaks
     if (Species) {
       Range_Mean <- c(R_mean_Clamp, R_mean_NoClamp) %>%
@@ -311,6 +317,8 @@ Mod_Predict_Plot <- function(
       terra::global(range, na.rm = TRUE) %>%
       range()
 
+    invisible(gc())
+
     # ggplot objects
 
     ## mean_no_clamp
@@ -320,7 +328,6 @@ Mod_Predict_Plot <- function(
     ## mean_clamp
     Plot_mean_clamp <- PrepPlots(
       Map = R_mean_Clamp, breaks = Breaks_Mean, limits = Range_Mean)
-    rm(R_mean_NoClamp, R_mean_Clamp, envir = environment())
 
     ## sd_no_clamp
     Plot_sd_no_clamp <- PrepPlots(
@@ -341,6 +348,8 @@ Mod_Predict_Plot <- function(
       Map = R_cov_Clamp, breaks = NULL, limits = Range_cov,
       LegendTitle = "log10")
     rm(R_cov_NoClamp, R_cov_Clamp, envir = environment())
+
+    invisible(gc())
 
     # Observed data
     if (Species) {
@@ -372,12 +381,20 @@ Mod_Predict_Plot <- function(
         3, Plot_observed[[1]]) %>%
         terra::as.factor() %>%
         PrepPlots(
-          Title = "Species observations", Observed = TRUE,
-          ShowLegend = TRUE) +
+          Title = "Species observations", Observed = TRUE, ShowLegend = TRUE) +
         ggplot2::theme(
           panel.border = ggplot2::element_rect(
             color = "black", linewidth = 0.25, fill = NA,
             linetype = "dashed"))
+
+      # Percentage habitat coverage
+      Plot_Final <- PrepPlots(
+        Map = terra::unwrap(R_habitat), breaks = seq(0, 100, 20),
+        limits = c(0, 100), ShowLegend = TRUE, Title = "% Habitat cover",
+        LegendTitle = "%") +
+        ggplot2::theme(
+          panel.border = ggplot2::element_rect(
+            color = "black", linewidth = 0.25, fill = NA, linetype = "dashed"))
 
     } else {
 
@@ -390,20 +407,80 @@ Mod_Predict_Plot <- function(
           panel.border = ggplot2::element_rect(
             color = "black", linewidth = 0.25, fill = NA,
             linetype = "dashed"))
-    }
 
-    Plot_habitat <- PrepPlots(
-      Map = terra::unwrap(R_habitat), breaks = seq(0, 100, 20),
-      limits = c(0, 100), ShowLegend = TRUE, Title = "% Habitat cover",
-      LegendTitle = "%") +
-      ggplot2::theme(
-        panel.border = ggplot2::element_rect(
-          color = "black", linewidth = 0.25, fill = NA, linetype = "dashed"))
+      # Observed vs predicted SR
+      Plot_Final <- c(terra::unwrap(R_SR), R_mean_Clamp, R_mean_NoClamp) %>%
+        terra::as.data.frame() %>%
+        stats::setNames(c("Observed", "Clamp", "NoClamp")) %>%
+        ggplot2::ggplot(mapping = ggplot2::aes(x = Observed)) +
+        ggplot2::geom_point(
+          ggplot2::aes(y = Clamp, colour = "with clamp"),
+          shape = 17, size = 0.03, alpha = 0.2) +
+        ggplot2::geom_point(
+          ggplot2::aes(y = NoClamp, colour = "without clamp"),
+          shape = 16, size = 0.03, alpha = 0.2) +
+        ggplot2::scale_colour_manual(
+          name = NULL, drop = FALSE,
+          values = c("with clamp" = "red", "without clamp" = "blue")) +
+        ggplot2::geom_abline(intercept = 0, slope = 1, linetype = 2) +
+        ggplot2::coord_equal(
+          xlim = Range_Mean + c(-2, 2), ylim = Range_Mean + c(-2, 2),
+          expand = FALSE, clip = "off") +
+        ggplot2::annotate(
+          "text", x = quantile(Range_Mean, 0.7), y = 5, angle = 0, size = 3,
+          label = "Observed species richness", hjust = 0.5, vjust = 1,
+          color = "darkgrey") +
+        ggplot2::annotate(
+          "text", x = 1, y = quantile(Range_Mean, 0.7), angle = 90, size = 3,
+          label = "Predicted species richness", hjust = 0.5, vjust = 1,
+          color = "darkgrey") +
+        ggplot2::labs(title =  "Observed vs predicted species richness") +
+        ggplot2::theme_bw() +
+        ggplot2::theme(
+          plot.margin = ggplot2::margin(0, 0.05, 0, 0.05, "cm"),
+          plot.title = ggplot2::element_text(
+            size = 9, color = "grey60", face = "bold", hjust = 0.5,
+            margin = ggplot2::margin(0, 0, 0, 0)),
+          legend.position = "inside",
+          legend.position.inside = c(0.35, 0.95),
+          legend.direction = "horizontal",
+          legend.background =  ggplot2::element_rect(
+            fill = "transparent", colour = "transparent"),
+          legend.margin = ggplot2::margin(0, 4, 0, 0),
+          legend.text = ggplot2::element_text(size = 6, vjust = 0.5),
+          legend.box.spacing = grid::unit(0, "pt"),
+          legend.title = ggplot2::element_text(
+            color = "blue", size = 6, face = "bold", hjust = 0, vjust = 0),
+          legend.spacing.x = grid::unit(0.05, "cm"),
+          legend.key.width = grid::unit(0.15, "cm"),
+          axis.text.x = ggplot2::element_text(size = 5),
+          axis.text.y = ggplot2::element_text(
+            size = 5, hjust = 0.5, angle = 90),
+          axis.ticks = ggplot2::element_blank(),
+          axis.title = ggplot2::element_blank(),
+          panel.grid.major = ggplot2::element_line(
+            linewidth = 0.025, colour = "grey40", linetype = 2),
+          panel.border = ggplot2::element_rect(
+            color = "black", linewidth = 0.25, fill = NA,
+            linetype = "dashed"),
+          panel.background = ggplot2::element_rect(fill = NA)) +
+        ggplot2::guides(
+          colour = ggplot2::guide_legend(
+            override.aes = list(size = 1.5, shape = c(17, 16), alpha = 1)))
+    }
 
     plot_grid_main <- cowplot::plot_grid(
       Plot_mean_no_clamp, Plot_mean_clamp, Plot_sd_no_clamp, Plot_sd_clamp,
-      Plot_cov_no_clamp, Plot_cov_clamp, Plot_observed, Plot_habitat,
-      ncol = 4, nrow = 2, byrow = FALSE)
+      Plot_cov_no_clamp, Plot_cov_clamp, Plot_observed, Plot_Final,
+      ncol = 4, nrow = 2, byrow = FALSE) +
+      ggplot2::theme(
+        plot.margin = unit(c(0.05, 0.05, 0.05, 0.05), "cm"),
+        panel.spacing = unit(0.1, "lines"))
+
+    rm(
+      Plot_mean_no_clamp, Plot_mean_clamp, Plot_sd_no_clamp, Plot_sd_clamp,
+      Plot_cov_no_clamp, Plot_cov_clamp, Plot_observed, Plot_Final,
+      envir = environment())
 
     YLab <- cowplot::ggdraw() +
       ggtext::geom_richtext(
@@ -517,6 +594,7 @@ Mod_Predict_Plot <- function(
         c("dplyr", "terra", "ggplot2", "stringr", "cowplot", "tidyterra",
           "purrr", "ggtext", "ragg", "paletteer", "grid", "scales"),
         library, character.only = TRUE)
+
       # Set null device for `cairo`. This is to properly render the plots using
       # ggtext::geom_richtext - https://github.com/wilkelab/cowplot/issues/73
       cowplot::set_null_device("cairo")

@@ -1401,6 +1401,14 @@ Mod_Postprocess_2_CPU <- function(
 
   # ****************************************************************
 
+  # Plot latent factors as JPEG ------
+  Ch1("Plot latent factors as JPEG")
+
+  IASDT.R::Mod_Plot_LF(
+    Path_Model = Path_Model, EnvFile = EnvFile, FromHPC = FromHPC)
+
+  # ****************************************************************
+
   IASDT.R::CatDiff(
     InitTime = .StartTime, Prefix = "\nPostprocessing took ")
 

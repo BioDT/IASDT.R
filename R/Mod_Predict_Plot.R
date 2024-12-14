@@ -427,11 +427,13 @@ Mod_Predict_Plot <- function(
           xlim = Range_Mean + c(-2, 2), ylim = Range_Mean + c(-2, 2),
           expand = FALSE, clip = "off") +
         ggplot2::annotate(
-          "text", x = quantile(Range_Mean, 0.7), y = quantile(Range_Mean, 0.05),
+          "text", x = stats::quantile(Range_Mean, 0.7),
+          y = stats::quantile(Range_Mean, 0.05),
           angle = 0, size = 3, color = "darkgrey",
           label = "Observed species richness", hjust = 0.5, vjust = 1) +
         ggplot2::annotate(
-          "text", x = quantile(Range_Mean, 0.05), y = quantile(Range_Mean, 0.7),
+          "text", x = stats::quantile(Range_Mean, 0.05),
+          y = stats::quantile(Range_Mean, 0.7),
           angle = 90, size = 3, color = "darkgrey",
           label = "Predicted species richness", hjust = 0.5, vjust = 1) +
         ggplot2::labs(title =  "Observed vs. predicted species richness") +
@@ -474,8 +476,8 @@ Mod_Predict_Plot <- function(
       Plot_cov_no_clamp, Plot_cov_clamp, Plot_observed, Plot_Final,
       ncol = 4, nrow = 2, byrow = FALSE) +
       ggplot2::theme(
-        plot.margin = unit(c(0.05, 0.05, 0.05, 0.05), "cm"),
-        panel.spacing = unit(0.1, "lines"))
+        plot.margin = grid::unit(c(0.05, 0.05, 0.05, 0.05), "cm"),
+        panel.spacing = grid::unit(0.1, "lines"))
 
     rm(
       Plot_mean_no_clamp, Plot_mean_clamp, Plot_sd_no_clamp, Plot_sd_clamp,

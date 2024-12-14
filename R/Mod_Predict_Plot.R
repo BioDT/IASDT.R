@@ -414,27 +414,27 @@ Mod_Predict_Plot <- function(
         stats::setNames(c("Observed", "Clamp", "NoClamp")) %>%
         ggplot2::ggplot(mapping = ggplot2::aes(x = Observed)) +
         ggplot2::geom_point(
-          ggplot2::aes(y = Clamp, colour = "with clamp"),
+          ggplot2::aes(y = Clamp, colour = "with clamping"),
           shape = 17, size = 0.03, alpha = 0.2) +
         ggplot2::geom_point(
-          ggplot2::aes(y = NoClamp, colour = "without clamp"),
+          ggplot2::aes(y = NoClamp, colour = "without clamping"),
           shape = 16, size = 0.03, alpha = 0.2) +
         ggplot2::scale_colour_manual(
           name = NULL, drop = FALSE,
-          values = c("with clamp" = "red", "without clamp" = "blue")) +
+          values = c("with clamping" = "red", "without clamping" = "blue")) +
         ggplot2::geom_abline(intercept = 0, slope = 1, linetype = 2) +
         ggplot2::coord_equal(
           xlim = Range_Mean + c(-2, 2), ylim = Range_Mean + c(-2, 2),
           expand = FALSE, clip = "off") +
         ggplot2::annotate(
-          "text", x = quantile(Range_Mean, 0.7), y = 5, angle = 0, size = 3,
-          label = "Observed species richness", hjust = 0.5, vjust = 1,
-          color = "darkgrey") +
+          "text", x = quantile(Range_Mean, 0.7), y = quantile(Range_Mean, 0.05),
+          angle = 0, size = 3, color = "darkgrey",
+          label = "Observed species richness", hjust = 0.5, vjust = 1) +
         ggplot2::annotate(
-          "text", x = 1, y = quantile(Range_Mean, 0.7), angle = 90, size = 3,
-          label = "Predicted species richness", hjust = 0.5, vjust = 1,
-          color = "darkgrey") +
-        ggplot2::labs(title =  "Observed vs predicted species richness") +
+          "text", x = quantile(Range_Mean, 0.05), y = quantile(Range_Mean, 0.7),
+          angle = 90, size = 3, color = "darkgrey",
+          label = "Predicted species richness", hjust = 0.5, vjust = 1) +
+        ggplot2::labs(title =  "Observed vs. predicted species richness") +
         ggplot2::theme_bw() +
         ggplot2::theme(
           plot.margin = ggplot2::margin(0, 0.05, 0, 0.05, "cm"),

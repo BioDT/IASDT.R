@@ -408,6 +408,10 @@ Mod_Predict_Plot <- function(
             color = "black", linewidth = 0.25, fill = NA,
             linetype = "dashed"))
 
+      Range_q1 <- stats::quantile(Range_Mean, 0.025)
+      Range_q2 <- stats::quantile(Range_Mean, 0.7)
+      Plot_limit <- Range_Mean + c(-2, 2)
+
       # Observed vs predicted SR
       Plot_Final <- c(terra::unwrap(R_SR), R_mean_Clamp, R_mean_NoClamp) %>%
         terra::as.data.frame() %>%
@@ -424,27 +428,24 @@ Mod_Predict_Plot <- function(
           values = c("with clamping" = "red", "without clamping" = "blue")) +
         ggplot2::geom_abline(intercept = 0, slope = 1, linetype = 2) +
         ggplot2::coord_equal(
-          xlim = Range_Mean + c(-2, 2), ylim = Range_Mean + c(-2, 2),
-          expand = FALSE, clip = "off") +
+          xlim = Plot_limit, ylim = Plot_limit, expand = FALSE, clip = "off") +
         ggplot2::annotate(
-          "text", x = stats::quantile(Range_Mean, 0.7),
-          y = stats::quantile(Range_Mean, 0.05),
+          "text", x = Range_q2, y = Range_q1,
           angle = 0, size = 3, color = "darkgrey",
-          label = "Observed species richness", hjust = 0.5, vjust = 1) +
+          label = "Observed species richness", hjust = 0.5, vjust = 0.5) +
         ggplot2::annotate(
-          "text", x = stats::quantile(Range_Mean, 0.05),
-          y = stats::quantile(Range_Mean, 0.7),
+          "text", x = Range_q1, y = Range_q2,
           angle = 90, size = 3, color = "darkgrey",
-          label = "Predicted species richness", hjust = 0.5, vjust = 1) +
+          label = "Predicted species richness", hjust = 0.5, vjust = 0.5) +
         ggplot2::labs(title =  "Observed vs. predicted species richness") +
         ggplot2::theme_bw() +
         ggplot2::theme(
           plot.margin = ggplot2::margin(0, 0.05, 0, 0.05, "cm"),
           plot.title = ggplot2::element_text(
-            size = 9, color = "grey60", face = "bold", hjust = 0.5,
+            size = 8, color = "grey60", face = "bold", hjust = 0.5,
             margin = ggplot2::margin(0, 0, 0, 0)),
           legend.position = "inside",
-          legend.position.inside = c(0.35, 0.95),
+          legend.position.inside = c(0.4, 0.96),
           legend.direction = "horizontal",
           legend.background =  ggplot2::element_rect(
             fill = "transparent", colour = "transparent"),

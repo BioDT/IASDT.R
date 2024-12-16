@@ -17,7 +17,7 @@
 #'   below 1 - threshold for negative associations) will be visualized. Defaults
 #'   to 0.95.
 #' @param PlotWidth,PlotHeight Integer. Specifies the width and height of the
-#'   generated plot in centimeters. Defaults to `25` x `22.5`.
+#'   generated plot in centimeters. Defaults to `26` x `22.5`.
 #' @return Generates two JPEG files containing the heatmaps of Omega parameter:
 #'   signs and mean values. These files are saved in a directory named
 #'   'Model_Postprocessing' within the parent directory of the provided model
@@ -26,9 +26,13 @@
 #' @export
 
 PlotOmegaGG <- function(
-    Path_Model, supportLevel = 0.95, PlotWidth = 25, PlotHeight = 22.5) {
+    Path_Model, supportLevel = 0.95, PlotWidth = 26, PlotHeight = 22.5) {
 
   # # ..................................................................... ###
+
+  # Set null device for `cairo`. This is to properly render the plots using
+  # ggtext - https://github.com/wilkelab/cowplot/issues/73
+  cowplot::set_null_device("cairo")
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -105,7 +109,7 @@ PlotOmegaGG <- function(
   # remove prefix "Sp_" from co-occurrence labels
   dimnames(Support)[[2]] <- dimnames(Support)[[1]] <- stringr::str_remove(
     dimnames(Support)[[1]], "^Sp_")
-  
+
   PostMean <- post$mean
   PostMean[!Support] <- NA_real_
   # remove prefix "Sp_" from co-occurrence labels
@@ -145,10 +149,10 @@ PlotOmegaGG <- function(
   Plot <- cowplot::plot_grid(
     (Plot_Sign + ggplot2::theme(legend.position = "none")),
     ggpubr::as_ggplot(ggpubr::get_legend(Plot_Sign)),
-    rel_widths = c(0.91, 0.09))
+    rel_widths = c(1, 0.09))
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
-  grDevices::jpeg(
+  ragg::agg_jpeg(
     filename = file.path(Path_Out, "Parameter_Omega_Sign.jpeg"), res = 600,
     width = PlotWidth, height = PlotHeight, units = "cm", quality = 100)
   print(Plot)
@@ -186,10 +190,10 @@ PlotOmegaGG <- function(
   Plot <- cowplot::plot_grid(
     (Plot_Mean + ggplot2::theme(legend.position = "none")),
     ggpubr::as_ggplot(ggpubr::get_legend(Plot_Mean)),
-    rel_widths = c(0.91, 0.09))
+    rel_widths = c(1, 0.09))
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
-  grDevices::jpeg(
+  ragg::agg_jpeg(
     filename = file.path(Path_Out, "Parameter_Omega_Mean.jpeg"), res = 600,
     width = PlotWidth, height = PlotHeight, units = "cm", quality = 100)
   print(Plot)

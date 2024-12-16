@@ -28,6 +28,10 @@ PlotBetaGG <- function(
 
   # # ..................................................................... ###
 
+  # Set null device for `cairo`. This is to properly render the plots using
+  # ggtext - https://github.com/wilkelab/cowplot/issues/73
+  cowplot::set_null_device("cairo")
+
   .StartTime <- lubridate::now(tzone = "CET")
 
   if (is.null(Path_Model)) {
@@ -100,17 +104,6 @@ PlotBetaGG <- function(
 
   # # ..................................................................... ###
 
-  # Sign ------
-
-  IASDT.R::CatTime("1. sign")
-  Plot_SignD <- (post$support > supportLevel) %>%
-    magrittr::add(post$support < (1 - supportLevel)) %>%
-    magrittr::is_greater_than(0) %>%
-    magrittr::multiply_by(sign(post$mean))
-  # remove prefix "Sp_" from species labels
-  dimnames(Plot_SignD)[[2]] <- stringr::str_remove(
-    dimnames(Plot_SignD)[[2]], "^Sp_")
-
   CovNames <- Model$covNames %>%
     stringr::str_remove("stats::poly\\(") %>%
     stringr::str_replace_all(", degree = 2, raw = TRUE\\)", "_") %>%
@@ -122,7 +115,65 @@ PlotBetaGG <- function(
     CovNames == "RoadRailLog" ~ "\n\n\nRoad &\nRail\nintensity",
     CovNames == "HabLog" ~ "\n\nHabitat\ncoverage",
     .default = paste0("\n\n", CovNames))
+  SupportMatrix <- (post$support > supportLevel) %>%
+    magrittr::add(post$support < (1 - supportLevel)) %>%
+    magrittr::is_greater_than(0)
 
+  # # ..................................................................... ###
+
+  # Support ------
+  IASDT.R::CatTime("1. support")
+
+  Plot_SupportD <- SupportMatrix * (2 * post$support - 1)
+  # remove prefix "Sp_" from species labels
+  dimnames(Plot_SupportD)[[2]] <- stringr::str_remove(
+    dimnames(Plot_SupportD)[[2]], "^Sp_")
+  rownames(Plot_SupportD) <- RowNames
+  LegendTitle <- paste0(
+    '<span style="font-size: 12pt"><b>Beta</span><br>',
+    '<span style="font-size: 7pt">(support)</span>')
+
+  Plot_Support <- (
+    Plot_SupportD %>%
+      t() %>%
+      as.data.frame() %>%
+      replace(., . == 0, NA_real_) %>%
+      ggtree::gheatmap(
+        PhyloPlot, ., offset = -0.85, width = 12,
+        font.size = 2.5, hjust = 0.5) +
+      ggplot2::scale_fill_gradientn(
+        na.value = "transparent", colours = colorRamps::matlab.like(200)) +
+      ggtree::scale_x_ggtree() +
+      ggplot2::coord_cartesian(clip = "off")  +
+      ggplot2::labs(fill = LegendTitle) +
+      Theme +
+      ggplot2::theme(legend.text = ggplot2::element_text(size = 8))
+  ) %>%
+    suppressMessages()
+
+  Plot <- cowplot::plot_grid(
+    (Plot_Support + ggplot2::theme(legend.position = "none")),
+    ggpubr::as_ggplot(ggpubr::get_legend(Plot_Support)),
+    rel_widths = c(0.94, 0.06))
+
+  # Using ggplot2::ggsave directly does not show non-ascii characters correctly
+  ragg::agg_jpeg(
+    filename = file.path(Path_Out, "Parameter_Beta_Support.jpeg"), res = 600,
+    width = PlotWidth, height = PlotHeight, units = "cm", quality = 100)
+  print(Plot)
+  grDevices::dev.off()
+
+  # # ..................................................................... ###
+
+  # Sign ------
+
+  IASDT.R::CatTime("1. sign")
+  Plot_SignD <- SupportMatrix * sign(post$mean)
+  Plot_SignD[!SupportMatrix] <- NA_real_
+
+  # remove prefix "Sp_" from species labels
+  dimnames(Plot_SignD)[[2]] <- stringr::str_remove(
+    dimnames(Plot_SignD)[[2]], "^Sp_")
   rownames(Plot_SignD) <- RowNames
   PosSign <- '<span style="font-size: 8pt"><b>  +  </b></span>'
   NegSign <- '<span style="font-size: 8pt"><b>  \u2212  </b></span>'
@@ -159,7 +210,7 @@ PlotBetaGG <- function(
     rel_widths = c(0.94, 0.06))
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
-  grDevices::jpeg(
+  ragg::agg_jpeg(
     filename = file.path(Path_Out, "Parameter_Beta_Sign.jpeg"), res = 600,
     width = PlotWidth, height = PlotHeight, units = "cm", quality = 100)
   print(Plot)
@@ -170,10 +221,9 @@ PlotBetaGG <- function(
   # Mean -----
   IASDT.R::CatTime("2. mean")
 
-  Plot_MeanD <- (post$support > supportLevel) %>%
-    magrittr::add(post$support < (1 - supportLevel)) %>%
-    magrittr::is_greater_than(0) %>%
-    magrittr::multiply_by(post$mean)
+  Plot_MeanD <- SupportMatrix * post$mean
+  Plot_MeanD[!SupportMatrix] <- NA_real_
+
   # remove prefix "Sp_" from species labels
   dimnames(Plot_MeanD)[[2]] <- stringr::str_remove(
     dimnames(Plot_MeanD)[[2]], "^Sp_")
@@ -205,7 +255,7 @@ PlotBetaGG <- function(
     rel_widths = c(0.94, 0.06))
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
-  grDevices::jpeg(
+  ragg::agg_jpeg(
     filename = file.path(Path_Out, "Parameter_Beta_Mean1.jpeg"), res = 600,
     width = PlotWidth, height = PlotHeight, units = "cm", quality = 100)
   print(Plot)
@@ -247,56 +297,8 @@ PlotBetaGG <- function(
     rel_widths = c(0.94, 0.06))
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
-  grDevices::jpeg(
+  ragg::agg_jpeg(
     filename = file.path(Path_Out, "Parameter_Beta_Mean2.jpeg"), res = 600,
-    width = PlotWidth, height = PlotHeight, units = "cm", quality = 100)
-  print(Plot)
-  grDevices::dev.off()
-
-  # # ..................................................................... ###
-
-  # Support ------
-  IASDT.R::CatTime("4. support")
-
-  Plot_SupportD <- (post$support > supportLevel) %>%
-    magrittr::add(post$support < (1 - supportLevel)) %>%
-    magrittr::is_greater_than(0) %>%
-    magrittr::multiply_by((2 * post$support - 1))
-    
-    # remove prefix "Sp_" from species labels
-    dimnames(Plot_SupportD)[[2]] <- stringr::str_remove(
-      dimnames(Plot_SupportD)[[2]], "^Sp_")
-  rownames(Plot_SupportD) <- RowNames
-  LegendTitle <- paste0(
-    '<span style="font-size: 12pt"><b>Beta</span><br>',
-    '<span style="font-size: 7pt">(support)</span>')
-
-  Plot_Support <- (
-    Plot_SupportD %>%
-      t() %>%
-      as.data.frame() %>%
-      replace(., . == 0, NA_real_) %>%
-      ggtree::gheatmap(
-        PhyloPlot, ., offset = -0.85, width = 12,
-        font.size = 2.5, hjust = 0.5) +
-      ggplot2::scale_fill_gradientn(
-        na.value = "transparent", colours = colorRamps::matlab.like(200)) +
-      ggtree::scale_x_ggtree() +
-      ggplot2::coord_cartesian(clip = "off")  +
-      ggplot2::labs(fill = LegendTitle) +
-      Theme +
-      ggplot2::theme(legend.text = ggplot2::element_text(size = 8))
-  ) %>%
-    suppressMessages()
-
-  Plot <- cowplot::plot_grid(
-    (Plot_Support + ggplot2::theme(legend.position = "none")),
-    ggpubr::as_ggplot(ggpubr::get_legend(Plot_Support)),
-    rel_widths = c(0.94, 0.06))
-
-  # Using ggplot2::ggsave directly does not show non-ascii characters correctly
-  grDevices::jpeg(
-    filename = file.path(Path_Out, "Parameter_Beta_Support.jpeg"), res = 600,
     width = PlotWidth, height = PlotHeight, units = "cm", quality = 100)
   print(Plot)
   grDevices::dev.off()

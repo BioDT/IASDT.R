@@ -10,9 +10,11 @@
 #' @param ModelDir Path to the model directory containing predictions.
 #' @param EnvFile Path to the environment file (`.env`) for setting paths.
 #' @param FromHPC Boolean indicating whether the environment is an HPC system.
+#' @param NCores Integer specifying the number of cores to use for parallel
+#'   processing. Defaults to 8.
 #' @return Saves prediction plots as JPEG files in the specified output
 #'   directory.
-#' @name Predict_Hmsc
+#' @name Mod_Predict_Plot
 #' @author Ahmed El-Gabbas
 #' @export
 
@@ -63,9 +65,15 @@ Mod_Predict_Plot <- function(
 
   # Without clamping
   Map_summary_NoClamp <- file.path(
-    ModelDir,
-    "Model_Prediction/NoClamp/Prediction_Current_Summary.RData") %>%
-    IASDT.R::LoadAs() %>%
+    ModelDir, "Model_Prediction/NoClamp/Prediction_Current_Summary.RData")
+
+  if (!file.exists(Map_summary_NoClamp)) {
+    stop(
+      paste0(
+        "`Map_summary_NoClamp` file: ", Map_summary_NoClamp,
+        " does not exist"), call. = FALSE)
+  }
+  Map_summary_NoClamp <- IASDT.R::LoadAs(Map_summary_NoClamp) %>%
     dplyr::rename(
       tif_path_mean_no_clamp = tif_path_mean,
       tif_path_sd_no_clamp = tif_path_sd,
@@ -73,9 +81,14 @@ Mod_Predict_Plot <- function(
 
   # With clamping
   Map_summary_Clamp <- file.path(
-    ModelDir,
-    "Model_Prediction/Clamp/Prediction_Current_Summary.RData") %>%
-    IASDT.R::LoadAs() %>%
+    ModelDir, "Model_Prediction/Clamp/Prediction_Current_Summary.RData")
+  if (!file.exists(Map_summary_Clamp)) {
+    stop(
+      paste0(
+        "`Map_summary_Clamp` file: ", Map_summary_Clamp,
+        " does not exist"), call. = FALSE)
+  }
+  Map_summary_Clamp <- IASDT.R::LoadAs(Map_summary_Clamp) %>%
     dplyr::rename(
       tif_path_mean_clamp = tif_path_mean,
       tif_path_sd_clamp = tif_path_sd,
@@ -96,11 +109,6 @@ Mod_Predict_Plot <- function(
   # nolint start
   Hab_Name <- Map_summary_Clamp$hab_name[[1]]
   # nolint end
-  AllSpID <- stringr::str_subset(Map_summary$ias_id, "^Sp_") %>%
-    stringr::str_remove("^Sp_")
-
-  rm(Map_summary_NoClamp, Map_summary_Clamp, envir = environment())
-  invisible(gc())
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -109,20 +117,28 @@ Mod_Predict_Plot <- function(
 
   IASDT.R::CatTime("Calculate observed species richness")
 
-  R_SR <- "datasets/processed/IAS_PA/Sp_PA_Data.RData"
-
-  if (!file.exists(R_SR)) {
-    stop(paste0("R_SR file: ", R_SR, " does not exist"), call. = FALSE)
+  # Reference grid
+  Gird10 <- IASDT.R::LoadAs("datasets/processed/grid/Grid_10_Land_Crop.RData")
+  if (!file.exists(Gird10)) {
+    stop(paste0("Gird10 file: ", Gird10, " does not exist"), call. = FALSE)
   }
 
-  R_SR <- IASDT.R::LoadAs(R_SR) %>%
-    dplyr::filter(SpeciesID %in% AllSpID) %>%
-    dplyr::pull("PA_Masked_Map") %>%
-    purrr::map(terra::unwrap) %>%
-    terra::rast() %>%
-    terra::app(sum, na.rm = TRUE) %>%
+  # Modelling data
+  Model_Data <- list.files(
+    ModelDir, pattern = "ModDT_.+.RData", full.names = TRUE)
+  if (length(Model_Data) != 1) {
+    stop("Model data does not exist", call. = FALSE)
+  }
+  Model_Data <- IASDT.R::LoadAs(Model_Data)
+
+  # Observed species richness
+  R_SR <- tibble::tibble(
+    as.data.frame(Model_Data$DT_xy), SR = apply(Model_Data$DT_y, 1, sum)) %>%
+    sf::st_as_sf(coords = c("x", "y"), crs = 3035) %>%
+    terra::rasterize(terra::unwrap(Gird10), field = "SR") %>%
     terra::wrap()
 
+  rm(Model_Data, Map_summary_NoClamp, Map_summary_Clamp, envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###
@@ -199,7 +215,7 @@ Mod_Predict_Plot <- function(
     if (Observed) {
       Plot <- Plot +
         ggplot2::scale_fill_manual(
-          breaks = c(0, 1, 3), values = c("grey90", "blue", "red"),
+          breaks = c(0, 1, 3), values = c("grey80", "blue", "red"),
           labels = c("Not observed", "Present", "Excluded"),
           na.value = "transparent", name = NULL)
     } else {
@@ -379,6 +395,7 @@ Mod_Predict_Plot <- function(
       Plot_observed <- terra::ifel(
         Plot_observed[[1]] == 0 & Plot_observed[[2]] == 1,
         3, Plot_observed[[1]]) %>%
+        terra::mask(terra::unwrap(R_SR)) %>%
         terra::as.factor() %>%
         PrepPlots(
           Title = "Species observations", Observed = TRUE, ShowLegend = TRUE) +
@@ -408,13 +425,13 @@ Mod_Predict_Plot <- function(
             color = "black", linewidth = 0.25, fill = NA,
             linetype = "dashed"))
 
-      Range_q1 <- stats::quantile(Range_Mean, 0.025)
-      Range_q2 <- stats::quantile(Range_Mean, 0.7)
+      Range_q1 <- as.vector(stats::quantile(Range_Mean, 0.025))
+      Range_q2 <- as.vector(stats::quantile(Range_Mean, 0.7))
       Plot_limit <- Range_Mean + c(-2, 2)
 
       # Observed vs predicted SR
       Plot_Final <- c(terra::unwrap(R_SR), R_mean_Clamp, R_mean_NoClamp) %>%
-        terra::as.data.frame() %>%
+        terra::as.data.frame(na.rm = TRUE) %>%
         stats::setNames(c("Observed", "Clamp", "NoClamp")) %>%
         ggplot2::ggplot(mapping = ggplot2::aes(x = Observed)) +
         ggplot2::geom_point(
@@ -526,6 +543,7 @@ Mod_Predict_Plot <- function(
       PlotTitle2 <- ""
     }
 
+    Hab_Name0 <- stringr::str_remove(Hab_Name, " habitats")
     MainTitle <- cowplot::ggdraw() +
       ggtext::geom_richtext(
         ggplot2::aes(x = 0.01, y = 0.6, label = PlotTitle1),
@@ -539,8 +557,8 @@ Mod_Predict_Plot <- function(
         ggplot2::aes(
           x = 1, y = 0.55,
           label = stringr::str_glue(
-            '<SPAN STYLE="font-size:12.5pt; color: red"><b>{Hab_Name} \\
-              habitat </b></SPAN>&#8212;<SPAN STYLE="font-size:12.5pt; \\
+            '<SPAN STYLE="font-size:12.5pt; color: red"><b>{Hab_Name0} \\
+              habitats </b></SPAN>&#8212;<SPAN STYLE="font-size:12.5pt; \\
               color: blue"><b> current climate</b></SPAN>')),
         fill = NA, label.color = NA, hjust = 1, vjust = 0.5) +
       ggtext::geom_richtext(
@@ -599,7 +617,7 @@ Mod_Predict_Plot <- function(
         library, character.only = TRUE)
 
       # Set null device for `cairo`. This is to properly render the plots using
-      # ggtext::geom_richtext - https://github.com/wilkelab/cowplot/issues/73
+      # ggtext - https://github.com/wilkelab/cowplot/issues/73
       cowplot::set_null_device("cairo")
     }))
 

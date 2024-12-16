@@ -118,11 +118,12 @@ Mod_Predict_Plot <- function(
   IASDT.R::CatTime("Calculate observed species richness")
 
   # Reference grid
-  Gird10 <- IASDT.R::LoadAs("datasets/processed/grid/Grid_10_Land_Crop.RData")
+  Gird10 <- "datasets/processed/grid/Grid_10_Land_Crop.RData"
   if (!file.exists(Gird10)) {
     stop(paste0("Gird10 file: ", Gird10, " does not exist"), call. = FALSE)
   }
-
+  Gird10 <- IASDT.R::LoadAs(Gird10)
+  
   # Modelling data
   Model_Data <- list.files(
     ModelDir, pattern = "ModDT_.+.RData", full.names = TRUE)

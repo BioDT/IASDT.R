@@ -26,6 +26,8 @@ Hmsc
 IAS
 IASDT
 JSON
+loadings
+loading
 LUMI
 NUnique
 NameX
@@ -149,3 +151,7 @@ zstd
 LUMI's
 NoPhyloTree
 PhyloTree
+gpkg
+GPKG
+Strahler
+STRAHLER

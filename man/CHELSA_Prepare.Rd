@@ -12,6 +12,7 @@ CHELSA_Prepare(
   Overwrite = FALSE,
   Download_Attempts = 10,
   Sleep = 5,
+  OtherVars = "",
   BaseURL = paste0("https://os.zhdk.cloud.switch.ch/envicloud/",
     "chelsa/chelsa_V2/GLOBAL/")
 )
@@ -38,19 +39,22 @@ Defaults to 10.}
 \item{Sleep}{Integer. Time in seconds to wait after each download attempt.
 Defaults to 5.}
 
+\item{OtherVars}{Character. First letters of variables other than bioclimatic
+variables to be processed. Defaults to an empty string, which means only
+bioclimatic variables (bio1-19) will be processed.}
+
 \item{BaseURL}{String, the base URL for downloading CHELSA climate data.}
 }
 \description{
 This function reads the contents of local text files containing URLs for
 \code{CHELSA} climate data and extracts and saves their metadata (e.g., variable
 name, climate model & scenario, time, and download URLs). It can optionally
-download these links to desk, if requested. Only bioclimatic variables are
-considered.
+download these links to desk, if requested.
 }
 \details{
 The function returns information on 874 tif files, representing 19
-bioclimatic variables at 46 climate options (current and 45 future
-scenarios)
+bioclimatic variables (+ additional variables starting with the string in
+\code{OtherVars}) at 46 climate options (current and 45 future scenarios)
 }
 \author{
 Ahmed El-Gabbas

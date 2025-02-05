@@ -1397,7 +1397,7 @@ Mod_Postprocess_2_CPU <- function(
   Ch1("Plot species & SR predictions as JPEG")
 
   IASDT.R::Mod_Predict_Plot(
-    ModelDir = ModelDir, EnvFile =  EnvFile, FromHPC = FromHPC, NCores = NCores)
+    ModelDir = ModelDir, EnvFile = EnvFile, FromHPC = FromHPC, NCores = NCores)
 
   # ****************************************************************
 
@@ -1406,6 +1406,14 @@ Mod_Postprocess_2_CPU <- function(
 
   IASDT.R::Mod_Plot_LF(
     Path_Model = Path_Model, EnvFile = EnvFile, FromHPC = FromHPC)
+
+  # ****************************************************************
+
+  # Plot explanatory Power ------
+  Ch1("Plot explanatory Power")
+
+  IASDT.R::Mod_Eval_Plot(
+    ModelDir = ModelDir, EnvFile = EnvFile, FromHPC = FromHPC)
 
   # ****************************************************************
 

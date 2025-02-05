@@ -142,6 +142,7 @@ Predict_Maps <- function(
   Path_Prediction_NoClamp <- file.path(Path_Prediction1, "NoClamp")
   fs::dir_create(c(Path_Eval, Path_Prediction_NoClamp))
 
+  # Path for overall summary - paths for summaries of identical scenarios
   Path_Summary_RData <- file.path(
       dplyr::if_else(
         Pred_Clamp, Path_Prediction_Clamp, Path_Prediction_NoClamp),
@@ -151,8 +152,20 @@ Predict_Maps <- function(
         Pred_Clamp, Path_Prediction_Clamp, Path_Prediction_NoClamp),
       "Prediction_Summary.txt")
 
+  # Path for overall summary - for ShinyApp
+  Path_Summary_RData_Shiny <- file.path(
+      dplyr::if_else(
+        Pred_Clamp, Path_Prediction_Clamp, Path_Prediction_NoClamp),
+      "Prediction_Summary_Shiny.RData")
+  Path_Summary_txt_Shiny <- file.path(
+      dplyr::if_else(
+        Pred_Clamp, Path_Prediction_Clamp, Path_Prediction_NoClamp),
+      "Prediction_Summary_Shiny.txt")
+
   # Check if the prediction summary is already available on disk
-  if (all(file.exists(Path_Summary_RData, Path_Summary_txt))) {
+  if (all(file.exists(
+    Path_Summary_RData, Path_Summary_txt,
+    Path_Summary_RData_Shiny, Path_Summary_txt_Shiny))) {
     IASDT.R::CatTime(
       paste0(
         "All model predictions and prediction summary are already available ",
@@ -278,9 +291,9 @@ Predict_Maps <- function(
   Prediction_Options <- IASDT.R::LoadAs(Path_CHELSA) %>%
     dplyr::select(-"File_List") %>%
     dplyr::filter(
-      # filter only for the following future climate models
+      # filter only selected future climate models
       ClimateModel %in% c("Current", CC_Models),
-      # filter only for the following future climate scenarios
+      # filter only selected future climate scenarios
       ClimateScenario %in% c("Current", CC_Scenario)) %>%
     dplyr::mutate(
       Name = paste0(TimePeriod, "_", ClimateScenario, "_", ClimateModel),
@@ -503,9 +516,9 @@ Predict_Maps <- function(
 
   # Predict latent factor for new locations ------
 
-  Path_Test_LF <- file.path(Path_Prediction1, "Test_LF.qs2")
-
   IASDT.R::CatTime("Predict latent factor for new locations")
+
+  Path_Test_LF <- file.path(Path_Prediction1, "Test_LF.qs2")
 
   if (!file.exists(Path_Test_LF) && Pred_NewSites) {
 
@@ -515,10 +528,10 @@ Predict_Maps <- function(
     Predict_DF_Test <- Prediction_Options %>%
       dplyr::filter(ClimateModel == "Current") %>%
       dplyr::pull("FilePath") %>%
-      # If there are two options for climate data, use the first (both are
-      # identical). If Pred_Clamp is TRUE, two sets of predictions under current
-      # climates will be produced. The additional predictions without clamping
-      # is used for model evaluation.
+      # If Pred_Clamp`=`TRUE`, there are two options for Current climate data
+      # (with and without clamping). Two sets of predictions under current
+      # climates will be produced. Predictions without clamping is used for
+      # model evaluation.
       utils::head(1) %>%
       IASDT.R::LoadAs() %>%
       terra::unwrap() %>%
@@ -576,7 +589,6 @@ Predict_Maps <- function(
   }
 
 
-
   if (LF_Only) {
     return(invisible())
   }
@@ -587,6 +599,8 @@ Predict_Maps <- function(
   # Predict_Internal ------
 
   Predict_Internal <- function(ID) {
+
+    # ID: Index of the current prediction option
 
     # Whether to clamp the sampling efforts
     DoClamp <- Prediction_Options$Clamp[[ID]]
@@ -949,6 +963,7 @@ Predict_Maps <- function(
   # # ..................................................................... ###
 
   # Predicting ------
+
   IASDT.R::InfoChunk(
     paste0("\t", "Making spatial predictions"), Rep = 2, Char = "*",
     CharReps = 70, Red = TRUE, Bold = TRUE, Time = FALSE)
@@ -957,7 +972,7 @@ Predict_Maps <- function(
 
   Prediction_Summary <- purrr::map_dfr(
     .x = seq_len(nrow(Prediction_Options)), .f = Predict_Internal) %>%
-    dplyr::full_join(Prediction_Options, ., by = "Name") %>%
+    dplyr::full_join(Prediction_Options, ., by = c("Name", "Clamp")) %>%
     dplyr::select(-"FilePath")
 
   rm(Predict_Internal, Grid10, Model_Coords, envir = environment())
@@ -969,7 +984,7 @@ Predict_Maps <- function(
   # Ensemble model predictions ------
 
   IASDT.R::InfoChunk(
-    "\tEnsemble model predictions", Rep = 1, Char = "-", CharReps = 70, 
+    "\tEnsemble model predictions", Rep = 1, Char = "-", CharReps = 70,
     Red = TRUE, Bold = TRUE, Time = FALSE)
 
   IASDT.R::CatTime("Prepare working on parallel", Level = 1)
@@ -988,6 +1003,7 @@ Predict_Maps <- function(
 
   # --------------------------------------------------------- #
 
+  # Prepare input data to calculate ensemble predictions
   IASDT.R::CatTime(
     "Prepare input data to calculate ensemble predictions", Level = 1)
 
@@ -1038,6 +1054,7 @@ Predict_Maps <- function(
 
   # Loading mean predictions at current climates
   IASDT.R::CatTime("Loading mean predictions at current climates", Level = 1)
+
   CurrentMean <- list.files(
     path = dplyr::if_else(
       Pred_Clamp, Path_Prediction_Clamp, Path_Prediction_NoClamp),
@@ -1049,7 +1066,9 @@ Predict_Maps <- function(
 
   # --------------------------------------------------------- #
 
+  # Calculate ensemble predictions
   IASDT.R::CatTime("Calculate ensemble predictions", Level = 1)
+
   Prediction_Ensemble <- Prediction_Ensemble %>%
     dplyr::mutate(
       Ensemble_Maps = furrr::future_pmap(
@@ -1149,6 +1168,7 @@ Predict_Maps <- function(
 
   # Save summary of ensemble predictions
   IASDT.R::CatTime("Save summary of ensemble predictions", Level = 1)
+
   Prediction_Ensemble_Summary <- Prediction_Ensemble %>%
     dplyr::select(-Ensemble_Maps) %>%
     dplyr::mutate(
@@ -1163,11 +1183,16 @@ Predict_Maps <- function(
       Ensemble_Save = purrr::map2(
         .x = Ensemble_DT, .y = Ensemble_File,
         .f = ~ {
-          save(.x, file = .y)
+
+          IASDT.R::SaveAs(
+            InObj = .x, OutPath = .y,
+            OutObj = stringr::str_remove(basename(.y), ".RData"))
+
           utils::write.table(
             x = .x, sep = "\t", row.names = FALSE, col.names = TRUE,
             file = stringr::str_replace(.y, ".RData", ".txt"),
             quote = FALSE, fileEncoding = "UTF-8")
+
         }),
       Ensemble_Save = NULL) %>%
     tidyr::unnest(Ensemble_DT) %>%
@@ -1187,8 +1212,9 @@ Predict_Maps <- function(
   # # ..................................................................... ###
 
   # Overall summary -----
+
   IASDT.R::InfoChunk(
-    "\tPrepare overall summary", Rep = 1, Char = "-", CharReps = 70, 
+    "\tPrepare overall summary", Rep = 1, Char = "-", CharReps = 70,
     Red = TRUE, Bold = TRUE, Time = FALSE)
 
   Prediction_Summary <- Prediction_Summary %>%
@@ -1203,7 +1229,26 @@ Predict_Maps <- function(
     x = Prediction_Summary, sep = "\t", row.names = FALSE, col.names = TRUE,
     file = Path_Summary_txt, quote = FALSE, fileEncoding = "UTF-8")
 
+  # # ..................................................................... ###
+  # # ..................................................................... ###
+
+  # Overall summary - to be used in ShinyApp -----
+
+  Prediction_Summary_Shiny <- Prediction_Summary %>%
+    dplyr::pull(File_Pred_summary) %>%
+    basename() %>%
+    file.path(dirname(Path_Summary_RData_Shiny), .) %>%
+    purrr::map(IASDT.R::LoadAs) %>%
+    dplyr::bind_rows()
+
+  save(Prediction_Summary_Shiny, file = Path_Summary_RData_Shiny)
+  utils::write.table(
+    x = Prediction_Summary_Shiny, sep = "\t", row.names = FALSE,
+    col.names = TRUE, file = Path_Summary_txt_Shiny, quote = FALSE,
+    fileEncoding = "UTF-8")
+
   # # ................................................................... ###
+  # # ..................................................................... ###
 
   IASDT.R::CatDiff(
     InitTime = .StartTime, Prefix = "\nThe whole prediction function took ")

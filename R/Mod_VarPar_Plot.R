@@ -20,9 +20,6 @@
 #'   `.env`
 #' @param FromHPC Logical. Indicates whether the function is being run on an HPC
 #'   environment, affecting file path handling. Default: `TRUE`.
-#' @param PlotRaw Logical. Indicates whether to plot the raw variance
-#'   partitioning. Default: `TRUE`. This requires the model evaluation file,
-#'   containing Tjur-R2, to be available.
 #' @param Fig_width,Fig_height Numeric. Width and height of the output plot in
 #'   centimeters. Default: `30` and `15`, respectively.
 #' @param axis_text Numeric. Size of the axis text. Default: `4`.
@@ -38,7 +35,7 @@
 
 VarPar_Plot <- function(
     Path_Model, EnvFile = ".env", VarParFile = NULL, FromHPC = TRUE,
-    UseTF = TRUE, TF_Environ = NULL, NCores = 1, PlotRaw = TRUE,
+    UseTF = TRUE, TF_Environ = NULL, NCores = 1,
     Fig_width = 30, Fig_height = 15, axis_text = 4) {
 
   .StartTime <- lubridate::now(tzone = "CET")
@@ -47,6 +44,10 @@ VarPar_Plot <- function(
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   IAS_ID <- Species_name <- Species <- Variable <- VP_Value <-
     TaxaInfoFile <- Sp <- TjurR2 <- Label <- VP_Sum <- Species_File <- NULL
+
+  # Set null device for `cairo`. This is to properly render the plots using
+  # ggtext - https://github.com/wilkelab/cowplot/issues/73
+  cowplot::set_null_device("cairo")
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -108,28 +109,25 @@ VarPar_Plot <- function(
 
   # Model evaluation ----
 
-  if (PlotRaw) {
+  IASDT.R::CatTime("Loading model evaluation")
 
-    IASDT.R::CatTime("Loading model evaluation")
+  Path_Eval <- file.path(Path_Root, "Model_Evaluation") %>%
+    list.files("Eval_.+.qs2", full.names = TRUE)
 
-    Path_Eval <- file.path(Path_Root, "Model_Evaluation") %>%
-      list.files("Eval_.+.qs2", full.names = TRUE)
-
-    if (length(Path_Eval) != 1) {
-      stop(
-        paste0(
-          "The number of model evaluation files in the directory: ",
-          Path_Root, " is not equal to 1"),
-        call. = FALSE)
-    }
-
-    Model_Eval <- IASDT.R::LoadAs(Path_Eval) %>%
-      # filter out the species that are not in the model
-      dplyr::filter(stringr::str_starts(IAS_ID, "Sp_")) %>%
-      dplyr::rename(Species = IAS_ID) %>%
-      dplyr::select(-Sp) %>%
-      dplyr::left_join(SpList, by = "Species")
+  if (length(Path_Eval) != 1) {
+    stop(
+      paste0(
+        "The number of model evaluation files in the directory: ",
+        Path_Root, " is not equal to 1"),
+      call. = FALSE)
   }
+
+  Model_Eval <- IASDT.R::LoadAs(Path_Eval) %>%
+    # filter out the species that are not in the model
+    dplyr::filter(stringr::str_starts(IAS_ID, "Sp_")) %>%
+    dplyr::rename(Species = IAS_ID) %>%
+    dplyr::select(-Sp) %>%
+    dplyr::left_join(SpList, by = "Species")
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -170,11 +168,13 @@ VarPar_Plot <- function(
   # Plot theme ----
 
   Theme <- ggplot2::theme(
-    plot.title = ggtext::element_markdown(
-      size = 14, hjust = 0.5, vjust = 0),
+    plot.title = ggtext::element_markdown(size = 14, hjust = 0, vjust = 0),
+    plot.subtitle = ggtext::element_markdown(size = 9, hjust = 0, vjust = 0),
     plot.title.position = "plot",
     legend.title = ggplot2::element_blank(),
     plot.margin = ggplot2::margin(0.2, 0.15, 0.2, 0.05, "cm"),
+    axis.text.y = ggplot2::element_text(
+      size = 7, margin = ggplot2::margin(r = 0)),
     axis.text.x = ggplot2::element_text(
       face = "italic", size = axis_text, angle = 90, hjust = 1, vjust = 0.3,
       margin = ggplot2::margin(t = 0)),
@@ -205,7 +205,8 @@ VarPar_Plot <- function(
       cols = -Variable, names_to = "Species", values_to = "VP_Value") %>%
     dplyr::left_join(SpList, by = "Species")
 
-  # Calculate mean VarPar per variable and prepare labels for the plot
+  # Calculate mean Variance partitioning per variable and prepare labels for the
+  # plot
   VarPar_Mean <- VarPar_DF %>%
     dplyr::summarise(VP_Value = mean(VP_Value), .by = "Variable") %>%
     dplyr::arrange(dplyr::desc(VP_Value)) %>%
@@ -227,11 +228,19 @@ VarPar_Plot <- function(
   VarOrder <- dplyr::pull(VarPar_Mean, Variable)
 
   # Order species by the mean variance partitioning per Variable
-  SpOrder <- VarPar_DF %>%
-    dplyr::mutate(Variable = factor(Variable, VarOrder)) %>%
+  SpOrder <- dplyr::mutate(VarPar_DF, Variable = factor(Variable, VarOrder)) %>%
     dplyr::summarise(
       VP_Value = sum(VP_Value), .by = c(Species_name, Variable)) %>%
     dplyr::arrange(Variable, dplyr::desc(VP_Value)) %>%
+    dplyr::distinct(Species_name) %>%
+    dplyr::pull(Species_name)
+
+  # Order species by total variance, excluding the spatial random effect
+  SpOrder_NonSpatial <- VarPar_DF %>%
+    dplyr::filter(stringr::str_detect(Variable, "^Random", negate = TRUE)) %>%
+    dplyr::summarise(
+      VP_Value = sum(VP_Value), .by = c("Species", "Species_name")) %>%
+    dplyr::arrange(dplyr::desc(VP_Value)) %>%
     dplyr::distinct(Species_name) %>%
     dplyr::pull(Species_name)
 
@@ -253,16 +262,15 @@ VarPar_Plot <- function(
     dplyr::mutate(Species_name = factor(Species_name, SpOrder_Orig))
 
   # 3. ordered by Tjur-R2
-  if (PlotRaw) {
-    # Order species by the mean variance partitioning per Variable
-    SpOrder_TjurR2 <- Model_Eval %>%
-      dplyr::arrange(dplyr::desc(TjurR2)) %>%
-      dplyr::pull(Species_name)
+  SpOrder_TjurR2 <- Model_Eval %>%
+    dplyr::arrange(dplyr::desc(TjurR2)) %>%
+    dplyr::pull(Species_name)
+  DT_Relative_TjurR2 <- DT_Relative %>%
+    dplyr::mutate(Species_name = factor(Species_name, SpOrder_TjurR2))
 
-    # 3. ordered by Tjur-R2
-    DT_Relative_TjurR2 <- DT_Relative %>%
-      dplyr::mutate(Species_name = factor(Species_name, SpOrder_TjurR2))
-  }
+  # 4. ordered by total variance partitioning, excluding spatial random effect
+  DT_Relative_NonSpatial <- DT_Relative %>%
+    dplyr::mutate(Species_name = factor(Species_name, SpOrder_NonSpatial))
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
 
@@ -272,10 +280,10 @@ VarPar_Plot <- function(
 
   # 1. ordered by mean variance partitioning
 
-  Title_Relative <- paste0(
-    "<b>Proportion of explained variance</b> ",
-    '<span style="font-size:12pt">',
-    "(species sorted by mean value per predictor)</span>")
+  Title_Relative <- stringr::str_glue(
+    '<span style="font-size:12pt"><b>Proportion of explained variance</b>\\
+    </span> --- <span style="font-size:10pt">Species are sorted by mean value \\
+    per predictor</span>')
 
   Plot_Relative <- DT_Relative %>%
     ggplot2::ggplot(
@@ -293,7 +301,7 @@ VarPar_Plot <- function(
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   ragg::agg_jpeg(
-    filename = file.path(Path_VarPar, "VarPar_Relative_Ordered.jpeg"),
+    filename = file.path(Path_VarPar, "VarPar_Relative_ByMean.jpeg"),
     width = Fig_width, height = Fig_height,
     units = "cm", quality = 100, res = 600)
   print(Plot_Relative)
@@ -302,10 +310,10 @@ VarPar_Plot <- function(
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
 
   # 2. ordered by original species order
-  Title_Relative_Orig <- paste0(
-    "<b>Proportion of explained variance</b> ",
-    '<span style="font-size:12pt">',
-    "(species sorted by species taxonomy)</span>")
+  Title_Relative_Orig <- stringr::str_glue(
+    '<span style="font-size:12pt"><b>Proportion of explained variance</b>\\
+    </span> --- <span style="font-size:10pt">Species sorted by species \\
+    taxonomy</span>')
 
   Plot_Relative_Orig <- DT_Relative_Orig %>%
     ggplot2::ggplot(
@@ -322,7 +330,7 @@ VarPar_Plot <- function(
     ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1, byrow = TRUE))
 
   grDevices::jpeg(
-    filename = file.path(Path_VarPar, "VarPar_Relative_Original.jpeg"),
+    filename = file.path(Path_VarPar, "VarPar_Relative_ByTaxonomy.jpeg"),
     width = Fig_width, height = Fig_height,
     units = "cm", quality = 100, res = 600)
   plot(Plot_Relative_Orig)
@@ -332,36 +340,64 @@ VarPar_Plot <- function(
 
   # 3. ordered by Tjur-R2
 
-  if (PlotRaw) {
+  Title_Relative_TjurR2 <- stringr::str_glue(
+    '<span style="font-size:12pt"><b>Proportion of explained variance</b>\\
+      --- </span><span style="font-size:10pt">Species are sorted by \\
+      explanatory power (Tjur-R<sup>2</sup>)</span>')
 
-    Title_Relative_TjurR2 <- paste0(
-      "<b>Proportion of explained variance</b> ",
-      '<span style="font-size:12pt">',
-      "(species sorted by Tjur-R<sup>2</sup>)</span>")
+  Plot_Relative_TjurR2 <- DT_Relative_TjurR2 %>%
+    ggplot2::ggplot(
+      mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label)) +
+    ggplot2::geom_bar(stat = "identity", width = 1) +
+    ggplot2::theme_classic() +
+    ggplot2::ylab("Species") +
+    ggplot2::xlab("Proportion of variance explained") +
+    ggplot2::scale_fill_brewer(palette = "Paired") +
+    ggplot2::coord_flip(xlim = c(0, 1), expand = FALSE) +
+    ggplot2::scale_x_continuous(labels = scales::label_percent(scale = 100)) +
+    ggplot2::labs(title = Title_Relative_TjurR2) +
+    Theme +
+    ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1, byrow = TRUE))
 
-    Plot_Relative_TjurR2 <- DT_Relative_TjurR2 %>%
-      ggplot2::ggplot(
-        mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label)) +
-      ggplot2::geom_bar(stat = "identity", width = 1) +
-      ggplot2::theme_classic() +
-      ggplot2::ylab("Species") +
-      ggplot2::xlab("Proportion of variance explained") +
-      ggplot2::scale_fill_brewer(palette = "Paired") +
-      ggplot2::coord_flip(xlim = c(0, 1), expand = FALSE) +
-      ggplot2::scale_x_continuous(labels = scales::label_percent(scale = 100)) +
-      ggplot2::labs(title = Title_Relative_TjurR2) +
-      Theme +
-      ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1, byrow = TRUE))
+  # Using ggplot2::ggsave directly does not show non-ascii characters
+  # correctly
+  grDevices::jpeg(
+    filename = file.path(Path_VarPar, "VarPar_Relative_ByTjurR2.jpeg"),
+    width = Fig_width, height = Fig_height,
+    units = "cm", quality = 100, res = 600)
+  plot(Plot_Relative_TjurR2)
+  grDevices::dev.off()
 
-    # Using ggplot2::ggsave directly does not show non-ascii characters
-    # correctly
-    grDevices::jpeg(
-      filename = file.path(Path_VarPar, "VarPar_Relative_TjurR2.jpeg"),
-      width = Fig_width, height = Fig_height,
-      units = "cm", quality = 100, res = 600)
-    plot(Plot_Relative_TjurR2)
-    grDevices::dev.off()
-  }
+  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
+
+  # 4. ordered by total variance partitioning, excluding spatial random effect
+
+  Title_NonSpatial <- stringr::str_glue(
+    '<span style="font-size:12pt"><b>Proportion of explained variance</b>\\
+    </span> --- <span style="font-size:10pt">Species are sorted by total \\
+    explained variance, excluding spatial random effect</span>')
+
+  Plot_Relative_NonSpatial <- DT_Relative_NonSpatial %>%
+    ggplot2::ggplot(
+      mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label)) +
+    ggplot2::geom_bar(stat = "identity", width = 1) +
+    ggplot2::theme_classic() +
+    ggplot2::ylab("Species") +
+    ggplot2::xlab("Proportion of variance explained") +
+    ggplot2::scale_fill_brewer(palette = "Paired") +
+    ggplot2::coord_flip(xlim = c(0, 1), expand = FALSE) +
+    ggplot2::scale_x_continuous(labels = scales::label_percent(scale = 100)) +
+    ggplot2::labs(title = Title_NonSpatial) +
+    Theme +
+    ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1, byrow = TRUE))
+
+  # Using ggplot2::ggsave directly does not show non-ascii characters correctly
+  ragg::agg_jpeg(
+    filename = file.path(Path_VarPar, "VarPar_Relative_ByTotalNonSpatial.jpeg"),
+    width = Fig_width, height = Fig_height,
+    units = "cm", quality = 100, res = 600)
+  print(Plot_Relative_NonSpatial)
+  grDevices::dev.off()
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -370,141 +406,173 @@ VarPar_Plot <- function(
 
   ## Plotting data ----
 
-  if (PlotRaw) {
-    if (!is.null(Model_Eval$TjurR2) &&
-        length(Model_Eval$TjurR2) == ncol(VarPar$vals)) {
+  if (!is.null(Model_Eval$TjurR2) &&
+      length(Model_Eval$TjurR2) == ncol(VarPar$vals)) {
 
-      VarPar_DF_Raw <- tibble::as_tibble(VarPar$vals, rownames = "Variable") %>%
-        tidyr::pivot_longer(
-          cols = -Variable, names_to = "Species", values_to = "VP_Value") %>%
-        dplyr::left_join(Model_Eval, by = "Species") %>%
-        dplyr::mutate(VP_Value = VP_Value * TjurR2)
+    VarPar_DF_Raw <- tibble::as_tibble(VarPar$vals, rownames = "Variable") %>%
+      tidyr::pivot_longer(
+        cols = -Variable, names_to = "Species", values_to = "VP_Value") %>%
+      dplyr::left_join(Model_Eval, by = "Species") %>%
+      dplyr::mutate(VP_Value = VP_Value * TjurR2)
 
-    } else {
+  } else {
 
-      stop(
-        paste0(
-          "Mismatch between the length of Model_Eval$TjurR2 and the number of ",
-          " columns in VarPar$vals"),
-        call. = FALSE)
-    }
-
-    # Calculate the maximum value for the x-axis
-    # MaxVal <- dplyr::group_by(VarPar_DF_Raw, Species) %>%
-    #   dplyr::summarize(VP_Value = sum(VP_Value)) %>%
-    #   dplyr::pull(VP_Value) %>%
-    #   max() %>%
-    #   magrittr::multiply_by(100) %>%
-    #   ceiling(x = .) %>%
-    #   magrittr::divide_by(100)
-
-    VarPar_Raw_Mean <- VarPar_DF_Raw %>%
-      dplyr::summarise(VP_Value = mean(VP_Value), .by = "Variable") %>%
-      dplyr::arrange(dplyr::desc(VP_Value)) %>%
-      dplyr::mutate(VP_Value = VP_Value * 100) %>%
-      dplyr::mutate(
-        Label = forcats::fct_recode(
-          Variable,
-          "Habitat coverage" = "HabLog",
-          "Road+Rail intensity" = "RoadRailLog",
-          "Sampling efforts" = "EffortsLog",
-          "Spatial effect" = "Random: sample"),
-        Label = paste0(
-          "<b>", stringr::str_to_title(as.character(Label)),
-          "</b><br>(", round(VP_Value, 1), "%)"),
-        Label = factor(Label, .data$Label),
-        VP_Value = NULL)
-
-    # Plotting data for relative variance partitioning - ordered by mean
-    # variance partitioning per Variable
-    DT_Raw <- VarPar_DF_Raw %>%
-      dplyr::arrange(Variable, VP_Value) %>%
-      dplyr::mutate(Species_name = factor(Species_name, SpOrder)) %>%
-      dplyr::left_join(VarPar_Raw_Mean, by = "Variable")
-
-    # Plotting data for relative variance partitioning - original species order
-    DT_Raw_Orig <- DT_Raw %>%
-      dplyr::mutate(Species_name = factor(Species_name, SpOrder_Orig))
-
-    # Plotting data for relative variance partitioning - original species order
-    SpOrder_TotalRaw <- DT_Raw %>%
-      dplyr::summarize(
-        VP_Sum = sum(VP_Value), .by = c(Species, Species_name)) %>%
-      dplyr::arrange(dplyr::desc(VP_Sum)) %>%
-      dplyr::mutate(Species_name = as.character(Species_name)) %>%
-      dplyr::pull(Species_name)
-    DT_Raw_TotalRaw <- DT_Raw %>%
-      dplyr::mutate(Species_name = factor(Species_name, SpOrder_TotalRaw))
-
-    # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
-
-    ## Plotting ----
-
-    ## 1. ordered by mean variance partitioning
-
-    Title_Raw <- paste0(
-      "<b>Proportion of raw variance</b> ",
-      '<span style="font-size:12pt">',
-      "(proportion of explained variance &times; Tjur-R<sup>2</sup>",
-      " --- species sorted by species taxonomy)</span>")
-
-    Plot_Raw <- DT_Raw_Orig %>%
-      ggplot2::ggplot(
-        mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label)) +
-      ggplot2::geom_bar(stat = "identity", width = 1) +
-      ggplot2::theme_classic() +
-      ggplot2::ylab("Species") +
-      ggplot2::xlab("Raw variance explained") +
-      ggplot2::scale_fill_brewer(palette = "Paired") +
-      ggplot2::coord_flip(xlim = c(0, 1), expand = FALSE) +
-      ggplot2::scale_x_continuous(labels = scales::label_percent(scale = 100)) +
-      ggplot2::labs(title = Title_Raw) +
-      Theme +
-      ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1, byrow = TRUE))
-
-    # Using ggplot2::ggsave directly does not show non-ascii characters
-    # correctly
-    grDevices::jpeg(
-      filename = file.path(Path_VarPar, "VarPar_Raw_Ordered.jpeg"),
-      width = Fig_width, height = Fig_height,
-      units = "cm", quality = 100, res = 600)
-    plot(Plot_Raw)
-    grDevices::dev.off()
-
-    # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
-
-    ## 2. ordered by _Total Variance Explained
-
-    Title_Raw_TotalRaw <- paste0(
-      "<b>Proportion of raw variance</b> ",
-      '<span style="font-size:12pt">',
-      "(proportion of explained variance &times; Tjur-R<sup>2</sup>",
-      " --- species sorted by total explained variance)</span>")
-
-    Plot_Raw_TotalRaw <- DT_Raw_TotalRaw %>%
-      ggplot2::ggplot(
-        mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label)) +
-      ggplot2::geom_bar(stat = "identity", width = 1) +
-      ggplot2::theme_classic() +
-      ggplot2::ylab("Species") +
-      ggplot2::xlab("Raw variance explained") +
-      ggplot2::scale_fill_brewer(palette = "Paired") +
-      ggplot2::coord_flip(xlim = c(0, 1), expand = FALSE) +
-      ggplot2::scale_x_continuous(labels = scales::label_percent(scale = 100)) +
-      ggplot2::labs(title = Title_Raw_TotalRaw) +
-      Theme +
-      ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1, byrow = TRUE))
-
-    # Using ggplot2::ggsave directly does not show non-ascii characters
-    # correctly
-    grDevices::jpeg(
-      filename = file.path(Path_VarPar, "VarPar_Raw_TotalVarExplained.jpeg"),
-      width = Fig_width, height = Fig_height,
-      units = "cm", quality = 100, res = 600)
-    plot(Plot_Raw_TotalRaw)
-    grDevices::dev.off()
-
+    stop(
+      paste0(
+        "Mismatch between the length of Model_Eval$TjurR2 and the number of ",
+        " columns in VarPar$vals"),
+      call. = FALSE)
   }
+
+  VarPar_Raw_Mean <- VarPar_DF_Raw %>%
+    dplyr::summarise(VP_Value = mean(VP_Value), .by = "Variable") %>%
+    dplyr::arrange(dplyr::desc(VP_Value)) %>%
+    dplyr::mutate(VP_Value = VP_Value * 100) %>%
+    dplyr::mutate(
+      Label = forcats::fct_recode(
+        Variable,
+        "Habitat coverage" = "HabLog",
+        "Road+Rail intensity" = "RoadRailLog",
+        "Sampling efforts" = "EffortsLog",
+        "Spatial effect" = "Random: sample"),
+      Label = paste0(
+        "<b>", stringr::str_to_title(as.character(Label)),
+        "</b><br>(", round(VP_Value, 1), "%)"),
+      Label = factor(Label, .data$Label),
+      VP_Value = NULL)
+
+  # Plotting data for relative variance partitioning - ordered by mean
+  # variance partitioning per Variable
+  DT_Raw <- VarPar_DF_Raw %>%
+    dplyr::arrange(Variable, VP_Value) %>%
+    dplyr::mutate(Species_name = factor(Species_name, SpOrder)) %>%
+    dplyr::left_join(VarPar_Raw_Mean, by = "Variable") %>%
+    dplyr::mutate(Species_name = as.character(Species_name))
+
+  # Plotting data for relative variance partitioning - original species order
+  DT_Raw_Orig <- DT_Raw %>%
+    dplyr::mutate(Species_name = factor(Species_name, SpOrder_Orig))
+
+  # Plotting data for relative variance partitioning - original species order
+  SpOrder_TotalRaw <- DT_Raw %>%
+    dplyr::summarize(
+      VP_Sum = sum(VP_Value), .by = c(Species, Species_name)) %>%
+    dplyr::arrange(dplyr::desc(VP_Sum)) %>%
+    dplyr::pull(Species_name)
+  DT_Raw_TotalRaw <- DT_Raw %>%
+    dplyr::mutate(Species_name = factor(Species_name, SpOrder_TotalRaw))
+
+  # Order species by total variance, excluding the spatial random effect
+  SpOrder_Raw_NonSpatial <- DT_Raw %>%
+    dplyr::filter(stringr::str_detect(Variable, "^Random", negate = TRUE)) %>%
+    dplyr::summarise(
+      VP_Value = sum(VP_Value), .by = c("Species", "Species_name")) %>%
+    dplyr::arrange(dplyr::desc(VP_Value)) %>%
+    dplyr::distinct(Species_name) %>%
+    dplyr::pull(Species_name)
+  DT_Raw_NonSpatial <- DT_Raw %>%
+    dplyr::mutate(Species_name = factor(Species_name, SpOrder_Raw_NonSpatial))
+
+  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
+
+  ## Plotting ----
+
+  ## 1. ordered by mean variance partitioning
+
+  Title_Raw <- stringr::str_glue(
+    '<b>Proportion of raw variance</b> <span style="font-size:12pt">\\
+    (proportion of explained variance &times; Tjur-R<sup>2</sup>)</span> --- \\
+    <span style="font-size:10pt">species are sorted by taxonomy</span>')
+
+  Plot_Raw <- DT_Raw_Orig %>%
+    ggplot2::ggplot(
+      mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label)) +
+    ggplot2::geom_bar(stat = "identity", width = 1) +
+    ggplot2::theme_classic() +
+    ggplot2::ylab("Species") +
+    ggplot2::xlab("Raw variance explained") +
+    ggplot2::scale_fill_brewer(palette = "Paired") +
+    ggplot2::coord_flip(xlim = c(0, 1), expand = FALSE) +
+    ggplot2::scale_x_continuous(labels = scales::label_percent(scale = 100)) +
+    ggplot2::labs(title = Title_Raw) +
+    Theme +
+    ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1, byrow = TRUE))
+
+  # Using ggplot2::ggsave directly does not show non-ascii characters
+  # correctly
+  grDevices::jpeg(
+    filename = file.path(Path_VarPar, "VarPar_Raw_ByTaxonomy.jpeg"),
+    width = Fig_width, height = Fig_height,
+    units = "cm", quality = 100, res = 600)
+  plot(Plot_Raw)
+  grDevices::dev.off()
+
+  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
+
+  ## 2. ordered by Total Variance Explained
+
+  Title_Raw_TotalRaw <- stringr::str_glue(
+    '<b>Proportion of raw variance</b> <span style="font-size:12pt">\\
+    (proportion of explained variance &times; Tjur-R<sup>2</sup>)</span> --- \\
+    <span style="font-size:10pt">Species are sorted by total explained \\
+    variance</span>')
+
+  Plot_Raw_TotalRaw <- DT_Raw_TotalRaw %>%
+    ggplot2::ggplot(
+      mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label)) +
+    ggplot2::geom_bar(stat = "identity", width = 1) +
+    ggplot2::theme_classic() +
+    ggplot2::ylab("Species") +
+    ggplot2::xlab("Raw variance explained") +
+    ggplot2::scale_fill_brewer(palette = "Paired") +
+    ggplot2::coord_flip(xlim = c(0, 1), expand = FALSE) +
+    ggplot2::scale_x_continuous(labels = scales::label_percent(scale = 100)) +
+    ggplot2::labs(title = Title_Raw_TotalRaw) +
+    Theme +
+    ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1, byrow = TRUE))
+
+  # Using ggplot2::ggsave directly does not show non-ascii characters
+  # correctly
+  grDevices::jpeg(
+    filename = file.path(Path_VarPar, "VarPar_Raw_ByMean.jpeg"),
+    width = Fig_width, height = Fig_height,
+    units = "cm", quality = 100, res = 600)
+  plot(Plot_Raw_TotalRaw)
+  grDevices::dev.off()
+
+  # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
+
+  ## 3. by total variance partitioning, excluding spatial random effect
+
+  Title_Raw_NonSpatial <- stringr::str_glue(
+    '<b>Proportion of raw variance</b> <span style="font-size:12pt">\\
+    (proportion of explained variance&nbsp;&times;&nbsp;Tjur-R<sup>2</sup>)\\
+    </span> --- <span style="font-size:10pt">Species are sorted by \\
+    total explained variance, excluding spatial random effect</span>')
+
+  Plot_Raw_NonSpatial <- DT_Raw_NonSpatial %>%
+    ggplot2::ggplot(
+      mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label)) +
+    ggplot2::geom_bar(stat = "identity", width = 1) +
+    ggplot2::theme_classic() +
+    ggplot2::ylab("Species") +
+    ggplot2::xlab("Raw variance explained") +
+    ggplot2::scale_fill_brewer(palette = "Paired") +
+    ggplot2::coord_flip(xlim = c(0, 1), expand = FALSE) +
+    ggplot2::scale_x_continuous(labels = scales::label_percent(scale = 100)) +
+    ggplot2::labs(title = Title_Raw_NonSpatial) +
+    Theme +
+    ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1, byrow = TRUE))
+
+  # Using ggplot2::ggsave directly does not show non-ascii characters
+  # correctly
+  grDevices::jpeg(
+    filename = file.path(Path_VarPar, "VarPar_Raw_ByTotalNonSpatial.jpeg"),
+    width = Fig_width, height = Fig_height,
+    units = "cm", quality = 100, res = 600)
+  plot(Plot_Raw_NonSpatial)
+  grDevices::dev.off()
+
   # # ..................................................................... ###
   # # ..................................................................... ###
 

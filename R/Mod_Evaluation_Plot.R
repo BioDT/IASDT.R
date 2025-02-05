@@ -1,20 +1,21 @@
 ## |------------------------------------------------------------------------| #
-# Mod_Evaluation_Plot ----
+# Mod_Eval_Plot ----
 ## |------------------------------------------------------------------------| #
 
-#' Generate Evaluation Plots for Hmsc models
+#' Generate Plots for the Explanatory Power of Hmsc models
 #'
 #' This function generates four diagnostic plots (RMSE, AUC, Continuous Boyce
-#' Index, and Tjur-R²) to evaluate the performance of Hmsc models.
+#' Index, and Tjur-R²) to evaluate the performance (explanatory power without
+#' cross-validation) of Hmsc models.
 #'
 #' @param ModelDir Path to the model directory containing predictions.
 #' @param EnvFile Path to the environment file (`.env`) for setting paths.
 #' @param FromHPC Boolean indicating whether the environment is an HPC system.
-#' @name Mod_Evaluation_Plot
+#' @name Mod_Eval_Plot
 #' @author Ahmed El-Gabbas
 #' @export
 
-Mod_Evaluation_Plot <- function(ModelDir, EnvFile = ".env", FromHPC = TRUE) {
+Mod_Eval_Plot <- function(ModelDir, EnvFile = ".env", FromHPC = TRUE) {
 
   Path_PA <- NCells_Naturalized <- IAS_ID <- AUC <- NCells <- RMSE <- Boyce <-
     TjurR2 <- NULL

@@ -67,32 +67,7 @@ from loky import get_reusable_executor
 # TensorFlow and Environment Configuration
 # ======================================================================
 
-# Add this near the TensorFlow configuration block
 # Set a fixed memory limit (e.g., 64 GB) to avoid exceeding the GPU memory
-
-
-# TOTAL_MEMORY_MB = 64 * 1024
-
-# gpus = tf.config.list_physical_devices('GPU')
-
-# if gpus:
-#     try:
-#         for gpu in gpus:
-#             # Dynamically calculate memory per worker
-#             if args.ncores > 0:
-#                 memory_limit_per_worker = TOTAL_MEMORY_MB // args.ncores
-#             else:
-#                 raise ValueError("Number of cores (ncores) must be greater than zero.")
-            
-#             # Apply memory limit to the GPU
-#             tf.config.set_logical_device_configuration(
-#                 gpu,
-#                 [tf.config.LogicalDeviceConfiguration(memory_limit=memory_limit_per_worker)])
-            
-#             # Enable memory growth
-#             tf.config.experimental.set_memory_growth(gpu, True)
-#     except RuntimeError as e:
-#         print(f"Error setting memory configurations: {e}")
 
 def configure_gpu_memory(ncores, total_memory_mb=64 * 1024):
     """

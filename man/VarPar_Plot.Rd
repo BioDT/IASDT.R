@@ -12,7 +12,6 @@ VarPar_Plot(
   UseTF = TRUE,
   TF_Environ = NULL,
   NCores = 1,
-  PlotRaw = TRUE,
   Fig_width = 30,
   Fig_height = 15,
   axis_text = 4
@@ -39,10 +38,6 @@ TRUE.}
 \item{NCores}{Integer. Number of parallel computations for computing variance
 partitioning using TensorFlow. See \link{VarPar_Compute} for more details.
 Default: \code{1}.}
-
-\item{PlotRaw}{Logical. Indicates whether to plot the raw variance
-partitioning. Default: \code{TRUE}. This requires the model evaluation file,
-containing Tjur-R2, to be available.}
 
 \item{Fig_width, Fig_height}{Numeric. Width and height of the output plot in
 centimeters. Default: \code{30} and \code{15}, respectively.}

@@ -84,7 +84,7 @@ PlotOmegaGG <- function(
     legend.title = ggtext::element_markdown(),
     legend.spacing = ggplot2::unit(0, "cm"),
     legend.key.size = ggplot2::unit(0.65, "cm"),
-    legend.key.width = ggplot2::unit(0.5, "cm"),
+    legend.key.width = ggplot2::unit(0.65, "cm"),
     legend.box.margin = ggplot2::margin(0, -30, 0, -15),
     legend.box.spacing = ggplot2::unit(0, "pt"),
     panel.grid.major = ggplot2::element_blank(),
@@ -97,6 +97,7 @@ PlotOmegaGG <- function(
   IASDT.R::CatTime("Compute associations")
 
   post <- Hmsc::computeAssociations(Model)[[1]]
+  rm(Model, envir = environment())
 
   # # ..................................................................... ###
 
@@ -145,7 +146,6 @@ PlotOmegaGG <- function(
     # scale for fill, which will replace the existing scale.
     suppressMessages()
 
-
   Plot <- cowplot::plot_grid(
     (Plot_Sign + ggplot2::theme(legend.position = "none")),
     ggpubr::as_ggplot(ggpubr::get_legend(Plot_Sign)),
@@ -163,29 +163,51 @@ PlotOmegaGG <- function(
   # Mean -----
   IASDT.R::CatTime("2. mean")
 
-  LegendTitle <- paste0(
-    '<span style="font-size: 12pt"><b>Omega</span><br>',
-    '<span style="font-size: 9pt">(mean)</span>')
+  # Legend colours
+  Palette_Positive <- grDevices::colorRampPalette(
+    c("#FFE4B2", "#FFC85C", "#FF8C00", "#E25822", "#800000"))(100)
+  Palette_Negative <- grDevices::colorRampPalette(
+    c("#E6FFFF", "#91D8F7", "#4682B4", "#083D77", "#001F3F"))(100) %>%
+    rev()
 
-  Plot_Mean <- (
-    PostMean %>%
-      as.data.frame() %>%
-      # replace diagonals with NA
-      replace(., col(.) == row(.), NA_real_) %>%
-      ggtree::gheatmap(
-        PhyloPlot, ., offset = 0.75, width = 12, font.size = 0.75,
-        colnames_offset_y = -1, colnames_angle = 90, hjust = 1) +
-      ggplot2::scale_fill_gradientn(
-        na.value = "transparent", colours = colorRamps::matlab.like(200),
-        labels = scales::number_format(accuracy = 0.1)) +
-      ggtree::scale_x_ggtree() +
-      ggplot2::coord_cartesian(clip = "off")  +
-      ggplot2::labs(fill = LegendTitle) +
-      Theme +
-      ggplot2::theme(legend.text = ggplot2::element_text(size = 8))) %>%
-    # suppress the message: Scale for fill is already present. Adding another
-    # scale for fill, which will replace the existing scale.
-    suppressMessages()
+  LegendTitle <- paste0(
+    '<span style="font-size: 11pt"><b>Omega</span><br>',
+    '<span style="font-size: 8pt">(mean)</span>')
+
+  PostMeanD <- as.data.frame(PostMean) %>%
+    # replace diagonals with NA
+    replace(., col(.) == row(.), NA_real_)
+
+  PostMeanD_Positive <- PostMeanD_Negative <- PostMeanD
+  PostMeanD_Positive[PostMeanD_Positive < 0] <- NA_real_
+  PostMeanD_Negative[PostMeanD_Negative >= 0] <- NA_real_
+
+  suppressMessages(
+    {
+      Plot_Mean1 <- ggtree::gheatmap(
+        PhyloPlot, PostMeanD_Negative, offset = 0.75, width = 12,
+        font.size = 0.75, colnames_offset_y = -1, colnames_angle = 90,
+        hjust = 1) +
+        ggplot2::scale_fill_gradientn(
+          na.value = "transparent", colours = Palette_Negative,
+          guide = ggplot2::guide_colorbar(order = 0),
+          labels = scales::number_format(accuracy = 0.1)) +
+        ggplot2::labs(fill = LegendTitle) +
+        ggnewscale::new_scale_fill()
+
+      Plot_Mean <- ggtree::gheatmap(
+        Plot_Mean1, PostMeanD_Positive, offset = 0.75, width = 12,
+        font.size = 0.75, colnames_offset_y = -1, colnames_angle = 90,
+        hjust = 1) +
+        ggplot2::scale_fill_gradientn(
+          na.value = "transparent", colours = Palette_Positive,
+          guide = ggplot2::guide_colorbar(order = 1), name = NULL,
+          labels = scales::number_format(accuracy = 0.1)) +
+        ggtree::scale_x_ggtree() +
+        ggplot2::coord_cartesian(clip = "off")  +
+        Theme +
+        ggplot2::theme(legend.text = ggplot2::element_text(size = 8))
+    })
 
   Plot <- cowplot::plot_grid(
     (Plot_Mean + ggplot2::theme(legend.position = "none")),

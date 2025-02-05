@@ -153,8 +153,7 @@ VarPar_Compute <- function(
     # names of variables used in the model
     groupnames <- names(Model$XData)
 
-    # actual variables used in the model, including the intercept and quadratic
-    # terms
+    # actual variables used in the model, including quadratic terms
     ModelVars <- dimnames(Model$X)[[2]][-1]
 
     # group variable to combine variable and its quadratic terms together

@@ -12,6 +12,7 @@ CHELSA_Process(
   Overwrite = FALSE,
   Download_Attempts = 10,
   Sleep = 5,
+  OtherVars = "",
   BaseURL = paste0("https://os.zhdk.cloud.switch.ch/envicloud/",
     "chelsa/chelsa_V2/GLOBAL/"),
   Download_NCores = 4,
@@ -41,6 +42,10 @@ Defaults to 10.}
 \item{Sleep}{Integer. Time in seconds to wait after each download attempt.
 Defaults to 5.}
 
+\item{OtherVars}{Character. First letters of variables other than bioclimatic
+variables to be processed. Defaults to an empty string, which means only
+bioclimatic variables (bio1-19) will be processed.}
+
 \item{BaseURL}{String, the base URL for downloading CHELSA climate data.}
 
 \item{Download_NCores}{integer. Number of CPU cores to use for parallel
@@ -54,9 +59,9 @@ files. Default is \code{FALSE}.}
 }
 \description{
 This function processes CHELSA climate data, with an option to download them
-first. It processes each bioclimatic variable to the European scale and
-reference grid, and outputs in TIFF and NetCDF (NC) formats. It also saves
-grouped data for each of the 46 climate scenarios.
+first. It processes each variable to the European scale and reference grid,
+and outputs in TIFF and NetCDF (NC) formats. It also saves grouped data for
+each of the 46 climate scenarios.
 }
 \author{
 Ahmed El-Gabbas

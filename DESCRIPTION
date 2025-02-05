@@ -2,8 +2,8 @@ Type: Package
 Package: IASDT.R
 Title: Helper R functions for the Invasive Alien Species (IAS) prototype
     Digital Twin (IAS-pDT)
-Version: 0.0.12
-Date: 2024-12-16
+Version: 0.1.02
+Date: 2025-02-05
 Authors@R: 
     person("Ahmed", "El-Gabbas", , "ahmed.el-gabbas@ufz.de", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-2225-088X"))
@@ -21,16 +21,16 @@ Imports:
     dplyr (>= 1.1.4),
     furrr (>= 0.3.1),
     future (>= 1.34.0),
-    future.apply (>= 1.11.2),
+    future.apply (>= 1.11.3),
     ggplot2 (>= 3.5.1),
-    Hmsc (>= 3.1.2),
-    lubridate (>= 1.9.3),
+    Hmsc (>= 3.1.3),
+    lubridate (>= 1.9.4),
     purrr (>= 1.0.2),
-    Rcpp  (>= 1.0.13),
+    Rcpp (>= 1.0.13),
     rlang (>= 1.1.4),
-    sf (>= 1.0.18),
+    sf (>= 1.0.19),
     snow (>= 0.4.4),
-    terra (>= 1.7.83),
+    terra (>= 1.8.15),
     tibble (>= 3.2.1),
     tidyselect (>= 1.2.1)
 Suggests:
@@ -58,6 +58,7 @@ Suggests:
     gdata (>= 3.0.0),
     ggbreak (>= 0.1.2),
     ggExtra (>= 0.10.1),
+    ggnewscale (>= 0.5.0),
     ggpubr (>= 0.6.0),
     ggtext (>= 0.1.2),
     ggtree (>= 3.13.0.1),
@@ -108,10 +109,11 @@ Suggests:
     units (>= 0.8-5),
     withr (>= 3.0.0),
     writexl (>= 1.5.0),
-    xml2 (>= 1.3.6)
+    xml2 (>= 1.3.6),
+    zip (>= 2.3.1)
 LinkingTo:
-    Rcpp,
-    RcppArmadillo
+    Rcpp (>= 1.0.13),
+    RcppArmadillo (>= 14.2.2)
 Remotes:
     EmilHvitfeldt/paletteer,
     hmsc-r/HMSC,

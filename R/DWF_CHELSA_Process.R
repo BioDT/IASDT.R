@@ -5,9 +5,9 @@
 #' Process CHELSA Climate Data
 #'
 #' This function processes CHELSA climate data, with an option to download them
-#' first. It processes each bioclimatic variable to the European scale and
-#' reference grid, and outputs in TIFF and NetCDF (NC) formats. It also saves
-#' grouped data for each of the 46 climate scenarios.
+#' first. It processes each variable to the European scale and reference grid,
+#' and outputs in TIFF and NetCDF (NC) formats. It also saves grouped data for
+#' each of the 46 climate scenarios.
 #'
 #' @name CHELSA_Process
 #' @param EnvFile Character. Path to the environment file containing paths to
@@ -31,12 +31,13 @@
 #'   NetCDF files. Default is 5.
 #' @param OverwriteProcessed Logical; whether to overwrite already processed
 #'   files. Default is `FALSE`.
+#' @inheritParams CHELSA_Prepare
 #' @author Ahmed El-Gabbas
 #' @export
 
 CHELSA_Process <- function(
     FromHPC = TRUE, EnvFile = ".env", NCores = 8, Download = FALSE,
-    Overwrite = FALSE, Download_Attempts = 10, Sleep = 5,
+    Overwrite = FALSE, Download_Attempts = 10, Sleep = 5, OtherVars = "",
     BaseURL = paste0(
       "https://os.zhdk.cloud.switch.ch/envicloud/",
       "chelsa/chelsa_V2/GLOBAL/"),
@@ -122,11 +123,11 @@ CHELSA_Process <- function(
   IASDT.R::CatTime("Prepare CHELSA metadata / download CHELSA data")
   TimePrepare <- lubridate::now(tzone = "CET")
 
-  # 874 files (19 Bioclimatic variables * 46 CC options)
+  # 19 Bioclimatic variables (+ OtherVars, if not empty string) * 46 CC options
   CHELSA_Data <- IASDT.R::CHELSA_Prepare(
     EnvFile = EnvFile, FromHPC = FromHPC, Download = Download,
-    NCores = Download_NCores, Overwrite = Overwrite, BaseURL = BaseURL,
-    Download_Attempts = Download_Attempts, Sleep = Sleep)
+    NCores = Download_NCores, Overwrite = Overwrite, OtherVars = OtherVars,
+    BaseURL = BaseURL, Download_Attempts = Download_Attempts, Sleep = Sleep)
 
   IASDT.R::CatDiff(
     InitTime = TimePrepare, Level = 1,
@@ -147,7 +148,7 @@ CHELSA_Process <- function(
     } else {
       IASDT.R::CatTime("Check input CHELSA files on parallel")
       withr::local_options(
-        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
         future.seed = TRUE)
       c1 <- snow::makeSOCKcluster(NCores)
       on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
@@ -191,14 +192,13 @@ CHELSA_Process <- function(
     if (length(Diff) > 0) {
       message(
         paste0(
-          " >> Only Bioclimatic variables will be processed (",
+          " >> Only Bioclimatic variables and variables identified in ", "`OtherVars`, if any, will be processed (",
           nrow(CHELSA_Data), " files)\n >> ", length(Diff),
           " files will not be processed.\n",
           " >> See `NotProcessed.txt` for the list of files"))
 
       readr::write_lines(
         x = Diff, file = file.path(Path_CHELSA_Out, "NotProcessed.txt"))
-
     }
 
     rm(AllOkay, Diff, envir = environment())
@@ -215,7 +215,7 @@ CHELSA_Process <- function(
     future::plan("future::sequential", gc = TRUE)
   } else {
     withr::local_options(
-      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
       future.seed = TRUE)
     IASDT.R::CatTime("Processing CHELSA maps on parallel")
     c1 <- snow::makeSOCKcluster(NCores)
@@ -323,7 +323,7 @@ CHELSA_Process <- function(
   }
 
   rm(CHELSA2Process, envir = environment())
-  
+
   if (NCores > 1) {
     snow::stopCluster(c1)
     future::plan("future::sequential", gc = TRUE)
@@ -343,7 +343,7 @@ CHELSA_Process <- function(
     future::plan("future::sequential", gc = TRUE)
   } else {
     withr::local_options(
-      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
       future.seed = TRUE)
     IASDT.R::CatTime(
       "Group CHELSA data by time and climate model/scenario on parallel")
@@ -353,6 +353,15 @@ CHELSA_Process <- function(
     on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
   }
 
+  # String to be matched to extract variable names
+  SelectedVars <- c("bio", "Bio", OtherVars) %>%
+    # Only keep non-empty strings. If `OtherVars` = "", only bioclimatic
+    # variables will be processed.
+    stringr::str_subset(".+") %>%
+    # Combine the strings into a single string separated by "|". This matches
+    # any variable starting with "bio" or "Bio" or any of the characters in
+    # `OtherVars` up to the first occurrence of underscore "_".
+    paste0(sep = ".*?_", collapse = "|")
 
   CHELSA_Processed <- CHELSA_Data %>%
     dplyr::select(TimePeriod, ClimateModel, ClimateScenario, Path_Out_tif) %>%
@@ -376,7 +385,9 @@ CHELSA_Process <- function(
         .f = function(File_List, FilePath, Name) {
 
           MapNames <- basename(File_List) %>%
-            stringr::str_extract("bio.._|bio._") %>%
+            # Extract variable names
+            stringr::str_extract(SelectedVars) %>%
+            # remove the last underscore
             stringr::str_remove_all("_$")
 
           Map <- terra::rast(File_List) %>%
@@ -387,15 +398,14 @@ CHELSA_Process <- function(
             terra::wrap()
 
           # save to disk
-          IASDT.R::SaveAs(
-            InObj = Map, OutObj = Name, OutPath = FilePath)
+          IASDT.R::SaveAs(InObj = Map, OutObj = Name, OutPath = FilePath)
 
           return(Map)
 
         },
         .options = furrr::furrr_options(
           seed = TRUE, packages = c("terra", "IASDT.R", "stringr"),
-          globals = "CHELSA_Data")))
+          globals = c("CHELSA_Data", "SelectedVars"))))
 
   if (NCores > 1) {
     snow::stopCluster(c1)

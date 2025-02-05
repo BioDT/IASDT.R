@@ -7,8 +7,7 @@
 #' This function reads the contents of local text files containing URLs for
 #' `CHELSA` climate data and extracts and saves their metadata (e.g., variable
 #' name, climate model & scenario, time, and download URLs). It can optionally
-#' download these links to desk, if requested. Only bioclimatic variables are
-#' considered.
+#' download these links to desk, if requested.
 #' @name CHELSA_Prepare
 #' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
@@ -24,16 +23,19 @@
 #'   Defaults to 10.
 #' @param Sleep Integer. Time in seconds to wait after each download attempt.
 #'   Defaults to 5.
+#' @param OtherVars Character. First letters of variables other than bioclimatic
+#'   variables to be processed. Defaults to an empty string, which means only
+#'   bioclimatic variables (bio1-19) will be processed.
 #' @param BaseURL String, the base URL for downloading CHELSA climate data.
 #' @author Ahmed El-Gabbas
 #' @export
 #' @details The function returns information on 874 tif files, representing 19
-#'   bioclimatic variables at 46 climate options (current and 45 future
-#'   scenarios)
+#'   bioclimatic variables (+ additional variables starting with the string in
+#'   `OtherVars`) at 46 climate options (current and 45 future scenarios)
 
 CHELSA_Prepare <- function(
     EnvFile = ".env", FromHPC = TRUE, Download = FALSE, NCores = 4,
-    Overwrite = FALSE, Download_Attempts = 10, Sleep = 5,
+    Overwrite = FALSE, Download_Attempts = 10, Sleep = 5, OtherVars = "",
     BaseURL = paste0(
       "https://os.zhdk.cloud.switch.ch/envicloud/",
       "chelsa/chelsa_V2/GLOBAL/")) {
@@ -100,6 +102,15 @@ CHELSA_Prepare <- function(
 
   fs::dir_create(c(Path_CHELSA_In, Path_CHELSA_Out))
 
+  # String to be matched in the variable names
+  SelectedVars <- c("^bio|^Bio", OtherVars) %>%
+    # Only keep non-empty strings. If `OtherVars` = "", only bioclimatic
+    # variables will be processed.
+    stringr::str_subset(".+") %>%
+    # Combine the strings into a single string separated by "|". This matches
+    # any variable starting with "bio" or "Bio" or any of the characters in
+    # `OtherVars`.
+    paste0(collapse = "|")
 
   IASDT.R::CatTime("Prepare CHELSA metadata", Level = 1)
   CHELSA_Metadata <- list.files(
@@ -176,8 +187,8 @@ CHELSA_Prepare <- function(
         }
       )
     ) %>%
-    # Only bioclimatic variables
-    dplyr::filter(stringr::str_detect(Variable, "^bio")) %>%
+    # Process only selected variables
+    dplyr::filter(stringr::str_detect(Variable, SelectedVars)) %>%
     dplyr::mutate(
 
       Path_Down = purrr::map_chr(
@@ -222,7 +233,7 @@ CHELSA_Prepare <- function(
       future::plan("future::sequential", gc = TRUE)
     } else {
       withr::local_options(
-        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
         future.seed = TRUE)
       c1 <- snow::makeSOCKcluster(NCores)
       on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
@@ -233,7 +244,9 @@ CHELSA_Prepare <- function(
     # # |||||||||||||||||||||||||||||||| ###
 
     if (Overwrite) {
+
       Data2Down <- CHELSA_Metadata
+
     } else {
 
       IASDT.R::CatTime("Exclude available and valid Tiff files", Level = 1)
@@ -315,7 +328,7 @@ CHELSA_Prepare <- function(
 
   # Save to disk -----
 
-  IASDT.R::CatTime("Save metadat to disk", Level = 1)
+  IASDT.R::CatTime("Save metadata to disk", Level = 1)
 
   save(
     CHELSA_Metadata,

@@ -76,7 +76,7 @@
 #' environmental stress or disturbance, including forest edges
 #' - **3. Scrub** -- shrublands maintained by environmental stress (aridity) or
 #' disturbance
-#' - **4a. Natural grasslands** -- grasslands mantained by climate (aridity,
+#' - **4a. Natural grasslands** -- grasslands maintained by climate (aridity,
 #' unevenly distributed precipitation), herbivores or environmental stress
 #' (aridity, instability or toxicity of substrate)
 #' - **4b. Human-maintained grasslands** -- grasslands dependent on regular
@@ -136,7 +136,7 @@ Mod_PrepData <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  SpeciesID <- Species_name <- Species_File <- PA <-
+  SpeciesID <- Species_name <- Species_File <- PA <- Path_Rivers <-
     cell <- Path_PA <- Path_Grid <- Path_Grid_Ref <- Path_CLC <-
     Path_Roads <- Path_Rail <- Path_Bias <- Path_CHELSA <-
     EU_Bound <- SpPA <- NPres <- Grid_R <- IAS_ID <- NULL

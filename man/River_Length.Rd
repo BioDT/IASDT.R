@@ -7,7 +7,8 @@
 River_Length(
   FromHPC = TRUE,
   EnvFile = ".env",
-  Filename = "EU_hydro_gpkg_eu.zip"
+  Filename = "EU_hydro_gpkg_eu.zip",
+  Cleanup = FALSE
 )
 }
 \arguments{
@@ -19,6 +20,9 @@ variables required by the function. Default is ".env".}
 
 \item{Filename}{Character. The name of the ZIP file containing the river
 network data. Default is "EU_hydro_gpkg_eu.zip".}
+
+\item{Cleanup}{Logical indicating whether to clean up temporary files from
+the Interim directory after finishing calculations. Default: \code{FALSE}.}
 }
 \value{
 \code{NULL}. The function outputs processed files to the specified

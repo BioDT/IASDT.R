@@ -20,4 +20,9 @@ variable
 \description{
 Detailed information on CHELSA climate variables
 }
+\examples{
+data(CHELSA_Vars)
+print(CHELSA_Vars)
+
+}
 \keyword{datasets}

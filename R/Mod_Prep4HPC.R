@@ -28,12 +28,14 @@
 #'   `RData` file. Default: `TRUE`.
 #' @param GPP_Plot Logical indicating whether to plot the coordinates of the
 #'   sampling units and the knots in a pdf file. Default: `TRUE`.
-#' @param BioVars Character vector. Specifies the Bioclimatic variables to be
-#'   included from CHELSA. Defaults to 6 ecologically meaningful and less
-#'   correlated Bioclimatic variables: `c("bio4", "bio6", "bio8", "bio12",
-#'   "bio15", "bio18")`.
+#' @param BioVars Character vector. Specifies variables from CHELSA to be used
+#'   in the model. This can include bioclimatic variables (bio1-19) as well as
+#'   other predictors such as npp (Net Primary Productivity). Defaults to 6
+#'   ecologically meaningful and less correlated variables: `c("bio3", "bio4",
+#'   "bio11", "bio18", "bio19", and "npp")`.
 #' @param QuadraticVars Character vector for variables for which quadratic terms
-#'   are used.
+#'   are used. Defaults to all variables of the `BioVars`. If `QuadraticVars` is
+#'   `NULL`, no quadratic terms will be used.
 #' @param EffortsAsPredictor Logical indicating whether to include the
 #'   (log<sub>10</sub>) sampling efforts as predictor to the model. Default:
 #'   `TRUE`.
@@ -44,6 +46,9 @@
 #'   (log<sub>10</sub>) percentage coverage of respective habitat type per grid
 #'   cell as predictor to the model. Default: `TRUE`. Only valid if `Hab_Abb`
 #'   not equals to `0`.
+#' @param RiversAsPredictor Logical indicating whether to include the total
+#'   length of rivers per grid cell as predictor to the model. Default: `TRUE`.
+#'   See [River_Length] for more details.
 #' @param NspPerGrid Integer. Indicating the minimum number of species per grid
 #'   cell for a grid cell to be include in the analysis. This is calculated
 #'   after filtering grid cells by sampling efforts (`MinEffortsSp`) and
@@ -152,12 +157,13 @@ Mod_Prep4HPC <- function(
     GPP_Plot = TRUE, MinLF = NULL, MaxLF = NULL,
     Alphapw = list(Prior = NULL, Min = 20, Max = 1200, Samples = 200),
     BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
-    QuadraticVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
+    QuadraticVars = BioVars,
     EffortsAsPredictor = TRUE, RoadRailAsPredictor = TRUE,
-    HabAsPredictor = TRUE, NspPerGrid = 0L, ExcludeCult = TRUE,
+    HabAsPredictor = TRUE, RiversAsPredictor = TRUE,
+    NspPerGrid = 0L, ExcludeCult = TRUE, ExcludeZeroHabitat = TRUE,
     CV_NFolds = 4L, CV_NGrids = 20L, CV_NR = 2L, CV_NC = 2L, CV_Plot = TRUE,
     CV_SAC = FALSE,
-    PhyloTree = TRUE, NoPhyloTree = FALSE, SaveData = TRUE,
+    PhyloTree = TRUE, NoPhyloTree = FALSE,
     OverwriteRDS = TRUE, NCores = 8L, NChains = 4L,
     thin = NULL, samples = 1000L, transientFactor = 500L, verbose = 200L,
     SkipFitted = TRUE, NumArrayJobs = 210L, ModelCountry = NULL,
@@ -296,10 +302,11 @@ Mod_Prep4HPC <- function(
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = CharArgs, Type = "character")
 
   LogicArgs <- c(
-    "GPP_Save", "GPP_Plot", "PhyloTree", "NoPhyloTree", "SaveData",
+    "GPP_Save", "GPP_Plot", "PhyloTree", "NoPhyloTree", "ExcludeZeroHabitat",
     "SkipFitted", "VerboseProgress", "ToJSON", "CV_SAC", "CheckPython",
     "OverwriteRDS", "PrepSLURM", "ExcludeCult", "GPP",
-    "EffortsAsPredictor", "RoadRailAsPredictor", "HabAsPredictor")
+    "EffortsAsPredictor", "RoadRailAsPredictor", "HabAsPredictor",
+    "RiversAsPredictor")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = LogicArgs, Type = "logical")
 
   NumericArgs <- c(
@@ -423,10 +430,9 @@ Mod_Prep4HPC <- function(
   IASDT.R::InfoChunk("Preparing input data using IASDT.R::Mod_PrepData")
 
   DT_All <- IASDT.R::Mod_PrepData(
-    Hab_Abb = Hab_Abb, MinEffortsSp = MinEffortsSp,
-    PresPerSpecies = PresPerSpecies, EnvFile = EnvFile,
-    Path_Model = Path_Model, VerboseProgress = VerboseProgress,
-    FromHPC = FromHPC, SaveData = SaveData, ExcludeCult = ExcludeCult)
+    Hab_Abb = Hab_Abb, MinEffortsSp = MinEffortsSp, ExcludeCult = ExcludeCult,
+    ExcludeZeroHabitat = ExcludeZeroHabitat, PresPerSpecies = PresPerSpecies,
+    EnvFile = EnvFile, Path_Model = Path_Model, VerboseProgress = VerboseProgress, FromHPC = FromHPC)
 
   IASDT.R::CatSep(Rep = 1, Extra1 = 1, Extra2 = 2)
 

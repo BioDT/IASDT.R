@@ -9,3 +9,7 @@ S_*.RData
 .Renviron
 IASDT.R.code-workspace
 .Rprofile
+.Rdata
+.httr-oauth
+.DS_Store
+.quarto

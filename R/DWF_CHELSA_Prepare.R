@@ -24,8 +24,11 @@
 #' @param Sleep Integer. Time in seconds to wait after each download attempt.
 #'   Defaults to 5.
 #' @param OtherVars Character. First letters of variables other than bioclimatic
-#'   variables to be processed. Defaults to an empty string, which means only
-#'   bioclimatic variables (bio1-19) will be processed.
+#'   variables to be processed. Defaults to "npp", which means processing
+#'   bioclimatic variables (bio1-19) and Net Primary Productivity will be
+#'   processed. If `OtherVars` is set to "", only bioclimatic variables will be
+#'   processed. See [CHELSA_Vars] for a detailed information on CHELSA climate
+#'   variables.
 #' @param BaseURL String, the base URL for downloading CHELSA climate data.
 #' @author Ahmed El-Gabbas
 #' @export
@@ -35,7 +38,7 @@
 
 CHELSA_Prepare <- function(
     EnvFile = ".env", FromHPC = TRUE, Download = FALSE, NCores = 4,
-    Overwrite = FALSE, Download_Attempts = 10, Sleep = 5, OtherVars = "",
+    Overwrite = FALSE, Download_Attempts = 10, Sleep = 5, OtherVars = "npp",
     BaseURL = paste0(
       "https://os.zhdk.cloud.switch.ch/envicloud/",
       "chelsa/chelsa_V2/GLOBAL/")) {
@@ -48,16 +51,17 @@ CHELSA_Prepare <- function(
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
 
-  CharArgs <- c("EnvFile", "BaseURL")
-  IASDT.R::CheckArgs(AllArgs = AllArgs, Args = CharArgs, Type = "character")
+  IASDT.R::CheckArgs(
+    AllArgs = AllArgs, Args = c("EnvFile", "BaseURL", "OtherVars"),
+    Type = "character")
+  IASDT.R::CheckArgs(
+    AllArgs = AllArgs, Args = c("FromHPC", "Download", "Overwrite"),
+    Type = "logical")
+  IASDT.R::CheckArgs(
+    AllArgs = AllArgs, Args = c("Sleep", "Download_Attempts", "NCores"),
+    Type = "numeric")
 
-  LogicArgs <- c("FromHPC", "Download", "Overwrite")
-  IASDT.R::CheckArgs(AllArgs = AllArgs, Args = LogicArgs, Type = "logical")
-
-  NumericArgs <- c("Sleep", "Download_Attempts", "NCores")
-  IASDT.R::CheckArgs(AllArgs = AllArgs, Args = NumericArgs, Type = "numeric")
-
-  rm(AllArgs, CharArgs, LogicArgs, NumericArgs, envir = environment())
+  rm(AllArgs, envir = environment())
 
   if (NCores < 1) {
     stop("`NCores` must be a positive integer.", call. = FALSE)

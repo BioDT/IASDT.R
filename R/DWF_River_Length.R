@@ -22,6 +22,8 @@
 #'   variables required by the function. Default is ".env".
 #' @param Filename Character. The name of the ZIP file containing the river
 #'   network data. Default is "EU_hydro_gpkg_eu.zip".
+#' @param Cleanup Logical indicating whether to clean up temporary files from
+#'   the Interim directory after finishing calculations. Default: `FALSE`.
 #' @return `NULL`. The function outputs processed files to the specified
 #'   directories.
 #' @details The data provides at pan-European level a photo-interpreted river
@@ -35,7 +37,8 @@
 #' @author Ahmed El-Gabbas
 
 River_Length <- function(
-    FromHPC = TRUE, EnvFile = ".env", Filename = "EU_hydro_gpkg_eu.zip") {
+    FromHPC = TRUE, EnvFile = ".env", Filename = "EU_hydro_gpkg_eu.zip",
+    Cleanup = FALSE) {
 
   # # ..................................................................... ###
 
@@ -50,8 +53,10 @@ River_Length <- function(
   AllArgs <- purrr::map(AllArgs, ~ get(.x, envir = environment())) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = "EnvFile")
-  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "logical", Args = "FromHPC")
+  IASDT.R::CheckArgs(
+    AllArgs = AllArgs, Type = "character", Args = c("EnvFile", "Filename"))
+  IASDT.R::CheckArgs(
+    AllArgs = AllArgs, Type = "logical", Args = c("FromHPC", "Cleanup"))
 
   rm(AllArgs, envir = environment())
 
@@ -216,12 +221,12 @@ River_Length <- function(
           # # .................................. #
 
           # Read the gpkg file as sf object
-
           IASDT.R::CatTime("Read the gpkg files as sf", Level = 2, Time = FALSE)
+
           River_sf <- sf::st_read(
             # Read the gpkg files
             dsn = gpkg_Files$path2, quiet = TRUE,
-            # only select `STRAHLER` (STRAHLER number) and `Shape` (line
+            # Select only `STRAHLER` (STRAHLER number) and `Shape` (line
             # geometry) columns from the `River_Net_l` layer
             query = "SELECT STRAHLER, Shape FROM River_Net_l") %>%
             suppressWarnings() %>%
@@ -249,8 +254,8 @@ River_Length <- function(
         # # .................................. #
         # # .................................. #
 
-        IASDT.R::CatTime("Rasterizing", Level = 2, Time = FALSE)
         # Rasterize the river network data
+        IASDT.R::CatTime("Rasterizing", Level = 2, Time = FALSE)
 
         River_sf %>%
           dplyr::mutate(
@@ -268,6 +273,7 @@ River_Length <- function(
           dplyr::arrange(STRAHLER) %>%
           # Convert length column to multiple columns
           tidyr::pivot_wider(names_from = STRAHLER, values_from = River)
+
       }) %>%
     # Combine all the processed rivers into a single tibble
     dplyr::bind_rows()
@@ -361,7 +367,8 @@ River_Length <- function(
           legend.text = ggplot2::element_text(size = 10),
           legend.box.spacing = grid::unit(0, "pt"),
           axis.text.x = ggplot2::element_text(size = 7),
-          axis.text.y = ggplot2::element_text(size = 7, hjust = 0.5, angle = 90),
+          axis.text.y = ggplot2::element_text(
+            size = 7, hjust = 0.5, angle = 90),
           axis.ticks = ggplot2::element_line(colour = "blue", linewidth = 0.25),
           axis.ticks.length = grid::unit(0.04, "cm"),
           axis.title = ggplot2::element_blank(),
@@ -386,6 +393,25 @@ River_Length <- function(
     width = 30, height = 33, res = 600, quality = 100, units = "cm")
   print(RiverPlots2)
   grDevices::dev.off()
+
+  # # ..................................................................... ###
+
+  # # |||||||||||||||||||||||||||||||||||
+  # Clean up temporary files ------
+  # # |||||||||||||||||||||||||||||||||||
+
+  if (Cleanup) {
+    IASDT.R::CatTime("Cleaning up interim files")
+
+    try(
+      expr = {
+        file_paths <- list.files(
+          path = normalizePath(Path_Rivers_Interim, winslash = "/"),
+          pattern = "_sf.RData$|.gpkg$|_GPKG.zip$", full.names = TRUE)
+        fs::file_delete(file_paths)
+      },
+      silent = TRUE)
+  }
 
   # # ..................................................................... ###
 

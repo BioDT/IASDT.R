@@ -18,12 +18,14 @@ Mod_Prep4HPC(
   MaxLF = NULL,
   Alphapw = list(Prior = NULL, Min = 20, Max = 1200, Samples = 200),
   BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
-  QuadraticVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
+  QuadraticVars = BioVars,
   EffortsAsPredictor = TRUE,
   RoadRailAsPredictor = TRUE,
   HabAsPredictor = TRUE,
+  RiversAsPredictor = TRUE,
   NspPerGrid = 0L,
   ExcludeCult = TRUE,
+  ExcludeZeroHabitat = TRUE,
   CV_NFolds = 4L,
   CV_NGrids = 20L,
   CV_NR = 2L,
@@ -32,7 +34,6 @@ Mod_Prep4HPC(
   CV_SAC = FALSE,
   PhyloTree = TRUE,
   NoPhyloTree = FALSE,
-  SaveData = TRUE,
   OverwriteRDS = TRUE,
   NCores = 8L,
   NChains = 4L,
@@ -108,12 +109,14 @@ the prior will be generated using \code{Min}, \code{Max}, and \code{Samples}. \c
 \code{Max} are the minimum and maximum values of the alpha parameter (in
 kilometer). \code{Samples} is the number of samples to be used in the prior.}
 
-\item{BioVars}{Character vector. Specifies the Bioclimatic variables to be
-included from CHELSA. Defaults to 6 ecologically meaningful and less
-correlated Bioclimatic variables: \code{c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18")}.}
+\item{BioVars}{Character vector. Specifies variables from CHELSA to be used
+in the model. This can include bioclimatic variables (bio1-19) as well as
+other predictors such as npp (Net Primary Productivity). Defaults to 6
+ecologically meaningful and less correlated variables: \verb{c("bio3", "bio4", "bio11", "bio18", "bio19", and "npp")}.}
 
 \item{QuadraticVars}{Character vector for variables for which quadratic terms
-are used.}
+are used. Defaults to all variables of the \code{BioVars}. If \code{QuadraticVars} is
+\code{NULL}, no quadratic terms will be used.}
 
 \item{EffortsAsPredictor}{Logical indicating whether to include the
 (log\if{html}{\out{<sub>}}10\if{html}{\out{</sub>}}) sampling efforts as predictor to the model. Default:
@@ -128,6 +131,10 @@ model. Default: \code{TRUE}.}
 cell as predictor to the model. Default: \code{TRUE}. Only valid if \code{Hab_Abb}
 not equals to \code{0}.}
 
+\item{RiversAsPredictor}{Logical indicating whether to include the total
+length of rivers per grid cell as predictor to the model. Default: \code{TRUE}.
+See \link{River_Length} for more details.}
+
 \item{NspPerGrid}{Integer. Indicating the minimum number of species per grid
 cell for a grid cell to be include in the analysis. This is calculated
 after filtering grid cells by sampling efforts (\code{MinEffortsSp}) and
@@ -138,6 +145,9 @@ will be considered in the models.}
 
 \item{ExcludeCult}{Logical. Indicates whether to exclude countries with
 cultivated or casual observations per species. Defaults to \code{TRUE}.}
+
+\item{ExcludeZeroHabitat}{Logical. Indicates whether to exclude grid cells
+with zero habitat coverage. Defaults to \code{TRUE}.}
 
 \item{CV_NFolds}{Number of cross-validation folds. Default: 4.}
 
@@ -162,9 +172,6 @@ models with (PhyloTree) or without (NoPhyloTree) phylogenetic trees.
 Defaults are \code{PhyloTree = TRUE} and \code{NoPhyloTree = FALSE}, meaning only
 models with phylogenetic trees are fitted by default. At least one of
 \code{PhyloTree} and \code{NoPhyloTree} should be \code{TRUE}.}
-
-\item{SaveData}{Logical. Indicates whether the processed data should be saved
-as RData file. Defaults to \code{TRUE}.}
 
 \item{OverwriteRDS}{Logical. Indicating whether to overwrite previously
 exported RDS files for initial models. Default: \code{TRUE}.}

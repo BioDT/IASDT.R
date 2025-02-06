@@ -10,8 +10,8 @@
 #' species data based on habitat type and minimum presence grid cells per
 #' species, and merges various environmental layers (e.g., CHELSA Bioclimatic
 #' variables, habitat coverage, road and railway intensity, sampling efforts)
-#' into a single dataset. The processed data can be saved to disk as an
-#' `*.RData` file.
+#' into a single dataset. Processed data is saved to disk as an `*.RData`
+#' file.
 #'
 #' @param Hab_Abb Character. Abbreviation for the habitat type (based on
 #'   [SynHab](https://www.preslia.cz/article/pdf?id=11548)) for which to prepare
@@ -23,6 +23,10 @@
 #'   species per grid cell (from GBIF data) required for inclusion in the
 #'   models. This is to exclude grid cells with very little sampling efforts.
 #'   Defaults to `100`.
+#' @param ExcludeCult Logical. Indicates whether to exclude countries with
+#'   cultivated or casual observations per species. Defaults to `TRUE`.
+#' @param ExcludeZeroHabitat Logical. Indicates whether to exclude grid cells
+#'   with zero habitat coverage. Defaults to `TRUE`.
 #' @param PresPerSpecies Integer. The minimum number of presence grid cells for
 #'   a species to be included in the analysis. The number of presence grid cells
 #'   per species is calculated after discarding grid cells with low sampling
@@ -34,63 +38,76 @@
 #'   displayed. Defaults to `TRUE`.
 #' @param FromHPC Logical indicating whether the work is being done from HPC, to
 #'   adjust file paths accordingly. Default: `TRUE`.
-#' @param SaveData Logical. Indicates whether the processed data should be saved
-#'   as RData file. Defaults to `TRUE`.
-#' @param ExcludeCult Logical. Indicates whether to exclude countries with
-#'   cultivated or casual observations per species. Defaults to `TRUE`.
 #' @name Mod_PrepData
 #' @author Ahmed El-Gabbas
 #' @return a tibble containing modelling data.
 #' @importFrom rlang .data
-#' @details The function reads the following environment variables:
-#'    - **`DP_R_Grid`** (if `FromHPC` = `TRUE`) or **`DP_R_Grid_Local`** (if
-#'   `FromHPC` = `FALSE`). The function reads the content of the
-#'   `Grid_10_Land_Crop.RData` and `Grid_10_Land_Crop_sf_Country.RData` files
-#'    - **`DP_R_Grid_Ref`** or **`DP_R_Grid_Ref_Local`**: The function reads the
-#'   content of `Grid_10_sf.RData` file from this path.
-#'    - **`DP_R_PA`** or **`DP_R_PA_Local`**: The function reads the contents
-#'   of the `Sp_PA_Summary_DF.RData` file from this path.
-#'    - **`DP_R_CLC_Summary`** / **`DP_R_CLC_Summary_Local`**: Path containing
-#'   the `PercCov_SynHab_Crop.RData` file. This file contains maps for the
-#'   percentage coverage of each SynHab habitat type per grid cell.
-#'    - **`DP_R_CHELSA_Output`** / **`DP_R_CHELSA_Output_Local`**: Path
-#'   for processed CHELSA data.
-#'    - **`DP_R_Roads`** / **`DP_R_Roads_Local`**: Path for processed road data.
-#'   The function reads the contents of: `Road_Length.RData` for the total
-#'   length of any road type per grid cell.
-#'    - **`DP_R_Railway`** / **`DP_R_Railway_Local`**: Path for processed
-#'   railway data. The function reads the contents of: `Railway_Length.RData`
-#'   for the total length of any railway type per grid cell.
-#'    - **`DP_R_Efforts`** / **`DP_R_Efforts_Local`**: Path for processed
-#'   sampling efforts analysis. The function reads the content of
-#'   `Bias_GBIF_SummaryR.RData` file containing the total number of GBIF
-#'   vascular plant observations per grid cell.
+#' @details
+#'
+#' The function reads the following environment variables:
+#' - **`DP_R_Grid`** (if `FromHPC` = `TRUE`) or **`DP_R_Grid_Local`** (if
+#' `FromHPC` = `FALSE`). The function reads the content of the
+#' `Grid_10_Land_Crop.RData` and `Grid_10_Land_Crop_sf_Country.RData` files
+#' - **`DP_R_Grid_Ref`** or **`DP_R_Grid_Ref_Local`**: The function reads the
+#' content of `Grid_10_sf.RData` file from this path.
+#' - **`DP_R_PA`** or **`DP_R_PA_Local`**: The function reads the contents
+#' of the `Sp_PA_Summary_DF.RData` file from this path.
+#' - **`DP_R_CLC_Summary`** / **`DP_R_CLC_Summary_Local`**: Path containing
+#' the `PercCov_SynHab_Crop.RData` file. This file contains maps for the
+#' percentage coverage of each SynHab habitat type per grid cell.
+#' - **`DP_R_CHELSA_Output`** / **`DP_R_CHELSA_Output_Local`**: Path
+#' for processed CHELSA data.
+#' - **`DP_R_Roads`** / **`DP_R_Roads_Local`**: Path for processed road data.
+#' The function reads the contents of: `Road_Length.RData` for the total length
+#' of any road type per grid cell.
+#' - **`DP_R_Railway`** / **`DP_R_Railway_Local`**: Path for processed
+#' railway data. The function reads the contents of: `Railway_Length.RData` for
+#' the total length of any railway type per grid cell.
+#' - **`DP_R_Efforts`** / **`DP_R_Efforts_Local`**: Path for processed
+#' sampling efforts analysis. The function reads the content of
+#' `Bias_GBIF_SummaryR.RData` file containing the total number of GBIF vascular
+#' plant observations per grid cell.
+#'
+#' The current models are fitted for 8 habitat types see [Pysek et
+#' al.](https://doi.org/10.23855/preslia.2022.447):
+#' - **1. Forests** -- closed vegetation dominated by deciduous or evergreen
+#' trees
+#' - **2. Open forests** -- woodlands with canopy openings created by
+#' environmental stress or disturbance, including forest edges
+#' - **3. Scrub** -- shrublands maintained by environmental stress (aridity) or
+#' disturbance
+#' - **4a. Natural grasslands** -- grasslands mantained by climate (aridity,
+#' unevenly distributed precipitation), herbivores or environmental stress
+#' (aridity, instability or toxicity of substrate)
+#' - **4b. Human-maintained grasslands** -- grasslands dependent on regular
+#' human-induced management (mowing, grazing by livestock, artificial burning)
+#' - **10. Wetland** -- sites with the permanent or seasonal influence of
+#' moisture, ranging from oligotrophic to eutrophic
+#' - **12a. Ruderal habitats** -- anthropogenically disturbed or eutrophicated
+#' sites, where the anthropogenic disturbance or fertilization is typically a
+#' side-product and not the aim of the management
+#' - **12b. Agricultural habitats** -- synanthropic habitats directly
+#' associated with growing of agricultural products, thus dependent on specific
+#' type of management (ploughing, fertilization)
+#'
+#' The following habitat types are excluded from the analysis:
+#' - **5. Sandy** -- dunes and other habitats on unstable sandy substrate, stressed
+#' by low nutrients, drought and disturbed by sand movement
+#' - **6. Rocky** -- cliffs and rock outcrops with very shallow or no soil
+#' - **7. Dryland** -- habitats in which drought stress limits vegetation
+#' development
+#' - **8. Saline** -- habitats stressed by high soil salinity
+#' - **9. Riparian** -- a mosaic of wetlands, grasslands, tall-forb stands,
+#' scrub and open forests in stream corridors
+#' - **11. Aquatic** -- water bodies and streams with submerged and floating
+#' plant species
+#'
 #' @export
 
 Mod_PrepData <- function(
-    Hab_Abb = NULL, MinEffortsSp = 100L, PresPerSpecies = 80L, EnvFile = ".env",
-    Path_Model = NULL, VerboseProgress = TRUE, FromHPC = TRUE,
-    SaveData = TRUE, ExcludeCult = TRUE) {
-
-  # # ..................................................................... ###
-
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # 2023
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # We decided to exclude the following SynHab habitat types in our analysis:
-  # # 4. Grasslands: use 4a and 4b separately
-  # # 7. Dryland
-  # # 9. Riparian
-  # # 11. Aquatic
-  # # 12. Man-made: use 12a and 12b separately
-
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # July 2024
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # We decided to further exclude three SynHab habitat types
-  # # 5. Sandy
-  # # 6. Rocky
-  # # 8. Saline
+    Hab_Abb = NULL, MinEffortsSp = 100L, ExcludeCult = TRUE,
+    ExcludeZeroHabitat = TRUE, PresPerSpecies = 80L, EnvFile = ".env",
+    Path_Model = NULL, VerboseProgress = TRUE, FromHPC = TRUE) {
 
   # # ..................................................................... ###
 
@@ -137,15 +154,34 @@ Mod_PrepData <- function(
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Args = c("MinEffortsSp", "PresPerSpecies"),
     Type = "numeric")
+  IASDT.R::CheckArgs(
+    AllArgs = AllArgs,
+    Args = c(
+      "ExcludeCult", "ExcludeZeroHabitat",
+      "VerboseProgress", "FromHPC"),
+    Type = "logical")
+
+  # Valid habitat type values
+  ValidHabAbbs <- c(0:3, "4a", "4b", 10, "12a", "12b")
+  if (!(Hab_Abb %in% ValidHabAbbs)) {
+    stop(
+      paste0(
+        "Hab_Abb has to be one of the following:\n >> ",
+        paste0(ValidHabAbbs, collapse = ", ")),
+      call. = FALSE)
+  }
+
+  fs::dir_create(Path_Model)
 
   # # ..................................................................... ###
 
   # # |||||||||||||||||||||||||||||||||||
   # Reading/checking environment variables ----
+  IASDT.R::CatTime("Reading/checking environment variables")
+
   # # |||||||||||||||||||||||||||||||||||
 
   # Input data paths - these are read from the .env file
-
   if (!file.exists(EnvFile)) {
     stop(paste0(
       "Path to environment variables: ", EnvFile, " was not found"),
@@ -163,6 +199,7 @@ Mod_PrepData <- function(
       "Path_Roads", "DP_R_Roads", TRUE, FALSE,
       "Path_Rail", "DP_R_Railways", TRUE, FALSE,
       "Path_Bias", "DP_R_Efforts", TRUE, FALSE,
+      "Path_Rivers", "DP_R_Rivers", FALSE, TRUE,
       "EU_Bound", "DP_R_EUBound_sf", FALSE, TRUE)
   } else {
     EnvVars2Read <- tibble::tribble(
@@ -175,30 +212,12 @@ Mod_PrepData <- function(
       "Path_Roads", "DP_R_Roads_Local", TRUE, FALSE,
       "Path_Rail", "DP_R_Railways_Local", TRUE, FALSE,
       "Path_Bias", "DP_R_Efforts_Local", TRUE, FALSE,
+      "Path_Rivers", "DP_R_Rivers", FALSE, TRUE,
       "EU_Bound", "DP_R_EUBound_sf_Local", FALSE, TRUE)
   }
 
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
-
-  # # ..................................................................... ###
-
-  # # |||||||||||||||||||||||||||||||||||
-  # Checking arguments ----
-  # # |||||||||||||||||||||||||||||||||||
-
-  IASDT.R::CatTime("Checking arguments")
-
-  ValidHabAbbs <- c(0:3, "4a", "4b", 10, "12a", "12b")
-  if (!(Hab_Abb %in% ValidHabAbbs)) {
-    stop(
-      paste0(
-        "Hab_Abb has to be one of the following:\n >> ",
-        paste0(ValidHabAbbs, collapse = ", ")),
-      call. = FALSE)
-  }
-
-  fs::dir_create(Path_Model)
 
   # # ..................................................................... ###
 
@@ -224,6 +243,46 @@ Mod_PrepData <- function(
       rcl = matrix(
         c(0, MinEffortsSp, NA, MinEffortsSp, Inf, 1), byrow = TRUE, ncol = 3),
       include.lowest = TRUE, right = FALSE)
+
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  ## Habitat coverage -----
+
+  IASDT.R::CatTime("Habitat coverage", Level = 1)
+
+  Path_Hab <- file.path(Path_CLC, "Summary_RData", "PercCov_SynHab_Crop.RData")
+  if (!file.exists(Path_Hab)) {
+    stop(
+      paste0("Path_Hab file: ", Path_Hab, " does not exist"),
+      call. = FALSE)
+  }
+
+  if (Hab_Abb == "0") {
+    # Use dummy habitat values
+    R_Hab <- stats::setNames(Grid_R, "Hab")
+    R_HabLog <- stats::setNames(Grid_R, "HabLog")
+  } else {
+    # Load habitat coverage data and mask by the efforts mask
+    R_Hab <- IASDT.R::LoadAs(Path_Hab) %>%
+      terra::unwrap() %>%
+      magrittr::extract2(paste0("SynHab_", Hab_Abb)) %>%
+      terra::mask(EffortsMask) %>%
+      stats::setNames("Hab")
+
+    # Exclude grid cells with zero habitat coverage
+    if (ExcludeZeroHabitat) {
+      IASDT.R::CatTime(
+        "Exclude grid cells with zero habitat coverage", Level = 2)
+      ZeroHabGrids <- (R_Hab == 0)
+      # Update the efforts mask to exclude grid cells with zero habitat coverage
+      EffortsMask[ZeroHabGrids] <- NA
+      R_Hab[ZeroHabGrids] <- NA
+    }
+
+    # Log of habitat coverage
+    R_HabLog <- log10(R_Hab + 0.1) %>%
+      stats::setNames("HabLog")
+  }
 
   # # ..................................................................... ###
 
@@ -256,7 +315,7 @@ Mod_PrepData <- function(
   ## Species Presence-absence data ----
   IASDT.R::CatTime("Species Presence-absence data", Level = 1)
 
-  # minimum number of presence grids per species
+  # Minimum number of presence grids per species
   NCellsCol <- dplyr::if_else(ExcludeCult, "NCells_Naturalized", "NCells_All")
 
   R_Sp <- DT_Sp %>%
@@ -323,6 +382,16 @@ Mod_PrepData <- function(
     terra::ext() %>%
     as.vector()
 
+  Caption <- stringr::str_glue(
+    "<span style='color:red; font-size:18px;'>\\
+    **{NGridsWzSpecies} grid cells --- {terra::nlyr(R_Sp)} IAS**</span><br/>\\
+    - Excluding grid cells with < {MinEffortsSp} vascular plant species \\
+    in GBIF",
+    dplyr::if_else(
+      ExcludeZeroHabitat,
+      " or with 0% habitat coverage<br/>", "<br/>"),
+    "- Considering only IAS with &#8805; {PresPerSpecies} presence grid cells")
+
   NSpPerGrid_gg <- ggplot2::ggplot() +
     tidyterra::geom_spatraster(data = R_Sp_sum) +
     tidyterra::scale_fill_whitebox_c(
@@ -336,21 +405,17 @@ Mod_PrepData <- function(
         "Number of IAS per grid cell to be used in the models</b></span>",
         '<span style="color:black; font-size:16px;"> (',
         stringr::str_remove(Hab_column, "Hab_"), ")</span>"),
-      caption  = paste0(
-        "Only grid cells with &#8805;", MinEffortsSp,
-        " vascular plant species in GBIF and IAS with ",
-        "&#8805;", PresPerSpecies, " presence grid cells are considered (",
-        NGridsWzSpecies, " grid cells & ", terra::nlyr(R_Sp), " IAS)")) +
+      caption = Caption) +
     ggplot2::scale_y_continuous(expand = c(0, 0), limits = Limits[c(3, 4)]) +
     ggplot2::scale_x_continuous(expand = c(0, 0), limits = Limits[c(1, 2)]) +
     ggplot2::theme_minimal() +
     ggplot2::theme(
-      plot.margin = ggplot2::margin(0.25, 0, 0.25, 0, "cm"),
+      plot.margin = ggplot2::margin(0.25, 0, 0.125, 0, "cm"),
       plot.title = ggtext::element_markdown(
         size = 16, color = "blue",
         margin = ggplot2::margin(0, 0, 0.1, 0, "cm")),
       plot.caption = ggtext::element_markdown(
-        size = 11, colour = "grey40", hjust = 0.3),
+        size = 11, colour = "grey40", hjust = 0),
       legend.position = "inside",
       legend.position.inside = c(0.95, 0.9),
       legend.key.size = grid::unit(0.8, "cm"),
@@ -358,10 +423,9 @@ Mod_PrepData <- function(
       axis.text = ggplot2::element_blank(),
       panel.border = ggplot2::element_blank())
 
-  # Using ggplot2::ggsave directly does not show non-ascii characters correctly
-  grDevices::jpeg(
+  ragg::agg_jpeg(
     filename = file.path(Path_Model, "NSpPerGrid.jpeg"),
-    width = 25, height = 27, units = "cm", quality = 100, res = 600)
+    width = 25, height = 28, res = 600, quality = 100, units = "cm")
   print(NSpPerGrid_gg)
   grDevices::dev.off()
 
@@ -383,8 +447,9 @@ Mod_PrepData <- function(
   # # ..................................................................... ###
 
   ## Reference grid -----
+  IASDT.R::CatTime("Reference grid", Level = 1)
 
-  IASDT.R::CatTime("Reference grid - sf", Level = 1)
+  IASDT.R::CatTime("Reference grid - sf", Level = 2)
   # Reference grid as sf
   Grid_SF <- file.path(Path_Grid_Ref, "Grid_10_sf.RData")
   if (!file.exists(Grid_SF)) {
@@ -393,8 +458,10 @@ Mod_PrepData <- function(
   Grid_SF <- IASDT.R::LoadAs(Grid_SF) %>%
     magrittr::extract2("Grid_10_sf_s")
 
+  # # ||||||||||||||||||||||||||||||||||||||||||
+
   # Reference grid as sf - country names
-  IASDT.R::CatTime("Reference grid - country names", Level = 1)
+  IASDT.R::CatTime("Reference grid - country names", Level = 2)
   Grid_CNT <- file.path(Path_Grid, "Grid_10_Land_Crop_sf_Country.RData")
   if (!file.exists(Grid_CNT)) {
     stop(paste0(Grid_CNT, " file does not exist"), call. = FALSE)
@@ -407,36 +474,11 @@ Mod_PrepData <- function(
 
   # # ..................................................................... ###
 
-  ## Habitat coverage -----
+  ## Railway + road intensity ----
+  IASDT.R::CatTime("Railway + road intensity", Level = 1)
 
-  IASDT.R::CatTime("Habitat coverage", Level = 1)
-
-  Path_Hab <- file.path(Path_CLC, "Summary_RData", "PercCov_SynHab_Crop.RData")
-  if (!file.exists(Path_Hab)) {
-    stop(
-      paste0("Path_Hab file: ", Path_Hab, " does not exist"),
-      call. = FALSE)
-  }
-
-  if (Hab_Abb == "0") {
-    # Use dummy habitat values
-    R_Hab <- stats::setNames(Grid_R, "Hab")
-    R_HabLog <- stats::setNames(Grid_R, "HabLog")
-  } else {
-    R_Hab <- IASDT.R::LoadAs(Path_Hab) %>%
-      terra::unwrap() %>%
-      magrittr::extract2(paste0("SynHab_", Hab_Abb)) %>%
-      terra::mask(EffortsMask) %>%
-      stats::setNames("Hab")
-
-    R_HabLog <- log10(R_Hab + 0.1) %>%
-      stats::setNames("HabLog")
-  }
-
-  # # ..................................................................... ###
-
-  ## Road ----
-  IASDT.R::CatTime("Road intensity", Level = 1)
+  ### Road ----
+  IASDT.R::CatTime("Road intensity", Level = 2)
 
   # road intensity of any road type
   R_RoadInt <- file.path(Path_Roads, "Road_Length.RData")
@@ -453,10 +495,10 @@ Mod_PrepData <- function(
   R_RoadIntLog <- log10(R_RoadInt + 0.1) %>%
     stats::setNames("RoadIntLog")
 
-  # # ..................................................................... ###
+  # # ||||||||||||||||||||||||||||||||||||||||||
 
-  ## Railways ----
-  IASDT.R::CatTime("Railway intensity", Level = 1)
+  ### Railways ----
+  IASDT.R::CatTime("Railway intensity", Level = 2)
 
   # Railway intensity
   R_RailInt <- file.path(Path_Rail, "Railways_Length.RData")
@@ -473,11 +515,10 @@ Mod_PrepData <- function(
   R_RailIntLog <- log10(R_RailInt + 0.1) %>%
     stats::setNames("RailIntLog")
 
-  # # ..................................................................... ###
+  # # ||||||||||||||||||||||||||||||||||||||||||
 
-  ## Road + rail ----
-
-  IASDT.R::CatTime("Railway + road intensity", Level = 1)
+  ### Merging Road + rail ----
+  IASDT.R::CatTime("Merging Railway + road intensity", Level = 2)
   R_RoadRail <- (R_RoadInt + R_RailInt) %>%
     stats::setNames("RoadRail")
   R_RoadRailLog <- log10(R_RoadRail + 0.1) %>%
@@ -491,9 +532,27 @@ Mod_PrepData <- function(
   R_Efforts <- IASDT.R::LoadAs(R_Bias) %>%
     terra::unwrap() %>%
     magrittr::extract2("NObs") %>%
+    terra::mask(EffortsMask) %>%
     stats::setNames("Efforts")
   R_EffortsLog <- log10(R_Efforts + 0.1) %>%
     stats::setNames("EffortsLog")
+
+  # # ..................................................................... ###
+
+  ## River length ----
+  IASDT.R::CatTime("River length", Level = 1)
+
+  R_Rivers <- file.path(Path_Rivers, "River_Lengths.RData")
+  if (!file.exists(R_Rivers)) {
+    stop(paste0(R_Rivers, " file does not exist"), call. = FALSE)
+  }
+  R_Rivers <- IASDT.R::LoadAs(R_Rivers) %>%
+    terra::unwrap() %>%
+    magrittr::extract2("STRAHLER_5") %>%
+    terra::mask(EffortsMask) %>%
+    stats::setNames("Rivers")
+  R_RiversLog <- log10(R_Rivers + 0.1) %>%
+    stats::setNames("RiversLog")
 
   # # ..................................................................... ###
 
@@ -504,7 +563,7 @@ Mod_PrepData <- function(
   DT_All <- c(
     R_CHELSA, R_Hab, R_HabLog, R_RoadInt, R_RoadIntLog,
     R_RailInt, R_RailIntLog, R_RoadRail, R_RoadRailLog,
-    R_Efforts, R_EffortsLog, R_Sp) %>%
+    R_Efforts, R_EffortsLog, R_Rivers, R_RiversLog, R_Sp) %>%
     as.data.frame(na.rm = TRUE, xy = TRUE, cells = TRUE) %>%
     tibble::tibble() %>%
     # Add country name
@@ -520,17 +579,16 @@ Mod_PrepData <- function(
 
   # Save model data to disk -----
 
-  if (SaveData) {
-    IASDT.R::CatTime("Save model data to disk")
-    if (Hab_Abb == "0") {
-      OutObjName <- "ModDT_0_All"
-    } else {
-      OutObjName <- paste0("ModDT_", stringr::str_remove(Hab_column, "Hab_"))
-    }
-    IASDT.R::SaveAs(
-      InObj = DT_All, OutObj = OutObjName,
-      OutPath = file.path(Path_Model, paste0(OutObjName, ".RData")))
+  IASDT.R::CatTime("Save model data to disk")
+  if (Hab_Abb == "0") {
+    OutObjName <- "ModDT_0_All"
+  } else {
+    OutObjName <- paste0("ModDT_", stringr::str_remove(Hab_column, "Hab_"))
   }
+
+  IASDT.R::SaveAs(
+    InObj = DT_All, OutObj = OutObjName,
+    OutPath = file.path(Path_Model, paste0(OutObjName, ".RData")))
 
   # # ..................................................................... ###
 

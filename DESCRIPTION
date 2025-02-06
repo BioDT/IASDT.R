@@ -116,7 +116,7 @@ LinkingTo:
     RcppArmadillo (>= 14.2.2)
 Remotes:
     EmilHvitfeldt/paletteer,
-    hmsc-r/HMSC,
+    url::https://github.com/hmsc-r/HMSC/archive/refs/heads/master.zip
     isciences/exactextractr,
     YuLab-SMU/ggtree
 Config/testthat/edition: 3

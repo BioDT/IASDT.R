@@ -23,7 +23,7 @@ Imports:
     future (>= 1.34.0),
     future.apply (>= 1.11.3),
     ggplot2 (>= 3.5.1),
-    Hmsc (>= 3.1.3),
+    Hmsc (>= 3.0-13),
     lubridate (>= 1.9.4),
     purrr (>= 1.0.2),
     Rcpp (>= 1.0.13),
@@ -116,7 +116,7 @@ LinkingTo:
     RcppArmadillo (>= 14.2.2)
 Remotes:
     EmilHvitfeldt/paletteer,
-    url::https://github.com/hmsc-r/HMSC/archive/refs/heads/master.zip
+    hmsc-r/HMSC,
     isciences/exactextractr,
     YuLab-SMU/ggtree
 Config/testthat/edition: 3

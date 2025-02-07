@@ -9,6 +9,7 @@ version: 0.1.2
 date-released: 2025-02-06
 url: "https://biodt.github.io/IASDT.R"
 repository-code: "https://github.com/BioDT/IASDT.R"
+doi: 10.5281/zenodo.14834385
 keywords:
 - digital-twin
 - r

@@ -54,7 +54,7 @@ Contributions, suggestions, and bug reports are welcome. Please make changes on 
 
 If you use the `IASDT.R` package in your research, please cite it as:
 
-> El-Gabbas A. (2025). IASDT.R: Helper R functions for the Invasive Alien Species (IAS) prototype Digital Twin (IAS-pDT). R package version x.x, https://github.com/BioDT/IASDT.R, https://biodt.eu.
+> El-Gabbas A. (2025). IASDT.R: Helper R functions for the Invasive Alien Species (IAS) prototype Digital Twin (IAS-pDT). R package version x.x. DOI: [10.5281/zenodo.14834385](https://doi.org/10.5281/zenodo.14834385). https://github.com/BioDT/IASDT.R, https://biodt.eu.
 
 ---
 

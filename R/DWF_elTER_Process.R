@@ -2,7 +2,7 @@
 # elTER_Process ----
 ## |------------------------------------------------------------------------| #
 
-#' eLTER Data Processing Function
+#' eLTER data processing function
 #'
 #' This function processes pre-cleaned and pre-standardized eLTER data.
 #' @param FromHPC Logical indicating whether the work is being done from HPC, to

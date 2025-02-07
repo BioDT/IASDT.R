@@ -752,6 +752,7 @@ Convergence_Plot <- function(
         x == "HabLog" ~ "% Habitat coverage",
         x == "RoadRailLog" ~ "Road + Rail intensity",
         x == "EffortsLog" ~ "Sampling efforts",
+        x == "RiversLog" ~ "River length",
         .default = x)
 
       Plots <- dplyr::filter(BetaTracePlots_ByVar, Variable == x) %>%
@@ -908,6 +909,7 @@ Convergence_Plot <- function(
                 .x == "HabLog" ~ "% Habitat coverage",
                 .x == "RoadRailLog" ~ "Road + Rail intensity",
                 .x == "EffortsLog" ~ "Sampling efforts",
+                .x == "RiversLog" ~ "River length",
                 .default = .x)
             }),
           Plot = purrr::map2(

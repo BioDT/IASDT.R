@@ -37,8 +37,8 @@ Mod_Postprocess <- function(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
       "MRI-ESM2-0", "UKESM1-0-LL"),
     CC_Scenario = c("ssp126", "ssp370", "ssp585"),
-    Pred_Clamp = TRUE, Fix_Efforts = "q90", Pred_NewSites = TRUE,
-    CVName = c("CV_Dist", "CV_Large")) {
+    Pred_Clamp = TRUE, Fix_Efforts = "q90", Fix_Rivers = "q90",
+    Pred_NewSites = TRUE, CVName = c("CV_Dist", "CV_Large")) {
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -368,7 +368,8 @@ Mod_Postprocess <- function(
   Model_Predictions <- IASDT.R::Predict_Maps(
     Path_Model = Path_Model, Hab_Abb = Hab_Abb, EnvFile = EnvFile,
     FromHPC = FromHPC, NCores = NCores, Pred_Clamp = Pred_Clamp,
-    Fix_Efforts = Fix_Efforts, Pred_NewSites = Pred_NewSites, UseTF = UseTF,
+    Fix_Efforts = Fix_Efforts, Fix_Rivers = Fix_Rivers,
+    Pred_NewSites = Pred_NewSites, UseTF = UseTF,
     TF_Environ = TF_Environ, CC_Models = CC_Models, CC_Scenario = CC_Scenario,
     Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup,
     TF_use_single = TF_use_single, LF_NCores = LF_NCores, LF_Check = LF_Check,
@@ -462,7 +463,7 @@ Mod_Postprocess_1_CPU <- function(
     N_Grid = 50L, UseTF = TRUE, TF_use_single = FALSE, LF_NCores = NCores,
     LF_Temp_Cleanup = TRUE, LF_Check = FALSE, Temp_Cleanup = TRUE,
     TF_Environ = NULL, Pred_Clamp = TRUE, Fix_Efforts = "q90",
-    Pred_NewSites = TRUE, NCores_VP = 3) {
+    Fix_Rivers = "q90", Pred_NewSites = TRUE, NCores_VP = 3) {
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -722,7 +723,8 @@ Mod_Postprocess_1_CPU <- function(
   IASDT.R::Predict_Maps(
     Path_Model = Path_Model, Hab_Abb = Hab_Abb, EnvFile = EnvFile,
     FromHPC = FromHPC, NCores = NCores, Pred_Clamp = Pred_Clamp,
-    Fix_Efforts = Fix_Efforts, Pred_NewSites = Pred_NewSites, UseTF = UseTF,
+    Fix_Efforts = Fix_Efforts, Fix_Rivers = Fix_Rivers,
+    Pred_NewSites = Pred_NewSites, UseTF = UseTF,
     TF_Environ = TF_Environ, Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup,
     TF_use_single = TF_use_single, LF_NCores = LF_NCores, LF_Check = LF_Check,
     LF_Temp_Cleanup = LF_Temp_Cleanup, LF_Only = TRUE, LF_Commands_Only = TRUE)
@@ -1153,7 +1155,7 @@ Mod_Postprocess_2_CPU <- function(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
       "MRI-ESM2-0", "UKESM1-0-LL"),
     CC_Scenario = c("ssp126", "ssp370", "ssp585"),
-    RC_NCores = 8L, Pred_Clamp = TRUE, Fix_Efforts = "q90",
+    RC_NCores = 8L, Pred_Clamp = TRUE, Fix_Efforts = "q90", Fix_Rivers = "q90",
     Pred_NewSites = TRUE) {
 
   .StartTime <- lubridate::now(tzone = "CET")
@@ -1361,7 +1363,8 @@ Mod_Postprocess_2_CPU <- function(
   IASDT.R::Predict_Maps(
     Path_Model = Path_Model, Hab_Abb = Hab_Abb, EnvFile = EnvFile,
     FromHPC = FromHPC, NCores = NCores, Pred_Clamp = Pred_Clamp,
-    Fix_Efforts = Fix_Efforts, Pred_NewSites = Pred_NewSites, UseTF = UseTF,
+    Fix_Efforts = Fix_Efforts, Fix_Rivers = Fix_Rivers,
+    Pred_NewSites = Pred_NewSites, UseTF = UseTF,
     TF_Environ = TF_Environ, Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup,
     TF_use_single = TF_use_single, LF_NCores = LF_NCores, LF_Check = LF_Check,
     LF_Temp_Cleanup = LF_Temp_Cleanup, LF_Only = FALSE,
@@ -1389,7 +1392,7 @@ Mod_Postprocess_2_CPU <- function(
   IASDT.R::VarPar_Plot(
     Path_Model = Path_Model, EnvFile = EnvFile, VarParFile = "VarPar",
     FromHPC = FromHPC, UseTF = UseTF, TF_Environ = TF_Environ, NCores = NCores,
-    PlotRaw = TRUE, Fig_width = 30, Fig_height = 15)
+    Fig_width = 30, Fig_height = 15)
 
   # ****************************************************************
 

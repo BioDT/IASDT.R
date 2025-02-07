@@ -2,7 +2,7 @@
 % Please edit documentation in R/DWF_EASIN_Plot.R
 \name{EASIN_Plot}
 \alias{EASIN_Plot}
-\title{EASIN_Plot}
+\title{Plotting cleaned EASIN data}
 \usage{
 EASIN_Plot(EnvFile = ".env", FromHPC = TRUE)
 }

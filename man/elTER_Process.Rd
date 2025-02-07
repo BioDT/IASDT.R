@@ -2,7 +2,7 @@
 % Please edit documentation in R/DWF_elTER_Process.R
 \name{elTER_Process}
 \alias{elTER_Process}
-\title{eLTER Data Processing Function}
+\title{eLTER data processing function}
 \usage{
 elTER_Process(FromHPC = TRUE, EnvFile = ".env", StartYear = 1981)
 }

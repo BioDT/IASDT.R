@@ -113,6 +113,7 @@ PlotBetaGG <- function(
     CovNames == "(Intercept)" ~ "\n\nIntercept\n",
     CovNames == "EffortsLog" ~ "\n\nSampling\nefforts",
     CovNames == "RoadRailLog" ~ "\n\n\nRoad &\nRail\nintensity",
+    CovNames == "RiversLog" ~ "\n\nRiver\nlength",
     CovNames == "HabLog" ~ "\n\nHabitat\ncoverage",
     .default = paste0("\n\n", CovNames))
   SupportMatrix <- (post$support > supportLevel) %>%

@@ -199,58 +199,44 @@ RespCurv_PlotSp <- function(
         dplyr::slice(gtools::mixedorder(Variable)) %>%
         dplyr::mutate(
           VarDesc = dplyr::case_when(
-            Variable == "bio2" ~ paste0(
-              "<span style='font-size: 10pt;'><b>Bio2</b></span>"),
-            Variable == "bio4" ~ paste0(
-              "<span style='font-size: 10pt;'><b>Bio4</b></span>"),
-            Variable == "bio6" ~ paste0(
-              "<span style='font-size: 10pt;'><b>Bio6</b></span>"),
-            Variable == "bio8" ~ paste0(
-              "<span style='font-size: 10pt;'><b>Bio8</b></span>"),
-            Variable == "bio12" ~ paste0(
-              "<span style='font-size: 10pt;'><b>Bio12</b></span>"),
-            Variable == "bio15" ~ paste0(
-              "<span style='font-size: 10pt;'><b>Bio15</b></span>"),
-            Variable == "bio18" ~ paste0(
-              "<span style='font-size: 10pt;'><b>Bio18</b></span>"),
-            Variable == "RoadRailLog" ~ paste0(
-              "<span style='font-size: 10pt;'><b>Road + Rail intensity</b>",
-              "</span>"),
-            Variable == "EffortsLog" ~ paste0(
-              "<span style='font-size: 10pt;'><b>Sampling efforts</b></span>"),
-            Variable == "HabLog" ~ paste0(
-              "<span style='font-size: 10pt;'>",
-              "<b>% habitat coverage</b></span>"),
+            stringr::str_detect(Variable, "^bio") ~
+            stringr::str_to_sentence(Variable),
+            Variable == "RoadRailLog" ~ "Road + Rail intensity",
+            Variable == "EffortsLog" ~ "Sampling efforts",
+            Variable == "RiversLog" ~ "River length",
+            Variable == "HabLog" ~ "% habitat coverage",
             .default = Variable),
+          VarDesc = paste0(
+              "<span style='font-size: 10pt;'><b>", VarDesc, "</b></span>"),
 
           VarDesc2 = dplyr::case_when(
-            Variable == "bio2" ~ paste0(
-              "<span style='font-size: 8pt;'>Mean diurnal range</span>"),
-            Variable == "bio4" ~ paste0(
-              "<span style='font-size: 8pt;'>temperature seasonality</span>"),
-            Variable == "bio6" ~ paste0(
-              "<span style='font-size: 8pt;'>temperature of the coldest ",
-              "month</span>"),
-            Variable == "bio8" ~ paste0(
-              "<span style='font-size: 8pt;'>temperatures of the wettest ",
-              "quarter</span>"),
-            Variable == "bio12" ~ paste0(
-              "<span style='font-size: 8pt;'>annual precipitation amount",
-              "</span>"),
-            Variable == "bio15" ~ paste0(
-              "<span style='font-size: 8pt;'>precipitation seasonality</span>"),
-            Variable == "bio18" ~ paste0(
-              "<span style='font-size: 8pt;'>monthly precipitation amount ",
-              "of the warmest quarter</span>"),
-            Variable == "RoadRailLog" ~ paste0(
-              "<span style='font-size: 8pt;'> (log<sub>10",
-              "</sub>(x + 0.1))</span>"),
-            Variable == "EffortsLog" ~ paste0(
-              "<span style='font-size: 8pt;'> (log<sub>10",
-              "</sub>(x + 0.1))</span>"),
-            Variable == "HabLog" ~ paste0(
-              "<span style='font-size: 8pt;'> (log<sub>10",
-              "</sub>(x + 0.1))</span>")))
+            Variable == "bio1" ~ "annual mean temperature",
+            Variable == "bio2" ~ "mean diurnal range",
+            Variable == "bio3" ~ "isothermality (bio2/bio7) (&times;100)",
+            Variable == "bio4" ~ "temperature seasonality",
+            Variable == "bio5" ~ "max temperature of warmest month",
+            Variable == "bio6" ~ "temperature of the coldest month",
+            Variable == "bio7" ~ "temperature annual range (bio5-bio6)",
+            Variable == "bio8" ~ "temperatures of the wettest quarter",
+            Variable == "bio9" ~ "mean temperature of driest quarter",
+            Variable == "bio10" ~ "mean temperature of warmest quarter",
+            Variable == "bio11" ~ "mean temperature of coldest quarter",
+            Variable == "bio12" ~ "annual precipitation amount",
+            Variable == "bio13" ~ "precipitation of wettest month",
+            Variable == "bio14" ~ "precipitation of driest month",
+            Variable == "bio15" ~ "precipitation seasonality",
+            Variable == "bio16" ~ "precipitation of wettest quarter",
+            Variable == "bio17" ~ "precipitation of driest quarter",
+            Variable == "bio18" ~ "precipitation of the warmest quarter",
+            Variable == "bio19" ~ "precipitation of coldest quarter",
+            Variable == "npp" ~ "net primary productivity",
+            Variable == "RiversLog" ~ " (log<sub>10</sub>(x + 0.1))",
+            Variable == "RoadRailLog" ~ " (log<sub>10</sub>(x + 0.1))",
+            Variable == "EffortsLog" ~ " (log<sub>10</sub>(x + 0.1))",
+            Variable == "HabLog" ~ " (log<sub>10</sub>(x + 0.1))",
+            .default = Variable),
+          VarDesc2 = paste0(
+            "<span style='font-size: 8pt;'>", VarDesc2, "</span>"))
 
       # nolint start
       Species2 <- dplyr::filter(SpeciesNames, IAS_ID == !!Species)

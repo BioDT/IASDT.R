@@ -1,4 +1,4 @@
-url: https://biodt.eu/
+url: https://biodt.github.io/IASDT.R
 
 template:
   bootstrap: 5
@@ -26,6 +26,7 @@ reference:
 - title: Data workflow - species distribution
   desc: Functions for preparing species observation data
 - subtitle: GBIF
+  desc: Process GBIF data
   contents:
   - GBIF_Process
   - GBIF_Download
@@ -33,15 +34,17 @@ reference:
   - GBIF_ReadChunk
   - GBIF_Check
 - subtitle: EASIN
+  desc: Process EASIN data
   contents:
   - EASIN_Process
   - EASIN_Taxonomy
   - EASIN_Down
   - EASIN_Plot
 - subtitle: eLTER
+  desc: Process eLTER data
   contents:
   - elTER_Process
-- subtitle: Species presence-absence data
+- subtitle: Merging species observation data
   contents:
   - IAS_Process
   - IAS_Distribution
@@ -54,15 +57,18 @@ reference:
 - title: Data workflow - Predictors and other data
   desc: Functions for preparing predictors and other abiotic data
 - subtitle: CLC
+  desc: Process Corine Land Cover data to obtain % coverage of habitat types
   contents:
   - CLC_Process
 - subtitle: CHELSA
+  desc: Process CHELSA data
   contents:
   - CHELSA_Vars
   - CHELSA_Prepare
   - CHELSA_Process
   - CHELSA_Project
 - subtitle: Sampling efforts
+  desc: Request, prepare, and process sampling efforts data from GBIF
   contents:
   - Efforts_Request
   - Efforts_Download
@@ -72,6 +78,7 @@ reference:
   - Efforts_SummarizeMaps
   - Efforts_Process
 - subtitle: Railway, roads, and rivers
+  desc: Processing railway and road intensity and the length of rivers per grid cell
   contents:
   - Railway_Intensity
   - Road_Intensity
@@ -80,24 +87,26 @@ reference:
 - title: Modelling functions
   desc: Functions for preparing data, running the models, and postprocessing of model outputs
 - subtitle: Data preparation
+  desc: Prepare input data and scripts for fitting Hmsc-HPC on GPU
   contents:
-  - Mod_PrepData
-  - Mod_Prep4HPC
   - GetCV
   - PrepKnots
-- subtitle: Model fitting
-  contents:
+  - Mod_PrepData
+  - Mod_Prep4HPC
   - Mod_SLURM
   - Mod_SLURM_Refit
   - Mod_Fit_WS
   - Mod_CV_Fit
 - subtitle: Model postprocessing
+  desc: Postprocessing model outputs, including checking for convergence, making spatial predictions, evaluation, and plotting.
   contents:
   - GetPosts
   - Merge_Chains
   - Mod_Summary
   - RespCurv_PrepData
   - RespCurv_PlotSpAll
+  - RespCurv_PlotSp
+  - RespCurv_PlotSR
   - Predict_LF
   - Mod_Plot_LF
   - Mod_Prep_TF
@@ -107,10 +116,8 @@ reference:
   - Mod_Postprocess
   - Mod_Postprocess_1_CPU
   - Mod_Postprocess_2_CPU
-  - Mod_Eval_Plot
   - Mod_CV_Eval
-- subtitle: Model postprocessing - plotting
-  contents:
+  - Mod_Eval_Plot
   - PlotBetaGG
   - PlotOmegaGG
   - PlotAlpha
@@ -124,8 +131,6 @@ reference:
   - PlotGelman_Beta
   - PlotGelman_Omega
   - PlotGelman_Rho
-  - RespCurv_PlotSp
-  - RespCurv_PlotSR
 - subtitle: Helper functions
   contents:
   - Coda_to_tibble
@@ -169,7 +174,7 @@ reference:
   - AddImg2Plot
   - AddLine
   - integer_breaks
-- subtitle: Printing functions
+- subtitle: Printing/logging functions
   contents:
   - CatSep
   - CatTime

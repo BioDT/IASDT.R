@@ -37,7 +37,7 @@ RespCurv_PlotSR <- function(ModelDir, Verbose = TRUE, NCores = 8) {
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Trend2 <- Variable <- Quant <- Observed <- Trend <- NFV <- Coords <-
     RC_Path_SR <- RC_Path_Orig <- RC_Path_Prob <- DT <- data <- XVals <-
-    Pred <- Q975 <- Q25 <- Q50 <- X <- Y <- NULL
+    Pred <- Q975 <- Q25 <- Q50 <- X <- Y <- Variable2 <- Var2 <- NULL
 
   # # ..................................................................... ###
 
@@ -134,6 +134,39 @@ RespCurv_PlotSR <- function(ModelDir, Verbose = TRUE, NCores = 8) {
 
   IASDT.R::CatTime("Plot species richness response curves", Level = 1)
 
+
+  VarLabel <- tibble::tribble(
+    ~Variable1, ~Var2, ~Variable2,
+    "bio1", "Bio1", "Annual mean temperature",
+    "bio2", "Bio2", "Mean diurnal range",
+    "bio3", "Bio3", "Isothermality (bio2/bio7) (&times;100)",
+    "bio4", "Bio4", "Temperature seasonality [standard deviation &times;100]",
+    "bio5", "Bio5", "Max temperature of warmest month",
+    "bio6", "Bio6", "Temperature of the coldest month",
+    "bio7", "Bio7", "Temperature annual range (bio5-bio6)",
+    "bio8", "Bio8", "Temperatures of the wettest quarter",
+    "bio9", "Bio9", "Mean temperature of driest quarter",
+    "bio10", "Bio10", "Mean temperature of warmest quarter",
+    "bio11", "Bio11", "Mean temperature of coldest quarter",
+    "bio12", "Bio12", "Annual precipitation amount",
+    "bio13", "Bio13", "Precipitation of wettest month",
+    "bio14", "Bio14", "Precipitation of driest month",
+    "bio15", "Bio15", "Precipitation seasonality [Coefficient of Variation]",
+    "bio16", "Bio16", "Precipitation of wettest quarter",
+    "bio17", "Bio17", "Precipitation of driest quarter",
+    "bio18", "Bio18", "Monthly precipitation amount of the warmest quarter",
+    "bio19", "Bio19", "Precipitation of coldest quarter",
+    "npp", "NPP", "net primary productivity",
+    "RiversLog", "River length", "log10(x + 0.1)",
+    "RoadRailLog", "Road + Rail intensity", "log10(x + 0.1)",
+    "HabLog", "% habitat coverage", "log10(x + 0.1)",
+    "EffortsLog", "Sampling efforts", "log10(x + 0.1)") %>%
+    dplyr::mutate(
+      Variable2 = paste0(
+        "<span style='font-size: 10pt;'><b>", Var2, "</b></span>",
+        "<span style='font-size: 8pt;'> (", Variable2, ")</span>")) %>%
+    dplyr::select(-Var2)
+
   SR_DT_All <- SR_DT_All %>%
     dplyr::mutate(
       Plot = purrr::pmap(
@@ -160,52 +193,14 @@ RespCurv_PlotSR <- function(ModelDir, Verbose = TRUE, NCores = 8) {
               Trend2 = as.character(Trend2), X = -Inf, Y = Inf)
 
           # Variable long name (x-axis label)
-          Variable2 <- dplyr::case_when(
-            Variable == "bio2" ~ paste0(
-              "<span style='font-size: 10pt;'><b>Bio2</b></span><span ",
-              "style='font-size: 7pt;'> (Mean diurnal range [mean of monthly ",
-              "(max temperature - min temperature)])</span>"),
-            Variable == "bio4" ~ paste0(
-              "<span style='font-size: 10pt;'><b>Bio4</b></span><span ",
-              "style='font-size: 7pt;'> (temperature seasonality [standard ",
-              "deviation &times;100])</span>"),
-            Variable == "bio6" ~ paste0(
-              "<span style='font-size: 10pt;'><b>Bio6</b></span><span ",
-              "style='font-size: 7pt;'> (temperature of the coldest ",
-              "month)</span>"),
-            Variable == "bio8" ~ paste0(
-              "<span style='font-size: 10pt;'><b>Bio8</b></span><span ",
-              "style='font-size: 7pt;'> (temperatures of the wettest ",
-              "quarter)</span>"),
-            Variable == "bio12" ~ paste0(
-              "<span style='font-size: 10pt;'><b>Bio12</b></span><span ",
-              "style='font-size: 7pt;'> (annual precipitation amount)</span>"),
-            Variable == "bio15" ~ paste0(
-              "<span style='font-size: 10pt;'><b>Bio15</b></span><span ",
-              "style='font-size: 7pt;'> (precipitation seasonality ",
-              "[Coefficient of Variation])</span>"),
-            Variable == "bio18" ~ paste0(
-              "<span style='font-size: 10pt;'><b>Bio18</b></span><span ",
-              "style='font-size: 7pt;'> (monthly precipitation amount of ",
-              "the warmest quarter)</span>"),
-            Variable == "RoadRailLog" ~ paste0(
-              "<span style='font-size: 10pt;'><b>Road + Rail intensity</b>",
-              "</span><span style='font-size: 7pt;'> (log<sub>10</sub>(x + ",
-              "0.1))</span>"),
-            Variable == "HabLog" ~ paste0(
-              "<span style='font-size: 10pt;'><b>% habitat coverage</b></span>",
-              "<span style='font-size: 8pt;'> (log<sub>10",
-              "</sub>(x + 0.1))</span>"),
-            Variable == "EffortsLog" ~ paste0(
-              "<span style='font-size: 10pt;'><b>Sampling efforts</b>",
-              "</span><span style='font-size: 7pt;'> (log<sub>10</sub>(x + ",
-              "0.1))</span>"),
-            .default = Variable)
+          Variable2 <- dplyr::filter(VarLabel, Variable1 == Variable) %>%
+            dplyr::pull(Variable2)
 
           VarName <- dplyr::case_when(
             Variable == "HabLog" ~ "% Habitat coverage",
             Variable == "RoadRailLog" ~ "Road + Rail intensity",
             Variable == "EffortsLog" ~ "Sampling efforts",
+            Variable == "RiversLog" ~ "River length",
             .default = Variable)
 
           # facetting labels
@@ -298,7 +293,8 @@ RespCurv_PlotSR <- function(ModelDir, Verbose = TRUE, NCores = 8) {
 
 
           # Back-transforming variables
-          if (Variable %in% c("EffortsLog", "RoadRailLog", "HabLog")) {
+          if (Variable %in% c(
+            "EffortsLog", "RoadRailLog", "HabLog", "RiversLog")) {
 
             IASDT.R::CatTime(
               paste0(Variable, " - coords = ", Coords, " - original scale"),
@@ -312,19 +308,15 @@ RespCurv_PlotSR <- function(ModelDir, Verbose = TRUE, NCores = 8) {
 
             # Variable long name (x-axis label)
             Variable2 <- dplyr::case_when(
-              Variable == "RoadRailLog" ~ paste0(
-                "<span style='font-size: 10pt;'><b>Road + Rail intensity</b>",
-                "</span><span style='font-size: 7pt;'> (original scale)",
-                "</span>"),
-              Variable == "HabLog" ~ paste0(
-                "<span style='font-size: 10pt;'>",
-                "<b>% habitat coverage</b></span>",
-                "<span style='font-size: 8pt;'> (original scale)</span>"),
-              Variable == "EffortsLog" ~ paste0(
-                "<span style='font-size: 10pt;'><b>Sampling efforts</b>",
-                "</span><span style='font-size: 7pt;'> (original scale)",
-                "</span>"),
-              .default = Variable)
+              Variable == "RoadRailLog" ~ "Road + Rail intensity",
+              Variable == "HabLog" ~ "% habitat coverage",
+              Variable == "RiversLog" ~ "River length",
+              Variable == "EffortsLog" ~ "Sampling efforts",
+              .default = Variable) %>%
+              paste0(
+                "<span style='font-size: 10pt;'><b>", .,
+                "</b></span><span style='font-size: 7pt;'> (original scale)",
+                "</span>")
 
             Plot2 <- ggplot2::ggplot(
               data = Observed2, mapping = ggplot2::aes(x = XVals, y = Pred)) +

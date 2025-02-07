@@ -1,19 +1,22 @@
 
 # IASDT.R R-package
 
-The `IASDT.R` R package supports the invasive alien species (IAS)
-prototype Digital Twin (`IAS-pDT`), as part of the EU-funded
-[`BioDT`](https://biodt.eu/) project. This package provides functions
-for processing input data (biotic and abiotic) and modeling the
-distribution of IAS across Europe using joint species distribution
-models. By the end of the project, it is planned that the package will
-enable end users to access model outputs (e.g., prediction maps)
-directly from R.
+[`IASDT.R`](https://biodt.github.io/IASDT.R/index.html) supports the
+invasive alien species (IAS) prototype Digital Twin (`IAS-pDT`), as part
+of the EU-funded [`BioDT`](https://biodt.eu/) project. This package
+provides functions for processing input data (biotic and abiotic) and
+modeling the distribution of IAS across Europe using joint species
+distribution models. By the end of the project, it is planned that the
+package will enable end users to access model outputs (e.g., prediction
+maps) directly from R.
 
 More information on the BioDT project can be found at this
 [`link`](https://biodt.eu/). For more information on the IAS-pDT, see
-[`Khan, El-Gabbas, et al. (2024)`](https://doi.org/10.3897/rio.10.e124579)
-<br/>
+Khan, El-Gabbas, et
+al. (2024)\[[`Link`](https://doi.org/10.3897/rio.10.e124579)\]
+
+The documentation of the package can be found
+[here](https://biodt.github.io/IASDT.R).
 
 <center>
 
@@ -29,8 +32,8 @@ width="352" alt="BioDT_Logo" />
 
 ## Installing the package
 
-The `IASDT.R` package is currently in development and is private. To
-install the package, use the following command:
+The `IASDT.R` package is currently under development. To install the
+package, use the following command:
 
 ``` r
 remotes::install_github(repo = "BioDT/IASDT.R", dependencies = TRUE)
@@ -50,8 +53,9 @@ renv::update("IASDT.R", prompt = FALSE)
 
 ## Contribute to the package
 
-We welcome contributions and bug reports to the package. Please make
-changes on a new branch and submit a pull request.
+Contributions, suggestions, and bug reports are welcome. Please make
+changes on a new branch and submit a pull request or make an issue
+[here](https://github.com/BioDT/IASDT.R/issues).
 
 > For questions, please get in touch with
 > [me](https://elgabbas.netlify.app/) at `ahmed.el-gabbas[at]ufz[dot]de`
@@ -60,9 +64,9 @@ changes on a new branch and submit a pull request.
 
 If you use the `IASDT.R` package in your research, please cite it as:
 
-> El-Gabbas, A. (2024) IASDT.R: An R package for the invasive alien
-> species prototype Digital Twin (IAS-pDT).
-> <https://github.com/BioDT/IASDT.R>. R package version XX.
+> El-Gabbas A. (2025). IASDT.R: Helper R functions for the Invasive
+> Alien Species (IAS) prototype Digital Twin (IAS-pDT). R package
+> version x.x, <https://github.com/BioDT/IASDT.R>, <https://biodt.eu>.
 
 ------------------------------------------------------------------------
 

@@ -2,7 +2,7 @@
 # EASIN_Plot ----
 ## |------------------------------------------------------------------------| #
 
-#' EASIN_Plot
+#' Plotting cleaned EASIN data
 #'
 #' Generates a series of plots for cleaned EASIN data, including the number of
 #' observations, number of species, and the distribution of these metrics per
@@ -198,7 +198,7 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
   ### Combine maps ----
   IASDT.R::CatTime(
     Text = "Merge maps side by side and save as JPEG", Level = 2)
-  
+
   Plot <- ggpubr::ggarrange(
     Plot_NObs,
     (ggplot2::ggplot() + ggplot2::theme_void()),
@@ -211,7 +211,7 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
         plot.title = ggtext::element_markdown(
           size = 9, face = "bold", hjust = 0.5,
           margin = ggplot2::margin(0, 0, 0, 0))))
-    
+
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   grDevices::jpeg(
     filename = file.path(Path_EASIN_Summary, "EASIN_Data.jpeg"),
@@ -294,7 +294,7 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
           tag = LastUpdate) +
         PlottingTheme2
 
-    # Using ggplot2::ggsave directly does not show non-ascii characters 
+    # Using ggplot2::ggsave directly does not show non-ascii characters
     # correctly
     grDevices::jpeg(
       filename = file.path(

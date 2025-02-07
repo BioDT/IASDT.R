@@ -217,6 +217,7 @@ VarPar_Plot <- function(
         "Habitat coverage" = "HabLog",
         "Road+Rail intensity" = "RoadRailLog",
         "Sampling efforts" = "EffortsLog",
+        "River length" = "RiversLog",
         "Spatial effect" = "Random: sample"),
       Label = paste0(
         "<b>", stringr::str_to_title(as.character(Label)),
@@ -434,6 +435,7 @@ VarPar_Plot <- function(
         "Habitat coverage" = "HabLog",
         "Road+Rail intensity" = "RoadRailLog",
         "Sampling efforts" = "EffortsLog",
+        "River length" = "RiversLog",
         "Spatial effect" = "Random: sample"),
       Label = paste0(
         "<b>", stringr::str_to_title(as.character(Label)),

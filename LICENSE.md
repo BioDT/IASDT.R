@@ -1,6 +1,6 @@
 # MIT License
 
-Copyright (c) 2023 Invasive Alien Species Digital Twin
+Copyright (c) 2023 Ahmed El-Gabbas, Helmholtz-Centre for Environmental Research (UFZ)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

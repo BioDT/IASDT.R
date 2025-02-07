@@ -28,15 +28,15 @@
 #' @param Fix_Efforts Numeric or character. Defines the value to fix sampling
 #'   efforts less than the provided value. If numeric, the value is directly
 #'   used (log<sub>10</sub> scale). If character, it can be `median`, `mean`,
-#'   `max`, or `q90` (90% Quantile). Using `max` can reflect extreme values
+#'   `max`, or `q90` (q0% Quantile). Using `max` can reflect extreme values
 #'   caused by rare, highly sampled locations (e.g., urban centers or popular
-#'   natural reserves). While using 90% Quantile avoid such extreme grid cells
+#'   natural reserves). While using 90% quantile avoid such extreme grid cells
 #'   while still capturing areas with high sampling effort. This argument is
 #'   mandatory when `Pred_Clamp` is set to `TRUE`.
 #' @param Fix_Rivers Numeric or character. Similar to `Fix_Efforts`, but for
 #'   fixing the length of rivers. If numeric, the value is directly used
 #'   (log<sub>10</sub> scale). If character, it can be `median`, `mean`, `max`,
-#'   `q90` (90% Quantile). It can be also `NULL` for not fixing the river length
+#'   `q90` (90% quantile). It can be also `NULL` for not fixing the river length
 #'   predictor. Defaults to `q90`.
 #' @param Pred_NewSites Logical indicating whether to predict habitat
 #'   suitability at new sites. Default: `TRUE`. Note: This parameter is

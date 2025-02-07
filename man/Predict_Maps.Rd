@@ -53,16 +53,16 @@ must be provided.}
 \item{Fix_Efforts}{Numeric or character. Defines the value to fix sampling
 efforts less than the provided value. If numeric, the value is directly
 used (log\if{html}{\out{<sub>}}10\if{html}{\out{</sub>}} scale). If character, it can be \code{median}, \code{mean},
-\code{max}, or \code{q90} (90\% Quantile). Using \code{max} can reflect extreme values
+\code{max}, or \code{q90} (q0\% Quantile). Using \code{max} can reflect extreme values
 caused by rare, highly sampled locations (e.g., urban centers or popular
-natural reserves). While using 90\% Quantile avoid such extreme grid cells
+natural reserves). While using 90\% quantile avoid such extreme grid cells
 while still capturing areas with high sampling effort. This argument is
 mandatory when \code{Pred_Clamp} is set to \code{TRUE}.}
 
 \item{Fix_Rivers}{Numeric or character. Similar to \code{Fix_Efforts}, but for
 fixing the length of rivers. If numeric, the value is directly used
 (log\if{html}{\out{<sub>}}10\if{html}{\out{</sub>}} scale). If character, it can be \code{median}, \code{mean}, \code{max},
-\code{q90} (90\% Quantile). It can be also \code{NULL} for not fixing the river length
+\code{q90} (90\% quantile). It can be also \code{NULL} for not fixing the river length
 predictor. Defaults to \code{q90}.}
 
 \item{Pred_NewSites}{Logical indicating whether to predict habitat

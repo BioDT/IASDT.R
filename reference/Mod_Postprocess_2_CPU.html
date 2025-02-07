@@ -77,6 +77,7 @@ plots response curves, and computes and visualizes variance partitioning.</p>
 <span>  RC_NCores <span class="op">=</span> <span class="fl">8L</span>,</span>
 <span>  Pred_Clamp <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  Fix_Efforts <span class="op">=</span> <span class="st">"q90"</span>,</span>
+<span>  Fix_Rivers <span class="op">=</span> <span class="st">"q90"</span>,</span>
 <span>  Pred_NewSites <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -201,12 +202,20 @@ must be provided.</p></dd>
 <dt id="arg-fix-efforts">Fix_Efforts<a class="anchor" aria-label="anchor" href="#arg-fix-efforts"></a></dt>
 <dd><p>Numeric or character. Defines the value to fix sampling
 efforts less than the provided value. If numeric, the value is directly
-used. If character, it can be <code>median</code>, <code>mean</code>, <code>max</code>, or <code>q90</code> (90%
-Quantile). Using <code>max</code> can reflect extreme values caused by rare, highly
-sampled locations (e.g., urban centers or popular natural reserves). While
-using 90% Quantile avoid such extreme grid cells while still capturing
-areas with high sampling effort. This argument is mandatory when
-<code>Pred_Clamp</code> is set to <code>TRUE</code>.</p></dd>
+used (log<sub>10</sub> scale). If character, it can be <code>median</code>, <code>mean</code>,
+<code>max</code>, or <code>q90</code> (90% Quantile). Using <code>max</code> can reflect extreme values
+caused by rare, highly sampled locations (e.g., urban centers or popular
+natural reserves). While using 90% Quantile avoid such extreme grid cells
+while still capturing areas with high sampling effort. This argument is
+mandatory when <code>Pred_Clamp</code> is set to <code>TRUE</code>.</p></dd>
+
+
+<dt id="arg-fix-rivers">Fix_Rivers<a class="anchor" aria-label="anchor" href="#arg-fix-rivers"></a></dt>
+<dd><p>Numeric or character. Similar to <code>Fix_Efforts</code>, but for
+fixing the length of rivers. If numeric, the value is directly used
+(log<sub>10</sub> scale). If character, it can be <code>median</code>, <code>mean</code>, <code>max</code>,
+<code>q90</code> (90% Quantile). It can be also <code>NULL</code> for not fixing the river length
+predictor. Defaults to <code>q90</code>.</p></dd>
 
 
 <dt id="arg-pred-newsites">Pred_NewSites<a class="anchor" aria-label="anchor" href="#arg-pred-newsites"></a></dt>

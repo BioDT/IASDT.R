@@ -56,7 +56,7 @@
     </div><div class="section level2">
 
       <h3 id="gbif">GBIF<a class="anchor" aria-label="anchor" href="#gbif"></a></h3>
-
+      <div class="section-desc"><p>Process GBIF data</p></div>
 
 
     </div><div class="section level2">
@@ -97,7 +97,7 @@
       </dl></div><div class="section level2">
 
       <h3 id="easin">EASIN<a class="anchor" aria-label="anchor" href="#easin"></a></h3>
-
+      <div class="section-desc"><p>Process EASIN data</p></div>
 
 
     </div><div class="section level2">
@@ -128,11 +128,11 @@
           <code><a href="EASIN_Plot.html">EASIN_Plot()</a></code>
 
         </dt>
-        <dd>EASIN_Plot</dd>
+        <dd>Plotting cleaned EASIN data</dd>
       </dl></div><div class="section level2">
 
       <h3 id="elter">eLTER<a class="anchor" aria-label="anchor" href="#elter"></a></h3>
-
+      <div class="section-desc"><p>Process eLTER data</p></div>
 
 
     </div><div class="section level2">
@@ -145,10 +145,10 @@
           <code><a href="elTER_Process.html">elTER_Process()</a></code>
 
         </dt>
-        <dd>eLTER Data Processing Function</dd>
+        <dd>eLTER data processing function</dd>
       </dl></div><div class="section level2">
 
-      <h3 id="species-presence-absence-data">Species presence-absence data<a class="anchor" aria-label="anchor" href="#species-presence-absence-data"></a></h3>
+      <h3 id="merging-species-observation-data">Merging species observation data<a class="anchor" aria-label="anchor" href="#merging-species-observation-data"></a></h3>
 
 
 
@@ -207,7 +207,7 @@
     </div><div class="section level2">
 
       <h3 id="clc">CLC<a class="anchor" aria-label="anchor" href="#clc"></a></h3>
-
+      <div class="section-desc"><p>Process Corine Land Cover data to obtain % coverage of habitat types</p></div>
 
 
     </div><div class="section level2">
@@ -224,7 +224,7 @@
       </dl></div><div class="section level2">
 
       <h3 id="chelsa">CHELSA<a class="anchor" aria-label="anchor" href="#chelsa"></a></h3>
-
+      <div class="section-desc"><p>Process CHELSA data</p></div>
 
 
     </div><div class="section level2">
@@ -259,7 +259,7 @@
       </dl></div><div class="section level2">
 
       <h3 id="sampling-efforts">Sampling efforts<a class="anchor" aria-label="anchor" href="#sampling-efforts"></a></h3>
-
+      <div class="section-desc"><p>Request, prepare, and process sampling efforts data from GBIF</p></div>
 
 
     </div><div class="section level2">
@@ -312,7 +312,7 @@
       </dl></div><div class="section level2">
 
       <h3 id="railway-roads-and-rivers">Railway, roads, and rivers<a class="anchor" aria-label="anchor" href="#railway-roads-and-rivers"></a></h3>
-
+      <div class="section-desc"><p>Processing railway and road intensity and the length of rivers per grid cell</p></div>
 
 
     </div><div class="section level2">
@@ -347,7 +347,7 @@
     </div><div class="section level2">
 
       <h3 id="data-preparation">Data preparation<a class="anchor" aria-label="anchor" href="#data-preparation"></a></h3>
-
+      <div class="section-desc"><p>Prepare input data and scripts for fitting Hmsc-HPC on GPU</p></div>
 
 
     </div><div class="section level2">
@@ -356,6 +356,18 @@
 
 
       <dl><dt>
+
+          <code><a href="GetCV.html">GetCV()</a></code>
+
+        </dt>
+        <dd>Prepare spatial-block cross-validation folds for spatial analysis</dd>
+      </dl><dl><dt>
+
+          <code><a href="PrepKnots.html">PrepKnots()</a></code>
+
+        </dt>
+        <dd>Prepare knot locations for Hmsc GPP models</dd>
+      </dl><dl><dt>
 
           <code><a href="Mod_PrepData.html">Mod_PrepData()</a></code>
 
@@ -368,29 +380,6 @@
         </dt>
         <dd>Prepare initial models in R for model fitting with Hmsc-HPC</dd>
       </dl><dl><dt>
-
-          <code><a href="GetCV.html">GetCV()</a></code>
-
-        </dt>
-        <dd>Prepare spatial-block cross-validation folds for spatial analysis</dd>
-      </dl><dl><dt>
-
-          <code><a href="PrepKnots.html">PrepKnots()</a></code>
-
-        </dt>
-        <dd>Prepare knot locations for Hmsc GPP models</dd>
-      </dl></div><div class="section level2">
-
-      <h3 id="model-fitting">Model fitting<a class="anchor" aria-label="anchor" href="#model-fitting"></a></h3>
-
-
-
-    </div><div class="section level2">
-
-
-
-
-      <dl><dt>
 
           <code><a href="Mod_SLURM.html">Mod_SLURM()</a></code>
 
@@ -417,7 +406,7 @@
       </dl></div><div class="section level2">
 
       <h3 id="model-postprocessing">Model postprocessing<a class="anchor" aria-label="anchor" href="#model-postprocessing"></a></h3>
-
+      <div class="section-desc"><p>Postprocessing model outputs, including checking for convergence, making spatial predictions, evaluation, and plotting.</p></div>
 
 
     </div><div class="section level2">
@@ -455,6 +444,18 @@
 
         </dt>
         <dd>Plot all species response curves</dd>
+      </dl><dl><dt>
+
+          <code><a href="RespCurv_PlotSp.html">RespCurv_PlotSp()</a></code>
+
+        </dt>
+        <dd>Plot species response curves</dd>
+      </dl><dl><dt>
+
+          <code><a href="RespCurv_PlotSR.html">RespCurv_PlotSR()</a></code>
+
+        </dt>
+        <dd>Plot species richness response curves</dd>
       </dl><dl><dt>
 
           <code><a href="Predict_LF.html">Predict_LF()</a></code>
@@ -511,28 +512,17 @@
         <dd>Model pipeline for Hmsc analysis (using CPU)</dd>
       </dl><dl><dt>
 
+          <code><a href="Mod_CV_Eval.html">Mod_CV_Eval()</a></code>
+
+        </dt>
+        <dd>Evaluate cross-validated Hmsc Model</dd>
+      </dl><dl><dt>
+
           <code><a href="Mod_Eval_Plot.html">Mod_Eval_Plot()</a></code>
 
         </dt>
         <dd>Generate plots for the explanatory power of Hmsc models</dd>
       </dl><dl><dt>
-
-          <code><a href="Mod_CV_Eval.html">Mod_CV_Eval()</a></code>
-
-        </dt>
-        <dd>Evaluate cross-validated Hmsc Model</dd>
-      </dl></div><div class="section level2">
-
-      <h3 id="model-postprocessing-plotting">Model postprocessing - plotting<a class="anchor" aria-label="anchor" href="#model-postprocessing-plotting"></a></h3>
-
-
-
-    </div><div class="section level2">
-
-
-
-
-      <dl><dt>
 
           <code><a href="PlotBetaGG.html">PlotBetaGG()</a></code>
 
@@ -610,18 +600,6 @@
 
         </dt>
         <dd>Creates a Gelman-Rubin-Brooks plot for the <code>rho</code> parameter.</dd>
-      </dl><dl><dt>
-
-          <code><a href="RespCurv_PlotSp.html">RespCurv_PlotSp()</a></code>
-
-        </dt>
-        <dd>Plot species response curves</dd>
-      </dl><dl><dt>
-
-          <code><a href="RespCurv_PlotSR.html">RespCurv_PlotSR()</a></code>
-
-        </dt>
-        <dd>Plot species richness response curves</dd>
       </dl></div><div class="section level2">
 
       <h3 id="helper-functions">Helper functions<a class="anchor" aria-label="anchor" href="#helper-functions"></a></h3>
@@ -866,7 +844,7 @@
         <dd>Integer breaks for ggplot axis</dd>
       </dl></div><div class="section level2">
 
-      <h3 id="printing-functions">Printing functions<a class="anchor" aria-label="anchor" href="#printing-functions"></a></h3>
+      <h3 id="printing-logging-functions">Printing/logging functions<a class="anchor" aria-label="anchor" href="#printing-logging-functions"></a></h3>
 
 
 

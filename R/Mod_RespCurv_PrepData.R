@@ -2,7 +2,7 @@
 # RespCurv_PrepData ----
 ## |------------------------------------------------------------------------| #
 
-#' Prepare and Process Response Curve Data for Hmsc Models
+#' Prepare and process response curve data for Hmsc models
 #'
 #' This function prepares and processes data for generating response curves for
 #' Hmsc models. It supports parallel processing and can return the processed

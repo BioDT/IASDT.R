@@ -2,7 +2,7 @@
 # CheckCommands ----
 ## |------------------------------------------------------------------------| #
 
-#' Check System Commands Availability
+#' Check system commands availability
 #'
 #' This function checks if a list of system commands are available on the user's
 #' PATH. If any commands are missing, it stops execution and returns an

@@ -18,7 +18,7 @@ The `IASDT.R` R package supports the invasive alien species (IAS) prototype Digi
 
 More information on the BioDT project can be found at this [`link`](https://biodt.eu/). For more information on the IAS-pDT, see [`Khan, El-Gabbas, et al. (2024)`](https://doi.org/10.3897/rio.10.e124579) <br/>
 
-<center>![](https://git.ufz.de/uploads/-/system/group/avatar/4444/biodt.png){width="352"}</center>
+<center>![BioDT_Logo](https://git.ufz.de/uploads/-/system/group/avatar/4444/biodt.png){width="352"}</center>
 
 <hr>
 

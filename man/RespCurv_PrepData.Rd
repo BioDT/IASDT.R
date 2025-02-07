@@ -2,7 +2,7 @@
 % Please edit documentation in R/Mod_RespCurv_PrepData.R
 \name{RespCurv_PrepData}
 \alias{RespCurv_PrepData}
-\title{Prepare and Process Response Curve Data for Hmsc Models}
+\title{Prepare and process response curve data for Hmsc models}
 \usage{
 RespCurv_PrepData(
   Path_Model = NULL,

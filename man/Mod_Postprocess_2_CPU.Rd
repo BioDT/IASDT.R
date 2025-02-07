@@ -2,7 +2,7 @@
 % Please edit documentation in R/Mod_Postprocess.R
 \name{Mod_Postprocess_2_CPU}
 \alias{Mod_Postprocess_2_CPU}
-\title{Model Pipeline for Hmsc Analysis (using CPU)}
+\title{Model pipeline for Hmsc analysis (using CPU)}
 \usage{
 Mod_Postprocess_2_CPU(
   ModelDir = NULL,

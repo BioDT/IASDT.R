@@ -12,6 +12,6 @@
 #'
 #' @examples
 #' data(CHELSA_Vars)
-#' print(CHELSA_Vars)
+#' print(CHELSA_Vars, n = Inf)
 #'
 "CHELSA_Vars"

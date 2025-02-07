@@ -2,7 +2,7 @@
 % Please edit documentation in R/DWF_CHELSA_Prepare.R
 \name{CHELSA_Prepare}
 \alias{CHELSA_Prepare}
-\title{Prepare and Download CHELSA Climate Data}
+\title{Prepare and download CHELSA climate data}
 \usage{
 CHELSA_Prepare(
   EnvFile = ".env",

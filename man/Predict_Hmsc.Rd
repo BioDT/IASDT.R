@@ -2,7 +2,7 @@
 % Please edit documentation in R/Mod_Predict_Hmsc.R
 \name{Predict_Hmsc}
 \alias{Predict_Hmsc}
-\title{Predict_Hmsc}
+\title{Calculates predicted values from a fitted Hmsc model.}
 \usage{
 Predict_Hmsc(
   Path_Model,
@@ -153,6 +153,5 @@ evaluation results will be saved. Defaults to \code{Evaluation}.}
 \code{FALSE}.}
 }
 \description{
-Calculates predicted values from a fitted \code{Hmsc} model. This function
-modifies the \code{Hmsc:::predict.Hmsc} function.
+This function modifies the \code{Hmsc:::predict.Hmsc} function.
 }

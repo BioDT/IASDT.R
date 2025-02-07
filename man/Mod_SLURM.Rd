@@ -2,7 +2,7 @@
 % Please edit documentation in R/Mod_SLURM.R
 \name{Mod_SLURM}
 \alias{Mod_SLURM}
-\title{Prepare SLURM Files for Hmsc-HPC Model Fitting}
+\title{Prepare SLURM files for Hmsc-HPC model fitting}
 \usage{
 Mod_SLURM(
   ModelDir = NULL,

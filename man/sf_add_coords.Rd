@@ -2,7 +2,7 @@
 % Please edit documentation in R/Spat_sf_add_coords.R
 \name{sf_add_coords}
 \alias{sf_add_coords}
-\title{Add Longitude and Latitude Coordinates to an sf Object}
+\title{Add longitude and latitude coordinates to an sf object}
 \usage{
 sf_add_coords(Sf_Obj, NameX = "Long", NameY = "Lat", Overwrite = FALSE)
 }

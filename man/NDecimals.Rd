@@ -2,7 +2,7 @@
 % Please edit documentation in R/General_NDecimals.R
 \name{NDecimals}
 \alias{NDecimals}
-\title{Number of Decimal Places in a Numeric Value}
+\title{Number of decimal places in a numeric value}
 \usage{
 NDecimals(x)
 }

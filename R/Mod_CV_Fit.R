@@ -2,7 +2,7 @@
 # Mod_CV_Fit ----
 ## |------------------------------------------------------------------------| #
 
-#' Prepare Cross-Validated Hmsc Models for HPC Fitting
+#' Prepare cross-Validated Hmsc models for HPC fitting
 #'
 #' This function prepares cross-validated Hmsc models for fitting using HPC. It
 #' handles data preparation, model initialization, and generation of SLURM

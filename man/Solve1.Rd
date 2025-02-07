@@ -2,7 +2,7 @@
 % Please edit documentation in R/RcppExports.R
 \name{Solve1}
 \alias{Solve1}
-\title{Solve1: Invert a matrix}
+\title{Invert a matrix}
 \usage{
 Solve1(x)
 }

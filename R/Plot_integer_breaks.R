@@ -2,7 +2,7 @@
 # integer_breaks ----
 ## |------------------------------------------------------------------------| #
 #
-#' Integer Breaks for ggplot Axis
+#' Integer breaks for ggplot axis
 #'
 #' This function generates a function that calculates integer axis values for
 #' ggplot, ensuring that the axis breaks are integers. It is particularly useful

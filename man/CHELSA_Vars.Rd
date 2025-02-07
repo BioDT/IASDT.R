@@ -22,7 +22,7 @@ Detailed information on CHELSA climate variables
 }
 \examples{
 data(CHELSA_Vars)
-print(CHELSA_Vars)
+print(CHELSA_Vars, n = Inf)
 
 }
 \keyword{datasets}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/DWF_CHELSA_Process.R
 \name{CHELSA_Process}
 \alias{CHELSA_Process}
-\title{Process CHELSA Climate Data}
+\title{Process CHELSA climate data}
 \usage{
 CHELSA_Process(
   FromHPC = TRUE,

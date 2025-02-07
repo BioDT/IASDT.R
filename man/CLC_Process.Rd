@@ -2,7 +2,7 @@
 % Please edit documentation in R/DWF_CLC_Process.R
 \name{CLC_Process}
 \alias{CLC_Process}
-\title{Process Corine Land Cover (CLC) data}
+\title{Process Corine land cover (CLC) data}
 \usage{
 CLC_Process(EnvFile = ".env", FromHPC = TRUE, MinLandPerc = 15, PlotCLC = TRUE)
 }

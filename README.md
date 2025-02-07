@@ -16,9 +16,14 @@ More information on the BioDT project can be found at this
 <br/>
 
 <center>
+
+<figure>
 <img
 src="https://git.ufz.de/uploads/-/system/group/avatar/4444/biodt.png"
-width="352" />
+width="352" alt="BioDT_Logo" />
+<figcaption aria-hidden="true">BioDT_Logo</figcaption>
+</figure>
+
 </center>
 <hr>
 
@@ -62,4 +67,4 @@ If you use the `IASDT.R` package in your research, please cite it as:
 ------------------------------------------------------------------------
 
 <span style="     color: grey !important;">Last update:
-2025-02-06</span>
+2025-02-07</span>

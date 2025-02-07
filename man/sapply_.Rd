@@ -2,7 +2,7 @@
 % Please edit documentation in R/General_sapply_.R
 \name{sapply_}
 \alias{sapply_}
-\title{Apply a Function over a List or Vector with Optional Silence}
+\title{Apply a function over a list or vector with optional silence}
 \usage{
 sapply_(X, FUN, simplify = TRUE, Silent = TRUE, ...)
 }

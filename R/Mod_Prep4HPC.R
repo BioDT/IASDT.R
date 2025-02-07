@@ -32,7 +32,7 @@
 #'   in the model. This can include bioclimatic variables (bio1-19) as well as
 #'   other predictors such as npp (Net Primary Productivity). Defaults to 6
 #'   ecologically meaningful and less correlated variables: `c("bio3", "bio4",
-#'   "bio11", "bio18", "bio19", and "npp")`.
+#'   "bio11", "bio18", "bio19", "npp")`.
 #' @param QuadraticVars Character vector for variables for which quadratic terms
 #'   are used. Defaults to all variables of the `BioVars`. If `QuadraticVars` is
 #'   `NULL`, no quadratic terms will be used.
@@ -156,7 +156,7 @@ Mod_Prep4HPC <- function(
     GPP = TRUE, GPP_Dists = NULL, GPP_Save = TRUE,
     GPP_Plot = TRUE, MinLF = NULL, MaxLF = NULL,
     Alphapw = list(Prior = NULL, Min = 20, Max = 1200, Samples = 200),
-    BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
+    BioVars = c("bio3", "bio4", "bio11", "bio18", "bio19", "npp"),
     QuadraticVars = BioVars,
     EffortsAsPredictor = TRUE, RoadRailAsPredictor = TRUE,
     HabAsPredictor = TRUE, RiversAsPredictor = TRUE,
@@ -244,7 +244,7 @@ Mod_Prep4HPC <- function(
 
   Path_Python <- file.path(Path_Hmsc, "Scripts/python.exe")
 
-  InfoChunk("Preparing data for Hmsc-HPC models", Char = "=")
+  IASDT.R::InfoChunk("Preparing data for Hmsc-HPC models", Char = "=")
 
   # # |||||||||||||||||||||||||||||||||||
   # Load/check environment variables -----
@@ -298,7 +298,7 @@ Mod_Prep4HPC <- function(
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
 
-  CharArgs <- c("Hab_Abb", "Path_Model", "Path_Hmsc", "EnvFile")
+  CharArgs <- c("Hab_Abb", "Path_Model", "Path_Hmsc", "EnvFile", "BioVars")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = CharArgs, Type = "character")
 
   LogicArgs <- c(
@@ -381,14 +381,10 @@ Mod_Prep4HPC <- function(
   # # |||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Prepare list of predictors")
-  if (is.null(BioVars)) {
-    BioVars <- c(
-      "bio4", "bio6", "bio8", "bio12", "bio15", "bio18")
-  }
 
   # Check BioVars values
-  if (!all(BioVars %in% paste0("bio", 1:19))) {
-    WrongBio <- BioVars[which(!(BioVars %in% paste0("bio", 1:19)))]
+  if (isFALSE(all(BioVars %in% IASDT.R::CHELSA_Vars$Variable))) {
+    WrongBio <- BioVars[which(!(BioVars %in% IASDT.R::CHELSA_Vars$Variable))]
     stop(
       paste0(
         "The following are invalid Bioclimatic variables: ",
@@ -404,6 +400,10 @@ Mod_Prep4HPC <- function(
   if (RoadRailAsPredictor) {
     XVars <- c(XVars, "RoadRailLog")
   }
+  if (RiversAsPredictor) {
+    XVars <- c(XVars, "RiversLog")
+  }
+
   if (Hab_Abb != "0" && HabAsPredictor) {
     XVars <- c(XVars, "HabLog")
   }
@@ -416,9 +416,11 @@ Mod_Prep4HPC <- function(
 
   IASDT.R::CatTime("Preparing input data")
   ValidHabAbbs <- c(0:3, "4a", "4b", 10, "12a", "12b")
-  if (!(as.character(Hab_Abb) %in% ValidHabAbbs)) {
-    stop(paste0("Hab_Abb has to be one of the following:\n >> ",
-                paste0(ValidHabAbbs, collapse = " | ")), call. = FALSE)
+  if (isFALSE(as.character(Hab_Abb) %in% ValidHabAbbs)) {
+    stop(
+      paste0("Hab_Abb has to be one of the following:\n >> ",
+             paste0(ValidHabAbbs, collapse = " | ")),
+      call. = FALSE)
   }
 
   HabVal <- c(
@@ -432,7 +434,8 @@ Mod_Prep4HPC <- function(
   DT_All <- IASDT.R::Mod_PrepData(
     Hab_Abb = Hab_Abb, MinEffortsSp = MinEffortsSp, ExcludeCult = ExcludeCult,
     ExcludeZeroHabitat = ExcludeZeroHabitat, PresPerSpecies = PresPerSpecies,
-    EnvFile = EnvFile, Path_Model = Path_Model, VerboseProgress = VerboseProgress, FromHPC = FromHPC)
+    EnvFile = EnvFile, Path_Model = Path_Model,
+    VerboseProgress = VerboseProgress, FromHPC = FromHPC)
 
   IASDT.R::CatSep(Rep = 1, Extra1 = 1, Extra2 = 2)
 
@@ -585,7 +588,7 @@ Mod_Prep4HPC <- function(
       paste0(
         "All grid cells, irrespective of number of species ",
         "presence, will be considered"),
-      Level = 1)
+      Level = 1, Time = FALSE)
   } else {
     EmptyGridsID <- dplyr::select(DT_All, tidyselect::starts_with("Sp_")) %>%
       rowSums() %>%
@@ -615,7 +618,7 @@ Mod_Prep4HPC <- function(
     CV_NR = CV_NR, CV_NC = CV_NC, OutPath = Path_Model, CV_Plot = CV_Plot,
     CV_SAC = CV_SAC)
 
-  # Save cross-validation data
+  # cross-validation data to be saved
   DT_CV <- DT_All %>%
     dplyr::select(
       "CellNum", "CellCode", "Country", tidyselect::starts_with("CV"))
@@ -717,8 +720,7 @@ Mod_Prep4HPC <- function(
   Tree <- c("Tree", "NoTree")[c(PhyloTree, NoPhyloTree)]
 
   IASDT.R::CatTime(
-    paste0(
-      "Models will be fitted using ", paste0(Tree, collapse = " & ")),
+    paste0("Models will be fitted using ", paste0(Tree, collapse = " & ")),
     Level = 1)
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

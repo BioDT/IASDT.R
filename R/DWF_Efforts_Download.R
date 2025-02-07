@@ -2,7 +2,7 @@
 # Efforts_Download ----
 ## |------------------------------------------------------------------------| #
 
-#' Download and Manage GBIF Data for Vascular Plant Orders
+#' Download and manage GBIF data for vascular plant orders
 #'
 #' This function handles the downloading of GBIF data in parallel, checks the
 #' validity of downloaded files, and stores the data in specified directories.
@@ -88,7 +88,7 @@ Efforts_Download <- function(NCores = 6, Path_Raw, Path_Interim, Path_Efforts) {
     future::plan("future::sequential", gc = TRUE)
   } else {
     withr::local_options(
-      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
       future.seed = TRUE)
     c1 <- snow::makeSOCKcluster(NCores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)

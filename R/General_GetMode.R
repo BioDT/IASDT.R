@@ -2,7 +2,7 @@
 # GetMode ----
 ## |------------------------------------------------------------------------| #
 
-#' Calculate the Mode of a Numeric Vector
+#' Calculate the mode of a numeric vector
 #'
 #' This function calculates the mode of a given numeric vector.
 #'

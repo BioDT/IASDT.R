@@ -2,7 +2,7 @@
 % Please edit documentation in R/DWF_Efforts_Summarize.R
 \name{Efforts_Summarize}
 \alias{Efforts_Summarize}
-\title{Process and Summarize GBIF Data for vascular plants}
+\title{Process and summarize GBIF data for vascular plants}
 \usage{
 Efforts_Summarize(
   NCores,

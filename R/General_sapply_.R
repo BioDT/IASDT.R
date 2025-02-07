@@ -2,7 +2,7 @@
 # sapply_ ----
 ## |------------------------------------------------------------------------| #
 
-#' Apply a Function over a List or Vector with Optional Silence
+#' Apply a function over a list or vector with optional silence
 #'
 #' This function is a wrapper around the base [base::sapply] function, allowing
 #' for the application of a function over a list or vector. It extends

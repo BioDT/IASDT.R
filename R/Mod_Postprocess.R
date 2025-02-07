@@ -2,7 +2,7 @@
 # Mod_Postprocess ----
 ## |------------------------------------------------------------------------| #
 
-#' Model Pipeline for Hmsc Analysis
+#' Model pipeline for Hmsc analysis
 #'
 #' This function sets up and runs an analysis pipeline for Hmsc models. It
 #' includes steps for environment setup, loading packages, managing SLURM
@@ -425,7 +425,7 @@ Mod_Postprocess <- function(
 # Mod_Postprocess_1_CPU ----
 ## |------------------------------------------------------------------------| #
 
-#' Model Pipeline for Hmsc Analysis (using CPU)
+#' Model pipeline for Hmsc analysis (using CPU)
 #'
 #' This function sets up and runs an analysis pipeline for Hmsc models. It
 #' includes steps for environment setup, loading packages, managing SLURM
@@ -756,7 +756,7 @@ Mod_Postprocess_1_CPU <- function(
 # Mod_Prep_TF ----
 ## |------------------------------------------------------------------------| #
 
-#' Prepare Batch Scripts for LF Prediction on GPU
+#' Prepare batch scripts for latent factor prediction on GPU
 #'
 #' This function automates the preparation of batch scripts for predicting the
 #' latent factors (LF) of response curves and at new sites using GPU resources.
@@ -1121,7 +1121,7 @@ Mod_Prep_TF <- function(
 # Mod_Postprocess_2_CPU ----
 ## |------------------------------------------------------------------------| #
 
-#' Model Pipeline for Hmsc Analysis (using CPU)
+#' Model pipeline for Hmsc analysis (using CPU)
 #'
 #' This function continues running the analysis pipeline for Hmsc models. It
 #' must be called after completing [Mod_Postprocess_1_CPU] and [Mod_Prep_TF] on

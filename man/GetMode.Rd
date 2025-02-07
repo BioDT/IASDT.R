@@ -2,7 +2,7 @@
 % Please edit documentation in R/General_GetMode.R
 \name{GetMode}
 \alias{GetMode}
-\title{Calculate the Mode of a Numeric Vector}
+\title{Calculate the mode of a numeric vector}
 \source{
 The source of this function was taken from this
 \href{https://www.tutorialspoint.com/r/r_mean_median_mode.htm}{link}.

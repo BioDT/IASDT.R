@@ -2,7 +2,7 @@
 # Mod_SLURM ----
 ## |------------------------------------------------------------------------| #
 
-#' Prepare SLURM Files for Hmsc-HPC Model Fitting
+#' Prepare SLURM files for Hmsc-HPC model fitting
 #'
 #' This function prepares and writes SLURM file(s) for submitting model fitting
 #' jobs on an HPC environment. It dynamically generates bash scripts based on

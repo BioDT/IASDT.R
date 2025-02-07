@@ -2,7 +2,7 @@
 % Please edit documentation in R/RcppExports.R
 \name{Solve2}
 \alias{Solve2}
-\title{Solve2: Solve a system of linear equations}
+\title{Solve a system of linear equations}
 \usage{
 Solve2(A, B)
 }

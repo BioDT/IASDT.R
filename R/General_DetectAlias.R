@@ -2,7 +2,7 @@
 # DetectAlias ----
 ## |------------------------------------------------------------------------| #
 #'
-#' Detect Aliased Variables in a Linear Model
+#' Detect aliased variables in a linear model
 #'
 #' This function identifies aliased (linearly dependent) variables in a linear
 #' model by adding a constant column to the data frame, fitting a linear model,

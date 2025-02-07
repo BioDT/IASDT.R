@@ -2,7 +2,7 @@
 % Please edit documentation in R/Mod_Predict_LF.R
 \name{Mod_Plot_LF}
 \alias{Mod_Plot_LF}
-\title{Spatial variation in site loadings of HMSC Models}
+\title{Plot spatial variation in site loadings of HMSC Models}
 \usage{
 Mod_Plot_LF(
   Path_Model = NULL,

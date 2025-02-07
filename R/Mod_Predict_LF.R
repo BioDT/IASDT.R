@@ -2,9 +2,8 @@
 # Predict_LF ----
 ## |------------------------------------------------------------------------| #
 
-#' Predict_LF
-#'
 #' Draws samples from the conditional predictive distribution of latent factors.
+#'
 #' This function is optimized for speed using parallel processing and optionally
 #' TensorFlow for matrix operations. This function is adapted from
 #' [Hmsc::predictLatentFactor] with equivalent results to the original function
@@ -1003,7 +1002,7 @@ run_crossprod_solve <- function(
 # Mod_Plot_LF ----
 ## |------------------------------------------------------------------------| #
 
-#' Spatial variation in site loadings of HMSC Models
+#' Plot spatial variation in site loadings of HMSC Models
 #'
 #' Generate and save spatial variation in site loadings of HMSC Models' latent
 #' factors as a JPEG file.

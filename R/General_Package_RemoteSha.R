@@ -2,7 +2,7 @@
 # Package_RemoteSha ----
 ## |------------------------------------------------------------------------| #
 
-#' Get the remote SHA of specified R packages
+#' Get the remote SHA of an R packages
 #'
 #' This function retrieves the remote SHA (Secure Hash Algorithm) reference for
 #' one or more specified R packages. It is useful for tracking the exact version

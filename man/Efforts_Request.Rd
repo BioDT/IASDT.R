@@ -2,7 +2,7 @@
 % Please edit documentation in R/DWF_Efforts_Request.R
 \name{Efforts_Request}
 \alias{Efforts_Request}
-\title{Request and Manage GBIF Data for Vascular Plant Orders}
+\title{Request and manage GBIF data for vascular plant orders}
 \usage{
 Efforts_Request(
   NCores = 3,

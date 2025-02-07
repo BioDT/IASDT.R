@@ -5,93 +5,139 @@ template:
 
 authors:
   Ahmed El-Gabbas:
-  href: https://elgabbas.netlify.app/
+    href: https://elgabbas.netlify.app/
 
 home:
   title: IASDT.R
   links:
   - text: BioDT project
-    href: https://biodt.eu
-  - text: Community ecology department @ UFZ
+    href: https://biodt.eu/
+  - text: Community ecology @ UFZ
     href: https://www.ufz.de/index.php?en=36737
-  - text: Git repo
-    href: https://git.ufz.de/biodt/IASDT.R
 
 development:
   mode: auto
 
 reference:
 - title: Package info
-  desc:
   contents:
   - IASDT.R-package
 
-
-- title: Data workflow
-  desc: Functions for preparing data, running the models, and postprocessing of model outputs
-- subtitle: Data preparation
-  desc:
+- title: Data workflow - species distribution
+  desc: Functions for preparing species observation data
+- subtitle: GBIF
   contents:
   - GBIF_Process
   - GBIF_Download
   - GBIF_SpData
   - GBIF_ReadChunk
   - GBIF_Check
-  - elTER_Process
+- subtitle: EASIN
+  contents:
   - EASIN_Process
   - EASIN_Taxonomy
   - EASIN_Down
   - EASIN_Plot
+- subtitle: eLTER
+  contents:
+  - elTER_Process
+- subtitle: Species presence-absence data
+  contents:
   - IAS_Process
   - IAS_Distribution
   - IAS_Plot
-  - CLC_Process
-  - Chelsa_Extract_Matching
-  - Chelsa_Prepare_List
-  - Chelsa_Vars
-  - Chelsa_Info
-  - Chelsa_Project
-  - Railway_Intensity
-  - Road_Intensity
-  - Efforts_Download
-  - Efforts_Plot
-  - Efforts_Process
-  - Efforts_Request
-  - Efforts_Split
-  - Efforts_Summarize
-  - Efforts_SummarizeMaps
+- subtitle: Others
+  contents:
   - GetAcceptedName
   - GetSpeciesName
+
+- title: Data workflow - Predictors and other data
+  desc: Functions for preparing predictors and other abiotic data
+- subtitle: CLC
+  contents:
+  - CLC_Process
+- subtitle: CHELSA
+  contents:
+  - CHELSA_Vars
+  - CHELSA_Prepare
+  - CHELSA_Process
+  - CHELSA_Project
+- subtitle: Sampling efforts
+  contents:
+  - Efforts_Request
+  - Efforts_Download
+  - Efforts_Split
+  - Efforts_Plot
+  - Efforts_Summarize
+  - Efforts_SummarizeMaps
+  - Efforts_Process
+- subtitle: Railway, roads, and rivers
+  contents:
+  - Railway_Intensity
+  - Road_Intensity
+  - River_Length
 
 - title: Modelling functions
   desc: Functions for preparing data, running the models, and postprocessing of model outputs
 - subtitle: Data preparation
-  desc:
   contents:
   - Mod_PrepData
   - Mod_Prep4HPC
   - GetCV
   - PrepKnots
 - subtitle: Model fitting
-  desc:
   contents:
   - Mod_SLURM
   - Mod_SLURM_Refit
   - Mod_Fit_WS
-  - Mod_CV
+  - Mod_CV_Fit
 - subtitle: Model postprocessing
-  desc:
   contents:
-  - Coda_to_tibble
   - GetPosts
-  - Mod_MergeChains
+  - Merge_Chains
   - Mod_Summary
   - RespCurv_PrepData
+  - RespCurv_PlotSpAll
+  - Predict_LF
+  - Mod_Plot_LF
+  - Mod_Prep_TF
+  - Predict_Hmsc
+  - Predict_Maps
+  - Mod_Predict_Plot
+  - Mod_Postprocess
+  - Mod_Postprocess_1_CPU
+  - Mod_Postprocess_2_CPU
+  - Mod_Eval_Plot
+  - Mod_CV_Eval
+- subtitle: Model postprocessing - plotting
+  contents:
+  - PlotBetaGG
+  - PlotOmegaGG
+  - PlotAlpha
+  - PlotRho
+  - Convergence_Plot
+  - Convergence_Plot_All
+  - VarPar_Compute
+  - VarPar_Plot
+  - PlotGelman
+  - PlotGelman_Alpha
+  - PlotGelman_Beta
+  - PlotGelman_Omega
+  - PlotGelman_Rho
+  - RespCurv_PlotSp
+  - RespCurv_PlotSR
+- subtitle: Helper functions
+  contents:
+  - Coda_to_tibble
+  - exp_neg_div
+  - fast_pnorm
+  - Solve1
+  - Solve2
+  - Solve2vect
 
 - title: General functions
   desc: Data management / utility functions
 - subtitle: Packages management
-  desc:
   contents:
   - FunctionsInPackage
   - LoadPackages
@@ -100,8 +146,9 @@ reference:
   - Package_RemoteSha
   - AssignEnvVars
   - CheckCommands
+  - CheckArgs
+  - CatFunArgs
 - subtitle: File operations
-  desc:
   contents:
   - FileExt
   - FileSize
@@ -110,28 +157,24 @@ reference:
   - LoadMultiple
   - SaveAs
   - SaveMultiple
+  - List2RData
   - CheckRData
   - CheckZip
   - CheckRDS
+  - CheckData
+  - CheckFeather
+  - CheckQs
 - subtitle: Plotting
-  desc:
   contents:
   - AddImg2Plot
   - AddLine
   - integer_breaks
-- subtitle: Statistics-related
-  desc:
-  contents:
-  - DetectAlias
-  - GetMode
 - subtitle: Printing functions
-  desc:
   contents:
   - CatSep
   - CatTime
   - CatDiff
 - subtitle: Vector / data frame operations
-  desc:
   contents:
   - AssignIfNotExist
   - cc
@@ -149,14 +192,13 @@ reference:
   - KeepOnly
   - SourceSilent
   - NUnique
-  - List2RData
   - AddMissingCols
-- subtitle: OTHER FUNCTIONS
-  desc:
+- subtitle: Other functions
   contents:
+  - SetChainName
   - CurrOS
   - System
-  - Valid_URL
+  - CheckURL
   - ScriptLocation
   - ClearConsole
   - CheckRStudioVersion
@@ -166,40 +208,18 @@ reference:
   - SaveSessionInfo
   - git_log
   - GetBashVars
-  - CheckArgs
-
-- subtitle: Plotting
-  desc:
-  contents:
-  - PlotBetaGG
-  - PlotOmegaGG
-  - PlotAlpha
-  - PlotRho
-  - PlotConvergence
-  - PlotConvergence_All
-  - PlotVarPar
-  - PlotGelman
-  - PlotGelman_Alpha
-  - PlotGelman_Beta
-  - PlotGelman_Omega
-  - PlotGelman_Rho
-  - RespCurv_PlotSp
-  - RespCurv_PlotSR
-- subtitle: Other functions
-  desc:
-  contents:
-  - SetChainName
-  - Mod_Pred2Array
+  - Install_Hmsc
+  - DetectAlias
+  - GetMode
 
 - title: Spatial functions
-  desc:
   contents:
   - CheckTiff
   - DownBoundary
   - Polygon_Centroid
   - Rename_geometry
   - SplitRaster
-  - Set_geometry
+  - setGeometry
   - Text2Coords
   - ClipRasterByPolygon
   - CheckStackInMemory

@@ -2,7 +2,7 @@
 % Please edit documentation in R/Mod_Evaluation_Plot.R
 \name{Mod_Eval_Plot}
 \alias{Mod_Eval_Plot}
-\title{Generate Plots for the Explanatory Power of Hmsc models}
+\title{Generate plots for the explanatory power of Hmsc models}
 \usage{
 Mod_Eval_Plot(ModelDir, EnvFile = ".env", FromHPC = TRUE)
 }

@@ -4,7 +4,7 @@ using namespace Rcpp;
 
 // [[Rcpp::depends(RcppArmadillo)]]
 
-//' Solve1: Invert a matrix
+//' Invert a matrix
 //'
 //' Computes the inverse of a square matrix using Armadillo's `inv` function.
 //'
@@ -17,7 +17,7 @@ arma::mat Solve1(const arma::mat & x) {
 }
 
 
-//' Solve2: Solve a system of linear equations
+//' Solve a system of linear equations
 //'
 //' Solves a system of linear equations `A * X = B` for `X`, where `A` is a
 //' square matrix and `B` is a matrix of compatible dimensions.
@@ -33,7 +33,7 @@ arma::mat Solve2(const arma::mat& A, const arma::mat& B) {
 
 
 
-//' Solve2vect: Solve a system of linear equations for a vector
+//' Solve a system of linear equations for a vector
 //'
 //' Solves a system of linear equations `A * x = B` where `A` is a square
 //' matrix and `B` is a vector.
@@ -49,9 +49,7 @@ arma::vec Solve2vect(const arma::mat& A, const arma::vec& B) {
     return x;
 }
 
-
-
-//' fast_pnorm: Fast Normal CDF
+//' Fast Normal CDF
 //'
 //' Computes the cumulative distribution function of the normal distribution
 //' for a numeric vector using a fast approximation.
@@ -70,8 +68,7 @@ NumericVector fast_pnorm(NumericVector x) {
 }
 
 
-
-//' exp_neg_div: Exponential of Negative Division
+//' Exponential of Negative Division
 //'
 //' Computes the element-wise exponential of the negative division of each
 //' element in a matrix by a scalar value.

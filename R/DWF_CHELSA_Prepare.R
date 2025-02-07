@@ -2,7 +2,7 @@
 # CHELSA_Prepare ----
 ## |------------------------------------------------------------------------| #
 
-#' Prepare and Download CHELSA Climate Data
+#' Prepare and download CHELSA climate data
 #'
 #' This function reads the contents of local text files containing URLs for
 #' `CHELSA` climate data and extracts and saves their metadata (e.g., variable

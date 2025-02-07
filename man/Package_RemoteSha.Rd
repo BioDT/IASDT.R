@@ -2,7 +2,7 @@
 % Please edit documentation in R/General_Package_RemoteSha.R
 \name{Package_RemoteSha}
 \alias{Package_RemoteSha}
-\title{Get the remote SHA of specified R packages}
+\title{Get the remote SHA of an R packages}
 \usage{
 Package_RemoteSha(...)
 }

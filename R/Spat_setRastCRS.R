@@ -1,11 +1,8 @@
-# ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪ ####
-# ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪ ####
-
 ## |------------------------------------------------------------------------| #
 # setRastCRS  ------
 ## |------------------------------------------------------------------------| #
 
-#' setRastCRS
+#' sets CRS for a SpatRaster
 #'
 #' This function sets the coordinate reference system (CRS) for a SpatRaster
 #' object using the specified EPSG code. This is a wrapper function for

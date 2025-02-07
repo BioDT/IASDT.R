@@ -2,7 +2,7 @@
 % Please edit documentation in R/DWF_Efforts_Download.R
 \name{Efforts_Download}
 \alias{Efforts_Download}
-\title{Download and Manage GBIF Data for Vascular Plant Orders}
+\title{Download and manage GBIF data for vascular plant orders}
 \usage{
 Efforts_Download(NCores = 6, Path_Raw, Path_Interim, Path_Efforts)
 }

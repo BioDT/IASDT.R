@@ -2,7 +2,7 @@
 # Efforts_Summarize ----
 ## |------------------------------------------------------------------------| #
 
-#' Process and Summarize GBIF Data for vascular plants
+#' Process and summarize GBIF data for vascular plants
 #'
 #' This function processes GBIF data for vascular plants by extracting,
 #' summarizing, and saving the data. It also creates summary maps and saves them
@@ -111,7 +111,7 @@ Efforts_Summarize <- function(
     future::plan("future::sequential", gc = TRUE)
   } else {
     withr::local_options(
-      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
       future.seed = TRUE)
     c1 <- snow::makeSOCKcluster(NCores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)

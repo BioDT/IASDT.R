@@ -2,7 +2,7 @@
 % Please edit documentation in R/General_AssignEnvVars.R
 \name{AssignEnvVars}
 \alias{AssignEnvVars}
-\title{Assign Environment Variables from a .env File}
+\title{Assign environment variables from a .env file}
 \usage{
 AssignEnvVars(EnvFile = ".env", EnvVarDT = NULL)
 }

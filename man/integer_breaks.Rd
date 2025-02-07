@@ -2,7 +2,7 @@
 % Please edit documentation in R/Plot_integer_breaks.R
 \name{integer_breaks}
 \alias{integer_breaks}
-\title{Integer Breaks for ggplot Axis}
+\title{Integer breaks for ggplot axis}
 \usage{
 integer_breaks(n = 5, ...)
 }

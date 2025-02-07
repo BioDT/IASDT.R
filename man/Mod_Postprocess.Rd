@@ -2,7 +2,7 @@
 % Please edit documentation in R/Mod_Postprocess.R
 \name{Mod_Postprocess}
 \alias{Mod_Postprocess}
-\title{Model Pipeline for Hmsc Analysis}
+\title{Model pipeline for Hmsc analysis}
 \usage{
 Mod_Postprocess(
   ModelDir = NULL,

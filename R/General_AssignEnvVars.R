@@ -2,7 +2,7 @@
 # AssignEnvVars ------
 ## |------------------------------------------------------------------------| #
 
-#' Assign Environment Variables from a .env File
+#' Assign environment variables from a .env file
 #'
 #' This function reads environment variables from a specified `.env` file and
 #' assigns them to variables in the R environment based on a data frame

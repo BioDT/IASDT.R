@@ -2,7 +2,7 @@
 # NDecimals ----
 ## |------------------------------------------------------------------------| #
 
-#' Number of Decimal Places in a Numeric Value
+#' Number of decimal places in a numeric value
 #'
 #' This function calculates the number of decimal places in a numeric value. It
 #' is designed to work with numeric inputs that can be coerced to character

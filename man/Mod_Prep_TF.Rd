@@ -2,7 +2,7 @@
 % Please edit documentation in R/Mod_Postprocess.R
 \name{Mod_Prep_TF}
 \alias{Mod_Prep_TF}
-\title{Prepare Batch Scripts for LF Prediction on GPU}
+\title{Prepare batch scripts for latent factor prediction on GPU}
 \usage{
 Mod_Prep_TF(
   Path = "datasets/processed/model_fitting",

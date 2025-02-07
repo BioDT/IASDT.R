@@ -2,7 +2,7 @@
 % Please edit documentation in R/General_LoadPackages.R
 \name{LoadPackages}
 \alias{LoadPackages}
-\title{Load or Install Multiple R Packages}
+\title{Load or install multiple R packages}
 \usage{
 LoadPackages(..., List = NULL, Verbose = FALSE, InstallMissing = TRUE)
 }

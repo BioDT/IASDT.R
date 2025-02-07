@@ -2,7 +2,7 @@
 # CLC_Process ------
 ## |------------------------------------------------------------------------| #
 
-#' Process Corine Land Cover (CLC) data
+#' Process Corine land cover (CLC) data
 #'
 #' Processes Corine Land Cover (CLC) data for environmental modeling purposes.
 #' The function calculates the percentage coverage of CLC per grid cell. It

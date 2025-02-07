@@ -2,7 +2,7 @@
 % Please edit documentation in R/RcppExports.R
 \name{Solve2vect}
 \alias{Solve2vect}
-\title{Solve2vect: Solve a system of linear equations for a vector}
+\title{Solve a system of linear equations for a vector}
 \usage{
 Solve2vect(A, B)
 }

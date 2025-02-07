@@ -2,7 +2,7 @@
 # LoadPackages ----
 ## |------------------------------------------------------------------------| #
 
-#' Load or Install Multiple R Packages
+#' Load or install multiple R packages
 #'
 #' This function attempts to load multiple R packages specified by the user. If
 #' a package is not installed, the function can optionally install it before

@@ -2,7 +2,7 @@
 # Efforts_Request ----
 ## |------------------------------------------------------------------------| #
 
-#' Request and Manage GBIF Data for Vascular Plant Orders
+#' Request and manage GBIF data for vascular plant orders
 #'
 #' This function requests GBIF data for each vascular plant order, processes it
 #' in parallel, and manages the data download and storage. If data is already
@@ -85,7 +85,7 @@ Efforts_Request <- function(
     future::plan("future::sequential", gc = TRUE)
   } else {
     withr::local_options(
-      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
       future.seed = TRUE)
     c1 <- snow::makeSOCKcluster(min(NCores, 3))
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)

@@ -2,7 +2,7 @@
 # CHELSA_Process ----
 ## |------------------------------------------------------------------------| #
 
-#' Process CHELSA Climate Data
+#' Process CHELSA climate data
 #'
 #' This function processes CHELSA climate data, with an option to download them
 #' first. It processes each variable to the European scale and reference grid,

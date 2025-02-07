@@ -98,7 +98,7 @@ trees
 environmental stress or disturbance, including forest edges
 \item \strong{3. Scrub} -- shrublands maintained by environmental stress (aridity) or
 disturbance
-\item \strong{4a. Natural grasslands} -- grasslands mantained by climate (aridity,
+\item \strong{4a. Natural grasslands} -- grasslands maintained by climate (aridity,
 unevenly distributed precipitation), herbivores or environmental stress
 (aridity, instability or toxicity of substrate)
 \item \strong{4b. Human-maintained grasslands} -- grasslands dependent on regular

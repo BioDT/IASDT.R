@@ -2,7 +2,7 @@
 % Please edit documentation in R/RcppExports.R
 \name{exp_neg_div}
 \alias{exp_neg_div}
-\title{exp_neg_div: Exponential of Negative Division}
+\title{Exponential of Negative Division}
 \usage{
 exp_neg_div(D11, x)
 }

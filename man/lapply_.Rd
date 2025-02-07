@@ -2,7 +2,7 @@
 % Please edit documentation in R/General_lapply_.R
 \name{lapply_}
 \alias{lapply_}
-\title{Apply a Function over a List or Vector with Optional Silence}
+\title{Apply a function over a list or vector with optional silence}
 \usage{
 lapply_(X, FUN, Silent = TRUE, ...)
 }

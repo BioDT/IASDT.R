@@ -5,10 +5,9 @@
 # Predict_Hmsc ----
 ## |------------------------------------------------------------------------| #
 
-#' Predict_Hmsc
+#' Calculates predicted values from a fitted Hmsc model.
 #'
-#' Calculates predicted values from a fitted \code{Hmsc} model. This function
-#' modifies the `Hmsc:::predict.Hmsc` function.
+#' This function modifies the `Hmsc:::predict.Hmsc` function.
 #'
 #' @param Path_Model character string specifying a file name where the model
 #'   object is saved.

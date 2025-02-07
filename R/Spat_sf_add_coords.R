@@ -2,7 +2,7 @@
 # sf_add_coords ------
 ## |------------------------------------------------------------------------| #
 
-#' Add Longitude and Latitude Coordinates to an sf Object
+#' Add longitude and latitude coordinates to an sf object
 #'
 #' Add longitude and latitude coordinates as new columns to an sf object
 #' (`Sf_Obj`). It extracts the coordinates from the sf object, converts them

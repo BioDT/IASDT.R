@@ -17,7 +17,7 @@ Mod_Prep4HPC(
   MinLF = NULL,
   MaxLF = NULL,
   Alphapw = list(Prior = NULL, Min = 20, Max = 1200, Samples = 200),
-  BioVars = c("bio4", "bio6", "bio8", "bio12", "bio15", "bio18"),
+  BioVars = c("bio3", "bio4", "bio11", "bio18", "bio19", "npp"),
   QuadraticVars = BioVars,
   EffortsAsPredictor = TRUE,
   RoadRailAsPredictor = TRUE,
@@ -112,7 +112,7 @@ kilometer). \code{Samples} is the number of samples to be used in the prior.}
 \item{BioVars}{Character vector. Specifies variables from CHELSA to be used
 in the model. This can include bioclimatic variables (bio1-19) as well as
 other predictors such as npp (Net Primary Productivity). Defaults to 6
-ecologically meaningful and less correlated variables: \verb{c("bio3", "bio4", "bio11", "bio18", "bio19", and "npp")}.}
+ecologically meaningful and less correlated variables: \code{c("bio3", "bio4", "bio11", "bio18", "bio19", "npp")}.}
 
 \item{QuadraticVars}{Character vector for variables for which quadratic terms
 are used. Defaults to all variables of the \code{BioVars}. If \code{QuadraticVars} is

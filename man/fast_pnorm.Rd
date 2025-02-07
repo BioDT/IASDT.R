@@ -2,7 +2,7 @@
 % Please edit documentation in R/RcppExports.R
 \name{fast_pnorm}
 \alias{fast_pnorm}
-\title{fast_pnorm: Fast Normal CDF}
+\title{Fast Normal CDF}
 \usage{
 fast_pnorm(x)
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/Mod_Predict_LF.R
 \name{Predict_LF}
 \alias{Predict_LF}
-\title{Predict_LF}
+\title{Draws samples from the conditional predictive distribution of latent factors.}
 \usage{
 Predict_LF(
   unitsPred,
@@ -90,7 +90,6 @@ function. Default is 50.}
 \code{FALSE}.}
 }
 \description{
-Draws samples from the conditional predictive distribution of latent factors.
 This function is optimized for speed using parallel processing and optionally
 TensorFlow for matrix operations. This function is adapted from
 \link[Hmsc:predictLatentFactor]{Hmsc::predictLatentFactor} with equivalent results to the original function

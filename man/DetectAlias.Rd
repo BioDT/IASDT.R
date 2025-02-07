@@ -2,7 +2,7 @@
 % Please edit documentation in R/General_DetectAlias.R
 \name{DetectAlias}
 \alias{DetectAlias}
-\title{Detect Aliased Variables in a Linear Model}
+\title{Detect aliased variables in a linear model}
 \usage{
 DetectAlias(DT, Verbose = FALSE)
 }

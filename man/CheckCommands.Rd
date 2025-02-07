@@ -2,7 +2,7 @@
 % Please edit documentation in R/General_CheckCommands.R
 \name{CheckCommands}
 \alias{CheckCommands}
-\title{Check System Commands Availability}
+\title{Check system commands availability}
 \usage{
 CheckCommands(Commands)
 }

@@ -37,7 +37,7 @@ RespCurv_PlotSp <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Path_PA <- NCells_Naturalized <- NFV <- Coords <- Species <- Prefix <-
-    Data <- RC_Path_Prob <- Variable <- IAS_ID <- NULL
+    Data <- RC_Path_Prob <- Variable <- IAS_ID <- VarDesc <- VarDesc2 <- NULL
 
   # # ..................................................................... ###
 

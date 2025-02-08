@@ -1,7 +1,7 @@
 Type: Package
 Package: IASDT.R
-Title: Helper R functions for the Invasive Alien Species (IAS) prototype
-    Digital Twin (IAS-pDT)
+Title: Modelling the distribution of invasive alien plant species in
+    Europe
 Version: 0.1.02
 Date: 2025-02-07
 Authors@R: 
@@ -11,7 +11,8 @@ Maintainer: Ahmed El-Gabbas <ahmed.el-gabbas@ufz.de>
 Description: Helper R functions for the Invasive Alien Species (IAS)
     prototype Digital Twin (IAS-pDT).
 License: MIT + file LICENSE
-URL: https://biodt.eu, https://github.com/BioDT/IASDT.R
+URL: https://doi.org/10.5281/zenodo.14834385, https://biodt.eu,
+    https://github.com/BioDT/IASDT.R
 BugReports: https://github.com/BioDT/IASDT.R/issues
 Depends: 
     magrittr (>= 2.0.3),

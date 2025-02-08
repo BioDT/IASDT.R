@@ -37,7 +37,8 @@ RespCurv_PlotSR <- function(ModelDir, Verbose = TRUE, NCores = 8) {
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Trend2 <- Variable <- Quant <- Observed <- Trend <- NFV <- Coords <-
     RC_Path_SR <- RC_Path_Orig <- RC_Path_Prob <- DT <- data <- XVals <-
-    Pred <- Q975 <- Q25 <- Q50 <- X <- Y <- Variable2 <- Var2 <- NULL
+    Pred <- Q975 <- Q25 <- Q50 <- X <- Y <- Variable2 <- Var2 <-
+    Variable1 <- NULL
 
   # # ..................................................................... ###
 

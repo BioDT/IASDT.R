@@ -12,5 +12,6 @@
 .lintr
 ^LICENSE\.md$
 IASDT.R.code-workspace
+^CITATION.cff
 
 ^\.github$

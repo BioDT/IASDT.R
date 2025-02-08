@@ -32,7 +32,8 @@ RespCurv_PlotSpAll <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Coords <- RC_Path_Prob <- NFV <- Data <- DT <- Variable <- Variable2 <- NULL
+  Coords <- RC_Path_Prob <- NFV <- Data <- DT <- Variable <- Variable2 <-
+    VarDesc <- VarDesc2 <- NULL
 
   # # ..................................................................... ###
 

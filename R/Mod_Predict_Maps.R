@@ -136,7 +136,7 @@ Predict_Maps <- function(
     tif_path_mean <- tif_path_cov <- tif_path_sd <-
     Train <- Ensemble_File <- Ensemble_Maps <- tifs <- layer_name <-
     TimePeriod <- File_Pred_summary <- Ensemble_DT <- Dir_Ensemble <-
-    File_Pred_R <- tif_path_anomaly <- NULL
+    File_Pred_R <- tif_path_anomaly <- Path_Rivers <- NULL
 
   # # ..................................................................... ###
   # # ..................................................................... ###

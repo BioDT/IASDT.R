@@ -248,27 +248,22 @@ GetCV <- function(
 
     DT_R <- sf::st_as_sf(DT, coords = c("x", "y"), crs = 3035) %>%
       terra::rasterize(RefGrid) %>%
-      terra::trim() %>%
       terra::classify(cbind(1, 0)) %>%
       terra::as.factor() %>%
       stats::setNames("GridR")
 
     if (is.null(CV_SAC)) {
-      PlotBox <- rbind(CV_Dist$blocks, CV_Large$blocks) %>%
-        sf::st_bbox()
       CVTypes <- c("CV_Dist", "CV_Large")
     } else {
-      PlotBox <- rbind(CV_SAC$blocks, CV_Dist$blocks, CV_Large$blocks) %>%
-        sf::st_bbox()
       CVTypes <- c("CV_SAC", "CV_Dist", "CV_Large")
     }
 
-    AspectRatio <- (PlotBox[3] - PlotBox[1]) / (PlotBox[4] - PlotBox[2])
+    Xlim <- c(2600000, 6550000)
+    Ylim <- c(1450000, 5420000)
 
     EU_Bound <- IASDT.R::LoadAs(EU_Bound) %>%
       magrittr::extract2("Bound_sf_Eur_s") %>%
       magrittr::extract2("L_03") %>%
-      sf::st_crop(PlotBox) %>%
       suppressWarnings()
 
     CV_Plots <- purrr::map(
@@ -280,39 +275,38 @@ GetCV <- function(
           dplyr::mutate(folds = factor(folds))
 
         Plot <- ggplot2::ggplot() +
-          tidyterra::geom_spatraster(data = DT_R) +
           ggplot2::geom_sf(
-            data = EU_Bound, fill = "transparent", colour = "darkgrey",
-            linewidth = 1.5) +
+            data = EU_Bound, fill = "gray95", colour = "darkgrey",
+            linewidth = 0.5) +
+          tidyterra::geom_spatraster(data = DT_R, inherit.aes = FALSE) +
           ggplot2::geom_sf(
-            data = blocks, inherit.aes = FALSE, alpha = 0.5, ,
-            mapping = ggplot2::aes(fill = folds), linewidth = 0.4) +
+            data = blocks, inherit.aes = FALSE, alpha = 0.35, ,
+            mapping = ggplot2::aes(fill = folds), linewidth = 0.3) +
+          ggplot2::geom_sf_text(
+            data = blocks, ggplot2::aes(label = folds), size = 8,
+            fontface = "bold") +
+          ggplot2::coord_sf(xlim = Xlim, ylim = Ylim, clip = "off") +
           ggplot2::scale_fill_manual(
             values = c(
               "darkgrey", "transparent", "red", "green", "blue", "yellow"),
             na.value = "transparent") +
-          ggplot2::scale_x_continuous(
-            limits = PlotBox[c(1, 3)], expand = c(0, 0)) +
-          ggplot2::scale_y_continuous(
-            limits = PlotBox[c(2, 4)], expand = c(0, 0)) +
-          ggplot2::geom_sf_text(
-            data = blocks, ggplot2::aes(label = folds), size = 16,
-            fontface = "bold") +
+          ggplot2::scale_x_continuous(expand = c(0, 0)) +
+          ggplot2::scale_y_continuous(expand = c(0, 0)) +
           ggplot2::labs(title = .x) +
           ggplot2::theme_void() +
           ggplot2::theme(
+            plot.margin = ggplot2::margin(0.25, 0.25, 0.125, 0.25, "cm"),
             plot.title = ggplot2::element_text(
-              size = 40, face = "bold", color = "blue"),
+              size = 20, face = "bold", color = "blue", hjust = 0.5,
+              margin = ggplot2::margin(0.2, 0, 0.2, 0.5, "cm")),
             legend.position = "none")
 
         return(Plot)
       })
 
-    # Using ggplot2::ggsave directly does not show non-ascii characters
-    # correctly
-    grDevices::pdf(
-      file = file.path(OutPath, "CV_Blocks.pdf"),
-      width = 25 * (AspectRatio), height = 25)
+    grDevices::cairo_pdf(
+      filename = file.path(OutPath, "CV_Blocks.pdf"),
+      width = 12.5, height = 13, onefile = TRUE)
     invisible(purrr::map(CV_Plots, print))
     grDevices::dev.off()
   }

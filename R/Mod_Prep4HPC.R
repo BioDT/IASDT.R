@@ -419,7 +419,7 @@ Mod_Prep4HPC <- function(
   if (isFALSE(as.character(Hab_Abb) %in% ValidHabAbbs)) {
     stop(
       paste0(
-        "Hab_Abb has to be one of the following:\n >> ", 
+        "Hab_Abb has to be one of the following:\n >> ",
         paste0(ValidHabAbbs, collapse = " | ")),
       call. = FALSE)
   }
@@ -791,28 +791,21 @@ Mod_Prep4HPC <- function(
     if (GPP_Plot) {
       IASDT.R::CatTime("Plotting GPP knots", Level = 1)
 
-      KnotExt <- rbind(
-        as.matrix(purrr::map_dfr(GPP_Knots, ~.x$sKnot)), as.matrix(DT_xy)) %>%
-        as.data.frame() %>%
-        stats::setNames(c("x", "y")) %>%
-        sf::st_as_sf(coords = c("x", "y"), crs = 3035) %>%
-        sf::st_buffer(10000) %>%
-        sf::st_bbox()
-      AspectRatio <- (KnotExt[3] - KnotExt[1]) / (KnotExt[4] - KnotExt[2])
-
       GridR <- terra::unwrap(IASDT.R::LoadAs(Path_GridR))
 
       GridR <- sf::st_as_sf(
         x = data.frame(DT_xy), coords = c("x", "y"), crs = 3035) %>%
         terra::rasterize(GridR) %>%
-        terra::trim() %>%
+        as.factor() %>%
         stats::setNames("GridR")
 
       EU_Bound <- IASDT.R::LoadAs(EU_Bound) %>%
         magrittr::extract2("Bound_sf_Eur_s") %>%
         magrittr::extract2("L_03") %>%
-        sf::st_crop(KnotExt) %>%
         suppressWarnings()
+
+      Xlim <- c(2600000, 6570000)
+      Ylim <- c(1360000, 5480000)
 
       Knots_Plots <- purrr::map(
         .x = GPP_Dists,
@@ -825,40 +818,40 @@ Mod_Prep4HPC <- function(
             formatC(format = "d", big.mark = ",")
 
           Plot <- ggplot2::ggplot() +
+            ggplot2::geom_sf(
+              data = EU_Bound, fill = "gray95", colour = "darkgrey",
+              linewidth = 0.4) +
             tidyterra::geom_spatraster(data = GridR) +
+            ggplot2::scale_fill_manual(
+              values = "grey50", na.value = "transparent") +
             ggplot2::geom_sf(
-              data = EU_Bound, fill = "transparent", colour = "darkgrey",
-              linewidth = 1.5) +
-            ggplot2::geom_sf(
-              data = Knot_sf, colour = "black", shape = 19,
-              stroke = 1.75, size = dplyr::if_else(.x < 50, 1.5, 3)) +
-            ggplot2::scale_x_continuous(
-              limits = sf::st_bbox(EU_Bound)[c(1, 3)], expand = c(0, 0)) +
-            ggplot2::scale_y_continuous(
-              limits = sf::st_bbox(EU_Bound)[c(2, 4)], expand = c(0, 0)) +
+              data = Knot_sf, colour = "blue", shape = 4,
+              size = 2.5, stroke = 2) +
+            ggplot2::scale_x_continuous(expand = c(0, 0)) +
+            ggplot2::scale_y_continuous(expand = c(0, 0)) +
+            ggplot2::coord_sf(xlim = Xlim, ylim = Ylim) +
             ggplot2::labs(
               title = "GPP knots",
               subtitle = paste0(
                 "Minimum distance between knots and between knots and grid ",
                 "cells is ", .x, " km (", NKnots, " knots)")) +
-            ggplot2::scale_fill_continuous(na.value = "transparent") +
             ggplot2::theme_void() +
             ggplot2::theme(
               plot.margin = ggplot2::margin(0, 0, 0, 0, "cm"),
               plot.title = ggplot2::element_text(
-                size = 50, face = "bold", color = "blue"),
+                size = 20, face = "bold", color = "blue",
+                margin = ggplot2::margin(0.1, 0, 0.125, 0.5, "cm")),
               plot.subtitle = ggplot2::element_text(
-                size = 35, color = "darkgrey"),
+                size = 15, color = "darkgrey",
+                margin = ggplot2::margin(0.125, 0, 0.125, 0.5, "cm")),
               legend.position = "none")
 
           return(Plot)
         })
 
-      # Using ggplot2::ggsave directly does not show non-ascii characters
-      # correctly
-      grDevices::pdf(
-        file = file.path(Path_Model, "knot_Locations.pdf"),
-        width = 25 * AspectRatio, height = 25)
+      grDevices::cairo_pdf(
+        filename = file.path(Path_Model, "knot_Locations.pdf"),
+        width = 12, height = 13.25, onefile = TRUE)
       invisible(purrr::map(Knots_Plots, print))
       grDevices::dev.off()
     }
@@ -1124,7 +1117,7 @@ Mod_Prep4HPC <- function(
             paste0(M_Name_Fit, "_Chain", Chain, "_Progress.txt"))
 
           Post_Missing <- isFALSE(file.exists(Path_Post))
- 
+
           # File path for the python script
           Path_Model2_4cmd <- IASDT.R::NormalizePath(Path_Model2)
           Path_Post_4cmd <- IASDT.R::NormalizePath(Path_Post)

@@ -378,9 +378,9 @@ Mod_PrepData <- function(
   NGridsWzSpecies <- terra::global(R_Sp_sum, fun = "notNA") %>%
     as.integer() %>%
     format(big.mark = ",")
-  Limits <- terra::trim(R_Sp_sum) %>%
-    terra::ext() %>%
-    as.vector()
+  
+  Xlim <- c(2600000, 6550000)
+  Ylim <- c(1450000, 5420000)
 
   Caption <- stringr::str_glue(
     "<span style='color:red; font-size:18px;'>\\
@@ -393,29 +393,29 @@ Mod_PrepData <- function(
     "- Considering only IAS with &#8805; {PresPerSpecies} presence grid cells")
 
   NSpPerGrid_gg <- ggplot2::ggplot() +
+    ggplot2::geom_sf(
+      data = EU_Bound, fill = "gray95", colour = "black", linewidth = 0.15) +
     tidyterra::geom_spatraster(data = R_Sp_sum) +
     tidyterra::scale_fill_whitebox_c(
       na.value = "transparent", palette = "bl_yl_rd", name = NULL) +
-    ggplot2::geom_sf(
-      data = EU_Bound, fill = "transparent", colour = "black",
-      linewidth = 0.15) +
     ggplot2::labs(
       title = paste0(
         '<span style="color:blue; font-size:20px;"><b>',
-        "Number of IAS per grid cell to be used in the models</b></span>",
+        "Number of IAS per grid cell to be used in the model</b></span>",
         '<span style="color:black; font-size:16px;"> (',
         stringr::str_remove(Hab_column, "Hab_"), ")</span>"),
       caption = Caption) +
-    ggplot2::scale_y_continuous(expand = c(0, 0), limits = Limits[c(3, 4)]) +
-    ggplot2::scale_x_continuous(expand = c(0, 0), limits = Limits[c(1, 2)]) +
+    ggplot2::scale_y_continuous(expand = c(0, 0), limits = Ylim) +
+    ggplot2::scale_x_continuous(expand = c(0, 0), limits = Xlim) +
     ggplot2::theme_minimal() +
     ggplot2::theme(
       plot.margin = ggplot2::margin(0.25, 0, 0.125, 0, "cm"),
       plot.title = ggtext::element_markdown(
         size = 16, color = "blue",
-        margin = ggplot2::margin(0, 0, 0.1, 0, "cm")),
+        margin = ggplot2::margin(0, 0, 0.1, 0.25, "cm")),
       plot.caption = ggtext::element_markdown(
-        size = 11, colour = "grey40", hjust = 0),
+        size = 11, colour = "grey40", hjust = 0, lineheight = 1.3,
+        margin = ggplot2::margin(0.1, 0, 0, 0.25, "cm")),
       legend.position = "inside",
       legend.position.inside = c(0.95, 0.9),
       legend.key.size = grid::unit(0.8, "cm"),
@@ -425,11 +425,11 @@ Mod_PrepData <- function(
 
   ragg::agg_jpeg(
     filename = file.path(Path_Model, "NSpPerGrid.jpeg"),
-    width = 25, height = 28, res = 600, quality = 100, units = "cm")
+    width = 25.5, height = 28, res = 600, quality = 100, units = "cm")
   print(NSpPerGrid_gg)
   grDevices::dev.off()
 
-  rm(Limits, NSpPerGrid_gg, R_Sp_sum, EU_Bound, envir = environment())
+  rm(NSpPerGrid_gg, R_Sp_sum, EU_Bound, envir = environment())
 
   # # ..................................................................... ###
 

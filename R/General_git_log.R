@@ -28,6 +28,7 @@
 #'   Git repository, Git is not installed, or if the `Num` parameter is not
 #'   `NULL` or a positive number.
 #' @name git_log
+#' @author Ahmed El-Gabbas
 #' @export
 #' @seealso [IASDT.R::System]
 #' @examples

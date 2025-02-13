@@ -6,14 +6,14 @@
 \alias{IASDT.R-package}
 \title{IASDT.R: Modelling the distribution of invasive alien plant species in Europe}
 \description{
-Helper R functions for the Invasive Alien Species (IAS) prototype Digital Twin (IAS-pDT).
+Helper R functions for the Invasive Alien Species (IAS) prototype Digital Twin (IAS-pDT), as part of the EU-funded BioDT project.
 }
 \seealso{
 Useful links:
 \itemize{
   \item \doi{10.5281/zenodo.14834385}
   \item \url{https://biodt.eu}
-  \item \url{https://github.com/BioDT/IASDT.R}
+  \item \url{https://github.com/BioDT/IASDT.R/}
   \item Report bugs at \url{https://github.com/BioDT/IASDT.R/issues}
 }
 

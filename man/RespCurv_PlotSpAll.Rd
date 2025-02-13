@@ -29,3 +29,6 @@ curve lines. Defaults to 0.3.}
 Generates and saves response curve plots for all species together in a single
 plot.
 }
+\author{
+Ahmed El-Gabbas
+}

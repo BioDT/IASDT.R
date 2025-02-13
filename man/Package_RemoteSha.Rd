@@ -22,3 +22,6 @@ of a package's source code.
 \examples{
 Package_RemoteSha(IASDT.R, devtools)
 }
+\author{
+Ahmed El-Gabbas
+}

@@ -20,6 +20,7 @@
 #'   centimeters. Default is `25` cm x `35` cm.
 #' @return The function does not return a value but saves heatmap plots as JPEG
 #'   files in a directory related to the model's path.
+#' @author Ahmed El-Gabbas
 #' @name PlotBetaGG
 #' @export
 

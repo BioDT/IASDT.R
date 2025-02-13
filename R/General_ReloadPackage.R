@@ -15,6 +15,7 @@
 #'   reload.
 #' @return The function is used for its side effect of reloading a package
 #'   rather than for its return value.
+#' @author Ahmed El-Gabbas
 #' @examples
 #' LoadPackages(sf)
 #'

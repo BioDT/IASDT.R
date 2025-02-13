@@ -50,3 +50,6 @@ plot(raster::extent(SPDF_DE), axes = FALSE, xlab = "", ylab = "")
 plot(SPDF_DE, add = TRUE)
 plot(SPDF, add = TRUE)
 }
+\author{
+Ahmed El-Gabbas
+}

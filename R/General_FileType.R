@@ -14,6 +14,7 @@
 #' @export
 #' @note This function relies on the system's `file` command and therefore
 #'    might produce different outputs on different platforms.
+#' @author Ahmed El-Gabbas
 #' @examples
 #' (f <- system.file("ex/elev.tif", package="terra"))
 #'
@@ -30,7 +31,7 @@ FileType <- function(Path) {
       paste0("The following command(s) are not available: ", Missing),
       call. = FALSE)
   }
-  
+
   if (is.null(Path)) {
     stop("Path cannot be NULL", call. = FALSE)
   }

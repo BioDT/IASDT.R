@@ -32,3 +32,6 @@ parameters). It is designed to work with model output files and produces two
 types of visualizations: one indicating the sign (positive or negative) of
 the associations and another showing the mean values of these associations.
 }
+\author{
+Ahmed El-Gabbas
+}

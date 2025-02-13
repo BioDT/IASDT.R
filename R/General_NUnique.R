@@ -17,6 +17,7 @@
 #' @source The source code of the function was copied from this
 #'   [stackoverflow](https://stackoverflow.com/q/22196078) question.
 #' @export
+#' @author Ahmed El-Gabbas
 #' @return A data frame with two columns: `Variable` and `NUnique`. The Variable
 #'   column lists the names of the original columns, and the `NUnique` column
 #'   lists the number of unique values in each column. The result is sorted by

@@ -22,6 +22,7 @@
 #'   signs and mean values. These files are saved in a directory named
 #'   'Model_Postprocessing' within the parent directory of the provided model
 #'   file path. The function itself returns `NULL` invisibly.
+#' @author Ahmed El-Gabbas
 #' @name PlotOmegaGG
 #' @export
 

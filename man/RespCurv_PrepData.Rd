@@ -81,3 +81,6 @@ data.
 \seealso{
 RespCurv_PlotSp RespCurv_PlotSR
 }
+\author{
+Ahmed El-Gabbas
+}

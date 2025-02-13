@@ -11,6 +11,7 @@
 #' @param R A SpatRaster object whose CRS needs to be set.
 #' @param CRS A string specifying the CRS to be set, default is "epsg:3035".
 #' @return The SpatRaster object with the updated CRS.
+#' @author Ahmed El-Gabbas
 #' @export
 
 setRastCRS <- function(R, CRS = "epsg:3035") {

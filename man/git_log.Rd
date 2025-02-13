@@ -54,3 +54,6 @@ git_log(Path = ".", Num = 5, ReturnLog = TRUE)
 \seealso{
 \link{System}
 }
+\author{
+Ahmed El-Gabbas
+}

@@ -53,7 +53,7 @@ Mod_Prep4HPC(
   Path_Hmsc = NULL,
   CheckPython = FALSE,
   ToJSON = FALSE,
-  Precision = 64,
+  Precision = 64L,
   ...
 )
 }

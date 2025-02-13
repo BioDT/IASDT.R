@@ -16,6 +16,7 @@
 #'   found; otherwise, returns `NULL` invisibly. If `Verbose` is `TRUE`, the
 #'   function will also print a message to the console.
 #' @name DetectAlias
+#' @author Ahmed El-Gabbas
 #' @export
 #' @examples
 #' library("car", warn.conflicts = FALSE, quietly = TRUE, verbose = FALSE)

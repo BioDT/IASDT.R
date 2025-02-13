@@ -13,6 +13,7 @@
 #' @return A named character vector where names are the package names and values
 #'   are the corresponding remote SHAs.
 #' @export
+#' @author Ahmed El-Gabbas
 #' @examples
 #' Package_RemoteSha(IASDT.R, devtools)
 

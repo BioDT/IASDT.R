@@ -34,3 +34,6 @@ Generates and saves response curve plots for species based on environmental
 variables and other factors. Plots show predicted habitat suitability across
 different values of each variable.
 }
+\author{
+Ahmed El-Gabbas
+}

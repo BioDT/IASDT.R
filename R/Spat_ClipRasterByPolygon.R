@@ -19,6 +19,7 @@
 #' @note This function requires the 'raster' and 'sp' packages.
 #' @export
 #' @name ClipRasterByPolygon
+#' @author Ahmed El-Gabbas
 #' @examples
 #' library(sp)
 #' library(raster)

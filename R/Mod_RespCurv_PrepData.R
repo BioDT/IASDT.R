@@ -22,6 +22,7 @@
 #'   data or `NULL` invisibly.
 #' @export
 #' @inheritParams Predict_Hmsc
+#' @author Ahmed El-Gabbas
 #' @name RespCurv_PrepData
 
 RespCurv_PrepData <- function(

@@ -25,12 +25,11 @@ CheckArgs <- function(AllArgs, Args, Type) {
     stop("AllArgs, Args, or Type cannot be NULL", call. = FALSE)
   }
 
-  Type <- match.arg(
-    arg = Type, choices = c("character", "logical", "numeric"))
+  Type <- match.arg(arg = Type, choices = c("character", "logical", "numeric"))
 
   if (Type == "character") {
     MissingArgs <- AllArgs[Args] %>%
-      purrr::map(~inherits(.x, "character") && nchar(.x) > 0) %>%
+      purrr::map(~inherits(.x, "character") && all(nchar(.x) > 0)) %>%
       purrr::keep(.p = Negate(isTRUE)) %>%
       names() %>%
       sort()

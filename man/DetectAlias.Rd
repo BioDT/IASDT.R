@@ -49,3 +49,6 @@ summary(model)
 
 try(car::vif(model))
 }
+\author{
+Ahmed El-Gabbas
+}

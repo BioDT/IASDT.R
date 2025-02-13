@@ -33,3 +33,6 @@ NUnique(mtcars)
 
 NUnique(iris)
 }
+\author{
+Ahmed El-Gabbas
+}

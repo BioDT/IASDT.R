@@ -13,3 +13,5 @@ IASDT.R.code-workspace
 .httr-oauth
 .DS_Store
 .quarto
+inst/load_qs.py
+inst/VarPar2.py

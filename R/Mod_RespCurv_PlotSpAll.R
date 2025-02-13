@@ -17,6 +17,7 @@
 #' @param PlotAlpha Numeric. The alpha value (transparency) for the response
 #'   curve lines. Defaults to 0.3.
 #' @export
+#' @author Ahmed El-Gabbas
 #' @name RespCurv_PlotSpAll
 
 RespCurv_PlotSpAll <- function(

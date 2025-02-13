@@ -35,3 +35,6 @@ It is designed to visualize how species (Y) respond to various covariates (X)
 using \code{ggplot2} for plotting. The function is an adaptation of
 \link[Hmsc:plotBeta]{Hmsc::plotBeta}, focusing on \code{ggplot2}-based visualizations.
 }
+\author{
+Ahmed El-Gabbas
+}

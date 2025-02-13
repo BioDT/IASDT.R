@@ -19,3 +19,6 @@ This function sets the coordinate reference system (CRS) for a SpatRaster
 object using the specified EPSG code. This is a wrapper function for
 \code{terra::crs(R) <- CRS} but allowing to set the CRS in the pipe.
 }
+\author{
+Ahmed El-Gabbas
+}

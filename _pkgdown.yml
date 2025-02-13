@@ -2,6 +2,8 @@ url: https://biodt.github.io/IASDT.R
 
 template:
   bootstrap: 5
+  light-switch: true
+
 
 authors:
   Ahmed El-Gabbas:
@@ -17,6 +19,7 @@ home:
 
 development:
   mode: auto
+
 
 reference:
 - title: Package info

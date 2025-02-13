@@ -20,6 +20,7 @@
 #' @param ReturnData Logical. Indicates whether the output data be returned as
 #'   an R object.
 #' @export
+#' @author Ahmed El-Gabbas
 #' @name RespCurv_PlotSp
 
 RespCurv_PlotSp <- function(

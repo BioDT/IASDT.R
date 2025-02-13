@@ -796,7 +796,7 @@ Mod_Prep4HPC <- function(
       GridR <- sf::st_as_sf(
         x = data.frame(DT_xy), coords = c("x", "y"), crs = 3035) %>%
         terra::rasterize(GridR) %>%
-        as.factor() %>%
+        terra::as.factor() %>%
         stats::setNames("GridR")
 
       EU_Bound <- IASDT.R::LoadAs(EU_Bound) %>%

@@ -343,13 +343,13 @@ VarPar_Compute <- function(
 
         IASDT.R::CatTime("Processing `geta` function", Level = 1)
         Path_Out_a <- file.path(Path_Temp, "VP_A.feather") %>%
-          normalizePath(winslash = "/", mustWork = FALSE)
+          IASDT.R::NormalizePath()
 
         cmd_a <- paste(
           python_executable, Script_geta,
-          "--tr", normalizePath(Path_Tr, winslash = "/", mustWork = TRUE),
-          "--x", normalizePath(Path_X, winslash = "/", mustWork = TRUE),
-          "--gamma", normalizePath(Path_Gamma, winslash = "/", mustWork = TRUE),
+          "--tr", IASDT.R::NormalizePath(Path_Tr, MustWork = TRUE),
+          "--x", IASDT.R::NormalizePath(Path_X, MustWork = TRUE),
+          "--gamma", IASDT.R::NormalizePath(Path_Gamma, MustWork = TRUE),
           "--output", Path_Out_a,
           "--ncores", NCores,
           "--chunk_size", Chunk_size)
@@ -399,13 +399,12 @@ VarPar_Compute <- function(
 
         IASDT.R::CatTime("Processing `getf` function", Level = 1)
         Path_Out_f <- file.path(Path_Temp, "VP_F.feather") %>%
-          normalizePath(winslash = "/", mustWork = FALSE)
+          IASDT.R::NormalizePath()
 
         cmd_f <- paste(
           python_executable, Script_getf,
-          "--x", normalizePath(Path_X, winslash = "/", mustWork = TRUE),
-          "--beta_dir",
-          normalizePath(Path_Temp, winslash = "/", mustWork = TRUE),
+          "--x", IASDT.R::NormalizePath(Path_X, MustWork = TRUE),
+          "--beta_dir", IASDT.R::NormalizePath(Path_Temp, MustWork = TRUE),
           "--output", Path_Out_f,
           "--ncores", NCores)
 
@@ -454,12 +453,12 @@ VarPar_Compute <- function(
 
         IASDT.R::CatTime("Processing `gemu` function", Level = 1)
         Path_Out_mu <- file.path(Path_Temp, "VP_Mu.feather") %>%
-          normalizePath(winslash = "/", mustWork = FALSE)
+          IASDT.R::NormalizePath()
 
         cmd_mu <- paste(
           python_executable, Script_gemu,
-          "--tr", normalizePath(Path_Tr, winslash = "/", mustWork = TRUE),
-          "--gamma", normalizePath(Path_Gamma, winslash = "/", mustWork = TRUE),
+          "--tr", IASDT.R::NormalizePath(Path_Tr, MustWork = TRUE),
+          "--gamma", IASDT.R::NormalizePath(Path_Gamma, MustWork = TRUE),
           "--output", Path_Out_mu,
           "--ncores", NCores,
           "--chunk_size", Chunk_size)
@@ -852,7 +851,7 @@ VarPar_Compute <- function(
 
     IASDT.R::CatTime("Clean up temporary files")
 
-    Path_Temp <- normalizePath(Path_Temp, winslash = "/", mustWork = FALSE)
+    Path_Temp <- IASDT.R::NormalizePath(Path_Temp)
 
     if (dir.exists(Path_Temp)) {
       # Function to delete files or directories
@@ -860,12 +859,12 @@ VarPar_Compute <- function(
         if (.Platform$OS.type == "windows") {
           # Use rmdir command on Windows
           system2(
-            "cmd", c("/c", "rmdir /s /q", shQuote(file_path)),
+            "cmd", c("/c", "rmdir /s /q", IASDT.R::NormalizePath(file_path)),
             stdout = NULL, stderr = NULL)
         } else {
           # Use rm command on Linux/macOS
           system2(
-            "rm", c("-rf", shQuote(file_path)),
+            "rm", c("-rf", IASDT.R::NormalizePath(file_path)),
             stdout = NULL, stderr = NULL)
         }
       }

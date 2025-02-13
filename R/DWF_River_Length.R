@@ -406,7 +406,7 @@ River_Length <- function(
     try(
       expr = {
         file_paths <- list.files(
-          path = normalizePath(Path_Rivers_Interim, winslash = "/"),
+          path = IASDT.R::NormalizePath(Path_Rivers_Interim),
           pattern = "_sf.RData$|.gpkg$|_GPKG.zip$", full.names = TRUE)
         fs::file_delete(file_paths)
       },

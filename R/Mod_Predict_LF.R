@@ -769,7 +769,7 @@ Predict_LF <- function(
           "^", Model_Name,
           "(postEta|r[0-9]|etaPred|s1|s2|post).+(feather|qs2|log)")
         file_paths <- list.files(
-          path = normalizePath(Temp_Dir, winslash = "/"),
+          path = IASDT.R::NormalizePath(Temp_Dir),
           pattern = Pattern, full.names = TRUE)
         fs::file_delete(file_paths)
       },
@@ -890,15 +890,13 @@ run_crossprod_solve <- function(
         stop(
           paste0(
             "The specified `TF_Environ` directory ",
-            normalizePath(TF_Environ, winslash = "/", mustWork = FALSE),
-            " does not exist"),
+            IASDT.R::NormalizePath(TF_Environ), " does not exist"),
           call. = FALSE)
       }
     }
 
-    python_executable <- normalizePath(
-      file.path(TF_Environ, "Scripts", "python.exe"),
-      winslash = "/", mustWork = TRUE)
+    python_executable <- IASDT.R::NormalizePath(
+      file.path(TF_Environ, "Scripts", "python.exe"), MustWork = TRUE)
 
     if (!file.exists(python_executable)) {
       stop(
@@ -917,9 +915,9 @@ run_crossprod_solve <- function(
   LF_Args <- c(
     python_executable,
     script_path,
-    "--s1", normalizePath(s1, winslash = "/", mustWork = TRUE),
-    "--s2", normalizePath(s2, winslash = "/", mustWork = TRUE),
-    "--post_eta", normalizePath(postEta, winslash = "/", mustWork = TRUE),
+    "--s1", IASDT.R::NormalizePath(s1, MustWork = TRUE),
+    "--s2", IASDT.R::NormalizePath(s2, MustWork = TRUE),
+    "--post_eta", IASDT.R::NormalizePath(postEta, MustWork = TRUE),
     "--path_out", file.path(getwd(), path_out),
     "--denom", as.character(denom),
     "--chunk_size", as.character(chunk_size),

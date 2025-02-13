@@ -71,11 +71,11 @@ git_log <- function(Path = ".", Num = NULL, ReturnLog = FALSE) {
   # Construct the command to check if the directory is a Git repo
   git_check_command <- if (os == "Windows") {
     paste0(
-      'cmd.exe /c "cd /d ', shQuote(Path),
+      'cmd.exe /c "cd /d ', IASDT.R::NormalizePath(Path),
       ' && git rev-parse --is-inside-work-tree"')
   } else {
     paste0(
-      'sh -c "cd ', shQuote(Path),
+      'sh -c "cd ', IASDT.R::NormalizePath(Path),
       ' && git rev-parse --is-inside-work-tree"')
   }
 
@@ -103,7 +103,7 @@ git_log <- function(Path = ".", Num = NULL, ReturnLog = FALSE) {
   if (is_git == "true") {
     # Construct the command to get the Git log
     log_command <- paste0(
-      "git -C ", shQuote(Path),
+      "git -C ", IASDT.R::NormalizePath(Path),
       ' log --graph --pretty=format:"%Cred%h%Creset ',
       "-%C(yellow)%d%Creset %s %Cgreen(%cr) ",
       '%C(bold blue)<%an>%Creset" --abbrev-commit')

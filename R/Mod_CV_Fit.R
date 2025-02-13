@@ -376,15 +376,15 @@ Mod_CV_Fit <- function(
               # Model fitting command
               Command_HPC <- paste0(
                 "/usr/bin/time -v python3 -m hmsc.run_gibbs_sampler",
-                " --input ", shQuote(Path_ModInit_rds),
-                " --output ", shQuote(Path_Post),
+                " --input ", IASDT.R::NormalizePath(Path_ModInit_rds),
+                " --output ", IASDT.R::NormalizePath(Path_Post),
                 " --samples ", Model_Full$samples,
                 " --transient ", Model_Full$transient,
                 " --thin ", Model_Full$thin,
                 " --verbose ", verbose,
                 " --chain ", (Chain - 1),
                 " --fp ", Precision,
-                " >& ", shQuote(Path_ModProg))
+                " >& ", IASDT.R::NormalizePath(Path_ModProg))
 
               # data to be returned for each combination of CV and Chain
               tibble::tibble(

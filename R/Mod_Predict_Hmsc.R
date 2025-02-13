@@ -763,7 +763,7 @@ Predict_Hmsc <- function(
       {
         Pattern <- paste0("(Pred_){0,}", Model_Name, ".+qs2")
         file_paths <- list.files(
-          path = normalizePath(Temp_Dir, winslash = "/"),
+          path = IASDT.R::NormalizePath(Temp_Dir),
           pattern = Pattern, full.names = TRUE)
         fs::file_delete(file_paths)
       },

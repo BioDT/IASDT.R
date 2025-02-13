@@ -834,9 +834,7 @@ Mod_Prep_TF <- function(
   Path_Out <- file.path(Path, Path_Out)
   fs::dir_create(Path_Out)
 
-  Path_Log <- normalizePath(
-    file.path(Path, "TMP", "%x-%A-%a.out"),
-    winslash = "/", mustWork = FALSE)
+  Path_Log <- IASDT.R::NormalizePath(file.path(Path, "TMP", "%x-%A-%a.out"))
 
   # ****************************************************************
   # ****************************************************************
@@ -947,7 +945,7 @@ Mod_Prep_TF <- function(
 
   # Change working directory if specified
   if (!is.null(WD)) {
-    WD <- normalizePath(WD, winslash = "/", mustWork = TRUE)
+    WD <- IASDT.R::NormalizePath(WD, MustWork = TRUE)
     BasicCommands <- c(
       BasicCommands, "# Change to working directory", paste0("cd ", WD), "")
   }

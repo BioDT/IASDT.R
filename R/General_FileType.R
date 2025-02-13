@@ -46,7 +46,7 @@ FileType <- function(Path) {
     stop("File does not exist", call. = FALSE)
   }
 
-  system(paste0("file ", shQuote(Path)), intern = TRUE) %>%
+  system(paste0("file ", IASDT.R::NormalizePath(Path)), intern = TRUE) %>%
     stringr::str_extract_all(": .+", simplify = TRUE) %>%
     as.vector() %>%
     stringr::str_remove("^: ") %>%

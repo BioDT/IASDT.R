@@ -418,8 +418,9 @@ Mod_Prep4HPC <- function(
   ValidHabAbbs <- c(0:3, "4a", "4b", 10, "12a", "12b")
   if (isFALSE(as.character(Hab_Abb) %in% ValidHabAbbs)) {
     stop(
-      paste0("Hab_Abb has to be one of the following:\n >> ",
-             paste0(ValidHabAbbs, collapse = " | ")),
+      paste0(
+        "Hab_Abb has to be one of the following:\n >> ", 
+        paste0(ValidHabAbbs, collapse = " | ")),
       call. = FALSE)
   }
 
@@ -1122,21 +1123,13 @@ Mod_Prep4HPC <- function(
             Path_Model, "Model_Fitting_HPC",
             paste0(M_Name_Fit, "_Chain", Chain, "_Progress.txt"))
 
-          Post_Missing <- !file.exists(Path_Post)
-
+          Post_Missing <- isFALSE(file.exists(Path_Post))
+ 
           # File path for the python script
-          Path_Model2_4cmd <- Path_Model2 %>%
-            normalizePath(winslash = "/", mustWork = FALSE) %>%
-            shQuote()
-          Path_Post_4cmd <- Path_Post %>%
-            normalizePath(winslash = "/", mustWork = FALSE) %>%
-            shQuote()
-          Path_Prog_4cmd <- Path_Prog %>%
-            normalizePath(winslash = "/", mustWork = FALSE) %>%
-            shQuote()
-          Path_Python <- Path_Python %>%
-            normalizePath(winslash = "/", mustWork = FALSE) %>%
-            shQuote()
+          Path_Model2_4cmd <- IASDT.R::NormalizePath(Path_Model2)
+          Path_Post_4cmd <- IASDT.R::NormalizePath(Path_Post)
+          Path_Prog_4cmd <- IASDT.R::NormalizePath(Path_Prog)
+          Path_Python <- IASDT.R::NormalizePath(Path_Python)
 
           # `TF_ENABLE_ONEDNN_OPTS=0` is used to disable the following warning:
           #

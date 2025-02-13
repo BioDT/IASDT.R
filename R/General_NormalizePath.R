@@ -2,7 +2,7 @@
 # NormalizePath ----
 ## |------------------------------------------------------------------------| #
 
-#' Normalize and Quote File Paths
+#' Normalize and quote file paths
 #'
 #' This function ensures that file paths are expressed in a consistent and
 #' canonical form. It first converts paths to absolute form using

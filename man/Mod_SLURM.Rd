@@ -79,7 +79,7 @@ workload manager.
 \details{
 The function reads the following environment variables:
 \itemize{
-\item \strong{\code{LUMI_ProjNum}} for the BioDT LUMI project number.
+\item \strong{\code{LUMI_Account_GPU}} for the BioDT LUMI project number.
 \item \strong{\code{DP_R_Path_GPU_Check}} for the path of the python for reporting if
 the GPU was used in the running SLURM job.
 }

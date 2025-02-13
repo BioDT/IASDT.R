@@ -41,7 +41,7 @@
 #' @return The function does not return any value but writes SLURM script files
 #'   to the disk.
 #' @details The function reads the following environment variables:
-#'    - **`LUMI_ProjNum`** for the BioDT LUMI project number.
+#'    - **`LUMI_Account_GPU`** for the BioDT LUMI project number.
 #'    - **`DP_R_Path_GPU_Check`** for the path of the python for reporting if
 #'   the GPU was used in the running SLURM job.
 #' @export
@@ -74,7 +74,7 @@ Mod_SLURM <- function(
 
   EnvVars2Read <- tibble::tribble(
     ~VarName, ~Value, ~CheckDir, ~CheckFile,
-    "ProjNum", "LUMI_ProjNum", FALSE, FALSE,
+    "ProjNum", "LUMI_Account_GPU", FALSE, FALSE,
     "Path_GPU_Check", "DP_R_Path_GPU_Check", FALSE, FromHPC)
 
   # Assign environment variables and check file and paths

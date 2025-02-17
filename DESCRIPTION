@@ -117,7 +117,7 @@ LinkingTo:
     Rcpp (>= 1.0.13),
     RcppArmadillo (>= 14.2.2)
 VignetteBuilder: 
-    quarto
+    knitr
 Remotes:
     EmilHvitfeldt/paletteer,
     hmsc-r/HMSC,

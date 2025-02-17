@@ -116,8 +116,6 @@ Suggests:
 LinkingTo:
     Rcpp (>= 1.0.13),
     RcppArmadillo (>= 14.2.2)
-VignetteBuilder: 
-    knitr
 Remotes:
     EmilHvitfeldt/paletteer,
     hmsc-r/HMSC,

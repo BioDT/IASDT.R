@@ -94,7 +94,7 @@ continuous focal variables. Defaults to 50. See \link[Hmsc:constructGradient]{Hm
 for more details.}
 
 \item{UseTF}{Logical indicating whether to use TensorFlow for calculations.
-Defaults to TRUE.}
+Defaults to \code{TRUE}.}
 
 \item{TF_use_single}{Logical indicating whether to use single precision for
 the TF calculations. Defaults to \code{FALSE}.}
@@ -105,16 +105,16 @@ processing. Defaults to 8.}
 \item{LF_Temp_Cleanup}{Logical indicating whether to delete temporary files
 in the \code{Temp_Dir} after finishing the LF predictions.}
 
-\item{LF_Check}{Logical. If TRUE, the function checks if the output files are
-already created and valid. If FALSE, the function will only check if the
-files exist without checking their integrity. Default is \code{FALSE}.}
+\item{LF_Check}{Logical. If \code{TRUE}, the function checks if the output files
+are already created and valid. If \code{FALSE}, the function will only check if
+the files exist without checking their integrity. Default is \code{FALSE}.}
 
 \item{Temp_Cleanup}{logical, indicating whether to clean up temporary files.
 Defaults to \code{TRUE}.}
 
 \item{TF_Environ}{Character string specifying the path to the Python
-environment. Defaults to NULL. This argument is required if \code{UseTF} is
-TRUE.}
+environment. Defaults to \code{NULL}. This argument is required if \code{UseTF} is
+\code{TRUE}.}
 
 \item{Pred_Clamp}{Logical indicating whether to clamp the sampling efforts at
 a single value. Defaults to \code{TRUE}. If \code{TRUE}, the \code{Fix_Efforts} argument

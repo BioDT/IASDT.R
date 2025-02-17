@@ -29,11 +29,11 @@ VarPar_Plot(
 environment, affecting file path handling. Default: \code{TRUE}.}
 
 \item{UseTF}{Logical indicating whether to use TensorFlow for calculations.
-Defaults to TRUE.}
+Defaults to \code{TRUE}.}
 
 \item{TF_Environ}{Character string specifying the path to the Python
-environment. Defaults to NULL. This argument is required if \code{UseTF} is
-TRUE.}
+environment. Defaults to \code{NULL}. This argument is required if \code{UseTF} is
+\code{TRUE}.}
 
 \item{NCores}{Integer. Number of parallel computations for computing variance
 partitioning using TensorFlow. See \link{VarPar_Compute} for more details.

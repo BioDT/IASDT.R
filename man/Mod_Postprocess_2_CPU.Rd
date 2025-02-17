@@ -63,11 +63,11 @@ model. Defaults to 1000.}
 \item{Thin}{Integer specifying the value for thinning in the selected model.}
 
 \item{UseTF}{Logical indicating whether to use TensorFlow for calculations.
-Defaults to TRUE.}
+Defaults to \code{TRUE}.}
 
 \item{TF_Environ}{Character string specifying the path to the Python
-environment. Defaults to NULL. This argument is required if \code{UseTF} is
-TRUE.}
+environment. Defaults to \code{NULL}. This argument is required if \code{UseTF} is
+\code{TRUE}.}
 
 \item{TF_use_single}{Logical indicating whether to use single precision for
 the TF calculations. Defaults to \code{FALSE}.}
@@ -75,9 +75,9 @@ the TF calculations. Defaults to \code{FALSE}.}
 \item{LF_NCores}{Integer specifying the number of cores to use for parallel
 processing. Defaults to 8.}
 
-\item{LF_Check}{Logical. If TRUE, the function checks if the output files are
-already created and valid. If FALSE, the function will only check if the
-files exist without checking their integrity. Default is \code{FALSE}.}
+\item{LF_Check}{Logical. If \code{TRUE}, the function checks if the output files
+are already created and valid. If \code{FALSE}, the function will only check if
+the files exist without checking their integrity. Default is \code{FALSE}.}
 
 \item{LF_Temp_Cleanup}{Logical indicating whether to delete temporary files
 in the \code{Temp_Dir} after finishing the LF predictions.}

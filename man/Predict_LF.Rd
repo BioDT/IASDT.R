@@ -52,14 +52,14 @@ intermediate files.}
 in the \code{Temp_Dir} after finishing the LF predictions.}
 
 \item{Model_Name}{Character string used as a prefix for temporary file names.
-Defaults to NULL, in which case no prefix is used.}
+Defaults to \code{NULL}, in which case no prefix is used.}
 
 \item{UseTF}{Logical indicating whether to use TensorFlow for calculations.
-Defaults to TRUE.}
+Defaults to \code{TRUE}.}
 
 \item{TF_Environ}{Character string specifying the path to the Python
-environment. Defaults to NULL. This argument is required if \code{UseTF} is
-TRUE.}
+environment. Defaults to \code{NULL}. This argument is required if \code{UseTF} is
+\code{TRUE}.}
 
 \item{TF_use_single}{Logical indicating whether to use single precision for
 the TF calculations. Defaults to \code{FALSE}.}
@@ -73,9 +73,9 @@ Defaults to \code{FALSE}. If \code{LF_OutFile} is \code{NULL}, this parameter ca
 set to \code{FALSE} because the function needs to return the result if it is not
 saved to a file.}
 
-\item{LF_Check}{Logical. If TRUE, the function checks if the output files are
-already created and valid. If FALSE, the function will only check if the
-files exist without checking their integrity. Default is \code{FALSE}.}
+\item{LF_Check}{Logical. If \code{TRUE}, the function checks if the output files
+are already created and valid. If \code{FALSE}, the function will only check if
+the files exist without checking their integrity. Default is \code{FALSE}.}
 
 \item{LF_Commands_Only}{logical. If \code{TRUE}, returns the command to run the
 Python script. Default is \code{FALSE}.}
@@ -86,7 +86,7 @@ run solve and crossprod functions. Default is 5.}
 \item{solve_chunk_size}{numeric. Chunk size for solve_and_multiply python
 function. Default is 50.}
 
-\item{Verbose}{Logical. If TRUE, detailed output is printed. Default is
+\item{Verbose}{Logical. If \code{TRUE}, detailed output is printed. Default is
 \code{FALSE}.}
 }
 \description{

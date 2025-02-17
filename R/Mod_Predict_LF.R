@@ -26,12 +26,12 @@
 #' @param LF_Temp_Cleanup Logical indicating whether to delete temporary files
 #'   in the `Temp_Dir` after finishing the LF predictions.
 #' @param Model_Name Character string used as a prefix for temporary file names.
-#'   Defaults to NULL, in which case no prefix is used.
+#'   Defaults to `NULL`, in which case no prefix is used.
 #' @param UseTF Logical indicating whether to use TensorFlow for calculations.
-#'   Defaults to TRUE.
+#'   Defaults to `TRUE`.
 #' @param TF_Environ Character string specifying the path to the Python
-#'   environment. Defaults to NULL. This argument is required if `UseTF` is
-#'   TRUE.
+#'   environment. Defaults to `NULL`. This argument is required if `UseTF` is 
+#'   `TRUE`.
 #' @param TF_use_single Logical indicating whether to use single precision for
 #'   the TF calculations. Defaults to `FALSE`.
 #' @param LF_OutFile Character string specifying the path to save the outputs.
@@ -41,10 +41,10 @@
 #'   Defaults to `FALSE`. If `LF_OutFile` is `NULL`, this parameter cannot be
 #'   set to `FALSE` because the function needs to return the result if it is not
 #'   saved to a file.
-#' @param LF_Check Logical. If TRUE, the function checks if the output files are
-#'   already created and valid. If FALSE, the function will only check if the
-#'   files exist without checking their integrity. Default is `FALSE`.
-#' @param Verbose Logical. If TRUE, detailed output is printed. Default is
+#' @param LF_Check Logical. If `TRUE`, the function checks if the output files 
+#'   are already created and valid. If `FALSE`, the function will only check if 
+#'   the files exist without checking their integrity. Default is `FALSE`.
+#' @param Verbose Logical. If `TRUE`, detailed output is printed. Default is
 #'   `FALSE`.
 #' @param solve_max_attempts numeric (Optional). Maximum number of attempts to
 #'   run solve and crossprod functions. Default is 5.

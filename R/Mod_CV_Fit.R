@@ -132,6 +132,7 @@ Mod_CV_Fit <- function(
   Path_Init <- file.path(Path_CV, "Model_Init")
   Path_Fitted <- file.path(Path_CV, "Model_Fitted")
   Path_Post <- file.path(Path_CV, "Model_Posterior")
+  Path_Log <- file.path(Path_Post, "JobsLog")
   Dir_Pred <- file.path(Path_CV, "Model_Prediction")
   fs::dir_create(c(Path_CV, Path_Init, Path_Fitted, Path_Post, Dir_Pred))
 
@@ -367,31 +368,30 @@ Mod_CV_Fit <- function(
               withr::local_options(list(scipen = 999))
 
               # Path to save the posterior of the combination of CV and chain
-              Path_Post <- file.path(
-                Path_Post,
-                paste0("Mod_", ModName, "_Ch", Chain, "_post.rds"))
+              Post_File <- file.path(
+                Path_Post, paste0("Mod_", ModName, "_Ch", Chain, "_post.rds"))
 
               # Path to save the progress of model fitting
-              Path_ModProg <- stringr::str_replace_all(
-                Path_Post, "post.rds$", "Progress.txt")
+              ModProg_File <- stringr::str_replace_all(
+                Post_File, "post.rds$", "Progress.txt")
 
 
               # Model fitting command
               Command_HPC <- paste0(
                 "/usr/bin/time -v python3 -m hmsc.run_gibbs_sampler",
                 " --input ", IASDT.R::NormalizePath(Path_ModInit_rds),
-                " --output ", IASDT.R::NormalizePath(Path_Post),
+                " --output ", IASDT.R::NormalizePath(Post_File),
                 " --samples ", Model_Full$samples,
                 " --transient ", Model_Full$transient,
                 " --thin ", Model_Full$thin,
                 " --verbose ", verbose,
                 " --chain ", (Chain - 1),
                 " --fp ", Precision,
-                " >& ", IASDT.R::NormalizePath(Path_ModProg))
+                " >& ", IASDT.R::NormalizePath(ModProg_File))
 
               # data to be returned for each combination of CV and Chain
               tibble::tibble(
-                Path_Post = Path_Post, Path_ModProg = Path_ModProg,
+                Path_Post = Post_File, Path_ModProg = ModProg_File,
                 Command_HPC = Command_HPC, NSamples = Model_Full$samples,
                 Transient = Model_Full$transient, Thin = Model_Full$thin) %>%
                 return()
@@ -427,7 +427,7 @@ Mod_CV_Fit <- function(
     IASDT.R::Mod_SLURM(
       ModelDir = Path_CV, JobName = JobName, MemPerCpu = MemPerCpu,
       Time = Time, EnvFile = EnvFile, FromHPC = FromHPC, Path_Hmsc = Path_Hmsc,
-      Path_SLURM_Out = dirname(Path_Post), SLURM_Prefix = "CV_Bash_Fit", ...)
+      Path_SLURM_Out = Path_Log, SLURM_Prefix = "CV_Bash_Fit", ...)
   }
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

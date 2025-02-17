@@ -5,29 +5,25 @@
 \title{Prepare batch scripts for latent factor prediction on GPU}
 \usage{
 Mod_Prep_TF(
-  Path = "datasets/processed/model_fitting",
+  Path_Models = "datasets/processed/model_fitting",
   NumFiles = 210,
+  EnvFile = ".env",
   WD = NULL,
-  Path_Out = "TF_BatchFiles",
-  ProjectID = NULL,
   Partition_Name = "small-g",
   LF_Time = "01:00:00",
   VP_Time = "01:30:00"
 )
 }
 \arguments{
-\item{Path}{Character. Directory containing input files with commands.}
+\item{Path_Models}{Character. Directory for fitted models. Default is
+\code{datasets/processed/model_fitting}. A subdirectory \code{TF_postprocess} will
+be created to store the batch scripts and log files.}
 
 \item{NumFiles}{Integer. Number of output batch files to create. Must be less
 than or equal to the maximum job limit of the HPC environment.}
 
-\item{WD}{Character. Working directory for batch files. If \code{NULL}, defaults
-to the current directory.}
-
-\item{Path_Out}{Character. Directory to save output files. Default is
-\code{TF_BatchFiles}.}
-
-\item{ProjectID}{Character. This can not be NULL.}
+\item{WD}{Character. Optional. Working directory to be set in batch scripts.
+If If \code{NULL}, the working directory will not be changed.}
 
 \item{Partition_Name}{Character. Name of the partition to submit the SLURM
 jobs to. Default is \code{small-g}.}
@@ -39,7 +35,7 @@ jobs to. Default is \code{small-g}.}
 is \code{01:00:00}.}
 }
 \value{
-None. Writes batch files to \code{Path_Out}.
+None. Writes batch files to \code{TF_postprocess} subdirectory.
 }
 \description{
 This function automates the preparation of batch scripts for predicting the

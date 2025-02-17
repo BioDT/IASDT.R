@@ -20,7 +20,14 @@ home:
 development:
   mode: auto
 
-
+navbar:
+  title: "IASDT.R"
+  left:
+    - icon: fa-home fa-lg
+      aria-label: Home
+      href: index.html
+    - text: "Functions"
+      href: reference/index.html
 reference:
 - title: Package info
   contents:
@@ -116,7 +123,6 @@ reference:
   - Predict_Hmsc
   - Predict_Maps
   - Mod_Predict_Plot
-  - Mod_Postprocess
   - Mod_Postprocess_1_CPU
   - Mod_Postprocess_2_CPU
   - Mod_CV_Eval

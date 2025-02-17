@@ -1,418 +1,4 @@
 ## |------------------------------------------------------------------------| #
-# Mod_Postprocess ----
-## |------------------------------------------------------------------------| #
-
-#' Model pipeline for Hmsc analysis
-#'
-#' This function sets up and runs an analysis pipeline for Hmsc models. It
-#' includes steps for environment setup, loading packages, managing SLURM
-#' refits, merging MCMC chains, convergence diagnostics, model summaries,
-#' spatial predictions, response curve generation, variance partitioning, and
-#' prepare initial models for cross-validation.
-#' @param GPP_Dist Integer specifying the distance in *kilometers* between knots
-#'   for GPP models.
-#' @param Tree Character string specifying if phylogenetic tree was used in the
-#'   model. Valid values are "Tree" or "NoTree". Default is "Tree".
-#' @param Samples Integer specifying the value for the number of MCMC samples in
-#'   the selected model. Defaults to 1000.
-#' @param Thin Integer specifying the value for thinning in the selected model.
-#'
-#' @name Mod_Postprocess
-#' @inheritParams Predict_Maps
-#' @inheritParams Mod_CV_Fit
-#' @inheritParams Merge_Chains
-#' @inheritParams Mod_Prep4HPC
-#' @inheritParams RespCurv_PrepData
-#' @inheritParams Coda_to_tibble
-#' @author Ahmed El-Gabbas
-#' @export
-
-Mod_Postprocess <- function(
-    ModelDir = NULL, Hab_Abb = NULL, NCores = 8L, FromHPC = TRUE,
-    EnvFile = ".env", Path_Hmsc = NULL, MemPerCpu = NULL, Time = NULL,
-    FromJSON = FALSE, GPP_Dist = NULL, Tree = "Tree", Samples = 1000L,
-    Thin = NULL, N_Grid = 50L, NOmega = 1000L, UseTF = TRUE, TF_Environ = NULL,
-    TF_use_single = FALSE, LF_NCores = NCores, LF_Check = FALSE,
-    LF_Temp_Cleanup = TRUE, Temp_Cleanup = TRUE,
-    CC_Models = c(
-      "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
-      "MRI-ESM2-0", "UKESM1-0-LL"),
-    CC_Scenario = c("ssp126", "ssp370", "ssp585"),
-    Pred_Clamp = TRUE, Fix_Efforts = "q90", Fix_Rivers = "q90",
-    Pred_NewSites = TRUE, CVName = c("CV_Dist", "CV_Large")) {
-
-  # # ..................................................................... ###
-  # # ..................................................................... ###
-
-  .StartTime <- lubridate::now(tzone = "CET")
-
-  Ch1 <- function(Text) {
-    IASDT.R::InfoChunk(
-      paste0("\t", Text), Rep = 2, Char = "=", CharReps = 60, Red = TRUE,
-      Bold = TRUE, Time = FALSE)
-  }
-
-  Ch2 <- function(Text) {
-    IASDT.R::InfoChunk(
-      paste0("\t", Text), Rep = 1, Char = "-", CharReps = 60, Red = TRUE,
-      Bold = TRUE, Time = FALSE)
-  }
-
-  # # ..................................................................... ###
-  # # ..................................................................... ###
-
-  # Check input arguments ----
-
-  Hab_Abb <- as.character(Hab_Abb)
-
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(
-    AllArgs,
-    function(x) get(x, envir = parent.env(env = environment()))) %>%
-    stats::setNames(AllArgs)
-
-  IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "character",
-    Args = c("Hab_Abb", "EnvFile", "ModelDir", "Tree", "Path_Hmsc"))
-
-  IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "logical",
-    Args = c("UseTF", "FromHPC", "Pred_Clamp", "Pred_NewSites", "FromJSON"))
-
-  IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "numeric",
-    Args = c("NCores", "NOmega", "N_Grid", "GPP_Dist", "Samples", "Thin"))
-  rm(AllArgs, envir = environment())
-
-
-  ValidHabAbbs <- c(as.character(0:3), "4a", "4b", "10", "12a", "12b")
-  if (!(Hab_Abb %in% ValidHabAbbs)) {
-    stop(
-      paste0(
-        "Invalid Habitat abbreviation. Valid values are:\n >> ",
-        paste0(ValidHabAbbs, collapse = ", ")),
-      call. = FALSE)
-  }
-
-  if (!file.exists(EnvFile)) {
-    stop(
-      paste0("Path for environment variables: ", EnvFile, " was not found"),
-      call. = FALSE)
-  }
-
-  if (!dir.exists(ModelDir)) {
-    stop(
-      paste0("Model directory: `", ModelDir, "' is invalid or does not exist."),
-      call. = FALSE)
-  }
-
-  if (Pred_Clamp && is.null(Fix_Efforts)) {
-    stop(
-      "`Fix_Efforts` can not be NULL when Clamping is implemented",
-      call. = FALSE)
-  }
-
-
-  if (!all(
-    CC_Models %in% c(
-      "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
-      "MRI-ESM2-0", "UKESM1-0-LL"))) {
-    stop(
-      paste0(
-        "Invalid climate models. Valid values are:\n >> ",
-        paste0(
-          c(
-            "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
-            "MRI-ESM2-0", "UKESM1-0-LL"), collapse = ", ")),
-      call. = FALSE)
-  }
-
-  if (!all(CC_Scenario %in% c("ssp126", "ssp370", "ssp585"))) {
-    stop(
-      paste0(
-        "Invalid climate scenarios. Valid values are:\n >> ",
-        paste0(c("ssp126", "ssp370", "ssp585"), collapse = ", ")),
-      call. = FALSE)
-  }
-
-
-  if (!(Tree %in% c("Tree", "NoTree"))) {
-    stop(
-      paste0(
-        "Invalid value for Tree argument. Valid values ",
-        "are: 'Tree' or 'NoTree'"),
-      call. = FALSE)
-  }
-
-  if (!all(CVName %in% c("CV_Dist", "CV_Large"))) {
-    stop(
-      paste0(
-        "Invalid value for CVName argument. Valid values ",
-        "are: 'CV_Dist' or 'CV_Large'"),
-      call. = FALSE)
-  }
-
-
-  LoadedPackages <- paste0(
-    sort(IASDT.R::LoadedPackages()), collapse = " + ") %>%
-    stringr::str_wrap(width = 60, indent = 8, exdent = 8)
-  cat(
-    paste0(
-      "  >>> Working directory: ", getwd(),
-      "\n  >>> Operating system: ", IASDT.R::CurrOS(),
-      "\n  >>> Model root: ", ModelDir,
-      "\n  >>> NCores: ", NCores,
-      "\n  >>> FromHPC: ", FromHPC,
-      "\n  >>> EnvFile: ", EnvFile,
-      "\n  >>> Path_Hmsc: ", Path_Hmsc,
-      "\n  >>> SLURM MemPerCpu: ", MemPerCpu,
-      "\n  >>> SLURM Time: ", Time,
-      "\n  >>> NOmega: ", NOmega,
-      "\n  >>> Hab_Abb: ", Hab_Abb,
-      "\n  >>> UseTF: ", UseTF,
-      if (is.null(TF_Environ)) {
-        TF_Environ
-      } else {
-        c("\n  >>> Python environment: ", TF_Environ)
-      },
-      "\n  >>> .libPaths(): \n",
-      paste0("\t", .libPaths(), collapse = "\n"),
-      "\n  >>> Loaded packages: \n", LoadedPackages))
-
-  Temp_Dir <- file.path(ModelDir, "TEMP_Pred")
-
-  # # ..................................................................... ###
-  # # ..................................................................... ###
-
-  # Check unsuccessful models -----
-  Ch1("Check unsuccessful models")
-
-  IASDT.R::Mod_SLURM_Refit(
-    ModelDir = ModelDir,
-    JobName = stringr::str_remove(basename(ModelDir), "Mod_"),
-    MemPerCpu = MemPerCpu, Time = Time, EnvFile = EnvFile, FromHPC = FromHPC,
-    Path_Hmsc = Path_Hmsc)
-
-  invisible(gc())
-
-  # ****************************************************************
-
-  Ch2("Merge chains and saving RData files")
-
-  IASDT.R::Merge_Chains(
-    ModelDir = ModelDir, NCores = NCores,
-    FromHPC = FromHPC, FromJSON = FromJSON)
-
-  invisible(gc())
-
-  # ****************************************************************
-
-  Ch2("Convergence of all model variants")
-
-  IASDT.R::Convergence_Plot_All(
-    ModelDir = ModelDir, maxOmega = NOmega, NCores = NCores,
-    FromHPC = FromHPC, MarginType = "histogram")
-
-  invisible(gc())
-
-  # # ..................................................................... ###
-  # # ..................................................................... ###
-
-  # Path of selected model -----
-  Ch1("Path of selected model")
-
-  Path_Model <- file.path(
-    ModelDir, "Model_Fitted",
-    paste0(
-      "GPP", GPP_Dist, "_", Tree, "_samp", Samples, "_th", Thin, "_Model.qs2"))
-
-  Path_Coda <- file.path(
-    ModelDir, "Model_Coda",
-    paste0(
-      "GPP", GPP_Dist, "_", Tree, "_samp", Samples, "_th", Thin, "_Coda.qs2"))
-
-  cat(paste0("Path_Model:\n\t", Path_Model, "\nPath_Coda:\n\t", Path_Coda))
-
-  if (!all(file.exists(Path_Model, Path_Coda))) {
-    stop("Selected model files not found", call. = FALSE)
-  }
-
-  # # ..................................................................... ###
-  # # ..................................................................... ###
-
-  # Convergence ----
-  Ch1("Convergence")
-
-  ## Gelman_Plot -----
-  Ch2("Gelman_Plot")
-
-  IASDT.R::PlotGelman(
-    Path_Coda = Path_Coda, Alpha = TRUE, Beta = TRUE, Omega = TRUE, Rho = TRUE,
-    NOmega = NOmega, FromHPC = FromHPC, EnvFile = EnvFile)
-
-  invisible(gc())
-
-  # ****************************************************************
-
-  ## Convergence plots ----
-  Ch2("Convergence plots")
-
-  IASDT.R::Convergence_Plot(
-    Path_Coda = Path_Coda, Path_Model = Path_Model, EnvFile = EnvFile,
-    FromHPC = FromHPC, NOmega = NOmega, NCores = NCores, NRC = c(2, 2),
-    Beta_NRC = c(3, 3), MarginType = "histogram")
-
-  invisible(gc())
-
-  # # ..................................................................... ###
-  # # ..................................................................... ###
-
-
-  # Response curves -----
-  Ch1("Response curves")
-
-  ## Prepare data ------
-  Ch2("Prepare data")
-
-  IASDT.R::RespCurv_PrepData(
-    Path_Model = Path_Model, N_Grid = N_Grid, NCores = NCores, UseTF = UseTF,
-    TF_Environ = TF_Environ, TF_use_single = TF_use_single,
-    LF_NCores = LF_NCores, LF_Temp_Cleanup = LF_Temp_Cleanup,
-    LF_Check = LF_Check, Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup,
-    Verbose = TRUE)
-
-  invisible(gc())
-
-  # ****************************************************************
-
-  ## Plotting - species richness ------
-  Ch2("Plotting - species richness")
-
-  IASDT.R::RespCurv_PlotSR(ModelDir = ModelDir, Verbose = TRUE, NCores = NCores)
-  invisible(gc())
-
-  ## Plotting - species -----
-  Ch2("Plotting - species")
-
-  IASDT.R::RespCurv_PlotSp(
-    ModelDir = ModelDir, NCores = NCores, EnvFile = EnvFile, FromHPC = FromHPC)
-
-  invisible(gc())
-
-  # ****************************************************************
-
-  ## Plotting - all species together -------
-  Ch2("Plotting - all species together")
-
-  IASDT.R::RespCurv_PlotSpAll(ModelDir = ModelDir, NCores = NCores)
-
-  invisible(gc())
-
-  # # ..................................................................... ###
-  # # ..................................................................... ###
-
-
-  # Model summary ------
-  Ch1("Model summary")
-
-  IASDT.R::Mod_Summary(
-    Path_Coda = Path_Coda, EnvFile = EnvFile, FromHPC = FromHPC)
-
-  invisible(gc())
-
-  # # ..................................................................... ###
-  # # ..................................................................... ###
-
-
-  # Plotting model parameters -----
-  Ch1("Plotting model parameters")
-
-
-  ## Omega -----
-  Ch2("Plotting Omega parameter")
-
-  IASDT.R::PlotOmegaGG(
-    Path_Model = Path_Model, supportLevel = 0.95,
-    PlotWidth = 22, PlotHeight = 20)
-
-  invisible(gc())
-
-  # ****************************************************************
-
-  ## Beta ------
-  Ch2("Plotting Beta parameters")
-
-  IASDT.R::PlotBetaGG(
-    Path_Model = Path_Model, supportLevel = 0.95,
-    PlotWidth = 26, PlotHeight = 20)
-
-  invisible(gc())
-
-  # # ..................................................................... ###
-  # # ..................................................................... ###
-
-
-  # Spatial predictions / evaluation ---------
-  Ch1("Spatial predictions / evaluation")
-
-  Model_Predictions <- IASDT.R::Predict_Maps(
-    Path_Model = Path_Model, Hab_Abb = Hab_Abb, EnvFile = EnvFile,
-    FromHPC = FromHPC, NCores = NCores, Pred_Clamp = Pred_Clamp,
-    Fix_Efforts = Fix_Efforts, Fix_Rivers = Fix_Rivers,
-    Pred_NewSites = Pred_NewSites, UseTF = UseTF,
-    TF_Environ = TF_Environ, CC_Models = CC_Models, CC_Scenario = CC_Scenario,
-    Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup,
-    TF_use_single = TF_use_single, LF_NCores = LF_NCores, LF_Check = LF_Check,
-    LF_Temp_Cleanup = LF_Temp_Cleanup)
-
-  rm(Model_Predictions)
-
-  invisible(gc())
-
-  # # ..................................................................... ###
-  # # ..................................................................... ###
-
-
-  # Variance partitioning ------
-  Ch1("Variance partitioning")
-
-  IASDT.R::VarPar_Plot(
-    Path_Model = Path_Model, EnvFile = EnvFile, FromHPC = FromHPC,
-    UseTF = UseTF, TF_Environ = TF_Environ, NCores = 5,
-    Fig_width = 30, Fig_height = 15)
-
-  # # ..................................................................... ###
-  # # ..................................................................... ###
-
-
-  # Cross-validation -------
-
-  Ch1("Prepare input data for cross-validation")
-  IASDT.R::Mod_CV_Fit(
-    Model = Path_Model, CVName = CVName, EnvFile = EnvFile,
-    JobName = paste0("CV_", Hab_Abb), FromHPC = FromHPC,
-    MemPerCpu = MemPerCpu, Time = Time, Path_Hmsc = Path_Hmsc)
-
-  # # ..................................................................... ###
-  # # ..................................................................... ###
-
-  CatTime()
-  IASDT.R::CatDiff(
-    InitTime = .StartTime, Prefix = "\nPostprocessing took ")
-
-  # # ..................................................................... ###
-  # # ..................................................................... ###
-
-  return(invisible(NULL))
-
-}
-
-
-# # ========================================================================== #
-# # ========================================================================== #
-
-
-## |------------------------------------------------------------------------| #
 # Mod_Postprocess_1_CPU ----
 ## |------------------------------------------------------------------------| #
 
@@ -433,9 +19,9 @@ Mod_Postprocess <- function(
 #' partitioning: [RespCurv_PrepData], [Predict_Maps], [VarPar_Compute].
 #' @param GPP_Dist Integer specifying the distance in *kilometers* between knots
 #'   for the selected model.
-#' @param Tree Character string specifying if phylogenetic tree was used in the 
+#' @param Tree Character string specifying if phylogenetic tree was used in the
 #'   selected model. Valid values are "Tree" or "NoTree". Default is "Tree".
-#' @param Samples Integer specifying number of MCMC samples in the selected 
+#' @param Samples Integer specifying number of MCMC samples in the selected
 #'   model. Defaults to 1000.
 #' @param Thin Integer specifying the value for thinning in the selected model.
 #' @param NCores_VP Integer specifying the number of cores to use for variance
@@ -740,7 +326,6 @@ Mod_Postprocess_1_CPU <- function(
 # # ========================================================================== #
 # # ========================================================================== #
 
-
 ## |------------------------------------------------------------------------| #
 # Mod_Prep_TF ----
 ## |------------------------------------------------------------------------| #
@@ -755,17 +340,13 @@ Mod_Postprocess_1_CPU <- function(
 #' environment, such as LUMI, with TensorFlow setup included. The function
 #' limits the number of output files to a specified maximum, defaults to 210 for
 #' compatibility with LUMI's job limits.
-#'
-#' @param Path Character. Directory containing input files with commands.
+#' @param Path_Models Character. Directory for fitted models. Default is
+#'  `datasets/processed/model_fitting`. A subdirectory `TF_postprocess` will
+#'  be created to store the batch scripts and log files.
 #' @param NumFiles Integer. Number of output batch files to create. Must be less
 #'   than or equal to the maximum job limit of the HPC environment.
 #' @param WD Character. Optional. Working directory to be set in batch scripts.
 #'   If If `NULL`, the working directory will not be changed.
-#' @param WD Character. Working directory for batch files. If `NULL`, defaults
-#'   to the current directory.
-#' @param Path_Out Character. Directory to save output files. Default is
-#'   `TF_BatchFiles`.
-#' @param ProjectID Character. This can not be NULL.
 #' @param Partition_Name Character. Name of the partition to submit the SLURM
 #'   jobs to. Default is `small-g`.
 #' @param LF_Time Character. Time limit for LF prediction jobs. Default is
@@ -777,15 +358,21 @@ Mod_Postprocess_1_CPU <- function(
 #'   necessary Python packages. On other HPC systems, users may need to modify
 #'   the function to load a Python virtual environment or install the required
 #'   dependencies for TensorFlow and related packages.
-#' @return None. Writes batch files to `Path_Out`.
+#' @return None. Writes batch files to `TF_postprocess` subdirectory.
 #' @author Ahmed El-Gabbas
 #' @name Mod_Prep_TF
 #' @export
 
 Mod_Prep_TF <- function(
-    Path = "datasets/processed/model_fitting", NumFiles = 210,
-    WD = NULL, Path_Out = "TF_BatchFiles", ProjectID = NULL,
-    Partition_Name = "small-g", LF_Time = "01:00:00", VP_Time = "01:30:00") {
+    Path_Models = "datasets/processed/model_fitting", NumFiles = 210,
+    EnvFile = ".env", WD = NULL, Partition_Name = "small-g",
+    LF_Time = "01:00:00", VP_Time = "01:30:00") {
+
+  # ****************************************************************
+
+  # Avoid "no visible binding for global variable" message
+  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
+  ProjectID <- NULL
 
   # ****************************************************************
 
@@ -799,28 +386,39 @@ Mod_Prep_TF <- function(
 
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "character",
-    Args = c(
-      "Path", "Path_Out", "ProjectID", "LF_Time", "VP_Time", "Partition_Name"))
+    Args = c("Path_Models", "LF_Time", "VP_Time", "Partition_Name", "EnvFile"))
 
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric", Args = "NumFiles")
   rm(AllArgs, envir = environment())
 
 
-  if (!dir.exists(Path)) {
-    stop("`Path` must be a valid directory.", call. = FALSE)
+  if (!dir.exists(Path_Models)) {
+    stop("`Path_Models` must be a valid directory.", call. = FALSE)
   }
 
   if (NumFiles <= 0) {
     stop("`NumFiles` must be a positive integer.", call. = FALSE)
   }
 
+  # # Load environment variables, for project ID
+  if (!file.exists(EnvFile)) {
+    stop(paste("Environment file not found:", EnvFile), call. = FALSE)
+  }
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "ProjectID", "LUMI_Account_GPU", FALSE, FALSE)
+  # Assign environment variables and check file and paths
+  IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+
   # ****************************************************************
 
-  Path_Out <- file.path(Path, Path_Out)
-  fs::dir_create(Path_Out)
+  # Path to store TF commands
+  Path_TF <- file.path(Path_Models, "TF_postprocess")
+  # path to store log files
+  Path_Log <- IASDT.R::NormalizePath(file.path(Path_TF, "TMP", "%x-%A-%a.out"))
 
-  Path_Log <- IASDT.R::NormalizePath(file.path(Path, "TMP", "%x-%A-%a.out"))
+  fs::dir_create(c(Path_TF, Path_Log))
 
   # ****************************************************************
   # ****************************************************************
@@ -829,8 +427,8 @@ Mod_Prep_TF <- function(
   IASDT.R::CatTime(
     "Prepare postprocessing data for calculating Variance partitioning")
 
-  Path_VP_SLURM <- file.path(Path, "VP_SLURM.slurm")
-  Path_VP_Commands <- file.path(Path, "VP_Commands.txt")
+  Path_VP_SLURM <- file.path(Path_TF, "VP_SLURM.slurm")
+  Path_VP_Commands <- file.path(Path_TF, "VP_Commands.txt")
 
   # ****************************************************************
 
@@ -841,7 +439,7 @@ Mod_Prep_TF <- function(
 
   # Find list of files matching the pattern
   VP_InFiles <- list.files(
-    path = Path, pattern = "VP_.+Command.txt", recursive = TRUE,
+    path = Path_Models, pattern = "VP_.+Command.txt", recursive = TRUE,
     full.names = TRUE) %>%
     purrr::map(readr::read_lines) %>%
     unlist() %>%
@@ -940,13 +538,15 @@ Mod_Prep_TF <- function(
   # Regex pattern to match input files
   LF_Pattern <- "^LF_NewSites_Commands_.+.txt|^LF_RC_Commands_.+txt"
   LF_InFiles <- list.files(
-    path = Path, pattern = LF_Pattern, recursive = TRUE, full.names = TRUE) %>%
+    path = Path_Models, pattern = LF_Pattern,
+    recursive = TRUE, full.names = TRUE) %>%
     gtools::mixedsort()
 
   if (length(LF_InFiles) == 0) {
     stop(
       paste0(
-        "No files found matching the pattern `", LF_Pattern, "` in ", Path),
+        "No files found matching the pattern `", LF_Pattern,
+        "` in ", Path_Models),
       call. = FALSE)
   }
 
@@ -986,7 +586,7 @@ Mod_Prep_TF <- function(
     .f = ~ {
 
       File <- file.path(
-        Path_Out,
+        Path_TF,
         paste0(
           "TF_Chunk_",
           stringr::str_pad(.x, pad = "0", width = nchar(NumFiles)), ".txt"))
@@ -1029,7 +629,7 @@ Mod_Prep_TF <- function(
     paste0("#SBATCH --array=1-", NumFiles),
     "",
     "# Define directories",
-    paste0('OutputDir="', file.path(Path, "TF_BatchFiles"), '"'),
+    paste0('OutputDir="', file.path(Path_Models, "TF_postprocess"), '"'),
     "",
     "# Find all the split files and sort them explicitly",
     paste0(
@@ -1084,7 +684,7 @@ Mod_Prep_TF <- function(
       " CET"),
     paste0("# ", paste0(rep("-", 50), collapse = "")))
 
-  Path_LF_SLURM <- file.path(Path, "LF_SLURM.slurm")
+  Path_LF_SLURM <- file.path(Path_TF, "LF_SLURM.slurm")
   IASDT.R::CatTime(
     paste0("Writing LF SLURM script to: `", Path_LF_SLURM, "`"),
     Level = 2, Time = FALSE)

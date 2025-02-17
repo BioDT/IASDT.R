@@ -26,11 +26,12 @@
 #' @param ExcludeCult Logical. Indicates whether to exclude countries with
 #'   cultivated or casual observations per species. Defaults to `TRUE`.
 #' @param ExcludeZeroHabitat Logical. Indicates whether to exclude grid cells
-#'   with zero habitat coverage. Defaults to `TRUE`.
+#'   with zero percentage habitat coverage. Defaults to `TRUE`.
 #' @param PresPerSpecies Integer. The minimum number of presence grid cells for
 #'   a species to be included in the analysis. The number of presence grid cells
 #'   per species is calculated after discarding grid cells with low sampling
-#'   efforts (`MinEffortsSp`). Defaults to `80`.
+#'   efforts (`MinEffortsSp`) and zero percentage habitat coverage 
+#'   `ExcludeZeroHabitat`. Defaults to `80`.
 #' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
 #' @param Path_Model Character. Path where the output file should be saved.
@@ -91,8 +92,8 @@
 #' type of management (ploughing, fertilization)
 #'
 #' The following habitat types are excluded from the analysis:
-#' - **5. Sandy** -- dunes and other habitats on unstable sandy substrate, stressed
-#' by low nutrients, drought and disturbed by sand movement
+#' - **5. Sandy** -- dunes and other habitats on unstable sandy substrate,
+#' stressed by low nutrients, drought and disturbed by sand movement
 #' - **6. Rocky** -- cliffs and rock outcrops with very shallow or no soil
 #' - **7. Dryland** -- habitats in which drought stress limits vegetation
 #' development
@@ -378,7 +379,7 @@ Mod_PrepData <- function(
   NGridsWzSpecies <- terra::global(R_Sp_sum, fun = "notNA") %>%
     as.integer() %>%
     format(big.mark = ",")
-  
+
   Xlim <- c(2600000, 6550000)
   Ylim <- c(1450000, 5420000)
 

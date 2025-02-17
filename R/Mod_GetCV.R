@@ -60,7 +60,7 @@
 #' @export
 
 GetCV <- function(
-    DT, EnvFile = ".env", XVars, CV_NFolds = 4, CV_NGrids = 20,
+    DT = NULL, EnvFile = ".env", XVars, CV_NFolds = 4, CV_NGrids = 20,
     CV_NR = 2, CV_NC = 2, CV_SAC = FALSE, OutPath = NULL,
     FromHPC = TRUE, CV_Plot = TRUE) {
 

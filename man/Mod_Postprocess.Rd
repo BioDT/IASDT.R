@@ -147,13 +147,14 @@ using more than one way of assigning grid cells into cross-validation
 folders. If multiple names are provided, separate cross-validation models
 will be fitted for each column. Currently, there are three cross-validation
 strategies, created using the \link{Mod_PrepData}: \code{CV_SAC}, \code{CV_Dist},
-and \code{CV_Large} (see \link{GetCV}).}
+and \code{CV_Large} (see \link{GetCV}). Defaults to \code{c("CV_Dist", "CV_Large")}.}
 }
 \description{
 This function sets up and runs an analysis pipeline for Hmsc models. It
 includes steps for environment setup, loading packages, managing SLURM
 refits, merging MCMC chains, convergence diagnostics, model summaries,
-spatial predictions, response curve generation, and variance partitioning.
+spatial predictions, response curve generation, variance partitioning, and
+prepare initial models for cross-validation.
 }
 \author{
 Ahmed El-Gabbas

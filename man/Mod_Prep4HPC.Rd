@@ -75,7 +75,8 @@ Defaults to \code{100}.}
 \item{PresPerSpecies}{Integer. The minimum number of presence grid cells for
 a species to be included in the analysis. The number of presence grid cells
 per species is calculated after discarding grid cells with low sampling
-efforts (\code{MinEffortsSp}). Defaults to \code{80}.}
+efforts (\code{MinEffortsSp}) and zero percentage habitat coverage
+\code{ExcludeZeroHabitat}. Defaults to \code{80}.}
 
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
@@ -147,7 +148,7 @@ will be considered in the models.}
 cultivated or casual observations per species. Defaults to \code{TRUE}.}
 
 \item{ExcludeZeroHabitat}{Logical. Indicates whether to exclude grid cells
-with zero habitat coverage. Defaults to \code{TRUE}.}
+with zero percentage habitat coverage. Defaults to \code{TRUE}.}
 
 \item{CV_NFolds}{Number of cross-validation folds. Default: 4.}
 
@@ -238,8 +239,8 @@ executable exists. Only valid if FromHPC = \code{FALSE}.}
 \item{ToJSON}{Logical indicating whether to convert unfitted models to JSON
 before saving to RDS file. Default: \code{FALSE}.}
 
-\item{Precision}{Integer, either of 32 (default; \verb{--fp 32}) or 64 for the
-precision mode used for sampling while fitting \code{Hmsc-HPC} models (\verb{--fp 64}
+\item{Precision}{Integer, either of 32 or 64 (default) for the
+precision mode used in \code{Hmsc-HPC} sampling (\verb{--fp 32} or \verb{--fp 64}
 argument). In \code{Hmsc-HPC}, the default value is 64. This is still under
 testing.}
 

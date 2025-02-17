@@ -2,7 +2,7 @@
 % Please edit documentation in R/DWF_GBIF_Download.R
 \name{GBIF_Download}
 \alias{GBIF_Download}
-\title{Download and Process GBIF Occurrence Data}
+\title{Download and process GBIF occurrence data}
 \usage{
 GBIF_Download(
   FromHPC = TRUE,

@@ -7,7 +7,8 @@
 #' This function sets up and runs an analysis pipeline for Hmsc models. It
 #' includes steps for environment setup, loading packages, managing SLURM
 #' refits, merging MCMC chains, convergence diagnostics, model summaries,
-#' spatial predictions, response curve generation, and variance partitioning.
+#' spatial predictions, response curve generation, variance partitioning, and
+#' prepare initial models for cross-validation.
 #' @param GPP_Dist Integer specifying the distance in *kilometers* between knots
 #'   for GPP models.
 #' @param Tree Character string specifying if phylogenetic tree was used in the
@@ -179,17 +180,6 @@ Mod_Postprocess <- function(
       "\n  >>> Loaded packages: \n", LoadedPackages))
 
   Temp_Dir <- file.path(ModelDir, "TEMP_Pred")
-
-  ModelData <- list.files(
-    path = ModelDir, full.names = TRUE,
-    pattern = paste0("^ModDT_", Hab_Abb, "_.+_subset.RData"))
-
-  if (length(ModelData) != 1) {
-    stop(
-      paste0(
-        "Expected one model data file, but found ", length(ModelData), "."),
-      call. = FALSE)
-  }
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -399,8 +389,8 @@ Mod_Postprocess <- function(
 
   Ch1("Prepare input data for cross-validation")
   IASDT.R::Mod_CV_Fit(
-    Model = Path_Model, ModelData = ModelData, CVName = CVName,
-    EnvFile = EnvFile, JobName = paste0("CV_", Hab_Abb), FromHPC = FromHPC,
+    Model = Path_Model, CVName = CVName, EnvFile = EnvFile,
+    JobName = paste0("CV_", Hab_Abb), FromHPC = FromHPC,
     MemPerCpu = MemPerCpu, Time = Time, Path_Hmsc = Path_Hmsc)
 
   # # ..................................................................... ###
@@ -428,20 +418,25 @@ Mod_Postprocess <- function(
 
 #' Model pipeline for Hmsc analysis (using CPU)
 #'
-#' This function sets up and runs an analysis pipeline for Hmsc models. It
-#' includes steps for environment setup, loading packages, managing SLURM
-#' refits, merging MCMC chains, convergence diagnostics, model summaries, and
-#' prepare input commands to use TensorFlow on GPU for compute variance
-#' partitioning and predicting latent factor for new spatial locations and
-#' response curves. This function must be followed by [Mod_Prep_TF] to prepare
-#' GPU-based TensorFlow batch scripts for variance partitioning and latent
-#' factor prediction.
+#' This function sets up and runs an analysis pipeline for postprocessing Hmsc
+#' models using CPU. This includes the following
+#' - Check unsuccessful models: [Mod_SLURM_Refit]
+#' - Merge chains and saving RData files: [Merge_Chains]
+#' - Convergence plots for fitted models: [Convergence_Plot_All],
+#' [PlotGelman], [Convergence_Plot]
+#'  - Model summary: [Mod_Summary]
+#'  - Plotting model parameters: [PlotOmegaGG], [PlotBetaGG]
+#'  - Prepare data for cross-validation and fit initial cross-validated models:
+#' [Mod_CV_Fit]
+#'  - Prepare scripts for GPU processing, including: predicting latent factors
+#' for response curves and at new sampling units, and computing variance
+#' partitioning: [RespCurv_PrepData], [Predict_Maps], [VarPar_Compute].
 #' @param GPP_Dist Integer specifying the distance in *kilometers* between knots
-#'   for GPP models.
-#' @param Tree Character string specifying if phylogenetic tree was used in the
-#'   model. Valid values are "Tree" or "NoTree". Default is "Tree".
-#' @param Samples Integer specifying the value for the number of MCMC samples in
-#'   the selected model. Defaults to 1000.
+#'   for the selected model.
+#' @param Tree Character string specifying if phylogenetic tree was used in the 
+#'   selected model. Valid values are "Tree" or "NoTree". Default is "Tree".
+#' @param Samples Integer specifying number of MCMC samples in the selected 
+#'   model. Defaults to 1000.
 #' @param Thin Integer specifying the value for thinning in the selected model.
 #' @param NCores_VP Integer specifying the number of cores to use for variance
 #'   partitioning. Defaults to 3.
@@ -453,6 +448,11 @@ Mod_Postprocess <- function(
 #' @inheritParams RespCurv_PrepData
 #' @inheritParams Coda_to_tibble
 #' @author Ahmed El-Gabbas
+#' @details
+#' This function must be followed by
+#' - running the [Mod_Prep_TF] function to prepare GPU-based TensorFlow
+#' batch scripts for variance partitioning and latent factor prediction,
+#' - fitting cross-validated models by submitting respective SLURM commands.
 #' @export
 
 Mod_Postprocess_1_CPU <- function(
@@ -562,19 +562,6 @@ Mod_Postprocess_1_CPU <- function(
       "\n  >>> .libPaths(): \n",
       paste0("\t", .libPaths(), collapse = "\n"),
       "\n  >>> Loaded packages: \n", LoadedPackages, "\n"))
-
-  # ****************************************************************
-
-  ModelData <- list.files(
-    path = ModelDir, full.names = TRUE,
-    pattern = paste0("^ModDT_", Hab_Abb, "_.+_subset.RData"))
-
-  if (length(ModelData) != 1) {
-    stop(
-      paste0(
-        "Expected one model data file, but found ", length(ModelData), "."),
-      call. = FALSE)
-  }
 
   # ****************************************************************
 
@@ -695,8 +682,8 @@ Mod_Postprocess_1_CPU <- function(
 
   Ch1("Prepare input data for cross-validation")
   IASDT.R::Mod_CV_Fit(
-    Model = Path_Model, ModelData = ModelData, CVName = CVName,
-    EnvFile = EnvFile, JobName = paste0("CV_", Hab_Abb), FromHPC = FromHPC,
+    Model = Path_Model, CVName = CVName, EnvFile = EnvFile,
+    JobName = paste0("CV_", Hab_Abb), FromHPC = FromHPC,
     MemPerCpu = MemPerCpu, Time = Time, Path_Hmsc = Path_Hmsc)
 
   invisible(gc())
@@ -744,7 +731,7 @@ Mod_Postprocess_1_CPU <- function(
   # ****************************************************************
 
   IASDT.R::CatDiff(
-    InitTime = .StartTime, Prefix = "\nPostprocessing took ")
+    InitTime = .StartTime, Prefix = "\nPostprocessing using CPU took ")
 
   return(invisible(NULL))
 }
@@ -813,8 +800,7 @@ Mod_Prep_TF <- function(
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "character",
     Args = c(
-      "Path", "Path_Out", "ProjectID", "LF_Time",
-      "VP_Time", "Partition_Name"))
+      "Path", "Path_Out", "ProjectID", "LF_Time", "VP_Time", "Partition_Name"))
 
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric", Args = "NumFiles")
@@ -960,8 +946,7 @@ Mod_Prep_TF <- function(
   if (length(LF_InFiles) == 0) {
     stop(
       paste0(
-        "No files found matching the pattern `", LF_Pattern,
-        "` in ", Path),
+        "No files found matching the pattern `", LF_Pattern, "` in ", Path),
       call. = FALSE)
   }
 
@@ -1123,12 +1108,14 @@ Mod_Prep_TF <- function(
 
 #' Model pipeline for Hmsc analysis (using CPU)
 #'
-#' This function continues running the analysis pipeline for Hmsc models. It
-#' must be called after completing [Mod_Postprocess_1_CPU] and [Mod_Prep_TF] on
-#' CPU, as well as executing `VP_SLURM.slurm` and `LF_SLURM.slurm` on GPU. The
-#' function processes Latent Factor predictions, generates spatial predictions
-#' under various climate scenarios, evaluate internal evaluation, prepares and
-#' plots response curves, and computes and visualizes variance partitioning.
+#' This function continues running the analysis pipeline for postprocessing Hmsc
+#' models. It is designed to automate the following:
+#' - process and visualize response curve
+#' - predict habitat suitability across different climate options
+#' - process and visualize variance partitioning
+#' - plot species & SR predictions as JPEG
+#' - compute and visualizing model internal evaluation (explanatory power)
+#' - postprocessing of fitted cross-validated models.
 #'
 #' @param RC_NCores Integer specifying the number of cores to use for response
 #'   curve prediction. Defaults to `8`.
@@ -1141,6 +1128,13 @@ Mod_Prep_TF <- function(
 #' @inheritParams RespCurv_PrepData
 #' @inheritParams Coda_to_tibble
 #' @author Ahmed El-Gabbas
+#' @details
+#' The function must be called after
+#' - completing [Mod_Postprocess_1_CPU] and [Mod_Prep_TF] on CPU,
+#' - executing `VP_SLURM.slurm` and `LF_SLURM.slurm` on GPU for making
+#' processing response curves and LF predictions. Both SLURM scripts are
+#' created using [Mod_Prep_TF],
+#' - fitting cross-validated models by submitting respective SLURM commands.
 #' @export
 
 Mod_Postprocess_2_CPU <- function(
@@ -1355,8 +1349,8 @@ Mod_Postprocess_2_CPU <- function(
 
   # ****************************************************************
 
-  # Predicting latent factors for new sampling units -------
-  Ch1("Prepare scripts for predicting latent factors for new sampling units")
+  # Predicting habitat suitability across different climate options -------
+  Ch1("Predicting habitat suitability across different climate options")
 
   IASDT.R::Predict_Maps(
     Path_Model = Path_Model, Hab_Abb = Hab_Abb, EnvFile = EnvFile,
@@ -1415,6 +1409,12 @@ Mod_Postprocess_2_CPU <- function(
 
   IASDT.R::Mod_Eval_Plot(
     ModelDir = ModelDir, EnvFile = EnvFile, FromHPC = FromHPC)
+
+  # ****************************************************************
+
+
+  # Postprocessing cross-validated models ------
+
 
   # ****************************************************************
 

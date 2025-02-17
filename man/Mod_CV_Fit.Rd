@@ -6,15 +6,13 @@
 \usage{
 Mod_CV_Fit(
   Model = NULL,
-  ModelData = NULL,
   CVName = c("CV_Dist", "CV_Large"),
-  partitions = NULL,
-  Path_CV = NULL,
+  Partitions = NULL,
   EnvFile = ".env",
-  initPar = NULL,
+  InitPar = NULL,
   JobName = "CV_Models",
-  updater = list(Gamma2 = FALSE, GammaEta = FALSE),
-  alignPost = TRUE,
+  Updater = list(Gamma2 = FALSE, GammaEta = FALSE),
+  AlignPost = TRUE,
   ToJSON = FALSE,
   FromHPC = TRUE,
   PrepSLURM = TRUE,
@@ -26,10 +24,7 @@ Mod_CV_Fit(
 )
 }
 \arguments{
-\item{Model}{Either a path to a saved model file (character) or an Hmsc model
-object. If a path is provided, the model is loaded from the file.}
-
-\item{ModelData}{Character. Path to input data used to fit the model.}
+\item{Model}{Character. Path to a saved model file (\verb{*.qs2}).}
 
 \item{CVName}{Character vector specifying the name of the column(s) in the
 model input data (see \link{Mod_PrepData} and \link{GetCV}) to be
@@ -38,35 +33,30 @@ using more than one way of assigning grid cells into cross-validation
 folders. If multiple names are provided, separate cross-validation models
 will be fitted for each column. Currently, there are three cross-validation
 strategies, created using the \link{Mod_PrepData}: \code{CV_SAC}, \code{CV_Dist},
-and \code{CV_Large} (see \link{GetCV}).}
+and \code{CV_Large} (see \link{GetCV}). Defaults to \code{c("CV_Dist", "CV_Large")}.}
 
-\item{partitions}{A vector for cross-validation created by
+\item{Partitions}{A vector for cross-validation created by
 \link[Hmsc:createPartition]{Hmsc::createPartition} or similar. Defaults to \code{NULL}, which means to use
-column name(s) provided in the \code{CVName} argument. If the \code{partitions}
+column name(s) provided in the \code{CVName} argument. If the \code{Partitions}
 vector is provided, the label used in the output files will be \code{CV_Custom}.}
-
-\item{Path_CV}{The directory path where cross-validation models and outputs
-will be stored. If \code{Model} argument is a character vector, it will be
-estimated from the model path. If \code{Model} is an Hmsc model object, it has
-to be provided by the user, otherwise the function will give an error.}
 
 \item{EnvFile}{String. Path to read the environment variables. Default value:
 \code{.env}.}
 
-\item{initPar}{a named list of parameter values used for initialization of
+\item{InitPar}{a named list of parameter values used for initialization of
 MCMC states. See \link[Hmsc:computePredictedValues]{Hmsc::computePredictedValues} for more information.
 Default: \code{NULL}.}
 
 \item{JobName}{String specifying the name of the submitted job(s) for SLURM.
 Default: \code{CV_Models}.}
 
-\item{updater}{a named list, specifying which conditional updaters should be
+\item{Updater}{a named list, specifying which conditional updaters should be
 omitted.  See \link[Hmsc:computePredictedValues]{Hmsc::computePredictedValues} for more information. Defaults
 to \code{list(Gamma2 = FALSE, GammaEta = FALSE)} to disable the following
 warnings: \verb{setting updater$Gamma2=FALSE due to specified phylogeny matrix}
 and \verb{setting updater$GammaEta=FALSE: not implemented for spatial methods 'GPP' and 'NNGP'}.}
 
-\item{alignPost}{boolean flag indicating whether the posterior of each chains
+\item{AlignPost}{boolean flag indicating whether the posterior of each chains
 should be aligned. See \link[Hmsc:computePredictedValues]{Hmsc::computePredictedValues} for more information.
 Default: \code{TRUE}.}
 
@@ -89,8 +79,8 @@ function will throw an error.}
 
 \item{Path_Hmsc}{String. Path for the Hmsc-HPC.}
 
-\item{Precision}{Integer, either of 32 (default; \verb{--fp 32}) or 64 for the
-precision mode used for sampling while fitting \code{Hmsc-HPC} models (\verb{--fp 64}
+\item{Precision}{Integer, either of 32 or 64 (default) for the
+precision mode used in \code{Hmsc-HPC} sampling (\verb{--fp 32} or \verb{--fp 64}
 argument). In \code{Hmsc-HPC}, the default value is 64. This is still under
 testing.}
 
@@ -104,9 +94,7 @@ commands.
 \details{
 The function copies part of the \link[Hmsc:computePredictedValues]{Hmsc::computePredictedValues}
 function, which currently does not support performing cross-validation
-using Hmsc-HPC. Although it is possible to \href{https://github.com/aniskhan25/hmsc-hpc/issues/14}{make some changes} to the
-\link[Hmsc:computePredictedValues]{Hmsc::computePredictedValues} to make it possible to use Hmsc-HPC, this
-does not help as our intention is to use the Hmsc-HPC using GPU.
+using Hmsc-HPC.
 }
 \author{
 Ahmed El-Gabbas

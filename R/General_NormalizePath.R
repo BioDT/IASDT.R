@@ -47,7 +47,7 @@ NormalizePath <- function(Path, MustWork = FALSE) {
 
   # Determine shell type
   shell_type <- dplyr::if_else(
-    nzchar(Sys.getenv("ComSpec", unset = "")), "cmd" , "sh")
+    nzchar(Sys.getenv("ComSpec", unset = "")), "cmd", "sh")
 
   # Process and return normalized path
   fs::path_abs(Path) %>%

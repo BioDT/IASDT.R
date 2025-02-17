@@ -67,13 +67,13 @@ function will throw an error.}
 format before reading. Defaults to \code{FALSE}.}
 
 \item{GPP_Dist}{Integer specifying the distance in \emph{kilometers} between knots
-for GPP models.}
+for the selected model.}
 
 \item{Tree}{Character string specifying if phylogenetic tree was used in the
-model. Valid values are "Tree" or "NoTree". Default is "Tree".}
+selected model. Valid values are "Tree" or "NoTree". Default is "Tree".}
 
-\item{Samples}{Integer specifying the value for the number of MCMC samples in
-the selected model. Defaults to 1000.}
+\item{Samples}{Integer specifying number of MCMC samples in the selected
+model. Defaults to 1000.}
 
 \item{Thin}{Integer specifying the value for thinning in the selected model.}
 
@@ -87,7 +87,7 @@ using more than one way of assigning grid cells into cross-validation
 folders. If multiple names are provided, separate cross-validation models
 will be fitted for each column. Currently, there are three cross-validation
 strategies, created using the \link{Mod_PrepData}: \code{CV_SAC}, \code{CV_Dist},
-and \code{CV_Large} (see \link{GetCV}).}
+and \code{CV_Large} (see \link{GetCV}). Defaults to \code{c("CV_Dist", "CV_Large")}.}
 
 \item{N_Grid}{Integer specifying the number of points along the gradient for
 continuous focal variables. Defaults to 50. See \link[Hmsc:constructGradient]{Hmsc::constructGradient}
@@ -143,14 +143,29 @@ temporary and will be removed in future updates.}
 partitioning. Defaults to 3.}
 }
 \description{
-This function sets up and runs an analysis pipeline for Hmsc models. It
-includes steps for environment setup, loading packages, managing SLURM
-refits, merging MCMC chains, convergence diagnostics, model summaries, and
-prepare input commands to use TensorFlow on GPU for compute variance
-partitioning and predicting latent factor for new spatial locations and
-response curves. This function must be followed by \link{Mod_Prep_TF} to prepare
-GPU-based TensorFlow batch scripts for variance partitioning and latent
-factor prediction.
+This function sets up and runs an analysis pipeline for postprocessing Hmsc
+models using CPU. This includes the following
+\itemize{
+\item Check unsuccessful models: \link{Mod_SLURM_Refit}
+\item Merge chains and saving RData files: \link{Merge_Chains}
+\item Convergence plots for fitted models: \link{Convergence_Plot_All},
+\link{PlotGelman}, \link{Convergence_Plot}
+\item Model summary: \link{Mod_Summary}
+\item Plotting model parameters: \link{PlotOmegaGG}, \link{PlotBetaGG}
+\item Prepare data for cross-validation and fit initial cross-validated models:
+\link{Mod_CV_Fit}
+\item Prepare scripts for GPU processing, including: predicting latent factors
+for response curves and at new sampling units, and computing variance
+partitioning: \link{RespCurv_PrepData}, \link{Predict_Maps}, \link{VarPar_Compute}.
+}
+}
+\details{
+This function must be followed by
+\itemize{
+\item running the \link{Mod_Prep_TF} function to prepare GPU-based TensorFlow
+batch scripts for variance partitioning and latent factor prediction,
+\item fitting cross-validated models by submitting respective SLURM commands.
+}
 }
 \author{
 Ahmed El-Gabbas

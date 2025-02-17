@@ -2,7 +2,7 @@
 # GBIF_Download ----
 ## |------------------------------------------------------------------------| #
 
-#' Download and Process GBIF Occurrence Data
+#' Download and process GBIF occurrence data
 #'
 #' This function handles the downloading and processing of occurrence data from
 #' the Global Biodiversity Information Facility (GBIF). The function allows

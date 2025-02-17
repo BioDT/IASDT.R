@@ -5,7 +5,7 @@
 \title{Prepare spatial-block cross-validation folds for spatial analysis}
 \usage{
 GetCV(
-  DT,
+  DT = NULL,
   EnvFile = ".env",
   XVars,
   CV_NFolds = 4,

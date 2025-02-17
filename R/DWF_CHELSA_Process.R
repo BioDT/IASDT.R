@@ -192,7 +192,8 @@ CHELSA_Process <- function(
     if (length(Diff) > 0) {
       message(
         paste0(
-          " >> Only Bioclimatic variables and variables identified in ", "`OtherVars`, if any, will be processed (",
+          " >> Only Bioclimatic variables and variables identified in ",
+          "`OtherVars`, if any, will be processed (",
           nrow(CHELSA_Data), " files)\n >> ", length(Diff),
           " files will not be processed.\n",
           " >> See `NotProcessed.txt` for the list of files"))

@@ -32,12 +32,13 @@ Defaults to \code{100}.}
 cultivated or casual observations per species. Defaults to \code{TRUE}.}
 
 \item{ExcludeZeroHabitat}{Logical. Indicates whether to exclude grid cells
-with zero habitat coverage. Defaults to \code{TRUE}.}
+with zero percentage habitat coverage. Defaults to \code{TRUE}.}
 
 \item{PresPerSpecies}{Integer. The minimum number of presence grid cells for
 a species to be included in the analysis. The number of presence grid cells
 per species is calculated after discarding grid cells with low sampling
-efforts (\code{MinEffortsSp}). Defaults to \code{80}.}
+efforts (\code{MinEffortsSp}) and zero percentage habitat coverage
+\code{ExcludeZeroHabitat}. Defaults to \code{80}.}
 
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
@@ -115,8 +116,8 @@ type of management (ploughing, fertilization)
 
 The following habitat types are excluded from the analysis:
 \itemize{
-\item \strong{5. Sandy} -- dunes and other habitats on unstable sandy substrate, stressed
-by low nutrients, drought and disturbed by sand movement
+\item \strong{5. Sandy} -- dunes and other habitats on unstable sandy substrate,
+stressed by low nutrients, drought and disturbed by sand movement
 \item \strong{6. Rocky} -- cliffs and rock outcrops with very shallow or no soil
 \item \strong{7. Dryland} -- habitats in which drought stress limits vegetation
 development

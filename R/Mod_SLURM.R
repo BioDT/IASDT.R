@@ -174,8 +174,9 @@ Mod_SLURM <- function(
         cat2('echo "Job id = "$SLURM_JOB_ID')
         cat2('echo "Job name = "$SLURM_JOB_NAME')
         cat2('echo "memory per CPU = "$SLURM_MEM_PER_CPU')
-        cat2(paste0('echo "The GPU IDs of GPUs in the job allocation ',
-                    '(if any) = "$SLURM_JOB_GPUS'))
+        cat2(paste0(
+          'echo "The GPU IDs of GPUs in the job allocation ',
+          '(if any) = "$SLURM_JOB_GPUS'))
         cat2('echo "Node running the job script = "$SLURMD_NODENAME')
         cat2(paste0(
           'echo "Process ID of the process started for the task',

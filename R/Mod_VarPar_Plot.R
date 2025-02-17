@@ -43,7 +43,7 @@ VarPar_Plot <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   IAS_ID <- Species_name <- Species <- Variable <- VP_Value <-
-    TaxaInfoFile <- Sp <- TjurR2 <- Label <- VP_Sum <- Species_File <- NULL
+    TaxaInfoFile <- Sp <- TjurR2 <- Label <- VP_Sum <- NULL
 
   # Set null device for `cairo`. This is to properly render the plots using
   # ggtext - https://github.com/wilkelab/cowplot/issues/73

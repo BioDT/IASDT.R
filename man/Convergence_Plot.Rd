@@ -62,7 +62,7 @@ disk.
 }
 \description{
 This function generates and saves plots for model convergence diagnostics,
-including rho, alpha, omega, and beta parameters. It supports parallel
+of the rho, alpha, omega, and beta parameters. It supports parallel
 processing for faster execution and can work with models fitted on
 High-Performance Computing HPC environments.
 }

@@ -46,7 +46,9 @@ network, consistent of surface interpretation of water bodies (lakes and
 wide rivers), and a drainage model (also called Drainage Network), derived
 from EU-DEM, with catchments and drainage lines and nodes.
 \itemize{
-\item \strong{Data source}: EU-Hydro River Network Database v013 | \strong{\href{https://doi.org/10.2909/393359a7-7ebd-4a52-80ac-1a18d5f3db9c}{DOI}} | \strong{\href{https://land.copernicus.eu/en/products/eu-hydro/eu-hydro-river-network-database}{Download link}}
+\item \strong{Data source}: EU-Hydro River Network Database v013 |
+\strong{\href{https://doi.org/10.2909/393359a7-7ebd-4a52-80ac-1a18d5f3db9c}{DOI}} |
+\strong{\href{https://land.copernicus.eu/en/products/eu-hydro/eu-hydro-river-network-database}{Download link}}
 \item \strong{Temporal extent}: 2006-2012; \strong{Format}: Vector (GPKG); \strong{Size}: 4 GB
 }
 }

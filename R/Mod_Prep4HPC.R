@@ -105,8 +105,8 @@
 #'   before saving to RDS file. Default: `FALSE`.
 #' @param CheckPython Logical indicating whether to check if the Python
 #'   executable exists. Only valid if FromHPC = `FALSE`.
-#' @param Precision Integer, either of 32 (default; `--fp 32`) or 64 for the
-#'   precision mode used for sampling while fitting `Hmsc-HPC` models (`--fp 64`
+#' @param Precision Integer, either of 32 or 64 (default) for the
+#'   precision mode used in `Hmsc-HPC` sampling (`--fp 32` or `--fp 64`
 #'   argument). In `Hmsc-HPC`, the default value is 64. This is still under
 #'   testing.
 #' @param ... Additional parameters provided to the [IASDT.R::Mod_SLURM]
@@ -119,7 +119,6 @@
 #' @return The function is used for its side effects of preparing data and
 #'   models for HPC and does not return any value.
 #' @details The function provides options for:
-#'
 #' - for which habitat types the models will be fitted
 #' - excluding grid cells with very low sampling efforts (`MinEffortsSp`)
 #' - selection of species based on minimum number of presence-grid

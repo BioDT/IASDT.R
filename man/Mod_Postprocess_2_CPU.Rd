@@ -52,13 +52,13 @@ adjust file paths accordingly. Default: \code{TRUE}.}
 data sources. Defaults to \code{.env}.}
 
 \item{GPP_Dist}{Integer specifying the distance in \emph{kilometers} between knots
-for GPP models.}
+for the selected model.}
 
 \item{Tree}{Character string specifying if phylogenetic tree was used in the
-model. Valid values are "Tree" or "NoTree". Default is "Tree".}
+selected model. Valid values are "Tree" or "NoTree". Default is "Tree".}
 
-\item{Samples}{Integer specifying the value for the number of MCMC samples in
-the selected model. Defaults to 1000.}
+\item{Samples}{Integer specifying number of MCMC samples in the selected
+model. Defaults to 1000.}
 
 \item{Thin}{Integer specifying the value for thinning in the selected model.}
 
@@ -124,12 +124,26 @@ suitability at new sites. Default: \code{TRUE}. Note: This parameter is
 temporary and will be removed in future updates.}
 }
 \description{
-This function continues running the analysis pipeline for Hmsc models. It
-must be called after completing \link{Mod_Postprocess_1_CPU} and \link{Mod_Prep_TF} on
-CPU, as well as executing \code{VP_SLURM.slurm} and \code{LF_SLURM.slurm} on GPU. The
-function processes Latent Factor predictions, generates spatial predictions
-under various climate scenarios, evaluate internal evaluation, prepares and
-plots response curves, and computes and visualizes variance partitioning.
+This function continues running the analysis pipeline for postprocessing Hmsc
+models. It is designed to automate the following:
+\itemize{
+\item process and visualize response curve
+\item predict habitat suitability across different climate options
+\item process and visualize variance partitioning
+\item plot species & SR predictions as JPEG
+\item compute and visualizing model internal evaluation (explanatory power)
+\item postprocessing of fitted cross-validated models.
+}
+}
+\details{
+The function must be called after
+\itemize{
+\item completing \link{Mod_Postprocess_1_CPU} and \link{Mod_Prep_TF} on CPU,
+\item executing \code{VP_SLURM.slurm} and \code{LF_SLURM.slurm} on GPU for making
+processing response curves and LF predictions. Both SLURM scripts are
+created using \link{Mod_Prep_TF},
+\item fitting cross-validated models by submitting respective SLURM commands.
+}
 }
 \author{
 Ahmed El-Gabbas

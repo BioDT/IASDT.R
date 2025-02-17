@@ -144,7 +144,8 @@ Defaults to <code>100</code>.</p></dd>
 <dd><p>Integer. The minimum number of presence grid cells for
 a species to be included in the analysis. The number of presence grid cells
 per species is calculated after discarding grid cells with low sampling
-efforts (<code>MinEffortsSp</code>). Defaults to <code>80</code>.</p></dd>
+efforts (<code>MinEffortsSp</code>) and zero percentage habitat coverage
+<code>ExcludeZeroHabitat</code>. Defaults to <code>80</code>.</p></dd>
 
 
 <dt id="arg-envfile">EnvFile<a class="anchor" aria-label="anchor" href="#arg-envfile"></a></dt>
@@ -248,7 +249,7 @@ cultivated or casual observations per species. Defaults to <code>TRUE</code>.</p
 
 <dt id="arg-excludezerohabitat">ExcludeZeroHabitat<a class="anchor" aria-label="anchor" href="#arg-excludezerohabitat"></a></dt>
 <dd><p>Logical. Indicates whether to exclude grid cells
-with zero habitat coverage. Defaults to <code>TRUE</code>.</p></dd>
+with zero percentage habitat coverage. Defaults to <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-cv-nfolds">CV_NFolds<a class="anchor" aria-label="anchor" href="#arg-cv-nfolds"></a></dt>
@@ -391,8 +392,8 @@ before saving to RDS file. Default: <code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-precision">Precision<a class="anchor" aria-label="anchor" href="#arg-precision"></a></dt>
-<dd><p>Integer, either of 32 (default; <code>--fp 32</code>) or 64 for the
-precision mode used for sampling while fitting <code>Hmsc-HPC</code> models (<code>--fp 64</code>
+<dd><p>Integer, either of 32 or 64 (default) for the
+precision mode used in <code>Hmsc-HPC</code> sampling (<code>--fp 32</code> or <code>--fp 64</code>
 argument). In <code>Hmsc-HPC</code>, the default value is 64. This is still under
 testing.</p></dd>
 

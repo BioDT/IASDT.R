@@ -104,14 +104,15 @@ cultivated or casual observations per species. Defaults to <code>TRUE</code>.</p
 
 <dt id="arg-excludezerohabitat">ExcludeZeroHabitat<a class="anchor" aria-label="anchor" href="#arg-excludezerohabitat"></a></dt>
 <dd><p>Logical. Indicates whether to exclude grid cells
-with zero habitat coverage. Defaults to <code>TRUE</code>.</p></dd>
+with zero percentage habitat coverage. Defaults to <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-presperspecies">PresPerSpecies<a class="anchor" aria-label="anchor" href="#arg-presperspecies"></a></dt>
 <dd><p>Integer. The minimum number of presence grid cells for
 a species to be included in the analysis. The number of presence grid cells
 per species is calculated after discarding grid cells with low sampling
-efforts (<code>MinEffortsSp</code>). Defaults to <code>80</code>.</p></dd>
+efforts (<code>MinEffortsSp</code>) and zero percentage habitat coverage
+<code>ExcludeZeroHabitat</code>. Defaults to <code>80</code>.</p></dd>
 
 
 <dt id="arg-envfile">EnvFile<a class="anchor" aria-label="anchor" href="#arg-envfile"></a></dt>
@@ -180,8 +181,8 @@ side-product and not the aim of the management</p></li>
 <li><p><strong>12b. Agricultural habitats</strong> – synanthropic habitats directly
 associated with growing of agricultural products, thus dependent on specific
 type of management (ploughing, fertilization)</p></li>
-</ul><p>The following habitat types are excluded from the analysis:</p><ul><li><p><strong>5. Sandy</strong> – dunes and other habitats on unstable sandy substrate, stressed
-by low nutrients, drought and disturbed by sand movement</p></li>
+</ul><p>The following habitat types are excluded from the analysis:</p><ul><li><p><strong>5. Sandy</strong> – dunes and other habitats on unstable sandy substrate,
+stressed by low nutrients, drought and disturbed by sand movement</p></li>
 <li><p><strong>6. Rocky</strong> – cliffs and rock outcrops with very shallow or no soil</p></li>
 <li><p><strong>7. Dryland</strong> – habitats in which drought stress limits vegetation
 development</p></li>

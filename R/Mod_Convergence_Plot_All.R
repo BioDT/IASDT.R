@@ -475,8 +475,6 @@ Convergence_Plot_All <- function(
     tidyr::unnest("Beta_Gelman") %>%
     ggplot2::ggplot(ggplot2::aes(GPP_Thin, Beta_Gelman)) +
     ggplot2::geom_violin() +
-    ggplot2::geom_vline(
-      xintercept = c(4.5, 8.5, 12.5), linetype = "dashed", color = "blue") +
     ggplot2::scale_y_log10() +
     ggplot2::facet_grid(Tree ~ M_samples, labeller = Label) +
     ggplot2::labs(title = Plot_Title) +
@@ -511,7 +509,7 @@ Convergence_Plot_All <- function(
 
   Plot_Path <- IASDT.R::Path(
     Path_Convergence_All, paste0("Convergence_Beta_ESS.pdf"))
-  Plot_Title <- "Effective sample size - Beta"
+  Plot_Title <- "Effective sample size --- Beta"
 
   Plot <- Convergence_DT %>%
     dplyr::left_join(Model_Info, by = "M_Name_Fit") %>%

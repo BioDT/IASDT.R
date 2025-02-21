@@ -286,7 +286,7 @@ PlotGelman_Alpha <- function(CodaObj, PlottingAlpha = 0.25) {
               limits = range(Gelman_Alpha_DT$Iter), expand = c(0, 0)) +
             ggplot2::coord_cartesian(expand = FALSE, clip = "off") +
             ggplot2::labs(
-              title = "Gelman-Rubin-Brooks plot - Alpha",
+              title = "Gelman-Rubin-Brooks plot --- Alpha",
               subtitle = .x,
               caption = paste0(
                 "This plot shows the evolution of Gelman and Rubin's shrink ",
@@ -303,7 +303,7 @@ PlotGelman_Alpha <- function(CodaObj, PlottingAlpha = 0.25) {
               axis.title = ggplot2::element_text(
                 size = 12, colour = "darkgrey", face = "bold"),
               axis.text = ggplot2::element_text(size = 12),
-              plot.title = ggplot2::element_text(
+              plot.title = ggtext::element_markdown(
                 size = 18, face = "bold", color = "blue"),
               plot.subtitle = ggplot2::element_text(
                 size = 12, face = "italic", color = "darkgrey"),
@@ -419,7 +419,7 @@ PlotGelman_Beta <- function(
     ggplot2::coord_cartesian(expand = FALSE) +
     ggplot2::theme_bw() +
     ggplot2::labs(
-      title = "Gelman-Rubin-Brooks plot - Beta", subtitle = SubTitle,
+      title = "Gelman-Rubin-Brooks plot --- Beta", subtitle = SubTitle,
       caption = paste0(
         "This plot shows the evolution of Gelman and Rubin's shrink factor as ",
         "the number of iterations increases.")) +
@@ -433,7 +433,7 @@ PlotGelman_Beta <- function(
       axis.title = ggplot2::element_text(
         size = 12, colour = "darkgrey", face = "bold"),
       axis.text = ggplot2::element_text(size = 12),
-      plot.title = ggplot2::element_text(
+      plot.title = ggtext::element_markdown(
         size = 18, face = "bold", color = "blue"),
       plot.subtitle = ggplot2::element_text(
         size = 12, face = "italic", color = "darkgrey"),
@@ -543,7 +543,7 @@ PlotGelman_Omega <- function(CodaObj, NOmega = 1000L, PlottingAlpha = 0.25) {
     ggplot2::coord_cartesian(expand = FALSE) +
     ggplot2::labs(
       title = paste0(
-        "Gelman-Rubin-Brooks plot - Omega - ",
+        "Gelman-Rubin-Brooks plot --- Omega --- ",
         NOmega, " species combination samples"),
       subtitle = NULL,
       caption = paste0(
@@ -561,7 +561,7 @@ PlotGelman_Omega <- function(CodaObj, NOmega = 1000L, PlottingAlpha = 0.25) {
       axis.title = ggplot2::element_text(
         size = 12, colour = "darkgrey", face = "bold"),
       axis.text = ggplot2::element_text(size = 12),
-      plot.title = ggplot2::element_text(
+      plot.title = ggtext::element_markdown(
         size = 18, face = "bold", color = "blue"),
       plot.subtitle = ggplot2::element_text(
         size = 12, face = "italic", color = "darkgrey"),
@@ -632,7 +632,7 @@ PlotGelman_Rho <- function(CodaObj) {
         c(`Median` = "Median", `Q97_5` = "97.5%"))) +
     ggplot2::coord_cartesian(expand = FALSE) +
     ggplot2::labs(
-      title = "Gelman-Rubin-Brooks plot - Rho",
+      title = "Gelman-Rubin-Brooks plot --- Rho",
       subtitle = NULL,
       caption = paste0(
         "This plot shows the evolution of Gelman and Rubin's ",
@@ -649,7 +649,7 @@ PlotGelman_Rho <- function(CodaObj) {
       axis.title = ggplot2::element_text(
         size = 12, colour = "darkgrey", face = "bold"),
       axis.text = ggplot2::element_text(size = 12),
-      plot.title = ggplot2::element_text(
+      plot.title = ggtext::element_markdown(
         size = 18, face = "bold", color = "blue"),
       plot.subtitle = ggplot2::element_text(
         size = 12, face = "italic", color = "darkgrey"),

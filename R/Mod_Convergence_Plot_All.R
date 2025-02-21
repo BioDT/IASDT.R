@@ -12,8 +12,6 @@
 #' @param ModelDir Character. Path to the root directory of the fitted models.
 #'   The convergence outputs will be saved to the `Model_Convergence_All`
 #'   subfolder.
-#' @param maxOmega Integer. Maximum number of species interactions to sample for
-#'   convergence diagnostics.
 #' @param NCores Integer. Number of CPU cores to use for parallel processing.
 #' @param FromHPC Logical. Whether the processing is being done on an
 #'   High-Performance Computing (HPC) environment, to adjust file paths
@@ -26,7 +24,7 @@
 #' @export
 
 Convergence_Plot_All <- function(
-    ModelDir = NULL, maxOmega = 1000L, NCores = NULL,
+    ModelDir = NULL, NOmega = 1000L, NCores = NULL,
     FromHPC = TRUE, MarginType = "histogram") {
 
   # # ..................................................................... ###
@@ -58,7 +56,7 @@ Convergence_Plot_All <- function(
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "character", Args = c("ModelDir", "MarginType"))
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "numeric",  Args = c("maxOmega", "NCores"))
+    AllArgs = AllArgs, Type = "numeric",  Args = c("NOmega", "NCores"))
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "logical", Args = "FromHPC")
   rm(AllArgs, envir = environment())
 
@@ -197,7 +195,7 @@ Convergence_Plot_All <- function(
         Omega_ESS <- coda::effectiveSize(Omega)
 
         # OMEGA - gelman.diag
-        sel <- sample(seq_len(dim(Omega[[1]])[2]), size = maxOmega)
+        sel <- sample(seq_len(dim(Omega[[1]])[2]), size = NOmega)
 
         Omega_Gelman <- purrr::map(.x = Omega, .f = ~ .x[, sel]) %>%
           coda::gelman.diag(multivariate = FALSE) %>%
@@ -264,7 +262,7 @@ Convergence_Plot_All <- function(
             "dplyr", "sf", "Hmsc", "coda", "magrittr", "ggplot2",
             "magrittr", "IASDT.R"),
           future.globals = c(
-            "Model_Info", "Path_ConvDT", "maxOmega", "PrepConvergence"))) %>%
+            "Model_Info", "Path_ConvDT", "NOmega", "PrepConvergence"))) %>%
       dplyr::select(tidyselect::all_of(c("M_Name_Fit", "Plots"))) %>%
       tidyr::unnest_wider("Plots") %>%
       # arrange data alphanumerically by model name
@@ -360,7 +358,7 @@ Convergence_Plot_All <- function(
     Path_Convergence_All, paste0("Convergence_Omega_Gelman.pdf"))
 
   Plot_Title <- paste0(
-    "Gelman convergence diagnostic --- Omega (", maxOmega, " samples)")
+    "Gelman convergence diagnostic --- Omega (", NOmega, " samples)")
 
   Plot <- dplyr::left_join(Convergence_DT, Model_Info, by = "M_Name_Fit") %>%
     dplyr::select(rL, Tree, M_thin, M_samples, Omega_Gelman) %>%
@@ -410,7 +408,7 @@ Convergence_Plot_All <- function(
     Path_Convergence_All, paste0("Convergence_Omega_ESS.pdf"))
 
   Plot_Title <- paste0(
-    "Effective sample size --- Omega (", maxOmega, " samples)")
+    "Effective sample size --- Omega (", NOmega, " samples)")
 
   Plot <- Convergence_DT %>%
     dplyr::left_join(Model_Info, by = "M_Name_Fit") %>%

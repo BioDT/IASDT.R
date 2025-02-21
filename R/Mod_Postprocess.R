@@ -251,7 +251,7 @@ Mod_Postprocess_1_CPU <- function(
   Ch1("Convergence of all model variants")
 
   IASDT.R::Convergence_Plot_All(
-    ModelDir = ModelDir, maxOmega = NOmega, NCores = NCores,
+    ModelDir = ModelDir, NOmega = NOmega, NCores = NCores,
     FromHPC = FromHPC, MarginType = "histogram")
 
   invisible(gc())

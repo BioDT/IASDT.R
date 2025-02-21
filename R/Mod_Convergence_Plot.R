@@ -589,8 +589,7 @@ Convergence_Plot <- function(
         Species <- Beta_DF$Species[x]
         Curr_IAS <- Beta_DF$IAS_ID[x]
         Var_Sp_File <- Beta_DF$Var_Sp_File[x]
-        Plot_File <- stringr::str_replace(
-          Var_Sp_File, ".RData$", "_Plots.RData")
+        Plot_File <- stringr::str_replace(Var_Sp_File, ".RData$", "_Plots.qs2")
 
         DT_all <- IASDT.R::LoadAs(Var_Sp_File)
         DT_all$Post <- NULL

@@ -167,7 +167,7 @@ PlotGelman <- function(
     # correctly
     grDevices::cairo_pdf(
       filename = IASDT.R::Path(OutPath, "GelmanPlots.pdf"),
-      width = 13, height = 7)
+      width = 13, height = 7, onefile = TRUE)
     purrr::walk(PlotList4Plot, grid::grid.draw)
     grDevices::dev.off()
   } else {

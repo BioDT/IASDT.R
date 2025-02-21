@@ -217,7 +217,7 @@ Convergence_Plot <- function(
     # correctly
     grDevices::cairo_pdf(
       filename = IASDT.R::Path(Path_Convergence, "Convergence_Rho.pdf"),
-      width = 18, height = 12)
+      width = 18, height = 12, onefile = FALSE)
     plot(PlotObj_Rho)
     grDevices::dev.off()
 
@@ -254,7 +254,7 @@ Convergence_Plot <- function(
   # correctly
   grDevices::cairo_pdf(
     filename = IASDT.R::Path(Path_Convergence, "Convergence_Alpha.pdf"),
-    width = 18, height = 14)
+    width = 18, height = 14, onefile = FALSE)
   print(PlotObj_Alpha)
   grDevices::dev.off()
 
@@ -453,7 +453,7 @@ Convergence_Plot <- function(
         grDevices::cairo_pdf(
           filename = IASDT.R::Path(
             Path_Convergence, paste0("Convergence_Omega_", .x, ".pdf")),
-          width = 18, height = 14)
+          width = 18, height = 14, onefile = FALSE)
         purrr::map(CurrPlotOrder$PlotID, grid::grid.draw, recording = FALSE)
         grDevices::dev.off()
       })
@@ -835,14 +835,14 @@ Convergence_Plot <- function(
         grDevices::cairo_pdf(
           filename = IASDT.R::Path(
             Path_Convergence, paste0("Convergence_Beta_", x, "_FreeY.pdf")),
-          width = 18, height = 13)
+          width = 18, height = 13, onefile = FALSE)
         purrr::map(BetaPlotList$Plot, grid::grid.draw, recording = FALSE)
         grDevices::dev.off()
 
         grDevices::cairo_pdf(
           filename = IASDT.R::Path(
             Path_Convergence, paste0("Convergence_Beta_", x, "_FixedY.pdf")),
-          width = 18, height = 13)
+          width = 18, height = 13, onefile = FALSE)
         purrr::map(.x = BetaPlotList$PlotFixedY, .f = grid::grid.draw)
         grDevices::dev.off()
       })
@@ -975,7 +975,7 @@ Convergence_Plot <- function(
             paste0(
               "Convergence_Beta_", SpDT$IAS_ID, "_",
               SpDT$Species_File, ".pdf")),
-          width = 23, height = 17)
+          width = 23, height = 17, onefile = FALSE)
         purrr::walk(SpPlots2, grid::grid.draw)
         grDevices::dev.off()
       })

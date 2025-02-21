@@ -5,7 +5,7 @@
 \alias{Mod_Postprocess_1_CPU}
 \alias{Mod_Prep_TF}
 \alias{Mod_Postprocess_2_CPU}
-\title{Model pipeline for postprocessing fitted Hmsc models}
+\title{Model pipeline for post-processing fitted Hmsc models}
 \usage{
 Mod_Postprocess_1_CPU(
   ModelDir = NULL,
@@ -99,11 +99,12 @@ data sources. Defaults to \code{.env}.}
 \item{Path_Hmsc}{Character. Path to the Hmsc-HPC installation.}
 
 \item{MemPerCpu}{Character. Memory allocation per CPU core. Example: "32G"
-for 32 gigabytes. Required — if not provided, the function throws an error.}
+for 32 gigabytes. Required --- if not provided, the function throws an
+error.}
 
 \item{Time}{Character. Maximum allowed runtime for the job. Example:
-"01:00:00" for one hour. Required — if not provided, the function throws an
-error.}
+"01:00:00" for one hour. Required --- if not provided, the function throws
+an error.}
 
 \item{FromJSON}{Logical. Whether to convert loaded models from JSON
 format before reading. Defaults to \code{FALSE}.}
@@ -114,8 +115,8 @@ selected model.}
 \item{Tree}{Character. Whether a phylogenetic tree was used in the selected
 model. Accepts "Tree" (default) or "NoTree".}
 
-\item{Thin, Samples}{Integer. Thinning value and the number of MCMC samples
-of the selected model.}
+\item{Thin, Samples}{Integer. Thinning value and the number of MCMC samples of
+the selected model.}
 
 \item{NOmega}{Integer. The number of species to be sampled for
 the \code{Omega} parameter transformation. Defaults to 100.}
@@ -208,7 +209,7 @@ predictions. Available options are: \code{c("ssp126", "ssp370", "ssp585")}
 prediction. Defaults to \code{8}.}
 }
 \description{
-These functions postprocess fitted Hmsc models on both CPU and GPU. The
+These functions post-process fitted Hmsc models on both CPU and GPU. The
 pipeline is under active development and may change in future updates.
 Currently, there are three main functions in this script:
 \code{Mod_Postprocess_1_CPU()}, \code{Mod_Prep_TF()}, and \code{Mod_Postprocess_2_CPU()}.
@@ -217,7 +218,7 @@ See details for more information.
 \details{
 \strong{Mod_Postprocess_1_CPU}
 
-This function performs the initial postprocessing step for habitat-specific
+This function performs the initial post-processing step for habitat-specific
 fitted models, automating the following tasks:
 \itemize{
 \item check unsuccessful models: \link{Mod_SLURM_Refit}
@@ -271,8 +272,8 @@ TensorFlow and related packages.\if{html}{\out{
 
 \strong{Mod_Postprocess_2_CPU}
 
-This function continues running the analysis pipeline for postprocessing Hmsc
-by automating the following steps:
+This function continues running the analysis pipeline for post-processing
+Hmsc by automating the following steps:
 \itemize{
 \item process and visualize response curves: \link{Response_curves}
 \item predict habitat suitability across different climate options:
@@ -283,7 +284,7 @@ by automating the following steps:
 \link{VarPar_Plot}
 \item compute and visualizing model internal evaluation (explanatory power):
 \link{Mod_Eval_Plot}
-\item initiate postprocessing of fitted cross-validated models: prepare
+\item initiate post-processing of fitted cross-validated models: prepare
 commands for latent factor predictions on GPU --- \strong{Ongoing}
 }
 

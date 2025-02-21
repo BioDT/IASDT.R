@@ -44,8 +44,8 @@ Defaults to 10.}
 Defaults to 5.}
 
 \item{OtherVars}{Character. First letters of variables other than bioclimatic
-variables to be processed. Defaults to "npp", which means processing
-bioclimatic variables (bio1-19) and Net Primary Productivity will be
+variables to be processed. Defaults to "npp", which means processing 19
+bioclimatic variables (bio1-bio19) and Net Primary Productivity will be
 processed. If \code{OtherVars} is set to "", only bioclimatic variables will be
 processed. See \link{CHELSA_Vars} for a detailed information on CHELSA climate
 variables.}

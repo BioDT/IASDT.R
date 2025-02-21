@@ -67,15 +67,16 @@ High-Performance Computing (HPC) environment, to adjust file paths
 accordingly. Default: \code{TRUE}.}
 
 \item{PrepSLURM}{Logical. Whether to prepare SLURM command files. If \code{TRUE}
-(default), the SLURM commands will be saved to disk using the
-\link{Mod_SLURM} function.}
+(default), the SLURM commands will be saved to disk using the \link{Mod_SLURM}
+function.}
 
 \item{MemPerCpu}{Character. Memory allocation per CPU core. Example: "32G"
-for 32 gigabytes. Required — if not provided, the function throws an error.}
+for 32 gigabytes. Required --- if not provided, the function throws an
+error.}
 
 \item{Time}{Character. Maximum allowed runtime for the job. Example:
-"01:00:00" for one hour. Required — if not provided, the function throws an
-error.}
+"01:00:00" for one hour. Required --- if not provided, the function throws
+an error.}
 
 \item{Path_Hmsc}{Character. Path to the Hmsc-HPC installation.}
 

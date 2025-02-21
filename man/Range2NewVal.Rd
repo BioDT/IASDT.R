@@ -2,8 +2,8 @@
 % Please edit documentation in R/General_Range2NewVal.R
 \name{Range2NewVal}
 \alias{Range2NewVal}
-\title{Changes values within a specified range, \verb{≥}, or \verb{≤}  specific value to a new
-value in a vector, data.frame, or raster.}
+\title{Changes values within a specified range, \eqn{\geq}, or \eqn{\leq} specific
+value to a new value in a vector, data.frame, or raster}
 \usage{
 Range2NewVal(
   x,
@@ -27,9 +27,9 @@ will be changed to \code{NewVal}. Only applied if \code{Between} is not specifie
 
 \item{NewVal}{The new value to assign to the selected elements in \code{x}.}
 
-\item{InvertSelection}{Logical. Whether to invert the
-selection specified by \code{Between}. If \code{TRUE}, values outside the specified
-range are changed to \code{NewVal}. Default is \code{FALSE}.}
+\item{InvertSelection}{Logical. Whether to invert the selection specified by
+\code{Between}. If \code{TRUE}, values outside the specified range are changed to
+\code{NewVal}. Default is \code{FALSE}.}
 }
 \value{
 The modified object \code{x} with values changed according to the
@@ -39,9 +39,9 @@ specified conditions.
 This function modifies values in the input object \code{x} based on the specified
 conditions. It can operate on vectors, data.frames, or RasterLayer objects.
 The function allows for changing values within a specified range (\code{Between}),
-\verb{≥} a specified value (\code{MoreThan}), or \verb{≤} a specified value (\code{LessThan}) to
-a new value (\code{NewVal}). An option to invert the selection is also available
-for ranges.
+\eqn{\geq} a specified value (\code{MoreThan}), or \eqn{\leq} a specified value
+(\code{LessThan}) to a new value (\code{NewVal}). An option to invert the selection is
+also available for ranges.
 }
 \examples{
 # Vector

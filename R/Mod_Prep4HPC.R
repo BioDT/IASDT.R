@@ -33,7 +33,7 @@
 #' @param GPP_Plot Logical. Whether to plot the coordinates of the sampling
 #'   units and the knots in a pdf file. Default: `TRUE`.
 #' @param BioVars Character vector. Variables from CHELSA (bioclimatic variables
-#'   (bio1–bio19) and additional predictors (e.g., Net Primary Productivity,
+#'   (bio1-bio19) and additional predictors (e.g., Net Primary Productivity,
 #'   npp)) to be used in the model. By default, six ecologically relevant and
 #'   minimally correlated variables are selected: c("bio3", "bio4", "bio11",
 #'   "bio18", "bio19", "npp").
@@ -67,12 +67,12 @@
 #' @param NCores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 8.
 #' @param NChains Integer. Number of model chains. Default: 4.
-#' @param thin Integer vector. Thinning value(s) in MCMC sampling. If more than one
-#'   value is provided, a separate model will be fitted at each value of
-#'   thinning.
-#' @param samples Integer vector. Value(s) for the number of MCMC samples. If more than
+#' @param thin Integer vector. Thinning value(s) in MCMC sampling. If more than
 #'   one value is provided, a separate model will be fitted at each value of
-#'   number of samples. Defaults to 1000.
+#'   thinning.
+#' @param samples Integer vector. Value(s) for the number of MCMC samples. If
+#'   more than one value is provided, a separate model will be fitted at each
+#'   value of number of samples. Defaults to 1000.
 #' @param transientFactor Integer. Transient multiplication factor. The value of
 #'   `transient` will equal the multiplication of `transientFactor` and `thin`.
 #'   Default: 500.
@@ -89,8 +89,8 @@
 #' @param ModelCountry Character. Country or countries to filter observations
 #'   by. Default: `NULL`, which means prepare data for the whole Europe.
 #' @param PrepSLURM Logical. Whether to prepare SLURM command files. If `TRUE`
-#'   (default), the SLURM commands will be saved to disk using the
-#'   [Mod_SLURM] function.
+#'   (default), the SLURM commands will be saved to disk using the [Mod_SLURM]
+#'   function.
 #' @param MemPerCpu Character. Memory per CPU for the SLURM job. This value will
 #'   be assigned to the `#SBATCH --mem-per-cpu=` SLURM argument. Example: "32G"
 #'   to request 32 gigabyte. Only effective if `PrepSLURM = TRUE`.

@@ -6,7 +6,7 @@
 \usage{
 Convergence_Plot_All(
   ModelDir = NULL,
-  maxOmega = 1000L,
+  NOmega = 1000L,
   NCores = NULL,
   FromHPC = TRUE,
   MarginType = "histogram"
@@ -17,8 +17,8 @@ Convergence_Plot_All(
 The convergence outputs will be saved to the \code{Model_Convergence_All}
 subfolder.}
 
-\item{maxOmega}{Integer. Maximum number of species interactions to sample for
-convergence diagnostics.}
+\item{NOmega}{Integer. Number of species interactions sampled for Omega
+parameter diagnostics. Default: 1000L}
 
 \item{NCores}{Integer. Number of CPU cores to use for parallel processing.}
 

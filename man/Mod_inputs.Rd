@@ -121,7 +121,7 @@ and \code{Max} are the minimum and maximum values of the alpha parameter (in
 kilometer). \code{Samples} is the number of samples to be used in the prior.}
 
 \item{BioVars}{Character vector. Variables from CHELSA (bioclimatic variables
-(bio1–bio19) and additional predictors (e.g., Net Primary Productivity,
+(bio1-bio19) and additional predictors (e.g., Net Primary Productivity,
 npp)) to be used in the model. By default, six ecologically relevant and
 minimally correlated variables are selected: c("bio3", "bio4", "bio11",
 "bio18", "bio19", "npp").}
@@ -189,13 +189,13 @@ Default: 8.}
 
 \item{NChains}{Integer. Number of model chains. Default: 4.}
 
-\item{thin}{Integer vector. Thinning value(s) in MCMC sampling. If more than one
-value is provided, a separate model will be fitted at each value of
+\item{thin}{Integer vector. Thinning value(s) in MCMC sampling. If more than
+one value is provided, a separate model will be fitted at each value of
 thinning.}
 
-\item{samples}{Integer vector. Value(s) for the number of MCMC samples. If more than
-one value is provided, a separate model will be fitted at each value of
-number of samples. Defaults to 1000.}
+\item{samples}{Integer vector. Value(s) for the number of MCMC samples. If
+more than one value is provided, a separate model will be fitted at each
+value of number of samples. Defaults to 1000.}
 
 \item{transientFactor}{Integer. Transient multiplication factor. The value of
 \code{transient} will equal the multiplication of \code{transientFactor} and \code{thin}.
@@ -224,8 +224,8 @@ High-Performance Computing (HPC) environment, to adjust file paths
 accordingly. Default: \code{TRUE}.}
 
 \item{PrepSLURM}{Logical. Whether to prepare SLURM command files. If \code{TRUE}
-(default), the SLURM commands will be saved to disk using the
-\link{Mod_SLURM} function.}
+(default), the SLURM commands will be saved to disk using the \link{Mod_SLURM}
+function.}
 
 \item{MemPerCpu}{Character. Memory per CPU for the SLURM job. This value will
 be assigned to the \verb{#SBATCH --mem-per-cpu=} SLURM argument. Example: "32G"

@@ -9,14 +9,14 @@
 #' name, climate model & scenario, time, and download URLs). It can optionally
 #' download these links to desk, if requested.
 #' @name CHELSA_Prepare
-#' @param EnvFile Character. Path to the environment file containing paths to 
+#' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
-#' @param FromHPC Logical. Whether the processing is being done on an 
-#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#' @param FromHPC Logical. Whether the processing is being done on an
+#'   High-Performance Computing (HPC) environment, to adjust file paths
 #'   accordingly. Default: `TRUE`.
 #' @param Download Logical. Whether to download the CHELSA files. Defaults to
 #'   `FALSE`.
-#' @param NCores Integer. Number of CPU cores to use for parallel processing. 
+#' @param NCores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 4.
 #' @param Overwrite Logical. Whether to re-download files that already exist.
 #'   Defaults to `FALSE`.
@@ -25,8 +25,8 @@
 #' @param Sleep Integer. Time in seconds to wait after each download attempt.
 #'   Defaults to 5.
 #' @param OtherVars Character. First letters of variables other than bioclimatic
-#'   variables to be processed. Defaults to "npp", which means processing
-#'   bioclimatic variables (bio1-19) and Net Primary Productivity will be
+#'   variables to be processed. Defaults to "npp", which means processing 19
+#'   bioclimatic variables (bio1-bio19) and Net Primary Productivity will be
 #'   processed. If `OtherVars` is set to "", only bioclimatic variables will be
 #'   processed. See [CHELSA_Vars] for a detailed information on CHELSA climate
 #'   variables.

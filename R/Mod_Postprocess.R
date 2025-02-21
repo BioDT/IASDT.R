@@ -1,18 +1,18 @@
-#' Model pipeline for postprocessing fitted Hmsc models
+#' Model pipeline for post-processing fitted Hmsc models
 #'
 #'
-#' These functions postprocess fitted Hmsc models on both CPU and GPU. The
+#' These functions post-process fitted Hmsc models on both CPU and GPU. The
 #' pipeline is under active development and may change in future updates.
 #' Currently, there are three main functions in this script:
 #' `Mod_Postprocess_1_CPU()`, `Mod_Prep_TF()`, and `Mod_Postprocess_2_CPU()`.
 #' See details for more information.
 #' @param GPP_Dist Integer. Distance in *kilometers* between knots for the
 #'   selected model.
-#' @param Tree Character. Whether a phylogenetic tree was used in the selected 
+#' @param Tree Character. Whether a phylogenetic tree was used in the selected
 #'   model. Accepts "Tree" (default) or "NoTree".
-#' @param Thin,Samples Integer. Thinning value and the number of MCMC samples 
-#'   of the selected model.
-#' @param NCores_VP Integer. Number of cores to use for variance partitioning. 
+#' @param Thin,Samples Integer. Thinning value and the number of MCMC samples of
+#'   the selected model.
+#' @param NCores_VP Integer. Number of cores to use for variance partitioning.
 #'   Defaults to 3.
 #' @param Path_Models Character. Directory for fitted models. Default is
 #'   `datasets/processed/model_fitting`. A subdirectory `TF_postprocess` will be
@@ -42,7 +42,7 @@
 #'
 #' **Mod_Postprocess_1_CPU**
 #'
-#' This function performs the initial postprocessing step for habitat-specific
+#' This function performs the initial post-processing step for habitat-specific
 #' fitted models, automating the following tasks:
 #'
 #' - check unsuccessful models: [Mod_SLURM_Refit]
@@ -89,8 +89,8 @@
 #'
 #' **Mod_Postprocess_2_CPU**
 #'
-#' This function continues running the analysis pipeline for postprocessing Hmsc
-#' by automating the following steps:
+#' This function continues running the analysis pipeline for post-processing
+#' Hmsc by automating the following steps:
 #' - process and visualize response curves: [Response_curves]
 #' - predict habitat suitability across different climate options:
 #' [Predict_Maps]
@@ -100,7 +100,7 @@
 #' [VarPar_Plot]
 #' - compute and visualizing model internal evaluation (explanatory power):
 #' [Mod_Eval_Plot]
-#'  - initiate postprocessing of fitted cross-validated models: prepare
+#'  - initiate post-processing of fitted cross-validated models: prepare
 #' commands for latent factor predictions on GPU --- **Ongoing**
 #'
 #' This function should be run after:
@@ -391,7 +391,7 @@ Mod_Postprocess_1_CPU <- function(
   # ****************************************************************
 
   IASDT.R::CatDiff(
-    InitTime = .StartTime, Prefix = "\nPostprocessing using CPU took ")
+    InitTime = .StartTime, Prefix = "\nPost-processing using CPU took ")
 
   return(invisible(NULL))
 }
@@ -471,9 +471,9 @@ Mod_Prep_TF <- function(
   # ****************************************************************
   # ****************************************************************
 
-  # Prepare postprocessing data for calculating Variance partitioning
+  # Prepare post-processing data for calculating Variance partitioning
   IASDT.R::CatTime(
-    "Prepare postprocessing data for calculating Variance partitioning")
+    "Prepare post-processing data for calculating Variance partitioning")
 
   Path_VP_SLURM <- IASDT.R::Path(Path_TF, "VP_SLURM.slurm")
   Path_VP_Commands <- IASDT.R::Path(Path_TF, "VP_Commands.txt")
@@ -546,8 +546,8 @@ Mod_Prep_TF <- function(
   # ****************************************************************
   # ****************************************************************
 
-  # Prepare postprocessing data for LF predictions
-  IASDT.R::CatTime("Prepare postprocessing data for LF predictions")
+  # Prepare post-processing data for LF predictions
+  IASDT.R::CatTime("Prepare post-processing data for LF predictions")
 
   # Ensure that the total number of simultaneous jobs (LF + VP) = NumFiles; so
   # both can be run on the same time.
@@ -1037,13 +1037,12 @@ Mod_Postprocess_2_CPU <- function(
   # ****************************************************************
 
 
-  # Postprocessing cross-validated models ------
-
+  # Post-processing cross-validated models ------
 
   # ****************************************************************
 
   IASDT.R::CatDiff(
-    InitTime = .StartTime, Prefix = "\nPostprocessing took ")
+    InitTime = .StartTime, Prefix = "\nPost-processing took ")
 
   return(invisible(NULL))
 }

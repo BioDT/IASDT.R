@@ -20,10 +20,11 @@
 #' @param GpusPerNode Integer. Number of GPUs requested per node (`#SBATCH
 #'   --gpus-per-node`). Default: 1.
 #' @param MemPerCpu Character. Memory allocation per CPU core. Example: "32G"
-#'   for 32 gigabytes. Required — if not provided, the function throws an error.
-#' @param Time Character. Maximum allowed runtime for the job. Example:
-#'   "01:00:00" for one hour. Required — if not provided, the function throws an
+#'   for 32 gigabytes. Required --- if not provided, the function throws an
 #'   error.
+#' @param Time Character. Maximum allowed runtime for the job. Example:
+#'   "01:00:00" for one hour. Required --- if not provided, the function throws
+#'   an error.
 #' @param Partition Character. Name of the SLURM partition to submit the job to.
 #'   Default: "small-g", for running the array jobs on the GPU.
 #' @param EnvFile Character. Path to the environment file containing paths to

@@ -15,8 +15,8 @@
 #' @param maxOmega Integer. Maximum number of species interactions to sample for
 #'   convergence diagnostics.
 #' @param NCores Integer. Number of CPU cores to use for parallel processing.
-#' @param FromHPC Logical. Whether the processing is being done on an 
-#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#' @param FromHPC Logical. Whether the processing is being done on an
+#'   High-Performance Computing (HPC) environment, to adjust file paths
 #'   accordingly. Default: `TRUE`.
 #' @name Convergence_Plot_All
 #' @inheritParams Convergence_plots
@@ -92,24 +92,6 @@ Convergence_Plot_All <- function(
 
   # Extract number of chains
   NChains <- length(Model_Info$Chain[[1]])
-
-  # # ..................................................................... ###
-
-  IASDT.R::CatTime(
-    paste0("Prepare working on parallel using `", NCores, "` cores."),
-    Level = 1)
-
-  if (NCores == 1) {
-    future::plan("future::sequential", gc = TRUE)
-  } else {
-    withr::local_options(
-      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
-      future.seed = TRUE)
-    c1 <- snow::makeSOCKcluster(min(NCores, nrow(Model_Info)))
-    on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-    future::plan("future::cluster", workers = c1, gc = TRUE)
-    on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
-  }
 
   # # ..................................................................... ###
 
@@ -246,32 +228,58 @@ Convergence_Plot_All <- function(
 
   # Processing convergence data -----
 
-  IASDT.R::CatTime("Processing convergence data", Level = 1)
+  Path_DT <- IASDT.R::Path(Path_Convergence_All, "Convergence_DT.RData")
 
-  Convergence_DT <- Model_Info %>%
-    dplyr::mutate(
-      Plots = future.apply::future_lapply(
-        X = seq_len(nrow(Model_Info)), FUN = PrepConvergence,
-        future.scheduling = Inf, future.seed = TRUE,
-        future.packages = c(
-          "dplyr", "sf", "Hmsc", "coda", "magrittr", "ggplot2",
-          "magrittr", "IASDT.R"),
-        future.globals = c(
-          "Model_Info", "Path_ConvDT", "maxOmega", "PrepConvergence"))) %>%
-    dplyr::select(tidyselect::all_of(c("M_Name_Fit", "Plots"))) %>%
-    tidyr::unnest_wider("Plots") %>%
-    # arrange data alphanumerically by model name
-    dplyr::arrange(gtools::mixedorder(M_Name_Fit)) %>%
-    # discard non existed data
-    dplyr::filter(!is.na(Path_Trace_Alpha))
+  if (IASDT.R::CheckData(Path_DT, warning = FALSE)) {
 
-  save(
-    Convergence_DT,
-    file = IASDT.R::Path(Path_Convergence_All, "Convergence_DT.RData"))
+    IASDT.R::CatTime("Loading convergence data", Level = 1)
+    Convergence_DT <- IASDT.R::LoadAs(Path_DT)
 
-  if (NCores > 1) {
-    snow::stopCluster(c1)
-    future::plan("future::sequential", gc = TRUE)
+  } else {
+
+    IASDT.R::CatTime("Processing convergence data", Level = 1)
+
+    IASDT.R::CatTime(
+      paste0("Prepare working on parallel using `", NCores, "` cores."),
+      Level = 2)
+
+    if (NCores == 1) {
+      future::plan("future::sequential", gc = TRUE)
+    } else {
+      withr::local_options(
+        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
+        future.seed = TRUE)
+      c1 <- snow::makeSOCKcluster(min(NCores, nrow(Model_Info)))
+      on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
+      future::plan("future::cluster", workers = c1, gc = TRUE)
+      on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
+    }
+
+    Convergence_DT <- Model_Info %>%
+      dplyr::mutate(
+        Plots = future.apply::future_lapply(
+          X = seq_len(nrow(Model_Info)), FUN = PrepConvergence,
+          future.scheduling = Inf, future.seed = TRUE,
+          future.packages = c(
+            "dplyr", "sf", "Hmsc", "coda", "magrittr", "ggplot2",
+            "magrittr", "IASDT.R"),
+          future.globals = c(
+            "Model_Info", "Path_ConvDT", "maxOmega", "PrepConvergence"))) %>%
+      dplyr::select(tidyselect::all_of(c("M_Name_Fit", "Plots"))) %>%
+      tidyr::unnest_wider("Plots") %>%
+      # arrange data alphanumerically by model name
+      dplyr::arrange(gtools::mixedorder(M_Name_Fit)) %>%
+      # discard non existed data
+      dplyr::filter(!is.na(Path_Trace_Alpha))
+
+    save(
+      Convergence_DT,
+      file = IASDT.R::Path(Path_Convergence_All, "Convergence_DT.RData"))
+
+    if (NCores > 1) {
+      snow::stopCluster(c1)
+      future::plan("future::sequential", gc = TRUE)
+    }
   }
 
   # # ..................................................................... ###
@@ -352,7 +360,7 @@ Convergence_Plot_All <- function(
     Path_Convergence_All, paste0("Convergence_Omega_Gelman.pdf"))
 
   Plot_Title <- paste0(
-    "Gelman convergence diagnostic - Omega (", maxOmega, " samples)")
+    "Gelman convergence diagnostic --- Omega (", maxOmega, " samples)")
 
   Plot <- dplyr::left_join(Convergence_DT, Model_Info, by = "M_Name_Fit") %>%
     dplyr::select(rL, Tree, M_thin, M_samples, Omega_Gelman) %>%
@@ -401,7 +409,8 @@ Convergence_Plot_All <- function(
   Plot_Path <- IASDT.R::Path(
     Path_Convergence_All, paste0("Convergence_Omega_ESS.pdf"))
 
-  Plot_Title <- paste0("Effective sample size - Omega (", maxOmega, " samples)")
+  Plot_Title <- paste0(
+    "Effective sample size --- Omega (", maxOmega, " samples)")
 
   Plot <- Convergence_DT %>%
     dplyr::left_join(Model_Info, by = "M_Name_Fit") %>%
@@ -451,7 +460,7 @@ Convergence_Plot_All <- function(
   # Beta - Gelman convergence ------
   IASDT.R::CatTime("Beta - Gelman convergence")
 
-  Plot_Title <- paste0("Gelman convergence diagnostic - Beta")
+  Plot_Title <- paste0("Gelman convergence diagnostic --- Beta")
 
   Plot_Path <- IASDT.R::Path(
     Path_Convergence_All, paste0("Convergence_Beta_Gelman.pdf"))

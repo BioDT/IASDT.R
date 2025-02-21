@@ -229,7 +229,7 @@ kilometer). <code>Samples</code> is the number of samples to be used in the prio
 
 <dt id="arg-biovars">BioVars<a class="anchor" aria-label="anchor" href="#arg-biovars"></a></dt>
 <dd><p>Character vector. Variables from CHELSA (bioclimatic variables
-(bio1–bio19) and additional predictors (e.g., Net Primary Productivity,
+(bio1-bio19) and additional predictors (e.g., Net Primary Productivity,
 npp)) to be used in the model. By default, six ecologically relevant and
 minimally correlated variables are selected: c("bio3", "bio4", "bio11",
 "bio18", "bio19", "npp").</p></dd>
@@ -333,15 +333,15 @@ Default: 8.</p></dd>
 
 
 <dt id="arg-thin">thin<a class="anchor" aria-label="anchor" href="#arg-thin"></a></dt>
-<dd><p>Integer vector. Thinning value(s) in MCMC sampling. If more than one
-value is provided, a separate model will be fitted at each value of
+<dd><p>Integer vector. Thinning value(s) in MCMC sampling. If more than
+one value is provided, a separate model will be fitted at each value of
 thinning.</p></dd>
 
 
 <dt id="arg-samples">samples<a class="anchor" aria-label="anchor" href="#arg-samples"></a></dt>
-<dd><p>Integer vector. Value(s) for the number of MCMC samples. If more than
-one value is provided, a separate model will be fitted at each value of
-number of samples. Defaults to 1000.</p></dd>
+<dd><p>Integer vector. Value(s) for the number of MCMC samples. If
+more than one value is provided, a separate model will be fitted at each
+value of number of samples. Defaults to 1000.</p></dd>
 
 
 <dt id="arg-transientfactor">transientFactor<a class="anchor" aria-label="anchor" href="#arg-transientfactor"></a></dt>
@@ -386,8 +386,8 @@ accordingly. Default: <code>TRUE</code>.</p></dd>
 
 <dt id="arg-prepslurm">PrepSLURM<a class="anchor" aria-label="anchor" href="#arg-prepslurm"></a></dt>
 <dd><p>Logical. Whether to prepare SLURM command files. If <code>TRUE</code>
-(default), the SLURM commands will be saved to disk using the
-<a href="Mod_SLURM.html">Mod_SLURM</a> function.</p></dd>
+(default), the SLURM commands will be saved to disk using the <a href="Mod_SLURM.html">Mod_SLURM</a>
+function.</p></dd>
 
 
 <dt id="arg-mempercpu">MemPerCpu<a class="anchor" aria-label="anchor" href="#arg-mempercpu"></a></dt>

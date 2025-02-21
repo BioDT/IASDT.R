@@ -56,7 +56,7 @@ model parameters.</p>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">Convergence_Plot_All</span><span class="op">(</span></span>
 <span>  ModelDir <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  maxOmega <span class="op">=</span> <span class="fl">1000L</span>,</span>
+<span>  NOmega <span class="op">=</span> <span class="fl">1000L</span>,</span>
 <span>  NCores <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  FromHPC <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  MarginType <span class="op">=</span> <span class="st">"histogram"</span></span>
@@ -73,9 +73,9 @@ The convergence outputs will be saved to the <code>Model_Convergence_All</code>
 subfolder.</p></dd>
 
 
-<dt id="arg-maxomega">maxOmega<a class="anchor" aria-label="anchor" href="#arg-maxomega"></a></dt>
-<dd><p>Integer. Maximum number of species interactions to sample for
-convergence diagnostics.</p></dd>
+<dt id="arg-nomega">NOmega<a class="anchor" aria-label="anchor" href="#arg-nomega"></a></dt>
+<dd><p>Integer. Number of species interactions sampled for Omega
+parameter diagnostics. Default: 1000L</p></dd>
 
 
 <dt id="arg-ncores">NCores<a class="anchor" aria-label="anchor" href="#arg-ncores"></a></dt>

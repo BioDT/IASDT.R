@@ -284,7 +284,7 @@ Convergence_Plot_All <- function(
       size = 20, colour = "darkgrey", face = "bold"),
     axis.text = ggplot2::element_text(size = 16),
     title = ggplot2::element_text(size = 20, face = "bold", color = "blue"),
-    axis.text.y = ggplot2::element_text(
+    axis.text.y = ggtext::element_markdown(
       hjust = 0, margin = ggplot2::margin(t = 0, r = 10, b = 0, l = 5)),
     panel.spacing = ggplot2::unit(0.75, "lines"))
 
@@ -302,8 +302,8 @@ Convergence_Plot_All <- function(
   # Alpha - trace plots ------
   IASDT.R::CatTime("Alpha - trace plots")
 
-  grDevices::pdf(
-    file = IASDT.R::Path(Path_Convergence_All, "TracePlots_Alpha.pdf"),
+  grDevices::cairo_pdf(
+    filename = IASDT.R::Path(Path_Convergence_All, "TracePlots_Alpha.pdf"),
     width = 18, height = 12)
   purrr::walk(
     .x = Convergence_DT$Path_Trace_Alpha,
@@ -336,8 +336,8 @@ Convergence_Plot_All <- function(
       nrow = 2, ncol = 2, layout_matrix = layout_matrix)
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
-  grDevices::pdf(
-    file = IASDT.R::Path(
+  grDevices::cairo_pdf(
+    filename = IASDT.R::Path(
       Path_Convergence_All, "TracePlots_Rho_Phylogenetic.pdf"),
     width = 18, height = 15)
   invisible(print(Plot))
@@ -363,8 +363,6 @@ Convergence_Plot_All <- function(
     tidyr::unnest("Omega_Gelman") %>%
     ggplot2::ggplot(ggplot2::aes(GPP_Thin, Omega_Gelman)) +
     ggplot2::geom_violin() +
-    ggplot2::geom_vline(
-      xintercept = c(4.5, 8.5, 12.5), linetype = "dashed", color = "blue") +
     ggplot2::scale_y_log10() +
     ggplot2::facet_grid(Tree ~ M_samples, labeller = Label) +
     ggplot2::labs(title = Plot_Title) +
@@ -382,11 +380,12 @@ Convergence_Plot_All <- function(
         paste0(
           "Gelman and Rubin's convergence diagnostic ",
           "<sub>(only values between 0.9 and 1.1)</sub>")) +
-      ggplot2::ylim(c(0.9, 1.1))
+      ggplot2::ylim(c(0.9, 1.1)) +
+      Theme
 
     # Using ggplot2::ggsave directly does not show non-ascii characters
     # correctly
-    grDevices::pdf(file = Plot_Path, width = 18, height = 12)
+    grDevices::cairo_pdf(filename = Plot_Path, width = 18, height = 12)
     print(Plot)
     print(Plot2)
     grDevices::dev.off()
@@ -413,8 +412,6 @@ Convergence_Plot_All <- function(
     tidyr::unnest("Omega_ESS") %>%
     ggplot2::ggplot(ggplot2::aes(GPP_Thin, Omega_ESS)) +
     ggplot2::geom_violin() +
-    ggplot2::geom_vline(
-      xintercept = c(4.5, 8.5, 12.5), linetype = "dashed", color = "blue") +
     ggplot2::facet_grid(Tree ~ M_samples, labeller = Label) +
     ggplot2::labs(title = Plot_Title) +
     ggplot2::xlab(NULL) +
@@ -433,8 +430,6 @@ Convergence_Plot_All <- function(
     dplyr::mutate(ESS2 = (100 * Omega_ESS / (M_samples * NChains))) %>%
     ggplot2::ggplot(ggplot2::aes(GPP_Thin, ESS2)) +
     ggplot2::geom_violin() +
-    ggplot2::geom_vline(
-      xintercept = c(4.5, 8.5, 12.5), linetype = "dashed", color = "blue") +
     ggplot2::facet_grid(Tree ~ M_samples, labeller = Label) +
     ggplot2::labs(title = Plot_Title) +
     ggplot2::xlab(NULL) +
@@ -444,7 +439,7 @@ Convergence_Plot_All <- function(
 
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
-  grDevices::pdf(file = Plot_Path, width = 18, height = 12)
+  grDevices::cairo_pdf(filename = Plot_Path, width = 18, height = 12)
   print(Plot)
   print(Plot2)
   grDevices::dev.off()
@@ -486,7 +481,8 @@ Convergence_Plot_All <- function(
         paste0(
           "Gelman and Rubin's convergence diagnostic ",
           "<sub>(only values between 0.9 and 1.1)</sub>")) +
-      ggplot2::ylim(c(0.9, 1.1))
+      ggplot2::ylim(c(0.9, 1.1)) +
+      Theme
 
     # Using ggplot2::ggsave directly does not show non-ascii characters
     # correctly
@@ -516,8 +512,6 @@ Convergence_Plot_All <- function(
     tidyr::unnest("Beta_ESS") %>%
     ggplot2::ggplot(ggplot2::aes(GPP_Thin, Beta_ESS)) +
     ggplot2::geom_violin() +
-    ggplot2::geom_vline(
-      xintercept = c(4.5, 8.5, 12.5), linetype = "dashed", color = "blue") +
     ggplot2::facet_grid(Tree ~ M_samples, labeller = Label) +
     ggplot2::labs(title = Plot_Title) +
     ggplot2::xlab(NULL) +
@@ -536,8 +530,6 @@ Convergence_Plot_All <- function(
     dplyr::mutate(ESS2 = (100 * Beta_ESS / (M_samples * NChains))) %>%
     ggplot2::ggplot(ggplot2::aes(GPP_Thin, ESS2)) +
     ggplot2::geom_violin() +
-    ggplot2::geom_vline(
-      xintercept = c(4.5, 8.5, 12.5), linetype = "dashed", color = "blue") +
     ggplot2::facet_grid(Tree ~ M_samples, labeller = Label) +
     ggplot2::labs(title = Plot_Title) +
     ggplot2::xlab(NULL) +

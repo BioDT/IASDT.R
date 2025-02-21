@@ -304,7 +304,7 @@ Convergence_Plot_All <- function(
 
   grDevices::cairo_pdf(
     filename = IASDT.R::Path(Path_Convergence_All, "TracePlots_Alpha.pdf"),
-    width = 18, height = 12)
+    width = 18, height = 12, onefile = TRUE)
   purrr::walk(
     .x = Convergence_DT$Path_Trace_Alpha,
     .f = purrr::safely(~{
@@ -339,7 +339,7 @@ Convergence_Plot_All <- function(
   grDevices::cairo_pdf(
     filename = IASDT.R::Path(
       Path_Convergence_All, "TracePlots_Rho_Phylogenetic.pdf"),
-    width = 18, height = 15)
+    width = 18, height = 15, onefile = TRUE)
   invisible(print(Plot))
   grDevices::dev.off()
 
@@ -385,7 +385,8 @@ Convergence_Plot_All <- function(
 
     # Using ggplot2::ggsave directly does not show non-ascii characters
     # correctly
-    grDevices::cairo_pdf(filename = Plot_Path, width = 18, height = 12)
+    grDevices::cairo_pdf(
+      filename = Plot_Path, width = 18, height = 12, onefile = TRUE)
     print(Plot)
     print(Plot2)
     grDevices::dev.off()
@@ -439,7 +440,8 @@ Convergence_Plot_All <- function(
 
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
-  grDevices::cairo_pdf(filename = Plot_Path, width = 18, height = 12)
+  grDevices::cairo_pdf(
+    filename = Plot_Path, width = 18, height = 12, onefile = TRUE)
   print(Plot)
   print(Plot2)
   grDevices::dev.off()
@@ -486,11 +488,11 @@ Convergence_Plot_All <- function(
 
     # Using ggplot2::ggsave directly does not show non-ascii characters
     # correctly
-    grDevices::pdf(file = Plot_Path, width = 18, height = 12)
+    grDevices::cairo_pdf(
+      filename = Plot_Path, width = 18, height = 12, onefile = TRUE)
     print(Plot)
     print(Plot2)
     grDevices::dev.off()
-
   }))
 
   # # ..................................................................... ###
@@ -541,7 +543,8 @@ Convergence_Plot_All <- function(
 
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
-  grDevices::pdf(file = Plot_Path, width = 18, height = 12)
+  grDevices::cairo_pdf(
+    filename = Plot_Path, width = 18, height = 12, onefile = TRUE)
   print(Plot)
   print(Plot2)
   grDevices::dev.off()

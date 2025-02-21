@@ -7,14 +7,14 @@
 EASIN_Process(
   ExtractTaxa = TRUE,
   ExtractData = TRUE,
-  NDownTries = 10,
-  NCores = 6,
-  SleepTime = 10,
-  NSearch = 1000,
+  NDownTries = 10L,
+  NCores = 6L,
+  SleepTime = 10L,
+  NSearch = 1000L,
   FromHPC = TRUE,
   EnvFile = ".env",
   DeleteChunks = TRUE,
-  StartYear = 1981,
+  StartYear = 1981L,
   Plot = TRUE
 )
 }
@@ -37,11 +37,12 @@ and between chunks. Default is 10 seconds.}
 \item{NSearch}{Integer. Number of observations or species to download during
 EASIN taxonomy or data extraction, respectively. Default is 1000.}
 
-\item{FromHPC}{Logical indicating whether the work is being done from HPC, to
-adjust file paths accordingly. Default: \code{TRUE}.}
+\item{FromHPC}{Logical. Whether the processing is being done on an
+High-Performance Computing (HPC) environment, to adjust file paths
+accordingly. Default: \code{TRUE}.}
 
-\item{EnvFile}{Character. The path to the environment file containing
-variables required by the function. Default is ".env".}
+\item{EnvFile}{Character. Path to the environment file containing paths to
+data sources. Defaults to \code{.env}.}
 
 \item{DeleteChunks}{Logical. If \code{TRUE}, the function will delete intermediate
 files after processing. Default is \code{FALSE}.}

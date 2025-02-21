@@ -17,18 +17,18 @@ SaveAs(
 \item{InObj}{The input object to be saved. This can be an actual R object or
 a character string representing the name of an object.}
 
-\item{OutObj}{A character string specifying the new name for the saved
+\item{OutObj}{Character. The new name for the saved
 \code{RData} object. This name is used when the object is loaded back into R.
 Default is \code{NULL}. This is required when saving \code{RData} files.}
 
-\item{OutPath}{A character string specifying the file path (ends with either
-\verb{*.RData}, \verb{*.qs2}, \code{feather}, and \code{rds}) where the object should be saved.
-This includes the directory and the file name.}
+\item{OutPath}{Character. File path (ends with either \verb{*.RData}, \verb{*.qs2},
+\code{feather}, and \code{rds}) where the object be saved. This includes the
+directory and the file name.}
 
-\item{nthreads}{A character string specifying the number of threads to use
+\item{nthreads}{Character. Number of threads to use
 when compressing data. See \link[qs2:qs_save]{qs2::qs_save}.}
 
-\item{feather_compression}{A character string specifying the compression
+\item{feather_compression}{Character. The compression
 algorithm to use when saving the object in the \code{feather} format. The
 default is "zstd". See \link[arrow:write_feather]{arrow::write_feather}.}
 
@@ -48,15 +48,15 @@ function supports saving objects in \code{RData}, \code{qs2}, \code{feather}, an
 formats. The format is determined by the extension of the file path.
 }
 \examples{
-TMP_Folder <- file.path(tempdir(), stringi::stri_rand_strings(1, 5))
+TMP_Folder <- IASDT.R::Path(tempdir(), stringi::stri_rand_strings(1, 5))
 fs::dir_create(TMP_Folder)
 list.files(TMP_Folder)
 
 # save iris data in `iris2.RData` with `iris2` object name
-SaveAs(iris, "iris2", file.path(TMP_Folder, "iris2.RData"))
+SaveAs(iris, "iris2", IASDT.R::Path(TMP_Folder, "iris2.RData"))
 list.files(TMP_Folder, pattern = "^.+.RData")
 
-(load(file.path(TMP_Folder, "iris2.RData")))
+(load(IASDT.R::Path(TMP_Folder, "iris2.RData")))
 
 tibble::tibble(iris2)
 }

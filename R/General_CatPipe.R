@@ -10,7 +10,7 @@
 #' of data processing in a pipeline.
 #' @param x The input object to be passed through the pipe. This parameter is
 #'   required and cannot be NULL.
-#' @param message A character string representing the message to be printed.
+#' @param message Character. The message to be printed.
 #' @return The same object passed as input (`x`), allowing the pipe operation to
 #'   continue uninterrupted.
 #' @name CatPipe

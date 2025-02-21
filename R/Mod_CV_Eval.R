@@ -14,14 +14,14 @@
 #'   mean values of posterior predictive distribution for random effects
 #'   corresponding for the new units. See `Hmsc:::predict.Hmsc` for more
 #'   details.
-#' @param NCores Integer specifying the number of parallel cores for
-#'   parallelization. Default: 8 cores.
+#' @param NCores Integer. Number of CPU cores to use for parallel processing. 
+#'   Default: 8.
 #' @author Ahmed El-Gabbas
 #' @export
 #' @name Mod_CV_Eval
 
 
-Mod_CV_Eval <- function(Path_CV = NULL, predictEtaMean = TRUE, NCores = 8) {
+Mod_CV_Eval <- function(Path_CV = NULL, predictEtaMean = TRUE, NCores = 8L) {
 
   # # ..................................................................... ###
 
@@ -40,10 +40,10 @@ Mod_CV_Eval <- function(Path_CV = NULL, predictEtaMean = TRUE, NCores = 8) {
 
   IASDT.R::CatTime("Merging posterior chains")
 
-  CV_DT <- IASDT.R::LoadAs(file.path(Path_CV, "CV_DT.RData"))
-  PredDir <- file.path(Path_CV, "Model_Prediction")
-  EvalDir <- file.path(Path_CV, "Evaluation")
-  TempDir <- file.path(PredDir, "Preds_Temp")
+  CV_DT <- IASDT.R::LoadAs(IASDT.R::Path(Path_CV, "CV_DT.RData"))
+  PredDir <- IASDT.R::Path(Path_CV, "Model_Prediction")
+  EvalDir <- IASDT.R::Path(Path_CV, "Evaluation")
+  TempDir <- IASDT.R::Path(PredDir, "Preds_Temp")
   fs::dir_create(c(PredDir, EvalDir, TempDir))
 
   purrr::walk(
@@ -84,8 +84,9 @@ Mod_CV_Eval <- function(Path_CV = NULL, predictEtaMean = TRUE, NCores = 8) {
         .f = function(ModName, Path_ModFull, Path_ModFitted, val, valCoords) {
           IASDT.R::CatTime(ModName, Level = 1)
 
-          Path_Eval <- file.path(EvalDir, paste0("Eval_", ModName, ".RData"))
-          Path_Pred <- file.path(PredDir, paste0("Preds_", ModName, ".qs2"))
+          Path_Eval <- IASDT.R::Path(
+            EvalDir, paste0("Eval_", ModName, ".RData"))
+          Path_Pred <- IASDT.R::Path(PredDir, paste0("Preds_", ModName, ".qs2"))
 
           PredsOkay <- IASDT.R::CheckData(Path_Eval, warning = FALSE)
 
@@ -128,14 +129,14 @@ Mod_CV_Eval <- function(Path_CV = NULL, predictEtaMean = TRUE, NCores = 8) {
       Path_Pred_Eval_all = purrr::pmap(
         .l = list(CVName, Path_Pred, Path_Eval),
         .f = function(CVName, Path_Pred, Path_Eval) {
-          Path_Preds <- file.path(
+          Path_Preds <- IASDT.R::Path(
             PredDir, paste0("Preds_", CVName, "_all.RData"))
           Preds <- purrr::map_dfr(.x = Path_Pred, .f = IASDT.R::LoadAs) %>%
           IASDT.R::SaveAs(
             InObj = Preds, OutObj = paste0("Preds_", CVName, "_all"),
             OutPath = Path_Preds)
 
-          Path_Evals <- file.path(
+          Path_Evals <- IASDT.R::Path(
             EvalDir, paste0("Eval_", CVName, "_all.RData"))
           Evals <- purrr::map(
             .x = Path_Eval,
@@ -162,8 +163,8 @@ Mod_CV_Eval <- function(Path_CV = NULL, predictEtaMean = TRUE, NCores = 8) {
         })) %>%
     tidyr::unnest_wider(Path_Pred_Eval_all)
 
-  save(CV_DT, file = file.path(Path_CV, "CV_DT.RData"))
-  save(CV_Eval_Preds, file = file.path(Path_CV, "CV_Eval_Preds.RData"))
+  save(CV_DT, file = IASDT.R::Path(Path_CV, "CV_DT.RData"))
+  save(CV_Eval_Preds, file = IASDT.R::Path(Path_CV, "CV_Eval_Preds.RData"))
 
   # # ..................................................................... ###
 

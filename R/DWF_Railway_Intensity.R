@@ -9,12 +9,13 @@
 #' [OpenStreetMap Data Extracts](https://download.geofabrik.de/). It supports
 #' parallel processing for faster execution and can calculate the total length
 #' of railways and distance to the nearest railway for each grid cell in Europe.
-#' @param FromHPC Logical indicating whether the work is being done from HPC, to
-#'   adjust file paths accordingly. Default: `TRUE`.
-#' @param EnvFile Character. The path to the environment file containing
-#'   variables required by the function. Default is ".env".
-#' @param NCores Numeric. Number of CPU cores to use for parallel processing.
-#'   Default is 6.
+#' @param FromHPC Logical. Whether the processing is being done on an 
+#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#'   accordingly. Default: `TRUE`.
+#' @param EnvFile Character. Path to the environment file containing paths to 
+#'   data sources. Defaults to `.env`.
+#' @param NCores Integer. Number of CPU cores to use for parallel processing. 
+#'   Default: 8.
 #' @param DeleteProcessed Logical indicating whether to delete the raw
 #'   downloaded railways files after processing them. This helps to free large
 #'   unnecessary file space (> 55 GB). Defaults to `TRUE`.
@@ -25,7 +26,8 @@
 #' @author Ahmed El-Gabbas
 
 Railway_Intensity <- function(
-    FromHPC = TRUE, EnvFile = ".env", NCores = 6, DeleteProcessed = TRUE) {
+    FromHPC = TRUE, EnvFile = ".env", NCores = 6L, DeleteProcessed = TRUE) {
+  
   .StartTime <- lubridate::now(tzone = "CET")
 
   # # ..................................................................... ###
@@ -97,7 +99,7 @@ Railway_Intensity <- function(
     c(Path_Railways, Path_Railways_Raw, Path_Railways_Interim)
   )
 
-  RefGrid <- file.path(Path_Grid, "Grid_10_Land_Crop.RData")
+  RefGrid <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(RefGrid)) {
     stop(
       paste0("The reference grid file does not exist: ", RefGrid),
@@ -106,7 +108,7 @@ Railway_Intensity <- function(
   RefGrid <- terra::unwrap(IASDT.R::LoadAs(RefGrid))
 
 
-  RefGridSF <- file.path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
+  RefGridSF <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
   if (!file.exists(RefGridSF)) {
     stop(
       paste0("The reference grid file does not exist: ", RefGridSF),
@@ -231,7 +233,7 @@ Railway_Intensity <- function(
         .f = ~ {
           stringr::str_remove_all(.x, "^.+/|-latest-free.shp") %>%
             paste0(.y, "_", .) %>%
-            file.path(Path_Railways_Raw, .)
+            IASDT.R::Path(Path_Railways_Raw, .)
         }
       ),
       ModDate = purrr::map(
@@ -255,7 +257,7 @@ Railway_Intensity <- function(
 
   save(
     Railways_Links,
-    file = file.path(Path_Railways, "Railways_Links.RData"))
+    file = IASDT.R::Path(Path_Railways, "Railways_Links.RData"))
 
   IASDT.R::CatDiff(
     InitTime = .StartTimeDown, NLines = 1, Level = 1,
@@ -276,7 +278,7 @@ Railway_Intensity <- function(
     future::plan("future::sequential", gc = TRUE)
   } else {
     withr::local_options(
-      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
       future.seed = TRUE)
     c1 <- snow::makeSOCKcluster(NCores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
@@ -294,7 +296,8 @@ Railway_Intensity <- function(
       Path <- Railways_Links$Path[[ID]]
       Country <- Railways_Links$Country[[ID]]
       Prefix <- stringr::str_remove_all(basename(Path), ".zip$")
-      Path_Temp <- file.path(Path_Railways_Interim, paste0(Prefix, ".RData"))
+      Path_Temp <- IASDT.R::Path(
+        Path_Railways_Interim, paste0(Prefix, ".RData"))
 
       withr::local_options(
         future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
@@ -339,11 +342,11 @@ Railway_Intensity <- function(
 
       utils::unzip(
         zipfile = Path, files = InFileN,
-        exdir = file.path(Path_Railways_Interim, Prefix))
+        exdir = IASDT.R::Path(Path_Railways_Interim, Prefix))
 
       Path_Extract <- dplyr::tibble(
-        OldName = file.path(Path_Railways_Interim, Prefix, InFileN),
-        NewName = file.path(
+        OldName = IASDT.R::Path(Path_Railways_Interim, Prefix, InFileN),
+        NewName = IASDT.R::Path(
           Path_Railways_Interim,
           paste0(Prefix, ".", tools::file_ext(InFileN)))
       ) %>%
@@ -362,7 +365,7 @@ Railway_Intensity <- function(
       save(Railway, file = Path_Temp)
 
       # Clean up
-      fs::dir_delete(file.path(Path_Railways_Interim, Prefix))
+      fs::dir_delete(IASDT.R::Path(Path_Railways_Interim, Prefix))
       fs::file_delete(Path_Extract$NewName)
       if (DeleteProcessed) {
         fs::file_delete(Path)
@@ -396,7 +399,9 @@ Railway_Intensity <- function(
 
   ## Saving - RData -----
   IASDT.R::CatTime("Saving - RData", Level = 1)
-  save(Railways_3035, file = file.path(Path_Railways, "Railways_3035.RData"))
+  save(
+    Railways_3035, 
+    file = IASDT.R::Path(Path_Railways, "Railways_3035.RData"))
 
   # # .................................... ###
 
@@ -408,7 +413,7 @@ Railway_Intensity <- function(
 
   save(
     Railways_3035_2plot,
-    file = file.path(Path_Railways, "Railways_3035_2plot.RData"))
+    file = IASDT.R::Path(Path_Railways, "Railways_3035_2plot.RData"))
 
   # # .................................... ###
 
@@ -424,7 +429,7 @@ Railway_Intensity <- function(
         dplyr::filter(Railways_3035, fclass == .x) %>%
           IASDT.R::SaveAs(
             OutObj = paste0("Railways_sf_", .x),
-            OutPath = file.path(
+            OutPath = IASDT.R::Path(
               Path_Railways, paste0("Railways_sf_", .x, ".RData")))
       }
     )
@@ -466,13 +471,13 @@ Railway_Intensity <- function(
   IASDT.R::CatTime("Saving - RData", Level = 1)
   IASDT.R::SaveAs(
     InObj = terra::wrap(Railways_Length), OutObj = "Railways_Length",
-    OutPath = file.path(Path_Railways, "Railways_Length.RData"))
+    OutPath = IASDT.R::Path(Path_Railways, "Railways_Length.RData"))
 
   ## Saving - tif ------
   IASDT.R::CatTime("Saving - tif", Level = 1)
   terra::writeRaster(
     x = Railways_Length, overwrite = TRUE,
-    filename = file.path(
+    filename = IASDT.R::Path(
       Path_Railways,
       paste0("Railways_Length_", names(Railways_Length), ".tif")))
 
@@ -508,13 +513,13 @@ Railway_Intensity <- function(
   IASDT.R::CatTime("Save distance to railways - tif", Level = 1)
   terra::writeRaster(
     x = Railways_Distance, overwrite = TRUE,
-    filename = file.path(
+    filename = IASDT.R::Path(
       Path_Railways, paste0(names(Railways_Distance), ".tif")))
 
   IASDT.R::CatTime("Save distance to railways - RData", Level = 1)
   IASDT.R::SaveAs(
     InObj = terra::wrap(Railways_Distance), OutObj = "Railways_Distance",
-    OutPath = file.path(Path_Railways, "Railways_Distance.RData"))
+    OutPath = IASDT.R::Path(Path_Railways, "Railways_Distance.RData"))
 
   rm(RefGrid, envir = environment())
 
@@ -586,7 +591,7 @@ Railway_Intensity <- function(
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
   grDevices::jpeg(
-    filename = file.path(Path_Railways, "Railways_Length.jpeg"),
+    filename = IASDT.R::Path(Path_Railways, "Railways_Length.jpeg"),
     width = 31, height = 30, units = "cm", quality = 100, res = 600)
   print(RailPlot)
   grDevices::dev.off()
@@ -617,7 +622,7 @@ Railway_Intensity <- function(
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
   grDevices::jpeg(
-    filename = file.path(Path_Railways, "Railways_Lines.jpeg"),
+    filename = IASDT.R::Path(Path_Railways, "Railways_Lines.jpeg"),
     width = 31, height = 30, units = "cm", quality = 100, res = 600)
   print(RailPlotShp)
   grDevices::dev.off()

@@ -7,18 +7,15 @@
 #' This function fits Hmsc models on a UFZ Windows Server. It reads model
 #' configurations from a specified path, loads environment variables, checks
 #' input arguments for validity, and executes model fitting in parallel if
-#' required. #'
-#' @param Path_Model String. Path to the model files (without trailing slash).
-#' @param EnvFile Path to the file containing environment variables. Defaults to
-#'   ".env".
-#' @param NCores Integer. Number of cores to use for parallel processing.
+#' required.
+#' @param Path_Model Character. Path to the model files.
+#' @param EnvFile Character. Path to the environment file containing paths to 
+#'   data sources. Defaults to `.env`.
+#' @param NCores Integer. Number of CPU cores to use for parallel processing.
 #' @name Mod_Fit_WS
 #' @author Ahmed El-Gabbas
 #' @return The function does not return anything but prints messages to the
 #'   console regarding the progress and completion of model fitting.
-#' @details The function reads the following environment variable:
-#'    - **`DP_R_Path_HmscVE_Win`** for the path of the `Hmsc-HPC` Python
-#'    virtual environment under windows operating system.
 #' @export
 
 Mod_Fit_WS <- function(Path_Model, EnvFile = ".env", NCores = NULL) {
@@ -72,7 +69,11 @@ Mod_Fit_WS <- function(Path_Model, EnvFile = ".env", NCores = NULL) {
   # # List of models to be fitted
   # # |||||||||||||||||||||||||||||||||||
 
-  Model2Run <- file.path(Path_Model, "Model_Info.RData") %>%
+  if (!fs::dir_exists(Path_Model)) {
+    stop(paste("Model directory does not exist:", Path_Model), call. = FALSE)
+  }
+
+  Model2Run <- IASDT.R::Path(Path_Model, "Model_Info.RData") %>%
     IASDT.R::LoadAs() %>%
     dplyr::select(Path_ModProg, Command_WS) %>%
     tidyr::unnest(cols = c("Path_ModProg", "Command_WS")) %>%
@@ -86,7 +87,7 @@ Mod_Fit_WS <- function(Path_Model, EnvFile = ".env", NCores = NULL) {
       future::plan("future::sequential", gc = TRUE)
     } else {
       withr::local_options(
-        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
         future.seed = TRUE)
       c1 <- snow::makeSOCKcluster(NCores)
       on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)

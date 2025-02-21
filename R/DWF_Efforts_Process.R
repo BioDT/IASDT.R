@@ -8,10 +8,11 @@
 #' geographical area (Europe), grouped by order, and converts the data to raster
 #' format to represent the number of vascular plant observations and species per
 #' grid cell.
-#' @param FromHPC Logical indicating whether the work is being done from HPC, to
-#'   adjust file paths accordingly. Default: `TRUE`.
-#' @param EnvFile Character. The path to the environment file containing
-#'   variables required by the function. Default: `.env`.
+#' @param FromHPC Logical. Whether the processing is being done on an
+#'   High-Performance Computing (HPC) environment, to adjust file paths
+#'   accordingly. Default: `TRUE`.
+#' @param EnvFile Character. Path to the environment file containing paths to
+#'   data sources. Defaults to `.env`.
 #' @param Renviron Character. The path to the `.Renviron` file containing GBIF
 #'   login credentials (email, user, password). Default: `.Renviron`.
 #' @param RequestData Logical. If `TRUE`, the function requests data from GBIF.
@@ -20,20 +21,21 @@
 #' @param DownloadData Logical. If `TRUE`, the function downloads data and
 #'   stores it on disk. If `FALSE`, it skips the download step. Defaults to
 #'   `TRUE`.
-#' @param Boundaries Numeric vector of length 4. Specifies geographical
-#'   boundaries for the requested GBIF data in the order: Left, Right, Bottom,
-#'   Top. Default: `c(-30, 50, 25, 75)`.
-#' @param NCores Integer. The number of cores to use for parallel processing.
+#' @param Boundaries Numeric vector of length 4. The boundaries of the 
+#'   requested GBIF data in the order: Left, Right, Bottom, Top. Defaults to 
+#'   `c(-30, 50, 25, 75)`.
+#' @param NCores Integer. Number of CPU cores to use for parallel processing.
+#'   Default: 6.
 #' @param StartYear Numeric. The starting year for the occurrence data. Only
 #'   records from this year onward will be requested from GBIF. Default is
 #'   `1981`, which matches the year ranges of CHELSA current climate data.
 #' @param ChunkSize Integer. The number of rows per chunk file. Default:
 #'   `100,000`. See [Efforts_Split] and [Efforts_Summarize] for more details.
-#' @param DeleteChunks logical, indicating whether to remove file chunks after
-#'   processing the data. Defaults to `TRUE`.
-#' @param DeleteProcessed Logical indicating whether to delete the raw
-#'   downloaded GBIF data after processing them. This helps to free large
-#'   unnecessary file space (> 22 GB). Defaults to `TRUE`.
+#' @param DeleteChunks Logical. Whether to remove file chunks after processing
+#'   the data. Defaults to `TRUE`.
+#' @param DeleteProcessed Logical. Whether to delete the raw downloaded GBIF
+#'   data after processing them. This helps to free large unnecessary file space
+#'   (> 22 GB). Defaults to `TRUE`.
 #' @note
 #' - This function is expected to take a substantial amount of time (>9
 #' hours on a Windows PC with 6 cores). The data request from GBIF may take
@@ -52,8 +54,8 @@
 
 Efforts_Process <- function(
     FromHPC = TRUE, EnvFile = ".env", Renviron = ".Renviron",
-    RequestData = TRUE, DownloadData = TRUE, NCores = 6, StartYear = 1981,
-    Boundaries = c(-30, 50, 25, 75), ChunkSize = 100000,
+    RequestData = TRUE, DownloadData = TRUE, NCores = 6L, StartYear = 1981L,
+    Boundaries = c(-30, 50, 25, 75), ChunkSize = 100000L,
     DeleteChunks = TRUE, DeleteProcessed = TRUE) {
 
   # # ..................................................................... ###
@@ -146,8 +148,8 @@ Efforts_Process <- function(
   IASDT.R::CatTime("Loading input data")
 
   ## Create paths -----
-  Path_Efforts_Requests <- file.path(Path_Efforts, "Requests")
-  Path_Efforts_Data <- file.path(Path_Efforts_Interim, "CleanedData")
+  Path_Efforts_Requests <- IASDT.R::Path(Path_Efforts, "Requests")
+  Path_Efforts_Data <- IASDT.R::Path(Path_Efforts_Interim, "CleanedData")
   # Create required directories
   fs::dir_create(
     c(
@@ -156,7 +158,7 @@ Efforts_Process <- function(
 
   ## Reference grid ----
   Grids <- Path_Grid %>%
-    file.path(c("Grid_10_Land_Crop_sf.RData", "Grid_10_Land_Crop.RData"))
+    IASDT.R::Path(c("Grid_10_Land_Crop_sf.RData", "Grid_10_Land_Crop.RData"))
 
   missing_grids <- Grids[!file.exists(Grids)]
   if (length(missing_grids) > 0) {
@@ -186,7 +188,7 @@ Efforts_Process <- function(
   } else {
     IASDT.R::CatTime("Efforts data was not requested, but loaded", Level = 1)
     Efforts_AllRequests <- IASDT.R::LoadAs(
-      file.path(Path_Efforts, "Efforts_AllRequests.RData"))
+      IASDT.R::Path(Path_Efforts, "Efforts_AllRequests.RData"))
   }
 
   # # ..................................................................... ###
@@ -201,7 +203,7 @@ Efforts_Process <- function(
   } else {
     IASDT.R::CatTime("Efforts data was not downloaded", Level = 1)
     Efforts_AllRequests <- IASDT.R::LoadAs(
-      file.path(Path_Efforts, "Efforts_AllRequests.RData"))
+      IASDT.R::Path(Path_Efforts, "Efforts_AllRequests.RData"))
   }
 
   # # ..................................................................... ###
@@ -237,7 +239,7 @@ Efforts_Process <- function(
   # # ..................................................................... ###
 
   IASDT.R::CatDiff(
-    InitTime = .StartTime, 
+    InitTime = .StartTime,
     Prefix = "\nProcessing efforts data took ", ... = "\n")
 
   return(invisible(NULL))

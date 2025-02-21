@@ -7,11 +7,15 @@
 #' Generate predictions for species and habitat models and saves the output as
 #' JPEG files.
 #'
-#' @param ModelDir Path to the model directory containing predictions.
-#' @param EnvFile Path to the environment file (`.env`) for setting paths.
-#' @param FromHPC Boolean indicating whether the environment is an HPC system.
-#' @param NCores Integer specifying the number of cores to use for parallel
-#'   processing. Defaults to 8.
+#' @param ModelDir Character. Path to the model directory containing
+#'   predictions.
+#' @param EnvFile Character. Path to the environment file containing paths to 
+#'   data sources. Defaults to `.env`.
+#' @param FromHPC Logical. Whether the processing is being done on an 
+#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#'   accordingly. Default: `TRUE`.
+#' @param NCores Integer. Number of CPU cores to use for parallel processing. 
+#'   Default: 8.
 #' @return Saves prediction plots as JPEG files in the specified output
 #'   directory.
 #' @name Mod_Predict_Plot
@@ -19,14 +23,14 @@
 #' @export
 
 Mod_Predict_Plot <- function(
-    ModelDir, EnvFile = ".env", FromHPC = TRUE, NCores = 8) {
+    ModelDir, EnvFile = ".env", FromHPC = TRUE, NCores = 8L) {
 
   # # ..................................................................... ###
   # # ..................................................................... ###
 
   .StartTime <- lubridate::now(tzone = "CET")
 
-  tif_path_mean <- tif_path_sd <- tif_path_cov <- Path_CLC <- SpeciesID <-
+  tif_path_mean <- tif_path_sd <- tif_path_cov <- Path_CLC <-
     IAS_ID <- Species_File <- Observed <- Clamp <- NoClamp <- NULL
 
   # # ..................................................................... ###
@@ -64,7 +68,7 @@ Mod_Predict_Plot <- function(
   IASDT.R::CatTime("Load summary of prediction maps")
 
   # Without clamping
-  Map_summary_NoClamp <- file.path(
+  Map_summary_NoClamp <- IASDT.R::Path(
     ModelDir, "Model_Prediction/NoClamp/Prediction_Current_Summary.RData")
 
   if (!file.exists(Map_summary_NoClamp)) {
@@ -80,7 +84,7 @@ Mod_Predict_Plot <- function(
       tif_path_cov_no_clamp = tif_path_cov)
 
   # With clamping
-  Map_summary_Clamp <- file.path(
+  Map_summary_Clamp <- IASDT.R::Path(
     ModelDir, "Model_Prediction/Clamp/Prediction_Current_Summary.RData")
   if (!file.exists(Map_summary_Clamp)) {
     stop(
@@ -123,7 +127,7 @@ Mod_Predict_Plot <- function(
     stop(paste0("Gird10 file: ", Gird10, " does not exist"), call. = FALSE)
   }
   Gird10 <- IASDT.R::LoadAs(Gird10)
-  
+
   # Modelling data
   Model_Data <- list.files(
     ModelDir, pattern = "ModDT_.+_subset.RData", full.names = TRUE)
@@ -149,7 +153,8 @@ Mod_Predict_Plot <- function(
 
   IASDT.R::CatTime("Load habitat map")
 
-  Path_Hab <- file.path(Path_CLC, "Summary_RData", "PercCov_SynHab_Crop.RData")
+  Path_Hab <- IASDT.R::Path(
+    Path_CLC, "Summary_RData", "PercCov_SynHab_Crop.RData")
   if (!file.exists(Path_Hab)) {
     stop(
       paste0("Path_Hab file: ", Path_Hab, " does not exist"), call. = FALSE)
@@ -164,7 +169,7 @@ Mod_Predict_Plot <- function(
   # # ..................................................................... ###
   # # ..................................................................... ###
 
-  Path_Plots <- file.path(ModelDir, "Model_Prediction", "Plots_Current")
+  Path_Plots <- IASDT.R::Path(ModelDir, "Model_Prediction", "Plots_Current")
   fs::dir_create(Path_Plots)
 
   # # ..................................................................... ###
@@ -313,12 +318,12 @@ Mod_Predict_Plot <- function(
         c(0, .)
       Breaks_Mean <- NULL
       SpID2 <- stringr::str_remove(SpID, "^Sp_")
-      Path_JPEG <- file.path(
+      Path_JPEG <- IASDT.R::Path(
         Path_Plots, paste0("Pred_Current_Sp", SpID2, "_", SpName, ".jpeg"))
       SpID2 <- as.integer(SpID2)
 
     } else {
-      Path_JPEG <- file.path(Path_Plots, "Pred_Current_SR.jpeg")
+      Path_JPEG <- IASDT.R::Path(Path_Plots, "Pred_Current_SR.jpeg")
       Range_Mean <- c(terra::unwrap(R_SR), R_mean_NoClamp) %>%
         terra::global("max", na.rm = TRUE) %>%
         dplyr::pull("max") %>%
@@ -384,7 +389,7 @@ Mod_Predict_Plot <- function(
         dplyr::filter(IAS_ID == SpID2) %>%
         dplyr::pull(Species_File) %>%
         paste0(., c("_Masked.tif", "_All.tif")) %>%
-        file.path("datasets/processed/IAS_PA/tif", .)
+        IASDT.R::Path("datasets/processed/IAS_PA/tif", .)
       # Check if observed data files exist
       if (!all(file.exists(Path_observed))) {
         stop(

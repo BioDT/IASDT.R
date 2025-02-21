@@ -7,11 +7,11 @@
 KeepOnly(Obj, Verbose = TRUE)
 }
 \arguments{
-\item{Obj}{A character vector specifying the names of the objects to be kept
-in the environment.}
+\item{Obj}{Character vector. Names of the objects to be kept in the
+environment.}
 
-\item{Verbose}{A logical value indicating whether to print the names of kept
-and removed variables. Default to \code{TRUE}.}
+\item{Verbose}{Logical. Whether to print the names of kept and
+removed variables. Default to \code{TRUE}.}
 }
 \value{
 No return value, called for side effects.

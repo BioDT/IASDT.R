@@ -87,7 +87,7 @@ CLC_Plot <- function(
   OutPath <- paste0(
     "Summary_PercCover_", FilePrefix, "_",
     seq_len(length(split_vector)), ".jpeg") %>%
-    file.path(Path_JPEG, .)
+    IASDT.R::Path(Path_JPEG, .)
   
   # nolint end
 
@@ -152,7 +152,7 @@ CLC_Plot <- function(
             "PercCover_", FilePrefix, "_", LevelTxt, "_",
             Labels$Label[YY], ".jpeg") %>%
             stringr::str_replace_all("/", "_") %>%
-            file.path(Path_JPEG, .)
+            IASDT.R::Path(Path_JPEG, .)
 
           Theme2 <- ggplot2::theme_minimal() +
             ggplot2::theme(
@@ -224,7 +224,7 @@ CLC_Plot <- function(
           TilePathFree <- paste0(
             "PercCover_", FilePrefix, "_", Labels$Label[YY], ".jpeg") %>%
             stringr::str_replace_all("/", "_") %>%
-            file.path(Path_JPEG_Free, .)
+            IASDT.R::Path(Path_JPEG_Free, .)
 
           Plot <- ggplot2::ggplot() +
             ggplot2::geom_sf(

@@ -9,10 +9,10 @@
 #' geometry column of the modified `sf` object.
 #' @param x A simple feature (`sf`) object; the polygon whose geometry is to be
 #'   replaced with its centroid. Cannot be `NULL`.
-#' @param Rename A logical value indicating whether to rename the geometry
-#'   column of the sf object. Defaults to `FALSE`.
-#' @param NewName A string specifying the new name for the geometry column if
-#'   Rename is `TRUE`. If Rename is `FALSE`, this parameter is ignored.
+#' @param Rename Logical. Whether to rename the geometry column of the sf
+#'   object. Defaults to `FALSE`.
+#' @param NewName Character. New name for the geometry column. Only valid if
+#'   `Rename = TRUE`.
 #' @name Polygon_Centroid
 #' @author Ahmed El-Gabbas
 #' @references [Click here](https://github.com/r-spatial/sf/issues/480)

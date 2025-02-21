@@ -11,12 +11,12 @@
 #'   function will not execute.
 #' @param Ncol,Nrow Integer. The desired number of columns and rows to split the
 #'   raster into. Default is 4 columns and 4 rows.
-#' @param save Logical. Indicates whether to save the split rasters to disk.
+#' @param save Logical. Whether to save the split rasters to disk.
 #'   Default is `FALSE`.
-#' @param SplitPath Character string. Specifies the directory path where the
+#' @param SplitPath Character. Directory path where the
 #'   split rasters should be saved if `save` is `TRUE`. If the directory does
 #'   not exist, it will be created.
-#' @param plot Logical. Indicates whether to plot the split rasters. Default is
+#' @param plot Logical. Whether to plot the split rasters. Default is
 #'   `FALSE`.
 #' @param Extent Logical. If `TRUE`, the function returns only the extents of
 #'   the split rasters instead of the raster data. Default is `FALSE`.

@@ -7,11 +7,15 @@
 Mod_Eval_Plot(ModelDir, EnvFile = ".env", FromHPC = TRUE)
 }
 \arguments{
-\item{ModelDir}{Path to the model directory containing predictions.}
+\item{ModelDir}{Character. Path to the model directory containing
+predictions.}
 
-\item{EnvFile}{Path to the environment file (\code{.env}) for setting paths.}
+\item{EnvFile}{Character. Path to the environment file containing paths to
+data sources. Defaults to \code{.env}.}
 
-\item{FromHPC}{Boolean indicating whether the environment is an HPC system.}
+\item{FromHPC}{Logical. Whether the processing is being done on an
+High-Performance Computing (HPC) environment, to adjust file paths
+accordingly. Default: \code{TRUE}.}
 }
 \description{
 This function generates four diagnostic plots (RMSE, AUC, Continuous Boyce

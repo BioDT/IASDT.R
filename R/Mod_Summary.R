@@ -8,26 +8,23 @@
 #' including `Alpha`, `Beta`, `Rho`, and `Omega`. It processes the model's
 #' output, performs statistical summaries, and optionally returns the summarized
 #' data.
-#' @param Path_Coda String. Path to the `.RData` file containing a coda object.
-#' @param EnvFile String. Path to the environment variables file. This file is
-#'   used to read necessary environmental variables for processing. The default
-#'   value is `.env`.
-#' @param ReturnData Logical. Indicates whether the summarized data should be
+#' @param Path_Coda Character. Path to the `.qs2` / `.RData` file containing 
+#' the coda object.
+#' @param EnvFile Character. Path to the environment file containing paths to 
+#'   data sources. Defaults to `.env`.
+#' @param ReturnData Logical. Whether the summarized data should be
 #'   returned as an R object. If `TRUE`, the function returns a list containing
 #'   summaries of `Alpha`, `Beta`, `Rho`, and `Omega` parameters. The default
 #'   value is `FALSE`, which means the function will not return any data but
 #'   will save the summaries to a specified directory.
-#' @param FromHPC Logical. Indicates whether the function is being run in an HPC
-#'   environment. This affects how file paths are handled. Defaults to `TRUE`.
+#' @param FromHPC Logical. Whether the processing is being done on an 
+#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#'   accordingly. Default: `TRUE`.
 #' @author Ahmed El-Gabbas
 #' @return If `ReturnData` is `FALSE` (default), the function does not return
 #'   anything and saves the summaries to a directory. If `ReturnData` is `TRUE`,
 #'   it also returns the data as R object.
 #' @export
-#' @details The function reads the following environment variables:
-#'   - **`DP_R_TaxaInfo`** (if `FromHPC` = `TRUE`) or
-#'     **`DP_R_TaxaInfo_Local`** (if `FromHPC` = `FALSE`) for the location of
-#'     the `Species_List_ID.txt` file containing species information.
 #' @name Mod_Summary
 
 Mod_Summary <- function(
@@ -226,7 +223,7 @@ Mod_Summary <- function(
   # Saving ------
   IASDT.R::CatTime("Saving")
   Path_Out <- dirname(dirname(Path_Coda)) %>%
-    file.path("Model_Postprocessing", "Parameters_Summary")
+    IASDT.R::Path("Model_Postprocessing", "Parameters_Summary")
   fs::dir_create(Path_Out)
 
   IASDT.R::SaveAs(
@@ -234,7 +231,7 @@ Mod_Summary <- function(
       Alpha = Alpha_Summary, Beta = Beta_Summary,
       Rho = Rho_Summary, Omega = Omega_Summary),
     OutObj = "Parameters_Summary",
-    OutPath = file.path(Path_Out, "Parameters_Summary.RData"))
+    OutPath = IASDT.R::Path(Path_Out, "Parameters_Summary.RData"))
 
   # # ..................................................................... ###
 

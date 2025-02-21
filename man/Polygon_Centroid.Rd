@@ -10,11 +10,11 @@ Polygon_Centroid(x = NULL, Rename = FALSE, NewName = NULL)
 \item{x}{A simple feature (\code{sf}) object; the polygon whose geometry is to be
 replaced with its centroid. Cannot be \code{NULL}.}
 
-\item{Rename}{A logical value indicating whether to rename the geometry
-column of the sf object. Defaults to \code{FALSE}.}
+\item{Rename}{Logical. Whether to rename the geometry column of the sf
+object. Defaults to \code{FALSE}.}
 
-\item{NewName}{A string specifying the new name for the geometry column if
-Rename is \code{TRUE}. If Rename is \code{FALSE}, this parameter is ignored.}
+\item{NewName}{Character. New name for the geometry column. Only valid if
+\code{Rename = TRUE}.}
 }
 \value{
 The modified sf object with its geometry replaced by the centroid of

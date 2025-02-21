@@ -10,34 +10,35 @@
 #' each of the 46 climate scenarios.
 #'
 #' @name CHELSA_Process
-#' @param EnvFile Character. Path to the environment file containing paths to
+#' @param EnvFile Character. Path to the environment file containing paths to 
 #'   data sources. Defaults to `.env`.
-#' @param FromHPC Logical indicating whether the work is being done from HPC, to
-#'   adjust file paths accordingly. Default: `TRUE`.
-#' @param NCores Integer. Number of CPU cores to use for parallel processing.
-#'   Defaults to 8.
-#' @param Download Logical, whether to download the CHELSA files. Defaults to
+#' @param FromHPC Logical. Whether the processing is being done on an 
+#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#'   accordingly. Default: `TRUE`.
+#' @param NCores Integer. Number of CPU cores to use for parallel processing. 
+#'   Default: 8.
+#' @param Download Logical. Whether to download the CHELSA files. Defaults to
 #'   `FALSE`.
 #' @param Download_Attempts Integer. The maximum number of download attempts.
 #'   Defaults to 10.
 #' @param Sleep Integer. Time in seconds to wait after each download attempt.
 #'   Defaults to 5.
-#' @param BaseURL String, the base URL for downloading CHELSA climate data.
-#' @param Download_NCores integer. Number of CPU cores to use for parallel
+#' @param BaseURL Character. The base URL for downloading CHELSA climate data.
+#' @param Download_NCores Integer. Number of CPU cores to use for parallel
 #'   downloading of CHELSA data. Only valid if Download = `TRUE`. Defaults to 4.
-#' @param Overwrite Logical, whether to re-download files that already exist.
+#' @param Overwrite Logical. Whether to re-download files that already exist.
 #'   Defaults to `FALSE`.
-#' @param CompressLevel Integer; the level of compression to use when saving
+#' @param CompressLevel Integer. The level of compression to use when saving
 #'   NetCDF files. Default is 5.
-#' @param OverwriteProcessed Logical; whether to overwrite already processed
+#' @param OverwriteProcessed Logical. Whether to overwrite already processed
 #'   files. Default is `FALSE`.
 #' @inheritParams CHELSA_Prepare
 #' @author Ahmed El-Gabbas
 #' @export
 
 CHELSA_Process <- function(
-    FromHPC = TRUE, EnvFile = ".env", NCores = 8, Download = FALSE,
-    Overwrite = FALSE, Download_Attempts = 10, Sleep = 5, OtherVars = "",
+    FromHPC = TRUE, EnvFile = ".env", NCores = 8L, Download = FALSE,
+    Overwrite = FALSE, Download_Attempts = 10L, Sleep = 5L, OtherVars = "",
     BaseURL = paste0(
       "https://os.zhdk.cloud.switch.ch/envicloud/",
       "chelsa/chelsa_V2/GLOBAL/"),
@@ -112,7 +113,7 @@ CHELSA_Process <- function(
   fs::dir_create(
     c(
       Path_CHELSA_In, Path_CHELSA_Out,
-      file.path(Path_CHELSA_Out, c("Tif", "NC", "Processed"))))
+      IASDT.R::Path(Path_CHELSA_Out, c("Tif", "NC", "Processed"))))
 
   rm(EnvVars2Read, envir = environment())
 
@@ -174,7 +175,7 @@ CHELSA_Process <- function(
     if (nrow(CHELSA_Data_Checked) > 0) {
       readr::write_lines(
         x = dplyr::pull(CHELSA_Data_Checked, "InputOkay"),
-        file = file.path(Path_CHELSA_Out, "ProblematicTiffs.txt"))
+        file = IASDT.R::Path(Path_CHELSA_Out, "ProblematicTiffs.txt"))
 
       stop(
         paste0(
@@ -199,7 +200,7 @@ CHELSA_Process <- function(
           " >> See `NotProcessed.txt` for the list of files"))
 
       readr::write_lines(
-        x = Diff, file = file.path(Path_CHELSA_Out, "NotProcessed.txt"))
+        x = Diff, file = IASDT.R::Path(Path_CHELSA_Out, "NotProcessed.txt"))
     }
 
     rm(AllOkay, Diff, envir = environment())
@@ -306,7 +307,7 @@ CHELSA_Process <- function(
     if (nrow(CHELSA2Process) > 0) {
       readr::write_lines(
         x = CHELSA2Process$Path_Down,
-        file = file.path(Path_CHELSA_Out, "FailedProcessing.txt"))
+        file = IASDT.R::Path(Path_CHELSA_Out, "FailedProcessing.txt"))
 
       stop(
         paste(
@@ -378,7 +379,7 @@ CHELSA_Process <- function(
         Name, "1981-2010_Current_Current", "Current"),
       Name = stringr::str_replace_all(Name, "-", "_"),
 
-      FilePath = file.path(
+      FilePath = IASDT.R::Path(
         Path_CHELSA_Out, "Processed", paste0(Name, ".RData")),
 
       Processed_Maps = furrr::future_pmap(
@@ -415,7 +416,7 @@ CHELSA_Process <- function(
 
   save(
     CHELSA_Processed,
-    file = file.path(Path_CHELSA_Out, "CHELSA_Processed.RData")
+    file = IASDT.R::Path(Path_CHELSA_Out, "CHELSA_Processed.RData")
   )
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -424,11 +425,11 @@ CHELSA_Process <- function(
 
   save(
     CHELSA_Processed_DT,
-    file = file.path(Path_CHELSA_Out, "CHELSA_Processed_DT.RData"))
+    file = IASDT.R::Path(Path_CHELSA_Out, "CHELSA_Processed_DT.RData"))
 
   readr::write_csv(
     x = CHELSA_Processed_DT,
-    file = file.path(Path_CHELSA_Out, "CHELSA_Processed_DT.csv"))
+    file = IASDT.R::Path(Path_CHELSA_Out, "CHELSA_Processed_DT.csv"))
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

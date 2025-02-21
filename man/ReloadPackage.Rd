@@ -7,8 +7,7 @@
 ReloadPackage(Package)
 }
 \arguments{
-\item{Package}{A character string specifying the name of the package to
-reload.}
+\item{Package}{Character. Name of the package to reload.}
 }
 \value{
 The function is used for its side effect of reloading a package

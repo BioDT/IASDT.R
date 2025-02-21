@@ -8,12 +8,12 @@
 #' a package is not installed, the function can optionally install it before
 #' loading. It also provides an option to print the names and versions of the
 #' loaded packages.
-#' @param ... character. Names of the packages to be loaded or installed.
-#' @param List character vector. An alternative or additional way to specify
+#' @param ... Character. Names of the packages to be loaded or installed.
+#' @param List Character vector. An alternative or additional way to specify
 #'   package names as a vector.
-#' @param Verbose logical. If `TRUE`, prints the names and versions of the
+#' @param Verbose Logical. If `TRUE`, prints the names and versions of the
 #'   loaded packages. Defaults to `FALSE`.
-#' @param InstallMissing logical. If `TRUE` (default), missing packages are
+#' @param InstallMissing Logical. If `TRUE` (default), missing packages are
 #'   automatically installed and then loaded.
 #' @return This function is used for its side effects (loading/installing
 #'   packages) and does not return any value.

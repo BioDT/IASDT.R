@@ -7,7 +7,7 @@
 #' This function requests GBIF data for each vascular plant order, processes it
 #' in parallel, and manages the data download and storage. If data is already
 #' available, it loads the data instead of making new requests.
-#' @param NCores Integer. The number of cores to use for parallel processing
+#' @param NCores Integer. Number of CPU cores to use for parallel processing 
 #'   (between 1 and 3). Must be a positive integer. Defaults to 3.
 #' @param Path_Requests Character. The directory path to save individual request
 #'   files.
@@ -16,9 +16,9 @@
 #' @param StartYear Numeric. The starting year for the occurrence data. Only
 #'   records from this year onward will be requested from GBIF. Default is
 #'   `1981`, which matches the year ranges of CHELSA current climate data.
-#' @param Boundaries Numeric vector of length 4. Specifies geographical
-#'   boundaries for the requested GBIF data in the order: Left, Right, Bottom,
-#'   Top. Defaults to c(-30, 50, 25, 75).
+#' @param Boundaries Numeric vector of length 4. The boundaries of the 
+#'   requested GBIF data in the order: Left, Right, Bottom, Top. Defaults to 
+#'   `c(-30, 50, 25, 75)`.
 #' @return The function returns the GBIF data requests processed and stored in
 #'   the specified directories.
 #' @note This function is not intended to be used directly by the user or in the
@@ -28,8 +28,8 @@
 #' @export
 
 Efforts_Request <- function(
-    NCores = 3, Path_Requests, Path_Efforts,
-    StartYear = 1981, Boundaries = c(-30, 50, 25, 75)) {
+    NCores = 3L, Path_Requests, Path_Efforts,
+    StartYear = 1981L, Boundaries = c(-30, 50, 25, 75)) {
 
   # # ..................................................................... ###
 
@@ -114,7 +114,8 @@ Efforts_Request <- function(
         .x = orderKey,
         .f = ~ {
           Request_ID <- paste0("Request_", .x)
-          Request_Path <- file.path(Path_Requests, paste0(Request_ID, ".RData"))
+          Request_Path <- IASDT.R::Path(
+            Path_Requests, paste0(Request_ID, ".RData"))
 
           if (file.exists(Request_Path)) {
             # load previous request
@@ -201,7 +202,7 @@ Efforts_Request <- function(
 
   save(
     Efforts_AllRequests,
-    file = file.path(Path_Efforts, "Efforts_AllRequests.RData"))
+    file = IASDT.R::Path(Path_Efforts, "Efforts_AllRequests.RData"))
 
   # # ..................................................................... ###
 

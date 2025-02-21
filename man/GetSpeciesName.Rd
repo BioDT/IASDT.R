@@ -10,12 +10,12 @@ GetSpeciesName(SpID = NULL, EnvFile = ".env", FromHPC = TRUE)
 \item{SpID}{optional IASDT species ID for which detailed information is
 required. If not provided, the function returns the entire species list.}
 
-\item{EnvFile}{EnvFile A string specifying the path to the environment
-variables file. Default is ".env". This file must exist in the specified
-path; otherwise, the function will stop with an error message.}
+\item{EnvFile}{Character. Path to the environment file containing paths to
+data sources. Defaults to \code{.env}.}
 
-\item{FromHPC}{Logical. Indicates whether the function is being run on an HPC
-environment, affecting file path handling. Default: \code{TRUE}.}
+\item{FromHPC}{Logical. Whether the processing is being done on an
+High-Performance Computing (HPC) environment, to adjust file paths
+accordingly. Default: \code{TRUE}.}
 }
 \value{
 A data frame containing species information. If a species ID \code{SpID}
@@ -29,17 +29,6 @@ from a given file, then reads a species list from a path specified in the
 environment variables. If a species ID \code{SpID} is provided, it only returns
 species information for the listed species, otherwise return the full list of
 IAS.
-}
-\details{
-The function reads the following environment variables:
-\itemize{
-\item \strong{\code{DP_R_TaxaInfo}} (if \code{FromHPC} = \code{TRUE}) or
-\strong{\code{DP_R_TaxaInfo_Local}} (if \code{FromHPC} = \code{FALSE}) for the location of
-the \code{Species_List_ID.txt} file containing species information.
-\item \strong{\code{DP_R_PA}} (if \code{FromHPC} = \code{TRUE}) or \strong{\code{DP_R_PA_Local}} (if
-\code{FromHPC} = \code{FALSE}). The function reads the contents of the
-\code{Sp_PA_Summary_DF.RData} file from this path.
-}
 }
 \author{
 Ahmed El-Gabbas

@@ -4,13 +4,13 @@
 \alias{ht}
 \title{Print head and tail of data frame}
 \usage{
-ht(DF, NRows = 5)
+ht(DF = NULL, NRows = 5L)
 }
 \arguments{
-\item{DF}{A data frame to print. This parameter cannot be NULL.}
+\item{DF}{\verb{data.frame. A data frame to print. This parameter cannot be  }NULL`.}
 
-\item{NRows}{Integer specifying the number of rows to print from both the
-head and tail of the data frame. Defaults to 5.}
+\item{NRows}{Integer. Number of rows to print from both the head and tail of
+the data frame. Defaults to 5.}
 }
 \value{
 The function is used for its side effect (printing) and does not

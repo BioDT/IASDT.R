@@ -9,12 +9,12 @@
 #' layer.
 #' @param Data An `sf` object containing spatial data, with a column named
 #'   `CellCode`.
-#' @param NSp A logical value indicating whether to generate distinct species
-#'   counts (`TRUE`) or total observation counts (`FALSE`).
-#' @param Name A character string that represents the name of the count field
-#'   and the prefix for the final raster layer's name.
-#' @param ClassOrder A character string specifying the class and order
-#'   combination (separated by an underscore) represented in the `Data`.
+#' @param NSp Logical. Whether to generate distinct species counts (`TRUE`) or 
+#'   total observation counts (`FALSE`).
+#' @param Name Character. Name of the count field and the prefix for the final 
+#'   raster layer's name.
+#' @param ClassOrder Character. The class and order combination (separated by 
+#'   an underscore) represented in the `Data`.
 #' @param Grid_SF,Grid_R Reference grid in the form of simple feature and
 #'   raster.
 #' @return A processed `terra` raster object representing the summarized data.

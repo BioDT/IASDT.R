@@ -99,10 +99,9 @@ reference:
 - subtitle: Data preparation
   desc: Prepare input data and scripts for fitting Hmsc-HPC on GPU
   contents:
-  - GetCV
-  - PrepKnots
-  - Mod_PrepData
-  - Mod_Prep4HPC
+  - Mod_GetCV
+  - Mod_PrepKnots
+  - Mod_inputs
   - Mod_SLURM
   - Mod_SLURM_Refit
   - Mod_Fit_WS
@@ -110,36 +109,24 @@ reference:
 - subtitle: Model postprocessing
   desc: Postprocessing model outputs, including checking for convergence, making spatial predictions, evaluation, and plotting.
   contents:
-  - GetPosts
-  - Merge_Chains
+  - Mod_GetPosts
+  - Mod_Merge_Chains
   - Mod_Summary
-  - RespCurv_PrepData
-  - RespCurv_PlotSpAll
-  - RespCurv_PlotSp
-  - RespCurv_PlotSR
-  - Predict_LF
+  - Response_curves
+  - Mod_Predict_LF
   - Mod_Plot_LF
   - Mod_Prep_TF
   - Predict_Hmsc
   - Predict_Maps
   - Mod_Predict_Plot
-  - Mod_Postprocess_1_CPU
-  - Mod_Postprocess_2_CPU
+  - Mod_postprocessing
   - Mod_CV_Eval
   - Mod_Eval_Plot
-  - PlotBetaGG
-  - PlotOmegaGG
-  - PlotAlpha
-  - PlotRho
+  - Parameter_Heatmap
   - Convergence_Plot
   - Convergence_Plot_All
-  - VarPar_Compute
-  - VarPar_Plot
+  - Variance_partitioning
   - PlotGelman
-  - PlotGelman_Alpha
-  - PlotGelman_Beta
-  - PlotGelman_Omega
-  - PlotGelman_Rho
 - subtitle: Helper functions
   contents:
   - Coda_to_tibble
@@ -168,17 +155,14 @@ reference:
   - FileSize
   - FileType
   - NormalizePath
+  - Path
   - LoadAs
+  - Check_data
   - LoadMultiple
   - SaveAs
   - SaveMultiple
   - List2RData
-  - CheckRData
   - CheckZip
-  - CheckRDS
-  - CheckData
-  - CheckFeather
-  - CheckQs
 - subtitle: Plotting
   contents:
   - AddImg2Plot
@@ -194,8 +178,7 @@ reference:
   - AssignIfNotExist
   - cc
   - ht
-  - lapply_
-  - sapply_
+  - Apply_functions
   - NDecimals
   - ReplaceSpace
   - ScrapLinks

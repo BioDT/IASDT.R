@@ -7,8 +7,8 @@
 FileType(Path)
 }
 \arguments{
-\item{Path}{A character string specifying the path to the file whose type
-is to be determined. The path must not be NULL, and the file must exist.}
+\item{Path}{Character. The path to the file whose type is to be determined.
+The path must not be \code{NULL}, and the file must exist.}
 }
 \value{
 A character string describing the file type.

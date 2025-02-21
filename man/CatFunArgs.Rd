@@ -13,8 +13,8 @@ R function.}
 \item{Assign}{Logical. Whether to assign the arguments as variables in the
 global environment. Defaults to \code{FALSE}.}
 
-\item{Package}{Character string. The name of the R package to be loaded
-before processing the function. Default is NULL.}
+\item{Package}{Character. Name of the R package to be loaded before
+processing the function. Default is \code{NULL}.}
 }
 \value{
 The function prints the formatted arguments to the console. If

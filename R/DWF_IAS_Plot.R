@@ -9,10 +9,11 @@
 #' eLTER).
 #' @param Species Character. The name of the species for which the distribution
 #'   plot will be generated.
-#' @param FromHPC Logical indicating whether the work is being done from HPC, to
-#'   adjust file paths accordingly. Default: `TRUE`.
-#' @param EnvFile Character. The path to the environment file containing
-#'   variables required by the function. Default is ".env".
+#' @param FromHPC Logical. Whether the processing is being done on an 
+#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#'   accordingly. Default: `TRUE`.
+#' @param EnvFile Character. Path to the environment file containing paths to 
+#'   data sources. Defaults to `.env`.
 #' @param Overwrite Logical. If `TRUE`, the function will overwrite existing
 #'   maps; otherwise, it will skip generating a new map if one exists (default:
 #'   `FALSE`).
@@ -80,8 +81,8 @@ IAS_Plot <- function(
   # # ..................................................................... ###
 
   # Check / create directories
-  Path_Summary <- file.path(Path_PA, "SpSummary")
-  Path_JPEG <- file.path(Path_PA, "JPEG_Maps")
+  Path_Summary <- IASDT.R::Path(Path_PA, "SpSummary")
+  Path_JPEG <- IASDT.R::Path(Path_PA, "JPEG_Maps")
   if (!fs::dir_exists(Path_JPEG)) {
     fs::dir_create(Path_JPEG)
   }
@@ -90,7 +91,7 @@ IAS_Plot <- function(
   SpFile <- stringr::str_replace_all(Species2, "\u00D7", "x") %>%
     stringr::str_replace_all("-", "")
 
-  SpData <- file.path(Path_Summary, paste0(SpFile, "_Summary.RData"))
+  SpData <- IASDT.R::Path(Path_Summary, paste0(SpFile, "_Summary.RData"))
   if (!file.exists(SpData)) {
     return(invisible(NULL))
   }
@@ -114,12 +115,12 @@ IAS_Plot <- function(
     dplyr::select(-"speciesKey") %>%
     dplyr::distinct()
 
-  OutPath <- file.path(Path_JPEG, paste0(SpInfo$Species_name2[1], ".jpeg"))
+  OutPath <- IASDT.R::Path(Path_JPEG, paste0(SpInfo$Species_name2[1], ".jpeg"))
   if (file.exists(OutPath) && isFALSE(Overwrite)) {
     return(invisible(NULL))
   }
 
-  Grid_100_sf <- file.path(Path_Grid_Ref, "Grid_100_sf.RData") %>%
+  Grid_100_sf <- IASDT.R::Path(Path_Grid_Ref, "Grid_100_sf.RData") %>%
     IASDT.R::LoadAs() %>%
     magrittr::extract2("Grid_100_sf_s")
 
@@ -130,7 +131,7 @@ IAS_Plot <- function(
   rm(Grid_100_sf, envir = environment())
 
   # the study area as simple feature object for plotting
-  Grid10_Sf <- file.path(Path_Grid, "Grid_10_Land_Crop_sf.RData") %>%
+  Grid10_Sf <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop_sf.RData") %>%
     IASDT.R::LoadAs()
 
   GBIF_Gr100 <- SpData$GBIF_Gr100[[1]]

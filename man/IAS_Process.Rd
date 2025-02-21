@@ -4,16 +4,18 @@
 \alias{IAS_Process}
 \title{Process IAS data}
 \usage{
-IAS_Process(FromHPC = TRUE, EnvFile = ".env", NCores = 6, Overwrite = TRUE)
+IAS_Process(FromHPC = TRUE, EnvFile = ".env", NCores = 6L, Overwrite = TRUE)
 }
 \arguments{
-\item{FromHPC}{Logical indicating whether the work is being done from HPC, to
-adjust file paths accordingly. Default: \code{TRUE}.}
+\item{FromHPC}{Logical. Whether the processing is being done on an
+High-Performance Computing (HPC) environment, to adjust file paths
+accordingly. Default: \code{TRUE}.}
 
-\item{EnvFile}{Character. The path to the environment file containing
-variables required by the function. Default is ".env".}
+\item{EnvFile}{Character. Path to the environment file containing paths to
+data sources. Defaults to \code{.env}.}
 
-\item{NCores}{Numeric. Number of cores to use for parallel processing.}
+\item{NCores}{Integer. Number of CPU cores to use for parallel processing.
+Default: 6.}
 
 \item{Overwrite}{Logical. If \code{TRUE}, existing JPEG files will be overwritten
 during processing. See \link{IAS_Plot}}

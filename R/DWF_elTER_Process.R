@@ -5,10 +5,11 @@
 #' eLTER data processing function
 #'
 #' This function processes pre-cleaned and pre-standardized eLTER data.
-#' @param FromHPC Logical indicating whether the work is being done from HPC, to
-#'   adjust file paths accordingly. Default: `TRUE`.
-#' @param EnvFile Character. The path to the environment file containing
-#'   variables required by the function. Default is ".env".
+#' @param FromHPC Logical. Whether the processing is being done on an 
+#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#'   accordingly. Default: `TRUE`.
+#' @param EnvFile Character. Path to the environment file containing paths to 
+#'   data sources. Defaults to `.env`.
 #' @param StartYear Numeric. The starting year for the occurrence data. Only
 #'   records from this year onward will be processed. Default is `1981`, which
 #'   matches the year ranges of CHELSA current climate data.
@@ -74,7 +75,7 @@ elTER_Process <- function(
       coords = c("Lon", "Lat"), crs = sf::st_crs(4326), remove = FALSE) %>%
     sf::st_transform(crs = sf::st_crs(3035))
 
-  save(eLTER_IAS, file = file.path(Path_PA, "eLTER_IAS.RData"))
+  save(eLTER_IAS, file = IASDT.R::Path(Path_PA, "eLTER_IAS.RData"))
 
   return(invisible(NULL))
 }

@@ -8,29 +8,30 @@ GBIF_Process(
   FromHPC = TRUE,
   EnvFile = ".env",
   Renviron = ".Renviron",
-  NCores = 6,
+  NCores = 6L,
   RequestData = TRUE,
   DownloadData = TRUE,
   SplitChunks = TRUE,
   Overwrite = FALSE,
   DeleteChunks = TRUE,
-  ChunkSize = 50000,
+  ChunkSize = 50000L,
   Boundaries = c(-30, 50, 25, 75),
-  StartYear = 1981
+  StartYear = 1981L
 )
 }
 \arguments{
-\item{FromHPC}{Logical indicating whether the work is being done from HPC, to
-adjust file paths accordingly. Default: \code{TRUE}.}
+\item{FromHPC}{Logical. Whether the processing is being done on an
+High-Performance Computing (HPC) environment, to adjust file paths
+accordingly. Default: \code{TRUE}.}
 
-\item{EnvFile}{Character. The path to the environment file containing
-variables required by the function. Default is ".env".}
+\item{EnvFile}{Character. Path to the environment file containing paths to
+data sources. Defaults to \code{.env}.}
 
 \item{Renviron}{Character. The path to the \code{.Renviron} file containing GBIF
 login credentials (email, user, password).}
 
-\item{NCores}{Numeric. Number of cores to use for parallel processing.
-Defaults to 6.}
+\item{NCores}{Integer. Number of CPU cores to use for parallel processing.
+Default: 6.}
 
 \item{RequestData}{Logical. If \code{TRUE}, requests data from GBIF. If \code{FALSE},
 loads a previously requested data set from \code{GBIF_Request.RData} and
@@ -42,7 +43,7 @@ Defaults to \code{TRUE}.}
 \item{SplitChunks}{Logical. If \code{TRUE}, splits the downloaded data into
 smaller chunks for easier processing.}
 
-\item{Overwrite}{Logical; indicating whether to process the current chunk
+\item{Overwrite}{Logical. Whether to process the current chunk
 file if it has already processed and saved as \verb{*.RData} file. This helps to
 continue working on previously processed chunks if the previous try failed,
 e.g. due to memory issue.}
@@ -53,9 +54,9 @@ e.g. due to memory issue.}
 \item{ChunkSize}{Integer. The number of records per chunk when splitting the
 data. Default is 50,000.}
 
-\item{Boundaries}{Numeric vector of length 4. Specifies geographical
-boundaries for the requested GBIF data in the order: Left, Right, Bottom,
-Top. Defaults to c(-30, 50, 25, 75).}
+\item{Boundaries}{Numeric vector of length 4. The boundaries of the
+requested GBIF data in the order: Left, Right, Bottom, Top. Defaults to
+\code{c(-30, 50, 25, 75)}.}
 
 \item{StartYear}{Numeric. The starting year for the occurrence data. Only
 records from this year onward will be requested from GBIF. Default is

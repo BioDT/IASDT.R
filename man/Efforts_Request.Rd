@@ -5,15 +5,15 @@
 \title{Request and manage GBIF data for vascular plant orders}
 \usage{
 Efforts_Request(
-  NCores = 3,
+  NCores = 3L,
   Path_Requests,
   Path_Efforts,
-  StartYear = 1981,
+  StartYear = 1981L,
   Boundaries = c(-30, 50, 25, 75)
 )
 }
 \arguments{
-\item{NCores}{Integer. The number of cores to use for parallel processing
+\item{NCores}{Integer. Number of CPU cores to use for parallel processing
 (between 1 and 3). Must be a positive integer. Defaults to 3.}
 
 \item{Path_Requests}{Character. The directory path to save individual request
@@ -26,9 +26,9 @@ data.}
 records from this year onward will be requested from GBIF. Default is
 \code{1981}, which matches the year ranges of CHELSA current climate data.}
 
-\item{Boundaries}{Numeric vector of length 4. Specifies geographical
-boundaries for the requested GBIF data in the order: Left, Right, Bottom,
-Top. Defaults to c(-30, 50, 25, 75).}
+\item{Boundaries}{Numeric vector of length 4. The boundaries of the
+requested GBIF data in the order: Left, Right, Bottom, Top. Defaults to
+\code{c(-30, 50, 25, 75)}.}
 }
 \value{
 The function returns the GBIF data requests processed and stored in

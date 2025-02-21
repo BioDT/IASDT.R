@@ -7,11 +7,11 @@
 AllObjSizes(GreaterThan = 0, InFunction = FALSE, SizeDecimals = 2, N = Inf)
 }
 \arguments{
-\item{GreaterThan}{numeric value specifying the size threshold in MB. Only
-objects larger than this value will be shown. Default is 0, which means all
-objects will be shown. \code{GreaterThan} must be a non-negative number.}
+\item{GreaterThan}{Numeric. Size threshold in MB. Only objects larger than
+this value will be shown. Default is 0, which means all objects will be
+shown. \code{GreaterThan} must be a non-negative number.}
 
-\item{InFunction}{Logical, controlling the scope of the function. It
+\item{InFunction}{Logical. This controls the scope of the function. It
 indicates whether the execution is done inside or outside of a function.
 Defaults to \code{FALSE} to show sizes of objects in the global environment. If
 set to \code{TRUE}, sizes of objects in the function are returned.}

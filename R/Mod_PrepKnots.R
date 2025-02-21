@@ -1,18 +1,19 @@
 ## |------------------------------------------------------------------------| #
-# PrepKnots ----
+# Mod_PrepKnots ----
 ## |------------------------------------------------------------------------| #
 
 #' Prepare knot locations for Hmsc GPP models
 #'
-#' This function prepares the locations of knots for use in GPP models within
-#' the HMSC framework. It ensures that knots are spaced at a minimum specified
-#' distance and applies jitter to any identical coordinates to avoid overlap.
-#' @param Coords A numeric matrix or data frame containing the (x, y)
+#' Prepare the locations of knots for use in Gaussian Predictive Process (GPP)
+#' models within the HMSC framework. It ensures that knots are spaced at a
+#' minimum specified distance and applies jitter to any identical coordinates to
+#' avoid overlap.
+#' @param Coords Numeric matrix or data frame containing the (x, y)
 #'   coordinates of sampling units.
-#' @param MinDist A numeric value specifying the minimum distance between knots
+#' @param MinDist Numeric. Minimum distance between knots
 #'   in meters. This distance is used for both `knotDist` and `minKnotDist`
 #'   parameters of the [Hmsc::constructKnots] function.
-#' @param JitterDist A numeric value for the jitter distance applied to
+#' @param JitterDist Numeric. The jitter distance applied to
 #'   overlapping coordinates to avoid exact duplicates. Defaults to 100 meters.
 #' @param MinLF,MaxLF integer. Minimum and maximum number of latent factors to
 #'   be used. Both default to `NULL` which means that the number of latent
@@ -20,19 +21,19 @@
 #'   respective values will be used as arguments to [Hmsc::setPriors].
 #' @param Alphapw Prior for the alpha parameter. Defaults to a list with `Prior
 #'   = NULL`, `Min = 20`, `Max = 1200`, and `Samples = 200`. If `Alphapw` is
-#'   NULL or a list with all NULL list items, the default prior will be used. If
-#'   `Prior` is a matrix, it will be used as the prior. If `Prior` is `NULL`,
-#'   the prior will be generated using `Min`, `Max`, and `Samples`. `Min` and
-#'   `Max` are the minimum and maximum values of the alpha parameter (in
+#'   `NULL` or a list with all `NULL` list items, the default prior will be
+#'   used. If `Prior` is a matrix, it will be used as the prior. If `Prior =
+#'   NULL`, the prior will be generated using `Min`, `Max`, and `Samples`. `Min`
+#'   and `Max` are the minimum and maximum values of the alpha parameter (in
 #'   kilometer). `Samples` is the number of samples to be used in the prior.
 #'
-#' @name PrepKnots
+#' @name Mod_PrepKnots
 #' @author Ahmed El-Gabbas
 #' @return An object suitable for specifying the random level in HMSC GPP
 #'   models. This object contains the prepared knot locations.
 #' @export
 
-PrepKnots <- function(
+Mod_PrepKnots <- function(
     Coords = NULL, MinDist = NULL, JitterDist = 100,
     MinLF = NULL, MaxLF = NULL,
     Alphapw = list(Prior = NULL, Min = 20, Max = 1200, Samples = 200)) {

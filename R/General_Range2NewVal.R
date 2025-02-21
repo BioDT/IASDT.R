@@ -13,15 +13,15 @@
 #' for ranges.
 #' @name Range2NewVal
 #' @author Ahmed El-Gabbas
-#' @param x A vector, data.frame, or RasterLayer object whose values are to be
-#'   modified.
-#' @param Between A numeric vector of length 2 specifying the range of values to
-#'   be changed or kept. If specified, `MoreThan` and `LessThan` are ignored.
-#' @param MoreThan,LessThan A numeric value specifying the threshold above/below
-#'   which values in `x` will be changed to `NewVal`. Only applied if `Between`
-#'   is not specified.
+#' @param x A numeric `vector`, `data.frame`, or `RasterLayer` object whose
+#'   values are to be modified.
+#' @param Between Numeric. A numeric vector of length 2 specifying the range of 
+#'   values to be changed or kept. If specified, `MoreThan` and `LessThan` are 
+#'   ignored.
+#' @param MoreThan,LessThan Numeric. Threshold above/below which values in `x` 
+#'   will be changed to `NewVal`. Only applied if `Between` is not specified.
 #' @param NewVal The new value to assign to the selected elements in `x`.
-#' @param InvertSelection A logical value indicating whether to invert the
+#' @param InvertSelection Logical. Whether to invert the
 #'   selection specified by `Between`. If `TRUE`, values outside the specified
 #'   range are changed to `NewVal`. Default is `FALSE`.
 #' @return The modified object `x` with values changed according to the
@@ -96,7 +96,7 @@ Range2NewVal <- function(
 
     if (length(Between) != 2) {
       stop(
-        "Between should have exactly two values: a minimum and a maximum.", 
+        "Between should have exactly two values: a minimum and a maximum.",
         call. = FALSE)
     }
 

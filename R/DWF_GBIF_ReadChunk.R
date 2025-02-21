@@ -9,22 +9,22 @@
 #' including spatial uncertainty, collection year, coordinate precision, and
 #' taxonomic rank and returns only selected columns.
 #'
-#' @param ChunkFile A string specifying the path of the chunk file to be
+#' @param ChunkFile Character. Path of the chunk file to be
 #'   processed.
-#' @param FromHPC A logical value indicating whether the environment variables
-#'   should be read from an HPC (High-Performance Computing) environment.
-#'   Default is TRUE.
-#' @param EnvFile A string specifying the path of the environment file. Default
-#'   is ".env".
-#' @param MaxUncert A numeric value specifying the maximum accepted spatial
-#'   uncertainty in kilometers. Default is 10 km.
-#' @param StartYear An integer specifying the earliest collection year to be
-#'   included. Default is 1981.
-#' @param SaveRData Logical; indicating whether to save the cleaned data for the
+#' @param FromHPC Logical. Whether the processing is being done on an 
+#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#'   accordingly. Default: `TRUE`.
+#' @param EnvFile Character. Path to the environment file containing paths to 
+#'   data sources. Defaults to `.env`.
+#' @param MaxUncert Numeric. Maximum accepted spatial uncertainty in 
+#'   kilometers. Default is 10.
+#' @param StartYear Integer. Earliest collection year to be included. Default 
+#'   is 1981.
+#' @param SaveRData Logical. Whether to save the cleaned data for the
 #'   current chunk as `*.RData` file.
-#' @param ReturnData Logical; indicating whether to return the cleaned data for
+#' @param ReturnData Logical. Whether to return the cleaned data for
 #'   the current chunk. Defaults to `FALSE`.
-#' @param Overwrite Logical; indicating whether to process the current chunk
+#' @param Overwrite Logical. Whether to process the current chunk
 #'   file if it has already processed and saved as `*.RData` file. This helps to
 #'   continue working on previously processed chunks if the previous try failed,
 #'   e.g. due to memory issue.
@@ -131,19 +131,19 @@ GBIF_ReadChunk <- function(
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
-  load(file.path(Path_GBIF, "SelectedCols.RData"))
+  load(IASDT.R::Path(Path_GBIF, "SelectedCols.RData"))
 
   # # ..................................................................... ###
 
   # Grid_10_Land_Crop
-  GridR <- file.path(Path_Grid, "Grid_10_Land_Crop.RData")
+  GridR <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(GridR)) {
     stop(paste0("Reference grid file not found at: ", GridR), call. = FALSE)
   }
   GridR <- terra::unwrap(IASDT.R::LoadAs(GridR))
 
   # # Grid_10_Land_Crop_sf
-  GridSf <- file.path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
+  GridSf <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
   if (!file.exists(GridSf)) {
     stop(
       paste0("Reference grid file (sf) not found at: ", GridSf),

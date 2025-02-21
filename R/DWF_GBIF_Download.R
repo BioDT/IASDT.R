@@ -8,10 +8,11 @@
 #' the Global Biodiversity Information Facility (GBIF). The function allows
 #' request data, download it, and optionally split it into smaller chunks for
 #' further analysis.
-#' @param FromHPC Logical indicating whether the work is being done from HPC, to
-#'   adjust file paths accordingly. Default: `TRUE`.
-#' @param EnvFile Character. The path to the environment file containing
-#'   variables required by the function. Default is ".env".
+#' @param FromHPC Logical. Whether the processing is being done on an 
+#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#'   accordingly. Default: `TRUE`.
+#' @param EnvFile Character. Path to the environment file containing paths to 
+#'   data sources. Defaults to `.env`.
 #' @param Renviron Character. The path to the `.Renviron` file containing GBIF
 #'   login credentials (email, user, password).
 #' @param RequestData Logical. If `TRUE`, requests data from GBIF. If `FALSE`,
@@ -23,9 +24,9 @@
 #'   smaller chunks for easier processing.
 #' @param ChunkSize Integer. The number of records per chunk when splitting the
 #'   data. Default is 50,000.
-#' @param Boundaries Numeric vector of length 4. Specifies geographical
-#'   boundaries for the requested GBIF data in the order: Left, Right, Bottom,
-#'   Top. Defaults to c(-30, 50, 25, 75).
+#' @param Boundaries Numeric vector of length 4. The boundaries of the 
+#'   requested GBIF data in the order: Left, Right, Bottom, Top. Defaults to 
+#'   `c(-30, 50, 25, 75)`.
 #' @param StartYear Numeric. The starting year for the occurrence data. Only
 #'   records from this year onward will be requested from GBIF. Default is
 #'   `1981`, which matches the year ranges of CHELSA current climate data.
@@ -180,7 +181,7 @@ GBIF_Download <- function(
     )
 
     IASDT.R::CatTime("Save data request", Level = 1)
-    save(GBIF_Request, file = file.path(Path_GBIF, "GBIF_Request.RData"))
+    save(GBIF_Request, file = IASDT.R::Path(Path_GBIF, "GBIF_Request.RData"))
 
     # Waiting for data to be ready ------
     IASDT.R::CatTime("Waiting for data to be ready", Level = 1)
@@ -191,12 +192,14 @@ GBIF_Download <- function(
       Prefix = "Requesting GBIF data took ", Level = 1)
 
     IASDT.R::CatTime("Save status details", Level = 1)
-    save(StatusDetailed, file = file.path(Path_GBIF, "StatusDetailed.RData"))
+    save(
+      StatusDetailed, 
+      file = IASDT.R::Path(Path_GBIF, "StatusDetailed.RData"))
 
     IASDT.R::CatTime("Data is ready - status summary:", ... = "\n", Level = 1)
     print(rgbif::occ_download_meta(key = StatusDetailed$key))
   } else {
-    Path_Request <- file.path(Path_GBIF, "GBIF_Request.RData")
+    Path_Request <- IASDT.R::Path(Path_GBIF, "GBIF_Request.RData")
 
     if (file.exists(Path_Request)) {
       IASDT.R::CatTime("Loading previous GBIF request", Level = 1)
@@ -208,7 +211,7 @@ GBIF_Download <- function(
         call. = FALSE)
     }
 
-    Path_Status <- file.path(Path_GBIF, "StatusDetailed.RData")
+    Path_Status <- IASDT.R::Path(Path_GBIF, "StatusDetailed.RData")
 
     if (file.exists(Path_Status)) {
       IASDT.R::CatTime(
@@ -261,11 +264,11 @@ GBIF_Download <- function(
       Status = StatusDetailed$status,
       DwnPath = as.character(Dwn))
 
-    save(GBIF_Metadata, file = file.path(Path_GBIF, "GBIF_Metadata.RData"))
+    save(GBIF_Metadata, file = IASDT.R::Path(Path_GBIF, "GBIF_Metadata.RData"))
   } else {
     IASDT.R::CatTime("Data was NOT downloaded", Level = 1)
 
-    GBIF_Metadata <- file.path(Path_GBIF, "GBIF_Metadata.RData")
+    GBIF_Metadata <- IASDT.R::Path(Path_GBIF, "GBIF_Metadata.RData")
     if (!file.exists(GBIF_Metadata)) {
       stop(
         paste0("GBIF metadata file does not exist: ", GBIF_Metadata),
@@ -376,7 +379,7 @@ GBIF_Download <- function(
   save(
     SelectedCols, Int_cols, Int64_cols, Dbl_cols, lgl_cols,
     SortCols, CountryCodes,
-    file = file.path(Path_GBIF, "SelectedCols.RData"))
+    file = IASDT.R::Path(Path_GBIF, "SelectedCols.RData"))
 
   # # ..................................................................... ###
 

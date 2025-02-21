@@ -7,7 +7,7 @@
 SaveSessionInfo(Path = getwd(), SessionObj = NULL, Prefix = "S")
 }
 \arguments{
-\item{Path}{string specifying the directory path where the output file
+\item{Path}{Character. Directory path where the output file
 should be saved. The default is the current working directory
 (\link[base:getwd]{base::getwd}).}
 
@@ -17,8 +17,7 @@ function like \link{SaveSession}. If provided, details of these objects
 (excluding functions and pre-selected objects, with sizes in megabytes) are
 appended to the session information file.}
 
-\item{Prefix}{A string to be used as a prefix for the output file name. The
-default prefix is \code{S}.}
+\item{Prefix}{Character. Prefix for the output file name. Defaults to \code{S}.}
 }
 \value{
 The primary effect of this function is the side effect of writing

@@ -14,8 +14,8 @@
 #'   This parameter cannot be `NULL`.
 #' @param Timeout integer; time in seconds before a download attempt times out.
 #'   Default is 200.
-#' @param Verbose logical. Indicating whether to print messages for the progress
-#'   of the function
+#' @param Verbose Logical. Whether to print progress messages. 
+#'   Default is `FALSE`.
 #' @param NSearch the number of records to attempt to retrieve per request.
 #'   Default is 1000, which is the current maximum allowed by the API.
 #' @param Attempts integer; maximum number of download attempts per data
@@ -81,10 +81,10 @@ EASIN_Down <- function(
   withr::local_options(list(scipen = 999, timeout = Timeout))
 
   # Output file for the merged datasets
-  Path_Out <- file.path(Path_Raw, paste0(SpKey, ".RData"))
+  Path_Out <- IASDT.R::Path(Path_Raw, paste0(SpKey, ".RData"))
 
   # Ensure that the directory for temporary files exist
-  fs::dir_create(file.path(Path_Raw, "FileParts"))
+  fs::dir_create(IASDT.R::Path(Path_Raw, "FileParts"))
 
   # Check if species data already available
   OutFileExist <- IASDT.R::CheckData(Path_Out, warning = FALSE)
@@ -103,7 +103,7 @@ EASIN_Down <- function(
       IASDT.R::CatTime("Download chunk data")
     }
     Chunk <- 0L
-    # PrevChunks <- list.files(file.path(Path_Raw, "FileParts"), SpKey) %>%
+    # PrevChunks <- list.files(IASDT.R::Path(Path_Raw, "FileParts"), SpKey) %>%
     #   stringr::str_remove_all(paste0(".RData|", SpKey, "_")) %>%
     #   as.integer()
 
@@ -113,7 +113,8 @@ EASIN_Down <- function(
       Obj_Out <- paste0(
         SpKey, "_", stringr::str_pad(Chunk, width = 5, pad = "0"))
 
-      Path_Part <- file.path(Path_Raw, "FileParts", paste0(Obj_Out, ".RData"))
+      Path_Part <- IASDT.R::Path(
+        Path_Raw, "FileParts", paste0(Obj_Out, ".RData"))
       if (IASDT.R::CheckData(Path_Part, warning = FALSE)) {
         next
       }
@@ -176,7 +177,7 @@ EASIN_Down <- function(
     }
 
     ChunkList <- list.files(
-      file.path(Path_Raw, "FileParts"),
+      IASDT.R::Path(Path_Raw, "FileParts"),
       paste0("^", SpKey, ".+"), full.names = TRUE)
 
     IASDT.R::SaveAs(

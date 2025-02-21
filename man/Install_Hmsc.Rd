@@ -13,21 +13,21 @@ Install_Hmsc(
 )
 }
 \arguments{
-\item{Path_Python}{Character string. Path to the Python executable.}
+\item{Path_Python}{Character. Path to the Python executable.}
 
-\item{Path_VE}{Character string. Path where the virtual environment will be
-created. This can not be an existing folder.}
+\item{Path_VE}{Character. Path where the virtual environment will be created.
+This can not be an existing folder.}
 
-\item{URL_Hmsc}{A character string for the Git repository (and branch name)
-of the \code{Hmsc-HPC} package.}
+\item{URL_Hmsc}{Character. URL of the Git repository (and branch name) of the
+\code{Hmsc-HPC} package.}
 
-\item{URL_rdata}{A character string for the Git repository (and branch name)
-of the \code{rdata} package. This is temporary to allow \code{rdata} package to write
-rds file. In the near future, this functionality will be pushed to the main
-branch of \code{rdata}.}
+\item{URL_rdata}{Character. URL of the Git repository (and branch name) of
+the \code{rdata} package. This is temporary to allow \code{rdata} package to write
+rds file. In the near future, this functionality will be pushed to the
+main branch of \code{rdata}.}
 
-\item{Force}{Whether to force the installation of \code{Hmsc-HPC}; i.e. using
-\code{--force-reinstall} as a suffix to the \verb{pip install} command}
+\item{Force}{Logical. Whether to force the installation of \code{Hmsc-HPC}; i.e.
+using \code{--force-reinstall} as a suffix to the \verb{pip install} command}
 }
 \value{
 The function performs installation steps and returns NULL invisibly.

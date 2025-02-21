@@ -7,16 +7,15 @@
 sf_add_coords(Sf_Obj, NameX = "Long", NameY = "Lat", Overwrite = FALSE)
 }
 \arguments{
-\item{Sf_Obj}{An sf object to which longitude and latitude columns will be
+\item{Sf_Obj}{An \code{sf} object to which longitude and latitude columns will be
 added.}
 
-\item{NameX, NameY}{A string specifying the name of the longitude column to be
-added. Defaults to \code{Long} and \code{Lat}.}
+\item{NameX, NameY}{Character. Name of the longitude column to be added.
+Defaults to \code{Long} and \code{Lat}.}
 
-\item{Overwrite}{A logical value indicating whether to overwrite existing
-columns with names specified by NameX and NameY. If \code{FALSE} and columns
-with these names exist, new columns are appended with "_NEW" suffix.
-Defaults to \code{FALSE}.}
+\item{Overwrite}{Logical. Whether to overwrite existing columns with names
+specified by \code{NameX} and \code{NameY}. If \code{FALSE} and columns with these names
+exist, new columns are appended with "_NEW" suffix. Defaults to \code{FALSE}.}
 }
 \value{
 An sf object with added longitude and latitude columns.

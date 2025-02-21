@@ -17,11 +17,12 @@ GBIF_Download(
 )
 }
 \arguments{
-\item{FromHPC}{Logical indicating whether the work is being done from HPC, to
-adjust file paths accordingly. Default: \code{TRUE}.}
+\item{FromHPC}{Logical. Whether the processing is being done on an
+High-Performance Computing (HPC) environment, to adjust file paths
+accordingly. Default: \code{TRUE}.}
 
-\item{EnvFile}{Character. The path to the environment file containing
-variables required by the function. Default is ".env".}
+\item{EnvFile}{Character. Path to the environment file containing paths to
+data sources. Defaults to \code{.env}.}
 
 \item{Renviron}{Character. The path to the \code{.Renviron} file containing GBIF
 login credentials (email, user, password).}
@@ -39,9 +40,9 @@ smaller chunks for easier processing.}
 \item{ChunkSize}{Integer. The number of records per chunk when splitting the
 data. Default is 50,000.}
 
-\item{Boundaries}{Numeric vector of length 4. Specifies geographical
-boundaries for the requested GBIF data in the order: Left, Right, Bottom,
-Top. Defaults to c(-30, 50, 25, 75).}
+\item{Boundaries}{Numeric vector of length 4. The boundaries of the
+requested GBIF data in the order: Left, Right, Bottom, Top. Defaults to
+\code{c(-30, 50, 25, 75)}.}
 
 \item{StartYear}{Numeric. The starting year for the occurrence data. Only
 records from this year onward will be requested from GBIF. Default is

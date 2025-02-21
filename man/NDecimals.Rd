@@ -7,7 +7,7 @@
 NDecimals(x)
 }
 \arguments{
-\item{x}{A numeric value or a string that represents a numeric value.}
+\item{x}{Numeric (or character) numeric value.}
 }
 \value{
 An integer representing the number of decimal places in the input

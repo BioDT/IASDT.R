@@ -15,19 +15,19 @@ Range2NewVal(
 )
 }
 \arguments{
-\item{x}{A vector, data.frame, or RasterLayer object whose values are to be
-modified.}
+\item{x}{A numeric \code{vector}, \code{data.frame}, or \code{RasterLayer} object whose
+values are to be modified.}
 
-\item{Between}{A numeric vector of length 2 specifying the range of values to
-be changed or kept. If specified, \code{MoreThan} and \code{LessThan} are ignored.}
+\item{Between}{Numeric. A numeric vector of length 2 specifying the range of
+values to be changed or kept. If specified, \code{MoreThan} and \code{LessThan} are
+ignored.}
 
-\item{MoreThan, LessThan}{A numeric value specifying the threshold above/below
-which values in \code{x} will be changed to \code{NewVal}. Only applied if \code{Between}
-is not specified.}
+\item{MoreThan, LessThan}{Numeric. Threshold above/below which values in \code{x}
+will be changed to \code{NewVal}. Only applied if \code{Between} is not specified.}
 
 \item{NewVal}{The new value to assign to the selected elements in \code{x}.}
 
-\item{InvertSelection}{A logical value indicating whether to invert the
+\item{InvertSelection}{Logical. Whether to invert the
 selection specified by \code{Between}. If \code{TRUE}, values outside the specified
 range are changed to \code{NewVal}. Default is \code{FALSE}.}
 }

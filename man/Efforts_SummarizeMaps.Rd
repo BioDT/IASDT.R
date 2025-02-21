@@ -10,14 +10,14 @@ Efforts_SummarizeMaps(Data, NSp, Name, ClassOrder, Grid_SF, Grid_R)
 \item{Data}{An \code{sf} object containing spatial data, with a column named
 \code{CellCode}.}
 
-\item{NSp}{A logical value indicating whether to generate distinct species
-counts (\code{TRUE}) or total observation counts (\code{FALSE}).}
+\item{NSp}{Logical. Whether to generate distinct species counts (\code{TRUE}) or
+total observation counts (\code{FALSE}).}
 
-\item{Name}{A character string that represents the name of the count field
-and the prefix for the final raster layer's name.}
+\item{Name}{Character. Name of the count field and the prefix for the final
+raster layer's name.}
 
-\item{ClassOrder}{A character string specifying the class and order
-combination (separated by an underscore) represented in the \code{Data}.}
+\item{ClassOrder}{Character. The class and order combination (separated by
+an underscore) represented in the \code{Data}.}
 
 \item{Grid_SF, Grid_R}{Reference grid in the form of simple feature and
 raster.}

@@ -14,7 +14,7 @@ run_crossprod_solve(
   denom,
   chunk_size = 1000L,
   threshold_mb = 2000L,
-  use_single = TRUE,
+  TF_use_single = TRUE,
   verbose = TRUE,
   solve_chunk_size = 50L,
   solve_max_attempts = 5L,
@@ -22,38 +22,35 @@ run_crossprod_solve(
 )
 }
 \arguments{
-\item{TF_Environ}{character. Path to the virtual environment containing
-Python and required dependencies.}
+\item{TF_Environ}{Character. Path to the Python environment. This argument is
+required if \code{UseTF} is \code{TRUE}.}
 
-\item{s1}{character. Path to the input file containing s1 coordinates.}
+\item{s1}{Character. Path to the input file containing s1 coordinates.}
 
-\item{s2}{character Path to the input file containing s2 coordinates.}
+\item{s2}{Character Path to the input file containing s2 coordinates.}
 
-\item{postEta}{character. Path to the file containing the \code{postEta} matrix
+\item{postEta}{Character. Path to the file containing the \code{postEta} matrix
 data.}
 
-\item{path_out}{character. Path to rds file where the output results will be
+\item{path_out}{Character. Path to rds file where the output results will be
 saved.}
 
-\item{denom}{numeric. A denominator value used in the computation.}
+\item{denom}{Numeric. The denominator value used in the computation.}
 
-\item{chunk_size}{numeric (Optional). Size of chunks to process at a time.
+\item{chunk_size}{Numeric (Optional). Size of chunks to process at a time.
 Default is 1000.}
 
-\item{threshold_mb}{numeric (Optional). Memory threshold (in MB) to manage
+\item{threshold_mb}{Numeric (Optional). Memory threshold (in MB) to manage
 processing. Default is 2000.}
 
-\item{use_single}{logical. Indicates whether to use single precision.
-Defaults to \code{TRUE}.}
+\item{TF_use_single}{Logical. Whether to use single precision for the
+TensorFlow calculations. Defaults to \code{FALSE}.}
 
-\item{verbose}{logical (Optional). If \code{TRUE}, logs detailed information
-during execution. Default is \code{TRUE}.}
+\item{solve_chunk_size}{Integer. Chunk size for \code{solve_and_multiply} Python
+function. Default is 50L.}
 
-\item{solve_chunk_size}{numeric. Chunk size for solve_and_multiply python
-function. Default is 50.}
-
-\item{solve_max_attempts}{numeric (Optional). Maximum number of attempts to
-run solve and crossprod functions. Default is 5.}
+\item{solve_max_attempts}{Integer. Maximum number of attempts to run solve
+and crossprod internal function \link{run_crossprod_solve}. Default is 5L.}
 
 \item{LF_Commands_Only}{logical. If \code{TRUE}, returns the command to run the
 Python script. Default is \code{FALSE}.}

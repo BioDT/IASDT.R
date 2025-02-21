@@ -9,10 +9,11 @@
 #' data partner. The function requires environment variables for paths to data
 #' and expects specific files to be present at these paths.
 #'
-#' @param EnvFile Character. The path to the `.env` file containing environment
-#'   variables. Defaults to ".env".
-#' @param FromHPC Logical indicating whether the work is being done from HPC, to
-#'   adjust file paths accordingly. Default: `TRUE`.
+#' @param EnvFile Character. Path to the environment file containing paths to 
+#'   data sources. Defaults to `.env`.
+#' @param FromHPC Logical. Whether the processing is being done on an 
+#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#'   accordingly. Default: `TRUE`.
 #' @return The function returns NULL invisibly. Plots are saved as JPEG files in
 #'   the specified directory.
 #' @details The function first loads environment variables either from a
@@ -86,12 +87,12 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
 
   ## EASIN summary maps -----
   IASDT.R::CatTime("EASIN summary maps", Level = 2)
-  Path_NSp <- file.path(Path_EASIN_Summary, "EASIN_NSp.RData")
-  Path_NSp_PerPartner <- file.path(
+  Path_NSp <- IASDT.R::Path(Path_EASIN_Summary, "EASIN_NSp.RData")
+  Path_NSp_PerPartner <- IASDT.R::Path(
     Path_EASIN_Summary, "EASIN_NSp_PerPartner.RData")
 
-  Path_NObs <- file.path(Path_EASIN_Summary, "EASIN_NObs.RData")
-  Path_NObs_PerPartner <- file.path(
+  Path_NObs <- IASDT.R::Path(Path_EASIN_Summary, "EASIN_NObs.RData")
+  Path_NObs_PerPartner <- IASDT.R::Path(
     Path_EASIN_Summary, "EASIN_NObs_PerPartner.RData")
 
   PathSummaryMaps <- c(
@@ -214,7 +215,7 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   grDevices::jpeg(
-    filename = file.path(Path_EASIN_Summary, "EASIN_Data.jpeg"),
+    filename = IASDT.R::Path(Path_EASIN_Summary, "EASIN_Data.jpeg"),
     width = 20, height = 10.3, units = "cm", quality = 100, res = 600)
   print(Plot)
   grDevices::dev.off()
@@ -297,7 +298,7 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
     # Using ggplot2::ggsave directly does not show non-ascii characters
     # correctly
     grDevices::jpeg(
-      filename = file.path(
+      filename = IASDT.R::Path(
             Path_EASIN_Summary, paste0(File_prefix, "_p", i, ".jpeg")),
       width = 30, height = 16.5, units = "cm", quality = 100, res = 600)
     print(Plot)

@@ -9,14 +9,13 @@
 #' commands.
 #'
 #' @param Model Character. Path to a saved model file (`*.qs2`).
-#' @param CVName Character vector specifying the name of the column(s) in the
-#'   model input data (see [IASDT.R::Mod_PrepData] and [IASDT.R::GetCV]) to be
-#'   used to cross-validate the models. The function allows the possibility of
-#'   using more than one way of assigning grid cells into cross-validation
-#'   folders. If multiple names are provided, separate cross-validation models
-#'   will be fitted for each column. Currently, there are three cross-validation
-#'   strategies, created using the [IASDT.R::Mod_PrepData]: `CV_SAC`, `CV_Dist`,
-#'   and `CV_Large` (see [IASDT.R::GetCV]). Defaults to `c("CV_Dist",
+#' @param CVName Character vector. Column name(s) in the model input data to be 
+#'   used to cross-validate the models (see [Mod_PrepData] and [Mod_GetCV]). 
+#'   The function allows the possibility of using more than one way of 
+#'   assigning grid cells into cross-validation folders. If multiple names are 
+#'   provided, separate cross-validation models will be fitted for each 
+#'   cross-validation type. Currently, there are three cross-validation 
+#'   strategies: `CV_SAC`, `CV_Dist`, and `CV_Large`. Defaults to `c("CV_Dist", 
 #'   "CV_Large")`.
 #' @param Partitions A vector for cross-validation created by
 #'   [Hmsc::createPartition] or similar. Defaults to `NULL`, which means to use
@@ -25,15 +24,15 @@
 #' @param InitPar a named list of parameter values used for initialization of
 #'   MCMC states. See [Hmsc::computePredictedValues] for more information.
 #'   Default: `NULL`.
-#' @param JobName String specifying the name of the submitted job(s) for SLURM.
-#'   Default: `CV_Models`.
-#' @param Updater a named list, specifying which conditional updaters should be
-#'   omitted.  See [Hmsc::computePredictedValues] for more information. Defaults
+#' @param JobName Character. Name of the submitted job(s) for SLURM. Default: 
+#'   `CV_Models`.
+#' @param Updater named `list`. Which conditional updaters should be
+#'   omitted? See [Hmsc::computePredictedValues] for more information. Defaults
 #'   to `list(Gamma2 = FALSE, GammaEta = FALSE)` to disable the following
 #'   warnings: `setting updater$Gamma2=FALSE due to specified phylogeny matrix`
 #'   and `setting updater$GammaEta=FALSE: not implemented for spatial methods
 #'   'GPP' and 'NNGP'`.
-#' @param AlignPost boolean flag indicating whether the posterior of each chains
+#' @param AlignPost Logical. Whether the posterior of each chains
 #'   should be aligned. See [Hmsc::computePredictedValues] for more information.
 #'   Default: `TRUE`.
 #' @param ... Additional arguments passed to the [IASDT.R::Mod_SLURM] function.
@@ -42,8 +41,7 @@
 #'   using Hmsc-HPC.
 #' @author Ahmed El-Gabbas
 #' @inheritParams Mod_SLURM
-#' @inheritParams Mod_PrepData
-#' @inheritParams Mod_Prep4HPC
+#' @inheritParams Mod_inputs
 #' @export
 #' @name Mod_CV_Fit
 
@@ -109,7 +107,7 @@ Mod_CV_Fit <- function(
   IASDT.R::CatTime("Loading model")
 
   # Path of the cross-validation folder
-  Path_CV <- file.path(dirname(dirname(Model)), "Model_Fitting_CV")
+  Path_CV <- IASDT.R::Path(dirname(dirname(Model)), "Model_Fitting_CV")
 
   # Path of the model input data
   Path_ModelData <- list.files(
@@ -129,11 +127,11 @@ Mod_CV_Fit <- function(
   # Creating paths -----
   IASDT.R::CatTime("Creating paths")
 
-  Path_Init <- file.path(Path_CV, "Model_Init")
-  Path_Fitted <- file.path(Path_CV, "Model_Fitted")
-  Path_Post <- file.path(Path_CV, "Model_Posterior")
-  Path_Log <- file.path(Path_Post, "JobsLog")
-  Dir_Pred <- file.path(Path_CV, "Model_Prediction")
+  Path_Init <- IASDT.R::Path(Path_CV, "Model_Init")
+  Path_Fitted <- IASDT.R::Path(Path_CV, "Model_Fitted")
+  Path_Post <- IASDT.R::Path(Path_CV, "Model_Posterior")
+  Path_Log <- IASDT.R::Path(Path_Post, "JobsLog")
+  Dir_Pred <- IASDT.R::Path(Path_CV, "Model_Prediction")
   fs::dir_create(c(Path_CV, Path_Init, Path_Fitted, Path_Post, Dir_Pred))
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -299,7 +297,7 @@ Mod_CV_Fit <- function(
 
 
               # Save unfitted model
-              Path_ModInit <- file.path(
+              Path_ModInit <- IASDT.R::Path(
                 Path_Init, paste0("InitMod_", CVName, "_k", k, ".RData"))
               IASDT.R::SaveAs(
                 InObj = Model_CV,
@@ -320,11 +318,11 @@ Mod_CV_Fit <- function(
               }
 
               # Save model input as rds file
-              Path_ModInit_rds <- file.path(
+              Path_ModInit_rds <- IASDT.R::Path(
                 Path_Init, paste0("InitMod_", CVName, "_k", k, ".rds"))
               saveRDS(Model_CV, file = Path_ModInit_rds)
 
-              Path_ModFitted <- file.path(
+              Path_ModFitted <- IASDT.R::Path(
                 Path_Fitted, paste0("Model_", CVName, "_k", k, ".RData"))
 
               dfPi <- droplevels(Model_Full$dfPi[val, , drop = FALSE])
@@ -368,7 +366,7 @@ Mod_CV_Fit <- function(
               withr::local_options(list(scipen = 999))
 
               # Path to save the posterior of the combination of CV and chain
-              Post_File <- file.path(
+              Post_File <- IASDT.R::Path(
                 Path_Post, paste0("Mod_", ModName, "_Ch", Chain, "_post.rds"))
 
               # Path to save the progress of model fitting
@@ -410,7 +408,7 @@ Mod_CV_Fit <- function(
   # Save model fitting commands -----
   IASDT.R::CatTime("Save model fitting commands")
 
-  CommandFile <- file.path(Path_CV, "Commands2Fit.txt")
+  CommandFile <- IASDT.R::Path(Path_CV, "Commands2Fit.txt")
   f <- file(CommandFile, open = "wb")
   on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
   cat(unlist(CV_DT$Command_HPC), sep = "\n", append = FALSE, file = f)
@@ -434,7 +432,7 @@ Mod_CV_Fit <- function(
 
   # Save summary data to disk -----
   IASDT.R::CatTime("Save summary data to disk")
-  save(CV_DT, file = file.path(Path_CV, "CV_DT.RData"))
+  save(CV_DT, file = IASDT.R::Path(Path_CV, "CV_DT.RData"))
 
   return(invisible(NULL))
 }

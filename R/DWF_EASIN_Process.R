@@ -22,10 +22,11 @@
 #'   and between chunks. Default is 10 seconds.
 #' @param NSearch Integer. Number of observations or species to download during
 #'   EASIN taxonomy or data extraction, respectively. Default is 1000.
-#' @param FromHPC Logical indicating whether the work is being done from HPC, to
-#'   adjust file paths accordingly. Default: `TRUE`.
-#' @param EnvFile Character. The path to the environment file containing
-#'   variables required by the function. Default is ".env".
+#' @param FromHPC Logical. Whether the processing is being done on an 
+#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#'   accordingly. Default: `TRUE`.
+#' @param EnvFile Character. Path to the environment file containing paths to 
+#'   data sources. Defaults to `.env`.
 #' @param DeleteChunks Logical. If `TRUE`, the function will delete intermediate
 #'   files after processing. Default is `FALSE`.
 #' @param StartYear Integer. Minimum year for filtering species occurrence data.
@@ -66,9 +67,9 @@
 #' @export
 
 EASIN_Process <- function(
-    ExtractTaxa = TRUE, ExtractData = TRUE, NDownTries = 10,
-    NCores = 6, SleepTime = 10, NSearch = 1000, FromHPC = TRUE,
-    EnvFile = ".env", DeleteChunks = TRUE, StartYear = 1981, Plot = TRUE) {
+    ExtractTaxa = TRUE, ExtractData = TRUE, NDownTries = 10L,
+    NCores = 6L, SleepTime = 10L, NSearch = 1000L, FromHPC = TRUE,
+    EnvFile = ".env", DeleteChunks = TRUE, StartYear = 1981L, Plot = TRUE) {
 
   # # ..................................................................... ###
 
@@ -150,10 +151,10 @@ EASIN_Process <- function(
 
   IASDT.R::CatTime("Checking input and output paths")
 
-  Path_EASIN_DT <- file.path(Path_EASIN, "Sp_DT")
-  Path_EASIN_Grid <- file.path(Path_EASIN, "Sp_Grid")
-  Path_EASIN_R <- file.path(Path_EASIN, "Sp_R")
-  Path_EASIN_Summary <- file.path(Path_EASIN, "Summary")
+  Path_EASIN_DT <- IASDT.R::Path(Path_EASIN, "Sp_DT")
+  Path_EASIN_Grid <- IASDT.R::Path(Path_EASIN, "Sp_Grid")
+  Path_EASIN_R <- IASDT.R::Path(Path_EASIN, "Sp_R")
+  Path_EASIN_Summary <- IASDT.R::Path(Path_EASIN, "Summary")
 
   fs::dir_create(
     c(
@@ -163,7 +164,7 @@ EASIN_Process <- function(
   # # ||||||||||||||||||||||||||||||||||||||||||||||
 
   ## Grid - raster ----
-  GridR <- file.path(Path_Grid, "Grid_10_Land_Crop.RData")
+  GridR <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(GridR)) {
     stop(
       paste0("Path for the reference grid does not exist: ", GridR),
@@ -171,7 +172,7 @@ EASIN_Process <- function(
   }
 
   ## Grid - sf ----
-  GridSf <- file.path(Path_Grid_Ref, "Grid_10_sf.RData")
+  GridSf <- IASDT.R::Path(Path_Grid_Ref, "Grid_10_sf.RData")
   if (!file.exists(GridSf)) {
     stop(
       paste0("Path for the reference grid does not exist: ", GridSf),
@@ -180,7 +181,7 @@ EASIN_Process <- function(
 
   ## Grid - sf - study area ----
   # Grid ID overlapping with study area
-  LandGrids <- file.path(Path_Grid, "Grid_10_Land_sf.RData")
+  LandGrids <- IASDT.R::Path(Path_Grid, "Grid_10_Land_sf.RData")
   if (!file.exists(LandGrids)) {
     stop(
       paste0("Path for the reference grid does not exist: ", LandGrids),
@@ -208,7 +209,7 @@ EASIN_Process <- function(
       Kingdom = "Plantae", Phylum = "Tracheophyta", NSearch = NSearch)
     save(
       EASIN_Taxa_Orig,
-      file = file.path(Path_EASIN, "EASIN_Taxa_Orig.RData"))
+      file = IASDT.R::Path(Path_EASIN, "EASIN_Taxa_Orig.RData"))
 
 
     IASDT.R::CatTime("Loading pre-standardized EASIN taxonomy", Level = 1)
@@ -258,15 +259,15 @@ EASIN_Process <- function(
     if (length(New_EASIN_Taxa) > 0) {
       tibble::tibble(NewTaxa = New_EASIN_Taxa) %>%
         readr::write_tsv(
-          file = file.path(Path_EASIN, "New_EASIN_Taxa.txt"),
+          file = IASDT.R::Path(Path_EASIN, "New_EASIN_Taxa.txt"),
           progress = FALSE)
     }
     ## Save EASIN taxa - RData ----
     IASDT.R::CatTime("Save EASIN taxa - RData", Level = 1)
-    save(EASIN_Taxa, file = file.path(Path_EASIN, "EASIN_Taxa.RData"))
+    save(EASIN_Taxa, file = IASDT.R::Path(Path_EASIN, "EASIN_Taxa.RData"))
   } else {
     IASDT.R::CatTime("Loading EASIN taxa list")
-    load(file.path(Path_EASIN, "EASIN_Taxa.RData"))
+    load(IASDT.R::Path(Path_EASIN, "EASIN_Taxa.RData"))
   }
 
   # # ..................................................................... ###
@@ -383,7 +384,7 @@ EASIN_Process <- function(
     paste0(EASIN_Taxa$EASINID, ".RData"), basename(EASIN_Files))
 
   if (length(NotProcessed) > 0) {
-    Path_NotProcessed <- file.path(Path_EASIN, "NotProcessedID.txt")
+    Path_NotProcessed <- IASDT.R::Path(Path_EASIN, "NotProcessedID.txt")
     stringr::str_remove_all(NotProcessed, ".RData") %>%
       cat(file = Path_NotProcessed, sep = "\n")
     IASDT.R::CatTime(
@@ -403,7 +404,7 @@ EASIN_Process <- function(
   ## Save merged EASIN data - RData -----
   IASDT.R::CatTime("Save merged EASIN data - RData", Level = 1)
   save(
-    EASIN_Data_Orig, file = file.path(Path_EASIN, "EASIN_Data_Orig.RData"))
+    EASIN_Data_Orig, file = IASDT.R::Path(Path_EASIN, "EASIN_Data_Orig.RData"))
 
   # # ..................................................................... ###
 
@@ -452,7 +453,7 @@ EASIN_Process <- function(
 
   ## Save cleaned EASIN Data - RData ----
   IASDT.R::CatTime("Save cleaned EASIN Data - RData", Level = 1)
-  save(EASIN_Data, file = file.path(Path_EASIN, "EASIN_Data.RData"))
+  save(EASIN_Data, file = IASDT.R::Path(Path_EASIN, "EASIN_Data.RData"))
 
   # # ..................................................................... ###
 
@@ -477,7 +478,7 @@ EASIN_Process <- function(
     terra::mask(GridR) %>%
     terra::wrap()
 
-  Path_NObs <- file.path(Path_EASIN_Summary, "EASIN_NObs.RData")
+  Path_NObs <- IASDT.R::Path(Path_EASIN_Summary, "EASIN_NObs.RData")
   save(EASIN_NObs, file = Path_NObs)
 
   ### NObs per partner ----
@@ -501,7 +502,7 @@ EASIN_Process <- function(
     terra::rast() %>%
     terra::wrap()
 
-  Path_NObs_PerPartner <- file.path(
+  Path_NObs_PerPartner <- IASDT.R::Path(
     Path_EASIN_Summary, "EASIN_NObs_PerPartner.RData")
   save(EASIN_NObs_PerPartner, file = Path_NObs_PerPartner)
 
@@ -519,7 +520,7 @@ EASIN_Process <- function(
     terra::mask(GridR) %>%
     terra::wrap()
 
-  Path_NSp <- file.path(Path_EASIN_Summary, "EASIN_NSp.RData")
+  Path_NSp <- IASDT.R::Path(Path_EASIN_Summary, "EASIN_NSp.RData")
   save(EASIN_NSp, file = Path_NSp)
 
   ### NSp per partner ----
@@ -544,12 +545,12 @@ EASIN_Process <- function(
     terra::rast() %>%
     terra::wrap()
 
-  Path_NSp_PerPartner <- file.path(
+  Path_NSp_PerPartner <- IASDT.R::Path(
     Path_EASIN_Summary, "EASIN_NSp_PerPartner.RData")
   save(EASIN_NSp_PerPartner, file = Path_NSp_PerPartner)
 
   if (DeleteChunks) {
-    fs::dir_delete(file.path(Path_EASIN_Interim, "FileParts"))
+    fs::dir_delete(IASDT.R::Path(Path_EASIN_Interim, "FileParts"))
   }
 
   # # ..................................................................... ###
@@ -578,7 +579,7 @@ EASIN_Process <- function(
           InObj = EASIN_Data2[[.x]],
           OutObj = names(EASIN_Data2)[.x],
           OutPath =
-            file.path(
+            IASDT.R::Path(
               Path_EASIN_DT, paste0(names(EASIN_Data2)[.x], "_DT.RData"))
         )
 
@@ -595,7 +596,7 @@ EASIN_Process <- function(
 
         IASDT.R::SaveAs(
           InObj = DT_Grid, OutObj = paste0(names(EASIN_Data2)[.x], "_Grid"),
-          OutPath = file.path(
+          OutPath = IASDT.R::Path(
             Path_EASIN_Grid, paste0(names(EASIN_Data2)[.x], "_Grid.RData")))
 
         # # ||||||||||||||||||||||||||||||||||
@@ -606,7 +607,7 @@ EASIN_Process <- function(
         IASDT.R::SaveAs(
           InObj = terra::wrap(DT_R),
           OutObj = paste0(names(EASIN_Data2)[.x], "_R"),
-          OutPath = file.path(
+          OutPath = IASDT.R::Path(
             Path_EASIN_R, paste0(names(EASIN_Data2)[.x], "_R.RData")))
 
         return(invisible(NULL))

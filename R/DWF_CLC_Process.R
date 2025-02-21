@@ -11,10 +11,11 @@
 #' most common class per grid cell (3 CLC levels, EUNIS, and SynHab habitat
 #' types) and prepares reference grid for models. The function optionally plots
 #' % coverage maps.
-#' @param EnvFile String specifying the path to the environment file containing
-#'   necessary paths and configurations.
-#' @param FromHPC Logical indicating whether the processing is being done on a
-#'   High-Performance Computing (HPC) environment. Defaults to `TRUE`.
+#' @param EnvFile Character. Path to the environment file containing paths to
+#'   data sources. Defaults to `.env`.
+#' @param FromHPC Logical. Whether the processing is being done on an
+#'   High-Performance Computing (HPC) environment, to adjust file paths
+#'   accordingly. Default: `TRUE`.
 #' @param MinLandPerc A numeric value indicating the minimum percentage of land
 #'   per grid cell to be used in the reference grid cell. Defaults to 15.
 #' @param PlotCLC Logical indicating whether to plot the percentage coverage of
@@ -27,29 +28,6 @@
 #' @details
 #' - [Data source](https://land.copernicus.eu/pan-european/corine-land-cover/clc2018)
 #' - [Citation](https://doi.org/10.2909/960998c1-1870-4e82-8051-6485205ebbac)
-#'
-#' The function reads the following environment variable:
-#'    - **`DP_R_Grid`** (if `FromHPC = TRUE`) or
-#'    **`DP_R_Grid_Local`** (if `FromHPC = FALSE`): Path for saving the
-#'    processed CLC data.
-#'    - **`DP_R_Grid_Ref`** (if `FromHPC = TRUE`) or
-#'    **`DP_R_Grid_Ref_Local`** (if `FromHPC = FALSE`). The function reads
-#'    the content of `Grid_10_sf.RData` and `Grid_10_Raster.RData` files from
-#'    this path.
-#'    - **`DP_R_EUBound_sf`** (if `FromHPC` = `TRUE`) or
-#'     **`DP_R_EUBound_sf_Local`** (if `FromHPC` = `FALSE`): path for the
-#' `RData` file containing the country boundaries (`sf` object).
-#'   - **`DP_R_CLC`** (if `FromHPC` = `TRUE`) or
-#'     **`DP_R_CLC_Local`** (if `FromHPC` = `FALSE`): directory where the
-#'     outputs of CLC data processing are processed.
-#'   - **`DP_R_CLC_CW`** (if `FromHPC` = `TRUE`) or
-#'     **`DP_R_CLC_CW_Local`** (if `FromHPC` = `FALSE`): path for the
-#'     `crossWalk.txt` file containing custom cross-walk between CLC values and
-#'     their corresponding values for three levels of CLC and `EUNIS_19` &
-#'     `SynHab` habitat types.
-#'   - **`DP_R_CLC_tif`** (if `FromHPC` = `TRUE`) or
-#'     **`DP_R_CLC_tif_Local`** (if `FromHPC` = `FALSE`): path for the input
-#'     CLC `.tif` file.
 
 CLC_Process <- function(
     EnvFile = ".env", FromHPC = TRUE, MinLandPerc = 15, PlotCLC = TRUE) {
@@ -129,8 +107,8 @@ CLC_Process <- function(
   IASDT.R::CatTime("Check files/directories", Level = 1)
   fs::dir_create(Path_CLC)
 
-  Path_Grid_sf <- file.path(Path_Grid_Ref, "Grid_10_sf.RData")
-  Path_Grid_rast <- file.path(Path_Grid_Ref, "Grid_10_Raster.RData")
+  Path_Grid_sf <- IASDT.R::Path(Path_Grid_Ref, "Grid_10_sf.RData")
+  Path_Grid_rast <- IASDT.R::Path(Path_Grid_Ref, "Grid_10_Raster.RData")
 
   requiredPaths <- c(Path_Grid_sf, Path_CLC_CW, Path_Grid_rast)
 
@@ -184,13 +162,13 @@ CLC_Process <- function(
   IASDT.R::CatTime("Creating folders", Level = 1)
 
   # sub-folders to store tif files (no masking to final reference grid)
-  Path_CLC_Summary_Tif <- file.path(Path_CLC, "Summary_Tif")
+  Path_CLC_Summary_Tif <- IASDT.R::Path(Path_CLC, "Summary_Tif")
 
   # sub-folders to store tif files (masked to final reference grid)
-  Path_CLC_Summary_Tif_Crop <- file.path(Path_CLC, "Summary_Tif_Crop")
+  Path_CLC_Summary_Tif_Crop <- IASDT.R::Path(Path_CLC, "Summary_Tif_Crop")
 
   # sub-folders to store output RData files
-  Path_CLC_Summary_RData <- file.path(Path_CLC, "Summary_RData")
+  Path_CLC_Summary_RData <- IASDT.R::Path(Path_CLC, "Summary_RData")
 
   # Create folders when necessary
   c(
@@ -201,8 +179,9 @@ CLC_Process <- function(
 
   if (PlotCLC) {
     # sub-folders to store JPEG files
-    Path_CLC_Summary_JPEG <- file.path(Path_CLC, "Summary_JPEG")
-    Path_CLC_Summary_JPEG_Free <- file.path(Path_CLC_Summary_JPEG, "FreeLegend")
+    Path_CLC_Summary_JPEG <- IASDT.R::Path(Path_CLC, "Summary_JPEG")
+    Path_CLC_Summary_JPEG_Free <- IASDT.R::Path(
+      Path_CLC_Summary_JPEG, "FreeLegend")
 
     fs::dir_create(c(Path_CLC_Summary_JPEG, Path_CLC_Summary_JPEG_Free))
   }
@@ -249,7 +228,7 @@ CLC_Process <- function(
 
   IASDT.R::CatTime("Save fraction results", Level = 1)
   save(CLC_Fracs,
-    file = file.path(Path_CLC_Summary_RData, "CLC_Fracs.RData"))
+    file = IASDT.R::Path(Path_CLC_Summary_RData, "CLC_Fracs.RData"))
 
   # # ||||||||||||||||||||||||||||||||||||||||||||
   # Convert fractions to raster
@@ -419,12 +398,13 @@ CLC_Process <- function(
   Grid_10_Land_Crop <- terra::wrap(Grid_10_Land_Crop)
 
   fs::dir_create(Path_Grid)
-  save(Grid_10_Land, file = file.path(Path_Grid, "Grid_10_Land.RData"))
+  save(Grid_10_Land, file = IASDT.R::Path(Path_Grid, "Grid_10_Land.RData"))
   save(Grid_10_Land_Crop,
-    file = file.path(Path_Grid, "Grid_10_Land_Crop.RData"))
-  save(Grid_10_Land_sf, file = file.path(Path_Grid, "Grid_10_Land_sf.RData"))
+    file = IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.RData"))
+  save(
+    Grid_10_Land_sf,  file = IASDT.R::Path(Path_Grid, "Grid_10_Land_sf.RData"))
   save(Grid_10_Land_Crop_sf,
-    file = file.path(Path_Grid, "Grid_10_Land_Crop_sf.RData"))
+    file = IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop_sf.RData"))
 
   ## ||||||||||||||||||||||||||||||||||||||||
   # Save calculated % coverage
@@ -433,7 +413,7 @@ CLC_Process <- function(
   IASDT.R::CatTime("Save calculated % coverage", Level = 1)
   CLC_FracsR <- terra::wrap(CLC_FracsR)
   save(CLC_FracsR,
-    file = file.path(Path_CLC_Summary_RData, "CLC_FracsR.RData"))
+    file = IASDT.R::Path(Path_CLC_Summary_RData, "CLC_FracsR.RData"))
 
   rm(CLC_FracsR, envir = environment())
   invisible(gc())
@@ -445,11 +425,11 @@ CLC_Process <- function(
   IASDT.R::CatTime("Save reference grid --- tif", Level = 1)
   terra::writeRaster(
     terra::unwrap(Grid_10_Land), overwrite = TRUE,
-    filename = file.path(Path_Grid, "Grid_10_Land.tif"))
+    filename = IASDT.R::Path(Path_Grid, "Grid_10_Land.tif"))
 
   terra::writeRaster(
     terra::unwrap(Grid_10_Land_Crop), overwrite = TRUE,
-    filename = file.path(Path_Grid, "Grid_10_Land_Crop.tif"))
+    filename = IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.tif"))
 
   # # ..................................................................... ###
 
@@ -490,7 +470,7 @@ CLC_Process <- function(
 
   IASDT.R::SaveAs(
     InObj = Grid_CNT, OutObj = "Grid_10_Land_Crop_sf_Country",
-    OutPath = file.path(Path_Grid, "Grid_10_Land_Crop_sf_Country.RData"))
+    OutPath = IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop_sf_Country.RData"))
 
   rm(
     Grid_10_Land_Crop_sf, Grid_10_Land_sf, Exclude_Area,
@@ -520,14 +500,14 @@ CLC_Process <- function(
 
         terra::writeRaster(
           x = Map, overwrite = TRUE,
-          filename = file.path(
+          filename = IASDT.R::Path(
             Path_CLC_Summary_Tif_Crop,
             paste0("PercCov_", names(Map), ".tif")))
 
         OutObjName <- paste0("PercCov_", Type, "_Crop")
         IASDT.R::SaveAs(
           InObj = terra::wrap(Map), OutObj = OutObjName,
-          OutPath = file.path(
+          OutPath = IASDT.R::Path(
             Path_CLC_Summary_RData, paste0(OutObjName, ".RData")))
 
         return(Map)
@@ -572,7 +552,7 @@ CLC_Process <- function(
 
   IASDT.R::CatTime("Save majority results", Level = 1)
   save(CLC_Majority,
-    file = file.path(Path_CLC_Summary_RData, "CLC_Majority.RData"))
+    file = IASDT.R::Path(Path_CLC_Summary_RData, "CLC_Majority.RData"))
 
   invisible(gc())
 
@@ -631,17 +611,15 @@ CLC_Process <- function(
 #' CLC_GetPerc
 #'
 #' This function Calculate % coverage of different cross-walks per grid cell.
-#' The function outputs raster and RData files containing the percentage cover
+#' The function outputs raster and `RData` files containing the percentage cover
 #' information.
-#' @param Type A string indicating the type of habitat to process. This has to
-#'   be one of one of SynHab, CLC_L1, CLC_L2, CLC_L3, and EUNIS_2019.
-#' @param CLC_CrossWalk A data frame containing the crosswalk data between
-#'   values and habitat types.
+#' @param Type Character. The cross-walk type to be processed. This has to be 
+#'   one of `SynHab`, `CLC_L1`, `CLC_L2`, `CLC_L3`, and `EUNIS_2019`.
+#' @param CLC_CrossWalk `data.frame`. A data frame containing the crosswalk data
+#'   between values and habitat types.
 #' @param CLC_FracsR A list of rasters for percent coverage results.
-#' @param Path_Tif A string specifying the path where the output TIFF files will
-#'   be saved.
-#' @param Path_RData A string specifying the path where the output RData files
-#'   will be saved.
+#' @param Path_Tif,Path_RData Character. Path where the output `TIFF` and
+#'   `RData` files, respectively, will be saved.
 #' @noRd
 #' @keywords internal
 #' @return A tibble containing the processed raster object.
@@ -698,11 +676,11 @@ CLC_GetPerc <- function(
 
   terra::writeRaster(
     Map, overwrite = TRUE,
-    filename = file.path(Path_Tif, paste0("PercCov_", names(Map), ".tif")))
+    filename = IASDT.R::Path(Path_Tif, paste0("PercCov_", names(Map), ".tif")))
 
   IASDT.R::SaveAs(
     InObj = terra::wrap(Map), OutObj = OutObjName,
-    OutPath = file.path(Path_RData, paste0(OutObjName, ".RData")))
+    OutPath = IASDT.R::Path(Path_RData, paste0(OutObjName, ".RData")))
 
   return(tibble::tibble(Name = OutObjName, Map = list(Map)))
 }
@@ -719,14 +697,14 @@ CLC_GetPerc <- function(
 #' This function processes CLC majority data for a specified type and generates
 #' corresponding raster and vector data. It includes functionality to crop and
 #' mask the data to a specific region.
-#' @param Type A string indicating the type of data to process. Must be one of
+#' @param Type Character. The type of data to process. Must be one of
 #'   "SynHab", "CLC_L1", "CLC_L2", "CLC_L3", or "EUNIS_2019".
 #' @param CLC_Majority A data frame containing the majority class data.
-#' @param Path_Tif A string specifying the path where the output TIFF files will
+#' @param Path_Tif Character. The path where the output TIFF files will
 #'   be saved.
-#' @param Path_Tif_Crop A string specifying the path where the cropped output
+#' @param Path_Tif_Crop Character. The path where the cropped output
 #'   TIFF files will be saved.
-#' @param Path_RData A string specifying the path where the output RData files
+#' @param Path_RData Character. he path where the output RData files
 #'   will be saved.
 #' @param Grid_10_Land A `SpatRaster` object representing the land grid for
 #'   rasterization.
@@ -813,18 +791,18 @@ CLC_ProcessMajority <- function(
 
   terra::writeRaster(
     x = Map, overwrite = TRUE,
-    filename = file.path(Path_Tif, paste0(OutObjName, ".tif")))
+    filename = IASDT.R::Path(Path_Tif, paste0(OutObjName, ".tif")))
 
   terra::levels(Map) %>%
     magrittr::extract2(1) %>%
     dplyr::rename(VALUE = ID) %>%
     foreign::write.dbf(
-      file = file.path(Path_Tif, paste0(OutObjName, ".tif.vat.dbf")),
+      file = IASDT.R::Path(Path_Tif, paste0(OutObjName, ".tif.vat.dbf")),
       factor2char = TRUE, max_nchar = 254)
 
   IASDT.R::SaveAs(
     InObj = terra::wrap(Map), OutObj = OutObjName,
-    OutPath = file.path(Path_RData, paste0(OutObjName, ".RData")))
+    OutPath = IASDT.R::Path(Path_RData, paste0(OutObjName, ".RData")))
 
   # CROPPING
   Map_Cr <- terra::crop(x = Map, y = terra::unwrap(Grid_10_Land_Crop)) %>%
@@ -833,18 +811,19 @@ CLC_ProcessMajority <- function(
 
   terra::writeRaster(
     x = Map_Cr, overwrite = TRUE,
-    filename = file.path(Path_Tif_Crop, paste0(OutObjName_Cr, ".tif")))
+    filename = IASDT.R::Path(Path_Tif_Crop, paste0(OutObjName_Cr, ".tif")))
 
   terra::levels(Map_Cr) %>%
     magrittr::extract2(1) %>%
     dplyr::rename(VALUE = ID) %>%
     foreign::write.dbf(
-      file = file.path(Path_Tif_Crop, paste0(OutObjName_Cr, ".tif.vat.dbf")),
+      file = IASDT.R::Path(
+        Path_Tif_Crop, paste0(OutObjName_Cr, ".tif.vat.dbf")),
       factor2char = TRUE, max_nchar = 254)
 
   IASDT.R::SaveAs(
     InObj = terra::wrap(Map_Cr), OutObj = OutObjName_Cr,
-    OutPath = file.path(Path_RData, paste0(OutObjName_Cr, ".RData")))
+    OutPath = IASDT.R::Path(Path_RData, paste0(OutObjName_Cr, ".RData")))
 
   return(tibble::tibble(Type = Type, Map = list(Map), Map_Cr = list(Map_Cr)))
 }

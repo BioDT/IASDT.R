@@ -8,17 +8,17 @@
 #' [`Hmsc-HPC`](https://github.com/aniskhan25/hmsc-hpc) package from a specified
 #' Git repository. It also installs `TensorFlow` and performs checks to to
 #' verify the installation of Python, the virtual environment, and the packages.
-#' @param Path_Python Character string. Path to the Python executable.
-#' @param Path_VE Character string. Path where the virtual environment will be
-#'   created. This can not be an existing folder.
-#' @param URL_Hmsc A character string for the Git repository (and branch name)
-#'   of the `Hmsc-HPC` package.
-#' @param URL_rdata A character string for the Git repository (and branch name)
-#'   of the `rdata` package. This is temporary to allow `rdata` package to write
-#'   rds file. In the near future, this functionality will be pushed to the main
-#'   branch of `rdata`.
-#' @param Force Whether to force the installation of `Hmsc-HPC`; i.e. using
-#'   `--force-reinstall` as a suffix to the `pip install` command
+#' @param Path_Python Character. Path to the Python executable.
+#' @param Path_VE Character. Path where the virtual environment will be created.
+#'   This can not be an existing folder.
+#' @param URL_Hmsc Character. URL of the Git repository (and branch name) of the
+#'   `Hmsc-HPC` package.
+#' @param URL_rdata Character. URL of the Git repository (and branch name) of 
+#'   the `rdata` package. This is temporary to allow `rdata` package to write 
+#'   rds file. In the near future, this functionality will be pushed to the 
+#'   main branch of `rdata`.
+#' @param Force Logical. Whether to force the installation of `Hmsc-HPC`; i.e.
+#'   using `--force-reinstall` as a suffix to the `pip install` command
 #' @return The function performs installation steps and returns NULL invisibly.
 #' @export
 #' @name Install_Hmsc
@@ -86,7 +86,7 @@ Install_Hmsc <- function(
   # Checking Python version in the virtual environment
 
   IASDT.R::InfoChunk("Checking virtual environment")
-  python <- file.path(Path_VE, "Scripts", "python.exe")
+  python <- IASDT.R::Path(Path_VE, "Scripts", "python.exe")
   PythonVersion <- system2(python, "--version", stdout = TRUE, stderr = TRUE)
 
   if (stringr::str_detect(PythonVersion, "^Python")) {

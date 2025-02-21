@@ -10,8 +10,8 @@
 #' directory, with an option to overwrite existing files.
 #'
 #' @param List A named list object to be split into separate `.RData` files.
-#' @param Prefix A character string to prefix to each filename. If empty
-#'   (default), no prefix is added.
+#' @param Prefix Character. Prefix to each filename. If empty (default), no
+#'   prefix is added.
 #' @param Dir The directory where the `.RData` files will be saved. Defaults to
 #'   the current working directory.
 #' @param Overwrite A logical indicating whether to overwrite existing files.
@@ -30,7 +30,7 @@
 #'
 #' str(iris2, 1)
 #'
-#' (TMP_Folder <- file.path(tempdir(), stringi::stri_rand_strings(1, 5)))
+#' (TMP_Folder <- IASDT.R::Path(tempdir(), stringi::stri_rand_strings(1, 5)))
 #' list.files(TMP_Folder)
 #'
 #' List2RData(List = iris2, Dir = TMP_Folder)
@@ -63,7 +63,7 @@ List2RData <- function(List, Prefix = "", Dir = getwd(), Overwrite = FALSE) {
       } else {
         paste0(Prefix, "_", names(List)[x])
       }
-      File <- file.path(Dir, paste0(FileName, ".RData"))
+      File <- IASDT.R::Path(Dir, paste0(FileName, ".RData"))
 
       # check if the file already exists. If it does and Overwrite is FALSE, it
       # prints a message indicating that the file already exists and will not be

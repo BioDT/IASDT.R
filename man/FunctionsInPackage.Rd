@@ -7,8 +7,7 @@
 FunctionsInPackage(Package)
 }
 \arguments{
-\item{Package}{A character string specifying the name of the package whose
-functions you want to list.}
+\item{Package}{Character. Package name.}
 }
 \value{
 A character vector containing the names of all functions in the

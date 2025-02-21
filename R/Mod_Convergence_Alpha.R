@@ -1,38 +1,14 @@
 ## |------------------------------------------------------------------------| #
-# PlotAlpha ----
+# Convergence_Alpha ----
 ## |------------------------------------------------------------------------| #
 
-#' Plot convergence traceplots for the alpha parameter
-#'
-#' This function generates and plots convergence traceplots for the alpha
-#' parameter from an Hmsc model, using various diagnostics and visualizations to
-#' assess convergence. It supports customization of plot aesthetics and layout.
-#' @param Post A `coda` object or a string path to a saved `coda` object
-#'   containing the posterior samples for the alpha parameter.
-#' @param Model A fitted model object or a string path to a saved model object
-#'   containing the samples and metadata necessary for plotting.
-#' @param Title A string specifying the main title of the plot.
-#' @param NRC  numeric vector of length 2 specifying the number of rows and
-#'   columns per page of plots. If `NULL`, it is automatically determined based
-#'   on the number of levels of the alpha parameter.
-#' @param AddFooter A logical value indicating whether to add a footer with page
-#'   numbers to each plot page. Defaults to `TRUE`.
-#' @param AddTitle A logical value indicating whether to add the main title
-#'   (specified by `Title`) to the plot. Defaults to `TRUE`.
-#' @param Cols Character vector for chain colours (optional). Default: `NULL`.
-#' @param FromHPC Logical. Indicates whether the function is being run on an HPC
-#'   environment, affecting file path handling. Default: `TRUE`.
-#' @param MarginType A string specifying the type of marginal plot to add to the
-#'   main plot. Must be either "histogram" or "density". Default: "histogram".
-#' @name PlotAlpha
-#' @author Ahmed El-Gabbas
-#' @return A grid of `ggplot2` objects representing the traceplots for the alpha
-#'   parameter, arranged according to the specified number of rows and columns
-#'   per page. If `AddTitle` or `AddFooter` is `TRUE`, additional text elements
-#'   are included as specified.
 #' @export
+#' @rdname Convergence_plots
+#' @name Convergence_plots
+#' @order 2
+#' @author Ahmed El-Gabbas
 
-PlotAlpha <- function(
+Convergence_Alpha <- function(
     Post = NULL, Model = NULL, Title = NULL, NRC = NULL, AddFooter = TRUE,
     AddTitle = TRUE, Cols = NULL, FromHPC = TRUE, MarginType = "histogram") {
 

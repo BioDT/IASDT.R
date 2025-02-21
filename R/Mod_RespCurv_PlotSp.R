@@ -1,27 +1,13 @@
+
 ## |------------------------------------------------------------------------| #
 # RespCurv_PlotSp ----
 ## |------------------------------------------------------------------------| #
 
-#' Plot species response curves
-#'
-#' Generates and saves response curve plots for species based on environmental
-#' variables and other factors. Plots show predicted habitat suitability across
-#' different values of each variable.
-#'
-#' @param ModelDir String. Path to the root directory of the fitted models
-#'   without the trailing slash. The function reads data from `RespCurv_DT`
-#'   subdirectory created by [RespCurv_PrepData].
-#' @param NCores Integer. Number of cores to use for parallel processing.
-#'   Defaults to 20.
-#' @param EnvFile String. Path to the environment variables file. Defaults to
-#'   ".env".
-#' @param FromHPC Logical. Indicates whether the function is being run on an HPC
-#'   environment, affecting file path handling. Default: `TRUE`.
-#' @param ReturnData Logical. Indicates whether the output data be returned as
-#'   an R object.
 #' @export
+#' @rdname Response_curves
+#' @name Response_curves
+#' @order 2
 #' @author Ahmed El-Gabbas
-#' @name RespCurv_PlotSp
 
 RespCurv_PlotSp <- function(
     ModelDir = NULL, NCores = 20, EnvFile = ".env",
@@ -64,12 +50,13 @@ RespCurv_PlotSp <- function(
 
   # # ..................................................................... ###
 
-  Path_RC_DT <- file.path(ModelDir, "Model_Postprocessing", "RespCurv_DT")
+  Path_RC_DT <- IASDT.R::Path(ModelDir, "Model_Postprocessing", "RespCurv_DT")
   if (!dir.exists(Path_RC_DT)) {
     stop("Response curve data subfolder is missing.", call. = FALSE)
   }
-  Path_RC_Sp <- file.path(ModelDir, "Model_Postprocessing", "RespCurv_Sp")
-  Path_RC_Sp_DT <- file.path(ModelDir, "Model_Postprocessing", "RespCurv_Sp_DT")
+  Path_RC_Sp <- IASDT.R::Path(ModelDir, "Model_Postprocessing", "RespCurv_Sp")
+  Path_RC_Sp_DT <- IASDT.R::Path(
+    ModelDir, "Model_Postprocessing", "RespCurv_Sp_DT")
   fs::dir_create(c(Path_RC_Sp, Path_RC_Sp_DT))
 
   # # ..................................................................... ###
@@ -90,7 +77,7 @@ RespCurv_PlotSp <- function(
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
-  SpSummary <- file.path(Path_PA, "Sp_PA_Summary_DF.csv")
+  SpSummary <- IASDT.R::Path(Path_PA, "Sp_PA_Summary_DF.csv")
   if (!file.exists(SpSummary)) {
     stop(paste0(SpSummary, " file does not exist"), call. = FALSE)
   }
@@ -124,7 +111,7 @@ RespCurv_PlotSp <- function(
     cl = c1, expr = sapply("IASDT.R", library, character.only = TRUE)))
 
   IASDT.R::CatTime("Loading species richness data", Level = 1)
-  Sp_DT_All <- file.path(Path_RC_DT, "ResCurvDT.RData") %>%
+  Sp_DT_All <- IASDT.R::Path(Path_RC_DT, "ResCurvDT.RData") %>%
     IASDT.R::LoadAs() %>%
     dplyr::select(tidyselect::all_of(c("Coords", "RC_Path_Prob"))) %>%
     dplyr::mutate(
@@ -138,9 +125,10 @@ RespCurv_PlotSp <- function(
     dplyr::left_join(SpSummary, by = "IAS_ID") %>%
     dplyr::mutate(
       Prefix = paste0(Species, "_NFV_", NFV, "_Coords_", Coords),
-      Path_JPEG_Fixed = file.path(Path_RC_Sp, paste0(Prefix, "_Fixed.jpeg")),
-      Path_JPEG_Free = file.path(Path_RC_Sp, paste0(Prefix, "_Free.jpeg")),
-      Path_Sp_DT = file.path(Path_RC_Sp_DT, paste0(Prefix, ".qs2")))
+      Path_JPEG_Fixed = IASDT.R::Path(
+        Path_RC_Sp, paste0(Prefix, "_Fixed.jpeg")),
+      Path_JPEG_Free = IASDT.R::Path(Path_RC_Sp, paste0(Prefix, "_Free.jpeg")),
+      Path_Sp_DT = IASDT.R::Path(Path_RC_Sp_DT, paste0(Prefix, ".qs2")))
 
   snow::stopCluster(c1)
 
@@ -201,14 +189,14 @@ RespCurv_PlotSp <- function(
         dplyr::mutate(
           VarDesc = dplyr::case_when(
             stringr::str_detect(Variable, "^bio") ~
-            stringr::str_to_sentence(Variable),
+              stringr::str_to_sentence(Variable),
             Variable == "RoadRailLog" ~ "Road + Rail intensity",
             Variable == "EffortsLog" ~ "Sampling efforts",
             Variable == "RiversLog" ~ "River length",
             Variable == "HabLog" ~ "% habitat coverage",
             .default = Variable),
           VarDesc = paste0(
-              "<span style='font-size: 10pt;'><b>", VarDesc, "</b></span>"),
+            "<span style='font-size: 10pt;'><b>", VarDesc, "</b></span>"),
 
           VarDesc2 = dplyr::case_when(
             Variable == "bio1" ~ "annual mean temperature",
@@ -460,7 +448,7 @@ RespCurv_PlotSp <- function(
 
   # Save data
   IASDT.R::CatTime("Save data")
-  save(Plots, file = file.path(Path_RC_Sp, "Sp_DT_All.RData"))
+  save(Plots, file = IASDT.R::Path(Path_RC_Sp, "Sp_DT_All.RData"))
 
   # # ..................................................................... ###
 

@@ -9,7 +9,7 @@ setRastCRS(R, CRS = "epsg:3035")
 \arguments{
 \item{R}{A SpatRaster object whose CRS needs to be set.}
 
-\item{CRS}{A string specifying the CRS to be set, default is "epsg:3035".}
+\item{CRS}{Character. CRS value to be set, default is "epsg:3035".}
 }
 \value{
 The SpatRaster object with the updated CRS.

@@ -21,14 +21,14 @@ function will not execute.}
 \item{Ncol, Nrow}{Integer. The desired number of columns and rows to split the
 raster into. Default is 4 columns and 4 rows.}
 
-\item{save}{Logical. Indicates whether to save the split rasters to disk.
+\item{save}{Logical. Whether to save the split rasters to disk.
 Default is \code{FALSE}.}
 
-\item{SplitPath}{Character string. Specifies the directory path where the
+\item{SplitPath}{Character. Directory path where the
 split rasters should be saved if \code{save} is \code{TRUE}. If the directory does
 not exist, it will be created.}
 
-\item{plot}{Logical. Indicates whether to plot the split rasters. Default is
+\item{plot}{Logical. Whether to plot the split rasters. Default is
 \code{FALSE}.}
 
 \item{Extent}{Logical. If \code{TRUE}, the function returns only the extents of

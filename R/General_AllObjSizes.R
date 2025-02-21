@@ -8,10 +8,10 @@
 #' using [lobstr::obj_size] and prints a summary of objects that are greater
 #' than a specified size threshold. It is useful for memory management and
 #' identifying large objects in the workspace.
-#' @param GreaterThan  numeric value specifying the size threshold in MB. Only
-#'   objects larger than this value will be shown. Default is 0, which means all
-#'   objects will be shown. `GreaterThan` must be a non-negative number.
-#' @param InFunction Logical, controlling the scope of the function. It
+#' @param GreaterThan Numeric. Size threshold in MB. Only objects larger than 
+#'   this value will be shown. Default is 0, which means all objects will be 
+#'   shown. `GreaterThan` must be a non-negative number.
+#' @param InFunction Logical. This controls the scope of the function. It
 #'   indicates whether the execution is done inside or outside of a function.
 #'   Defaults to `FALSE` to show sizes of objects in the global environment. If
 #'   set to `TRUE`, sizes of objects in the function are returned.

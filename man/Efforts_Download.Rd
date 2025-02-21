@@ -4,11 +4,11 @@
 \alias{Efforts_Download}
 \title{Download and manage GBIF data for vascular plant orders}
 \usage{
-Efforts_Download(NCores = 6, Path_Raw, Path_Interim, Path_Efforts)
+Efforts_Download(NCores = 6L, Path_Raw, Path_Interim, Path_Efforts)
 }
 \arguments{
-\item{NCores}{Integer. Number of cores to use for parallel processing.  Must
-be a positive integer. This directory must exist or be created beforehand.}
+\item{NCores}{Integer. Number of CPU cores to use for parallel processing.
+Default: 6.}
 
 \item{Path_Raw}{Character. Path where the raw downloaded data will be saved.
 This directory must exist or be created beforehand.}

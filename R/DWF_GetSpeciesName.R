@@ -10,25 +10,18 @@
 #' environment variables. If a species ID `SpID` is provided, it only returns
 #' species information for the listed species, otherwise return the full list of
 #' IAS.
-#' @param EnvFile EnvFile A string specifying the path to the environment
-#'   variables file. Default is ".env". This file must exist in the specified
-#'   path; otherwise, the function will stop with an error message.
+#' @param EnvFile Character. Path to the environment file containing paths to 
+#'   data sources. Defaults to `.env`.
 #' @param SpID optional IASDT species ID for which detailed information is
 #'   required. If not provided, the function returns the entire species list.
-#' @param FromHPC Logical. Indicates whether the function is being run on an HPC
-#'   environment, affecting file path handling. Default: `TRUE`.
+#' @param FromHPC Logical. Whether the processing is being done on an 
+#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#'   accordingly. Default: `TRUE`.
 #' @name GetSpeciesName
 #' @author Ahmed El-Gabbas
 #' @return A data frame containing species information. If a species ID `SpID`
 #'   is provided, it only returns species information for the listed species,
 #'   otherwise return the full list of IAS.
-#' @details The function reads the following environment variables:
-#'   - **`DP_R_TaxaInfo`** (if `FromHPC` = `TRUE`) or
-#'     **`DP_R_TaxaInfo_Local`** (if `FromHPC` = `FALSE`) for the location of
-#'     the `Species_List_ID.txt` file containing species information.
-#'    - **`DP_R_PA`** (if `FromHPC` = `TRUE`) or **`DP_R_PA_Local`** (if
-#'    `FromHPC` = `FALSE`). The function reads the contents of the
-#'    `Sp_PA_Summary_DF.RData` file from this path.
 #' @export
 
 GetSpeciesName <- function(SpID = NULL, EnvFile = ".env", FromHPC = TRUE) {
@@ -76,7 +69,7 @@ GetSpeciesName <- function(SpID = NULL, EnvFile = ".env", FromHPC = TRUE) {
       SpID <- paste0("Sp_", stringr::str_pad(SpID, pad = "0", width = 4))
     }
 
-    NGridCells <- file.path(Path_PA, "Sp_PA_Summary_DF.RData")
+    NGridCells <- IASDT.R::Path(Path_PA, "Sp_PA_Summary_DF.RData")
 
     if (!file.exists(NGridCells)) {
       stop(

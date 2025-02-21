@@ -6,27 +6,28 @@
 \usage{
 Convergence_Plot_All(
   ModelDir = NULL,
-  maxOmega = 1000,
+  maxOmega = 1000L,
   NCores = NULL,
   FromHPC = TRUE,
   MarginType = "histogram"
 )
 }
 \arguments{
-\item{ModelDir}{String. Path to the root directory of the fitted models
-without the trailing slash. The convergence outputs will be saved to the
-\code{Model_Convergence_All} subfolder.}
+\item{ModelDir}{Character. Path to the root directory of the fitted models.
+The convergence outputs will be saved to the \code{Model_Convergence_All}
+subfolder.}
 
 \item{maxOmega}{Integer. Maximum number of species interactions to sample for
 convergence diagnostics.}
 
-\item{NCores}{Integer. Number of cores to use for parallel processing.}
+\item{NCores}{Integer. Number of CPU cores to use for parallel processing.}
 
-\item{FromHPC}{Logical. Indicates whether the function is being run on an HPC
-environment, affecting file path handling. Default: \code{TRUE}.}
+\item{FromHPC}{Logical. Whether the processing is being done on an
+High-Performance Computing (HPC) environment, to adjust file paths
+accordingly. Default: \code{TRUE}.}
 
-\item{MarginType}{A string specifying the type of marginal plot to add to the
-main plot. Must be either "histogram" or "density". Default: "histogram".}
+\item{MarginType}{Character. The type of marginal plot to add to
+the main plot. Valid options are "histogram" (default) or "density".}
 }
 \value{
 The function does not return anything but saves a series of

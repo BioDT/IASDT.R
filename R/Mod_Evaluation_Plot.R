@@ -8,9 +8,13 @@
 #' Index, and Tjur-R²) to evaluate the performance (explanatory power without
 #' cross-validation) of Hmsc models.
 #'
-#' @param ModelDir Path to the model directory containing predictions.
-#' @param EnvFile Path to the environment file (`.env`) for setting paths.
-#' @param FromHPC Boolean indicating whether the environment is an HPC system.
+#' @param ModelDir Character. Path to the model directory containing
+#'   predictions.
+#' @param EnvFile Character. Path to the environment file containing paths to 
+#'   data sources. Defaults to `.env`.
+#' @param FromHPC Logical. Whether the processing is being done on an 
+#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#'   accordingly. Default: `TRUE`.
 #' @name Mod_Eval_Plot
 #' @author Ahmed El-Gabbas
 #' @export
@@ -39,7 +43,7 @@ Mod_Eval_Plot <- function(ModelDir, EnvFile = ".env", FromHPC = TRUE) {
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
-  SpSummary <- file.path(Path_PA, "Sp_PA_Summary_DF.csv")
+  SpSummary <- IASDT.R::Path(Path_PA, "Sp_PA_Summary_DF.csv")
   if (!file.exists(SpSummary)) {
     stop(paste("Species summary file not found at:", SpSummary), call. = FALSE)
   }
@@ -57,7 +61,7 @@ Mod_Eval_Plot <- function(ModelDir, EnvFile = ".env", FromHPC = TRUE) {
     stop("Invalid or missing `ModelDir`", call. = FALSE)
   }
 
-  Mod_Eval <- file.path(
+  Mod_Eval <- IASDT.R::Path(
     ModelDir, "Model_Evaluation", "Eval_Current_NoClamping.qs2")
 
   Mod_Eval <- IASDT.R::LoadAs(Mod_Eval) %>%
@@ -110,7 +114,7 @@ Mod_Eval_Plot <- function(ModelDir, EnvFile = ".env", FromHPC = TRUE) {
     patchwork::plot_layout(axes = "collect")
 
   ragg::agg_jpeg(
-    filename = file.path(
+    filename = IASDT.R::Path(
       ModelDir, "Model_Evaluation", "Eval_explanatory.jpeg"),
     width = 24, height = 20, res = 600,
     quality = 100, units = "cm")

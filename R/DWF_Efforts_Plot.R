@@ -27,7 +27,7 @@ Efforts_Plot <- function(Path_Efforts, EU_Bound) {
 
   # # ..................................................................... ###
 
-  File_SummaryR <- file.path(Path_Efforts, "Efforts_SummaryR.RData")
+  File_SummaryR <- IASDT.R::Path(Path_Efforts, "Efforts_SummaryR.RData")
   if (!file.exists(File_SummaryR)) {
     stop(
       paste0("Summary maps cannot be loaded: ", File_SummaryR),
@@ -170,7 +170,7 @@ Efforts_Plot <- function(Path_Efforts, EU_Bound) {
       # Using ggplot2::ggsave directly does not show non-ascii characters
       # correctly
       grDevices::jpeg(
-        filename = file.path(Path_Efforts, PlotDF$FileName[[.x]]),
+        filename = IASDT.R::Path(Path_Efforts, PlotDF$FileName[[.x]]),
         width = 31, height = 16.25, units = "cm", quality = 100, res = 600)
       print(CurrPlot)
       grDevices::dev.off()

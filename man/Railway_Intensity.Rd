@@ -7,19 +7,20 @@
 Railway_Intensity(
   FromHPC = TRUE,
   EnvFile = ".env",
-  NCores = 6,
+  NCores = 6L,
   DeleteProcessed = TRUE
 )
 }
 \arguments{
-\item{FromHPC}{Logical indicating whether the work is being done from HPC, to
-adjust file paths accordingly. Default: \code{TRUE}.}
+\item{FromHPC}{Logical. Whether the processing is being done on an
+High-Performance Computing (HPC) environment, to adjust file paths
+accordingly. Default: \code{TRUE}.}
 
-\item{EnvFile}{Character. The path to the environment file containing
-variables required by the function. Default is ".env".}
+\item{EnvFile}{Character. Path to the environment file containing paths to
+data sources. Defaults to \code{.env}.}
 
-\item{NCores}{Numeric. Number of CPU cores to use for parallel processing.
-Default is 6.}
+\item{NCores}{Integer. Number of CPU cores to use for parallel processing.
+Default: 8.}
 
 \item{DeleteProcessed}{Logical indicating whether to delete the raw
 downloaded railways files after processing them. This helps to free large

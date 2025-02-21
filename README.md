@@ -6,7 +6,7 @@
 [`IASDT.R`](https://biodt.github.io/IASDT.R) supports the invasive alien
 species (IAS) prototype Digital Twin (`IAS-pDT`), as part of the
 EU-funded <a href="https://biodt.eu/" target="_blank">BioDT</a> project.
-This package provides functions for processing input data (biotic and
+This R package provides functions for processing input data (biotic and
 abiotic) and modeling the distribution of invasive alien plant species
 across Europe using joint species distribution models. By the end of the
 project, it is planned that the package will enable end users to access
@@ -16,7 +16,7 @@ model outputs (e.g., prediction maps) directly from R.
   <a href="https://biodt.eu/" target="_blank">link</a>.
 - For an overview on the IAS-pDT, see Khan, El-Gabbas, et
   al. <a href="https://doi.org/10.3897/rio.10.e124579" target="_blank"><img src="https://img.shields.io/badge/DOI:-10.3897/rio.10.e124579-blue" alt="DOI: 10.3897/rio.10.e124579"/></a>.
-- The documentation of the package functions can be found
+- Documentation of the package functions can be found
   <a href="https://biodt.github.io/IASDT.R/reference/index.html" target="_blank">here</a>.
 - Click <a href="https://github.com/BioDT/uc-ias-workflows">here</a> for
   the workflow of the IAS-pDT.
@@ -74,4 +74,4 @@ If you use the `IASDT.R` package, please cite it as:
 > <a href="https://biodt.eu" target="_blank">https://biodt.eu</a>.
 
 <span style="     color: grey !important;">Last update:
-2025-02-17</span>
+2025-02-21</span>

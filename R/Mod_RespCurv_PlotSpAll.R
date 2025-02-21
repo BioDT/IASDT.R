@@ -2,26 +2,14 @@
 # RespCurv_PlotSpAll ----
 ## |------------------------------------------------------------------------| #
 
-#' Plot all species response curves
-#'
-#' Generates and saves response curve plots for all species together in a single
-#' plot.
-#'
-#' @param ModelDir String. Path to the root directory of the fitted models
-#'   without the trailing slash. The function reads data from `RespCurv_DT`
-#'   subdirectory created by [RespCurv_PrepData].
-#' @param NCores Integer. Number of cores to use for parallel processing.
-#'   Defaults to 20.
-#' @param ReturnData Logical. Indicates whether the output data be returned as
-#'   an R object.
-#' @param PlotAlpha Numeric. The alpha value (transparency) for the response
-#'   curve lines. Defaults to 0.3.
 #' @export
+#' @rdname Response_curves
+#' @name Response_curves
+#' @order 3
 #' @author Ahmed El-Gabbas
-#' @name RespCurv_PlotSpAll
 
 RespCurv_PlotSpAll <- function(
-    ModelDir = NULL, NCores = 8L, ReturnData = FALSE, PlotAlpha = 0.3) {
+    ModelDir = NULL, NCores = 8L, ReturnData = FALSE, PlottingAlpha = 0.3) {
 
   # # ..................................................................... ###
 
@@ -54,18 +42,18 @@ RespCurv_PlotSpAll <- function(
 
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = "ModelDir")
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "numeric", Args = c("NCores", "PlotAlpha"))
+    AllArgs = AllArgs, Type = "numeric", Args = c("NCores", "PlottingAlpha"))
   rm(AllArgs, envir = environment())
 
-  if (PlotAlpha < 0 || PlotAlpha > 1) {
-    stop("`PlotAlpha` must be between 0 and 1", call. = FALSE)
+  if (PlottingAlpha < 0 || PlottingAlpha > 1) {
+    stop("`PlottingAlpha` must be between 0 and 1", call. = FALSE)
   }
 
   # # ..................................................................... ###
 
 
-  Path_RC_DT <- file.path(ModelDir, "Model_Postprocessing", "RespCurv_DT")
-  Path_RC_All <- file.path(ModelDir, "Model_Postprocessing", "RespCurv_All")
+  Path_RC_DT <- IASDT.R::Path(ModelDir, "Model_Postprocessing", "RespCurv_DT")
+  Path_RC_All <- IASDT.R::Path(ModelDir, "Model_Postprocessing", "RespCurv_All")
 
   if (!dir.exists(Path_RC_DT)) {
     stop("Response curve data subfolder is missing.", call. = FALSE)
@@ -80,7 +68,7 @@ RespCurv_PlotSpAll <- function(
   IASDT.R::CatTime(
     "Loading & processing species response curve data on parallel", Level = 1)
 
-  Sp_DT_All <- file.path(Path_RC_DT, "ResCurvDT.RData") %>%
+  Sp_DT_All <- IASDT.R::Path(Path_RC_DT, "ResCurvDT.RData") %>%
     IASDT.R::LoadAs() %>%
     dplyr::select(Coords, RC_Path_Prob)
 
@@ -130,7 +118,7 @@ RespCurv_PlotSpAll <- function(
       Coords <- Sp_DT_All$Coords[[ID]]
 
       FilePrefix <- paste0("RespCurv_All_NFV_", NFV, "_Coords_", Coords)
-      Path_JPEG <- file.path(Path_RC_All, paste0(FilePrefix, ".jpeg"))
+      Path_JPEG <- IASDT.R::Path(Path_RC_All, paste0(FilePrefix, ".jpeg"))
 
       DT <- Sp_DT_All$DT[[ID]] %>%
         dplyr::mutate(
@@ -211,7 +199,7 @@ RespCurv_PlotSpAll <- function(
               mapping = ggplot2::aes(x = XVals, y = Pred, group = Species)) +
             ggplot2::geom_line(
               linetype = 1, linewidth = 0.3,
-              colour = "blue", alpha = PlotAlpha) +
+              colour = "blue", alpha = PlottingAlpha) +
             ggplot2::scale_y_continuous(
               limits = c(-0.01, 1.01), oob = scales::squish,
               expand = c(0, 0)) +
@@ -277,7 +265,7 @@ RespCurv_PlotSpAll <- function(
   Sp_DT_All <- dplyr::select(Sp_DT_All, -DT) %>%
     dplyr::bind_cols(Plots = Plots)
 
-  save(Sp_DT_All, file = file.path(Path_RC_All, "Sp_DT_All.RData"))
+  save(Sp_DT_All, file = IASDT.R::Path(Path_RC_All, "Sp_DT_All.RData"))
 
   # # ..................................................................... ###
 

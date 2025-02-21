@@ -2,20 +2,18 @@
 # LoadMultiple ----
 ## |------------------------------------------------------------------------| #
 #
-#' Load multiple RData files together
+#' Load multiple `.RData` files together
 #'
 #' This function loads multiple `.RData` files either into a single list object
 #' or directly into the global environment. It provides options for verbosity,
 #' returning object names, and handling of non-existent files.
-#' @param Files A character vector specifying the paths of `.RData` files to be
-#'   loaded.
-#' @param Verbose A logical flag indicating whether to print messages about the
-#'   loading process. Only effective when `OneObject` is `FALSE`. Defaults to
-#'   `TRUE`.
-#' @param OneObject A logical flag indicating whether to load all objects into a
+#' @param Files Character vector. The paths of `.RData` files to be loaded.
+#' @param Verbose Logical. Whether to print progress messages. 
+#'   Default is `TRUE`.
+#' @param OneObject Logical. Whether to load all objects into a
 #'   single list (`TRUE`) or directly into the global environment (`FALSE`).
 #'   Defaults to `TRUE`.
-#' @param ReturnNames A logical flag indicating whether to return the names of
+#' @param ReturnNames Logical. Whether to return the names of
 #'   the loaded objects. Only effective when `OneObject` is `FALSE`. Defaults to
 #'   `TRUE`.
 #' @author Ahmed El-Gabbas

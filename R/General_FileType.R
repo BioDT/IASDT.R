@@ -7,8 +7,8 @@
 #' This function uses the system's `file` command to determine the type of the
 #' file specified by the `Path` parameter. It returns a character string
 #' describing the file type.
-#' @param Path A character string specifying the path to the file whose type
-#' is to be determined. The path must not be NULL, and the file must exist.
+#' @param Path Character. The path to the file whose type is to be determined. 
+#'   The path must not be `NULL`, and the file must exist.
 #' @return A character string describing the file type.
 #' @name FileType
 #' @export

@@ -24,8 +24,8 @@ This parameter cannot be \code{NULL}.}
 \item{Timeout}{integer; time in seconds before a download attempt times out.
 Default is 200.}
 
-\item{Verbose}{logical. Indicating whether to print messages for the progress
-of the function}
+\item{Verbose}{Logical. Whether to print progress messages.
+Default is \code{FALSE}.}
 
 \item{BaseURL}{character; the base URL for downloading EASIN data. Default
 is "https://easin.jrc.ec.europa.eu/apixg/geoxg".}

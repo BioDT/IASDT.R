@@ -15,16 +15,16 @@ CatDiff(
 )
 }
 \arguments{
-\item{InitTime}{POSIXct; The initial time from which the difference is
+\item{InitTime}{\code{POSIXct}. The initial time from which the difference is
 calculated.}
 
-\item{ChunkText}{character. The message printed as chunk info. Default
+\item{ChunkText}{Character. The message printed as chunk info. Default
 value: \verb{Session summary}. See: \link{InfoChunk} for more information.}
 
-\item{Prefix}{character; A prefix string to prepend to the printed time
-difference. Defaults to "Completed in ".}
+\item{Prefix}{Character. Prefix to prepend to the printed time difference.
+Defaults to "Completed in ".}
 
-\item{CatInfo}{logical; If \code{TRUE}, prints a session summary using
+\item{CatInfo}{Logical. If \code{TRUE}, prints a session summary using
 \link{InfoChunk} ("Session summary"). Defaults to \code{FALSE}.}
 
 \item{Level}{integer; the level at which the message will be printed. If e.g.

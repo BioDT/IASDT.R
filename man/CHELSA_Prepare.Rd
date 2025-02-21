@@ -8,10 +8,10 @@ CHELSA_Prepare(
   EnvFile = ".env",
   FromHPC = TRUE,
   Download = FALSE,
-  NCores = 4,
+  NCores = 4L,
   Overwrite = FALSE,
-  Download_Attempts = 10,
-  Sleep = 5,
+  Download_Attempts = 10L,
+  Sleep = 5L,
   OtherVars = "npp",
   BaseURL = paste0("https://os.zhdk.cloud.switch.ch/envicloud/",
     "chelsa/chelsa_V2/GLOBAL/")
@@ -21,16 +21,17 @@ CHELSA_Prepare(
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
 
-\item{FromHPC}{Logical indicating whether the work is being done from HPC, to
-adjust file paths accordingly. Default: \code{TRUE}.}
+\item{FromHPC}{Logical. Whether the processing is being done on an
+High-Performance Computing (HPC) environment, to adjust file paths
+accordingly. Default: \code{TRUE}.}
 
-\item{Download}{Logical, whether to download the CHELSA files. Defaults to
+\item{Download}{Logical. Whether to download the CHELSA files. Defaults to
 \code{FALSE}.}
 
 \item{NCores}{Integer. Number of CPU cores to use for parallel processing.
-Defaults to 4.}
+Default: 4.}
 
-\item{Overwrite}{Logical, whether to re-download files that already exist.
+\item{Overwrite}{Logical. Whether to re-download files that already exist.
 Defaults to \code{FALSE}.}
 
 \item{Download_Attempts}{Integer. The maximum number of download attempts.
@@ -46,7 +47,7 @@ processed. If \code{OtherVars} is set to "", only bioclimatic variables will be
 processed. See \link{CHELSA_Vars} for a detailed information on CHELSA climate
 variables.}
 
-\item{BaseURL}{String, the base URL for downloading CHELSA climate data.}
+\item{BaseURL}{Character. The base URL for downloading CHELSA climate data.}
 }
 \description{
 This function reads the contents of local text files containing URLs for

@@ -2,108 +2,11 @@
 # Mod_PrepData ----
 ## |------------------------------------------------------------------------| #
 
-#' Prepare habitat-specific data for Hmsc models
-#'
-#' This function processes environmental and species presence data to prepare
-#' habitat-specific datasets for use in Hmsc models. It checks input arguments,
-#' reads environment variables from a file, verifies paths, loads and filters
-#' species data based on habitat type and minimum presence grid cells per
-#' species, and merges various environmental layers (e.g., CHELSA Bioclimatic
-#' variables, habitat coverage, road and railway intensity, sampling efforts)
-#' into a single dataset. Processed data is saved to disk as an `*.RData`
-#' file.
-#'
-#' @param Hab_Abb Character. Abbreviation for the habitat type (based on
-#'   [SynHab](https://www.preslia.cz/article/pdf?id=11548)) for which to prepare
-#'   data. Valid values are `0`, `1`, `2`, `3`, `4a`, `4b`, `10`, `12a`, `12b`.
-#'   If `Hab_Abb` = `0`, data is prepared irrespective of the habitat type. For
-#'   more details, see [Pysek et
-#'   al.](https://doi.org/10.23855/preslia.2022.447).
-#' @param MinEffortsSp Integer specifying the minimum number of vascular plant
-#'   species per grid cell (from GBIF data) required for inclusion in the
-#'   models. This is to exclude grid cells with very little sampling efforts.
-#'   Defaults to `100`.
-#' @param ExcludeCult Logical. Indicates whether to exclude countries with
-#'   cultivated or casual observations per species. Defaults to `TRUE`.
-#' @param ExcludeZeroHabitat Logical. Indicates whether to exclude grid cells
-#'   with zero percentage habitat coverage. Defaults to `TRUE`.
-#' @param PresPerSpecies Integer. The minimum number of presence grid cells for
-#'   a species to be included in the analysis. The number of presence grid cells
-#'   per species is calculated after discarding grid cells with low sampling
-#'   efforts (`MinEffortsSp`) and zero percentage habitat coverage 
-#'   `ExcludeZeroHabitat`. Defaults to `80`.
-#' @param EnvFile Character. Path to the environment file containing paths to
-#'   data sources. Defaults to `.env`.
-#' @param Path_Model Character. Path where the output file should be saved.
-#' @param VerboseProgress Logical. Indicates whether progress messages should be
-#'   displayed. Defaults to `TRUE`.
-#' @param FromHPC Logical indicating whether the work is being done from HPC, to
-#'   adjust file paths accordingly. Default: `TRUE`.
-#' @name Mod_PrepData
-#' @author Ahmed El-Gabbas
-#' @return a tibble containing modelling data.
-#' @importFrom rlang .data
-#' @details
-#'
-#' The function reads the following environment variables:
-#' - **`DP_R_Grid`** (if `FromHPC` = `TRUE`) or **`DP_R_Grid_Local`** (if
-#' `FromHPC` = `FALSE`). The function reads the content of the
-#' `Grid_10_Land_Crop.RData` and `Grid_10_Land_Crop_sf_Country.RData` files
-#' - **`DP_R_Grid_Ref`** or **`DP_R_Grid_Ref_Local`**: The function reads the
-#' content of `Grid_10_sf.RData` file from this path.
-#' - **`DP_R_PA`** or **`DP_R_PA_Local`**: The function reads the contents
-#' of the `Sp_PA_Summary_DF.RData` file from this path.
-#' - **`DP_R_CLC_Summary`** / **`DP_R_CLC_Summary_Local`**: Path containing
-#' the `PercCov_SynHab_Crop.RData` file. This file contains maps for the
-#' percentage coverage of each SynHab habitat type per grid cell.
-#' - **`DP_R_CHELSA_Output`** / **`DP_R_CHELSA_Output_Local`**: Path
-#' for processed CHELSA data.
-#' - **`DP_R_Roads`** / **`DP_R_Roads_Local`**: Path for processed road data.
-#' The function reads the contents of: `Road_Length.RData` for the total length
-#' of any road type per grid cell.
-#' - **`DP_R_Railway`** / **`DP_R_Railway_Local`**: Path for processed
-#' railway data. The function reads the contents of: `Railway_Length.RData` for
-#' the total length of any railway type per grid cell.
-#' - **`DP_R_Efforts`** / **`DP_R_Efforts_Local`**: Path for processed
-#' sampling efforts analysis. The function reads the content of
-#' `Bias_GBIF_SummaryR.RData` file containing the total number of GBIF vascular
-#' plant observations per grid cell.
-#'
-#' The current models are fitted for 8 habitat types see [Pysek et
-#' al.](https://doi.org/10.23855/preslia.2022.447):
-#' - **1. Forests** -- closed vegetation dominated by deciduous or evergreen
-#' trees
-#' - **2. Open forests** -- woodlands with canopy openings created by
-#' environmental stress or disturbance, including forest edges
-#' - **3. Scrub** -- shrublands maintained by environmental stress (aridity) or
-#' disturbance
-#' - **4a. Natural grasslands** -- grasslands maintained by climate (aridity,
-#' unevenly distributed precipitation), herbivores or environmental stress
-#' (aridity, instability or toxicity of substrate)
-#' - **4b. Human-maintained grasslands** -- grasslands dependent on regular
-#' human-induced management (mowing, grazing by livestock, artificial burning)
-#' - **10. Wetland** -- sites with the permanent or seasonal influence of
-#' moisture, ranging from oligotrophic to eutrophic
-#' - **12a. Ruderal habitats** -- anthropogenically disturbed or eutrophicated
-#' sites, where the anthropogenic disturbance or fertilization is typically a
-#' side-product and not the aim of the management
-#' - **12b. Agricultural habitats** -- synanthropic habitats directly
-#' associated with growing of agricultural products, thus dependent on specific
-#' type of management (ploughing, fertilization)
-#'
-#' The following habitat types are excluded from the analysis:
-#' - **5. Sandy** -- dunes and other habitats on unstable sandy substrate,
-#' stressed by low nutrients, drought and disturbed by sand movement
-#' - **6. Rocky** -- cliffs and rock outcrops with very shallow or no soil
-#' - **7. Dryland** -- habitats in which drought stress limits vegetation
-#' development
-#' - **8. Saline** -- habitats stressed by high soil salinity
-#' - **9. Riparian** -- a mosaic of wetlands, grasslands, tall-forb stands,
-#' scrub and open forests in stream corridors
-#' - **11. Aquatic** -- water bodies and streams with submerged and floating
-#' plant species
-#'
 #' @export
+#' @name Mod_inputs
+#' @rdname Mod_inputs
+#' @order 1
+#' @author Ahmed El-Gabbas
 
 Mod_PrepData <- function(
     Hab_Abb = NULL, MinEffortsSp = 100L, ExcludeCult = TRUE,
@@ -230,7 +133,7 @@ Mod_PrepData <- function(
 
   ## Sampling efforts ----
   IASDT.R::CatTime("Sampling efforts", Level = 1)
-  R_Bias <- file.path(Path_Bias, "Efforts_SummaryR.RData")
+  R_Bias <- IASDT.R::Path(Path_Bias, "Efforts_SummaryR.RData")
   if (!file.exists(R_Bias)) {
     stop(paste0(R_Bias, " file does not exist"), call. = FALSE)
   }
@@ -251,7 +154,8 @@ Mod_PrepData <- function(
 
   IASDT.R::CatTime("Habitat coverage", Level = 1)
 
-  Path_Hab <- file.path(Path_CLC, "Summary_RData", "PercCov_SynHab_Crop.RData")
+  Path_Hab <- IASDT.R::Path(
+    Path_CLC, "Summary_RData", "PercCov_SynHab_Crop.RData")
   if (!file.exists(Path_Hab)) {
     stop(
       paste0("Path_Hab file: ", Path_Hab, " does not exist"),
@@ -291,7 +195,7 @@ Mod_PrepData <- function(
   IASDT.R::CatTime("Species data summary", Level = 1)
 
   # Extract the list of species for the current habitat type
-  DT_Sp <- file.path(Path_PA, "Sp_PA_Summary_DF.RData")
+  DT_Sp <- IASDT.R::Path(Path_PA, "Sp_PA_Summary_DF.RData")
   if (!file.exists(DT_Sp)) {
     stop(paste0(DT_Sp, " file does not exist"), call. = FALSE)
   }
@@ -334,7 +238,7 @@ Mod_PrepData <- function(
           PA_Layer <- dplyr::if_else(ExcludeCult, "PA_Masked", "PA")
 
           # Masked raster map
-          SpPA <- file.path(
+          SpPA <- IASDT.R::Path(
             Path_PA, "RData", stringr::str_c(.x, "_PA.RData")) %>%
             IASDT.R::LoadAs() %>%
             terra::unwrap() %>%
@@ -425,7 +329,7 @@ Mod_PrepData <- function(
       panel.border = ggplot2::element_blank())
 
   ragg::agg_jpeg(
-    filename = file.path(Path_Model, "NSpPerGrid.jpeg"),
+    filename = IASDT.R::Path(Path_Model, "NSpPerGrid.jpeg"),
     width = 25.5, height = 28, res = 600, quality = 100, units = "cm")
   print(NSpPerGrid_gg)
   grDevices::dev.off()
@@ -437,7 +341,7 @@ Mod_PrepData <- function(
   ## CHELSA -----
 
   IASDT.R::CatTime("CHELSA", Level = 1)
-  R_CHELSA <- file.path(Path_CHELSA, "Processed", "R_Current.RData")
+  R_CHELSA <- IASDT.R::Path(Path_CHELSA, "Processed", "R_Current.RData")
   if (!file.exists(R_CHELSA)) {
     stop(paste0(R_CHELSA, " file does not exist"), call. = FALSE)
   }
@@ -452,7 +356,7 @@ Mod_PrepData <- function(
 
   IASDT.R::CatTime("Reference grid - sf", Level = 2)
   # Reference grid as sf
-  Grid_SF <- file.path(Path_Grid_Ref, "Grid_10_sf.RData")
+  Grid_SF <- IASDT.R::Path(Path_Grid_Ref, "Grid_10_sf.RData")
   if (!file.exists(Grid_SF)) {
     stop(paste0(Grid_SF, " file does not exist"), call. = FALSE)
   }
@@ -463,7 +367,7 @@ Mod_PrepData <- function(
 
   # Reference grid as sf - country names
   IASDT.R::CatTime("Reference grid - country names", Level = 2)
-  Grid_CNT <- file.path(Path_Grid, "Grid_10_Land_Crop_sf_Country.RData")
+  Grid_CNT <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop_sf_Country.RData")
   if (!file.exists(Grid_CNT)) {
     stop(paste0(Grid_CNT, " file does not exist"), call. = FALSE)
   }
@@ -482,7 +386,7 @@ Mod_PrepData <- function(
   IASDT.R::CatTime("Road intensity", Level = 2)
 
   # road intensity of any road type
-  R_RoadInt <- file.path(Path_Roads, "Road_Length.RData")
+  R_RoadInt <- IASDT.R::Path(Path_Roads, "Road_Length.RData")
   if (!file.exists(R_RoadInt)) {
     stop(paste0(R_RoadInt, " file does not exist"), call. = FALSE)
   }
@@ -502,7 +406,7 @@ Mod_PrepData <- function(
   IASDT.R::CatTime("Railway intensity", Level = 2)
 
   # Railway intensity
-  R_RailInt <- file.path(Path_Rail, "Railways_Length.RData")
+  R_RailInt <- IASDT.R::Path(Path_Rail, "Railways_Length.RData")
   if (!file.exists(R_RailInt)) {
     stop(paste0(R_RailInt, " file does not exist"), call. = FALSE)
   }
@@ -543,7 +447,7 @@ Mod_PrepData <- function(
   ## River length ----
   IASDT.R::CatTime("River length", Level = 1)
 
-  R_Rivers <- file.path(Path_Rivers, "River_Lengths.RData")
+  R_Rivers <- IASDT.R::Path(Path_Rivers, "River_Lengths.RData")
   if (!file.exists(R_Rivers)) {
     stop(paste0(R_Rivers, " file does not exist"), call. = FALSE)
   }
@@ -589,7 +493,7 @@ Mod_PrepData <- function(
 
   IASDT.R::SaveAs(
     InObj = DT_All, OutObj = OutObjName,
-    OutPath = file.path(Path_Model, paste0(OutObjName, ".RData")))
+    OutPath = IASDT.R::Path(Path_Model, paste0(OutObjName, ".RData")))
 
   # # ..................................................................... ###
 

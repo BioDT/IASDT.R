@@ -7,12 +7,12 @@
 CheckArgs(AllArgs, Args, Type)
 }
 \arguments{
-\item{AllArgs}{String. Vector for the input parameters of the function.
+\item{AllArgs}{Character vector. Input parameters of the function.
 Usually as a result of \code{formals()} function}
 
-\item{Args}{character vector. Names of the arguments to be checked.}
+\item{Args}{Character vector. Names of the arguments to be checked.}
 
-\item{Type}{character. Specifies the expected type of the arguments. Must be
+\item{Type}{Character. The expected type of the arguments. Must be
 one of "character", "logical", or "numeric".}
 }
 \value{

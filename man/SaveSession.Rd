@@ -7,14 +7,14 @@
 SaveSession(Path = getwd(), ExcludeObj = NULL, Prefix = "S")
 }
 \arguments{
-\item{Path}{A string specifying the directory path where the output \code{RData}
+\item{Path}{Character. Directory path where the output \code{RData}
 file should be saved. Defaults to the current working directory
 \code{\link[base:getwd]{base::getwd()}}.}
 
-\item{ExcludeObj}{A vector of object names (as strings) to exclude from
-saving.}
+\item{ExcludeObj}{Character vector. Object names (as strings) to exclude
+from saving.}
 
-\item{Prefix}{A string to prefix the saved file name with. Defaults to \code{S}.}
+\item{Prefix}{Character. Prefix the saved file name with. Defaults to \code{S}.}
 }
 \value{
 A tibble containing the names and sizes (in MB, rounded to 1 decimal

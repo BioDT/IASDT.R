@@ -1,5 +1,5 @@
 ## |------------------------------------------------------------------------| #
-# GetCV ----
+# Mod_GetCV ----
 ## |------------------------------------------------------------------------| #
 
 #' Prepare spatial-block cross-validation folds for spatial analysis
@@ -7,61 +7,55 @@
 #' This function assign modelling input data into spatial-block cross-validation
 #' folds using three strategies (see below) using [blockCV::cv_spatial]. The
 #' function is planned to be used inside the [IASDT.R::Mod_Prep4HPC] function.
-#' @param DT A data frame or tibble containing the input dataset. This data
-#'   frame should include two columns for `x` and `y` coordinates as long as
-#'   other columns matching the names of predictors listed in `XVars` argument.
-#' @param EnvFile String specifying the path to read environment variables from,
-#'   with a default value of `.env`.
-#' @param XVars Vector of strings specifying variables to be used in the model.
+#' @param Data `data.frame`. A data frame or tibble containing the input
+#'   dataset. This data frame should include two columns for `x` and `y`
+#'   coordinates as long as other columns matching the names of predictors
+#'   listed in `XVars` argument. This argument is mandatory and can not be
+#'   empty.
+#' @param EnvFile Character. Path to the environment file containing paths to
+#'   data sources. Defaults to `.env`.
+#' @param XVars Character vector. Variables to be used in the model.
 #'   This argument is mandatory and can not be empty.
-#' @param CV_NGrids For `CV_Dist` cross-validation strategy (see below), this
-#'   argument determines the size of the blocks (how many grid cells in both
-#'   directions).
-#' @param CV_NFolds Number of cross-validation folds. Default: 4.
-#' @param CV_NR,CV_NC Integer, the number of rows and columns used in the
-#'   `CV_Large` cross-validation strategy (see below), in which the study area
-#'   is divided into large blocks given the provided `CV_NR` and `CV_NC` values.
-#'   Both default to 2 which means to split the study area into four large
-#'   blocks at the median latitude and longitude.
-#' @param CV_SAC Logical. Indicating whether to use the spatial autocorrelation
+#' @param CV_NGrids Integer. Number of grid cells in both directions used in
+#'   the `CV_Dist` cross-validation strategy (see below). Default: 20L.
+#' @param CV_NFolds Integer. Number of cross-validation folds. Default: 4L.
+#' @param CV_NR,CV_NC Integer. Number of rows and columns used in the `CV_Large`
+#'   cross-validation strategy (see below), in which the study area is divided
+#'   into large blocks given the provided `CV_NR` and `CV_NC` values. Both
+#'   default to 2L which means to split the study area into four large blocks at
+#'   the median latitude and longitude.
+#' @param CV_SAC Logical. Whether to use the spatial autocorrelation
 #'   to determine the block size. Defaults to `FALSE`,
-#' @param OutPath String specifying the folder path to save the cross-validation
-#'   results. Default: `NULL`.
-#' @param FromHPC Logical. Indicates whether the function is being run on an HPC
-#'   environment, affecting file path handling. Default: `TRUE`.
+#' @param OutPath Character. Path for directory to save the
+#'   cross-validation results. This argument is mandatory and can not be empty.
+#' @param FromHPC Logical. Whether the processing is being done on an
+#'   High-Performance Computing (HPC) environment, to adjust file paths
+#'   accordingly. Default: `TRUE`.
 #' @param CV_Plot Logical. Indicating whether to plot the block cross-validation
 #'   folds.
-#' @name GetCV
+#' @name Mod_GetCV
 #' @author Ahmed El-Gabbas
-#' @return The function returns a modified version of the input dataset `DT`
-#'   with 3 additional numeric columns (integer) indicating the cross-validation
-#'   folds:
-#'
-#'   1) `CV_SAC` in which the size of the blocks is determined by the median
-#'   spatial autocorrelation range in the predictor data (estimated using
-#'   [blockCV::cv_spatial_autocor]). This requires the availability of the
-#'   `automap` R package.
-#'
-#'   2) `CV_Dist` in which the size of spatial cross-validation blocks is
+#' @return The function returns a modified version of the input dataset with
+#'   additional numeric columns (integer) indicating the cross-validation
+#'   strategy used.
+#' @note The function uses the following cross-validation strategies:
+#' - `CV_Dist` in which the size of spatial cross-validation blocks is
 #'   determined by the `CV_NGrids` argument. The default `CV_NGrids` value is
-#'   20, which means blocks of 20x20 grid cell each.
-#'
-#'   3) `CV_Large` which splits the study area into large blocks, as determined
-#'   by the  `CV_NR` and `CV_NC` arguments. if `CV_NR = CV_NC` = 2 (default),
+#'   20L, which means blocks of 20&times;20 grid cell each.
+#' - `CV_Large` which splits the study area into large blocks, as determined
+#'   by the  `CV_NR` and `CV_NC` arguments. if `CV_NR = CV_NC` = 2L (default),
 #'   four large blocks will be used, split the study area at the median
 #'   coordinates.
-#' @details The function reads the following environment variable:
-#'    - **`DP_R_Grid`** (if `FromHPC = TRUE`) or
-#'    **`DP_R_Grid_Local`** (if `FromHPC = FALSE`). The function reads
-#'   the content of the `Grid_10_Land_Crop.RData` file from this path.
-#'   - **`DP_R_EUBound_sf`** (if `FromHPC` = `TRUE`) or
-#'     **`DP_R_EUBound_sf_Local`** (if `FromHPC` = `FALSE`): path for the
-#'   `RData` file containing the country boundaries (`sf` object).
+#' - `CV_SAC` in which the size of the blocks is determined by the median
+#'   spatial autocorrelation range in the predictor data (estimated using
+#'   [blockCV::cv_spatial_autocor]). This requires the availability of the
+#'   `automap` R package. This strategy is currently skipped by default.
+
 #' @export
 
-GetCV <- function(
-    DT = NULL, EnvFile = ".env", XVars, CV_NFolds = 4, CV_NGrids = 20,
-    CV_NR = 2, CV_NC = 2, CV_SAC = FALSE, OutPath = NULL,
+Mod_GetCV <- function(
+    Data = NULL, EnvFile = ".env", XVars = NULL, CV_NFolds = 4L,
+    CV_NGrids = 20L, CV_NR = 2, CV_NC = 2L, CV_SAC = FALSE, OutPath = NULL,
     FromHPC = TRUE, CV_Plot = TRUE) {
 
   # # |||||||||||||||||||||||||||||||||||
@@ -72,8 +66,8 @@ GetCV <- function(
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Path_Grid <- EU_Bound <- NULL
 
-  if (is.null(DT) || is.null(EnvFile) || is.null(OutPath) || is.null(XVars)) {
-    stop("DT, EnvFile, OutPath, and XVars can not be empty", call. = FALSE)
+  if (is.null(Data) || is.null(EnvFile) || is.null(OutPath) || is.null(XVars)) {
+    stop("Data, EnvFile, OutPath, and XVars can not be empty", call. = FALSE)
   }
 
   if (!file.exists(EnvFile)) {
@@ -83,12 +77,12 @@ GetCV <- function(
   }
 
   AllVars <- c("x", "y", XVars)
-  AllVarsInDT <- all(AllVars %in% names(DT))
+  AllVarsInDT <- all(AllVars %in% names(Data))
   if (isFALSE(AllVarsInDT)) {
-    MissingVars <- setdiff(AllVars, names(DT))
+    MissingVars <- setdiff(AllVars, names(Data))
     stop(
       paste0(
-        "Data frame DT must contain 'x' and 'y' columns and all ",
+        "Data frame Data must contain 'x' and 'y' columns and all ",
         "environmental predictors in the XVars argument.\nMissing vars are ",
         paste0(MissingVars, collapse = "; ")),
       call. = FALSE)
@@ -113,7 +107,7 @@ GetCV <- function(
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
-  Path_Grid <- file.path(Path_Grid, "Grid_10_Land_Crop.RData")
+  Path_Grid <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(Path_Grid)) {
     stop("Path for reference grid does not exist", call. = FALSE)
   }
@@ -123,7 +117,7 @@ GetCV <- function(
   # # Coordinates as raster -----
   # # |||||||||||||||||||||||||||||||||||
 
-  DT_R <- dplyr::select(DT, "x", "y") %>%
+  DT_R <- dplyr::select(Data, "x", "y") %>%
     as.matrix() %>%
     terra::rasterize(RefGrid) %>%
     terra::trim()
@@ -132,14 +126,14 @@ GetCV <- function(
   # # input data as sf -----
   # # |||||||||||||||||||||||||||||||||||
 
-  XY_sf <- dplyr::select(DT, "x", "y") %>%
+  XY_sf <- dplyr::select(Data, "x", "y") %>%
     sf::st_as_sf(coords = c("x", "y"), crs = 3035)
 
   # # |||||||||||||||||||||||||||||||||||
   # # data as raster stack -----
   # # |||||||||||||||||||||||||||||||||||
 
-  DT_R <- dplyr::select(DT, dplyr::all_of(AllVars)) %>%
+  DT_R <- dplyr::select(Data, dplyr::all_of(AllVars)) %>%
     sf::st_as_sf(coords = c("x", "y"), crs = 3035) %>%
     terra::rasterize(y = RefGrid, field = names(.)[-length(.)]) %>%
     raster::trim()
@@ -174,7 +168,7 @@ GetCV <- function(
     # Measure spatial autocorrelation in predictor raster files
     IASDT.R::CatTime("Calculating median SAC range", Level = 2)
     CV_SAC_Range <- blockCV::cv_spatial_autocor(
-      r = DT_R, num_sample = min(10000, nrow(DT)), plot = FALSE,
+      r = DT_R, num_sample = min(10000, nrow(Data)), plot = FALSE,
       progress = FALSE)
 
     # If median spatial cross-validation is very large, skip CV_SAC option. This
@@ -236,7 +230,7 @@ GetCV <- function(
     CV_SAC_Range = CV_SAC_Range, CV_SAC = CV_SAC, CV_Dist = CV_Dist,
     CV_Large = CV_Large)
 
-  save(CV_data, file = file.path(OutPath, "CV_data.RData"))
+  save(CV_data, file = IASDT.R::Path(OutPath, "CV_data.RData"))
 
   # # |||||||||||||||||||||||||||||||||||
   # # Plot cross-validation folds -----
@@ -246,7 +240,7 @@ GetCV <- function(
 
     IASDT.R::CatTime("Plot cross-validation folds", Level = 1)
 
-    DT_R <- sf::st_as_sf(DT, coords = c("x", "y"), crs = 3035) %>%
+    DT_R <- sf::st_as_sf(Data, coords = c("x", "y"), crs = 3035) %>%
       terra::rasterize(RefGrid) %>%
       terra::classify(cbind(1, 0)) %>%
       terra::as.factor() %>%
@@ -257,9 +251,6 @@ GetCV <- function(
     } else {
       CVTypes <- c("CV_SAC", "CV_Dist", "CV_Large")
     }
-
-    Xlim <- c(2600000, 6550000)
-    Ylim <- c(1450000, 5420000)
 
     EU_Bound <- IASDT.R::LoadAs(EU_Bound) %>%
       magrittr::extract2("Bound_sf_Eur_s") %>%
@@ -285,7 +276,9 @@ GetCV <- function(
           ggplot2::geom_sf_text(
             data = blocks, ggplot2::aes(label = folds), size = 8,
             fontface = "bold") +
-          ggplot2::coord_sf(xlim = Xlim, ylim = Ylim, clip = "off") +
+          ggplot2::coord_sf(
+            xlim = c(2600000, 6550000), ylim = c(1450000, 5420000),
+            clip = "off") +
           ggplot2::scale_fill_manual(
             values = c(
               "darkgrey", "transparent", "red", "green", "blue", "yellow"),
@@ -305,7 +298,7 @@ GetCV <- function(
       })
 
     grDevices::cairo_pdf(
-      filename = file.path(OutPath, "CV_Blocks.pdf"),
+      filename = IASDT.R::Path(OutPath, "CV_Blocks.pdf"),
       width = 12.5, height = 13, onefile = TRUE)
     invisible(purrr::map(CV_Plots, print))
     grDevices::dev.off()
@@ -316,10 +309,10 @@ GetCV <- function(
   # # |||||||||||||||||||||||||||||||||||
 
   if (!is.null(CV_SAC)) {
-    DT$CV_SAC <- magrittr::extract2(CV_SAC, "folds_ids")
+    Data$CV_SAC <- magrittr::extract2(CV_SAC, "folds_ids")
   }
-  DT$CV_Dist <- magrittr::extract2(CV_Dist, "folds_ids")
-  DT$CV_Large <- magrittr::extract2(CV_Large, "folds_ids")
+  Data$CV_Dist <- magrittr::extract2(CV_Dist, "folds_ids")
+  Data$CV_Large <- magrittr::extract2(CV_Large, "folds_ids")
 
-  return(DT)
+  return(Data)
 }

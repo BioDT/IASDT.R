@@ -16,10 +16,11 @@
 #' STRAHLER values of 5 or higher).
 #'
 #' @name River_Length
-#' @param FromHPC Logical indicating whether the work is being done from HPC, to
-#'   adjust file paths accordingly. Default: `TRUE`.
-#' @param EnvFile Character. The path to the environment file containing
-#'   variables required by the function. Default is ".env".
+#' @param FromHPC Logical. Whether the processing is being done on an 
+#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#'   accordingly. Default: `TRUE`.
+#' @param EnvFile Character. Path to the environment file containing paths to 
+#'   data sources. Defaults to `.env`.
 #' @param Filename Character. The name of the ZIP file containing the river
 #'   network data. Default is "EU_hydro_gpkg_eu.zip".
 #' @param Cleanup Logical indicating whether to clean up temporary files from
@@ -98,7 +99,7 @@ River_Length <- function(
 
   fs::dir_create(c(Path_Rivers, Path_Rivers_Raw, Path_Rivers_Interim))
 
-  RefGrid <- file.path(Path_Grid, "Grid_10_Land_Crop.RData")
+  RefGrid <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(RefGrid)) {
     stop(
       paste0("The reference grid file does not exist: ", RefGrid),
@@ -114,7 +115,7 @@ River_Length <- function(
   # # |||||||||||||||||||||||||||||||||||
 
   # Path to the ZIP file
-  Path_Rivers_Zip <- file.path(Path_Rivers_Raw, Filename)
+  Path_Rivers_Zip <- IASDT.R::Path(Path_Rivers_Raw, Filename)
 
   # Check if ZIP file exists and not empty
   if (!file.exists(Path_Rivers_Zip) || fs::file_size(Path_Rivers_Zip) == 0) {
@@ -129,7 +130,7 @@ River_Length <- function(
     dplyr::select(path, size_original = size) %>%
     dplyr::mutate(
       # Use working relative path
-      path = file.path(Path_Rivers_Interim, path),
+      path = IASDT.R::Path(Path_Rivers_Interim, path),
       # Check if file exists in the interim directory
       exists = file.exists(path),
       # File size on disk
@@ -192,7 +193,7 @@ River_Length <- function(
             dplyr::select(path, size_original = size) %>%
             dplyr::mutate(
               # Use working relative path
-              path2 = file.path(Path_Rivers_Interim, basename(path)),
+              path2 = IASDT.R::Path(Path_Rivers_Interim, basename(path)),
               # Check if file exists in the interim directory
               exists = file.exists(path2),
               # File size on disk
@@ -323,13 +324,13 @@ River_Length <- function(
   IASDT.R::CatTime("Save as RData", Level = 1, Time = FALSE)
   IASDT.R::SaveAs(
     InObj = terra::wrap(River_Lengths), OutObj = "River_Length",
-    OutPath = file.path(Path_Rivers, "River_Lengths.RData"))
+    OutPath = IASDT.R::Path(Path_Rivers, "River_Lengths.RData"))
 
   # Save as tif files
   IASDT.R::CatTime("Save as tif files", Level = 1, Time = FALSE)
   terra::writeRaster(
     x = River_Lengths,
-    filename = file.path(
+    filename = IASDT.R::Path(
       Path_Rivers, paste0("Rivers_", names(River_Lengths), ".tif")),
     overwrite = TRUE)
 
@@ -391,7 +392,7 @@ River_Length <- function(
           margin = ggplot2::margin(t = 2.5, r = 0, b = 5, l = 0))))
 
   ragg::agg_jpeg(
-    filename = file.path(Path_Rivers, "River_Length.jpeg"),
+    filename = IASDT.R::Path(Path_Rivers, "River_Length.jpeg"),
     width = 30, height = 33, res = 600, quality = 100, units = "cm")
   print(RiverPlots2)
   grDevices::dev.off()

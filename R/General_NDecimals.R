@@ -8,7 +8,7 @@
 #' is designed to work with numeric inputs that can be coerced to character
 #' format.
 #'
-#' @param x A numeric value or a string that represents a numeric value.
+#' @param x Numeric (or character) numeric value.
 #' @name NDecimals
 #' @author Ahmed El-Gabbas
 #' @return An integer representing the number of decimal places in the input

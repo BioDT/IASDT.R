@@ -2,28 +2,45 @@
 # RespCurv_PrepData ----
 ## |------------------------------------------------------------------------| #
 
-#' Prepare and process response curve data for Hmsc models
+#' Prepare and plot response curve data for Hmsc models
 #'
-#' This function prepares and processes data for generating response curves for
-#' Hmsc models. It supports parallel processing and can return the processed
-#' data.
-#' @param Path_Model Character. Path file containing the model.
-#' @param N_Grid Integer specifying the number of points along the gradient for
-#'   continuous focal variables. Defaults to 50. See [Hmsc::constructGradient]
-#'   for more details.
-#' @param NCores Integer specifying the number of cores to use for parallel
-#'   processing. Defaults to 8.
-#' @param ReturnData Logical. If `TRUE`, returns processed response curve data
-#'   as an R object. Default is `FALSE`.
-#' @param Probabilities quantiles to be calculated. Defaults to `c(0.025, 0.5,
-#'   0.975)`. See [stats::quantile] for more details.
-#' @seealso RespCurv_PlotSp RespCurv_PlotSR
-#' @return Depending on the value of `ReturnData`, either returns response curve
-#'   data or `NULL` invisibly.
+#' The `RespCurv_*()` functions process and visualize response curves for Hmsc
+#' models. They support parallel computation and optionally return processed
+#' data. There are four functions in this group:
+#' - `RespCurv_PrepData()`: Prepares response curve data for analysis
+#' - `RespCurv_PlotSp()`: Generates response curve plots for individual species
+#' - `RespCurv_PlotSpAll()`: Generates response curves for all species together
+#' in a single plot
+#' - `RespCurv_PlotSR()`: Plots response curves for species richness.
+#' @param Path_Model Character. Path to the file containing the fitted Hmsc
+#'   model.
+#' @param N_Grid Integer. Number of points along the gradient for continuous
+#'   focal variables. Higher values result in smoother curves. Default: 50. See
+#'   [Hmsc::constructGradient] for details.
+#' @param NCores Integer. Number of CPU cores to use for parallel processing.
+#'   Defaults to 8 for all functions, except for `RespCurv_PlotSp`, in which it
+#'   defaults to 20.
+#' @param ReturnData Logical. If `TRUE`, the function returns processed data as
+#'   an R object. Default: `FALSE`.
+#' @param Probabilities Numeric vector. Quantiles to calculate in response curve
+#'   predictions. Default: `c(0.025, 0.5, 0.975)`. See [stats::quantile] for
+#'   details.
+#' @param ModelDir Character. Path to the root directory containing fitted
+#'   models. The function reads data from the `RespCurv_DT` subdirectory, which
+#'   is created by `RespCurv_PrepData`.
+#' @param EnvFile Character. Path to the environment file containing paths to
+#'   data sources. Defaults to `.env`.
+#' @param FromHPC Logical. Whether the processing is being done on an
+#'   High-Performance Computing (HPC) environment, to adjust file paths
+#'   accordingly. Default: `TRUE`.
+#' @param PlottingAlpha Numeric. Opacity level for response curve lines (0 =
+#'   fully transparent, 1 = fully opaque). Default: 0.3.
 #' @export
 #' @inheritParams Predict_Hmsc
+#' @rdname Response_curves
+#' @name Response_curves
+#' @order 1
 #' @author Ahmed El-Gabbas
-#' @name RespCurv_PrepData
 
 RespCurv_PrepData <- function(
     Path_Model = NULL, N_Grid = 50, NCores = 8, ReturnData = FALSE,
@@ -315,8 +332,8 @@ RespCurv_PrepData <- function(
 
   # Prepare response curve data -------
 
-  Path_RC <- file.path(dirname(dirname(Path_Model)), "Model_Postprocessing")
-  Path_RC_DT <- file.path(Path_RC, "RespCurv_DT")
+  Path_RC <- IASDT.R::Path(dirname(dirname(Path_Model)), "Model_Postprocessing")
+  Path_RC_DT <- IASDT.R::Path(Path_RC, "RespCurv_DT")
   fs::dir_create(Path_RC_DT)
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -351,11 +368,11 @@ RespCurv_PrepData <- function(
         .x = Variable, .f = stringr::str_remove_all,
         pattern = "stats::poly\\(|, degree = 2, raw = TRUE\\)"),
       RC_DT_Name = paste0("RC_", VarName, "_coord_", Coords, "_NFV", NFV),
-      RC_DT_Path_Orig = file.path(
+      RC_DT_Path_Orig = IASDT.R::Path(
         Path_RC_DT, paste0(RC_DT_Name, "_Orig.qs2")),
-      RC_DT_Path_Prob = file.path(
+      RC_DT_Path_Prob = IASDT.R::Path(
         Path_RC_DT, paste0(RC_DT_Name, "_Prob.qs2")),
-      RC_DT_Path_SR = file.path(Path_RC_DT, paste0(RC_DT_Name, "_SR.qs2")),
+      RC_DT_Path_SR = IASDT.R::Path(Path_RC_DT, paste0(RC_DT_Name, "_SR.qs2")),
       FileExists = purrr::pmap_lgl(
         .l = list(RC_DT_Path_Orig, RC_DT_Path_Prob, RC_DT_Path_SR),
         .f = function(RC_DT_Path_Orig, RC_DT_Path_Prob, RC_DT_Path_SR) {
@@ -369,7 +386,7 @@ RespCurv_PrepData <- function(
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   MissingRows <- sum(!ResCurvDT$FileExists)
-  File_LF <- file.path(Path_RC_DT, "ResCurv_LF.qs2")
+  File_LF <- IASDT.R::Path(Path_RC_DT, "ResCurv_LF.qs2")
 
   if (MissingRows == 0) {
 
@@ -496,7 +513,7 @@ RespCurv_PrepData <- function(
   # # ..................................................................... ###
 
   IASDT.R::CatTime("Saving data to desk")
-  save(ResCurvDT, file = file.path(Path_RC_DT, "ResCurvDT.RData"))
+  save(ResCurvDT, file = IASDT.R::Path(Path_RC_DT, "ResCurvDT.RData"))
 
   # # ..................................................................... ###
 

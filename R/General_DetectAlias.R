@@ -9,9 +9,9 @@
 #' and then using the alias function to detect aliased variables.
 #' @param DT A `data frame` or `tibble` containing the variables to be checked
 #'   for aliasing.
-#' @param Verbose A logical value indicating whether to print the aliased
-#'   variables found (if any). If `TRUE`, aliased variables are printed to the
-#'   console. Defaults to `FALSE`.
+#' @param Verbose Logical. Whether to print the aliased variables 
+#'   found (if any). If `TRUE`, aliased variables are printed to the console. 
+#'   Defaults to `FALSE`.
 #' @return Returns a character vector of aliased variable names if any are
 #'   found; otherwise, returns `NULL` invisibly. If `Verbose` is `TRUE`, the
 #'   function will also print a message to the console.

@@ -12,7 +12,7 @@ Efforts_Summarize(
   Path_Grid,
   IAS_List,
   Efforts_AllRequests,
-  ChunkSize = 1e+05,
+  ChunkSize = 100000L,
   DeleteChunks = TRUE
 )
 }

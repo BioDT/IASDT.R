@@ -9,12 +9,13 @@
 #' The function handles data chunking, merging, and produces summary maps as
 #' well as species-specific data.
 #'
-#' @param FromHPC Logical indicating whether the work is being done from HPC, to
-#'   adjust file paths accordingly. Default: `TRUE`.
-#' @param EnvFile Character. The path to the environment file containing
-#'   variables required by the function. Default is ".env".
-#' @param NCores Numeric. Number of cores to use for parallel processing.
-#'   Defaults to 6.
+#' @param FromHPC Logical. Whether the processing is being done on an 
+#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#'   accordingly. Default: `TRUE`.
+#' @param EnvFile Character. Path to the environment file containing paths to 
+#'   data sources. Defaults to `.env`.
+#' @param NCores Integer. Number of CPU cores to use for parallel processing. 
+#'   Default: 6.
 #' @param DeleteChunks Logical. If `TRUE`, delete the chunk files. Defaults to
 #'  `TRUE`.
 #' @inheritParams GBIF_Download
@@ -29,10 +30,10 @@
 #' @export
 
 GBIF_Process <- function(
-    FromHPC = TRUE, EnvFile = ".env", Renviron = ".Renviron", NCores = 6,
+    FromHPC = TRUE, EnvFile = ".env", Renviron = ".Renviron", NCores = 6L,
     RequestData = TRUE, DownloadData = TRUE, SplitChunks = TRUE,
-    Overwrite = FALSE, DeleteChunks = TRUE, ChunkSize = 50000,
-    Boundaries = c(-30, 50, 25, 75), StartYear = 1981) {
+    Overwrite = FALSE, DeleteChunks = TRUE, ChunkSize = 50000L,
+    Boundaries = c(-30, 50, 25, 75), StartYear = 1981L) {
 
   # # ..................................................................... ###
 
@@ -57,7 +58,7 @@ GBIF_Process <- function(
     Args = c("StartYear", "Boundaries", "ChunkSize", "NCores"))
 
   withr::local_options(
-    future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+    future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
     future.seed = TRUE)
 
   # # ..................................................................... ###
@@ -119,7 +120,7 @@ GBIF_Process <- function(
 
   # # ..................................................................... ###
 
-  GBIF_Metadata <- file.path(Path_GBIF, "GBIF_Metadata.RData")
+  GBIF_Metadata <- IASDT.R::Path(Path_GBIF, "GBIF_Metadata.RData")
   if (!file.exists(GBIF_Metadata)) {
     stop(
       paste0("GBIF metadata file does not exist: ", GBIF_Metadata),
@@ -128,11 +129,11 @@ GBIF_Process <- function(
   GBIF_Metadata <- IASDT.R::LoadAs(GBIF_Metadata)
 
   TaxaList <- IASDT.R::LoadAs(TaxaInfo)
-  Path_SpData <- file.path(Path_GBIF, "Sp_Data")
+  Path_SpData <- IASDT.R::Path(Path_GBIF, "Sp_Data")
   fs::dir_create(Path_SpData)
 
   # Grid_10_Land_Crop_sf
-  GridSf <- file.path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
+  GridSf <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
   if (!file.exists(GridSf)) {
     stop(
       paste0("Reference grid (sf) file not found at: ", GridSf),
@@ -141,7 +142,7 @@ GBIF_Process <- function(
   GridSf <- IASDT.R::LoadAs(GridSf)
 
   # Grid_10_Land_Crop
-  GridR <- file.path(Path_Grid, "Grid_10_Land_Crop.RData")
+  GridR <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(GridR)) {
     stop(paste0("Reference grid file not found at: ", GridR), call. = FALSE)
   }
@@ -173,7 +174,7 @@ GBIF_Process <- function(
     future::plan("future::sequential", gc = TRUE)
   } else {
     withr::local_options(
-      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
       future.seed = TRUE)
     c1 <- snow::makeSOCKcluster(NCores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
@@ -241,7 +242,7 @@ GBIF_Process <- function(
   }
 
   IASDT.R::CatTime("Saving `GBIF_Data` to disk", Level = 1)
-  save(GBIF_Data, file = file.path(Path_GBIF, "GBIF_Data.RData"))
+  save(GBIF_Data, file = IASDT.R::Path(Path_GBIF, "GBIF_Data.RData"))
 
   rm(TaxaList, envir = environment())
   invisible(gc())
@@ -287,10 +288,10 @@ GBIF_Process <- function(
   IASDT.R::CatTime("Save iNaturalist summary data", Level = 1)
   save(
     iNaturalist_Count,
-    file = file.path(Path_GBIF, "iNaturalist_Count.RData"))
+    file = IASDT.R::Path(Path_GBIF, "iNaturalist_Count.RData"))
 
   rm(
-    iNaturalist_Others, iNaturalist_Unique, iNaturalist_Count, 
+    iNaturalist_Others, iNaturalist_Unique, iNaturalist_Count,
     envir = environment())
   invisible(gc())
 
@@ -310,7 +311,7 @@ GBIF_Process <- function(
     sf::st_as_sf()
 
   IASDT.R::CatTime("Save presence-only grids", Level = 1)
-  save(GBIF_Grid, file = file.path(Path_GBIF, "GBIF_Grid.RData"))
+  save(GBIF_Grid, file = IASDT.R::Path(Path_GBIF, "GBIF_Grid.RData"))
   invisible(gc())
 
   # # ..................................................................... ###
@@ -337,11 +338,11 @@ GBIF_Process <- function(
     by = c("IAS_ID", "taxon_name", "Species_name"))
 
   IASDT.R::CatTime("Save as RData", Level = 1)
-  save(GBIF_NObsNGrid, file = file.path(Path_GBIF, "GBIF_NObsNGrid.RData"))
+  save(GBIF_NObsNGrid, file = IASDT.R::Path(Path_GBIF, "GBIF_NObsNGrid.RData"))
 
   IASDT.R::CatTime("Save as xlsx", Level = 1)
   writexl::write_xlsx(
-    x = GBIF_NObsNGrid, path = file.path(Path_GBIF, "GBIF_NObsNGrid.xlsx"))
+    x = GBIF_NObsNGrid, path = IASDT.R::Path(Path_GBIF, "GBIF_NObsNGrid.xlsx"))
 
   rm(GBIF_NObsNGrid, SpNObs, SpNGrids, envir = environment())
   invisible(gc())
@@ -373,7 +374,9 @@ GBIF_Process <- function(
     terra::wrap()
 
   IASDT.R::CatTime("Save as RData", Level = 2)
-  save(GBIF_NObs, GBIF_NObs_log, file = file.path(Path_GBIF, "GBIF_NObs.RData"))
+  save(
+    GBIF_NObs, GBIF_NObs_log,
+    file = IASDT.R::Path(Path_GBIF, "GBIF_NObs.RData"))
 
   invisible(gc())
 
@@ -400,7 +403,9 @@ GBIF_Process <- function(
     terra::wrap()
 
   IASDT.R::CatTime("Save as RData", Level = 2)
-  save(GBIF_NSp, GBIF_NSp_Log, file = file.path(Path_GBIF, "GBIF_NSp.RData"))
+  save(
+    GBIF_NSp, GBIF_NSp_Log,
+    file = IASDT.R::Path(Path_GBIF, "GBIF_NSp.RData"))
 
   rm(GridSf, GridR, envir = environment())
   invisible(gc())
@@ -423,7 +428,7 @@ GBIF_Process <- function(
 
   Plot_GBIF_Summary <- function(
     RstrMap, Title, LegendLabel = NULL, EU_Map = EuroBound) {
-    
+
     # Plotting limits
     Xlim <- c(2600000, 6700000)
     Ylim <- c(1450000, 5420000)
@@ -514,7 +519,7 @@ GBIF_Process <- function(
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   grDevices::jpeg(
-    filename = file.path(Path_GBIF, "GBIF_Summary.jpeg"),
+    filename = IASDT.R::Path(Path_GBIF, "GBIF_Summary.jpeg"),
     width = 25, height = 25.8, units = "cm", quality = 100, res = 600)
   print(Plot)
   grDevices::dev.off()
@@ -551,7 +556,7 @@ GBIF_Process <- function(
         stringr::str_replace_all("-", "")
 
       SpData <- dplyr::filter(GBIF_Data, Species_name == .x)
-      OutFileSF <- file.path(Path_SpData, paste0(SpName, ".RData"))
+      OutFileSF <- IASDT.R::Path(Path_SpData, paste0(SpName, ".RData"))
 
       # Save if there is data
       if (nrow(SpData) > 0) {
@@ -578,7 +583,7 @@ GBIF_Process <- function(
     future::plan("future::sequential", gc = TRUE)
   } else {
     withr::local_options(
-      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
       future.seed = TRUE)
     c1 <- snow::makeSOCKcluster(NCores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)

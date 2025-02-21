@@ -12,8 +12,8 @@
 #'   R function.
 #' @param Assign Logical. Whether to assign the arguments as variables in the
 #'   global environment. Defaults to `FALSE`.
-#' @param Package Character string. The name of the R package to be loaded
-#'   before processing the function. Default is NULL.
+#' @param Package Character. Name of the R package to be loaded before 
+#'   processing the function. Default is `NULL`.
 #' @export
 #' @name CatFunArgs
 #' @author Ahmed El-Gabbas

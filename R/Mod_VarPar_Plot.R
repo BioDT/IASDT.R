@@ -2,41 +2,15 @@
 # VarPar_Plot ----
 ## |------------------------------------------------------------------------| #
 
-#' Plot variance partitioning of Hmsc model
-#'
-#' This function generates plots for the variance partitioning of an Hmsc model.
-#' It can optionally compute the variance partitioning if not available on disk,
-#' supporting parallel computation and using TensorFlow; see [VarPar_Compute].
-#' It plots the relative variance partitioning sorted by the mean value per
-#' predictor or by the original species order. It also plots the raw variance
-#' partitioning (relative variance partitioning multiplied by the Tjur-R^2
-#' value). The plots are saved as JPEG files.
-#'
-#' @param Path_Model Character path for the model file.
-#' @param NCores Integer. Number of parallel computations for computing variance
-#'   partitioning using TensorFlow. See [VarPar_Compute] for more details.
-#'   Default: `1`.
-#' @param EnvFile String. Path to read the environment variables. Default value:
-#'   `.env`
-#' @param FromHPC Logical. Indicates whether the function is being run on an HPC
-#'   environment, affecting file path handling. Default: `TRUE`.
-#' @param Fig_width,Fig_height Numeric. Width and height of the output plot in
-#'   centimeters. Default: `30` and `15`, respectively.
-#' @param axis_text Numeric. Size of the axis text. Default: `4`.
-#' @name VarPar_Plot
-#' @author Ahmed El-Gabbas
-#' @details The function reads the following environment variables:
-#'   - **`DP_R_TaxaInfo_RData`** (if `FromHPC` = `TRUE`) or
-#'     **`DP_R_TaxaInfo_RData_Local`** (if `FromHPC` = `FALSE`) for the
-#'   location of the `TaxaList.RData` file containing species information.
-#' @inheritParams Predict_Hmsc
-#' @inheritParams VarPar_Compute
 #' @export
+#' @name Variance_partitioning
+#' @rdname Variance_partitioning
+#' @order 2
 
 VarPar_Plot <- function(
-    Path_Model, EnvFile = ".env", VarParFile = NULL, FromHPC = TRUE,
+    Path_Model, EnvFile = ".env", VarParFile = "VarPar", FromHPC = TRUE,
     UseTF = TRUE, TF_Environ = NULL, NCores = 1,
-    Fig_width = 30, Fig_height = 15, axis_text = 4) {
+    Fig_width = 30, Fig_height = 15, Axis_text = 4) {
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -101,7 +75,7 @@ VarPar_Plot <- function(
   # # ..................................................................... ###
 
   Path_Root <- dirname(dirname(Path_Model))
-  Path_VarPar <- file.path(
+  Path_VarPar <- IASDT.R::Path(
     Path_Root, "Model_Postprocessing/Variance_Partitioning")
 
   # # ..................................................................... ###
@@ -111,7 +85,7 @@ VarPar_Plot <- function(
 
   IASDT.R::CatTime("Loading model evaluation")
 
-  Path_Eval <- file.path(Path_Root, "Model_Evaluation") %>%
+  Path_Eval <- IASDT.R::Path(Path_Root, "Model_Evaluation") %>%
     list.files("Eval_.+.qs2", full.names = TRUE)
 
   if (length(Path_Eval) != 1) {
@@ -140,7 +114,7 @@ VarPar_Plot <- function(
     VarParFile <- "VarPar"
   }
 
-  File_VarPar <- file.path(Path_VarPar, paste0(VarParFile, ".RData"))
+  File_VarPar <- IASDT.R::Path(Path_VarPar, paste0(VarParFile, ".RData"))
 
   if (!file.exists(File_VarPar)) {
     IASDT.R::CatTime(
@@ -176,7 +150,7 @@ VarPar_Plot <- function(
     axis.text.y = ggplot2::element_text(
       size = 7, margin = ggplot2::margin(r = 0)),
     axis.text.x = ggplot2::element_text(
-      face = "italic", size = axis_text, angle = 90, hjust = 1, vjust = 0.3,
+      face = "italic", size = Axis_text, angle = 90, hjust = 1, vjust = 0.3,
       margin = ggplot2::margin(t = 0)),
     axis.title.x = ggplot2::element_blank(),
     axis.title.y = ggplot2::element_blank(),
@@ -302,7 +276,7 @@ VarPar_Plot <- function(
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   ragg::agg_jpeg(
-    filename = file.path(Path_VarPar, "VarPar_Relative_ByMean.jpeg"),
+    filename = IASDT.R::Path(Path_VarPar, "VarPar_Relative_ByMean.jpeg"),
     width = Fig_width, height = Fig_height,
     units = "cm", quality = 100, res = 600)
   print(Plot_Relative)
@@ -331,7 +305,7 @@ VarPar_Plot <- function(
     ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1, byrow = TRUE))
 
   grDevices::jpeg(
-    filename = file.path(Path_VarPar, "VarPar_Relative_ByTaxonomy.jpeg"),
+    filename = IASDT.R::Path(Path_VarPar, "VarPar_Relative_ByTaxonomy.jpeg"),
     width = Fig_width, height = Fig_height,
     units = "cm", quality = 100, res = 600)
   plot(Plot_Relative_Orig)
@@ -363,7 +337,7 @@ VarPar_Plot <- function(
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
   grDevices::jpeg(
-    filename = file.path(Path_VarPar, "VarPar_Relative_ByTjurR2.jpeg"),
+    filename = IASDT.R::Path(Path_VarPar, "VarPar_Relative_ByTjurR2.jpeg"),
     width = Fig_width, height = Fig_height,
     units = "cm", quality = 100, res = 600)
   plot(Plot_Relative_TjurR2)
@@ -394,7 +368,8 @@ VarPar_Plot <- function(
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   ragg::agg_jpeg(
-    filename = file.path(Path_VarPar, "VarPar_Relative_ByTotalNonSpatial.jpeg"),
+    filename = IASDT.R::Path(
+      Path_VarPar, "VarPar_Relative_ByTotalNonSpatial.jpeg"),
     width = Fig_width, height = Fig_height,
     units = "cm", quality = 100, res = 600)
   print(Plot_Relative_NonSpatial)
@@ -503,7 +478,7 @@ VarPar_Plot <- function(
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
   grDevices::jpeg(
-    filename = file.path(Path_VarPar, "VarPar_Raw_ByTaxonomy.jpeg"),
+    filename = IASDT.R::Path(Path_VarPar, "VarPar_Raw_ByTaxonomy.jpeg"),
     width = Fig_width, height = Fig_height,
     units = "cm", quality = 100, res = 600)
   plot(Plot_Raw)
@@ -536,7 +511,7 @@ VarPar_Plot <- function(
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
   grDevices::jpeg(
-    filename = file.path(Path_VarPar, "VarPar_Raw_ByMean.jpeg"),
+    filename = IASDT.R::Path(Path_VarPar, "VarPar_Raw_ByMean.jpeg"),
     width = Fig_width, height = Fig_height,
     units = "cm", quality = 100, res = 600)
   plot(Plot_Raw_TotalRaw)
@@ -569,7 +544,7 @@ VarPar_Plot <- function(
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
   grDevices::jpeg(
-    filename = file.path(Path_VarPar, "VarPar_Raw_ByTotalNonSpatial.jpeg"),
+    filename = IASDT.R::Path(Path_VarPar, "VarPar_Raw_ByTotalNonSpatial.jpeg"),
     width = Fig_width, height = Fig_height,
     units = "cm", quality = 100, res = 600)
   plot(Plot_Raw_NonSpatial)

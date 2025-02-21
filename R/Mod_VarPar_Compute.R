@@ -1,14 +1,18 @@
 ## |------------------------------------------------------------------------| #
 # VarPar_Compute ----
-## |------------------------------------------------------------------------| #
 
-#' Computes variance partitioning of Hmsc models
+#' Computes and visualize variance partitioning of Hmsc models
 #'
-#' Computes variance components with respect to given grouping of fixed effects
-#' and levels of random effects. This function is a wrapper around the
-#' `Hmsc::computeVariancePartitioning`, but with the added functionality of
-#' parallel computation using TensorFlow.
-#'
+#' The **`VarPar_Compute()`** function computes variance components with respect
+#' to given grouping of fixed effects and levels of random effects. This
+#' function inherits the main functionality from the
+#' `Hmsc::computeVariancePartitioning` function, but with the added
+#' functionality of parallel computation and using TensorFlow.<br/>The
+#' **`VarPar_Plot()`** function generates plots for variance partitioning as
+#' JPEG files. It allows for sorting the predictors and species; e.g., by the
+#' mean value per predictor; and by original species order. It also plots the
+#' raw variance partitioning (relative variance partitioning multiplied by the
+#' Tjur-R<sup>2</sup> value).
 #' @param Path_Model Character. Path to fitted `Hmsc` model object.
 #' @param group vector of numeric values corresponding to group identifiers in
 #'   groupnames. If the model was defined with `XData` and `XFormula`, the
@@ -17,25 +21,37 @@
 #'   match `group`. If the model was defined with `XData` and `XFormula`, the
 #'   default is to use the labels of model terms.
 #' @param start index of first MCMC sample included
-#' @param na.ignore logical. If TRUE, covariates are ignored for sites where the
-#'   focal species is NA when computing variance-covariance matrices for each
-#'   species
-#' @param NCores Integer specifying the number of parallel cores for
-#'   parallelization. This is only used when `UseTF` is TRUE.
+#' @param na.ignore Logical. If `TRUE`, covariates are ignored for sites where
+#'   the focal species is NA when computing variance-covariance matrices for
+#'   each species.
+#' @param NCores Integer. Number of CPU cores to use for computing variance
+#'   partitioning using TensorFlow. This is only effective when `UseTF` is
+#'   `TRUE`. Default: `1`.
 #' @param Chunk_size Integer. Size of each chunk of samples to process in
 #'   parallel. Only relevant for TensorFlow. Default: `50`.
-#' @param Verbose Logical. Indicates whether progress messages should be
-#'   displayed. Defaults to `TRUE`.
+#' @param Verbose Logical. Whether to print progress messages. 
+#'   Default is `TRUE`.
 #' @param Temp_Cleanup Logical. Whether to delete temporary files after
 #'   processing. Default: `TRUE`.
-#' @param VP_Commands_Only logical. If `TRUE`, returns the commands to run the
+#' @param VP_Commands_Only Logical. If `TRUE`, returns the commands to run the
 #'   Python script. Default is `FALSE`. Only relevant when `UseTF` is `TRUE`.
 #' @param VarParFile Character. Name of the output file to save the results.
-#' @export
-#' @name VarPar_Compute
+#'   Default: `VarPar`.
+#' @param EnvFile Character. Path to the environment file containing paths to 
+#'   data sources. Defaults to `.env`.
+#' @param FromHPC Logical. Whether the processing is being done on an 
+#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#'   accordingly. Default: `TRUE`.
+#' @param Fig_width,Fig_height Numeric. Width and height of the output plot in
+#'   centimeters. Default: `30` and `15`, respectively.
+#' @param Axis_text Numeric. Size of the axis text. Default: `4`.
 #' @author Ahmed El-Gabbas
 #' @inheritParams Predict_Hmsc
-#' @inheritParams Predict_LF
+#' @inheritParams VarPar_Compute
+#' @inheritParams Mod_Predict_LF
+#' @name Variance_partitioning
+#' @rdname Variance_partitioning
+#' @order 1
 #' @export
 
 VarPar_Compute <- function(
@@ -80,7 +96,7 @@ VarPar_Compute <- function(
     # point to a valid python virtual environment.
 
     python_executable <- if (.Platform$OS.type == "windows") {
-      Py <- file.path(TF_Environ, "Scripts", "python.exe")
+      Py <- IASDT.R::Path(TF_Environ, "Scripts", "python.exe")
       if (isFALSE(VP_Commands_Only) && !file.exists(Py)) {
         stop(
           paste0(
@@ -138,7 +154,7 @@ VarPar_Compute <- function(
   # # .................................................................... ###
 
   # Create folder for variance partitioning results
-  Path_VarPar <- file.path(
+  Path_VarPar <- IASDT.R::Path(
     dirname(dirname(Path_Model)), "Model_Postprocessing/Variance_Partitioning")
   fs::dir_create(Path_VarPar)
 
@@ -226,25 +242,28 @@ VarPar_Compute <- function(
   if (UseTF) {
 
     # Create the temporary directory
-    Path_Temp <- file.path(dirname(dirname(Path_Model)), "TEMP_VP")
+    Path_Temp <- IASDT.R::Path(dirname(dirname(Path_Model)), "TEMP_VP")
     fs::dir_create(Path_Temp)
 
     FileSuffix <- stringr::str_pad(
       string = seq_len(poolN), pad = "0", width = 4)
 
     # List of feather files resulted from `geta` function
-    Files_la <- file.path(Path_Temp, paste0("VP_A_", FileSuffix, ".feather"))
+    Files_la <- IASDT.R::Path(
+      Path_Temp, paste0("VP_A_", FileSuffix, ".feather"))
     Files_la_Exist <- all(file.exists(Files_la))
 
     # List of feather files resulted from `getf` function
-    Files_lf <- file.path(Path_Temp, paste0("VP_F_", FileSuffix, ".feather"))
+    Files_lf <- IASDT.R::Path(
+      Path_Temp, paste0("VP_F_", FileSuffix, ".feather"))
     Files_lf_Exist <- all(file.exists(Files_lf))
 
     # List of feather files resulted from `gemu` function
-    Files_lmu <- file.path(Path_Temp, paste0("VP_Mu_", FileSuffix, ".feather"))
+    Files_lmu <- IASDT.R::Path(
+      Path_Temp, paste0("VP_Mu_", FileSuffix, ".feather"))
     Files_lmu_Exist <- all(file.exists(Files_lmu))
 
-    Beta_Files <- file.path(
+    Beta_Files <- IASDT.R::Path(
       Path_Temp, paste0("VP_Beta_", FileSuffix, ".feather"))
 
     if (all(c(Files_la_Exist, Files_lf_Exist, Files_lmu_Exist))) {
@@ -265,7 +284,7 @@ VarPar_Compute <- function(
       # needed only to calculate `geta` and `getf` functions
       if (!all(c(Files_la_Exist, Files_lf_Exist))) {
         IASDT.R::CatTime("X", Level = 2)
-        Path_X <- file.path(Path_Temp, "VP_X.feather")
+        Path_X <- IASDT.R::Path(Path_Temp, "VP_X.feather")
         if (!file.exists(Path_X)) {
           arrow::write_feather(as.data.frame(Model$X), Path_X)
         }
@@ -275,14 +294,14 @@ VarPar_Compute <- function(
       # needed only to calculate `geta` and `gemu` functions
       if (!all(c(Files_la_Exist, Files_lmu_Exist))) {
         IASDT.R::CatTime("Tr", Level = 2)
-        Path_Tr <- file.path(Path_Temp, "VP_Tr.feather")
+        Path_Tr <- IASDT.R::Path(Path_Temp, "VP_Tr.feather")
         if (!file.exists(Path_Tr)) {
           arrow::write_feather(as.data.frame(Model$Tr), Path_Tr)
         }
 
         # Gamma - convert each list item into a column in a data frame
         IASDT.R::CatTime("Gamma", Level = 2)
-        Path_Gamma <- file.path(Path_Temp, "VP_Gamma.feather")
+        Path_Gamma <- IASDT.R::Path(Path_Temp, "VP_Gamma.feather")
         if (!file.exists(Path_Gamma)) {
           Gamma_data <- postList %>%
             purrr::map(~as.vector(.x[["Gamma"]])) %>%
@@ -342,7 +361,7 @@ VarPar_Compute <- function(
       if (!Files_la_Exist) {
 
         IASDT.R::CatTime("Processing `geta` function", Level = 1)
-        Path_Out_a <- file.path(Path_Temp, "VP_A.feather") %>%
+        Path_Out_a <- IASDT.R::Path(Path_Temp, "VP_A.feather") %>%
           IASDT.R::NormalizePath()
 
         cmd_a <- paste(
@@ -366,7 +385,7 @@ VarPar_Compute <- function(
           cmd_a <- paste0(cmd_a, paste0(" >> ", path_log_a, " 2>&1"))
           readr::write_lines(
             x = cmd_a,
-            file = file.path(Path_Temp, "VP_A_Command.txt"), append = FALSE)
+            file = IASDT.R::Path(Path_Temp, "VP_A_Command.txt"), append = FALSE)
 
         } else {
 
@@ -398,7 +417,7 @@ VarPar_Compute <- function(
       if (!Files_la_Exist) {
 
         IASDT.R::CatTime("Processing `getf` function", Level = 1)
-        Path_Out_f <- file.path(Path_Temp, "VP_F.feather") %>%
+        Path_Out_f <- IASDT.R::Path(Path_Temp, "VP_F.feather") %>%
           IASDT.R::NormalizePath()
 
         cmd_f <- paste(
@@ -420,7 +439,8 @@ VarPar_Compute <- function(
           cmd_f <- paste0(cmd_f, paste0(" >> ", path_log_f, " 2>&1"))
           readr::write_lines(
             x = cmd_f,
-            file = file.path(Path_Temp, "VP_F_Command.txt"), append = FALSE)
+            file = IASDT.R::Path(Path_Temp, "VP_F_Command.txt"),
+            append = FALSE)
 
         } else {
 
@@ -452,7 +472,7 @@ VarPar_Compute <- function(
       if (!Files_lmu_Exist) {
 
         IASDT.R::CatTime("Processing `gemu` function", Level = 1)
-        Path_Out_mu <- file.path(Path_Temp, "VP_Mu.feather") %>%
+        Path_Out_mu <- IASDT.R::Path(Path_Temp, "VP_Mu.feather") %>%
           IASDT.R::NormalizePath()
 
         cmd_mu <- paste(
@@ -475,7 +495,8 @@ VarPar_Compute <- function(
           cmd_mu <- paste0(cmd_mu, paste0(" >> ", path_log_mu, " 2>&1"))
           readr::write_lines(
             x = cmd_mu,
-            file = file.path(Path_Temp, "VP_mu_Command.txt"), append = FALSE)
+            file = IASDT.R::Path(Path_Temp, "VP_mu_Command.txt"),
+            append = FALSE)
 
         } else {
 
@@ -840,7 +861,7 @@ VarPar_Compute <- function(
   # Save the results
   IASDT.R::CatTime("Save the variance partitioning results")
 
-  File_VarPar <- file.path(Path_VarPar, paste0(VarParFile, ".RData"))
+  File_VarPar <- IASDT.R::Path(Path_VarPar, paste0(VarParFile, ".RData"))
   IASDT.R::SaveAs(InObj = VP, OutObj = VarParFile, OutPath = File_VarPar)
 
   VP$File <- File_VarPar

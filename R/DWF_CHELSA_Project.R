@@ -9,17 +9,18 @@
 #' supports downloading data from a URL, applying a land mask, and adjusting
 #' data with scale and offset values.
 #' @name CHELSA_Project
-#' @param Metadata Single row tibble for the metadata of the input file. This
-#'   should be prepared in the [CHELSA_Prepare] function and provided via the
-#'   the [CHELSA_Process] function.
+#' @param Metadata `tibble`. Single row tibble for the metadata of the input
+#'   file. This should be prepared in the [CHELSA_Prepare] function and provided
+#'   via the the [CHELSA_Process] function.
 #' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
-#' @param FromHPC Logical indicating whether the work is being done from HPC, to
-#'   adjust file paths accordingly. Default: `TRUE`.
-#' @param CompressLevel integer; specifies the compression level for the
-#'   exported NetCDF file, ranging from 1 (least compression) to 9 (most
-#'   compression). Defaults to 5.
-#' @param ReturnMap logical; if `TRUE`, the processed map (as a
+#' @param FromHPC Logical. Whether the processing is being done on an
+#'   High-Performance Computing (HPC) environment, to adjust file paths
+#'   accordingly. Default: `TRUE`.
+#' @param CompressLevel Integer. The compression level for the exported NetCDF
+#'   file, ranging from 1 (least compression) to 9 (most compression). Defaults
+#'   to 5.
+#' @param ReturnMap Logical. If `TRUE`, the processed map (as a
 #'   `PackedSpatRaster` object) is returned. Defaults to `FALSE`.
 #' @return Depending on the `ReturnMap` parameter, either a `PackedSpatRaster`
 #'   object is returned, or nothing is returned. The function always writes
@@ -74,7 +75,7 @@ CHELSA_Project <- function(
     )
   }
 
-  # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use 
+  # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use
   # official parameters (overriding the ones from GeoTIFF keys)
   # see: https://stackoverflow.com/questions/78007307
   terra::setGDALconfig("GTIFF_SRS_SOURCE", "EPSG")
@@ -106,7 +107,7 @@ CHELSA_Project <- function(
 
   # Loading reference grid -----
 
-  GridR <- file.path(Path_Grid, "Grid_10_Land_Crop.RData")
+  GridR <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(GridR)) {
     stop(
       paste0("Path for the Europe boundaries does not exist: ", GridR),

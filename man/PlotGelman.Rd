@@ -2,6 +2,10 @@
 % Please edit documentation in R/Mod_PlotGelman.R
 \name{PlotGelman}
 \alias{PlotGelman}
+\alias{PlotGelman_Alpha}
+\alias{PlotGelman_Beta}
+\alias{PlotGelman_Omega}
+\alias{PlotGelman_Rho}
 \title{Plot Gelman-Rubin-Brooks}
 \usage{
 PlotGelman(
@@ -10,60 +14,68 @@ PlotGelman(
   Beta = TRUE,
   Omega = TRUE,
   Rho = TRUE,
-  NOmega = 1000,
+  NOmega = 1000L,
   FromHPC = TRUE,
   PlottingAlpha = 0.25,
   EnvFile = ".env",
   ReturnPlots = FALSE
 )
+
+PlotGelman_Alpha(CodaObj, PlottingAlpha = 0.25)
+
+PlotGelman_Beta(
+  CodaObj,
+  EnvFile = ".env",
+  PlottingAlpha = 0.25,
+  FromHPC = TRUE
+)
+
+PlotGelman_Omega(CodaObj, NOmega = 1000L, PlottingAlpha = 0.25)
+
+PlotGelman_Rho(CodaObj)
 }
 \arguments{
-\item{Path_Coda}{coda object or path to file containing the coda object.}
+\item{Path_Coda}{Character or \code{mcmc.list}. Path to a file containing the coda
+object, or an \code{mcmc.list} object representing MCMC samples.}
 
-\item{Alpha}{Logical indicating whether to plot the Gelman-Rubin statistic
-for the Alpha parameter. If \code{TRUE} (default), the function executes the
-\link{PlotGelman_Alpha} function.}
+\item{Alpha, Beta, Omega, Rho}{Logical. If \code{TRUE}, plots the Gelman-Rubin
+statistic for the respective model parameters (Alpha, Beta, Omega, or Rho).
+Default: \code{TRUE} for all parameters.}
 
-\item{Beta}{Logical indicating whether to plot the Gelman-Rubin statistic for
-the Beta parameter. If \code{TRUE} (default), the function executes the
-\link{PlotGelman_Beta} function.}
+\item{NOmega}{Integer. Number of species sampled for the Omega parameter.
+Default: 1000L.}
 
-\item{Omega}{Logical indicating whether to plot the Gelman-Rubin statistic
-for the Omega parameter. If \code{TRUE} (default), the function executes the
-\link{PlotGelman_Omega} function.}
+\item{FromHPC}{Logical. Whether the processing is being done on an
+High-Performance Computing (HPC) environment, to adjust file paths
+accordingly. Default: \code{TRUE}.}
 
-\item{Rho}{Logical indicating whether to plot the Gelman-Rubin statistic for
-the Rho parameter.  If \code{TRUE} (default), the function executes the
-\link{PlotGelman_Rho} function.}
+\item{PlottingAlpha}{Numeric. Transparency level (alpha) for plot lines (0 =
+fully transparent, 1 = fully opaque). Default: 0.25.}
 
-\item{NOmega}{Integer specifying the number of species to be sampled for the
-Omega parameter.}
+\item{EnvFile}{Character. Path to the environment file containing paths to
+data sources. Defaults to \code{.env}.}
 
-\item{FromHPC}{Logical. Indicates whether the function is being run on an HPC
-environment, affecting file path handling. Default: \code{TRUE}.}
+\item{ReturnPlots}{Character. Path to the folder where the output plots will
+be saved.}
 
-\item{PlottingAlpha}{A numeric value between 0 and 1 indicating the
-transparency level of the plot lines. Defaults to 0.25.}
-
-\item{EnvFile}{String specifying the path to the environment variables file.
-The default value is ".env".}
-
-\item{ReturnPlots}{String specifying the folder path where output figures
-should be saved.}
-}
-\value{
-If \code{ReturnPlots} is \code{TRUE}, returns a list of ggplot objects
-corresponding to the generated plots. Otherwise, returns \code{NULL}.
+\item{CodaObj}{\code{mcmc.list}. An MCMC sample object containing posterior
+distributions from an Hmsc model.}
 }
 \description{
-This function generates and optionally saves a series of plots showing the
-evolution of Gelman and Rubin's shrink factor for various model parameters as
-the number of iterations increases. It is designed to help assess the
-convergence of Hmsc model by visualizing the shrink factor over iterations.
+The \verb{PlotGelman_*()} functions generate plots visualizing the evolution of
+the Gelman-Rubin-Brooks shrink factor for different model parameters as the
+number of iterations increases. These plots help assess whether MCMC chains
+have converged to a common distribution. Each plot includes: median (solid
+line) and 97.5\if{html}{\out{<sup>}}th\if{html}{\out{</sup>}} percentile (dashed line) of the shrink factor and
+a dashed horizontal line at 1.1, representing the common convergence
+threshold. The primary function for users is \code{PlotGelman()}, which internally
+calls:
+\itemize{
+\item \code{PlotGelman_Alpha()}: Plots shrink factor for the \strong{Alpha} parameter
+\item \code{PlotGelman_Beta()}: Plots shrink factor for the \strong{Beta} parameters
+\item \code{PlotGelman_Omega()}: Plots shrink factor for the \strong{Omega} parameter
+\item \code{PlotGelman_Rho()}: Plots shrink factor for the \strong{Rho} parameter
 }
-\seealso{
-\link{PlotGelman_Alpha}\if{html}{\out{<br>}}\link{PlotGelman_Beta}\if{html}{\out{<br>}}
-\link{PlotGelman_Rho}\if{html}{\out{<br>}}\link{PlotGelman_Omega}
 }
 \author{
 Ahmed El-Gabbas

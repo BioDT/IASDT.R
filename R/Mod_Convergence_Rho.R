@@ -1,28 +1,16 @@
 ## |------------------------------------------------------------------------| #
-# PlotRho ----
+# Convergence_Rho ----
 ## |------------------------------------------------------------------------| #
 
-#' Plot convergence traceplots for the rho parameter
-#'
-#' This function generates and plots convergence traceplots for the rho
-#' parameter of an Hmsc model. It visualizes the trace and density of the rho
-#' parameter across different chains, providing insights into the convergence
-#' and distribution of the parameter estimates.
-#' @param Post A `coda` object containing MCMC samples of the rho parameter or a
-#'   character string specifying the path to such an object.
-#' @param Model A fitted Hmsc model object or a character string specifying the
-#'   path to such an object.
-#' @param Title A character string specifying the title of the plot.
-#' @param Cols Character vector for chain colours (optional). Default: `NULL`.
-#' @name PlotRho
-#' @author Ahmed El-Gabbas
-#' @inheritParams PlotAlpha
-#' @return A ggplot object representing the traceplot of the rho parameter,
-#'   including annotations for the Gelman-Rubin diagnostic, effective sample
-#'   size, and credible intervals.
 #' @export
+#' @rdname Convergence_plots
+#' @name Convergence_plots
+#' @order 3
+#' @author Ahmed El-Gabbas
 
-PlotRho <- function(Post, Model, Title, Cols = NULL, MarginType = "histogram") {
+Convergence_Rho <- function(
+    Post = NULL, Model = NULL, Title = NULL,
+    Cols = NULL, MarginType = "histogram") {
 
   # # ..................................................................... ###
 

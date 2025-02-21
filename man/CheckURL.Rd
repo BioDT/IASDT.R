@@ -11,10 +11,10 @@ The source code of this function was taken from this
 CheckURL(url_in, t = 2)
 }
 \arguments{
-\item{url_in}{A character string specifying the URL to be checked.}
+\item{url_in}{Character. The URL to be checked.}
 
-\item{t}{A numeric value specifying the timeout in seconds for the connection
-attempt. Default is 2 seconds.}
+\item{t}{Numeric. Timeout in seconds for the connection attempt. Default is
+2 seconds.}
 }
 \value{
 A logical value: \code{TRUE} if the URL is valid, \code{FALSE} if not.

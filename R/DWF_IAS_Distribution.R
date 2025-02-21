@@ -10,12 +10,13 @@
 #' biogeographical region, and outputs results as tif, RData, and tibble
 #' formats.
 #' @param Species Character. Name of the species to analyze.
-#' @param FromHPC Logical indicating whether the work is being done from HPC, to
-#'   adjust file paths accordingly. Default: `TRUE`.
-#' @param EnvFile Character. The path to the environment file containing
-#'   variables required by the function. Default is ".env".
-#' @param Verbose Logical. If TRUE, detailed output is printed. Default is
-#'   `FALSE`.
+#' @param FromHPC Logical. Whether the processing is being done on an 
+#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#'   accordingly. Default: `TRUE`.
+#' @param EnvFile Character. Path to the environment file containing paths to 
+#'   data sources. Defaults to `.env`.
+#' @param Verbose Logical. Whether to print progress messages. 
+#'   Default is `FALSE`.
 #' @param Overwrite Logical. If `TRUE`, the function will overwrite existing
 #'   files (default: `FALSE`).
 #' @return A tibble containing species distribution information, including the
@@ -142,10 +143,10 @@ IAS_Distribution <- function(
   IASDT.R::CatTime("Check directories", Level = 1)
 
   IASDT.R::CatTime("Check/create directories", Level = 2)
-  Path_PA_Summary <- file.path(Path_PA, "SpSummary")
-  Path_PA_tif <- file.path(Path_PA, "tif")
-  Path_PA_RData <- file.path(Path_PA, "RData")
-  Path_PA_JPEG <- file.path(Path_PA, "JPEG_Maps")
+  Path_PA_Summary <- IASDT.R::Path(Path_PA, "SpSummary")
+  Path_PA_tif <- IASDT.R::Path(Path_PA, "tif")
+  Path_PA_RData <- IASDT.R::Path(Path_PA, "RData")
+  Path_PA_JPEG <- IASDT.R::Path(Path_PA, "JPEG_Maps")
   Path_PA_All <- c(
     Path_PA_Summary, Path_PA_tif, Path_PA_RData, Path_PA_JPEG)
   Path_PA_Missing <- any(!dir.exists(Path_PA_All))
@@ -154,11 +155,12 @@ IAS_Distribution <- function(
     fs::dir_create(Path_PA_All[Missing])
   }
 
-  Out_PA <- file.path(Path_PA_RData, paste0(Sp_File, "_PA.RData"))
-  Out_Summary <- file.path(Path_PA_Summary, paste0(Sp_File, "_Summary.RData"))
-  Out_tif_All <- file.path(Path_PA_tif, paste0(Sp_File, "_All.tif"))
-  Out_tif_Masked <- file.path(Path_PA_tif, paste0(Sp_File, "_Masked.tif"))
-  Out_JPEG <- file.path(Path_PA_JPEG, paste0(Sp_File, ".jpeg"))
+  Out_PA <- IASDT.R::Path(Path_PA_RData, paste0(Sp_File, "_PA.RData"))
+  Out_Summary <- IASDT.R::Path(
+    Path_PA_Summary, paste0(Sp_File, "_Summary.RData"))
+  Out_tif_All <- IASDT.R::Path(Path_PA_tif, paste0(Sp_File, "_All.tif"))
+  Out_tif_Masked <- IASDT.R::Path(Path_PA_tif, paste0(Sp_File, "_Masked.tif"))
+  Out_JPEG <- IASDT.R::Path(Path_PA_JPEG, paste0(Sp_File, ".jpeg"))
   Out_Exists <- c(
     Out_PA, Out_Summary, Out_tif_All, Out_tif_Masked, Out_JPEG) %>%
     file.exists() %>%
@@ -170,8 +172,8 @@ IAS_Distribution <- function(
   # # ................................ ###
 
   IASDT.R::CatTime("Check path for EASIN and GBIF data", Level = 2)
-  Path_GBIF_DT <- file.path(Path_GBIF, "Sp_Data")
-  Path_EASIN <- file.path(Path_EASIN, "Sp_DT")
+  Path_GBIF_DT <- IASDT.R::Path(Path_GBIF, "Sp_Data")
+  Path_EASIN <- IASDT.R::Path(Path_EASIN, "Sp_DT")
 
   if (!dir.exists(Path_GBIF_DT)) {
     stop(
@@ -195,13 +197,13 @@ IAS_Distribution <- function(
 
   # Loading reference grids ----
   IASDT.R::CatTime("Loading reference grids", Level = 1)
-  if (!file.exists(file.path(Path_Grid_Ref, "Grid_100_sf.RData"))) {
+  if (!file.exists(IASDT.R::Path(Path_Grid_Ref, "Grid_100_sf.RData"))) {
     stop(
       "The following grid file does not exist: Grid_100_sf.RData",
       call. = FALSE)
   }
 
-  GridsPath <- file.path(
+  GridsPath <- IASDT.R::Path(
     Path_Grid,
     c(
       "Grid_10_Land_Crop_sf_Country.RData", "Grid_10_Land_Crop.RData",
@@ -217,24 +219,25 @@ IAS_Distribution <- function(
 
   ### sf - 100 km ----
   IASDT.R::CatTime("sf - 100 km", Level = 2)
-  Grid_100_sf <- file.path(Path_Grid_Ref, "Grid_100_sf.RData") %>%
+  Grid_100_sf <- IASDT.R::Path(Path_Grid_Ref, "Grid_100_sf.RData") %>%
     IASDT.R::LoadAs() %>%
     magrittr::extract2("Grid_100_sf_s")
 
   ### sf - 10 km ----
   IASDT.R::CatTime("sf - 10 km - CNT", Level = 2)
-  Grid_10_CNT <- file.path(Path_Grid, "Grid_10_Land_Crop_sf_Country.RData") %>%
+  Grid_10_CNT <- IASDT.R::Path(
+    Path_Grid, "Grid_10_Land_Crop_sf_Country.RData") %>%
     IASDT.R::LoadAs()
 
   ### raster - 10 km ----
   IASDT.R::CatTime("raster - 10 km", Level = 2)
-  RefGrid <- file.path(Path_Grid, "Grid_10_Land_Crop.RData") %>%
+  RefGrid <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.RData") %>%
     IASDT.R::LoadAs() %>%
     terra::unwrap()
 
   ### raster - 100 km ----
   IASDT.R::CatTime("raster - 100 km", Level = 2)
-  Grid_100_Land <- file.path(Path_Grid, "Grid_10_Land_sf.RData") %>%
+  Grid_100_Land <- IASDT.R::Path(Path_Grid, "Grid_10_Land_sf.RData") %>%
     IASDT.R::LoadAs() %>%
     sf::st_geometry() %>%
     sf::st_centroid() %>%
@@ -307,7 +310,7 @@ IAS_Distribution <- function(
   }
 
   rm(Grid_10_CNT, envir = environment())
-  
+
   GBIF_Keys <- paste0(GBIF_Keys, collapse = "_")
 
   # # ..................................................................... ###
@@ -319,8 +322,8 @@ IAS_Distribution <- function(
   IASDT.R::CatTime("1. GBIF", Level = 1)
 
   # Path for the current species GBIF data
-  Path_GBIF_D <- file.path(Path_GBIF_DT, paste0(Sp_File, ".RData"))
-  Path_GBIF_R <- file.path(
+  Path_GBIF_D <- IASDT.R::Path(Path_GBIF_DT, paste0(Sp_File, ".RData"))
+  Path_GBIF_R <- IASDT.R::Path(
     Path_GBIF, "Sp_Raster", paste0(Sp_File, "_Raster.RData"))
 
   if (all(file.exists(Path_GBIF_D, Path_GBIF_R))) {
@@ -361,7 +364,7 @@ IAS_Distribution <- function(
   ## 2. EASIN -----
   IASDT.R::CatTime("2. EASIN", Level = 1)
 
-  Path_EASIN_D <- file.path(Path_EASIN, paste0(Sp_File, "_DT.RData"))
+  Path_EASIN_D <- IASDT.R::Path(Path_EASIN, paste0(Sp_File, "_DT.RData"))
 
   if (file.exists(Path_EASIN_D)) {
     EASIN_DT <- IASDT.R::LoadAs(Path_EASIN_D)
@@ -459,7 +462,7 @@ IAS_Distribution <- function(
 
   ### RData -----
   IASDT.R::CatTime("`.RData`", Level = 2)
-  Path_RData <- file.path(Path_PA_RData, paste0(Sp_File, "_PA.RData"))
+  Path_RData <- IASDT.R::Path(Path_PA_RData, paste0(Sp_File, "_PA.RData"))
   IASDT.R::SaveAs(
     InObj = terra::wrap(Sp_PA), OutObj = paste0(Sp_File, "_PA"),
     OutPath = Path_RData)
@@ -468,7 +471,7 @@ IAS_Distribution <- function(
   IASDT.R::CatTime("`.tif` - all presence grid cells", Level = 2)
   terra::writeRaster(
     x = Sp_PA$PA, overwrite = TRUE,
-    filename = file.path(Path_PA_tif, paste0(Sp_File, "_All.tif"))
+    filename = IASDT.R::Path(Path_PA_tif, paste0(Sp_File, "_All.tif"))
   )
 
   ### tif - Excluding cultivated or casual observations -----
@@ -476,7 +479,7 @@ IAS_Distribution <- function(
     "`.tif` - Excluding cultivated or casual observations", Level = 2)
   terra::writeRaster(
     x = Sp_PA$PA_Masked, overwrite = TRUE,
-    filename = file.path(Path_PA_tif, paste0(Sp_File, "_Masked.tif")))
+    filename = IASDT.R::Path(Path_PA_tif, paste0(Sp_File, "_Masked.tif")))
 
   ### NetCDF -----
   # NOT IMPLEMENTED YET
@@ -628,7 +631,7 @@ IAS_Distribution <- function(
     IASDT.R::ReplaceSpace() %>%
     paste0("CNT_", .)
 
-  Grid_CNT <- file.path(Path_Grid, "Grid_10_Land_Crop_sf_Country.RData") %>%
+  Grid_CNT <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop_sf_Country.RData") %>%
     IASDT.R::LoadAs() %>%
     dplyr::select("Country")
 
@@ -651,7 +654,7 @@ IAS_Distribution <- function(
   ## Number of unique iNaturalist grid cells -----
   IASDT.R::CatTime("# unique iNaturalist grid cells", Level = 1)
 
-  iNatur_DT <- file.path(Path_GBIF, "iNaturalist_Count.RData") %>%
+  iNatur_DT <- IASDT.R::Path(Path_GBIF, "iNaturalist_Count.RData") %>%
     IASDT.R::LoadAs() %>%
     dplyr::filter(species == Species)
 
@@ -742,7 +745,8 @@ IAS_Distribution <- function(
   dplyr::select(Results, -GBIF_R, -EASIN_R, -eLTER_R) %>%
     IASDT.R::SaveAs(
       InObj = ., OutObj = paste0(Sp_File, "_Summary"),
-      OutPath = file.path(Path_PA_Summary, paste0(Sp_File, "_Summary.RData")))
+      OutPath = IASDT.R::Path(
+        Path_PA_Summary, paste0(Sp_File, "_Summary.RData")))
 
   # # ..................................................................... ###
 

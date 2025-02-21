@@ -13,21 +13,22 @@ CHELSA_Project(
 )
 }
 \arguments{
-\item{Metadata}{Single row tibble for the metadata of the input file. This
-should be prepared in the \link{CHELSA_Prepare} function and provided via the
-the \link{CHELSA_Process} function.}
+\item{Metadata}{\code{tibble}. Single row tibble for the metadata of the input
+file. This should be prepared in the \link{CHELSA_Prepare} function and provided
+via the the \link{CHELSA_Process} function.}
 
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
 
-\item{FromHPC}{Logical indicating whether the work is being done from HPC, to
-adjust file paths accordingly. Default: \code{TRUE}.}
+\item{FromHPC}{Logical. Whether the processing is being done on an
+High-Performance Computing (HPC) environment, to adjust file paths
+accordingly. Default: \code{TRUE}.}
 
-\item{CompressLevel}{integer; specifies the compression level for the
-exported NetCDF file, ranging from 1 (least compression) to 9 (most
-compression). Defaults to 5.}
+\item{CompressLevel}{Integer. The compression level for the exported NetCDF
+file, ranging from 1 (least compression) to 9 (most compression). Defaults
+to 5.}
 
-\item{ReturnMap}{logical; if \code{TRUE}, the processed map (as a
+\item{ReturnMap}{Logical. If \code{TRUE}, the processed map (as a
 \code{PackedSpatRaster} object) is returned. Defaults to \code{FALSE}.}
 }
 \value{

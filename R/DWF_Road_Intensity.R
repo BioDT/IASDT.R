@@ -10,10 +10,11 @@
 #' function calculates the total road lengths and the distance to the nearest
 #' road per grid cell (for any road type and per road type).
 #'
-#' @param FromHPC Logical indicating whether the work is being done from HPC, to
-#'   adjust file paths accordingly. Default: `TRUE`.
-#' @param EnvFile Character. The path to the environment file containing
-#'   variables required by the function. Default is ".env".
+#' @param FromHPC Logical. Whether the processing is being done on an 
+#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#'   accordingly. Default: `TRUE`.
+#' @param EnvFile Character. Path to the environment file containing paths to 
+#'   data sources. Defaults to `.env`.
 #' @return `NULL`. The function outputs processed files to the specified
 #'   directories.
 #' @note
@@ -89,7 +90,7 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
 
   fs::dir_create(c(Path_Roads, Path_Roads_Raw, Path_Roads_Interim))
 
-  RefGrid <- file.path(Path_Grid, "Grid_10_Land_Crop.RData")
+  RefGrid <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(RefGrid)) {
     stop(
       paste0("The reference grid file does not exist: ", RefGrid),
@@ -102,7 +103,7 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
   IASDT.R::CatTime("Download road data")
 
   withr::local_options(timeout = 1200)
-  Path_DownFile <- file.path(Path_Roads_Raw, basename(Road_URL))
+  Path_DownFile <- IASDT.R::Path(Path_Roads_Raw, basename(Road_URL))
 
   # Check if zip file is a valid file
   if (file.exists(Path_DownFile)) {
@@ -190,7 +191,7 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
 
   ## Save - RData ----
   IASDT.R::CatTime("Save projected data - RData", Level = 1)
-  save(Road_sf, file = file.path(Path_Roads, "Road_sf.RData"))
+  save(Road_sf, file = IASDT.R::Path(Path_Roads, "Road_sf.RData"))
 
   # # ..................................... ###
 
@@ -215,7 +216,7 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
             terra::wrap() %>%
             IASDT.R::SaveAs(
               OutObj = paste0("Road_sf_", .x, "_", .y),
-              OutPath = file.path(
+              OutPath = IASDT.R::Path(
                 Path_Roads, paste0("Road_sf_", .x, "_", .y, ".RData")))
           invisible(gc())
           return(invisible(NULL))
@@ -274,14 +275,14 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
   IASDT.R::CatTime("Save road length - tif", Level = 1)
   terra::writeRaster(
     x = Road_Length, overwrite = TRUE,
-    filename = file.path(
+    filename = IASDT.R::Path(
       Path_Roads, paste0("Road_Length_", names(Road_Length), ".tif")))
 
   IASDT.R::CatTime("Save road length - RData", Level = 1)
   IASDT.R::SaveAs(
     InObj = terra::wrap(Road_Length),
     OutObj = "Road_Length",
-    OutPath = file.path(Path_Roads, "Road_Length.RData"))
+    OutPath = IASDT.R::Path(Path_Roads, "Road_Length.RData"))
 
   # # ..................................................................... ###
 
@@ -314,12 +315,12 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
   IASDT.R::CatTime("Save distance to road - tif", Level = 1)
   terra::writeRaster(
     x = Road_Distance, overwrite = TRUE,
-    filename = file.path(Path_Roads, paste0(names(Road_Distance), ".tif")))
+    filename = IASDT.R::Path(Path_Roads, paste0(names(Road_Distance), ".tif")))
 
   IASDT.R::CatTime("Save distance to road - RData", Level = 1)
   IASDT.R::SaveAs(
     InObj = terra::wrap(Road_Distance), OutObj = "Road_Distance",
-    OutPath = file.path(Path_Roads, "Road_Distance.RData"))
+    OutPath = IASDT.R::Path(Path_Roads, "Road_Distance.RData"))
 
   # # ..................................................................... ###
 
@@ -408,7 +409,7 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   grDevices::jpeg(
-    filename = file.path(Path_Roads, "Road_Length.jpeg"),
+    filename = IASDT.R::Path(Path_Roads, "Road_Length.jpeg"),
     width = 30, height = 21, units = "cm", quality = 100, res = 600)
   print(Plots_Length)
   grDevices::dev.off()
@@ -455,7 +456,7 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   grDevices::jpeg(
-    filename = file.path(Path_Roads, "Road_Distance.jpeg"),
+    filename = IASDT.R::Path(Path_Roads, "Road_Distance.jpeg"),
     width = 30, height = 21, units = "cm", quality = 100, res = 600)
   print(Plots_Distance)
   grDevices::dev.off()

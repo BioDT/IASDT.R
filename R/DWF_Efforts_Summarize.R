@@ -8,7 +8,7 @@
 #' summarizing, and saving the data. It also creates summary maps and saves them
 #' in both `RData` and `TIFF` formats.
 #'
-#' @param NCores Integer. Number of CPU cores to use for parallel processing.
+#' @param NCores Integer. Number of CPU cores to use for parallel processing. 
 #' @param Path_Efforts Character. Path where the final processed data will be
 #'   saved.
 #' @param Path_Efforts_Interim Character. The directory path to save interim
@@ -33,7 +33,7 @@
 
 Efforts_Summarize <- function(
     NCores, Path_Efforts, Path_Efforts_Interim, Path_Efforts_Data, Path_Grid,
-    IAS_List, Efforts_AllRequests, ChunkSize = 100000, DeleteChunks = TRUE) {
+    IAS_List, Efforts_AllRequests, ChunkSize = 100000L, DeleteChunks = TRUE) {
 
   # # ..................................................................... ###
 
@@ -79,8 +79,8 @@ Efforts_Summarize <- function(
 
   # # ..................................................................... ###
 
-  Path_Grid_R <- file.path(Path_Grid, "Grid_10_Land_Crop.RData")
-  Path_Grid_SF <- file.path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
+  Path_Grid_R <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.RData")
+  Path_Grid_SF <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
 
   if (!file.exists(Path_Grid_R)) {
     stop(
@@ -142,7 +142,7 @@ Efforts_Summarize <- function(
       ClassOrder <- paste0(class, "_", order)
 
       # Output path to save the data
-      Path_DT <- file.path(Path_Efforts_Data, paste0(ClassOrder, ".RData"))
+      Path_DT <- IASDT.R::Path(Path_Efforts_Data, paste0(ClassOrder, ".RData"))
 
       # Should Path_DT be returned as the path of the RData file containing the
       # data or NA if there are no records in the current order or no records
@@ -408,7 +408,7 @@ Efforts_Summarize <- function(
   IASDT.R::CatTime("Save summary results: `Efforts_Summary`", Level = 1)
   save(
     Efforts_Summary,
-    file = file.path(Path_Efforts, "Efforts_Summary.RData"))
+    file = IASDT.R::Path(Path_Efforts, "Efforts_Summary.RData"))
 
   # # ..................................................................... ###
 
@@ -444,14 +444,14 @@ Efforts_Summarize <- function(
   IASDT.R::CatTime("`RData`", Level = 2)
   IASDT.R::SaveAs(
     InObj = terra::wrap(Efforts_SummaryR), OutObj = "Efforts_SummaryR",
-    OutPath = file.path(Path_Efforts, "Efforts_SummaryR.RData"))
+    OutPath = IASDT.R::Path(Path_Efforts, "Efforts_SummaryR.RData"))
 
   ## Save summary maps - `tif` ----
   IASDT.R::CatTime("`tif`", Level = 2)
   terra::writeRaster(
     Efforts_SummaryR,
     overwrite = TRUE,
-    filename = file.path(
+    filename = IASDT.R::Path(
       Path_Efforts, paste0("Efforts_GBIF_", names(Efforts_SummaryR), ".tif")))
 
   # # ..................................................................... ###

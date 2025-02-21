@@ -10,10 +10,10 @@
 #' environment. The function also provides an option to print the names of the
 #' kept and removed variables.
 #' @name KeepOnly
-#' @param Obj A character vector specifying the names of the objects to be kept
-#'   in the environment.
-#' @param Verbose A logical value indicating whether to print the names of kept
-#'   and removed variables. Default to `TRUE`.
+#' @param Obj Character vector. Names of the objects to be kept in the 
+#'   environment.
+#' @param Verbose Logical. Whether to print the names of kept and 
+#'   removed variables. Default to `TRUE`.
 #' @return No return value, called for side effects.
 #' @author Ahmed El-Gabbas
 #' @export

@@ -10,14 +10,13 @@
 #' is designed to facilitate the management of environment variables in a
 #' structured and reproducible manner.
 #' @name AssignEnvVars
-#' @param EnvFile Character string specifying the path to the `.env` file.
-#'   Default is ".env". This file should contain environment variables in the
-#'   format `VAR_NAME=value`.
-#' @param EnvVarDT A data frame or tibble containing the columns `VarName`,
-#'   `Value`, `CheckDir`, and `CheckFile`. Each row specifies an environment
-#'   variable, the name to assign it to, and whether to check if it is a
-#'   directory or file. This structure allows for additional validation checks
-#'   on the variables being imported.
+#' @param EnvFile Character. Path to the environment file containing paths to
+#'   data sources. Defaults to `.env`.
+#' @param EnvVarDT `data.frame`. A data frame or tibble containing the columns
+#'   `VarName`, `Value`, `CheckDir`, and `CheckFile`. Each row specifies an
+#'   environment variable, the name to assign it to, and whether to check if it
+#'   is a directory or file. This structure allows for additional validation
+#'   checks on the variables being imported.
 #' @author Ahmed El-Gabbas
 #' @export
 #' @return This function is used for its side effects of setting environment

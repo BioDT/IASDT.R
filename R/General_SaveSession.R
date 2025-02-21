@@ -8,12 +8,12 @@
 #' from the global environment as list items in an `RData` file. It also creates
 #' a summary of these objects' sizes in memory.
 #'
-#' @param Path A string specifying the directory path where the output `RData`
+#' @param Path Character. Directory path where the output `RData`
 #'   file should be saved. Defaults to the current working directory
 #'   [base::getwd()].
-#' @param ExcludeObj A vector of object names (as strings) to exclude from
-#'   saving.
-#' @param Prefix A string to prefix the saved file name with. Defaults to `S`.
+#' @param ExcludeObj Character vector. Object names (as strings) to exclude 
+#'   from saving.
+#' @param Prefix Character. Prefix the saved file name with. Defaults to `S`.
 #' @author Ahmed El-Gabbas
 #' @return A tibble containing the names and sizes (in MB, rounded to 1 decimal
 #'   place) of the saved objects.
@@ -71,7 +71,7 @@ SaveSession <- function(Path = getwd(), ExcludeObj = NULL, Prefix = "S") {
 
   IASDT.R::SaveAs(
     InObj = AllObjs, OutObj = FF2,
-    OutPath = file.path(Path, paste0(FF2, ".RData")))
+    OutPath = IASDT.R::Path(Path, paste0(FF2, ".RData")))
 
   AllObjs %>%
     lapply(lobstr::obj_size) %>%

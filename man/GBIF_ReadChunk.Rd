@@ -16,29 +16,29 @@ GBIF_ReadChunk(
 )
 }
 \arguments{
-\item{ChunkFile}{A string specifying the path of the chunk file to be
+\item{ChunkFile}{Character. Path of the chunk file to be
 processed.}
 
-\item{EnvFile}{A string specifying the path of the environment file. Default
-is ".env".}
+\item{EnvFile}{Character. Path to the environment file containing paths to
+data sources. Defaults to \code{.env}.}
 
-\item{FromHPC}{A logical value indicating whether the environment variables
-should be read from an HPC (High-Performance Computing) environment.
-Default is TRUE.}
+\item{FromHPC}{Logical. Whether the processing is being done on an
+High-Performance Computing (HPC) environment, to adjust file paths
+accordingly. Default: \code{TRUE}.}
 
-\item{MaxUncert}{A numeric value specifying the maximum accepted spatial
-uncertainty in kilometers. Default is 10 km.}
+\item{MaxUncert}{Numeric. Maximum accepted spatial uncertainty in
+kilometers. Default is 10.}
 
-\item{StartYear}{An integer specifying the earliest collection year to be
-included. Default is 1981.}
+\item{StartYear}{Integer. Earliest collection year to be included. Default
+is 1981.}
 
-\item{SaveRData}{Logical; indicating whether to save the cleaned data for the
+\item{SaveRData}{Logical. Whether to save the cleaned data for the
 current chunk as \verb{*.RData} file.}
 
-\item{ReturnData}{Logical; indicating whether to return the cleaned data for
+\item{ReturnData}{Logical. Whether to return the cleaned data for
 the current chunk. Defaults to \code{FALSE}.}
 
-\item{Overwrite}{Logical; indicating whether to process the current chunk
+\item{Overwrite}{Logical. Whether to process the current chunk
 file if it has already processed and saved as \verb{*.RData} file. This helps to
 continue working on previously processed chunks if the previous try failed,
 e.g. due to memory issue.}

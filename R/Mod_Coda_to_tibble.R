@@ -10,24 +10,20 @@
 #' `beta`.
 #' @param CodaObj An object of class `mcmc.list` or `mcmc`, representing the
 #'   MCMC output.
-#' @param Type A character string specifying the parameter type to transform and
+#' @param Type Character. The parameter type to transform and 
 #'   extract. Must be one of `rho`, `alpha`, `omega`, or `beta`.
-#' @param EnvFile A character string specifying the path to the environment file
-#'   that contains necessary variables for `beta` parameter transformation.
-#'   Defaults to `.env`. Only required for the `beta` and `Omega` parameters.
-#' @param NOmega An integer specifying the number of species to be sampled for
+#' @param EnvFile Character. Path to the environment file containing paths to 
+#'   data sources. Defaults to `.env`.
+#' @param NOmega Integer. The number of species to be sampled for
 #'   the `Omega` parameter transformation. Defaults to 100.
-#' @param FromHPC Logical. Indicates whether the function is being run on an HPC
-#'   environment, affecting file path handling. Default: `TRUE`.
+#' @param FromHPC Logical. Whether the processing is being done on an 
+#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#'   accordingly. Default: `TRUE`.
 #' @name Coda_to_tibble
 #' @author Ahmed El-Gabbas
 #' @return A tibble containing the transformed parameters based on the specified
 #'   `Type`. The structure of the returned tibble varies depending on the `Type`
 #'   parameter.
-#' @details The function reads the following environment variables:
-#'   - **`DP_R_TaxaInfo`** (if `FromHPC` = `TRUE`) or
-#'     **`DP_R_TaxaInfo_Local`** (if `FromHPC` = `FALSE`) for the location of
-#'     the `Species_List_ID.txt` file containing species information.
 #' @export
 #' @examples
 #' library(Hmsc)

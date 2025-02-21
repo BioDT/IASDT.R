@@ -13,20 +13,19 @@ GBIF_SpData(
 )
 }
 \arguments{
-\item{Species}{A character string specifying the species name.}
+\item{Species}{Character. Species name.}
 
-\item{FromHPC}{A logical value indicating whether the environment variables
-should be read from an HPC (High-Performance Computing) environment.
-Default is \code{TRUE}.}
+\item{FromHPC}{Logical. Whether the processing is being done on an
+High-Performance Computing (HPC) environment, to adjust file paths
+accordingly. Default: \code{TRUE}.}
 
-\item{EnvFile}{A string specifying the path of the environment file. Default
-is ".env".}
+\item{EnvFile}{Character. Path to the environment file containing paths to
+data sources. Defaults to \code{.env}.}
 
-\item{Verbose}{A logical value indicating whether to print progress messages.
-Default is \code{TRUE}.}
+\item{Verbose}{Logical. Whether to print progress messages. Default is
+\code{TRUE}.}
 
-\item{LastUpdate}{A character string specifying the last update date to be
-displayed on the plots.}
+\item{LastUpdate}{Character. Last update date to be displayed on the plots.}
 }
 \description{
 Extracts and processes species data from processed GBIF data, generating

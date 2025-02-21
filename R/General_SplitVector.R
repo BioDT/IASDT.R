@@ -8,10 +8,10 @@
 #' chunks. It is useful for partitioning data into more manageable pieces or for
 #' parallel processing tasks.
 #' @param Vector A numeric or character vector that you want to split.
-#' @param NSplit An integer specifying the number of chunks to split the vector
-#'   into. It must not exceed the length of the vector.
-#' @param Prefix A string value that serves as the prefix for the names of the
-#'   chunks in the returned list. Defaults to "Chunk".
+#' @param NSplit Integer. Number of chunks to split the vector into. It 
+#'   must not exceed the length of the vector.
+#' @param Prefix Character. Prefix for the names of the chunks in the returned
+#'   list. Defaults to `"Chunk"`.
 #' @name SplitVector
 #' @author Ahmed El-Gabbas
 #' @return A list of vectors, where each vector represents a chunk of the

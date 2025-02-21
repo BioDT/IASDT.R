@@ -12,9 +12,10 @@
 #' @author Ahmed El-Gabbas
 #' @return The function is used for its side effect (printing) and does not
 #'   return any value.
-#' @param DF A data frame to print. This parameter cannot be NULL.
-#' @param NRows Integer specifying the number of rows to print from both the
-#'   head and tail of the data frame. Defaults to 5.
+#' @param DF `data.frame. A data frame to print. This parameter cannot be 
+#'   `NULL`.
+#' @param NRows Integer. Number of rows to print from both the head and tail of 
+#'   the data frame. Defaults to 5.
 #' @examples
 #' ht(mtcars)
 #'
@@ -27,7 +28,7 @@
 #' ht(DF = mtcars, 6)
 #' @export
 
-ht <- function(DF, NRows = 5) {
+ht <- function(DF = NULL, NRows = 5L) {
 
   if (is.null(DF)) {
     stop("DF cannot be NULL", call. = FALSE)

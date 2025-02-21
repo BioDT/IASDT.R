@@ -7,15 +7,14 @@
 AssignEnvVars(EnvFile = ".env", EnvVarDT = NULL)
 }
 \arguments{
-\item{EnvFile}{Character string specifying the path to the \code{.env} file.
-Default is ".env". This file should contain environment variables in the
-format \code{VAR_NAME=value}.}
+\item{EnvFile}{Character. Path to the environment file containing paths to
+data sources. Defaults to \code{.env}.}
 
-\item{EnvVarDT}{A data frame or tibble containing the columns \code{VarName},
-\code{Value}, \code{CheckDir}, and \code{CheckFile}. Each row specifies an environment
-variable, the name to assign it to, and whether to check if it is a
-directory or file. This structure allows for additional validation checks
-on the variables being imported.}
+\item{EnvVarDT}{\code{data.frame}. A data frame or tibble containing the columns
+\code{VarName}, \code{Value}, \code{CheckDir}, and \code{CheckFile}. Each row specifies an
+environment variable, the name to assign it to, and whether to check if it
+is a directory or file. This structure allows for additional validation
+checks on the variables being imported.}
 }
 \value{
 This function is used for its side effects of setting environment

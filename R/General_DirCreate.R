@@ -9,7 +9,7 @@
 #' is recursive, meaning it will create any necessary parent directories.
 #' @param Path character; the path where the directory is to be created. Cannot
 #'   be `NULL`.
-#' @param Verbose logical; if `TRUE`, the function prints messages about the
+#' @param Verbose Logical. Whether to print messages about the
 #'   operation's outcome. Defaults to `TRUE`.
 #' @name DirCreate
 #' @author Ahmed El-Gabbas
@@ -17,7 +17,7 @@
 #'   printing a message) rather than any return value.
 #' @examples
 #' # create a new folder (random name) in the temporary folder
-#' Path2Create <- file.path(tempdir(), stringi::stri_rand_strings(1, 5))
+#' Path2Create <- IASDT.R::Path(tempdir(), stringi::stri_rand_strings(1, 5))
 #' file.exists(Path2Create)
 #'
 #' DirCreate(Path2Create)

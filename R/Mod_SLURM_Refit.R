@@ -2,35 +2,22 @@
 # Mod_SLURM_Refit ----
 ## |------------------------------------------------------------------------| #
 
-#' Prepare SLURM file for failed / Unfitted Models
-#'
-#' This function prepares SLURM files for models that have not been successfully
-#' fitted yet. It generates command files for refitting and creates
-#' corresponding SLURM batch files to execute these commands on a HPC
-#' environment.
-#' @param ModelDir String. Path to the model files directory. Must not end
-#'   with a slash.
-#' @param Refit_Prefix String. Prefix for the files that contain the commands to
-#'   refit the models.
-#' @name Mod_SLURM_Refit
 #' @author Ahmed El-Gabbas
-#' @return The function does not return any value but creates command and SLURM
-#'   batch files for refitting models.
-#' @inheritParams Mod_SLURM
-#' @inheritParams Mod_Prep4HPC
+#' @name Mod_SLURM
+#' @rdname Mod_SLURM
+#' @order 2
 #' @export
 
 Mod_SLURM_Refit <- function(
-    ModelDir = NULL, NumArrayJobs = 210, JobName = NULL, MemPerCpu = NULL,
+    ModelDir = NULL, NumArrayJobs = 210L, JobName = NULL, MemPerCpu = NULL,
     Time = NULL, Partition = "small-g", EnvFile = ".env", CatJobInfo = TRUE,
-    ntasks = 1, CpusPerTask = 1, GpusPerNode = 1, FromHPC = TRUE,
+    ntasks = 1L, CpusPerTask = 1L, GpusPerNode = 1L, FromHPC = TRUE,
     PrepSLURM = TRUE, Path_Hmsc = NULL,
     Refit_Prefix = "Commands2Refit", SLURM_Prefix = "Bash_Refit") {
 
   # # ..................................................................... ###
 
-  NullVarsNames <- c(
-    "ModelDir", "MemPerCpu", "Time", "Path_Hmsc")
+  NullVarsNames <- c("ModelDir", "MemPerCpu", "Time", "Path_Hmsc")
   NullVars <- which(purrr::map_lgl(.x = NullVarsNames, .f = ~ is.null(get(.x))))
 
   if (length(NullVars) > 0) {
@@ -83,7 +70,12 @@ Mod_SLURM_Refit <- function(
   # # ..................................................................... ###
 
   # Remove temp files and incomplete RDs files -----
-  Path_Model_Fit <- file.path(ModelDir, "Model_Fitting_HPC")
+
+  if (!fs::dir_exists(ModelDir)) {
+    stop(paste("Model directory does not exist:", ModelDir), call. = FALSE)
+  }
+
+  Path_Model_Fit <- IASDT.R::Path(ModelDir, "Model_Fitting_HPC")
   tempFiles <- list.files(
     path = Path_Model_Fit, pattern = ".rds_temp$", full.names = TRUE)
   if (length(tempFiles) > 0) {
@@ -104,7 +96,7 @@ Mod_SLURM_Refit <- function(
   # # ..................................................................... ###
 
   # List of unfitted model variants -----
-  FailedModels <- file.path(ModelDir, "Model_Info.RData") %>%
+  FailedModels <- IASDT.R::Path(ModelDir, "Model_Info.RData") %>%
     IASDT.R::LoadAs() %>%
     tidyr::unnest_longer(c(Post_Path, Command_HPC)) %>%
     dplyr::filter(!file.exists(Post_Path))
@@ -165,7 +157,7 @@ Mod_SLURM_Refit <- function(
         # create connection to SLURM file
         # This is better than using sink to have a platform independent file
         # (here, to maintain a linux-like new line ending)
-        f <- file(file.path(ModelDir, OutCommandFile), open = "wb")
+        f <- file(IASDT.R::Path(ModelDir, OutCommandFile), open = "wb")
         on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
         cat(Commands2Refit[CurrIDs], sep = "\n", append = FALSE, file = f)
         close(f)

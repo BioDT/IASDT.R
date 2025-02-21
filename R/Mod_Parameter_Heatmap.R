@@ -1,31 +1,47 @@
 ## |------------------------------------------------------------------------| #
-# PlotBetaGG ----
+# Mod_Heatmap_Beta ----
 ## |------------------------------------------------------------------------| #
 
-#' Heatmaps of parameter estimates or posterior support values of species'
-#' environmental responses (Beta parameters)
+#' Heatmaps for the `beta` and `omega` parameters of the Hmsc model
 #'
-#' This function generates heatmaps of parameter estimates or posterior support
-#' values for species' environmental responses, represented by Beta parameters.
-#' It is designed to visualize how species (Y) respond to various covariates (X)
-#' using `ggplot2` for plotting. The function is an adaptation of
-#' [Hmsc::plotBeta], focusing on `ggplot2`-based visualizations.
-#' @param Path_Model String. Path to the fitted Hmsc model object.
-#' @param supportLevel Numeric. The threshold for posterior support used in
-#'   plotting. Values above this threshold (and below 1 - threshold) are
-#'   considered significant and will be plotted. The default value is 0.95,
-#'   indicating 95% posterior support. For more information, see
-#'   [Hmsc::plotBeta]
-#' @param PlotWidth,PlotHeight Numeric. The width and height of the plot in
-#'   centimeters. Default is `25` cm x `35` cm.
-#' @return The function does not return a value but saves heatmap plots as JPEG
-#'   files in a directory related to the model's path.
-#' @author Ahmed El-Gabbas
-#' @name PlotBetaGG
+#' The `Mod_Heatmap_Beta()` and `Mod_Heatmap_Omega()` functions generate
+#' heatmaps using `ggplot2` to visualize parameter estimates or posterior
+#' support values for species' environmental responses (`beta` parameters, which
+#' describes how species (*Y*) respond to various covariates (*X*); see
+#' [Hmsc::plotBeta]) and residual associations (`omega` parameter),
+#' respectively.
+#' @param Path_Model Character. Path to the fitted Hmsc model object.
+#' @param SupportLevel Numeric. The posterior support threshold for determining
+#'   which values are considered significant in the heatmap. Defaults to 0.95,
+#'   indicating 95% posterior support. Values above this threshold (or below 1 -
+#'   threshold for negative associations) are considered significant and will be
+#'   plotted (see [Hmsc::plotBeta]).
+#' @param PlotWidth,PlotHeight Integer. The width and height of the generated
+#'   heatmaps in centimeters. Defaults to 26&times;22.5 for `omega`; 25&times;35
+#'   for `beta`.
+#' @return Both functions do not return a value but saves heatmap plots as JPEG
+#'   files in the `Model_Postprocessing/Parameters_Summary` subdirectory.
+#' @details The functions exports three types of visualizations (see
+#'   [Hmsc::plotBeta]):
+#' - `Mean`: posterior mean estimate,
+#' - `Support`: statistical support level, measured by the posterior
+#'   probability for a positive or negative response,
+#' - `Sign`: indicates whether the response is positive, negative, or neither
+#'   of these based on the chosen `SupportLevel`.
+#'
+#' For the `omega` parameter, the `Mod_Heatmap_Omega()` function generates two
+#' JPEG files: signs and mean values. While for the `beta` parameter, the
+#' `Mod_Heatmap_Beta()` function generates four JPEG files : support, signs,
+#' mean values (including and excluding the intercept).
 #' @export
+#' @name Parameter_Heatmap
+#' @rdname Parameter_Heatmap
+#' @order 1
+#' @author Ahmed El-Gabbas. The `Mod_Heatmap_Beta()` function is adapted from
+#'   [Hmsc::plotBeta]
 
-PlotBetaGG <- function(
-    Path_Model = NULL, supportLevel = 0.95, PlotWidth = 25, PlotHeight = 35) {
+Mod_Heatmap_Beta <- function(
+    Path_Model = NULL, SupportLevel = 0.95, PlotWidth = 25, PlotHeight = 35) {
 
   # # ..................................................................... ###
 
@@ -41,10 +57,18 @@ PlotBetaGG <- function(
 
   # # ..................................................................... ###
 
+  # SupportLevel has to be between 0 and 1
+  if (SupportLevel < 0 || SupportLevel > 1) {
+    stop(
+      "`SupportLevel` has to be a numeric value between 0 and 1", call. = FALSE)
+  }
+
+  # # ..................................................................... ###
+
   # Out path -----
 
   Path_Out <- dirname(dirname(Path_Model)) %>%
-    file.path("Model_Postprocessing", "Parameters_Summary")
+    IASDT.R::Path("Model_Postprocessing", "Parameters_Summary")
   fs::dir_create(Path_Out)
 
   # # ..................................................................... ###
@@ -117,8 +141,8 @@ PlotBetaGG <- function(
     CovNames == "RiversLog" ~ "\n\nRiver\nlength",
     CovNames == "HabLog" ~ "\n\nHabitat\ncoverage",
     .default = paste0("\n\n", CovNames))
-  SupportMatrix <- (post$support > supportLevel) %>%
-    magrittr::add(post$support < (1 - supportLevel)) %>%
+  SupportMatrix <- (post$support > SupportLevel) %>%
+    magrittr::add(post$support < (1 - SupportLevel)) %>%
     magrittr::is_greater_than(0)
 
   # Legend colours
@@ -181,8 +205,9 @@ PlotBetaGG <- function(
     rel_widths = c(0.94, 0.06))
 
   ragg::agg_jpeg(
-    filename = file.path(Path_Out, "Parameter_Beta_Support.jpeg"), res = 600,
-    width = PlotWidth, height = PlotHeight, units = "cm", quality = 100)
+    filename = IASDT.R::Path(Path_Out, "Parameter_Beta_Support.jpeg"),
+    res = 600, width = PlotWidth, height = PlotHeight, units = "cm",
+    quality = 100)
   print(Plot)
   grDevices::dev.off()
 
@@ -232,7 +257,7 @@ PlotBetaGG <- function(
     rel_widths = c(0.94, 0.06))
 
   ragg::agg_jpeg(
-    filename = file.path(Path_Out, "Parameter_Beta_Sign.jpeg"), res = 600,
+    filename = IASDT.R::Path(Path_Out, "Parameter_Beta_Sign.jpeg"), res = 600,
     width = PlotWidth, height = PlotHeight, units = "cm", quality = 100)
   print(Plot)
   grDevices::dev.off()
@@ -288,7 +313,7 @@ PlotBetaGG <- function(
     rel_widths = c(0.94, 0.06))
 
   ragg::agg_jpeg(
-    filename = file.path(Path_Out, "Parameter_Beta_Mean1.jpeg"), res = 600,
+    filename = IASDT.R::Path(Path_Out, "Parameter_Beta_Mean1.jpeg"), res = 600,
     width = PlotWidth, height = PlotHeight, units = "cm", quality = 100)
   print(Plot)
   grDevices::dev.off()
@@ -335,7 +360,229 @@ PlotBetaGG <- function(
     rel_widths = c(0.94, 0.06))
 
   ragg::agg_jpeg(
-    filename = file.path(Path_Out, "Parameter_Beta_Mean2.jpeg"), res = 600,
+    filename = IASDT.R::Path(Path_Out, "Parameter_Beta_Mean2.jpeg"), res = 600,
+    width = PlotWidth, height = PlotHeight, units = "cm", quality = 100)
+  print(Plot)
+  grDevices::dev.off()
+
+  # # ..................................................................... ###
+
+  IASDT.R::CatDiff(InitTime = .StartTime, Prefix = "Plotting took ")
+
+  # # ..................................................................... ###
+
+  return(invisible(NULL))
+}
+
+## |------------------------------------------------------------------------| #
+# Mod_Heatmap_Omega ----
+## |------------------------------------------------------------------------| #
+
+#' @export
+#' @name Parameter_Heatmap
+#' @rdname Parameter_Heatmap
+#' @order 2
+
+Mod_Heatmap_Omega <- function(
+    Path_Model, SupportLevel = 0.95, PlotWidth = 26, PlotHeight = 22.5) {
+
+  # # ..................................................................... ###
+
+  # Set null device for `cairo`. This is to properly render the plots using
+  # ggtext - https://github.com/wilkelab/cowplot/issues/73
+  cowplot::set_null_device("cairo")
+
+  .StartTime <- lubridate::now(tzone = "CET")
+
+  if (is.null(Path_Model)) {
+    stop("Path_Model cannot be empty", call. = FALSE)
+  }
+
+  # # ..................................................................... ###
+
+  # SupportLevel has to be between 0 and 1
+  if (SupportLevel < 0 || SupportLevel > 1) {
+    stop(
+      "`SupportLevel` has to be a numeric value between 0 and 1", call. = FALSE)
+  }
+
+  # # ..................................................................... ###
+
+  # Out path -----
+
+  Path_Out <- dirname(dirname(Path_Model)) %>%
+    IASDT.R::Path("Model_Postprocessing", "Parameters_Summary")
+  fs::dir_create(Path_Out)
+
+  # # ..................................................................... ###
+
+  # Loading model object ------
+  IASDT.R::CatTime("Loading model object")
+
+  Model <- IASDT.R::LoadAs(Path_Model)
+
+  # # ..................................................................... ###
+
+  # Plot phylogenetic tree -----
+  IASDT.R::CatTime("Phylogenetic tree plot")
+
+  Tree <- Model$phyloTree
+  # Remove the 'Sp_' prefix from tip labels
+  Tree$tip.label <- stringr::str_remove(Tree$tip.label, "^Sp_")
+  if (length(Tree$edge.length) == 2 * nrow(Tree$edge)) {
+    Tree$edge.length <- rep(1, length(Tree$edge.length) / 2)
+  }
+
+  PhyloPlot <- ggtree::ggtree(
+    tr = Tree, branch.length = "none", ladderize = FALSE, linewidth = 0.25) +
+    ggtree::geom_tiplab(size = 1) +
+    ggtree::theme_tree() +
+    ggplot2::theme(
+      axis.text.y = ggplot2::element_blank(),
+      plot.margin = ggplot2::unit(c(0.2, 0, 0, 0), "lines"))
+
+  # # ..................................................................... ###
+
+  # Plotting theme ----
+  IASDT.R::CatTime("Plotting theme")
+
+  Theme <- ggplot2::theme(
+    legend.title = ggtext::element_markdown(),
+    legend.spacing = ggplot2::unit(0, "cm"),
+    legend.key.size = ggplot2::unit(0.65, "cm"),
+    legend.key.width = ggplot2::unit(0.65, "cm"),
+    legend.box.margin = ggplot2::margin(0, -30, 0, -15),
+    legend.box.spacing = ggplot2::unit(0, "pt"),
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank(),
+    plot.margin = ggplot2::unit(c(0, -3, 0.25, -2), "lines"))
+
+  # # ..................................................................... ###
+
+  # ComputeAssociations -----
+  IASDT.R::CatTime("Compute associations")
+
+  post <- Hmsc::computeAssociations(Model)[[1]]
+  rm(Model, envir = environment())
+
+  # # ..................................................................... ###
+
+  # Sign ------
+  IASDT.R::CatTime("1. sign")
+
+  Support <- (post$support > SupportLevel) %>%
+    magrittr::add(post$support < (1 - SupportLevel)) %>%
+    magrittr::is_greater_than(0)
+  # remove prefix "Sp_" from co-occurrence labels
+  dimnames(Support)[[2]] <- dimnames(Support)[[1]] <- stringr::str_remove(
+    dimnames(Support)[[1]], "^Sp_")
+
+  PostMean <- post$mean
+  PostMean[!Support] <- NA_real_
+  # remove prefix "Sp_" from co-occurrence labels
+  dimnames(PostMean)[[2]] <- dimnames(PostMean)[[1]] <- stringr::str_remove(
+    dimnames(PostMean)[[1]], "^Sp_")
+
+  PosSign <- '<span style="font-size: 8pt"><b>  +  </b></span>'
+  NegSign <- '<span style="font-size: 8pt"><b>  \u2212  </b></span>'
+  LegendTitle <- paste0(
+    '<span style="font-size: 12pt"><b>Omega</b></span><br>',
+    '<span style="font-size: 9pt">(sign)</span>')
+
+  Plot_Sign <- (
+    sign(PostMean) %>%
+      as.data.frame() %>%
+      dplyr::mutate_all(as.character) %>%
+      # replace diagonals with NA
+      replace(., col(.) == row(.), NA_character_) %>%
+      replace(., . == "1", PosSign) %>%
+      replace(., . == "-1", NegSign) %>%
+      ggtree::gheatmap(
+        PhyloPlot, ., offset = 0.75, width = 12, font.size = 0.75,
+        colnames_offset_y = -1, colnames_angle = 90, hjust = 0.5) +
+      ggplot2::scale_fill_manual(
+        values = c("red", "blue"), na.value = "transparent",
+        breaks = c(PosSign, NegSign)) +
+      ggtree::scale_x_ggtree() +
+      ggplot2::coord_cartesian(clip = "off")  +
+      ggplot2::labs(fill = LegendTitle) +
+      Theme +
+      ggplot2::theme(legend.text = ggtext::element_markdown(size = 8))) %>%
+    # suppress the message: Scale for fill is already present. Adding another
+    # scale for fill, which will replace the existing scale.
+    suppressMessages()
+
+  Plot <- cowplot::plot_grid(
+    (Plot_Sign + ggplot2::theme(legend.position = "none")),
+    ggpubr::as_ggplot(ggpubr::get_legend(Plot_Sign)),
+    rel_widths = c(1, 0.09))
+
+  # Using ggplot2::ggsave directly does not show non-ascii characters correctly
+  ragg::agg_jpeg(
+    filename = IASDT.R::Path(Path_Out, "Parameter_Omega_Sign.jpeg"), res = 600,
+    width = PlotWidth, height = PlotHeight, units = "cm", quality = 100)
+  print(Plot)
+  grDevices::dev.off()
+
+  # # ..................................................................... ###
+
+  # Mean -----
+  IASDT.R::CatTime("2. mean")
+
+  # Legend colours
+  Palette_Positive <- grDevices::colorRampPalette(
+    c("#FFE4B2", "#FFC85C", "#FF8C00", "#E25822", "#800000"))(100)
+  Palette_Negative <- grDevices::colorRampPalette(
+    c("#E6FFFF", "#91D8F7", "#4682B4", "#083D77", "#001F3F"))(100) %>%
+    rev()
+
+  LegendTitle <- paste0(
+    '<span style="font-size: 11pt"><b>Omega</span><br>',
+    '<span style="font-size: 8pt">(mean)</span>')
+
+  PostMeanD <- as.data.frame(PostMean) %>%
+    # replace diagonals with NA
+    replace(., col(.) == row(.), NA_real_)
+
+  PostMeanD_Positive <- PostMeanD_Negative <- PostMeanD
+  PostMeanD_Positive[PostMeanD_Positive < 0] <- NA_real_
+  PostMeanD_Negative[PostMeanD_Negative >= 0] <- NA_real_
+
+  suppressMessages(
+    {
+      Plot_Mean1 <- ggtree::gheatmap(
+        PhyloPlot, PostMeanD_Negative, offset = 0.75, width = 12,
+        font.size = 0.75, colnames_offset_y = -1, colnames_angle = 90,
+        hjust = 1) +
+        ggplot2::scale_fill_gradientn(
+          na.value = "transparent", colours = Palette_Negative,
+          guide = ggplot2::guide_colorbar(order = 0),
+          labels = scales::number_format(accuracy = 0.1)) +
+        ggplot2::labs(fill = LegendTitle) +
+        ggnewscale::new_scale_fill()
+
+      Plot_Mean <- ggtree::gheatmap(
+        Plot_Mean1, PostMeanD_Positive, offset = 0.75, width = 12,
+        font.size = 0.75, colnames_offset_y = -1, colnames_angle = 90,
+        hjust = 1) +
+        ggplot2::scale_fill_gradientn(
+          na.value = "transparent", colours = Palette_Positive,
+          guide = ggplot2::guide_colorbar(order = 1), name = NULL,
+          labels = scales::number_format(accuracy = 0.1)) +
+        ggtree::scale_x_ggtree() +
+        ggplot2::coord_cartesian(clip = "off")  +
+        Theme +
+        ggplot2::theme(legend.text = ggplot2::element_text(size = 8))
+    })
+
+  Plot <- cowplot::plot_grid(
+    (Plot_Mean + ggplot2::theme(legend.position = "none")),
+    ggpubr::as_ggplot(ggpubr::get_legend(Plot_Mean)),
+    rel_widths = c(1, 0.09))
+
+  # Using ggplot2::ggsave directly does not show non-ascii characters correctly
+  ragg::agg_jpeg(
+    filename = IASDT.R::Path(Path_Out, "Parameter_Omega_Mean.jpeg"), res = 600,
     width = PlotWidth, height = PlotHeight, units = "cm", quality = 100)
   print(Plot)
   grDevices::dev.off()

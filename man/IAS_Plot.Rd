@@ -10,11 +10,12 @@ IAS_Plot(Species, FromHPC = TRUE, EnvFile = ".env", Overwrite = FALSE)
 \item{Species}{Character. The name of the species for which the distribution
 plot will be generated.}
 
-\item{FromHPC}{Logical indicating whether the work is being done from HPC, to
-adjust file paths accordingly. Default: \code{TRUE}.}
+\item{FromHPC}{Logical. Whether the processing is being done on an
+High-Performance Computing (HPC) environment, to adjust file paths
+accordingly. Default: \code{TRUE}.}
 
-\item{EnvFile}{Character. The path to the environment file containing
-variables required by the function. Default is ".env".}
+\item{EnvFile}{Character. Path to the environment file containing paths to
+data sources. Defaults to \code{.env}.}
 
 \item{Overwrite}{Logical. If \code{TRUE}, the function will overwrite existing
 maps; otherwise, it will skip generating a new map if one exists (default:

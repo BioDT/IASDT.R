@@ -2,19 +2,19 @@
 % Please edit documentation in R/Spat_NetCDFGlobalAttrs.R
 \name{NetCDFGlobalAttrs}
 \alias{NetCDFGlobalAttrs}
-\title{Get global attributes for NetCDF files}
+\title{Get global attributes for \code{NetCDF} files}
 \usage{
 NetCDFGlobalAttrs(nc = NULL)
 }
 \arguments{
-\item{nc}{A character string specifying the path to the NetCDF file. If
+\item{nc}{Character. Path to the \code{NetCDF} file. If
 \code{NULL}, the function will stop with an error message.}
 }
 \value{
 A character vector where each element is a global attribute.
 }
 \description{
-This function opens a NetCDF file, extracts all global attributes, and
+This function opens a \code{NetCDF} file, extracts all global attributes, and
 returns them as a character vector where each element is an attribute
 name-value pair.
 }

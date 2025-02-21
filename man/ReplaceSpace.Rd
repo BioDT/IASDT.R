@@ -7,7 +7,7 @@
 ReplaceSpace(x)
 }
 \arguments{
-\item{x}{A character string. The string in which spaces will be replaced with
+\item{x}{Character. The string in which spaces will be replaced with
 underscores.}
 }
 \value{

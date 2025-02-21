@@ -13,23 +13,23 @@ SaveMultiple(
 )
 }
 \arguments{
-\item{Vars}{A character vector specifying the names of the variables to be
-saved. If \code{NULL} or any specified variable does not exist in the global
-environment, the function will stop with an error.}
+\item{Vars}{Character vector. Names of the variables to be saved. If \code{NULL}
+or any specified variable does not exist in the global environment, the
+function will stop with an error.}
 
-\item{OutFolder}{A string specifying the path to the output folder where the
-\code{.RData} files will be saved. Defaults to the current working directory.}
+\item{OutFolder}{Character. Path to the output folder where the \code{.RData}
+files will be saved. Defaults to the current working directory.}
 
-\item{Overwrite}{A logical value indicating whether existing \code{.RData} files
+\item{Overwrite}{Logical. Whether existing \code{.RData} files
 should be overwritten. If \code{FALSE} (Default) and files exist, the function
 will stop with an error message.}
 
-\item{Prefix}{A string to be prefixed to each output file name. Useful for
+\item{Prefix}{Character. Prefix of each output file name. Useful for
 organizing saved files or avoiding name conflicts. Defaults to an empty
 string.}
 
-\item{Verbose}{A logical value indicating whether to print a message upon
-successful saving of files. Defaults to \code{FALSE}.}
+\item{Verbose}{Logical. Whether to print a message upon successful saving of
+files. Defaults to \code{FALSE}.}
 }
 \value{
 The function is used for its side effect of saving files and does not
@@ -42,7 +42,7 @@ overwriting of existing files.
 }
 \examples{
 \dontrun{
-  TMP_Folder <- file.path(tempdir(), stringi::stri_rand_strings(1, 5))
+  TMP_Folder <- IASDT.R::Path(tempdir(), stringi::stri_rand_strings(1, 5))
   fs::dir_create(TMP_Folder)
 
   # ----------------------------------------------
@@ -54,9 +54,9 @@ overwriting of existing files.
 
   list.files(path = TMP_Folder, pattern = "^.+.RData")
 
-  (x1Contents <- IASDT.R::LoadAs(file.path(TMP_Folder, "x1.RData")))
+  (x1Contents <- IASDT.R::LoadAs(IASDT.R::Path(TMP_Folder, "x1.RData")))
 
-  (x2Contents <- IASDT.R::LoadAs(file.path(TMP_Folder, "x2.RData")))
+  (x2Contents <- IASDT.R::LoadAs(IASDT.R::Path(TMP_Folder, "x2.RData")))
 
   # ----------------------------------------------
   # Use Prefix
@@ -79,11 +79,11 @@ overwriting of existing files.
   SaveMultiple(Vars = c("x1", "x2", "x3"),
      OutFolder = TMP_Folder, Overwrite = TRUE)
 
-  (x1Contents <- IASDT.R::LoadAs(file.path(TMP_Folder, "x1.RData")))
+  (x1Contents <- IASDT.R::LoadAs(IASDT.R::Path(TMP_Folder, "x1.RData")))
 
-  (x2Contents <- IASDT.R::LoadAs(file.path(TMP_Folder, "x2.RData")))
+  (x2Contents <- IASDT.R::LoadAs(IASDT.R::Path(TMP_Folder, "x2.RData")))
 
-     (x3Contents <- IASDT.R::LoadAs(file.path(TMP_Folder, "x3.RData")))
+     (x3Contents <- IASDT.R::LoadAs(IASDT.R::Path(TMP_Folder, "x3.RData")))
 }
 }
 \author{

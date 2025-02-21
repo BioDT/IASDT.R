@@ -10,9 +10,9 @@ DetectAlias(DT, Verbose = FALSE)
 \item{DT}{A \verb{data frame} or \code{tibble} containing the variables to be checked
 for aliasing.}
 
-\item{Verbose}{A logical value indicating whether to print the aliased
-variables found (if any). If \code{TRUE}, aliased variables are printed to the
-console. Defaults to \code{FALSE}.}
+\item{Verbose}{Logical. Whether to print the aliased variables
+found (if any). If \code{TRUE}, aliased variables are printed to the console.
+Defaults to \code{FALSE}.}
 }
 \value{
 Returns a character vector of aliased variable names if any are

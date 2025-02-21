@@ -8,15 +8,15 @@ The source code of this function was taken from this
 \href{https://gist.github.com/paulrougieux/e1ee769577b40cd9ed9db7f75e9a2cc2}{gist}.
 }
 \usage{
-ScrapLinks(url)
+ScrapLinks(URL)
 }
 \arguments{
-\item{url}{A character string specifying the URL of the web page to scrape.
-This URL is also used to resolve relative links to absolute URLs.}
+\item{URL}{Character. The URL of the web page to scrape. This URL is also
+used to resolve relative links to absolute URLs.}
 }
 \value{
 A tibble with two columns: \code{link_text} containing the text of each
-link, and \code{url} containing  the absolute URL of each link. The tibble is
+link, and \code{URL} containing  the absolute URL of each link. The tibble is
 sorted by URL and then by link text, and only unique links are included.
 }
 \description{

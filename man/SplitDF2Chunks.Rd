@@ -7,17 +7,16 @@
 SplitDF2Chunks(DF = NULL, ChunkSize = NULL, NChunks = NULL, Prefix = "Chunk")
 }
 \arguments{
-\item{DF}{data.frame. The data.frame to be split into chunks.}
+\item{DF}{\code{data.frame}. The data.frame to be split into chunks.}
 
-\item{ChunkSize}{integer (optional). The desired number of rows each chunk
-should contain. It must be a positive integer and less than the number of
-rows in \code{DF}.}
+\item{ChunkSize}{integer. Number of rows each chunk should contain. It must
+be a positive integer and less than the number of rows in \code{DF}.}
 
-\item{NChunks}{integer (optional). The desired number of chunks to split the
-data.frame into. It must be a positive integer.}
+\item{NChunks}{integer. Number of chunks to split the data.frame into. It
+must be a positive integer.}
 
-\item{Prefix}{Character. A string value that will be used as a prefix for the
-names of the chunks. Default is "Chunk".}
+\item{Prefix}{Character. Prefix for the names of the chunks. Default is
+"Chunk".}
 }
 \value{
 A list of data.frames, where each data.frame represents a chunk of

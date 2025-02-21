@@ -7,15 +7,15 @@
 LoadPackages(..., List = NULL, Verbose = FALSE, InstallMissing = TRUE)
 }
 \arguments{
-\item{...}{character. Names of the packages to be loaded or installed.}
+\item{...}{Character. Names of the packages to be loaded or installed.}
 
-\item{List}{character vector. An alternative or additional way to specify
+\item{List}{Character vector. An alternative or additional way to specify
 package names as a vector.}
 
-\item{Verbose}{logical. If \code{TRUE}, prints the names and versions of the
+\item{Verbose}{Logical. If \code{TRUE}, prints the names and versions of the
 loaded packages. Defaults to \code{FALSE}.}
 
-\item{InstallMissing}{logical. If \code{TRUE} (default), missing packages are
+\item{InstallMissing}{Logical. If \code{TRUE} (default), missing packages are
 automatically installed and then loaded.}
 }
 \value{

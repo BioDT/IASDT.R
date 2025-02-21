@@ -2,7 +2,7 @@
 % Please edit documentation in R/Mod_Predict_Maps.R
 \name{Predict_Maps}
 \alias{Predict_Maps}
-\title{Predicts habitat suitability of \code{Hmsc} model across different climate options}
+\title{Predict habitat suitability of \code{Hmsc} model across different climate options}
 \usage{
 Predict_Maps(
   Path_Model = NULL,
@@ -40,20 +40,22 @@ which data will be prepared. Valid values are \code{0}, \code{1}, \code{2}, \cod
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
 
-\item{FromHPC}{Logical indicating whether the work is being done from HPC, to
-adjust file paths accordingly. Default: \code{TRUE}.}
+\item{FromHPC}{Logical. Whether the processing is being done on an
+High-Performance Computing (HPC) environment, to adjust file paths
+accordingly. Default: \code{TRUE}.}
 
-\item{NCores}{Integer specifying the number of parallel cores for
-parallelization. Default: 8 cores.}
+\item{NCores}{Integer. Number of CPU cores to use for parallel processing.
+Default: 8.}
 
 \item{Pred_Clamp}{Logical indicating whether to clamp the sampling efforts at
-a single value. Defaults to \code{TRUE}. If \code{TRUE}, the \code{Fix_Efforts} argument
-must be provided.}
+a single value. If \code{TRUE} (default), the \code{Fix_Efforts} argument must be
+provided.}
 
-\item{Fix_Efforts}{Numeric or character. Defines the value to fix sampling
-efforts less than the provided value. If numeric, the value is directly
-used (log\if{html}{\out{<sub>}}10\if{html}{\out{</sub>}} scale). If character, it can be \code{median}, \code{mean},
-\code{max}, or \code{q90} (q0\% Quantile). Using \code{max} can reflect extreme values
+\item{Fix_Efforts}{Numeric or character. If \code{Pred_Clamp = TRUE}, the sampling
+efforts predictor with values U+02264 \code{Fix_Efforts} is fixed at
+\code{Fix_Efforts} during predictions. If numeric, the value is directly used
+(log\if{html}{\out{<sub>}}10\if{html}{\out{</sub>}} scale). If character, it can be one of \code{median}, \code{mean},
+\code{max}, or \code{q90} (90\% Quantile). Using \code{max} can reflect extreme values
 caused by rare, highly sampled locations (e.g., urban centers or popular
 natural reserves). While using 90\% quantile avoid such extreme grid cells
 while still capturing areas with high sampling effort. This argument is
@@ -61,55 +63,53 @@ mandatory when \code{Pred_Clamp} is set to \code{TRUE}.}
 
 \item{Fix_Rivers}{Numeric or character. Similar to \code{Fix_Efforts}, but for
 fixing the length of rivers. If numeric, the value is directly used
-(log\if{html}{\out{<sub>}}10\if{html}{\out{</sub>}} scale). If character, it can be \code{median}, \code{mean}, \code{max},
-\code{q90} (90\% quantile). It can be also \code{NULL} for not fixing the river length
-predictor. Defaults to \code{q90}.}
+(log\if{html}{\out{<sub>}}10\if{html}{\out{</sub>}} scale). If character, it can be one of \code{median}, \code{mean},
+\code{max}, \code{q90} (90\% quantile). It can be also \code{NULL} for not fixing the river
+length predictor. Defaults to \code{q90}.}
 
-\item{Pred_NewSites}{Logical indicating whether to predict habitat
-suitability at new sites. Default: \code{TRUE}. Note: This parameter is
-temporary and will be removed in future updates.}
+\item{Pred_NewSites}{Logical. Whether to predict habitat suitability at new
+sites. Default: \code{TRUE}. Note: This parameter is temporary and will be
+removed in future updates.}
 
-\item{UseTF}{Logical indicating whether to use TensorFlow for calculations.
-Defaults to \code{TRUE}.}
-
-\item{TF_Environ}{Character string specifying the path to the Python
-environment. Defaults to \code{NULL}. This argument is required if \code{UseTF} is
+\item{UseTF}{Logical. Whether to use TensorFlow for calculations. Defaults to
 \code{TRUE}.}
 
-\item{TF_use_single}{Logical indicating whether to use single precision for
-the TF calculations. Defaults to \code{FALSE}.}
+\item{TF_Environ}{Character. Path to the Python environment. This argument is
+required if \code{UseTF} is \code{TRUE}.}
 
-\item{LF_NCores}{Integer specifying the number of cores to use for parallel
-processing. Defaults to 8.}
+\item{TF_use_single}{Logical. Whether to use single precision for the
+TensorFlow calculations. Defaults to \code{FALSE}.}
+
+\item{LF_NCores}{Integer. Number of cores to use for parallel processing of
+latent factor prediction. Defaults to 8L.}
 
 \item{LF_Check}{Logical. If \code{TRUE}, the function checks if the output files
 are already created and valid. If \code{FALSE}, the function will only check if
 the files exist without checking their integrity. Default is \code{FALSE}.}
 
-\item{LF_Temp_Cleanup}{Logical indicating whether to delete temporary files
-in the \code{Temp_Dir} after finishing the LF predictions.}
+\item{LF_Temp_Cleanup}{Logical. Whether to delete temporary files in the
+\code{Temp_Dir} directory after finishing the LF predictions.}
 
-\item{LF_Only}{Logical. Indicates whether to predict only the latent factor.
-Useful for distributing processing load between GPU and CPU. When \code{LF_Only = TRUE}, the latent factor prediction can be computed on the GPU. The
-function can then be rerun with \code{LF_Only = FALSE} to predict habitat
-suitability using the predicted latent factor on the CPU. Default: \code{FALSE}.}
+\item{LF_Only}{Logical. Whether to predict only the latent factor. This is
+useful for distributing processing load between GPU and CPU. When \code{LF_Only = TRUE}, latent factor prediction needs to be computed separately on GPU.
+When computations are finished on GPU, the function can later be rerun with
+\code{LF_Only = FALSE} (default) to predict habitat suitability using the
+already-computed latent factor predictions.}
 
 \item{LF_Commands_Only}{logical. If \code{TRUE}, returns the command to run the
 Python script. Default is \code{FALSE}.}
 
-\item{Temp_Dir}{Character string specifying the path for temporary storage of
-intermediate files.}
+\item{Temp_Dir}{Character. Path for temporary storage of intermediate files.}
 
-\item{Temp_Cleanup}{logical, indicating whether to clean up temporary files.
+\item{Temp_Cleanup}{Logical. Whether to clean up temporary files.
 Defaults to \code{TRUE}.}
 
-\item{CC_Models}{Character vector. Specifies the climate models for future
-predictions. Default: \code{c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL")}. Note: This parameter is temporary and may be
-removed in future updates.}
+\item{CC_Models}{Character vector. Climate models for future predictions.
+Available options are \code{c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL")} (default).}
 
-\item{CC_Scenario}{Character vector. Specifies the climate scenarios for
-future predictions. Default: \code{c("ssp126", "ssp370", "ssp585")}. Note: This
-parameter is temporary and may be removed in future updates.}
+\item{CC_Scenario}{Character vector. Climate scenarios for future
+predictions. Available options are: \code{c("ssp126", "ssp370", "ssp585")}
+(default).}
 }
 \value{
 A tibble containing the prediction summary and file paths for output
@@ -117,10 +117,13 @@ A tibble containing the prediction summary and file paths for output
 }
 \description{
 This function generates prediction maps of \code{Hmsc} models for current and
-future climate scenarios. It also predicts an ensemble predictions for
+future climate options. It also predicts an ensemble predictions for
 different climate models. For each species and overall species richness, the
 function exports three maps: mean, standard deviation (sd), and coefficient
-of variation (cov).
+of variation (cov). For future predictions, the function generates maps for
+prediction anomaly (future - current). The function prepares data to be
+uploaded to the \href{http://opendap.biodt.eu/ias-pdt/}{OPeNDAP} data server for
+the use of the IAS-pDT \href{https://app.biodt.eu/}{Shiny App}.
 }
 \author{
 Ahmed El-Gabbas

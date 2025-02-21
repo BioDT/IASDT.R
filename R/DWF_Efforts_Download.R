@@ -8,8 +8,8 @@
 #' validity of downloaded files, and stores the data in specified directories.
 #' If data has already been downloaded, it validates the files instead of
 #' downloading them again.
-#' @param NCores Integer. Number of cores to use for parallel processing.  Must
-#'   be a positive integer. This directory must exist or be created beforehand.
+#' @param NCores Integer. Number of CPU cores to use for parallel processing. 
+#'   Default: 6.
 #' @param Path_Raw Character. Path where the raw downloaded data will be saved.
 #'   This directory must exist or be created beforehand.
 #' @param Path_Interim Character. Path where the interim CSV files will be
@@ -24,7 +24,8 @@
 #'   IAS-pDT, but only used inside the [Efforts_Process] function.
 #' @export
 
-Efforts_Download <- function(NCores = 6, Path_Raw, Path_Interim, Path_Efforts) {
+Efforts_Download <- function(
+  NCores = 6L, Path_Raw, Path_Interim, Path_Efforts) {
 
   .StartTimeDown <- lubridate::now(tzone = "CET")
 
@@ -65,7 +66,9 @@ Efforts_Download <- function(NCores = 6, Path_Raw, Path_Interim, Path_Efforts) {
 
   # # ..................................................................... ###
 
-  Path_Efforts_Request <- file.path(Path_Efforts, "Efforts_AllRequests.RData")
+  Path_Efforts_Request <- IASDT.R::Path(
+    Path_Efforts, "Efforts_AllRequests.RData")
+
   if (!file.exists(Path_Efforts_Request)) {
     stop(
       paste0(
@@ -108,7 +111,7 @@ Efforts_Download <- function(NCores = 6, Path_Raw, Path_Interim, Path_Efforts) {
         .x = Request,
         .f = ~{
 
-          DownFile <- file.path(Path_Raw, paste0(as.character(.x), ".zip"))
+          DownFile <- IASDT.R::Path(Path_Raw, paste0(as.character(.x), ".zip"))
 
           # Check zip file if exist, if not download it
           if (file.exists(DownFile)) {
@@ -161,7 +164,7 @@ Efforts_Download <- function(NCores = 6, Path_Raw, Path_Interim, Path_Efforts) {
 
   save(
     Efforts_AllRequests,
-    file = file.path(Path_Efforts, "Efforts_AllRequests.RData"))
+    file = IASDT.R::Path(Path_Efforts, "Efforts_AllRequests.RData"))
 
   # # ..................................................................... ###
 

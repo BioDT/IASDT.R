@@ -9,23 +9,24 @@
 #' model convergence using trace plots and Gelman-Rubin diagnostics for key
 #' model parameters.
 #'
-#' @param ModelDir String. Path to the root directory of the fitted models
-#'   without the trailing slash. The convergence outputs will be saved to the
-#'   `Model_Convergence_All` subfolder.
+#' @param ModelDir Character. Path to the root directory of the fitted models.
+#'   The convergence outputs will be saved to the `Model_Convergence_All`
+#'   subfolder.
 #' @param maxOmega Integer. Maximum number of species interactions to sample for
 #'   convergence diagnostics.
-#' @param NCores Integer. Number of cores to use for parallel processing.
-#' @param FromHPC Logical. Indicates whether the function is being run on an HPC
-#'   environment, affecting file path handling. Default: `TRUE`.
+#' @param NCores Integer. Number of CPU cores to use for parallel processing.
+#' @param FromHPC Logical. Whether the processing is being done on an 
+#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#'   accordingly. Default: `TRUE`.
 #' @name Convergence_Plot_All
-#' @inheritParams PlotAlpha
+#' @inheritParams Convergence_plots
 #' @author Ahmed El-Gabbas
 #' @return The function does not return anything but saves a series of
 #'   diagnostic plots in the specified path.
 #' @export
 
 Convergence_Plot_All <- function(
-    ModelDir = NULL, maxOmega = 1000, NCores = NULL,
+    ModelDir = NULL, maxOmega = 1000L, NCores = NULL,
     FromHPC = TRUE, MarginType = "histogram") {
 
   # # ..................................................................... ###
@@ -55,11 +56,11 @@ Convergence_Plot_All <- function(
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "character", Args = "ModelDir")
+    AllArgs = AllArgs, Type = "character", Args = c("ModelDir", "MarginType"))
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "numeric", Args = c("maxOmega", "NCores"))
+    AllArgs = AllArgs, Type = "numeric",  Args = c("maxOmega", "NCores"))
+  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "logical", Args = "FromHPC")
   rm(AllArgs, envir = environment())
-
 
   if (length(MarginType) != 1) {
     stop("`MarginType` must be a single value.", call. = FALSE)
@@ -76,11 +77,12 @@ Convergence_Plot_All <- function(
 
   IASDT.R::CatTime("Prepare/load convergence data")
 
-  Path_Convergence_All <- file.path(ModelDir, "Model_Convergence_All")
-  Path_ConvDT <- file.path(Path_Convergence_All, "DT")
+
+  Path_Convergence_All <- IASDT.R::Path(ModelDir, "Model_Convergence_All")
+  Path_ConvDT <- IASDT.R::Path(Path_Convergence_All, "DT")
   fs::dir_create(c(Path_ConvDT, Path_Convergence_All))
 
-  Model_Info <- file.path(ModelDir, "Model_Info.RData")
+  Model_Info <- IASDT.R::Path(ModelDir, "Model_Info.RData")
   if (!file.exists(Model_Info)) {
     stop(
       paste0("Model info file `", Model_Info, "` does not exist"),
@@ -101,7 +103,7 @@ Convergence_Plot_All <- function(
     future::plan("future::sequential", gc = TRUE)
   } else {
     withr::local_options(
-      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
       future.seed = TRUE)
     c1 <- snow::makeSOCKcluster(min(NCores, nrow(Model_Info)))
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
@@ -130,13 +132,14 @@ Convergence_Plot_All <- function(
     } else {
 
       Obj_Rho <- paste0(M_Name_Fit, "_TraceRho")
-      Path_Trace_Rho <- file.path(Path_ConvDT, paste0(Obj_Rho, ".RData"))
+      Path_Trace_Rho <- IASDT.R::Path(Path_ConvDT, paste0(Obj_Rho, ".RData"))
 
       Obj_Alpha <- paste0(M_Name_Fit, "_TraceAlpha")
-      Path_Trace_Alpha <- file.path(Path_ConvDT, paste0(Obj_Alpha, ".RData"))
+      Path_Trace_Alpha <- IASDT.R::Path(
+        Path_ConvDT, paste0(Obj_Alpha, ".RData"))
 
       Obj_Beta_Omega <- paste0(M_Name_Fit, "_Beta_Omega")
-      Path_Beta_Omega <- file.path(
+      Path_Beta_Omega <- IASDT.R::Path(
         Path_ConvDT, paste0(Obj_Beta_Omega, ".RData"))
 
 
@@ -152,7 +155,7 @@ Convergence_Plot_All <- function(
           RhoTitle <- stringr::str_remove_all(
             string = basename(Path_Coda), pattern = "_Tree|_Coda|.RData$|.qs2")
 
-          PlotObj_Rho <- IASDT.R::PlotRho(
+          PlotObj_Rho <- IASDT.R::Convergence_Rho(
             Post = Coda_Obj, Model = Model_Obj, Title = RhoTitle,
             MarginType = MarginType)
 
@@ -168,7 +171,7 @@ Convergence_Plot_All <- function(
 
       # Alpha -----
       if (!file.exists(Path_Trace_Alpha)) {
-        PlotObj_Alpha <- IASDT.R::PlotAlpha(
+        PlotObj_Alpha <- IASDT.R::Convergence_Alpha(
           Post = Coda_Obj, Model = Model_Obj,
           Title = stringr::str_remove_all(
             basename(Path_Coda), "_Tree|_Coda|.RData$|.qs2"),
@@ -189,7 +192,7 @@ Convergence_Plot_All <- function(
         Omega_ESS <- Beta_Omega$Omega_ESS
         Omega_Gelman <- Beta_Omega$Omega_Gelman
         rm(Beta_Omega, envir = environment())
-      
+
       } else {
 
         Beta <- magrittr::extract2(Coda_Obj, "Beta")
@@ -264,7 +267,7 @@ Convergence_Plot_All <- function(
 
   save(
     Convergence_DT,
-    file = file.path(Path_Convergence_All, "Convergence_DT.RData"))
+    file = IASDT.R::Path(Path_Convergence_All, "Convergence_DT.RData"))
 
   if (NCores > 1) {
     snow::stopCluster(c1)
@@ -300,7 +303,7 @@ Convergence_Plot_All <- function(
   IASDT.R::CatTime("Alpha - trace plots")
 
   grDevices::pdf(
-    file = file.path(Path_Convergence_All, "TracePlots_Alpha.pdf"),
+    file = IASDT.R::Path(Path_Convergence_All, "TracePlots_Alpha.pdf"),
     width = 18, height = 12)
   purrr::walk(
     .x = Convergence_DT$Path_Trace_Alpha,
@@ -334,7 +337,7 @@ Convergence_Plot_All <- function(
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   grDevices::pdf(
-    file = file.path(
+    file = IASDT.R::Path(
       Path_Convergence_All, "TracePlots_Rho_Phylogenetic.pdf"),
     width = 18, height = 15)
   invisible(print(Plot))
@@ -345,7 +348,7 @@ Convergence_Plot_All <- function(
   # Omega - Gelman convergence ------
   IASDT.R::CatTime("Omega - Gelman convergence")
 
-  Plot_Path <- file.path(
+  Plot_Path <- IASDT.R::Path(
     Path_Convergence_All, paste0("Convergence_Omega_Gelman.pdf"))
 
   Plot_Title <- paste0(
@@ -395,7 +398,7 @@ Convergence_Plot_All <- function(
   # Omega - Effective sample size -----
   IASDT.R::CatTime("Omega - Effective sample size")
 
-  Plot_Path <- file.path(
+  Plot_Path <- IASDT.R::Path(
     Path_Convergence_All, paste0("Convergence_Omega_ESS.pdf"))
 
   Plot_Title <- paste0("Effective sample size - Omega (", maxOmega, " samples)")
@@ -453,7 +456,7 @@ Convergence_Plot_All <- function(
 
   Plot_Title <- paste0("Gelman convergence diagnostic - Beta")
 
-  Plot_Path <- file.path(
+  Plot_Path <- IASDT.R::Path(
     Path_Convergence_All, paste0("Convergence_Beta_Gelman.pdf"))
 
   Plot <- Convergence_DT %>%
@@ -499,7 +502,7 @@ Convergence_Plot_All <- function(
   # Beta - Effective sample size -----
   IASDT.R::CatTime("Beta - Effective sample size")
 
-  Plot_Path <- file.path(
+  Plot_Path <- IASDT.R::Path(
     Path_Convergence_All, paste0("Convergence_Beta_ESS.pdf"))
   Plot_Title <- "Effective sample size - Beta"
 

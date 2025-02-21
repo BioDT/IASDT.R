@@ -9,10 +9,10 @@
 #'
 #' @name CheckArgs
 #' @author Ahmed El-Gabbas
-#' @param AllArgs String. Vector for the input parameters of the function.
+#' @param AllArgs Character vector. Input parameters of the function.
 #'   Usually as a result of `formals()` function
-#' @param Args character vector. Names of the arguments to be checked.
-#' @param Type character. Specifies the expected type of the arguments. Must be
+#' @param Args Character vector. Names of the arguments to be checked.
+#' @param Type Character. The expected type of the arguments. Must be
 #'   one of "character", "logical", or "numeric".
 #' @return The function does not return a value but will stop execution and
 #'   throw an error if any of the specified arguments do not match the expected

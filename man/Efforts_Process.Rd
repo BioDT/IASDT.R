@@ -10,20 +10,21 @@ Efforts_Process(
   Renviron = ".Renviron",
   RequestData = TRUE,
   DownloadData = TRUE,
-  NCores = 6,
-  StartYear = 1981,
+  NCores = 6L,
+  StartYear = 1981L,
   Boundaries = c(-30, 50, 25, 75),
-  ChunkSize = 1e+05,
+  ChunkSize = 100000L,
   DeleteChunks = TRUE,
   DeleteProcessed = TRUE
 )
 }
 \arguments{
-\item{FromHPC}{Logical indicating whether the work is being done from HPC, to
-adjust file paths accordingly. Default: \code{TRUE}.}
+\item{FromHPC}{Logical. Whether the processing is being done on an
+High-Performance Computing (HPC) environment, to adjust file paths
+accordingly. Default: \code{TRUE}.}
 
-\item{EnvFile}{Character. The path to the environment file containing
-variables required by the function. Default: \code{.env}.}
+\item{EnvFile}{Character. Path to the environment file containing paths to
+data sources. Defaults to \code{.env}.}
 
 \item{Renviron}{Character. The path to the \code{.Renviron} file containing GBIF
 login credentials (email, user, password). Default: \code{.Renviron}.}
@@ -36,25 +37,26 @@ If \code{FALSE}, previously requested data is loaded from disk. Defaults to
 stores it on disk. If \code{FALSE}, it skips the download step. Defaults to
 \code{TRUE}.}
 
-\item{NCores}{Integer. The number of cores to use for parallel processing.}
+\item{NCores}{Integer. Number of CPU cores to use for parallel processing.
+Default: 6.}
 
 \item{StartYear}{Numeric. The starting year for the occurrence data. Only
 records from this year onward will be requested from GBIF. Default is
 \code{1981}, which matches the year ranges of CHELSA current climate data.}
 
-\item{Boundaries}{Numeric vector of length 4. Specifies geographical
-boundaries for the requested GBIF data in the order: Left, Right, Bottom,
-Top. Default: \code{c(-30, 50, 25, 75)}.}
+\item{Boundaries}{Numeric vector of length 4. The boundaries of the
+requested GBIF data in the order: Left, Right, Bottom, Top. Defaults to
+\code{c(-30, 50, 25, 75)}.}
 
 \item{ChunkSize}{Integer. The number of rows per chunk file. Default:
 \verb{100,000}. See \link{Efforts_Split} and \link{Efforts_Summarize} for more details.}
 
-\item{DeleteChunks}{logical, indicating whether to remove file chunks after
-processing the data. Defaults to \code{TRUE}.}
+\item{DeleteChunks}{Logical. Whether to remove file chunks after processing
+the data. Defaults to \code{TRUE}.}
 
-\item{DeleteProcessed}{Logical indicating whether to delete the raw
-downloaded GBIF data after processing them. This helps to free large
-unnecessary file space (> 22 GB). Defaults to \code{TRUE}.}
+\item{DeleteProcessed}{Logical. Whether to delete the raw downloaded GBIF
+data after processing them. This helps to free large unnecessary file space
+(> 22 GB). Defaults to \code{TRUE}.}
 }
 \value{
 Returns \code{NULL} invisibly. The function generates various output

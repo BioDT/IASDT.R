@@ -4,42 +4,59 @@
 
 #' Plot model convergence of a selected model
 #'
-#' This function generates and saves plots for model convergence diagnostics,
-#' of the rho, alpha, omega, and beta parameters. It supports parallel
-#' processing for faster execution and can work with models fitted on
-#' High-Performance Computing HPC environments.
-#' @param Path_Coda String. Path to the coda object containing MCMC samples.
-#' @param Path_Model String. Path to the fitted Hmsc model object.
-#' @param EnvFile String. Path to the environment file containing necessary
-#'   environment variables. Default: ".env".
-#' @param FromHPC Logical. Indicates whether the function is being run on an HPC
-#'   environment, affecting file path handling. Default: `TRUE`.
-#' @param Title String. Title for the rho and alpha plots. Default: " ".
-#' @param NOmega Integer. Number of species interactions to sample for omega
-#'   parameter convergence diagnostics. Default: 1000.
-#' @param NCores Integer. Number of cores to use for parallel processing.
+#' The `Convergence_Plot()` function generates and saves convergence diagnostics
+#' plots for the `rho`, `alpha`, `omega`, and `beta` parameters in an Hmsc
+#' model. These plots help assess whether the MCMC chains have reached
+#' stationarity. It supports parallel processing and can work with models fitted
+#' on HPC environments.
+#' @param Path_Coda Character. Path to a saved coda object containing MCMC
+#'   samples.
+#' @param Path_Model Character. Path to a saved Hmsc model object.
+#' @param EnvFile Character. Path to the environment file containing paths to 
+#'   data sources. Defaults to `.env`.
+#' @param FromHPC Logical. Whether the processing is being done on an 
+#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#'   accordingly. Default: `TRUE`.
+#' @param Title Character. Title for **rho** and **alpha** convergence plots.
+#'   Default: " "
+#' @param NOmega Integer. Number of species interactions sampled for Omega
+#'   parameter diagnostics. Default: 1000L
+#' @param NCores Integer. Number of CPU cores to use for parallel processing. 
 #'   Default: 8.
-#' @param NRC Numeric Vector. Specifies the number of rows and columns for
-#'   arranging multiple plots on a page. Default: c(2, 2).
-#' @param Beta_NRC Numeric Vector. Specifies the number of rows and columns for
-#'   arranging panels for the beta parameter. Default: c(3, 3).
-#' @param SavePlotData Logical. Indicates whether to save the plot data as RData
-#'   files. Default: TRUE.
-#' @param PagePerFile Integer. Indicates the number of pages per single pdf page
-#'   for the `Omega` parameter. Default: 20.
-#' @param Cols Character vector for chain colours (optional). Default: `NULL`.
-#' @name Convergence_Plot
-#' @inheritParams PlotAlpha
+#' @param NRC Numeric vector. Grid layout (rows&times;columns) for arranging 
+#'   alpha parameter plots. Default: `c(2, 2)`. If `NULL`, the layout is 
+#'   automatically determined based on the number of alpha levels.
+#' @param Beta_NRC Numeric vector. The grid layout (rows&times;columns) for 
+#'   arranging beta parameter plots. Default: `c(3, 3)`.
+#' @param SavePlotData Logical. If `TRUE` (default), saves the plot data as
+#'   `.RData` files.
+#' @param PagePerFile Integer. Number of plots per page in the Omega parameter
+#'   output. Default: 20L.
+#' @param Cols Character vector. MCMC chain colors (optional). Default: `NULL`.
+#' @param Post `mcmc.list` or character. Either an MCMC object (`mcmc.list`)
+#'   containing posterior samples, or a file path to a saved coda object.
+#' @param Model `Hmsc` object or character. Either a fitted Hmsc model
+#'   object, or a file path to a saved Hmsc model.
+#' @param AddFooter Logical. If `TRUE` (default), adds a footer with page
+#'   numbers to each plot.
+#' @param AddTitle Logical. If `TRUE` (default), adds the main title (`Title`)
+#'   to the plot.
+#' @param MarginType Character. The type of marginal plot to add to
+#'   the main plot. Valid options are "histogram" (default) or "density".
+#'
+#' @details `Convergence_Alpha()` and `Convergence_Rho()` are internal functions
+#'   and should not be called directly.
+#' @rdname Convergence_plots
+#' @name Convergence_plots
+#' @order 1
 #' @author Ahmed El-Gabbas
-#' @return The function does not return a value but generates and saves plots to
-#'   disk.
 #' @export
 
 Convergence_Plot <- function(
     Path_Coda = NULL, Path_Model = NULL, EnvFile = ".env",
-    FromHPC = TRUE, Title = " ", NOmega = 1000, NCores = 8,
-    NRC = c(2, 2), Beta_NRC = c(3, 3), SavePlotData = TRUE, PagePerFile = 20,
-    Cols = NULL, MarginType = "histogram") {
+    FromHPC = TRUE, Title = " ", NOmega = 1000L, NCores = 8L,
+    NRC = c(2L, 2L), Beta_NRC = c(3L, 3L), SavePlotData = TRUE,
+    PagePerFile = 20L, Cols = NULL, MarginType = "histogram") {
 
   # # ..................................................................... ###
 
@@ -108,7 +125,7 @@ Convergence_Plot <- function(
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
-  SpSummary <- file.path(Path_PA, "Sp_PA_Summary_DF.csv")
+  SpSummary <- IASDT.R::Path(Path_PA, "Sp_PA_Summary_DF.csv")
   if (!file.exists(SpSummary)) {
     stop(paste0(SpSummary, " file does not exist"), call. = FALSE)
   }
@@ -122,9 +139,9 @@ Convergence_Plot <- function(
 
   IASDT.R::CatTime("Create path")
   Path_Convergence <- dirname(dirname(Path_Coda)) %>%
-    file.path("Model_Convergence")
-  Pah_Beta_Data <- file.path(Path_Convergence, "Beta_Data")
-  Path_Convergence_BySp <- file.path(Path_Convergence, "Beta_BySpecies")
+    IASDT.R::Path("Model_Convergence")
+  Pah_Beta_Data <- IASDT.R::Path(Path_Convergence, "Beta_Data")
+  Path_Convergence_BySp <- IASDT.R::Path(Path_Convergence, "Beta_BySpecies")
   fs::dir_create(c(Path_Convergence, Path_Convergence_BySp, Pah_Beta_Data))
 
   # # ..................................................................... ###
@@ -177,14 +194,14 @@ Convergence_Plot <- function(
   if ("Rho" %in% names(Coda_Obj)) {
     IASDT.R::CatTime("Rho")
 
-    FileConv_Rho <- file.path(Path_Convergence, "Convergence_Rho.RData")
+    FileConv_Rho <- IASDT.R::Path(Path_Convergence, "Convergence_Rho.RData")
 
     if (IASDT.R::CheckData(FileConv_Rho, warning = FALSE)) {
       IASDT.R::CatTime("Loading plotting data", Level = 1)
       PlotObj_Rho <- IASDT.R::LoadAs(FileConv_Rho)
     } else {
       IASDT.R::CatTime("Prepare plot", Level = 1)
-      PlotObj_Rho <- IASDT.R::PlotRho(
+      PlotObj_Rho <- IASDT.R::Convergence_Rho(
         Post = Coda_Obj, Model = Model, Title = Title, Cols = Cols)
 
       if (SavePlotData) {
@@ -199,7 +216,7 @@ Convergence_Plot <- function(
     # Using ggplot2::ggsave directly does not show non-ascii characters
     # correctly
     grDevices::cairo_pdf(
-      filename = file.path(Path_Convergence, "Convergence_Rho.pdf"),
+      filename = IASDT.R::Path(Path_Convergence, "Convergence_Rho.pdf"),
       width = 18, height = 12)
     plot(PlotObj_Rho)
     grDevices::dev.off()
@@ -213,14 +230,14 @@ Convergence_Plot <- function(
 
   IASDT.R::CatTime("Alpha")
 
-  FileConv_Alpha <- file.path(Path_Convergence, "Convergence_Alpha.RData")
+  FileConv_Alpha <- IASDT.R::Path(Path_Convergence, "Convergence_Alpha.RData")
 
   if (file.exists(FileConv_Alpha)) {
     IASDT.R::CatTime("Loading plotting data", Level = 1)
     PlotObj_Alpha <- IASDT.R::LoadAs(FileConv_Alpha)
   } else {
     IASDT.R::CatTime("Prepare plot", Level = 1)
-    PlotObj_Alpha <- IASDT.R::PlotAlpha(
+    PlotObj_Alpha <- IASDT.R::Convergence_Alpha(
       Post = Coda_Obj, Model = Model, Title = Title, NRC = NRC,
       AddFooter = FALSE, AddTitle = FALSE, Cols = Cols)
 
@@ -228,7 +245,7 @@ Convergence_Plot <- function(
       IASDT.R::CatTime("Save plotting data", Level = 1)
       IASDT.R::SaveAs(
         InObj = PlotObj_Alpha, OutObj = "Convergence_Alpha",
-        OutPath = file.path(Path_Convergence, "Convergence_Alpha.RData"))
+        OutPath = IASDT.R::Path(Path_Convergence, "Convergence_Alpha.RData"))
     }
   }
 
@@ -236,7 +253,7 @@ Convergence_Plot <- function(
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
   grDevices::cairo_pdf(
-    filename = file.path(Path_Convergence, "Convergence_Alpha.pdf"),
+    filename = IASDT.R::Path(Path_Convergence, "Convergence_Alpha.pdf"),
     width = 18, height = 14)
   print(PlotObj_Alpha)
   grDevices::dev.off()
@@ -253,7 +270,7 @@ Convergence_Plot <- function(
 
   IASDT.R::CatTime("Omega")
 
-  FileConv_Omega <- file.path(Path_Convergence, "Convergence_Omega.RData")
+  FileConv_Omega <- IASDT.R::Path(Path_Convergence, "Convergence_Omega.RData")
 
   if (file.exists(FileConv_Omega)) {
     IASDT.R::CatTime("Loading plotting data", Level = 1)
@@ -387,7 +404,7 @@ Convergence_Plot <- function(
       IASDT.R::CatTime("Save plot data", Level = 1)
       IASDT.R::SaveAs(
         InObj = PlotObj_Omega,
-        OutPath = file.path(Path_Convergence, "Convergence_Omega.qs2"))
+        OutPath = IASDT.R::Path(Path_Convergence, "Convergence_Omega.qs2"))
     }
     rm(Obj_Omega, OmegaDF, SelectedCombs, CI, OmegaNames, envir = environment())
     invisible(gc())
@@ -434,7 +451,7 @@ Convergence_Plot <- function(
       invisible({
         CurrPlotOrder <- dplyr::filter(OmegaPlotList, File == .x)
         grDevices::cairo_pdf(
-          filename = file.path(
+          filename = IASDT.R::Path(
             Path_Convergence, paste0("Convergence_Omega_", .x, ".pdf")),
           width = 18, height = 14)
         purrr::map(CurrPlotOrder$PlotID, grid::grid.draw, recording = FALSE)
@@ -451,7 +468,7 @@ Convergence_Plot <- function(
 
   IASDT.R::CatTime("Beta")
 
-  FileConv_Beta <- file.path(Path_Convergence, "Convergence_Beta.RData")
+  FileConv_Beta <- IASDT.R::Path(Path_Convergence, "Convergence_Beta.RData")
 
   if (file.exists(FileConv_Beta)) {
     IASDT.R::CatTime("Loading plotting data", Level = 1)
@@ -505,7 +522,7 @@ Convergence_Plot <- function(
       dplyr::left_join(SpeciesTaxonomy, by = "IAS_ID") %>%
       dplyr::mutate(
         Var_Sp2 = paste0(Variable, "_", IAS_ID),
-        Var_Sp_File = file.path(Pah_Beta_Data, paste0(Var_Sp2, ".RData")),
+        Var_Sp_File = IASDT.R::Path(Pah_Beta_Data, paste0(Var_Sp2, ".RData")),
         DT = purrr::pmap(
           .l = list(
             Var_Sp, DT, CI_025, CI_975, Var_Min,
@@ -714,7 +731,7 @@ Convergence_Plot <- function(
       IASDT.R::CatTime("Save trace plot data", Level = 2)
       IASDT.R::SaveAs(
         InObj = PlotObj_Beta, OutObj = "Convergence_Beta",
-        OutPath = file.path(Path_Convergence, "Convergence_Beta.RData"))
+        OutPath = IASDT.R::Path(Path_Convergence, "Convergence_Beta.RData"))
     }
   }
 
@@ -816,14 +833,14 @@ Convergence_Plot <- function(
 
       invisible({
         grDevices::cairo_pdf(
-          filename = file.path(
+          filename = IASDT.R::Path(
             Path_Convergence, paste0("Convergence_Beta_", x, "_FreeY.pdf")),
           width = 18, height = 13)
         purrr::map(BetaPlotList$Plot, grid::grid.draw, recording = FALSE)
         grDevices::dev.off()
 
         grDevices::cairo_pdf(
-          filename = file.path(
+          filename = IASDT.R::Path(
             Path_Convergence, paste0("Convergence_Beta_", x, "_FixedY.pdf")),
           width = 18, height = 13)
         purrr::map(.x = BetaPlotList$PlotFixedY, .f = grid::grid.draw)
@@ -953,7 +970,7 @@ Convergence_Plot <- function(
 
       invisible({
         grDevices::cairo_pdf(
-          filename = file.path(
+          filename = IASDT.R::Path(
             Path_Convergence_BySp,
             paste0(
               "Convergence_Beta_", SpDT$IAS_ID, "_",

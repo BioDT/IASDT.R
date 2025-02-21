@@ -11,8 +11,7 @@
 #' @name Extract_BB
 #' @param x A list or data frame containing the results of GBIF standardization
 #'   ([rgbif::name_backbone]).
-#' @param var A character string specifying the name of the column to extract
-#'   from `x`.
+#' @param var Character. Column names to extract from `x`.
 #' @author Ahmed El-Gabbas
 #' @return Returns the content of the specified column `var` from the input `x`.
 #'   If `var` is not found within `x`, the function returns `NA_character_`.

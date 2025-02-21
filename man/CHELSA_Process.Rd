@@ -7,11 +7,11 @@
 CHELSA_Process(
   FromHPC = TRUE,
   EnvFile = ".env",
-  NCores = 8,
+  NCores = 8L,
   Download = FALSE,
   Overwrite = FALSE,
-  Download_Attempts = 10,
-  Sleep = 5,
+  Download_Attempts = 10L,
+  Sleep = 5L,
   OtherVars = "",
   BaseURL = paste0("https://os.zhdk.cloud.switch.ch/envicloud/",
     "chelsa/chelsa_V2/GLOBAL/"),
@@ -21,19 +21,20 @@ CHELSA_Process(
 )
 }
 \arguments{
-\item{FromHPC}{Logical indicating whether the work is being done from HPC, to
-adjust file paths accordingly. Default: \code{TRUE}.}
+\item{FromHPC}{Logical. Whether the processing is being done on an
+High-Performance Computing (HPC) environment, to adjust file paths
+accordingly. Default: \code{TRUE}.}
 
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
 
 \item{NCores}{Integer. Number of CPU cores to use for parallel processing.
-Defaults to 8.}
+Default: 8.}
 
-\item{Download}{Logical, whether to download the CHELSA files. Defaults to
+\item{Download}{Logical. Whether to download the CHELSA files. Defaults to
 \code{FALSE}.}
 
-\item{Overwrite}{Logical, whether to re-download files that already exist.
+\item{Overwrite}{Logical. Whether to re-download files that already exist.
 Defaults to \code{FALSE}.}
 
 \item{Download_Attempts}{Integer. The maximum number of download attempts.
@@ -49,15 +50,15 @@ processed. If \code{OtherVars} is set to "", only bioclimatic variables will be
 processed. See \link{CHELSA_Vars} for a detailed information on CHELSA climate
 variables.}
 
-\item{BaseURL}{String, the base URL for downloading CHELSA climate data.}
+\item{BaseURL}{Character. The base URL for downloading CHELSA climate data.}
 
-\item{Download_NCores}{integer. Number of CPU cores to use for parallel
+\item{Download_NCores}{Integer. Number of CPU cores to use for parallel
 downloading of CHELSA data. Only valid if Download = \code{TRUE}. Defaults to 4.}
 
-\item{CompressLevel}{Integer; the level of compression to use when saving
+\item{CompressLevel}{Integer. The level of compression to use when saving
 NetCDF files. Default is 5.}
 
-\item{OverwriteProcessed}{Logical; whether to overwrite already processed
+\item{OverwriteProcessed}{Logical. Whether to overwrite already processed
 files. Default is \code{FALSE}.}
 }
 \description{

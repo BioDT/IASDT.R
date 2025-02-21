@@ -7,14 +7,15 @@
 #'
 #' This function prints a formatted message with a timestamp, surrounded by
 #' separators for better readability in console outputs or logs.
-#' @param Message A character string representing the main message to be
-#'   timestamped. This parameter is mandatory and cannot be `NULL` or empty.
-#' @param Date logical; whether to include the date in the timestamp. Default is
-#'   `FALSE`, meaning only the time is printed. See [IASDT.R::CatTime].
-#' @param Extra1,Extra2 integer; the number of extra empty lines to print before
+#' @param Message Character. The main message to be timestamped. This parameter
+#'   is mandatory and cannot be `NULL` or empty.
+#' @param Date Logical. Whether to include the date in the timestamp.
+#'   Default is `FALSE`, meaning only the time is printed. See
+#'   [IASDT.R::CatTime].
+#' @param Extra1,Extra2 Integer. Number of extra empty lines to print before 
 #'   and after the separator lines. See [IASDT.R::CatSep] for more details.
-#' @param Time logical; whether to include the time in the timestamp. Default is
-#'   `FALSE`.
+#' @param Time Logical. Whether to include the time in the timestamp.
+#'   Default is `FALSE`.
 #' @param ... Additional arguments passed to [IASDT.R::CatSep] for customizing
 #'   the separators.
 #' @inheritParams CatTime

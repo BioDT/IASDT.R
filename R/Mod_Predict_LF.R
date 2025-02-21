@@ -1,77 +1,75 @@
 ## |------------------------------------------------------------------------| #
-# Predict_LF ----
+# Mod_Predict_LF ----
 ## |------------------------------------------------------------------------| #
 
-#' Draws samples from the conditional predictive distribution of latent factors.
+#' Draws samples from the conditional predictive distribution of latent factors
 #'
 #' This function is optimized for speed using parallel processing and optionally
 #' TensorFlow for matrix operations. This function is adapted from
 #' [Hmsc::predictLatentFactor] with equivalent results to the original function
 #' when `predictMean = TRUE`.
-#'
-#' @param unitsPred a factor vector with random level units for which
+#' @param Units_pred a factor vector with random level units for which
 #'   predictions are to be made
-#' @param modelunits a factor vector with random level units that are
+#' @param Units_model a factor vector with random level units that are
 #'   conditioned on
-#' @param postEta Character string specifying the path for postEta; a list
-#'   containing samples of random factors at conditioned units
+#' @param postEta Character. Path of `postEta`; a list containing samples of
+#'   random factors at conditioned units
 #' @param postAlpha a list containing samples of range (lengthscale) parameters
 #'   for latent factors
 #' @param LF_rL a HmscRandomLevel-class object that describes the random level
 #'   structure
-#' @param LF_NCores Integer specifying the number of cores to use for parallel
-#'   processing. Defaults to 8.
-#' @param Temp_Dir Character string specifying the path for temporary storage of
-#'   intermediate files.
-#' @param LF_Temp_Cleanup Logical indicating whether to delete temporary files
-#'   in the `Temp_Dir` after finishing the LF predictions.
-#' @param Model_Name Character string used as a prefix for temporary file names.
-#'   Defaults to `NULL`, in which case no prefix is used.
-#' @param UseTF Logical indicating whether to use TensorFlow for calculations.
-#'   Defaults to `TRUE`.
-#' @param TF_Environ Character string specifying the path to the Python
-#'   environment. Defaults to `NULL`. This argument is required if `UseTF` is 
+#' @param LF_NCores Integer. Number of cores to use for parallel processing of
+#'   latent factor prediction. Defaults to 8L.
+#' @param Temp_Dir Character. Path for temporary storage of intermediate files.
+#' @param LF_Temp_Cleanup Logical. Whether to delete temporary files in the
+#'   `Temp_Dir` directory after finishing the LF predictions.
+#' @param Model_Name Character. Prefix for temporary file names. Defaults to
+#'   `NULL`, in which case no prefix is used.
+#' @param UseTF Logical. Whether to use TensorFlow for calculations. Defaults to
 #'   `TRUE`.
-#' @param TF_use_single Logical indicating whether to use single precision for
-#'   the TF calculations. Defaults to `FALSE`.
-#' @param LF_OutFile Character string specifying the path to save the outputs.
-#'   If `NULL` (default), the predicted latent factors are not saved to a file.
-#'   This should end with either `*.qs2` or `*.RData`.
-#' @param LF_Return Logical. Indicates if the output should be returned.
-#'   Defaults to `FALSE`. If `LF_OutFile` is `NULL`, this parameter cannot be
-#'   set to `FALSE` because the function needs to return the result if it is not
-#'   saved to a file.
-#' @param LF_Check Logical. If `TRUE`, the function checks if the output files 
-#'   are already created and valid. If `FALSE`, the function will only check if 
+#' @param TF_Environ Character. Path to the Python environment. This argument is
+#'   required if `UseTF` is `TRUE`.
+#' @param LF_Commands_Only logical. If `TRUE`, returns the command to run the
+#'   Python script. Default is `FALSE`.
+#' @param TF_use_single Logical. Whether to use single precision for the
+#'   TensorFlow calculations. Defaults to `FALSE`.
+#' @param LF_OutFile Character. Path to save the outputs. If `NULL` (default),
+#'   the predicted latent factors are not saved to a file. This should end with
+#'   either `*.qs2` or `*.RData`.
+#' @param LF_Return Logical. Whether the output should be returned. Defaults to
+#'   `FALSE`. If `LF_OutFile` is `NULL`, this parameter cannot be set to `FALSE`
+#'   because the function needs to return the result if it is not saved to a
+#'   file.
+#' @param LF_Check Logical. If `TRUE`, the function checks if the output files
+#'   are already created and valid. If `FALSE`, the function will only check if
 #'   the files exist without checking their integrity. Default is `FALSE`.
-#' @param Verbose Logical. If `TRUE`, detailed output is printed. Default is
-#'   `FALSE`.
-#' @param solve_max_attempts numeric (Optional). Maximum number of attempts to
-#'   run solve and crossprod functions. Default is 5.
+#' @param Verbose Logical. If `TRUE`, logs detailed information during
+#'   execution. Default is `TRUE`.
+#' @param solve_max_attempts Integer. Maximum number of attempts to run solve
+#'   and crossprod internal function [run_crossprod_solve]. Default is 5L.
+#' @param solve_chunk_size Integer. Chunk size for `solve_and_multiply` Python
+#'   function. Default is 50L.
 #' @export
-#' @author This script was adapted from the [Hmsc::predictLatentFactor] function
-#'   in the `Hmsc` package.
 #' @seealso [Hmsc::predictLatentFactor]
-#' @name Predict_LF
-#' @inheritParams run_crossprod_solve
+#' @name Mod_Predict_LF
 #' @details The function is expected to be faster than the original function in
-#'   the `Hmsc` package, especially when using TensorFlow for calculations and
+#'   the `Hmsc` package, especially when using `TensorFlow` for calculations and
 #'   when working on parallel.
 #'
 #'   The main difference is that this function:
 #' - allow for parallel processing (`LF_NCores` argument);
-#' - it is possible to use TensorFlow (`UseTF` argument) to make matrix
-#'   calculations faster, particularly when used on GPU. The following modules
-#'   are needed: `numpy`, `os`, `tensorflow`, `rdata`, `xarray`, and `pandas`.
-#'   To use `TensorFlow`, the argument `TF_Environ` should be set to the path of
-#'   a Python environment with TensorFlow installed;
-#' - if `UseTF` is set to `FALSE`, the function uses R / CPP code in the
-#'   calculations;
-#' - calculates `D11` and `D12` matrices only once and save them to disk and
-#'   call them when needed.
+#' - when TensorFlow is used (`UseTF = TRUE`), matrix
+#'   calculations are much faster, particularly when used on GPU. The following
+#'   Python modules are needed: `numpy`, `tensorflow`, `rdata`, `xarray`, and
+#'   `pandas`. To use `TensorFlow`, the argument `TF_Environ` should be set to
+#'   the path of a Python environment with TensorFlow installed;
+#' - if `UseTF` is set to `FALSE`, the function uses `R` (supported by
+#'   relatively faster `CPP` functions) in the calculations;
+#' - `D11` and `D12` matrices are processed only once and saved to disk and
+#'   called when needed.
 
-Predict_LF <- function(
-    unitsPred, modelunits, postEta, postAlpha, LF_rL, LF_NCores = 8L,
+Mod_Predict_LF <- function(
+    Units_pred, Units_model, postEta, postAlpha, LF_rL, LF_NCores = 8L,
     Temp_Dir = "TEMP_Pred", LF_Temp_Cleanup = TRUE, Model_Name = NULL,
     UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE, LF_OutFile = NULL,
     LF_Return = FALSE, LF_Check = FALSE, LF_Commands_Only = FALSE,
@@ -86,7 +84,7 @@ Predict_LF <- function(
 
   .StartTime <- lubridate::now(tzone = "CET")
 
-  IASDT.R::CatTime("Starting `Predict_LF` function", Level = 1)
+  IASDT.R::CatTime("Starting `Mod_Predict_LF` function", Level = 1)
 
   # # ..................................................................... ###
 
@@ -120,9 +118,9 @@ Predict_LF <- function(
 
   # # ..................................................................... ###
 
-  # indices of unitsPred in modelunits
-  indOld <- (unitsPred %in% modelunits)
-  # indices of new unitsPred
+  # indices of Units_pred in Units_model
+  indOld <- (Units_pred %in% Units_model)
+  # indices of new Units_pred
   indNew <- !(indOld)
 
   # In the original Hmsc::predictLatentFactor function, the function is used
@@ -151,8 +149,8 @@ Predict_LF <- function(
     postEtaPred <- purrr::map(
       .x = postEta,
       .f = ~ {
-        Out <- .x[match(unitsPred[indOld], modelunits), ]
-        rownames(Out) <- modelunits
+        Out <- .x[match(Units_pred[indOld], Units_model), ]
+        rownames(Out) <- Units_model
         return(Out)
       })
 
@@ -168,7 +166,7 @@ Predict_LF <- function(
 
       # Check if PythonScript exists
       if (!file.exists(PythonScript)) {
-        stop("Necessary python script does not exist", call. = FALSE)
+        stop("Necessary Python script does not exist", call. = FALSE)
       }
 
       # Suppress TensorFlow warnings and disable optimizations
@@ -192,7 +190,7 @@ Predict_LF <- function(
     # Create a temporary directory to store intermediate results. This directory
     # will be used to save s1/s2 or D11/D12, and intermediate postEta files,
     # reducing memory usage.
-    Temp_Dir_LF <- file.path(Temp_Dir, "LF_Prediction")
+    Temp_Dir_LF <- IASDT.R::Path(Temp_Dir, "LF_Prediction")
     fs::dir_create(c(Temp_Dir_LF, Temp_Dir))
 
     # # .................................................................... ###
@@ -207,8 +205,8 @@ Predict_LF <- function(
 
       # Save s1 and s2 for coordinates at training and testing sites as feather
       # files, if not already exist on disk
-      Path_s1 <- file.path(Temp_Dir, paste0(Model_Name, "s1.feather"))
-      Path_s2 <- file.path(Temp_Dir, paste0(Model_Name, "s2.feather"))
+      Path_s1 <- IASDT.R::Path(Temp_Dir, paste0(Model_Name, "s1.feather"))
+      Path_s2 <- IASDT.R::Path(Temp_Dir, paste0(Model_Name, "s2.feather"))
 
       s1_s2_Okay <- IASDT.R::CheckData(Path_s1, warning = FALSE) &&
         IASDT.R::CheckData(Path_s2, warning = FALSE)
@@ -220,11 +218,11 @@ Predict_LF <- function(
         IASDT.R::CatTime("Saving s1 and s2 matrices", Level = 2)
 
         # s1
-        s1 <- as.data.frame(LF_rL$s[modelunits, , drop = FALSE])
+        s1 <- as.data.frame(LF_rL$s[Units_model, , drop = FALSE])
         IASDT.R::SaveAs(InObj = s1, OutPath = Path_s1)
 
         # s2
-        s2 <- as.data.frame(LF_rL$s[unitsPred[indNew], , drop = FALSE])
+        s2 <- as.data.frame(LF_rL$s[Units_pred[indNew], , drop = FALSE])
         IASDT.R::SaveAs(InObj = s2, OutPath = Path_s2)
 
         rm(s1, s2, envir = environment())
@@ -236,8 +234,8 @@ Predict_LF <- function(
     } else {
 
       # Save D11 and D12 as feather files, if not already exist on disk
-      Path_D11 <- file.path(Temp_Dir, paste0(Model_Name, "D11.qs2"))
-      Path_D12 <- file.path(Temp_Dir, paste0(Model_Name, "D12.qs2"))
+      Path_D11 <- IASDT.R::Path(Temp_Dir, paste0(Model_Name, "D11.qs2"))
+      Path_D12 <- IASDT.R::Path(Temp_Dir, paste0(Model_Name, "D12.qs2"))
 
       if (file.exists(Path_D11) && file.exists(Path_D12)) {
 
@@ -246,8 +244,8 @@ Predict_LF <- function(
 
       } else {
 
-        s1 <- LF_rL$s[modelunits, , drop = FALSE]
-        s2 <- LF_rL$s[unitsPred[indNew], , drop = FALSE]
+        s1 <- LF_rL$s[Units_model, , drop = FALSE]
+        s2 <- LF_rL$s[Units_pred[indNew], , drop = FALSE]
 
         # D11
         D11 <- Rfast::Dist(s1)
@@ -303,7 +301,7 @@ Predict_LF <- function(
           .f = ~ {
             ChunkID0 <- stringr::str_pad(
               .x, width = nchar(dplyr::n()), pad = 0)
-            file.path(
+            IASDT.R::Path(
               Temp_Dir,
               paste0(Model_Name, "postEta_ch", ChunkID0, ".feather"))
           }),
@@ -338,7 +336,7 @@ Predict_LF <- function(
 
     # Internal functions to predict latent factors
 
-    etaPreds_F <- function(RowNum, LF_Check = FALSE, unitsPred) {
+    etaPreds_F <- function(RowNum, LF_Check = FALSE, Units_pred) {
 
       # do not use scientific notation
       withr::local_options(scipen = 99)
@@ -384,7 +382,8 @@ Predict_LF <- function(
                 TF_Environ = TF_Environ, s1 = Path_s1, s2 = Path_s2,
                 denom = Denom, postEta = File_postEta,
                 path_out = File_etaPred_TF,
-                use_single = TF_use_single, LF_Commands_Only = LF_Commands_Only,
+                TF_use_single = TF_use_single,
+                LF_Commands_Only = LF_Commands_Only,
                 solve_max_attempts = solve_max_attempts,
                 solve_chunk_size = solve_chunk_size)
             }
@@ -397,7 +396,7 @@ Predict_LF <- function(
               etaPred <- tibble::tibble(
                 SampleID = SampleID,
                 LF = LF_ID,
-                Path_Samp_LF = file.path(
+                Path_Samp_LF = IASDT.R::Path(
                   Temp_Dir_LF,
                   paste0(
                     Model_Name, "Samp_",
@@ -410,9 +409,9 @@ Predict_LF <- function(
                     .x = eta_DT,
                     .f = ~ {
                       tidyr::unnest_longer(.x, "etaPred") %>%
-                        dplyr::mutate(LF = NULL, unitsPred = unitsPred) %>%
+                        dplyr::mutate(LF = NULL, Units_pred = Units_pred) %>%
                         stats::setNames(
-                          c("SampleID", paste0("LF_", LF_ID), "unitsPred"))
+                          c("SampleID", paste0("LF_", LF_ID), "Units_pred"))
                     }),
                   File_etaPred = File_etaPred,
                   ChunkID = LF_Data$ChunkID[[RowNum]],
@@ -443,7 +442,7 @@ Predict_LF <- function(
               .x = seq_along(SampleID),
               .f = function(ID) {
 
-                Path_Samp_LF <- file.path(
+                Path_Samp_LF <- IASDT.R::Path(
                   Temp_Dir_LF,
                   paste0(
                     Model_Name, "Samp_",
@@ -457,9 +456,9 @@ Predict_LF <- function(
                   as.vector() %>%
                   tibble::tibble(
                     SampleID = SampleID[ID],
-                    etaPred = ., unitsPred = unitsPred) %>%
+                    etaPred = ., Units_pred = Units_pred) %>%
                   stats::setNames(
-                    c("SampleID", paste0("LF_", LF_ID), "unitsPred"))
+                    c("SampleID", paste0("LF_", LF_ID), "Units_pred"))
 
                 qs2::qs_save(object = DT, file = Path_Samp_LF, nthreads = 5)
                 return(Path_Samp_LF)
@@ -480,7 +479,7 @@ Predict_LF <- function(
 
             etaPred <- tibble::tibble(
 
-              Path_Samp_LF = file.path(
+              Path_Samp_LF = IASDT.R::Path(
                 Temp_Dir_LF,
                 paste0(
                   Model_Name, "Samp_",
@@ -496,9 +495,9 @@ Predict_LF <- function(
                   .f = ~ {
                     DT <- tibble::tibble(
                       SampleID = .y, LF = 0,
-                      unitsPred = unitsPred) %>%
+                      Units_pred = Units_pred) %>%
                       stats::setNames(
-                        c("SampleID", paste0("LF_", LF_ID), "unitsPred"))
+                        c("SampleID", paste0("LF_", LF_ID), "Units_pred"))
                     qs2::qs_save(object = DT, file = .x, nthreads = 5)
                     return(NULL)
                   }),
@@ -543,7 +542,7 @@ Predict_LF <- function(
 
             result <- try(
               expr = etaPreds_F(
-                RowNum = x, LF_Check = LF_Check, unitsPred = unitsPred),
+                RowNum = x, LF_Check = LF_Check, Units_pred = Units_pred),
               silent = FALSE)
 
             if (inherits(result, "try-error")) {
@@ -575,7 +574,7 @@ Predict_LF <- function(
               chunk <- commands[start_line:end_line]
 
               # Define the filename
-              file_name <- file.path(
+              file_name <- IASDT.R::Path(
                 dirname(Temp_Dir), paste0(CommandFilePrefix, i, ".txt"))
               # Write the chunk to a file with Linux line endings
               writeLines(chunk, file_name, useBytes = TRUE)
@@ -609,7 +608,7 @@ Predict_LF <- function(
           cl = c1,
           varlist = c(
             "LF_Data", "Path_D11", "Path_D12", "Path_s1", "Path_s2", "indNew",
-            "unitsPred", "indOld", "modelunits", "TF_Environ", "UseTF",
+            "Units_pred", "indOld", "Units_model", "TF_Environ", "UseTF",
             "TF_use_single", "etaPreds_F", "LF_Check", "run_crossprod_solve",
             "LF_Commands_Only", "solve_max_attempts", "solve_chunk_size",
             "Temp_Dir_LF"),
@@ -636,7 +635,7 @@ Predict_LF <- function(
           x = seq_len(nrow(LF_Data)),
           fun = function(x) {
             result <- try(
-              etaPreds_F(x, LF_Check = LF_Check, unitsPred = unitsPred),
+              etaPreds_F(x, LF_Check = LF_Check, Units_pred = Units_pred),
               silent = FALSE)
             invisible(gc())
             if (inherits(result, "try-error")) {
@@ -683,7 +682,7 @@ Predict_LF <- function(
       dplyr::select(-LF, -ChunkID, -File_etaPred) %>%
       dplyr::arrange(SampleID) %>%
       dplyr::mutate(
-        Path_Sample = file.path(
+        Path_Sample = IASDT.R::Path(
           Temp_Dir_LF,
           paste0(
             Model_Name, "Samp_",
@@ -719,12 +718,12 @@ Predict_LF <- function(
 
         SampleDT0 <- lapply(sort(Path_LF), qs2::qs_read) %>%
           purrr::reduce(
-            .f = dplyr::left_join, by = c("SampleID", "unitsPred")) %>%
-          dplyr::arrange(unitsPred) %>%
+            .f = dplyr::left_join, by = c("SampleID", "Units_pred")) %>%
+          dplyr::arrange(Units_pred) %>%
           dplyr::select(sort(tidyselect::peek_vars())) %>%
           dplyr::select(-SampleID) %>%
           magrittr::set_rownames(NULL) %>%
-          tibble::column_to_rownames("unitsPred") %>%
+          tibble::column_to_rownames("Units_pred") %>%
           unname() %>%
           as.matrix()
 
@@ -779,7 +778,8 @@ Predict_LF <- function(
   # # ..................................................................... ###
 
   IASDT.R::CatDiff(
-    InitTime = .StartTime, Prefix = "Predict_LF was finished in ", Level = 1)
+    InitTime = .StartTime, Prefix = "Mod_Predict_LF was finished in ",
+    Level = 1)
 
   # # ..................................................................... ###
 
@@ -808,29 +808,17 @@ Predict_LF <- function(
 #' computations using TensorFlow with provided inputs. Retries up to three times
 #' if the output file validation fails.
 #'
-#' @param TF_Environ character. Path to the virtual environment containing
-#'   Python and required dependencies.
-#' @param s1 character. Path to the input file containing s1 coordinates.
-#' @param s2 character Path to the input file containing s2 coordinates.
-#' @param postEta character. Path to the file containing the `postEta` matrix
+#' @param s1 Character. Path to the input file containing s1 coordinates.
+#' @param s2 Character Path to the input file containing s2 coordinates.
+#' @param postEta Character. Path to the file containing the `postEta` matrix
 #'   data.
-#' @param path_out character. Path to rds file where the output results will be
+#' @param path_out Character. Path to rds file where the output results will be
 #'   saved.
-#' @param denom numeric. A denominator value used in the computation.
-#' @param chunk_size numeric (Optional). Size of chunks to process at a time.
+#' @param denom Numeric. The denominator value used in the computation.
+#' @param chunk_size Numeric (Optional). Size of chunks to process at a time.
 #'   Default is 1000.
-#' @param threshold_mb numeric (Optional). Memory threshold (in MB) to manage
+#' @param threshold_mb Numeric (Optional). Memory threshold (in MB) to manage
 #'   processing. Default is 2000.
-#' @param use_single logical. Indicates whether to use single precision.
-#'   Defaults to `TRUE`.
-#' @param verbose logical (Optional). If `TRUE`, logs detailed information
-#'   during execution. Default is `TRUE`.
-#' @param solve_max_attempts numeric (Optional). Maximum number of attempts to
-#'   run solve and crossprod functions. Default is 5.
-#' @param solve_chunk_size numeric. Chunk size for solve_and_multiply python
-#'   function. Default is 50.
-#' @param LF_Commands_Only logical. If `TRUE`, returns the command to run the
-#'   Python script. Default is `FALSE`.
 #' @return Returns the `path_out` if successful. Returns `NULL` if all attempts
 #'   fail.
 #' @details
@@ -842,10 +830,12 @@ Predict_LF <- function(
 #' - Generates detailed logs if `verbose` is set to `TRUE`.
 #' @author Ahmed El-Gabbas
 #' @keywords internal
+#' @inheritParams Mod_Predict_LF
 
 run_crossprod_solve <- function(
     TF_Environ, s1, s2, postEta, path_out, denom,
-    chunk_size = 1000L, threshold_mb = 2000L, use_single = TRUE, verbose = TRUE,
+    chunk_size = 1000L, threshold_mb = 2000L, TF_use_single = TRUE,
+    verbose = TRUE,
     solve_chunk_size = 50L, solve_max_attempts = 5L, LF_Commands_Only = FALSE) {
 
   Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3")
@@ -856,7 +846,7 @@ run_crossprod_solve <- function(
   script_path <- system.file("crossprod_solve.py", package = "IASDT.R")
   if (!file.exists(script_path)) {
     stop(
-      "Necessary python script `crossprod_solve.py` does not exist",
+      "Necessary Python script `crossprod_solve.py` does not exist",
       call. = FALSE)
   }
 
@@ -875,7 +865,7 @@ run_crossprod_solve <- function(
 
   # On Windows, the TF calculations has to be done through a valid virtual
   # environment; the path to the virtual environment must be specified in
-  # `TF_Environ`. On LUMI, this is not needed as the compatible python
+  # `TF_Environ`. On LUMI, this is not needed as the compatible Python
   # installation is loaded automatically when loading tensorflow module. When
   # using another HPC system, the function needs to be adapted accordingly.
 
@@ -896,7 +886,8 @@ run_crossprod_solve <- function(
     }
 
     python_executable <- IASDT.R::NormalizePath(
-      file.path(TF_Environ, "Scripts", "python.exe"), MustWork = TRUE)
+      IASDT.R::Path(TF_Environ, "Scripts", "python.exe"),
+      MustWork = TRUE)
 
     if (!file.exists(python_executable)) {
       stop(
@@ -905,7 +896,7 @@ run_crossprod_solve <- function(
     }
 
   } else {
-    # Use `python3`` directly - on LUMI, compatible python installation is
+    # Use `python3`` directly - on LUMI, compatible Python installation is
     # loaded automatically when loading tensorflow
     python_executable <- "/usr/bin/time -v python3"
 
@@ -918,14 +909,14 @@ run_crossprod_solve <- function(
     "--s1", IASDT.R::NormalizePath(s1, MustWork = TRUE),
     "--s2", IASDT.R::NormalizePath(s2, MustWork = TRUE),
     "--post_eta", IASDT.R::NormalizePath(postEta, MustWork = TRUE),
-    "--path_out", file.path(getwd(), path_out),
+    "--path_out", IASDT.R::NormalizePath(path_out),
     "--denom", as.character(denom),
     "--chunk_size", as.character(chunk_size),
     "--threshold_mb", as.character(threshold_mb),
     "--solve_chunk_size", as.character(solve_chunk_size))
 
   # Add boolean flags conditionally
-  if (use_single) {
+  if (TF_use_single) {
     LF_Args <- c(LF_Args, "--use_single")
   }
 
@@ -935,7 +926,7 @@ run_crossprod_solve <- function(
 
   if (.Platform$OS.type != "windows") {
     path_log <- stringr::str_replace(
-      file.path(getwd(), path_out), ".feather", ".log")
+      IASDT.R::Path(getwd(), path_out), ".feather", ".log")
     # Redirect results of time to log file
     LF_Args <- c(LF_Args, paste0(" >> ", path_log, " 2>&1"))
   }
@@ -1006,15 +997,13 @@ run_crossprod_solve <- function(
 #' factors as a JPEG file.
 #'
 #' @param Path_Model Path to the model file.
-#' @param EnvFile Path to the environment variables file. Default is ".env".
-#' @param FromHPC Logical flag indicating whether to load environment variables
-#'   from HPC. Default is `TRUE`.
-#' @param Plot_Width Numeric value specifying the width of the output plot in
-#'   cm. Default is 20.
-#' @param Plot_Height Numeric value specifying the height of the output plot in
-#'   cm. Default is 21.
-#'
-#' @return Invisibly returns NULL after saving the plot.
+#' @param EnvFile Character. Path to the environment file containing paths to
+#'   data sources. Defaults to `.env`.
+#' @param FromHPC Logical. Whether the processing is being done on an
+#'   High-Performance Computing (HPC) environment, to adjust file paths
+#'   accordingly. Default: `TRUE`.
+#' @param Plot_Width,Plot_Height Numeric. The width and height of the
+#'   output plot in cm. Default is 20&times;21 cm.
 #' @export
 #' @author Ahmed El-Gabbas
 #' @name Mod_Plot_LF
@@ -1041,7 +1030,7 @@ Mod_Plot_LF <- function(
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
-  Grid10 <- file.path(Path_Grid, "Grid_10_Land_Crop.RData") %>%
+  Grid10 <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.RData") %>%
     IASDT.R::LoadAs() %>%
     terra::unwrap()
 
@@ -1113,7 +1102,7 @@ Mod_Plot_LF <- function(
       panel.ontop = TRUE, panel.background = ggplot2::element_rect(fill = NA))
 
   ragg::agg_jpeg(
-    filename = file.path(
+    filename = IASDT.R::Path(
       dirname(dirname(Path_Model)), "Model_Prediction", "LF_Plot.jpeg"),
     width = Plot_Width, height = Plot_Height, res = 600,
     quality = 100, units = "cm")

@@ -15,19 +15,15 @@ Mod_Plot_LF(
 \arguments{
 \item{Path_Model}{Path to the model file.}
 
-\item{EnvFile}{Path to the environment variables file. Default is ".env".}
+\item{EnvFile}{Character. Path to the environment file containing paths to
+data sources. Defaults to \code{.env}.}
 
-\item{FromHPC}{Logical flag indicating whether to load environment variables
-from HPC. Default is \code{TRUE}.}
+\item{FromHPC}{Logical. Whether the processing is being done on an
+High-Performance Computing (HPC) environment, to adjust file paths
+accordingly. Default: \code{TRUE}.}
 
-\item{Plot_Width}{Numeric value specifying the width of the output plot in
-cm. Default is 20.}
-
-\item{Plot_Height}{Numeric value specifying the height of the output plot in
-cm. Default is 21.}
-}
-\value{
-Invisibly returns NULL after saving the plot.
+\item{Plot_Width, Plot_Height}{Numeric. The width and height of the
+output plot in cm. Default is 20×21 cm.}
 }
 \description{
 Generate and save spatial variation in site loadings of HMSC Models' latent

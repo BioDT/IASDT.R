@@ -51,7 +51,7 @@ Efforts_Split <- function(Path_Zip, Path_Output, ChunkSize = 100000) {
   ChunkSize <- format(ChunkSize, scientific = FALSE)
 
   OutPrefix <- stringr::str_replace(basename(Path_Zip), ".zip$", "_") %>%
-    file.path(Path_Output, .)
+    IASDT.R::Path(Path_Output, .)
 
   # nolint start
   CSV_File <- stringr::str_replace(basename(Path_Zip), ".zip$", ".csv")

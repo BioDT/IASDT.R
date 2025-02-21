@@ -12,14 +12,13 @@
 #' set to `TRUE` or 2) appends "_NEW" to the new column names to avoid overwrite
 #' if `Overwrite` is set to `FALSE`.
 #' @name sf_add_coords
-#' @param Sf_Obj An sf object to which longitude and latitude columns will be
+#' @param Sf_Obj An `sf` object to which longitude and latitude columns will be
 #'   added.
-#' @param NameX,NameY A string specifying the name of the longitude column to be
-#'   added. Defaults to `Long` and `Lat`.
-#' @param Overwrite A logical value indicating whether to overwrite existing
-#'   columns with names specified by NameX and NameY. If `FALSE` and columns
-#'   with these names exist, new columns are appended with "_NEW" suffix.
-#'   Defaults to `FALSE`.
+#' @param NameX,NameY Character. Name of the longitude column to be added. 
+#'   Defaults to `Long` and `Lat`.
+#' @param Overwrite Logical. Whether to overwrite existing columns with names
+#'   specified by `NameX` and `NameY`. If `FALSE` and columns with these names
+#'   exist, new columns are appended with "_NEW" suffix. Defaults to `FALSE`.
 #' @return An sf object with added longitude and latitude columns.
 #' @author Ahmed El-Gabbas
 #' @export

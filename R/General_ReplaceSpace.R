@@ -8,7 +8,7 @@
 #' underscores. It is useful for formatting strings to be used in contexts where
 #' spaces are not allowed or desired.
 #'
-#' @param x A character string. The string in which spaces will be replaced with
+#' @param x Character. The string in which spaces will be replaced with 
 #'   underscores.
 #' @name ReplaceSpace
 #' @author Ahmed El-Gabbas

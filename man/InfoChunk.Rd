@@ -18,21 +18,22 @@ InfoChunk(
 )
 }
 \arguments{
-\item{Message}{A character string representing the main message to be
-timestamped. This parameter is mandatory and cannot be \code{NULL} or empty.}
+\item{Message}{Character. The main message to be timestamped. This parameter
+is mandatory and cannot be \code{NULL} or empty.}
 
-\item{Date}{logical; whether to include the date in the timestamp. Default is
-\code{FALSE}, meaning only the time is printed. See \link{CatTime}.}
+\item{Date}{Logical. Whether to include the date in the timestamp.
+Default is \code{FALSE}, meaning only the time is printed. See
+\link{CatTime}.}
 
-\item{Extra1, Extra2}{integer; the number of extra empty lines to print before
+\item{Extra1, Extra2}{Integer. Number of extra empty lines to print before
 and after the separator lines. See \link{CatSep} for more details.}
 
 \item{Bold}{logical; whether to print the text in bold. Default is \code{FALSE}.}
 
 \item{Red}{logical; whether to print the text in red. Default is \code{FALSE}.}
 
-\item{Time}{logical; whether to include the time in the timestamp. Default is
-\code{FALSE}.}
+\item{Time}{Logical. Whether to include the time in the timestamp.
+Default is \code{FALSE}.}
 
 \item{Level}{integer; the level at which the message will be printed. If e.g.
 Level = 1, the following string will be printed at the beginning of the

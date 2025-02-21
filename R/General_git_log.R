@@ -10,16 +10,17 @@
 #' return it. It supports execution on Windows and Linux operating systems and
 #' provides a visually appealing graph format of the log, showing the commit
 #' hash, references, commit message, relative commit date, and author name.
-#' @param Path A character string specifying the path to the directory to check.
-#'   Defaults to the current working directory ".". If the path does not exist,
-#'   the function will stop and throw an error. If the path is not a git
-#'   repository, the function will throw a warning.
-#' @param Num An optional numeric value specifying the number of recent commits
-#'   to display. If `NULL` (the default), the complete log is shown. If `Num` is
-#'   not `NULL` or a positive number, the function will stop and throw an error.
-#' @param ReturnLog A logical value indicating whether to return the log
-#'   (`TRUE`) or print it to the console (`FALSE`, default). If `TRUE`, the
-#'   function returns a character vector containing the log lines.
+#' @param Path Character. Path to the directory to check. Defaults to the
+#'   current working directory ".". If the path does not exist, the function
+#'   will stop and throw an error. If the path is not a git repository, the
+#'   function will throw a warning.
+#' @param Num Integer. Number of recent commits to display. If `NULL` (the
+#'   default), the complete log is shown. If `Num` is not `NULL` or a positive
+#'   number, the function will stop and throw an error. This parameter is
+#'   ignored if `ReturnLog` is `TRUE`.
+#' @param ReturnLog Logical. Whether to return the log (`TRUE`) or print it to
+#'   the console (`FALSE`, default). If `TRUE`, the function returns a character
+#'   vector containing the log lines.
 #' @return If `ReturnLog` is `TRUE`, returns a character vector containing the
 #'   git log lines. If `ReturnLog` is `FALSE`, the function is called for its
 #'   side effect of printing to the console.
@@ -36,12 +37,17 @@
 #' git_log(Path = "C:/")
 #'
 #' # Show the most recent commit
-#' git_log(Path = ".", Num = 1)
+#' git_log(Num = 1)
 #'
 #' # Show the most recent 5 commits
-#' git_log(Path = ".", Num = 5)
+#' git_log(Num = 5)
 #'
-#' git_log(Path = ".", Num = 5, ReturnLog = TRUE)
+#' # Return the log as a character vector
+#' Log <- git_log(ReturnLog = TRUE)
+#'
+#' length(Log)
+#'
+#' head(Log, 8)
 
 git_log <- function(Path = ".", Num = NULL, ReturnLog = FALSE) {
 

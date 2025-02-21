@@ -8,11 +8,11 @@ pipeline.}
 setGeometry(x, Name)
 }
 \arguments{
-\item{x}{A simple feature (sf) data frame. This is the data frame whose
+\item{x}{simple feature (sf) data frame. This is the data frame whose
 geometry column will be set or changed.}
 
-\item{Name}{A string specifying the name of the geometry column to be used or
-set in the \code{x} data frame.}
+\item{Name}{Character. Name of the geometry column to be used or set in the
+\code{x} data frame.}
 }
 \value{
 The modified simple feature (sf) data frame with the updated geometry

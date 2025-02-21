@@ -16,18 +16,18 @@ Coda_to_tibble(
 \item{CodaObj}{An object of class \code{mcmc.list} or \code{mcmc}, representing the
 MCMC output.}
 
-\item{Type}{A character string specifying the parameter type to transform and
+\item{Type}{Character. The parameter type to transform and
 extract. Must be one of \code{rho}, \code{alpha}, \code{omega}, or \code{beta}.}
 
-\item{EnvFile}{A character string specifying the path to the environment file
-that contains necessary variables for \code{beta} parameter transformation.
-Defaults to \code{.env}. Only required for the \code{beta} and \code{Omega} parameters.}
+\item{EnvFile}{Character. Path to the environment file containing paths to
+data sources. Defaults to \code{.env}.}
 
-\item{NOmega}{An integer specifying the number of species to be sampled for
+\item{NOmega}{Integer. The number of species to be sampled for
 the \code{Omega} parameter transformation. Defaults to 100.}
 
-\item{FromHPC}{Logical. Indicates whether the function is being run on an HPC
-environment, affecting file path handling. Default: \code{TRUE}.}
+\item{FromHPC}{Logical. Whether the processing is being done on an
+High-Performance Computing (HPC) environment, to adjust file paths
+accordingly. Default: \code{TRUE}.}
 }
 \value{
 A tibble containing the transformed parameters based on the specified
@@ -39,14 +39,6 @@ This function converts a Coda object (\code{mcmc.list} or \code{mcmc}) into a ti
 format, facilitating further analysis and visualization. It supports
 transformation for specific parameter types: \code{rho}, \code{alpha}, \code{omega}, and
 \code{beta}.
-}
-\details{
-The function reads the following environment variables:
-\itemize{
-\item \strong{\code{DP_R_TaxaInfo}} (if \code{FromHPC} = \code{TRUE}) or
-\strong{\code{DP_R_TaxaInfo_Local}} (if \code{FromHPC} = \code{FALSE}) for the location of
-the \code{Species_List_ID.txt} file containing species information.
-}
 }
 \examples{
 library(Hmsc)

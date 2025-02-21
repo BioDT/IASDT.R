@@ -2,7 +2,7 @@
 % Please edit documentation in R/Mod_Predict_Hmsc.R
 \name{Predict_Hmsc}
 \alias{Predict_Hmsc}
-\title{Calculates predicted values from a fitted Hmsc model.}
+\title{Calculates predicted values from a fitted Hmsc model}
 \usage{
 Predict_Hmsc(
   Path_Model,
@@ -41,116 +41,113 @@ Predict_Hmsc(
 )
 }
 \arguments{
-\item{Path_Model}{character string specifying a file name where the model
-object is saved.}
+\item{Path_Model}{Character. Path to the saved model object.}
 
-\item{XData}{a dataframe specifying the unpreprocessed covariates for the
+\item{XData}{\code{data.frame}. The unpreprocessed covariates for the
 predictions to be made. Works only if the \code{XFormula} argument was specified
 in the \link[Hmsc:Hmsc]{Hmsc::Hmsc} model constructor call. Requirements are similar to
 those in the \code{Hmsc} model constructor.}
 
-\item{X}{a matrix specifying the covariates for the predictions to be made.
+\item{X}{\code{matrix}. Covariates for the predictions to be made.
 Only one of \code{XData} and \code{X} arguments may be provided.}
 
-\item{XRRRData}{a dataframe of covariates for reduced-rank regression.}
+\item{XRRRData}{\code{data.frame}. Covariates for reduced-rank regression.}
 
-\item{XRRR}{a matrix of covariates for reduced-rank regression.}
+\item{XRRR}{\code{matrix}. Covariates for reduced-rank regression.}
 
-\item{Gradient}{an object returned by \link[Hmsc:constructGradient]{Hmsc::constructGradient}. Providing
+\item{Gradient}{An object returned by \link[Hmsc:constructGradient]{Hmsc::constructGradient}. Providing
 \code{Gradient} is an alternative for providing \code{XData}, \code{studyDesign} and
 \code{ranLevels}. Cannot be used together with \code{Yc}.}
 
-\item{Yc}{a matrix of the outcomes that are assumed to be known for
-conditional predictions. Cannot be used together with \code{Gradient}.}
+\item{Yc}{\code{matrix}. Outcomes that are assumed to be known for conditional
+predictions. Cannot be used together with \code{Gradient}.}
 
-\item{mcmcStep}{the number of extra mcmc steps used for updating the random
-effects}
+\item{mcmcStep}{Integer. Number of extra \code{mcmc} steps used for updating the
+random effects. Defaults to 1L.}
 
-\item{expected}{boolean flag indicating whether to return the location
-parameter of the observation models or sample the values from those.}
-
-\item{NCores}{Integer specifying the number of cores to use for parallel
-processing. Defaults to 8.}
-
-\item{Model_Name}{Character string used as a prefix for temporary file names.
-Defaults to \code{NULL}, in which case no prefix is used.}
-
-\item{Temp_Dir}{Character string specifying the path for temporary storage of
-intermediate files.}
-
-\item{Temp_Cleanup}{logical, indicating whether to clean up temporary files.
-Defaults to \code{TRUE}.}
-
-\item{RC}{a character string specifying the type of predictions to be made.
-If \code{NULL} (default), predictions are made for the latent factors. If \code{c},
-predictions are made for response curves at mean coordinates. If \code{i},
-predictions are made for response curves at infinite coordinates.}
-
-\item{UseTF}{Logical indicating whether to use TensorFlow for calculations.
-Defaults to \code{TRUE}.}
-
-\item{TF_Environ}{Character string specifying the path to the Python
-environment. Defaults to \code{NULL}. This argument is required if \code{UseTF} is
+\item{expected}{Logical. Whether to return the location parameter
+of the observation models or sample the values from those. Defaults to
 \code{TRUE}.}
 
-\item{TF_use_single}{Logical indicating whether to use single precision for
-the TF calculations. Defaults to \code{FALSE}.}
+\item{NCores}{Integer. Number of CPU cores to use for parallel processing.
+Default: 8.}
 
-\item{LF_OutFile}{Character string specifying the path to save the outputs.
-If \code{NULL} (default), the predicted latent factors are not saved to a file.
-This should end with either \verb{*.qs2} or \verb{*.RData}.}
+\item{Model_Name}{Character. Prefix for temporary file names. Defaults to
+\code{NULL}, in which case no prefix is used.}
 
-\item{LF_Return}{Logical. Indicates if the output should be returned.
-Defaults to \code{FALSE}. If \code{LF_OutFile} is \code{NULL}, this parameter cannot be
-set to \code{FALSE} because the function needs to return the result if it is not
-saved to a file.}
+\item{Temp_Dir}{Character. Path for temporary storage of intermediate files.}
 
-\item{LF_InputFile}{a character string specifying the file name where the
-latent factor predictions are saved. If \code{NULL} (default), latent factor
-predictions will be made. If specified, the latent factor predictions are
-read from the file. This allows to predicting the latent factors for new
-sites only once.}
+\item{Temp_Cleanup}{Logical. Whether to clean up temporary files.
+Defaults to \code{TRUE}.}
 
-\item{LF_Only}{a logical flag indicating whether to return the latent factor
+\item{RC}{Character. Type of predictions to be made. If \code{NULL} (default),
+predictions are made for the latent factors. If \code{c}, predictions are made
+for response curves at mean coordinates. If \code{i}, predictions are made for
+response curves at infinite coordinates.}
+
+\item{UseTF}{Logical. Whether to use TensorFlow for calculations. Defaults to
+\code{TRUE}.}
+
+\item{TF_Environ}{Character. Path to the Python environment. This argument is
+required if \code{UseTF} is \code{TRUE}.}
+
+\item{TF_use_single}{Logical. Whether to use single precision for the
+TensorFlow calculations. Defaults to \code{FALSE}.}
+
+\item{LF_OutFile}{Character. Path to save the outputs. If \code{NULL} (default),
+the predicted latent factors are not saved to a file. This should end with
+either \verb{*.qs2} or \verb{*.RData}.}
+
+\item{LF_Return}{Logical. Whether the output should be returned. Defaults to
+\code{FALSE}. If \code{LF_OutFile} is \code{NULL}, this parameter cannot be set to \code{FALSE}
+because the function needs to return the result if it is not saved to a
+file.}
+
+\item{LF_InputFile}{Character. File name where the latent factor predictions
+are saved. If \code{NULL} (default), latent factor predictions will be computed.
+If specified, latent factor predictions are read from this path. This
+allows to predicting the latent factors for new sites only once.}
+
+\item{LF_Only}{Logical. Whether to return the latent factor
 predictions only. Defaults to \code{FALSE}. This helps in predicting to new
 sites, allowing to predicting the latent factors only once, then the output
 can be loaded in other predictions when needed.}
 
-\item{LF_NCores}{Integer specifying the number of cores to use for parallel
-processing. Defaults to 8.}
+\item{LF_NCores}{Integer. Number of cores to use for parallel processing of
+latent factor prediction. Defaults to 8L.}
 
 \item{LF_Check}{Logical. If \code{TRUE}, the function checks if the output files
 are already created and valid. If \code{FALSE}, the function will only check if
 the files exist without checking their integrity. Default is \code{FALSE}.}
 
-\item{LF_Temp_Cleanup}{Logical indicating whether to delete temporary files
-in the \code{Temp_Dir} after finishing the LF predictions.}
+\item{LF_Temp_Cleanup}{Logical. Whether to delete temporary files in the
+\code{Temp_Dir} directory after finishing the LF predictions.}
 
 \item{LF_Commands_Only}{logical. If \code{TRUE}, returns the command to run the
 Python script. Default is \code{FALSE}.}
 
-\item{Pred_Dir}{a character string specifying the directory where the
-predictions will be saved. Defaults to \code{NULL}, which saves model
-predictions to "Model_Prediction" folder of the current working directory.}
+\item{Pred_Dir}{Character. Directory path indicating where the predictions
+will be saved. Defaults to \code{NULL}, which saves model predictions to
+"\code{Model_Prediction}" folder of the current working directory.}
 
-\item{Pred_PA}{a matrix of presence-absence data for evaluation. If \code{NULL}
+\item{Pred_PA}{\code{matrix}. Presence-absence data for evaluation. If \code{NULL}
 (default), the presence-absence data from the model object is used. This
 argument is used only when \code{Evaluate} is \code{TRUE}.}
 
-\item{Pred_XY}{a matrix of coordinates to be added to predicted values. If
+\item{Pred_XY}{\code{matrix}. Coordinates to be added to predicted values. If
 \code{NULL} (default), the coordinates from the model object is used.}
 
-\item{Evaluate}{a logical flag indicating whether to evaluate the model
-predictions. Defaults to \code{FALSE}.}
+\item{Evaluate}{Logical. Whether to evaluate the model predictions.
+Defaults to \code{FALSE}.}
 
-\item{Eval_Name}{a character string specifying the name of the evaluation
-results. If \code{NULL}, the default name is used (\verb{Eval_[Model_Name].qs2}).}
+\item{Eval_Name}{Character. Name of the evaluation results. If \code{NULL}, the
+default name is used (\verb{Eval_[Model_Name].qs2}).}
 
-\item{Eval_Dir}{a character string specifying the directory where the
-evaluation results will be saved. Defaults to \code{Evaluation}.}
+\item{Eval_Dir}{Character. Directory where the evaluation results will be
+saved. Defaults to \code{Evaluation}.}
 
-\item{Verbose}{Logical. If TRUE, detailed output is printed. Default is
-\code{FALSE}.}
+\item{Verbose}{Logical. Whether to print a message upon
+successful saving of files. Defaults to \code{FALSE}.}
 }
 \description{
 This function modifies the \code{Hmsc:::predict.Hmsc} function.

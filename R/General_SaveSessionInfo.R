@@ -7,7 +7,7 @@
 #' This function saves the current R session information, including installed
 #' packages, session details, and optionally, information about specific objects
 #' in the session, to a text file.
-#' @param Path  string specifying the directory path where the output file
+#' @param Path Character. Directory path where the output file
 #'   should be saved. The default is the current working directory
 #'   ([base::getwd]).
 #' @param SessionObj An optional list of objects to include in the session
@@ -15,8 +15,7 @@
 #'   function like [IASDT.R::SaveSession]. If provided, details of these objects
 #'   (excluding functions and pre-selected objects, with sizes in megabytes) are
 #'   appended to the session information file.
-#' @param Prefix A string to be used as a prefix for the output file name. The
-#'   default prefix is `S`.
+#' @param Prefix Character. Prefix for the output file name. Defaults to `S`.
 #' @author Ahmed El-Gabbas
 #' @return The primary effect of this function is the side effect of writing
 #'   session information to a file.

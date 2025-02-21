@@ -10,13 +10,13 @@
 #'
 #' @name CatDiff
 #' @author Ahmed El-Gabbas
-#' @param InitTime POSIXct; The initial time from which the difference is
+#' @param InitTime `POSIXct`. The initial time from which the difference is
 #'   calculated.
-#' @param ChunkText character. The message printed as chunk info. Default
+#' @param ChunkText Character. The message printed as chunk info. Default
 #'   value: `Session summary`. See: [InfoChunk] for more information.
-#' @param Prefix character; A prefix string to prepend to the printed time
-#'   difference. Defaults to "Completed in ".
-#' @param CatInfo logical; If `TRUE`, prints a session summary using
+#' @param Prefix Character. Prefix to prepend to the printed time difference. 
+#'   Defaults to "Completed in ".
+#' @param CatInfo Logical. If `TRUE`, prints a session summary using
 #'   [IASDT.R::InfoChunk] ("Session summary"). Defaults to `FALSE`.
 #' @param ... Additional arguments for [CatTime].
 #' @return The function is used for its side effect of printing to the console

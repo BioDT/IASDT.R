@@ -26,63 +26,62 @@ Mod_CV_Fit(
 \arguments{
 \item{Model}{Character. Path to a saved model file (\verb{*.qs2}).}
 
-\item{CVName}{Character vector specifying the name of the column(s) in the
-model input data (see \link{Mod_PrepData} and \link{GetCV}) to be
-used to cross-validate the models. The function allows the possibility of
-using more than one way of assigning grid cells into cross-validation
-folders. If multiple names are provided, separate cross-validation models
-will be fitted for each column. Currently, there are three cross-validation
-strategies, created using the \link{Mod_PrepData}: \code{CV_SAC}, \code{CV_Dist},
-and \code{CV_Large} (see \link{GetCV}). Defaults to \code{c("CV_Dist", "CV_Large")}.}
+\item{CVName}{Character vector. Column name(s) in the model input data to be
+used to cross-validate the models (see \link{Mod_PrepData} and \link{Mod_GetCV}).
+The function allows the possibility of using more than one way of
+assigning grid cells into cross-validation folders. If multiple names are
+provided, separate cross-validation models will be fitted for each
+cross-validation type. Currently, there are three cross-validation
+strategies: \code{CV_SAC}, \code{CV_Dist}, and \code{CV_Large}. Defaults to \code{c("CV_Dist",  "CV_Large")}.}
 
 \item{Partitions}{A vector for cross-validation created by
 \link[Hmsc:createPartition]{Hmsc::createPartition} or similar. Defaults to \code{NULL}, which means to use
 column name(s) provided in the \code{CVName} argument. If the \code{Partitions}
 vector is provided, the label used in the output files will be \code{CV_Custom}.}
 
-\item{EnvFile}{String. Path to read the environment variables. Default value:
-\code{.env}.}
+\item{EnvFile}{Character. Path to the environment file containing paths to
+data sources. Defaults to \code{.env}.}
 
 \item{InitPar}{a named list of parameter values used for initialization of
 MCMC states. See \link[Hmsc:computePredictedValues]{Hmsc::computePredictedValues} for more information.
 Default: \code{NULL}.}
 
-\item{JobName}{String specifying the name of the submitted job(s) for SLURM.
-Default: \code{CV_Models}.}
+\item{JobName}{Character. Name of the submitted job(s) for SLURM. Default:
+\code{CV_Models}.}
 
-\item{Updater}{a named list, specifying which conditional updaters should be
-omitted.  See \link[Hmsc:computePredictedValues]{Hmsc::computePredictedValues} for more information. Defaults
+\item{Updater}{named \code{list}. Which conditional updaters should be
+omitted? See \link[Hmsc:computePredictedValues]{Hmsc::computePredictedValues} for more information. Defaults
 to \code{list(Gamma2 = FALSE, GammaEta = FALSE)} to disable the following
 warnings: \verb{setting updater$Gamma2=FALSE due to specified phylogeny matrix}
 and \verb{setting updater$GammaEta=FALSE: not implemented for spatial methods 'GPP' and 'NNGP'}.}
 
-\item{AlignPost}{boolean flag indicating whether the posterior of each chains
+\item{AlignPost}{Logical. Whether the posterior of each chains
 should be aligned. See \link[Hmsc:computePredictedValues]{Hmsc::computePredictedValues} for more information.
 Default: \code{TRUE}.}
 
-\item{ToJSON}{Logical indicating whether to convert unfitted models to JSON
-before saving to RDS file. Default: \code{FALSE}.}
+\item{ToJSON}{Logical. Whether to convert unfitted models to JSON before
+saving to RDS file. Default: \code{FALSE}.}
 
-\item{FromHPC}{Logical. Indicates if the operation is being performed from an
-HPC environment. This adjusts file paths accordingly. Default: \code{TRUE}.}
+\item{FromHPC}{Logical. Whether the processing is being done on an
+High-Performance Computing (HPC) environment, to adjust file paths
+accordingly. Default: \code{TRUE}.}
 
-\item{PrepSLURM}{Logical indicating whether to prepare SLURM command files.
-If \code{TRUE} (default), the SLURM commands will be saved to disk using the
+\item{PrepSLURM}{Logical. Whether to prepare SLURM command files. If \code{TRUE}
+(default), the SLURM commands will be saved to disk using the
 \link{Mod_SLURM} function.}
 
-\item{MemPerCpu}{String. Memory per CPU allocation for the SLURM job.
-Example: \verb{32G} for 32 gigabytes. Defaults to \code{NULL}. If not provided, the
-function will throw an error.}
+\item{MemPerCpu}{Character. Memory allocation per CPU core. Example: "32G"
+for 32 gigabytes. Required — if not provided, the function throws an error.}
 
-\item{Time}{String. Duration for which the job should run. Example:
-\code{01:00:00} for one hour. If not provided, the function will throw an error.}
+\item{Time}{Character. Maximum allowed runtime for the job. Example:
+"01:00:00" for one hour. Required — if not provided, the function throws an
+error.}
 
-\item{Path_Hmsc}{String. Path for the Hmsc-HPC.}
+\item{Path_Hmsc}{Character. Path to the Hmsc-HPC installation.}
 
-\item{Precision}{Integer, either of 32 or 64 (default) for the
-precision mode used in \code{Hmsc-HPC} sampling (\verb{--fp 32} or \verb{--fp 64}
-argument). In \code{Hmsc-HPC}, the default value is 64. This is still under
-testing.}
+\item{Precision}{Integer (either 32 or 64). Defines the floating-point
+precision mode for \code{Hmsc-HPC} sampling (--fp 32 or --fp 64). The default is
+64, which is the default precision in \code{Hmsc-HPC}.}
 
 \item{...}{Additional arguments passed to the \link{Mod_SLURM} function.}
 }

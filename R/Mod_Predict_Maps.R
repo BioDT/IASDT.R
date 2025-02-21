@@ -2,14 +2,16 @@
 # Predict_Maps ----
 ## |------------------------------------------------------------------------| #
 
-#' Predicts habitat suitability of `Hmsc` model across different climate options
+#' Predict habitat suitability of `Hmsc` model across different climate options
 #'
 #' This function generates prediction maps of `Hmsc` models for current and
-#' future climate scenarios. It also predicts an ensemble predictions for
+#' future climate options. It also predicts an ensemble predictions for
 #' different climate models. For each species and overall species richness, the
 #' function exports three maps: mean, standard deviation (sd), and coefficient
-#' of variation (cov).
-#'
+#' of variation (cov). For future predictions, the function generates maps for
+#' prediction anomaly (future - current). The function prepares data to be
+#' uploaded to the [OPeNDAP](http://opendap.biodt.eu/ias-pdt/) data server for
+#' the use of the IAS-pDT [Shiny App](https://app.biodt.eu/).
 #' @param Path_Model Character. Path to fitted `Hmsc` model object.
 #' @param Hab_Abb Character. Habitat abbreviation indicating the specific
 #'   [SynHab](https://www.preslia.cz/article/pdf?id=11548) habitat type for
@@ -18,41 +20,43 @@
 #'   al.](https://doi.org/10.23855/preslia.2022.447).
 #' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
-#' @param FromHPC Logical indicating whether the work is being done from HPC, to
-#'   adjust file paths accordingly. Default: `TRUE`.
-#' @param NCores Integer specifying the number of parallel cores for
-#'   parallelization. Default: 8 cores.
+#' @param FromHPC Logical. Whether the processing is being done on an
+#'   High-Performance Computing (HPC) environment, to adjust file paths
+#'   accordingly. Default: `TRUE`.
+#' @param NCores Integer. Number of CPU cores to use for parallel processing.
+#'   Default: 8.
 #' @param Pred_Clamp Logical indicating whether to clamp the sampling efforts at
-#'   a single value. Defaults to `TRUE`. If `TRUE`, the `Fix_Efforts` argument
-#'   must be provided.
-#' @param Fix_Efforts Numeric or character. Defines the value to fix sampling
-#'   efforts less than the provided value. If numeric, the value is directly
-#'   used (log<sub>10</sub> scale). If character, it can be `median`, `mean`,
-#'   `max`, or `q90` (q0% Quantile). Using `max` can reflect extreme values
+#'   a single value. If `TRUE` (default), the `Fix_Efforts` argument must be
+#'   provided.
+#' @param Fix_Efforts Numeric or character. If `Pred_Clamp = TRUE`, the sampling
+#'   efforts predictor with values U+02264 `Fix_Efforts` is fixed at
+#'   `Fix_Efforts` during predictions. If numeric, the value is directly used
+#'   (log<sub>10</sub> scale). If character, it can be one of `median`, `mean`,
+#'   `max`, or `q90` (90% Quantile). Using `max` can reflect extreme values
 #'   caused by rare, highly sampled locations (e.g., urban centers or popular
 #'   natural reserves). While using 90% quantile avoid such extreme grid cells
 #'   while still capturing areas with high sampling effort. This argument is
 #'   mandatory when `Pred_Clamp` is set to `TRUE`.
 #' @param Fix_Rivers Numeric or character. Similar to `Fix_Efforts`, but for
 #'   fixing the length of rivers. If numeric, the value is directly used
-#'   (log<sub>10</sub> scale). If character, it can be `median`, `mean`, `max`,
-#'   `q90` (90% quantile). It can be also `NULL` for not fixing the river length
-#'   predictor. Defaults to `q90`.
-#' @param Pred_NewSites Logical indicating whether to predict habitat
-#'   suitability at new sites. Default: `TRUE`. Note: This parameter is
-#'   temporary and will be removed in future updates.
-#' @param LF_Only Logical. Indicates whether to predict only the latent factor.
-#'   Useful for distributing processing load between GPU and CPU. When `LF_Only
-#'   = TRUE`, the latent factor prediction can be computed on the GPU. The
-#'   function can then be rerun with `LF_Only = FALSE` to predict habitat
-#'   suitability using the predicted latent factor on the CPU. Default: `FALSE`.
-#' @param CC_Models Character vector. Specifies the climate models for future
-#'   predictions. Default: `c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
-#'   "MRI-ESM2-0", "UKESM1-0-LL")`. Note: This parameter is temporary and may be
+#'   (log<sub>10</sub> scale). If character, it can be one of `median`, `mean`,
+#'   `max`, `q90` (90% quantile). It can be also `NULL` for not fixing the river
+#'   length predictor. Defaults to `q90`.
+#' @param Pred_NewSites Logical. Whether to predict habitat suitability at new
+#'   sites. Default: `TRUE`. Note: This parameter is temporary and will be
 #'   removed in future updates.
-#' @param CC_Scenario Character vector. Specifies the climate scenarios for
-#'   future predictions. Default: `c("ssp126", "ssp370", "ssp585")`. Note: This
-#'   parameter is temporary and may be removed in future updates.
+#' @param LF_Only Logical. Whether to predict only the latent factor. This is
+#'   useful for distributing processing load between GPU and CPU. When `LF_Only
+#'   = TRUE`, latent factor prediction needs to be computed separately on GPU.
+#'   When computations are finished on GPU, the function can later be rerun with
+#'   `LF_Only = FALSE` (default) to predict habitat suitability using the
+#'   already-computed latent factor predictions.
+#' @param CC_Models Character vector. Climate models for future predictions.
+#'   Available options are `c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
+#'   "MRI-ESM2-0", "UKESM1-0-LL")` (default).
+#' @param CC_Scenario Character vector. Climate scenarios for future
+#'   predictions. Available options are: `c("ssp126", "ssp370", "ssp585")`
+#'   (default).
 #' @export
 #' @name Predict_Maps
 #' @author Ahmed El-Gabbas
@@ -80,6 +84,12 @@ Predict_Maps <- function(
   # # ..................................................................... ###
 
   Hab_Abb <- as.character(Hab_Abb)
+  
+  # Check if `Hab_Abb` is a single character value
+  if (length(Hab_Abb) != 1) {
+    stop("`Hab_Abb` must be a single character value", call. = FALSE)
+  }
+
   Hab_Name <- c(
     "0_All", "1_Forests", "2_Open_forests", "3_Scrub",
     "4a_Natural_grasslands", "4b_Human_maintained_grasslands",
@@ -141,30 +151,30 @@ Predict_Maps <- function(
   # # ..................................................................... ###
   # # ..................................................................... ###
 
-  Path_Eval <- file.path(dirname(dirname(Path_Model)), "Model_Evaluation")
+  Path_Eval <- IASDT.R::Path(dirname(dirname(Path_Model)), "Model_Evaluation")
 
-  Path_Prediction1 <- file.path(
+  Path_Prediction1 <- IASDT.R::Path(
     dirname(dirname(Path_Model)), "Model_Prediction")
-  Path_Prediction_Clamp <- file.path(Path_Prediction1, "Clamp")
-  Path_Prediction_NoClamp <- file.path(Path_Prediction1, "NoClamp")
+  Path_Prediction_Clamp <- IASDT.R::Path(Path_Prediction1, "Clamp")
+  Path_Prediction_NoClamp <- IASDT.R::Path(Path_Prediction1, "NoClamp")
   fs::dir_create(c(Path_Eval, Path_Prediction_NoClamp))
 
   # Path for overall summary - paths for summaries of identical scenarios
-  Path_Summary_RData <- file.path(
+  Path_Summary_RData <- IASDT.R::Path(
     dplyr::if_else(
       Pred_Clamp, Path_Prediction_Clamp, Path_Prediction_NoClamp),
     "Prediction_Summary.RData")
-  Path_Summary_txt <- file.path(
+  Path_Summary_txt <- IASDT.R::Path(
     dplyr::if_else(
       Pred_Clamp, Path_Prediction_Clamp, Path_Prediction_NoClamp),
     "Prediction_Summary.txt")
 
   # Path for overall summary - for ShinyApp
-  Path_Summary_RData_Shiny <- file.path(
+  Path_Summary_RData_Shiny <- IASDT.R::Path(
     dplyr::if_else(
       Pred_Clamp, Path_Prediction_Clamp, Path_Prediction_NoClamp),
     "Prediction_Summary_Shiny.RData")
-  Path_Summary_txt_Shiny <- file.path(
+  Path_Summary_txt_Shiny <- IASDT.R::Path(
     dplyr::if_else(
       Pred_Clamp, Path_Prediction_Clamp, Path_Prediction_NoClamp),
     "Prediction_Summary_Shiny.txt")
@@ -180,13 +190,27 @@ Predict_Maps <- function(
     return(invisible(NULL))
   }
 
+
+  # Check Fix_Efforts value
   if (Pred_Clamp) {
+
+    # Fix_Efforts can not be NULL when Clamping is implemented
+    if (is.null(Fix_Efforts)) {
+      stop("`Fix_Efforts` can not be NULL when Clamping is implemented")
+    }
+
+    # Check if Fix_Efforts is a vector or length 1
+    if (length(Fix_Efforts) != 1) {
+      stop(
+        paste0(
+          "`Fix_Efforts` must be a vector or length 1.",
+          " The current value is: ",
+          paste0(Fix_Efforts, collapse = " & ")),
+        call. = FALSE)
+    }
+
     # Create folder for clamp results only if Pred_Clamp == TRUE
     fs::dir_create(Path_Prediction_Clamp)
-  }
-
-  if (Pred_Clamp && is.null(Fix_Efforts)) {
-    stop("`Fix_Efforts` can not be NULL when Clamping is implemented")
   }
 
   # # ..................................................................... ###
@@ -247,7 +271,7 @@ Predict_Maps <- function(
   ## Reference grid -----
 
   IASDT.R::CatTime("Reference grid", Level = 1)
-  Path_GridR <- file.path(Path_Grid, "Grid_10_Land_Crop.RData")
+  Path_GridR <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(Path_GridR)) {
     stop(
       paste0("Path for the Europe boundaries does not exist: ", Path_GridR),
@@ -293,7 +317,7 @@ Predict_Maps <- function(
 
   IASDT.R::CatTime("CHELSA data", Level = 1)
 
-  Path_CHELSA <- file.path(Path_CHELSA, "CHELSA_Processed_DT.RData")
+  Path_CHELSA <- IASDT.R::Path(Path_CHELSA, "CHELSA_Processed_DT.RData")
   if (!file.exists(Path_CHELSA)) {
     stop(
       paste0("Processed CHLESA data can not be found at: ", Path_CHELSA),
@@ -333,7 +357,7 @@ Predict_Maps <- function(
 
     IASDT.R::CatTime("Road and railway intensity", Level = 1)
 
-    R_Railways <- file.path(Path_Rail, "Railways_Length.RData")
+    R_Railways <- IASDT.R::Path(Path_Rail, "Railways_Length.RData")
     if (!file.exists(R_Railways)) {
       stop(
         paste0("Railways data does not exist at: ", R_Railways),
@@ -343,7 +367,7 @@ Predict_Maps <- function(
       terra::unwrap() %>%
       magrittr::extract2("rail")
 
-    R_Roads <- file.path(Path_Roads, "Road_Length.RData")
+    R_Roads <- IASDT.R::Path(Path_Roads, "Road_Length.RData")
     if (!file.exists(R_Roads)) {
       stop(
         paste0("Roads data does not exist at: ", R_Roads), call. = FALSE)
@@ -372,7 +396,8 @@ Predict_Maps <- function(
   if (Hab_Predictor) {
 
     IASDT.R::CatTime("Habitat information", Level = 1)
-    R_Hab <- file.path(Path_CLC, "Summary_RData", "PercCov_SynHab_Crop.RData")
+    R_Hab <- IASDT.R::Path(
+      Path_CLC, "Summary_RData", "PercCov_SynHab_Crop.RData")
     if (!file.exists(R_Hab)) {
       stop(
         paste0("Habitat data: '", R_Hab, "' does not exist"), call. = FALSE)
@@ -402,7 +427,7 @@ Predict_Maps <- function(
 
     IASDT.R::CatTime("Sampling efforts", Level = 1)
 
-    R_Efforts <- file.path(Path_Bias, "Efforts_SummaryR.RData")
+    R_Efforts <- IASDT.R::Path(Path_Bias, "Efforts_SummaryR.RData")
     if (!file.exists(R_Efforts)) {
       stop(
         paste0("Sampling efforts data does not exist at: ", R_Efforts),
@@ -417,19 +442,11 @@ Predict_Maps <- function(
       stats::setNames("EffortsLog")
 
 
-    # Check if the Fix_Efforts value is valid
-    if (!is.null(Fix_Efforts)) {
+    if (Fix_Efforts) {
 
-      # Check if Fix_Efforts is a vector or length 1
-      if (length(Fix_Efforts) != 1) {
-        stop(
-          paste0(
-            "`Fix_Efforts` must be a vector or length 1.",
-            " The current value is: ",
-            paste0(Fix_Efforts, collapse = " & ")),
-          call. = FALSE)
-      }
+      IASDT.R::CatTime("Fixing sampling efforts values", Level = 2)
 
+      # Check Fix_Efforts value
       if (is.numeric(Fix_Efforts)) {
 
         # If `Fix_Efforts` is numeric value, check if it is within the range of
@@ -437,7 +454,11 @@ Predict_Maps <- function(
         EffortsRange <- terra::global(R_Efforts, fun = range, na.rm = TRUE) %>%
           unlist() %>%
           as.vector()
-        if (!dplyr::between(Fix_Efforts, EffortsRange[1], EffortsRange[2])) {
+
+        InvalidVal <- isFALSE(
+          dplyr::between(Fix_Efforts, EffortsRange[1], EffortsRange[2]))
+
+        if (InvalidVal) {
           stop(
             paste0(
               "`Fix_Efforts` value (", Fix_Efforts, ") is out of the range of ",
@@ -445,6 +466,10 @@ Predict_Maps <- function(
               paste0(round(EffortsRange, 2), collapse = " to ")),
             call. = FALSE)
         }
+
+        # Fix value
+        EffortsVal <- Fix_Efforts
+
       } else {
 
         # If `Fix_Efforts` is character, check if it is one of the valid values:
@@ -459,17 +484,9 @@ Predict_Maps <- function(
             call. = FALSE)
         }
       }
-    }
 
-    # Fix at single value
-
-    if (is.numeric(Fix_Efforts)) {
-      # Fix at provided value
-      EffortsVal <- Fix_Efforts
-    } else {
-
+      # Fix value
       EffortsVal <- dplyr::case_when(
-        is.null(Fix_Efforts) ~ NA_real_,
 
         # Fix at 90% quantile
         Fix_Efforts == "q90" ~ {
@@ -502,16 +519,14 @@ Predict_Maps <- function(
             as.numeric()
         },
 
-        .default = NA_real_
-      )
-    }
-
-    IASDT.R::CatTime(
-      paste0("Fixed value is ", round(EffortsVal, 2), " [log10 scale]"),
-      Level = 2, Time = FALSE)
+        .default = NA_real_)
 
 
-    if (!is.na(EffortsVal)) {
+      # Fix at single value
+      IASDT.R::CatTime(
+        paste0("Fixed value is ", round(EffortsVal, 2), " [log10 scale]"),
+        Level = 2, Time = FALSE)
+
       # Set a minimum value for efforts variable to `EffortsVal`. Using upper =
       # Inf keeps efforts values > EffortsVal as they are.
       R_Efforts_Clamp <- terra::clamp(
@@ -519,12 +534,13 @@ Predict_Maps <- function(
         stats::setNames("EffortsLog_Clamp")
 
       StaticPredictors <- c(StaticPredictors, R_Efforts, R_Efforts_Clamp)
-
       rm(R_Efforts, R_Efforts_Clamp, envir = environment())
 
     } else {
+
       StaticPredictors <- c(StaticPredictors, R_Efforts)
       rm(R_Efforts, envir = environment())
+
     }
   }
 
@@ -536,7 +552,7 @@ Predict_Maps <- function(
 
     IASDT.R::CatTime("River length", Level = 1)
 
-    R_Rivers <- file.path(Path_Rivers, "River_Lengths.RData")
+    R_Rivers <- IASDT.R::Path(Path_Rivers, "River_Lengths.RData")
     if (!file.exists(R_Rivers)) {
       stop(
         paste0("River length data does not exist at: ", R_Rivers),
@@ -551,11 +567,19 @@ Predict_Maps <- function(
       stats::setNames("RiversLog")
 
 
-    if (!is.null(Fix_Rivers)) {
+    if (is.null(Fix_Rivers)) {
+
+      # Do not fix at single value
+      IASDT.R::CatTime(
+        "River length predictor is not fixed at a single value",
+        Level = 2, Time = FALSE)
+
+    } else {
 
       IASDT.R::CatTime(
-        "River length predictor will be fixed at `Fix_Rivers` value",
+        "River length predictor will be fixed at single (`Fix_Rivers`) value",
         Level = 2, Time = FALSE)
+
 
       # Check if the Fix_Rivers value is valid
 
@@ -569,12 +593,17 @@ Predict_Maps <- function(
       }
 
       if (is.numeric(Fix_Rivers)) {
+
         # If `Fix_Rivers` is numeric value, check if it is within the range of
         # the observed river lengths
         RiversRange <- terra::global(R_Rivers, fun = range, na.rm = TRUE) %>%
           unlist() %>%
           as.vector()
-        if (!dplyr::between(Fix_Rivers, RiversRange[1], RiversRange[2])) {
+
+        InvalidVal <- isFALSE(
+          dplyr::between(Fix_Rivers, RiversRange[1], RiversRange[2]))
+
+        if (InvalidVal) {
           stop(
             paste0(
               "`Fix_Rivers` value (", Fix_Rivers, ") is out of the range of ",
@@ -582,7 +611,12 @@ Predict_Maps <- function(
               paste0(round(RiversRange, 2), collapse = " to ")),
             call. = FALSE)
         }
+
+        # Fix value
+        RiversVal <- Fix_Rivers
+
       } else {
+
         # If `Fix_Rivers` is character, check if it is one of the valid values:
         # median, mean, max, and q90
         Fix_Rivers <- stringr::str_to_lower(Fix_Rivers)
@@ -594,17 +628,8 @@ Predict_Maps <- function(
               "or 'q90'. The current value is: ", Fix_Rivers),
             call. = FALSE)
         }
-      }
 
-      # Fix at single value
-
-      if (is.numeric(Fix_Rivers)) {
-
-        # Fix at provided value
-        RiversVal <- Fix_Rivers
-
-      } else {
-
+        # Fix value
         RiversVal <- dplyr::case_when(
 
           # Fix at 90% quantile
@@ -647,13 +672,11 @@ Predict_Maps <- function(
 
       # Set a minimum value for `RiversLog` variable to `RiversVal`. Using upper
       # = Inf keeps RiversLog values > RiversVal as they are.
-      R_Rivers <- terra::clamp(x = R_Rivers, lower = RiversVal, upper = Inf)
+      R_Rivers <- terra::clamp(
+        x = R_Rivers, lower = RiversVal, upper = Inf) %>%
+        stats::setNames("RiversLog")
 
-    } else {
-
-      IASDT.R::CatTime(
-        "River length predictor is not fixed at a single value",
-        Level = 2, Time = FALSE)
+      rm(RiversVal, envir = environment())
 
     }
 
@@ -682,7 +705,7 @@ Predict_Maps <- function(
 
   IASDT.R::CatTime("Predict latent factor at new locations")
 
-  Path_Test_LF <- file.path(Path_Prediction1, "Test_LF.qs2")
+  Path_Test_LF <- IASDT.R::Path(Path_Prediction1, "Test_LF.qs2")
 
   if (!file.exists(Path_Test_LF) && Pred_NewSites) {
 
@@ -818,15 +841,15 @@ Predict_Maps <- function(
       }
     }
 
-    Path_Prediction_sf <- file.path(
+    Path_Prediction_sf <- IASDT.R::Path(
       Path_Prediction, paste0("Prediction_", Option_Name, "_sf.qs2"))
-    Path_Prediction_R <- file.path(
+    Path_Prediction_R <- IASDT.R::Path(
       Path_Prediction, paste0("Prediction_", Option_Name, "_R.qs2"))
-    Path_Prediction_summary <- file.path(
+    Path_Prediction_summary <- IASDT.R::Path(
       Path_Prediction, paste0("Prediction_", Option_Name, "_Summary.RData"))
 
     # Path for saving tif files of the current option
-    Path_Prediction_tif <- file.path(Path_Prediction, Option_Name)
+    Path_Prediction_tif <- IASDT.R::Path(Path_Prediction, Option_Name)
     fs::dir_create(Path_Prediction_tif)
     invisible(gc())
 
@@ -903,7 +926,7 @@ Predict_Maps <- function(
         # Predictions at training sites ----
         IASDT.R::CatTime("Predictions at training sites", Level = 1)
 
-        Path_Current_Train <- file.path(
+        Path_Current_Train <- IASDT.R::Path(
           Path_Prediction, paste0("Prediction_", Option_Name, "_Train.qs2"))
 
         if (file.exists(Path_Current_Train)) {
@@ -935,7 +958,7 @@ Predict_Maps <- function(
 
           IASDT.R::CatTime("Predictions at new sites", Level = 1)
 
-          Path_Current_Test <- file.path(
+          Path_Current_Test <- IASDT.R::Path(
             Path_Prediction, paste0("Prediction_", Option_Name, "_Test.qs2"))
 
           if (file.exists(Path_Current_Test)) {
@@ -1067,7 +1090,8 @@ Predict_Maps <- function(
             .default = NULL),
           ias_id = stringr::str_remove(
             layer_name, "_mean$|_sd$|_cov$|_anomaly"),
-          tif_path = file.path(Path_Prediction_tif, paste0(layer_name, ".tif")))
+          tif_path = IASDT.R::Path(
+            Path_Prediction_tif, paste0(layer_name, ".tif")))
 
       # Save as tif
       IASDT.R::CatTime("Save as tif", Level = 1)
@@ -1200,7 +1224,7 @@ Predict_Maps <- function(
     tidyr::unnest("Prediction2") %>%
     dplyr::mutate(
       climate_model = "Ensemble",
-      Dir_Ensemble = file.path(
+      Dir_Ensemble = IASDT.R::Path(
         dirname(dirname(tif_path_mean)),
         paste0(
           stringr::str_replace(time_period, "-", "_"), "_", climate_scenario,
@@ -1208,11 +1232,11 @@ Predict_Maps <- function(
     dplyr::group_by(dplyr::across(-tif_path_mean)) %>%
     dplyr::summarise(tifs = list(tif_path_mean), .groups = "drop") %>%
     dplyr::mutate(
-      tif_path_mean = file.path(Dir_Ensemble, paste0(ias_id, "_mean.tif")),
-      tif_path_anomaly = file.path(
+      tif_path_mean = IASDT.R::Path(Dir_Ensemble, paste0(ias_id, "_mean.tif")),
+      tif_path_anomaly = IASDT.R::Path(
         Dir_Ensemble, paste0(ias_id, "_anomaly.tif")),
-      tif_path_sd = file.path(Dir_Ensemble, paste0(ias_id, "_sd.tif")),
-      tif_path_cov = file.path(Dir_Ensemble, paste0(ias_id, "_cov.tif")))
+      tif_path_sd = IASDT.R::Path(Dir_Ensemble, paste0(ias_id, "_sd.tif")),
+      tif_path_cov = IASDT.R::Path(Dir_Ensemble, paste0(ias_id, "_cov.tif")))
 
   # --------------------------------------------------------- #
 
@@ -1306,7 +1330,7 @@ Predict_Maps <- function(
 
   Prediction_Ensemble_R <- Prediction_Ensemble %>%
     dplyr::mutate(
-      Ensemble_File = file.path(
+      Ensemble_File = IASDT.R::Path(
         dplyr::if_else(
           Pred_Clamp, Path_Prediction_Clamp, Path_Prediction_NoClamp),
         paste0(
@@ -1341,7 +1365,7 @@ Predict_Maps <- function(
   Prediction_Ensemble_Summary <- Prediction_Ensemble %>%
     dplyr::select(-Ensemble_Maps) %>%
     dplyr::mutate(
-      Ensemble_File = file.path(
+      Ensemble_File = IASDT.R::Path(
         dplyr::if_else(
           Pred_Clamp, Path_Prediction_Clamp, Path_Prediction_NoClamp),
         paste0(
@@ -1406,7 +1430,7 @@ Predict_Maps <- function(
   Prediction_Summary_Shiny <- Prediction_Summary %>%
     dplyr::pull(File_Pred_summary) %>%
     basename() %>%
-    file.path(dirname(Path_Summary_RData_Shiny), .) %>%
+    IASDT.R::Path(dirname(Path_Summary_RData_Shiny), .) %>%
     purrr::map(IASDT.R::LoadAs) %>%
     dplyr::bind_rows()
 

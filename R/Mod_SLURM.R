@@ -2,48 +2,51 @@
 # Mod_SLURM ----
 ## |------------------------------------------------------------------------| #
 
-#' Prepare SLURM files for Hmsc-HPC model fitting
+#' Prepare SLURM scripts for Hmsc-HPC model fitting
 #'
-#' This function prepares and writes SLURM file(s) for submitting model fitting
-#' jobs on an HPC environment. It dynamically generates bash scripts based on
-#' the provided parameters, which are then used to submit jobs to the SLURM
-#' workload manager.
-#' @param ModelDir String. Path to the model files (without trailing slash).
-#' @param JobName String. The name of the submitted job(s).
-#' @param CatJobInfo Logical. Add bash lines to print information on the
-#'   submitted job. Default: `TRUE`.
-#' @param ntasks Integer. The value for the `#SBATCH --ntasks=` SLURM argument.
-#'   Default: 1.
-#' @param CpusPerTask Integer. The value for the `#SBATCH --cpus-per-task=`
-#'   SLURM argument. Default: 1.
-#' @param GpusPerNode Integer. The value for the `#SBATCH --gpus-per-node=`
-#'   SLURM argument. Default: 1.
-#' @param MemPerCpu String. Memory per CPU allocation for the SLURM job.
-#'   Example: `32G` for 32 gigabytes. Defaults to `NULL`. If not provided, the
-#'   function will throw an error.
-#' @param Time String. Duration for which the job should run. Example:
-#'   `01:00:00` for one hour. If not provided, the function will throw an error.
-#' @param Partition String. The name of the partition. Default: `small-g` for
-#'   running the array jobs on the GPU.
-#' @param EnvFile String. Path to read the environment variables. Default value:
-#'   `.env`.
-#' @param FromHPC Logical. Indicates if the operation is being performed from an
-#'   HPC environment. This adjusts file paths accordingly. Default: `TRUE`.
-#' @param Path_Hmsc String. Path for the Hmsc-HPC.
-#' @param Command_Prefix String. Prefix for the bash commands to be executed.
-#'   Default: `Commands2Fit`.
-#' @param SLURM_Prefix String. Prefix for the exported SLURM file.
-#' @param Path_SLURM_Out String indicating the directory where the SLURM file(s)
-#'   will be saved. Defaults to `NULL`, which means to identify the path from
-#'   `ModelDir`.
+#' The `Mod_SLURM` function generates SLURM job submission scripts for fitting
+#' Hmsc-HPC models in an HPC environment. Additionally, `Mod_SLURM_Refit`
+#' creates SLURM scripts for refitting models that failed or were not previously
+#' fitted.
+#'
+#' @param ModelDir Character. Path to the directory containing the models.
+#' @param JobName Character. Name of the submitted job(s).
+#' @param CatJobInfo Logical. If `TRUE`, additional bash commands are included
+#'   to print job-related information. Default: `TRUE`.
+#' @param ntasks Integer. Number of tasks to allocate for the job (`#SBATCH
+#'   --ntasks`). Default: 1.
+#' @param CpusPerTask Integer. Number of CPU cores allocated per task (`#SBATCH
+#'   --cpus-per-task`). Default: 1.
+#' @param GpusPerNode Integer. Number of GPUs requested per node (`#SBATCH
+#'   --gpus-per-node`). Default: 1.
+#' @param MemPerCpu Character. Memory allocation per CPU core. Example: "32G"
+#'   for 32 gigabytes. Required — if not provided, the function throws an error.
+#' @param Time Character. Maximum allowed runtime for the job. Example:
+#'   "01:00:00" for one hour. Required — if not provided, the function throws an
+#'   error.
+#' @param Partition Character. Name of the SLURM partition to submit the job to.
+#'   Default: "small-g", for running the array jobs on the GPU.
+#' @param EnvFile Character. Path to the environment file containing paths to
+#'   data sources. Defaults to `.env`.
+#' @param FromHPC Logical. Whether the processing is being done on an
+#'   High-Performance Computing (HPC) environment, to adjust file paths
+#'   accordingly. Default: `TRUE`.
+#' @param Path_Hmsc Character. Path to the Hmsc-HPC installation.
+#' @param Command_Prefix Character.Prefix for the bash commands used in job
+#'   execution. Default: "`Commands2Fit`".
+#' @param SLURM_Prefix Character. Prefix for the generated SLURM script
+#'   filenames.
+#' @param Path_SLURM_Out Character. Directory where SLURM script(s) will be
+#'   saved. If `NULL` (default), the function derives the path from `ModelDir`.
+#' @param Refit_Prefix Character. Prefix for files containing commands to refit
+#'   failed or incomplete models.
+#' @inheritParams Mod_inputs
 #' @name Mod_SLURM
+#' @rdname Mod_SLURM
+#' @order 1
 #' @author Ahmed El-Gabbas
-#' @return The function does not return any value but writes SLURM script files
-#'   to the disk.
-#' @details The function reads the following environment variables:
-#'    - **`LUMI_Account_GPU`** for the BioDT LUMI project number.
-#'    - **`DP_R_Path_GPU_Check`** for the path of the python for reporting if
-#'   the GPU was used in the running SLURM job.
+#' @return This function does not return a value. Instead, it generates and
+#'   writes SLURM script files to disk for model fitting and refitting.
 #' @export
 
 Mod_SLURM <- function(
@@ -103,6 +106,10 @@ Mod_SLURM <- function(
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
+  if (!fs::dir_exists(ModelDir)) {
+    stop(paste("Model directory does not exist:", ModelDir), call. = FALSE)
+  }
+
   ListCommands <- list.files(
     ModelDir, pattern = Command_Prefix, full.names = TRUE)
   NCommandFiles <- length(ListCommands)
@@ -112,7 +119,7 @@ Mod_SLURM <- function(
 
   if (is.null(Path_SLURM_Out)) {
     # This folder was created in the Mod_Prep4HPC function
-    Path_SLURM_Out <- file.path(ModelDir, "Model_Fitting_HPC", "JobsLog")
+    Path_SLURM_Out <- IASDT.R::Path(ModelDir, "Model_Fitting_HPC", "JobsLog")
   }
 
   purrr::walk(
@@ -133,7 +140,7 @@ Mod_SLURM <- function(
 
       # This is better than using sink to have a platform independent file
       # (here, to maintain a linux-like new line ending)
-      f <- file(file.path(ModelDir, OutFile), open = "wb")
+      f <- file(IASDT.R::Path(ModelDir, OutFile), open = "wb")
       on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
 
       # a wrapper function of cat with new line separator
@@ -152,9 +159,9 @@ Mod_SLURM <- function(
       cat2(paste0("#SBATCH --job-name=", JobName0))
       cat2(paste0("#SBATCH --ntasks=", ntasks))
       cat2(paste0(
-        "#SBATCH --output=", file.path(Path_SLURM_Out, "%x-%A-%a.out")))
+        "#SBATCH --output=", IASDT.R::Path(Path_SLURM_Out, "%x-%A-%a.out")))
       cat2(paste0(
-        "#SBATCH --error=", file.path(Path_SLURM_Out, "%x-%A-%a.out")))
+        "#SBATCH --error=", IASDT.R::Path(Path_SLURM_Out, "%x-%A-%a.out")))
       cat2(paste0("#SBATCH --account=", ProjNum))
       cat2(paste0("#SBATCH --cpus-per-task=", CpusPerTask))
       cat2(paste0("#SBATCH --mem-per-cpu=", MemPerCpu))
@@ -200,7 +207,7 @@ Mod_SLURM <- function(
       cat2("# -----------------------------------------------------------")
       cat2("# Loading Hmsc-HPC")
       cat2("# -----------------------------------------------------------")
-      cat2(paste0("source ", file.path(Path_Hmsc, "setup-env.sh"), "\n"))
+      cat2(paste0("source ", IASDT.R::Path(Path_Hmsc, "setup-env.sh"), "\n"))
 
       cat2("# -----------------------------------------------------------")
       cat2("# Check GPU")
@@ -238,7 +245,7 @@ Mod_SLURM <- function(
       close(f)
 
       # Print the command to submit the job
-      cat(paste0("\t sbatch ", file.path(ModelDir, OutFile), "\n"))
+      cat(paste0("\t sbatch ", IASDT.R::Path(ModelDir, OutFile), "\n"))
   })
 
   return(invisible(NULL))

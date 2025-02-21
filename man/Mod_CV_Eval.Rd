@@ -4,7 +4,7 @@
 \alias{Mod_CV_Eval}
 \title{Evaluate cross-validated Hmsc Model}
 \usage{
-Mod_CV_Eval(Path_CV = NULL, predictEtaMean = TRUE, NCores = 8)
+Mod_CV_Eval(Path_CV = NULL, predictEtaMean = TRUE, NCores = 8L)
 }
 \arguments{
 \item{Path_CV}{Character. The directory path where cross-validation models
@@ -15,8 +15,8 @@ mean values of posterior predictive distribution for random effects
 corresponding for the new units. See \code{Hmsc:::predict.Hmsc} for more
 details.}
 
-\item{NCores}{Integer specifying the number of parallel cores for
-parallelization. Default: 8 cores.}
+\item{NCores}{Integer. Number of CPU cores to use for parallel processing.
+Default: 8.}
 }
 \description{
 This function evaluates Hmsc models trained via cross-validation using. It

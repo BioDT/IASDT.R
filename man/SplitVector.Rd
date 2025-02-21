@@ -9,11 +9,11 @@ SplitVector(Vector = NULL, NSplit = NULL, Prefix = "Chunk")
 \arguments{
 \item{Vector}{A numeric or character vector that you want to split.}
 
-\item{NSplit}{An integer specifying the number of chunks to split the vector
-into. It must not exceed the length of the vector.}
+\item{NSplit}{Integer. Number of chunks to split the vector into. It
+must not exceed the length of the vector.}
 
-\item{Prefix}{A string value that serves as the prefix for the names of the
-chunks in the returned list. Defaults to "Chunk".}
+\item{Prefix}{Character. Prefix for the names of the chunks in the returned
+list. Defaults to \code{"Chunk"}.}
 }
 \value{
 A list of vectors, where each vector represents a chunk of the

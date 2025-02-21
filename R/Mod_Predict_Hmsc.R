@@ -5,63 +5,62 @@
 # Predict_Hmsc ----
 ## |------------------------------------------------------------------------| #
 
-#' Calculates predicted values from a fitted Hmsc model.
+#' Calculates predicted values from a fitted Hmsc model
 #'
 #' This function modifies the `Hmsc:::predict.Hmsc` function.
 #'
-#' @param Path_Model character string specifying a file name where the model
-#'   object is saved.
-#' @param XData a dataframe specifying the unpreprocessed covariates for the
+#' @param Path_Model Character. Path to the saved model object.
+#' @param XData `data.frame`. The unpreprocessed covariates for the
 #'   predictions to be made. Works only if the `XFormula` argument was specified
 #'   in the [Hmsc::Hmsc] model constructor call. Requirements are similar to
 #'   those in the `Hmsc` model constructor.
-#' @param X a matrix specifying the covariates for the predictions to be made.
+#' @param X `matrix`. Covariates for the predictions to be made.
 #'   Only one of `XData` and `X` arguments may be provided.
-#' @param XRRRData a dataframe of covariates for reduced-rank regression.
-#' @param XRRR a matrix of covariates for reduced-rank regression.
-#' @param Gradient an object returned by [Hmsc::constructGradient]. Providing
+#' @param XRRRData `data.frame`. Covariates for reduced-rank regression.
+#' @param XRRR `matrix`. Covariates for reduced-rank regression.
+#' @param Gradient An object returned by [Hmsc::constructGradient]. Providing
 #'   `Gradient` is an alternative for providing `XData`, `studyDesign` and
 #'   `ranLevels`. Cannot be used together with `Yc`.
-#' @param Yc a matrix of the outcomes that are assumed to be known for
-#'   conditional predictions. Cannot be used together with `Gradient`.
-#' @param mcmcStep the number of extra mcmc steps used for updating the random
-#'   effects
-#' @param expected boolean flag indicating whether to return the location
-#'   parameter of the observation models or sample the values from those.
-#' @param NCores Integer specifying the number of cores to use for parallel
-#'   processing. Defaults to 8.
-#' @param Temp_Cleanup logical, indicating whether to clean up temporary files.
+#' @param Yc `matrix`. Outcomes that are assumed to be known for conditional
+#'   predictions. Cannot be used together with `Gradient`.
+#' @param mcmcStep Integer. Number of extra `mcmc` steps used for updating the
+#'   random effects. Defaults to 1L.
+#' @param expected Logical. Whether to return the location parameter
+#'   of the observation models or sample the values from those. Defaults to
+#'   `TRUE`.
+#' @param NCores Integer. Number of CPU cores to use for parallel processing.
+#'   Default: 8.
+#' @param Temp_Cleanup Logical. Whether to clean up temporary files.
 #'   Defaults to `TRUE`.
-#' @param Pred_Dir a character string specifying the directory where the
-#'   predictions will be saved. Defaults to `NULL`, which saves model
-#'   predictions to "Model_Prediction" folder of the current working directory.
-#' @param Evaluate a logical flag indicating whether to evaluate the model
-#'   predictions. Defaults to `FALSE`.
-#' @param Eval_Name a character string specifying the name of the evaluation
-#'   results. If `NULL`, the default name is used (`Eval_[Model_Name].qs2`).
-#' @param Eval_Dir a character string specifying the directory where the
-#'   evaluation results will be saved. Defaults to `Evaluation`.
-#' @param RC a character string specifying the type of predictions to be made.
-#'   If `NULL` (default), predictions are made for the latent factors. If `c`,
-#'   predictions are made for response curves at mean coordinates. If `i`,
-#'   predictions are made for response curves at infinite coordinates.
-#' @param Pred_PA a matrix of presence-absence data for evaluation. If `NULL`
+#' @param Pred_Dir Character. Directory path indicating where the predictions
+#'   will be saved. Defaults to `NULL`, which saves model predictions to
+#'   "`Model_Prediction`" folder of the current working directory.
+#' @param Evaluate Logical. Whether to evaluate the model predictions.
+#'   Defaults to `FALSE`.
+#' @param Eval_Name Character. Name of the evaluation results. If `NULL`, the
+#'   default name is used (`Eval_[Model_Name].qs2`).
+#' @param Eval_Dir Character. Directory where the evaluation results will be
+#'   saved. Defaults to `Evaluation`.
+#' @param RC Character. Type of predictions to be made. If `NULL` (default),
+#'   predictions are made for the latent factors. If `c`, predictions are made
+#'   for response curves at mean coordinates. If `i`, predictions are made for
+#'   response curves at infinite coordinates.
+#' @param Pred_PA `matrix`. Presence-absence data for evaluation. If `NULL`
 #'   (default), the presence-absence data from the model object is used. This
 #'   argument is used only when `Evaluate` is `TRUE`.
-#' @param Pred_XY a matrix of coordinates to be added to predicted values. If
+#' @param Pred_XY `matrix`. Coordinates to be added to predicted values. If
 #'   `NULL` (default), the coordinates from the model object is used.
-#' @param LF_InputFile a character string specifying the file name where the
-#'   latent factor predictions are saved. If `NULL` (default), latent factor
-#'   predictions will be made. If specified, the latent factor predictions are
-#'   read from the file. This allows to predicting the latent factors for new
-#'   sites only once.
-#' @param LF_Only a logical flag indicating whether to return the latent factor
+#' @param LF_InputFile Character. File name where the latent factor predictions
+#'   are saved. If `NULL` (default), latent factor predictions will be computed.
+#'   If specified, latent factor predictions are read from this path. This
+#'   allows to predicting the latent factors for new sites only once.
+#' @param LF_Only Logical. Whether to return the latent factor
 #'   predictions only. Defaults to `FALSE`. This helps in predicting to new
 #'   sites, allowing to predicting the latent factors only once, then the output
 #'   can be loaded in other predictions when needed.
-#' @param Verbose Logical. If TRUE, detailed output is printed. Default is
-#'   `FALSE`.
-#' @inheritParams Predict_LF
+#' @param Verbose Logical. Whether to print a message upon
+#'   successful saving of files. Defaults to `FALSE`.
+#' @inheritParams Mod_Predict_LF
 #' @name Predict_Hmsc
 #' @export
 
@@ -116,7 +115,7 @@ Predict_Hmsc <- function(
   }
 
   if (is.null(Pred_Dir)) {
-    Pred_Dir <- file.path(dirname(dirname(Path_Model)), "Model_Prediction")
+    Pred_Dir <- IASDT.R::Path(dirname(dirname(Path_Model)), "Model_Prediction")
   }
 
   if (is.null(RC) || RC == "c") {
@@ -284,7 +283,7 @@ Predict_Hmsc <- function(
   Mod_dfPi <- Model$dfPi
 
   # Save smaller version of the model object for later use
-  Model_File_small <- file.path(Temp_Dir, "Model_small.qs2")
+  Model_File_small <- IASDT.R::Path(Temp_Dir, "Model_small.qs2")
   if (!file.exists(Model_File_small)) {
     IASDT.R::CatTime(
       "Save smaller version of the model object to disk",
@@ -301,7 +300,7 @@ Predict_Hmsc <- function(
   predPostEta <- vector("list", Mod_nr)
   PiNew <- matrix(NA, nrow(dfPiNew), Mod_nr)
 
-  # Whether to use `Predict_LF` or read its results from file
+  # Whether to use `Mod_Predict_LF` or read its results from file
   if (!is.null(Mod_nr)) {
     if (is.null(LF_InputFile) || length(LF_InputFile) != Mod_nr) {
       CalcLF <- TRUE
@@ -310,7 +309,7 @@ Predict_Hmsc <- function(
     }
   }
 
-  # Do not use `Predict_LF` when predicting values for response curves when
+  # Do not use `Mod_Predict_LF` when predicting values for response curves when
   # using coordinates = "i" in constructGradient
   if (!is.null(RC)) {
     if (RC == "i") {
@@ -339,9 +338,9 @@ Predict_Hmsc <- function(
 
       postAlpha <- lapply(post, function(c) c$Alpha[[r]])
 
-      # Save postEta to file and load it from Predict_LF. This helps to avoid
-      # the unnecessary copying of the postEta object to all cores
-      postEta_file <- file.path(
+      # Save postEta to file and load it from Mod_Predict_LF. This helps to
+      # avoid the unnecessary copying of the postEta object to all cores
+      postEta_file <- IASDT.R::Path(
         Temp_Dir, paste0(Model_Name, "_r", r, "_postEta.qs2"))
 
       if (isFALSE(IASDT.R::CheckData(postEta_file, warning = FALSE))) {
@@ -354,7 +353,7 @@ Predict_Hmsc <- function(
 
       # Save post to file and load it later
       if (r == Mod_nr) {
-        post_file <- file.path(Temp_Dir, paste0(Model_Name, "_post.qs2"))
+        post_file <- IASDT.R::Path(Temp_Dir, paste0(Model_Name, "_post.qs2"))
 
         if (isFALSE(IASDT.R::CheckData(post_file, warning = FALSE))) {
           # free some memory
@@ -370,12 +369,12 @@ Predict_Hmsc <- function(
       }
 
       if (r == 1) {
-        IASDT.R::CatTime("LF prediction using `Predict_LF`", Level = 1)
+        IASDT.R::CatTime("LF prediction using `Mod_Predict_LF`", Level = 1)
       }
 
-      predPostEta[[r]] <- IASDT.R::Predict_LF(
-        unitsPred = levels(dfPiNew[, r]),
-        modelunits = levels(Mod_dfPi[, r]),
+      predPostEta[[r]] <- IASDT.R::Mod_Predict_LF(
+        Units_pred = levels(dfPiNew[, r]),
+        Units_model = levels(Mod_dfPi[, r]),
         postEta = postEta_file, postAlpha = postAlpha, LF_rL = rL[[r]],
         LF_NCores = LF_NCores, LF_Temp_Cleanup = LF_Temp_Cleanup,
         LF_OutFile = LF_OutFile, LF_Return = LF_Return, LF_Check = LF_Check,
@@ -464,7 +463,7 @@ Predict_Hmsc <- function(
     .f = ~ {
       IDs <- which(ChunkIDs == .x)
       Ch <- list(ppEta = ppEta[IDs], post = post[IDs])
-      ChunkFile <- file.path(
+      ChunkFile <- IASDT.R::Path(
         Temp_Dir, paste0(Model_Name, "_preds_ch", .x, ".qs2"))
       IASDT.R::SaveAs(InObj = Ch, OutPath = ChunkFile)
       return(ChunkFile)
@@ -533,7 +532,7 @@ Predict_Hmsc <- function(
       ChunkSR <- simplify2array(lapply(X = PredChunk, FUN = rowSums)) %>%
         float::fl()
       dimnames(ChunkSR) <- NULL
-      ChunkSR_File <- file.path(
+      ChunkSR_File <- IASDT.R::Path(
         Temp_Dir, paste0("Pred_", Model_Name, "_ch", Chunk, "_SR.qs2"))
       IASDT.R::SaveAs(InObj = ChunkSR, OutPath = ChunkSR_File)
 
@@ -549,7 +548,7 @@ Predict_Hmsc <- function(
             float::fl()
           dimnames(SpD) <- NULL
 
-          ChunkSp_File <- file.path(
+          ChunkSp_File <- IASDT.R::Path(
             Temp_Dir,
             paste0("Pred_", Model_Name, "_ch", Chunk, "_taxon", Sp, ".qs2"))
 
@@ -636,7 +635,7 @@ Predict_Hmsc <- function(
             paste0(IAS_ID, "_sd"), paste0(IAS_ID, "_cov"))) %>%
         sf::st_as_sf(coords = c("x", "y"), crs = 3035, remove = FALSE)
 
-      PredSummaryFile <- file.path(
+      PredSummaryFile <- IASDT.R::Path(
         Pred_Dir, paste0("Pred_", Model_Name, "_", Sp2, ".qs2"))
 
       IASDT.R::SaveAs(InObj = PredSummary, OutPath = PredSummaryFile)
@@ -704,7 +703,7 @@ Predict_Hmsc <- function(
       x, y, geometry, SR_mean, SR_sd, SR_cov, tidyselect::everything()) %>%
     dplyr::mutate(Model_Name = Model_Name, .before = "SR_mean")
 
-  Pred_File <- file.path(
+  Pred_File <- IASDT.R::Path(
     Pred_Dir,
     paste0(
       "Prediction_",
@@ -720,12 +719,12 @@ Predict_Hmsc <- function(
 
   if (Evaluate) {
     if (is.null(Eval_Name)) {
-      Eval_Path <- file.path(
+      Eval_Path <- IASDT.R::Path(
         Eval_Dir,
         paste0(
           "Eval_", stringr::str_remove(Model_Name, "_Train|_Current"), ".qs2"))
     } else {
-      Eval_Path <- file.path(
+      Eval_Path <- IASDT.R::Path(
         Eval_Dir,
         paste0(
           "Eval_", stringr::str_remove(Model_Name, "_Train|_Current"),
@@ -738,7 +737,7 @@ Predict_Hmsc <- function(
     IASDT.R::CatTime(
       paste0(
         "Evaluation results were saved to `",
-        file.path(Eval_Dir, "Eval_DT.qs2"), "`"),
+        IASDT.R::Path(Eval_Dir, "Eval_DT.qs2"), "`"),
       Level = 1)
   } else {
     Eval_Path <- NULL

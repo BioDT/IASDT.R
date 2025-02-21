@@ -9,8 +9,8 @@ List2RData(List, Prefix = "", Dir = getwd(), Overwrite = FALSE)
 \arguments{
 \item{List}{A named list object to be split into separate \code{.RData} files.}
 
-\item{Prefix}{A character string to prefix to each filename. If empty
-(default), no prefix is added.}
+\item{Prefix}{Character. Prefix to each filename. If empty (default), no
+prefix is added.}
 
 \item{Dir}{The directory where the \code{.RData} files will be saved. Defaults to
 the current working directory.}
@@ -37,7 +37,7 @@ iris2 <- iris \%>\%
 
 str(iris2, 1)
 
-(TMP_Folder <- file.path(tempdir(), stringi::stri_rand_strings(1, 5)))
+(TMP_Folder <- IASDT.R::Path(tempdir(), stringi::stri_rand_strings(1, 5)))
 list.files(TMP_Folder)
 
 List2RData(List = iris2, Dir = TMP_Folder)

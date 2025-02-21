@@ -2,152 +2,189 @@
 # Mod_Prep4HPC ----
 ## |------------------------------------------------------------------------| #
 
-#' Prepare initial models in R for model fitting with Hmsc-HPC
+#' Prepare initial models for model fitting with Hmsc-HPC
 #'
-#' This function prepares initial models in R use with Hmsc-HPC. It includes
-#' data preparation, define spatial block cross-validation folds, initializing
-#' models, generating Gaussian Predictive Process (GPP) knots, and creating
-#' commands for HPC execution. It supports parallel processing, options to
-#' include/not include phylogenetic tree data. The models will be fitted using
-#' Gaussian Predictive Process (GPP; see [Tikhonov et
-#' al.](https://doi.org/10.1002/ecy.2929) for more details) via the
-#' [Hmsc-HPC](https://doi.org/10.1371/journal.pcbi.1011914) extension.
-#'
-#' @param Path_Model String (without trailing slash) specifying the path where
-#'   all output, including models to be fitted, will be saved.
-#' @param GPP Logical indicating whether to fit spatial random effect using
-#'   Gaussian Predictive Process. Defaults to `TRUE`. If `FALSE`, non-spatial
-#'   models will be fitted.
-#' @param GPP_Dists Integer specifying the distance in *kilometers* used both
-#'   for the spacing between knots and the minimum allowable distance between a
-#'   knot and the nearest sampling point. The GPP knots are prepared by the
-#'   [IASDT.R::PrepKnots] function. The same value will be used for the
-#'   `knotDist` and `minKnotDist`	arguments of the [Hmsc::constructKnots]
-#'   function.
-#' @param GPP_Save Logical indicating whether to save the resulted knots as
-#'   `RData` file. Default: `TRUE`.
-#' @param GPP_Plot Logical indicating whether to plot the coordinates of the
-#'   sampling units and the knots in a pdf file. Default: `TRUE`.
-#' @param BioVars Character vector. Specifies variables from CHELSA to be used
-#'   in the model. This can include bioclimatic variables (bio1-19) as well as
-#'   other predictors such as npp (Net Primary Productivity). Defaults to 6
-#'   ecologically meaningful and less correlated variables: `c("bio3", "bio4",
-#'   "bio11", "bio18", "bio19", "npp")`.
+#' The **`Mod_Prep4HPC`** function prepares input data and initializes models
+#' for fitting with [Hmsc-HPC](https://doi.org/10.1371/journal.pcbi.1011914). It
+#' performs multiple tasks, including data preparation, defining spatial block
+#' cross-validation folds, generating Gaussian Predictive Process (GPP) knots
+#' ([Tikhonov et al.](https://doi.org/10.1002/ecy.2929)), initializing models,
+#' and creating HPC execution commands. The function supports parallel
+#' processing and offers the option to include or exclude phylogenetic tree
+#' data.<br/><br/> The internal **`Mod_PrepData`** function is used to prepare
+#' habitat-specific data for Hmsc models. This function processes environmental
+#' and species presence data, reads environment variables from a file, verifies
+#' paths, loads and filters species data based on habitat type and minimum
+#' presence grid cells per species, and merges various environmental layers
+#' (e.g., CHELSA Bioclimatic variables, habitat coverage, road and railway
+#' intensity, sampling efforts) into a single dataset. Processed data is saved
+#' to disk as an `*.RData` file.
+#' @param Path_Model Character. Directory path where all output files, including
+#'   the models to be fitted, will be saved.
+#' @param GPP Logical. Whether to fit spatial random effect using Gaussian
+#'   Predictive Process. Defaults to `TRUE`. If `FALSE`, non-spatial models will
+#'   be fitted.
+#' @param GPP_Dists Integer. Spacing (in kilometers) between GPP knots, as well
+#'   as the minimum allowable distance between a knot and the nearest sampling
+#'   point. The knots are generated using the [Mod_PrepKnots] function, and this
+#'   value is used for both `knotDist` and `minKnotDist` in
+#'   [Hmsc::constructKnots].
+#' @param GPP_Save Logical. Whether `RData` file. Default: `TRUE`.
+#' @param GPP_Plot Logical. Whether to plot the coordinates of the sampling
+#'   units and the knots in a pdf file. Default: `TRUE`.
+#' @param BioVars Character vector. Variables from CHELSA (bioclimatic variables
+#'   (bio1–bio19) and additional predictors (e.g., Net Primary Productivity,
+#'   npp)) to be used in the model. By default, six ecologically relevant and
+#'   minimally correlated variables are selected: c("bio3", "bio4", "bio11",
+#'   "bio18", "bio19", "npp").
 #' @param QuadraticVars Character vector for variables for which quadratic terms
 #'   are used. Defaults to all variables of the `BioVars`. If `QuadraticVars` is
 #'   `NULL`, no quadratic terms will be used.
-#' @param EffortsAsPredictor Logical indicating whether to include the
-#'   (log<sub>10</sub>) sampling efforts as predictor to the model. Default:
+#' @param EffortsAsPredictor Logical. Whether to include the (log<sub>10</sub>)
+#'   sampling efforts as predictor to the model. Default: `TRUE`.
+#' @param RoadRailAsPredictor Logical. Whether to include the (log<sub>10</sub>)
+#'   sum of road and railway intensity as predictor to the model. Default:
 #'   `TRUE`.
-#' @param RoadRailAsPredictor Logical indicating whether to include the
-#'   (log<sub>10</sub>) sum of road and railway intensity as predictor to the
-#'   model. Default: `TRUE`.
-#' @param HabAsPredictor Logical indicating whether to include the
-#'   (log<sub>10</sub>) percentage coverage of respective habitat type per grid
-#'   cell as predictor to the model. Default: `TRUE`. Only valid if `Hab_Abb`
-#'   not equals to `0`.
-#' @param RiversAsPredictor Logical indicating whether to include the total
-#'   length of rivers per grid cell as predictor to the model. Default: `TRUE`.
-#'   See [River_Length] for more details.
-#' @param NspPerGrid Integer. Indicating the minimum number of species per grid
-#'   cell for a grid cell to be include in the analysis. This is calculated
-#'   after filtering grid cells by sampling efforts (`MinEffortsSp`) and
-#'   filtering species by the number of presence grid cells (`PresPerSpecies`).
-#'   If `NspPerGrid` = `0` (default), all grid cells will be used in the models.
-#'   If `NspPerGrid` > 0, only grid cells with >= `NspPerGrid` species presence
-#'   will be considered in the models.
-#' @param PhyloTree,NoPhyloTree Logical parameters indicating whether to fit
-#'   models with (PhyloTree) or without (NoPhyloTree) phylogenetic trees.
-#'   Defaults are `PhyloTree = TRUE` and `NoPhyloTree = FALSE`, meaning only
-#'   models with phylogenetic trees are fitted by default. At least one of
-#'   `PhyloTree` and `NoPhyloTree` should be `TRUE`.
-#' @param OverwriteRDS Logical. Indicating whether to overwrite previously
-#'   exported RDS files for initial models. Default: `TRUE`.
-#' @param NCores Integer specifying the number of parallel cores for
-#'   parallelization. Default: 8 cores.
-#' @param NChains Integer specifying the number of model chains. Default: 4.
-#' @param thin Integer specifying the value(s) for thinning in MCMC sampling. If
-#'   more than one value is provided, a separate model will be fitted at each
-#'   value of thinning.
-#' @param samples Integer specifying the value(s) for the number of MCMC
-#'   samples. If more than one value is provided, a separate model will be
-#'   fitted at each value of number of samples. Defaults to 1000.
-#' @param transientFactor Integer specifying the transient multiplication
-#'   factor. The value of `transient` will equal  the multiplication of
-#'   `transientFactor` and `thin`. Default: 500.
-#' @param verbose Integer indicating the interval at which MCMC sampling
-#'   progress is reported. Default: `200`.
-#' @param SkipFitted Logical indicating whether to skip already fitted models.
-#'   Default: `TRUE`.
-#' @param NumArrayJobs Integer specifying the maximum number of array jobs per
-#'   SLURM script. Default: 210. See [LUMI
+#' @param HabAsPredictor Logical. Whether to include the (log<sub>10</sub>)
+#'   percentage coverage of respective habitat type per grid cell as predictor
+#'   to the model. Default: `TRUE`. Only valid if `Hab_Abb` not equals to `0`.
+#' @param RiversAsPredictor Logical. Whether to include the (log<sub>10</sub>)
+#'   total length of rivers per grid cell as predictor to the model. Default:
+#'   `TRUE`. See [River_Length] for more details.
+#' @param NspPerGrid Integer. Minimum number of species required for a grid cell
+#'   to be included in the analysis. This filtering occurs after applying
+#'   `MinEffortsSp` (sampling effort thresholds), `PresPerSpecies` (minimum
+#'   species presence thresholds), and `ExcludeZeroHabitat` (exclude 0% habitat
+#'   coverage). Default (0): Includes all grid cells. Positive value (>0):
+#'   Includes only grid cells where at least `NspPerGrid` species are present.
+#' @param PhyloTree,NoPhyloTree Logical. Whether to fit models with (PhyloTree)
+#'   or without (NoPhyloTree) phylogenetic trees. Defaults are `PhyloTree =
+#'   TRUE` and `NoPhyloTree = FALSE`, meaning only models with phylogenetic
+#'   trees are fitted by default. At least one of `PhyloTree` and `NoPhyloTree`
+#'   should be `TRUE`.
+#' @param OverwriteRDS Logical. Whether to overwrite previously exported RDS
+#'   files for initial models. Default: `TRUE`.
+#' @param NCores Integer. Number of CPU cores to use for parallel processing.
+#'   Default: 8.
+#' @param NChains Integer. Number of model chains. Default: 4.
+#' @param thin Integer vector. Thinning value(s) in MCMC sampling. If more than one
+#'   value is provided, a separate model will be fitted at each value of
+#'   thinning.
+#' @param samples Integer vector. Value(s) for the number of MCMC samples. If more than
+#'   one value is provided, a separate model will be fitted at each value of
+#'   number of samples. Defaults to 1000.
+#' @param transientFactor Integer. Transient multiplication factor. The value of
+#'   `transient` will equal the multiplication of `transientFactor` and `thin`.
+#'   Default: 500.
+#' @param verbose Integer. Interval at which MCMC sampling progress is reported.
+#'   Default: `200`.
+#' @param SkipFitted Logical. Whether to skip already fitted models. Default:
+#'   `TRUE`.
+#' @param NumArrayJobs Integer. Number of jobs per SLURM script file. In LUMI
+#'   HPC, there is a limit of 210 submitted jobs per user for the `small-g`
+#'   partition. This argument is used to split the jobs into multiple SLURM
+#'   scripts if needed. Default: 210. See [LUMI
 #'   documentation](https://docs.lumi-supercomputer.eu/runjobs/scheduled-jobs/partitions)
 #'   for more details.
-#' @param ModelCountry String or vector of strings specifying the country or
-#'   countries to filter observations by. Default: `NULL`, which means prepare
-#'   data for the whole Europe.
-#' @param PrepSLURM Logical indicating whether to prepare SLURM command files.
-#'   If `TRUE` (default), the SLURM commands will be saved to disk using the
-#'   [IASDT.R::Mod_SLURM] function.
-#' @param MemPerCpu String specifying the memory per CPU for the SLURM job. This
-#'   value will be assigned to the `#SBATCH --mem-per-cpu=` SLURM argument.
-#'   Example: "32G" to request 32 gigabyte. Only effective if `PrepSLURM =
+#' @param ModelCountry Character. Country or countries to filter observations
+#'   by. Default: `NULL`, which means prepare data for the whole Europe.
+#' @param PrepSLURM Logical. Whether to prepare SLURM command files. If `TRUE`
+#'   (default), the SLURM commands will be saved to disk using the
+#'   [Mod_SLURM] function.
+#' @param MemPerCpu Character. Memory per CPU for the SLURM job. This value will
+#'   be assigned to the `#SBATCH --mem-per-cpu=` SLURM argument. Example: "32G"
+#'   to request 32 gigabyte. Only effective if `PrepSLURM = TRUE`.
+#' @param Time Character. Requested time for each job in the SLURM bash arrays.
+#'   Example: "01:00:00" to request an hour. Only effective if `PrepSLURM =
 #'   TRUE`.
-#' @param Time String specifying the requested time for each job in the SLURM
-#'   bash arrays. Example: "01:00:00" to request an hour. Only effective if
-#'   `PrepSLURM = TRUE`.
-#' @param JobName String specifying the name of the submitted job(s) for SLURM.
-#'   If `NULL` (Default), the job name will be prepared based on the folder path
-#'   and the `Hab_Abb` value. Only effective if `PrepSLURM = TRUE`.
-#' @param Path_Hmsc String specifying the path for the Hmsc-HPC. This will be
-#'   provided as the `Path_Hmsc` argument of the [IASDT.R::Mod_SLURM] function.
-#' @param ToJSON Logical indicating whether to convert unfitted models to JSON
-#'   before saving to RDS file. Default: `FALSE`.
-#' @param CheckPython Logical indicating whether to check if the Python
-#'   executable exists. Only valid if FromHPC = `FALSE`.
-#' @param Precision Integer, either of 32 or 64 (default) for the
-#'   precision mode used in `Hmsc-HPC` sampling (`--fp 32` or `--fp 64`
-#'   argument). In `Hmsc-HPC`, the default value is 64. This is still under
-#'   testing.
-#' @param ... Additional parameters provided to the [IASDT.R::Mod_SLURM]
-#'   function.
-#' @name Mod_Prep4HPC
-#' @inheritParams Mod_PrepData
-#' @inheritParams PrepKnots
-#' @inheritParams GetCV
-#' @author Ahmed El-Gabbas
-#' @return The function is used for its side effects of preparing data and
-#'   models for HPC and does not return any value.
-#' @details The function provides options for:
-#' - for which habitat types the models will be fitted
-#' - excluding grid cells with very low sampling efforts (`MinEffortsSp`)
-#' - selection of species based on minimum number of presence-grid
-#'   cells: `PresPerSpecies`.
-#' - optionally model fitting on specified list of countries: (`ModelCountry`)
-#' - whether to exclude grid cells with few species (`NspPerGrid`)
-#' - number of cross-validation folds
-#' - options for whether or not to include phylogenetic information to the model
-#' - different values for knot distance for GPP (`GPP_Dists`)
-#' - which Bioclimatic variables to be uses in the models (`BioVars`)
-#' - whether to include sampling efforts `EffortsAsPredictor`, percentage of
-#'   respective habitat type per grid cell `HabAsPredictor`, and railway and
-#'   road intensity per grid cell `RoadRailAsPredictor`
-#' - Hmsc options (`NChains`, `thin`, `samples`, `transientFactor`,
-#'   and `verbose`)
-#' - prepare SLURM commands (`PrepSLURM`) and some specifications (e.g.
-#'   `NumArrayJobs`, `MemPerCpu`, `Time`, `JobName`)
-#'
-#'   The function reads the following environment variables:
-#'   - **`DP_R_Grid`** (if `FromHPC = TRUE`) or
-#'    **`DP_R_Grid_Local`** (if `FromHPC = FALSE`). The function reads
-#'   the content of the `Grid_10_Land_Crop.RData` file from this path.
-#'   - **`DP_R_TaxaInfo`** or **`DP_R_TaxaInfo_Local`** for the location of the
-#'   `Species_List_ID.txt` file representing species information.
-#'   - **`DP_R_EUBound_sf`** or **`DP_R_EUBound_sf_Local`** for the path of the
-#'   `RData` file containing the country boundaries (`sf` object)
-#'   - **`DP_R_PA`** or **`DP_R_PA_Local`**: The function reads the contents of
-#'   the `Sp_PA_Summary_DF.RData` file from this path
+#' @param JobName Character. Name of the submitted job(s) for SLURM. If `NULL`
+#'   (Default), the job name will be prepared based on the folder path and the
+#'   `Hab_Abb` value. Only effective if `PrepSLURM = TRUE`.
+#' @param Path_Hmsc  Character. Directory path to `Hmsc-HPC` extension
+#'   installation. This will be provided as the `Path_Hmsc` argument of the
+#'   [Mod_SLURM] function.
+#' @param ToJSON Logical. Whether to convert unfitted models to JSON before
+#'   saving to RDS file. Default: `FALSE`.
+#' @param CheckPython Logical. Whether to check if the Python executable exists.
+#'   Only valid if FromHPC = `FALSE`.
+#' @param Precision Integer (either 32 or 64). Defines the floating-point
+#'   precision mode for `Hmsc-HPC` sampling (--fp 32 or --fp 64). The default is
+#'   64, which is the default precision in `Hmsc-HPC`.
+#' @param Hab_Abb Character. Abbreviation for the habitat type (based on
+#'   [SynHab](https://www.preslia.cz/article/pdf?id=11548)) for which to prepare
+#'   data. Valid values are `0`, `1`, `2`, `3`, `4a`, `4b`, `10`, `12a`, `12b`.
+#'   If `Hab_Abb` = `0`, data is prepared irrespective of the habitat type. For
+#'   more details, see [Pysek et
+#'   al.](https://doi.org/10.23855/preslia.2022.447).
+#' @param MinEffortsSp Integer. Minimum number of vascular plant species per
+#'   grid cell (from GBIF data) required for inclusion in the models. This is to
+#'   exclude grid cells with very little sampling efforts. Defaults to `100`.
+#' @param ExcludeCult Logical. Whether to exclude countries with cultivated or
+#'   casual observations per species. Defaults to `TRUE`.
+#' @param ExcludeZeroHabitat Logical. Whether to exclude grid cells with zero
+#'   percentage habitat coverage. Defaults to `TRUE`.
+#' @param PresPerSpecies Integer. The minimum number of presence grid cells for
+#'   a species to be included in the analysis. The number of presence grid cells
+#'   per species is calculated after discarding grid cells with low sampling
+#'   efforts (`MinEffortsSp`) and zero percentage habitat coverage
+#'   `ExcludeZeroHabitat`. Defaults to `80`.
+#' @param CV_NGrids Integer. For `CV_Dist` cross-validation strategy (see
+#'   [Mod_GetCV]), this argument determines the size of the blocks (how many
+#'   grid cells in both directions).
+#' @param CV_NR,CV_NC Integer. Number of rows and columns used in the `CV_Large`
+#'   cross-validation strategy  (see [Mod_GetCV]), in which the study area is
+#'   divided into large blocks given the provided `CV_NR` and `CV_NC` values.
+#'   Both default to 2 which means to split the study area into four large
+#'   blocks at the median latitude and longitude.
+#' @param EnvFile Character. Path to the environment file containing paths to
+#'   data sources. Defaults to `.env`.
+#' @param VerboseProgress Logical. Whether to print a message upon successful
+#'   saving of files. Defaults to `FALSE`.
+#' @param FromHPC Logical. Whether the processing is being done on an
+#'   High-Performance Computing (HPC) environment, to adjust file paths
+#'   accordingly. Default: `TRUE`.
+#' @param ... Additional parameters provided to the [Mod_SLURM] function.
 #' @export
+#' @inheritParams Mod_PrepKnots
+#' @inheritParams Mod_GetCV
+#' @name Mod_inputs
+#' @rdname Mod_inputs
+#' @order 1
+#' @importFrom rlang .data
+#' @author Ahmed El-Gabbas
+#' @details The current models are fitted for 8 habitat types see [Pysek et
+#'   al.](https://doi.org/10.23855/preslia.2022.447):
+#' - **1. Forests** -- closed vegetation dominated by deciduous or evergreen
+#'   trees
+#' - **2. Open forests** -- woodlands with canopy openings created by
+#'   environmental stress or disturbance, including forest edges
+#' - **3. Scrub** -- shrublands maintained by environmental stress (aridity) or
+#'   disturbance
+#' - **4a. Natural grasslands** -- grasslands maintained by climate (aridity,
+#'   unevenly distributed precipitation), herbivores or environmental stress
+#'   (aridity, instability or toxicity of substrate)
+#' - **4b. Human-maintained grasslands** -- grasslands dependent on regular
+#'   human-induced management (mowing, grazing by livestock, artificial burning)
+#' - **10. Wetland** -- sites with the permanent or seasonal influence of
+#'   moisture, ranging from oligotrophic to eutrophic
+#' - **12a. Ruderal habitats** -- anthropogenically disturbed or eutrophicated
+#'   sites, where the anthropogenic disturbance or fertilization is typically a
+#'   side-product and not the aim of the management
+#' - **12b. Agricultural habitats** -- synanthropic habitats directly
+#'   associated with growing of agricultural products, thus dependent on
+#'   specific type of management (ploughing, fertilization)
+#'
+#'   <br/>The following habitat types are excluded from the analysis:
+#' - **5. Sandy** -- dunes and other habitats on unstable sandy substrate,
+#'   stressed by low nutrients, drought and disturbed by sand movement
+#' - **6. Rocky** -- cliffs and rock outcrops with very shallow or no soil
+#' - **7. Dryland** -- habitats in which drought stress limits vegetation
+#'   development
+#' - **8. Saline** -- habitats stressed by high soil salinity
+#' - **9. Riparian** -- a mosaic of wetlands, grasslands, tall-forb stands,
+#'   scrub and open forests in stream corridors
+#' - **11. Aquatic** -- water bodies and streams with submerged and floating
+#'   plant species
 
 Mod_Prep4HPC <- function(
     Hab_Abb = NULL, Path_Model = NULL,
@@ -241,7 +278,7 @@ Mod_Prep4HPC <- function(
     on.exit(sink(), add = TRUE)
   }
 
-  Path_Python <- file.path(Path_Hmsc, "Scripts/python.exe")
+  Path_Python <- IASDT.R::Path(Path_Hmsc, "Scripts", "python.exe")
 
   IASDT.R::InfoChunk("Preparing data for Hmsc-HPC models", Char = "=")
 
@@ -350,7 +387,7 @@ Mod_Prep4HPC <- function(
     }
 
     if (GPP_Plot) {
-      Path_GridR <- file.path(Path_Grid, "Grid_10_Land_Crop.RData")
+      Path_GridR <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.RData")
       if (!file.exists(Path_GridR)) {
         stop(
           paste0("Path for the Europe boundaries does not exist: ", Path_GridR),
@@ -366,12 +403,12 @@ Mod_Prep4HPC <- function(
   # # |||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("File paths - Creating missing paths")
-  fs::dir_create(file.path(Path_Model, "InitMod4HPC"))
-  fs::dir_create(file.path(Path_Model, "Model_Fitting_HPC"))
+  fs::dir_create(IASDT.R::Path(Path_Model, "InitMod4HPC"))
+  fs::dir_create(IASDT.R::Path(Path_Model, "Model_Fitting_HPC"))
   # Also create directory for SLURM outputs
-  fs::dir_create(file.path(Path_Model, "Model_Fitting_HPC", "JobsLog"))
+  fs::dir_create(IASDT.R::Path(Path_Model, "Model_Fitting_HPC", "JobsLog"))
 
-  Path_ModelDT <- file.path(Path_Model, "Model_Info.RData")
+  Path_ModelDT <- IASDT.R::Path(Path_Model, "Model_Info.RData")
 
   # # ..................................................................... ###
 
@@ -564,7 +601,7 @@ Mod_Prep4HPC <- function(
     # Using ggplot2::ggsave directly does not show non-ascii characters
     # correctly
     grDevices::jpeg(
-      filename = file.path(Path_Model, "NSpPerGrid_Sub.jpeg"),
+      filename = IASDT.R::Path(Path_Model, "NSpPerGrid_Sub.jpeg"),
       width = 25, height = PlotHeight, units = "cm", quality = 100, res = 600)
     print(NSpPerGrid_Sub)
     grDevices::dev.off()
@@ -612,8 +649,8 @@ Mod_Prep4HPC <- function(
 
   IASDT.R::CatTime("Prepare cross-validation folds")
 
-  DT_All <- IASDT.R::GetCV(
-    DT = DT_All, EnvFile = EnvFile, XVars = XVars,
+  DT_All <- IASDT.R::Mod_GetCV(
+    Data = DT_All, EnvFile = EnvFile, XVars = XVars,
     CV_NFolds = CV_NFolds, FromHPC = FromHPC, CV_NGrids = CV_NGrids,
     CV_NR = CV_NR, CV_NC = CV_NC, OutPath = Path_Model, CV_Plot = CV_Plot,
     CV_SAC = CV_SAC)
@@ -635,7 +672,7 @@ Mod_Prep4HPC <- function(
   IASDT.R::CatTime(paste0(ncol(DT_y), " species"), Level = 1)
 
   IASDT.R::CatTime("Save species summary", Level = 1)
-  SpSummary <- file.path(Path_PA, "Sp_PA_Summary_DF.RData")
+  SpSummary <- IASDT.R::Path(Path_PA, "Sp_PA_Summary_DF.RData")
   if (!file.exists(SpSummary)) {
     stop(paste0(SpSummary, " file does not exist"), call. = FALSE)
   }
@@ -646,7 +683,7 @@ Mod_Prep4HPC <- function(
       IAS_ID = paste0("Sp_", IAS_ID)) %>%
     dplyr::filter(IAS_ID %in% names(DT_y))
 
-  save(SpSummary, file = file.path(Path_Model, "SpSummary.RData"))
+  save(SpSummary, file = IASDT.R::Path(Path_Model, "SpSummary.RData"))
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -760,7 +797,7 @@ Mod_Prep4HPC <- function(
       GPP_Knots <- future.apply::future_lapply(
         X = GPP_Dists * 1000,
         FUN = function(x) {
-          IASDT.R::PrepKnots(
+          IASDT.R::Mod_PrepKnots(
             Coords = DT_xy, MinDist = x, MinLF = MinLF, MaxLF = MaxLF,
             Alphapw = Alphapw)
         },
@@ -779,7 +816,7 @@ Mod_Prep4HPC <- function(
 
       GPP_Knots <- purrr::map(
         .x = GPP_Dists * 1000,
-        .f = ~IASDT.R::PrepKnots(
+        .f = ~IASDT.R::Mod_PrepKnots(
           Coords = DT_xy, MinDist = .x, MinLF = MinLF, MaxLF = MaxLF,
           Alphapw = Alphapw)) %>%
         stats::setNames(paste0("GPP_", GPP_Dists))
@@ -803,9 +840,6 @@ Mod_Prep4HPC <- function(
         magrittr::extract2("L_03") %>%
         suppressWarnings()
 
-      Xlim <- c(2600000, 6570000)
-      Ylim <- c(1360000, 5480000)
-
       Knots_Plots <- purrr::map(
         .x = GPP_Dists,
         .f = ~{
@@ -828,7 +862,8 @@ Mod_Prep4HPC <- function(
               size = 2.5, stroke = 2) +
             ggplot2::scale_x_continuous(expand = c(0, 0)) +
             ggplot2::scale_y_continuous(expand = c(0, 0)) +
-            ggplot2::coord_sf(xlim = Xlim, ylim = Ylim) +
+            ggplot2::coord_sf(
+              xlim = c(2600000, 6570000), ylim = c(1360000, 5480000)) +
             ggplot2::labs(
               title = "GPP knots",
               subtitle = paste0(
@@ -849,7 +884,7 @@ Mod_Prep4HPC <- function(
         })
 
       grDevices::cairo_pdf(
-        filename = file.path(Path_Model, "knot_Locations.pdf"),
+        filename = IASDT.R::Path(Path_Model, "knot_Locations.pdf"),
         width = 12, height = 13.25, onefile = TRUE)
       invisible(purrr::map(Knots_Plots, print))
       grDevices::dev.off()
@@ -857,7 +892,7 @@ Mod_Prep4HPC <- function(
 
     if (GPP_Save) {
       IASDT.R::CatTime("Saving GPP knots data", Level = 1)
-      save(GPP_Knots, file = file.path(Path_Model, "GPP_Knots.RData"))
+      save(GPP_Knots, file = IASDT.R::Path(Path_Model, "GPP_Knots.RData"))
     }
   } else {
 
@@ -889,7 +924,8 @@ Mod_Prep4HPC <- function(
           .x = M_Name_init, .y = rL2,
           .f = ~{
 
-            PathOut <- file.path(Path_Model, paste0("InitMod_", .x, ".RData"))
+            PathOut <- IASDT.R::Path(
+              Path_Model, paste0("InitMod_", .x, ".RData"))
 
             if (!file.exists(PathOut)) {
               if (stringr::str_detect(.x, "_Tree$")) {
@@ -920,7 +956,7 @@ Mod_Prep4HPC <- function(
 
             M_Name_Fit <- paste0(M_Name_init, "_samp", M_samples, "_th", M_thin)
 
-            M4HPC_Path <- file.path(
+            M4HPC_Path <- IASDT.R::Path(
               Path_Model, "InitMod4HPC", paste0("InitMod_", M_Name_Fit, ".rds"))
 
             return(list(M_Name_Fit = M_Name_Fit, M4HPC_Path = M4HPC_Path))
@@ -941,7 +977,8 @@ Mod_Prep4HPC <- function(
         M_Init_Path = purrr::map_chr(
           .x = M_Name_init,
           .f = ~{
-            PathOut <- file.path(Path_Model, paste0("InitMod_", .x, ".RData"))
+            PathOut <- IASDT.R::Path(
+              Path_Model, paste0("InitMod_", .x, ".RData"))
 
             InitModExists <- IASDT.R::CheckData(PathOut)
 
@@ -969,9 +1006,8 @@ Mod_Prep4HPC <- function(
 
             M_Name_Fit <- paste0(M_Name_init, "_samp", M_samples, "_th", M_thin)
 
-            M4HPC_Path <- file.path(
-              Path_Model, "InitMod4HPC",
-              paste0("InitMod_", M_Name_Fit, ".rds"))
+            M4HPC_Path <- IASDT.R::Path(
+              Path_Model, "InitMod4HPC", paste0("InitMod_", M_Name_Fit, ".rds"))
 
             return(list(M_Name_Fit = M_Name_Fit, M4HPC_Path = M4HPC_Path))
 
@@ -1077,9 +1113,9 @@ Mod_Prep4HPC <- function(
         nrow(Failed2Export),
         " model variants failed to be exported to rds files after 5 tries."),
       Level = 1)
-    save(Failed2Export, file = file.path(Path_Model, "Failed2Export.RData"))
+    save(Failed2Export, file = IASDT.R::Path(Path_Model, "Failed2Export.RData"))
     readr::write_tsv(
-      x = Failed2Export, file = file.path(Path_Model, "Failed2Export.txt"))
+      x = Failed2Export, file = IASDT.R::Path(Path_Model, "Failed2Export.txt"))
   }
 
   # # |||||||||||||||||||||||||||||||||||
@@ -1102,16 +1138,16 @@ Mod_Prep4HPC <- function(
           withr::local_options(list(scipen = 999))
 
           # Input model
-          Path_Model2 <- file.path(
+          Path_Model2 <- IASDT.R::Path(
             Path_Model, "InitMod4HPC", basename(M4HPC_Path))
 
           # Path for posterior sampling
-          Path_Post <- file.path(
+          Path_Post <- IASDT.R::Path(
             Path_Model, "Model_Fitting_HPC",
             paste0(M_Name_Fit, "_Chain", Chain, "_post.rds"))
 
           # Path for progress
-          Path_Prog <- file.path(
+          Path_Prog <- IASDT.R::Path(
             Path_Model, "Model_Fitting_HPC",
             paste0(M_Name_Fit, "_Chain", Chain, "_Progress.txt"))
 
@@ -1203,7 +1239,7 @@ Mod_Prep4HPC <- function(
 
   IASDT.R::CatTime("Save fitting commands for windows PC", Level = 1)
   f <- file(
-    description = file.path(Path_Model, "Commands_All_Windows.txt"),
+    description = IASDT.R::Path(Path_Model, "Commands_All_Windows.txt"),
     open = "wb")
   on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
   cat(Models2Fit_WS, sep = "\n", append = FALSE, file = f)
@@ -1224,7 +1260,7 @@ Mod_Prep4HPC <- function(
   # Save all fitting commands to single file
   IASDT.R::CatTime("Save all fitting commands to single file", Level = 1)
   f <- file(
-    description = file.path(Path_Model, "Commands_All.txt"),
+    description = IASDT.R::Path(Path_Model, "Commands_All.txt"),
     open = "wb")
   on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
   cat(Models2Fit_HPC, sep = "\n", append = FALSE, file = f)
@@ -1241,9 +1277,10 @@ Mod_Prep4HPC <- function(
     .f = function(x) {
 
       if (NSplits > 1) {
-        CommandFile <- file.path(Path_Model, paste0("Commands2Fit_", x, ".txt"))
+        CommandFile <- IASDT.R::Path(
+          Path_Model, paste0("Commands2Fit_", x, ".txt"))
       } else {
-        CommandFile <- file.path(Path_Model, "Commands2Fit.txt")
+        CommandFile <- IASDT.R::Path(Path_Model, "Commands2Fit.txt")
       }
 
       # create connection to SLURM file. This is better than using sink to have
@@ -1323,7 +1360,7 @@ Mod_Prep4HPC <- function(
 
   IASDT.R::SaveAs(
     InObj = DT_Split, OutObj = OutObjName,
-    OutPath = file.path(Path_Model, paste0(OutObjName, ".RData")))
+    OutPath = IASDT.R::Path(Path_Model, paste0(OutObjName, ".RData")))
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

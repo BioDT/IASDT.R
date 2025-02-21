@@ -1,42 +1,41 @@
 ## |------------------------------------------------------------------------| #
-# Merge_Chains ----
+# Mod_Merge_Chains ----
 ## |------------------------------------------------------------------------| #
 
-#' Post-processing of model outputs
+#' Merge model chains
 #'
-#' This function performs post-processing of HMSC model outputs. It merges model
-#' chains, checks for missing or incomplete model runs, and optionally prints
-#' information about incomplete models. It can work with models run on HPC
-#' environments and supports parallel processing.
-#'
-#' @param ModelDir String. Path to the root directory of the fitted models
-#'   without the trailing slash. Two folders will be created `Model_Fitted` and
-#'   `Model_Coda` to store merged model and coda objects, respectively.
-#' @param NCores Integer. The number of cores to use for parallel processing.
-#'   This should be a positive integer.
-#' @param ModInfoName String. The name of the file (without extension) where the
+#' This function merges model chains, checks for missing or incomplete model
+#' runs, and optionally prints information about incomplete models. It saves the
+#' processed model objects to disk.
+#' @param ModelDir Character. Path to the root directory of the fitted models.
+#'   Two folders will be created `Model_Fitted` and `Model_Coda` to store merged
+#'   model and coda objects, respectively.
+#' @param NCores Integer. Number of CPU cores to use for parallel processing.
+#' @param ModInfoName Character. Name of the file (without extension) where the 
 #'   processed model information will be saved. If `NULL`, it overwrites the
 #'   `Model_Info.RData` file in the `ModelDir` directory. If provided, a new
 #'   `.RData` file will be created with this name.
-#' @param PrintIncomplete Logical. Indicates whether to print the names of
+#' @param PrintIncomplete Logical. Whether to print the names of
 #'   models that were not successfully fitted to the console. Defaults to
 #'   `TRUE`.
-#' @param FromHPC Logical. Indicates whether the function is being run in an HPC
-#'   environment. This affects how file paths are handled. Defaults to `TRUE`.
-#' @param FromJSON Logical. Indicates whether to convert loaded models from JSON
+#' @param FromHPC Logical. Whether the processing is being done on an
+#'   High-Performance Computing (HPC) environment, to adjust file paths
+#'   accordingly. Default: `TRUE`.
+#' @param FromJSON Logical. Whether to convert loaded models from JSON
 #'   format before reading. Defaults to `FALSE`.
-#' @param FileFormat Character. The format to save the fitted model and coda
-#'   objects. It can be either "qs2" or "RData". Defaults to "qs2".
-#' @name Merge_Chains
+#' @param Extension Character. File extension (without dot) for the files 
+#'   containing the fitted model and coda objects. It can be either `qs2` or 
+#'   `RData`. Defaults to `qs2`.
+#' @name Mod_Merge_Chains
 #' @author Ahmed El-Gabbas
 #' @return The function does not return anything but saves the processed model
 #'   information to disk.
 #' @export
 
-Merge_Chains <- function(
+Mod_Merge_Chains <- function(
     ModelDir = NULL, NCores = NULL, ModInfoName = NULL,
     PrintIncomplete = TRUE, FromHPC = TRUE, FromJSON = FALSE,
-    FileFormat = "qs2") {
+    Extension = "qs2") {
 
   # # ..................................................................... ###
 
@@ -63,7 +62,7 @@ Merge_Chains <- function(
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Args = c("ModelDir", "FileFormat"), Type = "character")
+    AllArgs = AllArgs, Args = c("ModelDir", "Extension"), Type = "character")
 
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = "NCores", Type = "numeric")
 
@@ -79,27 +78,27 @@ Merge_Chains <- function(
       call. = FALSE)
   }
 
-  if (length(FileFormat) != 1) {
-    stop("`FileFormat` must be a single string.")
+  if (length(Extension) != 1) {
+    stop("`Extension` must be a single string.")
   }
 
-  if (!FileFormat %in% c("qs2", "RData")) {
-    stop("`FileFormat` must be either 'qs2' or 'RData'.")
+  if (!Extension %in% c("qs2", "RData")) {
+    stop("`Extension` must be either 'qs2' or 'RData'.")
   }
 
   # # ..................................................................... ###
 
   # Creating paths -----
 
-  Path_Fitted_Models <- file.path(ModelDir, "Model_Fitted")
-  Path_Coda <- file.path(ModelDir, "Model_Coda")
+  Path_Fitted_Models <- IASDT.R::Path(ModelDir, "Model_Fitted")
+  Path_Coda <- IASDT.R::Path(ModelDir, "Model_Coda")
   fs::dir_create(c(Path_Fitted_Models, Path_Coda))
 
   # # ..................................................................... ###
 
   # Loading model info ----
 
-  Path_ModInfo <- file.path(ModelDir, "Model_Info.RData")
+  Path_ModInfo <- IASDT.R::Path(ModelDir, "Model_Info.RData")
 
   if (!file.exists(Path_ModInfo)) {
     stop(paste0(
@@ -110,7 +109,7 @@ Merge_Chains <- function(
 
   # Remove temp files and incomplete RDs files ----
 
-  Path_Model_Fit <- file.path(ModelDir, "Model_Fitting_HPC")
+  Path_Model_Fit <- IASDT.R::Path(ModelDir, "Model_Fitting_HPC")
   tempFiles <- list.files(
     path = Path_Model_Fit, pattern = ".rds_temp$", full.names = TRUE)
 
@@ -148,7 +147,7 @@ Merge_Chains <- function(
     future::plan("future::sequential", gc = TRUE)
   } else {
     withr::local_options(
-      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
       future.seed = TRUE)
     c1 <- snow::makeSOCKcluster(min(NCores, nrow(Model_Info2)))
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
@@ -176,8 +175,8 @@ Merge_Chains <- function(
 
       M_Name_Fit <- Model_Info2$M_Name_Fit[[x]]
 
-      Path_FittedMod <- file.path(
-        Path_Fitted_Models, paste0(M_Name_Fit, "_Model.", FileFormat))
+      Path_FittedMod <- IASDT.R::Path(
+        Path_Fitted_Models, paste0(M_Name_Fit, "_Model.", Extension))
 
       # Check if model exists and is valid
       ModelFileOkay <- IASDT.R::CheckData(Path_FittedMod, warning = FALSE)
@@ -192,7 +191,7 @@ Merge_Chains <- function(
         # Get posteriors
         Posts <- purrr::map(
           .x = as.character(Model_Info2$Post_Path[[x]]),
-          .f = IASDT.R::GetPosts, FromJSON = FromJSON)
+          .f = IASDT.R::Mod_GetPosts, FromJSON = FromJSON)
 
         # Convert to Hmsc object
         # Try with `alignPost = TRUE`
@@ -241,8 +240,8 @@ Merge_Chains <- function(
       # Convert to Coda object
       # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-      Path_Coda <- file.path(
-        Path_Coda, paste0(M_Name_Fit, "_Coda.", FileFormat))
+      Path_Coda <- IASDT.R::Path(
+        Path_Coda, paste0(M_Name_Fit, "_Coda.", Extension))
 
       if (!exists("Model_Fit") && !file.exists(Path_FittedMod)) {
         list(
@@ -406,7 +405,7 @@ Merge_Chains <- function(
   } else {
     IASDT.R::SaveAs(
       InObj = Model_Info2, OutObj = ModInfoName,
-      OutPath = file.path(ModelDir, paste0(ModInfoName, ".RData")))
+      OutPath = IASDT.R::Path(ModelDir, paste0(ModInfoName, ".RData")))
   }
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

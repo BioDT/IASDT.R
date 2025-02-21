@@ -12,11 +12,13 @@
 #' summary table on the distribution of the species; and 3) JPEG files for the
 #' species distribution showing the the sources of presence data [IAS_Plot]. It
 #' further generates summary results in the form of maps and figures.
-#' @param FromHPC Logical indicating whether the work is being done from HPC, to
-#'   adjust file paths accordingly. Default: `TRUE`.
-#' @param EnvFile Character. The path to the environment file containing
-#'   variables required by the function. Default is ".env".
-#' @param NCores Numeric. Number of cores to use for parallel processing.
+#' @param FromHPC Logical. Whether the processing is being done on an 
+#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#'   accordingly. Default: `TRUE`.
+#' @param EnvFile Character. Path to the environment file containing paths to 
+#'   data sources. Defaults to `.env`.
+#' @param NCores Integer. Number of CPU cores to use for parallel processing. 
+#'   Default: 6.
 #' @param Overwrite Logical. If `TRUE`, existing JPEG files will be overwritten
 #'   during processing. See [IAS_Plot]
 #' @name IAS_Process
@@ -32,7 +34,7 @@
 #' distribution as JPEG.
 
 IAS_Process <- function(
-    FromHPC = TRUE, EnvFile = ".env", NCores = 6, Overwrite = TRUE) {
+    FromHPC = TRUE, EnvFile = ".env", NCores = 6L, Overwrite = TRUE) {
 
   # # ..................................................................... ###
 
@@ -53,7 +55,7 @@ IAS_Process <- function(
   rm(AllArgs, envir = environment())
 
   withr::local_options(
-    future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+    future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
     future.seed = TRUE)
 
   # # ..................................................................... ###
@@ -119,7 +121,7 @@ IAS_Process <- function(
 
   IASDT.R::CatTime("Reading input data and check/create directories")
 
-  Path_PA_JPEG <- file.path(Path_PA, "JPEG_Maps")
+  Path_PA_JPEG <- IASDT.R::Path(Path_PA, "JPEG_Maps")
   fs::dir_create(c(Path_PA_JPEG))
 
   # last update info
@@ -196,7 +198,7 @@ IAS_Process <- function(
     future::plan("future::sequential", gc = TRUE)
   } else {
     withr::local_options(
-      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
       future.seed = TRUE)
     c1 <- snow::makeSOCKcluster(NCores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
@@ -285,7 +287,7 @@ IAS_Process <- function(
   IASDT.R::CatTime("Save summary results", Level = 1)
 
   IASDT.R::CatTime("`RData`", Level = 2)
-  save(Sp_PA_Data, file = file.path(Path_PA, "Sp_PA_Data.RData"))
+  save(Sp_PA_Data, file = IASDT.R::Path(Path_PA, "Sp_PA_Data.RData"))
 
   IASDT.R::CatTime("Summary data without maps", Level = 1)
   IASDT.R::CatTime("csv format", Level = 2)
@@ -295,11 +297,13 @@ IAS_Process <- function(
         c("GBIF_R", "EASIN_R", "eLTER_R", "PA_Map", "PA_Masked_Map")))
 
   readr::write_excel_csv(
-    Sp_PA_Summary_DF, file = file.path(Path_PA, "Sp_PA_Summary_DF.csv"),
+    Sp_PA_Summary_DF, file = IASDT.R::Path(Path_PA, "Sp_PA_Summary_DF.csv"),
     progress = FALSE)
 
   IASDT.R::CatTime("RData format", Level = 2)
-  save(Sp_PA_Summary_DF, file = file.path(Path_PA, "Sp_PA_Summary_DF.RData"))
+  save(
+    Sp_PA_Summary_DF, 
+    file = IASDT.R::Path(Path_PA, "Sp_PA_Summary_DF.RData"))
 
   # # ..................................................................... ###
 
@@ -321,12 +325,12 @@ IAS_Process <- function(
   # save as RData
   IASDT.R::SaveAs(
     InObj = terra::wrap(IAS_NumSp), OutObj = "IAS_NumSp",
-    OutPath = file.path(Path_PA, "IAS_NumSp.RData"))
+    OutPath = IASDT.R::Path(Path_PA, "IAS_NumSp.RData"))
 
   # save as tif
   raster::writeRaster(
     x = IAS_NumSp, overwrite = TRUE,
-    filename = file.path(Path_PA, "IAS_NumSp.tif"))
+    filename = IASDT.R::Path(Path_PA, "IAS_NumSp.tif"))
 
   # # .................................... ###
 
@@ -344,12 +348,12 @@ IAS_Process <- function(
   # save as RData
   IASDT.R::SaveAs(
     InObj = terra::wrap(IAS_NumSp_Masked), OutObj = "IAS_NumSp_Masked",
-    OutPath = file.path(Path_PA, "IAS_NumSp_Masked.RData"))
+    OutPath = IASDT.R::Path(Path_PA, "IAS_NumSp_Masked.RData"))
 
   # save as tif
   raster::writeRaster(
     x = IAS_NumSp_Masked, overwrite = TRUE,
-    filename = file.path(Path_PA, "IAS_NumSp_Masked.tif"))
+    filename = IASDT.R::Path(Path_PA, "IAS_NumSp_Masked.tif"))
 
   # # .................................... ###
 
@@ -450,7 +454,7 @@ IAS_Process <- function(
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
   grDevices::jpeg(
-    filename = file.path(Path_PA, "IAS_NumSpecies.jpeg"),
+    filename = IASDT.R::Path(Path_PA, "IAS_NumSpecies.jpeg"),
     width = 30, height = 15.5, units = "cm", quality = 100, res = 600)
   print(Plot)
   grDevices::dev.off()
@@ -510,7 +514,7 @@ IAS_Process <- function(
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   grDevices::jpeg(
-    filename = file.path(Path_PA, "IAS_NumSpecies_Masked.jpeg"),
+    filename = IASDT.R::Path(Path_PA, "IAS_NumSpecies_Masked.jpeg"),
     width = 30, height = 15.5, units = "cm", quality = 100, res = 600)
   print(Plot)
   grDevices::dev.off()
@@ -683,7 +687,7 @@ IAS_Process <- function(
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   grDevices::jpeg(
-    filename = file.path(Path_PA, "IAS_NSp_threshold_Hab.jpeg"),
+    filename = IASDT.R::Path(Path_PA, "IAS_NSp_threshold_Hab.jpeg"),
     width = 30, height = 17, units = "cm", quality = 100, res = 600)
   print(Plot)
   grDevices::dev.off()

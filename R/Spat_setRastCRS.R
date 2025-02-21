@@ -9,7 +9,7 @@
 #' `terra::crs(R) <- CRS` but allowing to set the CRS in the pipe.
 #' @name setRastCRS
 #' @param R A SpatRaster object whose CRS needs to be set.
-#' @param CRS A string specifying the CRS to be set, default is "epsg:3035".
+#' @param CRS Character. CRS value to be set, default is "epsg:3035".
 #' @return The SpatRaster object with the updated CRS.
 #' @author Ahmed El-Gabbas
 #' @export

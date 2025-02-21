@@ -9,15 +9,16 @@
 #' name, climate model & scenario, time, and download URLs). It can optionally
 #' download these links to desk, if requested.
 #' @name CHELSA_Prepare
-#' @param EnvFile Character. Path to the environment file containing paths to
+#' @param EnvFile Character. Path to the environment file containing paths to 
 #'   data sources. Defaults to `.env`.
-#' @param FromHPC Logical indicating whether the work is being done from HPC, to
-#'   adjust file paths accordingly. Default: `TRUE`.
-#' @param Download Logical, whether to download the CHELSA files. Defaults to
+#' @param FromHPC Logical. Whether the processing is being done on an 
+#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#'   accordingly. Default: `TRUE`.
+#' @param Download Logical. Whether to download the CHELSA files. Defaults to
 #'   `FALSE`.
-#' @param NCores Integer. Number of CPU cores to use for parallel processing.
-#'   Defaults to 4.
-#' @param Overwrite Logical, whether to re-download files that already exist.
+#' @param NCores Integer. Number of CPU cores to use for parallel processing. 
+#'   Default: 4.
+#' @param Overwrite Logical. Whether to re-download files that already exist.
 #'   Defaults to `FALSE`.
 #' @param Download_Attempts Integer. The maximum number of download attempts.
 #'   Defaults to 10.
@@ -29,7 +30,7 @@
 #'   processed. If `OtherVars` is set to "", only bioclimatic variables will be
 #'   processed. See [CHELSA_Vars] for a detailed information on CHELSA climate
 #'   variables.
-#' @param BaseURL String, the base URL for downloading CHELSA climate data.
+#' @param BaseURL Character. The base URL for downloading CHELSA climate data.
 #' @author Ahmed El-Gabbas
 #' @export
 #' @details The function returns information on 874 tif files, representing 19
@@ -37,8 +38,8 @@
 #'   `OtherVars`) at 46 climate options (current and 45 future scenarios)
 
 CHELSA_Prepare <- function(
-    EnvFile = ".env", FromHPC = TRUE, Download = FALSE, NCores = 4,
-    Overwrite = FALSE, Download_Attempts = 10, Sleep = 5, OtherVars = "npp",
+    EnvFile = ".env", FromHPC = TRUE, Download = FALSE, NCores = 4L,
+    Overwrite = FALSE, Download_Attempts = 10L, Sleep = 5L, OtherVars = "npp",
     BaseURL = paste0(
       "https://os.zhdk.cloud.switch.ch/envicloud/",
       "chelsa/chelsa_V2/GLOBAL/")) {
@@ -196,10 +197,10 @@ CHELSA_Prepare <- function(
     dplyr::mutate(
 
       Path_Down = purrr::map_chr(
-        .x = File, .f = ~ file.path(Path_CHELSA_In, .x)),
+        .x = File, .f = ~ IASDT.R::Path(Path_CHELSA_In, .x)),
 
       Path_Out_tif = purrr::map_chr(
-        .x = File, .f = ~ file.path(Path_CHELSA_Out, "Tif", .x)),
+        .x = File, .f = ~ IASDT.R::Path(Path_CHELSA_Out, "Tif", .x)),
 
       Path_Out_NC = purrr::map_chr(
         .x = Path_Out_tif, .f = stringr::str_replace_all,
@@ -336,11 +337,11 @@ CHELSA_Prepare <- function(
 
   save(
     CHELSA_Metadata,
-    file = file.path(Path_CHELSA_Out, "CHELSA_Metadata.RData"))
+    file = IASDT.R::Path(Path_CHELSA_Out, "CHELSA_Metadata.RData"))
 
   readr::write_csv(
     x = CHELSA_Metadata,
-    file = file.path(Path_CHELSA_Out, "CHELSA_Metadata.csv"))
+    file = IASDT.R::Path(Path_CHELSA_Out, "CHELSA_Metadata.csv"))
 
   # # ..................................................................... ###
 

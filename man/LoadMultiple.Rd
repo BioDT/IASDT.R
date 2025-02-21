@@ -2,7 +2,7 @@
 % Please edit documentation in R/General_LoadMultiple.R
 \name{LoadMultiple}
 \alias{LoadMultiple}
-\title{Load multiple RData files together}
+\title{Load multiple \code{.RData} files together}
 \usage{
 LoadMultiple(
   Files = NULL,
@@ -12,18 +12,16 @@ LoadMultiple(
 )
 }
 \arguments{
-\item{Files}{A character vector specifying the paths of \code{.RData} files to be
-loaded.}
+\item{Files}{Character vector. The paths of \code{.RData} files to be loaded.}
 
-\item{Verbose}{A logical flag indicating whether to print messages about the
-loading process. Only effective when \code{OneObject} is \code{FALSE}. Defaults to
-\code{TRUE}.}
+\item{Verbose}{Logical. Whether to print progress messages.
+Default is \code{TRUE}.}
 
-\item{OneObject}{A logical flag indicating whether to load all objects into a
+\item{OneObject}{Logical. Whether to load all objects into a
 single list (\code{TRUE}) or directly into the global environment (\code{FALSE}).
 Defaults to \code{TRUE}.}
 
-\item{ReturnNames}{A logical flag indicating whether to return the names of
+\item{ReturnNames}{Logical. Whether to return the names of
 the loaded objects. Only effective when \code{OneObject} is \code{FALSE}. Defaults to
 \code{TRUE}.}
 }

@@ -11,8 +11,7 @@
 #' on the [devtools::reload] function.
 #'
 #' @name ReloadPackage
-#' @param Package A character string specifying the name of the package to
-#'   reload.
+#' @param Package Character. Name of the package to reload.
 #' @return The function is used for its side effect of reloading a package
 #'   rather than for its return value.
 #' @author Ahmed El-Gabbas

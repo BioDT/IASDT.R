@@ -1,26 +1,14 @@
 ## |------------------------------------------------------------------------| #
-# RespCurv_PrepData ----
+# RespCurv_PlotSR ----
 ## |------------------------------------------------------------------------| #
 
-#' Plot species richness response curves
-#'
-#' Generate species richness response curves as JPEG images for each variable
-#' used in the model.
-#'
-#' @param ModelDir String. Path to the root directory of the fitted models
-#'   without the trailing slash. The function reads data from `RespCurv_DT`
-#'   subdirectory created by [RespCurv_PrepData].
-#' @param NCores Integer. Number of cores to use for parallel processing.
-#'   Defaults to 8.
-#' @return This function does not return a value but saves JPEG images of the
-#'   response curves in a subdirectory within the specified path.
-#' @name RespCurv_PlotSR
-#' @inheritParams RespCurv_PrepData
-#' @author Ahmed El-Gabbas
-#' @seealso RespCurv_PlotSp RespCurv_PrepData
 #' @export
+#' @rdname Response_curves
+#' @name Response_curves
+#' @order 4
+#' @author Ahmed El-Gabbas
 
-RespCurv_PlotSR <- function(ModelDir, Verbose = TRUE, NCores = 8) {
+RespCurv_PlotSR <- function(ModelDir, Verbose = TRUE, NCores = 8L) {
 
   # # ..................................................................... ###
 
@@ -56,8 +44,8 @@ RespCurv_PlotSR <- function(ModelDir, Verbose = TRUE, NCores = 8) {
 
   IASDT.R::CatTime("Check the existence of response curve directory")
 
-  Path_RC_DT <- file.path(ModelDir, "Model_Postprocessing", "RespCurv_DT")
-  Path_RC_SR <- file.path(ModelDir, "Model_Postprocessing", "RespCurv_SR")
+  Path_RC_DT <- IASDT.R::Path(ModelDir, "Model_Postprocessing", "RespCurv_DT")
+  Path_RC_SR <- IASDT.R::Path(ModelDir, "Model_Postprocessing", "RespCurv_SR")
 
   if (!dir.exists(Path_RC_DT)) {
     stop("Response curve data subfolder is missing.", call. = FALSE)
@@ -69,7 +57,7 @@ RespCurv_PlotSR <- function(ModelDir, Verbose = TRUE, NCores = 8) {
 
   IASDT.R::CatTime("Create species richness response curves")
 
-  SR_DT_All <- file.path(Path_RC_DT, "ResCurvDT.RData") %>%
+  SR_DT_All <- IASDT.R::Path(Path_RC_DT, "ResCurvDT.RData") %>%
     IASDT.R::LoadAs() %>%
     dplyr::select(-RC_Path_Orig, -RC_Path_Prob)
 
@@ -285,7 +273,7 @@ RespCurv_PlotSR <- function(ModelDir, Verbose = TRUE, NCores = 8) {
           # Using ggplot2::ggsave directly does not show non-ascii characters
           # correctly
           ragg::agg_jpeg(
-            filename = file.path(
+            filename = IASDT.R::Path(
               Path_RC_SR,
               paste0("RespCurv_SR_", Variable, "_Coords_", Coords, ".jpeg")),
             width = 20, height = 12.5, res = 600, quality = 100, units = "cm")
@@ -355,7 +343,7 @@ RespCurv_PlotSR <- function(ModelDir, Verbose = TRUE, NCores = 8) {
             # Using ggplot2::ggsave directly does not show non-ascii characters
             # correctly
             ragg::agg_jpeg(
-              filename = file.path(
+              filename = IASDT.R::Path(
                 Path_RC_SR,
                 paste0(
                   "RespCurv_SR_", Variable, "_Coords_", Coords,
@@ -370,7 +358,7 @@ RespCurv_PlotSR <- function(ModelDir, Verbose = TRUE, NCores = 8) {
 
   save(
     SR_DT_All,
-    file = file.path(Path_RC_SR, "SR_DT_All.RData"))
+    file = IASDT.R::Path(Path_RC_SR, "SR_DT_All.RData"))
 
   # # ..................................................................... ###
 

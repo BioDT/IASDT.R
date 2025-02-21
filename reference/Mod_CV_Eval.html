@@ -51,7 +51,7 @@ metrics: AUC, RMSE, Tjur's R2, and Boyce Index.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">Mod_CV_Eval</span><span class="op">(</span>Path_CV <span class="op">=</span> <span class="cn">NULL</span>, predictEtaMean <span class="op">=</span> <span class="cn">TRUE</span>, NCores <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">Mod_CV_Eval</span><span class="op">(</span>Path_CV <span class="op">=</span> <span class="cn">NULL</span>, predictEtaMean <span class="op">=</span> <span class="cn">TRUE</span>, NCores <span class="op">=</span> <span class="fl">8L</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -71,8 +71,8 @@ details.</p></dd>
 
 
 <dt id="arg-ncores">NCores<a class="anchor" aria-label="anchor" href="#arg-ncores"></a></dt>
-<dd><p>Integer specifying the number of parallel cores for
-parallelization. Default: 8 cores.</p></dd>
+<dd><p>Integer. Number of CPU cores to use for parallel processing.
+Default: 8.</p></dd>
 
 </dl></div>
     <div class="section level2">

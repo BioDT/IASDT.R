@@ -73,14 +73,14 @@ required. If not provided, the function returns the entire species list.</p></dd
 
 
 <dt id="arg-envfile">EnvFile<a class="anchor" aria-label="anchor" href="#arg-envfile"></a></dt>
-<dd><p>EnvFile A string specifying the path to the environment
-variables file. Default is ".env". This file must exist in the specified
-path; otherwise, the function will stop with an error message.</p></dd>
+<dd><p>Character. Path to the environment file containing paths to
+data sources. Defaults to <code>.env</code>.</p></dd>
 
 
 <dt id="arg-fromhpc">FromHPC<a class="anchor" aria-label="anchor" href="#arg-fromhpc"></a></dt>
-<dd><p>Logical. Indicates whether the function is being run on an HPC
-environment, affecting file path handling. Default: <code>TRUE</code>.</p></dd>
+<dd><p>Logical. Whether the processing is being done on an
+High-Performance Computing (HPC) environment, to adjust file paths
+accordingly. Default: <code>TRUE</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -89,15 +89,6 @@ environment, affecting file path handling. Default: <code>TRUE</code>.</p></dd>
 is provided, it only returns species information for the listed species,
 otherwise return the full list of IAS.</p>
     </div>
-    <div class="section level2">
-    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The function reads the following environment variables:</p><ul><li><p><strong><code>DP_R_TaxaInfo</code></strong> (if <code>FromHPC</code> = <code>TRUE</code>) or
-<strong><code>DP_R_TaxaInfo_Local</code></strong> (if <code>FromHPC</code> = <code>FALSE</code>) for the location of
-the <code>Species_List_ID.txt</code> file containing species information.</p></li>
-<li><p><strong><code>DP_R_PA</code></strong> (if <code>FromHPC</code> = <code>TRUE</code>) or <strong><code>DP_R_PA_Local</code></strong> (if
-<code>FromHPC</code> = <code>FALSE</code>). The function reads the contents of the
-<code>Sp_PA_Summary_DF.RData</code> file from this path.</p></li>
-</ul></div>
     <div class="section level2">
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>
     <p>Ahmed El-Gabbas</p>

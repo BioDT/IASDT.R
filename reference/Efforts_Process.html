@@ -60,10 +60,10 @@ grid cell.</p>
 <span>  Renviron <span class="op">=</span> <span class="st">".Renviron"</span>,</span>
 <span>  RequestData <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  DownloadData <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  NCores <span class="op">=</span> <span class="fl">6</span>,</span>
-<span>  StartYear <span class="op">=</span> <span class="fl">1981</span>,</span>
+<span>  NCores <span class="op">=</span> <span class="fl">6L</span>,</span>
+<span>  StartYear <span class="op">=</span> <span class="fl">1981L</span>,</span>
 <span>  Boundaries <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">30</span>, <span class="fl">50</span>, <span class="fl">25</span>, <span class="fl">75</span><span class="op">)</span>,</span>
-<span>  ChunkSize <span class="op">=</span> <span class="fl">1e+05</span>,</span>
+<span>  ChunkSize <span class="op">=</span> <span class="fl">100000L</span>,</span>
 <span>  DeleteChunks <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  DeleteProcessed <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -74,13 +74,14 @@ grid cell.</p>
 
 
 <dl><dt id="arg-fromhpc">FromHPC<a class="anchor" aria-label="anchor" href="#arg-fromhpc"></a></dt>
-<dd><p>Logical indicating whether the work is being done from HPC, to
-adjust file paths accordingly. Default: <code>TRUE</code>.</p></dd>
+<dd><p>Logical. Whether the processing is being done on an
+High-Performance Computing (HPC) environment, to adjust file paths
+accordingly. Default: <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-envfile">EnvFile<a class="anchor" aria-label="anchor" href="#arg-envfile"></a></dt>
-<dd><p>Character. The path to the environment file containing
-variables required by the function. Default: <code>.env</code>.</p></dd>
+<dd><p>Character. Path to the environment file containing paths to
+data sources. Defaults to <code>.env</code>.</p></dd>
 
 
 <dt id="arg-renviron">Renviron<a class="anchor" aria-label="anchor" href="#arg-renviron"></a></dt>
@@ -101,7 +102,8 @@ stores it on disk. If <code>FALSE</code>, it skips the download step. Defaults t
 
 
 <dt id="arg-ncores">NCores<a class="anchor" aria-label="anchor" href="#arg-ncores"></a></dt>
-<dd><p>Integer. The number of cores to use for parallel processing.</p></dd>
+<dd><p>Integer. Number of CPU cores to use for parallel processing.
+Default: 6.</p></dd>
 
 
 <dt id="arg-startyear">StartYear<a class="anchor" aria-label="anchor" href="#arg-startyear"></a></dt>
@@ -111,9 +113,9 @@ records from this year onward will be requested from GBIF. Default is
 
 
 <dt id="arg-boundaries">Boundaries<a class="anchor" aria-label="anchor" href="#arg-boundaries"></a></dt>
-<dd><p>Numeric vector of length 4. Specifies geographical
-boundaries for the requested GBIF data in the order: Left, Right, Bottom,
-Top. Default: <code>c(-30, 50, 25, 75)</code>.</p></dd>
+<dd><p>Numeric vector of length 4. The boundaries of the
+requested GBIF data in the order: Left, Right, Bottom, Top. Defaults to
+<code>c(-30, 50, 25, 75)</code>.</p></dd>
 
 
 <dt id="arg-chunksize">ChunkSize<a class="anchor" aria-label="anchor" href="#arg-chunksize"></a></dt>
@@ -122,14 +124,14 @@ Top. Default: <code>c(-30, 50, 25, 75)</code>.</p></dd>
 
 
 <dt id="arg-deletechunks">DeleteChunks<a class="anchor" aria-label="anchor" href="#arg-deletechunks"></a></dt>
-<dd><p>logical, indicating whether to remove file chunks after
-processing the data. Defaults to <code>TRUE</code>.</p></dd>
+<dd><p>Logical. Whether to remove file chunks after processing
+the data. Defaults to <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-deleteprocessed">DeleteProcessed<a class="anchor" aria-label="anchor" href="#arg-deleteprocessed"></a></dt>
-<dd><p>Logical indicating whether to delete the raw
-downloaded GBIF data after processing them. This helps to free large
-unnecessary file space (&gt; 22 GB). Defaults to <code>TRUE</code>.</p></dd>
+<dd><p>Logical. Whether to delete the raw downloaded GBIF
+data after processing them. This helps to free large unnecessary file space
+(&gt; 22 GB). Defaults to <code>TRUE</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

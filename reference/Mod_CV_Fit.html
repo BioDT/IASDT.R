@@ -80,14 +80,13 @@ commands.</p>
 
 
 <dt id="arg-cvname">CVName<a class="anchor" aria-label="anchor" href="#arg-cvname"></a></dt>
-<dd><p>Character vector specifying the name of the column(s) in the
-model input data (see <a href="Mod_PrepData.html">Mod_PrepData</a> and <a href="GetCV.html">GetCV</a>) to be
-used to cross-validate the models. The function allows the possibility of
-using more than one way of assigning grid cells into cross-validation
-folders. If multiple names are provided, separate cross-validation models
-will be fitted for each column. Currently, there are three cross-validation
-strategies, created using the <a href="Mod_PrepData.html">Mod_PrepData</a>: <code>CV_SAC</code>, <code>CV_Dist</code>,
-and <code>CV_Large</code> (see <a href="GetCV.html">GetCV</a>). Defaults to <code>c("CV_Dist", "CV_Large")</code>.</p></dd>
+<dd><p>Character vector. Column name(s) in the model input data to be
+used to cross-validate the models (see <a href="Mod_inputs.html">Mod_PrepData</a> and <a href="Mod_GetCV.html">Mod_GetCV</a>).
+The function allows the possibility of using more than one way of
+assigning grid cells into cross-validation folders. If multiple names are
+provided, separate cross-validation models will be fitted for each
+cross-validation type. Currently, there are three cross-validation
+strategies: <code>CV_SAC</code>, <code>CV_Dist</code>, and <code>CV_Large</code>. Defaults to <code>c("CV_Dist",  "CV_Large")</code>.</p></dd>
 
 
 <dt id="arg-partitions">Partitions<a class="anchor" aria-label="anchor" href="#arg-partitions"></a></dt>
@@ -98,8 +97,8 @@ vector is provided, the label used in the output files will be <code>CV_Custom</
 
 
 <dt id="arg-envfile">EnvFile<a class="anchor" aria-label="anchor" href="#arg-envfile"></a></dt>
-<dd><p>String. Path to read the environment variables. Default value:
-<code>.env</code>.</p></dd>
+<dd><p>Character. Path to the environment file containing paths to
+data sources. Defaults to <code>.env</code>.</p></dd>
 
 
 <dt id="arg-initpar">InitPar<a class="anchor" aria-label="anchor" href="#arg-initpar"></a></dt>
@@ -109,60 +108,60 @@ Default: <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-jobname">JobName<a class="anchor" aria-label="anchor" href="#arg-jobname"></a></dt>
-<dd><p>String specifying the name of the submitted job(s) for SLURM.
-Default: <code>CV_Models</code>.</p></dd>
+<dd><p>Character. Name of the submitted job(s) for SLURM. Default:
+<code>CV_Models</code>.</p></dd>
 
 
 <dt id="arg-updater">Updater<a class="anchor" aria-label="anchor" href="#arg-updater"></a></dt>
-<dd><p>a named list, specifying which conditional updaters should be
-omitted.  See <a href="https://rdrr.io/pkg/Hmsc/man/computePredictedValues.html" class="external-link">Hmsc::computePredictedValues</a> for more information. Defaults
+<dd><p>named <code>list</code>. Which conditional updaters should be
+omitted? See <a href="https://rdrr.io/pkg/Hmsc/man/computePredictedValues.html" class="external-link">Hmsc::computePredictedValues</a> for more information. Defaults
 to <code>list(Gamma2 = FALSE, GammaEta = FALSE)</code> to disable the following
 warnings: <code>setting updater$Gamma2=FALSE due to specified phylogeny matrix</code>
 and <code>setting updater$GammaEta=FALSE: not implemented for spatial methods 'GPP' and 'NNGP'</code>.</p></dd>
 
 
 <dt id="arg-alignpost">AlignPost<a class="anchor" aria-label="anchor" href="#arg-alignpost"></a></dt>
-<dd><p>boolean flag indicating whether the posterior of each chains
+<dd><p>Logical. Whether the posterior of each chains
 should be aligned. See <a href="https://rdrr.io/pkg/Hmsc/man/computePredictedValues.html" class="external-link">Hmsc::computePredictedValues</a> for more information.
 Default: <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-tojson">ToJSON<a class="anchor" aria-label="anchor" href="#arg-tojson"></a></dt>
-<dd><p>Logical indicating whether to convert unfitted models to JSON
-before saving to RDS file. Default: <code>FALSE</code>.</p></dd>
+<dd><p>Logical. Whether to convert unfitted models to JSON before
+saving to RDS file. Default: <code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-fromhpc">FromHPC<a class="anchor" aria-label="anchor" href="#arg-fromhpc"></a></dt>
-<dd><p>Logical. Indicates if the operation is being performed from an
-HPC environment. This adjusts file paths accordingly. Default: <code>TRUE</code>.</p></dd>
+<dd><p>Logical. Whether the processing is being done on an
+High-Performance Computing (HPC) environment, to adjust file paths
+accordingly. Default: <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-prepslurm">PrepSLURM<a class="anchor" aria-label="anchor" href="#arg-prepslurm"></a></dt>
-<dd><p>Logical indicating whether to prepare SLURM command files.
-If <code>TRUE</code> (default), the SLURM commands will be saved to disk using the
+<dd><p>Logical. Whether to prepare SLURM command files. If <code>TRUE</code>
+(default), the SLURM commands will be saved to disk using the
 <a href="Mod_SLURM.html">Mod_SLURM</a> function.</p></dd>
 
 
 <dt id="arg-mempercpu">MemPerCpu<a class="anchor" aria-label="anchor" href="#arg-mempercpu"></a></dt>
-<dd><p>String. Memory per CPU allocation for the SLURM job.
-Example: <code>32G</code> for 32 gigabytes. Defaults to <code>NULL</code>. If not provided, the
-function will throw an error.</p></dd>
+<dd><p>Character. Memory allocation per CPU core. Example: "32G"
+for 32 gigabytes. Required — if not provided, the function throws an error.</p></dd>
 
 
 <dt id="arg-time">Time<a class="anchor" aria-label="anchor" href="#arg-time"></a></dt>
-<dd><p>String. Duration for which the job should run. Example:
-<code>01:00:00</code> for one hour. If not provided, the function will throw an error.</p></dd>
+<dd><p>Character. Maximum allowed runtime for the job. Example:
+"01:00:00" for one hour. Required — if not provided, the function throws an
+error.</p></dd>
 
 
 <dt id="arg-path-hmsc">Path_Hmsc<a class="anchor" aria-label="anchor" href="#arg-path-hmsc"></a></dt>
-<dd><p>String. Path for the Hmsc-HPC.</p></dd>
+<dd><p>Character. Path to the Hmsc-HPC installation.</p></dd>
 
 
 <dt id="arg-precision">Precision<a class="anchor" aria-label="anchor" href="#arg-precision"></a></dt>
-<dd><p>Integer, either of 32 or 64 (default) for the
-precision mode used in <code>Hmsc-HPC</code> sampling (<code>--fp 32</code> or <code>--fp 64</code>
-argument). In <code>Hmsc-HPC</code>, the default value is 64. This is still under
-testing.</p></dd>
+<dd><p>Integer (either 32 or 64). Defines the floating-point
+precision mode for <code>Hmsc-HPC</code> sampling (–fp 32 or –fp 64). The default is
+64, which is the default precision in <code>Hmsc-HPC</code>.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

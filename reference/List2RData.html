@@ -66,8 +66,8 @@ directory, with an option to overwrite existing files.</p>
 
 
 <dt id="arg-prefix">Prefix<a class="anchor" aria-label="anchor" href="#arg-prefix"></a></dt>
-<dd><p>A character string to prefix to each filename. If empty
-(default), no prefix is added.</p></dd>
+<dd><p>Character. Prefix to each filename. If empty (default), no
+prefix is added.</p></dd>
 
 
 <dt id="arg-dir">Dir<a class="anchor" aria-label="anchor" href="#arg-dir"></a></dt>
@@ -104,8 +104,8 @@ not return a value.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ versicolor: tibble [50 × 5] (S3: tbl_df/tbl/data.frame)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ virginica : tibble [50 × 5] (S3: tbl_df/tbl/data.frame)</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="op">(</span><span class="va">TMP_Folder</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="fu">stringi</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/stringi/man/stri_rand_strings.html" class="external-link">stri_rand_strings</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">5</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "/tmp/RtmpdeNBJJ/Me8gr"</span>
+<span class="r-in"><span><span class="op">(</span><span class="va">TMP_Folder</span> <span class="op">&lt;-</span> <span class="fu">IASDT.R</span><span class="fu">::</span><span class="fu"><a href="Path.html">Path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="fu">stringi</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/stringi/man/stri_rand_strings.html" class="external-link">stri_rand_strings</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">5</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "/tmp/RtmpuYVtCX/Me8gr"</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="va">TMP_Folder</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> character(0)</span>
 <span class="r-in"><span></span></span>

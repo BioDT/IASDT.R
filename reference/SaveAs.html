@@ -74,24 +74,24 @@ a character string representing the name of an object.</p></dd>
 
 
 <dt id="arg-outobj">OutObj<a class="anchor" aria-label="anchor" href="#arg-outobj"></a></dt>
-<dd><p>A character string specifying the new name for the saved
+<dd><p>Character. The new name for the saved
 <code>RData</code> object. This name is used when the object is loaded back into R.
 Default is <code>NULL</code>. This is required when saving <code>RData</code> files.</p></dd>
 
 
 <dt id="arg-outpath">OutPath<a class="anchor" aria-label="anchor" href="#arg-outpath"></a></dt>
-<dd><p>A character string specifying the file path (ends with either
-<code>*.RData</code>, <code>*.qs2</code>, <code>feather</code>, and <code>rds</code>) where the object should be saved.
-This includes the directory and the file name.</p></dd>
+<dd><p>Character. File path (ends with either <code>*.RData</code>, <code>*.qs2</code>,
+<code>feather</code>, and <code>rds</code>) where the object be saved. This includes the
+directory and the file name.</p></dd>
 
 
 <dt id="arg-nthreads">nthreads<a class="anchor" aria-label="anchor" href="#arg-nthreads"></a></dt>
-<dd><p>A character string specifying the number of threads to use
+<dd><p>Character. Number of threads to use
 when compressing data. See <a href="https://rdrr.io/pkg/qs2/man/qs_save.html" class="external-link">qs2::qs_save</a>.</p></dd>
 
 
 <dt id="arg-feather-compression">feather_compression<a class="anchor" aria-label="anchor" href="#arg-feather-compression"></a></dt>
-<dd><p>A character string specifying the compression
+<dd><p>Character. The compression
 algorithm to use when saving the object in the <code>feather</code> format. The
 default is "zstd". See <a href="https://arrow.apache.org/docs/r/reference/write_feather.html" class="external-link">arrow::write_feather</a>.</p></dd>
 
@@ -115,17 +115,17 @@ specified file path.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">TMP_Folder</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="fu">stringi</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/stringi/man/stri_rand_strings.html" class="external-link">stri_rand_strings</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">5</span><span class="op">)</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">TMP_Folder</span> <span class="op">&lt;-</span> <span class="fu">IASDT.R</span><span class="fu">::</span><span class="fu"><a href="Path.html">Path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="fu">stringi</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/stringi/man/stri_rand_strings.html" class="external-link">stri_rand_strings</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">5</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">fs</span><span class="fu">::</span><span class="fu"><a href="https://fs.r-lib.org/reference/create.html" class="external-link">dir_create</a></span><span class="op">(</span><span class="va">TMP_Folder</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="va">TMP_Folder</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> character(0)</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># save iris data in `iris2.RData` with `iris2` object name</span></span></span>
-<span class="r-in"><span><span class="fu">SaveAs</span><span class="op">(</span><span class="va">iris</span>, <span class="st">"iris2"</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">TMP_Folder</span>, <span class="st">"iris2.RData"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">SaveAs</span><span class="op">(</span><span class="va">iris</span>, <span class="st">"iris2"</span>, <span class="fu">IASDT.R</span><span class="fu">::</span><span class="fu"><a href="Path.html">Path</a></span><span class="op">(</span><span class="va">TMP_Folder</span>, <span class="st">"iris2.RData"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="va">TMP_Folder</span>, pattern <span class="op">=</span> <span class="st">"^.+.RData"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "iris2.RData"</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/load.html" class="external-link">load</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">TMP_Folder</span>, <span class="st">"iris2.RData"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/load.html" class="external-link">load</a></span><span class="op">(</span><span class="fu">IASDT.R</span><span class="fu">::</span><span class="fu"><a href="Path.html">Path</a></span><span class="op">(</span><span class="va">TMP_Folder</span>, <span class="st">"iris2.RData"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "iris2"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span><span class="va">iris2</span><span class="op">)</span></span></span>

@@ -65,17 +65,16 @@ structured and reproducible manner.</p>
 
 
 <dl><dt id="arg-envfile">EnvFile<a class="anchor" aria-label="anchor" href="#arg-envfile"></a></dt>
-<dd><p>Character string specifying the path to the <code>.env</code> file.
-Default is ".env". This file should contain environment variables in the
-format <code>VAR_NAME=value</code>.</p></dd>
+<dd><p>Character. Path to the environment file containing paths to
+data sources. Defaults to <code>.env</code>.</p></dd>
 
 
 <dt id="arg-envvardt">EnvVarDT<a class="anchor" aria-label="anchor" href="#arg-envvardt"></a></dt>
-<dd><p>A data frame or tibble containing the columns <code>VarName</code>,
-<code>Value</code>, <code>CheckDir</code>, and <code>CheckFile</code>. Each row specifies an environment
-variable, the name to assign it to, and whether to check if it is a
-directory or file. This structure allows for additional validation checks
-on the variables being imported.</p></dd>
+<dd><p><code>data.frame</code>. A data frame or tibble containing the columns
+<code>VarName</code>, <code>Value</code>, <code>CheckDir</code>, and <code>CheckFile</code>. Each row specifies an
+environment variable, the name to assign it to, and whether to check if it
+is a directory or file. This structure allows for additional validation
+checks on the variables being imported.</p></dd>
 
 </dl></div>
     <div class="section level2">

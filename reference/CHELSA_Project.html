@@ -68,9 +68,9 @@ data with scale and offset values.</p>
 
 
 <dl><dt id="arg-metadata">Metadata<a class="anchor" aria-label="anchor" href="#arg-metadata"></a></dt>
-<dd><p>Single row tibble for the metadata of the input file. This
-should be prepared in the <a href="CHELSA_Prepare.html">CHELSA_Prepare</a> function and provided via the
-the <a href="CHELSA_Process.html">CHELSA_Process</a> function.</p></dd>
+<dd><p><code>tibble</code>. Single row tibble for the metadata of the input
+file. This should be prepared in the <a href="CHELSA_Prepare.html">CHELSA_Prepare</a> function and provided
+via the the <a href="CHELSA_Process.html">CHELSA_Process</a> function.</p></dd>
 
 
 <dt id="arg-envfile">EnvFile<a class="anchor" aria-label="anchor" href="#arg-envfile"></a></dt>
@@ -79,18 +79,19 @@ data sources. Defaults to <code>.env</code>.</p></dd>
 
 
 <dt id="arg-fromhpc">FromHPC<a class="anchor" aria-label="anchor" href="#arg-fromhpc"></a></dt>
-<dd><p>Logical indicating whether the work is being done from HPC, to
-adjust file paths accordingly. Default: <code>TRUE</code>.</p></dd>
+<dd><p>Logical. Whether the processing is being done on an
+High-Performance Computing (HPC) environment, to adjust file paths
+accordingly. Default: <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-compresslevel">CompressLevel<a class="anchor" aria-label="anchor" href="#arg-compresslevel"></a></dt>
-<dd><p>integer; specifies the compression level for the
-exported NetCDF file, ranging from 1 (least compression) to 9 (most
-compression). Defaults to 5.</p></dd>
+<dd><p>Integer. The compression level for the exported NetCDF
+file, ranging from 1 (least compression) to 9 (most compression). Defaults
+to 5.</p></dd>
 
 
 <dt id="arg-returnmap">ReturnMap<a class="anchor" aria-label="anchor" href="#arg-returnmap"></a></dt>
-<dd><p>logical; if <code>TRUE</code>, the processed map (as a
+<dd><p>Logical. If <code>TRUE</code>, the processed map (as a
 <code>PackedSpatRaster</code> object) is returned. Defaults to <code>FALSE</code>.</p></dd>
 
 </dl></div>

@@ -67,17 +67,17 @@ data.</p>
 
 
 <dl><dt id="arg-path-coda">Path_Coda<a class="anchor" aria-label="anchor" href="#arg-path-coda"></a></dt>
-<dd><p>String. Path to the <code>.RData</code> file containing a coda object.</p></dd>
+<dd><p>Character. Path to the <code>.qs2</code> / <code>.RData</code> file containing
+the coda object.</p></dd>
 
 
 <dt id="arg-envfile">EnvFile<a class="anchor" aria-label="anchor" href="#arg-envfile"></a></dt>
-<dd><p>String. Path to the environment variables file. This file is
-used to read necessary environmental variables for processing. The default
-value is <code>.env</code>.</p></dd>
+<dd><p>Character. Path to the environment file containing paths to
+data sources. Defaults to <code>.env</code>.</p></dd>
 
 
 <dt id="arg-returndata">ReturnData<a class="anchor" aria-label="anchor" href="#arg-returndata"></a></dt>
-<dd><p>Logical. Indicates whether the summarized data should be
+<dd><p>Logical. Whether the summarized data should be
 returned as an R object. If <code>TRUE</code>, the function returns a list containing
 summaries of <code>Alpha</code>, <code>Beta</code>, <code>Rho</code>, and <code>Omega</code> parameters. The default
 value is <code>FALSE</code>, which means the function will not return any data but
@@ -85,8 +85,9 @@ will save the summaries to a specified directory.</p></dd>
 
 
 <dt id="arg-fromhpc">FromHPC<a class="anchor" aria-label="anchor" href="#arg-fromhpc"></a></dt>
-<dd><p>Logical. Indicates whether the function is being run in an HPC
-environment. This affects how file paths are handled. Defaults to <code>TRUE</code>.</p></dd>
+<dd><p>Logical. Whether the processing is being done on an
+High-Performance Computing (HPC) environment, to adjust file paths
+accordingly. Default: <code>TRUE</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -95,12 +96,6 @@ environment. This affects how file paths are handled. Defaults to <code>TRUE</co
 anything and saves the summaries to a directory. If <code>ReturnData</code> is <code>TRUE</code>,
 it also returns the data as R object.</p>
     </div>
-    <div class="section level2">
-    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The function reads the following environment variables:</p><ul><li><p><strong><code>DP_R_TaxaInfo</code></strong> (if <code>FromHPC</code> = <code>TRUE</code>) or
-<strong><code>DP_R_TaxaInfo_Local</code></strong> (if <code>FromHPC</code> = <code>FALSE</code>) for the location of
-the <code>Species_List_ID.txt</code> file containing species information.</p></li>
-</ul></div>
     <div class="section level2">
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>
     <p>Ahmed El-Gabbas</p>

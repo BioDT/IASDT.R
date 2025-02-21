@@ -75,19 +75,19 @@ for ranges.</p>
 
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>A vector, data.frame, or RasterLayer object whose values are to be
-modified.</p></dd>
+<dd><p>A numeric <code>vector</code>, <code>data.frame</code>, or <code>RasterLayer</code> object whose
+values are to be modified.</p></dd>
 
 
 <dt id="arg-between">Between<a class="anchor" aria-label="anchor" href="#arg-between"></a></dt>
-<dd><p>A numeric vector of length 2 specifying the range of values to
-be changed or kept. If specified, <code>MoreThan</code> and <code>LessThan</code> are ignored.</p></dd>
+<dd><p>Numeric. A numeric vector of length 2 specifying the range of
+values to be changed or kept. If specified, <code>MoreThan</code> and <code>LessThan</code> are
+ignored.</p></dd>
 
 
 <dt id="arg-morethan-lessthan">MoreThan, LessThan<a class="anchor" aria-label="anchor" href="#arg-morethan-lessthan"></a></dt>
-<dd><p>A numeric value specifying the threshold above/below
-which values in <code>x</code> will be changed to <code>NewVal</code>. Only applied if <code>Between</code>
-is not specified.</p></dd>
+<dd><p>Numeric. Threshold above/below which values in <code>x</code>
+will be changed to <code>NewVal</code>. Only applied if <code>Between</code> is not specified.</p></dd>
 
 
 <dt id="arg-newval">NewVal<a class="anchor" aria-label="anchor" href="#arg-newval"></a></dt>
@@ -95,7 +95,7 @@ is not specified.</p></dd>
 
 
 <dt id="arg-invertselection">InvertSelection<a class="anchor" aria-label="anchor" href="#arg-invertselection"></a></dt>
-<dd><p>A logical value indicating whether to invert the
+<dd><p>Logical. Whether to invert the
 selection specified by <code>Between</code>. If <code>TRUE</code>, values outside the specified
 range are changed to <code>NewVal</code>. Default is <code>FALSE</code>.</p></dd>
 

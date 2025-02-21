@@ -52,10 +52,10 @@ available, it loads the data instead of making new requests.</p>
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">Efforts_Request</span><span class="op">(</span></span>
-<span>  NCores <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>  NCores <span class="op">=</span> <span class="fl">3L</span>,</span>
 <span>  <span class="va">Path_Requests</span>,</span>
 <span>  <span class="va">Path_Efforts</span>,</span>
-<span>  StartYear <span class="op">=</span> <span class="fl">1981</span>,</span>
+<span>  StartYear <span class="op">=</span> <span class="fl">1981L</span>,</span>
 <span>  Boundaries <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">30</span>, <span class="fl">50</span>, <span class="fl">25</span>, <span class="fl">75</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -65,7 +65,7 @@ available, it loads the data instead of making new requests.</p>
 
 
 <dl><dt id="arg-ncores">NCores<a class="anchor" aria-label="anchor" href="#arg-ncores"></a></dt>
-<dd><p>Integer. The number of cores to use for parallel processing
+<dd><p>Integer. Number of CPU cores to use for parallel processing
 (between 1 and 3). Must be a positive integer. Defaults to 3.</p></dd>
 
 
@@ -86,9 +86,9 @@ records from this year onward will be requested from GBIF. Default is
 
 
 <dt id="arg-boundaries">Boundaries<a class="anchor" aria-label="anchor" href="#arg-boundaries"></a></dt>
-<dd><p>Numeric vector of length 4. Specifies geographical
-boundaries for the requested GBIF data in the order: Left, Right, Bottom,
-Top. Defaults to c(-30, 50, 25, 75).</p></dd>
+<dd><p>Numeric vector of length 4. The boundaries of the
+requested GBIF data in the order: Left, Right, Bottom, Top. Defaults to
+<code>c(-30, 50, 25, 75)</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

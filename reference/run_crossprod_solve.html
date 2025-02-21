@@ -60,7 +60,7 @@ if the output file validation fails.</p>
 <span>  <span class="va">denom</span>,</span>
 <span>  chunk_size <span class="op">=</span> <span class="fl">1000L</span>,</span>
 <span>  threshold_mb <span class="op">=</span> <span class="fl">2000L</span>,</span>
-<span>  use_single <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  TF_use_single <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  solve_chunk_size <span class="op">=</span> <span class="fl">50L</span>,</span>
 <span>  solve_max_attempts <span class="op">=</span> <span class="fl">5L</span>,</span>
@@ -73,60 +73,55 @@ if the output file validation fails.</p>
 
 
 <dl><dt id="arg-tf-environ">TF_Environ<a class="anchor" aria-label="anchor" href="#arg-tf-environ"></a></dt>
-<dd><p>character. Path to the virtual environment containing
-Python and required dependencies.</p></dd>
+<dd><p>Character. Path to the Python environment. This argument is
+required if <code>UseTF</code> is <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-s-">s1<a class="anchor" aria-label="anchor" href="#arg-s-"></a></dt>
-<dd><p>character. Path to the input file containing s1 coordinates.</p></dd>
+<dd><p>Character. Path to the input file containing s1 coordinates.</p></dd>
 
 
 <dt id="arg-s-">s2<a class="anchor" aria-label="anchor" href="#arg-s-"></a></dt>
-<dd><p>character Path to the input file containing s2 coordinates.</p></dd>
+<dd><p>Character Path to the input file containing s2 coordinates.</p></dd>
 
 
 <dt id="arg-posteta">postEta<a class="anchor" aria-label="anchor" href="#arg-posteta"></a></dt>
-<dd><p>character. Path to the file containing the <code>postEta</code> matrix
+<dd><p>Character. Path to the file containing the <code>postEta</code> matrix
 data.</p></dd>
 
 
 <dt id="arg-path-out">path_out<a class="anchor" aria-label="anchor" href="#arg-path-out"></a></dt>
-<dd><p>character. Path to rds file where the output results will be
+<dd><p>Character. Path to rds file where the output results will be
 saved.</p></dd>
 
 
 <dt id="arg-denom">denom<a class="anchor" aria-label="anchor" href="#arg-denom"></a></dt>
-<dd><p>numeric. A denominator value used in the computation.</p></dd>
+<dd><p>Numeric. The denominator value used in the computation.</p></dd>
 
 
 <dt id="arg-chunk-size">chunk_size<a class="anchor" aria-label="anchor" href="#arg-chunk-size"></a></dt>
-<dd><p>numeric (Optional). Size of chunks to process at a time.
+<dd><p>Numeric (Optional). Size of chunks to process at a time.
 Default is 1000.</p></dd>
 
 
 <dt id="arg-threshold-mb">threshold_mb<a class="anchor" aria-label="anchor" href="#arg-threshold-mb"></a></dt>
-<dd><p>numeric (Optional). Memory threshold (in MB) to manage
+<dd><p>Numeric (Optional). Memory threshold (in MB) to manage
 processing. Default is 2000.</p></dd>
 
 
-<dt id="arg-use-single">use_single<a class="anchor" aria-label="anchor" href="#arg-use-single"></a></dt>
-<dd><p>logical. Indicates whether to use single precision.
-Defaults to <code>TRUE</code>.</p></dd>
-
-
-<dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
-<dd><p>logical (Optional). If <code>TRUE</code>, logs detailed information
-during execution. Default is <code>TRUE</code>.</p></dd>
+<dt id="arg-tf-use-single">TF_use_single<a class="anchor" aria-label="anchor" href="#arg-tf-use-single"></a></dt>
+<dd><p>Logical. Whether to use single precision for the
+TensorFlow calculations. Defaults to <code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-solve-chunk-size">solve_chunk_size<a class="anchor" aria-label="anchor" href="#arg-solve-chunk-size"></a></dt>
-<dd><p>numeric. Chunk size for solve_and_multiply python
-function. Default is 50.</p></dd>
+<dd><p>Integer. Chunk size for <code>solve_and_multiply</code> Python
+function. Default is 50L.</p></dd>
 
 
 <dt id="arg-solve-max-attempts">solve_max_attempts<a class="anchor" aria-label="anchor" href="#arg-solve-max-attempts"></a></dt>
-<dd><p>numeric (Optional). Maximum number of attempts to
-run solve and crossprod functions. Default is 5.</p></dd>
+<dd><p>Integer. Maximum number of attempts to run solve
+and crossprod internal function run_crossprod_solve. Default is 5L.</p></dd>
 
 
 <dt id="arg-lf-commands-only">LF_Commands_Only<a class="anchor" aria-label="anchor" href="#arg-lf-commands-only"></a></dt>
@@ -145,7 +140,7 @@ fail.</p>
 <ul><li><p>The function checks for the existence of required input files and the
 Python executable in the specified virtual environment.</p></li>
 <li><p>Executes the Python script using <code>system2</code>.</p></li>
-<li><p>Verifies the output file validity using <code><a href="CheckData.html">IASDT.R::CheckData</a></code>. Retries up
+<li><p>Verifies the output file validity using <code><a href="Check_data.html">IASDT.R::CheckData</a></code>. Retries up
 to 3 times if the output is invalid.</p></li>
 <li><p>Generates detailed logs if <code>verbose</code> is set to <code>TRUE</code>.</p></li>
 </ul></div>

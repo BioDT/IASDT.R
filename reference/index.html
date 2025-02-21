@@ -364,40 +364,28 @@
 
       <dl><dt>
 
-          <code><a href="GetCV.html">GetCV()</a></code>
+          <code><a href="Mod_GetCV.html">Mod_GetCV()</a></code>
 
         </dt>
         <dd>Prepare spatial-block cross-validation folds for spatial analysis</dd>
       </dl><dl><dt>
 
-          <code><a href="PrepKnots.html">PrepKnots()</a></code>
+          <code><a href="Mod_PrepKnots.html">Mod_PrepKnots()</a></code>
 
         </dt>
         <dd>Prepare knot locations for Hmsc GPP models</dd>
       </dl><dl><dt>
 
-          <code><a href="Mod_PrepData.html">Mod_PrepData()</a></code>
+          <code><a href="Mod_inputs.html">Mod_Prep4HPC()</a></code> <code><a href="Mod_inputs.html">Mod_PrepData()</a></code>
 
         </dt>
-        <dd>Prepare habitat-specific data for Hmsc models</dd>
+        <dd>Prepare initial models for model fitting with Hmsc-HPC</dd>
       </dl><dl><dt>
 
-          <code><a href="Mod_Prep4HPC.html">Mod_Prep4HPC()</a></code>
+          <code><a href="Mod_SLURM.html">Mod_SLURM()</a></code> <code><a href="Mod_SLURM.html">Mod_SLURM_Refit()</a></code>
 
         </dt>
-        <dd>Prepare initial models in R for model fitting with Hmsc-HPC</dd>
-      </dl><dl><dt>
-
-          <code><a href="Mod_SLURM.html">Mod_SLURM()</a></code>
-
-        </dt>
-        <dd>Prepare SLURM files for Hmsc-HPC model fitting</dd>
-      </dl><dl><dt>
-
-          <code><a href="Mod_SLURM_Refit.html">Mod_SLURM_Refit()</a></code>
-
-        </dt>
-        <dd>Prepare SLURM file for failed / Unfitted Models</dd>
+        <dd>Prepare SLURM scripts for Hmsc-HPC model fitting</dd>
       </dl><dl><dt>
 
           <code><a href="Mod_Fit_WS.html">Mod_Fit_WS()</a></code>
@@ -423,16 +411,16 @@
 
       <dl><dt>
 
-          <code><a href="GetPosts.html">GetPosts()</a></code>
+          <code><a href="Mod_GetPosts.html">Mod_GetPosts()</a></code>
 
         </dt>
         <dd>Combines posteriors exported by <code>Hmsc-HPC</code> into an Hmsc object</dd>
       </dl><dl><dt>
 
-          <code><a href="Merge_Chains.html">Merge_Chains()</a></code>
+          <code><a href="Mod_Merge_Chains.html">Mod_Merge_Chains()</a></code>
 
         </dt>
-        <dd>Post-processing of model outputs</dd>
+        <dd>Merge model chains</dd>
       </dl><dl><dt>
 
           <code><a href="Mod_Summary.html">Mod_Summary()</a></code>
@@ -441,34 +429,16 @@
         <dd>Summary of Hmsc model parameters</dd>
       </dl><dl><dt>
 
-          <code><a href="RespCurv_PrepData.html">RespCurv_PrepData()</a></code>
+          <code><a href="Response_curves.html">RespCurv_PrepData()</a></code> <code><a href="Response_curves.html">RespCurv_PlotSp()</a></code> <code><a href="Response_curves.html">RespCurv_PlotSpAll()</a></code> <code><a href="Response_curves.html">RespCurv_PlotSR()</a></code>
 
         </dt>
-        <dd>Prepare and process response curve data for Hmsc models</dd>
+        <dd>Prepare and plot response curve data for Hmsc models</dd>
       </dl><dl><dt>
 
-          <code><a href="RespCurv_PlotSpAll.html">RespCurv_PlotSpAll()</a></code>
+          <code><a href="Mod_Predict_LF.html">Mod_Predict_LF()</a></code>
 
         </dt>
-        <dd>Plot all species response curves</dd>
-      </dl><dl><dt>
-
-          <code><a href="RespCurv_PlotSp.html">RespCurv_PlotSp()</a></code>
-
-        </dt>
-        <dd>Plot species response curves</dd>
-      </dl><dl><dt>
-
-          <code><a href="RespCurv_PlotSR.html">RespCurv_PlotSR()</a></code>
-
-        </dt>
-        <dd>Plot species richness response curves</dd>
-      </dl><dl><dt>
-
-          <code><a href="Predict_LF.html">Predict_LF()</a></code>
-
-        </dt>
-        <dd>Draws samples from the conditional predictive distribution of latent factors.</dd>
+        <dd>Draws samples from the conditional predictive distribution of latent factors</dd>
       </dl><dl><dt>
 
           <code><a href="Mod_Plot_LF.html">Mod_Plot_LF()</a></code>
@@ -477,40 +447,28 @@
         <dd>Plot spatial variation in site loadings of HMSC Models</dd>
       </dl><dl><dt>
 
-          <code><a href="Mod_Prep_TF.html">Mod_Prep_TF()</a></code>
+          <code><a href="Mod_postprocessing.html">Mod_Postprocess_1_CPU()</a></code> <code><a href="Mod_postprocessing.html">Mod_Prep_TF()</a></code> <code><a href="Mod_postprocessing.html">Mod_Postprocess_2_CPU()</a></code>
 
         </dt>
-        <dd>Prepare batch scripts for latent factor prediction on GPU</dd>
+        <dd>Model pipeline for postprocessing fitted Hmsc models</dd>
       </dl><dl><dt>
 
           <code><a href="Predict_Hmsc.html">Predict_Hmsc()</a></code>
 
         </dt>
-        <dd>Calculates predicted values from a fitted Hmsc model.</dd>
+        <dd>Calculates predicted values from a fitted Hmsc model</dd>
       </dl><dl><dt>
 
           <code><a href="Predict_Maps.html">Predict_Maps()</a></code>
 
         </dt>
-        <dd>Predicts habitat suitability of <code>Hmsc</code> model across different climate options</dd>
+        <dd>Predict habitat suitability of <code>Hmsc</code> model across different climate options</dd>
       </dl><dl><dt>
 
           <code><a href="Mod_Predict_Plot.html">Mod_Predict_Plot()</a></code>
 
         </dt>
         <dd>Plot species and level of invasion predictions as JPEG files using <code>ggplot2</code></dd>
-      </dl><dl><dt>
-
-          <code><a href="Mod_Postprocess_1_CPU.html">Mod_Postprocess_1_CPU()</a></code>
-
-        </dt>
-        <dd>Model pipeline for Hmsc analysis (using CPU)</dd>
-      </dl><dl><dt>
-
-          <code><a href="Mod_Postprocess_2_CPU.html">Mod_Postprocess_2_CPU()</a></code>
-
-        </dt>
-        <dd>Model pipeline for Hmsc analysis (using CPU)</dd>
       </dl><dl><dt>
 
           <code><a href="Mod_CV_Eval.html">Mod_CV_Eval()</a></code>
@@ -525,31 +483,13 @@
         <dd>Generate plots for the explanatory power of Hmsc models</dd>
       </dl><dl><dt>
 
-          <code><a href="PlotBetaGG.html">PlotBetaGG()</a></code>
+          <code><a href="Parameter_Heatmap.html">Mod_Heatmap_Beta()</a></code> <code><a href="Parameter_Heatmap.html">Mod_Heatmap_Omega()</a></code>
 
         </dt>
-        <dd>Heatmaps of parameter estimates or posterior support values of species' environmental responses (Beta parameters)</dd>
+        <dd>Heatmaps for the <code>beta</code> and <code>omega</code> parameters of the Hmsc model</dd>
       </dl><dl><dt>
 
-          <code><a href="PlotOmegaGG.html">PlotOmegaGG()</a></code>
-
-        </dt>
-        <dd>Creates heatmaps of parameter estimates or posterior support values for species' residual association (<code>Omega</code> parameters).</dd>
-      </dl><dl><dt>
-
-          <code><a href="PlotAlpha.html">PlotAlpha()</a></code>
-
-        </dt>
-        <dd>Plot convergence traceplots for the alpha parameter</dd>
-      </dl><dl><dt>
-
-          <code><a href="PlotRho.html">PlotRho()</a></code>
-
-        </dt>
-        <dd>Plot convergence traceplots for the rho parameter</dd>
-      </dl><dl><dt>
-
-          <code><a href="Convergence_Plot.html">Convergence_Plot()</a></code>
+          <code><a href="Convergence_plots.html">Convergence_Plot()</a></code> <code><a href="Convergence_plots.html">Convergence_Alpha()</a></code> <code><a href="Convergence_plots.html">Convergence_Rho()</a></code>
 
         </dt>
         <dd>Plot model convergence of a selected model</dd>
@@ -561,46 +501,16 @@
         <dd>Plot model convergence of multiple modelling alternatives</dd>
       </dl><dl><dt>
 
-          <code><a href="VarPar_Compute.html">VarPar_Compute()</a></code>
+          <code><a href="Variance_partitioning.html">VarPar_Compute()</a></code> <code><a href="Variance_partitioning.html">VarPar_Plot()</a></code>
 
         </dt>
-        <dd>Computes variance partitioning of Hmsc models</dd>
+        <dd>Computes and visualize variance partitioning of Hmsc models</dd>
       </dl><dl><dt>
 
-          <code><a href="VarPar_Plot.html">VarPar_Plot()</a></code>
-
-        </dt>
-        <dd>Plot variance partitioning of Hmsc model</dd>
-      </dl><dl><dt>
-
-          <code><a href="PlotGelman.html">PlotGelman()</a></code>
+          <code><a href="PlotGelman.html">PlotGelman()</a></code> <code><a href="PlotGelman.html">PlotGelman_Alpha()</a></code> <code><a href="PlotGelman.html">PlotGelman_Beta()</a></code> <code><a href="PlotGelman.html">PlotGelman_Omega()</a></code> <code><a href="PlotGelman.html">PlotGelman_Rho()</a></code>
 
         </dt>
         <dd>Plot Gelman-Rubin-Brooks</dd>
-      </dl><dl><dt>
-
-          <code><a href="PlotGelman_Alpha.html">PlotGelman_Alpha()</a></code>
-
-        </dt>
-        <dd>Creates a Gelman-Rubin-Brooks plot for <code>alpha</code> parameters from an Hmsc object.</dd>
-      </dl><dl><dt>
-
-          <code><a href="PlotGelman_Beta.html">PlotGelman_Beta()</a></code>
-
-        </dt>
-        <dd>Gelman-Rubin-Brooks plot for <code>beta</code> parameters</dd>
-      </dl><dl><dt>
-
-          <code><a href="PlotGelman_Omega.html">PlotGelman_Omega()</a></code>
-
-        </dt>
-        <dd>Creates a Gelman-Rubin-Brooks plot for <code>omega</code> parameters.</dd>
-      </dl><dl><dt>
-
-          <code><a href="PlotGelman_Rho.html">PlotGelman_Rho()</a></code>
-
-        </dt>
-        <dd>Creates a Gelman-Rubin-Brooks plot for the <code>rho</code> parameter.</dd>
       </dl></div><div class="section level2">
 
       <h3 id="helper-functions">Helper functions<a class="anchor" aria-label="anchor" href="#helper-functions"></a></h3>
@@ -756,16 +666,28 @@
         <dd>Normalize and quote file paths</dd>
       </dl><dl><dt>
 
+          <code><a href="Path.html">Path()</a></code>
+
+        </dt>
+        <dd>Construct path to a file or directory</dd>
+      </dl><dl><dt>
+
           <code><a href="LoadAs.html">LoadAs()</a></code>
 
         </dt>
         <dd>Load objects from <code>RData</code> / <code>qs2</code> / <code>rds</code> / <code>feather</code> file</dd>
       </dl><dl><dt>
 
+          <code><a href="Check_data.html">CheckData()</a></code> <code><a href="Check_data.html">CheckRData()</a></code> <code><a href="Check_data.html">CheckQs()</a></code> <code><a href="Check_data.html">CheckRDS()</a></code> <code><a href="Check_data.html">CheckFeather()</a></code>
+
+        </dt>
+        <dd>Check the integrity of <code>RData</code> / <code>qs2</code> / <code>rds</code> / <code>feather</code> files</dd>
+      </dl><dl><dt>
+
           <code><a href="LoadMultiple.html">LoadMultiple()</a></code>
 
         </dt>
-        <dd>Load multiple RData files together</dd>
+        <dd>Load multiple <code>.RData</code> files together</dd>
       </dl><dl><dt>
 
           <code><a href="SaveAs.html">SaveAs()</a></code>
@@ -786,40 +708,10 @@
         <dd>Split list items into separate <code>.RData</code> files</dd>
       </dl><dl><dt>
 
-          <code><a href="CheckRData.html">CheckRData()</a></code>
-
-        </dt>
-        <dd>Check the Integrity of an <code>RData</code> File</dd>
-      </dl><dl><dt>
-
           <code><a href="CheckZip.html">CheckZip()</a></code>
 
         </dt>
         <dd>Check the Integrity of a ZIP File</dd>
-      </dl><dl><dt>
-
-          <code><a href="CheckRDS.html">CheckRDS()</a></code>
-
-        </dt>
-        <dd>Check the Integrity of an <code>RDS</code> File</dd>
-      </dl><dl><dt>
-
-          <code><a href="CheckData.html">CheckData()</a></code>
-
-        </dt>
-        <dd>Check the Integrity of <code>RData</code> / <code>qs2</code> / <code>rds</code> / <code>feather</code> Files</dd>
-      </dl><dl><dt>
-
-          <code><a href="CheckFeather.html">CheckFeather()</a></code>
-
-        </dt>
-        <dd>Check the Integrity of an <code>feather</code> File</dd>
-      </dl><dl><dt>
-
-          <code><a href="CheckQs.html">CheckQs()</a></code>
-
-        </dt>
-        <dd>Check the Integrity of an <code>qs2</code> File</dd>
       </dl></div><div class="section level2">
 
       <h3 id="plotting">Plotting<a class="anchor" aria-label="anchor" href="#plotting"></a></h3>
@@ -909,13 +801,7 @@
         <dd>Print head and tail of data frame</dd>
       </dl><dl><dt>
 
-          <code><a href="lapply_.html">lapply_()</a></code>
-
-        </dt>
-        <dd>Apply a function over a list or vector with optional silence</dd>
-      </dl><dl><dt>
-
-          <code><a href="sapply_.html">sapply_()</a></code>
+          <code><a href="Apply_functions.html">lapply_()</a></code> <code><a href="Apply_functions.html">sapply_()</a></code>
 
         </dt>
         <dd>Apply a function over a list or vector with optional silence</dd>
@@ -1192,7 +1078,7 @@
           <code><a href="NetCDFGlobalAttrs.html">NetCDFGlobalAttrs()</a></code>
 
         </dt>
-        <dd>Get global attributes for NetCDF files</dd>
+        <dd>Get global attributes for <code>NetCDF</code> files</dd>
       </dl><dl><dt>
 
           <code><a href="Scale_0_1.html">Scale_0_1()</a></code>

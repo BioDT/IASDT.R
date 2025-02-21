@@ -58,10 +58,10 @@ download these links to desk, if requested.</p>
 <span>  EnvFile <span class="op">=</span> <span class="st">".env"</span>,</span>
 <span>  FromHPC <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  Download <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  NCores <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>  NCores <span class="op">=</span> <span class="fl">4L</span>,</span>
 <span>  Overwrite <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  Download_Attempts <span class="op">=</span> <span class="fl">10</span>,</span>
-<span>  Sleep <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  Download_Attempts <span class="op">=</span> <span class="fl">10L</span>,</span>
+<span>  Sleep <span class="op">=</span> <span class="fl">5L</span>,</span>
 <span>  OtherVars <span class="op">=</span> <span class="st">"npp"</span>,</span>
 <span>  BaseURL <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"https://os.zhdk.cloud.switch.ch/envicloud/"</span>,</span>
 <span>    <span class="st">"chelsa/chelsa_V2/GLOBAL/"</span><span class="op">)</span></span>
@@ -78,22 +78,23 @@ data sources. Defaults to <code>.env</code>.</p></dd>
 
 
 <dt id="arg-fromhpc">FromHPC<a class="anchor" aria-label="anchor" href="#arg-fromhpc"></a></dt>
-<dd><p>Logical indicating whether the work is being done from HPC, to
-adjust file paths accordingly. Default: <code>TRUE</code>.</p></dd>
+<dd><p>Logical. Whether the processing is being done on an
+High-Performance Computing (HPC) environment, to adjust file paths
+accordingly. Default: <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-download">Download<a class="anchor" aria-label="anchor" href="#arg-download"></a></dt>
-<dd><p>Logical, whether to download the CHELSA files. Defaults to
+<dd><p>Logical. Whether to download the CHELSA files. Defaults to
 <code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-ncores">NCores<a class="anchor" aria-label="anchor" href="#arg-ncores"></a></dt>
 <dd><p>Integer. Number of CPU cores to use for parallel processing.
-Defaults to 4.</p></dd>
+Default: 4.</p></dd>
 
 
 <dt id="arg-overwrite">Overwrite<a class="anchor" aria-label="anchor" href="#arg-overwrite"></a></dt>
-<dd><p>Logical, whether to re-download files that already exist.
+<dd><p>Logical. Whether to re-download files that already exist.
 Defaults to <code>FALSE</code>.</p></dd>
 
 
@@ -117,7 +118,7 @@ variables.</p></dd>
 
 
 <dt id="arg-baseurl">BaseURL<a class="anchor" aria-label="anchor" href="#arg-baseurl"></a></dt>
-<dd><p>String, the base URL for downloading CHELSA climate data.</p></dd>
+<dd><p>Character. The base URL for downloading CHELSA climate data.</p></dd>
 
 </dl></div>
     <div class="section level2">

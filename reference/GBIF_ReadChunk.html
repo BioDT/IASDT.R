@@ -71,43 +71,43 @@ taxonomic rank and returns only selected columns.</p>
 
 
 <dl><dt id="arg-chunkfile">ChunkFile<a class="anchor" aria-label="anchor" href="#arg-chunkfile"></a></dt>
-<dd><p>A string specifying the path of the chunk file to be
+<dd><p>Character. Path of the chunk file to be
 processed.</p></dd>
 
 
 <dt id="arg-envfile">EnvFile<a class="anchor" aria-label="anchor" href="#arg-envfile"></a></dt>
-<dd><p>A string specifying the path of the environment file. Default
-is ".env".</p></dd>
+<dd><p>Character. Path to the environment file containing paths to
+data sources. Defaults to <code>.env</code>.</p></dd>
 
 
 <dt id="arg-fromhpc">FromHPC<a class="anchor" aria-label="anchor" href="#arg-fromhpc"></a></dt>
-<dd><p>A logical value indicating whether the environment variables
-should be read from an HPC (High-Performance Computing) environment.
-Default is TRUE.</p></dd>
+<dd><p>Logical. Whether the processing is being done on an
+High-Performance Computing (HPC) environment, to adjust file paths
+accordingly. Default: <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-maxuncert">MaxUncert<a class="anchor" aria-label="anchor" href="#arg-maxuncert"></a></dt>
-<dd><p>A numeric value specifying the maximum accepted spatial
-uncertainty in kilometers. Default is 10 km.</p></dd>
+<dd><p>Numeric. Maximum accepted spatial uncertainty in
+kilometers. Default is 10.</p></dd>
 
 
 <dt id="arg-startyear">StartYear<a class="anchor" aria-label="anchor" href="#arg-startyear"></a></dt>
-<dd><p>An integer specifying the earliest collection year to be
-included. Default is 1981.</p></dd>
+<dd><p>Integer. Earliest collection year to be included. Default
+is 1981.</p></dd>
 
 
 <dt id="arg-saverdata">SaveRData<a class="anchor" aria-label="anchor" href="#arg-saverdata"></a></dt>
-<dd><p>Logical; indicating whether to save the cleaned data for the
+<dd><p>Logical. Whether to save the cleaned data for the
 current chunk as <code>*.RData</code> file.</p></dd>
 
 
 <dt id="arg-returndata">ReturnData<a class="anchor" aria-label="anchor" href="#arg-returndata"></a></dt>
-<dd><p>Logical; indicating whether to return the cleaned data for
+<dd><p>Logical. Whether to return the cleaned data for
 the current chunk. Defaults to <code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-overwrite">Overwrite<a class="anchor" aria-label="anchor" href="#arg-overwrite"></a></dt>
-<dd><p>Logical; indicating whether to process the current chunk
+<dd><p>Logical. Whether to process the current chunk
 file if it has already processed and saved as <code>*.RData</code> file. This helps to
 continue working on previously processed chunks if the previous try failed,
 e.g. due to memory issue.</p></dd>

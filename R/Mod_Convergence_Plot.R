@@ -270,7 +270,7 @@ Convergence_Plot <- function(
 
   IASDT.R::CatTime("Omega")
 
-  FileConv_Omega <- IASDT.R::Path(Path_Convergence, "Convergence_Omega.RData")
+  FileConv_Omega <- IASDT.R::Path(Path_Convergence, "Convergence_Omega.qs2")
 
   if (file.exists(FileConv_Omega)) {
     IASDT.R::CatTime("Loading plotting data", Level = 1)
@@ -402,9 +402,7 @@ Convergence_Plot <- function(
 
     if (SavePlotData) {
       IASDT.R::CatTime("Save plot data", Level = 1)
-      IASDT.R::SaveAs(
-        InObj = PlotObj_Omega,
-        OutPath = IASDT.R::Path(Path_Convergence, "Convergence_Omega.qs2"))
+      IASDT.R::SaveAs(InObj = PlotObj_Omega, OutPath = FileConv_Omega)
     }
     rm(Obj_Omega, OmegaDF, SelectedCombs, CI, OmegaNames, envir = environment())
     invisible(gc())
@@ -973,7 +971,7 @@ Convergence_Plot <- function(
           filename = IASDT.R::Path(
             Path_Convergence_BySp,
             paste0(
-              "Convergence_Beta_", SpDT$IAS_ID, "_",
+              "Convergence_Beta_", SpDT$IAS_ID, "_", 
               SpDT$Species_File, ".pdf")),
           width = 23, height = 17, onefile = TRUE)
         purrr::walk(SpPlots2, grid::grid.draw)

@@ -176,10 +176,10 @@ PlotGelman <- function(
 
   # # ..................................................................... ###
 
-  # Saving plots as RData -----
+  # Saving plots as qs2 -----
   IASDT.R::SaveAs(
     InObj = PlotList, OutObj = "GelmanPlots",
-    OutPath = IASDT.R::Path(OutPath, "GelmanPlots.RData"))
+    OutPath = IASDT.R::Path(OutPath, "GelmanPlots.qs2"))
 
   # # ..................................................................... ###
 

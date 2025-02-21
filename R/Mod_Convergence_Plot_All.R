@@ -291,7 +291,7 @@ Convergence_Plot_All <- function(
     axis.title = ggtext::element_markdown(
       size = 20, colour = "darkgrey", face = "bold"),
     axis.text = ggplot2::element_text(size = 16),
-    title = ggplot2::element_text(size = 20, face = "bold", color = "blue"),
+    title = ggtext::element_markdown(size = 20, face = "bold", color = "blue"),
     axis.text.y = ggtext::element_markdown(
       hjust = 0, margin = ggplot2::margin(t = 0, r = 10, b = 0, l = 5)),
     panel.spacing = ggplot2::unit(0.75, "lines"))

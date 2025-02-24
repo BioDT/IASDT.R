@@ -20,6 +20,7 @@
 #'   (`c1`) is assigned to the parent environment and cleaned up automatically
 #'   on exit.
 #' @export
+#' @name Set_parallel
 #' @author Ahmed El-Gabbas
 
 Set_parallel <- function(NCores = 1L, Stop = FALSE, Cat = TRUE, Level = 0L) {

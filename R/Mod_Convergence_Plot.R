@@ -773,15 +773,8 @@ Convergence_Plot <- function(
 
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
-    # # Stopping cluster
-    # if (NCores > 1 && .Platform$OS.type == "windows") {
-    #   IASDT.R::CatTime("Stopping cluster", Level = 3)
-    #   snow::stopCluster(c1)
-    # }
-    # future::plan("future::sequential", gc = TRUE)
-
     # Stopping cluster
-    IASDT.R::Parallel_Set(Stop = TRUE, Cat = TRUE, Level = 2)
+    IASDT.R::Set_parallel(Stop = TRUE, Cat = TRUE, Level = 2)
 
     rm(Beta_DF, BetaNames, envir = environment())
     invisible(gc())
@@ -807,20 +800,6 @@ Convergence_Plot <- function(
     dplyr::mutate(Plot_File = purrr::map(Plot_File, unlist))
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
-
-  # Prepare working on parallel
-  # IASDT.R::CatTime("Prepare working on parallel", Level = 2)
-  # if (NCores > 1) {
-  #   withr::local_options(
-  #     future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
-  #     future.seed = TRUE)
-  #   c1 <- snow::makeSOCKcluster(min(NCores, nrow(BetaTracePlots_ByVar)))
-  #   on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-  #   future::plan("future::cluster", workers = c1, gc = TRUE)
-  #   on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
-  # } else {
-  #   future::plan("future::sequential", gc = TRUE)
-  # }
 
   # Prepare working on parallel
   IASDT.R::Set_parallel(
@@ -933,14 +912,7 @@ Convergence_Plot <- function(
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
   # Stopping cluster
-  # if (NCores > 1) {
-  #   IASDT.R::CatTime("Stopping cluster", Level = 2)
-  #   snow::stopCluster(c1)
-  #   future::plan("future::sequential", gc = TRUE)
-  # }
-
-  # Stopping cluster
-  IASDT.R::Parallel_Set(Stop = TRUE, Cat = TRUE, Level = 2)
+  IASDT.R::Set_parallel(Stop = TRUE, Cat = TRUE, Level = 2)
 
   # # ..................................................................... ###
 
@@ -957,20 +929,6 @@ Convergence_Plot <- function(
     dplyr::left_join(SpSummary, by = "Species")
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
-
-  # # Prepare working on parallel
-  # IASDT.R::CatTime("Prepare working on parallel", Level = 2)
-  # if (NCores > 1) {
-  #   withr::local_options(
-  #     future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
-  #     future.seed = TRUE)
-  #   c1 <- snow::makeSOCKcluster(min(NCores, nrow(BetaTracePlots_BySp)))
-  #   on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-  #   future::plan("future::cluster", workers = c1, gc = TRUE)
-  #   on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
-  # } else {
-  #   future::plan("future::sequential", gc = TRUE)
-  # }
 
   # Prepare working on parallel
   IASDT.R::Set_parallel(
@@ -1067,13 +1025,8 @@ Convergence_Plot <- function(
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
-  # if (NCores > 1) {
-  #   snow::stopCluster(c1)
-  #   future::plan("future::sequential", gc = TRUE)
-  # }
-
   # Stopping cluster
-  IASDT.R::Parallel_Set(Stop = TRUE, Cat = TRUE, Level = 2)
+  IASDT.R::Set_parallel(Stop = TRUE, Cat = TRUE, Level = 2)
 
   rm(BetaTracePlots_BySp0, envir = environment())
 

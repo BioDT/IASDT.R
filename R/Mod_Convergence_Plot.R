@@ -635,6 +635,9 @@ Convergence_Plot <- function(
       on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
       future::plan("future::cluster", workers = c1, gc = TRUE)
       on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
+
+      future::future_log("future.log")  # Log parallel execution ##
+
     } else {
       future::plan("future::sequential", gc = TRUE)
     }
@@ -686,8 +689,7 @@ Convergence_Plot <- function(
             x = Iter, y = Value, color = factor(Chain))) +
           ggplot2::geom_line(linewidth = 0.15, alpha = 0.6) +
           ggplot2::geom_smooth(
-            method = "loess", formula = y ~ x,
-            se = FALSE, linewidth = 0.8) +
+            method = "loess", formula = y ~ x, se = FALSE, linewidth = 0.8) +
           ggplot2::geom_point(alpha = 0) +
           ggplot2::geom_hline(
             yintercept = CurrCI, linetype = "dashed", color = "black",
@@ -764,12 +766,13 @@ Convergence_Plot <- function(
         return(tibble::tibble(Var_Sp = Var_Sp, Plot_File = Plot_File))
       },
       .options = furrr::furrr_options(
-        seed = TRUE, scheduling = Inf,
+        seed = TRUE, scheduling = 1,
         globals = c(
           "Beta_DF", "NChains", "SampleSize", "Cols", "MarginType",
           "VarsDesc", "CurrCI"),
         packages = c(
-          "dplyr", "ggplot2", "ggtext", "magrittr", "coda", "IASDT.R"))) %>%
+          "dplyr", "ggplot2", "ggtext", "magrittr", "stringr", "ggExtra",
+          "coda", "IASDT.R", "qs2", "tibble"))) %>%
       dplyr::bind_rows() %>%
       dplyr::left_join(Beta_DF, ., by = "Var_Sp") %>%
       dplyr::left_join(VarsDesc, by = "Variable")
@@ -1043,7 +1046,7 @@ Convergence_Plot <- function(
       return(NULL)
     },
     .options = furrr::furrr_options(
-      seed = TRUE, scheduling = Inf,
+      seed = TRUE, scheduling = 1,
       globals = c(
         "BetaTracePlots_ByVar", "NRC", "Path_Convergence", "VarDesc"),
       packages = c(
@@ -1264,7 +1267,7 @@ Convergence_Plot <- function(
 
     },
     .options = furrr::furrr_options(
-      seed = TRUE, scheduling = Inf,
+      seed = TRUE, scheduling = 1,
       globals = c(
         "MarginType", "BetaTracePlots_BySp", "Path_Convergence_BySp",
         "Beta_NRC"),
@@ -1346,7 +1349,7 @@ Convergence_Plot <- function(
   #     rm(PlotTitle, envir = environment())
   #     return(invisible(NULL))
   #   },
-  #   future.scheduling = Inf, future.seed = TRUE,
+  #   future.scheduling = 1, future.seed = TRUE,
   #   future.globals = c(
   #     "MarginType", "BetaTracePlots_BySp", "Path_Convergence_BySp", "Beta_NRC"),
   #   future.packages = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext"))

@@ -85,7 +85,11 @@ See details for more information.</p>
 <span>  Fix_Efforts <span class="op">=</span> <span class="st">"q90"</span>,</span>
 <span>  Fix_Rivers <span class="op">=</span> <span class="st">"q90"</span>,</span>
 <span>  Pred_NewSites <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  NCores_VP <span class="op">=</span> <span class="fl">3</span></span>
+<span>  NCores_VP <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>  PlotWidth_Omega <span class="op">=</span> <span class="fl">26</span>,</span>
+<span>  PlotHeight_Omega <span class="op">=</span> <span class="fl">22.5</span>,</span>
+<span>  PlotWidth_Beta <span class="op">=</span> <span class="fl">25</span>,</span>
+<span>  PlotHeight_Beta <span class="op">=</span> <span class="fl">35</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">Mod_Prep_TF</span><span class="op">(</span></span>
@@ -208,7 +212,7 @@ The function allows the possibility of using more than one way of
 assigning grid cells into cross-validation folders. If multiple names are
 provided, separate cross-validation models will be fitted for each
 cross-validation type. Currently, there are three cross-validation
-strategies: <code>CV_SAC</code>, <code>CV_Dist</code>, and <code>CV_Large</code>. Defaults to <code>c("CV_Dist",  "CV_Large")</code>.</p></dd>
+strategies: <code>CV_SAC</code>, <code>CV_Dist</code>, and <code>CV_Large</code>. Defaults to <code>c("CV_Dist", "CV_Large")</code>.</p></dd>
 
 
 <dt id="arg-n-grid">N_Grid<a class="anchor" aria-label="anchor" href="#arg-n-grid"></a></dt>
@@ -288,6 +292,11 @@ removed in future updates.</p></dd>
 <dt id="arg-ncores-vp">NCores_VP<a class="anchor" aria-label="anchor" href="#arg-ncores-vp"></a></dt>
 <dd><p>Integer. Number of cores to use for variance partitioning.
 Defaults to 3.</p></dd>
+
+
+<dt id="arg-plotwidth-omega-plotheight-omega-plotwidth-beta-plotheight-beta">PlotWidth_Omega, PlotHeight_Omega, PlotWidth_Beta, PlotHeight_Beta<a class="anchor" aria-label="anchor" href="#arg-plotwidth-omega-plotheight-omega-plotwidth-beta-plotheight-beta"></a></dt>
+<dd><p>Integer. The width and height of the generated heatmaps of the Omega and
+Beta parameters in centimeters.</p></dd>
 
 
 <dt id="arg-path-models">Path_Models<a class="anchor" aria-label="anchor" href="#arg-path-models"></a></dt>

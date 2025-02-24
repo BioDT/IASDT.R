@@ -51,11 +51,26 @@ CatTime <- function(
     Text = "", NLines = 1L, Time = TRUE, Bold = FALSE, Red = FALSE,
     Date = FALSE, TZ = "CET", Level = 0L, ...) {
 
+  AllArgs <- ls(envir = environment())
+  AllArgs <- purrr::map(
+    AllArgs,
+    function(x) get(x, envir = parent.env(env = environment()))) %>%
+    stats::setNames(AllArgs)
+  IASDT.R::CheckArgs(
+    AllArgs = AllArgs, Type = "character", Args = "Text")
+  IASDT.R::CheckArgs(
+    AllArgs = AllArgs, Type = "logical",
+    Args = c("Time", "Bold", "Red", "Date"))
+  IASDT.R::CheckArgs(
+    AllArgs = AllArgs, Type = "numeric", Args = c("NLines", "Level"))
+  rm(AllArgs, envir = environment())
+
+
   if (Time) {
     DateFormat <- dplyr::if_else(Date, "%d/%m/%Y %X", "%X")
     Now <- lubridate::now(tzone = TZ) %>%
       format(DateFormat)
-    Now2 <- paste(" - ", Now)
+    Now2 <- paste0(" - ", Now)
   } else {
     Now <- Now2 <- ""
   }

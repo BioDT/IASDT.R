@@ -468,6 +468,7 @@ Convergence_Plot <- function(
 
   FileConv_Beta <- IASDT.R::Path(Path_Convergence, "Convergence_Beta.RData")
 
+
   if (file.exists(FileConv_Beta)) {
 
     IASDT.R::CatTime("Loading plotting data", Level = 1)
@@ -625,21 +626,16 @@ Convergence_Plot <- function(
     rm(CI, VarRanges, SpeciesTaxonomy, Obj_Beta, envir = environment())
     invisible(gc())
 
-    if (NCores > 1) {
-      if (.Platform$OS.type == "windows") {
-        # Use cluster for Windows
-        c1 <- snow::makeSOCKcluster(min(NCores, nrow(Beta_DF)))
-        on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-        future::plan("future::cluster", workers = c1)
-        on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
-      } else {
-        # Use multicore for Linux/Mac
-        future::plan("future::multicore", workers = min(NCores, nrow(Beta_DF)))
-        on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
-      }
-    } else {
-      future::plan("future::sequential", gc = TRUE)
+    # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
+
+    # Prepare working on parallel
+    IASDT.R::Set_parallel(NCores = min(NCores, nrow(Beta_DF)), Level = 3)
+    if (.Platform$OS.type == "windows") {
+      on.exit(try(snow::stopCluster("c1"), silent = TRUE), add = TRUE)
     }
+    on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
+
+    # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
     # Prepare plots
     IASDT.R::CatTime("Prepare plots", Level = 3)
@@ -688,7 +684,7 @@ Convergence_Plot <- function(
             x = Iter, y = Value, color = factor(Chain))) +
           ggplot2::geom_line(linewidth = 0.15, alpha = 0.6) +
           ggplot2::geom_smooth(
-            method = "loess", formula = y ~ x, 
+            method = "loess", formula = y ~ x,
             se = FALSE, linewidth = 0.8) +
           ggplot2::geom_point(alpha = 0) +
           ggplot2::geom_hline(
@@ -775,12 +771,17 @@ Convergence_Plot <- function(
       dplyr::left_join(Beta_DF, ., by = "Var_Sp") %>%
       dplyr::left_join(VarsDesc, by = "Variable")
 
+    # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
+
+    # # Stopping cluster
+    # if (NCores > 1 && .Platform$OS.type == "windows") {
+    #   IASDT.R::CatTime("Stopping cluster", Level = 3)
+    #   snow::stopCluster(c1)
+    # }
+    # future::plan("future::sequential", gc = TRUE)
+
     # Stopping cluster
-    if (NCores > 1) {
-      IASDT.R::CatTime("Stopping cluster", Level = 3)
-      snow::stopCluster(c1)
-      future::plan("future::sequential", gc = TRUE)
-    }
+    IASDT.R::Parallel_Set(Stop = TRUE, Cat = TRUE, Level = 2)
 
     rm(Beta_DF, BetaNames, envir = environment())
     invisible(gc())
@@ -805,30 +806,37 @@ Convergence_Plot <- function(
     tidyr::nest(Plot_File = "Plot_File") %>%
     dplyr::mutate(Plot_File = purrr::map(Plot_File, unlist))
 
-
-  IASDT.R::AllObjSizes(InFunction = TRUE) ##
-
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
   # Prepare working on parallel
-  IASDT.R::CatTime("Prepare working on parallel", Level = 2)
-  if (NCores > 1) {
-    withr::local_options(
-      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
-      future.seed = TRUE)
-    c1 <- snow::makeSOCKcluster(min(NCores, nrow(BetaTracePlots_ByVar)))
-    on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-    future::plan("future::cluster", workers = c1, gc = TRUE)
-    on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
-  } else {
-    future::plan("future::sequential", gc = TRUE)
+  # IASDT.R::CatTime("Prepare working on parallel", Level = 2)
+  # if (NCores > 1) {
+  #   withr::local_options(
+  #     future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
+  #     future.seed = TRUE)
+  #   c1 <- snow::makeSOCKcluster(min(NCores, nrow(BetaTracePlots_ByVar)))
+  #   on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
+  #   future::plan("future::cluster", workers = c1, gc = TRUE)
+  #   on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
+  # } else {
+  #   future::plan("future::sequential", gc = TRUE)
+  # }
+
+  # Prepare working on parallel
+  IASDT.R::Set_parallel(
+    NCores = min(NCores, nrow(BetaTracePlots_ByVar)), Level = 2)
+
+  if (.Platform$OS.type == "windows") {
+    on.exit(try(snow::stopCluster("c1"), silent = TRUE), add = TRUE)
   }
+  on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
+
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
   IASDT.R::CatTime("Save plots", Level = 2)
-
-
-  BetaTracePlots_ByVar0 <- furrr::future_map(
-    .x = BetaTracePlots_ByVar$Variable,
-    .f = function(x) {
+  BetaTracePlots_ByVar0 <- future.apply::future_lapply(
+    X = BetaTracePlots_ByVar$Variable,
+    FUN = function(x) {
 
       VarDesc <- BetaTracePlots_ByVar %>%
         dplyr::filter(Variable == x) %>%
@@ -913,116 +921,26 @@ Convergence_Plot <- function(
       invisible(gc())
       return(NULL)
     },
-    .options = furrr::furrr_options(
-      seed = TRUE, scheduling = 1,
-      globals = c(
-        "BetaTracePlots_ByVar", "NRC", "Path_Convergence", "VarDesc"),
-      packages = c(
-        "dplyr", "ggplot2", "magrittr", "purrr", "IASDT.R",
-        "tibble", "tidyr", "cowplot")))
-
-  # BetaTracePlots_ByVar0 <- future.apply::future_lapply(
-  #   X = BetaTracePlots_ByVar$Variable,
-  #   FUN = function(x) {
-  #
-  #     VarDesc <- BetaTracePlots_ByVar %>%
-  #       dplyr::filter(Variable == x) %>%
-  #       dplyr::pull(VarDesc)
-  #
-  #     Plots <- dplyr::filter(BetaTracePlots_ByVar, Variable == x) %>%
-  #       dplyr::pull(Plot_File) %>%
-  #       magrittr::extract2(1) %>%
-  #       purrr::map(
-  #         .f = ~ {
-  #           IASDT.R::LoadAs(.x) %>%
-  #             magrittr::extract(c("Plot_Marginal", "PlotFixedY_Marginal"))
-  #         })
-  #
-  #     BetaPlots <- purrr::map(
-  #       .x = Plots, .f = ~ magrittr::extract2(.x, "Plot_Marginal"))
-  #     BetaPlotsFixedY <- purrr::map(
-  #       .x = Plots, .f = ~ magrittr::extract2(.x, "PlotFixedY_Marginal"))
-  #     rm(Plots, envir = environment())
-  #
-  #     PlotTitle <- ggplot2::ggplot() +
-  #       ggplot2::labs(title = VarDesc) +
-  #       ggplot2::theme_minimal() +
-  #       ggplot2::theme(
-  #         plot.title = ggtext::element_markdown(
-  #           size = 24, hjust = 0.5, margin = ggplot2::margin(t = 15, b = 15)))
-  #
-  #     PlotTitleFixed <- ggplot2::ggplot() +
-  #       ggplot2::labs(
-  #         title = paste0(VarDesc, " (fixed y-axis range)")) +
-  #       ggplot2::theme_minimal() +
-  #       ggplot2::theme(
-  #         plot.title = ggtext::element_markdown(
-  #           size = 24, hjust = 0.5, margin = ggplot2::margin(t = 15, b = 15)))
-  #
-  #     BetaPlotList <- tibble::tibble(PlotID = seq_len(length(BetaPlots))) %>%
-  #       dplyr::mutate(Page = ceiling(PlotID / (NRC[2] * NRC[1]))) %>%
-  #       tidyr::nest(.by = "Page", .key = "PlotID") %>%
-  #       dplyr::mutate(
-  #         Plot = purrr::map(
-  #           .x = PlotID,
-  #           .f = ~ {
-  #             ID <- unlist(as.vector(.x))
-  #             cowplot::plot_grid(
-  #               plotlist = BetaPlots[ID],
-  #               ncol = NRC[2], nrow = NRC[1], align = "hv") %>%
-  #               cowplot::plot_grid(
-  #                 PlotTitle, ., ncol = 1, rel_heights = c(0.035, 1))
-  #           }),
-  #         PlotFixedY = purrr::map(
-  #           .x = PlotID,
-  #           .f = ~ {
-  #             ID <- unlist(as.vector(.x))
-  #             cowplot::plot_grid(
-  #               plotlist = BetaPlotsFixedY[ID],
-  #               ncol = NRC[2], nrow = NRC[1], align = "hv") %>%
-  #               cowplot::plot_grid(
-  #                 PlotTitleFixed, .,
-  #                 ncol = 1, rel_heights = c(0.035, 1))
-  #           }))
-  #
-  #     invisible({
-  #       grDevices::cairo_pdf(
-  #         filename = IASDT.R::Path(
-  #           Path_Convergence, paste0("Convergence_Beta_", x, "_FreeY.pdf")),
-  #         width = 18, height = 13, onefile = TRUE)
-  #       purrr::walk(BetaPlotList$Plot, grid::grid.draw, recording = FALSE)
-  #       grDevices::dev.off()
-  #
-  #       grDevices::cairo_pdf(
-  #         filename = IASDT.R::Path(
-  #           Path_Convergence, paste0("Convergence_Beta_", x, "_FixedY.pdf")),
-  #         width = 18, height = 13, onefile = TRUE)
-  #       purrr::walk(.x = BetaPlotList$PlotFixedY, .f = grid::grid.draw)
-  #       grDevices::dev.off()
-  #     })
-  #
-  #     rm(
-  #       PlotTitle, PlotTitleFixed, BetaPlotsFixedY, BetaPlots, BetaPlotList,
-  #       envir = environment())
-  #
-  #     invisible(gc())
-  #     return(NULL)
-  #   },
-  #   future.seed = TRUE,
-  #   future.globals = c("BetaTracePlots_ByVar", "NRC", "Path_Convergence"),
-  #   future.packages = c(
-  #     "dplyr", "ggplot2", "magrittr", "purrr", "IASDT.R",
-  #     "tibble", "tidyr", "cowplot"))
+    future.seed = TRUE,
+    future.globals = c("BetaTracePlots_ByVar", "NRC", "Path_Convergence"),
+    future.packages = c(
+      "dplyr", "ggplot2", "magrittr", "purrr", "IASDT.R",
+      "tibble", "tidyr", "cowplot"))
 
   rm(BetaTracePlots_ByVar0, BetaTracePlots_ByVar, envir = environment())
   invisible(gc())
 
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
+
   # Stopping cluster
-  if (NCores > 1) {
-    IASDT.R::CatTime("Stopping cluster", Level = 2)
-    snow::stopCluster(c1)
-    future::plan("future::sequential", gc = TRUE)
-  }
+  # if (NCores > 1) {
+  #   IASDT.R::CatTime("Stopping cluster", Level = 2)
+  #   snow::stopCluster(c1)
+  #   future::plan("future::sequential", gc = TRUE)
+  # }
+
+  # Stopping cluster
+  IASDT.R::Parallel_Set(Stop = TRUE, Cat = TRUE, Level = 2)
 
   # # ..................................................................... ###
 
@@ -1038,29 +956,38 @@ Convergence_Plot <- function(
     tidyr::nest(data = -c("Species", "IAS_ID")) %>%
     dplyr::left_join(SpSummary, by = "Species")
 
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
-  IASDT.R::AllObjSizes(InFunction = TRUE) ##
+  # # Prepare working on parallel
+  # IASDT.R::CatTime("Prepare working on parallel", Level = 2)
+  # if (NCores > 1) {
+  #   withr::local_options(
+  #     future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
+  #     future.seed = TRUE)
+  #   c1 <- snow::makeSOCKcluster(min(NCores, nrow(BetaTracePlots_BySp)))
+  #   on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
+  #   future::plan("future::cluster", workers = c1, gc = TRUE)
+  #   on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
+  # } else {
+  #   future::plan("future::sequential", gc = TRUE)
+  # }
 
   # Prepare working on parallel
-  IASDT.R::CatTime("Prepare working on parallel", Level = 2)
-  if (NCores > 1) {
-    withr::local_options(
-      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
-      future.seed = TRUE)
-    c1 <- snow::makeSOCKcluster(min(NCores, nrow(BetaTracePlots_BySp)))
-    on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-    future::plan("future::cluster", workers = c1, gc = TRUE)
-    on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
-  } else {
-    future::plan("future::sequential", gc = TRUE)
+  IASDT.R::Set_parallel(
+    NCores = min(NCores, nrow(BetaTracePlots_BySp)), Level = 2)
+
+  if (.Platform$OS.type == "windows") {
+    on.exit(try(snow::stopCluster("c1"), silent = TRUE), add = TRUE)
   }
+  on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
+
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
   IASDT.R::CatTime("Save plots", Level = 2)
 
-  BetaTracePlots_BySp0 <- furrr::future_map(
-    .x = BetaTracePlots_BySp$Species,
-    .f = function(x) {
-
+  BetaTracePlots_BySp0 <- future.apply::future_lapply(
+    X = BetaTracePlots_BySp$Species,
+    FUN = function(x) {
 
       PlotTitle <- ggplot2::ggplot() +
         ggplot2::labs(title = paste0("<i>", x, "</i>")) +
@@ -1132,100 +1059,21 @@ Convergence_Plot <- function(
 
       rm(PlotTitle, envir = environment())
       return(invisible(NULL))
-
     },
-    .options = furrr::furrr_options(
-      seed = TRUE, scheduling = 1,
-      globals = c(
-        "MarginType", "BetaTracePlots_BySp", "Path_Convergence_BySp",
-        "Beta_NRC"),
-      packages = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext")))
+    future.scheduling = 1, future.seed = TRUE,
+    future.globals = c(
+      "MarginType", "BetaTracePlots_BySp", "Path_Convergence_BySp", "Beta_NRC"),
+    future.packages = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext"))
 
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
-  # BetaTracePlots_BySp0 <- future.apply::future_lapply(
-  #   X = BetaTracePlots_BySp$Species,
-  #   FUN = function(x) {
-  #
-  #     PlotTitle <- ggplot2::ggplot() +
-  #       ggplot2::labs(title = paste0("<i>", x, "</i>")) +
-  #       ggplot2::theme_minimal() +
-  #       ggplot2::theme(
-  #         plot.title = ggtext::element_markdown(
-  #           face = "bold", size = 24, hjust = 0.5))
-  #
-  #     SpDT <- dplyr::filter(BetaTracePlots_BySp, Species == x)
-  #
-  #     VarOrder <- SpDT$data[[1]]$Variable %>%
-  #       stringr::str_subset("Intercept", negate = TRUE) %>%
-  #       gtools::mixedsort() %>%
-  #       c("Intercept", .)
-  #
-  #     SpPlots <- SpDT$data[[1]] %>%
-  #       dplyr::arrange(factor(Variable, levels = VarOrder)) %>%
-  #       dplyr::mutate(
-  #         Plot = purrr::map2(
-  #           .x = Plot_File, .y = VarDesc,
-  #           .f = ~ {
-  #             Plot <- IASDT.R::LoadAs(.x)$Plot +
-  #               ggplot2::ggtitle(.y) +
-  #               ggplot2::theme(
-  #                 plot.title = ggtext::element_markdown(
-  #                   hjust = 0.5, size = 15, colour = "red",
-  #                   margin = ggplot2::margin(0, 0, -2.5, 0)))
-  #
-  #             if (MarginType == "histogram") {
-  #               Plot <- ggExtra::ggMarginal(
-  #                 p = Plot, type = MarginType, margins = "y", size = 6,
-  #                 color = "steelblue4", fill = "steelblue4", bins = 100)
-  #             } else {
-  #               Plot <- ggExtra::ggMarginal(
-  #                 p = Plot, type = MarginType, margins = "y", size = 6,
-  #                 color = "steelblue4")
-  #             }
-  #             Plot$layout$t[1] <- 1
-  #             Plot$layout$r[1] <- max(Plot$layout$r)
-  #             return(Plot)
-  #           })) %>%
-  #       dplyr::pull("Plot")
-  #
-  #     NumPages <- ceiling(length(SpPlots) / (Beta_NRC[1] * Beta_NRC[2]))
-  #
-  #     SpPlots2 <- IASDT.R::SplitVector(
-  #       Vector = seq_len(length(SpPlots)), NSplit = NumPages) %>%
-  #       purrr::map(
-  #         .f = ~ {
-  #           SpPlots[.x] %>%
-  #             cowplot::plot_grid(
-  #               plotlist = ., ncol = Beta_NRC[2],
-  #               nrow = Beta_NRC[1], align = "hv") %>%
-  #             cowplot::plot_grid(
-  #               PlotTitle, ., ncol = 1, rel_heights = c(0.03, 1))
-  #         })
-  #
-  #     invisible({
-  #       grDevices::cairo_pdf(
-  #         filename = IASDT.R::Path(
-  #           Path_Convergence_BySp,
-  #           paste0(
-  #             "Convergence_Beta_", SpDT$IAS_ID, "_",
-  #             SpDT$Species_File, ".pdf")),
-  #         width = 23, height = 17, onefile = TRUE)
-  #       purrr::walk(SpPlots2, grid::grid.draw)
-  #       grDevices::dev.off()
-  #     })
-  #
-  #     rm(PlotTitle, envir = environment())
-  #     return(invisible(NULL))
-  #   },
-  #   future.scheduling = 1, future.seed = TRUE,
-  #   future.globals = c(
-  #     "MarginType", "BetaTracePlots_BySp", "Path_Convergence_BySp", "Beta_NRC"),
-  #   future.packages = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext"))
+  # if (NCores > 1) {
+  #   snow::stopCluster(c1)
+  #   future::plan("future::sequential", gc = TRUE)
+  # }
 
-  if (NCores > 1) {
-    snow::stopCluster(c1)
-    future::plan("future::sequential", gc = TRUE)
-  }
+  # Stopping cluster
+  IASDT.R::Parallel_Set(Stop = TRUE, Cat = TRUE, Level = 2)
 
   rm(BetaTracePlots_BySp0, envir = environment())
 

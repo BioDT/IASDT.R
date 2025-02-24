@@ -5,9 +5,7 @@
 #' Set up or stop parallel processing plan
 #'
 #' Configures parallel processing with `future::plan()` or stops an existing
-#' plan. On Windows, it uses `snow::makeSOCKcluster()` with `future::cluster`;
-#' on Linux/macOS, it uses `future::multicore`. When stopping, it resets to
-#' sequential mode.
+#' plan. When stopping, it resets to sequential mode.
 #'
 #' @param NCores Integer. Number of cores to use. If `NULL`, defaults to
 #'   sequential mode.
@@ -43,17 +41,27 @@ Set_parallel <- function(
     NCores = 1L, Stop = FALSE, Cat = TRUE, Level = 0L, Future_maxSize = 8) {
 
   # Validate NCores input
-  NCores <- ifelse(is.null(NCores) || NCores < 1, 1L, as.integer(NCores))
+  NCores <- ifelse(
+    (is.null(NCores) || NCores < 1),
+    1L, as.integer(NCores))
+
+  # NCores can not be more than the available cores
+  NCores <- ifelse(
+    NCores > parallelly::availableCores(),
+    {
+      warning(
+        paste0(
+          "`NCores` > number of available cores. ",
+          "It was reset to the number of available cores",
+          parallelly::availableCores()),
+        call. = FALSE)
+      parallelly::availableCores()
+    },
+    NCores)
 
   if (Stop) {
     if (Cat) {
       IASDT.R::CatTime("Stopping parallel processing", Level = Level)
-    }
-
-    if (.Platform$OS.type == "windows" &&
-        exists("c1", envir = parent.frame())) {
-      try(snow::stopCluster(get("c1", envir = parent.frame())), silent = TRUE)
-      rm("c1", envir = parent.frame())
     }
 
     # Stop any running future plan and reset to sequential
@@ -75,17 +83,7 @@ Set_parallel <- function(
       .local_envir = parent.frame())
 
     if (NCores > 1) {
-
-      if (.Platform$OS.type == "windows") {
-        # Windows: Use cluster (SOCK) since multicore is unavailable
-        c1 <- snow::makeSOCKcluster(NCores)
-        # assigns to the calling function's environment
-        assign("c1", c1, envir = parent.frame())
-        future::plan("future::cluster", workers = c1)
-      } else {
-        # Linux/Mac: Use multicore for better performance
-        future::plan("future::multicore", workers = NCores)
-      }
+      future::plan("future::multisession", workers = NCores)
     } else {
       future::plan("future::sequential", gc = TRUE)
     }

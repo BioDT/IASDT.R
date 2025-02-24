@@ -1300,18 +1300,28 @@ Mod_Prep4HPC <- function(
 
   IASDT.R::CatTime("Save data to disk")
 
+  SetChainName <- function(Obj, Chain) {
+    if (is.null(Obj) || is.null(Chain)) {
+      stop("Obj and Chain cannot be empty", call. = FALSE)
+    }
+    Obj %>%
+      unlist() %>%
+      as.vector() %>%
+      stats::setNames(paste0("Chain", unlist(Chain)))
+  }
+  
   Model_Info <- Model_Info %>%
     tidyr::nest(
       Post_Path = Post_Path, Path_ModProg = Path_ModProg,
       Chain = Chain, Command_HPC = Command_HPC, Command_WS = Command_WS,
       Post_Missing = Post_Missing) %>%
     dplyr::mutate(
-      Post_Path = purrr::map2(Post_Path, Chain, IASDT.R::SetChainName),
-      Chain = purrr::map2(Chain, Chain, IASDT.R::SetChainName),
-      Command_HPC = purrr::map2(Command_HPC, Chain, IASDT.R::SetChainName),
-      Command_WS = purrr::map2(Command_WS, Chain, IASDT.R::SetChainName),
-      Path_ModProg = purrr::map2(Path_ModProg, Chain, IASDT.R::SetChainName),
-      Post_Missing = purrr::map2(Post_Missing, Chain, IASDT.R::SetChainName),
+      Post_Path = purrr::map2(Post_Path, Chain, SetChainName),
+      Chain = purrr::map2(Chain, Chain, SetChainName),
+      Command_HPC = purrr::map2(Command_HPC, Chain, SetChainName),
+      Command_WS = purrr::map2(Command_WS, Chain, SetChainName),
+      Path_ModProg = purrr::map2(Path_ModProg, Chain, SetChainName),
+      Post_Missing = purrr::map2(Post_Missing, Chain, SetChainName),
       Post_Aligned = NA)
 
   save(Model_Info, file = Path_ModelDT)

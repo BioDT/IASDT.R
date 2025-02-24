@@ -468,11 +468,13 @@ Convergence_Plot <- function(
 
   FileConv_Beta <- IASDT.R::Path(Path_Convergence, "Convergence_Beta.RData")
 
-
   if (file.exists(FileConv_Beta)) {
 
     IASDT.R::CatTime("Loading plotting data", Level = 1)
     PlotObj_Beta <- IASDT.R::LoadAs(FileConv_Beta)
+
+    rm(Obj_Beta, envir = environment())
+    invisible(gc())
 
   } else {
 
@@ -497,6 +499,7 @@ Convergence_Plot <- function(
     HTML1 <- "<span style='color:blue;'><b>"
     HTML2 <- "</b></span><span style='color:grey;'>"
     HTML3 <- "</span>"
+    HTML4 <- "&nbsp;&nbsp;&nbsp;&mdash;&nbsp;&nbsp;&nbsp;"
     VarsDesc <- tibble::tribble(
       ~Variable, ~VarDesc,
       "bio1", "annual mean temperature",
@@ -525,9 +528,9 @@ Convergence_Plot <- function(
           "{HTML1}{stringr::str_to_sentence(Variable)}\\
         {HTML2} [{VarDesc}]{HTML3} - {Term}"),
         VarDesc = stringr::str_replace(
-          VarDesc, " - L$", "&nbsp&nbsp&mdash&nbsp&nbspLinear"),
+          VarDesc, " - L$", paste0(HTML4, "Linear")),
         VarDesc = stringr::str_replace(
-          VarDesc, " - Q$", "&nbsp&nbsp&mdash&nbsp&nbspQuadratic"),
+          VarDesc, " - Q$", paste0(HTML4, "Quadratic")),
         Variable = paste0(Variable, "_", Term),
         Term = NULL) %>%
       dplyr::bind_rows(LinearTerms)
@@ -629,9 +632,6 @@ Convergence_Plot <- function(
 
     # Prepare working on parallel
     IASDT.R::Set_parallel(NCores = min(NCores, nrow(Beta_DF)), Level = 2)
-    if (.Platform$OS.type == "windows") {
-      on.exit(try(snow::stopCluster("c1"), silent = TRUE), add = TRUE)
-    }
     on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
 
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
@@ -773,7 +773,7 @@ Convergence_Plot <- function(
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
     # Stopping cluster
-    IASDT.R::Set_parallel(Stop = TRUE, Cat = TRUE, Level = 2)
+    IASDT.R::Set_parallel(Stop = TRUE, Level = 2)
 
     rm(Beta_DF, BetaNames, envir = environment())
     invisible(gc())
@@ -803,17 +803,15 @@ Convergence_Plot <- function(
   # Prepare working on parallel
   IASDT.R::Set_parallel(
     NCores = min(NCores, nrow(BetaTracePlots_ByVar)), Level = 2)
-
-  if (.Platform$OS.type == "windows") {
-    on.exit(try(snow::stopCluster("c1"), silent = TRUE), add = TRUE)
-  }
   on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
   IASDT.R::CatTime("Save plots", Level = 2)
+  VarNames <- BetaTracePlots_ByVar$Variable
+
   BetaTracePlots_ByVar0 <- future.apply::future_lapply(
-    X = BetaTracePlots_ByVar$Variable,
+    X = VarNames,
     FUN = function(x) {
 
       VarDesc <- BetaTracePlots_ByVar %>%
@@ -903,8 +901,8 @@ Convergence_Plot <- function(
     future.seed = TRUE,
     future.globals = c("BetaTracePlots_ByVar", "NRC", "Path_Convergence"),
     future.packages = c(
-      "dplyr", "ggplot2", "magrittr", "purrr", "IASDT.R", "ggtext",
-      "tibble", "tidyr", "cowplot", "grid"))
+      "tidyr", "dplyr", "ggplot2", "purrr", "ggtext",
+      "tibble", "cowplot", "grDevices", "IASDT.R"))
 
   rm(BetaTracePlots_ByVar0, BetaTracePlots_ByVar, envir = environment())
   invisible(gc())
@@ -912,7 +910,7 @@ Convergence_Plot <- function(
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
   # Stopping cluster
-  IASDT.R::Set_parallel(Stop = TRUE, Cat = TRUE, Level = 2)
+  IASDT.R::Set_parallel(Stop = TRUE, Level = 2)
 
   # # ..................................................................... ###
 
@@ -933,10 +931,6 @@ Convergence_Plot <- function(
   # Prepare working on parallel
   IASDT.R::Set_parallel(
     NCores = min(NCores, nrow(BetaTracePlots_BySp)), Level = 2)
-
-  if (.Platform$OS.type == "windows") {
-    on.exit(try(snow::stopCluster("c1"), silent = TRUE), add = TRUE)
-  }
   on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
@@ -1018,17 +1012,17 @@ Convergence_Plot <- function(
       rm(PlotTitle, envir = environment())
       return(invisible(NULL))
     },
-    future.scheduling = 1, future.seed = TRUE,
+    future.seed = TRUE,
     future.globals = c(
       "MarginType", "BetaTracePlots_BySp", "Path_Convergence_BySp", "Beta_NRC"),
     future.packages = c(
       "dplyr", "coda", "ggplot2", "ggExtra", "ggtext", "IASDT.R",
-      "stringr", "gtools", "cowplot", "purrr"))
+      "stringr", "gtools", "cowplot", "purrr", "grDevices"))
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
   # Stopping cluster
-  IASDT.R::Set_parallel(Stop = TRUE, Cat = TRUE, Level = 2)
+  IASDT.R::Set_parallel(Stop = TRUE, Level = 2)
 
   rm(BetaTracePlots_BySp0, envir = environment())
 

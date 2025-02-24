@@ -193,7 +193,7 @@ reference:
   - AddMissingCols
 - subtitle: Other functions
   contents:
-  - SetChainName
+  - Set_parallel
   - CurrOS
   - System
   - CheckURL

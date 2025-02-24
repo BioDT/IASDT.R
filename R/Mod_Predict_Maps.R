@@ -78,13 +78,16 @@ Predict_Maps <- function(
       "MRI-ESM2-0", "UKESM1-0-LL"),
     CC_Scenario = c("ssp126", "ssp370", "ssp585")) {
 
+  # # ..................................................................... ###
+  # # ..................................................................... ###
+
   .StartTime <- lubridate::now(tzone = "CET")
 
   # # ..................................................................... ###
   # # ..................................................................... ###
 
   Hab_Abb <- as.character(Hab_Abb)
-  
+
   # Check if `Hab_Abb` is a single character value
   if (length(Hab_Abb) != 1) {
     stop("`Hab_Abb` must be a single character value", call. = FALSE)
@@ -732,8 +735,8 @@ Predict_Maps <- function(
       tibble::tibble() %>%
       sf::st_as_sf(remove = FALSE, coords = c("x", "y"), crs = 3035) %>%
       sf::st_join(Model_Coords) %>%
-      tidyr::replace_na(list(Train = FALSE)) %>%
-      dplyr::filter(isFALSE(Train))
+      tidyr::replace_na(list(Train = FALSE))
+      dplyr::filter(Train == FALSE)
 
     Test_XY <- sf::st_drop_geometry(Predict_DF_Test[, c("x", "y")])
     Test_X <- Predict_DF_Test %>%

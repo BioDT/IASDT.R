@@ -4,7 +4,13 @@
 \alias{Set_parallel}
 \title{Set up or stop parallel processing plan}
 \usage{
-Set_parallel(NCores = 1L, Stop = FALSE, Cat = TRUE, Level = 0L)
+Set_parallel(
+  NCores = 1L,
+  Stop = FALSE,
+  Cat = TRUE,
+  Level = 0L,
+  Future_maxSize = 8
+)
 }
 \arguments{
 \item{NCores}{Integer. Number of cores to use. If \code{NULL}, defaults to
@@ -17,6 +23,10 @@ sequential mode. If \code{FALSE} (default), sets up a new plan.}
 \code{\link[=CatTime]{CatTime()}}.}
 
 \item{Level}{Integer. The logging level for \link{CatTime}. Default is \code{0}.}
+
+\item{Set_parallel}{Numeric. Maximum allowed total size (in megabytes) of
+global variables identified. See `` argument of \link[future:future.options]{future::future.options}
+for more details}
 }
 \value{
 Invisible \code{NULL}. On Windows with \code{NCores > 1}, the cluster object
@@ -28,6 +38,20 @@ Configures parallel processing with \code{future::plan()} or stops an existing
 plan. On Windows, it uses \code{snow::makeSOCKcluster()} with \code{future::cluster};
 on Linux/macOS, it uses \code{future::multicore}. When stopping, it resets to
 sequential mode.
+}
+\examples{
+\dontrun{
+  # Prepare working on parallel
+  IASDT.R::Set_parallel(NCores = min(NCores, nrow(Beta_DF)), Level = 3)
+
+  if (.Platform$OS.type == "windows") {
+    on.exit(try(snow::stopCluster("c1"), silent = TRUE), add = TRUE)
+  }
+  on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
+
+  # Stopping cluster
+  IASDT.R::Set_parallel(Stop = TRUE, Cat = TRUE, Level = 3)
+}
 }
 \author{
 Ahmed El-Gabbas

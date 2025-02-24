@@ -574,7 +574,6 @@ Convergence_Plot <- function(
       EnvFile = EnvFile, FromHPC = FromHPC) %>%
       dplyr::select(IAS_ID, Class, Order, Family)
 
-    IASDT.R::CatTime("Prepare Beta data", Level = 2)
     Beta_DF <- Beta_DF %>%
       dplyr::left_join(VarRanges, by = "Variable") %>%
       dplyr::left_join(SpeciesTaxonomy, by = "IAS_ID") %>%
@@ -629,7 +628,7 @@ Convergence_Plot <- function(
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
     # Prepare working on parallel
-    IASDT.R::Set_parallel(NCores = min(NCores, nrow(Beta_DF)), Level = 3)
+    IASDT.R::Set_parallel(NCores = min(NCores, nrow(Beta_DF)), Level = 2)
     if (.Platform$OS.type == "windows") {
       on.exit(try(snow::stopCluster("c1"), silent = TRUE), add = TRUE)
     }
@@ -638,7 +637,7 @@ Convergence_Plot <- function(
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
     # Prepare plots
-    IASDT.R::CatTime("Prepare plots", Level = 3)
+    IASDT.R::CatTime("Prepare plots", Level = 2)
 
     PlotObj_Beta <- future.apply::future_lapply(
       X = seq_len(nrow(Beta_DF)),
@@ -780,7 +779,7 @@ Convergence_Plot <- function(
     invisible(gc())
 
     if (SavePlotData) {
-      IASDT.R::CatTime("Save trace plot data", Level = 3)
+      IASDT.R::CatTime("Save trace plot data", Level = 2)
       IASDT.R::SaveAs(
         InObj = PlotObj_Beta, OutObj = "Convergence_Beta",
         OutPath = FileConv_Beta)
@@ -835,6 +834,7 @@ Convergence_Plot <- function(
       BetaPlotsFixedY <- purrr::map(
         .x = Plots, .f = ~ magrittr::extract2(.x, "PlotFixedY_Marginal"))
       rm(Plots, envir = environment())
+      invisible(gc())
 
       PlotTitle <- ggplot2::ggplot() +
         ggplot2::labs(title = VarDesc) +
@@ -903,8 +903,8 @@ Convergence_Plot <- function(
     future.seed = TRUE,
     future.globals = c("BetaTracePlots_ByVar", "NRC", "Path_Convergence"),
     future.packages = c(
-      "dplyr", "ggplot2", "magrittr", "purrr", "IASDT.R",
-      "tibble", "tidyr", "cowplot"))
+      "dplyr", "ggplot2", "magrittr", "purrr", "IASDT.R", "ggtext",
+      "tibble", "tidyr", "cowplot", "grid"))
 
   rm(BetaTracePlots_ByVar0, BetaTracePlots_ByVar, envir = environment())
   invisible(gc())
@@ -1021,7 +1021,9 @@ Convergence_Plot <- function(
     future.scheduling = 1, future.seed = TRUE,
     future.globals = c(
       "MarginType", "BetaTracePlots_BySp", "Path_Convergence_BySp", "Beta_NRC"),
-    future.packages = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext"))
+    future.packages = c(
+      "dplyr", "coda", "ggplot2", "ggExtra", "ggtext", "IASDT.R",
+      "stringr", "gtools", "cowplot", "purrr"))
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 

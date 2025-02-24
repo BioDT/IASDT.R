@@ -636,8 +636,6 @@ Convergence_Plot <- function(
       future::plan("future::cluster", workers = c1, gc = TRUE)
       on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
 
-      future::future_log("future.log")  # Log parallel execution ##
-
     } else {
       future::plan("future::sequential", gc = TRUE)
     }

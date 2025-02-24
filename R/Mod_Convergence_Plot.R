@@ -83,7 +83,7 @@ Convergence_Plot <- function(
   SpComb <- `2.5%` <- `97.5%` <- Class <- Order <- Family <- DT <- IAS_ID <-
     Species <- Variable <- data <- PlotID <- File <- Page <- Iter <- Value <-
     Chain <- y <- label <- Var_Sp <- CI_025 <- CI_975 <- Var_Min <- Var_Max <-
-    Variable2 <- Plot_File <- Var_Sp2 <- Species_name <- Species_File <-
+    Plot_File <- Var_Sp2 <- Species_name <- Species_File <-
     Path_PA <- VarDesc <- Term <- NULL
 
   # # ..................................................................... ###
@@ -398,6 +398,7 @@ Convergence_Plot <- function(
         return(tibble::tibble(SpComb = CombData$SpComb, Plot = list(Plot)))
       }
     )
+    IASDT.R::CatTime("Plots preparation is finished", Level = 2)
 
     if (SavePlotData) {
       IASDT.R::CatTime("Save plot data", Level = 1)
@@ -624,9 +625,6 @@ Convergence_Plot <- function(
     rm(CI, VarRanges, SpeciesTaxonomy, Obj_Beta, envir = environment())
     invisible(gc())
 
-
-    IASDT.R::AllObjSizes(InFunction = TRUE) ##
-
     if (NCores > 1) {
       # Prepare working on parallel
       IASDT.R::CatTime("Prepare working on parallel", Level = 3)
@@ -767,13 +765,14 @@ Convergence_Plot <- function(
       },
       .options = furrr::furrr_options(
         seed = TRUE, scheduling = Inf,
-        globals = c("Beta_DF", "NChains", "SampleSize", "Cols", "MarginType"),
+        globals = c(
+          "Beta_DF", "NChains", "SampleSize", "Cols", "MarginType",
+          "VarsDesc", "CurrCI"),
         packages = c(
           "dplyr", "ggplot2", "ggtext", "magrittr", "coda", "IASDT.R"))) %>%
       dplyr::bind_rows() %>%
       dplyr::left_join(Beta_DF, ., by = "Var_Sp") %>%
       dplyr::left_join(VarsDesc, by = "Variable")
-
 
     # PlotObj_Beta <- future.apply::future_lapply(
     #   X = seq_len(nrow(Beta_DF)),
@@ -1045,7 +1044,8 @@ Convergence_Plot <- function(
     },
     .options = furrr::furrr_options(
       seed = TRUE, scheduling = Inf,
-      globals = c("BetaTracePlots_ByVar", "NRC", "Path_Convergence"),
+      globals = c(
+        "BetaTracePlots_ByVar", "NRC", "Path_Convergence", "VarDesc"),
       packages = c(
         "dplyr", "ggplot2", "magrittr", "purrr", "IASDT.R",
         "tibble", "tidyr", "cowplot")))
@@ -1266,8 +1266,10 @@ Convergence_Plot <- function(
     .options = furrr::furrr_options(
       seed = TRUE, scheduling = Inf,
       globals = c(
-        "MarginType", "BetaTracePlots_BySp", "Path_Convergence_BySp", "Beta_NRC"),
+        "MarginType", "BetaTracePlots_BySp", "Path_Convergence_BySp",
+        "Beta_NRC"),
       packages = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext")))
+
 
   # BetaTracePlots_BySp0 <- future.apply::future_lapply(
   #   X = BetaTracePlots_BySp$Species,

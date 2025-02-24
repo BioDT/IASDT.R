@@ -35,9 +35,7 @@ on exit.
 }
 \description{
 Configures parallel processing with \code{future::plan()} or stops an existing
-plan. On Windows, it uses \code{snow::makeSOCKcluster()} with \code{future::cluster};
-on Linux/macOS, it uses \code{future::multicore}. When stopping, it resets to
-sequential mode.
+plan. When stopping, it resets to sequential mode.
 }
 \examples{
 \dontrun{

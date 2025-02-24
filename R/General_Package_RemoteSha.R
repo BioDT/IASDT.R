@@ -8,7 +8,7 @@
 #' one or more specified R packages. It is useful for tracking the exact version
 #' of a package's source code.
 #' @name Package_RemoteSha
-#' @param ... character. Names of one or more R packages for which to retrieve
+#' @param ... Character. Names of one or more R packages for which to retrieve
 #'   the remote SHA.
 #' @return A named character vector where names are the package names and values
 #'   are the corresponding remote SHAs.

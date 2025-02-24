@@ -8,14 +8,14 @@
 #' handles data preparation, model initialization, and generation of SLURM
 #' commands.
 #'
-#' @param Model Character. Path to a saved model file (`*.qs2`).
-#' @param CVName Character vector. Column name(s) in the model input data to be 
-#'   used to cross-validate the models (see [Mod_PrepData] and [Mod_GetCV]). 
-#'   The function allows the possibility of using more than one way of 
-#'   assigning grid cells into cross-validation folders. If multiple names are 
-#'   provided, separate cross-validation models will be fitted for each 
-#'   cross-validation type. Currently, there are three cross-validation 
-#'   strategies: `CV_SAC`, `CV_Dist`, and `CV_Large`. Defaults to `c("CV_Dist", 
+#' @param Path_Model Character. Path to a saved model file (`*.qs2`).
+#' @param CVName Character vector. Column name(s) in the model input data to be
+#'   used to cross-validate the models (see [Mod_PrepData] and [Mod_GetCV]).
+#'   The function allows the possibility of using more than one way of
+#'   assigning grid cells into cross-validation folders. If multiple names are
+#'   provided, separate cross-validation models will be fitted for each
+#'   cross-validation type. Currently, there are three cross-validation
+#'   strategies: `CV_SAC`, `CV_Dist`, and `CV_Large`. Defaults to `c("CV_Dist",
 #'   "CV_Large")`.
 #' @param Partitions A vector for cross-validation created by
 #'   [Hmsc::createPartition] or similar. Defaults to `NULL`, which means to use
@@ -24,7 +24,7 @@
 #' @param InitPar a named list of parameter values used for initialization of
 #'   MCMC states. See [Hmsc::computePredictedValues] for more information.
 #'   Default: `NULL`.
-#' @param JobName Character. Name of the submitted job(s) for SLURM. Default: 
+#' @param JobName Character. Name of the submitted job(s) for SLURM. Default:
 #'   `CV_Models`.
 #' @param Updater named `list`. Which conditional updaters should be
 #'   omitted? See [Hmsc::computePredictedValues] for more information. Defaults
@@ -46,7 +46,7 @@
 #' @name Mod_CV_Fit
 
 Mod_CV_Fit <- function(
-    Model = NULL, CVName = c("CV_Dist", "CV_Large"), Partitions = NULL,
+    Path_Model = NULL, CVName = c("CV_Dist", "CV_Large"), Partitions = NULL,
     EnvFile = ".env", InitPar = NULL, JobName = "CV_Models",
     Updater = list(Gamma2 = FALSE, GammaEta = FALSE),
     AlignPost = TRUE, ToJSON = FALSE, FromHPC = TRUE, PrepSLURM = TRUE,
@@ -63,7 +63,7 @@ Mod_CV_Fit <- function(
   # Check input parameters -----
   IASDT.R::CatTime("Check input parameters")
 
-  NullVarsNames <- c("Model", "Path_Hmsc", "MemPerCpu", "Time", "EnvFile")
+  NullVarsNames <- c("Path_Model", "Path_Hmsc", "MemPerCpu", "Time", "EnvFile")
   NullVars <- which(purrr::map_lgl(.x = NullVarsNames, .f = ~ is.null(get(.x))))
 
   if (length(NullVars) > 0) {
@@ -82,7 +82,7 @@ Mod_CV_Fit <- function(
 
   # character arguments
   CharArgs <- c(
-    "Model", "JobName", "EnvFile", "Time", "MemPerCpu", "Path_Hmsc")
+    "Path_Model", "JobName", "EnvFile", "Time", "MemPerCpu", "Path_Hmsc")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = CharArgs, Type = "character")
 
   # numeric arguments
@@ -95,7 +95,7 @@ Mod_CV_Fit <- function(
       call. = FALSE)
   }
 
-  if (!file.exists(Model)) {
+  if (!file.exists(Path_Model)) {
     stop("Model path does not exist.", call. = FALSE)
   }
 
@@ -107,11 +107,11 @@ Mod_CV_Fit <- function(
   IASDT.R::CatTime("Loading model")
 
   # Path of the cross-validation folder
-  Path_CV <- IASDT.R::Path(dirname(dirname(Model)), "Model_Fitting_CV")
+  Path_CV <- IASDT.R::Path(dirname(dirname(Path_Model)), "Model_Fitting_CV")
 
   # Path of the model input data
   Path_ModelData <- list.files(
-    path = dirname(dirname(Model)),
+    path = dirname(dirname(Path_Model)),
     pattern = "^ModDT_.+_subset.RData", full.names = TRUE)
   if (length(Path_ModelData) != 1) {
     stop(
@@ -120,7 +120,7 @@ Mod_CV_Fit <- function(
   }
 
   # Loading full model object
-  Model_Full <- IASDT.R::LoadAs(Model)
+  Model_Full <- IASDT.R::LoadAs(Path_Model)
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -330,7 +330,7 @@ Mod_CV_Fit <- function(
               rownames(dfPi) <- rownames(valCoords) <- dfPi$sample
 
               tibble::tibble(
-                Path_ModFull = Model,
+                Path_ModFull = Path_Model,
                 CV = k,
                 Path_ModInit = Path_ModInit,
                 Path_ModInit_rds = Path_ModInit_rds,

@@ -96,7 +96,7 @@ When computations are finished on GPU, the function can later be rerun with
 \code{LF_Only = FALSE} (default) to predict habitat suitability using the
 already-computed latent factor predictions.}
 
-\item{LF_Commands_Only}{logical. If \code{TRUE}, returns the command to run the
+\item{LF_Commands_Only}{Logical. If \code{TRUE}, returns the command to run the
 Python script. Default is \code{FALSE}.}
 
 \item{Temp_Dir}{Character. Path for temporary storage of intermediate files.}

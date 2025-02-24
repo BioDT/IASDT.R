@@ -29,7 +29,7 @@
 #'   `TRUE`.
 #' @param TF_Environ Character. Path to the Python environment. This argument is
 #'   required if `UseTF` is `TRUE`.
-#' @param LF_Commands_Only logical. If `TRUE`, returns the command to run the
+#' @param LF_Commands_Only Logical. If `TRUE`, returns the command to run the
 #'   Python script. Default is `FALSE`.
 #' @param TF_use_single Logical. Whether to use single precision for the
 #'   TensorFlow calculations. Defaults to `FALSE`.

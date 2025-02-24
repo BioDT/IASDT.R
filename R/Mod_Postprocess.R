@@ -27,6 +27,9 @@
 #'   variance partitioning processing jobs, respectively. Default is `01:00:00`.
 #' @param RC_NCores Integer. The number of cores to use for response curve
 #'   prediction. Defaults to `8`.
+#' @param PlotWidth_Omega,PlotHeight_Omega,PlotWidth_Beta,PlotHeight_Beta
+#'   Integer. The width and height of the generated heatmaps of the Omega and
+#'   Beta parameters in centimeters.
 #' @rdname Mod_postprocessing
 #' @name Mod_postprocessing
 #' @order 1
@@ -123,7 +126,9 @@ Mod_Postprocess_1_CPU <- function(
     N_Grid = 50L, UseTF = TRUE, TF_use_single = FALSE, LF_NCores = NCores,
     LF_Temp_Cleanup = TRUE, LF_Check = FALSE, Temp_Cleanup = TRUE,
     TF_Environ = NULL, Pred_Clamp = TRUE, Fix_Efforts = "q90",
-    Fix_Rivers = "q90", Pred_NewSites = TRUE, NCores_VP = 3) {
+    Fix_Rivers = "q90", Pred_NewSites = TRUE, NCores_VP = 3,
+    PlotWidth_Omega = 26, PlotHeight_Omega = 22.5,
+    PlotWidth_Beta = 25, PlotHeight_Beta = 35) {
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -321,7 +326,7 @@ Mod_Postprocess_1_CPU <- function(
 
   IASDT.R::Mod_Heatmap_Omega(
     Path_Model = Path_Model, SupportLevel = 0.95,
-    PlotWidth = 22, PlotHeight = 20)
+    PlotWidth = PlotWidth_Omega, PlotHeight = PlotHeight_Omega)
 
   invisible(gc())
 
@@ -332,7 +337,7 @@ Mod_Postprocess_1_CPU <- function(
 
   IASDT.R::Mod_Heatmap_Beta(
     Path_Model = Path_Model, SupportLevel = 0.95,
-    PlotWidth = 26, PlotHeight = 20)
+    PlotWidth = PlotWidth_Beta, PlotHeight = PlotHeight_Beta)
 
   invisible(gc())
 
@@ -342,7 +347,7 @@ Mod_Postprocess_1_CPU <- function(
 
   Ch1("Prepare input data for cross-validation")
   IASDT.R::Mod_CV_Fit(
-    Model = Path_Model, CVName = CVName, EnvFile = EnvFile,
+    Path_Model = Path_Model, CVName = CVName, EnvFile = EnvFile,
     JobName = paste0("CV_", Hab_Abb), FromHPC = FromHPC,
     MemPerCpu = MemPerCpu, Time = Time, Path_Hmsc = Path_Hmsc)
 

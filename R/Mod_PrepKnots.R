@@ -15,7 +15,7 @@
 #'   parameters of the [Hmsc::constructKnots] function.
 #' @param JitterDist Numeric. The jitter distance applied to
 #'   overlapping coordinates to avoid exact duplicates. Defaults to 100 meters.
-#' @param MinLF,MaxLF integer. Minimum and maximum number of latent factors to
+#' @param MinLF,MaxLF Integer. Minimum and maximum number of latent factors to
 #'   be used. Both default to `NULL` which means that the number of latent
 #'   factors will be estimated from the data. If either is provided, the
 #'   respective values will be used as arguments to [Hmsc::setPriors].

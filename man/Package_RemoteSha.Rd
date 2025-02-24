@@ -7,7 +7,7 @@
 Package_RemoteSha(...)
 }
 \arguments{
-\item{...}{character. Names of one or more R packages for which to retrieve
+\item{...}{Character. Names of one or more R packages for which to retrieve
 the remote SHA.}
 }
 \value{

@@ -12,21 +12,21 @@
 #' @param Path_Coda Character. Path to a saved coda object containing MCMC
 #'   samples.
 #' @param Path_Model Character. Path to a saved Hmsc model object.
-#' @param EnvFile Character. Path to the environment file containing paths to 
+#' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
-#' @param FromHPC Logical. Whether the processing is being done on an 
-#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#' @param FromHPC Logical. Whether the processing is being done on an
+#'   High-Performance Computing (HPC) environment, to adjust file paths
 #'   accordingly. Default: `TRUE`.
 #' @param Title Character. Title for **rho** and **alpha** convergence plots.
 #'   Default: " "
 #' @param NOmega Integer. Number of species interactions sampled for Omega
 #'   parameter diagnostics. Default: 1000L
-#' @param NCores Integer. Number of CPU cores to use for parallel processing. 
+#' @param NCores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 8.
-#' @param NRC Numeric vector. Grid layout (rows&times;columns) for arranging 
-#'   alpha parameter plots. Default: `c(2, 2)`. If `NULL`, the layout is 
+#' @param NRC Numeric vector. Grid layout (rows&times;columns) for arranging
+#'   alpha parameter plots. Default: `c(2, 2)`. If `NULL`, the layout is
 #'   automatically determined based on the number of alpha levels.
-#' @param Beta_NRC Numeric vector. The grid layout (rows&times;columns) for 
+#' @param Beta_NRC Numeric vector. The grid layout (rows&times;columns) for
 #'   arranging beta parameter plots. Default: `c(3, 3)`.
 #' @param SavePlotData Logical. If `TRUE` (default), saves the plot data as
 #'   `.RData` files.
@@ -84,7 +84,7 @@ Convergence_Plot <- function(
     Species <- Variable <- data <- PlotID <- File <- Page <- Iter <- Value <-
     Chain <- y <- label <- Var_Sp <- CI_025 <- CI_975 <- Var_Min <- Var_Max <-
     Variable2 <- Plot_File <- Var_Sp2 <- Species_name <- Species_File <-
-    Path_PA <- NULL
+    Path_PA <- VarDesc <- Term <- NULL
 
   # # ..................................................................... ###
 
@@ -105,7 +105,6 @@ Convergence_Plot <- function(
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric", Args = c("NOmega", "NCores", "NRC"))
   rm(AllArgs, envir = environment())
-
 
   # # ..................................................................... ###
 
@@ -457,7 +456,7 @@ Convergence_Plot <- function(
       })
     })
 
-  rm(OmegaPlotList, PlotObj_Omega, envir = environment())
+  rm(OmegaPlotList, PlotObj_Omega, Obj_Omega, envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###
@@ -469,9 +468,68 @@ Convergence_Plot <- function(
   FileConv_Beta <- IASDT.R::Path(Path_Convergence, "Convergence_Beta.RData")
 
   if (file.exists(FileConv_Beta)) {
+
     IASDT.R::CatTime("Loading plotting data", Level = 1)
     PlotObj_Beta <- IASDT.R::LoadAs(FileConv_Beta)
+
   } else {
+
+    HTML1 <- "<span style='color:blue;'><b>"
+    HTML2 <- "</b></span>"
+    Intercept <- c(
+      Variable = "Intercept",
+      VarDesc = stringr::str_glue("{HTML1}Intercept{HTML2}"))
+
+    LinearTerms <- tibble::tribble(
+      ~Variable, ~VarDesc,
+      "RiversLog", "% Habitat coverage",
+      "RoadRailLog", "Road + Rail intensity",
+      "EffortsLog", "Sampling efforts",
+      "HabLog", "River length") %>%
+      dplyr::mutate(
+        VarDesc = stringr::str_glue(
+          "{HTML1}{stringr::str_to_sentence(VarDesc)}{HTML2}"),
+        VarDesc = paste0(VarDesc, " (log<sub>10</sub>(x + 0.1))")) %>%
+      dplyr::bind_rows(Intercept, .)
+
+    HTML1 <- "<span style='color:blue;'><b>"
+    HTML2 <- "</b></span><span style='color:grey;'>"
+    HTML3 <- "</span>"
+    VarsDesc <- tibble::tribble(
+      ~Variable, ~VarDesc,
+      "bio1", "annual mean temperature",
+      "bio2", "mean diurnal range",
+      "bio3", "isothermality (bio2/bio7)",
+      "bio4", "temperature seasonality",
+      "bio5", "max temperature of warmest month",
+      "bio6", "temperature of the coldest month",
+      "bio7", "temperature annual range (bio5-bio6)",
+      "bio8", "temperatures of the wettest quarter",
+      "bio9", "mean temperature of driest quarter",
+      "bio10", "mean temperature of warmest quarter",
+      "bio11", "mean temperature of coldest quarter",
+      "bio12", "annual precipitation amount",
+      "bio13", "precipitation of wettest month",
+      "bio14", "precipitation of driest month",
+      "bio15", "precipitation seasonality",
+      "bio16", "precipitation of wettest quarter",
+      "bio17", "precipitation of driest quarter",
+      "bio18", "precipitation of the warmest quarter",
+      "bio19", "precipitation of coldest quarter",
+      "npp", "net primary productivity") %>%
+      tidyr::expand_grid(Term = c("L", "Q")) %>%
+      dplyr::mutate(
+        VarDesc = stringr::str_glue(
+          "{HTML1}{stringr::str_to_sentence(Variable)}\\
+        {HTML2} [{VarDesc}]{HTML3} - {Term}"),
+        VarDesc = stringr::str_replace(
+          VarDesc, " - L$", "&nbsp&nbsp&mdash&nbsp&nbspLinear"),
+        VarDesc = stringr::str_replace(
+          VarDesc, " - Q$", "&nbsp&nbsp&mdash&nbsp&nbspQuadratic"),
+        Variable = paste0(Variable, "_", Term),
+        Term = NULL) %>%
+      dplyr::bind_rows(LinearTerms)
+
     IASDT.R::CatTime("Prepare trace plots", Level = 1)
 
     BetaNames <- attr(Obj_Beta[[1]], "dimnames")[[2]]
@@ -593,6 +651,7 @@ Convergence_Plot <- function(
 
         DT_all <- IASDT.R::LoadAs(Var_Sp_File)
         DT_all$Post <- NULL
+        invisible(gc())
 
         ## Gelman convergence diagnostic
         Label_Gelman <- round(DT_all$Gelman$psrf, 3) %>%
@@ -639,7 +698,6 @@ Convergence_Plot <- function(
             color = "transparent", linewidth = 0.6) +
           ggplot2::scale_color_manual(values = Cols) +
           ggplot2::scale_x_continuous(expand = c(0, 0)) +
-          # ggplot2::scale_y_continuous(expand = c(0, 0)) +
           ggtext::geom_richtext(
             mapping = ggplot2::aes(x = x, y = y, label = label),
             data = Label_Gelman, inherit.aes = FALSE, size = 3.5, hjust = 1,
@@ -712,7 +770,8 @@ Convergence_Plot <- function(
       future.packages = c(
         "dplyr", "ggplot2", "ggtext", "magrittr", "coda", "IASDT.R")) %>%
       dplyr::bind_rows() %>%
-      dplyr::left_join(Beta_DF, ., by = "Var_Sp")
+      dplyr::left_join(Beta_DF, ., by = "Var_Sp") %>%
+      dplyr::left_join(VarsDesc, by = "Variable")
 
     # Stopping cluster
     if (NCores > 1) {
@@ -728,7 +787,7 @@ Convergence_Plot <- function(
       IASDT.R::CatTime("Save trace plot data", Level = 2)
       IASDT.R::SaveAs(
         InObj = PlotObj_Beta, OutObj = "Convergence_Beta",
-        OutPath = IASDT.R::Path(Path_Convergence, "Convergence_Beta.RData"))
+        OutPath = FileConv_Beta)
     }
   }
 
@@ -740,8 +799,8 @@ Convergence_Plot <- function(
 
   IASDT.R::CatTime("Preparing data", Level = 2)
   BetaTracePlots_ByVar <- dplyr::arrange(PlotObj_Beta, Variable, IAS_ID) %>%
-    dplyr::select(Variable, Plot_File) %>%
-    tidyr::nest(Plot_File = c("Plot_File")) %>%
+    dplyr::select(Variable, Plot_File, VarDesc) %>%
+    tidyr::nest(Plot_File = "Plot_File") %>%
     dplyr::mutate(Plot_File = purrr::map(Plot_File, unlist))
 
   # Prepare working on parallel
@@ -762,12 +821,10 @@ Convergence_Plot <- function(
   BetaTracePlots_ByVar0 <- future.apply::future_lapply(
     X = BetaTracePlots_ByVar$Variable,
     FUN = function(x) {
-      VarName <- dplyr::case_when(
-        x == "HabLog" ~ "% Habitat coverage",
-        x == "RoadRailLog" ~ "Road + Rail intensity",
-        x == "EffortsLog" ~ "Sampling efforts",
-        x == "RiversLog" ~ "River length",
-        .default = x)
+
+      VarDesc <- BetaTracePlots_ByVar %>%
+        dplyr::filter(Variable == x) %>%
+        dplyr::pull(VarDesc)
 
       Plots <- dplyr::filter(BetaTracePlots_ByVar, Variable == x) %>%
         dplyr::pull(Plot_File) %>%
@@ -785,22 +842,19 @@ Convergence_Plot <- function(
       rm(Plots, envir = environment())
 
       PlotTitle <- ggplot2::ggplot() +
-        ggplot2::labs(
-          title = paste0("Convergence of the beta parameter - ", VarName)) +
+        ggplot2::labs(title = VarDesc) +
         ggplot2::theme_minimal() +
         ggplot2::theme(
-          plot.title = ggplot2::element_text(
-            face = "bold", size = 24, hjust = 0.5))
+          plot.title = ggtext::element_markdown(
+            size = 24, hjust = 0.5, margin = ggplot2::margin(t = 15, b = 15)))
 
       PlotTitleFixed <- ggplot2::ggplot() +
         ggplot2::labs(
-          title = paste0(
-            "Convergence of the beta parameter - ", VarName,
-            " (fixed y-axis range)")) +
+          title = paste0(VarDesc, " (fixed y-axis range)")) +
         ggplot2::theme_minimal() +
         ggplot2::theme(
-          plot.title = ggplot2::element_text(
-            face = "bold", size = 24, hjust = 0.5))
+          plot.title = ggtext::element_markdown(
+            size = 24, hjust = 0.5, margin = ggplot2::margin(t = 15, b = 15)))
 
       BetaPlotList <- tibble::tibble(PlotID = seq_len(length(BetaPlots))) %>%
         dplyr::mutate(Page = ceiling(PlotID / (NRC[2] * NRC[1]))) %>%
@@ -814,7 +868,7 @@ Convergence_Plot <- function(
                 plotlist = BetaPlots[ID],
                 ncol = NRC[2], nrow = NRC[1], align = "hv") %>%
                 cowplot::plot_grid(
-                  PlotTitle, ., ncol = 1, rel_heights = c(0.04, 1))
+                  PlotTitle, ., ncol = 1, rel_heights = c(0.035, 1))
             }),
           PlotFixedY = purrr::map(
             .x = PlotID,
@@ -825,7 +879,7 @@ Convergence_Plot <- function(
                 ncol = NRC[2], nrow = NRC[1], align = "hv") %>%
                 cowplot::plot_grid(
                   PlotTitleFixed, .,
-                  ncol = 1, rel_heights = c(0.04, 1))
+                  ncol = 1, rel_heights = c(0.035, 1))
             }))
 
       invisible({
@@ -833,18 +887,20 @@ Convergence_Plot <- function(
           filename = IASDT.R::Path(
             Path_Convergence, paste0("Convergence_Beta_", x, "_FreeY.pdf")),
           width = 18, height = 13, onefile = TRUE)
-        purrr::map(BetaPlotList$Plot, grid::grid.draw, recording = FALSE)
+        purrr::walk(BetaPlotList$Plot, grid::grid.draw, recording = FALSE)
         grDevices::dev.off()
 
         grDevices::cairo_pdf(
           filename = IASDT.R::Path(
             Path_Convergence, paste0("Convergence_Beta_", x, "_FixedY.pdf")),
           width = 18, height = 13, onefile = TRUE)
-        purrr::map(.x = BetaPlotList$PlotFixedY, .f = grid::grid.draw)
+        purrr::walk(.x = BetaPlotList$PlotFixedY, .f = grid::grid.draw)
         grDevices::dev.off()
       })
 
-      rm(PlotTitle, PlotTitleFixed, BetaPlotsFixedY, BetaPlots, BetaPlotList)
+      rm(
+        PlotTitle, PlotTitleFixed, BetaPlotsFixedY, BetaPlots, BetaPlotList,
+        envir = environment())
 
       invisible(gc())
       return(NULL)
@@ -875,7 +931,7 @@ Convergence_Plot <- function(
   Order <- stringr::str_remove_all(ModVars, "\\(|\\)")
   BetaTracePlots_BySp <- PlotObj_Beta %>%
     dplyr::arrange(Species, factor(Variable, levels = Order)) %>%
-    dplyr::select(Species, IAS_ID, Plot_File, Variable) %>%
+    dplyr::select(Species, IAS_ID, Plot_File, Variable, VarDesc) %>%
     tidyr::nest(data = -c("Species", "IAS_ID")) %>%
     dplyr::left_join(SpSummary, by = "Species")
 
@@ -897,10 +953,9 @@ Convergence_Plot <- function(
   BetaTracePlots_BySp0 <- future.apply::future_lapply(
     X = BetaTracePlots_BySp$Species,
     FUN = function(x) {
+
       PlotTitle <- ggplot2::ggplot() +
-        ggplot2::labs(
-          title = paste0(
-            "Convergence of the beta parameter - <i>", x, "</i>")) +
+        ggplot2::labs(title = paste0("<i>", x, "</i>")) +
         ggplot2::theme_minimal() +
         ggplot2::theme(
           plot.title = ggtext::element_markdown(
@@ -916,24 +971,14 @@ Convergence_Plot <- function(
       SpPlots <- SpDT$data[[1]] %>%
         dplyr::arrange(factor(Variable, levels = VarOrder)) %>%
         dplyr::mutate(
-          Variable2 = purrr::map_chr(
-            .x = Variable,
-            .f = ~ {
-              dplyr::case_when(
-                .x == "HabLog" ~ "% Habitat coverage",
-                .x == "RoadRailLog" ~ "Road + Rail intensity",
-                .x == "EffortsLog" ~ "Sampling efforts",
-                .x == "RiversLog" ~ "River length",
-                .default = .x)
-            }),
           Plot = purrr::map2(
-            .x = Plot_File, .y = Variable2,
+            .x = Plot_File, .y = VarDesc,
             .f = ~ {
               Plot <- IASDT.R::LoadAs(.x)$Plot +
                 ggplot2::ggtitle(.y) +
                 ggplot2::theme(
-                  plot.title = ggplot2::element_text(
-                    hjust = 0.5, size = 22, face = "bold", colour = "red",
+                  plot.title = ggtext::element_markdown(
+                    hjust = 0.5, size = 15, colour = "red",
                     margin = ggplot2::margin(0, 0, -2.5, 0)))
 
               if (MarginType == "histogram") {
@@ -951,7 +996,7 @@ Convergence_Plot <- function(
             })) %>%
         dplyr::pull("Plot")
 
-      NumPages <- length(SpPlots) / (Beta_NRC[1] * Beta_NRC[2])
+      NumPages <- ceiling(length(SpPlots) / (Beta_NRC[1] * Beta_NRC[2]))
 
       SpPlots2 <- IASDT.R::SplitVector(
         Vector = seq_len(length(SpPlots)), NSplit = NumPages) %>%
@@ -970,7 +1015,7 @@ Convergence_Plot <- function(
           filename = IASDT.R::Path(
             Path_Convergence_BySp,
             paste0(
-              "Convergence_Beta_", SpDT$IAS_ID, "_", 
+              "Convergence_Beta_", SpDT$IAS_ID, "_",
               SpDT$Species_File, ".pdf")),
           width = 23, height = 17, onefile = TRUE)
         purrr::walk(SpPlots2, grid::grid.draw)
@@ -982,7 +1027,7 @@ Convergence_Plot <- function(
     },
     future.scheduling = Inf, future.seed = TRUE,
     future.globals = c(
-      "BetaTracePlots_BySp", "Path_Convergence_BySp", "Beta_NRC"),
+      "MarginType", "BetaTracePlots_BySp", "Path_Convergence_BySp", "Beta_NRC"),
     future.packages = c("dplyr", "coda", "ggplot2", "ggExtra", "ggtext"))
 
   if (NCores > 1) {

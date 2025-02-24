@@ -5,7 +5,7 @@
 \title{Prepare cross-Validated Hmsc models for HPC fitting}
 \usage{
 Mod_CV_Fit(
-  Model = NULL,
+  Path_Model = NULL,
   CVName = c("CV_Dist", "CV_Large"),
   Partitions = NULL,
   EnvFile = ".env",
@@ -24,7 +24,7 @@ Mod_CV_Fit(
 )
 }
 \arguments{
-\item{Model}{Character. Path to a saved model file (\verb{*.qs2}).}
+\item{Path_Model}{Character. Path to a saved model file (\verb{*.qs2}).}
 
 \item{CVName}{Character vector. Column name(s) in the model input data to be
 used to cross-validate the models (see \link{Mod_PrepData} and \link{Mod_GetCV}).
@@ -32,7 +32,7 @@ The function allows the possibility of using more than one way of
 assigning grid cells into cross-validation folders. If multiple names are
 provided, separate cross-validation models will be fitted for each
 cross-validation type. Currently, there are three cross-validation
-strategies: \code{CV_SAC}, \code{CV_Dist}, and \code{CV_Large}. Defaults to \code{c("CV_Dist",  "CV_Large")}.}
+strategies: \code{CV_SAC}, \code{CV_Dist}, and \code{CV_Large}. Defaults to \code{c("CV_Dist", "CV_Large")}.}
 
 \item{Partitions}{A vector for cross-validation created by
 \link[Hmsc:createPartition]{Hmsc::createPartition} or similar. Defaults to \code{NULL}, which means to use

@@ -11,9 +11,9 @@
 #' The function ensures that the data is evenly distributed among the chunks as
 #' much as possible.
 #' @param DF `data.frame`. The data.frame to be split into chunks.
-#' @param ChunkSize integer. Number of rows each chunk should contain. It must 
+#' @param ChunkSize Integer. Number of rows each chunk should contain. It must 
 #'   be a positive integer and less than the number of rows in `DF`.
-#' @param NChunks integer. Number of chunks to split the data.frame into. It 
+#' @param NChunks Integer. Number of chunks to split the data.frame into. It 
 #'   must be a positive integer.
 #' @param Prefix Character. Prefix for the names of the chunks. Default is
 #'   "Chunk".

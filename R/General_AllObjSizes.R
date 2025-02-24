@@ -8,8 +8,8 @@
 #' using [lobstr::obj_size] and prints a summary of objects that are greater
 #' than a specified size threshold. It is useful for memory management and
 #' identifying large objects in the workspace.
-#' @param GreaterThan Numeric. Size threshold in MB. Only objects larger than 
-#'   this value will be shown. Default is 0, which means all objects will be 
+#' @param GreaterThan Numeric. Size threshold in MB. Only objects larger than
+#'   this value will be shown. Default is 0, which means all objects will be
 #'   shown. `GreaterThan` must be a non-negative number.
 #' @param InFunction Logical. This controls the scope of the function. It
 #'   indicates whether the execution is done inside or outside of a function.
@@ -96,16 +96,15 @@ AllObjSizes <- function(
 
     if (nrow(AllVarsSize) > 0) {
       cat(crayon::blue(
-        "---------------------------------------------\n",
+        "---------------------------------------------------\n\t",
         crayon::bold(sum(!is.na(AllVarsSize$Size))),
-        " Object(s) fulfill the criteria.\n",
-        "---------------------------------------------\n",
+        " Object(s) fulfill the criteria\n",
+        "---------------------------------------------------\n",
         sep = ""),
         sep = "")
 
       withr::local_options(list(pillar.sigfig = 4))
-      print(AllVarsSize, row.names = FALSE, n = N)
-
+      print(AllVarsSize, n = N)
 
       if (sum(is.na(AllVarsSize$Size)) > 0) {
         NA_Var <- dplyr::filter(AllVarsSize, is.na(.data$Size)) %>%

@@ -24,7 +24,7 @@ parameters of the \link[Hmsc:constructKnots]{Hmsc::constructKnots} function.}
 \item{JitterDist}{Numeric. The jitter distance applied to
 overlapping coordinates to avoid exact duplicates. Defaults to 100 meters.}
 
-\item{MinLF, MaxLF}{integer. Minimum and maximum number of latent factors to
+\item{MinLF, MaxLF}{Integer. Minimum and maximum number of latent factors to
 be used. Both default to \code{NULL} which means that the number of latent
 factors will be estimated from the data. If either is provided, the
 respective values will be used as arguments to \link[Hmsc:setPriors]{Hmsc::setPriors}.}

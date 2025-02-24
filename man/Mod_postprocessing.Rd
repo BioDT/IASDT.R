@@ -35,7 +35,11 @@ Mod_Postprocess_1_CPU(
   Fix_Efforts = "q90",
   Fix_Rivers = "q90",
   Pred_NewSites = TRUE,
-  NCores_VP = 3
+  NCores_VP = 3,
+  PlotWidth_Omega = 26,
+  PlotHeight_Omega = 22.5,
+  PlotWidth_Beta = 25,
+  PlotHeight_Beta = 35
 )
 
 Mod_Prep_TF(
@@ -127,7 +131,7 @@ The function allows the possibility of using more than one way of
 assigning grid cells into cross-validation folders. If multiple names are
 provided, separate cross-validation models will be fitted for each
 cross-validation type. Currently, there are three cross-validation
-strategies: \code{CV_SAC}, \code{CV_Dist}, and \code{CV_Large}. Defaults to \code{c("CV_Dist",  "CV_Large")}.}
+strategies: \code{CV_SAC}, \code{CV_Dist}, and \code{CV_Large}. Defaults to \code{c("CV_Dist", "CV_Large")}.}
 
 \item{N_Grid}{Integer. Number of points along the gradient for continuous
 focal variables. Higher values result in smoother curves. Default: 50. See
@@ -181,6 +185,9 @@ removed in future updates.}
 
 \item{NCores_VP}{Integer. Number of cores to use for variance partitioning.
 Defaults to 3.}
+
+\item{PlotWidth_Omega, PlotHeight_Omega, PlotWidth_Beta, PlotHeight_Beta}{Integer. The width and height of the generated heatmaps of the Omega and
+Beta parameters in centimeters.}
 
 \item{Path_Models}{Character. Directory for fitted models. Default is
 \code{datasets/processed/model_fitting}. A subdirectory \code{TF_postprocess} will be

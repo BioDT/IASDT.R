@@ -9,10 +9,10 @@ SplitDF2Chunks(DF = NULL, ChunkSize = NULL, NChunks = NULL, Prefix = "Chunk")
 \arguments{
 \item{DF}{\code{data.frame}. The data.frame to be split into chunks.}
 
-\item{ChunkSize}{integer. Number of rows each chunk should contain. It must
+\item{ChunkSize}{Integer. Number of rows each chunk should contain. It must
 be a positive integer and less than the number of rows in \code{DF}.}
 
-\item{NChunks}{integer. Number of chunks to split the data.frame into. It
+\item{NChunks}{Integer. Number of chunks to split the data.frame into. It
 must be a positive integer.}
 
 \item{Prefix}{Character. Prefix for the names of the chunks. Default is

@@ -109,7 +109,7 @@ value is used for both \code{knotDist} and \code{minKnotDist} in
 \item{GPP_Plot}{Logical. Whether to plot the coordinates of the sampling
 units and the knots in a pdf file. Default: \code{TRUE}.}
 
-\item{MinLF, MaxLF}{integer. Minimum and maximum number of latent factors to
+\item{MinLF, MaxLF}{Integer. Minimum and maximum number of latent factors to
 be used. Both default to \code{NULL} which means that the number of latent
 factors will be estimated from the data. If either is provided, the
 respective values will be used as arguments to \link[Hmsc:setPriors]{Hmsc::setPriors}.}

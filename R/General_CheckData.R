@@ -9,7 +9,7 @@
 #' successfully and contains a non-null object, returning `TRUE`. Otherwise, it
 #' returns `FALSE`.
 #' @param File Character. The path to the file to be checked. Cannot be empty.
-#' @param warning logical. If `TRUE` (default), warnings will be printed if the
+#' @param warning Logical. If `TRUE` (default), warnings will be printed if the
 #'   file does not exist.
 #' @param nthreads Integer. The number of threads to use when reading qs2 files.
 #'   Default is 5.

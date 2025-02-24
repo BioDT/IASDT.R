@@ -22,7 +22,7 @@ CheckFeather(File, warning = TRUE)
 \arguments{
 \item{File}{Character. The path to the file to be checked. Cannot be empty.}
 
-\item{warning}{logical. If \code{TRUE} (default), warnings will be printed if the
+\item{warning}{Logical. If \code{TRUE} (default), warnings will be printed if the
 file does not exist.}
 
 \item{nthreads}{Integer. The number of threads to use when reading qs2 files.

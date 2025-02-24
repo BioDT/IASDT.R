@@ -123,7 +123,7 @@ the files exist without checking their integrity. Default is \code{FALSE}.}
 \item{LF_Temp_Cleanup}{Logical. Whether to delete temporary files in the
 \code{Temp_Dir} directory after finishing the LF predictions.}
 
-\item{LF_Commands_Only}{logical. If \code{TRUE}, returns the command to run the
+\item{LF_Commands_Only}{Logical. If \code{TRUE}, returns the command to run the
 Python script. Default is \code{FALSE}.}
 
 \item{Pred_Dir}{Character. Directory path indicating where the predictions

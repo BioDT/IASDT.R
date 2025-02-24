@@ -52,7 +52,7 @@ function. Default is 50L.}
 \item{solve_max_attempts}{Integer. Maximum number of attempts to run solve
 and crossprod internal function \link{run_crossprod_solve}. Default is 5L.}
 
-\item{LF_Commands_Only}{logical. If \code{TRUE}, returns the command to run the
+\item{LF_Commands_Only}{Logical. If \code{TRUE}, returns the command to run the
 Python script. Default is \code{FALSE}.}
 }
 \value{

@@ -442,7 +442,7 @@ Predict_Maps <- function(
       stats::setNames("EffortsLog")
 
 
-    if (Fix_Efforts) {
+    if (Pred_Clamp) {
 
       IASDT.R::CatTime("Fixing sampling efforts values", Level = 2)
 

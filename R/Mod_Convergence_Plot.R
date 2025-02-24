@@ -626,16 +626,17 @@ Convergence_Plot <- function(
     invisible(gc())
 
     if (NCores > 1) {
-      # Prepare working on parallel
-      IASDT.R::CatTime("Prepare working on parallel", Level = 3)
-      withr::local_options(
-        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
-        future.seed = TRUE)
-      c1 <- snow::makeSOCKcluster(min(NCores, nrow(Beta_DF)))
-      on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-      future::plan("future::cluster", workers = c1, gc = TRUE)
-      on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
-
+      if (.Platform$OS.type == "windows") {
+        # Use cluster for Windows
+        c1 <- snow::makeSOCKcluster(min(NCores, nrow(Beta_DF)))
+        on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
+        future::plan("future::cluster", workers = c1)
+        on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
+      } else {
+        # Use multicore for Linux/Mac
+        future::plan("future::multicore", workers = min(NCores, nrow(Beta_DF)))
+        on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
+      }
     } else {
       future::plan("future::sequential", gc = TRUE)
     }
@@ -643,9 +644,9 @@ Convergence_Plot <- function(
     # Prepare plots
     IASDT.R::CatTime("Prepare plots", Level = 3)
 
-    PlotObj_Beta <- furrr::future_map(
-      .x = seq_len(nrow(Beta_DF)),
-      .f = function(x) {
+    PlotObj_Beta <- future.apply::future_lapply(
+      X = seq_len(nrow(Beta_DF)),
+      FUN = function(x) {
         Var_Sp <- Beta_DF$Var_Sp[x]
         Species <- Beta_DF$Species[x]
         Curr_IAS <- Beta_DF$IAS_ID[x]
@@ -687,7 +688,8 @@ Convergence_Plot <- function(
             x = Iter, y = Value, color = factor(Chain))) +
           ggplot2::geom_line(linewidth = 0.15, alpha = 0.6) +
           ggplot2::geom_smooth(
-            method = "loess", formula = y ~ x, se = FALSE, linewidth = 0.8) +
+            method = "loess", formula = y ~ x, 
+            se = FALSE, linewidth = 0.8) +
           ggplot2::geom_point(alpha = 0) +
           ggplot2::geom_hline(
             yintercept = CurrCI, linetype = "dashed", color = "black",
@@ -763,147 +765,15 @@ Convergence_Plot <- function(
 
         return(tibble::tibble(Var_Sp = Var_Sp, Plot_File = Plot_File))
       },
-      .options = furrr::furrr_options(
-        seed = TRUE, scheduling = 1,
-        globals = c(
-          "Beta_DF", "NChains", "SampleSize", "Cols", "MarginType",
-          "VarsDesc", "CurrCI"),
-        packages = c(
-          "dplyr", "ggplot2", "ggtext", "magrittr", "stringr", "ggExtra",
-          "coda", "IASDT.R", "qs2", "tibble"))) %>%
+      future.seed = TRUE,
+      future.globals = c(
+        "Beta_DF", "NChains", "SampleSize", "Cols", "MarginType"),
+      future.packages = c(
+        "dplyr", "ggplot2", "ggtext", "magrittr", "stringr", "ggExtra",
+        "coda", "IASDT.R", "qs2", "tibble")) %>%
       dplyr::bind_rows() %>%
       dplyr::left_join(Beta_DF, ., by = "Var_Sp") %>%
       dplyr::left_join(VarsDesc, by = "Variable")
-
-    # PlotObj_Beta <- future.apply::future_lapply(
-    #   X = seq_len(nrow(Beta_DF)),
-    #   FUN = function(x) {
-    #     Var_Sp <- Beta_DF$Var_Sp[x]
-    #     Species <- Beta_DF$Species[x]
-    #     Curr_IAS <- Beta_DF$IAS_ID[x]
-    #     Var_Sp_File <- Beta_DF$Var_Sp_File[x]
-    #     Plot_File <- stringr::str_replace(Var_Sp_File, ".RData$", "_Plots.qs2")
-    #
-    #     DT_all <- IASDT.R::LoadAs(Var_Sp_File)
-    #     DT_all$Post <- NULL
-    #     invisible(gc())
-    #
-    #     ## Gelman convergence diagnostic
-    #     Label_Gelman <- round(DT_all$Gelman$psrf, 3) %>%
-    #       paste0(collapse = " / ") %>%
-    #       paste0("<b><i>Gelman convergence diagnostic:</i></b> ", .) %>%
-    #       data.frame(x = Inf, y = -Inf, label = .)
-    #
-    #     ## Effective sample size / CI
-    #     Label_ESS <- round(DT_all$ESS / NChains) %>%
-    #       paste0(
-    #         "<b><i>Mean effective sample size:</i></b> ", ., " / ", SampleSize)
-    #     CurrCI <- c(DT_all$CI_025, DT_all$CI_975)
-    #     Label_CI <- paste0(round(CurrCI, 4), collapse = " to ") %>%
-    #       paste0("<b><i>95% credible interval:</i></b> ", .)
-    #     Label_ESS_CI <- data.frame(
-    #       x = -Inf, y = -Inf, label = paste0(Label_ESS, "<br>", Label_CI))
-    #
-    #     Label_Panel <- data.frame(
-    #       x = Inf, y = Inf, label = paste0("<br><b><i>", Species, "</i></b>"))
-    #
-    #     PanelTitle <- c(DT_all$Class, DT_all$Order, DT_all$Family) %>%
-    #       paste0(collapse = " | ") %>%
-    #       paste0("<b>", ., "</b>") %>%
-    #       paste0("<br>", Curr_IAS) %>%
-    #       data.frame(x = -Inf, y = Inf, label = .)
-    #
-    #     Plot <- ggplot2::ggplot(
-    #       data = DT_all$DT,
-    #       mapping = ggplot2::aes(
-    #         x = Iter, y = Value, color = factor(Chain))) +
-    #       ggplot2::geom_line(linewidth = 0.15, alpha = 0.6) +
-    #       ggplot2::geom_smooth(
-    #         method = "loess", formula = y ~ x,
-    #         se = FALSE, linewidth = 0.8) +
-    #       ggplot2::geom_point(alpha = 0) +
-    #       ggplot2::geom_hline(
-    #         yintercept = CurrCI, linetype = "dashed", color = "black",
-    #         linewidth = 1) +
-    #       # Ensure that y-axis always show 0
-    #       ggplot2::geom_hline(
-    #         yintercept = 0, linetype = "dashed",
-    #         color = "transparent", linewidth = 0.6) +
-    #       ggplot2::scale_color_manual(values = Cols) +
-    #       ggplot2::scale_x_continuous(expand = c(0, 0)) +
-    #       ggtext::geom_richtext(
-    #         mapping = ggplot2::aes(x = x, y = y, label = label),
-    #         data = Label_Gelman, inherit.aes = FALSE, size = 3.5, hjust = 1,
-    #         vjust = -0, lineheight = 0, fill = NA, label.color = NA) +
-    #       ggtext::geom_richtext(
-    #         mapping = ggplot2::aes(x = x, y = y, label = label),
-    #         data = Label_ESS_CI, inherit.aes = FALSE, size = 3.5, hjust = 0,
-    #         vjust = 0, lineheight = 0, fill = NA, label.color = NA) +
-    #       ggtext::geom_richtext(
-    #         mapping = ggplot2::aes(x = x, y = y, label = label),
-    #         data = Label_Panel, inherit.aes = FALSE, colour = "blue",
-    #         hjust = 1, vjust = 1, lineheight = 0, fill = NA, label.color = NA) +
-    #       ggtext::geom_richtext(
-    #         mapping = ggplot2::aes(x = x, y = y, label = label),
-    #         data = PanelTitle, inherit.aes = FALSE, hjust = 0, vjust = 1,
-    #         lineheight = 0, fill = NA, label.color = NA) +
-    #       ggplot2::theme_bw() +
-    #       ggplot2::xlab(NULL) +
-    #       ggplot2::ylab(NULL) +
-    #       ggplot2::theme(
-    #         legend.position = "none",
-    #         axis.text = ggplot2::element_text(size = 12))
-    #
-    #     suppressMessages({
-    #       Plot2 <- Plot +
-    #         ggplot2::scale_y_continuous(
-    #           limits = c(DT_all$Var_Min, DT_all$Var_Max))
-    #     })
-    #
-    #     if (MarginType == "histogram") {
-    #       Plot_Marginal <- ggExtra::ggMarginal(
-    #         p = Plot, type = MarginType, margins = "y", size = 6,
-    #         color = "steelblue4", fill = "steelblue4", bins = 100)
-    #     } else {
-    #       Plot_Marginal <- ggExtra::ggMarginal(
-    #         p = Plot, type = MarginType, margins = "y", size = 6,
-    #         color = "steelblue4")
-    #     }
-    #     # Making marginal background matching the plot background
-    #     # https://stackoverflow.com/a/78196022/3652584
-    #     Plot_Marginal$layout$t[1] <- 1
-    #     Plot_Marginal$layout$r[1] <- max(Plot_Marginal$layout$r)
-    #
-    #     if (MarginType == "histogram") {
-    #       Plot2_Marginal <- ggExtra::ggMarginal(
-    #         p = Plot2, type = MarginType, margins = "y", size = 6,
-    #         color = "steelblue4", fill = "steelblue4", bins = 100)
-    #     } else {
-    #       Plot2_Marginal <- ggExtra::ggMarginal(
-    #         p = Plot2, type = MarginType, margins = "y", size = 6,
-    #         color = "steelblue4")
-    #     }
-    #     # Making marginal background matching the plot background
-    #     # https://stackoverflow.com/a/78196022/3652584
-    #     Plot2_Marginal$layout$t[1] <- 1
-    #     Plot2_Marginal$layout$r[1] <- max(Plot2_Marginal$layout$r)
-    #
-    #     IASDT.R::SaveAs(
-    #       InObj = list(
-    #         Plot = Plot, Plot_Marginal = Plot_Marginal,
-    #         PlotFixedY_Marginal = Plot2_Marginal),
-    #       OutPath = Plot_File)
-    #
-    #     return(tibble::tibble(Var_Sp = Var_Sp, Plot_File = Plot_File))
-    #   },
-    #   future.seed = TRUE,
-    #   future.globals = c(
-    #     "Beta_DF", "NChains", "SampleSize", "Cols", "MarginType"),
-    #   future.packages = c(
-    # #     "dplyr", "ggplot2", "ggtext", "magrittr", "coda", "IASDT.R")) %>%
-    #   dplyr::bind_rows() %>%
-    #   dplyr::left_join(Beta_DF, ., by = "Var_Sp") %>%
-    #   dplyr::left_join(VarsDesc, by = "Variable")
 
     # Stopping cluster
     if (NCores > 1) {

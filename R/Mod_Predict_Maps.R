@@ -735,7 +735,7 @@ Predict_Maps <- function(
       tibble::tibble() %>%
       sf::st_as_sf(remove = FALSE, coords = c("x", "y"), crs = 3035) %>%
       sf::st_join(Model_Coords) %>%
-      tidyr::replace_na(list(Train = FALSE))
+      tidyr::replace_na(list(Train = FALSE)) %>%
       dplyr::filter(Train == FALSE)
 
     Test_XY <- sf::st_drop_geometry(Predict_DF_Test[, c("x", "y")])

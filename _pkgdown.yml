@@ -87,12 +87,12 @@ reference:
   - Efforts_Summarize
   - Efforts_SummarizeMaps
   - Efforts_Process
-- subtitle: Railway, roads, and rivers
-  desc: Processing railway and road intensity and the length of rivers per grid cell
+- subtitle: Railway, roads, rivers, and biogeographical regions
   contents:
   - Railway_Intensity
   - Road_Intensity
   - River_Length
+  - BioReg_Process
 
 - title: Modelling functions
   desc: Functions for preparing data, running the models, and postprocessing of model outputs

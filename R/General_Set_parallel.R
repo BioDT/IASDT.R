@@ -14,7 +14,7 @@
 #' @param Cat Logical. If `TRUE` (default), logs messages via
 #'   [IASDT.R::CatTime()].
 #' @param Level Integer. The logging level for [CatTime]. Default is `0`.
-#' @param Set_parallel Numeric. Maximum allowed total size (in megabytes) of
+#' @param Future_maxSize Numeric. Maximum allowed total size (in megabytes) of
 #'   global variables identified. See `` argument of [future::future.options]
 #'   for more details
 #' @return Invisible `NULL`. On Windows with `NCores > 1`, the cluster object
@@ -46,16 +46,16 @@ Set_parallel <- function(
     1L, as.integer(NCores))
 
   # NCores can not be more than the available cores
+  AvailableCores <- parallelly::availableCores()
   NCores <- ifelse(
-    NCores > parallelly::availableCores(),
+    NCores > AvailableCores,
     {
       warning(
         paste0(
           "`NCores` > number of available cores. ",
-          "It was reset to the number of available cores",
-          parallelly::availableCores()),
+          "It was reset to the number of available cores", AvailableCores),
         call. = FALSE)
-      parallelly::availableCores()
+      AvailableCores
     },
     NCores)
 

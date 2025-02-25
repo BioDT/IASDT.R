@@ -4,33 +4,29 @@
 
 #' Check the Integrity of a ZIP File
 #'
-#' This function checks if a given ZIP file exists and whether it is intact
-#' without any errors. The function uses the system's `unzip` command to test
-#' the file's integrity.
+#' Tests the integrity of a ZIP file using the `unzip -t` command. Verifies that
+#' the file exists, is non-empty, and has no detectable errors in its compressed
+#' data. Returns `FALSE` with a message if the file is invalid or if `unzip` is
+#' unavailable.
 #'
 #' @author Ahmed El-Gabbas
-#' @param File Character. The path to the ZIP file that needs to be checked.
-#' @return Logical. Returns `TRUE` if the file exists and passes the integrity
-#'   check, and `FALSE` otherwise.
+#' @param File Character. The path to the ZIP file to check. Must be a single,
+#'   non-empty string.
+#' @return Logical: `TRUE` if the file exists, is non-empty, and passes the
+#'   integrity check; `FALSE` otherwise.
 #' @name CheckZip
 #' @export
 
 CheckZip <- function(File) {
 
-  # Check if the unzip command is available
-  Commands <- c("unzip")
-  CommandsAvail <- purrr::map_lgl(Commands, IASDT.R::CheckCommands)
-  if (!all(CommandsAvail)) {
-    Missing <- paste0(Commands[!CommandsAvail], collapse = " + ")
-    stop(
-      paste0("The following command(s) are not available: ", Missing),
-      call. = FALSE)
+  if (isFALSE(IASDT.R::CheckCommands("unzip"))) {
+    stop("The 'unzip' command is not available", call. = FALSE)
   }
-
 
   if (length(File) != 1 || !inherits(File, "character") || !nzchar(File)) {
     stop(
-      paste0("Input file has to be a single character string"), call. = FALSE)
+      paste0("`File` must be a single non-empty character string"),
+      call. = FALSE)
   }
 
   # Verify the file exists
@@ -42,9 +38,7 @@ CheckZip <- function(File) {
   # Validate the ZIP file
   FileOkay <- tryCatch(
     expr = {
-      system2(
-        command = "unzip", args = c("-t", File),
-        stdout = TRUE, stderr = TRUE) %>%
+      IASDT.R::System(stringr::str_glue("unzip -t {File}")) %>%
         stringr::str_detect("No errors detected in compressed data") %>%
         any()
     },

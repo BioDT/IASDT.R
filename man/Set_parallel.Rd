@@ -24,7 +24,7 @@ sequential mode. If \code{FALSE} (default), sets up a new plan.}
 
 \item{Level}{Integer. The logging level for \link{CatTime}. Default is \code{0}.}
 
-\item{Set_parallel}{Numeric. Maximum allowed total size (in megabytes) of
+\item{Future_maxSize}{Numeric. Maximum allowed total size (in megabytes) of
 global variables identified. See `` argument of \link[future:future.options]{future::future.options}
 for more details}
 }

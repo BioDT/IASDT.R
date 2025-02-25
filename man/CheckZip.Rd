@@ -7,16 +7,18 @@
 CheckZip(File)
 }
 \arguments{
-\item{File}{Character. The path to the ZIP file that needs to be checked.}
+\item{File}{Character. The path to the ZIP file to check. Must be a single,
+non-empty string.}
 }
 \value{
-Logical. Returns \code{TRUE} if the file exists and passes the integrity
-check, and \code{FALSE} otherwise.
+Logical: \code{TRUE} if the file exists, is non-empty, and passes the
+integrity check; \code{FALSE} otherwise.
 }
 \description{
-This function checks if a given ZIP file exists and whether it is intact
-without any errors. The function uses the system's \code{unzip} command to test
-the file's integrity.
+Tests the integrity of a ZIP file using the \code{unzip -t} command. Verifies that
+the file exists, is non-empty, and has no detectable errors in its compressed
+data. Returns \code{FALSE} with a message if the file is invalid or if \code{unzip} is
+unavailable.
 }
 \author{
 Ahmed El-Gabbas

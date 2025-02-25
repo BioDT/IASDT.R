@@ -14,7 +14,7 @@
 #'   calculated.
 #' @param ChunkText Character. The message printed as chunk info. Default
 #'   value: `Session summary`. See: [InfoChunk] for more information.
-#' @param Prefix Character. Prefix to prepend to the printed time difference. 
+#' @param Prefix Character. Prefix to prepend to the printed time difference.
 #'   Defaults to "Completed in ".
 #' @param CatInfo Logical. If `TRUE`, prints a session summary using
 #'   [IASDT.R::InfoChunk] ("Session summary"). Defaults to `FALSE`.
@@ -26,29 +26,29 @@
 #' @examples
 #' RefTime <- (lubridate::now() - lubridate::seconds(45))
 #' CatDiff(RefTime)
-#' # Completed in 00:00:45 hours
+#' # Completed in 00:00:45
 #'
 #' RefTime <- (lubridate::now() -
 #'     (lubridate::minutes(50) + lubridate::seconds(45)))
 #' CatDiff(RefTime)
-#' # Completed in 00:50:46 hours
+#' # Completed in 00:50:45
 #'
 #' RefTime <- (lubridate::now() - lubridate::minutes(50))
 #' CatDiff(RefTime)
-#' # Completed in 00:50:01 hours
+#' # Completed in 00:50:00
 #'
 #' RefTime <- (lubridate::now() - lubridate::minutes(70))
 #' CatDiff(RefTime)
-#' # Completed in 01:10:00 hours
+#' # Completed in 01:10:00
 #'
 #' RefTime <- (lubridate::now() - lubridate::hours(4))
 #' CatDiff(RefTime)
-#' # Completed in 04:00:01 hours
+#' # Completed in 04:00:00
 #'
 #' RefTime <- lubridate::now() -
 #'   (lubridate::hours(4) + lubridate::minutes(50) + lubridate::seconds(45))
 #'   CatDiff(RefTime)
-#' # Completed in 04:50:45 hours
+#' # Completed in 04:50:45
 
 CatDiff <- function(
     InitTime, ChunkText = "Session summary", Prefix = "Completed in ",

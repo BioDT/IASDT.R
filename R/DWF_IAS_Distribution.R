@@ -10,12 +10,12 @@
 #' biogeographical region, and outputs results as tif, RData, and tibble
 #' formats.
 #' @param Species Character. Name of the species to analyze.
-#' @param FromHPC Logical. Whether the processing is being done on an 
-#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#' @param FromHPC Logical. Whether the processing is being done on an
+#'   High-Performance Computing (HPC) environment, to adjust file paths
 #'   accordingly. Default: `TRUE`.
-#' @param EnvFile Character. Path to the environment file containing paths to 
+#' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
-#' @param Verbose Logical. Whether to print progress messages. 
+#' @param Verbose Logical. Whether to print progress messages.
 #'   Default is `FALSE`.
 #' @param Overwrite Logical. If `TRUE`, the function will overwrite existing
 #'   files (default: `FALSE`).
@@ -92,7 +92,7 @@ IAS_Distribution <- function(
       "Path_TaxaCNT", "DP_R_Taxa_Country", FALSE, TRUE,
       "Path_TaxaInfo_RData", "DP_R_TaxaInfo_RData", FALSE, TRUE,
       "Path_TaxaInfo", "DP_R_TaxaInfo", FALSE, TRUE,
-      "Path_BioReg", "DP_R_BioReg", FALSE, TRUE,
+      "Path_BioReg", "DP_R_BioReg", TRUE, FALSE,
       "EU_Bound", "DP_R_EUBound_sf", FALSE, TRUE)
   } else {
     EnvVars2Read <- tibble::tribble(
@@ -106,7 +106,7 @@ IAS_Distribution <- function(
       "Path_TaxaCNT", "DP_R_Taxa_Country_Local", FALSE, TRUE,
       "Path_TaxaInfo_RData", "DP_R_TaxaInfo_RData_Local", FALSE, TRUE,
       "Path_TaxaInfo", "DP_R_TaxaInfo_Local", FALSE, TRUE,
-      "Path_BioReg", "DP_R_BioReg_Local", FALSE, TRUE,
+      "Path_BioReg", "DP_R_BioReg_Local",  TRUE, FALSE,
       "EU_Bound", "DP_R_EUBound_sf_Local", FALSE, TRUE)
   }
 
@@ -497,7 +497,15 @@ IAS_Distribution <- function(
   # number of biogeographical regions per species and minimum / maximum / mean
   # number of grid cells per biogeographical regions
 
-  BioReg_R <- terra::unwrap(IASDT.R::LoadAs(Path_BioReg))
+  BioReg_R <- IASDT.R::Path(Path_BioReg, "BioReg_R.RData")
+  if (isFALSE(IASDT.R::CheckRData(BioReg_R))) {
+    stop(
+      paste0(
+        "Required file for biogeographical regions does not exist: ", BioReg_R),
+      call. = FALSE)
+  }
+
+  BioReg_R <- terra::unwrap(IASDT.R::LoadAs(BioReg_R))
 
   # name of Biogeographical regions
   BioReg_Names <- c(

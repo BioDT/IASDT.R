@@ -57,9 +57,6 @@ length(Log)
 
 head(Log, 8)
 }
-\seealso{
-\link{System}
-}
 \author{
 Ahmed El-Gabbas
 }

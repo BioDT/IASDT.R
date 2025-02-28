@@ -2,32 +2,33 @@
 % Please edit documentation in R/General_Range2NewVal.R
 \name{Range2NewVal}
 \alias{Range2NewVal}
-\title{Changes values within a specified range, \eqn{\geq}, or \eqn{\leq} specific
-value to a new value in a vector, data.frame, or raster}
+\title{Changes values within a specified range, or greater than or less than a
+specific value to a new value in a vector, data.frame, or raster}
 \usage{
 Range2NewVal(
-  x,
+  x = NULL,
   Between = NULL,
   MoreThan = NULL,
   LessThan = NULL,
-  NewVal,
-  InvertSelection = FALSE
+  NewVal = NULL,
+  Invert = FALSE
 )
 }
 \arguments{
-\item{x}{A numeric \code{vector}, \code{data.frame}, or \code{RasterLayer} object whose
-values are to be modified.}
+\item{x}{A numeric \code{vector}, \code{data.frame}, \code{RasterLayer}, or \code{SpatRaster}
+object whose values are to be modified.}
 
 \item{Between}{Numeric. A numeric vector of length 2 specifying the range of
 values to be changed or kept. If specified, \code{MoreThan} and \code{LessThan} are
 ignored.}
 
-\item{MoreThan, LessThan}{Numeric. Threshold above/below which values in \code{x}
-will be changed to \code{NewVal}. Only applied if \code{Between} is not specified.}
+\item{MoreThan, LessThan}{Numeric. Threshold larger than or equal to/less than
+or equal to which values in \code{x} will be changed to \code{NewVal}. Only applied
+if \code{Between} is not specified.}
 
 \item{NewVal}{The new value to assign to the selected elements in \code{x}.}
 
-\item{InvertSelection}{Logical. Whether to invert the selection specified by
+\item{Invert}{Logical. Whether to invert the selection specified by
 \code{Between}. If \code{TRUE}, values outside the specified range are changed to
 \code{NewVal}. Default is \code{FALSE}.}
 }
@@ -39,60 +40,84 @@ specified conditions.
 This function modifies values in the input object \code{x} based on the specified
 conditions. It can operate on vectors, data.frames, or RasterLayer objects.
 The function allows for changing values within a specified range (\code{Between}),
-\eqn{\geq} a specified value (\code{MoreThan}), or \eqn{\leq} a specified value
-(\code{LessThan}) to a new value (\code{NewVal}). An option to invert the selection is
-also available for ranges.
+greater than or equals to (\code{MoreThan}) or  less than or equals to
+(\code{LessThan}) a specified value to a new value (\code{NewVal}). An option to invert
+the selection is also available for ranges.
 }
 \examples{
+library(raster)
+library(terra)
+par(mar = c(0.5, 0.5, 1, 2.5), oma = c(0.5, 0.5, 0.5, 1))
+
+# ---------------------------------------------
+
 # Vector
 
-Range2NewVal(x = seq_len(10), Between = c(5, 8), NewVal = NA)
+(VV <- seq_len(10))
 
-Range2NewVal(
-   x =  seq_len(10), Between = c(5, 8), NewVal = NA, InvertSelection = TRUE)
+Range2NewVal(x = VV, Between = c(5, 8), NewVal = NA)
 
-Range2NewVal(x =  seq_len(10), Between = c(5, 8), NewVal = NA, MoreThan = 4)
+Range2NewVal(x = VV, Between = c(5, 8), NewVal = NA, Invert = TRUE)
+
+# MoreThan is ignored as Between is specified
+Range2NewVal(x = VV, Between = c(5, 8), NewVal = NA, MoreThan = 4)
+
+Range2NewVal(x = VV, NewVal = NA, MoreThan = 4)
+
+Range2NewVal(x = VV, NewVal = NA, LessThan = 4)
 
 # ---------------------------------------------
 
 # tibble
 
-iris \%>\%
- tibble::as_tibble() \%>\%
- dplyr::slice_head(n = 50) \%>\%
- dplyr::select(-Sepal.Length, -Petal.Length, -Petal.Width) \%>\%
+iris2 <- iris \%>\%
+  tibble::as_tibble() \%>\%
+  dplyr::slice_head(n = 50) \%>\%
+  dplyr::select(-Sepal.Length, -Petal.Length, -Petal.Width) \%>\%
+  dplyr::arrange(-Sepal.Width)
+
+iris2 \%>\%
  dplyr::mutate(
    Sepal.Width.New = Range2NewVal(
-       x = Sepal.Width, Between = c(3, 3.5), NewVal = NA,
-        InvertSelection = FALSE),
+      x = Sepal.Width, Between = c(3, 3.5), NewVal = NA, Invert = FALSE),
    Sepal.Width.Rev = Range2NewVal(
-       x = Sepal.Width, Between = c(3, 3.5), NewVal = NA,
-        InvertSelection = TRUE)) \%>\%
- dplyr::arrange(-Sepal.Width) \%>\%
+      x = Sepal.Width, Between = c(3, 3.5), NewVal = NA, Invert = TRUE)) \%>\%
  print(n = 50)
 
 # ---------------------------------------------
 
-# raster
+# RasterLayer / SpatRaster
 
-library(raster)
+grd_file <- system.file("external/test.grd", package = "raster")
+R_raster <- raster::raster(grd_file)
+R_terra <- terra::rast(grd_file)
 
-RRR <- raster::raster(system.file("external/test.grd", package = "raster"))
-
-RRR2 <- Range2NewVal(x = RRR, LessThan = 500, NewVal = NA)
-RRR3 <- Range2NewVal(x = RRR, MoreThan = 500, NewVal = NA)
-par(mar = c(0.5, 0.5, 3, 3))
+# Convert values less than 500 to NA
+R_raster2 <- Range2NewVal(x = R_raster, LessThan = 500, NewVal = NA)
 plot(
-   raster::stack(RRR, RRR2, RRR3), nr = 1,
-   main = c("Original", "<500 to NA", ">500 to NA"))
+   raster::stack(R_raster, R_raster2), nr = 1,
+   main = c("\nOriginal", "\n<500 to NA"),
+   box = FALSE, axes = FALSE, legend.width = 2, colNA = "lightgrey",
+   xaxs = "i", yaxs = "i")
 
-RRR2 <- Range2NewVal(
-   x = RRR, Between = c(1000, 1800), NewVal = 1800, InvertSelection = FALSE)
-RRR3 <- Range2NewVal(
-   x = RRR, Between = c(1000, 1800), NewVal = 1800, InvertSelection = TRUE)
+R_terra2 <- Range2NewVal(x = R_terra, LessThan = 500, NewVal = NA)
 plot(
-   raster::stack(RRR>=1000, RRR2, RRR3), nr = 1,
-   main = c(">1000 ?", "<500 to NA", ">500 to NA"))
+   c(R_terra, R_terra2), nr = 1, main = c("\nOriginal", "\n<500 to NA"),
+   box = FALSE, axes = FALSE, colNA = "lightgrey", xaxs = "i", yaxs = "i")
+
+
+# Convert values greater than 700 to NA
+R_raster2 <- Range2NewVal(x = R_raster, MoreThan = 700, NewVal = NA)
+plot(
+   raster::stack(R_raster, R_raster2), nr = 1,
+   main = c("\nOriginal", "\n>700 to NA"),
+   box = FALSE, axes = FALSE, legend.width = 2, colNA = "lightgrey",
+   xaxs = "i", yaxs = "i")
+
+R_terra2 <- Range2NewVal(x = R_terra, MoreThan = 700, NewVal = NA)
+plot(
+   c(R_terra, R_terra2), nr = 1, main = c("\nOriginal", "\n>700 to NA"),
+   box = FALSE, axes = FALSE, colNA = "lightgrey", xaxs = "i", yaxs = "i")
 }
 \author{
 Ahmed El-Gabbas

@@ -2,57 +2,16 @@
 # GBIF_ReadChunk ----
 ## |------------------------------------------------------------------------| #
 
-#' Read GBIF chunk data
-#'
-#' This function reads and processes a chunk of GBIF (Global Biodiversity
-#' Information Facility) data. It filters the data based on several criteria
-#' including spatial uncertainty, collection year, coordinate precision, and
-#' taxonomic rank and returns only selected columns.
-#'
-#' @param ChunkFile Character. Path of the chunk file to be
-#'   processed.
-#' @param FromHPC Logical. Whether the processing is being done on an 
-#'   High-Performance Computing (HPC) environment, to adjust file paths 
-#'   accordingly. Default: `TRUE`.
-#' @param EnvFile Character. Path to the environment file containing paths to 
-#'   data sources. Defaults to `.env`.
-#' @param MaxUncert Numeric. Maximum accepted spatial uncertainty in 
-#'   kilometers. Default is 10.
-#' @param StartYear Integer. Earliest collection year to be included. Default 
-#'   is 1981.
-#' @param SaveRData Logical. Whether to save the cleaned data for the
-#'   current chunk as `*.RData` file.
-#' @param ReturnData Logical. Whether to return the cleaned data for
-#'   the current chunk. Defaults to `FALSE`.
-#' @param Overwrite Logical. Whether to process the current chunk
-#'   file if it has already processed and saved as `*.RData` file. This helps to
-#'   continue working on previously processed chunks if the previous try failed,
-#'   e.g. due to memory issue.
-#' @note This function is not intended to be used directly by the user or in the
-#'   IAS-pDT, but only used inside the [GBIF_Process] function.
-#' @return The output of the function is a tibble (sf) object containing the
-#'   processed and filtered GBIF data for the input chunk file. Whether the
-#'   tibble is exported or saved as `*.RData` file depends on the values of the
-#'   `SaveRData`, `ReturnData`, and `Overwrite` parameters.
-#'
-#'   If `SaveRData = TRUE` (default), the processed data will be saved as
-#'   `RData` file with the same base name of the chunk file and at the same
-#'   directory. By default, the function does not return any value, unless
-#'   `ReturnData` is set to `TRUE`. `SaveRData` and `ReturnData` can not both
-#'   set to `FALSE`. The function can optionally skip processing the current
-#'   chunk file if the `*.RData` file for this chunk already exist and
-#'   `Overwrite` is set as `FALSE` (default). If `Overwrite` is set to `TRUE`,
-#'   the data for the current chunk will be re-processed irrespective of the
-#'   existence of the RData file. This helps to continue working on previously
-#'   processed chunks if a previous run of [GBIF_Process] failed, e.g. due to
-#'   memory issue.
-#' @name GBIF_ReadChunk
 #' @author Ahmed El-Gabbas
 #' @export
+#' @name GBIF_data
+#' @rdname GBIF_data
+#' @order 4
 
 GBIF_ReadChunk <- function(
-    ChunkFile, EnvFile = ".env", FromHPC = TRUE, MaxUncert = 10,
-    StartYear = 1981, SaveRData = TRUE, ReturnData = FALSE, Overwrite = FALSE) {
+    ChunkFile, EnvFile = ".env", FromHPC = TRUE, MaxUncert = 10L,
+    StartYear = 1981L, SaveRData = TRUE, ReturnData = FALSE,
+    Overwrite = FALSE) {
 
   # # ..................................................................... ###
 
@@ -71,7 +30,7 @@ GBIF_ReadChunk <- function(
 
   # Checking arguments ----
   AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, ~ get(.x, envir = environment())) %>%
+  AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
@@ -86,13 +45,11 @@ GBIF_ReadChunk <- function(
 
   ChunkOutPath <- stringr::str_replace(ChunkFile, ".txt$", ".RData")
 
-  if (isFALSE(Overwrite) && file.exists(ChunkOutPath)) {
-    if (IASDT.R::CheckData(ChunkOutPath)) {
-      if (ReturnData) {
-        return(IASDT.R::LoadAs(ChunkOutPath))
-      } else {
-        return(invisible(NULL))
-      }
+  if (isFALSE(Overwrite) && IASDT.R::CheckData(ChunkOutPath, warning = FALSE)) {
+    if (ReturnData) {
+      return(IASDT.R::LoadAs(ChunkOutPath))
+    } else {
+      return(invisible(NULL))
     }
   }
 
@@ -138,16 +95,14 @@ GBIF_ReadChunk <- function(
   # Grid_10_Land_Crop
   GridR <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(GridR)) {
-    stop(paste0("Reference grid file not found at: ", GridR), call. = FALSE)
+    stop("Reference grid file not found at: ", GridR, call. = FALSE)
   }
   GridR <- terra::unwrap(IASDT.R::LoadAs(GridR))
 
   # # Grid_10_Land_Crop_sf
   GridSf <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
   if (!file.exists(GridSf)) {
-    stop(
-      paste0("Reference grid file (sf) not found at: ", GridSf),
-      call. = FALSE)
+    stop("Reference grid file (sf) not found at: ", GridSf, call. = FALSE)
   }
   GridSf <- IASDT.R::LoadAs(GridSf)
 

@@ -5,16 +5,16 @@
 #' Extract longitude and latitude from string
 #'
 #' Extract longitude and latitude from string representing a geographical point
-#' in the format `"POINT (longitude latitude)"` and converts it into a 
-#' two-column tibble containing the longitude and latitude as numeric values. 
-#' The names of the columns in the resulting tibble can be customized. The 
-#' default names for the longitude and latitude columns are "Longitude" and 
+#' in the format `"POINT (longitude latitude)"` and converts it into a
+#' two-column tibble containing the longitude and latitude as numeric values.
+#' The names of the columns in the resulting tibble can be customized. The
+#' default names for the longitude and latitude columns are "Longitude" and
 #' "Latitude", respectively.
-#' @param String Character. Coordinates in the format `"POINT (longitude 
-#' latitude)"`. This parameter is required and cannot be `NULL`.
-#' @param Long_Name,Lat_Name Character. Name to be used for the
-#'   longitude and Longitude columns in the output tibble. Defaults to
-#'   "Longitude" and "Latitude".
+#' @param String Character. Coordinates in the format `"POINT (longitude
+#'   latitude)"`. This parameter is required and cannot be `NULL`.
+#' @param Long_Name,Lat_Name Character. Name to be used for the longitude and
+#'   Longitude columns in the output tibble. Defaults to "Longitude" and
+#'   "Latitude".
 #' @return A tibble with two columns containing the longitude and latitude
 #'   values extracted from the input string. The names of these columns are
 #'   determined by the `Long_Name` and `Lat_Name` parameters. If no names are

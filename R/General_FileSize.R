@@ -2,7 +2,7 @@
 # FileSize ----
 ## |------------------------------------------------------------------------| #
 
-#' File size in a Human Readable format
+#' File size in a human-readable format
 #'
 #' This function takes the path to a file and returns its size in a format that
 #' is easy to read (e.g., KB, MB, GB), using the [gdata::humanReadable]

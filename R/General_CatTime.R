@@ -87,7 +87,7 @@ CatTime <- function(
     }
     if (Level > 0) {
       Prefix <- rep("  >>>", each = Level) %>%
-        paste0(collapse = "") %>%
+        paste(collapse = "") %>%
         paste0("  ")
       Text <- paste0(Prefix, Text)
     }

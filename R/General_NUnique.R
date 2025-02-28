@@ -33,11 +33,12 @@ NUnique <- function(Data) {
     stop("Data cannot be NULL", call. = FALSE)
   }
 
-  Data %>%
+  Data <- Data %>%
     dplyr::summarise(
       dplyr::across(tidyselect::everything(), dplyr::n_distinct)) %>%
     tidyr::pivot_longer(cols = tidyselect::everything(),
         names_to = "Variable", values_to = "NUnique") %>%
-    dplyr::arrange(NUnique) %>%
-    return()
+    dplyr::arrange(NUnique)
+
+  return(Data)
 }

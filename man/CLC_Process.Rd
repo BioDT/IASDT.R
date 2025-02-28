@@ -2,7 +2,7 @@
 % Please edit documentation in R/DWF_CLC_Process.R
 \name{CLC_Process}
 \alias{CLC_Process}
-\title{Process Corine land cover (CLC) data}
+\title{Process Corine Land Cover (CLC) data for the \code{IAS-pDT}}
 \usage{
 CLC_Process(EnvFile = ".env", FromHPC = TRUE, MinLandPerc = 15, PlotCLC = TRUE)
 }
@@ -14,29 +14,28 @@ data sources. Defaults to \code{.env}.}
 High-Performance Computing (HPC) environment, to adjust file paths
 accordingly. Default: \code{TRUE}.}
 
-\item{MinLandPerc}{A numeric value indicating the minimum percentage of land
-per grid cell to be used in the reference grid cell. Defaults to 15.}
+\item{MinLandPerc}{Numeric. Minimum land percentage per grid cell for the
+reference grid. Default: \code{15}.}
 
-\item{PlotCLC}{Logical indicating whether to plot the percentage coverage of
-different levels of CLC and custom habitat types. Defaults to \code{TRUE}.}
+\item{PlotCLC}{Logical. If \code{TRUE}, plots percentage coverage for CLC levels
+and habitat types. Default: \code{TRUE}.}
 }
 \value{
-The function does not return a value but produces side effects such
-as saving processed data and plots to specified directories.
+Returns \code{invisible(NULL)}; saves processed data and optional plots to
+disk.
 }
 \description{
-Processes Corine Land Cover (CLC) data for environmental modeling purposes.
-The function calculates the percentage coverage of CLC per grid cell. It
-estimate the percent coverage at the 3 CLC levels, and cross-walk for
-\code{EUNIS_19} and \code{SynHab} habitat types. Similarly, the function estimates the
-most common class per grid cell (3 CLC levels, EUNIS, and SynHab habitat
-types) and prepares reference grid for models. The function optionally plots
-\% coverage maps.
+Processes \href{https://land.copernicus.eu/pan-european/corine-land-cover/clc2018}{Corine Land Cover (CLC)}
+data for the Invasive Alien Species prototype Digital Twin (\code{IAS-pDT}).
+Calculates percentage coverage and most common classes per grid cell at three
+CLC levels, plus \code{EUNIS_19} and \code{SynHab} habitat types. Prepares a reference
+grid and optionally generates percentage coverage maps as JPEG.
 }
-\details{
+\references{
 \itemize{
-\item \href{https://land.copernicus.eu/pan-european/corine-land-cover/clc2018}{Data source}
-\item \href{https://doi.org/10.2909/960998c1-1870-4e82-8051-6485205ebbac}{Citation}
+\item Data source:
+\url{https://land.copernicus.eu/pan-european/corine-land-cover/clc2018}
+\item Citation: \url{https://doi.org/10.2909/960998c1-1870-4e82-8051-6485205ebbac}
 }
 }
 \author{

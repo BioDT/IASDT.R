@@ -41,7 +41,9 @@ AddLine <- function(at = NULL, Outer = FALSE, H = TRUE, ...) {
     stop("at cannot be NULL", call. = FALSE)
   }
 
-  if (Outer) graphics::par(xpd = TRUE)
+  if (Outer) {
+    graphics::par(xpd = TRUE)
+  }
 
   if (H) {
     graphics::abline(h = graphics::grconvertY(at, "npc"), ...)

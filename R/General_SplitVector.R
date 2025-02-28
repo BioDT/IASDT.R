@@ -8,8 +8,8 @@
 #' chunks. It is useful for partitioning data into more manageable pieces or for
 #' parallel processing tasks.
 #' @param Vector A numeric or character vector that you want to split.
-#' @param NSplit Integer. Number of chunks to split the vector into. It 
-#'   must not exceed the length of the vector.
+#' @param NSplit Integer. Number of chunks to split the vector into. It must not
+#'   exceed the length of the vector.
 #' @param Prefix Character. Prefix for the names of the chunks in the returned
 #'   list. Defaults to `"Chunk"`.
 #' @name SplitVector
@@ -36,10 +36,11 @@ SplitVector <- function(Vector = NULL, NSplit = NULL, Prefix = "Chunk") {
     stop("NSplit cannot be greater than the length of Vector", call. = FALSE)
   }
 
-  split(
+  Out <- split(
     Vector,
     cut(seq_along(Vector), breaks = NSplit,
         labels = paste0(Prefix, "_", seq_len(NSplit)),
-        include.lowest = TRUE)) %>%
-    return()
+        include.lowest = TRUE))
+
+  return(Out)
 }

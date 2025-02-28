@@ -12,9 +12,9 @@
 #' @author Ahmed El-Gabbas
 #' @return The function is used for its side effect (printing) and does not
 #'   return any value.
-#' @param DF `data.frame. A data frame to print. This parameter cannot be 
+#' @param DF `data.frame. A data frame to print. This parameter cannot be
 #'   `NULL`.
-#' @param NRows Integer. Number of rows to print from both the head and tail of 
+#' @param NRows Integer. Number of rows to print from both the head and tail of
 #'   the data frame. Defaults to 5.
 #' @examples
 #' ht(mtcars)

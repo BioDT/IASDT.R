@@ -35,7 +35,6 @@
 #' AssignIfNotExist(Variable = "y", Value = TRUE)
 #' print(y)
 
-
 AssignIfNotExist <- function(Variable, Value, Env = globalenv()) {
 
   if (is.null(Variable) || is.null(Value)) {
@@ -44,13 +43,12 @@ AssignIfNotExist <- function(Variable, Value, Env = globalenv()) {
 
   Variable <- as.character(rlang::ensyms(Variable))
 
-  if (!exists(Variable, envir = Env)) {
-    assign(x = Variable, value = Value, envir = Env)
-  } else {
+  if (exists(Variable, envir = Env)) {
     "The input object already exists in the environment. " %>%
       crayon::blue() %>%
       cat()
-
     print(rlang::env_get(Env, paste0(Variable)))
+  } else {
+    assign(x = Variable, value = Value, envir = Env)
   }
 }

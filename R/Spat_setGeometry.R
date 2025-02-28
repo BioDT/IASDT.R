@@ -11,7 +11,7 @@
 #' correct data.
 #' @param x simple feature (sf) data frame. This is the data frame whose
 #'   geometry column will be set or changed.
-#' @param Name Character. Name of the geometry column to be used or set in the 
+#' @param Name Character. Name of the geometry column to be used or set in the
 #'   `x` data frame.
 #' @name setGeometry
 #' @return The modified simple feature (sf) data frame with the updated geometry

@@ -2,7 +2,7 @@
 # Road_Intensity ----
 ## |------------------------------------------------------------------------| #
 
-#' Calculate road intensity
+#' Calculate road intensity per grid cell
 #'
 #' This function downloads, processes, and analyzes [GRIP global roads
 #' data](https://www.globio.info/download-grip-dataset) ([Meijer et al.
@@ -10,10 +10,10 @@
 #' function calculates the total road lengths and the distance to the nearest
 #' road per grid cell (for any road type and per road type).
 #'
-#' @param FromHPC Logical. Whether the processing is being done on an 
-#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#' @param FromHPC Logical. Whether the processing is being done on an
+#'   High-Performance Computing (HPC) environment, to adjust file paths
 #'   accordingly. Default: `TRUE`.
-#' @param EnvFile Character. Path to the environment file containing paths to 
+#' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
 #' @return `NULL`. The function outputs processed files to the specified
 #'   directories.
@@ -44,7 +44,7 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
   IASDT.R::CatTime("Checking arguments")
 
   AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, ~ get(.x, envir = environment())) %>%
+  AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = "EnvFile")
@@ -92,9 +92,7 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
 
   RefGrid <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(RefGrid)) {
-    stop(
-      paste0("The reference grid file does not exist: ", RefGrid),
-      call. = FALSE)
+    stop("The reference grid file does not exist: ", RefGrid, call. = FALSE)
   }
 
   # # ..................................................................... ###
@@ -140,10 +138,8 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
 
   if (isFALSE(Success)) {
     stop(
-      paste0(
-        "Failed to download road data after ", Attempts, " attempts:\n",
-        Road_URL),
-      call. = FALSE)
+      "Failed to download road data after ", Attempts, " attempts:\n",
+      Road_URL, call. = FALSE)
   }
 
   rm(Down, envir = environment())
@@ -169,10 +165,8 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
 
   if (length(Road_GDB_Files) == 0) {
     stop(
-      paste0(
-        "No `.gdb` files found in the directory after extraction: ",
-        Path_Roads_Interim),
-      call. = FALSE)
+      "No `.gdb` files found in the directory after extraction: ",
+      Path_Roads_Interim, call. = FALSE)
   }
 
   Road_sf <- Road_GDB_Files[1] %>%
@@ -369,6 +363,11 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
     .x = terra::as.list(Road_Length),
     .f = ~ {
       Road <- log10(terra::classify(.x, cbind(0, NA)))
+      Title <- names(.x) %>%
+        stringr::str_remove("Road_Distance_") %>%
+        stringr::str_replace("_", " - ") %>%
+        paste(" roads")
+
       ggplot2::ggplot() +
         ggplot2::geom_sf(
           EU_Bound,
@@ -387,14 +386,7 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
         ggplot2::scale_y_continuous(
           expand = ggplot2::expansion(mult = c(0, 0)),
           limits = c(1450000, 5420000)) +
-        ggplot2::labs(
-          title = {
-            names(.x) %>%
-              stringr::str_remove("Road_Distance_") %>%
-              stringr::str_replace("_", " - ") %>%
-              paste(" roads")
-          },
-          fill = "log10") +
+        ggplot2::labs(title = Title, fill = "log10") +
         PlottingTheme
     }
   )

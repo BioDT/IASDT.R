@@ -11,46 +11,55 @@
 #' the installed version.
 #' @name CheckQuartoVersion
 #' @author Ahmed El-Gabbas
+#' @param Prerelease Logical. Whether to check for pre-release versions. Default
+#'   is `FALSE`.
 #' @return A message indicating whether the installed Quarto version is up to
 #'   date or suggesting an update if it is not.
 #' @export
 #' @examples
 #' CheckQuartoVersion()
 
-CheckQuartoVersion <- function() {
+CheckQuartoVersion <- function(Prerelease = FALSE) {
 
-  # Check system commands
-  Commands <- c("quarto")
-  CommandsAvail <- purrr::map_lgl(Commands, IASDT.R::CheckCommands)
-  if (!all(CommandsAvail)) {
-    Missing <- paste0(Commands[!CommandsAvail], collapse = " + ")
-    stop(
-      paste0("The following command(s) are not available: ", Missing),
-      call. = FALSE)
-  }
-  
-  # # ..................................................................... ###
-
-  OnlineVersion <- "https://github.com/quarto-dev/quarto-cli/releases/" %>%
+  OnlineVersions <- "https://github.com/quarto-dev/quarto-cli/releases/" %>%
     xml2::read_html() %>%
     rvest::html_nodes(".Link--primary") %>%
     rvest::html_text2() %>%
-    stringr::str_remove_all("v") %>%
-    gtools::mixedsort(decreasing = TRUE) %>%
-    magrittr::extract(1)
+    stringr::str_remove_all("v")
+  Version_Latest <- OnlineVersions[1]
 
   # # ..................................................................... ###
 
-  InstalledVersion <- system("quarto --version", intern = TRUE)
 
-  if (isFALSE(identical(OnlineVersion, InstalledVersion))) {
-    cat(
-      crayon::blue(
-        "Quarto version:",
-        crayon::red(crayon::bold(OnlineVersion)),
-        "is available.\nInstalled Quarto version:",
-        crayon::red(crayon::bold(InstalledVersion)),
-        "\nPlease consider updating Quarto.\n"))
+  # Check `quarto` system command
+  if (IASDT.R::CheckCommands("quarto")) {
+    InstalledVersion <- system("quarto --version", intern = TRUE)
+  } else {
+    cat(crayon::blue("Quarto is not available in the system.\n"))
+    InstalledVersion <- NA_character_
+  }
+
+  if (isFALSE(identical(Version_Latest, InstalledVersion))) {
+
+    if (Prerelease) {
+      Version_PreRelease <- OnlineVersions %>%
+        gtools::mixedsort(decreasing = TRUE) %>%
+        magrittr::extract(1)
+      cat(
+        crayon::blue(
+          paste0(
+            "Available pre-release version is: ",
+            crayon::red(crayon::bold(Version_PreRelease)), " [installed: ",
+            crayon::red(crayon::bold(InstalledVersion)), "]\n")))
+    } else {
+      cat(
+        crayon::blue(
+          paste0(
+            "Latest quarto version is ",
+            crayon::red(crayon::bold(Version_Latest)), " [installed: ",
+            crayon::red(crayon::bold(InstalledVersion)), "]\n")))
+
+    }
   } else {
     cat(
       crayon::blue(
@@ -58,4 +67,6 @@ CheckQuartoVersion <- function() {
         crayon::red(crayon::bold(InstalledVersion)), ".",
         sep = ""))
   }
+
+  return(invisible(NULL))
 }

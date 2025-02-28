@@ -2,47 +2,15 @@
 # CHELSA_Prepare ----
 ## |------------------------------------------------------------------------| #
 
-#' Prepare and download CHELSA climate data
-#'
-#' This function reads the contents of local text files containing URLs for
-#' `CHELSA` climate data and extracts and saves their metadata (e.g., variable
-#' name, climate model & scenario, time, and download URLs). It can optionally
-#' download these links to desk, if requested.
-#' @name CHELSA_Prepare
-#' @param EnvFile Character. Path to the environment file containing paths to
-#'   data sources. Defaults to `.env`.
-#' @param FromHPC Logical. Whether the processing is being done on an
-#'   High-Performance Computing (HPC) environment, to adjust file paths
-#'   accordingly. Default: `TRUE`.
-#' @param Download Logical. Whether to download the CHELSA files. Defaults to
-#'   `FALSE`.
-#' @param NCores Integer. Number of CPU cores to use for parallel processing.
-#'   Default: 4.
-#' @param Overwrite Logical. Whether to re-download files that already exist.
-#'   Defaults to `FALSE`.
-#' @param Download_Attempts Integer. The maximum number of download attempts.
-#'   Defaults to 10.
-#' @param Sleep Integer. Time in seconds to wait after each download attempt.
-#'   Defaults to 5.
-#' @param OtherVars Character. First letters of variables other than bioclimatic
-#'   variables to be processed. Defaults to "npp", which means processing 19
-#'   bioclimatic variables (bio1-bio19) and Net Primary Productivity will be
-#'   processed. If `OtherVars` is set to "", only bioclimatic variables will be
-#'   processed. See [CHELSA_Vars] for a detailed information on CHELSA climate
-#'   variables.
-#' @param BaseURL Character. The base URL for downloading CHELSA climate data.
 #' @author Ahmed El-Gabbas
 #' @export
-#' @details The function returns information on 874 tif files, representing 19
-#'   bioclimatic variables (+ additional variables starting with the string in
-#'   `OtherVars`) at 46 climate options (current and 45 future scenarios)
+#' @name CHELSA_data
+#' @rdname CHELSA_data
+#' @order 2
 
 CHELSA_Prepare <- function(
-    EnvFile = ".env", FromHPC = TRUE, Download = FALSE, NCores = 4L,
-    Overwrite = FALSE, Download_Attempts = 10L, Sleep = 5L, OtherVars = "npp",
-    BaseURL = paste0(
-      "https://os.zhdk.cloud.switch.ch/envicloud/",
-      "chelsa/chelsa_V2/GLOBAL/")) {
+    EnvFile = ".env", FromHPC = TRUE, Download = FALSE, NCores = 8L,
+    Overwrite = FALSE, Download_Attempts = 10L, Sleep = 5L, OtherVars = "npp") {
 
   # # ..................................................................... ###
 
@@ -53,8 +21,7 @@ CHELSA_Prepare <- function(
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Args = c("EnvFile", "BaseURL", "OtherVars"),
-    Type = "character")
+    AllArgs = AllArgs, Args = c("EnvFile", "OtherVars"), Type = "character")
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Args = c("FromHPC", "Download", "Overwrite"),
     Type = "logical")
@@ -75,14 +42,14 @@ CHELSA_Prepare <- function(
   Variable <- Path_Down <- TimePeriod <- Ext <- ClimateScenario <- Variable <-
     Path_CHELSA_In <- File <- Path_Out_tif <- Path_Out_NC <- Path_CHELSA_Out <-
     Path_DwnLinks <- URL <- Folder <- URL_File <- ClimateModel <- Exclude <-
-    NULL
+    BaseURL <- NULL
 
   # # ..................................................................... ###
 
   # Environment variables -----
   if (!file.exists(EnvFile)) {
     stop(
-      paste0("Path to environment variables: ", EnvFile, " was not found"),
+      "Path to environment variables: ", EnvFile, " was not found",
       call. = FALSE)
   }
 
@@ -91,13 +58,15 @@ CHELSA_Prepare <- function(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
       "Path_CHELSA_Out", "DP_R_CHELSA_Output", FALSE, FALSE,
       "Path_CHELSA_In", "DP_R_CHELSA_Input", FALSE, FALSE,
-      "Path_DwnLinks", "DP_R_CHELSA_DwnLinks", TRUE, FALSE)
+      "Path_DwnLinks", "DP_R_CHELSA_DwnLinks", TRUE, FALSE,
+      "BaseURL", "DP_R_CHELSA_URL", FALSE, FALSE)
   } else {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
       "Path_CHELSA_Out", "DP_R_CHELSA_Output_Local", FALSE, FALSE,
       "Path_CHELSA_In", "DP_R_CHELSA_Input_Local", FALSE, FALSE,
-      "Path_DwnLinks", "DP_R_CHELSA_DwnLinks_Local", TRUE, FALSE)
+      "Path_DwnLinks", "DP_R_CHELSA_DwnLinks_Local", TRUE, FALSE,
+      "BaseURL", "DP_R_CHELSA_URL", FALSE, FALSE)
   }
 
   # Assign environment variables and check file and paths
@@ -115,7 +84,7 @@ CHELSA_Prepare <- function(
     # Combine the strings into a single string separated by "|". This matches
     # any variable starting with "bio" or "Bio" or any of the characters in
     # `OtherVars`.
-    paste0(collapse = "|")
+    paste(collapse = "|")
 
   IASDT.R::CatTime("Prepare CHELSA metadata", Level = 1)
   CHELSA_Metadata <- list.files(
@@ -124,7 +93,7 @@ CHELSA_Prepare <- function(
     dplyr::tibble(URL_File = .) %>%
     # Add download links
     dplyr::mutate(
-      URL = purrr::map(.x = URL_File, .f = ~ readr::read_lines(.x)),
+      URL = purrr::map(.x = URL_File, .f = readr::read_lines),
       URL_File = basename(URL_File)) %>%
     tidyr::unnest_longer("URL") %>%
     dplyr::mutate(
@@ -296,7 +265,7 @@ CHELSA_Prepare <- function(
           URL <- Data2Down$URL[.x]
 
           Try <- 0
-          while (TRUE) {
+          repeat {
             Try <- Try + 1
             Down <- paste0(
               "curl --connect-timeout 60 --max-time 1200 -o ",

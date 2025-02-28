@@ -10,10 +10,10 @@
 #'
 #' @param ModelDir Character. Path to the model directory containing
 #'   predictions.
-#' @param EnvFile Character. Path to the environment file containing paths to 
+#' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
-#' @param FromHPC Logical. Whether the processing is being done on an 
-#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#' @param FromHPC Logical. Whether the processing is being done on an
+#'   High-Performance Computing (HPC) environment, to adjust file paths
 #'   accordingly. Default: `TRUE`.
 #' @name Mod_Eval_Plot
 #' @author Ahmed El-Gabbas
@@ -45,7 +45,7 @@ Mod_Eval_Plot <- function(ModelDir, EnvFile = ".env", FromHPC = TRUE) {
 
   SpSummary <- IASDT.R::Path(Path_PA, "Sp_PA_Summary_DF.csv")
   if (!file.exists(SpSummary)) {
-    stop(paste("Species summary file not found at:", SpSummary), call. = FALSE)
+    stop("Species summary file not found at:", SpSummary, call. = FALSE)
   }
   SpSummary <- readr::read_csv(SpSummary, show_col_types = FALSE) %>%
     dplyr::select(tidyselect::all_of(c("IAS_ID", "NCells_Naturalized"))) %>%

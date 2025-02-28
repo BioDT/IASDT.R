@@ -32,7 +32,7 @@ CheckData <- function(File, warning = TRUE, nthreads = 5) {
 
   if (!file.exists(File) || is.null(File) || !nzchar(File)) {
     if (warning) {
-      warning(paste0("The provided file does not exist: `", File, "`"))
+      warning("The provided file does not exist: `", File, "`", call. = FALSE)
     }
     return(FALSE)
   }
@@ -65,7 +65,7 @@ CheckRData <- function(File, warning = TRUE) {
 
   if (!file.exists(File) || is.null(File) || !nzchar(File)) {
     if (warning) {
-      warning(paste0("The provided file does not exist: `", File, "`"))
+      warning("The provided file does not exist: `", File, "`", call. = FALSE)
     }
     return(FALSE)
   }
@@ -108,7 +108,7 @@ CheckQs <- function(File, warning = TRUE, nthreads = 5) {
 
   if (!file.exists(File) || is.null(File) || !nzchar(File)) {
     if (warning) {
-      warning(paste0("The provided file does not exist: `", File, "`"))
+      warning("The provided file does not exist: `", File, "`", call. = FALSE)
     }
     return(FALSE)
   }
@@ -153,7 +153,7 @@ CheckRDS <- function(File, warning = TRUE) {
 
   if (!file.exists(File) || is.null(File) || !nzchar(File)) {
     if (warning) {
-      warning(paste0("The provided file does not exist: `", File, "`"))
+      warning("The provided file does not exist: `", File, "`", call. = FALSE)
     }
     return(FALSE)
   }
@@ -176,7 +176,7 @@ CheckRDS <- function(File, warning = TRUE) {
 
   } else {
     if (warning) {
-      warning("The provided file is not an rds file")
+      warning("The provided file is not an rds file", call. = FALSE)
     }
     return(FALSE)
   }
@@ -196,7 +196,7 @@ CheckFeather <- function(File, warning = TRUE) {
 
   if (!file.exists(File) || is.null(File) || !nzchar(File)) {
     if (warning) {
-      warning(paste0("The provided file does not exist: `", File, "`"))
+      warning("The provided file does not exist: `", File, "`", call. = FALSE)
     }
     return(FALSE)
   }

@@ -31,7 +31,6 @@
 #' @name git_log
 #' @author Ahmed El-Gabbas
 #' @export
-#' @seealso [IASDT.R::System]
 #' @examples
 #' # not a git repo
 #' git_log(Path = "C:/")
@@ -51,14 +50,9 @@
 
 git_log <- function(Path = ".", Num = NULL, ReturnLog = FALSE) {
 
-  # Check system commands
-  Commands <- c("git")
-  CommandsAvail <- purrr::map_lgl(Commands, IASDT.R::CheckCommands)
-  if (!all(CommandsAvail)) {
-    Missing <- paste0(Commands[!CommandsAvail], collapse = " + ")
-    stop(
-      paste0("The following command(s) are not available: ", Missing),
-      call. = FALSE)
+  # Check `git` system command
+  if (isFALSE(IASDT.R::CheckCommands("git"))) {
+    stop("The system command 'git' is not available", call. = FALSE)
   }
 
   if (!dir.exists(Path)) {
@@ -103,7 +97,9 @@ git_log <- function(Path = ".", Num = NULL, ReturnLog = FALSE) {
   })
 
   if (is.null(is_git)) {
-    stop("Failed to determine if the directory is a Git repository.")
+    stop(
+      "Failed to determine if the directory is a Git repository.",
+      call. = FALSE)
   }
 
   if (is_git == "true") {
@@ -120,10 +116,8 @@ git_log <- function(Path = ".", Num = NULL, ReturnLog = FALSE) {
     },
     error = function(e) {
       stop(
-        paste0(
-          "Failed to retrieve Git log. Ensure Git is installed and the ",
-          "directory is a valid Git repository."),
-        call. = FALSE)
+        "Failed to retrieve Git log. Ensure Git is installed and the ",
+        "directory is a valid Git repository.", call. = FALSE)
     })
 
     if (isFALSE(ReturnLog)) {
@@ -131,14 +125,14 @@ git_log <- function(Path = ".", Num = NULL, ReturnLog = FALSE) {
       if (is.null(Num)) {
         cat(log_output, sep = "\n")
       } else {
-        if (is.numeric(Num) && Num > 0) {
-          cat(utils::head(log_output, n = Num), sep = "\n")
-        } else {
-          stop(paste0(
+
+        if (!(is.numeric(Num) && Num > 0)) {
+          stop(
             "The 'Num' argument can be either NULL to show the ",
             "complete log or a positive numeric value to show the ",
-            "most recent commits."), call. = FALSE)
+            "most recent commits.", call. = FALSE)
         }
+        cat(utils::head(log_output, n = Num), sep = "\n")
       }
     }
   } else {

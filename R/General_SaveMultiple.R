@@ -7,18 +7,18 @@
 #' This function saves specified variables from the global environment to
 #' separate `.RData` files. It allows for optional file prefixing and
 #' overwriting of existing files.
-#' @param Vars Character vector. Names of the variables to be saved. If `NULL` 
-#'   or any specified variable does not exist in the global environment, the 
+#' @param Vars Character vector. Names of the variables to be saved. If `NULL`
+#'   or any specified variable does not exist in the global environment, the
 #'   function will stop with an error.
-#' @param OutFolder Character. Path to the output folder where the `.RData` 
+#' @param OutFolder Character. Path to the output folder where the `.RData`
 #'   files will be saved. Defaults to the current working directory.
-#' @param Overwrite Logical. Whether existing `.RData` files
-#'   should be overwritten. If `FALSE` (Default) and files exist, the function
-#'   will stop with an error message.
+#' @param Overwrite Logical. Whether existing `.RData` files should be
+#'   overwritten. If `FALSE` (Default) and files exist, the function will stop
+#'   with an error message.
 #' @param Prefix Character. Prefix of each output file name. Useful for
 #'   organizing saved files or avoiding name conflicts. Defaults to an empty
 #'   string.
-#' @param Verbose Logical. Whether to print a message upon successful saving of 
+#' @param Verbose Logical. Whether to print a message upon successful saving of
 #'   files. Defaults to `FALSE`.
 #' @name SaveMultiple
 #' @author Ahmed El-Gabbas
@@ -77,7 +77,8 @@ SaveMultiple <- function(
 
   # Check if Vars is provided correctly
   if (is.null(Vars) || !is.character(Vars)) {
-    stop("Vars should be a character vector for names of objects")
+    stop(
+      "Vars should be a character vector for names of objects", call. = FALSE)
   }
 
   env <- rlang::new_environment()
@@ -89,12 +90,11 @@ SaveMultiple <- function(
   missing_vars <- setdiff(Vars, ls(envir = env))
 
   if (length(missing_vars) > 0) {
-    stop(paste0(
-      "Variable(s) ", paste0(missing_vars, collapse = " & "),
-      " do not exist in the caller environment.\n"), call. = FALSE)
-  } else {
-    fs::dir_create(OutFolder)
+    stop(
+      "Variable(s) ", paste(missing_vars, collapse = " & "),
+      " do not exist in the caller environment.\n", call. = FALSE)
   }
+  fs::dir_create(OutFolder)
 
   # Check if files already exist
   FilesExist <- purrr::map_lgl(
@@ -103,9 +103,9 @@ SaveMultiple <- function(
     any()
 
   if (FilesExist && isFALSE(Overwrite)) {
-    message(paste0(
+    message(
       "Some files already exist. No files are saved. ",
-      "Please use overwrite = TRUE"))
+      "Please use overwrite = TRUE")
   } else {
 
     purrr::walk(
@@ -121,8 +121,7 @@ SaveMultiple <- function(
 
     if (AllExist) {
       if (Verbose) {
-        message(paste0(
-          "All files are saved to disk in ", OutFolder, " successfully."))
+        message("All files are saved to disk in ", OutFolder, " successfully.")
       }
     } else {
       message("Some files were not saved to disk! Please check again.")

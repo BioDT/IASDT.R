@@ -1,70 +1,74 @@
+#' Process EASIN data for the `IAS-pDT`
+#'
+#' Extracts, processes, and visualizes data from the [European Alien Species
+#' Information Network (EASIN)](https://easin.jrc.ec.europa.eu/) for the
+#' Invasive Alien Species prototype Digital Twin (`IAS-pDT`). Manages taxonomy,
+#' occurrence data, and plots, handling API pagination and server limits.
+#' Orchestrated by `EASIN_Process()` with helpers `EASIN_Taxonomy()`,
+#' `EASIN_Down()`, and `EASIN_Plot()`.
+#'
+#' @param ExtractTaxa Logical. If `TRUE`, extracts taxonomy using
+#'   `EASIN_Taxonomy()`. Default: `TRUE`.
+#' @param ExtractData Logical.If `TRUE`, downloads occurrence data with
+#'   `EASIN_Down()`. Default: `TRUE`.
+#' @param NDownTries Integer. Retry attempts for downloads. Default: `10`.
+#' @param NCores Integer. Number of CPU cores to use for parallel processing.
+#'   Default: 6. The maximum number of allowed cores are 8.
+#' @param SleepTime Numeric. Seconds to wait between download attempts/chunks.
+#'   Default: `10`.
+#' @param NSearch Integer. Records per taxonomy or data request (max 1000).
+#'   Default: `1000`.
+#' @param FromHPC Logical. Whether the processing is being done on an
+#'   High-Performance Computing (HPC) environment, to adjust file paths
+#'   accordingly. Default: `TRUE`.
+#' @param EnvFile Character. Path to the environment file containing paths to
+#'   data sources. Defaults to `.env`.
+#' @param DeleteChunks Logical. If `TRUE`, removes intermediate files. Default:
+#'   `FALSE`.
+#'
+#' @param StartYear Integer. Earliest year for occurrence data (excludes earlier
+#'   records). Default: `1981` (aligned with CHELSA climate data).
+#' @param Plot Logical. If `TRUE`, generates plots via `EASIN_Plot()`. Default:
+#'   `TRUE`.
+#' @param SpKey Character. EASIN taxon ID for which data is to be retrieved.
+#'   This parameter cannot be `NULL`.
+#' @param Timeout Integer. Download timeout in seconds. Default: `200`.
+#' @param Verbose Logical. If `TRUE`, prints progress messages. Default:
+#'   `FALSE`.
+#' @param NSearch Integer. Number of records to attempt to retrieve per request.
+#'   Default: 1000, which is the current maximum allowed by the API.
+#' @param Attempts Integer. Max download attempts per chunk. Default: `10`.
+#' @param SleepTime Integer. Number of seconds to pause between each data
+#'   retrieval request to prevent overloading the server. Default: 5 second.
+#' @param DeleteChunks Logical. Whether to delete temporary files for data
+#'   chunks from the `FileParts` subdirectory. Defaults to `TRUE`.
+#' @param ReturnData Logical. If `TRUE`, returns data as a dataframe; otherwise,
+#'   saves to disk and returns `invisible(NULL)`. Default: `FALSE`.
+#' @param Kingdom Character. Taxonomic kingdom to query. Default: `"Plantae"`.
+#' @param Phylum Character. Taxonomic phylum within kingdom. Default:
+#'   `"Tracheophyta"`
+#' @note Uses a static RDS file with EASIN-GBIF taxonomic standardization,
+#'   prepared by Marina Golivets (Feb 2024).
+#' @section Functions details:
+#' - **`EASIN_Process()`**: Orchestrates taxonomy extraction, data downloads,
+#'   and plotting for EASIN species data.
+#' - **`EASIN_Taxonomy()`**: Fetches taxonomy data in chunks via the EASIN API,
+#'   filtered by kingdom and phylum. Returns a tibble.
+#' - **`EASIN_Down()`**: Downloads occurrence data for a given EASIN ID,
+#'   handling pagination and pauses. Returns a dataframe if `ReturnData = TRUE`,
+#'   else `invisible(NULL)`.
+#' - **`EASIN_Plot()`**: Creates summary plots (observations count, species
+#'   count, distribution by partner) as JPEGs. Returns `invisible(NULL)`.
+
+
 # # |------------------------------------------------------------------------| #
 # EASIN_Process ----
 ## |------------------------------------------------------------------------| #
 
-#' Extracts and processes EASIN data
-#'
-#' This function extracts and processes data from the European Alien Species
-#' Information Network ([EASIN](https://easin.jrc.ec.europa.eu/)) for vascular
-#' plants. This function extracts plant species data from the EASIN database,
-#' matches them with a pre-processed standardized list of taxa, and prepares
-#' species-specific maps and summary maps. It also supports downloading data in
-#' chunks, handling pagination, and retrying failed downloads.
-#' @param ExtractTaxa Logical. If `TRUE`, the function will extract the EASIN
-#'   taxonomy list using [EASIN_Taxonomy]. Default is `TRUE`.
-#' @param ExtractData Logical. If `TRUE`, the function will download EASIN
-#'   species occurrence data using [EASIN_Down]. Default is `TRUE`.
-#' @param NDownTries Integer. Number of attempts to retry downloading data in
-#'   case of failure. Default is 10.
-#' @param NCores Integer. Number of CPU cores to use for parallel processing.
-#'   The maximum number of allowed cores are 8. Default is 6.
-#' @param SleepTime Numeric. Time in seconds to wait between download attempts
-#'   and between chunks. Default is 10 seconds.
-#' @param NSearch Integer. Number of observations or species to download during
-#'   EASIN taxonomy or data extraction, respectively. Default is 1000.
-#' @param FromHPC Logical. Whether the processing is being done on an 
-#'   High-Performance Computing (HPC) environment, to adjust file paths 
-#'   accordingly. Default: `TRUE`.
-#' @param EnvFile Character. Path to the environment file containing paths to 
-#'   data sources. Defaults to `.env`.
-#' @param DeleteChunks Logical. If `TRUE`, the function will delete intermediate
-#'   files after processing. Default is `FALSE`.
-#' @param StartYear Integer. Minimum year for filtering species occurrence data.
-#'   Records before this year will be excluded. Default is `1981`, which matches
-#'   the year ranges of CHELSA current climate data.
-#' @param Plot Logical. If `TRUE`, the function will generate summary plots of
-#'   the processed data using [EASIN_Plot]. Default is `TRUE`.
 #' @author Ahmed El-Gabbas
-#' @name EASIN_Process
-#' @return The function Returns `NULL` invisibly after completing the data
-#'   extraction, processing, and optional plotting. The function saves multiple
-#'   outputs to disk, including the extracted and processed EASIN data,
-#'   species-specific data files, and summary statistics. The main outputs are:
-#'   - `EASIN_Taxa.RData`: A dataset containing the standardized EASIN taxonomy.
-#'   - `EASIN_Data.RData`: A cleaned and merged dataset of species occurrence
-#'   data.
-#'   - `EASIN_NObs.RData`: A rasterized dataset showing the number of
-#'   observations per grid cell.
-#'   - `EASIN_NObs_PerPartner.RData`: A rasterized dataset showing the number of
-#'   observations per data partner.
-#'   - `EASIN_NSp.RData`: A rasterized dataset showing the number of species per
-#'   grid cell.
-#'   - `EASIN_NSp_PerPartner.RData`: A rasterized dataset showing the number of
-#'   species per data partner.
-#'   -  Species-specific data files, saved as both sf and raster objects.
-#' @note
-#'   - The function assumes that the necessary environment variables are
-#' correctly set up in the specified `.env` file. Users should ensure that all
-#' required files and directories are accessible before running the function.
-#'   - The function skips processing (i.e. reuse) species data or data chunks if
-#' the data already exist on the raw directory. The function assumes that the
-#' contents of this folder should be removed as part of the data workflow.
-#' Skipping processing available data can help not to re-download already
-#' available data from the EASIN server.
-#'   - This function depends on the following functions: [EASIN_Taxonomy] for
-#' getting the most recent EASIN taxonomy; [EASIN_Down] for processing EASIN
-#' dataset; and [EASIN_Plot] for plotting.
-#' @export
+#' @name EASIN_data
+#' @rdname EASIN_data
+#' @order 1
 
 EASIN_Process <- function(
     ExtractTaxa = TRUE, ExtractData = TRUE, NDownTries = 10L,
@@ -79,7 +83,7 @@ EASIN_Process <- function(
   IASDT.R::CatTime("Checking arguments")
 
   AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, ~ get(.x, envir = environment())) %>%
+  AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = "EnvFile")
@@ -93,8 +97,7 @@ EASIN_Process <- function(
     Args = c("DownTries", "NCores", "SleepTime", "NSearch", "StartYear"))
 
   if (NCores > 8) {
-    message(paste0(
-      "Number of cores were reset from ", NCores, " to 8"))
+    message("Number of cores were reset from ", NCores, " to 8")
     NCores <- 8
   }
 
@@ -121,10 +124,7 @@ EASIN_Process <- function(
       "Path_EASIN_Interim", "DP_R_EASIN_Interim", FALSE, FALSE,
       "TaxaInfoFile", "DP_R_TaxaInfo_RData", FALSE, TRUE,
       "EASIN_Ref", "DP_R_TaxaInfo_EASIN", FALSE, TRUE,
-
-      # The following are needed for other called functions
-      "EU_Bound", "DP_R_EUBound_sf", FALSE, TRUE,
-      "Path_EASIN_Summary", "DP_R_EASIN_Summary", FALSE, FALSE)
+      "EASIN_URL", "DP_R_EASIN_URL", FALSE, FALSE)
   } else {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
@@ -134,10 +134,7 @@ EASIN_Process <- function(
       "Path_EASIN_Interim", "DP_R_EASIN_Interim_Local", FALSE, FALSE,
       "TaxaInfoFile", "DP_R_TaxaInfo_RData_Local", FALSE, TRUE,
       "EASIN_Ref", "DP_R_TaxaInfo_EASIN_Local", FALSE, TRUE,
-
-      # The following are needed for other called functions
-      "EU_Bound", "DP_R_EUBound_sf_Local", FALSE, TRUE,
-      "Path_EASIN_Summary", "DP_R_EASIN_Summary_Local", FALSE, FALSE)
+      "EASIN_URL", "DP_R_EASIN_URL", FALSE, FALSE)
   }
 
   # Assign environment variables and check file and paths
@@ -166,17 +163,13 @@ EASIN_Process <- function(
   ## Grid - raster ----
   GridR <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(GridR)) {
-    stop(
-      paste0("Path for the reference grid does not exist: ", GridR),
-      call. = FALSE)
+    stop("Path for the reference grid does not exist: ", GridR, call. = FALSE)
   }
 
   ## Grid - sf ----
   GridSf <- IASDT.R::Path(Path_Grid_Ref, "Grid_10_sf.RData")
   if (!file.exists(GridSf)) {
-    stop(
-      paste0("Path for the reference grid does not exist: ", GridSf),
-      call. = FALSE)
+    stop("Path for the reference grid does not exist: ", GridSf, call. = FALSE)
   }
 
   ## Grid - sf - study area ----
@@ -184,8 +177,7 @@ EASIN_Process <- function(
   LandGrids <- IASDT.R::Path(Path_Grid, "Grid_10_Land_sf.RData")
   if (!file.exists(LandGrids)) {
     stop(
-      paste0("Path for the reference grid does not exist: ", LandGrids),
-      call. = FALSE)
+      "Path for the reference grid does not exist: ", LandGrids, call. = FALSE)
   }
 
   ## Species list ----
@@ -203,14 +195,12 @@ EASIN_Process <- function(
   if (ExtractTaxa) {
     IASDT.R::CatTime("Download EASIN taxa", Level = 1)
 
+    # Download EASIN taxa
     EASIN_Taxa_Orig <- IASDT.R::EASIN_Taxonomy(
-      # Download EASIN taxa
-      BaseURL = "https://easin.jrc.ec.europa.eu/apixg/catxg",
       Kingdom = "Plantae", Phylum = "Tracheophyta", NSearch = NSearch)
     save(
       EASIN_Taxa_Orig,
       file = IASDT.R::Path(Path_EASIN, "EASIN_Taxa_Orig.RData"))
-
 
     IASDT.R::CatTime("Loading pre-standardized EASIN taxonomy", Level = 1)
     # Update 08.2024: While writing this function, I noticed that there 4 taxa
@@ -291,7 +281,7 @@ EASIN_Process <- function(
       future::plan("future::sequential", gc = TRUE)
     } else {
       withr::local_options(
-        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE, 
+        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
         future.seed = TRUE)
       c1 <- snow::makeSOCKcluster(NCores)
       on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
@@ -303,7 +293,7 @@ EASIN_Process <- function(
     Try <- 0
 
     # Start downloading ----
-    while (TRUE) {
+    repeat {
       Try <- Try + 1
       NotProcessed <- list.files(Path_EASIN_Interim, pattern = ".RData$") %>%
         stringr::str_remove(".RData") %>%
@@ -333,11 +323,13 @@ EASIN_Process <- function(
       Down <- try(
         future.apply::future_lapply(
           X = NotProcessed, FUN = IASDT.R::EASIN_Down,
-          Path_Raw = Path_EASIN_Interim, DeleteChunks = DeleteChunks,
+          FromHPC = FromHPC, EnvFile = EnvFile,
+          DeleteChunks = DeleteChunks,
           NSearch = NSearch, SleepTime = SleepTime,
           future.scheduling = Inf, future.seed = TRUE,
           future.globals = c(
-            "Path_EASIN_Interim", "NSearch", "DeleteChunks", "SleepTime"),
+            "Path_EASIN_Interim", "NSearch", "DeleteChunks", "SleepTime",
+            "EnvFile", "FromHPC"),
           future.packages = c(
             "dplyr", "jsonlite", "purrr", "IASDT.R", "withr", "fs",
             "stringr", "RCurl", "tibble")),

@@ -2,7 +2,7 @@
 # Mod_CV_Fit ----
 ## |------------------------------------------------------------------------| #
 
-#' Prepare cross-Validated Hmsc models for HPC fitting
+#' Prepare cross-validated Hmsc models for HPC fitting
 #'
 #' This function prepares cross-validated Hmsc models for fitting using HPC. It
 #' handles data preparation, model initialization, and generation of SLURM
@@ -69,9 +69,7 @@ Mod_CV_Fit <- function(
   if (length(NullVars) > 0) {
     NullVarsNames[NullVars]
     stop(
-      paste0(
-        paste0(NullVarsNames[NullVars], collapse = ", "), " cannot be NULL"),
-      call. = FALSE)
+      toString(NullVarsNames[NullVars]), " cannot be NULL", call. = FALSE)
   }
 
   AllArgs <- ls(envir = environment())
@@ -91,8 +89,7 @@ Mod_CV_Fit <- function(
 
   if (!(Precision %in% c(32, 64))) {
     stop(
-      paste0("Precision should be either of 32 or 64, not ", Precision),
-      call. = FALSE)
+      "Precision should be either of 32 or 64, not ", Precision, call. = FALSE)
   }
 
   if (!file.exists(Path_Model)) {
@@ -145,22 +142,20 @@ Mod_CV_Fit <- function(
 
     CV_Data <- IASDT.R::LoadAs(Path_ModelData)$DT_CV
 
-    if (all(CVName %in% names(CV_Data))) {
-      # Extract CV folds from the CV column(s)
-      Partitions <- purrr::map(CVName, ~ dplyr::pull(CV_Data, .x))
-      names(Partitions) <- stringr::str_remove(CVName, "^CV_")
-    } else {
+    if (!(all(CVName %in% names(CV_Data)))) {
       # if any of the column names does not exist, stop the function
-      MissingCV <- CVName[CVName %in% names(CV_Data) == FALSE]
+      MissingCV <- CVName[isFALSE(CVName %in% names(CV_Data))]
       stop(
-        paste0(
-          "`Partitions` was not defined (NULL) and column(s) for CV folds ",
-          paste(MissingCV, collapse = " + "),
-          " can not be found in species data"
-        ),
-        call. = FALSE
+        "`Partitions` was not defined (NULL) and column(s) for CV folds ",
+        paste(MissingCV, collapse = " + "),
+        " can not be found in species data", call. = FALSE
       )
     }
+
+    # Extract CV folds from the CV column(s)
+    Partitions <- purrr::map(CVName, ~ dplyr::pull(CV_Data, .x))
+    names(Partitions) <- stringr::str_remove(CVName, "^CV_")
+
   } else {
     # If Partitions is provided directly to the function, use "CV_Custom" as CV
     # name
@@ -168,12 +163,10 @@ Mod_CV_Fit <- function(
   }
 
   # Check the length of CV data equals the number of sampling units in the model
-  if (any(sapply(Partitions, length) != Model_Full$ny)) {
+  if (any(purrr::map_int(Partitions, length) != Model_Full$ny)) {
     stop(
-      paste0(
-        "Partitions parameter must be a vector of the same length of the ",
-        "sampling  units of the the full model"),
-      call. = FALSE)
+      "Partitions parameter must be a vector of the same length of the ",
+      "sampling  units of the the full model", call. = FALSE)
   }
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -329,17 +322,17 @@ Mod_CV_Fit <- function(
               valCoords <- Coords[val, ]
               rownames(dfPi) <- rownames(valCoords) <- dfPi$sample
 
-              tibble::tibble(
-                Path_ModFull = Path_Model,
-                CV = k,
-                Path_ModInit = Path_ModInit,
-                Path_ModInit_rds = Path_ModInit_rds,
-                Path_ModFitted = Path_ModFitted,
-                val = list(val),
-                valCoords = list(valCoords),
-                XRRRVal = list(XRRRVal),
-                dfPi = list(dfPi)) %>%
-                return()
+              return(
+                tibble::tibble(
+                  Path_ModFull = Path_Model,
+                  CV = k,
+                  Path_ModInit = Path_ModInit,
+                  Path_ModInit_rds = Path_ModInit_rds,
+                  Path_ModFitted = Path_ModFitted,
+                  val = list(val),
+                  valCoords = list(valCoords),
+                  XRRRVal = list(XRRRVal),
+                  dfPi = list(dfPi)))
             })
           return(CV_DT0)
         })) %>%
@@ -388,11 +381,11 @@ Mod_CV_Fit <- function(
                 " >& ", IASDT.R::NormalizePath(ModProg_File))
 
               # data to be returned for each combination of CV and Chain
-              tibble::tibble(
-                Path_Post = Post_File, Path_ModProg = ModProg_File,
-                Command_HPC = Command_HPC, NSamples = Model_Full$samples,
-                Transient = Model_Full$transient, Thin = Model_Full$thin) %>%
-                return()
+              return(
+                tibble::tibble(
+                  Path_Post = Post_File, Path_ModProg = ModProg_File,
+                  Command_HPC = Command_HPC, NSamples = Model_Full$samples,
+                  Transient = Model_Full$transient, Thin = Model_Full$thin))
             })
 
           return(dplyr::summarise_all(CV_Out, list))

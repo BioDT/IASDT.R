@@ -44,10 +44,10 @@ arguments (\code{obj}, \code{x}, \code{y}, \code{width}) are \code{NULL}.
 }
 \examples{
 library(png)
-myurl <- paste0("https://upload.wikimedia.org/wikipedia/commons/",
+URL <- paste0("https://upload.wikimedia.org/wikipedia/commons/",
     "e/e1/Jupiter_\%28transparent\%29.png")
 z <- tempfile()
-utils::download.file(myurl, z, mode="wb", quiet = TRUE)
+utils::download.file(URL, z, mode = "wb", quiet = TRUE)
 pic <- png::readPNG(z)
 file.remove(z) # cleanup
 

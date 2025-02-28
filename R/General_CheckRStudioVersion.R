@@ -36,26 +36,25 @@ CheckRStudioVersion <- function() {
 
   } else {
 
-  InstalledVersion <- rstudioapi::versionInfo() %>%
-    magrittr::extract2("long_version") %>%
-    stringr::str_replace_all("\\+", "\\.")
+    InstalledVersion <- rstudioapi::versionInfo() %>%
+      magrittr::extract2("long_version") %>%
+      stringr::str_replace_all("\\+", "\\.")
 
-
-  if (!identical(OnlineVersion, InstalledVersion)) {
-    cat(
-      crayon::blue(
-        "R-Studio version:",
-        crayon::red(crayon::bold(OnlineVersion)),
-        "is available.\nInstalled R-studio version:",
-        crayon::red(crayon::bold(InstalledVersion)),
-        "\nPlease consider updating R-Studio.\n"))
-  } else {
-    cat(
-      crayon::blue(
-        "You are using the most recent version of R-Studio: v",
-        crayon::red(crayon::bold(InstalledVersion)), ".",
-        sep = ""))
-  }
+    if (identical(OnlineVersion, InstalledVersion)) {
+      cat(
+        crayon::blue(
+          "You are using the most recent version of R-Studio: v",
+          crayon::red(crayon::bold(InstalledVersion)), ".",
+          sep = ""))
+    } else {
+      cat(
+        crayon::blue(
+          "R-Studio version:",
+          crayon::red(crayon::bold(OnlineVersion)),
+          "is available.\nInstalled R-studio version:",
+          crayon::red(crayon::bold(InstalledVersion)),
+          "\nPlease consider updating R-Studio.\n"))
+    }
   }
   return(invisible(NULL))
 }

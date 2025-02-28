@@ -126,7 +126,7 @@ Convergence_Plot <- function(
 
   SpSummary <- IASDT.R::Path(Path_PA, "Sp_PA_Summary_DF.csv")
   if (!file.exists(SpSummary)) {
-    stop(paste0(SpSummary, " file does not exist"), call. = FALSE)
+    stop(SpSummary, " file does not exist", call. = FALSE)
   }
 
   SpSummary <- readr::read_csv(SpSummary, show_col_types = FALSE) %>%
@@ -180,7 +180,7 @@ Convergence_Plot <- function(
   }
   if (length(Cols) != NChains) {
     warning(
-      "The length of provided colours != number of chains", .call. = FALSE)
+      "The length of provided colours != number of chains", call. = FALSE)
     Cols <- c(
       "black", "grey60",
       RColorBrewer::brewer.pal(n = NChains - 2, name = "Set1"))
@@ -332,7 +332,7 @@ Convergence_Plot <- function(
           round(2) %>%
           unlist()
         Label_CI <- CurrCI %>%
-          paste0(collapse = " to ") %>%
+          paste(collapse = " to ") %>%
           paste0("<b><i>95% credible interval:</i></b> ", .)
         Label_ESS_CI <- data.frame(
           x = -Inf, y = -Inf, label = paste0(Label_ESS, "<br>", Label_CI))
@@ -340,8 +340,8 @@ Convergence_Plot <- function(
         Label_Panel <- c(CombData$IAS1, CombData$IAS2) %>%
           sort() %>%
           paste0("<i>", ., "</i>") %>%
-          paste0(collapse = " & <br>") %>%
-          paste0(., " ") %>%
+          paste(collapse = " & <br>") %>%
+          paste0(" ") %>%
           data.frame(x = Inf, y = Inf, label = .)
 
         Plot <- ggplot2::ggplot(
@@ -558,7 +558,7 @@ Convergence_Plot <- function(
       dplyr::mutate(
         Range = purrr::map(.x = DT, .f = ~ range(dplyr::pull(.x, Value)))) %>%
       dplyr::select(-DT) %>%
-      tidyr::nest(data = c("Range")) %>%
+      tidyr::nest(data = "Range") %>%
       dplyr::mutate(
         Range = purrr::map(
           .x = data,
@@ -654,7 +654,7 @@ Convergence_Plot <- function(
 
         ## Gelman convergence diagnostic
         Label_Gelman <- round(DT_all$Gelman$psrf, 3) %>%
-          paste0(collapse = " / ") %>%
+          paste(collapse = " / ") %>%
           paste0("<b><i>Gelman convergence diagnostic:</i></b> ", .) %>%
           data.frame(x = Inf, y = -Inf, label = .)
 
@@ -663,7 +663,7 @@ Convergence_Plot <- function(
           paste0(
             "<b><i>Mean effective sample size:</i></b> ", ., " / ", SampleSize)
         CurrCI <- c(DT_all$CI_025, DT_all$CI_975)
-        Label_CI <- paste0(round(CurrCI, 4), collapse = " to ") %>%
+        Label_CI <- paste(round(CurrCI, 4), collapse = " to ") %>%
           paste0("<b><i>95% credible interval:</i></b> ", .)
         Label_ESS_CI <- data.frame(
           x = -Inf, y = -Inf, label = paste0(Label_ESS, "<br>", Label_CI))
@@ -672,7 +672,7 @@ Convergence_Plot <- function(
           x = Inf, y = Inf, label = paste0("<br><b><i>", Species, "</i></b>"))
 
         PanelTitle <- c(DT_all$Class, DT_all$Order, DT_all$Family) %>%
-          paste0(collapse = " | ") %>%
+          paste(collapse = " | ") %>%
           paste0("<b>", ., "</b>") %>%
           paste0("<br>", Curr_IAS) %>%
           data.frame(x = -Inf, y = Inf, label = .)
@@ -828,9 +828,9 @@ Convergence_Plot <- function(
           })
 
       BetaPlots <- purrr::map(
-        .x = Plots, .f = ~ magrittr::extract2(.x, "Plot_Marginal"))
+        .x = Plots, .f = magrittr::extract2, "Plot_Marginal")
       BetaPlotsFixedY <- purrr::map(
-        .x = Plots, .f = ~ magrittr::extract2(.x, "PlotFixedY_Marginal"))
+        .x = Plots, .f = magrittr::extract2, "PlotFixedY_Marginal")
       rm(Plots, envir = environment())
       invisible(gc())
 

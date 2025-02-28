@@ -10,9 +10,9 @@ Mod_GetPosts(Path_Post = NULL, FromJSON = FALSE)
 \item{Path_Post}{Character vector. Path to the RDS files containing the
 exported posterior files. This argument is mandatory and cannot be empty.}
 
-\item{FromJSON}{Logical. Whether the loaded models should be
-converted from \code{JSON} format. Defaults to \code{FALSE}, meaning the data will be
-read directly from RDS files without conversion.}
+\item{FromJSON}{Logical. Whether the loaded models should be converted from
+\code{JSON} format. Defaults to \code{FALSE}, meaning the data will be read directly
+from RDS files without conversion.}
 }
 \value{
 Depending on the \code{FromJSON} parameter, returns an Hmsc object either

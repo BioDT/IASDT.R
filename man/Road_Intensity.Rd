@@ -2,7 +2,7 @@
 % Please edit documentation in R/DWF_Road_Intensity.R
 \name{Road_Intensity}
 \alias{Road_Intensity}
-\title{Calculate road intensity}
+\title{Calculate road intensity per grid cell}
 \usage{
 Road_Intensity(FromHPC = TRUE, EnvFile = ".env")
 }

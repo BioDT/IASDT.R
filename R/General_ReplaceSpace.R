@@ -1,17 +1,16 @@
 ## |------------------------------------------------------------------------| #
 # ReplaceSpace ----
 ## |------------------------------------------------------------------------| #
-#
+
 #' Replace space with underscore in a string
 #'
-#' This function takes a string as input and replaces all spaces with
-#' underscores. It is useful for formatting strings to be used in contexts where
-#' spaces are not allowed or desired.
+#' A simple wrapper function for `stringr::str_replace_all` that replaces all
+#' spaces with underscores. It is useful for formatting strings to be used in
+#' contexts where spaces are not allowed or desired.
 #'
-#' @param x Character. The string in which spaces will be replaced with 
+#' @param x Character. The string in which spaces will be replaced with
 #'   underscores.
 #' @name ReplaceSpace
-#' @author Ahmed El-Gabbas
 #' @return A character string with all spaces replaced by underscores.
 #' @examples
 #' ReplaceSpace("Genus species")

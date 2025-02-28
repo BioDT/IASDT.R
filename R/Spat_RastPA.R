@@ -60,17 +60,16 @@ RastPA <- function(x = NULL, NA_to_0 = TRUE, Zero_to_NA = FALSE) {
     if (NA_to_0) x <- raster::reclassify(x, cbind(NA, 0))
     if (Zero_to_NA) x <- raster::reclassify(x, cbind(0, NA))
   } else {
-    if (inherits(x, "SpatRaster")) {
-      x <- terra::classify(x, cbind(0, Inf, 1))
-      if (NA_to_0) x <- terra::classify(x, cbind(NA, 0))
-      if (Zero_to_NA) x <- terra::classify(x, cbind(0, NA))
 
-    } else {
+    if (!inherits(x, "SpatRaster")) {
       stop(
-        paste0("Input map should be either PackedSpatRaster, ",
-               "RasterLayer, or SpatRaster"), 
-        call. = FALSE)
+        "Input map should be either PackedSpatRaster, ",
+        "RasterLayer, or SpatRaster", call. = FALSE)
     }
+
+    x <- terra::classify(x, cbind(0, Inf, 1))
+    if (NA_to_0) x <- terra::classify(x, cbind(NA, 0))
+    if (Zero_to_NA) x <- terra::classify(x, cbind(0, NA))
   }
   return(x)
 }

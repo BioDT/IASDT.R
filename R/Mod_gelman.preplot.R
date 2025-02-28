@@ -37,7 +37,7 @@ gelman.preplot <- function(
   shrink <- array(dim = c(nbin + 1, coda::nvar(x), 2))
   dimnames(shrink) <- list(
     last.iter, coda::varnames(x),
-    c("median", paste(50 * (confidence + 1), "%", sep = "")))
+    c("median", paste0(50 * (confidence + 1), "%")))
 
   for (i in seq_len(nbin + 1)) {
     shrink[i, , ] <- coda::gelman.diag(

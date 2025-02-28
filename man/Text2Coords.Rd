@@ -7,11 +7,11 @@
 Text2Coords(String = NULL, Long_Name = "Longitude", Lat_Name = "Latitude")
 }
 \arguments{
-\item{String}{Character. Coordinates in the format \code{"POINT (longitude  latitude)"}. This parameter is required and cannot be \code{NULL}.}
+\item{String}{Character. Coordinates in the format \code{"POINT (longitude latitude)"}. This parameter is required and cannot be \code{NULL}.}
 
-\item{Long_Name, Lat_Name}{Character. Name to be used for the
-longitude and Longitude columns in the output tibble. Defaults to
-"Longitude" and "Latitude".}
+\item{Long_Name, Lat_Name}{Character. Name to be used for the longitude and
+Longitude columns in the output tibble. Defaults to "Longitude" and
+"Latitude".}
 }
 \value{
 A tibble with two columns containing the longitude and latitude

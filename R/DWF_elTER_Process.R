@@ -1,31 +1,37 @@
 # # |------------------------------------------------------------------------| #
-# elTER_Process ----
+# eLTER_Process ----
 ## |------------------------------------------------------------------------| #
 
-#' eLTER data processing function
+#' Process eLTER data for the `IAS-pDT`
 #'
-#' This function processes pre-cleaned and pre-standardized eLTER data.
-#' @param FromHPC Logical. Whether the processing is being done on an 
-#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#' This function processes pre-cleaned and pre-standardized Integrated European
+#' Long-Term Ecosystem, critical zone and socio-ecological Research
+#' ([eLTER](https://elter-ri.eu/)) data.
+#' @param FromHPC Logical. Whether the processing is being done on an
+#'   High-Performance Computing (HPC) environment, to adjust file paths
 #'   accordingly. Default: `TRUE`.
-#' @param EnvFile Character. Path to the environment file containing paths to 
+#' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
 #' @param StartYear Numeric. The starting year for the occurrence data. Only
 #'   records from this year onward will be processed. Default is `1981`, which
 #'   matches the year ranges of CHELSA current climate data.
 #' @return Returns `NULL` invisibly after saving the processed data.
-#' @author Ahmed El-Gabbas & Marina Golivets
-#' @name elTER_Process
+#' @author Ahmed El-Gabbas
+#' @name eLTER_Process
+#' @note This function processes pre-cleaned vascular plants data from eLTER
+#'   sites, harmonized by Ahmed El-Gabbas. The original eLTER biodiversity data
+#'   were highly heterogeneous in format and structure, requiring
+#'   standardization and cleaning before use. Taxonomic standardization with the
+#'   GBIF backbone was performed by Marina Golivets (Feb. 2024).
 #' @export
 
-elTER_Process <- function(
-    FromHPC = TRUE, EnvFile = ".env", StartYear = 1981) {
+eLTER_Process <- function(FromHPC = TRUE, EnvFile = ".env", StartYear = 1981) {
 
   # # ..................................................................... ###
 
   # Checking arguments ----
   AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, ~get(.x, envir = environment())) %>%
+  AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = "EnvFile")

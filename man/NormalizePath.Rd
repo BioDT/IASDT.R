@@ -7,7 +7,7 @@
 NormalizePath(Path, MustWork = FALSE)
 }
 \arguments{
-\item{Path}{A character vector of file paths.}
+\item{Path}{Character vector. file path(s).}
 
 \item{MustWork}{Logical; if \code{TRUE}, the function errors for non-existing
 paths.}

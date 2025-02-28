@@ -14,15 +14,12 @@ underscores.}
 A character string with all spaces replaced by underscores.
 }
 \description{
-This function takes a string as input and replaces all spaces with
-underscores. It is useful for formatting strings to be used in contexts where
-spaces are not allowed or desired.
+A simple wrapper function for \code{stringr::str_replace_all} that replaces all
+spaces with underscores. It is useful for formatting strings to be used in
+contexts where spaces are not allowed or desired.
 }
 \examples{
 ReplaceSpace("Genus species")
 
 ReplaceSpace("Genus species subspecies")
-}
-\author{
-Ahmed El-Gabbas
 }

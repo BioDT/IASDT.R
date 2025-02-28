@@ -2,7 +2,7 @@
 # SaveSessionInfo ----
 ## |------------------------------------------------------------------------| #
 #
-#' Save Session Information to a File
+#' Save session information to a file
 #'
 #' This function saves the current R session information, including installed
 #' packages, session details, and optionally, information about specific objects

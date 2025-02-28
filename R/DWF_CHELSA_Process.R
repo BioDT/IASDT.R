@@ -1,47 +1,65 @@
+#' Process CHELSA Climate Data for the `IAS-pDT`
+#'
+#' Downloads, processes, and projects [CHELSA](https://chelsa-climate.org/)
+#' climate data at the European scale for the Invasive Alien Species prototype
+#' Digital Twin (`IAS-pDT`). Supports multiple climate scenarios, outputting
+#' data in TIFF and NetCDF formats. Orchestrated by `CHELSA_Process()`, with
+#' helper functions `CHELSA_Prepare()` and `CHELSA_Project()`.
+#'
+#' @param EnvFile Character. Path to the environment file containing paths to
+#'   data sources. Defaults to `.env`.
+#' @param FromHPC Logical. Whether the processing is being done on an
+#'   High-Performance Computing (HPC) environment, to adjust file paths
+#'   accordingly. Default: `TRUE`.
+#' @param NCores Integer. Number of CPU cores to use for parallel processing.
+#'   Default: 8.
+#' @param Download Logical. If `TRUE`, downloads CHELSA files. Default: `FALSE`.
+#' @param Download_Attempts Integer. Maximum download retries. Default: `10`.
+#' @param Sleep Integer. Seconds to wait between download attempts. Default:
+#'   `5`.
+#' @param Download_NCores Integer. Number of CPU cores to use for parallel
+#'   downloading of CHELSA data. Only valid if Download = `TRUE`. Defaults to 4.
+#' @param Overwrite Logical. If `TRUE`, re-downloads existing files. Default:
+#'   `FALSE`.
+#' @param CompressLevel Integer. NetCDF compression level (1 = least, 9 = most).
+#'   Default: `5`.
+#' @param OverwriteProcessed Logical. If `TRUE`, overwrites processed files.
+#'   Default: `FALSE`.
+#' @param OtherVars Character. Additional variables to process (e.g., `"npp"`
+#'   for Net Primary Productivity alongside 19 bioclimatic variables
+#'   bio1-bio19). Use `""` for bioclimatic only. See [CHELSA_Vars] for details.
+#'   Default: `"npp"`.
+#' @param Metadata Tibble. Single-row metadata for input files, prepared by
+#'   `CHELSA_Prepare()`
+#' @section Functions details:
+#' - **`CHELSA_Process()`**: Main function; optionally downloads CHELSA data,
+#'   processes it to the European scale and reference grid, and saves TIFF and
+#'   NetCDF outputs for 46 climate scenarios.
+#' - **`CHELSA_Prepare()`**: Extracts metadata from local URL text files and
+#'   manages optional downloads.
+#' - **`CHELSA_Project()`**: Projects data to the IAS-pDT reference grid with
+#'   optional transformations.
+#'
+#' @note
+#' - `CHELSA_Prepare()` and `CHELSA_Project()` are internal helpers, not for
+#' direct use.
+#' - Processes 19 bioclimatic variables (bio1–bio19) plus optional variables
+#' (e.g., NPP) for 46 scenarios (1 current, 45 future).
+#' - Time-intensive; depends on file size and compute resources.
+
 ## |------------------------------------------------------------------------| #
 # CHELSA_Process ----
 ## |------------------------------------------------------------------------| #
 
-#' Process CHELSA climate data
-#'
-#' This function processes CHELSA climate data, with an option to download them
-#' first. It processes each variable to the European scale and reference grid,
-#' and outputs in TIFF and NetCDF (NC) formats. It also saves grouped data for
-#' each of the 46 climate scenarios.
-#'
-#' @name CHELSA_Process
-#' @param EnvFile Character. Path to the environment file containing paths to 
-#'   data sources. Defaults to `.env`.
-#' @param FromHPC Logical. Whether the processing is being done on an 
-#'   High-Performance Computing (HPC) environment, to adjust file paths 
-#'   accordingly. Default: `TRUE`.
-#' @param NCores Integer. Number of CPU cores to use for parallel processing. 
-#'   Default: 8.
-#' @param Download Logical. Whether to download the CHELSA files. Defaults to
-#'   `FALSE`.
-#' @param Download_Attempts Integer. The maximum number of download attempts.
-#'   Defaults to 10.
-#' @param Sleep Integer. Time in seconds to wait after each download attempt.
-#'   Defaults to 5.
-#' @param BaseURL Character. The base URL for downloading CHELSA climate data.
-#' @param Download_NCores Integer. Number of CPU cores to use for parallel
-#'   downloading of CHELSA data. Only valid if Download = `TRUE`. Defaults to 4.
-#' @param Overwrite Logical. Whether to re-download files that already exist.
-#'   Defaults to `FALSE`.
-#' @param CompressLevel Integer. The level of compression to use when saving
-#'   NetCDF files. Default is 5.
-#' @param OverwriteProcessed Logical. Whether to overwrite already processed
-#'   files. Default is `FALSE`.
-#' @inheritParams CHELSA_Prepare
 #' @author Ahmed El-Gabbas
 #' @export
+#' @name CHELSA_data
+#' @rdname CHELSA_data
+#' @order 1
 
 CHELSA_Process <- function(
     FromHPC = TRUE, EnvFile = ".env", NCores = 8L, Download = FALSE,
-    Overwrite = FALSE, Download_Attempts = 10L, Sleep = 5L, OtherVars = "",
-    BaseURL = paste0(
-      "https://os.zhdk.cloud.switch.ch/envicloud/",
-      "chelsa/chelsa_V2/GLOBAL/"),
+    Overwrite = FALSE, Download_Attempts = 10L, Sleep = 5L, OtherVars = "npp",
     Download_NCores = 4, CompressLevel = 5, OverwriteProcessed = FALSE) {
 
   # # ..................................................................... ###
@@ -58,7 +76,7 @@ CHELSA_Process <- function(
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
 
-  CharArgs <- c("EnvFile", "BaseURL")
+  CharArgs <- c("EnvFile", "OtherVars")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = CharArgs, Type = "character")
 
   LogicArgs <- c("FromHPC", "Download", "Overwrite", "OverwriteProcessed")
@@ -90,7 +108,7 @@ CHELSA_Process <- function(
 
   if (!file.exists(EnvFile)) {
     stop(
-      paste0("Path to environment variables: ", EnvFile, " was not found"),
+      "Path to environment variables: ", EnvFile, " was not found",
       call. = FALSE)
   }
 
@@ -128,7 +146,7 @@ CHELSA_Process <- function(
   CHELSA_Data <- IASDT.R::CHELSA_Prepare(
     EnvFile = EnvFile, FromHPC = FromHPC, Download = Download,
     NCores = Download_NCores, Overwrite = Overwrite, OtherVars = OtherVars,
-    BaseURL = BaseURL, Download_Attempts = Download_Attempts, Sleep = Sleep)
+    Download_Attempts = Download_Attempts, Sleep = Sleep)
 
   IASDT.R::CatDiff(
     InitTime = TimePrepare, Level = 1,
@@ -178,10 +196,8 @@ CHELSA_Process <- function(
         file = IASDT.R::Path(Path_CHELSA_Out, "ProblematicTiffs.txt"))
 
       stop(
-        paste0(
-          "Not all input tiff files are available and valid.",
-          "Check `ProblematicTiffs.txt`"),
-        call. = FALSE
+        "Not all input tiff files are available and valid. ",
+        "Check `ProblematicTiffs.txt`", call. = FALSE
       )
     }
 
@@ -192,12 +208,11 @@ CHELSA_Process <- function(
 
     if (length(Diff) > 0) {
       message(
-        paste0(
-          " >> Only Bioclimatic variables and variables identified in ",
-          "`OtherVars`, if any, will be processed (",
-          nrow(CHELSA_Data), " files)\n >> ", length(Diff),
-          " files will not be processed.\n",
-          " >> See `NotProcessed.txt` for the list of files"))
+        " >> Only Bioclimatic variables and variables identified in ",
+        "`OtherVars`, if any, will be processed (",
+        nrow(CHELSA_Data), " files)\n >> ", length(Diff),
+        " files will not be processed.\n",
+        " >> See `NotProcessed.txt` for the list of files")
 
       readr::write_lines(
         x = Diff, file = IASDT.R::Path(Path_CHELSA_Out, "NotProcessed.txt"))
@@ -228,8 +243,8 @@ CHELSA_Process <- function(
 
   # Exclude previously processed files (after checking)
   if (OverwriteProcessed) {
-    CHELSA2Process <- CHELSA_Data %>%
-      dplyr::select(Path_Down, Path_Out_NC, Path_Out_tif)
+    CHELSA2Process <- dplyr::select(
+      .data = CHELSA_Data, Path_Down, Path_Out_NC, Path_Out_tif)
   } else {
     CHELSA2Process <- CHELSA_Data %>%
       dplyr::select(Path_Down, Path_Out_NC, Path_Out_tif) %>%
@@ -263,12 +278,12 @@ CHELSA_Process <- function(
             terra::setGDALconfig("GTIFF_SRS_SOURCE", "EPSG")
 
             Attempt <- 0
-            while (TRUE) {
+            repeat {
               Attempt <- Attempt + 1
               Try <- try(
                 IASDT.R::CHELSA_Project(
                   Metadata = FileMetadata, EnvFile = EnvFile, FromHPC = FromHPC,
-                  CompressLevel = CompressLevel, ReturnMap = FALSE),
+                  CompressLevel = CompressLevel),
                 silent = TRUE)
 
               if (!inherits(Try, "try-error") || Attempt >= 5) {
@@ -310,10 +325,8 @@ CHELSA_Process <- function(
         file = IASDT.R::Path(Path_CHELSA_Out, "FailedProcessing.txt"))
 
       stop(
-        paste(
-          "\n >> ", nrow(CHELSA2Process), " files failed to process.\n",
-          " >> Check `FailedProcessing.txt` for more details"),
-        call. = FALSE)
+        "\n >> ", nrow(CHELSA2Process), " files failed to process.\n",
+        " >> Check `FailedProcessing.txt` for more details", call. = FALSE)
     }
 
     IASDT.R::CatTime("All tiff files were processed", Level = 1)
@@ -363,7 +376,7 @@ CHELSA_Process <- function(
     # Combine the strings into a single string separated by "|". This matches
     # any variable starting with "bio" or "Bio" or any of the characters in
     # `OtherVars` up to the first occurrence of underscore "_".
-    paste0(sep = ".*?_", collapse = "|")
+    paste(sep = ".*?_", collapse = "|")
 
   CHELSA_Processed <- CHELSA_Data %>%
     dplyr::select(TimePeriod, ClimateModel, ClimateScenario, Path_Out_tif) %>%

@@ -20,9 +20,9 @@ function will stop with an error.}
 \item{OutFolder}{Character. Path to the output folder where the \code{.RData}
 files will be saved. Defaults to the current working directory.}
 
-\item{Overwrite}{Logical. Whether existing \code{.RData} files
-should be overwritten. If \code{FALSE} (Default) and files exist, the function
-will stop with an error message.}
+\item{Overwrite}{Logical. Whether existing \code{.RData} files should be
+overwritten. If \code{FALSE} (Default) and files exist, the function will stop
+with an error message.}
 
 \item{Prefix}{Character. Prefix of each output file name. Useful for
 organizing saved files or avoiding name conflicts. Defaults to an empty

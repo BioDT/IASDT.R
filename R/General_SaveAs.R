@@ -11,17 +11,17 @@
 #'
 #' @param InObj The input object to be saved. This can be an actual R object or
 #'   a character string representing the name of an object.
-#' @param OutObj Character. The new name for the saved
-#'   `RData` object. This name is used when the object is loaded back into R.
-#'   Default is `NULL`. This is required when saving `RData` files.
-#' @param OutPath Character. File path (ends with either `*.RData`, `*.qs2`, 
-#'   `feather`, and `rds`) where the object be saved. This includes the 
+#' @param OutObj Character. The new name for the saved `RData` object. This name
+#'   is used when the object is loaded back into R. Default is `NULL`. This is
+#'   required when saving `RData` files.
+#' @param OutPath Character. File path (ends with either `*.RData`, `*.qs2`,
+#'   `feather`, and `rds`) where the object be saved. This includes the
 #'   directory and the file name.
-#' @param nthreads Character. Number of threads to use
-#'   when compressing data. See [qs2::qs_save].
-#' @param feather_compression Character. The compression
-#'   algorithm to use when saving the object in the `feather` format. The
-#'   default is "zstd". See [arrow::write_feather].
+#' @param nthreads Character. Number of threads to use when compressing data.
+#'   See [qs2::qs_save].
+#' @param feather_compression Character. The compression algorithm to use when
+#'   saving the object in the `feather` format. The default is "zstd". See
+#'   [arrow::write_feather].
 #' @param ... Additional arguments to be passed to the respective save
 #'   functions. [base::save] for `RData` files; [qs2::qs_save] for `qs2` files;
 #'   [arrow::write_feather] for `feather` files; and [base::saveRDS] for `rds`
@@ -45,7 +45,7 @@
 #' tibble::tibble(iris2)
 
 SaveAs <- function(
-    InObj, OutObj = NULL, OutPath, nthreads = 5,
+    InObj = NULL, OutObj = NULL, OutPath = NULL, nthreads = 5L,
     feather_compression = "zstd", ...) {
 
   if (is.null(InObj) || is.null(OutPath)) {
@@ -60,10 +60,8 @@ SaveAs <- function(
 
   if (!Extension %in% c("qs2", "rdata", "feather", "rds")) {
     stop(
-      paste0(
-        "Extension of `OutPath` must be either 'qs2', ",
-        "'rdata', 'feather', or 'rds' (case-insensitive)."),
-      .call = FALSE)
+      "Extension of `OutPath` must be either 'qs2', ",
+      "'rdata', 'feather', or 'rds' (case-insensitive).", call. = FALSE)
   }
 
   # Create directory if not available

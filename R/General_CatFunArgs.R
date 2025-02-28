@@ -12,7 +12,7 @@
 #'   R function.
 #' @param Assign Logical. Whether to assign the arguments as variables in the
 #'   global environment. Defaults to `FALSE`.
-#' @param Package Character. Name of the R package to be loaded before 
+#' @param Package Character. Name of the R package to be loaded before
 #'   processing the function. Default is `NULL`.
 #' @export
 #' @name CatFunArgs
@@ -76,7 +76,7 @@ CatFunArgs <- function(Function, Assign = FALSE, Package = NULL) {
         paste0(arg_name, " = ", as.character(arg_value))
       }
 
-      if (Assign == TRUE) {
+      if (Assign) {
         eval(expr = parse(text = Output), envir = .GlobalEnv)
       }
       return(Output)

@@ -26,16 +26,15 @@ processed model information will be saved. If \code{NULL}, it overwrites the
 \code{Model_Info.RData} file in the \code{ModelDir} directory. If provided, a new
 \code{.RData} file will be created with this name.}
 
-\item{PrintIncomplete}{Logical. Whether to print the names of
-models that were not successfully fitted to the console. Defaults to
-\code{TRUE}.}
+\item{PrintIncomplete}{Logical. Whether to print the names of models that
+were not successfully fitted to the console. Defaults to \code{TRUE}.}
 
 \item{FromHPC}{Logical. Whether the processing is being done on an
 High-Performance Computing (HPC) environment, to adjust file paths
 accordingly. Default: \code{TRUE}.}
 
-\item{FromJSON}{Logical. Whether to convert loaded models from JSON
-format before reading. Defaults to \code{FALSE}.}
+\item{FromJSON}{Logical. Whether to convert loaded models from JSON format
+before reading. Defaults to \code{FALSE}.}
 
 \item{Extension}{Character. File extension (without dot) for the files
 containing the fitted model and coda objects. It can be either \code{qs2} or

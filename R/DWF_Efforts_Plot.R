@@ -2,37 +2,41 @@
 # Efforts_Plot ----
 ## |------------------------------------------------------------------------| #
 
-#' Plot the output of efforts maps
-#'
-#' This function generates and saves multiple plots of plant observation
-#' efforts, both in raw and log10 scales, using provided spatial boundary and
-#' summary data.
-#' @param Path_Efforts Character. Path to the directory where the generated
-#'   plots will be saved. The directory must exist.
-#' @param EU_Bound Character. Path to `RData` file containing country
-#'   boundaries.
-#' @return The function saves generated plots as JPEG files in the specified
-#'   directory and returns NULL invisibly.
 #' @author Ahmed El-Gabbas
-#' @name Efforts_Plot
-#' @note This function is not intended to be used directly by the user or in the
-#'   IAS-pDT, but only used inside the [Efforts_Process] function.
-#' @details This function generates and saves effort maps visualizing the number
-#'   of plant observations and species, including both native and non-native
-#'   species, within Europe. It produces both standard and log10-scaled plots.
+#' @name Efforts_data
+#' @rdname Efforts_data
+#' @order 6
 #' @export
 
-Efforts_Plot <- function(Path_Efforts, EU_Bound) {
+Efforts_Plot <- function(FromHPC = TRUE, EnvFile = ".env") {
 
+  # # ..................................................................... ###
+
+  # Avoid "no visible binding for global variable" message
+  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
+  Path_Efforts <- EU_Bound <- NULL
+
+  # # ..................................................................... ###
+
+  if (FromHPC) {
+    EnvVars2Read <- tibble::tribble(
+      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+      "Path_Efforts", "DP_R_Efforts", FALSE, FALSE,
+      "EU_Bound", "DP_R_EUBound_sf", FALSE, TRUE)
+  } else {
+    EnvVars2Read <- tibble::tribble(
+      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+      "Path_Efforts", "DP_R_Efforts_Local", FALSE, FALSE,
+      "EU_Bound", "DP_R_EUBound_sf_Local", FALSE, TRUE)
+  }
+  # Assign environment variables and check file and paths
+  IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
   # # ..................................................................... ###
 
   File_SummaryR <- IASDT.R::Path(Path_Efforts, "Efforts_SummaryR.RData")
   if (!file.exists(File_SummaryR)) {
-    stop(
-      paste0("Summary maps cannot be loaded: ", File_SummaryR),
-      call. = FALSE
-    )
+    stop("Summary maps cannot be loaded: ", File_SummaryR, call. = FALSE)
   }
 
   Efforts_SummaryR <- terra::unwrap(IASDT.R::LoadAs(File_SummaryR))

@@ -28,16 +28,16 @@ ReloadPackage <- function(Package) {
     stop("Package name cannot be NULL", call. = FALSE)
   }
 
-  if (!requireNamespace(Package, quietly = TRUE)) {
-    library(package = Package, character.only = TRUE)
-  } else {
-
-    PackagesFolders <- paste0(.libPaths(), "/", Package)
+  if (requireNamespace(Package, quietly = TRUE)) {
+    PackagesFolders <- IASDT.R::Path(.libPaths(), Package)
     PackagesFolders <- PackagesFolders[file.exists(PackagesFolders)]
     if (length(PackagesFolders) > 0) {
       purrr::walk(
-      .x = PackagesFolders, .f = ~ devtools::reload(pkg = .x, quiet = FALSE))
+        .x = PackagesFolders, .f = ~ devtools::reload(pkg = .x, quiet = FALSE))
+    }
+  } else {
+    library(package = Package, character.only = TRUE)
   }
-}
+
   return(invisible(NULL))
 }

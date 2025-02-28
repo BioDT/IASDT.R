@@ -2,14 +2,9 @@
 % Please edit documentation in R/DWF_River_Length.R
 \name{River_Length}
 \alias{River_Length}
-\title{Calculate the length of rivers in each Strahler order}
+\title{Calculate the length of rivers in each Strahler order per grid cell}
 \usage{
-River_Length(
-  FromHPC = TRUE,
-  EnvFile = ".env",
-  Filename = "EU_hydro_gpkg_eu.zip",
-  Cleanup = FALSE
-)
+River_Length(FromHPC = TRUE, EnvFile = ".env", Cleanup = FALSE)
 }
 \arguments{
 \item{FromHPC}{Logical. Whether the processing is being done on an
@@ -18,9 +13,6 @@ accordingly. Default: \code{TRUE}.}
 
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
-
-\item{Filename}{Character. The name of the ZIP file containing the river
-network data. Default is "EU_hydro_gpkg_eu.zip".}
 
 \item{Cleanup}{Logical indicating whether to clean up temporary files from
 the Interim directory after finishing calculations. Default: \code{FALSE}.}
@@ -39,7 +31,7 @@ about river segments, computes the length of rivers for each Strahler order
 per grid cell, and outputs the results both as raster files and RData
 objects. The calculated length represents the total length of rivers in each
 Strahler number or larger (e.g., for STRAHLER_5, the length of rivers with
-STRAHLER values of 5 or higher).
+Strahler values of 5 or higher).
 }
 \details{
 The data provides at pan-European level a photo-interpreted river
@@ -48,9 +40,13 @@ wide rivers), and a drainage model (also called Drainage Network), derived
 from EU-DEM, with catchments and drainage lines and nodes.
 \itemize{
 \item \strong{Data source}: EU-Hydro River Network Database v013 |
-\strong{\href{https://doi.org/10.2909/393359a7-7ebd-4a52-80ac-1a18d5f3db9c}{DOI}} |
-\strong{\href{https://land.copernicus.eu/en/products/eu-hydro/eu-hydro-river-network-database}{Download link}}
 \item \strong{Temporal extent}: 2006-2012; \strong{Format}: Vector (GPKG); \strong{Size}: 4 GB
+}
+}
+\references{
+\itemize{
+\item DOI: \url{https://doi.org/10.2909/393359a7-7ebd-4a52-80ac-1a18d5f3db9c}
+\item Download link: \url{https://land.copernicus.eu/en/products/eu-hydro/eu-hydro-river-network-database}
 }
 }
 \author{

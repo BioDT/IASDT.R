@@ -2,30 +2,13 @@
 # Efforts_Download ----
 ## |------------------------------------------------------------------------| #
 
-#' Download and manage GBIF data for vascular plant orders
-#'
-#' This function handles the downloading of GBIF data in parallel, checks the
-#' validity of downloaded files, and stores the data in specified directories.
-#' If data has already been downloaded, it validates the files instead of
-#' downloading them again.
-#' @param NCores Integer. Number of CPU cores to use for parallel processing. 
-#'   Default: 6.
-#' @param Path_Raw Character. Path where the raw downloaded data will be saved.
-#'   This directory must exist or be created beforehand.
-#' @param Path_Interim Character. Path where the interim CSV files will be
-#'   saved. This directory must exist or be created beforehand.
-#' @param Path_Efforts Character. Path where the final processed data will be
-#'   saved. This directory must exist or be created beforehand.
-#' @name Efforts_Download
 #' @author Ahmed El-Gabbas
-#' @return A data frame (`Efforts_AllRequests`) with updated download paths and
-#'   interim file paths.
-#' @note This function is not intended to be used directly by the user or in the
-#'   IAS-pDT, but only used inside the [Efforts_Process] function.
+#' @name Efforts_data
+#' @rdname Efforts_data
+#' @order 3
 #' @export
 
-Efforts_Download <- function(
-  NCores = 6L, Path_Raw, Path_Interim, Path_Efforts) {
+Efforts_Download <- function(NCores = 6L, FromHPC = TRUE, EnvFile = ".env") {
 
   .StartTimeDown <- lubridate::now(tzone = "CET")
 
@@ -33,7 +16,7 @@ Efforts_Download <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Request <- NULL
+  Request <- Path_Efforts <- Path_Raw <- NULL
 
   # # ..................................................................... ###
 
@@ -42,27 +25,32 @@ Efforts_Download <- function(
     stop("NCores must be a positive integer.", call. = FALSE)
   }
 
-  # Validate directory paths
-  if (!is.character(Path_Raw) || !dir.exists(Path_Raw)) {
-    stop("`Path_Raw` must be a valid directory path.", call. = FALSE)
-  }
-
-  if (!is.character(Path_Interim) || !dir.exists(Path_Interim)) {
-    stop("`Path_Interim` must be a valid directory path.", call. = FALSE)
-  }
-
-  if (!is.character(Path_Efforts) || !dir.exists(Path_Efforts)) {
-    stop("`Path_Efforts` must be a valid directory path.", call. = FALSE)
-  }
-
-  Commands <- c("unzip")
+  Commands <- "unzip"
   CommandsAvail <- purrr::map_lgl(Commands, IASDT.R::CheckCommands)
   if (!all(CommandsAvail)) {
-    Missing <- paste0(Commands[!CommandsAvail], collapse = " + ")
-    stop(
-      paste0("The following command(s) are not available: ", Missing),
-      call. = FALSE)
+    Missing <- paste(Commands[!CommandsAvail], collapse = " + ")
+    stop("The following command(s) are not available: ", Missing, call. = FALSE)
   }
+
+  # # ..................................................................... ###
+
+  # Environment variables ----
+  IASDT.R::CatTime("Environment variables")
+
+  if (FromHPC) {
+    EnvVars2Read <- tibble::tribble(
+      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+      "Path_Efforts", "DP_R_Efforts", FALSE, FALSE,
+      "Path_Raw", "DP_R_Efforts_Raw", FALSE, FALSE)
+  } else {
+    EnvVars2Read <- tibble::tribble(
+      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+      "Path_Efforts", "DP_R_Efforts_Local", FALSE, FALSE,
+      "Path_Raw", "DP_R_Efforts_Raw_Local", FALSE, FALSE)
+  }
+
+  # Assign environment variables and check file and paths
+  IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
   # # ..................................................................... ###
 
@@ -71,10 +59,8 @@ Efforts_Download <- function(
 
   if (!file.exists(Path_Efforts_Request)) {
     stop(
-      paste0(
-        "The path for the `Efforts_AllRequests` data does not exist: ",
-        Path_Efforts_Request),
-      call. = FALSE)
+      "The path for the `Efforts_AllRequests` data does not exist: ",
+      Path_Efforts_Request, call. = FALSE)
   }
 
   Efforts_AllRequests <- IASDT.R::LoadAs(Path_Efforts_Request)
@@ -142,15 +128,12 @@ Efforts_Download <- function(
 
             },
             error = function(e) {
-              if (Attempt < Attempts) {
-                Attempt <- Attempt + 1
-              } else {
+              if (Attempt >= Attempts) {
                 stop(
-                  paste0(
-                    "Failed to download data after ", Attempts, " attempts: ",
-                    conditionMessage(e)),
-                  call. = FALSE)
+                  "Failed to download data after ", Attempts, " attempts: ",
+                  conditionMessage(e), call. = FALSE)
               }
+              Attempt <- Attempt + 1
             })
           }
 
@@ -162,9 +145,7 @@ Efforts_Download <- function(
           globals = "Path_Raw",
           packages = c("dplyr", "IASDT.R", "rgbif", "stringr", "fs", "withr"))))
 
-  save(
-    Efforts_AllRequests,
-    file = IASDT.R::Path(Path_Efforts, "Efforts_AllRequests.RData"))
+  save(Efforts_AllRequests, file = Path_Efforts_Request)
 
   # # ..................................................................... ###
 
@@ -183,5 +164,5 @@ Efforts_Download <- function(
 
   # # ..................................................................... ###
 
-  return(Efforts_AllRequests)
+  return(invisible(NULL))
 }

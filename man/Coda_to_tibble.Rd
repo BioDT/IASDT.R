@@ -16,14 +16,14 @@ Coda_to_tibble(
 \item{CodaObj}{An object of class \code{mcmc.list} or \code{mcmc}, representing the
 MCMC output.}
 
-\item{Type}{Character. The parameter type to transform and
-extract. Must be one of \code{rho}, \code{alpha}, \code{omega}, or \code{beta}.}
+\item{Type}{Character. The parameter type to transform and extract. Must be
+one of \code{rho}, \code{alpha}, \code{omega}, or \code{beta}.}
 
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
 
-\item{NOmega}{Integer. The number of species to be sampled for
-the \code{Omega} parameter transformation. Defaults to 100.}
+\item{NOmega}{Integer. The number of species to be sampled for the \code{Omega}
+parameter transformation. Defaults to 100.}
 
 \item{FromHPC}{Logical. Whether the processing is being done on an
 High-Performance Computing (HPC) environment, to adjust file paths

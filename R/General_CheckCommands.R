@@ -28,9 +28,7 @@ CheckCommands <- function(Commands) {
   # If any tools are missing, stop with an informative error message
   if (length(MissingTools) > 0) {
     warning(
-      paste0(
-        "The following tool(s) are missing: ",
-        paste0(MissingTools, collapse = ", ")),
+      "The following tool(s) are missing: ", toString(MissingTools),
       call. = FALSE)
     return(FALSE)
   } else {

@@ -62,7 +62,7 @@ Convergence_Rho <- function(
 
   CI <- summary(Post, quantiles = c(0.025, 0.975))$quantiles
   CI2 <- paste0(
-    "<b><i>95% credible interval:</i></b> ", paste0(CI, collapse = " to "))
+    "<b><i>95% credible interval:</i></b> ", paste(CI, collapse = " to "))
 
   RhoDF <- purrr::map(.x = Post, .f = tibble::as_tibble, rownames = "ID") %>%
     dplyr::bind_rows(.id = "Chain") %>%
@@ -81,7 +81,7 @@ Convergence_Rho <- function(
   Gelman <- Gelman %>%
     magrittr::extract2("psrf") %>%
     round(2) %>%
-    paste0(collapse = " / ") %>%
+    paste(collapse = " / ") %>%
     paste0(
       '<span style="color:blue"><b><i>',
       "Gelman convergence diagnostic:</i></b></span> ", .)
@@ -98,7 +98,7 @@ Convergence_Rho <- function(
   }
   if (length(Cols) != NChains) {
     warning(
-      "The length of provided colours != number of chains", .call. = FALSE)
+      "The length of provided colours != number of chains", call. = FALSE)
     Cols <- c(
       "black", "grey60",
       RColorBrewer::brewer.pal(n = NChains - 2, name = "Set1"))

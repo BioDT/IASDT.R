@@ -2,85 +2,110 @@
 # Range2NewVal ----
 ## |------------------------------------------------------------------------| #
 
-#' Changes values within a specified range, \eqn{\geq}, or \eqn{\leq} specific
-#' value to a new value in a vector, data.frame, or raster
+#' Changes values within a specified range, or greater than or less than a
+#' specific value to a new value in a vector, data.frame, or raster
 #'
 #' This function modifies values in the input object `x` based on the specified
 #' conditions. It can operate on vectors, data.frames, or RasterLayer objects.
 #' The function allows for changing values within a specified range (`Between`),
-#' \eqn{\geq} a specified value (`MoreThan`), or \eqn{\leq} a specified value
-#' (`LessThan`) to a new value (`NewVal`). An option to invert the selection is
-#' also available for ranges.
+#' greater than or equals to (`MoreThan`) or  less than or equals to
+#' (`LessThan`) a specified value to a new value (`NewVal`). An option to invert
+#' the selection is also available for ranges.
 #' @name Range2NewVal
 #' @author Ahmed El-Gabbas
-#' @param x A numeric `vector`, `data.frame`, or `RasterLayer` object whose
-#'   values are to be modified.
+#' @param x A numeric `vector`, `data.frame`, `RasterLayer`, or `SpatRaster`
+#'   object whose values are to be modified.
 #' @param Between Numeric. A numeric vector of length 2 specifying the range of
 #'   values to be changed or kept. If specified, `MoreThan` and `LessThan` are
 #'   ignored.
-#' @param MoreThan,LessThan Numeric. Threshold above/below which values in `x`
-#'   will be changed to `NewVal`. Only applied if `Between` is not specified.
+#' @param MoreThan,LessThan Numeric. Threshold larger than or equal to/less than
+#'   or equal to which values in `x` will be changed to `NewVal`. Only applied
+#'   if `Between` is not specified.
 #' @param NewVal The new value to assign to the selected elements in `x`.
-#' @param InvertSelection Logical. Whether to invert the selection specified by
+#' @param Invert Logical. Whether to invert the selection specified by
 #'   `Between`. If `TRUE`, values outside the specified range are changed to
 #'   `NewVal`. Default is `FALSE`.
 #' @return The modified object `x` with values changed according to the
 #'   specified conditions.
 #' @export
 #' @examples
+#' library(raster)
+#' library(terra)
+#' par(mar = c(0.5, 0.5, 1, 2.5), oma = c(0.5, 0.5, 0.5, 1))
+#'
+#' # ---------------------------------------------
+#'
 #' # Vector
 #'
-#' Range2NewVal(x = seq_len(10), Between = c(5, 8), NewVal = NA)
+#' (VV <- seq_len(10))
 #'
-#' Range2NewVal(
-#'    x =  seq_len(10), Between = c(5, 8), NewVal = NA, InvertSelection = TRUE)
+#' Range2NewVal(x = VV, Between = c(5, 8), NewVal = NA)
 #'
-#' Range2NewVal(x =  seq_len(10), Between = c(5, 8), NewVal = NA, MoreThan = 4)
+#' Range2NewVal(x = VV, Between = c(5, 8), NewVal = NA, Invert = TRUE)
+#'
+#' # MoreThan is ignored as Between is specified
+#' Range2NewVal(x = VV, Between = c(5, 8), NewVal = NA, MoreThan = 4)
+#'
+#' Range2NewVal(x = VV, NewVal = NA, MoreThan = 4)
+#'
+#' Range2NewVal(x = VV, NewVal = NA, LessThan = 4)
 #'
 #' # ---------------------------------------------
 #'
 #' # tibble
 #'
-#' iris %>%
-#'  tibble::as_tibble() %>%
-#'  dplyr::slice_head(n = 50) %>%
-#'  dplyr::select(-Sepal.Length, -Petal.Length, -Petal.Width) %>%
+#' iris2 <- iris %>%
+#'   tibble::as_tibble() %>%
+#'   dplyr::slice_head(n = 50) %>%
+#'   dplyr::select(-Sepal.Length, -Petal.Length, -Petal.Width) %>%
+#'   dplyr::arrange(-Sepal.Width)
+#'
+#' iris2 %>%
 #'  dplyr::mutate(
 #'    Sepal.Width.New = Range2NewVal(
-#'        x = Sepal.Width, Between = c(3, 3.5), NewVal = NA,
-#'         InvertSelection = FALSE),
+#'       x = Sepal.Width, Between = c(3, 3.5), NewVal = NA, Invert = FALSE),
 #'    Sepal.Width.Rev = Range2NewVal(
-#'        x = Sepal.Width, Between = c(3, 3.5), NewVal = NA,
-#'         InvertSelection = TRUE)) %>%
-#'  dplyr::arrange(-Sepal.Width) %>%
+#'       x = Sepal.Width, Between = c(3, 3.5), NewVal = NA, Invert = TRUE)) %>%
 #'  print(n = 50)
 #'
 #' # ---------------------------------------------
 #'
-#' # raster
+#' # RasterLayer / SpatRaster
 #'
-#' library(raster)
+#' grd_file <- system.file("external/test.grd", package = "raster")
+#' R_raster <- raster::raster(grd_file)
+#' R_terra <- terra::rast(grd_file)
 #'
-#' RRR <- raster::raster(system.file("external/test.grd", package = "raster"))
-#'
-#' RRR2 <- Range2NewVal(x = RRR, LessThan = 500, NewVal = NA)
-#' RRR3 <- Range2NewVal(x = RRR, MoreThan = 500, NewVal = NA)
-#' par(mar = c(0.5, 0.5, 3, 3))
+#' # Convert values less than 500 to NA
+#' R_raster2 <- Range2NewVal(x = R_raster, LessThan = 500, NewVal = NA)
 #' plot(
-#'    raster::stack(RRR, RRR2, RRR3), nr = 1,
-#'    main = c("Original", "<500 to NA", ">500 to NA"))
+#'    raster::stack(R_raster, R_raster2), nr = 1,
+#'    main = c("\nOriginal", "\n<500 to NA"),
+#'    box = FALSE, axes = FALSE, legend.width = 2, colNA = "lightgrey",
+#'    xaxs = "i", yaxs = "i")
 #'
-#' RRR2 <- Range2NewVal(
-#'    x = RRR, Between = c(1000, 1800), NewVal = 1800, InvertSelection = FALSE)
-#' RRR3 <- Range2NewVal(
-#'    x = RRR, Between = c(1000, 1800), NewVal = 1800, InvertSelection = TRUE)
+#' R_terra2 <- Range2NewVal(x = R_terra, LessThan = 500, NewVal = NA)
 #' plot(
-#'    raster::stack(RRR>=1000, RRR2, RRR3), nr = 1,
-#'    main = c(">1000 ?", "<500 to NA", ">500 to NA"))
+#'    c(R_terra, R_terra2), nr = 1, main = c("\nOriginal", "\n<500 to NA"),
+#'    box = FALSE, axes = FALSE, colNA = "lightgrey", xaxs = "i", yaxs = "i")
+#'
+#'
+#' # Convert values greater than 700 to NA
+#' R_raster2 <- Range2NewVal(x = R_raster, MoreThan = 700, NewVal = NA)
+#' plot(
+#'    raster::stack(R_raster, R_raster2), nr = 1,
+#'    main = c("\nOriginal", "\n>700 to NA"),
+#'    box = FALSE, axes = FALSE, legend.width = 2, colNA = "lightgrey",
+#'    xaxs = "i", yaxs = "i")
+#'
+#' R_terra2 <- Range2NewVal(x = R_terra, MoreThan = 700, NewVal = NA)
+#' plot(
+#'    c(R_terra, R_terra2), nr = 1, main = c("\nOriginal", "\n>700 to NA"),
+#'    box = FALSE, axes = FALSE, colNA = "lightgrey", xaxs = "i", yaxs = "i")
 
 Range2NewVal <- function(
-    x, Between = NULL, MoreThan = NULL, LessThan = NULL,
-    NewVal, InvertSelection = FALSE) {
+    x = NULL, Between = NULL, MoreThan = NULL, LessThan = NULL,
+    NewVal = NULL, Invert = FALSE) {
 
   if (is.null(x) || is.null(NewVal)) {
     stop("x and NewVal cannot be NULL", call. = FALSE)
@@ -116,7 +141,7 @@ Range2NewVal <- function(
       X2[!is.na(X2)] <- 1
       X3 <- sum(X1, X2, na.rm = TRUE)
 
-      if (InvertSelection) {
+      if (Invert) {
         x[X3 == 1] <- NewVal
       } else {
         x[X3 == 2] <- NewVal
@@ -124,7 +149,7 @@ Range2NewVal <- function(
 
     } else {
 
-      if (InvertSelection) {
+      if (Invert) {
         x[!(x >= Min & x <= Max)] <- NewVal
       } else {
         x[x >= Min & x <= Max] <- NewVal

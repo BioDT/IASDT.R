@@ -2,31 +2,14 @@
 # IAS_Plot ----
 ## |------------------------------------------------------------------------| #
 
-#' Plot IAS distribution map
-#'
-#' This function prepares species distribution maps for IAS, showing the
-#' distribution of the species at the three data sources used (GBIF, EASIN, and
-#' eLTER).
-#' @param Species Character. The name of the species for which the distribution
-#'   plot will be generated.
-#' @param FromHPC Logical. Whether the processing is being done on an 
-#'   High-Performance Computing (HPC) environment, to adjust file paths 
-#'   accordingly. Default: `TRUE`.
-#' @param EnvFile Character. Path to the environment file containing paths to 
-#'   data sources. Defaults to `.env`.
-#' @param Overwrite Logical. If `TRUE`, the function will overwrite existing
-#'   maps; otherwise, it will skip generating a new map if one exists (default:
-#'   `FALSE`).
-#' @return The function uses `ggplot2` to generate a JPEG file containing the
-#'   species distribution map. No object is returned.
-#' @note This function is not intended to be used directly by the user or in the
-#'   IAS-pDT, but only used inside the [IAS_Process] function.
-#' @author Ahmed El-Gabbas
-#' @name IAS_Plot
 #' @export
+#' @author Ahmed El-Gabbas
+#' @name IAS_data
+#' @rdname IAS_data
+#' @order 3
 
 IAS_Plot <- function(
-    Species, FromHPC = TRUE, EnvFile = ".env", Overwrite = FALSE) {
+    Species = NULL, FromHPC = TRUE, EnvFile = ".env", Overwrite = FALSE) {
 
   # # ..................................................................... ###
 
@@ -37,7 +20,7 @@ IAS_Plot <- function(
   }
 
   AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, ~ get(.x, envir = environment())) %>%
+  AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(

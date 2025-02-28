@@ -7,11 +7,11 @@
 #' This function converts posterior files exported by `Hmsc-HPC` into an Hmsc
 #' object. It can either read the data directly from RDS files or convert it
 #' from JSON format if specified.
-#' @param Path_Post Character vector. Path to the RDS files containing the 
+#' @param Path_Post Character vector. Path to the RDS files containing the
 #'   exported posterior files. This argument is mandatory and cannot be empty.
-#' @param FromJSON Logical. Whether the loaded models should be
-#'   converted from `JSON` format. Defaults to `FALSE`, meaning the data will be
-#'   read directly from RDS files without conversion.
+#' @param FromJSON Logical. Whether the loaded models should be converted from
+#'   `JSON` format. Defaults to `FALSE`, meaning the data will be read directly
+#'   from RDS files without conversion.
 #' @name Mod_GetPosts
 #' @author Ahmed El-Gabbas
 #' @return Depending on the `FromJSON` parameter, returns an Hmsc object either
@@ -36,15 +36,15 @@ Mod_GetPosts <- function(Path_Post = NULL, FromJSON = FALSE) {
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = "FromJSON", Type = "logical")
 
   if (FromJSON) {
-    readRDS(file = Path_Post) %>%
+    Out <- readRDS(file = Path_Post) %>%
       magrittr::extract2(1) %>%
       jsonify::from_json() %>%
-      magrittr::extract2(1) %>%
-      return()
+      magrittr::extract2(1)
+    return(Out)
   } else {
-    readRDS(file = Path_Post) %>%
+    Out <- readRDS(file = Path_Post) %>%
       magrittr::extract2(1) %>%
-      magrittr::extract2(1) %>%
-      return()
+      magrittr::extract2(1)
+    return(Out)
   }
 }

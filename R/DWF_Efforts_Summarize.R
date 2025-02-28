@@ -2,80 +2,63 @@
 # Efforts_Summarize ----
 ## |------------------------------------------------------------------------| #
 
-#' Process and summarize GBIF data for vascular plants
-#'
-#' This function processes GBIF data for vascular plants by extracting,
-#' summarizing, and saving the data. It also creates summary maps and saves them
-#' in both `RData` and `TIFF` formats.
-#'
-#' @param NCores Integer. Number of CPU cores to use for parallel processing. 
-#' @param Path_Efforts Character. Path where the final processed data will be
-#'   saved.
-#' @param Path_Efforts_Interim Character. The directory path to save interim
-#'   data.
-#' @param Path_Efforts_Data Character. The directory path to save detailed
-#'   effort data as `RData`.
-#' @param Path_Grid Character. The directory path to load the grid data.
-#' @param IAS_List A list of invasive alien species keys.
-#' @param Efforts_AllRequests A data frame containing the details of the GBIF
-#'   download, including paths to CSV files, zip files, order, class, and total
-#'   records.
-#' @param ChunkSize Integer. The number of rows per chunk file. Default:
-#'   `100,000`. See [Efforts_Split] for more details.
-#' @param DeleteChunks logical, indicating whether to remove file chunks after
-#'   processing the data. Defaults to `TRUE`.
-#' @return The function returns and saves the GBIF data summary.
-#' @note This function is not intended to be used directly by the user or in the
-#'   IAS-pDT, but only used inside the [Efforts_Process] function.
 #' @author Ahmed El-Gabbas
-#' @name Efforts_Summarize
+#' @name Efforts_data
+#' @rdname Efforts_data
+#' @order 4
 #' @export
 
 Efforts_Summarize <- function(
-    NCores, Path_Efforts, Path_Efforts_Interim, Path_Efforts_Data, Path_Grid,
-    IAS_List, Efforts_AllRequests, ChunkSize = 100000L, DeleteChunks = TRUE) {
+    FromHPC = TRUE, EnvFile = ".env", NCores = 6L, ChunkSize = 100000L,
+    DeleteChunks = TRUE) {
 
   # # ..................................................................... ###
 
   .StartTimeProcess <- lubridate::now(tzone = "CET")
 
-  if (!is.numeric(NCores) || length(NCores) != 1 || NCores <= 0) {
-    stop("NCores must be a single positive integer.", call. = FALSE)
-  }
-
-  if (!is.character(Path_Efforts_Data) || length(Path_Efforts_Data) != 1 ||
-    !dir.exists(Path_Efforts_Data)) {
-    stop(
-      "`Path_Efforts_Data` must be a single valid directory path.",
-      call. = FALSE
-    )
-  }
-
-  if (!is.character(Path_Grid) || length(Path_Grid) != 1 ||
-    !dir.exists(Path_Grid)) {
-    stop("`Path_Grid` must be a single valid directory path.", call. = FALSE)
-  }
-
-  if (missing(Path_Efforts_Interim) || !is.character(Path_Efforts_Interim) ||
-    !dir.exists(Path_Efforts_Interim)) {
-    stop(
-      "`Path_Efforts_Interim` must be a valid directory path.",
-      call. = FALSE)
-  }
-
-  if (missing(Path_Efforts) || !is.character(Path_Efforts) ||
-    !dir.exists(Path_Efforts)) {
-    stop("`Path_Efforts` must be a valid directory path.", call. = FALSE)
-  }
-
   # # ..................................................................... ###
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  # speciesKey <- CellCode <- year <- UncertainKm <- Latitude <-
-  #   Longitude <- taxonRank <- ID <- DownPath <- Chunks <- TotalRecords <-
-  #   ClassOrder <- Path_DT <- NULL
-  speciesKey <- ObsN <- NULL
+  speciesKey <- ObsN <- Path_Interim <- Taxa_Stand <- Path_Grid <-
+    Path_Efforts <- NULL
+
+  # # ..................................................................... ###
+
+  if (!is.numeric(NCores) || length(NCores) != 1 || NCores <= 0) {
+    stop("NCores must be a single positive integer.", call. = FALSE)
+  }
+
+  # # ..................................................................... ###
+
+  # Environment variables ----
+  IASDT.R::CatTime("Environment variables")
+
+  if (FromHPC) {
+    EnvVars2Read <- tibble::tribble(
+      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+      "Path_Efforts", "DP_R_Efforts", TRUE, FALSE,
+      "Path_Interim", "DP_R_Efforts_Interim", TRUE, FALSE,
+      "Path_Grid", "DP_R_Grid", TRUE, FALSE,
+      "Taxa_Stand", "DP_R_TaxaStand", FALSE, TRUE)
+  } else {
+    EnvVars2Read <- tibble::tribble(
+      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+      "Path_Efforts", "DP_R_Efforts_Local", TRUE, FALSE,
+      "Path_Interim", "DP_R_Efforts_Interim_Local", TRUE, FALSE,
+      "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE,
+      "Taxa_Stand", "DP_R_TaxaStand_Local", FALSE, TRUE)
+  }
+
+  # Assign environment variables and check file and paths
+  IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+
+  Path_Efforts_Cleaned <- IASDT.R::Path(Path_Interim, "CleanedData")
+
+  ## IAS species list ----
+  IAS_List <- readRDS(Taxa_Stand) %>%
+    dplyr::pull("speciesKey") %>%
+    unique()
 
   # # ..................................................................... ###
 
@@ -84,17 +67,14 @@ Efforts_Summarize <- function(
 
   if (!file.exists(Path_Grid_R)) {
     stop(
-      paste0(
-        "Reference grid was not found at the specified path: ", Path_Grid_R),
+      "Reference grid was not found at the specified path: ", Path_Grid_R,
       call. = FALSE)
   }
 
   if (!file.exists(Path_Grid_SF)) {
     stop(
-      paste0(
-        "Reference grid file was not found at the specified path: ",
-        Path_Grid_SF),
-      call. = FALSE)
+      "Reference grid file was not found at the specified path: ",
+      Path_Grid_SF, call. = FALSE)
   }
 
   Grid_SF <- IASDT.R::LoadAs(Path_Grid_SF)
@@ -132,6 +112,17 @@ Efforts_Summarize <- function(
 
   # Earlier attempts with `furrr::future_map()` failed
 
+  Path_Efforts_Request <- IASDT.R::Path(
+    Path_Efforts, "Efforts_AllRequests.RData")
+
+  if (!file.exists(Path_Efforts_Request)) {
+    stop(
+      "The path for the `Efforts_AllRequests` data does not exist: ",
+      Path_Efforts_Request, call. = FALSE)
+  }
+
+  Efforts_AllRequests <- IASDT.R::LoadAs(Path_Efforts_Request)
+
   DT_Paths <- future.apply::future_lapply(
     X = seq_len(nrow(Efforts_AllRequests)),
     FUN = function(ID) {
@@ -142,12 +133,13 @@ Efforts_Summarize <- function(
       ClassOrder <- paste0(class, "_", order)
 
       # Output path to save the data
-      Path_DT <- IASDT.R::Path(Path_Efforts_Data, paste0(ClassOrder, ".RData"))
+      Path_DT <- IASDT.R::Path(
+        Path_Efforts_Cleaned, paste0(ClassOrder, ".RData"))
 
       # Should Path_DT be returned as the path of the RData file containing the
       # data or NA if there are no records in the current order or no records
       # left after processing
-      ReturnNoData <- dplyr::if_else(TotalRecords == 0, TRUE, FALSE)
+      ReturnNoData <- (TotalRecords == 0)
 
       # Check if the RData file for the current order exists and valid.
       FileOkay <- IASDT.R::CheckData(Path_DT, warning = FALSE)
@@ -167,7 +159,7 @@ Efforts_Summarize <- function(
 
         # List of chunks
         Chunks <- list.files(
-          path = Path_Efforts_Interim, full.names = TRUE,
+          path = Path_Interim, full.names = TRUE,
           pattern = stringr::str_remove(basename(DownPath), ".zip"))
 
         # If there are chunk files on disk, count their total number of
@@ -194,7 +186,7 @@ Efforts_Summarize <- function(
         # Split data into chunks
         if (SplitChunks) {
           Chunks <- IASDT.R::Efforts_Split(
-            Path_Zip = DownPath, Path_Output = Path_Efforts_Interim,
+            Path_Zip = DownPath, FromHPC = TRUE, EnvFile = ".env",
             ChunkSize = ChunkSize)
         }
 
@@ -221,7 +213,7 @@ Efforts_Summarize <- function(
               dplyr::mutate(UncertainKm = UncertainKm / 1000) %>%
               dplyr::filter(
                 !is.na(Latitude), !is.na(Longitude),
-                speciesKey != "", taxonRank %in% AcceptedRanks,
+                nzchar(speciesKey), taxonRank %in% AcceptedRanks,
                 UncertainKm <= 100 | is.na(UncertainKm)) %>%
               sf::st_as_sf(
                 coords = c("Longitude", "Latitude"),
@@ -263,8 +255,8 @@ Efforts_Summarize <- function(
       "terra", "IASDT.R", "stringr", "fs", "sf", "readr", "dplyr",
       "purrr", "tibble", "R.utils"),
     future.globals = c(
-      "Path_Efforts", "Path_Efforts_Interim", "Efforts_AllRequests",
-      "Path_Grid_R", "Path_Efforts_Data", "Grid_SF", "IAS_List", "ChunkSize")
+      "Path_Interim", "Efforts_AllRequests", "Path_Efforts_Cleaned",
+      "Grid_SF", "ChunkSize")
   ) %>%
     dplyr::bind_rows()
 
@@ -292,7 +284,6 @@ Efforts_Summarize <- function(
     FUN = function(ID) {
       Path_DT <- Efforts_Summary$Path_DT[ID]
       ClassOrder <- Efforts_Summary$ClassOrder[ID]
-
 
       if (is.na(Path_DT)) {
         # If there is no data for the current order
@@ -326,12 +317,12 @@ Efforts_Summarize <- function(
           terra::wrap()
       } else {
         # Number of observations
-        NObs_R <- IASDT.R::Efforts_SummarizeMaps(
+        NObs_R <- Efforts_SummarizeMaps(
           Data = DT, NSp = FALSE, Name = "NObs", ClassOrder = ClassOrder,
           Grid_SF = Grid_SF, Grid_R = Grid_R)
 
         # Number of species
-        NSp_R <- IASDT.R::Efforts_SummarizeMaps(
+        NSp_R <- Efforts_SummarizeMaps(
           Data = DT, NSp = TRUE, Name = "NSp", ClassOrder = ClassOrder,
           Grid_SF = Grid_SF, Grid_R = Grid_R)
 
@@ -354,12 +345,12 @@ Efforts_Summarize <- function(
           terra::wrap()
       } else {
         # Number of observations of native species
-        NObs_Native_R <- IASDT.R::Efforts_SummarizeMaps(
+        NObs_Native_R <- Efforts_SummarizeMaps(
           Data = DT_Native, NSp = FALSE, Name = "NObs_Native",
           ClassOrder = ClassOrder, Grid_SF = Grid_SF, Grid_R = Grid_R)
 
         # Number of native species
-        NSp_Native_R <- IASDT.R::Efforts_SummarizeMaps(
+        NSp_Native_R <- Efforts_SummarizeMaps(
           Data = DT_Native, NSp = TRUE, Name = "NSp_Native",
           ClassOrder = ClassOrder, Grid_SF = Grid_SF, Grid_R = Grid_R)
 
@@ -378,16 +369,12 @@ Efforts_Summarize <- function(
     future.scheduling = Inf, future.seed = TRUE,
     future.packages = c(
       "terra", "IASDT.R", "stringr", "fs", "sf", "readr", "dplyr"),
-    future.globals = c(
-      "Path_Efforts", "Path_Efforts_Interim", "Efforts_AllRequests",
-      "Efforts_Summary",
-      "Path_Grid_R", "Path_Efforts_Data", "Grid_SF", "IAS_List", "ChunkSize")
-  ) %>%
+    future.globals = c("Path_Grid_R", "Grid_SF", "IAS_List")) %>%
     dplyr::bind_rows()
 
   # join data with requests summary
   Efforts_Summary <- dplyr::left_join(
-    Efforts_Summary, SummaryMaps, by = c("ClassOrder"))
+    Efforts_Summary, SummaryMaps, by = "ClassOrder")
 
   rm(SummaryMaps, envir = environment())
   invisible(gc())
@@ -463,4 +450,92 @@ Efforts_Summarize <- function(
   # # ..................................................................... ###
 
   return(invisible(NULL))
+}
+
+
+
+## |------------------------------------------------------------------------| #
+# Efforts_SummarizeMaps ----
+## |------------------------------------------------------------------------| #
+
+#' Summarize maps for efforts data
+#'
+#' This function processes spatial data (as an `sf` object), summarizes it based
+#' on the number of observations or distinct species, and generates a raster
+#' layer.
+#' @param Data An `sf` object containing spatial data, with a column named
+#'   `CellCode`.
+#' @param NSp Logical. Whether to generate distinct species counts (`TRUE`) or
+#'   total observation counts (`FALSE`).
+#' @param Name Character. Name of the count field and the prefix for the final
+#'   raster layer's name.
+#' @param ClassOrder Character. The class and order combination (separated by
+#'   an underscore) represented in the `Data`.
+#' @param Grid_SF,Grid_R Reference grid in the form of simple feature and
+#'   raster.
+#' @return A processed `terra` raster object representing the summarized data.
+#' @note This function is not intended to be used directly by the user or in the
+#'   IAS-pDT, but only used inside the [Efforts_Process] and [Efforts_Summarize]
+#'   functions.
+#' @author Ahmed El-Gabbas
+#' @name Efforts_SummarizeMaps
+#' @keywords internal
+#' @noRd
+
+Efforts_SummarizeMaps <- function(
+    Data, NSp, Name, ClassOrder, Grid_SF, Grid_R) {
+
+  # # ..................................................................... ###
+
+  # Avoid "no visible binding for global variable" message
+  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
+  CellCode <- speciesKey <- NULL
+
+  # # ..................................................................... ###
+
+  # Validate if Data is an sf object
+  if (!inherits(Data, "sf")) {
+    stop(
+      "Input data must be a simple feature (sf) object. ",
+      "Provided data is of type: ", paste(class(Data), collapse = "+"),
+      call. = FALSE)
+  }
+
+  # Validate if NSp is logical
+  if (!is.logical(NSp) || length(NSp) != 1) {
+    stop(
+      "The parameter `NSp` must be a single logical value (TRUE or FALSE). ",
+      "Provided value is of type: ", paste(class(NSp), collapse = "+"),
+      call. = FALSE)
+  }
+
+  # Validate the Name parameter
+  if (is.null(Name)) {
+    stop("The parameter `Name` can not be empty", call. = FALSE)
+  }
+
+  # # ..................................................................... ###
+
+  # Drop geometry from Data
+  Data <- sf::st_drop_geometry(Data)
+
+  # Generate distinct species counts if NSp is TRUE
+  if (NSp) {
+    Data <- dplyr::distinct(Data, CellCode, speciesKey)
+  }
+
+  # Count observations or species, join with the grid, and rasterize
+  Data <- Data %>%
+    dplyr::count(CellCode, name = Name) %>%
+    dplyr::left_join(Grid_SF, by = "CellCode") %>%
+    sf::st_as_sf() %>%
+    terra::rasterize(Grid_R, field = Name) %>%
+    terra::classify(cbind(NA, 0)) %>%
+    terra::mask(Grid_R) %>%
+    IASDT.R::setRastCRS() %>%
+    IASDT.R::setRastVals() %>%
+    stats::setNames(paste0(Name, "_", ClassOrder)) %>%
+    terra::wrap()
+
+  return(Data)
 }

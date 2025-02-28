@@ -1,21 +1,19 @@
 ## |------------------------------------------------------------------------| #
 # LoadMultiple ----
 ## |------------------------------------------------------------------------| #
-#
+
 #' Load multiple `.RData` files together
 #'
 #' This function loads multiple `.RData` files either into a single list object
 #' or directly into the global environment. It provides options for verbosity,
 #' returning object names, and handling of non-existent files.
 #' @param Files Character vector. The paths of `.RData` files to be loaded.
-#' @param Verbose Logical. Whether to print progress messages. 
-#'   Default is `TRUE`.
-#' @param OneObject Logical. Whether to load all objects into a
-#'   single list (`TRUE`) or directly into the global environment (`FALSE`).
-#'   Defaults to `TRUE`.
-#' @param ReturnNames Logical. Whether to return the names of
-#'   the loaded objects. Only effective when `OneObject` is `FALSE`. Defaults to
+#' @param Verbose Logical. Whether to print progress messages. Default: `TRUE`.
+#' @param OneObject Logical. Whether to load all objects into a single list
+#'   (`TRUE`) or directly into the global environment (`FALSE`). Defaults to
 #'   `TRUE`.
+#' @param ReturnNames Logical. Whether to return the names of the loaded
+#'   objects. Only effective when `OneObject` is `FALSE`. Defaults to `TRUE`.
 #' @author Ahmed El-Gabbas
 #' @return If `OneObject` is `TRUE`, returns a named list of all objects loaded
 #'   from the specified files. If `OneObject` is `FALSE` and `ReturnNames` is
@@ -79,9 +77,9 @@ LoadMultiple <- function(
 
     ListNames <- stringr::str_replace_all(basename(Files), "\\.RData$", "")
 
-    purrr::map(.x = Files, .f = ~ IASDT.R::LoadAs(.x)) %>%
-      stats::setNames(ListNames) %>%
-      return()
+    Out <- purrr::map(.x = Files, .f = IASDT.R::LoadAs) %>%
+      stats::setNames(ListNames)
+    return(Out)
 
   } else {
 
@@ -90,9 +88,9 @@ LoadMultiple <- function(
     purrr::walk(.x = Files, .f = ~ load(file = .x, envir = Env1))
 
     if (any(ls(envir = Env1) %in% ls(envir = parent.frame()))) {
-      stop(paste0(
+      stop(
         "Some of the new object names already exists in the current ",
-        "environment. No files were loaded!"), call. = FALSE)
+        "environment. No files were loaded!", call. = FALSE)
     }
 
     ObjectsLoaded <- purrr::map(

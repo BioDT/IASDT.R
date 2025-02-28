@@ -76,12 +76,13 @@ GridDiagOff <- function(DT = NULL) {
           as.matrix() %>%
           sf::st_linestring()
 
-        list(OffDiag, Diag) %>%
+        Out <- list(OffDiag, Diag) %>%
           sf::st_multilinestring() %>%
           sf::st_geometry()  %>%
           sf::st_set_crs(sf::st_crs(DT)) %>%
-          sf::st_sfc() %>%
-          return()
+          sf::st_sfc()
+
+        Out
 
       }) %>%
     tibble::tibble(geometry = .) %>%

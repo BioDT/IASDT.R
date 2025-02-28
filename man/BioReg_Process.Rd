@@ -2,7 +2,7 @@
 % Please edit documentation in R/DWF_Bioreg.R
 \name{BioReg_Process}
 \alias{BioReg_Process}
-\title{Process biogeographical regions}
+\title{Process biogeographical regions dataset}
 \usage{
 BioReg_Process(FromHPC = TRUE, EnvFile = ".env")
 }
@@ -19,21 +19,18 @@ Invisible \code{NULL}. Processed data is saved to disk as raster, vector,
 and RData files.
 }
 \description{
-Downloads and processes the Biogeographical Regions dataset (Europe 2016,
-version 1) from the \href{https://www.eea.europa.eu/en/datahub/datahubitem-view/11db8d14-f167-4cd5-9205-95638dfd9618}{European Environment Agency}.
-The dataset is processed to extract region names per reference grid cell in
-EPSG:3035 projection. Outputs include raster (.tif), spatial vector (.shp),
-and RData files. The outputs of this function are used to count presence grid
-cells for each species per biogeographical region.
+Downloads and processes the Biogeographical Regions dataset (Europe 2016, v1)
+from the \href{https://www.eea.europa.eu/en/datahub/datahubitem-view/11db8d14-f167-4cd5-9205-95638dfd9618}{European Environment Agency}.
+This function extracts biogeographical region names per reference grid cell
+for use in counting species presence across biogeographical regions.
 }
 \details{
 \itemize{
-\item Temporal coverage: 2011-2015
-\item Spatial coverage: 28°E-81°E, 31.27°W-62°E
-\item CRS: EPSG:3035; read as: ETRS_1989_LAEA_L52_M10
-\item file format: shapefile (compressed in zip file)
-\item Requires external tools: \code{curl} (for downloading) and \code{unzip}
-(for extraction)
+\item \emph{Temporal coverage}: 2011-2015
+\item \emph{Spatial coverage}: 28°E to 81°E, 31.27°W to 62°E
+\item \emph{CRS}: EPSG:3035
+\item \emph{file format}: shapefile (compressed in zip file)
+\item \emph{Requirements}: \code{curl} (download) and \code{unzip} (extraction)
 }
 }
 \author{

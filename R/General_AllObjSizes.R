@@ -33,15 +33,14 @@
 #' AA1 <<- rep(seq_len(1000), 10000)
 #' AA2 <<- rep(seq_len(1000), 100)
 #'
+#' # All objects in memory
 #' AllObjSizes()
 #'
+#' # Objects larger than 1 MB
 #' AllObjSizes(GreaterThan = 1)
 #'
+#' # Objects larger than 50 MB
 #' AllObjSizes(GreaterThan = 50)
-#'
-#' # Outside of a function there is no difference
-#' AllObjSizes(InFunction = TRUE)
-#' AllObjSizes(InFunction = FALSE)
 #'
 #' # When called with another function, it shows the objects only available
 #' # within the function
@@ -52,6 +51,7 @@
 #' }
 #'
 #' TestFun()
+#'
 #' TestFun(XX = "TEST")
 
 AllObjSizes <- function(
@@ -77,7 +77,7 @@ AllObjSizes <- function(
       .x = AllVars,
       .f = ~{
         Obj <- get(.x, envir = Environment)
-        Class <- paste0(class(Obj), collapse = "_")
+        Class <- paste(class(Obj), collapse = "_")
 
         tryCatch({
           Size <- lobstr::obj_size(Obj) / (1024 * 1024)
@@ -109,7 +109,7 @@ AllObjSizes <- function(
       if (sum(is.na(AllVarsSize$Size)) > 0) {
         NA_Var <- dplyr::filter(AllVarsSize, is.na(.data$Size)) %>%
           dplyr::pull(.data$Object) %>%
-          paste0(collapse = " | ")
+          paste(collapse = " | ")
 
         cat(crayon::blue(
           paste0(
@@ -120,7 +120,7 @@ AllObjSizes <- function(
 
       cat(crayon::blue(
         "Object sizes are in MB.\n",
-        "---------------------------------------------\n", sep = ""),
+        "---------------------------------------------------\n", sep = ""),
         sep = "")
     } else {
       cat(crayon::red(

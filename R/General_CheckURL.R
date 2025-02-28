@@ -7,8 +7,8 @@
 #' This function opens a connection to the specified URL to check its validity.
 #' It returns `TRUE` if the URL is valid (i.e., the connection can be opened),
 #' and `FALSE` otherwise.
-#' @param url_in Character. The URL to be checked.
-#' @param t Numeric. Timeout in seconds for the connection attempt. Default is 
+#' @param URL Character. The URL to be checked.
+#' @param t Numeric. Timeout in seconds for the connection attempt. Default is
 #'   2 seconds.
 #' @name CheckURL
 #' @source The source code of this function was taken from this
@@ -21,17 +21,17 @@
 #' sapply(urls, CheckURL)
 #' @export
 
-CheckURL <- function(url_in, t = 2) {
+CheckURL <- function(URL, t = 2) {
 
-  if (is.null(url_in)) {
-    stop("url_in cannot be NULL")
+  if (is.null(URL)) {
+    stop("URL cannot be NULL", call. = FALSE)
   }
 
-  con <- url(url_in)
+  con <- url(URL)
   check <- suppressWarnings(
     try(open.connection(con, open = "rt", timeout = t), silent = TRUE)[1])
 
   suppressWarnings(try(close.connection(con), silent = TRUE))
 
-  return(ifelse(is.null(check), TRUE, FALSE))
+  return(is.null(check))
 }

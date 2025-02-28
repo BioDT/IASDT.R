@@ -35,7 +35,7 @@ CheckTiff <- function(x = NULL) {
 
   # Check if file exists
   if (!file.exists(x)) {
-    warning("Input file does not exist")
+    warning("Input file does not exist", call. = FALSE)
     return(FALSE)
   }
 

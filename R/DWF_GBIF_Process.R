@@ -1,39 +1,89 @@
+#' Process GBIF occurrence data for the `IAS-pDT`
+#'
+#' Extracts, processes, and visualizes occurrence data from the [Global
+#' Biodiversity Information Facility (GBIF)](https://www.gbif.org) for the
+#' Invasive Alien Species prototype Digital Twin (`IAS-pDT`). Orchestrated by
+#' `GBIF_Process()`, it requests, downloads, cleans, chunks, and maps species
+#' data using helper functions.
+#'
+#' @param FromHPC Logical. Whether the processing is being done on an
+#'   High-Performance Computing (`HPC`) environment, to adjust file paths
+#'   accordingly. Default: `TRUE`.
+#' @param EnvFile Character. Path to the environment file containing paths to
+#'   data sources. Defaults to `.env`.
+#' @param Renviron Character. The path to the `.Renviron` file containing GBIF
+#'   login credentials. Defaults to `.Renviron` in the current working
+#'   directory.
+#' @param Renviron Character. Path to `.Renviron` file with GBIF credentials
+#'   (`GBIF_EMAIL`, `GBIF_USER`, `GBIF_PWD`). Default: `".Renviron"`. The
+#'   credentials must be in the format:
+#'    - `GBIF_EMAIL=your_email`
+#'    - `GBIF_USER=your_username`
+#'    - `GBIF_PWD=your_password`
+#' @param Request Logical. If `TRUE` (default), requests GBIF data; otherwise,
+#'   loads from disk.
+#' @param Download Logical. If `TRUE` (default), downloads and saves GBIF data.
+#' @param SplitChunks Logical. If `TRUE` (default), splits data into chunks for
+#'   easier processing.
+#' @param ChunkSize Integer. Records per data chunk. Default: `50000`.
+#' @param Boundaries Numeric vector (length 4). GBIF data bounds (Left, Right,
+#'   Bottom, Top). Default: `c(-30, 50, 25, 75)`.
+#' @param StartYear Integer. Earliest year for GBIF records (matches CHELSA
+#'   climate data). Default: `1981`.
+#' @param NCores Integer. Number of CPU cores to use for parallel processing.
+#'   Default: 6.
+#' @param DeleteChunks Logical. If `TRUE` (default), deletes chunk files.
+#' @param ChunkFile Character. Path of chunk file for processing.
+#'
+#' @param MaxUncert Numeric. Maximum spatial uncertainty in kilometers. Default:
+#'   `10`.
+#' @param StartYear Integer. Earliest collection year to be included. Default is
+#'   1981.
+#' @param SaveRData Logical. If `TRUE` (default), saves chunk data as `.RData`.
+#' @param ReturnData If `TRUE`, returns chunk data; otherwise,
+#'   `invisible(NULL)`. Default: `FALSE`.
+#' @param Overwrite Logical. If `TRUE`, reprocesses existing `.RData` chunks.
+#'   Default: `FALSE`. This helps to continue working on previously processed
+#'   chunks if the previous try failed, e.g. due to memory issue.
+#' @param Species Character. Species name for processing.
+#' @param Verbose Logical. If `TRUE` (default), prints progress messages.
+#' @param PlotTag Character. Tag for plot titles.
+#'
+#' @section Functions details:
+#'
+#' - **`GBIF_Process()`**: Orchestrates GBIF data requests, downloads,
+#'   processing, and mapping. Saves `RData`, Excel, and JPEG summary files.
+#' - **`GBIF_Check()`**: Verifies GBIF credentials in environment or
+#'   `.Renviron`. Returns `TRUE` if valid, else `FALSE`.
+#' - **`GBIF_Download()`**: Requests and downloads GBIF data (if `Download =
+#'   TRUE`),  using the specified criteria (taxa, coordinates, time period, and
+#'   boundaries), splits into small chunks (if `SplitChunks = TRUE`), and saves
+#'   metadata. Returns `invisible(NULL)`.
+#' - **`GBIF_ReadChunk()`**: Filters chunk data (spatial/temporal, e.g.,
+#'   spatial uncertainty, collection year, coordinate precision, and taxonomic
+#'   rank), select relevant columns, and saves as `.RData` (if `SaveRData =
+#'   TRUE`) or returns it (if `ReturnData = TRUE`). Skips if `.RData` exists and
+#'   `Overwrite = FALSE`.
+#' - **`GBIF_SpData()`**: Converts species-specific data to `sf` and raster
+#'   formats, generating distribution maps.
+#' @note Relies on a static RDS file listing IAS species, GBIF keys, and
+#'   metadata, standardized by Marina Golivets (Feb 2024).
+
 # # |------------------------------------------------------------------------| #
 # GBIF_Process ----
 ## |------------------------------------------------------------------------| #
 
-#' GBIF Data Processing Function
-#'
-#' This function processes GBIF (Global Biodiversity Information Facility) data,
-#' which includes downloading, cleaning, and saving the data in various formats.
-#' The function handles data chunking, merging, and produces summary maps as
-#' well as species-specific data.
-#'
-#' @param FromHPC Logical. Whether the processing is being done on an 
-#'   High-Performance Computing (HPC) environment, to adjust file paths 
-#'   accordingly. Default: `TRUE`.
-#' @param EnvFile Character. Path to the environment file containing paths to 
-#'   data sources. Defaults to `.env`.
-#' @param NCores Integer. Number of CPU cores to use for parallel processing. 
-#'   Default: 6.
-#' @param DeleteChunks Logical. If `TRUE`, delete the chunk files. Defaults to
-#'  `TRUE`.
-#' @inheritParams GBIF_Download
-#' @inheritParams GBIF_ReadChunk
-#' @return Saves multiple RData and Excel files containing the processed data
-#'   and summary maps. Also saves a JPEG file with summary plots.
-#' @note This function depends on the following functions: [GBIF_Download]  for
-#'   requesting, downloading and splitting data into chunks; [GBIF_ReadChunk] to
-#'   process chunk files; and [GBIF_SpData] to prepare species-specific data.
-#' @name GBIF_Process
 #' @author Ahmed El-Gabbas
 #' @export
+#' @name GBIF_data
+#' @rdname GBIF_data
+#' @order 1
 
 GBIF_Process <- function(
     FromHPC = TRUE, EnvFile = ".env", Renviron = ".Renviron", NCores = 6L,
-    RequestData = TRUE, DownloadData = TRUE, SplitChunks = TRUE,
-    Overwrite = FALSE, DeleteChunks = TRUE, ChunkSize = 50000L,
-    Boundaries = c(-30, 50, 25, 75), StartYear = 1981L) {
+    Request = TRUE, Download = TRUE, SplitChunks = TRUE, Overwrite = FALSE,
+    DeleteChunks = TRUE, ChunkSize = 50000L, Boundaries = c(-30, 50, 25, 75),
+    StartYear = 1981L) {
 
   # # ..................................................................... ###
 
@@ -43,7 +93,7 @@ GBIF_Process <- function(
 
   IASDT.R::CatTime("Checking arguments")
   AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, ~ get(.x, envir = environment())) %>%
+  AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
@@ -51,7 +101,7 @@ GBIF_Process <- function(
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "logical",
     Args = c(
-      "FromHPC", "RequestData", "DownloadData", "SplitChunks",
+      "FromHPC", "Request", "Download", "SplitChunks",
       "Overwrite", "DeleteChunks"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric",
@@ -114,17 +164,14 @@ GBIF_Process <- function(
 
   IASDT.R::GBIF_Download(
     FromHPC = FromHPC, EnvFile = EnvFile, Renviron = Renviron,
-    RequestData = RequestData, DownloadData = DownloadData,
-    SplitChunks = SplitChunks, ChunkSize = ChunkSize, Boundaries = Boundaries,
-    StartYear = StartYear)
+    Request = Request, Download = Download, SplitChunks = SplitChunks,
+    ChunkSize = ChunkSize, Boundaries = Boundaries, StartYear = StartYear)
 
   # # ..................................................................... ###
 
   GBIF_Metadata <- IASDT.R::Path(Path_GBIF, "GBIF_Metadata.RData")
   if (!file.exists(GBIF_Metadata)) {
-    stop(
-      paste0("GBIF metadata file does not exist: ", GBIF_Metadata),
-      call. = FALSE)
+    stop("GBIF metadata file does not exist: ", GBIF_Metadata, call. = FALSE)
   }
   GBIF_Metadata <- IASDT.R::LoadAs(GBIF_Metadata)
 
@@ -135,16 +182,14 @@ GBIF_Process <- function(
   # Grid_10_Land_Crop_sf
   GridSf <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
   if (!file.exists(GridSf)) {
-    stop(
-      paste0("Reference grid (sf) file not found at: ", GridSf),
-      call. = FALSE)
+    stop("Reference grid (sf) file not found at: ", GridSf, call. = FALSE)
   }
   GridSf <- IASDT.R::LoadAs(GridSf)
 
   # Grid_10_Land_Crop
   GridR <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(GridR)) {
-    stop(paste0("Reference grid file not found at: ", GridR), call. = FALSE)
+    stop("Reference grid file not found at: ", GridR, call. = FALSE)
   }
   GridR <- terra::unwrap(IASDT.R::LoadAs(GridR))
 
@@ -420,9 +465,9 @@ GBIF_Process <- function(
     format("%d %B %Y")
 
   GBIF_DOI <- GBIF_Metadata$StatusDetailed$doi
-  LastUpdate <- format(Sys.Date(), "%d %B %Y")
-  LastUpdate <- stringr::str_glue(
-    "DOI: {GBIF_DOI} ({GBIF_date})\nLast update: {LastUpdate}")
+  PlotTag <- format(Sys.Date(), "%d %B %Y")
+  PlotTag <- stringr::str_glue(
+    "DOI: {GBIF_DOI} ({GBIF_date})\nLast update: {PlotTag}")
 
   rm(GBIF_date, GBIF_DOI, GBIF_Grid, GBIF_Metadata, envir = environment())
 
@@ -488,7 +533,7 @@ GBIF_Process <- function(
     cowplot::draw_label(
       label = "Summary of IAS data (GBIF)", fontface = "bold", hjust = 0.5) +
     cowplot::draw_label(
-      label = LastUpdate, fontface = "italic", color = "grey", x = 0.98,
+      label = PlotTag, fontface = "italic", color = "grey", x = 0.98,
       y = 0.35, size = 8, hjust = 1) +
     ggplot2::theme(plot.margin = ggplot2::margin(0, 0, 0.4, 0))
 
@@ -594,7 +639,7 @@ GBIF_Process <- function(
   IASDT.R::CatTime("Splitting species data on parallel", Level = 2)
   furrr::future_walk(
     .x = SpList, .f = IASDT.R::GBIF_SpData, EnvFile = EnvFile,
-    Verbose = FALSE, FromHPC = FromHPC, LastUpdate = LastUpdate,
+    Verbose = FALSE, FromHPC = FromHPC, PlotTag = PlotTag,
     .options = furrr::furrr_options(seed = TRUE, packages = "dplyr")
   )
 

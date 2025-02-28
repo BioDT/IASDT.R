@@ -23,10 +23,8 @@ Mod_PrepData <- function(
   IsNull <- purrr::map_lgl(CheckNULL, ~ is.null(get(.x)))
   if (any(IsNull)) {
     stop(
-      paste0(
-        paste0("`", CheckNULL[which(IsNull)], "`", collapse = ", "),
-        " can not be empty"),
-      call. = FALSE)
+      paste0("`", CheckNULL[which(IsNull)], "`", collapse = ", "),
+      " can not be empty", call. = FALSE)
   }
 
   Hab_Abb <- as.character(Hab_Abb)
@@ -69,9 +67,7 @@ Mod_PrepData <- function(
   ValidHabAbbs <- c(0:3, "4a", "4b", 10, "12a", "12b")
   if (!(Hab_Abb %in% ValidHabAbbs)) {
     stop(
-      paste0(
-        "Hab_Abb has to be one of the following:\n >> ",
-        paste0(ValidHabAbbs, collapse = ", ")),
+      "Hab_Abb has to be one of the following:\n >> ", toString(ValidHabAbbs),
       call. = FALSE)
   }
 
@@ -87,8 +83,8 @@ Mod_PrepData <- function(
 
   # Input data paths - these are read from the .env file
   if (!file.exists(EnvFile)) {
-    stop(paste0(
-      "Path to environment variables: ", EnvFile, " was not found"),
+    stop(
+      "Path to environment variables: ", EnvFile, " was not found",
       call. = FALSE)
   }
 
@@ -135,7 +131,7 @@ Mod_PrepData <- function(
   IASDT.R::CatTime("Sampling efforts", Level = 1)
   R_Bias <- IASDT.R::Path(Path_Bias, "Efforts_SummaryR.RData")
   if (!file.exists(R_Bias)) {
-    stop(paste0(R_Bias, " file does not exist"), call. = FALSE)
+    stop(R_Bias, " file does not exist", call. = FALSE)
   }
 
   # This mask layer represents grid cells with minimum accepted efforts
@@ -157,9 +153,7 @@ Mod_PrepData <- function(
   Path_Hab <- IASDT.R::Path(
     Path_CLC, "Summary_RData", "PercCov_SynHab_Crop.RData")
   if (!file.exists(Path_Hab)) {
-    stop(
-      paste0("Path_Hab file: ", Path_Hab, " does not exist"),
-      call. = FALSE)
+    stop("Path_Hab file: ", Path_Hab, " does not exist", call. = FALSE)
   }
 
   if (Hab_Abb == "0") {
@@ -197,7 +191,7 @@ Mod_PrepData <- function(
   # Extract the list of species for the current habitat type
   DT_Sp <- IASDT.R::Path(Path_PA, "Sp_PA_Summary_DF.RData")
   if (!file.exists(DT_Sp)) {
-    stop(paste0(DT_Sp, " file does not exist"), call. = FALSE)
+    stop(DT_Sp, " file does not exist", call. = FALSE)
   }
   DT_Sp <- IASDT.R::LoadAs(DT_Sp) %>%
     dplyr::arrange(IAS_ID)
@@ -343,7 +337,7 @@ Mod_PrepData <- function(
   IASDT.R::CatTime("CHELSA", Level = 1)
   R_CHELSA <- IASDT.R::Path(Path_CHELSA, "Processed", "R_Current.RData")
   if (!file.exists(R_CHELSA)) {
-    stop(paste0(R_CHELSA, " file does not exist"), call. = FALSE)
+    stop(R_CHELSA, " file does not exist", call. = FALSE)
   }
   R_CHELSA <- IASDT.R::LoadAs(R_CHELSA) %>%
     terra::unwrap() %>%
@@ -358,7 +352,7 @@ Mod_PrepData <- function(
   # Reference grid as sf
   Grid_SF <- IASDT.R::Path(Path_Grid_Ref, "Grid_10_sf.RData")
   if (!file.exists(Grid_SF)) {
-    stop(paste0(Grid_SF, " file does not exist"), call. = FALSE)
+    stop(Grid_SF, " file does not exist", call. = FALSE)
   }
   Grid_SF <- IASDT.R::LoadAs(Grid_SF) %>%
     magrittr::extract2("Grid_10_sf_s")
@@ -369,7 +363,7 @@ Mod_PrepData <- function(
   IASDT.R::CatTime("Reference grid - country names", Level = 2)
   Grid_CNT <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop_sf_Country.RData")
   if (!file.exists(Grid_CNT)) {
-    stop(paste0(Grid_CNT, " file does not exist"), call. = FALSE)
+    stop(Grid_CNT, " file does not exist", call. = FALSE)
   }
   Grid_CNT <- IASDT.R::LoadAs(Grid_CNT) %>%
     dplyr::mutate(
@@ -388,7 +382,7 @@ Mod_PrepData <- function(
   # road intensity of any road type
   R_RoadInt <- IASDT.R::Path(Path_Roads, "Road_Length.RData")
   if (!file.exists(R_RoadInt)) {
-    stop(paste0(R_RoadInt, " file does not exist"), call. = FALSE)
+    stop(R_RoadInt, " file does not exist", call. = FALSE)
   }
   R_RoadInt <- IASDT.R::LoadAs(R_RoadInt) %>%
     terra::unwrap() %>%
@@ -408,7 +402,7 @@ Mod_PrepData <- function(
   # Railway intensity
   R_RailInt <- IASDT.R::Path(Path_Rail, "Railways_Length.RData")
   if (!file.exists(R_RailInt)) {
-    stop(paste0(R_RailInt, " file does not exist"), call. = FALSE)
+    stop(R_RailInt, " file does not exist", call. = FALSE)
   }
   R_RailInt <- IASDT.R::LoadAs(R_RailInt) %>%
     terra::unwrap() %>%
@@ -424,10 +418,8 @@ Mod_PrepData <- function(
 
   ### Merging Road + rail ----
   IASDT.R::CatTime("Merging Railway + road intensity", Level = 2)
-  R_RoadRail <- (R_RoadInt + R_RailInt) %>%
-    stats::setNames("RoadRail")
-  R_RoadRailLog <- log10(R_RoadRail + 0.1) %>%
-    stats::setNames("RoadRailLog")
+  R_RoadRail <- stats::setNames((R_RoadInt + R_RailInt), "RoadRail")
+  R_RoadRailLog <- stats::setNames(log10(R_RoadRail + 0.1), "RoadRailLog")
 
   # # ..................................................................... ###
 
@@ -449,7 +441,7 @@ Mod_PrepData <- function(
 
   R_Rivers <- IASDT.R::Path(Path_Rivers, "River_Lengths.RData")
   if (!file.exists(R_Rivers)) {
-    stop(paste0(R_Rivers, " file does not exist"), call. = FALSE)
+    stop(R_Rivers, " file does not exist", call. = FALSE)
   }
   R_Rivers <- IASDT.R::LoadAs(R_Rivers) %>%
     terra::unwrap() %>%

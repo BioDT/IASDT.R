@@ -22,7 +22,6 @@ components and returns them as a character string instead of an \code{"fs_path"}
 object.
 }
 \examples{
-
 # Basic usage
 IASDT.R::Path("datasets", "processed", "model_fitting")
 

@@ -2,34 +2,15 @@
 # Efforts_Request ----
 ## |------------------------------------------------------------------------| #
 
-#' Request and manage GBIF data for vascular plant orders
-#'
-#' This function requests GBIF data for each vascular plant order, processes it
-#' in parallel, and manages the data download and storage. If data is already
-#' available, it loads the data instead of making new requests.
-#' @param NCores Integer. Number of CPU cores to use for parallel processing 
-#'   (between 1 and 3). Must be a positive integer. Defaults to 3.
-#' @param Path_Requests Character. The directory path to save individual request
-#'   files.
-#' @param Path_Efforts Character. The directory path to save the final compiled
-#'   data.
-#' @param StartYear Numeric. The starting year for the occurrence data. Only
-#'   records from this year onward will be requested from GBIF. Default is
-#'   `1981`, which matches the year ranges of CHELSA current climate data.
-#' @param Boundaries Numeric vector of length 4. The boundaries of the 
-#'   requested GBIF data in the order: Left, Right, Bottom, Top. Defaults to 
-#'   `c(-30, 50, 25, 75)`.
-#' @return The function returns the GBIF data requests processed and stored in
-#'   the specified directories.
-#' @note This function is not intended to be used directly by the user or in the
-#'   IAS-pDT, but only used inside the [Efforts_Process] function.
 #' @author Ahmed El-Gabbas
-#' @name Efforts_Request
+#' @name Efforts_data
+#' @rdname Efforts_data
+#' @order 2
 #' @export
 
 Efforts_Request <- function(
-    NCores = 3L, Path_Requests, Path_Efforts,
-    StartYear = 1981L, Boundaries = c(-30, 50, 25, 75)) {
+  FromHPC = TRUE, EnvFile = ".env", NCores = 3L, StartYear = 1981L,
+  Renviron = ".Renviron", Boundaries = c(-30, 50, 25, 75)) {
 
   # # ..................................................................... ###
 
@@ -48,16 +29,8 @@ Efforts_Request <- function(
     stop("`NCores` must be a positive integer.", call. = FALSE)
   }
 
-  if (!is.character(Path_Requests) || !dir.exists(Path_Requests)) {
-    stop("`Path_Requests` must be a valid directory path.", call. = FALSE)
-  }
-
-  if (!is.character(Path_Efforts) || !dir.exists(Path_Efforts)) {
-    stop("`Path_Efforts` must be a valid directory path.", call. = FALSE)
-  }
-
   if (!is.numeric(StartYear) || StartYear <= 1950) {
-    stop("`StartYear` must be a positive integer after 1950")
+    stop("`StartYear` must be a positive integer after 1950", call. = FALSE)
   }
 
   if (!is.numeric(Boundaries) || length(Boundaries) != 4) {
@@ -69,7 +42,32 @@ Efforts_Request <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Request <- DownDetails <- orderKey <- Size <- NumberDatasets <-
-    TotalRecords <-  NULL
+    TotalRecords <- Path_Efforts <- NULL
+  # # ..................................................................... ###
+
+  IASDT.R::CatTime(
+    "Ensure that GBIF access information is available", Level = 1)
+  IASDT.R::GBIF_Check(Renviron = Renviron)
+
+  # # ..................................................................... ###
+
+  # Environment variables ----
+  IASDT.R::CatTime("Environment variables")
+
+  if (FromHPC) {
+    EnvVars2Read <- tibble::tribble(
+      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+      "Path_Efforts", "DP_R_Efforts", FALSE, FALSE)
+  } else {
+    EnvVars2Read <- tibble::tribble(
+      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+      "Path_Efforts", "DP_R_Efforts_Local", FALSE, FALSE)
+  }
+
+  # Assign environment variables and check file and paths
+  IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+
+  Path_Efforts_Requests <- IASDT.R::Path(Path_Efforts, "Requests")
 
   # # ..................................................................... ###
 
@@ -115,7 +113,7 @@ Efforts_Request <- function(
         .f = ~ {
           Request_ID <- paste0("Request_", .x)
           Request_Path <- IASDT.R::Path(
-            Path_Requests, paste0(Request_ID, ".RData"))
+            Path_Efforts_Requests, paste0(Request_ID, ".RData"))
 
           if (file.exists(Request_Path)) {
             # load previous request
@@ -136,24 +134,17 @@ Efforts_Request <- function(
                   rgbif::pred_within(
                     value = IASDT.R::DownBoundary(
                       Left = Boundaries[1], Right = Boundaries[2],
-                      Bottom = Boundaries[3], Top = Boundaries[4])
-                  ),
-                  format = "SIMPLE_CSV"
-                )
+                      Bottom = Boundaries[3], Top = Boundaries[4])),
+                  format = "SIMPLE_CSV")
 
                 IASDT.R::SaveAs(
                   InObj = Down, OutObj = Request_ID, OutPath = Request_Path)
               },
               error = function(e) {
                 stop(
-                  paste0(
-                    "Failed to request data for taxonKey ", .x, ": ",
-                    conditionMessage(e)
-                  ),
-                  call. = FALSE
-                )
-              }
-            )
+                  "Failed to request data for taxonKey ", .x, ": ",
+                  conditionMessage(e), call. = FALSE)
+              })
           }
 
           # Waiting for data to be ready
@@ -163,6 +154,7 @@ Efforts_Request <- function(
         },
         .options = furrr::furrr_options(
           seed = TRUE, scheduling = Inf,
+          globals = c("Path_Efforts_Requests", "Boundaries", "StartYear"),
           packages = c("dplyr", "IASDT.R", "rgbif"))
       )
     ) %>%
@@ -221,5 +213,5 @@ Efforts_Request <- function(
 
   # # ..................................................................... ###
 
-  return(Efforts_AllRequests)
+  return(invisible(NULL))
 }

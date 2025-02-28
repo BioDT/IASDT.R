@@ -39,10 +39,8 @@ CLC_Plot <- function(
   if (is.null(CLC_Name) || is.null(EU_Map) || is.null(CrossWalk) ||
       is.null(Path_JPEG) || is.null(Path_JPEG_Free)) {
     stop(
-      paste0(
-        "`CLC_Name`, `EU_Map`, `CrossWalk`, `Path_JPEG`, and ",
-        "`Path_JPEG_Free` can not be empty"),
-      call. = FALSE)
+      "`CLC_Name`, `EU_Map`, `CrossWalk`, `Path_JPEG`, and ",
+      "`Path_JPEG_Free` can not be empty", call. = FALSE)
   }
 
   CLC_MapR <- dplyr::filter(CLC_Map, Name == CLC_Name) %>%
@@ -75,12 +73,12 @@ CLC_Plot <- function(
     split(., ceiling(seq_along(.) / 8))
 
   # nolint start
-  
+
   # Plotting boundaries
   Xlim <- c(2600000, 6550000)
   Ylim <- c(1450000, 5420000)
 
-  
+
   LastUpdate <- paste0(
     "Last update: ", format(Sys.Date(), "%d %B %Y"))
 
@@ -88,7 +86,7 @@ CLC_Plot <- function(
     "Summary_PercCover_", FilePrefix, "_",
     seq_len(length(split_vector)), ".jpeg") %>%
     IASDT.R::Path(Path_JPEG, .)
-  
+
   # nolint end
 
   MAPS <- purrr::map(
@@ -264,18 +262,18 @@ CLC_Plot <- function(
   # nolint start
   CommonLegend <- cowplot::get_legend(
     (ggplot2::ggplot() +
-      tidyterra::geom_spatraster(
-        data = terra::rast(CLC_MapR[[1]]), maxcell = terra::ncell(CLC_MapR)) +
-      paletteer::scale_fill_paletteer_c(
-        na.value = "transparent", palette = "viridis::plasma",
-        limits = c(0, 100)) +
-      ggplot2::theme(
-        legend.box.margin = ggplot2::margin(0, 0, 0, 0),
-        legend.key.size = grid::unit(0.4, "cm"),
-        legend.key.width = grid::unit(0.4, "cm"),
-        legend.text = ggplot2::element_text(size = 6),
-        legend.background = ggplot2::element_rect(fill = "transparent")) +
-      ggplot2::labs(fill = NULL))) %>%
+       tidyterra::geom_spatraster(
+         data = terra::rast(CLC_MapR[[1]]), maxcell = terra::ncell(CLC_MapR)) +
+       paletteer::scale_fill_paletteer_c(
+         na.value = "transparent", palette = "viridis::plasma",
+         limits = c(0, 100)) +
+       ggplot2::theme(
+         legend.box.margin = ggplot2::margin(0, 0, 0, 0),
+         legend.key.size = grid::unit(0.4, "cm"),
+         legend.key.width = grid::unit(0.4, "cm"),
+         legend.text = ggplot2::element_text(size = 6),
+         legend.background = ggplot2::element_rect(fill = "transparent")) +
+       ggplot2::labs(fill = NULL))) %>%
     suppressWarnings()
   # nolint end
 
@@ -297,7 +295,7 @@ CLC_Plot <- function(
         ggplot2::theme(plot.margin = ggplot2::margin(0, 0, 0, 0))
 
       Plot <- cowplot::plot_grid(plotlist = MAPS[[.x]], ncol = 4, nrow = 2) %>%
-        cowplot::plot_grid(CommonLegend, rel_widths = c(4, .2)) %>%
+        cowplot::plot_grid(CommonLegend, rel_widths = c(4, 0.2)) %>%
         cowplot::plot_grid(MainTitle, ., ncol = 1, rel_heights = c(0.05, 1))
 
       # Using ggplot2::ggsave directly does not show non-ascii characters

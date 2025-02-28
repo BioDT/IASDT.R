@@ -2,35 +2,14 @@
 # CHELSA_Project ----
 ## |------------------------------------------------------------------------| #
 
-#' Project CHELSA data to the study area
-#'
-#' This function processes CHELSA climate data, projects it to a specified
-#' reference grid, and optionally saves the output in NetCDF or TIFF format. It
-#' supports downloading data from a URL, applying a land mask, and adjusting
-#' data with scale and offset values.
-#' @name CHELSA_Project
-#' @param Metadata `tibble`. Single row tibble for the metadata of the input
-#'   file. This should be prepared in the [CHELSA_Prepare] function and provided
-#'   via the the [CHELSA_Process] function.
-#' @param EnvFile Character. Path to the environment file containing paths to
-#'   data sources. Defaults to `.env`.
-#' @param FromHPC Logical. Whether the processing is being done on an
-#'   High-Performance Computing (HPC) environment, to adjust file paths
-#'   accordingly. Default: `TRUE`.
-#' @param CompressLevel Integer. The compression level for the exported NetCDF
-#'   file, ranging from 1 (least compression) to 9 (most compression). Defaults
-#'   to 5.
-#' @param ReturnMap Logical. If `TRUE`, the processed map (as a
-#'   `PackedSpatRaster` object) is returned. Defaults to `FALSE`.
-#' @return Depending on the `ReturnMap` parameter, either a `PackedSpatRaster`
-#'   object is returned, or nothing is returned. The function always writes
-#'   NetCDF and TIFF files to disk.
 #' @author Ahmed El-Gabbas
 #' @export
+#' @name CHELSA_data
+#' @rdname CHELSA_data
+#' @order 3
 
 CHELSA_Project <- function(
-    Metadata = NULL, EnvFile = ".env", FromHPC = TRUE,
-    CompressLevel = 5, ReturnMap = FALSE) {
+    Metadata = NULL, EnvFile = ".env", FromHPC = TRUE, CompressLevel = 5) {
 
   # Checking input arguments -----
 
@@ -41,19 +20,17 @@ CHELSA_Project <- function(
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = "EnvFile", Type = "character")
-  LogicArgs <- c("FromHPC", "ReturnMap")
-  IASDT.R::CheckArgs(AllArgs = AllArgs, Args = LogicArgs, Type = "logical")
+  IASDT.R::CheckArgs(AllArgs = AllArgs, Args = "FromHPC", Type = "logical")
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Args = "CompressLevel", Type = "numeric")
-
-  rm(AllArgs, LogicArgs, envir = environment())
+  rm(AllArgs, envir = environment())
 
   if (!inherits(Metadata, "tbl_df")) {
-    stop("Input metadata has to be a tibble")
+    stop("Input metadata has to be a tibble", call. = FALSE)
   }
 
   if (nrow(Metadata) != 1) {
-    stop("Input metadata has to be a single-row tibble")
+    stop("Input metadata has to be a single-row tibble", call. = FALSE)
   }
 
   # # ..................................................................... ###
@@ -69,10 +46,7 @@ CHELSA_Project <- function(
   }
 
   if (!file.exists(Metadata$Path_Down)) {
-    stop(
-      paste0("Input file does not exist: ", Metadata$Path_Down),
-      call. = FALSE
-    )
+    stop("Input file does not exist: ", Metadata$Path_Down, call. = FALSE)
   }
 
   # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use
@@ -86,7 +60,7 @@ CHELSA_Project <- function(
 
   if (!file.exists(EnvFile)) {
     stop(
-      paste0("Path for environment variables: ", EnvFile, " was not found"),
+      "Path for environment variables: ", EnvFile, " was not found",
       call. = FALSE)
   }
 
@@ -110,8 +84,7 @@ CHELSA_Project <- function(
   GridR <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(GridR)) {
     stop(
-      paste0("Path for the Europe boundaries does not exist: ", GridR),
-      call. = FALSE)
+      "Path for the Europe boundaries does not exist: ", GridR, call. = FALSE)
   }
   GridR <- terra::unwrap(IASDT.R::LoadAs(GridR))
 
@@ -201,7 +174,7 @@ CHELSA_Project <- function(
   VarName4NC <- c(
     Metadata$TimePeriod, Metadata$ClimateModel, Metadata$ClimateScenario) %>%
     unique() %>%
-    paste0(collapse = "__") %>%
+    paste(collapse = "__") %>%
     paste0(Metadata$Variable, "__", .)
 
   # global attributes to be added to the *.nc file
@@ -225,11 +198,5 @@ CHELSA_Project <- function(
 
   # # ..................................................................... ###
 
-  # Return map? -----
-
-  if (ReturnMap) {
-    return(terra::wrap(Rstr))
-  } else {
-    return(invisible(NULL))
-  }
+  return(invisible(NULL))
 }

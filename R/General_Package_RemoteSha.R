@@ -18,16 +18,18 @@
 #' Package_RemoteSha(IASDT.R, devtools)
 
 Package_RemoteSha <- function(...) {
+
   Pk <- rlang::ensyms(...)  %>%
     purrr::map_chr(.f = rlang::as_string)
 
-  purrr::map_chr(
+  Out <- purrr::map_chr(
     .x = Pk,
     .f = ~{
       pak::lib_status() %>%
         dplyr::filter(package == .x) %>%
         dplyr::pull("remotesha")
     }) %>%
-    stats::setNames(Pk) %>%
-    return()
+    stats::setNames(Pk)
+
+  return(Out)
 }

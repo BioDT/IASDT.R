@@ -9,12 +9,12 @@
 #'
 #' @param ModelDir Character. Path to the model directory containing
 #'   predictions.
-#' @param EnvFile Character. Path to the environment file containing paths to 
+#' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
-#' @param FromHPC Logical. Whether the processing is being done on an 
-#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#' @param FromHPC Logical. Whether the processing is being done on an
+#'   High-Performance Computing (HPC) environment, to adjust file paths
 #'   accordingly. Default: `TRUE`.
-#' @param NCores Integer. Number of CPU cores to use for parallel processing. 
+#' @param NCores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 8.
 #' @return Saves prediction plots as JPEG files in the specified output
 #'   directory.
@@ -23,15 +23,25 @@
 #' @export
 
 Mod_Predict_Plot <- function(
-    ModelDir, EnvFile = ".env", FromHPC = TRUE, NCores = 8L) {
+    ModelDir = NULL, EnvFile = ".env", FromHPC = TRUE, NCores = 8L) {
 
   # # ..................................................................... ###
   # # ..................................................................... ###
 
   .StartTime <- lubridate::now(tzone = "CET")
 
-  tif_path_mean <- tif_path_sd <- tif_path_cov <- Path_CLC <-
-    IAS_ID <- Species_File <- Observed <- Clamp <- NoClamp <- NULL
+  tif_path_mean <- tif_path_sd <- tif_path_cov <- Path_CLC <- Path_Grid <-
+    IAS_ID <- Species_File <- Observed <- Clamp <- NoClamp <- Path_PA <- NULL
+
+  # # ..................................................................... ###
+  # # ..................................................................... ###
+
+  if (is.null(ModelDir) || !is.character(ModelDir) || !nzchar(ModelDir)) {
+    stop("ModelDir has to be a character with length > 0", call. = FALSE)
+  }
+  if (!fs::dir_exists(ModelDir)) {
+    stop("ModelDir is not a valid directory", call. = FALSE)
+  }
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -39,19 +49,23 @@ Mod_Predict_Plot <- function(
   # Assign environment variables ----
 
   if (!file.exists(EnvFile)) {
-    stop(paste0(
-      "Path to environment variables: ", EnvFile, " was not found"),
+    stop(
+      "Path to environment variables: ", EnvFile, " was not found",
       call. = FALSE)
   }
 
   if (FromHPC) {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_CLC", "DP_R_CLC", TRUE, FALSE)
+      "Path_CLC", "DP_R_CLC", TRUE, FALSE,
+      "Path_Grid", "DP_R_Grid", TRUE, FALSE,
+      "Path_PA", "DP_R_PA", TRUE, FALSE)
   } else {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_CLC", "DP_R_CLC_Local", TRUE, FALSE)
+      "Path_CLC", "DP_R_CLC_Local", TRUE, FALSE,
+      "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE,
+      "Path_PA", "DP_R_PA_Local", TRUE, FALSE)
   }
 
   # Assign environment variables and check file and paths
@@ -59,6 +73,15 @@ Mod_Predict_Plot <- function(
 
   rm(EnvVars2Read, envir = environment())
   invisible(gc())
+
+  # Reference grid
+  Gird10 <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.RData")
+  if (!file.exists(Gird10)) {
+    stop(
+      "Path for the Europe boundaries does not exist: ", Gird10, call. = FALSE)
+  }
+  Gird10 <- IASDT.R::LoadAs(Gird10) %>%
+    terra::unwrap()
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -69,13 +92,13 @@ Mod_Predict_Plot <- function(
 
   # Without clamping
   Map_summary_NoClamp <- IASDT.R::Path(
-    ModelDir, "Model_Prediction/NoClamp/Prediction_Current_Summary.RData")
+    ModelDir, "Model_Prediction", "NoClamp",
+    "Prediction_Current_Summary.RData")
 
   if (!file.exists(Map_summary_NoClamp)) {
     stop(
-      paste0(
-        "`Map_summary_NoClamp` file: ", Map_summary_NoClamp,
-        " does not exist"), call. = FALSE)
+      "`Map_summary_NoClamp` file: ", Map_summary_NoClamp,
+      " does not exist", call. = FALSE)
   }
   Map_summary_NoClamp <- IASDT.R::LoadAs(Map_summary_NoClamp) %>%
     dplyr::rename(
@@ -85,12 +108,11 @@ Mod_Predict_Plot <- function(
 
   # With clamping
   Map_summary_Clamp <- IASDT.R::Path(
-    ModelDir, "Model_Prediction/Clamp/Prediction_Current_Summary.RData")
+    ModelDir, "Model_Prediction", "Clamp", "Prediction_Current_Summary.RData")
   if (!file.exists(Map_summary_Clamp)) {
     stop(
-      paste0(
-        "`Map_summary_Clamp` file: ", Map_summary_Clamp,
-        " does not exist"), call. = FALSE)
+      "`Map_summary_Clamp` file: ", Map_summary_Clamp,
+      " does not exist", call. = FALSE)
   }
   Map_summary_Clamp <- IASDT.R::LoadAs(Map_summary_Clamp) %>%
     dplyr::rename(
@@ -121,13 +143,6 @@ Mod_Predict_Plot <- function(
 
   IASDT.R::CatTime("Calculate observed species richness")
 
-  # Reference grid
-  Gird10 <- "datasets/processed/grid/Grid_10_Land_Crop.RData"
-  if (!file.exists(Gird10)) {
-    stop(paste0("Gird10 file: ", Gird10, " does not exist"), call. = FALSE)
-  }
-  Gird10 <- IASDT.R::LoadAs(Gird10)
-
   # Modelling data
   Model_Data <- list.files(
     ModelDir, pattern = "ModDT_.+_subset.RData", full.names = TRUE)
@@ -138,9 +153,9 @@ Mod_Predict_Plot <- function(
 
   # Observed species richness
   R_SR <- tibble::tibble(
-    as.data.frame(Model_Data$DT_xy), SR = apply(Model_Data$DT_y, 1, sum)) %>%
+    as.data.frame(Model_Data$DT_xy), SR = rowSums(Model_Data$DT_y)) %>%
     sf::st_as_sf(coords = c("x", "y"), crs = 3035) %>%
-    terra::rasterize(terra::unwrap(Gird10), field = "SR") %>%
+    terra::rasterize(Gird10, field = "SR") %>%
     terra::wrap()
 
   rm(Model_Data, Map_summary_NoClamp, Map_summary_Clamp, envir = environment())
@@ -156,8 +171,7 @@ Mod_Predict_Plot <- function(
   Path_Hab <- IASDT.R::Path(
     Path_CLC, "Summary_RData", "PercCov_SynHab_Crop.RData")
   if (!file.exists(Path_Hab)) {
-    stop(
-      paste0("Path_Hab file: ", Path_Hab, " does not exist"), call. = FALSE)
+    stop("Path_Hab file: ", Path_Hab, " does not exist", call. = FALSE)
   }
   R_habitat <- IASDT.R::LoadAs(Path_Hab) %>%
     terra::unwrap() %>%
@@ -379,22 +393,22 @@ Mod_Predict_Plot <- function(
       # Observed species presence
 
       # Files containing observed data maps
-      Path_observed <- "datasets/processed/IAS_PA/Sp_PA_Summary_DF.RData"
+      Path_observed <- IASDT.R::Path(Path_PA, "Sp_PA_Summary_DF.RData")
       if (!file.exists(Path_observed)) {
         stop(
-          paste0("Path_observed file: ", Path_observed, " does not exist"),
+          "Path_observed file: ", Path_observed, " does not exist",
           call. = FALSE)
       }
       Path_observed <- IASDT.R::LoadAs(Path_observed) %>%
         dplyr::filter(IAS_ID == SpID2) %>%
         dplyr::pull(Species_File) %>%
-        paste0(., c("_Masked.tif", "_All.tif")) %>%
-        IASDT.R::Path("datasets/processed/IAS_PA/tif", .)
+        paste0(c("_Masked.tif", "_All.tif")) %>%
+        IASDT.R::Path(Path_PA, "tif", .)
+
       # Check if observed data files exist
       if (!all(file.exists(Path_observed))) {
         stop(
-          paste0("Observed data for species: ", SpName, " not found"),
-          call. = FALSE)
+          "Observed data for species: ", SpName, " not found", call. = FALSE)
       }
 
       Plot_observed <- terra::rast(Path_observed)
@@ -609,7 +623,7 @@ Mod_Predict_Plot <- function(
   parallel::clusterExport(
     cl = c1,
     varlist = c(
-      "Map_summary", "PrepPlots", "R_SR",
+      "Map_summary", "PrepPlots", "R_SR", "Path_PA",
       "R_habitat", "Path_Plots", "Hab_Name", "PlotMaps"),
     envir = environment())
 

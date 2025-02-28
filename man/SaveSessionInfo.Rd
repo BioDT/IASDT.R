@@ -2,7 +2,7 @@
 % Please edit documentation in R/General_SaveSessionInfo.R
 \name{SaveSessionInfo}
 \alias{SaveSessionInfo}
-\title{Save Session Information to a File}
+\title{Save session information to a file}
 \usage{
 SaveSessionInfo(Path = getwd(), SessionObj = NULL, Prefix = "S")
 }

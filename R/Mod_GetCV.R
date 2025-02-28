@@ -72,7 +72,7 @@ Mod_GetCV <- function(
 
   if (!file.exists(EnvFile)) {
     stop(
-      paste0("Path to environment variables: ", EnvFile, " was not found"),
+      "Path to environment variables: ", EnvFile, " was not found",
       call. = FALSE)
   }
 
@@ -81,11 +81,9 @@ Mod_GetCV <- function(
   if (isFALSE(AllVarsInDT)) {
     MissingVars <- setdiff(AllVars, names(Data))
     stop(
-      paste0(
-        "Data frame Data must contain 'x' and 'y' columns and all ",
-        "environmental predictors in the XVars argument.\nMissing vars are ",
-        paste0(MissingVars, collapse = "; ")),
-      call. = FALSE)
+      "Data frame Data must contain 'x' and 'y' columns and all ",
+      "environmental predictors in the XVars argument.\nMissing vars are ",
+      paste(MissingVars, collapse = "; "), call. = FALSE)
   }
 
   # # |||||||||||||||||||||||||||||||||||
@@ -271,7 +269,7 @@ Mod_GetCV <- function(
             linewidth = 0.5) +
           tidyterra::geom_spatraster(data = DT_R, inherit.aes = FALSE) +
           ggplot2::geom_sf(
-            data = blocks, inherit.aes = FALSE, alpha = 0.35, ,
+            data = blocks, inherit.aes = FALSE, alpha = 0.35,
             mapping = ggplot2::aes(fill = folds), linewidth = 0.3) +
           ggplot2::geom_sf_text(
             data = blocks, ggplot2::aes(label = folds), size = 8,

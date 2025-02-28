@@ -73,7 +73,7 @@ Mod_SLURM <- function(
   # # |||||||||||||||||||||||||||||||||||
 
   if (!file.exists(EnvFile)) {
-    stop(paste("Environment file not found:", EnvFile), call. = FALSE)
+    stop("Environment file not found:", EnvFile, call. = FALSE)
   }
 
   EnvVars2Read <- tibble::tribble(
@@ -108,7 +108,7 @@ Mod_SLURM <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   if (!fs::dir_exists(ModelDir)) {
-    stop(paste("Model directory does not exist:", ModelDir), call. = FALSE)
+    stop("Model directory does not exist:", ModelDir, call. = FALSE)
   }
 
   ListCommands <- list.files(

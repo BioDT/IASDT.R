@@ -8,17 +8,17 @@
 #' including `Alpha`, `Beta`, `Rho`, and `Omega`. It processes the model's
 #' output, performs statistical summaries, and optionally returns the summarized
 #' data.
-#' @param Path_Coda Character. Path to the `.qs2` / `.RData` file containing 
-#' the coda object.
-#' @param EnvFile Character. Path to the environment file containing paths to 
+#' @param Path_Coda Character. Path to the `.qs2` / `.RData` file containing the
+#'   coda object.
+#' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
-#' @param ReturnData Logical. Whether the summarized data should be
-#'   returned as an R object. If `TRUE`, the function returns a list containing
-#'   summaries of `Alpha`, `Beta`, `Rho`, and `Omega` parameters. The default
-#'   value is `FALSE`, which means the function will not return any data but
-#'   will save the summaries to a specified directory.
-#' @param FromHPC Logical. Whether the processing is being done on an 
-#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#' @param ReturnData Logical. Whether the summarized data should be returned as
+#'   an R object. If `TRUE`, the function returns a list containing summaries of
+#'   `Alpha`, `Beta`, `Rho`, and `Omega` parameters. The default value is
+#'   `FALSE`, which means the function will not return any data but will save
+#'   the summaries to a specified directory.
+#' @param FromHPC Logical. Whether the processing is being done on an
+#'   High-Performance Computing (HPC) environment, to adjust file paths
 #'   accordingly. Default: `TRUE`.
 #' @author Ahmed El-Gabbas
 #' @return If `ReturnData` is `FALSE` (default), the function does not return
@@ -41,7 +41,7 @@ Mod_Summary <- function(
   }
 
   if (!file.exists(EnvFile)) {
-    stop(paste("Environment file not found:", EnvFile), call. = FALSE)
+    stop("Environment file not found:", EnvFile, call. = FALSE)
   }
 
   # # ..................................................................... ###

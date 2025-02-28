@@ -2,7 +2,7 @@
 # River_Length ----
 ## |------------------------------------------------------------------------| #
 
-#' Calculate the length of rivers in each Strahler order
+#' Calculate the length of rivers in each Strahler order per grid cell
 #'
 #' This function processes EU-Hydro River Network Database to calculate the
 #' length of rivers in each Strahler number. The Strahler number is used as an
@@ -13,16 +13,14 @@
 #' per grid cell, and outputs the results both as raster files and RData
 #' objects. The calculated length represents the total length of rivers in each
 #' Strahler number or larger (e.g., for STRAHLER_5, the length of rivers with
-#' STRAHLER values of 5 or higher).
+#' Strahler values of 5 or higher).
 #'
 #' @name River_Length
-#' @param FromHPC Logical. Whether the processing is being done on an 
-#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#' @param FromHPC Logical. Whether the processing is being done on an
+#'   High-Performance Computing (HPC) environment, to adjust file paths
 #'   accordingly. Default: `TRUE`.
-#' @param EnvFile Character. Path to the environment file containing paths to 
+#' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
-#' @param Filename Character. The name of the ZIP file containing the river
-#'   network data. Default is "EU_hydro_gpkg_eu.zip".
 #' @param Cleanup Logical indicating whether to clean up temporary files from
 #'   the Interim directory after finishing calculations. Default: `FALSE`.
 #' @return `NULL`. The function outputs processed files to the specified
@@ -33,15 +31,14 @@
 #'   from EU-DEM, with catchments and drainage lines and nodes.
 #'
 #'   - **Data source**: EU-Hydro River Network Database v013 |
-#'   **[DOI](https://doi.org/10.2909/393359a7-7ebd-4a52-80ac-1a18d5f3db9c)** |
-#'   **[Download link](https://land.copernicus.eu/en/products/eu-hydro/eu-hydro-river-network-database)**
 #'   - **Temporal extent**: 2006-2012; **Format**: Vector (GPKG); **Size**: 4 GB
 #' @export
 #' @author Ahmed El-Gabbas
+#' @references
+#' - DOI: <https://doi.org/10.2909/393359a7-7ebd-4a52-80ac-1a18d5f3db9c>
+#' - Download link: <https://land.copernicus.eu/en/products/eu-hydro/eu-hydro-river-network-database>
 
-River_Length <- function(
-    FromHPC = TRUE, EnvFile = ".env", Filename = "EU_hydro_gpkg_eu.zip",
-    Cleanup = FALSE) {
+River_Length <- function(FromHPC = TRUE, EnvFile = ".env", Cleanup = FALSE) {
 
   # # ..................................................................... ###
 
@@ -53,11 +50,10 @@ River_Length <- function(
   # # |||||||||||||||||||||||||||||||||||
 
   AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, ~ get(.x, envir = environment())) %>%
+  AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "character", Args = c("EnvFile", "Filename"))
+  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = "EnvFile")
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "logical", Args = c("FromHPC", "Cleanup"))
 
@@ -69,7 +65,7 @@ River_Length <- function(
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Path_Rivers_Raw <- Path_Rivers_Interim <- Path_Grid <- path <- File <-
     size_original <- size <- size_on_disk <- Rivers <- STRAHLER <-
-    Path_Rivers <- NULL
+    Path_Rivers <- Path_Rivers_Zip <- NULL
 
   # # ..................................................................... ###
 
@@ -84,6 +80,7 @@ River_Length <- function(
       "Path_Rivers", "DP_R_Rivers", FALSE, FALSE,
       "Path_Rivers_Raw", "DP_R_Rivers_Raw", FALSE, FALSE,
       "Path_Rivers_Interim", "DP_R_Rivers_Interim", FALSE, FALSE,
+      "Path_Rivers_Zip", "DP_R_Rivers_Zip", FALSE, TRUE,
       "Path_Grid", "DP_R_Grid", TRUE, FALSE)
   } else {
     EnvVars2Read <- tibble::tribble(
@@ -91,6 +88,7 @@ River_Length <- function(
       "Path_Rivers", "DP_R_Rivers", FALSE, FALSE,
       "Path_Rivers_Raw", "DP_R_Rivers_Raw", FALSE, FALSE,
       "Path_Rivers_Interim", "DP_R_Rivers_Interim", FALSE, FALSE,
+      "Path_Rivers_Zip", "DP_R_Rivers_Zip", FALSE, TRUE,
       "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE)
   }
 
@@ -101,9 +99,7 @@ River_Length <- function(
 
   RefGrid <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(RefGrid)) {
-    stop(
-      paste0("The reference grid file does not exist: ", RefGrid),
-      call. = FALSE)
+    stop("The reference grid file does not exist: ", RefGrid, call. = FALSE)
   }
   RefGrid <- terra::unwrap(IASDT.R::LoadAs(RefGrid))
 
@@ -114,16 +110,20 @@ River_Length <- function(
   IASDT.R::CatTime("Unzipping river network data")
   # # |||||||||||||||||||||||||||||||||||
 
-  # Path to the ZIP file
-  Path_Rivers_Zip <- IASDT.R::Path(Path_Rivers_Raw, Filename)
-
   # Check if ZIP file exists and not empty
   if (!file.exists(Path_Rivers_Zip) || fs::file_size(Path_Rivers_Zip) == 0) {
     stop(
-      paste0(
-        "The river network ZIP file is missing or empty: ", Path_Rivers_Zip),
+      "The river network ZIP file is missing or empty: ", Path_Rivers_Zip,
       call. = FALSE)
   }
+
+  # Check the integrity of the ZIP file
+  if (!IASDT.R::CheckZip(Path_Rivers_Zip)) {
+    stop(
+      "The river network ZIP file is corrupted: ", Path_Rivers_Zip,
+      call. = FALSE)
+  }
+
 
   # List files inside ZIP not in the interim directory, and extract them
   Rivers2extract <- archive::archive(Path_Rivers_Zip) %>%

@@ -26,29 +26,23 @@
 #' @examples
 #' RefTime <- (lubridate::now() - lubridate::seconds(45))
 #' CatDiff(RefTime)
-#' # Completed in 00:00:45
 #'
 #' RefTime <- (lubridate::now() -
 #'     (lubridate::minutes(50) + lubridate::seconds(45)))
 #' CatDiff(RefTime)
-#' # Completed in 00:50:45
 #'
 #' RefTime <- (lubridate::now() - lubridate::minutes(50))
 #' CatDiff(RefTime)
-#' # Completed in 00:50:00
 #'
 #' RefTime <- (lubridate::now() - lubridate::minutes(70))
 #' CatDiff(RefTime)
-#' # Completed in 01:10:00
 #'
 #' RefTime <- (lubridate::now() - lubridate::hours(4))
 #' CatDiff(RefTime)
-#' # Completed in 04:00:00
 #'
 #' RefTime <- lubridate::now() -
 #'   (lubridate::hours(4) + lubridate::minutes(50) + lubridate::seconds(45))
 #'   CatDiff(RefTime)
-#' # Completed in 04:50:45
 
 CatDiff <- function(
     InitTime, ChunkText = "Session summary", Prefix = "Completed in ",

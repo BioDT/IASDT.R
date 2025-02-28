@@ -54,13 +54,13 @@ CatSep <- function(
   }
 
   if (Extra1 > 0) {
-    cat(paste0(rep("\n", Extra1), collapse = ""), ...)
+    cat(strrep("\n", Extra1), ...)
   }
 
-  cat(paste0(rep(Char, CharReps), collapse = ""), ...)
+  cat(paste(rep(Char, CharReps), collapse = ""), ...)
 
   if (Extra2 > 0) {
-    cat(paste0(rep("\n", Extra2), collapse = ""), ...)
+    cat(strrep("\n", Extra2), ...)
   }
   return(invisible(NULL))
 }

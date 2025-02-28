@@ -14,7 +14,7 @@
 #' @name sf_add_coords
 #' @param Sf_Obj An `sf` object to which longitude and latitude columns will be
 #'   added.
-#' @param NameX,NameY Character. Name of the longitude column to be added. 
+#' @param NameX,NameY Character. Name of the longitude column to be added.
 #'   Defaults to `Long` and `Lat`.
 #' @param Overwrite Logical. Whether to overwrite existing columns with names
 #'   specified by `NameX` and `NameY`. If `FALSE` and columns with these names
@@ -58,14 +58,15 @@ sf_add_coords <- function(
 
   if (any(c(NameX, NameY) %in% ColNames)) {
     if (Overwrite) {
-      warning(paste0(
+      warning(
         "Provided column names for longitude and Latitude ",
-        "already exist in the data; these columns were overwritten"))
+        "already exist in the data; these columns were overwritten",
+        call. = FALSE)
       Sf_Obj <- dplyr::select(Sf_Obj, -dplyr::all_of(c(NameX, NameY)))
     } else {
-      warning(paste0(
+      warning(
         "Provided column names for longitude and Latitude already exist ",
-        "in the data; `_NEW` is used as suffix"))
+        "in the data; `_NEW` is used as suffix", call. = FALSE)
       Coords <- Coords %>%
         stats::setNames(c(paste0(NameX, "_NEW"), paste0(NameY, "_NEW")))
     }

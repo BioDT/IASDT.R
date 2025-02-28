@@ -1,6 +1,7 @@
 ## quiets concerns of R CMD check re: the .'s that appear in pipelines
-if (getRversion() >= "2.15.1")  utils::globalVariables(c("."))
-
+if (getRversion() >= "2.15.1") {
+  utils::globalVariables(".")
+}
 
 #' Pipe operator
 #'
@@ -27,9 +28,8 @@ NULL
 
   # Display the startup message
   packageStartupMessage(
-    paste0(
-      "IASDT.R v", packageVersionInfo,
-      " - Last updated on ", packageDateInfo))
+    "IASDT.R v", packageVersionInfo,
+    " - Last updated on ", packageDateInfo)
 
 }
 

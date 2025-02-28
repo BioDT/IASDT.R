@@ -4,7 +4,11 @@
 \alias{CheckQuartoVersion}
 \title{Check if the installed Quarto version is up to date}
 \usage{
-CheckQuartoVersion()
+CheckQuartoVersion(Prerelease = FALSE)
+}
+\arguments{
+\item{Prerelease}{Logical. Whether to check for pre-release versions. Default
+is \code{FALSE}.}
 }
 \value{
 A message indicating whether the installed Quarto version is up to

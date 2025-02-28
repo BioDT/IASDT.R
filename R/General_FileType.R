@@ -7,7 +7,7 @@
 #' This function uses the system's `file` command to determine the type of the
 #' file specified by the `Path` parameter. It returns a character string
 #' describing the file type.
-#' @param Path Character. The path to the file whose type is to be determined. 
+#' @param Path Character. The path to the file whose type is to be determined.
 #'   The path must not be `NULL`, and the file must exist.
 #' @return A character string describing the file type.
 #' @name FileType
@@ -22,14 +22,9 @@
 
 FileType <- function(Path) {
 
-  # Check system commands
-  Commands <- c("file")
-  CommandsAvail <- purrr::map_lgl(Commands, IASDT.R::CheckCommands)
-  if (!all(CommandsAvail)) {
-    Missing <- paste0(Commands[!CommandsAvail], collapse = " + ")
-    stop(
-      paste0("The following command(s) are not available: ", Missing),
-      call. = FALSE)
+  # Check `file` system command
+  if (isFALSE(IASDT.R::CheckCommands("file"))) {
+    stop("The system command 'file' is not available", call. = FALSE)
   }
 
   if (is.null(Path)) {
@@ -46,9 +41,11 @@ FileType <- function(Path) {
     stop("File does not exist", call. = FALSE)
   }
 
-  system(paste0("file ", IASDT.R::NormalizePath(Path)), intern = TRUE) %>%
+  Out <- paste0("file ", IASDT.R::NormalizePath(Path)) %>%
+    system(intern = TRUE) %>%
     stringr::str_extract_all(": .+", simplify = TRUE) %>%
     as.vector() %>%
-    stringr::str_remove("^: ") %>%
-    return()
+    stringr::str_remove("^: ")
+
+  return(Out)
 }

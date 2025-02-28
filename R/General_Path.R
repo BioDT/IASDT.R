@@ -14,7 +14,6 @@
 #' @name Path
 #' @rdname Path
 #' @examples
-#' 
 #' # Basic usage
 #' IASDT.R::Path("datasets", "processed", "model_fitting")
 #'

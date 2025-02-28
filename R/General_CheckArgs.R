@@ -29,31 +29,29 @@ CheckArgs <- function(AllArgs, Args, Type) {
 
   if (Type == "character") {
     MissingArgs <- AllArgs[Args] %>%
-      purrr::map(~inherits(.x, "character") && all(nchar(.x) > 0)) %>%
+      purrr::map(~inherits(.x, "character") && all(nzchar(.x))) %>%
       purrr::keep(.p = Negate(isTRUE)) %>%
       names() %>%
       sort()
 
     if (length(MissingArgs) > 0) {
-      paste0(
+      stop(
         "The following character argument(s) must be provided\n  >>  ",
-        paste0(MissingArgs, collapse = " | ")) %>%
-        stop(call. = FALSE)
+        paste(MissingArgs, collapse = " | "), call. = FALSE)
     }
   }
 
   if (Type == "logical") {
     MissingArgs <- AllArgs[Args] %>%
-      purrr::map(~inherits(.x, "logical")) %>%
+      purrr::map(.f = inherits, what = "logical") %>%
       purrr::keep(.p = Negate(isTRUE)) %>%
       names() %>%
       sort()
 
     if (length(MissingArgs) > 0) {
-      paste0(
+      stop(
         "The following argument(s) must be logical\n  >>  ",
-        paste0(MissingArgs, collapse = " | ")) %>%
-        stop(call. = FALSE)
+        paste(MissingArgs, collapse = " | "), call. = FALSE)
     }
   }
 
@@ -65,10 +63,9 @@ CheckArgs <- function(AllArgs, Args, Type) {
       sort()
 
     if (length(MissingArgs) > 0) {
-      paste0(
+      stop(
         "The following argument(s) must be numeric or integer\n  >>  ",
-        paste0(MissingArgs, collapse = " | ")) %>%
-        stop(call. = FALSE)
+        paste(MissingArgs, collapse = " | "), call. = FALSE)
     }
   }
 

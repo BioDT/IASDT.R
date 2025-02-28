@@ -131,10 +131,8 @@ Predict_Maps <- function(
   ValidHabAbbs <- c(as.character(0:3), "4a", "4b", "10", "12a", "12b")
   if (!(Hab_Abb %in% ValidHabAbbs)) {
     stop(
-      paste0(
-        "Invalid Habitat abbreviation. Valid values are:\n >> ",
-        paste0(ValidHabAbbs, collapse = ", ")),
-      call. = FALSE)
+      "Invalid Habitat abbreviation. Valid values are:\n >> ",
+      toString(ValidHabAbbs), call. = FALSE)
   }
 
   # # ..................................................................... ###
@@ -199,17 +197,17 @@ Predict_Maps <- function(
 
     # Fix_Efforts can not be NULL when Clamping is implemented
     if (is.null(Fix_Efforts)) {
-      stop("`Fix_Efforts` can not be NULL when Clamping is implemented")
+      stop(
+        "`Fix_Efforts` can not be NULL when Clamping is implemented",
+        call. = FALSE)
     }
 
     # Check if Fix_Efforts is a vector or length 1
     if (length(Fix_Efforts) != 1) {
       stop(
-        paste0(
-          "`Fix_Efforts` must be a vector or length 1.",
-          " The current value is: ",
-          paste0(Fix_Efforts, collapse = " & ")),
-        call. = FALSE)
+        "`Fix_Efforts` must be a vector or length 1.",
+        " The current value is: ",
+        paste(Fix_Efforts, collapse = " & "), call. = FALSE)
     }
 
     # Create folder for clamp results only if Pred_Clamp == TRUE
@@ -225,7 +223,7 @@ Predict_Maps <- function(
 
   if (!file.exists(EnvFile)) {
     stop(
-      paste0("Path for environment variables: ", EnvFile, " was not found"),
+      "Path for environment variables: ", EnvFile, " was not found",
       call. = FALSE)
   }
 
@@ -277,7 +275,7 @@ Predict_Maps <- function(
   Path_GridR <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(Path_GridR)) {
     stop(
-      paste0("Path for the Europe boundaries does not exist: ", Path_GridR),
+      "Path for the Europe boundaries does not exist: ", Path_GridR,
       call. = FALSE)
   }
 
@@ -288,9 +286,7 @@ Predict_Maps <- function(
   IASDT.R::CatTime("Model object", Level = 1)
 
   if (is.null(Path_Model) || !file.exists(Path_Model)) {
-    stop(
-      paste0("Model path is NULL or does not exist: ", Path_Model),
-      call. = FALSE)
+    stop("Model path is NULL or does not exist: ", Path_Model, call. = FALSE)
   }
 
   Model <- IASDT.R::LoadAs(Path_Model)
@@ -323,7 +319,7 @@ Predict_Maps <- function(
   Path_CHELSA <- IASDT.R::Path(Path_CHELSA, "CHELSA_Processed_DT.RData")
   if (!file.exists(Path_CHELSA)) {
     stop(
-      paste0("Processed CHLESA data can not be found at: ", Path_CHELSA),
+      "Processed CHLESA data can not be found at: ", Path_CHELSA,
       call. = FALSE)
   }
 
@@ -362,9 +358,7 @@ Predict_Maps <- function(
 
     R_Railways <- IASDT.R::Path(Path_Rail, "Railways_Length.RData")
     if (!file.exists(R_Railways)) {
-      stop(
-        paste0("Railways data does not exist at: ", R_Railways),
-        call. = FALSE)
+      stop("Railways data does not exist at: ", R_Railways, call. = FALSE)
     }
     R_Railways <- IASDT.R::LoadAs(R_Railways) %>%
       terra::unwrap() %>%
@@ -372,8 +366,7 @@ Predict_Maps <- function(
 
     R_Roads <- IASDT.R::Path(Path_Roads, "Road_Length.RData")
     if (!file.exists(R_Roads)) {
-      stop(
-        paste0("Roads data does not exist at: ", R_Roads), call. = FALSE)
+      stop("Roads data does not exist at: ", R_Roads, call. = FALSE)
     }
     R_Roads <- IASDT.R::LoadAs(R_Roads) %>%
       terra::unwrap() %>%
@@ -402,8 +395,7 @@ Predict_Maps <- function(
     R_Hab <- IASDT.R::Path(
       Path_CLC, "Summary_RData", "PercCov_SynHab_Crop.RData")
     if (!file.exists(R_Hab)) {
-      stop(
-        paste0("Habitat data: '", R_Hab, "' does not exist"), call. = FALSE)
+      stop("Habitat data: '", R_Hab, "' does not exist", call. = FALSE)
     }
 
     R_Hab <- IASDT.R::LoadAs(R_Hab) %>%
@@ -433,8 +425,7 @@ Predict_Maps <- function(
     R_Efforts <- IASDT.R::Path(Path_Bias, "Efforts_SummaryR.RData")
     if (!file.exists(R_Efforts)) {
       stop(
-        paste0("Sampling efforts data does not exist at: ", R_Efforts),
-        call. = FALSE)
+        "Sampling efforts data does not exist at: ", R_Efforts, call. = FALSE)
     }
 
     R_Efforts <- IASDT.R::LoadAs(R_Efforts) %>%
@@ -463,11 +454,9 @@ Predict_Maps <- function(
 
         if (InvalidVal) {
           stop(
-            paste0(
-              "`Fix_Efforts` value (", Fix_Efforts, ") is out of the range of ",
-              "the observed efforts: From ",
-              paste0(round(EffortsRange, 2), collapse = " to ")),
-            call. = FALSE)
+            "`Fix_Efforts` value (", Fix_Efforts, ") is out of the range of ",
+            "the observed efforts: From ",
+            paste(round(EffortsRange, 2), collapse = " to "), call. = FALSE)
         }
 
         # Fix value
@@ -480,11 +469,9 @@ Predict_Maps <- function(
         Fix_Efforts <- stringr::str_to_lower(Fix_Efforts)
         if (!(Fix_Efforts %in% c("median", "mean", "max", "q90"))) {
           stop(
-            paste0(
-              "`Fix_Efforts` has to be either NULL, single numeric ",
-              "value, or one of the following: 'median', 'mean', 'max', ",
-              "or `q90`. The current value is: ", Fix_Efforts),
-            call. = FALSE)
+            "`Fix_Efforts` has to be either NULL, single numeric ",
+            "value, or one of the following: 'median', 'mean', 'max', ",
+            "or `q90`. The current value is: ", Fix_Efforts, call. = FALSE)
         }
       }
 
@@ -557,9 +544,7 @@ Predict_Maps <- function(
 
     R_Rivers <- IASDT.R::Path(Path_Rivers, "River_Lengths.RData")
     if (!file.exists(R_Rivers)) {
-      stop(
-        paste0("River length data does not exist at: ", R_Rivers),
-        call. = FALSE)
+      stop("River length data does not exist at: ", R_Rivers, call. = FALSE)
     }
 
     R_Rivers <- IASDT.R::LoadAs(R_Rivers) %>%
@@ -589,10 +574,8 @@ Predict_Maps <- function(
       if (length(Fix_Rivers) != 1) {
         # Check if Fix_Rivers is a vector or length 1
         stop(
-          paste0(
-            "`Fix_Rivers` must be a vector or length 1. The current value is: ",
-            paste0(Fix_Rivers, collapse = " & ")),
-          call. = FALSE)
+          "`Fix_Rivers` must be a vector or length 1. The current value is: ",
+          paste(Fix_Rivers, collapse = " & "), call. = FALSE)
       }
 
       if (is.numeric(Fix_Rivers)) {
@@ -608,11 +591,9 @@ Predict_Maps <- function(
 
         if (InvalidVal) {
           stop(
-            paste0(
-              "`Fix_Rivers` value (", Fix_Rivers, ") is out of the range of ",
-              "the observed river length: From ",
-              paste0(round(RiversRange, 2), collapse = " to ")),
-            call. = FALSE)
+            "`Fix_Rivers` value (", Fix_Rivers, ") is out of the range of ",
+            "the observed river length: From ",
+            paste(round(RiversRange, 2), collapse = " to "), call. = FALSE)
         }
 
         # Fix value
@@ -625,11 +606,9 @@ Predict_Maps <- function(
         Fix_Rivers <- stringr::str_to_lower(Fix_Rivers)
         if (!(Fix_Rivers %in% c("median", "mean", "max", "q90"))) {
           stop(
-            paste0(
-              "`Fix_Rivers` has to be either NULL, single numeric ",
-              "value, or one of the following: 'median', 'mean', 'max', ",
-              "or 'q90'. The current value is: ", Fix_Rivers),
-            call. = FALSE)
+            "`Fix_Rivers` has to be either NULL, single numeric ",
+            "value, or one of the following: 'median', 'mean', 'max', ",
+            "or 'q90'. The current value is: ", Fix_Rivers, call. = FALSE)
         }
 
         # Fix value
@@ -728,7 +707,7 @@ Predict_Maps <- function(
       # Only extract predictors used in the model
       terra::subset(BioVars) %>%
       # Combine with other static predictors
-      c(StaticPredictors) %>%
+      stringr::str_c(StaticPredictors) %>%
       # If Habitat predictor is used, grid cells with zero % coverage are
       # excluded from predictions [na.rm = TRUE]
       terra::as.data.frame(xy = TRUE, cells = TRUE, na.rm = TRUE) %>%
@@ -830,7 +809,7 @@ Predict_Maps <- function(
     } else {
 
       # Evaluate for "Current" climates, without clamping
-      Evaluate <- dplyr::if_else(Option_Name == "Current", TRUE, FALSE)
+      Evaluate <- (Option_Name == "Current")
 
       # Make prediction files at `Path_Prediction_NoClamp`
       Path_Prediction <- Path_Prediction_NoClamp
@@ -1146,11 +1125,11 @@ Predict_Maps <- function(
     }
 
     # output
-    tibble::tibble(
-      Name = Option_Name,
-      File_Pred_R = Path_Prediction_R, File_Pred_sf = Path_Prediction_sf,
-      File_Pred_summary = Path_Prediction_summary) %>%
-      return()
+    return(
+      tibble::tibble(
+        Name = Option_Name,
+        File_Pred_R = Path_Prediction_R, File_Pred_sf = Path_Prediction_sf,
+        File_Pred_summary = Path_Prediction_summary))
   }
 
   invisible(gc())
@@ -1210,15 +1189,16 @@ Predict_Maps <- function(
       Prediction2 = furrr::future_map(
         .x = File_Pred_summary,
         .f = ~ {
-          if (file.exists(.x)) {
-            IASDT.R::LoadAs(.x) %>%
-              dplyr::select(
-                -tidyselect::all_of(
-                  c("tif_path_sd", "tif_path_cov", "tif_path_anomaly")))
-          } else {
-            warning(paste0("File not found: ", .x))
+          if (!file.exists(.x)) {
+            warning("File not found: ", .x, call. = FALSE)
             return(NULL)
           }
+
+          IASDT.R::LoadAs(.x) %>%
+            dplyr::select(
+              -tidyselect::all_of(
+                c("tif_path_sd", "tif_path_cov", "tif_path_anomaly")))
+
         },
         .options = furrr::furrr_options(
           seed = TRUE, scheduling = 1,
@@ -1314,9 +1294,11 @@ Predict_Maps <- function(
             x = Ensemble_cov, filename = tif_path_cov,
             overwrite = TRUE, gdal = c("COMPRESS=DEFLATE", "TILED=YES"))
 
-          c(Ensemble_mean, Ensemble_sd, Ensemble_cov, Ensemble_anomaly) %>%
-            terra::wrap() %>%
-            return()
+          Out <- c(
+            Ensemble_mean, Ensemble_sd, Ensemble_cov, Ensemble_anomaly) %>%
+            terra::wrap()
+
+          return(Out)
         },
         .options = furrr::furrr_options(
           seed = TRUE, scheduling = 1, packages = "terra",

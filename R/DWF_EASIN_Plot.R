@@ -2,30 +2,11 @@
 # EASIN_Plot ----
 ## |------------------------------------------------------------------------| #
 
-#' Plotting cleaned EASIN data
-#'
-#' Generates a series of plots for cleaned EASIN data, including the number of
-#' observations, number of species, and the distribution of these metrics per
-#' data partner. The function requires environment variables for paths to data
-#' and expects specific files to be present at these paths.
-#'
-#' @param EnvFile Character. Path to the environment file containing paths to 
-#'   data sources. Defaults to `.env`.
-#' @param FromHPC Logical. Whether the processing is being done on an 
-#'   High-Performance Computing (HPC) environment, to adjust file paths 
-#'   accordingly. Default: `TRUE`.
-#' @return The function returns NULL invisibly. Plots are saved as JPEG files in
-#'   the specified directory.
-#' @details The function first loads environment variables either from a
-#'   high-performance computing (HPC) environment or a local environment. Then,
-#'   it loads required data files, checks for missing files, and proceeds to
-#'   generate and save plots as JPEG files. The plots include the number of
-#'   observations and species and their distribution per data partner.
-#' @note This function is not intended to be used directly by the user or in the
-#'   IAS-pDT, but only used inside the [EASIN_Process] function.
-#' @name EASIN_Plot
 #' @author Ahmed El-Gabbas
 #' @export
+#' @name EASIN_data
+#' @rdname EASIN_data
+#' @order 4
 
 EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
 
@@ -37,7 +18,7 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
   IASDT.R::CatTime("Checking arguments", Level = 1)
 
   AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, ~ get(.x, envir = environment())) %>%
+  AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = "EnvFile")
@@ -101,12 +82,9 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
 
   if (any(SummaryMapsMissing)) {
     stop(
+      "The following input files are missing: \n",
       paste0(
-        "The following input files are missing: \n",
-        paste0(
-          " >> ", PathSummaryMaps[which(SummaryMapsMissing)],
-          collapse = "\n")
-      ),
+        " >> ", PathSummaryMaps[which(SummaryMapsMissing)], collapse = "\n") ,
       call. = FALSE)
   }
 
@@ -119,7 +97,7 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
   IASDT.R::CatTime("Number of species/observations", Level = 1)
 
   Plot_EASIN_All <- function(
-      MapPath, Title, EuroBound, addTag = FALSE, Legend = FALSE) {
+    MapPath, Title, EuroBound, addTag = FALSE, Legend = FALSE) {
     LastUpdate <- paste0(
       "<b>Last update:</b></br><i>", format(Sys.Date(), "%d %B %Y"), "</i>")
 
@@ -290,19 +268,19 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
           expand = ggplot2::expansion(mult = c(0, 0)),
           limits = c(1450000, 5420000)) +
         ggplot2::labs(
-          title = paste(Title, "[p", i, "]", sep = ""),
+          title = paste0(Title, "[p", i, "]"),
           fill = "log<sub>10</sub>",
           tag = LastUpdate) +
         PlottingTheme2
 
-    # Using ggplot2::ggsave directly does not show non-ascii characters
-    # correctly
-    grDevices::jpeg(
-      filename = IASDT.R::Path(
-            Path_EASIN_Summary, paste0(File_prefix, "_p", i, ".jpeg")),
-      width = 30, height = 16.5, units = "cm", quality = 100, res = 600)
-    print(Plot)
-    grDevices::dev.off()
+      # Using ggplot2::ggsave directly does not show non-ascii characters
+      # correctly
+      grDevices::jpeg(
+        filename = IASDT.R::Path(
+          Path_EASIN_Summary, paste0(File_prefix, "_p", i, ".jpeg")),
+        width = 30, height = 16.5, units = "cm", quality = 100, res = 600)
+      print(Plot)
+      grDevices::dev.off()
 
     }
 

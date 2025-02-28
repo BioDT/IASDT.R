@@ -2,61 +2,16 @@
 # GBIF_Download ----
 ## |------------------------------------------------------------------------| #
 
-#' Download and process GBIF occurrence data
-#'
-#' This function handles the downloading and processing of occurrence data from
-#' the Global Biodiversity Information Facility (GBIF). The function allows
-#' request data, download it, and optionally split it into smaller chunks for
-#' further analysis.
-#' @param FromHPC Logical. Whether the processing is being done on an 
-#'   High-Performance Computing (HPC) environment, to adjust file paths 
-#'   accordingly. Default: `TRUE`.
-#' @param EnvFile Character. Path to the environment file containing paths to 
-#'   data sources. Defaults to `.env`.
-#' @param Renviron Character. The path to the `.Renviron` file containing GBIF
-#'   login credentials (email, user, password).
-#' @param RequestData Logical. If `TRUE`, requests data from GBIF. If `FALSE`,
-#'   loads a previously requested data set from `GBIF_Request.RData` and
-#'   `StatusDetailed.RData` files. Defaults to `TRUE`.
-#' @param DownloadData Logical. If `TRUE`, downloaded data is stored on disk.
-#'   Defaults to `TRUE`.
-#' @param SplitChunks Logical. If `TRUE`, splits the downloaded data into
-#'   smaller chunks for easier processing.
-#' @param ChunkSize Integer. The number of records per chunk when splitting the
-#'   data. Default is 50,000.
-#' @param Boundaries Numeric vector of length 4. The boundaries of the 
-#'   requested GBIF data in the order: Left, Right, Bottom, Top. Defaults to 
-#'   `c(-30, 50, 25, 75)`.
-#' @param StartYear Numeric. The starting year for the occurrence data. Only
-#'   records from this year onward will be requested from GBIF. Default is
-#'   `1981`, which matches the year ranges of CHELSA current climate data.
-#' @note This function is not intended to be used directly by the user or in the
-#'   IAS-pDT, but only used inside the [GBIF_Process] function.
-#' @return The function does not return any value. The function is called for
-#'   its side effects, including saving GBIF data and metadata.
 #' @author Ahmed El-Gabbas
-#' @name GBIF_Download
 #' @export
-#' @details The function begins by checking for necessary GBIF access
-#'   credentials. If these are not found in the environment, it attempts to read
-#'   them from the provided `.Renviron` file. The function then loads essential
-#'   paths and input data, such as country codes and species lists, from
-#'   specified locations.
-#'
-#'   If `RequestData` is `TRUE`, the function requests data from GBIF using the
-#'   specified criteria (taxa, coordinates, time period, and boundaries). The
-#'   request status is saved, and the function waits until the data is ready.
-#'   The data can then be downloaded and saved locally. If `DownloadData` is
-#'   `TRUE`, the downloaded data is processed, and metadata is extracted and
-#'   saved.
-#'
-#'   If `SplitChunks` is `TRUE`, the data is split into smaller chunks for
-#'   easier handling.
+#' @name GBIF_data
+#' @rdname GBIF_data
+#' @order 3
 
 GBIF_Download <- function(
     FromHPC = TRUE, EnvFile = ".env", Renviron = ".Renviron",
-    RequestData = TRUE, DownloadData = TRUE, SplitChunks = TRUE,
-    ChunkSize = 50000, Boundaries = c(-30, 50, 25, 75), StartYear = 1981) {
+    Request = TRUE, Download = TRUE, SplitChunks = TRUE,
+    ChunkSize = 50000L, Boundaries = c(-30, 50, 25, 75), StartYear = 1981L) {
 
   # # ..................................................................... ###
 
@@ -66,14 +21,14 @@ GBIF_Download <- function(
   IASDT.R::CatTime("Checking arguments")
 
   AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, ~ get(.x, envir = environment())) %>%
+  AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "character", Args = c("Renviron", "EnvFile"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "logical",
-    Args = c("FromHPC", "RequestData", "DownloadData", "SplitChunks"))
+    Args = c("FromHPC", "Request", "Download", "SplitChunks"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric",
     Args = c("ChunkSize", "Boundaries", "StartYear"))
@@ -98,10 +53,8 @@ GBIF_Download <- function(
   Commands <- c("unzip", "nl", "head", "cut", "sed", "split")
   CommandsAvail <- purrr::map_lgl(Commands, IASDT.R::CheckCommands)
   if (!all(CommandsAvail)) {
-    Missing <- paste0(Commands[!CommandsAvail], collapse = " + ")
-    stop(
-      paste0("The following command(s) are not available: ", Missing),
-      call. = FALSE)
+    Missing <- paste(Commands[!CommandsAvail], collapse = " + ")
+    stop("The following command(s) are not available: ", Missing, call. = FALSE)
   }
 
   # # ..................................................................... ###
@@ -155,7 +108,7 @@ GBIF_Download <- function(
 
   IASDT.R::CatTime("Request GBIF data")
 
-  if (RequestData) {
+  if (Request) {
     # This can take 1-3 hours for the data to be ready
     .StartTimeRequest <- lubridate::now(tzone = "CET")
 
@@ -193,7 +146,7 @@ GBIF_Download <- function(
 
     IASDT.R::CatTime("Save status details", Level = 1)
     save(
-      StatusDetailed, 
+      StatusDetailed,
       file = IASDT.R::Path(Path_GBIF, "StatusDetailed.RData"))
 
     IASDT.R::CatTime("Data is ready - status summary:", ... = "\n", Level = 1)
@@ -201,28 +154,25 @@ GBIF_Download <- function(
   } else {
     Path_Request <- IASDT.R::Path(Path_GBIF, "GBIF_Request.RData")
 
-    if (file.exists(Path_Request)) {
-      IASDT.R::CatTime("Loading previous GBIF request", Level = 1)
-      GBIF_Request <- IASDT.R::LoadAs(Path_Request)
-    } else {
+    if (!file.exists(Path_Request)) {
       stop(
-        paste0(
-          "Path to previously requested data does not exist:", Path_Request),
+        "Path to previously requested data does not exist:", Path_Request,
         call. = FALSE)
     }
+
+    IASDT.R::CatTime("Loading previous GBIF request", Level = 1)
+    GBIF_Request <- IASDT.R::LoadAs(Path_Request)
 
     Path_Status <- IASDT.R::Path(Path_GBIF, "StatusDetailed.RData")
 
-    if (file.exists(Path_Status)) {
-      IASDT.R::CatTime(
-        "Loading `status` information from a previous data request",
-        Level = 1)
-      StatusDetailed <- IASDT.R::LoadAs(Path_Status)
-    } else {
-      stop(
-        paste0("Path to status info does not exist:", Path_Status),
-        call. = FALSE)
+    if (!file.exists(Path_Status)) {
+      stop("Path to status info does not exist:", Path_Status, call. = FALSE)
     }
+
+    IASDT.R::CatTime(
+      "Loading `status` information from a previous data request",
+      Level = 1)
+    StatusDetailed <- IASDT.R::LoadAs(Path_Status)
   }
 
   # # ..................................................................... ###
@@ -231,7 +181,7 @@ GBIF_Download <- function(
 
   IASDT.R::CatTime("Download GBIF data")
 
-  if (DownloadData) {
+  if (Download) {
     IASDT.R::CatTime("Downloading GBIF data", Level = 1)
 
     .StartTimeDownload <- lubridate::now(tzone = "CET")
@@ -271,8 +221,7 @@ GBIF_Download <- function(
     GBIF_Metadata <- IASDT.R::Path(Path_GBIF, "GBIF_Metadata.RData")
     if (!file.exists(GBIF_Metadata)) {
       stop(
-        paste0("GBIF metadata file does not exist: ", GBIF_Metadata),
-        call. = FALSE)
+        "GBIF metadata file does not exist: ", GBIF_Metadata, call. = FALSE)
     }
 
     GBIF_Metadata <- IASDT.R::LoadAs(GBIF_Metadata)

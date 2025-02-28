@@ -14,16 +14,14 @@ LoadMultiple(
 \arguments{
 \item{Files}{Character vector. The paths of \code{.RData} files to be loaded.}
 
-\item{Verbose}{Logical. Whether to print progress messages.
-Default is \code{TRUE}.}
+\item{Verbose}{Logical. Whether to print progress messages. Default: \code{TRUE}.}
 
-\item{OneObject}{Logical. Whether to load all objects into a
-single list (\code{TRUE}) or directly into the global environment (\code{FALSE}).
-Defaults to \code{TRUE}.}
-
-\item{ReturnNames}{Logical. Whether to return the names of
-the loaded objects. Only effective when \code{OneObject} is \code{FALSE}. Defaults to
+\item{OneObject}{Logical. Whether to load all objects into a single list
+(\code{TRUE}) or directly into the global environment (\code{FALSE}). Defaults to
 \code{TRUE}.}
+
+\item{ReturnNames}{Logical. Whether to return the names of the loaded
+objects. Only effective when \code{OneObject} is \code{FALSE}. Defaults to \code{TRUE}.}
 }
 \value{
 If \code{OneObject} is \code{TRUE}, returns a named list of all objects loaded

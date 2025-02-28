@@ -11,20 +11,19 @@
 #'   Two folders will be created `Model_Fitted` and `Model_Coda` to store merged
 #'   model and coda objects, respectively.
 #' @param NCores Integer. Number of CPU cores to use for parallel processing.
-#' @param ModInfoName Character. Name of the file (without extension) where the 
+#' @param ModInfoName Character. Name of the file (without extension) where the
 #'   processed model information will be saved. If `NULL`, it overwrites the
 #'   `Model_Info.RData` file in the `ModelDir` directory. If provided, a new
 #'   `.RData` file will be created with this name.
-#' @param PrintIncomplete Logical. Whether to print the names of
-#'   models that were not successfully fitted to the console. Defaults to
-#'   `TRUE`.
+#' @param PrintIncomplete Logical. Whether to print the names of models that
+#'   were not successfully fitted to the console. Defaults to `TRUE`.
 #' @param FromHPC Logical. Whether the processing is being done on an
 #'   High-Performance Computing (HPC) environment, to adjust file paths
 #'   accordingly. Default: `TRUE`.
-#' @param FromJSON Logical. Whether to convert loaded models from JSON
-#'   format before reading. Defaults to `FALSE`.
-#' @param Extension Character. File extension (without dot) for the files 
-#'   containing the fitted model and coda objects. It can be either `qs2` or 
+#' @param FromJSON Logical. Whether to convert loaded models from JSON format
+#'   before reading. Defaults to `FALSE`.
+#' @param Extension Character. File extension (without dot) for the files
+#'   containing the fitted model and coda objects. It can be either `qs2` or
 #'   `RData`. Defaults to `qs2`.
 #' @name Mod_Merge_Chains
 #' @author Ahmed El-Gabbas
@@ -73,17 +72,15 @@ Mod_Merge_Chains <- function(
   rm(AllArgs, envir = environment())
 
   if (!dir.exists(ModelDir)) {
-    stop(paste0(
-      "ModelDir directory (`", ModelDir, "`) does not exist"),
-      call. = FALSE)
+    stop("ModelDir directory (`", ModelDir, "`) does not exist", call. = FALSE)
   }
 
   if (length(Extension) != 1) {
-    stop("`Extension` must be a single string.")
+    stop("`Extension` must be a single string.", call. = FALSE)
   }
 
   if (!Extension %in% c("qs2", "RData")) {
-    stop("`Extension` must be either 'qs2' or 'RData'.")
+    stop("`Extension` must be either 'qs2' or 'RData'.", call. = FALSE)
   }
 
   # # ..................................................................... ###
@@ -101,8 +98,7 @@ Mod_Merge_Chains <- function(
   Path_ModInfo <- IASDT.R::Path(ModelDir, "Model_Info.RData")
 
   if (!file.exists(Path_ModInfo)) {
-    stop(paste0(
-      "ModInfo file `", Path_ModInfo, "` does not exist"), call. = FALSE)
+    stop("ModInfo file `", Path_ModInfo, "` does not exist", call. = FALSE)
   }
 
   # # ..................................................................... ###
@@ -138,7 +134,7 @@ Mod_Merge_Chains <- function(
     dplyr::mutate(
       # Check if any posterior files is missing
       Post_Missing = purrr::map_lgl(
-        .x = Post_Path, .f = ~ all(!file.exists(.x))),
+        .x = Post_Path, .f = ~ !any(file.exists(.x))),
       # delete these columns if already exist from previous function execution
       Path_FittedMod = NULL, Path_Coda = NULL)
 
@@ -221,17 +217,15 @@ Mod_Merge_Chains <- function(
         invisible(gc())
 
         if (inherits(Model_Fit, "try-error")) {
-          return(list(
-            Path_FittedMod = NA_character_,
-            Path_Coda = NA_character_,
-            Post_Aligned2 = NA))
-        } else {
-
-          IASDT.R::SaveAs(
-            InObj = Model_Fit, OutObj = paste0(M_Name_Fit, "_Model"),
-            OutPath = Path_FittedMod)
-
+          return(
+            list(
+              Path_FittedMod = NA_character_, Path_Coda = NA_character_,
+              Post_Aligned2 = NA))
         }
+        IASDT.R::SaveAs(
+          InObj = Model_Fit, OutObj = paste0(M_Name_Fit, "_Model"),
+          OutPath = Path_FittedMod)
+
       } else {
         Post_Aligned2 <- Model_Info2$Post_Aligned[[x]]
       }
@@ -244,11 +238,10 @@ Mod_Merge_Chains <- function(
         Path_Coda, paste0(M_Name_Fit, "_Coda.", Extension))
 
       if (!exists("Model_Fit") && !file.exists(Path_FittedMod)) {
-        list(
-          Path_FittedMod = NA_character_,
-          Path_Coda = NA_character_,
-          Post_Aligned2 = NA) %>%
-          return()
+        return(
+          list(
+            Path_FittedMod = NA_character_, Path_Coda = NA_character_,
+            Post_Aligned2 = NA))
       }
 
       if (!exists("Model_Fit")) {
@@ -277,10 +270,10 @@ Mod_Merge_Chains <- function(
       invisible(gc())
 
       # Return list of objects
-      list(
-        Path_FittedMod = Path_FittedMod, Path_Coda = Path_Coda,
-        Post_Aligned2 = Post_Aligned2) %>%
-        return()
+      return(
+        list(
+          Path_FittedMod = Path_FittedMod, Path_Coda = Path_Coda,
+          Post_Aligned2 = Post_Aligned2))
     },
     future.scheduling = Inf, future.seed = TRUE,
     future.globals = c(

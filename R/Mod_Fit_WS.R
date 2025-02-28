@@ -9,7 +9,7 @@
 #' input arguments for validity, and executes model fitting in parallel if
 #' required.
 #' @param Path_Model Character. Path to the model files.
-#' @param EnvFile Character. Path to the environment file containing paths to 
+#' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
 #' @param NCores Integer. Number of CPU cores to use for parallel processing.
 #' @name Mod_Fit_WS
@@ -34,7 +34,7 @@ Mod_Fit_WS <- function(Path_Model, EnvFile = ".env", NCores = NULL) {
 
   if (!file.exists(EnvFile)) {
     stop(
-      paste0("Path to environment variables: ", EnvFile, " was not found"),
+      "Path to environment variables: ", EnvFile, " was not found",
       call. = FALSE)
   }
 
@@ -70,7 +70,7 @@ Mod_Fit_WS <- function(Path_Model, EnvFile = ".env", NCores = NULL) {
   # # |||||||||||||||||||||||||||||||||||
 
   if (!fs::dir_exists(Path_Model)) {
-    stop(paste("Model directory does not exist:", Path_Model), call. = FALSE)
+    stop("Model directory does not exist:", Path_Model, call. = FALSE)
   }
 
   Model2Run <- IASDT.R::Path(Path_Model, "Model_Info.RData") %>%

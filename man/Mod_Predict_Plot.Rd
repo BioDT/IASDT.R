@@ -4,7 +4,12 @@
 \alias{Mod_Predict_Plot}
 \title{Plot species and level of invasion predictions as JPEG files using \code{ggplot2}}
 \usage{
-Mod_Predict_Plot(ModelDir, EnvFile = ".env", FromHPC = TRUE, NCores = 8L)
+Mod_Predict_Plot(
+  ModelDir = NULL,
+  EnvFile = ".env",
+  FromHPC = TRUE,
+  NCores = 8L
+)
 }
 \arguments{
 \item{ModelDir}{Character. Path to the model directory containing

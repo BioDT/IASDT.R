@@ -3,19 +3,21 @@
 \name{ScrapLinks}
 \alias{ScrapLinks}
 \title{Extracts link texts and URLs from a web page}
-\source{
-The source code of this function was taken from this
-\href{https://gist.github.com/paulrougieux/e1ee769577b40cd9ed9db7f75e9a2cc2}{gist}.
-}
 \usage{
-ScrapLinks(URL)
+ScrapLinks(URL, Arrange = c("Link", "Link_text"))
 }
 \arguments{
 \item{URL}{Character. The URL of the web page to scrape. This URL is also
 used to resolve relative links to absolute URLs.}
+
+\item{Arrange}{Character vector of length 1 or 2. The columns to arrange the
+output by. The default is c("Link", "Link_text"). The first column is the
+URL of the link, and the second column is the text of the link. The
+function will arrange the output in ascending order by the column(s)
+specified in this argument.}
 }
 \value{
-A tibble with two columns: \code{link_text} containing the text of each
+A tibble with two columns: \code{Link_text} containing the text of each
 link, and \code{URL} containing  the absolute URL of each link. The tibble is
 sorted by URL and then by link text, and only unique links are included.
 }
@@ -24,5 +26,16 @@ This function scrapes a web page for all links (\verb{<a>} tags) and extracts bo
 the URLs and the link text.
 }
 \examples{
-ScrapLinks("https://github.com/")
+
+head(
+ScrapLinks(URL = "https://github.com/BioDT/IASDT.R"))
+
+head(
+  ScrapLinks(
+    URL = "https://github.com/BioDT/IASDT.R", Arrange = "Link_text"))
+
+# This will give an "Invalid URL" error
+\dontrun{
+ ScrapLinks(URL = "https://github50.com")
+}
 }

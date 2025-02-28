@@ -24,9 +24,9 @@ SourceSilent <- function(File, Messages = TRUE, Warnings = TRUE, ...) {
   if (is.null(File)) {
     stop("File cannot be NULL", call. = FALSE)
   }
-  
+
   if (!file.exists(File)) {
-    stop(paste0("File does not exist: ", File), call. = FALSE)
+    stop("File does not exist: ", File, call. = FALSE)
   }
 
   if (Messages && Warnings) {

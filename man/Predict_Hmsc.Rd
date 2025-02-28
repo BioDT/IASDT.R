@@ -43,6 +43,8 @@ Predict_Hmsc(
 \arguments{
 \item{Path_Model}{Character. Path to the saved model object.}
 
+\item{Loff}{See \link[Hmsc:predict.Hmsc]{Hmsc::predict.Hmsc} for more details.}
+
 \item{XData}{\code{data.frame}. The unpreprocessed covariates for the
 predictions to be made. Works only if the \code{XFormula} argument was specified
 in the \link[Hmsc:Hmsc]{Hmsc::Hmsc} model constructor call. Requirements are similar to

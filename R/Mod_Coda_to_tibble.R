@@ -10,14 +10,14 @@
 #' `beta`.
 #' @param CodaObj An object of class `mcmc.list` or `mcmc`, representing the
 #'   MCMC output.
-#' @param Type Character. The parameter type to transform and 
-#'   extract. Must be one of `rho`, `alpha`, `omega`, or `beta`.
-#' @param EnvFile Character. Path to the environment file containing paths to 
+#' @param Type Character. The parameter type to transform and extract. Must be
+#'   one of `rho`, `alpha`, `omega`, or `beta`.
+#' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
-#' @param NOmega Integer. The number of species to be sampled for
-#'   the `Omega` parameter transformation. Defaults to 100.
-#' @param FromHPC Logical. Whether the processing is being done on an 
-#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#' @param NOmega Integer. The number of species to be sampled for the `Omega`
+#'   parameter transformation. Defaults to 100.
+#' @param FromHPC Logical. Whether the processing is being done on an
+#'   High-Performance Computing (HPC) environment, to adjust file paths
 #'   accordingly. Default: `TRUE`.
 #' @name Coda_to_tibble
 #' @author Ahmed El-Gabbas
@@ -71,7 +71,8 @@ Coda_to_tibble <- function(
   # # |||||||||||||||||||||||||||||||||||||||
 
   if (Type == "omega") {
-    CombSample <- sample(seq_len(dim(CodaObj[[1]])[2]), NOmega)
+    CombSample <- sample.int(n = dim(CodaObj[[1]])[2], size = NOmega)
+
     Coda <- purrr::map(CodaObj, ~.x[, CombSample]) %>%
       coda::as.mcmc.list() %>%
       as.matrix(iter = TRUE, chain = TRUE) %>%
@@ -136,7 +137,7 @@ Coda_to_tibble <- function(
 
     if (!file.exists(EnvFile)) {
       stop(
-        paste0("Path to environment variables: ", EnvFile, " was not found"),
+        "Path to environment variables: ", EnvFile, " was not found",
         call. = FALSE)
     }
 

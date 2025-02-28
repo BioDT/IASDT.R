@@ -19,11 +19,12 @@ Convergence_Alpha <- function(
   }
 
   if (length(MarginType) != 1) {
-    stop("`MarginType` must be a single string.")
+    stop("`MarginType` must be a single string.", call. = FALSE)
   }
 
   if (!MarginType %in% c("histogram", "density")) {
-    stop("`MarginType` must be either 'histogram' or 'density'.")
+    stop(
+      "`MarginType` must be either 'histogram' or 'density'.", call. = FALSE)
   }
 
   # # ..................................................................... ###
@@ -36,10 +37,10 @@ Convergence_Alpha <- function(
 
   # Checking arguments
   AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, ~ get(.x, envir = environment())) %>%
+  AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = c("Title"))
+  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = "Title")
 
   # # ..................................................................... ###
 
@@ -48,11 +49,11 @@ Convergence_Alpha <- function(
     Post <- IASDT.R::LoadAs(Post)
   }
 
-  if ("Alpha" %in% names(Post)) {
-    Post <- Post$Alpha[[1]]
-  } else {
+  if (!("Alpha" %in% names(Post))) {
     stop("Post object does not contain 'Alpha'", call. = FALSE)
   }
+  Post <- Post$Alpha[[1]]
+
 
   # Load model object
   if (inherits(Model, "character")) {
@@ -70,7 +71,7 @@ Convergence_Alpha <- function(
   }
   if (length(Cols) != NChains) {
     warning(
-      "The length of provided colours != number of chains", .call. = FALSE)
+      "The length of provided colours != number of chains", call. = FALSE)
     Cols <- c(
       "black", "grey60",
       RColorBrewer::brewer.pal(n = NChains - 2, name = "Set1"))
@@ -114,8 +115,8 @@ Convergence_Alpha <- function(
           as.character(.x) %>%
             stringr::str_remove("factor") %>%
             as.integer()
-        })) %>%
-    dplyr::mutate(Value = Value / 1000)
+        }),
+      Value = Value / 1000)
 
   if (is.null(NRC)) {
     NRC <- dplyr::case_when(
@@ -133,7 +134,7 @@ Convergence_Alpha <- function(
         "<b><i>Mean effective sample size:</i></b> ", ESS[.x],
         " / ", SampleSize, " samples")
 
-      CI0 <- paste0(round(CI[.x, ], 2), collapse = " to ") %>%
+      CI0 <- paste(round(CI[.x, ], 2), collapse = " to ") %>%
         paste0("<b><i>95% credible interval:</i></b> ", ., " km")
 
       ESS_CI <- data.frame(

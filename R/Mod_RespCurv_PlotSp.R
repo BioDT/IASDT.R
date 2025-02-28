@@ -79,7 +79,7 @@ RespCurv_PlotSp <- function(
 
   SpSummary <- IASDT.R::Path(Path_PA, "Sp_PA_Summary_DF.csv")
   if (!file.exists(SpSummary)) {
-    stop(paste0(SpSummary, " file does not exist"), call. = FALSE)
+    stop(SpSummary, " file does not exist", call. = FALSE)
   }
 
   SpSummary <- readr::read_csv(SpSummary, show_col_types = FALSE) %>%

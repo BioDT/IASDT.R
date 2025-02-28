@@ -1,7 +1,7 @@
 ## |------------------------------------------------------------------------| #
 # DetectAlias ----
 ## |------------------------------------------------------------------------| #
-#'
+
 #' Detect aliased variables in a linear model
 #'
 #' This function identifies aliased (linearly dependent) variables in a linear
@@ -9,8 +9,8 @@
 #' and then using the alias function to detect aliased variables.
 #' @param DT A `data frame` or `tibble` containing the variables to be checked
 #'   for aliasing.
-#' @param Verbose Logical. Whether to print the aliased variables 
-#'   found (if any). If `TRUE`, aliased variables are printed to the console. 
+#' @param Verbose Logical. Whether to print the aliased variables
+#'   found (if any). If `TRUE`, aliased variables are printed to the console.
 #'   Defaults to `FALSE`.
 #' @return Returns a character vector of aliased variable names if any are
 #'   found; otherwise, returns `NULL` invisibly. If `Verbose` is `TRUE`, the
@@ -71,7 +71,7 @@ DetectAlias <- function(DT, Verbose = FALSE) {
   # Output aliased variables if any
   if (length(Aliased) > 0) {
     if (Verbose) {
-      cat(paste0("Aliased variables: ", paste(Aliased, collapse = ", "), "\n"))
+      cat(paste0("Aliased variables: ", toString(Aliased), "\n"))
     }
     return(Aliased)
   } else {

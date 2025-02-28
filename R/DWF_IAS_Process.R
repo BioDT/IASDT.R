@@ -1,37 +1,44 @@
+#' Process and map Invasive Alien Species (IAS) data for the `IAS-pDT`
+#'
+#' Processes and visualizes Invasive Alien Species (IAS) distribution data from
+#' GBIF, EASIN, and eLTER for the Invasive Alien Species prototype Digital Twin
+#' (`IAS-pDT`). Merges pre-processed data, creates presence-absence rasters,
+#' summarizes distributions, and generates maps using helper functions.
+#' @param FromHPC Logical. Whether the processing is being done on an
+#'   High-Performance Computing (HPC) environment, to adjust file paths
+#'   accordingly. Default: `TRUE`.
+#' @param EnvFile Character. Path to the environment file containing paths to
+#'   data sources. Defaults to `.env`.
+#' @param NCores Integer. Number of CPU cores to use for parallel processing.
+#'   Default: 6.
+#' @param Overwrite Logical. If `TRUE`, overwrites existing maps; otherwise,
+#'   skips if maps exist. Default: `FALSE`.
+#' @param Species Character. Species name for distribution mapping.
+#' @param Verbose Logical. If `TRUE`, prints progress messages. Default:
+#'   `FALSE`.
+#'
+#' @section Functions details:
+#' - **`IAS_Process()`**: Merges pre-processed GBIF (`GBIF_Process()`), EASIN
+#'   (`EASIN_Process()`), and eLTER (`eLTER_Process()`) data (run these first).
+#'   Outputs `SpatRaster` distribution rasters, summary tables, and JPEG maps
+#'   using `IAS_Distribution()` and `IAS_Plot()`.
+#' - **`IAS_Distribution()`**: Generates presence-absence maps (`.RData`,
+#' `.tif`)  for a species, including all grid cells in the study area and a set
+#'   excluding cultivated/casual-only countries. Returns a tibble with presence
+#'   counts (total, by source) and summary statistics for biogeographical
+#'   regions
+#' - **`IAS_Plot()`**: Creates JPEG distribution maps from GBIF, EASIN, and
+#'   eLTER data using `ggplot2`.
+
 # # |------------------------------------------------------------------------| #
 # IAS_Process ----
 ## |------------------------------------------------------------------------| #
 
-#' Process IAS data
-#'
-#' This function processes Invasive Alien Species (IAS) data. The function
-#' merges pre-processed distribution data from 3 data sources: GBIF
-#' ([GBIF_Process]), EASIN ([EASIN_Process]), eLTER ([elTER_Process]).
-#' The function prepares final species outputs in the form of 1) species
-#' distribution as SpatRaster (`.RData`) and `.tif` using [IAS_Distribution]; 2)
-#' summary table on the distribution of the species; and 3) JPEG files for the
-#' species distribution showing the the sources of presence data [IAS_Plot]. It
-#' further generates summary results in the form of maps and figures.
-#' @param FromHPC Logical. Whether the processing is being done on an 
-#'   High-Performance Computing (HPC) environment, to adjust file paths 
-#'   accordingly. Default: `TRUE`.
-#' @param EnvFile Character. Path to the environment file containing paths to 
-#'   data sources. Defaults to `.env`.
-#' @param NCores Integer. Number of CPU cores to use for parallel processing. 
-#'   Default: 6.
-#' @param Overwrite Logical. If `TRUE`, existing JPEG files will be overwritten
-#'   during processing. See [IAS_Plot]
-#' @name IAS_Process
 #' @export
 #' @author Ahmed El-Gabbas
-#' @return The function returns `NULL` invisibly.
-#' @note
-#'   - The function should be used only after data from the three data sources
-#' were processed: GBIF ([GBIF_Process]), EASIN ([EASIN_Process]), eLTER
-#' ([elTER_Process]).
-#'   - The function depends on the following functions: [IAS_Distribution] for
-#' prepare species-specific final maps and [IAS_Plot] for plotting species
-#' distribution as JPEG.
+#' @name IAS_data
+#' @rdname IAS_data
+#' @order 1
 
 IAS_Process <- function(
     FromHPC = TRUE, EnvFile = ".env", NCores = 6L, Overwrite = TRUE) {
@@ -44,7 +51,7 @@ IAS_Process <- function(
   IASDT.R::CatTime("Checking arguments")
 
   AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, ~ get(.x, envir = environment())) %>%
+  AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = "EnvFile")
@@ -108,7 +115,7 @@ IAS_Process <- function(
   IASDT.R::CatTime("Reading input data and check/create directories")
 
   Path_PA_JPEG <- IASDT.R::Path(Path_PA, "JPEG_Maps")
-  fs::dir_create(c(Path_PA_JPEG))
+  fs::dir_create(Path_PA_JPEG)
 
   # last update info
   LastUpdate <- stringr::str_glue(
@@ -288,7 +295,7 @@ IAS_Process <- function(
 
   IASDT.R::CatTime("RData format", Level = 2)
   save(
-    Sp_PA_Summary_DF, 
+    Sp_PA_Summary_DF,
     file = IASDT.R::Path(Path_PA, "Sp_PA_Summary_DF.RData"))
 
   # # ..................................................................... ###

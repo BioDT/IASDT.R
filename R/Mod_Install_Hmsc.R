@@ -2,7 +2,7 @@
 # Install_Hmsc ----
 ## |------------------------------------------------------------------------| #
 
-#' Install Hmsc-HPC in a Python Virtual Environment on Windows
+#' Install Hmsc-HPC in a python virtual environment on Windows
 #'
 #' This function sets up a Python virtual environment and installs the
 #' [`Hmsc-HPC`](https://github.com/aniskhan25/hmsc-hpc) package from a specified
@@ -13,9 +13,9 @@
 #'   This can not be an existing folder.
 #' @param URL_Hmsc Character. URL of the Git repository (and branch name) of the
 #'   `Hmsc-HPC` package.
-#' @param URL_rdata Character. URL of the Git repository (and branch name) of 
-#'   the `rdata` package. This is temporary to allow `rdata` package to write 
-#'   rds file. In the near future, this functionality will be pushed to the 
+#' @param URL_rdata Character. URL of the Git repository (and branch name) of
+#'   the `rdata` package. This is temporary to allow `rdata` package to write
+#'   rds file. In the near future, this functionality will be pushed to the
 #'   main branch of `rdata`.
 #' @param Force Logical. Whether to force the installation of `Hmsc-HPC`; i.e.
 #'   using `--force-reinstall` as a suffix to the `pip install` command
@@ -51,9 +51,8 @@ Install_Hmsc <- function(
   # Check if the virtual environment directory already exists
   if (fs::dir_exists(Path_VE)) {
     stop(
-      paste0("Path to the virtual environment already exists:\n", Path_VE),
-      call. = FALSE
-    )
+      "Path to the virtual environment already exists:\n", Path_VE,
+      call. = FALSE)
   }
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -64,15 +63,13 @@ Install_Hmsc <- function(
   PythonVersion <- system2(
     Path_Python, "--version", stdout = TRUE, stderr = TRUE)
 
-  if (stringr::str_detect(PythonVersion, "^Python")) {
-    cat(paste0("  >>  ", PythonVersion, "\n"))
-  } else {
+  if (!stringr::str_detect(PythonVersion, "^Python")) {
     stop(
-      paste0(
-        "Python was not installed or not found at the provided path",
-        Path_Python),
-      call. = FALSE)
+      "Python was not installed or not found at the provided path",
+      Path_Python, call. = FALSE)
   }
+
+  cat(paste0("  >>  ", PythonVersion, "\n"))
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -89,11 +86,11 @@ Install_Hmsc <- function(
   python <- IASDT.R::Path(Path_VE, "Scripts", "python.exe")
   PythonVersion <- system2(python, "--version", stdout = TRUE, stderr = TRUE)
 
-  if (stringr::str_detect(PythonVersion, "^Python")) {
-    cat(paste0("  >>  ", PythonVersion, "\n"))
-  } else {
+  if (!stringr::str_detect(PythonVersion, "^Python")) {
     stop("Python was not installed in the virtual environment", call. = FALSE)
   }
+
+  cat(paste0("  >>  ", PythonVersion, "\n"))
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

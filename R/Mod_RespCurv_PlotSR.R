@@ -84,7 +84,7 @@ RespCurv_PlotSR <- function(ModelDir, Verbose = TRUE, NCores = 8L) {
         .x = RC_Path_SR,
         .f = ~ {
           DT <- IASDT.R::LoadAs(.x) %>%
-            magrittr::inset(c("RC_Data_SR"), NULL)
+            magrittr::inset("RC_Data_SR", NULL)
 
           Quant <- DT$RC_Data_SR_Quant %>%
             dplyr::mutate(
@@ -94,8 +94,9 @@ RespCurv_PlotSR <- function(ModelDir, Verbose = TRUE, NCores = 8L) {
               names_from = Quantile, values_from = SR) %>%
             setNames(c("Variable", "NFV", "XVals", "Q25", "Q50", "Q975"))
 
-          Observed <- DT$Observed_SR %>%
-            dplyr::mutate(Variable = DT$Variable, NFV = DT$NFV, .before = 1)
+          Observed <- dplyr::mutate(
+            .data = DT$Observed_SR,
+            Variable = DT$Variable, NFV = DT$NFV, .before = 1)
 
           Trend <- tibble::tibble(
             Variable = DT$Variable, NFV = DT$NFV,

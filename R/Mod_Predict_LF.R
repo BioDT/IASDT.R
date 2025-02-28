@@ -357,8 +357,7 @@ Mod_Predict_LF <- function(
 
       if (LF_Check && isFALSE(CalcPredLF)) {
         Eta_NCols <- ncol(IASDT.R::LoadAs(File_etaPred))
-        CalcPredLF <- dplyr::if_else(
-          Eta_NCols == LF_Data$NSamples[[RowNum]], FALSE, TRUE)
+        CalcPredLF <- (Eta_NCols != LF_Data$NSamples[[RowNum]])
       }
 
       if (CalcPredLF) {
@@ -390,39 +389,39 @@ Mod_Predict_LF <- function(
 
             if (LF_Commands_Only) {
               return(eta_indNew0)
-            } else {
-              rm(eta_indNew0, envir = environment())
-
-              etaPred <- tibble::tibble(
-                SampleID = SampleID,
-                LF = LF_ID,
-                Path_Samp_LF = IASDT.R::Path(
-                  Temp_Dir_LF,
-                  paste0(
-                    Model_Name, "Samp_",
-                    stringr::str_pad(SampleID, width = 4, pad = "0"),
-                    "_LF", LF, ".qs2")),
-                etaPred = as.list(IASDT.R::LoadAs(File_etaPred_TF))) %>%
-                tidyr::nest(eta_DT = -Path_Samp_LF) %>%
-                dplyr::mutate(
-                  eta_DT = purrr::map(
-                    .x = eta_DT,
-                    .f = ~ {
-                      tidyr::unnest_longer(.x, "etaPred") %>%
-                        dplyr::mutate(LF = NULL, Units_pred = Units_pred) %>%
-                        stats::setNames(
-                          c("SampleID", paste0("LF_", LF_ID), "Units_pred"))
-                    }),
-                  File_etaPred = File_etaPred,
-                  ChunkID = LF_Data$ChunkID[[RowNum]],
-                  SampleID = SampleID,
-                  Save = purrr::map2(
-                    .x = eta_DT, .y = Path_Samp_LF,
-                    .f = ~qs2::qs_save(.x, .y, nthreads = 5)),
-                  LF = LF_ID, Save = NULL, eta_DT = NULL)
-
-              IASDT.R::SaveAs(InObj = etaPred, OutPath = File_etaPred)
             }
+
+            rm(eta_indNew0, envir = environment())
+
+            etaPred <- tibble::tibble(
+              SampleID = SampleID,
+              LF = LF_ID,
+              Path_Samp_LF = IASDT.R::Path(
+                Temp_Dir_LF,
+                paste0(
+                  Model_Name, "Samp_",
+                  stringr::str_pad(SampleID, width = 4, pad = "0"),
+                  "_LF", LF, ".qs2")),
+              etaPred = as.list(IASDT.R::LoadAs(File_etaPred_TF))) %>%
+              tidyr::nest(eta_DT = -Path_Samp_LF) %>%
+              dplyr::mutate(
+                eta_DT = purrr::map(
+                  .x = eta_DT,
+                  .f = ~ {
+                    tidyr::unnest_longer(.x, "etaPred") %>%
+                      dplyr::mutate(LF = NULL, Units_pred = Units_pred) %>%
+                      stats::setNames(
+                        c("SampleID", paste0("LF_", LF_ID), "Units_pred"))
+                  }),
+                File_etaPred = File_etaPred,
+                ChunkID = LF_Data$ChunkID[[RowNum]],
+                SampleID = SampleID,
+                Save = purrr::map2(
+                  .x = eta_DT, .y = Path_Samp_LF,
+                  .f = ~qs2::qs_save(.x, .y, nthreads = 5)),
+                LF = LF_ID, Save = NULL, eta_DT = NULL)
+
+            IASDT.R::SaveAs(InObj = etaPred, OutPath = File_etaPred)
 
           } else {
 
@@ -523,8 +522,10 @@ Mod_Predict_LF <- function(
 
     # Predict latent factors
 
-    if (!all(file.exists(LF_Data$File_etaPred))) {
-
+    if (all(file.exists(LF_Data$File_etaPred))) {
+      IASDT.R::CatTime(
+        "All LF prediction files were already created", Level = 1)
+    } else {
       if (LF_NCores == 1 || LF_Commands_Only) {
 
         if (LF_Commands_Only) {
@@ -656,20 +657,15 @@ Mod_Predict_LF <- function(
       AllEtaFiles <- LF_Data$File_etaPred
       AllEtaFilesExist <- all(file.exists(AllEtaFiles))
 
-      if (AllEtaFilesExist) {
-        IASDT.R::CatTime("All files were created", Level = 2)
-      } else {
+      if (!AllEtaFilesExist) {
         FailedFiles <- AllEtaFiles[!file.exists(AllEtaFiles)]
         stop(
-          paste0(
-            length(FailedFiles), " files are missing: \n",
-            paste0("  >>  ", basename(FailedFiles), collapse = "\n")),
+          length(FailedFiles), " files are missing: \n",
+          paste0("  >>  ", basename(FailedFiles), collapse = "\n"),
           call. = FALSE)
       }
+      IASDT.R::CatTime("All files were created", Level = 2)
 
-    } else {
-      IASDT.R::CatTime(
-        "All LF prediction files were already created", Level = 1)
     }
 
     # # .................................................................... ###
@@ -857,7 +853,7 @@ run_crossprod_solve <- function(
     .x = names(paths),
     .f = function(p) {
       if (!file.exists(paths[[p]])) {
-        stop(paste0(p, " does not exist: ", paths[[p]]), call. = FALSE)
+        stop(p, " does not exist: ", paths[[p]], call. = FALSE)
       }
     })
 
@@ -878,10 +874,8 @@ run_crossprod_solve <- function(
       }
       if (!dir.exists(TF_Environ)) {
         stop(
-          paste0(
-            "The specified `TF_Environ` directory ",
-            IASDT.R::NormalizePath(TF_Environ), " does not exist"),
-          call. = FALSE)
+          "The specified `TF_Environ` directory ",
+          IASDT.R::NormalizePath(TF_Environ), " does not exist", call. = FALSE)
       }
     }
 
@@ -899,7 +893,6 @@ run_crossprod_solve <- function(
     # Use `python3`` directly - on LUMI, compatible Python installation is
     # loaded automatically when loading tensorflow
     python_executable <- "/usr/bin/time -v python3"
-
   }
 
   # Construct the command to run the Python script
@@ -931,7 +924,7 @@ run_crossprod_solve <- function(
     LF_Args <- c(LF_Args, paste0(" >> ", path_log, " 2>&1"))
   }
 
-  LF_Args <- paste0(LF_Args, collapse = " ")
+  LF_Args <- paste(LF_Args, collapse = " ")
 
   if (LF_Commands_Only) {
     return(LF_Args)
@@ -967,7 +960,11 @@ run_crossprod_solve <- function(
     }
 
     # If all attempts fail, return NULL
-    if (!success) {
+    if (success) {
+      # close connection to the file
+      close(f)
+      return(path_out)
+    } else {
       if (verbose) {
         cat("All attempts failed. Returning NULL.\n",
             sep = "\n", file = f, append = TRUE)
@@ -975,10 +972,6 @@ run_crossprod_solve <- function(
         close(f)
       }
       return(NULL)
-    } else {
-      # close connection to the file
-      close(f)
-      return(path_out)
     }
   }
 }

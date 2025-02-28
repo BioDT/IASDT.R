@@ -8,10 +8,10 @@ The source of this function was taken from this
 \href{https://www.tutorialspoint.com/r/r_mean_median_mode.htm}{link}.
 }
 \usage{
-GetMode(v)
+GetMode(x)
 }
 \arguments{
-\item{v}{A numeric vector. It must not be NULL or empty.}
+\item{x}{Numeric vector. It must not be \code{NULL} or empty.}
 }
 \value{
 The mode of the vector as a single value. If the vector has a uniform
@@ -24,7 +24,7 @@ This function calculates the mode of a given numeric vector.
 \examples{
 GetMode(c(seq_len(10), 1, 1, 3, 3, 3, 3))
 
-GetMode(c(1, 2, 2, 3, 4)) # Returns 2
+GetMode(c(1, 2, 2, 3, 4))
 
-GetMode(c(1, 1, 2, 3, 3)) # Returns 1
+GetMode(c(1, 1, 2, 3, 3))
 }

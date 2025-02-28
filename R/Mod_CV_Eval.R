@@ -14,7 +14,7 @@
 #'   mean values of posterior predictive distribution for random effects
 #'   corresponding for the new units. See `Hmsc:::predict.Hmsc` for more
 #'   details.
-#' @param NCores Integer. Number of CPU cores to use for parallel processing. 
+#' @param NCores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 8.
 #' @author Ahmed El-Gabbas
 #' @export
@@ -115,8 +115,8 @@ Mod_CV_Eval <- function(Path_CV = NULL, predictEtaMean = TRUE, NCores = 8L) {
             #   Pred_XY = Pred_XY)
           }
 
-          tibble::tibble(Path_Pred = Path_Pred, Path_Eval = Path_Eval) %>%
-            return()
+          return(
+            tibble::tibble(Path_Pred = Path_Pred, Path_Eval = Path_Eval))
         })) %>%
     tidyr::unnest_wider("Path_Pred_Eval")
 
@@ -132,9 +132,9 @@ Mod_CV_Eval <- function(Path_CV = NULL, predictEtaMean = TRUE, NCores = 8L) {
           Path_Preds <- IASDT.R::Path(
             PredDir, paste0("Preds_", CVName, "_all.RData"))
           Preds <- purrr::map_dfr(.x = Path_Pred, .f = IASDT.R::LoadAs) %>%
-          IASDT.R::SaveAs(
-            InObj = Preds, OutObj = paste0("Preds_", CVName, "_all"),
-            OutPath = Path_Preds)
+            IASDT.R::SaveAs(
+              InObj = Preds, OutObj = paste0("Preds_", CVName, "_all"),
+              OutPath = Path_Preds)
 
           Path_Evals <- IASDT.R::Path(
             EvalDir, paste0("Eval_", CVName, "_all.RData"))
@@ -158,8 +158,8 @@ Mod_CV_Eval <- function(Path_CV = NULL, predictEtaMean = TRUE, NCores = 8L) {
             InObj = Evals, OutObj = paste0("Eval_", CVName, "_all"),
             OutPath = Path_Evals)
 
-          tibble::tibble(Path_Preds = Path_Preds, Path_Evals = Path_Evals) %>%
-            return()
+          return(
+            tibble::tibble(Path_Preds = Path_Preds, Path_Evals = Path_Evals))
         })) %>%
     tidyr::unnest_wider(Path_Pred_Eval_all)
 

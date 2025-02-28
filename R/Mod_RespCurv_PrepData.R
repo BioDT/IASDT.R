@@ -74,7 +74,7 @@ RespCurv_PrepData <- function(
 
   IASDT.R::CatTime("Check input arguments")
   AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(.x = AllArgs, .f = ~ get(.x, envir = environment())) %>%
+  AllArgs <- purrr::map(.x = AllArgs, .f = get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
@@ -109,7 +109,7 @@ RespCurv_PrepData <- function(
     }
   } else {
     stop(
-      "The model file does not exist or is not a .RData/.qs2 file.",
+      "The model file does not exist or is not a `.RData` or `.qs2` file.",
       call. = FALSE)
   }
 
@@ -242,8 +242,7 @@ RespCurv_PrepData <- function(
                 dplyr::reframe(MM = dplyr::last(Pred) > dplyr::first(Pred)) %>%
                 dplyr::pull(MM) %>%
                 mean()
-            })) %>%
-        dplyr::mutate(
+            }),
           Variable = Variable, NFV = ResCurvDT$NFV[[ID]], .before = 1)
 
       # Save data
@@ -398,25 +397,22 @@ RespCurv_PrepData <- function(
 
   } else {
 
-    if (all(!ResCurvDT$FileExists)) {
-      IASDT.R::CatTime(
-        paste0(
-          "All response curve data (", MissingRows, ") need to be prepared"),
-        Level = 1)
-
-    } else {
-
+    if (any(ResCurvDT$FileExists)) {
       IASDT.R::CatTime(
         paste0(
           "Some response curve data files (", MissingRows, " of ",
           length(ResCurvDT$FileExists), ") were missing"),
+        Level = 1)
+    } else {
+      IASDT.R::CatTime(
+        paste0(
+          "All response curve data (", MissingRows, ") need to be prepared"),
         Level = 1)
     }
 
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
     # Get LF prediction for the model
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
 
     if (isFALSE(IASDT.R::CheckData(File_LF, warning = FALSE))) {
 

@@ -1,60 +1,76 @@
-## |------------------------------------------------------------------------| #
-# Efforts_Process ----
-## |------------------------------------------------------------------------| #
-
-#' Download and Process sampling efforts data
+#' Process GBIF sampling effort data for the `IAS-pDT`
 #'
-#' This function downloads GBIF data for all vascular plants within a specified
-#' geographical area (Europe), grouped by order, and converts the data to raster
-#' format to represent the number of vascular plant observations and species per
-#' grid cell.
+#' Downloads and processes GBIF sampling effort data for vascular plants in
+#' Europe, supporting the Invasive Alien Species prototype Digital Twin
+#' (`IAS-pDT`). Orchestrated by `Efforts_Process()`, it uses helper functions to
+#' request, download, split, summarize, and visualize data at the Order level.
+#' The functions prepares raster maps for the number of vascular plant
+#' observations and species per grid cell.
+#'
 #' @param FromHPC Logical. Whether the processing is being done on an
 #'   High-Performance Computing (HPC) environment, to adjust file paths
 #'   accordingly. Default: `TRUE`.
 #' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
-#' @param Renviron Character. The path to the `.Renviron` file containing GBIF
-#'   login credentials (email, user, password). Default: `.Renviron`.
-#' @param RequestData Logical. If `TRUE`, the function requests data from GBIF.
-#'   If `FALSE`, previously requested data is loaded from disk. Defaults to
-#'   `TRUE`.
-#' @param DownloadData Logical. If `TRUE`, the function downloads data and
-#'   stores it on disk. If `FALSE`, it skips the download step. Defaults to
-#'   `TRUE`.
-#' @param Boundaries Numeric vector of length 4. The boundaries of the 
-#'   requested GBIF data in the order: Left, Right, Bottom, Top. Defaults to 
-#'   `c(-30, 50, 25, 75)`.
+#' @param Renviron Character. Path to `.Renviron` file with GBIF credentials
+#'   (`GBIF_EMAIL`, `GBIF_USER`, `GBIF_PWD`). Default: `".Renviron"`. The
+#'   credentials must be in the format:
+#'    - `GBIF_EMAIL=your_email`
+#'    - `GBIF_USER=your_username`
+#'    - `GBIF_PWD=your_password`
+#' @param Request Logical. If `TRUE` (default), requests GBIF data; otherwise,
+#'   loads existing data.
+#' @param Download Logical. If `TRUE` (default), downloads and saves GBIF data;
+#'   otherwise, skips download. Default: `TRUE`.
+#' @param Boundaries Numeric vector (length 4). GBIF data bounds (Left, Right,
+#'   Bottom, Top). Default: `c(-30, 50, 25, 75)`.
 #' @param NCores Integer. Number of CPU cores to use for parallel processing.
-#'   Default: 6.
-#' @param StartYear Numeric. The starting year for the occurrence data. Only
-#'   records from this year onward will be requested from GBIF. Default is
-#'   `1981`, which matches the year ranges of CHELSA current climate data.
-#' @param ChunkSize Integer. The number of rows per chunk file. Default:
-#'   `100,000`. See [Efforts_Split] and [Efforts_Summarize] for more details.
-#' @param DeleteChunks Logical. Whether to remove file chunks after processing
-#'   the data. Defaults to `TRUE`.
-#' @param DeleteProcessed Logical. Whether to delete the raw downloaded GBIF
-#'   data after processing them. This helps to free large unnecessary file space
-#'   (> 22 GB). Defaults to `TRUE`.
+#'   Default: 6, except for `Efforts_Request`, which defaults to 3 with a
+#'   maximum of 3.
+#' @param StartYear Integer. Earliest year for GBIF records (matches CHELSA
+#'   climate data). Default: `1981`.
+#' @param ChunkSize Integer. Rows per chunk file. Default: `100000`.
+#' @param DeleteChunks Logical. If `TRUE` (default), deletes chunk files
+#'   post-processing.
+#' @param DeleteProcessed Logical. If `TRUE` (default), removes raw GBIF files
+#'   after processing (>22 GB).
+#' @param Path_Zip Character. Path to zip file with CSV for splitting.
+#'
 #' @note
-#' - This function is expected to take a substantial amount of time (>9
-#' hours on a Windows PC with 6 cores). The data request from GBIF may take
-#' around 5 hours to be ready. The function requests GBIF data for each vascular
-#' plant order and waits for the data to be ready before processing them.
-#' - This function should be the only function to be called to prepare sampling
-#' efforts data. It calls other functions [Efforts_Request] to request data from
-#' GBIF, [Efforts_Download] to download zipped archive for each vascular plant
-#' order, [Efforts_Summarize] and [Efforts_Split] to process data in small
-#' chunks, and [Efforts_Plot] for plotting.
-#' @return Returns `NULL` invisibly. The function generates various output
-#'   files, maps, and logs, and it is designed to be used for its side effects.
+#' - `Efforts_Process()` is the main entry point for processing sampling effort
+#' data.
+#' - Time-intensive (>9 hours on 6-core Windows PC; GBIF request ~5 hours).
+#' - Detects and processes only new/missing data by order.
+#'
+#' @section Functions details:
+#' - **`Efforts_Process()`**: Manages the workflow for requesting, downloading,
+#'   processing, and plotting GBIF vascular plant data.
+#' - **`Efforts_Request()`**: Requests GBIF data by order in parallel. Stores
+#'   results to disk.
+#' - **`Efforts_Download()`**: Downloads GBIF data, validates files, and loads
+#'   existing data if available. Returns a dataframe (`Efforts_AllRequests`)
+#'   with paths.
+#' - **`Efforts_Split()`**: Splits zipped CSV data by order into chunks, saving
+#'   each separately.
+#' - **`Efforts_Summarize()`**: Processes and summarizes data into `RData` and
+#'   TIFF rasters.
+#' - **`Efforts_Plot()`**: Plots observation efforts (raw and log10 scales).
+#' @references Data source: <https://www.gbif.org>
+
+
+## |------------------------------------------------------------------------| #
+# Efforts_Process ----
+## |------------------------------------------------------------------------| #
+
 #' @author Ahmed El-Gabbas
-#' @name Efforts_Process
+#' @name Efforts_data
+#' @rdname Efforts_data
+#' @order 1
 #' @export
 
 Efforts_Process <- function(
     FromHPC = TRUE, EnvFile = ".env", Renviron = ".Renviron",
-    RequestData = TRUE, DownloadData = TRUE, NCores = 6L, StartYear = 1981L,
+    Request = TRUE, Download = TRUE, NCores = 6L, StartYear = 1981L,
     Boundaries = c(-30, 50, 25, 75), ChunkSize = 100000L,
     DeleteChunks = TRUE, DeleteProcessed = TRUE) {
 
@@ -66,7 +82,7 @@ Efforts_Process <- function(
   IASDT.R::CatTime("Checking arguments")
 
   AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, ~ get(.x, envir = environment())) %>%
+  AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
@@ -74,7 +90,7 @@ Efforts_Process <- function(
   )
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "logical",
-    Args = c("FromHPC", "RequestData", "DownloadData")
+    Args = c("FromHPC", "Request", "Download")
   )
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric",
@@ -83,30 +99,29 @@ Efforts_Process <- function(
 
   # Validate Boundaries argument
   if (length(Boundaries) != 4) {
-    stop("Boundaries must be a numeric vector of length 4.")
+    stop("Boundaries must be a numeric vector of length 4.", call. = FALSE)
   }
 
   # Validate ChunkSize
   if (!is.numeric(ChunkSize) || ChunkSize <= 0) {
-    stop("ChunkSize must be a positive numeric value.")
+    stop("ChunkSize must be a positive numeric value.", call. = FALSE)
   }
 
   # Validate NCores
   if (!is.numeric(NCores) || NCores <= 0 || NCores > 50) {
-    stop("NCores must be a positive integer.")
+    stop("NCores must be a positive integer.", call. = FALSE)
   }
 
   # Validate StartYear
   if (!is.numeric(StartYear) || StartYear <= 1950) {
-    stop("StartYear must be a positive integer after 1950")
+    stop("StartYear must be a positive integer after 1950", call. = FALSE)
   }
 
   # # ..................................................................... ###
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Path_Efforts <- Path_Efforts_Raw <- Path_Efforts_Interim <- Path_Grid <-
-    Taxa_Stand <- EU_Bound <- NULL
+  Path_Efforts <- Path_Raw <- Path_Interim <- Path_Grid <- NULL
 
   # # ..................................................................... ###
 
@@ -123,20 +138,18 @@ Efforts_Process <- function(
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
       "Path_Efforts", "DP_R_Efforts", FALSE, FALSE,
-      "Path_Efforts_Raw", "DP_R_Efforts_Raw", FALSE, FALSE,
-      "Path_Efforts_Interim", "DP_R_Efforts_Interim", FALSE, FALSE,
+      "Path_Raw", "DP_R_Efforts_Raw", FALSE, FALSE,
+      "Path_Interim", "DP_R_Efforts_Interim", FALSE, FALSE,
       "Taxa_Stand", "DP_R_TaxaStand", FALSE, TRUE,
-      "Path_Grid", "DP_R_Grid", TRUE, FALSE,
-      "EU_Bound", "DP_R_EUBound_sf", FALSE, TRUE)
+      "Path_Grid", "DP_R_Grid", TRUE, FALSE)
   } else {
     EnvVars2Read <- tibble::tribble(
       ~VarName, ~Value, ~CheckDir, ~CheckFile,
       "Path_Efforts", "DP_R_Efforts_Local", FALSE, FALSE,
-      "Path_Efforts_Raw", "DP_R_Efforts_Raw_Local", FALSE, FALSE,
-      "Path_Efforts_Interim", "DP_R_Efforts_Interim_Local", FALSE, FALSE,
+      "Path_Raw", "DP_R_Efforts_Raw_Local", FALSE, FALSE,
+      "Path_Interim", "DP_R_Efforts_Interim_Local", FALSE, FALSE,
       "Taxa_Stand", "DP_R_TaxaStand_Local", FALSE, TRUE,
-      "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE,
-      "EU_Bound", "DP_R_EUBound_sf_Local", FALSE, TRUE)
+      "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE)
   }
 
   # Assign environment variables and check file and paths
@@ -149,11 +162,11 @@ Efforts_Process <- function(
 
   ## Create paths -----
   Path_Efforts_Requests <- IASDT.R::Path(Path_Efforts, "Requests")
-  Path_Efforts_Data <- IASDT.R::Path(Path_Efforts_Interim, "CleanedData")
+  Path_Efforts_Cleaned <- IASDT.R::Path(Path_Interim, "CleanedData")
   # Create required directories
   fs::dir_create(
     c(
-      Path_Efforts, Path_Efforts_Raw, Path_Efforts_Interim, Path_Efforts_Data,
+      Path_Efforts, Path_Raw, Path_Interim, Path_Efforts_Cleaned,
       Path_Efforts_Requests))
 
   ## Reference grid ----
@@ -163,47 +176,71 @@ Efforts_Process <- function(
   missing_grids <- Grids[!file.exists(Grids)]
   if (length(missing_grids) > 0) {
     stop(
-      paste0(
-        "The following grid file(s) do not exist:\n",
-        paste0(" >>> ", missing_grids, collapse = "\n")
-      ),
-      call. = FALSE)
+      "The following grid file(s) do not exist:\n",
+      paste0(" >>> ", missing_grids, collapse = "\n"), call. = FALSE)
   }
-
-  ## IAS species list ----
-  IAS_List <- unique(dplyr::pull(readRDS(Taxa_Stand), "speciesKey"))
 
   # # ..................................................................... ###
 
   # Request efforts data ------
   IASDT.R::CatTime("Request efforts data")
 
-  if (RequestData) {
+  if (Request) {
     IASDT.R::CatTime("Requesting efforts data", Level = 1)
 
-    Efforts_AllRequests <- IASDT.R::Efforts_Request(
-      NCores = NCores, Path_Requests = Path_Efforts_Requests,
-      Path_Efforts = Path_Efforts, StartYear = StartYear,
-      Boundaries = Boundaries)
+    IASDT.R::Efforts_Request(
+      FromHPC = FromHPC, EnvFile = EnvFile, NCores = NCores,
+      StartYear = StartYear, Renviron = Renviron, Boundaries = Boundaries)
+
   } else {
-    IASDT.R::CatTime("Efforts data was not requested, but loaded", Level = 1)
     Efforts_AllRequests <- IASDT.R::LoadAs(
       IASDT.R::Path(Path_Efforts, "Efforts_AllRequests.RData"))
+
+    if (!file.exists(Efforts_AllRequests)) {
+      stop(
+        "Efforts data was not requested and the file does not exist.",
+        call. = FALSE)
+    }
+
+    IASDT.R::CatTime(
+      "Efforts data was not requested, but already available on disk",
+      Level = 1)
+
   }
 
   # # ..................................................................... ###
 
   # Download efforts data ------
-  IASDT.R::CatTime("Download efforts data")
 
-  if (DownloadData) {
-    Efforts_AllRequests <- IASDT.R::Efforts_Download(
-      NCores = NCores, Path_Raw = Path_Efforts_Raw,
-      Path_Interim = Path_Efforts_Interim, Path_Efforts = Path_Efforts)
+  if (Download) {
+
+    IASDT.R::CatTime("Downloading efforts data")
+    IASDT.R::Efforts_Download(
+      NCores = NCores, FromHPC = FromHPC, EnvFile = EnvFile)
+
   } else {
-    IASDT.R::CatTime("Efforts data was not downloaded", Level = 1)
-    Efforts_AllRequests <- IASDT.R::LoadAs(
-      IASDT.R::Path(Path_Efforts, "Efforts_AllRequests.RData"))
+
+
+    Path_Efforts_Request <- IASDT.R::Path(
+      Path_Efforts, "Efforts_AllRequests.RData")
+    if (!file.exists(Path_Efforts_Request)) {
+      stop(
+        "Efforts data was not downloaded and the file does not exist.",
+        call. = FALSE)
+    }
+
+    Efforts_AllRequests <- IASDT.R::LoadAs(Path_Efforts_Request)
+    if (!("DownPath" %in% names(Efforts_AllRequests))) {
+      stop(
+        "Efforts data was not downloaded and the 'DownPath' column is missing.",
+        call. = FALSE)
+    }
+
+    rm(Efforts_AllRequests, envir = environment())
+    invisible(gc())
+
+    IASDT.R::CatTime("Efforts data was not downloaded")
+
   }
 
   # # ..................................................................... ###
@@ -212,19 +249,15 @@ Efforts_Process <- function(
 
   IASDT.R::CatTime("Processing efforts data")
   IASDT.R::Efforts_Summarize(
-    NCores = NCores, Path_Efforts = Path_Efforts,
-    Path_Efforts_Interim = Path_Efforts_Interim,
-    Path_Efforts_Data = Path_Efforts_Data,
-    Path_Grid = Path_Grid, IAS_List = IAS_List,
-    Efforts_AllRequests = Efforts_AllRequests, ChunkSize = ChunkSize,
-    DeleteChunks = DeleteChunks)
+    FromHPC = FromHPC, EnvFile = EnvFile, NCores = NCores,
+    ChunkSize = ChunkSize, DeleteChunks = DeleteChunks)
 
   # # ..................................................................... ###
 
   # # Plotting ----
 
   IASDT.R::CatTime("Plotting sampling efforts")
-  IASDT.R::Efforts_Plot(Path_Efforts = Path_Efforts, EU_Bound = EU_Bound)
+  IASDT.R::Efforts_Plot(FromHPC = FromHPC, EnvFile = EnvFile)
 
   # # ..................................................................... ###
 
@@ -232,8 +265,8 @@ Efforts_Process <- function(
 
   if (DeleteProcessed) {
     IASDT.R::CatTime("Cleaning up - delete downloaded GBIF data")
-    fs::file_delete(list.files(Path_Efforts_Raw, full.names = TRUE))
-    fs::dir_delete(Path_Efforts_Raw)
+    fs::file_delete(list.files(Path_Raw, full.names = TRUE))
+    fs::dir_delete(Path_Raw)
   }
 
   # # ..................................................................... ###

@@ -12,7 +12,7 @@
 #' @param Date Logical. Whether to include the date in the timestamp.
 #'   Default is `FALSE`, meaning only the time is printed. See
 #'   [IASDT.R::CatTime].
-#' @param Extra1,Extra2 Integer. Number of extra empty lines to print before 
+#' @param Extra1,Extra2 Integer. Number of extra empty lines to print before
 #'   and after the separator lines. See [IASDT.R::CatSep] for more details.
 #' @param Time Logical. Whether to include the time in the timestamp.
 #'   Default is `FALSE`.
@@ -25,7 +25,11 @@
 #' @name InfoChunk
 #' @examples
 #' InfoChunk(Message = "Started")
+#'
 #' InfoChunk(Message = "finished", Char = "*", CharReps = 60)
+#'
+#' InfoChunk(Message = "Started", Bold =  TRUE, Red = TRUE)
+#'
 #' @export
 
 InfoChunk <- function(

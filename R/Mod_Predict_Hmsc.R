@@ -1,6 +1,3 @@
-## ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-## ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
 ## |------------------------------------------------------------------------| #
 # Predict_Hmsc ----
 ## |------------------------------------------------------------------------| #
@@ -60,6 +57,7 @@
 #'   can be loaded in other predictions when needed.
 #' @param Verbose Logical. Whether to print a message upon
 #'   successful saving of files. Defaults to `FALSE`.
+#' @param Loff See [Hmsc::predict.Hmsc] for more details.
 #' @inheritParams Mod_Predict_LF
 #' @name Predict_Hmsc
 #' @export
@@ -149,10 +147,8 @@ Predict_Hmsc <- function(
   if (!is.null(Gradient)) {
     if (!is.null(Yc)) {
       stop(
-        paste0(
-          "predict with arguments 'Yc' and 'Gradient' jointly is not ",
-          "implemented (yet)"),
-        call. = FALSE)
+        "predict with arguments 'Yc' and 'Gradient' jointly is not ",
+        "implemented (yet)", call. = FALSE)
     }
     XData <- Gradient$XDataNew
     studyDesign <- Gradient$studyDesignNew
@@ -185,7 +181,7 @@ Predict_Hmsc <- function(
           })
       },
       data.frame = {
-        if (any(is.na(XData))) {
+        if (anyNA(XData)) {
           stop("NA values are not allowed in 'XData'", call. = FALSE)
         }
         xlev <- lapply(Model$XData, levels)
@@ -554,10 +550,10 @@ Predict_Hmsc <- function(
 
           IASDT.R::SaveAs(InObj = SpD, OutPath = ChunkSp_File)
 
-          cbind.data.frame(
-            Chunk = Chunk, Sp = Sp, IAS_ID = Model$spNames[Sp],
-            ChunkSp_File = ChunkSp_File) %>%
-            return()
+          return(
+            cbind.data.frame(
+              Chunk = Chunk, Sp = Sp, IAS_ID = Model$spNames[Sp],
+              ChunkSp_File = ChunkSp_File))
         }) %>%
         dplyr::bind_rows(
           tibble::tibble(
@@ -668,10 +664,10 @@ Predict_Hmsc <- function(
         RMSE <- TjurR2 <- AUC <- Boyce <- NA_real_
       }
 
-      tibble::tibble(
-        Sp = Sp, IAS_ID = IAS_ID, Path_pred = PredSummaryFile,
-        RMSE = RMSE, AUC = AUC, Boyce = Boyce, TjurR2 = TjurR2) %>%
-        return()
+      return(
+        tibble::tibble(
+          Sp = Sp, IAS_ID = IAS_ID, Path_pred = PredSummaryFile,
+          RMSE = RMSE, AUC = AUC, Boyce = Boyce, TjurR2 = TjurR2))
 
     })
 
@@ -777,10 +773,9 @@ Predict_Hmsc <- function(
   IASDT.R::CatDiff(
     InitTime = .StartTime, Prefix = "Prediction was finished in ")
 
-  tibble::tibble(
-    Pred_Path = Pred_File,  Eval_Path = Eval_Path,
-    LF_Path = LF_Path) %>%
-    return()
+  return(
+    tibble::tibble(
+      Pred_Path = Pred_File,  Eval_Path = Eval_Path, LF_Path = LF_Path))
 }
 
 ## ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -858,7 +853,7 @@ get1prediction <- function(
   if (!is.null(Loff)) L <- L + Loff
 
   ## predict can be slow with Yc and especially with high mcmcStep
-  if (!is.null(Yc) && any(!is.na(Yc))) {
+  if (!is.null(Yc) && !all(is.na(Yc))) {
     Z <- L
     Z <- updateZ(
       Y = Yc, Z = Z, Beta = sam$Beta, iSigma = 1 / sam$sigma, Eta = Eta,
@@ -896,11 +891,11 @@ get1prediction <- function(
     L <- Reduce("+", c(list(LFix), LRan))
   }
 
-  if (!expected) {
+  if (expected) {
+    Z <- L
+  } else {
     Z <- L + matrix(sqrt(sam$sigma), nrow(L), object$ns, byrow = TRUE) *
       matrix(stats::rnorm(nrow(L) * object$ns), nrow(L), object$ns)
-  } else {
-    Z <- L
   }
 
   for (j in 1:object$ns) {

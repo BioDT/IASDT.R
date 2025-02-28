@@ -40,15 +40,14 @@ identifying large objects in the workspace.
 AA1 <<- rep(seq_len(1000), 10000)
 AA2 <<- rep(seq_len(1000), 100)
 
+# All objects in memory
 AllObjSizes()
 
+# Objects larger than 1 MB
 AllObjSizes(GreaterThan = 1)
 
+# Objects larger than 50 MB
 AllObjSizes(GreaterThan = 50)
-
-# Outside of a function there is no difference
-AllObjSizes(InFunction = TRUE)
-AllObjSizes(InFunction = FALSE)
 
 # When called with another function, it shows the objects only available
 # within the function
@@ -59,6 +58,7 @@ TestFun <- function(XX = 10) {
 }
 
 TestFun()
+
 TestFun(XX = "TEST")
 }
 \author{

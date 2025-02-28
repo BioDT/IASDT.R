@@ -50,7 +50,7 @@ Convergence_Plot_All <- function(
 
   IASDT.R::CatTime("Check input arguments")
   AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, ~get(.x, envir = environment())) %>%
+  AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
@@ -75,16 +75,13 @@ Convergence_Plot_All <- function(
 
   IASDT.R::CatTime("Prepare/load convergence data")
 
-
   Path_Convergence_All <- IASDT.R::Path(ModelDir, "Model_Convergence_All")
   Path_ConvDT <- IASDT.R::Path(Path_Convergence_All, "DT")
   fs::dir_create(c(Path_ConvDT, Path_Convergence_All))
 
   Model_Info <- IASDT.R::Path(ModelDir, "Model_Info.RData")
   if (!file.exists(Model_Info)) {
-    stop(
-      paste0("Model info file `", Model_Info, "` does not exist"),
-      call. = FALSE)
+    stop("Model info file `", Model_Info, "` does not exist", call. = FALSE)
   }
   Model_Info <- IASDT.R::LoadAs(Model_Info)
 
@@ -195,7 +192,7 @@ Convergence_Plot_All <- function(
         Omega_ESS <- coda::effectiveSize(Omega)
 
         # OMEGA - gelman.diag
-        sel <- sample(seq_len(dim(Omega[[1]])[2]), size = NOmega)
+        sel <- sample.int(n = dim(Omega[[1]])[2], size = NOmega)
 
         Omega_Gelman <- purrr::map(.x = Omega, .f = ~ .x[, sel]) %>%
           coda::gelman.diag(multivariate = FALSE) %>%
@@ -214,12 +211,12 @@ Convergence_Plot_All <- function(
 
     invisible(gc())
 
-    list(
-      Path_Trace_Alpha = Path_Trace_Alpha,
-      Path_Trace_Rho = Path_Trace_Rho,
-      Beta_Gelman = Beta_Gelman, Beta_ESS = Beta_ESS,
-      Omega_Gelman = Omega_Gelman, Omega_ESS = Omega_ESS) %>%
-      return()
+    return(
+      list(
+        Path_Trace_Alpha = Path_Trace_Alpha,
+        Path_Trace_Rho = Path_Trace_Rho,
+        Beta_Gelman = Beta_Gelman, Beta_ESS = Beta_ESS,
+        Omega_Gelman = Omega_Gelman, Omega_ESS = Omega_ESS))
   }
 
   # # ..................................................................... ###
@@ -300,8 +297,8 @@ Convergence_Plot_All <- function(
     `3000` = "3000 samples",
     `4000` = "4000 samples",
     `5000` = "5000 samples",
-    `Tree` = "Phylogenetic (taxonomic) tree",
-    `NoTree` = "No phylogenetic (taxonomic) tree"))
+    Tree = "Phylogenetic (taxonomic) tree",
+    NoTree = "No phylogenetic (taxonomic) tree"))
 
   # # ..................................................................... ###
 

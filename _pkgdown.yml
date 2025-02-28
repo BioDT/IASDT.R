@@ -33,62 +33,20 @@ reference:
   contents:
   - IASDT.R-package
 
-- title: Data workflow - species distribution
-  desc: Functions for preparing species observation data
-- subtitle: GBIF
-  desc: Process GBIF data
+- title: Prepare species distribution data
   contents:
-  - GBIF_Process
-  - GBIF_Download
-  - GBIF_SpData
-  - GBIF_ReadChunk
-  - GBIF_Check
-- subtitle: EASIN
-  desc: Process EASIN data
-  contents:
-  - EASIN_Process
-  - EASIN_Taxonomy
-  - EASIN_Down
-  - EASIN_Plot
-- subtitle: eLTER
-  desc: Process eLTER data
-  contents:
-  - elTER_Process
-- subtitle: Merging species observation data
-  contents:
-  - IAS_Process
-  - IAS_Distribution
-  - IAS_Plot
-- subtitle: Others
-  contents:
-  - GetAcceptedName
+  - GBIF_data
+  - EASIN_data
+  - eLTER_Process
+  - IAS_data
   - GetSpeciesName
 
-- title: Data workflow - Predictors and other data
-  desc: Functions for preparing predictors and other abiotic data
-- subtitle: CLC
-  desc: Process Corine Land Cover data to obtain % coverage of habitat types
+- title: Prepare abiotic data
   contents:
   - CLC_Process
-- subtitle: CHELSA
-  desc: Process CHELSA data
-  contents:
   - CHELSA_Vars
-  - CHELSA_Prepare
-  - CHELSA_Process
-  - CHELSA_Project
-- subtitle: Sampling efforts
-  desc: Request, prepare, and process sampling efforts data from GBIF
-  contents:
-  - Efforts_Request
-  - Efforts_Download
-  - Efforts_Split
-  - Efforts_Plot
-  - Efforts_Summarize
-  - Efforts_SummarizeMaps
-  - Efforts_Process
-- subtitle: Railway, roads, rivers, and biogeographical regions
-  contents:
+  - CHELSA_data
+  - Efforts_data
   - Railway_Intensity
   - Road_Intensity
   - River_Length
@@ -157,12 +115,12 @@ reference:
   - NormalizePath
   - Path
   - LoadAs
-  - Check_data
   - LoadMultiple
+  - Check_data
+  - CheckZip
   - SaveAs
   - SaveMultiple
   - List2RData
-  - CheckZip
 - subtitle: Plotting
   contents:
   - AddImg2Plot

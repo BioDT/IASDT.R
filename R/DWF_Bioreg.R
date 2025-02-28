@@ -2,32 +2,29 @@
 # BioReg_Process ----
 ## |------------------------------------------------------------------------| #
 
-#' Process biogeographical regions
+#' Process biogeographical regions dataset
 #'
-#' Downloads and processes the Biogeographical Regions dataset (Europe 2016,
-#' version 1) from the [European Environment
+#' Downloads and processes the Biogeographical Regions dataset (Europe 2016, v1)
+#' from the [European Environment
 #' Agency](https://www.eea.europa.eu/en/datahub/datahubitem-view/11db8d14-f167-4cd5-9205-95638dfd9618).
-#' The dataset is processed to extract region names per reference grid cell in
-#' EPSG:3035 projection. Outputs include raster (.tif), spatial vector (.shp),
-#' and RData files. The outputs of this function are used to count presence grid
-#' cells for each species per biogeographical region.
-#' @return Invisible `NULL`. Processed data is saved to disk as raster, vector,
-#'   and RData files.
-#' @details
-#'   - Temporal coverage: 2011-2015
-#'   - Spatial coverage: 28°E-81°E, 31.27°W-62°E
-#'   - CRS: EPSG:3035; read as: ETRS_1989_LAEA_L52_M10
-#'   - file format: shapefile (compressed in zip file)
-#'   - Requires external tools: `curl` (for downloading) and `unzip`
-#'   (for extraction)
+#' This function extracts biogeographical region names per reference grid cell
+#' for use in counting species presence across biogeographical regions.
 #' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
 #' @param FromHPC Logical. Whether the processing is being done on an
 #'   High-Performance Computing (HPC) environment, to adjust file paths
 #'   accordingly. Default: `TRUE`.
-#' @export
+#' @details
+#'   - *Temporal coverage*: 2011-2015
+#'   - *Spatial coverage*: 28°E to 81°E, 31.27°W to 62°E
+#'   - *CRS*: EPSG:3035
+#'   - *file format*: shapefile (compressed in zip file)
+#'   - *Requirements*: `curl` (download) and `unzip` (extraction)
 #' @author Ahmed El-Gabbas
 #' @name BioReg_Process
+#' @return Invisible `NULL`. Processed data is saved to disk as raster, vector,
+#'   and RData files.
+#' @export
 
 BioReg_Process <- function(FromHPC = TRUE, EnvFile = ".env") {
 
@@ -160,8 +157,8 @@ BioReg_Process <- function(FromHPC = TRUE, EnvFile = ".env") {
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
-  # unzip data to interim directory
-  IASDT.R::CatTime("unzip data to interim directory", Level = 1)
+  # unzip to interim directory
+  IASDT.R::CatTime("unzip to interim directory", Level = 1)
   stringr::str_glue("unzip -o -qq -j {Zip_file} -d {Path_Interim}") %>%
     IASDT.R::System() %>%
     invisible()
@@ -198,8 +195,7 @@ BioReg_Process <- function(FromHPC = TRUE, EnvFile = ".env") {
   GridR <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(GridR)) {
     stop(
-      paste0("Path for the Europe boundaries does not exist: ", GridR),
-      call. = FALSE)
+      "Path for the Europe boundaries does not exist: ", GridR, call. = FALSE)
   }
 
   BioReg_R <- BioReg_DT %>%
@@ -253,9 +249,10 @@ BioReg_Process <- function(FromHPC = TRUE, EnvFile = ".env") {
 
   # # ..................................................................... ###
 
-  IASDT.R::CatTime("Saving processed biogeographical regions data")
+  # Saving processed data ----
+  IASDT.R::CatTime("Saving processed data")
 
-  IASDT.R::CatTime("Save as tiff", Level = 1)
+  IASDT.R::CatTime("tiff", Level = 1, Time = FALSE)
   terra::writeRaster(
     x = BioReg_R, overwrite = TRUE,
     filename = file.path(Path_BioReg, "BioReg_R.tif"))
@@ -266,12 +263,12 @@ BioReg_Process <- function(FromHPC = TRUE, EnvFile = ".env") {
       file = file.path(Path_BioReg, "BioReg_R.tif.vat.dbf"),
       factor2char = TRUE, max_nchar = 254)
 
-  IASDT.R::CatTime("Save as RData", Level = 1)
+  IASDT.R::CatTime("RData - raster object", Level = 1, Time = FALSE)
   IASDT.R::SaveAs(
     InObj = terra::wrap(BioReg_R), OutObj = "BioReg_R",
     OutPath = file.path(Path_BioReg, "BioReg_R.RData"))
 
-  IASDT.R::CatTime("Save sf object", Level = 1)
+  IASDT.R::CatTime("RData - sf object", Level = 1, Time = FALSE)
   save(BioReg_sf, file = file.path(Path_BioReg, "BioReg_sf.RData"))
 
   # # ..................................................................... ###

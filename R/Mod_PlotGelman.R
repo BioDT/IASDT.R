@@ -21,14 +21,14 @@
 #' @param Alpha,Beta,Omega,Rho Logical. If `TRUE`, plots the Gelman-Rubin
 #'   statistic for the respective model parameters (Alpha, Beta, Omega, or Rho).
 #'   Default: `TRUE` for all parameters.
-#' @param FromHPC Logical. Whether the processing is being done on an 
-#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#' @param FromHPC Logical. Whether the processing is being done on an
+#'   High-Performance Computing (HPC) environment, to adjust file paths
 #'   accordingly. Default: `TRUE`.
 #' @param NOmega Integer. Number of species sampled for the Omega parameter.
 #'   Default: 1000L.
 #' @param PlottingAlpha Numeric. Transparency level (alpha) for plot lines (0 =
 #'   fully transparent, 1 = fully opaque). Default: 0.25.
-#' @param EnvFile Character. Path to the environment file containing paths to 
+#' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
 #' @param ReturnPlots Character. Path to the folder where the output plots will
 #'   be saved.
@@ -171,7 +171,7 @@ PlotGelman <- function(
     purrr::walk(PlotList4Plot, grid::grid.draw)
     grDevices::dev.off()
   } else {
-    warning("No plots to save")
+    warning("No plots to save", call. = FALSE)
   }
 
   # # ..................................................................... ###
@@ -264,20 +264,20 @@ PlotGelman_Alpha <- function(CodaObj, PlottingAlpha = 0.25) {
     dplyr::mutate(
       group = paste0(Var_LV, "_", Type),
       Var_LV = purrr::map_chr(
-        .x = Var_LV, .f = ~stringr::str_remove_all(.x, "Alpha1\\[|\\]"))) %>%
+        .x = Var_LV, .f = stringr::str_remove_all,
+        pattern = "Alpha1\\[|\\]")) %>%
     tidyr::nest(.by = "Var_LV") %>%
     dplyr::mutate(
       Plot = purrr::map2(
         .x = Var_LV, .y = data,
         .f = ~{
-          .y %>%
-            ggplot2::ggplot() +
+          ggplot2::ggplot(data = .y) +
             ggplot2::geom_line(
               mapping = ggplot2::aes(
                 x = Iter, y = ShrinkFactor, group = group, color = Type),
               alpha = PlottingAlpha) +
             ggplot2::scale_color_manual(
-              values = c("Median" = "red", "Q97_5" = "black")) +
+              values = c(Median = "red", Q97_5 = "black")) +
             ggplot2::geom_hline(
               yintercept = 1.1, linetype = "dashed", col = "darkgrey",
               linewidth = 0.8) +
@@ -401,21 +401,18 @@ PlotGelman_Beta <- function(
 
   # # ..................................................................... ###
 
-  Gelman_Beta_Plot <- Gelman_Beta_Vals %>%
-    ggplot2::ggplot() +
+  Gelman_Beta_Plot <- ggplot2::ggplot(data = Gelman_Beta_Vals) +
     ggplot2::geom_line(
       mapping = ggplot2::aes(
         x = Iter, y = ShrinkFactor, group = group, color = Type),
       alpha = PlottingAlpha) +
-    ggplot2::scale_color_manual(
-      values = c("Median" = "red", "Q97_5" = "black")) +
+    ggplot2::scale_color_manual(values = c(Median = "red", Q97_5 = "black")) +
     ggplot2::geom_hline(
       yintercept = 1.1, linetype = "dashed", col = "darkgrey",
       linewidth = 0.8) +
     ggplot2::facet_grid(
       ~Type,
-      labeller = ggplot2::as_labeller(
-        c(`Median` = "Median", `Q97_5` = "97.5%"))) +
+      labeller = ggplot2::as_labeller(c(Median = "Median", Q97_5 = "97.5%"))) +
     ggplot2::coord_cartesian(expand = FALSE) +
     ggplot2::theme_bw() +
     ggplot2::labs(
@@ -525,21 +522,18 @@ PlotGelman_Omega <- function(CodaObj, NOmega = 1000L, PlottingAlpha = 0.25) {
 
   # # ..................................................................... ###
 
-  Gelman_Omega_Plot <- Gelman_OmegaDT %>%
-    ggplot2::ggplot() +
+  Gelman_Omega_Plot <- ggplot2::ggplot(data = Gelman_OmegaDT) +
     ggplot2::geom_line(
       mapping = ggplot2::aes(
         x = Iter, y = ShrinkFactor, group = group, color = Type),
       alpha = PlottingAlpha) +
-    ggplot2::scale_color_manual(
-      values = c("Median" = "red", "Q97_5" = "black")) +
+    ggplot2::scale_color_manual(values = c(Median = "red", Q97_5 = "black")) +
     ggplot2::geom_hline(
       yintercept = 1.1, linetype = "dashed", col = "darkgrey",
       linewidth = 0.8) +
     ggplot2::facet_grid(
       ~Type,
-      labeller = ggplot2::as_labeller(
-        c(`Median` = "Median", `Q97_5` = "97.5%"))) +
+      labeller = ggplot2::as_labeller(c(Median = "Median", Q97_5 = "97.5%"))) +
     ggplot2::coord_cartesian(expand = FALSE) +
     ggplot2::labs(
       title = paste0(
@@ -621,15 +615,13 @@ PlotGelman_Rho <- function(CodaObj) {
     ggplot2::ggplot() +
     ggplot2::geom_line(
       mapping = ggplot2::aes(x = Iter, y = ShrinkFactor, color = Type)) +
-    ggplot2::scale_color_manual(
-      values = c("Median" = "red", "Q97_5" = "black")) +
+    ggplot2::scale_color_manual(values = c(Median = "red", Q97_5 = "black")) +
     ggplot2::geom_hline(
       yintercept = 1.1, linetype = "dashed", col = "darkgrey",
       linewidth = 0.8) +
     ggplot2::facet_grid(
       ~Type,
-      labeller = ggplot2::as_labeller(
-        c(`Median` = "Median", `Q97_5` = "97.5%"))) +
+      labeller = ggplot2::as_labeller(c(Median = "Median", Q97_5 = "97.5%"))) +
     ggplot2::coord_cartesian(expand = FALSE) +
     ggplot2::labs(
       title = "Gelman-Rubin-Brooks plot --- Rho",

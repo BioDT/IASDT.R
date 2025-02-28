@@ -40,12 +40,12 @@ NDecimals <- function(x) {
     stringr::str_split(pattern = "\\.", n = Inf, simplify = TRUE)
 
   if (ncol(Split) == 2) {
-    Split %>%
+    Out <- Split %>%
       as.vector() %>%
       utils::tail(1) %>%
       nchar() %>%
-      as.integer() %>%
-      return()
+      as.integer()
+    return(Out)
   } else {
     return(0L)
   }

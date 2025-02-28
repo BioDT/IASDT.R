@@ -24,14 +24,12 @@ CheckZip <- function(File) {
   }
 
   if (length(File) != 1 || !inherits(File, "character") || !nzchar(File)) {
-    stop(
-      paste0("`File` must be a single non-empty character string"),
-      call. = FALSE)
+    stop("`File` must be a single non-empty character string", call. = FALSE)
   }
 
   # Verify the file exists
   if (!file.exists(File)) {
-    message(paste0("File does not exist: ", File))
+    message("File does not exist: ", File)
     return(FALSE)
   }
 

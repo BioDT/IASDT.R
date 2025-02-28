@@ -24,7 +24,7 @@ FunctionsInPackage <- function(Package) {
   }
 
   if (!requireNamespace(Package, quietly = TRUE)) {
-    stop(paste("Package", Package, "not found"), call. = FALSE)
+    stop("Package", Package, "not found", call. = FALSE)
   }
   library(
     package = eval(Package), character.only = TRUE, quietly = TRUE,

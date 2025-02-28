@@ -2,34 +2,14 @@
 # EASIN_Taxonomy ----
 ## |------------------------------------------------------------------------| #
 
-#' Extract EASIN Taxonomy Data
-#'
-#' This function retrieves taxonomy data from the EASIN database for vascular
-#' plants. It is also possible to get similar data for other taxonomic groups.
-#' It handles pagination automatically, downloading data in chunks until all
-#' available data for the specified taxa are retrieved.
-#'
-#' @param BaseURL character; the base URL for accessing the EASIN taxonomy API.
-#'   Default is "https://easin.jrc.ec.europa.eu/apixg/catxg".
-#' @param Kingdom character; the taxonomic kingdom to search within. Default is
-#'   "Plantae".
-#' @param Phylum character; the taxonomic phylum to filter within the specified
-#'   kingdom. Default is "Tracheophyta".
-#' @param NSearch integer; the number of records to attempt to retrieve per
-#'   request. Default is 100.
-#' @return A tibble containing the retrieved taxonomy data for the specified
-#'   kingdom and phylum.
-#' @author Ahmed El-Gabbas and Marina Golivets
+#' @author Ahmed El-Gabbas
 #' @export
-#' @note This function is not intended to be used directly by the user or in the
-#'   IAS-pDT, but only used inside the [EASIN_Process] function.
-#' @details This function loops through the EASIN API, retrieving data in chunks
-#'   until all available data for the specified kingdom and phylum are
-#'   collected. The results are returned as a tibble after filtering for the
-#'   specified taxa.
+#' @name EASIN_data
+#' @rdname EASIN_data
+#' @order 2
 
 EASIN_Taxonomy <- function(
-    BaseURL = "https://easin.jrc.ec.europa.eu/apixg/catxg",
+    FromHPC = TRUE, EnvFile = ".env",
     Kingdom = "Plantae", Phylum = "Tracheophyta", NSearch = 100) {
 
   # # ..................................................................... ###
@@ -37,13 +17,34 @@ EASIN_Taxonomy <- function(
   # Checking arguments ----
 
   AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, ~ get(.x, envir = environment())) %>%
+  AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "character",
-    Args = c("BaseURL", "Kingdom", "Phylum"))
+    Args = c("Kingdom", "Phylum", "EnvFile"))
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "numeric", Args = "NSearch")
+  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "logical", Args = "FromHPC")
+
+  # # ..................................................................... ###
+
+  # Environment variables ----
+  IASDT.R::CatTime("Environment variables")
+
+  if (FromHPC) {
+    EnvVars2Read <- tibble::tribble(
+      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+      "EASIN_URL", "DP_R_EASIN_URL", FALSE, FALSE)
+  } else {
+    EnvVars2Read <- tibble::tribble(
+      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+      "EASIN_URL", "DP_R_EASIN_URL", FALSE, FALSE)
+  }
+
+  # Assign environment variables and check file and paths
+  IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+
+  rm(EnvVars2Read, envir = environment())
 
   # # ..................................................................... ###
 
@@ -61,13 +62,13 @@ EASIN_Taxonomy <- function(
   # a list to store the taxonomy list
   EASIN_Taxa <- list()
 
-  while (TRUE) {
+  repeat {
     ID <- ID + 1
 
     # The API has been changed in April 2023; the main change: using
     # 'apixg/catxg' instead of 'api/cat'
     URL <- stringr::str_glue(
-      "{BaseURL}/kingdom/{Kingdom}/skip/{Skip}/take/{NSearch}")
+      "{EASIN_URL}/kingdom/{Kingdom}/skip/{Skip}/take/{NSearch}")
 
     # Extract species data as tibble
     Data <- try(RCurl::getURL(URL, .mapUnicode = FALSE), silent = TRUE)
@@ -77,8 +78,8 @@ EASIN_Taxonomy <- function(
 
     Data <- dplyr::tibble(jsonlite::fromJSON(Data, flatten = TRUE))
 
+    # If there is no data, break the loop
     if (nrow(Data) == 0) {
-      # If there is no data, break the loop
       break
     }
 

@@ -8,10 +8,10 @@ The source code of this function was taken from this
 \href{https://stackoverflow.com/q/52911812}{stackoverflow} discussion.
 }
 \usage{
-CheckURL(url_in, t = 2)
+CheckURL(URL, t = 2)
 }
 \arguments{
-\item{url_in}{Character. The URL to be checked.}
+\item{URL}{Character. The URL to be checked.}
 
 \item{t}{Numeric. Timeout in seconds for the connection attempt. Default is
 2 seconds.}

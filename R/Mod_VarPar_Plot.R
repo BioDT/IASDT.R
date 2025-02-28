@@ -48,7 +48,7 @@ VarPar_Plot <- function(
 
   if (!file.exists(EnvFile)) {
     stop(
-      paste0("Path to environment variables: ", EnvFile, " was not found"),
+      "Path to environment variables: ", EnvFile, " was not found",
       call. = FALSE)
   }
 
@@ -76,7 +76,7 @@ VarPar_Plot <- function(
 
   Path_Root <- dirname(dirname(Path_Model))
   Path_VarPar <- IASDT.R::Path(
-    Path_Root, "Model_Postprocessing/Variance_Partitioning")
+    Path_Root, "Model_Postprocessing", "Variance_Partitioning")
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -90,10 +90,8 @@ VarPar_Plot <- function(
 
   if (length(Path_Eval) != 1) {
     stop(
-      paste0(
-        "The number of model evaluation files in the directory: ",
-        Path_Root, " is not equal to 1"),
-      call. = FALSE)
+      "The number of model evaluation files in the directory: ",
+      Path_Root, " is not equal to 1", call. = FALSE)
   }
 
   Model_Eval <- IASDT.R::LoadAs(Path_Eval) %>%
@@ -116,7 +114,13 @@ VarPar_Plot <- function(
 
   File_VarPar <- IASDT.R::Path(Path_VarPar, paste0(VarParFile, ".RData"))
 
-  if (!file.exists(File_VarPar)) {
+  if (file.exists(File_VarPar)) {
+
+    IASDT.R::CatTime("Loading variance partitioning", Level = 2)
+    VarPar <- IASDT.R::LoadAs(File_VarPar)
+
+  } else {
+
     IASDT.R::CatTime(
       paste0(
         "Variance partitioning will be computed using ", NCores, " cores ",
@@ -126,11 +130,6 @@ VarPar_Plot <- function(
     VarPar <- IASDT.R::VarPar_Compute(
       Path_Model = Path_Model, NCores = NCores, UseTF = UseTF,
       TF_Environ = TF_Environ, Verbose = TRUE, VarParFile = VarParFile)
-
-  } else {
-
-    IASDT.R::CatTime("Loading variance partitioning", Level = 2)
-    VarPar <- IASDT.R::LoadAs(File_VarPar)
 
   }
 
@@ -382,29 +381,24 @@ VarPar_Plot <- function(
 
   ## Plotting data ----
 
-  if (!is.null(Model_Eval$TjurR2) &&
-      length(Model_Eval$TjurR2) == ncol(VarPar$vals)) {
-
-    VarPar_DF_Raw <- tibble::as_tibble(VarPar$vals, rownames = "Variable") %>%
-      tidyr::pivot_longer(
-        cols = -Variable, names_to = "Species", values_to = "VP_Value") %>%
-      dplyr::left_join(Model_Eval, by = "Species") %>%
-      dplyr::mutate(VP_Value = VP_Value * TjurR2)
-
-  } else {
-
+  if (is.null(Model_Eval$TjurR2) ||
+      length(Model_Eval$TjurR2) != ncol(VarPar$vals)) {
     stop(
-      paste0(
-        "Mismatch between the length of Model_Eval$TjurR2 and the number of ",
-        " columns in VarPar$vals"),
-      call. = FALSE)
+      "Mismatch between the length of Model_Eval$TjurR2 and the number of ",
+      " columns in VarPar$vals", call. = FALSE)
   }
+
+  VarPar_DF_Raw <- tibble::as_tibble(VarPar$vals, rownames = "Variable") %>%
+    tidyr::pivot_longer(
+      cols = -Variable, names_to = "Species", values_to = "VP_Value") %>%
+    dplyr::left_join(Model_Eval, by = "Species") %>%
+    dplyr::mutate(VP_Value = VP_Value * TjurR2)
 
   VarPar_Raw_Mean <- VarPar_DF_Raw %>%
     dplyr::summarise(VP_Value = mean(VP_Value), .by = "Variable") %>%
     dplyr::arrange(dplyr::desc(VP_Value)) %>%
-    dplyr::mutate(VP_Value = VP_Value * 100) %>%
     dplyr::mutate(
+      VP_Value = VP_Value * 100,
       Label = forcats::fct_recode(
         Variable,
         "Habitat coverage" = "HabLog",

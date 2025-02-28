@@ -2,7 +2,7 @@
 % Please edit documentation in R/General_FileSize.R
 \name{FileSize}
 \alias{FileSize}
-\title{File size in a Human Readable format}
+\title{File size in a human-readable format}
 \usage{
 FileSize(File, ...)
 }

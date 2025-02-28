@@ -1,18 +1,17 @@
 ## |------------------------------------------------------------------------| #
 # SaveSession ----
 ## |------------------------------------------------------------------------| #
-#
+
 #' Saves all non-function objects from the global environment to an RData file
 #'
 #' This function saves all objects (except functions and specified exclusions)
 #' from the global environment as list items in an `RData` file. It also creates
 #' a summary of these objects' sizes in memory.
 #'
-#' @param Path Character. Directory path where the output `RData`
-#'   file should be saved. Defaults to the current working directory
-#'   [base::getwd()].
-#' @param ExcludeObj Character vector. Object names (as strings) to exclude 
-#'   from saving.
+#' @param Path Character. Directory path where the output `RData` file should be
+#'   saved. Defaults to the current working directory [base::getwd()].
+#' @param ExcludeObj Character vector. Object names (as strings) to exclude from
+#'   saving.
 #' @param Prefix Character. Prefix the saved file name with. Defaults to `S`.
 #' @author Ahmed El-Gabbas
 #' @return A tibble containing the names and sizes (in MB, rounded to 1 decimal
@@ -63,7 +62,7 @@ SaveSession <- function(Path = getwd(), ExcludeObj = NULL, Prefix = "S") {
         c(lubridate::year(.x), lubridate::month(.x),
           lubridate::day(.x), "__",
           lubridate::hour(.x), lubridate::minute(.x)) %>%
-          sapply(stringr::str_pad, width = 2, pad = "0") %>%
+          purrr::map_chr(stringr::str_pad, width = 2, pad = "0") %>%
           stringr::str_c(collapse = "") %>%
           stringr::str_replace_all("__", "_") %>%
           stringr::str_c(Prefix, "_", ., collapse = "_")
@@ -73,11 +72,12 @@ SaveSession <- function(Path = getwd(), ExcludeObj = NULL, Prefix = "S") {
     InObj = AllObjs, OutObj = FF2,
     OutPath = IASDT.R::Path(Path, paste0(FF2, ".RData")))
 
-  AllObjs %>%
+  Out <- AllObjs %>%
     lapply(lobstr::obj_size) %>%
     tibble::tibble(Obj = names(.), Size = as.numeric(.)) %>%
     dplyr::mutate(Size = Size / (1024 * 1024), Size = round(Size, 1)) %>%
     dplyr::select(Obj, Size) %>%
-    dplyr::arrange(dplyr::desc(Size)) %>%
-    return()
+    dplyr::arrange(dplyr::desc(Size))
+
+  return(Out)
 }

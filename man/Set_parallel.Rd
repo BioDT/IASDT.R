@@ -6,15 +6,23 @@
 \usage{
 Set_parallel(
   NCores = 1L,
+  Strategy = "future::multisession",
   Stop = FALSE,
   Cat = TRUE,
-  Level = 0L,
-  Future_maxSize = 8
+  Future_maxSize = 8L,
+  ...
 )
 }
 \arguments{
 \item{NCores}{Integer. Number of cores to use. If \code{NULL}, defaults to
-sequential mode.}
+sequential mode. Default is \code{1}.}
+
+\item{Strategy}{Character. The parallel processing strategy to use. Valid
+options are \code{future::sequential} (sequential), \code{future::multisession}
+(default), \code{future::multicore} (not supported on Windows), and
+\code{future::cluster}. If \code{Strategy} is not one of the valid options or if
+\code{future::multicore} on Windows PC, it defaults to \code{future::multisession}.
+See \code{future::plan()} for more details.}
 
 \item{Stop}{Logical. If \code{TRUE}, stops any parallel cluster and resets to
 sequential mode. If \code{FALSE} (default), sets up a new plan.}
@@ -22,34 +30,36 @@ sequential mode. If \code{FALSE} (default), sets up a new plan.}
 \item{Cat}{Logical. If \code{TRUE} (default), logs messages via
 \code{\link[=CatTime]{CatTime()}}.}
 
-\item{Level}{Integer. The logging level for \link{CatTime}. Default is \code{0}.}
-
 \item{Future_maxSize}{Numeric. Maximum allowed total size (in megabytes) of
-global variables identified. See `` argument of \link[future:future.options]{future::future.options}
-for more details}
-}
-\value{
-Invisible \code{NULL}. On Windows with \code{NCores > 1}, the cluster object
-(\code{c1}) is assigned to the parent environment and cleaned up automatically
-on exit.
+global variables identified. See \code{future.globals.maxSize} argument of
+\link[future:future.options]{future::future.options} for more details. Default is \code{8}.}
+
+\item{...}{Additional arguments to pass to \link{CatTime}.}
 }
 \description{
 Configures parallel processing with \code{future::plan()} or stops an existing
 plan. When stopping, it resets to sequential mode.
 }
 \examples{
-\dontrun{
-  # Prepare working on parallel
-  IASDT.R::Set_parallel(NCores = min(NCores, nrow(Beta_DF)), Level = 3)
+# Prepare working on parallel
+IASDT.R::Set_parallel(NCores = 2)
+future::plan()
 
-  if (.Platform$OS.type == "windows") {
-    on.exit(try(snow::stopCluster("c1"), silent = TRUE), add = TRUE)
-  }
-  on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
+# ---------------------------------------------
 
-  # Stopping cluster
-  IASDT.R::Set_parallel(Stop = TRUE, Cat = TRUE, Level = 3)
-}
+# Stopping parallel processing
+IASDT.R::Set_parallel(Stop = TRUE)
+future::plan()
+
+# ---------------------------------------------
+
+# Prepare working on parallel using `future::cluster`
+IASDT.R::Set_parallel(NCores = 2, Strategy = "future::cluster")
+future::plan()
+
+# Stopping parallel processing
+IASDT.R::Set_parallel(Stop = TRUE)
+future::plan()
 }
 \author{
 Ahmed El-Gabbas

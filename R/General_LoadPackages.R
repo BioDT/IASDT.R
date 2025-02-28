@@ -64,16 +64,17 @@ LoadPackages <- function(
 
   } else if (length(Pkg_ToInst) > 0) {
     message(
-      paste0("The following packages are neither available nor installed ",
-             "as InstallMissing = FALSE:\n",
-             paste("  >>>>>  ", Pkg_ToInst, collapse = "\n")))
+      "The following packages are neither available nor installed ",
+      "as InstallMissing = FALSE:\n",
+      paste("  >>>>>  ", Pkg_ToInst, collapse = "\n"))
   }
 
   # Packages to load
   Pkg_ToLoad <- setdiff(PG, IASDT.R::LoadedPackages())
 
-  purrr::walk(.x = Pkg_ToLoad, .f = library, character.only = TRUE,
-              quietly = TRUE, warn.conflicts = FALSE) %>%
+  purrr::walk(
+    .x = Pkg_ToLoad, .f = library, character.only = TRUE,
+    quietly = TRUE, warn.conflicts = FALSE) %>%
     invisible() %>%
     suppressWarnings() %>%
     suppressMessages()

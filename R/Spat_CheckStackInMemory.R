@@ -50,17 +50,17 @@ CheckStackInMemory <- function(Stack = NULL) {
     stop("The object should be a RasterStack object", call. = FALSE)
   }
 
-  InMem <- sapply(raster::unstack(Stack), raster::inMemory)
+  InMem <- purrr::map_lgl(raster::unstack(Stack), raster::inMemory)
 
   if (all(InMem)) {
-    message(paste0("All stack layers reads from ", crayon::bold("disk")))
+    message("All stack layers reads from ", crayon::bold("disk"))
   }
-  if (all(!InMem)) {
-    message(paste0("All stack layers reads from ", crayon::bold("memory")))
+  if (!any(InMem)) {
+    message("All stack layers reads from ", crayon::bold("memory"))
   }
 
   if (sum(InMem) > 0 && (sum(InMem) < raster::nlayers(Stack))) {
     paste0("Layers numbered (",
-      paste0(which(!InMem), collapse = "-"), ") reads from disk")
+      paste(which(!InMem), collapse = "-"), ") reads from disk")
   }
 }

@@ -29,18 +29,17 @@
 #'   `TRUE`. Default: `1`.
 #' @param Chunk_size Integer. Size of each chunk of samples to process in
 #'   parallel. Only relevant for TensorFlow. Default: `50`.
-#' @param Verbose Logical. Whether to print progress messages. 
-#'   Default is `TRUE`.
+#' @param Verbose Logical. Whether to print progress messages. Default: `TRUE`.
 #' @param Temp_Cleanup Logical. Whether to delete temporary files after
 #'   processing. Default: `TRUE`.
 #' @param VP_Commands_Only Logical. If `TRUE`, returns the commands to run the
 #'   Python script. Default is `FALSE`. Only relevant when `UseTF` is `TRUE`.
 #' @param VarParFile Character. Name of the output file to save the results.
 #'   Default: `VarPar`.
-#' @param EnvFile Character. Path to the environment file containing paths to 
+#' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
-#' @param FromHPC Logical. Whether the processing is being done on an 
-#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#' @param FromHPC Logical. Whether the processing is being done on an
+#'   High-Performance Computing (HPC) environment, to adjust file paths
 #'   accordingly. Default: `TRUE`.
 #' @param Fig_width,Fig_height Numeric. Width and height of the output plot in
 #'   centimeters. Default: `30` and `15`, respectively.
@@ -79,11 +78,9 @@ VarPar_Compute <- function(
     if (isFALSE(VP_Commands_Only) && .Platform$OS.type == "windows" &&
         (is.null(TF_Environ) || !dir.exists(TF_Environ))) {
       stop(
-        paste0(
-          "When running on Windows and `UseTF` is TRUE, `TF_Environ` must ",
-          "be specified and point to an existing directory with a ",
-          "Python virtual environment"),
-        call. = FALSE)
+        "When running on Windows and `UseTF` is TRUE, `TF_Environ` must ",
+        "be specified and point to an existing directory with a ",
+        "Python virtual environment", call. = FALSE)
     }
 
     # Determine the Python executable path
@@ -95,17 +92,16 @@ VarPar_Compute <- function(
     # using another HPC system, the function needs to be adapted accordingly to
     # point to a valid python virtual environment.
 
-    python_executable <- if (.Platform$OS.type == "windows") {
-      Py <- IASDT.R::Path(TF_Environ, "Scripts", "python.exe")
-      if (isFALSE(VP_Commands_Only) && !file.exists(Py)) {
+    if (.Platform$OS.type == "windows") {
+      python_executable <- IASDT.R::Path(TF_Environ, "Scripts", "python.exe")
+
+      if (isFALSE(VP_Commands_Only) && !file.exists(python_executable)) {
         stop(
-          paste0(
-            "Python executable not found in the virtual environment: ", Py),
-          call. = FALSE)
+          "Python executable not found in the virtual environment: ",
+          python_executable, call. = FALSE)
       }
-      return(Py)
     } else {
-      "/usr/bin/time -v python3"
+      python_executable <- "/usr/bin/time -v python3"
     }
 
     # Check GPU availability
@@ -144,9 +140,7 @@ VarPar_Compute <- function(
   IASDT.R::CatTime("Load model object")
 
   if (is.null(Path_Model) || !file.exists(Path_Model)) {
-    stop(
-      paste0("Model path is NULL or does not exist: ", Path_Model),
-      call. = FALSE)
+    stop("Model path is NULL or does not exist: ", Path_Model, call. = FALSE)
   }
 
   Model <- IASDT.R::LoadAs(Path_Model)
@@ -155,7 +149,8 @@ VarPar_Compute <- function(
 
   # Create folder for variance partitioning results
   Path_VarPar <- IASDT.R::Path(
-    dirname(dirname(Path_Model)), "Model_Postprocessing/Variance_Partitioning")
+    dirname(dirname(Path_Model)),
+    "Model_Postprocessing", "Variance_Partitioning")
   fs::dir_create(Path_VarPar)
 
   # # .................................................................... ###
@@ -358,7 +353,12 @@ VarPar_Compute <- function(
 
       ### Processing geta -----
 
-      if (!Files_la_Exist) {
+      if (Files_la_Exist) {
+
+        IASDT.R::CatTime(
+          "All `la` data were already available on disk", Level = 1)
+
+      } else {
 
         IASDT.R::CatTime("Processing `geta` function", Level = 1)
         Path_Out_a <- IASDT.R::Path(Path_Temp, "VP_A.feather") %>%
@@ -394,18 +394,13 @@ VarPar_Compute <- function(
 
           # Check for errors
           if (inherits(la, "error") || la[length(la)] != "Done") {
-            stop(paste0("Error in computing geta: ", la), call. = FALSE)
+            stop("Error in computing geta: ", la, call. = FALSE)
           }
 
           if (length(la) != 1) {
             cat(la, sep = "\n")
           }
-
         }
-
-      } else {
-        IASDT.R::CatTime(
-          "All `la` data were already available on disk", Level = 1)
       }
 
       invisible(gc())
@@ -414,7 +409,12 @@ VarPar_Compute <- function(
 
       ### Processing getf ----
 
-      if (!Files_la_Exist) {
+      if (Files_la_Exist) {
+
+        IASDT.R::CatTime(
+          "All `lf` data were already available on disk", Level = 1)
+
+      } else {
 
         IASDT.R::CatTime("Processing `getf` function", Level = 1)
         Path_Out_f <- IASDT.R::Path(Path_Temp, "VP_F.feather") %>%
@@ -449,18 +449,13 @@ VarPar_Compute <- function(
 
           # Check for errors
           if (inherits(lf, "error") || lf[length(lf)] != "Done") {
-            stop(paste0("Error in computing geta: ", lf), call. = FALSE)
+            stop("Error in computing geta: ", lf, call. = FALSE)
           }
 
           if (length(lf) != 1) {
             cat(lf, sep = "\n")
           }
-
         }
-
-      } else {
-        IASDT.R::CatTime(
-          "All `lf` data were already available on disk", Level = 1)
       }
 
       invisible(gc())
@@ -469,7 +464,12 @@ VarPar_Compute <- function(
 
       ### Processing gemu ----
 
-      if (!Files_lmu_Exist) {
+      if (Files_lmu_Exist) {
+
+        IASDT.R::CatTime(
+          "All `lmu` data were already available on disk", Level = 1)
+
+      } else {
 
         IASDT.R::CatTime("Processing `gemu` function", Level = 1)
         Path_Out_mu <- IASDT.R::Path(Path_Temp, "VP_Mu.feather") %>%
@@ -505,17 +505,13 @@ VarPar_Compute <- function(
 
           # Check for errors
           if (inherits(lmu, "error") || lmu[length(lmu)] != "Done") {
-            stop(paste0("Error in computing geta: ", lmu), call. = FALSE)
+            stop("Error in computing geta: ", lmu, call. = FALSE)
           }
 
           if (length(lmu) != 1) {
             cat(lmu, sep = "\n")
           }
-
         }
-      } else {
-        IASDT.R::CatTime(
-          "All `lmu` data were already available on disk", Level = 1)
       }
     }
 
@@ -721,10 +717,10 @@ VarPar_Compute <- function(
           fixedsplit[, k] <- fixedsplit1[, k] / rowSums(fixedsplit1)
         }
 
-        list(
-          fixed = fixed, random = random, fixedsplit = fixedsplit,
-          R2T.Y = R2T.Y, R2T.Beta = R2T.Beta) %>%
-          return()
+        return(
+          list(
+            fixed = fixed, random = random, fixedsplit = fixedsplit,
+            R2T.Y = R2T.Y, R2T.Beta = R2T.Beta))
       }
     )
 
@@ -846,7 +842,7 @@ VarPar_Compute <- function(
   colnames(vals) <- Model$spNames
   leg <- groupnames
   for (r in seq_len(nr)) {
-    leg <- c(leg, paste("Random: ", Model$rLNames[r], sep = ""))
+    leg <- c(leg, paste0("Random: ", Model$rLNames[r]))
   }
   rownames(vals) <- leg
 

@@ -9,12 +9,12 @@
 #' [OpenStreetMap Data Extracts](https://download.geofabrik.de/). It supports
 #' parallel processing for faster execution and can calculate the total length
 #' of railways and distance to the nearest railway for each grid cell in Europe.
-#' @param FromHPC Logical. Whether the processing is being done on an 
-#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#' @param FromHPC Logical. Whether the processing is being done on an
+#'   High-Performance Computing (HPC) environment, to adjust file paths
 #'   accordingly. Default: `TRUE`.
-#' @param EnvFile Character. Path to the environment file containing paths to 
+#' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
-#' @param NCores Integer. Number of CPU cores to use for parallel processing. 
+#' @param NCores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 8.
 #' @param DeleteProcessed Logical indicating whether to delete the raw
 #'   downloaded railways files after processing them. This helps to free large
@@ -27,7 +27,7 @@
 
 Railway_Intensity <- function(
     FromHPC = TRUE, EnvFile = ".env", NCores = 6L, DeleteProcessed = TRUE) {
-  
+
   .StartTime <- lubridate::now(tzone = "CET")
 
   # # ..................................................................... ###
@@ -36,7 +36,7 @@ Railway_Intensity <- function(
   IASDT.R::CatTime("Checking arguments")
 
   AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, ~ get(.x, envir = environment())) %>%
+  AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = "EnvFile")
@@ -48,14 +48,9 @@ Railway_Intensity <- function(
 
   # # ..................................................................... ###
 
-  # Check system commands
-  Commands <- c("unzip")
-  CommandsAvail <- purrr::map_lgl(Commands, IASDT.R::CheckCommands)
-  if (!all(CommandsAvail)) {
-    Missing <- paste0(Commands[!CommandsAvail], collapse = " + ")
-    stop(
-      paste0("The following command(s) are not available: ", Missing),
-      call. = FALSE)
+  # Check `unzip` system command
+  if (isFALSE(IASDT.R::CheckCommands("unzip"))) {
+    stop("The system command 'unzip' is not available", call. = FALSE)
   }
 
   # # ..................................................................... ###
@@ -101,18 +96,14 @@ Railway_Intensity <- function(
 
   RefGrid <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(RefGrid)) {
-    stop(
-      paste0("The reference grid file does not exist: ", RefGrid),
-      call. = FALSE)
+    stop("The reference grid file does not exist: ", RefGrid, call. = FALSE)
   }
   RefGrid <- terra::unwrap(IASDT.R::LoadAs(RefGrid))
 
 
   RefGridSF <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
   if (!file.exists(RefGridSF)) {
-    stop(
-      paste0("The reference grid file does not exist: ", RefGridSF),
-      call. = FALSE)
+    stop("The reference grid file does not exist: ", RefGridSF, call. = FALSE)
   }
   RefGridSF <- IASDT.R::LoadAs(RefGridSF)
 
@@ -124,7 +115,7 @@ Railway_Intensity <- function(
 
   if (!IASDT.R::CheckURL(Railways_URL)) {
     stop(
-      paste0("The base URL for railways data is not valid: ", Railways_URL),
+      "The base URL for railways data is not valid: ", Railways_URL,
       call. = FALSE)
   }
 
@@ -178,7 +169,7 @@ Railway_Intensity <- function(
       Success <- FALSE
       if (Attempt == Attempts) {
         stop(
-          paste0("Initial scraping of railways links failed after ", Attempts),
+          "Initial scraping of railways links failed after ", Attempts,
           call. = FALSE)
       }
     }
@@ -212,10 +203,8 @@ Railway_Intensity <- function(
               Success <- FALSE
               if (Attempt == Attempts) {
                 stop(
-                  paste0(
-                    "Scraping railways links failed for: ", ScrapedLinks,
-                    "after ", Attempts),
-                  call. = FALSE)
+                  "Scraping railways links failed for: ", ScrapedLinks,
+                  "after ", Attempts, call. = FALSE)
               }
             }
             Attempt <- Attempt + 1
@@ -371,9 +360,9 @@ Railway_Intensity <- function(
         fs::file_delete(Path)
       }
 
-      tibble::tibble(
-        URL = URL, Country = Country, Area = Prefix, Path = Path_Temp) %>%
-        return()
+      return(
+        tibble::tibble(
+          URL = URL, Country = Country, Area = Prefix, Path = Path_Temp))
     },
     future.scheduling = Inf, future.seed = TRUE,
     future.packages = c("dplyr", "fs", "sf", "IASDT.R", "stringr"),
@@ -400,7 +389,7 @@ Railway_Intensity <- function(
   ## Saving - RData -----
   IASDT.R::CatTime("Saving - RData", Level = 1)
   save(
-    Railways_3035, 
+    Railways_3035,
     file = IASDT.R::Path(Path_Railways, "Railways_3035.RData"))
 
   # # .................................... ###

@@ -12,7 +12,7 @@
 #' Windows, it tries to construct an absolute path, while on Linux, it returns
 #' the input path as-is (relative). To maintain consistency across platforms,
 #' this function uses `fs::path_abs()` instead of `normalizePath()`.
-#' @param Path A character vector of file paths.
+#' @param Path Character vector. file path(s).
 #' @param MustWork Logical; if `TRUE`, the function errors for non-existing
 #'   paths.
 #' @return A character vector of absolute, tidied, and shell-quoted paths.
@@ -32,16 +32,13 @@ NormalizePath <- function(Path, MustWork = FALSE) {
     stop("Error: 'Path' cannot be an empty character vector.", call. = FALSE)
   }
 
-
   # Check path existence before transformation (if MustWork = TRUE)
   if (MustWork) {
     Exists <- dplyr::if_else(
-      fs::is_dir(Path), fs::dir_exists(Path),
-      fs::file_exists(Path))
+      fs::is_dir(Path), fs::dir_exists(Path), fs::file_exists(Path))
 
     if (isFALSE(Exists)) {
-      stop(
-        paste0("Path does not exist: ", Path), call. = FALSE)
+      stop("Path does not exist: ", Path, call. = FALSE)
     }
   }
 
@@ -50,8 +47,9 @@ NormalizePath <- function(Path, MustWork = FALSE) {
     nzchar(Sys.getenv("ComSpec", unset = "")), "cmd", "sh")
 
   # Process and return normalized path
-  fs::path_abs(Path) %>%
+  Out <- fs::path_abs(Path) %>%
     fs::path_tidy() %>%
-    shQuote(type = shell_type) %>%
-    return()
+    shQuote(type = shell_type)
+
+  return(Out)
 }

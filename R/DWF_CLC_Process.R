@@ -2,32 +2,34 @@
 # CLC_Process ------
 ## |------------------------------------------------------------------------| #
 
-#' Process Corine land cover (CLC) data
+#' Process Corine Land Cover (CLC) data for the `IAS-pDT`
 #'
-#' Processes Corine Land Cover (CLC) data for environmental modeling purposes.
-#' The function calculates the percentage coverage of CLC per grid cell. It
-#' estimate the percent coverage at the 3 CLC levels, and cross-walk for
-#' `EUNIS_19` and `SynHab` habitat types. Similarly, the function estimates the
-#' most common class per grid cell (3 CLC levels, EUNIS, and SynHab habitat
-#' types) and prepares reference grid for models. The function optionally plots
-#' % coverage maps.
+#' Processes [Corine Land Cover
+#' (CLC)](https://land.copernicus.eu/pan-european/corine-land-cover/clc2018)
+#' data for the Invasive Alien Species prototype Digital Twin (`IAS-pDT`).
+#' Calculates percentage coverage and most common classes per grid cell at three
+#' CLC levels, plus `EUNIS_19` and `SynHab` habitat types. Prepares a reference
+#' grid and optionally generates percentage coverage maps as JPEG.
+#'
 #' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
 #' @param FromHPC Logical. Whether the processing is being done on an
 #'   High-Performance Computing (HPC) environment, to adjust file paths
 #'   accordingly. Default: `TRUE`.
-#' @param MinLandPerc A numeric value indicating the minimum percentage of land
-#'   per grid cell to be used in the reference grid cell. Defaults to 15.
-#' @param PlotCLC Logical indicating whether to plot the percentage coverage of
-#'   different levels of CLC and custom habitat types. Defaults to `TRUE`.
-#' @return The function does not return a value but produces side effects such
-#'   as saving processed data and plots to specified directories.
+#' @param MinLandPerc Numeric. Minimum land percentage per grid cell for the
+#'   reference grid. Default: `15`.
+#' @param PlotCLC Logical. If `TRUE`, plots percentage coverage for CLC levels
+#'   and habitat types. Default: `TRUE`.
+#' @return Returns `invisible(NULL)`; saves processed data and optional plots to
+#'   disk.
 #' @name CLC_Process
+#'
 #' @author Ahmed El-Gabbas
 #' @export
-#' @details
-#' - [Data source](https://land.copernicus.eu/pan-european/corine-land-cover/clc2018)
-#' - [Citation](https://doi.org/10.2909/960998c1-1870-4e82-8051-6485205ebbac)
+#' @references
+#' - Data source:
+#' <https://land.copernicus.eu/pan-european/corine-land-cover/clc2018>
+#' - Citation: <https://doi.org/10.2909/960998c1-1870-4e82-8051-6485205ebbac>
 
 CLC_Process <- function(
     EnvFile = ".env", FromHPC = TRUE, MinLandPerc = 15, PlotCLC = TRUE) {
@@ -57,9 +59,7 @@ CLC_Process <- function(
 
   if (!file.exists(EnvFile)) {
     stop(
-      paste0(
-        "Path to environment variables (`EnvFile`): ",
-        EnvFile, " was not found"),
+      "Path to environment variables (`EnvFile`): ", EnvFile, " was not found",
       call. = FALSE)
   }
 
@@ -116,7 +116,7 @@ CLC_Process <- function(
     .x = requiredPaths,
     .f = function(path) {
       if (!file.exists(path)) {
-        stop(paste0("Required path does not exist: ", path), call. = FALSE)
+        stop("Required path does not exist: ", path, call. = FALSE)
       }
     }
   )
@@ -228,7 +228,7 @@ CLC_Process <- function(
 
   IASDT.R::CatTime("Save fraction results", Level = 1)
   save(CLC_Fracs,
-    file = IASDT.R::Path(Path_CLC_Summary_RData, "CLC_Fracs.RData"))
+       file = IASDT.R::Path(Path_CLC_Summary_RData, "CLC_Fracs.RData"))
 
   # # ||||||||||||||||||||||||||||||||||||||||||||
   # Convert fractions to raster
@@ -399,11 +399,13 @@ CLC_Process <- function(
 
   fs::dir_create(Path_Grid)
   save(Grid_10_Land, file = IASDT.R::Path(Path_Grid, "Grid_10_Land.RData"))
-  save(Grid_10_Land_Crop,
+  save(
+    Grid_10_Land_Crop,
     file = IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.RData"))
   save(
     Grid_10_Land_sf,  file = IASDT.R::Path(Path_Grid, "Grid_10_Land_sf.RData"))
-  save(Grid_10_Land_Crop_sf,
+  save(
+    Grid_10_Land_Crop_sf,
     file = IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop_sf.RData"))
 
   ## ||||||||||||||||||||||||||||||||||||||||
@@ -412,7 +414,8 @@ CLC_Process <- function(
 
   IASDT.R::CatTime("Save calculated % coverage", Level = 1)
   CLC_FracsR <- terra::wrap(CLC_FracsR)
-  save(CLC_FracsR,
+  save(
+    CLC_FracsR,
     file = IASDT.R::Path(Path_CLC_Summary_RData, "CLC_FracsR.RData"))
 
   rm(CLC_FracsR, envir = environment())
@@ -551,7 +554,8 @@ CLC_Process <- function(
   ## ||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Save majority results", Level = 1)
-  save(CLC_Majority,
+  save(
+    CLC_Majority,
     file = IASDT.R::Path(Path_CLC_Summary_RData, "CLC_Majority.RData"))
 
   invisible(gc())
@@ -613,7 +617,7 @@ CLC_Process <- function(
 #' This function Calculate % coverage of different cross-walks per grid cell.
 #' The function outputs raster and `RData` files containing the percentage cover
 #' information.
-#' @param Type Character. The cross-walk type to be processed. This has to be 
+#' @param Type Character. The cross-walk type to be processed. This has to be
 #'   one of `SynHab`, `CLC_L1`, `CLC_L2`, `CLC_L3`, and `EUNIS_2019`.
 #' @param CLC_CrossWalk `data.frame`. A data frame containing the crosswalk data
 #'   between values and habitat types.
@@ -630,7 +634,7 @@ CLC_GetPerc <- function(
   # # ..................................................................... ###
 
   if (is.null(Type) || is.null(CLC_CrossWalk) || is.null(CLC_FracsR) ||
-    is.null(Path_Tif) || is.null(Path_RData)) {
+      is.null(Path_Tif) || is.null(Path_RData)) {
     stop("None of the input parameters can be empty", call. = FALSE)
   }
 
@@ -722,8 +726,8 @@ CLC_ProcessMajority <- function(
   # # ..................................................................... ###
 
   if (is.null(Type) || is.null(CLC_Majority) || is.null(Path_Tif) ||
-    is.null(Path_Tif_Crop) || is.null(Path_RData) || is.null(Grid_10_Land) ||
-    is.null(Grid_10_Land_Crop)) {
+      is.null(Path_Tif_Crop) || is.null(Path_RData) || is.null(Grid_10_Land) ||
+      is.null(Grid_10_Land_Crop)) {
     stop("None of the input parameters can be empty", call. = FALSE)
   }
 

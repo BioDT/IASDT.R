@@ -11,9 +11,8 @@ Helper R functions for the Invasive Alien Species (IAS) prototype Digital Twin (
 \seealso{
 Useful links:
 \itemize{
-  \item \doi{10.5281/zenodo.14834385}
+  \item \url{https://biodt.github.io/IASDT.R/}
   \item \url{https://biodt.eu}
-  \item \url{https://github.com/BioDT/IASDT.R/}
   \item Report bugs at \url{https://github.com/BioDT/IASDT.R/issues}
 }
 

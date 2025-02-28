@@ -2,7 +2,7 @@
 % Please edit documentation in R/Mod_Install_Hmsc.R
 \name{Install_Hmsc}
 \alias{Install_Hmsc}
-\title{Install Hmsc-HPC in a Python Virtual Environment on Windows}
+\title{Install Hmsc-HPC in a python virtual environment on Windows}
 \usage{
 Install_Hmsc(
   Path_Python,

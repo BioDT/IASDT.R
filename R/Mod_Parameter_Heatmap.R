@@ -76,11 +76,10 @@ Mod_Heatmap_Beta <- function(
   # Loading model object -----
   IASDT.R::CatTime("Loading model object")
 
-  if (file.exists(Path_Model)) {
-    Model <- IASDT.R::LoadAs(Path_Model)
-  } else {
+  if (!file.exists(Path_Model)) {
     stop("Model file not found", call. = FALSE)
   }
+  Model <- IASDT.R::LoadAs(Path_Model)
 
   # # ..................................................................... ###
 

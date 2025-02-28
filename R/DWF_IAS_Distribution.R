@@ -2,39 +2,14 @@
 # IAS_Distribution ----
 ## |------------------------------------------------------------------------| #
 
-#' Prepare distribution maps and summary for Invasive Alien Species (IAS)
-#'
-#' This function processes and analyzes distribution data for Invasive Alien
-#' Species (IAS) from multiple sources (GBIF, EASIN, and eLTER). It generates
-#' presence-absence maps, summarizes distribution data per country and
-#' biogeographical region, and outputs results as tif, RData, and tibble
-#' formats.
-#' @param Species Character. Name of the species to analyze.
-#' @param FromHPC Logical. Whether the processing is being done on an
-#'   High-Performance Computing (HPC) environment, to adjust file paths
-#'   accordingly. Default: `TRUE`.
-#' @param EnvFile Character. Path to the environment file containing paths to
-#'   data sources. Defaults to `.env`.
-#' @param Verbose Logical. Whether to print progress messages.
-#'   Default is `FALSE`.
-#' @param Overwrite Logical. If `TRUE`, the function will overwrite existing
-#'   files (default: `FALSE`).
-#' @return A tibble containing species distribution information, including the
-#'   number of presence grid cells, presence by data provider, and summary
-#'   statistics for biogeographical regions.
-#' @note
-#' - This function is not intended to be used directly by the user or in the
-#'   IAS-pDT, but only used inside the [IAS_Process] function.
-#' - The function returns two sets of presence-absence maps: 1) at the European
-#'   scale giving the data in the three data sources; and 2) the same maps, but
-#'   with assigning grid cells from countries with only cultivated or casual
-#'   observations.
-#' @author Ahmed El-Gabbas
-#' @name IAS_Distribution
 #' @export
+#' @author Ahmed El-Gabbas
+#' @name IAS_data
+#' @rdname IAS_data
+#' @order 2
 
 IAS_Distribution <- function(
-    Species, FromHPC = TRUE, EnvFile = ".env", Verbose = FALSE,
+    Species = NULL, FromHPC = TRUE, EnvFile = ".env", Verbose = FALSE,
     Overwrite = FALSE) {
 
   # # ..................................................................... ###
@@ -58,7 +33,7 @@ IAS_Distribution <- function(
   IASDT.R::CatTime("Checking arguments")
 
   AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, ~ get(.x, envir = environment())) %>%
+  AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
     stats::setNames(AllArgs)
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "character", Args = c("Species", "EnvFile"))
@@ -149,7 +124,7 @@ IAS_Distribution <- function(
   Path_PA_JPEG <- IASDT.R::Path(Path_PA, "JPEG_Maps")
   Path_PA_All <- c(
     Path_PA_Summary, Path_PA_tif, Path_PA_RData, Path_PA_JPEG)
-  Path_PA_Missing <- any(!dir.exists(Path_PA_All))
+  Path_PA_Missing <- !all(dir.exists(Path_PA_All))
   if (Path_PA_Missing) {
     Missing <- which(!dir.exists(Path_PA_All))
     fs::dir_create(Path_PA_All[Missing])
@@ -177,14 +152,12 @@ IAS_Distribution <- function(
 
   if (!dir.exists(Path_GBIF_DT)) {
     stop(
-      paste0("Required path for GBIF data do not exist: ", Path_GBIF_DT),
-      call. = FALSE)
+      "Required path for GBIF data do not exist: ", Path_GBIF_DT, call. = FALSE)
   }
 
   if (!dir.exists(Path_EASIN)) {
     stop(
-      paste0("Required path for EASIN data do not exist: ", Path_EASIN),
-      call. = FALSE)
+      "Required path for EASIN data do not exist: ", Path_EASIN, call. = FALSE)
   }
 
   # # ................................ ###
@@ -211,9 +184,8 @@ IAS_Distribution <- function(
 
   if (!all(file.exists(GridsPath))) {
     stop(
-      paste0(
-        "The following grid files do not exist: \n  >>> ",
-        paste0(GridsPath[!file.exists(GridsPath)], collapse = "\n  >>> ")),
+      "The following grid files do not exist: \n  >>> ",
+      paste(GridsPath[!file.exists(GridsPath)], collapse = "\n  >>> "),
       call. = FALSE)
   }
 
@@ -290,7 +262,7 @@ IAS_Distribution <- function(
     paste0("There are ", length(Countries2Exclude), " countries to exclude:"),
     Level = 2)
   IASDT.R::CatTime(
-    paste0(sort(Countries2Exclude), collapse = " + "), Level = 3)
+    paste(sort(Countries2Exclude), collapse = " + "), Level = 3)
 
   # Mask grid to exclude countries - `TRUE` for grid cells to be considered as
   # presence if present in any of the data source; `FALSE` for grid cells need
@@ -311,7 +283,7 @@ IAS_Distribution <- function(
 
   rm(Grid_10_CNT, envir = environment())
 
-  GBIF_Keys <- paste0(GBIF_Keys, collapse = "_")
+  GBIF_Keys <- paste(GBIF_Keys, collapse = "_")
 
   # # ..................................................................... ###
 
@@ -500,8 +472,7 @@ IAS_Distribution <- function(
   BioReg_R <- IASDT.R::Path(Path_BioReg, "BioReg_R.RData")
   if (isFALSE(IASDT.R::CheckRData(BioReg_R))) {
     stop(
-      paste0(
-        "Required file for biogeographical regions does not exist: ", BioReg_R),
+      "Required file for biogeographical regions does not exist: ", BioReg_R,
       call. = FALSE)
   }
 

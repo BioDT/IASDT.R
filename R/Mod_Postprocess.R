@@ -14,9 +14,6 @@
 #'   the selected model.
 #' @param NCores_VP Integer. Number of cores to use for variance partitioning.
 #'   Defaults to 3.
-#' @param Path_Models Character. Directory for fitted models. Default is
-#'   `datasets/processed/model_fitting`. A subdirectory `TF_postprocess` will be
-#'   created to store the batch scripts and log files.
 #' @param NumFiles Integer. Number of output batch files to create. Must be less
 #'   than or equal to the maximum job limit of the HPC environment.
 #' @param WD Character. Optionally sets the working directory in batch scripts
@@ -172,43 +169,35 @@ Mod_Postprocess_1_CPU <- function(
   ValidHabAbbs <- c(as.character(0:3), "4a", "4b", "10", "12a", "12b")
   if (!(Hab_Abb %in% ValidHabAbbs)) {
     stop(
-      paste0(
-        "Invalid Habitat abbreviation. Valid values are:\n >> ",
-        paste0(ValidHabAbbs, collapse = ", ")),
-      call. = FALSE)
+      "Invalid Habitat abbreviation. Valid values are:\n >> ",
+      toString(ValidHabAbbs), call. = FALSE)
   }
 
   if (!file.exists(EnvFile)) {
     stop(
-      paste0(
-        "Error: Environment file '", EnvFile,
-        "' is invalid or does not exist."),
+      "Error: Environment file '", EnvFile, "' is invalid or does not exist.",
       call. = FALSE)
   }
 
   if (!dir.exists(ModelDir)) {
-    stop(paste0("Model directory: ", ModelDir, " was not found"), call. = FALSE)
+    stop("Model directory: ", ModelDir, " was not found", call. = FALSE)
   }
 
   if (!(Tree %in% c("Tree", "NoTree"))) {
     stop(
-      paste0(
-        "Invalid value for Tree argument. Valid values ",
-        "are: 'Tree' or 'NoTree'"),
-      call. = FALSE)
+      "Invalid value for Tree argument. Valid values ",
+      "are: 'Tree' or 'NoTree'", call. = FALSE)
   }
 
   if (!all(CVName %in% c("CV_Dist", "CV_Large"))) {
     stop(
-      paste0(
-        "Invalid value for CVName argument. Valid values ",
-        "are: 'CV_Dist' or 'CV_Large'"),
-      call. = FALSE)
+      "Invalid value for CVName argument. Valid values ",
+      "are: 'CV_Dist' or 'CV_Large'", call. = FALSE)
   }
 
   # ****************************************************************
 
-  LoadedPackages <- paste0(
+  LoadedPackages <- paste(
     sort(IASDT.R::LoadedPackages()), collapse = " + ") %>%
     stringr::str_wrap(width = 60, indent = 8, exdent = 8)
   cat(
@@ -416,15 +405,14 @@ Mod_Postprocess_1_CPU <- function(
 #' @author Ahmed El-Gabbas
 
 Mod_Prep_TF <- function(
-    Path_Models = "datasets/processed/model_fitting", NumFiles = 210L,
-    EnvFile = ".env", WD = NULL, Partition_Name = "small-g",
-    LF_Time = "01:00:00", VP_Time = "01:30:00") {
+    NumFiles = 210L, FromHPC = TRUE, EnvFile = ".env", WD = NULL,
+    Partition_Name = "small-g", LF_Time = "01:00:00", VP_Time = "01:30:00") {
 
   # ****************************************************************
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  ProjectID <- NULL
+  ProjectID <- Path_Models <- NULL
 
   # ****************************************************************
 
@@ -438,16 +426,10 @@ Mod_Prep_TF <- function(
 
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "character",
-    Args = c("Path_Models", "LF_Time", "VP_Time", "Partition_Name", "EnvFile"))
-
-  IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "numeric", Args = "NumFiles")
+    Args = c("LF_Time", "VP_Time", "Partition_Name", "EnvFile"))
+  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "logical", Args = "FromHPC")
+  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "numeric", Args = "NumFiles")
   rm(AllArgs, envir = environment())
-
-
-  if (!dir.exists(Path_Models)) {
-    stop("`Path_Models` must be a valid directory.", call. = FALSE)
-  }
 
   if (NumFiles <= 0) {
     stop("`NumFiles` must be a positive integer.", call. = FALSE)
@@ -455,11 +437,21 @@ Mod_Prep_TF <- function(
 
   # # Load environment variables, for project ID
   if (!file.exists(EnvFile)) {
-    stop(paste("Environment file not found:", EnvFile), call. = FALSE)
+    stop("Environment file not found:", EnvFile, call. = FALSE)
   }
-  EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
-    "ProjectID", "LUMI_Account_GPU", FALSE, FALSE)
+
+  if (FromHPC) {
+    EnvVars2Read <- tibble::tribble(
+      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "ProjectID", "LUMI_Account_GPU", FALSE, FALSE,
+    "Path_Models", "DP_R_Model_Path", TRUE, FALSE)
+  } else {
+    EnvVars2Read <- tibble::tribble(
+      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "ProjectID", "LUMI_Account_GPU", FALSE, FALSE,
+    "Path_Models", "DP_R_Model_Path", TRUE, FALSE)
+  }
+
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
 
@@ -533,12 +525,12 @@ Mod_Prep_TF <- function(
     "\n# Run array job",
     "head -n $SLURM_ARRAY_TASK_ID $File | tail -n 1 | bash",
     "\necho End of program at `date`\n",
-    paste0("# ", paste0(rep("-", 50), collapse = "")),
+    paste0("# ", strrep("-", 50)),
     paste0(
       "# This script was created on: ",
       format(lubridate::now(tzone = "CET"), format = "%Y-%m-%d %H:%M"),
       " CET"),
-    paste0("# ", paste0(rep("-", 50), collapse = "")))
+    paste0("# ", strrep("-", 50)))
 
   IASDT.R::CatTime(
     paste0("Write VP SLURM script to: `", Path_VP_SLURM, "`"),
@@ -597,10 +589,8 @@ Mod_Prep_TF <- function(
 
   if (length(LF_InFiles) == 0) {
     stop(
-      paste0(
-        "No files found matching the pattern `", LF_Pattern,
-        "` in ", Path_Models),
-      call. = FALSE)
+      "No files found matching the pattern `", LF_Pattern,
+      "` in ", Path_Models, call. = FALSE)
   }
 
   IASDT.R::CatTime(
@@ -730,12 +720,11 @@ Mod_Prep_TF <- function(
     "# Run the selected split file",
     'bash "$SplitFile"',
     "\necho End of program at `date`\n",
-    paste0("# ", paste0(rep("-", 50), collapse = "")),
+    paste0("# ", strrep("-", 50)),
     paste0(
       "# This script was created on: ",
-      format(lubridate::now(tzone = "CET"), format = "%Y-%m-%d %H:%M"),
-      " CET"),
-    paste0("# ", paste0(rep("-", 50), collapse = "")))
+      format(lubridate::now(tzone = "CET"), format = "%Y-%m-%d %H:%M"), " CET"),
+    paste0("# ", strrep("-", 50)))
 
   Path_LF_SLURM <- IASDT.R::Path(Path_TF, "LF_SLURM.slurm")
   IASDT.R::CatTime(
@@ -817,66 +806,53 @@ Mod_Postprocess_2_CPU <- function(
   ValidHabAbbs <- c(as.character(0:3), "4a", "4b", "10", "12a", "12b")
   if (!(Hab_Abb %in% ValidHabAbbs)) {
     stop(
-      paste0(
-        "Invalid Habitat abbreviation. Valid values are:\n >> ",
-        paste0(ValidHabAbbs, collapse = ", ")),
-      call. = FALSE)
+      "Invalid Habitat abbreviation. Valid values are:\n >> ",
+      toString(ValidHabAbbs), call. = FALSE)
   }
 
   if (!file.exists(EnvFile)) {
     stop(
-      paste0(
-        "Error: Environment file '", EnvFile,
-        "' is invalid or does not exist."),
+      "Error: Environment file '", EnvFile, "' is invalid or does not exist.",
       call. = FALSE)
   }
 
   if (!dir.exists(ModelDir)) {
     stop(
-      paste0("Model directory: `", ModelDir, "' is invalid or does not exist."),
+      "Model directory: `", ModelDir, "' is invalid or does not exist.",
       call. = FALSE)
   }
 
   if (!(Tree %in% c("Tree", "NoTree"))) {
     stop(
-      paste0(
-        "Invalid value for Tree argument. Valid values ",
-        "are: 'Tree' or 'NoTree'"),
-      call. = FALSE)
+      "Invalid value for Tree argument. Valid values ",
+      "are: 'Tree' or 'NoTree'", call. = FALSE)
   }
 
   if (Pred_Clamp && is.null(Fix_Efforts)) {
-    stop("`Fix_Efforts` can not be NULL when Clamping is implemented")
+    stop(
+      "`Fix_Efforts` can not be NULL when Clamping is implemented",
+      call. = FALSE)
   }
 
+  ValidModels <- c(
+    "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
+    "MRI-ESM2-0", "UKESM1-0-LL")
 
-  if (!all(
-    CC_Models %in% c(
-      "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
-      "MRI-ESM2-0", "UKESM1-0-LL"))) {
+  if (!all(CC_Models %in% ValidModels)) {
     stop(
-      paste0(
-        "Invalid climate models. Valid values are:\n >> ",
-        paste0(
-          c(
-            "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
-            "MRI-ESM2-0", "UKESM1-0-LL"),
-          collapse = ", ")),
-      call. = FALSE)
+      "Invalid climate models. Valid values are:\n >> ",
+      toString(ValidModels), call. = FALSE)
   }
 
   if (!all(CC_Scenario %in% c("ssp126", "ssp370", "ssp585"))) {
     stop(
-      paste0(
-        "Invalid climate scenarios. Valid values are:\n >> ",
-        paste0(c("ssp126", "ssp370", "ssp585"), collapse = ", ")),
-      call. = FALSE)
+      "Invalid climate scenarios. Valid values are:\n >> ",
+      toString(c("ssp126", "ssp370", "ssp585")), call. = FALSE)
   }
 
   # ****************************************************************
 
-  LoadedPackages <- paste0(
-    sort(IASDT.R::LoadedPackages()), collapse = " + ") %>%
+  LoadedPackages <- paste(sort(IASDT.R::LoadedPackages()), collapse = " + ") %>%
     stringr::str_wrap(width = 60, indent = 8, exdent = 8)
   cat(
     paste0(
@@ -905,8 +881,7 @@ Mod_Postprocess_2_CPU <- function(
 
   if (length(ModelData) != 1) {
     stop(
-      paste0(
-        "Expected one model data file, but found ", length(ModelData), "."),
+      "Expected one model data file, but found ", length(ModelData), ".",
       call. = FALSE)
   }
 

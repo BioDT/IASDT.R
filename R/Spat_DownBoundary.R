@@ -24,9 +24,10 @@ DownBoundary <- function(Left = NULL, Right = NULL, Bottom = NULL, Top = NULL) {
     stop("none of Left, Right, Bottom, or Top can be NULL", call. = FALSE)
   }
 
-  stringr::str_glue(
+  Bound <- stringr::str_glue(
     "POLYGON(({Left} {Bottom},{Right} {Bottom},{Right} {Top},",
     "{Left} {Top},{Left} {Bottom}))") %>%
-    as.character() %>%
-    return()
+    as.character()
+
+  return(Bound)
 }

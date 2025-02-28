@@ -4,13 +4,18 @@
 \alias{LoadAs}
 \title{Load objects from \code{RData} / \code{qs2} / \code{rds} / \code{feather} file}
 \usage{
-LoadAs(File, nthreads = 5, ...)
+LoadAs(File = NULL, nthreads = 5, Timeout = 300, ...)
 }
 \arguments{
-\item{File}{character; the file path of the file to be loaded.}
+\item{File}{Character. the file path or URL of the file to be loaded. If
+\code{File} is a URL, the function will download the file from the URL to a
+temporary file and load it.}
 
 \item{nthreads}{Number of threads to use when reading \code{qs2} files. Default 5;
 see \link[qs2:qs_read]{qs2::qs_read}.}
+
+\item{Timeout}{integer; time in seconds before the download times out.
+Default 300 seconds; see \link{download.file}.}
 
 \item{...}{Additional arguments to be passed to the respective load
 functions. \link[base:load]{base::load} for \code{RData} files; \link[qs2:qs_read]{qs2::qs_read} for \code{qs2} files;
@@ -21,7 +26,7 @@ files.}
 Depending on the contents of the \code{RData} file, this function returns
 either a single R object or a named list of R objects. The names of the
 list elements (if a list is returned) correspond to the names of the
-objects stored within the RData file.
+objects stored within the \code{RData} file.
 }
 \description{
 This function loads an \code{RData} file specified by the \code{File} parameter. If the

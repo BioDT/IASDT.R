@@ -43,8 +43,8 @@ Mod_Postprocess_1_CPU(
 )
 
 Mod_Prep_TF(
-  Path_Models = "datasets/processed/model_fitting",
   NumFiles = 210L,
+  FromHPC = TRUE,
   EnvFile = ".env",
   WD = NULL,
   Partition_Name = "small-g",
@@ -110,8 +110,8 @@ error.}
 "01:00:00" for one hour. Required --- if not provided, the function throws
 an error.}
 
-\item{FromJSON}{Logical. Whether to convert loaded models from JSON
-format before reading. Defaults to \code{FALSE}.}
+\item{FromJSON}{Logical. Whether to convert loaded models from JSON format
+before reading. Defaults to \code{FALSE}.}
 
 \item{GPP_Dist}{Integer. Distance in \emph{kilometers} between knots for the
 selected model.}
@@ -122,8 +122,8 @@ model. Accepts "Tree" (default) or "NoTree".}
 \item{Thin, Samples}{Integer. Thinning value and the number of MCMC samples of
 the selected model.}
 
-\item{NOmega}{Integer. The number of species to be sampled for
-the \code{Omega} parameter transformation. Defaults to 100.}
+\item{NOmega}{Integer. The number of species to be sampled for the \code{Omega}
+parameter transformation. Defaults to 100.}
 
 \item{CVName}{Character vector. Column name(s) in the model input data to be
 used to cross-validate the models (see \link{Mod_PrepData} and \link{Mod_GetCV}).
@@ -188,10 +188,6 @@ Defaults to 3.}
 
 \item{PlotWidth_Omega, PlotHeight_Omega, PlotWidth_Beta, PlotHeight_Beta}{Integer. The width and height of the generated heatmaps of the Omega and
 Beta parameters in centimeters.}
-
-\item{Path_Models}{Character. Directory for fitted models. Default is
-\code{datasets/processed/model_fitting}. A subdirectory \code{TF_postprocess} will be
-created to store the batch scripts and log files.}
 
 \item{NumFiles}{Integer. Number of output batch files to create. Must be less
 than or equal to the maximum job limit of the HPC environment.}

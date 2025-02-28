@@ -2,29 +2,26 @@
 # GetSpeciesName ----
 ## |------------------------------------------------------------------------| #
 
-#' Get Species Name or Information Based on IASDT Species ID
+#' Get species name or information of an `IAS-pDT` species ID
 #'
-#' This function retrieves detailed information on IASDT Species, optionally
-#' filtered by a specific IASDT species ID. It first loads environment variables
-#' from a given file, then reads a species list from a path specified in the
-#' environment variables. If a species ID `SpID` is provided, it only returns
-#' species information for the listed species, otherwise return the full list of
-#' IAS.
-#' @param EnvFile Character. Path to the environment file containing paths to 
+#' This function retrieves detailed information on `IAS-pDT` species list,
+#' optionally filtered by a specific IAS-pDT species ID (`SpeciesID`).
+#'
+#' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
-#' @param SpID optional IASDT species ID for which detailed information is
+#' @param SpeciesID optional IASDT species ID for which detailed information is
 #'   required. If not provided, the function returns the entire species list.
-#' @param FromHPC Logical. Whether the processing is being done on an 
-#'   High-Performance Computing (HPC) environment, to adjust file paths 
+#' @param FromHPC Logical. Whether the processing is being done on an
+#'   High-Performance Computing (HPC) environment, to adjust file paths
 #'   accordingly. Default: `TRUE`.
 #' @name GetSpeciesName
 #' @author Ahmed El-Gabbas
-#' @return A data frame containing species information. If a species ID `SpID`
-#'   is provided, it only returns species information for the listed species,
-#'   otherwise return the full list of IAS.
+#' @return A data frame containing species information. If a species ID
+#'   `SpeciesID` is provided, it only returns species information for the listed
+#'   species, otherwise return the full list of IAS.
 #' @export
 
-GetSpeciesName <- function(SpID = NULL, EnvFile = ".env", FromHPC = TRUE) {
+GetSpeciesName <- function(SpeciesID = NULL, EnvFile = ".env", FromHPC = TRUE) {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
@@ -33,7 +30,7 @@ GetSpeciesName <- function(SpID = NULL, EnvFile = ".env", FromHPC = TRUE) {
   # Load environment variables
   if (!file.exists(EnvFile)) {
     stop(
-      paste0("Path to environment variables: ", EnvFile, " was not found"),
+      "Path to environment variables: ", EnvFile, " was not found",
       call. = FALSE)
   }
 
@@ -61,32 +58,33 @@ GetSpeciesName <- function(SpID = NULL, EnvFile = ".env", FromHPC = TRUE) {
     dplyr::mutate(
       IAS_ID = paste0("Sp_", stringr::str_pad(IAS_ID, pad = "0", width = 4)))
 
-  if (is.null(SpID)) {
+  if (is.null(SpeciesID)) {
     return(SpNames)
   } else {
 
-    if (is.numeric(SpID)) {
-      SpID <- paste0("Sp_", stringr::str_pad(SpID, pad = "0", width = 4))
+    if (is.numeric(SpeciesID)) {
+      SpeciesID <- paste0(
+        "Sp_", stringr::str_pad(SpeciesID, pad = "0", width = 4))
     }
 
     NGridCells <- IASDT.R::Path(Path_PA, "Sp_PA_Summary_DF.RData")
 
     if (!file.exists(NGridCells)) {
       stop(
-        paste0(
-          "Sp_PA_Summary_DF.RData file does not exist in the ",
-          Path_PA, " folder"))
+        "Sp_PA_Summary_DF.RData file does not exist in the ", Path_PA,
+        " folder", call. = FALSE)
     }
 
     NGridCells <- IASDT.R::LoadAs(NGridCells) %>%
       dplyr::mutate(
         IAS_ID = paste0(
           "Sp_", stringr::str_pad(IAS_ID, pad = "0", width = 4))) %>%
-      dplyr::filter(IAS_ID == SpID) %>%
+      dplyr::filter(IAS_ID == SpeciesID) %>%
       dplyr::pull("NCells_All")
 
-    dplyr::filter(SpNames, IAS_ID == SpID) %>%
-      dplyr::mutate(NCells = NGridCells) %>%
-      return()
+    Out <- dplyr::filter(SpNames, IAS_ID == SpeciesID) %>%
+      dplyr::mutate(NCells = NGridCells)
+
+    return(Out)
   }
 }

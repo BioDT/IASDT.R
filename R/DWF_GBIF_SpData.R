@@ -2,28 +2,15 @@
 # GBIF_SpData ----
 ## |------------------------------------------------------------------------| #
 
-#' Extract species data as sf and Raster and plot species distribution
-#'
-#' Extracts and processes species data from processed GBIF data, generating
-#' grids, rasters, and visual maps.
-#' @param Species Character. Species name.
-#' @param FromHPC Logical. Whether the processing is being done on an 
-#'   High-Performance Computing (HPC) environment, to adjust file paths 
-#'   accordingly. Default: `TRUE`.
-#' @param EnvFile Character. Path to the environment file containing paths to 
-#'   data sources. Defaults to `.env`.
-#' @param Verbose Logical. Whether to print progress messages. Default is 
-#'   `TRUE`.
-#' @param LastUpdate Character. Last update date to be displayed on the plots.
-#' @note This function is not intended to be used directly by the user or in the
-#'   IAS-pDT, but only used inside the [GBIF_Process] function.
-#' @name GBIF_SpData
 #' @author Ahmed El-Gabbas
 #' @export
+#' @name GBIF_data
+#' @rdname GBIF_data
+#' @order 5
 
 GBIF_SpData <- function(
     Species = NULL, FromHPC = TRUE, EnvFile = ".env", Verbose = TRUE,
-    LastUpdate = NULL) {
+    PlotTag = NULL) {
 
   # # ..................................................................... ###
 
@@ -33,12 +20,12 @@ GBIF_SpData <- function(
   }
 
   AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, ~ get(.x, envir = environment())) %>%
+  AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "character",
-    Args = c("EnvFile", "Species", "LastUpdate"))
+    Args = c("EnvFile", "Species", "PlotTag"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "logical", Args = c("FromHPC", "Verbose"))
 
@@ -84,16 +71,14 @@ GBIF_SpData <- function(
   # # Grid_10_Land_Crop_sf
   GridSf <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
   if (!file.exists(GridSf)) {
-    stop(
-      paste0("Reference grid file (sf) not found at: ", GridSf),
-      call. = FALSE)
+    stop("Reference grid file (sf) not found at: ", GridSf, call. = FALSE)
   }
   GridSf <- IASDT.R::LoadAs(GridSf)
 
   # Grid_10_Land_Crop
   GridR <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(GridR)) {
-    stop(paste0("Reference grid file not found at: ", GridR), call. = FALSE)
+    stop("Reference grid file not found at: ", GridR, call. = FALSE)
   }
   GridR <- terra::unwrap(IASDT.R::LoadAs(GridR))
 
@@ -218,7 +203,7 @@ GBIF_SpData <- function(
         expand = ggplot2::expansion(mult = c(0, 0))) +
       ggplot2::labs(
         title = stringr::str_replace_all(Species, "_", " "),
-        fill = "# observations", tag = LastUpdate) +
+        fill = "# observations", tag = PlotTag) +
       PlottingTheme
 
     SpPlot <- cowplot::ggdraw(SpPlot) +

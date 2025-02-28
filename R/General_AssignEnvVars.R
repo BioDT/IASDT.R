@@ -31,20 +31,23 @@ AssignEnvVars <- function(EnvFile = ".env", EnvVarDT = NULL) {
   }
 
   if (!file.exists((EnvFile))) {
-    stop(paste0(EnvFile, " file does not exist"), call. = FALSE)
+    stop(EnvFile, " file does not exist", call. = FALSE)
   }
 
   if (!inherits(EnvVarDT, "data.frame")) {
-    stop("The provided EnvVarDT object should be either tibble or data frame")
+    stop(
+      "The provided EnvVarDT object should be either tibble or data frame",
+      call. = FALSE)
   }
 
   MatchNames <- setdiff(
     c("VarName", "Value", "CheckDir", "CheckFile"),
     names(EnvVarDT))
+
   if (length(MatchNames) > 0) {
-    stop(paste0(
+    stop(
       "The following columns are missing from the EnvVarDT object: ",
-      paste0(MatchNames, collapse = "; ")), call. = FALSE)
+      paste(MatchNames, collapse = "; "), call. = FALSE)
   }
 
   InClasses <- purrr::map_chr(EnvVarDT, class)
@@ -79,25 +82,22 @@ AssignEnvVars <- function(EnvFile = ".env", EnvVarDT = NULL) {
 
       if (CheckDir && CheckFile) {
         stop(
-          paste0(
-            Val, " should be checked as either file or directory, not both"),
+          Val, " should be checked as either file or directory, not both",
           call. = FALSE)
       }
 
-      if (nchar(Val) == 0) {
+      if (!nzchar(Val)) {
         stop(
-          paste0(
-            "`", EV_Name,
-            "` environment variable was not set in the .env file"),
-          call. = FALSE)
+          "`", EV_Name,
+          "` environment variable was not set in the .env file", call. = FALSE)
       }
 
       if (CheckDir && !dir.exists(Val)) {
-        stop(paste0("`", Val, "` directory does not exist"), call. = FALSE)
+        stop("`", Val, "` directory does not exist", call. = FALSE)
       }
 
       if (CheckFile && !file.exists(Val)) {
-        stop(paste0("`", Val, "` file does not exist"), call. = FALSE)
+        stop("`", Val, "` file does not exist", call. = FALSE)
       }
 
       assign(x = Var_Name, value = Val, envir = parent.frame(5))

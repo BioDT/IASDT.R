@@ -7,7 +7,7 @@
 ht(DF = NULL, NRows = 5L)
 }
 \arguments{
-\item{DF}{\verb{data.frame. A data frame to print. This parameter cannot be  }NULL`.}
+\item{DF}{\verb{data.frame. A data frame to print. This parameter cannot be }NULL`.}
 
 \item{NRows}{Integer. Number of rows to print from both the head and tail of
 the data frame. Defaults to 5.}

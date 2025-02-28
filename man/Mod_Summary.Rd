@@ -12,17 +12,17 @@ Mod_Summary(
 )
 }
 \arguments{
-\item{Path_Coda}{Character. Path to the \code{.qs2} / \code{.RData} file containing
-the coda object.}
+\item{Path_Coda}{Character. Path to the \code{.qs2} / \code{.RData} file containing the
+coda object.}
 
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
 
-\item{ReturnData}{Logical. Whether the summarized data should be
-returned as an R object. If \code{TRUE}, the function returns a list containing
-summaries of \code{Alpha}, \code{Beta}, \code{Rho}, and \code{Omega} parameters. The default
-value is \code{FALSE}, which means the function will not return any data but
-will save the summaries to a specified directory.}
+\item{ReturnData}{Logical. Whether the summarized data should be returned as
+an R object. If \code{TRUE}, the function returns a list containing summaries of
+\code{Alpha}, \code{Beta}, \code{Rho}, and \code{Omega} parameters. The default value is
+\code{FALSE}, which means the function will not return any data but will save
+the summaries to a specified directory.}
 
 \item{FromHPC}{Logical. Whether the processing is being done on an
 High-Performance Computing (HPC) environment, to adjust file paths

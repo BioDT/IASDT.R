@@ -21,12 +21,8 @@ Mod_SLURM_Refit <- function(
   NullVars <- which(purrr::map_lgl(.x = NullVarsNames, .f = ~ is.null(get(.x))))
 
   if (length(NullVars) > 0) {
-    NullVarsNames[NullVars]
     stop(
-      paste0(
-        paste0(NullVarsNames[NullVars], collapse = ", "),
-        " cannot be missing."),
-      call. = FALSE)
+      toString(NullVarsNames[NullVars]), " cannot be missing.", call. = FALSE)
   }
 
   # # ..................................................................... ###
@@ -38,8 +34,8 @@ Mod_SLURM_Refit <- function(
   # # ..................................................................... ###
 
   if (!file.exists(EnvFile)) {
-    stop(paste0(
-      "Path to environment variables: ", EnvFile, " was not found"),
+    stop(
+      "Path to environment variables: ", EnvFile, " was not found",
       call. = FALSE)
   }
 
@@ -52,7 +48,7 @@ Mod_SLURM_Refit <- function(
   # Checking arguments -----
 
   AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(.x = AllArgs, .f = ~get(.x, envir = environment())) %>%
+  AllArgs <- purrr::map(.x = AllArgs, .f = get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
@@ -64,7 +60,7 @@ Mod_SLURM_Refit <- function(
     AllArgs = AllArgs, Type = "numeric",
     Args = c("NumArrayJobs", "ntasks", "CpusPerTask", "GpusPerNode"))
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Args = c("CatJobInfo"), Type = "logical")
+    AllArgs = AllArgs, Args = "CatJobInfo", Type = "logical")
   rm(AllArgs, envir = environment())
 
   # # ..................................................................... ###
@@ -72,7 +68,7 @@ Mod_SLURM_Refit <- function(
   # Remove temp files and incomplete RDs files -----
 
   if (!fs::dir_exists(ModelDir)) {
-    stop(paste("Model directory does not exist:", ModelDir), call. = FALSE)
+    stop("Model directory does not exist:", ModelDir, call. = FALSE)
   }
 
   Path_Model_Fit <- IASDT.R::Path(ModelDir, "Model_Fitting_HPC")

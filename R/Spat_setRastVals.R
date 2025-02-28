@@ -41,17 +41,14 @@ setRastVals <- function(R) {
 
   # Convert raster package objects to SpatRaster
   if (!inherits(R, "SpatRaster")) {
-    if (inherits(R, "RasterLayer") || inherits(R, "RasterStack") ||
-        inherits(R, "RasterBrick")) {
-      R <- terra::rast(R)
-    } else {
+    if (!inherits(R, c("RasterLayer", "RasterStack", "RasterBrick"))) {
       stop(
-        paste0(
-          "Input object must be a `SpatRaster`, `RasterLayer`, ",
-          "`RasterStack`, or `RasterBrick` object"),
-        call. = FALSE)
+        "Input object must be a `SpatRaster`, `RasterLayer`, ",
+        "`RasterStack`, or `RasterBrick` object", call. = FALSE)
     }
+    R <- terra::rast(R)
   }
+
 
   # Unwrap when necessary
   if (inherits(R, "PackedSpatRaster")) {
@@ -59,12 +56,11 @@ setRastVals <- function(R) {
       terra::unwrap(R),
       error = function(e) {
         stop("Failed to unwrap PackedSpatRaster: ", e$message, call. = FALSE)
-      }
-    )
+      })
   }
 
   # Set values
-  if (any(!terra::inMemory(R))) {
+  if (!all(terra::inMemory(R))) {
     terra::values(R) <- terra::values(R)
   }
 

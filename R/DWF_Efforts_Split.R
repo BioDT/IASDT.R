@@ -2,56 +2,76 @@
 # Efforts_Split ----
 ## |------------------------------------------------------------------------| #
 
-#' Split Order data into smaller chunks
-#'
-#' This function extracts Order data without extracting the zipped archive. The
-#' function reads CSV files inside the zipped file, selects specified columns,
-#' and splits the data into smaller chunks of specified row size, saving each
-#' chunk as a separate file.
-#' @param Path_Zip Character. The file path to the zip archive containing the
-#'   CSV file. The file must be a ZIP archive containing a single CSV file.
-#' @param Path_Output Character. The directory where the split files will be
-#'   saved. The directory must exist.
-#' @param ChunkSize Integer. The number of rows per chunk file. Default:
-#'   `100,000`. Note: Larger chunk sizes may require significant memory and
-#'   processing power.
-#' @return A character vector of file path(s) to the created chunk files.
-#' @name Efforts_Split
 #' @author Ahmed El-Gabbas
-#' @note This function is not intended to be used directly by the user or in the
-#'   IAS-pDT, but only used inside the [Efforts_Process] function.
+#' @name Efforts_data
+#' @rdname Efforts_data
+#' @order 5
 #' @export
 
-Efforts_Split <- function(Path_Zip, Path_Output, ChunkSize = 100000) {
+Efforts_Split <- function(
+  Path_Zip = NULL, FromHPC = TRUE, EnvFile = ".env", ChunkSize = 100000L) {
 
   # # ..................................................................... ###
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  ID <- Col <- NULL
+  ID <- Col <- Path_Interim <- NULL
 
   # # ..................................................................... ###
 
   # Check if ChunkSize is valid (greater than zero)
   if (!is.numeric(ChunkSize) || ChunkSize <= 0) {
-    stop("ChunkSize must be a positive number.")
+    stop("ChunkSize must be a positive number.", call. = FALSE)
   }
+
+  # Check if `Path_Zip` is a character of length 1 and not empty. Also Check
+  # if file exists
+  if (!is.character(Path_Zip) || length(Path_Zip) != 1 || Path_Zip == "" ||
+    is.null(Path_Zip)) {
+    stop(
+      "`Path_Zip` must be a character of length 1 and not empty.",
+      call. = FALSE)
+  }
+
+  # Check if `Path_Zip` is a valid path
+  if (!file.exists(Path_Zip)) {
+    stop("`Path_Zip` is not a valid path.", call. = FALSE)
+  }
+
 
   # Checking required bash tools
   Commands <- c("unzip", "cut", "sed", "split")
   CommandsAvail <- purrr::map_lgl(Commands, IASDT.R::CheckCommands)
   if (!all(CommandsAvail)) {
-    Missing <- paste0(Commands[!CommandsAvail], collapse = " + ")
-    stop(
-      paste0("The following command(s) are not available: ", Missing),
-      call. = FALSE)
+    Missing <- paste(Commands[!CommandsAvail], collapse = " + ")
+    stop("The following command(s) are not available: ", Missing, call. = FALSE)
   }
 
   # ensure that `ChunkSize` is not formatted in scientific notation
   ChunkSize <- format(ChunkSize, scientific = FALSE)
 
+  # # ..................................................................... ###
+
+  # Environment variables ----
+  IASDT.R::CatTime("Environment variables")
+
+  if (FromHPC) {
+    EnvVars2Read <- tibble::tribble(
+      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+      "Path_Interim", "DP_R_Efforts_Interim", FALSE, FALSE)
+  } else {
+    EnvVars2Read <- tibble::tribble(
+      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+      "Path_Interim", "DP_R_Efforts_Interim_Local", FALSE, FALSE)
+  }
+
+  # Assign environment variables and check file and paths
+  IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+
+  # # ..................................................................... ###
+
   OutPrefix <- stringr::str_replace(basename(Path_Zip), ".zip$", "_") %>%
-    IASDT.R::Path(Path_Output, .)
+    IASDT.R::Path(Path_Interim, .)
 
   # nolint start
   CSV_File <- stringr::str_replace(basename(Path_Zip), ".zip$", ".csv")
@@ -86,14 +106,14 @@ Efforts_Split <- function(Path_Zip, Path_Output, ChunkSize = 100000) {
   Path_Chunks <- tryCatch(
     IASDT.R::System(Command, RObj = FALSE),
     error = function(e) {
-      stop("Failed to execute system command: ", e$message)
+      stop("Failed to execute system command: ", e$message, call. = FALSE)
     }
   )
   rm(Path_Chunks, envir = environment())
 
   return(
     list.files(
-      Path_Output,
+      Path_Interim,
       full.names = TRUE,
       pattern = paste0(basename(OutPrefix), ".+txt")
     )

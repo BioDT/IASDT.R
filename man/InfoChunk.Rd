@@ -55,7 +55,11 @@ separators for better readability in console outputs or logs.
 }
 \examples{
 InfoChunk(Message = "Started")
+
 InfoChunk(Message = "finished", Char = "*", CharReps = 60)
+
+InfoChunk(Message = "Started", Bold =  TRUE, Red = TRUE)
+
 }
 \author{
 Ahmed El-Gabbas

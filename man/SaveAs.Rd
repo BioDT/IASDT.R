@@ -5,10 +5,10 @@
 \title{Save an object to a file with a new name}
 \usage{
 SaveAs(
-  InObj,
+  InObj = NULL,
   OutObj = NULL,
-  OutPath,
-  nthreads = 5,
+  OutPath = NULL,
+  nthreads = 5L,
   feather_compression = "zstd",
   ...
 )
@@ -17,20 +17,20 @@ SaveAs(
 \item{InObj}{The input object to be saved. This can be an actual R object or
 a character string representing the name of an object.}
 
-\item{OutObj}{Character. The new name for the saved
-\code{RData} object. This name is used when the object is loaded back into R.
-Default is \code{NULL}. This is required when saving \code{RData} files.}
+\item{OutObj}{Character. The new name for the saved \code{RData} object. This name
+is used when the object is loaded back into R. Default is \code{NULL}. This is
+required when saving \code{RData} files.}
 
 \item{OutPath}{Character. File path (ends with either \verb{*.RData}, \verb{*.qs2},
 \code{feather}, and \code{rds}) where the object be saved. This includes the
 directory and the file name.}
 
-\item{nthreads}{Character. Number of threads to use
-when compressing data. See \link[qs2:qs_save]{qs2::qs_save}.}
+\item{nthreads}{Character. Number of threads to use when compressing data.
+See \link[qs2:qs_save]{qs2::qs_save}.}
 
-\item{feather_compression}{Character. The compression
-algorithm to use when saving the object in the \code{feather} format. The
-default is "zstd". See \link[arrow:write_feather]{arrow::write_feather}.}
+\item{feather_compression}{Character. The compression algorithm to use when
+saving the object in the \code{feather} format. The default is "zstd". See
+\link[arrow:write_feather]{arrow::write_feather}.}
 
 \item{...}{Additional arguments to be passed to the respective save
 functions. \link[base:save]{base::save} for \code{RData} files; \link[qs2:qs_save]{qs2::qs_save} for \code{qs2} files;

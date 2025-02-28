@@ -2,7 +2,7 @@
 % Please edit documentation in R/Mod_CV_Fit.R
 \name{Mod_CV_Fit}
 \alias{Mod_CV_Fit}
-\title{Prepare cross-Validated Hmsc models for HPC fitting}
+\title{Prepare cross-validated Hmsc models for HPC fitting}
 \usage{
 Mod_CV_Fit(
   Path_Model = NULL,

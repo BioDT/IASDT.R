@@ -2,12 +2,12 @@
 % Please edit documentation in R/DWF_GetSpeciesName.R
 \name{GetSpeciesName}
 \alias{GetSpeciesName}
-\title{Get Species Name or Information Based on IASDT Species ID}
+\title{Get species name or information of an \code{IAS-pDT} species ID}
 \usage{
-GetSpeciesName(SpID = NULL, EnvFile = ".env", FromHPC = TRUE)
+GetSpeciesName(SpeciesID = NULL, EnvFile = ".env", FromHPC = TRUE)
 }
 \arguments{
-\item{SpID}{optional IASDT species ID for which detailed information is
+\item{SpeciesID}{optional IASDT species ID for which detailed information is
 required. If not provided, the function returns the entire species list.}
 
 \item{EnvFile}{Character. Path to the environment file containing paths to
@@ -18,17 +18,13 @@ High-Performance Computing (HPC) environment, to adjust file paths
 accordingly. Default: \code{TRUE}.}
 }
 \value{
-A data frame containing species information. If a species ID \code{SpID}
-is provided, it only returns species information for the listed species,
-otherwise return the full list of IAS.
+A data frame containing species information. If a species ID
+\code{SpeciesID} is provided, it only returns species information for the listed
+species, otherwise return the full list of IAS.
 }
 \description{
-This function retrieves detailed information on IASDT Species, optionally
-filtered by a specific IASDT species ID. It first loads environment variables
-from a given file, then reads a species list from a path specified in the
-environment variables. If a species ID \code{SpID} is provided, it only returns
-species information for the listed species, otherwise return the full list of
-IAS.
+This function retrieves detailed information on \code{IAS-pDT} species list,
+optionally filtered by a specific IAS-pDT species ID (\code{SpeciesID}).
 }
 \author{
 Ahmed El-Gabbas

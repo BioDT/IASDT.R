@@ -20,13 +20,17 @@ GetBashVars <- function() {
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Var <- Value <- NULL
 
-  # Convert command line arguments into a data frame
-  commandArgs(trailingOnly = TRUE) %>%
-    stringr::str_split("=", simplify = TRUE) %>%
-    as.data.frame(stringsAsFactors = FALSE) %>%
-    stats::setNames(c("Var", "Value")) %>%
-    tibble::tibble() %>%
-    dplyr::mutate(
-      Eval = purrr::walk2(Var, Value, assign, envir = globalenv())) %>%
-    invisible()
+  CommandArgs <- commandArgs(trailingOnly = TRUE)
+
+  if (length(CommandArgs) > 0) {
+    # Convert command line arguments into a data frame
+    CommandArgs %>%
+      stringr::str_split("=", simplify = TRUE) %>%
+      as.data.frame(stringsAsFactors = FALSE) %>%
+      stats::setNames(c("Var", "Value")) %>%
+      tibble::tibble() %>%
+      dplyr::mutate(
+        Eval = purrr::walk2(Var, Value, assign, envir = globalenv()))
+  }
+  return(invisible(NULL))
 }

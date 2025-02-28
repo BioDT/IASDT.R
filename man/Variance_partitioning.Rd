@@ -72,8 +72,7 @@ processing. Default: \code{TRUE}.}
 \item{Chunk_size}{Integer. Size of each chunk of samples to process in
 parallel. Only relevant for TensorFlow. Default: \code{50}.}
 
-\item{Verbose}{Logical. Whether to print progress messages.
-Default is \code{TRUE}.}
+\item{Verbose}{Logical. Whether to print progress messages. Default: \code{TRUE}.}
 
 \item{VarParFile}{Character. Name of the output file to save the results.
 Default: \code{VarPar}.}

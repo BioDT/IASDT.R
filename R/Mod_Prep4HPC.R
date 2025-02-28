@@ -222,17 +222,13 @@ Mod_Prep4HPC <- function(
 
   if (any(IsNull)) {
     stop(
-      paste0(
-        paste0("`", CheckNULL[which(IsNull)], "`", collapse = ", "),
-        " can not be empty"),
-      call. = FALSE)
+      paste0("`", CheckNULL[which(IsNull)], "`", collapse = ", "),
+      " can not be empty", call. = FALSE)
   }
 
   if (!(Precision %in% c(32, 64))) {
     stop(
-      paste0(
-        "Precision should be either of 32 or 64, not ", Precision),
-      call. = FALSE)
+      "Precision should be either of 32 or 64, not ", Precision, call. = FALSE)
   }
 
   Hab_Abb <- as.character(Hab_Abb)
@@ -289,8 +285,8 @@ Mod_Prep4HPC <- function(
   IASDT.R::CatTime("Load/check environment variables")
 
   if (!file.exists(EnvFile)) {
-    stop(paste0(
-      "Path to environment variables: ", EnvFile, " was not found"),
+    stop(
+      "Path to environment variables: ", EnvFile, " was not found",
       call. = FALSE)
   }
 
@@ -311,9 +307,7 @@ Mod_Prep4HPC <- function(
 
     # Check if Python executable exists
     if (CheckPython && !file.exists(Path_Python)) {
-      stop(
-        paste0("Python executable does not exist: ", Path_Python),
-        call. = FALSE)
+      stop("Python executable does not exist: ", Path_Python, call. = FALSE)
     }
   }
 
@@ -368,10 +362,9 @@ Mod_Prep4HPC <- function(
 
   NumArgsInvalid <- purrr::map_lgl(.x = NumericArgs, .f = ~all(get(.x) < 1))
   if (any(NumArgsInvalid)) {
-    paste0(
+    stop(
       "The following parameter(s) can not be < 1\n  >>  ",
-      paste0(NumericArgs[NumArgsInvalid], collapse = " | ")) %>%
-      stop(call. = FALSE)
+      paste(NumericArgs[NumArgsInvalid], collapse = " | "), call. = FALSE)
   }
 
   rm(AllArgs, CharArgs, LogicArgs, NumericArgs, envir = environment())
@@ -390,7 +383,7 @@ Mod_Prep4HPC <- function(
       Path_GridR <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.RData")
       if (!file.exists(Path_GridR)) {
         stop(
-          paste0("Path for the Europe boundaries does not exist: ", Path_GridR),
+          "Path for the Europe boundaries does not exist: ", Path_GridR,
           call. = FALSE)
       }
     }
@@ -422,10 +415,8 @@ Mod_Prep4HPC <- function(
   if (isFALSE(all(BioVars %in% IASDT.R::CHELSA_Vars$Variable))) {
     WrongBio <- BioVars[which(!(BioVars %in% IASDT.R::CHELSA_Vars$Variable))]
     stop(
-      paste0(
-        "The following are invalid Bioclimatic variables: ",
-        paste0(WrongBio, collapse = " | ")),
-      call. = FALSE)
+      "The following are invalid Bioclimatic variables: ",
+      paste(WrongBio, collapse = " | "), call. = FALSE)
   }
 
   XVars <- BioVars
@@ -454,10 +445,8 @@ Mod_Prep4HPC <- function(
   ValidHabAbbs <- c(0:3, "4a", "4b", 10, "12a", "12b")
   if (isFALSE(as.character(Hab_Abb) %in% ValidHabAbbs)) {
     stop(
-      paste0(
-        "Hab_Abb has to be one of the following:\n >> ",
-        paste0(ValidHabAbbs, collapse = " | ")),
-      call. = FALSE)
+      "Hab_Abb has to be one of the following:\n >> ",
+      paste(ValidHabAbbs, collapse = " | "), call. = FALSE)
   }
 
   HabVal <- c(
@@ -489,15 +478,14 @@ Mod_Prep4HPC <- function(
     ValidCountries <- ModelCountry %in% unique(DT_All$Country)
 
     if (!all(ValidCountries)) {
-      stop(paste0(
+      stop(
         "The following are invalid country names: ",
-        paste0(ModelCountry[!ValidCountries], collapse = " & ")),
-        call. = FALSE)
+        paste(ModelCountry[!ValidCountries], collapse = " & "), call. = FALSE)
     }
 
     IASDT.R::CatTime(
       paste0(
-        "Subsetting data to: ", paste0(sort(ModelCountry), collapse = " & ")),
+        "Subsetting data to: ", paste(sort(ModelCountry), collapse = " & ")),
       Level = 1)
 
     Sample_ExclSp <- dplyr::filter(DT_All, Country %in% ModelCountry) %>%
@@ -558,7 +546,7 @@ Mod_Prep4HPC <- function(
     NGrids <- format(nrow(DT_All), big.mark = ",")
     NSp <- length(stringr::str_subset(names(DT_All), "Sp_"))
 
-    Caption <- paste0(sort(ModelCountry), collapse = "; ") %>%
+    Caption <- paste(sort(ModelCountry), collapse = "; ") %>%
       stringr::str_wrap(width = 110) %>%
       paste0("<strong>Selected countries</strong>: <br/>", .) %>%
       stringr::str_replace_all("\n", "<br/>")
@@ -674,7 +662,7 @@ Mod_Prep4HPC <- function(
   IASDT.R::CatTime("Save species summary", Level = 1)
   SpSummary <- IASDT.R::Path(Path_PA, "Sp_PA_Summary_DF.RData")
   if (!file.exists(SpSummary)) {
-    stop(paste0(SpSummary, " file does not exist"), call. = FALSE)
+    stop(SpSummary, " file does not exist", call. = FALSE)
   }
   SpSummary <- IASDT.R::LoadAs(SpSummary) %>%
     dplyr::arrange(IAS_ID) %>%
@@ -702,7 +690,7 @@ Mod_Prep4HPC <- function(
     IASDT.R::CatTime(
       paste0(
         "Models will be fitted using ", length(XVars), " predictors: ",
-        paste0(XVars, collapse = " + ")), Level = 1)
+        paste(XVars, collapse = " + ")), Level = 1)
   } else {
     OnlyLinear <- setdiff(XVars, QuadraticVars)
     FormVars <- c(
@@ -712,12 +700,12 @@ Mod_Prep4HPC <- function(
     IASDT.R::CatTime("Models will be fitted using:", Level = 1)
 
     IASDT.R::CatTime(paste0(length(OnlyLinear), " linear effect: "), Level = 2)
-    IASDT.R::CatTime(paste0(OnlyLinear, collapse = " + "), Level = 3)
+    IASDT.R::CatTime(paste(OnlyLinear, collapse = " + "), Level = 3)
 
     IASDT.R::CatTime(
       paste0(length(QuadraticVars), " linear and quadratic effects: "),
       Level = 2)
-    IASDT.R::CatTime(paste0(QuadraticVars, collapse = " + "), Level = 3)
+    IASDT.R::CatTime(paste(QuadraticVars, collapse = " + "), Level = 3)
 
   }
 
@@ -757,7 +745,7 @@ Mod_Prep4HPC <- function(
   Tree <- c("Tree", "NoTree")[c(PhyloTree, NoPhyloTree)]
 
   IASDT.R::CatTime(
-    paste0("Models will be fitted using ", paste0(Tree, collapse = " & ")),
+    paste0("Models will be fitted using ", paste(Tree, collapse = " & ")),
     Level = 1)
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -936,7 +924,7 @@ Mod_Prep4HPC <- function(
 
               InitModel <- Hmsc::Hmsc(
                 Y = DT_y, XFormula = Form_x, XData = DT_x, distr = "probit",
-                studyDesign = studyDesign, ranLevels = list("sample" = .y),
+                studyDesign = studyDesign, ranLevels = list(sample = .y),
                 phyloTree = Tree)
 
               IASDT.R::SaveAs(
@@ -1205,11 +1193,11 @@ Mod_Prep4HPC <- function(
             " > ", Path_Prog_4cmd,
             " 2>&1")
 
-          list(
-            M4HPC_Path_LUMI = Path_Model2, Post_Path = Path_Post,
-            Post_Missing = Post_Missing, Path_ModProg = Path_Prog,
-            Command_HPC = Command_HPC, Command_WS = Command_WS) %>%
-            return()
+          return(
+            list(
+              M4HPC_Path_LUMI = Path_Model2, Post_Path = Path_Post,
+              Post_Missing = Post_Missing, Path_ModProg = Path_Prog,
+              Command_HPC = Command_HPC, Command_WS = Command_WS))
 
         })) %>%
     tidyr::unnest_wider("M_Chain")
@@ -1309,7 +1297,7 @@ Mod_Prep4HPC <- function(
       as.vector() %>%
       stats::setNames(paste0("Chain", unlist(Chain)))
   }
-  
+
   Model_Info <- Model_Info %>%
     tidyr::nest(
       Post_Path = Post_Path, Path_ModProg = Path_ModProg,

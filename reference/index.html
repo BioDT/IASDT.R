@@ -55,107 +55,8 @@
         </dt>
         <dd>IASDT.R: Modelling the distribution of invasive alien plant species in Europe</dd>
       </dl></div><div class="section level2">
-      <h2 id="data-workflow-species-distribution">Data workflow - species distribution<a class="anchor" aria-label="anchor" href="#data-workflow-species-distribution"></a></h2>
+      <h2 id="prepare-species-distribution-data">Prepare species distribution data<a class="anchor" aria-label="anchor" href="#prepare-species-distribution-data"></a></h2>
 
-      <div class="section-desc"><p>Functions for preparing species observation data</p></div>
-
-
-    </div><div class="section level2">
-
-      <h3 id="gbif">GBIF<a class="anchor" aria-label="anchor" href="#gbif"></a></h3>
-      <div class="section-desc"><p>Process GBIF data</p></div>
-
-
-    </div><div class="section level2">
-
-
-
-
-      <dl><dt>
-
-          <code><a href="GBIF_Process.html">GBIF_Process()</a></code>
-
-        </dt>
-        <dd>GBIF Data Processing Function</dd>
-      </dl><dl><dt>
-
-          <code><a href="GBIF_Download.html">GBIF_Download()</a></code>
-
-        </dt>
-        <dd>Download and process GBIF occurrence data</dd>
-      </dl><dl><dt>
-
-          <code><a href="GBIF_SpData.html">GBIF_SpData()</a></code>
-
-        </dt>
-        <dd>Extract species data as sf and Raster and plot species distribution</dd>
-      </dl><dl><dt>
-
-          <code><a href="GBIF_ReadChunk.html">GBIF_ReadChunk()</a></code>
-
-        </dt>
-        <dd>Read GBIF chunk data</dd>
-      </dl><dl><dt>
-
-          <code><a href="GBIF_Check.html">GBIF_Check()</a></code>
-
-        </dt>
-        <dd>Check if GBIF login credentials exist</dd>
-      </dl></div><div class="section level2">
-
-      <h3 id="easin">EASIN<a class="anchor" aria-label="anchor" href="#easin"></a></h3>
-      <div class="section-desc"><p>Process EASIN data</p></div>
-
-
-    </div><div class="section level2">
-
-
-
-
-      <dl><dt>
-
-          <code><a href="EASIN_Process.html">EASIN_Process()</a></code>
-
-        </dt>
-        <dd>Extracts and processes EASIN data</dd>
-      </dl><dl><dt>
-
-          <code><a href="EASIN_Taxonomy.html">EASIN_Taxonomy()</a></code>
-
-        </dt>
-        <dd>Extract EASIN Taxonomy Data</dd>
-      </dl><dl><dt>
-
-          <code><a href="EASIN_Down.html">EASIN_Down()</a></code>
-
-        </dt>
-        <dd>Extract EASIN data using EASIN ID</dd>
-      </dl><dl><dt>
-
-          <code><a href="EASIN_Plot.html">EASIN_Plot()</a></code>
-
-        </dt>
-        <dd>Plotting cleaned EASIN data</dd>
-      </dl></div><div class="section level2">
-
-      <h3 id="elter">eLTER<a class="anchor" aria-label="anchor" href="#elter"></a></h3>
-      <div class="section-desc"><p>Process eLTER data</p></div>
-
-
-    </div><div class="section level2">
-
-
-
-
-      <dl><dt>
-
-          <code><a href="elTER_Process.html">elTER_Process()</a></code>
-
-        </dt>
-        <dd>eLTER data processing function</dd>
-      </dl></div><div class="section level2">
-
-      <h3 id="merging-species-observation-data">Merging species observation data<a class="anchor" aria-label="anchor" href="#merging-species-observation-data"></a></h3>
 
 
 
@@ -166,55 +67,38 @@
 
       <dl><dt>
 
-          <code><a href="IAS_Process.html">IAS_Process()</a></code>
+          <code><a href="GBIF_data.html">GBIF_Process()</a></code> <code><a href="GBIF_data.html">GBIF_Check()</a></code> <code><a href="GBIF_data.html">GBIF_Download()</a></code> <code><a href="GBIF_data.html">GBIF_ReadChunk()</a></code> <code><a href="GBIF_data.html">GBIF_SpData()</a></code>
 
         </dt>
-        <dd>Process IAS data</dd>
+        <dd>Process GBIF occurrence data for the <code>IAS-pDT</code></dd>
       </dl><dl><dt>
 
-          <code><a href="IAS_Distribution.html">IAS_Distribution()</a></code>
+          <code><a href="EASIN_data.html">EASIN_Process()</a></code> <code><a href="EASIN_data.html">EASIN_Taxonomy()</a></code> <code><a href="EASIN_data.html">EASIN_Down()</a></code> <code><a href="EASIN_data.html">EASIN_Plot()</a></code>
 
         </dt>
-        <dd>Prepare distribution maps and summary for Invasive Alien Species (IAS)</dd>
+        <dd>Process EASIN data for the <code>IAS-pDT</code></dd>
       </dl><dl><dt>
 
-          <code><a href="IAS_Plot.html">IAS_Plot()</a></code>
+          <code><a href="eLTER_Process.html">eLTER_Process()</a></code>
 
         </dt>
-        <dd>Plot IAS distribution map</dd>
-      </dl></div><div class="section level2">
+        <dd>Process eLTER data for the <code>IAS-pDT</code></dd>
+      </dl><dl><dt>
 
-      <h3 id="others">Others<a class="anchor" aria-label="anchor" href="#others"></a></h3>
-
-
-
-    </div><div class="section level2">
-
-
-
-
-      <dl><dt>
-
-          <code><a href="GetAcceptedName.html">GetAcceptedName()</a></code>
+          <code><a href="IAS_data.html">IAS_Process()</a></code> <code><a href="IAS_data.html">IAS_Distribution()</a></code> <code><a href="IAS_data.html">IAS_Plot()</a></code>
 
         </dt>
-        <dd>Get accepted name of a taxon</dd>
+        <dd>Process and map Invasive Alien Species (IAS) data for the <code>IAS-pDT</code></dd>
       </dl><dl><dt>
 
           <code><a href="GetSpeciesName.html">GetSpeciesName()</a></code>
 
         </dt>
-        <dd>Get Species Name or Information Based on IASDT Species ID</dd>
+        <dd>Get species name or information of an <code>IAS-pDT</code> species ID</dd>
       </dl></div><div class="section level2">
-      <h2 id="data-workflow-predictors-and-other-data">Data workflow - Predictors and other data<a class="anchor" aria-label="anchor" href="#data-workflow-predictors-and-other-data"></a></h2>
-
-      <div class="section-desc"><p>Functions for preparing predictors and other abiotic data</p></div>
+      <h2 id="prepare-abiotic-data">Prepare abiotic data<a class="anchor" aria-label="anchor" href="#prepare-abiotic-data"></a></h2>
 
 
-    </div><div class="section level2">
-
-      <h3 id="clc">CLC<a class="anchor" aria-label="anchor" href="#clc"></a></h3>
-      <div class="section-desc"><p>Process Corine Land Cover data to obtain % coverage of habitat types</p></div>
 
 
     </div><div class="section level2">
@@ -227,19 +111,8 @@
           <code><a href="CLC_Process.html">CLC_Process()</a></code>
 
         </dt>
-        <dd>Process Corine land cover (CLC) data</dd>
-      </dl></div><div class="section level2">
-
-      <h3 id="chelsa">CHELSA<a class="anchor" aria-label="anchor" href="#chelsa"></a></h3>
-      <div class="section-desc"><p>Process CHELSA data</p></div>
-
-
-    </div><div class="section level2">
-
-
-
-
-      <dl><dt>
+        <dd>Process Corine Land Cover (CLC) data for the <code>IAS-pDT</code></dd>
+      </dl><dl><dt>
 
           <code><a href="CHELSA_Vars.html">CHELSA_Vars</a></code>
 
@@ -247,87 +120,17 @@
         <dd>Detailed information on CHELSA climate variables</dd>
       </dl><dl><dt>
 
-          <code><a href="CHELSA_Prepare.html">CHELSA_Prepare()</a></code>
+          <code><a href="CHELSA_data.html">CHELSA_Process()</a></code> <code><a href="CHELSA_data.html">CHELSA_Prepare()</a></code> <code><a href="CHELSA_data.html">CHELSA_Project()</a></code>
 
         </dt>
-        <dd>Prepare and download CHELSA climate data</dd>
+        <dd>Process CHELSA Climate Data for the <code>IAS-pDT</code></dd>
       </dl><dl><dt>
 
-          <code><a href="CHELSA_Process.html">CHELSA_Process()</a></code>
+          <code><a href="Efforts_data.html">Efforts_Process()</a></code> <code><a href="Efforts_data.html">Efforts_Request()</a></code> <code><a href="Efforts_data.html">Efforts_Download()</a></code> <code><a href="Efforts_data.html">Efforts_Summarize()</a></code> <code><a href="Efforts_data.html">Efforts_Split()</a></code> <code><a href="Efforts_data.html">Efforts_Plot()</a></code>
 
         </dt>
-        <dd>Process CHELSA climate data</dd>
+        <dd>Process GBIF sampling effort data for the <code>IAS-pDT</code></dd>
       </dl><dl><dt>
-
-          <code><a href="CHELSA_Project.html">CHELSA_Project()</a></code>
-
-        </dt>
-        <dd>Project CHELSA data to the study area</dd>
-      </dl></div><div class="section level2">
-
-      <h3 id="sampling-efforts">Sampling efforts<a class="anchor" aria-label="anchor" href="#sampling-efforts"></a></h3>
-      <div class="section-desc"><p>Request, prepare, and process sampling efforts data from GBIF</p></div>
-
-
-    </div><div class="section level2">
-
-
-
-
-      <dl><dt>
-
-          <code><a href="Efforts_Request.html">Efforts_Request()</a></code>
-
-        </dt>
-        <dd>Request and manage GBIF data for vascular plant orders</dd>
-      </dl><dl><dt>
-
-          <code><a href="Efforts_Download.html">Efforts_Download()</a></code>
-
-        </dt>
-        <dd>Download and manage GBIF data for vascular plant orders</dd>
-      </dl><dl><dt>
-
-          <code><a href="Efforts_Split.html">Efforts_Split()</a></code>
-
-        </dt>
-        <dd>Split Order data into smaller chunks</dd>
-      </dl><dl><dt>
-
-          <code><a href="Efforts_Plot.html">Efforts_Plot()</a></code>
-
-        </dt>
-        <dd>Plot the output of efforts maps</dd>
-      </dl><dl><dt>
-
-          <code><a href="Efforts_Summarize.html">Efforts_Summarize()</a></code>
-
-        </dt>
-        <dd>Process and summarize GBIF data for vascular plants</dd>
-      </dl><dl><dt>
-
-          <code><a href="Efforts_SummarizeMaps.html">Efforts_SummarizeMaps()</a></code>
-
-        </dt>
-        <dd>Summarize maps for efforts data</dd>
-      </dl><dl><dt>
-
-          <code><a href="Efforts_Process.html">Efforts_Process()</a></code>
-
-        </dt>
-        <dd>Download and Process sampling efforts data</dd>
-      </dl></div><div class="section level2">
-
-      <h3 id="railway-roads-rivers-and-biogeographical-regions">Railway, roads, rivers, and biogeographical regions<a class="anchor" aria-label="anchor" href="#railway-roads-rivers-and-biogeographical-regions"></a></h3>
-
-
-
-    </div><div class="section level2">
-
-
-
-
-      <dl><dt>
 
           <code><a href="Railway_Intensity.html">Railway_Intensity()</a></code>
 
@@ -338,19 +141,19 @@
           <code><a href="Road_Intensity.html">Road_Intensity()</a></code>
 
         </dt>
-        <dd>Calculate road intensity</dd>
+        <dd>Calculate road intensity per grid cell</dd>
       </dl><dl><dt>
 
           <code><a href="River_Length.html">River_Length()</a></code>
 
         </dt>
-        <dd>Calculate the length of rivers in each Strahler order</dd>
+        <dd>Calculate the length of rivers in each Strahler order per grid cell</dd>
       </dl><dl><dt>
 
           <code><a href="BioReg_Process.html">BioReg_Process()</a></code>
 
         </dt>
-        <dd>Process biogeographical regions</dd>
+        <dd>Process biogeographical regions dataset</dd>
       </dl></div><div class="section level2">
       <h2 id="modelling-functions">Modelling functions<a class="anchor" aria-label="anchor" href="#modelling-functions"></a></h2>
 
@@ -403,7 +206,7 @@
           <code><a href="Mod_CV_Fit.html">Mod_CV_Fit()</a></code>
 
         </dt>
-        <dd>Prepare cross-Validated Hmsc models for HPC fitting</dd>
+        <dd>Prepare cross-validated Hmsc models for HPC fitting</dd>
       </dl></div><div class="section level2">
 
       <h3 id="model-postprocessing">Model postprocessing<a class="anchor" aria-label="anchor" href="#model-postprocessing"></a></h3>
@@ -657,7 +460,7 @@
           <code><a href="FileSize.html">FileSize()</a></code>
 
         </dt>
-        <dd>File size in a Human Readable format</dd>
+        <dd>File size in a human-readable format</dd>
       </dl><dl><dt>
 
           <code><a href="FileType.html">FileType()</a></code>
@@ -684,16 +487,22 @@
         <dd>Load objects from <code>RData</code> / <code>qs2</code> / <code>rds</code> / <code>feather</code> file</dd>
       </dl><dl><dt>
 
+          <code><a href="LoadMultiple.html">LoadMultiple()</a></code>
+
+        </dt>
+        <dd>Load multiple <code>.RData</code> files together</dd>
+      </dl><dl><dt>
+
           <code><a href="Check_data.html">CheckData()</a></code> <code><a href="Check_data.html">CheckRData()</a></code> <code><a href="Check_data.html">CheckQs()</a></code> <code><a href="Check_data.html">CheckRDS()</a></code> <code><a href="Check_data.html">CheckFeather()</a></code>
 
         </dt>
         <dd>Check the integrity of <code>RData</code> / <code>qs2</code> / <code>rds</code> / <code>feather</code> files</dd>
       </dl><dl><dt>
 
-          <code><a href="LoadMultiple.html">LoadMultiple()</a></code>
+          <code><a href="CheckZip.html">CheckZip()</a></code>
 
         </dt>
-        <dd>Load multiple <code>.RData</code> files together</dd>
+        <dd>Check the Integrity of a ZIP File</dd>
       </dl><dl><dt>
 
           <code><a href="SaveAs.html">SaveAs()</a></code>
@@ -712,12 +521,6 @@
 
         </dt>
         <dd>Split list items into separate <code>.RData</code> files</dd>
-      </dl><dl><dt>
-
-          <code><a href="CheckZip.html">CheckZip()</a></code>
-
-        </dt>
-        <dd>Check the Integrity of a ZIP File</dd>
       </dl></div><div class="section level2">
 
       <h3 id="plotting">Plotting<a class="anchor" aria-label="anchor" href="#plotting"></a></h3>
@@ -852,7 +655,7 @@
           <code><a href="Range2NewVal.html">Range2NewVal()</a></code>
 
         </dt>
-        <dd>Changes values within a specified range, \(\geq\), or \(\leq\) specific value to a new value in a vector, data.frame, or raster</dd>
+        <dd>Changes values within a specified range, or greater than or less than a specific value to a new value in a vector, data.frame, or raster</dd>
       </dl><dl><dt>
 
           <code><a href="AllObjSizes.html">AllObjSizes()</a></code>
@@ -959,7 +762,7 @@
           <code><a href="SaveSessionInfo.html">SaveSessionInfo()</a></code>
 
         </dt>
-        <dd>Save Session Information to a File</dd>
+        <dd>Save session information to a file</dd>
       </dl><dl><dt>
 
           <code><a href="git_log.html">git_log()</a></code>
@@ -977,7 +780,7 @@
           <code><a href="Install_Hmsc.html">Install_Hmsc()</a></code>
 
         </dt>
-        <dd>Install Hmsc-HPC in a Python Virtual Environment on Windows</dd>
+        <dd>Install Hmsc-HPC in a python virtual environment on Windows</dd>
       </dl><dl><dt>
 
           <code><a href="DetectAlias.html">DetectAlias()</a></code>

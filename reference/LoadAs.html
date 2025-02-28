@@ -63,7 +63,7 @@ file ahead of time. The function also supports loading <code>feather</code>, <co
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">LoadAs</span><span class="op">(</span><span class="va">File</span>, nthreads <span class="op">=</span> <span class="fl">5</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">LoadAs</span><span class="op">(</span>File <span class="op">=</span> <span class="cn">NULL</span>, nthreads <span class="op">=</span> <span class="fl">5</span>, Timeout <span class="op">=</span> <span class="fl">300</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -71,12 +71,19 @@ file ahead of time. The function also supports loading <code>feather</code>, <co
 
 
 <dl><dt id="arg-file">File<a class="anchor" aria-label="anchor" href="#arg-file"></a></dt>
-<dd><p>character; the file path of the file to be loaded.</p></dd>
+<dd><p>Character. the file path or URL of the file to be loaded. If
+<code>File</code> is a URL, the function will download the file from the URL to a
+temporary file and load it.</p></dd>
 
 
 <dt id="arg-nthreads">nthreads<a class="anchor" aria-label="anchor" href="#arg-nthreads"></a></dt>
 <dd><p>Number of threads to use when reading <code>qs2</code> files. Default 5;
 see <a href="https://rdrr.io/pkg/qs2/man/qs_read.html" class="external-link">qs2::qs_read</a>.</p></dd>
+
+
+<dt id="arg-timeout">Timeout<a class="anchor" aria-label="anchor" href="#arg-timeout"></a></dt>
+<dd><p>integer; time in seconds before the download times out.
+Default 300 seconds; see <a href="https://rdrr.io/r/utils/download.file.html" class="external-link">download.file</a>.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -91,7 +98,7 @@ files.</p></dd>
     <p>Depending on the contents of the <code>RData</code> file, this function returns
 either a single R object or a named list of R objects. The names of the
 list elements (if a list is returned) correspond to the names of the
-objects stored within the RData file.</p>
+objects stored within the <code>RData</code> file.</p>
     </div>
     <div class="section level2">
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>

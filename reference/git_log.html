@@ -98,10 +98,6 @@ Git repository, Git is not installed, or if the <code>Num</code> parameter is no
 <code>NULL</code> or a positive number.</p>
     </div>
     <div class="section level2">
-    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><a href="System.html">System</a></p></div>
-    </div>
-    <div class="section level2">
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>
     <p>Ahmed El-Gabbas</p>
     </div>
@@ -114,11 +110,11 @@ Git repository, Git is not installed, or if the <code>Num</code> parameter is no
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Show the most recent commit</span></span></span>
 <span class="r-in"><span><span class="fu">git_log</span><span class="op">(</span>Num <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> * d574b1d - (grafted, HEAD -&gt; main, origin/main) Add BioReg_Process and small fixes (6 minutes ago) &lt;Ahmed El-Gabbas&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> * 1a8282d - (grafted, HEAD -&gt; main, origin/main) Update BioReg_Process/LoadAs/ScrapLinks/CheckURL + Rename eLTER_Process + Merge documentation for functions of GBIF/EASIN/EASIN/IAS/CHELSA/Efforts to produce single rd file + Linting + Ensure no absolute paths used (11 minutes ago) &lt;Ahmed El-Gabbas&gt;</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Show the most recent 5 commits</span></span></span>
 <span class="r-in"><span><span class="fu">git_log</span><span class="op">(</span>Num <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> * d574b1d - (grafted, HEAD -&gt; main, origin/main) Add BioReg_Process and small fixes (6 minutes ago) &lt;Ahmed El-Gabbas&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> * 1a8282d - (grafted, HEAD -&gt; main, origin/main) Update BioReg_Process/LoadAs/ScrapLinks/CheckURL + Rename eLTER_Process + Merge documentation for functions of GBIF/EASIN/EASIN/IAS/CHELSA/Efforts to produce single rd file + Linting + Ensure no absolute paths used (11 minutes ago) &lt;Ahmed El-Gabbas&gt;</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Return the log as a character vector</span></span></span>
 <span class="r-in"><span><span class="va">Log</span> <span class="op">&lt;-</span> <span class="fu">git_log</span><span class="op">(</span>ReturnLog <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
@@ -127,7 +123,7 @@ Git repository, Git is not installed, or if the <code>Num</code> parameter is no
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">Log</span>, <span class="fl">8</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "* d574b1d - (grafted, HEAD -&gt; main, origin/main) Add BioReg_Process and small fixes (6 minutes ago) &lt;Ahmed El-Gabbas&gt;"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "* 1a8282d - (grafted, HEAD -&gt; main, origin/main) Update BioReg_Process/LoadAs/ScrapLinks/CheckURL + Rename eLTER_Process + Merge documentation for functions of GBIF/EASIN/EASIN/IAS/CHELSA/Efforts to produce single rd file + Linting + Ensure no absolute paths used (11 minutes ago) &lt;Ahmed El-Gabbas&gt;"</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

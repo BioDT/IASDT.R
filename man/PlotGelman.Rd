@@ -15,7 +15,6 @@ PlotGelman(
   Omega = TRUE,
   Rho = TRUE,
   NOmega = 1000L,
-  FromHPC = TRUE,
   PlottingAlpha = 0.25,
   EnvFile = ".env",
   ReturnPlots = FALSE
@@ -23,12 +22,7 @@ PlotGelman(
 
 PlotGelman_Alpha(CodaObj, PlottingAlpha = 0.25)
 
-PlotGelman_Beta(
-  CodaObj,
-  EnvFile = ".env",
-  PlottingAlpha = 0.25,
-  FromHPC = TRUE
-)
+PlotGelman_Beta(CodaObj, EnvFile = ".env", PlottingAlpha = 0.25)
 
 PlotGelman_Omega(CodaObj, NOmega = 1000L, PlottingAlpha = 0.25)
 
@@ -44,10 +38,6 @@ Default: \code{TRUE} for all parameters.}
 
 \item{NOmega}{Integer. Number of species sampled for the Omega parameter.
 Default: 1000L.}
-
-\item{FromHPC}{Logical. Whether the processing is being done on an
-High-Performance Computing (HPC) environment, to adjust file paths
-accordingly. Default: \code{TRUE}.}
 
 \item{PlottingAlpha}{Numeric. Transparency level (alpha) for plot lines (0 =
 fully transparent, 1 = fully opaque). Default: 0.25.}

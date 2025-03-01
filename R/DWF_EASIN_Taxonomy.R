@@ -9,8 +9,8 @@
 #' @order 2
 
 EASIN_Taxonomy <- function(
-    FromHPC = TRUE, EnvFile = ".env",
-    Kingdom = "Plantae", Phylum = "Tracheophyta", NSearch = 100) {
+    EnvFile = ".env", Kingdom = "Plantae", Phylum = "Tracheophyta",
+    NSearch = 100) {
 
   # # ..................................................................... ###
 
@@ -24,26 +24,17 @@ EASIN_Taxonomy <- function(
     AllArgs = AllArgs, Type = "character",
     Args = c("Kingdom", "Phylum", "EnvFile"))
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "numeric", Args = "NSearch")
-  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "logical", Args = "FromHPC")
 
   # # ..................................................................... ###
 
   # Environment variables ----
   IASDT.R::CatTime("Environment variables")
 
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "EASIN_URL", "DP_R_EASIN_URL", FALSE, FALSE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "EASIN_URL", "DP_R_EASIN_URL", FALSE, FALSE)
-  }
-
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "EASIN_URL", "DP_R_EASIN_url", FALSE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
-
   rm(EnvVars2Read, envir = environment())
 
   # # ..................................................................... ###

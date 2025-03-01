@@ -4,12 +4,7 @@
 \alias{Mod_Predict_Plot}
 \title{Plot species and level of invasion predictions as JPEG files using \code{ggplot2}}
 \usage{
-Mod_Predict_Plot(
-  ModelDir = NULL,
-  EnvFile = ".env",
-  FromHPC = TRUE,
-  NCores = 8L
-)
+Mod_Predict_Plot(ModelDir = NULL, EnvFile = ".env", NCores = 8L)
 }
 \arguments{
 \item{ModelDir}{Character. Path to the model directory containing
@@ -17,10 +12,6 @@ predictions.}
 
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
-
-\item{FromHPC}{Logical. Whether the processing is being done on an
-High-Performance Computing (HPC) environment, to adjust file paths
-accordingly. Default: \code{TRUE}.}
 
 \item{NCores}{Integer. Number of CPU cores to use for parallel processing.
 Default: 8.}

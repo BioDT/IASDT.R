@@ -20,9 +20,6 @@
 #'   al.](https://doi.org/10.23855/preslia.2022.447).
 #' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
-#' @param FromHPC Logical. Whether the processing is being done on an
-#'   High-Performance Computing (HPC) environment, to adjust file paths
-#'   accordingly. Default: `TRUE`.
 #' @param NCores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 8.
 #' @param Pred_Clamp Logical indicating whether to clamp the sampling efforts at
@@ -66,12 +63,11 @@
 #' @export
 
 Predict_Maps <- function(
-    Path_Model = NULL, Hab_Abb = NULL, EnvFile = ".env", FromHPC = TRUE,
-    NCores = 8L, Pred_Clamp = TRUE, Fix_Efforts = "q90", Fix_Rivers = "q90",
-    Pred_NewSites = TRUE,
-    UseTF = TRUE, TF_Environ = NULL, TF_use_single = FALSE, LF_NCores = NCores,
-    LF_Check = FALSE, LF_Temp_Cleanup = TRUE, LF_Only = FALSE,
-    LF_Commands_Only = FALSE,
+    Path_Model = NULL, Hab_Abb = NULL, EnvFile = ".env", NCores = 8L,
+    Pred_Clamp = TRUE, Fix_Efforts = "q90", Fix_Rivers = "q90",
+    Pred_NewSites = TRUE, UseTF = TRUE, TF_Environ = NULL,
+    TF_use_single = FALSE, LF_NCores = NCores, LF_Check = FALSE,
+    LF_Temp_Cleanup = TRUE, LF_Only = FALSE, LF_Commands_Only = FALSE,
     Temp_Dir = "TEMP_Pred", Temp_Cleanup = TRUE,
     CC_Models = c(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
@@ -117,8 +113,7 @@ Predict_Maps <- function(
   IASDT.R::CheckArgs(
     AllArgs = AllArgs,
     Args = c("Hab_Abb", "EnvFile", "Path_Model"), Type = "character")
-  IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Args = c("FromHPC", "RemoveChunks"), Type = "logical")
+  IASDT.R::CheckArgs(AllArgs = AllArgs, Args = "RemoveChunks", Type = "logical")
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Args = c("NCores", "LF_NCores", "ChunkSize"),
     Type = "numeric")
@@ -221,36 +216,18 @@ Predict_Maps <- function(
 
   IASDT.R::CatTime("Environment variables")
 
-  if (!file.exists(EnvFile)) {
-    stop(
-      "Path for environment variables: ", EnvFile, " was not found",
-      call. = FALSE)
-  }
-
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Rail", "DP_R_Railways", TRUE, FALSE,
-      "Path_Roads", "DP_R_Roads", TRUE, FALSE,
-      "Path_CLC", "DP_R_CLC", TRUE, FALSE,
-      "Path_Bias", "DP_R_Efforts", TRUE, FALSE,
-      "Path_Grid", "DP_R_Grid", TRUE, FALSE,
-      "Path_Rivers", "DP_R_Rivers", TRUE, FALSE,
-      "Path_CHELSA", "DP_R_CHELSA_Output", TRUE, FALSE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Rail", "DP_R_Railways_Local", TRUE, FALSE,
-      "Path_Roads", "DP_R_Roads_Local", TRUE, FALSE,
-      "Path_CLC", "DP_R_CLC_Local", TRUE, FALSE,
-      "Path_Bias", "DP_R_Efforts_Local", TRUE, FALSE,
-      "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE,
-      "Path_Rivers", "DP_R_Rivers", TRUE, FALSE,
-      "Path_CHELSA", "DP_R_CHELSA_Output_Local", TRUE, FALSE)
-  }
-
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_Rail", "DP_R_Railways_processed", TRUE, FALSE,
+    "Path_Roads", "DP_R_Roads_processed", TRUE, FALSE,
+    "Path_CLC", "DP_R_CLC_processed", TRUE, FALSE,
+    "Path_Bias", "DP_R_Efforts_processed", TRUE, FALSE,
+    "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
+    "Path_Rivers", "DP_R_Rivers_processed", TRUE, FALSE,
+    "Path_CHELSA", "DP_R_CHELSA_processed", TRUE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -262,8 +239,7 @@ Predict_Maps <- function(
 
   ## Species information -----
 
-  SpeciesInfo <- IASDT.R::GetSpeciesName(
-    EnvFile = EnvFile, FromHPC = FromHPC) %>%
+  SpeciesInfo <- IASDT.R::GetSpeciesName(EnvFile = EnvFile) %>%
     janitor::clean_names() %>%
     dplyr::select(ias_id, taxon_name, species_name, class, order, family)
 

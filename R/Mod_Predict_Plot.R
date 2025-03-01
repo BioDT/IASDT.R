@@ -11,9 +11,6 @@
 #'   predictions.
 #' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
-#' @param FromHPC Logical. Whether the processing is being done on an
-#'   High-Performance Computing (HPC) environment, to adjust file paths
-#'   accordingly. Default: `TRUE`.
 #' @param NCores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 8.
 #' @return Saves prediction plots as JPEG files in the specified output
@@ -22,8 +19,7 @@
 #' @author Ahmed El-Gabbas
 #' @export
 
-Mod_Predict_Plot <- function(
-    ModelDir = NULL, EnvFile = ".env", FromHPC = TRUE, NCores = 8L) {
+Mod_Predict_Plot <- function(ModelDir = NULL, EnvFile = ".env", NCores = 8L) {
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -48,29 +44,13 @@ Mod_Predict_Plot <- function(
 
   # Assign environment variables ----
 
-  if (!file.exists(EnvFile)) {
-    stop(
-      "Path to environment variables: ", EnvFile, " was not found",
-      call. = FALSE)
-  }
-
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_CLC", "DP_R_CLC", TRUE, FALSE,
-      "Path_Grid", "DP_R_Grid", TRUE, FALSE,
-      "Path_PA", "DP_R_PA", TRUE, FALSE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_CLC", "DP_R_CLC_Local", TRUE, FALSE,
-      "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE,
-      "Path_PA", "DP_R_PA_Local", TRUE, FALSE)
-  }
-
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_CLC", "DP_R_CLC_processed", TRUE, FALSE,
+    "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
+    "Path_PA", "DP_R_PA", TRUE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
-
   rm(EnvVars2Read, envir = environment())
   invisible(gc())
 

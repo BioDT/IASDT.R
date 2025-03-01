@@ -11,9 +11,6 @@
 #' for use in counting species presence across biogeographical regions.
 #' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
-#' @param FromHPC Logical. Whether the processing is being done on an
-#'   High-Performance Computing (HPC) environment, to adjust file paths
-#'   accordingly. Default: `TRUE`.
 #' @details
 #'   - *Temporal coverage*: 2011-2015
 #'   - *Spatial coverage*: 28°E to 81°E, 31.27°W to 62°E
@@ -26,7 +23,7 @@
 #'   and RData files.
 #' @export
 
-BioReg_Process <- function(FromHPC = TRUE, EnvFile = ".env") {
+BioReg_Process <- function(EnvFile = ".env") {
 
   # # ..................................................................... ###
 
@@ -48,7 +45,6 @@ BioReg_Process <- function(FromHPC = TRUE, EnvFile = ".env") {
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = "EnvFile")
-  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "logical", Args = "FromHPC")
   rm(AllArgs, envir = environment())
 
   if (isFALSE(IASDT.R::CheckCommands("curl"))) {
@@ -65,28 +61,17 @@ BioReg_Process <- function(FromHPC = TRUE, EnvFile = ".env") {
   # # ..................................................................... ###
 
   # Environment variables
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Grid", "DP_R_Grid", TRUE, FALSE,
-      "Path_Grid_Ref", "DP_R_Grid_Ref", TRUE, FALSE,
-      "Path_Raw", "DP_R_BioReg_Raw", FALSE, FALSE,
-      "Path_Interim", "DP_R_BioReg_Interim", FALSE, FALSE,
-      "Path_BioReg", "DP_R_BioReg", FALSE, FALSE,
-      "BioReg_URL", "DP_R_BioReg_URL", FALSE, FALSE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE,
-      "Path_Grid_Ref", "DP_R_Grid_Ref_Local", TRUE, FALSE,
-      "Path_Raw", "DP_R_BioReg_Raw_Local", FALSE, FALSE,
-      "Path_Interim", "DP_R_BioReg_Interim_Local", FALSE, FALSE,
-      "Path_BioReg", "DP_R_BioReg_Local", FALSE, FALSE,
-      "BioReg_URL", "DP_R_BioReg_URL", FALSE, FALSE)
-  }
-
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
+    "Path_Grid_Ref", "DP_R_Grid_raw", TRUE, FALSE,
+    "Path_Raw", "DP_R_BioReg_raw", FALSE, FALSE,
+    "Path_Interim", "DP_R_BioReg_interim", FALSE, FALSE,
+    "Path_BioReg", "DP_R_BioReg_processed", FALSE, FALSE,
+    "BioReg_URL", "DP_R_BioReg_url", FALSE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   # # ..................................................................... ###
 

@@ -16,9 +16,6 @@
 #'   data sources. Defaults to `.env`.
 #' @param NOmega Integer. The number of species to be sampled for the `Omega`
 #'   parameter transformation. Defaults to 100.
-#' @param FromHPC Logical. Whether the processing is being done on an
-#'   High-Performance Computing (HPC) environment, to adjust file paths
-#'   accordingly. Default: `TRUE`.
 #' @name Coda_to_tibble
 #' @author Ahmed El-Gabbas
 #' @return A tibble containing the transformed parameters based on the specified
@@ -33,8 +30,7 @@
 #' IASDT.R::Coda_to_tibble(CodaObj = Coda$Alpha[[1]], Type = "Alpha")
 
 Coda_to_tibble <- function(
-    CodaObj = NULL, Type = NULL, EnvFile = ".env", NOmega = 100,
-    FromHPC = TRUE) {
+    CodaObj = NULL, Type = NULL, EnvFile = ".env", NOmega = 100) {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
@@ -135,24 +131,12 @@ Coda_to_tibble <- function(
 
   if (Type == "beta") {
 
-    if (!file.exists(EnvFile)) {
-      stop(
-        "Path to environment variables: ", EnvFile, " was not found",
-        call. = FALSE)
-    }
-
-    if (FromHPC) {
-      EnvVars2Read <- tibble::tribble(
-        ~VarName, ~Value, ~CheckDir, ~CheckFile,
-        "TaxaInfoFile", "DP_R_TaxaInfo", FALSE, TRUE)
-    } else {
-      EnvVars2Read <- tibble::tribble(
-        ~VarName, ~Value, ~CheckDir, ~CheckFile,
-        "TaxaInfoFile", "DP_R_TaxaInfo_Local", FALSE, TRUE)
-    }
-
+    EnvVars2Read <- tibble::tribble(
+      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+      "TaxaInfoFile", "DP_R_Taxa_info", FALSE, TRUE)
     # Assign environment variables and check file and paths
     IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+    rm(EnvVars2Read, envir = environment())
 
     SpeciesNames <- readr::read_tsv(
       file = TaxaInfoFile, show_col_types = FALSE) %>%
@@ -208,7 +192,7 @@ Coda_to_tibble <- function(
 
   if (Type == "omega") {
 
-    IAS <- IASDT.R::GetSpeciesName(EnvFile = EnvFile, FromHPC = FromHPC) %>%
+    IAS <- IASDT.R::GetSpeciesName(EnvFile = EnvFile) %>%
       dplyr::select(IAS_ID, Species_name)
 
     Coda <- tibble::tibble(SpComb = unique(Coda$SpComb)) %>%

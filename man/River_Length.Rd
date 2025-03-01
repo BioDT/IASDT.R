@@ -4,13 +4,9 @@
 \alias{River_Length}
 \title{Calculate the length of rivers in each Strahler order per grid cell}
 \usage{
-River_Length(FromHPC = TRUE, EnvFile = ".env", Cleanup = FALSE)
+River_Length(EnvFile = ".env", Cleanup = FALSE)
 }
 \arguments{
-\item{FromHPC}{Logical. Whether the processing is being done on an
-High-Performance Computing (HPC) environment, to adjust file paths
-accordingly. Default: \code{TRUE}.}
-
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
 

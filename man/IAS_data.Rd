@@ -8,23 +8,18 @@
 \alias{IAS_Plot}
 \title{Process and map Invasive Alien Species (IAS) data for the \code{IAS-pDT}}
 \usage{
-IAS_Process(FromHPC = TRUE, EnvFile = ".env", NCores = 6L, Overwrite = TRUE)
+IAS_Process(EnvFile = ".env", NCores = 6L, Overwrite = TRUE)
 
 IAS_Distribution(
   Species = NULL,
-  FromHPC = TRUE,
   EnvFile = ".env",
   Verbose = FALSE,
   Overwrite = FALSE
 )
 
-IAS_Plot(Species = NULL, FromHPC = TRUE, EnvFile = ".env", Overwrite = FALSE)
+IAS_Plot(Species = NULL, EnvFile = ".env", Overwrite = FALSE)
 }
 \arguments{
-\item{FromHPC}{Logical. Whether the processing is being done on an
-High-Performance Computing (HPC) environment, to adjust file paths
-accordingly. Default: \code{TRUE}.}
-
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
 

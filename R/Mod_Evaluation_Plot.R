@@ -12,14 +12,11 @@
 #'   predictions.
 #' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
-#' @param FromHPC Logical. Whether the processing is being done on an
-#'   High-Performance Computing (HPC) environment, to adjust file paths
-#'   accordingly. Default: `TRUE`.
 #' @name Mod_Eval_Plot
 #' @author Ahmed El-Gabbas
 #' @export
 
-Mod_Eval_Plot <- function(ModelDir, EnvFile = ".env", FromHPC = TRUE) {
+Mod_Eval_Plot <- function(ModelDir, EnvFile = ".env") {
 
   Path_PA <- NCells_Naturalized <- IAS_ID <- AUC <- NCells <- RMSE <- Boyce <-
     TjurR2 <- NULL
@@ -30,18 +27,12 @@ Mod_Eval_Plot <- function(ModelDir, EnvFile = ".env", FromHPC = TRUE) {
   # # Load species summary
   IASDT.R::CatTime("Load species summary")
 
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_PA", "DP_R_PA", TRUE, FALSE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_PA", "DP_R_PA_Local", TRUE, FALSE)
-  }
-
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_PA", "DP_R_PA", TRUE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   SpSummary <- IASDT.R::Path(Path_PA, "Sp_PA_Summary_DF.csv")
   if (!file.exists(SpSummary)) {

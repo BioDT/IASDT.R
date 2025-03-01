@@ -992,9 +992,6 @@ run_crossprod_solve <- function(
 #' @param Path_Model Path to the model file.
 #' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
-#' @param FromHPC Logical. Whether the processing is being done on an
-#'   High-Performance Computing (HPC) environment, to adjust file paths
-#'   accordingly. Default: `TRUE`.
 #' @param Plot_Width,Plot_Height Numeric. The width and height of the
 #'   output plot in cm. Default is 20&times;21 cm.
 #' @export
@@ -1002,26 +999,19 @@ run_crossprod_solve <- function(
 #' @name Mod_Plot_LF
 
 Mod_Plot_LF <- function(
-    Path_Model = NULL, EnvFile = ".env", FromHPC = TRUE,
-    Plot_Width = 20, Plot_Height = 21) {
+    Path_Model = NULL, EnvFile = ".env", Plot_Width = 20, Plot_Height = 21) {
 
   # # ..................................................................... ###
 
   Path_Grid <- NULL
 
   # Environment variables ----
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Grid", "DP_R_Grid", TRUE, FALSE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE)
-  }
-
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   Grid10 <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.RData") %>%
     IASDT.R::LoadAs() %>%

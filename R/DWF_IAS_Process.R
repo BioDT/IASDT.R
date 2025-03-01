@@ -4,9 +4,6 @@
 #' GBIF, EASIN, and eLTER for the Invasive Alien Species prototype Digital Twin
 #' (`IAS-pDT`). Merges pre-processed data, creates presence-absence rasters,
 #' summarizes distributions, and generates maps using helper functions.
-#' @param FromHPC Logical. Whether the processing is being done on an
-#'   High-Performance Computing (HPC) environment, to adjust file paths
-#'   accordingly. Default: `TRUE`.
 #' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
 #' @param NCores Integer. Number of CPU cores to use for parallel processing.
@@ -40,8 +37,7 @@
 #' @rdname IAS_data
 #' @order 1
 
-IAS_Process <- function(
-    FromHPC = TRUE, EnvFile = ".env", NCores = 6L, Overwrite = TRUE) {
+IAS_Process <- function(EnvFile = ".env", NCores = 6L, Overwrite = TRUE) {
 
   # # ..................................................................... ###
 
@@ -55,8 +51,7 @@ IAS_Process <- function(
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = "EnvFile")
-  IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "logical", Args = c("FromHPC", "Overwrite"))
+  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "logical", Args = "Overwrite")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "numeric", Args = "NCores")
 
   rm(AllArgs, envir = environment())
@@ -79,33 +74,18 @@ IAS_Process <- function(
   # Environment variables ----
   IASDT.R::CatTime("Environment variables")
 
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_GBIF", "DP_R_GBIF", TRUE, FALSE,
-      "Path_EASIN", "DP_R_EASIN", TRUE, FALSE,
-      "Path_eLTER", "DP_R_eLTER_Out", FALSE, TRUE,
-      "EU_Bound", "DP_R_EUBound_sf", FALSE, TRUE,
-      "Path_PA", "DP_R_PA", FALSE, FALSE,
-      "Path_HabAff", "DP_R_HabAff", FALSE, TRUE,
-      "Path_TaxaStand", "DP_R_TaxaStand", FALSE, TRUE,
-      "Path_TaxaInfo_RData", "DP_R_TaxaInfo_RData", FALSE, TRUE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_GBIF", "DP_R_GBIF_Local", TRUE, FALSE,
-      "Path_EASIN", "DP_R_EASIN_Local", TRUE, FALSE,
-      "Path_eLTER", "DP_R_eLTER_Out_Local", FALSE, TRUE,
-      "EU_Bound", "DP_R_EUBound_sf_Local", FALSE, TRUE,
-      "Path_PA", "DP_R_PA_Local", FALSE, FALSE,
-      "Path_HabAff", "DP_R_HabAff_Local", FALSE, TRUE,
-      "Path_TaxaStand", "DP_R_TaxaStand_Local", FALSE, TRUE,
-      "Path_TaxaInfo_RData", "DP_R_TaxaInfo_RData_Local", FALSE, TRUE)
-  }
-
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_GBIF", "DP_R_GBIF_processed", TRUE, FALSE,
+    "Path_EASIN", "DP_R_EASIN_processed", TRUE, FALSE,
+    "Path_eLTER", "DP_R_eLTER_processed", FALSE, TRUE,
+    "EU_Bound", "DP_R_EUBound", FALSE, TRUE,
+    "Path_PA", "DP_R_PA", FALSE, FALSE,
+    "Path_HabAff", "DP_R_HabAff", FALSE, TRUE,
+    "Path_TaxaStand", "DP_R_Taxa_stand", FALSE, TRUE,
+    "Path_TaxaInfo_RData", "DP_R_Taxa_info_rdata", FALSE, TRUE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
-
   rm(EnvVars2Read, envir = environment())
 
   # # ..................................................................... ###
@@ -208,8 +188,7 @@ IAS_Process <- function(
     X = sort(unique(TaxaList$Species_name)),
     FUN = function(x) {
       IASDT.R::IAS_Distribution(
-        Species = x, FromHPC = FromHPC, EnvFile = EnvFile, Verbose = FALSE,
-        Overwrite = Overwrite)
+        Species = x, EnvFile = EnvFile, Verbose = FALSE, Overwrite = Overwrite)
     },
     future.scheduling = Inf,
     future.seed = TRUE,
@@ -217,7 +196,7 @@ IAS_Process <- function(
       "dplyr", "lubridate", "IASDT.R", "purrr", "stringr", "readr", "fs",
       "sf", "terra", "readxl", "tidyr", "tidyselect", "ggplot2", "ggtext",
       "grid", "tidyterra", "cowplot", "scales"),
-    future.globals = c("FromHPC", "EnvFile", "Overwrite")) %>%
+    future.globals = c("EnvFile", "Overwrite")) %>%
     dplyr::bind_rows()
 
   # # .................................... ###

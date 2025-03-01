@@ -18,14 +18,10 @@
 #'   Default: `10`.
 #' @param NSearch Integer. Records per taxonomy or data request (max 1000).
 #'   Default: `1000`.
-#' @param FromHPC Logical. Whether the processing is being done on an
-#'   High-Performance Computing (HPC) environment, to adjust file paths
-#'   accordingly. Default: `TRUE`.
 #' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
 #' @param DeleteChunks Logical. If `TRUE`, removes intermediate files. Default:
 #'   `FALSE`.
-#'
 #' @param StartYear Integer. Earliest year for occurrence data (excludes earlier
 #'   records). Default: `1981` (aligned with CHELSA climate data).
 #' @param Plot Logical. If `TRUE`, generates plots via `EASIN_Plot()`. Default:
@@ -60,7 +56,6 @@
 #' - **`EASIN_Plot()`**: Creates summary plots (observations count, species
 #'   count, distribution by partner) as JPEGs. Returns `invisible(NULL)`.
 
-
 # # |------------------------------------------------------------------------| #
 # EASIN_Process ----
 ## |------------------------------------------------------------------------| #
@@ -71,9 +66,9 @@
 #' @order 1
 
 EASIN_Process <- function(
-    ExtractTaxa = TRUE, ExtractData = TRUE, NDownTries = 10L,
-    NCores = 6L, SleepTime = 10L, NSearch = 1000L, FromHPC = TRUE,
-    EnvFile = ".env", DeleteChunks = TRUE, StartYear = 1981L, Plot = TRUE) {
+    ExtractTaxa = TRUE, ExtractData = TRUE, NDownTries = 10L, NCores = 6L,
+    SleepTime = 10L, NSearch = 1000L, EnvFile = ".env", DeleteChunks = TRUE,
+    StartYear = 1981L, Plot = TRUE) {
 
   # # ..................................................................... ###
 
@@ -89,9 +84,7 @@ EASIN_Process <- function(
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = "EnvFile")
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "logical",
-    Args = c(
-      "ExtractTaxa", "ExtractData", "FromHPC", "Verbose",
-      "Plot", "DeleteChunks"))
+    Args = c("ExtractTaxa", "ExtractData", "Verbose", "Plot", "DeleteChunks"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric",
     Args = c("DownTries", "NCores", "SleepTime", "NSearch", "StartYear"))
@@ -115,30 +108,19 @@ EASIN_Process <- function(
   # # |||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Environment variables")
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Grid", "DP_R_Grid", TRUE, FALSE,
-      "Path_Grid_Ref", "DP_R_Grid_Ref", TRUE, FALSE,
-      "Path_EASIN", "DP_R_EASIN", FALSE, FALSE,
-      "Path_EASIN_Interim", "DP_R_EASIN_Interim", FALSE, FALSE,
-      "TaxaInfoFile", "DP_R_TaxaInfo_RData", FALSE, TRUE,
-      "EASIN_Ref", "DP_R_TaxaInfo_EASIN", FALSE, TRUE,
-      "EASIN_URL", "DP_R_EASIN_URL", FALSE, FALSE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE,
-      "Path_Grid_Ref", "DP_R_Grid_Ref_Local", TRUE, FALSE,
-      "Path_EASIN", "DP_R_EASIN_Local", FALSE, FALSE,
-      "Path_EASIN_Interim", "DP_R_EASIN_Interim_Local", FALSE, FALSE,
-      "TaxaInfoFile", "DP_R_TaxaInfo_RData_Local", FALSE, TRUE,
-      "EASIN_Ref", "DP_R_TaxaInfo_EASIN_Local", FALSE, TRUE,
-      "EASIN_URL", "DP_R_EASIN_URL", FALSE, FALSE)
-  }
 
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
+    "Path_Grid_Ref", "DP_R_Grid_raw", TRUE, FALSE,
+    "Path_EASIN", "DP_R_EASIN_processed", FALSE, FALSE,
+    "Path_EASIN_Interim", "DP_R_EASIN_interim", FALSE, FALSE,
+    "EASIN_URL", "DP_R_EASIN_url", FALSE, FALSE,
+    "TaxaInfoFile", "DP_R_Taxa_info_rdata", FALSE, TRUE,
+    "EASIN_Ref", "DP_R_Taxa_easin", FALSE, TRUE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   # # ..................................................................... ###
 
@@ -322,14 +304,13 @@ EASIN_Process <- function(
       IASDT.R::CatTime("Processing EASIN data", Level = 1)
       Down <- try(
         future.apply::future_lapply(
-          X = NotProcessed, FUN = IASDT.R::EASIN_Down,
-          FromHPC = FromHPC, EnvFile = EnvFile,
+          X = NotProcessed, FUN = IASDT.R::EASIN_Down, EnvFile = EnvFile,
           DeleteChunks = DeleteChunks,
           NSearch = NSearch, SleepTime = SleepTime,
           future.scheduling = Inf, future.seed = TRUE,
           future.globals = c(
             "Path_EASIN_Interim", "NSearch", "DeleteChunks", "SleepTime",
-            "EnvFile", "FromHPC"),
+            "EnvFile"),
           future.packages = c(
             "dplyr", "jsonlite", "purrr", "IASDT.R", "withr", "fs",
             "stringr", "RCurl", "tibble")),
@@ -619,7 +600,7 @@ EASIN_Process <- function(
 
   if (Plot) {
     IASDT.R::CatTime("Plotting")
-    IASDT.R::EASIN_Plot(EnvFile = EnvFile, FromHPC = FromHPC)
+    IASDT.R::EASIN_Plot(EnvFile = EnvFile)
   }
 
   # # ..................................................................... ###

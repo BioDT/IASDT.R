@@ -11,7 +11,6 @@ Mod_Postprocess_1_CPU(
   ModelDir = NULL,
   Hab_Abb = NULL,
   NCores = 8L,
-  FromHPC = TRUE,
   EnvFile = ".env",
   Path_Hmsc = NULL,
   MemPerCpu = NULL,
@@ -44,7 +43,6 @@ Mod_Postprocess_1_CPU(
 
 Mod_Prep_TF(
   NumFiles = 210L,
-  FromHPC = TRUE,
   EnvFile = ".env",
   WD = NULL,
   Partition_Name = "small-g",
@@ -56,7 +54,6 @@ Mod_Postprocess_2_CPU(
   ModelDir = NULL,
   Hab_Abb = NULL,
   NCores = 8L,
-  FromHPC = TRUE,
   EnvFile = ".env",
   GPP_Dist = NULL,
   Tree = "Tree",
@@ -92,10 +89,6 @@ which data will be prepared. Valid values are \code{0}, \code{1}, \code{2}, \cod
 
 \item{NCores}{Integer. Number of CPU cores to use for parallel processing.
 Default: 8.}
-
-\item{FromHPC}{Logical. Whether the processing is being done on an
-High-Performance Computing (HPC) environment, to adjust file paths
-accordingly. Default: \code{TRUE}.}
 
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}

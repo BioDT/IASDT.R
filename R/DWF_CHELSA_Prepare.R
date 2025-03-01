@@ -9,7 +9,7 @@
 #' @order 2
 
 CHELSA_Prepare <- function(
-    EnvFile = ".env", FromHPC = TRUE, Download = FALSE, NCores = 8L,
+    EnvFile = ".env", Download = FALSE, NCores = 8L,
     Overwrite = FALSE, Download_Attempts = 10L, Sleep = 5L, OtherVars = "npp") {
 
   # # ..................................................................... ###
@@ -23,7 +23,7 @@ CHELSA_Prepare <- function(
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Args = c("EnvFile", "OtherVars"), Type = "character")
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Args = c("FromHPC", "Download", "Overwrite"),
+    AllArgs = AllArgs, Args = c("Download", "Overwrite"),
     Type = "logical")
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Args = c("Sleep", "Download_Attempts", "NCores"),
@@ -47,30 +47,15 @@ CHELSA_Prepare <- function(
   # # ..................................................................... ###
 
   # Environment variables -----
-  if (!file.exists(EnvFile)) {
-    stop(
-      "Path to environment variables: ", EnvFile, " was not found",
-      call. = FALSE)
-  }
-
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_CHELSA_Out", "DP_R_CHELSA_Output", FALSE, FALSE,
-      "Path_CHELSA_In", "DP_R_CHELSA_Input", FALSE, FALSE,
-      "Path_DwnLinks", "DP_R_CHELSA_DwnLinks", TRUE, FALSE,
-      "BaseURL", "DP_R_CHELSA_URL", FALSE, FALSE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_CHELSA_Out", "DP_R_CHELSA_Output_Local", FALSE, FALSE,
-      "Path_CHELSA_In", "DP_R_CHELSA_Input_Local", FALSE, FALSE,
-      "Path_DwnLinks", "DP_R_CHELSA_DwnLinks_Local", TRUE, FALSE,
-      "BaseURL", "DP_R_CHELSA_URL", FALSE, FALSE)
-  }
-
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_CHELSA_Out", "DP_R_CHELSA_processed", FALSE, FALSE,
+    "Path_CHELSA_In", "DP_R_CHELSA_raw", FALSE, FALSE,
+    "Path_DwnLinks", "DP_R_CHELSA_links", TRUE, FALSE,
+    "BaseURL", "DP_R_CHELSA_url", FALSE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   # # ..................................................................... ###
 

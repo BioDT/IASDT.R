@@ -14,9 +14,6 @@
 #' @param Path_Model Character. Path to a saved Hmsc model object.
 #' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
-#' @param FromHPC Logical. Whether the processing is being done on an
-#'   High-Performance Computing (HPC) environment, to adjust file paths
-#'   accordingly. Default: `TRUE`.
 #' @param Title Character. Title for **rho** and **alpha** convergence plots.
 #'   Default: " "
 #' @param NOmega Integer. Number of species interactions sampled for Omega
@@ -53,10 +50,10 @@
 #' @export
 
 Convergence_Plot <- function(
-    Path_Coda = NULL, Path_Model = NULL, EnvFile = ".env",
-    FromHPC = TRUE, Title = " ", NOmega = 1000L, NCores = 8L,
-    NRC = c(2L, 2L), Beta_NRC = c(3L, 3L), SavePlotData = TRUE,
-    PagePerFile = 20L, Cols = NULL, MarginType = "histogram") {
+    Path_Coda = NULL, Path_Model = NULL, EnvFile = ".env", Title = " ",
+    NOmega = 1000L, NCores = 8L, NRC = c(2L, 2L), Beta_NRC = c(3L, 3L),
+    SavePlotData = TRUE, PagePerFile = 20L, Cols = NULL,
+    MarginType = "histogram") {
 
   # # ..................................................................... ###
 
@@ -101,7 +98,6 @@ Convergence_Plot <- function(
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "character",
     Args = c("Path_Coda", "Path_Model"))
-  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "logical", Args = "FromHPC")
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric", Args = c("NOmega", "NCores", "NRC"))
   rm(AllArgs, envir = environment())
@@ -111,18 +107,12 @@ Convergence_Plot <- function(
   # # Load species summary
   IASDT.R::CatTime("Load species summary")
 
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_PA", "DP_R_PA", TRUE, FALSE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_PA", "DP_R_PA_Local", TRUE, FALSE)
-  }
-
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_PA", "DP_R_PA", TRUE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   SpSummary <- IASDT.R::Path(Path_PA, "Sp_PA_Summary_DF.csv")
   if (!file.exists(SpSummary)) {
@@ -277,8 +267,7 @@ Convergence_Plot <- function(
   } else {
     IASDT.R::CatTime("Coda to tibble", Level = 1)
     OmegaDF <- IASDT.R::Coda_to_tibble(
-      CodaObj = Obj_Omega, Type = "omega", NOmega = NOmega,
-      EnvFile = EnvFile, FromHPC = FromHPC)
+      CodaObj = Obj_Omega, Type = "omega", NOmega = NOmega, EnvFile = EnvFile)
     invisible(gc())
     SelectedCombs <- unique(OmegaDF$SpComb)
 
@@ -547,8 +536,7 @@ Convergence_Plot <- function(
 
     IASDT.R::CatTime("Coda to tibble", Level = 2)
     Beta_DF <- IASDT.R::Coda_to_tibble(
-      CodaObj = Obj_Beta, Type = "beta",
-      EnvFile = EnvFile, FromHPC = FromHPC) %>%
+      CodaObj = Obj_Beta, Type = "beta", EnvFile = EnvFile) %>%
       dplyr::left_join(CI, by = "Var_Sp")
 
     # Variable ranges
@@ -573,8 +561,7 @@ Convergence_Plot <- function(
 
     # Species taxonomy
     IASDT.R::CatTime("Species taxonomy", Level = 2)
-    SpeciesTaxonomy <- IASDT.R::GetSpeciesName(
-      EnvFile = EnvFile, FromHPC = FromHPC) %>%
+    SpeciesTaxonomy <- IASDT.R::GetSpeciesName(EnvFile = EnvFile) %>%
       dplyr::select(IAS_ID, Class, Order, Family)
 
     Beta_DF <- Beta_DF %>%

@@ -106,7 +106,6 @@
 #' @param ToJSON Logical. Whether to convert unfitted models to JSON before
 #'   saving to RDS file. Default: `FALSE`.
 #' @param CheckPython Logical. Whether to check if the Python executable exists.
-#'   Only valid if FromHPC = `FALSE`.
 #' @param Precision Integer (either 32 or 64). Defines the floating-point
 #'   precision mode for `Hmsc-HPC` sampling (--fp 32 or --fp 64). The default is
 #'   64, which is the default precision in `Hmsc-HPC`.
@@ -140,9 +139,6 @@
 #'   data sources. Defaults to `.env`.
 #' @param VerboseProgress Logical. Whether to print a message upon successful
 #'   saving of files. Defaults to `FALSE`.
-#' @param FromHPC Logical. Whether the processing is being done on an
-#'   High-Performance Computing (HPC) environment, to adjust file paths
-#'   accordingly. Default: `TRUE`.
 #' @param ... Additional parameters provided to the [Mod_SLURM] function.
 #' @export
 #' @inheritParams Mod_PrepKnots
@@ -203,9 +199,9 @@ Mod_Prep4HPC <- function(
     OverwriteRDS = TRUE, NCores = 8L, NChains = 4L,
     thin = NULL, samples = 1000L, transientFactor = 500L, verbose = 200L,
     SkipFitted = TRUE, NumArrayJobs = 210L, ModelCountry = NULL,
-    VerboseProgress = TRUE, FromHPC = TRUE, PrepSLURM = TRUE, MemPerCpu = NULL,
-    Time = NULL, JobName = NULL, Path_Hmsc = NULL,
-    CheckPython = FALSE, ToJSON = FALSE, Precision = 64L, ...) {
+    VerboseProgress = TRUE, PrepSLURM = TRUE, MemPerCpu = NULL, Time = NULL,
+    JobName = NULL, Path_Hmsc = NULL, CheckPython = FALSE, ToJSON = FALSE,
+    Precision = 64L, ...) {
 
   # # ..................................................................... ###
 
@@ -284,35 +280,21 @@ Mod_Prep4HPC <- function(
 
   IASDT.R::CatTime("Load/check environment variables")
 
-  if (!file.exists(EnvFile)) {
-    stop(
-      "Path to environment variables: ", EnvFile, " was not found",
-      call. = FALSE)
-  }
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "TaxaInfoFile", "DP_R_Taxa_info", FALSE, TRUE,
+    "EU_Bound", "DP_R_EUBound", FALSE, TRUE,
+    "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
+    "Path_PA", "DP_R_PA", TRUE, FALSE)
 
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "TaxaInfoFile", "DP_R_TaxaInfo", FALSE, TRUE,
-      "EU_Bound", "DP_R_EUBound_sf", FALSE, TRUE,
-      "Path_Grid", "DP_R_Grid", TRUE, FALSE,
-      "Path_PA", "DP_R_PA", TRUE, FALSE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "TaxaInfoFile", "DP_R_TaxaInfo_Local", FALSE, TRUE,
-      "EU_Bound", "DP_R_EUBound_sf_Local", FALSE, TRUE,
-      "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE,
-      "Path_PA", "DP_R_PA_Local", TRUE, FALSE)
-
-    # Check if Python executable exists
-    if (CheckPython && !file.exists(Path_Python)) {
-      stop("Python executable does not exist: ", Path_Python, call. = FALSE)
-    }
+  # Check if Python executable exists
+  if (CheckPython && !file.exists(Path_Python) && Sys.info()[1] == "Windows") {
+    stop("Python executable does not exist: ", Path_Python, call. = FALSE)
   }
 
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   # # ..................................................................... ###
 
@@ -461,7 +443,7 @@ Mod_Prep4HPC <- function(
     Hab_Abb = Hab_Abb, MinEffortsSp = MinEffortsSp, ExcludeCult = ExcludeCult,
     ExcludeZeroHabitat = ExcludeZeroHabitat, PresPerSpecies = PresPerSpecies,
     EnvFile = EnvFile, Path_Model = Path_Model,
-    VerboseProgress = VerboseProgress, FromHPC = FromHPC)
+    VerboseProgress = VerboseProgress)
 
   IASDT.R::CatSep(Rep = 1, Extra1 = 1, Extra2 = 2)
 
@@ -639,9 +621,8 @@ Mod_Prep4HPC <- function(
 
   DT_All <- IASDT.R::Mod_GetCV(
     Data = DT_All, EnvFile = EnvFile, XVars = XVars,
-    CV_NFolds = CV_NFolds, FromHPC = FromHPC, CV_NGrids = CV_NGrids,
-    CV_NR = CV_NR, CV_NC = CV_NC, OutPath = Path_Model, CV_Plot = CV_Plot,
-    CV_SAC = CV_SAC)
+    CV_NFolds = CV_NFolds, CV_NGrids = CV_NGrids, CV_NR = CV_NR, CV_NC = CV_NC,
+    OutPath = Path_Model, CV_Plot = CV_Plot, CV_SAC = CV_SAC)
 
   # cross-validation data to be saved
   DT_CV <- DT_All %>%
@@ -1329,8 +1310,7 @@ Mod_Prep4HPC <- function(
 
     IASDT.R::Mod_SLURM(
       ModelDir = Path_Model, JobName = JobName, MemPerCpu = MemPerCpu,
-      Time = Time, EnvFile = EnvFile, FromHPC = FromHPC,
-      Path_Hmsc = Path_Hmsc, ...)
+      Time = Time, EnvFile = EnvFile, Path_Hmsc = Path_Hmsc, ...)
   }
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

@@ -9,7 +9,7 @@
 #' @export
 
 Efforts_Split <- function(
-  Path_Zip = NULL, FromHPC = TRUE, EnvFile = ".env", ChunkSize = 100000L) {
+  Path_Zip = NULL, EnvFile = ".env", ChunkSize = 100000L) {
 
   # # ..................................................................... ###
 
@@ -55,18 +55,12 @@ Efforts_Split <- function(
   # Environment variables ----
   IASDT.R::CatTime("Environment variables")
 
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Interim", "DP_R_Efforts_Interim", FALSE, FALSE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Interim", "DP_R_Efforts_Interim_Local", FALSE, FALSE)
-  }
-
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_Interim", "DP_R_Efforts_interim", FALSE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   # # ..................................................................... ###
 

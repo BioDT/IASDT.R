@@ -9,8 +9,7 @@
 #' @order 2
 
 IAS_Distribution <- function(
-    Species = NULL, FromHPC = TRUE, EnvFile = ".env", Verbose = FALSE,
-    Overwrite = FALSE) {
+    Species = NULL, EnvFile = ".env", Verbose = FALSE, Overwrite = FALSE) {
 
   # # ..................................................................... ###
 
@@ -37,8 +36,7 @@ IAS_Distribution <- function(
     stats::setNames(AllArgs)
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "character", Args = c("Species", "EnvFile"))
-  IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "logical", Args = c("FromHPC", "Verbose"))
+  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "logical", Args = "Verbose")
 
   # # ..................................................................... ###
 
@@ -55,39 +53,21 @@ IAS_Distribution <- function(
   # Environment variables ----
   IASDT.R::CatTime("Environment variables")
 
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Grid", "DP_R_Grid", TRUE, FALSE,
-      "Path_Grid_Ref", "DP_R_Grid_Ref", TRUE, FALSE,
-      "Path_GBIF", "DP_R_GBIF", TRUE, FALSE,
-      "Path_EASIN", "DP_R_EASIN", TRUE, FALSE,
-      "Path_eLTER", "DP_R_eLTER_Out", FALSE, TRUE,
-      "Path_PA", "DP_R_PA", FALSE, FALSE,
-      "Path_TaxaCNT", "DP_R_Taxa_Country", FALSE, TRUE,
-      "Path_TaxaInfo_RData", "DP_R_TaxaInfo_RData", FALSE, TRUE,
-      "Path_TaxaInfo", "DP_R_TaxaInfo", FALSE, TRUE,
-      "Path_BioReg", "DP_R_BioReg", TRUE, FALSE,
-      "EU_Bound", "DP_R_EUBound_sf", FALSE, TRUE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE,
-      "Path_Grid_Ref", "DP_R_Grid_Ref_Local", TRUE, FALSE,
-      "Path_GBIF", "DP_R_GBIF_Local", TRUE, FALSE,
-      "Path_EASIN", "DP_R_EASIN_Local", TRUE, FALSE,
-      "Path_eLTER", "DP_R_eLTER_Out_Local", FALSE, TRUE,
-      "Path_PA", "DP_R_PA_Local", FALSE, FALSE,
-      "Path_TaxaCNT", "DP_R_Taxa_Country_Local", FALSE, TRUE,
-      "Path_TaxaInfo_RData", "DP_R_TaxaInfo_RData_Local", FALSE, TRUE,
-      "Path_TaxaInfo", "DP_R_TaxaInfo_Local", FALSE, TRUE,
-      "Path_BioReg", "DP_R_BioReg_Local",  TRUE, FALSE,
-      "EU_Bound", "DP_R_EUBound_sf_Local", FALSE, TRUE)
-  }
-
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
+    "Path_Grid_Ref", "DP_R_Grid_raw", TRUE, FALSE,
+    "Path_GBIF", "DP_R_GBIF_processed", TRUE, FALSE,
+    "Path_EASIN", "DP_R_EASIN_processed", TRUE, FALSE,
+    "Path_eLTER", "DP_R_eLTER_processed", FALSE, TRUE,
+    "Path_PA", "DP_R_PA", FALSE, FALSE,
+    "Path_TaxaCNT", "DP_R_Taxa_country", FALSE, TRUE,
+    "Path_TaxaInfo_RData", "DP_R_Taxa_info_rdata", FALSE, TRUE,
+    "Path_TaxaInfo", "DP_R_Taxa_info", FALSE, TRUE,
+    "Path_BioReg", "DP_R_BioReg_processed", TRUE, FALSE,
+    "EU_Bound", "DP_R_EUBound", FALSE, TRUE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
-
   rm(EnvVars2Read, envir = environment())
 
   # # ..................................................................... ###
@@ -732,9 +712,7 @@ IAS_Distribution <- function(
   # Plotting species distribution -----
   IASDT.R::CatTime("Plotting species distribution")
 
-  IASDT.R::IAS_Plot(
-    Species = Species, FromHPC = FromHPC,
-    EnvFile = EnvFile, Overwrite = Overwrite)
+  IASDT.R::IAS_Plot(Species = Species, EnvFile = EnvFile, Overwrite = Overwrite)
   # # ..................................................................... ###
 
   IASDT.R::CatDiff(

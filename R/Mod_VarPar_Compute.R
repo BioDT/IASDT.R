@@ -38,9 +38,6 @@
 #'   Default: `VarPar`.
 #' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
-#' @param FromHPC Logical. Whether the processing is being done on an
-#'   High-Performance Computing (HPC) environment, to adjust file paths
-#'   accordingly. Default: `TRUE`.
 #' @param Fig_width,Fig_height Numeric. Width and height of the output plot in
 #'   centimeters. Default: `30` and `15`, respectively.
 #' @param Axis_text Numeric. Size of the axis text. Default: `4`.

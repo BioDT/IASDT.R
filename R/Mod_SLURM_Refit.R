@@ -11,9 +11,9 @@
 Mod_SLURM_Refit <- function(
     ModelDir = NULL, NumArrayJobs = 210L, JobName = NULL, MemPerCpu = NULL,
     Time = NULL, Partition = "small-g", EnvFile = ".env", CatJobInfo = TRUE,
-    ntasks = 1L, CpusPerTask = 1L, GpusPerNode = 1L, FromHPC = TRUE,
-    PrepSLURM = TRUE, Path_Hmsc = NULL,
-    Refit_Prefix = "Commands2Refit", SLURM_Prefix = "Bash_Refit") {
+    ntasks = 1L, CpusPerTask = 1L, GpusPerNode = 1L, PrepSLURM = TRUE,
+    Path_Hmsc = NULL, Refit_Prefix = "Commands2Refit",
+    SLURM_Prefix = "Bash_Refit") {
 
   # # ..................................................................... ###
 
@@ -166,7 +166,7 @@ Mod_SLURM_Refit <- function(
       CatJobInfo = CatJobInfo, ntasks = ntasks, CpusPerTask = CpusPerTask,
       Path_Hmsc = Path_Hmsc,
       Command_Prefix = Refit_Prefix, SLURM_Prefix = SLURM_Prefix,
-      FromHPC = FromHPC, Path_SLURM_Out = NULL)
+      Path_SLURM_Out = NULL)
 
     IASDT.R::CatTime(
       paste0(

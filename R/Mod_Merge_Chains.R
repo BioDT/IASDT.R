@@ -17,9 +17,6 @@
 #'   `.RData` file will be created with this name.
 #' @param PrintIncomplete Logical. Whether to print the names of models that
 #'   were not successfully fitted to the console. Defaults to `TRUE`.
-#' @param FromHPC Logical. Whether the processing is being done on an
-#'   High-Performance Computing (HPC) environment, to adjust file paths
-#'   accordingly. Default: `TRUE`.
 #' @param FromJSON Logical. Whether to convert loaded models from JSON format
 #'   before reading. Defaults to `FALSE`.
 #' @param Extension Character. File extension (without dot) for the files
@@ -33,8 +30,7 @@
 
 Mod_Merge_Chains <- function(
     ModelDir = NULL, NCores = NULL, ModInfoName = NULL,
-    PrintIncomplete = TRUE, FromHPC = TRUE, FromJSON = FALSE,
-    Extension = "qs2") {
+    PrintIncomplete = TRUE, FromJSON = FALSE, Extension = "qs2") {
 
   # # ..................................................................... ###
 
@@ -66,8 +62,7 @@ Mod_Merge_Chains <- function(
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = "NCores", Type = "numeric")
 
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Args = c("PrintIncomplete", "FromHPC", "PlotVP"),
-    Type = "logical")
+    AllArgs = AllArgs, Args = c("PrintIncomplete", "PlotVP"), Type = "logical")
 
   rm(AllArgs, envir = environment())
 

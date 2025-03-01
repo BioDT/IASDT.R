@@ -8,7 +8,7 @@
 #' @order 6
 #' @export
 
-Efforts_Plot <- function(FromHPC = TRUE, EnvFile = ".env") {
+Efforts_Plot <- function(EnvFile = ".env") {
 
   # # ..................................................................... ###
 
@@ -18,19 +18,13 @@ Efforts_Plot <- function(FromHPC = TRUE, EnvFile = ".env") {
 
   # # ..................................................................... ###
 
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Efforts", "DP_R_Efforts", FALSE, FALSE,
-      "EU_Bound", "DP_R_EUBound_sf", FALSE, TRUE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Efforts", "DP_R_Efforts_Local", FALSE, FALSE,
-      "EU_Bound", "DP_R_EUBound_sf_Local", FALSE, TRUE)
-  }
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_Efforts", "DP_R_Efforts_processed", FALSE, FALSE,
+    "EU_Bound", "DP_R_EUBound", FALSE, TRUE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   # # ..................................................................... ###
 

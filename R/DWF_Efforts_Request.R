@@ -9,7 +9,7 @@
 #' @export
 
 Efforts_Request <- function(
-  FromHPC = TRUE, EnvFile = ".env", NCores = 3L, StartYear = 1981L,
+  EnvFile = ".env", NCores = 3L, StartYear = 1981L,
   Renviron = ".Renviron", Boundaries = c(-30, 50, 25, 75)) {
 
   # # ..................................................................... ###
@@ -54,20 +54,12 @@ Efforts_Request <- function(
   # Environment variables ----
   IASDT.R::CatTime("Environment variables")
 
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Efforts", "DP_R_Efforts", FALSE, FALSE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Efforts", "DP_R_Efforts_Local", FALSE, FALSE)
-  }
-
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_Efforts", "DP_R_Efforts_processed", FALSE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
-
-  Path_Efforts_Requests <- IASDT.R::Path(Path_Efforts, "Requests")
+  rm(EnvVars2Read, envir = environment())
 
   # # ..................................................................... ###
 
@@ -113,7 +105,7 @@ Efforts_Request <- function(
         .f = ~ {
           Request_ID <- paste0("Request_", .x)
           Request_Path <- IASDT.R::Path(
-            Path_Efforts_Requests, paste0(Request_ID, ".RData"))
+            Path_Efforts, "Requests", paste0(Request_ID, ".RData"))
 
           if (file.exists(Request_Path)) {
             # load previous request
@@ -154,7 +146,7 @@ Efforts_Request <- function(
         },
         .options = furrr::furrr_options(
           seed = TRUE, scheduling = Inf,
-          globals = c("Path_Efforts_Requests", "Boundaries", "StartYear"),
+          globals = c("Path_Efforts", "Boundaries", "StartYear"),
           packages = c("dplyr", "IASDT.R", "rgbif"))
       )
     ) %>%

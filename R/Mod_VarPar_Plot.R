@@ -8,9 +8,9 @@
 #' @order 2
 
 VarPar_Plot <- function(
-    Path_Model, EnvFile = ".env", VarParFile = "VarPar", FromHPC = TRUE,
-    UseTF = TRUE, TF_Environ = NULL, NCores = 1,
-    Fig_width = 30, Fig_height = 15, Axis_text = 4) {
+    Path_Model, EnvFile = ".env", VarParFile = "VarPar", UseTF = TRUE,
+    TF_Environ = NULL, NCores = 1, Fig_width = 30, Fig_height = 15,
+    Axis_text = 4) {
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -34,8 +34,7 @@ VarPar_Plot <- function(
     stats::setNames(AllArgs)
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "character", Args = c("EnvFile", "Path_Model"))
-  IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "logical", Args = c("FromHPC", "UseTF"))
+  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "logical", Args = "UseTF")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "numeric", Args = "NCores")
   rm(AllArgs, envir = environment())
 
@@ -46,24 +45,12 @@ VarPar_Plot <- function(
 
   IASDT.R::CatTime("Loading species info")
 
-  if (!file.exists(EnvFile)) {
-    stop(
-      "Path to environment variables: ", EnvFile, " was not found",
-      call. = FALSE)
-  }
-
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "TaxaInfoFile", "DP_R_TaxaInfo_RData", FALSE, TRUE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "TaxaInfoFile", "DP_R_TaxaInfo_RData_Local", FALSE, TRUE)
-  }
-
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "TaxaInfoFile", "DP_R_Taxa_info_rdata", FALSE, TRUE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   SpList <- IASDT.R::LoadAs(TaxaInfoFile) %>%
     dplyr::select(Species = IAS_ID, Species_name) %>%

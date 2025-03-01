@@ -31,7 +31,6 @@ RespCurv_PlotSp(
   ModelDir = NULL,
   NCores = 20,
   EnvFile = ".env",
-  FromHPC = TRUE,
   ReturnData = FALSE
 )
 
@@ -99,10 +98,6 @@ is created by \code{RespCurv_PrepData}.}
 
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
-
-\item{FromHPC}{Logical. Whether the processing is being done on an
-High-Performance Computing (HPC) environment, to adjust file paths
-accordingly. Default: \code{TRUE}.}
 
 \item{PlottingAlpha}{Numeric. Opacity level for response curve lines (0 =
 fully transparent, 1 = fully opaque). Default: 0.3.}

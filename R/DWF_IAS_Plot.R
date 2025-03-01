@@ -8,8 +8,7 @@
 #' @rdname IAS_data
 #' @order 3
 
-IAS_Plot <- function(
-    Species = NULL, FromHPC = TRUE, EnvFile = ".env", Overwrite = FALSE) {
+IAS_Plot <- function(Species = NULL, EnvFile = ".env", Overwrite = FALSE) {
 
   # # ..................................................................... ###
 
@@ -25,8 +24,7 @@ IAS_Plot <- function(
 
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "character", Args = c("Species", "EnvFile"))
-  IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "logical", Args = c("FromHPC", "Overwrite"))
+  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "logical", Args = "Overwrite")
 
   # # ..................................................................... ###
 
@@ -38,28 +36,18 @@ IAS_Plot <- function(
   # # ..................................................................... ###
 
   # Environment variables ----
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Grid", "DP_R_Grid", TRUE, FALSE,
-      "Path_Grid_Ref", "DP_R_Grid_Ref", TRUE, FALSE,
-      "EU_Bound", "DP_R_EUBound_sf", FALSE, TRUE,
-      "Path_PA", "DP_R_PA", FALSE, FALSE,
-      "Path_TaxaInfo_RData", "DP_R_TaxaInfo_RData", FALSE, TRUE,
-      "Path_TaxaInfo", "DP_R_TaxaInfo", FALSE, TRUE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE,
-      "Path_Grid_Ref", "DP_R_Grid_Ref_Local", TRUE, FALSE,
-      "EU_Bound", "DP_R_EUBound_sf_Local", FALSE, TRUE,
-      "Path_PA", "DP_R_PA_Local", FALSE, FALSE,
-      "Path_TaxaInfo_RData", "DP_R_TaxaInfo_RData_Local", FALSE, TRUE,
-      "Path_TaxaInfo", "DP_R_TaxaInfo_Local", FALSE, TRUE)
-  }
 
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
+    "Path_Grid_Ref", "DP_R_Grid_raw", TRUE, FALSE,
+    "EU_Bound", "DP_R_EUBound", FALSE, TRUE,
+    "Path_PA", "DP_R_PA", FALSE, FALSE,
+    "Path_TaxaInfo_RData", "DP_R_Taxa_info_rdata", FALSE, TRUE,
+    "Path_TaxaInfo", "DP_R_Taxa_info", FALSE, TRUE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   # # ..................................................................... ###
 

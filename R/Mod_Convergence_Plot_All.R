@@ -13,9 +13,6 @@
 #'   The convergence outputs will be saved to the `Model_Convergence_All`
 #'   subfolder.
 #' @param NCores Integer. Number of CPU cores to use for parallel processing.
-#' @param FromHPC Logical. Whether the processing is being done on an
-#'   High-Performance Computing (HPC) environment, to adjust file paths
-#'   accordingly. Default: `TRUE`.
 #' @name Convergence_Plot_All
 #' @inheritParams Convergence_plots
 #' @author Ahmed El-Gabbas
@@ -24,8 +21,7 @@
 #' @export
 
 Convergence_Plot_All <- function(
-    ModelDir = NULL, NOmega = 1000L, NCores = NULL,
-    FromHPC = TRUE, MarginType = "histogram") {
+    ModelDir = NULL, NOmega = 1000L, NCores = NULL, MarginType = "histogram") {
 
   # # ..................................................................... ###
 
@@ -57,7 +53,6 @@ Convergence_Plot_All <- function(
     AllArgs = AllArgs, Type = "character", Args = c("ModelDir", "MarginType"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric",  Args = c("NOmega", "NCores"))
-  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "logical", Args = "FromHPC")
   rm(AllArgs, envir = environment())
 
   if (length(MarginType) != 1) {
@@ -152,7 +147,7 @@ Convergence_Plot_All <- function(
           Post = Coda_Obj, Model = Model_Obj,
           Title = stringr::str_remove_all(
             basename(Path_Coda), "_Tree|_Coda|.RData$|.qs2"),
-          FromHPC = FromHPC, MarginType = MarginType)
+          MarginType = MarginType)
 
         IASDT.R::SaveAs(
           InObj = PlotObj_Alpha, OutObj = Obj_Alpha,

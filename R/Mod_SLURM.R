@@ -29,9 +29,6 @@
 #'   Default: "small-g", for running the array jobs on the GPU.
 #' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
-#' @param FromHPC Logical. Whether the processing is being done on an
-#'   High-Performance Computing (HPC) environment, to adjust file paths
-#'   accordingly. Default: `TRUE`.
 #' @param Path_Hmsc Character. Path to the Hmsc-HPC installation.
 #' @param Command_Prefix Character.Prefix for the bash commands used in job
 #'   execution. Default: "`Commands2Fit`".
@@ -53,9 +50,9 @@
 Mod_SLURM <- function(
     ModelDir = NULL, JobName = NULL, CatJobInfo = TRUE, ntasks = 1L,
     CpusPerTask = 1L, GpusPerNode = 1L, MemPerCpu = NULL, Time = NULL,
-    Partition = "small-g", EnvFile = ".env", FromHPC = TRUE,
-    Path_Hmsc = NULL, Command_Prefix = "Commands2Fit",
-    SLURM_Prefix = "Bash_Fit", Path_SLURM_Out = NULL) {
+    Partition = "small-g", EnvFile = ".env", Path_Hmsc = NULL,
+    Command_Prefix = "Commands2Fit", SLURM_Prefix = "Bash_Fit",
+    Path_SLURM_Out = NULL) {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
@@ -78,11 +75,12 @@ Mod_SLURM <- function(
 
   EnvVars2Read <- tibble::tribble(
     ~VarName, ~Value, ~CheckDir, ~CheckFile,
-    "ProjNum", "LUMI_Account_GPU", FALSE, FALSE,
-    "Path_GPU_Check", "DP_R_Path_GPU_Check", FALSE, FromHPC)
+    "ProjNum", "DP_R_LUMI_gpu", FALSE, FALSE,
+    "Path_GPU_Check", "DP_R_LUMI_gpu_check", FALSE, Sys.info()[1] != "Windows")
 
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

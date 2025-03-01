@@ -9,9 +9,6 @@
 #' [OpenStreetMap Data Extracts](https://download.geofabrik.de/). It supports
 #' parallel processing for faster execution and can calculate the total length
 #' of railways and distance to the nearest railway for each grid cell in Europe.
-#' @param FromHPC Logical. Whether the processing is being done on an
-#'   High-Performance Computing (HPC) environment, to adjust file paths
-#'   accordingly. Default: `TRUE`.
 #' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
 #' @param NCores Integer. Number of CPU cores to use for parallel processing.
@@ -26,7 +23,7 @@
 #' @author Ahmed El-Gabbas
 
 Railway_Intensity <- function(
-    FromHPC = TRUE, EnvFile = ".env", NCores = 6L, DeleteProcessed = TRUE) {
+  EnvFile = ".env", NCores = 6L, DeleteProcessed = TRUE) {
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -40,8 +37,7 @@ Railway_Intensity <- function(
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = "EnvFile")
-  IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "logical", Args = c("FromHPC", "Download"))
+  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "logical", Args = "Download")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "numeric", Args = "NCores")
 
   rm(AllArgs, envir = environment())
@@ -67,28 +63,17 @@ Railway_Intensity <- function(
   # Environment variables ----
   IASDT.R::CatTime("Environment variables")
 
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Railways", "DP_R_Railways", FALSE, FALSE,
-      "Path_Railways_Raw", "DP_R_Railways_Raw", FALSE, FALSE,
-      "Path_Railways_Interim", "DP_R_Railways_Interim", FALSE, FALSE,
-      "Path_Grid", "DP_R_Grid", TRUE, FALSE,
-      "EU_Bound", "DP_R_EUBound_sf", FALSE, TRUE,
-      "Railways_URL", "DP_R_Railways_URL", FALSE, FALSE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Railways", "DP_R_Railways_Local", FALSE, FALSE,
-      "Path_Railways_Raw", "DP_R_Railways_Raw_Local", FALSE, FALSE,
-      "Path_Railways_Interim", "DP_R_Railways_Interim_Local", FALSE, FALSE,
-      "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE,
-      "EU_Bound", "DP_R_EUBound_sf_Local", FALSE, TRUE,
-      "Railways_URL", "DP_R_Railways_URL", FALSE, FALSE)
-  }
-
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_Railways", "DP_R_Railways_processed", FALSE, FALSE,
+    "Path_Railways_Raw", "DP_R_Railways_raw", FALSE, FALSE,
+    "Path_Railways_Interim", "DP_R_Railways_interim", FALSE, FALSE,
+    "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
+    "EU_Bound", "DP_R_EUBound", FALSE, TRUE,
+    "Railways_URL", "DP_R_Railways_url", FALSE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   fs::dir_create(
     c(Path_Railways, Path_Railways_Raw, Path_Railways_Interim)

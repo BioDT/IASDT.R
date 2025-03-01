@@ -49,8 +49,8 @@ Mod_CV_Fit <- function(
     Path_Model = NULL, CVName = c("CV_Dist", "CV_Large"), Partitions = NULL,
     EnvFile = ".env", InitPar = NULL, JobName = "CV_Models",
     Updater = list(Gamma2 = FALSE, GammaEta = FALSE),
-    AlignPost = TRUE, ToJSON = FALSE, FromHPC = TRUE, PrepSLURM = TRUE,
-    MemPerCpu = NULL, Time = NULL, Path_Hmsc = NULL, Precision = 64, ...) {
+    AlignPost = TRUE, ToJSON = FALSE, PrepSLURM = TRUE, MemPerCpu = NULL,
+    Time = NULL, Path_Hmsc = NULL, Precision = 64, ...) {
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -417,7 +417,7 @@ Mod_CV_Fit <- function(
     # Prepare SLURM file to submit ALL commands to HPC
     IASDT.R::Mod_SLURM(
       ModelDir = Path_CV, JobName = JobName, MemPerCpu = MemPerCpu,
-      Time = Time, EnvFile = EnvFile, FromHPC = FromHPC, Path_Hmsc = Path_Hmsc,
+      Time = Time, EnvFile = EnvFile, Path_Hmsc = Path_Hmsc,
       Path_SLURM_Out = Path_Log, SLURM_Prefix = "CV_Bash_Fit", ...)
   }
 

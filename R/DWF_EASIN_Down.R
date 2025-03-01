@@ -9,7 +9,7 @@
 #' @order 3
 
 EASIN_Down <- function(
-    SpKey, Timeout = 200, Verbose = FALSE, FromHPC = TRUE, EnvFile = ".env",
+    SpKey, Timeout = 200, Verbose = FALSE, EnvFile = ".env",
     NSearch = 1000, Attempts = 10, SleepTime = 5,
     DeleteChunks = TRUE, ReturnData = FALSE) {
 
@@ -36,7 +36,7 @@ EASIN_Down <- function(
     AllArgs = AllArgs, Type = "character", Args = c("SpKey", "EnvFile"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "logical",
-    Args = c("ReturnData", "Verbose", "DeleteChunks", "FromHPC"))
+    Args = c("ReturnData", "Verbose", "DeleteChunks"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric",
     Args = c("Timeout", "NSearch", "SleepTime"))
@@ -47,21 +47,12 @@ EASIN_Down <- function(
   # Environment variables ----
   IASDT.R::CatTime("Environment variables")
 
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "EASIN_URL", "DP_R_EASIN_URL", FALSE, FALSE,
-      "Path_EASIN", "DP_R_EASIN_Interim", FALSE, FALSE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "EASIN_URL", "DP_R_EASIN_URL", FALSE, FALSE,
-      "Path_EASIN", "DP_R_EASIN_Interim_Local", FALSE, FALSE)
-  }
-
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "EASIN_URL", "DP_R_EASIN_url", FALSE, FALSE,
+    "Path_EASIN", "DP_R_EASIN_interim", FALSE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
-
   rm(EnvVars2Read, envir = environment())
 
   # # ..................................................................... ###

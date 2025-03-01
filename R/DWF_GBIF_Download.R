@@ -9,9 +9,9 @@
 #' @order 3
 
 GBIF_Download <- function(
-    FromHPC = TRUE, EnvFile = ".env", Renviron = ".Renviron",
-    Request = TRUE, Download = TRUE, SplitChunks = TRUE,
-    ChunkSize = 50000L, Boundaries = c(-30, 50, 25, 75), StartYear = 1981L) {
+    EnvFile = ".env", Renviron = ".Renviron", Request = TRUE, Download = TRUE,
+    SplitChunks = TRUE, ChunkSize = 50000L, Boundaries = c(-30, 50, 25, 75),
+    StartYear = 1981L) {
 
   # # ..................................................................... ###
 
@@ -28,7 +28,7 @@ GBIF_Download <- function(
     AllArgs = AllArgs, Type = "character", Args = c("Renviron", "EnvFile"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "logical",
-    Args = c("FromHPC", "Request", "Download", "SplitChunks"))
+    Args = c("Request", "Download", "SplitChunks"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric",
     Args = c("ChunkSize", "Boundaries", "StartYear"))
@@ -62,26 +62,16 @@ GBIF_Download <- function(
   # Environment variables ----
   IASDT.R::CatTime("Environment variables")
 
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_GBIF", "DP_R_GBIF", FALSE, FALSE,
-      "Path_GBIF_Raw", "DP_R_GBIF_Raw", FALSE, FALSE,
-      "Path_GBIF_Interim", "DP_R_GBIF_Interim", FALSE, FALSE,
-      "CountryCodes", "DP_R_CountryCodes", FALSE, TRUE,
-      "TaxaInfo", "DP_R_TaxaInfo_RData", FALSE, TRUE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_GBIF", "DP_R_GBIF_Local", FALSE, FALSE,
-      "Path_GBIF_Raw", "DP_R_GBIF_Raw_Local", FALSE, FALSE,
-      "Path_GBIF_Interim", "DP_R_GBIF_Interim_Local", FALSE, FALSE,
-      "CountryCodes", "DP_R_CountryCodes_Local", FALSE, TRUE,
-      "TaxaInfo", "DP_R_TaxaInfo_RData_Local", FALSE, TRUE)
-  }
-
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_GBIF", "DP_R_GBIF_processed", FALSE, FALSE,
+    "Path_GBIF_Raw", "DP_R_GBIF_raw", FALSE, FALSE,
+    "Path_GBIF_Interim", "DP_R_GBIF_interim", FALSE, FALSE,
+    "CountryCodes", "DP_R_Countrycodes", FALSE, TRUE,
+    "TaxaInfo", "DP_R_Taxa_info_rdata", FALSE, TRUE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   # # ..................................................................... ###
 

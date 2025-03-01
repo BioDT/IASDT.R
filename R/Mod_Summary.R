@@ -17,9 +17,6 @@
 #'   `Alpha`, `Beta`, `Rho`, and `Omega` parameters. The default value is
 #'   `FALSE`, which means the function will not return any data but will save
 #'   the summaries to a specified directory.
-#' @param FromHPC Logical. Whether the processing is being done on an
-#'   High-Performance Computing (HPC) environment, to adjust file paths
-#'   accordingly. Default: `TRUE`.
 #' @author Ahmed El-Gabbas
 #' @return If `ReturnData` is `FALSE` (default), the function does not return
 #'   anything and saves the summaries to a directory. If `ReturnData` is `TRUE`,
@@ -28,7 +25,7 @@
 #' @name Mod_Summary
 
 Mod_Summary <- function(
-    Path_Coda = NULL, EnvFile = ".env", ReturnData = FALSE, FromHPC = TRUE) {
+  Path_Coda = NULL, EnvFile = ".env", ReturnData = FALSE) {
 
   # # ..................................................................... ###
 
@@ -57,18 +54,12 @@ Mod_Summary <- function(
   # Prepare Species list -----
   IASDT.R::CatTime("Prepare Species list")
 
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "TaxaInfoFile", "DP_R_TaxaInfo", FALSE, TRUE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "TaxaInfoFile", "DP_R_TaxaInfo_Local", FALSE, TRUE)
-  }
-
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "TaxaInfoFile", "DP_R_Taxa_info", FALSE, TRUE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   # # ..................................................................... ###
 

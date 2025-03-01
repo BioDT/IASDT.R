@@ -9,7 +9,7 @@
 #' @order 3
 
 CHELSA_Project <- function(
-    Metadata = NULL, EnvFile = ".env", FromHPC = TRUE, CompressLevel = 5) {
+  Metadata = NULL, EnvFile = ".env", CompressLevel = 5) {
 
   # Checking input arguments -----
 
@@ -20,7 +20,6 @@ CHELSA_Project <- function(
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = "EnvFile", Type = "character")
-  IASDT.R::CheckArgs(AllArgs = AllArgs, Args = "FromHPC", Type = "logical")
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Args = "CompressLevel", Type = "numeric")
   rm(AllArgs, envir = environment())
@@ -57,25 +56,12 @@ CHELSA_Project <- function(
   # # ..................................................................... ###
 
   # Environment variables -----
-
-  if (!file.exists(EnvFile)) {
-    stop(
-      "Path for environment variables: ", EnvFile, " was not found",
-      call. = FALSE)
-  }
-
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Grid", "DP_R_Grid", TRUE, FALSE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE)
-  }
-
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   # # ..................................................................... ###
 

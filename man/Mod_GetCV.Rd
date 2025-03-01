@@ -14,7 +14,6 @@ Mod_GetCV(
   CV_NC = 2L,
   CV_SAC = FALSE,
   OutPath = NULL,
-  FromHPC = TRUE,
   CV_Plot = TRUE
 )
 }
@@ -47,10 +46,6 @@ to determine the block size. Defaults to \code{FALSE},}
 
 \item{OutPath}{Character. Path for directory to save the
 cross-validation results. This argument is mandatory and can not be empty.}
-
-\item{FromHPC}{Logical. Whether the processing is being done on an
-High-Performance Computing (HPC) environment, to adjust file paths
-accordingly. Default: \code{TRUE}.}
 
 \item{CV_Plot}{Logical. Indicating whether to plot the block cross-validation
 folds.}

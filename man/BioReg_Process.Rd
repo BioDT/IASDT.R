@@ -4,13 +4,9 @@
 \alias{BioReg_Process}
 \title{Process biogeographical regions dataset}
 \usage{
-BioReg_Process(FromHPC = TRUE, EnvFile = ".env")
+BioReg_Process(EnvFile = ".env")
 }
 \arguments{
-\item{FromHPC}{Logical. Whether the processing is being done on an
-High-Performance Computing (HPC) environment, to adjust file paths
-accordingly. Default: \code{TRUE}.}
-
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
 }

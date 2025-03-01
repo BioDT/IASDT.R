@@ -10,7 +10,7 @@
 
 Convergence_Alpha <- function(
     Post = NULL, Model = NULL, Title = NULL, NRC = NULL, AddFooter = TRUE,
-    AddTitle = TRUE, Cols = NULL, FromHPC = TRUE, MarginType = "histogram") {
+    AddTitle = TRUE, Cols = NULL, MarginType = "histogram") {
 
   # # ..................................................................... ###
 
@@ -106,8 +106,7 @@ Convergence_Alpha <- function(
     magrittr::divide_by(1000) %>%
     round(3)
 
-  AlphaDF <- IASDT.R::Coda_to_tibble(
-    CodaObj = Post, Type = "alpha", FromHPC = FromHPC) %>%
+  AlphaDF <- IASDT.R::Coda_to_tibble(CodaObj = Post, Type = "alpha") %>%
     dplyr::mutate(
       Factor2 = purrr::map_int(
         .x = Factor,

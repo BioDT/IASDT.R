@@ -7,7 +7,6 @@
 Mod_Plot_LF(
   Path_Model = NULL,
   EnvFile = ".env",
-  FromHPC = TRUE,
   Plot_Width = 20,
   Plot_Height = 21
 )
@@ -17,10 +16,6 @@ Mod_Plot_LF(
 
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
-
-\item{FromHPC}{Logical. Whether the processing is being done on an
-High-Performance Computing (HPC) environment, to adjust file paths
-accordingly. Default: \code{TRUE}.}
 
 \item{Plot_Width, Plot_Height}{Numeric. The width and height of the
 output plot in cm. Default is 20×21 cm.}

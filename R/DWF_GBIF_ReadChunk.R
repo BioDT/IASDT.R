@@ -9,9 +9,8 @@
 #' @order 4
 
 GBIF_ReadChunk <- function(
-    ChunkFile, EnvFile = ".env", FromHPC = TRUE, MaxUncert = 10L,
-    StartYear = 1981L, SaveRData = TRUE, ReturnData = FALSE,
-    Overwrite = FALSE) {
+    ChunkFile, EnvFile = ".env", MaxUncert = 10L, StartYear = 1981L,
+    SaveRData = TRUE, ReturnData = FALSE, Overwrite = FALSE) {
 
   # # ..................................................................... ###
 
@@ -37,7 +36,7 @@ GBIF_ReadChunk <- function(
     AllArgs = AllArgs, Type = "character", Args = c("ChunkFile", "EnvFile"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "logical",
-    Args = c("FromHPC", "SaveRData", "ReturnData", "Overwrite"))
+    Args = c("SaveRData", "ReturnData", "Overwrite"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric", Args = c("MaxUncert", "StartYear"))
 
@@ -67,26 +66,16 @@ GBIF_ReadChunk <- function(
   # # ..................................................................... ###
 
   # Environment variables
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "CLC_Tif", "DP_R_CLC_tif", FALSE, TRUE,
-      "CLC_CW", "DP_R_CLC_CW", FALSE, TRUE,
-      "Path_Grid", "DP_R_Grid", TRUE, FALSE,
-      "Path_GBIF", "DP_R_GBIF", FALSE, FALSE,
-      "Path_GBIF_Interim", "DP_R_GBIF_Interim", FALSE, FALSE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "CLC_Tif", "DP_R_CLC_tif_Local", FALSE, TRUE,
-      "CLC_CW", "DP_R_CLC_CW_Local", FALSE, TRUE,
-      "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE,
-      "Path_GBIF", "DP_R_GBIF_Local", FALSE, FALSE,
-      "Path_GBIF_Interim", "DP_R_GBIF_Interim_Local", FALSE, FALSE)
-  }
-
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "CLC_Tif", "DP_R_CLC_tif", FALSE, TRUE,
+    "CLC_CW", "DP_R_CLC_crosswalk", FALSE, TRUE,
+    "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
+    "Path_GBIF", "DP_R_GBIF_processed", FALSE, FALSE,
+    "Path_GBIF_Interim", "DP_R_GBIF_interim", FALSE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   load(IASDT.R::Path(Path_GBIF, "SelectedCols.RData"))
 

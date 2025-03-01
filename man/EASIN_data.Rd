@@ -16,7 +16,6 @@ EASIN_Process(
   NCores = 6L,
   SleepTime = 10L,
   NSearch = 1000L,
-  FromHPC = TRUE,
   EnvFile = ".env",
   DeleteChunks = TRUE,
   StartYear = 1981L,
@@ -24,7 +23,6 @@ EASIN_Process(
 )
 
 EASIN_Taxonomy(
-  FromHPC = TRUE,
   EnvFile = ".env",
   Kingdom = "Plantae",
   Phylum = "Tracheophyta",
@@ -35,7 +33,6 @@ EASIN_Down(
   SpKey,
   Timeout = 200,
   Verbose = FALSE,
-  FromHPC = TRUE,
   EnvFile = ".env",
   NSearch = 1000,
   Attempts = 10,
@@ -44,7 +41,7 @@ EASIN_Down(
   ReturnData = FALSE
 )
 
-EASIN_Plot(EnvFile = ".env", FromHPC = TRUE)
+EASIN_Plot(EnvFile = ".env")
 }
 \arguments{
 \item{ExtractTaxa}{Logical. If \code{TRUE}, extracts taxonomy using
@@ -63,10 +60,6 @@ retrieval request to prevent overloading the server. Default: 5 second.}
 
 \item{NSearch}{Integer. Number of records to attempt to retrieve per request.
 Default: 1000, which is the current maximum allowed by the API.}
-
-\item{FromHPC}{Logical. Whether the processing is being done on an
-High-Performance Computing (HPC) environment, to adjust file paths
-accordingly. Default: \code{TRUE}.}
 
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}

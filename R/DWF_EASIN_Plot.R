@@ -8,7 +8,7 @@
 #' @rdname EASIN_data
 #' @order 4
 
-EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
+EASIN_Plot <- function(EnvFile = ".env") {
 
   # # ..................................................................... ###
 
@@ -22,7 +22,6 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = "EnvFile")
-  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "logical", Args = "FromHPC")
 
   # # ..................................................................... ###
 
@@ -35,24 +34,16 @@ EASIN_Plot <- function(EnvFile = ".env", FromHPC = TRUE) {
   # # |||||||||||||||||||||||||||||||||||
 
   IASDT.R::CatTime("Environment variables", Level = 1)
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "EU_Bound", "DP_R_EUBound_sf", FALSE, TRUE,
-      "Path_EASIN", "DP_R_EASIN", TRUE, FALSE,
-      "Path_EASIN_Interim", "DP_R_EASIN_Interim", TRUE, FALSE,
-      "Path_EASIN_Summary", "DP_R_EASIN_Summary", TRUE, FALSE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "EU_Bound", "DP_R_EUBound_sf_Local", FALSE, TRUE,
-      "Path_EASIN", "DP_R_EASIN_Local", TRUE, FALSE,
-      "Path_EASIN_Interim", "DP_R_EASIN_Interim_Local", TRUE, FALSE,
-      "Path_EASIN_Summary", "DP_R_EASIN_Summary_Local", TRUE, FALSE)
-  }
 
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "EU_Bound", "DP_R_EUBound", FALSE, TRUE,
+    "Path_EASIN", "DP_R_EASIN_processed", TRUE, FALSE,
+    "Path_EASIN_Interim", "DP_R_EASIN_interim", TRUE, FALSE,
+    "Path_EASIN_Summary", "DP_R_EASIN_summary", TRUE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   # # |||||||||||||||||||||||||||||||||||
   # # Input maps ----

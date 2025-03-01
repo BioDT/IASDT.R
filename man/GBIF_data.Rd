@@ -11,7 +11,6 @@
 \title{Process GBIF occurrence data for the \code{IAS-pDT}}
 \usage{
 GBIF_Process(
-  FromHPC = TRUE,
   EnvFile = ".env",
   Renviron = ".Renviron",
   NCores = 6L,
@@ -28,7 +27,6 @@ GBIF_Process(
 GBIF_Check(Renviron = ".Renviron")
 
 GBIF_Download(
-  FromHPC = TRUE,
   EnvFile = ".env",
   Renviron = ".Renviron",
   Request = TRUE,
@@ -42,7 +40,6 @@ GBIF_Download(
 GBIF_ReadChunk(
   ChunkFile,
   EnvFile = ".env",
-  FromHPC = TRUE,
   MaxUncert = 10L,
   StartYear = 1981L,
   SaveRData = TRUE,
@@ -50,19 +47,9 @@ GBIF_ReadChunk(
   Overwrite = FALSE
 )
 
-GBIF_SpData(
-  Species = NULL,
-  FromHPC = TRUE,
-  EnvFile = ".env",
-  Verbose = TRUE,
-  PlotTag = NULL
-)
+GBIF_SpData(Species = NULL, EnvFile = ".env", Verbose = TRUE, PlotTag = NULL)
 }
 \arguments{
-\item{FromHPC}{Logical. Whether the processing is being done on an
-High-Performance Computing (\code{HPC}) environment, to adjust file paths
-accordingly. Default: \code{TRUE}.}
-
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
 

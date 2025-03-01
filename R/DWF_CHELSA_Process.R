@@ -8,9 +8,6 @@
 #'
 #' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
-#' @param FromHPC Logical. Whether the processing is being done on an
-#'   High-Performance Computing (HPC) environment, to adjust file paths
-#'   accordingly. Default: `TRUE`.
 #' @param NCores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 8.
 #' @param Download Logical. If `TRUE`, downloads CHELSA files. Default: `FALSE`.
@@ -58,8 +55,8 @@
 #' @order 1
 
 CHELSA_Process <- function(
-    FromHPC = TRUE, EnvFile = ".env", NCores = 8L, Download = FALSE,
-    Overwrite = FALSE, Download_Attempts = 10L, Sleep = 5L, OtherVars = "npp",
+    EnvFile = ".env", NCores = 8L, Download = FALSE, Overwrite = FALSE,
+    Download_Attempts = 10L, Sleep = 5L, OtherVars = "npp",
     Download_NCores = 4, CompressLevel = 5, OverwriteProcessed = FALSE) {
 
   # # ..................................................................... ###
@@ -79,7 +76,7 @@ CHELSA_Process <- function(
   CharArgs <- c("EnvFile", "OtherVars")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = CharArgs, Type = "character")
 
-  LogicArgs <- c("FromHPC", "Download", "Overwrite", "OverwriteProcessed")
+  LogicArgs <- c("Download", "Overwrite", "OverwriteProcessed")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = LogicArgs, Type = "logical")
 
   NumericArgs <- c(
@@ -112,28 +109,19 @@ CHELSA_Process <- function(
       call. = FALSE)
   }
 
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_CHELSA_In", "DP_R_CHELSA_Input", FALSE, FALSE,
-      "Path_CHELSA_Out", "DP_R_CHELSA_Output", FALSE, FALSE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_CHELSA_In", "DP_R_CHELSA_Input_Local", FALSE, FALSE,
-      "Path_CHELSA_Out", "DP_R_CHELSA_Output_Local", FALSE, FALSE)
-  }
-
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_CHELSA_In", "DP_R_CHELSA_raw", FALSE, FALSE,
+    "Path_CHELSA_Out", "DP_R_CHELSA_processed", FALSE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   # Ensure that the output path exists
   fs::dir_create(
     c(
       Path_CHELSA_In, Path_CHELSA_Out,
       IASDT.R::Path(Path_CHELSA_Out, c("Tif", "NC", "Processed"))))
-
-  rm(EnvVars2Read, envir = environment())
 
   # # ..................................................................... ###
 
@@ -144,8 +132,8 @@ CHELSA_Process <- function(
 
   # 19 Bioclimatic variables (+ OtherVars, if not empty string) * 46 CC options
   CHELSA_Data <- IASDT.R::CHELSA_Prepare(
-    EnvFile = EnvFile, FromHPC = FromHPC, Download = Download,
-    NCores = Download_NCores, Overwrite = Overwrite, OtherVars = OtherVars,
+    EnvFile = EnvFile, Download = Download, NCores = Download_NCores,
+    Overwrite = Overwrite, OtherVars = OtherVars,
     Download_Attempts = Download_Attempts, Sleep = Sleep)
 
   IASDT.R::CatDiff(
@@ -282,7 +270,7 @@ CHELSA_Process <- function(
               Attempt <- Attempt + 1
               Try <- try(
                 IASDT.R::CHELSA_Project(
-                  Metadata = FileMetadata, EnvFile = EnvFile, FromHPC = FromHPC,
+                  Metadata = FileMetadata, EnvFile = EnvFile,
                   CompressLevel = CompressLevel),
                 silent = TRUE)
 
@@ -314,7 +302,7 @@ CHELSA_Process <- function(
           .options = furrr::furrr_options(
             seed = TRUE,
             packages = c("dplyr", "terra", "IASDT.R", "tibble", "ncdf4"),
-            globals = c("CHELSA_Data", "EnvFile", "FromHPC", "CompressLevel"))
+            globals = c("CHELSA_Data", "EnvFile", "CompressLevel"))
         )
       ) %>%
       dplyr::filter(Failed)

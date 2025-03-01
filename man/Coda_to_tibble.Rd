@@ -4,13 +4,7 @@
 \alias{Coda_to_tibble}
 \title{Convert a Coda object to a tibble with specified parameter transformations}
 \usage{
-Coda_to_tibble(
-  CodaObj = NULL,
-  Type = NULL,
-  EnvFile = ".env",
-  NOmega = 100,
-  FromHPC = TRUE
-)
+Coda_to_tibble(CodaObj = NULL, Type = NULL, EnvFile = ".env", NOmega = 100)
 }
 \arguments{
 \item{CodaObj}{An object of class \code{mcmc.list} or \code{mcmc}, representing the
@@ -24,10 +18,6 @@ data sources. Defaults to \code{.env}.}
 
 \item{NOmega}{Integer. The number of species to be sampled for the \code{Omega}
 parameter transformation. Defaults to 100.}
-
-\item{FromHPC}{Logical. Whether the processing is being done on an
-High-Performance Computing (HPC) environment, to adjust file paths
-accordingly. Default: \code{TRUE}.}
 }
 \value{
 A tibble containing the transformed parameters based on the specified

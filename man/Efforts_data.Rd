@@ -13,7 +13,6 @@
 \title{Process GBIF sampling effort data for the \code{IAS-pDT}}
 \usage{
 Efforts_Process(
-  FromHPC = TRUE,
   EnvFile = ".env",
   Renviron = ".Renviron",
   Request = TRUE,
@@ -27,7 +26,6 @@ Efforts_Process(
 )
 
 Efforts_Request(
-  FromHPC = TRUE,
   EnvFile = ".env",
   NCores = 3L,
   StartYear = 1981L,
@@ -35,30 +33,20 @@ Efforts_Request(
   Boundaries = c(-30, 50, 25, 75)
 )
 
-Efforts_Download(NCores = 6L, FromHPC = TRUE, EnvFile = ".env")
+Efforts_Download(NCores = 6L, EnvFile = ".env")
 
 Efforts_Summarize(
-  FromHPC = TRUE,
   EnvFile = ".env",
   NCores = 6L,
   ChunkSize = 100000L,
   DeleteChunks = TRUE
 )
 
-Efforts_Split(
-  Path_Zip = NULL,
-  FromHPC = TRUE,
-  EnvFile = ".env",
-  ChunkSize = 100000L
-)
+Efforts_Split(Path_Zip = NULL, EnvFile = ".env", ChunkSize = 100000L)
 
-Efforts_Plot(FromHPC = TRUE, EnvFile = ".env")
+Efforts_Plot(EnvFile = ".env")
 }
 \arguments{
-\item{FromHPC}{Logical. Whether the processing is being done on an
-High-Performance Computing (HPC) environment, to adjust file paths
-accordingly. Default: \code{TRUE}.}
-
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
 

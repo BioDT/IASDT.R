@@ -10,9 +10,6 @@
 #' function calculates the total road lengths and the distance to the nearest
 #' road per grid cell (for any road type and per road type).
 #'
-#' @param FromHPC Logical. Whether the processing is being done on an
-#'   High-Performance Computing (HPC) environment, to adjust file paths
-#'   accordingly. Default: `TRUE`.
 #' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
 #' @return `NULL`. The function outputs processed files to the specified
@@ -20,7 +17,7 @@
 #' @note
 #' - The function downloads the most recent version of Global Roads Inventory
 #'   Project (`GRIP`) data from the URL specified in the environment variable
-#'   `DP_R_Roads_URL`. Original data format is a zipped file containing global
+#'   `DP_R_Roads_url`. Original data format is a zipped file containing global
 #'   road data in the form of `fgdb` (`EPSG:3246`).
 #' - On LUMI HPC, loading the `libarchive` module is necessary to use the
 #'   `archive` R package: `module load libarchive/3.6.2-cpeGNU-23.09`
@@ -34,7 +31,7 @@
 #' @export
 #' @author Ahmed El-Gabbas
 
-Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
+Road_Intensity <- function(EnvFile = ".env") {
 
   # # ..................................................................... ###
 
@@ -48,8 +45,7 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = "EnvFile")
-  IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "logical", Args = c("FromHPC", "Download"))
+  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "logical", Args = "Download")
 
   rm(AllArgs, envir = environment())
 
@@ -65,28 +61,17 @@ Road_Intensity <- function(FromHPC = TRUE, EnvFile = ".env") {
   # Environment variables ----
   IASDT.R::CatTime("Environment variables")
 
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Roads", "DP_R_Roads", FALSE, FALSE,
-      "Path_Roads_Raw", "DP_R_Roads_Raw", FALSE, FALSE,
-      "Path_Roads_Interim", "DP_R_Roads_Interim", FALSE, FALSE,
-      "Path_Grid", "DP_R_Grid", TRUE, FALSE,
-      "EU_Bound", "DP_R_EUBound_sf", FALSE, TRUE,
-      "Road_URL", "DP_R_Roads_URL", FALSE, FALSE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Roads", "DP_R_Roads_Local", FALSE, FALSE,
-      "Path_Roads_Raw", "DP_R_Roads_Raw_Local", FALSE, FALSE,
-      "Path_Roads_Interim", "DP_R_Roads_Interim_Local", FALSE, FALSE,
-      "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE,
-      "EU_Bound", "DP_R_EUBound_sf_Local", FALSE, TRUE,
-      "Road_URL", "DP_R_Roads_URL", FALSE, FALSE)
-  }
-
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_Roads", "DP_R_Roads_processed", FALSE, FALSE,
+    "Path_Roads_Raw", "DP_R_Roads_raw", FALSE, FALSE,
+    "Path_Roads_Interim", "DP_R_Roads_interim", FALSE, FALSE,
+    "Road_URL", "DP_R_Roads_url", FALSE, FALSE,
+    "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
+    "EU_Bound", "DP_R_EUBound", FALSE, TRUE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   fs::dir_create(c(Path_Roads, Path_Roads_Raw, Path_Roads_Interim))
 

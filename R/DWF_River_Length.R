@@ -16,9 +16,6 @@
 #' Strahler values of 5 or higher).
 #'
 #' @name River_Length
-#' @param FromHPC Logical. Whether the processing is being done on an
-#'   High-Performance Computing (HPC) environment, to adjust file paths
-#'   accordingly. Default: `TRUE`.
 #' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
 #' @param Cleanup Logical indicating whether to clean up temporary files from
@@ -38,7 +35,7 @@
 #' - DOI: <https://doi.org/10.2909/393359a7-7ebd-4a52-80ac-1a18d5f3db9c>
 #' - Download link: <https://land.copernicus.eu/en/products/eu-hydro/eu-hydro-river-network-database>
 
-River_Length <- function(FromHPC = TRUE, EnvFile = ".env", Cleanup = FALSE) {
+River_Length <- function(EnvFile = ".env", Cleanup = FALSE) {
 
   # # ..................................................................... ###
 
@@ -54,9 +51,7 @@ River_Length <- function(FromHPC = TRUE, EnvFile = ".env", Cleanup = FALSE) {
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = "EnvFile")
-  IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "logical", Args = c("FromHPC", "Cleanup"))
-
+  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "logical", Args = "Cleanup")
   rm(AllArgs, envir = environment())
 
   # # ..................................................................... ###
@@ -74,26 +69,16 @@ River_Length <- function(FromHPC = TRUE, EnvFile = ".env", Cleanup = FALSE) {
   IASDT.R::CatTime("Environment variables")
   # # |||||||||||||||||||||||||||||||||||
 
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Rivers", "DP_R_Rivers", FALSE, FALSE,
-      "Path_Rivers_Raw", "DP_R_Rivers_Raw", FALSE, FALSE,
-      "Path_Rivers_Interim", "DP_R_Rivers_Interim", FALSE, FALSE,
-      "Path_Rivers_Zip", "DP_R_Rivers_Zip", FALSE, TRUE,
-      "Path_Grid", "DP_R_Grid", TRUE, FALSE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Rivers", "DP_R_Rivers", FALSE, FALSE,
-      "Path_Rivers_Raw", "DP_R_Rivers_Raw", FALSE, FALSE,
-      "Path_Rivers_Interim", "DP_R_Rivers_Interim", FALSE, FALSE,
-      "Path_Rivers_Zip", "DP_R_Rivers_Zip", FALSE, TRUE,
-      "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE)
-  }
-
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_Rivers", "DP_R_Rivers_processed", FALSE, FALSE,
+    "Path_Rivers_Raw", "DP_R_Rivers_raw", FALSE, FALSE,
+    "Path_Rivers_Interim", "DP_R_Rivers_interim", FALSE, FALSE,
+    "Path_Rivers_Zip", "DP_R_Rivers_zip", FALSE, TRUE,
+    "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   fs::dir_create(c(Path_Rivers, Path_Rivers_Raw, Path_Rivers_Interim))
 

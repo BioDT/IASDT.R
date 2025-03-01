@@ -4,7 +4,7 @@
 \alias{GetSpeciesName}
 \title{Get species name or information of an \code{IAS-pDT} species ID}
 \usage{
-GetSpeciesName(SpeciesID = NULL, EnvFile = ".env", FromHPC = TRUE)
+GetSpeciesName(SpeciesID = NULL, EnvFile = ".env")
 }
 \arguments{
 \item{SpeciesID}{optional IASDT species ID for which detailed information is
@@ -12,10 +12,6 @@ required. If not provided, the function returns the entire species list.}
 
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
-
-\item{FromHPC}{Logical. Whether the processing is being done on an
-High-Performance Computing (HPC) environment, to adjust file paths
-accordingly. Default: \code{TRUE}.}
 }
 \value{
 A data frame containing species information. If a species ID

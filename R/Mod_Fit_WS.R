@@ -40,10 +40,11 @@ Mod_Fit_WS <- function(Path_Model, EnvFile = ".env", NCores = NULL) {
 
   EnvVars2Read <- tibble::tribble(
     ~VarName, ~Value, ~CheckDir, ~CheckFile,
-    "Path_Hmsc_WS", "DP_R_Path_HmscVE_Win", TRUE, FALSE)
+    "Path_Hmsc_WS", "DP_R_Hmsc_ve_win", TRUE, FALSE)
 
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

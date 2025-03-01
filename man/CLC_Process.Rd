@@ -4,15 +4,11 @@
 \alias{CLC_Process}
 \title{Process Corine Land Cover (CLC) data for the \code{IAS-pDT}}
 \usage{
-CLC_Process(EnvFile = ".env", FromHPC = TRUE, MinLandPerc = 15, PlotCLC = TRUE)
+CLC_Process(EnvFile = ".env", MinLandPerc = 15, PlotCLC = TRUE)
 }
 \arguments{
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
-
-\item{FromHPC}{Logical. Whether the processing is being done on an
-High-Performance Computing (HPC) environment, to adjust file paths
-accordingly. Default: \code{TRUE}.}
 
 \item{MinLandPerc}{Numeric. Minimum land percentage per grid cell for the
 reference grid. Default: \code{15}.}
@@ -35,7 +31,8 @@ grid and optionally generates percentage coverage maps as JPEG.
 \itemize{
 \item Data source:
 \url{https://land.copernicus.eu/pan-european/corine-land-cover/clc2018}
-\item Citation: \url{https://doi.org/10.2909/960998c1-1870-4e82-8051-6485205ebbac}
+\item Data citation:
+\url{https://doi.org/10.2909/960998c1-1870-4e82-8051-6485205ebbac}
 }
 }
 \author{

@@ -10,8 +10,7 @@
 #' @author Ahmed El-Gabbas
 
 RespCurv_PlotSp <- function(
-    ModelDir = NULL, NCores = 20, EnvFile = ".env",
-    FromHPC = TRUE, ReturnData = FALSE) {
+    ModelDir = NULL, NCores = 20, EnvFile = ".env", ReturnData = FALSE) {
 
   # # ..................................................................... ###
 
@@ -64,18 +63,12 @@ RespCurv_PlotSp <- function(
   # # Load species summary
   IASDT.R::CatTime("Load species summary")
 
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_PA", "DP_R_PA", TRUE, FALSE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_PA", "DP_R_PA_Local", TRUE, FALSE)
-  }
-
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_PA", "DP_R_PA", TRUE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   SpSummary <- IASDT.R::Path(Path_PA, "Sp_PA_Summary_DF.csv")
   if (!file.exists(SpSummary)) {
@@ -90,7 +83,7 @@ RespCurv_PlotSp <- function(
 
   # Load species names
   IASDT.R::CatTime("Load species names")
-  SpeciesNames <- IASDT.R::GetSpeciesName(EnvFile = EnvFile, FromHPC = FromHPC)
+  SpeciesNames <- IASDT.R::GetSpeciesName(EnvFile = EnvFile)
 
   # # ..................................................................... ###
 

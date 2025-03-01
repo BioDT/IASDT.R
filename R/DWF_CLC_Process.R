@@ -13,9 +13,6 @@
 #'
 #' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
-#' @param FromHPC Logical. Whether the processing is being done on an
-#'   High-Performance Computing (HPC) environment, to adjust file paths
-#'   accordingly. Default: `TRUE`.
 #' @param MinLandPerc Numeric. Minimum land percentage per grid cell for the
 #'   reference grid. Default: `15`.
 #' @param PlotCLC Logical. If `TRUE`, plots percentage coverage for CLC levels
@@ -29,10 +26,10 @@
 #' @references
 #' - Data source:
 #' <https://land.copernicus.eu/pan-european/corine-land-cover/clc2018>
-#' - Citation: <https://doi.org/10.2909/960998c1-1870-4e82-8051-6485205ebbac>
+#' - Data citation:
+#' <https://doi.org/10.2909/960998c1-1870-4e82-8051-6485205ebbac>
 
-CLC_Process <- function(
-    EnvFile = ".env", FromHPC = TRUE, MinLandPerc = 15, PlotCLC = TRUE) {
+CLC_Process <- function(EnvFile = ".env", MinLandPerc = 15, PlotCLC = TRUE) {
   # # ..................................................................... ###
 
   .StartTime <- lubridate::now(tzone = "CET")
@@ -77,28 +74,17 @@ CLC_Process <- function(
 
   IASDT.R::CatTime("Environment variables")
 
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Grid", "DP_R_Grid", FALSE, FALSE,
-      "Path_Grid_Ref", "DP_R_Grid_Ref", TRUE, FALSE,
-      "Path_CLC", "DP_R_CLC", FALSE, FALSE,
-      "Path_CLC_tif", "DP_R_CLC_tif", FALSE, TRUE,
-      "Path_CLC_CW", "DP_R_CLC_CW", FALSE, TRUE,
-      "EU_Bound", "DP_R_EUBound_sf", FALSE, TRUE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Grid", "DP_R_Grid", FALSE, FALSE,
-      "Path_Grid_Ref", "DP_R_Grid_Ref_Local", TRUE, FALSE,
-      "Path_CLC", "DP_R_CLC_Local", FALSE, FALSE,
-      "Path_CLC_tif", "DP_R_CLC_tif_Local", FALSE, TRUE,
-      "Path_CLC_CW", "DP_R_CLC_CW_Local", FALSE, TRUE,
-      "EU_Bound", "DP_R_EUBound_sf_Local", FALSE, TRUE)
-  }
-
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_Grid", "DP_R_Grid_processed", FALSE, FALSE,
+    "Path_Grid_Ref", "DP_R_Grid_raw", TRUE, FALSE,
+    "Path_CLC", "DP_R_CLC_processed", FALSE, FALSE,
+    "Path_CLC_tif", "DP_R_CLC_tif", FALSE, TRUE,
+    "Path_CLC_CW", "DP_R_CLC_crosswalk", FALSE, TRUE,
+    "EU_Bound", "DP_R_EUBound", FALSE, TRUE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   # # ||||||||||||||||||||||||||||||||||||||||||||
   # Check files/directories

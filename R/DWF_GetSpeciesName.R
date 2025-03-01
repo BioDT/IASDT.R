@@ -11,9 +11,6 @@
 #'   data sources. Defaults to `.env`.
 #' @param SpeciesID optional IASDT species ID for which detailed information is
 #'   required. If not provided, the function returns the entire species list.
-#' @param FromHPC Logical. Whether the processing is being done on an
-#'   High-Performance Computing (HPC) environment, to adjust file paths
-#'   accordingly. Default: `TRUE`.
 #' @name GetSpeciesName
 #' @author Ahmed El-Gabbas
 #' @return A data frame containing species information. If a species ID
@@ -21,33 +18,21 @@
 #'   species, otherwise return the full list of IAS.
 #' @export
 
-GetSpeciesName <- function(SpeciesID = NULL, EnvFile = ".env", FromHPC = TRUE) {
+GetSpeciesName <- function(SpeciesID = NULL, EnvFile = ".env") {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Path_PA <- IAS_ID <- TaxaInfoFile <- NULL
 
   # Load environment variables
-  if (!file.exists(EnvFile)) {
-    stop(
-      "Path to environment variables: ", EnvFile, " was not found",
-      call. = FALSE)
-  }
 
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "TaxaInfoFile", "DP_R_TaxaInfo", FALSE, TRUE,
-      "Path_PA", "DP_R_PA", TRUE, FALSE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "TaxaInfoFile", "DP_R_TaxaInfo_Local", FALSE, TRUE,
-      "Path_PA", "DP_R_PA_Local", TRUE, FALSE)
-  }
-
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "TaxaInfoFile", "DP_R_Taxa_info", FALSE, TRUE,
+    "Path_PA", "DP_R_PA", TRUE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   # Reading species info
 

@@ -9,7 +9,6 @@
 \title{Process CHELSA Climate Data for the \code{IAS-pDT}}
 \usage{
 CHELSA_Process(
-  FromHPC = TRUE,
   EnvFile = ".env",
   NCores = 8L,
   Download = FALSE,
@@ -24,7 +23,6 @@ CHELSA_Process(
 
 CHELSA_Prepare(
   EnvFile = ".env",
-  FromHPC = TRUE,
   Download = FALSE,
   NCores = 8L,
   Overwrite = FALSE,
@@ -33,18 +31,9 @@ CHELSA_Prepare(
   OtherVars = "npp"
 )
 
-CHELSA_Project(
-  Metadata = NULL,
-  EnvFile = ".env",
-  FromHPC = TRUE,
-  CompressLevel = 5
-)
+CHELSA_Project(Metadata = NULL, EnvFile = ".env", CompressLevel = 5)
 }
 \arguments{
-\item{FromHPC}{Logical. Whether the processing is being done on an
-High-Performance Computing (HPC) environment, to adjust file paths
-accordingly. Default: \code{TRUE}.}
-
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
 

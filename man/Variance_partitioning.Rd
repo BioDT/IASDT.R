@@ -27,7 +27,6 @@ VarPar_Plot(
   Path_Model,
   EnvFile = ".env",
   VarParFile = "VarPar",
-  FromHPC = TRUE,
   UseTF = TRUE,
   TF_Environ = NULL,
   NCores = 1,
@@ -82,10 +81,6 @@ Python script. Default is \code{FALSE}. Only relevant when \code{UseTF} is \code
 
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
-
-\item{FromHPC}{Logical. Whether the processing is being done on an
-High-Performance Computing (HPC) environment, to adjust file paths
-accordingly. Default: \code{TRUE}.}
 
 \item{Fig_width, Fig_height}{Numeric. Width and height of the output plot in
 centimeters. Default: \code{30} and \code{15}, respectively.}

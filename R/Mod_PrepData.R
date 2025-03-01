@@ -11,7 +11,7 @@
 Mod_PrepData <- function(
     Hab_Abb = NULL, MinEffortsSp = 100L, ExcludeCult = TRUE,
     ExcludeZeroHabitat = TRUE, PresPerSpecies = 80L, EnvFile = ".env",
-    Path_Model = NULL, VerboseProgress = TRUE, FromHPC = TRUE) {
+    Path_Model = NULL, VerboseProgress = TRUE) {
 
   # # ..................................................................... ###
 
@@ -57,11 +57,8 @@ Mod_PrepData <- function(
     AllArgs = AllArgs, Args = c("MinEffortsSp", "PresPerSpecies"),
     Type = "numeric")
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs,
-    Args = c(
-      "ExcludeCult", "ExcludeZeroHabitat",
-      "VerboseProgress", "FromHPC"),
-    Type = "logical")
+    AllArgs = AllArgs, Type = "logical",
+    Args = c("ExcludeCult", "ExcludeZeroHabitat", "VerboseProgress"))
 
   # Valid habitat type values
   ValidHabAbbs <- c(0:3, "4a", "4b", 10, "12a", "12b")
@@ -82,42 +79,22 @@ Mod_PrepData <- function(
   # # |||||||||||||||||||||||||||||||||||
 
   # Input data paths - these are read from the .env file
-  if (!file.exists(EnvFile)) {
-    stop(
-      "Path to environment variables: ", EnvFile, " was not found",
-      call. = FALSE)
-  }
 
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Grid", "DP_R_Grid", FALSE, FALSE,
-      "Path_Grid_Ref", "DP_R_Grid_Ref", TRUE, FALSE,
-      "Path_PA", "DP_R_PA", TRUE, FALSE,
-      "Path_CLC", "DP_R_CLC", TRUE, FALSE,
-      "Path_CHELSA", "DP_R_CHELSA_Output", TRUE, FALSE,
-      "Path_Roads", "DP_R_Roads", TRUE, FALSE,
-      "Path_Rail", "DP_R_Railways", TRUE, FALSE,
-      "Path_Bias", "DP_R_Efforts", TRUE, FALSE,
-      "Path_Rivers", "DP_R_Rivers", FALSE, TRUE,
-      "EU_Bound", "DP_R_EUBound_sf", FALSE, TRUE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Grid", "DP_R_Grid_Local", FALSE, FALSE,
-      "Path_Grid_Ref", "DP_R_Grid_Ref_Local", TRUE, FALSE,
-      "Path_PA", "DP_R_PA_Local", TRUE, FALSE,
-      "Path_CLC", "DP_R_CLC_Local", TRUE, FALSE,
-      "Path_CHELSA", "DP_R_CHELSA_Output_Local", TRUE, FALSE,
-      "Path_Roads", "DP_R_Roads_Local", TRUE, FALSE,
-      "Path_Rail", "DP_R_Railways_Local", TRUE, FALSE,
-      "Path_Bias", "DP_R_Efforts_Local", TRUE, FALSE,
-      "Path_Rivers", "DP_R_Rivers", FALSE, TRUE,
-      "EU_Bound", "DP_R_EUBound_sf_Local", FALSE, TRUE)
-  }
-
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_Grid", "DP_R_Grid_processed", FALSE, FALSE,
+    "Path_Grid_Ref", "DP_R_Grid_raw", TRUE, FALSE,
+    "Path_PA", "DP_R_PA", TRUE, FALSE,
+    "Path_CLC", "DP_R_CLC_processed", TRUE, FALSE,
+    "Path_CHELSA", "DP_R_CHELSA_processed", TRUE, FALSE,
+    "Path_Roads", "DP_R_Roads_processed", TRUE, FALSE,
+    "Path_Rail", "DP_R_Railways_processed", TRUE, FALSE,
+    "Path_Bias", "DP_R_Efforts_processed", TRUE, FALSE,
+    "Path_Rivers", "DP_R_Rivers_processed", FALSE, TRUE,
+    "EU_Bound", "DP_R_EUBound", FALSE, TRUE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   # # ..................................................................... ###
 

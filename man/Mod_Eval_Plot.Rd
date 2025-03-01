@@ -4,7 +4,7 @@
 \alias{Mod_Eval_Plot}
 \title{Generate plots for the explanatory power of Hmsc models}
 \usage{
-Mod_Eval_Plot(ModelDir, EnvFile = ".env", FromHPC = TRUE)
+Mod_Eval_Plot(ModelDir, EnvFile = ".env")
 }
 \arguments{
 \item{ModelDir}{Character. Path to the model directory containing
@@ -12,10 +12,6 @@ predictions.}
 
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
-
-\item{FromHPC}{Logical. Whether the processing is being done on an
-High-Performance Computing (HPC) environment, to adjust file paths
-accordingly. Default: \code{TRUE}.}
 }
 \description{
 This function generates four diagnostic plots (RMSE, AUC, Continuous Boyce

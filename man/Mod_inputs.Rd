@@ -47,7 +47,6 @@ Mod_Prep4HPC(
   NumArrayJobs = 210L,
   ModelCountry = NULL,
   VerboseProgress = TRUE,
-  FromHPC = TRUE,
   PrepSLURM = TRUE,
   MemPerCpu = NULL,
   Time = NULL,
@@ -67,8 +66,7 @@ Mod_PrepData(
   PresPerSpecies = 80L,
   EnvFile = ".env",
   Path_Model = NULL,
-  VerboseProgress = TRUE,
-  FromHPC = TRUE
+  VerboseProgress = TRUE
 )
 }
 \arguments{
@@ -219,10 +217,6 @@ by. Default: \code{NULL}, which means prepare data for the whole Europe.}
 \item{VerboseProgress}{Logical. Whether to print a message upon successful
 saving of files. Defaults to \code{FALSE}.}
 
-\item{FromHPC}{Logical. Whether the processing is being done on an
-High-Performance Computing (HPC) environment, to adjust file paths
-accordingly. Default: \code{TRUE}.}
-
 \item{PrepSLURM}{Logical. Whether to prepare SLURM command files. If \code{TRUE}
 (default), the SLURM commands will be saved to disk using the \link{Mod_SLURM}
 function.}
@@ -242,8 +236,7 @@ Example: "01:00:00" to request an hour. Only effective if \code{PrepSLURM = TRUE
 installation. This will be provided as the \code{Path_Hmsc} argument of the
 \link{Mod_SLURM} function.}
 
-\item{CheckPython}{Logical. Whether to check if the Python executable exists.
-Only valid if FromHPC = \code{FALSE}.}
+\item{CheckPython}{Logical. Whether to check if the Python executable exists.}
 
 \item{ToJSON}{Logical. Whether to convert unfitted models to JSON before
 saving to RDS file. Default: \code{FALSE}.}

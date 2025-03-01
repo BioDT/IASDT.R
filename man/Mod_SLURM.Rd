@@ -16,7 +16,6 @@ Mod_SLURM(
   Time = NULL,
   Partition = "small-g",
   EnvFile = ".env",
-  FromHPC = TRUE,
   Path_Hmsc = NULL,
   Command_Prefix = "Commands2Fit",
   SLURM_Prefix = "Bash_Fit",
@@ -35,7 +34,6 @@ Mod_SLURM_Refit(
   ntasks = 1L,
   CpusPerTask = 1L,
   GpusPerNode = 1L,
-  FromHPC = TRUE,
   PrepSLURM = TRUE,
   Path_Hmsc = NULL,
   Refit_Prefix = "Commands2Refit",
@@ -69,10 +67,6 @@ Default: "small-g", for running the array jobs on the GPU.}
 
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
-
-\item{FromHPC}{Logical. Whether the processing is being done on an
-High-Performance Computing (HPC) environment, to adjust file paths
-accordingly. Default: \code{TRUE}.}
 
 \item{Path_Hmsc}{Character. Path to the Hmsc-HPC installation.}
 

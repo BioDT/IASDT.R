@@ -21,9 +21,6 @@
 #' @param Alpha,Beta,Omega,Rho Logical. If `TRUE`, plots the Gelman-Rubin
 #'   statistic for the respective model parameters (Alpha, Beta, Omega, or Rho).
 #'   Default: `TRUE` for all parameters.
-#' @param FromHPC Logical. Whether the processing is being done on an
-#'   High-Performance Computing (HPC) environment, to adjust file paths
-#'   accordingly. Default: `TRUE`.
 #' @param NOmega Integer. Number of species sampled for the Omega parameter.
 #'   Default: 1000L.
 #' @param PlottingAlpha Numeric. Transparency level (alpha) for plot lines (0 =
@@ -42,8 +39,8 @@
 
 PlotGelman <- function(
     Path_Coda = NULL, Alpha = TRUE, Beta = TRUE, Omega = TRUE, Rho = TRUE,
-    NOmega = 1000L, FromHPC = TRUE, PlottingAlpha = 0.25,
-    EnvFile = ".env", ReturnPlots = FALSE) {
+    NOmega = 1000L, PlottingAlpha = 0.25, EnvFile = ".env",
+    ReturnPlots = FALSE) {
 
   # # ..................................................................... ###
 
@@ -122,8 +119,7 @@ PlotGelman <- function(
   if (Beta) {
     IASDT.R::CatTime("Beta")
     PlotObj_Beta <- IASDT.R::PlotGelman_Beta(
-      CodaObj = CodaObj$Beta, EnvFile = EnvFile,
-      PlottingAlpha = PlottingAlpha, FromHPC = FromHPC)
+      CodaObj = CodaObj$Beta, EnvFile = EnvFile, PlottingAlpha = PlottingAlpha)
   } else {
     PlotObj_Beta <- NULL
   }
@@ -332,8 +328,7 @@ PlotGelman_Alpha <- function(CodaObj, PlottingAlpha = 0.25) {
 #' @order 3
 #' @author Ahmed El-Gabbas
 
-PlotGelman_Beta <- function(
-    CodaObj, EnvFile = ".env", PlottingAlpha = 0.25, FromHPC = TRUE) {
+PlotGelman_Beta <- function(CodaObj, EnvFile = ".env", PlottingAlpha = 0.25) {
 
   # # ..................................................................... ###
 
@@ -354,7 +349,7 @@ PlotGelman_Beta <- function(
   # # ..................................................................... ###
 
   Beta_Coda <- IASDT.R::Coda_to_tibble(
-    CodaObj = CodaObj, Type = "beta", EnvFile = EnvFile, FromHPC = FromHPC)
+    CodaObj = CodaObj, Type = "beta", EnvFile = EnvFile)
 
   NVars <- length(unique(Beta_Coda$Variable))
   NSp <- length(unique(Beta_Coda$Species))

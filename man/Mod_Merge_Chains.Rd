@@ -9,7 +9,6 @@ Mod_Merge_Chains(
   NCores = NULL,
   ModInfoName = NULL,
   PrintIncomplete = TRUE,
-  FromHPC = TRUE,
   FromJSON = FALSE,
   Extension = "qs2"
 )
@@ -28,10 +27,6 @@ processed model information will be saved. If \code{NULL}, it overwrites the
 
 \item{PrintIncomplete}{Logical. Whether to print the names of models that
 were not successfully fitted to the console. Defaults to \code{TRUE}.}
-
-\item{FromHPC}{Logical. Whether the processing is being done on an
-High-Performance Computing (HPC) environment, to adjust file paths
-accordingly. Default: \code{TRUE}.}
 
 \item{FromJSON}{Logical. Whether to convert loaded models from JSON format
 before reading. Defaults to \code{FALSE}.}

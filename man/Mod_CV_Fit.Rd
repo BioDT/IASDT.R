@@ -14,7 +14,6 @@ Mod_CV_Fit(
   Updater = list(Gamma2 = FALSE, GammaEta = FALSE),
   AlignPost = TRUE,
   ToJSON = FALSE,
-  FromHPC = TRUE,
   PrepSLURM = TRUE,
   MemPerCpu = NULL,
   Time = NULL,
@@ -61,10 +60,6 @@ Default: \code{TRUE}.}
 
 \item{ToJSON}{Logical. Whether to convert unfitted models to JSON before
 saving to RDS file. Default: \code{FALSE}.}
-
-\item{FromHPC}{Logical. Whether the processing is being done on an
-High-Performance Computing (HPC) environment, to adjust file paths
-accordingly. Default: \code{TRUE}.}
 
 \item{PrepSLURM}{Logical. Whether to prepare SLURM command files. If \code{TRUE}
 (default), the SLURM commands will be saved to disk using the \link{Mod_SLURM}

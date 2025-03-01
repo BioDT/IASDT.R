@@ -4,13 +4,9 @@
 \alias{Road_Intensity}
 \title{Calculate road intensity per grid cell}
 \usage{
-Road_Intensity(FromHPC = TRUE, EnvFile = ".env")
+Road_Intensity(EnvFile = ".env")
 }
 \arguments{
-\item{FromHPC}{Logical. Whether the processing is being done on an
-High-Performance Computing (HPC) environment, to adjust file paths
-accordingly. Default: \code{TRUE}.}
-
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
 }
@@ -27,7 +23,7 @@ road per grid cell (for any road type and per road type).
 \itemize{
 \item The function downloads the most recent version of Global Roads Inventory
 Project (\code{GRIP}) data from the URL specified in the environment variable
-\code{DP_R_Roads_URL}. Original data format is a zipped file containing global
+\code{DP_R_Roads_url}. Original data format is a zipped file containing global
 road data in the form of \code{fgdb} (\code{EPSG:3246}).
 \item On LUMI HPC, loading the \code{libarchive} module is necessary to use the
 \code{archive} R package: \verb{module load libarchive/3.6.2-cpeGNU-23.09}

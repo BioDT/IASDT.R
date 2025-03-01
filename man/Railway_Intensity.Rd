@@ -4,18 +4,9 @@
 \alias{Railway_Intensity}
 \title{Calculate railway intensity based on \code{OpenStreetMap} data}
 \usage{
-Railway_Intensity(
-  FromHPC = TRUE,
-  EnvFile = ".env",
-  NCores = 6L,
-  DeleteProcessed = TRUE
-)
+Railway_Intensity(EnvFile = ".env", NCores = 6L, DeleteProcessed = TRUE)
 }
 \arguments{
-\item{FromHPC}{Logical. Whether the processing is being done on an
-High-Performance Computing (HPC) environment, to adjust file paths
-accordingly. Default: \code{TRUE}.}
-
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
 

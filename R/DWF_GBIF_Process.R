@@ -6,9 +6,6 @@
 #' `GBIF_Process()`, it requests, downloads, cleans, chunks, and maps species
 #' data using helper functions.
 #'
-#' @param FromHPC Logical. Whether the processing is being done on an
-#'   High-Performance Computing (`HPC`) environment, to adjust file paths
-#'   accordingly. Default: `TRUE`.
 #' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
 #' @param Renviron Character. The path to the `.Renviron` file containing GBIF
@@ -80,8 +77,8 @@
 #' @order 1
 
 GBIF_Process <- function(
-    FromHPC = TRUE, EnvFile = ".env", Renviron = ".Renviron", NCores = 6L,
-    Request = TRUE, Download = TRUE, SplitChunks = TRUE, Overwrite = FALSE,
+    EnvFile = ".env", Renviron = ".Renviron", NCores = 6L, Request = TRUE,
+    Download = TRUE, SplitChunks = TRUE, Overwrite = FALSE,
     DeleteChunks = TRUE, ChunkSize = 50000L, Boundaries = c(-30, 50, 25, 75),
     StartYear = 1981L) {
 
@@ -100,9 +97,7 @@ GBIF_Process <- function(
     AllArgs = AllArgs, Type = "character", Args = c("EnvFile", "Renviron1"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "logical",
-    Args = c(
-      "FromHPC", "Request", "Download", "SplitChunks",
-      "Overwrite", "DeleteChunks"))
+    Args = c("Request", "Download", "SplitChunks", "Overwrite", "DeleteChunks"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric",
     Args = c("StartYear", "Boundaries", "ChunkSize", "NCores"))
@@ -125,47 +120,25 @@ GBIF_Process <- function(
   # Environment variables ----
   IASDT.R::CatTime("Environment variables")
 
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Grid", "DP_R_Grid", TRUE, FALSE,
-      "Path_GBIF", "DP_R_GBIF", FALSE, FALSE,
-      "Path_GBIF_Interim", "DP_R_GBIF_Interim", FALSE, FALSE,
-      "EU_Bound", "DP_R_EUBound_sf", FALSE, TRUE,
-      "CountryCodes", "DP_R_CountryCodes", FALSE, TRUE,
-      "TaxaInfo", "DP_R_TaxaInfo_RData", FALSE, TRUE,
-
-      # The following are needed for other called functions
-      "Path_GBIF_Raw", "DP_R_GBIF_Raw", FALSE, FALSE,
-      "CLC_Tif", "DP_R_CLC_tif", FALSE, TRUE,
-      "CLC_CW", "DP_R_CLC_CW", FALSE, TRUE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE,
-      "Path_GBIF", "DP_R_GBIF_Local", FALSE, FALSE,
-      "Path_GBIF_Interim", "DP_R_GBIF_Interim_Local", FALSE, FALSE,
-      "EU_Bound", "DP_R_EUBound_sf_Local", FALSE, TRUE,
-      "CountryCodes", "DP_R_CountryCodes_Local", FALSE, TRUE,
-      "TaxaInfo", "DP_R_TaxaInfo_RData_Local", FALSE, TRUE,
-
-      # The following are needed for other called functions
-      "Path_GBIF_Raw", "DP_R_GBIF_Raw_Local", FALSE, FALSE,
-      "CLC_Tif", "DP_R_CLC_tif_Local", FALSE, TRUE,
-      "CLC_CW", "DP_R_CLC_CW_Local", FALSE, TRUE)
-  }
-
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
+    "Path_GBIF", "DP_R_GBIF_processed", FALSE, FALSE,
+    "Path_GBIF_Interim", "DP_R_GBIF_interim", FALSE, FALSE,
+    "EU_Bound", "DP_R_EUBound", FALSE, TRUE,
+    "CountryCodes", "DP_R_Countrycodes", FALSE, TRUE,
+    "TaxaInfo", "DP_R_Taxa_info_rdata", FALSE, TRUE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
-
+  rm(EnvVars2Read, envir = environment())
   # # ..................................................................... ###
 
   # Request / download GBIF data and split data into chunks -----
 
   IASDT.R::GBIF_Download(
-    FromHPC = FromHPC, EnvFile = EnvFile, Renviron = Renviron,
-    Request = Request, Download = Download, SplitChunks = SplitChunks,
-    ChunkSize = ChunkSize, Boundaries = Boundaries, StartYear = StartYear)
+    EnvFile = EnvFile, Renviron = Renviron, Request = Request,
+    Download = Download, SplitChunks = SplitChunks, ChunkSize = ChunkSize,
+    Boundaries = Boundaries, StartYear = StartYear)
 
   # # ..................................................................... ###
 
@@ -243,13 +216,13 @@ GBIF_Process <- function(
     X = ChunkList,
     FUN = function(x) {
       IASDT.R::GBIF_ReadChunk(
-        ChunkFile = x, EnvFile = EnvFile, FromHPC = FromHPC, SaveRData = TRUE,
-        ReturnData = FALSE, Overwrite = Overwrite)
+        ChunkFile = x, EnvFile = EnvFile, SaveRData = TRUE, ReturnData = FALSE,
+        Overwrite = Overwrite)
     },
     future.scheduling = Inf, future.seed = TRUE,
     future.packages = c(
       "IASDT.R", "purrr", "tibble", "terra", "tidyr", "dplyr", "sf"),
-    future.globals = c("EnvFile", "FromHPC", "Overwrite"))
+    future.globals = c("EnvFile", "Overwrite"))
 
   IASDT.R::CatDiff(
     InitTime = .StartTimeChunks, Prefix = "Finished in ", Level = 2)
@@ -639,7 +612,7 @@ GBIF_Process <- function(
   IASDT.R::CatTime("Splitting species data on parallel", Level = 2)
   furrr::future_walk(
     .x = SpList, .f = IASDT.R::GBIF_SpData, EnvFile = EnvFile,
-    Verbose = FALSE, FromHPC = FromHPC, PlotTag = PlotTag,
+    Verbose = FALSE, PlotTag = PlotTag,
     .options = furrr::furrr_options(seed = TRUE, packages = "dplyr")
   )
 

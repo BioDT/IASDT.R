@@ -7,9 +7,6 @@
 #' The functions prepares raster maps for the number of vascular plant
 #' observations and species per grid cell.
 #'
-#' @param FromHPC Logical. Whether the processing is being done on an
-#'   High-Performance Computing (HPC) environment, to adjust file paths
-#'   accordingly. Default: `TRUE`.
 #' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
 #' @param Renviron Character. Path to `.Renviron` file with GBIF credentials
@@ -69,10 +66,9 @@
 #' @export
 
 Efforts_Process <- function(
-    FromHPC = TRUE, EnvFile = ".env", Renviron = ".Renviron",
-    Request = TRUE, Download = TRUE, NCores = 6L, StartYear = 1981L,
-    Boundaries = c(-30, 50, 25, 75), ChunkSize = 100000L,
-    DeleteChunks = TRUE, DeleteProcessed = TRUE) {
+    EnvFile = ".env", Renviron = ".Renviron", Request = TRUE, Download = TRUE,
+    NCores = 6L, StartYear = 1981L, Boundaries = c(-30, 50, 25, 75),
+    ChunkSize = 100000L, DeleteChunks = TRUE, DeleteProcessed = TRUE) {
 
   # # ..................................................................... ###
 
@@ -86,16 +82,12 @@ Efforts_Process <- function(
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "character", Args = c("Renviron", "EnvFile")
-  )
+    AllArgs = AllArgs, Type = "character", Args = c("Renviron", "EnvFile"))
   IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "logical",
-    Args = c("FromHPC", "Request", "Download")
-  )
+    AllArgs = AllArgs, Type = "logical", Args = c("Request", "Download"))
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric",
-    Args = c("NCores", "Boundaries", "StartYear")
-  )
+    Args = c("NCores", "Boundaries", "StartYear"))
 
   # Validate Boundaries argument
   if (length(Boundaries) != 4) {
@@ -134,26 +126,16 @@ Efforts_Process <- function(
   # Environment variables ----
   IASDT.R::CatTime("Environment variables")
 
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Efforts", "DP_R_Efforts", FALSE, FALSE,
-      "Path_Raw", "DP_R_Efforts_Raw", FALSE, FALSE,
-      "Path_Interim", "DP_R_Efforts_Interim", FALSE, FALSE,
-      "Taxa_Stand", "DP_R_TaxaStand", FALSE, TRUE,
-      "Path_Grid", "DP_R_Grid", TRUE, FALSE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Efforts", "DP_R_Efforts_Local", FALSE, FALSE,
-      "Path_Raw", "DP_R_Efforts_Raw_Local", FALSE, FALSE,
-      "Path_Interim", "DP_R_Efforts_Interim_Local", FALSE, FALSE,
-      "Taxa_Stand", "DP_R_TaxaStand_Local", FALSE, TRUE,
-      "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE)
-  }
-
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_Efforts", "DP_R_Efforts_processed", FALSE, FALSE,
+    "Path_Raw", "DP_R_Efforts_raw", FALSE, FALSE,
+    "Path_Interim", "DP_R_Efforts_interim", FALSE, FALSE,
+    "Taxa_Stand", "DP_R_Taxa_stand", FALSE, TRUE,
+    "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   # # ..................................................................... ###
 
@@ -189,8 +171,8 @@ Efforts_Process <- function(
     IASDT.R::CatTime("Requesting efforts data", Level = 1)
 
     IASDT.R::Efforts_Request(
-      FromHPC = FromHPC, EnvFile = EnvFile, NCores = NCores,
-      StartYear = StartYear, Renviron = Renviron, Boundaries = Boundaries)
+      EnvFile = EnvFile, NCores = NCores, StartYear = StartYear,
+      Renviron = Renviron, Boundaries = Boundaries)
 
   } else {
     Efforts_AllRequests <- IASDT.R::LoadAs(
@@ -215,8 +197,7 @@ Efforts_Process <- function(
   if (Download) {
 
     IASDT.R::CatTime("Downloading efforts data")
-    IASDT.R::Efforts_Download(
-      NCores = NCores, FromHPC = FromHPC, EnvFile = EnvFile)
+    IASDT.R::Efforts_Download(NCores = NCores, EnvFile = EnvFile)
 
   } else {
 
@@ -249,15 +230,15 @@ Efforts_Process <- function(
 
   IASDT.R::CatTime("Processing efforts data")
   IASDT.R::Efforts_Summarize(
-    FromHPC = FromHPC, EnvFile = EnvFile, NCores = NCores,
-    ChunkSize = ChunkSize, DeleteChunks = DeleteChunks)
+    EnvFile = EnvFile, NCores = NCores, ChunkSize = ChunkSize,
+    DeleteChunks = DeleteChunks)
 
   # # ..................................................................... ###
 
   # # Plotting ----
 
   IASDT.R::CatTime("Plotting sampling efforts")
-  IASDT.R::Efforts_Plot(FromHPC = FromHPC, EnvFile = EnvFile)
+  IASDT.R::Efforts_Plot(EnvFile = EnvFile)
 
   # # ..................................................................... ###
 

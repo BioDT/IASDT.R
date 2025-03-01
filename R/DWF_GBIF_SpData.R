@@ -9,8 +9,7 @@
 #' @order 5
 
 GBIF_SpData <- function(
-    Species = NULL, FromHPC = TRUE, EnvFile = ".env", Verbose = TRUE,
-    PlotTag = NULL) {
+    Species = NULL, EnvFile = ".env", Verbose = TRUE, PlotTag = NULL) {
 
   # # ..................................................................... ###
 
@@ -26,8 +25,7 @@ GBIF_SpData <- function(
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "character",
     Args = c("EnvFile", "Species", "PlotTag"))
-  IASDT.R::CheckArgs(
-    AllArgs = AllArgs, Type = "logical", Args = c("FromHPC", "Verbose"))
+  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "logical", Args = "Verbose")
 
   # # ..................................................................... ###
 
@@ -42,29 +40,19 @@ GBIF_SpData <- function(
     IASDT.R::CatTime("Environment variables")
   }
 
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Grid", "DP_R_Grid", TRUE, FALSE,
-      "Path_GBIF", "DP_R_GBIF", FALSE, FALSE,
-      "EU_Bound", "DP_R_EUBound_sf", FALSE, TRUE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE,
-      "Path_GBIF", "DP_R_GBIF_Local", FALSE, FALSE,
-      "EU_Bound", "DP_R_EUBound_sf_Local", FALSE, TRUE)
-  }
-
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
+    "Path_GBIF", "DP_R_GBIF_processed", FALSE, FALSE,
+    "EU_Bound", "DP_R_EUBound", FALSE, TRUE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
-
+  rm(EnvVars2Read, envir = environment())
 
   # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use
   # official parameters (overriding the ones from GeoTIFF keys)
   # see: https://stackoverflow.com/questions/78007307
   terra::setGDALconfig("GTIFF_SRS_SOURCE", "EPSG")
-
 
   # # ..................................................................... ###
 

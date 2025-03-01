@@ -12,7 +12,6 @@ Convergence_Plot(
   Path_Coda = NULL,
   Path_Model = NULL,
   EnvFile = ".env",
-  FromHPC = TRUE,
   Title = " ",
   NOmega = 1000L,
   NCores = 8L,
@@ -32,7 +31,6 @@ Convergence_Alpha(
   AddFooter = TRUE,
   AddTitle = TRUE,
   Cols = NULL,
-  FromHPC = TRUE,
   MarginType = "histogram"
 )
 
@@ -52,10 +50,6 @@ samples.}
 
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
-
-\item{FromHPC}{Logical. Whether the processing is being done on an
-High-Performance Computing (HPC) environment, to adjust file paths
-accordingly. Default: \code{TRUE}.}
 
 \item{Title}{Character. Title for \strong{rho} and \strong{alpha} convergence plots.
 Default: " "}

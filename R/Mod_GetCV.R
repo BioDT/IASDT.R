@@ -28,9 +28,6 @@
 #'   to determine the block size. Defaults to `FALSE`,
 #' @param OutPath Character. Path for directory to save the
 #'   cross-validation results. This argument is mandatory and can not be empty.
-#' @param FromHPC Logical. Whether the processing is being done on an
-#'   High-Performance Computing (HPC) environment, to adjust file paths
-#'   accordingly. Default: `TRUE`.
 #' @param CV_Plot Logical. Indicating whether to plot the block cross-validation
 #'   folds.
 #' @name Mod_GetCV
@@ -56,7 +53,7 @@
 Mod_GetCV <- function(
     Data = NULL, EnvFile = ".env", XVars = NULL, CV_NFolds = 4L,
     CV_NGrids = 20L, CV_NR = 2, CV_NC = 2L, CV_SAC = FALSE, OutPath = NULL,
-    FromHPC = TRUE, CV_Plot = TRUE) {
+    CV_Plot = TRUE) {
 
   # # |||||||||||||||||||||||||||||||||||
   # # Initial checking -----
@@ -90,20 +87,13 @@ Mod_GetCV <- function(
   # # Reference grid -----
   # # |||||||||||||||||||||||||||||||||||
 
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Grid", "DP_R_Grid", TRUE, FALSE,
-      "EU_Bound", "DP_R_EUBound_sf", FALSE, TRUE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE,
-      "EU_Bound", "DP_R_EUBound_sf_Local", FALSE, TRUE)
-  }
-
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
+    "EU_Bound", "DP_R_EUBound", FALSE, TRUE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   Path_Grid <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(Path_Grid)) {

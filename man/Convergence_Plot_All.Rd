@@ -8,7 +8,6 @@ Convergence_Plot_All(
   ModelDir = NULL,
   NOmega = 1000L,
   NCores = NULL,
-  FromHPC = TRUE,
   MarginType = "histogram"
 )
 }
@@ -21,10 +20,6 @@ subfolder.}
 parameter diagnostics. Default: 1000L}
 
 \item{NCores}{Integer. Number of CPU cores to use for parallel processing.}
-
-\item{FromHPC}{Logical. Whether the processing is being done on an
-High-Performance Computing (HPC) environment, to adjust file paths
-accordingly. Default: \code{TRUE}.}
 
 \item{MarginType}{Character. The type of marginal plot to add to
 the main plot. Valid options are "histogram" (default) or "density".}

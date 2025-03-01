@@ -1,5 +1,5 @@
 exclusions: list(
-    "vignettes/.+.Rmd"
+    "vignettes/"
 	)
 linters: linters_with_defaults(
 	# absolute_path_linter(),

@@ -8,7 +8,7 @@
 #' @order 3
 #' @export
 
-Efforts_Download <- function(NCores = 6L, FromHPC = TRUE, EnvFile = ".env") {
+Efforts_Download <- function(NCores = 6L, EnvFile = ".env") {
 
   .StartTimeDown <- lubridate::now(tzone = "CET")
 
@@ -37,20 +37,13 @@ Efforts_Download <- function(NCores = 6L, FromHPC = TRUE, EnvFile = ".env") {
   # Environment variables ----
   IASDT.R::CatTime("Environment variables")
 
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Efforts", "DP_R_Efforts", FALSE, FALSE,
-      "Path_Raw", "DP_R_Efforts_Raw", FALSE, FALSE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Efforts", "DP_R_Efforts_Local", FALSE, FALSE,
-      "Path_Raw", "DP_R_Efforts_Raw_Local", FALSE, FALSE)
-  }
-
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_Efforts", "DP_R_Efforts_processed", FALSE, FALSE,
+    "Path_Raw", "DP_R_Efforts_raw", FALSE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   # # ..................................................................... ###
 

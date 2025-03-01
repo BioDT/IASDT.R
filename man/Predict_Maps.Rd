@@ -8,7 +8,6 @@ Predict_Maps(
   Path_Model = NULL,
   Hab_Abb = NULL,
   EnvFile = ".env",
-  FromHPC = TRUE,
   NCores = 8L,
   Pred_Clamp = TRUE,
   Fix_Efforts = "q90",
@@ -39,10 +38,6 @@ which data will be prepared. Valid values are \code{0}, \code{1}, \code{2}, \cod
 
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
-
-\item{FromHPC}{Logical. Whether the processing is being done on an
-High-Performance Computing (HPC) environment, to adjust file paths
-accordingly. Default: \code{TRUE}.}
 
 \item{NCores}{Integer. Number of CPU cores to use for parallel processing.
 Default: 8.}

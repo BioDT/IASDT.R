@@ -9,8 +9,7 @@
 #' @export
 
 Efforts_Summarize <- function(
-    FromHPC = TRUE, EnvFile = ".env", NCores = 6L, ChunkSize = 100000L,
-    DeleteChunks = TRUE) {
+    EnvFile = ".env", NCores = 6L, ChunkSize = 100000L, DeleteChunks = TRUE) {
 
   # # ..................................................................... ###
 
@@ -34,24 +33,15 @@ Efforts_Summarize <- function(
   # Environment variables ----
   IASDT.R::CatTime("Environment variables")
 
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Efforts", "DP_R_Efforts", TRUE, FALSE,
-      "Path_Interim", "DP_R_Efforts_Interim", TRUE, FALSE,
-      "Path_Grid", "DP_R_Grid", TRUE, FALSE,
-      "Taxa_Stand", "DP_R_TaxaStand", FALSE, TRUE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "Path_Efforts", "DP_R_Efforts_Local", TRUE, FALSE,
-      "Path_Interim", "DP_R_Efforts_Interim_Local", TRUE, FALSE,
-      "Path_Grid", "DP_R_Grid_Local", TRUE, FALSE,
-      "Taxa_Stand", "DP_R_TaxaStand_Local", FALSE, TRUE)
-  }
-
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_Efforts", "DP_R_Efforts_processed", TRUE, FALSE,
+    "Path_Interim", "DP_R_Efforts_interim", TRUE, FALSE,
+    "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
+    "Taxa_Stand", "DP_R_Taxa_stand", FALSE, TRUE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   Path_Efforts_Cleaned <- IASDT.R::Path(Path_Interim, "CleanedData")
 
@@ -186,8 +176,7 @@ Efforts_Summarize <- function(
         # Split data into chunks
         if (SplitChunks) {
           Chunks <- IASDT.R::Efforts_Split(
-            Path_Zip = DownPath, FromHPC = TRUE, EnvFile = ".env",
-            ChunkSize = ChunkSize)
+            Path_Zip = DownPath, EnvFile = ".env", ChunkSize = ChunkSize)
         }
 
         # Process chunk files

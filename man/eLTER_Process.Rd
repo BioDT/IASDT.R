@@ -4,13 +4,9 @@
 \alias{eLTER_Process}
 \title{Process eLTER data for the \code{IAS-pDT}}
 \usage{
-eLTER_Process(FromHPC = TRUE, EnvFile = ".env", StartYear = 1981)
+eLTER_Process(EnvFile = ".env", StartYear = 1981)
 }
 \arguments{
-\item{FromHPC}{Logical. Whether the processing is being done on an
-High-Performance Computing (HPC) environment, to adjust file paths
-accordingly. Default: \code{TRUE}.}
-
 \item{EnvFile}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
 

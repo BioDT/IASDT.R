@@ -30,9 +30,6 @@
 #'   is created by `RespCurv_PrepData`.
 #' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
-#' @param FromHPC Logical. Whether the processing is being done on an
-#'   High-Performance Computing (HPC) environment, to adjust file paths
-#'   accordingly. Default: `TRUE`.
 #' @param PlottingAlpha Numeric. Opacity level for response curve lines (0 =
 #'   fully transparent, 1 = fully opaque). Default: 0.3.
 #' @export

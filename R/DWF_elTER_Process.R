@@ -7,9 +7,6 @@
 #' This function processes pre-cleaned and pre-standardized Integrated European
 #' Long-Term Ecosystem, critical zone and socio-ecological Research
 #' ([eLTER](https://elter-ri.eu/)) data.
-#' @param FromHPC Logical. Whether the processing is being done on an
-#'   High-Performance Computing (HPC) environment, to adjust file paths
-#'   accordingly. Default: `TRUE`.
 #' @param EnvFile Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
 #' @param StartYear Numeric. The starting year for the occurrence data. Only
@@ -25,7 +22,7 @@
 #'   GBIF backbone was performed by Marina Golivets (Feb. 2024).
 #' @export
 
-eLTER_Process <- function(FromHPC = TRUE, EnvFile = ".env", StartYear = 1981) {
+eLTER_Process <- function(EnvFile = ".env", StartYear = 1981) {
 
   # # ..................................................................... ###
 
@@ -35,7 +32,6 @@ eLTER_Process <- function(FromHPC = TRUE, EnvFile = ".env", StartYear = 1981) {
     stats::setNames(AllArgs)
 
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "character", Args = "EnvFile")
-  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "logical", Args = "FromHPC")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "numeric", Args = "StartYear")
 
   # # ..................................................................... ###
@@ -47,22 +43,15 @@ eLTER_Process <- function(FromHPC = TRUE, EnvFile = ".env", StartYear = 1981) {
   # # ..................................................................... ###
 
   # Environment variables ----
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "TaxaList", "DP_R_TaxaInfo_RData", FALSE, TRUE,
-      "Path_PA", "DP_R_PA", FALSE, FALSE,
-      "eLTER_DT", "DP_R_eLTER_In", FALSE, TRUE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-      "TaxaList", "DP_R_TaxaInfo_RData_Local", FALSE, TRUE,
-      "Path_PA", "DP_R_PA_Local", FALSE, FALSE,
-      "eLTER_DT", "DP_R_eLTER_In_Local", FALSE, TRUE)
-  }
 
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "TaxaList", "DP_R_Taxa_info_rdata", FALSE, TRUE,
+    "Path_PA", "DP_R_PA", FALSE, FALSE,
+    "eLTER_DT", "DP_R_eLTER_raw", FALSE, TRUE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   # # ..................................................................... ###
 

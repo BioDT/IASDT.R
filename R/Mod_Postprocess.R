@@ -116,11 +116,11 @@
 ## |------------------------------------------------------------------------| #
 
 Mod_Postprocess_1_CPU <- function(
-    ModelDir = NULL, Hab_Abb = NULL, NCores = 8L, FromHPC = TRUE,
-    EnvFile = ".env", Path_Hmsc = NULL, MemPerCpu = NULL, Time = NULL,
-    FromJSON = FALSE, GPP_Dist = NULL, Tree = "Tree", Samples = 1000L,
-    Thin = NULL, NOmega = 1000L, CVName = c("CV_Dist", "CV_Large"),
-    N_Grid = 50L, UseTF = TRUE, TF_use_single = FALSE, LF_NCores = NCores,
+    ModelDir = NULL, Hab_Abb = NULL, NCores = 8L, EnvFile = ".env",
+    Path_Hmsc = NULL, MemPerCpu = NULL, Time = NULL, FromJSON = FALSE,
+    GPP_Dist = NULL, Tree = "Tree", Samples = 1000L, Thin = NULL,
+    NOmega = 1000L, CVName = c("CV_Dist", "CV_Large"), N_Grid = 50L,
+    UseTF = TRUE, TF_use_single = FALSE, LF_NCores = NCores,
     LF_Temp_Cleanup = TRUE, LF_Check = FALSE, Temp_Cleanup = TRUE,
     TF_Environ = NULL, Pred_Clamp = TRUE, Fix_Efforts = "q90",
     Fix_Rivers = "q90", Pred_NewSites = TRUE, NCores_VP = 3,
@@ -156,7 +156,7 @@ Mod_Postprocess_1_CPU <- function(
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "logical",
     Args = c(
-      "FromHPC", "FromJSON", "Pred_NewSites", "Pred_Clamp", "Temp_Cleanup",
+      "FromJSON", "Pred_NewSites", "Pred_Clamp", "Temp_Cleanup",
       "UseTF", "LF_Check", "LF_Temp_Cleanup", "TF_use_single"))
 
   IASDT.R::CheckArgs(
@@ -206,7 +206,6 @@ Mod_Postprocess_1_CPU <- function(
       "\n  >>> Operating system: ", IASDT.R::CurrOS(),
       "\n  >>> Model root: ", ModelDir,
       "\n  >>> NCores: ", NCores,
-      "\n  >>> FromHPC: ", FromHPC,
       "\n  >>> EnvFile: ", EnvFile,
       "\n  >>> Path_Hmsc: ", Path_Hmsc,
       "\n  >>> SLURM MemPerCpu: ", MemPerCpu,
@@ -225,7 +224,7 @@ Mod_Postprocess_1_CPU <- function(
   IASDT.R::Mod_SLURM_Refit(
     ModelDir = ModelDir,
     JobName = stringr::str_remove(basename(ModelDir), "Mod_"),
-    MemPerCpu = MemPerCpu, Time = Time, EnvFile = EnvFile, FromHPC = FromHPC,
+    MemPerCpu = MemPerCpu, Time = Time, EnvFile = EnvFile,
     Path_Hmsc = Path_Hmsc)
 
   invisible(gc())
@@ -235,8 +234,7 @@ Mod_Postprocess_1_CPU <- function(
   Ch1("Merge chains and saving RData files")
 
   IASDT.R::Mod_Merge_Chains(
-    ModelDir = ModelDir, NCores = NCores,
-    FromHPC = FromHPC, FromJSON = FromJSON)
+    ModelDir = ModelDir, NCores = NCores, FromJSON = FromJSON)
 
   invisible(gc())
 
@@ -246,7 +244,7 @@ Mod_Postprocess_1_CPU <- function(
 
   IASDT.R::Convergence_Plot_All(
     ModelDir = ModelDir, NOmega = NOmega, NCores = NCores,
-    FromHPC = FromHPC, MarginType = "histogram")
+    MarginType = "histogram")
 
   invisible(gc())
 
@@ -282,7 +280,7 @@ Mod_Postprocess_1_CPU <- function(
 
   IASDT.R::PlotGelman(
     Path_Coda = Path_Coda, Alpha = TRUE, Beta = TRUE, Omega = TRUE, Rho = TRUE,
-    NOmega = NOmega, FromHPC = FromHPC, EnvFile = EnvFile)
+    NOmega = NOmega, EnvFile = EnvFile)
 
   invisible(gc())
 
@@ -293,7 +291,7 @@ Mod_Postprocess_1_CPU <- function(
 
   IASDT.R::Convergence_Plot(
     Path_Coda = Path_Coda, Path_Model = Path_Model, EnvFile = EnvFile,
-    FromHPC = FromHPC, NOmega = NOmega, NCores = NCores, NRC = c(2, 2),
+    NOmega = NOmega, NCores = NCores, NRC = c(2, 2),
     Beta_NRC = c(3, 3), MarginType = "histogram")
 
   invisible(gc())
@@ -303,8 +301,7 @@ Mod_Postprocess_1_CPU <- function(
   # Model summary ------
   Ch1("Model summary")
 
-  IASDT.R::Mod_Summary(
-    Path_Coda = Path_Coda, EnvFile = EnvFile, FromHPC = FromHPC)
+  IASDT.R::Mod_Summary(Path_Coda = Path_Coda, EnvFile = EnvFile)
 
   invisible(gc())
 
@@ -337,8 +334,8 @@ Mod_Postprocess_1_CPU <- function(
   Ch1("Prepare input data for cross-validation")
   IASDT.R::Mod_CV_Fit(
     Path_Model = Path_Model, CVName = CVName, EnvFile = EnvFile,
-    JobName = paste0("CV_", Hab_Abb), FromHPC = FromHPC,
-    MemPerCpu = MemPerCpu, Time = Time, Path_Hmsc = Path_Hmsc)
+    JobName = paste0("CV_", Hab_Abb), MemPerCpu = MemPerCpu, Time = Time,
+    Path_Hmsc = Path_Hmsc)
 
   invisible(gc())
 
@@ -363,9 +360,8 @@ Mod_Postprocess_1_CPU <- function(
 
   IASDT.R::Predict_Maps(
     Path_Model = Path_Model, Hab_Abb = Hab_Abb, EnvFile = EnvFile,
-    FromHPC = FromHPC, NCores = NCores, Pred_Clamp = Pred_Clamp,
-    Fix_Efforts = Fix_Efforts, Fix_Rivers = Fix_Rivers,
-    Pred_NewSites = Pred_NewSites, UseTF = UseTF,
+    NCores = NCores, Pred_Clamp = Pred_Clamp, Fix_Efforts = Fix_Efforts,
+    Fix_Rivers = Fix_Rivers, Pred_NewSites = Pred_NewSites, UseTF = UseTF,
     TF_Environ = TF_Environ, Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup,
     TF_use_single = TF_use_single, LF_NCores = LF_NCores, LF_Check = LF_Check,
     LF_Temp_Cleanup = LF_Temp_Cleanup, LF_Only = TRUE, LF_Commands_Only = TRUE)
@@ -405,8 +401,8 @@ Mod_Postprocess_1_CPU <- function(
 #' @author Ahmed El-Gabbas
 
 Mod_Prep_TF <- function(
-    NumFiles = 210L, FromHPC = TRUE, EnvFile = ".env", WD = NULL,
-    Partition_Name = "small-g", LF_Time = "01:00:00", VP_Time = "01:30:00") {
+    NumFiles = 210L, EnvFile = ".env", WD = NULL, Partition_Name = "small-g",
+    LF_Time = "01:00:00", VP_Time = "01:30:00") {
 
   # ****************************************************************
 
@@ -427,7 +423,6 @@ Mod_Prep_TF <- function(
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "character",
     Args = c("LF_Time", "VP_Time", "Partition_Name", "EnvFile"))
-  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "logical", Args = "FromHPC")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "numeric", Args = "NumFiles")
   rm(AllArgs, envir = environment())
 
@@ -436,24 +431,13 @@ Mod_Prep_TF <- function(
   }
 
   # # Load environment variables, for project ID
-  if (!file.exists(EnvFile)) {
-    stop("Environment file not found:", EnvFile, call. = FALSE)
-  }
-
-  if (FromHPC) {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-    "ProjectID", "LUMI_Account_GPU", FALSE, FALSE,
-    "Path_Models", "DP_R_Model_Path", TRUE, FALSE)
-  } else {
-    EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
-    "ProjectID", "LUMI_Account_GPU", FALSE, FALSE,
-    "Path_Models", "DP_R_Model_Path", TRUE, FALSE)
-  }
-
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "ProjectID", "DP_R_LUMI_gpu", FALSE, FALSE,
+    "Path_Models", "DP_R_Model_path", TRUE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
 
   # ****************************************************************
 
@@ -756,11 +740,10 @@ Mod_Prep_TF <- function(
 #' @author Ahmed El-Gabbas
 
 Mod_Postprocess_2_CPU <- function(
-    ModelDir = NULL, Hab_Abb = NULL, NCores = 8L, FromHPC = TRUE,
-    EnvFile = ".env", GPP_Dist = NULL, Tree = "Tree", Samples = 1000L,
-    Thin = NULL, UseTF = TRUE, TF_Environ = NULL,
-    TF_use_single = FALSE, LF_NCores = NCores, LF_Check = FALSE,
-    LF_Temp_Cleanup = TRUE, Temp_Cleanup = TRUE, N_Grid = 50L,
+    ModelDir = NULL, Hab_Abb = NULL, NCores = 8L, EnvFile = ".env",
+    GPP_Dist = NULL, Tree = "Tree", Samples = 1000L, Thin = NULL, UseTF = TRUE,
+    TF_Environ = NULL, TF_use_single = FALSE, LF_NCores = NCores,
+    LF_Check = FALSE, LF_Temp_Cleanup = TRUE, Temp_Cleanup = TRUE, N_Grid = 50L,
     CC_Models = c(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
       "MRI-ESM2-0", "UKESM1-0-LL"),
@@ -796,7 +779,7 @@ Mod_Postprocess_2_CPU <- function(
 
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "logical",
-    Args = c("UseTF", "FromHPC", "Pred_Clamp", "Pred_NewSites"))
+    Args = c("UseTF", "Pred_Clamp", "Pred_NewSites"))
 
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "numeric",
@@ -862,7 +845,6 @@ Mod_Postprocess_2_CPU <- function(
       "\n  >>> NCores: ", NCores,
       "\n  >>> RC_NCores: ", RC_NCores,
       "\n  >>> LF_NCores: ", LF_NCores,
-      "\n  >>> FromHPC: ", FromHPC,
       "\n  >>> EnvFile: ", EnvFile,
       "\n  >>> Hab_Abb: ", Hab_Abb,
       "\n  >>> UseTF: ", UseTF,
@@ -937,8 +919,7 @@ Mod_Postprocess_2_CPU <- function(
   # ## Plotting response curves - species -----
   Ch1("Plotting response curves - species")
   IASDT.R::RespCurv_PlotSp(
-    ModelDir = ModelDir, NCores = RC_NCores, EnvFile = EnvFile,
-    FromHPC = FromHPC)
+    ModelDir = ModelDir, NCores = RC_NCores, EnvFile = EnvFile)
 
   invisible(gc())
 
@@ -958,9 +939,8 @@ Mod_Postprocess_2_CPU <- function(
 
   IASDT.R::Predict_Maps(
     Path_Model = Path_Model, Hab_Abb = Hab_Abb, EnvFile = EnvFile,
-    FromHPC = FromHPC, NCores = NCores, Pred_Clamp = Pred_Clamp,
-    Fix_Efforts = Fix_Efforts, Fix_Rivers = Fix_Rivers,
-    Pred_NewSites = Pred_NewSites, UseTF = UseTF,
+    NCores = NCores, Pred_Clamp = Pred_Clamp, Fix_Efforts = Fix_Efforts,
+    Fix_Rivers = Fix_Rivers, Pred_NewSites = Pred_NewSites, UseTF = UseTF,
     TF_Environ = TF_Environ, Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup,
     TF_use_single = TF_use_single, LF_NCores = LF_NCores, LF_Check = LF_Check,
     LF_Temp_Cleanup = LF_Temp_Cleanup, LF_Only = FALSE,
@@ -987,8 +967,8 @@ Mod_Postprocess_2_CPU <- function(
 
   IASDT.R::VarPar_Plot(
     Path_Model = Path_Model, EnvFile = EnvFile, VarParFile = "VarPar",
-    FromHPC = FromHPC, UseTF = UseTF, TF_Environ = TF_Environ, NCores = NCores,
-    Fig_width = 30, Fig_height = 15)
+    UseTF = UseTF, TF_Environ = TF_Environ, NCores = NCores, Fig_width = 30,
+    Fig_height = 15)
 
   # ****************************************************************
 
@@ -996,23 +976,21 @@ Mod_Postprocess_2_CPU <- function(
   Ch1("Plot species & SR predictions as JPEG")
 
   IASDT.R::Mod_Predict_Plot(
-    ModelDir = ModelDir, EnvFile = EnvFile, FromHPC = FromHPC, NCores = NCores)
+    ModelDir = ModelDir, EnvFile = EnvFile, NCores = NCores)
 
   # ****************************************************************
 
   # Plot latent factors as JPEG ------
   Ch1("Plot latent factors as JPEG")
 
-  IASDT.R::Mod_Plot_LF(
-    Path_Model = Path_Model, EnvFile = EnvFile, FromHPC = FromHPC)
+  IASDT.R::Mod_Plot_LF(Path_Model = Path_Model, EnvFile = EnvFile)
 
   # ****************************************************************
 
   # Plot explanatory Power ------
   Ch1("Plot explanatory Power")
 
-  IASDT.R::Mod_Eval_Plot(
-    ModelDir = ModelDir, EnvFile = EnvFile, FromHPC = FromHPC)
+  IASDT.R::Mod_Eval_Plot(ModelDir = ModelDir, EnvFile = EnvFile)
 
   # ****************************************************************
 

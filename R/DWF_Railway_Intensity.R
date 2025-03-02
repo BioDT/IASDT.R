@@ -23,7 +23,7 @@
 #' @author Ahmed El-Gabbas
 
 Railway_Intensity <- function(
-  EnvFile = ".env", NCores = 6L, DeleteProcessed = TRUE) {
+    EnvFile = ".env", NCores = 6L, DeleteProcessed = TRUE) {
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -275,7 +275,7 @@ Railway_Intensity <- function(
 
       withr::local_options(
         future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
-        future.seed = TRUE, timeout = 1200)
+        future.seed = TRUE, timeout = 1800)
 
       # Check if zip file is a valid file
       if (file.exists(Path)) {
@@ -294,11 +294,18 @@ Railway_Intensity <- function(
       while (isFALSE(Success) && Attempt <= Attempts) {
         Down <- try(
           expr = {
-            utils::download.file(
-              url = URL, destfile = Path, mode = "wb", quiet = TRUE) %>%
-              suppressWarnings()
+
+            stringr::str_glue(
+              'curl -k -L --connect-timeout 120 --max-time 1800 --retry 5 \\
+            "{URL}" -o "{Path}" --silent') %>%
+              system()
 
             Success <- IASDT.R::CheckZip(Path)
+            
+            if (isFALSE(Success)) {
+              fs::file_delete(Path)
+            }
+
             Success
           }, silent = TRUE)
 
@@ -322,8 +329,7 @@ Railway_Intensity <- function(
         OldName = IASDT.R::Path(Path_Railways_Interim, Prefix, InFileN),
         NewName = IASDT.R::Path(
           Path_Railways_Interim,
-          paste0(Prefix, ".", tools::file_ext(InFileN)))
-      ) %>%
+          paste0(Prefix, ".", tools::file_ext(InFileN)))) %>%
         dplyr::mutate(Ren = purrr::map2(OldName, NewName, file.rename))
 
       Railway <- dplyr::pull(Path_Extract, NewName) %>%

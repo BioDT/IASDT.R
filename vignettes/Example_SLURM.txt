@@ -1,0 +1,73 @@
+#!/bin/bash
+
+# -----------------------------------------------------------
+# Job array configuration
+# -----------------------------------------------------------
+#SBATCH --job-name=Hab1
+#SBATCH --ntasks=1
+#SBATCH --output=datasets/processed/model_fitting/Mod_Riv_Hab1/Model_Fitting_HPC/JobsLog/%x-%A-%a.out
+#SBATCH --error=datasets/processed/model_fitting/Mod_Riv_Hab1/Model_Fitting_HPC/JobsLog/%x-%A-%a.out
+#SBATCH --account=project_465001588
+#SBATCH --cpus-per-task=1
+#SBATCH --mem-per-cpu=200G
+#SBATCH --gpus-per-node=1
+#SBATCH --time=3-00:00:00
+#SBATCH --partition=small-g
+#SBATCH --array=1-30
+
+# -----------------------------------------------------------
+# Job info
+# -----------------------------------------------------------
+echo "Start time = $(date)"
+echo "Submitting directory = "$SLURM_SUBMIT_DIR
+echo "working directory = "$PWD
+echo "Project name = "$SLURM_JOB_ACCOUNT
+echo "Job id = "$SLURM_JOB_ID
+echo "Job name = "$SLURM_JOB_NAME
+echo "memory per CPU = "$SLURM_MEM_PER_CPU
+echo "The GPU IDs of GPUs in the job allocation (if any) = "$SLURM_JOB_GPUS
+echo "Node running the job script = "$SLURMD_NODENAME
+echo "Process ID of the process started for the task = "$SLURM_TASK_PID
+echo "Dependency = "$SLURM_JOB_DEPENDENCY
+echo "Number of nodes assigned to a job = "$SLURM_NNODES
+echo "Number of tasks requested by the job = "$SLURM_NTASKS
+echo "Number of cpus per task = "$SLURM_CPUS_PER_TASK
+echo "Number of tasks in the array = "$SLURM_ARRAY_TASK_COUNT
+echo "Array's maximum ID (index) number = "$SLURM_ARRAY_TASK_MIN
+echo "Array's minimum ID (index) number = "$SLURM_ARRAY_TASK_MAX
+
+# -----------------------------------------------------------
+# File contains bash commands for model fitting
+# -----------------------------------------------------------
+File=datasets/processed/model_fitting/Mod_Riv_Hab1/Commands2Fit.txt
+
+# -----------------------------------------------------------
+# Loading Hmsc-HPC
+# -----------------------------------------------------------
+source /pfs/lustrep4/scratch/project_465000915/elgabbas/Hmsc_Simplified_OOM2/setup-env.sh
+
+# -----------------------------------------------------------
+# Check GPU
+# -----------------------------------------------------------
+export TF_CPP_MIN_LOG_LEVEL=3
+PythonCheckGPU=references/LUMI_Check_GPU.py
+
+# -----------------------------------------------------------
+# Some checking
+# -----------------------------------------------------------
+Path_Python=$(which python3)
+echo -e "Some Checking:\n  >>  Working directory: $PWD\n  >>  Python path:       $Path_Python\n  >>  Checking GPU:      $(python3 $PythonCheckGPU)\n"
+
+# -----------------------------------------------------------
+# Run array job
+# -----------------------------------------------------------
+head -n $SLURM_ARRAY_TASK_ID $File | tail -n 1 | bash
+
+echo "End of program at `date`"
+
+
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# This script was created on: 2025-02-13 19:43 CET
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+# |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

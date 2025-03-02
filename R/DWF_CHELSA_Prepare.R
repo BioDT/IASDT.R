@@ -73,8 +73,8 @@ CHELSA_Prepare <- function(
 
   IASDT.R::CatTime("Prepare CHELSA metadata", Level = 1)
 
-  if (stringr::str_detect(BaseURL, "/$")) {
-    BaseURL <- stringr::str_remove(BaseURL, "/$")
+  if (!stringr::str_detect(BaseURL, "/$")) {
+    BaseURL <- paste0(BaseURL, "/")
   }
 
   CHELSA_Metadata <- list.files(
@@ -157,14 +157,14 @@ CHELSA_Prepare <- function(
 
       Path_Down = purrr::map_chr(
         .x = File, .f = ~ IASDT.R::Path(Path_CHELSA_In, .x)),
-      
+
       Path_Out_tif = purrr::map_chr(
         .x = File, .f = ~ IASDT.R::Path(Path_CHELSA_Out, "Tif", .x)),
-      
+
       Path_Out_NC = purrr::map_chr(
         .x = Path_Out_tif, .f = stringr::str_replace_all,
         pattern = "Tif", replacement = "NC"),
-      
+
       Path_Out_NC = purrr::map_chr(
         .x = Path_Out_NC, .f = stringr::str_replace_all,
         pattern = ".tif$", replacement = ".nc"),
@@ -222,6 +222,7 @@ CHELSA_Prepare <- function(
           Exclude = furrr::future_map_lgl(
             .x = Path_Down,
             .f = ~ {
+
               if (file.exists(.x)) {
                 if (isFALSE(IASDT.R::CheckTiff(.x))) {
                   fs::file_delete(.x)

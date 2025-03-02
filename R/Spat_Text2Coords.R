@@ -41,7 +41,7 @@ Text2Coords <- function(
 
   String %>%
     # convert string to 2-columns data frame
-    stringr::str_remove_all("POINT \\(|\\)") %>%
+    stringr::str_remove_all("POINT \\(|POINT\\(|\\)") %>%
     stringr::str_split_fixed(" ", 2) %>%
     as.numeric() %>%
     matrix(ncol = 2, byrow = FALSE) %>%

@@ -400,12 +400,26 @@ EASIN_Process <- function(
 
   ## Extract coordinates from WKT string ----
   IASDT.R::CatTime("Extract coordinates from WKT string", Level = 1)
+
   WKTs <- dplyr::distinct(EASIN_Data, WKT) %>%
-    dplyr::mutate(Coords = purrr::map(WKT, IASDT.R::Text2Coords)) %>%
-    tidyr::unnest_wider(Coords) %>%
     dplyr::mutate(
-      dplyr::across(
-        .cols = c("Longitude", "Latitude"), .fns = ~ round(.x, 5)))
+      Points = purrr::map(
+        .x = WKT,
+        .f = ~ {
+          # Extract POINT coordinates from WKT string
+          Points <- stringr::str_extract_all(
+            .x, "POINT\\s*\\(\\s*-?\\d+\\.\\d+\\s+-?\\d+\\.\\d+\\s*\\)")[[1]]
+
+          if (length(Points) > 0) {
+            purrr::map(Points, IASDT.R::Text2Coords) %>%
+              dplyr::bind_rows() %>%
+              dplyr::mutate(
+                dplyr::across(
+                  .cols = c("Longitude", "Latitude"), .fns = ~ round(.x, 5)))
+          } else {
+            tibble::tibble(Longitude = NA_real_, Latitude = NA_real_)
+          }
+        }))
 
   ## Add coordinates to data and convert to sf ----
   IASDT.R::CatTime("Add coordinates to data and convert to sf", Level = 1)
@@ -416,6 +430,8 @@ EASIN_Process <- function(
     dplyr::pull("CellCode")
 
   EASIN_Data <- dplyr::left_join(EASIN_Data, WKTs, by = "WKT") %>%
+    tidyr::unnest(Points) %>%
+    dplyr::filter(!is.na(Longitude) & !is.na(Latitude)) %>%
     # convert to sf object, while keeping original coordinates as columns
     sf::st_as_sf(
       coords = c("Longitude", "Latitude"), crs = 4326, remove = FALSE) %>%

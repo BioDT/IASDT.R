@@ -224,7 +224,7 @@ CHELSA_Prepare <- function(
             .f = ~ {
 
               if (file.exists(.x)) {
-                if (isFALSE(IASDT.R::CheckTiff(.x))) {
+                if (isFALSE(IASDT.R::CheckTiff(.x, warning = FALSE))) {
                   fs::file_delete(.x)
                   Out <- TRUE
                 } else {
@@ -266,7 +266,7 @@ CHELSA_Prepare <- function(
               system()
 
             if (file.exists(PathOut)) {
-              if (IASDT.R::CheckTiff(PathOut)) {
+              if (IASDT.R::CheckTiff(PathOut, warning = FALSE)) {
                 break
               } else {
                 fs::file_delete(PathOut)

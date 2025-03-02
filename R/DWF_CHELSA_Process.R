@@ -168,7 +168,7 @@ CHELSA_Process <- function(
       dplyr::mutate(
         InputOkay = furrr::future_map_lgl(
           .x = Path_Down,
-          .f = ~ (file.exists(.x) && IASDT.R::CheckTiff(.x)),
+          .f = IASDT.R::CheckTiff, warning = FALSE,
           .options = furrr::furrr_options(seed = TRUE, packages = "IASDT.R"))
       ) %>%
       dplyr::filter(isFALSE(InputOkay))
@@ -243,8 +243,8 @@ CHELSA_Process <- function(
         Process = furrr::future_map2_lgl(
           .x = Path_Out_NC, .y = Path_Out_tif,
           .f = ~ {
-            NC_Okay <- file.exists(.x) && IASDT.R::CheckTiff(.x)
-            Tif_Okay <- file.exists(.y) && IASDT.R::CheckTiff(.y)
+            NC_Okay <- IASDT.R::CheckTiff(.x, warning = FALSE)
+            Tif_Okay <- IASDT.R::CheckTiff(.y, warning = FALSE)
             return(isFALSE(NC_Okay && Tif_Okay))
           },
           .options = furrr::furrr_options(seed = TRUE, packages = "IASDT.R"))
@@ -295,8 +295,8 @@ CHELSA_Process <- function(
             if (inherits(Try, "try-error")) {
               return(TRUE)
             } else {
-              if (IASDT.R::CheckTiff(Path_Out_tif) &&
-                  IASDT.R::CheckTiff(Path_Out_NC)) {
+              if (IASDT.R::CheckTiff(Path_Out_tif, warning = FALSE) &&
+                  IASDT.R::CheckTiff(Path_Out_NC, warning = FALSE)) {
                 return(FALSE)
               } else {
                 return(TRUE)

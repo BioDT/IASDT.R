@@ -12,6 +12,8 @@
 #' @param x Character; the file path of the tiff file to be checked. The
 #'   function will stop with an error if `x` is `NULL` or if the file does not
 #'   exist.
+#' @param warning Logical. If `TRUE`, the function will issue a warning if the
+#'   file does not exist.
 #' @name CheckTiff
 #' @author Ahmed El-Gabbas
 #' @return Logical; returns `TRUE` if the tiff file is not corrupted (i.e., it
@@ -23,7 +25,7 @@
 #'
 #' CheckTiff(x = f)
 
-CheckTiff <- function(x = NULL) {
+CheckTiff <- function(x = NULL, warning = TRUE) {
 
   # Check input argument
   if (is.null(x)) {
@@ -34,7 +36,9 @@ CheckTiff <- function(x = NULL) {
 
   # Check if file exists
   if (!file.exists(x)) {
-    warning("Input file does not exist", call. = FALSE)
+    if (warning) {
+      warning("Input file does not exist", call. = FALSE)
+    }
     return(FALSE)
   }
 

@@ -9,7 +9,7 @@
 #' @order 3
 
 CHELSA_Project <- function(
-  Metadata = NULL, EnvFile = ".env", CompressLevel = 5) {
+    Metadata = NULL, EnvFile = ".env", CompressLevel = 5) {
 
   # Checking input arguments -----
 

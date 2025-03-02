@@ -4,12 +4,15 @@
 \alias{CheckTiff}
 \title{Check if a tiff file corrupted}
 \usage{
-CheckTiff(x = NULL)
+CheckTiff(x = NULL, warning = TRUE)
 }
 \arguments{
 \item{x}{Character; the file path of the tiff file to be checked. The
 function will stop with an error if \code{x} is \code{NULL} or if the file does not
 exist.}
+
+\item{warning}{Logical. If \code{TRUE}, the function will issue a warning if the
+file does not exist.}
 }
 \value{
 Logical; returns \code{TRUE} if the tiff file is not corrupted (i.e., it

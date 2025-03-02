@@ -36,7 +36,8 @@ IAS_Distribution <- function(
     stats::setNames(AllArgs)
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Type = "character", Args = c("Species", "EnvFile"))
-  IASDT.R::CheckArgs(AllArgs = AllArgs, Type = "logical", Args = "Verbose")
+  IASDT.R::CheckArgs(
+    AllArgs = AllArgs, Type = "logical", Args = c("Verbose", "Overwrite"))
 
   # # ..................................................................... ###
 
@@ -241,13 +242,15 @@ IAS_Distribution <- function(
   IASDT.R::CatTime(
     paste0("There are ", length(Countries2Exclude), " countries to exclude:"),
     Level = 2)
-  IASDT.R::CatTime(
-    paste(sort(Countries2Exclude), collapse = " + "), Level = 3)
-
+  
   # Mask grid to exclude countries - `TRUE` for grid cells to be considered as
   # presence if present in any of the data source; `FALSE` for grid cells need
   # to be masked as 0 in species distribution maps (1 becomes 0)
   if (length(Countries2Exclude) > 0) {
+    
+    IASDT.R::CatTime(
+      paste(sort(Countries2Exclude), collapse = " + "), Level = 3)
+
     Mask_Keep <- Grid_10_CNT %>%
       dplyr::mutate(Keep = !(Country %in% Countries2Exclude)) %>%
       dplyr::select("Keep") %>%

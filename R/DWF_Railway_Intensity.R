@@ -296,12 +296,12 @@ Railway_Intensity <- function(
           expr = {
 
             stringr::str_glue(
-              'curl -k -L --connect-timeout 120 --max-time 1800 --retry 5 \\
+              'curl -k -L --connect-timeout 180 --max-time 3600 --retry 5 \\
             "{URL}" -o "{Path}" --silent') %>%
               system()
 
             Success <- IASDT.R::CheckZip(Path)
-            
+
             if (isFALSE(Success)) {
               fs::file_delete(Path)
             }

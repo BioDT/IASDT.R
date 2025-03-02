@@ -28,11 +28,10 @@ EASIN_Taxonomy <- function(
   # # ..................................................................... ###
 
   # Environment variables ----
-  IASDT.R::CatTime("Environment variables")
 
   EnvVars2Read <- tibble::tribble(
     ~VarName, ~Value, ~CheckDir, ~CheckFile,
-    "EASIN_URL", "DP_R_EASIN_url", FALSE, FALSE)
+    "EASIN_URL", "DP_R_EASIN_taxa_url", FALSE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())

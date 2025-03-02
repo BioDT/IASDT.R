@@ -41,15 +41,13 @@ EASIN_Down <- function(
     AllArgs = AllArgs, Type = "numeric",
     Args = c("Timeout", "NSearch", "SleepTime"))
 
-
   # # ..................................................................... ###
 
   # Environment variables ----
-  IASDT.R::CatTime("Environment variables")
 
   EnvVars2Read <- tibble::tribble(
     ~VarName, ~Value, ~CheckDir, ~CheckFile,
-    "EASIN_URL", "DP_R_EASIN_url", FALSE, FALSE,
+    "EASIN_URL", "DP_R_EASIN_data_url", FALSE, FALSE,
     "Path_EASIN", "DP_R_EASIN_interim", FALSE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
@@ -90,6 +88,7 @@ EASIN_Down <- function(
 
       Path_Part <- IASDT.R::Path(
         Path_EASIN, "FileParts", paste0(Obj_Out, ".RData"))
+
       if (IASDT.R::CheckData(Path_Part, warning = FALSE)) {
         next
       }
@@ -130,7 +129,6 @@ EASIN_Down <- function(
           break
         }
       }
-
 
       if (inherits(ChunkDT, "data.frame")) {
         IASDT.R::SaveAs(InObj = ChunkDT, OutObj = Obj_Out, OutPath = Path_Part)

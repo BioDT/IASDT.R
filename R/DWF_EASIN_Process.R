@@ -66,6 +66,30 @@
 #' @export
 #' @order 1
 
+
+
+
+setwd("U:/Workflow/")
+ExtractTaxa = TRUE
+ExtractData = TRUE
+NDownTries = 10L
+NCores = 6L
+SleepTime = 10L
+NSearch = 1000L
+EnvFile = ".env"
+DeleteChunks = TRUE
+StartYear = 1981L
+Plot = TRUE
+
+
+
+
+
+
+
+
+
+
 EASIN_Process <- function(
     ExtractTaxa = TRUE, ExtractData = TRUE, NDownTries = 10L, NCores = 6L,
     SleepTime = 10L, NSearch = 1000L, EnvFile = ".env", DeleteChunks = TRUE,
@@ -116,7 +140,6 @@ EASIN_Process <- function(
     "Path_Grid_Ref", "DP_R_Grid_raw", TRUE, FALSE,
     "Path_EASIN", "DP_R_EASIN_processed", FALSE, FALSE,
     "Path_EASIN_Interim", "DP_R_EASIN_interim", FALSE, FALSE,
-    "EASIN_URL", "DP_R_EASIN_url", FALSE, FALSE,
     "TaxaInfoFile", "DP_R_Taxa_info_rdata", FALSE, TRUE,
     "EASIN_Ref", "DP_R_Taxa_easin", FALSE, TRUE)
   # Assign environment variables and check file and paths
@@ -175,7 +198,10 @@ EASIN_Process <- function(
 
   IASDT.R::CatTime("Extract EASIN taxonomy list")
 
-  if (ExtractTaxa) {
+  Path_EASIN_Taxa <- IASDT.R::Path(Path_EASIN, "EASIN_Taxa.RData")
+  Taxa_Okay <- IASDT.R::CheckData(Path_EASIN_Taxa, warning = FALSE)
+
+  if (ExtractTaxa || isFALSE(Taxa_Okay)) {
     IASDT.R::CatTime("Download EASIN taxa", Level = 1)
 
     # Download EASIN taxa
@@ -209,8 +235,7 @@ EASIN_Process <- function(
           "Cenchrus setaceus", 5828232, "R03000",
           "Neltuma juliflora", 5358460, "R12278",
           "Persicaria perfoliata", 4033648, "R19287",
-          "Pueraria montana (Lour.) Merr. var. lobata", 2977636, "R12644")
-      )
+          "Pueraria montana (Lour.) Merr. var. lobata", 2977636, "R12644"))
 
     EASIN_Taxa <- EASIN_Taxa_Orig %>%
       # Merge with EASIN reference list of taxonomy standardization
@@ -237,10 +262,10 @@ EASIN_Process <- function(
     }
     ## Save EASIN taxa - RData ----
     IASDT.R::CatTime("Save EASIN taxa - RData", Level = 1)
-    save(EASIN_Taxa, file = IASDT.R::Path(Path_EASIN, "EASIN_Taxa.RData"))
+    save(EASIN_Taxa, file = Path_EASIN_Taxa)
   } else {
     IASDT.R::CatTime("Loading EASIN taxa list")
-    load(IASDT.R::Path(Path_EASIN, "EASIN_Taxa.RData"))
+    EASIN_Taxa <- IASDT.R::LoadAs(Path_EASIN_Taxa)
   }
 
   # # ..................................................................... ###
@@ -252,6 +277,7 @@ EASIN_Process <- function(
   IASDT.R::CatTime("Download EASIN data")
 
   if (ExtractData) {
+
     TimeStartData <- lubridate::now(tzone = "CET")
 
     ## Prepare working on parallel ----
@@ -271,6 +297,8 @@ EASIN_Process <- function(
       future::plan("future::cluster", workers = c1, gc = TRUE)
       on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
     }
+
+    IASDT.R::CatTime("Processing EASIN data", Level = 1)
 
     # Start downloading, allow for a maximum of `NumDownTries` trials
     Try <- 0
@@ -302,7 +330,6 @@ EASIN_Process <- function(
         break
       }
 
-      IASDT.R::CatTime("Processing EASIN data", Level = 1)
       Down <- try(
         future.apply::future_lapply(
           X = NotProcessed, FUN = IASDT.R::EASIN_Down, EnvFile = EnvFile,

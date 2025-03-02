@@ -66,30 +66,6 @@
 #' @export
 #' @order 1
 
-
-
-
-setwd("U:/Workflow/")
-ExtractTaxa = TRUE
-ExtractData = TRUE
-NDownTries = 10L
-NCores = 6L
-SleepTime = 10L
-NSearch = 1000L
-EnvFile = ".env"
-DeleteChunks = TRUE
-StartYear = 1981L
-Plot = TRUE
-
-
-
-
-
-
-
-
-
-
 EASIN_Process <- function(
     ExtractTaxa = TRUE, ExtractData = TRUE, NDownTries = 10L, NCores = 6L,
     SleepTime = 10L, NSearch = 1000L, EnvFile = ".env", DeleteChunks = TRUE,

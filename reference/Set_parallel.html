@@ -105,7 +105,7 @@ global variables identified. See <code>future.globals.maxSize</code> argument of
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Prepare working on parallel</span></span></span>
 <span class="r-in"><span><span class="fu">IASDT.R</span><span class="fu">::</span><span class="fu">Set_parallel</span><span class="op">(</span>NCores <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Setting up parallel processing with 2 core(s) - 15:41:35</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Setting up parallel processing with 2 core(s) - 18:01:38</span>
 <span class="r-in"><span><span class="fu">future</span><span class="fu">::</span><span class="fu"><a href="https://future.futureverse.org/reference/plan.html" class="external-link">plan</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> multisession:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> - args: function (..., workers = c(system = 2L), envir = parent.frame())</span>
@@ -116,7 +116,7 @@ global variables identified. See <code>future.globals.maxSize</code> argument of
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Stopping parallel processing</span></span></span>
 <span class="r-in"><span><span class="fu">IASDT.R</span><span class="fu">::</span><span class="fu">Set_parallel</span><span class="op">(</span>Stop <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Stopping parallel processing - 15:41:36</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Stopping parallel processing - 18:01:39</span>
 <span class="r-in"><span><span class="fu">future</span><span class="fu">::</span><span class="fu"><a href="https://future.futureverse.org/reference/plan.html" class="external-link">plan</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> sequential:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> - args: function (..., gc = TRUE, envir = parent.frame(), workers = "&lt;NULL&gt;")</span>
@@ -127,7 +127,7 @@ global variables identified. See <code>future.globals.maxSize</code> argument of
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Prepare working on parallel using `future::cluster`</span></span></span>
 <span class="r-in"><span><span class="fu">IASDT.R</span><span class="fu">::</span><span class="fu">Set_parallel</span><span class="op">(</span>NCores <span class="op">=</span> <span class="fl">2</span>, Strategy <span class="op">=</span> <span class="st">"future::cluster"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Setting up parallel processing with 2 core(s) - 15:41:36</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Setting up parallel processing with 2 core(s) - 18:01:39</span>
 <span class="r-in"><span><span class="fu">future</span><span class="fu">::</span><span class="fu"><a href="https://future.futureverse.org/reference/plan.html" class="external-link">plan</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> cluster:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> - args: function (..., workers = c(system = 2L), envir = parent.frame())</span>
@@ -136,7 +136,7 @@ global variables identified. See <code>future.globals.maxSize</code> argument of
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Stopping parallel processing</span></span></span>
 <span class="r-in"><span><span class="fu">IASDT.R</span><span class="fu">::</span><span class="fu">Set_parallel</span><span class="op">(</span>Stop <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Stopping parallel processing - 15:41:36</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Stopping parallel processing - 18:01:39</span>
 <span class="r-in"><span><span class="fu">future</span><span class="fu">::</span><span class="fu"><a href="https://future.futureverse.org/reference/plan.html" class="external-link">plan</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> sequential:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> - args: function (..., gc = TRUE, envir = parent.frame(), workers = "&lt;NULL&gt;")</span>

@@ -57,7 +57,7 @@ function works also for reading netCDF files with the <code>terra</code> package
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">CheckTiff</span><span class="op">(</span>x <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">CheckTiff</span><span class="op">(</span>x <span class="op">=</span> <span class="cn">NULL</span>, warning <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -68,6 +68,11 @@ function works also for reading netCDF files with the <code>terra</code> package
 <dd><p>Character; the file path of the tiff file to be checked. The
 function will stop with an error if <code>x</code> is <code>NULL</code> or if the file does not
 exist.</p></dd>
+
+
+<dt id="arg-warning">warning<a class="anchor" aria-label="anchor" href="#arg-warning"></a></dt>
+<dd><p>Logical. If <code>TRUE</code>, the function will issue a warning if the
+file does not exist.</p></dd>
 
 </dl></div>
     <div class="section level2">

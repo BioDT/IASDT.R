@@ -21,7 +21,7 @@ the use of the IAS-pDT Shiny App."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">IASDT.R</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.02</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.03</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,7 +70,6 @@ the use of the IAS-pDT <a href="https://app.biodt.eu/" class="external-link">Shi
 <span>  Path_Model <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  Hab_Abb <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  EnvFile <span class="op">=</span> <span class="st">".env"</span>,</span>
-<span>  FromHPC <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  NCores <span class="op">=</span> <span class="fl">8L</span>,</span>
 <span>  Pred_Clamp <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  Fix_Efforts <span class="op">=</span> <span class="st">"q90"</span>,</span>
@@ -110,12 +109,6 @@ which data will be prepared. Valid values are <code>0</code>, <code>1</code>, <c
 <dt id="arg-envfile">EnvFile<a class="anchor" aria-label="anchor" href="#arg-envfile"></a></dt>
 <dd><p>Character. Path to the environment file containing paths to
 data sources. Defaults to <code>.env</code>.</p></dd>
-
-
-<dt id="arg-fromhpc">FromHPC<a class="anchor" aria-label="anchor" href="#arg-fromhpc"></a></dt>
-<dd><p>Logical. Whether the processing is being done on an
-High-Performance Computing (HPC) environment, to adjust file paths
-accordingly. Default: <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-ncores">NCores<a class="anchor" aria-label="anchor" href="#arg-ncores"></a></dt>

@@ -11,7 +11,7 @@ processed model objects to disk."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">IASDT.R</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.02</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.03</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,7 +56,6 @@ processed model objects to disk.</p>
 <span>  NCores <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  ModInfoName <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  PrintIncomplete <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  FromHPC <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  FromJSON <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  Extension <span class="op">=</span> <span class="st">"qs2"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -86,12 +85,6 @@ processed model information will be saved. If <code>NULL</code>, it overwrites t
 <dt id="arg-printincomplete">PrintIncomplete<a class="anchor" aria-label="anchor" href="#arg-printincomplete"></a></dt>
 <dd><p>Logical. Whether to print the names of models that
 were not successfully fitted to the console. Defaults to <code>TRUE</code>.</p></dd>
-
-
-<dt id="arg-fromhpc">FromHPC<a class="anchor" aria-label="anchor" href="#arg-fromhpc"></a></dt>
-<dd><p>Logical. Whether the processing is being done on an
-High-Performance Computing (HPC) environment, to adjust file paths
-accordingly. Default: <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-fromjson">FromJSON<a class="anchor" aria-label="anchor" href="#arg-fromjson"></a></dt>

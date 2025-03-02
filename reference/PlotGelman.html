@@ -33,7 +33,7 @@ PlotGelman_Rho(): Plots shrink factor for the Rho parameter
 
     <a class="navbar-brand me-2" href="../index.html">IASDT.R</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.02</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.03</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -88,7 +88,6 @@ calls:</p><ul><li><p><code>PlotGelman_Alpha()</code>: Plots shrink factor for th
 <span>  Omega <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  Rho <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  NOmega <span class="op">=</span> <span class="fl">1000L</span>,</span>
-<span>  FromHPC <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  PlottingAlpha <span class="op">=</span> <span class="fl">0.25</span>,</span>
 <span>  EnvFile <span class="op">=</span> <span class="st">".env"</span>,</span>
 <span>  ReturnPlots <span class="op">=</span> <span class="cn">FALSE</span></span>
@@ -96,12 +95,7 @@ calls:</p><ul><li><p><code>PlotGelman_Alpha()</code>: Plots shrink factor for th
 <span></span>
 <span><span class="fu">PlotGelman_Alpha</span><span class="op">(</span><span class="va">CodaObj</span>, PlottingAlpha <span class="op">=</span> <span class="fl">0.25</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">PlotGelman_Beta</span><span class="op">(</span></span>
-<span>  <span class="va">CodaObj</span>,</span>
-<span>  EnvFile <span class="op">=</span> <span class="st">".env"</span>,</span>
-<span>  PlottingAlpha <span class="op">=</span> <span class="fl">0.25</span>,</span>
-<span>  FromHPC <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span>
+<span><span class="fu">PlotGelman_Beta</span><span class="op">(</span><span class="va">CodaObj</span>, EnvFile <span class="op">=</span> <span class="st">".env"</span>, PlottingAlpha <span class="op">=</span> <span class="fl">0.25</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">PlotGelman_Omega</span><span class="op">(</span><span class="va">CodaObj</span>, NOmega <span class="op">=</span> <span class="fl">1000L</span>, PlottingAlpha <span class="op">=</span> <span class="fl">0.25</span><span class="op">)</span></span>
 <span></span>
@@ -126,12 +120,6 @@ Default: <code>TRUE</code> for all parameters.</p></dd>
 <dt id="arg-nomega">NOmega<a class="anchor" aria-label="anchor" href="#arg-nomega"></a></dt>
 <dd><p>Integer. Number of species sampled for the Omega parameter.
 Default: 1000L.</p></dd>
-
-
-<dt id="arg-fromhpc">FromHPC<a class="anchor" aria-label="anchor" href="#arg-fromhpc"></a></dt>
-<dd><p>Logical. Whether the processing is being done on an
-High-Performance Computing (HPC) environment, to adjust file paths
-accordingly. Default: <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-plottingalpha">PlottingAlpha<a class="anchor" aria-label="anchor" href="#arg-plottingalpha"></a></dt>

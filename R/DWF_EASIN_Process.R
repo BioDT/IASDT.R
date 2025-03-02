@@ -63,6 +63,7 @@
 #' @author Ahmed El-Gabbas
 #' @name EASIN_data
 #' @rdname EASIN_data
+#' @export
 #' @order 1
 
 EASIN_Process <- function(

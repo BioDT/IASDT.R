@@ -230,6 +230,9 @@ CHELSA_Process <- function(
   }
 
   # Exclude previously processed files (after checking)
+  IASDT.R::CatTime(
+    "Exclude previously processed files (after checking)", Level = 1)
+
   if (OverwriteProcessed) {
     CHELSA2Process <- dplyr::select(
       .data = CHELSA_Data, Path_Down, Path_Out_NC, Path_Out_tif)
@@ -251,6 +254,7 @@ CHELSA_Process <- function(
   }
 
   # Processing CHELSA files
+  IASDT.R::CatTime("Processing CHELSA files", Level = 1)
 
   if (nrow(CHELSA2Process) > 0) {
     CHELSA2Process <- CHELSA2Process %>%

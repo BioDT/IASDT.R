@@ -64,12 +64,12 @@ changes on a new branch and submit a pull request or make an issue
 ## Citation
 
 If you use the `IASDT.R` package, please cite it as:
-<a href="https://doi.org/10.5281/zenodo.14834385" target="_blank"><img role="button" tabindex="0" id="modal-858828210-trigger" aria-controls="modal-858828210" aria-expanded="false" class="doi-modal-trigger block m-0" src="https://zenodo.org/badge/DOI/10.5281/zenodo.14834385.svg" alt="DOI: 10.5281/zenodo.14834385"/></a>
+<a href="https://doi.org/10.5281/zenodo.14954739" target="_blank"><img role="button" tabindex="0" id="modal-858828210-trigger" aria-controls="modal-858828210" aria-expanded="false" class="doi-modal-trigger block m-0" src="https://zenodo.org/badge/DOI/10.5281/zenodo.14954739.svg" alt="DOI: 10.5281/zenodo.14954739"/></a>
 
 > El-Gabbas, A. (2025). **IASDT.R: Modelling the distribution of
 > invasive alien plant species in Europe**.
-> <a href="https://doi.org/10.5281/zenodo.14834385" target="_blank">10.5281/zenodo.14834385</a>,
-> R package version 0.1.02;
+> <a href="https://doi.org/10.5281/zenodo.14954739" target="_blank">10.5281/zenodo.14954739</a>,
+> R package version 0.1.03;
 > <a href="https://github.com/BioDT/IASDT.R" target="_blank">https://github.com/BioDT/IASDT.R</a>;
 > <a href="https://biodt.eu" target="_blank">https://biodt.eu</a>.
 

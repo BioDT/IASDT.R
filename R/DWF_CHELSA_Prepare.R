@@ -72,6 +72,11 @@ CHELSA_Prepare <- function(
     paste(collapse = "|")
 
   IASDT.R::CatTime("Prepare CHELSA metadata", Level = 1)
+
+  if (stringr::str_detect(BaseURL, "/$")) {
+    BaseURL <- stringr::str_remove(BaseURL, "/$")
+  }
+
   CHELSA_Metadata <- list.files(
     path = Path_DwnLinks, recursive = TRUE, full.names = TRUE,
     pattern = "DwnLinks_Climatologies_.+txt$") %>%
@@ -123,8 +128,8 @@ CHELSA_Prepare <- function(
       )
     ) %>%
     tidyr::unnest_wider("ModelScenario") %>%
-    dplyr::filter(
-      Folder != "climatologies/2011-2040/UKESM1-0-LL/ssp126") %>%
+    # Files for 2011-2040/UKESM1-0-LL/ssp126 are duplicated
+    dplyr::filter(Folder != "climatologies/2011-2040/UKESM1-0-LL/ssp126") %>%
     dplyr::mutate(
       Variable = purrr::pmap_chr(
         .l = list(File, TimePeriod, ClimateScenario, Ext, ClimateModel),
@@ -152,20 +157,22 @@ CHELSA_Prepare <- function(
 
       Path_Down = purrr::map_chr(
         .x = File, .f = ~ IASDT.R::Path(Path_CHELSA_In, .x)),
-
+      
       Path_Out_tif = purrr::map_chr(
         .x = File, .f = ~ IASDT.R::Path(Path_CHELSA_Out, "Tif", .x)),
-
+      
       Path_Out_NC = purrr::map_chr(
         .x = Path_Out_tif, .f = stringr::str_replace_all,
         pattern = "Tif", replacement = "NC"),
+      
       Path_Out_NC = purrr::map_chr(
         .x = Path_Out_NC, .f = stringr::str_replace_all,
         pattern = ".tif$", replacement = ".nc"),
-
       DownCommand = purrr::map2_chr(
         .x = URL, .y = Path_Down,
-        .f = ~ stringr::str_glue('curl -k -L "{.x}" -o "{.y}" --silent')),
+        .f = ~ stringr::str_glue(
+          'curl -k -L --connect-timeout 120 --max-time 600 --retry 5 \\
+          "{.x}" -o "{.y}" --silent')),
 
       # Unique name for variable / time combination
       OutName = purrr::pmap_chr(

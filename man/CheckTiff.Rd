@@ -20,11 +20,8 @@ otherwise.
 This function checks if the provided tiff file is corrupted by attempting to
 describe it using the \code{terra} package and searching for the presence of a
 "Driver" string in the description, which indicates a valid tiff file. If the
-string is found, the function returns \code{TRUE} and \code{FALSE} otherwise.
-}
-\note{
-This function depends on the \code{terra}, \code{magrittr}, and \code{stringr}
-packages.
+string is found, the function returns \code{TRUE} and \code{FALSE} otherwise. The
+function works also for reading netCDF files with the \code{terra} package.
 }
 \examples{
 (f <- system.file("ex/elev.tif", package="terra"))

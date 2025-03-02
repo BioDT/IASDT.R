@@ -7,7 +7,8 @@
 #' This function checks if the provided tiff file is corrupted by attempting to
 #' describe it using the `terra` package and searching for the presence of a
 #' "Driver" string in the description, which indicates a valid tiff file. If the
-#' string is found, the function returns `TRUE` and `FALSE` otherwise.
+#' string is found, the function returns `TRUE` and `FALSE` otherwise. The
+#' function works also for reading netCDF files with the `terra` package.
 #' @param x Character; the file path of the tiff file to be checked. The
 #'   function will stop with an error if `x` is `NULL` or if the file does not
 #'   exist.
@@ -17,8 +18,6 @@
 #'   can be described and contains "Driver" in its description), and `FALSE`
 #'   otherwise.
 #' @export
-#' @note This function depends on the `terra`, `magrittr`, and `stringr`
-#'   packages.
 #' @examples
 #' (f <- system.file("ex/elev.tif", package="terra"))
 #'

@@ -54,7 +54,6 @@
 #' - **`Efforts_Plot()`**: Plots observation efforts (raw and log10 scales).
 #' @references Data source: <https://www.gbif.org>
 
-
 ## |------------------------------------------------------------------------| #
 # Efforts_Process ----
 ## |------------------------------------------------------------------------| #
@@ -117,15 +116,12 @@ Efforts_Process <- function(
 
   # # ..................................................................... ###
 
-  IASDT.R::CatTime(
-    "Ensure that GBIF access information is available", Level = 1)
+  IASDT.R::CatTime("Ensure that GBIF access information is available")
   IASDT.R::GBIF_Check(Renviron = Renviron)
 
   # # ..................................................................... ###
 
   # Environment variables ----
-  IASDT.R::CatTime("Environment variables")
-
   EnvVars2Read <- tibble::tribble(
     ~VarName, ~Value, ~CheckDir, ~CheckFile,
     "Path_Efforts", "DP_R_Efforts_processed", FALSE, FALSE,
@@ -165,10 +161,9 @@ Efforts_Process <- function(
   # # ..................................................................... ###
 
   # Request efforts data ------
-  IASDT.R::CatTime("Request efforts data")
-
+  
   if (Request) {
-    IASDT.R::CatTime("Requesting efforts data", Level = 1)
+    IASDT.R::CatTime("Requesting efforts data")
 
     IASDT.R::Efforts_Request(
       EnvFile = EnvFile, NCores = NCores, StartYear = StartYear,
@@ -185,8 +180,7 @@ Efforts_Process <- function(
     }
 
     IASDT.R::CatTime(
-      "Efforts data was not requested, but already available on disk",
-      Level = 1)
+      "Efforts data was not requested, but already available on disk")
 
   }
 
@@ -200,7 +194,6 @@ Efforts_Process <- function(
     IASDT.R::Efforts_Download(NCores = NCores, EnvFile = EnvFile)
 
   } else {
-
 
     Path_Efforts_Request <- IASDT.R::Path(
       Path_Efforts, "Efforts_AllRequests.RData")

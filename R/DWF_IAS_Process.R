@@ -190,8 +190,7 @@ IAS_Process <- function(EnvFile = ".env", NCores = 6L, Overwrite = TRUE) {
       IASDT.R::IAS_Distribution(
         Species = x, EnvFile = EnvFile, Verbose = FALSE, Overwrite = Overwrite)
     },
-    future.scheduling = Inf,
-    future.seed = TRUE,
+    future.scheduling = Inf, future.seed = TRUE,
     future.packages =   c(
       "dplyr", "lubridate", "IASDT.R", "purrr", "stringr", "readr", "fs",
       "sf", "terra", "readxl", "tidyr", "tidyselect", "ggplot2", "ggtext",

@@ -45,15 +45,12 @@ Efforts_Request <- function(
     TotalRecords <- Path_Efforts <- NULL
   # # ..................................................................... ###
 
-  IASDT.R::CatTime(
-    "Ensure that GBIF access information is available", Level = 1)
   IASDT.R::GBIF_Check(Renviron = Renviron)
 
   # # ..................................................................... ###
 
   # Environment variables ----
-  IASDT.R::CatTime("Environment variables")
-
+  
   EnvVars2Read <- tibble::tribble(
     ~VarName, ~Value, ~CheckDir, ~CheckFile,
     "Path_Efforts", "DP_R_Efforts_processed", FALSE, FALSE)
@@ -85,9 +82,10 @@ Efforts_Request <- function(
 
   # # ..................................................................... ###
 
-  # Requesting efforts Data on parallel -----
-  IASDT.R::CatTime("Requesting efforts Data on parallel", Level = 1)
-  IASDT.R::CatTime("This may take up to 4 hours", Level = 2)
+  # Requesting efforts data on parallel -----
+
+  "Requesting efforts data on parallel (This may take up to 4 hours)" %>% 
+    IASDT.R::CatTime(Level = 1)
 
   # Extract taxonomic info for vascular plants orders
   SelectedCols <- c(
@@ -178,6 +176,8 @@ Efforts_Request <- function(
     dplyr::ungroup() %>%
     # how to cite data
     dplyr::mutate(Citation = purrr::map_chr(Request, attr, "citation"))
+
+  IASDT.R::CatTime("Requesting efforts data was finished", Level = 2)
 
   # # ..................................................................... ###
 

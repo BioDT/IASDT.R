@@ -3,7 +3,7 @@ pkgdown: 2.1.1
 pkgdown_sha: ~
 articles:
   modelling_workflow: modelling_workflow.html
-last_built: 2025-03-03T11:07Z
+last_built: 2025-03-03T11:19Z
 urls:
   reference: https://biodt.github.io/IASDT.R/reference
   article: https://biodt.github.io/IASDT.R/articles

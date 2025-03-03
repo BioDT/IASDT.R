@@ -751,7 +751,7 @@ Mod_Prep4HPC <- function(
     if (NCores_GPP > 1) {
 
       IASDT.R::CatTime(
-        paste0("Prepare working on parallel using `", NCores_GPP, "` cores."),
+        paste0("Prepare working on parallel using ", NCores_GPP, " cores."),
         Level = 1)
 
       withr::local_options(

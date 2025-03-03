@@ -53,8 +53,6 @@ Efforts_Split <- function(
   # # ..................................................................... ###
 
   # Environment variables ----
-  IASDT.R::CatTime("Environment variables")
-
   EnvVars2Read <- tibble::tribble(
     ~VarName, ~Value, ~CheckDir, ~CheckFile,
     "Path_Interim", "DP_R_Efforts_interim", FALSE, FALSE)
@@ -92,10 +90,9 @@ Efforts_Split <- function(
   # nolint end
 
   Command <- stringr::str_glue(
-    'unzip -p {Path_Zip} {CSV_File} | cut -f{SelectedCols} -d "\t" | ',
-    'sed -n "1!p" | split -l {ChunkSize} ',
-    "-a 4 -d - {OutPrefix} --additional-suffix=.txt"
-  )
+    'unzip -p {Path_Zip} {CSV_File} | cut -f{SelectedCols} -d "\t" | \\
+    sed -n "1!p" | split -l {ChunkSize} -a 4 -d - {OutPrefix} \\
+    --additional-suffix=.txt')
 
   Path_Chunks <- tryCatch(
     IASDT.R::System(Command, RObj = FALSE),
@@ -107,9 +104,7 @@ Efforts_Split <- function(
 
   return(
     list.files(
-      Path_Interim,
-      full.names = TRUE,
-      pattern = paste0(basename(OutPrefix), ".+txt")
-    )
+      Path_Interim, full.names = TRUE,
+      pattern = paste0(basename(OutPrefix), ".+txt"))
   )
 }

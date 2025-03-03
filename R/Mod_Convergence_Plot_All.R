@@ -230,7 +230,7 @@ Convergence_Plot_All <- function(
     IASDT.R::CatTime("Processing convergence data", Level = 1)
 
     IASDT.R::CatTime(
-      paste0("Prepare working on parallel using `", NCores, "` cores."),
+      paste0("Prepare working on parallel using ", NCores, " cores."),
       Level = 2)
 
     if (NCores == 1) {

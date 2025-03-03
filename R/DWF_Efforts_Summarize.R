@@ -31,8 +31,6 @@ Efforts_Summarize <- function(
   # # ..................................................................... ###
 
   # Environment variables ----
-  IASDT.R::CatTime("Environment variables")
-
   EnvVars2Read <- tibble::tribble(
     ~VarName, ~Value, ~CheckDir, ~CheckFile,
     "Path_Efforts", "DP_R_Efforts_processed", TRUE, FALSE,
@@ -74,7 +72,7 @@ Efforts_Summarize <- function(
   # Prepare working on parallel -----
 
   IASDT.R::CatTime(
-    paste0("Prepare working on parallel using `", NCores, "` cores."),
+    paste0("Prepare working on parallel using ", NCores, " cores."),
     Level = 1)
 
   if (NCores == 1) {
@@ -96,8 +94,7 @@ Efforts_Summarize <- function(
 
   if (DeleteChunks) {
     IASDT.R::CatTime(
-      "Chunk files will be deleted after finishing processing",
-      Level = 2)
+      "Chunk files will be deleted after finishing processing", Level = 2)
   }
 
   # Earlier attempts with `furrr::future_map()` failed
@@ -116,6 +113,7 @@ Efforts_Summarize <- function(
   DT_Paths <- future.apply::future_lapply(
     X = seq_len(nrow(Efforts_AllRequests)),
     FUN = function(ID) {
+
       DownPath <- Efforts_AllRequests$DownPath[ID]
       TotalRecords <- Efforts_AllRequests$TotalRecords[ID]
       class <- Efforts_AllRequests$class[ID]
@@ -137,6 +135,7 @@ Efforts_Summarize <- function(
       # Process current order data if the output file is not okay and the order
       # have observations
       if (isFALSE(FileOkay) && TotalRecords > 0) {
+
         if (file.exists(Path_DT)) {
           fs::file_delete(Path_DT)
         }
@@ -222,31 +221,28 @@ Efforts_Summarize <- function(
         }
 
         rm(DT, envir = environment())
-      }
 
-      # delete chunk files for the current order
-      if (DeleteChunks) {
-        purrr::walk(Chunks, file.remove)
+        # delete chunk files for the current order
+        if (DeleteChunks && TotalRecords > 0) {
+          purrr::walk(Chunks, file.remove)
+        }
       }
-
-      # Output path
-      Path_DT <- dplyr::if_else(ReturnNoData, NA_character_, Path_DT)
 
       invisible(gc())
 
       return(
         tibble::tibble(
-          ClassOrder = ClassOrder, Path_DT = Path_DT,
+          ClassOrder = ClassOrder,
+          Path_DT = dplyr::if_else(ReturnNoData, NA_character_, Path_DT),
           class = class, order = order))
     },
     future.scheduling = Inf, future.seed = TRUE,
     future.packages = c(
-      "terra", "IASDT.R", "stringr", "fs", "sf", "readr", "dplyr",
+      "IASDT.R", "stringr", "fs", "sf", "readr", "dplyr",
       "purrr", "tibble", "R.utils"),
     future.globals = c(
       "Path_Interim", "Efforts_AllRequests", "Path_Efforts_Cleaned",
-      "Grid_SF", "ChunkSize")
-  ) %>%
+      "Grid_SF", "ChunkSize", "DeleteChunks")) %>%
     dplyr::bind_rows()
 
   # # ++++++++++++++++++++++++++++++ ###

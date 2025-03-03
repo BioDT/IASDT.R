@@ -25,11 +25,8 @@ Efforts_Download <- function(NCores = 6L, EnvFile = ".env") {
     stop("NCores must be a positive integer.", call. = FALSE)
   }
 
-  Commands <- "unzip"
-  CommandsAvail <- purrr::map_lgl(Commands, IASDT.R::CheckCommands)
-  if (!all(CommandsAvail)) {
-    Missing <- paste(Commands[!CommandsAvail], collapse = " + ")
-    stop("The following command(s) are not available: ", Missing, call. = FALSE)
+  if (isFALSE(IASDT.R::CheckCommands("unzip"))) {
+    stop("The 'unzip' command is not available", call. = FALSE)
   }
 
   # # ..................................................................... ###
@@ -62,7 +59,7 @@ Efforts_Download <- function(NCores = 6L, EnvFile = ".env") {
   ## Prepare working on parallel -----
 
   IASDT.R::CatTime(
-    paste0("Prepare working on parallel using `", NCores, "` cores."),
+    paste0("Prepare working on parallel using ", NCores, " cores."),
     Level = 1)
 
   if (NCores == 1) {

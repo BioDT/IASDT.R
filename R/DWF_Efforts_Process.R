@@ -181,8 +181,9 @@ Efforts_Process <- function(
     }
 
     IASDT.R::CatTime(
-      "Efforts data was not requested, but already available on disk")
-
+      stringr::str_glue(
+        "Efforts data was not requested. Previous request information is \\
+        already available on disk"))
   }
 
   # # ..................................................................... ###

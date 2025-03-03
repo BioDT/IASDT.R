@@ -65,7 +65,7 @@ Efforts_Request <- function(
   # GBIF allows only 3 parallel requests. Here I wait until previous request
   # is finished.
   IASDT.R::CatTime(
-    paste0("Prepare working on parallel using `", min(NCores, 3), "` cores."),
+    paste0("Prepare working on parallel using ", min(NCores, 3), " cores."),
     Level = 1)
 
   if (NCores == 1) {

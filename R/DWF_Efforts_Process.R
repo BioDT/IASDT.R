@@ -133,6 +133,8 @@ Efforts_Process <- function(
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
+  AllRequests <- IASDT.R::Path(Path_Efforts, "Efforts_AllRequests.RData")
+
   # # ..................................................................... ###
 
   # Loading input data ------
@@ -163,17 +165,16 @@ Efforts_Process <- function(
   # Request efforts data ------
   
   if (Request) {
-    IASDT.R::CatTime("Requesting efforts data")
 
+    IASDT.R::CatTime("Requesting efforts data")
+    
     IASDT.R::Efforts_Request(
       EnvFile = EnvFile, NCores = NCores, StartYear = StartYear,
       Renviron = Renviron, Boundaries = Boundaries)
 
   } else {
-    Efforts_AllRequests <- IASDT.R::LoadAs(
-      IASDT.R::Path(Path_Efforts, "Efforts_AllRequests.RData"))
 
-    if (!file.exists(Efforts_AllRequests)) {
+    if (!file.exists(AllRequests)) {
       stop(
         "Efforts data was not requested and the file does not exist.",
         call. = FALSE)
@@ -195,15 +196,14 @@ Efforts_Process <- function(
 
   } else {
 
-    Path_Efforts_Request <- IASDT.R::Path(
-      Path_Efforts, "Efforts_AllRequests.RData")
-    if (!file.exists(Path_Efforts_Request)) {
+    if (!file.exists(AllRequests)) {
       stop(
         "Efforts data was not downloaded and the file does not exist.",
         call. = FALSE)
     }
 
-    Efforts_AllRequests <- IASDT.R::LoadAs(Path_Efforts_Request)
+    Efforts_AllRequests <- IASDT.R::LoadAs(AllRequests)
+
     if (!("DownPath" %in% names(Efforts_AllRequests))) {
       stop(
         "Efforts data was not downloaded and the 'DownPath' column is missing.",

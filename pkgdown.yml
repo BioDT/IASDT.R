@@ -2,8 +2,12 @@ pandoc: 3.1.11
 pkgdown: 2.1.1
 pkgdown_sha: ~
 articles:
-  modelling_workflow: modelling_workflow.html
-last_built: 2025-03-03T14:38Z
+  workflow_1_overview: workflow_1_overview.html
+  workflow_2_abiotic_data: workflow_2_abiotic_data.html
+  workflow_3_biotic_data: workflow_3_biotic_data.html
+  workflow_4_model_fitting: workflow_4_model_fitting.html
+  workflow_5_model_postprocess: workflow_5_model_postprocess.html
+last_built: 2025-03-06T17:24Z
 urls:
   reference: https://biodt.github.io/IASDT.R/reference
   article: https://biodt.github.io/IASDT.R/articles

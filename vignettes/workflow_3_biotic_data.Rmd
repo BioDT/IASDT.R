@@ -1,0 +1,147 @@
+---
+title: "IAS-pDT modelling workflow — 3. biotic data"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+editor: 
+  markdown: 
+    wrap: 72
+execute: 
+  eval: false
+format:
+  html:
+    self_contained: true
+    mode: selfcontained
+    embed-resources: true
+    code-overflow: wrap
+    page-layout: full
+    # toc-expand: true
+    # toc-depth: 1
+    # number-sections: true
+    link-external-icon: true
+    link-external-newwindow: true
+vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{IAS-pDT modelling workflow — 3. biotic data}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE, eval=TRUE}
+library(kableExtra)
+library(knitr)
+library(tibble)
+knitr::opts_chunk$set(
+  collapse = TRUE, comment = "#>", eval = FALSE, warning = FALSE,
+  message = FALSE, dev = "ragg_png", dpi = 300, tidy = "styler",
+  out.width = "100%", fig.show = "hold", echo = FALSE)
+```
+
+```{r, eval=TRUE, results="asis"}
+c("<style>", readLines("style.css"), "</style>") %>% 
+  cat(sep = "\n")
+```
+
+<br/><br/>
+
+This article details the processing of biotic data within the `IAS-pDT` modeling workflow. The biotic data are sourced from `GBIF`, `EASIN`, and `eLTER`; see below. All data preparation adheres to the <a href="https://doi.org/10.1038/sdata.2016.18" target="_blank" class="ll">FAIR</a> principles (Findable, Accessible, Interoperable, and Reusable) to ensure scientific integrity and reproducibility.
+
+<br/><br/>
+
+## IAS species list
+
+The most recent checklist of naturalized terrestrial alien plant species of non-European origin was retrieved from <a href="https://floraveg.eu/" target="_blank" class="ll">FloraVeg.EU</a>. This checklist was standardized against the GBIF taxonomic backbone to ensure taxonomic consistency, resulting in a total of 1,338 species. The table below summarizes the species count by taxonomic class and order. Occurrence data for these species were compiled from available sources detailed in subsequent sections.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE}
+DT <- tibble::tribble(
+  ~"class",         ~"order",            ~`# species`,
+  "Liliopsida",     "Acorales",           2,
+  "Liliopsida",     "Alismatales",        9,
+  "Liliopsida",     "Arecales",           5,
+  "Liliopsida",     "Asparagales",       75,
+  "Liliopsida",     "Commelinales",       4,
+  "Liliopsida",     "Liliales",           6,
+  "Liliopsida",     "Poales",           168,
+  "Liliopsida",     "Zingiberales",       7,
+  "Lycopodiopsida", "Selaginellales",     1,
+  "Magnoliopsida",  "Apiales",           15,
+  "Magnoliopsida",  "Asterales",        150,
+  "Magnoliopsida",  "Boraginales",       10,
+  "Magnoliopsida",  "Brassicales",       14,
+  "Magnoliopsida",  "Caryophyllales",   144,
+  "Magnoliopsida",  "Celastrales",        4,
+  "Magnoliopsida",  "Cornales",          10,
+  "Magnoliopsida",  "Cucurbitales",       6,
+  "Magnoliopsida",  "Dipsacales",        19,
+  "Magnoliopsida",  "Ericales",          40,
+  "Magnoliopsida",  "Escalloniales",      1,
+  "Magnoliopsida",  "Fabales",           52,
+  "Magnoliopsida",  "Fagales",           20,
+  "Magnoliopsida",  "Garryales",          1,
+  "Magnoliopsida",  "Gentianales",        9,
+  "Magnoliopsida",  "Geraniales",         9,
+  "Magnoliopsida",  "Gunnerales",         1,
+  "Magnoliopsida",  "Lamiales",          65,
+  "Magnoliopsida",  "Laurales",           1,
+  "Magnoliopsida",  "Magnoliales",        1,
+  "Magnoliopsida",  "Malpighiales",      42,
+  "Magnoliopsida",  "Malvales",          10,
+  "Magnoliopsida",  "Myrtales",          75,
+  "Magnoliopsida",  "Oxalidales",        19,
+  "Magnoliopsida",  "Piperales",          3,
+  "Magnoliopsida",  "Proteales",          4,
+  "Magnoliopsida",  "Ranunculales",      27,
+  "Magnoliopsida",  "Rosales",          124,
+  "Magnoliopsida",  "Sapindales",        24,
+  "Magnoliopsida",  "Saxifragales",      38,
+  "Magnoliopsida",  "Solanales",         52,
+  "Magnoliopsida",  "Vitales",            9,
+  "Pinopsida",      "Pinales",           46,
+  "Polypodiopsida", "Cyatheales",         1,
+  "Polypodiopsida", "Equisetales",        1,
+  "Polypodiopsida", "Polypodiales",      13,
+  "Polypodiopsida", "Schizaeales",        1)
+
+knitr::kable(
+  cbind(DT[1:23,], DT[24:46,]), format = "html", 
+  align = "l", escape = FALSE) %>% 
+  kableExtra::column_spec(c(1, 2, 4, 5), width_min = "1.4in")  %>% 
+  kableExtra::column_spec(c(3, 6), width_min = "1.2in")  %>%
+  kableExtra::kable_styling(
+    c("basic", "condensed", "hover"), font_size = 16,
+    position = "center", full_width = TRUE)
+```
+
+<br/><br/>
+
+## GBIF
+
+The `GBIF_Process()` function manages the retrieval, processing, and visualization of the most current occurrence data for invasive alien species (IAS) from the Global Biodiversity Information Facility (<a href="https://www.gbif.org/" target="_blank" class="ll">GBIF</a>), totaling approximately 9.4 million occurrences as of March 2025. Occurrences deemed doubtful or exhibiting high spatial uncertainty are excluded to ensure data quality. Additionally, the function calculates the number of observations and occupied grid cells per species. Its primary output consists of gridded distribution maps for each species, delineating presence-only data across the reference grid.
+
+<br/><br/>
+
+## EASIN
+
+The European Alien Species Information Network (<a href="https://easin.jrc.ec.europa.eu/" target="_blank" class="ll">EASIN</a>) serves as a web-based platform providing spatial data on approximately 14,000 alien species. The `EASIN_Process()` function oversees the processing and visualization of the latest IAS occurrence data sourced from EASIN. A checklist of vascular plants from EASIN’s database was retrieved via its API and standardized against the GBIF taxonomic backbone. Occurrence data for taxa corresponding to the IAS checklist were subsequently downloaded through the API. Of the 34 partner organizations contributing to EASIN (including GBIF), only non-GBIF data are incorporated into the models to avoid redundancy. Following processing and spatial filtering, the dataset includes over 420,000 observations for 466 IAS as of March 2025. Consistent with the GBIF output, the function generates gridded distribution maps for each species.
+
+<br/><br/>
+
+## eLTER
+
+The Integrated European Long-Term Ecosystem, Critical Zone, and Socio-Ecological Research Infrastructure (<a href="https://elter-ri.eu/" target="_blank" class="ll">eLTER</a>) comprises a network of sites dedicated to collecting ecological data for long-term research across the European Union. Data from 137 eLTER sites, encompassing 5,265 observations for 110 invasive alien species (IAS), were processed (`eLTER_Process()`) and standardized to ensure consistency with other biotic datasets in the `IAS-pDT` workflow.
+
+<br/><br/>
+
+## Species distribution
+
+The `IAS_Process()` function integrates and visualizes species distribution data sourced from `GBIF`, `EASIN`, and `eLTER`. It combines pre-processed datasets and generates presence-absence rasters for use in the species distribution models.
+
+<hr class="hr1">
+
+<span style="font-size: 1.2em; line-height: 0.8;">
+<b>Previous articles:</b><br/>
+<tab>&#8608;<tab><a href="workflow_1_overview.html" class="ll">1. Overview</a><br/>
+<tab>&#8608;<tab><a href="workflow_2_abiotic_data.html" class="ll">2. Processing abiotic data</a><br/>
+<b>Next articles:</b><br/>
+<tab>&#8608;<tab><a href="workflow_4_model_fitting.html" class="ll">4. Model fitting</a><br/>
+<tab>&#8608;<tab><a href="workflow_5_model_postprocess.html" class="ll">5. Model post-processing</a><br/>
+</span>

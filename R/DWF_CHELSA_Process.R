@@ -229,14 +229,21 @@ CHELSA_Process <- function(
     on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
   }
 
-  # Exclude previously processed files (after checking)
-  IASDT.R::CatTime(
-    "Exclude previously processed files (after checking)", Level = 1)
 
   if (OverwriteProcessed) {
+
+    IASDT.R::CatTime(
+      "OverwriteProcessed = TRUE; all files will be processed", Level = 1)
+
     CHELSA2Process <- dplyr::select(
       .data = CHELSA_Data, Path_Down, Path_Out_NC, Path_Out_tif)
+
   } else {
+    
+    # Exclude previously processed files (after checking)
+    IASDT.R::CatTime(
+      "Exclude previously processed files (after checking)", Level = 1)
+
     CHELSA2Process <- CHELSA_Data %>%
       dplyr::select(Path_Down, Path_Out_NC, Path_Out_tif) %>%
       dplyr::mutate(
@@ -361,14 +368,17 @@ CHELSA_Process <- function(
   }
 
   # String to be matched to extract variable names
-  SelectedVars <- c("bio", "Bio", OtherVars) %>%
+  SelectedVars <- c("bio", OtherVars) %>%
     # Only keep non-empty strings. If `OtherVars` = "", only bioclimatic
     # variables will be processed.
-    stringr::str_subset(".+") %>%
-    # Combine the strings into a single string separated by "|". This matches
-    # any variable starting with "bio" or "Bio" or any of the characters in
-    # `OtherVars` up to the first occurrence of underscore "_".
-    paste(sep = ".*?_", collapse = "|")
+    stringr::str_subset(".+") %>% 
+    # If OtherVars = "", this will return "(?i)(bio)\\d*_"
+    # If OtherVars = "npp", this will return "(?i)(bio|npp)\\d*_"
+    # "(?i)" represents case-insensitive matching
+    # \\d+_ means one or more digits followed by an underscore
+    paste(., collapse = "|") %>% 
+    paste0("(?i)(", ., ")\\d*_")
+
 
   CHELSA_Processed <- CHELSA_Data %>%
     dplyr::select(TimePeriod, ClimateModel, ClimateScenario, Path_Out_tif) %>%
@@ -421,8 +431,7 @@ CHELSA_Process <- function(
 
   save(
     CHELSA_Processed,
-    file = IASDT.R::Path(Path_CHELSA_Out, "CHELSA_Processed.RData")
-  )
+    file = IASDT.R::Path(Path_CHELSA_Out, "CHELSA_Processed.RData"))
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

@@ -438,28 +438,31 @@ Mod_Prep_TF <- function(
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
-
+  
   # ****************************************************************
 
   # Path to store TF commands
   Path_TF <- IASDT.R::Path(Path_Models, "TF_postprocess")
-  # path to store log files
+  # Path to store log files
   Path_Log <- IASDT.R::NormalizePath(
-    IASDT.R::Path(Path_TF, "TMP", "%x-%A-%a.out"))
+    IASDT.R::Path(Path_TF, "log", "%x-%A-%a.out"))
 
   fs::dir_create(c(Path_TF, Path_Log))
 
   # ****************************************************************
   # ****************************************************************
 
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||| # # 
+  # VARIANCE PARTITIONING ----
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||| # # 
+  
   # Prepare post-processing data for calculating Variance partitioning
   IASDT.R::CatTime(
     "Prepare post-processing data for calculating Variance partitioning")
 
+  # Create paths for VP SLURM script and commands
   Path_VP_SLURM <- IASDT.R::Path(Path_TF, "VP_SLURM.slurm")
   Path_VP_Commands <- IASDT.R::Path(Path_TF, "VP_Commands.txt")
-
-  # ****************************************************************
 
   # Merge and organize TF commands for computing variance partitioning ----
   IASDT.R::CatTime(
@@ -473,6 +476,8 @@ Mod_Prep_TF <- function(
     purrr::map(readr::read_lines) %>%
     unlist() %>%
     gtools::mixedsort()
+  
+  # Save all VP commands to single file for batch processing
   readr::write_lines(x = VP_InFiles, file = Path_VP_Commands, append = FALSE)
 
   # ****************************************************************
@@ -527,6 +532,10 @@ Mod_Prep_TF <- function(
   # ****************************************************************
   # ****************************************************************
 
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||| # # 
+  # LF PREDICTIONS ----
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||| # # 
+  
   # Prepare post-processing data for LF predictions
   IASDT.R::CatTime("Prepare post-processing data for LF predictions")
 
@@ -537,7 +546,7 @@ Mod_Prep_TF <- function(
   # Merge and organize TF commands for LF predictions ----
   IASDT.R::CatTime(
     paste0(
-      "Merge and organize TF commands for LF predictions into ",
+      "Merge and organize TF commands for LF predictions into a max of ",
       NumFiles, " files"),
     Level = 1, Time = FALSE)
 
@@ -858,8 +867,7 @@ Mod_Postprocess_2_CPU <- function(
   Temp_Dir <- IASDT.R::Path(ModelDir, "TEMP_Pred")
 
   ModelData <- list.files(
-    path = ModelDir, full.names = TRUE,
-    pattern = paste0("^ModDT_", Hab_Abb, "_.+_subset.RData"))
+    path = ModelDir, full.names = TRUE, pattern = "^ModDT_.*subset.RData")
 
   if (length(ModelData) != 1) {
     stop(

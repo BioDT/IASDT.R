@@ -109,7 +109,7 @@ Mod_CV_Fit <- function(
   # Path of the model input data
   Path_ModelData <- list.files(
     path = dirname(dirname(Path_Model)),
-    pattern = "^ModDT_.+_subset.RData", full.names = TRUE)
+    pattern = "^ModDT_.*subset.RData", full.names = TRUE)
   if (length(Path_ModelData) != 1) {
     stop(
       "There should be exactly one file matches model input data",

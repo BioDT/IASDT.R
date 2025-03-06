@@ -261,9 +261,10 @@ Mod_Prep4HPC <- function(
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   NCells <- Sp <- IAS_ID <- x <- y <- Country <- M_thin <- rL <-
     M_Name_init <- rL2 <- M_samples <- M4HPC_Path <- M_transient <-
-    M_Name_Fit <- Chain <- Post_Missing <- Command_HPC <-
-    Command_WS <- Post_Path <- Path_ModProg <- TaxaInfoFile <-
-    Path_Grid <- EU_Bound <- Path_PA <- NAME_ENGL <- NSp <- NULL
+    M_Name_Fit <- Chain <- Post_Missing <- Command_HPC <- Command_WS <-
+    Post_Path <- Path_ModProg <- TaxaInfoFile <- Path_Grid <- EU_Bound <-
+    Path_PA <- NAME_ENGL <- NSp <- Species_File <- File <- ias_id <-
+    PA <- PA_model <- PA_file <- PA_model_file <- NULL
 
   if (isFALSE(VerboseProgress)) {
     sink(file = nullfile())
@@ -295,6 +296,14 @@ Mod_Prep4HPC <- function(
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
+
+
+  Path_GridR <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.RData")
+  if (!file.exists(Path_GridR)) {
+    stop(
+      "Path for the Europe boundaries does not exist: ", Path_GridR,
+      call. = FALSE)
+  }
 
   # # ..................................................................... ###
 
@@ -361,14 +370,6 @@ Mod_Prep4HPC <- function(
       stop("`GPP_Dists` should be numeric and greater than zero", call. = FALSE)
     }
 
-    if (GPP_Plot) {
-      Path_GridR <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.RData")
-      if (!file.exists(Path_GridR)) {
-        stop(
-          "Path for the Europe boundaries does not exist: ", Path_GridR,
-          call. = FALSE)
-      }
-    }
   }
 
   # # ..................................................................... ###
@@ -382,6 +383,9 @@ Mod_Prep4HPC <- function(
   fs::dir_create(IASDT.R::Path(Path_Model, "Model_Fitting_HPC"))
   # Also create directory for SLURM outputs
   fs::dir_create(IASDT.R::Path(Path_Model, "Model_Fitting_HPC", "JobsLog"))
+  # Directory to save species distribution tiffs
+  Path_Dist <- IASDT.R::Path(Path_Model, "Species_distribution")
+  fs::dir_create(Path_Dist)
 
   Path_ModelDT <- IASDT.R::Path(Path_Model, "Model_Info.RData")
 
@@ -1315,6 +1319,110 @@ Mod_Prep4HPC <- function(
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
+  # Save PA maps to disk
+  IASDT.R::CatTime("Save PA maps to disk")
+
+  # Mask layer for grid cells used in the models
+  Model_Mask <- IASDT.R::LoadAs(Path_GridR) %>%
+    terra::unwrap() %>%
+    terra::rasterize(DT_xy, .)
+  # Whether to use masked (ExcludeCult) or full PA
+  PA_Layer <- dplyr::if_else(ExcludeCult, "PA_Masked", "PA")
+
+  IASDT.R::CatTime("Processing and exporting maps as tif files", Level = 1)
+  Mod_PA <- SpSummary %>%
+    # Select only species name and ID
+    dplyr::select(ias_id = IAS_ID, Species_File) %>%
+    dplyr::mutate(
+      # Path storing PA maps as raster files
+      File = IASDT.R::Path(Path_PA, "RData", paste0(Species_File, "_PA.RData")),
+      Map_Sp = purrr::map2(
+        .x = File, .y = ias_id,
+        .f = ~ {
+          # Path for storing PA map - full EU extent
+          PA_file <- IASDT.R::Path(Path_Dist, paste0(.y, "_full.tif"))
+          # Load PA map
+          PA <- IASDT.R::LoadAs(.x) %>%
+            terra::unwrap() %>%
+            magrittr::extract2(PA_Layer)
+          # Save PA map
+          terra::writeRaster(PA, PA_file, overwrite = TRUE)
+
+          # Path for storing PA map - only in modelling grid cells
+          PA_model_file <- IASDT.R::Path(Path_Dist, paste0(.y, "_model.tif"))
+          # mask PA map to modelling grid cells
+          PA_model <- terra::mask(PA, Model_Mask)
+          # Save masked PA map
+          terra::writeRaster(PA_model, PA_model_file, overwrite = TRUE)
+
+          tibble::tibble(
+            PA = list(terra::wrap(PA)),
+            PA_file = PA_file,
+            PA_model = list(terra::wrap(PA_model)),
+            PA_model_file = PA_model_file)
+        })) %>%
+    tidyr::unnest(cols = "Map_Sp") %>%
+    dplyr::select(-Species_File, -File)
+
+  IASDT.R::CatTime("Calculate species richness - full", Level = 1)
+  SR_file <- IASDT.R::Path(Path_Dist, "SR_full.tif")
+  SR <- purrr::map(Mod_PA$PA, terra::unwrap) %>%
+    terra::rast() %>%
+    sum(na.rm = TRUE)
+  terra::writeRaster(SR, SR_file, overwrite = TRUE)
+
+  IASDT.R::CatTime("Calculate species richness - modelling", Level = 1)
+  SR_model_file <- IASDT.R::Path(Path_Dist, "SR_model.tif")
+  SR_model <- purrr::map(Mod_PA$PA_model, terra::unwrap) %>%
+    terra::rast() %>%
+    sum(na.rm = TRUE)
+  terra::writeRaster(SR_model, SR_model_file, overwrite = TRUE)
+
+  # Bind SR and PA in the same tibble
+  Mod_PA <- tibble::tribble(
+    ~ias_id, ~PA, ~PA_file, ~PA_model, ~PA_model_file,
+    "SR", terra::unwrap(SR), SR_file,
+    terra::unwrap(SR_model), SR_model_file) %>%
+    dplyr::bind_rows(Mod_PA)
+
+  IASDT.R::CatTime("Save maps as RData", Level = 1)
+  IASDT.R::SaveAs(
+    InObj = Mod_PA, OutObj = "PA_with_maps",
+    OutPath = IASDT.R::Path(Path_Dist, "PA_with_maps.RData"))
+
+  IASDT.R::CatTime("Save maps without maps as RData", Level = 1)
+  Mod_PA <- dplyr::select(Mod_PA, -PA, -PA_model)
+  IASDT.R::SaveAs(
+    InObj = Mod_PA, OutObj = "PA",
+    OutPath = IASDT.R::Path(Path_Dist, "PA.RData"))
+
+  IASDT.R::CatTime("Save only paths text file", Level = 1)
+  Mod_PA %>%
+    dplyr::mutate(
+      PA_file = basename(PA_file),
+      PA_model_file = basename(PA_model_file)) %>%
+    utils::write.table(
+      sep = "\t", row.names = FALSE, col.names = TRUE,
+      file = IASDT.R::Path(Path_Dist, "PA.txt"), quote = FALSE,
+      fileEncoding = "UTF-8")
+
+  # Save maps as tar file
+  IASDT.R::CatTime("Save maps as single tar file", Level = 1)
+  # Path of the tar file
+  tar_file <- IASDT.R::Path(Path_Dist, "PA_maps.tar")
+  # list of files to tar
+  Files2Tar <- c(
+    Mod_PA$PA_file, Mod_PA$PA_model_file,
+    IASDT.R::Path(Path_Dist, "PA.txt")) %>%
+    basename() %>%
+    paste(collapse = " ")
+  tar_command <- stringr::str_glue(
+    'tar -cf "{tar_file}" -C "{Path_Dist}" {Files2Tar}')
+  invisible(system(tar_command))
+
+  # Change the permission of the tar file
+  Sys.chmod(tar_file, "755", use_umask = FALSE)
+
   # # |||||||||||||||||||||||||||||||||||
   # # Save small datasets prepared in the function ------
   # # |||||||||||||||||||||||||||||||||||
@@ -1324,21 +1432,9 @@ Mod_Prep4HPC <- function(
     DT_CV = DT_CV, PhyloTree = PhyloTree, plant.tree = plant.tree, Tree = Tree,
     studyDesign = studyDesign, DT_xy = DT_xy, GPP_Knots = GPP_Knots)
 
-  if (Hab_Abb == "0") {
-    OutObjName <- "ModDT_0_All_subset"
-  } else {
-    OutObjName <- c(
-      "1_Forests", "2_Open_forests", "3_Scrub",
-      "4a_Natural_grasslands", "4b_Human_maintained_grasslands",
-      "10_Wetland", "12a_Ruderal_habitats",
-      "12b_Agricultural_habitats") %>%
-      stringr::str_subset(paste0("^", as.character(Hab_Abb), "_")) %>%
-      paste0("ModDT_", ., "_subset")
-  }
-
   IASDT.R::SaveAs(
-    InObj = DT_Split, OutObj = OutObjName,
-    OutPath = IASDT.R::Path(Path_Model, paste0(OutObjName, ".RData")))
+    InObj = DT_Split, OutObj = "ModDT_subset",
+    OutPath = IASDT.R::Path(Path_Model, "ModDT_subset.RData"))
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

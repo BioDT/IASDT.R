@@ -861,41 +861,22 @@ VarPar_Compute <- function(
 
   # # .................................................................... ###
 
-  if (UseTF && Temp_Cleanup) {
+  if (Temp_Cleanup) {
 
     IASDT.R::CatTime("Clean up temporary files")
 
     Path_Temp <- IASDT.R::NormalizePath(Path_Temp)
 
-    if (dir.exists(Path_Temp)) {
-      # Function to delete files or directories
-      delete_files <- function(file_path) {
-        if (.Platform$OS.type == "windows") {
-          # Use rmdir command on Windows
-          system2(
-            "cmd", c("/c", "rmdir /s /q", IASDT.R::NormalizePath(file_path)),
-            stdout = NULL, stderr = NULL)
-        } else {
-          # Use rm command on Linux/macOS
-          system2(
-            "rm", c("-rf", IASDT.R::NormalizePath(file_path)),
-            stdout = NULL, stderr = NULL)
-        }
-      }
-
-      # List all files to delete
-      files_to_delete <- list.files(Path_Temp, full.names = TRUE)
-
-      if (UseTF) {
-        try(parallel::parLapply(c1, files_to_delete, delete_files))
-
-        # stop the cluster
-        parallel::stopCluster(c1)
-      } else {
-        try(purrr::walk(files_to_delete, delete_files))
-      }
-      fs::dir_delete(Path_Temp)
-    }
+    try(
+      expr = {
+        file_paths <- list.files(
+          path = IASDT.R::NormalizePath(Path_Temp),
+          pattern = "(VP_).+(feather|log)$", full.names = TRUE)
+        
+        fs::file_delete(file_paths)
+      },
+      silent = TRUE)
+    
   }
 
   # # .................................................................... ###

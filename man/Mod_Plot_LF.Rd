@@ -2,7 +2,7 @@
 % Please edit documentation in R/Mod_Predict_LF.R
 \name{Mod_Plot_LF}
 \alias{Mod_Plot_LF}
-\title{Plot spatial variation in site loadings of HMSC Models}
+\title{Plot spatial variation in site loadings of HMSC models}
 \usage{
 Mod_Plot_LF(
   Path_Model = NULL,
@@ -21,7 +21,7 @@ data sources. Defaults to \code{.env}.}
 output plot in cm. Default is 20×21 cm.}
 }
 \description{
-Generate and save spatial variation in site loadings of HMSC Models' latent
+Generate and save spatial variation in site loadings of HMSC models' latent
 factors as a JPEG file.
 }
 \author{

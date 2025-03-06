@@ -576,7 +576,8 @@ Mod_Predict_LF <- function(
 
               # Define the filename
               file_name <- IASDT.R::Path(
-                dirname(Temp_Dir), paste0(CommandFilePrefix, i, ".txt"))
+                Temp_Dir, paste0(CommandFilePrefix, i, ".txt"))
+              
               # Write the chunk to a file with Linux line endings
               writeLines(chunk, file_name, useBytes = TRUE)
             }
@@ -762,10 +763,12 @@ Mod_Predict_LF <- function(
       expr = {
         Pattern <- paste0(
           "^", Model_Name,
-          "(postEta|r[0-9]|etaPred|s1|s2|post).+(feather|qs2|log)")
+          "(postEta|r[0-9]|etaPred|s1|s2|post).+(feather|qs2|log)$")
+        
         file_paths <- list.files(
           path = IASDT.R::NormalizePath(Temp_Dir),
           pattern = Pattern, full.names = TRUE)
+        
         fs::file_delete(file_paths)
       },
       silent = TRUE)
@@ -984,9 +987,9 @@ run_crossprod_solve <- function(
 # Mod_Plot_LF ----
 ## |------------------------------------------------------------------------| #
 
-#' Plot spatial variation in site loadings of HMSC Models
+#' Plot spatial variation in site loadings of HMSC models
 #'
-#' Generate and save spatial variation in site loadings of HMSC Models' latent
+#' Generate and save spatial variation in site loadings of HMSC models' latent
 #' factors as a JPEG file.
 #'
 #' @param Path_Model Path to the model file.

@@ -4,7 +4,6 @@ template:
   bootstrap: 5
   light-switch: true
 
-
 authors:
   Ahmed El-Gabbas:
     href: https://elgabbas.netlify.app/
@@ -20,14 +19,28 @@ home:
 development:
   mode: auto
 
+
 navbar:
-  title: "IASDT.R"
+  title: IASDT.R
+  type: default
   left:
-    - icon: fa-home fa-lg
-      aria-label: Home
-      href: index.html
-    - text: "Functions"
-      href: reference/index.html
+  - text: Functions
+    icon: fa-file-code-o
+    href: reference/index.html
+  - text: Modelling workflow
+    icon: fas fa-book
+    menu:
+    - text: Overview
+      href: articles/workflow_1_overview.html
+    - text: Processing abiotic data
+      href: articles/workflow_2_abiotic_data.html
+    - text: Processing biotic data
+      href: articles/workflow_3_biotic_data.html
+    - text: Model fitting
+      href: articles/workflow_4_model_fitting.html
+    - text: Model post-processing
+      href: articles/workflow_5_model_postprocess.html
+
 reference:
 - title: Package info
   contents:

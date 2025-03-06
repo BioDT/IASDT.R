@@ -683,7 +683,7 @@ Predict_Maps <- function(
       # Only extract predictors used in the model
       terra::subset(BioVars) %>%
       # Combine with other static predictors
-      stringr::str_c(StaticPredictors) %>%
+      c(StaticPredictors) %>%
       # If Habitat predictor is used, grid cells with zero % coverage are
       # excluded from predictions [na.rm = TRUE]
       terra::as.data.frame(xy = TRUE, cells = TRUE, na.rm = TRUE) %>%
@@ -900,8 +900,7 @@ Predict_Maps <- function(
             Temp_Dir = Temp_Dir, Temp_Cleanup = Temp_Cleanup, UseTF = UseTF,
             TF_Environ = TF_Environ, TF_use_single = TF_use_single,
             LF_Return = TRUE, LF_NCores = LF_NCores, LF_Check = LF_Check,
-            LF_Temp_Cleanup = LF_Temp_Cleanup,
-            LF_Commands_Only = FALSE,
+            LF_Temp_Cleanup = LF_Temp_Cleanup, LF_Commands_Only = FALSE,
             Pred_Dir = Path_Prediction, Pred_PA = Train_PA, Pred_XY = Train_XY,
             Evaluate = Evaluate, Eval_Name = NULL, Eval_Dir = Path_Eval,
             Verbose = FALSE)
@@ -933,9 +932,8 @@ Predict_Maps <- function(
               TF_Environ = TF_Environ, TF_use_single = TF_use_single,
               LF_Return = TRUE, LF_InputFile = Path_Test_LF,
               LF_NCores = LF_NCores, LF_Check = LF_Check,
-              LF_Temp_Cleanup = LF_Temp_Cleanup,
-              LF_Commands_Only = FALSE, Verbose = FALSE,
-              Pred_Dir = Path_Prediction, Evaluate = FALSE,
+              LF_Temp_Cleanup = LF_Temp_Cleanup, LF_Commands_Only = FALSE,
+              Verbose = FALSE, Pred_Dir = Path_Prediction, Evaluate = FALSE,
               Pred_XY = sf::st_drop_geometry(Test_XY))
 
           }

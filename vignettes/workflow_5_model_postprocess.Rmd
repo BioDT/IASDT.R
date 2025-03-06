@@ -1,0 +1,237 @@
+---
+title: "IAS-pDT modelling workflow — 5. Model post-processing"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+editor: 
+  markdown: 
+    wrap: 72
+execute: 
+  eval: false
+format:
+  html:
+    self_contained: true
+    mode: selfcontained
+    embed-resources: true
+    code-overflow: wrap
+    page-layout: full
+    # toc-expand: true
+    # toc-depth: 1
+    # number-sections: true
+    link-external-icon: true
+    link-external-newwindow: true
+vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{IAS-pDT modelling workflow — 5. Model post-processing}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+```{r, include = FALSE, eval=TRUE}
+library(kableExtra)
+library(knitr)
+library(tibble)
+knitr::opts_chunk$set(
+  collapse = TRUE, comment = "#>", eval = FALSE, warning = FALSE,
+  message = FALSE, dev = "ragg_png", dpi = 300, tidy = "styler",
+  out.width = "100%", fig.show = "hold", echo = FALSE)
+```
+
+```{r, eval=TRUE, results="asis"}
+c("<style>", readLines("style.css"), "</style>") %>% 
+  cat(sep = "\n")
+```
+
+<br/>
+
+Post-processing of fitted models within the `IAS-pDT` workflow is conducted across multiple steps, leveraging both CPU and GPU computations to optimize performance and address memory constraints.
+
+<br/>
+
+## Step 1: CPU
+
+The **`Mod_Postprocess_1_CPU()`** function initiates the post-processing phase for each habitat type, automating the following tasks:
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE}
+DT <- tibble::tribble(
+  ~Scenario, ~Description,
+  "`Mod_SLURM_Refit()`", "check for unsuccessful model fits",
+  "`Mod_Merge_Chains()`", "merge MCMC chains and saves fitted model and coda objects to <i>.qs2</i> or <i>.RData</i> files",
+  "`Convergence_Plot_All()`", "visualize convergence of `rho`, `alpha`, `omega`, and `beta` parameters across all model variants; unnecessary for a single variant, this function compares convergence across models with varying thinning values, both with and without phylogenetic relationships, or GPP knot distances",
+  "`Convergence_Plot()`", "convergence of `rho`, `alpha`, `omega`, and `beta` parameters for a selected model, offering a detailed view compared to `Convergence_Plot_All()`",
+  "`PlotGelman()`", "visualize Gelman-Rubin-Brooks diagnostics for the selected model",
+  "`Mod_Summary()`", "extract and save a summary of the model",
+  "`Mod_Heatmap_Beta()`", "generate heatmaps of the `beta` parameters",
+  "`Mod_Heatmap_Omega()`", "generates heatmaps of the `omega` parameter (residual species associations)",
+  "`Mod_CV_Fit()`", "prepare input data for spatial-block cross-validation model fitting") %>% 
+  dplyr::mutate(Scenario = paste0("<cc>", Scenario, "</cc><tab0>"))
+
+DT %>% 
+  knitr::kable(col.names = NULL, format = "html", escape = FALSE)  %>%
+  kableExtra::kable_styling(
+    c("basic", "condensed", "hover"), 
+    font_size = 16, full_width = TRUE) %>%
+  kableExtra::add_indent(
+    positions = seq_len(nrow(DT)), level_of_indent = 2) %>% 
+  kableExtra::column_spec(
+    column = 1, extra_css = "white-space: nowrap;")
+```
+
+Previous attempts to prepare response curve data, predict at new sites, and compute variance partitioning using R on CPUs (UFZ Windows server and LUMI HPC) were hindered by memory limitations. Consequently, these tasks are offloaded to GPU-based computations using Python and TensorFlow. The `Mod_Postprocess_1_CPU()` function invokes the following sub-functions to generate commands for GPU execution:
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE}
+DT <- tibble::tribble(
+  ~Scenario, ~Description,
+  "`RespCurv_PrepData()`", "prepare data for predicting latent factors for response curves",
+  "`Predict_Maps()`", "prepare data for predicting latent factors at new sampling units",
+  "`VarPar_Compute()`", "prepare data for computing variance partitioning") %>% 
+  dplyr::mutate(Scenario = paste0("<cc>", Scenario, "</cc><tab0>"))
+
+DT %>% 
+  knitr::kable(col.names = NULL, format = "html", escape = FALSE)  %>%
+  kableExtra::kable_styling(
+    c("basic", "condensed", "hover"),
+    font_size = 16, full_width = TRUE) %>%
+  kableExtra::add_indent(
+    positions = seq_len(nrow(DT)), level_of_indent = 2) %>% 
+  kableExtra::column_spec(
+    column = 1, extra_css = "white-space: nowrap;")
+```
+
+<br/><hr class="hr2"><br/>
+
+### Prepare commands for GPU computations
+
+> <u><i>Predicting latent factors:</i></u>
+
+- Latent factor predictions for response curves and new sampling units are executed via a TensorFlow script located at <ff>inst/crossprod_solve.py</ff>.
+- For these tasks, the respective R functions export numerous <i>.qs2</i> and <i>.feather</i> data files to the <ff>TEMP_Pred</ff> subdirectory, essential for GPU computations. They also generate execution commands saved as <ff>LF_RC_Commands_*.txt</ff> (for response curves) and <ff>LF_NewSites_Commands_*.txt</ff> (for new sites).
+
+<details>
+<summary>Example LF_RC_Commands.txt file</summary>
+```{bash, file = "Example_LF_RC_Commands.txt"}
+#| class-source: ShortBlock
+```
+</details>
+<details>
+<summary>Example LF_NewSites_Commands.txt file</summary>
+```{bash, file = "Example_LF_NewSites_Commands.txt"}
+#| class-source: ShortBlock
+```
+</details>
+
+<br/><br/>
+
+- Response curves
+  - `RespCurv_PrepData()` extends `Hmsc::constructGradient()` and `Hmsc::plotGradient()`, enabling GPU-based response curve data preparation when <cc>`LF_Commands_Only = TRUE`</cc>.  
+  - To predict at mean coordinates (per the <i>coordinates</i> argument of `Hmsc::constructGradient()`), latent factor predictions—typically memory-intensive with `Hmsc::predictLatentFactor()`—are computed on GPUs.
+- Predicting at new sites
+  - `Predict_Maps()` prepares GPU computations for new site predictions when <cc>`LF_Only = TRUE</cc> and <cc>LF_Commands_Only = TRUE`</cc>.
+  
+<br/><br/>
+
+> <u><i>Computing variance partitioning:</i></u>
+
+- Variance partitioning computations on GPUs are executed using TensorFlow scripts at <ff>inst/VP_geta.py</ff>, <ff>inst/VP_getf.py</ff>, and <ff>inst/VP_gemu.py</ff>.
+- `VarPar_Compute()` exports required files to the <ff>TEMP_VP</ff> subdirectory, including numerous <i>.qs2</i> and <i>.feather</i> files, and generates execution commands saved as <ff>VP_A_Command.txt</ff>, <ff>VP_F_Command.txt</ff>, and <ff>VP_mu_Command.txt</ff>.
+
+<br/><br/>
+
+### Combining commands for GPU computations
+
+After executing `Mod_Postprocess_1_CPU()` for all habitat types, the **`Mod_Prep_TF()`** function consolidates batch scripts for GPU computations across all habitat types:
+
+- It aggregates script files containing commands for response curves and latent factor predictions, splitting them into multiple scripts for batch processing, and generates a SLURM script (<ff>LF_SLURM.slurm</ff>) for latent factor predictions.
+
+<details>
+<summary>Example LF_SLURM.slurm file</summary>
+```{bash, file = "Example_LF_SLURM.slurm"}
+#| class-source: ShortBlock
+```
+</details>
+
+<br/><br/>
+
+- It consolidates variance partitioning command files into a single <ff>VP_Commands.txt</ff> and prepares a SLURM script (<ff>VP_SLURM.slurm</ff>) for variance partitioning computations.
+
+<details>
+<summary>Example VP_Commands.txt file</summary>
+```{bash, file = "Example_VP_Commands.txt"}
+#| class-source: ShortBlock
+```
+</details>
+
+<details>
+<summary>Example VP_SLURM.slurm file</summary>
+```{bash, file = "Example_VP_SLURM.slurm"}
+#| class-source: ShortBlock
+```
+</details>
+
+<hr class="hr1">
+
+## Step 2: GPU
+
+Latent factor predictions and variance partitioning are computed on GPUs. Batch jobs can be submitted using the `sbatch` command:
+
+```{bash}
+sbatch datasets/processed/model_fitting/TF_postprocess/VP_SLURM.slurm
+sbatch datasets/processed/model_fitting/TF_postprocess/LF_SLURM.slurm
+```
+
+Cross-validated models are fitted by submitting corresponding SLURM commands (*in preparation*):
+
+```{bash}
+source datasets/processed/model_fitting/HabX/Model_Fitting_CV/CV_Bash_Fit.slurm
+```
+
+<hr class="hr1">
+
+## Step 3: CPU
+
+The `Mod_Postprocess_2_CPU()` function advances the post-processing pipeline for HMSC models on the CPU, automating the following tasks:
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE}
+DT <- tibble::tribble(
+  ~Function, ~Description,
+  " `RespCurv_PrepData()`,<br/>`RespCurv_PlotSR()`,<br/>`RespCurv_PlotSp()`,<br/>`RespCurv_PlotSpAll()`", "continue processing and visualizing response curves",
+  "`Predict_Maps()`", "predict habitat suitability across climate scenarios, compute model explanatory power (internal evaluation), and prepare maps for the Shiny app",
+  "`Mod_Predict_Plot()`", "visualize species and species richness predictions as JPEG images",
+  "`Mod_Plot_LF()`", "visualize spatial variation in site loadings of HMSC models as JPEG images",
+  "`VarPar_Compute()`,<br/>`VarPar_Plot()`", "continue processing and visualize variance partitioning",
+  "`Mod_Eval_Plot()`", "visualize explanatory power (internal model evaluation)",
+    "*In preparation...*", "initiate post-processing of fitted cross-validated models and prepare GPU commands for latent factor predictions") %>% 
+  dplyr::mutate(Function = paste0("<cc>", Function, "</cc><tab0>"))
+
+DT %>% 
+  knitr::kable(col.names = NULL, format = "html", escape = FALSE)  %>%
+  kableExtra::kable_styling(
+    c("basic", "condensed", "hover"), 
+    font_size = 16, full_width = TRUE) %>%
+  kableExtra::add_indent(
+    positions = seq_len(nrow(DT)), level_of_indent = 1) %>% 
+  kableExtra::column_spec(
+    column = 1, extra_css = "white-space: nowrap;")
+```
+
+<hr class="hr1">
+
+## Step 4: GPU
+
+Predicting latent factors for cross-validated models on GPUs (*in preparation*).
+
+<hr class="hr1">
+
+## Step 5: CPU
+
+Evaluating the performance of cross-validated models (*in preparation*).
+
+<hr class="hr1">
+
+<span style="font-size: 1.2em; line-height: 0.8;">
+<b>Previous articles:</b><br/>
+<tab>&#8608;<tab><a href="workflow_1_overview.html" class="ll">1. Overview</a><br/>
+<tab>&#8608;<tab><a href="workflow_2_abiotic_data.html" class="ll">2. Processing abiotic data</a><br/>
+<tab>&#8608;<tab><a href="workflow_3_biotic_data.html" class="ll">3. Processing biotic data</a><br/>
+<tab>&#8608;<tab><a href="workflow_4_model_fitting.html" class="ll">4. Model fitting</a><br/>
+</span>

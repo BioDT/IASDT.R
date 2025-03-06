@@ -188,8 +188,8 @@ Mod_PrepData <- function(
 
   # # ..................................................................... ###
 
-  ## Species Presence-absence data ----
-  IASDT.R::CatTime("Species Presence-absence data", Level = 1)
+  ## Species presence-absence data ----
+  IASDT.R::CatTime("Species presence-absence data", Level = 1)
 
   # Minimum number of presence grids per species
   NCellsCol <- dplyr::if_else(ExcludeCult, "NCells_Naturalized", "NCells_All")
@@ -454,15 +454,9 @@ Mod_PrepData <- function(
   # Save model data to disk -----
 
   IASDT.R::CatTime("Save model data to disk")
-  if (Hab_Abb == "0") {
-    OutObjName <- "ModDT_0_All"
-  } else {
-    OutObjName <- paste0("ModDT_", stringr::str_remove(Hab_column, "Hab_"))
-  }
-
   IASDT.R::SaveAs(
-    InObj = DT_All, OutObj = OutObjName,
-    OutPath = IASDT.R::Path(Path_Model, paste0(OutObjName, ".RData")))
+    InObj = DT_All, OutObj = "ModDT",
+    OutPath = IASDT.R::Path(Path_Model, "ModDT.RData"))
 
   # # ..................................................................... ###
 

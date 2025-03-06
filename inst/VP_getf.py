@@ -25,6 +25,8 @@
 #   return(res)
 # }
 # 
+#   CITATION: El-Gabbas, A. (2025). IASDT.R: Modelling the distribution of invasive alien plant species in Europe. 10.5281/zenodo.14954739, R package version 0.1.X; https://biodt.github.io/IASDT.R/.
+# 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 import multiprocessing

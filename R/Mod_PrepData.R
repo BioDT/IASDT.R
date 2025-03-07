@@ -68,7 +68,6 @@ Mod_PrepData <- function(
       call. = FALSE)
   }
 
-
   # # ..................................................................... ###
 
   # # |||||||||||||||||||||||||||||||||||
@@ -101,6 +100,9 @@ Mod_PrepData <- function(
     stop("Model directory already exists: ", Path_Model, call. = FALSE)
   }
   fs::dir_create(Path_Model)
+
+  IASDT.R::RecordArgs(
+    ExportPath = IASDT.R::Path(Path_Model, "Args_PrepData.RData"))
 
   # # ..................................................................... ###
 

@@ -19,7 +19,7 @@
 #' (e.g., CHELSA Bioclimatic variables, habitat coverage, road and railway
 #' intensity, sampling efforts) into a single dataset. Processed data is saved
 #' to disk as an `*.RData` file.
-#' @param DirName Character. Directory name, without its parents, where the 
+#' @param DirName Character. Directory name, without its parents, where the
 #'   models will be saved. This directory will be created.
 #' @param GPP Logical. Whether to fit spatial random effect using Gaussian
 #'   Predictive Process. Defaults to `TRUE`. If `FALSE`, non-spatial models will
@@ -311,6 +311,9 @@ Mod_Prep4HPC <- function(
       call. = FALSE)
   }
 
+  IASDT.R::RecordArgs(
+    ExportPath = IASDT.R::Path(Path_Model, "Args_Prep4HPC.RData"))
+
   # # ..................................................................... ###
 
   # # |||||||||||||||||||||||||||||||||||
@@ -375,7 +378,6 @@ Mod_Prep4HPC <- function(
     if (!all(is.numeric(GPP_Dists)) || any(GPP_Dists <= 0)) {
       stop("`GPP_Dists` should be numeric and greater than zero", call. = FALSE)
     }
-
   }
 
   # # ..................................................................... ###

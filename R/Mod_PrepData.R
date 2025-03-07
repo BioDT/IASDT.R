@@ -9,9 +9,9 @@
 #' @author Ahmed El-Gabbas
 
 Mod_PrepData <- function(
-    Hab_Abb = NULL, MinEffortsSp = 100L, ExcludeCult = TRUE,
+    Hab_Abb = NULL, DirName = NULL, MinEffortsSp = 100L, ExcludeCult = TRUE,
     ExcludeZeroHabitat = TRUE, PresPerSpecies = 80L, EnvFile = ".env",
-    Path_Model = NULL, VerboseProgress = TRUE) {
+    VerboseProgress = TRUE) {
 
   # # ..................................................................... ###
 
@@ -19,7 +19,7 @@ Mod_PrepData <- function(
   # Check input parameters ----
   # # |||||||||||||||||||||||||||||||||||
 
-  CheckNULL <- c("Hab_Abb", "Path_Model", "EnvFile")
+  CheckNULL <- c("Hab_Abb", "DirName", "EnvFile")
   IsNull <- purrr::map_lgl(CheckNULL, ~ is.null(get(.x)))
   if (any(IsNull)) {
     stop(
@@ -40,7 +40,7 @@ Mod_PrepData <- function(
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   SpeciesID <- Species_name <- Species_File <- PA <- Path_Rivers <-
     cell <- Path_PA <- Path_Grid <- Path_Grid_Ref <- Path_CLC <-
-    Path_Roads <- Path_Rail <- Path_Bias <- Path_CHELSA <-
+    Path_Roads <- Path_Rail <- Path_Bias <- Path_CHELSA <- Path_Model <-
     EU_Bound <- SpPA <- NPres <- Grid_R <- IAS_ID <- NULL
 
   # # ..................................................................... ###
@@ -51,7 +51,7 @@ Mod_PrepData <- function(
     AllArgs,
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
-  CharArgs <- c("EnvFile", "Hab_Abb", "Path_Model")
+  CharArgs <- c("EnvFile", "Hab_Abb", "DirName")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = CharArgs, Type = "character")
   IASDT.R::CheckArgs(
     AllArgs = AllArgs, Args = c("MinEffortsSp", "PresPerSpecies"),
@@ -68,7 +68,6 @@ Mod_PrepData <- function(
       call. = FALSE)
   }
 
-  fs::dir_create(Path_Model)
 
   # # ..................................................................... ###
 
@@ -91,10 +90,17 @@ Mod_PrepData <- function(
     "Path_Rail", "DP_R_Railways_processed", TRUE, FALSE,
     "Path_Bias", "DP_R_Efforts_processed", TRUE, FALSE,
     "Path_Rivers", "DP_R_Rivers_processed", FALSE, TRUE,
+    "Path_Model", "DP_R_Model_path", FALSE, FALSE,
     "EU_Bound", "DP_R_EUBound", FALSE, TRUE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
+
+  Path_Model <- IASDT.R::Path(Path_Model, DirName)
+  if (fs::dir_exists(Path_Model)) {
+    stop("Model directory already exists: ", Path_Model, call. = FALSE)
+  }
+  fs::dir_create(Path_Model)
 
   # # ..................................................................... ###
 

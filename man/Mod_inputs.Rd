@@ -8,7 +8,7 @@
 \usage{
 Mod_Prep4HPC(
   Hab_Abb = NULL,
-  Path_Model = NULL,
+  DirName = NULL,
   MinEffortsSp = 100L,
   PresPerSpecies = 80L,
   EnvFile = ".env",
@@ -60,12 +60,12 @@ Mod_Prep4HPC(
 
 Mod_PrepData(
   Hab_Abb = NULL,
+  DirName = NULL,
   MinEffortsSp = 100L,
   ExcludeCult = TRUE,
   ExcludeZeroHabitat = TRUE,
   PresPerSpecies = 80L,
   EnvFile = ".env",
-  Path_Model = NULL,
   VerboseProgress = TRUE
 )
 }
@@ -76,8 +76,8 @@ data. Valid values are \code{0}, \code{1}, \code{2}, \code{3}, \verb{4a}, \verb{
 If \code{Hab_Abb} = \code{0}, data is prepared irrespective of the habitat type. For
 more details, see \href{https://doi.org/10.23855/preslia.2022.447}{Pysek et al.}.}
 
-\item{Path_Model}{Character. Directory path where all output files, including
-the models to be fitted, will be saved.}
+\item{DirName}{Character. Directory name, without its parents, where the
+models will be saved. This directory will be created.}
 
 \item{MinEffortsSp}{Integer. Minimum number of vascular plant species per
 grid cell (from GBIF data) required for inclusion in the models. This is to
@@ -255,7 +255,7 @@ cross-validation folds, generating Gaussian Predictive Process (GPP) knots
 (\href{https://doi.org/10.1002/ecy.2929}{Tikhonov et al.}), initializing models,
 and creating HPC execution commands. The function supports parallel
 processing and offers the option to include or exclude phylogenetic tree
-data.\if{html}{\out{<br/>}}\if{html}{\out{<br/>}} The internal \strong{\code{Mod_PrepData}} function is used to prepare
+data.\if{html}{\out{<br/>}}\if{html}{\out{<br/>}} The \code{Mod_PrepData} function is used to prepare
 habitat-specific data for Hmsc models. This function processes environmental
 and species presence data, reads environment variables from a file, verifies
 paths, loads and filters species data based on habitat type and minimum

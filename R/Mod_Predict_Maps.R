@@ -54,6 +54,8 @@
 #' @param CC_Scenario Character vector. Climate scenarios for future
 #'   predictions. Available options are: `c("ssp126", "ssp370", "ssp585")`
 #'   (default).
+#' @param Tar Logical. Whether to compress the add files into a single `*.tar`
+#'   file (without compression). Default: `TRUE`.
 #' @export
 #' @name Predict_Maps
 #' @author Ahmed El-Gabbas
@@ -68,7 +70,7 @@ Predict_Maps <- function(
     Pred_NewSites = TRUE, UseTF = TRUE, TF_Environ = NULL,
     TF_use_single = FALSE, LF_NCores = NCores, LF_Check = FALSE,
     LF_Temp_Cleanup = TRUE, LF_Only = FALSE, LF_Commands_Only = FALSE,
-    Temp_Dir = "TEMP_Pred", Temp_Cleanup = TRUE,
+    Temp_Dir = "TEMP_Pred", Temp_Cleanup = TRUE, Tar = TRUE,
     CC_Models = c(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
       "MRI-ESM2-0", "UKESM1-0-LL"),
@@ -1398,6 +1400,36 @@ Predict_Maps <- function(
     x = Prediction_Summary_Shiny, sep = "\t", row.names = FALSE,
     col.names = TRUE, file = Path_Summary_txt_Shiny, quote = FALSE,
     fileEncoding = "UTF-8")
+
+  if (Tar) {
+
+    IASDT.R::CatTime("Create tar file for prediction files", Level = 1)
+
+    # Directory to save the tar file
+    TarDir <- dirname(Path_Summary_RData_Shiny)
+    # Path to the tar file
+    TarFile <- IASDT.R::Path(TarDir, "Predictions.tar")
+    # List of directories in the prediction folder. All directories will be
+    # included in the tar file
+    TarFiles <- list.dirs(
+      path = TarDir, full.names = FALSE, recursive = FALSE) %>%
+      paste(collapse = " ") %>%
+      # Add the summary files to the list
+      paste(
+        "Prediction_Summary.RData", "Prediction_Summary_Shiny.txt",
+        collapse = " ")
+
+    # Command to create the tar file
+    Command <- stringr::str_glue(
+      'cd {fs::path_abs(TarDir)}; tar -cf {basename(TarFile)} -b 2048 \\
+    {TarFiles}')
+
+    # Create tar file
+    system(Command)
+
+    # Change the permission of the tar file
+    Sys.chmod(TarFile, "755", use_umask = FALSE)
+  }
 
   # # ................................................................... ###
   # # ..................................................................... ###

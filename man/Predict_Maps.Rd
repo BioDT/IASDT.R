@@ -23,6 +23,7 @@ Predict_Maps(
   LF_Commands_Only = FALSE,
   Temp_Dir = "TEMP_Pred",
   Temp_Cleanup = TRUE,
+  Tar = TRUE,
   CC_Models = c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0",
     "UKESM1-0-LL"),
   CC_Scenario = c("ssp126", "ssp370", "ssp585")
@@ -98,6 +99,9 @@ Python script. Default is \code{FALSE}.}
 
 \item{Temp_Cleanup}{Logical. Whether to clean up temporary files.
 Defaults to \code{TRUE}.}
+
+\item{Tar}{Logical. Whether to compress the add files into a single \verb{*.tar}
+file (without compression). Default: \code{TRUE}.}
 
 \item{CC_Models}{Character vector. Climate models for future predictions.
 Available options are \code{c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL")} (default).}

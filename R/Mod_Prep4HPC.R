@@ -11,7 +11,7 @@
 #' ([Tikhonov et al.](https://doi.org/10.1002/ecy.2929)), initializing models,
 #' and creating HPC execution commands. The function supports parallel
 #' processing and offers the option to include or exclude phylogenetic tree
-#' data.<br/><br/> The internal **`Mod_PrepData`** function is used to prepare
+#' data.<br/><br/> The `Mod_PrepData` function is used to prepare
 #' habitat-specific data for Hmsc models. This function processes environmental
 #' and species presence data, reads environment variables from a file, verifies
 #' paths, loads and filters species data based on habitat type and minimum
@@ -19,8 +19,8 @@
 #' (e.g., CHELSA Bioclimatic variables, habitat coverage, road and railway
 #' intensity, sampling efforts) into a single dataset. Processed data is saved
 #' to disk as an `*.RData` file.
-#' @param Path_Model Character. Directory path where all output files, including
-#'   the models to be fitted, will be saved.
+#' @param DirName Character. Directory name, without its parents, where the 
+#'   models will be saved. This directory will be created.
 #' @param GPP Logical. Whether to fit spatial random effect using Gaussian
 #'   Predictive Process. Defaults to `TRUE`. If `FALSE`, non-spatial models will
 #'   be fitted.
@@ -183,7 +183,7 @@
 #'   plant species
 
 Mod_Prep4HPC <- function(
-    Hab_Abb = NULL, Path_Model = NULL,
+    Hab_Abb = NULL, DirName = NULL,
     MinEffortsSp = 100L, PresPerSpecies = 80L, EnvFile = ".env",
     GPP = TRUE, GPP_Dists = NULL, GPP_Save = TRUE,
     GPP_Plot = TRUE, MinLF = NULL, MaxLF = NULL,
@@ -212,7 +212,7 @@ Mod_Prep4HPC <- function(
   .StartTime <- lubridate::now(tzone = "CET")
 
   CheckNULL <- c(
-    "Path_Model", "PresPerSpecies", "thin", "samples",
+    "DirName", "PresPerSpecies", "thin", "samples",
     "MemPerCpu", "Path_Hmsc", "Hab_Abb")
   IsNull <- purrr::map_lgl(CheckNULL, ~ is.null(get(.x)))
 
@@ -264,7 +264,7 @@ Mod_Prep4HPC <- function(
     M_Name_Fit <- Chain <- Post_Missing <- Command_HPC <- Command_WS <-
     Post_Path <- Path_ModProg <- TaxaInfoFile <- Path_Grid <- EU_Bound <-
     Path_PA <- NAME_ENGL <- NSp <- Species_File <- File <- ias_id <-
-    PA <- PA_model <- PA_file <- PA_model_file <- NULL
+    PA <- PA_model <- PA_file <- PA_model_file <- Path_Model <- NULL
 
   if (isFALSE(VerboseProgress)) {
     sink(file = nullfile())
@@ -286,6 +286,7 @@ Mod_Prep4HPC <- function(
     "TaxaInfoFile", "DP_R_Taxa_info", FALSE, TRUE,
     "EU_Bound", "DP_R_EUBound", FALSE, TRUE,
     "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
+    "Path_Model", "DP_R_Model_path", FALSE, FALSE,
     "Path_PA", "DP_R_PA", TRUE, FALSE)
 
   # Check if Python executable exists
@@ -297,6 +298,11 @@ Mod_Prep4HPC <- function(
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
+  Path_Model <- IASDT.R::Path(Path_Model, DirName)
+  if (fs::dir_exists(Path_Model)) {
+    stop("Model directory already exists: ", Path_Model, call. = FALSE)
+  }
+  fs::dir_create(Path_Model)
 
   Path_GridR <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(Path_GridR)) {
@@ -319,7 +325,7 @@ Mod_Prep4HPC <- function(
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
 
-  CharArgs <- c("Hab_Abb", "Path_Model", "Path_Hmsc", "EnvFile", "BioVars")
+  CharArgs <- c("Hab_Abb", "DirName", "Path_Hmsc", "EnvFile", "BioVars")
   IASDT.R::CheckArgs(AllArgs = AllArgs, Args = CharArgs, Type = "character")
 
   LogicArgs <- c(
@@ -446,8 +452,7 @@ Mod_Prep4HPC <- function(
   DT_All <- IASDT.R::Mod_PrepData(
     Hab_Abb = Hab_Abb, MinEffortsSp = MinEffortsSp, ExcludeCult = ExcludeCult,
     ExcludeZeroHabitat = ExcludeZeroHabitat, PresPerSpecies = PresPerSpecies,
-    EnvFile = EnvFile, Path_Model = Path_Model,
-    VerboseProgress = VerboseProgress)
+    EnvFile = EnvFile, DirName = DirName, VerboseProgress = VerboseProgress)
 
   IASDT.R::CatSep(Rep = 1, Extra1 = 1, Extra2 = 2)
 

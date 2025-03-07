@@ -74,7 +74,8 @@ Mod_Postprocess_2_CPU(
   Pred_Clamp = TRUE,
   Fix_Efforts = "q90",
   Fix_Rivers = "q90",
-  Pred_NewSites = TRUE
+  Pred_NewSites = TRUE,
+  Tar = TRUE
 )
 }
 \arguments{
@@ -203,6 +204,9 @@ predictions. Available options are: \code{c("ssp126", "ssp370", "ssp585")}
 
 \item{RC_NCores}{Integer. The number of cores to use for response curve
 prediction. Defaults to \code{8}.}
+
+\item{Tar}{Logical. Whether to compress the add files into a single \verb{*.tar}
+file (without compression). Default: \code{TRUE}.}
 }
 \description{
 These functions post-process fitted Hmsc models on both CPU and GPU. The

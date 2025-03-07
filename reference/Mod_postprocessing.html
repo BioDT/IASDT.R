@@ -131,7 +131,8 @@ See details for more information.</p>
 <span>  Pred_Clamp <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  Fix_Efforts <span class="op">=</span> <span class="st">"q90"</span>,</span>
 <span>  Fix_Rivers <span class="op">=</span> <span class="st">"q90"</span>,</span>
-<span>  Pred_NewSites <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  Pred_NewSites <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  Tar <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -331,6 +332,11 @@ predictions. Available options are: <code>c("ssp126", "ssp370", "ssp585")</code>
 <dt id="arg-rc-ncores">RC_NCores<a class="anchor" aria-label="anchor" href="#arg-rc-ncores"></a></dt>
 <dd><p>Integer. The number of cores to use for response curve
 prediction. Defaults to <code>8</code>.</p></dd>
+
+
+<dt id="arg-tar">Tar<a class="anchor" aria-label="anchor" href="#arg-tar"></a></dt>
+<dd><p>Logical. Whether to compress the add files into a single <code>*.tar</code>
+file (without compression). Default: <code>TRUE</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

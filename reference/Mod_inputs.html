@@ -6,7 +6,7 @@ cross-validation folds, generating Gaussian Predictive Process (GPP) knots
 (Tikhonov et al.), initializing models,
 and creating HPC execution commands. The function supports parallel
 processing and offers the option to include or exclude phylogenetic tree
-data. The internal Mod_PrepData function is used to prepare
+data. The Mod_PrepData function is used to prepare
 habitat-specific data for Hmsc models. This function processes environmental
 and species presence data, reads environment variables from a file, verifies
 paths, loads and filters species data based on habitat type and minimum
@@ -20,7 +20,7 @@ cross-validation folds, generating Gaussian Predictive Process (GPP) knots
 (Tikhonov et al.), initializing models,
 and creating HPC execution commands. The function supports parallel
 processing and offers the option to include or exclude phylogenetic tree
-data. The internal Mod_PrepData function is used to prepare
+data. The Mod_PrepData function is used to prepare
 habitat-specific data for Hmsc models. This function processes environmental
 and species presence data, reads environment variables from a file, verifies
 paths, loads and filters species data based on habitat type and minimum
@@ -82,7 +82,7 @@ cross-validation folds, generating Gaussian Predictive Process (GPP) knots
 (<a href="https://doi.org/10.1002/ecy.2929" class="external-link">Tikhonov et al.</a>), initializing models,
 and creating HPC execution commands. The function supports parallel
 processing and offers the option to include or exclude phylogenetic tree
-data.<br><br> The internal <strong><code>Mod_PrepData</code></strong> function is used to prepare
+data.<br><br> The <code>Mod_PrepData</code> function is used to prepare
 habitat-specific data for Hmsc models. This function processes environmental
 and species presence data, reads environment variables from a file, verifies
 paths, loads and filters species data based on habitat type and minimum
@@ -96,7 +96,7 @@ to disk as an <code>*.RData</code> file.</p>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">Mod_Prep4HPC</span><span class="op">(</span></span>
 <span>  Hab_Abb <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  Path_Model <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  DirName <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  MinEffortsSp <span class="op">=</span> <span class="fl">100L</span>,</span>
 <span>  PresPerSpecies <span class="op">=</span> <span class="fl">80L</span>,</span>
 <span>  EnvFile <span class="op">=</span> <span class="st">".env"</span>,</span>
@@ -148,12 +148,12 @@ to disk as an <code>*.RData</code> file.</p>
 <span></span>
 <span><span class="fu">Mod_PrepData</span><span class="op">(</span></span>
 <span>  Hab_Abb <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  DirName <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  MinEffortsSp <span class="op">=</span> <span class="fl">100L</span>,</span>
 <span>  ExcludeCult <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  ExcludeZeroHabitat <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  PresPerSpecies <span class="op">=</span> <span class="fl">80L</span>,</span>
 <span>  EnvFile <span class="op">=</span> <span class="st">".env"</span>,</span>
-<span>  Path_Model <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  VerboseProgress <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -170,9 +170,9 @@ If <code>Hab_Abb</code> = <code>0</code>, data is prepared irrespective of the h
 more details, see <a href="https://doi.org/10.23855/preslia.2022.447" class="external-link">Pysek et al.</a>.</p></dd>
 
 
-<dt id="arg-path-model">Path_Model<a class="anchor" aria-label="anchor" href="#arg-path-model"></a></dt>
-<dd><p>Character. Directory path where all output files, including
-the models to be fitted, will be saved.</p></dd>
+<dt id="arg-dirname">DirName<a class="anchor" aria-label="anchor" href="#arg-dirname"></a></dt>
+<dd><p>Character. Directory name, without its parents, where the
+models will be saved. This directory will be created.</p></dd>
 
 
 <dt id="arg-mineffortssp">MinEffortsSp<a class="anchor" aria-label="anchor" href="#arg-mineffortssp"></a></dt>

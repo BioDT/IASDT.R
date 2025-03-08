@@ -6,6 +6,7 @@
 #' Currently, there are three main functions in this script:
 #' `Mod_Postprocess_1_CPU()`, `Mod_Prep_TF()`, and `Mod_Postprocess_2_CPU()`.
 #' See details for more information.
+#' @param ModelDir Character. Path to the root directory of the fitted model.
 #' @param GPP_Dist Integer. Distance in *kilometers* between knots for the
 #'   selected model.
 #' @param Tree Character. Whether a phylogenetic tree was used in the selected
@@ -128,6 +129,7 @@ Mod_Postprocess_1_CPU <- function(
     PlotWidth_Beta = 25, PlotHeight_Beta = 35) {
 
   .StartTime <- lubridate::now(tzone = "CET")
+  Path_Model <- NULL
 
   # ****************************************************************
 
@@ -194,6 +196,19 @@ Mod_Postprocess_1_CPU <- function(
       "Invalid value for CVName argument. Valid values ",
       "are: 'CV_Dist' or 'CV_Large'", call. = FALSE)
   }
+
+  # ****************************************************************
+
+  # # Load environment variables, for project ID
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_Model", "DP_R_Model_path", TRUE, FALSE)
+  # Assign environment variables and check file and paths
+  IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
+
+  IASDT.R::RecordArgs(
+    ExportPath = IASDT.R::Path(Path_Model, "Args_Mod_Postprocess_1_CPU.RData"))
 
   # ****************************************************************
 
@@ -408,7 +423,7 @@ Mod_Prep_TF <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  ProjectID <- Path_Models <- NULL
+  ProjectID <- Path_Model <- NULL
 
   # ****************************************************************
 
@@ -434,15 +449,18 @@ Mod_Prep_TF <- function(
   EnvVars2Read <- tibble::tribble(
     ~VarName, ~Value, ~CheckDir, ~CheckFile,
     "ProjectID", "DP_R_LUMI_gpu", FALSE, FALSE,
-    "Path_Models", "DP_R_Model_path", TRUE, FALSE)
+    "Path_Model", "DP_R_Model_path", TRUE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
-  
+
+  IASDT.R::RecordArgs(
+    ExportPath = IASDT.R::Path(Path_Model, "Args_Mod_Prep_TF.RData"))
+
   # ****************************************************************
 
   # Path to store TF commands
-  Path_TF <- IASDT.R::Path(Path_Models, "TF_postprocess")
+  Path_TF <- IASDT.R::Path(Path_Model, "TF_postprocess")
   # Path to store log files
   Path_Log <- IASDT.R::NormalizePath(
     IASDT.R::Path(Path_TF, "log", "%x-%A-%a.out"))
@@ -452,10 +470,10 @@ Mod_Prep_TF <- function(
   # ****************************************************************
   # ****************************************************************
 
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||| # # 
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||| # #
   # VARIANCE PARTITIONING ----
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||| # # 
-  
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||| # #
+
   # Prepare post-processing data for calculating Variance partitioning
   IASDT.R::CatTime(
     "Prepare post-processing data for calculating Variance partitioning")
@@ -471,12 +489,12 @@ Mod_Prep_TF <- function(
 
   # Find list of files matching the pattern
   VP_InFiles <- list.files(
-    path = Path_Models, pattern = "VP_.+Command.txt", recursive = TRUE,
+    path = Path_Model, pattern = "VP_.+Command.txt", recursive = TRUE,
     full.names = TRUE) %>%
     purrr::map(readr::read_lines) %>%
     unlist() %>%
     gtools::mixedsort()
-  
+
   # Save all VP commands to single file for batch processing
   readr::write_lines(x = VP_InFiles, file = Path_VP_Commands, append = FALSE)
 
@@ -532,10 +550,10 @@ Mod_Prep_TF <- function(
   # ****************************************************************
   # ****************************************************************
 
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||| # # 
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||| # #
   # LF PREDICTIONS ----
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||| # # 
-  
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||| # #
+
   # Prepare post-processing data for LF predictions
   IASDT.R::CatTime("Prepare post-processing data for LF predictions")
 
@@ -576,14 +594,14 @@ Mod_Prep_TF <- function(
   # Regex pattern to match input files
   LF_Pattern <- "^LF_NewSites_Commands_.+.txt|^LF_RC_Commands_.+txt"
   LF_InFiles <- list.files(
-    path = Path_Models, pattern = LF_Pattern,
+    path = Path_Model, pattern = LF_Pattern,
     recursive = TRUE, full.names = TRUE) %>%
     gtools::mixedsort()
 
   if (length(LF_InFiles) == 0) {
     stop(
       "No files found matching the pattern `", LF_Pattern,
-      "` in ", Path_Models, call. = FALSE)
+      "` in ", Path_Model, call. = FALSE)
   }
 
   IASDT.R::CatTime(
@@ -665,7 +683,7 @@ Mod_Prep_TF <- function(
     paste0("#SBATCH --array=1-", NumFiles),
     "",
     "# Define directories",
-    paste0('OutputDir="', IASDT.R::Path(Path_Models, "TF_postprocess"), '"'),
+    paste0('OutputDir="', IASDT.R::Path(Path_Model, "TF_postprocess"), '"'),
     "",
     "# Find all the split files and sort them explicitly",
     paste0(
@@ -761,6 +779,8 @@ Mod_Postprocess_2_CPU <- function(
 
   .StartTime <- lubridate::now(tzone = "CET")
 
+  Path_Model <- NULL
+
   # ****************************************************************
 
   Ch1 <- function(Text) {
@@ -840,6 +860,19 @@ Mod_Postprocess_2_CPU <- function(
       "Invalid climate scenarios. Valid values are:\n >> ",
       toString(c("ssp126", "ssp370", "ssp585")), call. = FALSE)
   }
+
+  # ****************************************************************
+
+  # # Load environment variables, for project ID
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "Path_Model", "DP_R_Model_path", TRUE, FALSE)
+  # Assign environment variables and check file and paths
+  IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
+
+  IASDT.R::RecordArgs(
+    ExportPath = IASDT.R::Path(Path_Model, "Args_Mod_Postprocess_2_CPU.RData"))
 
   # ****************************************************************
 

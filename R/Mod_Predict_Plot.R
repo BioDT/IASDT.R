@@ -72,8 +72,7 @@ Mod_Predict_Plot <- function(ModelDir = NULL, EnvFile = ".env", NCores = 8L) {
 
   # Without clamping
   Map_summary_NoClamp <- IASDT.R::Path(
-    ModelDir, "Model_Prediction", "NoClamp",
-    "Prediction_Current_Summary.RData")
+    ModelDir, "Model_Prediction", "NoClamp", "Prediction_Current_Summary.RData")
 
   if (!file.exists(Map_summary_NoClamp)) {
     stop(
@@ -126,7 +125,7 @@ Mod_Predict_Plot <- function(ModelDir = NULL, EnvFile = ".env", NCores = 8L) {
   # Modelling data
   Model_Data <- list.files(
     ModelDir, pattern = "^ModDT_.*subset.RData$", full.names = TRUE)
-  
+
   if (length(Model_Data) != 1) {
     stop("Model data does not exist", call. = FALSE)
   }

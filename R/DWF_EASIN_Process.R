@@ -102,7 +102,7 @@ EASIN_Process <- function(
   Path_Grid <- TaxaInfoFile <- Name <- speciesKey <- EASINID <- taxon_name <-
     SpeciesId <- CellCode <- DataPartnerName <- Species_name <- Species_File <-
     EASIN_Ref <- Year <- WKT <- Path_EASIN <- Path_EASIN_Interim <- n <-
-    Path_Grid_Ref <- Coords <- Points <- Longitude <- Latitude <- NULL
+    Path_Grid_Ref <- Points <- Longitude <- Latitude <- NULL
 
   # # |||||||||||||||||||||||||||||||||||
   # # Environment variables ----

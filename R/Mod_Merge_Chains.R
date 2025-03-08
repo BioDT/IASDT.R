@@ -7,7 +7,7 @@
 #' This function merges model chains, checks for missing or incomplete model
 #' runs, and optionally prints information about incomplete models. It saves the
 #' processed model objects to disk.
-#' @param ModelDir Character. Path to the root directory of the fitted models.
+#' @param ModelDir Character. Path to the root directory of the fitted model.
 #'   Two folders will be created `Model_Fitted` and `Model_Coda` to store merged
 #'   model and coda objects, respectively.
 #' @param NCores Integer. Number of CPU cores to use for parallel processing.

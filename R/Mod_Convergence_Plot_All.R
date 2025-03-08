@@ -9,9 +9,9 @@
 #' model convergence using trace plots and Gelman-Rubin diagnostics for key
 #' model parameters.
 #'
-#' @param ModelDir Character. Path to the root directory of the fitted models.
-#'   The convergence outputs will be saved to the `Model_Convergence_All`
-#'   subfolder.
+#' @param ModelDir Character. Path to the root directory of the fitted model.
+#'   The convergence outputs will be saved to the
+#'   `Model_Convergence_All` subfolder.
 #' @param NCores Integer. Number of CPU cores to use for parallel processing.
 #' @name Convergence_Plot_All
 #' @inheritParams Convergence_plots

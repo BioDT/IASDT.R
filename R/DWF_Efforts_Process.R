@@ -163,11 +163,11 @@ Efforts_Process <- function(
   # # ..................................................................... ###
 
   # Request efforts data ------
-  
+
   if (Request) {
 
     IASDT.R::CatTime("Requesting efforts data")
-    
+
     IASDT.R::Efforts_Request(
       EnvFile = EnvFile, NCores = NCores, StartYear = StartYear,
       Renviron = Renviron, Boundaries = Boundaries)

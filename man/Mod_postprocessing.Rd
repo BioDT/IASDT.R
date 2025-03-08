@@ -79,9 +79,7 @@ Mod_Postprocess_2_CPU(
 )
 }
 \arguments{
-\item{ModelDir}{Character. Path to the root directory of the fitted models.
-Two folders will be created \code{Model_Fitted} and \code{Model_Coda} to store merged
-model and coda objects, respectively.}
+\item{ModelDir}{Character. Path to the root directory of the fitted model.}
 
 \item{Hab_Abb}{Character. Habitat abbreviation indicating the specific
 \href{https://www.preslia.cz/article/pdf?id=11548}{SynHab} habitat type for
@@ -151,7 +149,7 @@ the files exist without checking their integrity. Default is \code{FALSE}.}
 Defaults to \code{TRUE}.}
 
 \item{TF_Environ}{Character. Path to the Python environment. This argument is
-required if \code{UseTF} is \code{TRUE}.}
+required if \code{UseTF} is \code{TRUE} under Windows. Defaults to \code{NULL}.}
 
 \item{Pred_Clamp}{Logical indicating whether to clamp the sampling efforts at
 a single value. If \code{TRUE} (default), the \code{Fix_Efforts} argument must be

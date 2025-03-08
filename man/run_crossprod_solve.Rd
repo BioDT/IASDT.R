@@ -23,7 +23,7 @@ run_crossprod_solve(
 }
 \arguments{
 \item{TF_Environ}{Character. Path to the Python environment. This argument is
-required if \code{UseTF} is \code{TRUE}.}
+required if \code{UseTF} is \code{TRUE} under Windows. Defaults to \code{NULL}.}
 
 \item{s1}{Character. Path to the input file containing s1 coordinates.}
 

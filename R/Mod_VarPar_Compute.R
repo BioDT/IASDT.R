@@ -872,11 +872,11 @@ VarPar_Compute <- function(
         file_paths <- list.files(
           path = IASDT.R::NormalizePath(Path_Temp),
           pattern = "(VP_).+(feather|log)$", full.names = TRUE)
-        
+
         fs::file_delete(file_paths)
       },
       silent = TRUE)
-    
+
   }
 
   # # .................................................................... ###

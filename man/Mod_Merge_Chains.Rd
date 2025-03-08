@@ -14,7 +14,7 @@ Mod_Merge_Chains(
 )
 }
 \arguments{
-\item{ModelDir}{Character. Path to the root directory of the fitted models.
+\item{ModelDir}{Character. Path to the root directory of the fitted model.
 Two folders will be created \code{Model_Fitted} and \code{Model_Coda} to store merged
 model and coda objects, respectively.}
 

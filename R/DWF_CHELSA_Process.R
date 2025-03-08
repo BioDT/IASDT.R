@@ -239,7 +239,7 @@ CHELSA_Process <- function(
       .data = CHELSA_Data, Path_Down, Path_Out_NC, Path_Out_tif)
 
   } else {
-    
+
     # Exclude previously processed files (after checking)
     IASDT.R::CatTime(
       "Exclude previously processed files (after checking)", Level = 1)
@@ -371,14 +371,13 @@ CHELSA_Process <- function(
   SelectedVars <- c("bio", OtherVars) %>%
     # Only keep non-empty strings. If `OtherVars` = "", only bioclimatic
     # variables will be processed.
-    stringr::str_subset(".+") %>% 
+    stringr::str_subset(".+") %>%
     # If OtherVars = "", this will return "(?i)(bio)\\d*_"
     # If OtherVars = "npp", this will return "(?i)(bio|npp)\\d*_"
     # "(?i)" represents case-insensitive matching
     # \\d+_ means one or more digits followed by an underscore
-    paste(., collapse = "|") %>% 
+    paste(collapse = "|") %>%
     paste0("(?i)(", ., ")\\d*_")
-
 
   CHELSA_Processed <- CHELSA_Data %>%
     dplyr::select(TimePeriod, ClimateModel, ClimateScenario, Path_Out_tif) %>%

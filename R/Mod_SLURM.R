@@ -9,7 +9,7 @@
 #' creates SLURM scripts for refitting models that failed or were not previously
 #' fitted.
 #'
-#' @param ModelDir Character. Path to the directory containing the models.
+#' @param ModelDir Character. Path to the root directory of the fitted model.
 #' @param JobName Character. Name of the submitted job(s).
 #' @param CatJobInfo Logical. If `TRUE`, additional bash commands are included
 #'   to print job-related information. Default: `TRUE`.

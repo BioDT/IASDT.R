@@ -120,6 +120,7 @@ reference:
   - CheckCommands
   - CheckArgs
   - CatFunArgs
+  - RecordArgs
 - subtitle: File operations
   contents:
   - FileExt

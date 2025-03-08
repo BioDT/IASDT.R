@@ -57,7 +57,7 @@ latent factor prediction. Defaults to 8L.}
 \code{TRUE}.}
 
 \item{TF_Environ}{Character. Path to the Python environment. This argument is
-required if \code{UseTF} is \code{TRUE}.}
+required if \code{UseTF} is \code{TRUE} under Windows. Defaults to \code{NULL}.}
 
 \item{TF_use_single}{Logical. Whether to use single precision for the
 TensorFlow calculations. Defaults to \code{FALSE}.}
@@ -101,11 +101,12 @@ when working on parallel.
 The main difference is that this function:
 \itemize{
 \item allow for parallel processing (\code{LF_NCores} argument);
-\item when TensorFlow is used (\code{UseTF = TRUE}), matrix
+\item when \code{TensorFlow} is used (\code{UseTF = TRUE}), matrix
 calculations are much faster, particularly when used on GPU. The following
 Python modules are needed: \code{numpy}, \code{tensorflow}, \code{rdata}, \code{xarray}, and
-\code{pandas}. To use \code{TensorFlow}, the argument \code{TF_Environ} should be set to
-the path of a Python environment with TensorFlow installed;
+\code{pandas}. To use \code{TensorFlow} under Windows, the argument \code{TF_Environ}
+should be set to the path of a Python environment with \code{TensorFlow}
+installed;
 \item if \code{UseTF} is set to \code{FALSE}, the function uses \code{R} (supported by
 relatively faster \code{CPP} functions) in the calculations;
 \item \code{D11} and \code{D12} matrices are processed only once and saved to disk and

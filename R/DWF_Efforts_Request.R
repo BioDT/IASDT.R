@@ -9,8 +9,8 @@
 #' @export
 
 Efforts_Request <- function(
-  EnvFile = ".env", NCores = 3L, StartYear = 1981L,
-  Renviron = ".Renviron", Boundaries = c(-30, 50, 25, 75)) {
+    EnvFile = ".env", NCores = 3L, StartYear = 1981L,
+    Renviron = ".Renviron", Boundaries = c(-30, 50, 25, 75)) {
 
   # # ..................................................................... ###
 
@@ -50,7 +50,7 @@ Efforts_Request <- function(
   # # ..................................................................... ###
 
   # Environment variables ----
-  
+
   EnvVars2Read <- tibble::tribble(
     ~VarName, ~Value, ~CheckDir, ~CheckFile,
     "Path_Efforts", "DP_R_Efforts_processed", FALSE, FALSE)
@@ -84,8 +84,9 @@ Efforts_Request <- function(
 
   # Requesting efforts data on parallel -----
 
-  "Requesting efforts data on parallel (This may take up to 4 hours)" %>% 
-    IASDT.R::CatTime(Level = 1)
+  IASDT.R::CatTime(
+    "Requesting efforts data on parallel (This may take up to 4 hours)",
+    Level = 1)
 
   # Extract taxonomic info for vascular plants orders
   SelectedCols <- c(

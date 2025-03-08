@@ -28,7 +28,7 @@
 #' @param UseTF Logical. Whether to use TensorFlow for calculations. Defaults to
 #'   `TRUE`.
 #' @param TF_Environ Character. Path to the Python environment. This argument is
-#'   required if `UseTF` is `TRUE`.
+#'   required if `UseTF` is `TRUE` under Windows. Defaults to `NULL`.
 #' @param LF_Commands_Only Logical. If `TRUE`, returns the command to run the
 #'   Python script. Default is `FALSE`.
 #' @param TF_use_single Logical. Whether to use single precision for the
@@ -58,11 +58,12 @@
 #'
 #'   The main difference is that this function:
 #' - allow for parallel processing (`LF_NCores` argument);
-#' - when TensorFlow is used (`UseTF = TRUE`), matrix
+#' - when `TensorFlow` is used (`UseTF = TRUE`), matrix
 #'   calculations are much faster, particularly when used on GPU. The following
 #'   Python modules are needed: `numpy`, `tensorflow`, `rdata`, `xarray`, and
-#'   `pandas`. To use `TensorFlow`, the argument `TF_Environ` should be set to
-#'   the path of a Python environment with TensorFlow installed;
+#'   `pandas`. To use `TensorFlow` under Windows, the argument `TF_Environ`
+#'   should be set to the path of a Python environment with `TensorFlow`
+#'   installed;
 #' - if `UseTF` is set to `FALSE`, the function uses `R` (supported by
 #'   relatively faster `CPP` functions) in the calculations;
 #' - `D11` and `D12` matrices are processed only once and saved to disk and
@@ -577,7 +578,7 @@ Mod_Predict_LF <- function(
               # Define the filename
               file_name <- IASDT.R::Path(
                 Temp_Dir, paste0(CommandFilePrefix, i, ".txt"))
-              
+
               # Write the chunk to a file with Linux line endings
               writeLines(chunk, file_name, useBytes = TRUE)
             }
@@ -764,11 +765,11 @@ Mod_Predict_LF <- function(
         Pattern <- paste0(
           "^", Model_Name,
           "(postEta|r[0-9]|etaPred|s1|s2|post).+(feather|qs2|log)$")
-        
+
         file_paths <- list.files(
           path = IASDT.R::NormalizePath(Temp_Dir),
           pattern = Pattern, full.names = TRUE)
-        
+
         fs::file_delete(file_paths)
       },
       silent = TRUE)

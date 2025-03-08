@@ -12,9 +12,9 @@ Convergence_Plot_All(
 )
 }
 \arguments{
-\item{ModelDir}{Character. Path to the root directory of the fitted models.
-The convergence outputs will be saved to the \code{Model_Convergence_All}
-subfolder.}
+\item{ModelDir}{Character. Path to the root directory of the fitted model.
+The convergence outputs will be saved to the
+\code{Model_Convergence_All} subfolder.}
 
 \item{NOmega}{Integer. Number of species interactions sampled for Omega
 parameter diagnostics. Default: 1000L}

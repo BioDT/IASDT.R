@@ -41,7 +41,7 @@ Mod_SLURM_Refit(
 )
 }
 \arguments{
-\item{ModelDir}{Character. Path to the directory containing the models.}
+\item{ModelDir}{Character. Path to the root directory of the fitted model.}
 
 \item{JobName}{Character. Name of the submitted job(s).}
 

@@ -66,7 +66,7 @@ details.}
 \code{TRUE}.}
 
 \item{TF_Environ}{Character. Path to the Python environment. This argument is
-required if \code{UseTF} is \code{TRUE}.}
+required if \code{UseTF} is \code{TRUE} under Windows. Defaults to \code{NULL}.}
 
 \item{TF_use_single}{Logical. Whether to use single precision for the
 TensorFlow calculations. Defaults to \code{FALSE}.}

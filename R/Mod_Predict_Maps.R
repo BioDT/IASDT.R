@@ -1421,8 +1421,8 @@ Predict_Maps <- function(
 
     # Command to create the tar file
     Command <- stringr::str_glue(
-      'cd {fs::path_abs(TarDir)}; tar -cf {basename(TarFile)} -b 2048 \\
-    {TarFiles}')
+      "cd {fs::path_abs(TarDir)}; tar -cf {basename(TarFile)} -b 2048 \\
+    {TarFiles}")
 
     # Create tar file
     system(Command)

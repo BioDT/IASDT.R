@@ -32,7 +32,7 @@ Efforts_Download <- function(NCores = 6L, EnvFile = ".env") {
   # # ..................................................................... ###
 
   # Environment variables ----
-  
+
   EnvVars2Read <- tibble::tribble(
     ~VarName, ~Value, ~CheckDir, ~CheckFile,
     "Path_Efforts", "DP_R_Efforts_processed", FALSE, FALSE,

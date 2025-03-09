@@ -139,7 +139,7 @@ latent factor prediction. Defaults to 8L.</p></dd>
 
 <dt id="arg-tf-environ">TF_Environ<a class="anchor" aria-label="anchor" href="#arg-tf-environ"></a></dt>
 <dd><p>Character. Path to the Python environment. This argument is
-required if <code>UseTF</code> is <code>TRUE</code>.</p></dd>
+required if <code>UseTF</code> is <code>TRUE</code> under Windows. Defaults to <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-tf-use-single">TF_use_single<a class="anchor" aria-label="anchor" href="#arg-tf-use-single"></a></dt>
@@ -192,11 +192,12 @@ execution. Default is <code>TRUE</code>.</p></dd>
 the <code>Hmsc</code> package, especially when using <code>TensorFlow</code> for calculations and
 when working on parallel.</p>
 <p>The main difference is that this function:</p><ul><li><p>allow for parallel processing (<code>LF_NCores</code> argument);</p></li>
-<li><p>when TensorFlow is used (<code>UseTF = TRUE</code>), matrix
+<li><p>when <code>TensorFlow</code> is used (<code>UseTF = TRUE</code>), matrix
 calculations are much faster, particularly when used on GPU. The following
 Python modules are needed: <code>numpy</code>, <code>tensorflow</code>, <code>rdata</code>, <code>xarray</code>, and
-<code>pandas</code>. To use <code>TensorFlow</code>, the argument <code>TF_Environ</code> should be set to
-the path of a Python environment with TensorFlow installed;</p></li>
+<code>pandas</code>. To use <code>TensorFlow</code> under Windows, the argument <code>TF_Environ</code>
+should be set to the path of a Python environment with <code>TensorFlow</code>
+installed;</p></li>
 <li><p>if <code>UseTF</code> is set to <code>FALSE</code>, the function uses <code>R</code> (supported by
 relatively faster <code>CPP</code> functions) in the calculations;</p></li>
 <li><p><code>D11</code> and <code>D12</code> matrices are processed only once and saved to disk and

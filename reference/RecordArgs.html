@@ -3,17 +3,17 @@
 unevaluated and evaluated forms of arguments passed to a parent function. It
 returns a tibble with columns reflecting argument states: when unevaluated
 and evaluated values differ, columns are named with _orig and _eval
-suffixes; when they are the same, a single column is used with the argument
-name alone. The function dynamically handles scalars, call objects, and
-complex objects (e.g., lm models, SpatRaster objects), preserving their
-structure appropriately."><meta property="og:description" content="RecordArgs() is a utility function that captures and records both the
+suffixes; when they are the same (including symbols evaluated to scalars), a
+single column is used with the argument name alone. The function dynamically
+handles scalars, call objects, and complex objects (e.g., lm models,
+SpatRaster objects), preserving their structure appropriately."><meta property="og:description" content="RecordArgs() is a utility function that captures and records both the
 unevaluated and evaluated forms of arguments passed to a parent function. It
 returns a tibble with columns reflecting argument states: when unevaluated
 and evaluated values differ, columns are named with _orig and _eval
-suffixes; when they are the same, a single column is used with the argument
-name alone. The function dynamically handles scalars, call objects, and
-complex objects (e.g., lm models, SpatRaster objects), preserving their
-structure appropriately."></head><body>
+suffixes; when they are the same (including symbols evaluated to scalars), a
+single column is used with the argument name alone. The function dynamically
+handles scalars, call objects, and complex objects (e.g., lm models,
+SpatRaster objects), preserving their structure appropriately."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -65,15 +65,15 @@ structure appropriately."></head><body>
 unevaluated and evaluated forms of arguments passed to a parent function. It
 returns a tibble with columns reflecting argument states: when unevaluated
 and evaluated values differ, columns are named with <code>_orig</code> and <code>_eval</code>
-suffixes; when they are the same, a single column is used with the argument
-name alone. The function dynamically handles scalars, call objects, and
-complex objects (e.g., <code>lm</code> models, <code>SpatRaster</code> objects), preserving their
-structure appropriately.</p>
+suffixes; when they are the same (including symbols evaluated to scalars), a
+single column is used with the argument name alone. The function dynamically
+handles scalars, call objects, and complex objects (e.g., <code>lm</code> models,
+<code>SpatRaster</code> objects), preserving their structure appropriately.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">RecordArgs</span><span class="op">(</span>ExportPath <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">RecordArgs</span><span class="op">(</span>ExportPath <span class="op">=</span> <span class="cn">NULL</span>, call <span class="op">=</span> <span class="cn">NULL</span>, env <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -86,16 +86,32 @@ will be exported. If <code>NULL</code> (default), the tibble is returned without
 saving. If provided, the tibble is saved to the specified file and <code>NULL</code>
 is returned invisibly.</p></dd>
 
+
+<dt id="arg-call">call<a class="anchor" aria-label="anchor" href="#arg-call"></a></dt>
+<dd><p>Language object (optional). The call to the parent function, as
+provided by <code><a href="https://rdrr.io/r/base/match.call.html" class="external-link">match.call()</a></code> from the caller. If <code>NULL</code> (default), the
+function falls back to <code>sys.call(-1)</code> to capture the parent call. Used to
+ensure accurate argument capture in iterative contexts (e.g., <code>lapply</code>,
+<code><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">purrr::map</a></code>).</p></dd>
+
+
+<dt id="arg-env">env<a class="anchor" aria-label="anchor" href="#arg-env"></a></dt>
+<dd><p>Environment (optional). The environment in which to evaluate the
+arguments, typically provided by <code><a href="https://rdrr.io/r/base/sys.parent.html" class="external-link">parent.frame()</a></code> from the caller. If
+<code>NULL</code> (default), the function uses <code><a href="https://rdrr.io/r/base/sys.parent.html" class="external-link">parent.frame()</a></code> to determine the
+evaluation environment. Used to resolve variables in iterative contexts.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A <code>tibble</code> containing the unevaluated and evaluated forms of the
 parent function’s arguments. Column naming depends on whether unevaluated
 and evaluated values match:</p><ul><li><p><strong>Single columns</strong> (e.g., <code>y</code>): Used when unevaluated and evaluated
-values are identical (e.g., scalars like <code>2</code> or defaults like <code>10</code>),
+values are identical or effectively equivalent (e.g., scalars like <code>2</code>,
+defaults like <code>10</code>, or symbols like <code>i</code> evaluating to <code>1</code> in loops),
 containing the evaluated value as-is.</p></li>
-<li><p><strong>Paired columns</strong> (e.g., <code>x_orig</code>, <code>x_eval</code>):</p><ul><li><p><code>*_orig</code>: Unevaluated expressions as list columns with <code>call</code> objects
-(e.g., <code>a + b</code>) or scalars as-is.</p></li>
+<li><p><strong>Paired columns</strong> (e.g., <code>x_orig</code>, <code>x_eval</code>):</p><ul><li><p><code>*_orig</code>: Unevaluated expressions as character strings (e.g.,
+<code>"a + b"</code>) or scalars as-is for non-call objects.</p></li>
 <li><p><code>*_eval</code>: Evaluated values, either scalars (e.g., <code>8</code>) or list columns
 for complex objects (e.g., <code>lm</code>, <code>SpatRaster</code>).</p></li>
 </ul></li>
@@ -105,16 +121,21 @@ invisibly.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>This function must be called from within another function. It uses
-<code>sys.call(-1)</code> to capture the parent function’s call, evaluates arguments
-in the parent environment, and combines them with default values from the
-parent function’s formal arguments. Unevaluated expressions (e.g., <code>a + b</code>)
-are preserved as <code>call</code> objects, while evaluated values are kept as-is for
-scalars or wrapped in lists for complex objects. Columns are ordered based
-on the original argument sequence: single columns (for matching values)
-appear first, followed by <code>_orig</code> and <code>_eval</code> pairs (for differing values)
-in that order.</p>
-    </div>
+    <p>This function must be called from within another function. It
+captures the parent function’s call using either a provided <code>call</code> argument
+or <code>sys.call(-1)</code>, evaluates arguments in the specified or default parent
+environment, and combines them with default values from the parent
+function’s formal arguments. Unevaluated expressions (e.g., <code>a + b</code>) are
+preserved as character strings via <code><a href="https://rdrr.io/r/base/deparse.html" class="external-link">deparse()</a></code>, while scalars (including
+symbols like <code>i</code> in loops that evaluate to scalars) and complex objects
+(e.g., <code>lm</code>, <code>SpatRaster</code>) are handled appropriately:</p><ul><li><p>Symbols (e.g., <code>i</code> in <code>lapply</code>) are treated as matching their evaluated
+scalar values, resulting in a single column.</p></li>
+<li><p>Calls (e.g., <code>a + b</code>) result in <code>_orig</code>/<code>_eval</code> pairs.</p></li>
+<li><p>Complex objects are wrapped in lists in <code>_eval</code> columns.
+Columns are ordered based on the original argument sequence: single columns
+(for matching values) appear first, followed by <code>_orig</code> and <code>_eval</code> pairs
+in that order.</p></li>
+</ul></div>
     <div class="section level2">
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>
     <p>Ahmed El-Gabbas</p>
@@ -124,8 +145,9 @@ in that order.</p>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">a</span> <span class="op">&lt;-</span> <span class="fl">5</span></span></span>
 <span class="r-in"><span><span class="va">b</span> <span class="op">&lt;-</span> <span class="fl">3</span></span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">Function1</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">w</span> <span class="op">=</span> <span class="fl">5</span>, <span class="va">x</span>, <span class="va">y</span>, <span class="va">z</span> <span class="op">=</span> <span class="fl">10</span><span class="op">)</span> <span class="op">{</span></span></span>
-<span class="r-in"><span>  <span class="va">Args</span> <span class="op">&lt;-</span> <span class="fu">RecordArgs</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">Args</span> <span class="op">&lt;-</span> <span class="fu">IASDT.R</span><span class="fu">::</span><span class="fu">RecordArgs</span><span class="op">(</span>call <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/match.call.html" class="external-link">match.call</a></span><span class="op">(</span><span class="op">)</span>, env <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sys.parent.html" class="external-link">parent.frame</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="va">Args</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-in"><span></span></span>
@@ -133,39 +155,47 @@ in that order.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Basic usage with scalars and expressions</span></span></span>
 <span class="r-in"><span><span class="va">Out1</span> <span class="op">&lt;-</span> <span class="fu">Function1</span><span class="op">(</span>x <span class="op">=</span> <span class="va">a</span> <span class="op">+</span> <span class="va">b</span>, y <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">Out1</span><span class="op">$</span><span class="va">w</span>              <span class="co"># 5 (single column, same as orig and eval)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">Out1</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 5</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       w x_orig    x_eval     y     z</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;noquote&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>     5 a + b          8     2    10</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">Out1</span><span class="op">$</span><span class="va">w</span>              <span class="co"># 5 (single column, default matches evaluated)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 5</span>
-<span class="r-in"><span><span class="va">Out1</span><span class="op">$</span><span class="va">x_orig</span>         <span class="co"># call object: a + b</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [[1]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> a + b</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-in"><span><span class="va">Out1</span><span class="op">$</span><span class="va">x_eval</span>         <span class="co"># 8</span></span></span>
+<span class="r-in"><span><span class="va">Out1</span><span class="op">$</span><span class="va">x_orig</span>         <span class="co"># "a + b" (unevaluated expression)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] a + b</span>
+<span class="r-in"><span><span class="va">Out1</span><span class="op">$</span><span class="va">x_eval</span>         <span class="co"># 8 (evaluated result)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 8</span>
-<span class="r-in"><span><span class="va">Out1</span><span class="op">$</span><span class="va">y</span>              <span class="co"># 2 (single column)</span></span></span>
+<span class="r-in"><span><span class="va">Out1</span><span class="op">$</span><span class="va">y</span>              <span class="co"># 2 (single column, scalar matches evaluated)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 2</span>
-<span class="r-in"><span><span class="va">Out1</span><span class="op">$</span><span class="va">z</span>              <span class="co"># 10 (single column)</span></span></span>
+<span class="r-in"><span><span class="va">Out1</span><span class="op">$</span><span class="va">z</span>              <span class="co"># 10 (single column, default matches evaluated)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 10</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># --------------------------------------------------------------</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">#' # Usage with complex objects (lm and SpatRaster)</span></span></span>
+<span class="r-in"><span><span class="co"># Usage with complex objects (lm and Raster)</span></span></span>
 <span class="r-in"><span><span class="va">Out2</span> <span class="op">&lt;-</span> <span class="fu">Function1</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  w <span class="op">=</span> <span class="fl">10</span>,</span></span>
 <span class="r-in"><span>  x <span class="op">=</span> <span class="va">a</span> <span class="op">+</span> <span class="va">b</span>,</span></span>
 <span class="r-in"><span>  y <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">mpg</span> <span class="op">~</span> <span class="va">disp</span> <span class="op">+</span> <span class="va">hp</span>, data <span class="op">=</span> <span class="va">mtcars</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  z <span class="op">=</span> <span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/rast.html" class="external-link">rast</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"ex/logo.tif"</span>, package <span class="op">=</span> <span class="st">"terra"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  z <span class="op">=</span> <span class="fu">raster</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/raster/man/raster.html" class="external-link">raster</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">Out2</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 7</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       w x_orig    x_eval y_orig                 y_eval z_orig z_eval            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;noquote&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;noquote&gt;</span>              <span style="color: #949494; font-style: italic;">&lt;list&gt;</span> <span style="color: #949494; font-style: italic;">&lt;noqu&gt;</span> <span style="color: #949494; font-style: italic;">&lt;list&gt;</span>            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>    10 a + b          8 stats::lm(mpg ~ disp … <span style="color: #949494;">&lt;lm&gt;</span>   raste… <span style="color: #949494;">&lt;RastrLyr[,360,1]&gt;</span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">Out2</span><span class="op">$</span><span class="va">w</span>              <span class="co"># 10 (single column)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 10</span>
-<span class="r-in"><span><span class="va">Out2</span><span class="op">$</span><span class="va">x_orig</span>         <span class="co"># call object: a + b</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [[1]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> a + b</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-in"><span><span class="va">Out2</span><span class="op">$</span><span class="va">x_eval</span>         <span class="co"># 8</span></span></span>
+<span class="r-in"><span><span class="va">Out2</span><span class="op">$</span><span class="va">x_orig</span>         <span class="co"># "a + b" (unevaluated expression)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] a + b</span>
+<span class="r-in"><span><span class="va">Out2</span><span class="op">$</span><span class="va">x_eval</span>         <span class="co"># 8 (evaluated result)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 8</span>
-<span class="r-in"><span><span class="va">Out2</span><span class="op">$</span><span class="va">y_orig</span>         <span class="co"># call object: lm(mpg ~ disp + hp, data = mtcars)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [[1]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> stats::lm(mpg ~ disp + hp, data = mtcars)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-in"><span><span class="va">Out2</span><span class="op">$</span><span class="va">y_orig</span>         <span class="co"># "stats::lm(mpg ~ disp + hp, data = mtcars)"</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] stats::lm(mpg ~ disp + hp, data = mtcars)</span>
 <span class="r-in"><span><span class="va">Out2</span><span class="op">$</span><span class="va">y_eval</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>    <span class="co"># lm object</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Call:</span>
@@ -175,13 +205,64 @@ in that order.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept)         disp           hp  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    30.73590     -0.03035     -0.02484  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-in"><span><span class="va">Out2</span><span class="op">$</span><span class="va">z_orig</span>         <span class="co"># call object: terra::rast(system.file(...))</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [[1]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> terra::rast(system.file("ex/logo.tif", package = "terra"))</span>
+<span class="r-in"><span><span class="va">Out2</span><span class="op">$</span><span class="va">z_orig</span>         <span class="co"># "raster::raster()"</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] raster::raster()</span>
+<span class="r-in"><span><span class="va">Out2</span><span class="op">$</span><span class="va">z_eval</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>    <span class="co"># RasterLayer object</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> class      : RasterLayer </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> dimensions : 180, 360, 64800  (nrow, ncol, ncell)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> resolution : 1, 1  (x, y)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> extent     : -180, 180, -90, 90  (xmin, xmax, ymin, ymax)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> crs        : +proj=longlat +datum=WGS84 +no_defs </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-in"><span><span class="va">Out2</span><span class="op">$</span><span class="va">z_eval</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>    <span class="co"># SpatRaster object</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "This is a PackedSpatRaster object. Use 'terra::unwrap()' to unpack it"</span>
 <span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># --------------------------------------------------------------</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Usage with purrr::pmap for multiple inputs</span></span></span>
+<span class="r-in"><span><span class="va">w_values</span> <span class="op">&lt;-</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span></span></span>
+<span class="r-in"><span><span class="va">x_values</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">a</span> <span class="op">+</span> <span class="va">b</span>, <span class="fl">10</span>, <span class="fl">15</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">y_values</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ABCD"</span>, <span class="st">"XYZ123"</span>, <span class="st">"TEST"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">Out3</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/pmap.html" class="external-link">pmap</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  .l <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>w <span class="op">=</span> <span class="va">w_values</span>, x <span class="op">=</span> <span class="va">x_values</span>, y <span class="op">=</span> <span class="va">y_values</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  .f <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">w</span>, <span class="va">x</span>, <span class="va">y</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>    <span class="fu">Function1</span><span class="op">(</span></span></span>
+<span class="r-in"><span>      w <span class="op">=</span> <span class="va">w</span>,</span></span>
+<span class="r-in"><span>      x <span class="op">=</span> <span class="va">x</span>,</span></span>
+<span class="r-in"><span>      y <span class="op">=</span> <span class="fu">stringr</span><span class="fu">::</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_extract.html" class="external-link">str_extract</a></span><span class="op">(</span><span class="va">y</span>, <span class="st">"B.+$"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>      z <span class="op">=</span> <span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/rast.html" class="external-link">rast</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"ex/elev.tif"</span>, package<span class="op">=</span><span class="st">"terra"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">}</span><span class="op">)</span> <span class="op"><a href="pipe.html">%&gt;%</a></span></span></span>
+<span class="r-in"><span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">Out3</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 3 × 6</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       w     x y_orig                          y_eval z_orig           z_eval    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;noquote&gt;</span>                       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;noquote&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;list&gt;</span>    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>     1     8 stringr::str_extract(y, "B.+$") BCD    terra::rast(sys… <span style="color: #949494;">&lt;PckdSptR&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>     2    10 stringr::str_extract(y, "B.+$") <span style="color: #BB0000;">NA</span>     terra::rast(sys… <span style="color: #949494;">&lt;PckdSptR&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>     3    15 stringr::str_extract(y, "B.+$") <span style="color: #BB0000;">NA</span>     terra::rast(sys… <span style="color: #949494;">&lt;PckdSptR&gt;</span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">Out3</span><span class="op">$</span><span class="va">w</span>        <span class="co"># 1, 2, 3</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1 2 3</span>
+<span class="r-in"><span><span class="va">Out3</span><span class="op">$</span><span class="va">x</span>        <span class="co"># 8, 10, 15</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1]  8 10 15</span>
+<span class="r-in"><span><span class="va">Out3</span><span class="op">$</span><span class="va">y_orig</span>   <span class="co"># 'stringr::str_extract(y, "B.+$")', repeated for each row</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] stringr::str_extract(y, "B.+$") stringr::str_extract(y, "B.+$")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [3] stringr::str_extract(y, "B.+$")</span>
+<span class="r-in"><span><span class="va">Out3</span><span class="op">$</span><span class="va">y_eval</span>   <span class="co"># "BCD", NA, NA</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "BCD" NA    NA   </span>
+<span class="r-in"><span><span class="va">Out3</span><span class="op">$</span><span class="va">z_orig</span>   <span class="co"># "terra::rast(...))", repeated for each row</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] terra::rast(system.file("ex/elev.tif", package = "terra"))</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [2] terra::rast(system.file("ex/elev.tif", package = "terra"))</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [3] terra::rast(system.file("ex/elev.tif", package = "terra"))</span>
+<span class="r-in"><span><span class="va">Out3</span><span class="op">$</span><span class="va">z_eval</span>   <span class="co"># Packed SpatRaster, repeated for each row</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [[1]]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "This is a PackedSpatRaster object. Use 'terra::unwrap()' to unpack it"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [[2]]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "This is a PackedSpatRaster object. Use 'terra::unwrap()' to unpack it"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [[3]]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "This is a PackedSpatRaster object. Use 'terra::unwrap()' to unpack it"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

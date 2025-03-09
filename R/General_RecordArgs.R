@@ -66,7 +66,7 @@
 #' @examples
 #' a <- 5
 #' b <- 3
-#' 
+#'
 #' Function1 <- function(w = 5, x, y, z = 10) {
 #'   Args <- IASDT.R::RecordArgs(call = match.call(), env = parent.frame())
 #'   return(Args)
@@ -267,14 +267,21 @@ RecordArgs <- function(ExportPath = NULL, call = NULL, env = NULL) {
 
   # Return the tibble or save it to a file based on ExportPath
   if (is.null(ExportPath)) {
+
     # Return the tibble if no export path is provided
     return(result)
+
   } else {
+
+    # Extract the calling function name without the namespace
+    calling_func2 <- stringr::str_remove(calling_func, "^.+::")
+
     # Save to .RData file if ExportPath is specified
     IASDT.R::SaveAs(
-      InObj = result, OutObj = paste0("Args_", calling_func),
+      InObj = result, OutObj = paste0("Args_", calling_func2),
       OutPath = ExportPath)
     # Return NULL invisibly after saving
     return(invisible(NULL))
+
   }
 }

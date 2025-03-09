@@ -4,13 +4,24 @@
 \alias{RecordArgs}
 \title{Capture and record function arguments}
 \usage{
-RecordArgs(ExportPath = NULL)
+RecordArgs(ExportPath = NULL, call = NULL, env = NULL)
 }
 \arguments{
 \item{ExportPath}{Character. The path to an \code{.RData} file where the tibble
 will be exported. If \code{NULL} (default), the tibble is returned without
 saving. If provided, the tibble is saved to the specified file and \code{NULL}
 is returned invisibly.}
+
+\item{call}{Language object (optional). The call to the parent function, as
+provided by \code{match.call()} from the caller. If \code{NULL} (default), the
+function falls back to \code{sys.call(-1)} to capture the parent call. Used to
+ensure accurate argument capture in iterative contexts (e.g., \code{lapply},
+\code{purrr::map}).}
+
+\item{env}{Environment (optional). The environment in which to evaluate the
+arguments, typically provided by \code{parent.frame()} from the caller. If
+\code{NULL} (default), the function uses \code{parent.frame()} to determine the
+evaluation environment. Used to resolve variables in iterative contexts.}
 }
 \value{
 A \code{tibble} containing the unevaluated and evaluated forms of the
@@ -18,12 +29,13 @@ parent function’s arguments. Column naming depends on whether unevaluated
 and evaluated values match:
 \itemize{
 \item \strong{Single columns} (e.g., \code{y}): Used when unevaluated and evaluated
-values are identical (e.g., scalars like \code{2} or defaults like \code{10}),
+values are identical or effectively equivalent (e.g., scalars like \code{2},
+defaults like \code{10}, or symbols like \code{i} evaluating to \code{1} in loops),
 containing the evaluated value as-is.
 \item \strong{Paired columns} (e.g., \code{x_orig}, \code{x_eval}):
 \itemize{
-\item \verb{*_orig}: Unevaluated expressions as list columns with \code{call} objects
-(e.g., \code{a + b}) or scalars as-is.
+\item \verb{*_orig}: Unevaluated expressions as character strings (e.g.,
+\code{"a + b"}) or scalars as-is for non-call objects.
 \item \verb{*_eval}: Evaluated values, either scalars (e.g., \code{8}) or list columns
 for complex objects (e.g., \code{lm}, \code{SpatRaster}).
 }
@@ -38,27 +50,36 @@ invisibly.
 unevaluated and evaluated forms of arguments passed to a parent function. It
 returns a tibble with columns reflecting argument states: when unevaluated
 and evaluated values differ, columns are named with \verb{_orig} and \verb{_eval}
-suffixes; when they are the same, a single column is used with the argument
-name alone. The function dynamically handles scalars, call objects, and
-complex objects (e.g., \code{lm} models, \code{SpatRaster} objects), preserving their
-structure appropriately.
+suffixes; when they are the same (including symbols evaluated to scalars), a
+single column is used with the argument name alone. The function dynamically
+handles scalars, call objects, and complex objects (e.g., \code{lm} models,
+\code{SpatRaster} objects), preserving their structure appropriately.
 }
 \details{
-This function must be called from within another function. It uses
-\code{sys.call(-1)} to capture the parent function’s call, evaluates arguments
-in the parent environment, and combines them with default values from the
-parent function’s formal arguments. Unevaluated expressions (e.g., \code{a + b})
-are preserved as \code{call} objects, while evaluated values are kept as-is for
-scalars or wrapped in lists for complex objects. Columns are ordered based
-on the original argument sequence: single columns (for matching values)
-appear first, followed by \verb{_orig} and \verb{_eval} pairs (for differing values)
+This function must be called from within another function. It
+captures the parent function’s call using either a provided \code{call} argument
+or \code{sys.call(-1)}, evaluates arguments in the specified or default parent
+environment, and combines them with default values from the parent
+function’s formal arguments. Unevaluated expressions (e.g., \code{a + b}) are
+preserved as character strings via \code{deparse()}, while scalars (including
+symbols like \code{i} in loops that evaluate to scalars) and complex objects
+(e.g., \code{lm}, \code{SpatRaster}) are handled appropriately:
+\itemize{
+\item Symbols (e.g., \code{i} in \code{lapply}) are treated as matching their evaluated
+scalar values, resulting in a single column.
+\item Calls (e.g., \code{a + b}) result in \verb{_orig}/\verb{_eval} pairs.
+\item Complex objects are wrapped in lists in \verb{_eval} columns.
+Columns are ordered based on the original argument sequence: single columns
+(for matching values) appear first, followed by \verb{_orig} and \verb{_eval} pairs
 in that order.
+}
 }
 \examples{
 a <- 5
 b <- 3
+
 Function1 <- function(w = 5, x, y, z = 10) {
-  Args <- RecordArgs()
+  Args <- IASDT.R::RecordArgs(call = match.call(), env = parent.frame())
   return(Args)
 }
 
@@ -66,28 +87,59 @@ Function1 <- function(w = 5, x, y, z = 10) {
 
 # Basic usage with scalars and expressions
 Out1 <- Function1(x = a + b, y = 2)
-Out1$w              # 5 (single column, same as orig and eval)
-Out1$x_orig         # call object: a + b
-Out1$x_eval         # 8
-Out1$y              # 2 (single column)
-Out1$z              # 10 (single column)
+
+Out1
+
+Out1$w              # 5 (single column, default matches evaluated)
+Out1$x_orig         # "a + b" (unevaluated expression)
+Out1$x_eval         # 8 (evaluated result)
+Out1$y              # 2 (single column, scalar matches evaluated)
+Out1$z              # 10 (single column, default matches evaluated)
 
 # --------------------------------------------------------------
 
-#' # Usage with complex objects (lm and SpatRaster)
+# Usage with complex objects (lm and Raster)
 Out2 <- Function1(
   w = 10,
   x = a + b,
   y = stats::lm(mpg ~ disp + hp, data = mtcars),
-  z = terra::rast(system.file("ex/logo.tif", package = "terra")))
-Out2$w              # 10 (single column)
-Out2$x_orig         # call object: a + b
-Out2$x_eval         # 8
-Out2$y_orig         # call object: lm(mpg ~ disp + hp, data = mtcars)
-Out2$y_eval[[1]]    # lm object
-Out2$z_orig         # call object: terra::rast(system.file(...))
-Out2$z_eval[[1]]    # SpatRaster object
+  z = raster::raster())
 
+Out2
+
+Out2$w              # 10 (single column)
+Out2$x_orig         # "a + b" (unevaluated expression)
+Out2$x_eval         # 8 (evaluated result)
+Out2$y_orig         # "stats::lm(mpg ~ disp + hp, data = mtcars)"
+Out2$y_eval[[1]]    # lm object
+Out2$z_orig         # "raster::raster()"
+Out2$z_eval[[1]]    # RasterLayer object
+
+# --------------------------------------------------------------
+
+# Usage with purrr::pmap for multiple inputs
+w_values <- 1:3
+x_values <- c(a + b, 10, 15)
+y_values <- c("ABCD", "XYZ123", "TEST")
+Out3 <- purrr::pmap(
+  .l = list(w = w_values, x = x_values, y = y_values),
+  .f = function(w, x, y) {
+    Function1(
+      w = w,
+      x = x,
+      y = stringr::str_extract(y, "B.+$"),
+      z = terra::rast(system.file("ex/elev.tif", package="terra")))
+  }) \%>\%
+  dplyr::bind_rows()
+
+Out3
+
+Out3$w        # 1, 2, 3
+Out3$x        # 8, 10, 15
+Out3$y_orig   # 'stringr::str_extract(y, "B.+$")', repeated for each row
+Out3$y_eval   # "BCD", NA, NA
+Out3$z_orig   # "terra::rast(...))", repeated for each row
+Out3$z_eval   # Packed SpatRaster, repeated for each row
 }
 \author{
 Ahmed El-Gabbas

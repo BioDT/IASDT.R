@@ -129,7 +129,6 @@ Mod_Postprocess_1_CPU <- function(
     PlotWidth_Beta = 25, PlotHeight_Beta = 35) {
 
   .StartTime <- lubridate::now(tzone = "CET")
-  Path_Model <- NULL
 
   # ****************************************************************
 
@@ -199,17 +198,9 @@ Mod_Postprocess_1_CPU <- function(
 
   # ****************************************************************
 
-  # # Load environment variables, for project ID
-  EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
-    "Path_Model", "DP_R_Model_path", TRUE, FALSE)
-  # Assign environment variables and check file and paths
-  IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
-
   IASDT.R::RecordArgs(
     call = match.call(), env = parent.frame(),
-    ExportPath = IASDT.R::Path(Path_Model, "Args_Mod_Postprocess_1_CPU.RData"))
+    ExportPath = IASDT.R::Path(ModelDir, "Args_Mod_Postprocess_1_CPU.RData"))
 
   # ****************************************************************
 
@@ -781,8 +772,6 @@ Mod_Postprocess_2_CPU <- function(
 
   .StartTime <- lubridate::now(tzone = "CET")
 
-  Path_Model <- NULL
-
   # ****************************************************************
 
   Ch1 <- function(Text) {
@@ -865,17 +854,9 @@ Mod_Postprocess_2_CPU <- function(
 
   # ****************************************************************
 
-  # # Load environment variables, for project ID
-  EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
-    "Path_Model", "DP_R_Model_path", TRUE, FALSE)
-  # Assign environment variables and check file and paths
-  IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
-
   IASDT.R::RecordArgs(
     call = match.call(), env = parent.frame(),
-    ExportPath = IASDT.R::Path(Path_Model, "Args_Mod_Postprocess_2_CPU.RData"))
+    ExportPath = IASDT.R::Path(ModelDir, "Args_Mod_Postprocess_2_CPU.RData"))
 
   # ****************************************************************
 

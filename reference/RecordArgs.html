@@ -127,10 +127,13 @@ or <code>sys.call(-1)</code>, evaluates arguments in the specified or default pa
 environment, and combines them with default values from the parent
 function’s formal arguments. Unevaluated expressions (e.g., <code>a + b</code>) are
 preserved as character strings via <code><a href="https://rdrr.io/r/base/deparse.html" class="external-link">deparse()</a></code>, while scalars (including
-symbols like <code>i</code> in loops that evaluate to scalars) and complex objects
-(e.g., <code>lm</code>, <code>SpatRaster</code>) are handled appropriately:</p><ul><li><p>Symbols (e.g., <code>i</code> in <code>lapply</code>) are treated as matching their evaluated
+symbols like <code>i</code> in loops that evaluate to scalars), multi-element vectors
+(e.g., <code>c(1, 2)</code>), and complex objects (e.g., <code>lm</code>, <code>SpatRaster</code>) are
+handled appropriately:</p><ul><li><p>Symbols (e.g., <code>i</code> in <code>lapply</code>) are treated as matching their evaluated
 scalar values, resulting in a single column.</p></li>
 <li><p>Calls (e.g., <code>a + b</code>) result in <code>_orig</code>/<code>_eval</code> pairs.</p></li>
+<li><p>Multi-element vectors (e.g., <code>c(1, 2)</code>) result in a single column when
+unevaluated and evaluated forms match, or <code>_orig</code>/<code>_eval</code> pairs otherwise.</p></li>
 <li><p>Complex objects are wrapped in lists in <code>_eval</code> columns.
 Columns are ordered based on the original argument sequence: single columns
 (for matching values) appear first, followed by <code>_orig</code> and <code>_eval</code> pairs
@@ -146,21 +149,19 @@ in that order.</p></li>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">a</span> <span class="op">&lt;-</span> <span class="fl">5</span></span></span>
 <span class="r-in"><span><span class="va">b</span> <span class="op">&lt;-</span> <span class="fl">3</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">Function1</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">w</span> <span class="op">=</span> <span class="fl">5</span>, <span class="va">x</span>, <span class="va">y</span>, <span class="va">z</span> <span class="op">=</span> <span class="fl">10</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span><span class="va">Function1</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">w</span> <span class="op">=</span> <span class="fl">5</span>, <span class="va">x</span>, <span class="va">y</span>, <span class="va">z</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
 <span class="r-in"><span>  <span class="va">Args</span> <span class="op">&lt;-</span> <span class="fu">IASDT.R</span><span class="fu">::</span><span class="fu">RecordArgs</span><span class="op">(</span>call <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/match.call.html" class="external-link">match.call</a></span><span class="op">(</span><span class="op">)</span>, env <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sys.parent.html" class="external-link">parent.frame</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="va">Args</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># --------------------------------------------------------------</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Basic usage with scalars and expressions</span></span></span>
 <span class="r-in"><span><span class="va">Out1</span> <span class="op">&lt;-</span> <span class="fu">Function1</span><span class="op">(</span>x <span class="op">=</span> <span class="va">a</span> <span class="op">+</span> <span class="va">b</span>, y <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">Out1</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 5</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       w x_orig    x_eval     y     z</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;noquote&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>     5 a + b          8     2    10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 6</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       w x_orig    x_eval     y z_orig    z_eval   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;noquote&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;noquote&gt;</span> <span style="color: #949494; font-style: italic;">&lt;list&gt;</span>   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>     5 a + b          8     2 c(1, 2)   <span style="color: #949494;">&lt;dbl [2]&gt;</span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">Out1</span><span class="op">$</span><span class="va">w</span>              <span class="co"># 5 (single column, default matches evaluated)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 5</span>
@@ -170,8 +171,12 @@ in that order.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 8</span>
 <span class="r-in"><span><span class="va">Out1</span><span class="op">$</span><span class="va">y</span>              <span class="co"># 2 (single column, scalar matches evaluated)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 2</span>
-<span class="r-in"><span><span class="va">Out1</span><span class="op">$</span><span class="va">z</span>              <span class="co"># 10 (single column, default matches evaluated)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 10</span>
+<span class="r-in"><span><span class="va">Out1</span><span class="op">$</span><span class="va">z_orig</span>         <span class="co"># "c(1, 2)"</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] c(1, 2)</span>
+<span class="r-in"><span><span class="va">Out1</span><span class="op">$</span><span class="va">z_eval</span>         <span class="co"># c(1, 2) (single column, default matches evaluated)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [[1]]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1 2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># --------------------------------------------------------------</span></span></span>
 <span class="r-in"><span></span></span>

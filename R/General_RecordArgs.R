@@ -189,7 +189,7 @@ RecordArgs <- function(ExportPath = NULL, call = NULL, env = NULL) {
 
   # Identify which arguments have identical unevaluated and evaluated values
   # - Calls (e.g., a + b) are always different
-  # - Symbols (e.g., i in loops) are treated as matching their evaluated scalar
+  # - Symbols (e.g., i in loops) match their evaluated scalar
   # - Scalars and defaults are compared directly
   same_values <- purrr::map2_lgl(
     # Coerce pairlist to list for purrr compatibility
@@ -199,7 +199,7 @@ RecordArgs <- function(ExportPath = NULL, call = NULL, env = NULL) {
       # Calls always differ from evaluated
       if (is.call(u)) return(FALSE)
       # Symbols match their evaluated value
-      if (is.symbol(u)) return(identical(e, e))
+      if (is.symbol(u)) return(identical(u, e))
       # Direct comparison for scalars and defaults
       identical(u, e)
     })
@@ -281,10 +281,18 @@ RecordArgs <- function(ExportPath = NULL, call = NULL, env = NULL) {
 
   # Combine all values into a named list for tibble construction
   tibble_data <- c(
-    # Unevaluated differing values
-    stats::setNames(uneval_values[diff_cols], uneval_cols),
-    # Evaluated differing values
-    stats::setNames(eval_values[diff_cols], eval_cols),
+    # Unevaluated differing values, only if diff_cols is non-empty
+    if (length(diff_cols) > 0) {
+      stats::setNames(uneval_values[diff_cols], uneval_cols)
+    } else {
+      NULL
+    },
+    # Evaluated differing values, only if diff_cols is non-empty
+    if (length(diff_cols) > 0) {
+      stats::setNames(eval_values[diff_cols], eval_cols)
+    } else {
+      NULL
+    },
     # Single columns for matching values
     stats::setNames(eval_values[single_cols], single_cols))
 

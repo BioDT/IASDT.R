@@ -125,13 +125,7 @@ Mod_Merge_Chains <- function(
 
   # # ..................................................................... ###
 
-  Model_Info2 <- IASDT.R::LoadAs(Path_ModInfo) %>%
-    dplyr::mutate(
-      # Check if any posterior files is missing
-      Post_Missing = purrr::map_lgl(
-        .x = Post_Path, .f = ~ !any(file.exists(.x))),
-      # delete these columns if already exist from previous function execution
-      Path_FittedMod = NULL, Path_Coda = NULL)
+  Model_Info2 <- IASDT.R::LoadAs(Path_ModInfo)
 
   # Prepare working on parallel -----
   if (NCores == 1) {
@@ -146,6 +140,38 @@ Mod_Merge_Chains <- function(
     on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
   }
 
+
+  # Check if any posterior files is missing
+  Model_Info2 <- Model_Info2 %>%
+    dplyr::mutate(
+      Post_Missing = furrr::future_map_lgl(
+        .x = Post_Path,
+        .f = function(x){
+
+          purrr::map_lgl(
+            .x = as.character(x),
+            .f = function(y) {
+
+              if (isFALSE(fs::file_exists(y))) {
+
+                return(TRUE)
+
+              } else {
+
+                if (IASDT.R::CheckRDS(y)) {
+                  return(FALSE)
+                } else {
+                  fs::file_delete(y)
+                  return(TRUE)
+                }
+
+              }
+            }) %>%
+            any()
+        }),
+      # delete these columns if already exist from previous function execution
+      Path_FittedMod = NULL, Path_Coda = NULL)
+
   # # ..................................................................... ###
 
   # Merge posteriors and save as Hmsc model / coda object
@@ -155,9 +181,10 @@ Mod_Merge_Chains <- function(
     FUN = function(x) {
 
       if (Model_Info2$Post_Missing[[x]]) {
-        return(list(
-          Path_FittedMod = NA_character_,
-          Path_Coda = NA_character_, Post_Aligned2 = NA))
+        return(
+          list(
+            Path_FittedMod = NA_character_,
+            Path_Coda = NA_character_, Post_Aligned2 = NA))
       }
 
       # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -272,7 +299,8 @@ Mod_Merge_Chains <- function(
     },
     future.scheduling = Inf, future.seed = TRUE,
     future.globals = c(
-      "Model_Info2", "Path_Fitted_Models", "FromJSON", "Path_Coda"),
+      "Extension", "Model_Info2", "Path_Fitted_Models",
+      "FromJSON", "Path_Coda"),
     future.packages = c("Hmsc", "coda", "purrr", "IASDT.R", "dplyr"))
 
   if (NCores > 1) {

@@ -132,7 +132,8 @@ DT <- tibble::tribble(
   "DP_R_PA", "Species distribution", "Directory path to species-specific presence-absence data", "datasets/processed/IAS_PA",
   "DP_R_HabAff", "Taxa information", "Path to `rds` file containing species affinity to habitat types", "references/taxon-habitat-combined_2024-02-07.rds",
   "DP_R_Taxa_country", "Taxa information", "Path to excel file containing the number of grid cells per species and country", "references/cell_count_per_species_and_country_2024-01-30-IA-VK-MG.xlsx",
-  "DP_R_Taxa_easin", "Taxa information", "Path to `rds` file containing EASIN standardized taxonomy", "references/easin_taxon-list-gbif_2024-02-07.rds") %>% 
+  "DP_R_Taxa_easin", "Taxa information", "Path to `rds` file containing EASIN standardized taxonomy", "references/easin_taxon-list-gbif_2024-02-07.rds",
+  "DP_R_OPeNDAP_url", "", "Path to OpENDAP server for the `IAS-pDT`", "http://opendap.biodt.eu/ias-pdt/") %>% 
   dplyr::mutate(
     Variable = paste0("<cc>", Variable, "</cc>"),
     Category = NULL,

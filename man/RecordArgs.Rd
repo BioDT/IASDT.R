@@ -62,12 +62,15 @@ or \code{sys.call(-1)}, evaluates arguments in the specified or default parent
 environment, and combines them with default values from the parent
 function’s formal arguments. Unevaluated expressions (e.g., \code{a + b}) are
 preserved as character strings via \code{deparse()}, while scalars (including
-symbols like \code{i} in loops that evaluate to scalars) and complex objects
-(e.g., \code{lm}, \code{SpatRaster}) are handled appropriately:
+symbols like \code{i} in loops that evaluate to scalars), multi-element vectors
+(e.g., \code{c(1, 2)}), and complex objects (e.g., \code{lm}, \code{SpatRaster}) are
+handled appropriately:
 \itemize{
 \item Symbols (e.g., \code{i} in \code{lapply}) are treated as matching their evaluated
 scalar values, resulting in a single column.
 \item Calls (e.g., \code{a + b}) result in \verb{_orig}/\verb{_eval} pairs.
+\item Multi-element vectors (e.g., \code{c(1, 2)}) result in a single column when
+unevaluated and evaluated forms match, or \verb{_orig}/\verb{_eval} pairs otherwise.
 \item Complex objects are wrapped in lists in \verb{_eval} columns.
 Columns are ordered based on the original argument sequence: single columns
 (for matching values) appear first, followed by \verb{_orig} and \verb{_eval} pairs
@@ -78,12 +81,10 @@ in that order.
 a <- 5
 b <- 3
 
-Function1 <- function(w = 5, x, y, z = 10) {
+Function1 <- function(w = 5, x, y, z = c(1, 2)) {
   Args <- IASDT.R::RecordArgs(call = match.call(), env = parent.frame())
   return(Args)
 }
-
-# --------------------------------------------------------------
 
 # Basic usage with scalars and expressions
 Out1 <- Function1(x = a + b, y = 2)
@@ -94,7 +95,8 @@ Out1$w              # 5 (single column, default matches evaluated)
 Out1$x_orig         # "a + b" (unevaluated expression)
 Out1$x_eval         # 8 (evaluated result)
 Out1$y              # 2 (single column, scalar matches evaluated)
-Out1$z              # 10 (single column, default matches evaluated)
+Out1$z_orig         # "c(1, 2)"
+Out1$z_eval         # c(1, 2) (single column, default matches evaluated)
 
 # --------------------------------------------------------------
 

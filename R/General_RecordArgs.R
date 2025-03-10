@@ -33,11 +33,14 @@
 #'   environment, and combines them with default values from the parent
 #'   function’s formal arguments. Unevaluated expressions (e.g., `a + b`) are
 #'   preserved as character strings via `deparse()`, while scalars (including
-#'   symbols like `i` in loops that evaluate to scalars) and complex objects
-#'   (e.g., `lm`, `SpatRaster`) are handled appropriately:
+#'   symbols like `i` in loops that evaluate to scalars), multi-element vectors
+#'   (e.g., `c(1, 2)`), and complex objects (e.g., `lm`, `SpatRaster`) are
+#'   handled appropriately:
 #'   - Symbols (e.g., `i` in `lapply`) are treated as matching their evaluated
 #'   scalar values, resulting in a single column.
 #'   - Calls (e.g., `a + b`) result in `_orig`/`_eval` pairs.
+#'   - Multi-element vectors (e.g., `c(1, 2)`) result in a single column when
+#'   unevaluated and evaluated forms match, or `_orig`/`_eval` pairs otherwise.
 #'   - Complex objects are wrapped in lists in `_eval` columns.
 #'   Columns are ordered based on the original argument sequence: single columns
 #'   (for matching values) appear first, followed by `_orig` and `_eval` pairs
@@ -67,12 +70,10 @@
 #' a <- 5
 #' b <- 3
 #'
-#' Function1 <- function(w = 5, x, y, z = 10) {
+#' Function1 <- function(w = 5, x, y, z = c(1, 2)) {
 #'   Args <- IASDT.R::RecordArgs(call = match.call(), env = parent.frame())
 #'   return(Args)
 #' }
-#'
-#' # --------------------------------------------------------------
 #'
 #' # Basic usage with scalars and expressions
 #' Out1 <- Function1(x = a + b, y = 2)
@@ -83,7 +84,8 @@
 #' Out1$x_orig         # "a + b" (unevaluated expression)
 #' Out1$x_eval         # 8 (evaluated result)
 #' Out1$y              # 2 (single column, scalar matches evaluated)
-#' Out1$z              # 10 (single column, default matches evaluated)
+#' Out1$z_orig         # "c(1, 2)"
+#' Out1$z_eval         # c(1, 2) (single column, default matches evaluated)
 #'
 #' # --------------------------------------------------------------
 #'
@@ -134,17 +136,17 @@ RecordArgs <- function(ExportPath = NULL, call = NULL, env = NULL) {
 
   # Capture the parent function's call: use provided call (e.g., from
   # match.call()) or fall back to sys.call(-1) for direct calls
-  call_info <- if (!is.null(call)) call else sys.call(-1)
+  call_info <- if (!is.null(call)) {
+    call
+  }  else {
+    sys.call(-1)
+  }
 
   # Check if call_info is valid; stop if not called within a function
   if (is.null(call_info)) {
     stop(
       "RecordArgs() must be called from within another function", call. = FALSE)
   }
-
-  # Extract the arguments from the call, excluding the function name (first
-  # element)
-  args_list <- as.list(call_info)[-1]
 
   # Get the name of the calling function as a character string
   calling_func <- deparse(call_info[[1]])
@@ -157,8 +159,20 @@ RecordArgs <- function(ExportPath = NULL, call = NULL, env = NULL) {
   parent_func <- sys.function(-1)
   formals_full <- formals(parent_func)
 
-  # Evaluate the captured arguments in the parent environment
-  args_values <- lapply(args_list, eval, envir = parent_env)
+  # Extract the arguments from the call, excluding the function name (first
+  # element), and preserve defaults for missing arguments
+  args_list <- as.list(call_info)[-1]
+  args_list <- utils::modifyList(formals_full, args_list)
+
+  # Evaluate the captured arguments in the parent environment, handling all
+  # cases safely
+  args_values <- lapply(args_list, function(x) {
+    tryCatch(eval(x, envir = parent_env), error = function(e) {
+      # If evaluation fails in parent_env, try globalenv() to resolve globals
+      # (e.g., 'a' and 'b' in 'a + b')
+      tryCatch(eval(x, envir = globalenv()), error = function(e2) NA)
+    })
+  })
 
   # Name the evaluated values with their corresponding argument names
   recorded_values <- stats::setNames(args_values, names(args_list))
@@ -207,14 +221,28 @@ RecordArgs <- function(ExportPath = NULL, call = NULL, env = NULL) {
   # e.g., "x_orig" (unevaluated forms)
   uneval_cols <- paste0(diff_cols, "_orig")
 
-  # Format evaluated values: scalars as-is, complex objects (e.g., SpatRaster)
-  # wrapped in lists
+  # Format evaluated values: scalars as-is (e.g., 5, 8, NA), multi-element
+  # vectors (e.g., c(1, 2)) and complex objects in lists
   eval_values <- purrr::map(
     .x = as.list(Evaluated),
     .f = function(x) {
-      if (is.vector(x) && length(x) == 1 && !is.list(x)) {
-        # Scalars remain as-is (e.g., 8, "BCD")
-        return(x)
+      if (is.vector(x) && !is.list(x)) {
+        if (length(x) == 1) {
+          # Scalars (e.g., 5, 8, NA) remain as-is
+          return(x)
+        } else {
+          # Multi-element vectors (e.g., c(1, 2)) wrapped in a list
+          return(list(x))
+        }
+      } else if (is.language(x)) {
+        # Evaluate language objects and handle based on length
+        eval_result <- eval(x, envir = parent_env)
+        if (is.vector(eval_result) && !is.list(eval_result) &&
+            length(eval_result) == 1) {
+          return(eval_result)
+        } else {
+          return(list(eval_result))
+        }
       } else {
         if (inherits(x, "SpatRaster")) {
           # Wrap SpatRaster objects for storage
@@ -225,17 +253,22 @@ RecordArgs <- function(ExportPath = NULL, call = NULL, env = NULL) {
       }
     })
 
-  # Format unevaluated values: calls as character strings, scalars as-is,
-  # complex objects in lists
+  # Format unevaluated values: calls as strings (e.g., "a + b"), scalars as-is
+  # (e.g., 5), multi-element vectors (e.g., c(1, 2)) in lists
   uneval_values <- purrr::map(
     .x = as.list(Unevaluated),
     .f = function(x) {
       if (is.call(x)) {
         # Convert calls (e.g., a + b) to strings without quotes
         return(noquote(deparse(x)))
-      } else if (is.vector(x) && length(x) == 1 && !is.list(x)) {
-        # Scalars (e.g., 2, 10) remain as-is
-        return(x)
+      } else if (is.vector(x) && !is.list(x)) {
+        if (length(x) == 1) {
+          # Scalars (e.g., 5) remain as-is
+          return(x)
+        } else {
+          # Multi-element vectors (e.g., c(1, 2)) wrapped in a list
+          return(list(x))
+        }
       } else {
         if (inherits(x, "SpatRaster")) {
           # Wrap SpatRaster objects

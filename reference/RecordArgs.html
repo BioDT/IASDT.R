@@ -238,17 +238,19 @@ in that order.</p></li>
 <span class="r-in"><span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">Out3</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 3 × 6</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       w     x y_orig                          y_eval z_orig           z_eval    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;noquote&gt;</span>                       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;noquote&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;list&gt;</span>    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>     1     8 stringr::str_extract(y, "B.+$") BCD    terra::rast(sys… <span style="color: #949494;">&lt;PckdSptR&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>     2    10 stringr::str_extract(y, "B.+$") <span style="color: #BB0000;">NA</span>     terra::rast(sys… <span style="color: #949494;">&lt;PckdSptR&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>     3    15 stringr::str_extract(y, "B.+$") <span style="color: #BB0000;">NA</span>     terra::rast(sys… <span style="color: #949494;">&lt;PckdSptR&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 3 × 8</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   w_orig w_eval x_orig x_eval y_orig                    y_eval z_orig z_eval    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;list&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;list&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;noquote&gt;</span>                 <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;noqu&gt;</span> <span style="color: #949494; font-style: italic;">&lt;list&gt;</span>    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> <span style="color: #949494;">&lt;sym&gt;</span>       1 <span style="color: #949494;">&lt;sym&gt;</span>       8 stringr::str_extract(y, … BCD    terra… <span style="color: #949494;">&lt;PckdSptR&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> <span style="color: #949494;">&lt;sym&gt;</span>       2 <span style="color: #949494;">&lt;sym&gt;</span>      10 stringr::str_extract(y, … <span style="color: #BB0000;">NA</span>     terra… <span style="color: #949494;">&lt;PckdSptR&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> <span style="color: #949494;">&lt;sym&gt;</span>       3 <span style="color: #949494;">&lt;sym&gt;</span>      15 stringr::str_extract(y, … <span style="color: #BB0000;">NA</span>     terra… <span style="color: #949494;">&lt;PckdSptR&gt;</span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">Out3</span><span class="op">$</span><span class="va">w</span>        <span class="co"># 1, 2, 3</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1 2 3</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Unknown or uninitialised column: `w`.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
 <span class="r-in"><span><span class="va">Out3</span><span class="op">$</span><span class="va">x</span>        <span class="co"># 8, 10, 15</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1]  8 10 15</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Unknown or uninitialised column: `x`.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
 <span class="r-in"><span><span class="va">Out3</span><span class="op">$</span><span class="va">y_orig</span>   <span class="co"># 'stringr::str_extract(y, "B.+$")', repeated for each row</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] stringr::str_extract(y, "B.+$") stringr::str_extract(y, "B.+$")</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [3] stringr::str_extract(y, "B.+$")</span>

@@ -13,10 +13,11 @@
 #' handles scalars, call objects, and complex objects (e.g., `lm` models,
 #' `SpatRaster` objects), preserving their structure appropriately.
 #'
-#' @param ExportPath Character. The path to an `.RData` file where the tibble
-#'   will be exported. If `NULL` (default), the tibble is returned without
-#'   saving. If provided, the tibble is saved to the specified file and `NULL`
-#'   is returned invisibly.
+#' @param ExportPath Character. The path to an `.RData` file where the output
+#'   tibble will be exported. If `NULL` (default), the tibble is returned
+#'   without saving. If provided, the tibble is saved to the specified file and
+#'   `NULL` is returned invisibly.
+#'
 #' @param call Language object (optional). The call to the parent function, as
 #'   provided by `match.call()` from the caller. If `NULL` (default), the
 #'   function falls back to `sys.call(-1)` to capture the parent call. Used to
@@ -27,24 +28,26 @@
 #'   `NULL` (default), the function uses `parent.frame()` to determine the
 #'   evaluation environment. Used to resolve variables in iterative contexts.
 #'
-#' @details This function must be called from within another function. It
-#'   captures the parent function’s call using either a provided `call` argument
-#'   or `sys.call(-1)`, evaluates arguments in the specified or default parent
-#'   environment, and combines them with default values from the parent
-#'   function’s formal arguments. Unevaluated expressions (e.g., `a + b`) are
-#'   preserved as character strings via `deparse()`, while scalars (including
-#'   symbols like `i` in loops that evaluate to scalars), multi-element vectors
-#'   (e.g., `c(1, 2)`), and complex objects (e.g., `lm`, `SpatRaster`) are
-#'   handled appropriately:
-#'   - Symbols (e.g., `i` in `lapply`) are treated as matching their evaluated
-#'   scalar values, resulting in a single column.
-#'   - Calls (e.g., `a + b`) result in `_orig`/`_eval` pairs.
-#'   - Multi-element vectors (e.g., `c(1, 2)`) result in a single column when
-#'   unevaluated and evaluated forms match, or `_orig`/`_eval` pairs otherwise.
-#'   - Complex objects are wrapped in lists in `_eval` columns.
-#'   Columns are ordered based on the original argument sequence: single columns
-#'   (for matching values) appear first, followed by `_orig` and `_eval` pairs
-#'   in that order.
+#' @details This function must be called within another function to capture and
+#'   record the parent function’s arguments. It uses either a provided `call`
+#'   (e.g., from `match.call()`) or `sys.call(-1)` to retrieve the call,
+#'   evaluates arguments in the specified or default parent environment, and
+#'   merges them with the parent function’s formal argument defaults. The
+#'   handling of argument types is as follows:
+#'   - `NULL` values (e.g., from defaults or arguments) are converted to the
+#'   string `"NULL"` in the output tibble for compatibility.
+#'   - Symbols (e.g., `i` in `lapply`) match their evaluated scalar values,
+#'   appearing as single columns.
+#'   - Calls (e.g., `a + b`) are preserved as strings via `deparse()` in
+#'   `_orig` columns and evaluated in `_eval` columns.
+#'   - Multi-element vectors (e.g., `c(1, 2)`) appear as single columns if
+#'   unevaluated and evaluated forms match, otherwise as `_orig`/`_eval` pairs.
+#'   - Complex objects (e.g., `lm`, `SpatRaster`) are wrapped in list columns
+#'   in `_eval`.
+#'
+#'   The output tibble columns are ordered by the original argument sequence,
+#'   with single columns (matching values) first, followed by `_orig` and
+#'   `_eval` pairs.
 #'
 #' @return A `tibble` containing the unevaluated and evaluated forms of the
 #'   parent function’s arguments. Column naming depends on whether unevaluated
@@ -52,12 +55,14 @@
 #'   - **Single columns** (e.g., `y`): Used when unevaluated and evaluated
 #'   values are identical or effectively equivalent (e.g., scalars like `2`,
 #'   defaults like `10`, or symbols like `i` evaluating to `1` in loops),
-#'   containing the evaluated value as-is.
+#'   containing the evaluated value as-is; `NULL` is recorded as `"NULL"`.
 #'   - **Paired columns** (e.g., `x_orig`, `x_eval`):
 #'     - `*_orig`: Unevaluated expressions as character strings (e.g.,
-#'   `"a + b"`) or scalars as-is for non-call objects.
+#'   `"a + b"`) or scalars as-is for non-call objects; `NULL` is recorded as
+#'   `"NULL"`.
 #'     - `*_eval`: Evaluated values, either scalars (e.g., `8`) or list columns
-#'   for complex objects (e.g., `lm`, `SpatRaster`).
+#'   for complex objects (e.g., `lm`, `SpatRaster`); `NULL` is recorded as
+#'   `"NULL"`.
 #'
 #'   If `ExportPath` is `NULL` (default), the tibble is returned. If provided,
 #'   the tibble is saved to the specified `.RData` file and `NULL` is returned
@@ -89,22 +94,22 @@
 #'
 #' # --------------------------------------------------------------
 #'
-#' # Usage with complex objects (lm and Raster)
+#' # Usage with NULL, scalars, and complex objects (lm and Raster)
 #' Out2 <- Function1(
-#'   w = 10,
+#'   w = NULL,
 #'   x = a + b,
 #'   y = stats::lm(mpg ~ disp + hp, data = mtcars),
 #'   z = raster::raster())
 #'
 #' Out2
 #'
-#' Out2$w              # 10 (single column)
-#' Out2$x_orig         # "a + b" (unevaluated expression)
-#' Out2$x_eval         # 8 (evaluated result)
-#' Out2$y_orig         # "stats::lm(mpg ~ disp + hp, data = mtcars)"
-#' Out2$y_eval[[1]]    # lm object
-#' Out2$z_orig         # "raster::raster()"
-#' Out2$z_eval[[1]]    # RasterLayer object
+#' Out2$w              # "NULL" (recorded as character string)
+#' Out2$x_orig         # "a + b" (unevaluated call)
+#' Out2$x_eval         # 8 (evaluated scalar)
+#' Out2$y_orig         # "stats::lm(mpg ~ disp + hp, data = mtcars)" (call)
+#' Out2$y_eval[[1]]    # <lm object> (evaluated complex object)
+#' Out2$z_orig         # "raster::raster()" (call)
+#' Out2$z_eval[[1]]    # <RasterLayer object> (evaluated complex object)
 #'
 #' # --------------------------------------------------------------
 #'
@@ -151,18 +156,27 @@ RecordArgs <- function(ExportPath = NULL, call = NULL, env = NULL) {
   # Get the name of the calling function as a character string
   calling_func <- deparse(call_info[[1]])
 
-  # Determine the environment for evaluation: use provided env (e.g., from
-  # parent.frame()) or default to the immediate parent environment
-  parent_env <- if (!is.null(env)) env else parent.frame()
+  # Determine the environment for evaluation: use provided env or default to
+  # parent.frame()
+  parent_env <- env %||% parent.frame()
 
   # Retrieve the parent function and its formal arguments (including defaults)
   parent_func <- sys.function(-1)
   formals_full <- formals(parent_func)
 
+  # Replace NULL values with "NULL" for tibble compatibility
+  ReplaceNULL <- function(x) {
+    purrr::map(x, ~ if (is.null(.x)) "NULL" else .x) %>%
+      stats::setNames(names(x))
+  }
+
+
   # Extract the arguments from the call, excluding the function name (first
   # element), and preserve defaults for missing arguments
   args_list <- as.list(call_info)[-1]
-  args_list <- utils::modifyList(formals_full, args_list)
+  args_list <- utils::modifyList(formals_full, args_list) %>%
+    # Replace NULL values with "NULL" to avoid errors
+    ReplaceNULL()
 
   # Evaluate the captured arguments in the parent environment, handling all
   # cases safely
@@ -179,10 +193,14 @@ RecordArgs <- function(ExportPath = NULL, call = NULL, env = NULL) {
 
   # Merge evaluated values with defaults, overriding defaults with provided
   # values
-  Evaluated <- utils::modifyList(formals_full, recorded_values)
+  Evaluated <- utils::modifyList(formals_full, recorded_values) %>%
+    # Replace NULL values with "NULL" to avoid errors
+    ReplaceNULL()
 
   # Merge unevaluated expressions with defaults, keeping unevaluated forms
-  Unevaluated <- utils::modifyList(formals_full, args_list)
+  Unevaluated <- utils::modifyList(formals_full, args_list) %>%
+    # Replace NULL values with "NULL" to avoid errors
+    ReplaceNULL()
 
   # Get the argument names in their original order from the function definition
   arg_names <- names(formals_full)
@@ -284,14 +302,10 @@ RecordArgs <- function(ExportPath = NULL, call = NULL, env = NULL) {
     # Unevaluated differing values, only if diff_cols is non-empty
     if (length(diff_cols) > 0) {
       stats::setNames(uneval_values[diff_cols], uneval_cols)
-    } else {
-      NULL
     },
     # Evaluated differing values, only if diff_cols is non-empty
     if (length(diff_cols) > 0) {
       stats::setNames(eval_values[diff_cols], eval_cols)
-    } else {
-      NULL
     },
     # Single columns for matching values
     stats::setNames(eval_values[single_cols], single_cols))
@@ -323,6 +337,5 @@ RecordArgs <- function(ExportPath = NULL, call = NULL, env = NULL) {
       OutPath = ExportPath)
     # Return NULL invisibly after saving
     return(invisible(NULL))
-
   }
 }

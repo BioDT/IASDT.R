@@ -7,10 +7,10 @@
 RecordArgs(ExportPath = NULL, call = NULL, env = NULL)
 }
 \arguments{
-\item{ExportPath}{Character. The path to an \code{.RData} file where the tibble
-will be exported. If \code{NULL} (default), the tibble is returned without
-saving. If provided, the tibble is saved to the specified file and \code{NULL}
-is returned invisibly.}
+\item{ExportPath}{Character. The path to an \code{.RData} file where the output
+tibble will be exported. If \code{NULL} (default), the tibble is returned
+without saving. If provided, the tibble is saved to the specified file and
+\code{NULL} is returned invisibly.}
 
 \item{call}{Language object (optional). The call to the parent function, as
 provided by \code{match.call()} from the caller. If \code{NULL} (default), the
@@ -31,13 +31,15 @@ and evaluated values match:
 \item \strong{Single columns} (e.g., \code{y}): Used when unevaluated and evaluated
 values are identical or effectively equivalent (e.g., scalars like \code{2},
 defaults like \code{10}, or symbols like \code{i} evaluating to \code{1} in loops),
-containing the evaluated value as-is.
+containing the evaluated value as-is; \code{NULL} is recorded as \code{"NULL"}.
 \item \strong{Paired columns} (e.g., \code{x_orig}, \code{x_eval}):
 \itemize{
 \item \verb{*_orig}: Unevaluated expressions as character strings (e.g.,
-\code{"a + b"}) or scalars as-is for non-call objects.
+\code{"a + b"}) or scalars as-is for non-call objects; \code{NULL} is recorded as
+\code{"NULL"}.
 \item \verb{*_eval}: Evaluated values, either scalars (e.g., \code{8}) or list columns
-for complex objects (e.g., \code{lm}, \code{SpatRaster}).
+for complex objects (e.g., \code{lm}, \code{SpatRaster}); \code{NULL} is recorded as
+\code{"NULL"}.
 }
 }
 
@@ -56,26 +58,28 @@ handles scalars, call objects, and complex objects (e.g., \code{lm} models,
 \code{SpatRaster} objects), preserving their structure appropriately.
 }
 \details{
-This function must be called from within another function. It
-captures the parent function’s call using either a provided \code{call} argument
-or \code{sys.call(-1)}, evaluates arguments in the specified or default parent
-environment, and combines them with default values from the parent
-function’s formal arguments. Unevaluated expressions (e.g., \code{a + b}) are
-preserved as character strings via \code{deparse()}, while scalars (including
-symbols like \code{i} in loops that evaluate to scalars), multi-element vectors
-(e.g., \code{c(1, 2)}), and complex objects (e.g., \code{lm}, \code{SpatRaster}) are
-handled appropriately:
+This function must be called within another function to capture and
+record the parent function’s arguments. It uses either a provided \code{call}
+(e.g., from \code{match.call()}) or \code{sys.call(-1)} to retrieve the call,
+evaluates arguments in the specified or default parent environment, and
+merges them with the parent function’s formal argument defaults. The
+handling of argument types is as follows:
 \itemize{
-\item Symbols (e.g., \code{i} in \code{lapply}) are treated as matching their evaluated
-scalar values, resulting in a single column.
-\item Calls (e.g., \code{a + b}) result in \verb{_orig}/\verb{_eval} pairs.
-\item Multi-element vectors (e.g., \code{c(1, 2)}) result in a single column when
-unevaluated and evaluated forms match, or \verb{_orig}/\verb{_eval} pairs otherwise.
-\item Complex objects are wrapped in lists in \verb{_eval} columns.
-Columns are ordered based on the original argument sequence: single columns
-(for matching values) appear first, followed by \verb{_orig} and \verb{_eval} pairs
-in that order.
+\item \code{NULL} values (e.g., from defaults or arguments) are converted to the
+string \code{"NULL"} in the output tibble for compatibility.
+\item Symbols (e.g., \code{i} in \code{lapply}) match their evaluated scalar values,
+appearing as single columns.
+\item Calls (e.g., \code{a + b}) are preserved as strings via \code{deparse()} in
+\verb{_orig} columns and evaluated in \verb{_eval} columns.
+\item Multi-element vectors (e.g., \code{c(1, 2)}) appear as single columns if
+unevaluated and evaluated forms match, otherwise as \verb{_orig}/\verb{_eval} pairs.
+\item Complex objects (e.g., \code{lm}, \code{SpatRaster}) are wrapped in list columns
+in \verb{_eval}.
 }
+
+The output tibble columns are ordered by the original argument sequence,
+with single columns (matching values) first, followed by \verb{_orig} and
+\verb{_eval} pairs.
 }
 \examples{
 a <- 5
@@ -100,22 +104,22 @@ Out1$z_eval         # c(1, 2) (single column, default matches evaluated)
 
 # --------------------------------------------------------------
 
-# Usage with complex objects (lm and Raster)
+# Usage with NULL, scalars, and complex objects (lm and Raster)
 Out2 <- Function1(
-  w = 10,
+  w = NULL,
   x = a + b,
   y = stats::lm(mpg ~ disp + hp, data = mtcars),
   z = raster::raster())
 
 Out2
 
-Out2$w              # 10 (single column)
-Out2$x_orig         # "a + b" (unevaluated expression)
-Out2$x_eval         # 8 (evaluated result)
-Out2$y_orig         # "stats::lm(mpg ~ disp + hp, data = mtcars)"
-Out2$y_eval[[1]]    # lm object
-Out2$z_orig         # "raster::raster()"
-Out2$z_eval[[1]]    # RasterLayer object
+Out2$w              # "NULL" (recorded as character string)
+Out2$x_orig         # "a + b" (unevaluated call)
+Out2$x_eval         # 8 (evaluated scalar)
+Out2$y_orig         # "stats::lm(mpg ~ disp + hp, data = mtcars)" (call)
+Out2$y_eval[[1]]    # <lm object> (evaluated complex object)
+Out2$z_orig         # "raster::raster()" (call)
+Out2$z_eval[[1]]    # <RasterLayer object> (evaluated complex object)
 
 # --------------------------------------------------------------
 

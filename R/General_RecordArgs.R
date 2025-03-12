@@ -170,15 +170,33 @@ RecordArgs <- function(ExportPath = NULL) {
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
 
   # Evaluate each argument in the parent environment, with fallback to global
-  # environment
+  # environment, converting NULL defaults to scalar "NULL" for tibble
+  # compatibility
+
   evaluated_args <- lapply(combined_args, function(arg) {
     tryCatch(
       # Try evaluating the argument in the grandparent environment
-      eval(arg, envir = parent_env),
+      {
+        result <- eval(arg, envir = parent_env)
+        if (is.null(result)) {
+          # Convert NULL results (e.g., from default arguments) to scalar "NULL"
+          "NULL"
+        } else {
+          result
+        }
+      },
       error = function(e) {
         # If it fails, try the global environment as a fallback
         tryCatch(
-          eval(arg, envir = globalenv()),
+          {
+            result <- eval(arg, envir = globalenv())
+            if (is.null(result)) {
+              # Convert NULL results to scalar "NULL" in fallback case too
+              "NULL"
+            } else {
+              result
+            }
+          },
           error = function(e2) {
             # Return NA if evaluation fails in both environments
             NA

@@ -199,7 +199,6 @@ Mod_Postprocess_1_CPU <- function(
   # ****************************************************************
 
   IASDT.R::RecordArgs(
-    call = match.call(), env = parent.frame(),
     ExportPath = IASDT.R::Path(ModelDir, "Args_Mod_Postprocess_1_CPU.RData"))
 
   # ****************************************************************
@@ -447,7 +446,6 @@ Mod_Prep_TF <- function(
   rm(EnvVars2Read, envir = environment())
 
   IASDT.R::RecordArgs(
-    call = match.call(), env = parent.frame(),
     ExportPath = IASDT.R::Path(Path_Model, "Args_Mod_Prep_TF.RData"))
 
   # ****************************************************************
@@ -855,7 +853,6 @@ Mod_Postprocess_2_CPU <- function(
   # ****************************************************************
 
   IASDT.R::RecordArgs(
-    call = match.call(), env = parent.frame(),
     ExportPath = IASDT.R::Path(ModelDir, "Args_Mod_Postprocess_2_CPU.RData"))
 
   # ****************************************************************

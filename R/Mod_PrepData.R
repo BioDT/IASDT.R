@@ -102,7 +102,6 @@ Mod_PrepData <- function(
   fs::dir_create(Path_Model)
 
   IASDT.R::RecordArgs(
-    call = match.call(), env = parent.frame(),
     ExportPath = IASDT.R::Path(Path_Model, "Args_PrepData.RData"))
 
   # # ..................................................................... ###

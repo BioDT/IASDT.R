@@ -18,21 +18,6 @@ if (getRversion() >= "2.15.1") {
 #' @return The result of calling `rhs(lhs)`.
 NULL
 
-#' Null-coalescing operator
-#'
-#' See \code{rlang::\link[rlang:op-null-default]{\%||\%}} for details.
-#'
-#' @name %||%
-#' @rdname null_default
-#' @keywords internal
-#' @export
-#' @importFrom rlang %||%
-#' @usage lhs \%||\% rhs
-#' @param lhs Any R object, typically checked for `NULL`.
-#' @param rhs A default value to return if `lhs` is `NULL`.
-#' @return `lhs` if it is not `NULL`, otherwise `rhs`.
-NULL
-
 
 #' @noRd
 .onAttach <- function(...) {
@@ -45,7 +30,6 @@ NULL
   packageStartupMessage(
     "IASDT.R v", packageVersionInfo,
     " - Last updated on ", packageDateInfo)
-
 }
 
 

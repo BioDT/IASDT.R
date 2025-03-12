@@ -78,14 +78,18 @@ CHELSA_Project <- function(
 
   # Land mask ------
 
-  # Extent to crop the maps prior to processing.
-  # This ensures that the object reads from the memory. See below
+  # The land mask layer was sourced from the CHELSA-W5E5 v1.0 dataset, provided
+  # as a NetCDF file. It was cropped to an extent encompassing the study area to
+  # reduce file size. The resulting land mask layer is exported as LandMask.nc
+  # and included as a data file within the package.
+  #
+  # source: CHELSA-W5E5 v1.0: W5E5 v1.0 downscaled with CHELSA v2.0
+  # https://data.isimip.org/10.48364/ISIMIP.836809.3 Version: 1.0.3
+
+  # Extent to crop the maps prior to processing. This ensures that the object
+  # reads from the memory. See below
   CropExtent <- terra::ext(-26, 37.5, 34, 72)
 
-  # source: CHELSA-W5E5 v1.0: W5E5 v1.0 downscaled with CHELSA v2.0
-  # https://data.isimip.org/10.48364/ISIMIP.836809.3
-  # Version: 1.0.3
-  # This file was copied to the package data to make it easier to use it
   LandMaskL <- system.file(
     "extdata", "LandMask.nc", package = "IASDT.R", mustWork = TRUE) %>%
     terra::rast() %>%

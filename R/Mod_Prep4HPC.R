@@ -312,7 +312,6 @@ Mod_Prep4HPC <- function(
   }
 
   IASDT.R::RecordArgs(
-    call = match.call(), env = parent.frame(),
     ExportPath = IASDT.R::Path(Path_Model, "Args_Prep4HPC.RData"))
 
   # # ..................................................................... ###

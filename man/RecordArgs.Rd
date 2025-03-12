@@ -2,150 +2,93 @@
 % Please edit documentation in R/General_RecordArgs.R
 \name{RecordArgs}
 \alias{RecordArgs}
-\title{Capture and record function arguments}
+\title{Capture and record evaluated function arguments}
 \usage{
-RecordArgs(ExportPath = NULL, call = NULL, env = NULL)
+RecordArgs(ExportPath = NULL)
 }
 \arguments{
 \item{ExportPath}{Character. The path to an \code{.RData} file where the output
 tibble will be exported. If \code{NULL} (default), the tibble is returned
 without saving. If provided, the tibble is saved to the specified file and
 \code{NULL} is returned invisibly.}
-
-\item{call}{Language object (optional). The call to the parent function, as
-provided by \code{match.call()} from the caller. If \code{NULL} (default), the
-function falls back to \code{sys.call(-1)} to capture the parent call. Used to
-ensure accurate argument capture in iterative contexts (e.g., \code{lapply},
-\code{purrr::map}).}
-
-\item{env}{Environment (optional). The environment in which to evaluate the
-arguments, typically provided by \code{parent.frame()} from the caller. If
-\code{NULL} (default), the function uses \code{parent.frame()} to determine the
-evaluation environment. Used to resolve variables in iterative contexts.}
 }
 \value{
-A \code{tibble} containing the unevaluated and evaluated forms of the
-parent function’s arguments. Column naming depends on whether unevaluated
-and evaluated values match:
-\itemize{
-\item \strong{Single columns} (e.g., \code{y}): Used when unevaluated and evaluated
-values are identical or effectively equivalent (e.g., scalars like \code{2},
-defaults like \code{10}, or symbols like \code{i} evaluating to \code{1} in loops),
-containing the evaluated value as-is; \code{NULL} is recorded as \code{"NULL"}.
-\item \strong{Paired columns} (e.g., \code{x_orig}, \code{x_eval}):
-\itemize{
-\item \verb{*_orig}: Unevaluated expressions as character strings (e.g.,
-\code{"a + b"}) or scalars as-is for non-call objects; \code{NULL} is recorded as
-\code{"NULL"}.
-\item \verb{*_eval}: Evaluated values, either scalars (e.g., \code{8}) or list columns
-for complex objects (e.g., \code{lm}, \code{SpatRaster}); \code{NULL} is recorded as
-\code{"NULL"}.
-}
-}
-
-If \code{ExportPath} is \code{NULL} (default), the tibble is returned. If provided,
-the tibble is saved to the specified \code{.RData} file and \code{NULL} is returned
+A \code{tibble} containing the evaluated forms of the parent function’s
+arguments, with columns named after the arguments (e.g., \code{w}, \code{x}, \code{y}).
+Evaluated values are presented as scalars (e.g., \code{8}) or list columns for
+complex objects (e.g., \verb{<SpatRaster>}). If \code{ExportPath} is provided, the
+tibble is saved to the specified \code{.RData} file and \code{NULL} is returned
 invisibly.
 }
 \description{
-\code{RecordArgs()} is a utility function that captures and records both the
-unevaluated and evaluated forms of arguments passed to a parent function. It
-returns a tibble with columns reflecting argument states: when unevaluated
-and evaluated values differ, columns are named with \verb{_orig} and \verb{_eval}
-suffixes; when they are the same (including symbols evaluated to scalars), a
-single column is used with the argument name alone. The function dynamically
-handles scalars, call objects, and complex objects (e.g., \code{lm} models,
-\code{SpatRaster} objects), preserving their structure appropriately.
+\code{RecordArgs()} is a utility function that captures and records the evaluated
+forms of arguments passed to the parent function. It returns a tibble with
+columns named after the arguments, containing their evaluated values only.
 }
 \details{
-This function must be called within another function to capture and
-record the parent function’s arguments. It uses either a provided \code{call}
-(e.g., from \code{match.call()}) or \code{sys.call(-1)} to retrieve the call,
-evaluates arguments in the specified or default parent environment, and
-merges them with the parent function’s formal argument defaults. The
-handling of argument types is as follows:
+This function evaluates all arguments in the grandparent environment
+(two frames up), with a fallback to the global environment if evaluation
+fails. This ensures correct evaluation in iterative contexts like \code{lapply}.
+It handles:
 \itemize{
-\item \code{NULL} values (e.g., from defaults or arguments) are converted to the
-string \code{"NULL"} in the output tibble for compatibility.
-\item Symbols (e.g., \code{i} in \code{lapply}) match their evaluated scalar values,
-appearing as single columns.
-\item Calls (e.g., \code{a + b}) are preserved as strings via \code{deparse()} in
-\verb{_orig} columns and evaluated in \verb{_eval} columns.
-\item Multi-element vectors (e.g., \code{c(1, 2)}) appear as single columns if
-unevaluated and evaluated forms match, otherwise as \verb{_orig}/\verb{_eval} pairs.
-\item Complex objects (e.g., \code{lm}, \code{SpatRaster}) are wrapped in list columns
-in \verb{_eval}.
+\item Scalars (e.g., numbers, strings) as single values.
+\item Multi-element vectors or complex objects (e.g., \code{SpatRaster}) as list
+columns.
+\item \code{NULL} values are converted to the string \code{"NULL"}.
+\item Failed evaluations result in \code{NA}.
 }
 
-The output tibble columns are ordered by the original argument sequence,
-with single columns (matching values) first, followed by \verb{_orig} and
-\verb{_eval} pairs.
+The function must be called from within another function, as it relies on
+\code{sys.call(-1)} to capture the parent call.
 }
 \examples{
 a <- 5
 b <- 3
-
-Function1 <- function(w = 5, x, y, z = c(1, 2)) {
-  Args <- IASDT.R::RecordArgs(call = match.call(), env = parent.frame())
-  return(Args)
-}
-
-# Basic usage with scalars and expressions
-Out1 <- Function1(x = a + b, y = 2)
-
-Out1
-
-Out1$w              # 5 (single column, default matches evaluated)
-Out1$x_orig         # "a + b" (unevaluated expression)
-Out1$x_eval         # 8 (evaluated result)
-Out1$y              # 2 (single column, scalar matches evaluated)
-Out1$z_orig         # "c(1, 2)"
-Out1$z_eval         # c(1, 2) (single column, default matches evaluated)
-
-# --------------------------------------------------------------
-
-# Usage with NULL, scalars, and complex objects (lm and Raster)
-Out2 <- Function1(
-  w = NULL,
-  x = a + b,
-  y = stats::lm(mpg ~ disp + hp, data = mtcars),
-  z = raster::raster())
-
-Out2
-
-Out2$w              # "NULL" (recorded as character string)
-Out2$x_orig         # "a + b" (unevaluated call)
-Out2$x_eval         # 8 (evaluated scalar)
-Out2$y_orig         # "stats::lm(mpg ~ disp + hp, data = mtcars)" (call)
-Out2$y_eval[[1]]    # <lm object> (evaluated complex object)
-Out2$z_orig         # "raster::raster()" (call)
-Out2$z_eval[[1]]    # <RasterLayer object> (evaluated complex object)
-
-# --------------------------------------------------------------
-
-# Usage with purrr::pmap for multiple inputs
 w_values <- 1:3
 x_values <- c(a + b, 10, 15)
 y_values <- c("ABCD", "XYZ123", "TEST")
-Out3 <- purrr::pmap(
+
+Function1 <- function(w = 5, x, y, z = c(1, 2)) {
+  Args <- RecordArgs()
+  return(Args)
+}
+
+# ----------------------------------------------------
+
+# Example 1: Simple function call with scalar and expression
+Function1(x = a + b, y = 2)
+
+# ----------------------------------------------------
+
+# Example 2: Using lapply with indexed arguments
+
+lapply(
+  X = 1:3,
+  FUN = function(Z) {
+    Function1(
+      w = w_values[Z],
+      x = x_values[Z],
+      y = stringr::str_extract(y_values[Z], "B.+$"),
+      z = Z)
+}) \%>\%
+dplyr::bind_rows() \%>\%
+print()
+
+# ----------------------------------------------------
+
+# Example 3: Using pmap with mixed argument types
+purrr::pmap(
   .l = list(w = w_values, x = x_values, y = y_values),
   .f = function(w, x, y) {
     Function1(
       w = w,
       x = x,
       y = stringr::str_extract(y, "B.+$"),
-      z = terra::rast(system.file("ex/elev.tif", package="terra")))
+      z = terra::rast(system.file("ex/elev.tif", package = "terra")))
   }) \%>\%
-  dplyr::bind_rows()
+  dplyr::bind_rows() \%>\%
+  print()
 
-Out3
-
-Out3$w        # 1, 2, 3
-Out3$x        # 8, 10, 15
-Out3$y_orig   # 'stringr::str_extract(y, "B.+$")', repeated for each row
-Out3$y_eval   # "BCD", NA, NA
-Out3$z_orig   # "terra::rast(...))", repeated for each row
-Out3$z_eval   # Packed SpatRaster, repeated for each row
 }
 \author{
 Ahmed El-Gabbas

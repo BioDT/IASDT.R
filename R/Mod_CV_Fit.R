@@ -40,6 +40,7 @@
 #'   function, which currently does not support performing cross-validation
 #'   using Hmsc-HPC.
 #' @author Ahmed El-Gabbas
+#' @importFrom rlang %||%
 #' @inheritParams Mod_SLURM
 #' @inheritParams Mod_inputs
 #' @export

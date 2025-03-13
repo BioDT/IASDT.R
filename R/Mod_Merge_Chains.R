@@ -146,7 +146,7 @@ Mod_Merge_Chains <- function(
     dplyr::mutate(
       Post_Missing = furrr::future_map_lgl(
         .x = Post_Path,
-        .f = function(x){
+        .f = function(x) {
 
           purrr::map_lgl(
             .x = as.character(x),

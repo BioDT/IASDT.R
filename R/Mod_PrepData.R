@@ -89,7 +89,7 @@ Mod_PrepData <- function(
     "Path_Rail", "DP_R_Railways_processed", TRUE, FALSE,
     "Path_Bias", "DP_R_Efforts_processed", TRUE, FALSE,
     "Path_Rivers", "DP_R_Rivers_processed", FALSE, TRUE,
-    "Path_Model", "DP_R_Model_path", FALSE, FALSE,
+    "Path_Model", "DP_R_Model_path", TRUE, FALSE,
     "EU_Bound", "DP_R_EUBound", FALSE, TRUE)
   # Assign environment variables and check file and paths
   IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)

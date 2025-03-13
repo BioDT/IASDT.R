@@ -56,7 +56,3 @@ echo "Processing file: $SplitFile"
 bash "$SplitFile"
 
 echo End of program at `date`
-
-# --------------------------------------------------
-# This script was created on: 2024-12-13 02:23 CET
-# --------------------------------------------------

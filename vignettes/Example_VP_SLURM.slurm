@@ -8,8 +8,8 @@
 #SBATCH --gpus-per-node=1
 #SBATCH --time=01:30:00
 #SBATCH --partition=small-g
-#SBATCH --output=datasets/processed/model_fitting/TMP/%x-%A-%a.out
-#SBATCH --error=datasets/processed/model_fitting/TMP/%x-%A-%a.out
+#SBATCH --output=datasets/processed/model_fitting/TF_postprocess/log/%x-%A-%a.out
+#SBATCH --error=datasets/processed/model_fitting/TF_postprocess/log/%x-%A-%a.out
 #SBATCH --array=1-24
 
 # File containing commands to be executed
@@ -28,7 +28,3 @@ python3 -c "import tensorflow as tf; print(\"Num GPUs Available:\", len(tf.confi
 head -n $SLURM_ARRAY_TASK_ID $File | tail -n 1 | bash
 
 echo End of program at `date`
-
-# --------------------------------------------------
-# This script was created on: 2024-12-13 02:23 CET
-# --------------------------------------------------

@@ -21,15 +21,53 @@
 
 CheckQuartoVersion <- function(Prerelease = FALSE) {
 
-  OnlineVersions <- "https://github.com/quarto-dev/quarto-cli/releases/" %>%
-    xml2::read_html() %>%
-    rvest::html_nodes(".Link--primary") %>%
-    rvest::html_text2() %>%
-    stringr::str_remove_all("v")
-  Version_Latest <- OnlineVersions[1]
+  Version <- Labels <- NULL
+
+  # URL of the Quarto releases page
+  release_blocks <- "https://github.com/quarto-dev/quarto-cli/releases/" %>%
+    # Read the HTML content of the page
+    rvest::read_html() %>%
+    # Extract all release blocks (adjust selector based on current structure)
+    rvest::html_nodes("div.Box")
+
+  # Extract version and label for each release
+  Releases <- release_blocks %>%
+    lapply(function(block) {
+      # Get the version number from the <h2><a> or <a> tag
+      version <- block %>%
+        # Targets release tag links or titles
+        rvest::html_node("h2 a, a[href*='/tag/v']") %>%
+        rvest::html_text(trim = TRUE)
+
+      # Get all labels (<span> tags with class "Label" or similar)
+      labels <- block %>%
+        rvest::html_nodes(
+          "span.Label, span.Label--success, span.Label--orange") %>%
+        rvest::html_text(trim = TRUE) %>%
+        unique() %>%
+        # Combine multiple labels if present
+        paste(collapse = ", ")
+
+      # Return a data frame row
+      if (is.na(version)) {
+        # Skip if no version found
+        return(NULL)
+      } else {
+        return(
+          tibble::tibble(
+            Version = version,
+            Labels = dplyr::if_else(nzchar(labels), labels, "None")))
+      }
+    }) %>%
+    # Combine into a single data frame
+    dplyr::bind_rows() %>%
+    dplyr::filter(stringr::str_detect(Version, "^v"))
+
+  Version_Latest <- Releases %>%
+    dplyr::filter(stringr::str_detect(Labels, "Latest")) %>%
+    dplyr::pull("Version")
 
   # # ..................................................................... ###
-
 
   # Check `quarto` system command
   if (IASDT.R::CheckCommands("quarto")) {
@@ -42,9 +80,12 @@ CheckQuartoVersion <- function(Prerelease = FALSE) {
   if (isFALSE(identical(Version_Latest, InstalledVersion))) {
 
     if (Prerelease) {
-      Version_PreRelease <- OnlineVersions %>%
-        gtools::mixedsort(decreasing = TRUE) %>%
-        magrittr::extract(1)
+
+      Version_PreRelease <- Releases %>%
+        dplyr::slice(gtools::mixedorder(Version)) %>%
+        dplyr::slice_tail(n = 1) %>%
+        dplyr::pull("Version")
+
       cat(
         crayon::blue(
           paste0(

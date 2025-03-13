@@ -26,6 +26,20 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+```{r, results='asis', eval=TRUE, echo=FALSE}
+cat('
+<script>
+function toggleScript(id) {
+  var content = document.getElementById(id);
+  if (content.style.display === "none") {
+    content.style.display = "block";
+  } else {
+    content.style.display = "none";
+  }
+}
+</script>
+')
+```
 
 ```{r, include = FALSE, eval=TRUE}
 library(kableExtra)
@@ -35,6 +49,26 @@ knitr::opts_chunk$set(
   collapse = TRUE, comment = "#>", eval = FALSE, warning = FALSE,
   message = FALSE, dev = "ragg_png", dpi = 300, tidy = "styler",
   out.width = "100%", fig.show = "hold", echo = FALSE)
+
+collapsible_script_section <- function(
+    file_path, button_label, section_id, 
+    button_class = "ShortBlockButton", 
+    div_class = "ShortBlock") {
+  if (!file.exists(file_path)) {
+    script_content <- "Error: File not found."
+  } else {
+    script_content <- readLines(file_path) %>% 
+      paste(collapse = "\n") %>% 
+      htmltools::htmlEscape()
+  }
+  html_output <- paste0(
+    '<button onclick="toggleScript(\'', section_id, '\')" class="', button_class, '">', button_label, '</button>\n',
+    '<div id="', section_id, '" class="', div_class, '" style="display: none;">\n',
+    '  <pre><code class="bash">', script_content, '</code></pre>\n',
+    '</div>\n'
+  )
+  cat(html_output)
+}
 ```
 
 ```{r, eval=TRUE, results="asis"}
@@ -107,18 +141,21 @@ DT %>%
 - Latent factor predictions for response curves and new sampling units are executed via a TensorFlow script located at <ff>inst/crossprod_solve.py</ff>.
 - For these tasks, the respective R functions export numerous <i>.qs2</i> and <i>.feather</i> data files to the <ff>TEMP_Pred</ff> subdirectory, essential for GPU computations. They also generate execution commands saved as <ff>LF_RC_Commands_*.txt</ff> (for response curves) and <ff>LF_NewSites_Commands_*.txt</ff> (for new sites).
 
-<details>
-<summary>Example LF_RC_Commands.txt file</summary>
-```{bash, file = "Example_LF_RC_Commands.txt"}
-#| class-source: ShortBlock
+```{r, results='asis', eval=TRUE, echo=FALSE}
+collapsible_script_section(
+  "Example_LF_RC_Commands.txt", 
+  "&#187;&#187; Example LF_RC_Commands.txt file", 
+  "scriptContentNS1")
 ```
-</details>
-<details>
-<summary>Example LF_NewSites_Commands.txt file</summary>
-```{bash, file = "Example_LF_NewSites_Commands.txt"}
-#| class-source: ShortBlock
+
+<br/>
+
+```{r, results='asis', eval=TRUE, echo=FALSE}
+collapsible_script_section(
+  "Example_LF_NewSites_Commands.txt", 
+  "&#187;&#187; Example LF_NewSites_Commands.txt file", 
+  "scriptContentNS2")
 ```
-</details>
 
 <br/><br/>
 
@@ -126,7 +163,7 @@ DT %>%
   - `RespCurv_PrepData()` extends `Hmsc::constructGradient()` and `Hmsc::plotGradient()`, enabling GPU-based response curve data preparation when <cc>`LF_Commands_Only = TRUE`</cc>.  
   - To predict at mean coordinates (per the <i>coordinates</i> argument of `Hmsc::constructGradient()`), latent factor predictions—typically memory-intensive with `Hmsc::predictLatentFactor()`—are computed on GPUs.
 - Predicting at new sites
-  - `Predict_Maps()` prepares GPU computations for new site predictions when <cc>`LF_Only = TRUE</cc> and <cc>LF_Commands_Only = TRUE`</cc>.
+  - `Predict_Maps()` prepares GPU computations for new site predictions when <cc>`LF_Only = TRUE`</cc> and <cc>`LF_Commands_Only = TRUE`</cc>.
   
 <br/><br/>
 
@@ -141,32 +178,43 @@ DT %>%
 
 After executing `Mod_Postprocess_1_CPU()` for all habitat types, the **`Mod_Prep_TF()`** function consolidates batch scripts for GPU computations across all habitat types:
 
-- It aggregates script files containing commands for response curves and latent factor predictions, splitting them into multiple scripts for batch processing, and generates a SLURM script (<ff>LF_SLURM.slurm</ff>) for latent factor predictions.
+- It aggregates script files containing commands for response curves and latent factor predictions, splitting them into multiple scripts (<ff>TF_Chunk_*.txt</ff>) for batch processing, and generates a SLURM script (<ff>LF_SLURM.slurm</ff>) for latent factor predictions.
 
-<details>
-<summary>Example LF_SLURM.slurm file</summary>
-```{bash, file = "Example_LF_SLURM.slurm"}
-#| class-source: ShortBlock
+```{r, results='asis', eval=TRUE, echo=FALSE}
+collapsible_script_section(
+  "Example_TF_Chunk.txt", 
+  "&#187;&#187; Example TF_Chunk_*.txt file", 
+  "scriptContentNS3")
 ```
-</details>
 
-<br/><br/>
+<br/>
+
+```{r, results='asis', eval=TRUE, echo=FALSE}
+collapsible_script_section(
+  "Example_LF_SLURM.slurm", 
+  "&#187;&#187; Example LF_SLURM.slurm file", 
+  "scriptContentNS4")
+```
+
+<br/>
 
 - It consolidates variance partitioning command files into a single <ff>VP_Commands.txt</ff> and prepares a SLURM script (<ff>VP_SLURM.slurm</ff>) for variance partitioning computations.
 
-<details>
-<summary>Example VP_Commands.txt file</summary>
-```{bash, file = "Example_VP_Commands.txt"}
-#| class-source: ShortBlock
+```{r, results='asis', eval=TRUE, echo=FALSE}
+collapsible_script_section(
+  "Example_VP_Commands.txt", 
+  "&#187;&#187; Example VP_Commands.txt file", 
+  "scriptContentNS5")
 ```
-</details>
 
-<details>
-<summary>Example VP_SLURM.slurm file</summary>
-```{bash, file = "Example_VP_SLURM.slurm"}
-#| class-source: ShortBlock
+<br/>
+
+```{r, results='asis', eval=TRUE, echo=FALSE}
+collapsible_script_section(
+  "Example_VP_SLURM.slurm", 
+  "&#187;&#187; Example VP_SLURM.slurm file", 
+  "scriptContentNS6")
 ```
-</details>
 
 <hr class="hr1">
 
@@ -174,14 +222,14 @@ After executing `Mod_Postprocess_1_CPU()` for all habitat types, the **`Mod_Prep
 
 Latent factor predictions and variance partitioning are computed on GPUs. Batch jobs can be submitted using the `sbatch` command:
 
-```{bash}
+```{bash, echo = TRUE}
 sbatch datasets/processed/model_fitting/TF_postprocess/VP_SLURM.slurm
 sbatch datasets/processed/model_fitting/TF_postprocess/LF_SLURM.slurm
 ```
 
 Cross-validated models are fitted by submitting corresponding SLURM commands (*in preparation*):
 
-```{bash}
+```{bash, echo = TRUE}
 source datasets/processed/model_fitting/HabX/Model_Fitting_CV/CV_Bash_Fit.slurm
 ```
 

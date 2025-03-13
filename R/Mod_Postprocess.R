@@ -465,9 +465,9 @@ Mod_Prep_TF <- function(
   # VARIANCE PARTITIONING ----
   # # |||||||||||||||||||||||||||||||||||||||||||||||||| # #
 
-  # Prepare post-processing data for calculating Variance partitioning
+  # Prepare post-processing data for calculating variance partitioning
   IASDT.R::CatTime(
-    "Prepare post-processing data for calculating Variance partitioning")
+    "Prepare post-processing data for calculating variance partitioning")
 
   # Create paths for VP SLURM script and commands
   Path_VP_SLURM <- IASDT.R::Path(Path_TF, "VP_SLURM.slurm")
@@ -491,8 +491,8 @@ Mod_Prep_TF <- function(
 
   # ****************************************************************
 
-  # Prepare VarPar batch files ----
-  IASDT.R::CatTime("Prepare VarPar batch files", Level = 1, Time = FALSE)
+  # Prepare batch files ----
+  IASDT.R::CatTime("Prepare batch files", Level = 1, Time = FALSE)
 
   VP_Commands <- c(
     "#!/bin/bash",
@@ -531,7 +531,7 @@ Mod_Prep_TF <- function(
     paste0("# ", strrep("-", 50)))
 
   IASDT.R::CatTime(
-    paste0("Write VP SLURM script to: `", Path_VP_SLURM, "`"),
+    paste0("Write SLURM script to: `", Path_VP_SLURM, "`"),
     Level = 2, Time = FALSE)
 
   readr::write_lines(x = VP_Commands, file = Path_VP_SLURM, append = FALSE)
@@ -546,7 +546,7 @@ Mod_Prep_TF <- function(
   # # |||||||||||||||||||||||||||||||||||||||||||||||||| # #
 
   # Prepare post-processing data for LF predictions
-  IASDT.R::CatTime("Prepare post-processing data for LF predictions")
+  IASDT.R::CatTime("\nPrepare post-processing data for LF predictions")
 
   # Ensure that the total number of simultaneous jobs (LF + VP) = NumFiles; so
   # both can be run on the same time.
@@ -555,7 +555,7 @@ Mod_Prep_TF <- function(
   # Merge and organize TF commands for LF predictions ----
   IASDT.R::CatTime(
     paste0(
-      "Merge and organize TF commands for LF predictions into a max of ",
+      "Merge and organize TF commands for LF predictions into a maximum of ",
       NumFiles, " files"),
     Level = 1, Time = FALSE)
 
@@ -609,7 +609,7 @@ Mod_Prep_TF <- function(
 
   IASDT.R::CatTime(
     paste0(
-      "Total number of commands to be executed: ", length(LF_commands), "\n"),
+      "Total number of commands to be executed: ", length(LF_commands)),
     Level = 2, Time = FALSE)
 
   if (length(LF_commands) < NumFiles) {
@@ -622,7 +622,7 @@ Mod_Prep_TF <- function(
   }
 
   IASDT.R::CatTime(
-    paste0("Splitting commands into ", NumFiles, " files:"),
+    paste0("Splitting commands into ", NumFiles, " files"),
     Time = FALSE, Level = 2)
   LF_commands <- IASDT.R::SplitVector(LF_commands, NSplit = NumFiles)
 
@@ -635,8 +635,6 @@ Mod_Prep_TF <- function(
         paste0(
           "TF_Chunk_",
           stringr::str_pad(.x, pad = "0", width = nchar(NumFiles)), ".txt"))
-
-      IASDT.R::CatTime(File, Time = FALSE, Level = 3)
 
       readr::write_lines(x = BasicCommands, file = File, append = FALSE)
       readr::write_lines(
@@ -656,7 +654,7 @@ Mod_Prep_TF <- function(
   # ****************************************************************
 
   # Prepare LF batch files ----
-  IASDT.R::CatTime("Prepare LF batch files", Level = 1, Time = FALSE)
+  IASDT.R::CatTime("Prepare batch files", Level = 1, Time = FALSE)
 
   LF_slurm_script <- c(
     "#!/bin/bash",

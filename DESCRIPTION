@@ -3,7 +3,7 @@ Package: IASDT.R
 Title: Modelling the distribution of invasive alien plant species in
     Europe
 Version: 0.1.03
-Date: 2025-03-12
+Date: 2025-03-13
 Authors@R: 
     person("Ahmed", "El-Gabbas", , "ahmed.el-gabbas@ufz.de", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-2225-088X"))
@@ -66,6 +66,7 @@ Suggests:
     grid (>= 4.4.1),
     gridExtra (>= 2.3),
     gtools (>= 3.9.5),
+    htmltools (>= 0.5.8),
     httr(>= 1.4.7),
     janitor (>= 2.2.0),
     jsonify (>= 1.2.2),

@@ -242,7 +242,8 @@ RecordArgs <- function(ExportPath = NULL) {
   # Use the original order of argument names from the function definition,
   # excluding '...', and add any additional named arguments from the call
   formal_names <- names(formal_args)[names(formal_args) != "..."]
-  passed_names <- names(passed_args)
+  passed_names <- names(passed_args)[!is.na(names(passed_args)) &
+                                       nzchar(names(passed_args))]
   extra_names <- setdiff(passed_names, formal_names)
   arg_names <- unique(c(formal_names, extra_names))
 

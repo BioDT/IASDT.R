@@ -96,9 +96,6 @@ Mod_PrepData <- function(
   rm(EnvVars2Read, envir = environment())
 
   Path_Model <- IASDT.R::Path(Path_Model, DirName)
-  if (fs::dir_exists(Path_Model)) {
-    stop("Model directory already exists: ", Path_Model, call. = FALSE)
-  }
   fs::dir_create(Path_Model)
 
   IASDT.R::RecordArgs(

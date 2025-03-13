@@ -76,15 +76,63 @@
 
     
     
-<style>
+<script>
+function toggleScript(id) {
+  var content = document.getElementById(id);
+  if (content.style.display === "none") {
+    content.style.display = "block";
+  } else {
+    content.style.display = "none";
+  }
+}
+</script><style>
+/* Styles for the container div that holds the code block */
 .ShortBlock {
-  height: 400px;
-  width: 100%;
+  width: calc(100% - 40px);    /* Sets the width to 100% of the parent minus 40px to account for the left margin, ensuring it fits within the parent container */
+  max-height: 400px;           /* Limits the maximum height to 400px; if content exceeds this, a vertical scrollbar will appear due to overflow-y */
+  overflow-y: auto;            /* Enables a vertical scrollbar when content height exceeds max-height (400px), hides it when not needed */
+  overflow-x: auto;            /* Enables a horizontal scrollbar when content width exceeds the div's width, hides it when not needed */
+  margin-left: 40px;           /* Shifts the entire div (box and scrollbar) 40px to the right from the left edge of its parent, creating indentation */
+  color: red;                  /* Sets the text color inside the div to red, applied to the <pre><code> content */
+  display: block;              /* Ensures the div behaves as a block-level element, taking full width and stacking vertically */
+  box-sizing: border-box;      /* Includes padding and border in the width calculation, preventing overflow beyond the calculated width */
+  background-color: #f0f0f0;   /* Adds a light gray background for debugging, visually highlighting the div's area to check indentation */
+  position: relative;          /* Sets the div's positioning context to relative, allowing absolute positioning of pseudo-elements (like ::before) within it */
+  padding: 10px;               /* Adds 10px padding on all sides (top, right, bottom, left) for internal spacing between the div's edges and content */
 }
 
-summary {
-  color: red;
-  padding-left: 40px;
+/* Styles for the <pre> element inside .ShortBlock, which contains the code */
+.ShortBlock pre {
+  white-space: pre;            /* Preserves whitespace and prevents text wrapping, ensuring long lines extend horizontally as written */
+  margin: 0;                   /* Removes default margins of the <pre> element to align it flush with the div's padded edges */
+  width: max-content;          /* Sets the width to the natural width of the content (e.g., the longest line), enabling horizontal overflow if wider than the div */
+  overflow: auto;              /* Adds scroll bars to the <pre> if its content overflows (though typically overridden by .ShortBlock's overflow-x/y) */
+}
+
+/* Customizes the appearance of the horizontal scrollbar for WebKit browsers (e.g., Chrome, Safari) */
+.ShortBlock::-webkit-scrollbar {
+  height: 10px;                /* Sets the height of the horizontal scrollbar to 10px, making it visible and sized consistently */
+}
+
+/* Creates a pseudo-element to simulate a top horizontal scrollbar area */
+.ShortBlock::before {
+  content: "";                 /* Defines an empty content for the pseudo-element, required to render it */
+  display: block;              /* Makes the pseudo-element a block-level element, taking full width and stacking vertically */
+  height: 10px;                /* Sets the height to 10px, matching the scrollbar size, creating a scrollable area at the top */
+  width: 100%;                 /* Sets the width to 100% of the .ShortBlock div, aligning with its content area */
+  position: absolute;          /* Positions the pseudo-element absolutely within the .ShortBlock (due to position: relative on parent) */
+  top: 0;                      /* Aligns the pseudo-element to the top edge of the .ShortBlock div */
+  left: 0;                     /* Aligns the pseudo-element to the left edge of the .ShortBlock div, starting at the padded edge */
+  overflow-x: auto;            /* Enables horizontal scrolling for this pseudo-element, attempting to mirror the content's overflow (experimental) */
+}
+
+/* Styles for the button that toggles the collapsible code block */
+.ShortBlockButton {
+  color: red;                  /* Sets the button text color to red, matching the code block text */
+  padding-left: 40px;          /* Adds 40px padding on the left, aligning the button text visually with the indented code block */
+  border: none;                /* Removes the default border from the button for a clean look */
+  background: none;            /* Removes the default background, making it transparent and minimal */
+  cursor: pointer;             /* Changes the cursor to a pointer on hover, indicating the button is clickable */
 }
 
 ff {
@@ -100,14 +148,14 @@ cc {
 }
 
 .ll:visited {
-  color: blue; !important;
+  color: blue !important;
   text-decoration: none !important;
 }
 
 .ll:hover {
   text-decoration: underline !important;
   background-color: #d3f2aa !important;
-  color: darkblue; important;
+  color: darkblue !important;
 }
 
 .ll:link, .ll:active {
@@ -302,11 +350,48 @@ execution commands saved as <ff>LF_RC_Commands_<em>.txt</em></ff> (for
 response curves) and <ff>LF_NewSites_Commands_.txt</ff> (for new
 sites).</li>
 </ul>
-<details><summary>
-Example LF_RC_Commands.txt file
-</summary></details><details><summary>
-Example LF_NewSites_Commands.txt file
-</summary></details><p><br><br></p>
+<button onclick="toggleScript('scriptContentNS1')" class="ShortBlockButton">
+»» Example LF_RC_Commands.txt file
+</button>
+<div id="scriptContentNS1" class="ShortBlock" style="display: none;">
+<pre><code class="bash">python3 crossprod_solve.py --s1 RC_c_s1.feather --s2 RC_c_s2.feather --post_eta RC_c_postEta_ch001.feather --path_out RC_c_etaPred_ch001.feather --denom 1200000 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; RC_c_etaPred_ch001.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 RC_c_s1.feather --s2 RC_c_s2.feather --post_eta RC_c_postEta_ch002.feather --path_out RC_c_etaPred_ch002.feather --denom 1188081 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; RC_c_etaPred_ch002.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 RC_c_s1.feather --s2 RC_c_s2.feather --post_eta RC_c_postEta_ch003.feather --path_out RC_c_etaPred_ch003.feather --denom 1176162 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; RC_c_etaPred_ch003.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 RC_c_s1.feather --s2 RC_c_s2.feather --post_eta RC_c_postEta_ch004.feather --path_out RC_c_etaPred_ch004.feather --denom 1164242 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; RC_c_etaPred_ch004.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 RC_c_s1.feather --s2 RC_c_s2.feather --post_eta RC_c_postEta_ch005.feather --path_out RC_c_etaPred_ch005.feather --denom 1200000 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; RC_c_etaPred_ch005.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 RC_c_s1.feather --s2 RC_c_s2.feather --post_eta RC_c_postEta_ch006.feather --path_out RC_c_etaPred_ch006.feather --denom 413333 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; RC_c_etaPred_ch006.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 RC_c_s1.feather --s2 RC_c_s2.feather --post_eta RC_c_postEta_ch007.feather --path_out RC_c_etaPred_ch007.feather --denom 1188081 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; RC_c_etaPred_ch007.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 RC_c_s1.feather --s2 RC_c_s2.feather --post_eta RC_c_postEta_ch008.feather --path_out RC_c_etaPred_ch008.feather --denom 425253 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; RC_c_etaPred_ch008.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 RC_c_s1.feather --s2 RC_c_s2.feather --post_eta RC_c_postEta_ch009.feather --path_out RC_c_etaPred_ch009.feather --denom 1176162 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; RC_c_etaPred_ch009.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 RC_c_s1.feather --s2 RC_c_s2.feather --post_eta RC_c_postEta_ch010.feather --path_out RC_c_etaPred_ch010.feather --denom 437172 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; RC_c_etaPred_ch010.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 RC_c_s1.feather --s2 RC_c_s2.feather --post_eta RC_c_postEta_ch011.feather --path_out RC_c_etaPred_ch011.feather --denom 1200000 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; RC_c_etaPred_ch011.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 RC_c_s1.feather --s2 RC_c_s2.feather --post_eta RC_c_postEta_ch012.feather --path_out RC_c_etaPred_ch012.feather --denom 401414 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; RC_c_etaPred_ch012.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 RC_c_s1.feather --s2 RC_c_s2.feather --post_eta RC_c_postEta_ch013.feather --path_out RC_c_etaPred_ch013.feather --denom 1164242 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; RC_c_etaPred_ch013.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 RC_c_s1.feather --s2 RC_c_s2.feather --post_eta RC_c_postEta_ch014.feather --path_out RC_c_etaPred_ch014.feather --denom 449091 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; RC_c_etaPred_ch014.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 RC_c_s1.feather --s2 RC_c_s2.feather --post_eta RC_c_postEta_ch015.feather --path_out RC_c_etaPred_ch015.feather --denom 1152323 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; RC_c_etaPred_ch015.log 2&gt;&amp;1</code></pre>
+</div>
+<p><br></p>
+<button onclick="toggleScript('scriptContentNS2')" class="ShortBlockButton">
+»» Example LF_NewSites_Commands.txt file
+</button>
+<div id="scriptContentNS2" class="ShortBlock" style="display: none;">
+<pre><code class="bash">python3 crossprod_solve.py --s1 LF_3_Test_s1.feather --s2 LF_3_Test_s2.feather --post_eta LF_3_Test_postEta_ch001.feather --path_out LF_3_Test_etaPred_ch001.feather --denom 225758 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; LF_3_Test_etaPred_ch001.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 LF_3_Test_s1.feather --s2 LF_3_Test_s2.feather --post_eta LF_3_Test_postEta_ch002.feather --path_out LF_3_Test_etaPred_ch002.feather --denom 211111 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; LF_3_Test_etaPred_ch002.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 LF_3_Test_s1.feather --s2 LF_3_Test_s2.feather --post_eta LF_3_Test_postEta_ch003.feather --path_out LF_3_Test_etaPred_ch003.feather --denom 240404 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; LF_3_Test_etaPred_ch003.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 LF_3_Test_s1.feather --s2 LF_3_Test_s2.feather --post_eta LF_3_Test_postEta_ch004.feather --path_out LF_3_Test_etaPred_ch004.feather --denom 196465 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; LF_3_Test_etaPred_ch004.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 LF_3_Test_s1.feather --s2 LF_3_Test_s2.feather --post_eta LF_3_Test_postEta_ch005.feather --path_out LF_3_Test_etaPred_ch005.feather --denom 196465 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; LF_3_Test_etaPred_ch005.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 LF_3_Test_s1.feather --s2 LF_3_Test_s2.feather --post_eta LF_3_Test_postEta_ch006.feather --path_out LF_3_Test_etaPred_ch006.feather --denom 211111 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; LF_3_Test_etaPred_ch006.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 LF_3_Test_s1.feather --s2 LF_3_Test_s2.feather --post_eta LF_3_Test_postEta_ch007.feather --path_out LF_3_Test_etaPred_ch007.feather --denom 225758 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; LF_3_Test_etaPred_ch007.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 LF_3_Test_s1.feather --s2 LF_3_Test_s2.feather --post_eta LF_3_Test_postEta_ch008.feather --path_out LF_3_Test_etaPred_ch008.feather --denom 181818 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; LF_3_Test_etaPred_ch008.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 LF_3_Test_s1.feather --s2 LF_3_Test_s2.feather --post_eta LF_3_Test_postEta_ch009.feather --path_out LF_3_Test_etaPred_ch009.feather --denom 255051 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; LF_3_Test_etaPred_ch009.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 LF_3_Test_s1.feather --s2 LF_3_Test_s2.feather --post_eta LF_3_Test_postEta_ch010.feather --path_out LF_3_Test_etaPred_ch010.feather --denom 240404 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; LF_3_Test_etaPred_ch010.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 LF_3_Test_s1.feather --s2 LF_3_Test_s2.feather --post_eta LF_3_Test_postEta_ch011.feather --path_out LF_3_Test_etaPred_ch011.feather --denom 167172 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; LF_3_Test_etaPred_ch011.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 LF_3_Test_s1.feather --s2 LF_3_Test_s2.feather --post_eta LF_3_Test_postEta_ch012.feather --path_out LF_3_Test_etaPred_ch012.feather --denom 269697 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; LF_3_Test_etaPred_ch012.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 LF_3_Test_s1.feather --s2 LF_3_Test_s2.feather --post_eta LF_3_Test_postEta_ch013.feather --path_out LF_3_Test_etaPred_ch013.feather --denom 255051 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; LF_3_Test_etaPred_ch013.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 LF_3_Test_s1.feather --s2 LF_3_Test_s2.feather --post_eta LF_3_Test_postEta_ch014.feather --path_out LF_3_Test_etaPred_ch014.feather --denom 269697 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; LF_3_Test_etaPred_ch014.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 LF_3_Test_s1.feather --s2 LF_3_Test_s2.feather --post_eta LF_3_Test_postEta_ch015.feather --path_out LF_3_Test_etaPred_ch015.feather --denom 181818 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; LF_3_Test_etaPred_ch015.log 2&gt;&amp;1</code></pre>
+</div>
+<p><br><br></p>
 <ul>
 <li>Response curves
 <ul>
@@ -327,8 +412,8 @@ predictions—typically memory-intensive with
 <ul>
 <li>
 <code><a href="../reference/Predict_Maps.html">Predict_Maps()</a></code> prepares GPU computations for new site
-predictions when
-<cc><code>LF_Only = TRUE&lt;/cc&gt; and &lt;cc&gt;LF_Commands_Only = TRUE</code></cc>.</li>
+predictions when <cc><code>LF_Only = TRUE</code></cc> and
+<cc><code>LF_Commands_Only = TRUE</code></cc>.</li>
 </ul>
 </li>
 </ul>
@@ -358,23 +443,183 @@ consolidates batch scripts for GPU computations across all habitat
 types:</p>
 <ul>
 <li>It aggregates script files containing commands for response curves
-and latent factor predictions, splitting them into multiple scripts for
-batch processing, and generates a SLURM script (<ff>LF_SLURM.slurm</ff>)
-for latent factor predictions.</li>
+and latent factor predictions, splitting them into multiple scripts
+(<ff>TF_Chunk_*.txt</ff>) for batch processing, and generates a SLURM
+script (<ff>LF_SLURM.slurm</ff>) for latent factor predictions.</li>
 </ul>
-<details><summary>
-Example LF_SLURM.slurm file
-</summary></details><p><br><br></p>
+<button onclick="toggleScript('scriptContentNS3')" class="ShortBlockButton">
+»» Example TF_Chunk_*.txt file
+</button>
+<div id="scriptContentNS3" class="ShortBlock" style="display: none;">
+<pre><code class="bash">#!/bin/bash
+
+# Load TensorFlow module and configure environment
+ml use /appl/local/csc/modulefiles
+ml tensorflow
+export TF_CPP_MIN_LOG_LEVEL=3
+export TF_ENABLE_ONEDNN_OPTS=0
+
+# Verify GPU availability
+python3 -c "import tensorflow as tf; print(\"Num GPUs Available:\", len(tf.config.list_physical_devices(\"GPU\")))"
+
+# 20 commands to be executed:
+python3 crossprod_solve.py --s1 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s1.feather' --s2 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s2.feather' --post_eta 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_postEta_ch001.feather' --path_out 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch001.feather' --denom 50000 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch001.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s1.feather' --s2 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s2.feather' --post_eta 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_postEta_ch002.feather' --path_out 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch002.feather' --denom 1470707 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch002.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s1.feather' --s2 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s2.feather' --post_eta 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_postEta_ch003.feather' --path_out 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch003.feather' --denom 1485354 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch003.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s1.feather' --s2 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s2.feather' --post_eta 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_postEta_ch004.feather' --path_out 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch004.feather' --denom 1456061 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch004.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s1.feather' --s2 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s2.feather' --post_eta 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_postEta_ch005.feather' --path_out 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch005.feather' --denom 1500000 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch005.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s1.feather' --s2 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s2.feather' --post_eta 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_postEta_ch006.feather' --path_out 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch006.feather' --denom 1500000 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch006.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s1.feather' --s2 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s2.feather' --post_eta 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_postEta_ch007.feather' --path_out 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch007.feather' --denom 1426768 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch007.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s1.feather' --s2 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s2.feather' --post_eta 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_postEta_ch008.feather' --path_out 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch008.feather' --denom 1470707 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch008.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s1.feather' --s2 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s2.feather' --post_eta 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_postEta_ch009.feather' --path_out 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch009.feather' --denom 1485354 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch009.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s1.feather' --s2 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s2.feather' --post_eta 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_postEta_ch010.feather' --path_out 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch010.feather' --denom 1456061 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch010.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s1.feather' --s2 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s2.feather' --post_eta 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_postEta_ch011.feather' --path_out 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch011.feather' --denom 1470707 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch011.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s1.feather' --s2 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s2.feather' --post_eta 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_postEta_ch012.feather' --path_out 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch012.feather' --denom 1412121 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch012.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s1.feather' --s2 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s2.feather' --post_eta 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_postEta_ch013.feather' --path_out 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch013.feather' --denom 1426768 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch013.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s1.feather' --s2 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s2.feather' --post_eta 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_postEta_ch014.feather' --path_out 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch014.feather' --denom 1426768 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch014.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s1.feather' --s2 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s2.feather' --post_eta 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_postEta_ch015.feather' --path_out 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch015.feather' --denom 1441414 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch015.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s1.feather' --s2 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s2.feather' --post_eta 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_postEta_ch016.feather' --path_out 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch016.feather' --denom 1456061 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch016.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s1.feather' --s2 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s2.feather' --post_eta 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_postEta_ch017.feather' --path_out 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch017.feather' --denom 1441414 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch017.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s1.feather' --s2 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s2.feather' --post_eta 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_postEta_ch018.feather' --path_out 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch018.feather' --denom 1382828 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch018.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s1.feather' --s2 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s2.feather' --post_eta 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_postEta_ch019.feather' --path_out 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch019.feather' --denom 1485354 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch019.log 2&gt;&amp;1
+python3 crossprod_solve.py --s1 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s1.feather' --s2 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_s2.feather' --post_eta 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_postEta_ch020.feather' --path_out 'datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch020.feather' --denom 1368182 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; datasets/processed/model_fitting/Mod_Riv_Hab1/TEMP_Pred/LF_1_Test_etaPred_ch020.log 2&gt;&amp;1</code></pre>
+</div>
+<p><br></p>
+<button onclick="toggleScript('scriptContentNS4')" class="ShortBlockButton">
+»» Example LF_SLURM.slurm file
+</button>
+<div id="scriptContentNS4" class="ShortBlock" style="display: none;">
+<pre><code class="bash">#!/bin/bash
+#SBATCH --job-name=PP_LF
+#SBATCH --ntasks=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --account=project_465001588
+#SBATCH --cpus-per-task=1
+#SBATCH --mem-per-cpu=200G
+#SBATCH --gpus-per-node=1
+#SBATCH --time=01:00:00
+#SBATCH --partition=small-g
+#SBATCH --output=datasets/processed/model_fitting/TMP/%x-%A-%a.out
+#SBATCH --error=datasets/processed/model_fitting/TMP/%x-%A-%a.out
+#SBATCH --array=1-186
+
+# Define directories
+OutputDir="datasets/processed/model_fitting/TF_BatchFiles"
+
+# Find all the split files and sort them explicitly
+SplitFiles=($(find "$OutputDir" -type f -name "TF_Chunk_*.txt" | sort -V))
+
+# Check if files were found
+if [ ${#SplitFiles[@]} -eq 0 ]; then
+    echo "Error: No files matching TF_Chunk_*.txt found in $OutputDir"
+    exit 1
+fi
+
+# Ensure no more than `, NumFiles, ` files are processed
+MaxFiles=186
+if [ ${#SplitFiles[@]} -gt $MaxFiles ]; then
+    SplitFiles=("${SplitFiles[@]:0:$MaxFiles}")
+    echo "More than $MaxFiles files found, limiting to the first $MaxFiles files."
+fi
+
+# Get the index of the current task based on SLURM_ARRAY_TASK_ID
+TaskIndex=$((SLURM_ARRAY_TASK_ID - 1))
+
+# Validate TaskIndex
+if [ $TaskIndex -ge ${#SplitFiles[@]} ] || [ $TaskIndex -lt 0 ]; then
+    echo "Error: TaskIndex $TaskIndex is out of range. Valid range: 0 to $((${#SplitFiles[@]} - 1))"
+    exit 1
+fi
+
+# Get the specific split file to process based on the job array task ID
+SplitFile="${SplitFiles[$TaskIndex]}"
+
+# Verify the selected split file
+if [ -z "$SplitFile" ] || [ ! -f "$SplitFile" ]; then
+    echo "Error: File $SplitFile does not exist or is invalid."
+    exit 1
+fi
+
+# Processing file
+echo "Processing file: $SplitFile"
+
+# Run the selected split file
+bash "$SplitFile"
+
+echo End of program at `date`</code></pre>
+</div>
+<p><br></p>
 <ul>
 <li>It consolidates variance partitioning command files into a single
 <ff>VP_Commands.txt</ff> and prepares a SLURM script
 (<ff>VP_SLURM.slurm</ff>) for variance partitioning computations.</li>
 </ul>
-<details><summary>
-Example VP_Commands.txt file
-</summary></details><details><summary>
-Example VP_SLURM.slurm file
-</summary></details><hr class="hr1">
+<button onclick="toggleScript('scriptContentNS5')" class="ShortBlockButton">
+»» Example VP_Commands.txt file
+</button>
+<div id="scriptContentNS5" class="ShortBlock" style="display: none;">
+<pre><code class="bash">python3 VP_gemu.py --tr datasets/processed/model_fitting/Mod_Q_Hab1/TEMP_VP/VP_Tr.feather --gamma datasets/processed/model_fitting/Mod_Q_Hab1/TEMP_VP/VP_Gamma.feather --output datasets/processed/model_fitting/Mod_Q_Hab1/TEMP_VP/VP_Mu.feather --ncores 3 --chunk_size 50 &gt;&gt; datasets/processed/model_fitting/Mod_Q_Hab1/TEMP_VP/VP_Mu.log 2&gt;&amp;1
+python3 VP_gemu.py --tr datasets/processed/model_fitting/Mod_Q_Hab2/TEMP_VP/VP_Tr.feather --gamma datasets/processed/model_fitting/Mod_Q_Hab2/TEMP_VP/VP_Gamma.feather --output datasets/processed/model_fitting/Mod_Q_Hab2/TEMP_VP/VP_Mu.feather --ncores 3 --chunk_size 50 &gt;&gt; datasets/processed/model_fitting/Mod_Q_Hab2/TEMP_VP/VP_Mu.log 2&gt;&amp;1
+python3 VP_gemu.py --tr datasets/processed/model_fitting/Mod_Q_Hab3/TEMP_VP/VP_Tr.feather --gamma datasets/processed/model_fitting/Mod_Q_Hab3/TEMP_VP/VP_Gamma.feather --output datasets/processed/model_fitting/Mod_Q_Hab3/TEMP_VP/VP_Mu.feather --ncores 3 --chunk_size 50 &gt;&gt; datasets/processed/model_fitting/Mod_Q_Hab3/TEMP_VP/VP_Mu.log 2&gt;&amp;1
+python3 VP_gemu.py --tr datasets/processed/model_fitting/Mod_Q_Hab4a/TEMP_VP/VP_Tr.feather --gamma datasets/processed/model_fitting/Mod_Q_Hab4a/TEMP_VP/VP_Gamma.feather --output datasets/processed/model_fitting/Mod_Q_Hab4a/TEMP_VP/VP_Mu.feather --ncores 3 --chunk_size 50 &gt;&gt; datasets/processed/model_fitting/Mod_Q_Hab4a/TEMP_VP/VP_Mu.log 2&gt;&amp;1
+python3 VP_gemu.py --tr datasets/processed/model_fitting/Mod_Q_Hab4b/TEMP_VP/VP_Tr.feather --gamma datasets/processed/model_fitting/Mod_Q_Hab4b/TEMP_VP/VP_Gamma.feather --output datasets/processed/model_fitting/Mod_Q_Hab4b/TEMP_VP/VP_Mu.feather --ncores 3 --chunk_size 50 &gt;&gt; datasets/processed/model_fitting/Mod_Q_Hab4b/TEMP_VP/VP_Mu.log 2&gt;&amp;1
+python3 VP_gemu.py --tr datasets/processed/model_fitting/Mod_Q_Hab10/TEMP_VP/VP_Tr.feather --gamma datasets/processed/model_fitting/Mod_Q_Hab10/TEMP_VP/VP_Gamma.feather --output datasets/processed/model_fitting/Mod_Q_Hab10/TEMP_VP/VP_Mu.feather --ncores 3 --chunk_size 50 &gt;&gt; datasets/processed/model_fitting/Mod_Q_Hab10/TEMP_VP/VP_Mu.log 2&gt;&amp;1
+python3 VP_gemu.py --tr datasets/processed/model_fitting/Mod_Q_Hab12a/TEMP_VP/VP_Tr.feather --gamma datasets/processed/model_fitting/Mod_Q_Hab12a/TEMP_VP/VP_Gamma.feather --output datasets/processed/model_fitting/Mod_Q_Hab12a/TEMP_VP/VP_Mu.feather --ncores 3 --chunk_size 50 &gt;&gt; datasets/processed/model_fitting/Mod_Q_Hab12a/TEMP_VP/VP_Mu.log 2&gt;&amp;1
+python3 VP_gemu.py --tr datasets/processed/model_fitting/Mod_Q_Hab12b/TEMP_VP/VP_Tr.feather --gamma datasets/processed/model_fitting/Mod_Q_Hab12b/TEMP_VP/VP_Gamma.feather --output datasets/processed/model_fitting/Mod_Q_Hab12b/TEMP_VP/VP_Mu.feather --ncores 3 --chunk_size 50 &gt;&gt; datasets/processed/model_fitting/Mod_Q_Hab12b/TEMP_VP/VP_Mu.log 2&gt;&amp;1
+python3 VP_geta.py --tr datasets/processed/model_fitting/Mod_Q_Hab1/TEMP_VP/VP_Tr.feather --x datasets/processed/model_fitting/Mod_Q_Hab1/TEMP_VP/VP_X.feather --gamma datasets/processed/model_fitting/Mod_Q_Hab1/TEMP_VP/VP_Gamma.feather --output datasets/processed/model_fitting/Mod_Q_Hab1/TEMP_VP/VP_A.feather --ncores 3 --chunk_size 50 &gt;&gt; datasets/processed/model_fitting/Mod_Q_Hab1/TEMP_VP/VP_A.log 2&gt;&amp;1
+python3 VP_geta.py --tr datasets/processed/model_fitting/Mod_Q_Hab2/TEMP_VP/VP_Tr.feather --x datasets/processed/model_fitting/Mod_Q_Hab2/TEMP_VP/VP_X.feather --gamma datasets/processed/model_fitting/Mod_Q_Hab2/TEMP_VP/VP_Gamma.feather --output datasets/processed/model_fitting/Mod_Q_Hab2/TEMP_VP/VP_A.feather --ncores 3 --chunk_size 50 &gt;&gt; datasets/processed/model_fitting/Mod_Q_Hab2/TEMP_VP/VP_A.log 2&gt;&amp;1
+python3 VP_geta.py --tr datasets/processed/model_fitting/Mod_Q_Hab3/TEMP_VP/VP_Tr.feather --x datasets/processed/model_fitting/Mod_Q_Hab3/TEMP_VP/VP_X.feather --gamma datasets/processed/model_fitting/Mod_Q_Hab3/TEMP_VP/VP_Gamma.feather --output datasets/processed/model_fitting/Mod_Q_Hab3/TEMP_VP/VP_A.feather --ncores 3 --chunk_size 50 &gt;&gt; datasets/processed/model_fitting/Mod_Q_Hab3/TEMP_VP/VP_A.log 2&gt;&amp;1
+python3 VP_geta.py --tr datasets/processed/model_fitting/Mod_Q_Hab4a/TEMP_VP/VP_Tr.feather --x datasets/processed/model_fitting/Mod_Q_Hab4a/TEMP_VP/VP_X.feather --gamma datasets/processed/model_fitting/Mod_Q_Hab4a/TEMP_VP/VP_Gamma.feather --output datasets/processed/model_fitting/Mod_Q_Hab4a/TEMP_VP/VP_A.feather --ncores 3 --chunk_size 50 &gt;&gt; datasets/processed/model_fitting/Mod_Q_Hab4a/TEMP_VP/VP_A.log 2&gt;&amp;1
+python3 VP_geta.py --tr datasets/processed/model_fitting/Mod_Q_Hab4b/TEMP_VP/VP_Tr.feather --x datasets/processed/model_fitting/Mod_Q_Hab4b/TEMP_VP/VP_X.feather --gamma datasets/processed/model_fitting/Mod_Q_Hab4b/TEMP_VP/VP_Gamma.feather --output datasets/processed/model_fitting/Mod_Q_Hab4b/TEMP_VP/VP_A.feather --ncores 3 --chunk_size 50 &gt;&gt; datasets/processed/model_fitting/Mod_Q_Hab4b/TEMP_VP/VP_A.log 2&gt;&amp;1
+python3 VP_geta.py --tr datasets/processed/model_fitting/Mod_Q_Hab10/TEMP_VP/VP_Tr.feather --x datasets/processed/model_fitting/Mod_Q_Hab10/TEMP_VP/VP_X.feather --gamma datasets/processed/model_fitting/Mod_Q_Hab10/TEMP_VP/VP_Gamma.feather --output datasets/processed/model_fitting/Mod_Q_Hab10/TEMP_VP/VP_A.feather --ncores 3 --chunk_size 50 &gt;&gt; datasets/processed/model_fitting/Mod_Q_Hab10/TEMP_VP/VP_A.log 2&gt;&amp;1
+python3 VP_geta.py --tr datasets/processed/model_fitting/Mod_Q_Hab12a/TEMP_VP/VP_Tr.feather --x datasets/processed/model_fitting/Mod_Q_Hab12a/TEMP_VP/VP_X.feather --gamma datasets/processed/model_fitting/Mod_Q_Hab12a/TEMP_VP/VP_Gamma.feather --output datasets/processed/model_fitting/Mod_Q_Hab12a/TEMP_VP/VP_A.feather --ncores 3 --chunk_size 50 &gt;&gt; datasets/processed/model_fitting/Mod_Q_Hab12a/TEMP_VP/VP_A.log 2&gt;&amp;1
+python3 VP_geta.py --tr datasets/processed/model_fitting/Mod_Q_Hab12b/TEMP_VP/VP_Tr.feather --x datasets/processed/model_fitting/Mod_Q_Hab12b/TEMP_VP/VP_X.feather --gamma datasets/processed/model_fitting/Mod_Q_Hab12b/TEMP_VP/VP_Gamma.feather --output datasets/processed/model_fitting/Mod_Q_Hab12b/TEMP_VP/VP_A.feather --ncores 3 --chunk_size 50 &gt;&gt; datasets/processed/model_fitting/Mod_Q_Hab12b/TEMP_VP/VP_A.log 2&gt;&amp;1
+python3 VP_getf.py --x datasets/processed/model_fitting/Mod_Q_Hab1/TEMP_VP/VP_X.feather --beta_dir datasets/processed/model_fitting/Mod_Q_Hab1/TEMP_VP --output datasets/processed/model_fitting/Mod_Q_Hab1/TEMP_VP/VP_F.feather --ncores 3 &gt;&gt; datasets/processed/model_fitting/Mod_Q_Hab1/TEMP_VP/VP_F.log 2&gt;&amp;1
+python3 VP_getf.py --x datasets/processed/model_fitting/Mod_Q_Hab2/TEMP_VP/VP_X.feather --beta_dir datasets/processed/model_fitting/Mod_Q_Hab2/TEMP_VP --output datasets/processed/model_fitting/Mod_Q_Hab2/TEMP_VP/VP_F.feather --ncores 3 &gt;&gt; datasets/processed/model_fitting/Mod_Q_Hab2/TEMP_VP/VP_F.log 2&gt;&amp;1
+python3 VP_getf.py --x datasets/processed/model_fitting/Mod_Q_Hab3/TEMP_VP/VP_X.feather --beta_dir datasets/processed/model_fitting/Mod_Q_Hab3/TEMP_VP --output datasets/processed/model_fitting/Mod_Q_Hab3/TEMP_VP/VP_F.feather --ncores 3 &gt;&gt; datasets/processed/model_fitting/Mod_Q_Hab3/TEMP_VP/VP_F.log 2&gt;&amp;1
+python3 VP_getf.py --x datasets/processed/model_fitting/Mod_Q_Hab4a/TEMP_VP/VP_X.feather --beta_dir datasets/processed/model_fitting/Mod_Q_Hab4a/TEMP_VP --output datasets/processed/model_fitting/Mod_Q_Hab4a/TEMP_VP/VP_F.feather --ncores 3 &gt;&gt; datasets/processed/model_fitting/Mod_Q_Hab4a/TEMP_VP/VP_F.log 2&gt;&amp;1
+python3 VP_getf.py --x datasets/processed/model_fitting/Mod_Q_Hab4b/TEMP_VP/VP_X.feather --beta_dir datasets/processed/model_fitting/Mod_Q_Hab4b/TEMP_VP --output datasets/processed/model_fitting/Mod_Q_Hab4b/TEMP_VP/VP_F.feather --ncores 3 &gt;&gt; datasets/processed/model_fitting/Mod_Q_Hab4b/TEMP_VP/VP_F.log 2&gt;&amp;1
+python3 VP_getf.py --x datasets/processed/model_fitting/Mod_Q_Hab10/TEMP_VP/VP_X.feather --beta_dir datasets/processed/model_fitting/Mod_Q_Hab10/TEMP_VP --output datasets/processed/model_fitting/Mod_Q_Hab10/TEMP_VP/VP_F.feather --ncores 3 &gt;&gt; datasets/processed/model_fitting/Mod_Q_Hab10/TEMP_VP/VP_F.log 2&gt;&amp;1
+python3 VP_getf.py --x datasets/processed/model_fitting/Mod_Q_Hab12a/TEMP_VP/VP_X.feather --beta_dir datasets/processed/model_fitting/Mod_Q_Hab12a/TEMP_VP --output datasets/processed/model_fitting/Mod_Q_Hab12a/TEMP_VP/VP_F.feather --ncores 3 &gt;&gt; datasets/processed/model_fitting/Mod_Q_Hab12a/TEMP_VP/VP_F.log 2&gt;&amp;1
+python3 VP_getf.py --x datasets/processed/model_fitting/Mod_Q_Hab12b/TEMP_VP/VP_X.feather --beta_dir datasets/processed/model_fitting/Mod_Q_Hab12b/TEMP_VP --output datasets/processed/model_fitting/Mod_Q_Hab12b/TEMP_VP/VP_F.feather --ncores 3 &gt;&gt; datasets/processed/model_fitting/Mod_Q_Hab12b/TEMP_VP/VP_F.log 2&gt;&amp;1</code></pre>
+</div>
+<p><br></p>
+<button onclick="toggleScript('scriptContentNS6')" class="ShortBlockButton">
+»» Example VP_SLURM.slurm file
+</button>
+<div id="scriptContentNS6" class="ShortBlock" style="display: none;">
+<pre><code class="bash">#!/bin/bash
+#SBATCH --job-name=VP_TF
+#SBATCH --ntasks=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --account=project_465001588
+#SBATCH --cpus-per-task=1
+#SBATCH --mem-per-cpu=200G
+#SBATCH --gpus-per-node=1
+#SBATCH --time=01:30:00
+#SBATCH --partition=small-g
+#SBATCH --output=datasets/processed/model_fitting/TF_postprocess/log/%x-%A-%a.out
+#SBATCH --error=datasets/processed/model_fitting/TF_postprocess/log/%x-%A-%a.out
+#SBATCH --array=1-24
+
+# File containing commands to be executed
+File=datasets/processed/model_fitting/VP_Commands.txt
+
+# Load TensorFlow module and configure environment
+ml use /appl/local/csc/modulefiles
+ml tensorflow
+export TF_CPP_MIN_LOG_LEVEL=3
+export TF_ENABLE_ONEDNN_OPTS=0
+
+# Verify GPU availability
+python3 -c "import tensorflow as tf; print(\"Num GPUs Available:\", len(tf.config.list_physical_devices(\"GPU\")))"
+
+# Run array job
+head -n $SLURM_ARRAY_TASK_ID $File | tail -n 1 | bash
+
+echo End of program at `date`</code></pre>
+</div>
+<hr class="hr1">
 </div>
 </div>
 <div class="section level2">
@@ -383,8 +628,11 @@ Example VP_SLURM.slurm file
 <p>Latent factor predictions and variance partitioning are computed on
 GPUs. Batch jobs can be submitted using the <code>sbatch</code>
 command:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="ex">sbatch</span> datasets/processed/model_fitting/TF_postprocess/VP_SLURM.slurm</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="ex">sbatch</span> datasets/processed/model_fitting/TF_postprocess/LF_SLURM.slurm</span></code></pre></div>
 <p>Cross-validated models are fitted by submitting corresponding SLURM
 commands (<em>in preparation</em>):</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="bu">source</span> datasets/processed/model_fitting/HabX/Model_Fitting_CV/CV_Bash_Fit.slurm</span></code></pre></div>
 <hr class="hr1">
 </div>
 <div class="section level2">

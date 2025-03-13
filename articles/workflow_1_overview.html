@@ -77,14 +77,53 @@
     
     
 <style>
+/* Styles for the container div that holds the code block */
 .ShortBlock {
-  height: 400px;
-  width: 100%;
+  width: calc(100% - 40px);    /* Sets the width to 100% of the parent minus 40px to account for the left margin, ensuring it fits within the parent container */
+  max-height: 400px;           /* Limits the maximum height to 400px; if content exceeds this, a vertical scrollbar will appear due to overflow-y */
+  overflow-y: auto;            /* Enables a vertical scrollbar when content height exceeds max-height (400px), hides it when not needed */
+  overflow-x: auto;            /* Enables a horizontal scrollbar when content width exceeds the div's width, hides it when not needed */
+  margin-left: 40px;           /* Shifts the entire div (box and scrollbar) 40px to the right from the left edge of its parent, creating indentation */
+  color: red;                  /* Sets the text color inside the div to red, applied to the <pre><code> content */
+  display: block;              /* Ensures the div behaves as a block-level element, taking full width and stacking vertically */
+  box-sizing: border-box;      /* Includes padding and border in the width calculation, preventing overflow beyond the calculated width */
+  background-color: #f0f0f0;   /* Adds a light gray background for debugging, visually highlighting the div's area to check indentation */
+  position: relative;          /* Sets the div's positioning context to relative, allowing absolute positioning of pseudo-elements (like ::before) within it */
+  padding: 10px;               /* Adds 10px padding on all sides (top, right, bottom, left) for internal spacing between the div's edges and content */
 }
 
-summary {
-  color: red;
-  padding-left: 40px;
+/* Styles for the <pre> element inside .ShortBlock, which contains the code */
+.ShortBlock pre {
+  white-space: pre;            /* Preserves whitespace and prevents text wrapping, ensuring long lines extend horizontally as written */
+  margin: 0;                   /* Removes default margins of the <pre> element to align it flush with the div's padded edges */
+  width: max-content;          /* Sets the width to the natural width of the content (e.g., the longest line), enabling horizontal overflow if wider than the div */
+  overflow: auto;              /* Adds scroll bars to the <pre> if its content overflows (though typically overridden by .ShortBlock's overflow-x/y) */
+}
+
+/* Customizes the appearance of the horizontal scrollbar for WebKit browsers (e.g., Chrome, Safari) */
+.ShortBlock::-webkit-scrollbar {
+  height: 10px;                /* Sets the height of the horizontal scrollbar to 10px, making it visible and sized consistently */
+}
+
+/* Creates a pseudo-element to simulate a top horizontal scrollbar area */
+.ShortBlock::before {
+  content: "";                 /* Defines an empty content for the pseudo-element, required to render it */
+  display: block;              /* Makes the pseudo-element a block-level element, taking full width and stacking vertically */
+  height: 10px;                /* Sets the height to 10px, matching the scrollbar size, creating a scrollable area at the top */
+  width: 100%;                 /* Sets the width to 100% of the .ShortBlock div, aligning with its content area */
+  position: absolute;          /* Positions the pseudo-element absolutely within the .ShortBlock (due to position: relative on parent) */
+  top: 0;                      /* Aligns the pseudo-element to the top edge of the .ShortBlock div */
+  left: 0;                     /* Aligns the pseudo-element to the left edge of the .ShortBlock div, starting at the padded edge */
+  overflow-x: auto;            /* Enables horizontal scrolling for this pseudo-element, attempting to mirror the content's overflow (experimental) */
+}
+
+/* Styles for the button that toggles the collapsible code block */
+.ShortBlockButton {
+  color: red;                  /* Sets the button text color to red, matching the code block text */
+  padding-left: 40px;          /* Adds 40px padding on the left, aligning the button text visually with the indented code block */
+  border: none;                /* Removes the default border from the button for a clean look */
+  background: none;            /* Removes the default background, making it transparent and minimal */
+  cursor: pointer;             /* Changes the cursor to a pointer on hover, indicating the button is clickable */
 }
 
 ff {
@@ -100,14 +139,14 @@ cc {
 }
 
 .ll:visited {
-  color: blue; !important;
+  color: blue !important;
   text-decoration: none !important;
 }
 
 .ll:hover {
   text-decoration: underline !important;
   background-color: #d3f2aa !important;
-  color: darkblue; important;
+  color: darkblue !important;
 }
 
 .ll:link, .ll:active {

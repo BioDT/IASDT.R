@@ -529,7 +529,7 @@ Mod_Prep_TF <- function(
     paste0("# ", strrep("-", 50)))
 
   IASDT.R::CatTime(
-    paste0("Write SLURM script to: `", Path_VP_SLURM, "`"),
+    paste0("Writing SLURM script to: `", Path_VP_SLURM, "`"),
     Level = 2, Time = FALSE)
 
   readr::write_lines(x = VP_Commands, file = Path_VP_SLURM, append = FALSE)
@@ -726,7 +726,7 @@ Mod_Prep_TF <- function(
 
   Path_LF_SLURM <- IASDT.R::Path(Path_TF, "LF_SLURM.slurm")
   IASDT.R::CatTime(
-    paste0("Writing LF SLURM script to: `", Path_LF_SLURM, "`"),
+    paste0("Writing SLURM script to: `", Path_LF_SLURM, "`"),
     Level = 2, Time = FALSE)
   # Write the content to a file
   readr::write_lines(LF_slurm_script, Path_LF_SLURM, append = FALSE)

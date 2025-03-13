@@ -232,8 +232,9 @@ RecordArgs <- function(ExportPath = NULL) {
   # Prepare argument names for the output
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
 
-  # Use the original order of argument names from the function definition
-  arg_names <- names(formal_args)
+  # Use the original order of argument names from the function definition,
+  # excluding '...'
+  arg_names <- names(formal_args)[names(formal_args) != "..."]
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
   # Format evaluated values for the tibble

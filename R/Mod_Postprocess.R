@@ -453,9 +453,7 @@ Mod_Prep_TF <- function(
   # Path to store TF commands
   Path_TF <- IASDT.R::Path(Path_Model, "TF_postprocess")
   # Path to store log files
-  Path_Log <- IASDT.R::NormalizePath(
-    IASDT.R::Path(Path_TF, "log", "%x-%A-%a.out"))
-
+  Path_Log <- IASDT.R::NormalizePath(IASDT.R::Path(Path_TF, "log"))
   fs::dir_create(c(Path_TF, Path_Log))
 
   # ****************************************************************
@@ -473,9 +471,9 @@ Mod_Prep_TF <- function(
   Path_VP_SLURM <- IASDT.R::Path(Path_TF, "VP_SLURM.slurm")
   Path_VP_Commands <- IASDT.R::Path(Path_TF, "VP_Commands.txt")
 
-  # Merge and organize TF commands for computing variance partitioning ----
+  # Merge and organize TensorFlow commands for computing variance partitioning 
   IASDT.R::CatTime(
-    "Merge and organize TF commands for computing variance partitioning",
+    "Merge and organize TF TensorFlow for computing variance partitioning",
     Level = 1, Time = FALSE)
 
   # Find list of files matching the pattern
@@ -505,8 +503,8 @@ Mod_Prep_TF <- function(
     "#SBATCH --gpus-per-node=1",
     paste0("#SBATCH --time=", VP_Time),
     paste0("#SBATCH --partition=", Partition_Name),
-    paste0("#SBATCH --output=", Path_Log),
-    paste0("#SBATCH --error=", Path_Log),
+    paste0("#SBATCH --output=", IASDT.R::Path(Path_Log, "%x-%A-%a.out")),
+    paste0("#SBATCH --error=", IASDT.R::Path(Path_Log, "%x-%A-%a.out")),
     paste0("#SBATCH --array=1-", length(VP_InFiles)),
     "\n# File containing commands to be executed",
     paste0("File=", Path_VP_Commands),
@@ -552,11 +550,11 @@ Mod_Prep_TF <- function(
   # both can be run on the same time.
   NumFiles <- NumFiles - length(VP_InFiles)
 
-  # Merge and organize TF commands for LF predictions ----
+  # Merge and organize TensorFlow commands for LF predictions ----
   IASDT.R::CatTime(
     paste0(
-      "Merge and organize TF commands for LF predictions into a maximum of ",
-      NumFiles, " files"),
+      "Merge and organize TensorFlow commands for LF predictions ",
+      "into a maximum of ", NumFiles, " files"),
     Level = 1, Time = FALSE)
 
   # Basic commands for TensorFlow setup
@@ -667,8 +665,8 @@ Mod_Prep_TF <- function(
     "#SBATCH --gpus-per-node=1",
     paste0("#SBATCH --time=", LF_Time),
     paste0("#SBATCH --partition=", Partition_Name),
-    paste0("#SBATCH --output=", Path_Log),
-    paste0("#SBATCH --error=", Path_Log),
+    paste0("#SBATCH --output=", IASDT.R::Path(Path_Log, "%x-%A-%a.out")),
+    paste0("#SBATCH --error=", IASDT.R::Path(Path_Log, "%x-%A-%a.out")),
     paste0("#SBATCH --array=1-", NumFiles),
     "",
     "# Define directories",

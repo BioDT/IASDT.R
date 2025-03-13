@@ -14,11 +14,11 @@ without saving. If provided, the tibble is saved to the specified file and
 }
 \value{
 A \code{tibble} containing the evaluated forms of the parent function’s
-arguments, with columns named after the arguments (e.g., \code{w}, \code{x}, \code{y}).
-Evaluated values are presented as scalars (e.g., \code{8}) or list columns for
-complex objects (e.g., \verb{<SpatRaster>}). If \code{ExportPath} is provided, the
-tibble is saved to the specified \code{.RData} file and \code{NULL} is returned
-invisibly.
+arguments and any additional named arguments passed via \code{...}, with columns
+named after the arguments (e.g., \code{w}, \code{x}, \code{y}, \code{extra1}). Evaluated values
+are presented as scalars (e.g., \code{8}) or list columns for complex objects
+(e.g., \verb{<SpatRaster>}). If \code{ExportPath} is provided, the tibble is saved to
+the specified \code{.RData} file and \code{NULL} is returned invisibly.
 }
 \description{
 \code{RecordArgs()} is a utility function that captures and records the evaluated
@@ -36,6 +36,8 @@ It handles:
 columns.
 \item \code{NULL} values are converted to the string \code{"NULL"}.
 \item Failed evaluations result in \code{NA}.
+\item Additional named arguments passed via \code{...} in the parent function are also
+recorded.
 }
 
 The function must be called from within another function, as it relies on
@@ -48,7 +50,7 @@ w_values <- 1:3
 x_values <- c(a + b, 10, 15)
 y_values <- c("ABCD", "XYZ123", "TEST")
 
-Function1 <- function(w = 5, x, y, z = c(1, 2)) {
+Function1 <- function(w = 5, x, y, z = c(1, 2), ...) {
   Args <- RecordArgs()
   return(Args)
 }
@@ -88,6 +90,11 @@ purrr::pmap(
   }) \%>\%
   dplyr::bind_rows() \%>\%
   print()
+
+# ----------------------------------------------------
+
+# Example 4: Using additional arguments via ...
+Function1(x = a + b, y = "test", extra1 = "hello", extra2 = 42)
 
 }
 \author{

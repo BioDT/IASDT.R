@@ -14,11 +14,11 @@
 #'   `NULL` is returned invisibly.
 #'
 #' @return A `tibble` containing the evaluated forms of the parent function’s
-#'   arguments, with columns named after the arguments (e.g., `w`, `x`, `y`).
-#'   Evaluated values are presented as scalars (e.g., `8`) or list columns for
-#'   complex objects (e.g., `<SpatRaster>`). If `ExportPath` is provided, the
-#'   tibble is saved to the specified `.RData` file and `NULL` is returned
-#'   invisibly.
+#'   arguments and any additional named arguments passed via `...`, with columns
+#'   named after the arguments (e.g., `w`, `x`, `y`, `extra1`). Evaluated values
+#'   are presented as scalars (e.g., `8`) or list columns for complex objects
+#'   (e.g., `<SpatRaster>`). If `ExportPath` is provided, the tibble is saved to
+#'   the specified `.RData` file and `NULL` is returned invisibly.
 #'
 #' @details This function evaluates all arguments in the grandparent environment
 #'   (two frames up), with a fallback to the global environment if evaluation
@@ -29,6 +29,8 @@
 #'   columns.
 #' - `NULL` values are converted to the string `"NULL"`.
 #' - Failed evaluations result in `NA`.
+#' - Additional named arguments passed via `...` in the parent function are also
+#'   recorded.
 #'
 #' The function must be called from within another function, as it relies on
 #'   `sys.call(-1)` to capture the parent call.
@@ -40,7 +42,7 @@
 #' x_values <- c(a + b, 10, 15)
 #' y_values <- c("ABCD", "XYZ123", "TEST")
 #'
-#' Function1 <- function(w = 5, x, y, z = c(1, 2)) {
+#' Function1 <- function(w = 5, x, y, z = c(1, 2), ...) {
 #'   Args <- RecordArgs()
 #'   return(Args)
 #' }
@@ -80,6 +82,11 @@
 #'   }) %>%
 #'   dplyr::bind_rows() %>%
 #'   print()
+#'
+#' # ----------------------------------------------------
+#'
+#' # Example 4: Using additional arguments via ...
+#' Function1(x = a + b, y = "test", extra1 = "hello", extra2 = 42)
 #'
 #' @author Ahmed El-Gabbas
 #' @export
@@ -233,8 +240,11 @@ RecordArgs <- function(ExportPath = NULL) {
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
 
   # Use the original order of argument names from the function definition,
-  # excluding '...'
-  arg_names <- names(formal_args)[names(formal_args) != "..."]
+  # excluding '...', and add any additional named arguments from the call
+  formal_names <- names(formal_args)[names(formal_args) != "..."]
+  passed_names <- names(passed_args)
+  extra_names <- setdiff(passed_names, formal_names)
+  arg_names <- unique(c(formal_names, extra_names))
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
   # Format evaluated values for the tibble

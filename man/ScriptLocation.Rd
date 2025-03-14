@@ -4,7 +4,7 @@
 \alias{ScriptLocation}
 \title{Retrieve the location of the current R script.}
 \source{
-The source code of this function was taken from this
+The source code of this function was adapted from this
 \href{https://stackoverflow.com/questions/47044068/}{stackoverflow} question.
 }
 \usage{
@@ -12,16 +12,33 @@ ScriptLocation()
 }
 \value{
 A character string representing the file path of the current R
-script, or \code{NA} if the path cannot be determined.
+script, or \code{NA_character_} if the path cannot be determined (e.g., in an
+unsourced interactive session without a script context).
 }
 \description{
-This function attempts to find the location of the currently running R
-script. It first tries to identify the script's location based on the command
-line arguments used to start the script. If the script is being run in an
-interactive session within RStudio, it falls back to using the \code{rstudioapi}
-to find the file path of the script in the source editor. If the location
-cannot be determined, it returns \code{NA}.
+This function determines the file path of the currently executing R script.
+It checks command line arguments (e.g., via \code{Rscript}) for the script path,
+then in interactive sessions, it examines the call stack for the most
+recently sourced file, falling back to \code{rstudioapi} (if available and RStudio
+is running) when no sourcing context exists. If the location cannot be
+determined, it returns \code{NA}.
+}
+\details{
+The function follows this priority order:
+\itemize{
+\item Command line arguments (\code{--file}) when executed via \code{Rscript}.
+\item The most recent \code{ofile} attribute from the call stack when sourced
+interactively in any R environment, supporting nested sourcing scenarios.
+\item RStudio's active editor context via \code{rstudioapi} if available, RStudio is
+running, and no sourcing context is found.
+\item Returns \code{NA_character_} for unsourced interactive sessions or
+non-interactive execution without a script path.
+}
 }
 \examples{
-# ScriptLocation()
+\dontrun{
+# Save as "myscript.R": ScriptLocation()
+# Run: Rscript myscript.R
+# Output: [1] "myscript.R" (or full path depending on Rscript invocation)
+}
 }

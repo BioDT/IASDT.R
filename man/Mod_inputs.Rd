@@ -264,42 +264,6 @@ presence grid cells per species, and merges various environmental layers
 intensity, sampling efforts) into a single dataset. Processed data is saved
 to disk as an \verb{*.RData} file.
 }
-\details{
-The current models are fitted for 8 habitat types see \href{https://doi.org/10.23855/preslia.2022.447}{Pysek et al.}:
-\itemize{
-\item \strong{1. Forests} -- closed vegetation dominated by deciduous or evergreen
-trees
-\item \strong{2. Open forests} -- woodlands with canopy openings created by
-environmental stress or disturbance, including forest edges
-\item \strong{3. Scrub} -- shrublands maintained by environmental stress (aridity) or
-disturbance
-\item \strong{4a. Natural grasslands} -- grasslands maintained by climate (aridity,
-unevenly distributed precipitation), herbivores or environmental stress
-(aridity, instability or toxicity of substrate)
-\item \strong{4b. Human-maintained grasslands} -- grasslands dependent on regular
-human-induced management (mowing, grazing by livestock, artificial burning)
-\item \strong{10. Wetland} -- sites with the permanent or seasonal influence of
-moisture, ranging from oligotrophic to eutrophic
-\item \strong{12a. Ruderal habitats} -- anthropogenically disturbed or eutrophicated
-sites, where the anthropogenic disturbance or fertilization is typically a
-side-product and not the aim of the management
-\item \strong{12b. Agricultural habitats} -- synanthropic habitats directly
-associated with growing of agricultural products, thus dependent on
-specific type of management (ploughing, fertilization)
-
-\if{html}{\out{<br/>}}The following habitat types are excluded from the analysis:
-\item \strong{5. Sandy} -- dunes and other habitats on unstable sandy substrate,
-stressed by low nutrients, drought and disturbed by sand movement
-\item \strong{6. Rocky} -- cliffs and rock outcrops with very shallow or no soil
-\item \strong{7. Dryland} -- habitats in which drought stress limits vegetation
-development
-\item \strong{8. Saline} -- habitats stressed by high soil salinity
-\item \strong{9. Riparian} -- a mosaic of wetlands, grasslands, tall-forb stands,
-scrub and open forests in stream corridors
-\item \strong{11. Aquatic} -- water bodies and streams with submerged and floating
-plant species
-}
-}
 \author{
 Ahmed El-Gabbas
 }

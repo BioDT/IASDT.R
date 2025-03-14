@@ -32,9 +32,6 @@
 #' @author Ahmed El-Gabbas
 #' @export
 #' @examples
-#' # not a git repo
-#' git_log(Path = "C:/")
-#'
 #' # Show the most recent commit
 #' git_log(Num = 1)
 #'
@@ -47,6 +44,12 @@
 #' length(Log)
 #'
 #' head(Log, 8)
+#'
+#' \dontrun{
+#'   # not a git repo
+#'   git_log(Path = "C:/")
+#'   # #> Error: The provided path does not exist.
+#' }
 
 git_log <- function(Path = ".", Num = NULL, ReturnLog = FALSE) {
 

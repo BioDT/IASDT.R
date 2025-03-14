@@ -148,39 +148,6 @@
 #' @order 1
 #' @importFrom rlang .data
 #' @author Ahmed El-Gabbas
-#' @details The current models are fitted for 8 habitat types see [Pysek et
-#'   al.](https://doi.org/10.23855/preslia.2022.447):
-#' - **1. Forests** -- closed vegetation dominated by deciduous or evergreen
-#'   trees
-#' - **2. Open forests** -- woodlands with canopy openings created by
-#'   environmental stress or disturbance, including forest edges
-#' - **3. Scrub** -- shrublands maintained by environmental stress (aridity) or
-#'   disturbance
-#' - **4a. Natural grasslands** -- grasslands maintained by climate (aridity,
-#'   unevenly distributed precipitation), herbivores or environmental stress
-#'   (aridity, instability or toxicity of substrate)
-#' - **4b. Human-maintained grasslands** -- grasslands dependent on regular
-#'   human-induced management (mowing, grazing by livestock, artificial burning)
-#' - **10. Wetland** -- sites with the permanent or seasonal influence of
-#'   moisture, ranging from oligotrophic to eutrophic
-#' - **12a. Ruderal habitats** -- anthropogenically disturbed or eutrophicated
-#'   sites, where the anthropogenic disturbance or fertilization is typically a
-#'   side-product and not the aim of the management
-#' - **12b. Agricultural habitats** -- synanthropic habitats directly
-#'   associated with growing of agricultural products, thus dependent on
-#'   specific type of management (ploughing, fertilization)
-#'
-#'   <br/>The following habitat types are excluded from the analysis:
-#' - **5. Sandy** -- dunes and other habitats on unstable sandy substrate,
-#'   stressed by low nutrients, drought and disturbed by sand movement
-#' - **6. Rocky** -- cliffs and rock outcrops with very shallow or no soil
-#' - **7. Dryland** -- habitats in which drought stress limits vegetation
-#'   development
-#' - **8. Saline** -- habitats stressed by high soil salinity
-#' - **9. Riparian** -- a mosaic of wetlands, grasslands, tall-forb stands,
-#'   scrub and open forests in stream corridors
-#' - **11. Aquatic** -- water bodies and streams with submerged and floating
-#'   plant species
 
 Mod_Prep4HPC <- function(
     Hab_Abb = NULL, DirName = NULL,
@@ -649,9 +616,9 @@ Mod_Prep4HPC <- function(
   IASDT.R::CatTime("Response - Y matrix")
   DT_y <- dplyr::select(DT_All, tidyselect::starts_with("Sp_")) %>%
     as.data.frame()
-  IASDT.R::CatTime(paste0(ncol(DT_y), " species"), Level = 1)
+  IASDT.R::CatTime(paste0(ncol(DT_y), " species"), Level = 1, Time = FALSE)
 
-  IASDT.R::CatTime("Save species summary", Level = 1)
+  IASDT.R::CatTime("Save species summary", Level = 1, Time = FALSE)
   SpSummary <- IASDT.R::Path(Path_PA, "Sp_PA_Summary_DF.RData")
   if (!file.exists(SpSummary)) {
     stop(SpSummary, " file does not exist", call. = FALSE)
@@ -682,22 +649,25 @@ Mod_Prep4HPC <- function(
     IASDT.R::CatTime(
       paste0(
         "Models will be fitted using ", length(XVars), " predictors: ",
-        paste(XVars, collapse = " + ")), Level = 1)
+        paste(XVars, collapse = " + ")), Level = 1, Time = FALSE)
   } else {
     OnlyLinear <- setdiff(XVars, QuadraticVars)
     FormVars <- c(
       OnlyLinear,
       paste0("stats::poly(", QuadraticVars, ", degree = 2, raw = TRUE)"))
 
-    IASDT.R::CatTime("Models will be fitted using:", Level = 1)
+    IASDT.R::CatTime("Models will be fitted using:", Level = 1, Time = FALSE)
 
-    IASDT.R::CatTime(paste0(length(OnlyLinear), " linear effect: "), Level = 2)
-    IASDT.R::CatTime(paste(OnlyLinear, collapse = " + "), Level = 3)
+    IASDT.R::CatTime(
+      paste0(length(OnlyLinear), " linear effect: "), Level = 2, Time = FALSE)
+    IASDT.R::CatTime(
+      paste(OnlyLinear, collapse = " + "), Level = 3, Time = FALSE)
 
     IASDT.R::CatTime(
       paste0(length(QuadraticVars), " linear and quadratic effects: "),
       Level = 2)
-    IASDT.R::CatTime(paste(QuadraticVars, collapse = " + "), Level = 3)
+    IASDT.R::CatTime(
+      paste(QuadraticVars, collapse = " + "), Level = 3, Time = FALSE)
 
   }
 
@@ -738,7 +708,7 @@ Mod_Prep4HPC <- function(
 
   IASDT.R::CatTime(
     paste0("Models will be fitted using ", paste(Tree, collapse = " & ")),
-    Level = 1)
+    Level = 1, Time = FALSE)
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -763,7 +733,7 @@ Mod_Prep4HPC <- function(
 
       IASDT.R::CatTime(
         paste0("Prepare working on parallel using ", NCores_GPP, " cores."),
-        Level = 1)
+        Level = 2, Time = FALSE)
 
       withr::local_options(
         future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
@@ -792,7 +762,7 @@ Mod_Prep4HPC <- function(
 
     } else {
 
-      IASDT.R::CatTime("Working sequentially")
+      IASDT.R::CatTime("Working sequentially", Time = FALSE, Level = 2)
 
       GPP_Knots <- purrr::map(
         .x = GPP_Dists * 1000,
@@ -1250,7 +1220,8 @@ Mod_Prep4HPC <- function(
   IASDT.R::CatTime(
     "Save model fitting commands for batch SLURM jobs", Level = 1)
   IASDT.R::CatTime(
-    paste0("Models will be fitted in ", NSplits, " SLURM job(s)"), Level = 2)
+    paste0("Models will be fitted in ", NSplits, " SLURM job(s)"),
+    Level = 2, Time = FALSE)
 
   purrr::walk(
     .x = seq_len(NSplits),
@@ -1445,7 +1416,8 @@ Mod_Prep4HPC <- function(
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::CatDiff(InitTime = .StartTime)
+  IASDT.R::CatDiff(
+    Prefix = "Processing modelling data took ", InitTime = .StartTime)
 
   return(invisible(NULL))
 }

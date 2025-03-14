@@ -41,9 +41,6 @@ Git repository, Git is not installed, or if the \code{Num} parameter is not
 \code{NULL} or a positive number.
 }
 \examples{
-# not a git repo
-git_log(Path = "C:/")
-
 # Show the most recent commit
 git_log(Num = 1)
 
@@ -56,6 +53,12 @@ Log <- git_log(ReturnLog = TRUE)
 length(Log)
 
 head(Log, 8)
+
+\dontrun{
+  # not a git repo
+  git_log(Path = "C:/")
+  # #> Error: The provided path does not exist.
+}
 }
 \author{
 Ahmed El-Gabbas

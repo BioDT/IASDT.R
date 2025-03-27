@@ -61,7 +61,7 @@ Set_parallel <- function(
     {
       warning(
         "`NCores` > number of available cores. ",
-        "It was reset to the number of available cores", AvailableCores,
+        "It was reset to the number of available cores: ", AvailableCores,
         call. = FALSE)
       AvailableCores
     },

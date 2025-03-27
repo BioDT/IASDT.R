@@ -37,7 +37,9 @@
 #'
 #' CatTime("Time now")
 #'
-#' CatTime("Time now", Date = TRUE)
+#' CatTime("\n\nTime now", NLines = 2, Level = 1)
+#'
+#' CatTime("Time now", Date = TRUE, Bold = TRUE, Red = TRUE)
 #'
 #' # The use of levels
 #' {
@@ -48,8 +50,8 @@
 #' }
 
 CatTime <- function(
-    Text = "", NLines = 1L, Time = TRUE, Bold = FALSE, Red = FALSE,
-    Date = FALSE, TZ = "CET", Level = 0L, ...) {
+    Text = "", NLines = 1L, Time = TRUE, Bold = FALSE,
+    Red = FALSE, Date = FALSE, TZ = "CET", Level = 0L, ...) {
 
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(
@@ -63,7 +65,6 @@ CatTime <- function(
     AllArgs = AllArgs, Type = "numeric", Args = c("NLines", "Level"))
   rm(AllArgs, envir = environment())
 
-
   if (Time) {
     DateFormat <- dplyr::if_else(Date, "%d/%m/%Y %X", "%X")
     Now <- lubridate::now(tzone = TZ) %>%
@@ -73,7 +74,18 @@ CatTime <- function(
     Now <- Now2 <- ""
   }
 
+  NLinesBefore <- stringr::str_extract(Text, "^\\n+") %>%
+    stringr::str_count("\n")
+  if (is.na(NLinesBefore)) {
+    NLinesBefore <- 0
+  }
+
+  Text <- stringr::str_remove(Text, "^\\n+")
+
   if (Text == "") {
+    if (NLinesBefore > 0) {
+      Text <- paste0(paste0(rep("\n", NLinesBefore), collapse = ""), Text)
+    }
     cat(Now, ...)
     cat(rep("\n", NLines))
   } else {
@@ -88,6 +100,10 @@ CatTime <- function(
         paste(collapse = "") %>%
         paste0("  ")
       Text <- paste0(Prefix, Text)
+    }
+
+    if (NLinesBefore > 0) {
+      Text <- paste0(paste0(rep("\n", NLinesBefore), collapse = ""), Text)
     }
 
     cat(paste0(Text, Now2), ...)

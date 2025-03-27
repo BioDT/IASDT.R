@@ -1391,9 +1391,10 @@ Predict_Maps <- function(
   Prediction_Summary_Shiny <- Prediction_Summary %>%
     dplyr::pull(File_Pred_summary) %>%
     basename() %>%
-    IASDT.R::Path(dirname(Path_Summary_RData_Shiny), .) %>%
+    IASDT.R::Path(dirname(Path_Summary_RData_Shiny), .) %>% 
     purrr::map(IASDT.R::LoadAs) %>%
-    dplyr::bind_rows()
+    dplyr::bind_rows() %>%
+    dplyr::distinct()
 
   save(Prediction_Summary_Shiny, file = Path_Summary_RData_Shiny)
   utils::write.table(

@@ -40,13 +40,22 @@
 
 sf_add_coords <- function(
     Sf_Obj, NameX = "Long", NameY = "Lat", Overwrite = FALSE) {
+
+  if (!inherits(Sf_Obj, "sf")) {
+    stop("`Sf_Obj` must be an sf object", call. = FALSE)
+  }
+
+  if (!is.character(NameX) || !is.character(NameY) ||
+      !nzchar(NameX) || !nzchar(NameY)) {
+    stop("`NameX` and `NameY` must be non-empty strings", call. = FALSE)
+  }
+
   ColNames <- names(Sf_Obj)
 
   # Coordinate Extraction
   # extract the coordinates from the sf object and converts them into a tibble,
   # naming the columns according to NameX and NameY
-  Coords <- Sf_Obj %>%
-    sf::st_coordinates() %>%
+  Coords <- sf::st_coordinates(Sf_Obj) %>%
     tibble::as_tibble() %>%
     stats::setNames(c(NameX, NameY))
 

@@ -33,6 +33,12 @@ CheckZip <- function(File) {
     return(FALSE)
   }
 
+  # Verify the file is not empty
+  if (file.info(File)$size == 0) {
+    message("File is empty: ", File)
+    return(FALSE)
+  }
+
   # Validate the ZIP file
   FileOkay <- tryCatch(
     expr = {

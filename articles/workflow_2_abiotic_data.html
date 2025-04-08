@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">IASDT.R</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.03</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.04</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -219,7 +219,7 @@ This grid utilizes the ETRS89-LAEA Europe coordinate reference system
 <div class="section level2">
 <h2 id="corine-land-cover-and-habitat-data">Corine land cover and habitat data<a class="anchor" aria-label="anchor" href="#corine-land-cover-and-habitat-data"></a>
 </h2>
-<p>The <code><a href="../reference/CLC_Process.html">CLC_Process()</a></code> function manages the processing of
+<p>The <code><a href="../reference/CLC_Process.html">CLC_process()</a></code> function manages the processing of
 Corine Land Cover
 (<a href="https://land.copernicus.eu/en/products/corine-land-cover/clc2018" target="_blank" class="external-link ll">CLC</a>)
 data within the <code>IAS-pDT</code> workflow. It computes the
@@ -248,7 +248,7 @@ during model fitting.</li>
 <div class="section level2">
 <h2 id="biogeographical-regions">Biogeographical regions<a class="anchor" aria-label="anchor" href="#biogeographical-regions"></a>
 </h2>
-<p>The <code><a href="../reference/BioReg_Process.html">BioReg_Process()</a></code> function retrieves and processes
+<p>The <code><a href="../reference/BioReg_Process.html">bioreg_process()</a></code> function retrieves and processes
 the biogeographical regions dataset from the
 <a href="https://www.eea.europa.eu/en/datahub/datahubitem-view/11db8d14-f167-4cd5-9205-95638dfd9618" target="_blank" class="external-link ll">EEA</a>.
 It extracts the names of biogeographical regions corresponding to each
@@ -259,7 +259,7 @@ across these regions.</p>
 <div class="section level2">
 <h2 id="chelsa-climate-data">CHELSA climate data<a class="anchor" aria-label="anchor" href="#chelsa-climate-data"></a>
 </h2>
-<p>The <code><a href="../reference/CHELSA_data.html">CHELSA_Process()</a></code> function manages the retrieval and
+<p>The <code><a href="../reference/CHELSA_data.html">CHELSA_process()</a></code> function manages the retrieval and
 processing of
 <a href="https://chelsa-climate.org/" target="_blank" class="external-link ll">CHELSA</a>
 (Climatologies at High Resolution for the Earth’s Land Surface Areas)
@@ -368,8 +368,8 @@ SSP5-RCP8.5 climate as simulated by the GCMs
 <div class="section level2">
 <h2 id="railways-and-roads-intensity">Railways and roads intensity<a class="anchor" aria-label="anchor" href="#railways-and-roads-intensity"></a>
 </h2>
-<p>The <code><a href="../reference/Railway_Intensity.html">Railway_Intensity()</a></code> and
-<code><a href="../reference/Road_Intensity.html">Road_Intensity()</a></code> functions retrieve and process railway
+<p>The <code><a href="../reference/Railway_Intensity.html">railway_intensity()</a></code> and
+<code><a href="../reference/Road_Intensity.html">road_intensity()</a></code> functions retrieve and process railway
 data (sourced from
 <a href="https://www.openrailwaymap.org/" target="_blank" class="external-link ll">OpenRailwayMap</a>)
 and road data (sourced from the Global Roads Inventory Project;
@@ -385,7 +385,7 @@ as predictor variables.</p>
 <div class="section level2">
 <h2 id="river-length">River length<a class="anchor" aria-label="anchor" href="#river-length"></a>
 </h2>
-<p>The <code><a href="../reference/River_Length.html">River_Length()</a></code> function processes data from the
+<p>The <code><a href="../reference/River_Length.html">river_length()</a></code> function processes data from the
 <a href="https://land.copernicus.eu/en/products/eu-hydro/eu-hydro-river-network-database" target="_blank" class="external-link ll">EU-Hydro
 River Network Database</a> to compute river lengths categorized by
 Strahler order for each grid cell. The Strahler order, a hierarchical
@@ -406,7 +406,7 @@ the total number of vascular plant observations per grid cell from the
 Global Biodiversity Information Facility
 (<a href="https://www.gbif.org/" target="_blank" class="external-link ll">GBIF</a>) is
 employed as a proxy for sampling effort. The
-<code><a href="../reference/Efforts_data.html">Efforts_Process()</a></code> function manages the request, retrieval,
+<code><a href="../reference/Efforts_data.html">efforts_process()</a></code> function manages the request, retrieval,
 and processing of this sampling effort data, encompassing over 260
 million occurrences as of March 2025. Beyond total observations, the
 function also determines the number of vascular plant species per grid

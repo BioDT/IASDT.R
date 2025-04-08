@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">IASDT.R</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.03</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.04</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -215,7 +215,7 @@ and the subsequent process of fitting these models on GPUs within the
 <h2 id="model-input-data">Model input data<a class="anchor" aria-label="anchor" href="#model-input-data"></a>
 </h2>
 <p>The primary function for preparing model-fitting data and
-initializing models is <cc><code><a href="../reference/Mod_inputs.html">Mod_Prep4HPC()</a></code></cc>. It
+initializing models is <cc><code><a href="../reference/Mod_inputs.html">mod_prepare_HPC()</a></code></cc>. It
 structures data for each habitat-specific model into distinct
 directories (e.g., <ff>datasets/processed/model_fitting/HabX</ff>, where
 <i>X</i> represents a
@@ -225,13 +225,13 @@ perform the following tasks:</p>
 <p><br></p>
 <ul>
 <li>
-<cc><code><a href="../reference/Mod_inputs.html">Mod_PrepData()</a></code></cc>: prepare input data for
+<cc><code><a href="../reference/Mod_inputs.html">mod_prepare_data()</a></code></cc>: prepare input data for
 modeling, with key arguments including:</li>
 </ul>
 <table class="table table table-condensed table-hover" style="font-size: 16px; margin-left: auto; margin-right: auto;"><tbody>
 <tr>
 <td style="text-align:left;padding-left: 4em;white-space: nowrap;" indentlevel="1">
-<cc>Hab_Abb</cc><tab0></tab0>
+<cc>hab_abb</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 abbreviation of a single habitat type to be modeled
@@ -239,7 +239,7 @@ abbreviation of a single habitat type to be modeled
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 4em;white-space: nowrap;" indentlevel="1">
-<cc>Path_Model</cc><tab0></tab0>
+<cc>directory_name</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 directory path for storing all model files
@@ -247,7 +247,7 @@ directory path for storing all model files
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 4em;white-space: nowrap;" indentlevel="1">
-<cc>MinEffortsSp</cc><tab0></tab0>
+<cc>min_efforts_n_species</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 minimum number of vascular plant species per grid cell required for
@@ -255,13 +255,13 @@ inclusion in model fitting. This reflects the total count of vascular
 plant species (including native species) recorded in GBIF across Europe,
 as computed during the
 <a href="workflow_2_abiotic_data.html#sampling-efforts" class="ll">sampling
-effort preparation</a> step (<code><a href="../reference/Efforts_data.html">Efforts_Process()</a></code>). This
+effort preparation</a> step (<code><a href="../reference/Efforts_data.html">efforts_process()</a></code>). This
 argument filters out grid cells with insufficient sampling effort
 </td>
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 4em;white-space: nowrap;" indentlevel="1">
-<cc>ExcludeCult</cc><tab0></tab0>
+<cc>exclude_cultivated</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 whether to exclude countries with cultivated or casual observations for
@@ -270,7 +270,7 @@ each species
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 4em;white-space: nowrap;" indentlevel="1">
-<cc>ExcludeZeroHabitat</cc><tab0></tab0>
+<cc>exclude_0_habitat</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 whether to exclude grid cells with zero
@@ -280,30 +280,31 @@ coverage</a> of the respective habitat type
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 4em;white-space: nowrap;" indentlevel="1">
-<cc>PresPerSpecies</cc><tab0></tab0>
+<cc>n_pres_per_species</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 minimum number of presence grid cells required for a species to be
 included in the models, calculated after excluding grid cells with low
-sampling effort (<cc>MinEffortsSp</cc>), zero habitat coverage
-(<cc>ExcludeZeroHabitat</cc>), and countries with cultivated or casual
-observations (<cc>ExcludeCult</cc>)
+sampling effort (<cc>min_efforts_n_species</cc>), zero habitat coverage
+(<cc>exclude_0_habitat</cc>), and countries with cultivated or casual
+observations (<cc>exclude_cultivated</cc>)
 </td>
 </tr>
 </tbody></table>
 <p><br><br></p>
 <ul>
 <li>
-<code><a href="../reference/Mod_GetCV.html">Mod_GetCV()</a></code>: prepare and visualize options for
+<code><a href="../reference/mod_CV_prepare.html">mod_CV_prepare()</a></code>: prepare and visualize options for
 spatial-block cross-validation. In the <i>CV_Dist</i> strategy, block
-size is governed by the <em>CV_NGrids</em> argument, whereas in the
+size is governed by the <em>CV_n_grids</em> argument, whereas in the
 <i>CV_Large</i> strategy, the study area is partitioned into larger
-blocks based on the <em>CV_NR</em> and <em>CV_NC</em> arguments.</li>
+blocks based on the <em>CV_n_rows</em> and <em>CV_n_columns</em>
+arguments.</li>
 </ul>
 <table class="table table table-condensed table-hover" style="font-size: 16px; margin-left: auto; margin-right: auto;"><tbody>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>CV_NFolds</cc><tab0></tab0>
+<cc>CV_n_folds</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 number of cross-validation folds
@@ -311,7 +312,7 @@ number of cross-validation folds
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>CV_NGrids</cc><tab0></tab0>
+<cc>CV_n_grids</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 number of grid cells in each directions for the <i>CV_Dist</i>
@@ -321,20 +322,20 @@ blocks).
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>CV_NR / CV_NC</cc><tab0></tab0>
+<cc>CV_n_rows / CV_n_columns</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 number of rows and columns defining in the <i>CV_Large</i>
 cross-validation strategy, partitioning the study area into large blocks
-(default: <em>CV_NR = CV_NC = 2</em>, resulting in four blocks divided
-at median coordinates).
+(default: <em>CV_n_rows = CV_n_columns = 2</em>, resulting in four
+blocks divided at median coordinates).
 </td>
 </tr>
 </tbody></table>
 <p><br><br></p>
 <ul>
 <li>
-<code><a href="../reference/Mod_PrepKnots.html">Mod_PrepKnots()</a></code>: prepare and visualize knot locations
+<code><a href="../reference/prepare_knots.html">prepare_knots()</a></code>: prepare and visualize knot locations
 for Gaussian Predictive Process (GPP) models, as described by Tikhonov
 <em>et al.</em>
 (<a href="https://doi.org/10.1002/ecy.2929" target="_blank" class="external-link ll">2019</a>).</li>
@@ -351,16 +352,18 @@ Predictive Process (GPP)
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>GPP_Dists</cc><tab0></tab0>
+<cc>GPP_dists</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
-distance (in kilometers) specifying both the spacing between knots and
-the minimum distance between a knot and the nearest sampling point
+distance (in kilometers; controlled by the <code>min_distance</code>
+argument of <code><a href="../reference/prepare_knots.html">prepare_knots()</a></code>) specifying both the spacing
+between knots and the minimum distance between a knot and the nearest
+sampling point
 </td>
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>GPP_Plot</cc><tab0></tab0>
+<cc>GPP_plot</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 whether to plot the coordinates of sampling units and knots
@@ -368,7 +371,7 @@ whether to plot the coordinates of sampling units and knots
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>MinLF / MaxLF</cc><tab0></tab0>
+<cc>min_LF / max_LF</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 minimum and maximum number of latent factors to be include
@@ -376,7 +379,7 @@ minimum and maximum number of latent factors to be include
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>Alphapw</cc><tab0></tab0>
+<cc>alphapw</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 prior specification for the alpha parameter
@@ -386,13 +389,13 @@ prior specification for the alpha parameter
 <p><br><br></p>
 <ul>
 <li>
-<code><a href="../reference/Mod_SLURM.html">Mod_SLURM()</a></code>: generate SLURM scripts to facilitate model
+<code><a href="../reference/Mod_SLURM.html">mod_SLURM()</a></code>: generate SLURM scripts to facilitate model
 fitting on GPUs using the <code>Hmsc-HPC</code> extension.</li>
 </ul>
 <table class="table table table-condensed table-hover" style="font-size: 16px; margin-left: auto; margin-right: auto;"><tbody>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>JobName</cc><tab0></tab0>
+<cc>job_name</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 name assigned to the SLURM job
@@ -408,7 +411,7 @@ number of tasks to execute
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>CpusPerTask / GpusPerNode</cc><tab0></tab0>
+<cc>cpus_per_task / gpus_per_node</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 Number of CPUs and GPUs allocated per node
@@ -416,7 +419,7 @@ Number of CPUs and GPUs allocated per node
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>MemPerCpu</cc><tab0></tab0>
+<cc>memory_per_cpu</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 memory allocation per CPU
@@ -424,7 +427,7 @@ memory allocation per CPU
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>Time</cc><tab0></tab0>
+<cc>job_runtime</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 maximum duration for job execution
@@ -432,7 +435,7 @@ maximum duration for job execution
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>Partition</cc><tab0></tab0>
+<cc>HPC_partition</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 name of the HPC partition
@@ -440,7 +443,7 @@ name of the HPC partition
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>NumArrayJobs</cc><tab0></tab0>
+<cc>n_array_jobs</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 number of jobs within each SLURM script
@@ -455,7 +458,7 @@ number of jobs within each SLURM script
 <table class="table table table-condensed table-hover" style="font-size: 16px; margin-left: auto; margin-right: auto;"><tbody>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>BioVars</cc><tab0></tab0>
+<cc>bio_variables</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 names of
@@ -465,7 +468,7 @@ variables to include in the model
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>QuadraticVars</cc><tab0></tab0>
+<cc>quadratic_variables</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 names of variables for which quadratic terms are incorporated
@@ -473,7 +476,7 @@ names of variables for which quadratic terms are incorporated
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>EffortsAsPredictor</cc><tab0></tab0>
+<cc>efforts_as_predictor</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 whether to include the (log<sub>10</sub>-transformed)
@@ -483,7 +486,7 @@ effort</a> as a predictor
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>RoadRailAsPredictor</cc><tab0></tab0>
+<cc>road_rail_as_predictor</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 whether to include the (log<sub>10</sub>-transformed)
@@ -493,7 +496,7 @@ road and railway intensity</a> as a predictor
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>HabAsPredictor</cc><tab0></tab0>
+<cc>habitat_as_predictor</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 whether to include the (log<sub>10</sub>-transformed)
@@ -503,7 +506,7 @@ coverage of the respective habitat type</a> per grid cell as a predictor
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>RiversAsPredictor</cc><tab0></tab0>
+<cc>river_as_predictor</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 whether to include the (log<sub>10</sub>-transformed) total
@@ -519,7 +522,7 @@ length</a> per grid cell as a predictor
 <table class="table table table-condensed table-hover" style="font-size: 16px; margin-left: auto; margin-right: auto;"><tbody>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>NChains</cc><tab0></tab0>
+<cc>MCMC_n_chains</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 number of MCMC chains
@@ -527,7 +530,7 @@ number of MCMC chains
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>thin</cc><tab0></tab0>
+<cc>MCMC_thin</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 thinning value(s) in MCMC sampling
@@ -535,7 +538,7 @@ thinning value(s) in MCMC sampling
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>samples</cc><tab0></tab0>
+<cc>MCMC_samples</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 number of MCMC samples per chain
@@ -543,7 +546,7 @@ number of MCMC samples per chain
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>transientFactor</cc><tab0></tab0>
+<cc>MCMC_transient_factor</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 transient multiplication factor. The value of transient will equal the
@@ -552,7 +555,7 @@ multiplication of <cc>transientFactor</cc> and <cc>thin</cc>
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>verbose</cc><tab0></tab0>
+<cc>MCMC_verbose</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 interval at which MCMC sampling progress is reported
@@ -560,7 +563,7 @@ interval at which MCMC sampling progress is reported
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>Precision</cc><tab0></tab0>
+<cc>precision</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 floating-point precision mode for Hmsc-HPC sampling
@@ -570,20 +573,20 @@ floating-point precision mode for Hmsc-HPC sampling
 <p><br><br></p>
 <ul>
 <li>
-<cc>NspPerGrid</cc>: minimum number of IAS per grid cell for a grid
-cell to be included in the analysis</li>
+<cc>n_species_per_grid</cc>: minimum number of IAS per grid cell for
+a grid cell to be included in the analysis</li>
 <li>
-<cc>ModelCountry</cc>: fit the model for a specific country or
+<cc>model_country</cc>: fit the model for a specific country or
 countries</li>
-<li>whether or not to use phylogenetic trees: <cc>PhyloTree</cc> and
-<cc>NoPhyloTree</cc>
+<li>whether or not to use phylogenetic trees: <cc>use_phylo_tree</cc>
+and <cc>no_phylo_tree</cc>
 </li>
 <li>
-<cc>Path_Hmsc</cc>: directory path to <code>Hmsc-HPC</code>
+<cc>path_Hmsc</cc>: directory path to <code>Hmsc-HPC</code>
 extension installation</li>
 <li>
-<cc>PrepSLURM</cc>: whether to prepare SLURM script for model
-fitting on GPU via <code><a href="../reference/Mod_SLURM.html">Mod_SLURM()</a></code>
+<cc>SLURM_prepare</cc>: whether to prepare SLURM script for model
+fitting on GPU via <code><a href="../reference/Mod_SLURM.html">mod_SLURM()</a></code>
 </li>
 </ul>
 <hr class="hr1">
@@ -593,7 +596,7 @@ fitting on GPU via <code><a href="../reference/Mod_SLURM.html">Mod_SLURM()</a></
 </h2>
 <p>Following the preparation of model input data and initialization of
 models, the subsequent phase involves fitting these models on GPUs. For
-each habitat type, the <code><a href="../reference/Mod_inputs.html">Mod_Prep4HPC()</a></code> function
+each habitat type, the <code><a href="../reference/Mod_inputs.html">mod_prepare_HPC()</a></code> function
 produces:</p>
 <ul>
 <li>python commands (<ff>Commands2Fit.txt</ff>) for fitting model chains
@@ -629,7 +632,6 @@ jobs on a high-performance computing (HPC) system.</li>
 #SBATCH --error=datasets/processed/model_fitting/Mod_Riv_Hab1/Model_Fitting_HPC/JobsLog/%x-%A-%a.out
 #SBATCH --account=project_465001588
 #SBATCH --cpus-per-task=1
-#SBATCH --mem-per-cpu=200G
 #SBATCH --gpus-per-node=1
 #SBATCH --time=3-00:00:00
 #SBATCH --partition=small-g
@@ -664,7 +666,7 @@ File=datasets/processed/model_fitting/Mod_Riv_Hab1/Commands2Fit.txt
 # -----------------------------------------------------------
 # Loading Hmsc-HPC
 # -----------------------------------------------------------
-source /pfs/lustrep4/scratch/project_465000915/elgabbas/Hmsc_Simplified_OOM2/setup-env.sh
+source /pfs/lustrep4/scratch/project_465001857/elgabbas/Hmsc_simplify_io/setup-env.sh
 
 # -----------------------------------------------------------
 # Check GPU

@@ -11,7 +11,7 @@ if the output file validation fails."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">IASDT.R</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.03</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.04</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,7 +46,7 @@ if the output file validation fails."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>run_crossprod_solve Run Crossprod Solve</h1>
-      <small class="dont-index">Source: <a href="https://github.com/BioDT/IASDT.R/blob/main/R/Mod_Predict_LF.R" class="external-link"><code>R/Mod_Predict_LF.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/BioDT/IASDT.R/blob/main/R/mod_predict_latent_factor.R" class="external-link"><code>R/mod_predict_latent_factor.R</code></a></small>
       <div class="d-none name"><code>run_crossprod_solve.Rd</code></div>
     </div>
 
@@ -59,7 +59,7 @@ if the output file validation fails.</p>
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">run_crossprod_solve</span><span class="op">(</span></span>
-<span>  <span class="va">TF_Environ</span>,</span>
+<span>  <span class="va">TF_environ</span>,</span>
 <span>  <span class="va">s1</span>,</span>
 <span>  <span class="va">s2</span>,</span>
 <span>  <span class="va">postEta</span>,</span>
@@ -71,7 +71,7 @@ if the output file validation fails.</p>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  solve_chunk_size <span class="op">=</span> <span class="fl">50L</span>,</span>
 <span>  solve_max_attempts <span class="op">=</span> <span class="fl">5L</span>,</span>
-<span>  LF_Commands_Only <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  LF_commands_only <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -79,9 +79,9 @@ if the output file validation fails.</p>
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-tf-environ">TF_Environ<a class="anchor" aria-label="anchor" href="#arg-tf-environ"></a></dt>
+<dl><dt id="arg-tf-environ">TF_environ<a class="anchor" aria-label="anchor" href="#arg-tf-environ"></a></dt>
 <dd><p>Character. Path to the Python environment. This argument is
-required if <code>UseTF</code> is <code>TRUE</code> under Windows. Defaults to <code>NULL</code>.</p></dd>
+required if <code>use_TF</code> is <code>TRUE</code> under Windows. Defaults to <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-s-">s1<a class="anchor" aria-label="anchor" href="#arg-s-"></a></dt>
@@ -121,6 +121,11 @@ processing. Default is 2000.</p></dd>
 TensorFlow calculations. Defaults to <code>FALSE</code>.</p></dd>
 
 
+<dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
+<dd><p>Logical. If <code>TRUE</code>, logs detailed information during
+execution. Default is <code>TRUE</code>.</p></dd>
+
+
 <dt id="arg-solve-chunk-size">solve_chunk_size<a class="anchor" aria-label="anchor" href="#arg-solve-chunk-size"></a></dt>
 <dd><p>Integer. Chunk size for <code>solve_and_multiply</code> Python
 function. Default is 50L.</p></dd>
@@ -131,7 +136,7 @@ function. Default is 50L.</p></dd>
 and crossprod internal function run_crossprod_solve. Default is 5L.</p></dd>
 
 
-<dt id="arg-lf-commands-only">LF_Commands_Only<a class="anchor" aria-label="anchor" href="#arg-lf-commands-only"></a></dt>
+<dt id="arg-lf-commands-only">LF_commands_only<a class="anchor" aria-label="anchor" href="#arg-lf-commands-only"></a></dt>
 <dd><p>Logical. If <code>TRUE</code>, returns the command to run the
 Python script. Default is <code>FALSE</code>.</p></dd>
 
@@ -147,7 +152,7 @@ fail.</p>
 <ul><li><p>The function checks for the existence of required input files and the
 Python executable in the specified virtual environment.</p></li>
 <li><p>Executes the Python script using <code>system2</code>.</p></li>
-<li><p>Verifies the output file validity using <code><a href="Check_data.html">IASDT.R::CheckData</a></code>. Retries up
+<li><p>Verifies the output file validity using <code><a href="Check_data.html">IASDT.R::check_data</a></code>. Retries up
 to 3 times if the output is invalid.</p></li>
 <li><p>Generates detailed logs if <code>verbose</code> is set to <code>TRUE</code>.</p></li>
 </ul></div>

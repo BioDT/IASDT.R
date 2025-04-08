@@ -15,7 +15,7 @@ hash, references, commit message, relative commit date, and author name."></head
 
     <a class="navbar-brand me-2" href="../index.html">IASDT.R</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.03</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.04</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,7 +50,7 @@ hash, references, commit message, relative commit date, and author name."></head
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Print or return a detailed <code>git log</code> of the git repository located in the specified directory.</h1>
-      <small class="dont-index">Source: <a href="https://github.com/BioDT/IASDT.R/blob/main/R/General_git_log.R" class="external-link"><code>R/General_git_log.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/BioDT/IASDT.R/blob/main/R/general_git_log.R" class="external-link"><code>R/general_git_log.R</code></a></small>
       <div class="d-none name"><code>git_log.Rd</code></div>
     </div>
 
@@ -64,28 +64,28 @@ hash, references, commit message, relative commit date, and author name.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">git_log</span><span class="op">(</span>Path <span class="op">=</span> <span class="st">"."</span>, Num <span class="op">=</span> <span class="cn">NULL</span>, ReturnLog <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">git_log</span><span class="op">(</span>path <span class="op">=</span> <span class="st">"."</span>, n_commits <span class="op">=</span> <span class="cn">NULL</span>, return_log <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-path">Path<a class="anchor" aria-label="anchor" href="#arg-path"></a></dt>
+<dl><dt id="arg-path">path<a class="anchor" aria-label="anchor" href="#arg-path"></a></dt>
 <dd><p>Character. Path to the directory to check. Defaults to the
 current working directory ".". If the path does not exist, the function
 will stop and throw an error. If the path is not a git repository, the
 function will throw a warning.</p></dd>
 
 
-<dt id="arg-num">Num<a class="anchor" aria-label="anchor" href="#arg-num"></a></dt>
+<dt id="arg-n-commits">n_commits<a class="anchor" aria-label="anchor" href="#arg-n-commits"></a></dt>
 <dd><p>Integer. Number of recent commits to display. If <code>NULL</code> (the
-default), the complete log is shown. If <code>Num</code> is not <code>NULL</code> or a positive
-number, the function will stop and throw an error. This parameter is
-ignored if <code>ReturnLog</code> is <code>TRUE</code>.</p></dd>
+default), the complete log is shown. If <code>n_commits</code> is not <code>NULL</code> or a
+positive number, the function will stop and throw an error. This parameter
+is ignored if <code>return_log</code> is <code>TRUE</code>.</p></dd>
 
 
-<dt id="arg-returnlog">ReturnLog<a class="anchor" aria-label="anchor" href="#arg-returnlog"></a></dt>
+<dt id="arg-return-log">return_log<a class="anchor" aria-label="anchor" href="#arg-return-log"></a></dt>
 <dd><p>Logical. Whether to return the log (<code>TRUE</code>) or print it to
 the console (<code>FALSE</code>, default). If <code>TRUE</code>, the function returns a character
 vector containing the log lines.</p></dd>
@@ -93,16 +93,16 @@ vector containing the log lines.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>If <code>ReturnLog</code> is <code>TRUE</code>, returns a character vector containing the
-git log lines. If <code>ReturnLog</code> is <code>FALSE</code>, the function is called for its
+    <p>If <code>return_log</code> is <code>TRUE</code>, returns a character vector containing the
+git log lines. If <code>return_log</code> is <code>FALSE</code>, the function is called for its
 side effect of printing to the console.</p>
     </div>
     <div class="section level2">
     <h2 id="note">Note<a class="anchor" aria-label="anchor" href="#note"></a></h2>
     <p>The function will stop and throw an error if the specified path does
 not exist, the operating system is not supported, the directory is not a
-Git repository, Git is not installed, or if the <code>Num</code> parameter is not
-<code>NULL</code> or a positive number.</p>
+Git repository, Git is not installed, or if the <code>n_commits</code> parameter is
+not <code>NULL</code> or a positive number.</p>
     </div>
     <div class="section level2">
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>
@@ -112,25 +112,25 @@ Git repository, Git is not installed, or if the <code>Num</code> parameter is no
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Show the most recent commit</span></span></span>
-<span class="r-in"><span><span class="fu">git_log</span><span class="op">(</span>Num <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> * 66faeb9 - (grafted, HEAD -&gt; main, origin/main) Small fix to Predict_Maps function (11 minutes ago) &lt;Ahmed El-Gabbas&gt;</span>
+<span class="r-in"><span><span class="fu">git_log</span><span class="op">(</span>n_commits <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> * 2dbfd1b - (grafted, HEAD -&gt; main, origin/main, origin/HEAD) Use consistent name rule for names of functions and their arguments (11 minutes ago) &lt;Ahmed El-Gabbas&gt;</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Show the most recent 5 commits</span></span></span>
-<span class="r-in"><span><span class="fu">git_log</span><span class="op">(</span>Num <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> * 66faeb9 - (grafted, HEAD -&gt; main, origin/main) Small fix to Predict_Maps function (11 minutes ago) &lt;Ahmed El-Gabbas&gt;</span>
+<span class="r-in"><span><span class="fu">git_log</span><span class="op">(</span>n_commits <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> * 2dbfd1b - (grafted, HEAD -&gt; main, origin/main, origin/HEAD) Use consistent name rule for names of functions and their arguments (11 minutes ago) &lt;Ahmed El-Gabbas&gt;</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Return the log as a character vector</span></span></span>
-<span class="r-in"><span><span class="va">Log</span> <span class="op">&lt;-</span> <span class="fu">git_log</span><span class="op">(</span>ReturnLog <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">Log</span> <span class="op">&lt;-</span> <span class="fu">git_log</span><span class="op">(</span>return_log <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">Log</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">Log</span>, <span class="fl">8</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "* 66faeb9 - (grafted, HEAD -&gt; main, origin/main) Small fix to Predict_Maps function (11 minutes ago) &lt;Ahmed El-Gabbas&gt;"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "* 2dbfd1b - (grafted, HEAD -&gt; main, origin/main, origin/HEAD) Use consistent name rule for names of functions and their arguments (11 minutes ago) &lt;Ahmed El-Gabbas&gt;"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span>  <span class="co"># not a git repo</span></span></span>
-<span class="r-in"><span>  <span class="fu">git_log</span><span class="op">(</span>Path <span class="op">=</span> <span class="st">"C:/"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu">git_log</span><span class="op">(</span>path <span class="op">=</span> <span class="st">"C:/"</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="co"># #&gt; Error: The provided path does not exist.</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>

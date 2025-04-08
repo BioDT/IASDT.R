@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">IASDT.R</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.03</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.04</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -214,13 +214,13 @@ computations to optimize performance and address memory constraints.</p>
 <div class="section level2">
 <h2 id="step-1-cpu">Step 1: CPU<a class="anchor" aria-label="anchor" href="#step-1-cpu"></a>
 </h2>
-<p>The <strong><code><a href="../reference/Mod_postprocessing.html">Mod_Postprocess_1_CPU()</a></code></strong> function
+<p>The <strong><code><a href="../reference/Mod_postprocessing.html">mod_postprocess_1_CPU()</a></code></strong> function
 initiates the post-processing phase for each habitat type, automating
 the following tasks:</p>
 <table class="table table table-condensed table-hover" style="font-size: 16px; margin-left: auto; margin-right: auto;"><tbody>
 <tr>
 <td style="text-align:left;padding-left: 4em;white-space: nowrap;" indentlevel="1">
-<cc><code><a href="../reference/Mod_SLURM.html">Mod_SLURM_Refit()</a></code></cc><tab0></tab0>
+<cc><code><a href="../reference/Mod_SLURM.html">mod_SLURM_refit()</a></code></cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 check for unsuccessful model fits
@@ -228,7 +228,7 @@ check for unsuccessful model fits
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 4em;white-space: nowrap;" indentlevel="1">
-<cc><code><a href="../reference/Mod_Merge_Chains.html">Mod_Merge_Chains()</a></code></cc><tab0></tab0>
+<cc><code><a href="../reference/Mod_Merge_Chains.html">mod_merge_chains()</a></code></cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 merge MCMC chains and saves fitted model and coda objects to <i>.qs2</i>
@@ -237,7 +237,7 @@ or <i>.RData</i> files
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 4em;white-space: nowrap;" indentlevel="1">
-<cc><code><a href="../reference/Convergence_Plot_All.html">Convergence_Plot_All()</a></code></cc><tab0></tab0>
+<cc><code><a href="../reference/Convergence_Plot_All.html">convergence_plot_all()</a></code></cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 visualize convergence of <code>rho</code>, <code>alpha</code>,
@@ -249,17 +249,17 @@ without phylogenetic relationships, or GPP knot distances
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 4em;white-space: nowrap;" indentlevel="1">
-<cc><code><a href="../reference/Convergence_plots.html">Convergence_Plot()</a></code></cc><tab0></tab0>
+<cc><code><a href="../reference/Convergence_plots.html">convergence_plot()</a></code></cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 convergence of <code>rho</code>, <code>alpha</code>, <code>omega</code>,
 and <code>beta</code> parameters for a selected model, offering a
-detailed view compared to <code><a href="../reference/Convergence_Plot_All.html">Convergence_Plot_All()</a></code>
+detailed view compared to <code><a href="../reference/Convergence_Plot_All.html">convergence_plot_all()</a></code>
 </td>
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 4em;white-space: nowrap;" indentlevel="1">
-<cc><code><a href="../reference/PlotGelman.html">PlotGelman()</a></code></cc><tab0></tab0>
+<cc><code><a href="../reference/plot_gelman.html">plot_gelman()</a></code></cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 visualize Gelman-Rubin-Brooks diagnostics for the selected model
@@ -267,7 +267,7 @@ visualize Gelman-Rubin-Brooks diagnostics for the selected model
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 4em;white-space: nowrap;" indentlevel="1">
-<cc><code><a href="../reference/Mod_Summary.html">Mod_Summary()</a></code></cc><tab0></tab0>
+<cc><code><a href="../reference/Mod_Summary.html">mod_summary()</a></code></cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 extract and save a summary of the model
@@ -275,7 +275,7 @@ extract and save a summary of the model
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 4em;white-space: nowrap;" indentlevel="1">
-<cc><code><a href="../reference/Parameter_Heatmap.html">Mod_Heatmap_Beta()</a></code></cc><tab0></tab0>
+<cc><code><a href="../reference/Parameter_Heatmap.html">mod_heatmap_beta()</a></code></cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 generate heatmaps of the <code>beta</code> parameters
@@ -283,7 +283,7 @@ generate heatmaps of the <code>beta</code> parameters
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 4em;white-space: nowrap;" indentlevel="1">
-<cc><code><a href="../reference/Parameter_Heatmap.html">Mod_Heatmap_Omega()</a></code></cc><tab0></tab0>
+<cc><code><a href="../reference/Parameter_Heatmap.html">mod_heatmap_omega()</a></code></cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 generates heatmaps of the <code>omega</code> parameter (residual species
@@ -292,23 +292,28 @@ associations)
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 4em;white-space: nowrap;" indentlevel="1">
-<cc><code><a href="../reference/Mod_CV_Fit.html">Mod_CV_Fit()</a></code></cc><tab0></tab0>
+<cc><code><a href="../reference/Mod_CV_Fit.html">mod_CV_fit()</a></code></cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 prepare input data for spatial-block cross-validation model fitting
 </td>
 </tr>
 </tbody></table>
+<br><hr class="hr2">
+<p><br></p>
+<div class="section level3">
+<h3 id="computationally-intensive-tasks-that-are-offloaded-to-gpu">Computationally intensive tasks that are offloaded to GPU<a class="anchor" aria-label="anchor" href="#computationally-intensive-tasks-that-are-offloaded-to-gpu"></a>
+</h3>
 <p>Previous attempts to prepare response curve data, predict at new
 sites, and compute variance partitioning using R on CPUs (UFZ Windows
 server and LUMI HPC) were hindered by memory limitations. Consequently,
 these tasks are offloaded to GPU-based computations using Python and
-TensorFlow. The <code><a href="../reference/Mod_postprocessing.html">Mod_Postprocess_1_CPU()</a></code> function invokes
+TensorFlow. The <code><a href="../reference/Mod_postprocessing.html">mod_postprocess_1_CPU()</a></code> function invokes
 the following sub-functions to generate commands for GPU execution:</p>
 <table class="table table table-condensed table-hover" style="font-size: 16px; margin-left: auto; margin-right: auto;"><tbody>
 <tr>
 <td style="text-align:left;padding-left: 4em;white-space: nowrap;" indentlevel="1">
-<cc><code><a href="../reference/Response_curves.html">RespCurv_PrepData()</a></code></cc><tab0></tab0>
+<cc><code><a href="../reference/Response_curves.html">resp_curv_prepare_data()</a></code></cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 prepare data for predicting latent factors for response curves
@@ -316,7 +321,7 @@ prepare data for predicting latent factors for response curves
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 4em;white-space: nowrap;" indentlevel="1">
-<cc><code><a href="../reference/Predict_Maps.html">Predict_Maps()</a></code></cc><tab0></tab0>
+<cc><code><a href="../reference/Predict_Maps.html">predict_maps()</a></code></cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 prepare data for predicting latent factors at new sampling units
@@ -324,7 +329,7 @@ prepare data for predicting latent factors at new sampling units
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 4em;white-space: nowrap;" indentlevel="1">
-<cc><code><a href="../reference/Variance_partitioning.html">VarPar_Compute()</a></code></cc><tab0></tab0>
+<cc><code><a href="../reference/Variance_partitioning.html">variance_partitioning_compute()</a></code></cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 prepare data for computing variance partitioning
@@ -333,6 +338,7 @@ prepare data for computing variance partitioning
 </tbody></table>
 <br><hr class="hr2">
 <p><br></p>
+</div>
 <div class="section level3">
 <h3 id="prepare-commands-for-gpu-computations">Prepare commands for GPU computations<a class="anchor" aria-label="anchor" href="#prepare-commands-for-gpu-computations"></a>
 </h3>
@@ -341,8 +347,8 @@ prepare data for computing variance partitioning
 </blockquote>
 <ul>
 <li>Latent factor predictions for response curves and new sampling units
-are executed via a TensorFlow script located at
-<ff>inst/crossprod_solve.py</ff>.</li>
+are executed via a <i>TensorFlow</i> script located at
+<a href="https://github.com/BioDT/IASDT.R/blob/main/inst/crossprod_solve.py" target="_blank" class="external-link ll">inst/crossprod_solve.py</a>.</li>
 <li>For these tasks, the respective R functions export numerous
 <i>.qs2</i> and <i>.feather</i> data files to the <ff>TEMP_Pred</ff>
 subdirectory, essential for GPU computations. They also generate
@@ -396,12 +402,11 @@ python3 crossprod_solve.py --s1 LF_3_Test_s1.feather --s2 LF_3_Test_s2.feather -
 <li>Response curves
 <ul>
 <li>
-<code><a href="../reference/Response_curves.html">RespCurv_PrepData()</a></code> extends
+<code><a href="../reference/Response_curves.html">resp_curv_prepare_data()</a></code> extends
 <code><a href="https://rdrr.io/pkg/Hmsc/man/constructGradient.html" class="external-link">Hmsc::constructGradient()</a></code> and
 <code><a href="https://rdrr.io/pkg/Hmsc/man/plotGradient.html" class="external-link">Hmsc::plotGradient()</a></code>, enabling GPU-based response curve
 data preparation when
-<cc><code>LF_Commands_Only = TRUE</code></cc>.<br>
-</li>
+<cc><code>LF_commands_only = TRUE</code></cc>.</li>
 <li>To predict at mean coordinates (per the <i>coordinates</i> argument
 of <code><a href="https://rdrr.io/pkg/Hmsc/man/constructGradient.html" class="external-link">Hmsc::constructGradient()</a></code>), latent factor
 predictions—typically memory-intensive with
@@ -411,9 +416,9 @@ predictions—typically memory-intensive with
 <li>Predicting at new sites
 <ul>
 <li>
-<code><a href="../reference/Predict_Maps.html">Predict_Maps()</a></code> prepares GPU computations for new site
-predictions when <cc><code>LF_Only = TRUE</code></cc> and
-<cc><code>LF_Commands_Only = TRUE</code></cc>.</li>
+<code><a href="../reference/Predict_Maps.html">predict_maps()</a></code> prepares GPU computations for new site
+predictions when <cc><code>LF_only = TRUE</code></cc> and
+<cc><code>LF_commands_only = TRUE</code></cc>.</li>
 </ul>
 </li>
 </ul>
@@ -423,11 +428,19 @@ predictions when <cc><code>LF_Only = TRUE</code></cc> and
 </blockquote>
 <ul>
 <li>Variance partitioning computations on GPUs are executed using
-TensorFlow scripts at <ff>inst/VP_geta.py</ff>,
-<ff>inst/VP_getf.py</ff>, and <ff>inst/VP_gemu.py</ff>.</li>
+TensorFlow scripts at
+<a href="https://github.com/BioDT/IASDT.R/blob/main/inst/VP_geta.py" target="_blank" class="external-link ll">inst/VP_geta.py</a>,
+<a href="https://github.com/BioDT/IASDT.R/blob/main/inst/VP_getf.py" target="_blank" class="external-link ll">inst/VP_getf.py</a>,
+and
+<a href="https://github.com/BioDT/IASDT.R/blob/main/inst/VP_gemu.py" target="_blank" class="external-link ll">inst/VP_gemu.py</a>.
+The functionality of these scripts was taken from
+<code><a href="https://rdrr.io/pkg/Hmsc/man/computeVariancePartitioning.html" class="external-link">Hmsc::computeVariancePartitioning()</a></code> (see the
+<code>geta</code>, <code>getf</code>, and <code>gemu</code> internal
+functions identified inside of the computeVariancePartitioning R
+function).</li>
 <li>
-<code><a href="../reference/Variance_partitioning.html">VarPar_Compute()</a></code> exports required files to the
-<ff>TEMP_VP</ff> subdirectory, including numerous <i>.qs2</i> and
+<code><a href="../reference/Variance_partitioning.html">variance_partitioning_compute()</a></code> exports required files
+to the <ff>TEMP_VP</ff> subdirectory, including numerous <i>.qs2</i> and
 <i>.feather</i> files, and generates execution commands saved as
 <ff>VP_A_Command.txt</ff>, <ff>VP_F_Command.txt</ff>, and
 <ff>VP_mu_Command.txt</ff>.</li>
@@ -437,8 +450,8 @@ TensorFlow scripts at <ff>inst/VP_geta.py</ff>,
 <div class="section level3">
 <h3 id="combining-commands-for-gpu-computations">Combining commands for GPU computations<a class="anchor" aria-label="anchor" href="#combining-commands-for-gpu-computations"></a>
 </h3>
-<p>After executing <code><a href="../reference/Mod_postprocessing.html">Mod_Postprocess_1_CPU()</a></code> for all habitat
-types, the <strong><code><a href="../reference/Mod_postprocessing.html">Mod_Prep_TF()</a></code></strong> function
+<p>After executing <code><a href="../reference/Mod_postprocessing.html">mod_postprocess_1_CPU()</a></code> for all habitat
+types, the <strong><code><a href="../reference/Mod_postprocessing.html">mod_prepare_TF()</a></code></strong> function
 consolidates batch scripts for GPU computations across all habitat
 types:</p>
 <ul>
@@ -495,7 +508,6 @@ python3 crossprod_solve.py --s1 'datasets/processed/model_fitting/Mod_Riv_Hab1/T
 #SBATCH --ntasks-per-node=1
 #SBATCH --account=project_465001588
 #SBATCH --cpus-per-task=1
-#SBATCH --mem-per-cpu=200G
 #SBATCH --gpus-per-node=1
 #SBATCH --time=01:00:00
 #SBATCH --partition=small-g
@@ -594,7 +606,6 @@ python3 VP_getf.py --x datasets/processed/model_fitting/Mod_Q_Hab12b/TEMP_VP/VP_
 #SBATCH --ntasks-per-node=1
 #SBATCH --account=project_465001588
 #SBATCH --cpus-per-task=1
-#SBATCH --mem-per-cpu=200G
 #SBATCH --gpus-per-node=1
 #SBATCH --time=01:30:00
 #SBATCH --partition=small-g
@@ -638,13 +649,13 @@ commands (<em>in preparation</em>):</p>
 <div class="section level2">
 <h2 id="step-3-cpu">Step 3: CPU<a class="anchor" aria-label="anchor" href="#step-3-cpu"></a>
 </h2>
-<p>The <code><a href="../reference/Mod_postprocessing.html">Mod_Postprocess_2_CPU()</a></code> function advances the
+<p>The <code><a href="../reference/Mod_postprocessing.html">mod_postprocess_2_CPU()</a></code> function advances the
 post-processing pipeline for HMSC models on the CPU, automating the
 following tasks:</p>
 <table class="table table table-condensed table-hover" style="font-size: 16px; margin-left: auto; margin-right: auto;"><tbody>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc><code><a href="../reference/Response_curves.html">RespCurv_PrepData()</a></code>,<br><code><a href="../reference/Response_curves.html">RespCurv_PlotSR()</a></code>,<br><code><a href="../reference/Response_curves.html">RespCurv_PlotSp()</a></code>,<br><code><a href="../reference/Response_curves.html">RespCurv_PlotSpAll()</a></code></cc><tab0></tab0>
+<cc><code><a href="../reference/Response_curves.html">resp_curv_prepare_data()</a></code>,<br><code><a href="../reference/Response_curves.html">resp_curv_plot_SR()</a></code>,<br><code><a href="../reference/Response_curves.html">resp_curv_plot_species()</a></code>,<br><code><a href="../reference/Response_curves.html">resp_curv_plot_species_all()</a></code></cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 continue processing and visualizing response curves
@@ -652,7 +663,7 @@ continue processing and visualizing response curves
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc><code><a href="../reference/Predict_Maps.html">Predict_Maps()</a></code></cc><tab0></tab0>
+<cc><code><a href="../reference/Predict_Maps.html">predict_maps()</a></code></cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 predict habitat suitability across climate scenarios, compute model
@@ -662,7 +673,7 @@ app
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc><code><a href="../reference/Mod_Predict_Plot.html">Mod_Predict_Plot()</a></code></cc><tab0></tab0>
+<cc><code><a href="../reference/plot_prediction.html">plot_prediction()</a></code></cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 visualize species and species richness predictions as JPEG images
@@ -670,7 +681,7 @@ visualize species and species richness predictions as JPEG images
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc><code><a href="../reference/Mod_Plot_LF.html">Mod_Plot_LF()</a></code></cc><tab0></tab0>
+<cc><code><a href="../reference/plot_latent_factor.html">plot_latent_factor()</a></code></cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 visualize spatial variation in site loadings of HMSC models as JPEG
@@ -679,7 +690,7 @@ images
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc><code><a href="../reference/Variance_partitioning.html">VarPar_Compute()</a></code>,<br><code><a href="../reference/Variance_partitioning.html">VarPar_Plot()</a></code></cc><tab0></tab0>
+<cc><code><a href="../reference/Variance_partitioning.html">variance_partitioning_compute()</a></code>,<br><code><a href="../reference/Variance_partitioning.html">variance_partitioning_plot()</a></code></cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 continue processing and visualize variance partitioning
@@ -687,7 +698,7 @@ continue processing and visualize variance partitioning
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc><code><a href="../reference/Mod_Eval_Plot.html">Mod_Eval_Plot()</a></code></cc><tab0></tab0>
+<cc><code><a href="../reference/plot_evaluation.html">plot_evaluation()</a></code></cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 visualize explanatory power (internal model evaluation)

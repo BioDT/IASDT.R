@@ -21,9 +21,9 @@ format:
     link-external-icon: true
     link-external-newwindow: true
 vignette: >
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteIndexEntry{IAS-pDT modelling workflow — 4. Model fitting}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
 ---
 
 
@@ -85,21 +85,21 @@ This article outlines the preparation of input data for model fitting and the su
 
 ## Model input data
 
-The primary function for preparing model-fitting data and initializing models is <cc>`Mod_Prep4HPC()`</cc>. It structures data for each habitat-specific model into distinct directories (e.g., <ff>datasets/processed/model_fitting/HabX</ff>, where <i>X</i> represents a <a href="workflow_1_overview.html#models" class="ll">habitat type</a>). This function orchestrates a suite of specialized sub-functions to perform the following tasks:
+The primary function for preparing model-fitting data and initializing models is <cc>`mod_prepare_HPC()`</cc>. It structures data for each habitat-specific model into distinct directories (e.g., <ff>datasets/processed/model_fitting/HabX</ff>, where <i>X</i> represents a <a href="workflow_1_overview.html#models" class="ll">habitat type</a>). This function orchestrates a suite of specialized sub-functions to perform the following tasks:
 
 <br/>
 
-- <cc>`Mod_PrepData()`</cc>: prepare input data for modeling, with key arguments including:
+- <cc>`mod_prepare_data()`</cc>: prepare input data for modeling, with key arguments including:
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE}
 DT <- tibble::tribble(
   ~Argument, ~Description,
-  "Hab_Abb", "abbreviation of a single habitat type to be modeled",
-  "Path_Model", "directory path for storing all model files",
-  "MinEffortsSp", 'minimum number of vascular plant species per grid cell required for inclusion in model fitting. This reflects the total count of vascular plant species (including native species) recorded in GBIF across Europe, as computed during the <a href="workflow_2_abiotic_data.html#sampling-efforts" class="ll">sampling effort preparation</a> step (`Efforts_Process()`). This argument filters out grid cells with insufficient sampling effort',
-  "ExcludeCult", "whether to exclude countries with cultivated or casual observations for each species",
-    "ExcludeZeroHabitat", 'whether to exclude grid cells with zero <a href="workflow_2_abiotic_data.html#corine-land-cover-habitat-data" class="ll">habitat coverage</a> of the respective habitat type',
-    "PresPerSpecies", "minimum number of presence grid cells required for a species to be included in the models, calculated after excluding grid cells with low sampling effort (<cc>MinEffortsSp</cc>), zero habitat coverage (<cc>ExcludeZeroHabitat</cc>), and countries with cultivated or casual observations (<cc>ExcludeCult</cc>)") %>% 
+  "hab_abb", "abbreviation of a single habitat type to be modeled",
+  "directory_name", "directory path for storing all model files",
+  "min_efforts_n_species", 'minimum number of vascular plant species per grid cell required for inclusion in model fitting. This reflects the total count of vascular plant species (including native species) recorded in GBIF across Europe, as computed during the <a href="workflow_2_abiotic_data.html#sampling-efforts" class="ll">sampling effort preparation</a> step (`efforts_process()`). This argument filters out grid cells with insufficient sampling effort',
+  "exclude_cultivated", "whether to exclude countries with cultivated or casual observations for each species",
+  "exclude_0_habitat", 'whether to exclude grid cells with zero <a href="workflow_2_abiotic_data.html#corine-land-cover-habitat-data" class="ll">habitat coverage</a> of the respective habitat type',
+  "n_pres_per_species", "minimum number of presence grid cells required for a species to be included in the models, calculated after excluding grid cells with low sampling effort (<cc>min_efforts_n_species</cc>), zero habitat coverage (<cc>exclude_0_habitat</cc>), and countries with cultivated or casual observations (<cc>exclude_cultivated</cc>)") %>% 
   dplyr::mutate(Argument = paste0("<cc>", Argument, "</cc><tab0>"))
 
 DT %>% 
@@ -115,15 +115,15 @@ DT %>%
 
 <br/><br/>
 
-- `Mod_GetCV()`: prepare and visualize options for spatial-block cross-validation. In the <i>CV_Dist</i> strategy, block size is governed by the *CV_NGrids* argument, whereas in the <i>CV_Large</i> strategy, the study area is partitioned into larger blocks based on the *CV_NR* and *CV_NC* arguments.
+- `mod_CV_prepare()`: prepare and visualize options for spatial-block cross-validation. In the <i>CV_Dist</i> strategy, block size is governed by the *CV_n_grids* argument, whereas in the <i>CV_Large</i> strategy, the study area is partitioned into larger blocks based on the *CV_n_rows* and *CV_n_columns* arguments.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE}
 DT <- tibble::tribble(
   ~Argument, ~Description,
-  "CV_NFolds", "number of cross-validation folds",
-  "CV_NGrids", "number of grid cells in each directions for the <i>CV_Dist</i> cross-validation strategy (default: 20, yielding 20 &times; 20 grid cell blocks).",
+  "CV_n_folds", "number of cross-validation folds",
+  "CV_n_grids", "number of grid cells in each directions for the <i>CV_Dist</i> cross-validation strategy (default: 20, yielding 20 &times; 20 grid cell blocks).",
   
-  "CV_NR / CV_NC", "number of rows and columns defining in the <i>CV_Large</i> cross-validation strategy, partitioning the study area into large blocks (default: *CV_NR = CV_NC = 2*, resulting in four blocks divided at median coordinates).") %>% 
+  "CV_n_rows / CV_n_columns", "number of rows and columns defining in the <i>CV_Large</i> cross-validation strategy, partitioning the study area into large blocks (default: *CV_n_rows = CV_n_columns = 2*, resulting in four blocks divided at median coordinates).") %>% 
   dplyr::mutate(Argument = paste0("<cc>", Argument, "</cc><tab0>"))
   
 DT %>% 
@@ -139,16 +139,16 @@ DT %>%
 
 <br/><br/>
 
-- `Mod_PrepKnots()`: prepare and visualize knot locations for Gaussian Predictive Process (GPP) models, as described by Tikhonov *et al.* (<a href="https://doi.org/10.1002/ecy.2929" target="_blank" class="ll">2019</a>).
+- `prepare_knots()`: prepare and visualize knot locations for Gaussian Predictive Process (GPP) models, as described by Tikhonov *et al.* (<a href="https://doi.org/10.1002/ecy.2929" target="_blank" class="ll">2019</a>).
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE}
 DT <- tibble::tribble(
   ~Argument, ~Description,
   "GPP", "whether to incorporate spatial random effects using the Gaussian Predictive Process (GPP)",
-  "GPP_Dists", "distance (in kilometers) specifying both the spacing between knots and the minimum distance between a knot and the nearest sampling point",
-  "GPP_Plot", "whether to plot the coordinates of sampling units and knots",
-  "MinLF / MaxLF", "minimum and maximum number of latent factors to be include",
-  "Alphapw", "prior specification for the alpha parameter") %>% 
+  "GPP_dists", "distance (in kilometers; controlled by the `min_distance` argument of `prepare_knots()`) specifying both the spacing between knots and the minimum distance between a knot and the nearest sampling point",
+  "GPP_plot", "whether to plot the coordinates of sampling units and knots",
+  "min_LF / max_LF", "minimum and maximum number of latent factors to be include",
+  "alphapw", "prior specification for the alpha parameter") %>% 
   dplyr::mutate(Argument = paste0("<cc>", Argument, "</cc><tab0>"))
 
 DT %>% 
@@ -162,18 +162,18 @@ DT %>%
 
 <br/><br/>
 
-- `Mod_SLURM()`: generate SLURM scripts to facilitate model fitting on GPUs using the `Hmsc-HPC` extension.
+- `mod_SLURM()`: generate SLURM scripts to facilitate model fitting on GPUs using the `Hmsc-HPC` extension.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE}
 DT <- tibble::tribble(
   ~Argument, ~Description,
-  "JobName", "name assigned to the SLURM job",
+  "job_name", "name assigned to the SLURM job",
   "ntasks", "number of tasks to execute",
-  "CpusPerTask / GpusPerNode", "Number of CPUs and GPUs allocated per node",
-  "MemPerCpu", "memory allocation per CPU",
-  "Time", "maximum duration for job execution",
-  "Partition", "name of the HPC partition",
-  "NumArrayJobs", "number of jobs within each SLURM script") %>% 
+  "cpus_per_task / gpus_per_node", "Number of CPUs and GPUs allocated per node",
+  "memory_per_cpu", "memory allocation per CPU",
+  "job_runtime", "maximum duration for job execution",
+  "HPC_partition", "name of the HPC partition",
+  "n_array_jobs", "number of jobs within each SLURM script") %>% 
   dplyr::mutate(Argument = paste0("<cc>", Argument, "</cc><tab0>"))
 
 DT %>% 
@@ -195,12 +195,12 @@ Other arguments:
 ```{r echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE}
 DT <- tibble::tribble(
   ~Argument, ~Description,
-  "BioVars", 'names of <a href="workflow_2_abiotic_data.html#chelsa-climate-data" class="ll">CHELSA</a> variables to include in the model',
-  "QuadraticVars", "names of variables for which quadratic terms are incorporated",
-  "EffortsAsPredictor", 'whether to include the (log<sub>10</sub>-transformed) <a href="workflow_2_abiotic_data.html#sampling-efforts" class="ll">sampling effort</a> as a predictor',
-  "RoadRailAsPredictor", 'whether to include the (log<sub>10</sub>-transformed) <a href="workflow_2_abiotic_data.html#railways-and-roads-intensity" class="ll">summed road and railway intensity</a> as a predictor',
-  "HabAsPredictor", 'whether to include the (log<sub>10</sub>-transformed) <a href="workflow_2_abiotic_data.html#corine-land-cover-habitat-data" class="ll">percentage coverage of the respective habitat type</a> per grid cell as a predictor',
-  "RiversAsPredictor", 'whether to include the (log<sub>10</sub>-transformed) total <a href="workflow_2_abiotic_data.html#river-length" class="ll">river length</a> per grid cell as a predictor') %>% 
+  "bio_variables", 'names of <a href="workflow_2_abiotic_data.html#chelsa-climate-data" class="ll">CHELSA</a> variables to include in the model',
+  "quadratic_variables", "names of variables for which quadratic terms are incorporated",
+  "efforts_as_predictor", 'whether to include the (log<sub>10</sub>-transformed) <a href="workflow_2_abiotic_data.html#sampling-efforts" class="ll">sampling effort</a> as a predictor',
+  "road_rail_as_predictor", 'whether to include the (log<sub>10</sub>-transformed) <a href="workflow_2_abiotic_data.html#railways-and-roads-intensity" class="ll">summed road and railway intensity</a> as a predictor',
+  "habitat_as_predictor", 'whether to include the (log<sub>10</sub>-transformed) <a href="workflow_2_abiotic_data.html#corine-land-cover-habitat-data" class="ll">percentage coverage of the respective habitat type</a> per grid cell as a predictor',
+  "river_as_predictor", 'whether to include the (log<sub>10</sub>-transformed) total <a href="workflow_2_abiotic_data.html#river-length" class="ll">river length</a> per grid cell as a predictor') %>% 
   dplyr::mutate(Argument = paste0("<cc>", Argument, "</cc><tab0>"))
 
 DT %>% 
@@ -221,14 +221,13 @@ DT %>%
 ```{r echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE}
 DT <- tibble::tribble(
   ~Argument, ~Description,
-  "NChains", "number of MCMC chains",
-  "thin", "thinning value(s) in MCMC sampling",
-  "samples", "number of MCMC samples per chain",
-  "transientFactor", "transient multiplication factor. The value of transient will equal the multiplication of <cc>transientFactor</cc> and <cc>thin</cc>",
-  "verbose", "interval at which MCMC sampling progress is reported",
-  "Precision", "floating-point precision mode for Hmsc-HPC sampling") %>% 
+  "MCMC_n_chains", "number of MCMC chains",
+  "MCMC_thin", "thinning value(s) in MCMC sampling",
+  "MCMC_samples", "number of MCMC samples per chain",
+  "MCMC_transient_factor", "transient multiplication factor. The value of transient will equal the multiplication of <cc>transientFactor</cc> and <cc>thin</cc>",
+  "MCMC_verbose", "interval at which MCMC sampling progress is reported",
+  "precision", "floating-point precision mode for Hmsc-HPC sampling") %>% 
   dplyr::mutate(Argument = paste0("<cc>", Argument, "</cc><tab0>"))
-
 
 DT %>% 
   knitr::kable(col.names = NULL, format = "html", escape = FALSE)  %>%
@@ -243,17 +242,17 @@ DT %>%
 
 <br/><br/>
 
-- <cc>NspPerGrid</cc>: minimum number of IAS per grid cell for a grid cell to be included in the analysis
-- <cc>ModelCountry</cc>: fit the model for a specific country or countries
-- whether or not to use phylogenetic trees: <cc>PhyloTree</cc> and <cc>NoPhyloTree</cc>
-- <cc>Path_Hmsc</cc>: directory path to `Hmsc-HPC` extension installation
-- <cc>PrepSLURM</cc>: whether to prepare SLURM script for model fitting on GPU via `Mod_SLURM()`
+- <cc>n_species_per_grid</cc>: minimum number of IAS per grid cell for a grid cell to be included in the analysis
+- <cc>model_country</cc>: fit the model for a specific country or countries
+- whether or not to use phylogenetic trees: <cc>use_phylo_tree</cc> and <cc>no_phylo_tree</cc>
+- <cc>path_Hmsc</cc>: directory path to `Hmsc-HPC` extension installation
+- <cc>SLURM_prepare</cc>: whether to prepare SLURM script for model fitting on GPU via `mod_SLURM()`
 
 <hr class="hr1">
 
 ## Model fitting on GPUs
 
-Following the preparation of model input data and initialization of models, the subsequent phase involves fitting these models on GPUs. For each habitat type, the `Mod_Prep4HPC()` function produces:
+Following the preparation of model input data and initialization of models, the subsequent phase involves fitting these models on GPUs. For each habitat type, the `mod_prepare_HPC()` function produces:
 
 - python commands (<ff>Commands2Fit.txt</ff>) for fitting model chains across all model variants on GPUs, with each line corresponding to a single chain.
 

@@ -1,15 +1,16 @@
 ## |------------------------------------------------------------------------| #
-# Efforts_Summarize ----
+# efforts_summarize ----
 ## |------------------------------------------------------------------------| #
 
 #' @author Ahmed El-Gabbas
-#' @name Efforts_data
-#' @rdname Efforts_data
+#' @name efforts_data
+#' @rdname efforts_data
 #' @order 4
 #' @export
 
-Efforts_Summarize <- function(
-    EnvFile = ".env", NCores = 6L, ChunkSize = 100000L, DeleteChunks = TRUE) {
+efforts_summarize <- function(
+    env_file = ".env", n_cores = 6L, chunk_size = 100000L,
+    delete_chunks = TRUE) {
 
   # # ..................................................................... ###
 
@@ -24,8 +25,8 @@ Efforts_Summarize <- function(
 
   # # ..................................................................... ###
 
-  if (!is.numeric(NCores) || length(NCores) != 1 || NCores <= 0) {
-    stop("NCores must be a single positive integer.", call. = FALSE)
+  if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
+    stop("n_cores must be a single positive integer.", call. = FALSE)
   }
 
   # # ..................................................................... ###
@@ -38,10 +39,11 @@ Efforts_Summarize <- function(
     "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
     "Taxa_Stand", "DP_R_Taxa_stand", FALSE, TRUE)
   # Assign environment variables and check file and paths
-  IASDT.R::AssignEnvVars(EnvFile = EnvFile, EnvVarDT = EnvVars2Read)
+  IASDT.R::assign_env_vars(
+    env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
-  Path_Efforts_Cleaned <- IASDT.R::Path(Path_Interim, "CleanedData")
+  Path_Efforts_Cleaned <- IASDT.R::path(Path_Interim, "CleanedData")
 
   ## IAS species list ----
   IAS_List <- readRDS(Taxa_Stand) %>%
@@ -50,8 +52,8 @@ Efforts_Summarize <- function(
 
   # # ..................................................................... ###
 
-  Path_Grid_R <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop.RData")
-  Path_Grid_SF <- IASDT.R::Path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
+  Path_Grid_R <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop.RData")
+  Path_Grid_SF <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
 
   if (!file.exists(Path_Grid_R)) {
     stop(
@@ -65,23 +67,23 @@ Efforts_Summarize <- function(
       Path_Grid_SF, call. = FALSE)
   }
 
-  Grid_SF <- IASDT.R::LoadAs(Path_Grid_SF)
+  Grid_SF <- IASDT.R::load_as(Path_Grid_SF)
 
   # # ..................................................................... ###
 
   # Prepare working on parallel -----
 
-  IASDT.R::CatTime(
-    paste0("Prepare working on parallel using ", NCores, " cores."),
-    Level = 1)
+  IASDT.R::cat_time(
+    paste0("Prepare working on parallel using ", n_cores, " cores."),
+    level = 1)
 
-  if (NCores == 1) {
+  if (n_cores == 1) {
     future::plan("future::sequential", gc = TRUE)
   } else {
     withr::local_options(
       future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
       future.seed = TRUE)
-    c1 <- snow::makeSOCKcluster(NCores)
+    c1 <- snow::makeSOCKcluster(n_cores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
     future::plan("future::cluster", workers = c1, gc = TRUE)
     on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
@@ -90,16 +92,16 @@ Efforts_Summarize <- function(
   # # ..................................................................... ###
 
   # Processing data from zipped archives -----
-  IASDT.R::CatTime("Processing data from zipped archives", Level = 1)
+  IASDT.R::cat_time("Processing data from zipped archives", level = 1)
 
-  if (DeleteChunks) {
-    IASDT.R::CatTime(
-      "Chunk files will be deleted after finishing processing", Level = 2)
+  if (delete_chunks) {
+    IASDT.R::cat_time(
+      "Chunk files will be deleted after finishing processing", level = 2)
   }
 
   # Earlier attempts with `furrr::future_map()` failed
 
-  Path_Efforts_Request <- IASDT.R::Path(
+  Path_Efforts_Request <- IASDT.R::path(
     Path_Efforts, "Efforts_AllRequests.RData")
 
   if (!file.exists(Path_Efforts_Request)) {
@@ -108,7 +110,7 @@ Efforts_Summarize <- function(
       Path_Efforts_Request, call. = FALSE)
   }
 
-  Efforts_AllRequests <- IASDT.R::LoadAs(Path_Efforts_Request)
+  Efforts_AllRequests <- IASDT.R::load_as(Path_Efforts_Request)
 
   DT_Paths <- future.apply::future_lapply(
     X = seq_len(nrow(Efforts_AllRequests)),
@@ -121,7 +123,7 @@ Efforts_Summarize <- function(
       ClassOrder <- paste0(class, "_", order)
 
       # Output path to save the data
-      Path_DT <- IASDT.R::Path(
+      Path_DT <- IASDT.R::path(
         Path_Efforts_Cleaned, paste0(ClassOrder, ".RData"))
 
       # Should Path_DT be returned as the path of the RData file containing the
@@ -130,7 +132,7 @@ Efforts_Summarize <- function(
       ReturnNoData <- (TotalRecords == 0)
 
       # Check if the RData file for the current order exists and valid.
-      FileOkay <- IASDT.R::CheckData(Path_DT, warning = FALSE)
+      FileOkay <- IASDT.R::check_data(Path_DT, warning = FALSE)
 
       # Process current order data if the output file is not okay and the order
       # have observations
@@ -155,27 +157,27 @@ Efforts_Summarize <- function(
         # observations
         if (length(Chunks) > 0) {
           # Total number of lines in all chunk files
-          NLines <- sum(purrr::map_int(Chunks, R.utils::countLines))
+          n_lines <- sum(purrr::map_int(Chunks, R.utils::countLines))
 
           # if there are less than the total number of records, delete the chunk
           # files and recreate them
-          if (NLines != TotalRecords) {
+          if (n_lines != TotalRecords) {
             purrr::walk(Chunks, file.remove)
-            SplitChunks <- TRUE
+            split_chunks <- TRUE
             rm(Chunks, envir = environment())
           } else {
-            SplitChunks <- FALSE
+            split_chunks <- FALSE
           }
         } else {
           # If there is no chunk files available, split into chunks
-          SplitChunks <- TRUE
+          split_chunks <- TRUE
         }
 
 
         # Split data into chunks
-        if (SplitChunks) {
-          Chunks <- IASDT.R::Efforts_Split(
-            Path_Zip = DownPath, EnvFile = ".env", ChunkSize = ChunkSize)
+        if (split_chunks) {
+          Chunks <- IASDT.R::efforts_split(
+            path_zip = DownPath, env_file = ".env", chunk_size = chunk_size)
         }
 
         # Process chunk files
@@ -215,7 +217,8 @@ Efforts_Summarize <- function(
         # if there are observations after the filtering, save the data to disk
         # and return the saved path, otherwise return no path
         if (nrow(DT) > 0) {
-          IASDT.R::SaveAs(InObj = DT, OutObj = ClassOrder, OutPath = Path_DT)
+          IASDT.R::save_as(
+            object = DT, object_name = ClassOrder, out_path = Path_DT)
         } else {
           ReturnNoData <- TRUE
         }
@@ -223,7 +226,7 @@ Efforts_Summarize <- function(
         rm(DT, envir = environment())
 
         # delete chunk files for the current order
-        if (DeleteChunks && TotalRecords > 0) {
+        if (delete_chunks && (TotalRecords > 0)) {
           purrr::walk(Chunks, file.remove)
         }
       }
@@ -242,7 +245,7 @@ Efforts_Summarize <- function(
       "purrr", "tibble", "R.utils"),
     future.globals = c(
       "Path_Interim", "Efforts_AllRequests", "Path_Efforts_Cleaned",
-      "Grid_SF", "ChunkSize", "DeleteChunks")) %>%
+      "Grid_SF", "chunk_size", "delete_chunks")) %>%
     dplyr::bind_rows()
 
   # # ++++++++++++++++++++++++++++++ ###
@@ -262,7 +265,7 @@ Efforts_Summarize <- function(
   # # ..................................................................... ###
 
   # Prepare summary maps per order ----
-  IASDT.R::CatTime("Prepare summary maps per order", Level = 1)
+  IASDT.R::cat_time("Prepare summary maps per order", level = 1)
 
   SummaryMaps <- future.apply::future_lapply(
     X = seq_len(nrow(Efforts_Summary)),
@@ -275,7 +278,7 @@ Efforts_Summarize <- function(
         ObsN <- ObsN_Native <- 0L
       } else {
         # Load data on current order
-        DT <- IASDT.R::LoadAs(Path_DT)
+        DT <- IASDT.R::load_as(Path_DT)
         # Number of observation in the cleaned data
         ObsN <- nrow(DT)
 
@@ -285,7 +288,7 @@ Efforts_Summarize <- function(
         ObsN_Native <- nrow(DT_Native)
       }
 
-      Grid_R <- terra::unwrap(IASDT.R::LoadAs(Path_Grid_R))
+      Grid_R <- terra::unwrap(IASDT.R::load_as(Path_Grid_R))
 
       # # ++++++++++++++++++++++++++++++++++ ###
 
@@ -302,12 +305,12 @@ Efforts_Summarize <- function(
           terra::wrap()
       } else {
         # Number of observations
-        NObs_R <- Efforts_SummarizeMaps(
+        NObs_R <- efforts_summarize_maps(
           Data = DT, NSp = FALSE, Name = "NObs", ClassOrder = ClassOrder,
           Grid_SF = Grid_SF, Grid_R = Grid_R)
 
         # Number of species
-        NSp_R <- Efforts_SummarizeMaps(
+        NSp_R <- efforts_summarize_maps(
           Data = DT, NSp = TRUE, Name = "NSp", ClassOrder = ClassOrder,
           Grid_SF = Grid_SF, Grid_R = Grid_R)
 
@@ -330,12 +333,12 @@ Efforts_Summarize <- function(
           terra::wrap()
       } else {
         # Number of observations of native species
-        NObs_Native_R <- Efforts_SummarizeMaps(
+        NObs_Native_R <- efforts_summarize_maps(
           Data = DT_Native, NSp = FALSE, Name = "NObs_Native",
           ClassOrder = ClassOrder, Grid_SF = Grid_SF, Grid_R = Grid_R)
 
         # Number of native species
-        NSp_Native_R <- Efforts_SummarizeMaps(
+        NSp_Native_R <- efforts_summarize_maps(
           Data = DT_Native, NSp = TRUE, Name = "NSp_Native",
           ClassOrder = ClassOrder, Grid_SF = Grid_SF, Grid_R = Grid_R)
 
@@ -367,8 +370,8 @@ Efforts_Summarize <- function(
   # # ..................................................................... ###
 
   # Stopping cluster ------
-  IASDT.R::CatTime("Stopping cluster", Level = 1)
-  if (NCores > 1) {
+  IASDT.R::cat_time("Stopping cluster", level = 1)
+  if (n_cores > 1) {
     snow::stopCluster(c1)
     future::plan("future::sequential", gc = TRUE)
   }
@@ -377,22 +380,22 @@ Efforts_Summarize <- function(
   # # ..................................................................... ###
 
   # Save summary results: `Efforts_Summary` ----
-  IASDT.R::CatTime("Save summary results: `Efforts_Summary`", Level = 1)
+  IASDT.R::cat_time("Save summary results: `Efforts_Summary`", level = 1)
   save(
     Efforts_Summary,
-    file = IASDT.R::Path(Path_Efforts, "Efforts_Summary.RData"))
+    file = IASDT.R::path(Path_Efforts, "Efforts_Summary.RData"))
 
   # # ..................................................................... ###
 
   # Prepare summary maps - all sampling efforts ----
-  IASDT.R::CatTime("Prepare summary maps - all sampling efforts", Level = 1)
+  IASDT.R::cat_time("Prepare summary maps - all sampling efforts", level = 1)
 
   CalcNObsNSp <- function(List, Name) {
     purrr::map(.x = unlist(List), .f = terra::unwrap) %>%
       terra::rast() %>%
       sum(na.rm = TRUE) %>%
-      IASDT.R::setRastCRS() %>%
-      IASDT.R::setRastVals() %>%
+      IASDT.R::set_raster_CRS() %>%
+      IASDT.R::set_raster_values() %>%
       stats::setNames(Name)
   }
 
@@ -407,30 +410,30 @@ Efforts_Summarize <- function(
     CalcNObsNSp(Efforts_SummaryR$NSp_R, "NSp"),
     CalcNObsNSp(Efforts_SummaryR$NSp_Native_R, "NSp_Native")) %>%
     terra::rast() %>%
-    IASDT.R::setRastCRS() %>%
-    IASDT.R::setRastVals()
+    IASDT.R::set_raster_CRS() %>%
+    IASDT.R::set_raster_values()
 
   ## Save summary maps - `RData` ----
-  IASDT.R::CatTime("Save summary maps", Level = 1)
+  IASDT.R::cat_time("Save summary maps", level = 1)
 
-  IASDT.R::CatTime("`RData`", Level = 2)
-  IASDT.R::SaveAs(
-    InObj = terra::wrap(Efforts_SummaryR), OutObj = "Efforts_SummaryR",
-    OutPath = IASDT.R::Path(Path_Efforts, "Efforts_SummaryR.RData"))
+  IASDT.R::cat_time("`RData`", level = 2)
+  IASDT.R::save_as(
+    object = terra::wrap(Efforts_SummaryR), object_name = "Efforts_SummaryR",
+    out_path = IASDT.R::path(Path_Efforts, "Efforts_SummaryR.RData"))
 
   ## Save summary maps - `tif` ----
-  IASDT.R::CatTime("`tif`", Level = 2)
+  IASDT.R::cat_time("`tif`", level = 2)
   terra::writeRaster(
     Efforts_SummaryR,
     overwrite = TRUE,
-    filename = IASDT.R::Path(
+    filename = IASDT.R::path(
       Path_Efforts, paste0("Efforts_GBIF_", names(Efforts_SummaryR), ".tif")))
 
   # # ..................................................................... ###
 
-  IASDT.R::CatDiff(
-    InitTime = .StartTimeProcess,
-    Prefix = "Processing Efforts data took ", Level = 1)
+  IASDT.R::cat_diff(
+    init_time = .StartTimeProcess,
+    prefix = "Processing Efforts data took ", level = 1)
 
   # # ..................................................................... ###
 
@@ -440,7 +443,7 @@ Efforts_Summarize <- function(
 
 
 ## |------------------------------------------------------------------------| #
-# Efforts_SummarizeMaps ----
+# efforts_summarize_maps ----
 ## |------------------------------------------------------------------------| #
 
 #' Summarize maps for efforts data
@@ -460,14 +463,14 @@ Efforts_Summarize <- function(
 #'   raster.
 #' @return A processed `terra` raster object representing the summarized data.
 #' @note This function is not intended to be used directly by the user or in the
-#'   IAS-pDT, but only used inside the [Efforts_Process] and [Efforts_Summarize]
+#'   IAS-pDT, but only used inside the [efforts_process] and [efforts_summarize]
 #'   functions.
 #' @author Ahmed El-Gabbas
-#' @name Efforts_SummarizeMaps
+#' @name efforts_summarize_maps
 #' @keywords internal
 #' @noRd
 
-Efforts_SummarizeMaps <- function(
+efforts_summarize_maps <- function(
     Data, NSp, Name, ClassOrder, Grid_SF, Grid_R) {
 
   # # ..................................................................... ###
@@ -517,8 +520,8 @@ Efforts_SummarizeMaps <- function(
     terra::rasterize(Grid_R, field = Name) %>%
     terra::classify(cbind(NA, 0)) %>%
     terra::mask(Grid_R) %>%
-    IASDT.R::setRastCRS() %>%
-    IASDT.R::setRastVals() %>%
+    IASDT.R::set_raster_CRS() %>%
+    IASDT.R::set_raster_values() %>%
     stats::setNames(paste0(Name, "_", ClassOrder)) %>%
     terra::wrap()
 

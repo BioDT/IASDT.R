@@ -21,9 +21,9 @@ format:
     link-external-icon: true
     link-external-newwindow: true
 vignette: >
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteIndexEntry{IAS-pDT modelling workflow — 1. Overview}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
 ---
 
 ```{r, include = FALSE, eval=TRUE}
@@ -77,7 +77,7 @@ DT %>%
 
 ## Environment variables
 
-The workflow necessitates the configuration of multiple environment variables to ensure proper execution. Certain functions within the `IASDT.R` package include an `EnvFile` argument, which defaults to `.env`. The table below enumerates the environment variables essential to the workflow, accompanied by their descriptions and default values.
+The workflow necessitates the configuration of multiple environment variables to ensure proper execution. Certain functions within the `IASDT.R` package include an `env_file` argument, which defaults to `.env`. The table below enumerates the environment variables essential to the workflow, accompanied by their descriptions and default values.
 
 <br/>
 
@@ -95,9 +95,8 @@ DT <- tibble::tribble(
   "DP_R_CLC_crosswalk", "CLC", "Path to a text file containing custom cross-walk between CLC values at level 3 and their corresponding values for *EUNIS* and *SynHab* habitat types", "references/CrossWalk.txt",
   "DP_R_CLC_processed", "CLC", "Directory path to processed CLC data", "datasets/processed/corine",
   "DP_R_CLC_tif", "CLC", "Path to the input CLC tif file", "datasets/raw/corine/u2018_clc2018_v2020_20u1_raster100m/DATA/U2018_CLC2018_V2020_20u1.tif",
-  "DP_R_Hmsc_ve_win", "HPC", "Directory path to the Hmsc-HPC Python virtual environment under Windows operating system", "D:/Hmsc-HPC",
-  "DP_R_LUMI_cpu", "HPC", "LUMI project number for CPU computations", "project_465000915",
-  "DP_R_LUMI_gpu", "HPC", "LUMI project number for GPU computations", "project_465001588",
+  "DP_R_LUMI_cpu", "HPC", "LUMI project number for CPU computations", "project_465001857",
+  "DP_R_LUMI_gpu", "HPC", "LUMI project number for GPU computations", "project_465001857",
   "DP_R_LUMI_gpu_check", "HPC", "File path to a python script for reporting if the GPU was used in the running SLURM job", "references/LUMI_Check_GPU.py",
   "DP_R_Countrycodes", "Misc", "Path to a file containing countries ISO codes", "references/CountryCodes.csv",
   "DP_R_EUBound", "Misc", "Path to `RData` file containing country boundaries", "references/Bound_sf_Eur.RData",
@@ -143,7 +142,8 @@ DT %>%
   knitr::kable(format = "html", escape = FALSE)  %>%
   kableExtra::kable_styling(
     c("basic", "condensed", "hover"), font_size = 16, full_width = TRUE) %>% 
-  kableExtra::column_spec(column = 1, extra_css = "white-space: nowrap;")
+  kableExtra::column_spec(column = 1, extra_css = "white-space: nowrap;") %>% 
+  kableExtra::column_spec(column = 2, width = "25em")
 
 ```
 

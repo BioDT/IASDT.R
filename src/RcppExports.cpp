@@ -11,38 +11,38 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// Solve1
-arma::mat Solve1(const arma::mat& x);
-RcppExport SEXP _IASDT_R_Solve1(SEXP xSEXP) {
+// solve1
+arma::mat solve1(const arma::mat& x);
+RcppExport SEXP _IASDT_R_solve1(SEXP xSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::mat& >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(Solve1(x));
+    rcpp_result_gen = Rcpp::wrap(solve1(x));
     return rcpp_result_gen;
 END_RCPP
 }
-// Solve2
-arma::mat Solve2(const arma::mat& A, const arma::mat& B);
-RcppExport SEXP _IASDT_R_Solve2(SEXP ASEXP, SEXP BSEXP) {
+// solve2
+arma::mat solve2(const arma::mat& A, const arma::mat& B);
+RcppExport SEXP _IASDT_R_solve2(SEXP ASEXP, SEXP BSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::mat& >::type A(ASEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type B(BSEXP);
-    rcpp_result_gen = Rcpp::wrap(Solve2(A, B));
+    rcpp_result_gen = Rcpp::wrap(solve2(A, B));
     return rcpp_result_gen;
 END_RCPP
 }
-// Solve2vect
-arma::vec Solve2vect(const arma::mat& A, const arma::vec& B);
-RcppExport SEXP _IASDT_R_Solve2vect(SEXP ASEXP, SEXP BSEXP) {
+// solve2vect
+arma::vec solve2vect(const arma::mat& A, const arma::vec& B);
+RcppExport SEXP _IASDT_R_solve2vect(SEXP ASEXP, SEXP BSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::mat& >::type A(ASEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type B(BSEXP);
-    rcpp_result_gen = Rcpp::wrap(Solve2vect(A, B));
+    rcpp_result_gen = Rcpp::wrap(solve2vect(A, B));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -71,9 +71,9 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_IASDT_R_Solve1", (DL_FUNC) &_IASDT_R_Solve1, 1},
-    {"_IASDT_R_Solve2", (DL_FUNC) &_IASDT_R_Solve2, 2},
-    {"_IASDT_R_Solve2vect", (DL_FUNC) &_IASDT_R_Solve2vect, 2},
+    {"_IASDT_R_solve1", (DL_FUNC) &_IASDT_R_solve1, 1},
+    {"_IASDT_R_solve2", (DL_FUNC) &_IASDT_R_solve2, 2},
+    {"_IASDT_R_solve2vect", (DL_FUNC) &_IASDT_R_solve2vect, 2},
     {"_IASDT_R_fast_pnorm", (DL_FUNC) &_IASDT_R_fast_pnorm, 1},
     {"_IASDT_R_exp_neg_div", (DL_FUNC) &_IASDT_R_exp_neg_div, 2},
     {NULL, NULL, 0}

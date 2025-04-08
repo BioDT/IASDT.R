@@ -50,154 +50,153 @@ reference:
   contents:
   - GBIF_data
   - EASIN_data
-  - eLTER_Process
+  - eLTER_process
   - IAS_data
-  - GetSpeciesName
+  - get_species_name
 
 - title: Prepare abiotic data
   contents:
-  - CLC_Process
-  - CHELSA_Vars
+  - CLC_process
+  - CHELSA_variables
   - CHELSA_data
-  - Efforts_data
-  - Railway_Intensity
-  - Road_Intensity
-  - River_Length
-  - BioReg_Process
+  - efforts_data
+  - railway_intensity
+  - road_intensity
+  - river_length
+  - bioreg_process
 
 - title: Modelling functions
   desc: Functions for preparing data, running the models, and postprocessing of model outputs
 - subtitle: Data preparation
   desc: Prepare input data and scripts for fitting Hmsc-HPC on GPU
   contents:
-  - Mod_GetCV
-  - Mod_PrepKnots
-  - Mod_inputs
-  - Mod_SLURM
-  - Mod_SLURM_Refit
-  - Mod_Fit_WS
-  - Mod_CV_Fit
+  - mod_CV_prepare
+  - prepare_knots
+  - mod_inputs
+  - mod_SLURM
+  - mod_SLURM_refit
+  - mod_fit_windows
+  - mod_CV_fit
 - subtitle: Model postprocessing
   desc: Postprocessing model outputs, including checking for convergence, making spatial predictions, evaluation, and plotting.
   contents:
-  - Mod_GetPosts
-  - Mod_Merge_Chains
-  - Mod_Summary
-  - Response_curves
-  - Mod_Predict_LF
-  - Mod_Plot_LF
-  - Mod_Prep_TF
-  - Predict_Hmsc
-  - Predict_Maps
-  - Mod_Predict_Plot
-  - Mod_postprocessing
-  - Mod_CV_Eval
-  - Mod_Eval_Plot
-  - Parameter_Heatmap
-  - Convergence_Plot
-  - Convergence_Plot_All
-  - Variance_partitioning
-  - PlotGelman
+  - mod_get_posteriors
+  - mod_merge_chains
+  - mod_summary
+  - response_curves
+  - predict_latent_factor
+  - plot_latent_factor
+  - predict_hmsc
+  - predict_maps
+  - plot_prediction
+  - mod_postprocessing
+  - mod_CV_evaluate
+  - plot_evaluation
+  - parameter_heatmap
+  - convergence_plot
+  - convergence_plot_all
+  - variance_partitioning
+  - plot_gelman
 - subtitle: Helper functions
   contents:
-  - Coda_to_tibble
+  - coda_to_tibble
   - exp_neg_div
   - fast_pnorm
-  - Solve1
-  - Solve2
-  - Solve2vect
+  - solve1
+  - solve2
+  - solve2vect
 
 - title: General functions
   desc: Data management / utility functions
 - subtitle: Packages management
   contents:
-  - FunctionsInPackage
-  - LoadPackages
-  - ReloadPackage
-  - LoadedPackages
-  - Package_RemoteSha
-  - AssignEnvVars
-  - CheckCommands
-  - CheckArgs
-  - CatFunArgs
-  - RecordArgs
+  - package_functions
+  - load_packages
+  - reload_package
+  - loaded_packages
+  - package_remote_sha
+  - assign_env_vars
+  - check_system_command
+  - check_args
+  - function_arguments
+  - record_arguments
 - subtitle: File operations
   contents:
-  - FileExt
-  - FileSize
-  - FileType
-  - NormalizePath
-  - Path
-  - LoadAs
-  - LoadMultiple
-  - Check_data
-  - CheckZip
-  - SaveAs
-  - SaveMultiple
-  - List2RData
+  - file_extension
+  - file_size
+  - file_type
+  - normalize_path
+  - path
+  - load_as
+  - load_multiple
+  - check_data
+  - check_zip
+  - save_as
+  - save_multiple
+  - list_to_RData
 - subtitle: Plotting
   contents:
-  - AddImg2Plot
-  - AddLine
+  - add_image_to_plot
+  - add_line
   - integer_breaks
 - subtitle: Printing/logging functions
   contents:
-  - CatSep
-  - CatTime
-  - CatDiff
+  - cat_sep
+  - cat_time
+  - cat_diff
 - subtitle: Vector / data frame operations
   contents:
-  - AssignIfNotExist
+  - assign_if_not_exist
   - cc
   - ht
-  - Apply_functions
-  - NDecimals
-  - ReplaceSpace
-  - ScrapLinks
-  - sort_
-  - SplitVector
-  - SplitDF2Chunks
-  - Range2NewVal
-  - AllObjSizes
-  - KeepOnly
-  - SourceSilent
-  - NUnique
-  - AddMissingCols
+  - apply_functions
+  - n_decimals
+  - replace_space
+  - scrape_link
+  - sort2
+  - split_vector
+  - split_df_to_chunks
+  - range_to_new_value
+  - all_objects_sizes
+  - keep_only
+  - source_silent
+  - n_unique
+  - add_missing_columns
 - subtitle: Other functions
   contents:
-  - Set_parallel
-  - CurrOS
-  - System
-  - CheckURL
-  - ScriptLocation
-  - ClearConsole
-  - CheckRStudioVersion
-  - CheckQuartoVersion
-  - InfoChunk
-  - SaveSession
-  - SaveSessionInfo
+  - set_parallel
+  - OS
+  - system_command
+  - check_URL
+  - script_location
+  - clear_console
+  - check_RStudio
+  - check_quarto
+  - info_chunk
+  - save_session
+  - save_session_info
   - git_log
-  - GetBashVars
-  - Install_Hmsc
-  - DetectAlias
-  - GetMode
+  - bash_variables
+  - install_hmsc_windows
+  - detect_alias
+  - get_mode
 
 - title: Spatial functions
   contents:
-  - CheckTiff
-  - DownBoundary
-  - Polygon_Centroid
-  - Rename_geometry
-  - SplitRaster
-  - setGeometry
-  - Text2Coords
-  - ClipRasterByPolygon
-  - CheckStackInMemory
+  - check_tiff
+  - boundary_to_WKT
+  - polygon_centroid
+  - rename_geometry
+  - split_raster
+  - set_geometry
+  - text_to_coordinates
+  - clip_raster_by_polygon
+  - check_stack_in_memory
   - sf_add_coords
-  - GridCross
-  - GridDiagOff
-  - RastPA
-  - NetCDFGlobalAttrs
-  - Scale_0_1
-  - setRastCRS
-  - setRastVals
+  - add_cross_to_grid
+  - add_diagonals_to_grid
+  - raster_to_PA
+  - NetCDF_global_attributes
+  - scale_0_1
+  - set_raster_CRS
+  - set_raster_values

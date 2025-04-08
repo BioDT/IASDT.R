@@ -12,7 +12,7 @@ using namespace Rcpp;
 //' @return The inverted matrix of the same dimensions as `x`.
 //' //' @export
 // [[Rcpp::export]]
-arma::mat Solve1(const arma::mat & x) {
+arma::mat solve1(const arma::mat & x) {
     return arma::inv(x);
 }
 
@@ -27,7 +27,7 @@ arma::mat Solve1(const arma::mat & x) {
 //' @return The solution matrix or vector `X`.
 //' @export
 // [[Rcpp::export]]
-arma::mat Solve2(const arma::mat& A, const arma::mat& B) {
+arma::mat solve2(const arma::mat& A, const arma::mat& B) {
     return arma::solve(A, B);
 }
 
@@ -43,7 +43,7 @@ arma::mat Solve2(const arma::mat& A, const arma::mat& B) {
 //' @return The solution vector `x`.
 //' @export
 // [[Rcpp::export]]
-arma::vec Solve2vect(const arma::mat& A, const arma::vec& B) {
+arma::vec solve2vect(const arma::mat& A, const arma::vec& B) {
     arma::vec x = arma::solve(A, B);
     // Ensure the result is a vector
     return x;

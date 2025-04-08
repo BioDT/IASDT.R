@@ -9,8 +9,8 @@
 #   
 #   This Python script aids in computing variance partitioning for Hmsc models.
 #   It is designed to be called within the R function 
-#   `IASDT.R::VarPar_Compute`. The original functionality is extracted from the 
-#   `Hmsc::computeVariancePartitioning` R function.
+#   `IASDT.R::variance_partitioning_compute`. The original functionality is 
+#   extracted from the  `Hmsc::computeVariancePartitioning` R function.
 #   The implementation is optimized for parallel matrix multiplications using 
 #   TensorFlow. This script replaces the R function `gemu`:
 #

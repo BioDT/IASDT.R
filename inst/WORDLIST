@@ -11,7 +11,7 @@ EASIN
 EPSG
 EUNIS
 El
-EnvFile
+env_file
 GBIF
 GPP
 GPUs
@@ -100,7 +100,7 @@ eu
 europa
 geoxg
 jrc
-ReturnData
+return_data
 catxg
 Plantae
 rasterized
@@ -169,11 +169,11 @@ shrublands
 synanthropic
 zenodo
 modelled
-ModelDir
+model_dir
 Postprocess
 postprocess
 unpreprocessed
-CodaObj
+coda_object
 fp
 behaviour
 OPeNDAP
@@ -184,12 +184,12 @@ SSPs
 ETRS
 HabX
 LAEA
-ModelCountry
+model_country
 NewSites
 NGrids
-NspPerGrid
+n_species_per_grid
 Pred
-PrepSLURM
+SLURM_prepare
 shp
 slurm
 copernicus
@@ -215,3 +215,5 @@ Unevaluated
 RStudio's
 RStudio
 unsourced
+phylo
+computeVariancePartitioning

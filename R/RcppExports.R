@@ -8,8 +8,8 @@
 #' @param x A square matrix to be inverted.
 #' @return The inverted matrix of the same dimensions as `x`.
 #' //' @export
-Solve1 <- function(x) {
-    .Call(`_IASDT_R_Solve1`, x)
+solve1 <- function(x) {
+    .Call(`_IASDT_R_solve1`, x)
 }
 
 #' Solve a system of linear equations
@@ -21,8 +21,8 @@ Solve1 <- function(x) {
 #' @param B A matrix or vector representing the constants.
 #' @return The solution matrix or vector `X`.
 #' @export
-Solve2 <- function(A, B) {
-    .Call(`_IASDT_R_Solve2`, A, B)
+solve2 <- function(A, B) {
+    .Call(`_IASDT_R_solve2`, A, B)
 }
 
 #' Solve a system of linear equations for a vector
@@ -34,8 +34,8 @@ Solve2 <- function(A, B) {
 #' @param B A vector of constants.
 #' @return The solution vector `x`.
 #' @export
-Solve2vect <- function(A, B) {
-    .Call(`_IASDT_R_Solve2vect`, A, B)
+solve2vect <- function(A, B) {
+    .Call(`_IASDT_R_solve2vect`, A, B)
 }
 
 #' Fast Normal CDF

@@ -286,10 +286,9 @@ IAS_plot <- function(species = NULL, env_file = ".env", overwrite = FALSE) {
   #
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
 
-  grDevices::jpeg(
-    filename = out_path, width = 25, height = 26.5, units = "cm",
-    quality = 100, res = 600)
-
+  ragg::agg_jpeg(
+    filename = out_path, width = 25, height = 26.5, 
+    res = 600, quality = 100, units = "cm")
   print(Plot)
   grid::grid.text(
     label = LastUpdate, x = 0.98, y = 0.975, hjust = 1, vjust = 1,

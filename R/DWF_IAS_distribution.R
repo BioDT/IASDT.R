@@ -244,7 +244,7 @@ IAS_distribution <- function(
 
   IASDT.R::cat_time(
     paste0("There are ", length(Countries2Exclude), " countries to exclude:"),
-    level = 2)
+    level = 2, time = FALSE)
 
   # Mask grid to exclude countries - `TRUE` for grid cells to be considered as
   # presence if present in any of the data source; `FALSE` for grid cells need
@@ -252,7 +252,7 @@ IAS_distribution <- function(
   if (length(Countries2Exclude) > 0) {
 
     IASDT.R::cat_time(
-      paste(sort(Countries2Exclude), collapse = " + "), level = 3)
+      paste(sort(Countries2Exclude), collapse = " + "), level = 3, time = FALSE)
 
     Mask_Keep <- Grid_10_CNT %>%
       dplyr::mutate(Keep = !(Country %in% Countries2Exclude)) %>%
@@ -621,7 +621,7 @@ IAS_distribution <- function(
 
   iNatur_DT <- IASDT.R::path(Path_GBIF, "iNaturalist_Count.RData") %>%
     IASDT.R::load_as() %>%
-    dplyr::filter(species == species)
+    dplyr::filter(species == !!species)
 
   if (nrow(iNatur_DT) > 0) {
     iNatur_Unique <- iNatur_DT$iNaturalist_Unique

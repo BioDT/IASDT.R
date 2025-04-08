@@ -569,9 +569,10 @@ mod_prepare_HPC <- function(
 
     # Using ggplot2::ggsave directly does not show non-ascii characters
     # correctly
-    grDevices::jpeg(
+    ragg::agg_jpeg(
       filename = IASDT.R::path(path_model, "NSpPerGrid_Sub.jpeg"),
-      width = 25, height = plot_height, units = "cm", quality = 100, res = 600)
+      width = 25, height = plot_height, res = 600, quality = 100, units = "cm")
+    
     print(NSpPerGrid_Sub)
     grDevices::dev.off()
 

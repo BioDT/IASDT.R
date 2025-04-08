@@ -211,9 +211,9 @@ CLC_plot <- function(
 
           # Using ggplot2::ggsave directly does not show non-ascii characters
           # correctly
-          grDevices::jpeg(
-            filename = TilePath, width = 25, height = 23, units = "cm",
-            quality = 100, res = 600)
+          ragg::agg_jpeg(
+            filename = TilePath, width = 25, height = 23, res = 600,
+            quality = 100, units = "cm")
           print(Plot)
           grDevices::dev.off()
 
@@ -245,9 +245,9 @@ CLC_plot <- function(
 
           # Using ggplot2::ggsave directly does not show non-ascii characters
           # correctly
-          grDevices::jpeg(
-            filename = TilePathFree, width = 25, height = 23, units = "cm",
-            quality = 100, res = 600)
+          ragg::agg_jpeg(
+            filename = TilePathFree, width = 25, height = 23, res = 600,
+            quality = 100, units = "cm")
           print(Plot)
           grDevices::dev.off()
 
@@ -300,9 +300,9 @@ CLC_plot <- function(
 
       # Using ggplot2::ggsave directly does not show non-ascii characters
       # correctly
-      grDevices::jpeg(
-        filename = out_path[.x], width = 28, height = 15, units = "cm",
-        quality = 100, res = 600)
+      ragg::agg_jpeg(
+        filename = out_path[.x], width = 28, height = 15, res = 600,
+        quality = 100, units = "cm")
       print(Plot)
       grDevices::dev.off()
 

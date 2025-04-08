@@ -574,9 +574,9 @@ railway_intensity <- function(
 
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
-  grDevices::jpeg(
+  ragg::agg_jpeg(
     filename = IASDT.R::path(Path_Railways, "Railways_Length.jpeg"),
-    width = 31, height = 30, units = "cm", quality = 100, res = 600)
+    width = 31, height = 30, res = 600, quality = 100, units = "cm")
   print(RailPlot)
   grDevices::dev.off()
 
@@ -605,9 +605,9 @@ railway_intensity <- function(
 
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
-  grDevices::jpeg(
+  ragg::agg_jpeg(
     filename = IASDT.R::path(Path_Railways, "Railways_Lines.jpeg"),
-    width = 31, height = 30, units = "cm", quality = 100, res = 600)
+    width = 31, height = 30, res = 600, quality = 100, units = "cm")
   print(RailPlotShp)
   grDevices::dev.off()
 

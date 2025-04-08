@@ -168,7 +168,7 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
 
   ## Prepare working on parallel -----
   IASDT.R::cat_time(
-    paste0("Prepare working on parallel using ", n_cores, " cores."),
+    paste0("Prepare working on parallel using ", n_cores, " cores"),
     level = 1)
 
   if (n_cores == 1) {
@@ -429,9 +429,9 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
 
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
-  grDevices::jpeg(
+  ragg::agg_jpeg(
     filename = IASDT.R::path(Path_PA, "IAS_NumSpecies.jpeg"),
-    width = 30, height = 15.5, units = "cm", quality = 100, res = 600)
+    width = 30, height = 15.5, res = 600, quality = 100, units = "cm")
   print(Plot)
   grDevices::dev.off()
 
@@ -489,9 +489,9 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
       size = 7, hjust = 1)
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
-  grDevices::jpeg(
+  ragg::agg_jpeg(
     filename = IASDT.R::path(Path_PA, "IAS_NumSpecies_Masked.jpeg"),
-    width = 30, height = 15.5, units = "cm", quality = 100, res = 600)
+    width = 30, height = 15.5,  res = 600, quality = 100, units = "cm")
   print(Plot)
   grDevices::dev.off()
 
@@ -662,9 +662,9 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
     ncol = 1, rel_heights = c(0.05, 1, 0.05))
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
-  grDevices::jpeg(
+  ragg::agg_jpeg(
     filename = IASDT.R::path(Path_PA, "IAS_NSp_threshold_Hab.jpeg"),
-    width = 30, height = 17, units = "cm", quality = 100, res = 600)
+    width = 30, height = 17,  res = 600, quality = 100, units = "cm")
   print(Plot)
   grDevices::dev.off()
 

@@ -184,9 +184,9 @@ EASIN_plot <- function(env_file = ".env") {
           margin = ggplot2::margin(0, 0, 0, 0))))
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
-  grDevices::jpeg(
+  ragg::agg_jpeg(
     filename = IASDT.R::path(Path_EASIN_Summary, "EASIN_Data.jpeg"),
-    width = 20, height = 10.3, units = "cm", quality = 100, res = 600)
+    width = 20, height = 10.3, res = 600, quality = 100, units = "cm")
   print(Plot)
   grDevices::dev.off()
 
@@ -267,10 +267,10 @@ EASIN_plot <- function(env_file = ".env") {
 
       # Using ggplot2::ggsave directly does not show non-ascii characters
       # correctly
-      grDevices::jpeg(
+      ragg::agg_jpeg(
         filename = IASDT.R::path(
           Path_EASIN_Summary, paste0(File_prefix, "_p", i, ".jpeg")),
-        width = 30, height = 16.5, units = "cm", quality = 100, res = 600)
+        width = 30, height = 16.5, res = 600, quality = 100, units = "cm")
       print(Plot)
       grDevices::dev.off()
 

@@ -293,10 +293,9 @@ variance_partitioning_plot <- function(
     Theme +
     ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1, byrow = TRUE))
 
-  grDevices::jpeg(
+  ragg::agg_jpeg(
     filename = IASDT.R::path(Path_VarPar, "VarPar_Relative_ByTaxonomy.jpeg"),
-    width = width, height = height,
-    units = "cm", quality = 100, res = 600)
+    width = width, height = height, res = 600, quality = 100, units = "cm")
   plot(Plot_Relative_Orig)
   grDevices::dev.off()
 
@@ -325,10 +324,9 @@ variance_partitioning_plot <- function(
 
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
-  grDevices::jpeg(
+  ragg::agg_jpeg(
     filename = IASDT.R::path(Path_VarPar, "VarPar_Relative_ByTjurR2.jpeg"),
-    width = width, height = height,
-    units = "cm", quality = 100, res = 600)
+    width = width, height = height, res = 600, quality = 100, units = "cm")
   plot(Plot_Relative_TjurR2)
   grDevices::dev.off()
 
@@ -460,9 +458,10 @@ variance_partitioning_plot <- function(
 
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
-  grDevices::jpeg(
+  ragg::agg_jpeg(
     filename = IASDT.R::path(Path_VarPar, "VarPar_Raw_ByTaxonomy.jpeg"),
-    width = width, height = height, units = "cm", quality = 100, res = 600)
+    width = width, height = height, res = 600, quality = 100, units = "cm")
+  
   plot(Plot_Raw)
   grDevices::dev.off()
 
@@ -492,9 +491,9 @@ variance_partitioning_plot <- function(
 
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
-  grDevices::jpeg(
+  ragg::agg_jpeg(
     filename = IASDT.R::path(Path_VarPar, "VarPar_Raw_ByMean.jpeg"),
-    width = width, height = height, units = "cm", quality = 100, res = 600)
+    width = width, height = height, res = 600, quality = 100, units = "cm")
   plot(Plot_Raw_TotalRaw)
   grDevices::dev.off()
 
@@ -524,9 +523,9 @@ variance_partitioning_plot <- function(
 
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
-  grDevices::jpeg(
+  ragg::agg_jpeg(
     filename = IASDT.R::path(Path_VarPar, "VarPar_Raw_ByTotalNonSpatial.jpeg"),
-    width = width, height = height, units = "cm", quality = 100, res = 600)
+    width = width, height = height, res = 600, quality = 100, units = "cm")
   plot(Plot_Raw_NonSpatial)
   grDevices::dev.off()
 

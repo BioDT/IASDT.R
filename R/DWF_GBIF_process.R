@@ -533,9 +533,9 @@ GBIF_process <- function(
     cowplot::plot_grid(MainTitle, ., ncol = 1, rel_heights = c(0.035, 1))
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
-  grDevices::jpeg(
+  ragg::agg_jpeg(
     filename = IASDT.R::path(Path_GBIF, "GBIF_Summary.jpeg"),
-    width = 25, height = 25.8, units = "cm", quality = 100, res = 600)
+    width = 25, height = 25.8, res = 600, quality = 100, units = "cm")
   print(Plot)
   grDevices::dev.off()
 

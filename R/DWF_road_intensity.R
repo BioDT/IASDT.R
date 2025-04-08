@@ -388,9 +388,9 @@ road_intensity <- function(env_file = ".env") {
           margin = ggplot2::margin(0, 0, 0.5, 0))))
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
-  grDevices::jpeg(
+  ragg::agg_jpeg(
     filename = IASDT.R::path(Path_Roads, "Road_Length.jpeg"),
-    width = 30, height = 21, units = "cm", quality = 100, res = 600)
+    width = 30, height = 21, res = 600, quality = 100, units = "cm")
   print(Plots_Length)
   grDevices::dev.off()
 
@@ -435,9 +435,9 @@ road_intensity <- function(env_file = ".env") {
           margin = ggplot2::margin(0, 0, 1, 0))))
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
-  grDevices::jpeg(
+  ragg::agg_jpeg(
     filename = IASDT.R::path(Path_Roads, "Road_Distance.jpeg"),
-    width = 30, height = 21, units = "cm", quality = 100, res = 600)
+    width = 30, height = 21, res = 600, quality = 100, units = "cm")
   print(Plots_Distance)
   grDevices::dev.off()
 

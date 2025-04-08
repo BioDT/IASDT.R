@@ -166,7 +166,7 @@ CHELSA_process <- function(
       c1 <- snow::makeSOCKcluster(n_cores)
       on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
       future::plan("future::cluster", workers = c1, gc = TRUE)
-      on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
+      withr::defer(future::plan("future::sequential", gc = TRUE))
     }
 
     CHELSA_Data_Checked <- CHELSA_Data %>%
@@ -232,7 +232,7 @@ CHELSA_process <- function(
     c1 <- snow::makeSOCKcluster(n_cores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
     future::plan("future::cluster", workers = c1, gc = TRUE)
-    on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
+    withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 
 
@@ -371,7 +371,7 @@ CHELSA_process <- function(
     c1 <- snow::makeSOCKcluster(n_cores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
     future::plan("future::cluster", workers = c1, gc = TRUE)
-    on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
+    withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 
   # String to be matched to extract variable names

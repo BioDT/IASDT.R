@@ -206,7 +206,7 @@ CHELSA_prepare <- function(
       c1 <- snow::makeSOCKcluster(n_cores)
       on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
       future::plan("future::cluster", workers = c1, gc = TRUE)
-      on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
+      withr::defer(future::plan("future::sequential", gc = TRUE))
     }
 
     # # |||||||||||||||||||||||||||||||| ###

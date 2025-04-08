@@ -85,7 +85,7 @@ resp_curv_plot_species_all <- function(
     c1 <- snow::makeSOCKcluster(min(n_cores, nrow(Sp_DT_All)))
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
     future::plan("future::cluster", workers = c1, gc = TRUE)
-    on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
+    withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 
   Sp_DT_All <- Sp_DT_All %>%

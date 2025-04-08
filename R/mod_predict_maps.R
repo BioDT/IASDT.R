@@ -1156,7 +1156,7 @@ predict_maps <- function(
     c1 <- snow::makeSOCKcluster(min(n_cores, nrow(Prediction_Summary)))
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
     future::plan("future::cluster", workers = c1, gc = TRUE)
-    on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
+    withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 
   # --------------------------------------------------------- #

@@ -180,7 +180,7 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
     c1 <- snow::makeSOCKcluster(n_cores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
     future::plan("future::cluster", workers = c1, gc = TRUE)
-    on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
+    withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 
   # # .................................... ###

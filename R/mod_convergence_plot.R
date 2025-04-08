@@ -626,7 +626,7 @@ convergence_plot <- function(
 
     # Prepare working on parallel
     IASDT.R::set_parallel(n_cores = min(n_cores, nrow(Beta_DF)), level = 2)
-    on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
+    withr::defer(future::plan("future::sequential", gc = TRUE))
 
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
@@ -797,7 +797,7 @@ convergence_plot <- function(
   # Prepare working on parallel
   IASDT.R::set_parallel(
     n_cores = min(n_cores, nrow(BetaTracePlots_ByVar)), level = 2)
-  on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
+  withr::defer(future::plan("future::sequential", gc = TRUE))
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
@@ -925,7 +925,7 @@ convergence_plot <- function(
   # Prepare working on parallel
   IASDT.R::set_parallel(
     n_cores = min(n_cores, nrow(BetaTracePlots_BySp)), level = 2)
-  on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
+  withr::defer(future::plan("future::sequential", gc = TRUE))
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 

@@ -74,7 +74,7 @@ resp_curv_plot_SR <- function(model_dir, verbose = TRUE, n_cores = 8L) {
   c1 <- snow::makeSOCKcluster(n_cores)
   on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
   future::plan("future::cluster", workers = c1, gc = TRUE)
-  on.exit(future::plan("future::sequential", gc = TRUE), add = TRUE)
+  withr::defer(future::plan("future::sequential", gc = TRUE))
 
   IASDT.R::cat_time("Prepare data", level = 1)
 

@@ -419,7 +419,7 @@ predict_latent_factor <- function(
                 SampleID = SampleID,
                 Save = purrr::map2(
                   .x = eta_DT, .y = Path_Samp_LF,
-                  .f = ~qs2::qs_save(.x, .y, n_threads = 5)),
+                  .f = ~qs2::qs_save(.x, .y, nthreads = 5)),
                 LF = LF_ID, Save = NULL, eta_DT = NULL)
 
             IASDT.R::save_as(object = etaPred, out_path = File_etaPred)
@@ -460,7 +460,8 @@ predict_latent_factor <- function(
                   stats::setNames(
                     c("SampleID", paste0("LF_", LF_ID), "units_pred"))
 
-                qs2::qs_save(object = DT, file = Path_Samp_LF, n_threads = 5)
+                qs2::qs_save(object = DT, file = Path_Samp_LF, nthreads = 5)
+
                 return(Path_Samp_LF)
               }) %>%
               tibble::tibble(
@@ -498,7 +499,7 @@ predict_latent_factor <- function(
                       units_pred = units_pred) %>%
                       stats::setNames(
                         c("SampleID", paste0("LF_", LF_ID), "units_pred"))
-                    qs2::qs_save(object = DT, file = .x, n_threads = 5)
+                    qs2::qs_save(object = DT, file = .x, nthreads = 5)
                     return(NULL)
                   }),
                 Save = NULL, LF = LF_ID)

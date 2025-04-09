@@ -70,7 +70,7 @@ save_as <- function(
   switch(
     Extension,
     qs2 = {
-      qs2::qs_save(object = object, file = out_path, n_threads = n_threads, ...)
+      qs2::qs_save(object = object, file = out_path, nthreads = n_threads, ...)
     },
     rdata = {
       if (is.null(object_name)) {

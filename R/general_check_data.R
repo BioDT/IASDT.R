@@ -117,7 +117,7 @@ check_qs <- function(file, warning = TRUE, n_threads = 5) {
 
   if (Extension == "qs2") {
 
-    Obj <- try(qs2::qs_read(file = file, n_threads = n_threads), silent = TRUE)
+    Obj <- try(qs2::qs_read(file = file, nthreads = n_threads), silent = TRUE)
 
     if (inherits(Obj, "try-error")) {
       return(FALSE)

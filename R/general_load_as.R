@@ -100,7 +100,7 @@ load_as <- function(file = NULL, n_threads = 5, timeout = 300, ...) {
 
   OutFile <- switch(
     tools::file_ext(file),
-    qs2 = qs2::qs_read(file = file, n_threads = n_threads, ...),
+    qs2 = qs2::qs_read(file = file, nthreads = n_threads, ...),
     RData = {
       # Load the .RData file and capture the names of loaded objects
       InFile0 <- load(file, ...)

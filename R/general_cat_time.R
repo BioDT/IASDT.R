@@ -53,6 +53,7 @@ cat_time <- function(
     text = "", n_lines = 1L, time = TRUE, bold = FALSE,
     red = FALSE, date = FALSE, time_zone = "CET", level = 0L, ...) {
 
+  # Validate inputs
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(
     AllArgs,
@@ -66,10 +67,18 @@ cat_time <- function(
     args_to_check = c("n_lines", "level"))
   rm(AllArgs, envir = environment())
 
-  if (time) {
-    DateFormat <- dplyr::if_else(date, "%d/%m/%Y %X", "%X")
-    Now <- lubridate::now(tzone = time_zone) %>%
-      format(DateFormat)
+  # Current time
+  Now <- lubridate::now(tzone = time_zone)
+
+  # Format date / time
+  if (date && time) {
+    Now <- format(Now, "%d/%m/%Y %X")
+    Now2 <- paste0(" - ", Now)
+  } else if (date) {
+    Now <- format(Now, "%d/%m/%Y")
+    Now2 <- paste0(" - ", Now)
+  } else if (time) {
+    Now <- format(Now, "%X")
     Now2 <- paste0(" - ", Now)
   } else {
     Now <- Now2 <- ""

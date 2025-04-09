@@ -690,7 +690,7 @@ mod_prepare_HPC <- function(
 
     IASDT.R::cat_time(
       paste0(length(quadratic_variables), " linear and quadratic effects: "),
-      level = 2)
+      level = 2, time = FALSE)
     IASDT.R::cat_time(
       paste(quadratic_variables, collapse = " + "), level = 3, time = FALSE)
 

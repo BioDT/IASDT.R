@@ -138,14 +138,6 @@ mod_postprocess_1_CPU <- function(
 
   # ****************************************************************
 
-  Ch1 <- function(Text) {
-    IASDT.R::info_chunk(
-      paste0("\t", Text), n_separators = 2, line_char = "=", repetitions = 60,
-      red = TRUE, bold = TRUE, time = FALSE)
-  }
-
-  # ****************************************************************
-
   # Check input arguments ----
 
   hab_abb <- as.character(hab_abb)
@@ -232,7 +224,10 @@ mod_postprocess_1_CPU <- function(
   # ****************************************************************
 
   # Check unsuccessful models -----
-  Ch1("Check unsuccessful models")
+  
+  IASDT.R::info_chunk(
+    "\tCheck unsuccessful models",
+    line_char = "+", repetitions = 60, red = TRUE, bold = TRUE, time = FALSE)
 
   IASDT.R::mod_SLURM_refit(
     model_dir = model_dir,
@@ -244,8 +239,10 @@ mod_postprocess_1_CPU <- function(
 
   # ****************************************************************
 
-  Ch1("Merge chains and saving RData files")
-
+  IASDT.R::info_chunk(
+    "\tMerge chains and saving RData files",
+    line_char = "+", repetitions = 60, red = TRUE, bold = TRUE, time = FALSE)
+  
   IASDT.R::mod_merge_chains(
     model_dir = model_dir, n_cores = n_cores, from_JSON = from_JSON)
 
@@ -253,8 +250,10 @@ mod_postprocess_1_CPU <- function(
 
   # ****************************************************************
 
-  Ch1("Convergence of all model variants")
-
+  IASDT.R::info_chunk(
+    "\tConvergence of all model variants",
+    line_char = "+", repetitions = 60, red = TRUE, bold = TRUE, time = FALSE)
+  
   IASDT.R::convergence_plot_all(
     model_dir = model_dir, n_omega = n_omega, n_cores = n_cores,
     margin_type = "histogram")
@@ -265,7 +264,9 @@ mod_postprocess_1_CPU <- function(
   # # ..................................................................... ###
 
   # Path of selected model -----
-  Ch1("Path of selected model")
+  IASDT.R::info_chunk(
+    "\tPath of selected model",
+    line_char = "+", repetitions = 60, red = TRUE, bold = TRUE, time = FALSE)
 
   path_model <- IASDT.R::path(
     model_dir, "Model_Fitted",
@@ -291,8 +292,10 @@ mod_postprocess_1_CPU <- function(
   # ****************************************************************
 
   # Gelman_Plot -----
-  Ch1("Gelman_Plot")
-
+  IASDT.R::info_chunk(
+    "\tGelman_Plot",
+    line_char = "+", repetitions = 60, red = TRUE, bold = TRUE, time = FALSE)
+  
   IASDT.R::plot_gelman(
     path_coda = path_coda, alpha = TRUE, beta = TRUE, omega = TRUE, rho = TRUE,
     n_omega = n_omega, env_file = env_file)
@@ -302,7 +305,9 @@ mod_postprocess_1_CPU <- function(
   # ****************************************************************
 
   # Convergence plots ----
-  Ch1("Convergence plots")
+  IASDT.R::info_chunk(
+    "\tConvergence plots",
+    line_char = "+", repetitions = 60, red = TRUE, bold = TRUE, time = FALSE)
 
   IASDT.R::convergence_plot(
     path_coda = path_coda, path_model = path_model, env_file = env_file,
@@ -314,7 +319,9 @@ mod_postprocess_1_CPU <- function(
   # ****************************************************************
 
   # Model summary ------
-  Ch1("Model summary")
+  IASDT.R::info_chunk(
+    "\tModel summary",
+    line_char = "+", repetitions = 60, red = TRUE, bold = TRUE, time = FALSE)
 
   IASDT.R::mod_summary(path_coda = path_coda, env_file = env_file)
 
@@ -323,7 +330,9 @@ mod_postprocess_1_CPU <- function(
   # ****************************************************************
 
   # Plotting model parameters - Omega -----
-  Ch1("Plotting model parameters - Omega")
+  IASDT.R::info_chunk(
+    "\tPlotting model parameters - Omega",
+    line_char = "+", repetitions = 60, red = TRUE, bold = TRUE, time = FALSE)
 
   IASDT.R::mod_heatmap_omega(
     path_model = path_model, support_level = 0.95,
@@ -334,7 +343,9 @@ mod_postprocess_1_CPU <- function(
   # ****************************************************************
 
   # Plotting model parameters - Beta -----
-  Ch1("Plotting model parameters - Beta")
+  IASDT.R::info_chunk(
+    "\tPlotting model parameters - Beta",
+    line_char = "+", repetitions = 60, red = TRUE, bold = TRUE, time = FALSE)
 
   IASDT.R::mod_heatmap_beta(
     path_model = path_model, support_level = 0.95,
@@ -346,7 +357,10 @@ mod_postprocess_1_CPU <- function(
 
   # Prepare input data for cross-validation -------
 
-  Ch1("Prepare input data for cross-validation")
+  IASDT.R::info_chunk(
+    "\tPrepare input data for cross-validation",
+    line_char = "+", repetitions = 60, red = TRUE, bold = TRUE, time = FALSE)
+
   IASDT.R::mod_CV_fit(
     path_model = path_model, CV_name = CV_name, env_file = env_file,
     job_name = paste0("CV_", hab_abb), memory_per_cpu = memory_per_cpu,
@@ -357,7 +371,9 @@ mod_postprocess_1_CPU <- function(
   # ****************************************************************
 
   # latent factors of the response curves -------
-  Ch1("Prepare scripts for predicting latent factors of the response curves")
+  IASDT.R::info_chunk(
+    "\tPrepare scripts for predicting latent factors of the response curves",
+    line_char = "+", repetitions = 60, red = TRUE, bold = TRUE, time = FALSE)
 
   IASDT.R::resp_curv_prepare_data(
     path_model = path_model, n_grid = n_grid, n_cores = n_cores,
@@ -371,7 +387,10 @@ mod_postprocess_1_CPU <- function(
   # ****************************************************************
 
   # latent factors for new sampling units -------
-  Ch1("Prepare scripts for predicting latent factors for new sampling units")
+  
+  IASDT.R::info_chunk(
+    "\tPrepare scripts for predicting latent factors for new sampling units",
+    line_char = "+", repetitions = 60, red = TRUE, bold = TRUE, time = FALSE)
 
   IASDT.R::predict_maps(
     path_model = path_model, hab_abb = hab_abb, env_file = env_file,
@@ -384,7 +403,9 @@ mod_postprocess_1_CPU <- function(
   # ****************************************************************
 
   # Prepare scripts for computing variance partitioning -------
-  Ch1("Prepare scripts for computing variance partitioning")
+  IASDT.R::info_chunk(
+    "\tPrepare scripts for computing variance partitioning",
+    line_char = "+", repetitions = 60, red = TRUE, bold = TRUE, time = FALSE)
 
   IASDT.R::variance_partitioning_compute(
     path_model = path_model,
@@ -783,14 +804,6 @@ mod_postprocess_2_CPU <- function(
 
   # ****************************************************************
 
-  Ch1 <- function(Text) {
-    IASDT.R::info_chunk(
-      paste0("\t", Text), n_separators = 2, line_char = "=", repetitions = 60,
-      red = TRUE, bold = TRUE, time = FALSE)
-  }
-
-  # ****************************************************************
-
   # Check input arguments ----
 
   hab_abb <- as.character(hab_abb)
@@ -904,7 +917,9 @@ mod_postprocess_2_CPU <- function(
   # ****************************************************************
 
   # Path of selected model -----
-  Ch1("Path of selected model")
+  IASDT.R::info_chunk(
+    "\tPath of selected model",
+    line_char = "+", repetitions = 60, red = TRUE, bold = TRUE, time = FALSE)
 
   path_model <- IASDT.R::path(
     model_dir, "Model_Fitted",
@@ -928,7 +943,9 @@ mod_postprocess_2_CPU <- function(
   # ****************************************************************
 
   # Prepare response curve data -----
-  Ch1("Prepare response curve data")
+  IASDT.R::info_chunk(
+    "\tPrepare response curve data",
+    line_char = "+", repetitions = 60, red = TRUE, bold = TRUE, time = FALSE)
 
   IASDT.R::resp_curv_prepare_data(
     path_model = path_model, n_grid = n_grid, n_cores = RC_n_cores,
@@ -943,7 +960,9 @@ mod_postprocess_2_CPU <- function(
   # ****************************************************************
 
   # Plotting response curves - species richness -----
-  Ch1("Plotting response curves - species richness")
+  IASDT.R::info_chunk(
+    "\tPlotting response curves - species richness",
+    line_char = "+", repetitions = 60, red = TRUE, bold = TRUE, time = FALSE)
 
   IASDT.R::resp_curv_plot_SR(
     model_dir = model_dir, verbose = TRUE, n_cores = RC_n_cores)
@@ -952,8 +971,11 @@ mod_postprocess_2_CPU <- function(
 
   # ****************************************************************
 
-  # ## Plotting response curves - species -----
-  Ch1("Plotting response curves - species")
+  # Plotting response curves - species -----
+  IASDT.R::info_chunk(
+    "\tPlotting response curves - species",
+    line_char = "+", repetitions = 60, red = TRUE, bold = TRUE, time = FALSE)
+
   IASDT.R::resp_curv_plot_species(
     model_dir = model_dir, n_cores = RC_n_cores, env_file = env_file)
 
@@ -961,9 +983,11 @@ mod_postprocess_2_CPU <- function(
 
   # ****************************************************************
 
-  # ## Plotting - all species together -----
-  Ch1("Plotting response curves - all species together")
-
+  # Plotting - all species together -----
+  IASDT.R::info_chunk(
+    "\tPlotting response curves - all species together",
+    line_char = "+", repetitions = 60, red = TRUE, bold = TRUE, time = FALSE)
+  
   IASDT.R::resp_curv_plot_species_all(
     model_dir = model_dir, n_cores = RC_n_cores)
 
@@ -972,7 +996,9 @@ mod_postprocess_2_CPU <- function(
   # ****************************************************************
 
   # Predicting habitat suitability across different climate options -------
-  Ch1("Predicting habitat suitability across different climate options")
+  IASDT.R::info_chunk(
+    "\tPredicting habitat suitability across different climate options",
+    line_char = "+", repetitions = 60, red = TRUE, bold = TRUE, time = FALSE)
 
   IASDT.R::predict_maps(
     path_model = path_model, hab_abb = hab_abb, env_file = env_file,
@@ -989,8 +1015,10 @@ mod_postprocess_2_CPU <- function(
 
   # ****************************************************************
 
-  # Compute Variance partitioning ------
-  Ch1("Compute Variance partitioning")
+  # Compute variance partitioning ------
+  IASDT.R::info_chunk(
+    "\tCompute variance partitioning",
+    line_char = "+", repetitions = 60, red = TRUE, bold = TRUE, time = FALSE)
 
   IASDT.R::variance_partitioning_compute(
     path_model = path_model,
@@ -1002,7 +1030,9 @@ mod_postprocess_2_CPU <- function(
   # ****************************************************************
 
   # Plot Variance partitioning ------
-  Ch1("Plot Variance partitioning")
+  IASDT.R::info_chunk(
+    "\tPlot Variance partitioning",
+    line_char = "+", repetitions = 60, red = TRUE, bold = TRUE, time = FALSE)
 
   IASDT.R::variance_partitioning_plot(
     path_model = path_model, env_file = env_file, VP_file = "VarPar",
@@ -1012,7 +1042,9 @@ mod_postprocess_2_CPU <- function(
   # ****************************************************************
 
   # Plot species & SR predictions as JPEG ------
-  Ch1("Plot species & SR predictions as JPEG")
+  IASDT.R::info_chunk(
+    "\tPlot species & SR predictions as JPEG",
+    line_char = "+", repetitions = 60, red = TRUE, bold = TRUE, time = FALSE)
 
   IASDT.R::plot_prediction(
     model_dir = model_dir, env_file = env_file, n_cores = n_cores)
@@ -1020,19 +1052,22 @@ mod_postprocess_2_CPU <- function(
   # ****************************************************************
 
   # Plot latent factors as JPEG ------
-  Ch1("Plot latent factors as JPEG")
+  IASDT.R::info_chunk(
+    "\tPlot latent factors as JPEG",
+    line_char = "+", repetitions = 60, red = TRUE, bold = TRUE, time = FALSE)
 
   IASDT.R::plot_latent_factor(path_model = path_model, env_file = env_file)
 
   # ****************************************************************
 
   # Plot explanatory Power ------
-  Ch1("Plot explanatory Power")
+  IASDT.R::info_chunk(
+    "\tPlot explanatory Power",
+    line_char = "+", repetitions = 60, red = TRUE, bold = TRUE, time = FALSE)
 
   IASDT.R::plot_evaluation(model_dir = model_dir, env_file = env_file)
 
   # ****************************************************************
-
 
   # Post-processing cross-validated models ------
 

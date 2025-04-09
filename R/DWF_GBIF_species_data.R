@@ -207,7 +207,7 @@ GBIF_species_data <- function(
     # Using ggplot2::ggsave directly does not show non-ascii characters
     # correctly
     ragg::agg_jpeg(
-      filename = FilePath_Plot, width = 25, height = 25, res = 600, 
+      filename = FilePath_Plot, width = 25, height = 25, res = 600,
       quality = 100, units = "cm")
     print(SpPlot)
     grDevices::dev.off()

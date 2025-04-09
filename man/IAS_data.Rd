@@ -14,10 +14,10 @@ IAS_distribution(
   species = NULL,
   env_file = ".env",
   verbose = FALSE,
-  overwrite = FALSE
+  overwrite = TRUE
 )
 
-IAS_plot(species = NULL, env_file = ".env", overwrite = FALSE)
+IAS_plot(species = NULL, env_file = ".env", overwrite = TRUE)
 }
 \arguments{
 \item{env_file}{Character. Path to the environment file containing paths to

@@ -461,7 +461,7 @@ variance_partitioning_plot <- function(
   ragg::agg_jpeg(
     filename = IASDT.R::path(Path_VarPar, "VarPar_Raw_ByTaxonomy.jpeg"),
     width = width, height = height, res = 600, quality = 100, units = "cm")
-  
+
   plot(Plot_Raw)
   grDevices::dev.off()
 

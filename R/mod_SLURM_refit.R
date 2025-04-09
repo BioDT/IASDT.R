@@ -157,7 +157,7 @@ mod_SLURM_refit <- function(
         f <- file(IASDT.R::path(model_dir, OutCommandFile), open = "wb")
         on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
         cat(Commands2Refit[CurrIDs], sep = "\n", append = FALSE, file = f)
-        close(f)
+        on.exit(close(f))
       })
 
     IASDT.R::mod_SLURM(

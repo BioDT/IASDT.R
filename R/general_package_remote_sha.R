@@ -27,13 +27,22 @@
 
 package_remote_sha <- function(...) {
 
+  package <- NULL
+
   # Capture package names as symbols and convert to character strings
-  Pk <- rlang::ensyms(...) %>%
-    purrr::map_chr(.f = rlang::as_string)
+  Pk <- rlang::ensyms(...)
+
+  # ensure at least one package is provided
+  if (length(Pk) == 0) {
+    stop("At least one package name must be provided", call. = FALSE)
+  }
+
+  Pk <- purrr::map_chr(Pk, .f = rlang::as_string)
 
   # Retrieve library status once for efficiency and map over packages
   lib_status <- IASDT.R::add_missing_columns(
-    pak::lib_status(), NA_character_, "remotesha")
+    pak::lib_status(), NA_character_, "remotesha") %>%
+    dplyr::filter(package %in% Pk)
 
   Out <- purrr::map_chr(
     .x = Pk,

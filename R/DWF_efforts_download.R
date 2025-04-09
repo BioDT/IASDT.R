@@ -60,7 +60,7 @@ efforts_download <- function(n_cores = 6L, env_file = ".env") {
   ## Prepare working on parallel -----
 
   IASDT.R::cat_time(
-    paste0("Prepare working on parallel using ", n_cores, " cores."),
+    paste0("Prepare working on parallel using ", n_cores, " cores"),
     level = 1)
 
   if (n_cores == 1) {

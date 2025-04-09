@@ -572,7 +572,7 @@ mod_prepare_HPC <- function(
     ragg::agg_jpeg(
       filename = IASDT.R::path(path_model, "NSpPerGrid_Sub.jpeg"),
       width = 25, height = plot_height, res = 600, quality = 100, units = "cm")
-    
+
     print(NSpPerGrid_Sub)
     grDevices::dev.off()
 
@@ -757,7 +757,7 @@ mod_prepare_HPC <- function(
     if (NCores_GPP > 1) {
 
       IASDT.R::cat_time(
-        paste0("Prepare working on parallel using ", NCores_GPP, " cores."),
+        paste0("Prepare working on parallel using ", NCores_GPP, " cores"),
         level = 2, time = FALSE)
 
       withr::local_options(
@@ -792,8 +792,8 @@ mod_prepare_HPC <- function(
       GPP_Knots <- purrr::map(
         .x = GPP_dists * 1000,
         .f = ~IASDT.R::prepare_knots(
-          Coords = DT_xy, min_distance = .x, min_LF = min_LF, max_LF = max_LF,
-          alphapw = alphapw)) %>%
+          coordinates = DT_xy, min_distance = .x, min_LF = min_LF,
+          max_LF = max_LF, alphapw = alphapw)) %>%
         stats::setNames(paste0("GPP_", GPP_dists))
     }
 
@@ -1001,9 +1001,9 @@ mod_prepare_HPC <- function(
   if (overwrite_rds) {
     IASDT.R::cat_time("Processing all model variants", level = 1)
   } else {
-    NMod2Export <- Model_Info %>%
-      dplyr::filter(!file.exists(M4HPC_Path)) %>%
-      nrow()
+
+    NMod2Export <- sum(!file.exists(Model_Info$M4HPC_Path))
+
     if (NMod2Export == 0) {
       IASDT.R::cat_time(
         "All model variants were already available as RDS files", level = 1)
@@ -1269,7 +1269,7 @@ mod_prepare_HPC <- function(
       f <- file(CommandFile, open = "wb")
       on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
       cat(Models2Fit_HPC[IDs[[x]]], sep = "\n", append = FALSE, file = f)
-      close(f)
+      on.exit(close(f))
     })
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

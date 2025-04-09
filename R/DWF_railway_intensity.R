@@ -249,7 +249,7 @@ railway_intensity <- function(
 
   ## Prepare working on parallel ----
   IASDT.R::cat_time(
-    paste0("Prepare working on parallel using ", n_cores, " cores."),
+    paste0("Prepare working on parallel using ", n_cores, " cores"),
     level = 1)
 
   if (n_cores == 1) {

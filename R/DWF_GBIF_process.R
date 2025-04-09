@@ -184,7 +184,7 @@ GBIF_process <- function(
   ChunkListRData <- stringr::str_replace_all(ChunkList, ".txt$", ".RData")
 
   IASDT.R::cat_time(
-    paste0("Prepare working on parallel using ", n_cores, " cores."),
+    paste0("Prepare working on parallel using ", n_cores, " cores"),
     level = 1)
 
   if (n_cores == 1) {
@@ -592,7 +592,7 @@ GBIF_process <- function(
   IASDT.R::cat_time("Split species data - grid/raster/plot", level = 1)
 
   IASDT.R::cat_time(
-    paste0("Prepare working on parallel using ", n_cores, " cores."),
+    paste0("Prepare working on parallel using ", n_cores, " cores"),
     level = 1)
 
   if (n_cores == 1) {

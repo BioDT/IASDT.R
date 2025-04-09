@@ -9,7 +9,7 @@
 #' @order 2
 
 IAS_distribution <- function(
-    species = NULL, env_file = ".env", verbose = FALSE, overwrite = FALSE) {
+    species = NULL, env_file = ".env", verbose = FALSE, overwrite = TRUE) {
 
   # # ..................................................................... ###
 
@@ -48,7 +48,7 @@ IAS_distribution <- function(
   Path_Grid <- Path_TaxaInfo <- Path_GBIF <- Path_eLTER <- Path_EASIN <-
     Path_BioReg <- Path_Grid_Ref <- Path_PA <- Path_TaxaInfo_RData <- BiogReg <-
     Country <- Species_name2 <- Species_name <- n <- GBIF <- EASIN <- eLTER <-
-    PA <- species <- `status-decision` <- Path_TaxaCNT <- country <-
+    PA <- `status-decision` <- Path_TaxaCNT <- country <-
     gbif_key <- status_decision <- NULL
 
   # # ..................................................................... ###

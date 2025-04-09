@@ -59,10 +59,6 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
 
   rm(AllArgs, envir = environment())
 
-  withr::local_options(
-    future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
-    future.seed = TRUE)
-
   # # ..................................................................... ###
 
   # Avoid "no visible binding for global variable" message
@@ -167,21 +163,8 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
   .StartTimeDist <- lubridate::now(tzone = "CET")
 
   ## Prepare working on parallel -----
-  IASDT.R::cat_time(
-    paste0("Prepare working on parallel using ", n_cores, " cores"),
-    level = 1)
-
-  if (n_cores == 1) {
-    future::plan("future::sequential", gc = TRUE)
-  } else {
-    withr::local_options(
-      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
-      future.seed = TRUE)
-    c1 <- snow::makeSOCKcluster(n_cores)
-    on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-    future::plan("future::cluster", workers = c1, gc = TRUE)
-    withr::defer(future::plan("future::sequential", gc = TRUE))
-  }
+  IASDT.R::set_parallel(n_cores = n_cores, level = 1)
+  withr::defer(future::plan("future::sequential", gc = TRUE))
 
   # # .................................... ###
 
@@ -199,18 +182,15 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
     future.packages =   c(
       "dplyr", "lubridate", "IASDT.R", "purrr", "stringr", "readr", "fs",
       "sf", "terra", "readxl", "tidyr", "tidyselect", "ggplot2", "ggtext",
-      "grid", "tidyterra", "cowplot", "scales"),
+      "grid", "tidyterra", "cowplot", "scales", "tibble", "magrittr", "ragg",
+      "grDevices"),
     future.globals = c("env_file", "overwrite")) %>%
     dplyr::bind_rows()
 
   # # .................................... ###
 
   ## Stopping cluster ----
-  IASDT.R::cat_time("Stopping cluster", level = 1)
-  if (n_cores > 1) {
-    snow::stopCluster(c1)
-    future::plan("future::sequential", gc = TRUE)
-  }
+  IASDT.R::set_parallel(stop = TRUE, level = 2)
 
   IASDT.R::cat_diff(
     init_time = .StartTimeDist,

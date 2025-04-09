@@ -8,7 +8,7 @@
 #' @rdname IAS_data
 #' @order 3
 
-IAS_plot <- function(species = NULL, env_file = ".env", overwrite = FALSE) {
+IAS_plot <- function(species = NULL, env_file = ".env", overwrite = TRUE) {
 
   # # ..................................................................... ###
 
@@ -287,7 +287,7 @@ IAS_plot <- function(species = NULL, env_file = ".env", overwrite = FALSE) {
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
 
   ragg::agg_jpeg(
-    filename = out_path, width = 25, height = 26.5, 
+    filename = out_path, width = 25, height = 26.5,
     res = 600, quality = 100, units = "cm")
   print(Plot)
   grid::grid.text(

@@ -2,6 +2,8 @@
 # Model pipeline for post-processing fitted Hmsc models
 ## |------------------------------------------------------------------------| #
 
+#' Model pipeline for post-processing fitted Hmsc models
+#'
 #' These functions post-process fitted Hmsc models on both CPU and GPU. The
 #' pipeline is under active development and may change in future updates.
 #' Currently, there are three main functions in this script:

@@ -61,7 +61,11 @@ cat_sep <- function(
     cat(strrep("\n", lines_before), ...)
   }
 
-  cat(paste(rep(line_char, repetitions), collapse = ""), ...)
+
+  paste(rep(line_char, repetitions), collapse = "") %>%
+    rep(n_separators) %>%
+    paste0(collapse = "\n") %>%
+    cat(...)
 
   if (lines_after > 0) {
     cat(strrep("\n", lines_after), ...)

@@ -5,11 +5,7 @@
 \alias{mod_postprocess_1_CPU}
 \alias{mod_prepare_TF}
 \alias{mod_postprocess_2_CPU}
-\title{These functions post-process fitted Hmsc models on both CPU and GPU. The
-pipeline is under active development and may change in future updates.
-Currently, there are three main functions in this script:
-\code{mod_postprocess_1_CPU()}, \code{mod_prepare_TF()}, and \code{mod_postprocess_2_CPU()}.
-See details for more information.}
+\title{Model pipeline for post-processing fitted Hmsc models}
 \usage{
 mod_postprocess_1_CPU(
   model_dir = NULL,

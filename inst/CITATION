@@ -4,7 +4,7 @@ bibentry(
     author = person("Ahmed", "El-Gabbas"),
     year = sub("-.*", "", meta$Date),
     note = sprintf("R package version %s", meta$Version),
-    doi = "10.5281/zenodo.14834385",
+    doi = "10.5281/zenodo.14834384",
     url = "https://github.com/BioDT/IASDT.R",
     header = "To cite the IASDT.R R package:"
 )

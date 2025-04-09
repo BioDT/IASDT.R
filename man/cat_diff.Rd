@@ -9,7 +9,7 @@ cat_diff(
   chunk_text = "Session summary",
   prefix = "Completed in ",
   cat_info = FALSE,
-  level = 0,
+  level = 0L,
   time = FALSE,
   ...
 )

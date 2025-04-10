@@ -194,7 +194,8 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
 
   IASDT.R::cat_diff(
     init_time = .StartTimeDist,
-    prefix = "Processing Species-specific data took ", n_lines = 1, level = 2)
+    prefix = "Processing Species-specific data took ",
+    msg_n_lines = 1, level = 2)
 
   # # ..................................................................... ###
 

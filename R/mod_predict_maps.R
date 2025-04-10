@@ -496,7 +496,7 @@ predict_maps <- function(
       # Fix at single value
       IASDT.R::cat_time(
         paste0("Fixed value is ", round(EffortsVal, 2), " [log10 scale]"),
-        level = 2, time = FALSE)
+        level = 2, cat_timestamp = FALSE)
 
       # Set a minimum value for efforts variable to `EffortsVal`. Using upper =
       # Inf keeps efforts values > EffortsVal as they are.
@@ -541,13 +541,13 @@ predict_maps <- function(
       # Do not fix at single value
       IASDT.R::cat_time(
         "River length predictor is not fixed at a single value",
-        level = 2, time = FALSE)
+        level = 2, cat_timestamp = FALSE)
 
     } else {
 
       IASDT.R::cat_time(
         "River length predictor will be fixed at single (`fix_rivers`) value",
-        level = 2, time = FALSE)
+        level = 2, cat_timestamp = FALSE)
 
 
       # Check if the fix_rivers value is valid
@@ -631,7 +631,7 @@ predict_maps <- function(
 
       IASDT.R::cat_time(
         paste0("Fixed value is ", round(RiversVal, 2), " [log10 scale]"),
-        level = 2, time = FALSE)
+        level = 2, cat_timestamp = FALSE)
 
       # Set a minimum value for `RiversLog` variable to `RiversVal`. Using upper
       # = Inf keeps RiversLog values > RiversVal as they are.
@@ -711,7 +711,8 @@ predict_maps <- function(
 
     IASDT.R::cat_time("Predicting latent factor", level = 1)
     IASDT.R::cat_sep(
-      lines_before = 1, lines_after = 2, n_separators = 1, line_char = "*")
+      sep_lines_before = 1, sep_lines_after = 2,
+      n_separators = 1, line_char = "*")
 
     # Predicting latent factor only -- no predictions are made
     Preds_LF <- IASDT.R::predict_hmsc(
@@ -727,7 +728,8 @@ predict_maps <- function(
 
     IASDT.R::cat_time("Predicting latent factor is finished!", level = 1)
     IASDT.R::cat_sep(
-      lines_before = 1, lines_after = 2, n_separators = 1, line_char = "*")
+      sep_lines_before = 1, sep_lines_after = 2,
+      n_separators = 1, line_char = "*")
 
     if (LF_commands_only) {
       return(invisible(NULL))
@@ -770,10 +772,10 @@ predict_maps <- function(
 
     MSG <- paste0(
       model_name, " (", ID, "/", nrow(Prediction_Options), ")")
-    cat("\n")
     IASDT.R::info_chunk(
-      MSG, n_separators = 1, line_char = "-", repetitions = 70,
-      red = TRUE, bold = TRUE, time = FALSE, level = 1)
+      MSG, n_separators = 1, line_char = "-", line_char_rep = 70,
+      cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE, level = 1,
+      info_lines_before = 1L)
 
     if (DoClamp) {
 
@@ -1124,7 +1126,8 @@ predict_maps <- function(
 
   IASDT.R::info_chunk(
     "Making spatial predictions", n_separators = 2, level = 1,
-    line_char = "*", repetitions = 70, red = TRUE, bold = TRUE, time = FALSE)
+    line_char = "*", line_char_rep = 70, cat_red = TRUE,
+    cat_bold = TRUE, cat_timestamp = FALSE)
 
   Grid10 <- terra::unwrap(IASDT.R::load_as(Path_GridR))
 
@@ -1143,7 +1146,7 @@ predict_maps <- function(
 
   IASDT.R::info_chunk(
     "\tEnsemble model predictions", n_separators = 1, line_char = "-",
-    repetitions = 70, red = TRUE, bold = TRUE, time = FALSE)
+    line_char_rep = 70, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
   IASDT.R::cat_time("Prepare working on parallel", level = 1)
 
@@ -1401,7 +1404,7 @@ predict_maps <- function(
 
   IASDT.R::info_chunk(
     "\tPrepare overall summary", n_separators = 1, line_char = "-",
-    repetitions = 70, red = TRUE, bold = TRUE, time = FALSE)
+    line_char_rep = 70, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
   Prediction_Summary <- Prediction_Summary %>%
     dplyr::rename(

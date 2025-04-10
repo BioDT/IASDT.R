@@ -132,7 +132,7 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
 
   # Extract only the missing or outdated files
   if (length(Rivers2extract) > 0) {
-    IASDT.R::cat_time("Extracting files", level = 1, time = FALSE)
+    IASDT.R::cat_time("Extracting files", level = 1, cat_timestamp = FALSE)
     archive::archive_extract(
       Path_Rivers_Zip, dir = Path_Rivers_Interim,
       files = basename(Rivers2extract)) %>%
@@ -166,7 +166,8 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
 
           # Load data from sf file if already exists and valid
           IASDT.R::cat_time(
-            "GPKG file was already processed as sf", level = 2, time = FALSE)
+            "GPKG file was already processed as sf",
+            level = 2, cat_timestamp = FALSE)
           River_sf <- IASDT.R::load_as(File_Sf)
 
         } else {
@@ -194,7 +195,8 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
 
           if (nrow(gpkg_2_Extract) > 0) {
 
-            IASDT.R::cat_time("Extracting gpkg file", level = 2, time = FALSE)
+            IASDT.R::cat_time(
+              "Extracting gpkg file", level = 2, cat_timestamp = FALSE)
 
             # `archive::archive_extract` will always keep the file structure
             # inside of the ZIP file, which is not what needed here.
@@ -205,7 +207,8 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
           } else {
 
             IASDT.R::cat_time(
-              "gpkg file was already extracted", level = 2, time = FALSE)
+              "gpkg file was already extracted",
+              level = 2, cat_timestamp = FALSE)
 
           }
 
@@ -213,7 +216,7 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
 
           # Read the gpkg file as sf object
           IASDT.R::cat_time(
-            "Read the gpkg files as sf", level = 2, time = FALSE)
+            "Read the gpkg files as sf", level = 2, cat_timestamp = FALSE)
 
           River_sf <- sf::st_read(
             # Read the gpkg files
@@ -238,7 +241,7 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
 
           # Save the processed data as an sf object
           IASDT.R::cat_time(
-            "Saving processed data as sf", level = 2, time = FALSE)
+            "Saving processed data as sf", level = 2, cat_timestamp = FALSE)
           IASDT.R::save_as(
             object = River_sf, object_name = "River_sf", out_path = File_Sf)
         }
@@ -247,7 +250,7 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
         # # .................................. #
 
         # Rasterize the river network data
-        IASDT.R::cat_time("Rasterizing", level = 2, time = FALSE)
+        IASDT.R::cat_time("Rasterizing", level = 2, cat_timestamp = FALSE)
 
         River_sf %>%
           dplyr::mutate(
@@ -310,13 +313,13 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
   # # |||||||||||||||||||||||||||||||||||
 
   # Save as RData
-  IASDT.R::cat_time("Save as RData", level = 1, time = FALSE)
+  IASDT.R::cat_time("Save as RData", level = 1, cat_timestamp = FALSE)
   IASDT.R::save_as(
     object = terra::wrap(River_Lengths), object_name = "river_length",
     out_path = IASDT.R::path(Path_Rivers, "River_Lengths.RData"))
 
   # Save as tif files
-  IASDT.R::cat_time("Save as tif files", level = 1, time = FALSE)
+  IASDT.R::cat_time("Save as tif files", level = 1, cat_timestamp = FALSE)
   terra::writeRaster(
     x = River_Lengths,
     filename = IASDT.R::path(

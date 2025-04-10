@@ -112,11 +112,11 @@ variance_partitioning_compute <- function(
       if (N_GPU == 0) {
         IASDT.R::cat_time(
           "No GPU found; Calculations will use CPU.",
-          time = FALSE, bold = TRUE, red = TRUE)
+          cat_timestamp = FALSE, cat_bold = TRUE, cat_red = TRUE)
       } else {
         IASDT.R::cat_time(
           paste0(N_GPU, " GPUs were found. Calculations will use GPU."),
-          time = FALSE, bold = TRUE, red = TRUE)
+          cat_timestamp = FALSE, cat_bold = TRUE, cat_red = TRUE)
       }
     }
 

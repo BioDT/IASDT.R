@@ -746,7 +746,7 @@ predict_latent_factor <- function(
 
   if (!is.null(LF_out_file)) {
     IASDT.R::cat_time("Saving postEtaPred to: ", level = 1)
-    IASDT.R::cat_time(paste0("`", LF_out_file, "`"), time = FALSE, level = 2)
+    IASDT.R::cat_time(paste0("`", LF_out_file, "`"), cat_timestamp = FALSE, level = 2)
     fs::dir_create(fs::path_dir(LF_out_file))
     IASDT.R::save_as(
       object = postEtaPred, out_path = LF_out_file,

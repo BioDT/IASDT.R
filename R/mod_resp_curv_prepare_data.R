@@ -419,8 +419,8 @@ resp_curv_prepare_data <- function(
     if (isFALSE(IASDT.R::check_data(File_LF, warning = FALSE))) {
 
       IASDT.R::info_chunk(
-        message = "Get LF prediction at mean coordinates",
-        date = FALSE, red = TRUE, bold = TRUE, time = FALSE)
+        message = "Get LF prediction at mean coordinates", cat_date = FALSE,
+        cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
       IASDT.R::cat_time("Create gradient")
       Gradient_c <- Hmsc::constructGradient(
@@ -464,8 +464,8 @@ resp_curv_prepare_data <- function(
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
     IASDT.R::info_chunk(
-      message = "Prepare response curve data", date = FALSE,
-      red = TRUE, bold = TRUE, time = FALSE)
+      message = "Prepare response curve data", cat_date = FALSE,
+      cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
     n_cores <- max(min(n_cores, MissingRows), 1)
 

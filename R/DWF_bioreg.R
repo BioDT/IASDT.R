@@ -113,7 +113,7 @@ bioreg_process <- function(env_file = ".env") {
       "Download link extraction failed. Found: ", length(BioReg_URL2),
       call. = FALSE)
   }
-  IASDT.R::cat_time(BioReg_URL2, level = 2, time = FALSE)
+  IASDT.R::cat_time(BioReg_URL2, level = 2, cat_timestamp = FALSE)
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
@@ -122,11 +122,12 @@ bioreg_process <- function(env_file = ".env") {
   Zip_file <- IASDT.R::path(Path_Raw, ZipFileName)
   DownCommand <- stringr::str_glue(
     'curl -J --create-dirs --output-dir {Path_Raw} -o\\
-    "{ZipFileName}" -L {BioReg_URL2} --silent --max-time 300')
+    "{ZipFileName}" -L {BioReg_URL2} --silent --max-cat_time 300')
 
   attempt <- 1
   repeat {
-    IASDT.R::cat_time(paste0("Attempt ", attempt), level = 2, time = FALSE)
+    IASDT.R::cat_time(
+      paste0("Attempt ", attempt), level = 2, cat_timestamp = FALSE)
 
     invisible(IASDT.R::system_command(DownCommand))
 
@@ -239,7 +240,7 @@ bioreg_process <- function(env_file = ".env") {
   # Saving processed data ----
   IASDT.R::cat_time("Saving processed data")
 
-  IASDT.R::cat_time("tiff", level = 1, time = FALSE)
+  IASDT.R::cat_time("tiff", level = 1, cat_timestamp = FALSE)
   terra::writeRaster(
     x = BioReg_R, overwrite = TRUE,
     filename = file.path(Path_BioReg, "BioReg_R.tif"))
@@ -250,12 +251,12 @@ bioreg_process <- function(env_file = ".env") {
       file = file.path(Path_BioReg, "BioReg_R.tif.vat.dbf"),
       factor2char = TRUE, max_nchar = 254)
 
-  IASDT.R::cat_time("RData - raster object", level = 1, time = FALSE)
+  IASDT.R::cat_time("RData - raster object", level = 1, cat_timestamp = FALSE)
   IASDT.R::save_as(
     object = terra::wrap(BioReg_R), object_name = "BioReg_R",
     out_path = file.path(Path_BioReg, "BioReg_R.RData"))
 
-  IASDT.R::cat_time("RData - sf object", level = 1, time = FALSE)
+  IASDT.R::cat_time("RData - sf object", level = 1, cat_timestamp = FALSE)
   save(BioReg_sf, file = file.path(Path_BioReg, "BioReg_sf.RData"))
 
   # # ..................................................................... ###

@@ -6,12 +6,12 @@
 \usage{
 cat_sep(
   n_separators = 1L,
-  lines_before = 0L,
-  lines_after = 1L,
+  sep_lines_before = 0L,
+  sep_lines_after = 1L,
   line_char = "-",
-  repetitions = 50L,
-  bold = FALSE,
-  red = FALSE,
+  line_char_rep = 50L,
+  cat_bold = FALSE,
+  cat_red = FALSE,
   ...
 )
 }
@@ -19,19 +19,20 @@ cat_sep(
 \item{n_separators}{integer; the number of separator lines to print. Default
 is \code{1}.}
 
-\item{lines_before, lines_after}{integer; the number of extra empty lines to
-print before and after the separator lines. Default is \code{0} and \code{1},
-respectively.}
+\item{sep_lines_before, sep_lines_after}{integer; the number of extra empty
+lines to print before and after the separator lines. Default is \code{0} and
+\code{1}, respectively.}
 
 \item{line_char}{character; the character used to construct the separator
 line. Default is \code{"-"}.}
 
-\item{repetitions}{integer; the number of times the character is repeated to
-form a separator line. Default is \code{50}.}
+\item{line_char_rep}{integer; the number of times the character is repeated
+to form a separator line. Default is \code{50}.}
 
-\item{bold}{logical; whether to print the text in bold. Default is \code{FALSE}.}
+\item{cat_bold}{logical; whether to print the text in bold. Default is
+\code{FALSE}.}
 
-\item{red}{logical; whether to print the text in red. Default is \code{FALSE}.}
+\item{cat_red}{logical; whether to print the text in red. Default is \code{FALSE}.}
 
 \item{...}{additional arguments to be passed to \code{cat()}.}
 }
@@ -53,7 +54,7 @@ cat_sep(2,2,3)
 
 cat_sep(2,2,3, line_char = "*")
 
-cat_sep(2,2,3, line_char = "*", repetitions = 20)
+cat_sep(2,2,3, line_char = "*", line_char_rep = 20)
 }
 \author{
 Ahmed El-Gabbas

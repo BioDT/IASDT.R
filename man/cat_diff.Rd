@@ -10,7 +10,7 @@ cat_diff(
   prefix = "Completed in ",
   cat_info = FALSE,
   level = 0L,
-  time = FALSE,
+  cat_timestamp = FALSE,
   ...
 )
 }
@@ -31,8 +31,8 @@ Defaults to "Completed in ".}
 level = 1, the following string will be printed at the beginning of the
 message: "   >>>   ". Default is \code{0}.}
 
-\item{time}{logical; whether to include the time in the timestamp. Default is
-\code{TRUE}. If \code{FALSE}, only the text is printed.}
+\item{cat_timestamp}{logical; whether to include the time in the timestamp.
+Default is \code{TRUE}. If \code{FALSE}, only the text is printed.}
 
 \item{...}{Additional arguments for \link{cat_time}.}
 }

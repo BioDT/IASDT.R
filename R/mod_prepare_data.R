@@ -102,7 +102,7 @@ mod_prepare_data <- function(
   fs::dir_create(path_model)
 
   IASDT.R::record_arguments(
-    out_path = IASDT.R::path(path_model, "Args_Mod_PrepData.RData"))
+    out_path = IASDT.R::path(path_model, "Args_prepare_data.RData"))
 
   # # ..................................................................... ###
 

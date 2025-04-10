@@ -6,11 +6,11 @@
 \usage{
 cat_time(
   text = "",
-  n_lines = 1L,
-  time = TRUE,
-  bold = FALSE,
-  red = FALSE,
-  date = FALSE,
+  msg_n_lines = 1L,
+  cat_timestamp = TRUE,
+  cat_bold = FALSE,
+  cat_red = FALSE,
+  cat_date = FALSE,
   time_zone = "CET",
   level = 0L,
   ...
@@ -20,17 +20,18 @@ cat_time(
 \item{text}{character; the text to print before the timestamp. If empty
 (default), only the timestamp is printed.}
 
-\item{n_lines}{integer; the number of newline characters to print after the
-message. Default is 1.}
+\item{msg_n_lines}{integer; the number of newline characters to print after
+the message. Default is 1.}
 
-\item{time}{logical; whether to include the time in the timestamp. Default is
-\code{TRUE}. If \code{FALSE}, only the text is printed.}
+\item{cat_timestamp}{logical; whether to include the time in the timestamp.
+Default is \code{TRUE}. If \code{FALSE}, only the text is printed.}
 
-\item{bold}{logical; whether to print the text in bold. Default is \code{FALSE}.}
+\item{cat_bold}{logical; whether to print the text in bold. Default is
+\code{FALSE}.}
 
-\item{red}{logical; whether to print the text in red. Default is \code{FALSE}.}
+\item{cat_red}{logical; whether to print the text in red. Default is \code{FALSE}.}
 
-\item{date}{logical; whether to include the date in the timestamp. Only
+\item{cat_date}{logical; whether to include the date in the timestamp. Only
 effective if \code{time} is \code{TRUE}. Default is \code{FALSE}, meaning only the time is
 printed. If \code{TRUE}, the date is printed in the format "\%d/\%m/\%Y \%X".}
 
@@ -56,15 +57,15 @@ print after the message.
 \examples{
 cat_time()
 
-cat_time(date = TRUE)
+cat_time(cat_date = TRUE)
 
 cat_time("time now")
 
-cat_time("\n\nTime now", n_lines = 2L, level = 1L)
+cat_time("\n\nTime now", msg_n_lines = 2L, level = 1L)
 
 cat_time(
-  "\ntime now", date = TRUE, bold = TRUE, red = TRUE,
-  n_lines = 2L, level = 1L)
+  "\ntime now", cat_date = TRUE, cat_bold = TRUE, cat_red = TRUE,
+  msg_n_lines = 2L, level = 1L)
 
 # The use of levels
 {

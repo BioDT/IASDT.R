@@ -30,6 +30,11 @@
 
 system_command <- function(command, R_object = TRUE, ...) {
 
+  # Ensure that command is not NULL
+  if (is.null(command)) {
+    stop("`command` cannot be NULL", call. = FALSE)
+  }
+
   if (IASDT.R::OS() == "Windows") {
     Out <- shell(cmd = command, intern = R_object, ...)
   }

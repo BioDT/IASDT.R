@@ -10,11 +10,11 @@
 #' print after the message.
 #' @param text character; the text to print before the timestamp. If empty
 #'   (default), only the timestamp is printed.
-#' @param n_lines integer; the number of newline characters to print after the
-#'   message. Default is 1.
-#' @param time logical; whether to include the time in the timestamp. Default is
-#'   `TRUE`. If `FALSE`, only the text is printed.
-#' @param date logical; whether to include the date in the timestamp. Only
+#' @param msg_n_lines integer; the number of newline characters to print after
+#'   the message. Default is 1.
+#' @param cat_timestamp logical; whether to include the time in the timestamp.
+#'   Default is `TRUE`. If `FALSE`, only the text is printed.
+#' @param cat_date logical; whether to include the date in the timestamp. Only
 #'   effective if `time` is `TRUE`. Default is `FALSE`, meaning only the time is
 #'   printed. If `TRUE`, the date is printed in the format "%d/%m/%Y %X".
 #' @param time_zone character; the time zone to use for the timestamp. Default
@@ -22,8 +22,9 @@
 #' @param level integer; the level at which the message will be printed. If e.g.
 #'   level = 1, the following string will be printed at the beginning of the
 #'   message: "   >>>   ". Default is `0`.
-#' @param bold logical; whether to print the text in bold. Default is `FALSE`.
-#' @param red logical; whether to print the text in red. Default is `FALSE`.
+#' @param cat_bold logical; whether to print the text in bold. Default is
+#'   `FALSE`.
+#' @param cat_red logical; whether to print the text in red. Default is `FALSE`.
 #' @param ... additional arguments passed to `cat`.
 #' @name cat_time
 #' @author Ahmed El-Gabbas
@@ -33,15 +34,15 @@
 #' @examples
 #' cat_time()
 #'
-#' cat_time(date = TRUE)
+#' cat_time(cat_date = TRUE)
 #'
 #' cat_time("time now")
 #'
-#' cat_time("\n\nTime now", n_lines = 2L, level = 1L)
+#' cat_time("\n\nTime now", msg_n_lines = 2L, level = 1L)
 #'
 #' cat_time(
-#'   "\ntime now", date = TRUE, bold = TRUE, red = TRUE,
-#'   n_lines = 2L, level = 1L)
+#'   "\ntime now", cat_date = TRUE, cat_bold = TRUE, cat_red = TRUE,
+#'   msg_n_lines = 2L, level = 1L)
 #'
 #' # The use of levels
 #' {
@@ -52,8 +53,8 @@
 #' }
 
 cat_time <- function(
-    text = "", n_lines = 1L, time = TRUE, bold = FALSE,
-    red = FALSE, date = FALSE, time_zone = "CET", level = 0L, ...) {
+    text = "", msg_n_lines = 1L, cat_timestamp = TRUE, cat_bold = FALSE,
+    cat_red = FALSE, cat_date = FALSE, time_zone = "CET", level = 0L, ...) {
 
   # Validate inputs
   AllArgs <- ls(envir = environment())
@@ -63,23 +64,23 @@ cat_time <- function(
     stats::setNames(AllArgs)
   IASDT.R::check_args(
     args_all = AllArgs, args_type = "logical",
-    args_to_check = c("time", "bold", "red", "date"))
+    args_to_check = c("cat_timestamp", "cat_bold", "cat_red", "cat_date"))
   IASDT.R::check_args(
     args_all = AllArgs, args_type = "numeric",
-    args_to_check = c("n_lines", "level"))
+    args_to_check = c("msg_n_lines", "level"))
   rm(AllArgs, envir = environment())
 
   # Current time
   Now <- lubridate::now(tzone = time_zone)
 
   # Format date / time
-  if (date && time) {
+  if (cat_date && cat_timestamp) {
     Now <- format(Now, "%d/%m/%Y %X")
     Now2 <- paste0(" - ", Now)
-  } else if (date) {
+  } else if (cat_date) {
     Now <- format(Now, "%d/%m/%Y")
     Now2 <- paste0(" - ", Now)
-  } else if (time) {
+  } else if (cat_timestamp) {
     Now <- format(Now, "%X")
     Now2 <- paste0(" - ", Now)
   } else {
@@ -114,15 +115,15 @@ cat_time <- function(
 
   }
 
-  if (bold) {
+  if (cat_bold) {
     text <- crayon::bold(text)
   }
-  if (red) {
+  if (cat_red) {
     text <- crayon::red(text)
   }
 
   cat(text, ...)
-  cat(rep("\n", n_lines))
+  cat(rep("\n", msg_n_lines))
 
   return(invisible(NULL))
 }

@@ -134,7 +134,7 @@ mod_CV_prepare <- function(
   # # 1. CV using large blocks -----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("1. CV_Large", level = 1, time = FALSE)
+  IASDT.R::cat_time("1. CV_Large", level = 1, cat_timestamp = FALSE)
   CV_Large <- blockCV::cv_spatial(
     x = XY_sf, r = DT_R, hexagon = FALSE, iteration = 1000, k = CV_n_folds,
     rows_cols = c(CV_n_rows, CV_n_columns),
@@ -144,7 +144,7 @@ mod_CV_prepare <- function(
   # # 2. CV based on number of grid cells -----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("2. CV_Dist", level = 1, time = FALSE)
+  IASDT.R::cat_time("2. CV_Dist", level = 1, cat_timestamp = FALSE)
   CV_Dist <- blockCV::cv_spatial(
     x = XY_sf, r = DT_R, hexagon = FALSE, iteration = 1000, k = CV_n_folds,
     size = CV_n_grids * raster::res(DT_R)[1], plot = FALSE, progress = FALSE,

@@ -289,7 +289,7 @@ mod_prepare_HPC <- function(
   }
 
   IASDT.R::record_arguments(
-    out_path = IASDT.R::path(path_model, "Args_Mod_Prep4HPC.RData"))
+    out_path = IASDT.R::path(path_model, "Args_mod_prepare_HPC.RData"))
 
   # # ..................................................................... ###
 
@@ -444,7 +444,7 @@ mod_prepare_HPC <- function(
     n_pres_per_species = n_pres_per_species,
     env_file = env_file, verbose_progress = verbose_progress)
 
-  IASDT.R::cat_sep(n_separators = 1, lines_before = 1, lines_after = 2)
+  IASDT.R::cat_sep(n_separators = 1, sep_lines_before = 1, sep_lines_after = 2)
 
   # # ..................................................................... ###
 
@@ -595,7 +595,7 @@ mod_prepare_HPC <- function(
       paste0(
         "All grid cells, irrespective of number of species ",
         "presence, will be considered"),
-      level = 1, time = FALSE)
+      level = 1, cat_timestamp = FALSE)
   } else {
     EmptyGridsID <- dplyr::select(DT_All, tidyselect::starts_with("Sp_")) %>%
       rowSums() %>%
@@ -641,9 +641,10 @@ mod_prepare_HPC <- function(
   IASDT.R::cat_time("Response - Y matrix")
   DT_y <- dplyr::select(DT_All, tidyselect::starts_with("Sp_")) %>%
     as.data.frame()
-  IASDT.R::cat_time(paste0(ncol(DT_y), " species"), level = 1, time = FALSE)
+  IASDT.R::cat_time(
+    paste0(ncol(DT_y), " species"), level = 1, cat_timestamp = FALSE)
 
-  IASDT.R::cat_time("Save species summary", level = 1, time = FALSE)
+  IASDT.R::cat_time("Save species summary", level = 1, cat_timestamp = FALSE)
   SpSummary <- IASDT.R::path(Path_PA, "Sp_PA_Summary_DF.RData")
   if (!file.exists(SpSummary)) {
     stop(SpSummary, " file does not exist", call. = FALSE)
@@ -674,25 +675,28 @@ mod_prepare_HPC <- function(
     IASDT.R::cat_time(
       paste0(
         "Models will be fitted using ", length(XVars), " predictors: ",
-        paste(XVars, collapse = " + ")), level = 1, time = FALSE)
+        paste(XVars, collapse = " + ")), level = 1, cat_timestamp = FALSE)
   } else {
     OnlyLinear <- setdiff(XVars, quadratic_variables)
     FormVars <- c(
       OnlyLinear,
       paste0("stats::poly(", quadratic_variables, ", degree = 2, raw = TRUE)"))
 
-    IASDT.R::cat_time("Models will be fitted using:", level = 1, time = FALSE)
+    IASDT.R::cat_time(
+      "Models will be fitted using:", level = 1, cat_timestamp = FALSE)
 
     IASDT.R::cat_time(
-      paste0(length(OnlyLinear), " linear effect: "), level = 2, time = FALSE)
+      paste0(length(OnlyLinear), " linear effect: "),
+      level = 2, cat_timestamp = FALSE)
     IASDT.R::cat_time(
-      paste(OnlyLinear, collapse = " + "), level = 3, time = FALSE)
+      paste(OnlyLinear, collapse = " + "), level = 3, cat_timestamp = FALSE)
 
     IASDT.R::cat_time(
       paste0(length(quadratic_variables), " linear and quadratic effects: "),
-      level = 2, time = FALSE)
+      level = 2, cat_timestamp = FALSE)
     IASDT.R::cat_time(
-      paste(quadratic_variables, collapse = " + "), level = 3, time = FALSE)
+      paste(quadratic_variables, collapse = " + "),
+      level = 3, cat_timestamp = FALSE)
 
   }
 
@@ -733,7 +737,7 @@ mod_prepare_HPC <- function(
 
   IASDT.R::cat_time(
     paste0("Models will be fitted using ", paste(Tree, collapse = " & ")),
-    level = 1, time = FALSE)
+    level = 1, cat_timestamp = FALSE)
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -758,7 +762,7 @@ mod_prepare_HPC <- function(
 
       IASDT.R::cat_time(
         paste0("Prepare working on parallel using ", NCores_GPP, " cores"),
-        level = 2, time = FALSE)
+        level = 2, cat_timestamp = FALSE)
 
       withr::local_options(
         future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
@@ -787,7 +791,8 @@ mod_prepare_HPC <- function(
 
     } else {
 
-      IASDT.R::cat_time("Working sequentially", time = FALSE, level = 2)
+      IASDT.R::cat_time(
+        "Working sequentially", cat_timestamp = FALSE, level = 2)
 
       GPP_Knots <- purrr::map(
         .x = GPP_dists * 1000,
@@ -1250,7 +1255,7 @@ mod_prepare_HPC <- function(
     "Save model fitting commands for batch SLURM jobs", level = 1)
   IASDT.R::cat_time(
     paste0("Models will be fitted in ", NSplits, " SLURM job(s)"),
-    level = 2, time = FALSE)
+    level = 2, cat_timestamp = FALSE)
 
   purrr::walk(
     .x = seq_len(NSplits),

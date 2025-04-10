@@ -43,13 +43,13 @@ create_directory <- function(path, verbose = TRUE) {
   if (dir.exists(path) && verbose) {
     IASDT.R::cat_time(
       stringr::str_glue("path: {crayon::bold(Path2)} - already exists"),
-      date = TRUE)
+      cat_date = TRUE)
   } else {
     dir.create(path, recursive = TRUE, showWarnings = FALSE)
     if (verbose) {
       "path: {crayon::bold(Path2)} created" %>%
         stringr::str_glue() %>%
-        IASDT.R::cat_time(date = TRUE)
+        IASDT.R::cat_time(cat_date = TRUE)
     }
   }
   return(invisible(NULL))

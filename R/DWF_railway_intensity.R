@@ -238,7 +238,7 @@ railway_intensity <- function(
     file = IASDT.R::path(Path_Railways, "Railways_Links.RData"))
 
   IASDT.R::cat_diff(
-    init_time = .StartTimeDown, n_lines = 1, level = 1,
+    init_time = .StartTimeDown, msg_n_lines = 1, level = 1,
     prefix = "Preparing railways download links took ")
 
   # # ..................................................................... ###
@@ -423,7 +423,7 @@ railway_intensity <- function(
 
   IASDT.R::cat_diff(
     init_time = .StartTimeProcess,
-    prefix = "Processing railway data took ", n_lines = 1, level = 1)
+    prefix = "Processing railway data took ", msg_n_lines = 1, level = 1)
 
   # # ..................................................................... ###
 

@@ -46,7 +46,7 @@
 
 cat_diff <- function(
     init_time, chunk_text = "Session summary", prefix = "Completed in ",
-    cat_info = FALSE, level = 0L, time = FALSE, ...) {
+    cat_info = FALSE, level = 0L, cat_timestamp = FALSE, ...) {
 
   if (is.null(init_time)) {
     stop("`init_time` cannot be NULL", call. = FALSE)
@@ -57,7 +57,8 @@ cat_diff <- function(
     prefix <- paste0("\n", prefix)
   }
 
-  Period <- lubridate::time_length(lubridate::now(tzone = "CET") - init_time) %>%
+  Period <- lubridate::time_length(
+    lubridate::now(tzone = "CET") - init_time) %>%
     lubridate::seconds_to_period()
   Period_hours <- stringr::str_pad(
     (lubridate::hour(Period) + 24 * lubridate::day(Period)),
@@ -69,7 +70,7 @@ cat_diff <- function(
 
   paste0(Period_hours, ":", Period_minutes, ":", Period_seconds) %>%
     paste0(prefix, .) %>%
-    IASDT.R::cat_time(level = level, time = time, ...)
+    IASDT.R::cat_time(level = level, cat_timestamp = cat_timestamp, ...)
 
   return(invisible(NULL))
 }

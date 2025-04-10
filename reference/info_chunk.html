@@ -57,14 +57,15 @@ separators for better readability in console outputs or logs.</p>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">info_chunk</span><span class="op">(</span></span>
 <span>  message <span class="op">=</span> <span class="st">""</span>,</span>
-<span>  date <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  lines_before <span class="op">=</span> <span class="fl">0L</span>,</span>
-<span>  lines_after <span class="op">=</span> <span class="fl">1L</span>,</span>
-<span>  bold <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  red <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  time <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  cat_date <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  sep_lines_before <span class="op">=</span> <span class="fl">0L</span>,</span>
+<span>  sep_lines_after <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>  cat_bold <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  cat_red <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  cat_timestamp <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  level <span class="op">=</span> <span class="fl">0L</span>,</span>
-<span>  n_lines <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>  msg_n_lines <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>  info_lines_before <span class="op">=</span> <span class="fl">0L</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -78,28 +79,30 @@ separators for better readability in console outputs or logs.</p>
 is mandatory and cannot be <code>NULL</code> or empty.</p></dd>
 
 
-<dt id="arg-date">date<a class="anchor" aria-label="anchor" href="#arg-date"></a></dt>
-<dd><p>Logical. Whether to include the date in the timestamp. Default is
-<code>FALSE</code>, meaning only the time is printed. See <a href="cat_time.html">cat_time</a>.</p></dd>
+<dt id="arg-cat-date">cat_date<a class="anchor" aria-label="anchor" href="#arg-cat-date"></a></dt>
+<dd><p>Logical. Whether to include the date in the timestamp.
+Default is <code>FALSE</code>, meaning only the time is printed. See
+<a href="cat_time.html">cat_time</a>.</p></dd>
 
 
-<dt id="arg-lines-before-lines-after">lines_before, lines_after<a class="anchor" aria-label="anchor" href="#arg-lines-before-lines-after"></a></dt>
-<dd><p>Integer. Number of extra empty lines to print
-before and after the separator lines. See <a href="cat_sep.html">cat_sep</a> for more
-details.</p></dd>
+<dt id="arg-sep-lines-before-sep-lines-after">sep_lines_before, sep_lines_after<a class="anchor" aria-label="anchor" href="#arg-sep-lines-before-sep-lines-after"></a></dt>
+<dd><p>Integer. Number of extra empty lines
+to print before and after the separator lines. See <a href="cat_sep.html">cat_sep</a> for
+more details.</p></dd>
 
 
-<dt id="arg-bold">bold<a class="anchor" aria-label="anchor" href="#arg-bold"></a></dt>
-<dd><p>logical; whether to print the text in bold. Default is <code>FALSE</code>.</p></dd>
+<dt id="arg-cat-bold">cat_bold<a class="anchor" aria-label="anchor" href="#arg-cat-bold"></a></dt>
+<dd><p>logical; whether to print the text in bold. Default is
+<code>FALSE</code>.</p></dd>
 
 
-<dt id="arg-red">red<a class="anchor" aria-label="anchor" href="#arg-red"></a></dt>
+<dt id="arg-cat-red">cat_red<a class="anchor" aria-label="anchor" href="#arg-cat-red"></a></dt>
 <dd><p>logical; whether to print the text in red. Default is <code>FALSE</code>.</p></dd>
 
 
-<dt id="arg-time">time<a class="anchor" aria-label="anchor" href="#arg-time"></a></dt>
-<dd><p>Logical. Whether to include the time in the timestamp. Default is
-<code>FALSE</code>.</p></dd>
+<dt id="arg-cat-timestamp">cat_timestamp<a class="anchor" aria-label="anchor" href="#arg-cat-timestamp"></a></dt>
+<dd><p>Logical. Whether to include the time in the timestamp.
+Default is <code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-level">level<a class="anchor" aria-label="anchor" href="#arg-level"></a></dt>
@@ -108,9 +111,14 @@ level = 1, the following string will be printed at the beginning of the
 message: "   &gt;&gt;&gt;   ". Default is <code>0</code>.</p></dd>
 
 
-<dt id="arg-n-lines">n_lines<a class="anchor" aria-label="anchor" href="#arg-n-lines"></a></dt>
-<dd><p>integer; the number of newline characters to print after the
-message. Default is 1.</p></dd>
+<dt id="arg-msg-n-lines">msg_n_lines<a class="anchor" aria-label="anchor" href="#arg-msg-n-lines"></a></dt>
+<dd><p>integer; the number of newline characters to print after
+the message. Default is 1.</p></dd>
+
+
+<dt id="arg-info-lines-before">info_lines_before<a class="anchor" aria-label="anchor" href="#arg-info-lines-before"></a></dt>
+<dd><p>Integer. Number of extra empty lines to print before
+the message. Default is <code>0L</code>.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -133,23 +141,20 @@ separators to the console.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">info_chunk</span><span class="op">(</span>message <span class="op">=</span> <span class="st">"Started"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> --------------------------------------------------</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Started - 10/04/2025</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> --------------------------------------------------</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> The following argument(s) must be logical</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span>   &gt;&gt;  cat_timestamp</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="fu">info_chunk</span><span class="op">(</span>message <span class="op">=</span> <span class="st">"finished"</span>, line_char <span class="op">=</span> <span class="st">"*"</span>, repetitions <span class="op">=</span> <span class="fl">60</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">info_chunk</span><span class="op">(</span>message <span class="op">=</span> <span class="st">"finished"</span>, line_char <span class="op">=</span> <span class="st">"*"</span>, line_char_rep <span class="op">=</span> <span class="fl">60</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ************************************************************</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> finished - 10/04/2025</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ************************************************************</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> The following argument(s) must be logical</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span>   &gt;&gt;  cat_timestamp</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="fu">info_chunk</span><span class="op">(</span>message <span class="op">=</span> <span class="st">"Started"</span>, bold <span class="op">=</span>  <span class="cn">TRUE</span>, red <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">info_chunk</span><span class="op">(</span>message <span class="op">=</span> <span class="st">"Started"</span>, cat_bold <span class="op">=</span>  <span class="cn">TRUE</span>, cat_red <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000; font-weight: bold;">--------------------------------------------------</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000; font-weight: bold;">Started - 10/04/2025</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000; font-weight: bold;">--------------------------------------------------</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> The following argument(s) must be logical</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span>   &gt;&gt;  cat_timestamp</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

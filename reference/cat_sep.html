@@ -60,12 +60,12 @@ readability of console output in R scripts or during interactive sessions.</p>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">cat_sep</span><span class="op">(</span></span>
 <span>  n_separators <span class="op">=</span> <span class="fl">1L</span>,</span>
-<span>  lines_before <span class="op">=</span> <span class="fl">0L</span>,</span>
-<span>  lines_after <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>  sep_lines_before <span class="op">=</span> <span class="fl">0L</span>,</span>
+<span>  sep_lines_after <span class="op">=</span> <span class="fl">1L</span>,</span>
 <span>  line_char <span class="op">=</span> <span class="st">"-"</span>,</span>
-<span>  repetitions <span class="op">=</span> <span class="fl">50L</span>,</span>
-<span>  bold <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  red <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  line_char_rep <span class="op">=</span> <span class="fl">50L</span>,</span>
+<span>  cat_bold <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  cat_red <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -79,10 +79,10 @@ readability of console output in R scripts or during interactive sessions.</p>
 is <code>1</code>.</p></dd>
 
 
-<dt id="arg-lines-before-lines-after">lines_before, lines_after<a class="anchor" aria-label="anchor" href="#arg-lines-before-lines-after"></a></dt>
-<dd><p>integer; the number of extra empty lines to
-print before and after the separator lines. Default is <code>0</code> and <code>1</code>,
-respectively.</p></dd>
+<dt id="arg-sep-lines-before-sep-lines-after">sep_lines_before, sep_lines_after<a class="anchor" aria-label="anchor" href="#arg-sep-lines-before-sep-lines-after"></a></dt>
+<dd><p>integer; the number of extra empty
+lines to print before and after the separator lines. Default is <code>0</code> and
+<code>1</code>, respectively.</p></dd>
 
 
 <dt id="arg-line-char">line_char<a class="anchor" aria-label="anchor" href="#arg-line-char"></a></dt>
@@ -90,16 +90,17 @@ respectively.</p></dd>
 line. Default is <code>"-"</code>.</p></dd>
 
 
-<dt id="arg-repetitions">repetitions<a class="anchor" aria-label="anchor" href="#arg-repetitions"></a></dt>
-<dd><p>integer; the number of times the character is repeated to
-form a separator line. Default is <code>50</code>.</p></dd>
+<dt id="arg-line-char-rep">line_char_rep<a class="anchor" aria-label="anchor" href="#arg-line-char-rep"></a></dt>
+<dd><p>integer; the number of times the character is repeated
+to form a separator line. Default is <code>50</code>.</p></dd>
 
 
-<dt id="arg-bold">bold<a class="anchor" aria-label="anchor" href="#arg-bold"></a></dt>
-<dd><p>logical; whether to print the text in bold. Default is <code>FALSE</code>.</p></dd>
+<dt id="arg-cat-bold">cat_bold<a class="anchor" aria-label="anchor" href="#arg-cat-bold"></a></dt>
+<dd><p>logical; whether to print the text in bold. Default is
+<code>FALSE</code>.</p></dd>
 
 
-<dt id="arg-red">red<a class="anchor" aria-label="anchor" href="#arg-red"></a></dt>
+<dt id="arg-cat-red">cat_red<a class="anchor" aria-label="anchor" href="#arg-cat-red"></a></dt>
 <dd><p>logical; whether to print the text in red. Default is <code>FALSE</code>.</p></dd>
 
 
@@ -142,7 +143,7 @@ and does not return a meaningful value.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="fu">cat_sep</span><span class="op">(</span><span class="fl">2</span>,<span class="fl">2</span>,<span class="fl">3</span>, line_char <span class="op">=</span> <span class="st">"*"</span>, repetitions <span class="op">=</span> <span class="fl">20</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">cat_sep</span><span class="op">(</span><span class="fl">2</span>,<span class="fl">2</span>,<span class="fl">3</span>, line_char <span class="op">=</span> <span class="st">"*"</span>, line_char_rep <span class="op">=</span> <span class="fl">20</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ********************</span>

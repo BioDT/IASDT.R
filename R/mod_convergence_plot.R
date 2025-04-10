@@ -98,7 +98,7 @@ convergence_plot <- function(
     stats::setNames(AllArgs)
 
   IASDT.R::check_args(
-    args_all = AllArgs, Type = "character",
+    args_all = AllArgs, args_type = "character",
     args_to_check = c("path_coda", "path_model"))
   IASDT.R::check_args(
     args_all = AllArgs, args_type = "numeric",

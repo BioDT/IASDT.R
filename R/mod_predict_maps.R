@@ -772,8 +772,8 @@ predict_maps <- function(
       model_name, " (", ID, "/", nrow(Prediction_Options), ")")
     cat("\n")
     IASDT.R::info_chunk(
-      paste0("\t", MSG), n_separators = 1, line_char = "-", repetitions = 70,
-      red = TRUE, bold = TRUE, time = FALSE)
+      MSG, n_separators = 1, line_char = "-", repetitions = 70,
+      red = TRUE, bold = TRUE, time = FALSE, level = 1)
 
     if (DoClamp) {
 
@@ -1123,7 +1123,7 @@ predict_maps <- function(
   # Predicting ------
 
   IASDT.R::info_chunk(
-    paste0("\t", "Making spatial predictions"), n_separators = 2,
+    "Making spatial predictions", n_separators = 2, level = 1,
     line_char = "*", repetitions = 70, red = TRUE, bold = TRUE, time = FALSE)
 
   Grid10 <- terra::unwrap(IASDT.R::load_as(Path_GridR))

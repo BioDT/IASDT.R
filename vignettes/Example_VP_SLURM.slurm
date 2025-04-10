@@ -7,12 +7,12 @@
 #SBATCH --gpus-per-node=1
 #SBATCH --time=01:30:00
 #SBATCH --partition=small-g
-#SBATCH --output=datasets/processed/model_fitting/TF_postprocess/log/%x-%A-%a.out
-#SBATCH --error=datasets/processed/model_fitting/TF_postprocess/log/%x-%A-%a.out
+#SBATCH --output=datasets/processed/model_fitting/Mod_Q_Hab_TF/log/%x-%A-%a.out
+#SBATCH --error=datasets/processed/model_fitting/Mod_Q_Hab_TF/log/%x-%A-%a.out
 #SBATCH --array=1-24
 
 # File containing commands to be executed
-File=datasets/processed/model_fitting/VP_Commands.txt
+File=datasets/processed/model_fitting/Mod_Q_Hab_TF/VP_Commands.txt
 
 # Load TensorFlow module and configure environment
 ml use /appl/local/csc/modulefiles

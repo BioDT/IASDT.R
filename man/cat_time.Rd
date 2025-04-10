@@ -62,7 +62,9 @@ cat_time("time now")
 
 cat_time("\n\nTime now", n_lines = 2L, level = 1L)
 
-cat_time("time now", date = TRUE, bold = TRUE, red = TRUE)
+cat_time(
+  "\ntime now", date = TRUE, bold = TRUE, red = TRUE,
+  n_lines = 2L, level = 1L)
 
 # The use of levels
 {

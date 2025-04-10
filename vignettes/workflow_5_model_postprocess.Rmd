@@ -227,8 +227,8 @@ collapsible_script_section(
 Latent factor predictions and variance partitioning are computed on GPUs. Batch jobs can be submitted using the `sbatch` command:
 
 ```{bash, echo = TRUE}
-sbatch datasets/processed/model_fitting/TF_postprocess/VP_SLURM.slurm
-sbatch datasets/processed/model_fitting/TF_postprocess/LF_SLURM.slurm
+sbatch datasets/processed/model_fitting/Mod_Q_Hab_TF/VP_SLURM.slurm
+sbatch datasets/processed/model_fitting/Mod_Q_Hab_TF/LF_SLURM.slurm
 ```
 
 Cross-validated models are fitted by submitting corresponding SLURM commands (*in preparation*):

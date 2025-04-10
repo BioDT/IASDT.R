@@ -47,6 +47,7 @@ mod_prepare_TF(
   working_directory = NULL,
   partition_name = "small-g",
   LF_runtime = "01:00:00",
+  model_prefix = NULL,
   VP_runtime = "01:30:00"
 )
 
@@ -194,6 +195,10 @@ jobs to. Default is \code{small-g}.}
 prediction and variance partitioning processing jobs, respectively. Default
 is \code{01:00:00}.}
 
+\item{model_prefix}{Character. Prefix for the model name. A directory named
+\code{model_prefix_TF} is created in the \code{model_dir} to store the TensorFlow
+running commands. Defaults to \code{NULL}. This can not be \code{NULL}.}
+
 \item{CC_models}{Character vector. Climate models for future predictions.
 Available options are \code{c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL")} (default).}
 
@@ -253,11 +258,11 @@ prepares batch scripts for GPU computations of all habitat types:
 \item for \if{html}{\out{<u>}}variance partitioning\if{html}{\out{</u>}}, the function matches all files with
 the pattern \code{ "VP_.+Command.txt"} (created by \link{variance_partitioning_compute}
 and merges their contents into a single file
-(\code{TF_postprocess/VP_Commands.txt}). Then, it prepares a SLURM script for
-variance partitioning computations (\code{TF_postprocess/VP_SLURM.slurm}).
+(\code{model_prefix_TF/VP_Commands.txt}). Then, it prepares a SLURM script for
+variance partitioning computations (\code{model_prefix_TF/VP_SLURM.slurm}).
 \item for \if{html}{\out{<u>}}latent factor predictions\if{html}{\out{</u>}}, the function matches all files
 with the pattern \code{"^LF_NewSites_Commands_.+.txt|^LF_RC_Commands_.+txt"} and
-split their contents into multiple scripts at the \code{TF_postprocess} directory
+split their contents into multiple scripts at the \code{model_prefix_TF} directory
 for processing as a batch job. The function prepares a SLURM script for
 latent factor predictions (\code{LF_SLURM.slurm}).
 }

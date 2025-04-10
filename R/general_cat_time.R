@@ -39,7 +39,9 @@
 #'
 #' cat_time("\n\nTime now", n_lines = 2L, level = 1L)
 #'
-#' cat_time("time now", date = TRUE, bold = TRUE, red = TRUE)
+#' cat_time(
+#'   "\ntime now", date = TRUE, bold = TRUE, red = TRUE,
+#'   n_lines = 2L, level = 1L)
 #'
 #' # The use of levels
 #' {
@@ -96,15 +98,8 @@ cat_time <- function(
     if (NLinesBefore > 0) {
       text <- paste0(strrep("\n", NLinesBefore), text)
     }
-    cat(Now, ...)
-    cat(rep("\n", n_lines))
+    text <- paste0(text, Now)
   } else {
-    if (bold) {
-      text <- crayon::bold(text)
-    }
-    if (red) {
-      text <- crayon::red(text)
-    }
     if (level > 0) {
       Prefix <- rep("  >>>", each = level) %>%
         paste(collapse = "") %>%
@@ -115,8 +110,19 @@ cat_time <- function(
     if (NLinesBefore > 0) {
       text <- paste0(strrep("\n", NLinesBefore), text)
     }
+    text <- paste0(text, Now2)
 
-    cat(paste0(text, Now2), ...)
-    cat(rep("\n", n_lines))
   }
+
+  if (bold) {
+    text <- crayon::bold(text)
+  }
+  if (red) {
+    text <- crayon::red(text)
+  }
+
+  cat(text, ...)
+  cat(rep("\n", n_lines))
+
+  return(invisible(NULL))
 }

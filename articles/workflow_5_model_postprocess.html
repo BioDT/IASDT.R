@@ -609,12 +609,12 @@ python3 VP_getf.py --x datasets/processed/model_fitting/Mod_Q_Hab12b/TEMP_VP/VP_
 #SBATCH --gpus-per-node=1
 #SBATCH --time=01:30:00
 #SBATCH --partition=small-g
-#SBATCH --output=datasets/processed/model_fitting/TF_postprocess/log/%x-%A-%a.out
-#SBATCH --error=datasets/processed/model_fitting/TF_postprocess/log/%x-%A-%a.out
+#SBATCH --output=datasets/processed/model_fitting/Mod_Q_Hab_TF/log/%x-%A-%a.out
+#SBATCH --error=datasets/processed/model_fitting/Mod_Q_Hab_TF/log/%x-%A-%a.out
 #SBATCH --array=1-24
 
 # File containing commands to be executed
-File=datasets/processed/model_fitting/VP_Commands.txt
+File=datasets/processed/model_fitting/Mod_Q_Hab_TF/VP_Commands.txt
 
 # Load TensorFlow module and configure environment
 ml use /appl/local/csc/modulefiles
@@ -639,8 +639,8 @@ echo End of program at `date`</code></pre>
 <p>Latent factor predictions and variance partitioning are computed on
 GPUs. Batch jobs can be submitted using the <code>sbatch</code>
 command:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="ex">sbatch</span> datasets/processed/model_fitting/TF_postprocess/VP_SLURM.slurm</span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="ex">sbatch</span> datasets/processed/model_fitting/TF_postprocess/LF_SLURM.slurm</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="ex">sbatch</span> datasets/processed/model_fitting/Mod_Q_Hab_TF/VP_SLURM.slurm</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="ex">sbatch</span> datasets/processed/model_fitting/Mod_Q_Hab_TF/LF_SLURM.slurm</span></code></pre></div>
 <p>Cross-validated models are fitted by submitting corresponding SLURM
 commands (<em>in preparation</em>):</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="bu">source</span> datasets/processed/model_fitting/HabX/Model_Fitting_CV/CV_Bash_Fit.slurm</span></code></pre></div>

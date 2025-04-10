@@ -104,6 +104,7 @@ See details for more information.</p>
 <span>  working_directory <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  partition_name <span class="op">=</span> <span class="st">"small-g"</span>,</span>
 <span>  LF_runtime <span class="op">=</span> <span class="st">"01:00:00"</span>,</span>
+<span>  model_prefix <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  VP_runtime <span class="op">=</span> <span class="st">"01:30:00"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -317,6 +318,12 @@ prediction and variance partitioning processing jobs, respectively. Default
 is <code>01:00:00</code>.</p></dd>
 
 
+<dt id="arg-model-prefix">model_prefix<a class="anchor" aria-label="anchor" href="#arg-model-prefix"></a></dt>
+<dd><p>Character. Prefix for the model name. A directory named
+<code>model_prefix_TF</code> is created in the <code>model_dir</code> to store the TensorFlow
+running commands. Defaults to <code>NULL</code>. This can not be <code>NULL</code>.</p></dd>
+
+
 <dt id="arg-cc-models">CC_models<a class="anchor" aria-label="anchor" href="#arg-cc-models"></a></dt>
 <dd><p>Character vector. Climate models for future predictions.
 Available options are <code>c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL")</code> (default).</p></dd>
@@ -365,11 +372,11 @@ parameters.</p></li>
 prepares batch scripts for GPU computations of all habitat types:</p><ul><li><p>for <u>variance partitioning</u>, the function matches all files with
 the pattern <code> "VP_.+Command.txt"</code> (created by <a href="Variance_partitioning.html">variance_partitioning_compute</a>
 and merges their contents into a single file
-(<code>TF_postprocess/VP_Commands.txt</code>). Then, it prepares a SLURM script for
-variance partitioning computations (<code>TF_postprocess/VP_SLURM.slurm</code>).</p></li>
+(<code>model_prefix_TF/VP_Commands.txt</code>). Then, it prepares a SLURM script for
+variance partitioning computations (<code>model_prefix_TF/VP_SLURM.slurm</code>).</p></li>
 <li><p>for <u>latent factor predictions</u>, the function matches all files
 with the pattern <code>"^LF_NewSites_Commands_.+.txt|^LF_RC_Commands_.+txt"</code> and
-split their contents into multiple scripts at the <code>TF_postprocess</code> directory
+split their contents into multiple scripts at the <code>model_prefix_TF</code> directory
 for processing as a batch job. The function prepares a SLURM script for
 latent factor predictions (<code>LF_SLURM.slurm</code>).</p></li>
 </ul><p>This function is tailored for the LUMI HPC environment and assumes that the

@@ -244,8 +244,7 @@ convergence_plot <- function(
   }
 
   IASDT.R::cat_time("Save plots", level = 1)
-  # Using ggplot2::ggsave directly does not show non-ascii characters
-  # correctly
+  # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   grDevices::cairo_pdf(
     filename = IASDT.R::path(Path_Convergence, "Convergence_Alpha.pdf"),
     width = 18, height = 14, onefile = TRUE)
@@ -570,18 +569,25 @@ convergence_plot <- function(
     SpeciesTaxonomy <- IASDT.R::get_species_name(env_file = env_file) %>%
       dplyr::select(IAS_ID, Class, Order, Family)
 
+    # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
+
+    IASDT.R::cat_time("Starting preparing data for plotting", level = 2)
+    Cols2remove <- c(
+      "CI_025", "CI_975", "Var_Min", "Var_Max", "Class", "Order", "Family")
     Beta_DF <- Beta_DF %>%
       dplyr::left_join(VarRanges, by = "Variable") %>%
       dplyr::left_join(SpeciesTaxonomy, by = "IAS_ID") %>%
       dplyr::mutate(
         Var_Sp2 = paste0(Variable, "_", IAS_ID),
         Var_Sp_File = IASDT.R::path(Pah_Beta_Data, paste0(Var_Sp2, ".RData")),
+        Plot_File = IASDT.R::path(Pah_Beta_Data, paste0(Var_Sp2, "_Plots.qs2")),
         DT = purrr::pmap(
           .l = list(
             Var_Sp, DT, CI_025, CI_975, Var_Min,
             Var_Max, Class, Order, Family),
           .f = function(Var_Sp, DT, CI_025, CI_975, Var_Min,
                         Var_Max, Class, Order, Family) {
+
             Beta_ID <- which(BetaNames == Var_Sp)
             Post <- coda::as.mcmc.list(Obj_Beta[, Beta_ID])
 
@@ -601,32 +607,63 @@ convergence_plot <- function(
               Var_Min = Var_Min, Var_Max = Var_Max,
               Class = Class, Order = Order, Family = Family,
               Beta_ID = Beta_ID, Post = Post, Gelman = Gelman, ESS = ESS)
-          }
-        )) %>%
-      dplyr::select(
-        -tidyselect::all_of(
-          c(
-            "CI_025", "CI_975", "Var_Min", "Var_Max",
-            "Class", "Order", "Family")))
+          })) %>%
+      dplyr::select(-tidyselect::all_of(Cols2remove))
 
-    Beta_DF %>%
-      dplyr::group_by(Var_Sp) %>%
-      dplyr::group_split() %>%
-      purrr::walk(
-        .f = ~ IASDT.R::save_as(
-          object = .x$DT[[1]], object_name = .x$Var_Sp2,
-          out_path = .x$Var_Sp_File))
-
-    Beta_DF <- dplyr::select(Beta_DF, -DT)
-
-    rm(CI, VarRanges, SpeciesTaxonomy, Obj_Beta, envir = environment())
+    rm(
+      CI, VarRanges, SpeciesTaxonomy, Cols2remove, Obj_Beta,
+      envir = environment())
     invisible(gc())
 
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
     # Prepare working on parallel
+    IASDT.R::cat_time("Prepare working on parallel", level = 2)
     IASDT.R::set_parallel(n_cores = min(n_cores, nrow(Beta_DF)), level = 2)
     withr::defer(future::plan("future::sequential", gc = TRUE))
+
+    # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
+
+    # Save a small file for each of variables and species combination
+    IASDT.R::cat_time(
+      "Save a small file for each of variables and species combination",
+      level = 2)
+
+    Beta_DF <- Beta_DF %>%
+      dplyr::mutate(
+        Save = furrr::future_pmap(
+          .l = list(Var_Sp_File, Var_Sp2, DT),
+          .f = function(Var_Sp_File, Var_Sp2, DT) {
+
+            # try saving for a max of 5 attempts using repeat loop
+            attempt <- 1
+            repeat {
+
+              if (attempt > 5) {
+                stop(
+                  "Maximum attempts (5) reached without success: ",
+                  Var_Sp_File, call. = FALSE)
+              }
+
+              try({
+                IASDT.R::save_as(
+                  object = DT, object_name = Var_Sp2, out_path = Var_Sp_File)
+                Sys.sleep(2)
+              },
+              silent = TRUE)
+
+              if (IASDT.R::check_data(Var_Sp_File, warning = FALSE)) {
+                break
+              }
+
+              # Increment attempt counter
+              attempt <- attempt + 1
+            }
+          },
+          .options = furrr::furrr_options(
+            seed = TRUE, packages = c("IASDT.R", "tibble"))),
+        Save = NULL,
+        DT = NULL)
 
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
@@ -641,20 +678,26 @@ convergence_plot <- function(
         Species <- Beta_DF$Species[x]
         Curr_IAS <- Beta_DF$IAS_ID[x]
         Var_Sp_File <- Beta_DF$Var_Sp_File[x]
-        Plot_File <- stringr::str_replace(Var_Sp_File, ".RData$", "_Plots.qs2")
+        Plot_File <- Beta_DF$Plot_File[x]
 
         # check if input data exists
-        if (isFALSE(IASDT.R::check_data(Var_Sp_File))) {
-          stop("File ", Var_Sp_File, " does not exist.", call. = FALSE)
+        if (isFALSE(IASDT.R::check_data(Var_Sp_File, warning = FALSE))) {
+          stop("File ", x, ": ", Var_Sp_File, " does not exist.", call. = FALSE)
         }
 
         # Check if the output file already exists
-        if (IASDT.R::check_data(Plot_File)) {
+        if (IASDT.R::check_data(Plot_File, warning = FALSE)) {
           return(tibble::tibble(Var_Sp = Var_Sp, Plot_File = Plot_File))
         }
 
+        # delete file if corrupted
+        if (file.exists(Plot_File)) {
+          IASDT.R::system_command(
+            command = paste0("rm -f ", Plot_File), R_object = FALSE,
+            ignore.stdout = TRUE)
+        }
+
         attempt <- 1
-        result <- NULL
 
         repeat {
 
@@ -664,11 +707,16 @@ convergence_plot <- function(
               call. = FALSE)
           }
 
-          result <- try({
+          try({
 
             DT_all <- IASDT.R::load_as(Var_Sp_File)
+            if (is.null(DT_all) || !is.list(DT_all)) {
+              stop("Loaded data is invalid for file: ", Var_Sp_File)
+            }
+
             DT_all$Post <- NULL
             invisible(gc())
+
 
             ## Gelman convergence diagnostic
             Label_Gelman <- round(DT_all$Gelman$psrf, 3) %>%
@@ -772,7 +820,7 @@ convergence_plot <- function(
                   color = "steelblue4")
               }
             })
-            
+
             # Making marginal background matching the plot background
             # https://stackoverflow.com/a/78196022/3652584
             Plot2_Marginal$layout$t[1] <- 1
@@ -783,6 +831,9 @@ convergence_plot <- function(
                 Plot = Plot, Plot_Marginal = Plot_Marginal,
                 PlotFixedY_Marginal = Plot2_Marginal),
               out_path = Plot_File)
+
+            Sys.sleep(2)
+
           },
           silent = TRUE)
 
@@ -803,7 +854,9 @@ convergence_plot <- function(
         "Beta_DF", "NChains", "SampleSize", "chain_colors", "margin_type"),
       future.packages = c(
         "dplyr", "ggplot2", "ggtext", "magrittr", "stringr", "ggExtra",
-        "coda", "IASDT.R", "qs2", "tibble")) %>%
+        "coda", "IASDT.R", "qs2", "tibble"))
+
+    PlotObj_Beta <- PlotObj_Beta %>%
       dplyr::bind_rows() %>%
       dplyr::left_join(Beta_DF, ., by = "Var_Sp") %>%
       dplyr::left_join(VarsDesc, by = "Variable")

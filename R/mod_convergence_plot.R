@@ -493,7 +493,7 @@ convergence_plot <- function(
     HTML1 <- "<span style='color:blue;'><b>"
     HTML2 <- "</b></span><span style='color:grey;'>"
     HTML3 <- "</span>"
-    HTML4 <- "&nbsp;&nbsp;&nbsp;&mdash;&nbsp;&nbsp;&nbsp;"
+    HTML4 <- "\n&nbsp;&mdash;&nbsp;"
     VarsDesc <- tibble::tribble(
       ~Variable, ~VarDesc,
       "bio1", "annual mean temperature",
@@ -571,7 +571,7 @@ convergence_plot <- function(
 
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
-    IASDT.R::cat_time("Starting preparing data for plotting", level = 2)
+    IASDT.R::cat_time("Preparing data for plotting", level = 2)
     Cols2remove <- c(
       "CI_025", "CI_975", "Var_Min", "Var_Max", "Class", "Order", "Family")
     Beta_DF <- Beta_DF %>%
@@ -619,15 +619,14 @@ convergence_plot <- function(
 
     # Prepare working on parallel
     IASDT.R::cat_time("Prepare working on parallel", level = 2)
-    IASDT.R::set_parallel(n_cores = min(n_cores, nrow(Beta_DF)), level = 2)
+    IASDT.R::set_parallel(n_cores = min(n_cores, nrow(Beta_DF)), level = 3)
     withr::defer(future::plan("future::sequential", gc = TRUE))
 
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
-    # Save a small file for each of variables and species combination
+    # Split data for each of variables and species combination
     IASDT.R::cat_time(
-      "Save a small file for each of variables and species combination",
-      level = 2)
+      "Split data for each of variables and species combination", level = 2)
 
     Beta_DF <- Beta_DF %>%
       dplyr::mutate(
@@ -856,10 +855,7 @@ convergence_plot <- function(
         "dplyr", "ggplot2", "ggtext", "magrittr", "stringr", "ggExtra",
         "coda", "IASDT.R", "qs2", "tibble"))
 
-    PlotObj_Beta <- PlotObj_Beta %>%
-      dplyr::bind_rows() %>%
-      dplyr::left_join(Beta_DF, ., by = "Var_Sp") %>%
-      dplyr::left_join(VarsDesc, by = "Variable")
+    PlotObj_Beta <- dplyr::left_join(Beta_DF, VarsDesc, by = "Variable")
 
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 

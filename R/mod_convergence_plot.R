@@ -636,123 +636,167 @@ convergence_plot <- function(
     PlotObj_Beta <- future.apply::future_lapply(
       X = seq_len(nrow(Beta_DF)),
       FUN = function(x) {
+
         Var_Sp <- Beta_DF$Var_Sp[x]
         Species <- Beta_DF$Species[x]
         Curr_IAS <- Beta_DF$IAS_ID[x]
         Var_Sp_File <- Beta_DF$Var_Sp_File[x]
         Plot_File <- stringr::str_replace(Var_Sp_File, ".RData$", "_Plots.qs2")
 
-        DT_all <- IASDT.R::load_as(Var_Sp_File)
-        DT_all$Post <- NULL
-        invisible(gc())
-
-        ## Gelman convergence diagnostic
-        Label_Gelman <- round(DT_all$Gelman$psrf, 3) %>%
-          paste(collapse = " / ") %>%
-          paste0("<b><i>Gelman convergence diagnostic:</i></b> ", .) %>%
-          data.frame(x = Inf, y = -Inf, label = .)
-
-        ## Effective sample size / CI
-        Label_ESS <- round(DT_all$ESS / NChains) %>%
-          paste0(
-            "<b><i>Mean effective sample size:</i></b> ", ., " / ", SampleSize)
-        CurrCI <- c(DT_all$CI_025, DT_all$CI_975)
-        Label_CI <- paste(round(CurrCI, 4), collapse = " to ") %>%
-          paste0("<b><i>95% credible interval:</i></b> ", .)
-        Label_ESS_CI <- data.frame(
-          x = -Inf, y = -Inf, label = paste0(Label_ESS, "<br>", Label_CI))
-
-        Label_Panel <- data.frame(
-          x = Inf, y = Inf, label = paste0("<br><b><i>", Species, "</i></b>"))
-
-        PanelTitle <- c(DT_all$Class, DT_all$Order, DT_all$Family) %>%
-          paste(collapse = " | ") %>%
-          paste0("<b>", ., "</b>") %>%
-          paste0("<br>", Curr_IAS) %>%
-          data.frame(x = -Inf, y = Inf, label = .)
-
-        Plot <- ggplot2::ggplot(
-          data = DT_all$DT,
-          mapping = ggplot2::aes(
-            x = Iter, y = Value, color = factor(Chain))) +
-          ggplot2::geom_line(linewidth = 0.15, alpha = 0.6) +
-          ggplot2::geom_smooth(
-            method = "loess", formula = y ~ x,
-            se = FALSE, linewidth = 0.8) +
-          ggplot2::geom_point(alpha = 0) +
-          ggplot2::geom_hline(
-            yintercept = CurrCI, linetype = "dashed", color = "black",
-            linewidth = 1) +
-          # Ensure that y-axis always show 0
-          ggplot2::geom_hline(
-            yintercept = 0, linetype = "dashed",
-            color = "transparent", linewidth = 0.6) +
-          ggplot2::scale_color_manual(values = chain_colors) +
-          ggplot2::scale_x_continuous(expand = c(0, 0)) +
-          ggtext::geom_richtext(
-            mapping = ggplot2::aes(x = x, y = y, label = label),
-            data = Label_Gelman, inherit.aes = FALSE, size = 3.5, hjust = 1,
-            vjust = -0, lineheight = 0, fill = NA, label.color = NA) +
-          ggtext::geom_richtext(
-            mapping = ggplot2::aes(x = x, y = y, label = label),
-            data = Label_ESS_CI, inherit.aes = FALSE, size = 3.5, hjust = 0,
-            vjust = 0, lineheight = 0, fill = NA, label.color = NA) +
-          ggtext::geom_richtext(
-            mapping = ggplot2::aes(x = x, y = y, label = label),
-            data = Label_Panel, inherit.aes = FALSE, colour = "blue",
-            hjust = 1, vjust = 1, lineheight = 0, fill = NA, label.color = NA) +
-          ggtext::geom_richtext(
-            mapping = ggplot2::aes(x = x, y = y, label = label),
-            data = PanelTitle, inherit.aes = FALSE, hjust = 0, vjust = 1,
-            lineheight = 0, fill = NA, label.color = NA) +
-          ggplot2::theme_bw() +
-          ggplot2::xlab(NULL) +
-          ggplot2::ylab(NULL) +
-          ggplot2::theme(
-            legend.position = "none",
-            axis.text = ggplot2::element_text(size = 12))
-
-        suppressMessages({
-          Plot2 <- Plot +
-            ggplot2::scale_y_continuous(
-              limits = c(DT_all$Var_Min, DT_all$Var_Max))
-        })
-
-        if (margin_type == "histogram") {
-          Plot_Marginal <- ggExtra::ggMarginal(
-            p = Plot, type = margin_type, margins = "y", size = 6,
-            color = "steelblue4", fill = "steelblue4", bins = 100)
-        } else {
-          Plot_Marginal <- ggExtra::ggMarginal(
-            p = Plot, type = margin_type, margins = "y", size = 6,
-            color = "steelblue4")
+        # check if input data exists
+        if (isFALSE(IASDT.R::check_data(Var_Sp_File))) {
+          stop("File ", Var_Sp_File, " does not exist.", call. = FALSE)
         }
-        # Making marginal background matching the plot background
-        # https://stackoverflow.com/a/78196022/3652584
-        Plot_Marginal$layout$t[1] <- 1
-        Plot_Marginal$layout$r[1] <- max(Plot_Marginal$layout$r)
 
-        if (margin_type == "histogram") {
-          Plot2_Marginal <- ggExtra::ggMarginal(
-            p = Plot2, type = margin_type, margins = "y", size = 6,
-            color = "steelblue4", fill = "steelblue4", bins = 100)
-        } else {
-          Plot2_Marginal <- ggExtra::ggMarginal(
-            p = Plot2, type = margin_type, margins = "y", size = 6,
-            color = "steelblue4")
+        # Check if the output file already exists
+        if (IASDT.R::check_data(Plot_File)) {
+          return(tibble::tibble(Var_Sp = Var_Sp, Plot_File = Plot_File))
         }
-        # Making marginal background matching the plot background
-        # https://stackoverflow.com/a/78196022/3652584
-        Plot2_Marginal$layout$t[1] <- 1
-        Plot2_Marginal$layout$r[1] <- max(Plot2_Marginal$layout$r)
 
-        IASDT.R::save_as(
-          object = list(
-            Plot = Plot, Plot_Marginal = Plot_Marginal,
-            PlotFixedY_Marginal = Plot2_Marginal),
-          out_path = Plot_File)
+        attempt <- 1
+        result <- NULL
 
-        return(tibble::tibble(Var_Sp = Var_Sp, Plot_File = Plot_File))
+        repeat {
+
+          if (attempt > 5) {
+            stop(
+              "Maximum attempts (5) reached without success: ", Var_Sp_File,
+              call. = FALSE)
+          }
+
+          result <- try({
+
+            DT_all <- IASDT.R::load_as(Var_Sp_File)
+            DT_all$Post <- NULL
+            invisible(gc())
+
+            ## Gelman convergence diagnostic
+            Label_Gelman <- round(DT_all$Gelman$psrf, 3) %>%
+              paste(collapse = " / ") %>%
+              paste0("<b><i>Gelman convergence diagnostic:</i></b> ", .) %>%
+              data.frame(x = Inf, y = -Inf, label = .)
+
+            ## Effective sample size / CI
+            Label_ESS <- round(DT_all$ESS / NChains) %>%
+              paste0(
+                "<b><i>Mean effective sample size:</i></b> ",
+                ., " / ", SampleSize)
+            CurrCI <- c(DT_all$CI_025, DT_all$CI_975)
+            Label_CI <- paste(round(CurrCI, 4), collapse = " to ") %>%
+              paste0("<b><i>95% credible interval:</i></b> ", .)
+            Label_ESS_CI <- data.frame(
+              x = -Inf, y = -Inf, label = paste0(Label_ESS, "<br>", Label_CI))
+
+            Label_Panel <- data.frame(
+              x = Inf, y = Inf,
+              label = paste0("<br><b><i>", Species, "</i></b>"))
+
+            PanelTitle <- c(DT_all$Class, DT_all$Order, DT_all$Family) %>%
+              paste(collapse = " | ") %>%
+              paste0("<b>", ., "</b>") %>%
+              paste0("<br>", Curr_IAS) %>%
+              data.frame(x = -Inf, y = Inf, label = .)
+
+            Plot <- ggplot2::ggplot(
+              data = DT_all$DT,
+              mapping = ggplot2::aes(
+                x = Iter, y = Value, color = factor(Chain))) +
+              ggplot2::geom_line(linewidth = 0.15, alpha = 0.6) +
+              ggplot2::geom_smooth(
+                method = "loess", formula = y ~ x,
+                se = FALSE, linewidth = 0.8) +
+              ggplot2::geom_point(alpha = 0) +
+              ggplot2::geom_hline(
+                yintercept = CurrCI, linetype = "dashed", color = "black",
+                linewidth = 1) +
+              # Ensure that y-axis always show 0
+              ggplot2::geom_hline(
+                yintercept = 0, linetype = "dashed",
+                color = "transparent", linewidth = 0.6) +
+              ggplot2::scale_color_manual(values = chain_colors) +
+              ggplot2::scale_x_continuous(expand = c(0, 0)) +
+              ggtext::geom_richtext(
+                mapping = ggplot2::aes(x = x, y = y, label = label),
+                data = Label_Gelman, inherit.aes = FALSE, size = 3.5, hjust = 1,
+                vjust = -0, lineheight = 0, fill = NA, label.color = NA) +
+              ggtext::geom_richtext(
+                mapping = ggplot2::aes(x = x, y = y, label = label),
+                data = Label_ESS_CI, inherit.aes = FALSE, size = 3.5, hjust = 0,
+                vjust = 0, lineheight = 0, fill = NA, label.color = NA) +
+              ggtext::geom_richtext(
+                mapping = ggplot2::aes(x = x, y = y, label = label),
+                data = Label_Panel, inherit.aes = FALSE, colour = "blue",
+                hjust = 1, vjust = 1, lineheight = 0, fill = NA,
+                label.color = NA) +
+              ggtext::geom_richtext(
+                mapping = ggplot2::aes(x = x, y = y, label = label),
+                data = PanelTitle, inherit.aes = FALSE, hjust = 0, vjust = 1,
+                lineheight = 0, fill = NA, label.color = NA) +
+              ggplot2::theme_bw() +
+              ggplot2::xlab(NULL) +
+              ggplot2::ylab(NULL) +
+              ggplot2::theme(
+                legend.position = "none",
+                axis.text = ggplot2::element_text(size = 12))
+
+            suppressMessages({
+              Plot2 <- Plot +
+                ggplot2::scale_y_continuous(
+                  limits = c(DT_all$Var_Min, DT_all$Var_Max))
+            })
+
+
+            if (margin_type == "histogram") {
+              Plot_Marginal <- ggExtra::ggMarginal(
+                p = Plot, type = margin_type, margins = "y", size = 6,
+                color = "steelblue4", fill = "steelblue4", bins = 100)
+            } else {
+              Plot_Marginal <- ggExtra::ggMarginal(
+                p = Plot, type = margin_type, margins = "y", size = 6,
+                color = "steelblue4")
+            }
+
+            # Making marginal background matching the plot background
+            # https://stackoverflow.com/a/78196022/3652584
+            Plot_Marginal$layout$t[1] <- 1
+            Plot_Marginal$layout$r[1] <- max(Plot_Marginal$layout$r)
+
+            suppressWarnings({
+              if (margin_type == "histogram") {
+                Plot2_Marginal <- ggExtra::ggMarginal(
+                  p = Plot2, type = margin_type, margins = "y", size = 6,
+                  color = "steelblue4", fill = "steelblue4", bins = 100)
+              } else {
+                Plot2_Marginal <- ggExtra::ggMarginal(
+                  p = Plot2, type = margin_type, margins = "y", size = 6,
+                  color = "steelblue4")
+              }
+            })
+            
+            # Making marginal background matching the plot background
+            # https://stackoverflow.com/a/78196022/3652584
+            Plot2_Marginal$layout$t[1] <- 1
+            Plot2_Marginal$layout$r[1] <- max(Plot2_Marginal$layout$r)
+
+            IASDT.R::save_as(
+              object = list(
+                Plot = Plot, Plot_Marginal = Plot_Marginal,
+                PlotFixedY_Marginal = Plot2_Marginal),
+              out_path = Plot_File)
+          },
+          silent = TRUE)
+
+          if (IASDT.R::check_data(Plot_File, warning = FALSE)) {
+            break
+          }
+
+          # Increment attempt counter
+          attempt <- attempt + 1
+        }
+
+        # Return result if successful
+        tibble::tibble(Var_Sp = Var_Sp, Plot_File = Plot_File)
+
       },
       future.seed = TRUE,
       future.globals = c(

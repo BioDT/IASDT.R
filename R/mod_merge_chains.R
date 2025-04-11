@@ -407,7 +407,9 @@ mod_merge_chains <- function(
 
     if (length(MissingModelVars) > 0) {
       IASDT.R::cat_time("Unsuccessful models")
-      purrr::walk(MissingModelVars, IASDT.R::cat_time, level = 1)
+      purrr::walk(
+        .x = MissingModelVars, .f = IASDT.R::cat_time,
+        cat_timestamp = FALSE, level = 1)
     }
   }
 

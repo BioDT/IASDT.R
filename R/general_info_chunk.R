@@ -53,7 +53,7 @@ info_chunk <- function(
     sep_lines_after = sep_lines_after, cat_red = cat_red, cat_bold = cat_bold)
   IASDT.R::cat_time(
     text = message, msg_n_lines = msg_n_lines,
-    cat_timestamp = cat_time, cat_date = cat_date, level = level,
+    cat_timestamp = cat_timestamp, cat_date = cat_date, level = level,
     cat_red = cat_red, cat_bold = cat_bold)
   IASDT.R::cat_sep(
     ..., sep_lines_before = sep_lines_before,

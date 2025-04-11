@@ -553,7 +553,7 @@ convergence_plot_all <- function(
   # # ..................................................................... ###
 
   IASDT.R::cat_diff(
-    init_time = .StartTime, prefix = "Plotting model convergence took ")
+    init_time = .StartTime, prefix = "\nPlotting model convergence took ")
 
   # # ..................................................................... ###
 

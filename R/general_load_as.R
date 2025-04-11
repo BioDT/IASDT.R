@@ -95,7 +95,7 @@ load_as <- function(file = NULL, n_threads = 5, timeout = 300, ...) {
   }
 
   if (!file.exists(file)) {
-    stop("`file` not found", call. = FALSE)
+    stop("`file` does not exist: ", file, call. = FALSE)
   }
 
   OutFile <- switch(

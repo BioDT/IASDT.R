@@ -153,7 +153,7 @@ resp_curv_prepare_data <- function(
       if (file.exists(RC_DT_Path_Orig)) {
 
         RC_Data_Orig <- IASDT.R::load_as(RC_DT_Path_Orig)
-        gradient <- RC_Data_Orig$Gradient
+        gradient <- RC_Data_Orig$gradient
         XVals <- gradient$XDataNew[, Variable]
         Preds <- RC_Data_Orig$Preds
         Pred_SR <- RC_Data_Orig$Pred_SR

@@ -905,11 +905,11 @@ predict_maps <- function(
         } else {
 
           Preds_ModFitSites <- IASDT.R::predict_hmsc(
-            path_model = path_model, X = Train_X, Gradient = NULL,
+            path_model = path_model, X = Train_X, gradient = NULL,
             expected = TRUE, n_cores = n_cores, model_name = Model_Name_Train,
             temp_dir = temp_dir, temp_cleanup = temp_cleanup, use_TF = use_TF,
             TF_environ = TF_environ, TF_use_single = TF_use_single,
-            LF_Return = TRUE, LF_n_cores = LF_n_cores, LF_check = LF_check,
+            LF_return = TRUE, LF_n_cores = LF_n_cores, LF_check = LF_check,
             LF_temp_cleanup = LF_temp_cleanup, LF_commands_only = FALSE,
             pred_directory = Path_Prediction, pred_PA = Train_PA,
             pred_XY = Train_XY, evaluate = evaluate, evaluation_name = NULL,
@@ -936,11 +936,11 @@ predict_maps <- function(
           } else {
 
             Preds_NewSites <- IASDT.R::predict_hmsc(
-              path_model = path_model, Gradient = Gradient, expected = TRUE,
+              path_model = path_model, gradient = Gradient, expected = TRUE,
               n_cores = n_cores, model_name = Model_Name_Test,
               temp_dir = temp_dir, temp_cleanup = temp_cleanup, use_TF = use_TF,
               TF_environ = TF_environ, TF_use_single = TF_use_single,
-              LF_Return = TRUE, LF_inputFile = Path_Test_LF,
+              LF_return = TRUE, LF_inputFile = Path_Test_LF,
               LF_n_cores = LF_n_cores, LF_check = LF_check,
               LF_temp_cleanup = LF_temp_cleanup, LF_commands_only = FALSE,
               verbose = FALSE, pred_directory = Path_Prediction,

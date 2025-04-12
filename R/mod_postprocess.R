@@ -28,8 +28,8 @@
 #' @param partition_name Character. Name of the partition to submit the SLURM
 #'   jobs to. Default is `small-g`.
 #' @param LF_runtime,VP_runtime Character. Time limit for latent factor
-#'   prediction and variance partitioning processing jobs, respectively. Default
-#'   is `01:00:00`.
+#'   prediction and variance partitioning processing jobs, respectively. 
+#'   Defaults are `01:00:00` and `02:00:00` respevtively.
 #' @param RC_n_cores Integer. The number of cores to use for response curve
 #'   prediction. Defaults to `8`.
 #' @param width_omega,height_omega,width_beta,height_beta Integer. The width and
@@ -445,7 +445,7 @@ mod_postprocess_1_CPU <- function(
 mod_prepare_TF <- function(
     n_batch_files = 210L, env_file = ".env", working_directory = NULL,
     partition_name = "small-g", LF_runtime = "01:00:00", model_prefix = NULL,
-    VP_runtime = "01:30:00") {
+    VP_runtime = "02:00:00") {
 
   # ****************************************************************
 

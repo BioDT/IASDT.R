@@ -25,7 +25,7 @@
 #   return(res)
 # }
 # 
-#   CITATION: El-Gabbas, A. (2025). IASDT.R: Modelling the distribution of invasive alien plant species in Europe. 10.5281/zenodo.14834384, R package version 0.1.X; https://biodt.github.io/IASDT.R/.
+#   CITATION: El-Gabbas, A. (2025). IASDT.R: Modelling the distribution of invasive alien plant species in Europe. https://doi.org/10.5281/zenodo.14834384, R package version 0.1.X; https://biodt.github.io/IASDT.R/.
 # 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -172,7 +172,12 @@ def process_beta_file(x, beta_file, task_index, dtype, file_output):
                 res = tf.matmul(x, beta_chunk)
                 
                 # Save result as Feather
-                pd.DataFrame(res.numpy()).to_feather(feather_file)
+                # pd.DataFrame(res.numpy()).to_feather(feather_file)
+                result_array = res.numpy()
+                num_cols = result_array.shape[1]
+                df = pd.DataFrame(result_array, columns=[str(i) for i in range(num_cols)])
+                df.to_feather(feather_file)
+                
                 # Exit the loop if successful
                 return
 

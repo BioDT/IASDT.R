@@ -14,7 +14,7 @@
 #   The implementation is optimized for parallel matrix multiplications using #   TensorFlow. This script was tested for single spatial random effects using 
 #   the GPP method.
 # 
-#   CITATION: El-Gabbas, A. (2025). IASDT.R: Modelling the distribution of invasive alien plant species in Europe. 10.5281/zenodo.14834384, R package version 0.1.X; https://biodt.github.io/IASDT.R/.
+#   CITATION: El-Gabbas, A. (2025). IASDT.R: Modelling the distribution of invasive alien plant species in Europe. https://doi.org/10.5281/zenodo.1483438, R package version 0.1.X; https://biodt.github.io/IASDT.R/.
 # 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 

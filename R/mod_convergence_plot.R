@@ -416,7 +416,7 @@ convergence_plot <- function(
           PlotTitle <- ggplot2::ggplot() +
             ggplot2::labs(
               title = paste0(
-                "Convergence of the omega parameter - a sample of ",
+                "Convergence of the omega parameter --- a sample of ",
                 n_omega, " species pair"),
               subtitle = paste0(
                 "   File ", File, " | Page ",

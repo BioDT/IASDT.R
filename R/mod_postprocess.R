@@ -28,8 +28,8 @@
 #' @param partition_name Character. Name of the partition to submit the SLURM
 #'   jobs to. Default is `small-g`.
 #' @param LF_runtime,VP_runtime Character. Time limit for latent factor
-#'   prediction and variance partitioning processing jobs, respectively. 
-#'   Defaults are `01:00:00` and `02:00:00` respevtively.
+#'   prediction and variance partitioning processing jobs, respectively.
+#'   Defaults are `01:00:00` and `02:00:00` respectively.
 #' @param RC_n_cores Integer. The number of cores to use for response curve
 #'   prediction. Defaults to `8`.
 #' @param width_omega,height_omega,width_beta,height_beta Integer. The width and

@@ -48,7 +48,7 @@ mod_prepare_TF(
   partition_name = "small-g",
   LF_runtime = "01:00:00",
   model_prefix = NULL,
-  VP_runtime = "01:30:00"
+  VP_runtime = "02:00:00"
 )
 
 mod_postprocess_2_CPU(
@@ -192,8 +192,8 @@ batch scripts to this path. If \code{NULL}, the directory remains unchanged.}
 jobs to. Default is \code{small-g}.}
 
 \item{LF_runtime, VP_runtime}{Character. Time limit for latent factor
-prediction and variance partitioning processing jobs, respectively. Default
-is \code{01:00:00}.}
+prediction and variance partitioning processing jobs, respectively.
+Defaults are \code{01:00:00} and \code{02:00:00} respectively.}
 
 \item{model_prefix}{Character. Prefix for the model name. A directory named
 \code{model_prefix_TF} is created in the \code{model_dir} to store the TensorFlow

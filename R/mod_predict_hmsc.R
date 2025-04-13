@@ -163,6 +163,7 @@ predict_hmsc <- function(
       "only one of x_data and X arguments can be specified",
       call. = FALSE)
   }
+
   if (!is.null(XRRRData) && !is.null(XRRR)) {
     stop(
       "only one of XRRRData and XRRR arguments can be specified",
@@ -194,7 +195,6 @@ predict_hmsc <- function(
   } else if (is.null(X)) {
     X <- Model$X
   }
-
 
 
   if (!is.null(XRRRData)) {
@@ -764,7 +764,7 @@ predict_hmsc <- function(
         file_paths <- list.files(
           path = IASDT.R::normalize_path(temp_dir),
           pattern = Pattern, full.names = TRUE)
-        fs::file_delete(file_paths)
+        try(fs::file_delete(file_paths), silent = TRUE)
       },
       silent = TRUE)
 
@@ -808,6 +808,7 @@ get1prediction <- function(
   if (!is.null(seed)) {
     set.seed(seed)
   }
+
   if (object$ncRRR > 0) {
     XB <- XRRR %*% t(sam$wRRR)
   }

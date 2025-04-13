@@ -874,7 +874,7 @@ predict_maps <- function(
         Model_Name_Test <- paste0(
           Option_Name, "_",
           dplyr::if_else(DoClamp, "Clamping", "NoClamping"), "_Test")
-        Predict_DF_Test <- dplyr::filter(Predict_DF, isFALSE(Train))
+        Predict_DF_Test <- dplyr::filter(Predict_DF, !Train)
         Test_XY <- Predict_DF_Test[, c("x", "y")]
         Test_X <- Predict_DF_Test %>%
           dplyr::select(tidyselect::all_of(names(Model$XData))) %>%

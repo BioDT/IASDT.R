@@ -57,10 +57,10 @@ efforts_download <- function(n_cores = 6L, env_file = ".env") {
 
   # # ..................................................................... ###
 
-  ## Prepare working on parallel -----
+  ## Prepare working in parallel -----
 
   IASDT.R::cat_time(
-    paste0("Prepare working on parallel using ", n_cores, " cores"),
+    paste0("Prepare working in parallel using ", n_cores, " cores"),
     level = 1)
 
   if (n_cores == 1) {
@@ -82,7 +82,7 @@ efforts_download <- function(n_cores = 6L, env_file = ".env") {
 
   Efforts_AllRequests <- Efforts_AllRequests %>%
     dplyr::mutate(
-      # Download datasets on parallel
+      # Download datasets in parallel
       DownPath = furrr::future_map_chr(
         .x = Request,
         .f = ~{

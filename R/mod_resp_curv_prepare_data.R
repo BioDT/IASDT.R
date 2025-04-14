@@ -460,7 +460,7 @@ resp_curv_prepare_data <- function(
 
 
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-    # Prepare working on parallel
+    # Prepare working in parallel
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
     IASDT.R::info_chunk(
@@ -470,7 +470,7 @@ resp_curv_prepare_data <- function(
     n_cores <- max(min(n_cores, MissingRows), 1)
 
     IASDT.R::cat_time(
-      paste0("Prepare working on parallel, using ", n_cores, " cores"))
+      paste0("Prepare working in parallel, using ", n_cores, " cores"))
 
     if (n_cores == 1) {
       future::plan("future::sequential", gc = TRUE)
@@ -485,10 +485,10 @@ resp_curv_prepare_data <- function(
     }
 
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-    # Prepare response curve data on parallel
+    # Prepare response curve data in parallel
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-    IASDT.R::cat_time("Prepare response curve data on parallel")
+    IASDT.R::cat_time("Prepare response curve data in parallel")
 
     ResCurvDT <- future.apply::future_lapply(
       X = seq_len(nrow(ResCurvDT)),

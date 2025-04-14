@@ -311,7 +311,7 @@ variance_partitioning_compute <- function(
 
         if (!all(file.exists(Beta_Files))) {
 
-          IASDT.R::cat_time("Prepare working on parallel", level = 3)
+          IASDT.R::cat_time("Prepare working in parallel", level = 3)
           c1 <- parallel::makePSOCKcluster(n_cores)
           on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
 
@@ -325,7 +325,7 @@ variance_partitioning_compute <- function(
             parallel::clusterEvalQ(
               cl = c1, expr = sapply("arrow", library, character.only = TRUE)))
 
-          IASDT.R::cat_time("Processing beta on parallel", level = 3)
+          IASDT.R::cat_time("Processing beta in parallel", level = 3)
           Beta0 <- parallel::parLapply(
             cl = c1,
             X = seq_along(postList),
@@ -610,62 +610,90 @@ variance_partitioning_compute <- function(
 
   # Computing variance partitioning -------
 
-
-  mm <- methods::getMethod("%*%", "Matrix")
-
   if (use_TF) {
 
     IASDT.R::cat_time("Computing variance partitioning in parallel")
 
-    IASDT.R::cat_time("Prepare working on parallel", level = 1)
-    c1 <- parallel::makePSOCKcluster(n_cores)
-    on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
+    IASDT.R::cat_time("Split `lbeta` list into small qs2 files", level = 1)
+    path_lbeta <- IASDT.R::path(Path_Temp, "lbeta")
+    purrr::walk(
+      .x = seq_along(lbeta),
+      .f = ~ {
+        IASDT.R::save_as(
+          object = lbeta[[.x]],
+          out_path = IASDT.R::path(
+            path_lbeta,
+            paste0(
+              "lbeta_", stringr::str_pad(.x, width = 4, pad = "0"), ".qs2")))
+      })
 
-    IASDT.R::cat_time("Load libraries", level = 1)
-    invisible(
-      parallel::clusterEvalQ(
-        cl = c1,
-        expr = sapply(
-          c("Matrix", "dplyr", "arrow"), library, character.only = TRUE)))
+    IASDT.R::cat_time("Split `postList` list into small qs2 files", level = 1)
+    path_postList <- IASDT.R::path(Path_Temp, "postList")
+    purrr::walk(
+      .x = seq_along(postList),
+      .f = ~{
+        IASDT.R::save_as(
+          object = postList[[.x]],
+          out_path = IASDT.R::path(
+            path_postList,
+            paste0(
+              "post_", stringr::str_pad(.x, width = 4, pad = "0"), ".qs2")))
+      })
 
-    IASDT.R::cat_time("Export objects to cores", level = 1)
-    parallel::clusterExport(
-      cl = c1, varlist = c(
-        "ngroups", "Files_la", "Files_lf", "Files_lmu", "lbeta",
-        "postList", "poolN", "ns", "nr"),
-      envir = environment())
+    IASDT.R::cat_time("removing `postList` and `lbeta` list objects", level = 1)
+    n_postList <- length(postList)
+    rm(postList, lbeta, envir = environment())
+    invisible(gc())
 
-    IASDT.R::cat_time("Processing on parallel", level = 1)
-    Res <- parallel::parLapply(
-      cl = c1,
-      X = seq_along(postList),
-      fun = function(i) {
+    IASDT.R::cat_time("Prepare working in parallel", level = 1)
+    IASDT.R::set_parallel(n_cores = n_cores, level = 2)
+    withr::defer(future::plan("future::sequential", gc = TRUE))
 
-        DT_la <- as.matrix(arrow::read_feather(Files_la[i]))
-        DT_lf <- as.matrix(arrow::read_feather(Files_lf[i]))
-        DT_lmu <- as.matrix(arrow::read_feather(Files_lmu[i]))
+    IASDT.R::cat_time("Processing in parallel", level = 1)
+    Res <- future.apply::future_lapply(
+      X = seq_len(n_postList),
+      FUN = function(i) {
+
+        mm <- methods::getMethod("%*%", "Matrix")
+
+        curr_postList <- IASDT.R::path(
+          path_postList,
+          paste0(
+            "post_", stringr::str_pad(i, width = 4, pad = "0"), ".qs2")) %>%
+          IASDT.R::load_as()
+        Beta <- curr_postList$Beta
+        Lambdas <- curr_postList$Lambda
 
         # Suppress warnings when no trait information is used in the models
         # cor(Beta[k, ], lmu[k, ]) : the standard deviation is zero
+        DT_lmu <- as.matrix(arrow::read_feather(Files_lmu[i]))
+        curr_lbeta <- IASDT.R::path(
+          path_lbeta,
+          paste0(
+            "lbeta_", stringr::str_pad(i, width = 4, pad = "0"), ".qs2")) %>%
+          IASDT.R::load_as()
         R2T.Beta <- purrr::map_dbl(
           .x = seq_len(nc),
           .f = ~ {
-            suppressWarnings(stats::cor(lbeta[[i]][.x, ], DT_lmu[.x, ])^2)
+            suppressWarnings(stats::cor(curr_lbeta[.x, ], DT_lmu[.x, ])^2)
           })
 
         fixed1 <- matrix(0, nrow = ns, ncol = 1)
         fixedsplit1 <- matrix(0, nrow = ns, ncol = ngroups)
         random1 <- matrix(0, nrow = ns, ncol = nr)
-        Beta <- postList[[i]]$Beta
-        Lambdas <- postList[[i]]$Lambda
 
-        a <- DT_la - matrix(rep(rowMeans(DT_la), ns), ncol = ns)
-        f <- DT_lf - matrix(rep(rowMeans(DT_lf), ns), ncol = ns)
+        DT_la <- as.matrix(arrow::read_feather(Files_la[i]))
+        DT_lf <- as.matrix(arrow::read_feather(Files_lf[i]))
+        # a <- DT_la - matrix(rep(rowMeans(DT_la), ns), ncol = ns)
+        # f <- DT_lf - matrix(rep(rowMeans(DT_lf), ns), ncol = ns)
+        a <- DT_la - rowMeans(DT_la)
+        f <- DT_lf - rowMeans(DT_lf)
 
         res1 <- sum((rowSums((a * f)) / (ns - 1))^2)
         res2 <- sum((rowSums((a * a)) / (ns - 1)) *
                       (rowSums((f * f)) / (ns - 1)))
         R2T.Y <- res1 / res2
+
 
         for (j in seq_len(ns)) {
           switch(
@@ -686,6 +714,7 @@ variance_partitioning_compute <- function(
               Beta[sel, j], mm(cM[sel, sel], Beta[sel, j]))
             fixedsplit1[j, k] <- fixedsplit1[j, k] + fpart
           }
+
         }
 
         for (level in seq_len(nr)) {
@@ -696,6 +725,7 @@ variance_partitioning_compute <- function(
               t(Lambda[factor, ]) * Lambda[factor, ]
           }
         }
+
 
         if (nr > 0) {
           tot <- fixed1 + rowSums(random1)
@@ -708,17 +738,27 @@ variance_partitioning_compute <- function(
           random <- random1
         }
 
-        fixedsplit <- matrix(0, nrow = ns, ncol = ngroups)
-        for (k in seq_len(ngroups)) {
-          fixedsplit[, k] <- fixedsplit1[, k] / rowSums(fixedsplit1)
-        }
+        # fixedsplit <- matrix(0, nrow = ns, ncol = ngroups)
+        # for (k in seq_len(ngroups)) {
+        #   fixedsplit[, k] <- fixedsplit1[, k] / rowSums(fixedsplit1)
+        # }
+        fixedsplit0 <- fixedsplit1 / rowSums(fixedsplit1)
 
         return(
           list(
             fixed = fixed, random = random, fixedsplit = fixedsplit,
             R2T.Y = R2T.Y, R2T.Beta = R2T.Beta))
-      }
-    )
+
+      },
+      future.scheduling = Inf, future.seed = TRUE,
+      future.packages = c(
+        "Matrix", "dplyr", "arrow", "purrr", "IASDT.R", "qs2", "methods"),
+      future.globals = c(
+        "ngroups", "Files_la", "Files_lf", "Files_lmu", "path_lbeta", "nc",
+        "Model", "path_postList", "poolN", "ns", "nr", "cMA", "group"))
+
+    # stopping the cluster
+    IASDT.R::set_parallel(stop = TRUE, level = 2)
 
     # Summarize the results
     IASDT.R::cat_time("Summarize the results", level = 1)
@@ -731,6 +771,8 @@ variance_partitioning_compute <- function(
   } else {
 
     IASDT.R::cat_time("Computing variance partitioning sequentially")
+
+    mm <- methods::getMethod("%*%", "Matrix")
 
     fixed <- matrix(0, nrow = ns, ncol = 1)
     fixedsplit <- matrix(0, nrow = ns, ncol = ngroups)
@@ -864,18 +906,45 @@ variance_partitioning_compute <- function(
 
     IASDT.R::cat_time("Clean up temporary files")
 
-    Path_Temp <- IASDT.R::normalize_path(Path_Temp)
+    if (use_TF) {
 
+      if (fs::dir_exists(path_lbeta)) {
+        try({
+          IASDT.R::system_command(
+            paste0("rm -rf ", IASDT.R::normalize_path(path_lbeta)),
+            ignore.stderr = TRUE, ignore.stdout = TRUE)
+        },
+        silent = TRUE)
+      }
+      if (fs::dir_exists(path_postList)) {
+        try({
+          IASDT.R::system_command(
+            paste0("rm -rf ", IASDT.R::normalize_path(path_postList)),
+            ignore.stderr = TRUE, ignore.stdout = TRUE)
+        },
+        silent = TRUE)
+      }
+    }
+
+    Path_Temp <- IASDT.R::normalize_path(Path_Temp)
     try(
       expr = {
         file_paths <- list.files(
-          path = IASDT.R::normalize_path(Path_Temp),
+          path = Path_Temp,
           pattern = "(VP_).+(feather|log)$", full.names = TRUE)
 
         fs::file_delete(file_paths)
       },
       silent = TRUE)
 
+    if (fs::dir_exists(Path_Temp) && length(fs::dir_ls(Path_Temp)) == 0) {
+      try({
+        IASDT.R::system_command(
+          paste0("rm -rf ", Path_Temp),
+          ignore.stderr = TRUE, ignore.stdout = TRUE)
+      },
+      silent = TRUE)
+    }
   }
 
   # # .................................................................... ###

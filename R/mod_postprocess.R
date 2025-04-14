@@ -1030,7 +1030,7 @@ mod_postprocess_2_CPU <- function(
 
   IASDT.R::variance_partitioning_compute(
     path_model = path_model,
-    n_cores = 1, use_TF = use_TF, TF_environ = TF_environ,
+    n_cores = n_cores, use_TF = use_TF, TF_environ = TF_environ,
     TF_use_single = TF_use_single, temp_cleanup = temp_cleanup,
     chunk_size = 50L, verbose = TRUE, VP_file = "VarPar",
     VP_commands_only = FALSE)

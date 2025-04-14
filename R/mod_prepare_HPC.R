@@ -761,7 +761,7 @@ mod_prepare_HPC <- function(
     if (NCores_GPP > 1) {
 
       IASDT.R::cat_time(
-        paste0("Prepare working on parallel using ", NCores_GPP, " cores"),
+        paste0("Prepare working in parallel using ", NCores_GPP, " cores"),
         level = 2, cat_timestamp = FALSE)
 
       withr::local_options(

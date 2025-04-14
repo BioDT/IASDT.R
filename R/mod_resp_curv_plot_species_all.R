@@ -67,10 +67,10 @@ resp_curv_plot_species_all <- function(
 
   # # ..................................................................... ###
 
-  # Loading & processing species response curve data on parallel
+  # Loading & processing species response curve data in parallel
 
   IASDT.R::cat_time(
-    "Loading & processing species response curve data on parallel", level = 1)
+    "Loading & processing species response curve data in parallel", level = 1)
 
   Sp_DT_All <- IASDT.R::path(Path_RC_DT, "ResCurvDT.RData") %>%
     IASDT.R::load_as() %>%

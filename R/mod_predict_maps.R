@@ -696,7 +696,7 @@ predict_maps <- function(
       sf::st_as_sf(remove = FALSE, coords = c("x", "y"), crs = 3035) %>%
       sf::st_join(Model_Coords) %>%
       tidyr::replace_na(list(Train = FALSE)) %>%
-      dplyr::filter(Train == FALSE)
+      dplyr::filter(!Train)
 
     Test_XY <- sf::st_drop_geometry(Predict_DF_Test[, c("x", "y")])
     Test_X <- Predict_DF_Test %>%
@@ -1148,7 +1148,7 @@ predict_maps <- function(
     "\tEnsemble model predictions", n_separators = 1, line_char = "-",
     line_char_rep = 70, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
-  IASDT.R::cat_time("Prepare working on parallel", level = 1)
+  IASDT.R::cat_time("Prepare working in parallel", level = 1)
 
   if (n_cores == 1) {
     future::plan("future::sequential", gc = TRUE)
@@ -1466,7 +1466,7 @@ predict_maps <- function(
       paste(collapse = " ") %>%
       # Add the summary files to the list
       paste(
-        "Prediction_Summary.RData", "Prediction_Summary_Shiny.txt",
+        "Prediction_Summary_Shiny.RData", "Prediction_Summary_Shiny.txt",
         collapse = " ")
 
     # Command to create the tar file

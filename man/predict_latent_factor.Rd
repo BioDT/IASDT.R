@@ -96,7 +96,7 @@ when \code{predictMean = TRUE}.
 \details{
 The function is expected to be faster than the original function in
 the \code{Hmsc} package, especially when using \code{TensorFlow} for calculations and
-when working on parallel.
+when working in parallel.
 
 The main difference is that this function:
 \itemize{

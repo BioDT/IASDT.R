@@ -184,7 +184,7 @@ GBIF_process <- function(
   ChunkListRData <- stringr::str_replace_all(ChunkList, ".txt$", ".RData")
 
   IASDT.R::cat_time(
-    paste0("Prepare working on parallel using ", n_cores, " cores"),
+    paste0("Prepare working in parallel using ", n_cores, " cores"),
     level = 1)
 
   if (n_cores == 1) {
@@ -209,7 +209,7 @@ GBIF_process <- function(
   }
 
   IASDT.R::cat_time(
-    "Processing chunks on parallel, save each as RData files",
+    "Processing chunks in parallel, save each as RData files",
     level = 1)
 
   GBIF_Data <- future.apply::future_lapply(
@@ -592,7 +592,7 @@ GBIF_process <- function(
   IASDT.R::cat_time("Split species data - grid/raster/plot", level = 1)
 
   IASDT.R::cat_time(
-    paste0("Prepare working on parallel using ", n_cores, " cores"),
+    paste0("Prepare working in parallel using ", n_cores, " cores"),
     level = 1)
 
   if (n_cores == 1) {
@@ -607,7 +607,7 @@ GBIF_process <- function(
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 
-  IASDT.R::cat_time("Splitting species data on parallel", level = 2)
+  IASDT.R::cat_time("Splitting species data in parallel", level = 2)
   furrr::future_walk(
     .x = SpList, .f = IASDT.R::GBIF_species_data, env_file = env_file,
     verbose = FALSE, plot_tag = plot_tag,

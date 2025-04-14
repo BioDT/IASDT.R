@@ -64,7 +64,7 @@ resp_curv_plot_SR <- function(model_dir, verbose = TRUE, n_cores = 8L) {
   n_cores <- max(min(n_cores, nrow(SR_DT_All)), 1)
 
   IASDT.R::cat_time(
-    paste0("Prepare working on parallel, using ", n_cores, " cores"),
+    paste0("Prepare working in parallel, using ", n_cores, " cores"),
     level = 1)
 
   withr::local_options(

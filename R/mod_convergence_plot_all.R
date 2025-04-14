@@ -234,7 +234,7 @@ convergence_plot_all <- function(
     IASDT.R::cat_time("Processing convergence data", level = 1)
 
     IASDT.R::cat_time(
-      paste0("Prepare working on parallel using ", n_cores, " cores"),
+      paste0("Prepare working in parallel using ", n_cores, " cores"),
       level = 2)
 
     if (n_cores == 1) {

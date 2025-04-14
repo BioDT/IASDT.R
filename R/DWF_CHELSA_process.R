@@ -159,7 +159,7 @@ CHELSA_process <- function(
       IASDT.R::cat_time("Check input CHELSA files sequentially")
       future::plan("future::sequential", gc = TRUE)
     } else {
-      IASDT.R::cat_time("Check input CHELSA files on parallel")
+      IASDT.R::cat_time("Check input CHELSA files in parallel")
       withr::local_options(
         future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
         future.seed = TRUE)
@@ -228,7 +228,7 @@ CHELSA_process <- function(
     withr::local_options(
       future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
       future.seed = TRUE)
-    IASDT.R::cat_time("Processing CHELSA maps on parallel")
+    IASDT.R::cat_time("Processing CHELSA maps in parallel")
     c1 <- snow::makeSOCKcluster(n_cores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
     future::plan("future::cluster", workers = c1, gc = TRUE)
@@ -367,7 +367,7 @@ CHELSA_process <- function(
       future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
       future.seed = TRUE)
     IASDT.R::cat_time(
-      "Group CHELSA data by time and climate model/scenario on parallel")
+      "Group CHELSA data by time and climate model/scenario in parallel")
     c1 <- snow::makeSOCKcluster(n_cores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
     future::plan("future::cluster", workers = c1, gc = TRUE)

@@ -61,12 +61,12 @@ efforts_request <- function(
 
   # # ..................................................................... ###
 
-  # Prepare working on parallel -----
+  # Prepare working in parallel -----
 
   # GBIF allows only 3 parallel requests. Here I wait until previous request
   # is finished.
   IASDT.R::cat_time(
-    paste0("Prepare working on parallel using ", min(n_cores, 3), " cores"),
+    paste0("Prepare working in parallel using ", min(n_cores, 3), " cores"),
     level = 1)
 
   if (n_cores == 1) {
@@ -83,10 +83,10 @@ efforts_request <- function(
 
   # # ..................................................................... ###
 
-  # Requesting efforts data on parallel -----
+  # Requesting efforts data in parallel -----
 
   IASDT.R::cat_time(
-    "Requesting efforts data on parallel (This may take up to 4 hours)",
+    "Requesting efforts data in parallel (This may take up to 4 hours)",
     level = 1)
 
   # Extract taxonomic info for vascular plants orders

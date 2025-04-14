@@ -162,14 +162,14 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
   IASDT.R::cat_time("Species-specific data")
   .StartTimeDist <- lubridate::now(tzone = "CET")
 
-  ## Prepare working on parallel -----
+  ## Prepare working in parallel -----
   IASDT.R::set_parallel(n_cores = n_cores, level = 1)
   withr::defer(future::plan("future::sequential", gc = TRUE))
 
   # # .................................... ###
 
-  ## Species-specific data on parallel ----
-  IASDT.R::cat_time("Species-specific data on parallel", level = 1)
+  ## Species-specific data in parallel ----
+  IASDT.R::cat_time("Species-specific data in parallel", level = 1)
 
   Sp_PA_Data <- future.apply::future_lapply(
     X = sort(unique(TaxaList$Species_name)),

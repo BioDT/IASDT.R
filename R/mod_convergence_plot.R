@@ -617,8 +617,8 @@ convergence_plot <- function(
 
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
-    # Prepare working on parallel
-    IASDT.R::cat_time("Prepare working on parallel", level = 2)
+    # Prepare working in parallel
+    IASDT.R::cat_time("Prepare working in parallel", level = 2)
     IASDT.R::set_parallel(n_cores = min(n_cores, nrow(Beta_DF)), level = 3)
     withr::defer(future::plan("future::sequential", gc = TRUE))
 
@@ -710,7 +710,9 @@ convergence_plot <- function(
 
             DT_all <- IASDT.R::load_as(Var_Sp_File)
             if (is.null(DT_all) || !is.list(DT_all)) {
-              stop("Loaded data is invalid for file: ", Var_Sp_File)
+              stop(
+                "Loaded data is invalid for file: ", Var_Sp_File,
+                call. = FALSE)
             }
 
             DT_all$Post <- NULL
@@ -887,7 +889,7 @@ convergence_plot <- function(
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
-  # Prepare working on parallel
+  # Prepare working in parallel
   IASDT.R::set_parallel(
     n_cores = min(n_cores, nrow(BetaTracePlots_ByVar)), level = 2)
   withr::defer(future::plan("future::sequential", gc = TRUE))
@@ -1015,7 +1017,7 @@ convergence_plot <- function(
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
-  # Prepare working on parallel
+  # Prepare working in parallel
   IASDT.R::set_parallel(
     n_cores = min(n_cores, nrow(BetaTracePlots_BySp)), level = 2)
   withr::defer(future::plan("future::sequential", gc = TRUE))

@@ -90,11 +90,11 @@ resp_curv_plot_species <- function(
 
   # # ..................................................................... ###
 
-  # Prepare species-specific data on parallel
+  # Prepare species-specific data in parallel
 
-  IASDT.R::cat_time("Prepare species-specific data on parallel")
+  IASDT.R::cat_time("Prepare species-specific data in parallel")
 
-  IASDT.R::cat_time("Prepare working on parallel", level = 1)
+  IASDT.R::cat_time("Prepare working in parallel", level = 1)
   c1 <- parallel::makePSOCKcluster(n_cores)
   on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
 
@@ -145,7 +145,7 @@ resp_curv_plot_species <- function(
 
   IASDT.R::cat_time("Plotting species-specific data")
 
-  IASDT.R::cat_time("Prepare working on parallel", level = 1)
+  IASDT.R::cat_time("Prepare working in parallel", level = 1)
   c1 <- parallel::makePSOCKcluster(n_cores)
   on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
 
@@ -164,7 +164,7 @@ resp_curv_plot_species <- function(
         library, character.only = TRUE)
     }))
 
-  IASDT.R::cat_time("Plotting on parallel", level = 1)
+  IASDT.R::cat_time("Plotting in parallel", level = 1)
   Plots <- parallel::clusterApplyLB(
     cl = c1,
     x = Sp_DT_All,

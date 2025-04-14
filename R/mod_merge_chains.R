@@ -131,7 +131,7 @@ mod_merge_chains <- function(
 
   Model_Info2 <- IASDT.R::load_as(Path_ModInfo)
 
-  # Prepare working on parallel -----
+  # Prepare working in parallel -----
   if (n_cores == 1) {
     future::plan("future::sequential", gc = TRUE)
   } else {

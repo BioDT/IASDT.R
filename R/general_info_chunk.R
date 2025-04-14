@@ -45,7 +45,7 @@ info_chunk <- function(
   }
 
   if (info_lines_before > 1) {
-    cat(paste(rep("\n", info_lines_before), collapse = ""), sep = "")
+    cat(strrep("\n", info_lines_before))
   }
 
   IASDT.R::cat_sep(

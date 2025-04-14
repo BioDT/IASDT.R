@@ -473,7 +473,7 @@ predict_hmsc <- function(
 
   IASDT.R::cat_time(
     paste0(
-      "Preparing working on parallel using ",
+      "Preparing working in parallel using ",
       min(n_cores, length(Chunks)), " cores"),
     level = 1)
 
@@ -500,7 +500,7 @@ predict_hmsc <- function(
         library, character.only = TRUE)
     }))
 
-  IASDT.R::cat_time("Making predictions on parallel", level = 1)
+  IASDT.R::cat_time("Making predictions in parallel", level = 1)
 
   pred <- parallel::parLapplyLB(
     cl = c1,

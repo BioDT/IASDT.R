@@ -247,9 +247,9 @@ railway_intensity <- function(
   IASDT.R::cat_time("Processing railway data")
   .StartTimeProcess <- lubridate::now(tzone = "CET")
 
-  ## Prepare working on parallel ----
+  ## Prepare working in parallel ----
   IASDT.R::cat_time(
-    paste0("Prepare working on parallel using ", n_cores, " cores"),
+    paste0("Prepare working in parallel using ", n_cores, " cores"),
     level = 1)
 
   if (n_cores == 1) {

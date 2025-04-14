@@ -27,7 +27,7 @@
 #' @name set_parallel
 #' @author Ahmed El-Gabbas
 #' @examples
-#' # Prepare working on parallel
+#' # Prepare working in parallel
 #' IASDT.R::set_parallel(n_cores = 2)
 #' future::plan()
 #'
@@ -39,7 +39,7 @@
 #'
 #' # ---------------------------------------------
 #'
-#' # Prepare working on parallel using `future::cluster`
+#' # Prepare working in parallel using `future::cluster`
 #' IASDT.R::set_parallel(n_cores = 2, strategy = "future::cluster")
 #' future::plan()
 #'

@@ -596,7 +596,7 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
   IASDT.R::cat_time("Plotting")
 
   IASDT.R::cat_time(
-    paste0("Preparing working on parallel using ", n_cores, " cores"),
+    paste0("Preparing working in parallel using ", n_cores, " cores"),
     level = 1)
   c1 <- parallel::makePSOCKcluster(n_cores)
   on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
@@ -623,7 +623,7 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
       cowplot::set_null_device("cairo")
     }))
 
-  IASDT.R::cat_time("Prepare and save plots on parallel", level = 1)
+  IASDT.R::cat_time("Prepare and save plots in parallel", level = 1)
   Plots <- parallel::parLapply(
     cl = c1, X = seq_len(nrow(Map_summary)), fun = PlotMaps)
 

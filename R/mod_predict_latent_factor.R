@@ -54,7 +54,7 @@
 #' @name predict_latent_factor
 #' @details The function is expected to be faster than the original function in
 #'   the `Hmsc` package, especially when using `TensorFlow` for calculations and
-#'   when working on parallel.
+#'   when working in parallel.
 #'
 #'   The main difference is that this function:
 #' - allow for parallel processing (`LF_n_cores` argument);
@@ -631,8 +631,8 @@ predict_latent_factor <- function(
             invisible(gc())
           }))
 
-        # Making predictions on parallel
-        IASDT.R::cat_time("Making predictions on parallel", level = 2)
+        # Making predictions in parallel
+        IASDT.R::cat_time("Making predictions in parallel", level = 2)
 
         etaPreds <- parallel::clusterApplyLB(
           cl = c1,
@@ -706,8 +706,8 @@ predict_latent_factor <- function(
         invisible(gc())
       }))
 
-    # Merge results on parallel
-    IASDT.R::cat_time("Process results for MCMC samples on parallel", level = 2)
+    # Merge results in parallel
+    IASDT.R::cat_time("Process results for MCMC samples in parallel", level = 2)
 
     postEtaPred <- parallel::parLapply(
       cl = c1,
@@ -746,7 +746,8 @@ predict_latent_factor <- function(
 
   if (!is.null(LF_out_file)) {
     IASDT.R::cat_time("Saving postEtaPred to: ", level = 1)
-    IASDT.R::cat_time(paste0("`", LF_out_file, "`"), cat_timestamp = FALSE, level = 2)
+    IASDT.R::cat_time(
+      paste0("`", LF_out_file, "`"), cat_timestamp = FALSE, level = 2)
     fs::dir_create(fs::path_dir(LF_out_file))
     IASDT.R::save_as(
       object = postEtaPred, out_path = LF_out_file,
@@ -772,10 +773,17 @@ predict_latent_factor <- function(
         file_paths <- list.files(
           path = IASDT.R::normalize_path(temp_dir),
           pattern = Pattern, full.names = TRUE)
+        try(fs::file_delete(file_paths), silent = TRUE)
 
-        fs::file_delete(file_paths)
+        file_paths2 <- list.files(
+          path = IASDT.R::normalize_path(temp_dir),
+          pattern = "(LF_.+_Test|RC_c)_Samp_.+.qs2",
+          full.names = TRUE, recursive = TRUE)
+        try(fs::file_delete(file_paths2), silent = TRUE)
+
       },
       silent = TRUE)
+
   }
 
   # # ..................................................................... ###

@@ -408,11 +408,21 @@ mod_CV_fit <- function(
   # Save model fitting commands -----
   IASDT.R::cat_time("Save model fitting commands")
 
-  CommandFile <- IASDT.R::path(Path_CV, "Commands2Fit.txt")
-  f <- file(CommandFile, open = "wb")
-  on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
-  cat(unlist(CV_DT$Command_HPC), sep = "\n", append = FALSE, file = f)
-  close(f)
+  purrr::walk(
+    .x = CV_name,
+    .f = ~{
+      Curr_CV_Name <- stringr::str_remove_all(.x, "CV_")
+      CommandFile <- IASDT.R::path(Path_CV, paste0("Commands2Fit_", .x, ".txt"))
+      f <- file(CommandFile, open = "wb")
+      on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
+
+      CV_DT %>%
+        dplyr::filter(CV_name == Curr_CV_Name) %>%
+        dplyr::pull(Command_HPC) %>%
+        unlist() %>%
+        cat(sep = "\n", append = FALSE, file = f)
+      close(f)
+    })
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

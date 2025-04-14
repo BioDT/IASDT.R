@@ -98,14 +98,12 @@ mod_SLURM <- function(
     "HPC_partition", "path_Hmsc", "ProjNum", "Path_GPU_Check",
     "command_prefix", "SLURM_prefix")
   IASDT.R::check_args(
-    args_all = AllArgs, args_to_check = CharArgs,
-    args_type = "character")
+    args_all = AllArgs, args_to_check = CharArgs, args_type = "character")
 
   # numeric arguments
   NumericArgs <- c("gpus_per_node", "cpus_per_task", "ntasks")
   IASDT.R::check_args(
-    args_all = AllArgs, args_to_check = NumericArgs,
-    args_type = "numeric")
+    args_all = AllArgs, args_to_check = NumericArgs, args_type = "numeric")
 
   rm(AllArgs, envir = environment())
 
@@ -131,15 +129,27 @@ mod_SLURM <- function(
     .x = seq_len(NCommandFiles),
     .f = function(x) {
 
-      if (NCommandFiles == 1) {
-        OutFile <- paste0(SLURM_prefix, ".slurm")
-        JobName0 <- job_name
-      } else {
-        OutFile <- paste0(SLURM_prefix, "_", x, ".slurm")
-        JobName0 <- paste0(job_name, "_", x)
-      }
-      NJobs <- R.utils::countLines(ListCommands[x])[1]
+      SLURM_suffix <- basename(ListCommands[x]) %>%
+        stringr::str_remove_all(
+          paste0(c(command_prefix, "CV_", ".txt"), collapse = "|")) %>%
+        stringr::str_remove_all("^_")
 
+      if (nchar(SLURM_suffix) > 0) {
+        OutFile <- c(SLURM_prefix, SLURM_suffix) %>%
+          paste0(collapse = "_") %>%
+          paste0(".slurm")
+        JobName0 <- stringr::str_remove_all(OutFile, "_Fit|_Bash|.slurm$")
+      } else {
+        if (NCommandFiles == 1) {
+          OutFile <- paste0(SLURM_prefix, ".slurm")
+          JobName0 <- job_name
+        } else {
+          OutFile <- paste0(SLURM_prefix, "_", x, ".slurm")
+          JobName0 <- paste0(job_name, "_", x)
+        }
+      }
+
+      NJobs <- R.utils::countLines(ListCommands[x])[1]
 
       # create connection to SLURM file
 

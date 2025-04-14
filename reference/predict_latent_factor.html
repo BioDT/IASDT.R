@@ -190,7 +190,7 @@ execution. Default is <code>TRUE</code>.</p></dd>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The function is expected to be faster than the original function in
 the <code>Hmsc</code> package, especially when using <code>TensorFlow</code> for calculations and
-when working on parallel.</p>
+when working in parallel.</p>
 <p>The main difference is that this function:</p><ul><li><p>allow for parallel processing (<code>LF_n_cores</code> argument);</p></li>
 <li><p>when <code>TensorFlow</code> is used (<code>use_TF = TRUE</code>), matrix
 calculations are much faster, particularly when used on GPU. The following

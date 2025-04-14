@@ -742,7 +742,7 @@ variance_partitioning_compute <- function(
         # for (k in seq_len(ngroups)) {
         #   fixedsplit[, k] <- fixedsplit1[, k] / rowSums(fixedsplit1)
         # }
-        fixedsplit0 <- fixedsplit1 / rowSums(fixedsplit1)
+        fixedsplit <- fixedsplit1 / rowSums(fixedsplit1)
 
         return(
           list(

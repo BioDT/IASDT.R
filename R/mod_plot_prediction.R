@@ -157,7 +157,7 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
   }
   R_habitat <- IASDT.R::load_as(Path_Hab) %>%
     terra::unwrap() %>%
-    terra::classify(c(0, NA)) %>%
+    terra::classify(rcl = cbind(0, NA)) %>%
     terra::subset(paste0("SynHab_", HabAbb)) %>%
     terra::wrap()
 

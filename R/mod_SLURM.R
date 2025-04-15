@@ -131,12 +131,12 @@ mod_SLURM <- function(
 
       SLURM_suffix <- basename(ListCommands[x]) %>%
         stringr::str_remove_all(
-          paste0(c(command_prefix, "CV_", ".txt"), collapse = "|")) %>%
+          paste(c(command_prefix, "CV_", ".txt"), collapse = "|")) %>%
         stringr::str_remove_all("^_")
 
       if (nchar(SLURM_suffix) > 0) {
         OutFile <- c(SLURM_prefix, SLURM_suffix) %>%
-          paste0(collapse = "_") %>%
+          paste(collapse = "_") %>%
           paste0(".slurm")
         JobName0 <- stringr::str_remove_all(OutFile, "_Fit|_Bash|.slurm$")
       } else {

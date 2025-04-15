@@ -114,7 +114,7 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
 
   HabAbb <- Map_summary_Clamp$hab_abb[[1]]
   # nolint start
-  Hab_Name <- Map_summary_Clamp$hab_name[[1]]
+  Hab_Name <- paste0(HabAbb, ". ", Map_summary_Clamp$hab_name[[1]])
   # nolint end
 
   # # ..................................................................... ###
@@ -157,6 +157,7 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
   }
   R_habitat <- IASDT.R::load_as(Path_Hab) %>%
     terra::unwrap() %>%
+    terra::classify(c(0, NA)) %>%
     terra::subset(paste0("SynHab_", HabAbb)) %>%
     terra::wrap()
 
@@ -526,7 +527,7 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
           x = 1.1, y = 0.275,
           label = stringr::str_glue(
             '<span style="color: grey; font-size:8pt"> \\
-              (efforts predictor fixed at 90% quantile)</span>')
+              (efforts/rivers predictors fixed at 90% quantile)</span>')
         ),
         fill = NA, label.color = NA, hjust = 0.5, vjust = 0,
         angle = 90, color = "black") +

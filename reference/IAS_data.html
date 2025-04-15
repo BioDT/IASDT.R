@@ -105,15 +105,15 @@ skips if maps exist. Default: <code>FALSE</code>.</p></dd>
     <h2 id="functions-details">Functions details<a class="anchor" aria-label="anchor" href="#functions-details"></a></h2>
 
 
-<ul><li><p><strong><code>IAS_process()</code></strong>: Merges pre-processed GBIF (<code><a href="GBIF_data.html">GBIF_process()</a></code>), EASIN
-(<code><a href="EASIN_data.html">EASIN_process()</a></code>), and eLTER (<code><a href="eLTER_Process.html">eLTER_process()</a></code>) data (run these first).
+<ul><li><p><strong><code>IAS_process()</code></strong>: Merges pre-processed GBIF (<a href="GBIF_data.html">GBIF_process</a>), EASIN
+(<a href="EASIN_data.html">EASIN_process</a>), and eLTER (<a href="eLTER_Process.html">eLTER_process</a>) data (run these first).
 Outputs <code>SpatRaster</code> distribution rasters, summary tables, and JPEG maps
 using <code>IAS_distribution()</code> and <code>IAS_plot()</code>.</p></li>
 <li><p><strong><code>IAS_distribution()</code></strong>: Generates presence-absence maps (<code>.RData</code>,
-<code>.tif</code>)  for a species, including all grid cells in the study area and a set
-excluding cultivated/casual-only countries. Returns a tibble with presence
-counts (total, by source) and summary statistics for biogeographical
-regions</p></li>
+<code>.tif</code>)  for a species, including all grid cells in the study area and a
+set excluding cultivated/casual-only countries. Returns a tibble with
+presence counts (total, by source) and summary statistics for
+biogeographical regions</p></li>
 <li><p><strong><code>IAS_plot()</code></strong>: Creates JPEG distribution maps from GBIF, EASIN, and
 eLTER data using <code>ggplot2</code>.</p></li>
 </ul></div>

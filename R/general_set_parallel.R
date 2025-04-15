@@ -4,7 +4,7 @@
 
 #' Set up or stop parallel processing plan
 #'
-#' Configures parallel processing with `future::plan()` or stops an existing
+#' Configures parallel processing with [future::plan()] or stops an existing
 #' plan. When stopping, it resets to sequential mode.
 #'
 #' @param n_cores Integer. Number of cores to use. If `NULL`, defaults to
@@ -14,7 +14,7 @@
 #'   (default), `future::multicore` (not supported on Windows), and
 #'   `future::cluster`. If `strategy` is not one of the valid options or if
 #'   `future::multicore` on Windows PC, it defaults to `future::multisession`.
-#'   See `future::plan()` for more details.
+#'   See [future::plan()] for more details.
 #' @param stop Logical. If `TRUE`, stops any parallel cluster and resets to
 #'   sequential mode. If `FALSE` (default), sets up a new plan.
 #' @param show_log Logical. If `TRUE` (default), logs messages via

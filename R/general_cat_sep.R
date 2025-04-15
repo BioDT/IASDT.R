@@ -16,7 +16,7 @@
 #'   line. Default is `"-"`.
 #' @param line_char_rep integer; the number of times the character is repeated
 #'   to form a separator line. Default is `50`.
-#' @param ... additional arguments to be passed to `cat()`.
+#' @param ... additional arguments to be passed to [base::cat()].
 #' @name cat_sep
 #' @inheritParams cat_time
 #' @author Ahmed El-Gabbas

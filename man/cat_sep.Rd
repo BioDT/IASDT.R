@@ -34,7 +34,7 @@ to form a separator line. Default is \code{50}.}
 
 \item{cat_red}{logical; whether to print the text in red. Default is \code{FALSE}.}
 
-\item{...}{additional arguments to be passed to \code{cat()}.}
+\item{...}{additional arguments to be passed to \code{\link[base:cat]{base::cat()}}.}
 }
 \value{
 The function is called for its side effect (printing to the console)

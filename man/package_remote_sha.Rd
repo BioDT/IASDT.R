@@ -22,7 +22,7 @@ uniquely identifies the version of a package's source code, useful for
 reproducibility and version tracking.
 }
 \details{
-The function uses \code{pak::lib_status()} to query the status of
+The function uses \code{\link[pak:lib_status]{pak::lib_status()}} to query the status of
 installed packages and extract their remote SHAs. It supports packages
 installed from GitHub, GitLab, or other remote sources via \code{pak}. If a
 package is installed from CRAN or locally without a remote SHA, the result

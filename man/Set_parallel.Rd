@@ -22,7 +22,7 @@ options are \code{future::sequential} (sequential), \code{future::multisession}
 (default), \code{future::multicore} (not supported on Windows), and
 \code{future::cluster}. If \code{strategy} is not one of the valid options or if
 \code{future::multicore} on Windows PC, it defaults to \code{future::multisession}.
-See \code{future::plan()} for more details.}
+See \code{\link[future:plan]{future::plan()}} for more details.}
 
 \item{stop}{Logical. If \code{TRUE}, stops any parallel cluster and resets to
 sequential mode. If \code{FALSE} (default), sets up a new plan.}
@@ -37,7 +37,7 @@ global variables identified. See \code{future.globals.maxSize} argument of
 \item{...}{Additional arguments to pass to \link{cat_time}.}
 }
 \description{
-Configures parallel processing with \code{future::plan()} or stops an existing
+Configures parallel processing with \code{\link[future:plan]{future::plan()}} or stops an existing
 plan. When stopping, it resets to sequential mode.
 }
 \examples{

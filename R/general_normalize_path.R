@@ -6,12 +6,13 @@
 #'
 #' This function ensures that file paths are expressed in a consistent and
 #' canonical form. It first converts paths to absolute form using
-#' `fs::path_abs()`, then tidies them with `fs::path_tidy()`, and finally quotes
-#' them correctly based on the operating system. By default, `normalizePath()`
-#' behaves differently on Windows and Linux when a file does not exist. On
-#' Windows, it tries to construct an absolute path, while on Linux, it returns
-#' the input path as-is (relative). To maintain consistency across platforms,
-#' this function uses `fs::path_abs()` instead of `normalizePath()`.
+#' [fs::path_abs()], then tidies them with [fs::path_tidy()], and finally quotes
+#' them correctly based on the operating system. By default,
+#' [base::normalizePath()] behaves differently on Windows and Linux when a file
+#' does not exist. On Windows, it tries to construct an absolute path, while on
+#' Linux, it returns the input path as-is (relative). To maintain consistency
+#' across platforms, this function uses [fs::path_abs()] instead of
+#' [base::normalizePath()].
 #' @param path Character vector. file path(s).
 #' @param must_work Logical; if `TRUE`, the function errors for non-existing
 #'   paths.

@@ -18,12 +18,13 @@ A character vector of absolute, tidied, and shell-quoted paths.
 \description{
 This function ensures that file paths are expressed in a consistent and
 canonical form. It first converts paths to absolute form using
-\code{fs::path_abs()}, then tidies them with \code{fs::path_tidy()}, and finally quotes
-them correctly based on the operating system. By default, \code{normalizePath()}
-behaves differently on Windows and Linux when a file does not exist. On
-Windows, it tries to construct an absolute path, while on Linux, it returns
-the input path as-is (relative). To maintain consistency across platforms,
-this function uses \code{fs::path_abs()} instead of \code{normalizePath()}.
+\code{\link[fs:path_math]{fs::path_abs()}}, then tidies them with \code{\link[fs:path_tidy]{fs::path_tidy()}}, and finally quotes
+them correctly based on the operating system. By default,
+\code{\link[base:normalizePath]{base::normalizePath()}} behaves differently on Windows and Linux when a file
+does not exist. On Windows, it tries to construct an absolute path, while on
+Linux, it returns the input path as-is (relative). To maintain consistency
+across platforms, this function uses \code{\link[fs:path_math]{fs::path_abs()}} instead of
+\code{\link[base:normalizePath]{base::normalizePath()}}.
 }
 \author{
 Ahmed El-Gabbas

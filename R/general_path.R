@@ -4,7 +4,7 @@
 
 #' Construct path to a file or directory
 #'
-#' A wrapper around `fs::path()` that constructs file paths from input
+#' A wrapper around [fs::path()] that constructs file paths from input
 #' components and returns them as a character string instead of an `"fs_path"`
 #' object.
 #'

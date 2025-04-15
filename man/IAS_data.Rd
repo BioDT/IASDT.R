@@ -43,15 +43,15 @@ summarizes distributions, and generates maps using helper functions.
 \section{Functions details}{
 
 \itemize{
-\item \strong{\code{IAS_process()}}: Merges pre-processed GBIF (\code{GBIF_process()}), EASIN
-(\code{EASIN_process()}), and eLTER (\code{eLTER_process()}) data (run these first).
+\item \strong{\code{IAS_process()}}: Merges pre-processed GBIF (\link{GBIF_process}), EASIN
+(\link{EASIN_process}), and eLTER (\link{eLTER_process}) data (run these first).
 Outputs \code{SpatRaster} distribution rasters, summary tables, and JPEG maps
 using \code{IAS_distribution()} and \code{IAS_plot()}.
 \item \strong{\code{IAS_distribution()}}: Generates presence-absence maps (\code{.RData},
-\code{.tif})  for a species, including all grid cells in the study area and a set
-excluding cultivated/casual-only countries. Returns a tibble with presence
-counts (total, by source) and summary statistics for biogeographical
-regions
+\code{.tif})  for a species, including all grid cells in the study area and a
+set excluding cultivated/casual-only countries. Returns a tibble with
+presence counts (total, by source) and summary statistics for
+biogeographical regions
 \item \strong{\code{IAS_plot()}}: Creates JPEG distribution maps from GBIF, EASIN, and
 eLTER data using \code{ggplot2}.
 }

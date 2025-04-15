@@ -76,7 +76,15 @@ mod_postprocess_2_CPU(
   fix_efforts = "q90",
   fix_rivers = "q90",
   pred_new_sites = TRUE,
-  tar_predictions = TRUE
+  tar_predictions = TRUE,
+  RC_prepare = TRUE,
+  RC_plot = TRUE,
+  VP_prepare = TRUE,
+  VP_plot = TRUE,
+  predict_suitability = TRUE,
+  plot_predictions = TRUE,
+  plot_LF = TRUE,
+  plot_internal_evaluation = TRUE
 )
 }
 \arguments{
@@ -211,13 +219,40 @@ prediction. Defaults to \code{8}.}
 
 \item{tar_predictions}{Logical. Whether to compress the add files into a
 single \verb{*.tar} file (without compression). Default: \code{TRUE}.}
+
+\item{RC_prepare}{Logical. Whether to prepare the data for response curve
+prediction (using \link{resp_curv_prepare_data}). Defaults to \code{TRUE}.}
+
+\item{RC_plot}{Logical. Whether to plot the response curves as JPEG files
+(using \link{resp_curv_plot_SR}, \link{resp_curv_plot_species}, and
+\link{resp_curv_plot_species_all}). Defaults to \code{TRUE}.}
+
+\item{VP_prepare}{Logical. Whether to prepare the data for variance
+partitioning (using \link{variance_partitioning_compute}). Defaults to \code{TRUE}.}
+
+\item{VP_plot}{Logical. Whether to plot the variance partitioning results
+(using \link{variance_partitioning_plot}). Defaults to \code{TRUE}.}
+
+\item{predict_suitability}{Logical. Whether to predict habitat suitability
+across different climate options (using \link{predict_maps}). Defaults to
+\code{TRUE}.}
+
+\item{plot_predictions}{Logical. Whether to plot species and species richness
+predictions as JPEG files (using \link{plot_prediction}). Defaults to \code{TRUE}.}
+
+\item{plot_LF}{Logical. Whether to plot latent factors as JPEG files (using
+\link{plot_latent_factor}). Defaults to \code{TRUE}.}
+
+\item{plot_internal_evaluation}{Logical. Whether to compute and visualize
+model internal evaluation (explanatory power) using \link{plot_evaluation}.
+Defaults to \code{TRUE}.}
 }
 \description{
 These functions post-process fitted Hmsc models on both CPU and GPU. The
 pipeline is under active development and may change in future updates.
 Currently, there are three main functions in this script:
-\code{mod_postprocess_1_CPU()}, \code{mod_prepare_TF()}, and \code{mod_postprocess_2_CPU()}.
-See details for more information.
+\link{mod_postprocess_1_CPU}, \link{mod_prepare_TF}, and \link{mod_postprocess_2_CPU}. See
+details for more information.
 }
 \details{
 \strong{mod_postprocess_1_CPU}

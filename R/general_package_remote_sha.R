@@ -17,7 +17,7 @@
 #'   remote SHA, the value will be `NA`.
 #' @export
 #' @author Ahmed El-Gabbas
-#' @details The function uses `pak::lib_status()` to query the status of
+#' @details The function uses [pak::lib_status()] to query the status of
 #'   installed packages and extract their remote SHAs. It supports packages
 #'   installed from GitHub, GitLab, or other remote sources via `pak`. If a
 #'   package is installed from CRAN or locally without a remote SHA, the result

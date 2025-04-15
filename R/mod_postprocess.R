@@ -7,8 +7,8 @@
 #' These functions post-process fitted Hmsc models on both CPU and GPU. The
 #' pipeline is under active development and may change in future updates.
 #' Currently, there are three main functions in this script:
-#' `mod_postprocess_1_CPU()`, `mod_prepare_TF()`, and `mod_postprocess_2_CPU()`.
-#' See details for more information.
+#' [mod_postprocess_1_CPU], [mod_prepare_TF], and [mod_postprocess_2_CPU]. See
+#' details for more information.
 #' @param model_dir Character. Path to the root directory of the fitted model.
 #' @param GPP_dist Integer. Distance in *kilometers* between knots for the
 #'   selected model.
@@ -35,6 +35,25 @@
 #' @param width_omega,height_omega,width_beta,height_beta Integer. The width and
 #'   height of the generated heatmaps of the Omega and Beta parameters in
 #'   centimeters.
+#' @param RC_prepare Logical. Whether to prepare the data for response curve
+#'   prediction (using [resp_curv_prepare_data]). Defaults to `TRUE`.
+#' @param RC_plot Logical. Whether to plot the response curves as JPEG files
+#'   (using [resp_curv_plot_SR], [resp_curv_plot_species], and
+#'   [resp_curv_plot_species_all]). Defaults to `TRUE`.
+#' @param VP_prepare Logical. Whether to prepare the data for variance
+#'   partitioning (using [variance_partitioning_compute]). Defaults to `TRUE`.
+#' @param VP_plot Logical. Whether to plot the variance partitioning results
+#'   (using [variance_partitioning_plot]). Defaults to `TRUE`.
+#' @param predict_suitability Logical. Whether to predict habitat suitability
+#'   across different climate options (using [predict_maps]). Defaults to
+#'   `TRUE`.
+#' @param plot_predictions Logical. Whether to plot species and species richness
+#'   predictions as JPEG files (using [plot_prediction]). Defaults to `TRUE`.
+#' @param plot_LF Logical. Whether to plot latent factors as JPEG files (using
+#'   [plot_latent_factor]). Defaults to `TRUE`.
+#' @param plot_internal_evaluation Logical. Whether to compute and visualize
+#'   model internal evaluation (explanatory power) using [plot_evaluation].
+#'   Defaults to `TRUE`.
 #' @rdname mod_postprocessing
 #' @name mod_postprocessing
 #' @order 1
@@ -804,7 +823,10 @@ mod_postprocess_2_CPU <- function(
       "MRI-ESM2-0", "UKESM1-0-LL"),
     CC_scenario = c("ssp126", "ssp370", "ssp585"),
     RC_n_cores = 8L, clamp_pred = TRUE, fix_efforts = "q90", fix_rivers = "q90",
-    pred_new_sites = TRUE, tar_predictions = TRUE) {
+    pred_new_sites = TRUE, tar_predictions = TRUE,
+    RC_prepare = TRUE, RC_plot = TRUE, VP_prepare = TRUE, VP_plot = TRUE,
+    predict_suitability = TRUE, plot_predictions = TRUE, plot_LF = TRUE,
+    plot_internal_evaluation = TRUE) {
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -949,131 +971,165 @@ mod_postprocess_2_CPU <- function(
   # ****************************************************************
 
   # Prepare response curve data -----
-  IASDT.R::info_chunk(
-    "Prepare response curve data", level = 1, line_char = "+",
-    line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
-  IASDT.R::resp_curv_prepare_data(
-    path_model = path_model, n_grid = n_grid, n_cores = RC_n_cores,
-    use_TF = use_TF, TF_environ = TF_environ, TF_use_single = TF_use_single,
-    LF_n_cores = LF_n_cores, LF_temp_cleanup = LF_temp_cleanup,
-    LF_check = LF_check, temp_dir = temp_dir, temp_cleanup = temp_cleanup,
-    verbose = TRUE, LF_commands_only = FALSE,
-    return_data = FALSE, probabilities = c(0.025, 0.5, 0.975))
+  if (RC_prepare) {
+    IASDT.R::info_chunk(
+      "Prepare response curve data", level = 1, line_char = "+",
+      line_char_rep = 60, cat_red = TRUE,
+      cat_bold = TRUE, cat_timestamp = FALSE)
 
-  invisible(gc())
+    IASDT.R::resp_curv_prepare_data(
+      path_model = path_model, n_grid = n_grid, n_cores = RC_n_cores,
+      use_TF = use_TF, TF_environ = TF_environ, TF_use_single = TF_use_single,
+      LF_n_cores = LF_n_cores, LF_temp_cleanup = LF_temp_cleanup,
+      LF_check = LF_check, temp_dir = temp_dir, temp_cleanup = temp_cleanup,
+      verbose = TRUE, LF_commands_only = FALSE,
+      return_data = FALSE, probabilities = c(0.025, 0.5, 0.975))
 
-  # ****************************************************************
-
-  # Plotting response curves - species richness -----
-  IASDT.R::info_chunk(
-    "Plotting response curves - species richness", level = 1, line_char = "+",
-    line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
-
-  IASDT.R::resp_curv_plot_SR(
-    model_dir = model_dir, verbose = TRUE, n_cores = RC_n_cores)
-
-  invisible(gc())
+    invisible(gc())
+  }
 
   # ****************************************************************
 
-  # Plotting response curves - species -----
-  IASDT.R::info_chunk(
-    "Plotting response curves - species", level = 1, line_char = "+",
-    line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
+  # Plotting response curves ----
 
-  IASDT.R::resp_curv_plot_species(
-    model_dir = model_dir, n_cores = RC_n_cores, env_file = env_file)
+  if (RC_plot) {
 
-  invisible(gc())
+    ## Species richness -----
+    IASDT.R::info_chunk(
+      "Plotting response curves - species richness", level = 1,
+      line_char = "+", line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE,
+      cat_timestamp = FALSE)
 
-  # ****************************************************************
+    IASDT.R::resp_curv_plot_SR(
+      model_dir = model_dir, verbose = TRUE, n_cores = RC_n_cores)
 
-  # Plotting - all species together -----
-  IASDT.R::info_chunk(
-    "Plotting response curves - all species together", level = 1,
-    line_char = "+", line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE,
-    cat_timestamp = FALSE)
+    invisible(gc())
 
-  IASDT.R::resp_curv_plot_species_all(
-    model_dir = model_dir, n_cores = RC_n_cores)
+    # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  invisible(gc())
+    # Individual species -----
+    IASDT.R::info_chunk(
+      "Plotting response curves - species", level = 1, line_char = "+",
+      line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE,
+      cat_timestamp = FALSE)
+
+    IASDT.R::resp_curv_plot_species(
+      model_dir = model_dir, n_cores = RC_n_cores, env_file = env_file)
+
+    invisible(gc())
+
+    # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+    # All species together -----
+    IASDT.R::info_chunk(
+      "Plotting response curves - all species together", level = 1,
+      line_char = "+", line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE,
+      cat_timestamp = FALSE)
+
+    IASDT.R::resp_curv_plot_species_all(
+      model_dir = model_dir, n_cores = RC_n_cores)
+
+    invisible(gc())
+  }
 
   # ****************************************************************
 
   # Predicting habitat suitability across different climate options -------
-  IASDT.R::info_chunk(
-    "Predicting habitat suitability across different climate options",
-    line_char = "+", line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE,
-    cat_timestamp = FALSE, level = 1)
 
-  IASDT.R::predict_maps(
-    path_model = path_model, hab_abb = hab_abb, env_file = env_file,
-    n_cores = n_cores, clamp_pred = clamp_pred, fix_efforts = fix_efforts,
-    fix_rivers = fix_rivers, pred_new_sites = pred_new_sites, use_TF = use_TF,
-    TF_environ = TF_environ, TF_use_single = TF_use_single,
-    LF_n_cores = LF_n_cores, LF_check = LF_check,
-    LF_temp_cleanup = LF_temp_cleanup, LF_only = FALSE,
-    LF_commands_only = FALSE, temp_dir = temp_dir, temp_cleanup = temp_cleanup,
-    tar_predictions = tar_predictions, CC_models = CC_models,
-    CC_scenario = CC_scenario)
+  if (predict_suitability) {
 
-  invisible(gc())
+    IASDT.R::info_chunk(
+      "Predicting habitat suitability across different climate options",
+      line_char = "+", line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE,
+      cat_timestamp = FALSE, level = 1)
+
+    IASDT.R::predict_maps(
+      path_model = path_model, hab_abb = hab_abb, env_file = env_file,
+      n_cores = n_cores, clamp_pred = clamp_pred, fix_efforts = fix_efforts,
+      fix_rivers = fix_rivers, pred_new_sites = pred_new_sites, use_TF = use_TF,
+      TF_environ = TF_environ, TF_use_single = TF_use_single,
+      LF_n_cores = LF_n_cores, LF_check = LF_check,
+      LF_temp_cleanup = LF_temp_cleanup, LF_only = FALSE,
+      LF_commands_only = FALSE, temp_dir = temp_dir,
+      temp_cleanup = temp_cleanup, tar_predictions = tar_predictions,
+      CC_models = CC_models, CC_scenario = CC_scenario)
+
+    invisible(gc())
+  }
 
   # ****************************************************************
 
   # Compute variance partitioning ------
-  IASDT.R::info_chunk(
-    "Compute variance partitioning", level = 1, line_char = "+",
-    line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
-  IASDT.R::variance_partitioning_compute(
-    path_model = path_model,
-    n_cores = n_cores, use_TF = use_TF, TF_environ = TF_environ,
-    TF_use_single = TF_use_single, temp_cleanup = temp_cleanup,
-    chunk_size = 50L, verbose = TRUE, VP_file = "VarPar",
-    VP_commands_only = FALSE)
+  if (VP_prepare) {
+    IASDT.R::info_chunk(
+      "Compute variance partitioning", level = 1, line_char = "+",
+      line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE,
+      cat_timestamp = FALSE)
+
+    IASDT.R::variance_partitioning_compute(
+      path_model = path_model,
+      n_cores = n_cores, use_TF = use_TF, TF_environ = TF_environ,
+      TF_use_single = TF_use_single, temp_cleanup = temp_cleanup,
+      chunk_size = 50L, verbose = TRUE, VP_file = "VarPar",
+      VP_commands_only = FALSE)
+  }
 
   # ****************************************************************
 
   # Plot Variance partitioning ------
-  IASDT.R::info_chunk(
-    "Plot Variance partitioning", level = 1, line_char = "+",
-    line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
-  IASDT.R::variance_partitioning_plot(
-    path_model = path_model, env_file = env_file, VP_file = "VarPar",
-    use_TF = use_TF, TF_environ = TF_environ, n_cores = n_cores,
-    width = 30, height = 15)
+  if (VP_plot) {
+    IASDT.R::info_chunk(
+      "Plot Variance partitioning", level = 1, line_char = "+",
+      line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE,
+      cat_timestamp = FALSE)
+
+    IASDT.R::variance_partitioning_plot(
+      path_model = path_model, env_file = env_file, VP_file = "VarPar",
+      use_TF = use_TF, TF_environ = TF_environ, n_cores = n_cores,
+      width = 30, height = 15)
+  }
 
   # ****************************************************************
 
   # Plot species & SR predictions as JPEG ------
-  IASDT.R::info_chunk(
-    "Plot species & SR predictions as JPEG", level = 1, line_char = "+",
-    line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
-  IASDT.R::plot_prediction(
-    model_dir = model_dir, env_file = env_file, n_cores = n_cores)
+  if (plot_predictions) {
+    IASDT.R::info_chunk(
+      "Plot species & SR predictions as JPEG", level = 1, line_char = "+",
+      line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE,
+      cat_timestamp = FALSE)
+
+    IASDT.R::plot_prediction(
+      model_dir = model_dir, env_file = env_file, n_cores = n_cores)
+  }
 
   # ****************************************************************
 
   # Plot latent factors as JPEG ------
-  IASDT.R::info_chunk(
-    "Plot latent factors as JPEG", level = 1, line_char = "+",
-    line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
-  IASDT.R::plot_latent_factor(path_model = path_model, env_file = env_file)
+  if (plot_LF) {
+    IASDT.R::info_chunk(
+      "Plot latent factors as JPEG", level = 1, line_char = "+",
+      line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE,
+      cat_timestamp = FALSE)
+
+    IASDT.R::plot_latent_factor(path_model = path_model, env_file = env_file)
+  }
 
   # ****************************************************************
 
   # Plot explanatory Power ------
-  IASDT.R::info_chunk(
-    "Plot explanatory Power", level = 1, line_char = "+", line_char_rep = 60,
-    cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
-  IASDT.R::plot_evaluation(model_dir = model_dir, env_file = env_file)
+  if (plot_internal_evaluation) {
+    IASDT.R::info_chunk(
+      "Plot explanatory Power", level = 1, line_char = "+", line_char_rep = 60,
+      cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
+
+    IASDT.R::plot_evaluation(model_dir = model_dir, env_file = env_file)
+  }
 
   # ****************************************************************
 

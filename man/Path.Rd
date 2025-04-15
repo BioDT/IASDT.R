@@ -17,7 +17,7 @@ namely that only length 1 arguments are recycled.}
 A character vector representing the constructed file path(s).
 }
 \description{
-A wrapper around \code{fs::path()} that constructs file paths from input
+A wrapper around \code{\link[fs:path]{fs::path()}} that constructs file paths from input
 components and returns them as a character string instead of an \code{"fs_path"}
 object.
 }

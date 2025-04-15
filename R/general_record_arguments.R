@@ -109,7 +109,7 @@ record_arguments <- function(out_path = NULL) {
   # If call_info is NULL, it means there’s no parent call, so stop execution
   if (is.null(call_info)) {
     stop(
-      "`record_arguments()` must be called from within another function",
+      "`record_arguments` function must be called from within another function",
       call. = FALSE)
   }
 

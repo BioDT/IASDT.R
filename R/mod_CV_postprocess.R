@@ -133,7 +133,7 @@ mod_CV_postprocess_1_CPU <- function(
             use_TF = use_TF, TF_environ = TF_environ,
             TF_use_single = TF_use_single, LF_n_cores = LF_n_cores,
             LF_check = LF_check, LF_temp_cleanup = LF_temp_cleanup,
-            LF_only = LF_only, LF_commands_only = LF_commands_only,
+            LF_only = LF_only, LF_commands_only = TRUE,
             temp_cleanup = temp_cleanup)
         }
       ))

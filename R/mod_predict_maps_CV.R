@@ -62,7 +62,7 @@ predict_maps_CV <- function(
 
   rm(AllArgs, envir = environment())
 
-  if (CV_name %in% c("CV_Dist", "CV_Large", "CV_SAC")) {
+  if (!CV_name %in% c("CV_Dist", "CV_Large", "CV_SAC")) {
     stop(
       "Invalid value for CV_name argument. Valid values ",
       "are: 'CV_Dist', 'CV_Large', or `CV_SAC`", call. = FALSE)

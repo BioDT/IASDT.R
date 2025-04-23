@@ -14,6 +14,7 @@ format:
     mode: selfcontained
     embed-resources: true
     code-overflow: wrap
+    code-link: true
     page-layout: full
     # toc-expand: true
     # toc-depth: 1
@@ -21,12 +22,14 @@ format:
     link-external-icon: true
     link-external-newwindow: true
 vignette: >
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteIndexEntry{IAS-pDT modelling workflow — 3. biotic data}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
 ---
 
-```{r, include = FALSE, eval=TRUE}
+```{r}
+#| include = FALSE,
+#| eval = TRUE
 library(kableExtra)
 library(knitr)
 library(tibble)
@@ -36,7 +39,9 @@ knitr::opts_chunk$set(
   out.width = "100%", fig.show = "hold", echo = FALSE)
 ```
 
-```{r, eval=TRUE, results="asis"}
+```{r}
+#| eval = TRUE,
+#| results = "asis"
 c("<style>", readLines("style.css"), "</style>") %>% 
   cat(sep = "\n")
 ```
@@ -51,7 +56,11 @@ This article details the processing of biotic data within the `IAS-pDT` modeling
 
 The most recent checklist of naturalized terrestrial alien plant species of non-European origin was retrieved from <a href="https://floraveg.eu/" target="_blank" class="ll">FloraVeg.EU</a>. This checklist was standardized against the GBIF taxonomic backbone to ensure taxonomic consistency, resulting in a total of 1,338 species. The table below summarizes the species count by taxonomic class and order. Occurrence data for these species were compiled from available sources detailed in subsequent sections.
 
-```{r echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE}
+```{r}
+#| echo = FALSE,
+#| message = FALSE,
+#| warning = FALSE,
+#| eval = TRUE
 DT <- tibble::tribble(
   ~"class",         ~"order",            ~`# species`,
   "Liliopsida",     "Acorales",           2,

@@ -2,47 +2,81 @@
 % Please edit documentation in R/mod_merge_chains.R
 \name{mod_merge_chains}
 \alias{mod_merge_chains}
-\title{Merge model chains}
+\alias{mod_merge_chains_CV}
+\title{Merge model chains into \code{Hmsc} and \code{coda} objects}
 \usage{
 mod_merge_chains(
   model_dir = NULL,
-  n_cores = NULL,
+  n_cores = 8L,
   model_info_name = NULL,
   print_incomplete = TRUE,
   from_JSON = FALSE,
   out_extension = "qs2"
 )
+
+mod_merge_chains_CV(
+  model_dir = NULL,
+  n_cores = 8L,
+  CV_names = c("CV_Dist", "CV_Large"),
+  from_JSON = FALSE,
+  out_extension = "qs2"
+)
 }
 \arguments{
-\item{model_dir}{Character. Path to the root directory of the fitted model.
-Two folders will be created \code{Model_Fitted} and \code{Model_Coda} to store merged
-model and coda objects, respectively.}
+\item{model_dir}{Character. Path to the root directory where the model was
+fitted. For \code{mod_merge_chains}, subdirectories \code{Model_Fitted} and
+\code{Model_Coda} are created within this path to store the merged \code{Hmsc} and
+\code{coda} objects, respectively. For \code{mod_merge_chains_CV}, merged objects are
+stored under \code{Model_Fitting_CV/Model_Fitted}.}
 
-\item{n_cores}{Integer. Number of CPU cores to use for parallel processing.}
+\item{n_cores}{Integer. Number of CPU cores to use for parallel processing.
+Defaults to 8L.}
 
 \item{model_info_name}{Character. Name of the file (without extension) where
-the processed model information will be saved. If \code{NULL}, it overwrites the
-\code{Model_Info.RData} file in the \code{model_dir} directory. If provided, a new
-\code{.RData} file will be created with this name.}
+updated model information is saved. If \code{NULL}, overwrites the existing
+\code{Model_Info.RData} file in \code{model_dir} directory. If specified, creates a
+new \code{.RData} file with this name in \code{model_dir} directory. Applies only to
+\code{mod_merge_chains}.}
 
-\item{print_incomplete}{Logical. Whether to print the names of models that
-were not successfully fitted to the console. Defaults to \code{TRUE}.}
+\item{print_incomplete}{Logical. If \code{TRUE}, prints the names of model
+variants that failed to merge due to missing or incomplete chains. Defaults
+to \code{TRUE}.}
 
 \item{from_JSON}{Logical. Whether to convert loaded models from JSON format
 before reading. Defaults to \code{FALSE}.}
 
-\item{out_extension}{Character. File extension (without dot) for the files
-containing the fitted model and coda objects. It can be either \code{qs2} or
-\code{RData}. Defaults to \code{qs2}.}
+\item{out_extension}{Character. File extension (without dot) for output files
+containing merged \code{Hmsc} and \code{coda} objects. Options are \code{qs2} (faster
+read/write via the \code{qs2} package) or \code{RData} (standard R format). Defaults
+to \code{qs2}.}
+
+\item{CV_names}{Character vector. Names of cross-validation strategies to
+merge, matching those used during model setup. Defaults to \code{c("CV_Dist", "CV_Large")}. The names should be one of \code{CV_Dist}, \code{CV_Large}, or
+\code{CV_SAC}. Applies only to \code{mod_merge_chains_CV}.}
 }
 \value{
-The function does not return anything but saves the processed model
-information to disk.
+Both functions return \code{invisible(NULL)} and save processed model
+information and merged objects to disk in the specified locations.
 }
 \description{
-This function merges model chains, checks for missing or incomplete model
-runs, and optionally prints information about incomplete models. It saves the
-processed model objects to disk.
+These functions merge posterior chains from multiple runs of \code{Hmsc} models
+into unified \code{Hmsc} and \code{coda} objects, facilitating further analysis. They
+check for missing or incomplete chains, optionally report these issues, and
+save the processed results to disk. \code{mod_merge_chains} handles regular
+models, while \code{mod_merge_chains_CV} is designed for cross-validated models.
+}
+\details{
+\itemize{
+\item \code{mod_merge_chains} merges posterior chains from multiple runs of an \code{Hmsc}
+model fitted without cross-validation. It checks for missing or incomplete
+chains, aligns posteriors (using \code{alignPost = TRUE}, falling back to \code{FALSE}
+if alignment fails), and saves a merged \code{Hmsc} object and a \code{coda} object for
+MCMC diagnostics. It also records fitting time and memory usage from progress
+files.
+\item \code{mod_merge_chains_CV} performs a similar merging process for cross-validated
+\code{Hmsc} models, processing each fold of the specified \code{CV_names} separately.
+It saves merged \code{Hmsc} objects per fold but does not generate \code{coda} objects.
+}
 }
 \author{
 Ahmed El-Gabbas

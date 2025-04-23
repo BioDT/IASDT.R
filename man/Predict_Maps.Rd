@@ -124,6 +124,9 @@ prediction anomaly (future - current). The function prepares data to be
 uploaded to the \href{http://opendap.biodt.eu/ias-pdt/}{OPeNDAP} data server for
 the use of the IAS-pDT \href{https://app.biodt.eu/}{Shiny App}.
 }
+\seealso{
+\link{predict_maps_CV}
+}
 \author{
 Ahmed El-Gabbas
 }

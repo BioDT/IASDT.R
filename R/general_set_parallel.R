@@ -21,7 +21,7 @@
 #'   [IASDT.R::cat_time()].
 #' @param future_max_size Numeric. Maximum allowed total size (in megabytes) of
 #'   global variables identified. See `future.globals.maxSize` argument of
-#'   [future::future.options] for more details. Default is `8`.
+#'   [future::future.options] for more details. Default is `500L` for 500 MB.
 #' @param ... Additional arguments to pass to [cat_time].
 #' @export
 #' @name set_parallel
@@ -49,7 +49,7 @@
 
 set_parallel <- function(
     n_cores = 1L, strategy = "future::multisession", stop = FALSE,
-    show_log = TRUE, future_max_size = 8L, ...) {
+    show_log = TRUE, future_max_size = 500L, ...) {
 
   # Validate n_cores input
   n_cores <- ifelse((is.null(n_cores) || n_cores < 1), 1L, as.integer(n_cores))

@@ -13,6 +13,7 @@ format:
     self_contained: true
     mode: selfcontained
     embed-resources: true
+    code-link: true
     code-overflow: wrap
     page-layout: full
     # toc-expand: true
@@ -26,7 +27,9 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
 ---
 
-```{r, include = FALSE, eval=TRUE}
+```{r}
+#| include = FALSE,
+#| eval = TRUE
 library(kableExtra)
 library(knitr)
 library(tibble)
@@ -36,7 +39,9 @@ knitr::opts_chunk$set(
   out.width = "100%", fig.show = "hold", echo = FALSE)
 ```
 
-```{r, eval=TRUE, results="asis"}
+```{r}
+#| eval = TRUE,
+#| results = "asis"
 c("<style>", readLines("style.css"), "</style>") %>% 
   cat(sep = "\n")
 ```
@@ -55,7 +60,11 @@ Species distribution models are constructed using the Hierarchical Modelling of 
 
 Models are fitted at the habitat level, with a distinct model fitted for each habitat type, incorporating only those invasive alien species (IAS) associated with the respective habitat type. We employ the habitat classification delineated by Pyšek *et al.* (<a href="https://doi.org/10.23855/preslia.2022.447" target="_blank" class="ll">2022</a>). We fitted the models at eight habitat types (see table below). For each habitat type, predictions of individual species distributions and species richness are generated across multiple climate scenarios; further details are provided in the <a href="workflow_2_abiotic_data.html#chelsa-climate-data" class="ll">abiotic data processing section</a>. Model performance is assessed using spatial block cross-validation to ensure spatial independence between training and testing datasets.
 
-```{r echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE}
+```{r}
+#| echo = FALSE,
+#| message = FALSE,
+#| warning = FALSE,
+#| eval = TRUE
 DT <- tibble::tribble(
   ~Abbreviation, ~`Habitat Type`, ~Description,
   "1", "Forests", "closed vegetation dominated by deciduous or evergreen trees",
@@ -81,7 +90,11 @@ The workflow necessitates the configuration of multiple environment variables to
 
 <br/>
 
-```{r echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE}
+```{r}
+#| echo = FALSE,
+#| message = FALSE,
+#| warning = FALSE,
+#| eval = TRUE
 DT <- tibble::tribble(
   ~Variable, ~Category, ~Description, ~"Default value",
   "DP_R_BioReg_interim", "Biogeographical regions", "Directory path to biogeographical regions interim data", "datasets/interim/biogeoregions",

@@ -62,6 +62,7 @@
 #' @inheritParams predict_hmsc
 #' @return A tibble containing the prediction summary and file paths for output
 #'   `*.tif` files.
+#' @seealso [predict_maps_CV]
 #' @export
 
 predict_maps <- function(
@@ -114,12 +115,17 @@ predict_maps <- function(
 
   IASDT.R::check_args(
     args_all = AllArgs, args_type = "character",
-    args_to_check = c("hab_abb", "env_file", "path_model"))
+    args_to_check = c("hab_abb", "env_file", "path_model", "temp_dir"))
   IASDT.R::check_args(
-    args_all = AllArgs, args_to_check = "RemoveChunks", args_type = "logical")
+    args_all = AllArgs, args_type = "logical",
+    args_to_check = c(
+      "clamp_pred", "pred_new_sites", "use_TF", "TF_environ", "TF_use_single",
+      "LF_check", "LF_temp_cleanup", "LF_only", "LF_commands_only",
+      "temp_cleanup", "tar_predictions"
+    ))
   IASDT.R::check_args(
     args_all = AllArgs, args_type = "numeric",
-    args_to_check = c("n_cores", "LF_n_cores", "chunk_size"))
+    args_to_check = c("n_cores", "LF_n_cores"))
 
   rm(AllArgs, envir = environment())
 
@@ -714,7 +720,7 @@ predict_maps <- function(
       sep_lines_before = 1, sep_lines_after = 2,
       n_separators = 1, line_char = "*")
 
-    # Predicting latent factor only -- no predictions are made
+    # Predicting latent factor only
     Preds_LF <- IASDT.R::predict_hmsc(
       path_model = path_model, gradient = Gradient, expected = TRUE,
       n_cores = n_cores, model_name = paste0("LF_", hab_abb, "_Test"),

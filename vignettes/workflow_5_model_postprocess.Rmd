@@ -14,6 +14,7 @@ format:
     mode: selfcontained
     embed-resources: true
     code-overflow: wrap
+    code-link: true
     page-layout: full
     # toc-expand: true
     # toc-depth: 1
@@ -26,7 +27,10 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
 ---
 
-```{r, results='asis', eval=TRUE, echo=FALSE}
+```{r}
+#| results = "asis",
+#| eval = TRUE,
+#| echo = FALSE
 cat('
 <script>
 function toggleScript(id) {
@@ -41,7 +45,9 @@ function toggleScript(id) {
 ')
 ```
 
-```{r, include = FALSE, eval=TRUE}
+```{r}
+#| include = FALSE,
+#| eval = TRUE
 library(kableExtra)
 library(knitr)
 library(tibble)
@@ -71,7 +77,9 @@ collapsible_script_section <- function(
 }
 ```
 
-```{r, eval=TRUE, results="asis"}
+```{r}
+#| eval = TRUE,
+#| results = "asis"
 c("<style>", readLines("style.css"), "</style>") %>% 
   cat(sep = "\n")
 ```
@@ -86,7 +94,11 @@ Post-processing of fitted models within the `IAS-pDT` workflow is conducted acro
 
 The **`mod_postprocess_1_CPU()`** function initiates the post-processing phase for each habitat type, automating the following tasks:
 
-```{r echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE}
+```{r}
+#| echo = FALSE,
+#| message = FALSE,
+#| warning = FALSE,
+#| eval = TRUE
 DT <- tibble::tribble(
   ~Scenario, ~Description,
   "`mod_SLURM_refit()`", "check for unsuccessful model fits",
@@ -117,7 +129,11 @@ DT %>%
 
 Previous attempts to prepare response curve data, predict at new sites, and compute variance partitioning using R on CPUs (UFZ Windows server and LUMI HPC) were hindered by memory limitations. Consequently, these tasks are offloaded to GPU-based computations using Python and TensorFlow. The `mod_postprocess_1_CPU()` function invokes the following sub-functions to generate commands for GPU execution:
 
-```{r echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE}
+```{r}
+#| echo = FALSE,
+#| message = FALSE,
+#| warning = FALSE,
+#| eval = TRUE
 DT <- tibble::tribble(
   ~Scenario, ~Description,
   "`resp_curv_prepare_data()`", "prepare data for predicting latent factors for response curves",
@@ -145,7 +161,10 @@ DT %>%
 - Latent factor predictions for response curves and new sampling units are executed via a <i>TensorFlow</i> script located at <a href="https://github.com/BioDT/IASDT.R/blob/main/inst/crossprod_solve.py" target="_blank" class="ll">inst/crossprod_solve.py</a>.
 - For these tasks, the respective R functions export numerous <i>.qs2</i> and <i>.feather</i> data files to the <ff>TEMP_Pred</ff> subdirectory, essential for GPU computations. They also generate execution commands saved as <ff>LF_RC_Commands_*.txt</ff> (for response curves) and <ff>LF_NewSites_Commands_*.txt</ff> (for new sites).
 
-```{r, results='asis', eval=TRUE, echo=FALSE}
+```{r}
+#| results = "asis",
+#| eval = TRUE,
+#| echo = FALSE
 collapsible_script_section(
   "Example_LF_RC_Commands.txt", 
   "&#187;&#187; Example LF_RC_Commands.txt file", 
@@ -154,7 +173,10 @@ collapsible_script_section(
 
 <br/>
 
-```{r, results='asis', eval=TRUE, echo=FALSE}
+```{r}
+#| results = "asis",
+#| eval = TRUE,
+#| echo = FALSE
 collapsible_script_section(
   "Example_LF_NewSites_Commands.txt", 
   "&#187;&#187; Example LF_NewSites_Commands.txt file", 
@@ -184,7 +206,10 @@ After executing `mod_postprocess_1_CPU()` for all habitat types, the **`mod_prep
 
 - It aggregates script files containing commands for response curves and latent factor predictions, splitting them into multiple scripts (<ff>TF_Chunk_*.txt</ff>) for batch processing, and generates a SLURM script (<ff>LF_SLURM.slurm</ff>) for latent factor predictions.
 
-```{r, results='asis', eval=TRUE, echo=FALSE}
+```{r}
+#| results = "asis",
+#| eval = TRUE,
+#| echo = FALSE
 collapsible_script_section(
   "Example_TF_Chunk.txt", 
   "&#187;&#187; Example TF_Chunk_*.txt file", 
@@ -193,7 +218,10 @@ collapsible_script_section(
 
 <br/>
 
-```{r, results='asis', eval=TRUE, echo=FALSE}
+```{r}
+#| results = "asis",
+#| eval = TRUE,
+#| echo = FALSE
 collapsible_script_section(
   "Example_LF_SLURM.slurm", 
   "&#187;&#187; Example LF_SLURM.slurm file", 
@@ -204,7 +232,10 @@ collapsible_script_section(
 
 - It consolidates variance partitioning command files into a single <ff>VP_Commands.txt</ff> and prepares a SLURM script (<ff>VP_SLURM.slurm</ff>) for variance partitioning computations.
 
-```{r, results='asis', eval=TRUE, echo=FALSE}
+```{r}
+#| results = "asis",
+#| eval = TRUE,
+#| echo = FALSE
 collapsible_script_section(
   "Example_VP_Commands.txt", 
   "&#187;&#187; Example VP_Commands.txt file", 
@@ -213,7 +244,10 @@ collapsible_script_section(
 
 <br/>
 
-```{r, results='asis', eval=TRUE, echo=FALSE}
+```{r}
+#| results = "asis",
+#| eval = TRUE,
+#| echo = FALSE
 collapsible_script_section(
   "Example_VP_SLURM.slurm", 
   "&#187;&#187; Example VP_SLURM.slurm file", 
@@ -226,14 +260,16 @@ collapsible_script_section(
 
 Latent factor predictions and variance partitioning are computed on GPUs. Batch jobs can be submitted using the `sbatch` command:
 
-```{bash, echo = TRUE}
+```{bash}
+#| echo = TRUE
 sbatch datasets/processed/model_fitting/Mod_Q_Hab_TF/VP_SLURM.slurm
 sbatch datasets/processed/model_fitting/Mod_Q_Hab_TF/LF_SLURM.slurm
 ```
 
 Cross-validated models are fitted by submitting corresponding SLURM commands (*in preparation*):
 
-```{bash, echo = TRUE}
+```{bash}
+#| echo = TRUE
 source datasets/processed/model_fitting/HabX/Model_Fitting_CV/CV_Bash_Fit.slurm
 ```
 
@@ -243,7 +279,11 @@ source datasets/processed/model_fitting/HabX/Model_Fitting_CV/CV_Bash_Fit.slurm
 
 The `mod_postprocess_2_CPU()` function advances the post-processing pipeline for HMSC models on the CPU, automating the following tasks:
 
-```{r echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE}
+```{r}
+#| echo = FALSE,
+#| message = FALSE,
+#| warning = FALSE,
+#| eval = TRUE
 DT <- tibble::tribble(
   ~Function, ~Description,
   " `resp_curv_prepare_data()`,<br/>`resp_curv_plot_SR()`,<br/>`resp_curv_plot_species()`,<br/>`resp_curv_plot_species_all()`", "continue processing and visualizing response curves",

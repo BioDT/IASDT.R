@@ -88,6 +88,7 @@ reference:
   - plot_latent_factor
   - predict_hmsc
   - predict_maps
+  - predict_maps_CV
   - plot_prediction
   - mod_postprocessing
   - mod_CV_evaluate

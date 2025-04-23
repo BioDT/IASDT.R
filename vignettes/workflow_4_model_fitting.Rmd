@@ -14,6 +14,7 @@ format:
     mode: selfcontained
     embed-resources: true
     code-overflow: wrap
+    code-link: true
     page-layout: full
     # toc-expand: true
     # toc-depth: 1
@@ -27,7 +28,10 @@ vignette: >
 ---
 
 
-```{r, results='asis', eval=TRUE, echo=FALSE}
+```{r}
+#| results = "asis",
+#| eval = TRUE,
+#| echo = FALSE
 cat('
 <script>
 function toggleScript(id) {
@@ -42,7 +46,9 @@ function toggleScript(id) {
 ')
 ```
 
-```{r, include = FALSE, eval=TRUE}
+```{r}
+#| include = FALSE,
+#| eval = TRUE
 library(kableExtra)
 library(knitr)
 library(tibble)
@@ -72,7 +78,9 @@ collapsible_script_section <- function(
 }
 ```
 
-```{r, eval=TRUE, results="asis"}
+```{r}
+#| eval = TRUE,
+#| results = "asis"
 c("<style>", readLines("style.css"), "</style>") %>% 
   cat(sep = "\n")
 ```
@@ -91,7 +99,11 @@ The primary function for preparing model-fitting data and initializing models is
 
 - <cc>`mod_prepare_data()`</cc>: prepare input data for modeling, with key arguments including:
 
-```{r echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE}
+```{r}
+#| echo = FALSE,
+#| message = FALSE,
+#| warning = FALSE,
+#| eval = TRUE
 DT <- tibble::tribble(
   ~Argument, ~Description,
   "hab_abb", "abbreviation of a single habitat type to be modeled",
@@ -117,7 +129,11 @@ DT %>%
 
 - `mod_CV_prepare()`: prepare and visualize options for spatial-block cross-validation. In the <i>CV_Dist</i> strategy, block size is governed by the *CV_n_grids* argument, whereas in the <i>CV_Large</i> strategy, the study area is partitioned into larger blocks based on the *CV_n_rows* and *CV_n_columns* arguments.
 
-```{r echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE}
+```{r}
+#| echo = FALSE,
+#| message = FALSE,
+#| warning = FALSE,
+#| eval = TRUE
 DT <- tibble::tribble(
   ~Argument, ~Description,
   "CV_n_folds", "number of cross-validation folds",
@@ -141,7 +157,11 @@ DT %>%
 
 - `prepare_knots()`: prepare and visualize knot locations for Gaussian Predictive Process (GPP) models, as described by Tikhonov *et al.* (<a href="https://doi.org/10.1002/ecy.2929" target="_blank" class="ll">2019</a>).
 
-```{r echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE}
+```{r}
+#| echo = FALSE,
+#| message = FALSE,
+#| warning = FALSE,
+#| eval = TRUE
 DT <- tibble::tribble(
   ~Argument, ~Description,
   "GPP", "whether to incorporate spatial random effects using the Gaussian Predictive Process (GPP)",
@@ -164,7 +184,11 @@ DT %>%
 
 - `mod_SLURM()`: generate SLURM scripts to facilitate model fitting on GPUs using the `Hmsc-HPC` extension.
 
-```{r echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE}
+```{r}
+#| echo = FALSE,
+#| message = FALSE,
+#| warning = FALSE,
+#| eval = TRUE
 DT <- tibble::tribble(
   ~Argument, ~Description,
   "job_name", "name assigned to the SLURM job",
@@ -192,7 +216,11 @@ Other arguments:
 
 - selection of predictors:
 
-```{r echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE}
+```{r}
+#| echo = FALSE,
+#| message = FALSE,
+#| warning = FALSE,
+#| eval = TRUE
 DT <- tibble::tribble(
   ~Argument, ~Description,
   "bio_variables", 'names of <a href="workflow_2_abiotic_data.html#chelsa-climate-data" class="ll">CHELSA</a> variables to include in the model',
@@ -218,7 +246,11 @@ DT %>%
 
 - model fitting options
 
-```{r echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE}
+```{r}
+#| echo = FALSE,
+#| message = FALSE,
+#| warning = FALSE,
+#| eval = TRUE
 DT <- tibble::tribble(
   ~Argument, ~Description,
   "MCMC_n_chains", "number of MCMC chains",
@@ -256,7 +288,10 @@ Following the preparation of model input data and initialization of models, the 
 
 - python commands (<ff>Commands2Fit.txt</ff>) for fitting model chains across all model variants on GPUs, with each line corresponding to a single chain.
 
-```{r, results='asis', eval=TRUE, echo=FALSE}
+```{r}
+#| results = "asis",
+#| eval = TRUE,
+#| echo = FALSE
 collapsible_script_section(
   "Example_python.txt", 
   "&#187;&#187; Example model fitting commands", 
@@ -269,7 +304,10 @@ collapsible_script_section(
 
 <br/>
 
-```{r, results='asis', eval=TRUE, echo=FALSE}
+```{r}
+#| results = "asis",
+#| eval = TRUE,
+#| echo = FALSE
 collapsible_script_section(
   "Example_SLURM.txt", 
   "&#187;&#187; Example SLURM script", 
@@ -280,7 +318,8 @@ collapsible_script_section(
 
 Batch jobs for model fitting can be submitted using the `sbatch` command, for example:
 
-```{bash, echo = TRUE}
+```{bash}
+#| echo = TRUE
 sbatch datasets/processed/model_fitting/Hab1/Bash_Fit.slurm
 ```
 

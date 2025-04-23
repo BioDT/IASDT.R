@@ -4,11 +4,14 @@
 \alias{check_system_command}
 \title{Check system commands availability}
 \usage{
-check_system_command(commands)
+check_system_command(commands, warning = TRUE)
 }
 \arguments{
 \item{commands}{A character vector of system command names to check (e.g.,
 \code{c("git", "Rscript", "unzip")}).}
+
+\item{warning}{Logical. Whether to issue a warning if any command is missing.
+Defaults to \code{TRUE}.}
 }
 \value{
 The function returns \code{TRUE} if all specified commands are available

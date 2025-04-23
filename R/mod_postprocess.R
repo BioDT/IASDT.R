@@ -4,11 +4,10 @@
 
 #' Model pipeline for post-processing fitted Hmsc models
 #'
-#' These functions post-process fitted Hmsc models on both CPU and GPU. The
-#' pipeline is under active development and may change in future updates.
-#' Currently, there are three main functions in this script:
-#' [mod_postprocess_1_CPU], [mod_prepare_TF], and [mod_postprocess_2_CPU]. See
-#' details for more information.
+#' These functions post-process fitted Hmsc models on both CPU and GPU. The main
+#' functions in the pipeline includes `mod_postprocess_1_CPU`,
+#' `mod_CV_postprocess_1_CPU`, `mod_prepare_TF`, and `mod_postprocess_2_CPU`.
+#' See details for more information.
 #' @param model_dir Character. Path to the root directory of the fitted model.
 #' @param GPP_dist Integer. Distance in *kilometers* between knots for the
 #'   selected model.
@@ -17,7 +16,7 @@
 #' @param MCMC_thin,MCMC_n_samples Integer. Thinning value and the number of
 #'   MCMC samples of the selected model.
 #' @param n_cores_VP Integer. Number of cores to use for variance partitioning.
-#'   Defaults to 3.
+#'   Defaults to 3L.
 #' @param n_batch_files Integer. Number of output batch files to create. Must be
 #'   less than or equal to the maximum job limit of the HPC environment.
 #' @param working_directory Character. Optionally sets the working directory in
@@ -63,6 +62,7 @@
 #' @inheritParams mod_inputs
 #' @inheritParams response_curves
 #' @inheritParams coda_to_tibble
+#' @inheritParams mod_merge_chains
 #' @author Ahmed El-Gabbas
 #' @export
 #' @details
@@ -90,6 +90,15 @@
 #' [resp_curv_prepare_data]
 #'    - predicting latent factors for new sampling units: [predict_maps]
 #'    - computing variance partitioning: [variance_partitioning_compute]
+#'
+#' <hr>
+#'
+#' **mod_CV_postprocess_1_CPU**
+#'
+#' This function is similar to `mod_postprocess_1_CPU`, but it is specifically
+#' designed for cross-validated models. It automates merging fitted
+#' cross-validated model chains into `Hmsc` model objects and prepare scripts
+#' for latent factor prediction on `TensorFlow` using [predict_maps_CV].
 #'
 #' <hr>
 #'
@@ -153,7 +162,7 @@ mod_postprocess_1_CPU <- function(
     TF_use_single = FALSE, LF_n_cores = n_cores,
     LF_temp_cleanup = TRUE, LF_check = FALSE, temp_cleanup = TRUE,
     TF_environ = NULL, clamp_pred = TRUE, fix_efforts = "q90",
-    fix_rivers = "q90", pred_new_sites = TRUE, n_cores_VP = 3,
+    fix_rivers = "q90", pred_new_sites = TRUE, n_cores_VP = 3L,
     width_omega = 26, height_omega = 22.5, width_beta = 25, height_beta = 35) {
 
   .StartTime <- lubridate::now(tzone = "CET")
@@ -211,10 +220,10 @@ mod_postprocess_1_CPU <- function(
       "are: 'Tree' or 'NoTree'", call. = FALSE)
   }
 
-  if (!all(CV_name %in% c("CV_Dist", "CV_Large"))) {
+  if (!all(CV_name %in% c("CV_Dist", "CV_Large", "CV_SAC"))) {
     stop(
       "Invalid value for CV_name argument. Valid values ",
-      "are: 'CV_Dist' or 'CV_Large'", call. = FALSE)
+      "are: 'CV_Dist', 'CV_Large', or `CV_SAC`", call. = FALSE)
   }
 
   # ****************************************************************
@@ -703,10 +712,13 @@ mod_prepare_TF <- function(
       readr::write_lines(x = LF_commands[[.x]], file = File, append = TRUE)
       readr::write_lines(
         x = c(
-          "\n#----------------------------------------",
-          paste0("# ", lubridate::now(tzone = "CET")),
-          "#----------------------------------------"),
+          paste0("\n#", strrep("_", 60)),
+          paste0(
+            "# This script was created on: ",
+            format(lubridate::now(tzone = "CET"), "%Y-%m-%d %H:%M:%S")),
+          paste0("#", strrep("_", 60))),
         file = File, append = TRUE)
+
       return(invisible(NULL))
     })
 

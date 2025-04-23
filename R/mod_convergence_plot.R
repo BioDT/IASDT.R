@@ -82,7 +82,7 @@ convergence_plot <- function(
   SpComb <- `2.5%` <- `97.5%` <- Class <- Order <- Family <- DT <- IAS_ID <-
     Species <- Variable <- data <- PlotID <- File <- Page <- Iter <- Value <-
     Chain <- y <- label <- Var_Sp <- CI_025 <- CI_975 <- Var_Min <- Var_Max <-
-    Plot_File <- Var_Sp2 <- Species_name <- Species_File <-
+    Plot_File <- Var_Sp2 <- Species_name <- Species_File <- Var_Sp_File <-
     Path_PA <- VarDesc <- Term <- NULL
 
   # # ..................................................................... ###

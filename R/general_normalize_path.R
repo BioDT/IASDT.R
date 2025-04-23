@@ -24,13 +24,13 @@ normalize_path <- function(path, must_work = FALSE) {
 
   # Validate input
   if (is.null(path)) {
-    stop("Error: `path` cannot be NULL.", call. = FALSE)
+    stop("`path` cannot be NULL.", call. = FALSE)
   }
   if (!is.character(path)) {
-    stop("Error: `path` must be a character vector.", call. = FALSE)
+    stop("`path` must be a character vector.", call. = FALSE)
   }
   if (length(path) == 0) {
-    stop("Error: `path` cannot be an empty character vector.", call. = FALSE)
+    stop("`path` cannot be an empty character vector.", call. = FALSE)
   }
 
   # Check path existence before transformation (if must_work = TRUE)

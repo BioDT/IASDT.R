@@ -542,7 +542,6 @@ predict_latent_factor <- function(
         etaPreds <- purrr::map(
           .x = seq_len(nrow(LF_Data)),
           .f = function(x) {
-
             result <- try(
               expr = etaPreds_F(
                 RowNum = x, units_pred = units_pred, LF_check = LF_check),
@@ -881,17 +880,16 @@ run_crossprod_solve <- function(
   # using another HPC system, the function needs to be adapted accordingly.
 
   if (.Platform$OS.type == "windows") {
-    if (isFALSE(LF_commands_only)) {
-      if (is.null(TF_environ)) {
-        stop(
-          "When running on Windows, `TF_environ` must be specified",
-          call. = FALSE)
-      }
-      if (!dir.exists(TF_environ)) {
-        stop(
-          "The specified `TF_environ` directory ",
-          IASDT.R::normalize_path(TF_environ), " does not exist", call. = FALSE)
-      }
+
+    if (is.null(TF_environ)) {
+      stop(
+        "When running on Windows, `TF_environ` must be specified",
+        call. = FALSE)
+    }
+    if (!dir.exists(TF_environ)) {
+      stop(
+        "The specified `TF_environ` directory ",
+        IASDT.R::normalize_path(TF_environ), " does not exist", call. = FALSE)
     }
 
     python_executable <- IASDT.R::normalize_path(

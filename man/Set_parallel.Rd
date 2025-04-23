@@ -9,7 +9,7 @@ set_parallel(
   strategy = "future::multisession",
   stop = FALSE,
   show_log = TRUE,
-  future_max_size = 8L,
+  future_max_size = 500L,
   ...
 )
 }
@@ -32,7 +32,7 @@ sequential mode. If \code{FALSE} (default), sets up a new plan.}
 
 \item{future_max_size}{Numeric. Maximum allowed total size (in megabytes) of
 global variables identified. See \code{future.globals.maxSize} argument of
-\link[future:future.options]{future::future.options} for more details. Default is \code{8}.}
+\link[future:future.options]{future::future.options} for more details. Default is \code{500L} for 500 MB.}
 
 \item{...}{Additional arguments to pass to \link{cat_time}.}
 }

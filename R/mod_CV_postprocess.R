@@ -1,0 +1,304 @@
+## |------------------------------------------------------------------------| #
+# Model pipeline for post-processing cross-validated Hmsc models
+## |------------------------------------------------------------------------| #
+
+#' @rdname mod_postprocessing
+#' @name mod_postprocessing
+#' @order 5
+#' @author Ahmed El-Gabbas
+#' @export
+
+mod_CV_postprocess_1_CPU <- function(
+    model_dir = NULL, CV_names = NULL, n_cores = 8L, env_file = ".env",
+    from_JSON = FALSE, use_TF = TRUE, TF_use_single = FALSE,
+    LF_n_cores = n_cores, LF_only = TRUE, LF_temp_cleanup = TRUE,
+    LF_check = FALSE, temp_cleanup = TRUE, TF_environ = NULL,
+    n_batch_files = 210L, working_directory = NULL, partition_name = "small-g",
+    LF_runtime = "01:00:00") {
+
+  # ****************************************************************
+
+  # Avoid "no visible binding for global variable" message
+  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
+  CV <- CV_name <- NULL
+
+  # ****************************************************************
+
+  # Check input arguments ----
+
+  AllArgs <- ls(envir = environment())
+  AllArgs <- purrr::map(
+    AllArgs,
+    function(x) get(x, envir = parent.env(env = environment()))) %>%
+    stats::setNames(AllArgs)
+
+  IASDT.R::check_args(
+    args_all = AllArgs, args_type = "logical",
+    args_to_check = c(
+      "from_JSON", "use_TF", "TF_use_single", "LF_only", "LF_temp_cleanup",
+      "LF_check", "temp_cleanup"))
+  IASDT.R::check_args(
+    args_all = AllArgs, args_type = "character",
+    args_to_check = c("model_dir", "env_file", "partition_name", "LF_runtime"))
+  IASDT.R::check_args(
+    args_all = AllArgs, args_type = "numeric",
+    args_to_check = c("n_cores", "LF_n_cores", "n_batch_files"))
+  rm(AllArgs, envir = environment())
+
+  if (n_batch_files <= 0) {
+    stop("`n_batch_files` must be a positive integer.", call. = FALSE)
+  }
+  if (n_cores <= 0) {
+    stop("`n_cores` must be a positive integer.", call. = FALSE)
+  }
+  if (LF_n_cores <= 0) {
+    stop("`LF_n_cores` must be a positive integer.", call. = FALSE)
+  }
+
+  if (!all(CV_names %in% c("CV_Dist", "CV_Large", "CV_SAC"))) {
+    stop(
+      "Invalid value for CV_names argument. Valid values ",
+      "are: 'CV_Dist', 'CV_Large', or `CV_SAC`", call. = FALSE)
+  }
+
+  # ****************************************************************
+
+  # # Load environment variables, for project ID
+  EnvVars2Read <- tibble::tribble(
+    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    "ProjectID", "DP_R_LUMI_gpu", FALSE, FALSE)
+
+  # Assign environment variables and check file and paths
+  IASDT.R::assign_env_vars(
+    env_file = env_file, env_variables_data = EnvVars2Read)
+  rm(EnvVars2Read, envir = environment())
+
+  # ****************************************************************
+
+  # Paths to files and directories
+
+  CV_dir <- IASDT.R::path(model_dir, "Model_Fitting_CV")
+
+  Temp_dir <- IASDT.R::path(CV_dir, "Temp")
+  # Path to store TF commands
+  Path_TF <- IASDT.R::path(CV_dir, "TF_commands")
+  # Path to store log files
+  Path_Log <- IASDT.R::path(Path_TF, "log")
+
+  fs::dir_create(c(Path_TF, Path_Log))
+
+  CV_DT_fitted <- IASDT.R::path(CV_dir, "CV_DT_fitted.RData")
+  if (!file.exists(CV_DT_fitted)) {
+    stop("CV_DT_fitted file", CV_DT_fitted, "not found.", call. = FALSE)
+  }
+
+  Path_LF_SLURM <- IASDT.R::path(Path_TF, "LF_SLURM.slurm")
+  path_out <- IASDT.R::path(Path_Log, "%x-%A-%a.out")
+
+  # ****************************************************************
+
+  # Merge chains -----
+
+  IASDT.R::info_chunk(
+    "Merge chains", line_char = "|", line_char_rep = 60, cat_red = TRUE,
+    cat_bold = TRUE, cat_timestamp = FALSE, info_lines_before = 2)
+
+  IASDT.R::mod_merge_chains_CV(
+    model_dir = model_dir, n_cores = n_cores, CV_names = CV_names,
+    from_JSON = FALSE, out_extension = "qs2")
+
+  # ****************************************************************
+
+  # Prepare scripts for latent factor processing -----
+
+  IASDT.R::info_chunk(
+    "Prepare scripts for latent factor processing",
+    line_char = "|", line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE,
+    cat_timestamp = FALSE, info_lines_before = 2)
+
+  CV_DT_fitted <- IASDT.R::load_as(CV_DT_fitted) %>%
+    dplyr::mutate(
+      LF = purrr::map2(
+        .x = CV_name, .y = CV,
+        .f = ~ {
+
+          IASDT.R::info_chunk(
+            paste0(.x, "_", .y), level = 1,
+            line_char = "+", line_char_rep = 60, cat_red = TRUE,
+            cat_bold = TRUE, cat_timestamp = FALSE)
+
+          IASDT.R::predict_maps_CV(
+            model_dir = "datasets/processed/model_fitting/Mod_Riv_Hab4a",
+            CV_name = paste0("CV_", .x), CV_fold = .y, n_cores = n_cores,
+            use_TF = use_TF, TF_environ = TF_environ,
+            TF_use_single = TF_use_single, LF_n_cores = LF_n_cores,
+            LF_check = LF_check, LF_temp_cleanup = LF_temp_cleanup,
+            LF_only = LF_only, LF_commands_only = LF_commands_only,
+            temp_cleanup = temp_cleanup)
+        }
+      ))
+
+  # ****************************************************************
+
+  # Merge TensorFlow commands into batch files -----
+
+  IASDT.R::cat_sep(n_separators = 2, sep_lines_before = 2, sep_lines_after = 2)
+  IASDT.R::cat_time("Merge TensorFlow commands into batch files")
+
+  IASDT.R::cat_time(
+    paste0(
+      "Merge and organize TensorFlow commands for LF predictions ",
+      "into a maximum of ", n_batch_files, " files"),
+    level = 1, cat_timestamp = FALSE)
+
+  # Basic commands for TensorFlow setup
+  BasicCommands <- c(
+    "#!/bin/bash\n",
+    "# Load TensorFlow module and configure environment",
+    "ml use /appl/local/csc/modulefiles",
+    "ml tensorflow\n",
+    "export TF_CPP_MIN_LOG_LEVEL=3",
+    "export TF_ENABLE_ONEDNN_OPTS=0\n",
+    "# Verify GPU availability",
+    paste0(
+      'python3 -c "import tensorflow as tf; ',
+      'print(\\\"Num GPUs Available:\\\", ',
+      'len(tf.config.list_physical_devices(\\\"GPU\\\")))"'),
+    "")
+
+  # Change working directory if specified
+  if (!is.null(working_directory)) {
+    working_directory <- IASDT.R::normalize_path(
+      working_directory, must_work = TRUE)
+    BasicCommands <- c(
+      BasicCommands, "# Change to working directory",
+      paste0("cd ", working_directory), "")
+  }
+
+  # Find list of files matching the pattern
+  LF_InFiles <- list.files(
+    path = Temp_dir, pattern = "^LF_NewSites_Commands_.+.txt",
+    recursive = TRUE, full.names = TRUE) %>%
+    gtools::mixedsort()
+
+  if (length(LF_InFiles) == 0) {
+    stop("No command files were found in: ", Temp_dir, call. = FALSE)
+  }
+
+  IASDT.R::cat_time(
+    paste0("Found ", length(LF_InFiles), " files"),
+    level = 2, cat_timestamp = FALSE)
+  stringr::str_remove_all(LF_InFiles, paste0(Temp_dir, "/")) %>%
+    purrr::walk(IASDT.R::cat_time, level = 3, cat_timestamp = FALSE)
+
+  # Read and merge commands from input files
+  LF_commands <- purrr::map(LF_InFiles, readr::read_lines) %>%
+    unlist() %>%
+    gtools::mixedsort()
+
+  IASDT.R::cat_time(
+    paste0("Total number of commands to be executed: ", length(LF_commands)),
+    level = 2, cat_timestamp = FALSE)
+
+  if (length(LF_commands) < n_batch_files) {
+    IASDT.R::cat_time(
+      paste0(
+        "Fewer commands than the requested number of files. ",
+        "Setting `n_batch_files=", n_batch_files, "`."),
+      level = 2, cat_timestamp = FALSE)
+    n_batch_files <- length(LF_commands)
+  }
+
+  IASDT.R::cat_time(
+    paste0("Splitting commands into ", n_batch_files, " files"),
+    cat_timestamp = FALSE, level = 2)
+  LF_commands <- IASDT.R::split_vector(LF_commands, n_splits = n_batch_files)
+
+  line_sep <- strrep("-", 60)
+
+  purrr::walk(
+    .x = seq_len(length(LF_commands)),
+    .f = ~ {
+
+      Chunk_number <- stringr::str_pad(
+        .x, pad = "0", width = nchar(n_batch_files))
+      File <- IASDT.R::path(Path_TF, paste0("TF_Chunk_", Chunk_number, ".txt"))
+      time_now <- lubridate::now(tzone = "CET") %>%
+        format(format = "%Y-%m-%d %H:%M:%S")
+
+      readr::write_lines(x = BasicCommands, file = File, append = FALSE)
+      readr::write_lines(
+        x = paste0(
+          "# ", length(LF_commands[[.x]]), " commands to be executed:"),
+        file = File, append = TRUE)
+      readr::write_lines(x = LF_commands[[.x]], file = File, append = TRUE)
+      readr::write_lines(
+        x = c(
+          paste0("\n#", line_sep),
+          paste0("# This script was created on: ", time_now),
+          paste0("#", line_sep)),
+        file = File, append = TRUE)
+
+      return(invisible(NULL))
+    })
+
+  # ****************************************************************
+
+  # Prepare LF batch file -----
+  IASDT.R::cat_time("Prepare LF batch file")
+
+  time_now <- lubridate::now(tzone = "CET") %>%
+    format(format = "%Y-%m-%d %H:%M:%S")
+
+  LF_slurm_script <- stringr::str_glue(
+    "#!/bin/bash\n",
+    "#SBATCH --job-name=PP_LF\n",
+    "#SBATCH --ntasks=1\n",
+    "#SBATCH --ntasks-per-node=1\n",
+    "#SBATCH --account={ProjectID}\n",
+    "#SBATCH --cpus-per-task=1\n",
+    "#SBATCH --gpus-per-node=1\n",
+    "#SBATCH --time={LF_runtime}\n",
+    "#SBATCH --partition={partition_name}\n",
+    "#SBATCH --output={path_out}\n",
+    "#SBATCH --error={path_out}\n",
+    "#SBATCH --array=1-{n_batch_files}\n\n",
+
+    "# Define the directory where TF_Chunk_*.txt scripts exist.",
+    "Each array task will pick one of these files to execute.\n",
+    'OutputDir="{Path_TF}"\n\n',
+
+    '# Generate filename by zero-padding the "SLURM_ARRAY_TASK_ID" to ',
+    'three digits (001, 002, ..., 210) and prefixing with "TF_Chunk_"\n',
+    'SplitFile="${{OutputDir}}/TF_Chunk_$(printf "%03d" ',
+    '"$SLURM_ARRAY_TASK_ID").txt"\n\n',
+
+    "# Check if the target file exists\n",
+    'if [[ ! -f "$SplitFile" ]]; then\n',
+    '    echo "Error: File $SplitFile not found." >&2\n',
+    "    exit 1\nfi\n\n",
+
+    "# Report which file is being processed\n",
+    'echo "Processing file: $SplitFile"\n\n',
+    '# Execute the selected chunk script\nbash "$SplitFile"\n\n',
+
+    "# Print a timestamped end-of-job message\n",
+    'echo "End of program at $(date)"\n\n# {line_sep}\n',
+
+    "# This script was created on: {time_now} CET\n",
+    "# {line_sep}")
+
+  IASDT.R::cat_time(
+    paste0("Writing SLURM script to: `", Path_LF_SLURM, "`"),
+    level = 2, cat_timestamp = FALSE)
+  # Write the content to a file
+  readr::write_lines(LF_slurm_script, Path_LF_SLURM, append = FALSE)
+  # Make the file executable
+  Sys.chmod(Path_LF_SLURM, mode = "755")
+
+  # ****************************************************************
+  # ****************************************************************
+
+  return(invisible(NULL))
+
+}

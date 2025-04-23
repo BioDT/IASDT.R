@@ -70,7 +70,7 @@ check_quarto <- function(pre_release = FALSE) {
   # # ..................................................................... ###
 
   # Check `quarto` system command
-  if (IASDT.R::check_system_command("quarto")) {
+  if (IASDT.R::check_system_command("quarto", warning = FALSE)) {
     InstalledVersion <- system("quarto --version", intern = TRUE)
   } else {
     cat(crayon::blue("Quarto is not available in the system.\n"))

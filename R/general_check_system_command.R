@@ -11,6 +11,8 @@
 #'   `c("git", "Rscript", "unzip")`).
 #' @return The function returns `TRUE` if all specified commands are available
 #'   on the system, `FALSE` if any is not available.
+#' @param warning Logical. Whether to issue a warning if any command is missing.
+#'   Defaults to `TRUE`.
 #' @export
 #' @name check_system_command
 #' @author Ahmed El-Gabbas
@@ -18,7 +20,7 @@
 #' check_system_command(c("unzip", "head", "curl", "missing"))
 #' @export
 
-check_system_command <- function(commands) {
+check_system_command <- function(commands, warning = TRUE) {
 
   # Check the availability of each command in the list
   Okay <- purrr::map_lgl(.x = commands, .f = ~ nzchar(Sys.which(.x)))
@@ -28,9 +30,11 @@ check_system_command <- function(commands) {
 
   # If any tools are missing, stop with an informative error message
   if (length(MissingTools) > 0) {
-    warning(
-      "The following tool(s) are missing: ", toString(MissingTools),
-      call. = FALSE)
+    if (warning) {
+      warning(
+        "The following tool(s) are missing: ", toString(MissingTools),
+        call. = FALSE)
+    }
     return(FALSE)
   } else {
     return(TRUE)

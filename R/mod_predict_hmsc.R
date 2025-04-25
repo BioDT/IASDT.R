@@ -411,7 +411,7 @@ predict_hmsc <- function(
 
     if (is.null(prediction_type) || prediction_type == "c") {
 
-      IASDT.R::cat_time(paste0("Loading LF prediction from disk", level = 1)
+      IASDT.R::cat_time("Loading LF prediction from disk", level = 1)
       IASDT.R::cat_time(LF_inputFile, level = 2, cat_timestamp = FALSE)
 
       for (r in seq_len(Mod_nr)) {
@@ -713,7 +713,7 @@ predict_hmsc <- function(
   if (temp_cleanup) {
     try(fs::file_delete(Eval_DT$Path_pred), silent = TRUE)
   }
-  
+
   IASDT.R::cat_time("Predictions were saved", level = 1)
   IASDT.R::cat_time(Pred_File, level = 2, cat_timestamp = FALSE)
 

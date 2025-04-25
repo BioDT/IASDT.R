@@ -23,9 +23,10 @@
 check_args <- function(args_all, args_to_check, args_type) {
 
   if (is.null(args_all) || is.null(args_to_check) || is.null(args_type)) {
-    stop(
+    IASDT.R::stop_ctx(
       "`args_all`, `args_to_check`, or `args_type` cannot be NULL",
-      call. = FALSE)
+      args_all = args_all, args_to_check = args_to_check,
+      args_type = args_type)
   }
 
   args_type <- match.arg(
@@ -39,9 +40,11 @@ check_args <- function(args_all, args_to_check, args_type) {
       sort()
 
     if (length(MissingArgs) > 0) {
-      stop(
-        "The following character argument(s) must be provided\n  >>  ",
-        paste(MissingArgs, collapse = " | "), call. = FALSE)
+      IASDT.R::stop_ctx(
+        paste0(
+          "The following character argument(s) must be provided\n  >>  ",
+          paste(MissingArgs, collapse = " | ")),
+        length_MissingArgs = length(MissingArgs))
     }
   }
 
@@ -53,9 +56,11 @@ check_args <- function(args_all, args_to_check, args_type) {
       sort()
 
     if (length(MissingArgs) > 0) {
-      stop(
-        "The following argument(s) must be logical\n  >>  ",
-        paste(MissingArgs, collapse = " | "), call. = FALSE)
+      IASDT.R::stop_ctx(
+        paste0(
+          "The following argument(s) must be logical\n  >>  ",
+          paste(MissingArgs, collapse = " | ")),
+        length_MissingArgs = length(MissingArgs))
     }
   }
 
@@ -67,9 +72,11 @@ check_args <- function(args_all, args_to_check, args_type) {
       sort()
 
     if (length(MissingArgs) > 0) {
-      stop(
-        "The following argument(s) must be numeric or integer\n  >>  ",
-        paste(MissingArgs, collapse = " | "), call. = FALSE)
+      IASDT.R::stop_ctx(
+        paste0(
+          "The following argument(s) must be numeric or integer\n  >>  ",
+          paste(MissingArgs, collapse = " | ")),
+        length_MissingArgs = length(MissingArgs))
     }
   }
 

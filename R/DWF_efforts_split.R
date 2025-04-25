@@ -21,21 +21,22 @@ efforts_split <- function(
 
   # Check if chunk_size is valid (greater than zero)
   if (!is.numeric(chunk_size) || chunk_size <= 0) {
-    stop("chunk_size must be a positive number.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "chunk_size must be a positive number.", chunk_size = chunk_size)
   }
 
   # Check if `path_zip` is a character of length 1 and not empty. Also Check
   # if file exists
   if (!is.character(path_zip) || length(path_zip) != 1 || path_zip == "" ||
     is.null(path_zip)) {
-    stop(
+    IASDT.R::stop_ctx(
       "`path_zip` must be a character of length 1 and not empty.",
-      call. = FALSE)
+      path_zip = path_zip)
   }
 
   # Check if `path_zip` is a valid path
   if (!file.exists(path_zip)) {
-    stop("`path_zip` is not a valid path.", call. = FALSE)
+    IASDT.R::stop_ctx("`path_zip` is not a valid path.", path_zip = path_zip)
   }
 
 
@@ -44,7 +45,7 @@ efforts_split <- function(
   CommandsAvail <- purrr::map_lgl(Commands, IASDT.R::check_system_command)
   if (!all(CommandsAvail)) {
     Missing <- paste(Commands[!CommandsAvail], collapse = " + ")
-    stop("The following command(s) are not available: ", Missing, call. = FALSE)
+    IASDT.R::stop_ctx("Missing commands", missing_commands = Missing)
   }
 
   # ensure that `chunk_size` is not formatted in scientific notation
@@ -98,7 +99,8 @@ efforts_split <- function(
   Path_Chunks <- tryCatch(
     IASDT.R::system_command(Command, R_object = FALSE),
     error = function(e) {
-      stop("Failed to execute system command: ", e$message, call. = FALSE)
+      IASDT.R::stop_ctx(
+        paste0("Failed to execute system command: ", e$message))
     }
   )
   rm(Path_Chunks, envir = environment())

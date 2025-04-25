@@ -2,8 +2,7 @@
 % Please edit documentation in R/mod_predict_latent_factor.R
 \name{run_crossprod_solve}
 \alias{run_crossprod_solve}
-\title{run_crossprod_solve
-Run Crossprod Solve}
+\title{run_crossprod_solve}
 \usage{
 run_crossprod_solve(
   TF_environ,

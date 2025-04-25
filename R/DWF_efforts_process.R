@@ -92,22 +92,28 @@ efforts_process <- function(
 
   # Validate boundaries argument
   if (length(boundaries) != 4) {
-    stop("`boundaries` must be a numeric vector of length 4.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`boundaries` must be a numeric vector of length 4.",
+      boundaries = boundaries, length_boundaries = length(boundaries))
   }
 
   # Validate chunk_size
   if (!is.numeric(chunk_size) || chunk_size <= 0) {
-    stop("`chunk_size` must be a positive numeric value.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`chunk_size` must be a positive numeric value.", chunk_size = chunk_size)
   }
 
   # Validate n_cores
   if (!is.numeric(n_cores) || n_cores <= 0 || n_cores > 50) {
-    stop("`n_cores` must be a positive integer.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`n_cores` must be a positive integer.", n_cores = n_cores)
   }
 
   # Validate start_year
   if (!is.numeric(start_year) || start_year <= 1950) {
-    stop("`start_year` must be a positive integer after 1950", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`start_year` must be a positive integer after 1950",
+      start_year = start_year)
   }
 
   # # ..................................................................... ###
@@ -158,9 +164,12 @@ efforts_process <- function(
 
   missing_grids <- Grids[!file.exists(Grids)]
   if (length(missing_grids) > 0) {
-    stop(
-      "The following grid file(s) do not exist:\n",
-      paste0(" >>> ", missing_grids, collapse = "\n"), call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0(
+        "The following grid file(s) do not exist:\n",
+        paste0(" >>> ", missing_grids, collapse = "\n")),
+      missing_grids = missing_grids,
+      length_missing_grids = length(missing_grids))
   }
 
   # # ..................................................................... ###
@@ -178,9 +187,9 @@ efforts_process <- function(
   } else {
 
     if (!file.exists(AllRequests)) {
-      stop(
+      IASDT.R::stop_ctx(
         "Efforts data was not requested and the file does not exist.",
-        call. = FALSE)
+        AllRequests = AllRequests)
     }
 
     IASDT.R::cat_time(
@@ -201,17 +210,18 @@ efforts_process <- function(
   } else {
 
     if (!file.exists(AllRequests)) {
-      stop(
+      IASDT.R::stop_ctx(
         "Efforts data was not downloaded and the file does not exist.",
-        call. = FALSE)
+        AllRequests = AllRequests)
     }
 
     Efforts_AllRequests <- IASDT.R::load_as(AllRequests)
 
     if (!("DownPath" %in% names(Efforts_AllRequests))) {
-      stop(
+      IASDT.R::stop_ctx(
         "Efforts data was not downloaded and the 'DownPath' column is missing.",
-        call. = FALSE)
+        Efforts_AllRequests = Efforts_AllRequests,
+        names_Efforts_AllRequests = names(Efforts_AllRequests))
     }
 
     rm(Efforts_AllRequests, envir = environment())

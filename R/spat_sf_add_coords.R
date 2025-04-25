@@ -42,12 +42,16 @@ sf_add_coords <- function(
     sf_object, name_x = "Long", name_y = "Lat", overwrite = FALSE) {
 
   if (!inherits(sf_object, "sf")) {
-    stop("`sf_object` must be an sf object", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`sf_object` must be an sf object",
+      sf_object = sf_object, class_sf_object = class(sf_object))
   }
 
   if (!is.character(name_x) || !is.character(name_y) ||
       !nzchar(name_x) || !nzchar(name_y)) {
-    stop("`name_x` and `name_y` must be non-empty strings", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`name_x` and `name_y` must be non-empty strings",
+      name_x = name_x, name_y = name_y)
   }
 
   ColNames <- names(sf_object)

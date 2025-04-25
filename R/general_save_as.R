@@ -49,7 +49,9 @@ save_as <- function(
     feather_compression = "zstd", ...) {
 
   if (is.null(object) || is.null(out_path)) {
-    stop("`object` and `out_path` cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`object` and `out_path` cannot be NULL",
+      object = object, out_path = out_path)
   }
 
   if (inherits(object, "character")) {
@@ -59,9 +61,11 @@ save_as <- function(
   Extension <- stringr::str_to_lower(tools::file_ext(out_path))
 
   if (!Extension %in% c("qs2", "rdata", "feather", "rds")) {
-    stop(
-      "Extension of `out_path` must be either 'qs2', ",
-      "'rdata', 'feather', or 'rds' (case-insensitive).", call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0(
+        "Extension of `out_path` must be either 'qs2', ",
+        "'rdata', 'feather', or 'rds' (case-insensitive)."),
+      Extension = Extension)
   }
 
   # Create directory if not available
@@ -74,9 +78,9 @@ save_as <- function(
     },
     rdata = {
       if (is.null(object_name)) {
-        stop(
+        IASDT.R::stop_ctx(
           "`object_name` cannot be `NULL` for saving RData files",
-          call. = FALSE)
+          object_name = object_name)
       }
       object_name <- eval(object_name)
       assign(object_name, object)
@@ -89,7 +93,7 @@ save_as <- function(
     rds = {
       saveRDS(object = object, file = out_path, ...)
     },
-    stop("Invalid file extension", call. = FALSE)
+    IASDT.R::stop_ctx("Invalid file extension", Extension = Extension)
   )
 
   return(invisible())

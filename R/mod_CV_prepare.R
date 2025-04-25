@@ -65,25 +65,26 @@ mod_CV_prepare <- function(
 
   if (is.null(input_data) || is.null(env_file) ||
       is.null(out_path) || is.null(x_vars)) {
-    stop(
+    IASDT.R::stop_ctx(
       "`input_data`, `env_file`, `out_path`, and `x_vars` can not be empty",
-      call. = FALSE)
+      input_data = input_data, env_file = env_file, out_path = out_path,
+      x_vars = x_vars)
   }
 
   if (!file.exists(env_file)) {
-    stop(
-      "Path to environment variables: ", env_file, " was not found",
-      call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Path to environment variables does not exist ", env_file = env_file)
   }
 
   AllVars <- c("x", "y", x_vars)
   AllVarsInDT <- all(AllVars %in% names(input_data))
   if (isFALSE(AllVarsInDT)) {
     MissingVars <- setdiff(AllVars, names(input_data))
-    stop(
-      "input_data must contain 'x' and 'y' columns and all ",
-      "environmental predictors in the x_vars argument.\nMissing vars are ",
-      paste(MissingVars, collapse = "; "), call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0(
+        "input_data must contain 'x' and 'y' columns and all ",
+        "environmental predictors in the x_vars argument."),
+      AllVarsInDT = AllVarsInDT, MissingVars = MissingVars)
   }
 
   # # |||||||||||||||||||||||||||||||||||
@@ -101,7 +102,8 @@ mod_CV_prepare <- function(
 
   Path_Grid <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(Path_Grid)) {
-    stop("Path for reference grid does not exist", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Path for reference grid does not exist", Path_Grid = Path_Grid)
   }
   RefGrid <- terra::unwrap(IASDT.R::load_as(Path_Grid))
 
@@ -187,9 +189,9 @@ mod_CV_prepare <- function(
       # Check `folds_ids` exists in each of the cross-validation strategies
       if (!("folds_ids" %in% names(CV_Dist) &&
             "folds_ids" %in% names(CV_Large))) {
-        stop(
+        IASDT.R::stop_ctx(
           "Cross-validation results do not contain 'folds_ids'.",
-          call. = FALSE)
+          names_CV_Large = names(CV_Large), names_CV_Dist = names(CV_Dist))
       }
     } else {
       # CV based on Spatial autocorrelation
@@ -202,9 +204,10 @@ mod_CV_prepare <- function(
       if (!(("folds_ids" %in% names(CV_SAC)) &&
             ("folds_ids" %in% names(CV_Dist)) &&
             ("folds_ids" %in% names(CV_Large)))) {
-        stop(
+        IASDT.R::stop_ctx(
           "Cross-validation results do not contain 'folds_ids'.",
-          call. = FALSE)
+          names_CV_Large = names(CV_Large), names_CV_Dist = names(CV_Dist),
+          names_CV_SAC = names(CV_SAC))
       }
     }
   } else {

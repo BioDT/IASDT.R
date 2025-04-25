@@ -150,21 +150,23 @@ EASIN_process <- function(
   ## Grid - raster ----
   GridR <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(GridR)) {
-    stop("Path for the reference grid does not exist: ", GridR, call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Path for the reference grid does not exist", GridR = GridR)
   }
 
   ## Grid - sf ----
   GridSf <- IASDT.R::path(Path_Grid_Ref, "Grid_10_sf.RData")
   if (!file.exists(GridSf)) {
-    stop("Path for the reference grid does not exist: ", GridSf, call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Path for the reference grid does not exist", GridSf = GridSf)
   }
 
   ## Grid - sf - study area ----
   # Grid ID overlapping with study area
   LandGrids <- IASDT.R::path(Path_Grid, "Grid_10_Land_sf.RData")
   if (!file.exists(LandGrids)) {
-    stop(
-      "Path for the reference grid does not exist: ", LandGrids, call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Path for the reference grid does not exist", LandGrids = LandGrids)
   }
 
   ## Species list ----

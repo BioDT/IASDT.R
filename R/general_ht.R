@@ -31,7 +31,7 @@
 ht <- function(data = NULL, n_rows = 5L) {
 
   if (is.null(data)) {
-    stop("`data` cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx("`data` cannot be NULL", data = data)
   }
 
   data %>%

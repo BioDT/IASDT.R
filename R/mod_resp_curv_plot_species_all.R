@@ -31,7 +31,7 @@ resp_curv_plot_species_all <- function(
   IASDT.R::cat_time("Check arguments", level = 1)
 
   if (is.null(model_dir)) {
-    stop("`model_dir` cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx("`model_dir` cannot be NULL", model_dir = model_dir)
   }
 
   AllArgs <- ls(envir = environment())
@@ -49,7 +49,9 @@ resp_curv_plot_species_all <- function(
   rm(AllArgs, envir = environment())
 
   if (plotting_alpha < 0 || plotting_alpha > 1) {
-    stop("`plotting_alpha` must be between 0 and 1", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`plotting_alpha` must be between 0 and 1",
+      plotting_alpha = plotting_alpha)
   }
 
   # # ..................................................................... ###
@@ -60,7 +62,8 @@ resp_curv_plot_species_all <- function(
     model_dir, "Model_Postprocessing", "RespCurv_All")
 
   if (!dir.exists(Path_RC_DT)) {
-    stop("Response curve data subfolder is missing.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Response curve data subfolder is missing.", Path_RC_DT = Path_RC_DT)
   }
 
   fs::dir_create(Path_RC_All)

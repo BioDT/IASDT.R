@@ -63,7 +63,7 @@
 lapply_ <- function(X, FUN, Silent = TRUE, ...) {
 
   if (is.null(X) || is.null(FUN)) {
-    stop("X or FUN cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx("X or FUN cannot be NULL", FUN = FUN, X = X)
   }
 
   result <- lapply(X = X, FUN = FUN, ...)
@@ -87,7 +87,7 @@ lapply_ <- function(X, FUN, Silent = TRUE, ...) {
 sapply_ <- function(X, FUN, simplify = TRUE, Silent = TRUE, ...) {
 
   if (is.null(X) || is.null(FUN)) {
-    stop("X or FUN cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx("X or FUN cannot be NULL", FUN = FUN, X = X)
   }
 
   result <- sapply(X = X, FUN = FUN, simplify = simplify, ...)

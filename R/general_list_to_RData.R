@@ -41,11 +41,11 @@ list_to_RData <- function(
 
   # Validation Checks
   if (is.null(list) || length(list) == 0) {
-    stop("`list` cannot be NULL or empty.", call. = FALSE)
+    IASDT.R::stop_ctx("`list` cannot be NULL or empty.", list = list)
   }
 
   if (is.null(names(list))) {
-    stop("`list` names cannot be NULL.", call. = FALSE)
+    IASDT.R::stop_ctx("`list` names cannot be NULL.", list = list)
   }
 
   # Directory Creation

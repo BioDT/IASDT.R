@@ -41,7 +41,7 @@
 add_missing_columns <- function(DT, FillVal = NA_character_, ...) {
 
   if (is.null(DT) || is.null(FillVal)) {
-    stop("DT can not be NULL", call. = FALSE)
+    IASDT.R::stop_ctx("DT can not be NULL", FillVal = FillVal, DT = DT)
   }
 
   Cols <- as.character(rlang::ensyms(...))

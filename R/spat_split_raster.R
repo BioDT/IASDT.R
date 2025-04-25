@@ -69,7 +69,7 @@ split_raster <- function(
 
   # Check input raster
   if (is.null(raster)) {
-    stop("raster cannot be NULL.", call. = FALSE)
+    IASDT.R::stop_ctx("raster cannot be NULL.", raster = raster)
   }
 
   h <- ceiling((ncol(raster) / n_columns))

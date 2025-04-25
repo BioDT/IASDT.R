@@ -22,9 +22,11 @@ mod_prepare_data <- function(
   CheckNULL <- c("hab_abb", "directory_name", "env_file")
   IsNull <- purrr::map_lgl(CheckNULL, ~ is.null(get(.x)))
   if (any(IsNull)) {
-    stop(
-      paste0("`", CheckNULL[which(IsNull)], "`", collapse = ", "),
-      " can not be empty", call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0(
+        paste0("`", CheckNULL[which(IsNull)], "`", collapse = ", "),
+        " can not be empty"),
+      hab_abb = hab_abb, directory_name = directory_name, env_file = env_file)
   }
 
   hab_abb <- as.character(hab_abb)
@@ -65,9 +67,11 @@ mod_prepare_data <- function(
   # Valid habitat type values
   ValidHabAbbs <- c(0:3, "4a", "4b", 10, "12a", "12b")
   if (!(hab_abb %in% ValidHabAbbs)) {
-    stop(
-      "`hab_abb` has to be one of the following:\n >> ", toString(ValidHabAbbs),
-      call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0(
+        "`hab_abb` has to be one of the following:\n >> ",
+        toString(ValidHabAbbs)),
+      hab_abb = hab_abb)
   }
 
   # # ..................................................................... ###
@@ -116,7 +120,7 @@ mod_prepare_data <- function(
   IASDT.R::cat_time("Sampling efforts", level = 1)
   R_Bias <- IASDT.R::path(Path_Bias, "Efforts_SummaryR.RData")
   if (!file.exists(R_Bias)) {
-    stop(R_Bias, " file does not exist", call. = FALSE)
+    IASDT.R::stop_ctx("R_Bias file does not exist", R_Bias = R_Bias)
   }
 
   # This mask layer represents grid cells with minimum accepted efforts
@@ -139,7 +143,7 @@ mod_prepare_data <- function(
   Path_Hab <- IASDT.R::path(
     Path_CLC, "Summary_RData", "PercCov_SynHab_Crop.RData")
   if (!file.exists(Path_Hab)) {
-    stop("Path_Hab file: ", Path_Hab, " does not exist", call. = FALSE)
+    IASDT.R::stop_ctx("Path_Hab file does not exist", Path_Hab = Path_Hab)
   }
 
   if (hab_abb == "0") {
@@ -177,7 +181,7 @@ mod_prepare_data <- function(
   # Extract the list of species for the current habitat type
   DT_Sp <- IASDT.R::path(Path_PA, "Sp_PA_Summary_DF.RData")
   if (!file.exists(DT_Sp)) {
-    stop(DT_Sp, " file does not exist", call. = FALSE)
+    IASDT.R::stop_ctx("DT_Sp file does not exist", DT_Sp = DT_Sp)
   }
   DT_Sp <- IASDT.R::load_as(DT_Sp) %>%
     dplyr::arrange(IAS_ID)
@@ -326,7 +330,7 @@ mod_prepare_data <- function(
   IASDT.R::cat_time("CHELSA", level = 1)
   R_CHELSA <- IASDT.R::path(Path_CHELSA, "Processed", "R_Current.RData")
   if (!file.exists(R_CHELSA)) {
-    stop(R_CHELSA, " file does not exist", call. = FALSE)
+    IASDT.R::stop_ctx("R_CHELSA file does not exist", R_CHELSA = R_CHELSA)
   }
   R_CHELSA <- IASDT.R::load_as(R_CHELSA) %>%
     terra::unwrap() %>%
@@ -341,7 +345,7 @@ mod_prepare_data <- function(
   # Reference grid as sf
   Grid_SF <- IASDT.R::path(Path_Grid_Ref, "Grid_10_sf.RData")
   if (!file.exists(Grid_SF)) {
-    stop(Grid_SF, " file does not exist", call. = FALSE)
+    IASDT.R::stop_ctx("Grid_SF file does not exist", Grid_SF = Grid_SF)
   }
   Grid_SF <- IASDT.R::load_as(Grid_SF) %>%
     magrittr::extract2("Grid_10_sf_s")
@@ -352,7 +356,7 @@ mod_prepare_data <- function(
   IASDT.R::cat_time("Reference grid - country names", level = 2)
   Grid_CNT <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop_sf_Country.RData")
   if (!file.exists(Grid_CNT)) {
-    stop(Grid_CNT, " file does not exist", call. = FALSE)
+    IASDT.R::stop_ctx("Grid_CNT file does not exist", Grid_CNT = Grid_CNT)
   }
   Grid_CNT <- IASDT.R::load_as(Grid_CNT) %>%
     dplyr::mutate(
@@ -371,7 +375,7 @@ mod_prepare_data <- function(
   # road intensity of any road type
   R_RoadInt <- IASDT.R::path(Path_Roads, "Road_Length.RData")
   if (!file.exists(R_RoadInt)) {
-    stop(R_RoadInt, " file does not exist", call. = FALSE)
+    IASDT.R::stop_ctx("R_RoadInt file does not exist", R_RoadInt = R_RoadInt)
   }
   R_RoadInt <- IASDT.R::load_as(R_RoadInt) %>%
     terra::unwrap() %>%
@@ -391,7 +395,7 @@ mod_prepare_data <- function(
   # Railway intensity
   R_RailInt <- IASDT.R::path(Path_Rail, "Railways_Length.RData")
   if (!file.exists(R_RailInt)) {
-    stop(R_RailInt, " file does not exist", call. = FALSE)
+    IASDT.R::stop_ctx("R_RailInt file does not exist", R_RailInt = R_RailInt)
   }
   R_RailInt <- IASDT.R::load_as(R_RailInt) %>%
     terra::unwrap() %>%
@@ -430,7 +434,7 @@ mod_prepare_data <- function(
 
   R_Rivers <- IASDT.R::path(Path_Rivers, "River_Lengths.RData")
   if (!file.exists(R_Rivers)) {
-    stop(R_Rivers, " file does not exist", call. = FALSE)
+    IASDT.R::stop_ctx("R_Rivers file does not exist", R_Rivers = R_Rivers)
   }
   R_Rivers <- IASDT.R::load_as(R_Rivers) %>%
     terra::unwrap() %>%

@@ -45,7 +45,8 @@
 clip_raster_by_polygon <- function(raster = NULL, shape = NULL) {
 
   if (is.null(raster) || is.null(shape)) {
-    stop("Input raster or shape cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Input raster or shape cannot be NULL", raster = raster, shape = shape)
   }
 
   a1_crop <- raster::crop(raster, shape)

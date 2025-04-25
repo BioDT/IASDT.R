@@ -32,7 +32,7 @@ system_command <- function(command, R_object = TRUE, ...) {
 
   # Ensure that command is not NULL
   if (is.null(command)) {
-    stop("`command` cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx("`command` cannot be NULL", command = command)
   }
 
   if (IASDT.R::OS() == "Windows") {

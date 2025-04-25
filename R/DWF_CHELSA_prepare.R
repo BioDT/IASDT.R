@@ -33,7 +33,8 @@ CHELSA_prepare <- function(
   rm(AllArgs, envir = environment())
 
   if (n_cores < 1) {
-    stop("`n_cores` must be a positive integer.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`n_cores` must be a positive integer.", n_cores = n_cores)
   }
 
   # # ..................................................................... ###

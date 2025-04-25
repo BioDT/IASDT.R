@@ -30,7 +30,7 @@
 #' <https://doi.org/10.2909/960998c1-1870-4e82-8051-6485205ebbac>
 
 CLC_process <- function(
-  env_file = ".env", min_land_percent = 15, plot_CLC = TRUE) {
+    env_file = ".env", min_land_percent = 15, plot_CLC = TRUE) {
   # # ..................................................................... ###
 
   .StartTime <- lubridate::now(tzone = "CET")
@@ -46,21 +46,19 @@ CLC_process <- function(
     EU_Bound <- Value <- Country <- Country2 <- NULL
 
   if (is.null(env_file)) {
-    stop("env_file can not be empty", call. = FALSE)
+    IASDT.R::stop_ctx("env_file can not be empty", env_file = env_file)
   }
 
   if (!is.numeric(min_land_percent) ||
       !dplyr::between(min_land_percent, 0, 100)) {
-    stop(
+    IASDT.R::stop_ctx(
       "`min_land_percent` must be a numeric value between 0 and 100.",
-      call. = FALSE)
+      min_land_percent = min_land_percent)
   }
 
   if (!file.exists(env_file)) {
-    stop(
-      "Path to environment variables (`env_file`): ", env_file,
-      " was not found",
-      call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Path to environment variables was not found", env_file = env_file)
   }
 
   # # ..................................................................... ###
@@ -106,7 +104,7 @@ CLC_process <- function(
     .x = requiredPaths,
     .f = function(path) {
       if (!file.exists(path)) {
-        stop("Required path does not exist: ", path, call. = FALSE)
+        IASDT.R::stop_ctx("Required path does not exist: ", path = path)
       }
     }
   )
@@ -627,15 +625,19 @@ CLC_get_percentage <- function(
 
   if (is.null(CLC_type) || is.null(CLC_crossWalk) || is.null(CLC_fracs_r) ||
       is.null(path_tif) || is.null(path_RData)) {
-    stop("None of the input parameters can be empty", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "None of the input parameters can be empty",
+      CLC_type = CLC_type, CLC_crossWalk = CLC_crossWalk,
+      CLC_fracs_r = CLC_fracs_r, path_tif = path_tif, path_RData = path_RData)
   }
 
   if (!(
     CLC_type %in% c("SynHab", "CLC_L1", "CLC_L2", "CLC_L3", "EUNIS_2019"))) {
-    stop(
-      "CLC_type has to be one of SynHab, CLC_L1, CLC_L2, ",
-      "CLC_L3, and EUNIS_2019",
-      call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0(
+        "CLC_type has to be one of SynHab, CLC_L1, CLC_L2, ",
+        "CLC_L3, and EUNIS_2019"),
+      CLC_type = CLC_type)
   }
   # # ..................................................................... ###
 
@@ -721,15 +723,21 @@ CLC_get_majority <- function(
   if (is.null(CLC_type) || is.null(CLC_majority) || is.null(path_tif) ||
       is.null(path_tif_crop) || is.null(path_RData) || is.null(Grid_10_Land) ||
       is.null(Grid_10_Land_Crop)) {
-    stop("None of the input parameters can be empty", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "None of the input parameters can be empty",
+      CLC_type = CLC_type, CLC_majority = CLC_majority,
+      path_tif = path_tif, path_tif_crop = path_tif_crop,
+      path_RData = path_RData, Grid_10_Land = Grid_10_Land,
+      Grid_10_Land_Crop = Grid_10_Land_Crop)
   }
 
   if (!(
     CLC_type %in% c("SynHab", "CLC_L1", "CLC_L2", "CLC_L3", "EUNIS_2019"))) {
-    stop(
-      "CLC_type has to be one of SynHab, CLC_L1, CLC_L2, ",
-      "CLC_L3, and EUNIS_2019",
-      call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0(
+        "CLC_type has to be one of SynHab, CLC_L1, CLC_L2, ",
+        "CLC_L3, and EUNIS_2019"),
+      CLC_type = CLC_type)
   }
 
   # # ..................................................................... ###

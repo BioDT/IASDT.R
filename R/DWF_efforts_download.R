@@ -22,11 +22,11 @@ efforts_download <- function(n_cores = 6L, env_file = ".env") {
 
   # Validate n_cores
   if (missing(n_cores) || !is.numeric(n_cores) || n_cores <= 0) {
-    stop("n_cores must be a positive integer.", call. = FALSE)
+    IASDT.R::stop_ctx("n_cores must be a positive integer.", n_cores = n_cores)
   }
 
   if (isFALSE(IASDT.R::check_system_command("unzip"))) {
-    stop("The 'unzip' command is not available", call. = FALSE)
+    IASDT.R::stop_ctx("The 'unzip' command is not available")
   }
 
   # # ..................................................................... ###
@@ -48,9 +48,9 @@ efforts_download <- function(n_cores = 6L, env_file = ".env") {
     Path_Efforts, "Efforts_AllRequests.RData")
 
   if (!file.exists(Path_Efforts_Request)) {
-    stop(
+    IASDT.R::stop_ctx(
       "The path for the `Efforts_AllRequests` data does not exist: ",
-      Path_Efforts_Request, call. = FALSE)
+      Path_Efforts_Request = Path_Efforts_Request)
   }
 
   Efforts_AllRequests <- IASDT.R::load_as(Path_Efforts_Request)
@@ -119,9 +119,10 @@ efforts_download <- function(n_cores = 6L, env_file = ".env") {
             },
             error = function(e) {
               if (Attempt >= Attempts) {
-                stop(
-                  "Failed to download data after ", Attempts, " attempts: ",
-                  conditionMessage(e), call. = FALSE)
+                IASDT.R::stop_ctx(
+                  paste0(
+                    "Failed to download data after ", Attempts, " attempts: ",
+                    conditionMessage(e)))
               }
               Attempt <- Attempt + 1
             })

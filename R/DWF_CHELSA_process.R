@@ -90,7 +90,9 @@ CHELSA_process <- function(
   rm(AllArgs, CharArgs, LogicArgs, NumericArgs, envir = environment())
 
   if (n_cores < 1 || download_n_cores < 1) {
-    stop("`n_cores` must be a positive integer.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`n_cores` must be a positive integer.",
+      n_cores = n_cores, download_n_cores = download_n_cores)
   }
 
   # # ..................................................................... ###
@@ -108,9 +110,8 @@ CHELSA_process <- function(
   IASDT.R::cat_time("Environment variables")
 
   if (!file.exists(env_file)) {
-    stop(
-      "Path to environment variables: ", env_file, " was not found",
-      call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Path to environment variables was not found", env_file = env_file)
   }
 
   EnvVars2Read <- tibble::tribble(
@@ -189,10 +190,10 @@ CHELSA_process <- function(
         x = dplyr::pull(CHELSA_Data_Checked, "InputOkay"),
         file = IASDT.R::path(Path_CHELSA_Out, "ProblematicTiffs.txt"))
 
-      stop(
-        "Not all input tiff files are available and valid. ",
-        "Check `ProblematicTiffs.txt`", call. = FALSE
-      )
+      IASDT.R::stop_ctx(
+        paste0(
+          "Not all input tiff files are available and valid. ",
+          "Check `ProblematicTiffs.txt`"))
     }
 
     # CHELSA files that will not be processed
@@ -330,9 +331,11 @@ CHELSA_process <- function(
         x = CHELSA2Process$Path_Down,
         file = IASDT.R::path(Path_CHELSA_Out, "FailedProcessing.txt"))
 
-      stop(
-        "\n >> ", nrow(CHELSA2Process), " files failed to process.\n",
-        " >> Check `FailedProcessing.txt` for more details", call. = FALSE)
+      IASDT.R::stop_ctx(
+        paste0(
+          "\n >> ", nrow(CHELSA2Process), " files failed to process.\n",
+          " >> Check `FailedProcessing.txt` for more details"),
+        CHELSA2Process = CHELSA2Process)
     }
 
     IASDT.R::cat_time("All tiff files were processed", level = 1)

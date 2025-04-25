@@ -78,9 +78,9 @@ save_multiple <- function(
 
   # Check if variables is provided correctly
   if (is.null(variables) || !is.character(variables)) {
-    stop(
+    IASDT.R::stop_ctx(
       "`variables` should be a character vector for names of objects",
-      call. = FALSE)
+      variables = variables)
   }
 
   env <- rlang::new_environment()
@@ -93,9 +93,10 @@ save_multiple <- function(
   missing_vars <- setdiff(variables, ls(envir = env))
 
   if (length(missing_vars) > 0) {
-    stop(
-      "Variable(s) ", paste(missing_vars, collapse = " & "),
-      " do not exist in the caller environment.\n", call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0(
+        "Variable(s) ", paste(missing_vars, collapse = " & "),
+        " do not exist in the caller environment.\n"))
   }
   fs::dir_create(out_directory)
 

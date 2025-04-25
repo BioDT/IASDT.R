@@ -21,8 +21,9 @@
 #' @noRd
 
 cat_pipe <- function(x, message) {
+
   if (is.null(x) || is.null(message)) {
-    stop("x or message cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx("x or message cannot be NULL", message = message, x = x)
   }
   IASDT.R::cat_time(message)
   return(x)

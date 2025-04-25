@@ -144,7 +144,8 @@ GBIF_process <- function(
 
   GBIF_Metadata <- IASDT.R::path(Path_GBIF, "GBIF_Metadata.RData")
   if (!file.exists(GBIF_Metadata)) {
-    stop("GBIF metadata file does not exist: ", GBIF_Metadata, call. = FALSE)
+    IASDT.R::stop_ctx(
+      "GBIF metadata file does not exist: ", GBIF_Metadata = GBIF_Metadata)
   }
   GBIF_Metadata <- IASDT.R::load_as(GBIF_Metadata)
 
@@ -155,14 +156,14 @@ GBIF_process <- function(
   # Grid_10_Land_Crop_sf
   GridSf <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
   if (!file.exists(GridSf)) {
-    stop("Reference grid (sf) file not found at: ", GridSf, call. = FALSE)
+    IASDT.R::stop_ctx("Reference grid (sf) file not found", GridSf = GridSf)
   }
   GridSf <- IASDT.R::load_as(GridSf)
 
   # Grid_10_Land_Crop
   GridR <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(GridR)) {
-    stop("Reference grid file not found at: ", GridR, call. = FALSE)
+    IASDT.R::stop_ctx("Reference grid file not found", GridR = GridR)
   }
   GridR <- terra::unwrap(IASDT.R::load_as(GridR))
 
@@ -238,10 +239,10 @@ GBIF_process <- function(
       # arrange by species name
       dplyr::arrange(Species_name)
   } else {
-    ChunkList[which(!file.exists(ChunkListRData))] %>%
+    Msg <- ChunkList[which(!file.exists(ChunkListRData))] %>%
       paste0(" >> ", ., collapse = "\n") %>%
-      paste0("The following chunks were not processed\n", .) %>%
-      stop(call. = FALSE)
+      paste0("The following chunks were not processed\n", .)
+    IASDT.R::stop_ctx(Msg)
   }
 
   IASDT.R::cat_diff(

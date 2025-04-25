@@ -49,9 +49,10 @@
 #' if alignment fails), and saves a merged `Hmsc` object and a `coda` object for
 #' MCMC diagnostics. It also records fitting time and memory usage from progress
 #' files.
-#' - `mod_merge_chains_CV` performs a similar merging process for cross-validated
-#' `Hmsc` models, processing each fold of the specified `CV_names` separately.
-#' It saves merged `Hmsc` objects per fold but does not generate `coda` objects.
+#' - `mod_merge_chains_CV` performs a similar merging process for
+#' cross-validated `Hmsc` models, processing each fold of the specified
+#' `CV_names` separately. It saves merged `Hmsc` objects per fold but does not
+#' generate `coda` objects.
 
 ## |------------------------------------------------------------------------| #
 # mod_merge_chains ----
@@ -75,8 +76,12 @@ mod_merge_chains <- function(
 
   # Checking arguments ----
 
-  if (is.null(model_dir) || is.null(n_cores)) {
-    stop("`model_dir` and `n_cores` cannot be empty", call. = FALSE)
+  if (is.null(model_dir)) {
+    IASDT.R::stop_ctx("`model_dir` cannot be empty", model_dir = model_dir)
+  }
+
+  if (is.null(n_cores)) {
+    IASDT.R::stop_ctx("`n_cores` cannot be empty", n_cores = n_cores)
   }
 
   AllArgs <- ls(envir = environment())
@@ -99,16 +104,21 @@ mod_merge_chains <- function(
   rm(AllArgs, envir = environment())
 
   if (!dir.exists(model_dir)) {
-    stop(
-      "`model_dir` directory (`", model_dir, "`) does not exist", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`model_dir` directory does not exist", model_dir = model_dir)
   }
 
   if (length(out_extension) != 1) {
-    stop("`out_extension` must be a single string.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`out_extension` must be a single string.",
+      out_extension = out_extension,
+      length_out_extension = length(out_extension))
   }
 
   if (!out_extension %in% c("qs2", "RData")) {
-    stop("`out_extension` must be either 'qs2' or 'RData'.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`out_extension` must be either 'qs2' or 'RData'.",
+      out_extension = out_extension)
   }
 
   # # ..................................................................... ###
@@ -126,7 +136,8 @@ mod_merge_chains <- function(
   Path_ModInfo <- IASDT.R::path(model_dir, "Model_Info.RData")
 
   if (!file.exists(Path_ModInfo)) {
-    stop("ModInfo file `", Path_ModInfo, "` does not exist", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "ModInfo file does not exist", Path_ModInfo = Path_ModInfo)
   }
 
   # # ..................................................................... ###
@@ -494,8 +505,12 @@ mod_merge_chains_CV <- function(
 
   # Checking arguments ----
 
-  if (is.null(model_dir) || is.null(n_cores)) {
-    stop("`model_dir` and `n_cores` cannot be empty", call. = FALSE)
+  if (is.null(model_dir)) {
+    IASDT.R::stop_ctx("`model_dir` cannot be empty", model_dir = model_dir)
+  }
+
+  if (is.null(n_cores)) {
+    IASDT.R::stop_ctx("`n_cores` cannot be empty", n_cores = n_cores)
   }
 
   AllArgs <- ls(envir = environment())
@@ -514,22 +529,28 @@ mod_merge_chains_CV <- function(
   rm(AllArgs, envir = environment())
 
   if (!dir.exists(model_dir)) {
-    stop(
-      "`model_dir` directory (`", model_dir, "`) does not exist", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`model_dir` directory does not exist", model_dir = model_dir)
   }
 
   if (length(out_extension) != 1) {
-    stop("`out_extension` must be a single string.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`out_extension` must be a single string.",
+      out_extension = out_extension, length_out_extension = out_extension)
   }
 
   if (!out_extension %in% c("qs2", "RData")) {
-    stop("`out_extension` must be either 'qs2' or 'RData'.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`out_extension` must be either 'qs2' or 'RData'.",
+      out_extension = out_extension)
   }
 
   if (!all(CV_names %in% c("CV_Dist", "CV_Large", "CV_SAC"))) {
-    stop(
-      "Invalid value for CV_names argument. Valid values ",
-      "are: 'CV_Dist', 'CV_Large', or `CV_SAC`", call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0(
+        "Invalid value for CV_names argument. Valid values ",
+        "are: 'CV_Dist', 'CV_Large', or `CV_SAC`"),
+      CV_names = CV_names)
   }
 
   # # ..................................................................... ###
@@ -546,10 +567,10 @@ mod_merge_chains_CV <- function(
 
   Path_CV_DT <- IASDT.R::path(model_dir, "Model_Fitting_CV", "CV_DT.RData")
   if (!file.exists(Path_CV_DT)) {
-    stop("CV_DT file: `", Path_CV_DT, "` does not exist", call. = FALSE)
+    IASDT.R::stop_ctx("CV_DT file does not exist", Path_CV_DT = Path_CV_DT)
   }
   if (isFALSE(IASDT.R::check_data(Path_CV_DT, warning = FALSE))) {
-    stop("CV_DT file: `", Path_CV_DT, "` is not a valid file", call. = FALSE)
+    IASDT.R::stop_ctx("CV_DT file is not a valid file", Path_CV_DT = Path_CV_DT)
   }
 
   CV_DT <- IASDT.R::load_as(Path_CV_DT) %>%
@@ -764,7 +785,7 @@ mod_merge_chains_CV <- function(
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # stopping the cluster
-  IASDT.R::set_parallel(stop = TRUE, level = 2)
+  IASDT.R::set_parallel(stop_cluster = TRUE, level = 2)
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

@@ -74,11 +74,9 @@ EASIN_plot <- function(env_file = ".env") {
   SummaryMapsMissing <- !file.exists(PathSummaryMaps)
 
   if (any(SummaryMapsMissing)) {
-    stop(
-      "The following input files are missing: \n",
-      paste0(
-        " >> ", PathSummaryMaps[which(SummaryMapsMissing)], collapse = "\n") ,
-      call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Missing summary input files",
+      missing_files = PathSummaryMaps[which(SummaryMapsMissing)])
   }
 
   # # |||||||||||||||||||||||||||||||||||

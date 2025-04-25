@@ -21,11 +21,11 @@
 package_functions <- function(package) {
 
   if (is.null(package)) {
-    stop("`package` cannot be NULL or empty", call. = FALSE)
+    IASDT.R::stop_ctx("`package` cannot be NULL or empty", package = package)
   }
 
   if (!requireNamespace(package, quietly = TRUE)) {
-    stop("package", package, "not found", call. = FALSE)
+    IASDT.R::stop_ctx("package not found", package = package)
   }
   library(
     package = eval(package), character.only = TRUE, quietly = TRUE,

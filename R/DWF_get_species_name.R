@@ -56,9 +56,11 @@ get_species_name <- function(species_ID = NULL, env_file = ".env") {
     NGridCells <- IASDT.R::path(Path_PA, "Sp_PA_Summary_DF.RData")
 
     if (!file.exists(NGridCells)) {
-      stop(
-        "`Sp_PA_Summary_DF.RData` file does not exist in the ", Path_PA,
-        " folder", call. = FALSE)
+      IASDT.R::stop_ctx(
+        paste0(
+          "`Sp_PA_Summary_DF.RData` file does not exist in the ", Path_PA,
+          " folder"),
+        NGridCells = NGridCells, Path_PA = Path_PA)
     }
 
     NGridCells <- IASDT.R::load_as(NGridCells) %>%

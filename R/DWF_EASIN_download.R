@@ -16,7 +16,7 @@ EASIN_download <- function(
   # # ..................................................................... ###
 
   if (is.null(species_key)) {
-    stop("species_key cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx("species_key cannot be NULL", species_key = species_key)
   }
 
   Path_EASIN <- NULL

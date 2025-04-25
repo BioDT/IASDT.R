@@ -60,10 +60,13 @@ mod_SLURM <- function(
 
   if (is.null(model_dir) || is.null(job_name) || is.null(memory_per_cpu) ||
       is.null(job_runtime) || is.null(path_Hmsc)) {
-    stop(
-      "`model_dir`, `job_name`, `memory_per_cpu`, `job_runtime`, ",
-      "and `path_Hmsc` ", "cannot be empty",
-      call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0(
+        "`model_dir`, `job_name`, `memory_per_cpu`, `job_runtime`, ",
+        "and `path_Hmsc` ", "cannot be empty"),
+      model_dir = model_dir, job_name = job_name,
+      memory_per_cpu = memory_per_cpu, job_runtime = job_runtime,
+      path_Hmsc = path_Hmsc)
   }
 
   # # |||||||||||||||||||||||||||||||||||
@@ -71,7 +74,7 @@ mod_SLURM <- function(
   # # |||||||||||||||||||||||||||||||||||
 
   if (!file.exists(env_file)) {
-    stop("Environment file not found:", env_file, call. = FALSE)
+    IASDT.R::stop_ctx("Environment file not found", env_file = env_file)
   }
 
   EnvVars2Read <- tibble::tribble(
@@ -110,14 +113,16 @@ mod_SLURM <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   if (!fs::dir_exists(model_dir)) {
-    stop("Model directory does not exist:", model_dir, call. = FALSE)
+    IASDT.R::stop_ctx("Model directory does not exist", model_dir = model_dir)
   }
 
   ListCommands <- list.files(
     model_dir, pattern = command_prefix, full.names = TRUE)
   NCommandFiles <- length(ListCommands)
   if (NCommandFiles == 0) {
-    stop("The file containing the bash commands does not exist", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "The file containing the bash commands does not exist",
+      NCommandFiles = NCommandFiles, ListCommands = basename(ListCommands))
   }
 
   if (is.null(SLURM_path_out)) {
@@ -134,7 +139,7 @@ mod_SLURM <- function(
           paste(c(command_prefix, "CV_", ".txt"), collapse = "|")) %>%
         stringr::str_remove_all("^_")
 
-      if (nchar(SLURM_suffix) > 0) {
+      if (nzchar(SLURM_suffix)) {
         OutFile <- c(SLURM_prefix, SLURM_suffix) %>%
           paste(collapse = "_") %>%
           paste0(".slurm")
@@ -261,7 +266,7 @@ mod_SLURM <- function(
 
       # Print the command to submit the job
       cat(paste0("\t sbatch ", IASDT.R::path(model_dir, OutFile), "\n"))
-  })
+    })
 
   return(invisible(NULL))
 }

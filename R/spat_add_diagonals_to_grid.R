@@ -53,7 +53,15 @@
 add_diagonals_to_grid <- function(sf_object = NULL) {
 
   if (is.null(sf_object)) {
-    stop("Input sf_object  cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Input sf_object  cannot be NULL",
+      sf_object = sf_object, class_sf_object = class(sf_object))
+  }
+
+  if (!inherits(sf_object, "sf")) {
+    IASDT.R::stop_ctx(
+      "Input sf_object must be of class sf",
+      sf_object = sf_object, class_sf_object = class(sf_object))
   }
 
   sf_object %>%

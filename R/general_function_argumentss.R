@@ -26,7 +26,8 @@
 function_arguments <- function(function_name, assign = FALSE, package = NULL) {
 
   if (!is.function(function_name)) {
-    stop("The provided function is not a function", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "The provided input is not a function", function_name = function_name)
   }
 
   if (!is.null(package)) {

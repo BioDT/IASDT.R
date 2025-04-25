@@ -190,7 +190,7 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
   # # .................................... ###
 
   ## Stopping cluster ----
-  IASDT.R::set_parallel(stop = TRUE, level = 2)
+  IASDT.R::set_parallel(stop_cluster = TRUE, level = 2)
 
   IASDT.R::cat_diff(
     init_time = .StartTimeDist,

@@ -24,7 +24,7 @@
 check_URL <- function(URL, timeout = 2) {
 
   if (is.null(URL)) {
-    stop("URL cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx("URL cannot be NULL", URL = URL)
   }
 
   con <- url(URL)

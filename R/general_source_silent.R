@@ -22,11 +22,11 @@
 source_silent <- function(file, messages = TRUE, warnings = TRUE, ...) {
 
   if (is.null(file)) {
-    stop("`file` cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx("`file` cannot be NULL", file = file)
   }
 
   if (!file.exists(file)) {
-    stop("`file` does not exist: ", file, call. = FALSE)
+    IASDT.R::stop_ctx("`file` does not exist", file = file)
   }
 
   if (messages && warnings) {

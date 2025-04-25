@@ -27,20 +27,22 @@
 assign_env_vars <- function(env_file = ".env", env_variables_data = NULL) {
 
   if (is.null(env_file) || is.null(env_variables_data)) {
-    stop(
+    IASDT.R::stop_ctx(
       "`env_file` and `env_variables_data` can not be empty",
-      call. = FALSE)
+      env_file = env_file, env_variables_data = env_variables_data)
   }
 
   if (!file.exists((env_file))) {
-    stop(env_file, " file does not exist", call. = FALSE)
+    IASDT.R::stop_ctx("env_file does not exist", env_file = env_file)
   }
 
   if (!inherits(env_variables_data, "data.frame")) {
-    stop(
-      "The provided env_variables_data object should be either tibble or ",
-      "data frame",
-      call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0(
+        "The provided env_variables_data object should be either tibble or ",
+        "data frame"),
+      env_variables_data = env_variables_data,
+      class_env_variables_data = class(env_variables_data))
   }
 
   MatchNames <- setdiff(
@@ -48,9 +50,11 @@ assign_env_vars <- function(env_file = ".env", env_variables_data = NULL) {
     names(env_variables_data))
 
   if (length(MatchNames) > 0) {
-    stop(
-      "The following columns are missing from `env_variables_data`: ",
-      paste(MatchNames, collapse = "; "), call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0(
+        "The following columns are missing from `env_variables_data`: ",
+        paste(MatchNames, collapse = "; ")),
+      MatchNames = MatchNames, length_MatchNames = length(MatchNames))
   }
 
   InClasses <- purrr::map_chr(env_variables_data, class)
@@ -59,7 +63,7 @@ assign_env_vars <- function(env_file = ".env", env_variables_data = NULL) {
 
   if (isFALSE(MatchClass)) {
     Diff <- which(InClasses != ExpClasses)
-    purrr::map_chr(
+    msg <- purrr::map_chr(
       .x = Diff,
       .f = ~{
         paste0(
@@ -67,8 +71,8 @@ assign_env_vars <- function(env_file = ".env", env_variables_data = NULL) {
           " not ", ExpClasses[.x])
       }) %>%
       stringr::str_c(collapse = "\n") %>%
-      stringr::str_c("\n", ., collapse = "\n") %>%
-      stop(call. = FALSE)
+      stringr::str_c("\n", ., collapse = "\n")
+    IASDT.R::stop_ctx(msg, MatchClass = MatchClass, InClasses = InClasses)
   }
 
   readRenviron(env_file)
@@ -84,23 +88,29 @@ assign_env_vars <- function(env_file = ".env", env_variables_data = NULL) {
       Val <- Sys.getenv(EV_Name)
 
       if (CheckDir && CheckFile) {
-        stop(
-          Val, " should be checked as either file or directory, not both",
-          call. = FALSE)
+        IASDT.R::stop_ctx(
+          "Val should be checked as either file or directory, not both",
+          Val = Val)
       }
 
       if (!nzchar(Val)) {
-        stop(
-          "`", EV_Name,
-          "` environment variable was not set in the .env file", call. = FALSE)
+        IASDT.R::stop_ctx(
+          paste0(
+            "`", EV_Name,
+            "` environment variable was not set in the .env file"),
+          EV_Name = EV_Name)
       }
 
       if (CheckDir && !dir.exists(Val)) {
-        stop("`", Val, "` directory does not exist", call. = FALSE)
+        IASDT.R::stop_ctx(
+          paste0("`", Val, "` directory does not exist"),
+          Val = Val, CheckDir = CheckDir)
       }
 
       if (CheckFile && !file.exists(Val)) {
-        stop("`", Val, "` file does not exist", call. = FALSE)
+        IASDT.R::stop_ctx(
+          paste0("`", Val, "` file does not exist"),
+          Val = Val, CheckDir = CheckDir)
       }
 
       assign(x = Var_Name, value = Val, envir = parent.frame(5))

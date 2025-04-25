@@ -33,7 +33,7 @@
 create_directory <- function(path, verbose = TRUE) {
 
   if (is.null(path)) {
-    stop("path cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx("path cannot be NULL", path = path)
   }
 
   # nolint start

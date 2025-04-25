@@ -15,8 +15,8 @@
 #'   `future::cluster`. If `strategy` is not one of the valid options or if
 #'   `future::multicore` on Windows PC, it defaults to `future::multisession`.
 #'   See [future::plan()] for more details.
-#' @param stop Logical. If `TRUE`, stops any parallel cluster and resets to
-#'   sequential mode. If `FALSE` (default), sets up a new plan.
+#' @param stop_cluster  Logical. If `TRUE`, stops any parallel cluster and
+#'   resets to sequential mode. If `FALSE` (default), sets up a new plan.
 #' @param show_log Logical. If `TRUE` (default), logs messages via
 #'   [IASDT.R::cat_time()].
 #' @param future_max_size Numeric. Maximum allowed total size (in megabytes) of
@@ -34,7 +34,7 @@
 #' # ---------------------------------------------
 #'
 #' # Stopping parallel processing
-#' IASDT.R::set_parallel(stop = TRUE)
+#' IASDT.R::set_parallel(stop_cluster = TRUE)
 #' future::plan()
 #'
 #' # ---------------------------------------------
@@ -44,11 +44,11 @@
 #' future::plan()
 #'
 #' # Stopping parallel processing
-#' IASDT.R::set_parallel(stop = TRUE)
+#' IASDT.R::set_parallel(stop_cluster = TRUE)
 #' future::plan()
 
 set_parallel <- function(
-    n_cores = 1L, strategy = "future::multisession", stop = FALSE,
+    n_cores = 1L, strategy = "future::multisession", stop_cluster = FALSE,
     show_log = TRUE, future_max_size = 500L, ...) {
 
   # Validate n_cores input
@@ -67,7 +67,7 @@ set_parallel <- function(
     },
     n_cores)
 
-  if (stop) {
+  if (stop_cluster) {
     if (show_log) {
       IASDT.R::cat_time("Stopping parallel processing", ...)
     }
@@ -90,7 +90,9 @@ set_parallel <- function(
 
     # strategy should be a character vector of length 1
     if (length(strategy) != 1) {
-      stop("`strategy` must be a character vector of length 1", call. = FALSE)
+      IASDT.R::stop_ctx(
+        "`strategy` must be a character vector of length 1",
+        strategy = strategy, length_strategy = length(strategy))
     }
 
     # strategy can be only one of the following: "future::sequential",

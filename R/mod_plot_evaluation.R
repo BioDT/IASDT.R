@@ -37,7 +37,7 @@ plot_evaluation <- function(model_dir, env_file = ".env") {
 
   SpSummary <- IASDT.R::path(Path_PA, "Sp_PA_Summary_DF.csv")
   if (!file.exists(SpSummary)) {
-    stop("Species summary file not found at:", SpSummary, call. = FALSE)
+    IASDT.R::stop_ctx("Species summary file not found", SpSummary = SpSummary)
   }
   SpSummary <- readr::read_csv(SpSummary, show_col_types = FALSE) %>%
     dplyr::select(tidyselect::all_of(c("IAS_ID", "NCells_Naturalized"))) %>%
@@ -50,7 +50,7 @@ plot_evaluation <- function(model_dir, env_file = ".env") {
   # # ..................................................................... ###
 
   if (is.null(model_dir) || !dir.exists(model_dir)) {
-    stop("Invalid or missing `model_dir`", call. = FALSE)
+    IASDT.R::stop_ctx("Invalid or missing `model_dir`", model_dir = model_dir)
   }
 
   Mod_Eval <- IASDT.R::path(

@@ -25,7 +25,7 @@ get_mode <- function(x) {
 
   # Check if the vector is NULL or empty
   if (is.null(x) || length(x) == 0) {
-    stop("x cannot be NULL or empty", call. = FALSE)
+    IASDT.R::stop_ctx("x cannot be NULL or empty", x = x)
   }
 
   # Extract unique values from the vector

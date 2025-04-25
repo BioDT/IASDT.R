@@ -72,15 +72,14 @@
 load_as <- function(file = NULL, n_threads = 5, timeout = 300, ...) {
 
   if (is.null(file)) {
-    # stop("file cannot be NULL", call. = FALSE)
-    stop("file or URL cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx("file or URL cannot be NULL", file = file)
   }
 
   isURL <- stringr::str_detect(file, "^http")
 
   if (isURL) {
     if (isFALSE(IASDT.R::check_URL(file))) {
-      stop("URL is not valid", call. = FALSE)
+      IASDT.R::stop_ctx("URL is not valid", file = file)
     }
 
     withr::local_options(list(timeout = timeout))
@@ -95,7 +94,7 @@ load_as <- function(file = NULL, n_threads = 5, timeout = 300, ...) {
   }
 
   if (!file.exists(file)) {
-    stop("`file` does not exist: ", file, call. = FALSE)
+    IASDT.R::stop_ctx("`file` does not exist: ", file = file)
   }
 
   OutFile <- switch(
@@ -117,7 +116,8 @@ load_as <- function(file = NULL, n_threads = 5, timeout = 300, ...) {
     },
     rds = readRDS(file, ...),
     feather = arrow::read_feather(file = file, ...),
-    stop("Unknown file extension", call. = FALSE))
+    IASDT.R::stop_ctx(
+      "Unknown file extension", file = file, extension = tools::file_ext(file)))
 
   return(OutFile)
 }

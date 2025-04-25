@@ -57,7 +57,7 @@ resp_curv_prepare_data <- function(
   .StartTime <- lubridate::now(tzone = "CET")
 
   if (is.null(path_model)) {
-    stop("`path_model` cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx("`path_model` cannot be NULL", path_model = path_model)
   }
 
   # Avoid "no visible binding for global variable" message
@@ -86,13 +86,15 @@ resp_curv_prepare_data <- function(
   rm(AllArgs, envir = environment())
 
   if (!is.numeric(n_cores) || n_cores < 1) {
-    stop("`n_cores` must be greater than 0", call. = FALSE)
+    IASDT.R::stop_ctx("`n_cores` must be greater than 0", n_cores = n_cores)
   }
   if (!is.numeric(LF_n_cores) || LF_n_cores < 1) {
-    stop("`LF_n_cores` must be greater than 0", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`LF_n_cores` must be greater than 0", LF_n_cores = LF_n_cores)
   }
   if (any(probabilities > 1) || any(probabilities < 0)) {
-    stop("`probabilities` must be between 0 and 1", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`probabilities` must be between 0 and 1", probabilities = probabilities)
   }
 
   probabilities <- sort(probabilities)
@@ -105,12 +107,13 @@ resp_curv_prepare_data <- function(
   if (file.exists(path_model)) {
     Model <- IASDT.R::load_as(path_model)
     if (!inherits(Model, "Hmsc")) {
-      stop("Model object is not of class 'hmsc'", call. = FALSE)
+      IASDT.R::stop_ctx(
+        "Model object is not of class 'hmsc'", class_model = class(Model))
     }
   } else {
-    stop(
+    IASDT.R::stop_ctx(
       "The model file does not exist or is not a `.RData` or `.qs2` file.",
-      call. = FALSE)
+      path_model = path_model)
   }
 
   # # ..................................................................... ###

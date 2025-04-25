@@ -89,7 +89,9 @@ predict_maps <- function(
 
   # Check if `hab_abb` is a single character value
   if (length(hab_abb) != 1) {
-    stop("`hab_abb` must be a single character value", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`hab_abb` must be a single character value",
+      hab_abb = hab_abb, length_hab_abb = length(hab_abb))
   }
 
   Hab_Name <- c(
@@ -129,14 +131,22 @@ predict_maps <- function(
 
   rm(AllArgs, envir = environment())
 
+  if (!file.exists(env_file)) {
+    IASDT.R::stop_ctx(
+      "Error: Environment file is invalid or does not exist.",
+      env_file = env_file)
+  }
+
   # # ..................................................................... ###
   # # ..................................................................... ###
 
   ValidHabAbbs <- c(as.character(0:3), "4a", "4b", "10", "12a", "12b")
   if (!(hab_abb %in% ValidHabAbbs)) {
-    stop(
-      "Invalid Habitat abbreviation. Valid values are:\n >> ",
-      toString(ValidHabAbbs), call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0(
+        "Invalid Habitat abbreviation. Valid values are:\n >> ",
+        toString(ValidHabAbbs)),
+      hab_abb = hab_abb)
   }
 
   # # ..................................................................... ###
@@ -201,17 +211,16 @@ predict_maps <- function(
 
     # fix_efforts can not be NULL when Clamping is implemented
     if (is.null(fix_efforts)) {
-      stop(
-        "`fix_efforts` can not be NULL when Clamping is implemented",
-        call. = FALSE)
+      IASDT.R::stop_ctx(
+        "`fix_efforts` can not be `NULL` when Clamping is implemented",
+        fix_efforts = fix_efforts)
     }
 
     # Check if fix_efforts is a vector or length 1
     if (length(fix_efforts) != 1) {
-      stop(
+      IASDT.R::stop_ctx(
         "`fix_efforts` must be a vector or length 1.",
-        " The current value is: ",
-        paste(fix_efforts, collapse = " & "), call. = FALSE)
+        fix_efforts = fix_efforts)
     }
 
     # Create folder for clamp results only if clamp_pred == TRUE
@@ -260,9 +269,8 @@ predict_maps <- function(
   IASDT.R::cat_time("Reference grid", level = 1)
   Path_GridR <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(Path_GridR)) {
-    stop(
-      "Path for the Europe boundaries does not exist: ", Path_GridR,
-      call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Path for the Europe boundaries does not exist", Path_GridR = Path_GridR)
   }
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
@@ -272,16 +280,17 @@ predict_maps <- function(
   IASDT.R::cat_time("Model object", level = 1)
 
   if (is.null(path_model) || !file.exists(path_model)) {
-    stop("Model path is NULL or does not exist: ", path_model, call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Model path is NULL or does not exist ", path_model = path_model)
   }
 
   Model <- IASDT.R::load_as(path_model)
 
   # `clamp_pred` can not be TRUE when `EffortsLog` is not used as predictor
   if (clamp_pred && isFALSE("EffortsLog" %in% names(Model$XData))) {
-    stop(
+    IASDT.R::stop_ctx(
       "`clamp_pred` can not be used when `EffortsLog` is not used as predictor",
-      call. = FALSE)
+      clamp_pred = clamp_pred, names_data = names(Model$XData))
   }
 
   other_variables <- paste0(
@@ -305,9 +314,8 @@ predict_maps <- function(
 
   Path_CHELSA <- IASDT.R::path(Path_CHELSA, "CHELSA_Processed_DT.RData")
   if (!file.exists(Path_CHELSA)) {
-    stop(
-      "Processed CHLESA data can not be found at: ", Path_CHELSA,
-      call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Processed CHLESA data can not be found", Path_CHELSA = Path_CHELSA)
   }
 
   Prediction_Options <- IASDT.R::load_as(Path_CHELSA) %>%
@@ -345,7 +353,7 @@ predict_maps <- function(
 
     R_Railways <- IASDT.R::path(Path_Rail, "Railways_Length.RData")
     if (!file.exists(R_Railways)) {
-      stop("Railways data does not exist at: ", R_Railways, call. = FALSE)
+      IASDT.R::stop_ctx("Railways data does not exist", R_Railways = R_Railways)
     }
     R_Railways <- IASDT.R::load_as(R_Railways) %>%
       terra::unwrap() %>%
@@ -353,7 +361,7 @@ predict_maps <- function(
 
     R_Roads <- IASDT.R::path(Path_Roads, "Road_Length.RData")
     if (!file.exists(R_Roads)) {
-      stop("Roads data does not exist at: ", R_Roads, call. = FALSE)
+      IASDT.R::stop_ctx("Roads data does not exist", R_Roads = R_Roads)
     }
     R_Roads <- IASDT.R::load_as(R_Roads) %>%
       terra::unwrap() %>%
@@ -382,7 +390,7 @@ predict_maps <- function(
     R_Hab <- IASDT.R::path(
       Path_CLC, "Summary_RData", "PercCov_SynHab_Crop.RData")
     if (!file.exists(R_Hab)) {
-      stop("Habitat data: '", R_Hab, "' does not exist", call. = FALSE)
+      IASDT.R::stop_ctx("Habitat data does not exist", R_Hab = R_Hab)
     }
 
     R_Hab <- IASDT.R::load_as(R_Hab) %>%
@@ -411,8 +419,8 @@ predict_maps <- function(
 
     R_Efforts <- IASDT.R::path(Path_Bias, "Efforts_SummaryR.RData")
     if (!file.exists(R_Efforts)) {
-      stop(
-        "Sampling efforts data does not exist at: ", R_Efforts, call. = FALSE)
+      IASDT.R::stop_ctx(
+        "Sampling efforts data does not exist", R_Efforts = R_Efforts)
     }
 
     R_Efforts <- IASDT.R::load_as(R_Efforts) %>%
@@ -440,10 +448,9 @@ predict_maps <- function(
           dplyr::between(fix_efforts, EffortsRange[1], EffortsRange[2]))
 
         if (InvalidVal) {
-          stop(
-            "`fix_efforts` value (", fix_efforts, ") is out of the range of ",
-            "the observed efforts: From ",
-            paste(round(EffortsRange, 2), collapse = " to "), call. = FALSE)
+          IASDT.R::stop_ctx(
+            "`fix_efforts` value is out of the range of observed efforts",
+            fix_efforts = fix_efforts, EffortsRange = round(EffortsRange, 2))
         }
 
         # Fix value
@@ -455,10 +462,12 @@ predict_maps <- function(
         # median, mean, max, and q90
         fix_efforts <- stringr::str_to_lower(fix_efforts)
         if (!(fix_efforts %in% c("median", "mean", "max", "q90"))) {
-          stop(
-            "`fix_efforts` has to be either NULL, single numeric ",
-            "value, or one of the following: 'median', 'mean', 'max', ",
-            "or `q90`. The current value is: ", fix_efforts, call. = FALSE)
+          IASDT.R::stop_ctx(
+            paste0(
+              "`fix_efforts` has to be either NULL, single numeric ",
+              "value, or one of the following: 'median', 'mean', 'max', ",
+              "or `q90`."),
+            fix_efforts = fix_efforts)
         }
       }
 
@@ -531,7 +540,7 @@ predict_maps <- function(
 
     R_Rivers <- IASDT.R::path(Path_Rivers, "River_Lengths.RData")
     if (!file.exists(R_Rivers)) {
-      stop("River length data does not exist at: ", R_Rivers, call. = FALSE)
+      IASDT.R::stop_ctx("River length data does not exist", R_Rivers = R_Rivers)
     }
 
     R_Rivers <- IASDT.R::load_as(R_Rivers) %>%
@@ -560,9 +569,8 @@ predict_maps <- function(
 
       if (length(fix_rivers) != 1) {
         # Check if fix_rivers is a vector or length 1
-        stop(
-          "`fix_rivers` must be a vector or length 1. The current value is: ",
-          paste(fix_rivers, collapse = " & "), call. = FALSE)
+        IASDT.R::stop_ctx(
+          "`fix_rivers` must be a vector or length 1.", fix_rivers = fix_rivers)
       }
 
       if (is.numeric(fix_rivers)) {
@@ -577,10 +585,9 @@ predict_maps <- function(
           dplyr::between(fix_rivers, RiversRange[1], RiversRange[2]))
 
         if (InvalidVal) {
-          stop(
-            "`fix_rivers` value (", fix_rivers, ") is out of the range of ",
-            "the observed river length: From ",
-            paste(round(RiversRange, 2), collapse = " to "), call. = FALSE)
+          IASDT.R::stop_ctx(
+            "`fix_rivers` value is out of the range of observed river length",
+            fix_rivers = fix_rivers, RiversRange = round(RiversRange, 2))
         }
 
         # Fix value
@@ -592,10 +599,12 @@ predict_maps <- function(
         # median, mean, max, and q90
         fix_rivers <- stringr::str_to_lower(fix_rivers)
         if (!(fix_rivers %in% c("median", "mean", "max", "q90"))) {
-          stop(
-            "`fix_rivers` has to be either NULL, single numeric ",
-            "value, or one of the following: 'median', 'mean', 'max', ",
-            "or 'q90'. The current value is: ", fix_rivers, call. = FALSE)
+          IASDT.R::stop_ctx(
+            paste0(
+              "`fix_rivers` has to be either NULL, single numeric ",
+              "value, or one of the following: 'median', 'mean', 'max', ",
+              "or 'q90'."),
+            fix_rivers = fix_rivers)
         }
 
         # Fix value

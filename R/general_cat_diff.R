@@ -49,7 +49,7 @@ cat_diff <- function(
     cat_info = FALSE, level = 0L, cat_timestamp = FALSE, ...) {
 
   if (is.null(init_time)) {
-    stop("`init_time` cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx("`init_time` cannot be NULL", init_time = init_time)
   }
 
   if (cat_info) {

@@ -65,13 +65,13 @@ load_multiple <- function(
     files = NULL, verbose = TRUE, single_object = TRUE, return_names = TRUE) {
 
   if (!inherits(files, "character")) {
-    stop("`files` should be character object", call. = FALSE)
+    IASDT.R::stop_ctx("`files` should be character object", files = files)
   }
 
   if (!all(file.exists(files))) {
-    stop(
+    IASDT.R::stop_ctx(
       "Some of these files do not exist. No objects were loaded!",
-      call. = FALSE)
+      files = files)
   }
 
 
@@ -90,9 +90,10 @@ load_multiple <- function(
     purrr::walk(.x = files, .f = ~ load(file = .x, envir = Env1))
 
     if (any(ls(envir = Env1) %in% ls(envir = parent.frame()))) {
-      stop(
-        "Some of the new object names already exists in the current ",
-        "environment. No files were loaded!", call. = FALSE)
+      IASDT.R::stop_ctx(
+        paste0(
+          "Some of the new object names already exists in the current ",
+          "environment. No files were loaded!"))
     }
 
     ObjectsLoaded <- purrr::map(

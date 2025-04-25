@@ -47,9 +47,9 @@
 add_image_to_plot <- function(image_object, x, y, width, interpolate = TRUE) {
 
   if (is.null(image_object) || is.null(x) || is.null(y) || is.null(width)) {
-    stop(
+    IASDT.R::stop_ctx(
       "Must provide args `image_object`, `x`, `y`, and `width`",
-      call. = FALSE)
+      image_object = image_object, x = x, y = y, width = width)
   }
 
   # A vector of the form c(x1, x2, y1, y2) giving the extremes of the user

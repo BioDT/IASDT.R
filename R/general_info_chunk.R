@@ -41,7 +41,7 @@ info_chunk <- function(
     msg_n_lines = 1L, info_lines_before = 0L, ...) {
 
   if (is.null(message)) {
-    stop("message cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx("message cannot be NULL", message = message)
   }
 
   if (info_lines_before > 1) {

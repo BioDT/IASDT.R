@@ -71,8 +71,9 @@ mod_CV_fit <- function(
 
   if (length(NullVars) > 0) {
     NullVarsNames[NullVars]
-    stop(
-      toString(NullVarsNames[NullVars]), " cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0(toString(NullVarsNames[NullVars]), " cannot be NULL"),
+      NullVars = NullVars, length_NullVars = length(NullVars))
   }
 
   AllArgs <- ls(envir = environment())
@@ -94,12 +95,12 @@ mod_CV_fit <- function(
     args_all = AllArgs, args_to_check = NumericArgs, args_type = "numeric")
 
   if (!(precision %in% c(32, 64))) {
-    stop(
-      "precision should be either of 32 or 64, not ", precision, call. = FALSE)
+    IASDT.R::stop_ctx(
+      "precision should be either of 32 or 64", precision = precision)
   }
 
   if (!file.exists(path_model)) {
-    stop("Model path does not exist.", call. = FALSE)
+    IASDT.R::stop_ctx("Model path does not exist.", path_model = path_model)
   }
 
   rm(AllArgs, NullVarsNames, NullVars, envir = environment())
@@ -117,9 +118,10 @@ mod_CV_fit <- function(
     path = dirname(dirname(path_model)),
     pattern = "^ModDT_.*subset.RData", full.names = TRUE)
   if (length(Path_ModelData) != 1) {
-    stop(
+    IASDT.R::stop_ctx(
       "There should be exactly one file matches model input data",
-      call. = FALSE)
+      length_Path_ModelData = length(Path_ModelData),
+      Path_ModelData = Path_ModelData)
   }
 
   # Loading full model object
@@ -151,11 +153,13 @@ mod_CV_fit <- function(
     if (!(all(CV_name %in% names(CV_Data)))) {
       # if any of the column names does not exist, stop the function
       MissingCV <- CV_name[isFALSE(CV_name %in% names(CV_Data))]
-      stop(
-        "`Partitions` was not defined (NULL) and column(s) for CV folds ",
-        paste(MissingCV, collapse = " + "),
-        " can not be found in species data", call. = FALSE
-      )
+      IASDT.R::stop_ctx(
+        paste0(
+          "`Partitions` was not defined (NULL) and column(s) for CV folds ",
+          paste(MissingCV, collapse = " + "),
+          " can not be found in species data"),
+        CV_name = CV_name, Partitions = Partitions,
+        names_CV_Data = names(CV_Data))
     }
 
     # Extract CV folds from the CV column(s)
@@ -170,9 +174,12 @@ mod_CV_fit <- function(
 
   # Check the length of CV data equals the number of sampling units in the model
   if (any(purrr::map_int(Partitions, length) != Model_Full$ny)) {
-    stop(
-      "Partitions parameter must be a vector of the same length of the ",
-      "sampling  units of the the full model", call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0(
+        "Partitions parameter must be a vector of the same length of the ",
+        "sampling  units of the the full model"),
+      Partitions = Partitions, model_ny = Model_Full$ny,
+      length_Partitions = purrr::map_int(Partitions, length))
   }
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

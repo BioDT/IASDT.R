@@ -24,13 +24,17 @@ normalize_path <- function(path, must_work = FALSE) {
 
   # Validate input
   if (is.null(path)) {
-    stop("`path` cannot be NULL.", call. = FALSE)
+    IASDT.R::stop_ctx("`path` cannot be NULL.", path = path)
   }
   if (!is.character(path)) {
-    stop("`path` must be a character vector.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`path` must be a character vector.",
+      path = path, class_path = class(path))
   }
   if (length(path) == 0) {
-    stop("`path` cannot be an empty character vector.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`path` cannot be an empty character vector.",
+      path = path, length_path = length(path))
   }
 
   # Check path existence before transformation (if must_work = TRUE)
@@ -39,7 +43,7 @@ normalize_path <- function(path, must_work = FALSE) {
       fs::is_dir(path), fs::dir_exists(path), fs::file_exists(path))
 
     if (isFALSE(Exists)) {
-      stop("`path` does not exist: ", path, call. = FALSE)
+      IASDT.R::stop_ctx("`path` does not exist: ", path = path, Exists = Exists)
     }
   }
 

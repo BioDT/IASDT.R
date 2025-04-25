@@ -33,10 +33,13 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
   # # ..................................................................... ###
 
   if (is.null(model_dir) || !is.character(model_dir) || !nzchar(model_dir)) {
-    stop("`model_dir` has to be a character with length > 0", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`model_dir` has to be a character with length > 0",
+      model_dir = model_dir)
   }
   if (!fs::dir_exists(model_dir)) {
-    stop("`model_dir` is not a valid directory", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`model_dir` is not a valid directory", model_dir = model_dir)
   }
 
   # # ..................................................................... ###
@@ -58,8 +61,8 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
   # Reference grid
   Gird10 <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(Gird10)) {
-    stop(
-      "Path for the Europe boundaries does not exist: ", Gird10, call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Path for the Europe boundaries does not exist", Gird10 = Gird10)
   }
   Gird10 <- IASDT.R::load_as(Gird10) %>%
     terra::unwrap()
@@ -77,9 +80,9 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
     "Prediction_Current_Summary.RData")
 
   if (!file.exists(Map_summary_NoClamp)) {
-    stop(
-      "`Map_summary_NoClamp` file: ", Map_summary_NoClamp,
-      " does not exist", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`Map_summary_NoClamp` file does not exist",
+      Map_summary_NoClamp = Map_summary_NoClamp)
   }
   Map_summary_NoClamp <- IASDT.R::load_as(Map_summary_NoClamp) %>%
     dplyr::rename(
@@ -91,9 +94,9 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
   Map_summary_Clamp <- IASDT.R::path(
     model_dir, "Model_Prediction", "Clamp", "Prediction_Current_Summary.RData")
   if (!file.exists(Map_summary_Clamp)) {
-    stop(
-      "`Map_summary_Clamp` file: ", Map_summary_Clamp,
-      " does not exist", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`Map_summary_Clamp` file does not exist",
+      Map_summary_Clamp = Map_summary_Clamp)
   }
   Map_summary_Clamp <- IASDT.R::load_as(Map_summary_Clamp) %>%
     dplyr::rename(
@@ -129,7 +132,7 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
     model_dir, pattern = "^ModDT_.*subset.RData$", full.names = TRUE)
 
   if (length(Model_Data) != 1) {
-    stop("Model data does not exist", call. = FALSE)
+    IASDT.R::stop_ctx("Model data does not exist", Model_Data = Model_Data)
   }
   Model_Data <- IASDT.R::load_as(Model_Data)
 
@@ -153,7 +156,7 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
   Path_Hab <- IASDT.R::path(
     Path_CLC, "Summary_RData", "PercCov_SynHab_Crop.RData")
   if (!file.exists(Path_Hab)) {
-    stop("Path_Hab file: ", Path_Hab, " does not exist", call. = FALSE)
+    IASDT.R::stop_ctx("Path_Hab file does not exist", Path_Hab = Path_Hab)
   }
   R_habitat <- IASDT.R::load_as(Path_Hab) %>%
     terra::unwrap() %>%
@@ -371,6 +374,7 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
     invisible(gc())
 
     # Observed data
+
     if (Species) {
 
       # Observed species presence
@@ -378,9 +382,8 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
       # Files containing observed data maps
       Path_observed <- IASDT.R::path(Path_PA, "Sp_PA_Summary_DF.RData")
       if (!file.exists(Path_observed)) {
-        stop(
-          "Path_observed file: ", Path_observed, " does not exist",
-          call. = FALSE)
+        IASDT.R::stop_ctx(
+          "Path_observed file does not exist", Path_observed = Path_observed)
       }
       Path_observed <- IASDT.R::load_as(Path_observed) %>%
         dplyr::filter(IAS_ID == SpID2) %>%
@@ -390,8 +393,9 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
 
       # Check if observed data files exist
       if (!all(file.exists(Path_observed))) {
-        stop(
-          "Observed data for species: ", SpName, " not found", call. = FALSE)
+        IASDT.R::stop_ctx(
+          paste0("Observed data for species: ", SpName, " not found"),
+          Path_observed = Path_observed, SpName = SpName)
       }
 
       Plot_observed <- terra::rast(Path_observed)

@@ -36,12 +36,12 @@
 
 file_extension <- function(path) {
   if (is.null(path)) {
-    stop("`path` cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx("`path` cannot be NULL", path = path)
   }
 
   # Ensure path is a character string
   if (!is.character(path)) {
-    stop("`path` must be a character string", call. = FALSE)
+    IASDT.R::stop_ctx("`path` must be a character string", path = path)
   }
 
   return(tools::file_ext(path))

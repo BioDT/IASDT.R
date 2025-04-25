@@ -49,14 +49,12 @@ bioreg_process <- function(env_file = ".env") {
   rm(AllArgs, envir = environment())
 
   if (isFALSE(IASDT.R::check_system_command("curl"))) {
-    stop(
-      "`curl` is required for downloading data but was not found.",
-      call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`curl` is required for downloading data but was not found.")
   }
   if (isFALSE(IASDT.R::check_system_command("unzip"))) {
-    stop(
-      "`unzip` is required for extracting data but was not found.",
-      call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`unzip` is required for extracting data but was not found.")
   }
 
   # # ..................................................................... ###
@@ -105,13 +103,13 @@ bioreg_process <- function(env_file = ".env") {
       rvest::html_elements(css = "#header-primary-action .button") %>%
       rvest::html_attr("href")
   }, error = function(e) {
-    stop("Failed to extract download URL: ", e$message, call. = FALSE)
+    IASDT.R::stop_ctx(paste0("Failed to extract download URL: ", e$message))
   })
 
   if (length(BioReg_URL2) != 1) {
-    stop(
-      "Download link extraction failed. Found: ", length(BioReg_URL2),
-      call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0("Download link extraction failed. Found: ", length(BioReg_URL2)),
+      BioReg_URL2 = BioReg_URL2, length_BioReg_URL2 = length(BioReg_URL2))
   }
   IASDT.R::cat_time(BioReg_URL2, level = 2, cat_timestamp = FALSE)
 
@@ -136,9 +134,8 @@ bioreg_process <- function(env_file = ".env") {
     }
 
     if (attempt >= 5) {
-      stop(
-        "Error: Maximum download attempts reached. Zip file check failed.",
-        call. = FALSE)
+      IASDT.R::stop_ctx(
+        "Error: Maximum download attempts reached. Zip file check failed.")
     }
     attempt <- attempt + 1
   }
@@ -160,7 +157,9 @@ bioreg_process <- function(env_file = ".env") {
   IASDT.R::cat_time("Read data from original shapefile", level = 1)
   BioReg_DT <- fs::dir_ls(path = Path_Interim, type = "file", glob = "*.shp$")
   if (length(BioReg_DT) != 1) {
-    stop("Expected one .shp file, found: ", length(BioReg_DT), call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0("Expected one .shp file, found: ", length(BioReg_DT)),
+      BioReg_DT = BioReg_DT, length_BioReg_DT = length(BioReg_DT))
   }
   BioReg_DT <- sf::st_read(BioReg_DT, quiet = TRUE) %>%
     # project to EPSG:3035
@@ -182,8 +181,8 @@ bioreg_process <- function(env_file = ".env") {
 
   GridR <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(GridR)) {
-    stop(
-      "Path for the Europe boundaries does not exist: ", GridR, call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Path for the Europe boundaries does not exist", GridR = GridR)
   }
 
   BioReg_R <- BioReg_DT %>%

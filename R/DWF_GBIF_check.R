@@ -20,7 +20,8 @@ GBIF_check <- function(r_environ = ".Renviron") {
   # `.Renviron` file
   if (Missing_Account) {
     if (!file.exists(r_environ)) {
-      stop("`.Renviron` file does not exist: ", r_environ, call. = FALSE)
+      IASDT.R::stop_ctx(
+        "`.Renviron` file does not exist", r_environ = r_environ)
     }
     readRenviron(r_environ)
   }
@@ -31,9 +32,10 @@ GBIF_check <- function(r_environ = ".Renviron") {
       .f = ~ !nzchar(Sys.getenv(.x))))
 
   if (Missing_Account) {
-    stop(
-      "GBIF access information is not available or read from ",
-      "the `.Renviron` file", call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0(
+        "GBIF access information is not available or read from ",
+        "the `.Renviron` file"))
   }
 
   return(invisible(NULL))

@@ -16,16 +16,21 @@ convergence_alpha <- function(
   # # ..................................................................... ###
 
   if (is.null(posterior) || is.null(model_object)) {
-    stop("`posterior` and `model_object` cannot be empty", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`posterior` and `model_object` cannot be empty",
+      model_object = model_object, posterior = posterior)
   }
 
   if (length(margin_type) != 1) {
-    stop("`margin_type` must be a single string.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`margin_type` must be a single string.",
+      margin_type = margin_type, length_margin_type = length(margin_type))
   }
 
   if (!margin_type %in% c("histogram", "density")) {
-    stop(
-      "`margin_type` must be either 'histogram' or 'density'.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`margin_type` must be either 'histogram' or 'density'.",
+      margin_type = margin_type)
   }
 
   # # ..................................................................... ###
@@ -52,7 +57,9 @@ convergence_alpha <- function(
   }
 
   if (!("Alpha" %in% names(posterior))) {
-    stop("`posterior` object does not contain 'Alpha'", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`posterior` object does not contain 'Alpha'",
+      names_posterior = names(posterior))
   }
   posterior <- posterior$Alpha[[1]]
 

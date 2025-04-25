@@ -23,7 +23,7 @@
 #' @author Ahmed El-Gabbas
 
 railway_intensity <- function(
-  env_file = ".env", n_cores = 6L, delete_processed = TRUE) {
+    env_file = ".env", n_cores = 6L, delete_processed = TRUE) {
 
   .StartTime <- lubridate::now(tzone = "CET")
 
@@ -49,7 +49,7 @@ railway_intensity <- function(
 
   # Check `unzip` system command
   if (isFALSE(IASDT.R::check_system_command("unzip"))) {
-    stop("The system command 'unzip' is not available", call. = FALSE)
+    IASDT.R::stop_ctx("The system command 'unzip' is not available")
   }
 
   # # ..................................................................... ###
@@ -85,14 +85,16 @@ railway_intensity <- function(
 
   RefGrid <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(RefGrid)) {
-    stop("The reference grid file does not exist: ", RefGrid, call. = FALSE)
+    IASDT.R::stop_ctx(
+      "The reference grid file does not exist", RefGrid = RefGrid)
   }
   RefGrid <- terra::unwrap(IASDT.R::load_as(RefGrid))
 
 
   RefGridSF <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
   if (!file.exists(RefGridSF)) {
-    stop("The reference grid file does not exist: ", RefGridSF, call. = FALSE)
+    IASDT.R::stop_ctx(
+      "The reference grid file does not exist: ", RefGridSF = RefGridSF)
   }
   RefGridSF <- IASDT.R::load_as(RefGridSF)
 
@@ -103,9 +105,9 @@ railway_intensity <- function(
   .StartTimeDown <- lubridate::now(tzone = "CET")
 
   if (!IASDT.R::check_URL(Railways_URL)) {
-    stop(
-      "The base URL for railways data is not valid: ", Railways_URL,
-      call. = FALSE)
+    IASDT.R::stop_ctx(
+      "The base URL for railways data is not valid",
+      Railways_URL = Railways_URL)
   }
 
   IASDT.R::cat_time(paste0("Base URL is: ", Railways_URL), level = 1)
@@ -157,9 +159,8 @@ railway_intensity <- function(
     } else if (inherits(Railways_Links, "try-error")) {
       Success <- FALSE
       if (Attempt == Attempts) {
-        stop(
-          "Initial scraping of railways links failed after ", Attempts,
-          call. = FALSE)
+        IASDT.R::stop_ctx(
+          paste0("Initial scraping of railways links failed after ", Attempts))
       }
     }
 
@@ -191,9 +192,10 @@ railway_intensity <- function(
             } else if (inherits(ScrapedLinks, "try-error")) {
               Success <- FALSE
               if (Attempt == Attempts) {
-                stop(
-                  "Scraping railways links failed for: ", ScrapedLinks,
-                  "after ", Attempts, call. = FALSE)
+                IASDT.R::stop_ctx(
+                  paste0(
+                    "Scraping railways links failed for: ", ScrapedLinks,
+                    "after ", Attempts))
               }
             }
             Attempt <- Attempt + 1

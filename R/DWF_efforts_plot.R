@@ -31,7 +31,8 @@ efforts_plot <- function(env_file = ".env") {
 
   File_SummaryR <- IASDT.R::path(Path_Efforts, "Efforts_SummaryR.RData")
   if (!file.exists(File_SummaryR)) {
-    stop("Summary maps cannot be loaded: ", File_SummaryR, call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Summary maps cannot be loaded: ", File_SummaryR = File_SummaryR)
   }
 
   Efforts_SummaryR <- terra::unwrap(IASDT.R::load_as(File_SummaryR))

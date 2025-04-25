@@ -15,7 +15,7 @@ IAS_plot <- function(species = NULL, env_file = ".env", overwrite = TRUE) {
   # Checking arguments ----
 
   if (is.null(species)) {
-    stop("species cannot be empty", call. = FALSE)
+    IASDT.R::stop_ctx("species cannot be empty", species = species)
   }
 
   AllArgs <- ls(envir = environment())
@@ -83,7 +83,10 @@ IAS_plot <- function(species = NULL, env_file = ".env", overwrite = TRUE) {
   # Summary information for the current species
   SpInfo <- IASDT.R::load_as(Path_TaxaInfo_RData)
   if (nrow(SpInfo) == 0) {
-    stop("Species information could not be found", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Species information could not be found",
+      Path_TaxaInfo_RData = Path_TaxaInfo_RData,
+      SpInfo = SpInfo, nrow_SpInfo = nrow(SpInfo))
   }
   SpInfo <- dplyr::filter(SpInfo, Species_name2 == Species2) %>%
     dplyr::select(-"speciesKey") %>%

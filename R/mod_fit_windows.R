@@ -24,32 +24,33 @@ mod_fit_windows <- function(
 
   # exit the function if not running on Windows
   if (IASDT.R::OS() != "Windows") {
-    stop("This function is only for Windows OS.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "This function is only for Windows OS.", OS = IASDT.R::OS())
   }
 
   if (is.null(path_model) || is.null(python_VE) || is.null(n_cores)) {
-    stop(
+    IASDT.R::stop_ctx(
       "`path_model`, `python_VE`, and `n_cores` cannot be empty",
-      call. = FALSE)
+      path_model = path_model, python_VE = python_VE, n_cores = n_cores)
   }
 
   # Check if path_model is a valid directory
   if (!fs::dir_exists(path_model)) {
-    stop("Model directory does not exist:", path_model, call. = FALSE)
+    IASDT.R::stop_ctx("Model directory does not exist", path_model = path_model)
   }
 
   # Check if python_VE is a valid directory
   if (!fs::dir_exists(python_VE)) {
-    stop(
-      "Python virtual environment directory does not exist:", python_VE,
-      call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Python virtual environment directory does not exist",
+      python_VE = python_VE)
   }
 
   # Check if python_VE directory contains python virtual environment
   python_exe <- IASDT.R::path(python_VE, "Scripts", "python.exe")
   if (!fs::file_exists(python_exe)) {
-    stop(
-      "Python virtual environment does not exist:", python_VE, call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Python virtual environment does not exist", python_VE = python_VE)
   }
 
   # Avoid "no visible binding for global variable" message

@@ -7,7 +7,7 @@
 set_parallel(
   n_cores = 1L,
   strategy = "future::multisession",
-  stop = FALSE,
+  stop_cluster = FALSE,
   show_log = TRUE,
   future_max_size = 500L,
   ...
@@ -24,15 +24,15 @@ options are \code{future::sequential} (sequential), \code{future::multisession}
 \code{future::multicore} on Windows PC, it defaults to \code{future::multisession}.
 See \code{\link[future:plan]{future::plan()}} for more details.}
 
-\item{stop}{Logical. If \code{TRUE}, stops any parallel cluster and resets to
-sequential mode. If \code{FALSE} (default), sets up a new plan.}
+\item{stop_cluster}{Logical. If \code{TRUE}, stops any parallel cluster and
+resets to sequential mode. If \code{FALSE} (default), sets up a new plan.}
 
 \item{show_log}{Logical. If \code{TRUE} (default), logs messages via
 \code{\link[=cat_time]{cat_time()}}.}
 
 \item{future_max_size}{Numeric. Maximum allowed total size (in megabytes) of
 global variables identified. See \code{future.globals.maxSize} argument of
-\link[future:future.options]{future::future.options} for more details. Default is \code{500L} for 500 MB.}
+\link[future:zzz-future.options]{future::future.options} for more details. Default is \code{500L} for 500 MB.}
 
 \item{...}{Additional arguments to pass to \link{cat_time}.}
 }
@@ -48,7 +48,7 @@ future::plan()
 # ---------------------------------------------
 
 # Stopping parallel processing
-IASDT.R::set_parallel(stop = TRUE)
+IASDT.R::set_parallel(stop_cluster = TRUE)
 future::plan()
 
 # ---------------------------------------------
@@ -58,7 +58,7 @@ IASDT.R::set_parallel(n_cores = 2, strategy = "future::cluster")
 future::plan()
 
 # Stopping parallel processing
-IASDT.R::set_parallel(stop = TRUE)
+IASDT.R::set_parallel(stop_cluster = TRUE)
 future::plan()
 }
 \author{

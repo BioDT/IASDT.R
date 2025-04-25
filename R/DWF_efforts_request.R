@@ -26,15 +26,20 @@ efforts_request <- function(
   .StartTimeRequest <- lubridate::now(tzone = "CET")
 
   if (missing(n_cores) || !is.numeric(n_cores) || n_cores < 1) {
-    stop("`n_cores` must be a positive integer.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`n_cores` must be a positive integer.", n_cores = n_cores)
   }
 
   if (!is.numeric(start_year) || start_year <= 1950) {
-    stop("`start_year` must be a positive integer after 1950", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`start_year` must be a positive integer after 1950",
+      start_year = start_year)
   }
 
   if (!is.numeric(boundaries) || length(boundaries) != 4) {
-    stop("`boundaries` must be a numeric vector of length 4.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`boundaries` must be a numeric vector of length 4.",
+      boundaries = boundaries)
   }
 
   # # ..................................................................... ###
@@ -134,9 +139,10 @@ efforts_request <- function(
                   out_path = Request_Path)
               },
               error = function(e) {
-                stop(
-                  "Failed to request data for taxonKey ", .x, ": ",
-                  conditionMessage(e), call. = FALSE)
+                IASDT.R::stop_ctx(
+                  paste0(
+                    "Failed to request data for taxonKey ", .x, ": ",
+                    conditionMessage(e)))
               })
           }
 

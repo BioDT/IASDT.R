@@ -36,7 +36,7 @@ text_to_coordinates <- function(
     text = NULL, name_x = "Longitude", name_y = "Latitude") {
 
   if (is.null(text)) {
-    stop("Input string cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx("Input string cannot be NULL", text = text)
   }
 
   text %>%

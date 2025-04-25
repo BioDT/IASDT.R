@@ -25,7 +25,7 @@ polygon_centroid <- function(
   sf_object = NULL, rename = FALSE, new_name = NULL) {
 
   if (is.null(sf_object)) {
-    stop("Input sf object cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx("Input sf object cannot be NULL", sf_object = sf_object)
   }
 
   suppressWarnings({
@@ -35,7 +35,7 @@ polygon_centroid <- function(
 
   if (rename) {
     if (is.null(new_name)) {
-      stop("new_name cannot be NULL", call. = FALSE)
+      IASDT.R::stop_ctx("new_name cannot be NULL", new_name = new_name)
     }
 
     sf_object <- rename_geometry(sf_object = sf_object, new_name = new_name)

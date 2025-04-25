@@ -92,9 +92,9 @@ predict_latent_factor <- function(
   # Check inputs
 
   if (is.null(LF_out_file) && isFALSE(LF_return)) {
-    stop(
-      "`LF_return` must be TRUE when `LF_out_file` is NULL.",
-      call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`LF_return` must be `TRUE` when `LF_out_file` is NULL.",
+      LF_return = LF_return, LF_out_file = LF_out_file)
   }
 
   # # ..................................................................... ###
@@ -104,7 +104,8 @@ predict_latent_factor <- function(
   if (inherits(postEta, "character")) {
     IASDT.R::cat_time("Load postEta", level = 1)
     if (!file.exists(postEta)) {
-      stop("The specified path for `postEta` does not exist. ", call. = FALSE)
+      IASDT.R::stop_ctx(
+        "The specified path for `postEta` does not exist. ", postEta = postEta)
     }
     postEta <- IASDT.R::load_as(postEta)
   }
@@ -137,9 +138,9 @@ predict_latent_factor <- function(
 
   # Either AllTraining or AllNew should be TRUE
   if (sum(AllTraining, AllNew) != 1) {
-    stop(
+    IASDT.R::stop_ctx(
       "The input sites should be either all training sites or all new sites.",
-      call. = FALSE)
+      sum = sum(AllTraining, AllNew))
   }
 
   if (AllTraining) {
@@ -167,7 +168,8 @@ predict_latent_factor <- function(
 
       # Check if PythonScript exists
       if (!file.exists(PythonScript)) {
-        stop("Necessary Python script does not exist", call. = FALSE)
+        IASDT.R::stop_ctx(
+          "Necessary Python script does not exist", PythonScript = PythonScript)
       }
 
       # Suppress TensorFlow warnings and disable optimizations
@@ -663,10 +665,9 @@ predict_latent_factor <- function(
 
       if (!AllEtaFilesExist) {
         FailedFiles <- AllEtaFiles[!file.exists(AllEtaFiles)]
-        stop(
-          length(FailedFiles), " files are missing: \n",
-          paste0("  >>  ", basename(FailedFiles), collapse = "\n"),
-          call. = FALSE)
+        IASDT.R::stop_ctx(
+          paste0(length(FailedFiles), " files are missing"),
+          FailedFiles = basename(FailedFiles))
       }
       IASDT.R::cat_time("All files were created", level = 2)
 
@@ -772,13 +773,28 @@ predict_latent_factor <- function(
         file_paths <- list.files(
           path = IASDT.R::normalize_path(temp_dir),
           pattern = Pattern, full.names = TRUE)
-        try(fs::file_delete(file_paths), silent = TRUE)
+        if (length(file_paths) > 0) {
+          try(fs::file_delete(file_paths), silent = TRUE)
+        }
 
         file_paths2 <- list.files(
           path = IASDT.R::normalize_path(temp_dir),
           pattern = "(LF_.+_Test|RC_c)_Samp_.+.qs2",
           full.names = TRUE, recursive = TRUE)
-        try(fs::file_delete(file_paths2), silent = TRUE)
+        if (length(file_paths2) > 0) {
+          try(fs::file_delete(file_paths2), silent = TRUE)
+        }
+
+        # delete temp files for cross-validated models
+        file_paths3 <- IASDT.R::path(temp_dir, "LF_Prediction") %>%
+          IASDT.R::normalize_path() %>%
+          list.files(
+            pattern = paste0("^", model_name, "_Samp_.+.qs2"),
+            full.names = TRUE, recursive = TRUE)
+
+        if (length(file_paths3) > 0) {
+          try(fs::file_delete(file_paths3), silent = TRUE)
+        }
 
       },
       silent = TRUE)
@@ -811,8 +827,6 @@ predict_latent_factor <- function(
 ## |------------------------------------------------------------------------| #
 
 #' run_crossprod_solve
-
-#' Run Crossprod Solve
 #'
 #' Internal function to executes a Python script that performs matrix
 #' computations using TensorFlow with provided inputs. Retries up to three times
@@ -855,9 +869,9 @@ run_crossprod_solve <- function(
 
   script_path <- system.file("crossprod_solve.py", package = "IASDT.R")
   if (!file.exists(script_path)) {
-    stop(
+    IASDT.R::stop_ctx(
       "Necessary Python script `crossprod_solve.py` does not exist",
-      call. = FALSE)
+      script_path = script_path)
   }
 
   # Ensure the paths are valid
@@ -867,7 +881,7 @@ run_crossprod_solve <- function(
     .x = names(paths),
     .f = function(p) {
       if (!file.exists(paths[[p]])) {
-        stop(p, " does not exist: ", paths[[p]], call. = FALSE)
+        IASDT.R::stop_ctx(paste0(p, " does not exist: "), path = paths[[p]])
       }
     })
 
@@ -882,14 +896,14 @@ run_crossprod_solve <- function(
   if (.Platform$OS.type == "windows") {
 
     if (is.null(TF_environ)) {
-      stop(
+      IASDT.R::stop_ctx(
         "When running on Windows, `TF_environ` must be specified",
-        call. = FALSE)
+        TF_environ = TF_environ)
     }
     if (!dir.exists(TF_environ)) {
-      stop(
-        "The specified `TF_environ` directory ",
-        IASDT.R::normalize_path(TF_environ), " does not exist", call. = FALSE)
+      IASDT.R::stop_ctx(
+        "The specified `TF_environ` directory does not exist",
+        TF_environ = IASDT.R::normalize_path(TF_environ))
     }
 
     python_executable <- IASDT.R::normalize_path(
@@ -897,9 +911,9 @@ run_crossprod_solve <- function(
       must_work = TRUE)
 
     if (!file.exists(python_executable)) {
-      stop(
+      IASDT.R::stop_ctx(
         "Python executable not found in the virtual environment.",
-        call. = FALSE)
+        python_executable = python_executable)
     }
 
   } else {
@@ -1034,7 +1048,7 @@ plot_latent_factor <- function(
 
   # Check if the model file exists
   if (is.null(path_model) || !file.exists(path_model)) {
-    stop("Selected model files not found", call. = FALSE)
+    IASDT.R::stop_ctx("Selected model files not found", path_model = path_model)
   }
 
   Model <- IASDT.R::load_as(path_model)

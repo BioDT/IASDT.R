@@ -6,6 +6,7 @@
 \alias{mod_prepare_TF}
 \alias{mod_postprocess_2_CPU}
 \alias{mod_CV_postprocess_1_CPU}
+\alias{mod_CV_postprocess_2_CPU}
 \title{Model pipeline for post-processing fitted Hmsc models}
 \usage{
 mod_postprocess_1_CPU(
@@ -96,16 +97,30 @@ mod_CV_postprocess_1_CPU(
   from_JSON = FALSE,
   use_TF = TRUE,
   TF_use_single = FALSE,
+  TF_environ = NULL,
   LF_n_cores = n_cores,
   LF_only = TRUE,
   LF_temp_cleanup = TRUE,
   LF_check = FALSE,
+  LF_runtime = "01:00:00",
   temp_cleanup = TRUE,
-  TF_environ = NULL,
   n_batch_files = 210L,
   working_directory = NULL,
-  partition_name = "small-g",
-  LF_runtime = "01:00:00"
+  partition_name = "small-g"
+)
+
+mod_CV_postprocess_2_CPU(
+  model_dir = NULL,
+  CV_names = NULL,
+  n_cores = 8L,
+  env_file = ".env",
+  use_TF = TRUE,
+  TF_use_single = FALSE,
+  temp_cleanup = TRUE,
+  LF_temp_cleanup = TRUE,
+  TF_environ = NULL,
+  LF_n_cores = n_cores,
+  LF_check = FALSE
 )
 }
 \arguments{

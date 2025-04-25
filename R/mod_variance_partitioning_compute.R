@@ -73,10 +73,13 @@ variance_partitioning_compute <- function(
     # Check python virtual environment
     if (isFALSE(VP_commands_only) && .Platform$OS.type == "windows" &&
         (is.null(TF_environ) || !dir.exists(TF_environ))) {
-      stop(
-        "When running on Windows and `use_TF` is TRUE, `TF_environ` must ",
-        "be specified and point to an existing directory with a ",
-        "Python virtual environment", call. = FALSE)
+      IASDT.R::stop_ctx(
+        paste0(
+          "When running on Windows and `use_TF` is TRUE, `TF_environ` must ",
+          "be specified and point to an existing directory with a ",
+          "Python virtual environment"),
+        VP_commands_only = VP_commands_only, OS = .Platform$OS.type,
+        TF_environ = TF_environ)
     }
 
     # Determine the Python executable path
@@ -92,9 +95,9 @@ variance_partitioning_compute <- function(
       python_executable <- IASDT.R::path(TF_environ, "Scripts", "python.exe")
 
       if (isFALSE(VP_commands_only) && !file.exists(python_executable)) {
-        stop(
-          "Python executable not found in the virtual environment: ",
-          python_executable, call. = FALSE)
+        IASDT.R::stop_ctx(
+          "Python executable not found in the virtual environment",
+          python_executable = python_executable)
       }
     } else {
       python_executable <- "/usr/bin/time -v python3"
@@ -125,8 +128,10 @@ variance_partitioning_compute <- function(
     Script_getf <- system.file("VP_getf.py", package = "IASDT.R")
     Script_gemu <- system.file("VP_gemu.py", package = "IASDT.R")
     if (!all(file.exists(c(Script_geta, Script_getf, Script_gemu)))) {
-      stop(
-        "Necessary python scripts do not exist", call. = FALSE)
+      IASDT.R::stop_ctx(
+        "Necessary python scripts do not exist",
+        Script_geta = Script_geta, Script_getf = Script_getf,
+        Script_gemu = Script_gemu)
     }
   }
 
@@ -136,7 +141,8 @@ variance_partitioning_compute <- function(
   IASDT.R::cat_time("Load model object")
 
   if (is.null(path_model) || !file.exists(path_model)) {
-    stop("Model path is NULL or does not exist: ", path_model, call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Model path is NULL or does not exist", path_model = path_model)
   }
 
   Model <- IASDT.R::load_as(path_model)
@@ -390,7 +396,8 @@ variance_partitioning_compute <- function(
 
           # Check for errors
           if (inherits(la, "error") || la[length(la)] != "Done") {
-            stop("Error in computing geta: ", la, call. = FALSE)
+            IASDT.R::stop_ctx(
+              "Error in computing geta", la = la, class_la = class(la))
           }
 
           if (length(la) != 1) {
@@ -445,7 +452,8 @@ variance_partitioning_compute <- function(
 
           # Check for errors
           if (inherits(lf, "error") || lf[length(lf)] != "Done") {
-            stop("Error in computing geta: ", lf, call. = FALSE)
+            IASDT.R::stop_ctx(
+              "Error in computing geta", lf = lf, class_lf = class(lf))
           }
 
           if (length(lf) != 1) {
@@ -501,7 +509,8 @@ variance_partitioning_compute <- function(
 
           # Check for errors
           if (inherits(lmu, "error") || lmu[length(lmu)] != "Done") {
-            stop("Error in computing geta: ", lmu, call. = FALSE)
+            IASDT.R::stop_ctx(
+              "Error in computing geta", lmu = lmu, class_lmu = class(lmu))
           }
 
           if (length(lmu) != 1) {
@@ -758,7 +767,7 @@ variance_partitioning_compute <- function(
         "Model", "path_postList", "poolN", "ns", "nr", "cMA", "group"))
 
     # stopping the cluster
-    IASDT.R::set_parallel(stop = TRUE, level = 2)
+    IASDT.R::set_parallel(stop_cluster = TRUE, level = 2)
 
     # Summarize the results
     IASDT.R::cat_time("Summarize the results", level = 1)

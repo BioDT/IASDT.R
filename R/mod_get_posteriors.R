@@ -22,7 +22,8 @@ mod_get_posteriors <- function(path_posterior = NULL, from_JSON = FALSE) {
 
   # Check if path_posterior is empty
   if (is.null(path_posterior)) {
-    stop("`path_posterior` cannot be empty", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`path_posterior` cannot be empty", path_posterior = path_posterior)
   }
 
   # Checking arguments

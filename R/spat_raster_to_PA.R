@@ -48,7 +48,7 @@
 raster_to_PA <- function(raster = NULL, NA_to_0 = TRUE, zero_to_NA = FALSE) {
 
   if (is.null(raster)) {
-    stop("raster can not be NULL", call. = FALSE)
+    IASDT.R::stop_ctx("raster can not be NULL", raster = raster)
   }
 
   if (inherits(raster, "PackedSpatRaster")) {
@@ -63,9 +63,11 @@ raster_to_PA <- function(raster = NULL, NA_to_0 = TRUE, zero_to_NA = FALSE) {
   } else {
 
     if (!inherits(raster, "SpatRaster")) {
-      stop(
-        "Input map should be either PackedSpatRaster, ",
-        "RasterLayer, or SpatRaster", call. = FALSE)
+      IASDT.R::stop_ctx(
+        paste0(
+          "Input map should be either PackedSpatRaster, ",
+          "RasterLayer, or SpatRaster"),
+        raster = raster, class_raster = class(raster))
     }
 
     raster <- terra::classify(raster, cbind(0, Inf, 1))

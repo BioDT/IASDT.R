@@ -28,10 +28,10 @@
 #' n_decimals(x = 13.45554545)
 #' @export
 
-n_decimals <- function(x) {
+n_decimals <- function(x = NULL) {
 
   if (is.null(x)) {
-    stop("x cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx("x cannot be NULL", x = x)
   }
 
   Split <- x %>%

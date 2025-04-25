@@ -88,15 +88,15 @@ predict_hmsc <- function(
   pred_PA <- pred_PA
 
   if (LF_only && is.null(LF_out_file)) {
-    stop(
+    IASDT.R::stop_ctx(
       "`LF_out_file` must be specified when `LF_only` is `TRUE`",
-      call. = FALSE)
+      LF_out_file = LF_out_file, LF_only = LF_only)
   }
 
   if (!is.null(LF_out_file) && !is.null(LF_inputFile)) {
-    stop(
+    IASDT.R::stop_ctx(
       "only one of `LF_out_file` and `LF_inputFile` arguments can be specified",
-      call. = FALSE)
+      LF_out_file = LF_out_file, LF_inputFile = LF_inputFile)
   }
 
   # # ..................................................................... ###
@@ -109,9 +109,9 @@ predict_hmsc <- function(
   # # ..................................................................... ###
 
   if (!is.null(prediction_type) && !prediction_type %in% c("c", "i")) {
-    stop(
+    IASDT.R::stop_ctx(
       "`prediction_type` must be either NULL or one of 'c' or 'i'",
-      call. = FALSE)
+      prediction_type = prediction_type)
   }
 
   if (is.null(pred_directory)) {
@@ -149,9 +149,11 @@ predict_hmsc <- function(
 
   if (!is.null(gradient)) {
     if (!is.null(Yc)) {
-      stop(
-        "predict with arguments 'Yc' and 'gradient' jointly is not ",
-        "implemented (yet)", call. = FALSE)
+      IASDT.R::stop_ctx(
+        paste0(
+          "predict with arguments 'Yc' and 'gradient' jointly is not ",
+          "implemented (yet)"),
+        gradient = gradient, Yc = Yc)
     }
     x_data <- gradient$XDataNew
     studyDesign <- gradient$studyDesignNew
@@ -159,15 +161,15 @@ predict_hmsc <- function(
   }
 
   if (!is.null(x_data) && !is.null(X)) {
-    stop(
+    IASDT.R::stop_ctx(
       "only one of x_data and X arguments can be specified",
-      call. = FALSE)
+      x_data = x_data, X = X)
   }
 
   if (!is.null(XRRRData) && !is.null(XRRR)) {
-    stop(
+    IASDT.R::stop_ctx(
       "only one of XRRRData and XRRR arguments can be specified",
-      call. = FALSE)
+      XRRRData = XRRRData, XRRR = XRRR)
   }
 
   if (!is.null(x_data)) {
@@ -175,7 +177,8 @@ predict_hmsc <- function(
 
     if (class_x == "list") {
       if (any(unlist(lapply(x_data, is.na)))) {
-        stop("NA values are not allowed in 'x_data'", call. = FALSE)
+        IASDT.R::stop_ctx(
+          "NA values are not allowed in 'x_data'", class_x = class_x)
       }
       xlev <- lapply(Reduce(rbind, Model$XData), levels)
       xlev <- xlev[unlist(lapply(Reduce(rbind, Model$XData), is.factor))]
@@ -185,7 +188,8 @@ predict_hmsc <- function(
 
     } else if (class_x == "data.frame") {
       if (anyNA(x_data)) {
-        stop("NA values are not allowed in 'x_data'", call. = FALSE)
+        IASDT.R::stop_ctx(
+          "NA values are not allowed in 'x_data'", class_x = class_x)
       }
       xlev <- lapply(Model$XData, levels)
       xlev <- xlev[unlist(lapply(Model$XData, is.factor))]
@@ -222,30 +226,40 @@ predict_hmsc <- function(
 
   if (!is.null(Yc)) {
     if (ncol(Yc) != Model$ns) {
-      stop("number of columns in Yc must be equal to ns", call. = FALSE)
+      IASDT.R::stop_ctx(
+        "number of columns in Yc must be equal to ns",
+        ncol_Yc = ncol(Yc), model_ns = Model$ns)
     }
     if (nrow(Yc) != nyNew) {
-      stop("number of rows in Yc and X must be equal", call. = FALSE)
+      IASDT.R::stop_ctx(
+        "number of rows in Yc and X must be equal",
+        nrow_Yc = nrow(Yc), nyNew = nyNew)
     }
   }
 
   if (!is.null(Loff)) {
     if (ncol(Loff) != Model$ns) {
-      stop("number of columns in Loff must be equal to ns", call. = FALSE)
+      IASDT.R::stop_ctx(
+        "number of columns in Loff must be equal to ns",
+        ncol_Loff = ncol(Loff), model_ns = Model$ns)
     }
     if (nrow(Loff) != nyNew) {
-      stop("number of rows in Loff and X must be equal", call. = FALSE)
+      IASDT.R::stop_ctx(
+        "number of rows in Loff and X must be equal",
+        nrow_Loff = nrow(Loff), nyNew = nyNew)
     }
   }
 
   if (!all(Model$rLNames %in% colnames(studyDesign))) {
-    stop(
+    IASDT.R::stop_ctx(
       "dfPiNew does not contain all the necessary named columns",
-      call. = FALSE)
+      model_rLNames = Model$rLNames, names_study_design = colnames(studyDesign))
   }
 
   if (!all(Model$rLNames %in% names(ranLevels))) {
-    stop("rL does not contain all the necessary named levels", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "rL does not contain all the necessary named levels",
+      model_rLNames = Model$rLNames, names_ranLevels = names(ranLevels))
   }
 
   if (!is.null(studyDesign)) {
@@ -281,7 +295,9 @@ predict_hmsc <- function(
   Mod_dfPi <- Model$dfPi
 
   # Save smaller version of the model object for later use
-  Model_File_small <- IASDT.R::path(temp_dir, "Model_small.qs2")
+  Model_File_small <- IASDT.R::path(
+    temp_dir, paste0(model_name, "Model_small.qs2"))
+
   if (!file.exists(Model_File_small)) {
     IASDT.R::cat_time(
       "Save smaller version of the model object to disk",
@@ -471,41 +487,16 @@ predict_hmsc <- function(
   rm(ChunkIDs, post, ppEta, envir = environment())
   invisible(gc())
 
-  IASDT.R::cat_time(
-    paste0(
-      "Preparing working in parallel using ",
-      min(n_cores, length(Chunks)), " cores"),
-    level = 1)
-
   seeds <- sample.int(.Machine$integer.max, predN)
 
-  c1 <- parallel::makePSOCKcluster(min(n_cores, length(Chunks)))
-  on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
 
-  parallel::clusterExport(
-    cl = c1,
-    varlist = c(
-      "Model", "X", "XRRR", "Yc", "Loff", "rL", "rLPar", "PiNew",
-      "dfPiNew", "nyNew", "expected", "mcmcStep", "seeds", "chunk_size",
-      "Chunks", "temp_dir", "model_name", "get1prediction"),
-    envir = environment())
-
-  invisible(parallel::clusterEvalQ(
-    cl = c1,
-    expr = {
-      sapply(
-        c(
-          "dplyr", "Rcpp", "RcppArmadillo", "Matrix", "float", "qs2", "Hmsc",
-          "purrr", "tibble", "Hmsc", "Rfast", "caret", "pROC", "ecospat", "sf"),
-        library, character.only = TRUE)
-    }))
+  IASDT.R::set_parallel(n_cores = min(n_cores, length(Chunks)), level = 1)
+  withr::defer(future::plan("future::sequential", gc = TRUE))
 
   IASDT.R::cat_time("Making predictions in parallel", level = 1)
-
-  pred <- parallel::parLapplyLB(
-    cl = c1,
+  pred <- future.apply::future_lapply(
     X = seq_len(length(Chunks)),
-    fun = function(Chunk) {
+    FUN = function(Chunk) {
 
       chunk_file <- Chunks[Chunk]
       Ch <- IASDT.R::load_as(chunk_file)
@@ -567,11 +558,19 @@ predict_hmsc <- function(
 
       invisible(gc())
       return(ChunkSp)
-    })
+    },
+    future.seed = TRUE,
+    future.globals = c(
+      "Model", "X", "XRRR", "Yc", "Loff", "rL", "rLPar", "PiNew",
+      "dfPiNew", "nyNew", "expected", "mcmcStep", "seeds", "chunk_size",
+      "Chunks", "temp_dir", "model_name", "get1prediction"),
+    future.packages = c(
+      "dplyr", "Rcpp", "RcppArmadillo", "Matrix", "float", "qs2", "Hmsc",
+      "purrr", "tibble", "Hmsc", "Rfast", "caret", "pROC", "ecospat", "sf"))
+
 
   pred <- tibble::tibble(dplyr::bind_rows(pred))
 
-  invisible(parallel::clusterEvalQ(cl = c1, expr = invisible(gc())))
 
   # # ..................................................................... ###
 
@@ -581,17 +580,9 @@ predict_hmsc <- function(
     dplyr::group_nest(Sp, IAS_ID) %>%
     dplyr::mutate(data = purrr::map(data, unlist))
 
-  parallel::clusterExport(
-    cl = c1,
-    varlist = c(
-      "Eval_DT", "evaluate", "pred_directory", "model_name",
-      "pred_PA", "pred_XY"),
-    envir = environment())
-
-  Eval_DT <- parallel::parLapplyLB(
-    cl = c1,
+  Eval_DT <- future.apply::future_lapply(
     X = seq_len(nrow(Eval_DT)),
-    fun = function(ID) {
+    FUN = function(ID) {
 
       Sp <- Eval_DT$Sp[[ID]]
       if (Sp == 0) {
@@ -673,9 +664,18 @@ predict_hmsc <- function(
           Sp = Sp, IAS_ID = IAS_ID, Path_pred = PredSummaryFile,
           RMSE = RMSE, AUC = AUC, Boyce = Boyce, TjurR2 = TjurR2))
 
-    })
 
-  parallel::stopCluster(c1)
+    },
+    future.seed = TRUE,
+    future.globals = c(
+      "Eval_DT", "evaluate", "pred_directory", "model_name",
+      "pred_PA", "pred_XY"),
+    future.packages = c(
+      "dplyr", "Rcpp", "RcppArmadillo", "Matrix", "float", "qs2", "Hmsc",
+      "purrr", "tibble", "Hmsc", "Rfast", "caret", "pROC", "ecospat", "sf"))
+
+  IASDT.R::set_parallel(stop_cluster = TRUE, level = 1)
+
   invisible(gc())
 
   # # ..................................................................... ###

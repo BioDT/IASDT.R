@@ -29,12 +29,15 @@
 split_vector <- function(vector = NULL, n_splits = NULL, prefix = "Chunk") {
 
   if (is.null(vector) || is.null(n_splits)) {
-    stop("`vector` and `n_splits` cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`vector` and `n_splits` cannot be NULL",
+      vector = vector, n_splits = n_splits)
   }
 
   if (n_splits > length(vector)) {
-    stop(
-      "`n_splits` cannot be greater than the length of vector", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`n_splits` cannot be greater than the length of vector",
+      vector = vector, n_splits = n_splits)
   }
 
   Out <- split(

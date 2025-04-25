@@ -29,7 +29,7 @@ check_tiff <- function(x = NULL, warning = TRUE) {
 
   # Check input argument
   if (is.null(x)) {
-    stop("Input file cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx("Input file cannot be NULL", x = x)
   }
 
   # # ..................................................................... ###

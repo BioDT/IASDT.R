@@ -46,12 +46,12 @@
 detect_alias <- function(data, verbose = FALSE) {
 
   if (is.null(data)) {
-    stop("`data` cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx("`data` cannot be NULL", data = data)
   }
 
   # Ensure data is a data.frame or tibble
   if (!is.data.frame(data)) {
-    stop("`data` must be a data frame or tibble.", call. = FALSE)
+    IASDT.R::stop_ctx("`data` must be a data frame or tibble.", data = data)
   }
 
   # Add a constant column to the data frame

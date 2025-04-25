@@ -21,7 +21,7 @@
 replace_space <- function(x) {
 
   if (is.null(x)) {
-    stop("x name cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx("x name cannot be NULL", x = x)
   }
 
   return(stringr::str_replace_all(as.character(x), " ", "_"))

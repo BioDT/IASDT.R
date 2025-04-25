@@ -108,9 +108,9 @@ record_arguments <- function(out_path = NULL) {
 
   # If call_info is NULL, it means there’s no parent call, so stop execution
   if (is.null(call_info)) {
-    stop(
+    IASDT.R::stop_ctx(
       "`record_arguments` function must be called from within another function",
-      call. = FALSE)
+      call_info = call_info)
   }
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #

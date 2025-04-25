@@ -199,31 +199,37 @@ mod_postprocess_1_CPU <- function(
 
   ValidHabAbbs <- c(as.character(0:3), "4a", "4b", "10", "12a", "12b")
   if (!(hab_abb %in% ValidHabAbbs)) {
-    stop(
-      "Invalid Habitat abbreviation. Valid values are:\n >> ",
-      toString(ValidHabAbbs), call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0(
+        "Invalid Habitat abbreviation. Valid values are:\n >> ",
+        toString(ValidHabAbbs)),
+      hab_abb = hab_abb)
   }
 
   if (!file.exists(env_file)) {
-    stop(
-      "Error: Environment file '", env_file, "' is invalid or does not exist.",
-      call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Error: Environment file is invalid or does not exist.",
+      env_file = env_file)
   }
 
   if (!dir.exists(model_dir)) {
-    stop("Model directory: ", model_dir, " was not found", call. = FALSE)
+    IASDT.R::stop_ctx("Model directory was not found", model_dir = model_dir)
   }
 
   if (!(use_trees %in% c("Tree", "NoTree"))) {
-    stop(
-      "Invalid value for Tree argument. Valid values ",
-      "are: 'Tree' or 'NoTree'", call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0(
+        "Invalid value for Tree argument. Valid values ",
+        "are: 'Tree' or 'NoTree'"),
+      use_trees = use_trees)
   }
 
   if (!all(CV_name %in% c("CV_Dist", "CV_Large", "CV_SAC"))) {
-    stop(
-      "Invalid value for CV_name argument. Valid values ",
-      "are: 'CV_Dist', 'CV_Large', or `CV_SAC`", call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0(
+        "Invalid value for CV_name argument. Valid values ",
+        "are: 'CV_Dist', 'CV_Large', or `CV_SAC`"),
+      CV_name = CV_name)
   }
 
   # ****************************************************************
@@ -315,7 +321,9 @@ mod_postprocess_1_CPU <- function(
     paste0("path_model:\n\t", path_model, "\nPath_Coda:\n\t", path_coda, "\n"))
 
   if (!all(file.exists(path_model, path_coda))) {
-    stop("Selected model files not found", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Selected model files not found",
+      path_model = path_model, path_coda = path_coda)
   }
 
   temp_dir <- IASDT.R::path(model_dir, "TEMP_Pred")
@@ -500,7 +508,9 @@ mod_prepare_TF <- function(
   rm(AllArgs, envir = environment())
 
   if (n_batch_files <= 0) {
-    stop("`n_batch_files` must be a positive integer.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`n_batch_files` must be a positive integer.",
+      n_batch_files = n_batch_files)
   }
 
   # # Load environment variables, for project ID
@@ -657,9 +667,9 @@ mod_prepare_TF <- function(
     gtools::mixedsort()
 
   if (length(LF_InFiles) == 0) {
-    stop(
-      "No files found matching the pattern `", LF_Pattern,
-      "` in ", path_model, call. = FALSE)
+    IASDT.R::stop_ctx(
+      "No files found matching the pattern",
+      LF_Pattern = LF_Pattern, path_model = path_model)
   }
 
   IASDT.R::cat_time(
@@ -870,33 +880,36 @@ mod_postprocess_2_CPU <- function(
 
   ValidHabAbbs <- c(as.character(0:3), "4a", "4b", "10", "12a", "12b")
   if (!(hab_abb %in% ValidHabAbbs)) {
-    stop(
-      "Invalid Habitat abbreviation. Valid values are:\n >> ",
-      toString(ValidHabAbbs), call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0(
+        "Invalid Habitat abbreviation. Valid values are:\n >> ",
+        toString(ValidHabAbbs)),
+      hab_abb = hab_abb)
   }
 
   if (!file.exists(env_file)) {
-    stop(
-      "Error: Environment file '", env_file, "' is invalid or does not exist.",
-      call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Error: Environment file is invalid or does not exist.",
+      env_file = env_file)
   }
 
   if (!dir.exists(model_dir)) {
-    stop(
-      "Model directory: `", model_dir, "' is invalid or does not exist.",
-      call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Model directory is invalid or does not exist.", model_dir = model_dir)
   }
 
   if (!(use_trees %in% c("Tree", "NoTree"))) {
-    stop(
-      "Invalid value for Tree argument. Valid values ",
-      "are: 'Tree' or 'NoTree'", call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0(
+        "Invalid value for Tree argument. Valid values ",
+        "are: 'Tree' or 'NoTree'"),
+      use_trees = use_trees)
   }
 
   if (clamp_pred && is.null(fix_efforts)) {
-    stop(
+    IASDT.R::stop_ctx(
       "`fix_efforts` can not be NULL when Clamping is implemented",
-      call. = FALSE)
+      clamp_pred = clamp_pred, fix_efforts = fix_efforts)
   }
 
   ValidModels <- c(
@@ -904,15 +917,19 @@ mod_postprocess_2_CPU <- function(
     "MRI-ESM2-0", "UKESM1-0-LL")
 
   if (!all(CC_models %in% ValidModels)) {
-    stop(
-      "Invalid climate models. Valid values are:\n >> ",
-      toString(ValidModels), call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0(
+        "Invalid climate models. Valid values are:\n >> ",
+        toString(ValidModels)),
+      CC_models = CC_models)
   }
 
   if (!all(CC_scenario %in% c("ssp126", "ssp370", "ssp585"))) {
-    stop(
-      "Invalid climate scenarios. Valid values are:\n >> ",
-      toString(c("ssp126", "ssp370", "ssp585")), call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0(
+        "Invalid climate scenarios. Valid values are:\n >> ",
+        toString(c("ssp126", "ssp370", "ssp585"))),
+      CC_scenario = CC_scenario)
   }
 
   # ****************************************************************
@@ -949,9 +966,8 @@ mod_postprocess_2_CPU <- function(
     path = model_dir, full.names = TRUE, pattern = "^ModDT_.*subset.RData")
 
   if (length(ModelData) != 1) {
-    stop(
-      "Expected one model data file, but found ", length(ModelData), ".",
-      call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Expected one model data file", length_model_data = length(ModelData))
   }
 
   # ****************************************************************
@@ -977,7 +993,9 @@ mod_postprocess_2_CPU <- function(
     paste0("path_model:\n\t", path_model, "\nPath_Coda:\n\t", path_coda, "\n"))
 
   if (!all(file.exists(path_model, path_coda))) {
-    stop("Selected model files not found", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Selected model files not found",
+      path_model = path_model, path_coda = path_coda)
   }
 
   # ****************************************************************

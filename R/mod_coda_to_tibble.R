@@ -45,9 +45,9 @@ coda_to_tibble <- function(
   # # |||||||||||||||||||||||||||||||||||||||
 
   if (is.null(coda_object) || is.null(posterior_type)) {
-    stop(
+    IASDT.R::stop_ctx(
       "None of `coda_object` or `posterior_type` cannot be empty",
-      call. = FALSE)
+      coda_object = coda_object, posterior_type = posterior_type)
   }
 
   # # |||||||||||||||||||||||||||||||||||||||
@@ -57,15 +57,15 @@ coda_to_tibble <- function(
   posterior_type <- tolower(posterior_type)
 
   if (!posterior_type %in% c("rho", "alpha", "omega", "beta")) {
-    stop(
+    IASDT.R::stop_ctx(
       "posterior_type has to be one of rho, alpha, omega, or beta",
-      call. = FALSE)
+      posterior_type = posterior_type)
   }
 
   if (!(inherits(coda_object, "mcmc.list") || inherits(coda_object, "mcmc"))) {
-    stop(
+    IASDT.R::stop_ctx(
       "Input Coda object has to be of class mcmc.list or mcmc",
-      call. = FALSE)
+      class_coda_obj = class(coda_object))
   }
 
   # # |||||||||||||||||||||||||||||||||||||||

@@ -34,11 +34,11 @@ mod_summary <- function(
   # # ..................................................................... ###
 
   if (is.null(path_coda)) {
-    stop("`path_coda` cannot be empty", call. = FALSE)
+    IASDT.R::stop_ctx("`path_coda` cannot be empty", path_coda = path_coda)
   }
 
   if (!file.exists(env_file)) {
-    stop("Environment file not found:", env_file, call. = FALSE)
+    IASDT.R::stop_ctx("Environment file not found", env_file = env_file)
   }
 
   # # ..................................................................... ###

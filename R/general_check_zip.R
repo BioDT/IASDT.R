@@ -20,11 +20,12 @@
 check_zip <- function(file) {
 
   if (isFALSE(IASDT.R::check_system_command("unzip"))) {
-    stop("The 'unzip' command is not available", call. = FALSE)
+    IASDT.R::stop_ctx("The 'unzip' command is not available")
   }
 
   if (length(file) != 1 || !inherits(file, "character") || !nzchar(file)) {
-    stop("`file` must be a single non-empty character string", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`file` must be a single non-empty character string", file = file)
   }
 
   # Verify the file exists

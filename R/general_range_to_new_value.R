@@ -114,29 +114,31 @@ range_to_new_value <- function(
     new_value = NULL, invert = FALSE) {
 
   if (is.null(x) || is.null(new_value)) {
-    stop("x and new_value cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "x and new_value cannot be NULL", x = x, new_value = new_value)
   }
 
   if (all(is.null(greater_than), is.null(less_than), is.null(between))) {
-      stop(
-        "At least one of `greater_than`, `less_than`, and `between` should be ",
-        "not NULL",
-        call. = FALSE)
+    IASDT.R::stop_ctx(
+        paste0(
+          "At least one of `greater_than`, `less_than`, and `between` ",
+          "should be not NULL"),
+        greater_than = greater_than, between = between, less_than = less_than)
   }
 
   if (!is.null(between)) {
 
     if (length(between) != 2) {
-      stop(
+      IASDT.R::stop_ctx(
         "`between` should have exactly two values: a minimum and a maximum.",
-        call. = FALSE)
+        between = between, length_between = length(between))
     }
 
     Min <- between[1]
     Max <- between[2]
 
     if (Max <= Min) {
-      stop("Max must be greater than Min.", call. = FALSE)
+      IASDT.R::stop_ctx("Max must be greater than Min.", Max = Max, Min = Min)
     }
 
     if (inherits(x, "RasterLayer")) {

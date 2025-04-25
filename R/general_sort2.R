@@ -24,24 +24,29 @@
 #' @export
 
 sort2 <- function(
-    x, decreasing = FALSE, na.last = TRUE,
-    blank.last = FALSE, numeric.type = c("decimal", "roman"),
+    x, decreasing = FALSE, na.last = TRUE, blank.last = FALSE,
+    numeric.type = c("decimal", "roman"),
     roman.case = c("upper", "lower", "both")) {
 
   if (is.null(x) || is.null(numeric.type) || is.null(roman.case)) {
-    stop("x, numeric.type, and roman.case cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "x, numeric.type, and roman.case cannot be NULL",
+      x = x, numeric.type = numeric.type, roman.case = roman.case)
   }
 
   numeric.type <- numeric.type[1]
   roman.case <- roman.case[1]
 
   if (!numeric.type %in% c("decimal", "roman")) {
-    stop("numeric.type must be either 'decimal' or 'roman'", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "numeric.type must be either 'decimal' or 'roman'",
+      numeric.type = numeric.type)
   }
 
   if (!roman.case %in% c("upper", "lower", "both")) {
-    stop(
-      "roman.case must be one of 'upper', 'lower', or 'both'", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "roman.case must be one of 'upper', 'lower', or 'both'",
+      roman.case = roman.case)
   }
 
   gtools::mixedsort(

@@ -32,7 +32,7 @@ resp_curv_plot_species <- function(
   IASDT.R::cat_time("Check arguments")
 
   if (is.null(model_dir)) {
-    stop("`model_dir` cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx("`model_dir` cannot be NULL", model_dir = model_dir)
   }
 
   AllArgs <- ls(envir = environment())
@@ -53,7 +53,8 @@ resp_curv_plot_species <- function(
 
   Path_RC_DT <- IASDT.R::path(model_dir, "Model_Postprocessing", "RespCurv_DT")
   if (!dir.exists(Path_RC_DT)) {
-    stop("Response curve data subfolder is missing.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Response curve data subfolder is missing.", Path_RC_DT = Path_RC_DT)
   }
   Path_RC_Sp <- IASDT.R::path(model_dir, "Model_Postprocessing", "RespCurv_Sp")
   Path_RC_Sp_DT <- IASDT.R::path(
@@ -75,7 +76,7 @@ resp_curv_plot_species <- function(
 
   SpSummary <- IASDT.R::path(Path_PA, "Sp_PA_Summary_DF.csv")
   if (!file.exists(SpSummary)) {
-    stop(SpSummary, " file does not exist", call. = FALSE)
+    IASDT.R::stop_ctx("SpSummary file does not exist", SpSummary = SpSummary)
   }
 
   SpSummary <- readr::read_csv(SpSummary, show_col_types = FALSE) %>%

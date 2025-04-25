@@ -15,9 +15,9 @@ GBIF_read_chunk <- function(
   # # ..................................................................... ###
 
   if (isFALSE(save_RData) && isFALSE(return_data)) {
-    stop(
+    IASDT.R::stop_ctx(
       "At least one of `save_RData` and `return_data` has to be `TRUE`",
-      call. = FALSE)
+      save_RData = save_RData, return_data = return_data)
   }
 
   # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use
@@ -88,14 +88,14 @@ GBIF_read_chunk <- function(
   # Grid_10_Land_Crop
   GridR <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(GridR)) {
-    stop("Reference grid file not found at: ", GridR, call. = FALSE)
+    IASDT.R::stop_ctx("Reference grid file not found", GridR = GridR)
   }
   GridR <- terra::unwrap(IASDT.R::load_as(GridR))
 
   # # Grid_10_Land_Crop_sf
   GridSf <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
   if (!file.exists(GridSf)) {
-    stop("Reference grid file (sf) not found at: ", GridSf, call. = FALSE)
+    IASDT.R::stop_ctx("Reference grid file (sf) not found", GridSf = GridSf)
   }
   GridSf <- IASDT.R::load_as(GridSf)
 

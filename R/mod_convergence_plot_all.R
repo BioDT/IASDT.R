@@ -29,7 +29,9 @@ convergence_plot_all <- function(
   .StartTime <- lubridate::now(tzone = "CET")
 
   if (is.null(model_dir) || is.null(n_cores)) {
-    stop("`model_dir` and `n_cores` must not be NULL", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`model_dir` and `n_cores` must not be NULL",
+      model_dir = model_dir, n_cores = n_cores)
   }
 
   # # ..................................................................... ###
@@ -59,12 +61,14 @@ convergence_plot_all <- function(
   rm(AllArgs, envir = environment())
 
   if (length(margin_type) != 1) {
-    stop("`margin_type` must be a single value.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`margin_type` must be a single value.", margin_type = margin_type)
   }
 
   if (!margin_type %in% c("histogram", "density")) {
-    stop(
-      "`margin_type` must be either 'histogram' or 'density'.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`margin_type` must be either 'histogram' or 'density'.",
+      margin_type = margin_type)
   }
 
   # # ..................................................................... ###
@@ -79,7 +83,7 @@ convergence_plot_all <- function(
 
   Model_Info <- IASDT.R::path(model_dir, "Model_Info.RData")
   if (!file.exists(Model_Info)) {
-    stop("Model info file `", Model_Info, "` does not exist", call. = FALSE)
+    IASDT.R::stop_ctx("Model info file does not exist", Model_Info = Model_Info)
   }
   Model_Info <- IASDT.R::load_as(Model_Info)
 

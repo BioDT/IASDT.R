@@ -51,13 +51,13 @@ plot_gelman <- function(
   # Checking arguments --------
 
   if (sum(alpha, beta, omega, rho) == 0) {
-    stop(
+    IASDT.R::stop_ctx(
       "At least one of `alpha`, `beta`, `omega`, and `rho` must be `TRUE`",
-      call. = FALSE)
+      alpha = alpha, beta = beta, omega = omega, rho = rho)
   }
 
   if (is.null(path_coda)) {
-    stop("path_coda cannot be empty", call. = FALSE)
+    IASDT.R::stop_ctx("path_coda cannot be empty", path_coda = path_coda)
   }
 
   AllArgs <- ls(envir = environment())
@@ -87,10 +87,14 @@ plot_gelman <- function(
   } else {
 
     if (!inherits(path_coda, "list")) {
-      stop("`path_coda` is neither character path or a list", call. = FALSE)
+      IASDT.R::stop_ctx(
+        "`path_coda` is neither character path or a list",
+        path_coda = path_coda, class_path_coda = class(path_coda))
     }
     if (!inherits(path_coda[[1]], "mcmc.list")) {
-      stop("`path_coda` has no mcmc.list items", call. = FALSE)
+      IASDT.R::stop_ctx(
+        "`path_coda` has no mcmc.list items",
+        path_coda = path_coda, class_path_coda = class(path_coda))
     }
 
     coda_object <- path_coda
@@ -210,7 +214,9 @@ plot_gelman_alpha <- function(coda_object, plotting_alpha = 0.25) {
   # # ..................................................................... ###
 
   if (!inherits(coda_object, "mcmc.list")) {
-    stop("`coda_object` has to be of class mcmc.list", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`coda_object` has to be of class mcmc.list",
+      coda_object = coda_object, class_coda_object = class(coda_object))
   }
 
   # # ..................................................................... ###
@@ -337,11 +343,14 @@ plot_gelman_beta <- function(
   # # ..................................................................... ###
 
   if (is.null(coda_object)) {
-    stop("`coda_object` cannot be empty", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`coda_object` cannot be empty", coda_object = coda_object)
   }
 
   if (!inherits(coda_object, "mcmc.list")) {
-    stop("`coda_object` has to be of class mcmc.list", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`coda_object` has to be of class mcmc.list",
+      coda_object = coda_object, class_coda_object = class(coda_object))
   }
 
   # # ..................................................................... ###
@@ -462,15 +471,19 @@ plot_gelman_omega <- function(
   # # ..................................................................... ###
 
   if (is.null(coda_object)) {
-    stop("`coda_object` cannot be empty", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`coda_object` cannot be empty", coda_object = coda_object)
   }
 
   if (!is.numeric(n_omega) || n_omega <= 0) {
-    stop("`n_omega` must be a positive integer.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`n_omega` must be a positive integer.", n_omega = n_omega)
   }
 
   if (!inherits(coda_object, "mcmc.list")) {
-    stop("`coda_object` has to be of class mcmc.list", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`coda_object` has to be of class mcmc.list",
+      coda_object = coda_object, class_coda_object = class(coda_object))
   }
 
   # # ..................................................................... ###
@@ -584,7 +597,8 @@ plot_gelman_omega <- function(
 plot_gelman_rho <- function(coda_object) {
 
   if (is.null(coda_object)) {
-    stop("`coda_object` cannot be empty", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`coda_object` cannot be empty", coda_object = coda_object)
   }
 
   # Avoid "no visible binding for global variable" message

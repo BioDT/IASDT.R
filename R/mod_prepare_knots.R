@@ -63,16 +63,23 @@ prepare_knots <- function(
     if (all(purrr::map_lgl(alphapw, is.null))) {
       Prior <- NULL
     } else {
+
       if (is.null(alphapw$Prior)) {
 
         if (is.null(alphapw$Min) || !is.numeric(alphapw$Min)) {
-          stop("`alphapw$Min` must be numeric", call. = FALSE)
+          IASDT.R::stop_ctx(
+            "`alphapw$Min` must be numeric", alphapw_min = alphapw$Min)
         }
+
         if (is.null(alphapw$Samples) || !is.numeric(alphapw$Samples)) {
-          stop("`alphapw$Samples` must be numeric", call. = FALSE)
+          IASDT.R::stop_ctx(
+            "`alphapw$Samples` must be numeric",
+            alphapw_samples = alphapw$Samples)
         }
+
         if (is.null(alphapw$Max) || !is.numeric(alphapw$Max)) {
-          stop("`alphapw$Max` must be numeric", call. = FALSE)
+          IASDT.R::stop_ctx(
+            "`alphapw$Max` must be numeric", alphapw_max = alphapw$Max)
         }
 
         Prior <- AlphaPrior(
@@ -80,37 +87,49 @@ prepare_knots <- function(
           NSamples = alphapw$Samples)
 
       } else {
+
         Prior <- alphapw$Prior
 
         # Check if Prior is a matrix
         if (!inherits(Prior, "matrix")) {
-          stop("`Prior` must be a matrix", call. = FALSE)
+          IASDT.R::stop_ctx(
+            "`Prior` must be a matrix",
+            Prior = Prior, class_prior = class(Prior))
         }
 
         # Check if Prior has 2 columns
         if (ncol(Prior) != 2) {
-          stop("`Prior` should have exactly 2 columns.", call. = FALSE)
+          IASDT.R::stop_ctx(
+            "`Prior` should have exactly 2 columns.",
+            Prior = Prior, ncol_Prior = ncol(Prior))
         }
 
         # Check if Prior has at least 100 rows
         if (nrow(Prior) < 100) {
-          stop("`Prior` must have >= 100 rows.", call. = FALSE)
+          IASDT.R::stop_ctx(
+            "`Prior` must have >= 100 rows.",
+            Prior = Prior, nrow_Prior = nrow(Prior))
         }
 
         # Check if the first element of the second column is 0.5
         # if (Prior[1, 2] != 0.5) {
-        #   stop("The first element of the second column is not 0.5.",
-        #        call. = FALSE)
+        #   IASDT.R::stop_ctx(
+        #      "The first element of the second column is not 0.5.",
+        #        prior_1_2 = Prior[1, 2])
         # }
 
         # Check if all values are positive
         if (any(as.vector(Prior) < 0)) {
-          stop("`Prior` can not contain negative numbers", call. = FALSE)
+          IASDT.R::stop_ctx(
+            "`Prior` can not contain negative numbers",
+            sum_negative = sum(as.vector(Prior) < 0))
         }
 
         # Check if the sum of the second column is equal to 1
         if (sum(Prior[, 2]) != 1) {
-          stop("The sum of the second column is not equal to 1.", call. = FALSE)
+          IASDT.R::stop_ctx(
+            "The sum of the second column is not equal to 1.",
+            sum_prior_2 = sum(Prior[, 2]))
         }
       }
     }
@@ -121,20 +140,24 @@ prepare_knots <- function(
   # Validation for latent factors -----
 
   if (!is.null(max_LF) && !is.numeric(max_LF)) {
-    stop("`max_LF` must be NULL or a numeric value", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`max_LF` must be NULL or a numeric value", max_LF = max_LF)
   }
 
   if (!is.null(min_LF) && !is.numeric(min_LF)) {
-    stop("`min_LF` must be NULL or a numeric value", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`min_LF` must be NULL or a numeric value", min_LF = min_LF)
   }
 
   # Ensure min_LF >= 1 and < max_LF
   if (!is.null(min_LF) && min_LF < 1) {
-    stop("`min_LF` must be >= 1", call. = FALSE)
+    IASDT.R::stop_ctx("`min_LF` must be >= 1", min_LF = min_LF)
   }
 
   if (!is.null(min_LF) && !is.null(max_LF) && min_LF >= max_LF) {
-    stop("`min_LF` must be less than `max_LF`", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`min_LF` must be less than `max_LF`",
+      min_LF = min_LF, max_LF = max_LF)
   }
 
   # convert max_LF and min_LF to integer

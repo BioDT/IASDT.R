@@ -111,6 +111,7 @@ reference:
   desc: Data management / utility functions
 - subtitle: Packages management
   contents:
+  - stop_ctx
   - package_functions
   - load_packages
   - reload_package

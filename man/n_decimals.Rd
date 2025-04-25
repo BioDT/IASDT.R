@@ -4,7 +4,7 @@
 \alias{n_decimals}
 \title{Number of decimal places in a numeric value}
 \usage{
-n_decimals(x)
+n_decimals(x = NULL)
 }
 \arguments{
 \item{x}{Numeric (or character) numeric value.}

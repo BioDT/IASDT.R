@@ -24,21 +24,21 @@ file_type <- function(path) {
 
   # Check `file` system command
   if (isFALSE(IASDT.R::check_system_command("file"))) {
-    stop("The system command 'file' is not available", call. = FALSE)
+    IASDT.R::stop_ctx("The system command 'file' is not available")
   }
 
   if (is.null(path)) {
-    stop("`path` cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx("`path` cannot be NULL", path = path)
   }
 
   # Ensure path is a character string
   if (!is.character(path)) {
-    stop("`path` must be a character string", call. = FALSE)
+    IASDT.R::stop_ctx("`path` must be a character string", path = path)
   }
 
   # Ensure file exists
   if (!file.exists(path)) {
-    stop("File does not exist", call. = FALSE)
+    IASDT.R::stop_ctx("File does not exist", path = path)
   }
 
   Out <- paste0("file ", IASDT.R::normalize_path(path)) %>%

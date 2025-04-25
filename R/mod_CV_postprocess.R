@@ -11,10 +11,10 @@
 mod_CV_postprocess_1_CPU <- function(
     model_dir = NULL, CV_names = NULL, n_cores = 8L, env_file = ".env",
     from_JSON = FALSE, use_TF = TRUE, TF_use_single = FALSE,
-    LF_n_cores = n_cores, LF_only = TRUE, LF_temp_cleanup = TRUE,
-    LF_check = FALSE, temp_cleanup = TRUE, TF_environ = NULL,
-    n_batch_files = 210L, working_directory = NULL, partition_name = "small-g",
-    LF_runtime = "01:00:00") {
+    TF_environ = NULL, LF_n_cores = n_cores, LF_only = TRUE,
+    LF_temp_cleanup = TRUE, LF_check = FALSE, LF_runtime = "01:00:00",
+    temp_cleanup = TRUE,  n_batch_files = 210L, working_directory = NULL,
+    partition_name = "small-g") {
 
   # ****************************************************************
 
@@ -46,19 +46,36 @@ mod_CV_postprocess_1_CPU <- function(
   rm(AllArgs, envir = environment())
 
   if (n_batch_files <= 0) {
-    stop("`n_batch_files` must be a positive integer.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`n_batch_files` must be a positive integer.",
+      n_batch_files = n_batch_files)
   }
   if (n_cores <= 0) {
-    stop("`n_cores` must be a positive integer.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`n_cores` must be a positive integer.", n_cores = n_cores)
   }
   if (LF_n_cores <= 0) {
-    stop("`LF_n_cores` must be a positive integer.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`LF_n_cores` must be a positive integer.", LF_n_cores = LF_n_cores)
+  }
+
+  if (!file.exists(env_file)) {
+    IASDT.R::stop_ctx(
+      "Error: Environment file is invalid or does not exist.",
+      env_file = env_file)
+  }
+
+  if (!dir.exists(model_dir)) {
+    IASDT.R::stop_ctx(
+      "Model directory is invalid or does not exist.", model_dir = model_dir)
   }
 
   if (!all(CV_names %in% c("CV_Dist", "CV_Large", "CV_SAC"))) {
-    stop(
-      "Invalid value for CV_names argument. Valid values ",
-      "are: 'CV_Dist', 'CV_Large', or `CV_SAC`", call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0(
+        "Invalid value for CV_names argument. Valid values ",
+        "are: 'CV_Dist', 'CV_Large', or `CV_SAC`"),
+      CV_names = CV_names)
   }
 
   # ****************************************************************
@@ -81,7 +98,7 @@ mod_CV_postprocess_1_CPU <- function(
 
   Temp_dir <- IASDT.R::path(CV_dir, "Temp")
   # Path to store TF commands
-  Path_TF <- IASDT.R::path(CV_dir, "TF_commands")
+  Path_TF <- IASDT.R::path(CV_dir, "LF_TensorFlow_commands")
   # Path to store log files
   Path_Log <- IASDT.R::path(Path_TF, "log")
 
@@ -89,7 +106,8 @@ mod_CV_postprocess_1_CPU <- function(
 
   CV_DT_fitted <- IASDT.R::path(CV_dir, "CV_DT_fitted.RData")
   if (!file.exists(CV_DT_fitted)) {
-    stop("CV_DT_fitted file", CV_DT_fitted, "not found.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "CV_DT_fitted file not found.", CV_DT_fitted = CV_DT_fitted)
   }
 
   Path_LF_SLURM <- IASDT.R::path(Path_TF, "LF_SLURM.slurm")
@@ -128,13 +146,12 @@ mod_CV_postprocess_1_CPU <- function(
             cat_bold = TRUE, cat_timestamp = FALSE)
 
           IASDT.R::predict_maps_CV(
-            model_dir = "datasets/processed/model_fitting/Mod_Riv_Hab4a",
-            CV_name = paste0("CV_", .x), CV_fold = .y, n_cores = n_cores,
-            use_TF = use_TF, TF_environ = TF_environ,
-            TF_use_single = TF_use_single, LF_n_cores = LF_n_cores,
-            LF_check = LF_check, LF_temp_cleanup = LF_temp_cleanup,
-            LF_only = LF_only, LF_commands_only = TRUE,
-            temp_cleanup = temp_cleanup)
+            model_dir = model_dir, CV_name = paste0("CV_", .x),
+            CV_fold = .y, n_cores = n_cores, use_TF = use_TF,
+            TF_environ = TF_environ, TF_use_single = TF_use_single,
+            LF_n_cores = LF_n_cores, LF_check = LF_check,
+            LF_temp_cleanup = LF_temp_cleanup, LF_only = LF_only,
+            LF_commands_only = TRUE, temp_cleanup = temp_cleanup)
         }
       ))
 
@@ -142,8 +159,10 @@ mod_CV_postprocess_1_CPU <- function(
 
   # Merge TensorFlow commands into batch files -----
 
-  IASDT.R::cat_sep(n_separators = 2, sep_lines_before = 2, sep_lines_after = 2)
-  IASDT.R::cat_time("Merge TensorFlow commands into batch files")
+  IASDT.R::info_chunk(
+    "Merge TensorFlow commands into batch files",
+    line_char = "|", line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE,
+    cat_timestamp = FALSE, info_lines_before = 2)
 
   IASDT.R::cat_time(
     paste0(
@@ -182,7 +201,10 @@ mod_CV_postprocess_1_CPU <- function(
     gtools::mixedsort()
 
   if (length(LF_InFiles) == 0) {
-    stop("No command files were found in: ", Temp_dir, call. = FALSE)
+    IASDT.R::stop_ctx(
+      "No command files were found in the temp directory",
+      Temp_dir = Temp_dir, LF_InFiles = LF_InFiles,
+      length_LF_InFiles = length(LF_InFiles))
   }
 
   IASDT.R::cat_time(
@@ -213,7 +235,6 @@ mod_CV_postprocess_1_CPU <- function(
     paste0("Splitting commands into ", n_batch_files, " files"),
     cat_timestamp = FALSE, level = 2)
   LF_commands <- IASDT.R::split_vector(LF_commands, n_splits = n_batch_files)
-
   line_sep <- strrep("-", 60)
 
   purrr::walk(
@@ -301,4 +322,147 @@ mod_CV_postprocess_1_CPU <- function(
 
   return(invisible(NULL))
 
+}
+
+
+# # ========================================================================== #
+# # ========================================================================== #
+
+## |------------------------------------------------------------------------| #
+# mod_CV_postprocess_2_CPU ----
+## |------------------------------------------------------------------------| #
+
+#' @rdname mod_postprocessing
+#' @name mod_postprocessing
+#' @order 6
+#' @author Ahmed El-Gabbas
+#' @export
+
+mod_CV_postprocess_2_CPU <- function(
+    model_dir = NULL, CV_names = NULL, n_cores = 8L, env_file = ".env",
+    use_TF = TRUE, TF_use_single = FALSE, temp_cleanup = TRUE,
+    LF_temp_cleanup = TRUE, TF_environ = NULL, LF_n_cores = n_cores,
+    LF_check = FALSE) {
+
+  # ****************************************************************
+
+  .StartTime <- lubridate::now(tzone = "CET")
+
+  # Avoid "no visible binding for global variable" message
+  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
+  CV <- CV_name <- NULL
+
+  # ****************************************************************
+
+  # Check input arguments ----
+
+  AllArgs <- ls(envir = environment())
+  AllArgs <- purrr::map(
+    AllArgs,
+    function(x) get(x, envir = parent.env(env = environment()))) %>%
+    stats::setNames(AllArgs)
+
+  IASDT.R::check_args(
+    args_all = AllArgs, args_type = "logical",
+    args_to_check = c(
+      "use_TF", "TF_use_single", "LF_temp_cleanup",
+      "LF_check"))
+  IASDT.R::check_args(
+    args_all = AllArgs, args_type = "character",
+    args_to_check = c("model_dir", "env_file"))
+  IASDT.R::check_args(
+    args_all = AllArgs, args_type = "numeric",
+    args_to_check = c("n_cores", "LF_n_cores"))
+  rm(AllArgs, envir = environment())
+
+
+  if (n_cores <= 0) {
+    IASDT.R::stop_ctx(
+      "`n_cores` must be a positive integer.", n_cores = n_cores)
+  }
+  if (LF_n_cores <= 0) {
+    IASDT.R::stop_ctx(
+      "`LF_n_cores` must be a positive integer.", LF_n_cores = LF_n_cores)
+  }
+
+  if (!all(CV_names %in% c("CV_Dist", "CV_Large", "CV_SAC"))) {
+    IASDT.R::stop_ctx(
+      paste0(
+        "Invalid value for CV_names argument. Valid values ",
+        "are: 'CV_Dist', 'CV_Large', or `CV_SAC`"),
+      CV_names = CV_names)
+  }
+
+  # ****************************************************************
+
+  CV_dir <- IASDT.R::path(model_dir, "Model_Fitting_CV")
+  Temp_dir <- IASDT.R::path(CV_dir, "Temp")
+
+  # ****************************************************************
+
+  # Predicting habitat suitability at testing cross-validation folds -------
+
+  IASDT.R::info_chunk(
+    "Predicting habitat suitability across different climate options",
+    line_char = "+", line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE,
+    cat_timestamp = FALSE, level = 1)
+
+  CV_DT_fitted <- IASDT.R::path(CV_dir, "CV_DT_fitted.RData")
+  if (!file.exists(CV_DT_fitted)) {
+    IASDT.R::stop_ctx(
+      "CV_DT_fitted file not found.", CV_DT_fitted = CV_DT_fitted)
+  }
+
+  IASDT.R::info_chunk(
+    "Prepare scripts for latent factor processing",
+    line_char = "|", line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE,
+    cat_timestamp = FALSE, info_lines_before = 2)
+
+  CV_DT_fitted <- IASDT.R::load_as(CV_DT_fitted) %>%
+    dplyr::mutate(
+      LF = purrr::map2(
+        .x = CV_name, .y = CV,
+        .f = ~ {
+
+          IASDT.R::info_chunk(
+            paste0(.x, "_", .y), level = 1,
+            line_char = "+", line_char_rep = 60, cat_red = TRUE,
+            cat_bold = TRUE, cat_timestamp = FALSE)
+
+          IASDT.R::predict_maps_CV(
+            model_dir = model_dir, CV_name = paste0("CV_", .x),
+            CV_fold = .y, n_cores = n_cores,
+            use_TF = use_TF, TF_environ = TF_environ,
+            TF_use_single = TF_use_single, LF_n_cores = LF_n_cores,
+            LF_check = LF_check, LF_temp_cleanup = LF_temp_cleanup,
+            LF_only = FALSE, LF_commands_only = FALSE,
+            temp_cleanup = temp_cleanup)
+        }
+      ))
+
+  invisible(gc())
+
+  # NEXT
+  # CHECK / test
+  # Merge evaluation results
+  # 
+
+  # ****************************************************************
+
+  # Plot species & SR predictions as JPEG ------
+
+  # ****************************************************************
+  
+  # Plot latent factors as JPEG ------
+  
+  # ****************************************************************
+  
+  # Plot predictive Power ------
+  
+  # ****************************************************************
+
+  IASDT.R::cat_diff(
+    init_time = .StartTime, prefix = "\nPost-processing took ")
+
+  return(invisible(NULL))
 }

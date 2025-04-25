@@ -17,7 +17,9 @@
 rename_geometry <- function(sf_object = NULL, new_name = NULL) {
 
   if (any(is.null(sf_object) | is.null(new_name))) {
-    stop("The input sf object or new_name cannot be 'NULL'.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "The input sf object or new_name cannot be 'NULL'.",
+      sf_object = sf_object, new_name = new_name)
   }
 
   current <- attr(sf_object, "sf_column")

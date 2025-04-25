@@ -62,17 +62,21 @@ convergence_plot <- function(
   .StartTime <- lubridate::now(tzone = "CET")
 
   if (is.null(path_coda) || is.null(path_model) || is.null(n_cores)) {
-    stop(
-      "path_coda, path_model, and n_cores cannot be empty", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "path_coda, path_model, and n_cores cannot be empty",
+      path_coda = path_coda, path_model = path_model, n_cores = n_cores)
   }
 
   if (length(margin_type) != 1) {
-    stop("`margin_type` must be a single value.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`margin_type` must be a single value.",
+      margin_type = margin_type, length_margin_type = length(margin_type))
   }
 
   if (!margin_type %in% c("histogram", "density")) {
-    stop(
-      "`margin_type` must be either 'histogram' or 'density'.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`margin_type` must be either 'histogram' or 'density'.",
+      margin_type = margin_type)
   }
 
   # # ..................................................................... ###
@@ -120,7 +124,8 @@ convergence_plot <- function(
 
   SpSummary <- IASDT.R::path(Path_PA, "Sp_PA_Summary_DF.csv")
   if (!file.exists(SpSummary)) {
-    stop(SpSummary, " file does not exist", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "SpSummary file does not exist", SpSummary = SpSummary)
   }
 
   SpSummary <- readr::read_csv(SpSummary, show_col_types = FALSE) %>%
@@ -144,11 +149,11 @@ convergence_plot <- function(
   IASDT.R::cat_time("Prepare convergence data")
 
   if (!file.exists(path_model)) {
-    stop("`path_model` does not exist", call. = FALSE)
+    IASDT.R::stop_ctx("`path_model` does not exist", path_model = path_model)
   }
 
   if (!file.exists(path_coda)) {
-    stop("`path_coda` does not exist", call. = FALSE)
+    IASDT.R::stop_ctx("`path_coda` does not exist", path_coda = path_coda)
   }
 
   IASDT.R::cat_time("Loading coda object", level = 1)
@@ -639,9 +644,9 @@ convergence_plot <- function(
             repeat {
 
               if (attempt > 5) {
-                stop(
+                IASDT.R::stop_ctx(
                   "Maximum attempts (5) reached without success: ",
-                  Var_Sp_File, call. = FALSE)
+                  Var_Sp_File = Var_Sp_File)
               }
 
               try({
@@ -681,7 +686,8 @@ convergence_plot <- function(
 
         # check if input data exists
         if (isFALSE(IASDT.R::check_data(Var_Sp_File, warning = FALSE))) {
-          stop("File ", x, ": ", Var_Sp_File, " does not exist.", call. = FALSE)
+          IASDT.R::stop_ctx(
+            "File does not exist.", x = x, Var_Sp_File = Var_Sp_File)
         }
 
         # Check if the output file already exists
@@ -701,18 +707,18 @@ convergence_plot <- function(
         repeat {
 
           if (attempt > 5) {
-            stop(
-              "Maximum attempts (5) reached without success: ", Var_Sp_File,
-              call. = FALSE)
+            IASDT.R::stop_ctx(
+              "Maximum attempts (5) reached without success: ",
+              Var_Sp_File = Var_Sp_File)
           }
 
           try({
 
             DT_all <- IASDT.R::load_as(Var_Sp_File)
             if (is.null(DT_all) || !is.list(DT_all)) {
-              stop(
-                "Loaded data is invalid for file: ", Var_Sp_File,
-                call. = FALSE)
+              IASDT.R::stop_ctx(
+                "Loaded data is invalid", Var_Sp_File = Var_Sp_File,
+                DT_all = DT_all, class_DT_all = DT_all)
             }
 
             DT_all$Post <- NULL
@@ -862,7 +868,7 @@ convergence_plot <- function(
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
     # Stopping cluster
-    IASDT.R::set_parallel(stop = TRUE, level = 2)
+    IASDT.R::set_parallel(stop_cluster = TRUE, level = 2)
 
     rm(Beta_DF, BetaNames, envir = environment())
     invisible(gc())
@@ -999,7 +1005,7 @@ convergence_plot <- function(
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
   # Stopping cluster
-  IASDT.R::set_parallel(stop = TRUE, level = 2)
+  IASDT.R::set_parallel(stop_cluster = TRUE, level = 2)
 
   # # ..................................................................... ###
 
@@ -1112,7 +1118,7 @@ convergence_plot <- function(
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
   # Stopping cluster
-  IASDT.R::set_parallel(stop = TRUE, level = 2)
+  IASDT.R::set_parallel(stop_cluster = TRUE, level = 2)
 
   rm(BetaTracePlots_BySp0, envir = environment())
 

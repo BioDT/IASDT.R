@@ -21,8 +21,10 @@ mod_SLURM_refit <- function(
   NullVars <- which(purrr::map_lgl(.x = NullVarsNames, .f = ~ is.null(get(.x))))
 
   if (length(NullVars) > 0) {
-    stop(
-      toString(NullVarsNames[NullVars]), " cannot be missing.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0(toString(NullVarsNames[NullVars]), " cannot be missing."),
+      NullVars = NullVars, length_NullVars = length(NullVars),
+      Vars = NullVarsNames[NullVars])
   }
 
   # # ..................................................................... ###
@@ -34,9 +36,8 @@ mod_SLURM_refit <- function(
   # # ..................................................................... ###
 
   if (!file.exists(env_file)) {
-    stop(
-      "Path to environment variables: ", env_file, " was not found",
-      call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Path to environment variables was not found", env_file = env_file)
   }
 
   if (is.null(job_name)) {
@@ -69,7 +70,7 @@ mod_SLURM_refit <- function(
   # Remove temp files and incomplete RDs files -----
 
   if (!fs::dir_exists(model_dir)) {
-    stop("Model directory does not exist:", model_dir, call. = FALSE)
+    IASDT.R::stop_ctx("Model directory does not exist", model_dir = model_dir)
   }
 
   Path_Model_Fit <- IASDT.R::path(model_dir, "Model_Fitting_HPC")

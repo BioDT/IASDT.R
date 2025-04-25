@@ -39,11 +39,12 @@ split_df_to_chunks <- function(
     data = NULL, chunk_size = NULL, n_chunks = NULL, prefix = "Chunk") {
 
   if (is.null(data)) {
-    stop("`data` cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx("`data` cannot be NULL", data = data)
   }
 
   if (!is.null(chunk_size) && (chunk_size < 1 || !is.numeric(chunk_size))) {
-    stop("`chunk_size` must be numeric and larger than 1", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`chunk_size` must be numeric and larger than 1", chunk_size = chunk_size)
   }
 
   if (is.null(chunk_size) && is.null(n_chunks)) {
@@ -55,9 +56,11 @@ split_df_to_chunks <- function(
   }
 
   if (!is.null(chunk_size) && nrow(data) <= chunk_size) {
-    stop(
-      "`chunk_size` is larger than the number of rows in the data ",
-      "frame!\nPlease use a smaller chunk_size.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0(
+        "`chunk_size` is larger than the number of rows in the data ",
+        "frame!\nPlease use a smaller chunk_size."),
+      chunk_size = chunk_size, nrow_data = nrow(data))
   }
 
   if (is.null(chunk_size)) {

@@ -35,11 +35,12 @@
 keep_only <- function(objects, verbose = TRUE) {
 
   if (is.null(objects) || length(objects) == 0) {
-    stop("`objects` cannot be NULL or empty.", call. = FALSE)
+    IASDT.R::stop_ctx("`objects` cannot be NULL or empty.", objects = objects)
   }
 
   if (!is.character(objects)) {
-    stop("`objects` must be a character vector.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`objects` must be a character vector.", objects = objects)
   }
 
   AllObjects <- ls(pos = parent.frame())

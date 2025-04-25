@@ -26,7 +26,8 @@ efforts_summarize <- function(
   # # ..................................................................... ###
 
   if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
-    stop("n_cores must be a single positive integer.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "n_cores must be a single positive integer.", n_cores = n_cores)
   }
 
   # # ..................................................................... ###
@@ -56,15 +57,12 @@ efforts_summarize <- function(
   Path_Grid_SF <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
 
   if (!file.exists(Path_Grid_R)) {
-    stop(
-      "Reference grid was not found at the specified path: ", Path_Grid_R,
-      call. = FALSE)
+    IASDT.R::stop_ctx("Reference grid was not found", Path_Grid_R = Path_Grid_R)
   }
 
   if (!file.exists(Path_Grid_SF)) {
-    stop(
-      "Reference grid file was not found at the specified path: ",
-      Path_Grid_SF, call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Reference grid file was not found", Path_Grid_SF = Path_Grid_SF)
   }
 
   Grid_SF <- IASDT.R::load_as(Path_Grid_SF)
@@ -105,9 +103,9 @@ efforts_summarize <- function(
     Path_Efforts, "Efforts_AllRequests.RData")
 
   if (!file.exists(Path_Efforts_Request)) {
-    stop(
+    IASDT.R::stop_ctx(
       "The path for the `Efforts_AllRequests` data does not exist: ",
-      Path_Efforts_Request, call. = FALSE)
+      Path_Efforts_Request = Path_Efforts_Request)
   }
 
   Efforts_AllRequests <- IASDT.R::load_as(Path_Efforts_Request)
@@ -483,23 +481,25 @@ efforts_summarize_maps <- function(
 
   # Validate if Data is an sf object
   if (!inherits(Data, "sf")) {
-    stop(
-      "Input data must be a simple feature (sf) object. ",
-      "Provided data is of type: ", paste(class(Data), collapse = "+"),
-      call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0(
+        "Input data must be a simple feature (sf) object. ",
+        "Provided data is of type: ", paste(class(Data), collapse = "+")),
+      Data = Data, class_data = class(Data))
   }
 
   # Validate if NSp is logical
   if (!is.logical(NSp) || length(NSp) != 1) {
-    stop(
-      "The parameter `NSp` must be a single logical value (TRUE or FALSE). ",
-      "Provided value is of type: ", paste(class(NSp), collapse = "+"),
-      call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0(
+        "The parameter `NSp` must be a single logical value (TRUE or FALSE). ",
+        "Provided value is of type: ", paste(class(NSp), collapse = "+")),
+      NSp = NSp, class_NSp = class(NSp), length_NSp = length(NSp))
   }
 
   # Validate the Name parameter
   if (is.null(Name)) {
-    stop("The parameter `Name` can not be empty", call. = FALSE)
+    IASDT.R::stop_ctx("The parameter `Name` can not be empty", Name = Name)
   }
 
   # # ..................................................................... ###

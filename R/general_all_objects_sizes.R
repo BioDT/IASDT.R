@@ -64,7 +64,9 @@ all_objects_sizes <- function(
   }
 
   if (!is.numeric(greater_than) || is.na(greater_than) || greater_than < 0) {
-    stop("`greater_than` must be a non-negative number", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`greater_than` must be a non-negative number",
+      greater_than = greater_than)
   }
 
   AllVars <- ls(envir = Environment, all.names = TRUE)

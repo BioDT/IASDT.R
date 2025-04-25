@@ -73,9 +73,10 @@ chains, aligns posteriors (using \code{alignPost = TRUE}, falling back to \code{
 if alignment fails), and saves a merged \code{Hmsc} object and a \code{coda} object for
 MCMC diagnostics. It also records fitting time and memory usage from progress
 files.
-\item \code{mod_merge_chains_CV} performs a similar merging process for cross-validated
-\code{Hmsc} models, processing each fold of the specified \code{CV_names} separately.
-It saves merged \code{Hmsc} objects per fold but does not generate \code{coda} objects.
+\item \code{mod_merge_chains_CV} performs a similar merging process for
+cross-validated \code{Hmsc} models, processing each fold of the specified
+\code{CV_names} separately. It saves merged \code{Hmsc} objects per fold but does not
+generate \code{coda} objects.
 }
 }
 \author{

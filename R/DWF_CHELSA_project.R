@@ -27,11 +27,15 @@ CHELSA_project <- function(
   rm(AllArgs, envir = environment())
 
   if (!inherits(metadata, "tbl_df")) {
-    stop("Input metadata has to be a tibble", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Input metadata has to be a tibble", class_metadata = class(metadata))
   }
 
   if (nrow(metadata) != 1) {
-    stop("Input metadata has to be a single-row tibble", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Input metadata has to be a single-row tibble",
+      metadata = metadata, class_metadata = class(metadata),
+      nrow_metadata = nrow(metadata))
   }
 
   # # ..................................................................... ###
@@ -43,11 +47,12 @@ CHELSA_project <- function(
   # # ..................................................................... ###
 
   if (is.null(metadata)) {
-    stop("Input metadata can not be `NULL`", call. = FALSE)
+    IASDT.R::stop_ctx("Input metadata can not be `NULL`", metadata = metadata)
   }
 
   if (!file.exists(metadata$Path_Down)) {
-    stop("Input file does not exist: ", metadata$Path_Down, call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Input file does not exist", path = metadata$Path_Down)
   }
 
   # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use
@@ -72,8 +77,8 @@ CHELSA_project <- function(
 
   GridR <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(GridR)) {
-    stop(
-      "Path for the Europe boundaries does not exist: ", GridR, call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Path for the Europe boundaries does not exist", GridR = GridR)
   }
   GridR <- terra::unwrap(IASDT.R::load_as(GridR))
 

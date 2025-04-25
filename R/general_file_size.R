@@ -22,7 +22,7 @@
 file_size <- function(file, ...) {
 
   if (is.null(file)) {
-    stop("`file` cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx("`file` cannot be NULL", file = file)
   }
 
   return(gdata::humanReadable(fs::file_size(file), ...))

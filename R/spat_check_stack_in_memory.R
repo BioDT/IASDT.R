@@ -43,11 +43,13 @@ check_stack_in_memory <- function(stack = NULL) {
 
   # Check input argument
   if (is.null(stack)) {
-    stop("Input stack cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx("Input stack cannot be NULL", stack = stack)
   }
 
   if (!inherits(stack, "RasterStack")) {
-    stop("The object should be a RasterStack object", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "The object should be a RasterStack object",
+      stack = stack, class_stack = class(stack))
   }
 
   InMem <- purrr::map_lgl(raster::unstack(stack), raster::inMemory)
@@ -60,7 +62,8 @@ check_stack_in_memory <- function(stack = NULL) {
   }
 
   if (sum(InMem) > 0 && (sum(InMem) < raster::nlayers(stack))) {
-    paste0("Layers numbered (",
+    paste0(
+      "Layers numbered (",
       paste(which(!InMem), collapse = "-"), ") reads from disk")
   }
 }

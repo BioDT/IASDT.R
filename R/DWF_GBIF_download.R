@@ -54,7 +54,7 @@ GBIF_download <- function(
   CommandsAvail <- purrr::map_lgl(Commands, IASDT.R::check_system_command)
   if (!all(CommandsAvail)) {
     Missing <- paste(Commands[!CommandsAvail], collapse = " + ")
-    stop("The following command(s) are not available: ", Missing, call. = FALSE)
+    IASDT.R::stop_ctx("Missing commands", missing_commands = Missing)
   }
 
   # # ..................................................................... ###
@@ -146,9 +146,9 @@ GBIF_download <- function(
     Path_Request <- IASDT.R::path(Path_GBIF, "GBIF_Request.RData")
 
     if (!file.exists(Path_Request)) {
-      stop(
-        "Path to previously requested data does not exist:", Path_Request,
-        call. = FALSE)
+      IASDT.R::stop_ctx(
+        "Path to previously requested data does not exist",
+        Path_Request = Path_Request)
     }
 
     IASDT.R::cat_time("Loading previous GBIF request", level = 1)
@@ -157,7 +157,8 @@ GBIF_download <- function(
     Path_Status <- IASDT.R::path(Path_GBIF, "StatusDetailed.RData")
 
     if (!file.exists(Path_Status)) {
-      stop("Path to status info does not exist:", Path_Status, call. = FALSE)
+      IASDT.R::stop_ctx(
+        "Path to status info does not exist", Path_Status = Path_Status)
     }
 
     IASDT.R::cat_time(
@@ -211,8 +212,8 @@ GBIF_download <- function(
 
     GBIF_Metadata <- IASDT.R::path(Path_GBIF, "GBIF_Metadata.RData")
     if (!file.exists(GBIF_Metadata)) {
-      stop(
-        "GBIF metadata file does not exist: ", GBIF_Metadata, call. = FALSE)
+      IASDT.R::stop_ctx(
+        "GBIF metadata file does not exist", GBIF_Metadata = GBIF_Metadata)
     }
 
     GBIF_Metadata <- IASDT.R::load_as(GBIF_Metadata)

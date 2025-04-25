@@ -34,7 +34,9 @@ package_remote_sha <- function(...) {
 
   # ensure at least one package is provided
   if (length(Pk) == 0) {
-    stop("At least one package name must be provided", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "At least one package name must be provided",
+      Pk = Pk, length_Pk = length(Pk))
   }
 
   Pk <- purrr::map_chr(Pk, .f = rlang::as_string)

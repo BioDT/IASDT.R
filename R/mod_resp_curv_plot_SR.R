@@ -48,7 +48,8 @@ resp_curv_plot_SR <- function(model_dir, verbose = TRUE, n_cores = 8L) {
   Path_RC_SR <- IASDT.R::path(model_dir, "Model_Postprocessing", "RespCurv_SR")
 
   if (!dir.exists(Path_RC_DT)) {
-    stop("Response curve data subfolder is missing.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Response curve data subfolder is missing.", Path_RC_DT = Path_RC_DT)
   }
 
   fs::dir_create(Path_RC_SR)

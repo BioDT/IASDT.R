@@ -55,20 +55,20 @@ git_log <- function(path = ".", n_commits = NULL, return_log = FALSE) {
 
   # Check `git` system command
   if (isFALSE(IASDT.R::check_system_command("git"))) {
-    stop("The system command 'git' is not available", call. = FALSE)
+    IASDT.R::stop_ctx("The system command 'git' is not available")
   }
 
   if (!dir.exists(path)) {
-    stop("The provided path does not exist.", call. = FALSE)
+    IASDT.R::stop_ctx("The provided path does not exist.", path = path)
   }
 
   # Determine the OS-specific command
   os <- IASDT.R::OS()
 
   if (!os %in% c("Windows", "Linux")) {
-    stop(
+    IASDT.R::stop_ctx(
       "Unsupported OS. This function supports only Windows and Linux.",
-      call. = FALSE)
+      os = os)
   }
 
   # Construct the command to check if the directory is a Git repo
@@ -100,9 +100,9 @@ git_log <- function(path = ".", n_commits = NULL, return_log = FALSE) {
   })
 
   if (is.null(is_git)) {
-    stop(
+    IASDT.R::stop_ctx(
       "Failed to determine if the directory is a Git repository.",
-      call. = FALSE)
+      is_git = is_git)
   }
 
   if (is_git == "true") {
@@ -118,9 +118,10 @@ git_log <- function(path = ".", n_commits = NULL, return_log = FALSE) {
       IASDT.R::system_command(log_command, R_object = TRUE)
     },
     error = function(e) {
-      stop(
-        "Failed to retrieve Git log. Ensure Git is installed and the ",
-        "directory is a valid Git repository.", call. = FALSE)
+      IASDT.R::stop_ctx(
+        paste0(
+          "Failed to retrieve Git log. Ensure Git is installed and the ",
+          "directory is a valid Git repository."))
     })
 
     if (isFALSE(return_log)) {
@@ -130,10 +131,12 @@ git_log <- function(path = ".", n_commits = NULL, return_log = FALSE) {
       } else {
 
         if (!(is.numeric(n_commits) && n_commits > 0)) {
-          stop(
-            "The 'n_commits' argument can be either NULL to show the ",
-            "complete log or a positive numeric value to show the ",
-            "most recent commits.", call. = FALSE)
+          IASDT.R::stop_ctx(
+            paste0(
+              "The 'n_commits' argument can be either NULL to show the ",
+              "complete log or a positive numeric value to show the ",
+              "most recent commits."),
+            n_commits = n_commits)
         }
         cat(utils::head(log_output, n = n_commits), sep = "\n")
       }

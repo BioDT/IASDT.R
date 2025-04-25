@@ -190,45 +190,52 @@ mod_prepare_HPC <- function(
   IsNull <- purrr::map_lgl(CheckNULL, ~ is.null(get(.x)))
 
   if (any(IsNull)) {
-    stop(
-      paste0("`", CheckNULL[which(IsNull)], "`", collapse = ", "),
-      " can not be empty", call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0(
+        paste0("`", CheckNULL[which(IsNull)], "`", collapse = ", "),
+        " can not be empty"),
+      sum_IsNull = sum(IsNull), directory_name = directory_name,
+      n_pres_per_species = n_pres_per_species, MCMC_thin = MCMC_thin,
+      MCMC_samples = MCMC_samples, memory_per_cpu = memory_per_cpu,
+      path_Hmsc = path_Hmsc, hab_abb = hab_abb)
   }
 
   if (!(precision %in% c(32, 64))) {
-    stop(
-      "`precision` should be either of 32 or 64, not ", precision,
-      call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`precision` should be either of 32 or 64", precision = precision)
   }
 
   hab_abb <- as.character(hab_abb)
 
 
   if (!all(is.numeric(MCMC_samples)) || any(MCMC_samples <= 0)) {
-    stop(
+    IASDT.R::stop_ctx(
       "`MCMC_samples` should be numeric and greater than zero",
-      call. = FALSE)
+      MCMC_samples = MCMC_samples)
   }
 
   if (!all(is.numeric(MCMC_thin)) || any(MCMC_thin <= 0)) {
-    stop("`MCMC_thin` should be numeric and greater than zero", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`MCMC_thin` should be numeric and greater than zero",
+      MCMC_thin = MCMC_thin)
   }
 
   if (!all(is.numeric(n_pres_per_species)) || n_pres_per_species <= 0) {
-    stop(
+    IASDT.R::stop_ctx(
       "`n_pres_per_species` should be numeric and greater than zero",
-      call. = FALSE)
+      n_pres_per_species = n_pres_per_species)
   }
 
   if (!all(is.numeric(min_efforts_n_species)) || min_efforts_n_species <= 0) {
-    stop(
+    IASDT.R::stop_ctx(
       "`min_efforts_n_species` should be numeric and greater than zero",
-      call. = FALSE)
+      min_efforts_n_species = min_efforts_n_species)
   }
 
   if (!is.numeric(n_species_per_grid) || n_species_per_grid < 0) {
-    stop(
-      "`n_species_per_grid` has to be integer >= 0", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`n_species_per_grid` has to be integer >= 0",
+      n_species_per_grid = n_species_per_grid)
   }
 
   # # ..................................................................... ###
@@ -267,7 +274,8 @@ mod_prepare_HPC <- function(
 
   # Check if Python executable exists
   if (check_python && !file.exists(Path_Python) && Sys.info()[1] == "Windows") {
-    stop("Python executable does not exist: ", Path_Python, call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Python executable does not exist", Path_Python = Path_Python)
   }
 
   # Assign environment variables and check file and paths
@@ -277,15 +285,15 @@ mod_prepare_HPC <- function(
 
   path_model <- IASDT.R::path(path_model, directory_name)
   if (fs::dir_exists(path_model)) {
-    stop("Model directory already exists: ", path_model, call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Model directory already exists", path_model = path_model)
   }
   fs::dir_create(path_model)
 
   Path_GridR <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(Path_GridR)) {
-    stop(
-      "Path for the Europe boundaries does not exist: ", Path_GridR,
-      call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Path for the Europe boundaries does not exist", Path_GridR = Path_GridR)
   }
 
   IASDT.R::record_arguments(
@@ -339,16 +347,16 @@ mod_prepare_HPC <- function(
 
   # Phylogenetic tree options
   if (isFALSE(use_phylo_tree) && isFALSE(no_phylo_tree)) {
-    stop(
+    IASDT.R::stop_ctx(
       "At least one of `use_phylo_tree` or `no_phylo_tree` has to be true",
-      call. = FALSE)
+      use_phylo_tree = use_phylo_tree, no_phylo_tree = no_phylo_tree)
   }
 
   NumArgsInvalid <- purrr::map_lgl(.x = NumericArgs, .f = ~all(get(.x) < 1))
   if (any(NumArgsInvalid)) {
-    stop(
-      "The following parameter(s) can not be < 1\n  >>  ",
-      paste(NumericArgs[NumArgsInvalid], collapse = " | "), call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Some parameter(s) can not be < 1",
+      NumArgsInvalid = NumericArgs[NumArgsInvalid])
   }
 
   rm(AllArgs, CharArgs, LogicArgs, NumericArgs, envir = environment())
@@ -357,10 +365,12 @@ mod_prepare_HPC <- function(
 
   if (GPP) {
     if (is.null(GPP_dists)) {
-      stop("`GPP_dists` can not be empty", call. = FALSE)
+      IASDT.R::stop_ctx("`GPP_dists` can not be empty", GPP_dists = GPP_dists)
     }
     if (!all(is.numeric(GPP_dists)) || any(GPP_dists <= 0)) {
-      stop("`GPP_dists` should be numeric and greater than zero", call. = FALSE)
+      IASDT.R::stop_ctx(
+        "`GPP_dists` should be numeric and greater than zero",
+        GPP_dists = GPP_dists)
     }
   }
 
@@ -393,9 +403,7 @@ mod_prepare_HPC <- function(
   if (isFALSE(all(bio_variables %in% IASDT.R::CHELSA_variables$Variable))) {
     WrongBio <- bio_variables[
       which(!(bio_variables %in% IASDT.R::CHELSA_variables$Variable))]
-    stop(
-      "The following are invalid Bioclimatic variables: ",
-      paste(WrongBio, collapse = " | "), call. = FALSE)
+    IASDT.R::stop_ctx("Invalid Bioclimatic variables", WrongBio = WrongBio)
   }
 
   XVars <- bio_variables
@@ -423,9 +431,11 @@ mod_prepare_HPC <- function(
   IASDT.R::cat_time("Preparing input data")
   ValidHabAbbs <- c(0:3, "4a", "4b", 10, "12a", "12b")
   if (isFALSE(as.character(hab_abb) %in% ValidHabAbbs)) {
-    stop(
-      "`hab_abb` has to be one of the following:\n >> ",
-      paste(ValidHabAbbs, collapse = " | "), call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0(
+        "`hab_abb` has to be one of the following:\n >> ",
+        paste(ValidHabAbbs, collapse = " | ")),
+      hab_abb = hab_abb)
   }
 
   HabVal <- c(
@@ -459,9 +469,9 @@ mod_prepare_HPC <- function(
     ValidCountries <- model_country %in% unique(DT_All$Country)
 
     if (!all(ValidCountries)) {
-      stop(
-        "The following are invalid country names: ",
-        paste(model_country[!ValidCountries], collapse = " & "), call. = FALSE)
+      IASDT.R::stop_ctx(
+        "Invalid country names",
+        invalid_countries = model_country[!ValidCountries])
     }
 
     IASDT.R::cat_time(
@@ -647,7 +657,8 @@ mod_prepare_HPC <- function(
   IASDT.R::cat_time("Save species summary", level = 1, cat_timestamp = FALSE)
   SpSummary <- IASDT.R::path(Path_PA, "Sp_PA_Summary_DF.RData")
   if (!file.exists(SpSummary)) {
-    stop(SpSummary, " file does not exist", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "SpSummary file does not exist", SpSummary = SpSummary)
   }
   SpSummary <- IASDT.R::load_as(SpSummary) %>%
     dplyr::arrange(IAS_ID) %>%
@@ -1287,7 +1298,8 @@ mod_prepare_HPC <- function(
 
   SetChainName <- function(Obj, Chain) {
     if (is.null(Obj) || is.null(Chain)) {
-      stop("Obj and Chain cannot be empty", call. = FALSE)
+      IASDT.R::stop_ctx(
+        "Obj and Chain cannot be empty", Obj = Obj, Chain = Chain)
     }
     Obj %>%
       unlist() %>%

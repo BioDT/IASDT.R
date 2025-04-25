@@ -52,16 +52,16 @@ mod_heatmap_beta <- function(
   .StartTime <- lubridate::now(tzone = "CET")
 
   if (is.null(path_model)) {
-    stop("`path_model` cannot be empty", call. = FALSE)
+    IASDT.R::stop_ctx("`path_model` cannot be empty", path_model = path_model)
   }
 
   # # ..................................................................... ###
 
   # support_level has to be between 0 and 1
   if (support_level < 0 || support_level > 1) {
-    stop(
+    IASDT.R::stop_ctx(
       "`support_level` has to be a numeric value between 0 and 1",
-      call. = FALSE)
+      support_level = support_level)
   }
 
   # # ..................................................................... ###
@@ -78,7 +78,7 @@ mod_heatmap_beta <- function(
   IASDT.R::cat_time("Loading model object")
 
   if (!file.exists(path_model)) {
-    stop("Model file not found", call. = FALSE)
+    IASDT.R::stop_ctx("Model file not found", path_model = path_model)
   }
   Model <- IASDT.R::load_as(path_model)
 
@@ -395,16 +395,16 @@ mod_heatmap_omega <- function(
   .StartTime <- lubridate::now(tzone = "CET")
 
   if (is.null(path_model)) {
-    stop("`path_model` cannot be empty", call. = FALSE)
+    IASDT.R::stop_ctx("`path_model` cannot be empty", path_model = path_model)
   }
 
   # # ..................................................................... ###
 
   # support_level has to be between 0 and 1
   if (support_level < 0 || support_level > 1) {
-    stop(
+    IASDT.R::stop_ctx(
       "`support_level` has to be a numeric value between 0 and 1",
-      call. = FALSE)
+      support_level = support_level)
   }
 
   # # ..................................................................... ###

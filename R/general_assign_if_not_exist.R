@@ -38,7 +38,9 @@
 assign_if_not_exist <- function(variable, value, environment = globalenv()) {
 
   if (is.null(variable) || is.null(value)) {
-    stop("`variable` and `value` cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`variable` and `value` cannot be NULL",
+      variable = variable, value = value)
   }
 
   variable <- as.character(rlang::ensyms(variable))

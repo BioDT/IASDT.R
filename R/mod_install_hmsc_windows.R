@@ -50,9 +50,8 @@ install_hmsc_windows <- function(
 
   # Check if the virtual environment directory already exists
   if (fs::dir_exists(path_VE)) {
-    stop(
-      "Path to the virtual environment already exists:\n", path_VE,
-      call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Path to the virtual environment already exists", path_VE = path_VE)
   }
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -64,9 +63,9 @@ install_hmsc_windows <- function(
     path_python, "--version", stdout = TRUE, stderr = TRUE)
 
   if (!stringr::str_detect(PythonVersion, "^Python")) {
-    stop(
+    IASDT.R::stop_ctx(
       "Python was not installed or not found at the provided path",
-      path_python, call. = FALSE)
+      path_python = path_python)
   }
 
   cat(paste0("  >>  ", PythonVersion, "\n"))
@@ -87,7 +86,9 @@ install_hmsc_windows <- function(
   PythonVersion <- system2(python, "--version", stdout = TRUE, stderr = TRUE)
 
   if (!stringr::str_detect(PythonVersion, "^Python")) {
-    stop("Python was not installed in the virtual environment", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Python was not installed in the virtual environment",
+      PythonVersion = PythonVersion)
   }
 
   cat(paste0("  >>  ", PythonVersion, "\n"))

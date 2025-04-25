@@ -38,7 +38,7 @@
 add_line <- function(at = NULL, outer = FALSE, horizontal = TRUE, ...) {
 
   if (is.null(at)) {
-    stop("at cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx("at cannot be NULL", at = at)
   }
 
   if (outer) {

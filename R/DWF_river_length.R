@@ -87,7 +87,8 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
 
   RefGrid <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(RefGrid)) {
-    stop("The reference grid file does not exist: ", RefGrid, call. = FALSE)
+    IASDT.R::stop_ctx(
+      "The reference grid file does not exist: ", RefGrid = RefGrid)
   }
   RefGrid <- terra::unwrap(IASDT.R::load_as(RefGrid))
 
@@ -100,16 +101,16 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
 
   # Check if ZIP file exists and not empty
   if (!file.exists(Path_Rivers_Zip) || fs::file_size(Path_Rivers_Zip) == 0) {
-    stop(
-      "The river network ZIP file is missing or empty: ", Path_Rivers_Zip,
-      call. = FALSE)
+    IASDT.R::stop_ctx(
+      "The river network ZIP file is missing or empty",
+      Path_Rivers_Zip = Path_Rivers_Zip)
   }
 
   # Check the integrity of the ZIP file
   if (!IASDT.R::check_zip(Path_Rivers_Zip)) {
-    stop(
-      "The river network ZIP file is corrupted: ", Path_Rivers_Zip,
-      call. = FALSE)
+    IASDT.R::stop_ctx(
+      "The river network ZIP file is corrupted",
+      Path_Rivers_Zip = Path_Rivers_Zip)
   }
 
 

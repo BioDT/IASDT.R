@@ -28,14 +28,14 @@ set_raster_values <- function(raster) {
   # If raster is character object, try to read it as SpatRast object
   if (inherits(raster, "character")) {
     if (!file.exists(raster)) {
-      stop("Input file path does not exist", call. = FALSE)
+      IASDT.R::stop_ctx("Input file path does not exist", raster = raster)
     }
     raster <- tryCatch(
       terra::rast(raster),
       error = function(e) {
-        stop(
-          "Failed to load raster from the provided file path: ", e$message,
-          call. = FALSE)
+        IASDT.R::stop_ctx(
+          paste0(
+            "Failed to load raster from the provided file path: ", e$message))
       }
     )
   }
@@ -43,9 +43,11 @@ set_raster_values <- function(raster) {
   # Convert raster package objects to SpatRaster
   if (!inherits(raster, "SpatRaster")) {
     if (!inherits(raster, c("RasterLayer", "RasterStack", "RasterBrick"))) {
-      stop(
-        "Input object must be a `SpatRaster`, `RasterLayer`, ",
-        "`RasterStack`, or `RasterBrick` object", call. = FALSE)
+      IASDT.R::stop_ctx(
+        paste0(
+          "Input object must be a `SpatRaster`, `RasterLayer`, ",
+          "`RasterStack`, or `RasterBrick` object"),
+        raster = raster, class_raster = class(raster))
     }
     raster <- terra::rast(raster)
   }
@@ -56,7 +58,8 @@ set_raster_values <- function(raster) {
     raster <- tryCatch(
       terra::unwrap(raster),
       error = function(e) {
-        stop("Failed to unwrap PackedSpatRaster: ", e$message, call. = FALSE)
+        IASDT.R::stop_ctx(
+          paste0("Failed to unwrap PackedSpatRaster: ", e$message))
       })
   }
 

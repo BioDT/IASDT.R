@@ -16,7 +16,7 @@ IAS_distribution <- function(
   .StartTime <- lubridate::now(tzone = "CET")
 
   if (is.null(species) || is.na(species) || species == "") {
-    stop("`species` cannot be empty", call. = FALSE)
+    IASDT.R::stop_ctx("`species` cannot be empty", species = species)
   }
 
   if (isFALSE(verbose)) {
@@ -135,13 +135,13 @@ IAS_distribution <- function(
   Path_EASIN <- IASDT.R::path(Path_EASIN, "Sp_DT")
 
   if (!dir.exists(Path_GBIF_DT)) {
-    stop(
-      "Required path for GBIF data do not exist: ", Path_GBIF_DT, call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Required path for GBIF data do not exist: ", Path_GBIF_DT = Path_GBIF_DT)
   }
 
   if (!dir.exists(Path_EASIN)) {
-    stop(
-      "Required path for EASIN data do not exist: ", Path_EASIN, call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Required path for EASIN data do not exist: ", Path_EASIN = Path_EASIN)
   }
 
   # # ................................ ###
@@ -154,10 +154,11 @@ IAS_distribution <- function(
 
   # Loading reference grids ----
   IASDT.R::cat_time("Loading reference grids", level = 1)
-  if (!file.exists(IASDT.R::path(Path_Grid_Ref, "Grid_100_sf.RData"))) {
-    stop(
-      "The following grid file does not exist: Grid_100_sf.RData",
-      call. = FALSE)
+  grid_100_file <- IASDT.R::path(Path_Grid_Ref, "Grid_100_sf.RData")
+  if (!file.exists(grid_100_file)) {
+    IASDT.R::stop_ctx(
+      "grid file does not exist: Grid_100_sf.RData",
+      grid_100_file = grid_100_file)
   }
 
   GridsPath <- IASDT.R::path(
@@ -167,16 +168,17 @@ IAS_distribution <- function(
       "Grid_10_Land_sf.RData"))
 
   if (!all(file.exists(GridsPath))) {
-    stop(
-      "The following grid files do not exist: \n  >>> ",
-      paste(GridsPath[!file.exists(GridsPath)], collapse = "\n  >>> "),
-      call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0(
+        "grid files do not exist: \n  >>> ",
+        paste(GridsPath[!file.exists(GridsPath)], collapse = "\n  >>> ")),
+      GridsPath = GridsPath,
+      missing_GridsPath = GridsPath[!file.exists(GridsPath)])
   }
 
   ### sf - 100 km ----
   IASDT.R::cat_time("sf - 100 km", level = 2)
-  Grid_100_sf <- IASDT.R::path(Path_Grid_Ref, "Grid_100_sf.RData") %>%
-    IASDT.R::load_as() %>%
+  Grid_100_sf <- IASDT.R::load_as(grid_100_file) %>%
     magrittr::extract2("Grid_100_sf_s")
 
   ### sf - 10 km ----
@@ -458,9 +460,9 @@ IAS_distribution <- function(
 
   BioReg_R <- IASDT.R::path(Path_BioReg, "BioReg_R.RData")
   if (isFALSE(IASDT.R::check_RData(BioReg_R))) {
-    stop(
-      "Required file for biogeographical regions does not exist: ", BioReg_R,
-      call. = FALSE)
+    IASDT.R::stop_ctx(
+      "Required file for biogeographical regions does not exist",
+      BioReg_R = BioReg_R)
   }
 
   BioReg_R <- terra::unwrap(IASDT.R::load_as(BioReg_R))

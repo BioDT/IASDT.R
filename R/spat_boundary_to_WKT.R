@@ -22,7 +22,9 @@ boundary_to_WKT <- function(
   left = NULL, right = NULL, bottom = NULL, top = NULL) {
 
   if (any(c(is.null(left), is.null(right), is.null(bottom), is.null(top)))) {
-    stop("none of left, right, bottom, or top can be NULL", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "none of left, right, bottom, or top can be NULL",
+      left = left, right = right, bottom = bottom, top = top)
   }
 
   Bound <- stringr::str_glue(

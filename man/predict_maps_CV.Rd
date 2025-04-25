@@ -9,6 +9,7 @@ predict_maps_CV(
   CV_name = NULL,
   CV_fold = NULL,
   n_cores = 8L,
+  env_file = ".env",
   use_TF = TRUE,
   TF_environ = NULL,
   TF_use_single = FALSE,
@@ -31,6 +32,9 @@ values are \code{CV_Dist}, \code{CV_Large}, or \code{CV_SAC}.}
 
 \item{n_cores}{Integer. Number of CPU cores to use for parallel processing.
 Default: 8.}
+
+\item{env_file}{Character. Path to the environment file containing paths to
+data sources. Defaults to \code{.env}.}
 
 \item{use_TF}{Logical. Whether to use TensorFlow for calculations. Defaults
 to \code{TRUE}.}

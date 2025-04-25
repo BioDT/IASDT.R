@@ -15,18 +15,20 @@ convergence_rho <- function(
   # # ..................................................................... ###
 
   if (is.null(posterior) || is.null(model_object) || is.null(title)) {
-    stop(
+    IASDT.R::stop_ctx(
       "`posterior`, `model_object`, and `title` cannot be empty",
-      call. = FALSE)
+      posterior = posterior, model_object = model_object, title = title)
   }
 
   if (length(margin_type) != 1) {
-    stop("`margin_type` must be a single value.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`margin_type` must be a single value.", margin_type = margin_type)
   }
 
   if (!margin_type %in% c("histogram", "density")) {
-    stop(
-      "`margin_type` must be either 'histogram' or 'density'.", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`margin_type` must be either 'histogram' or 'density'.",
+      margin_type = margin_type)
   }
 
   # # ..................................................................... ###

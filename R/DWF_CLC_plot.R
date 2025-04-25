@@ -38,9 +38,12 @@ CLC_plot <- function(
 
   if (is.null(CLC_name) || is.null(EU_map) || is.null(crosswalk) ||
       is.null(path_JPEG) || is.null(path_JPEG_free)) {
-    stop(
-      "`CLC_name`, `EU_map`, `crosswalk`, `path_JPEG`, and ",
-      "`path_JPEG_free` can not be empty", call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0(
+        "`CLC_name`, `EU_map`, `crosswalk`, `path_JPEG`, and ",
+        "`path_JPEG_free` can not be empty"),
+      CLC_name = CLC_name, EU_map = EU_map, crosswalk = crosswalk,
+      path_JPEG = path_JPEG, path_JPEG_free = path_JPEG_free)
   }
 
   CLC_MapR <- dplyr::filter(CLC_map, Name == CLC_name) %>%
@@ -261,11 +264,11 @@ CLC_plot <- function(
 
   # nolint start
   CommonLegend <- cowplot::get_legend(
-    (ggplot2::ggplot() + 
+    (ggplot2::ggplot() +
       tidyterra::geom_spatraster(
         data = terra::rast(CLC_MapR[[1]]), maxcell = terra::ncell(CLC_MapR)) +
       paletteer::scale_fill_paletteer_c(
-        na.value = "transparent", palette = "viridis::plasma", 
+        na.value = "transparent", palette = "viridis::plasma",
         limits = c(0, 100)) +
       ggplot2::theme(
         legend.box.margin = ggplot2::margin(0, 0, 0, 0),

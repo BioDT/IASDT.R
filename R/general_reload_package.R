@@ -25,7 +25,7 @@
 reload_package <- function(package) {
 
   if (is.null(package)) {
-    stop("`package` cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx("`package` cannot be NULL", package = package)
   }
 
   if (requireNamespace(package, quietly = TRUE)) {

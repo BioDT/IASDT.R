@@ -80,7 +80,8 @@ road_intensity <- function(env_file = ".env") {
 
   RefGrid <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(RefGrid)) {
-    stop("The reference grid file does not exist: ", RefGrid, call. = FALSE)
+    IASDT.R::stop_ctx(
+      "The reference grid file does not exist: ", RefGrid = RefGrid)
   }
 
   # # ..................................................................... ###
@@ -125,9 +126,9 @@ road_intensity <- function(env_file = ".env") {
   }
 
   if (isFALSE(Success)) {
-    stop(
-      "Failed to download road data after ", Attempts, " attempts:\n",
-      Road_URL, call. = FALSE)
+    IASDT.R::stop_ctx(
+      paste0("Failed to download road data after ", Attempts, " attempts"),
+      Road_URL = Road_URL)
   }
 
   rm(Down, envir = environment())
@@ -152,9 +153,9 @@ road_intensity <- function(env_file = ".env") {
     path = Path_Roads_Interim, pattern = ".gdb$", full.names = TRUE)
 
   if (length(Road_GDB_Files) == 0) {
-    stop(
+    IASDT.R::stop_ctx(
       "No `.gdb` files found in the directory after extraction: ",
-      Path_Roads_Interim, call. = FALSE)
+      Path_Roads_Interim = Path_Roads_Interim, Road_GDB_Files = Road_GDB_Files)
   }
 
   Road_sf <- Road_GDB_Files[1] %>%

@@ -40,23 +40,23 @@ scrape_link <- function(URL, sort_by = c("Link", "Link_text")) {
   # Ensure that sort_by is a character vector of length 1 or 2
   if (!is.character(sort_by) || length(sort_by) > 2 ||
       length(sort_by) < 1) {
-    stop(
+    IASDT.R::stop_ctx(
       "`sort_by` must be a character vector of length 1 or 2",
-      call. = FALSE)
+      sort_by = sort_by)
   }
 
   # Ensure that all values of sort_by are in c("Link", "Link_text")
   if (!all(sort_by %in% c("Link", "Link_text"))) {
-    stop(
-      "`sort_by` must contain only 'Link' and 'Link_text'", call. = FALSE)
+    IASDT.R::stop_ctx(
+      "`sort_by` must contain only 'Link' and 'Link_text'", sort_by = sort_by)
   }
 
   if (is.null(URL)) {
-    stop("URL cannot be NULL", call. = FALSE)
+    IASDT.R::stop_ctx("URL cannot be NULL", URL = URL)
   }
 
   if (isFALSE(IASDT.R::check_URL(URL))) {
-    stop("Invalid URL", call. = FALSE)
+    IASDT.R::stop_ctx("Invalid URL", URL = URL)
   }
 
   # Create an html document from the URL

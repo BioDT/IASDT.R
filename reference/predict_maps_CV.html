@@ -66,6 +66,7 @@ predicts only under current climate conditions and does not use clamping.</p>
 <span>  CV_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  CV_fold <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  n_cores <span class="op">=</span> <span class="fl">8L</span>,</span>
+<span>  env_file <span class="op">=</span> <span class="st">".env"</span>,</span>
 <span>  use_TF <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  TF_environ <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  TF_use_single <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -99,6 +100,11 @@ values are <code>CV_Dist</code>, <code>CV_Large</code>, or <code>CV_SAC</code>.<
 <dt id="arg-n-cores">n_cores<a class="anchor" aria-label="anchor" href="#arg-n-cores"></a></dt>
 <dd><p>Integer. Number of CPU cores to use for parallel processing.
 Default: 8.</p></dd>
+
+
+<dt id="arg-env-file">env_file<a class="anchor" aria-label="anchor" href="#arg-env-file"></a></dt>
+<dd><p>Character. Path to the environment file containing paths to
+data sources. Defaults to <code>.env</code>.</p></dd>
 
 
 <dt id="arg-use-tf">use_TF<a class="anchor" aria-label="anchor" href="#arg-use-tf"></a></dt>

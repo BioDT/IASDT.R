@@ -43,7 +43,7 @@ normalize_path <- function(path, must_work = FALSE) {
       fs::is_dir(path), fs::dir_exists(path), fs::file_exists(path))
 
     if (isFALSE(Exists)) {
-      IASDT.R::stop_ctx("`path` does not exist: ", path = path, Exists = Exists)
+      IASDT.R::stop_ctx("`path` does not exist", path = path, Exists = Exists)
     }
   }
 

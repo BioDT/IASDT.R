@@ -136,12 +136,12 @@ IAS_distribution <- function(
 
   if (!dir.exists(Path_GBIF_DT)) {
     IASDT.R::stop_ctx(
-      "Required path for GBIF data do not exist: ", Path_GBIF_DT = Path_GBIF_DT)
+      "Required path for GBIF data do not exist", Path_GBIF_DT = Path_GBIF_DT)
   }
 
   if (!dir.exists(Path_EASIN)) {
     IASDT.R::stop_ctx(
-      "Required path for EASIN data do not exist: ", Path_EASIN = Path_EASIN)
+      "Required path for EASIN data do not exist", Path_EASIN = Path_EASIN)
   }
 
   # # ................................ ###

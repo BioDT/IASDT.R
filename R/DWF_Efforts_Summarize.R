@@ -104,7 +104,7 @@ efforts_summarize <- function(
 
   if (!file.exists(Path_Efforts_Request)) {
     IASDT.R::stop_ctx(
-      "The path for the `Efforts_AllRequests` data does not exist: ",
+      "The path for the `Efforts_AllRequests` data does not exist",
       Path_Efforts_Request = Path_Efforts_Request)
   }
 

@@ -595,50 +595,17 @@ predict_latent_factor <- function(
       } else {
 
         # Parallel processing
-        IASDT.R::cat_time(
-          paste0(
-            "Predicting Latent Factor in parallel using ",
-            min(LF_n_cores, nrow(LF_Data)), " cores"),
-          level = 1)
+        IASDT.R::cat_time("Predicting Latent Factor in parallel", level = 1)
 
-        IASDT.R::cat_time("Prepare for parallel processing", level = 2)
-        withr::local_options(
-          future.globals.maxSize = 8000 * 1024^2, cluster.timeout = 10 * 60,
-          future.gc = TRUE, future.seed = TRUE)
-        c1 <- parallel::makeCluster(min(LF_n_cores, nrow(LF_Data)))
-        on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
+        IASDT.R::set_parallel(
+          n_cores = min(LF_n_cores, nrow(LF_Data)), level = 2)
+        withr::defer(future::plan("future::sequential", gc = TRUE))
 
-        IASDT.R::cat_time("Export objects to cores", level = 2)
-        parallel::clusterExport(
-          cl = c1,
-          varlist = c(
-            "LF_Data", "Path_D11", "Path_D12", "Path_s1", "Path_s2", "indNew",
-            "units_pred", "indOld", "units_model", "TF_environ", "use_TF",
-            "TF_use_single", "etaPreds_F", "LF_check", "run_crossprod_solve",
-            "LF_commands_only", "solve_max_attempts", "solve_chunk_size",
-            "Temp_Dir_LF"),
-          envir = environment())
-
-        # Load necessary libraries and load environment if using TensorFlow
-        IASDT.R::cat_time("Load necessary libraries", level = 2)
-        invisible(parallel::clusterEvalQ(
-          cl = c1,
-          expr = {
-            sapply(
-              c(
-                "Rcpp", "RcppArmadillo", "dplyr", "tidyr", "tibble", "arrow",
-                "Matrix", "Hmsc", "qs2", "fs", "purrr", "IASDT.R"),
-              library, character.only = TRUE)
-            invisible(gc())
-          }))
-
-        # Making predictions in parallel
         IASDT.R::cat_time("Making predictions in parallel", level = 2)
 
-        etaPreds <- parallel::clusterApplyLB(
-          cl = c1,
-          x = seq_len(nrow(LF_Data)),
-          fun = function(x) {
+        etaPreds <- future.apply::future_lapply(
+          X = seq_len(nrow(LF_Data)),
+          FUN = function(x) {
             result <- try(
               etaPreds_F(
                 RowNum = x, units_pred = units_pred, LF_check = LF_check),
@@ -650,12 +617,20 @@ predict_latent_factor <- function(
             } else {
               return(result)
             }
-          })
+          },
+          future.seed = TRUE,
+          future.globals = c(
+            "LF_Data", "Path_D11", "Path_D12", "Path_s1", "Path_s2", "indNew",
+            "units_pred", "indOld", "units_model", "TF_environ", "use_TF",
+            "TF_use_single", "etaPreds_F", "LF_check", "run_crossprod_solve",
+            "LF_commands_only", "solve_max_attempts", "solve_chunk_size",
+            "Temp_Dir_LF"),
+          future.packages = c(
+            "Rcpp", "RcppArmadillo", "dplyr", "tidyr", "tibble", "arrow",
+            "Matrix", "Hmsc", "qs2", "fs", "purrr", "IASDT.R"))
 
         # Stop the cluster
-        IASDT.R::cat_time("Stop the cluster", level = 2)
-        parallel::stopCluster(c1)
-        invisible(gc())
+        IASDT.R::set_parallel(stop_cluster = TRUE, level = 2)
       }
 
       # Check if all files are created
@@ -673,10 +648,12 @@ predict_latent_factor <- function(
 
     }
 
+    invisible(gc())
+
     # # .................................................................... ###
 
     # Merge results
-    IASDT.R::cat_time("Merge results", level = 1)
+    IASDT.R::cat_time("Merge results in parallel", level = 1)
 
     postEtaPred_Samp <- etaPreds %>%
       dplyr::bind_rows() %>%
@@ -690,29 +667,15 @@ predict_latent_factor <- function(
             stringr::str_pad(SampleID, width = 4, pad = "0"), ".qs2"))) %>%
       tidyr::nest(data = -c("SampleID", "Path_Sample"))
 
-    IASDT.R::cat_time("Prepare for parallel processing", level = 2)
-    c1 <- parallel::makeCluster(LF_n_cores)
-    on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
 
-    parallel::clusterExport(
-      cl = c1, varlist = c("postEtaPred_Samp", "LF_return"),
-      envir = environment())
-    invisible(parallel::clusterEvalQ(
-      cl = c1,
-      expr = {
-        sapply(
-          c("dplyr", "magrittr", "tibble", "IASDT.R", "purrr"),
-          library, character.only = TRUE)
-        invisible(gc())
-      }))
+    IASDT.R::set_parallel(n_cores = LF_n_cores, level = 2)
+    withr::defer(future::plan("future::sequential", gc = TRUE))
 
-    # Merge results in parallel
     IASDT.R::cat_time("Process results for MCMC samples in parallel", level = 2)
 
-    postEtaPred <- parallel::parLapply(
-      cl = c1,
+    postEtaPred <- future.apply::future_lapply(
       X = seq_len(nrow(postEtaPred_Samp)),
-      fun = function(x) {
+      FUN = function(x) {
 
         Path_Sample <- postEtaPred_Samp$Path_Sample[[x]]
         Path_LF <- postEtaPred_Samp$data[[x]]$Path_Samp_LF
@@ -731,11 +694,14 @@ predict_latent_factor <- function(
         IASDT.R::save_as(SampleDT0, out_path = Path_Sample)
         try(fs::file_delete(Path_LF), silent = TRUE)
         return(SampleDT0)
-      })
+      },
+      future.seed = TRUE,
+      future.globals = c("postEtaPred_Samp", "LF_return"),
+      future.packages = c("dplyr", "magrittr", "tibble", "IASDT.R", "purrr"))
 
     # Stop the cluster
-    IASDT.R::cat_time("Stop the cluster", level = 2)
-    parallel::stopCluster(c1)
+    IASDT.R::set_parallel(stop_cluster = TRUE, level = 2)
+
     invisible(gc())
 
   }
@@ -745,9 +711,8 @@ predict_latent_factor <- function(
   # Save postEtaPred
 
   if (!is.null(LF_out_file)) {
-    IASDT.R::cat_time("Saving postEtaPred to: ", level = 1)
-    IASDT.R::cat_time(
-      paste0("`", LF_out_file, "`"), cat_timestamp = FALSE, level = 2)
+    IASDT.R::cat_time("Saving postEtaPred to disk", level = 1)
+    IASDT.R::cat_time(LF_out_file, cat_timestamp = FALSE, level = 2)
     fs::dir_create(fs::path_dir(LF_out_file))
     IASDT.R::save_as(
       object = postEtaPred, out_path = LF_out_file,
@@ -881,7 +846,7 @@ run_crossprod_solve <- function(
     .x = names(paths),
     .f = function(p) {
       if (!file.exists(paths[[p]])) {
-        IASDT.R::stop_ctx(paste0(p, " does not exist: "), path = paths[[p]])
+        IASDT.R::stop_ctx(paste0(p, " does not exist"), path = paths[[p]])
       }
     })
 

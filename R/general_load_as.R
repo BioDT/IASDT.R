@@ -94,7 +94,7 @@ load_as <- function(file = NULL, n_threads = 5, timeout = 300, ...) {
   }
 
   if (!file.exists(file)) {
-    IASDT.R::stop_ctx("`file` does not exist: ", file = file)
+    IASDT.R::stop_ctx("`file` does not exist", file = file)
   }
 
   OutFile <- switch(

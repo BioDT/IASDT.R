@@ -94,7 +94,7 @@ railway_intensity <- function(
   RefGridSF <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
   if (!file.exists(RefGridSF)) {
     IASDT.R::stop_ctx(
-      "The reference grid file does not exist: ", RefGridSF = RefGridSF)
+      "The reference grid file does not exist", RefGridSF = RefGridSF)
   }
   RefGridSF <- IASDT.R::load_as(RefGridSF)
 

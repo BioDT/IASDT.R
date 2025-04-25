@@ -88,7 +88,7 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
   RefGrid <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(RefGrid)) {
     IASDT.R::stop_ctx(
-      "The reference grid file does not exist: ", RefGrid = RefGrid)
+      "The reference grid file does not exist", RefGrid = RefGrid)
   }
   RefGrid <- terra::unwrap(IASDT.R::load_as(RefGrid))
 

@@ -395,43 +395,41 @@ mod_CV_postprocess_2_CPU <- function(
 
   # ****************************************************************
 
-  CV_dir <- IASDT.R::path(model_dir, "Model_Fitting_CV")
-  Temp_dir <- IASDT.R::path(CV_dir, "Temp")
-
-  # ****************************************************************
-
   # Predicting habitat suitability at testing cross-validation folds -------
 
   IASDT.R::info_chunk(
-    "Predicting habitat suitability across different climate options",
+    "Predicting habitat suitability at testing sites",
     line_char = "+", line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE,
     cat_timestamp = FALSE, level = 1)
 
-  CV_DT_fitted <- IASDT.R::path(CV_dir, "CV_DT_fitted.RData")
-  if (!file.exists(CV_DT_fitted)) {
+  path_CV_DT_fitted <- IASDT.R::path(
+    model_dir, "Model_Fitting_CV", "CV_DT_fitted.RData")
+  if (!file.exists(path_CV_DT_fitted)) {
     IASDT.R::stop_ctx(
-      "CV_DT_fitted file not found.", CV_DT_fitted = CV_DT_fitted)
+      "path_CV_DT_fitted file not found.",
+      path_CV_DT_fitted = path_CV_DT_fitted)
   }
 
-  IASDT.R::info_chunk(
-    "Prepare scripts for latent factor processing",
-    line_char = "|", line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE,
-    cat_timestamp = FALSE, info_lines_before = 2)
+  CV_DT_fitted <- IASDT.R::load_as(path_CV_DT_fitted)
+  if (nrow(CV_DT_fitted) < 1) {
+    IASDT.R::stop_ctx(
+      "CV_DT_fitted data should contain at least one row",
+      CV_DT_fitted = CV_DT_fitted)
+  }
 
-  CV_DT_fitted <- IASDT.R::load_as(CV_DT_fitted) %>%
+  CV_DT_fitted <- CV_DT_fitted %>%
     dplyr::mutate(
-      LF = purrr::map2(
+      Path_Preds_summary = purrr::map2_chr(
         .x = CV_name, .y = CV,
         .f = ~ {
 
           IASDT.R::info_chunk(
-            paste0(.x, "_", .y), level = 1,
-            line_char = "+", line_char_rep = 60, cat_red = TRUE,
+            paste0(.x, "_", .y), level = 1, line_char_rep = 60, cat_red = TRUE,
             cat_bold = TRUE, cat_timestamp = FALSE)
 
           IASDT.R::predict_maps_CV(
             model_dir = model_dir, CV_name = paste0("CV_", .x),
-            CV_fold = .y, n_cores = n_cores,
+            CV_fold = .y, n_cores = n_cores, env_file = env_file,
             use_TF = use_TF, TF_environ = TF_environ,
             TF_use_single = TF_use_single, LF_n_cores = LF_n_cores,
             LF_check = LF_check, LF_temp_cleanup = LF_temp_cleanup,
@@ -440,25 +438,18 @@ mod_CV_postprocess_2_CPU <- function(
         }
       ))
 
+  IASDT.R::save_as(
+    object = CV_DT_fitted, object_name = "CV_DT_fitted",
+    out_path = path_CV_DT_fitted)
+
   invisible(gc())
 
-  # NEXT
-  # CHECK / test
-  # Merge evaluation results
-  # 
-
   # ****************************************************************
 
-  # Plot species & SR predictions as JPEG ------
+  # Merge post processing data ------
 
-  # ****************************************************************
-  
-  # Plot latent factors as JPEG ------
-  
-  # ****************************************************************
-  
   # Plot predictive Power ------
-  
+
   # ****************************************************************
 
   IASDT.R::cat_diff(

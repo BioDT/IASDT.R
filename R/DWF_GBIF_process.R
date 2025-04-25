@@ -145,7 +145,7 @@ GBIF_process <- function(
   GBIF_Metadata <- IASDT.R::path(Path_GBIF, "GBIF_Metadata.RData")
   if (!file.exists(GBIF_Metadata)) {
     IASDT.R::stop_ctx(
-      "GBIF metadata file does not exist: ", GBIF_Metadata = GBIF_Metadata)
+      "GBIF metadata file does not exist", GBIF_Metadata = GBIF_Metadata)
   }
   GBIF_Metadata <- IASDT.R::load_as(GBIF_Metadata)
 

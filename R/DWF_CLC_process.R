@@ -104,7 +104,7 @@ CLC_process <- function(
     .x = requiredPaths,
     .f = function(path) {
       if (!file.exists(path)) {
-        IASDT.R::stop_ctx("Required path does not exist: ", path = path)
+        IASDT.R::stop_ctx("Required path does not exist", path = path)
       }
     }
   )

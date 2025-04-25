@@ -81,7 +81,7 @@ road_intensity <- function(env_file = ".env") {
   RefGrid <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(RefGrid)) {
     IASDT.R::stop_ctx(
-      "The reference grid file does not exist: ", RefGrid = RefGrid)
+      "The reference grid file does not exist", RefGrid = RefGrid)
   }
 
   # # ..................................................................... ###

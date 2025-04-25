@@ -410,9 +410,9 @@ predict_hmsc <- function(
   } else {
 
     if (is.null(prediction_type) || prediction_type == "c") {
-      IASDT.R::cat_time(
-        paste0("Loading LF prediction from disk: `", LF_inputFile, "`"),
-        level = 1)
+
+      IASDT.R::cat_time(paste0("Loading LF prediction from disk", level = 1)
+      IASDT.R::cat_time(LF_inputFile, level = 2, cat_timestamp = FALSE)
 
       for (r in seq_len(Mod_nr)) {
         predPostEta[[r]] <- IASDT.R::load_as(LF_inputFile[[r]])
@@ -664,7 +664,6 @@ predict_hmsc <- function(
           Sp = Sp, IAS_ID = IAS_ID, Path_pred = PredSummaryFile,
           RMSE = RMSE, AUC = AUC, Boyce = Boyce, TjurR2 = TjurR2))
 
-
     },
     future.seed = TRUE,
     future.globals = c(
@@ -714,8 +713,9 @@ predict_hmsc <- function(
   if (temp_cleanup) {
     try(fs::file_delete(Eval_DT$Path_pred), silent = TRUE)
   }
-  IASDT.R::cat_time(
-    paste0("Predictions were saved to `", Pred_File, "`"), level = 1)
+  
+  IASDT.R::cat_time("Predictions were saved", level = 1)
+  IASDT.R::cat_time(Pred_File, level = 2, cat_timestamp = FALSE)
 
   if (evaluate) {
     if (is.null(evaluation_name)) {
@@ -734,11 +734,11 @@ predict_hmsc <- function(
     Eval_DT <- dplyr::select(Eval_DT, -Path_pred)
     IASDT.R::save_as(object = Eval_DT, out_path = Eval_Path)
 
+    IASDT.R::cat_time("Evaluation results were saved", level = 1)
     IASDT.R::cat_time(
-      paste0(
-        "Evaluation results were saved to `",
-        IASDT.R::path(evaluation_directory, "Eval_DT.qs2"), "`"),
-      level = 1)
+      IASDT.R::path(evaluation_directory, "Eval_DT.qs2"),
+      level = 2, cat_timestamp = FALSE)
+
   } else {
     Eval_Path <- NULL
   }

@@ -37,8 +37,9 @@ predict_maps_CV <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  x <- y <- Path_Grid <- ias_id <- taxon_name <- species_name <-
-    layer_name <- tif_path <-  class <- order <- family <- NULL
+  x <- y <- Path_Grid <- ias_id <- taxon_name <- species_name <- sp_type <-
+    type <- n_grids_pres <- n_grids_abs <- Sp <- IAS_ID <- ncells <-
+    layer_name <- tif_path <- class <- order <- family <- NULL
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -117,10 +118,19 @@ predict_maps_CV <- function(
     dplyr::filter(.data$CV_name == CV_name, .data$CV == CV_fold)
 
   # model name
-  habitat_abb <- stringr::str_extract(model_dir, "(Hab|hab).+") %>%
+  hab_abb <- stringr::str_extract(model_dir, "(Hab|hab).+") %>%
     stringr::str_remove("/$") %>%
     stringr::str_remove("Hab|hab")
-  model_name <- paste0(habitat_abb, "_", CV_DT$ModName)
+  # full habitat name
+  Hab_Name <- c(
+    "0_All", "1_Forests", "2_Open_forests", "3_Scrub",
+    "4a_Natural_grasslands", "4b_Human_maintained_grasslands",
+    "10_Wetland", "12a_Ruderal_habitats", "12b_Agricultural_habitats") %>%
+    stringr::str_subset(paste0("^", as.character(hab_abb), "_")) %>%
+    stringr::str_remove(paste0("^", as.character(hab_abb), "_")) %>%
+    stringr::str_replace_all("_", " ")
+  # model name
+  model_name <- paste0(hab_abb, "_", CV_DT$ModName)
 
   # path for model evaluation
   Path_Eval <- IASDT.R::path(model_dir, "Model_Fitting_CV", "Evaluation")
@@ -134,7 +144,7 @@ predict_maps_CV <- function(
   fs::dir_create(c(Path_Eval, Path_Prediction, temp_dir))
 
   Path_Preds_sf <- IASDT.R::path(
-    Path_Prediction, paste0("Prediction_", model_name, "_sf.qs2"))
+    Path_Prediction, paste0("Prediction_", model_name, ".qs2"))
   Path_Eval_File <- IASDT.R::path(
     Path_Eval, paste0("Eval_", model_name, ".qs2"))
   Path_Preds_R <- IASDT.R::path(
@@ -187,6 +197,20 @@ predict_maps_CV <- function(
   Test_PA <- dplyr::select(Test_DT, tidyselect::starts_with("Sp_")) %>%
     as.data.frame()
 
+  n_grid_summary <- Test_PA %>%
+    dplyr::summarise(
+      dplyr::across(
+        .cols = tidyselect::everything(),
+        .fns = list(n_grids_pres = sum, n_grids_abs = ~sum(.x == 0)),
+        .names = "{.col}__{.fn}")) %>%
+    tidyr::pivot_longer(
+      col = tidyselect::everything(),
+      names_to = "sp_type", values_to = "ncells") %>%
+    tidyr::separate_wider_delim(
+      cols = sp_type, delim = "__", names = c("ias_id", "type")) %>%
+    tidyr::pivot_wider(names_from = type, values_from = ncells) %>%
+    dplyr::mutate(dplyr::across(c(n_grids_pres, n_grids_abs), as.integer))
+
   rm(Model, Test_X, envir = environment())
   invisible(gc())
 
@@ -221,6 +245,8 @@ predict_maps_CV <- function(
       LF_check = LF_check, LF_temp_cleanup = LF_temp_cleanup,
       LF_commands_only = LF_commands_only, evaluate = FALSE, verbose = TRUE)
 
+    rm(Preds_LF, envir = environment())
+
     IASDT.R::cat_time("Predicting latent factor is finished!", level = 1)
     IASDT.R::cat_sep(
       sep_lines_before = 1, sep_lines_after = 2,
@@ -242,19 +268,19 @@ predict_maps_CV <- function(
 
   # Predict habitat suitability at testing cross-validation folds ------
 
-
-
   if (all(file.exists(Path_Preds_sf, Path_Eval_File))) {
 
     # Skip predictions if the predictions as sf object and evaluation data
     # already on disk
-    IASDT.R::cat_time("Loading predictions `sf` from disk", level = 1)
+    IASDT.R::cat_time("Loading predictions `sf` from disk")
     Prediction_sf <- IASDT.R::load_as(Path_Preds_sf)
 
   } else {
 
-    IASDT.R::cat_time("predicting at new sites", level = 1)
+    IASDT.R::cat_time("predicting at new sites")
     .OptionStartTime <- lubridate::now(tzone = "CET")
+
+    IASDT.R::cat_sep(sep_lines_after = 2, sep_lines_before = 1)
 
     Prediction_sf <- IASDT.R::predict_hmsc(
       path_model = path_model, gradient = Gradient, expected = TRUE,
@@ -263,9 +289,12 @@ predict_maps_CV <- function(
       TF_use_single = TF_use_single, LF_return = TRUE,
       LF_inputFile = Path_Test_LF, LF_n_cores = LF_n_cores, LF_check = LF_check,
       LF_temp_cleanup = LF_temp_cleanup, LF_commands_only = FALSE,
-      verbose = FALSE, pred_directory = Path_Prediction, evaluate = TRUE,
+      verbose = TRUE, pred_directory = Path_Prediction, evaluate = TRUE,
       evaluation_directory = Path_Eval, pred_XY = Test_XY, pred_PA = Test_PA)
 
+    IASDT.R::cat_sep(sep_lines_after = 2, sep_lines_before = 1)
+
+    # --------------------------------------------------------------------------
 
     if (!file.exists(Path_Preds_sf)) {
       IASDT.R::stop_ctx(
@@ -287,6 +316,11 @@ predict_maps_CV <- function(
         "Evaluation file is corrupted", Path_Eval_File = Path_Eval_File)
     }
 
+    # loading evaluation data
+    Eval_data <- IASDT.R::load_as(Prediction_sf$Eval_Path) %>%
+      dplyr::select(-Sp) %>%
+      dplyr::rename(ias_id = IAS_ID)
+
     # loading prediction data
     Prediction_sf <- IASDT.R::load_as(Prediction_sf$Pred_Path)
 
@@ -307,7 +341,7 @@ predict_maps_CV <- function(
 
   } else {
 
-    IASDT.R::cat_time("Rasterization predictions at testing sites", level = 1)
+    IASDT.R::cat_time("\nRasterization predictions at testing sites")
 
     SpeciesInfo <- IASDT.R::get_species_name(env_file = env_file) %>%
       janitor::clean_names() %>%
@@ -321,11 +355,20 @@ predict_maps_CV <- function(
     Prediction_R <- terra::rasterize(
       Prediction_sf, Grid10, field = Fields2Raster)
 
+    # --------------------------------------------------------------------------
+
+    IASDT.R::cat_time("Save prediction outputs")
+
     # Save as tif
     IASDT.R::cat_time("Save predictions as tif files", level = 1)
 
+    selected_columns <- c(
+      "hab_abb", "Hab_Name", "CV_name", "CV_fold", "ias_id", "taxon_name",
+      "species_name", "class", "order", "family", "tif_path_mean",
+      "tif_path_sd", "tif_path_cov", "n_grids_pres", "n_grids_abs")
+
     Out_Summary <- tibble::tibble(
-      layer_name = Fields2Raster, hab_abb = habitat_abb,
+      layer_name = Fields2Raster, hab_abb = hab_abb, Hab_Name = Hab_Name,
       CV_name = CV_name, CV_fold = CV_fold) %>%
       dplyr::mutate(
         Stats = dplyr::case_when(
@@ -336,26 +379,24 @@ predict_maps_CV <- function(
         ias_id = stringr::str_remove(layer_name, "_mean$|_sd$|_cov$"),
         tif_path = IASDT.R::path(
           Path_Prediction, paste0(layer_name, "_", model_name, ".tif")),
-        Outt_Map = purrr::map2(
+        Out_Map = purrr::map2(
           .x = layer_name, .y = tif_path,
           .f = ~ {
             terra::writeRaster(
               x = Prediction_R[[.x]], filename = .y, overwrite = TRUE,
               gdal = c("COMPRESS=DEFLATE", "TILED=YES"))
           }),
-        Outt_Map = NULL) %>%
+        Out_Map = NULL) %>%
       tidyr::pivot_wider(
-        id_cols = c("hab_abb",  "CV_name", "CV_fold", "ias_id"),
+        id_cols = c("hab_abb", "Hab_Name", "CV_name", "CV_fold", "ias_id"),
         names_from = "Stats", values_from = "tif_path") %>%
       dplyr::left_join(SpeciesInfo, by = "ias_id") %>%
-      dplyr::select(
-        tidyselect::all_of(
-          c("hab_abb",  "CV_name", "CV_fold", "ias_id", "taxon_name",
-            "species_name", "class", "order", "family", "tif_path_mean",
-            "tif_path_sd", "tif_path_cov")))
+      dplyr::left_join(n_grid_summary, by = "ias_id") %>%
+      dplyr::select(tidyselect::all_of(selected_columns)) %>%
+      dplyr::left_join(Eval_data, by = "ias_id") %>%
+      dplyr::slice(gtools::mixedorder(ias_id))
 
     IASDT.R::cat_time("Save summary data", level = 1)
-
     # save as spatRaster - qs2
     IASDT.R::cat_time("Save as spatRaster - qs2", level = 1)
     Prediction_R <- terra::wrap(Prediction_R)
@@ -383,5 +424,5 @@ predict_maps_CV <- function(
   IASDT.R::cat_diff(
     init_time = .StartTime, prefix = "\nThe whole prediction function took ")
 
-  return(Out_Summary)
+  return(Path_Preds_summary)
 }

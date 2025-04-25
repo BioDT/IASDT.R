@@ -190,6 +190,9 @@ predict_latent_factor <- function(
       model_name <- paste0(model_name, "_")
     }
 
+    # ensure only one underscore at the end of model_name
+    model_name <- stringr::str_replace_all(model_name, "__$", "_")
+
     # Create a temporary directory to store intermediate results. This directory
     # will be used to save s1/s2 or D11/D12, and intermediate postEta files,
     # reducing memory usage.
@@ -731,10 +734,10 @@ predict_latent_factor <- function(
 
     try(
       expr = {
+
         Pattern <- paste0(
           "^", model_name,
           "(postEta|r[0-9]|etaPred|s1|s2|post).+(feather|qs2|log)$")
-
         file_paths <- list.files(
           path = IASDT.R::normalize_path(temp_dir),
           pattern = Pattern, full.names = TRUE)
@@ -751,11 +754,10 @@ predict_latent_factor <- function(
         }
 
         # delete temp files for cross-validated models
-        file_paths3 <- IASDT.R::path(temp_dir, "LF_Prediction") %>%
-          IASDT.R::normalize_path() %>%
-          list.files(
-            pattern = paste0("^", model_name, "_Samp_.+.qs2"),
-            full.names = TRUE, recursive = TRUE)
+        file_paths3 <- list.files(
+          path = IASDT.R::normalize_path(Temp_Dir_LF),
+          pattern = paste0("^", model_name, "Samp_.+.qs2"),
+          full.names = TRUE, recursive = TRUE)
 
         if (length(file_paths3) > 0) {
           try(fs::file_delete(file_paths3), silent = TRUE)

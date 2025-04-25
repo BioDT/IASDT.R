@@ -59,8 +59,8 @@ predict_maps_CV <- function(
   IASDT.R::check_args(
     args_all = AllArgs, args_type = "logical",
     args_to_check = c(
-      "use_TF", "TF_use_single", "LF_check", "LF_temp_cleanup",
-      "LF_temp_cleanup", "LF_only", "LF_commands_only", "temp_cleanup"))
+      "use_TF", "TF_use_single", "LF_check", "LF_temp_cleanup", "LF_only",
+      "LF_commands_only", "temp_cleanup"))
   IASDT.R::check_args(
     args_all = AllArgs, args_type = "numeric",
     args_to_check = c("n_cores", "CV_fold", "LF_n_cores"))
@@ -219,21 +219,16 @@ predict_maps_CV <- function(
 
   # Predict latent factor at new locations ------
 
-  IASDT.R::cat_time("Predict latent factor at new locations")
-
   Path_Test_LF <- IASDT.R::path(
     Path_Prediction, paste0("LF_Test_", model_name, ".qs2"))
 
   if (file.exists(Path_Test_LF)) {
 
-    IASDT.R::cat_time("LF prediction is already available on disk", level = 1)
+    IASDT.R::cat_time("LF prediction is already available on disk")
 
   } else {
 
-    IASDT.R::cat_time("Predicting latent factor", level = 1)
-    IASDT.R::cat_sep(
-      sep_lines_before = 1, sep_lines_after = 2,
-      n_separators = 1, line_char = "*")
+    IASDT.R::info_chunk("Predict latent factor at new locations")
 
     # Predicting latent factor only
     Preds_LF <- IASDT.R::predict_hmsc(
@@ -277,10 +272,10 @@ predict_maps_CV <- function(
 
   } else {
 
-    IASDT.R::cat_time("predicting at new sites")
-    .OptionStartTime <- lubridate::now(tzone = "CET")
+    IASDT.R::info_chunk(
+      "Predict habitat suitability at testing cross-validation folds")
 
-    IASDT.R::cat_sep(sep_lines_after = 2, sep_lines_before = 1)
+    .OptionStartTime <- lubridate::now(tzone = "CET")
 
     Prediction_sf <- IASDT.R::predict_hmsc(
       path_model = path_model, gradient = Gradient, expected = TRUE,
@@ -291,8 +286,6 @@ predict_maps_CV <- function(
       LF_temp_cleanup = LF_temp_cleanup, LF_commands_only = FALSE,
       verbose = TRUE, pred_directory = Path_Prediction, evaluate = TRUE,
       evaluation_directory = Path_Eval, pred_XY = Test_XY, pred_PA = Test_PA)
-
-    IASDT.R::cat_sep(sep_lines_after = 2, sep_lines_before = 1)
 
     # --------------------------------------------------------------------------
 
@@ -326,7 +319,7 @@ predict_maps_CV <- function(
 
     # elapsed time
     IASDT.R::cat_diff(
-      init_time = .OptionStartTime, prefix = "Prediction took ", level = 2)
+      init_time = .OptionStartTime, prefix = "Prediction took ", level = 1)
 
   }
 

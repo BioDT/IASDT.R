@@ -86,7 +86,7 @@ CHELSA_prepare <- function(
     dplyr::tibble(URL_File = .) %>%
     # Add download links
     dplyr::mutate(
-      URL = purrr::map(.x = URL_File, .f = readr::read_lines),
+      URL = purrr::map(.x = URL_File, .f = readr::read_lines, progress = FALSE),
       URL_File = basename(URL_File)) %>%
     tidyr::unnest_longer("URL") %>%
     dplyr::mutate(

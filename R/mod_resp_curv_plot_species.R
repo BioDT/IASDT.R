@@ -79,7 +79,8 @@ resp_curv_plot_species <- function(
     IASDT.R::stop_ctx("SpSummary file does not exist", SpSummary = SpSummary)
   }
 
-  SpSummary <- readr::read_csv(SpSummary, show_col_types = FALSE) %>%
+  SpSummary <- readr::read_csv(
+    file = SpSummary, show_col_types = FALSE, progress = FALSE) %>%
     dplyr::select(tidyselect::all_of(c("IAS_ID", "NCells_Naturalized"))) %>%
     dplyr::rename(NCells = NCells_Naturalized)
 

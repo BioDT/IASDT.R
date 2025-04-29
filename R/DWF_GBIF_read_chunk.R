@@ -104,7 +104,8 @@ GBIF_read_chunk <- function(
   terra::activeCat(Corine) <- 0
 
   # CLC cross-walk to match observations
-  CLC_Levels <- readr::read_delim(file = CLC_CW, show_col_types = FALSE) %>%
+  CLC_Levels <- readr::read_delim(
+    file = CLC_CW, show_col_types = FALSE, progress = FALSE) %>%
     dplyr::select(-SynHab_desc)
 
   ChunkData <- readr::read_lines(chunk_file, progress = FALSE) %>%

@@ -146,7 +146,7 @@ coda_to_tibble <- function(
     rm(EnvVars2Read, envir = environment())
 
     SpeciesNames <- readr::read_tsv(
-      file = TaxaInfoFile, show_col_types = FALSE) %>%
+      file = TaxaInfoFile, show_col_types = FALSE, progress = FALSE) %>%
       dplyr::select(IAS_ID, Species = Species_name) %>%
       dplyr::mutate(
         IAS_ID = stringr::str_pad(IAS_ID, pad = "0", width = 4),

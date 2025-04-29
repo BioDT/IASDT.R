@@ -369,7 +369,7 @@ mod_merge_chains <- function(
             .x = .x,
             .f = function(File) {
               if (file.exists(File)) {
-                readr::read_lines(file = File) %>%
+                readr::read_lines(file = File, progress = FALSE) %>%
                   stringr::str_subset("Whole Gibbs sampler elapsed") %>%
                   stringr::str_remove("Whole Gibbs sampler elapsed") %>%
                   stringr::str_trim() %>%
@@ -402,7 +402,7 @@ mod_merge_chains <- function(
             .x = .x,
             .f = function(File) {
               if (file.exists(File)) {
-                readr::read_lines(file = File) %>%
+                readr::read_lines(file = File, progress = FALSE) %>%
                   stringr::str_subset("Maximum resident set size") %>%
                   stringr::str_remove_all(
                     "\t|:|Maximum resident set size \\(kbytes\\)") %>%

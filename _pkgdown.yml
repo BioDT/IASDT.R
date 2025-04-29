@@ -80,6 +80,7 @@ reference:
 - subtitle: Model postprocessing
   desc: Postprocessing model outputs, including checking for convergence, making spatial predictions, evaluation, and plotting.
   contents:
+  - coda_to_tibble
   - mod_get_posteriors
   - mod_merge_chains
   - mod_summary
@@ -91,21 +92,12 @@ reference:
   - predict_maps_CV
   - plot_prediction
   - mod_postprocessing
-  - mod_CV_evaluate
   - plot_evaluation
   - parameter_heatmap
   - convergence_plot
   - convergence_plot_all
   - variance_partitioning
   - plot_gelman
-- subtitle: Helper functions
-  contents:
-  - coda_to_tibble
-  - exp_neg_div
-  - fast_pnorm
-  - solve1
-  - solve2
-  - solve2vect
 
 - title: General functions
   desc: Data management / utility functions
@@ -164,6 +156,7 @@ reference:
   - source_silent
   - n_unique
   - add_missing_columns
+  - cpp_functions
 - subtitle: Other functions
   contents:
   - set_parallel

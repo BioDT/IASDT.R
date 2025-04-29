@@ -39,7 +39,8 @@ plot_evaluation <- function(model_dir, env_file = ".env") {
   if (!file.exists(SpSummary)) {
     IASDT.R::stop_ctx("Species summary file not found", SpSummary = SpSummary)
   }
-  SpSummary <- readr::read_csv(SpSummary, show_col_types = FALSE) %>%
+  SpSummary <- readr::read_csv(
+    file = SpSummary, show_col_types = FALSE, progress = FALSE) %>%
     dplyr::select(tidyselect::all_of(c("IAS_ID", "NCells_Naturalized"))) %>%
     dplyr::rename(NCells = NCells_Naturalized) %>%
     dplyr::mutate(

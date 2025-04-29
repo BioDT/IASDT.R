@@ -148,6 +148,16 @@
 #' `mod_prepare_TF`).
 #' - submitting SLURM jobs for cross-validated model fitting.
 #'
+#' <hr>
+#'
+#' **mod_CV_postprocess_2_CPU**
+#'
+#' The function 1) processes `*.feather` files resulted from Latent Factor
+#' predictions using `TensorFlow` and saves LF predication to disk; 2) predicts
+#' species-specific mean habitat suitability at testing cross-validation folds
+#' and calculates testing evaluation metrics; generates plots of the evaluation
+#' metrics.
+#'
 
 ## |------------------------------------------------------------------------| #
 # mod_postprocess_1_CPU ----
@@ -558,7 +568,7 @@ mod_prepare_TF <- function(
   VP_InFiles <- list.files(
     path = path_model, pattern = "VP_.+Command.txt", recursive = TRUE,
     full.names = TRUE) %>%
-    purrr::map(readr::read_lines) %>%
+    purrr::map(readr::read_lines, progress = FALSE) %>%
     unlist() %>%
     gtools::mixedsort()
 
@@ -680,7 +690,7 @@ mod_prepare_TF <- function(
   purrr::walk(LF_InFiles, IASDT.R::cat_time, level = 3, cat_timestamp = FALSE)
 
   # Read and merge commands from input files
-  LF_commands <- purrr::map(LF_InFiles, readr::read_lines) %>%
+  LF_commands <- purrr::map(LF_InFiles, readr::read_lines, progress = FALSE) %>%
     unlist() %>%
     gtools::mixedsort()
 

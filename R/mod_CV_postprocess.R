@@ -141,9 +141,8 @@ mod_CV_postprocess_1_CPU <- function(
         .f = ~ {
 
           IASDT.R::info_chunk(
-            paste0(.x, "_", .y), level = 1,
-            line_char = "+", line_char_rep = 60, cat_red = TRUE,
-            cat_bold = TRUE, cat_timestamp = FALSE)
+            message = paste0(.x, "_", .y), level = 1, line_char = "+",
+            line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE)
 
           IASDT.R::predict_maps_CV(
             model_dir = model_dir, CV_name = paste0("CV_", .x),
@@ -162,7 +161,7 @@ mod_CV_postprocess_1_CPU <- function(
   IASDT.R::info_chunk(
     "Merge TensorFlow commands into batch files",
     line_char = "|", line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE,
-    cat_timestamp = FALSE, info_lines_before = 2)
+    info_lines_before = 2)
 
   IASDT.R::cat_time(
     paste0(
@@ -214,7 +213,7 @@ mod_CV_postprocess_1_CPU <- function(
     purrr::walk(IASDT.R::cat_time, level = 3, cat_timestamp = FALSE)
 
   # Read and merge commands from input files
-  LF_commands <- purrr::map(LF_InFiles, readr::read_lines) %>%
+  LF_commands <- purrr::map(LF_InFiles, readr::read_lines, progress = FALSE) %>%
     unlist() %>%
     gtools::mixedsort()
 
@@ -350,7 +349,9 @@ mod_CV_postprocess_2_CPU <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  CV <- CV_name <- NULL
+  CV <- CV_name <- n_grids <- Sp <- IAS_ID <- metric <- y_label <- pred_mean <-
+    pred <- pred_sd <- mean_minus <- mean_plus <- label <- summary_vals <-
+    ias_id <- n_grids_pres_mean <- data <- title <- NULL
 
   # ****************************************************************
 
@@ -364,9 +365,7 @@ mod_CV_postprocess_2_CPU <- function(
 
   IASDT.R::check_args(
     args_all = AllArgs, args_type = "logical",
-    args_to_check = c(
-      "use_TF", "TF_use_single", "LF_temp_cleanup",
-      "LF_check"))
+    args_to_check = c("use_TF", "TF_use_single", "LF_temp_cleanup", "LF_check"))
   IASDT.R::check_args(
     args_all = AllArgs, args_type = "character",
     args_to_check = c("model_dir", "env_file"))
@@ -374,7 +373,6 @@ mod_CV_postprocess_2_CPU <- function(
     args_all = AllArgs, args_type = "numeric",
     args_to_check = c("n_cores", "LF_n_cores"))
   rm(AllArgs, envir = environment())
-
 
   if (n_cores <= 0) {
     IASDT.R::stop_ctx(
@@ -395,12 +393,31 @@ mod_CV_postprocess_2_CPU <- function(
 
   # ****************************************************************
 
+  # load model's explanatory power ------
+
+  Eval_explain <- list.files(
+    path = IASDT.R::path(model_dir, "Model_Evaluation"),
+    pattern = "Eval_.+.qs2", full.names = TRUE)
+
+  if (length(Eval_explain) != 1) {
+    IASDT.R::stop_ctx(
+      "There should be only one evaluation file in the Model_Evaluation folder",
+      Eval_explain = Eval_explain)
+  }
+
+  Eval_explain <- IASDT.R::load_as(Eval_explain) %>%
+    dplyr::select(-Sp) %>%
+    dplyr::rename(ias_id = IAS_ID) %>%
+    dplyr::filter(ias_id != "SR") %>%
+    dplyr::rename_with(.cols = -ias_id, .fn = ~ paste0(.x, "_exp"))
+
+  # ****************************************************************
+
   # Predicting habitat suitability at testing cross-validation folds -------
 
   IASDT.R::info_chunk(
-    "Predicting habitat suitability at testing sites",
-    line_char = "+", line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE,
-    cat_timestamp = FALSE, level = 1)
+    message = "Predicting habitat suitability at testing sites",
+    line_char = "*", line_char_rep = 70, cat_red = TRUE, cat_bold = TRUE)
 
   path_CV_DT_fitted <- IASDT.R::path(
     model_dir, "Model_Fitting_CV", "CV_DT_fitted.RData")
@@ -424,8 +441,8 @@ mod_CV_postprocess_2_CPU <- function(
         .f = ~ {
 
           IASDT.R::info_chunk(
-            paste0(.x, "_", .y), level = 1, line_char_rep = 60, cat_red = TRUE,
-            cat_bold = TRUE, cat_timestamp = FALSE)
+            message = paste0(.x, "_", .y), line_char = "~", level = 1,
+            line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE)
 
           IASDT.R::predict_maps_CV(
             model_dir = model_dir, CV_name = paste0("CV_", .x),
@@ -446,9 +463,147 @@ mod_CV_postprocess_2_CPU <- function(
 
   # ****************************************************************
 
-  # Merge post processing data ------
+  # Merge prediction summary data ------
 
-  # Plot predictive Power ------
+  IASDT.R::cat_time("Merge prediction summary data")
+
+  # ID columns to be used for nesting
+  cols_id <- c(
+    "hab_abb", "Hab_Name", "CV_name", "ias_id", "taxon_name", "species_name",
+    "class", "order", "family")
+
+  # Evaluation metrics to be used for summary
+  eval_metrics <- c("RMSE", "AUC", "Boyce", "TjurR2")
+
+  # Summary columns
+  cols_summary <- outer(
+    X = eval_metrics, Y = c("mean", "sd"),
+    FUN = function(x, y) paste0(x, "_", y)) %>%
+    as.vector() %>%
+    sort() %>%
+    c("n_grids_pres_mean")
+
+  summary_all_CV <- purrr::map(
+    CV_DT_fitted$Path_Preds_summary, IASDT.R::load_as) %>%
+    dplyr::bind_rows() %>%
+    tidyr::nest(.by = tidyselect::all_of(cols_id)) %>%
+    dplyr::filter(ias_id != "SR") %>%
+    dplyr::mutate(
+      data = purrr::map(
+        .x = data,
+        .f = ~{
+          .x %>%
+            dplyr::arrange(CV_fold) %>%
+            dplyr::summarise(
+              dplyr::across(
+                .cols = tidyselect::everything(),
+                .fns = function(y) {
+                  as.vector(y) %>%
+                    stats::setNames(paste0("CV_", seq_len(length(.)))) %>%
+                    list()
+                })) %>%
+            dplyr::mutate(
+              dplyr::across(
+                .cols = tidyselect::all_of(eval_metrics),
+                list(mean = ~mean(unlist(.)), sd = ~sd(unlist(.))),
+                .names = "{.col}_{.fn}"),
+              n_grids_pres_mean = mean(unlist(n_grids_pres)))
+        }),
+      summary_vals = purrr::map(
+        .x = data, .f = dplyr::select, tidyselect::all_of(cols_summary)),
+      data = purrr::map(
+        .x = data, .f = dplyr::select, -tidyselect::all_of(cols_summary))) %>%
+    tidyr::unnest_wider(summary_vals) %>%
+    dplyr::left_join(Eval_explain, by = "ias_id")
+
+  # ****************************************************************
+
+  # Plotting testing evaluation -----
+
+  plot_cv_metric <- function(
+    metric, y_label, title, data = summary_all_CV, linewidth = 0.25) {
+
+    mean_col <- paste0(metric, "_mean")
+    sd_col <- paste0(metric, "_sd")
+
+    data %>%
+      dplyr::select(n_grids_pres_mean, dplyr::all_of(c(mean_col, sd_col))) %>%
+      stats::setNames(c("n_grids", "pred_mean", "pred_sd")) %>%
+      dplyr::mutate(
+        mean_plus = pred_mean + pred_sd,
+        mean_minus = pred_mean - pred_sd) %>%
+      ggplot2::ggplot(ggplot2::aes(x = n_grids, y = pred_mean)) +
+      ggplot2::geom_point() +
+      ggplot2::geom_errorbar(
+        ggplot2::aes(ymin = mean_plus, ymax = mean_minus),
+        linewidth = linewidth) +
+      ggplot2::scale_x_continuous(transform = "log10") +
+      ggplot2::labs(
+        x = "Mean number of testing presences (log<sub>10</sub>scale)",
+        y = y_label, title = title) +
+      ggplot2::theme(axis.title = ggtext::element_markdown())
+  }
+
+  Plots <- tibble::tibble(
+    metric = eval_metrics,
+    y_label = c(
+      "Root mean square error (RMSE)", "Area under the ROC curve (AUC)",
+      "Continuous Boyce index", "Tjur R-Squared"),
+    title = c("RMSE", "AUC", "continuous Boyce index", "Tjur R-Squared")) %>%
+    dplyr::mutate(
+      title = paste0("Cross-validated predictive power (", title, ")"),
+      plot = purrr::pmap(
+        .l = list(metric = metric, y_label = y_label, title = title),
+        .f = plot_cv_metric))
+
+
+  # Plots$plot[[1]]
+  # Plots$plot[[2]]
+  # Plots$plot[[3]]
+  # Plots$plot[[4]]
+
+  plot_pred_vs_exp <- function(
+    metric, label, data = summary_all_CV, linewidth = 0.25) {
+
+    pred_col <- paste0(metric, "_mean")
+    exp_col <- paste0(metric, "_exp")
+    sd_col <- paste0(metric, "_sd")
+
+    data2 <- data %>%
+      dplyr::select(dplyr::all_of(c(pred_col, exp_col, sd_col))) %>%
+      stats::setNames(c("pred", "exp", "pred_sd")) %>%
+      dplyr::mutate(
+        mean_plus = pred + pred_sd,
+        mean_minus = pred - pred_sd)
+
+    range_xy <- range(c(data2$pred, data2$exp), na.rm = TRUE)
+
+    data2 %>%
+      ggplot2::ggplot(ggplot2::aes(x = exp, y = pred)) +
+      ggplot2::geom_point() +
+      ggplot2::geom_errorbar(
+        ggplot2::aes(ymin = mean_minus, ymax = mean_plus),
+        linewidth = linewidth) +
+      ggplot2::geom_abline(intercept = 0, slope = 1) +
+      ggplot2::coord_equal() +
+      ggplot2::scale_x_continuous(limits = range_xy) +
+      ggplot2::scale_y_continuous(limits = range_xy) +
+      ggplot2::labs(
+        x = paste0("Model's explanatory power (", label, ")"),
+        y = paste0("Model's predictive power (", label, ")")) +
+      ggplot2::theme_minimal()
+  }
+
+  plots2 <- tibble::tibble(
+    metric = eval_metrics,
+    label  = c("RMSE", "AUC", "Boyce index", "Tjur R-Squared")) %>%
+    dplyr::mutate(
+      plots = purrr::map2(.x = metric, .y = label, .f = plot_pred_vs_exp))
+
+  # plots2$plots[[1]]
+  # plots2$plots[[2]]
+  # plots2$plots[[3]]
+  # plots2$plots[[4]]
 
   # ****************************************************************
 

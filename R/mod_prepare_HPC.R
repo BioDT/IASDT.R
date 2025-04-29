@@ -728,7 +728,8 @@ mod_prepare_HPC <- function(
 
   if (use_phylo_tree) {
     # Taxonomy as a proxy for phylogeny
-    plant.tree <- readr::read_tsv(TaxaInfoFile, show_col_types = FALSE) %>%
+    plant.tree <- readr::read_tsv(
+      file = TaxaInfoFile, show_col_types = FALSE, progress = FALSE) %>%
       dplyr::mutate(
         IAS_ID = stringr::str_pad(IAS_ID, pad = "0", width = 4),
         IAS_ID = paste0("Sp_", IAS_ID),

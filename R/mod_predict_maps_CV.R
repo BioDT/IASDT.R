@@ -273,8 +273,8 @@ predict_maps_CV <- function(
   } else {
 
     IASDT.R::info_chunk(
-      "Predict habitat suitability at testing cross-validation folds")
-
+      "Predict habitat suitability at testing cross-validation folds",
+      line_char_rep = 75)
     .OptionStartTime <- lubridate::now(tzone = "CET")
 
     Prediction_sf <- IASDT.R::predict_hmsc(
@@ -316,10 +316,6 @@ predict_maps_CV <- function(
 
     # loading prediction data
     Prediction_sf <- IASDT.R::load_as(Prediction_sf$Pred_Path)
-
-    # elapsed time
-    IASDT.R::cat_diff(
-      init_time = .OptionStartTime, prefix = "Prediction took ", level = 1)
 
   }
 

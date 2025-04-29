@@ -2,6 +2,7 @@
 .Rhistory
 .RData
 .Ruserdata
+*.tar.gz
 docs
 Ignore
 S_*.txt
@@ -15,3 +16,4 @@ IASDT.R.code-workspace
 .quarto
 inst/load_qs.py
 inst/VarPar2.py
+IASDT.R.Rcheck

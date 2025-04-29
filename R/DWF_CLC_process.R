@@ -115,7 +115,8 @@ CLC_process <- function(
   # # ||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::cat_time("Loading cross-walk", level = 1)
-  CLC_crossWalk <- readr::read_delim(Path_CLC_CW, show_col_types = FALSE) %>%
+  CLC_crossWalk <- readr::read_delim(
+    file = Path_CLC_CW, show_col_types = FALSE, progress = FALSE) %>%
     dplyr::select(-SynHab_desc)
 
   # # ||||||||||||||||||||||||||||||||||||||||||||

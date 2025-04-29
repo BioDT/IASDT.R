@@ -39,6 +39,8 @@ cat_sep <- function(
     line_char = "-", line_char_rep = 50L, cat_bold = FALSE, cat_red = FALSE,
     ...) {
 
+  # ****************************************************************
+
   # Check input arguments
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(
@@ -52,6 +54,8 @@ cat_sep <- function(
   IASDT.R::check_args(
     args_all = AllArgs, args_to_check = "line_char", args_type = "character")
 
+  # ****************************************************************
+
   if (cat_bold) {
     line_char <- crayon::bold(line_char)
   }
@@ -62,7 +66,6 @@ cat_sep <- function(
   if (sep_lines_before > 0) {
     cat(strrep("\n", sep_lines_before), ...)
   }
-
 
   paste(rep(line_char, line_char_rep), collapse = "") %>%
     rep(n_separators) %>%

@@ -58,14 +58,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // exp_neg_div
-arma::mat exp_neg_div(const arma::mat& D11, double x);
-RcppExport SEXP _IASDT_R_exp_neg_div(SEXP D11SEXP, SEXP xSEXP) {
+arma::mat exp_neg_div(const arma::mat& A, double x);
+RcppExport SEXP _IASDT_R_exp_neg_div(SEXP ASEXP, SEXP xSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::mat& >::type D11(D11SEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type A(ASEXP);
     Rcpp::traits::input_parameter< double >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(exp_neg_div(D11, x));
+    rcpp_result_gen = Rcpp::wrap(exp_neg_div(A, x));
     return rcpp_result_gen;
 END_RCPP
 }

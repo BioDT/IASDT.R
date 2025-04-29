@@ -4,82 +4,118 @@ using namespace Rcpp;
 
 // [[Rcpp::depends(RcppArmadillo)]]
 
-//' Invert a matrix
-//'
-//' Computes the inverse of a square matrix using Armadillo's `inv` function.
-//'
-//' @param x A square matrix to be inverted.
-//' @return The inverted matrix of the same dimensions as `x`.
-//' //' @export
+//' @title helper C++ functions for fast matrix computations
+//' 
+//' @description
+//' A collection of efficient C++ functions using RcppArmadillo for common matrix operations, including solving linear systems, computing matrix inverses, approximating normal CDFs, and fast elementwise transformations.
+//' 
+//' @name cpp_functions
+//' @rdname cpp_functions
+//' @param A A numeric matrix (for solving, exponential operations, etc.).
+//' @param B A numeric matrix or vector (right-hand side for solving linear systems).
+//' @param x A numeric matrix, numeric vector, or numeric scalar (depending on the function).
+//' 
+//' @return 
+//' - `solve1()`: A numeric matrix, the inverse of `x`.
+//' - `solve2()`: A numeric matrix, the solution to `A * X = B`.
+//' - `solve2vect()`: A numeric vector, the solution to `A * x = B`.
+//' - `fast_pnorm()`: A numeric vector, CDF values approximated for standard normal distribution.
+//' - `exp_neg_div()`: A numeric matrix, elementwise exponential of `-A/x`.
+//' 
+//' @author Ahmed El-Gabbas
+//' @examples
+//' 
+//' # -----------------------------------------
+//' # Example for solve1
+//' # -----------------------------------------
+//' 
+//' N <- 100
+//' set.seed(1000)
+//' Matrix <- matrix(rnorm(N * N), N, N)
+//' all.equal(solve(Matrix), IASDT.R::solve1(Matrix))
+//' 
+//' # -----------------------------------------
+//' # Example for solve2
+//' # -----------------------------------------
+//' 
+//' N <- 100
+//' set.seed(1000)
+//' A <- matrix(rnorm(N * N), N, N)
+//' set.seed(2000)
+//' B <- matrix(rnorm(N * N), N, N)
+//' identical(solve(A, B), IASDT.R::solve2(A, B))
+//' 
+//' set.seed(2000)
+//' B <- matrix(rnorm(N), N, 1)
+//' identical(solve(A, B), IASDT.R::solve2(A, B))
+//' 
+//' # -----------------------------------------
+//' # Example for solve2vect
+//' # -----------------------------------------
+//' 
+//' N <- 100
+//' set.seed(1000)
+//' A <- matrix(rnorm(N * N), N, N)
+//' set.seed(2000)
+//' B <- rnorm(N)
+//' identical(solve(A, B), as.vector(IASDT.R::solve2vect(A, B)))
+//' 
+//' # -----------------------------------------
+//' # Example for fast_pnorm
+//' # -----------------------------------------
+//' 
+//' set.seed(1000)
+//' A <- rnorm(100)
+//' all.equal(pnorm(A), IASDT.R::fast_pnorm(A))
+//' 
+//' # -----------------------------------------
+//' # Example for exp_neg_div
+//' # -----------------------------------------
+//' 
+//' N <- 1000
+//' set.seed(1000)
+//' A <- matrix(rnorm(N * N), N, N)
+//' set.seed(2000)
+//' x <- rnorm(1)
+//' identical(exp(-A / x), IASDT.R::exp_neg_div(A, x))
+
+//' @rdname cpp_functions
+//' @export
 // [[Rcpp::export]]
-arma::mat solve1(const arma::mat & x) {
+arma::mat solve1(const arma::mat& x) {
     return arma::inv(x);
 }
 
-
-//' Solve a system of linear equations
-//'
-//' Solves a system of linear equations `A * X = B` for `X`, where `A` is a
-//' square matrix and `B` is a matrix of compatible dimensions.
-//'
-//' @param A A square matrix representing the coefficients.
-//' @param B A matrix or vector representing the constants.
-//' @return The solution matrix or vector `X`.
+//' @rdname cpp_functions
 //' @export
 // [[Rcpp::export]]
 arma::mat solve2(const arma::mat& A, const arma::mat& B) {
     return arma::solve(A, B);
 }
 
-
-
-//' Solve a system of linear equations for a vector
-//'
-//' Solves a system of linear equations `A * x = B` where `A` is a square
-//' matrix and `B` is a vector.
-//'
-//' @param A A square matrix of coefficients.
-//' @param B A vector of constants.
-//' @return The solution vector `x`.
+//' @rdname cpp_functions
 //' @export
 // [[Rcpp::export]]
 arma::vec solve2vect(const arma::mat& A, const arma::vec& B) {
     arma::vec x = arma::solve(A, B);
-    // Ensure the result is a vector
     return x;
 }
 
-//' Fast Normal CDF
-//'
-//' Computes the cumulative distribution function of the normal distribution
-//' for a numeric vector using a fast approximation.
-//'
-//' @param x A numeric vector for which the CDF should be computed.
-//' @return A numeric vector of CDF values for each element in `x`.
+//' @rdname cpp_functions
 //' @export
 // [[Rcpp::export]]
 NumericVector fast_pnorm(NumericVector x) {
     int n = x.size();
-        NumericVector result(n);
+    NumericVector result(n);
     for (int i = 0; i < n; ++i) {
         result[i] = 0.5 * erfc(-x[i] / sqrt(2.0));
     }
     return result;
 }
 
-
-//' Exponential of Negative Division
-//'
-//' Computes the element-wise exponential of the negative division of each
-//' element in a matrix by a scalar value.
-//'
-//' @param D11 A matrix of values to be divided and exponentiated.
-//' @param x A scalar divisor.
-//' @return A matrix of the same dimensions as `D11`, containing the computed
-//' values.
-//'
+//' @rdname cpp_functions
 //' @export
 // [[Rcpp::export]]
-arma::mat exp_neg_div(const arma::mat& D11, double x) {
-    return arma::exp(-D11 / x);
+arma::mat exp_neg_div(const arma::mat& A, double x) {
+    return arma::exp(-A / x);
 }

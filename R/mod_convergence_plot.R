@@ -12,6 +12,7 @@
 #' @param path_coda Character. Path to a saved coda object containing MCMC
 #'   samples.
 #' @param path_model Character. Path to a saved Hmsc model object.
+#' @param model_dir Character. A path to the model directory.
 #' @param env_file Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
 #' @param title Character. title for **rho** and **alpha** convergence plots.
@@ -43,8 +44,12 @@
 #' @param margin_type Character. The type of marginal plot to add to the main
 #'   plot. Valid options are "histogram" (default) or "density".
 #'
-#' @details `convergence_alpha()` and `convergence_rho()` are internal functions
-#'   and should not be called directly.
+#' @details `convergence_alpha()`, `convergence_rho()`, and
+#'   `convergence_Beta_ranges` are internal functions and should not be called
+#'   directly. The `convergence_Beta_ranges` plots the convergence range of the
+#'   each species beta parameters. It can be used to check if any of the chains
+#'   show convergence issues; i.e., showing exceptionally high or low beta
+#'   values.
 #' @rdname convergence_plots
 #' @name convergence_plots
 #' @order 1
@@ -128,7 +133,8 @@ convergence_plot <- function(
       "SpSummary file does not exist", SpSummary = SpSummary)
   }
 
-  SpSummary <- readr::read_csv(SpSummary, show_col_types = FALSE) %>%
+  SpSummary <- readr::read_csv(
+    file = SpSummary, show_col_types = FALSE, progress = FALSE) %>%
     dplyr::select(Species = Species_name, Species_File)
 
   # # ..................................................................... ###
@@ -177,6 +183,7 @@ convergence_plot <- function(
       "black", "grey60",
       RColorBrewer::brewer.pal(n = NChains - 2, name = "Set1"))
   }
+
   if (length(chain_colors) != NChains) {
     warning(
       "The length of provided colours != number of chains", call. = FALSE)
@@ -231,7 +238,7 @@ convergence_plot <- function(
 
   FileConv_Alpha <- IASDT.R::path(Path_Convergence, "Convergence_Alpha.RData")
 
-  if (file.exists(FileConv_Alpha)) {
+  if (IASDT.R::check_data(FileConv_Alpha, warning = FALSE)) {
     IASDT.R::cat_time("Loading plotting data", level = 1)
     PlotObj_Alpha <- IASDT.R::load_as(FileConv_Alpha)
   } else {
@@ -270,7 +277,7 @@ convergence_plot <- function(
 
   FileConv_Omega <- IASDT.R::path(Path_Convergence, "Convergence_Omega.qs2")
 
-  if (file.exists(FileConv_Omega)) {
+  if (IASDT.R::check_data(FileConv_Omega, warning = FALSE)) {
     IASDT.R::cat_time("Loading plotting data", level = 1)
     PlotObj_Omega <- IASDT.R::load_as(FileConv_Omega)
   } else {
@@ -328,8 +335,8 @@ convergence_plot <- function(
           paste0(
             "<b><i>Mean effective sample size:</i></b> ", ., " / ", SampleSize)
         CurrCI <- dplyr::select(CombData, c("CI_25", "CI_975")) %>%
-          round(2) %>%
-          unlist()
+          unlist() %>%
+          round(2)
         Label_CI <- CurrCI %>%
           paste(collapse = " to ") %>%
           paste0("<b><i>95% credible interval:</i></b> ", .)
@@ -422,13 +429,13 @@ convergence_plot <- function(
             ggplot2::labs(
               title = paste0(
                 "Convergence of the omega parameter --- a sample of ",
-                n_omega, " species pair"),
+                n_omega, " species pairs"),
               subtitle = paste0(
                 "   File ", File, " | Page ",
                 (Page - ((File - 1) * pages_per_file)))) +
             ggplot2::theme_minimal() +
             ggplot2::theme(
-              plot.title = ggplot2::element_text(
+              plot.title = ggtext::element_markdown(
                 face = "bold", size = 20, hjust = 0.5),
               plot.subtitle = ggplot2::element_text(
                 size = 12, colour = "grey",
@@ -467,7 +474,7 @@ convergence_plot <- function(
 
   FileConv_Beta <- IASDT.R::path(Path_Convergence, "Convergence_Beta.RData")
 
-  if (file.exists(FileConv_Beta)) {
+  if (IASDT.R::check_data(FileConv_Beta, warning = FALSE)) {
 
     IASDT.R::cat_time("Loading plotting data", level = 1)
     PlotObj_Beta <- IASDT.R::load_as(FileConv_Beta)
@@ -485,10 +492,10 @@ convergence_plot <- function(
 
     LinearTerms <- tibble::tribble(
       ~Variable, ~VarDesc,
-      "RiversLog", "% Habitat coverage",
+      "RiversLog", "River length",
       "RoadRailLog", "Road + Rail intensity",
       "EffortsLog", "Sampling efforts",
-      "HabLog", "River length") %>%
+      "HabLog", "% Habitat coverage") %>%
       dplyr::mutate(
         VarDesc = stringr::str_glue(
           "{HTML1}{stringr::str_to_sentence(VarDesc)}{HTML2}"),
@@ -579,6 +586,7 @@ convergence_plot <- function(
     IASDT.R::cat_time("Preparing data for plotting", level = 2)
     Cols2remove <- c(
       "CI_025", "CI_975", "Var_Min", "Var_Max", "Class", "Order", "Family")
+
     Beta_DF <- Beta_DF %>%
       dplyr::left_join(VarRanges, by = "Variable") %>%
       dplyr::left_join(SpeciesTaxonomy, by = "IAS_ID") %>%
@@ -633,41 +641,42 @@ convergence_plot <- function(
     IASDT.R::cat_time(
       "Split data for each of variables and species combination", level = 2)
 
-    Beta_DF <- Beta_DF %>%
-      dplyr::mutate(
-        Save = furrr::future_pmap(
-          .l = list(Var_Sp_File, Var_Sp2, DT),
-          .f = function(Var_Sp_File, Var_Sp2, DT) {
+    Beta_DF2 <- future.apply::future_lapply(
+      X = seq_len(nrow(Beta_DF)),
+      FUN = function(x) {
 
-            # try saving for a max of 5 attempts using repeat loop
-            attempt <- 1
-            repeat {
+        Var_Sp_File <- Beta_DF$Var_Sp_File[[x]]
 
-              if (attempt > 5) {
-                IASDT.R::stop_ctx(
-                  "Maximum attempts (5) reached without success: ",
-                  Var_Sp_File = Var_Sp_File)
-              }
+        # try saving for a max of 5 attempts using repeat loop
+        attempt <- 1
+        repeat {
 
-              try({
-                IASDT.R::save_as(
-                  object = DT, object_name = Var_Sp2, out_path = Var_Sp_File)
-                Sys.sleep(2)
-              },
-              silent = TRUE)
+          if (attempt > 5) {
+            IASDT.R::stop_ctx(
+              "Maximum attempts (5) reached without success: ",
+              Var_Sp_File = Var_Sp_File)
+          }
 
-              if (IASDT.R::check_data(Var_Sp_File, warning = FALSE)) {
-                break
-              }
-
-              # Increment attempt counter
-              attempt <- attempt + 1
-            }
+          try({
+            IASDT.R::save_as(
+              object = Beta_DF$DT[[x]], object_name = Beta_DF$Var_Sp2[[x]],
+              out_path = Var_Sp_File)
+            Sys.sleep(2)
           },
-          .options = furrr::furrr_options(
-            seed = TRUE, packages = c("IASDT.R", "tibble"))),
-        Save = NULL,
-        DT = NULL)
+          silent = TRUE)
+
+          if (IASDT.R::check_data(Var_Sp_File, warning = FALSE)) {
+            break
+          }
+
+          # Increment attempt counter
+          attempt <- attempt + 1
+        }
+      },
+      future.seed = TRUE, future.globals = "Beta_DF",
+      future.packages = c("IASDT.R", "tibble", "coda", "fs", "stringr"))
+
+    rm(Beta_DF2, envir = environment())
 
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
@@ -883,6 +892,11 @@ convergence_plot <- function(
 
   # # ..................................................................... ###
 
+  # plot minimum and max value of each beta parameter
+  IASDT.R::convergence_Beta_ranges(model_dir = dirname(path_model))
+
+  # # ..................................................................... ###
+
   # Beta - 2. by variable ------
 
   IASDT.R::cat_time("Trace plots, grouped by variables", level = 1)
@@ -935,6 +949,12 @@ convergence_plot <- function(
         ggplot2::theme(
           plot.title = ggtext::element_markdown(
             size = 24, hjust = 0.5, margin = ggplot2::margin(t = 15, b = 15)))
+
+
+
+      if (!stringr::str_detect(VarDesc, HTML4)) {
+        VarDesc <- paste0(VarDesc, " --- ")
+      }
 
       PlotTitleFixed <- ggplot2::ggplot() +
         ggplot2::labs(
@@ -994,7 +1014,8 @@ convergence_plot <- function(
       return(NULL)
     },
     future.seed = TRUE,
-    future.globals = c("BetaTracePlots_ByVar", "n_RC", "Path_Convergence"),
+    future.globals = c(
+      "BetaTracePlots_ByVar", "n_RC", "Path_Convergence", "HTML4"),
     future.packages = c(
       "tidyr", "dplyr", "ggplot2", "purrr", "ggtext",
       "tibble", "cowplot", "grDevices", "IASDT.R"))
@@ -1130,4 +1151,106 @@ convergence_plot <- function(
   # # ..................................................................... ###
 
   return(invisible(NULL))
+}
+
+# # ========================================================================== #
+# # ========================================================================== #
+
+## |------------------------------------------------------------------------| #
+# plot_Beta_ranges
+## |------------------------------------------------------------------------| #
+
+#' @rdname convergence_plots
+#' @name convergence_plots
+#' @order 4
+#' @author Ahmed El-Gabbas
+#' @export
+
+convergence_Beta_ranges <- function(model_dir) {
+
+  # # ..................................................................... ###
+
+  # Avoid "no visible binding for global variable" message
+  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
+  Variable <- chain <- Var_Sp_File <- Range <- NULL
+
+  # # ..................................................................... ###
+
+  # Check input arguments ------
+
+  if (!is.character(model_dir) || length(model_dir) != 1 ||
+      !nzchar(model_dir)) {
+    IASDT.R::stop_ctx(
+      "The specified model_dir is not a character of length 1 and nchar > 1.",
+      model_dir = model_dir)
+  }
+
+  if (!dir.exists(model_dir)) {
+    IASDT.R::stop_ctx(
+      "The specified model_dir does not exist.", model_dir = model_dir)
+  }
+
+  # Construct path to beta parameter data
+  beta_data_path <- IASDT.R::path(
+    model_dir, "Model_Convergence", "Convergence_Beta.RData")
+  # Check if the beta data file exists
+  if (!file.exists(beta_data_path)) {
+    IASDT.R::stop_ctx(
+      "The beta parameter data file does not exist.",
+      beta_data_path = beta_data_path)
+  }
+
+  # # ..................................................................... ###
+
+  # Load beta parameter information
+  Beta_ranges <- IASDT.R::load_as(beta_data_path) %>%
+    dplyr::mutate(
+      Variable = forcats::fct(Variable),
+      # Calculate the min and max of the beta values for each species
+      Range = purrr::map(
+        .x = Var_Sp_File,
+        .f = ~ {
+          Post <- IASDT.R::load_as(.x)$Post
+          purrr::map(
+            1:5,
+            ~ {
+              tibble::tibble(
+                chain = .x,
+                min = min(Post[[.x]]),
+                max = max(Post[[.x]]))
+            }) %>%
+            dplyr::bind_rows()
+        },
+        .progress = TRUE)) %>%
+    tidyr::unnest(Range) %>%
+    dplyr::select(Variable, chain, min, max)
+
+  plot_subtitle <- stringr::str_glue(
+    "Values of beta (<span style='color:red'>min</span> and <span \\
+    style='color:blue'>max</span> per species) across chains")
+
+  # Construct path for saving the plot
+  plot_path <- IASDT.R::path(
+    model_dir, "Model_Postprocessing", "Beta_min_max_Habitat.jpeg")
+  fs::dir_create(dirname(plot_path))
+
+  Beta_plot <- Beta_ranges %>%
+    ggplot2::ggplot(ggplot2::aes(x = (chain - 0.125), y = min)) +
+    ggplot2::geom_point(pch = 20, colour = "red", size = 1, alpha = 0.5) +
+    ggplot2::geom_point(
+      ggplot2::aes(x = (chain + 0.125), y = max), show.legend = FALSE,
+      pch = 20, colour = "blue", size = 1, alpha = 0.5) +
+    ggplot2::facet_wrap(~Variable, scales = "free_y", ncol = 5, nrow = 4) +
+    ggplot2::labs(
+      title = "Convergence of beta parameters", subtitle = plot_subtitle,
+      x = "Chain", y = "min/max Beta value") +
+    ggplot2::theme(
+      plot.title = ggplot2::element_text(size = 20, face = "bold"),
+      plot.subtitle = ggtext::element_markdown())
+
+  ragg::agg_jpeg(
+    filename = plot_path, width = 30, height = 20, res = 600,
+    quality = 100, units = "cm")
+  print(Beta_plot)
+  grDevices::dev.off()
 }

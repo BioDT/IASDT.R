@@ -44,9 +44,6 @@
 <url><loc>https://biodt.github.io/IASDT.R/reference/Road_Intensity.html</loc></url>
 <url><loc>https://biodt.github.io/IASDT.R/reference/Scale_0_1.html</loc></url>
 <url><loc>https://biodt.github.io/IASDT.R/reference/Set_parallel.html</loc></url>
-<url><loc>https://biodt.github.io/IASDT.R/reference/Solve1.html</loc></url>
-<url><loc>https://biodt.github.io/IASDT.R/reference/Solve2.html</loc></url>
-<url><loc>https://biodt.github.io/IASDT.R/reference/Solve2vect.html</loc></url>
 <url><loc>https://biodt.github.io/IASDT.R/reference/Variance_partitioning.html</loc></url>
 <url><loc>https://biodt.github.io/IASDT.R/reference/add_cross_to_grid.html</loc></url>
 <url><loc>https://biodt.github.io/IASDT.R/reference/add_diagonals_to_grid.html</loc></url>
@@ -72,10 +69,9 @@
 <url><loc>https://biodt.github.io/IASDT.R/reference/check_zip.html</loc></url>
 <url><loc>https://biodt.github.io/IASDT.R/reference/clear_console.html</loc></url>
 <url><loc>https://biodt.github.io/IASDT.R/reference/clip_raster_by_polygon.html</loc></url>
+<url><loc>https://biodt.github.io/IASDT.R/reference/cpp_functions.html</loc></url>
 <url><loc>https://biodt.github.io/IASDT.R/reference/detect_alias.html</loc></url>
 <url><loc>https://biodt.github.io/IASDT.R/reference/eLTER_Process.html</loc></url>
-<url><loc>https://biodt.github.io/IASDT.R/reference/exp_neg_div.html</loc></url>
-<url><loc>https://biodt.github.io/IASDT.R/reference/fast_pnorm.html</loc></url>
 <url><loc>https://biodt.github.io/IASDT.R/reference/file_extension.html</loc></url>
 <url><loc>https://biodt.github.io/IASDT.R/reference/file_size.html</loc></url>
 <url><loc>https://biodt.github.io/IASDT.R/reference/file_type.html</loc></url>
@@ -94,7 +90,6 @@
 <url><loc>https://biodt.github.io/IASDT.R/reference/load_multiple.html</loc></url>
 <url><loc>https://biodt.github.io/IASDT.R/reference/load_packages.html</loc></url>
 <url><loc>https://biodt.github.io/IASDT.R/reference/loaded_packages.html</loc></url>
-<url><loc>https://biodt.github.io/IASDT.R/reference/mod_CV_evaluate.html</loc></url>
 <url><loc>https://biodt.github.io/IASDT.R/reference/mod_CV_prepare.html</loc></url>
 <url><loc>https://biodt.github.io/IASDT.R/reference/mod_fit_windows.html</loc></url>
 <url><loc>https://biodt.github.io/IASDT.R/reference/mod_get_posteriors.html</loc></url>

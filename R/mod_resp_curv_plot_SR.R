@@ -30,25 +30,25 @@ resp_curv_plot_SR <- function(model_dir, verbose = TRUE, n_cores = 8L) {
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_time("Check input arguments")
+  ecokit::cat_time("Check input arguments")
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(
     AllArgs,
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character", args_to_check = "model_dir")
   rm(AllArgs, envir = environment())
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_time("Check the existence of response curve directory")
+  ecokit::cat_time("Check the existence of response curve directory")
 
   Path_RC_DT <- fs::path(model_dir, "Model_Postprocessing", "RespCurv_DT")
   Path_RC_SR <- fs::path(model_dir, "Model_Postprocessing", "RespCurv_SR")
 
   if (!dir.exists(Path_RC_DT)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Response curve data subfolder is missing.", Path_RC_DT = Path_RC_DT)
   }
 
@@ -56,15 +56,15 @@ resp_curv_plot_SR <- function(model_dir, verbose = TRUE, n_cores = 8L) {
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_time("Create species richness response curves")
+  ecokit::cat_time("Create species richness response curves")
 
   SR_DT_All <- fs::path(Path_RC_DT, "ResCurvDT.RData") %>%
-    IASDT.R::load_as() %>%
+    ecokit::load_as() %>%
     dplyr::select(-RC_Path_Orig, -RC_Path_Prob)
 
   n_cores <- max(min(n_cores, nrow(SR_DT_All)), 1)
 
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     paste0("Prepare working in parallel, using ", n_cores, " cores"),
     level = 1L)
 
@@ -77,14 +77,14 @@ resp_curv_plot_SR <- function(model_dir, verbose = TRUE, n_cores = 8L) {
   future::plan("future::cluster", workers = c1, gc = TRUE)
   withr::defer(future::plan("future::sequential", gc = TRUE))
 
-  IASDT.R::cat_time("Prepare data", level = 1L)
+  ecokit::cat_time("Prepare data", level = 1L)
 
   SR_DT_All <- SR_DT_All %>%
     dplyr::mutate(
       DT = furrr::future_map(
         .x = RC_Path_SR,
         .f = ~ {
-          DT <- IASDT.R::load_as(.x) %>%
+          DT <- ecokit::load_as(.x) %>%
             magrittr::inset("RC_Data_SR", NULL)
 
           Quant <- DT$RC_Data_SR_Quant %>%
@@ -123,7 +123,7 @@ resp_curv_plot_SR <- function(model_dir, verbose = TRUE, n_cores = 8L) {
 
   # Plot species richness response curves
 
-  IASDT.R::cat_time("Plot species richness response curves", level = 1L)
+  ecokit::cat_time("Plot species richness response curves", level = 1L)
 
 
   VarLabel <- tibble::tribble(
@@ -164,7 +164,7 @@ resp_curv_plot_SR <- function(model_dir, verbose = TRUE, n_cores = 8L) {
         .l = list(Variable, Quant, Observed, Trend, Coords),
         .f = function(Variable, Quant, Observed, Trend, Coords) {
 
-          IASDT.R::cat_time(
+          ecokit::cat_time(
             paste0(Variable, " - coords = ", Coords), level = 2L)
 
           # Maximum value on the y-axis
@@ -287,7 +287,7 @@ resp_curv_plot_SR <- function(model_dir, verbose = TRUE, n_cores = 8L) {
           if (Variable %in% c(
             "EffortsLog", "RoadRailLog", "HabLog", "RiversLog")) {
 
-            IASDT.R::cat_time(
+            ecokit::cat_time(
               paste0(Variable, " - coords = ", Coords, " - original scale"),
               level = 2L)
 
@@ -364,7 +364,7 @@ resp_curv_plot_SR <- function(model_dir, verbose = TRUE, n_cores = 8L) {
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = .start_time,
     prefix = "Plotting response curves for species richness took ")
 

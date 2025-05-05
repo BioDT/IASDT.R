@@ -38,7 +38,7 @@ CLC_plot <- function(
 
   if (is.null(CLC_name) || is.null(EU_map) || is.null(crosswalk) ||
       is.null(path_JPEG) || is.null(path_JPEG_free)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       paste0(
         "`CLC_name`, `EU_map`, `crosswalk`, `path_JPEG`, and ",
         "`path_JPEG_free` can not be empty"),
@@ -69,7 +69,7 @@ CLC_plot <- function(
   FilePrefix <- stringr::str_remove_all(CLC_name, "PercCov_|_Crop") %>%
     stringr::str_replace_all("CLC_L", "CLC")
 
-  IASDT.R::cat_time(Prefix, level = 1L)
+  ecokit::cat_time(Prefix, level = 1L)
 
   # determine which layers will be plotted in each figure (4 columns * 2 rows)
   split_vector <- seq_len(terra::nlyr(CLC_MapR)) %>%
@@ -100,7 +100,7 @@ CLC_plot <- function(
         .f = function(YY) {
           CurrMap <- CLC_MapR[[YY]]
 
-          IASDT.R::cat_time(paste0(Labels$Label[[YY]]), level = 2L)
+          ecokit::cat_time(paste0(Labels$Label[[YY]]), level = 2L)
           MapTitle <- Labels$Label[[YY]] %>%
             # split long title text into multiple lines when necessary
             stringi::stri_wrap(55) %>%
@@ -260,7 +260,7 @@ CLC_plot <- function(
     }
   )
 
-  IASDT.R::cat_time(paste0(Prefix, " - Multiple panels per file "), level = 1L)
+  ecokit::cat_time(paste0(Prefix, " - Multiple panels per file "), level = 1L)
 
   # nolint start
   CommonLegend <- cowplot::get_legend(

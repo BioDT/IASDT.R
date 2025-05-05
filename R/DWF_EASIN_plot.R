@@ -15,13 +15,13 @@ EASIN_plot <- function(env_file = ".env") {
   .PlotStartTime <- lubridate::now(tzone = "CET")
 
   # Checking arguments ----
-  IASDT.R::cat_time("Checking arguments", level = 1L)
+  ecokit::cat_time("Checking arguments", level = 1L)
 
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character", args_to_check = "env_file")
 
   # # ..................................................................... ###
@@ -34,7 +34,7 @@ EASIN_plot <- function(env_file = ".env") {
   # # Environment variables ----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Environment variables", level = 1L)
+  ecokit::cat_time("Environment variables", level = 1L)
 
   EnvVars2Read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
@@ -43,7 +43,7 @@ EASIN_plot <- function(env_file = ".env") {
     "Path_EASIN_Interim", "DP_R_EASIN_interim", TRUE, FALSE,
     "Path_EASIN_Summary", "DP_R_EASIN_summary", TRUE, FALSE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
@@ -51,16 +51,16 @@ EASIN_plot <- function(env_file = ".env") {
   # # Input maps ----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Loading input maps", level = 1L)
+  ecokit::cat_time("Loading input maps", level = 1L)
 
   ## Country boundaries ----
-  IASDT.R::cat_time("Country boundaries", level = 2L)
-  EuroBound <- IASDT.R::load_as(EU_Bound) %>%
+  ecokit::cat_time("Country boundaries", level = 2L)
+  EuroBound <- ecokit::load_as(EU_Bound) %>%
     magrittr::extract2("Bound_sf_Eur_s") %>%
     magrittr::extract2("L_03")
 
   ## EASIN summary maps -----
-  IASDT.R::cat_time("EASIN summary maps", level = 2L)
+  ecokit::cat_time("EASIN summary maps", level = 2L)
   Path_NSp <- fs::path(Path_EASIN_Summary, "EASIN_NSp.RData")
   Path_NSp_PerPartner <- fs::path(
     Path_EASIN_Summary, "EASIN_NSp_PerPartner.RData")
@@ -74,7 +74,7 @@ EASIN_plot <- function(env_file = ".env") {
   SummaryMapsMissing <- !file.exists(PathSummaryMaps)
 
   if (any(SummaryMapsMissing)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Missing summary input files",
       missing_files = PathSummaryMaps[which(SummaryMapsMissing)])
   }
@@ -85,14 +85,14 @@ EASIN_plot <- function(env_file = ".env") {
 
   ## NObs + NSp ----
 
-  IASDT.R::cat_time("Number of species & observations", level = 1L)
+  ecokit::cat_time("Number of species & observations", level = 1L)
 
   Plot_EASIN_All <- function(
     MapPath, Title, EuroBound, addTag = FALSE, Legend = FALSE) {
     LastUpdate <- paste0(
       "<b>Last update:</b></br><i>", format(Sys.Date(), "%d %B %Y"), "</i>")
 
-    Map <- IASDT.R::load_as(MapPath) %>%
+    Map <- ecokit::load_as(MapPath) %>%
       terra::unwrap() %>%
       log10()
 
@@ -154,19 +154,19 @@ EASIN_plot <- function(env_file = ".env") {
   }
 
   ### Number of observations ----
-  IASDT.R::cat_time("Number of observations", level = 2L)
+  ecokit::cat_time("Number of observations", level = 2L)
   Plot_NObs <- Plot_EASIN_All(
     MapPath = Path_NObs, Title = "Number of observations",
     EuroBound = EuroBound, addTag = FALSE, Legend = FALSE)
 
   ### Number of species ----
-  IASDT.R::cat_time("Number of species", level = 2L)
+  ecokit::cat_time("Number of species", level = 2L)
   Plot_NSp <- Plot_EASIN_All(
     MapPath = Path_NSp, Title = "Number of species",
     EuroBound = EuroBound, addTag = TRUE, Legend = TRUE)
 
   ### Combine maps ----
-  IASDT.R::cat_time("Merge maps side by side and save as JPEG", level = 2L)
+  ecokit::cat_time("Merge maps side by side and save as JPEG", level = 2L)
 
   Plot <- ggpubr::ggarrange(
     Plot_NObs,
@@ -194,7 +194,7 @@ EASIN_plot <- function(env_file = ".env") {
 
   ## Number of species/observations per partner ----
 
-  IASDT.R::cat_time("Number of species & observations per partner", level = 1L)
+  ecokit::cat_time("Number of species & observations per partner", level = 1L)
 
   Plot_EASIN_Partner <- function(MapPath, File_prefix, Title) {
     LastUpdate <- paste0(
@@ -228,7 +228,7 @@ EASIN_plot <- function(env_file = ".env") {
         plot.tag = ggtext::element_markdown(colour = "grey", size = 9)
       )
 
-    Map <- IASDT.R::load_as(MapPath) %>%
+    Map <- ecokit::load_as(MapPath) %>%
       terra::unwrap() %>%
       log10()
     NCells <- terra::ncell(Map)
@@ -279,7 +279,7 @@ EASIN_plot <- function(env_file = ".env") {
 
 
   ### Number of observations per partner ----
-  IASDT.R::cat_time("Number of observations per partner", level = 2L)
+  ecokit::cat_time("Number of observations per partner", level = 2L)
   Plot_EASIN_Partner(
     MapPath = Path_NObs_PerPartner,
     File_prefix = "EASIN_NObs_per_partner",
@@ -287,7 +287,7 @@ EASIN_plot <- function(env_file = ".env") {
 
 
   ### Number of species per partner ----
-  IASDT.R::cat_time("Number of species per partner", level = 2L)
+  ecokit::cat_time("Number of species per partner", level = 2L)
   Plot_EASIN_Partner(
     MapPath = Path_NSp_PerPartner,
     File_prefix = "EASIN_NSp_per_partner",
@@ -295,7 +295,7 @@ EASIN_plot <- function(env_file = ".env") {
 
   ## |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = .PlotStartTime,
     prefix = "Plotting EASIN data was finished in ", level = 1L)
 

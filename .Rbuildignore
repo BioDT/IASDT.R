@@ -13,5 +13,5 @@
 ^LICENSE\.md$
 IASDT.R.code-workspace
 ^CITATION.cff
-
 ^\.github$
+^src/.*[.](o|so|dll|dSYM|exp)$

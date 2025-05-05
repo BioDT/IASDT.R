@@ -20,20 +20,20 @@ CHELSA_prepare <- function(
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character",
     args_to_check = c("env_file", "other_variables"))
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "logical",
     args_to_check = c("download", "overwrite"))
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "numeric",
     args_to_check = c("sleep", "download_attempts", "n_cores"))
 
   rm(AllArgs, envir = environment())
 
   if (n_cores < 1) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`n_cores` must be a positive integer.", n_cores = n_cores)
   }
 
@@ -56,7 +56,7 @@ CHELSA_prepare <- function(
     "Path_DwnLinks", "DP_R_CHELSA_links", TRUE, FALSE,
     "BaseURL", "DP_R_CHELSA_url", FALSE, FALSE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
@@ -74,7 +74,7 @@ CHELSA_prepare <- function(
     # `other_variables`.
     paste(collapse = "|")
 
-  IASDT.R::cat_time("Prepare CHELSA metadata", level = 1L)
+  ecokit::cat_time("Prepare CHELSA metadata", level = 1L)
 
   if (!endsWith(BaseURL, "/")) {
     BaseURL <- paste0(BaseURL, "/")
@@ -198,7 +198,7 @@ CHELSA_prepare <- function(
 
   if (download) {
 
-    IASDT.R::cat_time("Downloading CHELSA files", level = 1L)
+    ecokit::cat_time("Downloading CHELSA files", level = 1L)
 
     if (n_cores == 1) {
       future::plan("future::sequential", gc = TRUE)
@@ -220,7 +220,7 @@ CHELSA_prepare <- function(
 
     } else {
 
-      IASDT.R::cat_time("Exclude available and valid Tiff files", level = 1L)
+      ecokit::cat_time("Exclude available and valid Tiff files", level = 1L)
 
       Data2Down <- CHELSA_Metadata %>%
         dplyr::mutate(
@@ -229,7 +229,7 @@ CHELSA_prepare <- function(
             .f = ~ {
 
               if (file.exists(.x)) {
-                if (isFALSE(IASDT.R::check_tiff(.x, warning = FALSE))) {
+                if (isFALSE(ecokit::check_tiff(.x, warning = FALSE))) {
                   fs::file_delete(.x)
                   Out <- TRUE
                 } else {
@@ -253,7 +253,7 @@ CHELSA_prepare <- function(
     # # |||||||||||||||||||||||||||||||| ###
 
     # download missing files
-    IASDT.R::cat_time("Download missing CHELSA files", level = 1L)
+    ecokit::cat_time("Download missing CHELSA files", level = 1L)
 
     if (nrow(Data2Down) > 0) {
       furrr::future_walk(
@@ -271,7 +271,7 @@ CHELSA_prepare <- function(
               system()
 
             if (file.exists(PathOut)) {
-              if (IASDT.R::check_tiff(PathOut, warning = FALSE)) {
+              if (ecokit::check_tiff(PathOut, warning = FALSE)) {
                 break
               } else {
                 fs::file_delete(PathOut)
@@ -300,7 +300,7 @@ CHELSA_prepare <- function(
 
   # Save to disk -----
 
-  IASDT.R::cat_time("Save metadata to disk", level = 1L)
+  ecokit::cat_time("Save metadata to disk", level = 1L)
 
   save(
     CHELSA_Metadata,

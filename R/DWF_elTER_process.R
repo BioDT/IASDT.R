@@ -32,9 +32,9 @@ eLTER_process <- function(env_file = ".env", start_year = 1981) {
   AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character", args_to_check = "env_file")
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "numeric", args_to_check = "start_year")
 
   # # ..................................................................... ###
@@ -53,14 +53,14 @@ eLTER_process <- function(env_file = ".env", start_year = 1981) {
     "Path_PA", "DP_R_PA", FALSE, FALSE,
     "eLTER_DT", "DP_R_eLTER_raw", FALSE, TRUE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
   # # ..................................................................... ###
 
   fs::dir_create(Path_PA)
-  TaxaList <- IASDT.R::load_as(TaxaList)
+  TaxaList <- ecokit::load_as(TaxaList)
 
   eLTER_IAS <- readRDS(eLTER_DT) %>%
     dplyr::select(

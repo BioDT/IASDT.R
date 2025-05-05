@@ -27,7 +27,7 @@ gelman_preplot <- function(
   x <- coda::as.mcmc.list(x)
   nbin <- min(floor((coda::niter(x) - 50) / coda::thin(x)), max.bins)
   if (nbin < 1) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Insufficient iterations to produce Gelman-Rubin plot", nbin = nbin)
   }
   binw <- floor((coda::niter(x) - 50) / nbin)

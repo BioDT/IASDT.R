@@ -22,7 +22,7 @@ mod_get_posteriors <- function(path_posterior = NULL, from_JSON = FALSE) {
 
   # Check if path_posterior is empty
   if (is.null(path_posterior)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`path_posterior` cannot be empty", path_posterior = path_posterior)
   }
 
@@ -33,10 +33,10 @@ mod_get_posteriors <- function(path_posterior = NULL, from_JSON = FALSE) {
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_to_check = "path_posterior",
     args_type = "character")
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_to_check = "from_JSON", args_type = "logical")
 
   if (from_JSON) {

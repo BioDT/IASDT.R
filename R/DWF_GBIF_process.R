@@ -85,19 +85,19 @@ GBIF_process <- function(
 
   # Checking arguments ----
 
-  IASDT.R::cat_time("Checking arguments")
+  ecokit::cat_time("Checking arguments")
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character",
     args_to_check = c("env_file", "Renviron"))
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "logical",
     args_to_check = c(
       "request", "download", "split_chunks", "overwrite", "delete_chunks"))
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "numeric",
     args_to_check = c("start_year", "boundaries", "chunk_size", "n_cores"))
 
@@ -117,7 +117,7 @@ GBIF_process <- function(
   # # ..................................................................... ###
 
   # Environment variables ----
-  IASDT.R::cat_time("Environment variables")
+  ecokit::cat_time("Environment variables")
 
   EnvVars2Read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
@@ -128,7 +128,7 @@ GBIF_process <- function(
     "CountryCodes", "DP_R_Countrycodes", FALSE, TRUE,
     "TaxaInfo", "DP_R_Taxa_info_rdata", FALSE, TRUE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
   # # ..................................................................... ###
@@ -144,30 +144,30 @@ GBIF_process <- function(
 
   GBIF_Metadata <- fs::path(Path_GBIF, "GBIF_Metadata.RData")
   if (!file.exists(GBIF_Metadata)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "GBIF metadata file does not exist", GBIF_Metadata = GBIF_Metadata)
   }
-  GBIF_Metadata <- IASDT.R::load_as(GBIF_Metadata)
+  GBIF_Metadata <- ecokit::load_as(GBIF_Metadata)
 
-  TaxaList <- IASDT.R::load_as(TaxaInfo)
+  TaxaList <- ecokit::load_as(TaxaInfo)
   Path_SpData <- fs::path(Path_GBIF, "Sp_Data")
   fs::dir_create(Path_SpData)
 
   # Grid_10_Land_Crop_sf
   GridSf <- fs::path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
   if (!file.exists(GridSf)) {
-    IASDT.R::stop_ctx("Reference grid (sf) file not found", GridSf = GridSf)
+    ecokit::stop_ctx("Reference grid (sf) file not found", GridSf = GridSf)
   }
-  GridSf <- IASDT.R::load_as(GridSf)
+  GridSf <- ecokit::load_as(GridSf)
 
   # Grid_10_Land_Crop
   GridR <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(GridR)) {
-    IASDT.R::stop_ctx("Reference grid file not found", GridR = GridR)
+    ecokit::stop_ctx("Reference grid file not found", GridR = GridR)
   }
-  GridR <- terra::unwrap(IASDT.R::load_as(GridR))
+  GridR <- terra::unwrap(ecokit::load_as(GridR))
 
-  EuroBound <- IASDT.R::load_as(EU_Bound) %>%
+  EuroBound <- ecokit::load_as(EU_Bound) %>%
     magrittr::extract2("Bound_sf_Eur_s") %>%
     magrittr::extract2("L_03")
 
@@ -177,14 +177,14 @@ GBIF_process <- function(
 
   # Processing data chunks -----
 
-  IASDT.R::cat_time("Processing data chunks")
+  ecokit::cat_time("Processing data chunks")
   .StartTimeChunks <- lubridate::now(tzone = "CET")
 
   ChunkList <- list.files(
     path = Path_GBIF_Interim, pattern = "Chunk_.+.txt", full.names = TRUE)
   ChunkListRData <- stringr::str_replace_all(ChunkList, ".txt$", ".RData")
 
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     paste0("Prepare working in parallel using ", n_cores, " cores"),
     level = 1L)
 
@@ -209,7 +209,7 @@ GBIF_process <- function(
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     "Processing chunks in parallel, save each as RData files",
     level = 1L)
 
@@ -225,15 +225,14 @@ GBIF_process <- function(
       "IASDT.R", "purrr", "tibble", "terra", "tidyr", "dplyr", "sf"),
     future.globals = c("env_file", "overwrite"))
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = .StartTimeChunks, prefix = "Finished in ", level = 2L)
 
-  IASDT.R::cat_time(
-    "Reading processed chunks into a single dataset", level = 1L)
+  ecokit::cat_time("Reading processed chunks into a single dataset", level = 1L)
 
   if (all(file.exists(ChunkListRData))) {
     GBIF_Data <- future.apply::future_lapply(
-      X = ChunkListRData, FUN = IASDT.R::load_as,
+      X = ChunkListRData, FUN = ecokit::load_as,
       future.scheduling = Inf, future.seed = TRUE) %>%
       dplyr::bind_rows() %>%
       # merge with taxa standardization results
@@ -244,25 +243,25 @@ GBIF_process <- function(
     Msg <- ChunkList[which(!file.exists(ChunkListRData))] %>%
       paste0(" >> ", ., collapse = "\n") %>%
       paste0("The following chunks were not processed\n", .)
-    IASDT.R::stop_ctx(Msg)
+    ecokit::stop_ctx(Msg)
   }
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = .StartTimeChunks,
     prefix = "Processing data chunks was finished in ", level = 2L)
 
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     paste0(
       "A total of ", format(nrow(GBIF_Data), big.mark = ","), " observations"),
     level = 2L)
 
-  IASDT.R::cat_time("Stopping cluster", level = 1L)
+  ecokit::cat_time("Stopping cluster", level = 1L)
   if (n_cores > 1) {
     snow::stopCluster(c1)
     future::plan("future::sequential", gc = TRUE)
   }
 
-  IASDT.R::cat_time("Saving `GBIF_Data` to disk", level = 1L)
+  ecokit::cat_time("Saving `GBIF_Data` to disk", level = 1L)
   save(GBIF_Data, file = fs::path(Path_GBIF, "GBIF_Data.RData"))
 
   rm(TaxaList, envir = environment())
@@ -272,9 +271,9 @@ GBIF_process <- function(
 
   # iNaturalist unique grids ----
 
-  IASDT.R::cat_time("iNaturalist unique grids")
+  ecokit::cat_time("iNaturalist unique grids")
 
-  IASDT.R::cat_time("Prepare input data for summarising", level = 1L)
+  ecokit::cat_time("Prepare input data for summarising", level = 1L)
   iNaturalist_Others <- sf::st_drop_geometry(GBIF_Data) %>%
     dplyr::distinct(species, CellCode, institutionCode) %>%
     dplyr::mutate(
@@ -283,7 +282,7 @@ GBIF_process <- function(
       institutionCode = dplyr::if_else(
         institutionCode, "iNaturalist", "Others"))
 
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     "Number of unique iNaturalist grid cells per species", level = 1L)
   iNaturalist_Unique <- iNaturalist_Others %>%
     dplyr::group_by(species, CellCode) %>%
@@ -295,7 +294,7 @@ GBIF_process <- function(
     dplyr::count(species) %>%
     dplyr::rename(iNaturalist_Unique = n)
 
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     "Number of grid cells for iNaturalist and other data sources",
     level = 1L)
 
@@ -306,7 +305,7 @@ GBIF_process <- function(
     dplyr::left_join(iNaturalist_Unique, by = "species") %>%
     dplyr::select(species, Others, tidyselect::everything())
 
-  IASDT.R::cat_time("Save iNaturalist summary data", level = 1L)
+  ecokit::cat_time("Save iNaturalist summary data", level = 1L)
   save(
     iNaturalist_Count,
     file = fs::path(Path_GBIF, "iNaturalist_Count.RData"))
@@ -320,7 +319,7 @@ GBIF_process <- function(
 
   # Covert GBIF data to presence-only grids ----
 
-  IASDT.R::cat_time("Covert GBIF data to presence-only grids")
+  ecokit::cat_time("Covert GBIF data to presence-only grids")
   GBIF_Grid <- sf::st_drop_geometry(GBIF_Data) %>%
     # only unique combinations between species and grid ID
     dplyr::distinct(
@@ -331,7 +330,7 @@ GBIF_process <- function(
     # ensure that the data is sf object
     sf::st_as_sf()
 
-  IASDT.R::cat_time("Save presence-only grids", level = 1L)
+  ecokit::cat_time("Save presence-only grids", level = 1L)
   save(GBIF_Grid, file = fs::path(Path_GBIF, "GBIF_Grid.RData"))
   invisible(gc())
 
@@ -339,28 +338,28 @@ GBIF_process <- function(
 
   # Number of observations or grid cells per species ----
 
-  IASDT.R::cat_time("# observations or grid cells per species")
+  ecokit::cat_time("# observations or grid cells per species")
 
-  IASDT.R::cat_time("# observations per species", level = 1L)
+  ecokit::cat_time("# observations per species", level = 1L)
   SpNObs <- sf::st_drop_geometry(GBIF_Data) %>%
     dplyr::count(IAS_ID, taxon_name, Species_name) %>%
     dplyr::rename(GBIF_NumOcc = n)
 
-  IASDT.R::cat_time("# grids per species", level = 1L)
+  ecokit::cat_time("# grids per species", level = 1L)
   SpNGrids <- sf::st_drop_geometry(GBIF_Grid) %>%
     dplyr::count(IAS_ID, taxon_name, Species_name) %>%
     dplyr::rename(GBIF_NumGrids = n)
 
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     "Merge number of observations and grids per species", level = 1L)
   GBIF_NObsNGrid <- dplyr::full_join(
     SpNObs, SpNGrids,
     by = c("IAS_ID", "taxon_name", "Species_name"))
 
-  IASDT.R::cat_time("Save as RData", level = 1L)
+  ecokit::cat_time("Save as RData", level = 1L)
   save(GBIF_NObsNGrid, file = fs::path(Path_GBIF, "GBIF_NObsNGrid.RData"))
 
-  IASDT.R::cat_time("Save as xlsx", level = 1L)
+  ecokit::cat_time("Save as xlsx", level = 1L)
   writexl::write_xlsx(
     x = GBIF_NObsNGrid, path = fs::path(Path_GBIF, "GBIF_NObsNGrid.xlsx"))
 
@@ -370,11 +369,11 @@ GBIF_process <- function(
   # # ..................................................................... ###
 
   # Summary maps ----
-  IASDT.R::cat_time("Summary maps")
+  ecokit::cat_time("Summary maps")
 
   ## Number of observations per grid  ----
 
-  IASDT.R::cat_time("Number of observations per grid cell", level = 1L)
+  ecokit::cat_time("Number of observations per grid cell", level = 1L)
   GBIF_NObs <- sf::st_drop_geometry(GBIF_Data) %>%
     dplyr::count(CellCode) %>%
     dplyr::left_join(GridSf, by = "CellCode") %>%
@@ -383,17 +382,17 @@ GBIF_process <- function(
     terra::rasterize(y = GridR, field = "n") %>%
     terra::mask(GridR) %>%
     stats::setNames("NumObs") %>%
-    IASDT.R::set_raster_CRS() %>%
+    ecokit::set_raster_CRS() %>%
     terra::wrap()
 
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     "Number of observations per grid cell (log scale)", level = 1L)
   GBIF_NObs_log <- terra::unwrap(GBIF_NObs) %>%
     log10() %>%
-    IASDT.R::set_raster_CRS() %>%
+    ecokit::set_raster_CRS() %>%
     terra::wrap()
 
-  IASDT.R::cat_time("Save as RData", level = 2L)
+  ecokit::cat_time("Save as RData", level = 2L)
   save(GBIF_NObs, GBIF_NObs_log, file = fs::path(Path_GBIF, "GBIF_NObs.RData"))
 
   invisible(gc())
@@ -402,7 +401,7 @@ GBIF_process <- function(
 
   ## Number of species per grid cell -----
 
-  IASDT.R::cat_time("Number of IAS per grid cell", level = 1L)
+  ecokit::cat_time("Number of IAS per grid cell", level = 1L)
   GBIF_NSp <- sf::st_drop_geometry(GBIF_Grid) %>%
     dplyr::count(CellCode) %>%
     dplyr::left_join(GridSf, by = "CellCode") %>%
@@ -411,16 +410,16 @@ GBIF_process <- function(
     terra::rasterize(y = GridR, field = "n") %>%
     terra::mask(GridR) %>%
     stats::setNames("NumSpecies") %>%
-    IASDT.R::set_raster_CRS() %>%
+    ecokit::set_raster_CRS() %>%
     terra::wrap()
 
-  IASDT.R::cat_time("Number of IAS per grid cell (log)", level = 1L)
+  ecokit::cat_time("Number of IAS per grid cell (log)", level = 1L)
   GBIF_NSp_Log <- terra::unwrap(GBIF_NSp) %>%
     log10() %>%
-    IASDT.R::set_raster_CRS() %>%
+    ecokit::set_raster_CRS() %>%
     terra::wrap()
 
-  IASDT.R::cat_time("Save as RData", level = 2L)
+  ecokit::cat_time("Save as RData", level = 2L)
   save(GBIF_NSp, GBIF_NSp_Log, file = fs::path(Path_GBIF, "GBIF_NSp.RData"))
 
   rm(GridSf, GridR, envir = environment())
@@ -429,7 +428,7 @@ GBIF_process <- function(
   # # ................................... ###
 
   ## Plot_GBIF_Summary -----
-  IASDT.R::cat_time("Plotting summary maps", level = 1L)
+  ecokit::cat_time("Plotting summary maps", level = 1L)
 
   GBIF_date <- GBIF_Metadata$StatusDetailed$modified %>%
     lubridate::date() %>%
@@ -483,7 +482,7 @@ GBIF_process <- function(
       tidyterra::geom_spatraster(data = terra::trim(RstrMap), maxcell = Inf) +
       paletteer::scale_fill_paletteer_c(
         na.value = "transparent", "viridis::plasma",
-        breaks = IASDT.R::integer_breaks()) +
+        breaks = ecokit::integer_breaks()) +
       ggplot2::geom_sf(
         EU_map, mapping = ggplot2::aes(), color = "grey40", linewidth = 0.075,
         fill = "transparent", inherit.aes = TRUE) +
@@ -544,7 +543,7 @@ GBIF_process <- function(
   # # ..................................................................... ###
 
   # Species-specific data ----
-  IASDT.R::cat_time("Species-specific data")
+  ecokit::cat_time("Species-specific data")
 
   SpList <- sf::st_drop_geometry(GBIF_Data) %>%
     dplyr::distinct(Species_name) %>%
@@ -552,7 +551,7 @@ GBIF_process <- function(
     sort()
 
   # Species data --- sf ----
-  IASDT.R::cat_time("Split species data - sf", level = 1L)
+  ecokit::cat_time("Split species data - sf", level = 1L)
 
   # On LUMI, extracting species data in parallel using `furrr::future_walk` took
   # much longer time than working sequentially `purrr::walk` due to the
@@ -564,7 +563,7 @@ GBIF_process <- function(
     .x = SpList,
     .f = ~ {
       # Filter data on this species
-      SpName <- IASDT.R::replace_space(.x) %>%
+      SpName <- ecokit::replace_space(.x) %>%
         # replace non-ascii multiplication symbol with x
         stringr::str_replace_all("\u00D7", "x") %>%
         stringr::str_replace_all("-", "")
@@ -574,7 +573,7 @@ GBIF_process <- function(
 
       # Save if there is data
       if (nrow(SpData) > 0) {
-        IASDT.R::save_as(
+        ecokit::save_as(
           object = SpData, object_name = SpName, out_path = OutFileSF)
       }
       return(invisible(NULL))
@@ -588,9 +587,9 @@ GBIF_process <- function(
 
 
   # Grid / raster / plotting ----
-  IASDT.R::cat_time("Split species data - grid + raster + plot", level = 1L)
+  ecokit::cat_time("Split species data - grid + raster + plot", level = 1L)
 
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     paste0("Prepare working in parallel using ", n_cores, " cores"),
     level = 1L)
 
@@ -606,14 +605,14 @@ GBIF_process <- function(
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 
-  IASDT.R::cat_time("Splitting species data in parallel", level = 2L)
+  ecokit::cat_time("Splitting species data in parallel", level = 2L)
   furrr::future_walk(
     .x = SpList, .f = IASDT.R::GBIF_species_data, env_file = env_file,
     verbose = FALSE, plot_tag = plot_tag,
     .options = furrr::furrr_options(seed = TRUE, packages = "dplyr")
   )
 
-  IASDT.R::cat_time("Stopping cluster", level = 2L)
+  ecokit::cat_time("Stopping cluster", level = 2L)
   if (n_cores > 1) {
     snow::stopCluster(c1)
     future::plan("future::sequential", gc = TRUE)
@@ -623,7 +622,7 @@ GBIF_process <- function(
 
   # Clean up chunk files ----
   if (delete_chunks) {
-    IASDT.R::cat_time("Clean up - remove temporary chunk files")
+    ecokit::cat_time("Clean up - remove temporary chunk files")
     list.files(Path_GBIF_Interim, full.names = TRUE) %>%
       fs::file_delete()
     fs::dir_delete(Path_GBIF_Interim)
@@ -631,7 +630,7 @@ GBIF_process <- function(
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = .start_time, prefix = "\nProcessing GBIF data was finished in ")
 
   return(invisible(NULL))

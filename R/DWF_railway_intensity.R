@@ -30,17 +30,17 @@ railway_intensity <- function(
   # # ..................................................................... ###
 
   # Checking arguments ----
-  IASDT.R::cat_time("Checking arguments")
+  ecokit::cat_time("Checking arguments")
 
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character", args_to_check = "env_file")
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "logical", args_to_check = "download")
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "numeric", args_to_check = "n_cores")
 
   rm(AllArgs, envir = environment())
@@ -48,8 +48,8 @@ railway_intensity <- function(
   # # ..................................................................... ###
 
   # Check `unzip` system command
-  if (isFALSE(IASDT.R::check_system_command("unzip"))) {
-    IASDT.R::stop_ctx("The system command 'unzip' is not available")
+  if (isFALSE(ecokit::check_system_command("unzip"))) {
+    ecokit::stop_ctx("The system command 'unzip' is not available")
   }
 
   # # ..................................................................... ###
@@ -64,7 +64,7 @@ railway_intensity <- function(
   # # ..................................................................... ###
 
   # Environment variables ----
-  IASDT.R::cat_time("Environment variables")
+  ecokit::cat_time("Environment variables")
 
   EnvVars2Read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
@@ -75,7 +75,7 @@ railway_intensity <- function(
     "EU_Bound", "DP_R_EUBound", FALSE, TRUE,
     "Railways_URL", "DP_R_Railways_url", FALSE, FALSE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
@@ -85,32 +85,32 @@ railway_intensity <- function(
 
   RefGrid <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(RefGrid)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "The reference grid file does not exist", RefGrid = RefGrid)
   }
-  RefGrid <- terra::unwrap(IASDT.R::load_as(RefGrid))
+  RefGrid <- terra::unwrap(ecokit::load_as(RefGrid))
 
 
   RefGridSF <- fs::path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
   if (!file.exists(RefGridSF)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "The reference grid file does not exist", RefGridSF = RefGridSF)
   }
-  RefGridSF <- IASDT.R::load_as(RefGridSF)
+  RefGridSF <- ecokit::load_as(RefGridSF)
 
   # # ..................................................................... ###
 
   # Scrap download links -----
-  IASDT.R::cat_time("Scrap download links")
+  ecokit::cat_time("Scrap download links")
   .StartTimeDown <- lubridate::now(tzone = "CET")
 
-  if (!IASDT.R::check_URL(Railways_URL)) {
-    IASDT.R::stop_ctx(
+  if (!ecokit::check_URL(Railways_URL)) {
+    ecokit::stop_ctx(
       "The base URL for railways data is not valid",
       Railways_URL = Railways_URL)
   }
 
-  IASDT.R::cat_time(paste0("Base URL is: ", Railways_URL), level = 1L)
+  ecokit::cat_time(paste0("Base URL is: ", Railways_URL), level = 1L)
 
   # We download European data at country level. For most countries, the data are
   # available in single file, while for others the data are divided into
@@ -159,7 +159,7 @@ railway_intensity <- function(
     } else if (inherits(Railways_Links, "try-error")) {
       Success <- FALSE
       if (Attempt == Attempts) {
-        IASDT.R::stop_ctx(
+        ecokit::stop_ctx(
           paste0("Initial scraping of railways links failed after ", Attempts))
       }
     }
@@ -192,7 +192,7 @@ railway_intensity <- function(
             } else if (inherits(ScrapedLinks, "try-error")) {
               Success <- FALSE
               if (Attempt == Attempts) {
-                IASDT.R::stop_ctx(
+                ecokit::stop_ctx(
                   paste0(
                     "Scraping railways links failed for: ", ScrapedLinks,
                     "after ", Attempts))
@@ -231,24 +231,24 @@ railway_intensity <- function(
     ) %>%
     tidyr::unnest(c = "ModDate")
 
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     paste0("There are ", nrow(Railways_Links), " files to be downloaded"),
     level = 1L)
 
   save(Railways_Links, file = fs::path(Path_Railways, "Railways_Links.RData"))
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = .StartTimeDown, msg_n_lines = 1, level = 1L,
     prefix = "Preparing railways download links took ")
 
   # # ..................................................................... ###
 
   # Processing railway data ------
-  IASDT.R::cat_time("Processing railway data")
+  ecokit::cat_time("Processing railway data")
   .StartTimeProcess <- lubridate::now(tzone = "CET")
 
   ## Prepare working in parallel ----
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     paste0("Prepare working in parallel using ", n_cores, " cores"),
     level = 1L)
 
@@ -265,7 +265,7 @@ railway_intensity <- function(
   }
 
   ## Processing railway data ----
-  IASDT.R::cat_time("Processing railway data", level = 1L)
+  ecokit::cat_time("Processing railway data", level = 1L)
 
   Railways_3035 <- future.apply::future_lapply(
     X = seq_len(nrow(Railways_Links)),
@@ -282,7 +282,7 @@ railway_intensity <- function(
 
       # Check if zip file is a valid file
       if (file.exists(Path)) {
-        Success <- IASDT.R::check_zip(Path)
+        Success <- ecokit::check_zip(Path)
         if (isFALSE(Success)) {
           fs::file_delete(Path)
         }
@@ -303,7 +303,7 @@ railway_intensity <- function(
             "{URL}" -o "{Path}" --silent') %>%
               system()
 
-            Success <- IASDT.R::check_zip(Path)
+            Success <- ecokit::check_zip(Path)
 
             if (isFALSE(Success)) {
               fs::file_delete(Path)
@@ -363,7 +363,7 @@ railway_intensity <- function(
     future.globals = c("Railways_Links", "RefGridSF")
   ) %>%
     dplyr::bind_rows() %>%
-    dplyr::mutate(DT = purrr::map(Path, IASDT.R::load_as)) %>%
+    dplyr::mutate(DT = purrr::map(Path, ecokit::load_as)) %>%
     tidyr::unnest(DT) %>%
     sf::st_as_sf()
 
@@ -381,7 +381,7 @@ railway_intensity <- function(
   # # .................................... ###
 
   ## Saving - RData -----
-  IASDT.R::cat_time("Saving - RData", level = 1L)
+  ecokit::cat_time("Saving - RData", level = 1L)
   save(Railways_3035, file = fs::path(Path_Railways, "Railways_3035.RData"))
 
   # # .................................... ###
@@ -399,16 +399,16 @@ railway_intensity <- function(
   # # .................................... ###
 
   ## Saving each railway class to separate file ----
-  IASDT.R::cat_time("Saving each railway class to separate file", level = 1L)
+  ecokit::cat_time("Saving each railway class to separate file", level = 1L)
 
   sf::st_drop_geometry(Railways_3035) %>%
     dplyr::distinct(fclass) %>%
     dplyr::pull(fclass) %>%
     purrr::walk(
       .f = ~ {
-        IASDT.R::cat_time(.x, level = 2L)
+        ecokit::cat_time(.x, level = 2L)
         dplyr::filter(Railways_3035, fclass == .x) %>%
-          IASDT.R::save_as(
+          ecokit::save_as(
             object_name = paste0("Railways_sf_", .x),
             out_path = fs::path(
               Path_Railways, paste0("Railways_sf_", .x, ".RData")))
@@ -418,14 +418,14 @@ railway_intensity <- function(
   rm(Railways_3035, RefGridSF, envir = environment())
   invisible(gc())
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = .StartTimeProcess,
     prefix = "Processing railway data took ", msg_n_lines = 1, level = 1L)
 
   # # ..................................................................... ###
 
   # Calculate length of railways for each railway class per grid cell -----
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     "Calculate length of railways for each railway class per grid cell")
 
   Railways_Length <- Path_Railways %>%
@@ -434,13 +434,14 @@ railway_intensity <- function(
       .f = ~ {
         Name <- stringr::str_remove_all(basename(.x), "Railways_sf_|.RData")
 
-        IASDT.R::cat_time(Name, level = 2L)
-        IASDT.R::load_as(.x) %>%
+        ecokit::cat_time(Name, level = 2L)
+
+        ecokit::load_as(.x) %>%
           terra::vect() %>%
           terra::rasterizeGeom(y = RefGrid, fun = "length", unit = "km") %>%
           terra::mask(mask = RefGrid) %>%
           stats::setNames(Name) %>%
-          IASDT.R::set_raster_values()
+          ecokit::set_raster_values()
       }, .progress = FALSE
     ) %>%
     terra::rast()
@@ -449,13 +450,13 @@ railway_intensity <- function(
   Railways_Length$Sum <- sum(Railways_Length)
 
   ## Saving - RData -----
-  IASDT.R::cat_time("Saving - RData", level = 1L)
-  IASDT.R::save_as(
+  ecokit::cat_time("Saving - RData", level = 1L)
+  ecokit::save_as(
     object = terra::wrap(Railways_Length), object_name = "Railways_Length",
     out_path = fs::path(Path_Railways, "Railways_Length.RData"))
 
   ## Saving - tif ------
-  IASDT.R::cat_time("Saving - tif", level = 1L)
+  ecokit::cat_time("Saving - tif", level = 1L)
   terra::writeRaster(
     x = Railways_Length, overwrite = TRUE,
     filename = fs::path(
@@ -465,7 +466,7 @@ railway_intensity <- function(
   # # ..................................................................... ###
 
   # Calculate distance to rail ------
-  IASDT.R::cat_time("Calculate distance to rail")
+  ecokit::cat_time("Calculate distance to rail")
 
   # This calculates the distance from each grid cell to the nearest grid cell
   # overlapping with a railway. This can be different than calculating the
@@ -475,7 +476,7 @@ railway_intensity <- function(
   Railways_Distance <- purrr::map(
     .x = as.list(Railways_Length),
     .f = ~ {
-      IASDT.R::cat_time(names(.x), level = 2L)
+      ecokit::cat_time(names(.x), level = 2L)
 
       # suppress progress bar
       terra::terraOptions(progress = 0)
@@ -486,19 +487,19 @@ railway_intensity <- function(
         terra::mask(RefGrid) %>%
         stats::setNames(paste0("Railways_Distance_", names(.x))) %>%
         # Ensure that values are read from memory
-        IASDT.R::set_raster_values()
+        ecokit::set_raster_values()
     }
   ) %>%
     terra::rast()
 
-  IASDT.R::cat_time("Save distance to railways - tif", level = 1L)
+  ecokit::cat_time("Save distance to railways - tif", level = 1L)
   terra::writeRaster(
     x = Railways_Distance, overwrite = TRUE,
     filename = fs::path(
       Path_Railways, paste0(names(Railways_Distance), ".tif")))
 
-  IASDT.R::cat_time("Save distance to railways - RData", level = 1L)
-  IASDT.R::save_as(
+  ecokit::cat_time("Save distance to railways - RData", level = 1L)
+  ecokit::save_as(
     object = terra::wrap(Railways_Distance), object_name = "Railways_Distance",
     out_path = fs::path(Path_Railways, "Railways_Distance.RData"))
 
@@ -507,9 +508,9 @@ railway_intensity <- function(
   # # ..................................................................... ###
 
   # Plotting ------
-  IASDT.R::cat_time("Plotting")
+  ecokit::cat_time("Plotting")
 
-  EU_Bound <- IASDT.R::load_as(EU_Bound) %>%
+  EU_Bound <- ecokit::load_as(EU_Bound) %>%
     magrittr::extract2("Bound_sf_Eur_s") %>%
     magrittr::extract2("L_03")
 
@@ -545,7 +546,7 @@ railway_intensity <- function(
   # # .................................. ###
 
   ## Plotting length of railways -----
-  IASDT.R::cat_time("Plotting length of railways", level = 1L)
+  ecokit::cat_time("Plotting length of railways", level = 1L)
 
   Rail2Plot <- terra::subset(Railways_Length, "rail") %>%
     terra::classify(cbind(0, NA))
@@ -582,7 +583,7 @@ railway_intensity <- function(
   # # .................................. ###
 
   ## Plotting railways -----
-  IASDT.R::cat_time("Plotting European railways", level = 1L)
+  ecokit::cat_time("Plotting European railways", level = 1L)
 
   RailPlotShp <- ggplot2::ggplot() +
     ggplot2::geom_sf(
@@ -614,7 +615,7 @@ railway_intensity <- function(
 
   # Function Summary ----
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = .start_time,
     prefix = "\nProcessing railway data was finished in ", ... = "\n")
 

@@ -65,14 +65,14 @@ mod_CV_prepare <- function(
 
   if (is.null(input_data) || is.null(env_file) ||
       is.null(out_path) || is.null(x_vars)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`input_data`, `env_file`, `out_path`, and `x_vars` can not be empty",
       input_data = input_data, env_file = env_file, out_path = out_path,
       x_vars = x_vars)
   }
 
   if (!file.exists(env_file)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Path to environment variables does not exist ", env_file = env_file)
   }
 
@@ -80,7 +80,7 @@ mod_CV_prepare <- function(
   AllVarsInDT <- all(AllVars %in% names(input_data))
   if (isFALSE(AllVarsInDT)) {
     MissingVars <- setdiff(AllVars, names(input_data))
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       paste0(
         "input_data must contain 'x' and 'y' columns and all ",
         "environmental predictors in the x_vars argument."),
@@ -96,16 +96,16 @@ mod_CV_prepare <- function(
     "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
     "EU_Bound", "DP_R_EUBound", FALSE, TRUE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
   Path_Grid <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(Path_Grid)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Path for reference grid does not exist", Path_Grid = Path_Grid)
   }
-  RefGrid <- terra::unwrap(IASDT.R::load_as(Path_Grid))
+  RefGrid <- terra::unwrap(ecokit::load_as(Path_Grid))
 
   # # |||||||||||||||||||||||||||||||||||
   # # Coordinates as raster -----
@@ -136,7 +136,7 @@ mod_CV_prepare <- function(
   # # 1. CV using large blocks -----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("1. CV_Large", level = 1L, cat_timestamp = FALSE)
+  ecokit::cat_time("1. CV_Large", level = 1L, cat_timestamp = FALSE)
   CV_Large <- blockCV::cv_spatial(
     x = XY_sf, r = DT_R, hexagon = FALSE, iteration = 1000, k = CV_n_folds,
     rows_cols = c(CV_n_rows, CV_n_columns),
@@ -146,7 +146,7 @@ mod_CV_prepare <- function(
   # # 2. CV based on number of grid cells -----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("2. CV_Dist", level = 1L, cat_timestamp = FALSE)
+  ecokit::cat_time("2. CV_Dist", level = 1L, cat_timestamp = FALSE)
   CV_Dist <- blockCV::cv_spatial(
     x = XY_sf, r = DT_R, hexagon = FALSE, iteration = 1000, k = CV_n_folds,
     size = CV_n_grids * raster::res(DT_R)[1], plot = FALSE, progress = FALSE,
@@ -158,10 +158,10 @@ mod_CV_prepare <- function(
 
   if (CV_SAC) {
 
-    IASDT.R::cat_time("3. CV_SAC", level = 1L)
+    ecokit::cat_time("3. CV_SAC", level = 1L)
 
     # Measure spatial autocorrelation in predictor raster files
-    IASDT.R::cat_time("Calculating median SAC range", level = 2L)
+    ecokit::cat_time("Calculating median SAC range", level = 2L)
     CV_SAC_Range <- blockCV::cv_spatial_autocor(
       r = DT_R, num_sample = min(10000, nrow(input_data)), plot = FALSE,
       progress = FALSE)
@@ -180,7 +180,7 @@ mod_CV_prepare <- function(
       (terra::ncol(RefGrid) * terra::res(RefGrid)[1] / 2))
 
     if (CV_SAC_Range$range > min_distance) {
-      IASDT.R::cat_time(
+      ecokit::cat_time(
         paste0(
           "`CV_SAC` was NOT implemented; median SAC: ",
           round(CV_SAC_Range$range / 1000, 2), "km"), level = 2L)
@@ -189,7 +189,7 @@ mod_CV_prepare <- function(
       # Check `folds_ids` exists in each of the cross-validation strategies
       if (!("folds_ids" %in% names(CV_Dist) &&
             "folds_ids" %in% names(CV_Large))) {
-        IASDT.R::stop_ctx(
+        ecokit::stop_ctx(
           "Cross-validation results do not contain 'folds_ids'.",
           names_CV_Large = names(CV_Large), names_CV_Dist = names(CV_Dist))
       }
@@ -204,7 +204,7 @@ mod_CV_prepare <- function(
       if (!(("folds_ids" %in% names(CV_SAC)) &&
             ("folds_ids" %in% names(CV_Dist)) &&
             ("folds_ids" %in% names(CV_Large)))) {
-        IASDT.R::stop_ctx(
+        ecokit::stop_ctx(
           "Cross-validation results do not contain 'folds_ids'.",
           names_CV_Large = names(CV_Large), names_CV_Dist = names(CV_Dist),
           names_CV_SAC = names(CV_SAC))
@@ -220,7 +220,7 @@ mod_CV_prepare <- function(
   # # Save cross-validation results as RData -----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Save cross-validation results as RData", level = 1L)
+  ecokit::cat_time("Save cross-validation results as RData", level = 1L)
   CV_data <- list(
     CV_n_grids = CV_n_grids, CV_n_rows = CV_n_rows, CV_n_columns = CV_n_columns,
     CV_SAC_Range = CV_SAC_Range, CV_SAC = CV_SAC, CV_Dist = CV_Dist,
@@ -234,7 +234,7 @@ mod_CV_prepare <- function(
 
   if (CV_plot) {
 
-    IASDT.R::cat_time("Plot cross-validation folds", level = 1L)
+    ecokit::cat_time("Plot cross-validation folds", level = 1L)
 
     DT_R <- sf::st_as_sf(input_data, coords = c("x", "y"), crs = 3035) %>%
       terra::rasterize(RefGrid) %>%
@@ -248,7 +248,7 @@ mod_CV_prepare <- function(
       CVTypes <- c("CV_SAC", "CV_Dist", "CV_Large")
     }
 
-    EU_Bound <- IASDT.R::load_as(EU_Bound) %>%
+    EU_Bound <- ecokit::load_as(EU_Bound) %>%
       magrittr::extract2("Bound_sf_Eur_s") %>%
       magrittr::extract2("L_03") %>%
       suppressWarnings()

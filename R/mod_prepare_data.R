@@ -22,7 +22,7 @@ mod_prepare_data <- function(
   CheckNULL <- c("hab_abb", "directory_name", "env_file")
   IsNull <- purrr::map_lgl(CheckNULL, ~ is.null(get(.x)))
   if (any(IsNull)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       paste0(
         paste0("`", CheckNULL[which(IsNull)], "`", collapse = ", "),
         " can not be empty"),
@@ -47,19 +47,19 @@ mod_prepare_data <- function(
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_time("Checking input arguments")
+  ecokit::cat_time("Checking input arguments")
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(
     AllArgs,
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
   CharArgs <- c("env_file", "hab_abb", "directory_name")
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_to_check = CharArgs, args_type = "character")
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "numeric",
     args_to_check = c("min_efforts_n_species", "n_pres_per_species"))
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "logical",
     args_to_check = c(
       "exclude_cultivated", "exclude_0_habitat", "verbose_progress"))
@@ -67,7 +67,7 @@ mod_prepare_data <- function(
   # Valid habitat type values
   ValidHabAbbs <- c(0:3, "4a", "4b", 10, "12a", "12b")
   if (!(hab_abb %in% ValidHabAbbs)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       paste0(
         "`hab_abb` has to be one of the following:\n >> ",
         toString(ValidHabAbbs)),
@@ -78,7 +78,7 @@ mod_prepare_data <- function(
 
   # # |||||||||||||||||||||||||||||||||||
   # Reading/checking environment variables ----
-  IASDT.R::cat_time("Reading/checking environment variables")
+  ecokit::cat_time("Reading/checking environment variables")
 
   # # |||||||||||||||||||||||||||||||||||
 
@@ -98,14 +98,14 @@ mod_prepare_data <- function(
     "path_model", "DP_R_Model_path", TRUE, FALSE,
     "EU_Bound", "DP_R_EUBound", FALSE, TRUE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
   path_model <- fs::path(path_model, directory_name)
   fs::dir_create(path_model)
 
-  IASDT.R::record_arguments(
+  ecokit::record_arguments(
     out_path = fs::path(path_model, "Args_prepare_data.RData"))
 
   # # ..................................................................... ###
@@ -114,18 +114,18 @@ mod_prepare_data <- function(
   # Loading data ----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Loading data")
+  ecokit::cat_time("Loading data")
 
   ## Sampling efforts ----
-  IASDT.R::cat_time("Sampling efforts", level = 1L)
+  ecokit::cat_time("Sampling efforts", level = 1L)
   R_Bias <- fs::path(Path_Bias, "Efforts_SummaryR.RData")
   if (!file.exists(R_Bias)) {
-    IASDT.R::stop_ctx("R_Bias file does not exist", R_Bias = R_Bias)
+    ecokit::stop_ctx("R_Bias file does not exist", R_Bias = R_Bias)
   }
 
   # This mask layer represents grid cells with minimum accepted efforts
   # (`min_efforts_n_species`). All subsequent maps will be masked to this layer
-  EffortsMask <- IASDT.R::load_as(R_Bias) %>%
+  EffortsMask <- ecokit::load_as(R_Bias) %>%
     terra::unwrap() %>%
     magrittr::extract2("NSp") %>%
     terra::classify(
@@ -138,11 +138,11 @@ mod_prepare_data <- function(
 
   ## Habitat coverage -----
 
-  IASDT.R::cat_time("Habitat coverage", level = 1L)
+  ecokit::cat_time("Habitat coverage", level = 1L)
 
   Path_Hab <- fs::path(Path_CLC, "Summary_RData", "PercCov_SynHab_Crop.RData")
   if (!file.exists(Path_Hab)) {
-    IASDT.R::stop_ctx("Path_Hab file does not exist", Path_Hab = Path_Hab)
+    ecokit::stop_ctx("Path_Hab file does not exist", Path_Hab = Path_Hab)
   }
 
   if (hab_abb == "0") {
@@ -151,7 +151,7 @@ mod_prepare_data <- function(
     R_HabLog <- stats::setNames(Grid_R, "HabLog")
   } else {
     # Load habitat coverage data and mask by the efforts mask
-    R_Hab <- IASDT.R::load_as(Path_Hab) %>%
+    R_Hab <- ecokit::load_as(Path_Hab) %>%
       terra::unwrap() %>%
       magrittr::extract2(paste0("SynHab_", hab_abb)) %>%
       terra::mask(EffortsMask) %>%
@@ -159,7 +159,7 @@ mod_prepare_data <- function(
 
     # Exclude grid cells with zero habitat coverage
     if (exclude_0_habitat) {
-      IASDT.R::cat_time(
+      ecokit::cat_time(
         "Exclude grid cells with zero habitat coverage", level = 2L)
       zero_hab_grids <- (R_Hab == 0)
       # Update the efforts mask to exclude grid cells with zero habitat coverage
@@ -175,14 +175,14 @@ mod_prepare_data <- function(
   # # ..................................................................... ###
 
   ## Species data summary ----
-  IASDT.R::cat_time("Species data summary", level = 1L)
+  ecokit::cat_time("Species data summary", level = 1L)
 
   # Extract the list of species for the current habitat type
   DT_Sp <- fs::path(Path_PA, "Sp_PA_Summary_DF.RData")
   if (!file.exists(DT_Sp)) {
-    IASDT.R::stop_ctx("DT_Sp file does not exist", DT_Sp = DT_Sp)
+    ecokit::stop_ctx("DT_Sp file does not exist", DT_Sp = DT_Sp)
   }
-  DT_Sp <- IASDT.R::load_as(DT_Sp) %>%
+  DT_Sp <- ecokit::load_as(DT_Sp) %>%
     dplyr::arrange(IAS_ID)
 
   if (hab_abb == "0") {
@@ -201,7 +201,7 @@ mod_prepare_data <- function(
   # # ..................................................................... ###
 
   ## Species presence-absence data ----
-  IASDT.R::cat_time("Species presence-absence data", level = 1L)
+  ecokit::cat_time("Species presence-absence data", level = 1L)
 
   # Minimum number of presence grids per species
   NCellsCol <- dplyr::if_else(
@@ -224,7 +224,7 @@ mod_prepare_data <- function(
           # Masked raster map
           SpPA <- fs::path(
             Path_PA, "RData", stringr::str_c(.x, "_PA.RData")) %>%
-            IASDT.R::load_as() %>%
+            ecokit::load_as() %>%
             terra::unwrap() %>%
             magrittr::extract2(PA_Layer) %>%
             terra::mask(EffortsMask) %>%
@@ -257,9 +257,9 @@ mod_prepare_data <- function(
   # # ................................... ###
 
   ### Plotting number of IAS per grid cell -----
-  IASDT.R::cat_time("Plotting number of IAS per grid cell", level = 2L)
+  ecokit::cat_time("Plotting number of IAS per grid cell", level = 2L)
 
-  EU_Bound <- IASDT.R::load_as(EU_Bound) %>%
+  EU_Bound <- ecokit::load_as(EU_Bound) %>%
     magrittr::extract2("Bound_sf_Eur") %>%
     magrittr::extract2("L_03")
   R_Sp_sum <- sum(R_Sp, na.rm = TRUE)
@@ -326,38 +326,38 @@ mod_prepare_data <- function(
 
   ## CHELSA -----
 
-  IASDT.R::cat_time("CHELSA", level = 1L)
+  ecokit::cat_time("CHELSA", level = 1L)
   R_CHELSA <- fs::path(Path_CHELSA, "Processed", "R_Current.RData")
   if (!file.exists(R_CHELSA)) {
-    IASDT.R::stop_ctx("R_CHELSA file does not exist", R_CHELSA = R_CHELSA)
+    ecokit::stop_ctx("R_CHELSA file does not exist", R_CHELSA = R_CHELSA)
   }
-  R_CHELSA <- IASDT.R::load_as(R_CHELSA) %>%
+  R_CHELSA <- ecokit::load_as(R_CHELSA) %>%
     terra::unwrap() %>%
     terra::mask(EffortsMask)
 
   # # ..................................................................... ###
 
   ## Reference grid -----
-  IASDT.R::cat_time("Reference grid", level = 1L)
+  ecokit::cat_time("Reference grid", level = 1L)
 
-  IASDT.R::cat_time("Reference grid - sf", level = 2L)
+  ecokit::cat_time("Reference grid - sf", level = 2L)
   # Reference grid as sf
   Grid_SF <- fs::path(Path_Grid_Ref, "Grid_10_sf.RData")
   if (!file.exists(Grid_SF)) {
-    IASDT.R::stop_ctx("Grid_SF file does not exist", Grid_SF = Grid_SF)
+    ecokit::stop_ctx("Grid_SF file does not exist", Grid_SF = Grid_SF)
   }
-  Grid_SF <- IASDT.R::load_as(Grid_SF) %>%
+  Grid_SF <- ecokit::load_as(Grid_SF) %>%
     magrittr::extract2("Grid_10_sf_s")
 
   # # ||||||||||||||||||||||||||||||||||||||||||
 
   # Reference grid as sf - country names
-  IASDT.R::cat_time("Reference grid - country names", level = 2L)
+  ecokit::cat_time("Reference grid - country names", level = 2L)
   Grid_CNT <- fs::path(Path_Grid, "Grid_10_Land_Crop_sf_Country.RData")
   if (!file.exists(Grid_CNT)) {
-    IASDT.R::stop_ctx("Grid_CNT file does not exist", Grid_CNT = Grid_CNT)
+    ecokit::stop_ctx("Grid_CNT file does not exist", Grid_CNT = Grid_CNT)
   }
-  Grid_CNT <- IASDT.R::load_as(Grid_CNT) %>%
+  Grid_CNT <- ecokit::load_as(Grid_CNT) %>%
     dplyr::mutate(
       x = sf::st_coordinates(.)[, 1], y = sf::st_coordinates(.)[, 2]) %>%
     sf::st_drop_geometry() %>%
@@ -366,17 +366,17 @@ mod_prepare_data <- function(
   # # ..................................................................... ###
 
   ## Railway + road intensity ----
-  IASDT.R::cat_time("Railway + road intensity", level = 1L)
+  ecokit::cat_time("Railway + road intensity", level = 1L)
 
   ### Road ----
-  IASDT.R::cat_time("Road intensity", level = 2L)
+  ecokit::cat_time("Road intensity", level = 2L)
 
   # road intensity of any road type
   R_RoadInt <- fs::path(Path_Roads, "Road_Length.RData")
   if (!file.exists(R_RoadInt)) {
-    IASDT.R::stop_ctx("R_RoadInt file does not exist", R_RoadInt = R_RoadInt)
+    ecokit::stop_ctx("R_RoadInt file does not exist", R_RoadInt = R_RoadInt)
   }
-  R_RoadInt <- IASDT.R::load_as(R_RoadInt) %>%
+  R_RoadInt <- ecokit::load_as(R_RoadInt) %>%
     terra::unwrap() %>%
     magrittr::extract2("All") %>%
     stats::setNames("RoadInt") %>%
@@ -389,14 +389,14 @@ mod_prepare_data <- function(
   # # ||||||||||||||||||||||||||||||||||||||||||
 
   ### Railways ----
-  IASDT.R::cat_time("Railway intensity", level = 2L)
+  ecokit::cat_time("Railway intensity", level = 2L)
 
   # Railway intensity
   R_RailInt <- fs::path(Path_Rail, "Railways_Length.RData")
   if (!file.exists(R_RailInt)) {
-    IASDT.R::stop_ctx("R_RailInt file does not exist", R_RailInt = R_RailInt)
+    ecokit::stop_ctx("R_RailInt file does not exist", R_RailInt = R_RailInt)
   }
-  R_RailInt <- IASDT.R::load_as(R_RailInt) %>%
+  R_RailInt <- ecokit::load_as(R_RailInt) %>%
     terra::unwrap() %>%
     magrittr::extract2("rail") %>%
     terra::mask(EffortsMask) %>%
@@ -409,16 +409,16 @@ mod_prepare_data <- function(
   # # ||||||||||||||||||||||||||||||||||||||||||
 
   ### Merging Road + rail ----
-  IASDT.R::cat_time("Merging Railway + road intensity", level = 2L)
+  ecokit::cat_time("Merging Railway + road intensity", level = 2L)
   R_RoadRail <- stats::setNames((R_RoadInt + R_RailInt), "RoadRail")
   R_RoadRailLog <- stats::setNames(log10(R_RoadRail + 0.1), "RoadRailLog")
 
   # # ..................................................................... ###
 
   ## Sampling effort ----
-  IASDT.R::cat_time("Sampling effort", level = 1L)
+  ecokit::cat_time("Sampling effort", level = 1L)
 
-  R_Efforts <- IASDT.R::load_as(R_Bias) %>%
+  R_Efforts <- ecokit::load_as(R_Bias) %>%
     terra::unwrap() %>%
     magrittr::extract2("NObs") %>%
     terra::mask(EffortsMask) %>%
@@ -429,13 +429,13 @@ mod_prepare_data <- function(
   # # ..................................................................... ###
 
   ## River length ----
-  IASDT.R::cat_time("River length", level = 1L)
+  ecokit::cat_time("River length", level = 1L)
 
   R_Rivers <- fs::path(Path_Rivers, "River_Lengths.RData")
   if (!file.exists(R_Rivers)) {
-    IASDT.R::stop_ctx("R_Rivers file does not exist", R_Rivers = R_Rivers)
+    ecokit::stop_ctx("R_Rivers file does not exist", R_Rivers = R_Rivers)
   }
-  R_Rivers <- IASDT.R::load_as(R_Rivers) %>%
+  R_Rivers <- ecokit::load_as(R_Rivers) %>%
     terra::unwrap() %>%
     magrittr::extract2("STRAHLER_5") %>%
     terra::mask(EffortsMask) %>%
@@ -446,7 +446,7 @@ mod_prepare_data <- function(
   # # ..................................................................... ###
 
   ## Merging data together -----
-  IASDT.R::cat_time("Merging data together")
+  ecokit::cat_time("Merging data together")
 
   ColumnsFirst <- c("CellNum", "CellCode", "Country", "Country_Nearest")
   DT_All <- c(
@@ -468,8 +468,8 @@ mod_prepare_data <- function(
 
   # Save model data to disk -----
 
-  IASDT.R::cat_time("Save model data to disk")
-  IASDT.R::save_as(
+  ecokit::cat_time("Save model data to disk")
+  ecokit::save_as(
     object = DT_All, object_name = "ModDT",
     out_path = fs::path(path_model, "ModDT.RData"))
 

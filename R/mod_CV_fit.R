@@ -63,7 +63,7 @@ mod_CV_fit <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Check input parameters -----
-  IASDT.R::cat_time("Check input parameters")
+  ecokit::cat_time("Check input parameters")
 
   NullVarsNames <- c(
     "path_model", "path_Hmsc", "memory_per_cpu", "job_runtime", "env_file")
@@ -71,7 +71,7 @@ mod_CV_fit <- function(
 
   if (length(NullVars) > 0) {
     NullVarsNames[NullVars]
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       paste0(toString(NullVarsNames[NullVars]), " cannot be NULL"),
       NullVars = NullVars, length_NullVars = length(NullVars))
   }
@@ -86,21 +86,21 @@ mod_CV_fit <- function(
   CharArgs <- c(
     "path_model", "job_name", "env_file",
     "job_runtime", "memory_per_cpu", "path_Hmsc")
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_to_check = CharArgs, args_type = "character")
 
   # numeric arguments
   NumericArgs <- c("gpus_per_node", "cpus_per_task", "ntasks")
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_to_check = NumericArgs, args_type = "numeric")
 
   if (!(precision %in% c(32, 64))) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "precision should be either of 32 or 64", precision = precision)
   }
 
   if (!file.exists(path_model)) {
-    IASDT.R::stop_ctx("Model path does not exist.", path_model = path_model)
+    ecokit::stop_ctx("Model path does not exist.", path_model = path_model)
   }
 
   rm(AllArgs, NullVarsNames, NullVars, envir = environment())
@@ -108,7 +108,7 @@ mod_CV_fit <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Loading model -----
-  IASDT.R::cat_time("Loading model")
+  ecokit::cat_time("Loading model")
 
   # Path of the cross-validation folder
   Path_CV <- fs::path(dirname(dirname(path_model)), "Model_Fitting_CV")
@@ -118,19 +118,19 @@ mod_CV_fit <- function(
     path = dirname(dirname(path_model)),
     pattern = "^ModDT_.*subset.RData", full.names = TRUE)
   if (length(Path_ModelData) != 1) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "There should be exactly one file matches model input data",
       length_Path_ModelData = length(Path_ModelData),
       Path_ModelData = Path_ModelData)
   }
 
   # Loading full model object
-  Model_Full <- IASDT.R::load_as(path_model)
+  Model_Full <- ecokit::load_as(path_model)
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Creating paths -----
-  IASDT.R::cat_time("Creating paths")
+  ecokit::cat_time("Creating paths")
 
   Path_Init <- fs::path(Path_CV, "Model_Init")
   Path_Fitted <- fs::path(Path_CV, "Model_Fitted")
@@ -142,18 +142,18 @@ mod_CV_fit <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Cross-validation partitions ----
-  IASDT.R::cat_time("Cross-validation partitions")
+  ecokit::cat_time("Cross-validation partitions")
 
   if (is.null(Partitions)) {
     # if custom partitions is not provided, extract the CV column(s) available
     # in the modelling data
 
-    CV_Data <- IASDT.R::load_as(Path_ModelData)$DT_CV
+    CV_Data <- ecokit::load_as(Path_ModelData)$DT_CV
 
     if (!(all(CV_name %in% names(CV_Data)))) {
       # if any of the column names does not exist, stop the function
       MissingCV <- CV_name[isFALSE(CV_name %in% names(CV_Data))]
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         paste0(
           "`Partitions` was not defined (NULL) and column(s) for CV folds ",
           paste(MissingCV, collapse = " + "),
@@ -174,7 +174,7 @@ mod_CV_fit <- function(
 
   # Check the length of CV data equals the number of sampling units in the model
   if (any(purrr::map_int(Partitions, length) != Model_Full$ny)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       paste0(
         "Partitions parameter must be a vector of the same length of the ",
         "sampling  units of the the full model"),
@@ -202,10 +202,10 @@ mod_CV_fit <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Prepare cross-validated initial models -----
-  IASDT.R::cat_time("Prepare cross-validated initial models")
+  ecokit::cat_time("Prepare cross-validated initial models")
 
   # Load coordinates from the full model
-  Coords <- IASDT.R::load_as(Path_ModelData)$DT_xy
+  Coords <- ecokit::load_as(Path_ModelData)$DT_xy
 
   CV_DT <- tibble::tibble(
     partition = Partitions, CV_name = names(Partitions)) %>%
@@ -219,14 +219,14 @@ mod_CV_fit <- function(
         .l = list(partition, CV_name, nfolds),
         .f = function(partition, CV_name, nfolds) {
 
-          IASDT.R::cat_time(
+          ecokit::cat_time(
             paste0("Cross-validation Type: ", CV_name), level = 1L)
 
           CV_DT0 <- purrr::map_dfr(
             .x = seq_len(nfolds),
             .f = function(k) {
 
-              IASDT.R::cat_time(paste0("Fold ", k, "/", nfolds), level = 2L)
+              ecokit::cat_time(paste0("Fold ", k, "/", nfolds), level = 2L)
 
               # # |||||||||||||||||||||||
               # The following is adapted from Hmsc::computePredictedValues()
@@ -306,7 +306,7 @@ mod_CV_fit <- function(
               # Save unfitted model
               Path_ModInit <- fs::path(
                 Path_Init, paste0("InitMod_", CV_name, "_k", k, ".RData"))
-              IASDT.R::save_as(
+              ecokit::save_as(
                 object = Model_CV,
                 object_name = paste0("InitMod_", CV_name, "_k", k),
                 out_path = Path_ModInit)
@@ -356,7 +356,7 @@ mod_CV_fit <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Prepare model fitting commands -----
-  IASDT.R::cat_time("Prepare model fitting commands")
+  ecokit::cat_time("Prepare model fitting commands")
 
   CV_DT <- CV_DT %>%
     dplyr::mutate(ModName = paste0(CV_name, CV), .after = CV) %>%
@@ -384,15 +384,15 @@ mod_CV_fit <- function(
               # Model fitting command
               Command_HPC <- paste0(
                 "/usr/bin/time -v python3 -m hmsc.run_gibbs_sampler",
-                " --input ", IASDT.R::normalize_path(Path_ModInit_rds),
-                " --output ", IASDT.R::normalize_path(Post_File),
+                " --input ", ecokit::normalize_path(Path_ModInit_rds),
+                " --output ", ecokit::normalize_path(Post_File),
                 " --samples ", Model_Full$samples,
                 " --transient ", Model_Full$transient,
                 " --thin ", Model_Full$thin,
                 " --verbose ", verbose,
                 " --chain ", (Chain - 1),
                 " --fp ", precision,
-                " >& ", IASDT.R::normalize_path(ModProg_File))
+                " >& ", ecokit::normalize_path(ModProg_File))
 
               # data to be returned for each combination of CV and Chain
               return(
@@ -413,7 +413,7 @@ mod_CV_fit <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Save model fitting commands -----
-  IASDT.R::cat_time("Save model fitting commands")
+  ecokit::cat_time("Save model fitting commands")
 
   purrr::walk(
     .x = CV_name,
@@ -436,7 +436,7 @@ mod_CV_fit <- function(
   # Prepare SLURM script -----
 
   if (SLURM_prepare) {
-    IASDT.R::cat_time("Prepare SLURM script")
+    ecokit::cat_time("Prepare SLURM script")
 
     # Prepare SLURM file to submit ALL commands to HPC
     IASDT.R::mod_SLURM(
@@ -448,7 +448,7 @@ mod_CV_fit <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Save summary data to disk -----
-  IASDT.R::cat_time("Save summary data to disk")
+  ecokit::cat_time("Save summary data to disk")
   save(CV_DT, file = fs::path(Path_CV, "CV_DT.RData"))
 
   return(invisible(NULL))

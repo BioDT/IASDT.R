@@ -33,12 +33,12 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
   # # ..................................................................... ###
 
   if (is.null(model_dir) || !is.character(model_dir) || !nzchar(model_dir)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`model_dir` has to be a character with length > 0",
       model_dir = model_dir)
   }
   if (!fs::dir_exists(model_dir)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`model_dir` is not a valid directory", model_dir = model_dir)
   }
 
@@ -53,7 +53,7 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
     "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
     "Path_PA", "DP_R_PA", TRUE, FALSE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
   invisible(gc())
@@ -61,10 +61,10 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
   # Reference grid
   Gird10 <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(Gird10)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Path for the Europe boundaries does not exist", Gird10 = Gird10)
   }
-  Gird10 <- IASDT.R::load_as(Gird10) %>%
+  Gird10 <- ecokit::load_as(Gird10) %>%
     terra::unwrap()
 
   # # ..................................................................... ###
@@ -72,7 +72,7 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
 
   # Load summary of prediction maps ----
 
-  IASDT.R::cat_time("Load summary of prediction maps")
+  ecokit::cat_time("Load summary of prediction maps")
 
   # Without clamping
   Map_summary_NoClamp <- fs::path(
@@ -80,11 +80,11 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
     "Prediction_Current_Summary.RData")
 
   if (!file.exists(Map_summary_NoClamp)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`Map_summary_NoClamp` file does not exist",
       Map_summary_NoClamp = Map_summary_NoClamp)
   }
-  Map_summary_NoClamp <- IASDT.R::load_as(Map_summary_NoClamp) %>%
+  Map_summary_NoClamp <- ecokit::load_as(Map_summary_NoClamp) %>%
     dplyr::rename(
       tif_path_mean_no_clamp = tif_path_mean,
       tif_path_sd_no_clamp = tif_path_sd,
@@ -94,11 +94,11 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
   Map_summary_Clamp <- fs::path(
     model_dir, "Model_Prediction", "Clamp", "Prediction_Current_Summary.RData")
   if (!file.exists(Map_summary_Clamp)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`Map_summary_Clamp` file does not exist",
       Map_summary_Clamp = Map_summary_Clamp)
   }
-  Map_summary_Clamp <- IASDT.R::load_as(Map_summary_Clamp) %>%
+  Map_summary_Clamp <- ecokit::load_as(Map_summary_Clamp) %>%
     dplyr::rename(
       tif_path_mean_clamp = tif_path_mean,
       tif_path_sd_clamp = tif_path_sd,
@@ -125,16 +125,16 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
 
   # Calculate observed species richness ----
 
-  IASDT.R::cat_time("Calculate observed species richness")
+  ecokit::cat_time("Calculate observed species richness")
 
   # Modelling data
   Model_Data <- list.files(
     model_dir, pattern = "^ModDT_.*subset.RData$", full.names = TRUE)
 
   if (length(Model_Data) != 1) {
-    IASDT.R::stop_ctx("Model data does not exist", Model_Data = Model_Data)
+    ecokit::stop_ctx("Model data does not exist", Model_Data = Model_Data)
   }
-  Model_Data <- IASDT.R::load_as(Model_Data)
+  Model_Data <- ecokit::load_as(Model_Data)
 
   # Observed species richness
   R_SR <- tibble::tibble(
@@ -151,13 +151,13 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
 
   # Load habitat map ----
 
-  IASDT.R::cat_time("Load habitat map")
+  ecokit::cat_time("Load habitat map")
 
   Path_Hab <- fs::path(Path_CLC, "Summary_RData", "PercCov_SynHab_Crop.RData")
   if (!file.exists(Path_Hab)) {
-    IASDT.R::stop_ctx("Path_Hab file does not exist", Path_Hab = Path_Hab)
+    ecokit::stop_ctx("Path_Hab file does not exist", Path_Hab = Path_Hab)
   }
-  R_habitat <- IASDT.R::load_as(Path_Hab) %>%
+  R_habitat <- ecokit::load_as(Path_Hab) %>%
     terra::unwrap() %>%
     terra::classify(rcl = cbind(0, NA)) %>%
     terra::subset(paste0("SynHab_", HabAbb)) %>%
@@ -381,10 +381,10 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
       # Files containing observed data maps
       Path_observed <- fs::path(Path_PA, "Sp_PA_Summary_DF.RData")
       if (!file.exists(Path_observed)) {
-        IASDT.R::stop_ctx(
+        ecokit::stop_ctx(
           "Path_observed file does not exist", Path_observed = Path_observed)
       }
-      Path_observed <- IASDT.R::load_as(Path_observed) %>%
+      Path_observed <- ecokit::load_as(Path_observed) %>%
         dplyr::filter(IAS_ID == SpID2) %>%
         dplyr::pull(Species_File) %>%
         paste0(c("_Masked.tif", "_All.tif")) %>%
@@ -392,7 +392,7 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
 
       # Check if observed data files exist
       if (!all(file.exists(Path_observed))) {
-        IASDT.R::stop_ctx(
+        ecokit::stop_ctx(
           paste0("Observed data for species: ", SpName, " not found"),
           Path_observed = Path_observed, SpName = SpName)
       }
@@ -597,15 +597,15 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
 
   # Plotting ----
 
-  IASDT.R::cat_time("Plotting")
+  ecokit::cat_time("Plotting")
 
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     paste0("Preparing working in parallel using ", n_cores, " cores"),
     level = 1L)
   c1 <- parallel::makePSOCKcluster(n_cores)
   on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
 
-  IASDT.R::cat_time("Exporting variables to parallel cores", level = 1L)
+  ecokit::cat_time("Exporting variables to parallel cores", level = 1L)
   parallel::clusterExport(
     cl = c1,
     varlist = c(
@@ -613,7 +613,7 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
       "R_habitat", "Path_Plots", "hab_name", "PlotMaps"),
     envir = environment())
 
-  IASDT.R::cat_time("Loading packages at parallel cores", level = 1L)
+  ecokit::cat_time("Loading packages at parallel cores", level = 1L)
   invisible(parallel::clusterEvalQ(
     cl = c1,
     expr = {
@@ -627,13 +627,13 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
       cowplot::set_null_device("cairo")
     }))
 
-  IASDT.R::cat_time("Prepare and save plots in parallel", level = 1L)
+  ecokit::cat_time("Prepare and save plots in parallel", level = 1L)
   Plots <- parallel::parLapply(
     cl = c1, X = seq_len(nrow(Map_summary)), fun = PlotMaps)
 
   rm(Plots, envir = environment())
 
-  IASDT.R::cat_diff(init_time = .start_time)
+  ecokit::cat_diff(init_time = .start_time)
 
   return(invisible(NULL))
 }

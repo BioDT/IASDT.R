@@ -60,7 +60,7 @@ mod_SLURM <- function(
 
   if (is.null(model_dir) || is.null(job_name) || is.null(memory_per_cpu) ||
       is.null(job_runtime) || is.null(path_Hmsc)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       paste0(
         "`model_dir`, `job_name`, `memory_per_cpu`, `job_runtime`, ",
         "and `path_Hmsc` ", "cannot be empty"),
@@ -74,7 +74,7 @@ mod_SLURM <- function(
   # # |||||||||||||||||||||||||||||||||||
 
   if (!file.exists(env_file)) {
-    IASDT.R::stop_ctx("Environment file not found", env_file = env_file)
+    ecokit::stop_ctx("Environment file not found", env_file = env_file)
   }
 
   EnvVars2Read <- tibble::tribble(
@@ -83,7 +83,7 @@ mod_SLURM <- function(
     "Path_GPU_Check", "DP_R_LUMI_gpu_check", FALSE, Sys.info()[1] != "Windows")
 
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
@@ -100,12 +100,12 @@ mod_SLURM <- function(
     "model_dir", "job_name", "env_file", "job_runtime", "memory_per_cpu",
     "HPC_partition", "path_Hmsc", "ProjNum", "Path_GPU_Check",
     "command_prefix", "SLURM_prefix")
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_to_check = CharArgs, args_type = "character")
 
   # numeric arguments
   NumericArgs <- c("gpus_per_node", "cpus_per_task", "ntasks")
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_to_check = NumericArgs, args_type = "numeric")
 
   rm(AllArgs, envir = environment())
@@ -113,14 +113,14 @@ mod_SLURM <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   if (!fs::dir_exists(model_dir)) {
-    IASDT.R::stop_ctx("Model directory does not exist", model_dir = model_dir)
+    ecokit::stop_ctx("Model directory does not exist", model_dir = model_dir)
   }
 
   ListCommands <- list.files(
     model_dir, pattern = command_prefix, full.names = TRUE)
   NCommandFiles <- length(ListCommands)
   if (NCommandFiles == 0) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "The file containing the bash commands does not exist",
       NCommandFiles = NCommandFiles, ListCommands = basename(ListCommands))
   }

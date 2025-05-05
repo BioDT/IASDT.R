@@ -52,14 +52,14 @@ mod_heatmap_beta <- function(
   .start_time <- lubridate::now(tzone = "CET")
 
   if (is.null(path_model)) {
-    IASDT.R::stop_ctx("`path_model` cannot be empty", path_model = path_model)
+    ecokit::stop_ctx("`path_model` cannot be empty", path_model = path_model)
   }
 
   # # ..................................................................... ###
 
   # support_level has to be between 0 and 1
   if (support_level < 0 || support_level > 1) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`support_level` has to be a numeric value between 0 and 1",
       support_level = support_level)
   }
@@ -75,17 +75,17 @@ mod_heatmap_beta <- function(
   # # ..................................................................... ###
 
   # Loading model object -----
-  IASDT.R::cat_time("Loading model object")
+  ecokit::cat_time("Loading model object")
 
   if (!file.exists(path_model)) {
-    IASDT.R::stop_ctx("Model file not found", path_model = path_model)
+    ecokit::stop_ctx("Model file not found", path_model = path_model)
   }
-  Model <- IASDT.R::load_as(path_model)
+  Model <- ecokit::load_as(path_model)
 
   # # ..................................................................... ###
 
   # Plot phylogenetic tree -----
-  IASDT.R::cat_time("phylogenetic tree plot")
+  ecokit::cat_time("phylogenetic tree plot")
 
   Tree <- Model$phyloTree
   # remove prefix "Sp_" from tip labels
@@ -105,7 +105,7 @@ mod_heatmap_beta <- function(
   # # ..................................................................... ###
 
   # Plotting theme ----
-  IASDT.R::cat_time("Plotting theme")
+  ecokit::cat_time("Plotting theme")
 
   Theme <- ggplot2::theme(
     legend.title = ggtext::element_markdown(),
@@ -121,7 +121,7 @@ mod_heatmap_beta <- function(
   # # ..................................................................... ###
 
   # getPostEstimate -----
-  IASDT.R::cat_time("getPostEstimate")
+  ecokit::cat_time("getPostEstimate")
 
   # Calculates mean, support and other posterior quantities for a specified
   # model parameter
@@ -157,7 +157,7 @@ mod_heatmap_beta <- function(
   # # ..................................................................... ###
 
   # Support ------
-  IASDT.R::cat_time("1. support")
+  ecokit::cat_time("1. support")
 
   Plot_SupportD <- (SupportMatrix * (2 * post$support - 1)) %>%
     t() %>%
@@ -215,7 +215,7 @@ mod_heatmap_beta <- function(
 
   # Sign ------
 
-  IASDT.R::cat_time("1. sign")
+  ecokit::cat_time("1. sign")
 
   PosSign <- '<span style="font-size: 8pt"><b>  +  </b></span>'
   NegSign <- '<span style="font-size: 8pt"><b>  \u2212  </b></span>'
@@ -265,7 +265,7 @@ mod_heatmap_beta <- function(
   # # ..................................................................... ###
 
   # Mean -----
-  IASDT.R::cat_time("2. mean")
+  ecokit::cat_time("2. mean")
 
   Plot_MeanD <- (SupportMatrix * post$mean) %>%
     t() %>%
@@ -321,7 +321,7 @@ mod_heatmap_beta <- function(
   # # ..................................................................... ###
 
   # Mean - without intercept -----
-  IASDT.R::cat_time("3. Mean - without intercept")
+  ecokit::cat_time("3. Mean - without intercept")
 
   LegendTitle <- paste0(
     '<span style="font-size: 12pt"><b>Beta</span><br>',
@@ -367,7 +367,7 @@ mod_heatmap_beta <- function(
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_diff(init_time = .start_time, prefix = "Plotting took ")
+  ecokit::cat_diff(init_time = .start_time, prefix = "Plotting took ")
 
   # # ..................................................................... ###
 
@@ -395,14 +395,14 @@ mod_heatmap_omega <- function(
   .start_time <- lubridate::now(tzone = "CET")
 
   if (is.null(path_model)) {
-    IASDT.R::stop_ctx("`path_model` cannot be empty", path_model = path_model)
+    ecokit::stop_ctx("`path_model` cannot be empty", path_model = path_model)
   }
 
   # # ..................................................................... ###
 
   # support_level has to be between 0 and 1
   if (support_level < 0 || support_level > 1) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`support_level` has to be a numeric value between 0 and 1",
       support_level = support_level)
   }
@@ -418,14 +418,14 @@ mod_heatmap_omega <- function(
   # # ..................................................................... ###
 
   # Loading model object ------
-  IASDT.R::cat_time("Loading model object")
+  ecokit::cat_time("Loading model object")
 
-  Model <- IASDT.R::load_as(path_model)
+  Model <- ecokit::load_as(path_model)
 
   # # ..................................................................... ###
 
   # Plot phylogenetic tree -----
-  IASDT.R::cat_time("Phylogenetic tree plot")
+  ecokit::cat_time("Phylogenetic tree plot")
 
   Tree <- Model$phyloTree
   # Remove the 'Sp_' prefix from tip labels
@@ -445,7 +445,7 @@ mod_heatmap_omega <- function(
   # # ..................................................................... ###
 
   # Plotting theme ----
-  IASDT.R::cat_time("Plotting theme")
+  ecokit::cat_time("Plotting theme")
 
   Theme <- ggplot2::theme(
     legend.title = ggtext::element_markdown(),
@@ -461,7 +461,7 @@ mod_heatmap_omega <- function(
   # # ..................................................................... ###
 
   # ComputeAssociations -----
-  IASDT.R::cat_time("Compute associations")
+  ecokit::cat_time("Compute associations")
 
   post <- Hmsc::computeAssociations(Model)[[1]]
   rm(Model, envir = environment())
@@ -469,7 +469,7 @@ mod_heatmap_omega <- function(
   # # ..................................................................... ###
 
   # Sign ------
-  IASDT.R::cat_time("1. sign")
+  ecokit::cat_time("1. sign")
 
   Support <- (post$support > support_level) %>%
     magrittr::add(post$support < (1 - support_level)) %>%
@@ -528,7 +528,7 @@ mod_heatmap_omega <- function(
   # # ..................................................................... ###
 
   # Mean -----
-  IASDT.R::cat_time("2. mean")
+  ecokit::cat_time("2. mean")
 
   # Legend colours
   Palette_Positive <- grDevices::colorRampPalette(
@@ -590,7 +590,7 @@ mod_heatmap_omega <- function(
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_diff(init_time = .start_time, prefix = "Plotting took ")
+  ecokit::cat_diff(init_time = .start_time, prefix = "Plotting took ")
 
   # # ..................................................................... ###
 

@@ -13,7 +13,7 @@ resp_curv_plot_species_all <- function(
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_time("Plotting species response curves")
+  ecokit::cat_time("Plotting species response curves")
 
   .start_time <- lubridate::now(tzone = "CET")
 
@@ -28,10 +28,10 @@ resp_curv_plot_species_all <- function(
 
   # Check arguments
 
-  IASDT.R::cat_time("Check arguments", level = 1L)
+  ecokit::cat_time("Check arguments", level = 1L)
 
   if (is.null(model_dir)) {
-    IASDT.R::stop_ctx("`model_dir` cannot be NULL", model_dir = model_dir)
+    ecokit::stop_ctx("`model_dir` cannot be NULL", model_dir = model_dir)
   }
 
   AllArgs <- ls(envir = environment())
@@ -40,16 +40,16 @@ resp_curv_plot_species_all <- function(
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character",
     args_to_check = "model_dir")
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "numeric",
     args_to_check = c("n_cores", "plotting_alpha"))
   rm(AllArgs, envir = environment())
 
   if (plotting_alpha < 0 || plotting_alpha > 1) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`plotting_alpha` must be between 0 and 1",
       plotting_alpha = plotting_alpha)
   }
@@ -61,7 +61,7 @@ resp_curv_plot_species_all <- function(
   Path_RC_All <- fs::path(model_dir, "Model_Postprocessing", "RespCurv_All")
 
   if (!dir.exists(Path_RC_DT)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Response curve data subfolder is missing.", Path_RC_DT = Path_RC_DT)
   }
 
@@ -71,11 +71,11 @@ resp_curv_plot_species_all <- function(
 
   # Loading & processing species response curve data in parallel
 
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     "Loading & processing species response curve data in parallel", level = 1L)
 
   Sp_DT_All <- fs::path(Path_RC_DT, "ResCurvDT.RData") %>%
-    IASDT.R::load_as() %>%
+    ecokit::load_as() %>%
     dplyr::select(Coords, RC_Path_Prob)
 
   if (n_cores == 1) {
@@ -95,9 +95,8 @@ resp_curv_plot_species_all <- function(
       Data = furrr::future_map(
         .x = RC_Path_Prob,
         .f = ~ {
-          IASDT.R::load_as(.x) %>%
-            dplyr::select(
-              Variable, NFV, Species, PlotData_Quant)
+          ecokit::load_as(.x) %>%
+            dplyr::select(Variable, NFV, Species, PlotData_Quant)
         },
         .options = furrr::furrr_options(seed = TRUE, chunk_size = 1))) %>%
     tidyr::unnest(Data) %>%
@@ -114,7 +113,7 @@ resp_curv_plot_species_all <- function(
 
   # Plot all species response curves
 
-  IASDT.R::cat_time("Plot all species response curves", level = 1L)
+  ecokit::cat_time("Plot all species response curves", level = 1L)
 
   Plots <- purrr::map_dfr(
     .x = seq_len(nrow(Sp_DT_All)),
@@ -266,7 +265,7 @@ resp_curv_plot_species_all <- function(
   # # ..................................................................... ###
 
   # Save data
-  IASDT.R::cat_time("Save data", level = 1L)
+  ecokit::cat_time("Save data", level = 1L)
 
   Sp_DT_All <- dplyr::select(Sp_DT_All, -DT) %>%
     dplyr::bind_cols(Plots = Plots)
@@ -275,7 +274,7 @@ resp_curv_plot_species_all <- function(
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = .start_time,
     prefix = "Plotting all species response curves took ", level = 1L)
 

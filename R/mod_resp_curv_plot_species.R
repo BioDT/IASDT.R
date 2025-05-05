@@ -14,7 +14,7 @@ resp_curv_plot_species <- function(
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_time("Plotting species response curves")
+  ecokit::cat_time("Plotting species response curves")
 
   .start_time <- lubridate::now(tzone = "CET")
 
@@ -29,10 +29,10 @@ resp_curv_plot_species <- function(
 
   # Check arguments
 
-  IASDT.R::cat_time("Check arguments")
+  ecokit::cat_time("Check arguments")
 
   if (is.null(model_dir)) {
-    IASDT.R::stop_ctx("`model_dir` cannot be NULL", model_dir = model_dir)
+    ecokit::stop_ctx("`model_dir` cannot be NULL", model_dir = model_dir)
   }
 
   AllArgs <- ls(envir = environment())
@@ -41,11 +41,11 @@ resp_curv_plot_species <- function(
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character",
     args_to_check = c("model_dir", "env_file"))
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "numeric", args_to_check = "n_cores")
   rm(AllArgs, envir = environment())
 
@@ -53,7 +53,7 @@ resp_curv_plot_species <- function(
 
   Path_RC_DT <- fs::path(model_dir, "Model_Postprocessing", "RespCurv_DT")
   if (!dir.exists(Path_RC_DT)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Response curve data subfolder is missing.", Path_RC_DT = Path_RC_DT)
   }
   Path_RC_Sp <- fs::path(model_dir, "Model_Postprocessing", "RespCurv_Sp")
@@ -63,19 +63,19 @@ resp_curv_plot_species <- function(
   # # ..................................................................... ###
 
   # # Load species summary
-  IASDT.R::cat_time("Load species summary")
+  ecokit::cat_time("Load species summary")
 
   EnvVars2Read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
     "Path_PA", "DP_R_PA", TRUE, FALSE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
   SpSummary <- fs::path(Path_PA, "Sp_PA_Summary_DF.csv")
   if (!file.exists(SpSummary)) {
-    IASDT.R::stop_ctx("SpSummary file does not exist", SpSummary = SpSummary)
+    ecokit::stop_ctx("SpSummary file does not exist", SpSummary = SpSummary)
   }
 
   SpSummary <- readr::read_csv(
@@ -86,34 +86,34 @@ resp_curv_plot_species <- function(
   # # ..................................................................... ###
 
   # Load species names
-  IASDT.R::cat_time("Load species names")
+  ecokit::cat_time("Load species names")
   SpeciesNames <- IASDT.R::get_species_name(env_file = env_file)
 
   # # ..................................................................... ###
 
   # Prepare species-specific data in parallel
 
-  IASDT.R::cat_time("Prepare species-specific data in parallel")
+  ecokit::cat_time("Prepare species-specific data in parallel")
 
-  IASDT.R::cat_time("Prepare working in parallel", level = 1L)
+  ecokit::cat_time("Prepare working in parallel", level = 1L)
   c1 <- parallel::makePSOCKcluster(n_cores)
   on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
 
-  IASDT.R::cat_time("Exporting objects to cores", level = 1L)
+  ecokit::cat_time("Exporting objects to cores", level = 1L)
   parallel::clusterExport(
     cl = c1, varlist = "Path_RC_DT", envir = environment())
 
-  IASDT.R::cat_time("Load packages at each core", level = 1L)
+  ecokit::cat_time("Load packages at each core", level = 1L)
   invisible(parallel::clusterEvalQ(
     cl = c1, expr = sapply("IASDT.R", library, character.only = TRUE)))
 
-  IASDT.R::cat_time("Loading species richness data", level = 1L)
+  ecokit::cat_time("Loading species richness data", level = 1L)
   Sp_DT_All <- fs::path(Path_RC_DT, "ResCurvDT.RData") %>%
-    IASDT.R::load_as() %>%
+    ecokit::load_as() %>%
     dplyr::select(tidyselect::all_of(c("Coords", "RC_Path_Prob"))) %>%
     dplyr::mutate(
       Data = parallel::parLapplyLB(
-        cl = c1, X = RC_Path_Prob, fun = IASDT.R::load_as)) %>%
+        cl = c1, X = RC_Path_Prob, fun = ecokit::load_as)) %>%
     tidyr::unnest(Data) %>%
     dplyr::select(-RC_Path_Prob) %>%
     tidyr::nest(
@@ -128,13 +128,13 @@ resp_curv_plot_species <- function(
 
   snow::stopCluster(c1)
 
-  IASDT.R::cat_time("Export species-specific data", level = 1L)
+  ecokit::cat_time("Export species-specific data", level = 1L)
   purrr::walk(
     .x = seq_len(nrow(Sp_DT_All)),
     .f = function(ID) {
       DT <- dplyr::slice(Sp_DT_All, ID)
-      if (isFALSE(IASDT.R::check_data(DT$Path_Sp_DT, warning = FALSE))) {
-        IASDT.R::save_as(object = DT, out_path = DT$Path_Sp_DT)
+      if (isFALSE(ecokit::check_data(DT$Path_Sp_DT, warning = FALSE))) {
+        ecokit::save_as(object = DT, out_path = DT$Path_Sp_DT)
       }
     })
 
@@ -143,17 +143,17 @@ resp_curv_plot_species <- function(
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_time("Plotting species-specific data")
+  ecokit::cat_time("Plotting species-specific data")
 
-  IASDT.R::cat_time("Prepare working in parallel", level = 1L)
+  ecokit::cat_time("Prepare working in parallel", level = 1L)
   c1 <- parallel::makePSOCKcluster(n_cores)
   on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
 
-  IASDT.R::cat_time("Exporting objects to cores", level = 1L)
+  ecokit::cat_time("Exporting objects to cores", level = 1L)
   parallel::clusterExport(
     cl = c1, varlist = c("SpeciesNames", "Sp_DT_All"), envir = environment())
 
-  IASDT.R::cat_time("Load packages at each core", level = 1L)
+  ecokit::cat_time("Load packages at each core", level = 1L)
   invisible(parallel::clusterEvalQ(
     cl = c1,
     expr = {
@@ -164,13 +164,13 @@ resp_curv_plot_species <- function(
         library, character.only = TRUE)
     }))
 
-  IASDT.R::cat_time("Plotting in parallel", level = 1L)
+  ecokit::cat_time("Plotting in parallel", level = 1L)
   Plots <- parallel::clusterApplyLB(
     cl = c1,
     x = Sp_DT_All,
     fun = function(RC_File) {
 
-      DT <- IASDT.R::load_as(RC_File)
+      DT <- ecokit::load_as(RC_File)
 
       Coords <- DT$Coords
       Species <- DT$Species
@@ -442,12 +442,12 @@ resp_curv_plot_species <- function(
   # # ..................................................................... ###
 
   # Save data
-  IASDT.R::cat_time("Save data")
+  ecokit::cat_time("Save data")
   save(Plots, file = fs::path(Path_RC_Sp, "Sp_DT_All.RData"))
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = .start_time, prefix = "Plotting species response curves took ")
 
   # # ..................................................................... ###

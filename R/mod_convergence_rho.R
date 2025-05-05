@@ -15,18 +15,18 @@ convergence_rho <- function(
   # # ..................................................................... ###
 
   if (is.null(posterior) || is.null(model_object) || is.null(title)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`posterior`, `model_object`, and `title` cannot be empty",
       posterior = posterior, model_object = model_object, title = title)
   }
 
   if (length(margin_type) != 1) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`margin_type` must be a single value.", margin_type = margin_type)
   }
 
   if (!margin_type %in% c("histogram", "density")) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`margin_type` must be either 'histogram' or 'density'.",
       margin_type = margin_type)
   }
@@ -41,7 +41,7 @@ convergence_rho <- function(
 
   # Load coda object
   if (inherits(posterior, "character")) {
-    posterior <- IASDT.R::load_as(posterior)
+    posterior <- ecokit::load_as(posterior)
   }
   posterior <- posterior$Rho
 
@@ -49,7 +49,7 @@ convergence_rho <- function(
 
   # Load model object
   if (inherits(model_object, "character")) {
-    model_object <- IASDT.R::load_as(model_object)
+    model_object <- ecokit::load_as(model_object)
   }
 
   # # ..................................................................... ###

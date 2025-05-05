@@ -32,47 +32,46 @@ mod_postprocess_CV_1_CPU <- function(
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "logical",
     args_to_check = c(
       "from_JSON", "use_TF", "TF_use_single", "LF_only", "LF_temp_cleanup",
       "LF_check", "temp_cleanup"))
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character",
     args_to_check = c("model_dir", "env_file", "partition_name", "LF_runtime"))
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "numeric",
     args_to_check = c("n_cores", "LF_n_cores", "n_batch_files"))
   rm(AllArgs, envir = environment())
 
   if (n_batch_files <= 0) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`n_batch_files` must be a positive integer.",
       n_batch_files = n_batch_files)
   }
   if (n_cores <= 0) {
-    IASDT.R::stop_ctx(
-      "`n_cores` must be a positive integer.", n_cores = n_cores)
+    ecokit::stop_ctx("`n_cores` must be a positive integer.", n_cores = n_cores)
   }
   if (LF_n_cores <= 0) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`LF_n_cores` must be a positive integer.", LF_n_cores = LF_n_cores)
   }
 
   if (!file.exists(env_file)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Error: Environment file is invalid or does not exist.",
       env_file = env_file)
   }
 
   if (!dir.exists(model_dir)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Model directory is invalid or does not exist.", model_dir = model_dir)
   }
 
   valid_CVs <- c("CV_Dist", "CV_Large", "CV_SAC")
   if (!all(CV_names %in% valid_CVs)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       paste0(
         "Invalid value for CV_names argument. Valid values ",
         "are: 'CV_Dist', 'CV_Large', or `CV_SAC`"),
@@ -87,7 +86,7 @@ mod_postprocess_CV_1_CPU <- function(
     "ProjectID", "DP_R_LUMI_gpu", FALSE, FALSE)
 
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
@@ -107,7 +106,7 @@ mod_postprocess_CV_1_CPU <- function(
 
   CV_DT_fitted <- fs::path(CV_dir, "CV_DT_fitted.RData")
   if (!file.exists(CV_DT_fitted)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "CV_DT_fitted file not found.", CV_DT_fitted = CV_DT_fitted)
   }
 
@@ -119,7 +118,7 @@ mod_postprocess_CV_1_CPU <- function(
 
   # Merge chains -----
 
-  IASDT.R::info_chunk(
+  ecokit::info_chunk(
     "Merge chains", line_char = "|", line_char_rep = 60L, cat_red = TRUE,
     cat_bold = TRUE, cat_timestamp = FALSE, info_lines_before = 2L)
 
@@ -132,18 +131,18 @@ mod_postprocess_CV_1_CPU <- function(
 
   # Prepare scripts for latent factor processing -----
 
-  IASDT.R::info_chunk(
+  ecokit::info_chunk(
     "Prepare scripts for latent factor processing",
     line_char = "|", line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
     cat_timestamp = FALSE, info_lines_before = 2L)
 
-  CV_DT_fitted <- IASDT.R::load_as(CV_DT_fitted) %>%
+  CV_DT_fitted <- ecokit::load_as(CV_DT_fitted) %>%
     dplyr::mutate(
       LF = purrr::map2(
         .x = CV_name, .y = CV,
         .f = ~ {
 
-          IASDT.R::info_chunk(
+          ecokit::info_chunk(
             message = paste0(.x, "_", .y), level = 1L, line_char = "+",
             line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE)
 
@@ -162,12 +161,12 @@ mod_postprocess_CV_1_CPU <- function(
 
   # Merge TensorFlow commands into batch files -----
 
-  IASDT.R::info_chunk(
+  ecokit::info_chunk(
     "Merge TensorFlow commands into batch files", line_char = "|",
     line_char_rep = 60L, cat_red = TRUE,
     cat_bold = TRUE, info_lines_before = 2L)
 
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     paste0(
       "Merge and organise TensorFlow commands for LF predictions ",
       "into a maximum of ", n_batch_files, " files"),
@@ -190,7 +189,7 @@ mod_postprocess_CV_1_CPU <- function(
 
   # Change working directory if specified
   if (!is.null(working_directory)) {
-    working_directory <- IASDT.R::normalize_path(
+    working_directory <- ecokit::normalize_path(
       working_directory, must_work = TRUE)
     BasicCommands <- c(
       BasicCommands, "# Change to working directory",
@@ -204,29 +203,29 @@ mod_postprocess_CV_1_CPU <- function(
     gtools::mixedsort()
 
   if (length(LF_InFiles) == 0) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "No command files were found in the temp directory",
       Temp_dir = Temp_dir, LF_InFiles = LF_InFiles,
       length_LF_InFiles = length(LF_InFiles))
   }
 
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     paste0("Found ", length(LF_InFiles), " files"),
     level = 2L, cat_timestamp = FALSE)
   stringr::str_remove_all(LF_InFiles, paste0(Temp_dir, "/")) %>%
-    purrr::walk(IASDT.R::cat_time, level = 3L, cat_timestamp = FALSE)
+    purrr::walk(ecokit::cat_time, level = 3L, cat_timestamp = FALSE)
 
   # Read and merge commands from input files
   LF_commands <- purrr::map(LF_InFiles, readr::read_lines, progress = FALSE) %>%
     unlist() %>%
     gtools::mixedsort()
 
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     paste0("Total number of commands to be executed: ", length(LF_commands)),
     level = 2L, cat_timestamp = FALSE)
 
   if (length(LF_commands) < n_batch_files) {
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       paste0(
         "Fewer commands than the requested number of files. ",
         "Setting `n_batch_files=", n_batch_files, "`."),
@@ -234,10 +233,10 @@ mod_postprocess_CV_1_CPU <- function(
     n_batch_files <- length(LF_commands)
   }
 
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     paste0("Splitting commands into ", n_batch_files, " files"),
     cat_timestamp = FALSE, level = 2L)
-  LF_commands <- IASDT.R::split_vector(LF_commands, n_splits = n_batch_files)
+  LF_commands <- ecokit::split_vector(LF_commands, n_splits = n_batch_files)
   line_sep <- strrep("-", 60)
 
   purrr::walk(
@@ -270,7 +269,7 @@ mod_postprocess_CV_1_CPU <- function(
   # # ..................................................................... ###
 
   # Prepare LF batch file -----
-  IASDT.R::cat_time("Prepare LF batch file")
+  ecokit::cat_time("Prepare LF batch file")
 
   time_now <- lubridate::now(tzone = "CET") %>%
     format(format = "%Y-%m-%d %H:%M:%S")
@@ -313,7 +312,7 @@ mod_postprocess_CV_1_CPU <- function(
     "# This script was created on: {time_now} CET\n",
     "# {line_sep}")
 
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     paste0("Writing SLURM script to: `", Path_LF_SLURM, "`"),
     level = 2L, cat_timestamp = FALSE)
   # Write the content to a file
@@ -370,29 +369,28 @@ mod_postprocess_CV_2_CPU <- function(
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "logical",
     args_to_check = c("use_TF", "TF_use_single", "LF_temp_cleanup", "LF_check"))
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character",
     args_to_check = c("model_dir", "env_file"))
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "numeric",
     args_to_check = c("n_cores", "LF_n_cores"))
   rm(AllArgs, envir = environment())
 
   if (n_cores <= 0) {
-    IASDT.R::stop_ctx(
-      "`n_cores` must be a positive integer.", n_cores = n_cores)
+    ecokit::stop_ctx("`n_cores` must be a positive integer.", n_cores = n_cores)
   }
   if (LF_n_cores <= 0) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`LF_n_cores` must be a positive integer.", LF_n_cores = LF_n_cores)
   }
 
   valid_CVs <- c("CV_Dist", "CV_Large", "CV_SAC")
   if (!all(CV_names %in% valid_CVs)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       paste0(
         "Invalid value for CV_names argument. Valid values ",
         "are: 'CV_Dist', 'CV_Large', or `CV_SAC`"),
@@ -409,12 +407,12 @@ mod_postprocess_CV_2_CPU <- function(
     pattern = "Eval_.+.qs2", full.names = TRUE)
 
   if (length(Eval_explain) != 1L) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "There should be only one evaluation file in the Model_Evaluation folder",
       Eval_explain = Eval_explain)
   }
 
-  Eval_explain <- IASDT.R::load_as(Eval_explain) %>%
+  Eval_explain <- ecokit::load_as(Eval_explain) %>%
     dplyr::select(-Sp) %>%
     dplyr::rename(ias_id = IAS_ID) %>%
     dplyr::filter(ias_id != "SR") %>%
@@ -425,21 +423,21 @@ mod_postprocess_CV_2_CPU <- function(
 
   # Predicting habitat suitability at testing cross-validation folds -------
 
-  IASDT.R::info_chunk(
+  ecokit::info_chunk(
     message = "Predicting habitat suitability at testing sites",
     line_char = "*", line_char_rep = 70L, cat_red = TRUE, cat_bold = TRUE)
 
   path_CV <- fs::path(model_dir, "Model_Fitting_CV")
   path_CV_DT_fitted <- fs::path(path_CV, "CV_DT_fitted.RData")
   if (!file.exists(path_CV_DT_fitted)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Required file 'CV_DT_fitted.RData' not found",
       path_CV_DT_fitted = path_CV_DT_fitted)
   }
 
-  CV_DT_fitted <- IASDT.R::load_as(path_CV_DT_fitted)
+  CV_DT_fitted <- ecokit::load_as(path_CV_DT_fitted)
   if (nrow(CV_DT_fitted) < 1) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "CV_DT_fitted data should contain at least one row",
       CV_DT_fitted = CV_DT_fitted)
   }
@@ -450,7 +448,7 @@ mod_postprocess_CV_2_CPU <- function(
         .x = CV_name, .y = CV,
         .f = ~ {
 
-          IASDT.R::info_chunk(
+          ecokit::info_chunk(
             message = paste0(.x, "_", .y), line_char = "~", level = 1L,
             line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE)
 
@@ -465,7 +463,7 @@ mod_postprocess_CV_2_CPU <- function(
         }
       ))
 
-  IASDT.R::save_as(
+  ecokit::save_as(
     object = CV_DT_fitted, object_name = "CV_DT_fitted",
     out_path = path_CV_DT_fitted)
 
@@ -476,7 +474,7 @@ mod_postprocess_CV_2_CPU <- function(
 
   # Merge prediction summary data ------
 
-  IASDT.R::cat_time("Merge prediction summary data")
+  ecokit::cat_time("Merge prediction summary data")
 
   # ID columns to be used for nesting
   cols_id <- c(
@@ -497,7 +495,7 @@ mod_postprocess_CV_2_CPU <- function(
 
   summary_all <- CV_DT_fitted$Path_Preds_summary %>%
     # load summary data for predictions
-    purrr::map(IASDT.R::load_as) %>%
+    purrr::map(ecokit::load_as) %>%
     dplyr::bind_rows() %>%
     # nest selected columns into `data` column
     tidyr::nest(.by = tidyselect::all_of(cols_id)) %>%
@@ -540,7 +538,7 @@ mod_postprocess_CV_2_CPU <- function(
 
   hab_type <- dplyr::distinct(summary_all, hab_abb, hab_name)
   if (nrow(hab_type) != 1) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "There should be only one habitat type in the summary data",
       hab_type = hab_type)
   }
@@ -559,19 +557,19 @@ mod_postprocess_CV_2_CPU <- function(
 
     # Ensure metric is non-null, character strings with content
     if (is.null(metric) || !is.character(metric) || !nzchar(metric))  {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         "`metric` have to be character of length > 1", metric = metric)
     }
     # Ensure data is a data frame tibble with more than 1 row
     if (!is.data.frame(data) || nrow(data) < 1) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         "`data` has to be a data frame tibble with more than 1 row",
         data = data)
     }
 
     # metric value has to be exist in the eval_metrics vector
     if (!metric %in% eval_metrics) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         paste0(
           "`metric` should be one of the following: ", toString(eval_metrics)),
         metric = metric)
@@ -675,19 +673,19 @@ mod_postprocess_CV_2_CPU <- function(
 
     # Ensure metric is non-null, character strings with content
     if (is.null(metric) || !is.character(metric) || !nzchar(metric))  {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         "`metric` have to be character of length > 1", metric = metric)
     }
     # Ensure data is a data frame tibble with more than 1 row
     if (!is.data.frame(data) || nrow(data) < 1) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         "`data` has to be a data frame tibble with more than 1 row",
         data = data)
     }
 
     # metric value has to be exist in the eval_metrics vector
     if (!metric %in% eval_metrics) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         paste0(
           "`metric` should be one of the following: ", toString(eval_metrics)),
         metric = metric)
@@ -794,8 +792,7 @@ mod_postprocess_CV_2_CPU <- function(
 
   # ****************************************************************
 
-  IASDT.R::cat_diff(
-    init_time = .start_time, prefix = "\nPost-processing took ")
+  ecokit::cat_diff(init_time = .start_time, prefix = "\nPost-processing took ")
 
   return(invisible(NULL))
 }

@@ -20,10 +20,10 @@ EASIN_taxonomy <- function(
   AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character",
     args_to_check = c("kingdom", "phylum", "env_file"))
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "numeric", args_to_check = "n_search")
 
   # # ..................................................................... ###
@@ -34,7 +34,7 @@ EASIN_taxonomy <- function(
     ~var_name, ~value, ~check_dir, ~check_file,
     "EASIN_URL", "DP_R_EASIN_taxa_url", FALSE, FALSE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
@@ -94,7 +94,7 @@ EASIN_taxonomy <- function(
     dplyr::filter(Kingdom == !!kingdom, Phylum == !!phylum)
 
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = TimeStartTaxa,
     prefix = "Extracting EASIN taxonomy was finished in ", level = 2L)
 

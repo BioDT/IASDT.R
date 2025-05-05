@@ -71,7 +71,7 @@ if the output file validation fails.
 \item The function checks for the existence of required input files and the
 Python executable in the specified virtual environment.
 \item Executes the Python script using \code{system2}.
-\item Verifies the output file validity using \code{IASDT.R::check_data}. Retries up
+\item Verifies the output file validity using \code{ecokit::check_data}. Retries up
 to 3 times if the output is invalid.
 \item Generates detailed logs if \code{verbose} is set to \code{TRUE}.
 }

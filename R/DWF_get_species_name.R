@@ -31,7 +31,7 @@ get_species_name <- function(species_ID = NULL, env_file = ".env") {
     "TaxaInfoFile", "DP_R_Taxa_info", FALSE, TRUE,
     "Path_PA", "DP_R_PA", TRUE, FALSE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
@@ -56,14 +56,14 @@ get_species_name <- function(species_ID = NULL, env_file = ".env") {
     NGridCells <- fs::path(Path_PA, "Sp_PA_Summary_DF.RData")
 
     if (!file.exists(NGridCells)) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         paste0(
           "`Sp_PA_Summary_DF.RData` file does not exist in the ", Path_PA,
           " folder"),
         NGridCells = NGridCells, Path_PA = Path_PA)
     }
 
-    NGridCells <- IASDT.R::load_as(NGridCells) %>%
+    NGridCells <- ecokit::load_as(NGridCells) %>%
       dplyr::mutate(
         IAS_ID = paste0(
           "Sp_", stringr::str_pad(IAS_ID, pad = "0", width = 4))) %>%

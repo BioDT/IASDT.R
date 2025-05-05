@@ -45,7 +45,7 @@ coda_to_tibble <- function(
   # # |||||||||||||||||||||||||||||||||||||||
 
   if (is.null(coda_object) || is.null(posterior_type)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "None of `coda_object` or `posterior_type` cannot be empty",
       coda_object = coda_object, posterior_type = posterior_type)
   }
@@ -57,13 +57,13 @@ coda_to_tibble <- function(
   posterior_type <- tolower(posterior_type)
 
   if (!posterior_type %in% c("rho", "alpha", "omega", "beta")) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "posterior_type has to be one of rho, alpha, omega, or beta",
       posterior_type = posterior_type)
   }
 
   if (!(inherits(coda_object, "mcmc.list") || inherits(coda_object, "mcmc"))) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Input Coda object has to be of class mcmc.list or mcmc",
       class_coda_obj = class(coda_object))
   }
@@ -141,7 +141,7 @@ coda_to_tibble <- function(
       ~var_name, ~value, ~check_dir, ~check_file,
       "TaxaInfoFile", "DP_R_Taxa_info", FALSE, TRUE)
     # Assign environment variables and check file and paths
-    IASDT.R::assign_env_vars(
+    ecokit::assign_env_vars(
       env_file = env_file, env_variables_data = EnvVars2Read)
     rm(EnvVars2Read, envir = environment())
 

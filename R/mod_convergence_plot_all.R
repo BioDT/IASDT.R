@@ -29,7 +29,7 @@ convergence_plot_all <- function(
   .start_time <- lubridate::now(tzone = "CET")
 
   if (is.null(model_dir) || is.null(n_cores)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`model_dir` and `n_cores` must not be NULL",
       model_dir = model_dir, n_cores = n_cores)
   }
@@ -47,26 +47,26 @@ convergence_plot_all <- function(
 
   # Check input arguments ------
 
-  IASDT.R::cat_time("Check input arguments")
+  ecokit::cat_time("Check input arguments")
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character",
     args_to_check = c("model_dir", "margin_type"))
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "numeric",
     args_to_check = c("n_omega", "n_cores"))
   rm(AllArgs, envir = environment())
 
   if (length(margin_type) != 1) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`margin_type` must be a single value.", margin_type = margin_type)
   }
 
   if (!margin_type %in% c("histogram", "density")) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`margin_type` must be either 'histogram' or 'density'.",
       margin_type = margin_type)
   }
@@ -75,7 +75,7 @@ convergence_plot_all <- function(
 
   # Prepare/load convergence data ------
 
-  IASDT.R::cat_time("Prepare or load convergence data")
+  ecokit::cat_time("Prepare or load convergence data")
 
   Path_Convergence_All <- fs::path(model_dir, "Model_Convergence_All")
   Path_ConvDT <- fs::path(Path_Convergence_All, "DT")
@@ -83,9 +83,9 @@ convergence_plot_all <- function(
 
   Model_Info <- fs::path(model_dir, "Model_Info.RData")
   if (!file.exists(Model_Info)) {
-    IASDT.R::stop_ctx("Model info file does not exist", Model_Info = Model_Info)
+    ecokit::stop_ctx("Model info file does not exist", Model_Info = Model_Info)
   }
-  Model_Info <- IASDT.R::load_as(Model_Info)
+  Model_Info <- ecokit::load_as(Model_Info)
 
   # Extract number of chains
   NChains <- length(Model_Info$Chain[[1]])
@@ -122,8 +122,8 @@ convergence_plot_all <- function(
 
       if ((Tree == "Tree" && !file.exists(Path_Trace_Rho)) ||
           !file.exists(Path_Trace_Alpha) || !file.exists(Path_Beta_Omega)) {
-        Model_Obj <- IASDT.R::load_as(Path_FittedMod)
-        Coda_Obj <- IASDT.R::load_as(path_coda)
+        Model_Obj <- ecokit::load_as(Path_FittedMod)
+        Coda_Obj <- ecokit::load_as(path_coda)
       }
 
       # Rho -----
@@ -136,7 +136,7 @@ convergence_plot_all <- function(
             posterior = Coda_Obj, model_object = Model_Obj, title = RhoTitle,
             margin_type = margin_type)
 
-          IASDT.R::save_as(
+          ecokit::save_as(
             object = PlotObj_Rho, object_name = Obj_Rho,
             out_path = Path_Trace_Rho)
 
@@ -155,7 +155,7 @@ convergence_plot_all <- function(
             basename(path_coda), "_Tree|_Coda|.RData$|.qs2"),
           margin_type = margin_type)
 
-        IASDT.R::save_as(
+        ecokit::save_as(
           object = PlotObj_Alpha, object_name = Obj_Alpha,
           out_path = Path_Trace_Alpha)
 
@@ -164,7 +164,7 @@ convergence_plot_all <- function(
 
       # Beta + Omega -----
       if (file.exists(Path_Beta_Omega)) {
-        Beta_Omega <- IASDT.R::load_as(Path_Beta_Omega)
+        Beta_Omega <- ecokit::load_as(Path_Beta_Omega)
         Beta_Gelman <- Beta_Omega$Beta_Gelman
         Beta_ESS <- Beta_Omega$Beta_ESS
         Omega_ESS <- Beta_Omega$Omega_ESS
@@ -226,16 +226,16 @@ convergence_plot_all <- function(
 
   Path_DT <- fs::path(Path_Convergence_All, "Convergence_DT.RData")
 
-  if (IASDT.R::check_data(Path_DT, warning = FALSE)) {
+  if (ecokit::check_data(Path_DT, warning = FALSE)) {
 
-    IASDT.R::cat_time("Loading convergence data", level = 1L)
-    Convergence_DT <- IASDT.R::load_as(Path_DT)
+    ecokit::cat_time("Loading convergence data", level = 1L)
+    Convergence_DT <- ecokit::load_as(Path_DT)
 
   } else {
 
-    IASDT.R::cat_time("Processing convergence data", level = 1L)
+    ecokit::cat_time("Processing convergence data", level = 1L)
 
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       paste0("Prepare working in parallel using ", n_cores, " cores"),
       level = 2L)
 
@@ -304,7 +304,7 @@ convergence_plot_all <- function(
   # # ..................................................................... ###
 
   # Alpha - trace plots ------
-  IASDT.R::cat_time("Alpha - trace plots")
+  ecokit::cat_time("Alpha - trace plots")
 
   grDevices::cairo_pdf(
     filename = fs::path(Path_Convergence_All, "TracePlots_Alpha.pdf"),
@@ -312,14 +312,14 @@ convergence_plot_all <- function(
   purrr::walk(
     .x = Convergence_DT$Path_Trace_Alpha,
     .f = purrr::safely(~{
-      gridExtra::grid.arrange(IASDT.R::load_as(.x)[[1]])
+      gridExtra::grid.arrange(ecokit::load_as(.x)[[1]])
     }))
   grDevices::dev.off()
 
   # # ..................................................................... ###
 
   # Rho - trace plots ------
-  IASDT.R::cat_time("Rho - trace plots")
+  ecokit::cat_time("Rho - trace plots")
 
   layout_matrix <- matrix(seq_len(2 * 2), nrow = 2, byrow = TRUE)
 
@@ -330,7 +330,7 @@ convergence_plot_all <- function(
         .x = Path_Trace_Rho,
         .p = ~is.na(.x),
         .f = ~grid::grid.rect(gp = grid::gpar(col = "white")),
-        .else = ~IASDT.R::load_as(.x))) %>%
+        .else = ~ecokit::load_as(.x))) %>%
     dplyr::pull(Rho) %>%
     gridExtra::marrangeGrob(
       bottom = bquote(paste0("page ", g, " of ", npages)),
@@ -350,7 +350,7 @@ convergence_plot_all <- function(
   # # ..................................................................... ###
 
   # Omega - Gelman convergence ------
-  IASDT.R::cat_time("Omega - Gelman convergence")
+  ecokit::cat_time("Omega - Gelman convergence")
 
   Plot_Path <- fs::path(
     Path_Convergence_All, paste0("Convergence_Omega_Gelman.pdf"))
@@ -400,7 +400,7 @@ convergence_plot_all <- function(
   # # ..................................................................... ###
 
   # Omega - Effective sample size -----
-  IASDT.R::cat_time("Omega - Effective sample size")
+  ecokit::cat_time("Omega - Effective sample size")
 
   Plot_Path <- fs::path(
     Path_Convergence_All, paste0("Convergence_Omega_ESS.pdf"))
@@ -454,7 +454,7 @@ convergence_plot_all <- function(
   # # ..................................................................... ###
 
   # Beta - Gelman convergence ------
-  IASDT.R::cat_time("Beta - Gelman convergence")
+  ecokit::cat_time("Beta - Gelman convergence")
 
   Plot_Title <- paste0("Gelman convergence diagnostic --- Beta")
 
@@ -501,7 +501,7 @@ convergence_plot_all <- function(
   # # ..................................................................... ###
 
   # Beta - Effective sample size -----
-  IASDT.R::cat_time("Beta - Effective sample size")
+  ecokit::cat_time("Beta - Effective sample size")
 
   Plot_Path <- fs::path(
     Path_Convergence_All, paste0("Convergence_Beta_ESS.pdf"))
@@ -554,7 +554,7 @@ convergence_plot_all <- function(
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = .start_time, prefix = "\nPlotting model convergence took ")
 
   # # ..................................................................... ###

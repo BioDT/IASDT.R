@@ -65,7 +65,7 @@ CHELSA_process <- function(
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_time("Checking input arguments")
+  ecokit::cat_time("Checking input arguments")
 
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(
@@ -74,23 +74,23 @@ CHELSA_process <- function(
     stats::setNames(AllArgs)
 
   CharArgs <- c("env_file", "other_variables")
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_to_check = CharArgs, args_type = "character")
 
   LogicArgs <- c("download", "overwrite", "overwrite_processed")
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_to_check = LogicArgs, args_type = "logical")
 
   NumericArgs <- c(
     "download_n_cores", "compression_level",
     "sleep", "download_attempts", "n_cores")
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_to_check = NumericArgs, args_type = "numeric")
 
   rm(AllArgs, CharArgs, LogicArgs, NumericArgs, envir = environment())
 
   if (n_cores < 1 || download_n_cores < 1) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`n_cores` must be a positive integer.",
       n_cores = n_cores, download_n_cores = download_n_cores)
   }
@@ -107,10 +107,10 @@ CHELSA_process <- function(
   # # ..................................................................... ###
 
   # Environment variables -----
-  IASDT.R::cat_time("Environment variables")
+  ecokit::cat_time("Environment variables")
 
   if (!file.exists(env_file)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Path to environment variables was not found", env_file = env_file)
   }
 
@@ -119,7 +119,7 @@ CHELSA_process <- function(
     "Path_CHELSA_In", "DP_R_CHELSA_raw", FALSE, FALSE,
     "Path_CHELSA_Out", "DP_R_CHELSA_processed", FALSE, FALSE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
@@ -133,7 +133,7 @@ CHELSA_process <- function(
 
   # Prepare CHELSA metadata / download CHELSA data -----
 
-  IASDT.R::cat_time("Prepare CHELSA metadata or download CHELSA data")
+  ecokit::cat_time("Prepare CHELSA metadata or download CHELSA data")
   TimePrepare <- lubridate::now(tzone = "CET")
 
   # 19 Bioclimatic variables (+ other_variables, if not empty string) * 46 CC
@@ -143,7 +143,7 @@ CHELSA_process <- function(
     overwrite = overwrite, other_variables = other_variables,
     download_attempts = download_attempts, sleep = sleep)
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = TimePrepare, level = 1L,
     prefix = "Prepare CHELSA metadata or download CHELSA data was finished in ")
 
@@ -157,10 +157,10 @@ CHELSA_process <- function(
     # were already checked while downloading the files
 
     if (n_cores == 1) {
-      IASDT.R::cat_time("Check input CHELSA files sequentially")
+      ecokit::cat_time("Check input CHELSA files sequentially")
       future::plan("future::sequential", gc = TRUE)
     } else {
-      IASDT.R::cat_time("Check input CHELSA files in parallel")
+      ecokit::cat_time("Check input CHELSA files in parallel")
       withr::local_options(
         future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
         future.seed = TRUE)
@@ -175,7 +175,7 @@ CHELSA_process <- function(
       dplyr::mutate(
         InputOkay = furrr::future_map_lgl(
           .x = Path_Down,
-          .f = IASDT.R::check_tiff, warning = FALSE,
+          .f = ecokit::check_tiff, warning = FALSE,
           .options = furrr::furrr_options(seed = TRUE, packages = "IASDT.R"))
       ) %>%
       dplyr::filter(isFALSE(InputOkay))
@@ -190,7 +190,7 @@ CHELSA_process <- function(
         x = dplyr::pull(CHELSA_Data_Checked, "InputOkay"),
         file = fs::path(Path_CHELSA_Out, "ProblematicTiffs.txt"))
 
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         paste0(
           "Not all input tiff files are available and valid. ",
           "Check `ProblematicTiffs.txt`"))
@@ -223,13 +223,13 @@ CHELSA_process <- function(
   TimeProcess <- lubridate::now(tzone = "CET")
 
   if (n_cores == 1) {
-    IASDT.R::cat_time("Processing CHELSA maps sequentially")
+    ecokit::cat_time("Processing CHELSA maps sequentially")
     future::plan("future::sequential", gc = TRUE)
   } else {
     withr::local_options(
       future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
       future.seed = TRUE)
-    IASDT.R::cat_time("Processing CHELSA maps in parallel")
+    ecokit::cat_time("Processing CHELSA maps in parallel")
     c1 <- snow::makeSOCKcluster(n_cores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
     future::plan("future::cluster", workers = c1, gc = TRUE)
@@ -239,7 +239,7 @@ CHELSA_process <- function(
 
   if (overwrite_processed) {
 
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       "overwrite_processed = TRUE; all files will be processed", level = 1L)
 
     CHELSA2Process <- dplyr::select(
@@ -248,7 +248,7 @@ CHELSA_process <- function(
   } else {
 
     # Exclude previously processed files (after checking)
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       "Exclude previously processed files (after checking)", level = 1L)
 
     CHELSA2Process <- CHELSA_Data %>%
@@ -257,8 +257,8 @@ CHELSA_process <- function(
         Process = furrr::future_map2_lgl(
           .x = Path_Out_NC, .y = Path_Out_tif,
           .f = ~ {
-            NC_Okay <- IASDT.R::check_tiff(.x, warning = FALSE)
-            Tif_Okay <- IASDT.R::check_tiff(.y, warning = FALSE)
+            NC_Okay <- ecokit::check_tiff(.x, warning = FALSE)
+            Tif_Okay <- ecokit::check_tiff(.y, warning = FALSE)
             return(isFALSE(NC_Okay && Tif_Okay))
           },
           .options = furrr::furrr_options(seed = TRUE, packages = "IASDT.R"))
@@ -268,7 +268,7 @@ CHELSA_process <- function(
   }
 
   # Processing CHELSA files
-  IASDT.R::cat_time("Processing CHELSA files", level = 1L)
+  ecokit::cat_time("Processing CHELSA files", level = 1L)
 
   if (nrow(CHELSA2Process) > 0) {
     CHELSA2Process <- CHELSA2Process %>%
@@ -307,8 +307,8 @@ CHELSA_process <- function(
             invisible(gc())
 
             Tiffs_okay <- all(
-              IASDT.R::check_tiff(Path_Out_tif, warning = FALSE),
-              IASDT.R::check_tiff(Path_Out_NC, warning = FALSE))
+              ecokit::check_tiff(Path_Out_tif, warning = FALSE),
+              ecokit::check_tiff(Path_Out_NC, warning = FALSE))
 
             if (inherits(Try, "try-error")) {
               return(TRUE)
@@ -331,18 +331,18 @@ CHELSA_process <- function(
         x = CHELSA2Process$Path_Down,
         file = fs::path(Path_CHELSA_Out, "FailedProcessing.txt"))
 
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         paste0(
           "\n >> ", nrow(CHELSA2Process), " files failed to process.\n",
           " >> Check `FailedProcessing.txt` for more details"),
         CHELSA2Process = CHELSA2Process)
     }
 
-    IASDT.R::cat_time("All tiff files were processed", level = 1L)
+    ecokit::cat_time("All tiff files were processed", level = 1L)
 
   } else {
 
-    IASDT.R::cat_time("All tiff files were already processed.", level = 1L)
+    ecokit::cat_time("All tiff files were already processed.", level = 1L)
 
   }
 
@@ -353,7 +353,7 @@ CHELSA_process <- function(
     future::plan("future::sequential", gc = TRUE)
   }
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = TimeProcess,
     prefix = "Processing CHELSA data was finished in ", level = 1L)
 
@@ -362,14 +362,14 @@ CHELSA_process <- function(
   # Grouping CHELSA data by time, climate model/scenario ----
 
   if (n_cores == 1) {
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       "Grouping CHELSA data by time and climate model+scenario sequentially")
     future::plan("future::sequential", gc = TRUE)
   } else {
     withr::local_options(
       future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
       future.seed = TRUE)
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       "Grouping CHELSA data by time and climate model+scenario in parallel")
     c1 <- snow::makeSOCKcluster(n_cores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
@@ -419,12 +419,12 @@ CHELSA_process <- function(
           Map <- terra::rast(File_List) %>%
             stats::setNames(MapNames) %>%
             terra::subset(gtools::mixedsort(MapNames)) %>%
-            IASDT.R::set_raster_CRS() %>%
-            IASDT.R::set_raster_values() %>%
+            ecokit::set_raster_CRS() %>%
+            ecokit::set_raster_values() %>%
             terra::wrap()
 
           # save to disk
-          IASDT.R::save_as(
+          ecokit::save_as(
             object = Map, object_name = Name, out_path = FilePath)
 
           return(Map)
@@ -457,7 +457,7 @@ CHELSA_process <- function(
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = .start_time, prefix = "\nProcessing CHELSA data took ")
 
   return(invisible(NULL))

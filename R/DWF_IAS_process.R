@@ -44,17 +44,17 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
   .start_time <- lubridate::now(tzone = "CET")
 
   # Checking arguments ----
-  IASDT.R::cat_time("Checking arguments")
+  ecokit::cat_time("Checking arguments")
 
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character", args_to_check = "env_file")
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "logical", args_to_check = "overwrite")
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "numeric", args_to_check = "n_cores")
 
   rm(AllArgs, envir = environment())
@@ -71,7 +71,7 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
   # # ..................................................................... ###
 
   # Environment variables ----
-  IASDT.R::cat_time("Environment variables")
+  ecokit::cat_time("Environment variables")
 
   EnvVars2Read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
@@ -84,7 +84,7 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
     "Path_TaxaStand", "DP_R_Taxa_stand", FALSE, TRUE,
     "Path_TaxaInfo_RData", "DP_R_Taxa_info_rdata", FALSE, TRUE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
@@ -92,7 +92,7 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
 
   # Reading input data and create directories ------
 
-  IASDT.R::cat_time("Reading input data and create directories")
+  ecokit::cat_time("Reading input data and create directories")
 
   Path_PA_JPEG <- fs::path(Path_PA, "JPEG_Maps")
   fs::dir_create(Path_PA_JPEG)
@@ -102,7 +102,7 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
     'Last update: {format(Sys.Date(), "%d %B %Y")}')
 
   ## Standardized taxonomy -----
-  IASDT.R::cat_time("Standardized taxonomy", level = 1L)
+  ecokit::cat_time("Standardized taxonomy", level = 1L)
   # list of original taxonomy (including dummy ID column `taxon_id_`)
   TaxaList_Original <- readRDS(Path_TaxaStand) %>%
     dplyr::select(tidyselect::all_of(c("taxon_id_", "taxon_name")))
@@ -110,14 +110,14 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
   # # .................................... ###
 
   ## TaxaInfo ----
-  IASDT.R::cat_time("TaxaInfo", level = 1L)
-  TaxaList <- IASDT.R::load_as(Path_TaxaInfo_RData)
+  ecokit::cat_time("TaxaInfo", level = 1L)
+  TaxaList <- ecokit::load_as(Path_TaxaInfo_RData)
   TaxaList_Distinct <- dplyr::distinct(TaxaList, taxon_name, IAS_ID)
 
   # # .................................... ###
 
   ## Species habitat affinity -----
-  IASDT.R::cat_time("Species habitat affinity", level = 1L)
+  ecokit::cat_time("Species habitat affinity", level = 1L)
   SynHab_List <- tibble::tribble(
     ~SynHab_code, ~SynHab_name,
     "1", "Forests",
@@ -159,17 +159,17 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
 
   # Species-specific data ------
 
-  IASDT.R::cat_time("Species-specific data")
+  ecokit::cat_time("Species-specific data")
   .StartTimeDist <- lubridate::now(tzone = "CET")
 
   ## Prepare working in parallel -----
-  IASDT.R::set_parallel(n_cores = n_cores, level = 1L)
+  ecokit::set_parallel(n_cores = n_cores, level = 1L)
   withr::defer(future::plan("future::sequential", gc = TRUE))
 
   # # .................................... ###
 
   ## Species-specific data in parallel ----
-  IASDT.R::cat_time("Species-specific data in parallel", level = 1L)
+  ecokit::cat_time("Species-specific data in parallel", level = 1L)
 
   Sp_PA_Data <- future.apply::future_lapply(
     X = sort(unique(TaxaList$Species_name)),
@@ -190,9 +190,9 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
   # # .................................... ###
 
   ## Stopping cluster ----
-  IASDT.R::set_parallel(stop_cluster = TRUE, level = 2L)
+  ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = .StartTimeDist,
     prefix = "Processing Species-specific data took ",
     msg_n_lines = 1, level = 2L)
@@ -200,7 +200,7 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
   # # ..................................................................... ###
 
   # Merge Species-specific summary info -----
-  IASDT.R::cat_time("Merge Species-specific summary info")
+  ecokit::cat_time("Merge Species-specific summary info")
 
   Sp_PA_Data <- Sp_PA_Data %>%
     # Split number of grid cell per country / biogeographical region as separate
@@ -241,13 +241,13 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
   rm(TaxaList, envir = environment())
 
   ## Save summary results -----
-  IASDT.R::cat_time("Save summary results", level = 1L)
+  ecokit::cat_time("Save summary results", level = 1L)
 
-  IASDT.R::cat_time("`RData`", level = 2L)
+  ecokit::cat_time("`RData`", level = 2L)
   save(Sp_PA_Data, file = fs::path(Path_PA, "Sp_PA_Data.RData"))
 
-  IASDT.R::cat_time("Summary data without maps", level = 1L)
-  IASDT.R::cat_time("csv format", level = 2L)
+  ecokit::cat_time("Summary data without maps", level = 1L)
+  ecokit::cat_time("csv format", level = 2L)
   Sp_PA_Summary_DF <- Sp_PA_Data %>%
     dplyr::select(
       -tidyselect::all_of(
@@ -257,7 +257,7 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
     Sp_PA_Summary_DF, file = fs::path(Path_PA, "Sp_PA_Summary_DF.csv"),
     progress = FALSE)
 
-  IASDT.R::cat_time("RData format", level = 2L)
+  ecokit::cat_time("RData format", level = 2L)
   save(
     Sp_PA_Summary_DF,
     file = fs::path(Path_PA, "Sp_PA_Summary_DF.RData"))
@@ -265,10 +265,10 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
   # # ..................................................................... ###
 
   # Summary of merged data ------
-  IASDT.R::cat_time("Summary of merged data")
+  ecokit::cat_time("Summary of merged data")
 
   ## Number of IAS per grid cell -----
-  IASDT.R::cat_time("# IAS per grid cell", level = 1L)
+  ecokit::cat_time("# IAS per grid cell", level = 1L)
 
   IAS_NumSp <- dplyr::filter(Sp_PA_Data, NCells_All > 0) %>%
     dplyr::pull(PA_Map) %>%
@@ -277,10 +277,10 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
     sum(na.rm = TRUE) %>%
     stats::setNames("IAS_NumSp") %>%
     # Ensure that values are read from memory
-    IASDT.R::set_raster_values()
+    ecokit::set_raster_values()
 
   # save as RData
-  IASDT.R::save_as(
+  ecokit::save_as(
     object = terra::wrap(IAS_NumSp), object_name = "IAS_NumSp",
     out_path = fs::path(Path_PA, "IAS_NumSp.RData"))
 
@@ -300,10 +300,10 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
     sum(na.rm = TRUE) %>%
     stats::setNames("IAS_NumSp_Masked") %>%
     # Ensure that values are read from memory
-    IASDT.R::set_raster_values()
+    ecokit::set_raster_values()
 
   # save as RData
-  IASDT.R::save_as(
+  ecokit::save_as(
     object = terra::wrap(IAS_NumSp_Masked), object_name = "IAS_NumSp_Masked",
     out_path = fs::path(Path_PA, "IAS_NumSp_Masked.RData"))
 
@@ -315,9 +315,9 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
   # # .................................... ###
 
   ## Plotting summary of IAS data -----
-  IASDT.R::cat_time("Plotting summary of IAS data", level = 1L)
+  ecokit::cat_time("Plotting summary of IAS data", level = 1L)
 
-  EUBound <- IASDT.R::load_as(EU_Bound) %>%
+  EUBound <- ecokit::load_as(EU_Bound) %>%
     magrittr::extract2("Bound_sf_Eur_s") %>%
     magrittr::extract2("L_03")
   MapLimX <- c(2600000, 6550000)
@@ -367,7 +367,7 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
       data = terra::classify(IAS_NumSp, cbind(0, NA)), maxcell = Inf) +
     paletteer::scale_fill_paletteer_c(
       na.value = "transparent", "viridis::plasma",
-      breaks = IASDT.R::integer_breaks()) +
+      breaks = ecokit::integer_breaks()) +
     ggplot2::geom_sf(
       EUBound, mapping = ggplot2::aes(), color = "grey40",
       linewidth = 0.075, fill = "transparent", inherit.aes = TRUE) +
@@ -389,7 +389,7 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
       data = log10(terra::classify(IAS_NumSp, cbind(0, NA))), maxcell = Inf) +
     paletteer::scale_fill_paletteer_c(
       na.value = "transparent", "viridis::plasma",
-      breaks = IASDT.R::integer_breaks()) +
+      breaks = ecokit::integer_breaks()) +
     ggplot2::geom_sf(
       EUBound, mapping = ggplot2::aes(), color = "grey40",
       linewidth = 0.075, fill = "transparent", inherit.aes = TRUE) +
@@ -426,7 +426,7 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
       data = terra::classify(IAS_NumSp_Masked, cbind(0, NA)), maxcell = Inf) +
     paletteer::scale_fill_paletteer_c(
       na.value = "transparent", "viridis::plasma",
-      breaks = IASDT.R::integer_breaks()) +
+      breaks = ecokit::integer_breaks()) +
     ggplot2::geom_sf(
       EUBound, mapping = ggplot2::aes(), color = "grey40",
       linewidth = 0.075, fill = "transparent", inherit.aes = TRUE) +
@@ -449,7 +449,7 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
       maxcell = Inf) +
     paletteer::scale_fill_paletteer_c(
       na.value = "transparent", "viridis::plasma",
-      breaks = IASDT.R::integer_breaks()) +
+      breaks = ecokit::integer_breaks()) +
     ggplot2::geom_sf(
       EUBound, mapping = ggplot2::aes(), color = "grey40",
       linewidth = 0.075, fill = "transparent", inherit.aes = TRUE) +
@@ -652,7 +652,7 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
   # # ..................................................................... ###
 
   # Function Summary ----
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = .start_time,
     prefix = "\nProcessing species data was finished in ", ... = "\n")
 

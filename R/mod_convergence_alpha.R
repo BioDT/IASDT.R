@@ -16,19 +16,19 @@ convergence_alpha <- function(
   # # ..................................................................... ###
 
   if (is.null(posterior) || is.null(model_object)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`posterior` and `model_object` cannot be empty",
       model_object = model_object, posterior = posterior)
   }
 
   if (length(margin_type) != 1) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`margin_type` must be a single string.",
       margin_type = margin_type, length_margin_type = length(margin_type))
   }
 
   if (!margin_type %in% c("histogram", "density")) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`margin_type` must be either 'histogram' or 'density'.",
       margin_type = margin_type)
   }
@@ -46,18 +46,18 @@ convergence_alpha <- function(
   AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character", args_to_check = "title")
 
   # # ..................................................................... ###
 
   # Load coda object
   if (inherits(posterior, "character")) {
-    posterior <- IASDT.R::load_as(posterior)
+    posterior <- ecokit::load_as(posterior)
   }
 
   if (!("Alpha" %in% names(posterior))) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`posterior` object does not contain 'Alpha'",
       names_posterior = names(posterior))
   }
@@ -66,7 +66,7 @@ convergence_alpha <- function(
 
   # Load model object
   if (inherits(model_object, "character")) {
-    model_object <- IASDT.R::load_as(model_object)
+    model_object <- ecokit::load_as(model_object)
   }
 
   SampleSize <- model_object$samples

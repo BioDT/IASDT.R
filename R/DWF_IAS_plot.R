@@ -15,17 +15,17 @@ IAS_plot <- function(species = NULL, env_file = ".env", overwrite = TRUE) {
   # Checking arguments ----
 
   if (is.null(species)) {
-    IASDT.R::stop_ctx("species cannot be empty", species = species)
+    ecokit::stop_ctx("species cannot be empty", species = species)
   }
 
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character",
     args_to_check = c("species", "env_file"))
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "logical", args_to_check = "overwrite")
 
   # # ..................................................................... ###
@@ -48,7 +48,7 @@ IAS_plot <- function(species = NULL, env_file = ".env", overwrite = TRUE) {
     "Path_TaxaInfo_RData", "DP_R_Taxa_info_rdata", FALSE, TRUE,
     "Path_TaxaInfo", "DP_R_Taxa_info", FALSE, TRUE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
@@ -61,7 +61,7 @@ IAS_plot <- function(species = NULL, env_file = ".env", overwrite = TRUE) {
     fs::dir_create(path_JPEG)
   }
 
-  Species2 <- IASDT.R::replace_space(species)
+  Species2 <- ecokit::replace_space(species)
   SpFile <- stringr::str_replace_all(Species2, "\u00D7", "x") %>%
     stringr::str_replace_all("-", "")
 
@@ -69,21 +69,21 @@ IAS_plot <- function(species = NULL, env_file = ".env", overwrite = TRUE) {
   if (!file.exists(SpData)) {
     return(invisible(NULL))
   }
-  SpData <- IASDT.R::load_as(SpData)
+  SpData <- ecokit::load_as(SpData)
 
   if (SpData$NCells_All == 0) {
     return(invisible(NULL))
   }
 
-  CountryBound <- IASDT.R::load_as(EU_Bound) %>%
+  CountryBound <- ecokit::load_as(EU_Bound) %>%
     magrittr::extract2("Bound_sf_Eur_s") %>%
     magrittr::extract2("L_10")
   LastUpdate <- paste0("Last update: ", format(Sys.Date(), "%d %B %Y"))
 
   # Summary information for the current species
-  SpInfo <- IASDT.R::load_as(Path_TaxaInfo_RData)
+  SpInfo <- ecokit::load_as(Path_TaxaInfo_RData)
   if (nrow(SpInfo) == 0) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Species information could not be found",
       Path_TaxaInfo_RData = Path_TaxaInfo_RData,
       SpInfo = SpInfo, nrow_SpInfo = nrow(SpInfo))
@@ -98,7 +98,7 @@ IAS_plot <- function(species = NULL, env_file = ".env", overwrite = TRUE) {
   }
 
   Grid_100_sf <- fs::path(Path_Grid_Ref, "Grid_100_sf.RData") %>%
-    IASDT.R::load_as() %>%
+    ecokit::load_as() %>%
     magrittr::extract2("Grid_100_sf_s")
 
   # Location of legend
@@ -109,7 +109,7 @@ IAS_plot <- function(species = NULL, env_file = ".env", overwrite = TRUE) {
 
   # the study area as simple feature object for plotting
   Grid10_Sf <- fs::path(Path_Grid, "Grid_10_Land_Crop_sf.RData") %>%
-    IASDT.R::load_as()
+    ecokit::load_as()
 
   GBIF_Gr100 <- SpData$GBIF_Gr100[[1]]
   EASIN_Gr100 <- SpData$EASIN_Gr100[[1]]
@@ -174,7 +174,7 @@ IAS_plot <- function(species = NULL, env_file = ".env", overwrite = TRUE) {
     terra::classify(cbind(0, NA)) %>%
     terra::as.factor()
 
-  BoundExclude <- IASDT.R::load_as(EU_Bound) %>%
+  BoundExclude <- ecokit::load_as(EU_Bound) %>%
     magrittr::extract2("Bound_sf_Eur") %>%
     magrittr::extract2("L_10") %>%
     dplyr::filter(NAME_ENGL %in% SpData$Countries2Exclude[[1]]) %>%

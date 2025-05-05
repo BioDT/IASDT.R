@@ -88,13 +88,13 @@ predict_hmsc <- function(
   pred_PA <- pred_PA
 
   if (LF_only && is.null(LF_out_file)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`LF_out_file` must be specified when `LF_only` is `TRUE`",
       LF_out_file = LF_out_file, LF_only = LF_only)
   }
 
   if (!is.null(LF_out_file) && !is.null(LF_inputFile)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "only one of `LF_out_file` and `LF_inputFile` arguments can be specified",
       LF_out_file = LF_out_file, LF_inputFile = LF_inputFile)
   }
@@ -109,7 +109,7 @@ predict_hmsc <- function(
   # # ..................................................................... ###
 
   if (!is.null(prediction_type) && !prediction_type %in% c("c", "i")) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`prediction_type` must be either NULL or one of 'c' or 'i'",
       prediction_type = prediction_type)
   }
@@ -119,7 +119,7 @@ predict_hmsc <- function(
   }
 
   if (is.null(prediction_type) || prediction_type == "c") {
-    IASDT.R::cat_time("Creating/checking output paths")
+    ecokit::cat_time("Creating/checking output paths")
     fs::dir_create(c(temp_dir, pred_directory))
     if (evaluate) {
       fs::dir_create(evaluation_directory)
@@ -130,25 +130,25 @@ predict_hmsc <- function(
 
   # Load model if it is a character
   if (inherits(path_model, "character")) {
-    IASDT.R::cat_time("Load model object")
-    Model <- IASDT.R::load_as(path_model)
+    ecokit::cat_time("Load model object")
+    Model <- ecokit::load_as(path_model)
   }
 
   # # ..................................................................... ###
 
   # Combines a list of single or several MCMC chains into a single chain
-  IASDT.R::cat_time("Combine list of posteriors")
+  ecokit::cat_time("Combine list of posteriors")
   post <- Hmsc::poolMcmcChains(Model$postList)
   studyDesign <- Model$studyDesign
   ranLevels <- Model$ranLevels
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_time("Check input parameters")
+  ecokit::cat_time("Check input parameters")
 
   if (!is.null(gradient)) {
     if (!is.null(Yc)) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         paste0(
           "predict with arguments 'Yc' and 'gradient' jointly is not ",
           "implemented (yet)"),
@@ -160,13 +160,13 @@ predict_hmsc <- function(
   }
 
   if (!is.null(x_data) && !is.null(X)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "only one of x_data and X arguments can be specified",
       x_data = x_data, X = X)
   }
 
   if (!is.null(XRRRData) && !is.null(XRRR)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "only one of XRRRData and XRRR arguments can be specified",
       XRRRData = XRRRData, XRRR = XRRR)
   }
@@ -176,7 +176,7 @@ predict_hmsc <- function(
 
     if (class_x == "list") {
       if (any(unlist(lapply(x_data, is.na)))) {
-        IASDT.R::stop_ctx(
+        ecokit::stop_ctx(
           "NA values are not allowed in 'x_data'", class_x = class_x)
       }
       xlev <- lapply(Reduce(rbind, Model$XData), levels)
@@ -187,7 +187,7 @@ predict_hmsc <- function(
 
     } else if (class_x == "data.frame") {
       if (anyNA(x_data)) {
-        IASDT.R::stop_ctx(
+        ecokit::stop_ctx(
           "NA values are not allowed in 'x_data'", class_x = class_x)
       }
       xlev <- lapply(Model$XData, levels)
@@ -225,12 +225,12 @@ predict_hmsc <- function(
 
   if (!is.null(Yc)) {
     if (ncol(Yc) != Model$ns) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         "number of columns in Yc must be equal to ns",
         ncol_Yc = ncol(Yc), model_ns = Model$ns)
     }
     if (nrow(Yc) != nyNew) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         "number of rows in Yc and X must be equal",
         nrow_Yc = nrow(Yc), nyNew = nyNew)
     }
@@ -238,25 +238,25 @@ predict_hmsc <- function(
 
   if (!is.null(Loff)) {
     if (ncol(Loff) != Model$ns) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         "number of columns in Loff must be equal to ns",
         ncol_Loff = ncol(Loff), model_ns = Model$ns)
     }
     if (nrow(Loff) != nyNew) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         "number of rows in Loff and X must be equal",
         nrow_Loff = nrow(Loff), nyNew = nyNew)
     }
   }
 
   if (!all(Model$rLNames %in% colnames(studyDesign))) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "dfPiNew does not contain all the necessary named columns",
       model_rLNames = Model$rLNames, names_study_design = colnames(studyDesign))
   }
 
   if (!all(Model$rLNames %in% names(ranLevels))) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "rL does not contain all the necessary named levels",
       model_rLNames = Model$rLNames, names_ranLevels = names(ranLevels))
   }
@@ -287,7 +287,7 @@ predict_hmsc <- function(
   # # ..................................................................... ###
 
   # free some memory
-  IASDT.R::cat_time("Free some memory")
+  ecokit::cat_time("Free some memory")
   Model$postList <- Model$YScaled <- Model$X <- Model$XScaled <- NULL
 
   Mod_nr <- Model$nr
@@ -297,17 +297,17 @@ predict_hmsc <- function(
   Model_File_small <- fs::path(temp_dir, paste0(model_name, "Model_small.qs2"))
 
   if (!file.exists(Model_File_small)) {
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       "Save smaller version of the model object to disk",
       level = 1L)
-    IASDT.R::save_as(object = Model, out_path = Model_File_small)
+    ecokit::save_as(object = Model, out_path = Model_File_small)
   }
   rm(Model, envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_time("Predict Latent Factor")
+  ecokit::cat_time("Predict Latent Factor")
 
   predPostEta <- vector("list", Mod_nr)
   PiNew <- matrix(NA, nrow(dfPiNew), Mod_nr)
@@ -327,7 +327,7 @@ predict_hmsc <- function(
     if (prediction_type == "i") {
       for (r in seq_len(Mod_nr)) {
         if (r == 1) {
-          IASDT.R::cat_time(
+          ecokit::cat_time(
             "LF prediction for response curve with infinite coordinates",
             level = 1L)
         }
@@ -355,10 +355,10 @@ predict_hmsc <- function(
       postEta_file <- fs::path(
         temp_dir, paste0(model_name, "_r", r, "_postEta.qs2"))
 
-      if (isFALSE(IASDT.R::check_data(postEta_file, warning = FALSE))) {
-        IASDT.R::cat_time("Save postEta to file", level = 1L)
+      if (isFALSE(ecokit::check_data(postEta_file, warning = FALSE))) {
+        ecokit::cat_time("Save postEta to file", level = 1L)
         postEta <- lapply(post, function(c) c$Eta[[r]])
-        IASDT.R::save_as(object = postEta, out_path = postEta_file)
+        ecokit::save_as(object = postEta, out_path = postEta_file)
         rm(postEta, envir = environment())
         invisible(gc())
       }
@@ -367,21 +367,21 @@ predict_hmsc <- function(
       if (r == Mod_nr) {
         post_file <- fs::path(temp_dir, paste0(model_name, "_post.qs2"))
 
-        if (isFALSE(IASDT.R::check_data(post_file, warning = FALSE))) {
+        if (isFALSE(ecokit::check_data(post_file, warning = FALSE))) {
           # free some memory
           post <- lapply(post, function(x) {
             x$Eta <- x$Psi <- x$V <- x$Delta <- x$Gamma <- x$rho <- NULL
             x
           })
-          IASDT.R::cat_time("Save post to file", level = 1L)
-          IASDT.R::save_as(object = post, out_path = post_file)
+          ecokit::cat_time("Save post to file", level = 1L)
+          ecokit::save_as(object = post, out_path = post_file)
         }
         rm(post, envir = environment())
         invisible(gc())
       }
 
       if (r == 1) {
-        IASDT.R::cat_time(
+        ecokit::cat_time(
           "LF prediction using `predict_latent_factor`", level = 1L)
       }
 
@@ -409,11 +409,11 @@ predict_hmsc <- function(
 
     if (is.null(prediction_type) || prediction_type == "c") {
 
-      IASDT.R::cat_time("Loading LF prediction from disk", level = 1L)
-      IASDT.R::cat_time(LF_inputFile, level = 2L, cat_timestamp = FALSE)
+      ecokit::cat_time("Loading LF prediction from disk", level = 1L)
+      ecokit::cat_time(LF_inputFile, level = 2L, cat_timestamp = FALSE)
 
       for (r in seq_len(Mod_nr)) {
-        predPostEta[[r]] <- IASDT.R::load_as(LF_inputFile[[r]])
+        predPostEta[[r]] <- ecokit::load_as(LF_inputFile[[r]])
         rowNames <- rownames(predPostEta[[r]][[1]])
         PiNew[, r] <- fastmatch::fmatch(dfPiNew[, r], rowNames)
       }
@@ -438,19 +438,19 @@ predict_hmsc <- function(
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_time("Predicting")
+  ecokit::cat_time("Predicting")
 
   if (!exists("post")) {
-    IASDT.R::cat_time("Loading post from disk", level = 1L)
-    post <- IASDT.R::load_as(post_file)
+    ecokit::cat_time("Loading post from disk", level = 1L)
+    post <- ecokit::load_as(post_file)
   }
 
   # Read model object from disk
-  Model <- IASDT.R::load_as(Model_File_small)
+  Model <- ecokit::load_as(Model_File_small)
 
   # prediction data for response curves
   if (!is.null(prediction_type)) {
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       "Predicting data for response curve (sequentially)",
       level = 1L)
 
@@ -462,14 +462,14 @@ predict_hmsc <- function(
           ppEta[pN, ], PiNew, dfPiNew, nyNew, expected, mcmcStep)
       })
 
-    IASDT.R::cat_diff(
+    ecokit::cat_diff(
       init_time = .start_time, prefix = "Prediction was finished in ",
       level = 1L)
     return(preds)
   }
 
   # Save ppEta / post as small chunks
-  IASDT.R::cat_time("Save ppEta / post as small chunks", level = 1L)
+  ecokit::cat_time("Save ppEta / post as small chunks", level = 1L)
   chunk_size <- 25
   ChunkIDs <- ceiling(seq_along(post) / chunk_size)
   Chunks <- purrr::map_chr(
@@ -479,7 +479,7 @@ predict_hmsc <- function(
       Ch <- list(ppEta = ppEta[IDs], post = post[IDs])
       chunk_file <- fs::path(
         temp_dir, paste0(model_name, "_preds_ch", .x, ".qs2"))
-      IASDT.R::save_as(object = Ch, out_path = chunk_file)
+      ecokit::save_as(object = Ch, out_path = chunk_file)
       return(chunk_file)
     })
 
@@ -489,16 +489,16 @@ predict_hmsc <- function(
   seeds <- sample.int(.Machine$integer.max, predN)
 
 
-  IASDT.R::set_parallel(n_cores = min(n_cores, length(Chunks)), level = 1L)
+  ecokit::set_parallel(n_cores = min(n_cores, length(Chunks)), level = 1L)
   withr::defer(future::plan("future::sequential", gc = TRUE))
 
-  IASDT.R::cat_time("Making predictions in parallel", level = 1L)
+  ecokit::cat_time("Making predictions in parallel", level = 1L)
   pred <- future.apply::future_lapply(
     X = seq_len(length(Chunks)),
     FUN = function(Chunk) {
 
       chunk_file <- Chunks[Chunk]
-      Ch <- IASDT.R::load_as(chunk_file)
+      Ch <- ecokit::load_as(chunk_file)
       ppEta <- Ch$ppEta
       post <- Ch$post
       rm(Ch, envir = environment())
@@ -523,7 +523,7 @@ predict_hmsc <- function(
       dimnames(ChunkSR) <- NULL
       ChunkSR_File <- fs::path(
         temp_dir, paste0("Pred_", model_name, "_ch", Chunk, "_SR.qs2"))
-      IASDT.R::save_as(object = ChunkSR, out_path = ChunkSR_File)
+      ecokit::save_as(object = ChunkSR, out_path = ChunkSR_File)
 
       rm(ChunkSR, envir = environment())
 
@@ -541,7 +541,7 @@ predict_hmsc <- function(
             temp_dir,
             paste0("Pred_", model_name, "_ch", Chunk, "_taxon", Sp, ".qs2"))
 
-          IASDT.R::save_as(object = SpD, out_path = ChunkSp_File)
+          ecokit::save_as(object = SpD, out_path = ChunkSp_File)
 
           return(
             cbind.data.frame(
@@ -573,7 +573,7 @@ predict_hmsc <- function(
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_time("Summarizing prediction outputs / Evaluation", level = 1L)
+  ecokit::cat_time("Summarizing prediction outputs / Evaluation", level = 1L)
 
   Eval_DT <- dplyr::select(pred, -Chunk) %>%
     dplyr::group_nest(Sp, IAS_ID) %>%
@@ -592,7 +592,7 @@ predict_hmsc <- function(
       IAS_ID <- Eval_DT$IAS_ID[[ID]]
       data <- as.vector(Eval_DT$data[[ID]])
 
-      SpDT <- purrr::map(data, IASDT.R::load_as) %>%
+      SpDT <- purrr::map(data, ecokit::load_as) %>%
         do.call(cbind, .) %>%
         as.double()
 
@@ -628,7 +628,7 @@ predict_hmsc <- function(
       PredSummaryFile <- fs::path(
         pred_directory, paste0("Pred_", model_name, "_", Sp2, ".qs2"))
 
-      IASDT.R::save_as(object = PredSummary, out_path = PredSummaryFile)
+      ecokit::save_as(object = PredSummary, out_path = PredSummaryFile)
 
       if (evaluate && Sp2 != "SR") {
         if (is.null(pred_PA)) {
@@ -672,14 +672,14 @@ predict_hmsc <- function(
       "dplyr", "Rcpp", "RcppArmadillo", "Matrix", "float", "qs2", "Hmsc",
       "purrr", "tibble", "Hmsc", "Rfast", "caret", "pROC", "ecospat", "sf"))
 
-  IASDT.R::set_parallel(stop_cluster = TRUE, level = 1L)
+  ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
 
   invisible(gc())
 
   # # ..................................................................... ###
 
   # Save predictions for all species in a single file
-  IASDT.R::cat_time("Save predictions for all species in a single file")
+  ecokit::cat_time("Save predictions for all species in a single file")
 
   Eval_DT <- dplyr::bind_rows(Eval_DT)
 
@@ -688,7 +688,7 @@ predict_hmsc <- function(
       Sp_data = purrr::map(
         .x = Path_pred,
         .f = ~ {
-          IASDT.R::load_as(.x) %>%
+          ecokit::load_as(.x) %>%
             tidyr::pivot_longer(
               cols = tidyselect::starts_with(c("Sp_", "SR_")),
               names_to = "Species", values_to = "Prediction")
@@ -707,14 +707,14 @@ predict_hmsc <- function(
       "Prediction_",
       stringr::str_remove(model_name, "_Clamping|_NoClamping"), ".qs2"))
 
-  IASDT.R::save_as(object = Predictions, out_path = Pred_File)
+  ecokit::save_as(object = Predictions, out_path = Pred_File)
 
   if (temp_cleanup) {
     try(fs::file_delete(Eval_DT$Path_pred), silent = TRUE)
   }
 
-  IASDT.R::cat_time("Predictions were saved", level = 1L)
-  IASDT.R::cat_time(Pred_File, level = 2L, cat_timestamp = FALSE)
+  ecokit::cat_time("Predictions were saved", level = 1L)
+  ecokit::cat_time(Pred_File, level = 2L, cat_timestamp = FALSE)
 
   if (evaluate) {
     if (is.null(evaluation_name)) {
@@ -731,10 +731,10 @@ predict_hmsc <- function(
     }
 
     Eval_DT <- dplyr::select(Eval_DT, -Path_pred)
-    IASDT.R::save_as(object = Eval_DT, out_path = Eval_Path)
+    ecokit::save_as(object = Eval_DT, out_path = Eval_Path)
 
-    IASDT.R::cat_time("Evaluation results were saved", level = 1L)
-    IASDT.R::cat_time(
+    ecokit::cat_time("Evaluation results were saved", level = 1L)
+    ecokit::cat_time(
       fs::path(evaluation_directory, "Eval_DT.qs2"),
       level = 2L, cat_timestamp = FALSE)
 
@@ -755,13 +755,13 @@ predict_hmsc <- function(
   # Clean up
   if (temp_cleanup) {
 
-    IASDT.R::cat_time("Cleaning up temporary files", level = 1L)
+    ecokit::cat_time("Cleaning up temporary files", level = 1L)
 
     try(
       {
         Pattern <- paste0("(Pred_){0,}", model_name, ".+qs2")
         file_paths <- list.files(
-          path = IASDT.R::normalize_path(temp_dir),
+          path = ecokit::normalize_path(temp_dir),
           pattern = Pattern, full.names = TRUE)
         try(fs::file_delete(file_paths), silent = TRUE)
       },
@@ -773,7 +773,7 @@ predict_hmsc <- function(
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = .start_time, prefix = "Prediction was finished in ")
 
   return(

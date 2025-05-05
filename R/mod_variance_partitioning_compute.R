@@ -73,7 +73,7 @@ variance_partitioning_compute <- function(
     # Check python virtual environment
     if (isFALSE(VP_commands_only) && .Platform$OS.type == "windows" &&
         (is.null(TF_environ) || !dir.exists(TF_environ))) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         paste0(
           "When running on Windows and `use_TF` is TRUE, `TF_environ` must ",
           "be specified and point to an existing directory with a ",
@@ -95,7 +95,7 @@ variance_partitioning_compute <- function(
       python_executable <- fs::path(TF_environ, "Scripts", "python.exe")
 
       if (isFALSE(VP_commands_only) && !file.exists(python_executable)) {
-        IASDT.R::stop_ctx(
+        ecokit::stop_ctx(
           "Python executable not found in the virtual environment",
           python_executable = python_executable)
       }
@@ -113,11 +113,11 @@ variance_partitioning_compute <- function(
         intern = TRUE)
       N_GPU <- result[length(result)]
       if (N_GPU == 0) {
-        IASDT.R::cat_time(
+        ecokit::cat_time(
           "No GPU found; Calculations will use CPU.",
           cat_timestamp = FALSE, cat_bold = TRUE, cat_red = TRUE)
       } else {
-        IASDT.R::cat_time(
+        ecokit::cat_time(
           paste0(N_GPU, " GPUs were found. Calculations will use GPU."),
           cat_timestamp = FALSE, cat_bold = TRUE, cat_red = TRUE)
       }
@@ -128,7 +128,7 @@ variance_partitioning_compute <- function(
     Script_getf <- system.file("VP_getf.py", package = "IASDT.R")
     Script_gemu <- system.file("VP_gemu.py", package = "IASDT.R")
     if (!all(file.exists(c(Script_geta, Script_getf, Script_gemu)))) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         "Necessary python scripts do not exist",
         Script_geta = Script_geta, Script_getf = Script_getf,
         Script_gemu = Script_gemu)
@@ -138,14 +138,14 @@ variance_partitioning_compute <- function(
   # # .................................................................... ###
 
   # Load model object ------
-  IASDT.R::cat_time("Load model object")
+  ecokit::cat_time("Load model object")
 
   if (is.null(path_model) || !file.exists(path_model)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Model path is NULL or does not exist", path_model = path_model)
   }
 
-  Model <- IASDT.R::load_as(path_model)
+  Model <- ecokit::load_as(path_model)
 
   # # .................................................................... ###
 
@@ -207,7 +207,7 @@ variance_partitioning_compute <- function(
 
   # Prepare postList-----
 
-  IASDT.R::cat_time("Prepare postList")
+  ecokit::cat_time("Prepare postList")
   postList <- Hmsc::poolMcmcChains(Model$postList, start = start) %>%
     purrr::map(
       ~ {
@@ -263,21 +263,20 @@ variance_partitioning_compute <- function(
     if (all(c(Files_la_Exist, Files_lf_Exist, Files_lmu_Exist))) {
 
       # All feather data are already processed and available on disk
-      IASDT.R::cat_time(
-        "Data for `la`/`lf`/`lmu` lists were already processed")
+      ecokit::cat_time("Data for `la`/`lf`/`lmu` lists were already processed")
 
     } else {
 
       ## Prepare la/lf/lmu lists using TensorFlow ----
-      IASDT.R::cat_time("Prepare la/lf/lmu lists using TensorFlow")
+      ecokit::cat_time("Prepare la/lf/lmu lists using TensorFlow")
 
       ### Prepare data for TensorFlow ----
-      IASDT.R::cat_time("Prepare data for TensorFlow", level = 1L)
+      ecokit::cat_time("Prepare data for TensorFlow", level = 1L)
 
       #### X data -----
       # needed only to calculate `geta` and `getf` functions
       if (!all(c(Files_la_Exist, Files_lf_Exist))) {
-        IASDT.R::cat_time("X", level = 2L)
+        ecokit::cat_time("X", level = 2L)
         Path_X <- fs::path(Path_Temp, "VP_X.feather")
         if (!file.exists(Path_X)) {
           arrow::write_feather(as.data.frame(Model$X), Path_X)
@@ -287,14 +286,14 @@ variance_partitioning_compute <- function(
       #### Tr / Gamma ------
       # needed only to calculate `geta` and `gemu` functions
       if (!all(c(Files_la_Exist, Files_lmu_Exist))) {
-        IASDT.R::cat_time("Tr", level = 2L)
+        ecokit::cat_time("Tr", level = 2L)
         Path_Tr <- fs::path(Path_Temp, "VP_Tr.feather")
         if (!file.exists(Path_Tr)) {
           arrow::write_feather(as.data.frame(Model$Tr), Path_Tr)
         }
 
         # Gamma - convert each list item into a column in a data frame
-        IASDT.R::cat_time("Gamma", level = 2L)
+        ecokit::cat_time("Gamma", level = 2L)
         Path_Gamma <- fs::path(Path_Temp, "VP_Gamma.feather")
         if (!file.exists(Path_Gamma)) {
           Gamma_data <- postList %>%
@@ -310,25 +309,25 @@ variance_partitioning_compute <- function(
       if (!Files_lf_Exist) {
         # Beta -- Each element of Beta is a matrix, so each list item is saved
         # to separate feather file
-        IASDT.R::cat_time("Beta", level = 2L)
+        ecokit::cat_time("Beta", level = 2L)
 
         if (!all(file.exists(Beta_Files))) {
 
-          IASDT.R::cat_time("Prepare working in parallel", level = 3L)
+          ecokit::cat_time("Prepare working in parallel", level = 3L)
           c1 <- parallel::makePSOCKcluster(n_cores)
           on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
 
-          IASDT.R::cat_time("Export necessary objects to cores", level = 3L)
+          ecokit::cat_time("Export necessary objects to cores", level = 3L)
           parallel::clusterExport(
             cl = c1, varlist = c("Beta_Files", "postList"),
             envir = environment())
 
-          IASDT.R::cat_time("Load libraries on each core", level = 3L)
+          ecokit::cat_time("Load libraries on each core", level = 3L)
           invisible(
             parallel::clusterEvalQ(
               cl = c1, expr = sapply("arrow", library, character.only = TRUE)))
 
-          IASDT.R::cat_time("Processing beta in parallel", level = 3L)
+          ecokit::cat_time("Processing beta in parallel", level = 3L)
           Beta0 <- parallel::parLapply(
             cl = c1,
             X = seq_along(postList),
@@ -342,7 +341,7 @@ variance_partitioning_compute <- function(
             })
           rm(Beta0)
 
-          IASDT.R::cat_time("stop cluster", level = 3L)
+          ecokit::cat_time("stop cluster", level = 3L)
           parallel::stopCluster(c1)
         }
       }
@@ -354,20 +353,20 @@ variance_partitioning_compute <- function(
 
       if (Files_la_Exist) {
 
-        IASDT.R::cat_time(
+        ecokit::cat_time(
           "All `la` data were already available on disk", level = 1L)
 
       } else {
 
-        IASDT.R::cat_time("Processing `geta` function", level = 1L)
+        ecokit::cat_time("Processing `geta` function", level = 1L)
         Path_Out_a <- fs::path(Path_Temp, "VP_A.feather") %>%
-          IASDT.R::normalize_path()
+          ecokit::normalize_path()
 
         cmd_a <- paste(
           python_executable, Script_geta,
-          "--tr", IASDT.R::normalize_path(Path_Tr, must_work = TRUE),
-          "--x", IASDT.R::normalize_path(Path_X, must_work = TRUE),
-          "--gamma", IASDT.R::normalize_path(Path_Gamma, must_work = TRUE),
+          "--tr", ecokit::normalize_path(Path_Tr, must_work = TRUE),
+          "--x", ecokit::normalize_path(Path_X, must_work = TRUE),
+          "--gamma", ecokit::normalize_path(Path_Gamma, must_work = TRUE),
           "--output", Path_Out_a,
           "--ncores", n_cores,
           "--chunk_size", chunk_size)
@@ -393,7 +392,7 @@ variance_partitioning_compute <- function(
 
           # Check for errors
           if (inherits(la, "error") || la[length(la)] != "Done") {
-            IASDT.R::stop_ctx(
+            ecokit::stop_ctx(
               "Error in computing geta", la = la, class_la = class(la))
           }
 
@@ -411,19 +410,19 @@ variance_partitioning_compute <- function(
 
       if (Files_la_Exist) {
 
-        IASDT.R::cat_time(
+        ecokit::cat_time(
           "All `lf` data were already available on disk", level = 1L)
 
       } else {
 
-        IASDT.R::cat_time("Processing `getf` function", level = 1L)
+        ecokit::cat_time("Processing `getf` function", level = 1L)
         Path_Out_f <- fs::path(Path_Temp, "VP_F.feather") %>%
-          IASDT.R::normalize_path()
+          ecokit::normalize_path()
 
         cmd_f <- paste(
           python_executable, Script_getf,
-          "--x", IASDT.R::normalize_path(Path_X, must_work = TRUE),
-          "--beta_dir", IASDT.R::normalize_path(Path_Temp, must_work = TRUE),
+          "--x", ecokit::normalize_path(Path_X, must_work = TRUE),
+          "--beta_dir", ecokit::normalize_path(Path_Temp, must_work = TRUE),
           "--output", Path_Out_f,
           "--ncores", n_cores)
 
@@ -449,7 +448,7 @@ variance_partitioning_compute <- function(
 
           # Check for errors
           if (inherits(lf, "error") || lf[length(lf)] != "Done") {
-            IASDT.R::stop_ctx(
+            ecokit::stop_ctx(
               "Error in computing geta", lf = lf, class_lf = class(lf))
           }
 
@@ -467,19 +466,19 @@ variance_partitioning_compute <- function(
 
       if (Files_lmu_Exist) {
 
-        IASDT.R::cat_time(
+        ecokit::cat_time(
           "All `lmu` data were already available on disk", level = 1L)
 
       } else {
 
-        IASDT.R::cat_time("Processing `gemu` function", level = 1L)
+        ecokit::cat_time("Processing `gemu` function", level = 1L)
         Path_Out_mu <- fs::path(Path_Temp, "VP_Mu.feather") %>%
-          IASDT.R::normalize_path()
+          ecokit::normalize_path()
 
         cmd_mu <- paste(
           python_executable, Script_gemu,
-          "--tr", IASDT.R::normalize_path(Path_Tr, must_work = TRUE),
-          "--gamma", IASDT.R::normalize_path(Path_Gamma, must_work = TRUE),
+          "--tr", ecokit::normalize_path(Path_Tr, must_work = TRUE),
+          "--gamma", ecokit::normalize_path(Path_Gamma, must_work = TRUE),
           "--output", Path_Out_mu,
           "--ncores", n_cores,
           "--chunk_size", chunk_size)
@@ -506,7 +505,7 @@ variance_partitioning_compute <- function(
 
           # Check for errors
           if (inherits(lmu, "error") || lmu[length(lmu)] != "Done") {
-            IASDT.R::stop_ctx(
+            ecokit::stop_ctx(
               "Error in computing geta", lmu = lmu, class_lmu = class(lmu))
           }
 
@@ -527,10 +526,10 @@ variance_partitioning_compute <- function(
 
     # Prepare la/lf/lmu lists using original R code -----
 
-    IASDT.R::cat_time("Prepare la/lf/lmu lists using original R code")
+    ecokit::cat_time("Prepare la/lf/lmu lists using original R code")
 
     ## geta -----
-    IASDT.R::cat_time("Running geta", level = 1L)
+    ecokit::cat_time("Running geta", level = 1L)
     geta <- function(a) {
       switch(
         class(Model$X)[1L],
@@ -554,7 +553,7 @@ variance_partitioning_compute <- function(
 
     ## getf ------
 
-    IASDT.R::cat_time("Running getf", level = 1L)
+    ecokit::cat_time("Running getf", level = 1L)
     getf <- function(a) {
       switch(
         class(Model$X)[1L],
@@ -576,7 +575,7 @@ variance_partitioning_compute <- function(
 
     ## gemu ------
 
-    IASDT.R::cat_time("Running gemu", level = 1L)
+    ecokit::cat_time("Running gemu", level = 1L)
     gemu <- function(a) {
       res <- t(Model$Tr %*% t(a$Gamma))
       return(res)
@@ -591,7 +590,7 @@ variance_partitioning_compute <- function(
   # # .................................................................... ###
 
   # Running gebeta -------
-  IASDT.R::cat_time("Running gebeta")
+  ecokit::cat_time("Running gebeta")
   gebeta <- function(a) {
     res <- a$Beta
     return(res)
@@ -601,7 +600,7 @@ variance_partitioning_compute <- function(
   # # .................................................................... ###
 
   # Remove Gamma from postList ------
-  IASDT.R::cat_time("Remove Gamma from postList")
+  ecokit::cat_time("Remove Gamma from postList")
   postList <- purrr::map(
     postList,
     ~ {
@@ -618,14 +617,14 @@ variance_partitioning_compute <- function(
 
   if (use_TF) {
 
-    IASDT.R::cat_time("Computing variance partitioning in parallel")
+    ecokit::cat_time("Computing variance partitioning in parallel")
 
-    IASDT.R::cat_time("Split `lbeta` list into small qs2 files", level = 1L)
+    ecokit::cat_time("Split `lbeta` list into small qs2 files", level = 1L)
     path_lbeta <- fs::path(Path_Temp, "lbeta")
     purrr::walk(
       .x = seq_along(lbeta),
       .f = ~ {
-        IASDT.R::save_as(
+        ecokit::save_as(
           object = lbeta[[.x]],
           out_path = fs::path(
             path_lbeta,
@@ -633,12 +632,12 @@ variance_partitioning_compute <- function(
               "lbeta_", stringr::str_pad(.x, width = 4, pad = "0"), ".qs2")))
       })
 
-    IASDT.R::cat_time("Split `postList` list into small qs2 files", level = 1L)
+    ecokit::cat_time("Split `postList` list into small qs2 files", level = 1L)
     path_postList <- fs::path(Path_Temp, "postList")
     purrr::walk(
       .x = seq_along(postList),
       .f = ~{
-        IASDT.R::save_as(
+        ecokit::save_as(
           object = postList[[.x]],
           out_path = fs::path(
             path_postList,
@@ -646,17 +645,17 @@ variance_partitioning_compute <- function(
               "post_", stringr::str_pad(.x, width = 4, pad = "0"), ".qs2")))
       })
 
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       "removing `postList` and `lbeta` list objects", level = 1L)
     n_postList <- length(postList)
     rm(postList, lbeta, envir = environment())
     invisible(gc())
 
-    IASDT.R::cat_time("Prepare working in parallel", level = 1L)
-    IASDT.R::set_parallel(n_cores = n_cores, level = 2L)
+    ecokit::cat_time("Prepare working in parallel", level = 1L)
+    ecokit::set_parallel(n_cores = n_cores, level = 2L)
     withr::defer(future::plan("future::sequential", gc = TRUE))
 
-    IASDT.R::cat_time("Processing in parallel", level = 1L)
+    ecokit::cat_time("Processing in parallel", level = 1L)
     Res <- future.apply::future_lapply(
       X = seq_len(n_postList),
       FUN = function(i) {
@@ -667,7 +666,7 @@ variance_partitioning_compute <- function(
           path_postList,
           paste0(
             "post_", stringr::str_pad(i, width = 4, pad = "0"), ".qs2")) %>%
-          IASDT.R::load_as()
+          ecokit::load_as()
         Beta <- curr_postList$Beta
         Lambdas <- curr_postList$Lambda
 
@@ -678,7 +677,7 @@ variance_partitioning_compute <- function(
           path_lbeta,
           paste0(
             "lbeta_", stringr::str_pad(i, width = 4, pad = "0"), ".qs2")) %>%
-          IASDT.R::load_as()
+          ecokit::load_as()
         R2T.Beta <- purrr::map_dbl(
           .x = seq_len(nc),
           .f = ~ {
@@ -765,10 +764,10 @@ variance_partitioning_compute <- function(
         "Model", "path_postList", "poolN", "ns", "nr", "cMA", "group"))
 
     # stopping the cluster
-    IASDT.R::set_parallel(stop_cluster = TRUE, level = 2L)
+    ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
 
     # Summarise the results
-    IASDT.R::cat_time("Summarise the results", level = 1L)
+    ecokit::cat_time("Summarise the results", level = 1L)
     fixed <- Reduce("+", purrr::map(Res, ~ .x$fixed)) / poolN
     random <- Reduce("+", purrr::map(Res, ~ .x$random)) / poolN
     fixedsplit <- Reduce("+", purrr::map(Res, ~ .x$fixedsplit)) / poolN
@@ -777,7 +776,7 @@ variance_partitioning_compute <- function(
 
   } else {
 
-    IASDT.R::cat_time("Computing variance partitioning sequentially")
+    ecokit::cat_time("Computing variance partitioning sequentially")
 
     mm <- methods::getMethod("%*%", "Matrix")
 
@@ -790,7 +789,7 @@ variance_partitioning_compute <- function(
     for (i in seq_len(poolN)) {
 
       if (i %% 200 == 0) {
-        IASDT.R::cat_time(sprintf("Processing iteration %d of %d", i, poolN))
+        ecokit::cat_time(sprintf("Processing iteration %d of %d", i, poolN))
       }
 
       DT_la <- la[[i]]
@@ -900,10 +899,10 @@ variance_partitioning_compute <- function(
   # # .................................................................... ###
 
   # Save the results
-  IASDT.R::cat_time("Save the variance partitioning results")
+  ecokit::cat_time("Save the variance partitioning results")
 
   File_VarPar <- fs::path(Path_VarPar, paste0(VP_file, ".RData"))
-  IASDT.R::save_as(object = VP, object_name = VP_file, out_path = File_VarPar)
+  ecokit::save_as(object = VP, object_name = VP_file, out_path = File_VarPar)
 
   VP$File <- File_VarPar
 
@@ -911,29 +910,29 @@ variance_partitioning_compute <- function(
 
   if (temp_cleanup) {
 
-    IASDT.R::cat_time("Clean up temporary files")
+    ecokit::cat_time("Clean up temporary files")
 
     if (use_TF) {
 
       if (fs::dir_exists(path_lbeta)) {
         try({
-          IASDT.R::system_command(
-            paste0("rm -rf ", IASDT.R::normalize_path(path_lbeta)),
+          ecokit::system_command(
+            paste0("rm -rf ", ecokit::normalize_path(path_lbeta)),
             ignore.stderr = TRUE, ignore.stdout = TRUE)
         },
         silent = TRUE)
       }
       if (fs::dir_exists(path_postList)) {
         try({
-          IASDT.R::system_command(
-            paste0("rm -rf ", IASDT.R::normalize_path(path_postList)),
+          ecokit::system_command(
+            paste0("rm -rf ", ecokit::normalize_path(path_postList)),
             ignore.stderr = TRUE, ignore.stdout = TRUE)
         },
         silent = TRUE)
       }
     }
 
-    Path_Temp <- IASDT.R::normalize_path(Path_Temp)
+    Path_Temp <- ecokit::normalize_path(Path_Temp)
     try(
       expr = {
         file_paths <- list.files(
@@ -946,7 +945,7 @@ variance_partitioning_compute <- function(
 
     if (fs::dir_exists(Path_Temp) && length(fs::dir_ls(Path_Temp)) == 0) {
       try({
-        IASDT.R::system_command(
+        ecokit::system_command(
           paste0("rm -rf ", Path_Temp),
           ignore.stderr = TRUE, ignore.stdout = TRUE)
       },
@@ -956,7 +955,7 @@ variance_partitioning_compute <- function(
 
   # # .................................................................... ###
 
-  IASDT.R::cat_diff(init_time = .start_time)
+  ecokit::cat_diff(init_time = .start_time)
 
   return(VP)
 }

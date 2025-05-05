@@ -15,17 +15,17 @@ GBIF_species_data <- function(
 
   # Checking arguments ----
   if (verbose) {
-    IASDT.R::cat_time("Checking arguments")
+    ecokit::cat_time("Checking arguments")
   }
 
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character",
     args_to_check = c("env_file", "species", "plot_tag"))
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "logical", args_to_check = "verbose")
 
   # # ..................................................................... ###
@@ -38,7 +38,7 @@ GBIF_species_data <- function(
 
   # Environment variables
   if (verbose) {
-    IASDT.R::cat_time("Environment variables")
+    ecokit::cat_time("Environment variables")
   }
 
   EnvVars2Read <- tibble::tribble(
@@ -47,7 +47,7 @@ GBIF_species_data <- function(
     "Path_GBIF", "DP_R_GBIF_processed", FALSE, FALSE,
     "EU_Bound", "DP_R_EUBound", FALSE, TRUE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
@@ -61,20 +61,18 @@ GBIF_species_data <- function(
   # # Grid_10_Land_Crop_sf
   GridSf <- fs::path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
   if (!file.exists(GridSf)) {
-    IASDT.R::stop_ctx(
-      "Reference grid file (sf) not found", GridSf = GridSf)
+    ecokit::stop_ctx("Reference grid file (sf) not found", GridSf = GridSf)
   }
-  GridSf <- IASDT.R::load_as(GridSf)
+  GridSf <- ecokit::load_as(GridSf)
 
   # Grid_10_Land_Crop
   GridR <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(GridR)) {
-    IASDT.R::stop_ctx(
-      "Reference grid file not found", GridR = GridR)
+    ecokit::stop_ctx("Reference grid file not found", GridR = GridR)
   }
-  GridR <- terra::unwrap(IASDT.R::load_as(GridR))
+  GridR <- terra::unwrap(ecokit::load_as(GridR))
 
-  EuroBound <- IASDT.R::load_as(EU_Bound) %>%
+  EuroBound <- ecokit::load_as(EU_Bound) %>%
     magrittr::extract2("Bound_sf_Eur_s") %>%
     magrittr::extract2("L_03")
 
@@ -87,10 +85,10 @@ GBIF_species_data <- function(
   fs::dir_create(c(Path_SpData, path_JPEG, Path_Grids, Path_Raster))
 
   if (verbose) {
-    IASDT.R::cat_time(species, level = 1L)
+    ecokit::cat_time(species, level = 1L)
   }
 
-  SpName <- IASDT.R::replace_space(species) %>%
+  SpName <- ecokit::replace_space(species) %>%
     # replace non-ascii multiplication symbol with x
     stringr::str_replace_all("\u00D7", "x") %>%
     stringr::str_replace_all("-", "")
@@ -98,7 +96,7 @@ GBIF_species_data <- function(
 
   if (file.exists(SpPath)) {
 
-    SpData <- IASDT.R::load_as(SpPath)
+    SpData <- ecokit::load_as(SpPath)
 
     # ****************************************************
     # species data --- grid
@@ -117,7 +115,7 @@ GBIF_species_data <- function(
 
     FilePath_grid <- fs::path(Path_Grids, paste0(Obj_Name_grid, ".RData"))
 
-    IASDT.R::save_as(
+    ecokit::save_as(
       object = SpGrid, object_name = Obj_Name_grid, out_path = FilePath_grid)
 
     # ****************************************************
@@ -129,10 +127,10 @@ GBIF_species_data <- function(
       x = SpGrid, y = GridR, field = "Count", fun = "max") %>%
       terra::mask(GridR) %>%
       stats::setNames(SpName) %>%
-      IASDT.R::set_raster_CRS()
+      ecokit::set_raster_CRS()
 
     FilePath_R <- fs::path(Path_Raster, paste0(Obj_Name_Raster, ".RData"))
-    IASDT.R::save_as(
+    ecokit::save_as(
       object = terra::wrap(Sp_R), object_name = Obj_Name_Raster,
       out_path = FilePath_R
     )
@@ -187,7 +185,7 @@ GBIF_species_data <- function(
         linewidth = 0.075, fill = "transparent", inherit.aes = TRUE) +
       paletteer::scale_fill_paletteer_c(
         na.value = "transparent", "viridis::plasma",
-        breaks = IASDT.R::integer_breaks()) +
+        breaks = ecokit::integer_breaks()) +
       ggplot2::scale_x_continuous(
         limits = c(2600000, 6700000),
         expand = ggplot2::expansion(mult = c(0, 0))) +

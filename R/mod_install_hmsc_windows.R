@@ -50,7 +50,7 @@ install_hmsc_windows <- function(
 
   # Check if the virtual environment directory already exists
   if (fs::dir_exists(path_VE)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Path to the virtual environment already exists", path_VE = path_VE)
   }
 
@@ -58,12 +58,12 @@ install_hmsc_windows <- function(
 
   # Checking Python installation
 
-  IASDT.R::info_chunk("Checking Python")
+  ecokit::info_chunk("Checking Python")
   PythonVersion <- system2(
     path_python, "--version", stdout = TRUE, stderr = TRUE)
 
   if (!startsWith(PythonVersion, "Python")) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Python was not installed or not found at the provided path",
       path_python = path_python)
   }
@@ -74,19 +74,19 @@ install_hmsc_windows <- function(
 
   # Creating the virtual environment
 
-  IASDT.R::info_chunk("Creating virtual environment")
+  ecokit::info_chunk("Creating virtual environment")
   system2(path_python, paste0("-m venv ", path_VE))
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Checking Python version in the virtual environment
 
-  IASDT.R::info_chunk("Checking virtual environment")
+  ecokit::info_chunk("Checking virtual environment")
   python <- fs::path(path_VE, "Scripts", "python.exe")
   PythonVersion <- system2(python, "--version", stdout = TRUE, stderr = TRUE)
 
   if (!startsWith(PythonVersion, "Python")) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Python was not installed in the virtual environment",
       PythonVersion = PythonVersion)
   }
@@ -97,15 +97,15 @@ install_hmsc_windows <- function(
 
   # Upgrading pip
 
-  IASDT.R::info_chunk("Upgrading pip")
+  ecokit::info_chunk("Upgrading pip")
   system2(python, "-m pip install --upgrade pip")
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Installing Hmsc-HPC package from Git
 
-  IASDT.R::info_chunk(
-    "Installing Hmsc-HPC package from Git")
+  ecokit::info_chunk("Installing Hmsc-HPC package from Git")
+
   if (force) {
     Command <- paste0("-m pip install git+", URL_Hmsc, " --force-reinstall")
   } else {
@@ -121,19 +121,19 @@ install_hmsc_windows <- function(
   # TensorFlow Probability requires TensorFlow version >= 2.15; Detected an
   # installation of version 2.13.1. Please upgrade TensorFlow to proceed.
 
-  IASDT.R::info_chunk("Installing TensorFlow v2.15")
+  ecokit::info_chunk("Installing TensorFlow v2.15")
   system2(python, "-m pip install tensorflow==2.15")
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Checking TensorFlow
-  IASDT.R::info_chunk("Checking TensorFlow")
+  ecokit::info_chunk("Checking TensorFlow")
   system2(python, '-c "import tensorflow as tf; print(tf.constant(1))"')
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Install `rdata`
-  IASDT.R::info_chunk("Installing rdata")
+  ecokit::info_chunk("Installing rdata")
   Command <- paste0("-m pip install git+", URL_rdata)
   system2(python, Command)
 
@@ -149,7 +149,7 @@ install_hmsc_windows <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Checking Hmsc
-  IASDT.R::info_chunk("Checking Hmsc")
+  ecokit::info_chunk("Checking Hmsc")
   system2(python, '-c "import hmsc"')
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

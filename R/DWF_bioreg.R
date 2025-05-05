@@ -37,23 +37,23 @@ bioreg_process <- function(env_file = ".env") {
   # # ..................................................................... ###
 
   # Check input arguments ------
-  IASDT.R::cat_time("Check input arguments")
+  ecokit::cat_time("Check input arguments")
 
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(
     AllArgs,
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character", args_to_check = "env_file")
   rm(AllArgs, envir = environment())
 
-  if (isFALSE(IASDT.R::check_system_command("curl"))) {
-    IASDT.R::stop_ctx(
+  if (isFALSE(ecokit::check_system_command("curl"))) {
+    ecokit::stop_ctx(
       "`curl` is required for downloading data but was not found.")
   }
-  if (isFALSE(IASDT.R::check_system_command("unzip"))) {
-    IASDT.R::stop_ctx(
+  if (isFALSE(ecokit::check_system_command("unzip"))) {
+    ecokit::stop_ctx(
       "`unzip` is required for extracting data but was not found.")
   }
 
@@ -69,7 +69,7 @@ bioreg_process <- function(env_file = ".env") {
     "Path_BioReg", "DP_R_BioReg_processed", FALSE, FALSE,
     "BioReg_URL", "DP_R_BioReg_url", FALSE, FALSE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
@@ -82,13 +82,13 @@ bioreg_process <- function(env_file = ".env") {
 
   # Download biogeographical regions dataset ------
 
-  IASDT.R::cat_time("Downloading biogeographical regions dataset")
+  ecokit::cat_time("Downloading biogeographical regions dataset")
 
   # name of downloaded zip file
   zip_file_name <- "Biogeog_regions_original.zip"
 
   # Extract download link
-  IASDT.R::cat_time("Extract download link", level = 1L)
+  ecokit::cat_time("Extract download link", level = 1L)
   BioReg_URL2 <- tryCatch({
     BioReg_URL %>%
       # extract download link
@@ -103,20 +103,20 @@ bioreg_process <- function(env_file = ".env") {
       rvest::html_elements(css = "#header-primary-action .button") %>%
       rvest::html_attr("href")
   }, error = function(e) {
-    IASDT.R::stop_ctx(paste0("Failed to extract download URL: ", e$message))
+    ecokit::stop_ctx(paste0("Failed to extract download URL: ", e$message))
   })
 
   if (length(BioReg_URL2) != 1L) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       paste0("Download link extraction failed. Found: ", length(BioReg_URL2)),
       BioReg_URL2 = BioReg_URL2, length_BioReg_URL2 = length(BioReg_URL2))
   }
-  IASDT.R::cat_time(BioReg_URL2, level = 2L, cat_timestamp = FALSE)
+  ecokit::cat_time(BioReg_URL2, level = 2L, cat_timestamp = FALSE)
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
   # Downloading using `curl`
-  IASDT.R::cat_time("Download using `curl`", level = 1L)
+  ecokit::cat_time("Download using `curl`", level = 1L)
   Zip_file <- fs::path(Path_Raw, zip_file_name)
   DownCommand <- stringr::str_glue(
     'curl -J --create-dirs --output-dir {Path_Raw} -o\\
@@ -124,17 +124,17 @@ bioreg_process <- function(env_file = ".env") {
 
   attempt <- 1L
   repeat {
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       paste0("Attempt ", attempt), level = 2L, cat_timestamp = FALSE)
 
-    invisible(IASDT.R::system_command(DownCommand))
+    invisible(ecokit::system_command(DownCommand))
 
-    if (IASDT.R::check_zip(Zip_file)) {
+    if (ecokit::check_zip(Zip_file)) {
       break
     }
 
     if (attempt >= 5L) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         "Error: Maximum download attempts reached. Zip file check failed.")
     }
     attempt <- attempt + 1L
@@ -143,21 +143,21 @@ bioreg_process <- function(env_file = ".env") {
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
   # unzip to interim directory
-  IASDT.R::cat_time("unzip to interim directory", level = 1L)
+  ecokit::cat_time("unzip to interim directory", level = 1L)
   stringr::str_glue("unzip -o -qq -j {Zip_file} -d {Path_Interim}") %>%
-    IASDT.R::system_command() %>%
+    ecokit::system_command() %>%
     invisible()
 
   # # ..................................................................... ###
 
   # Processing biogeographical regions data ------
-  IASDT.R::cat_time("Processing biogeographical regions data")
+  ecokit::cat_time("Processing biogeographical regions data")
 
   # Reading data from original shapefile
-  IASDT.R::cat_time("Read data from original shapefile", level = 1L)
+  ecokit::cat_time("Read data from original shapefile", level = 1L)
   BioReg_DT <- fs::dir_ls(path = Path_Interim, type = "file", glob = "*.shp$")
   if (length(BioReg_DT) != 1L) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       paste0("Expected one .shp file, found: ", length(BioReg_DT)),
       BioReg_DT = BioReg_DT, length_BioReg_DT = length(BioReg_DT))
   }
@@ -168,7 +168,7 @@ bioreg_process <- function(env_file = ".env") {
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
   # Extract metadata
-  IASDT.R::cat_time("Extract metadata", level = 1L)
+  ecokit::cat_time("Extract metadata", level = 1L)
   BioReg_Metadata <- sf::st_drop_geometry(BioReg_DT) %>%
     tibble::as_tibble() %>%
     dplyr::rename(ID = "PK_UID") %>%
@@ -177,11 +177,11 @@ bioreg_process <- function(env_file = ".env") {
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
   # Rasterize/masking
-  IASDT.R::cat_time("Rasterize & masking", level = 1L)
+  ecokit::cat_time("Rasterize & masking", level = 1L)
 
   GridR <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(GridR)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Path for the Europe boundaries does not exist", GridR = GridR)
   }
 
@@ -194,21 +194,21 @@ bioreg_process <- function(env_file = ".env") {
             sf::st_geometry() %>%
             sf::st_as_sf() %>%
             terra::rasterize(
-              y = terra::unwrap(IASDT.R::load_as(GridR)), cover = TRUE) %>%
+              y = terra::unwrap(ecokit::load_as(GridR)), cover = TRUE) %>%
             terra::classify(cbind(NA, 0L))
         })) %>%
     dplyr::pull(Rast) %>%
     terra::rast() %>%
     terra::which.max() %>%
     stats::setNames("ID") %>%
-    terra::mask(terra::unwrap(IASDT.R::load_as(GridR)))
+    terra::mask(terra::unwrap(ecokit::load_as(GridR)))
 
   rm(BioReg_DT, GridR, envir = environment())
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
   # Remove unused levels and adjust ID column
-  IASDT.R::cat_time("Remove unused levels", level = 1L)
+  ecokit::cat_time("Remove unused levels", level = 1L)
   levels(BioReg_R) <- BioReg_Metadata
   BioReg_R <- terra::droplevels(BioReg_R)
 
@@ -221,9 +221,9 @@ bioreg_process <- function(env_file = ".env") {
   levels(BioReg_R) <- list(MapLevelsNew)
   terra::crs(BioReg_R) <- "epsg:3035"
 
-  IASDT.R::cat_time("Convert to sf object", level = 1L)
+  ecokit::cat_time("Convert to sf object", level = 1L)
   Grid_sf <- fs::path(Path_Grid_Ref, "Grid_10_sf.RData") %>%
-    IASDT.R::load_as() %>%
+    ecokit::load_as() %>%
     magrittr::extract2("Grid_10_sf_s")
   BioReg_sf <- terra::as.polygons(
     x = BioReg_R, aggregate = FALSE, na.rm = TRUE) %>%
@@ -237,9 +237,9 @@ bioreg_process <- function(env_file = ".env") {
   # # ..................................................................... ###
 
   # Saving processed data ----
-  IASDT.R::cat_time("Saving processed data")
+  ecokit::cat_time("Saving processed data")
 
-  IASDT.R::cat_time("tiff", level = 1L, cat_timestamp = FALSE)
+  ecokit::cat_time("tiff", level = 1L, cat_timestamp = FALSE)
   terra::writeRaster(
     x = BioReg_R, overwrite = TRUE,
     filename = file.path(Path_BioReg, "BioReg_R.tif"))
@@ -250,17 +250,17 @@ bioreg_process <- function(env_file = ".env") {
       file = file.path(Path_BioReg, "BioReg_R.tif.vat.dbf"),
       factor2char = TRUE, max_nchar = 254L)
 
-  IASDT.R::cat_time("RData - raster object", level = 1L, cat_timestamp = FALSE)
-  IASDT.R::save_as(
+  ecokit::cat_time("RData - raster object", level = 1L, cat_timestamp = FALSE)
+  ecokit::save_as(
     object = terra::wrap(BioReg_R), object_name = "BioReg_R",
     out_path = file.path(Path_BioReg, "BioReg_R.RData"))
 
-  IASDT.R::cat_time("RData - sf object", level = 1L, cat_timestamp = FALSE)
+  ecokit::cat_time("RData - sf object", level = 1L, cat_timestamp = FALSE)
   save(BioReg_sf, file = file.path(Path_BioReg, "BioReg_sf.RData"))
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = .start_time,
     prefix = "Processing biogeographical regions data took ")
 

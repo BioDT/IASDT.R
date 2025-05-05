@@ -43,16 +43,16 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
 
   # # |||||||||||||||||||||||||||||||||||
   # Checking arguments ----
-  IASDT.R::cat_time("Checking arguments")
+  ecokit::cat_time("Checking arguments")
   # # |||||||||||||||||||||||||||||||||||
 
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character", args_to_check = "env_file")
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "logical", args_to_check = "cleanup")
   rm(AllArgs, envir = environment())
 
@@ -68,7 +68,7 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
 
   # # |||||||||||||||||||||||||||||||||||
   # Environment variables ----
-  IASDT.R::cat_time("Environment variables")
+  ecokit::cat_time("Environment variables")
   # # |||||||||||||||||||||||||||||||||||
 
   EnvVars2Read <- tibble::tribble(
@@ -79,7 +79,7 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
     "Path_Rivers_Zip", "DP_R_Rivers_zip", FALSE, TRUE,
     "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
@@ -87,28 +87,28 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
 
   RefGrid <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(RefGrid)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "The reference grid file does not exist", RefGrid = RefGrid)
   }
-  RefGrid <- terra::unwrap(IASDT.R::load_as(RefGrid))
+  RefGrid <- terra::unwrap(ecokit::load_as(RefGrid))
 
   # # ..................................................................... ###
 
   # # |||||||||||||||||||||||||||||||||||
   # Unzipping river network data ----
-  IASDT.R::cat_time("Unzipping river network data")
+  ecokit::cat_time("Unzipping river network data")
   # # |||||||||||||||||||||||||||||||||||
 
   # Check if ZIP file exists and not empty
   if (!file.exists(Path_Rivers_Zip) || fs::file_size(Path_Rivers_Zip) == 0) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "The river network ZIP file is missing or empty",
       Path_Rivers_Zip = Path_Rivers_Zip)
   }
 
   # Check the integrity of the ZIP file
-  if (!IASDT.R::check_zip(Path_Rivers_Zip)) {
-    IASDT.R::stop_ctx(
+  if (!ecokit::check_zip(Path_Rivers_Zip)) {
+    ecokit::stop_ctx(
       "The river network ZIP file is corrupted",
       Path_Rivers_Zip = Path_Rivers_Zip)
   }
@@ -133,7 +133,7 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
 
   # Extract only the missing or outdated files
   if (length(Rivers2extract) > 0) {
-    IASDT.R::cat_time("Extracting files", level = 1L, cat_timestamp = FALSE)
+    ecokit::cat_time("Extracting files", level = 1L, cat_timestamp = FALSE)
     archive::archive_extract(
       Path_Rivers_Zip, dir = Path_Rivers_Interim,
       files = basename(Rivers2extract)) %>%
@@ -146,7 +146,7 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
 
   # # |||||||||||||||||||||||||||||||||||
   # Processing river network files (gpkg) ----
-  IASDT.R::cat_time("Processing river network files")
+  ecokit::cat_time("Processing river network files")
   # # |||||||||||||||||||||||||||||||||||
 
   River_Lengths <- list.files(
@@ -158,18 +158,18 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
         stringr::str_remove_all(
           basename(.x), "^euhydro_|_v.+_GPKG.zip$") %>%
           stringr::str_to_sentence() %>%
-          IASDT.R::cat_time(level = 1L)
+          ecokit::cat_time(level = 1L)
 
         # File path for processed sf data
         File_Sf <- stringr::str_replace_all(.x, "_GPKG.zip$", "_sf.RData")
 
-        if (IASDT.R::check_data(File_Sf, warning = FALSE)) {
+        if (ecokit::check_data(File_Sf, warning = FALSE)) {
 
           # Load data from sf file if already exists and valid
-          IASDT.R::cat_time(
+          ecokit::cat_time(
             "GPKG file was already processed as sf",
             level = 2L, cat_timestamp = FALSE)
-          River_sf <- IASDT.R::load_as(File_Sf)
+          River_sf <- ecokit::load_as(File_Sf)
 
         } else {
 
@@ -196,7 +196,7 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
 
           if (nrow(gpkg_2_Extract) > 0) {
 
-            IASDT.R::cat_time(
+            ecokit::cat_time(
               "Extracting gpkg file", level = 2L, cat_timestamp = FALSE)
 
             # `archive::archive_extract` will always keep the file structure
@@ -207,7 +207,7 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
 
           } else {
 
-            IASDT.R::cat_time(
+            ecokit::cat_time(
               "gpkg file was already extracted",
               level = 2L, cat_timestamp = FALSE)
 
@@ -216,7 +216,7 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
           # # .................................. #
 
           # Read the gpkg file as sf object
-          IASDT.R::cat_time(
+          ecokit::cat_time(
             "Read the gpkg files as sf", level = 2L, cat_timestamp = FALSE)
 
           River_sf <- sf::st_read(
@@ -241,9 +241,9 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
               STRAHLER = paste0("STRAHLER_", STRAHLER))
 
           # Save the processed data as an sf object
-          IASDT.R::cat_time(
+          ecokit::cat_time(
             "Saving processed data as sf", level = 2L, cat_timestamp = FALSE)
-          IASDT.R::save_as(
+          ecokit::save_as(
             object = River_sf, object_name = "River_sf", out_path = File_Sf)
         }
 
@@ -251,7 +251,7 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
         # # .................................. #
 
         # Rasterize the river network data
-        IASDT.R::cat_time("Rasterizing", level = 2L, cat_timestamp = FALSE)
+        ecokit::cat_time("Rasterizing", level = 2L, cat_timestamp = FALSE)
 
         River_sf %>%
           dplyr::mutate(
@@ -278,7 +278,7 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
 
   # # |||||||||||||||||||||||||||||||||||
   # Merging rasterized gpkg data ----
-  IASDT.R::cat_time("Merging rasterized gpkg data")
+  ecokit::cat_time("Merging rasterized gpkg data")
   # # |||||||||||||||||||||||||||||||||||
 
   River_Lengths <- River_Lengths %>%
@@ -310,17 +310,17 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
 
   # # |||||||||||||||||||||||||||||||||||
   # Saving ------
-  IASDT.R::cat_time("Saving")
+  ecokit::cat_time("Saving")
   # # |||||||||||||||||||||||||||||||||||
 
   # Save as RData
-  IASDT.R::cat_time("Save as RData", level = 1L, cat_timestamp = FALSE)
-  IASDT.R::save_as(
+  ecokit::cat_time("Save as RData", level = 1L, cat_timestamp = FALSE)
+  ecokit::save_as(
     object = terra::wrap(River_Lengths), object_name = "river_length",
     out_path = fs::path(Path_Rivers, "River_Lengths.RData"))
 
   # Save as tif files
-  IASDT.R::cat_time("Save as tif files", level = 1L, cat_timestamp = FALSE)
+  ecokit::cat_time("Save as tif files", level = 1L, cat_timestamp = FALSE)
   terra::writeRaster(
     x = River_Lengths,
     filename = fs::path(
@@ -331,7 +331,7 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
 
   # # |||||||||||||||||||||||||||||||||||
   # Plotting ------
-  IASDT.R::cat_time("Plotting")
+  ecokit::cat_time("Plotting")
   # # |||||||||||||||||||||||||||||||||||
 
   RiverPlots <- purrr::map(
@@ -397,12 +397,12 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
   # # |||||||||||||||||||||||||||||||||||
 
   if (cleanup) {
-    IASDT.R::cat_time("Cleaning up interim files")
+    ecokit::cat_time("Cleaning up interim files")
 
     try(
       expr = {
         file_paths <- list.files(
-          path = IASDT.R::normalize_path(Path_Rivers_Interim),
+          path = ecokit::normalize_path(Path_Rivers_Interim),
           pattern = "_sf.RData$|.gpkg$|_GPKG.zip$", full.names = TRUE)
         fs::file_delete(file_paths)
       },
@@ -415,7 +415,7 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
   # Function Summary ----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = .start_time,
     prefix = "\nProcessing river data was finished in ", ... = "\n")
 

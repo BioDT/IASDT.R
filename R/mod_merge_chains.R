@@ -77,11 +77,11 @@ mod_merge_chains <- function(
   # Checking arguments ----
 
   if (is.null(model_dir)) {
-    IASDT.R::stop_ctx("`model_dir` cannot be empty", model_dir = model_dir)
+    ecokit::stop_ctx("`model_dir` cannot be empty", model_dir = model_dir)
   }
 
   if (is.null(n_cores)) {
-    IASDT.R::stop_ctx("`n_cores` cannot be empty", n_cores = n_cores)
+    ecokit::stop_ctx("`n_cores` cannot be empty", n_cores = n_cores)
   }
 
   AllArgs <- ls(envir = environment())
@@ -90,33 +90,33 @@ mod_merge_chains <- function(
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character",
     args_to_check = c("model_dir", "out_extension"))
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_to_check = "n_cores", args_type = "numeric")
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "logical",
     args_to_check = c("print_incomplete", "from_JSON"))
 
   rm(AllArgs, envir = environment())
 
   if (!dir.exists(model_dir)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`model_dir` directory does not exist", model_dir = model_dir)
   }
 
   if (length(out_extension) != 1) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`out_extension` must be a single string.",
       out_extension = out_extension,
       length_out_extension = length(out_extension))
   }
 
   if (!out_extension %in% c("qs2", "RData")) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`out_extension` must be either 'qs2' or 'RData'.",
       out_extension = out_extension)
   }
@@ -136,8 +136,7 @@ mod_merge_chains <- function(
   Path_ModInfo <- fs::path(model_dir, "Model_Info.RData")
 
   if (!file.exists(Path_ModInfo)) {
-    IASDT.R::stop_ctx(
-      "ModInfo file does not exist", Path_ModInfo = Path_ModInfo)
+    ecokit::stop_ctx("ModInfo file does not exist", Path_ModInfo = Path_ModInfo)
   }
 
   # # ..................................................................... ###
@@ -149,7 +148,7 @@ mod_merge_chains <- function(
     path = Path_Model_Fit, pattern = ".rds_temp$", full.names = TRUE)
 
   if (length(tempFiles) > 0) {
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       paste0(
         "There are ", length(tempFiles),
         " unsuccessful model variants to be removed"))
@@ -169,7 +168,7 @@ mod_merge_chains <- function(
 
   # # ..................................................................... ###
 
-  Model_Info2 <- IASDT.R::load_as(Path_ModInfo)
+  Model_Info2 <- ecokit::load_as(Path_ModInfo)
 
   # Prepare working in parallel -----
   if (n_cores == 1) {
@@ -198,7 +197,7 @@ mod_merge_chains <- function(
 
               if (isFALSE(fs::file_exists(y))) {
                 return(TRUE)
-              } else if (IASDT.R::check_rds(y)) {
+              } else if (ecokit::check_rds(y)) {
                 return(FALSE)
               } else {
                 fs::file_delete(y)
@@ -236,7 +235,7 @@ mod_merge_chains <- function(
         Path_Fitted_Models, paste0(M_Name_Fit, "_Model.", out_extension))
 
       # Check if model exists and is valid
-      ModelFileOkay <- IASDT.R::check_data(Path_FittedMod, warning = FALSE)
+      ModelFileOkay <- ecokit::check_data(Path_FittedMod, warning = FALSE)
 
       if (isFALSE(ModelFileOkay)) {
 
@@ -253,7 +252,7 @@ mod_merge_chains <- function(
         # Convert to Hmsc object
         # Try with `alignPost = TRUE`
         Model_Fit <- Hmsc::importPosteriorFromHPC(
-          m = IASDT.R::load_as(Model_Info2$M_Init_Path[x]),
+          m = ecokit::load_as(Model_Info2$M_Init_Path[x]),
           postList = Posts, nSamples = Model_Info2$M_samples[x],
           thin = Model_Info2$M_thin[x],
           transient = Model_Info2$M_transient[x],
@@ -264,7 +263,7 @@ mod_merge_chains <- function(
         if (inherits(Model_Fit, "try-error")) {
           Model_Fit <- try(
             Hmsc::importPosteriorFromHPC(
-              m = IASDT.R::load_as(Model_Info2$M_Init_Path[x]),
+              m = ecokit::load_as(Model_Info2$M_Init_Path[x]),
               postList = Posts, nSamples = Model_Info2$M_samples[x],
               thin = Model_Info2$M_thin[x],
               transient = Model_Info2$M_transient[x], alignPost = FALSE),
@@ -284,7 +283,7 @@ mod_merge_chains <- function(
               Path_Coda = NA_character_,
               Post_Aligned2 = NA))
         }
-        IASDT.R::save_as(
+        ecokit::save_as(
           object = Model_Fit, object_name = paste0(M_Name_Fit, "_Model"),
           out_path = Path_FittedMod)
 
@@ -307,11 +306,11 @@ mod_merge_chains <- function(
       }
 
       if (!exists("Model_Fit")) {
-        Model_Fit <- IASDT.R::load_as(Path_FittedMod)
+        Model_Fit <- ecokit::load_as(Path_FittedMod)
       }
 
       # Check if coda file exists and is valid
-      if (isFALSE(IASDT.R::check_data(Path_Coda, warning = FALSE))) {
+      if (isFALSE(ecokit::check_data(Path_Coda, warning = FALSE))) {
 
         if (file.exists(Path_Coda)) {
           fs::file_delete(Path_Coda)
@@ -321,7 +320,7 @@ mod_merge_chains <- function(
           Model_Fit, spNamesNumbers = c(TRUE, FALSE),
           covNamesNumbers = c(TRUE, FALSE))
 
-        IASDT.R::save_as(
+        ecokit::save_as(
           object = Mod_Coda, object_name = paste0(M_Name_Fit, "_Coda"),
           out_path = Path_Coda)
 
@@ -443,12 +442,12 @@ mod_merge_chains <- function(
         MissingModels = paste0(M_Name_Fit, " (", NMissingChains, " chains)")
       ) %>%
       dplyr::pull(MissingModels) %>%
-      IASDT.R::sort2()
+      ecokit::sort2()
 
     if (length(MissingModelVars) > 0) {
-      IASDT.R::cat_time("Unsuccessful models")
+      ecokit::cat_time("Unsuccessful models")
       purrr::walk(
-        .x = MissingModelVars, .f = IASDT.R::cat_time,
+        .x = MissingModelVars, .f = ecokit::cat_time,
         cat_timestamp = FALSE, level = 1L)
     }
   }
@@ -458,17 +457,17 @@ mod_merge_chains <- function(
   # Save Model_Info to disk
 
   if (is.null(model_info_name)) {
-    IASDT.R::save_as(
+    ecokit::save_as(
       object = Model_Info2, object_name = "Model_Info", out_path = Path_ModInfo)
   } else {
-    IASDT.R::save_as(
+    ecokit::save_as(
       object = Model_Info2, object_name = model_info_name,
       out_path = fs::path(model_dir, paste0(model_info_name, ".RData")))
   }
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_diff(init_time = .start_time, prefix = "Merging chains took ")
+  ecokit::cat_diff(init_time = .start_time, prefix = "Merging chains took ")
 
   return(invisible(NULL))
 }
@@ -493,7 +492,7 @@ mod_merge_chains_CV <- function(
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_time("Merge chains for cross-validated models")
+  ecokit::cat_time("Merge chains for cross-validated models")
   .start_time <- lubridate::now(tzone = "CET")
 
   # Avoid "no visible binding for global variable" message
@@ -506,11 +505,11 @@ mod_merge_chains_CV <- function(
   # Checking arguments ----
 
   if (is.null(model_dir)) {
-    IASDT.R::stop_ctx("`model_dir` cannot be empty", model_dir = model_dir)
+    ecokit::stop_ctx("`model_dir` cannot be empty", model_dir = model_dir)
   }
 
   if (is.null(n_cores)) {
-    IASDT.R::stop_ctx("`n_cores` cannot be empty", n_cores = n_cores)
+    ecokit::stop_ctx("`n_cores` cannot be empty", n_cores = n_cores)
   }
 
   AllArgs <- ls(envir = environment())
@@ -519,34 +518,34 @@ mod_merge_chains_CV <- function(
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character",
     args_to_check = c("model_dir", "out_extension"))
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_to_check = "n_cores", args_type = "numeric")
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "logical", args_to_check = "from_JSON")
   rm(AllArgs, envir = environment())
 
   if (!dir.exists(model_dir)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`model_dir` directory does not exist", model_dir = model_dir)
   }
 
   if (length(out_extension) != 1) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`out_extension` must be a single string.",
       out_extension = out_extension, length_out_extension = out_extension)
   }
 
   if (!out_extension %in% c("qs2", "RData")) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`out_extension` must be either 'qs2' or 'RData'.",
       out_extension = out_extension)
   }
 
   if (!all(CV_names %in% c("CV_Dist", "CV_Large", "CV_SAC"))) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       paste0(
         "Invalid value for CV_names argument. Valid values ",
         "are: 'CV_Dist', 'CV_Large', or `CV_SAC`"),
@@ -566,28 +565,28 @@ mod_merge_chains_CV <- function(
 
   Path_CV_DT <- fs::path(model_dir, "Model_Fitting_CV", "CV_DT.RData")
   if (!file.exists(Path_CV_DT)) {
-    IASDT.R::stop_ctx("CV_DT file does not exist", Path_CV_DT = Path_CV_DT)
+    ecokit::stop_ctx("CV_DT file does not exist", Path_CV_DT = Path_CV_DT)
   }
-  if (isFALSE(IASDT.R::check_data(Path_CV_DT, warning = FALSE))) {
-    IASDT.R::stop_ctx("CV_DT file is not a valid file", Path_CV_DT = Path_CV_DT)
+  if (isFALSE(ecokit::check_data(Path_CV_DT, warning = FALSE))) {
+    ecokit::stop_ctx("CV_DT file is not a valid file", Path_CV_DT = Path_CV_DT)
   }
 
-  CV_DT <- IASDT.R::load_as(Path_CV_DT) %>%
+  CV_DT <- ecokit::load_as(Path_CV_DT) %>%
     # filter only selected cross-validation strategies
     dplyr::filter(CV_name %in% stringr::str_remove(CV_names, "CV_"))
 
   # # ..................................................................... ###
 
   # Prepare working in parallel
-  IASDT.R::cat_time("Prepare working in parallel", level = 1L)
+  ecokit::cat_time("Prepare working in parallel", level = 1L)
 
-  IASDT.R::set_parallel(n_cores = min(n_cores, nrow(CV_DT)), level = 2L)
+  ecokit::set_parallel(n_cores = min(n_cores, nrow(CV_DT)), level = 2L)
   withr::defer(future::plan("future::sequential", gc = TRUE))
 
   # # ..................................................................... ###
 
   # Check if any posterior files is missing
-  IASDT.R::cat_time("Check if any posterior files is missing", level = 1L)
+  ecokit::cat_time("Check if any posterior files is missing", level = 1L)
 
   CV_DT <- CV_DT %>%
     dplyr::mutate(
@@ -600,7 +599,7 @@ mod_merge_chains_CV <- function(
 
               if (isFALSE(fs::file_exists(y))) {
                 return(TRUE)
-              } else if (IASDT.R::check_rds(y)) {
+              } else if (ecokit::check_rds(y)) {
                 return(FALSE)
               } else {
                 fs::file_delete(y)
@@ -619,7 +618,7 @@ mod_merge_chains_CV <- function(
   # # ..................................................................... ###
 
   # Merge posteriors and save as Hmsc object
-  IASDT.R::cat_time("Merge posteriors and save as Hmsc object", level = 1L)
+  ecokit::cat_time("Merge posteriors and save as Hmsc object", level = 1L)
 
   CV_DT2 <- future.apply::future_lapply(
     X = seq_len(nrow(CV_DT)),
@@ -632,7 +631,7 @@ mod_merge_chains_CV <- function(
       Path_Fitted <- CV_DT$Path_ModFitted[[x]]
 
       # Check if model exists and is valid
-      ModelFileOkay <- IASDT.R::check_data(Path_Fitted, warning = FALSE)
+      ModelFileOkay <- ecokit::check_data(Path_Fitted, warning = FALSE)
 
       if (isFALSE(ModelFileOkay)) {
 
@@ -647,8 +646,8 @@ mod_merge_chains_CV <- function(
           .f = IASDT.R::mod_get_posteriors, from_JSON = from_JSON)
 
         # Convert to Hmsc object
-        Model_init_rds <- IASDT.R::load_as(CV_DT$Path_ModInit_rds[x])
-        Model_init <- IASDT.R::load_as(CV_DT$Path_ModInit[x])
+        Model_init_rds <- ecokit::load_as(CV_DT$Path_ModInit_rds[x])
+        Model_init <- ecokit::load_as(CV_DT$Path_ModInit[x])
         Model_Fit <- Hmsc::importPosteriorFromHPC(
           m = Model_init, postList = Posts, nSamples = Model_init_rds$samples,
           thin = Model_init_rds$thin, transient = Model_init_rds$transient,
@@ -659,7 +658,7 @@ mod_merge_chains_CV <- function(
         if (inherits(Model_Fit, "try-error")) {
           Model_Fit <- try(
             Hmsc::importPosteriorFromHPC(
-              m = IASDT.R::load_as(CV_DT$M_Init_Path[x]),
+              m = ecokit::load_as(CV_DT$M_Init_Path[x]),
               postList = Posts, nSamples = CV_DT$M_samples[x],
               thin = CV_DT$M_thin[x],
               transient = CV_DT$M_transient[x], alignPost = FALSE),
@@ -675,7 +674,7 @@ mod_merge_chains_CV <- function(
           return(NA)
         }
 
-        IASDT.R::save_as(
+        ecokit::save_as(
           object = Model_Fit,
           object_name = stringr::str_remove(
             basename(Path_Fitted), ".RData$|.qs2"),
@@ -699,7 +698,7 @@ mod_merge_chains_CV <- function(
   # # ..................................................................... ###
 
   # Check saved Hmsc object and extract info on model fitting
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     "Check saved Hmsc object and extract info on model fitting", level = 1L)
 
   CV_DT <- CV_DT %>%
@@ -709,7 +708,7 @@ mod_merge_chains_CV <- function(
 
       # Check if both merged fitted model file exist
       Model_Finished = furrr::future_map_lgl(
-        .x = Path_ModFitted, .f = IASDT.R::check_data, warning = FALSE,
+        .x = Path_ModFitted, .f = ecokit::check_data, warning = FALSE,
         .options = furrr::furrr_options(seed = TRUE, packages = "IASDT.R")),
 
       # Extract fitting time from the progress file
@@ -784,19 +783,19 @@ mod_merge_chains_CV <- function(
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # stopping the cluster
-  IASDT.R::set_parallel(stop_cluster = TRUE, level = 2L)
+  ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Save Model_Info to disk
 
-  IASDT.R::save_as(
+  ecokit::save_as(
     object = CV_DT, object_name = "CV_DT_fitted",
     out_path = fs::path(model_dir, "Model_Fitting_CV", "CV_DT_fitted.RData"))
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_diff(init_time = .start_time, prefix = "Merging chains took ")
+  ecokit::cat_diff(init_time = .start_time, prefix = "Merging chains took ")
 
   return(invisible(NULL))
 }

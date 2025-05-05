@@ -25,19 +25,19 @@ plot_evaluation <- function(model_dir, env_file = ".env") {
   # # ..................................................................... ###
 
   # # Load species summary
-  IASDT.R::cat_time("Load species summary")
+  ecokit::cat_time("Load species summary")
 
   EnvVars2Read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
     "Path_PA", "DP_R_PA", TRUE, FALSE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
   SpSummary <- fs::path(Path_PA, "Sp_PA_Summary_DF.csv")
   if (!file.exists(SpSummary)) {
-    IASDT.R::stop_ctx("Species summary file not found", SpSummary = SpSummary)
+    ecokit::stop_ctx("Species summary file not found", SpSummary = SpSummary)
   }
   SpSummary <- readr::read_csv(
     file = SpSummary, show_col_types = FALSE, progress = FALSE) %>%
@@ -51,13 +51,13 @@ plot_evaluation <- function(model_dir, env_file = ".env") {
   # # ..................................................................... ###
 
   if (is.null(model_dir) || !dir.exists(model_dir)) {
-    IASDT.R::stop_ctx("Invalid or missing `model_dir`", model_dir = model_dir)
+    ecokit::stop_ctx("Invalid or missing `model_dir`", model_dir = model_dir)
   }
 
   Mod_Eval <- fs::path(
     model_dir, "Model_Evaluation", "Eval_Current_NoClamping.qs2")
 
-  Mod_Eval <- IASDT.R::load_as(Mod_Eval) %>%
+  Mod_Eval <- ecokit::load_as(Mod_Eval) %>%
     dplyr::filter(IAS_ID != "SR") %>%
     dplyr::left_join(SpSummary, by = "IAS_ID")
 

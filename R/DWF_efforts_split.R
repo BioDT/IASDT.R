@@ -21,7 +21,7 @@ efforts_split <- function(
 
   # Check if chunk_size is valid (greater than zero)
   if (!is.numeric(chunk_size) || chunk_size <= 0) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "chunk_size must be a positive number.", chunk_size = chunk_size)
   }
 
@@ -29,23 +29,23 @@ efforts_split <- function(
   # if file exists
   if (!is.character(path_zip) || length(path_zip) != 1 || path_zip == "" ||
     is.null(path_zip)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`path_zip` must be a character of length 1 and not empty.",
       path_zip = path_zip)
   }
 
   # Check if `path_zip` is a valid path
   if (!file.exists(path_zip)) {
-    IASDT.R::stop_ctx("`path_zip` is not a valid path.", path_zip = path_zip)
+    ecokit::stop_ctx("`path_zip` is not a valid path.", path_zip = path_zip)
   }
 
 
   # Checking required bash tools
   Commands <- c("unzip", "cut", "sed", "split")
-  CommandsAvail <- purrr::map_lgl(Commands, IASDT.R::check_system_command)
+  CommandsAvail <- purrr::map_lgl(Commands, ecokit::check_system_command)
   if (!all(CommandsAvail)) {
     Missing <- paste(Commands[!CommandsAvail], collapse = " + ")
-    IASDT.R::stop_ctx("Missing commands", missing_commands = Missing)
+    ecokit::stop_ctx("Missing commands", missing_commands = Missing)
   }
 
   # ensure that `chunk_size` is not formatted in scientific notation
@@ -58,7 +58,7 @@ efforts_split <- function(
     ~var_name, ~value, ~check_dir, ~check_file,
     "Path_Interim", "DP_R_Efforts_interim", FALSE, FALSE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
@@ -78,7 +78,7 @@ efforts_split <- function(
 
   SelectedCols <- "unzip -p {path_zip} {CSV_File} | head -n 1" %>%
     stringr::str_glue() %>%
-    IASDT.R::system_command() %>%
+    ecokit::system_command() %>%
     # Split the first row into column names. Data is tab-separated
     stringr::str_split("\t") %>%
     magrittr::extract2(1) %>%
@@ -97,9 +97,9 @@ efforts_split <- function(
     --additional-suffix=.txt')
 
   Path_Chunks <- tryCatch(
-    IASDT.R::system_command(Command, r_object = FALSE),
+    ecokit::system_command(Command, r_object = FALSE),
     error = function(e) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         paste0("Failed to execute system command: ", e$message))
     }
   )

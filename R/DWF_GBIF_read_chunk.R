@@ -15,7 +15,7 @@ GBIF_read_chunk <- function(
   # # ..................................................................... ###
 
   if (isFALSE(save_RData) && isFALSE(return_data)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "At least one of `save_RData` and `return_data` has to be `TRUE`",
       save_RData = save_RData, return_data = return_data)
   }
@@ -32,13 +32,13 @@ GBIF_read_chunk <- function(
   AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character",
     args_to_check = c("chunk_file", "env_file"))
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "logical",
     args_to_check = c("save_RData", "return_data", "overwrite"))
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "numeric",
     args_to_check = c("max_uncertainty", "start_year"))
 
@@ -47,9 +47,9 @@ GBIF_read_chunk <- function(
   ChunkOutPath <- stringr::str_replace(chunk_file, ".txt$", ".RData")
 
   if (isFALSE(overwrite) &&
-      IASDT.R::check_data(ChunkOutPath, warning = FALSE)) {
+      ecokit::check_data(ChunkOutPath, warning = FALSE)) {
     if (return_data) {
-      return(IASDT.R::load_as(ChunkOutPath))
+      return(ecokit::load_as(ChunkOutPath))
     } else {
       return(invisible(NULL))
     }
@@ -77,7 +77,7 @@ GBIF_read_chunk <- function(
     "Path_GBIF", "DP_R_GBIF_processed", FALSE, FALSE,
     "Path_GBIF_Interim", "DP_R_GBIF_interim", FALSE, FALSE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
@@ -88,16 +88,16 @@ GBIF_read_chunk <- function(
   # Grid_10_Land_Crop
   GridR <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(GridR)) {
-    IASDT.R::stop_ctx("Reference grid file not found", GridR = GridR)
+    ecokit::stop_ctx("Reference grid file not found", GridR = GridR)
   }
-  GridR <- terra::unwrap(IASDT.R::load_as(GridR))
+  GridR <- terra::unwrap(ecokit::load_as(GridR))
 
   # # Grid_10_Land_Crop_sf
   GridSf <- fs::path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
   if (!file.exists(GridSf)) {
-    IASDT.R::stop_ctx("Reference grid file (sf) not found", GridSf = GridSf)
+    ecokit::stop_ctx("Reference grid file (sf) not found", GridSf = GridSf)
   }
-  GridSf <- IASDT.R::load_as(GridSf)
+  GridSf <- ecokit::load_as(GridSf)
 
   # CLC - tif
   Corine <- terra::rast(CLC_Tif)
@@ -119,8 +119,8 @@ GBIF_read_chunk <- function(
       # convert empty strings to NA
       dplyr::across(tidyselect::everything(), ~ dplyr::na_if(., "")),
       # number of decimal places for longitude / latitude
-      NDecLong = purrr::map_int(Longitude, IASDT.R::n_decimals),
-      NDecLat = purrr::map_int(Latitude, IASDT.R::n_decimals),
+      NDecLong = purrr::map_int(Longitude, ecokit::n_decimals),
+      NDecLat = purrr::map_int(Latitude, ecokit::n_decimals),
       # change column classes
       dplyr::across(tidyselect::all_of(Int_cols), as.integer),
       dplyr::across(tidyselect::all_of(lgl_cols), as.logical),
@@ -158,7 +158,7 @@ GBIF_read_chunk <- function(
     # project into EPSG:3035
     sf::st_transform(crs = 3035) %>%
     # Extract coordinates in the new projection
-    IASDT.R::sf_add_coords("Longitude_3035", "Latitude_3035") %>%
+    ecokit::sf_add_coords("Longitude_3035", "Latitude_3035") %>%
     # add country name (match original data iso name for countries)
     dplyr::left_join(y = CountryCodes, by = "countryCode") %>%
     dplyr::relocate(countryName, .after = "countryCode") %>%
@@ -192,7 +192,7 @@ GBIF_read_chunk <- function(
 
     if (save_RData) {
       ChunkOutName <- stringr::str_remove_all(basename(chunk_file), ".txt$")
-      IASDT.R::save_as(
+      ecokit::save_as(
         object = ChunkData, object_name = ChunkOutName, out_path = ChunkOutPath)
     }
 
@@ -208,7 +208,7 @@ GBIF_read_chunk <- function(
 
     if (save_RData) {
       ChunkOutName <- stringr::str_remove_all(basename(chunk_file), ".txt$")
-      IASDT.R::save_as(
+      ecokit::save_as(
         object = tibble::tibble(),
         object_name = ChunkOutName, out_path = ChunkOutPath)
     }

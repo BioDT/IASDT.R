@@ -57,7 +57,7 @@ resp_curv_prepare_data <- function(
   .start_time <- lubridate::now(tzone = "CET")
 
   if (is.null(path_model)) {
-    IASDT.R::stop_ctx("`path_model` cannot be NULL", path_model = path_model)
+    ecokit::stop_ctx("`path_model` cannot be NULL", path_model = path_model)
   }
 
   # Avoid "no visible binding for global variable" message
@@ -70,30 +70,30 @@ resp_curv_prepare_data <- function(
 
   # Check input arguments ------
 
-  IASDT.R::cat_time("Check input arguments")
+  ecokit::cat_time("Check input arguments")
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(.x = AllArgs, .f = get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character",
     args_to_check = c("path_model", "temp_dir"))
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "numeric",
     args_to_check = c("n_cores", "LF_n_cores", "n_grid", "probabilities"))
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "logical", args_to_check = "use_TF")
   rm(AllArgs, envir = environment())
 
   if (!is.numeric(n_cores) || n_cores < 1) {
-    IASDT.R::stop_ctx("`n_cores` must be greater than 0", n_cores = n_cores)
+    ecokit::stop_ctx("`n_cores` must be greater than 0", n_cores = n_cores)
   }
   if (!is.numeric(LF_n_cores) || LF_n_cores < 1) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`LF_n_cores` must be greater than 0", LF_n_cores = LF_n_cores)
   }
   if (any(probabilities > 1) || any(probabilities < 0)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`probabilities` must be between 0 and 1", probabilities = probabilities)
   }
 
@@ -103,15 +103,15 @@ resp_curv_prepare_data <- function(
 
   # Loading model object ------
 
-  IASDT.R::cat_time("Loading model object")
+  ecokit::cat_time("Loading model object")
   if (file.exists(path_model)) {
-    Model <- IASDT.R::load_as(path_model)
+    Model <- ecokit::load_as(path_model)
     if (!inherits(Model, "Hmsc")) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         "Model object is not of class 'hmsc'", class_model = class(Model))
     }
   } else {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "The model file does not exist or is not a `.RData` or `.qs2` file.",
       path_model = path_model)
   }
@@ -155,7 +155,7 @@ resp_curv_prepare_data <- function(
 
       if (file.exists(RC_DT_Path_Orig)) {
 
-        RC_Data_Orig <- IASDT.R::load_as(RC_DT_Path_Orig)
+        RC_Data_Orig <- ecokit::load_as(RC_DT_Path_Orig)
         gradient <- RC_Data_Orig$gradient
         XVals <- gradient$XDataNew[, Variable]
         Preds <- RC_Data_Orig$Preds
@@ -163,7 +163,7 @@ resp_curv_prepare_data <- function(
 
       } else {
 
-        Model <- IASDT.R::load_as(path_model)
+        Model <- ecokit::load_as(path_model)
 
         # constructGradient
         gradient <- Hmsc::constructGradient(
@@ -198,7 +198,7 @@ resp_curv_prepare_data <- function(
           Variable = Variable, NFV = ResCurvDT$NFV[[ID]],
           gradient = gradient, Preds = Preds, Pred_SR = Pred_SR)
 
-        IASDT.R::save_as(
+        ecokit::save_as(
           object = RC_Data_Orig, object_name = paste0(RC_DT_Name, "_Orig"),
           out_path = RC_DT_Path_Orig)
       }
@@ -210,7 +210,7 @@ resp_curv_prepare_data <- function(
       # Prepare plotting data: probability of occurrence
       # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-      Model <- IASDT.R::load_as(path_model)
+      Model <- ecokit::load_as(path_model)
 
       RC_Data_Prob <- purrr::map_dfr(
         .x = seq_len(length(Preds)),
@@ -251,13 +251,13 @@ resp_curv_prepare_data <- function(
 
       # Save data
       RC_Data_Prob_Samples <- RC_Data_Prob
-      IASDT.R::save_as(
+      ecokit::save_as(
         object = RC_Data_Prob_Samples,
         object_name = paste0(RC_DT_Name, "_Prob_Samples"),
         out_path = RC_DT_Path_Prob_Samples)
 
       RC_Data_Prob <- dplyr::select(RC_Data_Prob, -SamplesData)
-      IASDT.R::save_as(
+      ecokit::save_as(
         object = RC_Data_Prob, object_name = paste0(RC_DT_Name, "_Prob"),
         out_path = RC_DT_Path_Prob)
 
@@ -302,7 +302,7 @@ resp_curv_prepare_data <- function(
         RC_Data_SR_Quant = RC_Data_SR_Quant, Observed_SR = Observed_SR,
         SR_PositiveTrendProb = SR_PositiveTrendProb)
 
-      IASDT.R::save_as(
+      ecokit::save_as(
         object = RC_Data_SR, object_name = paste0(RC_DT_Name, "_SR"),
         out_path = RC_DT_Path_SR)
 
@@ -312,7 +312,7 @@ resp_curv_prepare_data <- function(
         RC_Data_SR_Quant = RC_Data_SR_Quant, Observed_SR = Observed_SR,
         SR_PositiveTrendProb = SR_PositiveTrendProb)
 
-      IASDT.R::save_as(
+      ecokit::save_as(
         object = RC_Data_SR_Samples,
         object_name = paste0(RC_DT_Name, "_SR_Samples"),
         out_path = RC_DT_Path_SR_Samples)
@@ -344,7 +344,7 @@ resp_curv_prepare_data <- function(
   # Extract names of the variables
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Extract names of the variables")
+  ecokit::cat_time("Extract names of the variables")
   ModelVars <- stringr::str_split(
     as.character(Model$XFormula)[2], "\\+", simplify = TRUE) %>%
     stringr::str_trim()
@@ -392,7 +392,7 @@ resp_curv_prepare_data <- function(
 
   if (MissingRows == 0) {
 
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       "All response curve data files were already available on disk",
       level = 1L)
     ResCurvDT <- purrr::map_dfr(
@@ -401,13 +401,13 @@ resp_curv_prepare_data <- function(
   } else {
 
     if (any(ResCurvDT$FileExists)) {
-      IASDT.R::cat_time(
+      ecokit::cat_time(
         paste0(
           "Some response curve data files (", MissingRows, " of ",
           length(ResCurvDT$FileExists), ") were missing"),
         level = 1L)
     } else {
-      IASDT.R::cat_time(
+      ecokit::cat_time(
         paste0(
           "All response curve data (", MissingRows, ") need to be prepared"),
         level = 1L)
@@ -417,13 +417,13 @@ resp_curv_prepare_data <- function(
     # Get LF prediction for the model
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-    if (isFALSE(IASDT.R::check_data(File_LF, warning = FALSE))) {
+    if (isFALSE(ecokit::check_data(File_LF, warning = FALSE))) {
 
-      IASDT.R::info_chunk(
+      ecokit::info_chunk(
         message = "Get LF prediction at mean coordinates", cat_date = FALSE,
         cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
-      IASDT.R::cat_time("Create gradient")
+      ecokit::cat_time("Create gradient")
       Gradient_c <- Hmsc::constructGradient(
         hM = Model, focalVariable = ResCurvDT$Variable[1],
         non.focalVariables = 1, ngrid = 20, coordinates = list(sample = "c"))
@@ -434,7 +434,7 @@ resp_curv_prepare_data <- function(
       rm(Model, envir = environment())
       invisible(gc())
 
-      IASDT.R::cat_time("Predicting LF")
+      ecokit::cat_time("Predicting LF")
       Model_LF <- IASDT.R::predict_hmsc(
         path_model = path_model, gradient = Gradient_c, expected = TRUE,
         n_cores = n_cores, temp_dir = temp_dir, temp_cleanup = temp_cleanup,
@@ -453,7 +453,7 @@ resp_curv_prepare_data <- function(
       invisible(gc())
 
     } else {
-      IASDT.R::cat_time(
+      ecokit::cat_time(
         paste0(
           "LF prediction will be loaded from available file: \n   >>>  ",
           File_LF))
@@ -464,13 +464,13 @@ resp_curv_prepare_data <- function(
     # Prepare working in parallel
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-    IASDT.R::info_chunk(
+    ecokit::info_chunk(
       message = "Prepare response curve data", cat_date = FALSE,
       cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
     n_cores <- max(min(n_cores, MissingRows), 1)
 
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       paste0("Prepare working in parallel, using ", n_cores, " cores"))
 
     if (n_cores == 1) {
@@ -489,7 +489,7 @@ resp_curv_prepare_data <- function(
     # Prepare response curve data in parallel
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-    IASDT.R::cat_time("Prepare response curve data in parallel")
+    ecokit::cat_time("Prepare response curve data in parallel")
 
     ResCurvDT <- future.apply::future_lapply(
       X = seq_len(nrow(ResCurvDT)),
@@ -512,12 +512,12 @@ resp_curv_prepare_data <- function(
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_time("Saving data to desk")
+  ecokit::cat_time("Saving data to desk")
   save(ResCurvDT, file = fs::path(Path_RC_DT, "ResCurvDT.RData"))
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = .start_time, prefix = "Preparing response curve data took ")
 
   if (return_data) {

@@ -102,7 +102,7 @@ predict_maps <- function(
 
   # Check if `hab_abb` is a single character value
   if (length(hab_abb) != 1) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`hab_abb` must be a single character value",
       hab_abb = hab_abb, length_hab_abb = length(hab_abb))
   }
@@ -120,7 +120,7 @@ predict_maps <- function(
 
   # Check input arguments ----
 
-  IASDT.R::cat_time("Checking input arguments")
+  ecokit::cat_time("Checking input arguments")
 
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(
@@ -128,24 +128,24 @@ predict_maps <- function(
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character",
     args_to_check = c("hab_abb", "env_file", "path_model", "temp_dir"))
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "logical",
     args_to_check = c(
       "clamp_pred", "pred_new_sites", "use_TF", "TF_environ", "TF_use_single",
       "LF_check", "LF_temp_cleanup", "LF_only", "LF_commands_only",
       "temp_cleanup", "tar_predictions"
     ))
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "numeric",
     args_to_check = c("n_cores", "LF_n_cores"))
 
   rm(AllArgs, envir = environment())
 
   if (!file.exists(env_file)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Error: Environment file is invalid or does not exist.",
       env_file = env_file)
   }
@@ -155,7 +155,7 @@ predict_maps <- function(
 
   ValidHabAbbs <- c(as.character(0:3), "4a", "4b", "10", "12a", "12b")
   if (!(hab_abb %in% ValidHabAbbs)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       paste0(
         "Invalid Habitat abbreviation. Valid values are:\n >> ",
         toString(ValidHabAbbs)),
@@ -211,7 +211,7 @@ predict_maps <- function(
   if (all(file.exists(
     Path_Summary_RData, Path_Summary_txt,
     Path_Summary_RData_Shiny, Path_Summary_txt_Shiny))) {
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       paste0(
         "All model predictions and prediction summary are already available ",
         "on disk"))
@@ -224,14 +224,14 @@ predict_maps <- function(
 
     # fix_efforts can not be NULL when Clamping is implemented
     if (is.null(fix_efforts)) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         "`fix_efforts` can not be `NULL` when Clamping is implemented",
         fix_efforts = fix_efforts)
     }
 
     # Check if fix_efforts is a vector or length 1
     if (length(fix_efforts) != 1) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         "`fix_efforts` must be a vector or length 1.",
         fix_efforts = fix_efforts)
     }
@@ -245,7 +245,7 @@ predict_maps <- function(
 
   # Environment variables ------
 
-  IASDT.R::cat_time("Environment variables")
+  ecokit::cat_time("Environment variables")
 
   EnvVars2Read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
@@ -257,7 +257,7 @@ predict_maps <- function(
     "Path_Rivers", "DP_R_Rivers_processed", TRUE, FALSE,
     "Path_CHELSA", "DP_R_CHELSA_processed", TRUE, FALSE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
@@ -265,7 +265,7 @@ predict_maps <- function(
   # # ..................................................................... ###
 
   # Loading input data -----
-  IASDT.R::cat_time("Loading input data")
+  ecokit::cat_time("Loading input data")
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
 
@@ -279,10 +279,10 @@ predict_maps <- function(
 
   ## Reference grid -----
 
-  IASDT.R::cat_time("Reference grid", level = 1L)
+  ecokit::cat_time("Reference grid", level = 1L)
   Path_GridR <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(Path_GridR)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Path for the Europe boundaries does not exist", Path_GridR = Path_GridR)
   }
 
@@ -290,18 +290,18 @@ predict_maps <- function(
 
   ## Model object -----
 
-  IASDT.R::cat_time("Model object", level = 1L)
+  ecokit::cat_time("Model object", level = 1L)
 
   if (is.null(path_model) || !file.exists(path_model)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Model path is NULL or does not exist ", path_model = path_model)
   }
 
-  Model <- IASDT.R::load_as(path_model)
+  Model <- ecokit::load_as(path_model)
 
   # `clamp_pred` can not be TRUE when `EffortsLog` is not used as predictor
   if (clamp_pred && isFALSE("EffortsLog" %in% names(Model$XData))) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`clamp_pred` can not be used when `EffortsLog` is not used as predictor",
       clamp_pred = clamp_pred, names_data = names(Model$XData))
   }
@@ -323,15 +323,15 @@ predict_maps <- function(
 
   ## CHELSA data -----
 
-  IASDT.R::cat_time("CHELSA data", level = 1L)
+  ecokit::cat_time("CHELSA data", level = 1L)
 
   Path_CHELSA <- fs::path(Path_CHELSA, "CHELSA_Processed_DT.RData")
   if (!file.exists(Path_CHELSA)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Processed CHLESA data can not be found", Path_CHELSA = Path_CHELSA)
   }
 
-  Prediction_Options <- IASDT.R::load_as(Path_CHELSA) %>%
+  Prediction_Options <- ecokit::load_as(Path_CHELSA) %>%
     dplyr::select(-"File_List") %>%
     dplyr::filter(
       # Filter only selected future climate models
@@ -362,21 +362,21 @@ predict_maps <- function(
 
   if ("RoadRailLog" %in% other_variables) {
 
-    IASDT.R::cat_time("Road and railway intensity", level = 1L)
+    ecokit::cat_time("Road and railway intensity", level = 1L)
 
     R_Railways <- fs::path(Path_Rail, "Railways_Length.RData")
     if (!file.exists(R_Railways)) {
-      IASDT.R::stop_ctx("Railways data does not exist", R_Railways = R_Railways)
+      ecokit::stop_ctx("Railways data does not exist", R_Railways = R_Railways)
     }
-    R_Railways <- IASDT.R::load_as(R_Railways) %>%
+    R_Railways <- ecokit::load_as(R_Railways) %>%
       terra::unwrap() %>%
       magrittr::extract2("rail")
 
     R_Roads <- fs::path(Path_Roads, "Road_Length.RData")
     if (!file.exists(R_Roads)) {
-      IASDT.R::stop_ctx("Roads data does not exist", R_Roads = R_Roads)
+      ecokit::stop_ctx("Roads data does not exist", R_Roads = R_Roads)
     }
-    R_Roads <- IASDT.R::load_as(R_Roads) %>%
+    R_Roads <- ecokit::load_as(R_Roads) %>%
       terra::unwrap() %>%
       magrittr::extract2("All")
 
@@ -399,14 +399,14 @@ predict_maps <- function(
 
   if (Hab_Predictor) {
 
-    IASDT.R::cat_time("Habitat information", level = 1L)
+    ecokit::cat_time("Habitat information", level = 1L)
     R_Hab <- fs::path(
       Path_CLC, "Summary_RData", "PercCov_SynHab_Crop.RData")
     if (!file.exists(R_Hab)) {
-      IASDT.R::stop_ctx("Habitat data does not exist", R_Hab = R_Hab)
+      ecokit::stop_ctx("Habitat data does not exist", R_Hab = R_Hab)
     }
 
-    R_Hab <- IASDT.R::load_as(R_Hab) %>%
+    R_Hab <- ecokit::load_as(R_Hab) %>%
       terra::unwrap() %>%
       magrittr::extract2(paste0("SynHab_", hab_abb))
 
@@ -428,15 +428,15 @@ predict_maps <- function(
 
   if ("EffortsLog" %in% other_variables) {
 
-    IASDT.R::cat_time("Sampling efforts", level = 1L)
+    ecokit::cat_time("Sampling efforts", level = 1L)
 
     R_Efforts <- fs::path(Path_Bias, "Efforts_SummaryR.RData")
     if (!file.exists(R_Efforts)) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         "Sampling efforts data does not exist", R_Efforts = R_Efforts)
     }
 
-    R_Efforts <- IASDT.R::load_as(R_Efforts) %>%
+    R_Efforts <- ecokit::load_as(R_Efforts) %>%
       terra::unwrap() %>%
       magrittr::extract2("NObs") %>%
       magrittr::add(0.1) %>%
@@ -446,7 +446,7 @@ predict_maps <- function(
 
     if (clamp_pred) {
 
-      IASDT.R::cat_time("Fixing sampling efforts values", level = 2L)
+      ecokit::cat_time("Fixing sampling efforts values", level = 2L)
 
       # Check fix_efforts value
       if (is.numeric(fix_efforts)) {
@@ -461,7 +461,7 @@ predict_maps <- function(
           dplyr::between(fix_efforts, EffortsRange[1], EffortsRange[2]))
 
         if (InvalidVal) {
-          IASDT.R::stop_ctx(
+          ecokit::stop_ctx(
             "`fix_efforts` value is out of the range of observed efforts",
             fix_efforts = fix_efforts, EffortsRange = round(EffortsRange, 2))
         }
@@ -475,7 +475,7 @@ predict_maps <- function(
         # median, mean, max, and q90
         fix_efforts <- stringr::str_to_lower(fix_efforts)
         if (!(fix_efforts %in% c("median", "mean", "max", "q90"))) {
-          IASDT.R::stop_ctx(
+          ecokit::stop_ctx(
             paste0(
               "`fix_efforts` has to be either NULL, single numeric ",
               "value, or one of the following: 'median', 'mean', 'max', ",
@@ -522,7 +522,7 @@ predict_maps <- function(
 
 
       # Fix at single value
-      IASDT.R::cat_time(
+      ecokit::cat_time(
         paste0("Fixed value is ", round(EffortsVal, 2), " [log10 scale]"),
         level = 2L, cat_timestamp = FALSE)
 
@@ -549,14 +549,14 @@ predict_maps <- function(
 
   if ("RiversLog" %in% other_variables) {
 
-    IASDT.R::cat_time("River length", level = 1L)
+    ecokit::cat_time("River length", level = 1L)
 
     R_Rivers <- fs::path(Path_Rivers, "River_Lengths.RData")
     if (!file.exists(R_Rivers)) {
-      IASDT.R::stop_ctx("River length data does not exist", R_Rivers = R_Rivers)
+      ecokit::stop_ctx("River length data does not exist", R_Rivers = R_Rivers)
     }
 
-    R_Rivers <- IASDT.R::load_as(R_Rivers) %>%
+    R_Rivers <- ecokit::load_as(R_Rivers) %>%
       terra::unwrap() %>%
       magrittr::extract2("STRAHLER_5") %>%
       magrittr::add(0.1) %>%
@@ -567,13 +567,13 @@ predict_maps <- function(
     if (is.null(fix_rivers)) {
 
       # Do not fix at single value
-      IASDT.R::cat_time(
+      ecokit::cat_time(
         "River length predictor is not fixed at a single value",
         level = 2L, cat_timestamp = FALSE)
 
     } else {
 
-      IASDT.R::cat_time(
+      ecokit::cat_time(
         "River length predictor will be fixed at single (`fix_rivers`) value",
         level = 2L, cat_timestamp = FALSE)
 
@@ -582,7 +582,7 @@ predict_maps <- function(
 
       if (length(fix_rivers) != 1) {
         # Check if fix_rivers is a vector or length 1
-        IASDT.R::stop_ctx(
+        ecokit::stop_ctx(
           "`fix_rivers` must be a vector or length 1.", fix_rivers = fix_rivers)
       }
 
@@ -598,7 +598,7 @@ predict_maps <- function(
           dplyr::between(fix_rivers, RiversRange[1], RiversRange[2]))
 
         if (InvalidVal) {
-          IASDT.R::stop_ctx(
+          ecokit::stop_ctx(
             "`fix_rivers` value is out of the range of observed river length",
             fix_rivers = fix_rivers, RiversRange = round(RiversRange, 2))
         }
@@ -612,7 +612,7 @@ predict_maps <- function(
         # median, mean, max, and q90
         fix_rivers <- stringr::str_to_lower(fix_rivers)
         if (!(fix_rivers %in% c("median", "mean", "max", "q90"))) {
-          IASDT.R::stop_ctx(
+          ecokit::stop_ctx(
             paste0(
               "`fix_rivers` has to be either NULL, single numeric ",
               "value, or one of the following: 'median', 'mean', 'max', ",
@@ -657,7 +657,7 @@ predict_maps <- function(
           .default = NA_real_)
       }
 
-      IASDT.R::cat_time(
+      ecokit::cat_time(
         paste0("Fixed value is ", round(RiversVal, 2), " [log10 scale]"),
         level = 2L, cat_timestamp = FALSE)
 
@@ -679,7 +679,7 @@ predict_maps <- function(
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
 
   ## Merge static predictors -----
-  IASDT.R::cat_time("Merge static predictors", level = 1L)
+  ecokit::cat_time("Merge static predictors", level = 1L)
 
   StaticPredictors <- terra::rast(StaticPredictors)
 
@@ -694,13 +694,13 @@ predict_maps <- function(
 
   # Predict latent factor at new locations ------
 
-  IASDT.R::cat_time("Predict latent factor at new locations")
+  ecokit::cat_time("Predict latent factor at new locations")
 
   Path_Test_LF <- fs::path(Path_Prediction1, "Test_LF.qs2")
 
   if (!file.exists(Path_Test_LF) && pred_new_sites) {
 
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       "Preparing input data for predicting latent factor", level = 1L)
 
     Predict_DF_Test <- Prediction_Options %>%
@@ -711,7 +711,7 @@ predict_maps <- function(
       # climates will be produced. Predictions without clamping is used for
       # model evaluation.
       utils::head(1) %>%
-      IASDT.R::load_as() %>%
+      ecokit::load_as() %>%
       terra::unwrap() %>%
       # Only extract predictors used in the model
       terra::subset(bio_variables) %>%
@@ -737,8 +737,8 @@ predict_maps <- function(
     rm(Predict_DF_Test, Test_X, Test_XY, Model, envir = environment())
     invisible(gc())
 
-    IASDT.R::cat_time("Predicting latent factor", level = 1L)
-    IASDT.R::cat_sep(
+    ecokit::cat_time("Predicting latent factor", level = 1L)
+    ecokit::cat_sep(
       sep_lines_before = 1L, sep_lines_after = 2,
       n_separators = 1L, line_char = "*")
 
@@ -754,8 +754,8 @@ predict_maps <- function(
 
     rm(Gradient, Preds_LF, envir = environment())
 
-    IASDT.R::cat_time("Predicting latent factor is finished!", level = 1L)
-    IASDT.R::cat_sep(
+    ecokit::cat_time("Predicting latent factor is finished!", level = 1L)
+    ecokit::cat_sep(
       sep_lines_before = 1L, sep_lines_after = 2,
       n_separators = 1L, line_char = "*")
 
@@ -765,10 +765,10 @@ predict_maps <- function(
 
   } else {
     if (pred_new_sites) {
-      IASDT.R::cat_time(
+      ecokit::cat_time(
         "LF prediction is already available on disk", level = 1L)
     } else {
-      IASDT.R::cat_time("LF prediction will NOT be made", level = 1L)
+      ecokit::cat_time("LF prediction will NOT be made", level = 1L)
     }
 
     rm(Model, envir = environment())
@@ -801,7 +801,7 @@ predict_maps <- function(
 
     MSG <- paste0(
       model_name, " (", ID, "/", nrow(Prediction_Options), ")")
-    IASDT.R::info_chunk(
+    ecokit::info_chunk(
       MSG, n_separators = 1L, line_char = "-", line_char_rep = 70L,
       cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE, level = 1L,
       info_lines_before = 1L)
@@ -861,23 +861,23 @@ predict_maps <- function(
     if (OutMissing) {
 
       # Load model
-      Model <- IASDT.R::load_as(path_model)
+      Model <- ecokit::load_as(path_model)
 
       # Skip predictions if the predictions as sf object is already on disk
       if (file.exists(Path_Prediction_sf)) {
 
-        IASDT.R::cat_time("Loading predictions `sf` from disk", level = 1L)
-        Prediction_sf <- IASDT.R::load_as(Path_Prediction_sf)
+        ecokit::cat_time("Loading predictions `sf` from disk", level = 1L)
+        Prediction_sf <- ecokit::load_as(Path_Prediction_sf)
 
       } else {
 
         .OptionStartTime <- lubridate::now(tzone = "CET")
 
         # Extracting data at training and new sites ------
-        IASDT.R::cat_time(
+        ecokit::cat_time(
           "Extracting data at training and new sites", level = 1L)
         Predict_DF <- Prediction_Options$FilePath[[ID]] %>%
-          IASDT.R::load_as() %>%
+          ecokit::load_as() %>%
           terra::unwrap() %>%
           terra::subset(bio_variables) %>%
           c(StaticPreds) %>%
@@ -921,14 +921,14 @@ predict_maps <- function(
         # ______________________________________________
 
         # Predictions at training sites ----
-        IASDT.R::cat_time("Predictions at training sites", level = 1L)
+        ecokit::cat_time("Predictions at training sites", level = 1L)
 
         Path_Current_Train <- fs::path(
           Path_Prediction, paste0("Prediction_", Option_Name, "_Train.qs2"))
 
         if (file.exists(Path_Current_Train)) {
 
-          IASDT.R::cat_time("Loading predictions from disk", level = 2L)
+          ecokit::cat_time("Loading predictions from disk", level = 2L)
           Preds_ModFitSites <- tibble::tibble(Pred_Path = Path_Current_Train)
 
         } else {
@@ -952,14 +952,14 @@ predict_maps <- function(
 
         if (pred_new_sites) {
 
-          IASDT.R::cat_time("Predictions at new sites", level = 1L)
+          ecokit::cat_time("Predictions at new sites", level = 1L)
 
           Path_Current_Test <- fs::path(
             Path_Prediction, paste0("Prediction_", Option_Name, "_Test.qs2"))
 
           if (file.exists(Path_Current_Test)) {
 
-            IASDT.R::cat_time("Loading predictions from disk", level = 2L)
+            ecokit::cat_time("Loading predictions from disk", level = 2L)
             Preds_NewSites <- tibble::tibble(Pred_Path = Path_Current_Test)
 
           } else {
@@ -980,30 +980,30 @@ predict_maps <- function(
           # ______________________________________________
 
           # Merge & save predictions - sf ------
-          IASDT.R::cat_time(
+          ecokit::cat_time(
             "Merge & save predictions at training and new sites", level = 1L)
 
           Prediction_sf <- dplyr::bind_rows(
-            IASDT.R::load_as(Preds_ModFitSites$Pred_Path),
-            IASDT.R::load_as(Preds_NewSites$Pred_Path))
+            ecokit::load_as(Preds_ModFitSites$Pred_Path),
+            ecokit::load_as(Preds_NewSites$Pred_Path))
 
         } else {
 
-          IASDT.R::cat_time(
+          ecokit::cat_time(
             "Predictions at new sites will NOT be made", level = 1L)
 
           # Get column names from predictions at training sites
-          ColsToAdd <- IASDT.R::load_as(Preds_ModFitSites$Pred_Path) %>%
+          ColsToAdd <- ecokit::load_as(Preds_ModFitSites$Pred_Path) %>%
             names() %>%
             stringr::str_subset("^Sp_|^SR_|model_name")
 
           # Add missing columns to predictions at new sites
           Preds_New_NA <- Test_XY %>%
             dplyr::mutate(model_name = Model_Name_Test) %>%
-            IASDT.R::add_missing_columns(fill_value = NA_real_, ColsToAdd)
+            ecokit::add_missing_columns(fill_value = NA_real_, ColsToAdd)
 
           # combine predictions
-          Prediction_sf <- IASDT.R::load_as(Preds_ModFitSites$Pred_Path) %>%
+          Prediction_sf <- ecokit::load_as(Preds_ModFitSites$Pred_Path) %>%
             dplyr::bind_rows(Preds_New_NA)
 
           rm(Preds_New_NA, ColsToAdd, envir = environment())
@@ -1012,9 +1012,9 @@ predict_maps <- function(
         # ______________________________________________
 
         # Save predictions as sf object
-        IASDT.R::save_as(object = Prediction_sf, out_path = Path_Prediction_sf)
+        ecokit::save_as(object = Prediction_sf, out_path = Path_Prediction_sf)
 
-        IASDT.R::cat_diff(
+        ecokit::cat_diff(
           init_time = .OptionStartTime, prefix = "Prediction took ", level = 1L)
 
       }
@@ -1024,13 +1024,13 @@ predict_maps <- function(
 
       ### Predictions as spatRaster / tif -----
 
-      IASDT.R::cat_time("Rasterization & prepare summary data", level = 1L)
+      ecokit::cat_time("Rasterization & prepare summary data", level = 1L)
 
       Fields2Raster <- names(Prediction_sf) %>%
         stringr::str_subset("^Sp_|^SR_") %>%
         gtools::mixedsort()
 
-      Grid10 <- terra::unwrap(IASDT.R::load_as(Path_GridR))
+      Grid10 <- terra::unwrap(ecokit::load_as(Path_GridR))
       Prediction_R <- terra::rasterize(
         Prediction_sf, Grid10, field = Fields2Raster)
 
@@ -1047,7 +1047,7 @@ predict_maps <- function(
           # clamping is used or not
           path = Path_Prediction, pattern = "Prediction_Current.*_R.qs2",
           full.names = TRUE) %>%
-          IASDT.R::load_as() %>%
+          ecokit::load_as() %>%
           terra::unwrap() %>%
           terra::subset(MeanNames)
 
@@ -1089,7 +1089,7 @@ predict_maps <- function(
             Path_Prediction_tif, paste0(layer_name, ".tif")))
 
       # Save as tif
-      IASDT.R::cat_time("Save as tif", level = 1L)
+      ecokit::cat_time("Save as tif", level = 1L)
       Out_Summary0 <- Out_Summary %>%
         dplyr::mutate(
           Map = purrr::map2(
@@ -1118,18 +1118,18 @@ predict_maps <- function(
               "tif_path_cov", "tif_path_anomaly")))
 
       # save as spatRaster - qs2
-      IASDT.R::cat_time("Save as spatRaster - qs2", level = 1L)
+      ecokit::cat_time("Save as spatRaster - qs2", level = 1L)
       Prediction_R <- terra::wrap(Prediction_R)
-      IASDT.R::save_as(object = Prediction_R, out_path = Path_Prediction_R)
+      ecokit::save_as(object = Prediction_R, out_path = Path_Prediction_R)
 
       # Save summary - RData
-      IASDT.R::cat_time("Save summary - RData", level = 1L)
-      IASDT.R::save_as(
+      ecokit::cat_time("Save summary - RData", level = 1L)
+      ecokit::save_as(
         object = Out_Summary, object_name = paste0(Option_Name, "_Summary"),
         out_path = Path_Prediction_summary)
 
       # Save summary - csv
-      IASDT.R::cat_time("Save summary - csv", level = 1L)
+      ecokit::cat_time("Save summary - csv", level = 1L)
       utils::write.table(
         x = Out_Summary,
         file = stringr::str_replace(Path_Prediction_summary, ".RData$", ".txt"),
@@ -1153,12 +1153,12 @@ predict_maps <- function(
 
   # Predicting ------
 
-  IASDT.R::info_chunk(
+  ecokit::info_chunk(
     "Making spatial predictions", n_separators = 2L, level = 1L,
     line_char = "*", line_char_rep = 70L, cat_red = TRUE,
     cat_bold = TRUE, cat_timestamp = FALSE)
 
-  Grid10 <- terra::unwrap(IASDT.R::load_as(Path_GridR))
+  Grid10 <- terra::unwrap(ecokit::load_as(Path_GridR))
 
   Prediction_Summary <- purrr::map_dfr(
     .x = seq_len(nrow(Prediction_Options)), .f = Predict_Internal) %>%
@@ -1173,11 +1173,11 @@ predict_maps <- function(
 
   # Ensemble model predictions ------
 
-  IASDT.R::info_chunk(
+  ecokit::info_chunk(
     "\tEnsemble model predictions", n_separators = 1L, line_char = "-",
     line_char_rep = 70L, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
-  IASDT.R::cat_time("Prepare working in parallel", level = 1L)
+  ecokit::cat_time("Prepare working in parallel", level = 1L)
 
   if (n_cores == 1) {
     future::plan("future::sequential", gc = TRUE)
@@ -1194,7 +1194,7 @@ predict_maps <- function(
   # --------------------------------------------------------- #
 
   # Prepare input data to calculate ensemble predictions
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     "Prepare input data to calculate ensemble predictions", level = 1L)
 
   Prediction_Ensemble <- Prediction_Summary %>%
@@ -1209,7 +1209,7 @@ predict_maps <- function(
             return(NULL)
           }
 
-          IASDT.R::load_as(.x) %>%
+          ecokit::load_as(.x) %>%
             dplyr::select(
               -tidyselect::all_of(
                 c("tif_path_sd", "tif_path_cov", "tif_path_anomaly")))
@@ -1238,27 +1238,27 @@ predict_maps <- function(
 
   # --------------------------------------------------------- #
 
-  IASDT.R::cat_time("Create directories for ensemble predictions", level = 1L)
+  ecokit::cat_time("Create directories for ensemble predictions", level = 1L)
   fs::dir_create(unique(Prediction_Ensemble$Dir_Ensemble))
 
   # --------------------------------------------------------- #
 
   # Loading mean predictions at current climates
-  IASDT.R::cat_time("Loading mean predictions at current climates", level = 1L)
+  ecokit::cat_time("Loading mean predictions at current climates", level = 1L)
 
   CurrentMean <- list.files(
     path = dplyr::if_else(
       clamp_pred, Path_Prediction_Clamp, Path_Prediction_NoClamp),
     pattern = "Prediction_Current.*_R.qs2",
     full.names = TRUE) %>%
-    IASDT.R::load_as() %>%
+    ecokit::load_as() %>%
     terra::unwrap()
   CurrentMean <- terra::wrap(CurrentMean["_mean"])
 
   # --------------------------------------------------------- #
 
   # Calculate ensemble predictions
-  IASDT.R::cat_time("Calculate ensemble predictions", level = 1L)
+  ecokit::cat_time("Calculate ensemble predictions", level = 1L)
 
   Prediction_Ensemble <- Prediction_Ensemble %>%
     dplyr::mutate(
@@ -1321,7 +1321,7 @@ predict_maps <- function(
   # --------------------------------------------------------- #
 
   # Save ensemble maps as SpatRast
-  IASDT.R::cat_time("Save ensemble predictions as SpatRast", level = 1L)
+  ecokit::cat_time("Save ensemble predictions as SpatRast", level = 1L)
 
   Prediction_Ensemble_R <- Prediction_Ensemble %>%
     dplyr::mutate(
@@ -1370,7 +1370,7 @@ predict_maps <- function(
         terra::rast() %>%
         terra::wrap()
 
-      IASDT.R::save_as(object = OutMaps, out_path = OutFile)
+      ecokit::save_as(object = OutMaps, out_path = OutFile)
     },
     future.scheduling = Inf, future.seed = TRUE,
     future.globals = "Prediction_Ensemble_R",
@@ -1384,7 +1384,7 @@ predict_maps <- function(
   # --------------------------------------------------------- #
 
   # Save summary of ensemble predictions
-  IASDT.R::cat_time("Save summary of ensemble predictions", level = 1L)
+  ecokit::cat_time("Save summary of ensemble predictions", level = 1L)
 
   Prediction_Ensemble_Summary <- Prediction_Ensemble %>%
     dplyr::select(-Ensemble_Maps) %>%
@@ -1401,7 +1401,7 @@ predict_maps <- function(
         .x = Ensemble_DT, .y = Ensemble_File,
         .f = ~ {
 
-          IASDT.R::save_as(
+          ecokit::save_as(
             object = .x, out_path = .y,
             object_name = stringr::str_remove(basename(.y), ".RData"))
 
@@ -1431,7 +1431,7 @@ predict_maps <- function(
 
   # Overall summary -----
 
-  IASDT.R::info_chunk(
+  ecokit::info_chunk(
     "\tPrepare overall summary", n_separators = 1L, line_char = "-",
     line_char_rep = 70L, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
@@ -1459,7 +1459,7 @@ predict_maps <- function(
   }
 
   Prediction_Summary_Shiny <- Prediction_Summary_Shiny$File_Pred_summary %>%
-    purrr::map(IASDT.R::load_as) %>%
+    purrr::map(ecokit::load_as) %>%
     dplyr::bind_rows() %>%
     dplyr::distinct() %>%
     dplyr::mutate(
@@ -1482,7 +1482,7 @@ predict_maps <- function(
   # Create tar file for prediction files
   if (tar_predictions) {
 
-    IASDT.R::cat_time("Create tar file for prediction files", level = 1L)
+    ecokit::cat_time("Create tar file for prediction files", level = 1L)
 
     # Directory to save the tar file
     TarDir <- dirname(Path_Summary_RData_Shiny)
@@ -1513,7 +1513,7 @@ predict_maps <- function(
   # # ................................................................... ###
   # # ..................................................................... ###
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = .start_time, prefix = "\nThe whole prediction function took ")
 
   return(Prediction_Summary)

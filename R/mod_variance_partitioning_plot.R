@@ -32,12 +32,12 @@ variance_partitioning_plot <- function(
   AllArgs <- purrr::map(
     AllArgs, function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character",
     args_to_check = c("env_file", "path_model"))
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "logical", args_to_check = "use_TF")
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "numeric", args_to_check = "n_cores")
   rm(AllArgs, envir = environment())
 
@@ -46,17 +46,17 @@ variance_partitioning_plot <- function(
 
   # Species info -----
 
-  IASDT.R::cat_time("Loading species info")
+  ecokit::cat_time("Loading species info")
 
   EnvVars2Read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
     "TaxaInfoFile", "DP_R_Taxa_info_rdata", FALSE, TRUE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
-  SpList <- IASDT.R::load_as(TaxaInfoFile) %>%
+  SpList <- ecokit::load_as(TaxaInfoFile) %>%
     dplyr::select(Species = IAS_ID, Species_name) %>%
     dplyr::distinct() %>%
     dplyr::mutate(
@@ -74,13 +74,13 @@ variance_partitioning_plot <- function(
 
   # Model evaluation ----
 
-  IASDT.R::cat_time("Loading model evaluation")
+  ecokit::cat_time("Loading model evaluation")
 
   Path_Eval <- fs::path(Path_Root, "Model_Evaluation") %>%
     list.files("Eval_.+.qs2", full.names = TRUE)
 
   if (length(Path_Eval) != 1) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       paste0(
         "The number of model evaluation files in the directory: ",
         Path_Root, " is not equal to 1"),
@@ -88,7 +88,7 @@ variance_partitioning_plot <- function(
       length_Path_Eval = length(Path_Eval))
   }
 
-  Model_Eval <- IASDT.R::load_as(Path_Eval) %>%
+  Model_Eval <- ecokit::load_as(Path_Eval) %>%
     # filter out the species that are not in the model
     dplyr::filter(stringr::str_starts(IAS_ID, "Sp_")) %>%
     dplyr::rename(Species = IAS_ID) %>%
@@ -100,7 +100,7 @@ variance_partitioning_plot <- function(
 
   # Compute or load variance partitioning ----
 
-  IASDT.R::cat_time("Compute or load variance partitioning")
+  ecokit::cat_time("Compute or load variance partitioning")
 
   if (is.null(VP_file)) {
     VP_file <- "VarPar"
@@ -110,12 +110,12 @@ variance_partitioning_plot <- function(
 
   if (file.exists(File_VarPar)) {
 
-    IASDT.R::cat_time("Loading variance partitioning", level = 2L)
-    VarPar <- IASDT.R::load_as(File_VarPar)
+    ecokit::cat_time("Loading variance partitioning", level = 2L)
+    VarPar <- ecokit::load_as(File_VarPar)
 
   } else {
 
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       paste0(
         "Variance partitioning will be computed using ", n_cores, " cores ",
         dplyr::if_else(use_TF, "and", "without"), " TensorFlow."),
@@ -161,7 +161,7 @@ variance_partitioning_plot <- function(
   # # ..................................................................... ###
   # # ..................................................................... ###
 
-  IASDT.R::cat_time("Prepare plotting data")
+  ecokit::cat_time("Prepare plotting data")
 
   # Relative variance partitioning ----
 
@@ -244,7 +244,7 @@ variance_partitioning_plot <- function(
 
   ## Plotting ----
 
-  IASDT.R::cat_time("Plotting")
+  ecokit::cat_time("Plotting")
 
   # 1. ordered by mean variance partitioning
 
@@ -373,7 +373,7 @@ variance_partitioning_plot <- function(
 
   if (is.null(Model_Eval$TjurR2) ||
       length(Model_Eval$TjurR2) != ncol(VarPar$vals)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       paste0(
         "Mismatch between the length of Model_Eval$TjurR2 and the number of ",
         " columns in VarPar$vals"),
@@ -539,7 +539,7 @@ variance_partitioning_plot <- function(
   # # ..................................................................... ###
   # # ..................................................................... ###
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = .start_time,
     prefix = "Computing and plotting variance partitioning took ")
 

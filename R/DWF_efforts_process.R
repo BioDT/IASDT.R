@@ -74,44 +74,43 @@ efforts_process <- function(
   .start_time <- lubridate::now(tzone = "CET")
 
   # Checking arguments ----
-  IASDT.R::cat_time("Checking arguments")
+  ecokit::cat_time("Checking arguments")
 
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character",
     args_to_check = c("r_environ", "env_file"))
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "logical",
     args_to_check = c("request", "download"))
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "numeric",
     args_to_check = c("n_cores", "boundaries", "start_year"))
 
   # Validate boundaries argument
   if (length(boundaries) != 4) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`boundaries` must be a numeric vector of length 4.",
       boundaries = boundaries, length_boundaries = length(boundaries))
   }
 
   # Validate chunk_size
   if (!is.numeric(chunk_size) || chunk_size <= 0) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`chunk_size` must be a positive numeric value.", chunk_size = chunk_size)
   }
 
   # Validate n_cores
   if (!is.numeric(n_cores) || n_cores <= 0 || n_cores > 50) {
-    IASDT.R::stop_ctx(
-      "`n_cores` must be a positive integer.", n_cores = n_cores)
+    ecokit::stop_ctx("`n_cores` must be a positive integer.", n_cores = n_cores)
   }
 
   # Validate start_year
   if (!is.numeric(start_year) || start_year <= 1950) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`start_year` must be a positive integer after 1950",
       start_year = start_year)
   }
@@ -124,7 +123,7 @@ efforts_process <- function(
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_time("Ensure that GBIF access information is available")
+  ecokit::cat_time("Ensure that GBIF access information is available")
   IASDT.R::GBIF_check(r_environ = r_environ)
 
   # # ..................................................................... ###
@@ -138,7 +137,7 @@ efforts_process <- function(
     "Taxa_Stand", "DP_R_Taxa_stand", FALSE, TRUE,
     "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
@@ -147,7 +146,7 @@ efforts_process <- function(
   # # ..................................................................... ###
 
   # Loading input data ------
-  IASDT.R::cat_time("Loading input data")
+  ecokit::cat_time("Loading input data")
 
   ## Create paths -----
   Path_Efforts_Requests <- fs::path(Path_Efforts, "Requests")
@@ -164,7 +163,7 @@ efforts_process <- function(
 
   missing_grids <- Grids[!file.exists(Grids)]
   if (length(missing_grids) > 0) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       paste0(
         "The following grid file(s) do not exist:\n",
         paste0(" >>> ", missing_grids, collapse = "\n")),
@@ -178,7 +177,7 @@ efforts_process <- function(
 
   if (request) {
 
-    IASDT.R::cat_time("Requesting efforts data")
+    ecokit::cat_time("Requesting efforts data")
 
     IASDT.R::efforts_request(
       env_file = env_file, n_cores = n_cores, start_year = start_year,
@@ -187,12 +186,12 @@ efforts_process <- function(
   } else {
 
     if (!file.exists(AllRequests)) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         "Efforts data was not requested and the file does not exist.",
         AllRequests = AllRequests)
     }
 
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       stringr::str_glue(
         "Efforts data was not requested. Previous request information is \\
         already available on disk"))
@@ -204,21 +203,21 @@ efforts_process <- function(
 
   if (download) {
 
-    IASDT.R::cat_time("Downloading efforts data")
+    ecokit::cat_time("Downloading efforts data")
     IASDT.R::efforts_download(n_cores = n_cores, env_file = env_file)
 
   } else {
 
     if (!file.exists(AllRequests)) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         "Efforts data was not downloaded and the file does not exist.",
         AllRequests = AllRequests)
     }
 
-    Efforts_AllRequests <- IASDT.R::load_as(AllRequests)
+    Efforts_AllRequests <- ecokit::load_as(AllRequests)
 
     if (!("DownPath" %in% names(Efforts_AllRequests))) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         "Efforts data was not downloaded and the 'DownPath' column is missing.",
         Efforts_AllRequests = Efforts_AllRequests,
         names_Efforts_AllRequests = names(Efforts_AllRequests))
@@ -227,7 +226,7 @@ efforts_process <- function(
     rm(Efforts_AllRequests, envir = environment())
     invisible(gc())
 
-    IASDT.R::cat_time("Efforts data was not downloaded")
+    ecokit::cat_time("Efforts data was not downloaded")
 
   }
 
@@ -235,7 +234,7 @@ efforts_process <- function(
 
   # Processing efforts data ------
 
-  IASDT.R::cat_time("Processing efforts data")
+  ecokit::cat_time("Processing efforts data")
   IASDT.R::efforts_summarize(
     env_file = env_file, n_cores = n_cores, chunk_size = chunk_size,
     delete_chunks = delete_chunks)
@@ -244,7 +243,7 @@ efforts_process <- function(
 
   # # Plotting ----
 
-  IASDT.R::cat_time("Plotting sampling efforts")
+  ecokit::cat_time("Plotting sampling efforts")
   IASDT.R::efforts_plot(env_file = env_file)
 
   # # ..................................................................... ###
@@ -252,14 +251,14 @@ efforts_process <- function(
   # # Cleaning up ----
 
   if (delete_processed) {
-    IASDT.R::cat_time("Cleaning up - delete downloaded GBIF data")
+    ecokit::cat_time("Cleaning up - delete downloaded GBIF data")
     fs::file_delete(list.files(Path_Raw, full.names = TRUE))
     fs::dir_delete(Path_Raw)
   }
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = .start_time,
     prefix = "\nProcessing efforts data took ", ... = "\n")
 

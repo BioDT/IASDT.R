@@ -18,19 +18,19 @@ GBIF_download <- function(
   .start_time <- lubridate::now(tzone = "CET")
 
   # Checking arguments ----
-  IASDT.R::cat_time("Checking arguments")
+  ecokit::cat_time("Checking arguments")
 
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character",
     args_to_check = c("r_environ", "env_file"))
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "logical",
     args_to_check = c("request", "download", "split_chunks"))
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "numeric",
     args_to_check = c("chunk_size", "boundaries", "start_year"))
 
@@ -43,24 +43,24 @@ GBIF_download <- function(
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     "Ensure that GBIF access information is available", level = 1L)
   IASDT.R::GBIF_check(r_environ = r_environ)
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_time("Check system commands")
+  ecokit::cat_time("Check system commands")
   Commands <- c("unzip", "nl", "head", "cut", "sed", "split")
-  CommandsAvail <- purrr::map_lgl(Commands, IASDT.R::check_system_command)
+  CommandsAvail <- purrr::map_lgl(Commands, ecokit::check_system_command)
   if (!all(CommandsAvail)) {
     Missing <- paste(Commands[!CommandsAvail], collapse = " + ")
-    IASDT.R::stop_ctx("Missing commands", missing_commands = Missing)
+    ecokit::stop_ctx("Missing commands", missing_commands = Missing)
   }
 
   # # ..................................................................... ###
 
   # Environment variables ----
-  IASDT.R::cat_time("Environment variables")
+  ecokit::cat_time("Environment variables")
 
   EnvVars2Read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
@@ -70,41 +70,41 @@ GBIF_download <- function(
     "CountryCodes", "DP_R_Countrycodes", FALSE, TRUE,
     "TaxaInfo", "DP_R_Taxa_info_rdata", FALSE, TRUE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
   # # ..................................................................... ###
 
   # Input data ------
-  IASDT.R::cat_time("Loading input data")
+  ecokit::cat_time("Loading input data")
 
   ## Create paths -----
-  IASDT.R::cat_time("Create paths", level = 1L)
+  ecokit::cat_time("Create paths", level = 1L)
   fs::dir_create(c(Path_GBIF, Path_GBIF_Raw, Path_GBIF_Interim))
 
   ## Country codes -----
-  IASDT.R::cat_time("Country codes", level = 1L)
+  ecokit::cat_time("Country codes", level = 1L)
   CountryCodes <- readr::read_csv(
     file = CountryCodes, col_types = list(readr::col_character()),
     progress = FALSE, col_select = c("countryName", "countryCode"))
 
   ## Species list -----
-  IASDT.R::cat_time("Species list", level = 1L)
-  TaxaList <- IASDT.R::load_as(TaxaInfo)
+  ecokit::cat_time("Species list", level = 1L)
+  TaxaList <- ecokit::load_as(TaxaInfo)
 
   # # ..................................................................... ###
 
   # request GBIF data ------
 
-  IASDT.R::cat_time("Request GBIF data")
+  ecokit::cat_time("Request GBIF data")
 
   if (request) {
     # This can take 1-3 hours for the data to be ready
     .StartTimeRequest <- lubridate::now(tzone = "CET")
 
     ## Request GBIF data -----
-    IASDT.R::cat_time("Requesting GBIF data", level = 1L)
+    ecokit::cat_time("Requesting GBIF data", level = 1L)
 
     # a new DOI will be created; a couple of hours waiting time is expected
 
@@ -118,61 +118,61 @@ GBIF_download <- function(
       rgbif::pred_gte("year", start_year),
       # Only within specific boundaries
       rgbif::pred_within(
-        IASDT.R::boundary_to_WKT(
+        ecokit::boundary_to_WKT(
           left = boundaries[1], right = boundaries[2],
           bottom = boundaries[3], top = boundaries[4])
       )
     )
 
-    IASDT.R::cat_time("Save data request", level = 1L)
+    ecokit::cat_time("Save data request", level = 1L)
     save(GBIF_Request, file = fs::path(Path_GBIF, "GBIF_Request.RData"))
 
     # Waiting for data to be ready ------
-    IASDT.R::cat_time("Waiting for data to be ready", level = 1L)
+    ecokit::cat_time("Waiting for data to be ready", level = 1L)
     StatusDetailed <- rgbif::occ_download_wait(GBIF_Request)
 
-    IASDT.R::cat_diff(
+    ecokit::cat_diff(
       init_time = .StartTimeRequest,
       prefix = "Requesting GBIF data took ", level = 1L)
 
-    IASDT.R::cat_time("Save status details", level = 1L)
+    ecokit::cat_time("Save status details", level = 1L)
     save(StatusDetailed, file = fs::path(Path_GBIF, "StatusDetailed.RData"))
 
-    IASDT.R::cat_time("Data is ready - status summary:", ... = "\n", level = 1L)
+    ecokit::cat_time("Data is ready - status summary:", ... = "\n", level = 1L)
     print(rgbif::occ_download_meta(key = StatusDetailed$key))
   } else {
     Path_Request <- fs::path(Path_GBIF, "GBIF_Request.RData")
 
     if (!file.exists(Path_Request)) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         "Path to previously requested data does not exist",
         Path_Request = Path_Request)
     }
 
-    IASDT.R::cat_time("Loading previous GBIF request", level = 1L)
-    GBIF_Request <- IASDT.R::load_as(Path_Request)
+    ecokit::cat_time("Loading previous GBIF request", level = 1L)
+    GBIF_Request <- ecokit::load_as(Path_Request)
 
     Path_Status <- fs::path(Path_GBIF, "StatusDetailed.RData")
 
     if (!file.exists(Path_Status)) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         "Path to status info does not exist", Path_Status = Path_Status)
     }
 
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       "Loading `status` information from a previous data request",
       level = 1L)
-    StatusDetailed <- IASDT.R::load_as(Path_Status)
+    StatusDetailed <- ecokit::load_as(Path_Status)
   }
 
   # # ..................................................................... ###
 
   # download the data to disk ----
 
-  IASDT.R::cat_time("Download GBIF data")
+  ecokit::cat_time("Download GBIF data")
 
   if (download) {
-    IASDT.R::cat_time("Downloading GBIF data", level = 1L)
+    ecokit::cat_time("Downloading GBIF data", level = 1L)
 
     .StartTimeDownload <- lubridate::now(tzone = "CET")
 
@@ -180,15 +180,15 @@ GBIF_download <- function(
       GBIF_Request, path = Path_GBIF_Raw, overwrite = FALSE) %>%
       suppressMessages()
 
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       "GBIF data was downloaded at the following path:", level = 3L)
-    IASDT.R::cat_time(as.character(Dwn), level = 2L)
-    IASDT.R::cat_diff(
+    ecokit::cat_time(as.character(Dwn), level = 2L)
+    ecokit::cat_diff(
       init_time = .StartTimeDownload,
       prefix = "Downloading GBIF data took ", level = 2L)
 
     # Extract/save metadata info
-    IASDT.R::cat_time("Extract and save metadata info", level = 1L)
+    ecokit::cat_time("Extract and save metadata info", level = 1L)
     GBIF_Metadata <- list(
       GBIF_Request = GBIF_Request,
       StatusDetailed = StatusDetailed,
@@ -206,22 +206,22 @@ GBIF_download <- function(
 
     save(GBIF_Metadata, file = fs::path(Path_GBIF, "GBIF_Metadata.RData"))
   } else {
-    IASDT.R::cat_time("Data was NOT downloaded", level = 1L)
+    ecokit::cat_time("Data was NOT downloaded", level = 1L)
 
     GBIF_Metadata <- fs::path(Path_GBIF, "GBIF_Metadata.RData")
     if (!file.exists(GBIF_Metadata)) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         "GBIF metadata file does not exist", GBIF_Metadata = GBIF_Metadata)
     }
 
-    GBIF_Metadata <- IASDT.R::load_as(GBIF_Metadata)
+    GBIF_Metadata <- ecokit::load_as(GBIF_Metadata)
   }
 
   # # ..................................................................... ###
 
   # Selected columns and data types ----
 
-  IASDT.R::cat_time("Prepare selected columns and data types")
+  ecokit::cat_time("Prepare selected columns and data types")
 
   # Class types of some selected columns
   # integer columns
@@ -280,7 +280,7 @@ GBIF_download <- function(
     # extraction read first line
     "unzip -p {GBIF_Metadata$DwnPath} occurrence.txt | head -n 1" %>%
     stringr::str_glue() %>%
-    IASDT.R::system_command() %>%
+    ecokit::system_command() %>%
     # Split the first row into column names. Data is tab-separated
     stringr::str_split("\t") %>%
     magrittr::extract2(1) %>%
@@ -325,7 +325,7 @@ GBIF_download <- function(
   # Split data into chunks using bash ------
 
   if (split_chunks) {
-    IASDT.R::cat_time("Split data into chunks using bash")
+    ecokit::cat_time("Split data into chunks using bash")
 
     # This bash command implements the following:
     ## unzip: read the content of occurrences without extracting its content
@@ -343,15 +343,15 @@ GBIF_download <- function(
       'collapse = ",")} -d "\t" | sed -n "1!p" | split -l {chunk_size} ',
       '-a 3 -d - "{Path_GBIF_Interim}/Chunk_" --additional-suffix=.txt') %>%
       stringr::str_glue() %>%
-      IASDT.R::system_command(r_object = FALSE) %>%
+      ecokit::system_command(r_object = FALSE) %>%
       invisible()
   } else {
-    IASDT.R::cat_time("`split_chunks = FALSE`; no data split was made")
+    ecokit::cat_time("`split_chunks = FALSE`; no data split was made")
   }
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = .start_time,
     prefix = paste0(
       "Requesting or downloading GBIF data and split data into chunks took "))

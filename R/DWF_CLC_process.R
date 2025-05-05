@@ -46,18 +46,18 @@ CLC_process <- function(
     EU_Bound <- Value <- Country <- Country2 <- NULL
 
   if (is.null(env_file)) {
-    IASDT.R::stop_ctx("env_file can not be empty", env_file = env_file)
+    ecokit::stop_ctx("env_file can not be empty", env_file = env_file)
   }
 
   if (!is.numeric(min_land_percent) ||
       !dplyr::between(min_land_percent, 0, 100)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`min_land_percent` must be a numeric value between 0 and 100.",
       min_land_percent = min_land_percent)
   }
 
   if (!file.exists(env_file)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Path to environment variables was not found", env_file = env_file)
   }
 
@@ -67,13 +67,13 @@ CLC_process <- function(
   # Loading data ------
   ## ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪
 
-  IASDT.R::cat_time("Loading data")
+  ecokit::cat_time("Loading data")
 
   # # ||||||||||||||||||||||||||||||||||||||||||||
   # Environment variables
   # # ||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Environment variables")
+  ecokit::cat_time("Environment variables")
 
   EnvVars2Read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
@@ -84,7 +84,7 @@ CLC_process <- function(
     "Path_CLC_CW", "DP_R_CLC_crosswalk", FALSE, TRUE,
     "EU_Bound", "DP_R_EUBound", FALSE, TRUE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
@@ -92,7 +92,7 @@ CLC_process <- function(
   # Check files/directories
   # # ||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Check files and directories", level = 1L)
+  ecokit::cat_time("Check files and directories", level = 1L)
   fs::dir_create(Path_CLC)
 
   Path_Grid_sf <- fs::path(Path_Grid_Ref, "Grid_10_sf.RData")
@@ -104,7 +104,7 @@ CLC_process <- function(
     .x = requiredPaths,
     .f = function(path) {
       if (!file.exists(path)) {
-        IASDT.R::stop_ctx("Required path does not exist", path = path)
+        ecokit::stop_ctx("Required path does not exist", path = path)
       }
     }
   )
@@ -114,7 +114,7 @@ CLC_process <- function(
   # description of CLC values and custom cross-walks
   # # ||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Loading cross-walk", level = 1L)
+  ecokit::cat_time("Loading cross-walk", level = 1L)
   CLC_crossWalk <- readr::read_delim(
     file = Path_CLC_CW, show_col_types = FALSE, progress = FALSE) %>%
     dplyr::select(-SynHab_desc)
@@ -124,31 +124,31 @@ CLC_process <- function(
   # # ||||||||||||||||||||||||||||||||||||||||||||
 
   # Path of reference grid
-  IASDT.R::cat_time("Loading reference grid", level = 1L)
+  ecokit::cat_time("Loading reference grid", level = 1L)
 
   # sf
-  IASDT.R::cat_time("sf", level = 2L)
+  ecokit::cat_time("sf", level = 2L)
 
-  Grid_sf <- IASDT.R::load_as(Path_Grid_sf) %>%
+  Grid_sf <- ecokit::load_as(Path_Grid_sf) %>%
     magrittr::extract2("Grid_10_sf_s")
 
   # raster
-  IASDT.R::cat_time("raster", level = 2L)
-  Grid_R <- IASDT.R::load_as(Path_Grid_rast)
+  ecokit::cat_time("raster", level = 2L)
+  Grid_R <- ecokit::load_as(Path_Grid_rast)
 
   # # ||||||||||||||||||||||||||||||||||||||||||||
   # country boundaries
   # # ||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Loading country boundaries", level = 1L)
-  EUBound_sf <- IASDT.R::load_as(EU_Bound) %>%
+  ecokit::cat_time("Loading country boundaries", level = 1L)
+  EUBound_sf <- ecokit::load_as(EU_Bound) %>%
     magrittr::extract2("Bound_sf_Eur_s")
 
   # # ||||||||||||||||||||||||||||||||||||||||||||
   # Creating folders
   # # ||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Creating folders", level = 1L)
+  ecokit::cat_time("Creating folders", level = 1L)
 
   # sub-folders to store tif files (no masking to final reference grid)
   Path_CLC_Summary_Tif <- fs::path(Path_CLC, "Summary_Tif")
@@ -180,13 +180,13 @@ CLC_process <- function(
   # Calculate fraction of each CLC class at each grid cell ----
   # ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪
 
-  IASDT.R::cat_time("Calculate fraction of each CLC class at each grid cell")
+  ecokit::cat_time("Calculate fraction of each CLC class at each grid cell")
 
   # # ||||||||||||||||||||||||||||||||||||||||||||
   # Loading CLC tif file
   # # ||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Loading CLC tif file", level = 1L)
+  ecokit::cat_time("Loading CLC tif file", level = 1L)
   CLC_Rast <- terra::rast(Path_CLC_tif)
   terra::NAflag(CLC_Rast) <- 128
 
@@ -194,7 +194,7 @@ CLC_process <- function(
   # Calculate fraction for each CLC value
   # # ||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     "Processing using `exactextractr::exact_extract` function",
     level = 1L)
 
@@ -214,7 +214,7 @@ CLC_process <- function(
   # Save fraction results
   # # ||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Save fraction results", level = 1L)
+  ecokit::cat_time("Save fraction results", level = 1L)
   save(
     CLC_Fracs,
     file = fs::path(Path_CLC_Summary_RData, "CLC_Fracs.RData"))
@@ -223,7 +223,7 @@ CLC_process <- function(
   # Convert fractions to raster
   # # ||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Convert fractions to raster", level = 1L)
+  ecokit::cat_time("Convert fractions to raster", level = 1L)
   # convert to SpatVector objects for faster rasterization
   CLC_Fracs_vect <- terra::vect(CLC_Fracs)
 
@@ -236,7 +236,7 @@ CLC_process <- function(
           x = CLC_Fracs_vect, y = terra::rast(Grid_R), field = .x) %>%
           magrittr::multiply_by(100) %>%
           stats::setNames(.x) %>%
-          IASDT.R::set_raster_CRS()
+          ecokit::set_raster_CRS()
 
         # For `frac_44` (CLC 5.2.3 Sea and ocean), the original values do not
         # cover the whole study area, resulting in values of zero in the sea.
@@ -260,7 +260,7 @@ CLC_process <- function(
   # Calculate % coverage of different cross-walks per grid cell ----
   # ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪
 
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     "Calculate % coverage of different cross-walks per grid cell")
 
   PercCovMaps <- purrr::map_dfr(
@@ -275,13 +275,13 @@ CLC_process <- function(
   # Prepare reference grid --- Exclude areas from the study area ----
   # ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪
 
-  IASDT.R::cat_time("Reference grid --- Exclude areas from the study area")
+  ecokit::cat_time("Reference grid --- Exclude areas from the study area")
 
   ### |||||||||||||||||||||||||||||||||||||||
   # Islands to exclude
   ## ||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Islands to exclude", level = 1L)
+  ecokit::cat_time("Islands to exclude", level = 1L)
   Exclude_Islands <- list(
     melilla = c(2926000, 2944000, 1557000, 1574000),
     ceuta = c(3098000, 3219000, 1411000, 1493000),
@@ -300,7 +300,7 @@ CLC_process <- function(
   # Turkey --- boundaries / extent
   ## ||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Turkey --- boundaries and extent", level = 1L)
+  ecokit::cat_time("Turkey --- boundaries and extent", level = 1L)
   TR <- EUBound_sf$L_01 %>%
     dplyr::filter(CNTR_ID == "TR") %>%
     dplyr::select(-CNTR_ID)
@@ -315,7 +315,7 @@ CLC_process <- function(
   # Combine areas to be excluded
   ## ||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Combine areas to be excluded", level = 1L)
+  ecokit::cat_time("Combine areas to be excluded", level = 1L)
   Exclude_Area <- Grid_sf %>%
     dplyr::mutate(TR = as.integer(!sf::st_intersects(geometry, TR))) %>%
     dplyr::filter(is.na(TR)) %>%
@@ -335,7 +335,7 @@ CLC_process <- function(
   # Percentage of water habitats per grid cells
   ## ||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Calculate the % of water per grid cell", level = 1L)
+  ecokit::cat_time("Calculate the % of water per grid cell", level = 1L)
   Grid_10_Land <- dplyr::filter(PercCovMaps, Name == "PercCov_CLC_L3") %>%
     dplyr::pull(Map) %>%
     magrittr::extract2(1) %>%
@@ -346,32 +346,32 @@ CLC_process <- function(
     # calculate the sum of these classes
     sum() %>%
     stats::setNames("Grid_10_Land") %>%
-    IASDT.R::set_raster_CRS()
+    ecokit::set_raster_CRS()
 
   ## ||||||||||||||||||||||||||||||||||||||||
   # Reference grid
   ## ||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Reference grid", level = 1L)
+  ecokit::cat_time("Reference grid", level = 1L)
 
-  IASDT.R::cat_time("Reference grid --- land only", level = 2L)
+  ecokit::cat_time("Reference grid --- land only", level = 2L)
   Grid_10_Land[Exclude_Area == 1] <- NA
   Grid_10_Land[Grid_10_Land > (100 - min_land_percent)] <- NA
   Grid_10_Land[!is.na(Grid_10_Land)] <- 1
 
-  IASDT.R::cat_time("Reference grid --- cropped", level = 2L)
+  ecokit::cat_time("Reference grid --- cropped", level = 2L)
   Grid_10_Land_Crop <- terra::trim(Grid_10_Land) %>%
     stats::setNames("Grid_10_Land_Crop") %>%
-    IASDT.R::set_raster_CRS()
+    ecokit::set_raster_CRS()
 
-  IASDT.R::cat_time("Reference grid --- sf object", level = 2L)
+  ecokit::cat_time("Reference grid --- sf object", level = 2L)
   Grid_10_Land_sf <- terra::as.points(Grid_10_Land) %>%
     sf::st_as_sf() %>%
     sf::st_join(x = Grid_sf, y = .) %>%
     dplyr::filter(Grid_10_Land == 1) %>%
     dplyr::select(-Grid_10_Land)
 
-  IASDT.R::cat_time("Reference grid --- sf object - cropped", level = 2L)
+  ecokit::cat_time("Reference grid --- sf object - cropped", level = 2L)
   Grid_10_Land_Crop_sf <- terra::as.points(Grid_10_Land_Crop) %>%
     sf::st_as_sf() %>%
     sf::st_join(x = Grid_sf, y = .) %>%
@@ -382,7 +382,7 @@ CLC_process <- function(
   # Save reference grid
   ## ||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Save reference grid --- RData", level = 1L)
+  ecokit::cat_time("Save reference grid --- RData", level = 1L)
   Grid_10_Land <- terra::wrap(Grid_10_Land)
   Grid_10_Land_Crop <- terra::wrap(Grid_10_Land_Crop)
 
@@ -401,7 +401,7 @@ CLC_process <- function(
   # Save calculated % coverage
   ## ||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Save calculated % coverage", level = 1L)
+  ecokit::cat_time("Save calculated % coverage", level = 1L)
   CLC_fracs_r <- terra::wrap(CLC_fracs_r)
   save(
     CLC_fracs_r,
@@ -414,7 +414,7 @@ CLC_process <- function(
   # Save reference grid - tif
   ## ||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Save reference grid --- tif", level = 1L)
+  ecokit::cat_time("Save reference grid --- tif", level = 1L)
   terra::writeRaster(
     terra::unwrap(Grid_10_Land), overwrite = TRUE,
     filename = fs::path(Path_Grid, "Grid_10_Land.tif"))
@@ -430,7 +430,7 @@ CLC_process <- function(
   ## ||||||||||||||||||||||||||||||||||||||||
 
   # Country boundaries
-  EU_BoundCNT <- IASDT.R::load_as(EU_Bound) %>%
+  EU_BoundCNT <- ecokit::load_as(EU_Bound) %>%
     magrittr::extract2("Bound_sf_Eur") %>%
     magrittr::extract2("L_01") %>%
     dplyr::select(Country = "NAME_ENGL") %>%
@@ -460,7 +460,7 @@ CLC_process <- function(
       Country = dplyr::coalesce(Country, Country2)) %>%
     dplyr::select(-"Country2")
 
-  IASDT.R::save_as(
+  ecokit::save_as(
     object = Grid_CNT, object_name = "Grid_10_Land_Crop_sf_Country",
     out_path = fs::path(Path_Grid, "Grid_10_Land_Crop_sf_Country.RData"))
 
@@ -476,7 +476,7 @@ CLC_process <- function(
   # Crop % coverage results ----
   # ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪
 
-  IASDT.R::cat_time("Crop % coverage results")
+  ecokit::cat_time("Crop % coverage results")
 
   PercCovMaps <- dplyr::mutate(
     PercCovMaps,
@@ -484,11 +484,11 @@ CLC_process <- function(
       .x = Name, .y = Map,
       .f = ~ {
         CLC_type <- stringr::str_remove(.x, "PercCov_")
-        IASDT.R::cat_time(CLC_type, level = 2L)
+        ecokit::cat_time(CLC_type, level = 2L)
 
         Map <- terra::crop(.y, terra::unwrap(Grid_10_Land_Crop)) %>%
           terra::mask(terra::unwrap(Grid_10_Land_Crop)) %>%
-          IASDT.R::set_raster_CRS()
+          ecokit::set_raster_CRS()
 
         terra::writeRaster(
           x = Map, overwrite = TRUE,
@@ -497,7 +497,7 @@ CLC_process <- function(
             paste0("PercCov_", names(Map), ".tif")))
 
         OutObjName <- paste0("PercCov_", CLC_type, "_Crop")
-        IASDT.R::save_as(
+        ecokit::save_as(
           object = terra::wrap(Map), object_name = OutObjName,
           out_path = fs::path(
             Path_CLC_Summary_RData, paste0(OutObjName, ".RData")))
@@ -513,13 +513,13 @@ CLC_process <- function(
   # Majority per grid cell ----
   # ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪
 
-  IASDT.R::cat_time("Identify major CLC class per per grid cell")
+  ecokit::cat_time("Identify major CLC class per per grid cell")
 
   ## ||||||||||||||||||||||||||||||||||||||||
   # Processing using `exactextractr::exact_extract`
   ## ||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     "Processing using `exactextractr::exact_extract`", level = 1L)
 
   CLC_majority <- Grid_sf %>%
@@ -543,7 +543,7 @@ CLC_process <- function(
   # Save majority results
   ## ||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Save majority results", level = 1L)
+  ecokit::cat_time("Save majority results", level = 1L)
   save(
     CLC_majority,
     file = fs::path(Path_CLC_Summary_RData, "CLC_majority.RData"))
@@ -554,7 +554,7 @@ CLC_process <- function(
   # post-processing majority results
   ## ||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Post-processing majority results", level = 1L)
+  ecokit::cat_time("Post-processing majority results", level = 1L)
 
   MajorityMaps <- purrr::map_dfr(
     .x = c("SynHab", "CLC_L1", "CLC_L2", "CLC_L3", "EUNIS_2019"),
@@ -576,7 +576,7 @@ CLC_process <- function(
   # ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪
 
   if (plot_CLC) {
-    IASDT.R::cat_time("Plotting")
+    ecokit::cat_time("Plotting")
     c(
       "PercCov_SynHab", "PercCov_CLC_L1", "PercCov_CLC_L2",
       "PercCov_CLC_L3", "PercCov_EUNIS_2019") %>%
@@ -589,7 +589,7 @@ CLC_process <- function(
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = .start_time, prefix = "\nProcessing CLC data was finished in ")
 
   return(invisible(NULL))
@@ -625,7 +625,7 @@ CLC_get_percentage <- function(
 
   if (is.null(CLC_type) || is.null(CLC_crossWalk) || is.null(CLC_fracs_r) ||
       is.null(path_tif) || is.null(path_RData)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "None of the input parameters can be empty",
       CLC_type = CLC_type, CLC_crossWalk = CLC_crossWalk,
       CLC_fracs_r = CLC_fracs_r, path_tif = path_tif, path_RData = path_RData)
@@ -633,7 +633,7 @@ CLC_get_percentage <- function(
 
   if (!(
     CLC_type %in% c("SynHab", "CLC_L1", "CLC_L2", "CLC_L3", "EUNIS_2019"))) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       paste0(
         "CLC_type has to be one of SynHab, CLC_L1, CLC_L2, ",
         "CLC_L3, and EUNIS_2019"),
@@ -647,7 +647,7 @@ CLC_get_percentage <- function(
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_time(CLC_type, level = 1L)
+  ecokit::cat_time(CLC_type, level = 1L)
   OutObjName <- paste0("PercCov_", CLC_type)
 
   Map <- dplyr::select(
@@ -677,7 +677,7 @@ CLC_get_percentage <- function(
     Map, overwrite = TRUE,
     filename = fs::path(path_tif, paste0("PercCov_", names(Map), ".tif")))
 
-  IASDT.R::save_as(
+  ecokit::save_as(
     object = terra::wrap(Map), object_name = OutObjName,
     out_path = fs::path(path_RData, paste0(OutObjName, ".RData")))
 
@@ -723,7 +723,7 @@ CLC_get_majority <- function(
   if (is.null(CLC_type) || is.null(CLC_majority) || is.null(path_tif) ||
       is.null(path_tif_crop) || is.null(path_RData) || is.null(Grid_10_Land) ||
       is.null(Grid_10_Land_Crop)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "None of the input parameters can be empty",
       CLC_type = CLC_type, CLC_majority = CLC_majority,
       path_tif = path_tif, path_tif_crop = path_tif_crop,
@@ -733,7 +733,7 @@ CLC_get_majority <- function(
 
   if (!(
     CLC_type %in% c("SynHab", "CLC_L1", "CLC_L2", "CLC_L3", "EUNIS_2019"))) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       paste0(
         "CLC_type has to be one of SynHab, CLC_L1, CLC_L2, ",
         "CLC_L3, and EUNIS_2019"),
@@ -749,7 +749,7 @@ CLC_get_majority <- function(
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_time(CLC_type, level = 2L)
+  ecokit::cat_time(CLC_type, level = 2L)
   OutObjName <- paste0("Majority_", CLC_type)
   OutObjName_Cr <- paste0(OutObjName, "_Crop")
 
@@ -792,7 +792,7 @@ CLC_get_majority <- function(
     dplyr::filter(Class %in% NAClasses) %>%
     dplyr::pull(ID)
 
-  Map <- IASDT.R::set_raster_CRS(terra::classify(Map, cbind(NA, VV)))
+  Map <- ecokit::set_raster_CRS(terra::classify(Map, cbind(NA, VV)))
   levels(Map) <- list(MapLevelsNew)
 
   terra::writeRaster(
@@ -806,14 +806,14 @@ CLC_get_majority <- function(
       file = fs::path(path_tif, paste0(OutObjName, ".tif.vat.dbf")),
       factor2char = TRUE, max_nchar = 254)
 
-  IASDT.R::save_as(
+  ecokit::save_as(
     object = terra::wrap(Map), object_name = OutObjName,
     out_path = fs::path(path_RData, paste0(OutObjName, ".RData")))
 
   # CROPPING
   Map_Cr <- terra::crop(x = Map, y = terra::unwrap(Grid_10_Land_Crop)) %>%
     terra::mask(mask = terra::unwrap(Grid_10_Land_Crop)) %>%
-    IASDT.R::set_raster_CRS()
+    ecokit::set_raster_CRS()
 
   terra::writeRaster(
     x = Map_Cr, overwrite = TRUE,
@@ -827,7 +827,7 @@ CLC_get_majority <- function(
         path_tif_crop, paste0(OutObjName_Cr, ".tif.vat.dbf")),
       factor2char = TRUE, max_nchar = 254)
 
-  IASDT.R::save_as(
+  ecokit::save_as(
     object = terra::wrap(Map_Cr), object_name = OutObjName_Cr,
     out_path = fs::path(path_RData, paste0(OutObjName_Cr, ".RData")))
 

@@ -23,25 +23,25 @@ mod_fit_windows <- function(
     path_model = NULL, python_VE = NULL, n_cores = NULL) {
 
   # exit the function if not running on Windows
-  if (IASDT.R::OS() != "Windows") {
-    IASDT.R::stop_ctx(
-      "This function is only for Windows OS.", OS = IASDT.R::OS())
+  if (ecokit::OS() != "Windows") {
+    ecokit::stop_ctx(
+      "This function is only for Windows OS.", OS = ecokit::OS())
   }
 
   if (is.null(path_model) || is.null(python_VE) || is.null(n_cores)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`path_model`, `python_VE`, and `n_cores` cannot be empty",
       path_model = path_model, python_VE = python_VE, n_cores = n_cores)
   }
 
   # Check if path_model is a valid directory
   if (!fs::dir_exists(path_model)) {
-    IASDT.R::stop_ctx("Model directory does not exist", path_model = path_model)
+    ecokit::stop_ctx("Model directory does not exist", path_model = path_model)
   }
 
   # Check if python_VE is a valid directory
   if (!fs::dir_exists(python_VE)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Python virtual environment directory does not exist",
       python_VE = python_VE)
   }
@@ -49,7 +49,7 @@ mod_fit_windows <- function(
   # Check if python_VE directory contains python virtual environment
   python_exe <- fs::path(python_VE, "Scripts", "python.exe")
   if (!fs::file_exists(python_exe)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Python virtual environment does not exist", python_VE = python_VE)
   }
 
@@ -69,11 +69,11 @@ mod_fit_windows <- function(
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character",
     args_to_check = c("Path_Hmsc_WS", "path_model"))
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_to_check = "n_cores", args_type = "numeric")
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -83,13 +83,13 @@ mod_fit_windows <- function(
   # # |||||||||||||||||||||||||||||||||||
 
   Model2Run <- fs::path(path_model, "Model_Info.RData") %>%
-    IASDT.R::load_as() %>%
+    ecokit::load_as() %>%
     dplyr::select(Path_ModProg, Command_WS) %>%
     tidyr::unnest(cols = c("Path_ModProg", "Command_WS")) %>%
     dplyr::filter(!file.exists(Path_ModProg))
 
   if (nrow(Model2Run) > 0) {
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       paste0("There are ", nrow(Model2Run), " model variants to be fitted."))
 
     if (n_cores == 1) {
@@ -123,7 +123,7 @@ mod_fit_windows <- function(
     }
 
   } else {
-    IASDT.R::cat_time("All model variants were already fitted.")
+    ecokit::cat_time("All model variants were already fitted.")
   }
 
   return(invisible(NULL))

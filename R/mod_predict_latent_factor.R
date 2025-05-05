@@ -85,14 +85,14 @@ predict_latent_factor <- function(
 
   .start_time <- lubridate::now(tzone = "CET")
 
-  IASDT.R::cat_time("Starting `predict_latent_factor` function", level = 1L)
+  ecokit::cat_time("Starting `predict_latent_factor` function", level = 1L)
 
   # # ..................................................................... ###
 
   # Check inputs
 
   if (is.null(LF_out_file) && isFALSE(LF_return)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`LF_return` must be `TRUE` when `LF_out_file` is NULL.",
       LF_return = LF_return, LF_out_file = LF_out_file)
   }
@@ -102,12 +102,12 @@ predict_latent_factor <- function(
   # Load postEta if it is a file path
 
   if (inherits(postEta, "character")) {
-    IASDT.R::cat_time("Load postEta", level = 1L)
+    ecokit::cat_time("Load postEta", level = 1L)
     if (!file.exists(postEta)) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         "The specified path for `postEta` does not exist. ", postEta = postEta)
     }
-    postEta <- IASDT.R::load_as(postEta)
+    postEta <- ecokit::load_as(postEta)
   }
 
   # # ..................................................................... ###
@@ -138,7 +138,7 @@ predict_latent_factor <- function(
 
   # Either AllTraining or AllNew should be TRUE
   if (sum(AllTraining, AllNew) != 1) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "The input sites should be either all training sites or all new sites.",
       sum = sum(AllTraining, AllNew))
   }
@@ -146,7 +146,7 @@ predict_latent_factor <- function(
   if (AllTraining) {
     # If all input sites are for training sites, use LF info from the model
     # directly
-    IASDT.R::cat_time("All input sites are training sites", level = 1L)
+    ecokit::cat_time("All input sites are training sites", level = 1L)
 
     postEtaPred <- purrr::map(
       .x = postEta,
@@ -158,7 +158,7 @@ predict_latent_factor <- function(
 
   } else {
 
-    IASDT.R::cat_time("All input sites are new sites", level = 1L)
+    ecokit::cat_time("All input sites are new sites", level = 1L)
 
     # Check TensorFlow settings
 
@@ -168,17 +168,16 @@ predict_latent_factor <- function(
 
       # Check if PythonScript exists
       if (!file.exists(PythonScript)) {
-        IASDT.R::stop_ctx(
+        ecokit::stop_ctx(
           "Necessary Python script does not exist", PythonScript = PythonScript)
       }
 
       # Suppress TensorFlow warnings and disable optimizations
       Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3", TF_ENABLE_ONEDNN_OPTS = "0")
 
-      IASDT.R::cat_time(
-        "Computations will be made using TensorFlow", level = 1L)
+      ecokit::cat_time("Computations will be made using TensorFlow", level = 1L)
     } else {
-      IASDT.R::cat_time("Computations will be made using R/CPP", level = 1L)
+      ecokit::cat_time("Computations will be made using R/CPP", level = 1L)
     }
 
     # # .................................................................... ###
@@ -204,7 +203,7 @@ predict_latent_factor <- function(
 
     # Calculate D11 and D12 only once
 
-    IASDT.R::cat_time("Calculate/save necessary matrices", level = 1L)
+    ecokit::cat_time("Calculate/save necessary matrices", level = 1L)
 
     alphapw <- LF_rL$alphapw
 
@@ -215,22 +214,22 @@ predict_latent_factor <- function(
       Path_s1 <- fs::path(temp_dir, paste0(model_name, "s1.feather"))
       Path_s2 <- fs::path(temp_dir, paste0(model_name, "s2.feather"))
 
-      s1_s2_Okay <- IASDT.R::check_data(Path_s1, warning = FALSE) &&
-        IASDT.R::check_data(Path_s2, warning = FALSE)
+      s1_s2_Okay <- ecokit::check_data(Path_s1, warning = FALSE) &&
+        ecokit::check_data(Path_s2, warning = FALSE)
 
       if (s1_s2_Okay) {
-        IASDT.R::cat_time("s1 and s2 matrices were already saved", level = 2L)
+        ecokit::cat_time("s1 and s2 matrices were already saved", level = 2L)
       } else {
 
-        IASDT.R::cat_time("Saving s1 and s2 matrices", level = 2L)
+        ecokit::cat_time("Saving s1 and s2 matrices", level = 2L)
 
         # s1
         s1 <- as.data.frame(LF_rL$s[units_model, , drop = FALSE])
-        IASDT.R::save_as(object = s1, out_path = Path_s1)
+        ecokit::save_as(object = s1, out_path = Path_s1)
 
         # s2
         s2 <- as.data.frame(LF_rL$s[units_pred[indNew], , drop = FALSE])
-        IASDT.R::save_as(object = s2, out_path = Path_s2)
+        ecokit::save_as(object = s2, out_path = Path_s2)
 
         rm(s1, s2, envir = environment())
       }
@@ -246,7 +245,7 @@ predict_latent_factor <- function(
 
       if (file.exists(Path_D11) && file.exists(Path_D12)) {
 
-        IASDT.R::cat_time(
+        ecokit::cat_time(
           "D11 and D12 distance matrices are already saved", level = 2L)
 
       } else {
@@ -256,11 +255,11 @@ predict_latent_factor <- function(
 
         # D11
         D11 <- Rfast::Dist(s1)
-        IASDT.R::save_as(object = D11, out_path = Path_D11)
+        ecokit::save_as(object = D11, out_path = Path_D11)
 
         # D12
         D12 <- Rfast::dista(s1, s2)
-        IASDT.R::save_as(object = D12, out_path = Path_D12)
+        ecokit::save_as(object = D12, out_path = Path_D12)
 
         # Clean up
         rm(LF_rL, s1, s2, D11, D12, envir = environment())
@@ -277,7 +276,7 @@ predict_latent_factor <- function(
 
     # Convert post_alpha to tibble
 
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       "Splitting and saving `post_alpha` to small chunks", level = 1L)
 
     # Unique combination of LF / alphapw / sample IDs
@@ -328,7 +327,7 @@ predict_latent_factor <- function(
                 as.data.frame() %>%
                 stats::setNames(paste0("Eta_", Sample_IDs))
 
-              IASDT.R::save_as(object = Out, out_path = File_postEta)
+              ecokit::save_as(object = Out, out_path = File_postEta)
             }
 
             return(NULL)
@@ -363,7 +362,7 @@ predict_latent_factor <- function(
       CalcPredLF <- !file.exists(File_etaPred)
 
       if (LF_check && isFALSE(CalcPredLF)) {
-        Eta_NCols <- ncol(IASDT.R::load_as(File_etaPred))
+        Eta_NCols <- ncol(ecokit::load_as(File_etaPred))
         CalcPredLF <- (Eta_NCols != LF_Data$NSamples[[RowNum]])
       }
 
@@ -409,7 +408,7 @@ predict_latent_factor <- function(
                   model_name, "Samp_",
                   stringr::str_pad(SampleID, width = 4, pad = "0"),
                   "_LF", LF, ".qs2")),
-              etaPred = as.list(IASDT.R::load_as(File_etaPred_TF))) %>%
+              etaPred = as.list(ecokit::load_as(File_etaPred_TF))) %>%
               tidyr::nest(eta_DT = -Path_Samp_LF) %>%
               dplyr::mutate(
                 eta_DT = purrr::map(
@@ -428,18 +427,18 @@ predict_latent_factor <- function(
                   .f = ~qs2::qs_save(.x, .y, nthreads = 5)),
                 LF = LF_ID, Save = NULL, eta_DT = NULL)
 
-            IASDT.R::save_as(object = etaPred, out_path = File_etaPred)
+            ecokit::save_as(object = etaPred, out_path = File_etaPred)
 
           } else {
 
             # Use R / CPP
 
             # Reading postEta from file
-            postEta0 <- IASDT.R::load_as(File_postEta)
+            postEta0 <- ecokit::load_as(File_postEta)
 
             # Read D11 and D12
-            D11 <- IASDT.R::load_as(Path_D11)
-            D12 <- IASDT.R::load_as(Path_D12)
+            D11 <- ecokit::load_as(Path_D11)
+            D12 <- ecokit::load_as(Path_D12)
 
             K11 <- IASDT.R::exp_neg_div(D11, Denom)
             K12 <- IASDT.R::exp_neg_div(D12, Denom)
@@ -475,7 +474,7 @@ predict_latent_factor <- function(
                 ChunkID = LF_Data$ChunkID[[RowNum]], SampleID = SampleID,
                 LF = LF_ID)
 
-            IASDT.R::save_as(object = etaPred, out_path = File_etaPred)
+            ecokit::save_as(object = etaPred, out_path = File_etaPred)
           }
 
         } else {
@@ -510,12 +509,12 @@ predict_latent_factor <- function(
                   }),
                 Save = NULL, LF = LF_ID)
 
-            IASDT.R::save_as(object = etaPred, out_path = File_etaPred)
+            ecokit::save_as(object = etaPred, out_path = File_etaPred)
           }
         }
 
       } else {
-        etaPred <- IASDT.R::load_as(File_etaPred)
+        etaPred <- ecokit::load_as(File_etaPred)
       }
 
       if (isFALSE(LF_commands_only)) {
@@ -531,17 +530,17 @@ predict_latent_factor <- function(
     # Predict latent factors
 
     if (all(file.exists(LF_Data$File_etaPred))) {
-      IASDT.R::cat_time(
+      ecokit::cat_time(
         "All LF prediction files were already created", level = 1L)
     } else {
       if (LF_n_cores == 1 || LF_commands_only) {
 
         if (LF_commands_only) {
-          IASDT.R::cat_time(
+          ecokit::cat_time(
             "Prepare commands for predicting latent factors", level = 1L)
         } else {
           # Sequential processing
-          IASDT.R::cat_time("Predicting Latent Factor sequentially", level = 1L)
+          ecokit::cat_time("Predicting Latent Factor sequentially", level = 1L)
         }
 
         # Making predictions sequentially
@@ -599,13 +598,13 @@ predict_latent_factor <- function(
       } else {
 
         # Parallel processing
-        IASDT.R::cat_time("Predicting Latent Factor in parallel", level = 1L)
+        ecokit::cat_time("Predicting Latent Factor in parallel", level = 1L)
 
-        IASDT.R::set_parallel(
+        ecokit::set_parallel(
           n_cores = min(LF_n_cores, nrow(LF_Data)), level = 2L)
         withr::defer(future::plan("future::sequential", gc = TRUE))
 
-        IASDT.R::cat_time("Making predictions in parallel", level = 2L)
+        ecokit::cat_time("Making predictions in parallel", level = 2L)
 
         etaPreds <- future.apply::future_lapply(
           X = seq_len(nrow(LF_Data)),
@@ -634,21 +633,21 @@ predict_latent_factor <- function(
             "Matrix", "Hmsc", "qs2", "fs", "purrr", "IASDT.R"))
 
         # Stop the cluster
-        IASDT.R::set_parallel(stop_cluster = TRUE, level = 2L)
+        ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
       }
 
       # Check if all files are created
-      IASDT.R::cat_time("Check if all files are created", level = 1L)
+      ecokit::cat_time("Check if all files are created", level = 1L)
       AllEtaFiles <- LF_Data$File_etaPred
       AllEtaFilesExist <- all(file.exists(AllEtaFiles))
 
       if (!AllEtaFilesExist) {
         FailedFiles <- AllEtaFiles[!file.exists(AllEtaFiles)]
-        IASDT.R::stop_ctx(
+        ecokit::stop_ctx(
           paste0(length(FailedFiles), " files are missing"),
           FailedFiles = basename(FailedFiles))
       }
-      IASDT.R::cat_time("All files were created", level = 2L)
+      ecokit::cat_time("All files were created", level = 2L)
 
     }
 
@@ -657,7 +656,7 @@ predict_latent_factor <- function(
     # # .................................................................... ###
 
     # Merge results
-    IASDT.R::cat_time("Merge results in parallel", level = 1L)
+    ecokit::cat_time("Merge results in parallel", level = 1L)
 
     postEtaPred_Samp <- etaPreds %>%
       dplyr::bind_rows() %>%
@@ -672,11 +671,10 @@ predict_latent_factor <- function(
       tidyr::nest(data = -c("SampleID", "Path_Sample"))
 
 
-    IASDT.R::set_parallel(n_cores = LF_n_cores, level = 2L)
+    ecokit::set_parallel(n_cores = LF_n_cores, level = 2L)
     withr::defer(future::plan("future::sequential", gc = TRUE))
 
-    IASDT.R::cat_time(
-      "Process results for MCMC samples in parallel", level = 2L)
+    ecokit::cat_time("Process results for MCMC samples in parallel", level = 2L)
 
     postEtaPred <- future.apply::future_lapply(
       X = seq_len(nrow(postEtaPred_Samp)),
@@ -696,7 +694,7 @@ predict_latent_factor <- function(
           unname() %>%
           as.matrix()
 
-        IASDT.R::save_as(SampleDT0, out_path = Path_Sample)
+        ecokit::save_as(SampleDT0, out_path = Path_Sample)
         try(fs::file_delete(Path_LF), silent = TRUE)
         return(SampleDT0)
       },
@@ -705,7 +703,7 @@ predict_latent_factor <- function(
       future.packages = c("dplyr", "magrittr", "tibble", "IASDT.R", "purrr"))
 
     # Stop the cluster
-    IASDT.R::set_parallel(stop_cluster = TRUE, level = 2L)
+    ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
 
     invisible(gc())
 
@@ -716,15 +714,15 @@ predict_latent_factor <- function(
   # Save postEtaPred
 
   if (!is.null(LF_out_file)) {
-    IASDT.R::cat_time("Saving postEtaPred to disk", level = 1L)
-    IASDT.R::cat_time(LF_out_file, cat_timestamp = FALSE, level = 2L)
+    ecokit::cat_time("Saving postEtaPred to disk", level = 1L)
+    ecokit::cat_time(LF_out_file, cat_timestamp = FALSE, level = 2L)
     fs::dir_create(fs::path_dir(LF_out_file))
-    IASDT.R::save_as(
+    ecokit::save_as(
       object = postEtaPred, out_path = LF_out_file,
       n_threads = 10, compress_level = 6)
 
     LF_OutFile_Samp <- stringr::str_replace(LF_out_file, ".qs2", "_Samp.qs2")
-    IASDT.R::save_as(object = postEtaPred_Samp, out_path = LF_OutFile_Samp)
+    ecokit::save_as(object = postEtaPred_Samp, out_path = LF_OutFile_Samp)
   }
 
   # # ..................................................................... ###
@@ -732,7 +730,7 @@ predict_latent_factor <- function(
   # Clean up temporary files after finishing calculations
   if (LF_temp_cleanup) {
 
-    IASDT.R::cat_time("Cleaning up temporary files", level = 1L)
+    ecokit::cat_time("Cleaning up temporary files", level = 1L)
 
     try(
       expr = {
@@ -741,14 +739,14 @@ predict_latent_factor <- function(
           "^", model_name,
           "(postEta|r[0-9]|etaPred|s1|s2|post).+(feather|qs2|log)$")
         file_paths <- list.files(
-          path = IASDT.R::normalize_path(temp_dir),
+          path = ecokit::normalize_path(temp_dir),
           pattern = Pattern, full.names = TRUE)
         if (length(file_paths) > 0) {
           try(fs::file_delete(file_paths), silent = TRUE)
         }
 
         file_paths2 <- list.files(
-          path = IASDT.R::normalize_path(temp_dir),
+          path = ecokit::normalize_path(temp_dir),
           pattern = "(LF_.+_Test|RC_c)_Samp_.+.qs2",
           full.names = TRUE, recursive = TRUE)
         if (length(file_paths2) > 0) {
@@ -757,7 +755,7 @@ predict_latent_factor <- function(
 
         # delete temp files for cross-validated models
         file_paths3 <- list.files(
-          path = IASDT.R::normalize_path(Temp_Dir_LF),
+          path = ecokit::normalize_path(Temp_Dir_LF),
           pattern = paste0("^", model_name, "Samp_.+.qs2"),
           full.names = TRUE, recursive = TRUE)
 
@@ -772,7 +770,7 @@ predict_latent_factor <- function(
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = .start_time, prefix = "predict_latent_factor was finished in ",
     level = 1L)
 
@@ -818,7 +816,7 @@ predict_latent_factor <- function(
 #' - The function checks for the existence of required input files and the
 #' Python executable in the specified virtual environment.
 #' - Executes the Python script using `system2`.
-#' - Verifies the output file validity using `IASDT.R::check_data`. Retries up
+#' - Verifies the output file validity using `ecokit::check_data`. Retries up
 #' to 3 times if the output is invalid.
 #' - Generates detailed logs if `verbose` is set to `TRUE`.
 #' @author Ahmed El-Gabbas
@@ -838,7 +836,7 @@ run_crossprod_solve <- function(
 
   script_path <- system.file("crossprod_solve.py", package = "IASDT.R")
   if (!file.exists(script_path)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Necessary Python script `crossprod_solve.py` does not exist",
       script_path = script_path)
   }
@@ -850,7 +848,7 @@ run_crossprod_solve <- function(
     .x = names(paths),
     .f = function(p) {
       if (!file.exists(paths[[p]])) {
-        IASDT.R::stop_ctx(paste0(p, " does not exist"), path = paths[[p]])
+        ecokit::stop_ctx(paste0(p, " does not exist"), path = paths[[p]])
       }
     })
 
@@ -865,22 +863,22 @@ run_crossprod_solve <- function(
   if (.Platform$OS.type == "windows") {
 
     if (is.null(TF_environ)) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         "When running on Windows, `TF_environ` must be specified",
         TF_environ = TF_environ)
     }
     if (!dir.exists(TF_environ)) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         "The specified `TF_environ` directory does not exist",
-        TF_environ = IASDT.R::normalize_path(TF_environ))
+        TF_environ = ecokit::normalize_path(TF_environ))
     }
 
-    python_executable <- IASDT.R::normalize_path(
+    python_executable <- ecokit::normalize_path(
       fs::path(TF_environ, "Scripts", "python.exe"),
       must_work = TRUE)
 
     if (!file.exists(python_executable)) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         "Python executable not found in the virtual environment.",
         python_executable = python_executable)
     }
@@ -895,10 +893,10 @@ run_crossprod_solve <- function(
   LF_Args <- c(
     python_executable,
     script_path,
-    "--s1", IASDT.R::normalize_path(s1, must_work = TRUE),
-    "--s2", IASDT.R::normalize_path(s2, must_work = TRUE),
-    "--post_eta", IASDT.R::normalize_path(postEta, must_work = TRUE),
-    "--path_out", IASDT.R::normalize_path(path_out),
+    "--s1", ecokit::normalize_path(s1, must_work = TRUE),
+    "--s2", ecokit::normalize_path(s2, must_work = TRUE),
+    "--post_eta", ecokit::normalize_path(postEta, must_work = TRUE),
+    "--path_out", ecokit::normalize_path(path_out),
     "--denom", as.character(denom),
     "--chunk_size", as.character(chunk_size),
     "--threshold_mb", as.character(threshold_mb),
@@ -950,7 +948,7 @@ run_crossprod_solve <- function(
       if (!inherits(result, "error") || length(result) != 0 ||
           result == "Done") {
         # Check the integrity of the file
-        success <- IASDT.R::check_data(path_out)
+        success <- ecokit::check_data(path_out)
       }
       attempt <- attempt + 1
     }
@@ -1005,22 +1003,22 @@ plot_latent_factor <- function(
     ~var_name, ~value, ~check_dir, ~check_file,
     "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
   Grid10 <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData") %>%
-    IASDT.R::load_as() %>%
+    ecokit::load_as() %>%
     terra::unwrap()
 
   # # ..................................................................... ###
 
   # Check if the model file exists
   if (is.null(path_model) || !file.exists(path_model)) {
-    IASDT.R::stop_ctx("Selected model files not found", path_model = path_model)
+    ecokit::stop_ctx("Selected model files not found", path_model = path_model)
   }
 
-  Model <- IASDT.R::load_as(path_model)
+  Model <- ecokit::load_as(path_model)
   Model_Coords <- Model$ranLevels$sample$s
   postEta <- Hmsc::getPostEstimate(Model, parName = "Eta")
   N_LF <- ncol(postEta$mean)
@@ -1046,7 +1044,7 @@ plot_latent_factor <- function(
     ggplot2::facet_wrap(~lyr, ncol = 2) +
     paletteer::scale_fill_paletteer_c(
       na.value = "transparent", "viridis::plasma",
-      breaks = IASDT.R::integer_breaks(), name = NULL) +
+      breaks = ecokit::integer_breaks(), name = NULL) +
     ggplot2::scale_x_continuous(
       expand = ggplot2::expansion(mult = c(0, 0)), limits = Xlim) +
     ggplot2::scale_y_continuous(

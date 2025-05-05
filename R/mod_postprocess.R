@@ -190,18 +190,18 @@ mod_postprocess_1_CPU <- function(
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character",
     args_to_check = c(
       "hab_abb", "env_file", "model_dir", "use_trees", "path_Hmsc"))
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "logical",
     args_to_check = c(
       "from_JSON", "pred_new_sites", "clamp_pred", "temp_cleanup",
       "use_TF", "LF_check", "LF_temp_cleanup", "TF_use_single"))
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "numeric",
     args_to_check = c(
       "n_cores", "n_omega", "GPP_dist", "MCMC_n_samples",
@@ -210,7 +210,7 @@ mod_postprocess_1_CPU <- function(
 
   ValidHabAbbs <- c(as.character(0:3), "4a", "4b", "10", "12a", "12b")
   if (!(hab_abb %in% ValidHabAbbs)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       paste0(
         "Invalid Habitat abbreviation. Valid values are:\n >> ",
         toString(ValidHabAbbs)),
@@ -218,17 +218,17 @@ mod_postprocess_1_CPU <- function(
   }
 
   if (!file.exists(env_file)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Error: Environment file is invalid or does not exist.",
       env_file = env_file)
   }
 
   if (!dir.exists(model_dir)) {
-    IASDT.R::stop_ctx("Model directory was not found", model_dir = model_dir)
+    ecokit::stop_ctx("Model directory was not found", model_dir = model_dir)
   }
 
   if (!(use_trees %in% c("Tree", "NoTree"))) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       paste0(
         "Invalid value for Tree argument. Valid values ",
         "are: 'Tree' or 'NoTree'"),
@@ -236,7 +236,7 @@ mod_postprocess_1_CPU <- function(
   }
 
   if (!all(CV_name %in% c("CV_Dist", "CV_Large", "CV_SAC"))) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       paste0(
         "Invalid value for CV_name argument. Valid values ",
         "are: 'CV_Dist', 'CV_Large', or `CV_SAC`"),
@@ -245,18 +245,18 @@ mod_postprocess_1_CPU <- function(
 
   # ****************************************************************
 
-  IASDT.R::record_arguments(
+  ecokit::record_arguments(
     out_path = fs::path(model_dir, "Args_mod_postprocess_1_CPU.RData"))
 
   # ****************************************************************
 
   loaded_packages <- paste(
-    sort(IASDT.R::loaded_packages()), collapse = " + ") %>%
+    sort(ecokit::loaded_packages()), collapse = " + ") %>%
     stringr::str_wrap(width = 60, indent = 8, exdent = 8)
   cat(
     paste0(
       "\n  >>> Working directory: ", getwd(),
-      "\n  >>> Operating system: ", IASDT.R::OS(),
+      "\n  >>> Operating system: ", ecokit::OS(),
       "\n  >>> Model root: ", model_dir,
       "\n  >>> n_cores: ", n_cores,
       "\n  >>> env_file: ", env_file,
@@ -273,7 +273,7 @@ mod_postprocess_1_CPU <- function(
 
   # Check unsuccessful models -----
 
-  IASDT.R::info_chunk(
+  ecokit::info_chunk(
     "Check unsuccessful models", level = 1L, line_char = "+",
     line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
@@ -287,7 +287,7 @@ mod_postprocess_1_CPU <- function(
 
   # ****************************************************************
 
-  IASDT.R::info_chunk(
+  ecokit::info_chunk(
     "Merge chains and saving RData or qs2 files", level = 1L, line_char = "+",
     line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
@@ -298,7 +298,7 @@ mod_postprocess_1_CPU <- function(
 
   # ****************************************************************
 
-  IASDT.R::info_chunk(
+  ecokit::info_chunk(
     "Convergence of all model variants", level = 1L, line_char = "+",
     line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
@@ -312,7 +312,7 @@ mod_postprocess_1_CPU <- function(
   # # ..................................................................... ###
 
   # Path of selected model -----
-  IASDT.R::info_chunk(
+  ecokit::info_chunk(
     "Path of selected model", level = 1L, line_char = "+", line_char_rep = 60L,
     cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
@@ -332,7 +332,7 @@ mod_postprocess_1_CPU <- function(
     paste0("path_model:\n\t", path_model, "\nPath_Coda:\n\t", path_coda, "\n"))
 
   if (!all(file.exists(path_model, path_coda))) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Selected model files not found",
       path_model = path_model, path_coda = path_coda)
   }
@@ -342,7 +342,7 @@ mod_postprocess_1_CPU <- function(
   # ****************************************************************
 
   # Gelman_Plot -----
-  IASDT.R::info_chunk(
+  ecokit::info_chunk(
     "Gelman_Plot", level = 1L, line_char = "+", line_char_rep = 60L,
     cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
@@ -355,7 +355,7 @@ mod_postprocess_1_CPU <- function(
   # ****************************************************************
 
   # Convergence plots ----
-  IASDT.R::info_chunk(
+  ecokit::info_chunk(
     "Convergence plots", level = 1L, line_char = "+", line_char_rep = 60L,
     cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
@@ -369,7 +369,7 @@ mod_postprocess_1_CPU <- function(
   # ****************************************************************
 
   # Model summary ------
-  IASDT.R::info_chunk(
+  ecokit::info_chunk(
     "Model summary", level = 1L, line_char = "+", line_char_rep = 60L,
     cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
@@ -380,7 +380,7 @@ mod_postprocess_1_CPU <- function(
   # ****************************************************************
 
   # Plotting model parameters - Omega -----
-  IASDT.R::info_chunk(
+  ecokit::info_chunk(
     "Plotting model parameters - Omega", level = 1L, line_char = "+",
     line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
@@ -393,7 +393,7 @@ mod_postprocess_1_CPU <- function(
   # ****************************************************************
 
   # Plotting model parameters - Beta -----
-  IASDT.R::info_chunk(
+  ecokit::info_chunk(
     "Plotting model parameters - Beta", level = 1L, line_char = "+",
     line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
@@ -407,7 +407,7 @@ mod_postprocess_1_CPU <- function(
 
   # Prepare input data for cross-validation -------
 
-  IASDT.R::info_chunk(
+  ecokit::info_chunk(
     "Prepare input data for cross-validation", level = 1L, line_char = "+",
     line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
@@ -421,7 +421,7 @@ mod_postprocess_1_CPU <- function(
   # ****************************************************************
 
   # latent factors of the response curves -------
-  IASDT.R::info_chunk(
+  ecokit::info_chunk(
     "Prepare scripts for predicting latent factors of the response curves",
     line_char = "+", line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
     cat_timestamp = FALSE, level = 1L)
@@ -439,7 +439,7 @@ mod_postprocess_1_CPU <- function(
 
   # latent factors for new sampling units -------
 
-  IASDT.R::info_chunk(
+  ecokit::info_chunk(
     "Prepare scripts for predicting latent factors for new sampling units",
     line_char = "+", line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
     cat_timestamp = FALSE, level = 1L)
@@ -455,7 +455,7 @@ mod_postprocess_1_CPU <- function(
   # ****************************************************************
 
   # Prepare scripts for computing variance partitioning -------
-  IASDT.R::info_chunk(
+  ecokit::info_chunk(
     "Prepare scripts for computing variance partitioning", level = 1L,
     line_char = "+", line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
     cat_timestamp = FALSE)
@@ -469,7 +469,7 @@ mod_postprocess_1_CPU <- function(
 
   # ****************************************************************
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = .start_time, prefix = "\nPost-processing using CPU took ")
 
   return(invisible(NULL))
@@ -510,16 +510,16 @@ mod_prepare_TF <- function(
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character",
     args_to_check = c(
       "LF_runtime", "VP_runtime", "partition_name", "env_file", "model_prefix"))
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "numeric", args_to_check = "n_batch_files")
   rm(AllArgs, envir = environment())
 
   if (n_batch_files <= 0) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`n_batch_files` must be a positive integer.",
       n_batch_files = n_batch_files)
   }
@@ -530,11 +530,11 @@ mod_prepare_TF <- function(
     "ProjectID", "DP_R_LUMI_gpu", FALSE, FALSE,
     "path_model", "DP_R_Model_path", TRUE, FALSE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
-  IASDT.R::record_arguments(
+  ecokit::record_arguments(
     out_path = fs::path(path_model, "Args_mod_prep_TF.RData"))
 
   # ****************************************************************
@@ -542,7 +542,7 @@ mod_prepare_TF <- function(
   # Path to store TF commands
   Path_TF <- fs::path(path_model, paste0(model_prefix, "_TF"))
   # Path to store log files
-  Path_Log <- IASDT.R::normalize_path(fs::path(Path_TF, "log"))
+  Path_Log <- ecokit::normalize_path(fs::path(Path_TF, "log"))
   fs::dir_create(c(Path_TF, Path_Log))
 
   # ****************************************************************
@@ -553,7 +553,7 @@ mod_prepare_TF <- function(
   # # |||||||||||||||||||||||||||||||||||||||||||||||||| # #
 
   # Prepare post-processing data for calculating variance partitioning
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     "Prepare post-processing data for calculating variance partitioning")
 
   # Create paths for VP SLURM script and commands
@@ -561,7 +561,7 @@ mod_prepare_TF <- function(
   Path_VP_Commands <- fs::path(Path_TF, "VP_Commands.txt")
 
   # Merge and organise TensorFlow commands for computing variance partitioning
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     "Merge and organise TF TensorFlow for computing variance partitioning",
     level = 1L, cat_timestamp = FALSE)
 
@@ -579,7 +579,7 @@ mod_prepare_TF <- function(
   # ****************************************************************
 
   # Prepare batch files ----
-  IASDT.R::cat_time("Prepare batch files", level = 1L, cat_timestamp = FALSE)
+  ecokit::cat_time("Prepare batch files", level = 1L, cat_timestamp = FALSE)
 
   VP_Commands <- c(
     "#!/bin/bash",
@@ -616,7 +616,7 @@ mod_prepare_TF <- function(
       " CET"),
     paste0("# ", strrep("-", 50)))
 
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     paste0("Writing SLURM script to: `", Path_VP_SLURM, "`"),
     level = 2L, cat_timestamp = FALSE)
 
@@ -632,14 +632,14 @@ mod_prepare_TF <- function(
   # # |||||||||||||||||||||||||||||||||||||||||||||||||| # #
 
   # Prepare post-processing data for LF predictions
-  IASDT.R::cat_time("\nPrepare post-processing data for LF predictions")
+  ecokit::cat_time("\nPrepare post-processing data for LF predictions")
 
   # Ensure that the total number of simultaneous jobs (LF + VP) = n_batch_files;
   # so both can be run on the same time.
   n_batch_files <- n_batch_files - length(VP_InFiles)
 
   # Merge and organise TensorFlow commands for LF predictions ----
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     paste0(
       "Merge and organise TensorFlow commands for LF predictions ",
       "into a maximum of ", n_batch_files, " files"),
@@ -662,7 +662,7 @@ mod_prepare_TF <- function(
 
   # Change working directory if specified
   if (!is.null(working_directory)) {
-    working_directory <- IASDT.R::normalize_path(
+    working_directory <- ecokit::normalize_path(
       working_directory, must_work = TRUE)
     BasicCommands <- c(
       BasicCommands, "# Change to working directory",
@@ -678,30 +678,30 @@ mod_prepare_TF <- function(
     gtools::mixedsort()
 
   if (length(LF_InFiles) == 0) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "No files found matching the pattern",
       LF_Pattern = LF_Pattern, path_model = path_model)
   }
 
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     paste0(
       "Found ", length(LF_InFiles), " files matching the pattern `",
       LF_Pattern, "`"),
     level = 2L, cat_timestamp = FALSE)
-  purrr::walk(LF_InFiles, IASDT.R::cat_time, level = 3L, cat_timestamp = FALSE)
+  purrr::walk(LF_InFiles, ecokit::cat_time, level = 3L, cat_timestamp = FALSE)
 
   # Read and merge commands from input files
   LF_commands <- purrr::map(LF_InFiles, readr::read_lines, progress = FALSE) %>%
     unlist() %>%
     gtools::mixedsort()
 
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     paste0(
       "Total number of commands to be executed: ", length(LF_commands)),
     level = 2L, cat_timestamp = FALSE)
 
   if (length(LF_commands) < n_batch_files) {
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       paste0(
         "Fewer commands than the requested number of files. ",
         "Setting `n_batch_files=", n_batch_files, "`."),
@@ -709,10 +709,10 @@ mod_prepare_TF <- function(
     n_batch_files <- length(LF_commands)
   }
 
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     paste0("Splitting commands into ", n_batch_files, " files"),
     cat_timestamp = FALSE, level = 2L)
-  LF_commands <- IASDT.R::split_vector(LF_commands, n_splits = n_batch_files)
+  LF_commands <- ecokit::split_vector(LF_commands, n_splits = n_batch_files)
 
   purrr::walk(
     .x = seq_len(length(LF_commands)),
@@ -746,7 +746,7 @@ mod_prepare_TF <- function(
   # ****************************************************************
 
   # Prepare LF batch files ----
-  IASDT.R::cat_time("Prepare batch files", level = 1L, cat_timestamp = FALSE)
+  ecokit::cat_time("Prepare batch files", level = 1L, cat_timestamp = FALSE)
 
   LF_slurm_script <- c(
     "#!/bin/bash",
@@ -818,7 +818,7 @@ mod_prepare_TF <- function(
     paste0("# ", strrep("-", 50)))
 
   Path_LF_SLURM <- fs::path(Path_TF, "LF_SLURM.slurm")
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     paste0("Writing SLURM script to: `", Path_LF_SLURM, "`"),
     level = 2L, cat_timestamp = FALSE)
   # Write the content to a file
@@ -875,15 +875,15 @@ mod_postprocess_2_CPU <- function(
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character",
     args_to_check = c("hab_abb", "env_file", "model_dir", "use_trees"))
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "logical",
     args_to_check = c("use_TF", "clamp_pred", "pred_new_sites"))
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "numeric",
     args_to_check = c(
       "n_cores", "GPP_dist", "MCMC_n_samples", "MCMC_thin", "n_grid"))
@@ -891,7 +891,7 @@ mod_postprocess_2_CPU <- function(
 
   ValidHabAbbs <- c(as.character(0:3), "4a", "4b", "10", "12a", "12b")
   if (!(hab_abb %in% ValidHabAbbs)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       paste0(
         "Invalid Habitat abbreviation. Valid values are:\n >> ",
         toString(ValidHabAbbs)),
@@ -899,18 +899,18 @@ mod_postprocess_2_CPU <- function(
   }
 
   if (!file.exists(env_file)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Error: Environment file is invalid or does not exist.",
       env_file = env_file)
   }
 
   if (!dir.exists(model_dir)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Model directory is invalid or does not exist.", model_dir = model_dir)
   }
 
   if (!(use_trees %in% c("Tree", "NoTree"))) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       paste0(
         "Invalid value for Tree argument. Valid values ",
         "are: 'Tree' or 'NoTree'"),
@@ -918,7 +918,7 @@ mod_postprocess_2_CPU <- function(
   }
 
   if (clamp_pred && is.null(fix_efforts)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`fix_efforts` can not be NULL when Clamping is implemented",
       clamp_pred = clamp_pred, fix_efforts = fix_efforts)
   }
@@ -928,7 +928,7 @@ mod_postprocess_2_CPU <- function(
     "MRI-ESM2-0", "UKESM1-0-LL")
 
   if (!all(CC_models %in% ValidModels)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       paste0(
         "Invalid climate models. Valid values are:\n >> ",
         toString(ValidModels)),
@@ -936,7 +936,7 @@ mod_postprocess_2_CPU <- function(
   }
 
   if (!all(CC_scenario %in% c("ssp126", "ssp370", "ssp585"))) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       paste0(
         "Invalid climate scenarios. Valid values are:\n >> ",
         toString(c("ssp126", "ssp370", "ssp585"))),
@@ -945,18 +945,18 @@ mod_postprocess_2_CPU <- function(
 
   # ****************************************************************
 
-  IASDT.R::record_arguments(
+  ecokit::record_arguments(
     out_path = fs::path(model_dir, "Args_Mod_Postprocess_2_CPU.RData"))
 
   # ****************************************************************
 
   loaded_packages <- paste(
-    sort(IASDT.R::loaded_packages()), collapse = " + ") %>%
+    sort(ecokit::loaded_packages()), collapse = " + ") %>%
     stringr::str_wrap(width = 60, indent = 8, exdent = 8)
   cat(
     paste0(
       "\n  >>> Working directory: ", getwd(),
-      "\n  >>> Operating system: ", IASDT.R::OS(),
+      "\n  >>> Operating system: ", ecokit::OS(),
       "\n  >>> Model root: ", model_dir,
       "\n  >>> n_cores: ", n_cores,
       "\n  >>> RC_n_cores: ", RC_n_cores,
@@ -977,14 +977,14 @@ mod_postprocess_2_CPU <- function(
     path = model_dir, full.names = TRUE, pattern = "^ModDT_.*subset.RData")
 
   if (length(ModelData) != 1) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Expected one model data file", length_model_data = length(ModelData))
   }
 
   # ****************************************************************
 
   # Path of selected model -----
-  IASDT.R::info_chunk(
+  ecokit::info_chunk(
     "Path of selected model", level = 1L, line_char = "+", line_char_rep = 60L,
     cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
@@ -1004,7 +1004,7 @@ mod_postprocess_2_CPU <- function(
     paste0("path_model:\n\t", path_model, "\nPath_Coda:\n\t", path_coda, "\n"))
 
   if (!all(file.exists(path_model, path_coda))) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Selected model files not found",
       path_model = path_model, path_coda = path_coda)
   }
@@ -1014,7 +1014,7 @@ mod_postprocess_2_CPU <- function(
   # Prepare response curve data -----
 
   if (RC_prepare) {
-    IASDT.R::info_chunk(
+    ecokit::info_chunk(
       "Prepare response curve data", level = 1L, line_char = "+",
       line_char_rep = 60L, cat_red = TRUE,
       cat_bold = TRUE, cat_timestamp = FALSE)
@@ -1037,7 +1037,7 @@ mod_postprocess_2_CPU <- function(
   if (RC_plot) {
 
     ## Species richness -----
-    IASDT.R::info_chunk(
+    ecokit::info_chunk(
       "Plotting response curves - species richness", level = 1L,
       line_char = "+", line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
       cat_timestamp = FALSE)
@@ -1050,7 +1050,7 @@ mod_postprocess_2_CPU <- function(
     # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
     # Individual species -----
-    IASDT.R::info_chunk(
+    ecokit::info_chunk(
       "Plotting response curves - species", level = 1L, line_char = "+",
       line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
       cat_timestamp = FALSE)
@@ -1063,7 +1063,7 @@ mod_postprocess_2_CPU <- function(
     # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
     # All species together -----
-    IASDT.R::info_chunk(
+    ecokit::info_chunk(
       "Plotting response curves - all species together", level = 1L,
       line_char = "+", line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
       cat_timestamp = FALSE)
@@ -1080,7 +1080,7 @@ mod_postprocess_2_CPU <- function(
 
   if (predict_suitability) {
 
-    IASDT.R::info_chunk(
+    ecokit::info_chunk(
       "Predicting habitat suitability across different climate options",
       line_char = "+", line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
       cat_timestamp = FALSE, level = 1L)
@@ -1104,7 +1104,7 @@ mod_postprocess_2_CPU <- function(
   # Compute variance partitioning ------
 
   if (VP_prepare) {
-    IASDT.R::info_chunk(
+    ecokit::info_chunk(
       "Compute variance partitioning", level = 1L, line_char = "+",
       line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
       cat_timestamp = FALSE)
@@ -1122,7 +1122,7 @@ mod_postprocess_2_CPU <- function(
   # Plot Variance partitioning ------
 
   if (VP_plot) {
-    IASDT.R::info_chunk(
+    ecokit::info_chunk(
       "Plot Variance partitioning", level = 1L, line_char = "+",
       line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
       cat_timestamp = FALSE)
@@ -1138,7 +1138,7 @@ mod_postprocess_2_CPU <- function(
   # Plot species & SR predictions as JPEG ------
 
   if (plot_predictions) {
-    IASDT.R::info_chunk(
+    ecokit::info_chunk(
       "Plot species & SR predictions as JPEG", level = 1L, line_char = "+",
       line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
       cat_timestamp = FALSE)
@@ -1152,7 +1152,7 @@ mod_postprocess_2_CPU <- function(
   # Plot latent factors as JPEG ------
 
   if (plot_LF) {
-    IASDT.R::info_chunk(
+    ecokit::info_chunk(
       "Plot latent factors as JPEG", level = 1L, line_char = "+",
       line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
       cat_timestamp = FALSE)
@@ -1165,7 +1165,7 @@ mod_postprocess_2_CPU <- function(
   # Plot explanatory Power ------
 
   if (plot_internal_evaluation) {
-    IASDT.R::info_chunk(
+    ecokit::info_chunk(
       "Plot explanatory Power", level = 1L, line_char = "+",
       line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
       cat_timestamp = FALSE)
@@ -1179,8 +1179,7 @@ mod_postprocess_2_CPU <- function(
 
   # ****************************************************************
 
-  IASDT.R::cat_diff(
-    init_time = .start_time, prefix = "\nPost-processing took ")
+  ecokit::cat_diff(init_time = .start_time, prefix = "\nPost-processing took ")
 
   return(invisible(NULL))
 }

@@ -69,7 +69,7 @@ If you use the `IASDT.R` package, please cite it as:
 > El-Gabbas, A. (2025). **IASDT.R: Modelling the distribution of
 > invasive alien plant species in Europe**.
 > <a href="https://doi.org/10.5281/zenodo.14834384" target="_blank">10.5281/zenodo.14834384</a>,
-> R package version 0.1.03;
+> R package version 0.1.05;
 > <a href="https://github.com/BioDT/IASDT.R" target="_blank">https://github.com/BioDT/IASDT.R</a>;
 > <a href="https://biodt.eu" target="_blank">https://biodt.eu</a>.
 

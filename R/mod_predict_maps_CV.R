@@ -29,7 +29,7 @@ predict_maps_CV <- function(
   # # ..................................................................... ###
 
   # Check input arguments ----
-  IASDT.R::cat_time("Checking input arguments")
+  ecokit::cat_time("Checking input arguments")
 
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(
@@ -37,22 +37,22 @@ predict_maps_CV <- function(
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character",
     args_to_check = c("CV_name", "model_dir", "env_file"))
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "logical",
     args_to_check = c(
       "use_TF", "TF_use_single", "LF_check", "LF_temp_cleanup", "LF_only",
       "LF_commands_only", "temp_cleanup"))
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "numeric",
     args_to_check = c("n_cores", "CV_fold", "LF_n_cores"))
 
   rm(AllArgs, envir = environment())
 
   if (!CV_name %in% c("CV_Dist", "CV_Large", "CV_SAC")) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       paste0(
         "Invalid value for CV_name argument.\nValid values are: CV_Dist, ",
         "CV_Large, or CV_SAC"),
@@ -60,7 +60,7 @@ predict_maps_CV <- function(
   }
 
   if (!file.exists(env_file)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Environment file is invalid or does not exist.", env_file = env_file)
   }
 
@@ -69,19 +69,19 @@ predict_maps_CV <- function(
 
   # Environment variables ------
 
-  IASDT.R::cat_time("Environment variables")
+  ecokit::cat_time("Environment variables")
 
   EnvVars2Read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
     "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
   Path_GridR <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(Path_GridR)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Path for the Europe boundaries does not exist", Path_GridR = Path_GridR)
   }
 
@@ -90,15 +90,15 @@ predict_maps_CV <- function(
 
   # Reading input data + managing File and directory paths
 
-  IASDT.R::cat_time("Reading input data + managing File and directory paths")
+  ecokit::cat_time("Reading input data + managing File and directory paths")
 
   # Loading CV data
   CV_DT <- fs::path(model_dir, "Model_Fitting_CV", "CV_DT_fitted.RData")
-  if (!IASDT.R::check_data(CV_DT, warning = FALSE)) {
-    IASDT.R::stop_ctx("CV data does not exist", CV_DT = CV_DT)
+  if (!ecokit::check_data(CV_DT, warning = FALSE)) {
+    ecokit::stop_ctx("CV data does not exist", CV_DT = CV_DT)
 
   }
-  CV_DT <- IASDT.R::load_as(CV_DT) %>%
+  CV_DT <- ecokit::load_as(CV_DT) %>%
     dplyr::filter(.data$CV_name == CV_name, .data$CV == CV_fold)
 
   # model name
@@ -138,33 +138,33 @@ predict_maps_CV <- function(
   # CV fitted cross-validated model
   path_model <- CV_DT$Path_ModFitted
   if (!file.exists(path_model)) {
-    IASDT.R::stop_ctx("Model data does not exist", path_model = path_model)
+    ecokit::stop_ctx("Model data does not exist", path_model = path_model)
   }
 
   # # ..................................................................... ###
   # # ..................................................................... ###
 
   # Loading data used in full model (without cross-validation)
-  IASDT.R::cat_time("Loading data used in full model")
+  ecokit::cat_time("Loading data used in full model")
 
   model_data <- list.files(
     path = model_dir, pattern = "ModDT_.+_subset.RData", full.names = TRUE)
   if (length(model_data) != 1) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       paste0("There are ", length(model_data), " model data files"),
       model_dir = model_dir)
   }
-  model_data <- IASDT.R::load_as(model_data)
+  model_data <- ecokit::load_as(model_data)
 
   # ..................................................................... ###
   # ..................................................................... ###
 
   # Prepare testing data sets
-  IASDT.R::cat_time("Prepare testing datasets")
+  ecokit::cat_time("Prepare testing datasets")
 
   Test_DT <- dplyr::filter(model_data$DT_All, .data[[CV_name]] == CV_fold)
   if (nrow(Test_DT) == 0) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "No data available for the current CV fold",
       CV_name = CV_name, CV_fold = CV_fold)
   }
@@ -174,7 +174,7 @@ predict_maps_CV <- function(
     as.data.frame()
   Test_XY <- as.data.frame(dplyr::select(Test_DT, x, y))
 
-  Model <- IASDT.R::load_as(path_model)
+  Model <- ecokit::load_as(path_model)
   Gradient <- Hmsc::prepareGradient(
     hM = Model, XDataNew = Test_X, sDataNew = list(sample = Test_XY))
   Test_PA <- dplyr::select(Test_DT, tidyselect::starts_with("Sp_")) %>%
@@ -207,11 +207,11 @@ predict_maps_CV <- function(
 
   if (file.exists(Path_Test_LF)) {
 
-    IASDT.R::cat_time("LF prediction is already available on disk")
+    ecokit::cat_time("LF prediction is already available on disk")
 
   } else {
 
-    IASDT.R::info_chunk("Predict latent factor at new locations")
+    ecokit::info_chunk("Predict latent factor at new locations")
 
     # Predicting latent factor only
     Preds_LF <- IASDT.R::predict_hmsc(
@@ -225,8 +225,8 @@ predict_maps_CV <- function(
 
     rm(Preds_LF, envir = environment())
 
-    IASDT.R::cat_time("Predicting latent factor is finished!", level = 1L)
-    IASDT.R::cat_sep(
+    ecokit::cat_time("Predicting latent factor is finished!", level = 1L)
+    ecokit::cat_sep(
       sep_lines_before = 1L, sep_lines_after = 2L, n_separators = 1L,
       line_char = "*")
 
@@ -250,12 +250,12 @@ predict_maps_CV <- function(
 
     # Skip predictions if the predictions as sf object and evaluation data
     # already on disk
-    IASDT.R::cat_time("Loading predictions `sf` from disk")
-    Prediction_sf <- IASDT.R::load_as(Path_Preds_sf)
+    ecokit::cat_time("Loading predictions `sf` from disk")
+    Prediction_sf <- ecokit::load_as(Path_Preds_sf)
 
   } else {
 
-    IASDT.R::info_chunk(
+    ecokit::info_chunk(
       "Predict habitat suitability at testing cross-validation folds",
       line_char_rep = 75)
 
@@ -272,32 +272,32 @@ predict_maps_CV <- function(
     #  --------------------------------------------------------------------- #
 
     if (!file.exists(Path_Preds_sf)) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         "Prediction file does not exist", Path_Preds_sf = Path_Preds_sf)
 
     }
-    if (isFALSE(IASDT.R::check_data(Path_Preds_sf, warning = FALSE))) {
-      IASDT.R::stop_ctx(
+    if (isFALSE(ecokit::check_data(Path_Preds_sf, warning = FALSE))) {
+      ecokit::stop_ctx(
         "Prediction file is corrupted", Path_Preds_sf = Path_Preds_sf)
     }
 
     if (!file.exists(Path_Eval_File)) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         "Evaluation file does not exist", Path_Eval_File = Path_Eval_File)
     }
 
-    if (isFALSE(IASDT.R::check_data(Path_Eval_File, warning = FALSE))) {
-      IASDT.R::stop_ctx(
+    if (isFALSE(ecokit::check_data(Path_Eval_File, warning = FALSE))) {
+      ecokit::stop_ctx(
         "Evaluation file is corrupted", Path_Eval_File = Path_Eval_File)
     }
 
     # loading evaluation data
-    Eval_data <- IASDT.R::load_as(Prediction_sf$Eval_Path) %>%
+    Eval_data <- ecokit::load_as(Prediction_sf$Eval_Path) %>%
       dplyr::select(-Sp) %>%
       dplyr::rename(ias_id = IAS_ID)
 
     # loading prediction data
-    Prediction_sf <- IASDT.R::load_as(Prediction_sf$Pred_Path)
+    Prediction_sf <- ecokit::load_as(Prediction_sf$Pred_Path)
 
   }
 
@@ -308,11 +308,11 @@ predict_maps_CV <- function(
 
   if (all(file.exists(Path_Preds_R, Path_Preds_summary))) {
 
-    Out_Summary <- IASDT.R::load_as(Path_Preds_summary)
+    Out_Summary <- ecokit::load_as(Path_Preds_summary)
 
   } else {
 
-    IASDT.R::cat_time("\nRasterization predictions at testing sites")
+    ecokit::cat_time("\nRasterization predictions at testing sites")
 
     SpeciesInfo <- IASDT.R::get_species_name(env_file = env_file) %>%
       janitor::clean_names() %>%
@@ -322,16 +322,16 @@ predict_maps_CV <- function(
       stringr::str_subset("^Sp_|^SR_") %>%
       gtools::mixedsort()
 
-    Grid10 <- terra::unwrap(IASDT.R::load_as(Path_GridR))
+    Grid10 <- terra::unwrap(ecokit::load_as(Path_GridR))
     Prediction_R <- terra::rasterize(
       Prediction_sf, Grid10, field = Fields2Raster)
 
     #  --------------------------------------------------------------------- #
 
-    IASDT.R::cat_time("Save prediction outputs")
+    ecokit::cat_time("Save prediction outputs")
 
     # Save as tif
-    IASDT.R::cat_time("Save predictions as tif files", level = 1L)
+    ecokit::cat_time("Save predictions as tif files", level = 1L)
 
     selected_columns <- c(
       "hab_abb", "hab_name", "CV_name", "CV_fold", "ias_id", "taxon_name",
@@ -367,21 +367,21 @@ predict_maps_CV <- function(
       dplyr::left_join(Eval_data, by = "ias_id") %>%
       dplyr::slice(gtools::mixedorder(ias_id))
 
-    IASDT.R::cat_time("Save summary data", level = 1L)
+    ecokit::cat_time("Save summary data", level = 1L)
     # save as spatRaster - qs2
-    IASDT.R::cat_time("Save as spatRaster - qs2", level = 1L)
+    ecokit::cat_time("Save as spatRaster - qs2", level = 1L)
     Prediction_R <- terra::wrap(Prediction_R)
-    IASDT.R::save_as(object = Prediction_R, out_path = Path_Preds_R)
+    ecokit::save_as(object = Prediction_R, out_path = Path_Preds_R)
 
     # Save summary - RData
-    IASDT.R::cat_time("Save summary - RData", level = 1L)
-    IASDT.R::save_as(
+    ecokit::cat_time("Save summary - RData", level = 1L)
+    ecokit::save_as(
       object = Out_Summary,
       object_name = paste0("Prediction_", model_name, "_Summary"),
       out_path = Path_Preds_summary)
 
     # Save summary - csv
-    IASDT.R::cat_time("Save summary - csv", level = 1L)
+    ecokit::cat_time("Save summary - csv", level = 1L)
     utils::write.table(
       x = Out_Summary,
       file = stringr::str_replace(Path_Preds_summary, ".RData$", ".txt"),
@@ -392,7 +392,7 @@ predict_maps_CV <- function(
   # # ..................................................................... ###
   # # ..................................................................... ###
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = .start_time, prefix = "\nThe whole prediction function took ")
 
   return(Path_Preds_summary)

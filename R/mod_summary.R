@@ -34,11 +34,11 @@ mod_summary <- function(
   # # ..................................................................... ###
 
   if (is.null(path_coda)) {
-    IASDT.R::stop_ctx("`path_coda` cannot be empty", path_coda = path_coda)
+    ecokit::stop_ctx("`path_coda` cannot be empty", path_coda = path_coda)
   }
 
   if (!file.exists(env_file)) {
-    IASDT.R::stop_ctx("Environment file not found", env_file = env_file)
+    ecokit::stop_ctx("Environment file not found", env_file = env_file)
   }
 
   # # ..................................................................... ###
@@ -52,13 +52,13 @@ mod_summary <- function(
   # # ..................................................................... ###
 
   # Prepare Species list -----
-  IASDT.R::cat_time("Prepare Species list")
+  ecokit::cat_time("Prepare Species list")
 
   EnvVars2Read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
     "TaxaInfoFile", "DP_R_Taxa_info", FALSE, TRUE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
@@ -79,29 +79,29 @@ mod_summary <- function(
   # # ..................................................................... ###
 
   # Loading coda object ------
-  IASDT.R::cat_time("Loading coda object")
-  Coda <- IASDT.R::load_as(path_coda)
+  ecokit::cat_time("Loading coda object")
+  Coda <- ecokit::load_as(path_coda)
 
-  IASDT.R::cat_time("Beta summary", level = 1L)
+  ecokit::cat_time("Beta summary", level = 1L)
   Beta_Summary <- summary(Coda$Beta)
 
-  IASDT.R::cat_time("Alpha summary", level = 1L)
+  ecokit::cat_time("Alpha summary", level = 1L)
   Alpha_Summary <- summary(Coda$Alpha[[1]])
 
-  IASDT.R::cat_time("Omega summary", level = 1L)
+  ecokit::cat_time("Omega summary", level = 1L)
   Omega_Summary <- summary(Coda$Omega[[1]])
 
-  IASDT.R::cat_time("Rho summary", level = 1L)
+  ecokit::cat_time("Rho summary", level = 1L)
   Rho_Summary <- summary(Coda$Rho)
 
   rm(Coda, envir = environment())
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_time("Extracting summary data")
+  ecokit::cat_time("Extracting summary data")
 
   # Beta ------
-  IASDT.R::cat_time("Beta", level = 1L)
+  ecokit::cat_time("Beta", level = 1L)
   Beta_Summary <- DataPrep(Beta_Summary$statistics) %>%
     dplyr::full_join(DataPrep(Beta_Summary$quantiles), by = "VarSp") %>%
     dplyr::mutate(
@@ -131,7 +131,7 @@ mod_summary <- function(
         .x = Q2_5, .y = Q97_5, ~dplyr::between(x = 0, left = .x, right = .y)))
 
   # Alpha -----
-  IASDT.R::cat_time("Alpha", level = 1L)
+  ecokit::cat_time("Alpha", level = 1L)
   Alpha_Summary <- DataPrep(Alpha_Summary$statistics) %>%
     dplyr::full_join(DataPrep(Alpha_Summary$quantiles), by = "VarSp") %>%
     dplyr::mutate(
@@ -150,7 +150,7 @@ mod_summary <- function(
         .x = Q2_5, .y = Q97_5, ~dplyr::between(x = 0, left = .x, right = .y)))
 
   # Rho ----
-  IASDT.R::cat_time("Rho", level = 1L)
+  ecokit::cat_time("Rho", level = 1L)
   Rho_Summary <- dplyr::bind_rows(
     as.data.frame(as.matrix(Rho_Summary$statistics)),
     as.data.frame(as.matrix(Rho_Summary$quantiles))) %>%
@@ -169,7 +169,7 @@ mod_summary <- function(
         .x = Q2_5, .y = Q97_5, ~dplyr::between(x = 0, left = .x, right = .y)))
 
   # Omega ------
-  IASDT.R::cat_time("Omega", level = 1L)
+  ecokit::cat_time("Omega", level = 1L)
 
   ListSp <- utils::read.delim(TaxaInfoFile, sep = "\t") %>%
     tibble::tibble() %>%
@@ -213,12 +213,12 @@ mod_summary <- function(
   # # ..................................................................... ###
 
   # Saving ------
-  IASDT.R::cat_time("Saving")
+  ecokit::cat_time("Saving")
   Path_Out <- dirname(dirname(path_coda)) %>%
     fs::path("Model_Postprocessing", "Parameters_Summary")
   fs::dir_create(Path_Out)
 
-  IASDT.R::save_as(
+  ecokit::save_as(
     object = list(
       Alpha = Alpha_Summary, Beta = Beta_Summary,
       Rho = Rho_Summary, Omega = Omega_Summary),
@@ -227,7 +227,7 @@ mod_summary <- function(
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = .start_time, prefix = "Extracting model summary took ")
 
   # # ..................................................................... ###

@@ -51,13 +51,13 @@ plot_gelman <- function(
   # Checking arguments --------
 
   if (sum(alpha, beta, omega, rho) == 0) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "At least one of `alpha`, `beta`, `omega`, and `rho` must be `TRUE`",
       alpha = alpha, beta = beta, omega = omega, rho = rho)
   }
 
   if (is.null(path_coda)) {
-    IASDT.R::stop_ctx("path_coda cannot be empty", path_coda = path_coda)
+    ecokit::stop_ctx("path_coda cannot be empty", path_coda = path_coda)
   }
 
   AllArgs <- ls(envir = environment())
@@ -66,10 +66,10 @@ plot_gelman <- function(
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "numeric",
     args_to_check = c("n_omega", "plotting_alpha"))
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "logical",
     args_to_check = c("beta", "rho", "omega", "alpha", "return_plots"))
 
@@ -81,18 +81,18 @@ plot_gelman <- function(
 
   if (inherits(path_coda, "character")) {
 
-    IASDT.R::cat_time("Loading coda object")
-    coda_object <- IASDT.R::load_as(path_coda)
+    ecokit::cat_time("Loading coda object")
+    coda_object <- ecokit::load_as(path_coda)
 
   } else {
 
     if (!inherits(path_coda, "list")) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         "`path_coda` is neither character path or a list",
         path_coda = path_coda, class_path_coda = class(path_coda))
     }
     if (!inherits(path_coda[[1]], "mcmc.list")) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         "`path_coda` has no mcmc.list items",
         path_coda = path_coda, class_path_coda = class(path_coda))
     }
@@ -111,7 +111,7 @@ plot_gelman <- function(
   # alpha -----
 
   if (alpha) {
-    IASDT.R::cat_time("alpha")
+    ecokit::cat_time("alpha")
     PlotObj_Alpha <- plot_gelman_alpha(
       coda_object = coda_object$Alpha[[1]], plotting_alpha = plotting_alpha)
   } else {
@@ -123,7 +123,7 @@ plot_gelman <- function(
   # beta -----
 
   if (beta) {
-    IASDT.R::cat_time("beta")
+    ecokit::cat_time("beta")
     PlotObj_Beta <- IASDT.R::plot_gelman_beta(
       coda_object = coda_object$Beta, env_file = env_file,
       plotting_alpha = plotting_alpha)
@@ -136,7 +136,7 @@ plot_gelman <- function(
   # omega -----
 
   if (omega) {
-    IASDT.R::cat_time("omega")
+    ecokit::cat_time("omega")
     PlotObj_Omega <- IASDT.R::plot_gelman_omega(
       coda_object = coda_object$Omega[[1]], n_omega = n_omega,
       plotting_alpha = plotting_alpha)
@@ -149,7 +149,7 @@ plot_gelman <- function(
   # rho -----
 
   if (rho && ("Rho" %in% names(coda_object))) {
-    IASDT.R::cat_time("rho")
+    ecokit::cat_time("rho")
     PlotObj_Rho <- IASDT.R::plot_gelman_rho(coda_object$Rho)
   } else {
     PlotObj_Rho <- NULL
@@ -180,13 +180,13 @@ plot_gelman <- function(
   # # ..................................................................... ###
 
   # Saving plots as qs2 -----
-  IASDT.R::save_as(
+  ecokit::save_as(
     object = PlotList, object_name = "GelmanPlots",
     out_path = fs::path(out_path, "GelmanPlots.qs2"))
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_diff(init_time = .start_time)
+  ecokit::cat_diff(init_time = .start_time)
 
   if (return_plots) {
     return(PlotList)
@@ -214,7 +214,7 @@ plot_gelman_alpha <- function(coda_object, plotting_alpha = 0.25) {
   # # ..................................................................... ###
 
   if (!inherits(coda_object, "mcmc.list")) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`coda_object` has to be of class mcmc.list",
       coda_object = coda_object, class_coda_object = class(coda_object))
   }
@@ -343,12 +343,11 @@ plot_gelman_beta <- function(
   # # ..................................................................... ###
 
   if (is.null(coda_object)) {
-    IASDT.R::stop_ctx(
-      "`coda_object` cannot be empty", coda_object = coda_object)
+    ecokit::stop_ctx("`coda_object` cannot be empty", coda_object = coda_object)
   }
 
   if (!inherits(coda_object, "mcmc.list")) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`coda_object` has to be of class mcmc.list",
       coda_object = coda_object, class_coda_object = class(coda_object))
   }
@@ -471,17 +470,15 @@ plot_gelman_omega <- function(
   # # ..................................................................... ###
 
   if (is.null(coda_object)) {
-    IASDT.R::stop_ctx(
-      "`coda_object` cannot be empty", coda_object = coda_object)
+    ecokit::stop_ctx("`coda_object` cannot be empty", coda_object = coda_object)
   }
 
   if (!is.numeric(n_omega) || n_omega <= 0) {
-    IASDT.R::stop_ctx(
-      "`n_omega` must be a positive integer.", n_omega = n_omega)
+    ecokit::stop_ctx("`n_omega` must be a positive integer.", n_omega = n_omega)
   }
 
   if (!inherits(coda_object, "mcmc.list")) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`coda_object` has to be of class mcmc.list",
       coda_object = coda_object, class_coda_object = class(coda_object))
   }
@@ -597,8 +594,7 @@ plot_gelman_omega <- function(
 plot_gelman_rho <- function(coda_object) {
 
   if (is.null(coda_object)) {
-    IASDT.R::stop_ctx(
-      "`coda_object` cannot be empty", coda_object = coda_object)
+    ecokit::stop_ctx("`coda_object` cannot be empty", coda_object = coda_object)
   }
 
   # Avoid "no visible binding for global variable" message

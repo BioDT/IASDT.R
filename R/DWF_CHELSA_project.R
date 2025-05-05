@@ -19,20 +19,20 @@ CHELSA_project <- function(
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_to_check = "env_file", args_type = "character")
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_to_check = "compression_level",
     args_type = "numeric")
   rm(AllArgs, envir = environment())
 
   if (!inherits(metadata, "tbl_df")) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Input metadata has to be a tibble", class_metadata = class(metadata))
   }
 
   if (nrow(metadata) != 1) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Input metadata has to be a single-row tibble",
       metadata = metadata, class_metadata = class(metadata),
       nrow_metadata = nrow(metadata))
@@ -47,12 +47,11 @@ CHELSA_project <- function(
   # # ..................................................................... ###
 
   if (is.null(metadata)) {
-    IASDT.R::stop_ctx("Input metadata can not be `NULL`", metadata = metadata)
+    ecokit::stop_ctx("Input metadata can not be `NULL`", metadata = metadata)
   }
 
   if (!file.exists(metadata$Path_Down)) {
-    IASDT.R::stop_ctx(
-      "Input file does not exist", path = metadata$Path_Down)
+    ecokit::stop_ctx("Input file does not exist", path = metadata$Path_Down)
   }
 
   # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use
@@ -67,7 +66,7 @@ CHELSA_project <- function(
     ~var_name, ~value, ~check_dir, ~check_file,
     "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
@@ -77,10 +76,10 @@ CHELSA_project <- function(
 
   GridR <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(GridR)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Path for the Europe boundaries does not exist", GridR = GridR)
   }
-  GridR <- terra::unwrap(IASDT.R::load_as(GridR))
+  GridR <- terra::unwrap(ecokit::load_as(GridR))
 
   # # ..................................................................... ###
 
@@ -154,8 +153,8 @@ CHELSA_project <- function(
     # mask to the reference grid
     terra::mask(GridR) %>%
     # Ensure that values are read from memory
-    IASDT.R::set_raster_values() %>%
-    IASDT.R::set_raster_CRS()
+    ecokit::set_raster_values() %>%
+    ecokit::set_raster_CRS()
 
   # # ..................................................................... ###
 

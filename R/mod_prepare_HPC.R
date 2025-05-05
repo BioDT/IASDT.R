@@ -190,7 +190,7 @@ mod_prepare_HPC <- function(
   IsNull <- purrr::map_lgl(CheckNULL, ~ is.null(get(.x)))
 
   if (any(IsNull)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       paste0(
         paste0("`", CheckNULL[which(IsNull)], "`", collapse = ", "),
         " can not be empty"),
@@ -201,7 +201,7 @@ mod_prepare_HPC <- function(
   }
 
   if (!(precision %in% c(32, 64))) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`precision` should be either of 32 or 64", precision = precision)
   }
 
@@ -209,31 +209,31 @@ mod_prepare_HPC <- function(
 
 
   if (!all(is.numeric(MCMC_samples)) || any(MCMC_samples <= 0)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`MCMC_samples` should be numeric and greater than zero",
       MCMC_samples = MCMC_samples)
   }
 
   if (!all(is.numeric(MCMC_thin)) || any(MCMC_thin <= 0)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`MCMC_thin` should be numeric and greater than zero",
       MCMC_thin = MCMC_thin)
   }
 
   if (!all(is.numeric(n_pres_per_species)) || n_pres_per_species <= 0) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`n_pres_per_species` should be numeric and greater than zero",
       n_pres_per_species = n_pres_per_species)
   }
 
   if (!all(is.numeric(min_efforts_n_species)) || min_efforts_n_species <= 0) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`min_efforts_n_species` should be numeric and greater than zero",
       min_efforts_n_species = min_efforts_n_species)
   }
 
   if (!is.numeric(n_species_per_grid) || n_species_per_grid < 0) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`n_species_per_grid` has to be integer >= 0",
       n_species_per_grid = n_species_per_grid)
   }
@@ -256,13 +256,13 @@ mod_prepare_HPC <- function(
 
   Path_Python <- fs::path(path_Hmsc, "Scripts", "python.exe")
 
-  IASDT.R::info_chunk("Preparing data for Hmsc-HPC models", line_char = "=")
+  ecokit::info_chunk("Preparing data for Hmsc-HPC models", line_char = "=")
 
   # # |||||||||||||||||||||||||||||||||||
   # Load/check environment variables -----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Load and check environment variables")
+  ecokit::cat_time("Load and check environment variables")
 
   EnvVars2Read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
@@ -274,29 +274,29 @@ mod_prepare_HPC <- function(
 
   # Check if Python executable exists
   if (check_python && !file.exists(Path_Python) && Sys.info()[1] == "Windows") {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Python executable does not exist", Path_Python = Path_Python)
   }
 
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
   path_model <- fs::path(path_model, directory_name)
   if (fs::dir_exists(path_model)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Model directory already exists", path_model = path_model)
   }
   fs::dir_create(path_model)
 
   Path_GridR <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(Path_GridR)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Path for the Europe boundaries does not exist", Path_GridR = Path_GridR)
   }
 
-  IASDT.R::record_arguments(
+  ecokit::record_arguments(
     out_path = fs::path(path_model, "Args_mod_prepare_HPC.RData"))
 
   # # ..................................................................... ###
@@ -305,7 +305,7 @@ mod_prepare_HPC <- function(
   # Check input arguments ----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Checking input arguments")
+  ecokit::cat_time("Checking input arguments")
 
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(
@@ -315,7 +315,7 @@ mod_prepare_HPC <- function(
 
   CharArgs <- c(
     "hab_abb", "directory_name", "path_Hmsc", "env_file", "bio_variables")
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_to_check = CharArgs, args_type = "character")
 
   LogicArgs <- c(
@@ -324,7 +324,7 @@ mod_prepare_HPC <- function(
     "CV_SAC", "check_python", "overwrite_rds", "SLURM_prepare",
     "exclude_cultivated", "GPP", "efforts_as_predictor",
     "road_rail_as_predictor", "habitat_as_predictor", "river_as_predictor")
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_to_check = LogicArgs, args_type = "logical")
 
   NumericArgs <- c(
@@ -335,26 +335,26 @@ mod_prepare_HPC <- function(
   if (GPP) {
     NumericArgs <- c(NumericArgs, "GPP_dists")
   }
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_to_check = NumericArgs, args_type = "numeric")
 
 
   if (SLURM_prepare) {
-    IASDT.R::check_args(
+    ecokit::check_args(
       args_all = AllArgs, args_type = "character",
       args_to_check = c("memory_per_cpu", "job_runtime"))
   }
 
   # Phylogenetic tree options
   if (isFALSE(use_phylo_tree) && isFALSE(no_phylo_tree)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "At least one of `use_phylo_tree` or `no_phylo_tree` has to be true",
       use_phylo_tree = use_phylo_tree, no_phylo_tree = no_phylo_tree)
   }
 
   NumArgsInvalid <- purrr::map_lgl(.x = NumericArgs, .f = ~all(get(.x) < 1))
   if (any(NumArgsInvalid)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Some parameter(s) can not be < 1",
       NumArgsInvalid = NumericArgs[NumArgsInvalid])
   }
@@ -365,10 +365,10 @@ mod_prepare_HPC <- function(
 
   if (GPP) {
     if (is.null(GPP_dists)) {
-      IASDT.R::stop_ctx("`GPP_dists` can not be empty", GPP_dists = GPP_dists)
+      ecokit::stop_ctx("`GPP_dists` can not be empty", GPP_dists = GPP_dists)
     }
     if (!all(is.numeric(GPP_dists)) || any(GPP_dists <= 0)) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         "`GPP_dists` should be numeric and greater than zero",
         GPP_dists = GPP_dists)
     }
@@ -380,7 +380,7 @@ mod_prepare_HPC <- function(
   # File paths - Creating missing paths ----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("File paths - Creating missing paths")
+  ecokit::cat_time("File paths - Creating missing paths")
   fs::dir_create(fs::path(path_model, "InitMod4HPC"))
   fs::dir_create(fs::path(path_model, "Model_Fitting_HPC"))
   # Also create directory for SLURM outputs
@@ -397,13 +397,13 @@ mod_prepare_HPC <- function(
   # # Prepare list of predictors -----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Prepare list of predictors")
+  ecokit::cat_time("Prepare list of predictors")
 
   # Check bio_variables values
   if (isFALSE(all(bio_variables %in% IASDT.R::CHELSA_variables$Variable))) {
     WrongBio <- bio_variables[
       which(!(bio_variables %in% IASDT.R::CHELSA_variables$Variable))]
-    IASDT.R::stop_ctx("Invalid Bioclimatic variables", WrongBio = WrongBio)
+    ecokit::stop_ctx("Invalid Bioclimatic variables", WrongBio = WrongBio)
   }
 
   XVars <- bio_variables
@@ -428,10 +428,10 @@ mod_prepare_HPC <- function(
   # # Preparing input data -----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Preparing input data")
+  ecokit::cat_time("Preparing input data")
   ValidHabAbbs <- c(0:3, "4a", "4b", 10, "12a", "12b")
   if (isFALSE(as.character(hab_abb) %in% ValidHabAbbs)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       paste0(
         "`hab_abb` has to be one of the following:\n >> ",
         paste(ValidHabAbbs, collapse = " | ")),
@@ -444,7 +444,7 @@ mod_prepare_HPC <- function(
     "10_Wetland", "12a_Ruderal_habitats", "12b_Agricultural_habitats") %>%
     stringr::str_subset(paste0("^", as.character(hab_abb), "_"))
 
-  IASDT.R::info_chunk("Preparing input data using IASDT.R::mod_prepare_data")
+  ecokit::info_chunk("Preparing input data using IASDT.R::mod_prepare_data")
 
   DT_All <- IASDT.R::mod_prepare_data(
     hab_abb = hab_abb, directory_name = directory_name,
@@ -454,7 +454,7 @@ mod_prepare_HPC <- function(
     n_pres_per_species = n_pres_per_species,
     env_file = env_file, verbose_progress = verbose_progress)
 
-  IASDT.R::cat_sep(
+  ecokit::cat_sep(
     n_separators = 1L, sep_lines_before = 1L, sep_lines_after = 2L)
 
   # # ..................................................................... ###
@@ -463,19 +463,19 @@ mod_prepare_HPC <- function(
   # # Subsetting study area -----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Subsetting study area")
+  ecokit::cat_time("Subsetting study area")
 
   if (!is.null(model_country)) {
 
     ValidCountries <- model_country %in% unique(DT_All$Country)
 
     if (!all(ValidCountries)) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         "Invalid country names",
         invalid_countries = model_country[!ValidCountries])
     }
 
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       paste0(
         "Subsetting data to: ", paste(sort(model_country), collapse = " & ")),
       level = 1L)
@@ -489,7 +489,7 @@ mod_prepare_HPC <- function(
       dplyr::filter(NCells < n_pres_per_species) %>%
       dplyr::pull(Sp)
 
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       paste0(length(Sample_ExclSp), " species are excluded"), level = 1L)
     DT_All <- dplyr::filter(DT_All, Country %in% model_country) %>%
       dplyr::select(-tidyselect::all_of(Sample_ExclSp))
@@ -498,7 +498,7 @@ mod_prepare_HPC <- function(
     ## Plotting subsetted data -----
     # # |||||||||||||||||||||||||||||||||||
 
-    IASDT.R::cat_time("Plotting subsetted data", level = 1L)
+    ecokit::cat_time("Plotting subsetted data", level = 1L)
 
     NSpSubset <- DT_All %>%
       dplyr::mutate(
@@ -509,7 +509,7 @@ mod_prepare_HPC <- function(
       dplyr::select("x", "y", "NSp") %>%
       sf::st_as_sf(coords = c("x", "y"), crs = 3035) %>%
       terra::rasterize(
-        y = terra::unwrap(IASDT.R::load_as(Path_GridR)),
+        y = terra::unwrap(ecokit::load_as(Path_GridR)),
         field = "NSp") %>%
       terra::trim()
 
@@ -525,7 +525,7 @@ mod_prepare_HPC <- function(
         stringr::str_remove("Hab_")
     }
 
-    EU_Bound_sub <- IASDT.R::load_as(EU_Bound) %>%
+    EU_Bound_sub <- ecokit::load_as(EU_Bound) %>%
       magrittr::extract2("Bound_sf_Eur") %>%
       magrittr::extract2("L_03") %>%
       dplyr::filter(NAME_ENGL %in% model_country)
@@ -590,7 +590,7 @@ mod_prepare_HPC <- function(
     rm(Limits, NSpPerGrid_Sub, EU_Bound_sub, envir = environment())
 
   } else {
-    IASDT.R::cat_time("No data subsetting was implemented", level = 1L)
+    ecokit::cat_time("No data subsetting was implemented", level = 1L)
   }
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -599,10 +599,10 @@ mod_prepare_HPC <- function(
   # # Exclude grid cells with low number of presences -----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Exclude grid cells with low number of presences")
+  ecokit::cat_time("Exclude grid cells with low number of presences")
 
   if (n_species_per_grid == 0) {
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       paste0(
         "All grid cells, irrespective of number of species ",
         "presence, will be considered"),
@@ -615,7 +615,7 @@ mod_prepare_HPC <- function(
       magrittr::multiply_by(-1)
 
     if (length(EmptyGridsID) > 0) {
-      IASDT.R::cat_time(
+      ecokit::cat_time(
         paste0(
           "Excluding grid cells with < ", n_species_per_grid,
           " species presence"),
@@ -630,7 +630,7 @@ mod_prepare_HPC <- function(
   # # Cross-validation ----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Prepare cross-validation folds")
+  ecokit::cat_time("Prepare cross-validation folds")
 
   DT_All <- IASDT.R::mod_CV_prepare(
     input_data = DT_All, env_file = env_file, x_vars = XVars,
@@ -649,19 +649,19 @@ mod_prepare_HPC <- function(
   # # Response - Y matrix ----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Response - Y matrix")
+  ecokit::cat_time("Response - Y matrix")
   DT_y <- dplyr::select(DT_All, tidyselect::starts_with("Sp_")) %>%
     as.data.frame()
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     paste0(ncol(DT_y), " species"), level = 1L, cat_timestamp = FALSE)
 
-  IASDT.R::cat_time("Save species summary", level = 1L, cat_timestamp = FALSE)
+  ecokit::cat_time("Save species summary", level = 1L, cat_timestamp = FALSE)
   SpSummary <- fs::path(Path_PA, "Sp_PA_Summary_DF.RData")
   if (!file.exists(SpSummary)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "SpSummary file does not exist", SpSummary = SpSummary)
   }
-  SpSummary <- IASDT.R::load_as(SpSummary) %>%
+  SpSummary <- ecokit::load_as(SpSummary) %>%
     dplyr::arrange(IAS_ID) %>%
     dplyr::mutate(
       IAS_ID = stringr::str_pad(IAS_ID, pad = "0", width = 4),
@@ -680,11 +680,11 @@ mod_prepare_HPC <- function(
   # function. Setting the environment of the formula as an empty environment
   # release this unnecessary size. https://stackoverflow.com/questions/66241212
 
-  IASDT.R::cat_time("Xformula")
+  ecokit::cat_time("Xformula")
 
   if (is.null(quadratic_variables)) {
     FormVars <- XVars
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       paste0(
         "Models will be fitted using ", length(XVars), " predictors: ",
         paste(XVars, collapse = " + ")), level = 1L, cat_timestamp = FALSE)
@@ -694,19 +694,19 @@ mod_prepare_HPC <- function(
       OnlyLinear,
       paste0("stats::poly(", quadratic_variables, ", degree = 2, raw = TRUE)"))
 
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       "Models will be fitted using:", level = 1L, cat_timestamp = FALSE)
 
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       paste0(length(OnlyLinear), " linear effect: "),
       level = 2L, cat_timestamp = FALSE)
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       paste(OnlyLinear, collapse = " + "), level = 3L, cat_timestamp = FALSE)
 
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       paste0(length(quadratic_variables), " linear and quadratic effects: "),
       level = 2L, cat_timestamp = FALSE)
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       paste(quadratic_variables, collapse = " + "),
       level = 3L, cat_timestamp = FALSE)
 
@@ -725,7 +725,7 @@ mod_prepare_HPC <- function(
   # # Phylogenetic tree data -----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Phylogenetic tree data")
+  ecokit::cat_time("Phylogenetic tree data")
 
   if (use_phylo_tree) {
     # Taxonomy as a proxy for phylogeny
@@ -748,7 +748,7 @@ mod_prepare_HPC <- function(
 
   Tree <- c("Tree", "NoTree")[c(use_phylo_tree, no_phylo_tree)]
 
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     paste0("Models will be fitted using ", paste(Tree, collapse = " & ")),
     level = 1L, cat_timestamp = FALSE)
 
@@ -760,20 +760,20 @@ mod_prepare_HPC <- function(
 
   if (GPP) {
 
-    IASDT.R::cat_time("Spatial info and random effect")
+    ecokit::cat_time("Spatial info and random effect")
     studyDesign <- data.frame(sample = as.factor(seq_len(nrow(DT_x))))
 
     DT_xy <- as.matrix(dplyr::select(DT_All, x, y))
     rownames(DT_xy) <- studyDesign$sample
 
     # Prepare GPP knots
-    IASDT.R::cat_time("Preparing GPP knots", level = 1L)
+    ecokit::cat_time("Preparing GPP knots", level = 1L)
 
     NCores_GPP <- length(GPP_dists)
 
     if (NCores_GPP > 1) {
 
-      IASDT.R::cat_time(
+      ecokit::cat_time(
         paste0("Prepare working in parallel using ", NCores_GPP, " cores"),
         level = 2L, cat_timestamp = FALSE)
 
@@ -785,7 +785,7 @@ mod_prepare_HPC <- function(
       future::plan("future::cluster", workers = c1, gc = TRUE)
       withr::defer(future::plan("future::sequential", gc = TRUE))
 
-      IASDT.R::cat_time("Prepare GPP knots", level = 2L)
+      ecokit::cat_time("Prepare GPP knots", level = 2L)
       GPP_Knots <- future.apply::future_lapply(
         X = GPP_dists * 1000,
         FUN = function(x) {
@@ -804,7 +804,7 @@ mod_prepare_HPC <- function(
 
     } else {
 
-      IASDT.R::cat_time(
+      ecokit::cat_time(
         "Working sequentially", cat_timestamp = FALSE, level = 2L)
 
       GPP_Knots <- purrr::map(
@@ -818,9 +818,9 @@ mod_prepare_HPC <- function(
 
     ## Plotting knot location ----
     if (GPP_plot) {
-      IASDT.R::cat_time("Plotting GPP knots", level = 1L)
+      ecokit::cat_time("Plotting GPP knots", level = 1L)
 
-      GridR <- terra::unwrap(IASDT.R::load_as(Path_GridR))
+      GridR <- terra::unwrap(ecokit::load_as(Path_GridR))
 
       GridR <- sf::st_as_sf(
         x = data.frame(DT_xy), coords = c("x", "y"), crs = 3035) %>%
@@ -828,7 +828,7 @@ mod_prepare_HPC <- function(
         terra::as.factor() %>%
         stats::setNames("GridR")
 
-      EU_Bound <- IASDT.R::load_as(EU_Bound) %>%
+      EU_Bound <- ecokit::load_as(EU_Bound) %>%
         magrittr::extract2("Bound_sf_Eur_s") %>%
         magrittr::extract2("L_03") %>%
         suppressWarnings()
@@ -884,12 +884,12 @@ mod_prepare_HPC <- function(
     }
 
     if (GPP_save) {
-      IASDT.R::cat_time("Saving GPP knots data", level = 1L)
+      ecokit::cat_time("Saving GPP knots data", level = 1L)
       save(GPP_Knots, file = fs::path(path_model, "GPP_Knots.RData"))
     }
   } else {
 
-    IASDT.R::cat_time("Models will be fitted without spatial random effect")
+    ecokit::cat_time("Models will be fitted without spatial random effect")
     GPP_Knots <- studyDesign <- DT_xy <- NULL
   }
 
@@ -899,7 +899,7 @@ mod_prepare_HPC <- function(
   # # Define the initial models -----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Define the initial models")
+  ecokit::cat_time("Define the initial models")
 
   if (GPP) {
 
@@ -933,7 +933,7 @@ mod_prepare_HPC <- function(
                 studyDesign = studyDesign, ranLevels = list(sample = .y),
                 phyloTree = Tree)
 
-              IASDT.R::save_as(
+              ecokit::save_as(
                 object = InitModel, object_name = paste0("InitMod_", .x),
                 out_path = PathOut)
             }
@@ -975,7 +975,7 @@ mod_prepare_HPC <- function(
             PathOut <- fs::path(
               path_model, paste0("InitMod_", .x, ".RData"))
 
-            InitModExists <- IASDT.R::check_data(PathOut)
+            InitModExists <- ecokit::check_data(PathOut)
 
             if (isFALSE(InitModExists)) {
               if (endsWith(.x, "_Tree")) {
@@ -988,7 +988,7 @@ mod_prepare_HPC <- function(
                 Y = DT_y, XFormula = Form_x, XData = DT_x,
                 distr = "probit", phyloTree = Tree)
 
-              IASDT.R::save_as(
+              ecokit::save_as(
                 object = InitModel, object_name = paste0("InitMod_", .x),
                 out_path = PathOut)
             }
@@ -1014,19 +1014,19 @@ mod_prepare_HPC <- function(
   # # Prepare and save unfitted models -----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Save unfitted models")
+  ecokit::cat_time("Save unfitted models")
 
   if (overwrite_rds) {
-    IASDT.R::cat_time("Processing all model variants", level = 1L)
+    ecokit::cat_time("Processing all model variants", level = 1L)
   } else {
 
     NMod2Export <- sum(!file.exists(Model_Info$M4HPC_Path))
 
     if (NMod2Export == 0) {
-      IASDT.R::cat_time(
+      ecokit::cat_time(
         "All model variants were already available as RDS files", level = 1L)
     } else {
-      IASDT.R::cat_time(
+      ecokit::cat_time(
         paste0(
           NMod2Export, " model variants need to be exported as RDS files"),
         level = 1L)
@@ -1042,7 +1042,7 @@ mod_prepare_HPC <- function(
     }
 
     if (isFALSE(overwrite_rds) && file.exists(CurrPath) &&
-        IASDT.R::check_data(CurrPath)) {
+        ecokit::check_data(CurrPath)) {
       return(invisible(NULL))
     }
 
@@ -1050,7 +1050,7 @@ mod_prepare_HPC <- function(
     while (Try < 6) {
       Try <- Try + 1
       Model <- Hmsc::sampleMcmc(
-        hM = IASDT.R::load_as(Model_Info$M_Init_Path[ID]),
+        hM = ecokit::load_as(Model_Info$M_Init_Path[ID]),
         samples = Model_Info$M_samples[ID],
         thin = Model_Info$M_thin[ID],
         transient = Model_Info$M_transient[ID],
@@ -1062,7 +1062,7 @@ mod_prepare_HPC <- function(
 
       saveRDS(Model, file = CurrPath)
 
-      if (file.exists(CurrPath) && IASDT.R::check_rds(CurrPath)) {
+      if (file.exists(CurrPath) && ecokit::check_rds(CurrPath)) {
         break
       }
     }
@@ -1101,10 +1101,10 @@ mod_prepare_HPC <- function(
   # Which models failed to be exported as RDS files after 5 trials
   Failed2Export <- dplyr::filter(Model_Info, !file.exists(M4HPC_Path))
   if (nrow(Failed2Export) == 0) {
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       "All model variants were exported as RDS files", level = 1L)
   } else {
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       paste0(
         nrow(Failed2Export),
         " model variants failed to be exported to rds files after 5 tries."),
@@ -1118,7 +1118,7 @@ mod_prepare_HPC <- function(
   # # Prepare Hmsc-HPC fitting commands -----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Prepare Hmsc-HPC fitting commands")
+  ecokit::cat_time("Prepare Hmsc-HPC fitting commands")
 
   Model_Info <- Model_Info %>%
     dplyr::mutate(Chain = list(seq_len(MCMC_n_chains))) %>%
@@ -1151,10 +1151,10 @@ mod_prepare_HPC <- function(
           Post_Missing <- isFALSE(file.exists(Path_Post))
 
           # File path for the python script
-          Path_Model2_4cmd <- IASDT.R::normalize_path(Path_Model2)
-          Path_Post_4cmd <- IASDT.R::normalize_path(Path_Post)
-          Path_Prog_4cmd <- IASDT.R::normalize_path(Path_Prog)
-          Path_Python <- IASDT.R::normalize_path(Path_Python)
+          Path_Model2_4cmd <- ecokit::normalize_path(Path_Model2)
+          Path_Post_4cmd <- ecokit::normalize_path(Path_Post)
+          Path_Prog_4cmd <- ecokit::normalize_path(Path_Prog)
+          Path_Python <- ecokit::normalize_path(Path_Python)
 
           # `TF_ENABLE_ONEDNN_OPTS=0` is used to disable the following warning:
           #
@@ -1216,7 +1216,7 @@ mod_prepare_HPC <- function(
   # # |||||||||||||||||||||||||||||||||||
 
   if (skip_fitted) {
-    IASDT.R::cat_time("Skip fitted models")
+    ecokit::cat_time("Skip fitted models")
     Models2Fit_HPC <- dplyr::filter(Model_Info, Post_Missing) %>%
       dplyr::pull(Command_HPC) %>%
       unlist()
@@ -1232,9 +1232,9 @@ mod_prepare_HPC <- function(
   # # Save commands in a text file -----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Save model fitting commands to text file(s)")
+  ecokit::cat_time("Save model fitting commands to text file(s)")
 
-  IASDT.R::cat_time("Save fitting commands for windows PC", level = 1L)
+  ecokit::cat_time("Save fitting commands for windows PC", level = 1L)
   f <- file(
     description = fs::path(path_model, "Commands_All_Windows.txt"),
     open = "wb")
@@ -1243,19 +1243,19 @@ mod_prepare_HPC <- function(
   close(f)
 
 
-  IASDT.R::cat_time("Save fitting commands for HPC", level = 1L)
+  ecokit::cat_time("Save fitting commands for HPC", level = 1L)
   NJobs <- length(Models2Fit_HPC)
 
   if (NJobs > n_array_jobs) {
     NSplits <- ceiling((NJobs / n_array_jobs))
-    IDs <- IASDT.R::split_vector(vector = seq_len(NJobs), n_splits = NSplits)
+    IDs <- ecokit::split_vector(vector = seq_len(NJobs), n_splits = NSplits)
   } else {
     NSplits <- 1
     IDs <- list(seq_len(NJobs))
   }
 
   # Save all fitting commands to single file
-  IASDT.R::cat_time("Save all fitting commands to single file", level = 1L)
+  ecokit::cat_time("Save all fitting commands to single file", level = 1L)
   f <- file(
     description = fs::path(path_model, "Commands_All.txt"),
     open = "wb")
@@ -1264,9 +1264,9 @@ mod_prepare_HPC <- function(
   close(f)
 
   # Save model fitting commands for batch SLURM jobs
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     "Save model fitting commands for batch SLURM jobs", level = 1L)
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     paste0("Models will be fitted in ", NSplits, " SLURM job(s)"),
     level = 2L, cat_timestamp = FALSE)
 
@@ -1296,11 +1296,11 @@ mod_prepare_HPC <- function(
   # # Save data to disk -----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Save data to disk")
+  ecokit::cat_time("Save data to disk")
 
   SetChainName <- function(Obj, Chain) {
     if (is.null(Obj) || is.null(Chain)) {
-      IASDT.R::stop_ctx(
+      ecokit::stop_ctx(
         "Obj and Chain cannot be empty", Obj = Obj, Chain = Chain)
     }
     Obj %>%
@@ -1332,7 +1332,7 @@ mod_prepare_HPC <- function(
   # # |||||||||||||||||||||||||||||||||||
 
   if (SLURM_prepare) {
-    IASDT.R::cat_time("Preparing SLURM file")
+    ecokit::cat_time("Preparing SLURM file")
     if (is.null(job_name)) {
       job_name <- stringr::str_remove_all(
         basename(path_model), paste0("_", HabVal))
@@ -1347,16 +1347,16 @@ mod_prepare_HPC <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Save PA maps to disk
-  IASDT.R::cat_time("Save PA maps to disk")
+  ecokit::cat_time("Save PA maps to disk")
 
   # Mask layer for grid cells used in the models
-  Model_Mask <- IASDT.R::load_as(Path_GridR) %>%
+  Model_Mask <- ecokit::load_as(Path_GridR) %>%
     terra::unwrap() %>%
     terra::rasterize(DT_xy, .)
   # Whether to use masked (exclude_cultivated) or full PA
   PA_Layer <- dplyr::if_else(exclude_cultivated, "PA_Masked", "PA")
 
-  IASDT.R::cat_time("Processing and exporting maps as tif files", level = 1L)
+  ecokit::cat_time("Processing and exporting maps as tif files", level = 1L)
   Mod_PA <- SpSummary %>%
     # Select only species name and ID
     dplyr::select(ias_id = IAS_ID, Species_File) %>%
@@ -1369,7 +1369,7 @@ mod_prepare_HPC <- function(
           # Path for storing PA map - full EU extent
           PA_file <- fs::path(Path_Dist, paste0(.y, "_full.tif"))
           # Load PA map
-          PA <- IASDT.R::load_as(.x) %>%
+          PA <- ecokit::load_as(.x) %>%
             terra::unwrap() %>%
             magrittr::extract2(PA_Layer)
           # Save PA map
@@ -1391,14 +1391,14 @@ mod_prepare_HPC <- function(
     tidyr::unnest(cols = "Map_Sp") %>%
     dplyr::select(-Species_File, -File)
 
-  IASDT.R::cat_time("Calculate species richness - full", level = 1L)
+  ecokit::cat_time("Calculate species richness - full", level = 1L)
   SR_file <- fs::path(Path_Dist, "SR_full.tif")
   SR <- purrr::map(Mod_PA$PA, terra::unwrap) %>%
     terra::rast() %>%
     sum(na.rm = TRUE)
   terra::writeRaster(SR, SR_file, overwrite = TRUE)
 
-  IASDT.R::cat_time("Calculate species richness - modelling", level = 1L)
+  ecokit::cat_time("Calculate species richness - modelling", level = 1L)
   SR_model_file <- fs::path(Path_Dist, "SR_model.tif")
   SR_model <- purrr::map(Mod_PA$PA_model, terra::unwrap) %>%
     terra::rast() %>%
@@ -1412,18 +1412,18 @@ mod_prepare_HPC <- function(
     terra::unwrap(SR_model), SR_model_file) %>%
     dplyr::bind_rows(Mod_PA)
 
-  IASDT.R::cat_time("Save maps as RData", level = 1L)
-  IASDT.R::save_as(
+  ecokit::cat_time("Save maps as RData", level = 1L)
+  ecokit::save_as(
     object = Mod_PA, object_name = "PA_with_maps",
     out_path = fs::path(Path_Dist, "PA_with_maps.RData"))
 
-  IASDT.R::cat_time("Save maps without maps as RData", level = 1L)
+  ecokit::cat_time("Save maps without maps as RData", level = 1L)
   Mod_PA <- dplyr::select(Mod_PA, -PA, -PA_model)
-  IASDT.R::save_as(
+  ecokit::save_as(
     object = Mod_PA, object_name = "PA",
     out_path = fs::path(Path_Dist, "PA.RData"))
 
-  IASDT.R::cat_time("Save only paths text file", level = 1L)
+  ecokit::cat_time("Save only paths text file", level = 1L)
   Mod_PA %>%
     dplyr::mutate(
       PA_file = basename(PA_file),
@@ -1434,7 +1434,7 @@ mod_prepare_HPC <- function(
       fileEncoding = "UTF-8")
 
   # Save maps as tar file
-  IASDT.R::cat_time("Save maps as single tar file", level = 1L)
+  ecokit::cat_time("Save maps as single tar file", level = 1L)
   # Path of the tar file
   tar_file <- fs::path(Path_Dist, "PA_maps.tar")
   # list of files to tar
@@ -1460,13 +1460,13 @@ mod_prepare_HPC <- function(
     Tree = Tree, studyDesign = studyDesign, DT_xy = DT_xy,
     GPP_Knots = GPP_Knots)
 
-  IASDT.R::save_as(
+  ecokit::save_as(
     object = DT_Split, object_name = "ModDT_subset",
     out_path = fs::path(path_model, "ModDT_subset.RData"))
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = .start_time, prefix = "Processing modelling data took ")
 
   return(invisible(NULL))

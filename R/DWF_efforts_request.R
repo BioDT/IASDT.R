@@ -26,18 +26,17 @@ efforts_request <- function(
   .StartTimeRequest <- lubridate::now(tzone = "CET")
 
   if (missing(n_cores) || !is.numeric(n_cores) || n_cores < 1) {
-    IASDT.R::stop_ctx(
-      "`n_cores` must be a positive integer.", n_cores = n_cores)
+    ecokit::stop_ctx("`n_cores` must be a positive integer.", n_cores = n_cores)
   }
 
   if (!is.numeric(start_year) || start_year <= 1950) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`start_year` must be a positive integer after 1950",
       start_year = start_year)
   }
 
   if (!is.numeric(boundaries) || length(boundaries) != 4) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`boundaries` must be a numeric vector of length 4.",
       boundaries = boundaries)
   }
@@ -60,7 +59,7 @@ efforts_request <- function(
     ~var_name, ~value, ~check_dir, ~check_file,
     "Path_Efforts", "DP_R_Efforts_processed", FALSE, FALSE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
@@ -70,7 +69,7 @@ efforts_request <- function(
 
   # GBIF allows only 3 parallel requests. Here I wait until previous request
   # is finished.
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     paste0("Prepare working in parallel using ", min(n_cores, 3), " cores"),
     level = 1L)
 
@@ -90,7 +89,7 @@ efforts_request <- function(
 
   # Requesting efforts data in parallel -----
 
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     "Requesting efforts data in parallel (This may take up to 4 hours)",
     level = 1L)
 
@@ -114,7 +113,7 @@ efforts_request <- function(
 
           if (file.exists(Request_Path)) {
             # load previous request
-            Down <- IASDT.R::load_as(Request_Path)
+            Down <- ecokit::load_as(Request_Path)
           } else {
             # Attempt the request with error handling
             tryCatch(
@@ -129,17 +128,17 @@ efforts_request <- function(
                   rgbif::pred_gte("year", start_year),
                   # Only within specific boundaries
                   rgbif::pred_within(
-                    value = IASDT.R::boundary_to_WKT(
+                    value = ecokit::boundary_to_WKT(
                       left = boundaries[1], right = boundaries[2],
                       bottom = boundaries[3], top = boundaries[4])),
                   format = "SIMPLE_CSV")
 
-                IASDT.R::save_as(
+                ecokit::save_as(
                   object = Down, object_name = Request_ID,
                   out_path = Request_Path)
               },
               error = function(e) {
-                IASDT.R::stop_ctx(
+                ecokit::stop_ctx(
                   paste0(
                     "Failed to request data for taxonKey ", .x, ": ",
                     conditionMessage(e)))
@@ -186,12 +185,12 @@ efforts_request <- function(
     # how to cite data
     dplyr::mutate(Citation = purrr::map_chr(Request, attr, "citation"))
 
-  IASDT.R::cat_time("Requesting efforts data was finished", level = 2L)
+  ecokit::cat_time("Requesting efforts data was finished", level = 2L)
 
   # # ..................................................................... ###
 
   # Save efforts request data ------
-  IASDT.R::cat_time("Save efforts request data", level = 1L)
+  ecokit::cat_time("Save efforts request data", level = 1L)
 
   save(
     Efforts_AllRequests,
@@ -200,7 +199,7 @@ efforts_request <- function(
   # # ..................................................................... ###
 
   # Stopping cluster ------
-  IASDT.R::cat_time("Stopping cluster", level = 1L)
+  ecokit::cat_time("Stopping cluster", level = 1L)
   if (n_cores > 1) {
     snow::stopCluster(c1)
     future::plan("future::sequential", gc = TRUE)
@@ -208,7 +207,7 @@ efforts_request <- function(
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = .StartTimeRequest,
     prefix = "Requesting efforts data took ", level = 1L)
 

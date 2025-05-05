@@ -26,7 +26,7 @@ efforts_summarize <- function(
   # # ..................................................................... ###
 
   if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "n_cores must be a single positive integer.", n_cores = n_cores)
   }
 
@@ -40,7 +40,7 @@ efforts_summarize <- function(
     "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
     "Taxa_Stand", "DP_R_Taxa_stand", FALSE, TRUE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
@@ -57,21 +57,21 @@ efforts_summarize <- function(
   Path_Grid_SF <- fs::path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
 
   if (!file.exists(Path_Grid_R)) {
-    IASDT.R::stop_ctx("Reference grid was not found", Path_Grid_R = Path_Grid_R)
+    ecokit::stop_ctx("Reference grid was not found", Path_Grid_R = Path_Grid_R)
   }
 
   if (!file.exists(Path_Grid_SF)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Reference grid file was not found", Path_Grid_SF = Path_Grid_SF)
   }
 
-  Grid_SF <- IASDT.R::load_as(Path_Grid_SF)
+  Grid_SF <- ecokit::load_as(Path_Grid_SF)
 
   # # ..................................................................... ###
 
   # Prepare working in parallel -----
 
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     paste0("Prepare working in parallel using ", n_cores, " cores"),
     level = 1L)
 
@@ -90,10 +90,10 @@ efforts_summarize <- function(
   # # ..................................................................... ###
 
   # Processing data from zipped archives -----
-  IASDT.R::cat_time("Processing data from zipped archives", level = 1L)
+  ecokit::cat_time("Processing data from zipped archives", level = 1L)
 
   if (delete_chunks) {
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       "Chunk files will be deleted after finishing processing", level = 2L)
   }
 
@@ -102,12 +102,12 @@ efforts_summarize <- function(
   Path_Efforts_Request <- fs::path(Path_Efforts, "Efforts_AllRequests.RData")
 
   if (!file.exists(Path_Efforts_Request)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "The path for the `Efforts_AllRequests` data does not exist",
       Path_Efforts_Request = Path_Efforts_Request)
   }
 
-  Efforts_AllRequests <- IASDT.R::load_as(Path_Efforts_Request)
+  Efforts_AllRequests <- ecokit::load_as(Path_Efforts_Request)
 
   DT_Paths <- future.apply::future_lapply(
     X = seq_len(nrow(Efforts_AllRequests)),
@@ -129,7 +129,7 @@ efforts_summarize <- function(
       ReturnNoData <- (TotalRecords == 0)
 
       # Check if the RData file for the current order exists and valid.
-      FileOkay <- IASDT.R::check_data(Path_DT, warning = FALSE)
+      FileOkay <- ecokit::check_data(Path_DT, warning = FALSE)
 
       # Process current order data if the output file is not okay and the order
       # have observations
@@ -214,7 +214,7 @@ efforts_summarize <- function(
         # if there are observations after the filtering, save the data to disk
         # and return the saved path, otherwise return no path
         if (nrow(DT) > 0) {
-          IASDT.R::save_as(
+          ecokit::save_as(
             object = DT, object_name = ClassOrder, out_path = Path_DT)
         } else {
           ReturnNoData <- TRUE
@@ -262,7 +262,7 @@ efforts_summarize <- function(
   # # ..................................................................... ###
 
   # Prepare summary maps per order ----
-  IASDT.R::cat_time("Prepare summary maps per order", level = 1L)
+  ecokit::cat_time("Prepare summary maps per order", level = 1L)
 
   SummaryMaps <- future.apply::future_lapply(
     X = seq_len(nrow(Efforts_Summary)),
@@ -275,7 +275,7 @@ efforts_summarize <- function(
         ObsN <- ObsN_Native <- 0L
       } else {
         # Load data on current order
-        DT <- IASDT.R::load_as(Path_DT)
+        DT <- ecokit::load_as(Path_DT)
         # Number of observation in the cleaned data
         ObsN <- nrow(DT)
 
@@ -285,7 +285,7 @@ efforts_summarize <- function(
         ObsN_Native <- nrow(DT_Native)
       }
 
-      Grid_R <- terra::unwrap(IASDT.R::load_as(Path_Grid_R))
+      Grid_R <- terra::unwrap(ecokit::load_as(Path_Grid_R))
 
       # # ++++++++++++++++++++++++++++++++++ ###
 
@@ -367,7 +367,7 @@ efforts_summarize <- function(
   # # ..................................................................... ###
 
   # Stopping cluster ------
-  IASDT.R::cat_time("Stopping cluster", level = 1L)
+  ecokit::cat_time("Stopping cluster", level = 1L)
   if (n_cores > 1) {
     snow::stopCluster(c1)
     future::plan("future::sequential", gc = TRUE)
@@ -377,7 +377,7 @@ efforts_summarize <- function(
   # # ..................................................................... ###
 
   # Save summary results: `Efforts_Summary` ----
-  IASDT.R::cat_time("Save summary results: `Efforts_Summary`", level = 1L)
+  ecokit::cat_time("Save summary results: `Efforts_Summary`", level = 1L)
   save(
     Efforts_Summary,
     file = fs::path(Path_Efforts, "Efforts_Summary.RData"))
@@ -385,14 +385,14 @@ efforts_summarize <- function(
   # # ..................................................................... ###
 
   # Prepare summary maps - all sampling efforts ----
-  IASDT.R::cat_time("Prepare summary maps - all sampling efforts", level = 1L)
+  ecokit::cat_time("Prepare summary maps - all sampling efforts", level = 1L)
 
   CalcNObsNSp <- function(List, Name) {
     purrr::map(.x = unlist(List), .f = terra::unwrap) %>%
       terra::rast() %>%
       sum(na.rm = TRUE) %>%
-      IASDT.R::set_raster_CRS() %>%
-      IASDT.R::set_raster_values() %>%
+      ecokit::set_raster_CRS() %>%
+      ecokit::set_raster_values() %>%
       stats::setNames(Name)
   }
 
@@ -407,19 +407,19 @@ efforts_summarize <- function(
     CalcNObsNSp(Efforts_SummaryR$NSp_R, "NSp"),
     CalcNObsNSp(Efforts_SummaryR$NSp_Native_R, "NSp_Native")) %>%
     terra::rast() %>%
-    IASDT.R::set_raster_CRS() %>%
-    IASDT.R::set_raster_values()
+    ecokit::set_raster_CRS() %>%
+    ecokit::set_raster_values()
 
   ## Save summary maps - `RData` ----
-  IASDT.R::cat_time("Save summary maps", level = 1L)
+  ecokit::cat_time("Save summary maps", level = 1L)
 
-  IASDT.R::cat_time("`RData`", level = 2L)
-  IASDT.R::save_as(
+  ecokit::cat_time("`RData`", level = 2L)
+  ecokit::save_as(
     object = terra::wrap(Efforts_SummaryR), object_name = "Efforts_SummaryR",
     out_path = fs::path(Path_Efforts, "Efforts_SummaryR.RData"))
 
   ## Save summary maps - `tif` ----
-  IASDT.R::cat_time("`tif`", level = 2L)
+  ecokit::cat_time("`tif`", level = 2L)
   terra::writeRaster(
     Efforts_SummaryR,
     overwrite = TRUE,
@@ -428,7 +428,7 @@ efforts_summarize <- function(
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = .StartTimeProcess,
     prefix = "Processing Efforts data took ", level = 1L)
 
@@ -479,7 +479,7 @@ efforts_summarize_maps <- function(
 
   # Validate if Data is an sf object
   if (!inherits(Data, "sf")) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       paste0(
         "Input data must be a simple feature (sf) object. ",
         "Provided data is of type: ", paste(class(Data), collapse = "+")),
@@ -488,7 +488,7 @@ efforts_summarize_maps <- function(
 
   # Validate if NSp is logical
   if (!is.logical(NSp) || length(NSp) != 1) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       paste0(
         "The parameter `NSp` must be a single logical value (TRUE or FALSE). ",
         "Provided value is of type: ", paste(class(NSp), collapse = "+")),
@@ -497,7 +497,7 @@ efforts_summarize_maps <- function(
 
   # Validate the Name parameter
   if (is.null(Name)) {
-    IASDT.R::stop_ctx("The parameter `Name` can not be empty", Name = Name)
+    ecokit::stop_ctx("The parameter `Name` can not be empty", Name = Name)
   }
 
   # # ..................................................................... ###
@@ -518,8 +518,8 @@ efforts_summarize_maps <- function(
     terra::rasterize(Grid_R, field = Name) %>%
     terra::classify(cbind(NA, 0)) %>%
     terra::mask(Grid_R) %>%
-    IASDT.R::set_raster_CRS() %>%
-    IASDT.R::set_raster_values() %>%
+    ecokit::set_raster_CRS() %>%
+    ecokit::set_raster_values() %>%
     stats::setNames(paste0(Name, "_", ClassOrder)) %>%
     terra::wrap()
 

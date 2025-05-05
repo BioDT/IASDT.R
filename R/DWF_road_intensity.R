@@ -38,15 +38,15 @@ road_intensity <- function(env_file = ".env") {
   .start_time <- lubridate::now(tzone = "CET")
 
   # Checking arguments ----
-  IASDT.R::cat_time("Checking arguments")
+  ecokit::cat_time("Checking arguments")
 
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character", args_to_check = "env_file")
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "logical", args_to_check = "download")
 
   rm(AllArgs, envir = environment())
@@ -61,7 +61,7 @@ road_intensity <- function(env_file = ".env") {
   # # ..................................................................... ###
 
   # Environment variables ----
-  IASDT.R::cat_time("Environment variables")
+  ecokit::cat_time("Environment variables")
 
   EnvVars2Read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
@@ -72,7 +72,7 @@ road_intensity <- function(env_file = ".env") {
     "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
     "EU_Bound", "DP_R_EUBound", FALSE, TRUE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
@@ -80,21 +80,21 @@ road_intensity <- function(env_file = ".env") {
 
   RefGrid <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(RefGrid)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "The reference grid file does not exist", RefGrid = RefGrid)
   }
 
   # # ..................................................................... ###
 
   # download road data ------
-  IASDT.R::cat_time("Download road data")
+  ecokit::cat_time("Download road data")
 
   withr::local_options(timeout = 1200)
   Path_DownFile <- fs::path(Path_Roads_Raw, basename(Road_URL))
 
   # Check if zip file is a valid file
   if (file.exists(Path_DownFile)) {
-    Success <- IASDT.R::check_zip(Path_DownFile)
+    Success <- ecokit::check_zip(Path_DownFile)
     if (isFALSE(Success)) {
       fs::file_delete(Path_DownFile)
     }
@@ -114,7 +114,7 @@ road_intensity <- function(env_file = ".env") {
           mode = "wb", quiet = TRUE) %>%
           suppressWarnings()
 
-        Success <- IASDT.R::check_zip(Path_DownFile)
+        Success <- ecokit::check_zip(Path_DownFile)
         Success
       }, silent = TRUE)
 
@@ -126,7 +126,7 @@ road_intensity <- function(env_file = ".env") {
   }
 
   if (isFALSE(Success)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       paste0("Failed to download road data after ", Attempts, " attempts"),
       Road_URL = Road_URL)
   }
@@ -135,7 +135,7 @@ road_intensity <- function(env_file = ".env") {
 
   # # .................................... ###
 
-  IASDT.R::cat_time("Extracting files")
+  ecokit::cat_time("Extracting files")
   archive::archive_extract(
     archive = Path_DownFile, dir = Path_Roads_Interim) %>%
     suppressMessages()
@@ -144,16 +144,16 @@ road_intensity <- function(env_file = ".env") {
   # # ..................................................................... ###
 
   # Processing GRIP road data ------
-  IASDT.R::cat_time("Processing GRIP road data")
+  ecokit::cat_time("Processing GRIP road data")
 
   ## Load, crop, and project GRIP data -----
-  IASDT.R::cat_time("Load, crop, and project GRIP data", level = 1L)
+  ecokit::cat_time("Load, crop, and project GRIP data", level = 1L)
 
   Road_GDB_Files <- list.files(
     path = Path_Roads_Interim, pattern = ".gdb$", full.names = TRUE)
 
   if (length(Road_GDB_Files) == 0) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "No `.gdb` files found in the directory after extraction: ",
       Path_Roads_Interim = Path_Roads_Interim, Road_GDB_Files = Road_GDB_Files)
   }
@@ -173,13 +173,13 @@ road_intensity <- function(env_file = ".env") {
   # # ..................................... ###
 
   ## Save - RData ----
-  IASDT.R::cat_time("Save projected data - RData", level = 1L)
+  ecokit::cat_time("Save projected data - RData", level = 1L)
   save(Road_sf, file = fs::path(Path_Roads, "Road_sf.RData"))
 
   # # ..................................... ###
 
   ## One file per road type ----
-  IASDT.R::cat_time("Save RData file per road type", level = 1L)
+  ecokit::cat_time("Save RData file per road type", level = 1L)
 
   tibble::tribble(
     ~RoadType, ~VarName,
@@ -192,12 +192,12 @@ road_intensity <- function(env_file = ".env") {
       A = purrr::walk2(
         .x = RoadType, .y = VarName,
         .f = ~ {
-          IASDT.R::cat_time(paste0(.x, " - ", .y), level = 2L)
+          ecokit::cat_time(paste0(.x, " - ", .y), level = 2L)
           dplyr::filter(Road_sf, GP_RTP %in% .x) %>%
             dplyr::select(-GP_RTP) %>%
             terra::vect() %>%
             terra::wrap() %>%
-            IASDT.R::save_as(
+            ecokit::save_as(
               object_name = paste0("Road_sf_", .x, "_", .y),
               out_path = fs::path(
                 Path_Roads, paste0("Road_sf_", .x, "_", .y, ".RData")))
@@ -214,18 +214,18 @@ road_intensity <- function(env_file = ".env") {
   # # ..................................................................... ###
 
   # Road length ------
-  IASDT.R::cat_time("Road length")
+  ecokit::cat_time("Road length")
 
 
-  IASDT.R::cat_time("Calculate Road length per road type", level = 1L)
+  ecokit::cat_time("Calculate Road length per road type", level = 1L)
 
-  RefGrid <- terra::unwrap(IASDT.R::load_as(RefGrid))
+  RefGrid <- terra::unwrap(ecokit::load_as(RefGrid))
 
   ExtractRoadSummary <- function(RoadType, VarName, Function = "length") {
     SummMap <- list.files(
       path = Path_Roads, full.names = TRUE,
       pattern = paste0("^Road_sf_", RoadType, "_.+RData")) %>%
-      IASDT.R::load_as() %>%
+      ecokit::load_as() %>%
       terra::unwrap() %>%
       terra::rasterizeGeom(y = RefGrid, fun = Function, unit = "km") %>%
       terra::mask(mask = RefGrid) %>%
@@ -233,36 +233,36 @@ road_intensity <- function(env_file = ".env") {
     return(SummMap)
   }
 
-  IASDT.R::cat_time("1 - Highways", level = 2L)
+  ecokit::cat_time("1 - Highways", level = 2L)
   GRIP_1 <- ExtractRoadSummary(RoadType = 1, VarName = "Highways")
 
-  IASDT.R::cat_time("2 - Primary", level = 2L)
+  ecokit::cat_time("2 - Primary", level = 2L)
   GRIP_2 <- ExtractRoadSummary(RoadType = 2, VarName = "Primary")
 
-  IASDT.R::cat_time("3 - Secondary", level = 2L)
+  ecokit::cat_time("3 - Secondary", level = 2L)
   GRIP_3 <- ExtractRoadSummary(RoadType = 3, VarName = "Secondary")
 
-  IASDT.R::cat_time("4 - Tertiary", level = 2L)
+  ecokit::cat_time("4 - Tertiary", level = 2L)
   GRIP_4 <- ExtractRoadSummary(RoadType = 4, VarName = "Tertiary")
 
-  IASDT.R::cat_time("5 - Local", level = 2L)
+  ecokit::cat_time("5 - Local", level = 2L)
   GRIP_5 <- ExtractRoadSummary(RoadType = 5, VarName = "Local")
 
-  IASDT.R::cat_time("All roads", level = 2L)
+  ecokit::cat_time("All roads", level = 2L)
   Road_Length <- (GRIP_1 + GRIP_2 + GRIP_3 + GRIP_4 + GRIP_5) %>%
     stats::setNames("All") %>%
     c(GRIP_1, GRIP_2, GRIP_3, GRIP_4, GRIP_5, .) %>%
     # Ensure that values are read from memory
-    IASDT.R::set_raster_values()
+    ecokit::set_raster_values()
 
-  IASDT.R::cat_time("Save road length - tif", level = 1L)
+  ecokit::cat_time("Save road length - tif", level = 1L)
   terra::writeRaster(
     x = Road_Length, overwrite = TRUE,
     filename = fs::path(
       Path_Roads, paste0("Road_Length_", names(Road_Length), ".tif")))
 
-  IASDT.R::cat_time("Save road length - RData", level = 1L)
-  IASDT.R::save_as(
+  ecokit::cat_time("Save road length - RData", level = 1L)
+  ecokit::save_as(
     object = terra::wrap(Road_Length),
     object_name = "Road_Length",
     out_path = fs::path(Path_Roads, "Road_Length.RData"))
@@ -270,13 +270,13 @@ road_intensity <- function(env_file = ".env") {
   # # ..................................................................... ###
 
   # Distance to roads ------
-  IASDT.R::cat_time("Distance to roads")
+  ecokit::cat_time("Distance to roads")
   # This calculates the distance from each grid cell to the nearest grid cell
   # overlapping with a road This can be different than calculating the actual
   # distance to nearest road line; which is expected to take too much time to
   # calculate
 
-  IASDT.R::cat_time("Calculate distance to roads", level = 1L)
+  ecokit::cat_time("Calculate distance to roads", level = 1L)
 
   # suppress progress bar
   terra::terraOptions(progress = 0)
@@ -284,33 +284,33 @@ road_intensity <- function(env_file = ".env") {
   Road_Distance <- purrr::map(
     .x = as.list(Road_Length),
     .f = ~ {
-      IASDT.R::cat_time(names(.x), level = 2L)
+      ecokit::cat_time(names(.x), level = 2L)
       Road_Points <- terra::as.points(terra::classify(.x, cbind(0, NA)))
       terra::distance(x = .x, y = Road_Points, unit = "km") %>%
         terra::mask(RefGrid) %>%
         stats::setNames(paste0("Road_Distance_", names(.x))) %>%
         # Ensure that values are read from memory
-        IASDT.R::set_raster_values()
+        ecokit::set_raster_values()
     }
   ) %>%
     terra::rast()
 
-  IASDT.R::cat_time("Save distance to road - tif", level = 1L)
+  ecokit::cat_time("Save distance to road - tif", level = 1L)
   terra::writeRaster(
     x = Road_Distance, overwrite = TRUE,
     filename = fs::path(Path_Roads, paste0(names(Road_Distance), ".tif")))
 
-  IASDT.R::cat_time("Save distance to road - RData", level = 1L)
-  IASDT.R::save_as(
+  ecokit::cat_time("Save distance to road - RData", level = 1L)
+  ecokit::save_as(
     object = terra::wrap(Road_Distance), object_name = "Road_Distance",
     out_path = fs::path(Path_Roads, "Road_Distance.RData"))
 
   # # ..................................................................... ###
 
   # Plotting ------
-  IASDT.R::cat_time("Plotting")
+  ecokit::cat_time("Plotting")
 
-  EU_Bound <- IASDT.R::load_as(EU_Bound) %>%
+  EU_Bound <- ecokit::load_as(EU_Bound) %>%
     magrittr::extract2("Bound_sf_Eur_s") %>%
     magrittr::extract2("L_03")
 
@@ -346,7 +346,7 @@ road_intensity <- function(env_file = ".env") {
   # # ..................................... ###
 
   ## Road length -----
-  IASDT.R::cat_time("Road length", level = 1L)
+  ecokit::cat_time("Road length", level = 1L)
 
   Plots_Length <- purrr::map(
     .x = terra::as.list(Road_Length),
@@ -400,7 +400,7 @@ road_intensity <- function(env_file = ".env") {
   # # ..................................... ###
 
   ## Distance to roads ------
-  IASDT.R::cat_time("Distance to roads", level = 1L)
+  ecokit::cat_time("Distance to roads", level = 1L)
   Plots_Distance <- purrr::map(
     .x = terra::as.list(Road_Distance),
     .f = ~ {
@@ -447,7 +447,7 @@ road_intensity <- function(env_file = ".env") {
   # ..................................................................... ###
 
   # Cleanup ------
-  IASDT.R::cat_time("Cleanup")
+  ecokit::cat_time("Cleanup")
 
   # Delete extracted GRIP files
   list.files(Path_Roads_Interim, full.names = TRUE, pattern = "^GRIP") %>%
@@ -459,7 +459,7 @@ road_intensity <- function(env_file = ".env") {
 
   # Function Summary ----
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = .start_time,
     prefix = "\nProcessing road data was finished in ", ... = "\n")
 

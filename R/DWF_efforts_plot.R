@@ -23,7 +23,7 @@ efforts_plot <- function(env_file = ".env") {
     "Path_Efforts", "DP_R_Efforts_processed", FALSE, FALSE,
     "EU_Bound", "DP_R_EUBound", FALSE, TRUE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
@@ -31,11 +31,11 @@ efforts_plot <- function(env_file = ".env") {
 
   File_SummaryR <- fs::path(Path_Efforts, "Efforts_SummaryR.RData")
   if (!file.exists(File_SummaryR)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Summary maps cannot be loaded: ", File_SummaryR = File_SummaryR)
   }
 
-  Efforts_SummaryR <- terra::unwrap(IASDT.R::load_as(File_SummaryR))
+  Efforts_SummaryR <- terra::unwrap(ecokit::load_as(File_SummaryR))
 
   # # ..................................................................... ###
 
@@ -59,7 +59,7 @@ efforts_plot <- function(env_file = ".env") {
       panel.border = ggplot2::element_blank(),
       panel.background = ggplot2::element_rect(fill = NA))
 
-  EurBound <- IASDT.R::load_as(EU_Bound) %>%
+  EurBound <- ecokit::load_as(EU_Bound) %>%
     magrittr::extract2("Bound_sf_Eur_s") %>%
     magrittr::extract2("L_03")
   # nolint end

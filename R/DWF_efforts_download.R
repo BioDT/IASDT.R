@@ -22,11 +22,11 @@ efforts_download <- function(n_cores = 6L, env_file = ".env") {
 
   # Validate n_cores
   if (missing(n_cores) || !is.numeric(n_cores) || n_cores <= 0) {
-    IASDT.R::stop_ctx("n_cores must be a positive integer.", n_cores = n_cores)
+    ecokit::stop_ctx("n_cores must be a positive integer.", n_cores = n_cores)
   }
 
-  if (isFALSE(IASDT.R::check_system_command("unzip"))) {
-    IASDT.R::stop_ctx("The 'unzip' command is not available")
+  if (isFALSE(ecokit::check_system_command("unzip"))) {
+    ecokit::stop_ctx("The 'unzip' command is not available")
   }
 
   # # ..................................................................... ###
@@ -38,7 +38,7 @@ efforts_download <- function(n_cores = 6L, env_file = ".env") {
     "Path_Efforts", "DP_R_Efforts_processed", FALSE, FALSE,
     "Path_Raw", "DP_R_Efforts_raw", FALSE, FALSE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
@@ -47,18 +47,18 @@ efforts_download <- function(n_cores = 6L, env_file = ".env") {
   Path_Efforts_Request <- fs::path(Path_Efforts, "Efforts_AllRequests.RData")
 
   if (!file.exists(Path_Efforts_Request)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "The path for the `Efforts_AllRequests` data does not exist",
       Path_Efforts_Request = Path_Efforts_Request)
   }
 
-  Efforts_AllRequests <- IASDT.R::load_as(Path_Efforts_Request)
+  Efforts_AllRequests <- ecokit::load_as(Path_Efforts_Request)
 
   # # ..................................................................... ###
 
   ## Prepare working in parallel -----
 
-  IASDT.R::cat_time(
+  ecokit::cat_time(
     paste0("Prepare working in parallel using ", n_cores, " cores"),
     level = 1L)
 
@@ -77,7 +77,7 @@ efforts_download <- function(n_cores = 6L, env_file = ".env") {
   # # ..................................................................... ###
 
   # Downloading/checking efforts data ------
-  IASDT.R::cat_time("Downloading & checking efforts data", level = 1L)
+  ecokit::cat_time("Downloading & checking efforts data", level = 1L)
 
   Efforts_AllRequests <- Efforts_AllRequests %>%
     dplyr::mutate(
@@ -90,7 +90,7 @@ efforts_download <- function(n_cores = 6L, env_file = ".env") {
 
           # Check zip file if exist, if not download it
           if (file.exists(DownFile)) {
-            Success <- IASDT.R::check_zip(DownFile)
+            Success <- ecokit::check_zip(DownFile)
             if (isFALSE(Success)) {
               fs::file_delete(DownFile)
             }
@@ -113,12 +113,12 @@ efforts_download <- function(n_cores = 6L, env_file = ".env") {
 
               # Ensure Success is only TRUE if both the zip file exists and
               # passes integrity check
-              Success <- file.exists(DownFile) && IASDT.R::check_zip(DownFile)
+              Success <- file.exists(DownFile) && ecokit::check_zip(DownFile)
 
             },
             error = function(e) {
               if (Attempt >= Attempts) {
-                IASDT.R::stop_ctx(
+                ecokit::stop_ctx(
                   paste0(
                     "Failed to download data after ", Attempts, " attempts: ",
                     conditionMessage(e)))
@@ -140,7 +140,7 @@ efforts_download <- function(n_cores = 6L, env_file = ".env") {
   # # ..................................................................... ###
 
   # Stopping cluster ------
-  IASDT.R::cat_time("Stopping cluster", level = 1L)
+  ecokit::cat_time("Stopping cluster", level = 1L)
   if (n_cores > 1) {
     snow::stopCluster(c1)
     future::plan("future::sequential", gc = TRUE)
@@ -148,7 +148,7 @@ efforts_download <- function(n_cores = 6L, env_file = ".env") {
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = .StartTimeDown,
     prefix = "Downloading efforts data took ", level = 1L)
 

@@ -67,19 +67,19 @@ convergence_plot <- function(
   .start_time <- lubridate::now(tzone = "CET")
 
   if (is.null(path_coda) || is.null(path_model) || is.null(n_cores)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "path_coda, path_model, and n_cores cannot be empty",
       path_coda = path_coda, path_model = path_model, n_cores = n_cores)
   }
 
   if (length(margin_type) != 1) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`margin_type` must be a single value.",
       margin_type = margin_type, length_margin_type = length(margin_type))
   }
 
   if (!margin_type %in% c("histogram", "density")) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "`margin_type` must be either 'histogram' or 'density'.",
       margin_type = margin_type)
   }
@@ -98,7 +98,7 @@ convergence_plot <- function(
 
   # Check input arguments ------
 
-  IASDT.R::cat_time("Check input arguments")
+  ecokit::cat_time("Check input arguments")
 
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(
@@ -106,10 +106,10 @@ convergence_plot <- function(
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character",
     args_to_check = c("path_coda", "path_model"))
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "numeric",
     args_to_check = c("n_omega", "n_cores", "n_RC"))
   rm(AllArgs, envir = environment())
@@ -117,20 +117,19 @@ convergence_plot <- function(
   # # ..................................................................... ###
 
   # # Load species summary
-  IASDT.R::cat_time("Load species summary")
+  ecokit::cat_time("Load species summary")
 
   EnvVars2Read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
     "Path_PA", "DP_R_PA", TRUE, FALSE)
   # Assign environment variables and check file and paths
-  IASDT.R::assign_env_vars(
+  ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
   SpSummary <- fs::path(Path_PA, "Sp_PA_Summary_DF.csv")
   if (!file.exists(SpSummary)) {
-    IASDT.R::stop_ctx(
-      "SpSummary file does not exist", SpSummary = SpSummary)
+    ecokit::stop_ctx("SpSummary file does not exist", SpSummary = SpSummary)
   }
 
   SpSummary <- readr::read_csv(
@@ -141,7 +140,7 @@ convergence_plot <- function(
 
   # Create path ------
 
-  IASDT.R::cat_time("Create path")
+  ecokit::cat_time("Create path")
   Path_Convergence <- dirname(dirname(path_coda)) %>%
     fs::path("Model_Convergence")
   Pah_Beta_Data <- fs::path(Path_Convergence, "Beta_Data")
@@ -152,21 +151,21 @@ convergence_plot <- function(
 
   # Prepare convergence data ------
 
-  IASDT.R::cat_time("Prepare convergence data")
+  ecokit::cat_time("Prepare convergence data")
 
   if (!file.exists(path_model)) {
-    IASDT.R::stop_ctx("`path_model` does not exist", path_model = path_model)
+    ecokit::stop_ctx("`path_model` does not exist", path_model = path_model)
   }
 
   if (!file.exists(path_coda)) {
-    IASDT.R::stop_ctx("`path_coda` does not exist", path_coda = path_coda)
+    ecokit::stop_ctx("`path_coda` does not exist", path_coda = path_coda)
   }
 
-  IASDT.R::cat_time("Loading coda object", level = 1L)
-  Coda_Obj <- IASDT.R::load_as(path_coda)
+  ecokit::cat_time("Loading coda object", level = 1L)
+  Coda_Obj <- ecokit::load_as(path_coda)
 
-  IASDT.R::cat_time("Loading fitted model object", level = 1L)
-  Model <- IASDT.R::load_as(path_model)
+  ecokit::cat_time("Loading fitted model object", level = 1L)
+  Model <- ecokit::load_as(path_model)
 
   # Model variables
   ModVars <- Model$covNames
@@ -197,28 +196,28 @@ convergence_plot <- function(
   # Rho ------
 
   if ("Rho" %in% names(Coda_Obj)) {
-    IASDT.R::cat_time("Rho")
+    ecokit::cat_time("Rho")
 
     FileConv_Rho <- fs::path(Path_Convergence, "convergence_rho.RData")
 
-    if (IASDT.R::check_data(FileConv_Rho, warning = FALSE)) {
-      IASDT.R::cat_time("Loading plotting data", level = 1L)
-      PlotObj_Rho <- IASDT.R::load_as(FileConv_Rho)
+    if (ecokit::check_data(FileConv_Rho, warning = FALSE)) {
+      ecokit::cat_time("Loading plotting data", level = 1L)
+      PlotObj_Rho <- ecokit::load_as(FileConv_Rho)
     } else {
-      IASDT.R::cat_time("Prepare plot", level = 1L)
+      ecokit::cat_time("Prepare plot", level = 1L)
       PlotObj_Rho <- IASDT.R::convergence_rho(
         posterior = Coda_Obj, model_object = Model, title = title,
         chain_colors = chain_colors)
 
       if (save_plotting_data) {
-        IASDT.R::cat_time("Save plotting data", level = 1L)
-        IASDT.R::save_as(
+        ecokit::cat_time("Save plotting data", level = 1L)
+        ecokit::save_as(
           object = PlotObj_Rho, object_name = "convergence_rho",
           out_path = FileConv_Rho)
       }
     }
 
-    IASDT.R::cat_time("Save plot", level = 1L)
+    ecokit::cat_time("Save plot", level = 1L)
     # Using ggplot2::ggsave directly does not show non-ascii characters
     # correctly
     grDevices::cairo_pdf(
@@ -234,28 +233,28 @@ convergence_plot <- function(
 
   # Alpha  ------
 
-  IASDT.R::cat_time("Alpha")
+  ecokit::cat_time("Alpha")
 
   FileConv_Alpha <- fs::path(Path_Convergence, "Convergence_Alpha.RData")
 
-  if (IASDT.R::check_data(FileConv_Alpha, warning = FALSE)) {
-    IASDT.R::cat_time("Loading plotting data", level = 1L)
-    PlotObj_Alpha <- IASDT.R::load_as(FileConv_Alpha)
+  if (ecokit::check_data(FileConv_Alpha, warning = FALSE)) {
+    ecokit::cat_time("Loading plotting data", level = 1L)
+    PlotObj_Alpha <- ecokit::load_as(FileConv_Alpha)
   } else {
-    IASDT.R::cat_time("Prepare plot", level = 1L)
+    ecokit::cat_time("Prepare plot", level = 1L)
     PlotObj_Alpha <- IASDT.R::convergence_alpha(
       posterior = Coda_Obj, model_object = Model, title = title, n_RC = n_RC,
       add_footer = FALSE, add_title = FALSE, chain_colors = chain_colors)
 
     if (save_plotting_data) {
-      IASDT.R::cat_time("Save plotting data", level = 1L)
-      IASDT.R::save_as(
+      ecokit::cat_time("Save plotting data", level = 1L)
+      ecokit::save_as(
         object = PlotObj_Alpha, object_name = "convergence_alpha",
         out_path = fs::path(Path_Convergence, "Convergence_Alpha.RData"))
     }
   }
 
-  IASDT.R::cat_time("Save plots", level = 1L)
+  ecokit::cat_time("Save plots", level = 1L)
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   grDevices::cairo_pdf(
     filename = fs::path(Path_Convergence, "Convergence_Alpha.pdf"),
@@ -273,22 +272,22 @@ convergence_plot <- function(
 
   # Omega  ------
 
-  IASDT.R::cat_time("Omega")
+  ecokit::cat_time("Omega")
 
   FileConv_Omega <- fs::path(Path_Convergence, "Convergence_Omega.qs2")
 
-  if (IASDT.R::check_data(FileConv_Omega, warning = FALSE)) {
-    IASDT.R::cat_time("Loading plotting data", level = 1L)
-    PlotObj_Omega <- IASDT.R::load_as(FileConv_Omega)
+  if (ecokit::check_data(FileConv_Omega, warning = FALSE)) {
+    ecokit::cat_time("Loading plotting data", level = 1L)
+    PlotObj_Omega <- ecokit::load_as(FileConv_Omega)
   } else {
-    IASDT.R::cat_time("Coda to tibble", level = 1L)
+    ecokit::cat_time("Coda to tibble", level = 1L)
     OmegaDF <- IASDT.R::coda_to_tibble(
       coda_object = Obj_Omega, posterior_type = "omega", n_omega = n_omega,
       env_file = env_file)
     invisible(gc())
     SelectedCombs <- unique(OmegaDF$SpComb)
 
-    IASDT.R::cat_time("Prepare confidence interval data", level = 1L)
+    ecokit::cat_time("Prepare confidence interval data", level = 1L)
     CI <- purrr::map(.x = Obj_Omega, .f = ~ .x[, SelectedCombs]) %>%
       coda::mcmc.list() %>%
       summary(quantiles = c(0.025, 0.975)) %>%
@@ -300,7 +299,7 @@ convergence_plot <- function(
     OmegaDF <- dplyr::left_join(OmegaDF, CI, by = "SpComb")
     OmegaNames <- attr(Obj_Omega[[1]], "dimnames")[[2]]
 
-    IASDT.R::cat_time("Prepare plots", level = 1L)
+    ecokit::cat_time("Prepare plots", level = 1L)
     PlotObj_Omega <- purrr::map_dfr(
       .x = seq_len(n_omega),
       .f = function(x) {
@@ -404,17 +403,17 @@ convergence_plot <- function(
         return(tibble::tibble(SpComb = CombData$SpComb, Plot = list(Plot)))
       }
     )
-    IASDT.R::cat_time("Plots preparation is finished", level = 2L)
+    ecokit::cat_time("Plots preparation is finished", level = 2L)
 
     if (save_plotting_data) {
-      IASDT.R::cat_time("Save plot data", level = 1L)
-      IASDT.R::save_as(object = PlotObj_Omega, out_path = FileConv_Omega)
+      ecokit::cat_time("Save plot data", level = 1L)
+      ecokit::save_as(object = PlotObj_Omega, out_path = FileConv_Omega)
     }
     rm(OmegaDF, SelectedCombs, CI, OmegaNames, envir = environment())
     invisible(gc())
   }
 
-  IASDT.R::cat_time("Arrange plots", level = 1L)
+  ecokit::cat_time("Arrange plots", level = 1L)
   OmegaPlotList <- tibble::tibble(PlotID = seq_len(nrow(PlotObj_Omega))) %>%
     dplyr::mutate(
       File = ceiling(PlotID / (pages_per_file * n_RC[2] * n_RC[1])),
@@ -448,7 +447,7 @@ convergence_plot <- function(
         }
       ))
 
-  IASDT.R::cat_time("Save plots", level = 1L)
+  ecokit::cat_time("Save plots", level = 1L)
   purrr::walk(
     .x = seq_along(unique(OmegaPlotList$File)),
     .f = ~ {
@@ -470,14 +469,14 @@ convergence_plot <- function(
 
   # Beta - 1. Prepare data ------
 
-  IASDT.R::cat_time("Beta")
+  ecokit::cat_time("Beta")
 
   FileConv_Beta <- fs::path(Path_Convergence, "Convergence_Beta.RData")
 
-  if (IASDT.R::check_data(FileConv_Beta, warning = FALSE)) {
+  if (ecokit::check_data(FileConv_Beta, warning = FALSE)) {
 
-    IASDT.R::cat_time("Loading plotting data", level = 1L)
-    PlotObj_Beta <- IASDT.R::load_as(FileConv_Beta)
+    ecokit::cat_time("Loading plotting data", level = 1L)
+    PlotObj_Beta <- ecokit::load_as(FileConv_Beta)
 
     rm(Obj_Beta, envir = environment())
     invisible(gc())
@@ -541,23 +540,23 @@ convergence_plot <- function(
         Term = NULL) %>%
       dplyr::bind_rows(LinearTerms)
 
-    IASDT.R::cat_time("Prepare trace plots", level = 1L)
+    ecokit::cat_time("Prepare trace plots", level = 1L)
 
     BetaNames <- attr(Obj_Beta[[1]], "dimnames")[[2]]
 
-    IASDT.R::cat_time("Prepare 95% credible interval data", level = 2L)
+    ecokit::cat_time("Prepare 95% credible interval data", level = 2L)
     CI <- summary(Obj_Beta, quantiles = c(0.025, 0.975))$quantiles %>%
       as.data.frame() %>%
       tibble::as_tibble(rownames = "Var_Sp") %>%
       dplyr::rename(CI_025 = `2.5%`, CI_975 = `97.5%`)
 
-    IASDT.R::cat_time("Coda to tibble", level = 2L)
+    ecokit::cat_time("Coda to tibble", level = 2L)
     Beta_DF <- IASDT.R::coda_to_tibble(
       coda_object = Obj_Beta, posterior_type = "beta", env_file = env_file) %>%
       dplyr::left_join(CI, by = "Var_Sp")
 
     # Variable ranges
-    IASDT.R::cat_time("Variable ranges", level = 2L)
+    ecokit::cat_time("Variable ranges", level = 2L)
     VarRanges <- dplyr::arrange(Beta_DF, Variable, IAS_ID) %>%
       dplyr::select(Variable, DT) %>%
       dplyr::mutate(
@@ -577,13 +576,13 @@ convergence_plot <- function(
       tidyr::unnest_wider("Range")
 
     # Species taxonomy
-    IASDT.R::cat_time("Species taxonomy", level = 2L)
+    ecokit::cat_time("Species taxonomy", level = 2L)
     SpeciesTaxonomy <- IASDT.R::get_species_name(env_file = env_file) %>%
       dplyr::select(IAS_ID, Class, Order, Family)
 
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
-    IASDT.R::cat_time("Preparing data for plotting", level = 2L)
+    ecokit::cat_time("Preparing data for plotting", level = 2L)
     Cols2remove <- c(
       "CI_025", "CI_975", "Var_Min", "Var_Max", "Class", "Order", "Family")
 
@@ -631,14 +630,14 @@ convergence_plot <- function(
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
     # Prepare working in parallel
-    IASDT.R::cat_time("Prepare working in parallel", level = 2L)
-    IASDT.R::set_parallel(n_cores = min(n_cores, nrow(Beta_DF)), level = 3L)
+    ecokit::cat_time("Prepare working in parallel", level = 2L)
+    ecokit::set_parallel(n_cores = min(n_cores, nrow(Beta_DF)), level = 3L)
     withr::defer(future::plan("future::sequential", gc = TRUE))
 
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
     # Split data for each of variables and species combination
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       "Split data for each of variables and species combination", level = 2L)
 
     Beta_DF2 <- future.apply::future_lapply(
@@ -652,20 +651,20 @@ convergence_plot <- function(
         repeat {
 
           if (attempt > 5) {
-            IASDT.R::stop_ctx(
+            ecokit::stop_ctx(
               "Maximum attempts (5) reached without success: ",
               Var_Sp_File = Var_Sp_File)
           }
 
           try({
-            IASDT.R::save_as(
+            ecokit::save_as(
               object = Beta_DF$DT[[x]], object_name = Beta_DF$Var_Sp2[[x]],
               out_path = Var_Sp_File)
             Sys.sleep(2)
           },
           silent = TRUE)
 
-          if (IASDT.R::check_data(Var_Sp_File, warning = FALSE)) {
+          if (ecokit::check_data(Var_Sp_File, warning = FALSE)) {
             break
           }
 
@@ -681,7 +680,7 @@ convergence_plot <- function(
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
     # Prepare plots
-    IASDT.R::cat_time("Prepare plots", level = 2L)
+    ecokit::cat_time("Prepare plots", level = 2L)
 
     PlotObj_Beta <- future.apply::future_lapply(
       X = seq_len(nrow(Beta_DF)),
@@ -694,19 +693,19 @@ convergence_plot <- function(
         Plot_File <- Beta_DF$Plot_File[x]
 
         # check if input data exists
-        if (isFALSE(IASDT.R::check_data(Var_Sp_File, warning = FALSE))) {
-          IASDT.R::stop_ctx(
+        if (isFALSE(ecokit::check_data(Var_Sp_File, warning = FALSE))) {
+          ecokit::stop_ctx(
             "File does not exist.", x = x, Var_Sp_File = Var_Sp_File)
         }
 
         # Check if the output file already exists
-        if (IASDT.R::check_data(Plot_File, warning = FALSE)) {
+        if (ecokit::check_data(Plot_File, warning = FALSE)) {
           return(tibble::tibble(Var_Sp = Var_Sp, Plot_File = Plot_File))
         }
 
         # delete file if corrupted
         if (file.exists(Plot_File)) {
-          IASDT.R::system_command(
+          ecokit::system_command(
             command = paste0("rm -f ", Plot_File), r_object = FALSE,
             ignore.stdout = TRUE)
         }
@@ -716,16 +715,16 @@ convergence_plot <- function(
         repeat {
 
           if (attempt > 5) {
-            IASDT.R::stop_ctx(
+            ecokit::stop_ctx(
               "Maximum attempts (5) reached without success: ",
               Var_Sp_File = Var_Sp_File)
           }
 
           try({
 
-            DT_all <- IASDT.R::load_as(Var_Sp_File)
+            DT_all <- ecokit::load_as(Var_Sp_File)
             if (is.null(DT_all) || !is.list(DT_all)) {
-              IASDT.R::stop_ctx(
+              ecokit::stop_ctx(
                 "Loaded data is invalid", Var_Sp_File = Var_Sp_File,
                 DT_all = DT_all, class_DT_all = DT_all)
             }
@@ -842,7 +841,7 @@ convergence_plot <- function(
             Plot2_Marginal$layout$t[1] <- 1
             Plot2_Marginal$layout$r[1] <- max(Plot2_Marginal$layout$r)
 
-            IASDT.R::save_as(
+            ecokit::save_as(
               object = list(
                 Plot = Plot, Plot_Marginal = Plot_Marginal,
                 PlotFixedY_Marginal = Plot2_Marginal),
@@ -853,7 +852,7 @@ convergence_plot <- function(
           },
           silent = TRUE)
 
-          if (IASDT.R::check_data(Plot_File, warning = FALSE)) {
+          if (ecokit::check_data(Plot_File, warning = FALSE)) {
             break
           }
 
@@ -877,14 +876,14 @@ convergence_plot <- function(
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
     # Stopping cluster
-    IASDT.R::set_parallel(stop_cluster = TRUE, level = 2L)
+    ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
 
     rm(Beta_DF, BetaNames, envir = environment())
     invisible(gc())
 
     if (save_plotting_data) {
-      IASDT.R::cat_time("Save trace plot data", level = 2L)
-      IASDT.R::save_as(
+      ecokit::cat_time("Save trace plot data", level = 2L)
+      ecokit::save_as(
         object = PlotObj_Beta, object_name = "Convergence_Beta",
         out_path = FileConv_Beta)
     }
@@ -899,9 +898,9 @@ convergence_plot <- function(
 
   # Beta - 2. by variable ------
 
-  IASDT.R::cat_time("Trace plots, grouped by variables", level = 1L)
+  ecokit::cat_time("Trace plots, grouped by variables", level = 1L)
 
-  IASDT.R::cat_time("Preparing data", level = 2L)
+  ecokit::cat_time("Preparing data", level = 2L)
   BetaTracePlots_ByVar <- dplyr::arrange(PlotObj_Beta, Variable, IAS_ID) %>%
     dplyr::select(Variable, Plot_File, VarDesc) %>%
     tidyr::nest(Plot_File = "Plot_File") %>%
@@ -910,13 +909,13 @@ convergence_plot <- function(
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
   # Prepare working in parallel
-  IASDT.R::set_parallel(
+  ecokit::set_parallel(
     n_cores = min(n_cores, nrow(BetaTracePlots_ByVar)), level = 2L)
   withr::defer(future::plan("future::sequential", gc = TRUE))
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
-  IASDT.R::cat_time("Save plots", level = 2L)
+  ecokit::cat_time("Save plots", level = 2L)
   VarNames <- BetaTracePlots_ByVar$Variable
 
   BetaTracePlots_ByVar0 <- future.apply::future_lapply(
@@ -932,7 +931,7 @@ convergence_plot <- function(
         magrittr::extract2(1) %>%
         purrr::map(
           .f = ~ {
-            IASDT.R::load_as(.x) %>%
+            ecokit::load_as(.x) %>%
               magrittr::extract(c("Plot_Marginal", "PlotFixedY_Marginal"))
           })
 
@@ -1026,15 +1025,15 @@ convergence_plot <- function(
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
   # Stopping cluster
-  IASDT.R::set_parallel(stop_cluster = TRUE, level = 2L)
+  ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
 
   # # ..................................................................... ###
 
   # Beta - 3. by species ------
 
-  IASDT.R::cat_time("Trace plots, grouped by species", level = 1L)
+  ecokit::cat_time("Trace plots, grouped by species", level = 1L)
 
-  IASDT.R::cat_time("Preparing data", level = 2L)
+  ecokit::cat_time("Preparing data", level = 2L)
   Order <- stringr::str_remove_all(ModVars, "\\(|\\)")
   BetaTracePlots_BySp <- PlotObj_Beta %>%
     dplyr::arrange(Species, factor(Variable, levels = Order)) %>%
@@ -1045,13 +1044,13 @@ convergence_plot <- function(
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
   # Prepare working in parallel
-  IASDT.R::set_parallel(
+  ecokit::set_parallel(
     n_cores = min(n_cores, nrow(BetaTracePlots_BySp)), level = 2L)
   withr::defer(future::plan("future::sequential", gc = TRUE))
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
-  IASDT.R::cat_time("Save plots", level = 2L)
+  ecokit::cat_time("Save plots", level = 2L)
 
   BetaTracePlots_BySp0 <- future.apply::future_lapply(
     X = BetaTracePlots_BySp$Species,
@@ -1077,7 +1076,7 @@ convergence_plot <- function(
           Plot = purrr::map2(
             .x = Plot_File, .y = VarDesc,
             .f = ~ {
-              Plot <- IASDT.R::load_as(.x)$Plot +
+              Plot <- ecokit::load_as(.x)$Plot +
                 ggplot2::ggtitle(.y) +
                 ggplot2::theme(
                   plot.title = ggtext::element_markdown(
@@ -1101,7 +1100,7 @@ convergence_plot <- function(
 
       NumPages <- ceiling(length(SpPlots) / (beta_n_RC[1] * beta_n_RC[2]))
 
-      SpPlots2 <- IASDT.R::split_vector(
+      SpPlots2 <- ecokit::split_vector(
         vector = seq_len(length(SpPlots)), n_splits = NumPages) %>%
         purrr::map(
           .f = ~ {
@@ -1139,13 +1138,13 @@ convergence_plot <- function(
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
   # Stopping cluster
-  IASDT.R::set_parallel(stop_cluster = TRUE, level = 2L)
+  ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
 
   rm(BetaTracePlots_BySp0, envir = environment())
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_diff(
+  ecokit::cat_diff(
     init_time = .start_time, prefix = "Plot model convergence took ")
 
   # # ..................................................................... ###
@@ -1180,13 +1179,13 @@ convergence_Beta_ranges <- function(model_dir) {
 
   if (!is.character(model_dir) || length(model_dir) != 1 ||
       !nzchar(model_dir)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "The specified model_dir is not a character of length 1 and nchar > 1.",
       model_dir = model_dir)
   }
 
   if (!dir.exists(model_dir)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "The specified model_dir does not exist.", model_dir = model_dir)
   }
 
@@ -1195,7 +1194,7 @@ convergence_Beta_ranges <- function(model_dir) {
     model_dir, "Model_Convergence", "Convergence_Beta.RData")
   # Check if the beta data file exists
   if (!file.exists(beta_data_path)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "The beta parameter data file does not exist.",
       beta_data_path = beta_data_path)
   }
@@ -1203,14 +1202,14 @@ convergence_Beta_ranges <- function(model_dir) {
   # # ..................................................................... ###
 
   # Load beta parameter information
-  Beta_ranges <- IASDT.R::load_as(beta_data_path) %>%
+  Beta_ranges <- ecokit::load_as(beta_data_path) %>%
     dplyr::mutate(
       Variable = forcats::fct(Variable),
       # Calculate the min and max of the beta values for each species
       Range = purrr::map(
         .x = Var_Sp_File,
         .f = ~ {
-          Post <- IASDT.R::load_as(.x)$Post
+          Post <- ecokit::load_as(.x)$Post
           purrr::map(
             1:5,
             ~ {

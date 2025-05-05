@@ -21,7 +21,7 @@ mod_SLURM_refit <- function(
   NullVars <- which(purrr::map_lgl(.x = NullVarsNames, .f = ~ is.null(get(.x))))
 
   if (length(NullVars) > 0) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       paste0(toString(NullVarsNames[NullVars]), " cannot be missing."),
       NullVars = NullVars, length_NullVars = length(NullVars),
       Vars = NullVarsNames[NullVars])
@@ -36,7 +36,7 @@ mod_SLURM_refit <- function(
   # # ..................................................................... ###
 
   if (!file.exists(env_file)) {
-    IASDT.R::stop_ctx(
+    ecokit::stop_ctx(
       "Path to environment variables was not found", env_file = env_file)
   }
 
@@ -52,16 +52,16 @@ mod_SLURM_refit <- function(
   AllArgs <- purrr::map(.x = AllArgs, .f = get, envir = environment()) %>%
     stats::setNames(AllArgs)
 
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "character",
     args_to_check = c(
       "HPC_partition", "env_file", "job_runtime", "job_name", "memory_per_cpu",
       "model_dir", "path_Hmsc", "SLURM_prefix", "refit_prefix"))
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_type = "numeric",
     args_to_check = c(
       "n_array_jobs", "ntasks", "cpus_per_task", "gpus_per_node"))
-  IASDT.R::check_args(
+  ecokit::check_args(
     args_all = AllArgs, args_to_check = "cat_job_info", args_type = "logical")
   rm(AllArgs, envir = environment())
 
@@ -70,14 +70,14 @@ mod_SLURM_refit <- function(
   # Remove temp files and incomplete RDs files -----
 
   if (!fs::dir_exists(model_dir)) {
-    IASDT.R::stop_ctx("Model directory does not exist", model_dir = model_dir)
+    ecokit::stop_ctx("Model directory does not exist", model_dir = model_dir)
   }
 
   Path_Model_Fit <- fs::path(model_dir, "Model_Fitting_HPC")
   tempFiles <- list.files(
     path = Path_Model_Fit, pattern = ".rds_temp$", full.names = TRUE)
   if (length(tempFiles) > 0) {
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       paste0(
         "There are ", length(tempFiles),
         " unsuccessful model variants to be removed"))
@@ -95,7 +95,7 @@ mod_SLURM_refit <- function(
 
   # List of unfitted model variants -----
   FailedModels <- fs::path(model_dir, "Model_Info.RData") %>%
-    IASDT.R::load_as() %>%
+    ecokit::load_as() %>%
     tidyr::unnest_longer(c(Post_Path, Command_HPC)) %>%
     dplyr::filter(!file.exists(Post_Path))
 
@@ -117,24 +117,24 @@ mod_SLURM_refit <- function(
           " failed model variants")) %>%
       dplyr::pull(Summ)
 
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       paste0(
         NJobs, " model variants for ", length(unique(FailedModels$M_Name_Fit)),
         " models were not successful."))
-    purrr::walk(Failed_rL, IASDT.R::cat_time, level = 1L)
+    purrr::walk(Failed_rL, ecokit::cat_time, level = 1L)
   } else {
-    IASDT.R::cat_time("All models were already fitted!")
+    ecokit::cat_time("All models were already fitted!")
   }
 
   # # ..................................................................... ###
 
   if (SLURM_prepare && NJobs > 0) {
 
-    IASDT.R::cat_time("Preparing SLURM script(s) for failed models")
+    ecokit::cat_time("Preparing SLURM script(s) for failed models")
 
     if (NJobs > n_array_jobs) {
       NSplits <- ceiling((NJobs / n_array_jobs))
-      IDs <- IASDT.R::split_vector(vector = seq_len(NJobs), n_splits = NSplits)
+      IDs <- ecokit::split_vector(vector = seq_len(NJobs), n_splits = NSplits)
     } else {
       NSplits <- 1
       IDs <- list(seq_len(NJobs))
@@ -170,7 +170,7 @@ mod_SLURM_refit <- function(
       command_prefix = refit_prefix, SLURM_prefix = SLURM_prefix,
       SLURM_path_out = NULL)
 
-    IASDT.R::cat_time(
+    ecokit::cat_time(
       paste0(
         NJobs, " model variants (", NSplits,
         " SLURM files) need to be re-fitted"), level = 1L)

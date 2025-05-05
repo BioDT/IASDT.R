@@ -58,11 +58,11 @@ set.seed(1000)
 A <- matrix(rnorm(N * N), N, N)
 set.seed(2000)
 B <- matrix(rnorm(N * N), N, N)
-identical(solve(A, B), IASDT.R::solve2(A, B))
+all.equal(solve(A, B), IASDT.R::solve2(A, B))
 
 set.seed(2000)
 B <- matrix(rnorm(N), N, 1)
-identical(solve(A, B), IASDT.R::solve2(A, B))
+all.equal(solve(A, B), IASDT.R::solve2(A, B))
 
 # -----------------------------------------
 # Example for solve2vect
@@ -73,7 +73,7 @@ set.seed(1000)
 A <- matrix(rnorm(N * N), N, N)
 set.seed(2000)
 B <- rnorm(N)
-identical(solve(A, B), as.vector(IASDT.R::solve2vect(A, B)))
+all.equal(solve(A, B), as.vector(IASDT.R::solve2vect(A, B)))
 
 # -----------------------------------------
 # Example for fast_pnorm
@@ -92,7 +92,7 @@ set.seed(1000)
 A <- matrix(rnorm(N * N), N, N)
 set.seed(2000)
 x <- rnorm(1)
-identical(exp(-A / x), IASDT.R::exp_neg_div(A, x))
+all.equal(exp(-A / x), IASDT.R::exp_neg_div(A, x))
 }
 \author{
 Ahmed El-Gabbas

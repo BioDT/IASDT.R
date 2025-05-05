@@ -30,7 +30,7 @@
 #'
 #' str(iris2, 1)
 #'
-#' (TMP_Folder <- IASDT.R::path(tempdir(), stringi::stri_rand_strings(1, 5)))
+#' (TMP_Folder <- fs::path(tempdir(), stringi::stri_rand_strings(1, 5)))
 #' list.files(TMP_Folder)
 #'
 #' list_to_RData(list = iris2, directory = TMP_Folder)
@@ -64,7 +64,7 @@ list_to_RData <- function(
       } else {
         paste0(prefix, "_", names(list)[x])
       }
-      File <- IASDT.R::path(directory, paste0(FileName, ".RData"))
+      File <- fs::path(directory, paste0(FileName, ".RData"))
 
       # check if the file already exists. If it does and overwrite is FALSE, it
       # prints a message indicating that the file already exists and will not be

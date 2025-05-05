@@ -104,7 +104,7 @@ data sources. Defaults to \code{.env}.}
 fully transparent, 1 = fully opaque). Default: 0.3.}
 }
 \description{
-The \verb{RespCurv_*()} functions process and visualize response curves for Hmsc
+The \verb{RespCurv_*()} functions process and visualise response curves for Hmsc
 models. They support parallel computation and optionally return processed
 data. There are four functions in this group:
 \itemize{

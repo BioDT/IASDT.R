@@ -63,7 +63,7 @@ cat_sep <- function(
     line_char <- crayon::red(line_char)
   }
 
-  if (sep_lines_before > 0) {
+  if (sep_lines_before > 0L) {
     cat(strrep("\n", sep_lines_before), ...)
   }
 
@@ -72,7 +72,7 @@ cat_sep <- function(
     paste(collapse = "\n") %>%
     cat(...)
 
-  if (sep_lines_after > 0) {
+  if (sep_lines_after > 0L) {
     cat(strrep("\n", sep_lines_after), ...)
   }
   return(invisible(NULL))

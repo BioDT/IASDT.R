@@ -15,7 +15,7 @@ data sources. Defaults to \code{.env}.}
 directories.
 }
 \description{
-This function downloads, processes, and analyzes \href{https://www.globio.info/download-grip-dataset}{GRIP global roads data} (\href{https://iopscience.iop.org/article/10.1088/1748-9326/aabd42/meta}{Meijer et al. 2018}). The
+This function downloads, processes, and analyses \href{https://www.globio.info/download-grip-dataset}{GRIP global roads data} (\href{https://iopscience.iop.org/article/10.1088/1748-9326/aabd42/meta}{Meijer et al. 2018}). The
 function calculates the total road lengths and the distance to the nearest
 road per grid cell (for any road type and per road type).
 }

@@ -1,5 +1,5 @@
 ---
-title: "IAS-pDT modelling workflow — 4. Model fitting"
+title: "IASDT modelling workflow — 4. Model fitting"
 output: html_document
 editor_options: 
   chunk_output_type: console
@@ -22,7 +22,7 @@ format:
     link-external-icon: true
     link-external-newwindow: true
 vignette: >
-  %\VignetteIndexEntry{IAS-pDT modelling workflow — 4. Model fitting}
+  %\VignetteIndexEntry{IASDT modelling workflow — 4. Model fitting}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 ---
@@ -87,17 +87,17 @@ c("<style>", readLines("style.css"), "</style>") %>%
 
 <br/><br/>
 
-This article outlines the preparation of input data for model fitting and the subsequent process of fitting these models on GPUs within the `IAS-pDT` workflow.
+This article outlines the preparation of input data for model fitting and the subsequent process of fitting these models on GPUs within the `IASDT` workflow.
 
 <br/><br/>
 
 ## Model input data
 
-The primary function for preparing model-fitting data and initializing models is <cc>`mod_prepare_HPC()`</cc>. It structures data for each habitat-specific model into distinct directories (e.g., <ff>datasets/processed/model_fitting/HabX</ff>, where <i>X</i> represents a <a href="workflow_1_overview.html#models" class="ll">habitat type</a>). This function orchestrates a suite of specialized sub-functions to perform the following tasks:
+The primary function for preparing model-fitting data and initialising models is <cc>`mod_prepare_HPC()`</cc>. It structures data for each habitat-specific model into distinct directories (e.g., <ff>datasets/processed/model_fitting/HabX</ff>, where <i>X</i> represents a <a href="workflow_1_overview.html#models" class="ll">habitat type</a>). This function orchestrates a suite of specialised sub-functions to perform the following tasks:
 
 <br/>
 
-- <cc>`mod_prepare_data()`</cc>: prepare input data for modeling, with key arguments including:
+- <cc>`mod_prepare_data()`</cc>: prepare input data for modelling, with key arguments including:
 
 ```{r}
 #| echo = FALSE,
@@ -106,7 +106,7 @@ The primary function for preparing model-fitting data and initializing models is
 #| eval = TRUE
 DT <- tibble::tribble(
   ~Argument, ~Description,
-  "hab_abb", "abbreviation of a single habitat type to be modeled",
+  "hab_abb", "abbreviation of a single habitat type to be modelled",
   "directory_name", "directory path for storing all model files",
   "min_efforts_n_species", 'minimum number of vascular plant species per grid cell required for inclusion in model fitting. This reflects the total count of vascular plant species (including native species) recorded in GBIF across Europe, as computed during the <a href="workflow_2_abiotic_data.html#sampling-efforts" class="ll">sampling effort preparation</a> step (`efforts_process()`). This argument filters out grid cells with insufficient sampling effort',
   "exclude_cultivated", "whether to exclude countries with cultivated or casual observations for each species",
@@ -127,7 +127,7 @@ DT %>%
 
 <br/><br/>
 
-- `mod_CV_prepare()`: prepare and visualize options for spatial-block cross-validation. In the <i>CV_Dist</i> strategy, block size is governed by the *CV_n_grids* argument, whereas in the <i>CV_Large</i> strategy, the study area is partitioned into larger blocks based on the *CV_n_rows* and *CV_n_columns* arguments.
+- `mod_CV_prepare()`: prepare and visualise options for spatial-block cross-validation. In the <i>CV_Dist</i> strategy, block size is governed by the *CV_n_grids* argument, whereas in the <i>CV_Large</i> strategy, the study area is partitioned into larger blocks based on the *CV_n_rows* and *CV_n_columns* arguments.
 
 ```{r}
 #| echo = FALSE,
@@ -155,7 +155,7 @@ DT %>%
 
 <br/><br/>
 
-- `prepare_knots()`: prepare and visualize knot locations for Gaussian Predictive Process (GPP) models, as described by Tikhonov *et al.* (<a href="https://doi.org/10.1002/ecy.2929" target="_blank" class="ll">2019</a>).
+- `prepare_knots()`: prepare and visualise knot locations for Gaussian Predictive Process (GPP) models, as described by Tikhonov *et al.* (<a href="https://doi.org/10.1002/ecy.2929" target="_blank" class="ll">2019</a>).
 
 ```{r}
 #| echo = FALSE,
@@ -165,7 +165,7 @@ DT %>%
 DT <- tibble::tribble(
   ~Argument, ~Description,
   "GPP", "whether to incorporate spatial random effects using the Gaussian Predictive Process (GPP)",
-  "GPP_dists", "distance (in kilometers; controlled by the `min_distance` argument of `prepare_knots()`) specifying both the spacing between knots and the minimum distance between a knot and the nearest sampling point",
+  "GPP_dists", "distance (in kilometres; controlled by the `min_distance` argument of `prepare_knots()`) specifying both the spacing between knots and the minimum distance between a knot and the nearest sampling point",
   "GPP_plot", "whether to plot the coordinates of sampling units and knots",
   "min_LF / max_LF", "minimum and maximum number of latent factors to be include",
   "alphapw", "prior specification for the alpha parameter") %>% 
@@ -284,7 +284,7 @@ DT %>%
 
 ## Model fitting on GPUs
 
-Following the preparation of model input data and initialization of models, the subsequent phase involves fitting these models on GPUs. For each habitat type, the `mod_prepare_HPC()` function produces:
+Following the preparation of model input data and initialisation of models, the subsequent phase involves fitting these models on GPUs. For each habitat type, the `mod_prepare_HPC()` function produces:
 
 - python commands (<ff>Commands2Fit.txt</ff>) for fitting model chains across all model variants on GPUs, with each line corresponding to a single chain.
 

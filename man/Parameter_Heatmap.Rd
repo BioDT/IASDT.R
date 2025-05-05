@@ -30,7 +30,7 @@ threshold for negative associations) are considered significant and will be
 plotted (see \link[Hmsc:plotBeta]{Hmsc::plotBeta}).}
 
 \item{width, height}{Integer. The width and height of the generated
-heatmaps in centimeters. Defaults to 26×22.5 for \code{omega}; 25×35
+heatmaps in centimetres. Defaults to 26×22.5 for \code{omega}; 25×35
 for \code{beta}.}
 }
 \value{
@@ -39,14 +39,14 @@ files in the \code{Model_Postprocessing/Parameters_Summary} subdirectory.
 }
 \description{
 The \code{mod_heatmap_beta()} and \code{mod_heatmap_omega()} functions generate
-heatmaps using \code{ggplot2} to visualize parameter estimates or posterior
+heatmaps using \code{ggplot2} to visualise parameter estimates or posterior
 support values for species' environmental responses (\code{beta} parameters, which
 describes how species (\emph{Y}) respond to various covariates (\emph{X}); see
 \link[Hmsc:plotBeta]{Hmsc::plotBeta}) and residual associations (\code{omega} parameter),
 respectively.
 }
 \details{
-The functions exports three types of visualizations (see
+The functions exports three types of visualisations (see
 \link[Hmsc:plotBeta]{Hmsc::plotBeta}):
 \itemize{
 \item \code{Mean}: posterior mean estimate,

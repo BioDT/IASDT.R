@@ -64,7 +64,7 @@ mod_merge_chains <- function(
 
   # # ..................................................................... ###
 
-  .StartTime <- lubridate::now(tzone = "CET")
+  .start_time <- lubridate::now(tzone = "CET")
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
@@ -125,15 +125,15 @@ mod_merge_chains <- function(
 
   # Creating paths -----
 
-  Path_Fitted_Models <- IASDT.R::path(model_dir, "Model_Fitted")
-  Path_Coda <- IASDT.R::path(model_dir, "Model_Coda")
+  Path_Fitted_Models <- fs::path(model_dir, "Model_Fitted")
+  Path_Coda <- fs::path(model_dir, "Model_Coda")
   fs::dir_create(c(Path_Fitted_Models, Path_Coda))
 
   # # ..................................................................... ###
 
   # Loading model info ----
 
-  Path_ModInfo <- IASDT.R::path(model_dir, "Model_Info.RData")
+  Path_ModInfo <- fs::path(model_dir, "Model_Info.RData")
 
   if (!file.exists(Path_ModInfo)) {
     IASDT.R::stop_ctx(
@@ -144,7 +144,7 @@ mod_merge_chains <- function(
 
   # Remove temp files and incomplete RDs files ----
 
-  Path_Model_Fit <- IASDT.R::path(model_dir, "Model_Fitting_HPC")
+  Path_Model_Fit <- fs::path(model_dir, "Model_Fitting_HPC")
   tempFiles <- list.files(
     path = Path_Model_Fit, pattern = ".rds_temp$", full.names = TRUE)
 
@@ -232,7 +232,7 @@ mod_merge_chains <- function(
 
       M_Name_Fit <- Model_Info2$M_Name_Fit[[x]]
 
-      Path_FittedMod <- IASDT.R::path(
+      Path_FittedMod <- fs::path(
         Path_Fitted_Models, paste0(M_Name_Fit, "_Model.", out_extension))
 
       # Check if model exists and is valid
@@ -296,7 +296,7 @@ mod_merge_chains <- function(
       # Convert to Coda object
       # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-      Path_Coda <- IASDT.R::path(
+      Path_Coda <- fs::path(
         Path_Coda, paste0(M_Name_Fit, "_Coda.", out_extension))
 
       if (!exists("Model_Fit") && !file.exists(Path_FittedMod)) {
@@ -449,7 +449,7 @@ mod_merge_chains <- function(
       IASDT.R::cat_time("Unsuccessful models")
       purrr::walk(
         .x = MissingModelVars, .f = IASDT.R::cat_time,
-        cat_timestamp = FALSE, level = 1)
+        cat_timestamp = FALSE, level = 1L)
     }
   }
 
@@ -463,12 +463,12 @@ mod_merge_chains <- function(
   } else {
     IASDT.R::save_as(
       object = Model_Info2, object_name = model_info_name,
-      out_path = IASDT.R::path(model_dir, paste0(model_info_name, ".RData")))
+      out_path = fs::path(model_dir, paste0(model_info_name, ".RData")))
   }
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_diff(init_time = .StartTime, prefix = "Merging chains took ")
+  IASDT.R::cat_diff(init_time = .start_time, prefix = "Merging chains took ")
 
   return(invisible(NULL))
 }
@@ -494,7 +494,7 @@ mod_merge_chains_CV <- function(
   # # ..................................................................... ###
 
   IASDT.R::cat_time("Merge chains for cross-validated models")
-  .StartTime <- lubridate::now(tzone = "CET")
+  .start_time <- lubridate::now(tzone = "CET")
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
@@ -557,15 +557,14 @@ mod_merge_chains_CV <- function(
 
   # Creating paths -----
 
-  Path_Fitted_Models <- IASDT.R::path(
-    model_dir, "Model_Fitting_CV", "Model_Fitted")
+  Path_Fitted_Models <- fs::path(model_dir, "Model_Fitting_CV", "Model_Fitted")
   fs::dir_create(Path_Fitted_Models)
 
   # # ..................................................................... ###
 
   # Loading CV model info -----
 
-  Path_CV_DT <- IASDT.R::path(model_dir, "Model_Fitting_CV", "CV_DT.RData")
+  Path_CV_DT <- fs::path(model_dir, "Model_Fitting_CV", "CV_DT.RData")
   if (!file.exists(Path_CV_DT)) {
     IASDT.R::stop_ctx("CV_DT file does not exist", Path_CV_DT = Path_CV_DT)
   }
@@ -580,15 +579,15 @@ mod_merge_chains_CV <- function(
   # # ..................................................................... ###
 
   # Prepare working in parallel
-  IASDT.R::cat_time("Prepare working in parallel", level = 1)
+  IASDT.R::cat_time("Prepare working in parallel", level = 1L)
 
-  IASDT.R::set_parallel(n_cores = min(n_cores, nrow(CV_DT)), level = 2)
+  IASDT.R::set_parallel(n_cores = min(n_cores, nrow(CV_DT)), level = 2L)
   withr::defer(future::plan("future::sequential", gc = TRUE))
 
   # # ..................................................................... ###
 
   # Check if any posterior files is missing
-  IASDT.R::cat_time("Check if any posterior files is missing", level = 1)
+  IASDT.R::cat_time("Check if any posterior files is missing", level = 1L)
 
   CV_DT <- CV_DT %>%
     dplyr::mutate(
@@ -620,7 +619,7 @@ mod_merge_chains_CV <- function(
   # # ..................................................................... ###
 
   # Merge posteriors and save as Hmsc object
-  IASDT.R::cat_time("Merge posteriors and save as Hmsc object", level = 1)
+  IASDT.R::cat_time("Merge posteriors and save as Hmsc object", level = 1L)
 
   CV_DT2 <- future.apply::future_lapply(
     X = seq_len(nrow(CV_DT)),
@@ -701,7 +700,7 @@ mod_merge_chains_CV <- function(
 
   # Check saved Hmsc object and extract info on model fitting
   IASDT.R::cat_time(
-    "Check saved Hmsc object and extract info on model fitting", level = 1)
+    "Check saved Hmsc object and extract info on model fitting", level = 1L)
 
   CV_DT <- CV_DT %>%
     dplyr::mutate(
@@ -785,7 +784,7 @@ mod_merge_chains_CV <- function(
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # stopping the cluster
-  IASDT.R::set_parallel(stop_cluster = TRUE, level = 2)
+  IASDT.R::set_parallel(stop_cluster = TRUE, level = 2L)
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -793,12 +792,11 @@ mod_merge_chains_CV <- function(
 
   IASDT.R::save_as(
     object = CV_DT, object_name = "CV_DT_fitted",
-    out_path = IASDT.R::path(
-      model_dir, "Model_Fitting_CV", "CV_DT_fitted.RData"))
+    out_path = fs::path(model_dir, "Model_Fitting_CV", "CV_DT_fitted.RData"))
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_diff(init_time = .StartTime, prefix = "Merging chains took ")
+  IASDT.R::cat_diff(init_time = .start_time, prefix = "Merging chains took ")
 
   return(invisible(NULL))
 }

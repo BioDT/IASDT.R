@@ -43,7 +43,7 @@ package_remote_sha <- function(...) {
 
   # Retrieve library status once for efficiency and map over packages
   lib_status <- IASDT.R::add_missing_columns(
-    pak::lib_status(), NA_character_, "remotesha") %>%
+    data = pak::lib_status(), FillVal = NA_character_, "remotesha") %>%
     dplyr::filter(package %in% Pk)
 
   Out <- purrr::map_chr(

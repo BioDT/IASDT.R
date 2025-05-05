@@ -15,7 +15,7 @@ EASIN_plot <- function(env_file = ".env") {
   .PlotStartTime <- lubridate::now(tzone = "CET")
 
   # Checking arguments ----
-  IASDT.R::cat_time("Checking arguments", level = 1)
+  IASDT.R::cat_time("Checking arguments", level = 1L)
 
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
@@ -34,10 +34,10 @@ EASIN_plot <- function(env_file = ".env") {
   # # Environment variables ----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Environment variables", level = 1)
+  IASDT.R::cat_time("Environment variables", level = 1L)
 
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "EU_Bound", "DP_R_EUBound", FALSE, TRUE,
     "Path_EASIN", "DP_R_EASIN_processed", TRUE, FALSE,
     "Path_EASIN_Interim", "DP_R_EASIN_interim", TRUE, FALSE,
@@ -51,22 +51,22 @@ EASIN_plot <- function(env_file = ".env") {
   # # Input maps ----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Loading input maps", level = 1)
+  IASDT.R::cat_time("Loading input maps", level = 1L)
 
   ## Country boundaries ----
-  IASDT.R::cat_time("Country boundaries", level = 2)
+  IASDT.R::cat_time("Country boundaries", level = 2L)
   EuroBound <- IASDT.R::load_as(EU_Bound) %>%
     magrittr::extract2("Bound_sf_Eur_s") %>%
     magrittr::extract2("L_03")
 
   ## EASIN summary maps -----
-  IASDT.R::cat_time("EASIN summary maps", level = 2)
-  Path_NSp <- IASDT.R::path(Path_EASIN_Summary, "EASIN_NSp.RData")
-  Path_NSp_PerPartner <- IASDT.R::path(
+  IASDT.R::cat_time("EASIN summary maps", level = 2L)
+  Path_NSp <- fs::path(Path_EASIN_Summary, "EASIN_NSp.RData")
+  Path_NSp_PerPartner <- fs::path(
     Path_EASIN_Summary, "EASIN_NSp_PerPartner.RData")
 
-  Path_NObs <- IASDT.R::path(Path_EASIN_Summary, "EASIN_NObs.RData")
-  Path_NObs_PerPartner <- IASDT.R::path(
+  Path_NObs <- fs::path(Path_EASIN_Summary, "EASIN_NObs.RData")
+  Path_NObs_PerPartner <- fs::path(
     Path_EASIN_Summary, "EASIN_NObs_PerPartner.RData")
 
   PathSummaryMaps <- c(
@@ -85,7 +85,7 @@ EASIN_plot <- function(env_file = ".env") {
 
   ## NObs + NSp ----
 
-  IASDT.R::cat_time("Number of species/observations", level = 1)
+  IASDT.R::cat_time("Number of species & observations", level = 1L)
 
   Plot_EASIN_All <- function(
     MapPath, Title, EuroBound, addTag = FALSE, Legend = FALSE) {
@@ -154,19 +154,19 @@ EASIN_plot <- function(env_file = ".env") {
   }
 
   ### Number of observations ----
-  IASDT.R::cat_time("Number of observations", level = 2)
+  IASDT.R::cat_time("Number of observations", level = 2L)
   Plot_NObs <- Plot_EASIN_All(
     MapPath = Path_NObs, Title = "Number of observations",
     EuroBound = EuroBound, addTag = FALSE, Legend = FALSE)
 
   ### Number of species ----
-  IASDT.R::cat_time("Number of species", level = 2)
+  IASDT.R::cat_time("Number of species", level = 2L)
   Plot_NSp <- Plot_EASIN_All(
     MapPath = Path_NSp, Title = "Number of species",
     EuroBound = EuroBound, addTag = TRUE, Legend = TRUE)
 
   ### Combine maps ----
-  IASDT.R::cat_time("Merge maps side by side and save as JPEG", level = 2)
+  IASDT.R::cat_time("Merge maps side by side and save as JPEG", level = 2L)
 
   Plot <- ggpubr::ggarrange(
     Plot_NObs,
@@ -183,7 +183,7 @@ EASIN_plot <- function(env_file = ".env") {
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   ragg::agg_jpeg(
-    filename = IASDT.R::path(Path_EASIN_Summary, "EASIN_Data.jpeg"),
+    filename = fs::path(Path_EASIN_Summary, "EASIN_Data.jpeg"),
     width = 20, height = 10.3, res = 600, quality = 100, units = "cm")
   print(Plot)
   grDevices::dev.off()
@@ -194,7 +194,7 @@ EASIN_plot <- function(env_file = ".env") {
 
   ## Number of species/observations per partner ----
 
-  IASDT.R::cat_time("Number of species/observations per partner", level = 1)
+  IASDT.R::cat_time("Number of species & observations per partner", level = 1L)
 
   Plot_EASIN_Partner <- function(MapPath, File_prefix, Title) {
     LastUpdate <- paste0(
@@ -266,7 +266,7 @@ EASIN_plot <- function(env_file = ".env") {
       # Using ggplot2::ggsave directly does not show non-ascii characters
       # correctly
       ragg::agg_jpeg(
-        filename = IASDT.R::path(
+        filename = fs::path(
           Path_EASIN_Summary, paste0(File_prefix, "_p", i, ".jpeg")),
         width = 30, height = 16.5, res = 600, quality = 100, units = "cm")
       print(Plot)
@@ -279,7 +279,7 @@ EASIN_plot <- function(env_file = ".env") {
 
 
   ### Number of observations per partner ----
-  IASDT.R::cat_time("Number of observations per partner", level = 2)
+  IASDT.R::cat_time("Number of observations per partner", level = 2L)
   Plot_EASIN_Partner(
     MapPath = Path_NObs_PerPartner,
     File_prefix = "EASIN_NObs_per_partner",
@@ -287,7 +287,7 @@ EASIN_plot <- function(env_file = ".env") {
 
 
   ### Number of species per partner ----
-  IASDT.R::cat_time("Number of species per partner", level = 2)
+  IASDT.R::cat_time("Number of species per partner", level = 2L)
   Plot_EASIN_Partner(
     MapPath = Path_NSp_PerPartner,
     File_prefix = "EASIN_NSp_per_partner",
@@ -297,7 +297,7 @@ EASIN_plot <- function(env_file = ".env") {
 
   IASDT.R::cat_diff(
     init_time = .PlotStartTime,
-    prefix = "Plotting EASIN data was finished in ", level = 1)
+    prefix = "Plotting EASIN data was finished in ", level = 1L)
 
   return(invisible(NULL))
 }

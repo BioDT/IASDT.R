@@ -16,7 +16,7 @@ resp_curv_plot_species <- function(
 
   IASDT.R::cat_time("Plotting species response curves")
 
-  .StartTime <- lubridate::now(tzone = "CET")
+  .start_time <- lubridate::now(tzone = "CET")
 
   # # ..................................................................... ###
 
@@ -51,14 +51,13 @@ resp_curv_plot_species <- function(
 
   # # ..................................................................... ###
 
-  Path_RC_DT <- IASDT.R::path(model_dir, "Model_Postprocessing", "RespCurv_DT")
+  Path_RC_DT <- fs::path(model_dir, "Model_Postprocessing", "RespCurv_DT")
   if (!dir.exists(Path_RC_DT)) {
     IASDT.R::stop_ctx(
       "Response curve data subfolder is missing.", Path_RC_DT = Path_RC_DT)
   }
-  Path_RC_Sp <- IASDT.R::path(model_dir, "Model_Postprocessing", "RespCurv_Sp")
-  Path_RC_Sp_DT <- IASDT.R::path(
-    model_dir, "Model_Postprocessing", "RespCurv_Sp_DT")
+  Path_RC_Sp <- fs::path(model_dir, "Model_Postprocessing", "RespCurv_Sp")
+  Path_RC_Sp_DT <- fs::path(model_dir, "Model_Postprocessing", "RespCurv_Sp_DT")
   fs::dir_create(c(Path_RC_Sp, Path_RC_Sp_DT))
 
   # # ..................................................................... ###
@@ -67,14 +66,14 @@ resp_curv_plot_species <- function(
   IASDT.R::cat_time("Load species summary")
 
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "Path_PA", "DP_R_PA", TRUE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
-  SpSummary <- IASDT.R::path(Path_PA, "Sp_PA_Summary_DF.csv")
+  SpSummary <- fs::path(Path_PA, "Sp_PA_Summary_DF.csv")
   if (!file.exists(SpSummary)) {
     IASDT.R::stop_ctx("SpSummary file does not exist", SpSummary = SpSummary)
   }
@@ -96,20 +95,20 @@ resp_curv_plot_species <- function(
 
   IASDT.R::cat_time("Prepare species-specific data in parallel")
 
-  IASDT.R::cat_time("Prepare working in parallel", level = 1)
+  IASDT.R::cat_time("Prepare working in parallel", level = 1L)
   c1 <- parallel::makePSOCKcluster(n_cores)
   on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
 
-  IASDT.R::cat_time("Exporting objects to cores", level = 1)
+  IASDT.R::cat_time("Exporting objects to cores", level = 1L)
   parallel::clusterExport(
     cl = c1, varlist = "Path_RC_DT", envir = environment())
 
-  IASDT.R::cat_time("Load packages at each core", level = 1)
+  IASDT.R::cat_time("Load packages at each core", level = 1L)
   invisible(parallel::clusterEvalQ(
     cl = c1, expr = sapply("IASDT.R", library, character.only = TRUE)))
 
-  IASDT.R::cat_time("Loading species richness data", level = 1)
-  Sp_DT_All <- IASDT.R::path(Path_RC_DT, "ResCurvDT.RData") %>%
+  IASDT.R::cat_time("Loading species richness data", level = 1L)
+  Sp_DT_All <- fs::path(Path_RC_DT, "ResCurvDT.RData") %>%
     IASDT.R::load_as() %>%
     dplyr::select(tidyselect::all_of(c("Coords", "RC_Path_Prob"))) %>%
     dplyr::mutate(
@@ -123,14 +122,13 @@ resp_curv_plot_species <- function(
     dplyr::left_join(SpSummary, by = "IAS_ID") %>%
     dplyr::mutate(
       Prefix = paste0(Species, "_NFV_", NFV, "_Coords_", Coords),
-      path_JPEG_fixed = IASDT.R::path(
-        Path_RC_Sp, paste0(Prefix, "_Fixed.jpeg")),
-      path_JPEG_free = IASDT.R::path(Path_RC_Sp, paste0(Prefix, "_Free.jpeg")),
-      Path_Sp_DT = IASDT.R::path(Path_RC_Sp_DT, paste0(Prefix, ".qs2")))
+      path_JPEG_fixed = fs::path(Path_RC_Sp, paste0(Prefix, "_Fixed.jpeg")),
+      path_JPEG_free = fs::path(Path_RC_Sp, paste0(Prefix, "_Free.jpeg")),
+      Path_Sp_DT = fs::path(Path_RC_Sp_DT, paste0(Prefix, ".qs2")))
 
   snow::stopCluster(c1)
 
-  IASDT.R::cat_time("Export species-specific data", level = 1)
+  IASDT.R::cat_time("Export species-specific data", level = 1L)
   purrr::walk(
     .x = seq_len(nrow(Sp_DT_All)),
     .f = function(ID) {
@@ -147,15 +145,15 @@ resp_curv_plot_species <- function(
 
   IASDT.R::cat_time("Plotting species-specific data")
 
-  IASDT.R::cat_time("Prepare working in parallel", level = 1)
+  IASDT.R::cat_time("Prepare working in parallel", level = 1L)
   c1 <- parallel::makePSOCKcluster(n_cores)
   on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
 
-  IASDT.R::cat_time("Exporting objects to cores", level = 1)
+  IASDT.R::cat_time("Exporting objects to cores", level = 1L)
   parallel::clusterExport(
     cl = c1, varlist = c("SpeciesNames", "Sp_DT_All"), envir = environment())
 
-  IASDT.R::cat_time("Load packages at each core", level = 1)
+  IASDT.R::cat_time("Load packages at each core", level = 1L)
   invisible(parallel::clusterEvalQ(
     cl = c1,
     expr = {
@@ -166,7 +164,7 @@ resp_curv_plot_species <- function(
         library, character.only = TRUE)
     }))
 
-  IASDT.R::cat_time("Plotting in parallel", level = 1)
+  IASDT.R::cat_time("Plotting in parallel", level = 1L)
   Plots <- parallel::clusterApplyLB(
     cl = c1,
     x = Sp_DT_All,
@@ -186,8 +184,7 @@ resp_curv_plot_species <- function(
         dplyr::slice(gtools::mixedorder(Variable)) %>%
         dplyr::mutate(
           VarDesc = dplyr::case_when(
-            stringr::str_detect(Variable, "^bio") ~
-              stringr::str_to_sentence(Variable),
+            startsWith(Variable, "bio") ~ stringr::str_to_sentence(Variable),
             Variable == "RoadRailLog" ~ "Road + Rail intensity",
             Variable == "EffortsLog" ~ "Sampling efforts",
             Variable == "RiversLog" ~ "River length",
@@ -446,12 +443,12 @@ resp_curv_plot_species <- function(
 
   # Save data
   IASDT.R::cat_time("Save data")
-  save(Plots, file = IASDT.R::path(Path_RC_Sp, "Sp_DT_All.RData"))
+  save(Plots, file = fs::path(Path_RC_Sp, "Sp_DT_All.RData"))
 
   # # ..................................................................... ###
 
   IASDT.R::cat_diff(
-    init_time = .StartTime, prefix = "Plotting species response curves took ")
+    init_time = .start_time, prefix = "Plotting species response curves took ")
 
   # # ..................................................................... ###
 

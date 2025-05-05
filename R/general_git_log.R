@@ -115,7 +115,7 @@ git_log <- function(path = ".", n_commits = NULL, return_log = FALSE) {
 
     # Execute the command and capture the output
     log_output <- tryCatch({
-      IASDT.R::system_command(log_command, R_object = TRUE)
+      IASDT.R::system_command(log_command, r_object = TRUE)
     },
     error = function(e) {
       IASDT.R::stop_ctx(

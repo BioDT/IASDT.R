@@ -76,7 +76,7 @@ as \code{.RData} files.}
 \item{pages_per_file}{Integer. Number of plots per page in the Omega
 parameter output. Default: 20L.}
 
-\item{chain_colors}{Character vector. MCMC chain colors (optional). Default:
+\item{chain_colors}{Character vector. MCMC chain colours (optional). Default:
 \code{NULL}.}
 
 \item{margin_type}{Character. The type of marginal plot to add to the main

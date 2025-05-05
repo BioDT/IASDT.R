@@ -38,7 +38,7 @@ returns \code{FALSE}.
 }
 \details{
 The \code{check_data()} function determines the file type based on its
-extension. If the extension is unrecognized, it returns \code{FALSE}. Supported
+extension. If the extension is unrecognised, it returns \code{FALSE}. Supported
 file types:
 \itemize{
 \item \strong{RData}: Checked with \code{check_RData()}, read using \link{load_as}

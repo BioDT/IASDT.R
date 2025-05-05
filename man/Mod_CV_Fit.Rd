@@ -41,7 +41,7 @@ vector is provided, the label used in the output files will be \code{CV_Custom}.
 \item{env_file}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
 
-\item{init_par}{a named list of parameter values used for initialization of
+\item{init_par}{a named list of parameter values used for initialisation of
 MCMC states. See \link[Hmsc:computePredictedValues]{Hmsc::computePredictedValues} for more information.
 Default: \code{NULL}.}
 
@@ -82,7 +82,7 @@ precision mode for \code{Hmsc-HPC} sampling (--fp 32 or --fp 64). The default is
 }
 \description{
 This function prepares cross-validated Hmsc models for fitting using HPC. It
-handles data preparation, model initialization, and generation of SLURM
+handles data preparation, model initialisation, and generation of SLURM
 commands.
 }
 \details{

@@ -1,5 +1,5 @@
 ---
-title: "IAS-pDT modelling workflow — 1. Overview"
+title: "IASDT modelling workflow — 1. Overview"
 output: html_document
 editor_options: 
   chunk_output_type: console
@@ -22,7 +22,7 @@ format:
     link-external-icon: true
     link-external-newwindow: true
 vignette: >
-  %\VignetteIndexEntry{IAS-pDT modelling workflow — 1. Overview}
+  %\VignetteIndexEntry{IASDT modelling workflow — 1. Overview}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 ---
@@ -48,15 +48,15 @@ c("<style>", readLines("style.css"), "</style>") %>%
 
 ## Overview
 
-This document delineates the workflow — currently under development — for modeling the distribution and level of invasion (species richness) of invasive alien plant species (IAS) across Europe. The IAS prototype Digital Twin (`IAS-pDT`) is a component of the European <a href="https://www.biodt.eu/" target="_blank" class="ll">BioDT</a> project, which seeks to establish a Digital Twin framework for biodiversity in Europe. For a detailed exposition of the `IAS-pDT`, refer to Khan, El-Gabbas, *et al.* (<a href="https://doi.org/10.3897/rio.10.e124579" target="_blank" class="ll">2024</a>). The complete `IAS-pDT` workflow is documented at <a href="https://doi.org/10.5281/zenodo.14756907" target="_blank" class="ll">Zenodo</a>.
+This document delineates the workflow — currently under development — for modelling the distribution and level of invasion (species richness) of invasive alien plant species (IAS) across Europe. The IAS Digital Twin (`IASDT`) is a component of the European <a href="https://www.biodt.eu/" target="_blank" class="ll">BioDT</a> project, which seeks to establish a Digital Twin framework for biodiversity in Europe. For a detailed exposition of the `IASDT`, refer to Khan, El-Gabbas, *et al.* (<a href="https://doi.org/10.3897/rio.10.e124579" target="_blank" class="ll">2024</a>). The complete `IASDT` workflow is documented at <a href="https://doi.org/10.5281/zenodo.14756907" target="_blank" class="ll">Zenodo</a>.
 
-The `IAS-pDT` leverages the <a href="https://doi.org/10.5281/zenodo.14834384" target="_blank" class="ll">`IASDT.R`</a> R package to execute a comprehensive workflow encompassing model fitting, post-processing, and data preparation for the <a href="https://app.biodt.eu/app/biodtshiny" target="_blank" class="ll">Shiny application</a>. This package facilitates the preparation of abiotic data (e.g., climate and land cover) and biotic data (i.e., species distribution). Model outputs from the `IAS-pDT` are made publicly available to end-users and stakeholders through an <a href="http://opendap.biodt.eu/ias-pdt/" target="_blank" class="ll">OPeNDAP cloud server</a>, with prediction maps retrievable directly in R via the `IASDT.R` package (*currently in development*).
+The `IASDT` leverages the <a href="https://doi.org/10.5281/zenodo.14834384" target="_blank" class="ll">`IASDT.R`</a> R package to execute a comprehensive workflow encompassing model fitting, post-processing, and data preparation for the <a href="https://app.biodt.eu/app/biodtshiny" target="_blank" class="ll">Shiny application</a>. This package facilitates the preparation of abiotic data (e.g., climate and land cover) and biotic data (i.e., species distribution). Model outputs from the `IASDT` are made publicly available to end-users and stakeholders through an <a href="http://opendap.biodt.eu/ias-pdt/" target="_blank" class="ll">OPeNDAP cloud server</a>, with prediction maps retrievable directly in R via the `IASDT.R` package (*currently in development*).
 
 <hr class="hr1">
 
 ## Models
 
-Species distribution models are constructed using the Hierarchical Modelling of Species Communities (<a href="https://www.helsinki.fi/en/researchgroups/statistical-ecology/software/hmsc" target="_blank" class="ll">HMSC</a>) R package, a hierarchical Bayesian framework that incorporates spatial autocorrelation and species associations. Spatial autocorrelation is modeled via the Gaussian Predictive Process (GPP; Tikhonov *et al.*, <a href="https://doi.org/10.1002/ecy.2929" target="_blank" class="ll">2019</a>), offering a flexible and computationally efficient approach to capturing spatial dependencies. Given the substantial computational demands of fitting these spatial models at a European scale, we utilize the `HMSC-HPC` extension (Rahman *et al.*, <a href="https://doi.org/10.1371/journal.pcbi.1011914" target="_blank" class="ll">2024</a>) to leverage GPU-based processing for enhanced efficiency.
+Species distribution models are constructed using the Hierarchical Modelling of Species Communities (<a href="https://www.helsinki.fi/en/researchgroups/statistical-ecology/software/hmsc" target="_blank" class="ll">HMSC</a>) R package, a hierarchical Bayesian framework that incorporates spatial autocorrelation and species associations. Spatial autocorrelation is modelled via the Gaussian Predictive Process (GPP; Tikhonov *et al.*, <a href="https://doi.org/10.1002/ecy.2929" target="_blank" class="ll">2019</a>), offering a flexible and computationally efficient approach to capturing spatial dependencies. Given the substantial computational demands of fitting these spatial models at a European scale, we utilise the `HMSC-HPC` extension (Rahman *et al.*, <a href="https://doi.org/10.1371/journal.pcbi.1011914" target="_blank" class="ll">2024</a>) to leverage GPU-based processing for enhanced efficiency.
 
 Models are fitted at the habitat level, with a distinct model fitted for each habitat type, incorporating only those invasive alien species (IAS) associated with the respective habitat type. We employ the habitat classification delineated by Pyšek *et al.* (<a href="https://doi.org/10.23855/preslia.2022.447" target="_blank" class="ll">2022</a>). We fitted the models at eight habitat types (see table below). For each habitat type, predictions of individual species distributions and species richness are generated across multiple climate scenarios; further details are provided in the <a href="workflow_2_abiotic_data.html#chelsa-climate-data" class="ll">abiotic data processing section</a>. Model performance is assessed using spatial block cross-validation to ensure spatial independence between training and testing datasets.
 
@@ -145,7 +145,7 @@ DT <- tibble::tribble(
   "DP_R_HabAff", "Taxa information", "Path to `rds` file containing species affinity to habitat types", "references/taxon-habitat-combined_2024-02-07.rds",
   "DP_R_Taxa_country", "Taxa information", "Path to excel file containing the number of grid cells per species and country", "references/cell_count_per_species_and_country_2024-01-30-IA-VK-MG.xlsx",
   "DP_R_Taxa_easin", "Taxa information", "Path to `rds` file containing EASIN standardized taxonomy", "references/easin_taxon-list-gbif_2024-02-07.rds",
-  "DP_R_OPeNDAP_url", "", "Path to OpENDAP server for the `IAS-pDT`", "http://opendap.biodt.eu/ias-pdt/") %>% 
+  "DP_R_OPeNDAP_url", "", "Path to OpENDAP server for the `IASDT`", "http://opendap.biodt.eu/ias-pdt/") %>% 
   dplyr::mutate(
     Variable = paste0("<cc>", Variable, "</cc>"),
     Category = NULL,

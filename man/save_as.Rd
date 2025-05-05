@@ -48,15 +48,15 @@ function supports saving objects in \code{RData}, \code{qs2}, \code{feather}, an
 formats. The format is determined by the extension of the file path.
 }
 \examples{
-TMP_Folder <- IASDT.R::path(tempdir(), stringi::stri_rand_strings(1, 5))
+TMP_Folder <- fs::path(tempdir(), stringi::stri_rand_strings(1, 5))
 fs::dir_create(TMP_Folder)
 list.files(TMP_Folder)
 
 # save iris data in `iris2.RData` with `iris2` object name
-save_as(iris, "iris2", IASDT.R::path(TMP_Folder, "iris2.RData"))
+save_as(iris, "iris2", fs::path(TMP_Folder, "iris2.RData"))
 list.files(TMP_Folder, pattern = "^.+.RData")
 
-(load(IASDT.R::path(TMP_Folder, "iris2.RData")))
+(load(fs::path(TMP_Folder, "iris2.RData")))
 
 tibble::tibble(iris2)
 }

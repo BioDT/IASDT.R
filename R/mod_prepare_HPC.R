@@ -4,11 +4,11 @@
 
 #' Prepare initial models for model fitting with Hmsc-HPC
 #'
-#' The **`mod_prepare_HPC`** function prepares input data and initializes models
+#' The **`mod_prepare_HPC`** function prepares input data and initialises models
 #' for fitting with [Hmsc-HPC](https://doi.org/10.1371/journal.pcbi.1011914). It
 #' performs multiple tasks, including data preparation, defining spatial block
 #' cross-validation folds, generating Gaussian Predictive Process (GPP) knots
-#' ([Tikhonov et al.](https://doi.org/10.1002/ecy.2929)), initializing models,
+#' ([Tikhonov et al.](https://doi.org/10.1002/ecy.2929)), initialising models,
 #' and creating HPC execution commands. The function supports parallel
 #' processing and offers the option to include or exclude phylogenetic tree
 #' data.<br/><br/> The `mod_prepare_data` function is used to prepare
@@ -24,7 +24,7 @@
 #' @param GPP Logical. Whether to fit spatial random effect using Gaussian
 #'   Predictive Process. Defaults to `TRUE`. If `FALSE`, non-spatial models will
 #'   be fitted.
-#' @param GPP_dists Integer. Spacing (in kilometers) between GPP knots, as well
+#' @param GPP_dists Integer. Spacing (in kilometres) between GPP knots, as well
 #'   as the minimum allowable distance between a knot and the nearest sampling
 #'   point. The knots are generated using the [prepare_knots] function, and this
 #'   value is used for both `knotDist` and `minKnotDist` in
@@ -182,7 +182,7 @@ mod_prepare_HPC <- function(
   # Initial checking -----
   # # |||||||||||||||||||||||||||||||||||
 
-  .StartTime <- lubridate::now(tzone = "CET")
+  .start_time <- lubridate::now(tzone = "CET")
 
   CheckNULL <- c(
     "directory_name", "n_pres_per_species", "MCMC_thin", "MCMC_samples",
@@ -254,7 +254,7 @@ mod_prepare_HPC <- function(
     on.exit(sink(), add = TRUE)
   }
 
-  Path_Python <- IASDT.R::path(path_Hmsc, "Scripts", "python.exe")
+  Path_Python <- fs::path(path_Hmsc, "Scripts", "python.exe")
 
   IASDT.R::info_chunk("Preparing data for Hmsc-HPC models", line_char = "=")
 
@@ -262,10 +262,10 @@ mod_prepare_HPC <- function(
   # Load/check environment variables -----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Load/check environment variables")
+  IASDT.R::cat_time("Load and check environment variables")
 
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "TaxaInfoFile", "DP_R_Taxa_info", FALSE, TRUE,
     "EU_Bound", "DP_R_EUBound", FALSE, TRUE,
     "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
@@ -283,21 +283,21 @@ mod_prepare_HPC <- function(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
-  path_model <- IASDT.R::path(path_model, directory_name)
+  path_model <- fs::path(path_model, directory_name)
   if (fs::dir_exists(path_model)) {
     IASDT.R::stop_ctx(
       "Model directory already exists", path_model = path_model)
   }
   fs::dir_create(path_model)
 
-  Path_GridR <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop.RData")
+  Path_GridR <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(Path_GridR)) {
     IASDT.R::stop_ctx(
       "Path for the Europe boundaries does not exist", Path_GridR = Path_GridR)
   }
 
   IASDT.R::record_arguments(
-    out_path = IASDT.R::path(path_model, "Args_mod_prepare_HPC.RData"))
+    out_path = fs::path(path_model, "Args_mod_prepare_HPC.RData"))
 
   # # ..................................................................... ###
 
@@ -381,15 +381,15 @@ mod_prepare_HPC <- function(
   # # |||||||||||||||||||||||||||||||||||
 
   IASDT.R::cat_time("File paths - Creating missing paths")
-  fs::dir_create(IASDT.R::path(path_model, "InitMod4HPC"))
-  fs::dir_create(IASDT.R::path(path_model, "Model_Fitting_HPC"))
+  fs::dir_create(fs::path(path_model, "InitMod4HPC"))
+  fs::dir_create(fs::path(path_model, "Model_Fitting_HPC"))
   # Also create directory for SLURM outputs
-  fs::dir_create(IASDT.R::path(path_model, "Model_Fitting_HPC", "JobsLog"))
+  fs::dir_create(fs::path(path_model, "Model_Fitting_HPC", "JobsLog"))
   # Directory to save species distribution tiffs
-  Path_Dist <- IASDT.R::path(path_model, "Species_distribution")
+  Path_Dist <- fs::path(path_model, "Species_distribution")
   fs::dir_create(Path_Dist)
 
-  Path_ModelDT <- IASDT.R::path(path_model, "Model_Info.RData")
+  Path_ModelDT <- fs::path(path_model, "Model_Info.RData")
 
   # # ..................................................................... ###
 
@@ -454,7 +454,8 @@ mod_prepare_HPC <- function(
     n_pres_per_species = n_pres_per_species,
     env_file = env_file, verbose_progress = verbose_progress)
 
-  IASDT.R::cat_sep(n_separators = 1, sep_lines_before = 1, sep_lines_after = 2)
+  IASDT.R::cat_sep(
+    n_separators = 1L, sep_lines_before = 1L, sep_lines_after = 2L)
 
   # # ..................................................................... ###
 
@@ -477,7 +478,7 @@ mod_prepare_HPC <- function(
     IASDT.R::cat_time(
       paste0(
         "Subsetting data to: ", paste(sort(model_country), collapse = " & ")),
-      level = 1)
+      level = 1L)
 
     Sample_ExclSp <- dplyr::filter(DT_All, Country %in% model_country) %>%
       dplyr::summarise(
@@ -489,7 +490,7 @@ mod_prepare_HPC <- function(
       dplyr::pull(Sp)
 
     IASDT.R::cat_time(
-      paste0(length(Sample_ExclSp), " species are excluded"), level = 1)
+      paste0(length(Sample_ExclSp), " species are excluded"), level = 1L)
     DT_All <- dplyr::filter(DT_All, Country %in% model_country) %>%
       dplyr::select(-tidyselect::all_of(Sample_ExclSp))
 
@@ -497,7 +498,7 @@ mod_prepare_HPC <- function(
     ## Plotting subsetted data -----
     # # |||||||||||||||||||||||||||||||||||
 
-    IASDT.R::cat_time("Plotting subsetted data", level = 1)
+    IASDT.R::cat_time("Plotting subsetted data", level = 1L)
 
     NSpSubset <- DT_All %>%
       dplyr::mutate(
@@ -543,7 +544,7 @@ mod_prepare_HPC <- function(
       stringr::str_replace_all("\n", "<br/>")
     Subtitle <- paste0(
       NSp, " IAS within \u2265", n_pres_per_species,
-      " presence grid cells in the selected country/countries (",
+      " presence grid cells in the selected countries (",
       NGrids, " grid cells)")
 
     NSpPerGrid_Sub <- ggplot2::ggplot() +
@@ -580,7 +581,7 @@ mod_prepare_HPC <- function(
     # Using ggplot2::ggsave directly does not show non-ascii characters
     # correctly
     ragg::agg_jpeg(
-      filename = IASDT.R::path(path_model, "NSpPerGrid_Sub.jpeg"),
+      filename = fs::path(path_model, "NSpPerGrid_Sub.jpeg"),
       width = 25, height = plot_height, res = 600, quality = 100, units = "cm")
 
     print(NSpPerGrid_Sub)
@@ -589,7 +590,7 @@ mod_prepare_HPC <- function(
     rm(Limits, NSpPerGrid_Sub, EU_Bound_sub, envir = environment())
 
   } else {
-    IASDT.R::cat_time("No data subsetting was implemented", level = 1)
+    IASDT.R::cat_time("No data subsetting was implemented", level = 1L)
   }
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -605,7 +606,7 @@ mod_prepare_HPC <- function(
       paste0(
         "All grid cells, irrespective of number of species ",
         "presence, will be considered"),
-      level = 1, cat_timestamp = FALSE)
+      level = 1L, cat_timestamp = FALSE)
   } else {
     EmptyGridsID <- dplyr::select(DT_All, tidyselect::starts_with("Sp_")) %>%
       rowSums() %>%
@@ -618,7 +619,7 @@ mod_prepare_HPC <- function(
         paste0(
           "Excluding grid cells with < ", n_species_per_grid,
           " species presence"),
-        level = 1)
+        level = 1L)
       DT_All <- dplyr::slice(DT_All, EmptyGridsID)
     }
   }
@@ -652,10 +653,10 @@ mod_prepare_HPC <- function(
   DT_y <- dplyr::select(DT_All, tidyselect::starts_with("Sp_")) %>%
     as.data.frame()
   IASDT.R::cat_time(
-    paste0(ncol(DT_y), " species"), level = 1, cat_timestamp = FALSE)
+    paste0(ncol(DT_y), " species"), level = 1L, cat_timestamp = FALSE)
 
-  IASDT.R::cat_time("Save species summary", level = 1, cat_timestamp = FALSE)
-  SpSummary <- IASDT.R::path(Path_PA, "Sp_PA_Summary_DF.RData")
+  IASDT.R::cat_time("Save species summary", level = 1L, cat_timestamp = FALSE)
+  SpSummary <- fs::path(Path_PA, "Sp_PA_Summary_DF.RData")
   if (!file.exists(SpSummary)) {
     IASDT.R::stop_ctx(
       "SpSummary file does not exist", SpSummary = SpSummary)
@@ -667,7 +668,7 @@ mod_prepare_HPC <- function(
       IAS_ID = paste0("Sp_", IAS_ID)) %>%
     dplyr::filter(IAS_ID %in% names(DT_y))
 
-  save(SpSummary, file = IASDT.R::path(path_model, "SpSummary.RData"))
+  save(SpSummary, file = fs::path(path_model, "SpSummary.RData"))
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -686,7 +687,7 @@ mod_prepare_HPC <- function(
     IASDT.R::cat_time(
       paste0(
         "Models will be fitted using ", length(XVars), " predictors: ",
-        paste(XVars, collapse = " + ")), level = 1, cat_timestamp = FALSE)
+        paste(XVars, collapse = " + ")), level = 1L, cat_timestamp = FALSE)
   } else {
     OnlyLinear <- setdiff(XVars, quadratic_variables)
     FormVars <- c(
@@ -694,20 +695,20 @@ mod_prepare_HPC <- function(
       paste0("stats::poly(", quadratic_variables, ", degree = 2, raw = TRUE)"))
 
     IASDT.R::cat_time(
-      "Models will be fitted using:", level = 1, cat_timestamp = FALSE)
+      "Models will be fitted using:", level = 1L, cat_timestamp = FALSE)
 
     IASDT.R::cat_time(
       paste0(length(OnlyLinear), " linear effect: "),
-      level = 2, cat_timestamp = FALSE)
+      level = 2L, cat_timestamp = FALSE)
     IASDT.R::cat_time(
-      paste(OnlyLinear, collapse = " + "), level = 3, cat_timestamp = FALSE)
+      paste(OnlyLinear, collapse = " + "), level = 3L, cat_timestamp = FALSE)
 
     IASDT.R::cat_time(
       paste0(length(quadratic_variables), " linear and quadratic effects: "),
-      level = 2, cat_timestamp = FALSE)
+      level = 2L, cat_timestamp = FALSE)
     IASDT.R::cat_time(
       paste(quadratic_variables, collapse = " + "),
-      level = 3, cat_timestamp = FALSE)
+      level = 3L, cat_timestamp = FALSE)
 
   }
 
@@ -749,7 +750,7 @@ mod_prepare_HPC <- function(
 
   IASDT.R::cat_time(
     paste0("Models will be fitted using ", paste(Tree, collapse = " & ")),
-    level = 1, cat_timestamp = FALSE)
+    level = 1L, cat_timestamp = FALSE)
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -759,14 +760,14 @@ mod_prepare_HPC <- function(
 
   if (GPP) {
 
-    IASDT.R::cat_time("Spatial info / random effect")
+    IASDT.R::cat_time("Spatial info and random effect")
     studyDesign <- data.frame(sample = as.factor(seq_len(nrow(DT_x))))
 
     DT_xy <- as.matrix(dplyr::select(DT_All, x, y))
     rownames(DT_xy) <- studyDesign$sample
 
     # Prepare GPP knots
-    IASDT.R::cat_time("Preparing GPP knots", level = 1)
+    IASDT.R::cat_time("Preparing GPP knots", level = 1L)
 
     NCores_GPP <- length(GPP_dists)
 
@@ -774,7 +775,7 @@ mod_prepare_HPC <- function(
 
       IASDT.R::cat_time(
         paste0("Prepare working in parallel using ", NCores_GPP, " cores"),
-        level = 2, cat_timestamp = FALSE)
+        level = 2L, cat_timestamp = FALSE)
 
       withr::local_options(
         future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
@@ -784,7 +785,7 @@ mod_prepare_HPC <- function(
       future::plan("future::cluster", workers = c1, gc = TRUE)
       withr::defer(future::plan("future::sequential", gc = TRUE))
 
-      IASDT.R::cat_time("Prepare GPP knots", level = 2)
+      IASDT.R::cat_time("Prepare GPP knots", level = 2L)
       GPP_Knots <- future.apply::future_lapply(
         X = GPP_dists * 1000,
         FUN = function(x) {
@@ -804,7 +805,7 @@ mod_prepare_HPC <- function(
     } else {
 
       IASDT.R::cat_time(
-        "Working sequentially", cat_timestamp = FALSE, level = 2)
+        "Working sequentially", cat_timestamp = FALSE, level = 2L)
 
       GPP_Knots <- purrr::map(
         .x = GPP_dists * 1000,
@@ -817,7 +818,7 @@ mod_prepare_HPC <- function(
 
     ## Plotting knot location ----
     if (GPP_plot) {
-      IASDT.R::cat_time("Plotting GPP knots", level = 1)
+      IASDT.R::cat_time("Plotting GPP knots", level = 1L)
 
       GridR <- terra::unwrap(IASDT.R::load_as(Path_GridR))
 
@@ -876,15 +877,15 @@ mod_prepare_HPC <- function(
         })
 
       grDevices::cairo_pdf(
-        filename = IASDT.R::path(path_model, "knot_Locations.pdf"),
+        filename = fs::path(path_model, "knot_Locations.pdf"),
         width = 12, height = 13.25, onefile = TRUE)
       invisible(purrr::map(Knots_Plots, print))
       grDevices::dev.off()
     }
 
     if (GPP_save) {
-      IASDT.R::cat_time("Saving GPP knots data", level = 1)
-      save(GPP_Knots, file = IASDT.R::path(path_model, "GPP_Knots.RData"))
+      IASDT.R::cat_time("Saving GPP knots data", level = 1L)
+      save(GPP_Knots, file = fs::path(path_model, "GPP_Knots.RData"))
     }
   } else {
 
@@ -917,11 +918,11 @@ mod_prepare_HPC <- function(
           .x = M_Name_init, .y = rL2,
           .f = ~{
 
-            PathOut <- IASDT.R::path(
+            PathOut <- fs::path(
               path_model, paste0("InitMod_", .x, ".RData"))
 
             if (!file.exists(PathOut)) {
-              if (stringr::str_detect(.x, "_Tree$")) {
+              if (endsWith(.x, "_Tree")) {
                 Tree <- plant.tree
               } else {
                 Tree <- NULL
@@ -949,7 +950,7 @@ mod_prepare_HPC <- function(
 
             M_Name_Fit <- paste0(M_Name_init, "_samp", M_samples, "_th", M_thin)
 
-            M4HPC_Path <- IASDT.R::path(
+            M4HPC_Path <- fs::path(
               path_model, "InitMod4HPC", paste0("InitMod_", M_Name_Fit, ".rds"))
 
             return(list(M_Name_Fit = M_Name_Fit, M4HPC_Path = M4HPC_Path))
@@ -971,13 +972,13 @@ mod_prepare_HPC <- function(
         M_Init_Path = purrr::map_chr(
           .x = M_Name_init,
           .f = ~{
-            PathOut <- IASDT.R::path(
+            PathOut <- fs::path(
               path_model, paste0("InitMod_", .x, ".RData"))
 
             InitModExists <- IASDT.R::check_data(PathOut)
 
             if (isFALSE(InitModExists)) {
-              if (stringr::str_detect(.x, "_Tree$")) {
+              if (endsWith(.x, "_Tree")) {
                 Tree <- plant.tree
               } else {
                 Tree <- NULL
@@ -1000,7 +1001,7 @@ mod_prepare_HPC <- function(
 
             M_Name_Fit <- paste0(M_Name_init, "_samp", M_samples, "_th", M_thin)
 
-            M4HPC_Path <- IASDT.R::path(
+            M4HPC_Path <- fs::path(
               path_model, "InitMod4HPC", paste0("InitMod_", M_Name_Fit, ".rds"))
 
             return(list(M_Name_Fit = M_Name_Fit, M4HPC_Path = M4HPC_Path))
@@ -1016,19 +1017,19 @@ mod_prepare_HPC <- function(
   IASDT.R::cat_time("Save unfitted models")
 
   if (overwrite_rds) {
-    IASDT.R::cat_time("Processing all model variants", level = 1)
+    IASDT.R::cat_time("Processing all model variants", level = 1L)
   } else {
 
     NMod2Export <- sum(!file.exists(Model_Info$M4HPC_Path))
 
     if (NMod2Export == 0) {
       IASDT.R::cat_time(
-        "All model variants were already available as RDS files", level = 1)
+        "All model variants were already available as RDS files", level = 1L)
     } else {
       IASDT.R::cat_time(
         paste0(
           NMod2Export, " model variants need to be exported as RDS files"),
-        level = 1)
+        level = 1L)
     }
   }
 
@@ -1101,16 +1102,16 @@ mod_prepare_HPC <- function(
   Failed2Export <- dplyr::filter(Model_Info, !file.exists(M4HPC_Path))
   if (nrow(Failed2Export) == 0) {
     IASDT.R::cat_time(
-      "All model variants were exported as RDS files", level = 1)
+      "All model variants were exported as RDS files", level = 1L)
   } else {
     IASDT.R::cat_time(
       paste0(
         nrow(Failed2Export),
         " model variants failed to be exported to rds files after 5 tries."),
-      level = 1)
-    save(Failed2Export, file = IASDT.R::path(path_model, "Failed2Export.RData"))
+      level = 1L)
+    save(Failed2Export, file = fs::path(path_model, "Failed2Export.RData"))
     readr::write_tsv(
-      x = Failed2Export, file = IASDT.R::path(path_model, "Failed2Export.txt"))
+      x = Failed2Export, file = fs::path(path_model, "Failed2Export.txt"))
   }
 
   # # |||||||||||||||||||||||||||||||||||
@@ -1134,16 +1135,16 @@ mod_prepare_HPC <- function(
           withr::local_options(list(scipen = 999))
 
           # Input model
-          Path_Model2 <- IASDT.R::path(
+          Path_Model2 <- fs::path(
             path_model, "InitMod4HPC", basename(M4HPC_Path))
 
           # Path for posterior sampling
-          Path_Post <- IASDT.R::path(
+          Path_Post <- fs::path(
             path_model, "Model_Fitting_HPC",
             paste0(M_Name_Fit, "_Chain", Chain, "_post.rds"))
 
           # Path for progress
-          Path_Prog <- IASDT.R::path(
+          Path_Prog <- fs::path(
             path_model, "Model_Fitting_HPC",
             paste0(M_Name_Fit, "_Chain", Chain, "_Progress.txt"))
 
@@ -1233,16 +1234,16 @@ mod_prepare_HPC <- function(
 
   IASDT.R::cat_time("Save model fitting commands to text file(s)")
 
-  IASDT.R::cat_time("Save fitting commands for windows PC", level = 1)
+  IASDT.R::cat_time("Save fitting commands for windows PC", level = 1L)
   f <- file(
-    description = IASDT.R::path(path_model, "Commands_All_Windows.txt"),
+    description = fs::path(path_model, "Commands_All_Windows.txt"),
     open = "wb")
   on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
   cat(Models2Fit_WS, sep = "\n", append = FALSE, file = f)
   close(f)
 
 
-  IASDT.R::cat_time("Save fitting commands for HPC", level = 1)
+  IASDT.R::cat_time("Save fitting commands for HPC", level = 1L)
   NJobs <- length(Models2Fit_HPC)
 
   if (NJobs > n_array_jobs) {
@@ -1254,9 +1255,9 @@ mod_prepare_HPC <- function(
   }
 
   # Save all fitting commands to single file
-  IASDT.R::cat_time("Save all fitting commands to single file", level = 1)
+  IASDT.R::cat_time("Save all fitting commands to single file", level = 1L)
   f <- file(
-    description = IASDT.R::path(path_model, "Commands_All.txt"),
+    description = fs::path(path_model, "Commands_All.txt"),
     open = "wb")
   on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
   cat(Models2Fit_HPC, sep = "\n", append = FALSE, file = f)
@@ -1264,20 +1265,20 @@ mod_prepare_HPC <- function(
 
   # Save model fitting commands for batch SLURM jobs
   IASDT.R::cat_time(
-    "Save model fitting commands for batch SLURM jobs", level = 1)
+    "Save model fitting commands for batch SLURM jobs", level = 1L)
   IASDT.R::cat_time(
     paste0("Models will be fitted in ", NSplits, " SLURM job(s)"),
-    level = 2, cat_timestamp = FALSE)
+    level = 2L, cat_timestamp = FALSE)
 
   purrr::walk(
     .x = seq_len(NSplits),
     .f = function(x) {
 
       if (NSplits > 1) {
-        CommandFile <- IASDT.R::path(
+        CommandFile <- fs::path(
           path_model, paste0("Commands2Fit_", x, ".txt"))
       } else {
-        CommandFile <- IASDT.R::path(path_model, "Commands2Fit.txt")
+        CommandFile <- fs::path(path_model, "Commands2Fit.txt")
       }
 
       # create connection to SLURM file. This is better than using sink to have
@@ -1355,18 +1356,18 @@ mod_prepare_HPC <- function(
   # Whether to use masked (exclude_cultivated) or full PA
   PA_Layer <- dplyr::if_else(exclude_cultivated, "PA_Masked", "PA")
 
-  IASDT.R::cat_time("Processing and exporting maps as tif files", level = 1)
+  IASDT.R::cat_time("Processing and exporting maps as tif files", level = 1L)
   Mod_PA <- SpSummary %>%
     # Select only species name and ID
     dplyr::select(ias_id = IAS_ID, Species_File) %>%
     dplyr::mutate(
       # Path storing PA maps as raster files
-      File = IASDT.R::path(Path_PA, "RData", paste0(Species_File, "_PA.RData")),
+      File = fs::path(Path_PA, "RData", paste0(Species_File, "_PA.RData")),
       Map_Sp = purrr::map2(
         .x = File, .y = ias_id,
         .f = ~ {
           # Path for storing PA map - full EU extent
-          PA_file <- IASDT.R::path(Path_Dist, paste0(.y, "_full.tif"))
+          PA_file <- fs::path(Path_Dist, paste0(.y, "_full.tif"))
           # Load PA map
           PA <- IASDT.R::load_as(.x) %>%
             terra::unwrap() %>%
@@ -1375,7 +1376,7 @@ mod_prepare_HPC <- function(
           terra::writeRaster(PA, PA_file, overwrite = TRUE)
 
           # Path for storing PA map - only in modelling grid cells
-          PA_model_file <- IASDT.R::path(Path_Dist, paste0(.y, "_model.tif"))
+          PA_model_file <- fs::path(Path_Dist, paste0(.y, "_model.tif"))
           # mask PA map to modelling grid cells
           PA_model <- terra::mask(PA, Model_Mask)
           # Save masked PA map
@@ -1390,15 +1391,15 @@ mod_prepare_HPC <- function(
     tidyr::unnest(cols = "Map_Sp") %>%
     dplyr::select(-Species_File, -File)
 
-  IASDT.R::cat_time("Calculate species richness - full", level = 1)
-  SR_file <- IASDT.R::path(Path_Dist, "SR_full.tif")
+  IASDT.R::cat_time("Calculate species richness - full", level = 1L)
+  SR_file <- fs::path(Path_Dist, "SR_full.tif")
   SR <- purrr::map(Mod_PA$PA, terra::unwrap) %>%
     terra::rast() %>%
     sum(na.rm = TRUE)
   terra::writeRaster(SR, SR_file, overwrite = TRUE)
 
-  IASDT.R::cat_time("Calculate species richness - modelling", level = 1)
-  SR_model_file <- IASDT.R::path(Path_Dist, "SR_model.tif")
+  IASDT.R::cat_time("Calculate species richness - modelling", level = 1L)
+  SR_model_file <- fs::path(Path_Dist, "SR_model.tif")
   SR_model <- purrr::map(Mod_PA$PA_model, terra::unwrap) %>%
     terra::rast() %>%
     sum(na.rm = TRUE)
@@ -1411,35 +1412,35 @@ mod_prepare_HPC <- function(
     terra::unwrap(SR_model), SR_model_file) %>%
     dplyr::bind_rows(Mod_PA)
 
-  IASDT.R::cat_time("Save maps as RData", level = 1)
+  IASDT.R::cat_time("Save maps as RData", level = 1L)
   IASDT.R::save_as(
     object = Mod_PA, object_name = "PA_with_maps",
-    out_path = IASDT.R::path(Path_Dist, "PA_with_maps.RData"))
+    out_path = fs::path(Path_Dist, "PA_with_maps.RData"))
 
-  IASDT.R::cat_time("Save maps without maps as RData", level = 1)
+  IASDT.R::cat_time("Save maps without maps as RData", level = 1L)
   Mod_PA <- dplyr::select(Mod_PA, -PA, -PA_model)
   IASDT.R::save_as(
     object = Mod_PA, object_name = "PA",
-    out_path = IASDT.R::path(Path_Dist, "PA.RData"))
+    out_path = fs::path(Path_Dist, "PA.RData"))
 
-  IASDT.R::cat_time("Save only paths text file", level = 1)
+  IASDT.R::cat_time("Save only paths text file", level = 1L)
   Mod_PA %>%
     dplyr::mutate(
       PA_file = basename(PA_file),
       PA_model_file = basename(PA_model_file)) %>%
     utils::write.table(
       sep = "\t", row.names = FALSE, col.names = TRUE,
-      file = IASDT.R::path(Path_Dist, "PA.txt"), quote = FALSE,
+      file = fs::path(Path_Dist, "PA.txt"), quote = FALSE,
       fileEncoding = "UTF-8")
 
   # Save maps as tar file
-  IASDT.R::cat_time("Save maps as single tar file", level = 1)
+  IASDT.R::cat_time("Save maps as single tar file", level = 1L)
   # Path of the tar file
-  tar_file <- IASDT.R::path(Path_Dist, "PA_maps.tar")
+  tar_file <- fs::path(Path_Dist, "PA_maps.tar")
   # list of files to tar
   Files2Tar <- c(
     Mod_PA$PA_file, Mod_PA$PA_model_file,
-    IASDT.R::path(Path_Dist, "PA.txt")) %>%
+    fs::path(Path_Dist, "PA.txt")) %>%
     basename() %>%
     paste(collapse = " ")
   tar_command <- stringr::str_glue(
@@ -1461,12 +1462,12 @@ mod_prepare_HPC <- function(
 
   IASDT.R::save_as(
     object = DT_Split, object_name = "ModDT_subset",
-    out_path = IASDT.R::path(path_model, "ModDT_subset.RData"))
+    out_path = fs::path(path_model, "ModDT_subset.RData"))
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::cat_diff(
-    init_time = .StartTime, prefix = "Processing modelling data took ")
+    init_time = .start_time, prefix = "Processing modelling data took ")
 
   return(invisible(NULL))
 }

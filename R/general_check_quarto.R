@@ -61,7 +61,7 @@ check_quarto <- function(pre_release = FALSE) {
     }) %>%
     # Combine into a single data frame
     dplyr::bind_rows() %>%
-    dplyr::filter(stringr::str_detect(Version, "^v"))
+    dplyr::filter(startsWith(Version, "v"))
 
   Version_Latest <- Releases %>%
     dplyr::filter(stringr::str_detect(Labels, "Latest")) %>%

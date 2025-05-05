@@ -2,22 +2,20 @@
 # predict_maps ----
 ## |------------------------------------------------------------------------| #
 
-#' Predict habitat suitability of `Hmsc` model across different climate options
+#' Predict habitat suitability of `Hmsc` models
 #'
-#' This function generates prediction maps of `Hmsc` models for current and
-#' future climate options. It also predicts an ensemble predictions for
-#' different climate models. For each species and overall species richness, the
-#' function exports three maps: mean, standard deviation (sd), and coefficient
-#' of variation (cov). For future predictions, the function generates maps for
-#' prediction anomaly (future - current). The function prepares data to be
-#' uploaded to the [OPeNDAP](http://opendap.biodt.eu/ias-pdt/) data server for
-#' the use of the IAS-pDT [Shiny App](https://app.biodt.eu/).
+#' This package provides two functions for predicting habitat suitability of
+#' `Hmsc` models in the `IASDT` framework. [predict_maps] generates current and
+#' future habitat suitability maps (mean, sd, cov) from a full Hmsc model fit.
+#' [predict_maps_CV] predicts and evaluates cross-validated Hmsc models for
+#' current climate conditions. For more details, see the respective function
+#' documentation and the details section below.
+#'
 #' @param path_model Character. Path to fitted `Hmsc` model object.
 #' @param hab_abb Character. Habitat abbreviation indicating the specific
-#'   [SynHab](https://www.preslia.cz/article/pdf?id=11548) habitat type for
-#'   which data will be prepared. Valid values are `0`, `1`, `2`, `3`, `4a`,
-#'   `4b`, `10`, `12a`, `12b`. For more details, see [Pysek et
-#'   al.](https://doi.org/10.23855/preslia.2022.447).
+#'   [SynHab](https://www.preslia.cz/article/pdf?id=11548) habitat type. Valid
+#'   values: `0`, `1`, `2`, `3`, `4a`, `4b`, `10`, `12a`, `12b`. See [Pysek et
+#'   al.](https://doi.org/10.23855/preslia.2022.447) for details.
 #' @param env_file Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
@@ -25,23 +23,18 @@
 #' @param clamp_pred Logical indicating whether to clamp the sampling efforts at
 #'   a single value. If `TRUE` (default), the `fix_efforts` argument must be
 #'   provided.
-#' @param fix_efforts Numeric or character. If `clamp_pred = TRUE`, the sampling
-#'   efforts predictor with values U+02264 `fix_efforts` is fixed at
-#'   `fix_efforts` during predictions. If numeric, the value is directly used
-#'   (log<sub>10</sub> scale). If character, it can be one of `median`, `mean`,
-#'   `max`, or `q90` (90% Quantile). Using `max` can reflect extreme values
-#'   caused by rare, highly sampled locations (e.g., urban centers or popular
-#'   natural reserves). While using 90% quantile avoid such extreme grid cells
-#'   while still capturing areas with high sampling effort. This argument is
-#'   mandatory when `clamp_pred` is set to `TRUE`.
-#' @param fix_rivers Numeric or character. Similar to `fix_efforts`, but for
-#'   fixing the length of rivers. If numeric, the value is directly used
-#'   (log<sub>10</sub> scale). If character, it can be one of `median`, `mean`,
-#'   `max`, `q90` (90% quantile). It can be also `NULL` for not fixing the river
-#'   length predictor. Defaults to `q90`.
-#' @param pred_new_sites Logical. Whether to predict habitat suitability at new
-#'   sites. Default: `TRUE`. Note: This parameter is temporary and will be
-#'   removed in future updates.
+#' @param fix_efforts Numeric or character. When `clamp_pred = TRUE`, fixes the
+#'   sampling efforts predictor at this value during predictions. If numeric,
+#'   uses the value directly (on log<sub>10</sub> scale). If character, must be
+#'   one of `median`, `mean`, `max`, or `q90` (90% quantile). Using `max` may
+#'   reflect extreme sampling efforts from highly sampled locations, while `q90`
+#'   captures high sampling areas without extremes. Required if `clamp_pred =
+#'   TRUE`.
+#' @param fix_rivers Numeric, character, or `NULL`. Similar to `fix_efforts`,
+#'   but for the river length predictor. If `NULL`, the river length is not
+#'   fixed. Default: `q90`.
+#' @param pred_new_sites Logical. Whether to predict suitability at new sites.
+#'   Default: `TRUE`.
 #' @param LF_only Logical. Whether to predict only the latent factor. This is
 #'   useful for distributing processing load between GPU and CPU. When `LF_only
 #'   = TRUE`, latent factor prediction needs to be computed separately on GPU.
@@ -56,14 +49,34 @@
 #'   (default).
 #' @param tar_predictions Logical. Whether to compress the add files into a
 #'   single `*.tar` file (without compression). Default: `TRUE`.
+#' @param model_dir Character. Path to the directory containing cross-validated
+#'   models.
+#' @param CV_name Character. Cross-validation strategy. Valid values are
+#'   `CV_Dist`, `CV_Large`, or `CV_SAC`.
+#' @param CV_fold Integer. The cross-validation fold number.
+#' @inheritParams predict_hmsc
+#' @details
+#'   - **`predict_maps`**: Generates habitat suitability maps for `Hmsc` models
+#' fitted on the full dataset, for both current and future climate options. It
+#' produces maps for mean, standard deviation (sd), and coefficient of variation
+#' (cov) of suitability for each species and overall species richness. It
+#' evaluate model's explanatory power using various metrics. For future
+#' predictions, it also generates anomaly maps (future - current). The function
+#' supports ensemble predictions across multiple climate models and prepares
+#' data for upload to the [OPeNDAP](http://opendap.biodt.eu/ias-pdt/) server for
+#' use in the `IASDT` [Shiny App](https://app.biodt.eu/).
+#'   - **`predict_maps_CV`**: Computes predictions for cross-validated `Hmsc`
+#' models using only the testing folds. It evaluates model performance
+#' (predictive power) with various metrics and plots evaluation results for
+#' predictive and explanatory power. Unlike `predict_maps`, this function does
+#' not perform clamping and does not generate future climate predictions.
+#' @seealso predict_hmsc
+
 #' @export
 #' @name predict_maps
+#' @rdname predict_maps
+#' @order 1
 #' @author Ahmed El-Gabbas
-#' @inheritParams predict_hmsc
-#' @return A tibble containing the prediction summary and file paths for output
-#'   `*.tif` files.
-#' @seealso [predict_maps_CV]
-#' @export
 
 predict_maps <- function(
     path_model = NULL, hab_abb = NULL, env_file = ".env", n_cores = 8L,
@@ -80,7 +93,7 @@ predict_maps <- function(
   # # ..................................................................... ###
   # # ..................................................................... ###
 
-  .StartTime <- lubridate::now(tzone = "CET")
+  .start_time <- lubridate::now(tzone = "CET")
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -94,7 +107,7 @@ predict_maps <- function(
       hab_abb = hab_abb, length_hab_abb = length(hab_abb))
   }
 
-  Hab_Name <- c(
+  hab_name <- c(
     "0_All", "1_Forests", "2_Open_forests", "3_Scrub",
     "4a_Natural_grasslands", "4b_Human_maintained_grasslands",
     "10_Wetland", "12a_Ruderal_habitats", "12b_Agricultural_habitats") %>%
@@ -166,30 +179,30 @@ predict_maps <- function(
   # # ..................................................................... ###
   # # ..................................................................... ###
 
-  Path_Eval <- IASDT.R::path(dirname(dirname(path_model)), "Model_Evaluation")
+  Path_Eval <- fs::path(dirname(dirname(path_model)), "Model_Evaluation")
 
-  Path_Prediction1 <- IASDT.R::path(
+  Path_Prediction1 <- fs::path(
     dirname(dirname(path_model)), "Model_Prediction")
-  Path_Prediction_Clamp <- IASDT.R::path(Path_Prediction1, "Clamp")
-  Path_Prediction_NoClamp <- IASDT.R::path(Path_Prediction1, "NoClamp")
+  Path_Prediction_Clamp <- fs::path(Path_Prediction1, "Clamp")
+  Path_Prediction_NoClamp <- fs::path(Path_Prediction1, "NoClamp")
   fs::dir_create(c(Path_Eval, Path_Prediction_NoClamp))
 
   # Path for overall summary - paths for summaries of identical scenarios
-  Path_Summary_RData <- IASDT.R::path(
+  Path_Summary_RData <- fs::path(
     dplyr::if_else(
       clamp_pred, Path_Prediction_Clamp, Path_Prediction_NoClamp),
     "Prediction_Summary.RData")
-  Path_Summary_txt <- IASDT.R::path(
+  Path_Summary_txt <- fs::path(
     dplyr::if_else(
       clamp_pred, Path_Prediction_Clamp, Path_Prediction_NoClamp),
     "Prediction_Summary.txt")
 
   # Path for overall summary - for ShinyApp
-  Path_Summary_RData_Shiny <- IASDT.R::path(
+  Path_Summary_RData_Shiny <- fs::path(
     dplyr::if_else(
       clamp_pred, Path_Prediction_Clamp, Path_Prediction_NoClamp),
     "Prediction_Summary_Shiny.RData")
-  Path_Summary_txt_Shiny <- IASDT.R::path(
+  Path_Summary_txt_Shiny <- fs::path(
     dplyr::if_else(
       clamp_pred, Path_Prediction_Clamp, Path_Prediction_NoClamp),
     "Prediction_Summary_Shiny.txt")
@@ -235,7 +248,7 @@ predict_maps <- function(
   IASDT.R::cat_time("Environment variables")
 
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "Path_Rail", "DP_R_Railways_processed", TRUE, FALSE,
     "Path_Roads", "DP_R_Roads_processed", TRUE, FALSE,
     "Path_CLC", "DP_R_CLC_processed", TRUE, FALSE,
@@ -266,8 +279,8 @@ predict_maps <- function(
 
   ## Reference grid -----
 
-  IASDT.R::cat_time("Reference grid", level = 1)
-  Path_GridR <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop.RData")
+  IASDT.R::cat_time("Reference grid", level = 1L)
+  Path_GridR <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(Path_GridR)) {
     IASDT.R::stop_ctx(
       "Path for the Europe boundaries does not exist", Path_GridR = Path_GridR)
@@ -277,7 +290,7 @@ predict_maps <- function(
 
   ## Model object -----
 
-  IASDT.R::cat_time("Model object", level = 1)
+  IASDT.R::cat_time("Model object", level = 1L)
 
   if (is.null(path_model) || !file.exists(path_model)) {
     IASDT.R::stop_ctx(
@@ -310,9 +323,9 @@ predict_maps <- function(
 
   ## CHELSA data -----
 
-  IASDT.R::cat_time("CHELSA data", level = 1)
+  IASDT.R::cat_time("CHELSA data", level = 1L)
 
-  Path_CHELSA <- IASDT.R::path(Path_CHELSA, "CHELSA_Processed_DT.RData")
+  Path_CHELSA <- fs::path(Path_CHELSA, "CHELSA_Processed_DT.RData")
   if (!file.exists(Path_CHELSA)) {
     IASDT.R::stop_ctx(
       "Processed CHLESA data can not be found", Path_CHELSA = Path_CHELSA)
@@ -349,9 +362,9 @@ predict_maps <- function(
 
   if ("RoadRailLog" %in% other_variables) {
 
-    IASDT.R::cat_time("Road and railway intensity", level = 1)
+    IASDT.R::cat_time("Road and railway intensity", level = 1L)
 
-    R_Railways <- IASDT.R::path(Path_Rail, "Railways_Length.RData")
+    R_Railways <- fs::path(Path_Rail, "Railways_Length.RData")
     if (!file.exists(R_Railways)) {
       IASDT.R::stop_ctx("Railways data does not exist", R_Railways = R_Railways)
     }
@@ -359,7 +372,7 @@ predict_maps <- function(
       terra::unwrap() %>%
       magrittr::extract2("rail")
 
-    R_Roads <- IASDT.R::path(Path_Roads, "Road_Length.RData")
+    R_Roads <- fs::path(Path_Roads, "Road_Length.RData")
     if (!file.exists(R_Roads)) {
       IASDT.R::stop_ctx("Roads data does not exist", R_Roads = R_Roads)
     }
@@ -386,8 +399,8 @@ predict_maps <- function(
 
   if (Hab_Predictor) {
 
-    IASDT.R::cat_time("Habitat information", level = 1)
-    R_Hab <- IASDT.R::path(
+    IASDT.R::cat_time("Habitat information", level = 1L)
+    R_Hab <- fs::path(
       Path_CLC, "Summary_RData", "PercCov_SynHab_Crop.RData")
     if (!file.exists(R_Hab)) {
       IASDT.R::stop_ctx("Habitat data does not exist", R_Hab = R_Hab)
@@ -415,9 +428,9 @@ predict_maps <- function(
 
   if ("EffortsLog" %in% other_variables) {
 
-    IASDT.R::cat_time("Sampling efforts", level = 1)
+    IASDT.R::cat_time("Sampling efforts", level = 1L)
 
-    R_Efforts <- IASDT.R::path(Path_Bias, "Efforts_SummaryR.RData")
+    R_Efforts <- fs::path(Path_Bias, "Efforts_SummaryR.RData")
     if (!file.exists(R_Efforts)) {
       IASDT.R::stop_ctx(
         "Sampling efforts data does not exist", R_Efforts = R_Efforts)
@@ -433,7 +446,7 @@ predict_maps <- function(
 
     if (clamp_pred) {
 
-      IASDT.R::cat_time("Fixing sampling efforts values", level = 2)
+      IASDT.R::cat_time("Fixing sampling efforts values", level = 2L)
 
       # Check fix_efforts value
       if (is.numeric(fix_efforts)) {
@@ -511,7 +524,7 @@ predict_maps <- function(
       # Fix at single value
       IASDT.R::cat_time(
         paste0("Fixed value is ", round(EffortsVal, 2), " [log10 scale]"),
-        level = 2, cat_timestamp = FALSE)
+        level = 2L, cat_timestamp = FALSE)
 
       # Set a minimum value for efforts variable to `EffortsVal`. Using upper =
       # Inf keeps efforts values > EffortsVal as they are.
@@ -536,9 +549,9 @@ predict_maps <- function(
 
   if ("RiversLog" %in% other_variables) {
 
-    IASDT.R::cat_time("River length", level = 1)
+    IASDT.R::cat_time("River length", level = 1L)
 
-    R_Rivers <- IASDT.R::path(Path_Rivers, "River_Lengths.RData")
+    R_Rivers <- fs::path(Path_Rivers, "River_Lengths.RData")
     if (!file.exists(R_Rivers)) {
       IASDT.R::stop_ctx("River length data does not exist", R_Rivers = R_Rivers)
     }
@@ -556,13 +569,13 @@ predict_maps <- function(
       # Do not fix at single value
       IASDT.R::cat_time(
         "River length predictor is not fixed at a single value",
-        level = 2, cat_timestamp = FALSE)
+        level = 2L, cat_timestamp = FALSE)
 
     } else {
 
       IASDT.R::cat_time(
         "River length predictor will be fixed at single (`fix_rivers`) value",
-        level = 2, cat_timestamp = FALSE)
+        level = 2L, cat_timestamp = FALSE)
 
 
       # Check if the fix_rivers value is valid
@@ -646,7 +659,7 @@ predict_maps <- function(
 
       IASDT.R::cat_time(
         paste0("Fixed value is ", round(RiversVal, 2), " [log10 scale]"),
-        level = 2, cat_timestamp = FALSE)
+        level = 2L, cat_timestamp = FALSE)
 
       # Set a minimum value for `RiversLog` variable to `RiversVal`. Using upper
       # = Inf keeps RiversLog values > RiversVal as they are.
@@ -666,7 +679,7 @@ predict_maps <- function(
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
 
   ## Merge static predictors -----
-  IASDT.R::cat_time("Merge static predictors", level = 1)
+  IASDT.R::cat_time("Merge static predictors", level = 1L)
 
   StaticPredictors <- terra::rast(StaticPredictors)
 
@@ -683,12 +696,12 @@ predict_maps <- function(
 
   IASDT.R::cat_time("Predict latent factor at new locations")
 
-  Path_Test_LF <- IASDT.R::path(Path_Prediction1, "Test_LF.qs2")
+  Path_Test_LF <- fs::path(Path_Prediction1, "Test_LF.qs2")
 
   if (!file.exists(Path_Test_LF) && pred_new_sites) {
 
     IASDT.R::cat_time(
-      "Preparing input data for predicting latent factor", level = 1)
+      "Preparing input data for predicting latent factor", level = 1L)
 
     Predict_DF_Test <- Prediction_Options %>%
       dplyr::filter(ClimateModel == "Current") %>%
@@ -724,10 +737,10 @@ predict_maps <- function(
     rm(Predict_DF_Test, Test_X, Test_XY, Model, envir = environment())
     invisible(gc())
 
-    IASDT.R::cat_time("Predicting latent factor", level = 1)
+    IASDT.R::cat_time("Predicting latent factor", level = 1L)
     IASDT.R::cat_sep(
-      sep_lines_before = 1, sep_lines_after = 2,
-      n_separators = 1, line_char = "*")
+      sep_lines_before = 1L, sep_lines_after = 2,
+      n_separators = 1L, line_char = "*")
 
     # Predicting latent factor only
     Preds_LF <- IASDT.R::predict_hmsc(
@@ -741,10 +754,10 @@ predict_maps <- function(
 
     rm(Gradient, Preds_LF, envir = environment())
 
-    IASDT.R::cat_time("Predicting latent factor is finished!", level = 1)
+    IASDT.R::cat_time("Predicting latent factor is finished!", level = 1L)
     IASDT.R::cat_sep(
-      sep_lines_before = 1, sep_lines_after = 2,
-      n_separators = 1, line_char = "*")
+      sep_lines_before = 1L, sep_lines_after = 2,
+      n_separators = 1L, line_char = "*")
 
     if (LF_commands_only) {
       return(invisible(NULL))
@@ -752,9 +765,10 @@ predict_maps <- function(
 
   } else {
     if (pred_new_sites) {
-      IASDT.R::cat_time("LF prediction is already available on disk", level = 1)
+      IASDT.R::cat_time(
+        "LF prediction is already available on disk", level = 1L)
     } else {
-      IASDT.R::cat_time("LF prediction will NOT be made", level = 1)
+      IASDT.R::cat_time("LF prediction will NOT be made", level = 1L)
     }
 
     rm(Model, envir = environment())
@@ -788,8 +802,8 @@ predict_maps <- function(
     MSG <- paste0(
       model_name, " (", ID, "/", nrow(Prediction_Options), ")")
     IASDT.R::info_chunk(
-      MSG, n_separators = 1, line_char = "-", line_char_rep = 70,
-      cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE, level = 1,
+      MSG, n_separators = 1L, line_char = "-", line_char_rep = 70L,
+      cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE, level = 1L,
       info_lines_before = 1L)
 
     if (DoClamp) {
@@ -823,15 +837,15 @@ predict_maps <- function(
       }
     }
 
-    Path_Prediction_sf <- IASDT.R::path(
+    Path_Prediction_sf <- fs::path(
       Path_Prediction, paste0("Prediction_", Option_Name, "_sf.qs2"))
-    Path_Prediction_R <- IASDT.R::path(
+    Path_Prediction_R <- fs::path(
       Path_Prediction, paste0("Prediction_", Option_Name, "_R.qs2"))
-    Path_Prediction_summary <- IASDT.R::path(
+    Path_Prediction_summary <- fs::path(
       Path_Prediction, paste0("Prediction_", Option_Name, "_Summary.RData"))
 
     # Path for saving tif files of the current option
-    Path_Prediction_tif <- IASDT.R::path(Path_Prediction, Option_Name)
+    Path_Prediction_tif <- fs::path(Path_Prediction, Option_Name)
     fs::dir_create(Path_Prediction_tif)
     invisible(gc())
 
@@ -852,7 +866,7 @@ predict_maps <- function(
       # Skip predictions if the predictions as sf object is already on disk
       if (file.exists(Path_Prediction_sf)) {
 
-        IASDT.R::cat_time("Loading predictions `sf` from disk", level = 1)
+        IASDT.R::cat_time("Loading predictions `sf` from disk", level = 1L)
         Prediction_sf <- IASDT.R::load_as(Path_Prediction_sf)
 
       } else {
@@ -861,7 +875,7 @@ predict_maps <- function(
 
         # Extracting data at training and new sites ------
         IASDT.R::cat_time(
-          "Extracting data at training and new sites", level = 1)
+          "Extracting data at training and new sites", level = 1L)
         Predict_DF <- Prediction_Options$FilePath[[ID]] %>%
           IASDT.R::load_as() %>%
           terra::unwrap() %>%
@@ -907,14 +921,14 @@ predict_maps <- function(
         # ______________________________________________
 
         # Predictions at training sites ----
-        IASDT.R::cat_time("Predictions at training sites", level = 1)
+        IASDT.R::cat_time("Predictions at training sites", level = 1L)
 
-        Path_Current_Train <- IASDT.R::path(
+        Path_Current_Train <- fs::path(
           Path_Prediction, paste0("Prediction_", Option_Name, "_Train.qs2"))
 
         if (file.exists(Path_Current_Train)) {
 
-          IASDT.R::cat_time("Loading predictions from disk", level = 2)
+          IASDT.R::cat_time("Loading predictions from disk", level = 2L)
           Preds_ModFitSites <- tibble::tibble(Pred_Path = Path_Current_Train)
 
         } else {
@@ -938,14 +952,14 @@ predict_maps <- function(
 
         if (pred_new_sites) {
 
-          IASDT.R::cat_time("Predictions at new sites", level = 1)
+          IASDT.R::cat_time("Predictions at new sites", level = 1L)
 
-          Path_Current_Test <- IASDT.R::path(
+          Path_Current_Test <- fs::path(
             Path_Prediction, paste0("Prediction_", Option_Name, "_Test.qs2"))
 
           if (file.exists(Path_Current_Test)) {
 
-            IASDT.R::cat_time("Loading predictions from disk", level = 2)
+            IASDT.R::cat_time("Loading predictions from disk", level = 2L)
             Preds_NewSites <- tibble::tibble(Pred_Path = Path_Current_Test)
 
           } else {
@@ -967,7 +981,7 @@ predict_maps <- function(
 
           # Merge & save predictions - sf ------
           IASDT.R::cat_time(
-            "Merge & save predictions at training and new sites", level = 1)
+            "Merge & save predictions at training and new sites", level = 1L)
 
           Prediction_sf <- dplyr::bind_rows(
             IASDT.R::load_as(Preds_ModFitSites$Pred_Path),
@@ -976,7 +990,7 @@ predict_maps <- function(
         } else {
 
           IASDT.R::cat_time(
-            "Predictions at new sites will NOT be made", level = 1)
+            "Predictions at new sites will NOT be made", level = 1L)
 
           # Get column names from predictions at training sites
           ColsToAdd <- IASDT.R::load_as(Preds_ModFitSites$Pred_Path) %>%
@@ -986,7 +1000,7 @@ predict_maps <- function(
           # Add missing columns to predictions at new sites
           Preds_New_NA <- Test_XY %>%
             dplyr::mutate(model_name = Model_Name_Test) %>%
-            IASDT.R::add_missing_columns(FillVal = NA_real_, ColsToAdd)
+            IASDT.R::add_missing_columns(fill_value = NA_real_, ColsToAdd)
 
           # combine predictions
           Prediction_sf <- IASDT.R::load_as(Preds_ModFitSites$Pred_Path) %>%
@@ -1001,7 +1015,7 @@ predict_maps <- function(
         IASDT.R::save_as(object = Prediction_sf, out_path = Path_Prediction_sf)
 
         IASDT.R::cat_diff(
-          init_time = .OptionStartTime, prefix = "Prediction took ", level = 1)
+          init_time = .OptionStartTime, prefix = "Prediction took ", level = 1L)
 
       }
 
@@ -1010,7 +1024,7 @@ predict_maps <- function(
 
       ### Predictions as spatRaster / tif -----
 
-      IASDT.R::cat_time("Rasterization & prepare summary data", level = 1)
+      IASDT.R::cat_time("Rasterization & prepare summary data", level = 1L)
 
       Fields2Raster <- names(Prediction_sf) %>%
         stringr::str_subset("^Sp_|^SR_") %>%
@@ -1055,7 +1069,7 @@ predict_maps <- function(
       }
 
       Out_Summary <- tibble::tibble(
-        hab_abb = hab_abb, hab_name = Hab_Name,
+        hab_abb = hab_abb, hab_name = hab_name,
         layer_name = Fields2Raster,
         time_period = Prediction_Options$TimePeriod[[ID]],
         climate_model = Prediction_Options$ClimateModel[[ID]],
@@ -1064,18 +1078,18 @@ predict_maps <- function(
         Path_Prediction = Path_Prediction) %>%
         dplyr::mutate(
           Stats = dplyr::case_when(
-            stringr::str_detect(layer_name, "_mean$") ~ "tif_path_mean",
-            stringr::str_detect(layer_name, "_sd$") ~ "tif_path_sd",
-            stringr::str_detect(layer_name, "_cov$") ~ "tif_path_cov",
-            stringr::str_detect(layer_name, "_anomaly$") ~ "tif_path_anomaly",
+            endsWith(layer_name, "_mean") ~ "tif_path_mean",
+            endsWith(layer_name, "_sd") ~ "tif_path_sd",
+            endsWith(layer_name, "_cov") ~ "tif_path_cov",
+            endsWith(layer_name, "_anomaly") ~ "tif_path_anomaly",
             .default = NULL),
           ias_id = stringr::str_remove(
             layer_name, "_mean$|_sd$|_cov$|_anomaly"),
-          tif_path = IASDT.R::path(
+          tif_path = fs::path(
             Path_Prediction_tif, paste0(layer_name, ".tif")))
 
       # Save as tif
-      IASDT.R::cat_time("Save as tif", level = 1)
+      IASDT.R::cat_time("Save as tif", level = 1L)
       Out_Summary0 <- Out_Summary %>%
         dplyr::mutate(
           Map = purrr::map2(
@@ -1104,18 +1118,18 @@ predict_maps <- function(
               "tif_path_cov", "tif_path_anomaly")))
 
       # save as spatRaster - qs2
-      IASDT.R::cat_time("Save as spatRaster - qs2", level = 1)
+      IASDT.R::cat_time("Save as spatRaster - qs2", level = 1L)
       Prediction_R <- terra::wrap(Prediction_R)
       IASDT.R::save_as(object = Prediction_R, out_path = Path_Prediction_R)
 
       # Save summary - RData
-      IASDT.R::cat_time("Save summary - RData", level = 1)
+      IASDT.R::cat_time("Save summary - RData", level = 1L)
       IASDT.R::save_as(
         object = Out_Summary, object_name = paste0(Option_Name, "_Summary"),
         out_path = Path_Prediction_summary)
 
       # Save summary - csv
-      IASDT.R::cat_time("Save summary - csv", level = 1)
+      IASDT.R::cat_time("Save summary - csv", level = 1L)
       utils::write.table(
         x = Out_Summary,
         file = stringr::str_replace(Path_Prediction_summary, ".RData$", ".txt"),
@@ -1140,8 +1154,8 @@ predict_maps <- function(
   # Predicting ------
 
   IASDT.R::info_chunk(
-    "Making spatial predictions", n_separators = 2, level = 1,
-    line_char = "*", line_char_rep = 70, cat_red = TRUE,
+    "Making spatial predictions", n_separators = 2L, level = 1L,
+    line_char = "*", line_char_rep = 70L, cat_red = TRUE,
     cat_bold = TRUE, cat_timestamp = FALSE)
 
   Grid10 <- terra::unwrap(IASDT.R::load_as(Path_GridR))
@@ -1160,10 +1174,10 @@ predict_maps <- function(
   # Ensemble model predictions ------
 
   IASDT.R::info_chunk(
-    "\tEnsemble model predictions", n_separators = 1, line_char = "-",
-    line_char_rep = 70, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
+    "\tEnsemble model predictions", n_separators = 1L, line_char = "-",
+    line_char_rep = 70L, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
-  IASDT.R::cat_time("Prepare working in parallel", level = 1)
+  IASDT.R::cat_time("Prepare working in parallel", level = 1L)
 
   if (n_cores == 1) {
     future::plan("future::sequential", gc = TRUE)
@@ -1181,7 +1195,7 @@ predict_maps <- function(
 
   # Prepare input data to calculate ensemble predictions
   IASDT.R::cat_time(
-    "Prepare input data to calculate ensemble predictions", level = 1)
+    "Prepare input data to calculate ensemble predictions", level = 1L)
 
   Prediction_Ensemble <- Prediction_Summary %>%
     dplyr::filter(ClimateModel != "Current") %>%
@@ -1208,7 +1222,7 @@ predict_maps <- function(
     tidyr::unnest("Prediction2") %>%
     dplyr::mutate(
       climate_model = "Ensemble",
-      Dir_Ensemble = IASDT.R::path(
+      Dir_Ensemble = fs::path(
         dirname(dirname(tif_path_mean)),
         paste0(
           stringr::str_replace(time_period, "-", "_"), "_", climate_scenario,
@@ -1216,21 +1230,21 @@ predict_maps <- function(
     dplyr::group_by(dplyr::across(-tif_path_mean)) %>%
     dplyr::summarise(tifs = list(tif_path_mean), .groups = "drop") %>%
     dplyr::mutate(
-      tif_path_mean = IASDT.R::path(Dir_Ensemble, paste0(ias_id, "_mean.tif")),
-      tif_path_anomaly = IASDT.R::path(
+      tif_path_mean = fs::path(Dir_Ensemble, paste0(ias_id, "_mean.tif")),
+      tif_path_anomaly = fs::path(
         Dir_Ensemble, paste0(ias_id, "_anomaly.tif")),
-      tif_path_sd = IASDT.R::path(Dir_Ensemble, paste0(ias_id, "_sd.tif")),
-      tif_path_cov = IASDT.R::path(Dir_Ensemble, paste0(ias_id, "_cov.tif")))
+      tif_path_sd = fs::path(Dir_Ensemble, paste0(ias_id, "_sd.tif")),
+      tif_path_cov = fs::path(Dir_Ensemble, paste0(ias_id, "_cov.tif")))
 
   # --------------------------------------------------------- #
 
-  IASDT.R::cat_time("Create directories for ensemble predictions", level = 1)
+  IASDT.R::cat_time("Create directories for ensemble predictions", level = 1L)
   fs::dir_create(unique(Prediction_Ensemble$Dir_Ensemble))
 
   # --------------------------------------------------------- #
 
   # Loading mean predictions at current climates
-  IASDT.R::cat_time("Loading mean predictions at current climates", level = 1)
+  IASDT.R::cat_time("Loading mean predictions at current climates", level = 1L)
 
   CurrentMean <- list.files(
     path = dplyr::if_else(
@@ -1244,7 +1258,7 @@ predict_maps <- function(
   # --------------------------------------------------------- #
 
   # Calculate ensemble predictions
-  IASDT.R::cat_time("Calculate ensemble predictions", level = 1)
+  IASDT.R::cat_time("Calculate ensemble predictions", level = 1L)
 
   Prediction_Ensemble <- Prediction_Ensemble %>%
     dplyr::mutate(
@@ -1307,11 +1321,11 @@ predict_maps <- function(
   # --------------------------------------------------------- #
 
   # Save ensemble maps as SpatRast
-  IASDT.R::cat_time("Save ensemble predictions as SpatRast", level = 1)
+  IASDT.R::cat_time("Save ensemble predictions as SpatRast", level = 1L)
 
   Prediction_Ensemble_R <- Prediction_Ensemble %>%
     dplyr::mutate(
-      Ensemble_File = IASDT.R::path(
+      Ensemble_File = fs::path(
         dplyr::if_else(
           clamp_pred, Path_Prediction_Clamp, Path_Prediction_NoClamp),
         paste0(
@@ -1370,12 +1384,12 @@ predict_maps <- function(
   # --------------------------------------------------------- #
 
   # Save summary of ensemble predictions
-  IASDT.R::cat_time("Save summary of ensemble predictions", level = 1)
+  IASDT.R::cat_time("Save summary of ensemble predictions", level = 1L)
 
   Prediction_Ensemble_Summary <- Prediction_Ensemble %>%
     dplyr::select(-Ensemble_Maps) %>%
     dplyr::mutate(
-      Ensemble_File = IASDT.R::path(
+      Ensemble_File = fs::path(
         dplyr::if_else(
           clamp_pred, Path_Prediction_Clamp, Path_Prediction_NoClamp),
         paste0(
@@ -1418,15 +1432,15 @@ predict_maps <- function(
   # Overall summary -----
 
   IASDT.R::info_chunk(
-    "\tPrepare overall summary", n_separators = 1, line_char = "-",
-    line_char_rep = 70, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
+    "\tPrepare overall summary", n_separators = 1L, line_char = "-",
+    line_char_rep = 70L, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
   Prediction_Summary <- Prediction_Summary %>%
     dplyr::rename(
       time_period = TimePeriod, climate_model = ClimateModel,
       climate_scenario = ClimateScenario) %>%
     dplyr::bind_rows(Prediction_Ensemble_Summary) %>%
-    dplyr::mutate(hab_abb = hab_abb, hab_name = Hab_Name, .before = 1)
+    dplyr::mutate(hab_abb = hab_abb, hab_name = hab_name, .before = 1)
 
   save(Prediction_Summary, file = Path_Summary_RData)
   utils::write.table(
@@ -1468,12 +1482,12 @@ predict_maps <- function(
   # Create tar file for prediction files
   if (tar_predictions) {
 
-    IASDT.R::cat_time("Create tar file for prediction files", level = 1)
+    IASDT.R::cat_time("Create tar file for prediction files", level = 1L)
 
     # Directory to save the tar file
     TarDir <- dirname(Path_Summary_RData_Shiny)
     # Path to the tar file
-    TarFile <- IASDT.R::path(TarDir, "Predictions.tar")
+    TarFile <- fs::path(TarDir, "Predictions.tar")
     # List of directories in the prediction folder. All directories will be
     # included in the tar file
     TarFiles <- list.dirs(
@@ -1500,7 +1514,7 @@ predict_maps <- function(
   # # ..................................................................... ###
 
   IASDT.R::cat_diff(
-    init_time = .StartTime, prefix = "\nThe whole prediction function took ")
+    init_time = .start_time, prefix = "\nThe whole prediction function took ")
 
   return(Prediction_Summary)
 }

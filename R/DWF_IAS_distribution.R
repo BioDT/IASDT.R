@@ -13,7 +13,7 @@ IAS_distribution <- function(
 
   # # ..................................................................... ###
 
-  .StartTime <- lubridate::now(tzone = "CET")
+  .start_time <- lubridate::now(tzone = "CET")
 
   if (is.null(species) || is.na(species) || species == "") {
     IASDT.R::stop_ctx("`species` cannot be empty", species = species)
@@ -57,7 +57,7 @@ IAS_distribution <- function(
   IASDT.R::cat_time("Environment variables")
 
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
     "Path_Grid_Ref", "DP_R_Grid_raw", TRUE, FALSE,
     "Path_GBIF", "DP_R_GBIF_processed", TRUE, FALSE,
@@ -82,7 +82,7 @@ IAS_distribution <- function(
   # # ................................ ###
 
   ## Current species info
-  IASDT.R::cat_time("Current species info", level = 1)
+  IASDT.R::cat_time("Current species info", level = 1L)
 
   Species2 <- IASDT.R::replace_space(species)
   IAS_ID <- readr::read_tsv(
@@ -99,13 +99,13 @@ IAS_distribution <- function(
   # # ................................ ###
 
   ## Check directories ----
-  IASDT.R::cat_time("Check directories", level = 1)
+  IASDT.R::cat_time("Check directories", level = 1L)
 
-  IASDT.R::cat_time("Check/create directories", level = 2)
-  Path_PA_Summary <- IASDT.R::path(Path_PA, "SpSummary")
-  Path_PA_tif <- IASDT.R::path(Path_PA, "tif")
-  Path_PA_RData <- IASDT.R::path(Path_PA, "RData")
-  Path_PA_JPEG <- IASDT.R::path(Path_PA, "JPEG_Maps")
+  IASDT.R::cat_time("Check and create directories", level = 2L)
+  Path_PA_Summary <- fs::path(Path_PA, "SpSummary")
+  Path_PA_tif <- fs::path(Path_PA, "tif")
+  Path_PA_RData <- fs::path(Path_PA, "RData")
+  Path_PA_JPEG <- fs::path(Path_PA, "JPEG_Maps")
   Path_PA_All <- c(
     Path_PA_Summary, Path_PA_tif, Path_PA_RData, Path_PA_JPEG)
   Path_PA_Missing <- !all(dir.exists(Path_PA_All))
@@ -114,12 +114,11 @@ IAS_distribution <- function(
     fs::dir_create(Path_PA_All[Missing])
   }
 
-  Out_PA <- IASDT.R::path(Path_PA_RData, paste0(Sp_File, "_PA.RData"))
-  Out_Summary <- IASDT.R::path(
-    Path_PA_Summary, paste0(Sp_File, "_Summary.RData"))
-  Out_tif_All <- IASDT.R::path(Path_PA_tif, paste0(Sp_File, "_All.tif"))
-  Out_tif_Masked <- IASDT.R::path(Path_PA_tif, paste0(Sp_File, "_Masked.tif"))
-  Out_JPEG <- IASDT.R::path(Path_PA_JPEG, paste0(Sp_File, ".jpeg"))
+  Out_PA <- fs::path(Path_PA_RData, paste0(Sp_File, "_PA.RData"))
+  Out_Summary <- fs::path(Path_PA_Summary, paste0(Sp_File, "_Summary.RData"))
+  Out_tif_All <- fs::path(Path_PA_tif, paste0(Sp_File, "_All.tif"))
+  Out_tif_Masked <- fs::path(Path_PA_tif, paste0(Sp_File, "_Masked.tif"))
+  Out_JPEG <- fs::path(Path_PA_JPEG, paste0(Sp_File, ".jpeg"))
   Out_Exists <- c(
     Out_PA, Out_Summary, Out_tif_All, Out_tif_Masked, Out_JPEG) %>%
     file.exists() %>%
@@ -130,9 +129,9 @@ IAS_distribution <- function(
 
   # # ................................ ###
 
-  IASDT.R::cat_time("Check path for EASIN and GBIF data", level = 2)
-  Path_GBIF_DT <- IASDT.R::path(Path_GBIF, "Sp_Data")
-  Path_EASIN <- IASDT.R::path(Path_EASIN, "Sp_DT")
+  IASDT.R::cat_time("Check path for EASIN and GBIF data", level = 2L)
+  Path_GBIF_DT <- fs::path(Path_GBIF, "Sp_Data")
+  Path_EASIN <- fs::path(Path_EASIN, "Sp_DT")
 
   if (!dir.exists(Path_GBIF_DT)) {
     IASDT.R::stop_ctx(
@@ -146,22 +145,22 @@ IAS_distribution <- function(
 
   # # ................................ ###
 
-  IASDT.R::cat_time("eLTER data", level = 1)
+  IASDT.R::cat_time("eLTER data", level = 1L)
   eLTER_DT <- IASDT.R::load_as(Path_eLTER) %>%
     dplyr::filter(Species_name == species)
 
   # # ................................ ###
 
   # Loading reference grids ----
-  IASDT.R::cat_time("Loading reference grids", level = 1)
-  grid_100_file <- IASDT.R::path(Path_Grid_Ref, "Grid_100_sf.RData")
+  IASDT.R::cat_time("Loading reference grids", level = 1L)
+  grid_100_file <- fs::path(Path_Grid_Ref, "Grid_100_sf.RData")
   if (!file.exists(grid_100_file)) {
     IASDT.R::stop_ctx(
       "grid file does not exist: Grid_100_sf.RData",
       grid_100_file = grid_100_file)
   }
 
-  GridsPath <- IASDT.R::path(
+  GridsPath <- fs::path(
     Path_Grid,
     c(
       "Grid_10_Land_Crop_sf_Country.RData", "Grid_10_Land_Crop.RData",
@@ -177,25 +176,25 @@ IAS_distribution <- function(
   }
 
   ### sf - 100 km ----
-  IASDT.R::cat_time("sf - 100 km", level = 2)
+  IASDT.R::cat_time("sf - 100 km", level = 2L)
   Grid_100_sf <- IASDT.R::load_as(grid_100_file) %>%
     magrittr::extract2("Grid_100_sf_s")
 
   ### sf - 10 km ----
-  IASDT.R::cat_time("sf - 10 km - CNT", level = 2)
-  Grid_10_CNT <- IASDT.R::path(
+  IASDT.R::cat_time("sf - 10 km - CNT", level = 2L)
+  Grid_10_CNT <- fs::path(
     Path_Grid, "Grid_10_Land_Crop_sf_Country.RData") %>%
     IASDT.R::load_as()
 
   ### raster - 10 km ----
-  IASDT.R::cat_time("raster - 10 km", level = 2)
-  RefGrid <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop.RData") %>%
+  IASDT.R::cat_time("raster - 10 km", level = 2L)
+  RefGrid <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData") %>%
     IASDT.R::load_as() %>%
     terra::unwrap()
 
   ### raster - 100 km ----
-  IASDT.R::cat_time("raster - 100 km", level = 2)
-  Grid_100_Land <- IASDT.R::path(Path_Grid, "Grid_10_Land_sf.RData") %>%
+  IASDT.R::cat_time("raster - 100 km", level = 2L)
+  Grid_100_Land <- fs::path(Path_Grid, "Grid_10_Land_sf.RData") %>%
     IASDT.R::load_as() %>%
     sf::st_geometry() %>%
     sf::st_centroid() %>%
@@ -207,7 +206,7 @@ IAS_distribution <- function(
 
   ## `PA_100km` function - species distribution at 100 km ----
   IASDT.R::cat_time(
-    "`PA_100km` function - species distribution at 100 km", level = 1)
+    "`PA_100km` function - species distribution at 100 km", level = 1L)
   PA_100km <- function(Sp_Sf, Grid100 = Grid_100_Land) {
     sf::st_filter(x = Grid100, y = Sp_Sf, join = sf::st_within) %>%
       dplyr::select("geometry") %>%
@@ -221,7 +220,7 @@ IAS_distribution <- function(
   ## Exclude countries with only cultivated or casual observations ----
   IASDT.R::cat_time(
     "Exclude countries with only cultivated or casual observations",
-    level = 1)
+    level = 1L)
 
   # List of countries to be excluded for the current species
   Countries2Exclude <- readxl::read_xlsx(path = Path_TaxaCNT, sheet = 1) %>%
@@ -246,7 +245,7 @@ IAS_distribution <- function(
 
   IASDT.R::cat_time(
     paste0("There are ", length(Countries2Exclude), " countries to exclude:"),
-    level = 2, cat_timestamp = FALSE)
+    level = 2L, cat_timestamp = FALSE)
 
   # Mask grid to exclude countries - `TRUE` for grid cells to be considered as
   # presence if present in any of the data source; `FALSE` for grid cells need
@@ -255,7 +254,7 @@ IAS_distribution <- function(
 
     IASDT.R::cat_time(
       paste(sort(Countries2Exclude), collapse = " + "),
-      level = 3, cat_timestamp = FALSE)
+      level = 3L, cat_timestamp = FALSE)
 
     Mask_Keep <- Grid_10_CNT %>%
       dplyr::mutate(Keep = !(Country %in% Countries2Exclude)) %>%
@@ -280,11 +279,11 @@ IAS_distribution <- function(
   IASDT.R::cat_time("Preparing species data from the 3 sources")
 
   ## 1. GBIF -----
-  IASDT.R::cat_time("1. GBIF", level = 1)
+  IASDT.R::cat_time("1. GBIF", level = 1L)
 
   # Path for the current species GBIF data
-  Path_GBIF_D <- IASDT.R::path(Path_GBIF_DT, paste0(Sp_File, ".RData"))
-  Path_GBIF_R <- IASDT.R::path(
+  Path_GBIF_D <- fs::path(Path_GBIF_DT, paste0(Sp_File, ".RData"))
+  Path_GBIF_R <- fs::path(
     Path_GBIF, "Sp_Raster", paste0(Sp_File, "_Raster.RData"))
 
   if (all(file.exists(Path_GBIF_D, Path_GBIF_R))) {
@@ -323,9 +322,9 @@ IAS_distribution <- function(
   # # .................................... ###
 
   ## 2. EASIN -----
-  IASDT.R::cat_time("2. EASIN", level = 1)
+  IASDT.R::cat_time("2. EASIN", level = 1L)
 
-  Path_EASIN_D <- IASDT.R::path(Path_EASIN, paste0(Sp_File, "_DT.RData"))
+  Path_EASIN_D <- fs::path(Path_EASIN, paste0(Sp_File, "_DT.RData"))
 
   if (file.exists(Path_EASIN_D)) {
     EASIN_DT <- IASDT.R::load_as(Path_EASIN_D)
@@ -359,7 +358,7 @@ IAS_distribution <- function(
   # # .................................... ###
 
   ## 3. eLTER -----
-  IASDT.R::cat_time("3. eLTER", level = 1)
+  IASDT.R::cat_time("3. eLTER", level = 1L)
 
   if (nrow(eLTER_DT) > 0) {
     eLTER_R <- dplyr::select(eLTER_DT, "Species_name") %>%
@@ -387,7 +386,7 @@ IAS_distribution <- function(
   # # ..................................................................... ###
 
   ## 4. Merging data from the 3 data sources -----
-  IASDT.R::cat_time("Merging data from the 3 data sources", level = 1)
+  IASDT.R::cat_time("Merging data from the 3 data sources", level = 1L)
 
   Sp_PA <- sum(GBIF_R, EASIN_R, eLTER_R) %>%
     IASDT.R::raster_to_PA() %>%
@@ -419,28 +418,27 @@ IAS_distribution <- function(
 
   ## Save maps ------
 
-  IASDT.R::cat_time("Save species data", level = 1)
+  IASDT.R::cat_time("Save species data", level = 1L)
 
   ### RData -----
-  IASDT.R::cat_time("`.RData`", level = 2)
-  path_RData <- IASDT.R::path(Path_PA_RData, paste0(Sp_File, "_PA.RData"))
+  IASDT.R::cat_time("`.RData`", level = 2L)
+  path_RData <- fs::path(Path_PA_RData, paste0(Sp_File, "_PA.RData"))
   IASDT.R::save_as(
     object = terra::wrap(Sp_PA), object_name = paste0(Sp_File, "_PA"),
     out_path = path_RData)
 
   ### tif - all presence grid cells -----
-  IASDT.R::cat_time("`.tif` - all presence grid cells", level = 2)
+  IASDT.R::cat_time("`.tif` - all presence grid cells", level = 2L)
   terra::writeRaster(
     x = Sp_PA$PA, overwrite = TRUE,
-    filename = IASDT.R::path(Path_PA_tif, paste0(Sp_File, "_All.tif"))
-  )
+    filename = fs::path(Path_PA_tif, paste0(Sp_File, "_All.tif")))
 
   ### tif - Excluding cultivated or casual observations -----
   IASDT.R::cat_time(
-    "`.tif` - Excluding cultivated or casual observations", level = 2)
+    "`.tif` - Excluding cultivated or casual observations", level = 2L)
   terra::writeRaster(
     x = Sp_PA$PA_Masked, overwrite = TRUE,
-    filename = IASDT.R::path(Path_PA_tif, paste0(Sp_File, "_Masked.tif")))
+    filename = fs::path(Path_PA_tif, paste0(Sp_File, "_Masked.tif")))
 
   ### NetCDF -----
   # NOT IMPLEMENTED YET
@@ -448,17 +446,17 @@ IAS_distribution <- function(
   # # .................................... ###
 
   ## Biogeographical regions ----
-  IASDT.R::cat_time("Analysis per biogeographical regions", level = 1)
+  IASDT.R::cat_time("Analysis per biogeographical regions", level = 1L)
 
   ### All -----
-  IASDT.R::cat_time("all data", level = 2)
+  IASDT.R::cat_time("all data", level = 2L)
 
   # Number of grid per each biogeographical region
   #
   # number of biogeographical regions per species and minimum / maximum / mean
   # number of grid cells per biogeographical regions
 
-  BioReg_R <- IASDT.R::path(Path_BioReg, "BioReg_R.RData")
+  BioReg_R <- fs::path(Path_BioReg, "BioReg_R.RData")
   if (isFALSE(IASDT.R::check_RData(BioReg_R))) {
     IASDT.R::stop_ctx(
       "Required file for biogeographical regions does not exist",
@@ -493,7 +491,7 @@ IAS_distribution <- function(
   BioRegsSumm_N <- sum(Sp_BiogeoRegions > 0)
 
   ### Masked -----
-  IASDT.R::cat_time("Excluding cultivated or casual observations", level = 2)
+  IASDT.R::cat_time("Excluding cultivated or casual observations", level = 2L)
 
   BioReg_Names2 <- stringr::str_replace(
     string = BioReg_Names, pattern = "BioReg_", replacement = "BioReg_Masked_")
@@ -526,7 +524,7 @@ IAS_distribution <- function(
   # # .................................... ###
 
   ## Number of presence grid cells per data provider -----
-  IASDT.R::cat_time("# presence grid cells per data provider", level = 1)
+  IASDT.R::cat_time("# presence grid cells per data provider", level = 1L)
 
   # presence grid cells per data type
   RVals <- c(GBIF_R, EASIN_R, eLTER_R) %>%
@@ -583,7 +581,7 @@ IAS_distribution <- function(
   # # .................................... ###
 
   ## Number of presence grid cells per country -----
-  IASDT.R::cat_time("# presence grid cells per country", level = 1)
+  IASDT.R::cat_time("# presence grid cells per country", level = 1L)
 
   CountryList <- c(
     "Albania", "Austria", "Belgium", "Bosnia and Herzegovina",
@@ -599,7 +597,7 @@ IAS_distribution <- function(
     IASDT.R::replace_space() %>%
     paste0("CNT_", .)
 
-  Grid_CNT <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop_sf_Country.RData") %>%
+  Grid_CNT <- fs::path(Path_Grid, "Grid_10_Land_Crop_sf_Country.RData") %>%
     IASDT.R::load_as() %>%
     dplyr::select("Country")
 
@@ -620,9 +618,9 @@ IAS_distribution <- function(
   # # .................................... ###
 
   ## Number of unique iNaturalist grid cells -----
-  IASDT.R::cat_time("# unique iNaturalist grid cells", level = 1)
+  IASDT.R::cat_time("# unique iNaturalist grid cells", level = 1L)
 
-  iNatur_DT <- IASDT.R::path(Path_GBIF, "iNaturalist_Count.RData") %>%
+  iNatur_DT <- fs::path(Path_GBIF, "iNaturalist_Count.RData") %>%
     IASDT.R::load_as() %>%
     dplyr::filter(species == !!species)
 
@@ -635,8 +633,8 @@ IAS_distribution <- function(
 
   # # ..................................................................... ###
 
-  # Prepare/export species summary info -------
-  IASDT.R::cat_time("Prepare/export species summary info")
+  # Prepare and export species summary info -------
+  IASDT.R::cat_time("Prepare and export species summary info")
 
   Binary_R_Out <- stats::setNames(Sp_PA$PA, Sp_File) %>%
     terra::wrap() %>%
@@ -713,8 +711,7 @@ IAS_distribution <- function(
   dplyr::select(Results, -GBIF_R, -EASIN_R, -eLTER_R) %>%
     IASDT.R::save_as(
       object = ., object_name = paste0(Sp_File, "_Summary"),
-      out_path = IASDT.R::path(
-        Path_PA_Summary, paste0(Sp_File, "_Summary.RData")))
+      out_path = fs::path(Path_PA_Summary, paste0(Sp_File, "_Summary.RData")))
 
   # # ..................................................................... ###
 
@@ -726,7 +723,7 @@ IAS_distribution <- function(
   # # ..................................................................... ###
 
   IASDT.R::cat_diff(
-    init_time = .StartTime,
+    init_time = .start_time,
     prefix = "\nProcessing species data was finished in ", ... = "\n")
 
   return(dplyr::select(Results, -GBIF_Gr100, -EASIN_Gr100, -eLTER_Gr100))

@@ -47,7 +47,7 @@ mod_fit_windows <- function(
   }
 
   # Check if python_VE directory contains python virtual environment
-  python_exe <- IASDT.R::path(python_VE, "Scripts", "python.exe")
+  python_exe <- fs::path(python_VE, "Scripts", "python.exe")
   if (!fs::file_exists(python_exe)) {
     IASDT.R::stop_ctx(
       "Python virtual environment does not exist", python_VE = python_VE)
@@ -82,7 +82,7 @@ mod_fit_windows <- function(
   # # List of models to be fitted
   # # |||||||||||||||||||||||||||||||||||
 
-  Model2Run <- IASDT.R::path(path_model, "Model_Info.RData") %>%
+  Model2Run <- fs::path(path_model, "Model_Info.RData") %>%
     IASDT.R::load_as() %>%
     dplyr::select(Path_ModProg, Command_WS) %>%
     tidyr::unnest(cols = c("Path_ModProg", "Command_WS")) %>%

@@ -6,7 +6,7 @@
 \alias{IASDT.R-package}
 \title{IASDT.R: Modelling the distribution of invasive alien plant species in Europe}
 \description{
-Helper R functions for the Invasive Alien Species (IAS) prototype Digital Twin (IAS-pDT), as part of the EU-funded BioDT project.
+Helper R functions for the Invasive Alien Species (IAS) Digital Twin (IASDT), as part of the EU-funded Biodiversity Digital Twin (BioDT) project.
 }
 \seealso{
 Useful links:

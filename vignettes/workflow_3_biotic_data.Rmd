@@ -1,5 +1,5 @@
 ---
-title: "IAS-pDT modelling workflow — 3. biotic data"
+title: "IASDT modelling workflow — 3. biotic data"
 output: html_document
 editor_options: 
   chunk_output_type: console
@@ -22,7 +22,7 @@ format:
     link-external-icon: true
     link-external-newwindow: true
 vignette: >
-  %\VignetteIndexEntry{IAS-pDT modelling workflow — 3. biotic data}
+  %\VignetteIndexEntry{IASDT modelling workflow — 3. biotic data}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 ---
@@ -48,13 +48,13 @@ c("<style>", readLines("style.css"), "</style>") %>%
 
 <br/><br/>
 
-This article details the processing of biotic data within the `IAS-pDT` modeling workflow. The biotic data are sourced from `GBIF`, `EASIN`, and `eLTER`; see below. All data preparation adheres to the <a href="https://doi.org/10.1038/sdata.2016.18" target="_blank" class="ll">FAIR</a> principles (Findable, Accessible, Interoperable, and Reusable) to ensure scientific integrity and reproducibility.
+This article details the processing of biotic data within the `IASDT` modelling workflow. The biotic data are sourced from `GBIF`, `EASIN`, and `eLTER`; see below. All data preparation adheres to the <a href="https://doi.org/10.1038/sdata.2016.18" target="_blank" class="ll">FAIR</a> principles (Findable, Accessible, Interoperable, and Reusable) to ensure scientific integrity and reproducibility.
 
 <br/><br/>
 
 ## IAS species list
 
-The most recent checklist of naturalized terrestrial alien plant species of non-European origin was retrieved from <a href="https://floraveg.eu/" target="_blank" class="ll">FloraVeg.EU</a>. This checklist was standardized against the GBIF taxonomic backbone to ensure taxonomic consistency, resulting in a total of 1,338 species. The table below summarizes the species count by taxonomic class and order. Occurrence data for these species were compiled from available sources detailed in subsequent sections.
+The most recent checklist of naturalised terrestrial alien plant species of non-European origin was retrieved from <a href="https://floraveg.eu/" target="_blank" class="ll">FloraVeg.EU</a>. This checklist was standardized against the GBIF taxonomic backbone to ensure taxonomic consistency, resulting in a total of 1,338 species. The table below summarises the species count by taxonomic class and order. Occurrence data for these species were compiled from available sources detailed in subsequent sections.
 
 ```{r}
 #| echo = FALSE,
@@ -124,25 +124,25 @@ knitr::kable(
 
 ## GBIF
 
-The `GBIF_process()` function manages the retrieval, processing, and visualization of the most current occurrence data for invasive alien species (IAS) from the Global Biodiversity Information Facility (<a href="https://www.gbif.org/" target="_blank" class="ll">GBIF</a>), totaling approximately 9.4 million occurrences as of March 2025. Occurrences deemed doubtful or exhibiting high spatial uncertainty are excluded to ensure data quality. Additionally, the function calculates the number of observations and occupied grid cells per species. Its primary output consists of gridded distribution maps for each species, delineating presence-only data across the reference grid.
+The `GBIF_process()` function manages the retrieval, processing, and visualisation of the most current occurrence data for invasive alien species (IAS) from the Global Biodiversity Information Facility (<a href="https://www.gbif.org/" target="_blank" class="ll">GBIF</a>), totalling approximately 9.4 million occurrences as of March 2025. Occurrences deemed doubtful or exhibiting high spatial uncertainty are excluded to ensure data quality. Additionally, the function calculates the number of observations and occupied grid cells per species. Its primary output consists of gridded distribution maps for each species, delineating presence-only data across the reference grid.
 
 <br/><br/>
 
 ## EASIN
 
-The European Alien Species Information Network (<a href="https://easin.jrc.ec.europa.eu/" target="_blank" class="ll">EASIN</a>) serves as a web-based platform providing spatial data on approximately 14,000 alien species. The `EASIN_process()` function oversees the processing and visualization of the latest IAS occurrence data sourced from EASIN. A checklist of vascular plants from EASIN’s database was retrieved via its API and standardized against the GBIF taxonomic backbone. Occurrence data for taxa corresponding to the IAS checklist were subsequently downloaded through the API. Of the 34 partner organizations contributing to EASIN (including GBIF), only non-GBIF data are incorporated into the models to avoid redundancy. Following processing and spatial filtering, the dataset includes over 420,000 observations for 466 IAS as of March 2025. Consistent with the GBIF output, the function generates gridded distribution maps for each species.
+The European Alien Species Information Network (<a href="https://easin.jrc.ec.europa.eu/" target="_blank" class="ll">EASIN</a>) serves as a web-based platform providing spatial data on approximately 14,000 alien species. The `EASIN_process()` function oversees the processing and visualisation of the latest IAS occurrence data sourced from EASIN. A checklist of vascular plants from EASIN’s database was retrieved via its API and standardized against the GBIF taxonomic backbone. Occurrence data for taxa corresponding to the IAS checklist were subsequently downloaded through the API. Of the 34 partner organizations contributing to EASIN (including GBIF), only non-GBIF data are incorporated into the models to avoid redundancy. Following processing and spatial filtering, the dataset includes over 420,000 observations for 466 IAS as of March 2025. Consistent with the GBIF output, the function generates gridded distribution maps for each species.
 
 <br/><br/>
 
 ## eLTER
 
-The Integrated European Long-Term Ecosystem, Critical Zone, and Socio-Ecological Research Infrastructure (<a href="https://elter-ri.eu/" target="_blank" class="ll">eLTER</a>) comprises a network of sites dedicated to collecting ecological data for long-term research across the European Union. Data from 137 eLTER sites, encompassing 5,265 observations for 110 invasive alien species (IAS), were processed (`eLTER_process()`) and standardized to ensure consistency with other biotic datasets in the `IAS-pDT` workflow.
+The Integrated European Long-Term Ecosystem, Critical Zone, and Socio-Ecological Research Infrastructure (<a href="https://elter-ri.eu/" target="_blank" class="ll">eLTER</a>) comprises a network of sites dedicated to collecting ecological data for long-term research across the European Union. Data from 137 eLTER sites, encompassing 5,265 observations for 110 invasive alien species (IAS), were processed (`eLTER_process()`) and standardized to ensure consistency with other biotic datasets in the `IASDT` workflow.
 
 <br/><br/>
 
 ## Species distribution
 
-The `IAS_process()` function integrates and visualizes species distribution data sourced from `GBIF`, `EASIN`, and `eLTER`. It combines pre-processed datasets and generates presence-absence rasters for use in the species distribution models.
+The `IAS_process()` function integrates and visualises species distribution data sourced from `GBIF`, `EASIN`, and `eLTER`. It combines pre-processed datasets and generates presence-absence rasters for use in the species distribution models.
 
 <hr class="hr1">
 

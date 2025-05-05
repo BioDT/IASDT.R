@@ -6,13 +6,13 @@
 #'
 #' This function provides a comprehensive summary of Hmsc model parameters,
 #' including `Alpha`, `Beta`, `Rho`, and `Omega`. It processes the model's
-#' output, performs statistical summaries, and optionally returns the summarized
+#' output, performs statistical summaries, and optionally returns the summarised
 #' data.
 #' @param path_coda Character. Path to the `.qs2` / `.RData` file containing the
 #'   coda object.
 #' @param env_file Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
-#' @param return_data Logical. Whether the summarized data should be returned as
+#' @param return_data Logical. Whether the summarised data should be returned as
 #'   an R object. If `TRUE`, the function returns a list containing summaries of
 #'   `Alpha`, `Beta`, `Rho`, and `Omega` parameters. The default value is
 #'   `FALSE`, which means the function will not return any data but will save
@@ -29,7 +29,7 @@ mod_summary <- function(
 
   # # ..................................................................... ###
 
-  .StartTime <- lubridate::now(tzone = "CET")
+  .start_time <- lubridate::now(tzone = "CET")
 
   # # ..................................................................... ###
 
@@ -55,7 +55,7 @@ mod_summary <- function(
   IASDT.R::cat_time("Prepare Species list")
 
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "TaxaInfoFile", "DP_R_Taxa_info", FALSE, TRUE)
   # Assign environment variables and check file and paths
   IASDT.R::assign_env_vars(
@@ -82,16 +82,16 @@ mod_summary <- function(
   IASDT.R::cat_time("Loading coda object")
   Coda <- IASDT.R::load_as(path_coda)
 
-  IASDT.R::cat_time("Beta summary", level = 1)
+  IASDT.R::cat_time("Beta summary", level = 1L)
   Beta_Summary <- summary(Coda$Beta)
 
-  IASDT.R::cat_time("Alpha summary", level = 1)
+  IASDT.R::cat_time("Alpha summary", level = 1L)
   Alpha_Summary <- summary(Coda$Alpha[[1]])
 
-  IASDT.R::cat_time("Omega summary", level = 1)
+  IASDT.R::cat_time("Omega summary", level = 1L)
   Omega_Summary <- summary(Coda$Omega[[1]])
 
-  IASDT.R::cat_time("Rho summary", level = 1)
+  IASDT.R::cat_time("Rho summary", level = 1L)
   Rho_Summary <- summary(Coda$Rho)
 
   rm(Coda, envir = environment())
@@ -101,7 +101,7 @@ mod_summary <- function(
   IASDT.R::cat_time("Extracting summary data")
 
   # Beta ------
-  IASDT.R::cat_time("Beta", level = 1)
+  IASDT.R::cat_time("Beta", level = 1L)
   Beta_Summary <- DataPrep(Beta_Summary$statistics) %>%
     dplyr::full_join(DataPrep(Beta_Summary$quantiles), by = "VarSp") %>%
     dplyr::mutate(
@@ -131,7 +131,7 @@ mod_summary <- function(
         .x = Q2_5, .y = Q97_5, ~dplyr::between(x = 0, left = .x, right = .y)))
 
   # Alpha -----
-  IASDT.R::cat_time("Alpha", level = 1)
+  IASDT.R::cat_time("Alpha", level = 1L)
   Alpha_Summary <- DataPrep(Alpha_Summary$statistics) %>%
     dplyr::full_join(DataPrep(Alpha_Summary$quantiles), by = "VarSp") %>%
     dplyr::mutate(
@@ -150,7 +150,7 @@ mod_summary <- function(
         .x = Q2_5, .y = Q97_5, ~dplyr::between(x = 0, left = .x, right = .y)))
 
   # Rho ----
-  IASDT.R::cat_time("Rho", level = 1)
+  IASDT.R::cat_time("Rho", level = 1L)
   Rho_Summary <- dplyr::bind_rows(
     as.data.frame(as.matrix(Rho_Summary$statistics)),
     as.data.frame(as.matrix(Rho_Summary$quantiles))) %>%
@@ -169,7 +169,7 @@ mod_summary <- function(
         .x = Q2_5, .y = Q97_5, ~dplyr::between(x = 0, left = .x, right = .y)))
 
   # Omega ------
-  IASDT.R::cat_time("Omega", level = 1)
+  IASDT.R::cat_time("Omega", level = 1L)
 
   ListSp <- utils::read.delim(TaxaInfoFile, sep = "\t") %>%
     tibble::tibble() %>%
@@ -215,7 +215,7 @@ mod_summary <- function(
   # Saving ------
   IASDT.R::cat_time("Saving")
   Path_Out <- dirname(dirname(path_coda)) %>%
-    IASDT.R::path("Model_Postprocessing", "Parameters_Summary")
+    fs::path("Model_Postprocessing", "Parameters_Summary")
   fs::dir_create(Path_Out)
 
   IASDT.R::save_as(
@@ -223,12 +223,12 @@ mod_summary <- function(
       Alpha = Alpha_Summary, Beta = Beta_Summary,
       Rho = Rho_Summary, Omega = Omega_Summary),
     object_name = "Parameters_Summary",
-    out_path = IASDT.R::path(Path_Out, "Parameters_Summary.RData"))
+    out_path = fs::path(Path_Out, "Parameters_Summary.RData"))
 
   # # ..................................................................... ###
 
   IASDT.R::cat_diff(
-    init_time = .StartTime, prefix = "Extracting model summary took ")
+    init_time = .start_time, prefix = "Extracting model summary took ")
 
   # # ..................................................................... ###
 

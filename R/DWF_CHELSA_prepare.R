@@ -50,7 +50,7 @@ CHELSA_prepare <- function(
 
   # Environment variables -----
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "Path_CHELSA_Out", "DP_R_CHELSA_processed", FALSE, FALSE,
     "Path_CHELSA_In", "DP_R_CHELSA_raw", FALSE, FALSE,
     "Path_DwnLinks", "DP_R_CHELSA_links", TRUE, FALSE,
@@ -74,9 +74,9 @@ CHELSA_prepare <- function(
     # `other_variables`.
     paste(collapse = "|")
 
-  IASDT.R::cat_time("Prepare CHELSA metadata", level = 1)
+  IASDT.R::cat_time("Prepare CHELSA metadata", level = 1L)
 
-  if (!stringr::str_detect(BaseURL, "/$")) {
+  if (!endsWith(BaseURL, "/")) {
     BaseURL <- paste0(BaseURL, "/")
   }
 
@@ -132,7 +132,9 @@ CHELSA_prepare <- function(
     ) %>%
     tidyr::unnest_wider("ModelScenario") %>%
     # Files for 2011-2040/UKESM1-0-LL/ssp126 are duplicated
-    dplyr::filter(Folder != "climatologies/2011-2040/UKESM1-0-LL/ssp126") %>%
+    dplyr::filter(
+      Folder != fs::path(
+        "climatologies", "2011-2040", "UKESM1-0-LL", "ssp126")) %>%
     dplyr::mutate(
       Variable = purrr::pmap_chr(
         .l = list(File, TimePeriod, ClimateScenario, Ext, ClimateModel),
@@ -159,10 +161,10 @@ CHELSA_prepare <- function(
     dplyr::mutate(
 
       Path_Down = purrr::map_chr(
-        .x = File, .f = ~ IASDT.R::path(Path_CHELSA_In, .x)),
+        .x = File, .f = ~ fs::path(Path_CHELSA_In, .x)),
 
       Path_Out_tif = purrr::map_chr(
-        .x = File, .f = ~ IASDT.R::path(Path_CHELSA_Out, "Tif", .x)),
+        .x = File, .f = ~ fs::path(Path_CHELSA_Out, "Tif", .x)),
 
       Path_Out_NC = purrr::map_chr(
         .x = Path_Out_tif, .f = stringr::str_replace_all,
@@ -196,7 +198,7 @@ CHELSA_prepare <- function(
 
   if (download) {
 
-    IASDT.R::cat_time("Downloading CHELSA files", level = 1)
+    IASDT.R::cat_time("Downloading CHELSA files", level = 1L)
 
     if (n_cores == 1) {
       future::plan("future::sequential", gc = TRUE)
@@ -218,7 +220,7 @@ CHELSA_prepare <- function(
 
     } else {
 
-      IASDT.R::cat_time("Exclude available and valid Tiff files", level = 1)
+      IASDT.R::cat_time("Exclude available and valid Tiff files", level = 1L)
 
       Data2Down <- CHELSA_Metadata %>%
         dplyr::mutate(
@@ -251,7 +253,7 @@ CHELSA_prepare <- function(
     # # |||||||||||||||||||||||||||||||| ###
 
     # download missing files
-    IASDT.R::cat_time("Download missing CHELSA files", level = 1)
+    IASDT.R::cat_time("Download missing CHELSA files", level = 1L)
 
     if (nrow(Data2Down) > 0) {
       furrr::future_walk(
@@ -298,15 +300,15 @@ CHELSA_prepare <- function(
 
   # Save to disk -----
 
-  IASDT.R::cat_time("Save metadata to disk", level = 1)
+  IASDT.R::cat_time("Save metadata to disk", level = 1L)
 
   save(
     CHELSA_Metadata,
-    file = IASDT.R::path(Path_CHELSA_Out, "CHELSA_Metadata.RData"))
+    file = fs::path(Path_CHELSA_Out, "CHELSA_Metadata.RData"))
 
   readr::write_csv(
     x = CHELSA_Metadata,
-    file = IASDT.R::path(Path_CHELSA_Out, "CHELSA_Metadata.csv"))
+    file = fs::path(Path_CHELSA_Out, "CHELSA_Metadata.csv"))
 
   # # ..................................................................... ###
 

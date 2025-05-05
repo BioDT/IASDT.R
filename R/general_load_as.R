@@ -75,9 +75,7 @@ load_as <- function(file = NULL, n_threads = 5, timeout = 300, ...) {
     IASDT.R::stop_ctx("file or URL cannot be NULL", file = file)
   }
 
-  isURL <- stringr::str_detect(file, "^http")
-
-  if (isURL) {
+  if (startsWith(file, "http")) {
     if (isFALSE(IASDT.R::check_URL(file))) {
       IASDT.R::stop_ctx("URL is not valid", file = file)
     }

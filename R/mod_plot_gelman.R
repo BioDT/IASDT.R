@@ -4,7 +4,7 @@
 
 #' Plot Gelman-Rubin-Brooks
 #'
-#' The `PlotGelman_*()` functions generate plots visualizing the evolution of
+#' The `PlotGelman_*()` functions generate plots visualising the evolution of
 #' the Gelman-Rubin-Brooks shrink factor for different model parameters as the
 #' number of iterations increases. These plots help assess whether MCMC chains
 #' have converged to a common distribution. Each plot includes: median (solid
@@ -44,7 +44,7 @@ plot_gelman <- function(
 
   # # ..................................................................... ###
 
-  .StartTime <- lubridate::now(tzone = "CET")
+  .start_time <- lubridate::now(tzone = "CET")
 
   # # ..................................................................... ###
 
@@ -103,7 +103,7 @@ plot_gelman <- function(
 
   # # ..................................................................... ###
 
-  out_path <- IASDT.R::path(dirname(dirname(path_coda)), "Model_Convergence")
+  out_path <- fs::path(dirname(dirname(path_coda)), "Model_Convergence")
   fs::dir_create(out_path)
 
   # # ..................................................................... ###
@@ -169,7 +169,7 @@ plot_gelman <- function(
     # Using ggplot2::ggsave directly does not show non-ascii characters
     # correctly
     grDevices::cairo_pdf(
-      filename = IASDT.R::path(out_path, "GelmanPlots.pdf"),
+      filename = fs::path(out_path, "GelmanPlots.pdf"),
       width = 13, height = 7, onefile = TRUE)
     purrr::walk(PlotList4Plot, grid::grid.draw)
     grDevices::dev.off()
@@ -182,11 +182,11 @@ plot_gelman <- function(
   # Saving plots as qs2 -----
   IASDT.R::save_as(
     object = PlotList, object_name = "GelmanPlots",
-    out_path = IASDT.R::path(out_path, "GelmanPlots.qs2"))
+    out_path = fs::path(out_path, "GelmanPlots.qs2"))
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_diff(init_time = .StartTime)
+  IASDT.R::cat_diff(init_time = .start_time)
 
   if (return_plots) {
     return(PlotList)

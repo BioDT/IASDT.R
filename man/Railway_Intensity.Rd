@@ -22,7 +22,7 @@ unnecessary file space (> 55 GB). Defaults to \code{TRUE}.}
 environment file.
 }
 \description{
-This function downloads, processes, and analyzes railway data extracted from
+This function downloads, processes, and analyses railway data extracted from
 \href{https://www.openrailwaymap.org}{OpenRailwayMap} available from
 \href{https://download.geofabrik.de/}{OpenStreetMap Data Extracts}. It supports
 parallel processing for faster execution and can calculate the total length

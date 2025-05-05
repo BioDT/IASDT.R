@@ -30,7 +30,7 @@
 #'   as `.RData` files.
 #' @param pages_per_file Integer. Number of plots per page in the Omega
 #'   parameter output. Default: 20L.
-#' @param chain_colors Character vector. MCMC chain colors (optional). Default:
+#' @param chain_colors Character vector. MCMC chain colours (optional). Default:
 #'   `NULL`.
 #' @param posterior `mcmc.list` or character. Either an MCMC object
 #'   (`mcmc.list`) containing posterior samples, or a file path to a saved coda
@@ -64,7 +64,7 @@ convergence_plot <- function(
 
   # # ..................................................................... ###
 
-  .StartTime <- lubridate::now(tzone = "CET")
+  .start_time <- lubridate::now(tzone = "CET")
 
   if (is.null(path_coda) || is.null(path_model) || is.null(n_cores)) {
     IASDT.R::stop_ctx(
@@ -120,14 +120,14 @@ convergence_plot <- function(
   IASDT.R::cat_time("Load species summary")
 
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "Path_PA", "DP_R_PA", TRUE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
-  SpSummary <- IASDT.R::path(Path_PA, "Sp_PA_Summary_DF.csv")
+  SpSummary <- fs::path(Path_PA, "Sp_PA_Summary_DF.csv")
   if (!file.exists(SpSummary)) {
     IASDT.R::stop_ctx(
       "SpSummary file does not exist", SpSummary = SpSummary)
@@ -143,9 +143,9 @@ convergence_plot <- function(
 
   IASDT.R::cat_time("Create path")
   Path_Convergence <- dirname(dirname(path_coda)) %>%
-    IASDT.R::path("Model_Convergence")
-  Pah_Beta_Data <- IASDT.R::path(Path_Convergence, "Beta_Data")
-  Path_Convergence_BySp <- IASDT.R::path(Path_Convergence, "Beta_BySpecies")
+    fs::path("Model_Convergence")
+  Pah_Beta_Data <- fs::path(Path_Convergence, "Beta_Data")
+  Path_Convergence_BySp <- fs::path(Path_Convergence, "Beta_BySpecies")
   fs::dir_create(c(Path_Convergence, Path_Convergence_BySp, Pah_Beta_Data))
 
   # # ..................................................................... ###
@@ -162,10 +162,10 @@ convergence_plot <- function(
     IASDT.R::stop_ctx("`path_coda` does not exist", path_coda = path_coda)
   }
 
-  IASDT.R::cat_time("Loading coda object", level = 1)
+  IASDT.R::cat_time("Loading coda object", level = 1L)
   Coda_Obj <- IASDT.R::load_as(path_coda)
 
-  IASDT.R::cat_time("Loading fitted model object", level = 1)
+  IASDT.R::cat_time("Loading fitted model object", level = 1L)
   Model <- IASDT.R::load_as(path_model)
 
   # Model variables
@@ -199,30 +199,30 @@ convergence_plot <- function(
   if ("Rho" %in% names(Coda_Obj)) {
     IASDT.R::cat_time("Rho")
 
-    FileConv_Rho <- IASDT.R::path(Path_Convergence, "convergence_rho.RData")
+    FileConv_Rho <- fs::path(Path_Convergence, "convergence_rho.RData")
 
     if (IASDT.R::check_data(FileConv_Rho, warning = FALSE)) {
-      IASDT.R::cat_time("Loading plotting data", level = 1)
+      IASDT.R::cat_time("Loading plotting data", level = 1L)
       PlotObj_Rho <- IASDT.R::load_as(FileConv_Rho)
     } else {
-      IASDT.R::cat_time("Prepare plot", level = 1)
+      IASDT.R::cat_time("Prepare plot", level = 1L)
       PlotObj_Rho <- IASDT.R::convergence_rho(
         posterior = Coda_Obj, model_object = Model, title = title,
         chain_colors = chain_colors)
 
       if (save_plotting_data) {
-        IASDT.R::cat_time("Save plotting data", level = 1)
+        IASDT.R::cat_time("Save plotting data", level = 1L)
         IASDT.R::save_as(
           object = PlotObj_Rho, object_name = "convergence_rho",
           out_path = FileConv_Rho)
       }
     }
 
-    IASDT.R::cat_time("Save plot", level = 1)
+    IASDT.R::cat_time("Save plot", level = 1L)
     # Using ggplot2::ggsave directly does not show non-ascii characters
     # correctly
     grDevices::cairo_pdf(
-      filename = IASDT.R::path(Path_Convergence, "Convergence_Rho.pdf"),
+      filename = fs::path(Path_Convergence, "Convergence_Rho.pdf"),
       width = 18, height = 12, onefile = TRUE)
     plot(PlotObj_Rho)
     grDevices::dev.off()
@@ -236,29 +236,29 @@ convergence_plot <- function(
 
   IASDT.R::cat_time("Alpha")
 
-  FileConv_Alpha <- IASDT.R::path(Path_Convergence, "Convergence_Alpha.RData")
+  FileConv_Alpha <- fs::path(Path_Convergence, "Convergence_Alpha.RData")
 
   if (IASDT.R::check_data(FileConv_Alpha, warning = FALSE)) {
-    IASDT.R::cat_time("Loading plotting data", level = 1)
+    IASDT.R::cat_time("Loading plotting data", level = 1L)
     PlotObj_Alpha <- IASDT.R::load_as(FileConv_Alpha)
   } else {
-    IASDT.R::cat_time("Prepare plot", level = 1)
+    IASDT.R::cat_time("Prepare plot", level = 1L)
     PlotObj_Alpha <- IASDT.R::convergence_alpha(
       posterior = Coda_Obj, model_object = Model, title = title, n_RC = n_RC,
       add_footer = FALSE, add_title = FALSE, chain_colors = chain_colors)
 
     if (save_plotting_data) {
-      IASDT.R::cat_time("Save plotting data", level = 1)
+      IASDT.R::cat_time("Save plotting data", level = 1L)
       IASDT.R::save_as(
         object = PlotObj_Alpha, object_name = "convergence_alpha",
-        out_path = IASDT.R::path(Path_Convergence, "Convergence_Alpha.RData"))
+        out_path = fs::path(Path_Convergence, "Convergence_Alpha.RData"))
     }
   }
 
-  IASDT.R::cat_time("Save plots", level = 1)
+  IASDT.R::cat_time("Save plots", level = 1L)
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   grDevices::cairo_pdf(
-    filename = IASDT.R::path(Path_Convergence, "Convergence_Alpha.pdf"),
+    filename = fs::path(Path_Convergence, "Convergence_Alpha.pdf"),
     width = 18, height = 14, onefile = TRUE)
   print(PlotObj_Alpha)
   grDevices::dev.off()
@@ -275,20 +275,20 @@ convergence_plot <- function(
 
   IASDT.R::cat_time("Omega")
 
-  FileConv_Omega <- IASDT.R::path(Path_Convergence, "Convergence_Omega.qs2")
+  FileConv_Omega <- fs::path(Path_Convergence, "Convergence_Omega.qs2")
 
   if (IASDT.R::check_data(FileConv_Omega, warning = FALSE)) {
-    IASDT.R::cat_time("Loading plotting data", level = 1)
+    IASDT.R::cat_time("Loading plotting data", level = 1L)
     PlotObj_Omega <- IASDT.R::load_as(FileConv_Omega)
   } else {
-    IASDT.R::cat_time("Coda to tibble", level = 1)
+    IASDT.R::cat_time("Coda to tibble", level = 1L)
     OmegaDF <- IASDT.R::coda_to_tibble(
       coda_object = Obj_Omega, posterior_type = "omega", n_omega = n_omega,
       env_file = env_file)
     invisible(gc())
     SelectedCombs <- unique(OmegaDF$SpComb)
 
-    IASDT.R::cat_time("Prepare confidence interval data", level = 1)
+    IASDT.R::cat_time("Prepare confidence interval data", level = 1L)
     CI <- purrr::map(.x = Obj_Omega, .f = ~ .x[, SelectedCombs]) %>%
       coda::mcmc.list() %>%
       summary(quantiles = c(0.025, 0.975)) %>%
@@ -300,7 +300,7 @@ convergence_plot <- function(
     OmegaDF <- dplyr::left_join(OmegaDF, CI, by = "SpComb")
     OmegaNames <- attr(Obj_Omega[[1]], "dimnames")[[2]]
 
-    IASDT.R::cat_time("Prepare plots", level = 1)
+    IASDT.R::cat_time("Prepare plots", level = 1L)
     PlotObj_Omega <- purrr::map_dfr(
       .x = seq_len(n_omega),
       .f = function(x) {
@@ -404,17 +404,17 @@ convergence_plot <- function(
         return(tibble::tibble(SpComb = CombData$SpComb, Plot = list(Plot)))
       }
     )
-    IASDT.R::cat_time("Plots preparation is finished", level = 2)
+    IASDT.R::cat_time("Plots preparation is finished", level = 2L)
 
     if (save_plotting_data) {
-      IASDT.R::cat_time("Save plot data", level = 1)
+      IASDT.R::cat_time("Save plot data", level = 1L)
       IASDT.R::save_as(object = PlotObj_Omega, out_path = FileConv_Omega)
     }
     rm(OmegaDF, SelectedCombs, CI, OmegaNames, envir = environment())
     invisible(gc())
   }
 
-  IASDT.R::cat_time("Arrange plots", level = 1)
+  IASDT.R::cat_time("Arrange plots", level = 1L)
   OmegaPlotList <- tibble::tibble(PlotID = seq_len(nrow(PlotObj_Omega))) %>%
     dplyr::mutate(
       File = ceiling(PlotID / (pages_per_file * n_RC[2] * n_RC[1])),
@@ -448,14 +448,14 @@ convergence_plot <- function(
         }
       ))
 
-  IASDT.R::cat_time("Save plots", level = 1)
+  IASDT.R::cat_time("Save plots", level = 1L)
   purrr::walk(
     .x = seq_along(unique(OmegaPlotList$File)),
     .f = ~ {
       invisible({
         CurrPlotOrder <- dplyr::filter(OmegaPlotList, File == .x)
         grDevices::cairo_pdf(
-          filename = IASDT.R::path(
+          filename = fs::path(
             Path_Convergence, paste0("Convergence_Omega_", .x, ".pdf")),
           width = 18, height = 14, onefile = TRUE)
         purrr::map(CurrPlotOrder$PlotID, grid::grid.draw, recording = FALSE)
@@ -472,11 +472,11 @@ convergence_plot <- function(
 
   IASDT.R::cat_time("Beta")
 
-  FileConv_Beta <- IASDT.R::path(Path_Convergence, "Convergence_Beta.RData")
+  FileConv_Beta <- fs::path(Path_Convergence, "Convergence_Beta.RData")
 
   if (IASDT.R::check_data(FileConv_Beta, warning = FALSE)) {
 
-    IASDT.R::cat_time("Loading plotting data", level = 1)
+    IASDT.R::cat_time("Loading plotting data", level = 1L)
     PlotObj_Beta <- IASDT.R::load_as(FileConv_Beta)
 
     rm(Obj_Beta, envir = environment())
@@ -541,23 +541,23 @@ convergence_plot <- function(
         Term = NULL) %>%
       dplyr::bind_rows(LinearTerms)
 
-    IASDT.R::cat_time("Prepare trace plots", level = 1)
+    IASDT.R::cat_time("Prepare trace plots", level = 1L)
 
     BetaNames <- attr(Obj_Beta[[1]], "dimnames")[[2]]
 
-    IASDT.R::cat_time("Prepare 95% credible interval data", level = 2)
+    IASDT.R::cat_time("Prepare 95% credible interval data", level = 2L)
     CI <- summary(Obj_Beta, quantiles = c(0.025, 0.975))$quantiles %>%
       as.data.frame() %>%
       tibble::as_tibble(rownames = "Var_Sp") %>%
       dplyr::rename(CI_025 = `2.5%`, CI_975 = `97.5%`)
 
-    IASDT.R::cat_time("Coda to tibble", level = 2)
+    IASDT.R::cat_time("Coda to tibble", level = 2L)
     Beta_DF <- IASDT.R::coda_to_tibble(
       coda_object = Obj_Beta, posterior_type = "beta", env_file = env_file) %>%
       dplyr::left_join(CI, by = "Var_Sp")
 
     # Variable ranges
-    IASDT.R::cat_time("Variable ranges", level = 2)
+    IASDT.R::cat_time("Variable ranges", level = 2L)
     VarRanges <- dplyr::arrange(Beta_DF, Variable, IAS_ID) %>%
       dplyr::select(Variable, DT) %>%
       dplyr::mutate(
@@ -577,13 +577,13 @@ convergence_plot <- function(
       tidyr::unnest_wider("Range")
 
     # Species taxonomy
-    IASDT.R::cat_time("Species taxonomy", level = 2)
+    IASDT.R::cat_time("Species taxonomy", level = 2L)
     SpeciesTaxonomy <- IASDT.R::get_species_name(env_file = env_file) %>%
       dplyr::select(IAS_ID, Class, Order, Family)
 
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
-    IASDT.R::cat_time("Preparing data for plotting", level = 2)
+    IASDT.R::cat_time("Preparing data for plotting", level = 2L)
     Cols2remove <- c(
       "CI_025", "CI_975", "Var_Min", "Var_Max", "Class", "Order", "Family")
 
@@ -592,8 +592,8 @@ convergence_plot <- function(
       dplyr::left_join(SpeciesTaxonomy, by = "IAS_ID") %>%
       dplyr::mutate(
         Var_Sp2 = paste0(Variable, "_", IAS_ID),
-        Var_Sp_File = IASDT.R::path(Pah_Beta_Data, paste0(Var_Sp2, ".RData")),
-        Plot_File = IASDT.R::path(Pah_Beta_Data, paste0(Var_Sp2, "_Plots.qs2")),
+        Var_Sp_File = fs::path(Pah_Beta_Data, paste0(Var_Sp2, ".RData")),
+        Plot_File = fs::path(Pah_Beta_Data, paste0(Var_Sp2, "_Plots.qs2")),
         DT = purrr::pmap(
           .l = list(
             Var_Sp, DT, CI_025, CI_975, Var_Min,
@@ -631,15 +631,15 @@ convergence_plot <- function(
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
     # Prepare working in parallel
-    IASDT.R::cat_time("Prepare working in parallel", level = 2)
-    IASDT.R::set_parallel(n_cores = min(n_cores, nrow(Beta_DF)), level = 3)
+    IASDT.R::cat_time("Prepare working in parallel", level = 2L)
+    IASDT.R::set_parallel(n_cores = min(n_cores, nrow(Beta_DF)), level = 3L)
     withr::defer(future::plan("future::sequential", gc = TRUE))
 
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
     # Split data for each of variables and species combination
     IASDT.R::cat_time(
-      "Split data for each of variables and species combination", level = 2)
+      "Split data for each of variables and species combination", level = 2L)
 
     Beta_DF2 <- future.apply::future_lapply(
       X = seq_len(nrow(Beta_DF)),
@@ -681,7 +681,7 @@ convergence_plot <- function(
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
     # Prepare plots
-    IASDT.R::cat_time("Prepare plots", level = 2)
+    IASDT.R::cat_time("Prepare plots", level = 2L)
 
     PlotObj_Beta <- future.apply::future_lapply(
       X = seq_len(nrow(Beta_DF)),
@@ -707,7 +707,7 @@ convergence_plot <- function(
         # delete file if corrupted
         if (file.exists(Plot_File)) {
           IASDT.R::system_command(
-            command = paste0("rm -f ", Plot_File), R_object = FALSE,
+            command = paste0("rm -f ", Plot_File), r_object = FALSE,
             ignore.stdout = TRUE)
         }
 
@@ -877,13 +877,13 @@ convergence_plot <- function(
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
     # Stopping cluster
-    IASDT.R::set_parallel(stop_cluster = TRUE, level = 2)
+    IASDT.R::set_parallel(stop_cluster = TRUE, level = 2L)
 
     rm(Beta_DF, BetaNames, envir = environment())
     invisible(gc())
 
     if (save_plotting_data) {
-      IASDT.R::cat_time("Save trace plot data", level = 2)
+      IASDT.R::cat_time("Save trace plot data", level = 2L)
       IASDT.R::save_as(
         object = PlotObj_Beta, object_name = "Convergence_Beta",
         out_path = FileConv_Beta)
@@ -899,9 +899,9 @@ convergence_plot <- function(
 
   # Beta - 2. by variable ------
 
-  IASDT.R::cat_time("Trace plots, grouped by variables", level = 1)
+  IASDT.R::cat_time("Trace plots, grouped by variables", level = 1L)
 
-  IASDT.R::cat_time("Preparing data", level = 2)
+  IASDT.R::cat_time("Preparing data", level = 2L)
   BetaTracePlots_ByVar <- dplyr::arrange(PlotObj_Beta, Variable, IAS_ID) %>%
     dplyr::select(Variable, Plot_File, VarDesc) %>%
     tidyr::nest(Plot_File = "Plot_File") %>%
@@ -911,12 +911,12 @@ convergence_plot <- function(
 
   # Prepare working in parallel
   IASDT.R::set_parallel(
-    n_cores = min(n_cores, nrow(BetaTracePlots_ByVar)), level = 2)
+    n_cores = min(n_cores, nrow(BetaTracePlots_ByVar)), level = 2L)
   withr::defer(future::plan("future::sequential", gc = TRUE))
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
-  IASDT.R::cat_time("Save plots", level = 2)
+  IASDT.R::cat_time("Save plots", level = 2L)
   VarNames <- BetaTracePlots_ByVar$Variable
 
   BetaTracePlots_ByVar0 <- future.apply::future_lapply(
@@ -992,14 +992,14 @@ convergence_plot <- function(
 
       invisible({
         grDevices::cairo_pdf(
-          filename = IASDT.R::path(
+          filename = fs::path(
             Path_Convergence, paste0("Convergence_Beta_", x, "_FreeY.pdf")),
           width = 18, height = 13, onefile = TRUE)
         purrr::walk(BetaPlotList$Plot, grid::grid.draw, recording = FALSE)
         grDevices::dev.off()
 
         grDevices::cairo_pdf(
-          filename = IASDT.R::path(
+          filename = fs::path(
             Path_Convergence, paste0("Convergence_Beta_", x, "_FixedY.pdf")),
           width = 18, height = 13, onefile = TRUE)
         purrr::walk(.x = BetaPlotList$PlotFixedY, .f = grid::grid.draw)
@@ -1026,15 +1026,15 @@ convergence_plot <- function(
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
   # Stopping cluster
-  IASDT.R::set_parallel(stop_cluster = TRUE, level = 2)
+  IASDT.R::set_parallel(stop_cluster = TRUE, level = 2L)
 
   # # ..................................................................... ###
 
   # Beta - 3. by species ------
 
-  IASDT.R::cat_time("Trace plots, grouped by species", level = 1)
+  IASDT.R::cat_time("Trace plots, grouped by species", level = 1L)
 
-  IASDT.R::cat_time("Preparing data", level = 2)
+  IASDT.R::cat_time("Preparing data", level = 2L)
   Order <- stringr::str_remove_all(ModVars, "\\(|\\)")
   BetaTracePlots_BySp <- PlotObj_Beta %>%
     dplyr::arrange(Species, factor(Variable, levels = Order)) %>%
@@ -1046,12 +1046,12 @@ convergence_plot <- function(
 
   # Prepare working in parallel
   IASDT.R::set_parallel(
-    n_cores = min(n_cores, nrow(BetaTracePlots_BySp)), level = 2)
+    n_cores = min(n_cores, nrow(BetaTracePlots_BySp)), level = 2L)
   withr::defer(future::plan("future::sequential", gc = TRUE))
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
-  IASDT.R::cat_time("Save plots", level = 2)
+  IASDT.R::cat_time("Save plots", level = 2L)
 
   BetaTracePlots_BySp0 <- future.apply::future_lapply(
     X = BetaTracePlots_BySp$Species,
@@ -1115,7 +1115,7 @@ convergence_plot <- function(
 
       invisible({
         grDevices::cairo_pdf(
-          filename = IASDT.R::path(
+          filename = fs::path(
             Path_Convergence_BySp,
             paste0(
               "Convergence_Beta_", SpDT$IAS_ID, "_",
@@ -1139,14 +1139,14 @@ convergence_plot <- function(
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
   # Stopping cluster
-  IASDT.R::set_parallel(stop_cluster = TRUE, level = 2)
+  IASDT.R::set_parallel(stop_cluster = TRUE, level = 2L)
 
   rm(BetaTracePlots_BySp0, envir = environment())
 
   # # ..................................................................... ###
 
   IASDT.R::cat_diff(
-    init_time = .StartTime, prefix = "Plot model convergence took ")
+    init_time = .start_time, prefix = "Plot model convergence took ")
 
   # # ..................................................................... ###
 
@@ -1191,7 +1191,7 @@ convergence_Beta_ranges <- function(model_dir) {
   }
 
   # Construct path to beta parameter data
-  beta_data_path <- IASDT.R::path(
+  beta_data_path <- fs::path(
     model_dir, "Model_Convergence", "Convergence_Beta.RData")
   # Check if the beta data file exists
   if (!file.exists(beta_data_path)) {
@@ -1230,7 +1230,7 @@ convergence_Beta_ranges <- function(model_dir) {
     style='color:blue'>max</span> per species) across chains")
 
   # Construct path for saving the plot
-  plot_path <- IASDT.R::path(
+  plot_path <- fs::path(
     model_dir, "Model_Postprocessing", "Beta_min_max_Habitat.jpeg")
   fs::dir_create(dirname(plot_path))
 
@@ -1243,7 +1243,7 @@ convergence_Beta_ranges <- function(model_dir) {
     ggplot2::facet_wrap(~Variable, scales = "free_y", ncol = 5, nrow = 4) +
     ggplot2::labs(
       title = "Convergence of beta parameters", subtitle = plot_subtitle,
-      x = "Chain", y = "min/max Beta value") +
+      x = "Chain", y = "minimum and maximum Beta value") +
     ggplot2::theme(
       plot.title = ggplot2::element_text(size = 20, face = "bold"),
       plot.subtitle = ggtext::element_markdown())

@@ -6,7 +6,7 @@
 \alias{CHELSA_process}
 \alias{CHELSA_prepare}
 \alias{CHELSA_project}
-\title{Process CHELSA Climate Data for the \code{IAS-pDT}}
+\title{Process CHELSA Climate Data for the \code{IASDT}}
 \usage{
 CHELSA_process(
   env_file = ".env",
@@ -31,7 +31,7 @@ CHELSA_prepare(
   other_variables = "npp"
 )
 
-CHELSA_project(metadata = NULL, env_file = ".env", compression_level = 5)
+CHELSA_project(metadata = NULL, env_file = ".env", compression_level = 5L)
 }
 \arguments{
 \item{env_file}{Character. Path to the environment file containing paths to
@@ -69,10 +69,10 @@ Default: \code{FALSE}.}
 }
 \description{
 Downloads, processes, and projects \href{https://chelsa-climate.org/}{CHELSA}
-climate data at the European scale for the Invasive Alien Species prototype
-Digital Twin (\code{IAS-pDT}). Supports multiple climate scenarios, outputting
-data in TIFF and NetCDF formats. Orchestrated by \code{CHELSA_process()}, with
-helper functions \code{CHELSA_prepare()} and \code{CHELSA_project()}.
+climate data at the European scale for the Invasive Alien Species Digital
+Twin (\code{IASDT}). Supports multiple climate scenarios, outputting data in TIFF
+and NetCDF formats. Orchestrated by \code{CHELSA_process()}, with helper functions
+\code{CHELSA_prepare()} and \code{CHELSA_project()}.
 }
 \note{
 \itemize{
@@ -91,7 +91,7 @@ processes it to the European scale and reference grid, and saves TIFF and
 NetCDF outputs for 46 climate scenarios.
 \item \strong{\code{CHELSA_prepare()}}: Extracts metadata from local URL text files and
 manages optional downloads.
-\item \strong{\code{CHELSA_project()}}: Projects data to the IAS-pDT reference grid with
+\item \strong{\code{CHELSA_project()}}: Projects data to the \code{IASDT} reference grid with
 optional transformations.
 }
 }

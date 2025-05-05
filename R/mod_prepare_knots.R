@@ -25,7 +25,7 @@
 #'   used. If `Prior` is a matrix, it will be used as the prior. If `Prior =
 #'   NULL`, the prior will be generated using `Min`, `Max`, and `Samples`. `Min`
 #'   and `Max` are the minimum and maximum values of the alpha parameter (in
-#'   kilometer). `Samples` is the number of samples to be used in the prior.
+#'   kilometre). `Samples` is the number of samples to be used in the prior.
 #'
 #' @name prepare_knots
 #' @author Ahmed El-Gabbas

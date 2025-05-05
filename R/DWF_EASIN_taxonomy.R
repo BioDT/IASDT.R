@@ -31,7 +31,7 @@ EASIN_taxonomy <- function(
   # Environment variables ----
 
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "EASIN_URL", "DP_R_EASIN_taxa_url", FALSE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::assign_env_vars(
@@ -96,7 +96,7 @@ EASIN_taxonomy <- function(
 
   IASDT.R::cat_diff(
     init_time = TimeStartTaxa,
-    prefix = "Extracting EASIN taxonomy was finished in ", level = 2)
+    prefix = "Extracting EASIN taxonomy was finished in ", level = 2L)
 
   return(EASIN_Taxa)
 }

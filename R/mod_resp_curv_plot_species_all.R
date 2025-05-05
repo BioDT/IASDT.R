@@ -15,7 +15,7 @@ resp_curv_plot_species_all <- function(
 
   IASDT.R::cat_time("Plotting species response curves")
 
-  .StartTime <- lubridate::now(tzone = "CET")
+  .start_time <- lubridate::now(tzone = "CET")
 
   # # ..................................................................... ###
 
@@ -28,7 +28,7 @@ resp_curv_plot_species_all <- function(
 
   # Check arguments
 
-  IASDT.R::cat_time("Check arguments", level = 1)
+  IASDT.R::cat_time("Check arguments", level = 1L)
 
   if (is.null(model_dir)) {
     IASDT.R::stop_ctx("`model_dir` cannot be NULL", model_dir = model_dir)
@@ -57,9 +57,8 @@ resp_curv_plot_species_all <- function(
   # # ..................................................................... ###
 
 
-  Path_RC_DT <- IASDT.R::path(model_dir, "Model_Postprocessing", "RespCurv_DT")
-  Path_RC_All <- IASDT.R::path(
-    model_dir, "Model_Postprocessing", "RespCurv_All")
+  Path_RC_DT <- fs::path(model_dir, "Model_Postprocessing", "RespCurv_DT")
+  Path_RC_All <- fs::path(model_dir, "Model_Postprocessing", "RespCurv_All")
 
   if (!dir.exists(Path_RC_DT)) {
     IASDT.R::stop_ctx(
@@ -73,9 +72,9 @@ resp_curv_plot_species_all <- function(
   # Loading & processing species response curve data in parallel
 
   IASDT.R::cat_time(
-    "Loading & processing species response curve data in parallel", level = 1)
+    "Loading & processing species response curve data in parallel", level = 1L)
 
-  Sp_DT_All <- IASDT.R::path(Path_RC_DT, "ResCurvDT.RData") %>%
+  Sp_DT_All <- fs::path(Path_RC_DT, "ResCurvDT.RData") %>%
     IASDT.R::load_as() %>%
     dplyr::select(Coords, RC_Path_Prob)
 
@@ -115,7 +114,7 @@ resp_curv_plot_species_all <- function(
 
   # Plot all species response curves
 
-  IASDT.R::cat_time("Plot all species response curves", level = 1)
+  IASDT.R::cat_time("Plot all species response curves", level = 1L)
 
   Plots <- purrr::map_dfr(
     .x = seq_len(nrow(Sp_DT_All)),
@@ -125,13 +124,12 @@ resp_curv_plot_species_all <- function(
       Coords <- Sp_DT_All$Coords[[ID]]
 
       FilePrefix <- paste0("RespCurv_All_NFV_", NFV, "_Coords_", Coords)
-      path_JPEG <- IASDT.R::path(Path_RC_All, paste0(FilePrefix, ".jpeg"))
+      path_JPEG <- fs::path(Path_RC_All, paste0(FilePrefix, ".jpeg"))
 
       DT <- Sp_DT_All$DT[[ID]] %>%
         dplyr::mutate(
           VarDesc = dplyr::case_when(
-            stringr::str_detect(Variable, "^bio") ~
-              stringr::str_to_sentence(Variable),
+            startsWith(Variable, "bio") ~ stringr::str_to_sentence(Variable),
             Variable == "RoadRailLog" ~ "Road + Rail intensity",
             Variable == "EffortsLog" ~ "Sampling efforts",
             Variable == "RiversLog" ~ "River length",
@@ -268,18 +266,18 @@ resp_curv_plot_species_all <- function(
   # # ..................................................................... ###
 
   # Save data
-  IASDT.R::cat_time("Save data", level = 1)
+  IASDT.R::cat_time("Save data", level = 1L)
 
   Sp_DT_All <- dplyr::select(Sp_DT_All, -DT) %>%
     dplyr::bind_cols(Plots = Plots)
 
-  save(Sp_DT_All, file = IASDT.R::path(Path_RC_All, "Sp_DT_All.RData"))
+  save(Sp_DT_All, file = fs::path(Path_RC_All, "Sp_DT_All.RData"))
 
   # # ..................................................................... ###
 
   IASDT.R::cat_diff(
-    init_time = .StartTime,
-    prefix = "Plotting all species response curves took ", level = 1)
+    init_time = .start_time,
+    prefix = "Plotting all species response curves took ", level = 1L)
 
   # # ..................................................................... ###
 

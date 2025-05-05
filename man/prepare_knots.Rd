@@ -33,7 +33,7 @@ respective values will be used as arguments to \link[Hmsc:setPriors]{Hmsc::setPr
 \code{NULL} or a list with all \code{NULL} list items, the default prior will be
 used. If \code{Prior} is a matrix, it will be used as the prior. If \code{Prior = NULL}, the prior will be generated using \code{Min}, \code{Max}, and \code{Samples}. \code{Min}
 and \code{Max} are the minimum and maximum values of the alpha parameter (in
-kilometer). \code{Samples} is the number of samples to be used in the prior.}
+kilometre). \code{Samples} is the number of samples to be used in the prior.}
 }
 \value{
 An object suitable for specifying the random level in HMSC GPP

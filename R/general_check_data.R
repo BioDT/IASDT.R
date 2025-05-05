@@ -20,7 +20,7 @@
 #' @author Ahmed El-Gabbas
 #' @export
 #' @details The `check_data()` function determines the file type based on its
-#'   extension. If the extension is unrecognized, it returns `FALSE`. Supported
+#'   extension. If the extension is unrecognised, it returns `FALSE`. Supported
 #'   file types:
 #' - **RData**: Checked with `check_RData()`, read using [load_as]
 #' - **qs2**: Checked with `check_qs()`, read using [qs2::qs_read]

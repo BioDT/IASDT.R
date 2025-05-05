@@ -68,30 +68,29 @@ add_diagonals_to_grid <- function(sf_object = NULL) {
     dplyr::pull("geometry") %>%
     purrr::map(
       .f = ~{
-        SS2 <- .x %>%
-          sf::st_coordinates() %>%
+        ss_2 <- sf::st_coordinates(.x) %>%
           tibble::as_tibble() %>%
           dplyr::select(X, Y)
 
-        OffDiag <- dplyr::bind_rows(
-          dplyr::filter(SS2, X == min(X), Y == max(Y)),
-          dplyr::filter(SS2, X == max(X), Y == min(Y))) %>%
+        off_diag <- dplyr::bind_rows(
+          dplyr::filter(ss_2, X == min(X), Y == max(Y)),
+          dplyr::filter(ss_2, X == max(X), Y == min(Y))) %>%
           as.matrix() %>%
           sf::st_linestring()
 
-        Diag <- dplyr::bind_rows(
-          dplyr::filter(SS2, X == min(X), Y == min(Y)),
-          dplyr::filter(SS2, X == max(X), Y == max(Y))) %>%
+        diag <- dplyr::bind_rows(
+          dplyr::filter(ss_2, X == min(X), Y == min(Y)),
+          dplyr::filter(ss_2, X == max(X), Y == max(Y))) %>%
           as.matrix() %>%
           sf::st_linestring()
 
-        Out <- list(OffDiag, Diag) %>%
+        output <- list(off_diag, diag) %>%
           sf::st_multilinestring() %>%
           sf::st_geometry()  %>%
           sf::st_set_crs(sf::st_crs(sf_object)) %>%
           sf::st_sfc()
 
-        Out
+        output
 
       }) %>%
     tibble::tibble(geometry = .) %>%

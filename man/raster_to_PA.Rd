@@ -36,7 +36,7 @@ ggplot2::ggplot() +
   tidyterra::geom_spatraster(data = terra::rast(r), maxcell = Inf) +
   ggplot2::theme_minimal()
 
-R2 <- raster::stack(
+r_2 <- raster::stack(
   # NA replaced with 0
   raster_to_PA(raster = r),
   # NA is kept as NA
@@ -46,7 +46,7 @@ R2 <- raster::stack(
 
 ggplot2::ggplot() +
   tidyterra::geom_spatraster(
-    data = terra::as.factor(terra::rast(R2)), maxcell = Inf) +
+    data = terra::as.factor(terra::rast(r_2)), maxcell = Inf) +
   ggplot2::facet_wrap(~lyr) +
   ggplot2::scale_fill_manual(values = c("grey30", "red"),
     na.value = "transparent") +

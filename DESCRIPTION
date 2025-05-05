@@ -2,15 +2,15 @@ Type: Package
 Package: IASDT.R
 Title: Modelling the distribution of invasive alien plant species in
     Europe
-Version: 0.1.04
-Date: 2025-04-29
+Version: 0.1.05
+Date: 2025-05-05
 Authors@R: 
     person("Ahmed", "El-Gabbas", , "ahmed.el-gabbas@ufz.de", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-2225-088X"))
 Maintainer: Ahmed El-Gabbas <ahmed.el-gabbas@ufz.de>
 Description: Helper R functions for the Invasive Alien Species (IAS)
-    prototype Digital Twin (IAS-pDT), as part of the EU-funded BioDT
-    project.
+    Digital Twin (IASDT), as part of the EU-funded Biodiversity Digital
+    Twin (BioDT) project.
 License: MIT + file LICENSE
 URL: https://biodt.github.io/IASDT.R/, https://biodt.eu
 BugReports: https://github.com/BioDT/IASDT.R/issues
@@ -65,6 +65,7 @@ Suggests:
     ggtree (>= 3.13.0.1),
     grid (>= 4.4.1),
     gridExtra (>= 2.3),
+    gridtext (>= 0.1.5),
     gtools (>= 3.9.5),
     htmltools (>= 0.5.8),
     httr(>= 1.4.7),
@@ -129,7 +130,7 @@ Remotes:
     YuLab-SMU/ggtree
 Config/testthat/edition: 3
 Encoding: UTF-8
-Language: en-US
+Language: en-GB
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2

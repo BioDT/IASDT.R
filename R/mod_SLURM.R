@@ -78,7 +78,7 @@ mod_SLURM <- function(
   }
 
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "ProjNum", "DP_R_LUMI_gpu", FALSE, FALSE,
     "Path_GPU_Check", "DP_R_LUMI_gpu_check", FALSE, Sys.info()[1] != "Windows")
 
@@ -127,7 +127,7 @@ mod_SLURM <- function(
 
   if (is.null(SLURM_path_out)) {
     # This folder was created in the mod_prepare_HPC function
-    SLURM_path_out <- IASDT.R::path(model_dir, "Model_Fitting_HPC", "JobsLog")
+    SLURM_path_out <- fs::path(model_dir, "Model_Fitting_HPC", "JobsLog")
   }
 
   purrr::walk(
@@ -160,7 +160,7 @@ mod_SLURM <- function(
 
       # This is better than using sink to have a platform independent file
       # (here, to maintain a linux-like new line ending)
-      f <- file(IASDT.R::path(model_dir, OutFile), open = "wb")
+      f <- file(fs::path(model_dir, OutFile), open = "wb")
       on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
 
       # a wrapper function of cat with new line separator
@@ -179,9 +179,9 @@ mod_SLURM <- function(
       cat2(paste0("#SBATCH --job-name=", JobName0))
       cat2(paste0("#SBATCH --ntasks=", ntasks))
       cat2(paste0(
-        "#SBATCH --output=", IASDT.R::path(SLURM_path_out, "%x-%A-%a.out")))
+        "#SBATCH --output=", fs::path(SLURM_path_out, "%x-%A-%a.out")))
       cat2(paste0(
-        "#SBATCH --error=", IASDT.R::path(SLURM_path_out, "%x-%A-%a.out")))
+        "#SBATCH --error=", fs::path(SLURM_path_out, "%x-%A-%a.out")))
       cat2(paste0("#SBATCH --account=", ProjNum))
       cat2(paste0("#SBATCH --cpus-per-task=", cpus_per_task))
       cat2(paste0("#SBATCH --mem-per-cpu=", memory_per_cpu))
@@ -227,7 +227,7 @@ mod_SLURM <- function(
       cat2("# -----------------------------------------------------------")
       cat2("# Loading Hmsc-HPC")
       cat2("# -----------------------------------------------------------")
-      cat2(paste0("source ", IASDT.R::path(path_Hmsc, "setup-env.sh"), "\n"))
+      cat2(paste0("source ", fs::path(path_Hmsc, "setup-env.sh"), "\n"))
 
       cat2("# -----------------------------------------------------------")
       cat2("# Check GPU")
@@ -265,7 +265,7 @@ mod_SLURM <- function(
       close(f)
 
       # Print the command to submit the job
-      cat(paste0("\t sbatch ", IASDT.R::path(model_dir, OutFile), "\n"))
+      cat(paste0("\t sbatch ", fs::path(model_dir, OutFile), "\n"))
     })
 
   return(invisible(NULL))

@@ -13,7 +13,7 @@ coda object.}
 \item{env_file}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
 
-\item{return_data}{Logical. Whether the summarized data should be returned as
+\item{return_data}{Logical. Whether the summarised data should be returned as
 an R object. If \code{TRUE}, the function returns a list containing summaries of
 \code{Alpha}, \code{Beta}, \code{Rho}, and \code{Omega} parameters. The default value is
 \code{FALSE}, which means the function will not return any data but will save
@@ -27,7 +27,7 @@ anything and saves the summaries to a directory. If \code{return_data} is
 \description{
 This function provides a comprehensive summary of Hmsc model parameters,
 including \code{Alpha}, \code{Beta}, \code{Rho}, and \code{Omega}. It processes the model's
-output, performs statistical summaries, and optionally returns the summarized
+output, performs statistical summaries, and optionally returns the summarised
 data.
 }
 \author{

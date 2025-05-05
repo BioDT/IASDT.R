@@ -34,7 +34,7 @@ efforts_download <- function(n_cores = 6L, env_file = ".env") {
   # Environment variables ----
 
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "Path_Efforts", "DP_R_Efforts_processed", FALSE, FALSE,
     "Path_Raw", "DP_R_Efforts_raw", FALSE, FALSE)
   # Assign environment variables and check file and paths
@@ -44,8 +44,7 @@ efforts_download <- function(n_cores = 6L, env_file = ".env") {
 
   # # ..................................................................... ###
 
-  Path_Efforts_Request <- IASDT.R::path(
-    Path_Efforts, "Efforts_AllRequests.RData")
+  Path_Efforts_Request <- fs::path(Path_Efforts, "Efforts_AllRequests.RData")
 
   if (!file.exists(Path_Efforts_Request)) {
     IASDT.R::stop_ctx(
@@ -61,7 +60,7 @@ efforts_download <- function(n_cores = 6L, env_file = ".env") {
 
   IASDT.R::cat_time(
     paste0("Prepare working in parallel using ", n_cores, " cores"),
-    level = 1)
+    level = 1L)
 
   if (n_cores == 1) {
     future::plan("future::sequential", gc = TRUE)
@@ -78,7 +77,7 @@ efforts_download <- function(n_cores = 6L, env_file = ".env") {
   # # ..................................................................... ###
 
   # Downloading/checking efforts data ------
-  IASDT.R::cat_time("Downloading/checking efforts data", level = 1)
+  IASDT.R::cat_time("Downloading & checking efforts data", level = 1L)
 
   Efforts_AllRequests <- Efforts_AllRequests %>%
     dplyr::mutate(
@@ -87,7 +86,7 @@ efforts_download <- function(n_cores = 6L, env_file = ".env") {
         .x = Request,
         .f = ~{
 
-          DownFile <- IASDT.R::path(Path_Raw, paste0(as.character(.x), ".zip"))
+          DownFile <- fs::path(Path_Raw, paste0(as.character(.x), ".zip"))
 
           # Check zip file if exist, if not download it
           if (file.exists(DownFile)) {
@@ -141,7 +140,7 @@ efforts_download <- function(n_cores = 6L, env_file = ".env") {
   # # ..................................................................... ###
 
   # Stopping cluster ------
-  IASDT.R::cat_time("Stopping cluster", level = 1)
+  IASDT.R::cat_time("Stopping cluster", level = 1L)
   if (n_cores > 1) {
     snow::stopCluster(c1)
     future::plan("future::sequential", gc = TRUE)
@@ -151,7 +150,7 @@ efforts_download <- function(n_cores = 6L, env_file = ".env") {
 
   IASDT.R::cat_diff(
     init_time = .StartTimeDown,
-    prefix = "Downloading efforts data took ", level = 1)
+    prefix = "Downloading efforts data took ", level = 1L)
 
   # # ..................................................................... ###
 

@@ -83,9 +83,9 @@ predict_latent_factor <- function(
     on.exit(try(sink(), silent = TRUE), add = TRUE)
   }
 
-  .StartTime <- lubridate::now(tzone = "CET")
+  .start_time <- lubridate::now(tzone = "CET")
 
-  IASDT.R::cat_time("Starting `predict_latent_factor` function", level = 1)
+  IASDT.R::cat_time("Starting `predict_latent_factor` function", level = 1L)
 
   # # ..................................................................... ###
 
@@ -102,7 +102,7 @@ predict_latent_factor <- function(
   # Load postEta if it is a file path
 
   if (inherits(postEta, "character")) {
-    IASDT.R::cat_time("Load postEta", level = 1)
+    IASDT.R::cat_time("Load postEta", level = 1L)
     if (!file.exists(postEta)) {
       IASDT.R::stop_ctx(
         "The specified path for `postEta` does not exist. ", postEta = postEta)
@@ -146,7 +146,7 @@ predict_latent_factor <- function(
   if (AllTraining) {
     # If all input sites are for training sites, use LF info from the model
     # directly
-    IASDT.R::cat_time("All input sites are training sites", level = 1)
+    IASDT.R::cat_time("All input sites are training sites", level = 1L)
 
     postEtaPred <- purrr::map(
       .x = postEta,
@@ -158,7 +158,7 @@ predict_latent_factor <- function(
 
   } else {
 
-    IASDT.R::cat_time("All input sites are new sites", level = 1)
+    IASDT.R::cat_time("All input sites are new sites", level = 1L)
 
     # Check TensorFlow settings
 
@@ -175,9 +175,10 @@ predict_latent_factor <- function(
       # Suppress TensorFlow warnings and disable optimizations
       Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3", TF_ENABLE_ONEDNN_OPTS = "0")
 
-      IASDT.R::cat_time("Computations will be made using TensorFlow", level = 1)
+      IASDT.R::cat_time(
+        "Computations will be made using TensorFlow", level = 1L)
     } else {
-      IASDT.R::cat_time("Computations will be made using R/CPP", level = 1)
+      IASDT.R::cat_time("Computations will be made using R/CPP", level = 1L)
     }
 
     # # .................................................................... ###
@@ -196,14 +197,14 @@ predict_latent_factor <- function(
     # Create a temporary directory to store intermediate results. This directory
     # will be used to save s1/s2 or D11/D12, and intermediate postEta files,
     # reducing memory usage.
-    Temp_Dir_LF <- IASDT.R::path(temp_dir, "LF_Prediction")
+    Temp_Dir_LF <- fs::path(temp_dir, "LF_Prediction")
     fs::dir_create(c(Temp_Dir_LF, temp_dir))
 
     # # .................................................................... ###
 
     # Calculate D11 and D12 only once
 
-    IASDT.R::cat_time("Calculate/save necessary matrices", level = 1)
+    IASDT.R::cat_time("Calculate/save necessary matrices", level = 1L)
 
     alphapw <- LF_rL$alphapw
 
@@ -211,17 +212,17 @@ predict_latent_factor <- function(
 
       # Save s1 and s2 for coordinates at training and testing sites as feather
       # files, if not already exist on disk
-      Path_s1 <- IASDT.R::path(temp_dir, paste0(model_name, "s1.feather"))
-      Path_s2 <- IASDT.R::path(temp_dir, paste0(model_name, "s2.feather"))
+      Path_s1 <- fs::path(temp_dir, paste0(model_name, "s1.feather"))
+      Path_s2 <- fs::path(temp_dir, paste0(model_name, "s2.feather"))
 
       s1_s2_Okay <- IASDT.R::check_data(Path_s1, warning = FALSE) &&
         IASDT.R::check_data(Path_s2, warning = FALSE)
 
       if (s1_s2_Okay) {
-        IASDT.R::cat_time("s1 and s2 matrices were already saved", level = 2)
+        IASDT.R::cat_time("s1 and s2 matrices were already saved", level = 2L)
       } else {
 
-        IASDT.R::cat_time("Saving s1 and s2 matrices", level = 2)
+        IASDT.R::cat_time("Saving s1 and s2 matrices", level = 2L)
 
         # s1
         s1 <- as.data.frame(LF_rL$s[units_model, , drop = FALSE])
@@ -240,13 +241,13 @@ predict_latent_factor <- function(
     } else {
 
       # Save D11 and D12 as feather files, if not already exist on disk
-      Path_D11 <- IASDT.R::path(temp_dir, paste0(model_name, "D11.qs2"))
-      Path_D12 <- IASDT.R::path(temp_dir, paste0(model_name, "D12.qs2"))
+      Path_D11 <- fs::path(temp_dir, paste0(model_name, "D11.qs2"))
+      Path_D12 <- fs::path(temp_dir, paste0(model_name, "D12.qs2"))
 
       if (file.exists(Path_D11) && file.exists(Path_D12)) {
 
         IASDT.R::cat_time(
-          "D11 and D12 distance matrices are already saved", level = 2)
+          "D11 and D12 distance matrices are already saved", level = 2L)
 
       } else {
 
@@ -277,7 +278,7 @@ predict_latent_factor <- function(
     # Convert post_alpha to tibble
 
     IASDT.R::cat_time(
-      "Splitting and saving `post_alpha` to small chunks", level = 1)
+      "Splitting and saving `post_alpha` to small chunks", level = 1L)
 
     # Unique combination of LF / alphapw / sample IDs
     LF_Data <- do.call(rbind, post_alpha) %>%
@@ -307,7 +308,7 @@ predict_latent_factor <- function(
           .f = ~ {
             ChunkID0 <- stringr::str_pad(
               .x, width = nchar(dplyr::n()), pad = 0)
-            IASDT.R::path(
+            fs::path(
               temp_dir,
               paste0(model_name, "postEta_ch", ChunkID0, ".feather"))
           }),
@@ -402,7 +403,7 @@ predict_latent_factor <- function(
             etaPred <- tibble::tibble(
               SampleID = SampleID,
               LF = LF_ID,
-              Path_Samp_LF = IASDT.R::path(
+              Path_Samp_LF = fs::path(
                 Temp_Dir_LF,
                 paste0(
                   model_name, "Samp_",
@@ -447,7 +448,7 @@ predict_latent_factor <- function(
               .x = seq_along(SampleID),
               .f = function(ID) {
 
-                Path_Samp_LF <- IASDT.R::path(
+                Path_Samp_LF <- fs::path(
                   Temp_Dir_LF,
                   paste0(
                     model_name, "Samp_",
@@ -485,7 +486,7 @@ predict_latent_factor <- function(
 
             etaPred <- tibble::tibble(
 
-              Path_Samp_LF = IASDT.R::path(
+              Path_Samp_LF = fs::path(
                 Temp_Dir_LF,
                 paste0(
                   model_name, "Samp_",
@@ -531,16 +532,16 @@ predict_latent_factor <- function(
 
     if (all(file.exists(LF_Data$File_etaPred))) {
       IASDT.R::cat_time(
-        "All LF prediction files were already created", level = 1)
+        "All LF prediction files were already created", level = 1L)
     } else {
       if (LF_n_cores == 1 || LF_commands_only) {
 
         if (LF_commands_only) {
           IASDT.R::cat_time(
-            "Prepare commands for predicting latent factors", level = 1)
+            "Prepare commands for predicting latent factors", level = 1L)
         } else {
           # Sequential processing
-          IASDT.R::cat_time("Predicting Latent Factor sequentially", level = 1)
+          IASDT.R::cat_time("Predicting Latent Factor sequentially", level = 1L)
         }
 
         # Making predictions sequentially
@@ -563,7 +564,7 @@ predict_latent_factor <- function(
         if (LF_commands_only) {
 
           CommandFilePrefix <- dplyr::if_else(
-            stringr::str_detect(model_name, "^RC_c_"),
+            startsWith(model_name, "RC_c_"),
             "LF_RC_Commands_", "LF_NewSites_Commands_")
 
           # Function to save commands to files
@@ -581,7 +582,7 @@ predict_latent_factor <- function(
               chunk <- commands[start_line:end_line]
 
               # Define the filename
-              file_name <- IASDT.R::path(
+              file_name <- fs::path(
                 temp_dir, paste0(CommandFilePrefix, i, ".txt"))
 
               # Write the chunk to a file with Linux line endings
@@ -598,13 +599,13 @@ predict_latent_factor <- function(
       } else {
 
         # Parallel processing
-        IASDT.R::cat_time("Predicting Latent Factor in parallel", level = 1)
+        IASDT.R::cat_time("Predicting Latent Factor in parallel", level = 1L)
 
         IASDT.R::set_parallel(
-          n_cores = min(LF_n_cores, nrow(LF_Data)), level = 2)
+          n_cores = min(LF_n_cores, nrow(LF_Data)), level = 2L)
         withr::defer(future::plan("future::sequential", gc = TRUE))
 
-        IASDT.R::cat_time("Making predictions in parallel", level = 2)
+        IASDT.R::cat_time("Making predictions in parallel", level = 2L)
 
         etaPreds <- future.apply::future_lapply(
           X = seq_len(nrow(LF_Data)),
@@ -633,11 +634,11 @@ predict_latent_factor <- function(
             "Matrix", "Hmsc", "qs2", "fs", "purrr", "IASDT.R"))
 
         # Stop the cluster
-        IASDT.R::set_parallel(stop_cluster = TRUE, level = 2)
+        IASDT.R::set_parallel(stop_cluster = TRUE, level = 2L)
       }
 
       # Check if all files are created
-      IASDT.R::cat_time("Check if all files are created", level = 1)
+      IASDT.R::cat_time("Check if all files are created", level = 1L)
       AllEtaFiles <- LF_Data$File_etaPred
       AllEtaFilesExist <- all(file.exists(AllEtaFiles))
 
@@ -647,7 +648,7 @@ predict_latent_factor <- function(
           paste0(length(FailedFiles), " files are missing"),
           FailedFiles = basename(FailedFiles))
       }
-      IASDT.R::cat_time("All files were created", level = 2)
+      IASDT.R::cat_time("All files were created", level = 2L)
 
     }
 
@@ -656,14 +657,14 @@ predict_latent_factor <- function(
     # # .................................................................... ###
 
     # Merge results
-    IASDT.R::cat_time("Merge results in parallel", level = 1)
+    IASDT.R::cat_time("Merge results in parallel", level = 1L)
 
     postEtaPred_Samp <- etaPreds %>%
       dplyr::bind_rows() %>%
       dplyr::select(-LF, -ChunkID, -File_etaPred) %>%
       dplyr::arrange(SampleID) %>%
       dplyr::mutate(
-        Path_Sample = IASDT.R::path(
+        Path_Sample = fs::path(
           Temp_Dir_LF,
           paste0(
             model_name, "Samp_",
@@ -671,10 +672,11 @@ predict_latent_factor <- function(
       tidyr::nest(data = -c("SampleID", "Path_Sample"))
 
 
-    IASDT.R::set_parallel(n_cores = LF_n_cores, level = 2)
+    IASDT.R::set_parallel(n_cores = LF_n_cores, level = 2L)
     withr::defer(future::plan("future::sequential", gc = TRUE))
 
-    IASDT.R::cat_time("Process results for MCMC samples in parallel", level = 2)
+    IASDT.R::cat_time(
+      "Process results for MCMC samples in parallel", level = 2L)
 
     postEtaPred <- future.apply::future_lapply(
       X = seq_len(nrow(postEtaPred_Samp)),
@@ -703,7 +705,7 @@ predict_latent_factor <- function(
       future.packages = c("dplyr", "magrittr", "tibble", "IASDT.R", "purrr"))
 
     # Stop the cluster
-    IASDT.R::set_parallel(stop_cluster = TRUE, level = 2)
+    IASDT.R::set_parallel(stop_cluster = TRUE, level = 2L)
 
     invisible(gc())
 
@@ -714,8 +716,8 @@ predict_latent_factor <- function(
   # Save postEtaPred
 
   if (!is.null(LF_out_file)) {
-    IASDT.R::cat_time("Saving postEtaPred to disk", level = 1)
-    IASDT.R::cat_time(LF_out_file, cat_timestamp = FALSE, level = 2)
+    IASDT.R::cat_time("Saving postEtaPred to disk", level = 1L)
+    IASDT.R::cat_time(LF_out_file, cat_timestamp = FALSE, level = 2L)
     fs::dir_create(fs::path_dir(LF_out_file))
     IASDT.R::save_as(
       object = postEtaPred, out_path = LF_out_file,
@@ -730,7 +732,7 @@ predict_latent_factor <- function(
   # Clean up temporary files after finishing calculations
   if (LF_temp_cleanup) {
 
-    IASDT.R::cat_time("Cleaning up temporary files", level = 1)
+    IASDT.R::cat_time("Cleaning up temporary files", level = 1L)
 
     try(
       expr = {
@@ -771,8 +773,8 @@ predict_latent_factor <- function(
   # # ..................................................................... ###
 
   IASDT.R::cat_diff(
-    init_time = .StartTime, prefix = "predict_latent_factor was finished in ",
-    level = 1)
+    init_time = .start_time, prefix = "predict_latent_factor was finished in ",
+    level = 1L)
 
   # # ..................................................................... ###
 
@@ -874,7 +876,7 @@ run_crossprod_solve <- function(
     }
 
     python_executable <- IASDT.R::normalize_path(
-      IASDT.R::path(TF_environ, "Scripts", "python.exe"),
+      fs::path(TF_environ, "Scripts", "python.exe"),
       must_work = TRUE)
 
     if (!file.exists(python_executable)) {
@@ -913,7 +915,7 @@ run_crossprod_solve <- function(
 
   if (.Platform$OS.type != "windows") {
     path_log <- stringr::str_replace(
-      IASDT.R::path(getwd(), path_out), ".feather", ".log")
+      fs::path(getwd(), path_out), ".feather", ".log")
     # Redirect results of time to log file
     LF_Args <- c(LF_Args, paste0(" >> ", path_log, " 2>&1"))
   }
@@ -931,7 +933,7 @@ run_crossprod_solve <- function(
       "Running command:\n", paste(LF_Args, "\n\n"),
       sep = "\n", file = f, append = TRUE)
 
-    # Initialize retry logic
+    # Initialise retry logic
     attempt <- 1
     success <- FALSE
 
@@ -1000,14 +1002,14 @@ plot_latent_factor <- function(
 
   # Environment variables ----
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
-  Grid10 <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop.RData") %>%
+  Grid10 <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData") %>%
     IASDT.R::load_as() %>%
     terra::unwrap()
 
@@ -1079,7 +1081,7 @@ plot_latent_factor <- function(
       panel.ontop = TRUE, panel.background = ggplot2::element_rect(fill = NA))
 
   ragg::agg_jpeg(
-    filename = IASDT.R::path(
+    filename = fs::path(
       dirname(dirname(path_model)), "Model_Prediction", "LF_Plot.jpeg"),
     width = plot_width, height = plot_height, res = 600,
     quality = 100, units = "cm")

@@ -5,7 +5,7 @@
 \alias{variance_partitioning}
 \alias{variance_partitioning_compute}
 \alias{variance_partitioning_plot}
-\title{Computes and visualize variance partitioning of Hmsc models}
+\title{Computes and visualise variance partitioning of Hmsc models}
 \usage{
 variance_partitioning_compute(
   path_model,
@@ -30,7 +30,7 @@ variance_partitioning_plot(
   VP_file = "VarPar",
   use_TF = TRUE,
   TF_environ = NULL,
-  n_cores = 1,
+  n_cores = 1L,
   width = 30,
   height = 15,
   Axis_text = 4
@@ -84,7 +84,7 @@ Python script. Default is \code{FALSE}. Only relevant when \code{use_TF} is \cod
 data sources. Defaults to \code{.env}.}
 
 \item{width, height}{Numeric. Width and height of the output plot in
-centimeters. Default: \code{30} and \code{15}, respectively.}
+centimetres. Default: \code{30} and \code{15}, respectively.}
 
 \item{Axis_text}{Numeric. Size of the axis text. Default: \code{4}.}
 }

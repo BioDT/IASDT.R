@@ -70,7 +70,7 @@ GBIF_read_chunk <- function(
 
   # Environment variables
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "CLC_Tif", "DP_R_CLC_tif", FALSE, TRUE,
     "CLC_CW", "DP_R_CLC_crosswalk", FALSE, TRUE,
     "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
@@ -81,19 +81,19 @@ GBIF_read_chunk <- function(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
-  load(IASDT.R::path(Path_GBIF, "SelectedCols.RData"))
+  load(fs::path(Path_GBIF, "SelectedCols.RData"))
 
   # # ..................................................................... ###
 
   # Grid_10_Land_Crop
-  GridR <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop.RData")
+  GridR <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(GridR)) {
     IASDT.R::stop_ctx("Reference grid file not found", GridR = GridR)
   }
   GridR <- terra::unwrap(IASDT.R::load_as(GridR))
 
   # # Grid_10_Land_Crop_sf
-  GridSf <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
+  GridSf <- fs::path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
   if (!file.exists(GridSf)) {
     IASDT.R::stop_ctx("Reference grid file (sf) not found", GridSf = GridSf)
   }
@@ -126,7 +126,7 @@ GBIF_read_chunk <- function(
       dplyr::across(tidyselect::all_of(lgl_cols), as.logical),
       dplyr::across(tidyselect::all_of(Dbl_cols), as.double),
       dplyr::across(tidyselect::all_of(Int64_cols), bit64::as.integer64),
-      # convert uncertainty to kilometer
+      # convert uncertainty to kilometre
       UncertainKm = UncertainKm / 1000) %>%
     # filtering data
     dplyr::filter(

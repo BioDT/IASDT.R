@@ -5,7 +5,7 @@
 #' Convert a Coda object to a tibble with specified parameter transformations
 #'
 #' This function converts a Coda object (`mcmc.list` or `mcmc`) into a tibble
-#' format, facilitating further analysis and visualization. It supports
+#' format, facilitating further analysis and visualisation. It supports
 #' transformation for specific parameter types: `rho`, `alpha`, `omega`, and
 #' `beta`.
 #' @param coda_object An object of class `mcmc.list` or `mcmc`, representing the
@@ -138,7 +138,7 @@ coda_to_tibble <- function(
   if (posterior_type == "beta") {
 
     EnvVars2Read <- tibble::tribble(
-      ~VarName, ~Value, ~CheckDir, ~CheckFile,
+      ~var_name, ~value, ~check_dir, ~check_file,
       "TaxaInfoFile", "DP_R_Taxa_info", FALSE, TRUE)
     # Assign environment variables and check file and paths
     IASDT.R::assign_env_vars(

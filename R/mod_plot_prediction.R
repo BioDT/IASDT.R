@@ -24,7 +24,7 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
   # # ..................................................................... ###
   # # ..................................................................... ###
 
-  .StartTime <- lubridate::now(tzone = "CET")
+  .start_time <- lubridate::now(tzone = "CET")
 
   tif_path_mean <- tif_path_sd <- tif_path_cov <- Path_CLC <- Path_Grid <-
     IAS_ID <- Species_File <- Observed <- Clamp <- NoClamp <- Path_PA <- NULL
@@ -48,7 +48,7 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
   # Assign environment variables ----
 
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "Path_CLC", "DP_R_CLC_processed", TRUE, FALSE,
     "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
     "Path_PA", "DP_R_PA", TRUE, FALSE)
@@ -59,7 +59,7 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
   invisible(gc())
 
   # Reference grid
-  Gird10 <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop.RData")
+  Gird10 <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(Gird10)) {
     IASDT.R::stop_ctx(
       "Path for the Europe boundaries does not exist", Gird10 = Gird10)
@@ -75,7 +75,7 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
   IASDT.R::cat_time("Load summary of prediction maps")
 
   # Without clamping
-  Map_summary_NoClamp <- IASDT.R::path(
+  Map_summary_NoClamp <- fs::path(
     model_dir, "Model_Prediction", "NoClamp",
     "Prediction_Current_Summary.RData")
 
@@ -91,7 +91,7 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
       tif_path_cov_no_clamp = tif_path_cov)
 
   # With clamping
-  Map_summary_Clamp <- IASDT.R::path(
+  Map_summary_Clamp <- fs::path(
     model_dir, "Model_Prediction", "Clamp", "Prediction_Current_Summary.RData")
   if (!file.exists(Map_summary_Clamp)) {
     IASDT.R::stop_ctx(
@@ -117,7 +117,7 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
 
   HabAbb <- Map_summary_Clamp$hab_abb[[1]]
   # nolint start
-  Hab_Name <- paste0(HabAbb, ". ", Map_summary_Clamp$hab_name[[1]])
+  hab_name <- paste0(HabAbb, ". ", Map_summary_Clamp$hab_name[[1]])
   # nolint end
 
   # # ..................................................................... ###
@@ -153,8 +153,7 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
 
   IASDT.R::cat_time("Load habitat map")
 
-  Path_Hab <- IASDT.R::path(
-    Path_CLC, "Summary_RData", "PercCov_SynHab_Crop.RData")
+  Path_Hab <- fs::path(Path_CLC, "Summary_RData", "PercCov_SynHab_Crop.RData")
   if (!file.exists(Path_Hab)) {
     IASDT.R::stop_ctx("Path_Hab file does not exist", Path_Hab = Path_Hab)
   }
@@ -169,7 +168,7 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
   # # ..................................................................... ###
   # # ..................................................................... ###
 
-  Path_Plots <- IASDT.R::path(model_dir, "Model_Prediction", "Plots_Current")
+  Path_Plots <- fs::path(model_dir, "Model_Prediction", "Plots_Current")
   fs::dir_create(Path_Plots)
 
   # # ..................................................................... ###
@@ -318,12 +317,12 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
         c(0, .)
       Breaks_Mean <- NULL
       SpID2 <- stringr::str_remove(SpID, "^Sp_")
-      path_JPEG <- IASDT.R::path(
+      path_JPEG <- fs::path(
         Path_Plots, paste0("Pred_Current_Sp", SpID2, "_", SpName, ".jpeg"))
       SpID2 <- as.integer(SpID2)
 
     } else {
-      path_JPEG <- IASDT.R::path(Path_Plots, "Pred_Current_SR.jpeg")
+      path_JPEG <- fs::path(Path_Plots, "Pred_Current_SR.jpeg")
       Range_Mean <- c(terra::unwrap(R_SR), R_mean_NoClamp) %>%
         terra::global("max", na.rm = TRUE) %>%
         dplyr::pull("max") %>%
@@ -380,7 +379,7 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
       # Observed species presence
 
       # Files containing observed data maps
-      Path_observed <- IASDT.R::path(Path_PA, "Sp_PA_Summary_DF.RData")
+      Path_observed <- fs::path(Path_PA, "Sp_PA_Summary_DF.RData")
       if (!file.exists(Path_observed)) {
         IASDT.R::stop_ctx(
           "Path_observed file does not exist", Path_observed = Path_observed)
@@ -389,7 +388,7 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
         dplyr::filter(IAS_ID == SpID2) %>%
         dplyr::pull(Species_File) %>%
         paste0(c("_Masked.tif", "_All.tif")) %>%
-        IASDT.R::path(Path_PA, "tif", .)
+        fs::path(Path_PA, "tif", .)
 
       # Check if observed data files exist
       if (!all(file.exists(Path_observed))) {
@@ -550,7 +549,7 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
       PlotTitle2 <- ""
     }
 
-    Hab_Name0 <- stringr::str_remove(Hab_Name, " habitats")
+    Hab_Name0 <- stringr::str_remove(hab_name, " habitats")
     MainTitle <- cowplot::ggdraw() +
       ggtext::geom_richtext(
         ggplot2::aes(x = 0.01, y = 0.6, label = PlotTitle1),
@@ -602,19 +601,19 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
 
   IASDT.R::cat_time(
     paste0("Preparing working in parallel using ", n_cores, " cores"),
-    level = 1)
+    level = 1L)
   c1 <- parallel::makePSOCKcluster(n_cores)
   on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
 
-  IASDT.R::cat_time("Exporting variables to parallel cores", level = 1)
+  IASDT.R::cat_time("Exporting variables to parallel cores", level = 1L)
   parallel::clusterExport(
     cl = c1,
     varlist = c(
       "Map_summary", "PrepPlots", "R_SR", "Path_PA",
-      "R_habitat", "Path_Plots", "Hab_Name", "PlotMaps"),
+      "R_habitat", "Path_Plots", "hab_name", "PlotMaps"),
     envir = environment())
 
-  IASDT.R::cat_time("Loading packages at parallel cores", level = 1)
+  IASDT.R::cat_time("Loading packages at parallel cores", level = 1L)
   invisible(parallel::clusterEvalQ(
     cl = c1,
     expr = {
@@ -628,13 +627,13 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
       cowplot::set_null_device("cairo")
     }))
 
-  IASDT.R::cat_time("Prepare and save plots in parallel", level = 1)
+  IASDT.R::cat_time("Prepare and save plots in parallel", level = 1L)
   Plots <- parallel::parLapply(
     cl = c1, X = seq_len(nrow(Map_summary)), fun = PlotMaps)
 
   rm(Plots, envir = environment())
 
-  IASDT.R::cat_diff(init_time = .StartTime)
+  IASDT.R::cat_diff(init_time = .start_time)
 
   return(invisible(NULL))
 }

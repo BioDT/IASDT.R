@@ -1,5 +1,5 @@
 ---
-title: "IAS-pDT modelling workflow — 2. abiotic data"
+title: "IASDT modelling workflow — 2. abiotic data"
 output: html_document
 editor_options: 
   chunk_output_type: console
@@ -22,7 +22,7 @@ format:
     link-external-icon: true
     link-external-newwindow: true
 vignette: >
-  %\VignetteIndexEntry{IAS-pDT modelling workflow — 2. abiotic data}
+  %\VignetteIndexEntry{IASDT modelling workflow — 2. abiotic data}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 ---
@@ -48,19 +48,19 @@ c("<style>", readLines("style.css"), "</style>") %>%
 
 <br/><br/>
 
-This article details the processing of abiotic data within the `IAS-pDT` modelling workflow. These processed data serve as predictor variables in the species distribution models. All data preparation adheres to the <a href="https://doi.org/10.1038/sdata.2016.18" target="_blank" class="ll">FAIR</a> principles (Findable, Accessible, Interoperable, and Reusable) to ensure scientific integrity and reproducibility.
+This article details the processing of abiotic data within the `IASDT` modelling workflow. These processed data serve as predictor variables in the species distribution models. All data preparation adheres to the <a href="https://doi.org/10.1038/sdata.2016.18" target="_blank" class="ll">FAIR</a> principles (Findable, Accessible, Interoperable, and Reusable) to ensure scientific integrity and reproducibility.
 
 <br/><br/>
 
 ## Reference grid
 
-The workflow employs the European Environment Agency (EEA) <a href="https://www.eea.europa.eu/en/datahub/datahubitem-view/3c362237-daa4-45e2-8c16-aaadfb1a003b" target="_blank" class="ll">reference grid</a>, standardized at a 10&times;10 km resolution across the study area. This grid utilizes the ETRS89-LAEA Europe coordinate reference system (CRS; `EPSG:3035`).
+The workflow employs the European Environment Agency (EEA) <a href="https://www.eea.europa.eu/en/datahub/datahubitem-view/3c362237-daa4-45e2-8c16-aaadfb1a003b" target="_blank" class="ll">reference grid</a>, standardized at a 10&times;10 km resolution across the study area. This grid utilises the ETRS89-LAEA Europe coordinate reference system (CRS; `EPSG:3035`).
 
 <br/><br/>
 
 ## Corine land cover and habitat data
 
-The `CLC_process()` function manages the processing of Corine Land Cover (<a href="https://land.copernicus.eu/en/products/corine-land-cover/clc2018" target="_blank" class="ll">CLC</a>) data within the `IAS-pDT` workflow. It computes the percentage coverage and predominant classes per grid cell across all three CLC levels, alongside `EUNIS` and `SynHab` habitat classifications. A custom crosswalk was used to transform the CLC Level 3 data into ecologically meaningful `EUNIS` and `SynHab` habitat classes. The resulting data serve the following purposes:
+The `CLC_process()` function manages the processing of Corine Land Cover (<a href="https://land.copernicus.eu/en/products/corine-land-cover/clc2018" target="_blank" class="ll">CLC</a>) data within the `IASDT` workflow. It computes the percentage coverage and predominant classes per grid cell across all three CLC levels, alongside `EUNIS` and `SynHab` habitat classifications. A custom crosswalk was used to transform the CLC Level 3 data into ecologically meaningful `EUNIS` and `SynHab` habitat classes. The resulting data serve the following purposes:
 
 - **model grid selection**: Grid cells with at least 15% land cover (default threshold) are retained for modelling.
 - **habitat-specific modelling**: The percentage coverage of `SynHab` habitat types informs model fitting by:

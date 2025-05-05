@@ -34,7 +34,7 @@ efforts_summarize <- function(
 
   # Environment variables ----
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "Path_Efforts", "DP_R_Efforts_processed", TRUE, FALSE,
     "Path_Interim", "DP_R_Efforts_interim", TRUE, FALSE,
     "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
@@ -44,7 +44,7 @@ efforts_summarize <- function(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
-  Path_Efforts_Cleaned <- IASDT.R::path(Path_Interim, "CleanedData")
+  Path_Efforts_Cleaned <- fs::path(Path_Interim, "CleanedData")
 
   ## IAS species list ----
   IAS_List <- readRDS(Taxa_Stand) %>%
@@ -53,8 +53,8 @@ efforts_summarize <- function(
 
   # # ..................................................................... ###
 
-  Path_Grid_R <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop.RData")
-  Path_Grid_SF <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
+  Path_Grid_R <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
+  Path_Grid_SF <- fs::path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
 
   if (!file.exists(Path_Grid_R)) {
     IASDT.R::stop_ctx("Reference grid was not found", Path_Grid_R = Path_Grid_R)
@@ -73,7 +73,7 @@ efforts_summarize <- function(
 
   IASDT.R::cat_time(
     paste0("Prepare working in parallel using ", n_cores, " cores"),
-    level = 1)
+    level = 1L)
 
   if (n_cores == 1) {
     future::plan("future::sequential", gc = TRUE)
@@ -90,17 +90,16 @@ efforts_summarize <- function(
   # # ..................................................................... ###
 
   # Processing data from zipped archives -----
-  IASDT.R::cat_time("Processing data from zipped archives", level = 1)
+  IASDT.R::cat_time("Processing data from zipped archives", level = 1L)
 
   if (delete_chunks) {
     IASDT.R::cat_time(
-      "Chunk files will be deleted after finishing processing", level = 2)
+      "Chunk files will be deleted after finishing processing", level = 2L)
   }
 
   # Earlier attempts with `furrr::future_map()` failed
 
-  Path_Efforts_Request <- IASDT.R::path(
-    Path_Efforts, "Efforts_AllRequests.RData")
+  Path_Efforts_Request <- fs::path(Path_Efforts, "Efforts_AllRequests.RData")
 
   if (!file.exists(Path_Efforts_Request)) {
     IASDT.R::stop_ctx(
@@ -121,7 +120,7 @@ efforts_summarize <- function(
       ClassOrder <- paste0(class, "_", order)
 
       # Output path to save the data
-      Path_DT <- IASDT.R::path(
+      Path_DT <- fs::path(
         Path_Efforts_Cleaned, paste0(ClassOrder, ".RData"))
 
       # Should Path_DT be returned as the path of the RData file containing the
@@ -263,7 +262,7 @@ efforts_summarize <- function(
   # # ..................................................................... ###
 
   # Prepare summary maps per order ----
-  IASDT.R::cat_time("Prepare summary maps per order", level = 1)
+  IASDT.R::cat_time("Prepare summary maps per order", level = 1L)
 
   SummaryMaps <- future.apply::future_lapply(
     X = seq_len(nrow(Efforts_Summary)),
@@ -368,7 +367,7 @@ efforts_summarize <- function(
   # # ..................................................................... ###
 
   # Stopping cluster ------
-  IASDT.R::cat_time("Stopping cluster", level = 1)
+  IASDT.R::cat_time("Stopping cluster", level = 1L)
   if (n_cores > 1) {
     snow::stopCluster(c1)
     future::plan("future::sequential", gc = TRUE)
@@ -378,15 +377,15 @@ efforts_summarize <- function(
   # # ..................................................................... ###
 
   # Save summary results: `Efforts_Summary` ----
-  IASDT.R::cat_time("Save summary results: `Efforts_Summary`", level = 1)
+  IASDT.R::cat_time("Save summary results: `Efforts_Summary`", level = 1L)
   save(
     Efforts_Summary,
-    file = IASDT.R::path(Path_Efforts, "Efforts_Summary.RData"))
+    file = fs::path(Path_Efforts, "Efforts_Summary.RData"))
 
   # # ..................................................................... ###
 
   # Prepare summary maps - all sampling efforts ----
-  IASDT.R::cat_time("Prepare summary maps - all sampling efforts", level = 1)
+  IASDT.R::cat_time("Prepare summary maps - all sampling efforts", level = 1L)
 
   CalcNObsNSp <- function(List, Name) {
     purrr::map(.x = unlist(List), .f = terra::unwrap) %>%
@@ -412,26 +411,26 @@ efforts_summarize <- function(
     IASDT.R::set_raster_values()
 
   ## Save summary maps - `RData` ----
-  IASDT.R::cat_time("Save summary maps", level = 1)
+  IASDT.R::cat_time("Save summary maps", level = 1L)
 
-  IASDT.R::cat_time("`RData`", level = 2)
+  IASDT.R::cat_time("`RData`", level = 2L)
   IASDT.R::save_as(
     object = terra::wrap(Efforts_SummaryR), object_name = "Efforts_SummaryR",
-    out_path = IASDT.R::path(Path_Efforts, "Efforts_SummaryR.RData"))
+    out_path = fs::path(Path_Efforts, "Efforts_SummaryR.RData"))
 
   ## Save summary maps - `tif` ----
-  IASDT.R::cat_time("`tif`", level = 2)
+  IASDT.R::cat_time("`tif`", level = 2L)
   terra::writeRaster(
     Efforts_SummaryR,
     overwrite = TRUE,
-    filename = IASDT.R::path(
+    filename = fs::path(
       Path_Efforts, paste0("Efforts_GBIF_", names(Efforts_SummaryR), ".tif")))
 
   # # ..................................................................... ###
 
   IASDT.R::cat_diff(
     init_time = .StartTimeProcess,
-    prefix = "Processing Efforts data took ", level = 1)
+    prefix = "Processing Efforts data took ", level = 1L)
 
   # # ..................................................................... ###
 
@@ -446,7 +445,7 @@ efforts_summarize <- function(
 
 #' Summarize maps for efforts data
 #'
-#' This function processes spatial data (as an `sf` object), summarizes it based
+#' This function processes spatial data (as an `sf` object), summarises it based
 #' on the number of observations or distinct species, and generates a raster
 #' layer.
 #' @param Data An `sf` object containing spatial data, with a column named
@@ -459,10 +458,9 @@ efforts_summarize <- function(
 #'   an underscore) represented in the `Data`.
 #' @param Grid_SF,Grid_R Reference grid in the form of simple feature and
 #'   raster.
-#' @return A processed `terra` raster object representing the summarized data.
-#' @note This function is not intended to be used directly by the user or in the
-#'   IAS-pDT, but only used inside the [efforts_process] and [efforts_summarize]
-#'   functions.
+#' @return A processed `terra` raster object representing the summarised data.
+#' @note This function is not intended to be used directly by the user, but
+#'   only used inside the [efforts_process] and [efforts_summarize] functions.
 #' @author Ahmed El-Gabbas
 #' @name efforts_summarize_maps
 #' @keywords internal

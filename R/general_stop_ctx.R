@@ -237,7 +237,7 @@ stop_ctx <- function(
   quos <- rlang::enquos(..., .named = TRUE)
   # Extract labels for each quosure
   labels <- lapply(quos, rlang::as_label)
-  # Initialize a named list to store evaluated values
+  # Initialise a named list to store evaluated values
   vals <- vector("list", length(quos))
   # Set names of the list to match quosure names
   names(vals) <- names(quos)
@@ -263,7 +263,7 @@ stop_ctx <- function(
   # 4. Build a formatted metadata string
   # --------------------------------------------------------------------------
 
-  # Initialize an empty string for metadata
+  # Initialise an empty string for metadata
   metadata_str <- ""
 
   # Check if there are metadata values to process
@@ -293,7 +293,7 @@ stop_ctx <- function(
   # 5. Capture name of calling function
   # --------------------------------------------------------------------------
 
-  # Initialize calling function name as NULL
+  # Initialise calling function name as NULL
   caller_name <- NULL
 
   # Get all calls in the stack
@@ -339,7 +339,7 @@ stop_ctx <- function(
   # 6. Capture an inline backtrace if requested
   # --------------------------------------------------------------------------
 
-  # Initialize backtrace as NULL
+  # Initialise backtrace as NULL
   backtrace_info <- NULL
 
   # Check if backtrace is requested

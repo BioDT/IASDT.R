@@ -59,7 +59,7 @@
 #'
 
 split_raster <- function(
-    raster = NULL, n_columns = 4, n_rows = 4, save = FALSE,
+    raster = NULL, n_columns = 4L, n_rows = 4L, save = FALSE,
     save_path = "", plot = FALSE, extent_only = FALSE) {
 
   # Directory Check

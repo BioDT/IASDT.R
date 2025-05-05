@@ -4,7 +4,7 @@
 
 #' Prepare and plot response curve data for Hmsc models
 #'
-#' The `RespCurv_*()` functions process and visualize response curves for Hmsc
+#' The `RespCurv_*()` functions process and visualise response curves for Hmsc
 #' models. They support parallel computation and optionally return processed
 #' data. There are four functions in this group:
 #' - `resp_curv_prepare_data()`: Prepares response curve data for analysis
@@ -54,7 +54,7 @@ resp_curv_prepare_data <- function(
     on.exit(try(sink(), silent = TRUE), add = TRUE)
   }
 
-  .StartTime <- lubridate::now(tzone = "CET")
+  .start_time <- lubridate::now(tzone = "CET")
 
   if (is.null(path_model)) {
     IASDT.R::stop_ctx("`path_model` cannot be NULL", path_model = path_model)
@@ -336,8 +336,8 @@ resp_curv_prepare_data <- function(
 
   # Prepare response curve data -------
 
-  Path_RC <- IASDT.R::path(dirname(dirname(path_model)), "Model_Postprocessing")
-  Path_RC_DT <- IASDT.R::path(Path_RC, "RespCurv_DT")
+  Path_RC <- fs::path(dirname(dirname(path_model)), "Model_Postprocessing")
+  Path_RC_DT <- fs::path(Path_RC, "RespCurv_DT")
   fs::dir_create(Path_RC_DT)
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -372,11 +372,9 @@ resp_curv_prepare_data <- function(
         .x = Variable, .f = stringr::str_remove_all,
         pattern = "stats::poly\\(|, degree = 2, raw = TRUE\\)"),
       RC_DT_Name = paste0("RC_", VarName, "_coord_", Coords, "_NFV", NFV),
-      RC_DT_Path_Orig = IASDT.R::path(
-        Path_RC_DT, paste0(RC_DT_Name, "_Orig.qs2")),
-      RC_DT_Path_Prob = IASDT.R::path(
-        Path_RC_DT, paste0(RC_DT_Name, "_Prob.qs2")),
-      RC_DT_Path_SR = IASDT.R::path(Path_RC_DT, paste0(RC_DT_Name, "_SR.qs2")),
+      RC_DT_Path_Orig = fs::path(Path_RC_DT, paste0(RC_DT_Name, "_Orig.qs2")),
+      RC_DT_Path_Prob = fs::path(Path_RC_DT, paste0(RC_DT_Name, "_Prob.qs2")),
+      RC_DT_Path_SR = fs::path(Path_RC_DT, paste0(RC_DT_Name, "_SR.qs2")),
       FileExists = purrr::pmap_lgl(
         .l = list(RC_DT_Path_Orig, RC_DT_Path_Prob, RC_DT_Path_SR),
         .f = function(RC_DT_Path_Orig, RC_DT_Path_Prob, RC_DT_Path_SR) {
@@ -390,13 +388,13 @@ resp_curv_prepare_data <- function(
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   MissingRows <- sum(!ResCurvDT$FileExists)
-  File_LF <- IASDT.R::path(Path_RC_DT, "ResCurv_LF.qs2")
+  File_LF <- fs::path(Path_RC_DT, "ResCurv_LF.qs2")
 
   if (MissingRows == 0) {
 
     IASDT.R::cat_time(
       "All response curve data files were already available on disk",
-      level = 1)
+      level = 1L)
     ResCurvDT <- purrr::map_dfr(
       .x = seq_len(nrow(ResCurvDT)), .f = PrepRCData, File_LF = File_LF)
 
@@ -407,12 +405,12 @@ resp_curv_prepare_data <- function(
         paste0(
           "Some response curve data files (", MissingRows, " of ",
           length(ResCurvDT$FileExists), ") were missing"),
-        level = 1)
+        level = 1L)
     } else {
       IASDT.R::cat_time(
         paste0(
           "All response curve data (", MissingRows, ") need to be prepared"),
-        level = 1)
+        level = 1L)
     }
 
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -515,12 +513,12 @@ resp_curv_prepare_data <- function(
   # # ..................................................................... ###
 
   IASDT.R::cat_time("Saving data to desk")
-  save(ResCurvDT, file = IASDT.R::path(Path_RC_DT, "ResCurvDT.RData"))
+  save(ResCurvDT, file = fs::path(Path_RC_DT, "ResCurvDT.RData"))
 
   # # ..................................................................... ###
 
   IASDT.R::cat_diff(
-    init_time = .StartTime, prefix = "Preparing response curve data took ")
+    init_time = .start_time, prefix = "Preparing response curve data took ")
 
   if (return_data) {
     return(ResCurvDT)

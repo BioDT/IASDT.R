@@ -15,8 +15,8 @@
 #'   indicates whether the execution is done inside or outside of a function.
 #'   Defaults to `FALSE` to show sizes of objects in the global environment. If
 #'   set to `TRUE`, sizes of objects in the function are returned.
-#' @param SizeDecimals Integer; representing the number of decimal places to
-#'   show in the `Size` column. Defaults to 2.
+#' @param n_decimals Integer; representing the number of decimal places to
+#'   show in the `size_MB` column. Defaults to 2.
 #' @param n_objects Number of objects to show. Defaults to `Inf` meaning show
 #'   all available objects.
 #' @return The function prints a tibble containing the variables' names, their
@@ -55,7 +55,7 @@
 #' TestFun(XX = "TEST")
 
 all_objects_sizes <- function(
-    greater_than = 0, in_function = FALSE, SizeDecimals = 2, n_objects = Inf) {
+    greater_than = 0, in_function = FALSE, n_decimals = 2, n_objects = Inf) {
 
   if (in_function) {
     Environment <- parent.frame()
@@ -75,42 +75,49 @@ all_objects_sizes <- function(
     cat("No Objects are available in the global environment!\n")
   } else {
 
-    AllVarsSize <- purrr::map_dfr(
+    all_vars_size <- purrr::map_dfr(
       .x = AllVars,
       .f = ~{
         Obj <- get(.x, envir = Environment)
-        Class <- paste(class(Obj), collapse = "_")
+        object_class <- paste(class(Obj), collapse = "_")
 
         tryCatch({
-          Size <- lobstr::obj_size(Obj) / (1024 * 1024)
-          Size <- round(as.numeric(Size), SizeDecimals)
-          return(tibble::tibble(Object = .x, Class = Class, Size = Size))
+          size_MB <- lobstr::obj_size(Obj) / (1024 * 1024)
+          size_MB <- round(as.numeric(size_MB), n_decimals)
+          return(
+            tibble::tibble(
+              object = .x, object_class = object_class,
+              size_MB = size_MB))
 
         }, error = function(e) {
-          return(tibble::tibble(Object = .x, Class = Class, Size = NA_real_))
+          return(
+            tibble::tibble(
+              object = .x, object_class = object_class, size_MB = NA_real_))
         })
       }) %>%
       dplyr::mutate(
-        Percent = round(.data$Size / sum(.data$Size, na.rm = TRUE), 2),
-        Percent = scales::percent(.data$Percent, accuracy = 0.01)) %>%
-      dplyr::arrange(dplyr::desc(.data$Size)) %>%
-      dplyr::filter(.data$Size >= greater_than | is.na(.data$Size))
+        percent = round(
+          100 * .data$size_MB / sum(.data$size_MB, na.rm = TRUE), 2)) %>%
+      dplyr::arrange(dplyr::desc(.data$size_MB)) %>%
+      dplyr::filter(
+        .data$size_MB >= greater_than | is.na(.data$size_MB))
 
-    if (nrow(AllVarsSize) > 0) {
+    if (nrow(all_vars_size) > 0) {
       cat(crayon::blue(
         "---------------------------------------------------\n\t",
-        crayon::bold(sum(!is.na(AllVarsSize$Size))),
-        " Object(s) fulfill the criteria\n",
+        crayon::bold(sum(!is.na(all_vars_size$size_MB))),
+        " object(s) fulfil the criteria\n",
         "---------------------------------------------------\n",
         sep = ""),
         sep = "")
 
       withr::local_options(list(pillar.sigfig = 4))
-      print(AllVarsSize, n = n_objects)
+      print(all_vars_size, n = n_objects)
 
-      if (sum(is.na(AllVarsSize$Size)) > 0) {
-        NA_Var <- dplyr::filter(AllVarsSize, is.na(.data$Size)) %>%
-          dplyr::pull(.data$Object) %>%
+      if (sum(is.na(all_vars_size$size_MB)) > 0) {
+        NA_Var <- all_vars_size %>%
+          dplyr::filter(is.na(.data$size_MB)) %>%
+          dplyr::pull(.data$object) %>%
           paste(collapse = " | ")
 
         cat(crayon::blue(
@@ -121,7 +128,8 @@ all_objects_sizes <- function(
       }
 
       cat(crayon::blue(
-        "Object sizes are in MB.\n",
+        "---------------------------------------------------\n",
+        "object sizes are in MB.\n",
         "---------------------------------------------------\n", sep = ""),
         sep = "")
     } else {

@@ -4,7 +4,7 @@
 \alias{integer_breaks}
 \title{Integer breaks for ggplot axis}
 \usage{
-integer_breaks(n_breaks = 5, ...)
+integer_breaks(n_breaks = 5L, ...)
 }
 \arguments{
 \item{n_breaks}{integer (default: 5), the desired number of breaks on the

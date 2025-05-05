@@ -81,7 +81,7 @@ predict_hmsc <- function(
     on.exit(try(sink(), silent = TRUE), add = TRUE)
   }
 
-  .StartTime <- lubridate::now(tzone = "CET")
+  .start_time <- lubridate::now(tzone = "CET")
 
   # To avoid non-standard evaluation
   pred_XY <- pred_XY
@@ -115,8 +115,7 @@ predict_hmsc <- function(
   }
 
   if (is.null(pred_directory)) {
-    pred_directory <- IASDT.R::path(
-      dirname(dirname(path_model)), "Model_Prediction")
+    pred_directory <- fs::path(dirname(dirname(path_model)), "Model_Prediction")
   }
 
   if (is.null(prediction_type) || prediction_type == "c") {
@@ -295,13 +294,12 @@ predict_hmsc <- function(
   Mod_dfPi <- Model$dfPi
 
   # Save smaller version of the model object for later use
-  Model_File_small <- IASDT.R::path(
-    temp_dir, paste0(model_name, "Model_small.qs2"))
+  Model_File_small <- fs::path(temp_dir, paste0(model_name, "Model_small.qs2"))
 
   if (!file.exists(Model_File_small)) {
     IASDT.R::cat_time(
       "Save smaller version of the model object to disk",
-      level = 1)
+      level = 1L)
     IASDT.R::save_as(object = Model, out_path = Model_File_small)
   }
   rm(Model, envir = environment())
@@ -331,7 +329,7 @@ predict_hmsc <- function(
         if (r == 1) {
           IASDT.R::cat_time(
             "LF prediction for response curve with infinite coordinates",
-            level = 1)
+            level = 1L)
         }
         nLF <- length(post[[1]]$Alpha[[1]])
         predPostEta[[r]] <- replicate(
@@ -354,11 +352,11 @@ predict_hmsc <- function(
 
       # Save postEta to file and load it from predict_latent_factor. This helps
       # to avoid the unnecessary copying of the postEta object to all cores
-      postEta_file <- IASDT.R::path(
+      postEta_file <- fs::path(
         temp_dir, paste0(model_name, "_r", r, "_postEta.qs2"))
 
       if (isFALSE(IASDT.R::check_data(postEta_file, warning = FALSE))) {
-        IASDT.R::cat_time("Save postEta to file", level = 1)
+        IASDT.R::cat_time("Save postEta to file", level = 1L)
         postEta <- lapply(post, function(c) c$Eta[[r]])
         IASDT.R::save_as(object = postEta, out_path = postEta_file)
         rm(postEta, envir = environment())
@@ -367,7 +365,7 @@ predict_hmsc <- function(
 
       # Save post to file and load it later
       if (r == Mod_nr) {
-        post_file <- IASDT.R::path(temp_dir, paste0(model_name, "_post.qs2"))
+        post_file <- fs::path(temp_dir, paste0(model_name, "_post.qs2"))
 
         if (isFALSE(IASDT.R::check_data(post_file, warning = FALSE))) {
           # free some memory
@@ -375,7 +373,7 @@ predict_hmsc <- function(
             x$Eta <- x$Psi <- x$V <- x$Delta <- x$Gamma <- x$rho <- NULL
             x
           })
-          IASDT.R::cat_time("Save post to file", level = 1)
+          IASDT.R::cat_time("Save post to file", level = 1L)
           IASDT.R::save_as(object = post, out_path = post_file)
         }
         rm(post, envir = environment())
@@ -384,7 +382,7 @@ predict_hmsc <- function(
 
       if (r == 1) {
         IASDT.R::cat_time(
-          "LF prediction using `predict_latent_factor`", level = 1)
+          "LF prediction using `predict_latent_factor`", level = 1L)
       }
 
       predPostEta[[r]] <- IASDT.R::predict_latent_factor(
@@ -411,8 +409,8 @@ predict_hmsc <- function(
 
     if (is.null(prediction_type) || prediction_type == "c") {
 
-      IASDT.R::cat_time("Loading LF prediction from disk", level = 1)
-      IASDT.R::cat_time(LF_inputFile, level = 2, cat_timestamp = FALSE)
+      IASDT.R::cat_time("Loading LF prediction from disk", level = 1L)
+      IASDT.R::cat_time(LF_inputFile, level = 2L, cat_timestamp = FALSE)
 
       for (r in seq_len(Mod_nr)) {
         predPostEta[[r]] <- IASDT.R::load_as(LF_inputFile[[r]])
@@ -443,7 +441,7 @@ predict_hmsc <- function(
   IASDT.R::cat_time("Predicting")
 
   if (!exists("post")) {
-    IASDT.R::cat_time("Loading post from disk", level = 1)
+    IASDT.R::cat_time("Loading post from disk", level = 1L)
     post <- IASDT.R::load_as(post_file)
   }
 
@@ -454,7 +452,7 @@ predict_hmsc <- function(
   if (!is.null(prediction_type)) {
     IASDT.R::cat_time(
       "Predicting data for response curve (sequentially)",
-      level = 1)
+      level = 1L)
 
     preds <- lapply(
       seq_len(predN),
@@ -465,12 +463,13 @@ predict_hmsc <- function(
       })
 
     IASDT.R::cat_diff(
-      init_time = .StartTime, prefix = "Prediction was finished in ", level = 1)
+      init_time = .start_time, prefix = "Prediction was finished in ",
+      level = 1L)
     return(preds)
   }
 
   # Save ppEta / post as small chunks
-  IASDT.R::cat_time("Save ppEta / post as small chunks", level = 1)
+  IASDT.R::cat_time("Save ppEta / post as small chunks", level = 1L)
   chunk_size <- 25
   ChunkIDs <- ceiling(seq_along(post) / chunk_size)
   Chunks <- purrr::map_chr(
@@ -478,7 +477,7 @@ predict_hmsc <- function(
     .f = ~ {
       IDs <- which(ChunkIDs == .x)
       Ch <- list(ppEta = ppEta[IDs], post = post[IDs])
-      chunk_file <- IASDT.R::path(
+      chunk_file <- fs::path(
         temp_dir, paste0(model_name, "_preds_ch", .x, ".qs2"))
       IASDT.R::save_as(object = Ch, out_path = chunk_file)
       return(chunk_file)
@@ -490,10 +489,10 @@ predict_hmsc <- function(
   seeds <- sample.int(.Machine$integer.max, predN)
 
 
-  IASDT.R::set_parallel(n_cores = min(n_cores, length(Chunks)), level = 1)
+  IASDT.R::set_parallel(n_cores = min(n_cores, length(Chunks)), level = 1L)
   withr::defer(future::plan("future::sequential", gc = TRUE))
 
-  IASDT.R::cat_time("Making predictions in parallel", level = 1)
+  IASDT.R::cat_time("Making predictions in parallel", level = 1L)
   pred <- future.apply::future_lapply(
     X = seq_len(length(Chunks)),
     FUN = function(Chunk) {
@@ -522,7 +521,7 @@ predict_hmsc <- function(
       ChunkSR <- simplify2array(lapply(X = PredChunk, FUN = rowSums)) %>%
         float::fl()
       dimnames(ChunkSR) <- NULL
-      ChunkSR_File <- IASDT.R::path(
+      ChunkSR_File <- fs::path(
         temp_dir, paste0("Pred_", model_name, "_ch", Chunk, "_SR.qs2"))
       IASDT.R::save_as(object = ChunkSR, out_path = ChunkSR_File)
 
@@ -538,7 +537,7 @@ predict_hmsc <- function(
             float::fl()
           dimnames(SpD) <- NULL
 
-          ChunkSp_File <- IASDT.R::path(
+          ChunkSp_File <- fs::path(
             temp_dir,
             paste0("Pred_", model_name, "_ch", Chunk, "_taxon", Sp, ".qs2"))
 
@@ -574,7 +573,7 @@ predict_hmsc <- function(
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_time("Summarizing prediction outputs / Evaluation", level = 1)
+  IASDT.R::cat_time("Summarizing prediction outputs / Evaluation", level = 1L)
 
   Eval_DT <- dplyr::select(pred, -Chunk) %>%
     dplyr::group_nest(Sp, IAS_ID) %>%
@@ -626,7 +625,7 @@ predict_hmsc <- function(
             paste0(IAS_ID, "_sd"), paste0(IAS_ID, "_cov"))) %>%
         sf::st_as_sf(coords = c("x", "y"), crs = 3035, remove = FALSE)
 
-      PredSummaryFile <- IASDT.R::path(
+      PredSummaryFile <- fs::path(
         pred_directory, paste0("Pred_", model_name, "_", Sp2, ".qs2"))
 
       IASDT.R::save_as(object = PredSummary, out_path = PredSummaryFile)
@@ -673,7 +672,7 @@ predict_hmsc <- function(
       "dplyr", "Rcpp", "RcppArmadillo", "Matrix", "float", "qs2", "Hmsc",
       "purrr", "tibble", "Hmsc", "Rfast", "caret", "pROC", "ecospat", "sf"))
 
-  IASDT.R::set_parallel(stop_cluster = TRUE, level = 1)
+  IASDT.R::set_parallel(stop_cluster = TRUE, level = 1L)
 
   invisible(gc())
 
@@ -702,7 +701,7 @@ predict_hmsc <- function(
       x, y, geometry, SR_mean, SR_sd, SR_cov, tidyselect::everything()) %>%
     dplyr::mutate(model_name = model_name, .before = "SR_mean")
 
-  Pred_File <- IASDT.R::path(
+  Pred_File <- fs::path(
     pred_directory,
     paste0(
       "Prediction_",
@@ -714,17 +713,17 @@ predict_hmsc <- function(
     try(fs::file_delete(Eval_DT$Path_pred), silent = TRUE)
   }
 
-  IASDT.R::cat_time("Predictions were saved", level = 1)
-  IASDT.R::cat_time(Pred_File, level = 2, cat_timestamp = FALSE)
+  IASDT.R::cat_time("Predictions were saved", level = 1L)
+  IASDT.R::cat_time(Pred_File, level = 2L, cat_timestamp = FALSE)
 
   if (evaluate) {
     if (is.null(evaluation_name)) {
-      Eval_Path <- IASDT.R::path(
+      Eval_Path <- fs::path(
         evaluation_directory,
         paste0(
           "Eval_", stringr::str_remove(model_name, "_Train|_Current"), ".qs2"))
     } else {
-      Eval_Path <- IASDT.R::path(
+      Eval_Path <- fs::path(
         evaluation_directory,
         paste0(
           "Eval_", stringr::str_remove(model_name, "_Train|_Current"),
@@ -734,10 +733,10 @@ predict_hmsc <- function(
     Eval_DT <- dplyr::select(Eval_DT, -Path_pred)
     IASDT.R::save_as(object = Eval_DT, out_path = Eval_Path)
 
-    IASDT.R::cat_time("Evaluation results were saved", level = 1)
+    IASDT.R::cat_time("Evaluation results were saved", level = 1L)
     IASDT.R::cat_time(
-      IASDT.R::path(evaluation_directory, "Eval_DT.qs2"),
-      level = 2, cat_timestamp = FALSE)
+      fs::path(evaluation_directory, "Eval_DT.qs2"),
+      level = 2L, cat_timestamp = FALSE)
 
   } else {
     Eval_Path <- NULL
@@ -756,7 +755,7 @@ predict_hmsc <- function(
   # Clean up
   if (temp_cleanup) {
 
-    IASDT.R::cat_time("Cleaning up temporary files", level = 1)
+    IASDT.R::cat_time("Cleaning up temporary files", level = 1L)
 
     try(
       {
@@ -775,7 +774,7 @@ predict_hmsc <- function(
   # # ..................................................................... ###
 
   IASDT.R::cat_diff(
-    init_time = .StartTime, prefix = "Prediction was finished in ")
+    init_time = .start_time, prefix = "Prediction was finished in ")
 
   return(
     tibble::tibble(

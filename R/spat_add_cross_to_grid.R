@@ -67,33 +67,32 @@ add_cross_to_grid <- function(sf_object = NULL) {
     dplyr::pull("geometry") %>%
     purrr::map(
       .f = ~{
-        SS2 <- .x %>%
-          sf::st_coordinates() %>%
+        ss_2 <- sf::st_coordinates(.x) %>%
           tibble::as_tibble() %>%
           dplyr::select(X, Y)
 
-        Horiz <- SS2 %>%
+        horizontal <- ss_2 %>%
           dplyr::reframe(
             X = X,
-            Y = (min(Y) + (max(Y) - min(Y)) / 2)) %>%
+            Y = (min(Y) + (max(Y) - min(Y)) / 2L)) %>%
           dplyr::distinct() %>%
           as.matrix() %>%
           sf::st_linestring()
-        Vert <- SS2 %>%
+        vertical <- ss_2 %>%
           dplyr::reframe(
-            X = (min(X) + (max(X) - min(X)) / 2),
+            X = (min(X) + (max(X) - min(X)) / 2L),
             Y = Y) %>%
           dplyr::distinct() %>%
           as.matrix() %>%
           sf::st_linestring()
 
-        Out <- list(Horiz, Vert) %>%
+        output <- list(horizontal, vertical) %>%
           sf::st_multilinestring() %>%
           sf::st_geometry()  %>%
           sf::st_set_crs(sf::st_crs(sf_object)) %>%
           sf::st_sfc()
 
-        Out
+        output
       }) %>%
     tibble::tibble(geometry = .) %>%
     tidyr::unnest("geometry") %>%

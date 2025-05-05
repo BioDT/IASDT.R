@@ -29,7 +29,7 @@ reload_package <- function(package) {
   }
 
   if (requireNamespace(package, quietly = TRUE)) {
-    PackagesFolders <- IASDT.R::path(.libPaths(), package)
+    PackagesFolders <- fs::path(.libPaths(), package)
     PackagesFolders <- PackagesFolders[file.exists(PackagesFolders)]
     if (length(PackagesFolders) > 0) {
       purrr::walk(

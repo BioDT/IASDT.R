@@ -27,10 +27,10 @@ boundary_to_WKT <- function(
       left = left, right = right, bottom = bottom, top = top)
   }
 
-  Bound <- stringr::str_glue(
+  boundaries <- stringr::str_glue(
     "POLYGON(({left} {bottom},{right} {bottom},{right} {top},",
     "{left} {top},{left} {bottom}))") %>%
     as.character()
 
-  return(Bound)
+  return(boundaries)
 }

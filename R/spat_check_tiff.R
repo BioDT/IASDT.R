@@ -45,11 +45,11 @@ check_tiff <- function(x = NULL, warning = TRUE) {
   # # ..................................................................... ###
 
   # Check file metadata using terra's describe
-  MetadataOkay <- as.character(terra::describe(x = x)) %>%
+  metadata_okay <- as.character(terra::describe(x = x)) %>%
     stringr::str_detect("Driver") %>%
     any()
 
-  if (isFALSE(MetadataOkay)) {
+  if (isFALSE(metadata_okay)) {
     return(FALSE)
   }
 

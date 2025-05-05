@@ -4,13 +4,13 @@
 \alias{add_missing_columns}
 \title{Add missing columns to a data frame with specified fill values}
 \usage{
-add_missing_columns(DT, FillVal = NA_character_, ...)
+add_missing_columns(data, fill_value = NA_character_, ...)
 }
 \arguments{
-\item{DT}{A data frame to which missing columns will be added. This parameter
-cannot be NULL.}
+\item{data}{A data frame to which missing columns will be added. This
+parameter cannot be NULL.}
 
-\item{FillVal}{The value to fill the missing columns with. This parameter
+\item{fill_value}{The value to fill the missing columns with. This parameter
 defaults to \code{NA_character_}, but can be changed to any scalar value as
 required.}
 
@@ -35,14 +35,14 @@ mtcars2
 # -------------------------------------------
 
 mtcars2 \%>\%
- add_missing_columns(FillVal = NA_character_, A, B, C) \%>\%
- add_missing_columns(FillVal = as.integer(10), D)
+ add_missing_columns(fill_value = NA_character_, A, B, C) \%>\%
+ add_missing_columns(fill_value = as.integer(10), D)
 
 # -------------------------------------------
 
 AddCols <- c("Add1", "Add2")
 mtcars2 \%>\%
- add_missing_columns(FillVal = NA_real_, AddCols)
+ add_missing_columns(fill_value = NA_real_, AddCols)
 }
 \author{
 Ahmed El-Gabbas

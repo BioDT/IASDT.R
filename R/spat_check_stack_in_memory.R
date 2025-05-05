@@ -52,18 +52,18 @@ check_stack_in_memory <- function(stack = NULL) {
       stack = stack, class_stack = class(stack))
   }
 
-  InMem <- purrr::map_lgl(raster::unstack(stack), raster::inMemory)
+  in_memory <- purrr::map_lgl(raster::unstack(stack), raster::inMemory)
 
-  if (all(InMem)) {
+  if (all(in_memory)) {
     message("All stack layers reads from ", crayon::bold("disk"))
   }
-  if (!any(InMem)) {
+  if (!any(in_memory)) {
     message("All stack layers reads from ", crayon::bold("memory"))
   }
 
-  if (sum(InMem) > 0 && (sum(InMem) < raster::nlayers(stack))) {
+  if (sum(in_memory) > 0L && (sum(in_memory) < raster::nlayers(stack))) {
     paste0(
       "Layers numbered (",
-      paste(which(!InMem), collapse = "-"), ") reads from disk")
+      paste(which(!in_memory), collapse = "-"), ") reads from disk")
   }
 }

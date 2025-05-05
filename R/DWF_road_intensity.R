@@ -4,7 +4,7 @@
 
 #' Calculate road intensity per grid cell
 #'
-#' This function downloads, processes, and analyzes [GRIP global roads
+#' This function downloads, processes, and analyses [GRIP global roads
 #' data](https://www.globio.info/download-grip-dataset) ([Meijer et al.
 #' 2018](https://iopscience.iop.org/article/10.1088/1748-9326/aabd42/meta)). The
 #' function calculates the total road lengths and the distance to the nearest
@@ -35,7 +35,7 @@ road_intensity <- function(env_file = ".env") {
 
   # # ..................................................................... ###
 
-  .StartTime <- lubridate::now(tzone = "CET")
+  .start_time <- lubridate::now(tzone = "CET")
 
   # Checking arguments ----
   IASDT.R::cat_time("Checking arguments")
@@ -64,7 +64,7 @@ road_intensity <- function(env_file = ".env") {
   IASDT.R::cat_time("Environment variables")
 
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "Path_Roads", "DP_R_Roads_processed", FALSE, FALSE,
     "Path_Roads_Raw", "DP_R_Roads_raw", FALSE, FALSE,
     "Path_Roads_Interim", "DP_R_Roads_interim", FALSE, FALSE,
@@ -78,7 +78,7 @@ road_intensity <- function(env_file = ".env") {
 
   fs::dir_create(c(Path_Roads, Path_Roads_Raw, Path_Roads_Interim))
 
-  RefGrid <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop.RData")
+  RefGrid <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(RefGrid)) {
     IASDT.R::stop_ctx(
       "The reference grid file does not exist", RefGrid = RefGrid)
@@ -90,7 +90,7 @@ road_intensity <- function(env_file = ".env") {
   IASDT.R::cat_time("Download road data")
 
   withr::local_options(timeout = 1200)
-  Path_DownFile <- IASDT.R::path(Path_Roads_Raw, basename(Road_URL))
+  Path_DownFile <- fs::path(Path_Roads_Raw, basename(Road_URL))
 
   # Check if zip file is a valid file
   if (file.exists(Path_DownFile)) {
@@ -147,7 +147,7 @@ road_intensity <- function(env_file = ".env") {
   IASDT.R::cat_time("Processing GRIP road data")
 
   ## Load, crop, and project GRIP data -----
-  IASDT.R::cat_time("Load, crop, and project GRIP data", level = 1)
+  IASDT.R::cat_time("Load, crop, and project GRIP data", level = 1L)
 
   Road_GDB_Files <- list.files(
     path = Path_Roads_Interim, pattern = ".gdb$", full.names = TRUE)
@@ -173,13 +173,13 @@ road_intensity <- function(env_file = ".env") {
   # # ..................................... ###
 
   ## Save - RData ----
-  IASDT.R::cat_time("Save projected data - RData", level = 1)
-  save(Road_sf, file = IASDT.R::path(Path_Roads, "Road_sf.RData"))
+  IASDT.R::cat_time("Save projected data - RData", level = 1L)
+  save(Road_sf, file = fs::path(Path_Roads, "Road_sf.RData"))
 
   # # ..................................... ###
 
   ## One file per road type ----
-  IASDT.R::cat_time("Save RData file per road type", level = 1)
+  IASDT.R::cat_time("Save RData file per road type", level = 1L)
 
   tibble::tribble(
     ~RoadType, ~VarName,
@@ -192,14 +192,14 @@ road_intensity <- function(env_file = ".env") {
       A = purrr::walk2(
         .x = RoadType, .y = VarName,
         .f = ~ {
-          IASDT.R::cat_time(paste0(.x, " - ", .y), level = 2)
+          IASDT.R::cat_time(paste0(.x, " - ", .y), level = 2L)
           dplyr::filter(Road_sf, GP_RTP %in% .x) %>%
             dplyr::select(-GP_RTP) %>%
             terra::vect() %>%
             terra::wrap() %>%
             IASDT.R::save_as(
               object_name = paste0("Road_sf_", .x, "_", .y),
-              out_path = IASDT.R::path(
+              out_path = fs::path(
                 Path_Roads, paste0("Road_sf_", .x, "_", .y, ".RData")))
           invisible(gc())
           return(invisible(NULL))
@@ -217,7 +217,7 @@ road_intensity <- function(env_file = ".env") {
   IASDT.R::cat_time("Road length")
 
 
-  IASDT.R::cat_time("Calculate Road length per road type", level = 1)
+  IASDT.R::cat_time("Calculate Road length per road type", level = 1L)
 
   RefGrid <- terra::unwrap(IASDT.R::load_as(RefGrid))
 
@@ -233,39 +233,39 @@ road_intensity <- function(env_file = ".env") {
     return(SummMap)
   }
 
-  IASDT.R::cat_time("1 - Highways", level = 2)
+  IASDT.R::cat_time("1 - Highways", level = 2L)
   GRIP_1 <- ExtractRoadSummary(RoadType = 1, VarName = "Highways")
 
-  IASDT.R::cat_time("2 - Primary", level = 2)
+  IASDT.R::cat_time("2 - Primary", level = 2L)
   GRIP_2 <- ExtractRoadSummary(RoadType = 2, VarName = "Primary")
 
-  IASDT.R::cat_time("3 - Secondary", level = 2)
+  IASDT.R::cat_time("3 - Secondary", level = 2L)
   GRIP_3 <- ExtractRoadSummary(RoadType = 3, VarName = "Secondary")
 
-  IASDT.R::cat_time("4 - Tertiary", level = 2)
+  IASDT.R::cat_time("4 - Tertiary", level = 2L)
   GRIP_4 <- ExtractRoadSummary(RoadType = 4, VarName = "Tertiary")
 
-  IASDT.R::cat_time("5 - Local", level = 2)
+  IASDT.R::cat_time("5 - Local", level = 2L)
   GRIP_5 <- ExtractRoadSummary(RoadType = 5, VarName = "Local")
 
-  IASDT.R::cat_time("All roads", level = 2)
+  IASDT.R::cat_time("All roads", level = 2L)
   Road_Length <- (GRIP_1 + GRIP_2 + GRIP_3 + GRIP_4 + GRIP_5) %>%
     stats::setNames("All") %>%
     c(GRIP_1, GRIP_2, GRIP_3, GRIP_4, GRIP_5, .) %>%
     # Ensure that values are read from memory
     IASDT.R::set_raster_values()
 
-  IASDT.R::cat_time("Save road length - tif", level = 1)
+  IASDT.R::cat_time("Save road length - tif", level = 1L)
   terra::writeRaster(
     x = Road_Length, overwrite = TRUE,
-    filename = IASDT.R::path(
+    filename = fs::path(
       Path_Roads, paste0("Road_Length_", names(Road_Length), ".tif")))
 
-  IASDT.R::cat_time("Save road length - RData", level = 1)
+  IASDT.R::cat_time("Save road length - RData", level = 1L)
   IASDT.R::save_as(
     object = terra::wrap(Road_Length),
     object_name = "Road_Length",
-    out_path = IASDT.R::path(Path_Roads, "Road_Length.RData"))
+    out_path = fs::path(Path_Roads, "Road_Length.RData"))
 
   # # ..................................................................... ###
 
@@ -276,7 +276,7 @@ road_intensity <- function(env_file = ".env") {
   # distance to nearest road line; which is expected to take too much time to
   # calculate
 
-  IASDT.R::cat_time("Calculate distance to roads", level = 1)
+  IASDT.R::cat_time("Calculate distance to roads", level = 1L)
 
   # suppress progress bar
   terra::terraOptions(progress = 0)
@@ -284,7 +284,7 @@ road_intensity <- function(env_file = ".env") {
   Road_Distance <- purrr::map(
     .x = as.list(Road_Length),
     .f = ~ {
-      IASDT.R::cat_time(names(.x), level = 2)
+      IASDT.R::cat_time(names(.x), level = 2L)
       Road_Points <- terra::as.points(terra::classify(.x, cbind(0, NA)))
       terra::distance(x = .x, y = Road_Points, unit = "km") %>%
         terra::mask(RefGrid) %>%
@@ -295,15 +295,15 @@ road_intensity <- function(env_file = ".env") {
   ) %>%
     terra::rast()
 
-  IASDT.R::cat_time("Save distance to road - tif", level = 1)
+  IASDT.R::cat_time("Save distance to road - tif", level = 1L)
   terra::writeRaster(
     x = Road_Distance, overwrite = TRUE,
-    filename = IASDT.R::path(Path_Roads, paste0(names(Road_Distance), ".tif")))
+    filename = fs::path(Path_Roads, paste0(names(Road_Distance), ".tif")))
 
-  IASDT.R::cat_time("Save distance to road - RData", level = 1)
+  IASDT.R::cat_time("Save distance to road - RData", level = 1L)
   IASDT.R::save_as(
     object = terra::wrap(Road_Distance), object_name = "Road_Distance",
-    out_path = IASDT.R::path(Path_Roads, "Road_Distance.RData"))
+    out_path = fs::path(Path_Roads, "Road_Distance.RData"))
 
   # # ..................................................................... ###
 
@@ -346,7 +346,7 @@ road_intensity <- function(env_file = ".env") {
   # # ..................................... ###
 
   ## Road length -----
-  IASDT.R::cat_time("Road length", level = 1)
+  IASDT.R::cat_time("Road length", level = 1L)
 
   Plots_Length <- purrr::map(
     .x = terra::as.list(Road_Length),
@@ -390,7 +390,7 @@ road_intensity <- function(env_file = ".env") {
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   ragg::agg_jpeg(
-    filename = IASDT.R::path(Path_Roads, "Road_Length.jpeg"),
+    filename = fs::path(Path_Roads, "Road_Length.jpeg"),
     width = 30, height = 21, res = 600, quality = 100, units = "cm")
   print(Plots_Length)
   grDevices::dev.off()
@@ -400,7 +400,7 @@ road_intensity <- function(env_file = ".env") {
   # # ..................................... ###
 
   ## Distance to roads ------
-  IASDT.R::cat_time("Distance to roads", level = 1)
+  IASDT.R::cat_time("Distance to roads", level = 1L)
   Plots_Distance <- purrr::map(
     .x = terra::as.list(Road_Distance),
     .f = ~ {
@@ -437,7 +437,7 @@ road_intensity <- function(env_file = ".env") {
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   ragg::agg_jpeg(
-    filename = IASDT.R::path(Path_Roads, "Road_Distance.jpeg"),
+    filename = fs::path(Path_Roads, "Road_Distance.jpeg"),
     width = 30, height = 21, res = 600, quality = 100, units = "cm")
   print(Plots_Distance)
   grDevices::dev.off()
@@ -460,7 +460,7 @@ road_intensity <- function(env_file = ".env") {
   # Function Summary ----
 
   IASDT.R::cat_diff(
-    init_time = .StartTime,
+    init_time = .start_time,
     prefix = "\nProcessing road data was finished in ", ... = "\n")
 
   return(invisible(NULL))

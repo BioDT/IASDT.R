@@ -31,7 +31,7 @@ the \code{posterior_type} parameter.
 }
 \description{
 This function converts a Coda object (\code{mcmc.list} or \code{mcmc}) into a tibble
-format, facilitating further analysis and visualization. It supports
+format, facilitating further analysis and visualisation. It supports
 transformation for specific parameter types: \code{rho}, \code{alpha}, \code{omega}, and
 \code{beta}.
 }

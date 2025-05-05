@@ -10,9 +10,9 @@
 #'
 #' @name add_missing_columns
 #' @author Ahmed El-Gabbas
-#' @param DT A data frame to which missing columns will be added. This parameter
-#'   cannot be NULL.
-#' @param FillVal The value to fill the missing columns with. This parameter
+#' @param data A data frame to which missing columns will be added. This
+#'   parameter cannot be NULL.
+#' @param fill_value The value to fill the missing columns with. This parameter
 #'   defaults to `NA_character_`, but can be changed to any scalar value as
 #'   required.
 #' @param ... Column names as character strings.
@@ -29,38 +29,39 @@
 #' # -------------------------------------------
 #'
 #' mtcars2 %>%
-#'  add_missing_columns(FillVal = NA_character_, A, B, C) %>%
-#'  add_missing_columns(FillVal = as.integer(10), D)
+#'  add_missing_columns(fill_value = NA_character_, A, B, C) %>%
+#'  add_missing_columns(fill_value = as.integer(10), D)
 #'
 #' # -------------------------------------------
 #'
 #' AddCols <- c("Add1", "Add2")
 #' mtcars2 %>%
-#'  add_missing_columns(FillVal = NA_real_, AddCols)
+#'  add_missing_columns(fill_value = NA_real_, AddCols)
 
-add_missing_columns <- function(DT, FillVal = NA_character_, ...) {
+add_missing_columns <- function(data, fill_value = NA_character_, ...) {
 
-  if (is.null(DT) || is.null(FillVal)) {
-    IASDT.R::stop_ctx("DT can not be NULL", FillVal = FillVal, DT = DT)
+  if (is.null(data) || is.null(fill_value)) {
+    IASDT.R::stop_ctx(
+      "data can not be NULL", fill_value = fill_value, data = data)
   }
 
-  Cols <- as.character(rlang::ensyms(...))
+  columns <- as.character(rlang::ensyms(...))
 
-  if (any(Cols %in% ls(envir = parent.env(rlang::caller_env())))) {
-    Cols <- get(Cols, envir = parent.env(rlang::caller_env()))
+  if (any(columns %in% ls(envir = parent.env(rlang::caller_env())))) {
+    columns <- get(columns, envir = parent.env(rlang::caller_env()))
   }
 
-  Cols2Add <- setdiff(Cols, names(DT))
+  columns_to_dd <- setdiff(columns, names(data))
 
-  Add_DF <- rep(FillVal, length(Cols2Add)) %>%
+  add_data <- rep(fill_value, length(columns_to_dd)) %>%
     matrix(nrow = 1) %>%
     as.data.frame() %>%
-    stats::setNames(Cols2Add) %>%
+    stats::setNames(columns_to_dd) %>%
     tibble::as_tibble()
 
-  if (length(Cols2Add) != 0) {
-    DT <- tibble::add_column(DT, !!!Add_DF) %>%
+  if (length(columns_to_dd) != 0) {
+    data <- tibble::add_column(data, !!!add_data) %>%
       tibble::tibble()
   }
-  return(DT)
+  return(data)
 }

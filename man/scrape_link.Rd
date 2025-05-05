@@ -4,20 +4,20 @@
 \alias{scrape_link}
 \title{Extracts link texts and URLs from a web page}
 \usage{
-scrape_link(URL, sort_by = c("Link", "Link_text"))
+scrape_link(URL, sort_by = c("link", "link_text"))
 }
 \arguments{
 \item{URL}{Character. The URL of the web page to scrape. This URL is also
 used to resolve relative links to absolute URLs.}
 
 \item{sort_by}{Character vector of length 1 or 2. The columns to arrange the
-output by. The default is c("Link", "Link_text"). The first column is the
+output by. The default is c("link", "link_text"). The first column is the
 URL of the link, and the second column is the text of the link. The
 function will arrange the output in ascending order by the column(s)
 specified in this argument.}
 }
 \value{
-A tibble with two columns: \code{Link_text} containing the text of each
+A tibble with two columns: \code{link_text} containing the text of each
 link, and \code{URL} containing  the absolute URL of each link. The tibble is
 sorted by URL and then by link text, and only unique links are included.
 }
@@ -28,11 +28,11 @@ the URLs and the link text.
 \examples{
 
 head(
-scrape_link(URL = "https://github.com/BioDT/IASDT.R"))
+scrape_link(URL = "https://github.com/tidyverse/dplyr"))
 
 head(
   scrape_link(
-    URL = "https://github.com/BioDT/IASDT.R", sort_by = "Link_text"))
+    URL = "https://github.com/tidyverse/dplyr", sort_by = "link_text"))
 
 # This will give an "Invalid URL" error
 \dontrun{

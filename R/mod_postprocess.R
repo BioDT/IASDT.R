@@ -5,11 +5,12 @@
 #' Model pipeline for post-processing fitted Hmsc models
 #'
 #' These functions post-process fitted Hmsc models on both CPU and GPU. The main
-#' functions in the pipeline includes `mod_postprocess_1_CPU`,
-#' `mod_CV_postprocess_1_CPU`, `mod_prepare_TF`, and `mod_postprocess_2_CPU`.
-#' See details for more information.
+#' functions in the pipeline includes `mod_postprocess_1_CPU`, `mod_prepare_TF`,
+#' and `mod_postprocess_2_CPU` for full models without cross-validation, as well
+#' as `mod_postprocess_CV_1_CPU` and `mod_postprocess_CV_2_CPU` for
+#' cross-validated models. See details for more information.
 #' @param model_dir Character. Path to the root directory of the fitted model.
-#' @param GPP_dist Integer. Distance in *kilometers* between knots for the
+#' @param GPP_dist Integer. Distance in *kilometres* between knots for the
 #'   selected model.
 #' @param use_trees Character. Whether a phylogenetic tree was used in the
 #'   selected model. Accepts "Tree" (default) or "NoTree".
@@ -33,7 +34,7 @@
 #'   prediction. Defaults to `8`.
 #' @param width_omega,height_omega,width_beta,height_beta Integer. The width and
 #'   height of the generated heatmaps of the Omega and Beta parameters in
-#'   centimeters.
+#'   centimetres.
 #' @param RC_prepare Logical. Whether to prepare the data for response curve
 #'   prediction (using [resp_curv_prepare_data]). Defaults to `TRUE`.
 #' @param RC_plot Logical. Whether to plot the response curves as JPEG files
@@ -50,7 +51,7 @@
 #'   predictions as JPEG files (using [plot_prediction]). Defaults to `TRUE`.
 #' @param plot_LF Logical. Whether to plot latent factors as JPEG files (using
 #'   [plot_latent_factor]). Defaults to `TRUE`.
-#' @param plot_internal_evaluation Logical. Whether to compute and visualize
+#' @param plot_internal_evaluation Logical. Whether to compute and visualise
 #'   model internal evaluation (explanatory power) using [plot_evaluation].
 #'   Defaults to `TRUE`.
 #' @rdname mod_postprocessing
@@ -75,9 +76,9 @@
 #' - check unsuccessful models: [mod_SLURM_refit]
 #' - merge chains and save R objects (fitted model object and coda object) to
 #' `qs2` or `RData` files: [mod_merge_chains]
-#' - visualize the convergence of all model variants fitted
+#' - visualise the convergence of all model variants fitted
 #' [convergence_plot_all]
-#' - visualize the convergence of selected model, including plotting
+#' - visualise the convergence of selected model, including plotting
 #' Gelman-Rubin-Brooks [plot_gelman] and [convergence_plot] for model
 #' convergence diagnostics of the `rho`, `alpha`, `omega`, and `beta`
 #' parameters.
@@ -90,15 +91,6 @@
 #' [resp_curv_prepare_data]
 #'    - predicting latent factors for new sampling units: [predict_maps]
 #'    - computing variance partitioning: [variance_partitioning_compute]
-#'
-#' <hr>
-#'
-#' **mod_CV_postprocess_1_CPU**
-#'
-#' This function is similar to `mod_postprocess_1_CPU`, but it is specifically
-#' designed for cross-validated models. It automates merging fitted
-#' cross-validated model chains into `Hmsc` model objects and prepare scripts
-#' for latent factor prediction on `TensorFlow` using [predict_maps_CV].
 #'
 #' <hr>
 #'
@@ -129,12 +121,12 @@
 #'
 #' This function continues running the analysis pipeline for post-processing
 #' Hmsc by automating the following steps:
-#' - process and visualize response curves: [response_curves]
+#' - process and visualise response curves: [response_curves]
 #' - predict habitat suitability across different climate options:
 #' [predict_maps]
 #' - plot species & SR predictions as JPEG: [plot_prediction]
 #' - plot latent factors as JPEG: [plot_latent_factor]
-#' - process and visualize variance partitioning:
+#' - process and visualise variance partitioning:
 #' [variance_partitioning_compute] and [variance_partitioning_plot]
 #' - compute and visualizing model internal evaluation (explanatory power):
 #' [plot_evaluation]
@@ -150,13 +142,22 @@
 #'
 #' <hr>
 #'
-#' **mod_CV_postprocess_2_CPU**
+#' **mod_postprocess_CV_1_CPU**
+#'
+#' This function is similar to `mod_postprocess_1_CPU`, but it is specifically
+#' designed for cross-validated models. It automates merging fitted
+#' cross-validated model chains into `Hmsc` model objects and prepare scripts
+#' for latent factor prediction on `TensorFlow` using [predict_maps_CV].
+#'
+#' <hr>
+#'
+#' **mod_postprocess_CV_2_CPU**
 #'
 #' The function 1) processes `*.feather` files resulted from Latent Factor
-#' predictions using `TensorFlow` and saves LF predication to disk; 2) predicts
-#' species-specific mean habitat suitability at testing cross-validation folds
-#' and calculates testing evaluation metrics; generates plots of the evaluation
-#' metrics.
+#' predictions (using `TensorFlow`) and saves LF predication to disk; 2)
+#' predicts species-specific mean habitat suitability at testing
+#' cross-validation folds and calculates testing evaluation metrics; 3)
+#' generates plots of the evaluation metrics.
 #'
 
 ## |------------------------------------------------------------------------| #
@@ -175,7 +176,7 @@ mod_postprocess_1_CPU <- function(
     fix_rivers = "q90", pred_new_sites = TRUE, n_cores_VP = 3L,
     width_omega = 26, height_omega = 22.5, width_beta = 25, height_beta = 35) {
 
-  .StartTime <- lubridate::now(tzone = "CET")
+  .start_time <- lubridate::now(tzone = "CET")
 
   # ****************************************************************
 
@@ -245,7 +246,7 @@ mod_postprocess_1_CPU <- function(
   # ****************************************************************
 
   IASDT.R::record_arguments(
-    out_path = IASDT.R::path(model_dir, "Args_mod_postprocess_1_CPU.RData"))
+    out_path = fs::path(model_dir, "Args_mod_postprocess_1_CPU.RData"))
 
   # ****************************************************************
 
@@ -273,8 +274,8 @@ mod_postprocess_1_CPU <- function(
   # Check unsuccessful models -----
 
   IASDT.R::info_chunk(
-    "Check unsuccessful models", level = 1, line_char = "+", line_char_rep = 60,
-    cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
+    "Check unsuccessful models", level = 1L, line_char = "+",
+    line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
   IASDT.R::mod_SLURM_refit(
     model_dir = model_dir,
@@ -287,8 +288,8 @@ mod_postprocess_1_CPU <- function(
   # ****************************************************************
 
   IASDT.R::info_chunk(
-    "Merge chains and saving RData/qs2 files", level = 1, line_char = "+",
-    line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
+    "Merge chains and saving RData or qs2 files", level = 1L, line_char = "+",
+    line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
   IASDT.R::mod_merge_chains(
     model_dir = model_dir, n_cores = n_cores, from_JSON = from_JSON)
@@ -298,8 +299,8 @@ mod_postprocess_1_CPU <- function(
   # ****************************************************************
 
   IASDT.R::info_chunk(
-    "Convergence of all model variants", level = 1, line_char = "+",
-    line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
+    "Convergence of all model variants", level = 1L, line_char = "+",
+    line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
   IASDT.R::convergence_plot_all(
     model_dir = model_dir, n_omega = n_omega, n_cores = n_cores,
@@ -312,16 +313,16 @@ mod_postprocess_1_CPU <- function(
 
   # Path of selected model -----
   IASDT.R::info_chunk(
-    "Path of selected model", level = 1, line_char = "+", line_char_rep = 60,
+    "Path of selected model", level = 1L, line_char = "+", line_char_rep = 60L,
     cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
-  path_model <- IASDT.R::path(
+  path_model <- fs::path(
     model_dir, "Model_Fitted",
     paste0(
       "GPP", GPP_dist, "_", use_trees, "_samp", MCMC_n_samples, "_th",
       MCMC_thin, "_Model.qs2"))
 
-  path_coda <- IASDT.R::path(
+  path_coda <- fs::path(
     model_dir, "Model_Coda",
     paste0(
       "GPP", GPP_dist, "_", use_trees, "_samp", MCMC_n_samples, "_th",
@@ -336,13 +337,13 @@ mod_postprocess_1_CPU <- function(
       path_model = path_model, path_coda = path_coda)
   }
 
-  temp_dir <- IASDT.R::path(model_dir, "TEMP_Pred")
+  temp_dir <- fs::path(model_dir, "TEMP_Pred")
 
   # ****************************************************************
 
   # Gelman_Plot -----
   IASDT.R::info_chunk(
-    "Gelman_Plot", level = 1, line_char = "+", line_char_rep = 60,
+    "Gelman_Plot", level = 1L, line_char = "+", line_char_rep = 60L,
     cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
   IASDT.R::plot_gelman(
@@ -355,7 +356,7 @@ mod_postprocess_1_CPU <- function(
 
   # Convergence plots ----
   IASDT.R::info_chunk(
-    "Convergence plots", level = 1, line_char = "+", line_char_rep = 60,
+    "Convergence plots", level = 1L, line_char = "+", line_char_rep = 60L,
     cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
   IASDT.R::convergence_plot(
@@ -369,7 +370,7 @@ mod_postprocess_1_CPU <- function(
 
   # Model summary ------
   IASDT.R::info_chunk(
-    "Model summary", level = 1, line_char = "+", line_char_rep = 60,
+    "Model summary", level = 1L, line_char = "+", line_char_rep = 60L,
     cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
   IASDT.R::mod_summary(path_coda = path_coda, env_file = env_file)
@@ -380,8 +381,8 @@ mod_postprocess_1_CPU <- function(
 
   # Plotting model parameters - Omega -----
   IASDT.R::info_chunk(
-    "Plotting model parameters - Omega", level = 1, line_char = "+",
-    line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
+    "Plotting model parameters - Omega", level = 1L, line_char = "+",
+    line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
   IASDT.R::mod_heatmap_omega(
     path_model = path_model, support_level = 0.95,
@@ -393,8 +394,8 @@ mod_postprocess_1_CPU <- function(
 
   # Plotting model parameters - Beta -----
   IASDT.R::info_chunk(
-    "Plotting model parameters - Beta", level = 1, line_char = "+",
-    line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
+    "Plotting model parameters - Beta", level = 1L, line_char = "+",
+    line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
   IASDT.R::mod_heatmap_beta(
     path_model = path_model, support_level = 0.95,
@@ -407,8 +408,8 @@ mod_postprocess_1_CPU <- function(
   # Prepare input data for cross-validation -------
 
   IASDT.R::info_chunk(
-    "Prepare input data for cross-validation", level = 1, line_char = "+",
-    line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
+    "Prepare input data for cross-validation", level = 1L, line_char = "+",
+    line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
   IASDT.R::mod_CV_fit(
     path_model = path_model, CV_name = CV_name, env_file = env_file,
@@ -422,8 +423,8 @@ mod_postprocess_1_CPU <- function(
   # latent factors of the response curves -------
   IASDT.R::info_chunk(
     "Prepare scripts for predicting latent factors of the response curves",
-    line_char = "+", line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE,
-    cat_timestamp = FALSE, level = 1)
+    line_char = "+", line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
+    cat_timestamp = FALSE, level = 1L)
 
   IASDT.R::resp_curv_prepare_data(
     path_model = path_model, n_grid = n_grid, n_cores = n_cores,
@@ -440,8 +441,8 @@ mod_postprocess_1_CPU <- function(
 
   IASDT.R::info_chunk(
     "Prepare scripts for predicting latent factors for new sampling units",
-    line_char = "+", line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE,
-    cat_timestamp = FALSE, level = 1)
+    line_char = "+", line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
+    cat_timestamp = FALSE, level = 1L)
 
   IASDT.R::predict_maps(
     path_model = path_model, hab_abb = hab_abb, env_file = env_file,
@@ -455,8 +456,8 @@ mod_postprocess_1_CPU <- function(
 
   # Prepare scripts for computing variance partitioning -------
   IASDT.R::info_chunk(
-    "Prepare scripts for computing variance partitioning", level = 1,
-    line_char = "+", line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE,
+    "Prepare scripts for computing variance partitioning", level = 1L,
+    line_char = "+", line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
     cat_timestamp = FALSE)
 
   IASDT.R::variance_partitioning_compute(
@@ -469,7 +470,7 @@ mod_postprocess_1_CPU <- function(
   # ****************************************************************
 
   IASDT.R::cat_diff(
-    init_time = .StartTime, prefix = "\nPost-processing using CPU took ")
+    init_time = .start_time, prefix = "\nPost-processing using CPU took ")
 
   return(invisible(NULL))
 }
@@ -525,7 +526,7 @@ mod_prepare_TF <- function(
 
   # # Load environment variables, for project ID
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "ProjectID", "DP_R_LUMI_gpu", FALSE, FALSE,
     "path_model", "DP_R_Model_path", TRUE, FALSE)
   # Assign environment variables and check file and paths
@@ -534,14 +535,14 @@ mod_prepare_TF <- function(
   rm(EnvVars2Read, envir = environment())
 
   IASDT.R::record_arguments(
-    out_path = IASDT.R::path(path_model, "Args_mod_prep_TF.RData"))
+    out_path = fs::path(path_model, "Args_mod_prep_TF.RData"))
 
   # ****************************************************************
 
   # Path to store TF commands
-  Path_TF <- IASDT.R::path(path_model, paste0(model_prefix, "_TF"))
+  Path_TF <- fs::path(path_model, paste0(model_prefix, "_TF"))
   # Path to store log files
-  Path_Log <- IASDT.R::normalize_path(IASDT.R::path(Path_TF, "log"))
+  Path_Log <- IASDT.R::normalize_path(fs::path(Path_TF, "log"))
   fs::dir_create(c(Path_TF, Path_Log))
 
   # ****************************************************************
@@ -556,13 +557,13 @@ mod_prepare_TF <- function(
     "Prepare post-processing data for calculating variance partitioning")
 
   # Create paths for VP SLURM script and commands
-  Path_VP_SLURM <- IASDT.R::path(Path_TF, "VP_SLURM.slurm")
-  Path_VP_Commands <- IASDT.R::path(Path_TF, "VP_Commands.txt")
+  Path_VP_SLURM <- fs::path(Path_TF, "VP_SLURM.slurm")
+  Path_VP_Commands <- fs::path(Path_TF, "VP_Commands.txt")
 
-  # Merge and organize TensorFlow commands for computing variance partitioning
+  # Merge and organise TensorFlow commands for computing variance partitioning
   IASDT.R::cat_time(
-    "Merge and organize TF TensorFlow for computing variance partitioning",
-    level = 1, cat_timestamp = FALSE)
+    "Merge and organise TF TensorFlow for computing variance partitioning",
+    level = 1L, cat_timestamp = FALSE)
 
   # Find list of files matching the pattern
   VP_InFiles <- list.files(
@@ -578,7 +579,7 @@ mod_prepare_TF <- function(
   # ****************************************************************
 
   # Prepare batch files ----
-  IASDT.R::cat_time("Prepare batch files", level = 1, cat_timestamp = FALSE)
+  IASDT.R::cat_time("Prepare batch files", level = 1L, cat_timestamp = FALSE)
 
   VP_Commands <- c(
     "#!/bin/bash",
@@ -590,8 +591,8 @@ mod_prepare_TF <- function(
     "#SBATCH --gpus-per-node=1",
     paste0("#SBATCH --time=", VP_runtime),
     paste0("#SBATCH --partition=", partition_name),
-    paste0("#SBATCH --output=", IASDT.R::path(Path_Log, "%x-%A-%a.out")),
-    paste0("#SBATCH --error=", IASDT.R::path(Path_Log, "%x-%A-%a.out")),
+    paste0("#SBATCH --output=", fs::path(Path_Log, "%x-%A-%a.out")),
+    paste0("#SBATCH --error=", fs::path(Path_Log, "%x-%A-%a.out")),
     paste0("#SBATCH --array=1-", length(VP_InFiles)),
     "\n# File containing commands to be executed",
     paste0("File=", Path_VP_Commands),
@@ -617,7 +618,7 @@ mod_prepare_TF <- function(
 
   IASDT.R::cat_time(
     paste0("Writing SLURM script to: `", Path_VP_SLURM, "`"),
-    level = 2, cat_timestamp = FALSE)
+    level = 2L, cat_timestamp = FALSE)
 
   readr::write_lines(x = VP_Commands, file = Path_VP_SLURM, append = FALSE)
   # Make the file executable
@@ -637,12 +638,12 @@ mod_prepare_TF <- function(
   # so both can be run on the same time.
   n_batch_files <- n_batch_files - length(VP_InFiles)
 
-  # Merge and organize TensorFlow commands for LF predictions ----
+  # Merge and organise TensorFlow commands for LF predictions ----
   IASDT.R::cat_time(
     paste0(
-      "Merge and organize TensorFlow commands for LF predictions ",
+      "Merge and organise TensorFlow commands for LF predictions ",
       "into a maximum of ", n_batch_files, " files"),
-    level = 1, cat_timestamp = FALSE)
+    level = 1L, cat_timestamp = FALSE)
 
   # Basic commands for TensorFlow setup
   BasicCommands <- c(
@@ -686,8 +687,8 @@ mod_prepare_TF <- function(
     paste0(
       "Found ", length(LF_InFiles), " files matching the pattern `",
       LF_Pattern, "`"),
-    level = 2, cat_timestamp = FALSE)
-  purrr::walk(LF_InFiles, IASDT.R::cat_time, level = 3, cat_timestamp = FALSE)
+    level = 2L, cat_timestamp = FALSE)
+  purrr::walk(LF_InFiles, IASDT.R::cat_time, level = 3L, cat_timestamp = FALSE)
 
   # Read and merge commands from input files
   LF_commands <- purrr::map(LF_InFiles, readr::read_lines, progress = FALSE) %>%
@@ -697,27 +698,27 @@ mod_prepare_TF <- function(
   IASDT.R::cat_time(
     paste0(
       "Total number of commands to be executed: ", length(LF_commands)),
-    level = 2, cat_timestamp = FALSE)
+    level = 2L, cat_timestamp = FALSE)
 
   if (length(LF_commands) < n_batch_files) {
     IASDT.R::cat_time(
       paste0(
         "Fewer commands than the requested number of files. ",
         "Setting `n_batch_files=", n_batch_files, "`."),
-      level = 2, cat_timestamp = FALSE)
+      level = 2L, cat_timestamp = FALSE)
     n_batch_files <- length(LF_commands)
   }
 
   IASDT.R::cat_time(
     paste0("Splitting commands into ", n_batch_files, " files"),
-    cat_timestamp = FALSE, level = 2)
+    cat_timestamp = FALSE, level = 2L)
   LF_commands <- IASDT.R::split_vector(LF_commands, n_splits = n_batch_files)
 
   purrr::walk(
     .x = seq_len(length(LF_commands)),
     .f = ~ {
 
-      File <- IASDT.R::path(
+      File <- fs::path(
         Path_TF,
         paste0(
           "TF_Chunk_",
@@ -745,7 +746,7 @@ mod_prepare_TF <- function(
   # ****************************************************************
 
   # Prepare LF batch files ----
-  IASDT.R::cat_time("Prepare batch files", level = 1, cat_timestamp = FALSE)
+  IASDT.R::cat_time("Prepare batch files", level = 1L, cat_timestamp = FALSE)
 
   LF_slurm_script <- c(
     "#!/bin/bash",
@@ -757,8 +758,8 @@ mod_prepare_TF <- function(
     "#SBATCH --gpus-per-node=1",
     paste0("#SBATCH --time=", LF_runtime),
     paste0("#SBATCH --partition=", partition_name),
-    paste0("#SBATCH --output=", IASDT.R::path(Path_Log, "%x-%A-%a.out")),
-    paste0("#SBATCH --error=", IASDT.R::path(Path_Log, "%x-%A-%a.out")),
+    paste0("#SBATCH --output=", fs::path(Path_Log, "%x-%A-%a.out")),
+    paste0("#SBATCH --error=", fs::path(Path_Log, "%x-%A-%a.out")),
     paste0("#SBATCH --array=1-", n_batch_files),
     "",
     "# Define directories",
@@ -816,10 +817,10 @@ mod_prepare_TF <- function(
       format(lubridate::now(tzone = "CET"), format = "%Y-%m-%d %H:%M"), " CET"),
     paste0("# ", strrep("-", 50)))
 
-  Path_LF_SLURM <- IASDT.R::path(Path_TF, "LF_SLURM.slurm")
+  Path_LF_SLURM <- fs::path(Path_TF, "LF_SLURM.slurm")
   IASDT.R::cat_time(
     paste0("Writing SLURM script to: `", Path_LF_SLURM, "`"),
-    level = 2, cat_timestamp = FALSE)
+    level = 2L, cat_timestamp = FALSE)
   # Write the content to a file
   readr::write_lines(LF_slurm_script, Path_LF_SLURM, append = FALSE)
   # Make the file executable
@@ -860,7 +861,7 @@ mod_postprocess_2_CPU <- function(
     predict_suitability = TRUE, plot_predictions = TRUE, plot_LF = TRUE,
     plot_internal_evaluation = TRUE) {
 
-  .StartTime <- lubridate::now(tzone = "CET")
+  .start_time <- lubridate::now(tzone = "CET")
 
   # ****************************************************************
 
@@ -945,7 +946,7 @@ mod_postprocess_2_CPU <- function(
   # ****************************************************************
 
   IASDT.R::record_arguments(
-    out_path = IASDT.R::path(model_dir, "Args_Mod_Postprocess_2_CPU.RData"))
+    out_path = fs::path(model_dir, "Args_Mod_Postprocess_2_CPU.RData"))
 
   # ****************************************************************
 
@@ -970,7 +971,7 @@ mod_postprocess_2_CPU <- function(
 
   # ****************************************************************
 
-  temp_dir <- IASDT.R::path(model_dir, "TEMP_Pred")
+  temp_dir <- fs::path(model_dir, "TEMP_Pred")
 
   ModelData <- list.files(
     path = model_dir, full.names = TRUE, pattern = "^ModDT_.*subset.RData")
@@ -984,16 +985,16 @@ mod_postprocess_2_CPU <- function(
 
   # Path of selected model -----
   IASDT.R::info_chunk(
-    "Path of selected model", level = 1, line_char = "+", line_char_rep = 60,
+    "Path of selected model", level = 1L, line_char = "+", line_char_rep = 60L,
     cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
-  path_model <- IASDT.R::path(
+  path_model <- fs::path(
     model_dir, "Model_Fitted",
     paste0(
       "GPP", GPP_dist, "_", use_trees, "_samp", MCMC_n_samples, "_th",
       MCMC_thin, "_Model.qs2"))
 
-  path_coda <- IASDT.R::path(
+  path_coda <- fs::path(
     model_dir, "Model_Coda",
     paste0(
       "GPP", GPP_dist, "_", use_trees, "_samp", MCMC_n_samples, "_th",
@@ -1014,8 +1015,8 @@ mod_postprocess_2_CPU <- function(
 
   if (RC_prepare) {
     IASDT.R::info_chunk(
-      "Prepare response curve data", level = 1, line_char = "+",
-      line_char_rep = 60, cat_red = TRUE,
+      "Prepare response curve data", level = 1L, line_char = "+",
+      line_char_rep = 60L, cat_red = TRUE,
       cat_bold = TRUE, cat_timestamp = FALSE)
 
     IASDT.R::resp_curv_prepare_data(
@@ -1037,8 +1038,8 @@ mod_postprocess_2_CPU <- function(
 
     ## Species richness -----
     IASDT.R::info_chunk(
-      "Plotting response curves - species richness", level = 1,
-      line_char = "+", line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE,
+      "Plotting response curves - species richness", level = 1L,
+      line_char = "+", line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
       cat_timestamp = FALSE)
 
     IASDT.R::resp_curv_plot_SR(
@@ -1050,8 +1051,8 @@ mod_postprocess_2_CPU <- function(
 
     # Individual species -----
     IASDT.R::info_chunk(
-      "Plotting response curves - species", level = 1, line_char = "+",
-      line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE,
+      "Plotting response curves - species", level = 1L, line_char = "+",
+      line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
       cat_timestamp = FALSE)
 
     IASDT.R::resp_curv_plot_species(
@@ -1063,8 +1064,8 @@ mod_postprocess_2_CPU <- function(
 
     # All species together -----
     IASDT.R::info_chunk(
-      "Plotting response curves - all species together", level = 1,
-      line_char = "+", line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE,
+      "Plotting response curves - all species together", level = 1L,
+      line_char = "+", line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
       cat_timestamp = FALSE)
 
     IASDT.R::resp_curv_plot_species_all(
@@ -1081,8 +1082,8 @@ mod_postprocess_2_CPU <- function(
 
     IASDT.R::info_chunk(
       "Predicting habitat suitability across different climate options",
-      line_char = "+", line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE,
-      cat_timestamp = FALSE, level = 1)
+      line_char = "+", line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
+      cat_timestamp = FALSE, level = 1L)
 
     IASDT.R::predict_maps(
       path_model = path_model, hab_abb = hab_abb, env_file = env_file,
@@ -1104,8 +1105,8 @@ mod_postprocess_2_CPU <- function(
 
   if (VP_prepare) {
     IASDT.R::info_chunk(
-      "Compute variance partitioning", level = 1, line_char = "+",
-      line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE,
+      "Compute variance partitioning", level = 1L, line_char = "+",
+      line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
       cat_timestamp = FALSE)
 
     IASDT.R::variance_partitioning_compute(
@@ -1122,8 +1123,8 @@ mod_postprocess_2_CPU <- function(
 
   if (VP_plot) {
     IASDT.R::info_chunk(
-      "Plot Variance partitioning", level = 1, line_char = "+",
-      line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE,
+      "Plot Variance partitioning", level = 1L, line_char = "+",
+      line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
       cat_timestamp = FALSE)
 
     IASDT.R::variance_partitioning_plot(
@@ -1138,8 +1139,8 @@ mod_postprocess_2_CPU <- function(
 
   if (plot_predictions) {
     IASDT.R::info_chunk(
-      "Plot species & SR predictions as JPEG", level = 1, line_char = "+",
-      line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE,
+      "Plot species & SR predictions as JPEG", level = 1L, line_char = "+",
+      line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
       cat_timestamp = FALSE)
 
     IASDT.R::plot_prediction(
@@ -1152,8 +1153,8 @@ mod_postprocess_2_CPU <- function(
 
   if (plot_LF) {
     IASDT.R::info_chunk(
-      "Plot latent factors as JPEG", level = 1, line_char = "+",
-      line_char_rep = 60, cat_red = TRUE, cat_bold = TRUE,
+      "Plot latent factors as JPEG", level = 1L, line_char = "+",
+      line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
       cat_timestamp = FALSE)
 
     IASDT.R::plot_latent_factor(path_model = path_model, env_file = env_file)
@@ -1165,8 +1166,9 @@ mod_postprocess_2_CPU <- function(
 
   if (plot_internal_evaluation) {
     IASDT.R::info_chunk(
-      "Plot explanatory Power", level = 1, line_char = "+", line_char_rep = 60,
-      cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
+      "Plot explanatory Power", level = 1L, line_char = "+",
+      line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
+      cat_timestamp = FALSE)
 
     IASDT.R::plot_evaluation(model_dir = model_dir, env_file = env_file)
   }
@@ -1178,7 +1180,7 @@ mod_postprocess_2_CPU <- function(
   # ****************************************************************
 
   IASDT.R::cat_diff(
-    init_time = .StartTime, prefix = "\nPost-processing took ")
+    init_time = .start_time, prefix = "\nPost-processing took ")
 
   return(invisible(NULL))
 }

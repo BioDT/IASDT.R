@@ -6,7 +6,7 @@
 \alias{IAS_process}
 \alias{IAS_distribution}
 \alias{IAS_plot}
-\title{Process and map Invasive Alien Species (IAS) data for the \code{IAS-pDT}}
+\title{Process and map Invasive Alien Species (IAS) data for the \code{IASDT}}
 \usage{
 IAS_process(env_file = ".env", n_cores = 6L, overwrite = TRUE)
 
@@ -35,10 +35,10 @@ skips if maps exist. Default: \code{FALSE}.}
 \code{FALSE}.}
 }
 \description{
-Processes and visualizes Invasive Alien Species (IAS) distribution data from
-GBIF, EASIN, and eLTER for the Invasive Alien Species prototype Digital Twin
-(\code{IAS-pDT}). Merges pre-processed data, creates presence-absence rasters,
-summarizes distributions, and generates maps using helper functions.
+Processes and visualises Invasive Alien Species (IAS) distribution data from
+GBIF, EASIN, and eLTER for the Invasive Alien Species Digital Twin (\code{IASDT}).
+Merges pre-processed data, creates presence-absence rasters, summarises
+distributions, and generates maps using helper functions.
 }
 \section{Functions details}{
 

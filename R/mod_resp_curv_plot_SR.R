@@ -12,7 +12,7 @@ resp_curv_plot_SR <- function(model_dir, verbose = TRUE, n_cores = 8L) {
 
   # # ..................................................................... ###
 
-  .StartTime <- lubridate::now(tzone = "CET")
+  .start_time <- lubridate::now(tzone = "CET")
 
   if (isFALSE(verbose)) {
     sink(file = nullfile())
@@ -44,8 +44,8 @@ resp_curv_plot_SR <- function(model_dir, verbose = TRUE, n_cores = 8L) {
 
   IASDT.R::cat_time("Check the existence of response curve directory")
 
-  Path_RC_DT <- IASDT.R::path(model_dir, "Model_Postprocessing", "RespCurv_DT")
-  Path_RC_SR <- IASDT.R::path(model_dir, "Model_Postprocessing", "RespCurv_SR")
+  Path_RC_DT <- fs::path(model_dir, "Model_Postprocessing", "RespCurv_DT")
+  Path_RC_SR <- fs::path(model_dir, "Model_Postprocessing", "RespCurv_SR")
 
   if (!dir.exists(Path_RC_DT)) {
     IASDT.R::stop_ctx(
@@ -58,7 +58,7 @@ resp_curv_plot_SR <- function(model_dir, verbose = TRUE, n_cores = 8L) {
 
   IASDT.R::cat_time("Create species richness response curves")
 
-  SR_DT_All <- IASDT.R::path(Path_RC_DT, "ResCurvDT.RData") %>%
+  SR_DT_All <- fs::path(Path_RC_DT, "ResCurvDT.RData") %>%
     IASDT.R::load_as() %>%
     dplyr::select(-RC_Path_Orig, -RC_Path_Prob)
 
@@ -66,7 +66,7 @@ resp_curv_plot_SR <- function(model_dir, verbose = TRUE, n_cores = 8L) {
 
   IASDT.R::cat_time(
     paste0("Prepare working in parallel, using ", n_cores, " cores"),
-    level = 1)
+    level = 1L)
 
   withr::local_options(
     future.globals.maxSize = 8000 * 1024^2,
@@ -77,7 +77,7 @@ resp_curv_plot_SR <- function(model_dir, verbose = TRUE, n_cores = 8L) {
   future::plan("future::cluster", workers = c1, gc = TRUE)
   withr::defer(future::plan("future::sequential", gc = TRUE))
 
-  IASDT.R::cat_time("Prepare data", level = 1)
+  IASDT.R::cat_time("Prepare data", level = 1L)
 
   SR_DT_All <- SR_DT_All %>%
     dplyr::mutate(
@@ -123,7 +123,7 @@ resp_curv_plot_SR <- function(model_dir, verbose = TRUE, n_cores = 8L) {
 
   # Plot species richness response curves
 
-  IASDT.R::cat_time("Plot species richness response curves", level = 1)
+  IASDT.R::cat_time("Plot species richness response curves", level = 1L)
 
 
   VarLabel <- tibble::tribble(
@@ -165,7 +165,7 @@ resp_curv_plot_SR <- function(model_dir, verbose = TRUE, n_cores = 8L) {
         .f = function(Variable, Quant, Observed, Trend, Coords) {
 
           IASDT.R::cat_time(
-            paste0(Variable, " - coords = ", Coords), level = 2)
+            paste0(Variable, " - coords = ", Coords), level = 2L)
 
           # Maximum value on the y-axis
           PlotMax <- max(Observed$Pred, Quant$Q975) * 1.05
@@ -275,7 +275,7 @@ resp_curv_plot_SR <- function(model_dir, verbose = TRUE, n_cores = 8L) {
           # Using ggplot2::ggsave directly does not show non-ascii characters
           # correctly
           ragg::agg_jpeg(
-            filename = IASDT.R::path(
+            filename = fs::path(
               Path_RC_SR,
               paste0("RespCurv_SR_", Variable, "_Coords_", Coords, ".jpeg")),
             width = 20, height = 12.5, res = 600, quality = 100, units = "cm")
@@ -289,7 +289,7 @@ resp_curv_plot_SR <- function(model_dir, verbose = TRUE, n_cores = 8L) {
 
             IASDT.R::cat_time(
               paste0(Variable, " - coords = ", Coords, " - original scale"),
-              level = 2)
+              level = 2L)
 
             Observed2 <- dplyr::mutate(Observed, XVals = 10 ^ XVals - 0.1)
             Quant2 <- dplyr::mutate(Quant, XVals = 10 ^ XVals - 0.1)
@@ -345,7 +345,7 @@ resp_curv_plot_SR <- function(model_dir, verbose = TRUE, n_cores = 8L) {
             # Using ggplot2::ggsave directly does not show non-ascii characters
             # correctly
             ragg::agg_jpeg(
-              filename = IASDT.R::path(
+              filename = fs::path(
                 Path_RC_SR,
                 paste0(
                   "RespCurv_SR_", Variable, "_Coords_", Coords,
@@ -360,12 +360,12 @@ resp_curv_plot_SR <- function(model_dir, verbose = TRUE, n_cores = 8L) {
 
   save(
     SR_DT_All,
-    file = IASDT.R::path(Path_RC_SR, "SR_DT_All.RData"))
+    file = fs::path(Path_RC_SR, "SR_DT_All.RData"))
 
   # # ..................................................................... ###
 
   IASDT.R::cat_diff(
-    init_time = .StartTime,
+    init_time = .start_time,
     prefix = "Plotting response curves for species richness took ")
 
   # # ..................................................................... ###

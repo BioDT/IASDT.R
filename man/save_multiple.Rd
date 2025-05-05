@@ -42,7 +42,7 @@ overwriting of existing files.
 }
 \examples{
 \dontrun{
-  TMP_Folder <- IASDT.R::path(tempdir(), stringi::stri_rand_strings(1, 5))
+  TMP_Folder <- fs::path(tempdir(), stringi::stri_rand_strings(1, 5))
   fs::dir_create(TMP_Folder)
 
   # ----------------------------------------------
@@ -54,9 +54,9 @@ overwriting of existing files.
 
   list.files(path = TMP_Folder, pattern = "^.+.RData")
 
-  (x1Contents <- IASDT.R::load_as(IASDT.R::path(TMP_Folder, "x1.RData")))
+  (x1Contents <- IASDT.R::load_as(fs::path(TMP_Folder, "x1.RData")))
 
-  (x2Contents <- IASDT.R::load_as(IASDT.R::path(TMP_Folder, "x2.RData")))
+  (x2Contents <- IASDT.R::load_as(fs::path(TMP_Folder, "x2.RData")))
 
   # ----------------------------------------------
   # Use prefix
@@ -80,11 +80,11 @@ overwriting of existing files.
   save_multiple(variables = c("x1", "x2", "x3"),
      out_directory = TMP_Folder, overwrite = TRUE)
 
-  (x1Contents <- IASDT.R::load_as(IASDT.R::path(TMP_Folder, "x1.RData")))
+  (x1Contents <- IASDT.R::load_as(fs::path(TMP_Folder, "x1.RData")))
 
-  (x2Contents <- IASDT.R::load_as(IASDT.R::path(TMP_Folder, "x2.RData")))
+  (x2Contents <- IASDT.R::load_as(fs::path(TMP_Folder, "x2.RData")))
 
-  (x3Contents <- IASDT.R::load_as(IASDT.R::path(TMP_Folder, "x3.RData")))
+  (x3Contents <- IASDT.R::load_as(fs::path(TMP_Folder, "x3.RData")))
 }
 }
 \author{

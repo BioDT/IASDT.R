@@ -40,7 +40,7 @@ IAS_plot <- function(species = NULL, env_file = ".env", overwrite = TRUE) {
   # Environment variables ----
 
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
     "Path_Grid_Ref", "DP_R_Grid_raw", TRUE, FALSE,
     "EU_Bound", "DP_R_EUBound", FALSE, TRUE,
@@ -55,8 +55,8 @@ IAS_plot <- function(species = NULL, env_file = ".env", overwrite = TRUE) {
   # # ..................................................................... ###
 
   # Check / create directories
-  Path_Summary <- IASDT.R::path(Path_PA, "SpSummary")
-  path_JPEG <- IASDT.R::path(Path_PA, "JPEG_Maps")
+  Path_Summary <- fs::path(Path_PA, "SpSummary")
+  path_JPEG <- fs::path(Path_PA, "JPEG_Maps")
   if (!fs::dir_exists(path_JPEG)) {
     fs::dir_create(path_JPEG)
   }
@@ -65,7 +65,7 @@ IAS_plot <- function(species = NULL, env_file = ".env", overwrite = TRUE) {
   SpFile <- stringr::str_replace_all(Species2, "\u00D7", "x") %>%
     stringr::str_replace_all("-", "")
 
-  SpData <- IASDT.R::path(Path_Summary, paste0(SpFile, "_Summary.RData"))
+  SpData <- fs::path(Path_Summary, paste0(SpFile, "_Summary.RData"))
   if (!file.exists(SpData)) {
     return(invisible(NULL))
   }
@@ -92,12 +92,12 @@ IAS_plot <- function(species = NULL, env_file = ".env", overwrite = TRUE) {
     dplyr::select(-"speciesKey") %>%
     dplyr::distinct()
 
-  out_path <- IASDT.R::path(path_JPEG, paste0(SpInfo$Species_name2[1], ".jpeg"))
+  out_path <- fs::path(path_JPEG, paste0(SpInfo$Species_name2[1], ".jpeg"))
   if (file.exists(out_path) && isFALSE(overwrite)) {
     return(invisible(NULL))
   }
 
-  Grid_100_sf <- IASDT.R::path(Path_Grid_Ref, "Grid_100_sf.RData") %>%
+  Grid_100_sf <- fs::path(Path_Grid_Ref, "Grid_100_sf.RData") %>%
     IASDT.R::load_as() %>%
     magrittr::extract2("Grid_100_sf_s")
 
@@ -108,7 +108,7 @@ IAS_plot <- function(species = NULL, env_file = ".env", overwrite = TRUE) {
   rm(Grid_100_sf, envir = environment())
 
   # the study area as simple feature object for plotting
-  Grid10_Sf <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop_sf.RData") %>%
+  Grid10_Sf <- fs::path(Path_Grid, "Grid_10_Land_Crop_sf.RData") %>%
     IASDT.R::load_as()
 
   GBIF_Gr100 <- SpData$GBIF_Gr100[[1]]

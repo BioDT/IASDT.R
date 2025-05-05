@@ -54,12 +54,12 @@ sf_add_coords <- function(
       name_x = name_x, name_y = name_y)
   }
 
-  ColNames <- names(sf_object)
+  column_names <- names(sf_object)
 
   # Coordinate Extraction
   # extract the coordinates from the sf object and converts them into a tibble,
   # naming the columns according to name_x and name_y
-  Coords <- sf::st_coordinates(sf_object) %>%
+  coordinates <- sf::st_coordinates(sf_object) %>%
     tibble::as_tibble() %>%
     stats::setNames(c(name_x, name_y))
 
@@ -69,7 +69,7 @@ sf_add_coords <- function(
   # these columns if overwrite is TRUE, after issuing a warning. 2) Appends
   # "_NEW" to the new column names to avoid overwriting, if overwrite is FALSE.
 
-  if (any(c(name_x, name_y) %in% ColNames)) {
+  if (any(c(name_x, name_y) %in% column_names)) {
     if (overwrite) {
       warning(
         "Provided column names for longitude and Latitude ",
@@ -80,11 +80,11 @@ sf_add_coords <- function(
       warning(
         "Provided column names for longitude and Latitude already exist ",
         "in the data; `_NEW` is used as suffix", call. = FALSE)
-      Coords <- Coords %>%
+      coordinates <- coordinates %>%
         stats::setNames(c(paste0(name_x, "_NEW"), paste0(name_y, "_NEW")))
     }
   } else {
-    Coords <- stats::setNames(Coords, c(name_x, name_y))
+    coordinates <- stats::setNames(coordinates, c(name_x, name_y))
   }
-  return(dplyr::bind_cols(sf_object, Coords))
+  return(dplyr::bind_cols(sf_object, coordinates))
 }

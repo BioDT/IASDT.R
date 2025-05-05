@@ -7,7 +7,7 @@
 all_objects_sizes(
   greater_than = 0,
   in_function = FALSE,
-  SizeDecimals = 2,
+  n_decimals = 2,
   n_objects = Inf
 )
 }
@@ -21,8 +21,8 @@ indicates whether the execution is done inside or outside of a function.
 Defaults to \code{FALSE} to show sizes of objects in the global environment. If
 set to \code{TRUE}, sizes of objects in the function are returned.}
 
-\item{SizeDecimals}{Integer; representing the number of decimal places to
-show in the \code{Size} column. Defaults to 2.}
+\item{n_decimals}{Integer; representing the number of decimal places to
+show in the \code{size_MB} column. Defaults to 2.}
 
 \item{n_objects}{Number of objects to show. Defaults to \code{Inf} meaning show
 all available objects.}

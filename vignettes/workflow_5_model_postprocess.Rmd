@@ -1,5 +1,5 @@
 ---
-title: "IAS-pDT modelling workflow — 5. Model post-processing"
+title: "IASDT modelling workflow — 5. Model post-processing"
 output: html_document
 editor_options: 
   chunk_output_type: console
@@ -22,7 +22,7 @@ format:
     link-external-icon: true
     link-external-newwindow: true
 vignette: >
-  %\VignetteIndexEntry{IAS-pDT modelling workflow — 5. Model post-processing}
+  %\VignetteIndexEntry{IASDT modelling workflow — 5. Model post-processing}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 ---
@@ -86,13 +86,14 @@ c("<style>", readLines("style.css"), "</style>") %>%
 
 <br/>
 
-Post-processing of fitted models within the `IAS-pDT` workflow is conducted across multiple steps, leveraging both CPU and GPU computations to optimize performance and address memory constraints.
+Post-processing of fitted models in the `IASDT` workflow involves multiple steps, utilising both CPU and GPU computations to optimize performance and manage memory constraints effectively.
 
 <br/>
 
 ## Step 1: CPU
 
-The **`mod_postprocess_1_CPU()`** function initiates the post-processing phase for each habitat type, automating the following tasks:
+The **`mod_postprocess_1_CPU()`** function begins the post-processing phase for each habitat type by automating the following tasks:
+
 
 ```{r}
 #| echo = FALSE,
@@ -100,17 +101,18 @@ The **`mod_postprocess_1_CPU()`** function initiates the post-processing phase f
 #| warning = FALSE,
 #| eval = TRUE
 DT <- tibble::tribble(
-  ~Scenario, ~Description,
-  "`mod_SLURM_refit()`", "check for unsuccessful model fits",
-  "`mod_merge_chains()`", "merge MCMC chains and saves fitted model and coda objects to <i>.qs2</i> or <i>.RData</i> files",
-  "`convergence_plot_all()`", "visualize convergence of `rho`, `alpha`, `omega`, and `beta` parameters across all model variants; unnecessary for a single variant, this function compares convergence across models with varying thinning values, both with and without phylogenetic relationships, or GPP knot distances",
-  "`convergence_plot()`", "convergence of `rho`, `alpha`, `omega`, and `beta` parameters for a selected model, offering a detailed view compared to `convergence_plot_all()`",
-  "`plot_gelman()`", "visualize Gelman-Rubin-Brooks diagnostics for the selected model",
-  "`mod_summary()`", "extract and save a summary of the model",
-  "`mod_heatmap_beta()`", "generate heatmaps of the `beta` parameters",
-  "`mod_heatmap_omega()`", "generates heatmaps of the `omega` parameter (residual species associations)",
-  "`mod_CV_fit()`", "prepare input data for spatial-block cross-validation model fitting") %>% 
-  dplyr::mutate(Scenario = paste0("<cc>", Scenario, "</cc><tab0>"))
+  ~R_function, ~Description,
+  "`mod_SLURM_refit()`", "checks for unsuccessful model fits.",
+  "`mod_merge_chains()`", "merges MCMC chains and saves the fitted model and coda objects to `.qs2` or `.RData` files.",
+  "`convergence_plot_all()`", "visualises the convergence of `rho`, `alpha`, `omega`, and `beta` parameters across all model variants. This function is particularly useful for comparing convergence across models with different thinning values, with and without phylogenetic relationships, or varying GPP knot distances. It is unnecessary when only a single model variant is considered.",
+  "`convergence_plot()`", "displays the convergence of `rho`, `alpha`, `omega`, and `beta` parameters for a selected model, providing a more detailed view compared to `convergence_plot_all()`.",
+  "`plot_gelman()`", "visualises the Gelman-Rubin-Brooks diagnostics for the selected model.",
+  "`mod_summary()`", "extracts and saves a summary of the model.",
+  "`mod_heatmap_beta()`", "generates heatmaps of the `beta` parameters.",
+  "`mod_heatmap_omega()`", "generates heatmaps of the `omega` parameter, which represents residual species associations.",
+  "`mod_CV_fit()`", "prepares the necessary data for fitting cross-validated models. 
+  <ul><li>output files are saved in the `Model_Fitting_CV` subdirectory.</li><li>the type of cross-validation strategy is controlled by the `CV_name` argument, which defaults to both `CV_Dist` and `CV_Large`.</li><li>unfitted model objects are saved in the `Model_Init` subdirectory.</li><li>commands for model fitting are saved as text files, with a separate file for each cross-validation strategy (e.g., `Commands2Fit_CV_Dist.txt`, `Commands2Fit_CV_Large.txt`).</li><li>model fitting commands are submitted as batch jobs using SLURM scripts, with a separate script for each strategy (e.g., `CV_Bash_Fit_Dist.slurm`, `CV_Bash_Fit_Large.slurm`).</li></ul>") %>% 
+  dplyr::mutate(R_function = paste0("<cc>", R_function, "</cc><tab0>"))
 
 DT %>% 
   knitr::kable(col.names = NULL, format = "html", escape = FALSE)  %>%
@@ -123,11 +125,13 @@ DT %>%
     column = 1, extra_css = "white-space: nowrap;")
 ```
 
+
 <br/><hr class="hr2"><br/>
 
-### Computationally intensive tasks that are offloaded to GPU
+### Computationally intensive tasks offloaded to GPU
 
-Previous attempts to prepare response curve data, predict at new sites, and compute variance partitioning using R on CPUs (UFZ Windows server and LUMI HPC) were hindered by memory limitations. Consequently, these tasks are offloaded to GPU-based computations using Python and TensorFlow. The `mod_postprocess_1_CPU()` function invokes the following sub-functions to generate commands for GPU execution:
+Previous attempts to prepare response curve data, predict at new sites, and compute variance partitioning using R on CPUs (such as the UFZ Windows server and LUMI HPC) were limited by memory constraints. As a result, these tasks are now offloaded to GPU-based computations using `Python` and `TensorFlow`. The `mod_postprocess_1_CPU()` function calls the following sub-functions to generate the necessary commands for GPU execution:
+
 
 ```{r}
 #| echo = FALSE,
@@ -135,11 +139,11 @@ Previous attempts to prepare response curve data, predict at new sites, and comp
 #| warning = FALSE,
 #| eval = TRUE
 DT <- tibble::tribble(
-  ~Scenario, ~Description,
-  "`resp_curv_prepare_data()`", "prepare data for predicting latent factors for response curves",
-  "`predict_maps()`", "prepare data for predicting latent factors at new sampling units",
-  "`variance_partitioning_compute()`", "prepare data for computing variance partitioning") %>% 
-  dplyr::mutate(Scenario = paste0("<cc>", Scenario, "</cc><tab0>"))
+  ~R_function, ~Description,
+  "`resp_curv_prepare_data()`", "prepares data for predicting latent factors for response curves",
+  "`predict_maps()`", "prepares data for predicting latent factors at new sampling units",
+  "`variance_partitioning_compute()`", "prepares data for computing variance partitioning") %>% 
+  dplyr::mutate(R_function = paste0("<cc>", R_function, "</cc><tab0>"))
 
 DT %>% 
   knitr::kable(col.names = NULL, format = "html", escape = FALSE)  %>%
@@ -154,12 +158,13 @@ DT %>%
 
 <br/><hr class="hr2"><br/>
 
-### Prepare commands for GPU computations
+### Preparing commands for GPU computations
 
 > <u><i>Predicting latent factors:</i></u>
 
-- Latent factor predictions for response curves and new sampling units are executed via a <i>TensorFlow</i> script located at <a href="https://github.com/BioDT/IASDT.R/blob/main/inst/crossprod_solve.py" target="_blank" class="ll">inst/crossprod_solve.py</a>.
-- For these tasks, the respective R functions export numerous <i>.qs2</i> and <i>.feather</i> data files to the <ff>TEMP_Pred</ff> subdirectory, essential for GPU computations. They also generate execution commands saved as <ff>LF_RC_Commands_*.txt</ff> (for response curves) and <ff>LF_NewSites_Commands_*.txt</ff> (for new sites).
+- Predictions of latent factors for response curves and new sampling units are performed using a `TensorFlow` script located at <a href="https://github.com/BioDT/IASDT.R/blob/main/inst/crossprod_solve.py" target="_blank" class="ll">inst/crossprod_solve.py</a>.
+- For these tasks, the corresponding R functions export multiple `.qs2` and `.feather` data files to the <ff>TEMP_Pred</ff> subdirectory, which are essential for GPU computations. Additionally, they generate execution commands saved as <ff>LF_RC_Commands_*.txt</ff> (for response curves) and <ff>LF_NewSites_Commands_*.txt</ff> (for new sites).
+
 
 ```{r}
 #| results = "asis",
@@ -186,25 +191,26 @@ collapsible_script_section(
 <br/><br/>
 
 - Response curves
-  - `resp_curv_prepare_data()` extends `Hmsc::constructGradient()` and `Hmsc::plotGradient()`, enabling GPU-based response curve data preparation when <cc>`LF_commands_only = TRUE`</cc>.
-  - To predict at mean coordinates (per the <i>coordinates</i> argument of `Hmsc::constructGradient()`), latent factor predictions—typically memory-intensive with `Hmsc::predictLatentFactor()`—are computed on GPUs.
+  - `resp_curv_prepare_data()` extends the functionality of `Hmsc::constructGradient()` and `Hmsc::plotGradient()` by enabling the preparation of response curve data on GPUs when `LF_commands_only = TRUE`.
+  - For predictions at mean coordinates (as specified by the `coordinates` argument in `Hmsc::constructGradient()`), latent factor predictions — which are typically memory-intensive when using `Hmsc::predictLatentFactor()` — are computed on GPUs.
 - Predicting at new sites
-  - `predict_maps()` prepares GPU computations for new site predictions when <cc>`LF_only = TRUE`</cc> and <cc>`LF_commands_only = TRUE`</cc>.
+  - `predict_maps()` sets up GPU computations for predictions at new sites when both `LF_only = TRUE` and `LF_commands_only = TRUE`.
   
 <br/><br/>
 
+
 > <u><i>Computing variance partitioning:</i></u>
 
-- Variance partitioning computations on GPUs are executed using TensorFlow scripts at <a href="https://github.com/BioDT/IASDT.R/blob/main/inst/VP_geta.py" target="_blank" class="ll">inst/VP_geta.py</a>, <a href="https://github.com/BioDT/IASDT.R/blob/main/inst/VP_getf.py" target="_blank" class="ll">inst/VP_getf.py</a>, and <a href="https://github.com/BioDT/IASDT.R/blob/main/inst/VP_gemu.py" target="_blank" class="ll">inst/VP_gemu.py</a>. The functionality of these scripts was taken from `Hmsc::computeVariancePartitioning()` (see the `geta`, `getf`, and `gemu` internal functions identified inside of the computeVariancePartitioning R function).
-- `variance_partitioning_compute()` exports required files to the <ff>TEMP_VP</ff> subdirectory, including numerous <i>.qs2</i> and <i>.feather</i> files, and generates execution commands saved as <ff>VP_A_Command.txt</ff>, <ff>VP_F_Command.txt</ff>, and <ff>VP_mu_Command.txt</ff>.
+- Variance partitioning computations are performed on GPUs using TensorFlow scripts located at <a href="https://github.com/BioDT/IASDT.R/blob/main/inst/VP_geta.py" target="_blank" class="ll">inst/VP_geta.py</a>, <a href="https://github.com/BioDT/IASDT.R/blob/main/inst/VP_getf.py" target="_blank" class="ll">inst/VP_getf.py</a>, and <a href="https://github.com/BioDT/IASDT.R/blob/main/inst/VP_gemu.py" target="_blank" class="ll">inst/VP_gemu.py</a>. These scripts implement functionality derived from `Hmsc::computeVariancePartitioning()`, specifically the internal functions `geta`, `getf`, and `gemu`.
+- The `variance_partitioning_compute()` function exports the necessary files to the <ff>TEMP_VP</ff> subdirectory, including numerous `.qs2` and `.feather` files. It also generates execution commands saved as <ff>VP_A_Command.txt</ff>, <ff>VP_F_Command.txt</ff>, and <ff>VP_mu_Command.txt</ff>.
 
 <br/><br/>
 
 ### Combining commands for GPU computations
 
-After executing `mod_postprocess_1_CPU()` for all habitat types, the **`mod_prepare_TF()`** function consolidates batch scripts for GPU computations across all habitat types:
+Once `mod_postprocess_1_CPU()` has been executed for all habitat types, the **`mod_prepare_TF()`** function consolidates the batch scripts for GPU computations across all habitat types:
 
-- It aggregates script files containing commands for response curves and latent factor predictions, splitting them into multiple scripts (<ff>TF_Chunk_*.txt</ff>) for batch processing, and generates a SLURM script (<ff>LF_SLURM.slurm</ff>) for latent factor predictions.
+- It aggregates the script files that contain commands for response curves and latent factor predictions, splitting them into multiple scripts (<ff>TF_Chunk_*.txt</ff>) for batch processing. Additionally, it generates a SLURM script (<ff>LF_SLURM.slurm</ff>) for executing the latent factor predictions.
 
 ```{r}
 #| results = "asis",
@@ -230,7 +236,7 @@ collapsible_script_section(
 
 <br/>
 
-- It consolidates variance partitioning command files into a single <ff>VP_Commands.txt</ff> and prepares a SLURM script (<ff>VP_SLURM.slurm</ff>) for variance partitioning computations.
+- It combines the variance partitioning command files into a single <ff>VP_Commands.txt</ff> file and prepares a SLURM script (<ff>VP_SLURM.slurm</ff>) for the variance partitioning computations.
 
 ```{r}
 #| results = "asis",
@@ -258,42 +264,53 @@ collapsible_script_section(
 
 ## Step 2: GPU
 
-Latent factor predictions and variance partitioning are computed on GPUs. Batch jobs can be submitted using the `sbatch` command:
+In this step, latent factor predictions and variance partitioning are computed on GPUs. The batch jobs for these computations can be submitted using the `sbatch` command:
 
 ```{bash}
 #| echo = TRUE
+# Submit SLURM jobs for variance partitioning and latent factor predictions
 sbatch datasets/processed/model_fitting/Mod_Q_Hab_TF/VP_SLURM.slurm
 sbatch datasets/processed/model_fitting/Mod_Q_Hab_TF/LF_SLURM.slurm
 ```
 
-Cross-validated models are fitted by submitting corresponding SLURM commands (*in preparation*):
+Additionally, cross-validated models are fitted by submitting the corresponding SLURM scripts for each cross-validation strategy:
 
 ```{bash}
 #| echo = TRUE
-source datasets/processed/model_fitting/HabX/Model_Fitting_CV/CV_Bash_Fit.slurm
+# Submit SLURM jobs for cross-validated model fitting
+#
+# cross-validation method "CV_Dist"
+sbatch datasets/processed/model_fitting/HabX/Model_Fitting_CV/CV_Bash_Fit_Dist.slurm
+# cross-validation method "CV_Large"
+sbatch datasets/processed/model_fitting/HabX/Model_Fitting_CV/CV_Bash_Fit_Large.slurm
 ```
 
 <hr class="hr1">
 
 ## Step 3: CPU
 
-The `mod_postprocess_2_CPU()` function advances the post-processing pipeline for HMSC models on the CPU, automating the following tasks:
+To continue the post-processing of the fitted models on CPUs, two functions need to be executed:
+
+
+### 1. **`mod_postprocess_1_CPU()`**
+
+This function progresses the post-processing pipeline for HMSC models on the CPU by automating the following tasks:
 
 ```{r}
 #| echo = FALSE,
 #| message = FALSE,
 #| warning = FALSE,
 #| eval = TRUE
+
 DT <- tibble::tribble(
-  ~Function, ~Description,
-  " `resp_curv_prepare_data()`,<br/>`resp_curv_plot_SR()`,<br/>`resp_curv_plot_species()`,<br/>`resp_curv_plot_species_all()`", "continue processing and visualizing response curves",
-  "`predict_maps()`", "predict habitat suitability across climate scenarios, compute model explanatory power (internal evaluation), and prepare maps for the Shiny app",
-  "`plot_prediction()`", "visualize species and species richness predictions as JPEG images",
-  "`plot_latent_factor()`", "visualize spatial variation in site loadings of HMSC models as JPEG images",
-  "`variance_partitioning_compute()`,<br/>`variance_partitioning_plot()`", "continue processing and visualize variance partitioning",
-  "`plot_evaluation()`", "visualize explanatory power (internal model evaluation)",
-  "*In preparation...*", "initiate post-processing of fitted cross-validated models and prepare GPU commands for latent factor predictions") %>% 
-  dplyr::mutate(Function = paste0("<cc>", Function, "</cc><tab0>"))
+  ~R_function, ~Description,
+  "`resp_curv_prepare_data()`,<br/>`resp_curv_plot_SR()`,<br/>`resp_curv_plot_species()`,<br/>`resp_curv_plot_species_all()`", "continues the processing and visualisation of response curves.",
+  "`predict_maps()`", "<ul><li>predicts habitat suitability across various climate scenarios.</li><li>computes the model's explanatory power (internal evaluation without cross-validation) using four metrics: AUC (area under the ROC curve), RMSE (root mean square error), continuous Boyce index, and Tjur R<sup>2</sup>.</li><li>prepares GeoTIFF maps for free access via the `IASDT` <a href='http://opendap.biodt.eu/ias-pdt/' target='_blank' class='ll'>OPeNDAP server</a> and the `IASDT` <a href='https://app.biodt.eu/app/biodtshiny' target='_blank' class='ll'>Shiny app</a>.</li></ul>",
+  "`plot_prediction()`", "visualises predictions of species and species richness as JPEG images.",
+  "`plot_latent_factor()`", "visualises the spatial variation in site loadings of HMSC models as JPEG images.",
+  "`variance_partitioning_compute()`,<br/>`variance_partitioning_plot()`", "continues the processing and visualisation of variance partitioning.",
+  "`plot_evaluation()`", "visualises the explanatory power of the model (internal evaluation).") %>% 
+  dplyr::mutate(R_function = paste0("<cc>", R_function, "</cc><tab0>"))
 
 DT %>% 
   knitr::kable(col.names = NULL, format = "html", escape = FALSE)  %>%
@@ -306,18 +323,59 @@ DT %>%
     column = 1, extra_css = "white-space: nowrap;")
 ```
 
+<br/>
+
+### 2. **`mod_postprocess_CV_1_CPU()`**
+
+This function begins the post-processing of cross-validated models on the CPU by automating the following tasks:
+
+```{r}
+#| echo = FALSE,
+#| message = FALSE,
+#| warning = FALSE,
+#| eval = TRUE
+DT <- tibble::tribble(
+  ~R_function, ~Description,
+  "`mod_merge_chains_CV()`", "merges fitted cross-validated model chains into `Hmsc` model objects and saves them to disk.",
+  "`predict_maps_CV()`", "prepares scripts for predicting latent factors for each cross-validation strategy at new sampling units (evaluation folds). The arguments `LF_only` and `LF_commands_only` are set to `TRUE` to prepare only the necessary script files.") %>% 
+  dplyr::mutate(R_function = paste0("<cc>", R_function, "</cc><tab0>"))
+
+DT %>% 
+  knitr::kable(col.names = NULL, format = "html", escape = FALSE)  %>%
+  kableExtra::kable_styling(
+    c("basic", "condensed", "hover"), 
+    font_size = 16, full_width = TRUE) %>%
+  kableExtra::add_indent(
+    positions = seq_len(nrow(DT)), level_of_indent = 1) %>% 
+  kableExtra::column_spec(
+    column = 1, extra_css = "white-space: nowrap;")
+```
+
+Once `predict_maps_CV()` has been completed, the function combines the computation commands into multiple text script files (<ff>TF_Chunk_*.txt</ff>) in each model's <ff>Model_Fitting_CV/LF_TF_commands</ff> subdirectory. These scripts need to be executed on GPUs using a single batch job submitted via a SLURM script in the same directory, <ff>LF_SLURM.slurm</ff>.
+
 <hr class="hr1">
 
 ## Step 4: GPU
 
-Predicting latent factors for cross-validated models on GPUs (*in preparation*).
+In this step, the computation of latent factors for cross-validated models is performed on GPUs using SLURM scripts.
+
+```{bash}
+#| echo = TRUE
+sbatch datasets/processed/model_fitting/HabX/Model_Fitting_CV/LF_TF_commands/LF_SLURM.slurm
+```
 
 <hr class="hr1">
 
 ## Step 5: CPU
 
-Evaluating the performance of cross-validated models (*in preparation*).
+The final step of the post-processing pipeline is carried out on CPUs using the `mod_postprocess_CV_2_CPU()` function. This function automates the following tasks:
 
+- Predicting habitat suitability at the testing cross-validation folds using the `predict_maps_CV()` function.
+- Computing the model's predictive power (using spatially independent testing data) with the same function, based on four metrics: AUC (area under the ROC curve); RMSE (root mean square error); continuous Boyce index; and Tjur R<sup>2</sup>.
+- Plotting the model's evaluation, including:
+  - Predictive power values for each evaluation metric versus the mean number of testing presences
+  - Explanatory versus predictive power for each evaluation metric
+  
 <hr class="hr1">
 
 <span style="font-size: 1.2em; line-height: 0.8;">

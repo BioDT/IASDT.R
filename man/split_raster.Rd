@@ -6,8 +6,8 @@
 \usage{
 split_raster(
   raster = NULL,
-  n_columns = 4,
-  n_rows = 4,
+  n_columns = 4L,
+  n_rows = 4L,
   save = FALSE,
   save_path = "",
   plot = FALSE,

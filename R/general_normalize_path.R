@@ -2,7 +2,7 @@
 # normalize_path ----
 ## |------------------------------------------------------------------------| #
 
-#' Normalize and quote file paths
+#' Normalise and quote file paths
 #'
 #' This function ensures that file paths are expressed in a consistent and
 #' canonical form. It first converts paths to absolute form using
@@ -47,7 +47,7 @@ normalize_path <- function(path, must_work = FALSE) {
     }
   }
 
-  # Process and return normalized path
+  # Process and return normalised path
   Out <- fs::path_abs(path) %>%
     fs::path_tidy()
 

@@ -2,11 +2,12 @@
 # eLTER_process ----
 ## |------------------------------------------------------------------------| #
 
-#' Process eLTER data for the `IAS-pDT`
+#' Process eLTER data for the `IASDT`
 #'
 #' This function processes pre-cleaned and pre-standardized Integrated European
 #' Long-Term Ecosystem, critical zone and socio-ecological Research
-#' ([eLTER](https://elter-ri.eu/)) data.
+#' ([eLTER](https://elter-ri.eu/)) data for the Invasive Alien Species Digital
+#' Twin (`IASDT`).
 #' @param env_file Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
 #' @param start_year Numeric. The starting year for the occurrence data. Only
@@ -47,7 +48,7 @@ eLTER_process <- function(env_file = ".env", start_year = 1981) {
   # Environment variables ----
 
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "TaxaList", "DP_R_Taxa_info_rdata", FALSE, TRUE,
     "Path_PA", "DP_R_PA", FALSE, FALSE,
     "eLTER_DT", "DP_R_eLTER_raw", FALSE, TRUE)
@@ -73,7 +74,7 @@ eLTER_process <- function(env_file = ".env", start_year = 1981) {
       coords = c("Lon", "Lat"), crs = sf::st_crs(4326), remove = FALSE) %>%
     sf::st_transform(crs = sf::st_crs(3035))
 
-  save(eLTER_IAS, file = IASDT.R::path(Path_PA, "eLTER_IAS.RData"))
+  save(eLTER_IAS, file = fs::path(Path_PA, "eLTER_IAS.RData"))
 
   return(invisible(NULL))
 }

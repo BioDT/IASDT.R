@@ -73,7 +73,7 @@ save_session <- function(
 
   IASDT.R::save_as(
     object = AllObjs, object_name = FF2,
-    out_path = IASDT.R::path(out_directory, paste0(FF2, ".RData")))
+    out_path = fs::path(out_directory, paste0(FF2, ".RData")))
 
   Out <- AllObjs %>%
     lapply(lobstr::obj_size) %>%

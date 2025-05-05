@@ -5,7 +5,7 @@
 #' Heatmaps for the `beta` and `omega` parameters of the Hmsc model
 #'
 #' The `mod_heatmap_beta()` and `mod_heatmap_omega()` functions generate
-#' heatmaps using `ggplot2` to visualize parameter estimates or posterior
+#' heatmaps using `ggplot2` to visualise parameter estimates or posterior
 #' support values for species' environmental responses (`beta` parameters, which
 #' describes how species (*Y*) respond to various covariates (*X*); see
 #' [Hmsc::plotBeta]) and residual associations (`omega` parameter),
@@ -17,11 +17,11 @@
 #'   threshold for negative associations) are considered significant and will be
 #'   plotted (see [Hmsc::plotBeta]).
 #' @param width,height Integer. The width and height of the generated
-#'   heatmaps in centimeters. Defaults to 26&times;22.5 for `omega`; 25&times;35
+#'   heatmaps in centimetres. Defaults to 26&times;22.5 for `omega`; 25&times;35
 #'   for `beta`.
 #' @return Both functions do not return a value but saves heatmap plots as JPEG
 #'   files in the `Model_Postprocessing/Parameters_Summary` subdirectory.
-#' @details The functions exports three types of visualizations (see
+#' @details The functions exports three types of visualisations (see
 #'   [Hmsc::plotBeta]):
 #' - `Mean`: posterior mean estimate,
 #' - `Support`: statistical support level, measured by the posterior
@@ -49,7 +49,7 @@ mod_heatmap_beta <- function(
   # ggtext - https://github.com/wilkelab/cowplot/issues/73
   cowplot::set_null_device("cairo")
 
-  .StartTime <- lubridate::now(tzone = "CET")
+  .start_time <- lubridate::now(tzone = "CET")
 
   if (is.null(path_model)) {
     IASDT.R::stop_ctx("`path_model` cannot be empty", path_model = path_model)
@@ -69,7 +69,7 @@ mod_heatmap_beta <- function(
   # Out path -----
 
   Path_Out <- dirname(dirname(path_model)) %>%
-    IASDT.R::path("Model_Postprocessing", "Parameters_Summary")
+    fs::path("Model_Postprocessing", "Parameters_Summary")
   fs::dir_create(Path_Out)
 
   # # ..................................................................... ###
@@ -205,7 +205,7 @@ mod_heatmap_beta <- function(
     rel_widths = c(0.94, 0.06))
 
   ragg::agg_jpeg(
-    filename = IASDT.R::path(Path_Out, "Parameter_Beta_Support.jpeg"),
+    filename = fs::path(Path_Out, "Parameter_Beta_Support.jpeg"),
     res = 600, width = width, height = height, units = "cm",
     quality = 100)
   print(Plot)
@@ -257,7 +257,7 @@ mod_heatmap_beta <- function(
     rel_widths = c(0.94, 0.06))
 
   ragg::agg_jpeg(
-    filename = IASDT.R::path(Path_Out, "Parameter_Beta_Sign.jpeg"), res = 600,
+    filename = fs::path(Path_Out, "Parameter_Beta_Sign.jpeg"), res = 600,
     width = width, height = height, units = "cm", quality = 100)
   print(Plot)
   grDevices::dev.off()
@@ -313,7 +313,7 @@ mod_heatmap_beta <- function(
     rel_widths = c(0.94, 0.06))
 
   ragg::agg_jpeg(
-    filename = IASDT.R::path(Path_Out, "Parameter_Beta_Mean1.jpeg"), res = 600,
+    filename = fs::path(Path_Out, "Parameter_Beta_Mean1.jpeg"), res = 600,
     width = width, height = height, units = "cm", quality = 100)
   print(Plot)
   grDevices::dev.off()
@@ -360,14 +360,14 @@ mod_heatmap_beta <- function(
     rel_widths = c(0.94, 0.06))
 
   ragg::agg_jpeg(
-    filename = IASDT.R::path(Path_Out, "Parameter_Beta_Mean2.jpeg"), res = 600,
+    filename = fs::path(Path_Out, "Parameter_Beta_Mean2.jpeg"), res = 600,
     width = width, height = height, units = "cm", quality = 100)
   print(Plot)
   grDevices::dev.off()
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_diff(init_time = .StartTime, prefix = "Plotting took ")
+  IASDT.R::cat_diff(init_time = .start_time, prefix = "Plotting took ")
 
   # # ..................................................................... ###
 
@@ -392,7 +392,7 @@ mod_heatmap_omega <- function(
   # ggtext - https://github.com/wilkelab/cowplot/issues/73
   cowplot::set_null_device("cairo")
 
-  .StartTime <- lubridate::now(tzone = "CET")
+  .start_time <- lubridate::now(tzone = "CET")
 
   if (is.null(path_model)) {
     IASDT.R::stop_ctx("`path_model` cannot be empty", path_model = path_model)
@@ -412,7 +412,7 @@ mod_heatmap_omega <- function(
   # Out path -----
 
   Path_Out <- dirname(dirname(path_model)) %>%
-    IASDT.R::path("Model_Postprocessing", "Parameters_Summary")
+    fs::path("Model_Postprocessing", "Parameters_Summary")
   fs::dir_create(Path_Out)
 
   # # ..................................................................... ###
@@ -520,7 +520,7 @@ mod_heatmap_omega <- function(
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   ragg::agg_jpeg(
-    filename = IASDT.R::path(Path_Out, "Parameter_Omega_Sign.jpeg"), res = 600,
+    filename = fs::path(Path_Out, "Parameter_Omega_Sign.jpeg"), res = 600,
     width = width, height = height, units = "cm", quality = 100)
   print(Plot)
   grDevices::dev.off()
@@ -583,14 +583,14 @@ mod_heatmap_omega <- function(
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   ragg::agg_jpeg(
-    filename = IASDT.R::path(Path_Out, "Parameter_Omega_Mean.jpeg"), res = 600,
+    filename = fs::path(Path_Out, "Parameter_Omega_Mean.jpeg"), res = 600,
     width = width, height = height, units = "cm", quality = 100)
   print(Plot)
   grDevices::dev.off()
 
   # # ..................................................................... ###
 
-  IASDT.R::cat_diff(init_time = .StartTime, prefix = "Plotting took ")
+  IASDT.R::cat_diff(init_time = .start_time, prefix = "Plotting took ")
 
   # # ..................................................................... ###
 

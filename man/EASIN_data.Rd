@@ -7,7 +7,7 @@
 \alias{EASIN_taxonomy}
 \alias{EASIN_download}
 \alias{EASIN_plot}
-\title{Process EASIN data for the \code{IAS-pDT}}
+\title{Process EASIN data for the \code{IASDT}}
 \usage{
 EASIN_process(
   extract_taxa = TRUE,
@@ -93,11 +93,11 @@ retrieved. This parameter cannot be \code{NULL}.}
 otherwise, saves to disk and returns \code{invisible(NULL)}. Default: \code{FALSE}.}
 }
 \description{
-Extracts, processes, and visualizes data from the \href{https://easin.jrc.ec.europa.eu/}{European Alien Species Information Network (EASIN)} for the
-Invasive Alien Species prototype Digital Twin (\code{IAS-pDT}). Manages taxonomy,
-occurrence data, and plots, handling API pagination and server limits.
-Orchestrated by \code{EASIN_process()} with helpers \code{EASIN_taxonomy()},
-\code{EASIN_download()}, and \code{EASIN_plot()}.
+Extracts, processes, and visualises data from the \href{https://easin.jrc.ec.europa.eu/}{European Alien Species Information Network (EASIN)} for the
+Invasive Alien Species Digital Twin (\code{IASDT}). Manages taxonomy, occurrence
+data, and plots, handling API pagination and server limits. Orchestrated by
+\code{EASIN_process()} with helpers \code{EASIN_taxonomy()}, \code{EASIN_download()}, and
+\code{EASIN_plot()}.
 }
 \note{
 Uses a static RDS file with EASIN-GBIF taxonomic standardization,

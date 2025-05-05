@@ -29,7 +29,7 @@
 #'   tidyterra::geom_spatraster(data = terra::rast(r), maxcell = Inf) +
 #'   ggplot2::theme_minimal()
 #'
-#' R2 <- raster::stack(
+#' r_2 <- raster::stack(
 #'   # NA replaced with 0
 #'   raster_to_PA(raster = r),
 #'   # NA is kept as NA
@@ -39,7 +39,7 @@
 #'
 #' ggplot2::ggplot() +
 #'   tidyterra::geom_spatraster(
-#'     data = terra::as.factor(terra::rast(R2)), maxcell = Inf) +
+#'     data = terra::as.factor(terra::rast(r_2)), maxcell = Inf) +
 #'   ggplot2::facet_wrap(~lyr) +
 #'   ggplot2::scale_fill_manual(values = c("grey30", "red"),
 #'     na.value = "transparent") +
@@ -56,10 +56,10 @@ raster_to_PA <- function(raster = NULL, NA_to_0 = TRUE, zero_to_NA = FALSE) {
   }
 
   if (inherits(raster, "RasterLayer")) {
-    MaxVal <- raster::cellStats(raster, max)
-    if (MaxVal > 0) raster[raster > 0] <- 1
-    if (NA_to_0) raster <- raster::reclassify(raster, cbind(NA, 0))
-    if (zero_to_NA) raster <- raster::reclassify(raster, cbind(0, NA))
+    max_value <- raster::cellStats(raster, max)
+    if (max_value > 0L) raster[raster > 0L] <- 1L
+    if (NA_to_0) raster <- raster::reclassify(raster, cbind(NA, 0L))
+    if (zero_to_NA) raster <- raster::reclassify(raster, cbind(0L, NA))
   } else {
 
     if (!inherits(raster, "SpatRaster")) {
@@ -70,9 +70,9 @@ raster_to_PA <- function(raster = NULL, NA_to_0 = TRUE, zero_to_NA = FALSE) {
         raster = raster, class_raster = class(raster))
     }
 
-    raster <- terra::classify(raster, cbind(0, Inf, 1))
-    if (NA_to_0) raster <- terra::classify(raster, cbind(NA, 0))
-    if (zero_to_NA) raster <- terra::classify(raster, cbind(0, NA))
+    raster <- terra::classify(raster, cbind(0L, Inf, 1L))
+    if (NA_to_0) raster <- terra::classify(raster, cbind(NA, 0L))
+    if (zero_to_NA) raster <- terra::classify(raster, cbind(0L, NA))
   }
   return(raster)
 }

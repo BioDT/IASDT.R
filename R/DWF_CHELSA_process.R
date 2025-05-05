@@ -1,10 +1,10 @@
-#' Process CHELSA Climate Data for the `IAS-pDT`
+#' Process CHELSA Climate Data for the `IASDT`
 #'
 #' Downloads, processes, and projects [CHELSA](https://chelsa-climate.org/)
-#' climate data at the European scale for the Invasive Alien Species prototype
-#' Digital Twin (`IAS-pDT`). Supports multiple climate scenarios, outputting
-#' data in TIFF and NetCDF formats. Orchestrated by `CHELSA_process()`, with
-#' helper functions `CHELSA_prepare()` and `CHELSA_project()`.
+#' climate data at the European scale for the Invasive Alien Species Digital
+#' Twin (`IASDT`). Supports multiple climate scenarios, outputting data in TIFF
+#' and NetCDF formats. Orchestrated by `CHELSA_process()`, with helper functions
+#' `CHELSA_prepare()` and `CHELSA_project()`.
 #'
 #' @param env_file Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
@@ -34,7 +34,7 @@
 #'   NetCDF outputs for 46 climate scenarios.
 #' - **`CHELSA_prepare()`**: Extracts metadata from local URL text files and
 #'   manages optional downloads.
-#' - **`CHELSA_project()`**: Projects data to the IAS-pDT reference grid with
+#' - **`CHELSA_project()`**: Projects data to the `IASDT` reference grid with
 #'   optional transformations.
 #'
 #' @note
@@ -61,7 +61,7 @@ CHELSA_process <- function(
 
   # # ..................................................................... ###
 
-  .StartTime <- lubridate::now(tzone = "CET")
+  .start_time <- lubridate::now(tzone = "CET")
 
   # # ..................................................................... ###
 
@@ -115,7 +115,7 @@ CHELSA_process <- function(
   }
 
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "Path_CHELSA_In", "DP_R_CHELSA_raw", FALSE, FALSE,
     "Path_CHELSA_Out", "DP_R_CHELSA_processed", FALSE, FALSE)
   # Assign environment variables and check file and paths
@@ -127,13 +127,13 @@ CHELSA_process <- function(
   fs::dir_create(
     c(
       Path_CHELSA_In, Path_CHELSA_Out,
-      IASDT.R::path(Path_CHELSA_Out, c("Tif", "NC", "Processed"))))
+      fs::path(Path_CHELSA_Out, c("Tif", "NC", "Processed"))))
 
   # # ..................................................................... ###
 
   # Prepare CHELSA metadata / download CHELSA data -----
 
-  IASDT.R::cat_time("Prepare CHELSA metadata / download CHELSA data")
+  IASDT.R::cat_time("Prepare CHELSA metadata or download CHELSA data")
   TimePrepare <- lubridate::now(tzone = "CET")
 
   # 19 Bioclimatic variables (+ other_variables, if not empty string) * 46 CC
@@ -144,8 +144,8 @@ CHELSA_process <- function(
     download_attempts = download_attempts, sleep = sleep)
 
   IASDT.R::cat_diff(
-    init_time = TimePrepare, level = 1,
-    prefix = "Prepare CHELSA metadata / download CHELSA data was finished in ")
+    init_time = TimePrepare, level = 1L,
+    prefix = "Prepare CHELSA metadata or download CHELSA data was finished in ")
 
   # # ..................................................................... ###
 
@@ -188,7 +188,7 @@ CHELSA_process <- function(
     if (nrow(CHELSA_Data_Checked) > 0) {
       readr::write_lines(
         x = dplyr::pull(CHELSA_Data_Checked, "InputOkay"),
-        file = IASDT.R::path(Path_CHELSA_Out, "ProblematicTiffs.txt"))
+        file = fs::path(Path_CHELSA_Out, "ProblematicTiffs.txt"))
 
       IASDT.R::stop_ctx(
         paste0(
@@ -210,7 +210,7 @@ CHELSA_process <- function(
         " >> See `NotProcessed.txt` for the list of files")
 
       readr::write_lines(
-        x = Diff, file = IASDT.R::path(Path_CHELSA_Out, "NotProcessed.txt"))
+        x = Diff, file = fs::path(Path_CHELSA_Out, "NotProcessed.txt"))
     }
 
     rm(AllOkay, Diff, envir = environment())
@@ -240,7 +240,7 @@ CHELSA_process <- function(
   if (overwrite_processed) {
 
     IASDT.R::cat_time(
-      "overwrite_processed = TRUE; all files will be processed", level = 1)
+      "overwrite_processed = TRUE; all files will be processed", level = 1L)
 
     CHELSA2Process <- dplyr::select(
       .data = CHELSA_Data, Path_Down, Path_Out_NC, Path_Out_tif)
@@ -249,7 +249,7 @@ CHELSA_process <- function(
 
     # Exclude previously processed files (after checking)
     IASDT.R::cat_time(
-      "Exclude previously processed files (after checking)", level = 1)
+      "Exclude previously processed files (after checking)", level = 1L)
 
     CHELSA2Process <- CHELSA_Data %>%
       dplyr::select(Path_Down, Path_Out_NC, Path_Out_tif) %>%
@@ -268,7 +268,7 @@ CHELSA_process <- function(
   }
 
   # Processing CHELSA files
-  IASDT.R::cat_time("Processing CHELSA files", level = 1)
+  IASDT.R::cat_time("Processing CHELSA files", level = 1L)
 
   if (nrow(CHELSA2Process) > 0) {
     CHELSA2Process <- CHELSA2Process %>%
@@ -329,7 +329,7 @@ CHELSA_process <- function(
     if (nrow(CHELSA2Process) > 0) {
       readr::write_lines(
         x = CHELSA2Process$Path_Down,
-        file = IASDT.R::path(Path_CHELSA_Out, "FailedProcessing.txt"))
+        file = fs::path(Path_CHELSA_Out, "FailedProcessing.txt"))
 
       IASDT.R::stop_ctx(
         paste0(
@@ -338,11 +338,11 @@ CHELSA_process <- function(
         CHELSA2Process = CHELSA2Process)
     }
 
-    IASDT.R::cat_time("All tiff files were processed", level = 1)
+    IASDT.R::cat_time("All tiff files were processed", level = 1L)
 
   } else {
 
-    IASDT.R::cat_time("All tiff files were already processed.", level = 1)
+    IASDT.R::cat_time("All tiff files were already processed.", level = 1L)
 
   }
 
@@ -355,22 +355,22 @@ CHELSA_process <- function(
 
   IASDT.R::cat_diff(
     init_time = TimeProcess,
-    prefix = "Processing CHELSA data was finished in ", level = 1)
+    prefix = "Processing CHELSA data was finished in ", level = 1L)
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  # Group CHELSA data by time, climate model/scenario ----
+  # Grouping CHELSA data by time, climate model/scenario ----
 
   if (n_cores == 1) {
     IASDT.R::cat_time(
-      "Group CHELSA data by time and climate model/scenario sequentially")
+      "Grouping CHELSA data by time and climate model+scenario sequentially")
     future::plan("future::sequential", gc = TRUE)
   } else {
     withr::local_options(
       future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
       future.seed = TRUE)
     IASDT.R::cat_time(
-      "Group CHELSA data by time and climate model/scenario in parallel")
+      "Grouping CHELSA data by time and climate model+scenario in parallel")
     c1 <- snow::makeSOCKcluster(n_cores)
     on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
     future::plan("future::cluster", workers = c1, gc = TRUE)
@@ -403,7 +403,7 @@ CHELSA_process <- function(
         Name, "1981-2010_Current_Current", "Current"),
       Name = stringr::str_replace_all(Name, "-", "_"),
 
-      FilePath = IASDT.R::path(
+      FilePath = fs::path(
         Path_CHELSA_Out, "Processed", paste0(Name, ".RData")),
 
       Processed_Maps = furrr::future_pmap(
@@ -441,7 +441,7 @@ CHELSA_process <- function(
 
   save(
     CHELSA_Processed,
-    file = IASDT.R::path(Path_CHELSA_Out, "CHELSA_Processed.RData"))
+    file = fs::path(Path_CHELSA_Out, "CHELSA_Processed.RData"))
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -449,16 +449,16 @@ CHELSA_process <- function(
 
   save(
     CHELSA_Processed_DT,
-    file = IASDT.R::path(Path_CHELSA_Out, "CHELSA_Processed_DT.RData"))
+    file = fs::path(Path_CHELSA_Out, "CHELSA_Processed_DT.RData"))
 
   readr::write_csv(
     x = CHELSA_Processed_DT,
-    file = IASDT.R::path(Path_CHELSA_Out, "CHELSA_Processed_DT.csv"))
+    file = fs::path(Path_CHELSA_Out, "CHELSA_Processed_DT.csv"))
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   IASDT.R::cat_diff(
-    init_time = .StartTime, prefix = "\nProcessing CHELSA data took ")
+    init_time = .start_time, prefix = "\nProcessing CHELSA data took ")
 
   return(invisible(NULL))
 }

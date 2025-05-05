@@ -62,7 +62,7 @@ install_hmsc_windows <- function(
   PythonVersion <- system2(
     path_python, "--version", stdout = TRUE, stderr = TRUE)
 
-  if (!stringr::str_detect(PythonVersion, "^Python")) {
+  if (!startsWith(PythonVersion, "Python")) {
     IASDT.R::stop_ctx(
       "Python was not installed or not found at the provided path",
       path_python = path_python)
@@ -82,10 +82,10 @@ install_hmsc_windows <- function(
   # Checking Python version in the virtual environment
 
   IASDT.R::info_chunk("Checking virtual environment")
-  python <- IASDT.R::path(path_VE, "Scripts", "python.exe")
+  python <- fs::path(path_VE, "Scripts", "python.exe")
   PythonVersion <- system2(python, "--version", stdout = TRUE, stderr = TRUE)
 
-  if (!stringr::str_detect(PythonVersion, "^Python")) {
+  if (!startsWith(PythonVersion, "Python")) {
     IASDT.R::stop_ctx(
       "Python was not installed in the virtual environment",
       PythonVersion = PythonVersion)

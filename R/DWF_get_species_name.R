@@ -2,10 +2,10 @@
 # get_species_name ----
 ## |------------------------------------------------------------------------| #
 
-#' Get species name or information of an `IAS-pDT` species ID
+#' Get species name or information of an `IASDT` species ID
 #'
-#' This function retrieves detailed information on `IAS-pDT` species list,
-#' optionally filtered by a specific IAS-pDT species ID (`species_ID`).
+#' This function retrieves detailed information on `IASDT` species list,
+#' optionally filtered by a specific `IASDT` species ID (`species_ID`).
 #'
 #' @param env_file Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
@@ -27,7 +27,7 @@ get_species_name <- function(species_ID = NULL, env_file = ".env") {
   # Load environment variables
 
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "TaxaInfoFile", "DP_R_Taxa_info", FALSE, TRUE,
     "Path_PA", "DP_R_PA", TRUE, FALSE)
   # Assign environment variables and check file and paths
@@ -53,7 +53,7 @@ get_species_name <- function(species_ID = NULL, env_file = ".env") {
         "Sp_", stringr::str_pad(species_ID, pad = "0", width = 4))
     }
 
-    NGridCells <- IASDT.R::path(Path_PA, "Sp_PA_Summary_DF.RData")
+    NGridCells <- fs::path(Path_PA, "Sp_PA_Summary_DF.RData")
 
     if (!file.exists(NGridCells)) {
       IASDT.R::stop_ctx(

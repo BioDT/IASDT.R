@@ -221,7 +221,7 @@ def compute_distances_chunked(
     s1 = tf.convert_to_tensor(s1, dtype=dtype)
     s2 = tf.convert_to_tensor(s2, dtype=dtype)
     
-    # Initialize an empty list to store results
+    # Initialise an empty list to store results
     dist_list = []
 
     # Iterate over chunks of s1

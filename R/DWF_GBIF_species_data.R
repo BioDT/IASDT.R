@@ -42,7 +42,7 @@ GBIF_species_data <- function(
   }
 
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
     "Path_GBIF", "DP_R_GBIF_processed", FALSE, FALSE,
     "EU_Bound", "DP_R_EUBound", FALSE, TRUE)
@@ -59,7 +59,7 @@ GBIF_species_data <- function(
   # # ..................................................................... ###
 
   # # Grid_10_Land_Crop_sf
-  GridSf <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
+  GridSf <- fs::path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
   if (!file.exists(GridSf)) {
     IASDT.R::stop_ctx(
       "Reference grid file (sf) not found", GridSf = GridSf)
@@ -67,7 +67,7 @@ GBIF_species_data <- function(
   GridSf <- IASDT.R::load_as(GridSf)
 
   # Grid_10_Land_Crop
-  GridR <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop.RData")
+  GridR <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(GridR)) {
     IASDT.R::stop_ctx(
       "Reference grid file not found", GridR = GridR)
@@ -80,21 +80,21 @@ GBIF_species_data <- function(
 
   # # ..................................................................... ###
 
-  Path_SpData <- IASDT.R::path(Path_GBIF, "Sp_Data")
-  path_JPEG <- IASDT.R::path(Path_GBIF, "Sp_JPEG_Maps")
-  Path_Grids <- IASDT.R::path(Path_GBIF, "Sp_Grids")
-  Path_Raster <- IASDT.R::path(Path_GBIF, "Sp_Raster")
+  Path_SpData <- fs::path(Path_GBIF, "Sp_Data")
+  path_JPEG <- fs::path(Path_GBIF, "Sp_JPEG_Maps")
+  Path_Grids <- fs::path(Path_GBIF, "Sp_Grids")
+  Path_Raster <- fs::path(Path_GBIF, "Sp_Raster")
   fs::dir_create(c(Path_SpData, path_JPEG, Path_Grids, Path_Raster))
 
   if (verbose) {
-    IASDT.R::cat_time(species, level = 1)
+    IASDT.R::cat_time(species, level = 1L)
   }
 
   SpName <- IASDT.R::replace_space(species) %>%
     # replace non-ascii multiplication symbol with x
     stringr::str_replace_all("\u00D7", "x") %>%
     stringr::str_replace_all("-", "")
-  SpPath <- IASDT.R::path(Path_SpData, paste0(SpName, ".RData"))
+  SpPath <- fs::path(Path_SpData, paste0(SpName, ".RData"))
 
   if (file.exists(SpPath)) {
 
@@ -115,7 +115,7 @@ GBIF_species_data <- function(
       # convert to sf object
       sf::st_as_sf()
 
-    FilePath_grid <- IASDT.R::path(Path_Grids, paste0(Obj_Name_grid, ".RData"))
+    FilePath_grid <- fs::path(Path_Grids, paste0(Obj_Name_grid, ".RData"))
 
     IASDT.R::save_as(
       object = SpGrid, object_name = Obj_Name_grid, out_path = FilePath_grid)
@@ -131,7 +131,7 @@ GBIF_species_data <- function(
       stats::setNames(SpName) %>%
       IASDT.R::set_raster_CRS()
 
-    FilePath_R <- IASDT.R::path(Path_Raster, paste0(Obj_Name_Raster, ".RData"))
+    FilePath_R <- fs::path(Path_Raster, paste0(Obj_Name_Raster, ".RData"))
     IASDT.R::save_as(
       object = terra::wrap(Sp_R), object_name = Obj_Name_Raster,
       out_path = FilePath_R
@@ -169,7 +169,7 @@ GBIF_species_data <- function(
         plot.tag = ggplot2::element_text(colour = "grey", size = 9, hjust = 1),
         panel.ontop = TRUE, panel.background = ggplot2::element_rect(fill = NA))
 
-    FilePath_Plot <- IASDT.R::path(path_JPEG, paste0(SpName, ".jpeg"))
+    FilePath_Plot <- fs::path(path_JPEG, paste0(SpName, ".jpeg"))
 
     NDataGrids <- stringr::str_glue(
       "{scales::label_comma()(nrow(SpData))} ",

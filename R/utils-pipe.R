@@ -23,13 +23,13 @@ NULL
 .onAttach <- function(...) {
 
   # Retrieve the package version and date dynamically
-  packageVersionInfo <- utils::packageVersion("IASDT.R")
-  packageDateInfo <- utils::packageDescription("IASDT.R")$Date
+  package_version_Info <- utils::packageVersion("IASDT.R")
+  package_date_info <- utils::packageDescription("IASDT.R")$Date
 
   # Display the startup message
   packageStartupMessage(
-    "IASDT.R v", packageVersionInfo,
-    " - Last updated on ", packageDateInfo)
+    "IASDT.R v", package_version_Info,
+    " - Last updated on ", package_date_info)
 }
 
 

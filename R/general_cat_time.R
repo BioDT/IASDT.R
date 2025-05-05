@@ -20,7 +20,7 @@
 #' @param time_zone character; the time zone to use for the timestamp. Default
 #'   is `CET`.
 #' @param level integer; the level at which the message will be printed. If e.g.
-#'   level = 1, the following string will be printed at the beginning of the
+#'   `level = 1L`, the following string will be printed at the beginning of the
 #'   message: "   >>>   ". Default is `0`.
 #' @param cat_bold logical; whether to print the text in bold. Default is
 #'   `FALSE`.

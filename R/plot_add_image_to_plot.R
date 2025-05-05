@@ -18,7 +18,7 @@
 #'   an array-like structure (e.g., as read by [png::readPNG] or
 #'   [jpeg::readJPEG]).
 #' @param x,y Numeric, the x-coordinate or y-coordinate (in plot units) at which
-#'   the center of the image should be placed.
+#'   the centre of the image should be placed.
 #' @param width Numeric, the desired width of the image in plot units (not
 #'   pixels or inches). The function will calculate the corresponding height to
 #'   preserve the image's aspect ratio.
@@ -54,28 +54,29 @@ add_image_to_plot <- function(image_object, x, y, width, interpolate = TRUE) {
 
   # A vector of the form c(x1, x2, y1, y2) giving the extremes of the user
   # coordinates of the plotting region
-  USR <- graphics::par()$usr
+  par_user <- graphics::par()$usr
 
-  # The current plot dimensions, (width, height), in inches
-  PIN <- graphics::par()$pin
+  # The current plot dimensions (width, height), in inches
+  plot_dimensions <- graphics::par()$pin
 
   # number of x-y pixels for the image_object
-  DIM <- dim(image_object)
+  image_dimension <- dim(image_object)
 
   # pixel aspect ratio (y/x)
-  ARp <- DIM[1] / DIM[2]
+  aspect_ratio <- image_dimension[1L] / image_dimension[2L]
 
   # convert width units to inches
-  WIDi <- width / (USR[2] - USR[1]) * PIN[1]
+  width_inches <- width / (par_user[2L] - par_user[1L]) * plot_dimensions[1L]
 
   # height in inches
-  HEIi <- WIDi * ARp
+  height_in_inches <- width_inches * aspect_ratio
 
   # height in units
-  HEIu <- HEIi / PIN[2] * (USR[4] - USR[3])
+  height_in_units <- height_in_inches / plot_dimensions[2L] *
+    (par_user[4L] - par_user[3L])
 
   graphics::rasterImage(
-    image = image_object, xleft = x - (width / 2), xright = x + (width / 2),
-    ybottom = y - (HEIu / 2), ytop = y + (HEIu / 2),
+    image = image_object, xleft = x - (width / 2L), xright = x + (width / 2L),
+    ybottom = y - (height_in_units / 2L), ytop = y + (height_in_units / 2L),
     interpolate = interpolate)
 }

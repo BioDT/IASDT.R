@@ -57,7 +57,7 @@ efforts_request <- function(
   # Environment variables ----
 
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "Path_Efforts", "DP_R_Efforts_processed", FALSE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::assign_env_vars(
@@ -72,7 +72,7 @@ efforts_request <- function(
   # is finished.
   IASDT.R::cat_time(
     paste0("Prepare working in parallel using ", min(n_cores, 3), " cores"),
-    level = 1)
+    level = 1L)
 
   if (n_cores == 1) {
     future::plan("future::sequential", gc = TRUE)
@@ -92,7 +92,7 @@ efforts_request <- function(
 
   IASDT.R::cat_time(
     "Requesting efforts data in parallel (This may take up to 4 hours)",
-    level = 1)
+    level = 1L)
 
   # Extract taxonomic info for vascular plants orders
   SelectedCols <- c(
@@ -109,7 +109,7 @@ efforts_request <- function(
         .x = orderKey,
         .f = ~ {
           Request_ID <- paste0("Request_", .x)
-          Request_Path <- IASDT.R::path(
+          Request_Path <- fs::path(
             Path_Efforts, "Requests", paste0(Request_ID, ".RData"))
 
           if (file.exists(Request_Path)) {
@@ -186,21 +186,21 @@ efforts_request <- function(
     # how to cite data
     dplyr::mutate(Citation = purrr::map_chr(Request, attr, "citation"))
 
-  IASDT.R::cat_time("Requesting efforts data was finished", level = 2)
+  IASDT.R::cat_time("Requesting efforts data was finished", level = 2L)
 
   # # ..................................................................... ###
 
   # Save efforts request data ------
-  IASDT.R::cat_time("Save efforts request data", level = 1)
+  IASDT.R::cat_time("Save efforts request data", level = 1L)
 
   save(
     Efforts_AllRequests,
-    file = IASDT.R::path(Path_Efforts, "Efforts_AllRequests.RData"))
+    file = fs::path(Path_Efforts, "Efforts_AllRequests.RData"))
 
   # # ..................................................................... ###
 
   # Stopping cluster ------
-  IASDT.R::cat_time("Stopping cluster", level = 1)
+  IASDT.R::cat_time("Stopping cluster", level = 1L)
   if (n_cores > 1) {
     snow::stopCluster(c1)
     future::plan("future::sequential", gc = TRUE)
@@ -210,7 +210,7 @@ efforts_request <- function(
 
   IASDT.R::cat_diff(
     init_time = .StartTimeRequest,
-    prefix = "Requesting efforts data took ", level = 1)
+    prefix = "Requesting efforts data took ", level = 1L)
 
   # # ..................................................................... ###
 

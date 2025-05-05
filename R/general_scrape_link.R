@@ -9,23 +9,23 @@
 #' @param URL Character. The URL of the web page to scrape. This URL is also
 #'   used to resolve relative links to absolute URLs.
 #' @param sort_by Character vector of length 1 or 2. The columns to arrange the
-#'   output by. The default is c("Link", "Link_text"). The first column is the
+#'   output by. The default is c("link", "link_text"). The first column is the
 #'   URL of the link, and the second column is the text of the link. The
 #'   function will arrange the output in ascending order by the column(s)
 #'   specified in this argument.
 #' @name scrape_link
-#' @return A tibble with two columns: `Link_text` containing the text of each
+#' @return A tibble with two columns: `link_text` containing the text of each
 #'   link, and `URL` containing  the absolute URL of each link. The tibble is
 #'   sorted by URL and then by link text, and only unique links are included.
 #' @importFrom rlang .data
 #' @examples
 #'
 #' head(
-#' scrape_link(URL = "https://github.com/BioDT/IASDT.R"))
+#' scrape_link(URL = "https://github.com/tidyverse/dplyr"))
 #'
 #' head(
 #'   scrape_link(
-#'     URL = "https://github.com/BioDT/IASDT.R", sort_by = "Link_text"))
+#'     URL = "https://github.com/tidyverse/dplyr", sort_by = "link_text"))
 #'
 #' # This will give an "Invalid URL" error
 #' \dontrun{
@@ -33,9 +33,9 @@
 #' }
 #' @export
 
-scrape_link <- function(URL, sort_by = c("Link", "Link_text")) {
+scrape_link <- function(URL, sort_by = c("link", "link_text")) {
 
-  Link <- Link_text <- NULL
+  link <- link_text <- NULL
 
   # Ensure that sort_by is a character vector of length 1 or 2
   if (!is.character(sort_by) || length(sort_by) > 2 ||
@@ -45,10 +45,10 @@ scrape_link <- function(URL, sort_by = c("Link", "Link_text")) {
       sort_by = sort_by)
   }
 
-  # Ensure that all values of sort_by are in c("Link", "Link_text")
-  if (!all(sort_by %in% c("Link", "Link_text"))) {
+  # Ensure that all values of sort_by are in c("link", "link_text")
+  if (!all(sort_by %in% c("link", "link_text"))) {
     IASDT.R::stop_ctx(
-      "`sort_by` must contain only 'Link' and 'Link_text'", sort_by = sort_by)
+      "`sort_by` must contain only 'link' and 'link_text'", sort_by = sort_by)
   }
 
   if (is.null(URL)) {
@@ -64,31 +64,31 @@ scrape_link <- function(URL, sort_by = c("Link", "Link_text")) {
     rvest::html_nodes("a")
 
   # Extract the URLs
-  Out <- purrr::map(
+  output <- purrr::map(
     .x = webpage,
     .f = ~ tibble::tibble(
-      Link = stringr::str_trim(rvest::html_attr(.x, "href")),
-      Link_text = stringr::str_trim(rvest::html_text(.x)))) %>%
+      link = stringr::str_trim(rvest::html_attr(.x, "href")),
+      link_text = stringr::str_trim(rvest::html_text(.x)))) %>%
     dplyr::bind_rows() %>%
     # Remove empty or anchor links
     dplyr::filter(
-      !is.na(Link) & !stringr::str_starts(Link, "#"),
-      Link != "..", nzchar(Link_text)) %>%
+      !is.na(link) & !stringr::str_starts(link, "#"),
+      link != "..", nzchar(link_text)) %>%
     dplyr::mutate(
-      Link = dplyr::if_else(
-        stringr::str_starts(Link, "http"), Link,
-        IASDT.R::path(
-          stringr::str_remove(URL, "/$"), stringr::str_remove(Link, "^/")
+      link = dplyr::if_else(
+        stringr::str_starts(link, "http"), link,
+        fs::path(
+          stringr::str_remove(URL, "/$"), stringr::str_remove(link, "^/")
         )),
 
-      Link_text = {
-        stringr::str_remove_all(Link_text, "\n") %>%
+      link_text = {
+        stringr::str_remove_all(link_text, "\n") %>%
           stringr::str_replace_all("\\s+", " ") %>%
           stringr::str_trim()
       }) %>%
     dplyr::distinct() %>%
-    dplyr::select(Link_text, Link) %>%
+    dplyr::select(link_text, link) %>%
     dplyr::arrange(dplyr::across(tidyselect::all_of(sort_by)))
 
-  return(Out)
+  return(output)
 }

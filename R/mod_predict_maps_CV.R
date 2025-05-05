@@ -2,27 +2,11 @@
 # predict_maps_CV ----
 ## |------------------------------------------------------------------------| #
 
-#' Predict and evaluate cross-validated `Hmsc` models
-#'
-#' This function computes predicted values of cross-validated `Hmsc` models in
-#' the testing cross-validation folders and evaluates the model performance
-#' using different metrics. In contrast to [predict_maps], this function
-#' predicts only under current climate conditions and does not use clamping.
-#'
-#' @param model_dir Character. Path to the root directory where the
-#'   cross-validated models were fitted.
-#' @param CV_name Character. Name of the cross-validation strategy used. Valid
-#'   values are `CV_Dist`, `CV_Large`, or `CV_SAC`.
-#' @param CV_fold Integer. The cross-validation fold number.
 #' @export
-#' @name predict_maps_CV
+#' @name predict_maps
+#' @rdname predict_maps
+#' @order 2
 #' @author Ahmed El-Gabbas
-#' @inheritParams predict_hmsc
-#' @inheritParams predict_maps
-#' @return A tibble containing the prediction summary and file paths for output
-#'   `*.tif` files.
-#' @seealso [predict_maps]
-#' @export
 
 predict_maps_CV <- function(
     model_dir = NULL, CV_name = NULL, CV_fold = NULL, n_cores = 8L,
@@ -33,7 +17,7 @@ predict_maps_CV <- function(
   # # ..................................................................... ###
   # # ..................................................................... ###
 
-  .StartTime <- lubridate::now(tzone = "CET")
+  .start_time <- lubridate::now(tzone = "CET")
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
@@ -88,14 +72,14 @@ predict_maps_CV <- function(
   IASDT.R::cat_time("Environment variables")
 
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
-  Path_GridR <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop.RData")
+  Path_GridR <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(Path_GridR)) {
     IASDT.R::stop_ctx(
       "Path for the Europe boundaries does not exist", Path_GridR = Path_GridR)
@@ -109,7 +93,7 @@ predict_maps_CV <- function(
   IASDT.R::cat_time("Reading input data + managing File and directory paths")
 
   # Loading CV data
-  CV_DT <- IASDT.R::path(model_dir, "Model_Fitting_CV", "CV_DT_fitted.RData")
+  CV_DT <- fs::path(model_dir, "Model_Fitting_CV", "CV_DT_fitted.RData")
   if (!IASDT.R::check_data(CV_DT, warning = FALSE)) {
     IASDT.R::stop_ctx("CV data does not exist", CV_DT = CV_DT)
 
@@ -122,7 +106,7 @@ predict_maps_CV <- function(
     stringr::str_remove("/$") %>%
     stringr::str_remove("Hab|hab")
   # full habitat name
-  Hab_Name <- c(
+  hab_name <- c(
     "0_All", "1_Forests", "2_Open_forests", "3_Scrub",
     "4a_Natural_grasslands", "4b_Human_maintained_grasslands",
     "10_Wetland", "12a_Ruderal_habitats", "12b_Agricultural_habitats") %>%
@@ -133,23 +117,22 @@ predict_maps_CV <- function(
   model_name <- paste0(hab_abb, "_", CV_DT$ModName)
 
   # path for model evaluation
-  Path_Eval <- IASDT.R::path(model_dir, "Model_Fitting_CV", "Evaluation")
+  Path_Eval <- fs::path(model_dir, "Model_Fitting_CV", "Evaluation")
 
   # path for model predictions
-  Path_Prediction <- IASDT.R::path(
+  Path_Prediction <- fs::path(
     model_dir, "Model_Fitting_CV", "Model_Prediction", model_name)
 
-  temp_dir <- IASDT.R::path(
+  temp_dir <- fs::path(
     model_dir, "Model_Fitting_CV", "Temp", paste0("Temp_", model_name))
   fs::dir_create(c(Path_Eval, Path_Prediction, temp_dir))
 
-  Path_Preds_sf <- IASDT.R::path(
+  Path_Preds_sf <- fs::path(
     Path_Prediction, paste0("Prediction_", model_name, ".qs2"))
-  Path_Eval_File <- IASDT.R::path(
-    Path_Eval, paste0("Eval_", model_name, ".qs2"))
-  Path_Preds_R <- IASDT.R::path(
+  Path_Eval_File <- fs::path(Path_Eval, paste0("Eval_", model_name, ".qs2"))
+  Path_Preds_R <- fs::path(
     Path_Prediction, paste0("Prediction_", model_name, "_R.qs2"))
-  Path_Preds_summary <- IASDT.R::path(
+  Path_Preds_summary <- fs::path(
     Path_Prediction, paste0("Prediction_", model_name, "_Summary.RData"))
 
   # CV fitted cross-validated model
@@ -219,7 +202,7 @@ predict_maps_CV <- function(
 
   # Predict latent factor at new locations ------
 
-  Path_Test_LF <- IASDT.R::path(
+  Path_Test_LF <- fs::path(
     Path_Prediction, paste0("LF_Test_", model_name, ".qs2"))
 
   if (file.exists(Path_Test_LF)) {
@@ -242,10 +225,10 @@ predict_maps_CV <- function(
 
     rm(Preds_LF, envir = environment())
 
-    IASDT.R::cat_time("Predicting latent factor is finished!", level = 1)
+    IASDT.R::cat_time("Predicting latent factor is finished!", level = 1L)
     IASDT.R::cat_sep(
-      sep_lines_before = 1, sep_lines_after = 2,
-      n_separators = 1, line_char = "*")
+      sep_lines_before = 1L, sep_lines_after = 2L, n_separators = 1L,
+      line_char = "*")
 
     if (LF_commands_only) {
       return(invisible(NULL))
@@ -275,7 +258,6 @@ predict_maps_CV <- function(
     IASDT.R::info_chunk(
       "Predict habitat suitability at testing cross-validation folds",
       line_char_rep = 75)
-    .OptionStartTime <- lubridate::now(tzone = "CET")
 
     Prediction_sf <- IASDT.R::predict_hmsc(
       path_model = path_model, gradient = Gradient, expected = TRUE,
@@ -287,7 +269,7 @@ predict_maps_CV <- function(
       verbose = TRUE, pred_directory = Path_Prediction, evaluate = TRUE,
       evaluation_directory = Path_Eval, pred_XY = Test_XY, pred_PA = Test_PA)
 
-    # --------------------------------------------------------------------------
+    #  --------------------------------------------------------------------- #
 
     if (!file.exists(Path_Preds_sf)) {
       IASDT.R::stop_ctx(
@@ -344,29 +326,29 @@ predict_maps_CV <- function(
     Prediction_R <- terra::rasterize(
       Prediction_sf, Grid10, field = Fields2Raster)
 
-    # --------------------------------------------------------------------------
+    #  --------------------------------------------------------------------- #
 
     IASDT.R::cat_time("Save prediction outputs")
 
     # Save as tif
-    IASDT.R::cat_time("Save predictions as tif files", level = 1)
+    IASDT.R::cat_time("Save predictions as tif files", level = 1L)
 
     selected_columns <- c(
-      "hab_abb", "Hab_Name", "CV_name", "CV_fold", "ias_id", "taxon_name",
+      "hab_abb", "hab_name", "CV_name", "CV_fold", "ias_id", "taxon_name",
       "species_name", "class", "order", "family", "tif_path_mean",
       "tif_path_sd", "tif_path_cov", "n_grids_pres", "n_grids_abs")
 
     Out_Summary <- tibble::tibble(
-      layer_name = Fields2Raster, hab_abb = hab_abb, Hab_Name = Hab_Name,
+      layer_name = Fields2Raster, hab_abb = hab_abb, hab_name = hab_name,
       CV_name = CV_name, CV_fold = CV_fold) %>%
       dplyr::mutate(
         Stats = dplyr::case_when(
-          stringr::str_detect(layer_name, "_mean$") ~ "tif_path_mean",
-          stringr::str_detect(layer_name, "_sd$") ~ "tif_path_sd",
-          stringr::str_detect(layer_name, "_cov$") ~ "tif_path_cov",
+          endsWith(layer_name, "_mean") ~ "tif_path_mean",
+          endsWith(layer_name, "_sd") ~ "tif_path_sd",
+          endsWith(layer_name, "_cov") ~ "tif_path_cov",
           .default = NULL),
         ias_id = stringr::str_remove(layer_name, "_mean$|_sd$|_cov$"),
-        tif_path = IASDT.R::path(
+        tif_path = fs::path(
           Path_Prediction, paste0(layer_name, "_", model_name, ".tif")),
         Out_Map = purrr::map2(
           .x = layer_name, .y = tif_path,
@@ -377,7 +359,7 @@ predict_maps_CV <- function(
           }),
         Out_Map = NULL) %>%
       tidyr::pivot_wider(
-        id_cols = c("hab_abb", "Hab_Name", "CV_name", "CV_fold", "ias_id"),
+        id_cols = c("hab_abb", "hab_name", "CV_name", "CV_fold", "ias_id"),
         names_from = "Stats", values_from = "tif_path") %>%
       dplyr::left_join(SpeciesInfo, by = "ias_id") %>%
       dplyr::left_join(n_grid_summary, by = "ias_id") %>%
@@ -385,21 +367,21 @@ predict_maps_CV <- function(
       dplyr::left_join(Eval_data, by = "ias_id") %>%
       dplyr::slice(gtools::mixedorder(ias_id))
 
-    IASDT.R::cat_time("Save summary data", level = 1)
+    IASDT.R::cat_time("Save summary data", level = 1L)
     # save as spatRaster - qs2
-    IASDT.R::cat_time("Save as spatRaster - qs2", level = 1)
+    IASDT.R::cat_time("Save as spatRaster - qs2", level = 1L)
     Prediction_R <- terra::wrap(Prediction_R)
     IASDT.R::save_as(object = Prediction_R, out_path = Path_Preds_R)
 
     # Save summary - RData
-    IASDT.R::cat_time("Save summary - RData", level = 1)
+    IASDT.R::cat_time("Save summary - RData", level = 1L)
     IASDT.R::save_as(
       object = Out_Summary,
       object_name = paste0("Prediction_", model_name, "_Summary"),
       out_path = Path_Preds_summary)
 
     # Save summary - csv
-    IASDT.R::cat_time("Save summary - csv", level = 1)
+    IASDT.R::cat_time("Save summary - csv", level = 1L)
     utils::write.table(
       x = Out_Summary,
       file = stringr::str_replace(Path_Preds_summary, ".RData$", ".txt"),
@@ -411,7 +393,7 @@ predict_maps_CV <- function(
   # # ..................................................................... ###
 
   IASDT.R::cat_diff(
-    init_time = .StartTime, prefix = "\nThe whole prediction function took ")
+    init_time = .start_time, prefix = "\nThe whole prediction function took ")
 
   return(Path_Preds_summary)
 }

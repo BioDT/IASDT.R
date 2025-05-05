@@ -27,7 +27,7 @@
 #' @export
 #' @examples
 #' \dontrun{
-#'   TMP_Folder <- IASDT.R::path(tempdir(), stringi::stri_rand_strings(1, 5))
+#'   TMP_Folder <- fs::path(tempdir(), stringi::stri_rand_strings(1, 5))
 #'   fs::dir_create(TMP_Folder)
 #'
 #'   # ----------------------------------------------
@@ -39,9 +39,9 @@
 #'
 #'   list.files(path = TMP_Folder, pattern = "^.+.RData")
 #'
-#'   (x1Contents <- IASDT.R::load_as(IASDT.R::path(TMP_Folder, "x1.RData")))
+#'   (x1Contents <- IASDT.R::load_as(fs::path(TMP_Folder, "x1.RData")))
 #'
-#'   (x2Contents <- IASDT.R::load_as(IASDT.R::path(TMP_Folder, "x2.RData")))
+#'   (x2Contents <- IASDT.R::load_as(fs::path(TMP_Folder, "x2.RData")))
 #'
 #'   # ----------------------------------------------
 #'   # Use prefix
@@ -65,11 +65,11 @@
 #'   save_multiple(variables = c("x1", "x2", "x3"),
 #'      out_directory = TMP_Folder, overwrite = TRUE)
 #'
-#'   (x1Contents <- IASDT.R::load_as(IASDT.R::path(TMP_Folder, "x1.RData")))
+#'   (x1Contents <- IASDT.R::load_as(fs::path(TMP_Folder, "x1.RData")))
 #'
-#'   (x2Contents <- IASDT.R::load_as(IASDT.R::path(TMP_Folder, "x2.RData")))
+#'   (x2Contents <- IASDT.R::load_as(fs::path(TMP_Folder, "x2.RData")))
 #'
-#'   (x3Contents <- IASDT.R::load_as(IASDT.R::path(TMP_Folder, "x3.RData")))
+#'   (x3Contents <- IASDT.R::load_as(fs::path(TMP_Folder, "x3.RData")))
 #' }
 
 save_multiple <- function(
@@ -102,7 +102,7 @@ save_multiple <- function(
 
   # Check if files already exist
   FilesExist <- purrr::map_lgl(
-    .x = IASDT.R::path(out_directory, paste0(prefix, variables, ".RData")),
+    .x = fs::path(out_directory, paste0(prefix, variables, ".RData")),
     .f = file.exists) %>%
     any()
 
@@ -117,12 +117,12 @@ save_multiple <- function(
       .f = ~{
         IASDT.R::save_as(
           object = get(.x, envir = env), object_name = .x,
-          out_path = IASDT.R::path(out_directory, paste0(prefix, .x, ".RData")))
+          out_path = fs::path(out_directory, paste0(prefix, .x, ".RData")))
       })
 
-    AllExist <- all(
-      file.exists(
-        IASDT.R::path(out_directory, paste0(prefix, variables, ".RData"))))
+    AllExist <- fs::path(out_directory, paste0(prefix, variables, ".RData")) %>%
+      file.exists() %>%
+      all()
 
     if (AllExist) {
       if (verbose) {

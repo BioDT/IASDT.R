@@ -2,7 +2,7 @@
 % Please edit documentation in R/DWF_elTER_process.R
 \name{eLTER_process}
 \alias{eLTER_process}
-\title{Process eLTER data for the \code{IAS-pDT}}
+\title{Process eLTER data for the \code{IASDT}}
 \usage{
 eLTER_process(env_file = ".env", start_year = 1981)
 }
@@ -20,7 +20,8 @@ Returns \code{NULL} invisibly after saving the processed data.
 \description{
 This function processes pre-cleaned and pre-standardized Integrated European
 Long-Term Ecosystem, critical zone and socio-ecological Research
-(\href{https://elter-ri.eu/}{eLTER}) data.
+(\href{https://elter-ri.eu/}{eLTER}) data for the Invasive Alien Species Digital
+Twin (\code{IASDT}).
 }
 \note{
 This function processes pre-cleaned vascular plants data from eLTER

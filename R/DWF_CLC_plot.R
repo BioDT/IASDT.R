@@ -69,7 +69,7 @@ CLC_plot <- function(
   FilePrefix <- stringr::str_remove_all(CLC_name, "PercCov_|_Crop") %>%
     stringr::str_replace_all("CLC_L", "CLC")
 
-  IASDT.R::cat_time(Prefix, level = 1)
+  IASDT.R::cat_time(Prefix, level = 1L)
 
   # determine which layers will be plotted in each figure (4 columns * 2 rows)
   split_vector <- seq_len(terra::nlyr(CLC_MapR)) %>%
@@ -88,7 +88,7 @@ CLC_plot <- function(
   out_path <- paste0(
     "Summary_PercCover_", FilePrefix, "_",
     seq_len(length(split_vector)), ".jpeg") %>%
-    IASDT.R::path(path_JPEG, .)
+    fs::path(path_JPEG, .)
 
   # nolint end
 
@@ -100,7 +100,7 @@ CLC_plot <- function(
         .f = function(YY) {
           CurrMap <- CLC_MapR[[YY]]
 
-          IASDT.R::cat_time(paste0(Labels$Label[[YY]]), level = 2)
+          IASDT.R::cat_time(paste0(Labels$Label[[YY]]), level = 2L)
           MapTitle <- Labels$Label[[YY]] %>%
             # split long title text into multiple lines when necessary
             stringi::stri_wrap(55) %>%
@@ -153,7 +153,7 @@ CLC_plot <- function(
             "PercCover_", FilePrefix, "_", LevelTxt, "_",
             Labels$Label[YY], ".jpeg") %>%
             stringr::str_replace_all("/", "_") %>%
-            IASDT.R::path(path_JPEG, .)
+            fs::path(path_JPEG, .)
 
           Theme2 <- ggplot2::theme_minimal() +
             ggplot2::theme(
@@ -225,7 +225,7 @@ CLC_plot <- function(
           TilePathFree <- paste0(
             "PercCover_", FilePrefix, "_", Labels$Label[YY], ".jpeg") %>%
             stringr::str_replace_all("/", "_") %>%
-            IASDT.R::path(path_JPEG_free, .)
+            fs::path(path_JPEG_free, .)
 
           Plot <- ggplot2::ggplot() +
             ggplot2::geom_sf(
@@ -260,7 +260,7 @@ CLC_plot <- function(
     }
   )
 
-  IASDT.R::cat_time(paste0(Prefix, " - Multiple panels per file "), level = 1)
+  IASDT.R::cat_time(paste0(Prefix, " - Multiple panels per file "), level = 1L)
 
   # nolint start
   CommonLegend <- cowplot::get_legend(

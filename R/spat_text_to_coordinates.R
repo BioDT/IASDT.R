@@ -42,9 +42,9 @@ text_to_coordinates <- function(
   text %>%
     # convert string to 2-columns data frame
     stringr::str_remove_all("POINT \\(|POINT\\(|\\)") %>%
-    stringr::str_split_fixed(" ", 2) %>%
+    stringr::str_split_fixed(" ", 2L) %>%
     as.numeric() %>%
-    matrix(ncol = 2, byrow = FALSE) %>%
+    matrix(ncol = 2L, byrow = FALSE) %>%
     as.data.frame() %>%
     stats::setNames(c(name_x, name_y)) %>%
     tibble::as_tibble()

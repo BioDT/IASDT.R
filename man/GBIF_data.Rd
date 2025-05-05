@@ -8,7 +8,7 @@
 \alias{GBIF_download}
 \alias{GBIF_read_chunk}
 \alias{GBIF_species_data}
-\title{Process GBIF occurrence data for the \code{IAS-pDT}}
+\title{Process GBIF occurrence data for the \code{IASDT}}
 \usage{
 GBIF_process(
   env_file = ".env",
@@ -94,7 +94,7 @@ is 1981.}
 
 \item{chunk_file}{Character. Path of chunk file for processing.}
 
-\item{max_uncertainty}{Numeric. Maximum spatial uncertainty in kilometers.
+\item{max_uncertainty}{Numeric. Maximum spatial uncertainty in kilometres.
 Default: \code{10}.}
 
 \item{save_RData}{Logical. If \code{TRUE} (default), saves chunk data as \code{.RData}.}
@@ -109,8 +109,8 @@ Default: \code{10}.}
 \item{plot_tag}{Character. Tag for plot titles.}
 }
 \description{
-Extracts, processes, and visualizes occurrence data from the \href{https://www.gbif.org}{Global Biodiversity Information Facility (GBIF)} for the
-Invasive Alien Species prototype Digital Twin (\code{IAS-pDT}). Orchestrated by
+Extracts, processes, and visualises occurrence data from the \href{https://www.gbif.org}{Global Biodiversity Information Facility (GBIF)} for the
+Invasive Alien Species Digital Twin (\code{IASDT}). Orchestrated by
 \code{GBIF_process()}, it requests, downloads, cleans, chunks, and maps species
 data using helper functions.
 }

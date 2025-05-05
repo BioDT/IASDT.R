@@ -55,7 +55,7 @@ efforts_split <- function(
 
   # Environment variables ----
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "Path_Interim", "DP_R_Efforts_interim", FALSE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::assign_env_vars(
@@ -65,7 +65,7 @@ efforts_split <- function(
   # # ..................................................................... ###
 
   OutPrefix <- stringr::str_replace(basename(path_zip), ".zip$", "_") %>%
-    IASDT.R::path(Path_Interim, .)
+    fs::path(Path_Interim, .)
 
   # nolint start
   CSV_File <- stringr::str_replace(basename(path_zip), ".zip$", ".csv")
@@ -97,7 +97,7 @@ efforts_split <- function(
     --additional-suffix=.txt')
 
   Path_Chunks <- tryCatch(
-    IASDT.R::system_command(Command, R_object = FALSE),
+    IASDT.R::system_command(Command, r_object = FALSE),
     error = function(e) {
       IASDT.R::stop_ctx(
         paste0("Failed to execute system command: ", e$message))

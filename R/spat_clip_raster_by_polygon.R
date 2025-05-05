@@ -50,9 +50,9 @@ clip_raster_by_polygon <- function(raster = NULL, shape = NULL) {
   }
 
   a1_crop <- raster::crop(raster, shape)
-  step1 <- raster::rasterize(shape, a1_crop, field = 1)
-  ClippedRaster <- a1_crop * step1
-  names(ClippedRaster) <- names(raster)
+  step1 <- raster::rasterize(shape, a1_crop, field = 1L)
+  clipped_raster <- a1_crop * step1
+  names(clipped_raster) <- names(raster)
 
-  return(ClippedRaster)
+  return(clipped_raster)
 }

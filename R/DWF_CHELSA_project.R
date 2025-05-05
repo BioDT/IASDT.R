@@ -9,7 +9,7 @@
 #' @order 3
 
 CHELSA_project <- function(
-    metadata = NULL, env_file = ".env", compression_level = 5) {
+    metadata = NULL, env_file = ".env", compression_level = 5L) {
 
   # Checking input arguments -----
 
@@ -64,7 +64,7 @@ CHELSA_project <- function(
 
   # Environment variables -----
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::assign_env_vars(
@@ -75,7 +75,7 @@ CHELSA_project <- function(
 
   # Loading reference grid -----
 
-  GridR <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop.RData")
+  GridR <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(GridR)) {
     IASDT.R::stop_ctx(
       "Path for the Europe boundaries does not exist", GridR = GridR)

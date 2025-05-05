@@ -47,7 +47,7 @@ EASIN_download <- function(
   # Environment variables ----
 
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "EASIN_URL", "DP_R_EASIN_data_url", FALSE, FALSE,
     "Path_EASIN", "DP_R_EASIN_interim", FALSE, FALSE)
   # Assign environment variables and check file and paths
@@ -61,10 +61,10 @@ EASIN_download <- function(
   withr::local_options(list(scipen = 999, timeout = timeout))
 
   # Output file for the merged datasets
-  Path_Out <- IASDT.R::path(Path_EASIN, paste0(species_key, ".RData"))
+  Path_Out <- fs::path(Path_EASIN, paste0(species_key, ".RData"))
 
   # Ensure that the directory for temporary files exist
-  fs::dir_create(IASDT.R::path(Path_EASIN, "FileParts"))
+  fs::dir_create(fs::path(Path_EASIN, "FileParts"))
 
   # Check if species data already available
   OutFileExist <- IASDT.R::check_data(Path_Out, warning = FALSE)
@@ -88,7 +88,7 @@ EASIN_download <- function(
       Obj_Out <- paste0(
         species_key, "_", stringr::str_pad(Chunk, width = 5, pad = "0"))
 
-      Path_Part <- IASDT.R::path(
+      Path_Part <- fs::path(
         Path_EASIN, "FileParts", paste0(Obj_Out, ".RData"))
 
       if (IASDT.R::check_data(Path_Part, warning = FALSE)) {
@@ -97,10 +97,9 @@ EASIN_download <- function(
 
       # nolint start
       Skip <- (Chunk - 1) * n_search
-      # nolint end
-
       URL <- stringr::str_glue(
         "{EASIN_URL}/{species_key}/exclude/dps/1/{Skip}/{n_search}")
+      # nolint end
 
       DownTry <- 0
       while (DownTry <= n_attempts) {
@@ -126,7 +125,7 @@ EASIN_download <- function(
         if (inherits(ChunkDT, "data.frame")) {
           if (verbose) {
             IASDT.R::cat_time(
-              paste0("Chunk ", Chunk, " - attempt ", DownTry), level = 1)
+              paste0("Chunk ", Chunk, " - attempt ", DownTry), level = 1L)
           }
           break
         }
@@ -153,7 +152,7 @@ EASIN_download <- function(
     }
 
     ChunkList <- list.files(
-      IASDT.R::path(Path_EASIN, "FileParts"),
+      fs::path(Path_EASIN, "FileParts"),
       paste0("^", species_key, ".+"), full.names = TRUE)
 
     IASDT.R::save_as(

@@ -2,7 +2,7 @@
 % Please edit documentation in R/DWF_get_species_name.R
 \name{get_species_name}
 \alias{get_species_name}
-\title{Get species name or information of an \code{IAS-pDT} species ID}
+\title{Get species name or information of an \code{IASDT} species ID}
 \usage{
 get_species_name(species_ID = NULL, env_file = ".env")
 }
@@ -19,8 +19,8 @@ A data frame containing species information. If a species ID
 listed species, otherwise return the full list of IAS.
 }
 \description{
-This function retrieves detailed information on \code{IAS-pDT} species list,
-optionally filtered by a specific IAS-pDT species ID (\code{species_ID}).
+This function retrieves detailed information on \code{IASDT} species list,
+optionally filtered by a specific \code{IASDT} species ID (\code{species_ID}).
 }
 \author{
 Ahmed El-Gabbas

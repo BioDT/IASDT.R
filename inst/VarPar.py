@@ -180,7 +180,7 @@ def VarPar_Sequential(hM_X, hM_Tr, postList, use_single=False):
 # ==============================================================================
 
 def warmup():
-    """A lightweight function to initialize necessary modules."""
+    """A lightweight function to initialise necessary modules."""
     # Use os to list the current directory
     _ = os.listdir('.')
     
@@ -190,7 +190,7 @@ def warmup():
     # Perform a lightweight numpy operation
     _ = np.array([1, 2, 3]).mean()
     
-    # Initialize logging
+    # Initialise logging
     logger = logging.getLogger("warmup_logger")
     logger.setLevel(logging.INFO)
     logger.info("Warm-up complete for logging")

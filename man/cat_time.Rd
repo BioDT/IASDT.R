@@ -39,7 +39,7 @@ printed. If \code{TRUE}, the date is printed in the format "\%d/\%m/\%Y \%X".}
 is \code{CET}.}
 
 \item{level}{integer; the level at which the message will be printed. If e.g.
-level = 1, the following string will be printed at the beginning of the
+\code{level = 1L}, the following string will be printed at the beginning of the
 message: "   >>>   ". Default is \code{0}.}
 
 \item{...}{additional arguments passed to \code{cat}.}

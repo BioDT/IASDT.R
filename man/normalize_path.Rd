@@ -2,7 +2,7 @@
 % Please edit documentation in R/general_normalize_path.R
 \name{normalize_path}
 \alias{normalize_path}
-\title{Normalize and quote file paths}
+\title{Normalise and quote file paths}
 \usage{
 normalize_path(path, must_work = FALSE)
 }

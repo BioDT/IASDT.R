@@ -92,7 +92,7 @@ mod_CV_prepare <- function(
   # # |||||||||||||||||||||||||||||||||||
 
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
     "EU_Bound", "DP_R_EUBound", FALSE, TRUE)
   # Assign environment variables and check file and paths
@@ -100,7 +100,7 @@ mod_CV_prepare <- function(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
-  Path_Grid <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop.RData")
+  Path_Grid <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(Path_Grid)) {
     IASDT.R::stop_ctx(
       "Path for reference grid does not exist", Path_Grid = Path_Grid)
@@ -136,7 +136,7 @@ mod_CV_prepare <- function(
   # # 1. CV using large blocks -----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("1. CV_Large", level = 1, cat_timestamp = FALSE)
+  IASDT.R::cat_time("1. CV_Large", level = 1L, cat_timestamp = FALSE)
   CV_Large <- blockCV::cv_spatial(
     x = XY_sf, r = DT_R, hexagon = FALSE, iteration = 1000, k = CV_n_folds,
     rows_cols = c(CV_n_rows, CV_n_columns),
@@ -146,7 +146,7 @@ mod_CV_prepare <- function(
   # # 2. CV based on number of grid cells -----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("2. CV_Dist", level = 1, cat_timestamp = FALSE)
+  IASDT.R::cat_time("2. CV_Dist", level = 1L, cat_timestamp = FALSE)
   CV_Dist <- blockCV::cv_spatial(
     x = XY_sf, r = DT_R, hexagon = FALSE, iteration = 1000, k = CV_n_folds,
     size = CV_n_grids * raster::res(DT_R)[1], plot = FALSE, progress = FALSE,
@@ -158,10 +158,10 @@ mod_CV_prepare <- function(
 
   if (CV_SAC) {
 
-    IASDT.R::cat_time("3. CV_SAC", level = 1)
+    IASDT.R::cat_time("3. CV_SAC", level = 1L)
 
     # Measure spatial autocorrelation in predictor raster files
-    IASDT.R::cat_time("Calculating median SAC range", level = 2)
+    IASDT.R::cat_time("Calculating median SAC range", level = 2L)
     CV_SAC_Range <- blockCV::cv_spatial_autocor(
       r = DT_R, num_sample = min(10000, nrow(input_data)), plot = FALSE,
       progress = FALSE)
@@ -183,7 +183,7 @@ mod_CV_prepare <- function(
       IASDT.R::cat_time(
         paste0(
           "`CV_SAC` was NOT implemented; median SAC: ",
-          round(CV_SAC_Range$range / 1000, 2), "km"), level = 2)
+          round(CV_SAC_Range$range / 1000, 2), "km"), level = 2L)
       CV_SAC <- NULL
 
       # Check `folds_ids` exists in each of the cross-validation strategies
@@ -220,13 +220,13 @@ mod_CV_prepare <- function(
   # # Save cross-validation results as RData -----
   # # |||||||||||||||||||||||||||||||||||
 
-  IASDT.R::cat_time("Save cross-validation results as RData", level = 1)
+  IASDT.R::cat_time("Save cross-validation results as RData", level = 1L)
   CV_data <- list(
     CV_n_grids = CV_n_grids, CV_n_rows = CV_n_rows, CV_n_columns = CV_n_columns,
     CV_SAC_Range = CV_SAC_Range, CV_SAC = CV_SAC, CV_Dist = CV_Dist,
     CV_Large = CV_Large)
 
-  save(CV_data, file = IASDT.R::path(out_path, "CV_data.RData"))
+  save(CV_data, file = fs::path(out_path, "CV_data.RData"))
 
   # # |||||||||||||||||||||||||||||||||||
   # # Plot cross-validation folds -----
@@ -234,7 +234,7 @@ mod_CV_prepare <- function(
 
   if (CV_plot) {
 
-    IASDT.R::cat_time("Plot cross-validation folds", level = 1)
+    IASDT.R::cat_time("Plot cross-validation folds", level = 1L)
 
     DT_R <- sf::st_as_sf(input_data, coords = c("x", "y"), crs = 3035) %>%
       terra::rasterize(RefGrid) %>%
@@ -294,7 +294,7 @@ mod_CV_prepare <- function(
       })
 
     grDevices::cairo_pdf(
-      filename = IASDT.R::path(out_path, "CV_Blocks.pdf"),
+      filename = fs::path(out_path, "CV_Blocks.pdf"),
       width = 12.5, height = 13, onefile = TRUE)
     invisible(purrr::map(CV_Plots, print))
     grDevices::dev.off()

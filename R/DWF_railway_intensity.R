@@ -4,7 +4,7 @@
 
 #' Calculate railway intensity based on `OpenStreetMap` data
 #'
-#' This function downloads, processes, and analyzes railway data extracted from
+#' This function downloads, processes, and analyses railway data extracted from
 #' [OpenRailwayMap](https://www.openrailwaymap.org) available from
 #' [OpenStreetMap Data Extracts](https://download.geofabrik.de/). It supports
 #' parallel processing for faster execution and can calculate the total length
@@ -25,7 +25,7 @@
 railway_intensity <- function(
     env_file = ".env", n_cores = 6L, delete_processed = TRUE) {
 
-  .StartTime <- lubridate::now(tzone = "CET")
+  .start_time <- lubridate::now(tzone = "CET")
 
   # # ..................................................................... ###
 
@@ -67,7 +67,7 @@ railway_intensity <- function(
   IASDT.R::cat_time("Environment variables")
 
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "Path_Railways", "DP_R_Railways_processed", FALSE, FALSE,
     "Path_Railways_Raw", "DP_R_Railways_raw", FALSE, FALSE,
     "Path_Railways_Interim", "DP_R_Railways_interim", FALSE, FALSE,
@@ -83,7 +83,7 @@ railway_intensity <- function(
     c(Path_Railways, Path_Railways_Raw, Path_Railways_Interim)
   )
 
-  RefGrid <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop.RData")
+  RefGrid <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(RefGrid)) {
     IASDT.R::stop_ctx(
       "The reference grid file does not exist", RefGrid = RefGrid)
@@ -91,7 +91,7 @@ railway_intensity <- function(
   RefGrid <- terra::unwrap(IASDT.R::load_as(RefGrid))
 
 
-  RefGridSF <- IASDT.R::path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
+  RefGridSF <- fs::path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
   if (!file.exists(RefGridSF)) {
     IASDT.R::stop_ctx(
       "The reference grid file does not exist", RefGridSF = RefGridSF)
@@ -110,7 +110,7 @@ railway_intensity <- function(
       Railways_URL = Railways_URL)
   }
 
-  IASDT.R::cat_time(paste0("Base URL is: ", Railways_URL), level = 1)
+  IASDT.R::cat_time(paste0("Base URL is: ", Railways_URL), level = 1L)
 
   # We download European data at country level. For most countries, the data are
   # available in single file, while for others the data are divided into
@@ -213,7 +213,7 @@ railway_intensity <- function(
         .f = ~ {
           stringr::str_remove_all(.x, "^.+/|-latest-free.shp") %>%
             paste0(.y, "_", .) %>%
-            IASDT.R::path(Path_Railways_Raw, .)
+            fs::path(Path_Railways_Raw, .)
         }
       ),
       ModDate = purrr::map(
@@ -233,14 +233,12 @@ railway_intensity <- function(
 
   IASDT.R::cat_time(
     paste0("There are ", nrow(Railways_Links), " files to be downloaded"),
-    level = 1)
+    level = 1L)
 
-  save(
-    Railways_Links,
-    file = IASDT.R::path(Path_Railways, "Railways_Links.RData"))
+  save(Railways_Links, file = fs::path(Path_Railways, "Railways_Links.RData"))
 
   IASDT.R::cat_diff(
-    init_time = .StartTimeDown, msg_n_lines = 1, level = 1,
+    init_time = .StartTimeDown, msg_n_lines = 1, level = 1L,
     prefix = "Preparing railways download links took ")
 
   # # ..................................................................... ###
@@ -252,7 +250,7 @@ railway_intensity <- function(
   ## Prepare working in parallel ----
   IASDT.R::cat_time(
     paste0("Prepare working in parallel using ", n_cores, " cores"),
-    level = 1)
+    level = 1L)
 
   if (n_cores == 1) {
     future::plan("future::sequential", gc = TRUE)
@@ -267,7 +265,7 @@ railway_intensity <- function(
   }
 
   ## Processing railway data ----
-  IASDT.R::cat_time("Processing railway data", level = 1)
+  IASDT.R::cat_time("Processing railway data", level = 1L)
 
   Railways_3035 <- future.apply::future_lapply(
     X = seq_len(nrow(Railways_Links)),
@@ -276,8 +274,7 @@ railway_intensity <- function(
       Path <- Railways_Links$Path[[ID]]
       Country <- Railways_Links$Country[[ID]]
       Prefix <- stringr::str_remove_all(basename(Path), ".zip$")
-      Path_Temp <- IASDT.R::path(
-        Path_Railways_Interim, paste0(Prefix, ".RData"))
+      Path_Temp <- fs::path(Path_Railways_Interim, paste0(Prefix, ".RData"))
 
       withr::local_options(
         future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
@@ -329,11 +326,11 @@ railway_intensity <- function(
 
       utils::unzip(
         zipfile = Path, files = InFileN,
-        exdir = IASDT.R::path(Path_Railways_Interim, Prefix))
+        exdir = fs::path(Path_Railways_Interim, Prefix))
 
       Path_Extract <- dplyr::tibble(
-        OldName = IASDT.R::path(Path_Railways_Interim, Prefix, InFileN),
-        NewName = IASDT.R::path(
+        OldName = fs::path(Path_Railways_Interim, Prefix, InFileN),
+        NewName = fs::path(
           Path_Railways_Interim,
           paste0(Prefix, ".", tools::file_ext(InFileN)))) %>%
         dplyr::mutate(Ren = purrr::map2(OldName, NewName, file.rename))
@@ -351,7 +348,7 @@ railway_intensity <- function(
       save(Railway, file = Path_Temp)
 
       # Clean up
-      fs::dir_delete(IASDT.R::path(Path_Railways_Interim, Prefix))
+      fs::dir_delete(fs::path(Path_Railways_Interim, Prefix))
       fs::file_delete(Path_Extract$NewName)
       if (delete_processed) {
         fs::file_delete(Path)
@@ -384,10 +381,8 @@ railway_intensity <- function(
   # # .................................... ###
 
   ## Saving - RData -----
-  IASDT.R::cat_time("Saving - RData", level = 1)
-  save(
-    Railways_3035,
-    file = IASDT.R::path(Path_Railways, "Railways_3035.RData"))
+  IASDT.R::cat_time("Saving - RData", level = 1L)
+  save(Railways_3035, file = fs::path(Path_Railways, "Railways_3035.RData"))
 
   # # .................................... ###
 
@@ -399,23 +394,23 @@ railway_intensity <- function(
 
   save(
     Railways_3035_2plot,
-    file = IASDT.R::path(Path_Railways, "Railways_3035_2plot.RData"))
+    file = fs::path(Path_Railways, "Railways_3035_2plot.RData"))
 
   # # .................................... ###
 
   ## Saving each railway class to separate file ----
-  IASDT.R::cat_time("Saving each railway class to separate file", level = 1)
+  IASDT.R::cat_time("Saving each railway class to separate file", level = 1L)
 
   sf::st_drop_geometry(Railways_3035) %>%
     dplyr::distinct(fclass) %>%
     dplyr::pull(fclass) %>%
     purrr::walk(
       .f = ~ {
-        IASDT.R::cat_time(.x, level = 2)
+        IASDT.R::cat_time(.x, level = 2L)
         dplyr::filter(Railways_3035, fclass == .x) %>%
           IASDT.R::save_as(
             object_name = paste0("Railways_sf_", .x),
-            out_path = IASDT.R::path(
+            out_path = fs::path(
               Path_Railways, paste0("Railways_sf_", .x, ".RData")))
       }
     )
@@ -425,7 +420,7 @@ railway_intensity <- function(
 
   IASDT.R::cat_diff(
     init_time = .StartTimeProcess,
-    prefix = "Processing railway data took ", msg_n_lines = 1, level = 1)
+    prefix = "Processing railway data took ", msg_n_lines = 1, level = 1L)
 
   # # ..................................................................... ###
 
@@ -439,7 +434,7 @@ railway_intensity <- function(
       .f = ~ {
         Name <- stringr::str_remove_all(basename(.x), "Railways_sf_|.RData")
 
-        IASDT.R::cat_time(Name, level = 2)
+        IASDT.R::cat_time(Name, level = 2L)
         IASDT.R::load_as(.x) %>%
           terra::vect() %>%
           terra::rasterizeGeom(y = RefGrid, fun = "length", unit = "km") %>%
@@ -454,16 +449,16 @@ railway_intensity <- function(
   Railways_Length$Sum <- sum(Railways_Length)
 
   ## Saving - RData -----
-  IASDT.R::cat_time("Saving - RData", level = 1)
+  IASDT.R::cat_time("Saving - RData", level = 1L)
   IASDT.R::save_as(
     object = terra::wrap(Railways_Length), object_name = "Railways_Length",
-    out_path = IASDT.R::path(Path_Railways, "Railways_Length.RData"))
+    out_path = fs::path(Path_Railways, "Railways_Length.RData"))
 
   ## Saving - tif ------
-  IASDT.R::cat_time("Saving - tif", level = 1)
+  IASDT.R::cat_time("Saving - tif", level = 1L)
   terra::writeRaster(
     x = Railways_Length, overwrite = TRUE,
-    filename = IASDT.R::path(
+    filename = fs::path(
       Path_Railways,
       paste0("Railways_Length_", names(Railways_Length), ".tif")))
 
@@ -480,7 +475,7 @@ railway_intensity <- function(
   Railways_Distance <- purrr::map(
     .x = as.list(Railways_Length),
     .f = ~ {
-      IASDT.R::cat_time(names(.x), level = 2)
+      IASDT.R::cat_time(names(.x), level = 2L)
 
       # suppress progress bar
       terra::terraOptions(progress = 0)
@@ -496,16 +491,16 @@ railway_intensity <- function(
   ) %>%
     terra::rast()
 
-  IASDT.R::cat_time("Save distance to railways - tif", level = 1)
+  IASDT.R::cat_time("Save distance to railways - tif", level = 1L)
   terra::writeRaster(
     x = Railways_Distance, overwrite = TRUE,
-    filename = IASDT.R::path(
+    filename = fs::path(
       Path_Railways, paste0(names(Railways_Distance), ".tif")))
 
-  IASDT.R::cat_time("Save distance to railways - RData", level = 1)
+  IASDT.R::cat_time("Save distance to railways - RData", level = 1L)
   IASDT.R::save_as(
     object = terra::wrap(Railways_Distance), object_name = "Railways_Distance",
-    out_path = IASDT.R::path(Path_Railways, "Railways_Distance.RData"))
+    out_path = fs::path(Path_Railways, "Railways_Distance.RData"))
 
   rm(RefGrid, envir = environment())
 
@@ -550,7 +545,7 @@ railway_intensity <- function(
   # # .................................. ###
 
   ## Plotting length of railways -----
-  IASDT.R::cat_time("Plotting length of railways", level = 1)
+  IASDT.R::cat_time("Plotting length of railways", level = 1L)
 
   Rail2Plot <- terra::subset(Railways_Length, "rail") %>%
     terra::classify(cbind(0, NA))
@@ -577,7 +572,7 @@ railway_intensity <- function(
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
   ragg::agg_jpeg(
-    filename = IASDT.R::path(Path_Railways, "Railways_Length.jpeg"),
+    filename = fs::path(Path_Railways, "Railways_Length.jpeg"),
     width = 31, height = 30, res = 600, quality = 100, units = "cm")
   print(RailPlot)
   grDevices::dev.off()
@@ -587,7 +582,7 @@ railway_intensity <- function(
   # # .................................. ###
 
   ## Plotting railways -----
-  IASDT.R::cat_time("Plotting European railways", level = 1)
+  IASDT.R::cat_time("Plotting European railways", level = 1L)
 
   RailPlotShp <- ggplot2::ggplot() +
     ggplot2::geom_sf(
@@ -608,7 +603,7 @@ railway_intensity <- function(
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
   ragg::agg_jpeg(
-    filename = IASDT.R::path(Path_Railways, "Railways_Lines.jpeg"),
+    filename = fs::path(Path_Railways, "Railways_Lines.jpeg"),
     width = 31, height = 30, res = 600, quality = 100, units = "cm")
   print(RailPlotShp)
   grDevices::dev.off()
@@ -620,7 +615,7 @@ railway_intensity <- function(
   # Function Summary ----
 
   IASDT.R::cat_diff(
-    init_time = .StartTime,
+    init_time = .start_time,
     prefix = "\nProcessing railway data was finished in ", ... = "\n")
 
   return(invisible(NULL))

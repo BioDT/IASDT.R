@@ -19,7 +19,7 @@ efforts_plot <- function(env_file = ".env") {
   # # ..................................................................... ###
 
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "Path_Efforts", "DP_R_Efforts_processed", FALSE, FALSE,
     "EU_Bound", "DP_R_EUBound", FALSE, TRUE)
   # Assign environment variables and check file and paths
@@ -29,7 +29,7 @@ efforts_plot <- function(env_file = ".env") {
 
   # # ..................................................................... ###
 
-  File_SummaryR <- IASDT.R::path(Path_Efforts, "Efforts_SummaryR.RData")
+  File_SummaryR <- fs::path(Path_Efforts, "Efforts_SummaryR.RData")
   if (!file.exists(File_SummaryR)) {
     IASDT.R::stop_ctx(
       "Summary maps cannot be loaded: ", File_SummaryR = File_SummaryR)
@@ -170,7 +170,7 @@ efforts_plot <- function(env_file = ".env") {
       # Using ggplot2::ggsave directly does not show non-ascii characters
       # correctly
       ragg::agg_jpeg(
-        filename = IASDT.R::path(Path_Efforts, PlotDF$FileName[[.x]]),
+        filename = fs::path(Path_Efforts, PlotDF$FileName[[.x]]),
         width = 31, height = 16.25, res = 600, quality = 100, units = "cm")
       print(CurrPlot)
       grDevices::dev.off()

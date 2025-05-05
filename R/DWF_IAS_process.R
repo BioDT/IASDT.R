@@ -1,9 +1,9 @@
-#' Process and map Invasive Alien Species (IAS) data for the `IAS-pDT`
+#' Process and map Invasive Alien Species (IAS) data for the `IASDT`
 #'
-#' Processes and visualizes Invasive Alien Species (IAS) distribution data from
-#' GBIF, EASIN, and eLTER for the Invasive Alien Species prototype Digital Twin
-#' (`IAS-pDT`). Merges pre-processed data, creates presence-absence rasters,
-#' summarizes distributions, and generates maps using helper functions.
+#' Processes and visualises Invasive Alien Species (IAS) distribution data from
+#' GBIF, EASIN, and eLTER for the Invasive Alien Species Digital Twin (`IASDT`).
+#' Merges pre-processed data, creates presence-absence rasters, summarises
+#' distributions, and generates maps using helper functions.
 #' @param env_file Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
@@ -41,7 +41,7 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
 
   # # ..................................................................... ###
 
-  .StartTime <- lubridate::now(tzone = "CET")
+  .start_time <- lubridate::now(tzone = "CET")
 
   # Checking arguments ----
   IASDT.R::cat_time("Checking arguments")
@@ -74,7 +74,7 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
   IASDT.R::cat_time("Environment variables")
 
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "Path_GBIF", "DP_R_GBIF_processed", TRUE, FALSE,
     "Path_EASIN", "DP_R_EASIN_processed", TRUE, FALSE,
     "Path_eLTER", "DP_R_eLTER_processed", FALSE, TRUE,
@@ -90,11 +90,11 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
 
   # # ..................................................................... ###
 
-  # Reading input data and check/create directories ------
+  # Reading input data and create directories ------
 
-  IASDT.R::cat_time("Reading input data and check/create directories")
+  IASDT.R::cat_time("Reading input data and create directories")
 
-  Path_PA_JPEG <- IASDT.R::path(Path_PA, "JPEG_Maps")
+  Path_PA_JPEG <- fs::path(Path_PA, "JPEG_Maps")
   fs::dir_create(Path_PA_JPEG)
 
   # last update info
@@ -102,7 +102,7 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
     'Last update: {format(Sys.Date(), "%d %B %Y")}')
 
   ## Standardized taxonomy -----
-  IASDT.R::cat_time("Standardized taxonomy", level = 1)
+  IASDT.R::cat_time("Standardized taxonomy", level = 1L)
   # list of original taxonomy (including dummy ID column `taxon_id_`)
   TaxaList_Original <- readRDS(Path_TaxaStand) %>%
     dplyr::select(tidyselect::all_of(c("taxon_id_", "taxon_name")))
@@ -110,14 +110,14 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
   # # .................................... ###
 
   ## TaxaInfo ----
-  IASDT.R::cat_time("TaxaInfo", level = 1)
+  IASDT.R::cat_time("TaxaInfo", level = 1L)
   TaxaList <- IASDT.R::load_as(Path_TaxaInfo_RData)
   TaxaList_Distinct <- dplyr::distinct(TaxaList, taxon_name, IAS_ID)
 
   # # .................................... ###
 
   ## Species habitat affinity -----
-  IASDT.R::cat_time("Species habitat affinity", level = 1)
+  IASDT.R::cat_time("Species habitat affinity", level = 1L)
   SynHab_List <- tibble::tribble(
     ~SynHab_code, ~SynHab_name,
     "1", "Forests",
@@ -163,13 +163,13 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
   .StartTimeDist <- lubridate::now(tzone = "CET")
 
   ## Prepare working in parallel -----
-  IASDT.R::set_parallel(n_cores = n_cores, level = 1)
+  IASDT.R::set_parallel(n_cores = n_cores, level = 1L)
   withr::defer(future::plan("future::sequential", gc = TRUE))
 
   # # .................................... ###
 
   ## Species-specific data in parallel ----
-  IASDT.R::cat_time("Species-specific data in parallel", level = 1)
+  IASDT.R::cat_time("Species-specific data in parallel", level = 1L)
 
   Sp_PA_Data <- future.apply::future_lapply(
     X = sort(unique(TaxaList$Species_name)),
@@ -190,12 +190,12 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
   # # .................................... ###
 
   ## Stopping cluster ----
-  IASDT.R::set_parallel(stop_cluster = TRUE, level = 2)
+  IASDT.R::set_parallel(stop_cluster = TRUE, level = 2L)
 
   IASDT.R::cat_diff(
     init_time = .StartTimeDist,
     prefix = "Processing Species-specific data took ",
-    msg_n_lines = 1, level = 2)
+    msg_n_lines = 1, level = 2L)
 
   # # ..................................................................... ###
 
@@ -241,26 +241,26 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
   rm(TaxaList, envir = environment())
 
   ## Save summary results -----
-  IASDT.R::cat_time("Save summary results", level = 1)
+  IASDT.R::cat_time("Save summary results", level = 1L)
 
-  IASDT.R::cat_time("`RData`", level = 2)
-  save(Sp_PA_Data, file = IASDT.R::path(Path_PA, "Sp_PA_Data.RData"))
+  IASDT.R::cat_time("`RData`", level = 2L)
+  save(Sp_PA_Data, file = fs::path(Path_PA, "Sp_PA_Data.RData"))
 
-  IASDT.R::cat_time("Summary data without maps", level = 1)
-  IASDT.R::cat_time("csv format", level = 2)
+  IASDT.R::cat_time("Summary data without maps", level = 1L)
+  IASDT.R::cat_time("csv format", level = 2L)
   Sp_PA_Summary_DF <- Sp_PA_Data %>%
     dplyr::select(
       -tidyselect::all_of(
         c("GBIF_R", "EASIN_R", "eLTER_R", "PA_Map", "PA_Masked_Map")))
 
   readr::write_excel_csv(
-    Sp_PA_Summary_DF, file = IASDT.R::path(Path_PA, "Sp_PA_Summary_DF.csv"),
+    Sp_PA_Summary_DF, file = fs::path(Path_PA, "Sp_PA_Summary_DF.csv"),
     progress = FALSE)
 
-  IASDT.R::cat_time("RData format", level = 2)
+  IASDT.R::cat_time("RData format", level = 2L)
   save(
     Sp_PA_Summary_DF,
-    file = IASDT.R::path(Path_PA, "Sp_PA_Summary_DF.RData"))
+    file = fs::path(Path_PA, "Sp_PA_Summary_DF.RData"))
 
   # # ..................................................................... ###
 
@@ -268,7 +268,7 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
   IASDT.R::cat_time("Summary of merged data")
 
   ## Number of IAS per grid cell -----
-  IASDT.R::cat_time("# IAS per grid cell", level = 1)
+  IASDT.R::cat_time("# IAS per grid cell", level = 1L)
 
   IAS_NumSp <- dplyr::filter(Sp_PA_Data, NCells_All > 0) %>%
     dplyr::pull(PA_Map) %>%
@@ -282,12 +282,12 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
   # save as RData
   IASDT.R::save_as(
     object = terra::wrap(IAS_NumSp), object_name = "IAS_NumSp",
-    out_path = IASDT.R::path(Path_PA, "IAS_NumSp.RData"))
+    out_path = fs::path(Path_PA, "IAS_NumSp.RData"))
 
   # save as tif
   raster::writeRaster(
     x = IAS_NumSp, overwrite = TRUE,
-    filename = IASDT.R::path(Path_PA, "IAS_NumSp.tif"))
+    filename = fs::path(Path_PA, "IAS_NumSp.tif"))
 
   # # .................................... ###
 
@@ -305,17 +305,17 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
   # save as RData
   IASDT.R::save_as(
     object = terra::wrap(IAS_NumSp_Masked), object_name = "IAS_NumSp_Masked",
-    out_path = IASDT.R::path(Path_PA, "IAS_NumSp_Masked.RData"))
+    out_path = fs::path(Path_PA, "IAS_NumSp_Masked.RData"))
 
   # save as tif
   raster::writeRaster(
     x = IAS_NumSp_Masked, overwrite = TRUE,
-    filename = IASDT.R::path(Path_PA, "IAS_NumSp_Masked.tif"))
+    filename = fs::path(Path_PA, "IAS_NumSp_Masked.tif"))
 
   # # .................................... ###
 
   ## Plotting summary of IAS data -----
-  IASDT.R::cat_time("Plotting summary of IAS data", level = 1)
+  IASDT.R::cat_time("Plotting summary of IAS data", level = 1L)
 
   EUBound <- IASDT.R::load_as(EU_Bound) %>%
     magrittr::extract2("Bound_sf_Eur_s") %>%
@@ -411,7 +411,7 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
   ragg::agg_jpeg(
-    filename = IASDT.R::path(Path_PA, "IAS_NumSpecies.jpeg"),
+    filename = fs::path(Path_PA, "IAS_NumSpecies.jpeg"),
     width = 30, height = 15.5, res = 600, quality = 100, units = "cm")
   print(Plot)
   grDevices::dev.off()
@@ -471,7 +471,7 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   ragg::agg_jpeg(
-    filename = IASDT.R::path(Path_PA, "IAS_NumSpecies_Masked.jpeg"),
+    filename = fs::path(Path_PA, "IAS_NumSpecies_Masked.jpeg"),
     width = 30, height = 15.5,  res = 600, quality = 100, units = "cm")
   print(Plot)
   grDevices::dev.off()
@@ -644,7 +644,7 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   ragg::agg_jpeg(
-    filename = IASDT.R::path(Path_PA, "IAS_NSp_threshold_Hab.jpeg"),
+    filename = fs::path(Path_PA, "IAS_NSp_threshold_Hab.jpeg"),
     width = 30, height = 17,  res = 600, quality = 100, units = "cm")
   print(Plot)
   grDevices::dev.off()
@@ -653,7 +653,7 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
 
   # Function Summary ----
   IASDT.R::cat_diff(
-    init_time = .StartTime,
+    init_time = .start_time,
     prefix = "\nProcessing species data was finished in ", ... = "\n")
 
   return(invisible(NULL))

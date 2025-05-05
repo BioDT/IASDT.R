@@ -27,7 +27,7 @@
 #'   ggplot2::geom_point() +
 #'   ggplot2::scale_x_continuous(breaks = integer_breaks(5))
 
-integer_breaks <- function(n_breaks = 5, ...) {
+integer_breaks <- function(n_breaks = 5L, ...) {
 
   fxn <- function(x) {
     breaks <- floor(pretty(x, n_breaks, ...))

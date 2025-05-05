@@ -73,7 +73,7 @@ mod_SLURM_refit <- function(
     IASDT.R::stop_ctx("Model directory does not exist", model_dir = model_dir)
   }
 
-  Path_Model_Fit <- IASDT.R::path(model_dir, "Model_Fitting_HPC")
+  Path_Model_Fit <- fs::path(model_dir, "Model_Fitting_HPC")
   tempFiles <- list.files(
     path = Path_Model_Fit, pattern = ".rds_temp$", full.names = TRUE)
   if (length(tempFiles) > 0) {
@@ -94,7 +94,7 @@ mod_SLURM_refit <- function(
   # # ..................................................................... ###
 
   # List of unfitted model variants -----
-  FailedModels <- IASDT.R::path(model_dir, "Model_Info.RData") %>%
+  FailedModels <- fs::path(model_dir, "Model_Info.RData") %>%
     IASDT.R::load_as() %>%
     tidyr::unnest_longer(c(Post_Path, Command_HPC)) %>%
     dplyr::filter(!file.exists(Post_Path))
@@ -121,7 +121,7 @@ mod_SLURM_refit <- function(
       paste0(
         NJobs, " model variants for ", length(unique(FailedModels$M_Name_Fit)),
         " models were not successful."))
-    purrr::walk(Failed_rL, IASDT.R::cat_time, level = 1)
+    purrr::walk(Failed_rL, IASDT.R::cat_time, level = 1L)
   } else {
     IASDT.R::cat_time("All models were already fitted!")
   }
@@ -155,7 +155,7 @@ mod_SLURM_refit <- function(
         # create connection to SLURM file
         # This is better than using sink to have a platform independent file
         # (here, to maintain a linux-like new line ending)
-        f <- file(IASDT.R::path(model_dir, OutCommandFile), open = "wb")
+        f <- file(fs::path(model_dir, OutCommandFile), open = "wb")
         on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
         cat(Commands2Refit[CurrIDs], sep = "\n", append = FALSE, file = f)
         on.exit(close(f))
@@ -173,7 +173,7 @@ mod_SLURM_refit <- function(
     IASDT.R::cat_time(
       paste0(
         NJobs, " model variants (", NSplits,
-        " SLURM files) need to be re-fitted"), level = 1)
+        " SLURM files) need to be re-fitted"), level = 1L)
   }
 
   # # ..................................................................... ###

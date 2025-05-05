@@ -16,7 +16,7 @@ an array-like structure (e.g., as read by \link[png:readPNG]{png::readPNG} or
 \link[jpeg:readJPEG]{jpeg::readJPEG}).}
 
 \item{x, y}{Numeric, the x-coordinate or y-coordinate (in plot units) at which
-the center of the image should be placed.}
+the centre of the image should be placed.}
 
 \item{width}{Numeric, the desired width of the image in plot units (not
 pixels or inches). The function will calculate the corresponding height to

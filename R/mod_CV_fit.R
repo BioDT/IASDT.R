@@ -5,7 +5,7 @@
 #' Prepare cross-validated Hmsc models for HPC fitting
 #'
 #' This function prepares cross-validated Hmsc models for fitting using HPC. It
-#' handles data preparation, model initialization, and generation of SLURM
+#' handles data preparation, model initialisation, and generation of SLURM
 #' commands.
 #'
 #' @param path_model Character. Path to a saved model file (`*.qs2`).
@@ -21,7 +21,7 @@
 #'   [Hmsc::createPartition] or similar. Defaults to `NULL`, which means to use
 #'   column name(s) provided in the `CV_name` argument. If the `Partitions`
 #'   vector is provided, the label used in the output files will be `CV_Custom`.
-#' @param init_par a named list of parameter values used for initialization of
+#' @param init_par a named list of parameter values used for initialisation of
 #'   MCMC states. See [Hmsc::computePredictedValues] for more information.
 #'   Default: `NULL`.
 #' @param job_name Character. Name of the submitted job(s) for SLURM. Default:
@@ -111,7 +111,7 @@ mod_CV_fit <- function(
   IASDT.R::cat_time("Loading model")
 
   # Path of the cross-validation folder
-  Path_CV <- IASDT.R::path(dirname(dirname(path_model)), "Model_Fitting_CV")
+  Path_CV <- fs::path(dirname(dirname(path_model)), "Model_Fitting_CV")
 
   # Path of the model input data
   Path_ModelData <- list.files(
@@ -132,11 +132,11 @@ mod_CV_fit <- function(
   # Creating paths -----
   IASDT.R::cat_time("Creating paths")
 
-  Path_Init <- IASDT.R::path(Path_CV, "Model_Init")
-  Path_Fitted <- IASDT.R::path(Path_CV, "Model_Fitted")
-  Path_Post <- IASDT.R::path(Path_CV, "Model_Posterior")
-  Path_Log <- IASDT.R::path(Path_Post, "JobsLog")
-  Dir_Pred <- IASDT.R::path(Path_CV, "Model_Prediction")
+  Path_Init <- fs::path(Path_CV, "Model_Init")
+  Path_Fitted <- fs::path(Path_CV, "Model_Fitted")
+  Path_Post <- fs::path(Path_CV, "Model_Posterior")
+  Path_Log <- fs::path(Path_Post, "JobsLog")
+  Dir_Pred <- fs::path(Path_CV, "Model_Prediction")
   fs::dir_create(c(Path_CV, Path_Init, Path_Fitted, Path_Post, Dir_Pred))
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -220,13 +220,13 @@ mod_CV_fit <- function(
         .f = function(partition, CV_name, nfolds) {
 
           IASDT.R::cat_time(
-            paste0("Cross-validation Type: ", CV_name), level = 1)
+            paste0("Cross-validation Type: ", CV_name), level = 1L)
 
           CV_DT0 <- purrr::map_dfr(
             .x = seq_len(nfolds),
             .f = function(k) {
 
-              IASDT.R::cat_time(paste0("Fold ", k, "/", nfolds), level = 2)
+              IASDT.R::cat_time(paste0("Fold ", k, "/", nfolds), level = 2L)
 
               # # |||||||||||||||||||||||
               # The following is adapted from Hmsc::computePredictedValues()
@@ -304,7 +304,7 @@ mod_CV_fit <- function(
 
 
               # Save unfitted model
-              Path_ModInit <- IASDT.R::path(
+              Path_ModInit <- fs::path(
                 Path_Init, paste0("InitMod_", CV_name, "_k", k, ".RData"))
               IASDT.R::save_as(
                 object = Model_CV,
@@ -325,11 +325,11 @@ mod_CV_fit <- function(
               }
 
               # Save model input as rds file
-              Path_ModInit_rds <- IASDT.R::path(
+              Path_ModInit_rds <- fs::path(
                 Path_Init, paste0("InitMod_", CV_name, "_k", k, ".rds"))
               saveRDS(Model_CV, file = Path_ModInit_rds)
 
-              Path_ModFitted <- IASDT.R::path(
+              Path_ModFitted <- fs::path(
                 Path_Fitted, paste0("Model_", CV_name, "_k", k, ".RData"))
 
               dfPi <- droplevels(Model_Full$dfPi[val, , drop = FALSE])
@@ -373,7 +373,7 @@ mod_CV_fit <- function(
               withr::local_options(list(scipen = 999))
 
               # Path to save the posterior of the combination of CV and chain
-              Post_File <- IASDT.R::path(
+              Post_File <- fs::path(
                 Path_Post, paste0("Mod_", ModName, "_Ch", Chain, "_post.rds"))
 
               # Path to save the progress of model fitting
@@ -419,7 +419,7 @@ mod_CV_fit <- function(
     .x = CV_name,
     .f = ~{
       Curr_CV_Name <- stringr::str_remove_all(.x, "CV_")
-      CommandFile <- IASDT.R::path(Path_CV, paste0("Commands2Fit_", .x, ".txt"))
+      CommandFile <- fs::path(Path_CV, paste0("Commands2Fit_", .x, ".txt"))
       f <- file(CommandFile, open = "wb")
       on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
 
@@ -449,7 +449,7 @@ mod_CV_fit <- function(
 
   # Save summary data to disk -----
   IASDT.R::cat_time("Save summary data to disk")
-  save(CV_DT, file = IASDT.R::path(Path_CV, "CV_DT.RData"))
+  save(CV_DT, file = fs::path(Path_CV, "CV_DT.RData"))
 
   return(invisible(NULL))
 }

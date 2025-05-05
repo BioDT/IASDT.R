@@ -28,14 +28,14 @@ plot_evaluation <- function(model_dir, env_file = ".env") {
   IASDT.R::cat_time("Load species summary")
 
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "Path_PA", "DP_R_PA", TRUE, FALSE)
   # Assign environment variables and check file and paths
   IASDT.R::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
-  SpSummary <- IASDT.R::path(Path_PA, "Sp_PA_Summary_DF.csv")
+  SpSummary <- fs::path(Path_PA, "Sp_PA_Summary_DF.csv")
   if (!file.exists(SpSummary)) {
     IASDT.R::stop_ctx("Species summary file not found", SpSummary = SpSummary)
   }
@@ -54,7 +54,7 @@ plot_evaluation <- function(model_dir, env_file = ".env") {
     IASDT.R::stop_ctx("Invalid or missing `model_dir`", model_dir = model_dir)
   }
 
-  Mod_Eval <- IASDT.R::path(
+  Mod_Eval <- fs::path(
     model_dir, "Model_Evaluation", "Eval_Current_NoClamping.qs2")
 
   Mod_Eval <- IASDT.R::load_as(Mod_Eval) %>%
@@ -107,8 +107,7 @@ plot_evaluation <- function(model_dir, env_file = ".env") {
     patchwork::plot_layout(axes = "collect")
 
   ragg::agg_jpeg(
-    filename = IASDT.R::path(
-      model_dir, "Model_Evaluation", "Eval_explanatory.jpeg"),
+    filename = fs::path(model_dir, "Model_Evaluation", "Eval_explanatory.jpeg"),
     width = 24, height = 20, res = 600,
     quality = 100, units = "cm")
   print(Plots)

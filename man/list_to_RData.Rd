@@ -37,7 +37,7 @@ iris2 <- iris \%>\%
 
 str(iris2, 1)
 
-(TMP_Folder <- IASDT.R::path(tempdir(), stringi::stri_rand_strings(1, 5)))
+(TMP_Folder <- fs::path(tempdir(), stringi::stri_rand_strings(1, 5)))
 list.files(TMP_Folder)
 
 list_to_RData(list = iris2, directory = TMP_Folder)

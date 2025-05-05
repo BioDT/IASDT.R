@@ -4,12 +4,12 @@
 \alias{system_command}
 \title{Run a system command in a cross-platform manner}
 \usage{
-system_command(command, R_object = TRUE, ...)
+system_command(command, r_object = TRUE, ...)
 }
 \arguments{
 \item{command}{Character. The bash command to be executed.}
 
-\item{R_object}{Logical. Whether to capture the output of the command as an R
+\item{r_object}{Logical. Whether to capture the output of the command as an R
 object. If \code{TRUE} (Default), the output is captured; if \code{FALSE}, the output
 is printed to the console.}
 
@@ -17,8 +17,8 @@ is printed to the console.}
 function, depending on the operating system.}
 }
 \value{
-Depending on the value of \code{R_object}, either the output of the
-executed command as an R object or \code{NULL} if \code{R_object} is \code{FALSE} and the
+Depending on the value of \code{r_object}, either the output of the
+executed command as an R object or \code{NULL} if \code{r_object} is \code{FALSE} and the
 output is printed to the console.
 }
 \description{
@@ -33,7 +33,7 @@ IASDT.R::system_command("pwd")
 # first 5 files on the working directory
 (A <- IASDT.R::system_command("ls | head -n 5"))
 
-(A <- IASDT.R::system_command("ls | head -n 5", R_object = FALSE))
+(A <- IASDT.R::system_command("ls | head -n 5", r_object = FALSE))
 }
 \author{
 Ahmed El-Gabbas

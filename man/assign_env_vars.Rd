@@ -11,10 +11,10 @@ assign_env_vars(env_file = ".env", env_variables_data = NULL)
 data sources. Defaults to \code{.env}.}
 
 \item{env_variables_data}{\code{data.frame}. A data frame or tibble containing the
-columns \code{VarName}, \code{Value}, \code{CheckDir}, and \code{CheckFile}. Each row specifies
-an environment variable, the name to assign it to, and whether to check if
-it is a directory or file. This structure allows for additional validation
-checks on the variables being imported.}
+columns \code{var_name}, \code{value}, \code{check_dir}, and \code{check_file}. Each row
+specifies an environment variable, the name to assign it to, and whether to
+check if it is a directory or file. This structure allows for additional
+validation checks on the variables being imported.}
 }
 \value{
 This function is used for its side effects of setting environment

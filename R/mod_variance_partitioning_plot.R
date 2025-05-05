@@ -9,10 +9,10 @@
 
 variance_partitioning_plot <- function(
     path_model, env_file = ".env", VP_file = "VarPar", use_TF = TRUE,
-    TF_environ = NULL, n_cores = 1, width = 30, height = 15,
+    TF_environ = NULL, n_cores = 1L, width = 30, height = 15,
     Axis_text = 4) {
 
-  .StartTime <- lubridate::now(tzone = "CET")
+  .start_time <- lubridate::now(tzone = "CET")
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
@@ -49,7 +49,7 @@ variance_partitioning_plot <- function(
   IASDT.R::cat_time("Loading species info")
 
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "TaxaInfoFile", "DP_R_Taxa_info_rdata", FALSE, TRUE)
   # Assign environment variables and check file and paths
   IASDT.R::assign_env_vars(
@@ -66,7 +66,7 @@ variance_partitioning_plot <- function(
   # # ..................................................................... ###
 
   Path_Root <- dirname(dirname(path_model))
-  Path_VarPar <- IASDT.R::path(
+  Path_VarPar <- fs::path(
     Path_Root, "Model_Postprocessing", "Variance_Partitioning")
 
   # # ..................................................................... ###
@@ -76,7 +76,7 @@ variance_partitioning_plot <- function(
 
   IASDT.R::cat_time("Loading model evaluation")
 
-  Path_Eval <- IASDT.R::path(Path_Root, "Model_Evaluation") %>%
+  Path_Eval <- fs::path(Path_Root, "Model_Evaluation") %>%
     list.files("Eval_.+.qs2", full.names = TRUE)
 
   if (length(Path_Eval) != 1) {
@@ -98,19 +98,19 @@ variance_partitioning_plot <- function(
   # # ..................................................................... ###
   # # ..................................................................... ###
 
-  # Compute variance partitioning ----
+  # Compute or load variance partitioning ----
 
-  IASDT.R::cat_time("Compute/load variance partitioning")
+  IASDT.R::cat_time("Compute or load variance partitioning")
 
   if (is.null(VP_file)) {
     VP_file <- "VarPar"
   }
 
-  File_VarPar <- IASDT.R::path(Path_VarPar, paste0(VP_file, ".RData"))
+  File_VarPar <- fs::path(Path_VarPar, paste0(VP_file, ".RData"))
 
   if (file.exists(File_VarPar)) {
 
-    IASDT.R::cat_time("Loading variance partitioning", level = 2)
+    IASDT.R::cat_time("Loading variance partitioning", level = 2L)
     VarPar <- IASDT.R::load_as(File_VarPar)
 
   } else {
@@ -119,7 +119,7 @@ variance_partitioning_plot <- function(
       paste0(
         "Variance partitioning will be computed using ", n_cores, " cores ",
         dplyr::if_else(use_TF, "and", "without"), " TensorFlow."),
-      level = 1)
+      level = 1L)
 
     VarPar <- IASDT.R::variance_partitioning_compute(
       path_model = path_model, n_cores = n_cores, use_TF = use_TF,
@@ -205,7 +205,7 @@ variance_partitioning_plot <- function(
 
   # Order species by total variance, excluding the spatial random effect
   SpOrder_NonSpatial <- VarPar_DF %>%
-    dplyr::filter(stringr::str_detect(Variable, "^Random", negate = TRUE)) %>%
+    dplyr::filter(!startsWith(Variable, "Random")) %>%
     dplyr::summarise(
       VP_Value = sum(VP_Value), .by = c("Species", "Species_name")) %>%
     dplyr::arrange(dplyr::desc(VP_Value)) %>%
@@ -269,7 +269,7 @@ variance_partitioning_plot <- function(
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   ragg::agg_jpeg(
-    filename = IASDT.R::path(Path_VarPar, "VarPar_Relative_ByMean.jpeg"),
+    filename = fs::path(Path_VarPar, "VarPar_Relative_ByMean.jpeg"),
     width = width, height = height, units = "cm", quality = 100, res = 600)
   print(Plot_Relative)
   grDevices::dev.off()
@@ -297,7 +297,7 @@ variance_partitioning_plot <- function(
     ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1, byrow = TRUE))
 
   ragg::agg_jpeg(
-    filename = IASDT.R::path(Path_VarPar, "VarPar_Relative_ByTaxonomy.jpeg"),
+    filename = fs::path(Path_VarPar, "VarPar_Relative_ByTaxonomy.jpeg"),
     width = width, height = height, res = 600, quality = 100, units = "cm")
   plot(Plot_Relative_Orig)
   grDevices::dev.off()
@@ -328,7 +328,7 @@ variance_partitioning_plot <- function(
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
   ragg::agg_jpeg(
-    filename = IASDT.R::path(Path_VarPar, "VarPar_Relative_ByTjurR2.jpeg"),
+    filename = fs::path(Path_VarPar, "VarPar_Relative_ByTjurR2.jpeg"),
     width = width, height = height, res = 600, quality = 100, units = "cm")
   plot(Plot_Relative_TjurR2)
   grDevices::dev.off()
@@ -358,7 +358,7 @@ variance_partitioning_plot <- function(
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   ragg::agg_jpeg(
-    filename = IASDT.R::path(
+    filename = fs::path(
       Path_VarPar, "VarPar_Relative_ByTotalNonSpatial.jpeg"),
     width = width, height = height, units = "cm", quality = 100, res = 600)
   print(Plot_Relative_NonSpatial)
@@ -429,7 +429,7 @@ variance_partitioning_plot <- function(
 
   # Order species by total variance, excluding the spatial random effect
   SpOrder_Raw_NonSpatial <- DT_Raw %>%
-    dplyr::filter(stringr::str_detect(Variable, "^Random", negate = TRUE)) %>%
+    dplyr::filter(!startsWith(Variable, "Random")) %>%
     dplyr::summarise(
       VP_Value = sum(VP_Value), .by = c("Species", "Species_name")) %>%
     dplyr::arrange(dplyr::desc(VP_Value)) %>%
@@ -466,7 +466,7 @@ variance_partitioning_plot <- function(
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
   ragg::agg_jpeg(
-    filename = IASDT.R::path(Path_VarPar, "VarPar_Raw_ByTaxonomy.jpeg"),
+    filename = fs::path(Path_VarPar, "VarPar_Raw_ByTaxonomy.jpeg"),
     width = width, height = height, res = 600, quality = 100, units = "cm")
 
   plot(Plot_Raw)
@@ -499,7 +499,7 @@ variance_partitioning_plot <- function(
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
   ragg::agg_jpeg(
-    filename = IASDT.R::path(Path_VarPar, "VarPar_Raw_ByMean.jpeg"),
+    filename = fs::path(Path_VarPar, "VarPar_Raw_ByMean.jpeg"),
     width = width, height = height, res = 600, quality = 100, units = "cm")
   plot(Plot_Raw_TotalRaw)
   grDevices::dev.off()
@@ -531,7 +531,7 @@ variance_partitioning_plot <- function(
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
   ragg::agg_jpeg(
-    filename = IASDT.R::path(Path_VarPar, "VarPar_Raw_ByTotalNonSpatial.jpeg"),
+    filename = fs::path(Path_VarPar, "VarPar_Raw_ByTotalNonSpatial.jpeg"),
     width = width, height = height, res = 600, quality = 100, units = "cm")
   plot(Plot_Raw_NonSpatial)
   grDevices::dev.off()
@@ -540,7 +540,7 @@ variance_partitioning_plot <- function(
   # # ..................................................................... ###
 
   IASDT.R::cat_diff(
-    init_time = .StartTime,
+    init_time = .start_time,
     prefix = "Computing and plotting variance partitioning took ")
 
   return(invisible(NULL))

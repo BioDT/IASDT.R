@@ -191,7 +191,7 @@ reference:
   - add_cross_to_grid
   - add_diagonals_to_grid
   - raster_to_PA
-  - NetCDF_global_attributes
+  - nc_global_attributes
   - scale_0_1
   - set_raster_CRS
   - set_raster_values

@@ -1,7 +1,7 @@
 ## |------------------------------------------------------------------------| #
 # variance_partitioning_compute ----
 
-#' Computes and visualize variance partitioning of Hmsc models
+#' Computes and visualise variance partitioning of Hmsc models
 #'
 #' The **`variance_partitioning_compute()`** function computes variance
 #' components with respect to given grouping of fixed effects and levels of
@@ -39,7 +39,7 @@
 #' @param env_file Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
 #' @param width,height Numeric. Width and height of the output plot in
-#'   centimeters. Default: `30` and `15`, respectively.
+#'   centimetres. Default: `30` and `15`, respectively.
 #' @param Axis_text Numeric. Size of the axis text. Default: `4`.
 #' @author Ahmed El-Gabbas
 #' @inheritParams predict_hmsc
@@ -62,7 +62,7 @@ variance_partitioning_compute <- function(
     on.exit(sink(), add = TRUE)
   }
 
-  .StartTime <- lubridate::now(tzone = "CET")
+  .start_time <- lubridate::now(tzone = "CET")
 
   # # .................................................................... ###
 
@@ -92,7 +92,7 @@ variance_partitioning_compute <- function(
     # point to a valid python virtual environment.
 
     if (.Platform$OS.type == "windows") {
-      python_executable <- IASDT.R::path(TF_environ, "Scripts", "python.exe")
+      python_executable <- fs::path(TF_environ, "Scripts", "python.exe")
 
       if (isFALSE(VP_commands_only) && !file.exists(python_executable)) {
         IASDT.R::stop_ctx(
@@ -150,7 +150,7 @@ variance_partitioning_compute <- function(
   # # .................................................................... ###
 
   # Create folder for variance partitioning results
-  Path_VarPar <- IASDT.R::path(
+  Path_VarPar <- fs::path(
     dirname(dirname(path_model)),
     "Model_Postprocessing", "Variance_Partitioning")
   fs::dir_create(Path_VarPar)
@@ -239,28 +239,25 @@ variance_partitioning_compute <- function(
   if (use_TF) {
 
     # Create the temporary directory
-    Path_Temp <- IASDT.R::path(dirname(dirname(path_model)), "TEMP_VP")
+    Path_Temp <- fs::path(dirname(dirname(path_model)), "TEMP_VP")
     fs::dir_create(Path_Temp)
 
     FileSuffix <- stringr::str_pad(
       string = seq_len(poolN), pad = "0", width = 4)
 
     # List of feather files resulted from `geta` function
-    Files_la <- IASDT.R::path(
-      Path_Temp, paste0("VP_A_", FileSuffix, ".feather"))
+    Files_la <- fs::path(Path_Temp, paste0("VP_A_", FileSuffix, ".feather"))
     Files_la_Exist <- all(file.exists(Files_la))
 
     # List of feather files resulted from `getf` function
-    Files_lf <- IASDT.R::path(
-      Path_Temp, paste0("VP_F_", FileSuffix, ".feather"))
+    Files_lf <- fs::path(Path_Temp, paste0("VP_F_", FileSuffix, ".feather"))
     Files_lf_Exist <- all(file.exists(Files_lf))
 
     # List of feather files resulted from `gemu` function
-    Files_lmu <- IASDT.R::path(
-      Path_Temp, paste0("VP_Mu_", FileSuffix, ".feather"))
+    Files_lmu <- fs::path(Path_Temp, paste0("VP_Mu_", FileSuffix, ".feather"))
     Files_lmu_Exist <- all(file.exists(Files_lmu))
 
-    Beta_Files <- IASDT.R::path(
+    Beta_Files <- fs::path(
       Path_Temp, paste0("VP_Beta_", FileSuffix, ".feather"))
 
     if (all(c(Files_la_Exist, Files_lf_Exist, Files_lmu_Exist))) {
@@ -275,13 +272,13 @@ variance_partitioning_compute <- function(
       IASDT.R::cat_time("Prepare la/lf/lmu lists using TensorFlow")
 
       ### Prepare data for TensorFlow ----
-      IASDT.R::cat_time("Prepare data for TensorFlow", level = 1)
+      IASDT.R::cat_time("Prepare data for TensorFlow", level = 1L)
 
       #### X data -----
       # needed only to calculate `geta` and `getf` functions
       if (!all(c(Files_la_Exist, Files_lf_Exist))) {
-        IASDT.R::cat_time("X", level = 2)
-        Path_X <- IASDT.R::path(Path_Temp, "VP_X.feather")
+        IASDT.R::cat_time("X", level = 2L)
+        Path_X <- fs::path(Path_Temp, "VP_X.feather")
         if (!file.exists(Path_X)) {
           arrow::write_feather(as.data.frame(Model$X), Path_X)
         }
@@ -290,15 +287,15 @@ variance_partitioning_compute <- function(
       #### Tr / Gamma ------
       # needed only to calculate `geta` and `gemu` functions
       if (!all(c(Files_la_Exist, Files_lmu_Exist))) {
-        IASDT.R::cat_time("Tr", level = 2)
-        Path_Tr <- IASDT.R::path(Path_Temp, "VP_Tr.feather")
+        IASDT.R::cat_time("Tr", level = 2L)
+        Path_Tr <- fs::path(Path_Temp, "VP_Tr.feather")
         if (!file.exists(Path_Tr)) {
           arrow::write_feather(as.data.frame(Model$Tr), Path_Tr)
         }
 
         # Gamma - convert each list item into a column in a data frame
-        IASDT.R::cat_time("Gamma", level = 2)
-        Path_Gamma <- IASDT.R::path(Path_Temp, "VP_Gamma.feather")
+        IASDT.R::cat_time("Gamma", level = 2L)
+        Path_Gamma <- fs::path(Path_Temp, "VP_Gamma.feather")
         if (!file.exists(Path_Gamma)) {
           Gamma_data <- postList %>%
             purrr::map(~as.vector(.x[["Gamma"]])) %>%
@@ -313,25 +310,25 @@ variance_partitioning_compute <- function(
       if (!Files_lf_Exist) {
         # Beta -- Each element of Beta is a matrix, so each list item is saved
         # to separate feather file
-        IASDT.R::cat_time("Beta", level = 2)
+        IASDT.R::cat_time("Beta", level = 2L)
 
         if (!all(file.exists(Beta_Files))) {
 
-          IASDT.R::cat_time("Prepare working in parallel", level = 3)
+          IASDT.R::cat_time("Prepare working in parallel", level = 3L)
           c1 <- parallel::makePSOCKcluster(n_cores)
           on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
 
-          IASDT.R::cat_time("Export necessary objects to cores", level = 3)
+          IASDT.R::cat_time("Export necessary objects to cores", level = 3L)
           parallel::clusterExport(
             cl = c1, varlist = c("Beta_Files", "postList"),
             envir = environment())
 
-          IASDT.R::cat_time("Load libraries on each core", level = 3)
+          IASDT.R::cat_time("Load libraries on each core", level = 3L)
           invisible(
             parallel::clusterEvalQ(
               cl = c1, expr = sapply("arrow", library, character.only = TRUE)))
 
-          IASDT.R::cat_time("Processing beta in parallel", level = 3)
+          IASDT.R::cat_time("Processing beta in parallel", level = 3L)
           Beta0 <- parallel::parLapply(
             cl = c1,
             X = seq_along(postList),
@@ -345,7 +342,7 @@ variance_partitioning_compute <- function(
             })
           rm(Beta0)
 
-          IASDT.R::cat_time("stop cluster", level = 3)
+          IASDT.R::cat_time("stop cluster", level = 3L)
           parallel::stopCluster(c1)
         }
       }
@@ -358,12 +355,12 @@ variance_partitioning_compute <- function(
       if (Files_la_Exist) {
 
         IASDT.R::cat_time(
-          "All `la` data were already available on disk", level = 1)
+          "All `la` data were already available on disk", level = 1L)
 
       } else {
 
-        IASDT.R::cat_time("Processing `geta` function", level = 1)
-        Path_Out_a <- IASDT.R::path(Path_Temp, "VP_A.feather") %>%
+        IASDT.R::cat_time("Processing `geta` function", level = 1L)
+        Path_Out_a <- fs::path(Path_Temp, "VP_A.feather") %>%
           IASDT.R::normalize_path()
 
         cmd_a <- paste(
@@ -387,7 +384,7 @@ variance_partitioning_compute <- function(
           cmd_a <- paste0(cmd_a, paste0(" >> ", path_log_a, " 2>&1"))
           readr::write_lines(
             x = cmd_a,
-            file = IASDT.R::path(Path_Temp, "VP_A_Command.txt"), append = FALSE)
+            file = fs::path(Path_Temp, "VP_A_Command.txt"), append = FALSE)
 
         } else {
 
@@ -415,12 +412,12 @@ variance_partitioning_compute <- function(
       if (Files_la_Exist) {
 
         IASDT.R::cat_time(
-          "All `lf` data were already available on disk", level = 1)
+          "All `lf` data were already available on disk", level = 1L)
 
       } else {
 
-        IASDT.R::cat_time("Processing `getf` function", level = 1)
-        Path_Out_f <- IASDT.R::path(Path_Temp, "VP_F.feather") %>%
+        IASDT.R::cat_time("Processing `getf` function", level = 1L)
+        Path_Out_f <- fs::path(Path_Temp, "VP_F.feather") %>%
           IASDT.R::normalize_path()
 
         cmd_f <- paste(
@@ -442,7 +439,7 @@ variance_partitioning_compute <- function(
           cmd_f <- paste0(cmd_f, paste0(" >> ", path_log_f, " 2>&1"))
           readr::write_lines(
             x = cmd_f,
-            file = IASDT.R::path(Path_Temp, "VP_F_Command.txt"),
+            file = fs::path(Path_Temp, "VP_F_Command.txt"),
             append = FALSE)
 
         } else {
@@ -471,12 +468,12 @@ variance_partitioning_compute <- function(
       if (Files_lmu_Exist) {
 
         IASDT.R::cat_time(
-          "All `lmu` data were already available on disk", level = 1)
+          "All `lmu` data were already available on disk", level = 1L)
 
       } else {
 
-        IASDT.R::cat_time("Processing `gemu` function", level = 1)
-        Path_Out_mu <- IASDT.R::path(Path_Temp, "VP_Mu.feather") %>%
+        IASDT.R::cat_time("Processing `gemu` function", level = 1L)
+        Path_Out_mu <- fs::path(Path_Temp, "VP_Mu.feather") %>%
           IASDT.R::normalize_path()
 
         cmd_mu <- paste(
@@ -499,7 +496,7 @@ variance_partitioning_compute <- function(
           cmd_mu <- paste0(cmd_mu, paste0(" >> ", path_log_mu, " 2>&1"))
           readr::write_lines(
             x = cmd_mu,
-            file = IASDT.R::path(Path_Temp, "VP_mu_Command.txt"),
+            file = fs::path(Path_Temp, "VP_mu_Command.txt"),
             append = FALSE)
 
         } else {
@@ -533,7 +530,7 @@ variance_partitioning_compute <- function(
     IASDT.R::cat_time("Prepare la/lf/lmu lists using original R code")
 
     ## geta -----
-    IASDT.R::cat_time("Running geta", level = 1)
+    IASDT.R::cat_time("Running geta", level = 1L)
     geta <- function(a) {
       switch(
         class(Model$X)[1L],
@@ -557,7 +554,7 @@ variance_partitioning_compute <- function(
 
     ## getf ------
 
-    IASDT.R::cat_time("Running getf", level = 1)
+    IASDT.R::cat_time("Running getf", level = 1L)
     getf <- function(a) {
       switch(
         class(Model$X)[1L],
@@ -579,7 +576,7 @@ variance_partitioning_compute <- function(
 
     ## gemu ------
 
-    IASDT.R::cat_time("Running gemu", level = 1)
+    IASDT.R::cat_time("Running gemu", level = 1L)
     gemu <- function(a) {
       res <- t(Model$Tr %*% t(a$Gamma))
       return(res)
@@ -623,49 +620,50 @@ variance_partitioning_compute <- function(
 
     IASDT.R::cat_time("Computing variance partitioning in parallel")
 
-    IASDT.R::cat_time("Split `lbeta` list into small qs2 files", level = 1)
-    path_lbeta <- IASDT.R::path(Path_Temp, "lbeta")
+    IASDT.R::cat_time("Split `lbeta` list into small qs2 files", level = 1L)
+    path_lbeta <- fs::path(Path_Temp, "lbeta")
     purrr::walk(
       .x = seq_along(lbeta),
       .f = ~ {
         IASDT.R::save_as(
           object = lbeta[[.x]],
-          out_path = IASDT.R::path(
+          out_path = fs::path(
             path_lbeta,
             paste0(
               "lbeta_", stringr::str_pad(.x, width = 4, pad = "0"), ".qs2")))
       })
 
-    IASDT.R::cat_time("Split `postList` list into small qs2 files", level = 1)
-    path_postList <- IASDT.R::path(Path_Temp, "postList")
+    IASDT.R::cat_time("Split `postList` list into small qs2 files", level = 1L)
+    path_postList <- fs::path(Path_Temp, "postList")
     purrr::walk(
       .x = seq_along(postList),
       .f = ~{
         IASDT.R::save_as(
           object = postList[[.x]],
-          out_path = IASDT.R::path(
+          out_path = fs::path(
             path_postList,
             paste0(
               "post_", stringr::str_pad(.x, width = 4, pad = "0"), ".qs2")))
       })
 
-    IASDT.R::cat_time("removing `postList` and `lbeta` list objects", level = 1)
+    IASDT.R::cat_time(
+      "removing `postList` and `lbeta` list objects", level = 1L)
     n_postList <- length(postList)
     rm(postList, lbeta, envir = environment())
     invisible(gc())
 
-    IASDT.R::cat_time("Prepare working in parallel", level = 1)
-    IASDT.R::set_parallel(n_cores = n_cores, level = 2)
+    IASDT.R::cat_time("Prepare working in parallel", level = 1L)
+    IASDT.R::set_parallel(n_cores = n_cores, level = 2L)
     withr::defer(future::plan("future::sequential", gc = TRUE))
 
-    IASDT.R::cat_time("Processing in parallel", level = 1)
+    IASDT.R::cat_time("Processing in parallel", level = 1L)
     Res <- future.apply::future_lapply(
       X = seq_len(n_postList),
       FUN = function(i) {
 
         mm <- methods::getMethod("%*%", "Matrix")
 
-        curr_postList <- IASDT.R::path(
+        curr_postList <- fs::path(
           path_postList,
           paste0(
             "post_", stringr::str_pad(i, width = 4, pad = "0"), ".qs2")) %>%
@@ -676,7 +674,7 @@ variance_partitioning_compute <- function(
         # Suppress warnings when no trait information is used in the models
         # cor(Beta[k, ], lmu[k, ]) : the standard deviation is zero
         DT_lmu <- as.matrix(arrow::read_feather(Files_lmu[i]))
-        curr_lbeta <- IASDT.R::path(
+        curr_lbeta <- fs::path(
           path_lbeta,
           paste0(
             "lbeta_", stringr::str_pad(i, width = 4, pad = "0"), ".qs2")) %>%
@@ -767,10 +765,10 @@ variance_partitioning_compute <- function(
         "Model", "path_postList", "poolN", "ns", "nr", "cMA", "group"))
 
     # stopping the cluster
-    IASDT.R::set_parallel(stop_cluster = TRUE, level = 2)
+    IASDT.R::set_parallel(stop_cluster = TRUE, level = 2L)
 
-    # Summarize the results
-    IASDT.R::cat_time("Summarize the results", level = 1)
+    # Summarise the results
+    IASDT.R::cat_time("Summarise the results", level = 1L)
     fixed <- Reduce("+", purrr::map(Res, ~ .x$fixed)) / poolN
     random <- Reduce("+", purrr::map(Res, ~ .x$random)) / poolN
     fixedsplit <- Reduce("+", purrr::map(Res, ~ .x$fixedsplit)) / poolN
@@ -904,7 +902,7 @@ variance_partitioning_compute <- function(
   # Save the results
   IASDT.R::cat_time("Save the variance partitioning results")
 
-  File_VarPar <- IASDT.R::path(Path_VarPar, paste0(VP_file, ".RData"))
+  File_VarPar <- fs::path(Path_VarPar, paste0(VP_file, ".RData"))
   IASDT.R::save_as(object = VP, object_name = VP_file, out_path = File_VarPar)
 
   VP$File <- File_VarPar
@@ -958,7 +956,7 @@ variance_partitioning_compute <- function(
 
   # # .................................................................... ###
 
-  IASDT.R::cat_diff(init_time = .StartTime)
+  IASDT.R::cat_diff(init_time = .start_time)
 
   return(VP)
 }

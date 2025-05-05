@@ -97,7 +97,7 @@ data sources. Defaults to \code{.env}.}
 Predictive Process. Defaults to \code{TRUE}. If \code{FALSE}, non-spatial models will
 be fitted.}
 
-\item{GPP_dists}{Integer. Spacing (in kilometers) between GPP knots, as well
+\item{GPP_dists}{Integer. Spacing (in kilometres) between GPP knots, as well
 as the minimum allowable distance between a knot and the nearest sampling
 point. The knots are generated using the \link{prepare_knots} function, and this
 value is used for both \code{knotDist} and \code{minKnotDist} in
@@ -117,7 +117,7 @@ respective values will be used as arguments to \link[Hmsc:setPriors]{Hmsc::setPr
 \code{NULL} or a list with all \code{NULL} list items, the default prior will be
 used. If \code{Prior} is a matrix, it will be used as the prior. If \code{Prior = NULL}, the prior will be generated using \code{Min}, \code{Max}, and \code{Samples}. \code{Min}
 and \code{Max} are the minimum and maximum values of the alpha parameter (in
-kilometer). \code{Samples} is the number of samples to be used in the prior.}
+kilometre). \code{Samples} is the number of samples to be used in the prior.}
 
 \item{bio_variables}{Character vector. Variables from CHELSA (bioclimatic
 variables (bio1-bio19) and additional predictors (e.g., Net Primary
@@ -256,11 +256,11 @@ precision mode for \code{Hmsc-HPC} sampling (--fp 32 or --fp 64). The default is
 \item{...}{Additional parameters provided to the \link{mod_SLURM} function.}
 }
 \description{
-The \strong{\code{mod_prepare_HPC}} function prepares input data and initializes models
+The \strong{\code{mod_prepare_HPC}} function prepares input data and initialises models
 for fitting with \href{https://doi.org/10.1371/journal.pcbi.1011914}{Hmsc-HPC}. It
 performs multiple tasks, including data preparation, defining spatial block
 cross-validation folds, generating Gaussian Predictive Process (GPP) knots
-(\href{https://doi.org/10.1002/ecy.2929}{Tikhonov et al.}), initializing models,
+(\href{https://doi.org/10.1002/ecy.2929}{Tikhonov et al.}), initialising models,
 and creating HPC execution commands. The function supports parallel
 processing and offers the option to include or exclude phylogenetic tree
 data.\if{html}{\out{<br/>}}\if{html}{\out{<br/>}} The \code{mod_prepare_data} function is used to prepare

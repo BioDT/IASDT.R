@@ -2,7 +2,7 @@
 % Please edit documentation in R/DWF_CLC_process.R
 \name{CLC_process}
 \alias{CLC_process}
-\title{Process Corine Land Cover (CLC) data for the \code{IAS-pDT}}
+\title{Process Corine Land Cover (CLC) data for the \code{IASDT}}
 \usage{
 CLC_process(env_file = ".env", min_land_percent = 15, plot_CLC = TRUE)
 }
@@ -22,10 +22,10 @@ disk.
 }
 \description{
 Processes \href{https://land.copernicus.eu/pan-european/corine-land-cover/clc2018}{Corine Land Cover (CLC)}
-data for the Invasive Alien Species prototype Digital Twin (\code{IAS-pDT}).
-Calculates percentage coverage and most common classes per grid cell at three
-CLC levels, plus \code{EUNIS_19} and \code{SynHab} habitat types. Prepares a reference
-grid and optionally generates percentage coverage maps as JPEG.
+data for the Invasive Alien Species Digital Twin (\code{IASDT}). Calculates
+percentage coverage and most common classes per grid cell at three CLC
+levels, plus \code{EUNIS_19} and \code{SynHab} habitat types. Prepares a reference grid
+and optionally generates percentage coverage maps as JPEG.
 }
 \references{
 \itemize{

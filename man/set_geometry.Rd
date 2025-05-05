@@ -22,7 +22,7 @@ geometry column set to \code{Name}.
 \description{
 Set the geometry column of a simple feature (sf) data frame, making it
 particularly useful in data processing pipelines. By specifying the name of
-the geometry column, users can ensure that spatial operations utilize the
+the geometry column, users can ensure that spatial operations utilise the
 correct data.
 }
 \author{

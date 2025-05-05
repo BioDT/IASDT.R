@@ -213,7 +213,7 @@ record_arguments <- function(out_path = NULL) {
   })
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
-  # Name and finalize the evaluated arguments
+  # Name and finalise the evaluated arguments
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
 
   # Assign names to the evaluated values based on the argument names

@@ -1,11 +1,11 @@
-#' Process GBIF sampling effort data for the `IAS-pDT`
+#' Process GBIF sampling effort data for the `IASDT`
 #'
 #' Downloads and processes GBIF sampling effort data for vascular plants in
-#' Europe, supporting the Invasive Alien Species prototype Digital Twin
-#' (`IAS-pDT`). Orchestrated by `efforts_process()`, it uses helper functions to
-#' request, download, split, summarize, and visualize data at the Order level.
-#' The functions prepares raster maps for the number of vascular plant
-#' observations and species per grid cell.
+#' Europe, supporting the Invasive Alien Species Digital Twin (`IASDT`).
+#' Orchestrated by `efforts_process()`, it uses helper functions to request,
+#' download, split, summarise, and visualise data at the Order level. The
+#' functions prepares raster maps for the number of vascular plant observations
+#' and species per grid cell.
 #'
 #' @param env_file Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
@@ -49,7 +49,7 @@
 #'   with paths.
 #' - **`efforts_split()`**: Splits zipped CSV data by order into chunks, saving
 #'   each separately.
-#' - **`efforts_summarize()`**: Processes and summarizes data into `RData` and
+#' - **`efforts_summarize()`**: Processes and summarises data into `RData` and
 #'   TIFF rasters.
 #' - **`efforts_plot()`**: Plots observation efforts (raw and log10 scales).
 #' @references Data source: <https://www.gbif.org>
@@ -71,7 +71,7 @@ efforts_process <- function(
 
   # # ..................................................................... ###
 
-  .StartTime <- lubridate::now(tzone = "CET")
+  .start_time <- lubridate::now(tzone = "CET")
 
   # Checking arguments ----
   IASDT.R::cat_time("Checking arguments")
@@ -131,7 +131,7 @@ efforts_process <- function(
 
   # Environment variables ----
   EnvVars2Read <- tibble::tribble(
-    ~VarName, ~Value, ~CheckDir, ~CheckFile,
+    ~var_name, ~value, ~check_dir, ~check_file,
     "Path_Efforts", "DP_R_Efforts_processed", FALSE, FALSE,
     "Path_Raw", "DP_R_Efforts_raw", FALSE, FALSE,
     "Path_Interim", "DP_R_Efforts_interim", FALSE, FALSE,
@@ -142,7 +142,7 @@ efforts_process <- function(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
-  AllRequests <- IASDT.R::path(Path_Efforts, "Efforts_AllRequests.RData")
+  AllRequests <- fs::path(Path_Efforts, "Efforts_AllRequests.RData")
 
   # # ..................................................................... ###
 
@@ -150,8 +150,8 @@ efforts_process <- function(
   IASDT.R::cat_time("Loading input data")
 
   ## Create paths -----
-  Path_Efforts_Requests <- IASDT.R::path(Path_Efforts, "Requests")
-  Path_Efforts_Cleaned <- IASDT.R::path(Path_Interim, "CleanedData")
+  Path_Efforts_Requests <- fs::path(Path_Efforts, "Requests")
+  Path_Efforts_Cleaned <- fs::path(Path_Interim, "CleanedData")
   # Create required directories
   fs::dir_create(
     c(
@@ -160,7 +160,7 @@ efforts_process <- function(
 
   ## Reference grid ----
   Grids <- Path_Grid %>%
-    IASDT.R::path(c("Grid_10_Land_Crop_sf.RData", "Grid_10_Land_Crop.RData"))
+    fs::path(c("Grid_10_Land_Crop_sf.RData", "Grid_10_Land_Crop.RData"))
 
   missing_grids <- Grids[!file.exists(Grids)]
   if (length(missing_grids) > 0) {
@@ -260,7 +260,7 @@ efforts_process <- function(
   # # ..................................................................... ###
 
   IASDT.R::cat_diff(
-    init_time = .StartTime,
+    init_time = .start_time,
     prefix = "\nProcessing efforts data took ", ... = "\n")
 
   return(invisible(NULL))

@@ -24,25 +24,25 @@
 #' @inheritParams cat_time
 #' @export
 #' @examples
-#' RefTime <- (lubridate::now() - lubridate::seconds(45))
-#' cat_diff(RefTime)
+#' reference_time <- (lubridate::now() - lubridate::seconds(45))
+#' cat_diff(reference_time)
 #'
-#' RefTime <- (lubridate::now() -
+#' reference_time <- (lubridate::now() -
 #'     (lubridate::minutes(50) + lubridate::seconds(45)))
-#' cat_diff(RefTime)
+#' cat_diff(reference_time)
 #'
-#' RefTime <- (lubridate::now() - lubridate::minutes(50))
-#' cat_diff(RefTime)
+#' reference_time <- (lubridate::now() - lubridate::minutes(50))
+#' cat_diff(reference_time)
 #'
-#' RefTime <- (lubridate::now() - lubridate::minutes(70))
-#' cat_diff(RefTime)
+#' reference_time <- (lubridate::now() - lubridate::minutes(70))
+#' cat_diff(reference_time)
 #'
-#' RefTime <- (lubridate::now() - lubridate::hours(4))
-#' cat_diff(RefTime)
+#' reference_time <- (lubridate::now() - lubridate::hours(4))
+#' cat_diff(reference_time)
 #'
-#' RefTime <- lubridate::now() -
+#' reference_time <- lubridate::now() -
 #'   (lubridate::hours(4) + lubridate::minutes(50) + lubridate::seconds(45))
-#' cat_diff(RefTime)
+#' cat_diff(reference_time)
 
 cat_diff <- function(
     init_time, chunk_text = "Session summary", prefix = "Completed in ",

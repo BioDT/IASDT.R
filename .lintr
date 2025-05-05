@@ -10,7 +10,7 @@ linters: linters_with_defaults(
 	# object_length_linter = NULL,
 	# object_usage_linter = NULL,
 	# pipe_continuation_linter = NULL,
-	# string_boundary_linter(),
+	string_boundary_linter(),
 	# trailing_whitespace_linter = NULL,
 	# undesirable_function_linter(),
     # implicit_integer_linter(),

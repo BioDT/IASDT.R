@@ -28,7 +28,7 @@ Defaults to "Completed in ".}
 \link{info_chunk} ("Session summary"). Defaults to \code{FALSE}.}
 
 \item{level}{integer; the level at which the message will be printed. If e.g.
-level = 1, the following string will be printed at the beginning of the
+\code{level = 1L}, the following string will be printed at the beginning of the
 message: "   >>>   ". Default is \code{0}.}
 
 \item{cat_timestamp}{logical; whether to include the time in the timestamp.
@@ -46,25 +46,25 @@ current time and prints it with a specified prefix. Optionally, it can also
 print a session summary.
 }
 \examples{
-RefTime <- (lubridate::now() - lubridate::seconds(45))
-cat_diff(RefTime)
+reference_time <- (lubridate::now() - lubridate::seconds(45))
+cat_diff(reference_time)
 
-RefTime <- (lubridate::now() -
+reference_time <- (lubridate::now() -
     (lubridate::minutes(50) + lubridate::seconds(45)))
-cat_diff(RefTime)
+cat_diff(reference_time)
 
-RefTime <- (lubridate::now() - lubridate::minutes(50))
-cat_diff(RefTime)
+reference_time <- (lubridate::now() - lubridate::minutes(50))
+cat_diff(reference_time)
 
-RefTime <- (lubridate::now() - lubridate::minutes(70))
-cat_diff(RefTime)
+reference_time <- (lubridate::now() - lubridate::minutes(70))
+cat_diff(reference_time)
 
-RefTime <- (lubridate::now() - lubridate::hours(4))
-cat_diff(RefTime)
+reference_time <- (lubridate::now() - lubridate::hours(4))
+cat_diff(reference_time)
 
-RefTime <- lubridate::now() -
+reference_time <- lubridate::now() -
   (lubridate::hours(4) + lubridate::minutes(50) + lubridate::seconds(45))
-cat_diff(RefTime)
+cat_diff(reference_time)
 }
 \author{
 Ahmed El-Gabbas

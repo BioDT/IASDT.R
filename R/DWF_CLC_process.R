@@ -798,7 +798,7 @@ CLC_get_majority <- function(
     dplyr::filter(Class %in% NAClasses) %>%
     dplyr::pull(ID)
 
-  Map <- terra::classify(Map, cbind(NA, VV)) %>% 
+  Map <- terra::classify(Map, cbind(NA, VV)) %>%
     ecokit::set_raster_crs(crs = "epsg:3035")
   levels(Map) <- list(MapLevelsNew)
 

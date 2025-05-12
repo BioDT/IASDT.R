@@ -595,7 +595,7 @@ GBIF_process <- function(
 
   ecokit::cat_time(
     paste0("Prepare working in parallel using ", n_cores, " cores"),
-    level = 1L)
+    level = 2L)
 
   if (n_cores == 1) {
     future::plan("future::sequential", gc = TRUE)
@@ -613,8 +613,13 @@ GBIF_process <- function(
   furrr::future_walk(
     .x = SpList, .f = IASDT.R::GBIF_species_data, env_file = env_file,
     verbose = FALSE, plot_tag = plot_tag,
-    .options = furrr::furrr_options(seed = TRUE, packages = "dplyr")
-  )
+    .options = furrr::furrr_options(
+      seed = TRUE,
+      packages = c(
+        "dplyr", "ecokit", "cowplot", "ggplot2", "terra", "tidyterra",
+        "tibble", "fs", "magrittr", "stringr", "sf", "ragg",
+        "cowplot", "grid"),
+      globals = c("env_file", "plot_tag")))
 
   ecokit::cat_time("Stopping cluster", level = 2L)
   if (n_cores > 1) {

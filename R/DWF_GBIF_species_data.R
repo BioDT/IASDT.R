@@ -135,8 +135,7 @@ GBIF_species_data <- function(
     FilePath_R <- fs::path(Path_Raster, paste0(Obj_Name_Raster, ".RData"))
     ecokit::save_as(
       object = terra::wrap(Sp_R), object_name = Obj_Name_Raster,
-      out_path = FilePath_R
-    )
+      out_path = FilePath_R)
 
     # ****************************************************
     ## Plotting species data

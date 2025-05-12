@@ -22,20 +22,13 @@ jobs:
         with:
           use-public-rspm: true
 
-      - name: Install remotes
-        run: R -e 'install.packages("remotes", repos = "https://cloud.r-project.org")'
-      
-      - name: Install HMSC and ecokit from GitHub
-        run: |
-          R -e 'remotes::install_github(c(
-            "hmsc-r/HMSC",
-            "elgabbas/ecokit"
-          ), dependencies = TRUE)'
-
-
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::lintr, local::.
+          extra-packages: |
+            any::lintr
+            github::elgabbas/ecokit
+            github::hmsc-r/HMSC
+            local::.
           needs: lint
 
       - name: Lint

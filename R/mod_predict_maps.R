@@ -104,7 +104,8 @@ predict_maps <- function(
   if (length(hab_abb) != 1) {
     ecokit::stop_ctx(
       "`hab_abb` must be a single character value",
-      hab_abb = hab_abb, length_hab_abb = length(hab_abb))
+      hab_abb = hab_abb, length_hab_abb = length(hab_abb),
+      include_backtrace = TRUE)
   }
 
   hab_name <- c(
@@ -147,7 +148,7 @@ predict_maps <- function(
   if (!file.exists(env_file)) {
     ecokit::stop_ctx(
       "Error: Environment file is invalid or does not exist.",
-      env_file = env_file)
+      env_file = env_file, include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -159,7 +160,7 @@ predict_maps <- function(
       paste0(
         "Invalid Habitat abbreviation. Valid values are:\n >> ",
         toString(ValidHabAbbs)),
-      hab_abb = hab_abb)
+      hab_abb = hab_abb, include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -226,14 +227,14 @@ predict_maps <- function(
     if (is.null(fix_efforts)) {
       ecokit::stop_ctx(
         "`fix_efforts` can not be `NULL` when Clamping is implemented",
-        fix_efforts = fix_efforts)
+        fix_efforts = fix_efforts, include_backtrace = TRUE)
     }
 
     # Check if fix_efforts is a vector or length 1
     if (length(fix_efforts) != 1) {
       ecokit::stop_ctx(
         "`fix_efforts` must be a vector or length 1.",
-        fix_efforts = fix_efforts)
+        fix_efforts = fix_efforts, include_backtrace = TRUE)
     }
 
     # Create folder for clamp results only if clamp_pred == TRUE
@@ -283,7 +284,8 @@ predict_maps <- function(
   Path_GridR <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(Path_GridR)) {
     ecokit::stop_ctx(
-      "Path for the Europe boundaries does not exist", Path_GridR = Path_GridR)
+      "Path for the Europe boundaries does not exist", Path_GridR = Path_GridR,
+      include_backtrace = TRUE)
   }
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
@@ -294,7 +296,8 @@ predict_maps <- function(
 
   if (is.null(path_model) || !file.exists(path_model)) {
     ecokit::stop_ctx(
-      "Model path is NULL or does not exist ", path_model = path_model)
+      "Model path is NULL or does not exist ", path_model = path_model,
+      include_backtrace = TRUE)
   }
 
   Model <- ecokit::load_as(path_model)
@@ -303,7 +306,8 @@ predict_maps <- function(
   if (clamp_pred && isFALSE("EffortsLog" %in% names(Model$XData))) {
     ecokit::stop_ctx(
       "`clamp_pred` can not be used when `EffortsLog` is not used as predictor",
-      clamp_pred = clamp_pred, names_data = names(Model$XData))
+      clamp_pred = clamp_pred, names_data = names(Model$XData),
+      include_backtrace = TRUE)
   }
 
   other_variables <- paste0(
@@ -328,7 +332,8 @@ predict_maps <- function(
   Path_CHELSA <- fs::path(Path_CHELSA, "CHELSA_Processed_DT.RData")
   if (!file.exists(Path_CHELSA)) {
     ecokit::stop_ctx(
-      "Processed CHLESA data can not be found", Path_CHELSA = Path_CHELSA)
+      "Processed CHLESA data can not be found", Path_CHELSA = Path_CHELSA,
+      include_backtrace = TRUE)
   }
 
   Prediction_Options <- ecokit::load_as(Path_CHELSA) %>%
@@ -366,7 +371,9 @@ predict_maps <- function(
 
     R_Railways <- fs::path(Path_Rail, "Railways_Length.RData")
     if (!file.exists(R_Railways)) {
-      ecokit::stop_ctx("Railways data does not exist", R_Railways = R_Railways)
+      ecokit::stop_ctx(
+        "Railways data does not exist", R_Railways = R_Railways,
+        include_backtrace = TRUE)
     }
     R_Railways <- ecokit::load_as(R_Railways) %>%
       terra::unwrap() %>%
@@ -374,7 +381,9 @@ predict_maps <- function(
 
     R_Roads <- fs::path(Path_Roads, "Road_Length.RData")
     if (!file.exists(R_Roads)) {
-      ecokit::stop_ctx("Roads data does not exist", R_Roads = R_Roads)
+      ecokit::stop_ctx(
+        "Roads data does not exist", R_Roads = R_Roads,
+        include_backtrace = TRUE)
     }
     R_Roads <- ecokit::load_as(R_Roads) %>%
       terra::unwrap() %>%
@@ -403,7 +412,8 @@ predict_maps <- function(
     R_Hab <- fs::path(
       Path_CLC, "Summary_RData", "PercCov_SynHab_Crop.RData")
     if (!file.exists(R_Hab)) {
-      ecokit::stop_ctx("Habitat data does not exist", R_Hab = R_Hab)
+      ecokit::stop_ctx(
+        "Habitat data does not exist", R_Hab = R_Hab, include_backtrace = TRUE)
     }
 
     R_Hab <- ecokit::load_as(R_Hab) %>%
@@ -433,7 +443,8 @@ predict_maps <- function(
     R_Efforts <- fs::path(Path_Bias, "Efforts_SummaryR.RData")
     if (!file.exists(R_Efforts)) {
       ecokit::stop_ctx(
-        "Sampling efforts data does not exist", R_Efforts = R_Efforts)
+        "Sampling efforts data does not exist", R_Efforts = R_Efforts,
+        include_backtrace = TRUE)
     }
 
     R_Efforts <- ecokit::load_as(R_Efforts) %>%
@@ -463,7 +474,8 @@ predict_maps <- function(
         if (InvalidVal) {
           ecokit::stop_ctx(
             "`fix_efforts` value is out of the range of observed efforts",
-            fix_efforts = fix_efforts, EffortsRange = round(EffortsRange, 2))
+            fix_efforts = fix_efforts, EffortsRange = round(EffortsRange, 2),
+            include_backtrace = TRUE)
         }
 
         # Fix value
@@ -480,7 +492,7 @@ predict_maps <- function(
               "`fix_efforts` has to be either NULL, single numeric ",
               "value, or one of the following: 'median', 'mean', 'max', ",
               "or `q90`."),
-            fix_efforts = fix_efforts)
+            fix_efforts = fix_efforts, include_backtrace = TRUE)
         }
       }
 
@@ -553,7 +565,9 @@ predict_maps <- function(
 
     R_Rivers <- fs::path(Path_Rivers, "River_Lengths.RData")
     if (!file.exists(R_Rivers)) {
-      ecokit::stop_ctx("River length data does not exist", R_Rivers = R_Rivers)
+      ecokit::stop_ctx(
+        "River length data does not exist", R_Rivers = R_Rivers,
+        include_backtrace = TRUE)
     }
 
     R_Rivers <- ecokit::load_as(R_Rivers) %>%
@@ -583,7 +597,8 @@ predict_maps <- function(
       if (length(fix_rivers) != 1) {
         # Check if fix_rivers is a vector or length 1
         ecokit::stop_ctx(
-          "`fix_rivers` must be a vector or length 1.", fix_rivers = fix_rivers)
+          "`fix_rivers` must be a vector or length 1.", fix_rivers = fix_rivers,
+          include_backtrace = TRUE)
       }
 
       if (is.numeric(fix_rivers)) {
@@ -600,7 +615,8 @@ predict_maps <- function(
         if (InvalidVal) {
           ecokit::stop_ctx(
             "`fix_rivers` value is out of the range of observed river length",
-            fix_rivers = fix_rivers, RiversRange = round(RiversRange, 2))
+            fix_rivers = fix_rivers, RiversRange = round(RiversRange, 2),
+            include_backtrace = TRUE)
         }
 
         # Fix value
@@ -617,7 +633,7 @@ predict_maps <- function(
               "`fix_rivers` has to be either NULL, single numeric ",
               "value, or one of the following: 'median', 'mean', 'max', ",
               "or 'q90'."),
-            fix_rivers = fix_rivers)
+            fix_rivers = fix_rivers, include_backtrace = TRUE)
         }
 
         # Fix value
@@ -716,7 +732,7 @@ predict_maps <- function(
       # Only extract predictors used in the model
       terra::subset(bio_variables) %>%
       # Combine with other static predictors
-      c(StaticPredictors) %>%
+      c(StaticPredictors) %>% # nolint: consecutive_concatenation_linter
       # If Habitat predictor is used, grid cells with zero % coverage are
       # excluded from predictions [na.rm = TRUE]
       terra::as.data.frame(xy = TRUE, cells = TRUE, na.rm = TRUE) %>%
@@ -1490,7 +1506,7 @@ predict_maps <- function(
     TarFile <- fs::path(TarDir, "Predictions.tar")
     # List of directories in the prediction folder. All directories will be
     # included in the tar file
-    TarFiles <- list.dirs(
+    TarFiles <- list.dirs(      # nolint: object_name_linter
       path = TarDir, full.names = FALSE, recursive = FALSE) %>%
       paste(collapse = " ") %>%
       # Add the summary files to the list

@@ -43,7 +43,8 @@ CLC_plot <- function(
         "`CLC_name`, `EU_map`, `crosswalk`, `path_JPEG`, and ",
         "`path_JPEG_free` can not be empty"),
       CLC_name = CLC_name, EU_map = EU_map, crosswalk = crosswalk,
-      path_JPEG = path_JPEG, path_JPEG_free = path_JPEG_free)
+      path_JPEG = path_JPEG, path_JPEG_free = path_JPEG_free,
+      include_backtrace = TRUE)
   }
 
   CLC_MapR <- dplyr::filter(CLC_map, Name == CLC_name) %>%

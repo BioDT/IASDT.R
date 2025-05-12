@@ -24,7 +24,8 @@ mod_SLURM_refit <- function(
     ecokit::stop_ctx(
       paste0(toString(NullVarsNames[NullVars]), " cannot be missing."),
       NullVars = NullVars, length_NullVars = length(NullVars),
-      Vars = NullVarsNames[NullVars])
+      Vars = NullVarsNames[NullVars],
+      include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -37,7 +38,8 @@ mod_SLURM_refit <- function(
 
   if (!file.exists(env_file)) {
     ecokit::stop_ctx(
-      "Path to environment variables was not found", env_file = env_file)
+      "Path to environment variables was not found", env_file = env_file,
+      include_backtrace = TRUE)
   }
 
   if (is.null(job_name)) {
@@ -70,7 +72,9 @@ mod_SLURM_refit <- function(
   # Remove temp files and incomplete RDs files -----
 
   if (!fs::dir_exists(model_dir)) {
-    ecokit::stop_ctx("Model directory does not exist", model_dir = model_dir)
+    ecokit::stop_ctx(
+      "Model directory does not exist", model_dir = model_dir,
+      include_backtrace = TRUE)
   }
 
   Path_Model_Fit <- fs::path(model_dir, "Model_Fitting_HPC")

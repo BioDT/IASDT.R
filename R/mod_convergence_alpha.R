@@ -18,19 +18,21 @@ convergence_alpha <- function(
   if (is.null(posterior) || is.null(model_object)) {
     ecokit::stop_ctx(
       "`posterior` and `model_object` cannot be empty",
-      model_object = model_object, posterior = posterior)
+      model_object = model_object, posterior = posterior,
+      include_backtrace = TRUE)
   }
 
   if (length(margin_type) != 1) {
     ecokit::stop_ctx(
       "`margin_type` must be a single string.",
-      margin_type = margin_type, length_margin_type = length(margin_type))
+      margin_type = margin_type, length_margin_type = length(margin_type),
+      include_backtrace = TRUE)
   }
 
   if (!margin_type %in% c("histogram", "density")) {
     ecokit::stop_ctx(
       "`margin_type` must be either 'histogram' or 'density'.",
-      margin_type = margin_type)
+      margin_type = margin_type, include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -59,7 +61,7 @@ convergence_alpha <- function(
   if (!("Alpha" %in% names(posterior))) {
     ecokit::stop_ctx(
       "`posterior` object does not contain 'Alpha'",
-      names_posterior = names(posterior))
+      names_posterior = names(posterior), include_backtrace = TRUE)
   }
   posterior <- posterior$Alpha[[1]]
 
@@ -69,7 +71,7 @@ convergence_alpha <- function(
     model_object <- ecokit::load_as(model_object)
   }
 
-  SampleSize <- model_object$samples
+  SampleSize <- model_object$samples      # nolint: object_name_linter
   NChains <- length(model_object$postList)
 
   #  Plotting colours
@@ -104,18 +106,18 @@ convergence_alpha <- function(
     dplyr::pull(Gelman)
 
   ## Effective sample size
-  ESS <- coda::effectiveSize(x = posterior) %>%
+  ESS <- coda::effectiveSize(x = posterior) %>%  # nolint: object_name_linter
     magrittr::divide_by(NChains) %>%
     round(1)
 
   ## quantiles
-  CI <- summary(posterior, quantiles = c(0.025, 0.975)) %>%
+  CI <- summary(posterior, quantiles = c(0.025, 0.975)) %>% # nolint: object_name_linter
     magrittr::extract2("quantiles") %>%
     matrix(ncol = 2) %>%
     magrittr::divide_by(1000) %>%
     round(3)
 
-  AlphaDF <- IASDT.R::coda_to_tibble(
+  AlphaDF <- IASDT.R::coda_to_tibble(      # nolint: object_name_linter
     coda_object = posterior, posterior_type = "alpha") %>%
     dplyr::mutate(
       Factor2 = purrr::map_int(

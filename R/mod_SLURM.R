@@ -66,7 +66,7 @@ mod_SLURM <- function(
         "and `path_Hmsc` ", "cannot be empty"),
       model_dir = model_dir, job_name = job_name,
       memory_per_cpu = memory_per_cpu, job_runtime = job_runtime,
-      path_Hmsc = path_Hmsc)
+      path_Hmsc = path_Hmsc, include_backtrace = TRUE)
   }
 
   # # |||||||||||||||||||||||||||||||||||
@@ -74,7 +74,9 @@ mod_SLURM <- function(
   # # |||||||||||||||||||||||||||||||||||
 
   if (!file.exists(env_file)) {
-    ecokit::stop_ctx("Environment file not found", env_file = env_file)
+    ecokit::stop_ctx(
+      "Environment file not found", env_file = env_file,
+      include_backtrace = TRUE)
   }
 
   EnvVars2Read <- tibble::tribble(
@@ -113,7 +115,9 @@ mod_SLURM <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   if (!fs::dir_exists(model_dir)) {
-    ecokit::stop_ctx("Model directory does not exist", model_dir = model_dir)
+    ecokit::stop_ctx(
+      "Model directory does not exist", model_dir = model_dir,
+      include_backtrace = TRUE)
   }
 
   ListCommands <- list.files(
@@ -122,7 +126,8 @@ mod_SLURM <- function(
   if (NCommandFiles == 0) {
     ecokit::stop_ctx(
       "The file containing the bash commands does not exist",
-      NCommandFiles = NCommandFiles, ListCommands = basename(ListCommands))
+      NCommandFiles = NCommandFiles, ListCommands = basename(ListCommands),
+      include_backtrace = TRUE)
   }
 
   if (is.null(SLURM_path_out)) {
@@ -145,7 +150,7 @@ mod_SLURM <- function(
           paste0(".slurm")
         JobName0 <- stringr::str_remove_all(OutFile, "_Fit|_Bash|.slurm$")
       } else {
-        if (NCommandFiles == 1) {
+        if (NCommandFiles == 1) { # nolint: unnecessary_nesting_linter
           OutFile <- paste0(SLURM_prefix, ".slurm")
           JobName0 <- job_name
         } else {

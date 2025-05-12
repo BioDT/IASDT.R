@@ -49,7 +49,8 @@ resp_curv_plot_SR <- function(model_dir, verbose = TRUE, n_cores = 8L) {
 
   if (!dir.exists(Path_RC_DT)) {
     ecokit::stop_ctx(
-      "Response curve data subfolder is missing.", Path_RC_DT = Path_RC_DT)
+      "Response curve data subfolder is missing.", Path_RC_DT = Path_RC_DT,
+      include_backtrace = TRUE)
   }
 
   fs::dir_create(Path_RC_SR)

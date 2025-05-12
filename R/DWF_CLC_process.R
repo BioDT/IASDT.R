@@ -46,19 +46,22 @@ CLC_process <- function(
     EU_Bound <- Value <- Country <- Country2 <- NULL
 
   if (is.null(env_file)) {
-    ecokit::stop_ctx("env_file can not be empty", env_file = env_file)
+    ecokit::stop_ctx(
+      "env_file can not be empty", env_file = env_file,
+      include_backtrace = TRUE)
   }
 
   if (!is.numeric(min_land_percent) ||
       !dplyr::between(min_land_percent, 0, 100)) {
     ecokit::stop_ctx(
       "`min_land_percent` must be a numeric value between 0 and 100.",
-      min_land_percent = min_land_percent)
+      min_land_percent = min_land_percent, include_backtrace = TRUE)
   }
 
   if (!file.exists(env_file)) {
     ecokit::stop_ctx(
-      "Path to environment variables was not found", env_file = env_file)
+      "Path to environment variables was not found", env_file = env_file,
+      include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -104,7 +107,9 @@ CLC_process <- function(
     .x = requiredPaths,
     .f = function(path) {
       if (!file.exists(path)) {
-        ecokit::stop_ctx("Required path does not exist", path = path)
+        ecokit::stop_ctx(
+          "Required path does not exist", path = path,
+          include_backtrace = TRUE)
       }
     }
   )
@@ -236,7 +241,7 @@ CLC_process <- function(
           x = CLC_Fracs_vect, y = terra::rast(Grid_R), field = .x) %>%
           magrittr::multiply_by(100) %>%
           stats::setNames(.x) %>%
-          ecokit::set_raster_CRS()
+          ecokit::set_raster_crs(crs = "epsg:3035")
 
         # For `frac_44` (CLC 5.2.3 Sea and ocean), the original values do not
         # cover the whole study area, resulting in values of zero in the sea.
@@ -346,7 +351,7 @@ CLC_process <- function(
     # calculate the sum of these classes
     sum() %>%
     stats::setNames("Grid_10_Land") %>%
-    ecokit::set_raster_CRS()
+    ecokit::set_raster_crs(crs = "epsg:3035")
 
   ## ||||||||||||||||||||||||||||||||||||||||
   # Reference grid
@@ -362,7 +367,7 @@ CLC_process <- function(
   ecokit::cat_time("Reference grid --- cropped", level = 2L)
   Grid_10_Land_Crop <- terra::trim(Grid_10_Land) %>%
     stats::setNames("Grid_10_Land_Crop") %>%
-    ecokit::set_raster_CRS()
+    ecokit::set_raster_crs(crs = "epsg:3035")
 
   ecokit::cat_time("Reference grid --- sf object", level = 2L)
   Grid_10_Land_sf <- terra::as.points(Grid_10_Land) %>%
@@ -488,7 +493,7 @@ CLC_process <- function(
 
         Map <- terra::crop(.y, terra::unwrap(Grid_10_Land_Crop)) %>%
           terra::mask(terra::unwrap(Grid_10_Land_Crop)) %>%
-          ecokit::set_raster_CRS()
+          ecokit::set_raster_crs(crs = "epsg:3035")
 
         terra::writeRaster(
           x = Map, overwrite = TRUE,
@@ -628,7 +633,8 @@ CLC_get_percentage <- function(
     ecokit::stop_ctx(
       "None of the input parameters can be empty",
       CLC_type = CLC_type, CLC_crossWalk = CLC_crossWalk,
-      CLC_fracs_r = CLC_fracs_r, path_tif = path_tif, path_RData = path_RData)
+      CLC_fracs_r = CLC_fracs_r, path_tif = path_tif, path_RData = path_RData,
+      include_backtrace = TRUE)
   }
 
   if (!(
@@ -637,7 +643,7 @@ CLC_get_percentage <- function(
       paste0(
         "CLC_type has to be one of SynHab, CLC_L1, CLC_L2, ",
         "CLC_L3, and EUNIS_2019"),
-      CLC_type = CLC_type)
+      CLC_type = CLC_type, include_backtrace = TRUE)
   }
   # # ..................................................................... ###
 
@@ -728,7 +734,7 @@ CLC_get_majority <- function(
       CLC_type = CLC_type, CLC_majority = CLC_majority,
       path_tif = path_tif, path_tif_crop = path_tif_crop,
       path_RData = path_RData, Grid_10_Land = Grid_10_Land,
-      Grid_10_Land_Crop = Grid_10_Land_Crop)
+      Grid_10_Land_Crop = Grid_10_Land_Crop, include_backtrace = TRUE)
   }
 
   if (!(
@@ -737,7 +743,7 @@ CLC_get_majority <- function(
       paste0(
         "CLC_type has to be one of SynHab, CLC_L1, CLC_L2, ",
         "CLC_L3, and EUNIS_2019"),
-      CLC_type = CLC_type)
+      CLC_type = CLC_type, include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -792,7 +798,7 @@ CLC_get_majority <- function(
     dplyr::filter(Class %in% NAClasses) %>%
     dplyr::pull(ID)
 
-  Map <- ecokit::set_raster_CRS(terra::classify(Map, cbind(NA, VV)))
+  Map <- ecokit::set_raster_crs(terra::classify(Map, cbind(NA, VV)))
   levels(Map) <- list(MapLevelsNew)
 
   terra::writeRaster(
@@ -813,7 +819,7 @@ CLC_get_majority <- function(
   # CROPPING
   Map_Cr <- terra::crop(x = Map, y = terra::unwrap(Grid_10_Land_Crop)) %>%
     terra::mask(mask = terra::unwrap(Grid_10_Land_Crop)) %>%
-    ecokit::set_raster_CRS()
+    ecokit::set_raster_crs(crs = "epsg:3035")
 
   terra::writeRaster(
     x = Map_Cr, overwrite = TRUE,

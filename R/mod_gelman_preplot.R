@@ -28,7 +28,8 @@ gelman_preplot <- function(
   nbin <- min(floor((coda::niter(x) - 50) / coda::thin(x)), max.bins)
   if (nbin < 1) {
     ecokit::stop_ctx(
-      "Insufficient iterations to produce Gelman-Rubin plot", nbin = nbin)
+      "Insufficient iterations to produce Gelman-Rubin plot", nbin = nbin,
+      include_backtrace = TRUE)
   }
   binw <- floor((coda::niter(x) - 50) / nbin)
   last.iter <- c(

@@ -31,7 +31,7 @@ convergence_plot_all <- function(
   if (is.null(model_dir) || is.null(n_cores)) {
     ecokit::stop_ctx(
       "`model_dir` and `n_cores` must not be NULL",
-      model_dir = model_dir, n_cores = n_cores)
+      model_dir = model_dir, n_cores = n_cores, include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -62,13 +62,14 @@ convergence_plot_all <- function(
 
   if (length(margin_type) != 1) {
     ecokit::stop_ctx(
-      "`margin_type` must be a single value.", margin_type = margin_type)
+      "`margin_type` must be a single value.", margin_type = margin_type,
+      include_backtrace = TRUE)
   }
 
   if (!margin_type %in% c("histogram", "density")) {
     ecokit::stop_ctx(
       "`margin_type` must be either 'histogram' or 'density'.",
-      margin_type = margin_type)
+      margin_type = margin_type, include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -83,7 +84,9 @@ convergence_plot_all <- function(
 
   Model_Info <- fs::path(model_dir, "Model_Info.RData")
   if (!file.exists(Model_Info)) {
-    ecokit::stop_ctx("Model info file does not exist", Model_Info = Model_Info)
+    ecokit::stop_ctx(
+      "Model info file does not exist", Model_Info = Model_Info,
+      include_backtrace = TRUE)
   }
   Model_Info <- ecokit::load_as(Model_Info)
 
@@ -193,7 +196,7 @@ convergence_plot_all <- function(
         Omega_ESS <- coda::effectiveSize(Omega)
 
         # OMEGA - gelman.diag
-        sel <- sample.int(n = dim(Omega[[1]])[2], size = n_omega)
+        sel <- sample.int(n = dim(Omega[[1]])[2], size = n_omega)  # nolint: object_use_linter
 
         Omega_Gelman <- purrr::map(.x = Omega, .f = ~ .x[, sel]) %>%
           coda::gelman.diag(multivariate = FALSE) %>%

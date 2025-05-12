@@ -22,7 +22,8 @@ efforts_split <- function(
   # Check if chunk_size is valid (greater than zero)
   if (!is.numeric(chunk_size) || chunk_size <= 0) {
     ecokit::stop_ctx(
-      "chunk_size must be a positive number.", chunk_size = chunk_size)
+      "chunk_size must be a positive number.", chunk_size = chunk_size,
+      include_backtrace = TRUE)
   }
 
   # Check if `path_zip` is a character of length 1 and not empty. Also Check
@@ -31,12 +32,14 @@ efforts_split <- function(
     is.null(path_zip)) {
     ecokit::stop_ctx(
       "`path_zip` must be a character of length 1 and not empty.",
-      path_zip = path_zip)
+      path_zip = path_zip, include_backtrace = TRUE)
   }
 
   # Check if `path_zip` is a valid path
   if (!file.exists(path_zip)) {
-    ecokit::stop_ctx("`path_zip` is not a valid path.", path_zip = path_zip)
+    ecokit::stop_ctx(
+      "`path_zip` is not a valid path.", path_zip = path_zip,
+      include_backtrace = TRUE)
   }
 
 
@@ -45,7 +48,8 @@ efforts_split <- function(
   CommandsAvail <- purrr::map_lgl(Commands, ecokit::check_system_command)
   if (!all(CommandsAvail)) {
     Missing <- paste(Commands[!CommandsAvail], collapse = " + ")
-    ecokit::stop_ctx("Missing commands", missing_commands = Missing)
+    ecokit::stop_ctx(
+      "Missing commands", missing_commands = Missing, include_backtrace = TRUE)
   }
 
   # ensure that `chunk_size` is not formatted in scientific notation
@@ -100,7 +104,8 @@ efforts_split <- function(
     ecokit::system_command(Command, r_object = FALSE),
     error = function(e) {
       ecokit::stop_ctx(
-        paste0("Failed to execute system command: ", e$message))
+        paste0("Failed to execute system command: ", e$message),
+        include_backtrace = TRUE)
     }
   )
   rm(Path_Chunks, envir = environment())

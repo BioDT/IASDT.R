@@ -73,7 +73,8 @@ mod_CV_fit <- function(
     NullVarsNames[NullVars]
     ecokit::stop_ctx(
       paste0(toString(NullVarsNames[NullVars]), " cannot be NULL"),
-      NullVars = NullVars, length_NullVars = length(NullVars))
+      NullVars = NullVars, length_NullVars = length(NullVars),
+      include_backtrace = TRUE)
   }
 
   AllArgs <- ls(envir = environment())
@@ -96,11 +97,14 @@ mod_CV_fit <- function(
 
   if (!(precision %in% c(32, 64))) {
     ecokit::stop_ctx(
-      "precision should be either of 32 or 64", precision = precision)
+      "precision should be either of 32 or 64", precision = precision,
+      include_backtrace = TRUE)
   }
 
   if (!file.exists(path_model)) {
-    ecokit::stop_ctx("Model path does not exist.", path_model = path_model)
+    ecokit::stop_ctx(
+      "Model path does not exist.", path_model = path_model,
+      include_backtrace = TRUE)
   }
 
   rm(AllArgs, NullVarsNames, NullVars, envir = environment())
@@ -121,7 +125,7 @@ mod_CV_fit <- function(
     ecokit::stop_ctx(
       "There should be exactly one file matches model input data",
       length_Path_ModelData = length(Path_ModelData),
-      Path_ModelData = Path_ModelData)
+      Path_ModelData = Path_ModelData, include_backtrace = TRUE)
   }
 
   # Loading full model object
@@ -159,7 +163,7 @@ mod_CV_fit <- function(
           paste(MissingCV, collapse = " + "),
           " can not be found in species data"),
         CV_name = CV_name, Partitions = Partitions,
-        names_CV_Data = names(CV_Data))
+        names_CV_Data = names(CV_Data), include_backtrace = TRUE)
     }
 
     # Extract CV folds from the CV column(s)
@@ -179,7 +183,8 @@ mod_CV_fit <- function(
         "Partitions parameter must be a vector of the same length of the ",
         "sampling  units of the the full model"),
       Partitions = Partitions, model_ny = Model_Full$ny,
-      length_Partitions = purrr::map_int(Partitions, length))
+      length_Partitions = purrr::map_int(Partitions, length),
+      include_backtrace = TRUE)
   }
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -360,7 +365,7 @@ mod_CV_fit <- function(
 
   CV_DT <- CV_DT %>%
     dplyr::mutate(ModName = paste0(CV_name, CV), .after = CV) %>%
-    dplyr::mutate(
+    dplyr::mutate(                # nolint: consecutive_mutate_linter
       ModelPrep = purrr::pmap(
         .l = list(Path_ModInit_rds, CV, ModName),
         .f = function(Path_ModInit_rds, CV, ModName) {

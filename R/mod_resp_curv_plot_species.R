@@ -32,7 +32,9 @@ resp_curv_plot_species <- function(
   ecokit::cat_time("Check arguments")
 
   if (is.null(model_dir)) {
-    ecokit::stop_ctx("`model_dir` cannot be NULL", model_dir = model_dir)
+    ecokit::stop_ctx(
+      "`model_dir` cannot be NULL", model_dir = model_dir,
+      include_backtrace = TRUE)
   }
 
   AllArgs <- ls(envir = environment())
@@ -54,7 +56,8 @@ resp_curv_plot_species <- function(
   Path_RC_DT <- fs::path(model_dir, "Model_Postprocessing", "RespCurv_DT")
   if (!dir.exists(Path_RC_DT)) {
     ecokit::stop_ctx(
-      "Response curve data subfolder is missing.", Path_RC_DT = Path_RC_DT)
+      "Response curve data subfolder is missing.", Path_RC_DT = Path_RC_DT,
+      include_backtrace = TRUE)
   }
   Path_RC_Sp <- fs::path(model_dir, "Model_Postprocessing", "RespCurv_Sp")
   Path_RC_Sp_DT <- fs::path(model_dir, "Model_Postprocessing", "RespCurv_Sp_DT")
@@ -75,7 +78,9 @@ resp_curv_plot_species <- function(
 
   SpSummary <- fs::path(Path_PA, "Sp_PA_Summary_DF.csv")
   if (!file.exists(SpSummary)) {
-    ecokit::stop_ctx("SpSummary file does not exist", SpSummary = SpSummary)
+    ecokit::stop_ctx(
+      "SpSummary file does not exist", SpSummary = SpSummary,
+      include_backtrace = TRUE)
   }
 
   SpSummary <- readr::read_csv(

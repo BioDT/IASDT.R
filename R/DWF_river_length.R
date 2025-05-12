@@ -88,7 +88,8 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
   RefGrid <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(RefGrid)) {
     ecokit::stop_ctx(
-      "The reference grid file does not exist", RefGrid = RefGrid)
+      "The reference grid file does not exist", RefGrid = RefGrid,
+      include_backtrace = TRUE)
   }
   RefGrid <- terra::unwrap(ecokit::load_as(RefGrid))
 
@@ -103,14 +104,14 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
   if (!file.exists(Path_Rivers_Zip) || fs::file_size(Path_Rivers_Zip) == 0) {
     ecokit::stop_ctx(
       "The river network ZIP file is missing or empty",
-      Path_Rivers_Zip = Path_Rivers_Zip)
+      Path_Rivers_Zip = Path_Rivers_Zip, include_backtrace = TRUE)
   }
 
   # Check the integrity of the ZIP file
   if (!ecokit::check_zip(Path_Rivers_Zip)) {
     ecokit::stop_ctx(
       "The river network ZIP file is corrupted",
-      Path_Rivers_Zip = Path_Rivers_Zip)
+      Path_Rivers_Zip = Path_Rivers_Zip, include_backtrace = TRUE)
   }
 
 

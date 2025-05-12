@@ -34,7 +34,8 @@ CHELSA_prepare <- function(
 
   if (n_cores < 1) {
     ecokit::stop_ctx(
-      "`n_cores` must be a positive integer.", n_cores = n_cores)
+      "`n_cores` must be a positive integer.", n_cores = n_cores,
+      include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###

@@ -69,19 +69,21 @@ convergence_plot <- function(
   if (is.null(path_coda) || is.null(path_model) || is.null(n_cores)) {
     ecokit::stop_ctx(
       "path_coda, path_model, and n_cores cannot be empty",
-      path_coda = path_coda, path_model = path_model, n_cores = n_cores)
+      path_coda = path_coda, path_model = path_model, n_cores = n_cores,
+      include_backtrace = TRUE)
   }
 
   if (length(margin_type) != 1) {
     ecokit::stop_ctx(
       "`margin_type` must be a single value.",
-      margin_type = margin_type, length_margin_type = length(margin_type))
+      margin_type = margin_type, length_margin_type = length(margin_type),
+      include_backtrace = TRUE)
   }
 
   if (!margin_type %in% c("histogram", "density")) {
     ecokit::stop_ctx(
       "`margin_type` must be either 'histogram' or 'density'.",
-      margin_type = margin_type)
+      margin_type = margin_type, include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -91,8 +93,8 @@ convergence_plot <- function(
   SpComb <- `2.5%` <- `97.5%` <- Class <- Order <- Family <- DT <- IAS_ID <-
     Species <- Variable <- data <- PlotID <- File <- Page <- Iter <- Value <-
     Chain <- y <- label <- Var_Sp <- CI_025 <- CI_975 <- Var_Min <- Var_Max <-
-    Plot_File <- Var_Sp2 <- Species_name <- Species_File <- Var_Sp_File <-
-    Path_PA <- VarDesc <- Term <- NULL
+    Plot_File <- Var_Sp2 <- Species_name <- Species_File <- Path_PA <-
+    VarDesc <- Term <- NULL
 
   # # ..................................................................... ###
 
@@ -129,7 +131,9 @@ convergence_plot <- function(
 
   SpSummary <- fs::path(Path_PA, "Sp_PA_Summary_DF.csv")
   if (!file.exists(SpSummary)) {
-    ecokit::stop_ctx("SpSummary file does not exist", SpSummary = SpSummary)
+    ecokit::stop_ctx(
+      "SpSummary file does not exist", SpSummary = SpSummary,
+      include_backtrace = TRUE)
   }
 
   SpSummary <- readr::read_csv(
@@ -154,11 +158,15 @@ convergence_plot <- function(
   ecokit::cat_time("Prepare convergence data")
 
   if (!file.exists(path_model)) {
-    ecokit::stop_ctx("`path_model` does not exist", path_model = path_model)
+    ecokit::stop_ctx(
+      "`path_model` does not exist", path_model = path_model,
+      include_backtrace = TRUE)
   }
 
   if (!file.exists(path_coda)) {
-    ecokit::stop_ctx("`path_coda` does not exist", path_coda = path_coda)
+    ecokit::stop_ctx(
+      "`path_coda` does not exist", path_coda = path_coda,
+      include_backtrace = TRUE)
   }
 
   ecokit::cat_time("Loading coda object", level = 1L)
@@ -483,8 +491,8 @@ convergence_plot <- function(
 
   } else {
 
-    HTML1 <- "<span style='color:blue;'><b>"
-    HTML2 <- "</b></span>"
+    HTML1 <- "<span style='color:blue;'><b>"  # nolint: object_use_linter
+    HTML2 <- "</b></span>"  # nolint: object_use_linter
     Intercept <- c(
       Variable = "Intercept",
       VarDesc = stringr::str_glue("{HTML1}Intercept{HTML2}"))
@@ -501,9 +509,9 @@ convergence_plot <- function(
         VarDesc = paste0(VarDesc, " (log<sub>10</sub>(x + 0.1))")) %>%
       dplyr::bind_rows(Intercept, .)
 
-    HTML1 <- "<span style='color:blue;'><b>"
-    HTML2 <- "</b></span><span style='color:grey;'>"
-    HTML3 <- "</span>"
+    HTML1 <- "<span style='color:blue;'><b>"      # nolint: object_name_linter
+    HTML2 <- "</b></span><span style='color:grey;'>"  # nolint: object_name_linter
+    HTML3 <- "</span>"      # nolint: object_name_linter
     HTML4 <- "\n&nbsp;&mdash;&nbsp;"
     VarsDesc <- tibble::tribble(
       ~Variable, ~VarDesc,
@@ -653,7 +661,7 @@ convergence_plot <- function(
           if (attempt > 5) {
             ecokit::stop_ctx(
               "Maximum attempts (5) reached without success: ",
-              Var_Sp_File = Var_Sp_File)
+              Var_Sp_File = Var_Sp_File, include_backtrace = TRUE)
           }
 
           try({
@@ -695,7 +703,8 @@ convergence_plot <- function(
         # check if input data exists
         if (isFALSE(ecokit::check_data(Var_Sp_File, warning = FALSE))) {
           ecokit::stop_ctx(
-            "File does not exist.", x = x, Var_Sp_File = Var_Sp_File)
+            "File does not exist.", x = x, Var_Sp_File = Var_Sp_File,
+            include_backtrace = TRUE)
         }
 
         # Check if the output file already exists
@@ -717,7 +726,7 @@ convergence_plot <- function(
           if (attempt > 5) {
             ecokit::stop_ctx(
               "Maximum attempts (5) reached without success: ",
-              Var_Sp_File = Var_Sp_File)
+              Var_Sp_File = Var_Sp_File, include_backtrace = TRUE)
           }
 
           try({
@@ -726,7 +735,8 @@ convergence_plot <- function(
             if (is.null(DT_all) || !is.list(DT_all)) {
               ecokit::stop_ctx(
                 "Loaded data is invalid", Var_Sp_File = Var_Sp_File,
-                DT_all = DT_all, class_DT_all = DT_all)
+                DT_all = DT_all, class_DT_all = DT_all,
+                include_backtrace = TRUE)
             }
 
             DT_all$Post <- NULL
@@ -1181,12 +1191,13 @@ convergence_Beta_ranges <- function(model_dir) {
       !nzchar(model_dir)) {
     ecokit::stop_ctx(
       "The specified model_dir is not a character of length 1 and nchar > 1.",
-      model_dir = model_dir)
+      model_dir = model_dir, include_backtrace = TRUE)
   }
 
   if (!dir.exists(model_dir)) {
     ecokit::stop_ctx(
-      "The specified model_dir does not exist.", model_dir = model_dir)
+      "The specified model_dir does not exist.", model_dir = model_dir,
+      include_backtrace = TRUE)
   }
 
   # Construct path to beta parameter data
@@ -1196,7 +1207,7 @@ convergence_Beta_ranges <- function(model_dir) {
   if (!file.exists(beta_data_path)) {
     ecokit::stop_ctx(
       "The beta parameter data file does not exist.",
-      beta_data_path = beta_data_path)
+      beta_data_path = beta_data_path, include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###

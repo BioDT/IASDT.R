@@ -54,7 +54,9 @@ GBIF_download <- function(
   CommandsAvail <- purrr::map_lgl(Commands, ecokit::check_system_command)
   if (!all(CommandsAvail)) {
     Missing <- paste(Commands[!CommandsAvail], collapse = " + ")
-    ecokit::stop_ctx("Missing commands", missing_commands = Missing)
+    ecokit::stop_ctx(
+      "Missing commands", missing_commands = Missing,
+      include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -118,7 +120,7 @@ GBIF_download <- function(
       rgbif::pred_gte("year", start_year),
       # Only within specific boundaries
       rgbif::pred_within(
-        ecokit::boundary_to_WKT(
+        ecokit::boundary_to_wkt(
           left = boundaries[1], right = boundaries[2],
           bottom = boundaries[3], top = boundaries[4])
       )
@@ -146,7 +148,7 @@ GBIF_download <- function(
     if (!file.exists(Path_Request)) {
       ecokit::stop_ctx(
         "Path to previously requested data does not exist",
-        Path_Request = Path_Request)
+        Path_Request = Path_Request, include_backtrace = TRUE)
     }
 
     ecokit::cat_time("Loading previous GBIF request", level = 1L)
@@ -156,7 +158,8 @@ GBIF_download <- function(
 
     if (!file.exists(Path_Status)) {
       ecokit::stop_ctx(
-        "Path to status info does not exist", Path_Status = Path_Status)
+        "Path to status info does not exist", Path_Status = Path_Status,
+        include_backtrace = TRUE)
     }
 
     ecokit::cat_time(
@@ -211,7 +214,8 @@ GBIF_download <- function(
     GBIF_Metadata <- fs::path(Path_GBIF, "GBIF_Metadata.RData")
     if (!file.exists(GBIF_Metadata)) {
       ecokit::stop_ctx(
-        "GBIF metadata file does not exist", GBIF_Metadata = GBIF_Metadata)
+        "GBIF metadata file does not exist", GBIF_Metadata = GBIF_Metadata,
+        include_backtrace = TRUE)
     }
 
     GBIF_Metadata <- ecokit::load_as(GBIF_Metadata)

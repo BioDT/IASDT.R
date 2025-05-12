@@ -20,7 +20,7 @@ NULL
 
 
 #' @noRd
-.onAttach <- function(...) {
+.onAttach <- function(...) { # nolint: package_hooks_linter
 
   # Retrieve the package version and date dynamically
   package_version_Info <- utils::packageVersion("IASDT.R")

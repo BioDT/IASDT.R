@@ -60,26 +60,28 @@ prepare_knots <- function(
   if (is.null(alphapw)) {
     Prior <- NULL
   } else {
-    if (all(purrr::map_lgl(alphapw, is.null))) {
+    if (all(purrr::map_lgl(alphapw, is.null))) {   # nolint: unneeded_nesting_linter
       Prior <- NULL
     } else {
 
-      if (is.null(alphapw$Prior)) {
+      if (is.null(alphapw$Prior)) {   # nolint: unneeded_nesting_linter
 
         if (is.null(alphapw$Min) || !is.numeric(alphapw$Min)) {
           ecokit::stop_ctx(
-            "`alphapw$Min` must be numeric", alphapw_min = alphapw$Min)
+            "`alphapw$Min` must be numeric", alphapw_min = alphapw$Min,
+            include_backtrace = TRUE)
         }
 
         if (is.null(alphapw$Samples) || !is.numeric(alphapw$Samples)) {
           ecokit::stop_ctx(
             "`alphapw$Samples` must be numeric",
-            alphapw_samples = alphapw$Samples)
+            alphapw_samples = alphapw$Samples, include_backtrace = TRUE)
         }
 
         if (is.null(alphapw$Max) || !is.numeric(alphapw$Max)) {
           ecokit::stop_ctx(
-            "`alphapw$Max` must be numeric", alphapw_max = alphapw$Max)
+            "`alphapw$Max` must be numeric", alphapw_max = alphapw$Max,
+            include_backtrace = TRUE)
         }
 
         Prior <- AlphaPrior(
@@ -94,42 +96,42 @@ prepare_knots <- function(
         if (!inherits(Prior, "matrix")) {
           ecokit::stop_ctx(
             "`Prior` must be a matrix",
-            Prior = Prior, class_prior = class(Prior))
+            Prior = Prior, class_prior = class(Prior), include_backtrace = TRUE)
         }
 
         # Check if Prior has 2 columns
         if (ncol(Prior) != 2) {
           ecokit::stop_ctx(
             "`Prior` should have exactly 2 columns.",
-            Prior = Prior, ncol_Prior = ncol(Prior))
+            Prior = Prior, ncol_Prior = ncol(Prior), include_backtrace = TRUE)
         }
 
         # Check if Prior has at least 100 rows
         if (nrow(Prior) < 100) {
           ecokit::stop_ctx(
             "`Prior` must have >= 100 rows.",
-            Prior = Prior, nrow_Prior = nrow(Prior))
+            Prior = Prior, nrow_Prior = nrow(Prior), include_backtrace = TRUE)
         }
 
         # Check if the first element of the second column is 0.5
         # if (Prior[1, 2] != 0.5) {
         #   ecokit::stop_ctx(
         #      "The first element of the second column is not 0.5.",
-        #        prior_1_2 = Prior[1, 2])
+        #        prior_1_2 = Prior[1, 2], include_backtrace = TRUE)
         # }
 
         # Check if all values are positive
         if (any(as.vector(Prior) < 0)) {
           ecokit::stop_ctx(
             "`Prior` can not contain negative numbers",
-            sum_negative = sum(as.vector(Prior) < 0))
+            sum_negative = sum(as.vector(Prior) < 0), include_backtrace = TRUE)
         }
 
         # Check if the sum of the second column is equal to 1
         if (sum(Prior[, 2]) != 1) {
           ecokit::stop_ctx(
             "The sum of the second column is not equal to 1.",
-            sum_prior_2 = sum(Prior[, 2]))
+            sum_prior_2 = sum(Prior[, 2]), include_backtrace = TRUE)
         }
       }
     }
@@ -141,17 +143,20 @@ prepare_knots <- function(
 
   if (!is.null(max_LF) && !is.numeric(max_LF)) {
     ecokit::stop_ctx(
-      "`max_LF` must be NULL or a numeric value", max_LF = max_LF)
+      "`max_LF` must be NULL or a numeric value", max_LF = max_LF,
+      include_backtrace = TRUE)
   }
 
   if (!is.null(min_LF) && !is.numeric(min_LF)) {
     ecokit::stop_ctx(
-      "`min_LF` must be NULL or a numeric value", min_LF = min_LF)
+      "`min_LF` must be NULL or a numeric value", min_LF = min_LF,
+      include_backtrace = TRUE)
   }
 
   # Ensure min_LF >= 1 and < max_LF
   if (!is.null(min_LF) && min_LF < 1) {
-    ecokit::stop_ctx("`min_LF` must be >= 1", min_LF = min_LF)
+    ecokit::stop_ctx(
+      "`min_LF` must be >= 1", min_LF = min_LF, include_backtrace = TRUE)
   }
 
   if (!is.null(min_LF) && !is.null(max_LF) && min_LF >= max_LF) {
@@ -173,7 +178,7 @@ prepare_knots <- function(
 
   # coordinates of the sampling units as sf object -----
 
-  SU_Sf <- tibble::as_tibble(coordinates) %>%
+  SU_Sf <- tibble::as_tibble(coordinates) %>%      # nolint: object_name_linter
     stats::setNames(c("x", "y")) %>%
     sf::st_as_sf(coords = c("x", "y"), remove = FALSE, crs = 3035)
 
@@ -190,7 +195,7 @@ prepare_knots <- function(
       Identical = purrr::map2_lgl(
         .x = Var1, .y = Var2,
         .f = ~ {
-          SU_Sf %>%
+          SU_Sf %>%  # nolint: nrow_subset_linter
             dplyr::filter(x == .x, y == .y) %>%
             nrow() %>%
             magrittr::is_greater_than(0)

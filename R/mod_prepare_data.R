@@ -26,7 +26,8 @@ mod_prepare_data <- function(
       paste0(
         paste0("`", CheckNULL[which(IsNull)], "`", collapse = ", "),
         " can not be empty"),
-      hab_abb = hab_abb, directory_name = directory_name, env_file = env_file)
+      hab_abb = hab_abb, directory_name = directory_name, env_file = env_file,
+      include_backtrace = TRUE)
   }
 
   hab_abb <- as.character(hab_abb)
@@ -71,7 +72,7 @@ mod_prepare_data <- function(
       paste0(
         "`hab_abb` has to be one of the following:\n >> ",
         toString(ValidHabAbbs)),
-      hab_abb = hab_abb)
+      hab_abb = hab_abb, include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -120,7 +121,8 @@ mod_prepare_data <- function(
   ecokit::cat_time("Sampling efforts", level = 1L)
   R_Bias <- fs::path(Path_Bias, "Efforts_SummaryR.RData")
   if (!file.exists(R_Bias)) {
-    ecokit::stop_ctx("R_Bias file does not exist", R_Bias = R_Bias)
+    ecokit::stop_ctx(
+      "R_Bias file does not exist", R_Bias = R_Bias, include_backtrace = TRUE)
   }
 
   # This mask layer represents grid cells with minimum accepted efforts
@@ -142,7 +144,9 @@ mod_prepare_data <- function(
 
   Path_Hab <- fs::path(Path_CLC, "Summary_RData", "PercCov_SynHab_Crop.RData")
   if (!file.exists(Path_Hab)) {
-    ecokit::stop_ctx("Path_Hab file does not exist", Path_Hab = Path_Hab)
+    ecokit::stop_ctx(
+      "Path_Hab file does not exist", Path_Hab = Path_Hab,
+      include_backtrace = TRUE)
   }
 
   if (hab_abb == "0") {
@@ -180,7 +184,8 @@ mod_prepare_data <- function(
   # Extract the list of species for the current habitat type
   DT_Sp <- fs::path(Path_PA, "Sp_PA_Summary_DF.RData")
   if (!file.exists(DT_Sp)) {
-    ecokit::stop_ctx("DT_Sp file does not exist", DT_Sp = DT_Sp)
+    ecokit::stop_ctx(
+      "DT_Sp file does not exist", DT_Sp = DT_Sp, include_backtrace = TRUE)
   }
   DT_Sp <- ecokit::load_as(DT_Sp) %>%
     dplyr::arrange(IAS_ID)
@@ -264,7 +269,7 @@ mod_prepare_data <- function(
     magrittr::extract2("L_03")
   R_Sp_sum <- sum(R_Sp, na.rm = TRUE)
 
-  NGridsWzSpecies <- terra::global(R_Sp_sum, fun = "notNA") %>%
+  NGridsWzSpecies <- terra::global(R_Sp_sum, fun = "notNA") %>%      # nolint: object_name_linter
     as.integer() %>%
     format(big.mark = ",")
 
@@ -329,7 +334,9 @@ mod_prepare_data <- function(
   ecokit::cat_time("CHELSA", level = 1L)
   R_CHELSA <- fs::path(Path_CHELSA, "Processed", "R_Current.RData")
   if (!file.exists(R_CHELSA)) {
-    ecokit::stop_ctx("R_CHELSA file does not exist", R_CHELSA = R_CHELSA)
+    ecokit::stop_ctx(
+      "R_CHELSA file does not exist", R_CHELSA = R_CHELSA,
+      include_backtrace = TRUE)
   }
   R_CHELSA <- ecokit::load_as(R_CHELSA) %>%
     terra::unwrap() %>%
@@ -344,7 +351,9 @@ mod_prepare_data <- function(
   # Reference grid as sf
   Grid_SF <- fs::path(Path_Grid_Ref, "Grid_10_sf.RData")
   if (!file.exists(Grid_SF)) {
-    ecokit::stop_ctx("Grid_SF file does not exist", Grid_SF = Grid_SF)
+    ecokit::stop_ctx(
+      "Grid_SF file does not exist", Grid_SF = Grid_SF,
+      include_backtrace = TRUE)
   }
   Grid_SF <- ecokit::load_as(Grid_SF) %>%
     magrittr::extract2("Grid_10_sf_s")
@@ -355,7 +364,9 @@ mod_prepare_data <- function(
   ecokit::cat_time("Reference grid - country names", level = 2L)
   Grid_CNT <- fs::path(Path_Grid, "Grid_10_Land_Crop_sf_Country.RData")
   if (!file.exists(Grid_CNT)) {
-    ecokit::stop_ctx("Grid_CNT file does not exist", Grid_CNT = Grid_CNT)
+    ecokit::stop_ctx(
+      "Grid_CNT file does not exist", Grid_CNT = Grid_CNT,
+      include_backtrace = TRUE)
   }
   Grid_CNT <- ecokit::load_as(Grid_CNT) %>%
     dplyr::mutate(
@@ -374,7 +385,9 @@ mod_prepare_data <- function(
   # road intensity of any road type
   R_RoadInt <- fs::path(Path_Roads, "Road_Length.RData")
   if (!file.exists(R_RoadInt)) {
-    ecokit::stop_ctx("R_RoadInt file does not exist", R_RoadInt = R_RoadInt)
+    ecokit::stop_ctx(
+      "R_RoadInt file does not exist", R_RoadInt = R_RoadInt,
+      include_backtrace = TRUE)
   }
   R_RoadInt <- ecokit::load_as(R_RoadInt) %>%
     terra::unwrap() %>%
@@ -394,7 +407,9 @@ mod_prepare_data <- function(
   # Railway intensity
   R_RailInt <- fs::path(Path_Rail, "Railways_Length.RData")
   if (!file.exists(R_RailInt)) {
-    ecokit::stop_ctx("R_RailInt file does not exist", R_RailInt = R_RailInt)
+    ecokit::stop_ctx(
+      "R_RailInt file does not exist", R_RailInt = R_RailInt,
+      include_backtrace = TRUE)
   }
   R_RailInt <- ecokit::load_as(R_RailInt) %>%
     terra::unwrap() %>%
@@ -433,7 +448,9 @@ mod_prepare_data <- function(
 
   R_Rivers <- fs::path(Path_Rivers, "River_Lengths.RData")
   if (!file.exists(R_Rivers)) {
-    ecokit::stop_ctx("R_Rivers file does not exist", R_Rivers = R_Rivers)
+    ecokit::stop_ctx(
+      "R_Rivers file does not exist", R_Rivers = R_Rivers,
+      include_backtrace = TRUE)
   }
   R_Rivers <- ecokit::load_as(R_Rivers) %>%
     terra::unwrap() %>%

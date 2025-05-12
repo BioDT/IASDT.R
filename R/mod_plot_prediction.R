@@ -35,11 +35,12 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
   if (is.null(model_dir) || !is.character(model_dir) || !nzchar(model_dir)) {
     ecokit::stop_ctx(
       "`model_dir` has to be a character with length > 0",
-      model_dir = model_dir)
+      model_dir = model_dir, include_backtrace = TRUE)
   }
   if (!fs::dir_exists(model_dir)) {
     ecokit::stop_ctx(
-      "`model_dir` is not a valid directory", model_dir = model_dir)
+      "`model_dir` is not a valid directory", model_dir = model_dir,
+      include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -62,7 +63,8 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
   Gird10 <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(Gird10)) {
     ecokit::stop_ctx(
-      "Path for the Europe boundaries does not exist", Gird10 = Gird10)
+      "Path for the Europe boundaries does not exist", Gird10 = Gird10,
+      include_backtrace = TRUE)
   }
   Gird10 <- ecokit::load_as(Gird10) %>%
     terra::unwrap()
@@ -82,7 +84,7 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
   if (!file.exists(Map_summary_NoClamp)) {
     ecokit::stop_ctx(
       "`Map_summary_NoClamp` file does not exist",
-      Map_summary_NoClamp = Map_summary_NoClamp)
+      Map_summary_NoClamp = Map_summary_NoClamp, include_backtrace = TRUE)
   }
   Map_summary_NoClamp <- ecokit::load_as(Map_summary_NoClamp) %>%
     dplyr::rename(
@@ -96,7 +98,7 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
   if (!file.exists(Map_summary_Clamp)) {
     ecokit::stop_ctx(
       "`Map_summary_Clamp` file does not exist",
-      Map_summary_Clamp = Map_summary_Clamp)
+      Map_summary_Clamp = Map_summary_Clamp, include_backtrace = TRUE)
   }
   Map_summary_Clamp <- ecokit::load_as(Map_summary_Clamp) %>%
     dplyr::rename(
@@ -132,7 +134,9 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
     model_dir, pattern = "^ModDT_.*subset.RData$", full.names = TRUE)
 
   if (length(Model_Data) != 1) {
-    ecokit::stop_ctx("Model data does not exist", Model_Data = Model_Data)
+    ecokit::stop_ctx(
+      "Model data does not exist", Model_Data = Model_Data,
+      include_backtrace = TRUE)
   }
   Model_Data <- ecokit::load_as(Model_Data)
 
@@ -155,7 +159,9 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
 
   Path_Hab <- fs::path(Path_CLC, "Summary_RData", "PercCov_SynHab_Crop.RData")
   if (!file.exists(Path_Hab)) {
-    ecokit::stop_ctx("Path_Hab file does not exist", Path_Hab = Path_Hab)
+    ecokit::stop_ctx(
+      "Path_Hab file does not exist", Path_Hab = Path_Hab,
+      include_backtrace = TRUE)
   }
   R_habitat <- ecokit::load_as(Path_Hab) %>%
     terra::unwrap() %>%
@@ -382,7 +388,8 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
       Path_observed <- fs::path(Path_PA, "Sp_PA_Summary_DF.RData")
       if (!file.exists(Path_observed)) {
         ecokit::stop_ctx(
-          "Path_observed file does not exist", Path_observed = Path_observed)
+          "Path_observed file does not exist", Path_observed = Path_observed,
+          include_backtrace = TRUE)
       }
       Path_observed <- ecokit::load_as(Path_observed) %>%
         dplyr::filter(IAS_ID == SpID2) %>%
@@ -394,7 +401,8 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
       if (!all(file.exists(Path_observed))) {
         ecokit::stop_ctx(
           paste0("Observed data for species: ", SpName, " not found"),
-          Path_observed = Path_observed, SpName = SpName)
+          Path_observed = Path_observed, SpName = SpName,
+          include_backtrace = TRUE)
       }
 
       Plot_observed <- terra::rast(Path_observed)
@@ -549,7 +557,7 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
       PlotTitle2 <- ""
     }
 
-    Hab_Name0 <- stringr::str_remove(hab_name, " habitats")
+    Hab_Name0 <- stringr::str_remove(hab_name, " habitats")      # nolint: object_name_linter
     MainTitle <- cowplot::ggdraw() +
       ggtext::geom_richtext(
         ggplot2::aes(x = 0.01, y = 0.6, label = PlotTitle1),

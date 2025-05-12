@@ -50,11 +50,13 @@ bioreg_process <- function(env_file = ".env") {
 
   if (isFALSE(ecokit::check_system_command("curl"))) {
     ecokit::stop_ctx(
-      "`curl` is required for downloading data but was not found.")
+      "`curl` is required for downloading data but was not found.",
+      include_backtrace = TRUE)
   }
   if (isFALSE(ecokit::check_system_command("unzip"))) {
     ecokit::stop_ctx(
-      "`unzip` is required for extracting data but was not found.")
+      "`unzip` is required for extracting data but was not found.",
+      include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -103,13 +105,16 @@ bioreg_process <- function(env_file = ".env") {
       rvest::html_elements(css = "#header-primary-action .button") %>%
       rvest::html_attr("href")
   }, error = function(e) {
-    ecokit::stop_ctx(paste0("Failed to extract download URL: ", e$message))
+    ecokit::stop_ctx(
+      paste0("Failed to extract download URL: ", e$message),
+      include_backtrace = TRUE)
   })
 
   if (length(BioReg_URL2) != 1L) {
     ecokit::stop_ctx(
       paste0("Download link extraction failed. Found: ", length(BioReg_URL2)),
-      BioReg_URL2 = BioReg_URL2, length_BioReg_URL2 = length(BioReg_URL2))
+      BioReg_URL2 = BioReg_URL2, length_BioReg_URL2 = length(BioReg_URL2),
+      include_backtrace = TRUE)
   }
   ecokit::cat_time(BioReg_URL2, level = 2L, cat_timestamp = FALSE)
 
@@ -135,7 +140,8 @@ bioreg_process <- function(env_file = ".env") {
 
     if (attempt >= 5L) {
       ecokit::stop_ctx(
-        "Error: Maximum download attempts reached. Zip file check failed.")
+        "Error: Maximum download attempts reached. Zip file check failed.",
+        include_backtrace = TRUE)
     }
     attempt <- attempt + 1L
   }
@@ -159,7 +165,8 @@ bioreg_process <- function(env_file = ".env") {
   if (length(BioReg_DT) != 1L) {
     ecokit::stop_ctx(
       paste0("Expected one .shp file, found: ", length(BioReg_DT)),
-      BioReg_DT = BioReg_DT, length_BioReg_DT = length(BioReg_DT))
+      BioReg_DT = BioReg_DT, length_BioReg_DT = length(BioReg_DT),
+      include_backtrace = TRUE)
   }
   BioReg_DT <- sf::st_read(BioReg_DT, quiet = TRUE) %>%
     # project to EPSG:3035
@@ -182,7 +189,8 @@ bioreg_process <- function(env_file = ".env") {
   GridR <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(GridR)) {
     ecokit::stop_ctx(
-      "Path for the Europe boundaries does not exist", GridR = GridR)
+      "Path for the Europe boundaries does not exist", GridR = GridR,
+      include_backtrace = TRUE)
   }
 
   BioReg_R <- BioReg_DT %>%

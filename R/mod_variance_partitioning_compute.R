@@ -79,7 +79,7 @@ variance_partitioning_compute <- function(
           "be specified and point to an existing directory with a ",
           "Python virtual environment"),
         VP_commands_only = VP_commands_only, OS = .Platform$OS.type,
-        TF_environ = TF_environ)
+        TF_environ = TF_environ, include_backtrace = TRUE)
     }
 
     # Determine the Python executable path
@@ -97,7 +97,7 @@ variance_partitioning_compute <- function(
       if (isFALSE(VP_commands_only) && !file.exists(python_executable)) {
         ecokit::stop_ctx(
           "Python executable not found in the virtual environment",
-          python_executable = python_executable)
+          python_executable = python_executable, include_backtrace = TRUE)
       }
     } else {
       python_executable <- "/usr/bin/time -v python3"
@@ -131,7 +131,7 @@ variance_partitioning_compute <- function(
       ecokit::stop_ctx(
         "Necessary python scripts do not exist",
         Script_geta = Script_geta, Script_getf = Script_getf,
-        Script_gemu = Script_gemu)
+        Script_gemu = Script_gemu, include_backtrace = TRUE)
     }
   }
 
@@ -142,7 +142,8 @@ variance_partitioning_compute <- function(
 
   if (is.null(path_model) || !file.exists(path_model)) {
     ecokit::stop_ctx(
-      "Model path is NULL or does not exist", path_model = path_model)
+      "Model path is NULL or does not exist", path_model = path_model,
+      include_backtrace = TRUE)
   }
 
   Model <- ecokit::load_as(path_model)
@@ -393,7 +394,8 @@ variance_partitioning_compute <- function(
           # Check for errors
           if (inherits(la, "error") || la[length(la)] != "Done") {
             ecokit::stop_ctx(
-              "Error in computing geta", la = la, class_la = class(la))
+              "Error in computing geta", la = la, class_la = class(la),
+              include_backtrace = TRUE)
           }
 
           if (length(la) != 1) {
@@ -449,7 +451,8 @@ variance_partitioning_compute <- function(
           # Check for errors
           if (inherits(lf, "error") || lf[length(lf)] != "Done") {
             ecokit::stop_ctx(
-              "Error in computing geta", lf = lf, class_lf = class(lf))
+              "Error in computing geta", lf = lf, class_lf = class(lf),
+              include_backtrace = TRUE)
           }
 
           if (length(lf) != 1) {
@@ -506,7 +509,8 @@ variance_partitioning_compute <- function(
           # Check for errors
           if (inherits(lmu, "error") || lmu[length(lmu)] != "Done") {
             ecokit::stop_ctx(
-              "Error in computing geta", lmu = lmu, class_lmu = class(lmu))
+              "Error in computing geta", lmu = lmu, class_lmu = class(lmu),
+              include_backtrace = TRUE)
           }
 
           if (length(lmu) != 1) {
@@ -672,8 +676,8 @@ variance_partitioning_compute <- function(
 
         # Suppress warnings when no trait information is used in the models
         # cor(Beta[k, ], lmu[k, ]) : the standard deviation is zero
-        DT_lmu <- as.matrix(arrow::read_feather(Files_lmu[i]))
-        curr_lbeta <- fs::path(
+        DT_lmu <- as.matrix(arrow::read_feather(Files_lmu[i]))      # nolint: object_name_linter
+        curr_lbeta <- fs::path(      # nolint: object_name_linter
           path_lbeta,
           paste0(
             "lbeta_", stringr::str_pad(i, width = 4, pad = "0"), ".qs2")) %>%

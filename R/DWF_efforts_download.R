@@ -16,17 +16,20 @@ efforts_download <- function(n_cores = 6L, env_file = ".env") {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Request <- Path_Efforts <- Path_Raw <- NULL
+  Request <- Path_Efforts <- NULL
 
   # # ..................................................................... ###
 
   # Validate n_cores
   if (missing(n_cores) || !is.numeric(n_cores) || n_cores <= 0) {
-    ecokit::stop_ctx("n_cores must be a positive integer.", n_cores = n_cores)
+    ecokit::stop_ctx(
+      "n_cores must be a positive integer.", n_cores = n_cores,
+      include_backtrace = TRUE)
   }
 
   if (isFALSE(ecokit::check_system_command("unzip"))) {
-    ecokit::stop_ctx("The 'unzip' command is not available")
+    ecokit::stop_ctx(
+      "The 'unzip' command is not available", include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -49,7 +52,7 @@ efforts_download <- function(n_cores = 6L, env_file = ".env") {
   if (!file.exists(Path_Efforts_Request)) {
     ecokit::stop_ctx(
       "The path for the `Efforts_AllRequests` data does not exist",
-      Path_Efforts_Request = Path_Efforts_Request)
+      Path_Efforts_Request = Path_Efforts_Request, include_backtrace = TRUE)
   }
 
   Efforts_AllRequests <- ecokit::load_as(Path_Efforts_Request)
@@ -121,7 +124,8 @@ efforts_download <- function(n_cores = 6L, env_file = ".env") {
                 ecokit::stop_ctx(
                   paste0(
                     "Failed to download data after ", Attempts, " attempts: ",
-                    conditionMessage(e)))
+                    conditionMessage(e)),
+                  include_backtrace = TRUE)
               }
               Attempt <- Attempt + 1
             })

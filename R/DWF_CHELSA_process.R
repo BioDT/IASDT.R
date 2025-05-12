@@ -92,7 +92,8 @@ CHELSA_process <- function(
   if (n_cores < 1 || download_n_cores < 1) {
     ecokit::stop_ctx(
       "`n_cores` must be a positive integer.",
-      n_cores = n_cores, download_n_cores = download_n_cores)
+      n_cores = n_cores, download_n_cores = download_n_cores,
+      include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -111,7 +112,8 @@ CHELSA_process <- function(
 
   if (!file.exists(env_file)) {
     ecokit::stop_ctx(
-      "Path to environment variables was not found", env_file = env_file)
+      "Path to environment variables was not found", env_file = env_file,
+      include_backtrace = TRUE)
   }
 
   EnvVars2Read <- tibble::tribble(
@@ -193,7 +195,8 @@ CHELSA_process <- function(
       ecokit::stop_ctx(
         paste0(
           "Not all input tiff files are available and valid. ",
-          "Check `ProblematicTiffs.txt`"))
+          "Check `ProblematicTiffs.txt`"),
+        include_backtrace = TRUE)
     }
 
     # CHELSA files that will not be processed
@@ -335,7 +338,7 @@ CHELSA_process <- function(
         paste0(
           "\n >> ", nrow(CHELSA2Process), " files failed to process.\n",
           " >> Check `FailedProcessing.txt` for more details"),
-        CHELSA2Process = CHELSA2Process)
+        CHELSA2Process = CHELSA2Process, include_backtrace = TRUE)
     }
 
     ecokit::cat_time("All tiff files were processed", level = 1L)
@@ -419,7 +422,7 @@ CHELSA_process <- function(
           Map <- terra::rast(File_List) %>%
             stats::setNames(MapNames) %>%
             terra::subset(gtools::mixedsort(MapNames)) %>%
-            ecokit::set_raster_CRS() %>%
+            ecokit::set_raster_crs(crs = "epsg:3035") %>%
             ecokit::set_raster_values() %>%
             terra::wrap()
 

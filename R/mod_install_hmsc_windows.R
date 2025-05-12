@@ -51,7 +51,8 @@ install_hmsc_windows <- function(
   # Check if the virtual environment directory already exists
   if (fs::dir_exists(path_VE)) {
     ecokit::stop_ctx(
-      "Path to the virtual environment already exists", path_VE = path_VE)
+      "Path to the virtual environment already exists", path_VE = path_VE,
+      include_backtrace = TRUE)
   }
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -65,7 +66,7 @@ install_hmsc_windows <- function(
   if (!startsWith(PythonVersion, "Python")) {
     ecokit::stop_ctx(
       "Python was not installed or not found at the provided path",
-      path_python = path_python)
+      path_python = path_python, include_backtrace = TRUE)
   }
 
   cat(paste0("  >>  ", PythonVersion, "\n"))
@@ -88,7 +89,7 @@ install_hmsc_windows <- function(
   if (!startsWith(PythonVersion, "Python")) {
     ecokit::stop_ctx(
       "Python was not installed in the virtual environment",
-      PythonVersion = PythonVersion)
+      PythonVersion = PythonVersion, include_backtrace = TRUE)
   }
 
   cat(paste0("  >>  ", PythonVersion, "\n"))

@@ -94,7 +94,8 @@ predict_latent_factor <- function(
   if (is.null(LF_out_file) && isFALSE(LF_return)) {
     ecokit::stop_ctx(
       "`LF_return` must be `TRUE` when `LF_out_file` is NULL.",
-      LF_return = LF_return, LF_out_file = LF_out_file)
+      LF_return = LF_return, LF_out_file = LF_out_file,
+      include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -105,7 +106,8 @@ predict_latent_factor <- function(
     ecokit::cat_time("Load postEta", level = 1L)
     if (!file.exists(postEta)) {
       ecokit::stop_ctx(
-        "The specified path for `postEta` does not exist. ", postEta = postEta)
+        "The specified path for `postEta` does not exist. ", postEta = postEta,
+        include_backtrace = TRUE)
     }
     postEta <- ecokit::load_as(postEta)
   }
@@ -140,7 +142,7 @@ predict_latent_factor <- function(
   if (sum(AllTraining, AllNew) != 1) {
     ecokit::stop_ctx(
       "The input sites should be either all training sites or all new sites.",
-      sum = sum(AllTraining, AllNew))
+      sum = sum(AllTraining, AllNew), include_backtrace = TRUE)
   }
 
   if (AllTraining) {
@@ -169,7 +171,8 @@ predict_latent_factor <- function(
       # Check if PythonScript exists
       if (!file.exists(PythonScript)) {
         ecokit::stop_ctx(
-          "Necessary Python script does not exist", PythonScript = PythonScript)
+          "Necessary Python script does not exist",
+          PythonScript = PythonScript, include_backtrace = TRUE)
       }
 
       # Suppress TensorFlow warnings and disable optimizations
@@ -205,7 +208,7 @@ predict_latent_factor <- function(
 
     ecokit::cat_time("Calculate/save necessary matrices", level = 1L)
 
-    alphapw <- LF_rL$alphapw
+    alphapw <- LF_rL$alphapw      # nolint: object_name_linter
 
     if (use_TF) {
 
@@ -481,7 +484,7 @@ predict_latent_factor <- function(
 
           # When Denom is zero, set `eta_indNew` to zero
 
-          if (isFALSE(LF_commands_only)) {
+          if (isFALSE(LF_commands_only)) {   # nolint: unneeded_nesting_linter
 
             etaPred <- tibble::tibble(
 
@@ -645,7 +648,7 @@ predict_latent_factor <- function(
         FailedFiles <- AllEtaFiles[!file.exists(AllEtaFiles)]
         ecokit::stop_ctx(
           paste0(length(FailedFiles), " files are missing"),
-          FailedFiles = basename(FailedFiles))
+          FailedFiles = basename(FailedFiles), include_backtrace = TRUE)
       }
       ecokit::cat_time("All files were created", level = 2L)
 
@@ -838,7 +841,7 @@ run_crossprod_solve <- function(
   if (!file.exists(script_path)) {
     ecokit::stop_ctx(
       "Necessary Python script `crossprod_solve.py` does not exist",
-      script_path = script_path)
+      script_path = script_path, include_backtrace = TRUE)
   }
 
   # Ensure the paths are valid
@@ -848,7 +851,9 @@ run_crossprod_solve <- function(
     .x = names(paths),
     .f = function(p) {
       if (!file.exists(paths[[p]])) {
-        ecokit::stop_ctx(paste0(p, " does not exist"), path = paths[[p]])
+        ecokit::stop_ctx(
+          paste0(p, " does not exist"), path = paths[[p]],
+          include_backtrace = TRUE)
       }
     })
 
@@ -865,22 +870,22 @@ run_crossprod_solve <- function(
     if (is.null(TF_environ)) {
       ecokit::stop_ctx(
         "When running on Windows, `TF_environ` must be specified",
-        TF_environ = TF_environ)
+        TF_environ = TF_environ, include_backtrace = TRUE)
     }
     if (!dir.exists(TF_environ)) {
       ecokit::stop_ctx(
         "The specified `TF_environ` directory does not exist",
-        TF_environ = ecokit::normalize_path(TF_environ))
+        TF_environ = ecokit::normalize_path(TF_environ),
+        include_backtrace = TRUE)
     }
 
     python_executable <- ecokit::normalize_path(
-      fs::path(TF_environ, "Scripts", "python.exe"),
-      must_work = TRUE)
+      fs::path(TF_environ, "Scripts", "python.exe"), must_work = TRUE)
 
     if (!file.exists(python_executable)) {
       ecokit::stop_ctx(
         "Python executable not found in the virtual environment.",
-        python_executable = python_executable)
+        python_executable = python_executable, include_backtrace = TRUE)
     }
 
   } else {
@@ -1015,7 +1020,9 @@ plot_latent_factor <- function(
 
   # Check if the model file exists
   if (is.null(path_model) || !file.exists(path_model)) {
-    ecokit::stop_ctx("Selected model files not found", path_model = path_model)
+    ecokit::stop_ctx(
+      "Selected model files not found", path_model = path_model,
+      include_backtrace = TRUE)
   }
 
   Model <- ecokit::load_as(path_model)

@@ -94,25 +94,29 @@ efforts_process <- function(
   if (length(boundaries) != 4) {
     ecokit::stop_ctx(
       "`boundaries` must be a numeric vector of length 4.",
-      boundaries = boundaries, length_boundaries = length(boundaries))
+      boundaries = boundaries, length_boundaries = length(boundaries),
+      include_backtrace = TRUE)
   }
 
   # Validate chunk_size
   if (!is.numeric(chunk_size) || chunk_size <= 0) {
     ecokit::stop_ctx(
-      "`chunk_size` must be a positive numeric value.", chunk_size = chunk_size)
+      "`chunk_size` must be a positive numeric value.",
+      chunk_size = chunk_size, include_backtrace = TRUE)
   }
 
   # Validate n_cores
   if (!is.numeric(n_cores) || n_cores <= 0 || n_cores > 50) {
-    ecokit::stop_ctx("`n_cores` must be a positive integer.", n_cores = n_cores)
+    ecokit::stop_ctx(
+      "`n_cores` must be a positive integer.", n_cores = n_cores,
+      include_backtrace = TRUE)
   }
 
   # Validate start_year
   if (!is.numeric(start_year) || start_year <= 1950) {
     ecokit::stop_ctx(
       "`start_year` must be a positive integer after 1950",
-      start_year = start_year)
+      start_year = start_year, include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -168,7 +172,7 @@ efforts_process <- function(
         "The following grid file(s) do not exist:\n",
         paste0(" >>> ", missing_grids, collapse = "\n")),
       missing_grids = missing_grids,
-      length_missing_grids = length(missing_grids))
+      length_missing_grids = length(missing_grids), include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -188,7 +192,7 @@ efforts_process <- function(
     if (!file.exists(AllRequests)) {
       ecokit::stop_ctx(
         "Efforts data was not requested and the file does not exist.",
-        AllRequests = AllRequests)
+        AllRequests = AllRequests, include_backtrace = TRUE)
     }
 
     ecokit::cat_time(
@@ -211,7 +215,7 @@ efforts_process <- function(
     if (!file.exists(AllRequests)) {
       ecokit::stop_ctx(
         "Efforts data was not downloaded and the file does not exist.",
-        AllRequests = AllRequests)
+        AllRequests = AllRequests, include_backtrace = TRUE)
     }
 
     Efforts_AllRequests <- ecokit::load_as(AllRequests)
@@ -220,7 +224,8 @@ efforts_process <- function(
       ecokit::stop_ctx(
         "Efforts data was not downloaded and the 'DownPath' column is missing.",
         Efforts_AllRequests = Efforts_AllRequests,
-        names_Efforts_AllRequests = names(Efforts_AllRequests))
+        names_Efforts_AllRequests = names(Efforts_AllRequests),
+        include_backtrace = TRUE)
     }
 
     rm(Efforts_AllRequests, envir = environment())

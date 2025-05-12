@@ -21,7 +21,8 @@ GBIF_check <- function(r_environ = ".Renviron") {
   if (Missing_Account) {
     if (!file.exists(r_environ)) {
       ecokit::stop_ctx(
-        "`.Renviron` file does not exist", r_environ = r_environ)
+        "`.Renviron` file does not exist", r_environ = r_environ,
+        include_backtrace = TRUE)
     }
     readRenviron(r_environ)
   }
@@ -35,7 +36,8 @@ GBIF_check <- function(r_environ = ".Renviron") {
     ecokit::stop_ctx(
       paste0(
         "GBIF access information is not available or read from ",
-        "the `.Renviron` file"))
+        "the `.Renviron` file"),
+      include_backtrace = TRUE)
   }
 
   return(invisible(NULL))

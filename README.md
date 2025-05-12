@@ -1,4 +1,9 @@
 
+<!-- badges: start -->
+
+[![R-CMD-check](https://github.com/BioDT/IASDT.R/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/BioDT/IASDT.R/actions/workflows/R-CMD-check.yaml)
+<!-- badges: end -->
+
 # IASDT.R: Modelling the distribution of invasive alien plant species in Europe
 
 ## Overview
@@ -22,8 +27,10 @@ model outputs (e.g., prediction maps) directly from R.
   the workflow of the `IASDT`.
 
 <center>
+
 <img src="https://git.ufz.de/uploads/-/system/group/avatar/4444/biodt.png" alt="BioDT_logo" width="400">
 </center>
+
 <hr>
 
 ## Installing the package
@@ -74,4 +81,4 @@ If you use the `IASDT.R` package, please cite it as:
 > <a href="https://biodt.eu" target="_blank">https://biodt.eu</a>.
 
 <span style="     color: grey !important;">Last update:
-2025-05-05</span>
+2025-05-12</span>

@@ -28,14 +28,15 @@ CHELSA_project <- function(
 
   if (!inherits(metadata, "tbl_df")) {
     ecokit::stop_ctx(
-      "Input metadata has to be a tibble", class_metadata = class(metadata))
+      "Input metadata has to be a tibble", class_metadata = class(metadata),
+      include_backtrace = TRUE)
   }
 
   if (nrow(metadata) != 1) {
     ecokit::stop_ctx(
       "Input metadata has to be a single-row tibble",
       metadata = metadata, class_metadata = class(metadata),
-      nrow_metadata = nrow(metadata))
+      nrow_metadata = nrow(metadata), include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -47,11 +48,15 @@ CHELSA_project <- function(
   # # ..................................................................... ###
 
   if (is.null(metadata)) {
-    ecokit::stop_ctx("Input metadata can not be `NULL`", metadata = metadata)
+    ecokit::stop_ctx(
+      "Input metadata can not be `NULL`", metadata = metadata,
+      include_backtrace = TRUE)
   }
 
   if (!file.exists(metadata$Path_Down)) {
-    ecokit::stop_ctx("Input file does not exist", path = metadata$Path_Down)
+    ecokit::stop_ctx(
+      "Input file does not exist", path = metadata$Path_Down,
+      include_backtrace = TRUE)
   }
 
   # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use
@@ -77,7 +82,8 @@ CHELSA_project <- function(
   GridR <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(GridR)) {
     ecokit::stop_ctx(
-      "Path for the Europe boundaries does not exist", GridR = GridR)
+      "Path for the Europe boundaries does not exist", GridR = GridR,
+      include_backtrace = TRUE)
   }
   GridR <- terra::unwrap(ecokit::load_as(GridR))
 
@@ -154,7 +160,7 @@ CHELSA_project <- function(
     terra::mask(GridR) %>%
     # Ensure that values are read from memory
     ecokit::set_raster_values() %>%
-    ecokit::set_raster_CRS()
+    ecokit::set_raster_crs(crs = "epsg:3035")
 
   # # ..................................................................... ###
 

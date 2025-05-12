@@ -47,7 +47,8 @@ coda_to_tibble <- function(
   if (is.null(coda_object) || is.null(posterior_type)) {
     ecokit::stop_ctx(
       "None of `coda_object` or `posterior_type` cannot be empty",
-      coda_object = coda_object, posterior_type = posterior_type)
+      coda_object = coda_object, posterior_type = posterior_type,
+      include_backtrace = TRUE)
   }
 
   # # |||||||||||||||||||||||||||||||||||||||
@@ -59,13 +60,13 @@ coda_to_tibble <- function(
   if (!posterior_type %in% c("rho", "alpha", "omega", "beta")) {
     ecokit::stop_ctx(
       "posterior_type has to be one of rho, alpha, omega, or beta",
-      posterior_type = posterior_type)
+      posterior_type = posterior_type, include_backtrace = TRUE)
   }
 
   if (!(inherits(coda_object, "mcmc.list") || inherits(coda_object, "mcmc"))) {
     ecokit::stop_ctx(
       "Input Coda object has to be of class mcmc.list or mcmc",
-      class_coda_obj = class(coda_object))
+      class_coda_obj = class(coda_object), include_backtrace = TRUE)
   }
 
   # # |||||||||||||||||||||||||||||||||||||||
@@ -73,7 +74,7 @@ coda_to_tibble <- function(
   # # |||||||||||||||||||||||||||||||||||||||
 
   if (posterior_type == "omega") {
-    CombSample <- sample.int(n = dim(coda_object[[1]])[2], size = n_omega)
+    CombSample <- sample.int(n = dim(coda_object[[1]])[2], size = n_omega)      # nolint: object_name_linter
 
     Coda <- purrr::map(coda_object, ~.x[, CombSample]) %>%
       coda::as.mcmc.list() %>%
@@ -199,7 +200,7 @@ coda_to_tibble <- function(
 
   if (posterior_type == "omega") {
 
-    IAS <- IASDT.R::get_species_name(env_file = env_file) %>%
+    IAS <- IASDT.R::get_species_name(env_file = env_file) %>%      # nolint: object_name_linter
       dplyr::select(IAS_ID, Species_name)
 
     Coda <- tibble::tibble(SpComb = unique(Coda$SpComb)) %>%

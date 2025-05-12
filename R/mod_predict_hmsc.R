@@ -90,13 +90,14 @@ predict_hmsc <- function(
   if (LF_only && is.null(LF_out_file)) {
     ecokit::stop_ctx(
       "`LF_out_file` must be specified when `LF_only` is `TRUE`",
-      LF_out_file = LF_out_file, LF_only = LF_only)
+      LF_out_file = LF_out_file, LF_only = LF_only, include_backtrace = TRUE)
   }
 
   if (!is.null(LF_out_file) && !is.null(LF_inputFile)) {
     ecokit::stop_ctx(
       "only one of `LF_out_file` and `LF_inputFile` arguments can be specified",
-      LF_out_file = LF_out_file, LF_inputFile = LF_inputFile)
+      LF_out_file = LF_out_file, LF_inputFile = LF_inputFile,
+      include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -111,7 +112,7 @@ predict_hmsc <- function(
   if (!is.null(prediction_type) && !prediction_type %in% c("c", "i")) {
     ecokit::stop_ctx(
       "`prediction_type` must be either NULL or one of 'c' or 'i'",
-      prediction_type = prediction_type)
+      prediction_type = prediction_type, include_backtrace = TRUE)
   }
 
   if (is.null(pred_directory)) {
@@ -152,7 +153,7 @@ predict_hmsc <- function(
         paste0(
           "predict with arguments 'Yc' and 'gradient' jointly is not ",
           "implemented (yet)"),
-        gradient = gradient, Yc = Yc)
+        gradient = gradient, Yc = Yc, include_backtrace = TRUE)
     }
     x_data <- gradient$XDataNew
     studyDesign <- gradient$studyDesignNew
@@ -162,13 +163,13 @@ predict_hmsc <- function(
   if (!is.null(x_data) && !is.null(X)) {
     ecokit::stop_ctx(
       "only one of x_data and X arguments can be specified",
-      x_data = x_data, X = X)
+      x_data = x_data, X = X, include_backtrace = TRUE)
   }
 
   if (!is.null(XRRRData) && !is.null(XRRR)) {
     ecokit::stop_ctx(
       "only one of XRRRData and XRRR arguments can be specified",
-      XRRRData = XRRRData, XRRR = XRRR)
+      XRRRData = XRRRData, XRRR = XRRR, include_backtrace = TRUE)
   }
 
   if (!is.null(x_data)) {
@@ -177,7 +178,8 @@ predict_hmsc <- function(
     if (class_x == "list") {
       if (any(unlist(lapply(x_data, is.na)))) {
         ecokit::stop_ctx(
-          "NA values are not allowed in 'x_data'", class_x = class_x)
+          "NA values are not allowed in 'x_data'", class_x = class_x,
+          include_backtrace = TRUE)
       }
       xlev <- lapply(Reduce(rbind, Model$XData), levels)
       xlev <- xlev[unlist(lapply(Reduce(rbind, Model$XData), is.factor))]
@@ -188,7 +190,8 @@ predict_hmsc <- function(
     } else if (class_x == "data.frame") {
       if (anyNA(x_data)) {
         ecokit::stop_ctx(
-          "NA values are not allowed in 'x_data'", class_x = class_x)
+          "NA values are not allowed in 'x_data'", class_x = class_x,
+          include_backtrace = TRUE)
       }
       xlev <- lapply(Model$XData, levels)
       xlev <- xlev[unlist(lapply(Model$XData, is.factor))]
@@ -227,12 +230,12 @@ predict_hmsc <- function(
     if (ncol(Yc) != Model$ns) {
       ecokit::stop_ctx(
         "number of columns in Yc must be equal to ns",
-        ncol_Yc = ncol(Yc), model_ns = Model$ns)
+        ncol_Yc = ncol(Yc), model_ns = Model$ns, include_backtrace = TRUE)
     }
     if (nrow(Yc) != nyNew) {
       ecokit::stop_ctx(
         "number of rows in Yc and X must be equal",
-        nrow_Yc = nrow(Yc), nyNew = nyNew)
+        nrow_Yc = nrow(Yc), nyNew = nyNew, include_backtrace = TRUE)
     }
   }
 
@@ -240,25 +243,27 @@ predict_hmsc <- function(
     if (ncol(Loff) != Model$ns) {
       ecokit::stop_ctx(
         "number of columns in Loff must be equal to ns",
-        ncol_Loff = ncol(Loff), model_ns = Model$ns)
+        ncol_Loff = ncol(Loff), model_ns = Model$ns, include_backtrace = TRUE)
     }
     if (nrow(Loff) != nyNew) {
       ecokit::stop_ctx(
         "number of rows in Loff and X must be equal",
-        nrow_Loff = nrow(Loff), nyNew = nyNew)
+        nrow_Loff = nrow(Loff), nyNew = nyNew, include_backtrace = TRUE)
     }
   }
 
   if (!all(Model$rLNames %in% colnames(studyDesign))) {
     ecokit::stop_ctx(
       "dfPiNew does not contain all the necessary named columns",
-      model_rLNames = Model$rLNames, names_study_design = colnames(studyDesign))
+      model_rLNames = Model$rLNames, names_study_design = colnames(studyDesign),
+      include_backtrace = TRUE)
   }
 
   if (!all(Model$rLNames %in% names(ranLevels))) {
     ecokit::stop_ctx(
       "rL does not contain all the necessary named levels",
-      model_rLNames = Model$rLNames, names_ranLevels = names(ranLevels))
+      model_rLNames = Model$rLNames, names_ranLevels = names(ranLevels),
+      include_backtrace = TRUE)
   }
 
   if (!is.null(studyDesign)) {
@@ -324,7 +329,7 @@ predict_hmsc <- function(
   # Do not use `predict_latent_factor` when predicting values for response
   # curves when using coordinates = "i" in constructGradient
   if (!is.null(prediction_type)) {
-    if (prediction_type == "i") {
+    if (prediction_type == "i") {   # nolint: unneeded_nesting_linter
       for (r in seq_len(Mod_nr)) {
         if (r == 1) {
           ecokit::cat_time(
@@ -407,7 +412,7 @@ predict_hmsc <- function(
 
   } else {
 
-    if (is.null(prediction_type) || prediction_type == "c") {
+    if (is.null(prediction_type) || prediction_type == "c") {   # nolint: unneeded_nesting_linter
 
       ecokit::cat_time("Loading LF prediction from disk", level = 1L)
       ecokit::cat_time(LF_inputFile, level = 2L, cat_timestamp = FALSE)

@@ -23,34 +23,39 @@ mod_fit_windows <- function(
     path_model = NULL, python_VE = NULL, n_cores = NULL) {
 
   # exit the function if not running on Windows
-  if (ecokit::OS() != "Windows") {
+  if (ecokit::os() != "Windows") {
     ecokit::stop_ctx(
-      "This function is only for Windows OS.", OS = ecokit::OS())
+      "This function is only for Windows OS.", OS = ecokit::os(),
+      include_backtrace = TRUE)
   }
 
   if (is.null(path_model) || is.null(python_VE) || is.null(n_cores)) {
     ecokit::stop_ctx(
       "`path_model`, `python_VE`, and `n_cores` cannot be empty",
-      path_model = path_model, python_VE = python_VE, n_cores = n_cores)
+      path_model = path_model, python_VE = python_VE, n_cores = n_cores,
+      include_backtrace = TRUE)
   }
 
   # Check if path_model is a valid directory
   if (!fs::dir_exists(path_model)) {
-    ecokit::stop_ctx("Model directory does not exist", path_model = path_model)
+    ecokit::stop_ctx(
+      "Model directory does not exist", path_model = path_model,
+      include_backtrace = TRUE)
   }
 
   # Check if python_VE is a valid directory
   if (!fs::dir_exists(python_VE)) {
     ecokit::stop_ctx(
       "Python virtual environment directory does not exist",
-      python_VE = python_VE)
+      python_VE = python_VE, include_backtrace = TRUE)
   }
 
   # Check if python_VE directory contains python virtual environment
   python_exe <- fs::path(python_VE, "Scripts", "python.exe")
   if (!fs::file_exists(python_exe)) {
     ecokit::stop_ctx(
-      "Python virtual environment does not exist", python_VE = python_VE)
+      "Python virtual environment does not exist", python_VE = python_VE,
+      include_backtrace = TRUE)
   }
 
   # Avoid "no visible binding for global variable" message

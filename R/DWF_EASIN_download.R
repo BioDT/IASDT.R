@@ -16,7 +16,9 @@ EASIN_download <- function(
   # # ..................................................................... ###
 
   if (is.null(species_key)) {
-    ecokit::stop_ctx("species_key cannot be NULL", species_key = species_key)
+    ecokit::stop_ctx(
+      "species_key cannot be NULL", species_key = species_key,
+      include_backtrace = TRUE)
   }
 
   Path_EASIN <- NULL

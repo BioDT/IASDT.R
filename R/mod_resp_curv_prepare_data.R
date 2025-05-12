@@ -57,7 +57,9 @@ resp_curv_prepare_data <- function(
   .start_time <- lubridate::now(tzone = "CET")
 
   if (is.null(path_model)) {
-    ecokit::stop_ctx("`path_model` cannot be NULL", path_model = path_model)
+    ecokit::stop_ctx(
+      "`path_model` cannot be NULL", path_model = path_model,
+      include_backtrace = TRUE)
   }
 
   # Avoid "no visible binding for global variable" message
@@ -86,15 +88,19 @@ resp_curv_prepare_data <- function(
   rm(AllArgs, envir = environment())
 
   if (!is.numeric(n_cores) || n_cores < 1) {
-    ecokit::stop_ctx("`n_cores` must be greater than 0", n_cores = n_cores)
+    ecokit::stop_ctx(
+      "`n_cores` must be greater than 0", n_cores = n_cores,
+      include_backtrace = TRUE)
   }
   if (!is.numeric(LF_n_cores) || LF_n_cores < 1) {
     ecokit::stop_ctx(
-      "`LF_n_cores` must be greater than 0", LF_n_cores = LF_n_cores)
+      "`LF_n_cores` must be greater than 0", LF_n_cores = LF_n_cores,
+      include_backtrace = TRUE)
   }
   if (any(probabilities > 1) || any(probabilities < 0)) {
     ecokit::stop_ctx(
-      "`probabilities` must be between 0 and 1", probabilities = probabilities)
+      "`probabilities` must be between 0 and 1", probabilities = probabilities,
+      include_backtrace = TRUE)
   }
 
   probabilities <- sort(probabilities)
@@ -108,12 +114,13 @@ resp_curv_prepare_data <- function(
     Model <- ecokit::load_as(path_model)
     if (!inherits(Model, "Hmsc")) {
       ecokit::stop_ctx(
-        "Model object is not of class 'hmsc'", class_model = class(Model))
+        "Model object is not of class 'hmsc'", class_model = class(Model),
+        include_backtrace = TRUE)
     }
   } else {
     ecokit::stop_ctx(
       "The model file does not exist or is not a `.RData` or `.qs2` file.",
-      path_model = path_model)
+      path_model = path_model, include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###

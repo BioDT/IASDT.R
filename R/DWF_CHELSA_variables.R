@@ -11,7 +11,7 @@
 #'   variable
 #'
 #' @examples
-#' require(dplyr)
+#' library(dplyr)
 #' data(CHELSA_variables)
 #' print(CHELSA_variables, n = Inf)
 #'

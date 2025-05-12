@@ -60,7 +60,7 @@ get_species_name <- function(species_ID = NULL, env_file = ".env") {
         paste0(
           "`Sp_PA_Summary_DF.RData` file does not exist in the ", Path_PA,
           " folder"),
-        NGridCells = NGridCells, Path_PA = Path_PA)
+        NGridCells = NGridCells, Path_PA = Path_PA, include_backtrace = TRUE)
     }
 
     NGridCells <- ecokit::load_as(NGridCells) %>%

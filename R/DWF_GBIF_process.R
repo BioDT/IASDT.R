@@ -145,7 +145,8 @@ GBIF_process <- function(
   GBIF_Metadata <- fs::path(Path_GBIF, "GBIF_Metadata.RData")
   if (!file.exists(GBIF_Metadata)) {
     ecokit::stop_ctx(
-      "GBIF metadata file does not exist", GBIF_Metadata = GBIF_Metadata)
+      "GBIF metadata file does not exist", GBIF_Metadata = GBIF_Metadata,
+      include_backtrace = TRUE)
   }
   GBIF_Metadata <- ecokit::load_as(GBIF_Metadata)
 
@@ -156,14 +157,17 @@ GBIF_process <- function(
   # Grid_10_Land_Crop_sf
   GridSf <- fs::path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
   if (!file.exists(GridSf)) {
-    ecokit::stop_ctx("Reference grid (sf) file not found", GridSf = GridSf)
+    ecokit::stop_ctx(
+      "Reference grid (sf) file not found", GridSf = GridSf,
+      include_backtrace = TRUE)
   }
   GridSf <- ecokit::load_as(GridSf)
 
   # Grid_10_Land_Crop
   GridR <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(GridR)) {
-    ecokit::stop_ctx("Reference grid file not found", GridR = GridR)
+    ecokit::stop_ctx(
+      "Reference grid file not found", GridR = GridR, include_backtrace = TRUE)
   }
   GridR <- terra::unwrap(ecokit::load_as(GridR))
 
@@ -243,7 +247,7 @@ GBIF_process <- function(
     Msg <- ChunkList[which(!file.exists(ChunkListRData))] %>%
       paste0(" >> ", ., collapse = "\n") %>%
       paste0("The following chunks were not processed\n", .)
-    ecokit::stop_ctx(Msg)
+    ecokit::stop_ctx(Msg, include_backtrace = TRUE)
   }
 
   ecokit::cat_diff(
@@ -382,14 +386,14 @@ GBIF_process <- function(
     terra::rasterize(y = GridR, field = "n") %>%
     terra::mask(GridR) %>%
     stats::setNames("NumObs") %>%
-    ecokit::set_raster_CRS() %>%
+    ecokit::set_raster_crs(crs = "epsg:3035") %>%
     terra::wrap()
 
   ecokit::cat_time(
     "Number of observations per grid cell (log scale)", level = 1L)
   GBIF_NObs_log <- terra::unwrap(GBIF_NObs) %>%
     log10() %>%
-    ecokit::set_raster_CRS() %>%
+    ecokit::set_raster_crs(crs = "epsg:3035") %>%
     terra::wrap()
 
   ecokit::cat_time("Save as RData", level = 2L)
@@ -410,13 +414,13 @@ GBIF_process <- function(
     terra::rasterize(y = GridR, field = "n") %>%
     terra::mask(GridR) %>%
     stats::setNames("NumSpecies") %>%
-    ecokit::set_raster_CRS() %>%
+    ecokit::set_raster_crs(crs = "epsg:3035") %>%
     terra::wrap()
 
   ecokit::cat_time("Number of IAS per grid cell (log)", level = 1L)
   GBIF_NSp_Log <- terra::unwrap(GBIF_NSp) %>%
     log10() %>%
-    ecokit::set_raster_CRS() %>%
+    ecokit::set_raster_crs(crs = "epsg:3035") %>%
     terra::wrap()
 
   ecokit::cat_time("Save as RData", level = 2L)

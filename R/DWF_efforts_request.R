@@ -26,19 +26,21 @@ efforts_request <- function(
   .StartTimeRequest <- lubridate::now(tzone = "CET")
 
   if (missing(n_cores) || !is.numeric(n_cores) || n_cores < 1) {
-    ecokit::stop_ctx("`n_cores` must be a positive integer.", n_cores = n_cores)
+    ecokit::stop_ctx(
+      "`n_cores` must be a positive integer.", n_cores = n_cores,
+      include_backtrace = TRUE)
   }
 
   if (!is.numeric(start_year) || start_year <= 1950) {
     ecokit::stop_ctx(
       "`start_year` must be a positive integer after 1950",
-      start_year = start_year)
+      start_year = start_year, include_backtrace = TRUE)
   }
 
   if (!is.numeric(boundaries) || length(boundaries) != 4) {
     ecokit::stop_ctx(
       "`boundaries` must be a numeric vector of length 4.",
-      boundaries = boundaries)
+      boundaries = boundaries, include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -128,7 +130,7 @@ efforts_request <- function(
                   rgbif::pred_gte("year", start_year),
                   # Only within specific boundaries
                   rgbif::pred_within(
-                    value = ecokit::boundary_to_WKT(
+                    value = ecokit::boundary_to_wkt(
                       left = boundaries[1], right = boundaries[2],
                       bottom = boundaries[3], top = boundaries[4])),
                   format = "SIMPLE_CSV")
@@ -141,7 +143,8 @@ efforts_request <- function(
                 ecokit::stop_ctx(
                   paste0(
                     "Failed to request data for taxonKey ", .x, ": ",
-                    conditionMessage(e)))
+                    conditionMessage(e)),
+                  include_backtrace = TRUE)
               })
           }
 

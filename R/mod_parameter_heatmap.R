@@ -52,7 +52,9 @@ mod_heatmap_beta <- function(
   .start_time <- lubridate::now(tzone = "CET")
 
   if (is.null(path_model)) {
-    ecokit::stop_ctx("`path_model` cannot be empty", path_model = path_model)
+    ecokit::stop_ctx(
+      "`path_model` cannot be empty", path_model = path_model,
+      include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -61,7 +63,7 @@ mod_heatmap_beta <- function(
   if (support_level < 0 || support_level > 1) {
     ecokit::stop_ctx(
       "`support_level` has to be a numeric value between 0 and 1",
-      support_level = support_level)
+      support_level = support_level, include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -78,7 +80,8 @@ mod_heatmap_beta <- function(
   ecokit::cat_time("Loading model object")
 
   if (!file.exists(path_model)) {
-    ecokit::stop_ctx("Model file not found", path_model = path_model)
+    ecokit::stop_ctx(
+      "Model file not found", path_model = path_model, include_backtrace = TRUE)
   }
   Model <- ecokit::load_as(path_model)
 
@@ -395,7 +398,9 @@ mod_heatmap_omega <- function(
   .start_time <- lubridate::now(tzone = "CET")
 
   if (is.null(path_model)) {
-    ecokit::stop_ctx("`path_model` cannot be empty", path_model = path_model)
+    ecokit::stop_ctx(
+      "`path_model` cannot be empty", path_model = path_model,
+      include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -404,7 +409,7 @@ mod_heatmap_omega <- function(
   if (support_level < 0 || support_level > 1) {
     ecokit::stop_ctx(
       "`support_level` has to be a numeric value between 0 and 1",
-      support_level = support_level)
+      support_level = support_level, include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###

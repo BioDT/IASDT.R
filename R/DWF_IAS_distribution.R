@@ -16,7 +16,8 @@ IAS_distribution <- function(
   .start_time <- lubridate::now(tzone = "CET")
 
   if (is.null(species) || is.na(species) || species == "") {
-    ecokit::stop_ctx("`species` cannot be empty", species = species)
+    ecokit::stop_ctx(
+      "`species` cannot be empty", species = species, include_backtrace = TRUE)
   }
 
   if (isFALSE(verbose)) {
@@ -135,12 +136,14 @@ IAS_distribution <- function(
 
   if (!dir.exists(Path_GBIF_DT)) {
     ecokit::stop_ctx(
-      "Required path for GBIF data do not exist", Path_GBIF_DT = Path_GBIF_DT)
+      "Required path for GBIF data do not exist", Path_GBIF_DT = Path_GBIF_DT,
+      include_backtrace = TRUE)
   }
 
   if (!dir.exists(Path_EASIN)) {
     ecokit::stop_ctx(
-      "Required path for EASIN data do not exist", Path_EASIN = Path_EASIN)
+      "Required path for EASIN data do not exist", Path_EASIN = Path_EASIN,
+      include_backtrace = TRUE)
   }
 
   # # ................................ ###
@@ -157,7 +160,7 @@ IAS_distribution <- function(
   if (!file.exists(grid_100_file)) {
     ecokit::stop_ctx(
       "grid file does not exist: Grid_100_sf.RData",
-      grid_100_file = grid_100_file)
+      grid_100_file = grid_100_file, include_backtrace = TRUE)
   }
 
   GridsPath <- fs::path(
@@ -172,7 +175,8 @@ IAS_distribution <- function(
         "grid files do not exist: \n  >>> ",
         paste(GridsPath[!file.exists(GridsPath)], collapse = "\n  >>> ")),
       GridsPath = GridsPath,
-      missing_GridsPath = GridsPath[!file.exists(GridsPath)])
+      missing_GridsPath = GridsPath[!file.exists(GridsPath)],
+      include_backtrace = TRUE)
   }
 
   ### sf - 100 km ----
@@ -294,7 +298,7 @@ IAS_distribution <- function(
     GBIF_R <- ecokit::load_as(Path_GBIF_R) %>%
       terra::unwrap() %>%
       # convert raster map into binary (1/0)
-      ecokit::raster_to_PA() %>%
+      ecokit::raster_to_pres_abs() %>%
       terra::mask(RefGrid) %>%
       stats::setNames("GBIF")
 
@@ -332,7 +336,7 @@ IAS_distribution <- function(
     # raster map
     EASIN_R <- dplyr::select(EASIN_DT, "Species_name") %>%
       terra::rasterize(RefGrid) %>%
-      ecokit::raster_to_PA() %>%
+      ecokit::raster_to_pres_abs() %>%
       terra::mask(RefGrid) %>%
       stats::setNames("EASIN")
 
@@ -363,7 +367,7 @@ IAS_distribution <- function(
   if (nrow(eLTER_DT) > 0) {
     eLTER_R <- dplyr::select(eLTER_DT, "Species_name") %>%
       terra::rasterize(RefGrid) %>%
-      ecokit::raster_to_PA() %>%
+      ecokit::raster_to_pres_abs() %>%
       terra::mask(RefGrid) %>%
       stats::setNames("eLTER")
 
@@ -389,7 +393,7 @@ IAS_distribution <- function(
   ecokit::cat_time("Merging data from the 3 data sources", level = 1L)
 
   Sp_PA <- sum(GBIF_R, EASIN_R, eLTER_R) %>%
-    ecokit::raster_to_PA() %>%
+    ecokit::raster_to_pres_abs() %>%
     stats::setNames("PA") %>%
     terra::mask(RefGrid)
   Sp_PA$PA_Masked <- (Sp_PA$PA * Mask_Keep)
@@ -460,7 +464,7 @@ IAS_distribution <- function(
   if (isFALSE(ecokit::check_rdata(BioReg_R))) {
     ecokit::stop_ctx(
       "Required file for biogeographical regions does not exist",
-      BioReg_R = BioReg_R)
+      BioReg_R = BioReg_R, include_backtrace = TRUE)
   }
 
   BioReg_R <- terra::unwrap(ecokit::load_as(BioReg_R))

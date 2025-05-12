@@ -151,14 +151,16 @@ EASIN_process <- function(
   GridR <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(GridR)) {
     ecokit::stop_ctx(
-      "Path for the reference grid does not exist", GridR = GridR)
+      "Path for the reference grid does not exist", GridR = GridR,
+      include_backtrace = TRUE)
   }
 
   ## Grid - sf ----
   GridSf <- fs::path(Path_Grid_Ref, "Grid_10_sf.RData")
   if (!file.exists(GridSf)) {
     ecokit::stop_ctx(
-      "Path for the reference grid does not exist", GridSf = GridSf)
+      "Path for the reference grid does not exist", GridSf = GridSf,
+      include_backtrace = TRUE)
   }
 
   ## Grid - sf - study area ----
@@ -166,7 +168,8 @@ EASIN_process <- function(
   LandGrids <- fs::path(Path_Grid, "Grid_10_Land_sf.RData")
   if (!file.exists(LandGrids)) {
     ecokit::stop_ctx(
-      "Path for the reference grid does not exist", LandGrids = LandGrids)
+      "Path for the reference grid does not exist", LandGrids = LandGrids,
+      include_backtrace = TRUE)
   }
 
   ## Species list ----

@@ -92,7 +92,7 @@
 #'    - predicting latent factors for new sampling units: [predict_maps]
 #'    - computing variance partitioning: [variance_partitioning_compute]
 #'
-#' <hr>
+#' <br/>
 #'
 #' **mod_prepare_TF**
 #'
@@ -115,7 +115,7 @@
 #' to load a Python virtual environment or install the required dependencies for
 #' TensorFlow and related packages.
 #'
-#' <hr>
+#' <br/><br/>
 #'
 #' **mod_postprocess_2_CPU**
 #'
@@ -140,7 +140,7 @@
 #' `mod_prepare_TF`).
 #' - submitting SLURM jobs for cross-validated model fitting.
 #'
-#' <hr>
+#' <br/>
 #'
 #' **mod_postprocess_CV_1_CPU**
 #'
@@ -149,7 +149,7 @@
 #' cross-validated model chains into `Hmsc` model objects and prepare scripts
 #' for latent factor prediction on `TensorFlow` using [predict_maps_CV].
 #'
-#' <hr>
+#' <br/><br/>
 #'
 #' **mod_postprocess_CV_2_CPU**
 #'
@@ -214,17 +214,19 @@ mod_postprocess_1_CPU <- function(
       paste0(
         "Invalid Habitat abbreviation. Valid values are:\n >> ",
         toString(ValidHabAbbs)),
-      hab_abb = hab_abb)
+      hab_abb = hab_abb, include_backtrace = TRUE)
   }
 
   if (!file.exists(env_file)) {
     ecokit::stop_ctx(
       "Error: Environment file is invalid or does not exist.",
-      env_file = env_file)
+      env_file = env_file, include_backtrace = TRUE)
   }
 
   if (!dir.exists(model_dir)) {
-    ecokit::stop_ctx("Model directory was not found", model_dir = model_dir)
+    ecokit::stop_ctx(
+      "Model directory was not found", model_dir = model_dir,
+      include_backtrace = TRUE)
   }
 
   if (!(use_trees %in% c("Tree", "NoTree"))) {
@@ -232,7 +234,7 @@ mod_postprocess_1_CPU <- function(
       paste0(
         "Invalid value for Tree argument. Valid values ",
         "are: 'Tree' or 'NoTree'"),
-      use_trees = use_trees)
+      use_trees = use_trees, include_backtrace = TRUE)
   }
 
   if (!all(CV_name %in% c("CV_Dist", "CV_Large", "CV_SAC"))) {
@@ -240,7 +242,7 @@ mod_postprocess_1_CPU <- function(
       paste0(
         "Invalid value for CV_name argument. Valid values ",
         "are: 'CV_Dist', 'CV_Large', or `CV_SAC`"),
-      CV_name = CV_name)
+      CV_name = CV_name, include_backtrace = TRUE)
   }
 
   # ****************************************************************
@@ -256,7 +258,7 @@ mod_postprocess_1_CPU <- function(
   cat(
     paste0(
       "\n  >>> Working directory: ", getwd(),
-      "\n  >>> Operating system: ", ecokit::OS(),
+      "\n  >>> Operating system: ", ecokit::os(),
       "\n  >>> Model root: ", model_dir,
       "\n  >>> n_cores: ", n_cores,
       "\n  >>> env_file: ", env_file,
@@ -334,7 +336,7 @@ mod_postprocess_1_CPU <- function(
   if (!all(file.exists(path_model, path_coda))) {
     ecokit::stop_ctx(
       "Selected model files not found",
-      path_model = path_model, path_coda = path_coda)
+      path_model = path_model, path_coda = path_coda, include_backtrace = TRUE)
   }
 
   temp_dir <- fs::path(model_dir, "TEMP_Pred")
@@ -521,7 +523,7 @@ mod_prepare_TF <- function(
   if (n_batch_files <= 0) {
     ecokit::stop_ctx(
       "`n_batch_files` must be a positive integer.",
-      n_batch_files = n_batch_files)
+      n_batch_files = n_batch_files, include_backtrace = TRUE)
   }
 
   # # Load environment variables, for project ID
@@ -680,7 +682,8 @@ mod_prepare_TF <- function(
   if (length(LF_InFiles) == 0) {
     ecokit::stop_ctx(
       "No files found matching the pattern",
-      LF_Pattern = LF_Pattern, path_model = path_model)
+      LF_Pattern = LF_Pattern, path_model = path_model,
+      include_backtrace = TRUE)
   }
 
   ecokit::cat_time(
@@ -895,18 +898,19 @@ mod_postprocess_2_CPU <- function(
       paste0(
         "Invalid Habitat abbreviation. Valid values are:\n >> ",
         toString(ValidHabAbbs)),
-      hab_abb = hab_abb)
+      hab_abb = hab_abb, include_backtrace = TRUE)
   }
 
   if (!file.exists(env_file)) {
     ecokit::stop_ctx(
       "Error: Environment file is invalid or does not exist.",
-      env_file = env_file)
+      env_file = env_file, include_backtrace = TRUE)
   }
 
   if (!dir.exists(model_dir)) {
     ecokit::stop_ctx(
-      "Model directory is invalid or does not exist.", model_dir = model_dir)
+      "Model directory is invalid or does not exist.", model_dir = model_dir,
+      include_backtrace = TRUE)
   }
 
   if (!(use_trees %in% c("Tree", "NoTree"))) {
@@ -914,13 +918,14 @@ mod_postprocess_2_CPU <- function(
       paste0(
         "Invalid value for Tree argument. Valid values ",
         "are: 'Tree' or 'NoTree'"),
-      use_trees = use_trees)
+      use_trees = use_trees, include_backtrace = TRUE)
   }
 
   if (clamp_pred && is.null(fix_efforts)) {
     ecokit::stop_ctx(
       "`fix_efforts` can not be NULL when Clamping is implemented",
-      clamp_pred = clamp_pred, fix_efforts = fix_efforts)
+      clamp_pred = clamp_pred, fix_efforts = fix_efforts,
+      include_backtrace = TRUE)
   }
 
   ValidModels <- c(
@@ -932,7 +937,7 @@ mod_postprocess_2_CPU <- function(
       paste0(
         "Invalid climate models. Valid values are:\n >> ",
         toString(ValidModels)),
-      CC_models = CC_models)
+      CC_models = CC_models, include_backtrace = TRUE)
   }
 
   if (!all(CC_scenario %in% c("ssp126", "ssp370", "ssp585"))) {
@@ -940,7 +945,7 @@ mod_postprocess_2_CPU <- function(
       paste0(
         "Invalid climate scenarios. Valid values are:\n >> ",
         toString(c("ssp126", "ssp370", "ssp585"))),
-      CC_scenario = CC_scenario)
+      CC_scenario = CC_scenario, include_backtrace = TRUE)
   }
 
   # ****************************************************************
@@ -956,7 +961,7 @@ mod_postprocess_2_CPU <- function(
   cat(
     paste0(
       "\n  >>> Working directory: ", getwd(),
-      "\n  >>> Operating system: ", ecokit::OS(),
+      "\n  >>> Operating system: ", ecokit::os(),
       "\n  >>> Model root: ", model_dir,
       "\n  >>> n_cores: ", n_cores,
       "\n  >>> RC_n_cores: ", RC_n_cores,
@@ -978,7 +983,8 @@ mod_postprocess_2_CPU <- function(
 
   if (length(ModelData) != 1) {
     ecokit::stop_ctx(
-      "Expected one model data file", length_model_data = length(ModelData))
+      "Expected one model data file", length_model_data = length(ModelData),
+      include_backtrace = TRUE)
   }
 
   # ****************************************************************
@@ -1006,7 +1012,7 @@ mod_postprocess_2_CPU <- function(
   if (!all(file.exists(path_model, path_coda))) {
     ecokit::stop_ctx(
       "Selected model files not found",
-      path_model = path_model, path_coda = path_coda)
+      path_model = path_model, path_coda = path_coda, include_backtrace = TRUE)
   }
 
   # ****************************************************************

@@ -56,12 +56,13 @@ predict_maps_CV <- function(
       paste0(
         "Invalid value for CV_name argument.\nValid values are: CV_Dist, ",
         "CV_Large, or CV_SAC"),
-      CV_name = CV_name)
+      CV_name = CV_name, include_backtrace = TRUE)
   }
 
   if (!file.exists(env_file)) {
     ecokit::stop_ctx(
-      "Environment file is invalid or does not exist.", env_file = env_file)
+      "Environment file is invalid or does not exist.", env_file = env_file,
+      include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -82,7 +83,8 @@ predict_maps_CV <- function(
   Path_GridR <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(Path_GridR)) {
     ecokit::stop_ctx(
-      "Path for the Europe boundaries does not exist", Path_GridR = Path_GridR)
+      "Path for the Europe boundaries does not exist", Path_GridR = Path_GridR,
+      include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -95,9 +97,10 @@ predict_maps_CV <- function(
   # Loading CV data
   CV_DT <- fs::path(model_dir, "Model_Fitting_CV", "CV_DT_fitted.RData")
   if (!ecokit::check_data(CV_DT, warning = FALSE)) {
-    ecokit::stop_ctx("CV data does not exist", CV_DT = CV_DT)
-
+    ecokit::stop_ctx(
+      "CV data does not exist", CV_DT = CV_DT, include_backtrace = TRUE)
   }
+
   CV_DT <- ecokit::load_as(CV_DT) %>%
     dplyr::filter(.data$CV_name == CV_name, .data$CV == CV_fold)
 
@@ -138,7 +141,9 @@ predict_maps_CV <- function(
   # CV fitted cross-validated model
   path_model <- CV_DT$Path_ModFitted
   if (!file.exists(path_model)) {
-    ecokit::stop_ctx("Model data does not exist", path_model = path_model)
+    ecokit::stop_ctx(
+      "Model data does not exist", path_model = path_model,
+      include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -152,7 +157,7 @@ predict_maps_CV <- function(
   if (length(model_data) != 1) {
     ecokit::stop_ctx(
       paste0("There are ", length(model_data), " model data files"),
-      model_dir = model_dir)
+      model_dir = model_dir, include_backtrace = TRUE)
   }
   model_data <- ecokit::load_as(model_data)
 
@@ -166,7 +171,7 @@ predict_maps_CV <- function(
   if (nrow(Test_DT) == 0) {
     ecokit::stop_ctx(
       "No data available for the current CV fold",
-      CV_name = CV_name, CV_fold = CV_fold)
+      CV_name = CV_name, CV_fold = CV_fold, include_backtrace = TRUE)
   }
 
   Test_X <- Test_DT %>%
@@ -273,22 +278,26 @@ predict_maps_CV <- function(
 
     if (!file.exists(Path_Preds_sf)) {
       ecokit::stop_ctx(
-        "Prediction file does not exist", Path_Preds_sf = Path_Preds_sf)
+        "Prediction file does not exist", Path_Preds_sf = Path_Preds_sf,
+        include_backtrace = TRUE)
 
     }
     if (isFALSE(ecokit::check_data(Path_Preds_sf, warning = FALSE))) {
       ecokit::stop_ctx(
-        "Prediction file is corrupted", Path_Preds_sf = Path_Preds_sf)
+        "Prediction file is corrupted", Path_Preds_sf = Path_Preds_sf,
+        include_backtrace = TRUE)
     }
 
     if (!file.exists(Path_Eval_File)) {
       ecokit::stop_ctx(
-        "Evaluation file does not exist", Path_Eval_File = Path_Eval_File)
+        "Evaluation file does not exist", Path_Eval_File = Path_Eval_File,
+        include_backtrace = TRUE)
     }
 
     if (isFALSE(ecokit::check_data(Path_Eval_File, warning = FALSE))) {
       ecokit::stop_ctx(
-        "Evaluation file is corrupted", Path_Eval_File = Path_Eval_File)
+        "Evaluation file is corrupted", Path_Eval_File = Path_Eval_File,
+        include_backtrace = TRUE)
     }
 
     # loading evaluation data

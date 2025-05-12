@@ -68,12 +68,13 @@ mod_CV_prepare <- function(
     ecokit::stop_ctx(
       "`input_data`, `env_file`, `out_path`, and `x_vars` can not be empty",
       input_data = input_data, env_file = env_file, out_path = out_path,
-      x_vars = x_vars)
+      x_vars = x_vars, include_backtrace = TRUE)
   }
 
   if (!file.exists(env_file)) {
     ecokit::stop_ctx(
-      "Path to environment variables does not exist ", env_file = env_file)
+      "Path to environment variables does not exist ", env_file = env_file,
+      include_backtrace = TRUE)
   }
 
   AllVars <- c("x", "y", x_vars)
@@ -84,7 +85,8 @@ mod_CV_prepare <- function(
       paste0(
         "input_data must contain 'x' and 'y' columns and all ",
         "environmental predictors in the x_vars argument."),
-      AllVarsInDT = AllVarsInDT, MissingVars = MissingVars)
+      AllVarsInDT = AllVarsInDT, MissingVars = MissingVars,
+      include_backtrace = TRUE)
   }
 
   # # |||||||||||||||||||||||||||||||||||
@@ -103,7 +105,8 @@ mod_CV_prepare <- function(
   Path_Grid <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(Path_Grid)) {
     ecokit::stop_ctx(
-      "Path for reference grid does not exist", Path_Grid = Path_Grid)
+      "Path for reference grid does not exist", Path_Grid = Path_Grid,
+      include_backtrace = TRUE)
   }
   RefGrid <- terra::unwrap(ecokit::load_as(Path_Grid))
 
@@ -191,7 +194,8 @@ mod_CV_prepare <- function(
             "folds_ids" %in% names(CV_Large))) {
         ecokit::stop_ctx(
           "Cross-validation results do not contain 'folds_ids'.",
-          names_CV_Large = names(CV_Large), names_CV_Dist = names(CV_Dist))
+          names_CV_Large = names(CV_Large), names_CV_Dist = names(CV_Dist),
+          include_backtrace = TRUE)
       }
     } else {
       # CV based on Spatial autocorrelation
@@ -207,7 +211,7 @@ mod_CV_prepare <- function(
         ecokit::stop_ctx(
           "Cross-validation results do not contain 'folds_ids'.",
           names_CV_Large = names(CV_Large), names_CV_Dist = names(CV_Dist),
-          names_CV_SAC = names(CV_SAC))
+          names_CV_SAC = names(CV_SAC), include_backtrace = TRUE)
       }
     }
   } else {

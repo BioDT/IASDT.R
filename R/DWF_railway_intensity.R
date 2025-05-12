@@ -49,7 +49,8 @@ railway_intensity <- function(
 
   # Check `unzip` system command
   if (isFALSE(ecokit::check_system_command("unzip"))) {
-    ecokit::stop_ctx("The system command 'unzip' is not available")
+    ecokit::stop_ctx(
+      "The system command 'unzip' is not available", include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -86,7 +87,8 @@ railway_intensity <- function(
   RefGrid <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(RefGrid)) {
     ecokit::stop_ctx(
-      "The reference grid file does not exist", RefGrid = RefGrid)
+      "The reference grid file does not exist", RefGrid = RefGrid,
+      include_backtrace = TRUE)
   }
   RefGrid <- terra::unwrap(ecokit::load_as(RefGrid))
 
@@ -94,7 +96,8 @@ railway_intensity <- function(
   RefGridSF <- fs::path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
   if (!file.exists(RefGridSF)) {
     ecokit::stop_ctx(
-      "The reference grid file does not exist", RefGridSF = RefGridSF)
+      "The reference grid file does not exist", RefGridSF = RefGridSF,
+      include_backtrace = TRUE)
   }
   RefGridSF <- ecokit::load_as(RefGridSF)
 
@@ -104,10 +107,10 @@ railway_intensity <- function(
   ecokit::cat_time("Scrap download links")
   .StartTimeDown <- lubridate::now(tzone = "CET")
 
-  if (!ecokit::check_URL(Railways_URL)) {
+  if (!ecokit::check_url(Railways_URL)) {
     ecokit::stop_ctx(
       "The base URL for railways data is not valid",
-      Railways_URL = Railways_URL)
+      Railways_URL = Railways_URL, include_backtrace = TRUE)
   }
 
   ecokit::cat_time(paste0("Base URL is: ", Railways_URL), level = 1L)
@@ -160,7 +163,8 @@ railway_intensity <- function(
       Success <- FALSE
       if (Attempt == Attempts) {
         ecokit::stop_ctx(
-          paste0("Initial scraping of railways links failed after ", Attempts))
+          paste0("Initial scraping of railways links failed after ", Attempts),
+          include_backtrace = TRUE)
       }
     }
 
@@ -195,7 +199,8 @@ railway_intensity <- function(
                 ecokit::stop_ctx(
                   paste0(
                     "Scraping railways links failed for: ", ScrapedLinks,
-                    "after ", Attempts))
+                    "after ", Attempts),
+                  include_backtrace = TRUE)
               }
             }
             Attempt <- Attempt + 1

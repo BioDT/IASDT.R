@@ -32,7 +32,8 @@ efforts_plot <- function(env_file = ".env") {
   File_SummaryR <- fs::path(Path_Efforts, "Efforts_SummaryR.RData")
   if (!file.exists(File_SummaryR)) {
     ecokit::stop_ctx(
-      "Summary maps cannot be loaded: ", File_SummaryR = File_SummaryR)
+      "Summary maps cannot be loaded: ", File_SummaryR = File_SummaryR,
+      include_backtrace = TRUE)
   }
 
   Efforts_SummaryR <- terra::unwrap(ecokit::load_as(File_SummaryR))

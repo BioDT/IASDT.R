@@ -17,18 +17,20 @@ convergence_rho <- function(
   if (is.null(posterior) || is.null(model_object) || is.null(title)) {
     ecokit::stop_ctx(
       "`posterior`, `model_object`, and `title` cannot be empty",
-      posterior = posterior, model_object = model_object, title = title)
+      posterior = posterior, model_object = model_object, title = title,
+      include_backtrace = TRUE)
   }
 
   if (length(margin_type) != 1) {
     ecokit::stop_ctx(
-      "`margin_type` must be a single value.", margin_type = margin_type)
+      "`margin_type` must be a single value.", margin_type = margin_type,
+      include_backtrace = TRUE)
   }
 
   if (!margin_type %in% c("histogram", "density")) {
     ecokit::stop_ctx(
       "`margin_type` must be either 'histogram' or 'density'.",
-      margin_type = margin_type)
+      margin_type = margin_type, include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###

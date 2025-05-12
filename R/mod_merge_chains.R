@@ -77,11 +77,14 @@ mod_merge_chains <- function(
   # Checking arguments ----
 
   if (is.null(model_dir)) {
-    ecokit::stop_ctx("`model_dir` cannot be empty", model_dir = model_dir)
+    ecokit::stop_ctx(
+      "`model_dir` cannot be empty", model_dir = model_dir,
+      include_backtrace = TRUE)
   }
 
   if (is.null(n_cores)) {
-    ecokit::stop_ctx("`n_cores` cannot be empty", n_cores = n_cores)
+    ecokit::stop_ctx(
+      "`n_cores` cannot be empty", n_cores = n_cores, include_backtrace = TRUE)
   }
 
   AllArgs <- ls(envir = environment())
@@ -105,20 +108,21 @@ mod_merge_chains <- function(
 
   if (!dir.exists(model_dir)) {
     ecokit::stop_ctx(
-      "`model_dir` directory does not exist", model_dir = model_dir)
+      "`model_dir` directory does not exist", model_dir = model_dir,
+      include_backtrace = TRUE)
   }
 
   if (length(out_extension) != 1) {
     ecokit::stop_ctx(
       "`out_extension` must be a single string.",
       out_extension = out_extension,
-      length_out_extension = length(out_extension))
+      length_out_extension = length(out_extension), include_backtrace = TRUE)
   }
 
   if (!out_extension %in% c("qs2", "RData")) {
     ecokit::stop_ctx(
       "`out_extension` must be either 'qs2' or 'RData'.",
-      out_extension = out_extension)
+      out_extension = out_extension, include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -136,7 +140,9 @@ mod_merge_chains <- function(
   Path_ModInfo <- fs::path(model_dir, "Model_Info.RData")
 
   if (!file.exists(Path_ModInfo)) {
-    ecokit::stop_ctx("ModInfo file does not exist", Path_ModInfo = Path_ModInfo)
+    ecokit::stop_ctx(
+      "ModInfo file does not exist", Path_ModInfo = Path_ModInfo,
+      include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -442,7 +448,7 @@ mod_merge_chains <- function(
         MissingModels = paste0(M_Name_Fit, " (", NMissingChains, " chains)")
       ) %>%
       dplyr::pull(MissingModels) %>%
-      ecokit::sort2()
+      gtools::mixedsort()
 
     if (length(MissingModelVars) > 0) {
       ecokit::cat_time("Unsuccessful models")
@@ -505,11 +511,14 @@ mod_merge_chains_CV <- function(
   # Checking arguments ----
 
   if (is.null(model_dir)) {
-    ecokit::stop_ctx("`model_dir` cannot be empty", model_dir = model_dir)
+    ecokit::stop_ctx(
+      "`model_dir` cannot be empty", model_dir = model_dir,
+      include_backtrace = TRUE)
   }
 
   if (is.null(n_cores)) {
-    ecokit::stop_ctx("`n_cores` cannot be empty", n_cores = n_cores)
+    ecokit::stop_ctx(
+      "`n_cores` cannot be empty", n_cores = n_cores, include_backtrace = TRUE)
   }
 
   AllArgs <- ls(envir = environment())
@@ -529,19 +538,21 @@ mod_merge_chains_CV <- function(
 
   if (!dir.exists(model_dir)) {
     ecokit::stop_ctx(
-      "`model_dir` directory does not exist", model_dir = model_dir)
+      "`model_dir` directory does not exist", model_dir = model_dir,
+      include_backtrace = TRUE)
   }
 
   if (length(out_extension) != 1) {
     ecokit::stop_ctx(
       "`out_extension` must be a single string.",
-      out_extension = out_extension, length_out_extension = out_extension)
+      out_extension = out_extension, length_out_extension = out_extension,
+      include_backtrace = TRUE)
   }
 
   if (!out_extension %in% c("qs2", "RData")) {
     ecokit::stop_ctx(
       "`out_extension` must be either 'qs2' or 'RData'.",
-      out_extension = out_extension)
+      out_extension = out_extension, include_backtrace = TRUE)
   }
 
   if (!all(CV_names %in% c("CV_Dist", "CV_Large", "CV_SAC"))) {
@@ -549,7 +560,7 @@ mod_merge_chains_CV <- function(
       paste0(
         "Invalid value for CV_names argument. Valid values ",
         "are: 'CV_Dist', 'CV_Large', or `CV_SAC`"),
-      CV_names = CV_names)
+      CV_names = CV_names, include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -565,10 +576,14 @@ mod_merge_chains_CV <- function(
 
   Path_CV_DT <- fs::path(model_dir, "Model_Fitting_CV", "CV_DT.RData")
   if (!file.exists(Path_CV_DT)) {
-    ecokit::stop_ctx("CV_DT file does not exist", Path_CV_DT = Path_CV_DT)
+    ecokit::stop_ctx(
+      "CV_DT file does not exist", Path_CV_DT = Path_CV_DT,
+      include_backtrace = TRUE)
   }
   if (isFALSE(ecokit::check_data(Path_CV_DT, warning = FALSE))) {
-    ecokit::stop_ctx("CV_DT file is not a valid file", Path_CV_DT = Path_CV_DT)
+    ecokit::stop_ctx(
+      "CV_DT file is not a valid file", Path_CV_DT = Path_CV_DT,
+      include_backtrace = TRUE)
   }
 
   CV_DT <- ecokit::load_as(Path_CV_DT) %>%

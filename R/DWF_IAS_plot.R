@@ -15,7 +15,8 @@ IAS_plot <- function(species = NULL, env_file = ".env", overwrite = TRUE) {
   # Checking arguments ----
 
   if (is.null(species)) {
-    ecokit::stop_ctx("species cannot be empty", species = species)
+    ecokit::stop_ctx(
+      "species cannot be empty", species = species, include_backtrace = TRUE)
   }
 
   AllArgs <- ls(envir = environment())
@@ -86,7 +87,7 @@ IAS_plot <- function(species = NULL, env_file = ".env", overwrite = TRUE) {
     ecokit::stop_ctx(
       "Species information could not be found",
       Path_TaxaInfo_RData = Path_TaxaInfo_RData,
-      SpInfo = SpInfo, nrow_SpInfo = nrow(SpInfo))
+      SpInfo = SpInfo, nrow_SpInfo = nrow(SpInfo), include_backtrace = TRUE)
   }
   SpInfo <- dplyr::filter(SpInfo, Species_name2 == Species2) %>%
     dplyr::select(-"speciesKey") %>%

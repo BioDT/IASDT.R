@@ -23,7 +23,8 @@ mod_get_posteriors <- function(path_posterior = NULL, from_JSON = FALSE) {
   # Check if path_posterior is empty
   if (is.null(path_posterior)) {
     ecokit::stop_ctx(
-      "`path_posterior` cannot be empty", path_posterior = path_posterior)
+      "`path_posterior` cannot be empty", path_posterior = path_posterior,
+      include_backtrace = TRUE)
   }
 
   # Checking arguments

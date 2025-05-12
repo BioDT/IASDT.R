@@ -34,11 +34,15 @@ mod_summary <- function(
   # # ..................................................................... ###
 
   if (is.null(path_coda)) {
-    ecokit::stop_ctx("`path_coda` cannot be empty", path_coda = path_coda)
+    ecokit::stop_ctx(
+      "`path_coda` cannot be empty", path_coda = path_coda,
+      include_backtrace = TRUE)
   }
 
   if (!file.exists(env_file)) {
-    ecokit::stop_ctx("Environment file not found", env_file = env_file)
+    ecokit::stop_ctx(
+      "Environment file not found", env_file = env_file,
+      include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -164,7 +168,7 @@ mod_summary <- function(
         Q2_5 = "2.5%", Q25 = "25%", Q50 = "50%", Q75 = "75%", Q97_5 = "97.5%")
       )) %>%
     dplyr::mutate(Rho = "Taxonomy", .before = 1) %>%
-    dplyr::mutate(
+    dplyr::mutate(  # nolint: consecutive_mutate_linter
       CI_Overlap_0 = purrr::map2_lgl(
         .x = Q2_5, .y = Q97_5, ~dplyr::between(x = 0, left = .x, right = .y)))
 

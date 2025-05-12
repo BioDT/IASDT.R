@@ -17,7 +17,8 @@ GBIF_read_chunk <- function(
   if (isFALSE(save_RData) && isFALSE(return_data)) {
     ecokit::stop_ctx(
       "At least one of `save_RData` and `return_data` has to be `TRUE`",
-      save_RData = save_RData, return_data = return_data)
+      save_RData = save_RData, return_data = return_data,
+      include_backtrace = TRUE)
   }
 
   # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use
@@ -88,14 +89,17 @@ GBIF_read_chunk <- function(
   # Grid_10_Land_Crop
   GridR <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(GridR)) {
-    ecokit::stop_ctx("Reference grid file not found", GridR = GridR)
+    ecokit::stop_ctx(
+      "Reference grid file not found", GridR = GridR, include_backtrace = TRUE)
   }
   GridR <- terra::unwrap(ecokit::load_as(GridR))
 
   # # Grid_10_Land_Crop_sf
   GridSf <- fs::path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
   if (!file.exists(GridSf)) {
-    ecokit::stop_ctx("Reference grid file (sf) not found", GridSf = GridSf)
+    ecokit::stop_ctx(
+      "Reference grid file (sf) not found", GridSf = GridSf,
+      include_backtrace = TRUE)
   }
   GridSf <- ecokit::load_as(GridSf)
 

@@ -76,7 +76,8 @@ EASIN_plot <- function(env_file = ".env") {
   if (any(SummaryMapsMissing)) {
     ecokit::stop_ctx(
       "Missing summary input files",
-      missing_files = PathSummaryMaps[which(SummaryMapsMissing)])
+      missing_files = PathSummaryMaps[which(SummaryMapsMissing)],
+      include_backtrace = TRUE)
   }
 
   # # |||||||||||||||||||||||||||||||||||

@@ -48,25 +48,29 @@ mod_postprocess_CV_1_CPU <- function(
   if (n_batch_files <= 0) {
     ecokit::stop_ctx(
       "`n_batch_files` must be a positive integer.",
-      n_batch_files = n_batch_files)
+      n_batch_files = n_batch_files, include_backtrace = TRUE)
   }
   if (n_cores <= 0) {
-    ecokit::stop_ctx("`n_cores` must be a positive integer.", n_cores = n_cores)
+    ecokit::stop_ctx(
+      "`n_cores` must be a positive integer.", n_cores = n_cores,
+      include_backtrace = TRUE)
   }
   if (LF_n_cores <= 0) {
     ecokit::stop_ctx(
-      "`LF_n_cores` must be a positive integer.", LF_n_cores = LF_n_cores)
+      "`LF_n_cores` must be a positive integer.", LF_n_cores = LF_n_cores,
+      include_backtrace = TRUE)
   }
 
   if (!file.exists(env_file)) {
     ecokit::stop_ctx(
       "Error: Environment file is invalid or does not exist.",
-      env_file = env_file)
+      env_file = env_file, include_backtrace = TRUE)
   }
 
   if (!dir.exists(model_dir)) {
     ecokit::stop_ctx(
-      "Model directory is invalid or does not exist.", model_dir = model_dir)
+      "Model directory is invalid or does not exist.", model_dir = model_dir,
+      include_backtrace = TRUE)
   }
 
   valid_CVs <- c("CV_Dist", "CV_Large", "CV_SAC")
@@ -75,7 +79,7 @@ mod_postprocess_CV_1_CPU <- function(
       paste0(
         "Invalid value for CV_names argument. Valid values ",
         "are: 'CV_Dist', 'CV_Large', or `CV_SAC`"),
-      CV_names = CV_names)
+      CV_names = CV_names, include_backtrace = TRUE)
   }
 
   # ****************************************************************
@@ -107,11 +111,12 @@ mod_postprocess_CV_1_CPU <- function(
   CV_DT_fitted <- fs::path(CV_dir, "CV_DT_fitted.RData")
   if (!file.exists(CV_DT_fitted)) {
     ecokit::stop_ctx(
-      "CV_DT_fitted file not found.", CV_DT_fitted = CV_DT_fitted)
+      "CV_DT_fitted file not found.", CV_DT_fitted = CV_DT_fitted,
+      include_backtrace = TRUE)
   }
 
   Path_LF_SLURM <- fs::path(Path_TF, "LF_SLURM.slurm")
-  path_out <- fs::path(Path_Log, "%x-%A-%a.out")
+  path_out <- fs::path(Path_Log, "%x-%A-%a.out")      # nolint: object_name_linter
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -206,7 +211,7 @@ mod_postprocess_CV_1_CPU <- function(
     ecokit::stop_ctx(
       "No command files were found in the temp directory",
       Temp_dir = Temp_dir, LF_InFiles = LF_InFiles,
-      length_LF_InFiles = length(LF_InFiles))
+      length_LF_InFiles = length(LF_InFiles), include_backtrace = TRUE)
   }
 
   ecokit::cat_time(
@@ -237,7 +242,7 @@ mod_postprocess_CV_1_CPU <- function(
     paste0("Splitting commands into ", n_batch_files, " files"),
     cat_timestamp = FALSE, level = 2L)
   LF_commands <- ecokit::split_vector(LF_commands, n_splits = n_batch_files)
-  line_sep <- strrep("-", 60)
+  line_sep <- strrep("-", 60)      # nolint: object_name_linter
 
   purrr::walk(
     .x = seq_len(length(LF_commands)),
@@ -271,7 +276,7 @@ mod_postprocess_CV_1_CPU <- function(
   # Prepare LF batch file -----
   ecokit::cat_time("Prepare LF batch file")
 
-  time_now <- lubridate::now(tzone = "CET") %>%
+  time_now <- lubridate::now(tzone = "CET") %>%      # nolint: object_name_linter
     format(format = "%Y-%m-%d %H:%M:%S")
 
   LF_slurm_script <- stringr::str_glue(
@@ -381,11 +386,14 @@ mod_postprocess_CV_2_CPU <- function(
   rm(AllArgs, envir = environment())
 
   if (n_cores <= 0) {
-    ecokit::stop_ctx("`n_cores` must be a positive integer.", n_cores = n_cores)
+    ecokit::stop_ctx(
+      "`n_cores` must be a positive integer.", n_cores = n_cores,
+      include_backtrace = TRUE)
   }
   if (LF_n_cores <= 0) {
     ecokit::stop_ctx(
-      "`LF_n_cores` must be a positive integer.", LF_n_cores = LF_n_cores)
+      "`LF_n_cores` must be a positive integer.", LF_n_cores = LF_n_cores,
+      include_backtrace = TRUE)
   }
 
   valid_CVs <- c("CV_Dist", "CV_Large", "CV_SAC")
@@ -394,7 +402,7 @@ mod_postprocess_CV_2_CPU <- function(
       paste0(
         "Invalid value for CV_names argument. Valid values ",
         "are: 'CV_Dist', 'CV_Large', or `CV_SAC`"),
-      CV_names = CV_names)
+      CV_names = CV_names, include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -409,7 +417,7 @@ mod_postprocess_CV_2_CPU <- function(
   if (length(Eval_explain) != 1L) {
     ecokit::stop_ctx(
       "There should be only one evaluation file in the Model_Evaluation folder",
-      Eval_explain = Eval_explain)
+      Eval_explain = Eval_explain, include_backtrace = TRUE)
   }
 
   Eval_explain <- ecokit::load_as(Eval_explain) %>%
@@ -432,14 +440,14 @@ mod_postprocess_CV_2_CPU <- function(
   if (!file.exists(path_CV_DT_fitted)) {
     ecokit::stop_ctx(
       "Required file 'CV_DT_fitted.RData' not found",
-      path_CV_DT_fitted = path_CV_DT_fitted)
+      path_CV_DT_fitted = path_CV_DT_fitted, include_backtrace = TRUE)
   }
 
   CV_DT_fitted <- ecokit::load_as(path_CV_DT_fitted)
   if (nrow(CV_DT_fitted) < 1) {
     ecokit::stop_ctx(
       "CV_DT_fitted data should contain at least one row",
-      CV_DT_fitted = CV_DT_fitted)
+      CV_DT_fitted = CV_DT_fitted, include_backtrace = TRUE)
   }
 
   CV_DT_fitted <- CV_DT_fitted %>%
@@ -540,7 +548,7 @@ mod_postprocess_CV_2_CPU <- function(
   if (nrow(hab_type) != 1) {
     ecokit::stop_ctx(
       "There should be only one habitat type in the summary data",
-      hab_type = hab_type)
+      hab_type = hab_type, include_backtrace = TRUE)
   }
   hab_type <- paste(unlist(hab_type), collapse = ": ") %>%
     stringr::str_to_lower()
@@ -558,13 +566,14 @@ mod_postprocess_CV_2_CPU <- function(
     # Ensure metric is non-null, character strings with content
     if (is.null(metric) || !is.character(metric) || !nzchar(metric))  {
       ecokit::stop_ctx(
-        "`metric` have to be character of length > 1", metric = metric)
+        "`metric` have to be character of length > 1", metric = metric,
+        include_backtrace = TRUE)
     }
     # Ensure data is a data frame tibble with more than 1 row
     if (!is.data.frame(data) || nrow(data) < 1) {
       ecokit::stop_ctx(
         "`data` has to be a data frame tibble with more than 1 row",
-        data = data)
+        data = data, include_backtrace = TRUE)
     }
 
     # metric value has to be exist in the eval_metrics vector
@@ -572,7 +581,7 @@ mod_postprocess_CV_2_CPU <- function(
       ecokit::stop_ctx(
         paste0(
           "`metric` should be one of the following: ", toString(eval_metrics)),
-        metric = metric)
+        metric = metric, include_backtrace = TRUE)
     }
 
     # column names for mean and sd of evaluation metrics
@@ -674,13 +683,14 @@ mod_postprocess_CV_2_CPU <- function(
     # Ensure metric is non-null, character strings with content
     if (is.null(metric) || !is.character(metric) || !nzchar(metric))  {
       ecokit::stop_ctx(
-        "`metric` have to be character of length > 1", metric = metric)
+        "`metric` have to be character of length > 1", metric = metric,
+        include_backtrace = TRUE)
     }
     # Ensure data is a data frame tibble with more than 1 row
     if (!is.data.frame(data) || nrow(data) < 1) {
       ecokit::stop_ctx(
         "`data` has to be a data frame tibble with more than 1 row",
-        data = data)
+        data = data, include_backtrace = TRUE)
     }
 
     # metric value has to be exist in the eval_metrics vector
@@ -688,7 +698,7 @@ mod_postprocess_CV_2_CPU <- function(
       ecokit::stop_ctx(
         paste0(
           "`metric` should be one of the following: ", toString(eval_metrics)),
-        metric = metric)
+        metric = metric, include_backtrace = TRUE)
     }
 
     # column name for explained power

@@ -197,12 +197,13 @@ mod_prepare_HPC <- function(
       sum_IsNull = sum(IsNull), directory_name = directory_name,
       n_pres_per_species = n_pres_per_species, MCMC_thin = MCMC_thin,
       MCMC_samples = MCMC_samples, memory_per_cpu = memory_per_cpu,
-      path_Hmsc = path_Hmsc, hab_abb = hab_abb)
+      path_Hmsc = path_Hmsc, hab_abb = hab_abb, include_backtrace = TRUE)
   }
 
   if (!(precision %in% c(32, 64))) {
     ecokit::stop_ctx(
-      "`precision` should be either of 32 or 64", precision = precision)
+      "`precision` should be either of 32 or 64", precision = precision,
+      include_backtrace = TRUE)
   }
 
   hab_abb <- as.character(hab_abb)
@@ -211,31 +212,31 @@ mod_prepare_HPC <- function(
   if (!all(is.numeric(MCMC_samples)) || any(MCMC_samples <= 0)) {
     ecokit::stop_ctx(
       "`MCMC_samples` should be numeric and greater than zero",
-      MCMC_samples = MCMC_samples)
+      MCMC_samples = MCMC_samples, include_backtrace = TRUE)
   }
 
   if (!all(is.numeric(MCMC_thin)) || any(MCMC_thin <= 0)) {
     ecokit::stop_ctx(
       "`MCMC_thin` should be numeric and greater than zero",
-      MCMC_thin = MCMC_thin)
+      MCMC_thin = MCMC_thin, include_backtrace = TRUE)
   }
 
   if (!all(is.numeric(n_pres_per_species)) || n_pres_per_species <= 0) {
     ecokit::stop_ctx(
       "`n_pres_per_species` should be numeric and greater than zero",
-      n_pres_per_species = n_pres_per_species)
+      n_pres_per_species = n_pres_per_species, include_backtrace = TRUE)
   }
 
   if (!all(is.numeric(min_efforts_n_species)) || min_efforts_n_species <= 0) {
     ecokit::stop_ctx(
       "`min_efforts_n_species` should be numeric and greater than zero",
-      min_efforts_n_species = min_efforts_n_species)
+      min_efforts_n_species = min_efforts_n_species, include_backtrace = TRUE)
   }
 
   if (!is.numeric(n_species_per_grid) || n_species_per_grid < 0) {
     ecokit::stop_ctx(
       "`n_species_per_grid` has to be integer >= 0",
-      n_species_per_grid = n_species_per_grid)
+      n_species_per_grid = n_species_per_grid, include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -275,7 +276,8 @@ mod_prepare_HPC <- function(
   # Check if Python executable exists
   if (check_python && !file.exists(Path_Python) && Sys.info()[1] == "Windows") {
     ecokit::stop_ctx(
-      "Python executable does not exist", Path_Python = Path_Python)
+      "Python executable does not exist", Path_Python = Path_Python,
+      include_backtrace = TRUE)
   }
 
   # Assign environment variables and check file and paths
@@ -286,14 +288,16 @@ mod_prepare_HPC <- function(
   path_model <- fs::path(path_model, directory_name)
   if (fs::dir_exists(path_model)) {
     ecokit::stop_ctx(
-      "Model directory already exists", path_model = path_model)
+      "Model directory already exists", path_model = path_model,
+      include_backtrace = TRUE)
   }
   fs::dir_create(path_model)
 
   Path_GridR <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(Path_GridR)) {
     ecokit::stop_ctx(
-      "Path for the Europe boundaries does not exist", Path_GridR = Path_GridR)
+      "Path for the Europe boundaries does not exist", Path_GridR = Path_GridR,
+      include_backtrace = TRUE)
   }
 
   ecokit::record_arguments(
@@ -349,14 +353,15 @@ mod_prepare_HPC <- function(
   if (isFALSE(use_phylo_tree) && isFALSE(no_phylo_tree)) {
     ecokit::stop_ctx(
       "At least one of `use_phylo_tree` or `no_phylo_tree` has to be true",
-      use_phylo_tree = use_phylo_tree, no_phylo_tree = no_phylo_tree)
+      use_phylo_tree = use_phylo_tree, no_phylo_tree = no_phylo_tree,
+      include_backtrace = TRUE)
   }
 
   NumArgsInvalid <- purrr::map_lgl(.x = NumericArgs, .f = ~all(get(.x) < 1))
   if (any(NumArgsInvalid)) {
     ecokit::stop_ctx(
       "Some parameter(s) can not be < 1",
-      NumArgsInvalid = NumericArgs[NumArgsInvalid])
+      NumArgsInvalid = NumericArgs[NumArgsInvalid], include_backtrace = TRUE)
   }
 
   rm(AllArgs, CharArgs, LogicArgs, NumericArgs, envir = environment())
@@ -365,12 +370,14 @@ mod_prepare_HPC <- function(
 
   if (GPP) {
     if (is.null(GPP_dists)) {
-      ecokit::stop_ctx("`GPP_dists` can not be empty", GPP_dists = GPP_dists)
+      ecokit::stop_ctx(
+        "`GPP_dists` can not be empty", GPP_dists = GPP_dists,
+        include_backtrace = TRUE)
     }
     if (!all(is.numeric(GPP_dists)) || any(GPP_dists <= 0)) {
       ecokit::stop_ctx(
         "`GPP_dists` should be numeric and greater than zero",
-        GPP_dists = GPP_dists)
+        GPP_dists = GPP_dists, include_backtrace = TRUE)
     }
   }
 
@@ -403,7 +410,9 @@ mod_prepare_HPC <- function(
   if (isFALSE(all(bio_variables %in% IASDT.R::CHELSA_variables$Variable))) {
     WrongBio <- bio_variables[
       which(!(bio_variables %in% IASDT.R::CHELSA_variables$Variable))]
-    ecokit::stop_ctx("Invalid Bioclimatic variables", WrongBio = WrongBio)
+    ecokit::stop_ctx(
+      "Invalid Bioclimatic variables", WrongBio = WrongBio,
+      include_backtrace = TRUE)
   }
 
   XVars <- bio_variables
@@ -435,7 +444,7 @@ mod_prepare_HPC <- function(
       paste0(
         "`hab_abb` has to be one of the following:\n >> ",
         paste(ValidHabAbbs, collapse = " | ")),
-      hab_abb = hab_abb)
+      hab_abb = hab_abb, include_backtrace = TRUE)
   }
 
   HabVal <- c(
@@ -472,7 +481,8 @@ mod_prepare_HPC <- function(
     if (!all(ValidCountries)) {
       ecokit::stop_ctx(
         "Invalid country names",
-        invalid_countries = model_country[!ValidCountries])
+        invalid_countries = model_country[!ValidCountries],
+        include_backtrace = TRUE)
     }
 
     ecokit::cat_time(
@@ -659,7 +669,8 @@ mod_prepare_HPC <- function(
   SpSummary <- fs::path(Path_PA, "Sp_PA_Summary_DF.RData")
   if (!file.exists(SpSummary)) {
     ecokit::stop_ctx(
-      "SpSummary file does not exist", SpSummary = SpSummary)
+      "SpSummary file does not exist", SpSummary = SpSummary,
+      include_backtrace = TRUE)
   }
   SpSummary <- ecokit::load_as(SpSummary) %>%
     dplyr::arrange(IAS_ID) %>%
@@ -1301,7 +1312,8 @@ mod_prepare_HPC <- function(
   SetChainName <- function(Obj, Chain) {
     if (is.null(Obj) || is.null(Chain)) {
       ecokit::stop_ctx(
-        "Obj and Chain cannot be empty", Obj = Obj, Chain = Chain)
+        "Obj and Chain cannot be empty", Obj = Obj, Chain = Chain,
+        include_backtrace = TRUE)
     }
     Obj %>%
       unlist() %>%
@@ -1350,11 +1362,11 @@ mod_prepare_HPC <- function(
   ecokit::cat_time("Save PA maps to disk")
 
   # Mask layer for grid cells used in the models
-  Model_Mask <- ecokit::load_as(Path_GridR) %>%
+  Model_Mask <- ecokit::load_as(Path_GridR) %>%      # nolint: object_name_linter
     terra::unwrap() %>%
     terra::rasterize(DT_xy, .)
   # Whether to use masked (exclude_cultivated) or full PA
-  PA_Layer <- dplyr::if_else(exclude_cultivated, "PA_Masked", "PA")
+  PA_Layer <- dplyr::if_else(exclude_cultivated, "PA_Masked", "PA")      # nolint: object_name_linter
 
   ecokit::cat_time("Processing and exporting maps as tif files", level = 1L)
   Mod_PA <- SpSummary %>%
@@ -1438,7 +1450,7 @@ mod_prepare_HPC <- function(
   # Path of the tar file
   tar_file <- fs::path(Path_Dist, "PA_maps.tar")
   # list of files to tar
-  Files2Tar <- c(
+  Files2Tar <- c(      # nolint: object_name_linter
     Mod_PA$PA_file, Mod_PA$PA_model_file,
     fs::path(Path_Dist, "PA.txt")) %>%
     basename() %>%

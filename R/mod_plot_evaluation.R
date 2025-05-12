@@ -37,7 +37,9 @@ plot_evaluation <- function(model_dir, env_file = ".env") {
 
   SpSummary <- fs::path(Path_PA, "Sp_PA_Summary_DF.csv")
   if (!file.exists(SpSummary)) {
-    ecokit::stop_ctx("Species summary file not found", SpSummary = SpSummary)
+    ecokit::stop_ctx(
+      "Species summary file not found", SpSummary = SpSummary,
+      include_backtrace = TRUE)
   }
   SpSummary <- readr::read_csv(
     file = SpSummary, show_col_types = FALSE, progress = FALSE) %>%
@@ -51,7 +53,9 @@ plot_evaluation <- function(model_dir, env_file = ".env") {
   # # ..................................................................... ###
 
   if (is.null(model_dir) || !dir.exists(model_dir)) {
-    ecokit::stop_ctx("Invalid or missing `model_dir`", model_dir = model_dir)
+    ecokit::stop_ctx(
+      "Invalid or missing `model_dir`", model_dir = model_dir,
+      include_backtrace = TRUE)
   }
 
   Mod_Eval <- fs::path(

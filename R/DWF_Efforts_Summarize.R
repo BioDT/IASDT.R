@@ -27,7 +27,8 @@ efforts_summarize <- function(
 
   if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
     ecokit::stop_ctx(
-      "n_cores must be a single positive integer.", n_cores = n_cores)
+      "n_cores must be a single positive integer.", n_cores = n_cores,
+      include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -57,12 +58,15 @@ efforts_summarize <- function(
   Path_Grid_SF <- fs::path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
 
   if (!file.exists(Path_Grid_R)) {
-    ecokit::stop_ctx("Reference grid was not found", Path_Grid_R = Path_Grid_R)
+    ecokit::stop_ctx(
+      "Reference grid was not found", Path_Grid_R = Path_Grid_R,
+      include_backtrace = TRUE)
   }
 
   if (!file.exists(Path_Grid_SF)) {
     ecokit::stop_ctx(
-      "Reference grid file was not found", Path_Grid_SF = Path_Grid_SF)
+      "Reference grid file was not found", Path_Grid_SF = Path_Grid_SF,
+      include_backtrace = TRUE)
   }
 
   Grid_SF <- ecokit::load_as(Path_Grid_SF)
@@ -104,7 +108,7 @@ efforts_summarize <- function(
   if (!file.exists(Path_Efforts_Request)) {
     ecokit::stop_ctx(
       "The path for the `Efforts_AllRequests` data does not exist",
-      Path_Efforts_Request = Path_Efforts_Request)
+      Path_Efforts_Request = Path_Efforts_Request, include_backtrace = TRUE)
   }
 
   Efforts_AllRequests <- ecokit::load_as(Path_Efforts_Request)
@@ -391,7 +395,7 @@ efforts_summarize <- function(
     purrr::map(.x = unlist(List), .f = terra::unwrap) %>%
       terra::rast() %>%
       sum(na.rm = TRUE) %>%
-      ecokit::set_raster_CRS() %>%
+      ecokit::set_raster_crs(crs = "epsg:3035") %>%
       ecokit::set_raster_values() %>%
       stats::setNames(Name)
   }
@@ -407,7 +411,7 @@ efforts_summarize <- function(
     CalcNObsNSp(Efforts_SummaryR$NSp_R, "NSp"),
     CalcNObsNSp(Efforts_SummaryR$NSp_Native_R, "NSp_Native")) %>%
     terra::rast() %>%
-    ecokit::set_raster_CRS() %>%
+    ecokit::set_raster_crs(crs = "epsg:3035") %>%
     ecokit::set_raster_values()
 
   ## Save summary maps - `RData` ----
@@ -483,7 +487,8 @@ efforts_summarize_maps <- function(
       paste0(
         "Input data must be a simple feature (sf) object. ",
         "Provided data is of type: ", paste(class(Data), collapse = "+")),
-      Data = Data, class_data = class(Data))
+      Data = Data, class_data = class(Data),
+      include_backtrace = TRUE)
   }
 
   # Validate if NSp is logical
@@ -492,12 +497,15 @@ efforts_summarize_maps <- function(
       paste0(
         "The parameter `NSp` must be a single logical value (TRUE or FALSE). ",
         "Provided value is of type: ", paste(class(NSp), collapse = "+")),
-      NSp = NSp, class_NSp = class(NSp), length_NSp = length(NSp))
+      NSp = NSp, class_NSp = class(NSp), length_NSp = length(NSp),
+      include_backtrace = TRUE)
   }
 
   # Validate the Name parameter
   if (is.null(Name)) {
-    ecokit::stop_ctx("The parameter `Name` can not be empty", Name = Name)
+    ecokit::stop_ctx(
+      "The parameter `Name` can not be empty", Name = Name,
+      include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -518,7 +526,7 @@ efforts_summarize_maps <- function(
     terra::rasterize(Grid_R, field = Name) %>%
     terra::classify(cbind(NA, 0)) %>%
     terra::mask(Grid_R) %>%
-    ecokit::set_raster_CRS() %>%
+    ecokit::set_raster_crs(crs = "epsg:3035") %>%
     ecokit::set_raster_values() %>%
     stats::setNames(paste0(Name, "_", ClassOrder)) %>%
     terra::wrap()

@@ -61,14 +61,17 @@ GBIF_species_data <- function(
   # # Grid_10_Land_Crop_sf
   GridSf <- fs::path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
   if (!file.exists(GridSf)) {
-    ecokit::stop_ctx("Reference grid file (sf) not found", GridSf = GridSf)
+    ecokit::stop_ctx(
+      "Reference grid file (sf) not found", GridSf = GridSf,
+      include_backtrace = TRUE)
   }
   GridSf <- ecokit::load_as(GridSf)
 
   # Grid_10_Land_Crop
   GridR <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(GridR)) {
-    ecokit::stop_ctx("Reference grid file not found", GridR = GridR)
+    ecokit::stop_ctx(
+      "Reference grid file not found", GridR = GridR, include_backtrace = TRUE)
   }
   GridR <- terra::unwrap(ecokit::load_as(GridR))
 
@@ -127,7 +130,7 @@ GBIF_species_data <- function(
       x = SpGrid, y = GridR, field = "Count", fun = "max") %>%
       terra::mask(GridR) %>%
       stats::setNames(SpName) %>%
-      ecokit::set_raster_CRS()
+      ecokit::set_raster_crs(crs = "epsg:3035")
 
     FilePath_R <- fs::path(Path_Raster, paste0(Obj_Name_Raster, ".RData"))
     ecokit::save_as(

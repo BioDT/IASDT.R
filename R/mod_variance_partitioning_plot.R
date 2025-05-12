@@ -85,7 +85,7 @@ variance_partitioning_plot <- function(
         "The number of model evaluation files in the directory: ",
         Path_Root, " is not equal to 1"),
       Path_Root = Path_Root, Path_Eval = Path_Eval,
-      length_Path_Eval = length(Path_Eval))
+      length_Path_Eval = length(Path_Eval), include_backtrace = TRUE)
   }
 
   Model_Eval <- ecokit::load_as(Path_Eval) %>%
@@ -379,7 +379,7 @@ variance_partitioning_plot <- function(
         " columns in VarPar$vals"),
       Model_Eval_TjurR2 = Model_Eval$TjurR2,
       length_Model_Eval_TjurR2 = length(Model_Eval$TjurR2),
-      ncol_VarPar_vals = ncol(VarPar$vals))
+      ncol_VarPar_vals = ncol(VarPar$vals), include_backtrace = TRUE)
   }
 
   VarPar_DF_Raw <- tibble::as_tibble(VarPar$vals, rownames = "Variable") %>%

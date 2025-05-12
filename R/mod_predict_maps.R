@@ -1193,19 +1193,15 @@ predict_maps <- function(
     "\tEnsemble model predictions", n_separators = 1L, line_char = "-",
     line_char_rep = 70L, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
-  ecokit::cat_time("Prepare working in parallel", level = 1L)
-
   if (n_cores == 1) {
     future::plan("future::sequential", gc = TRUE)
   } else {
-    withr::local_options(
-      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
-      future.seed = TRUE)
-    c1 <- snow::makeSOCKcluster(min(n_cores, nrow(Prediction_Summary)))
-    on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-    future::plan("future::cluster", workers = c1, gc = TRUE)
+    ecokit::set_parallel(
+      n_cores = min(n_cores, nrow(Prediction_Summary)), level = 1L,
+      future_max_size = 800L)
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
+
 
   # --------------------------------------------------------- #
 
@@ -1392,8 +1388,10 @@ predict_maps <- function(
     future.globals = "Prediction_Ensemble_R",
     future.packages = c("terra", "dplyr", "purrr", "IASDT.R", "qs2"))
 
-  snow::stopCluster(c1)
-  future::plan("future::sequential", gc = TRUE)
+  if (n_cores > 1) {
+    ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
+    future::plan("future::sequential", gc = TRUE)
+  }
 
   rm(Prediction_Ensemble_R, envir = environment())
 

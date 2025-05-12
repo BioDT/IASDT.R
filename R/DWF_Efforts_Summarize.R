@@ -75,21 +75,14 @@ efforts_summarize <- function(
 
   # Prepare working in parallel -----
 
-  ecokit::cat_time(
-    paste0("Prepare working in parallel using ", n_cores, " cores"),
-    level = 1L)
-
   if (n_cores == 1) {
     future::plan("future::sequential", gc = TRUE)
   } else {
-    withr::local_options(
-      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
-      future.seed = TRUE)
-    c1 <- snow::makeSOCKcluster(n_cores)
-    on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-    future::plan("future::cluster", workers = c1, gc = TRUE)
+    ecokit::set_parallel(
+      n_cores = n_cores, level = 1L, future_max_size = 800L)
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
+
 
   # # ..................................................................... ###
 
@@ -371,11 +364,11 @@ efforts_summarize <- function(
   # # ..................................................................... ###
 
   # Stopping cluster ------
-  ecokit::cat_time("Stopping cluster", level = 1L)
   if (n_cores > 1) {
-    snow::stopCluster(c1)
+    ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
     future::plan("future::sequential", gc = TRUE)
   }
+
   invisible(gc())
 
   # # ..................................................................... ###

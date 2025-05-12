@@ -21,8 +21,6 @@
 #'   Default: `1000`.
 #' @param env_file Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
-#' @param delete_chunks Logical. If `TRUE`, removes intermediate files. Default:
-#'   `FALSE`.
 #' @param start_year Integer. Earliest year for occurrence data (excludes
 #'   earlier records). Default: `1981` (aligned with CHELSA climate data).
 #' @param plot Logical. If `TRUE`, generates plots via `EASIN_plot()`. Default:
@@ -267,20 +265,11 @@ EASIN_process <- function(
     TimeStartData <- lubridate::now(tzone = "CET")
 
     ## Prepare working in parallel ----
-
-    ecokit::cat_time(
-      paste0("Prepare working in parallel using ", n_cores, " cores"),
-      level = 1L)
-
     if (n_cores == 1) {
       future::plan("future::sequential", gc = TRUE)
     } else {
-      withr::local_options(
-        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
-        future.seed = TRUE)
-      c1 <- snow::makeSOCKcluster(n_cores)
-      on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-      future::plan("future::cluster", workers = c1, gc = TRUE)
+      ecokit::set_parallel(
+        n_cores = n_cores, level = 1L, future_max_size = 800L)
       withr::defer(future::plan("future::sequential", gc = TRUE))
     }
 
@@ -345,10 +334,8 @@ EASIN_process <- function(
       prefix = "Downloading EASIN data was finished in ", level = 1L)
 
     # Stopping cluster ----
-    ecokit::cat_time("Stopping cluster", level = 1L)
-
     if (n_cores > 1) {
-      snow::stopCluster(c1)
+      ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
       future::plan("future::sequential", gc = TRUE)
     }
   }

@@ -184,8 +184,9 @@ GBIF_download <- function(
       suppressMessages()
 
     ecokit::cat_time(
-      "GBIF data was downloaded at the following path:", level = 3L)
-    ecokit::cat_time(as.character(Dwn), level = 2L)
+      "GBIF data was downloaded at the following path:", level = 2L,
+      cat_timestamp = FALSE)
+    ecokit::cat_time(as.character(Dwn), level = 2L, cat_timestamp = FALSE)
     ecokit::cat_diff(
       init_time = .StartTimeDownload,
       prefix = "Downloading GBIF data took ", level = 2L)

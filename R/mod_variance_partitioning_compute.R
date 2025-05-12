@@ -655,9 +655,13 @@ variance_partitioning_compute <- function(
     rm(postList, lbeta, envir = environment())
     invisible(gc())
 
-    ecokit::cat_time("Prepare working in parallel", level = 1L)
-    ecokit::set_parallel(n_cores = n_cores, level = 2L)
-    withr::defer(future::plan("future::sequential", gc = TRUE))
+    if (n_cores == 1) {
+      future::plan("future::sequential", gc = TRUE)
+    } else {
+      ecokit::set_parallel(
+        n_cores = n_cores, level = 1L, future_max_size = 800L)
+      withr::defer(future::plan("future::sequential", gc = TRUE))
+    }
 
     ecokit::cat_time("Processing in parallel", level = 1L)
     Res <- future.apply::future_lapply(
@@ -768,7 +772,10 @@ variance_partitioning_compute <- function(
         "Model", "path_postList", "poolN", "ns", "nr", "cMA", "group"))
 
     # stopping the cluster
-    ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
+    if (n_cores > 1) {
+      ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
+      future::plan("future::sequential", gc = TRUE)
+    }
 
     # Summarise the results
     ecokit::cat_time("Summarise the results", level = 1L)

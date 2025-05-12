@@ -493,9 +493,14 @@ predict_hmsc <- function(
 
   seeds <- sample.int(.Machine$integer.max, predN)
 
-
-  ecokit::set_parallel(n_cores = min(n_cores, length(Chunks)), level = 1L)
-  withr::defer(future::plan("future::sequential", gc = TRUE))
+  if (n_cores == 1) {
+    future::plan("future::sequential", gc = TRUE)
+  } else {
+    ecokit::set_parallel(
+      n_cores = min(n_cores, length(Chunks)), level = 1L,
+      future_max_size = 800L)
+    withr::defer(future::plan("future::sequential", gc = TRUE))
+  }
 
   ecokit::cat_time("Making predictions in parallel", level = 1L)
   pred <- future.apply::future_lapply(
@@ -677,7 +682,10 @@ predict_hmsc <- function(
       "dplyr", "Rcpp", "RcppArmadillo", "Matrix", "float", "qs2", "Hmsc",
       "purrr", "tibble", "Hmsc", "Rfast", "caret", "pROC", "ecospat", "sf"))
 
-  ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
+  if (n_cores > 1) {
+    ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
+    future::plan("future::sequential", gc = TRUE)
+  }
 
   invisible(gc())
 

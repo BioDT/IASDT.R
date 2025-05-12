@@ -163,8 +163,13 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
   .StartTimeDist <- lubridate::now(tzone = "CET")
 
   ## Prepare working in parallel -----
-  ecokit::set_parallel(n_cores = n_cores, level = 1L)
-  withr::defer(future::plan("future::sequential", gc = TRUE))
+  if (n_cores == 1) {
+    future::plan("future::sequential", gc = TRUE)
+  } else {
+    ecokit::set_parallel(
+      n_cores = n_cores, level = 1L, future_max_size = 800L)
+    withr::defer(future::plan("future::sequential", gc = TRUE))
+  }
 
   # # .................................... ###
 
@@ -190,7 +195,10 @@ IAS_process <- function(env_file = ".env", n_cores = 6L, overwrite = TRUE) {
   # # .................................... ###
 
   ## Stopping cluster ----
-  ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
+  if (n_cores > 1) {
+    ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
+    future::plan("future::sequential", gc = TRUE)
+  }
 
   ecokit::cat_diff(
     init_time = .StartTimeDist,

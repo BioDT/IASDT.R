@@ -638,9 +638,14 @@ convergence_plot <- function(
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
     # Prepare working in parallel
-    ecokit::cat_time("Prepare working in parallel", level = 2L)
-    ecokit::set_parallel(n_cores = min(n_cores, nrow(Beta_DF)), level = 3L)
-    withr::defer(future::plan("future::sequential", gc = TRUE))
+    if (n_cores == 1) {
+      future::plan("future::sequential", gc = TRUE)
+    } else {
+      ecokit::set_parallel(
+        n_cores = min(n_cores, nrow(Beta_DF)), level = 2L,
+        future_max_size = 800L)
+      withr::defer(future::plan("future::sequential", gc = TRUE))
+    }
 
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
@@ -818,7 +823,6 @@ convergence_plot <- function(
                   limits = c(DT_all$Var_Min, DT_all$Var_Max))
             })
 
-
             if (margin_type == "histogram") {
               Plot_Marginal <- ggExtra::ggMarginal(
                 p = Plot, type = margin_type, margins = "y", size = 6,
@@ -886,7 +890,10 @@ convergence_plot <- function(
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
     # Stopping cluster
-    ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
+    if (n_cores > 1) {
+      ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
+      future::plan("future::sequential", gc = TRUE)
+    }
 
     rm(Beta_DF, BetaNames, envir = environment())
     invisible(gc())
@@ -919,9 +926,14 @@ convergence_plot <- function(
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
   # Prepare working in parallel
-  ecokit::set_parallel(
-    n_cores = min(n_cores, nrow(BetaTracePlots_ByVar)), level = 2L)
-  withr::defer(future::plan("future::sequential", gc = TRUE))
+  if (n_cores == 1) {
+    future::plan("future::sequential", gc = TRUE)
+  } else {
+    ecokit::set_parallel(
+      n_cores = nrow(BetaTracePlots_ByVar), level = 1L,
+      future_max_size = 800L)
+    withr::defer(future::plan("future::sequential", gc = TRUE))
+  }
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
@@ -958,8 +970,6 @@ convergence_plot <- function(
         ggplot2::theme(
           plot.title = ggtext::element_markdown(
             size = 24, hjust = 0.5, margin = ggplot2::margin(t = 15, b = 15)))
-
-
 
       if (!stringr::str_detect(VarDesc, HTML4)) {
         VarDesc <- paste0(VarDesc, " --- ")
@@ -1035,7 +1045,10 @@ convergence_plot <- function(
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
   # Stopping cluster
-  ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
+  if (n_cores > 1) {
+    ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
+    future::plan("future::sequential", gc = TRUE)
+  }
 
   # # ..................................................................... ###
 
@@ -1054,10 +1067,14 @@ convergence_plot <- function(
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
   # Prepare working in parallel
-  ecokit::set_parallel(
-    n_cores = min(n_cores, nrow(BetaTracePlots_BySp)), level = 2L)
-  withr::defer(future::plan("future::sequential", gc = TRUE))
-
+  if (n_cores == 1) {
+    future::plan("future::sequential", gc = TRUE)
+  } else {
+    ecokit::set_parallel(
+      n_cores = min(n_cores, nrow(BetaTracePlots_BySp)), level = 2L,
+      future_max_size = 800L)
+    withr::defer(future::plan("future::sequential", gc = TRUE))
+  }
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
   ecokit::cat_time("Save plots", level = 2L)
@@ -1148,7 +1165,10 @@ convergence_plot <- function(
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
   # Stopping cluster
-  ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
+  if (n_cores > 1) {
+    ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
+    future::plan("future::sequential", gc = TRUE)
+  }
 
   rm(BetaTracePlots_BySp0, envir = environment())
 

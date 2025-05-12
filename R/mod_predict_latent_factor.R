@@ -492,7 +492,7 @@ predict_latent_factor <- function(
                 Temp_Dir_LF,
                 paste0(
                   model_name, "Samp_",
-                  stringr::str_pad(SampleID, width = 4, pad = "0"),
+                  stringr::str_pad(SampleID, width = 4L, pad = "0"),
                   "_LF", LF_ID, ".qs2")),
 
               File_etaPred = File_etaPred,
@@ -674,7 +674,8 @@ predict_latent_factor <- function(
       tidyr::nest(data = -c("SampleID", "Path_Sample"))
 
 
-    ecokit::set_parallel(n_cores = LF_n_cores, level = 2L)
+    ecokit::set_parallel(
+      n_cores = LF_n_cores, level = 2L, future_max_size = 800L)
     withr::defer(future::plan("future::sequential", gc = TRUE))
 
     ecokit::cat_time("Process results for MCMC samples in parallel", level = 2L)

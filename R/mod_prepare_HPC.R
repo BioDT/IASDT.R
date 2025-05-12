@@ -1084,12 +1084,9 @@ mod_prepare_HPC <- function(
   # Implement `InitFitFun` function: start sampling and save output files
   if (n_cores > 1) {
 
-    withr::local_options(
-      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
-      future.seed = TRUE)
-    c1 <- snow::makeSOCKcluster(min(n_cores, nrow(Model_Info)))
-    on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-    future::plan("future::cluster", workers = c1, gc = TRUE)
+    ecokit::set_parallel(
+      n_cores = min(n_cores, nrow(Model_Info)), level = 1L,
+      future_max_size = 800L)
     withr::defer(future::plan("future::sequential", gc = TRUE))
 
     Model_Process <- future.apply::future_lapply(
@@ -1100,7 +1097,7 @@ mod_prepare_HPC <- function(
         "MCMC_verbose", "MCMC_n_chains", "to_JSON"),
       future.packages = c("Hmsc", "jsonify", "IASDT.R"))
 
-    snow::stopCluster(c1)
+    ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
     future::plan("future::sequential", gc = TRUE)
 
   } else {

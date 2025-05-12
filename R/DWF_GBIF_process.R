@@ -181,41 +181,23 @@ GBIF_process <- function(
 
   # Processing data chunks -----
 
-  ecokit::cat_time("Processing data chunks")
+  ecokit::cat_time("\nProcessing data chunks")
   .StartTimeChunks <- lubridate::now(tzone = "CET")
 
   ChunkList <- list.files(
     path = Path_GBIF_Interim, pattern = "Chunk_.+.txt", full.names = TRUE)
   ChunkListRData <- stringr::str_replace_all(ChunkList, ".txt$", ".RData")
 
-  ecokit::cat_time(
-    paste0("Prepare working in parallel using ", n_cores, " cores"),
-    level = 1L)
-
   if (n_cores == 1) {
-    terra::setGDALconfig("GTIFF_SRS_SOURCE", "EPSG")
     future::plan("future::sequential", gc = TRUE)
   } else {
-    withr::local_options(
-      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
-      future.seed = TRUE)
-    c1 <- snow::makeSOCKcluster(n_cores)
-    on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-
-    # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use
-    # official parameters (overriding the ones from GeoTIFF keys)
-    # see: https://stackoverflow.com/questions/78007307
-    snow::clusterEvalQ(
-      cl = c1, expr = terra::setGDALconfig("GTIFF_SRS_SOURCE", "EPSG")) %>%
-      invisible()
-
-    future::plan("future::cluster", workers = c1, gc = TRUE)
+    ecokit::set_parallel(
+      n_cores = n_cores, level = 1L, future_max_size = 800L)
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 
   ecokit::cat_time(
-    "Processing chunks in parallel, save each as RData files",
-    level = 1L)
+    "Processing chunks in parallel, save each as RData files", level = 1L)
 
   GBIF_Data <- future.apply::future_lapply(
     X = ChunkList,
@@ -257,16 +239,17 @@ GBIF_process <- function(
   ecokit::cat_time(
     paste0(
       "A total of ", format(nrow(GBIF_Data), big.mark = ","), " observations"),
-    level = 2L)
+    level = 2L, cat_timestamp = FALSE)
 
-  ecokit::cat_time("Stopping cluster", level = 1L)
+
   if (n_cores > 1) {
-    snow::stopCluster(c1)
+    ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
     future::plan("future::sequential", gc = TRUE)
   }
 
   ecokit::cat_time("Saving `GBIF_Data` to disk", level = 1L)
-  save(GBIF_Data, file = fs::path(Path_GBIF, "GBIF_Data.RData"))
+  ecokit::save_as(
+    object = GBIF_Data, out_path = fs::path(Path_GBIF, "GBIF_Data.qs2"))
 
   rm(TaxaList, envir = environment())
   invisible(gc())
@@ -593,37 +576,28 @@ GBIF_process <- function(
   # Grid / raster / plotting ----
   ecokit::cat_time("Split species data - grid + raster + plot", level = 1L)
 
-  ecokit::cat_time(
-    paste0("Prepare working in parallel using ", n_cores, " cores"),
-    level = 2L)
-
   if (n_cores == 1) {
     future::plan("future::sequential", gc = TRUE)
   } else {
-    withr::local_options(
-      future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
-      future.seed = TRUE)
-    c1 <- snow::makeSOCKcluster(n_cores)
-    on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-    future::plan("future::cluster", workers = c1, gc = TRUE)
+    ecokit::set_parallel(
+      n_cores = n_cores, level = 2L, future_max_size = 800L)
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 
   ecokit::cat_time("Splitting species data in parallel", level = 2L)
-  furrr::future_walk(
-    .x = SpList, .f = IASDT.R::GBIF_species_data, env_file = env_file,
+  sp_data_tmp <- future.apply::future_lapply(
+    X = SpList,
+    FUN = IASDT.R::GBIF_species_data, env_file = env_file,
     verbose = FALSE, plot_tag = plot_tag,
-    .options = furrr::furrr_options(
-      seed = TRUE,
-      packages = c(
-        "dplyr", "ecokit", "cowplot", "ggplot2", "terra", "tidyterra",
-        "tibble", "fs", "magrittr", "stringr", "sf", "ragg",
-        "cowplot", "grid"),
-      globals = c("env_file", "plot_tag")))
+    future.scheduling = Inf, future.seed = TRUE,
+    future.packages = c(
+      "dplyr", "ecokit", "cowplot", "ggplot2", "terra", "tidyterra", "fs",
+      "tibble", "magrittr", "stringr", "sf", "ragg", "cowplot", "grid"),
+    future.globals = c("env_file", "plot_tag"))
+  rm(sp_data_tmp, envir = environment())
 
-  ecokit::cat_time("Stopping cluster", level = 2L)
   if (n_cores > 1) {
-    snow::stopCluster(c1)
+    ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
     future::plan("future::sequential", gc = TRUE)
   }
 

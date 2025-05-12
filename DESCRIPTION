@@ -25,7 +25,7 @@ Imports:
     future (>= 1.34.0),
     future.apply (>= 1.11.3),
     ggplot2 (>= 3.5.1),
-    Hmsc (>= 3.0-13),
+    Hmsc,
     lubridate (>= 1.9.4),
     purrr (>= 1.0.2),
     Rcpp (>= 1.0.13),

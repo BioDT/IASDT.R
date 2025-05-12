@@ -208,7 +208,8 @@ GBIF_process <- function(
     },
     future.scheduling = Inf, future.seed = TRUE,
     future.packages = c(
-      "IASDT.R", "purrr", "tibble", "terra", "tidyr", "dplyr", "sf"),
+      "IASDT.R", "purrr", "tibble", "terra", "tidyr", "dplyr",
+      "stringr", "bit64", "tidyselect", "fs", "sf", "ecokit"),
     future.globals = c("env_file", "overwrite"))
 
   ecokit::cat_diff(

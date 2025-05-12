@@ -38,7 +38,10 @@ jobs:
           r-version: ${{ matrix.config.r }}
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
-
+      
+      - name: Install remotes
+        run: R -e 'install.packages("remotes", repos = "https://cloud.r-project.org")'
+      
       - name: Install HMSC and ecokit from GitHub
         run: |
           R -e 'remotes::install_github(c(

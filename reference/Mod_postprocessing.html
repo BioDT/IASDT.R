@@ -68,6 +68,7 @@ cross-validated models. See details for more information.</p>
 <span>  model_dir <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  hab_abb <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  n_cores <span class="op">=</span> <span class="fl">8L</span>,</span>
+<span>  strategy <span class="op">=</span> <span class="st">"future::multicore"</span>,</span>
 <span>  env_file <span class="op">=</span> <span class="st">".env"</span>,</span>
 <span>  path_Hmsc <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  memory_per_cpu <span class="op">=</span> <span class="st">"64G"</span>,</span>
@@ -112,6 +113,7 @@ cross-validated models. See details for more information.</p>
 <span>  model_dir <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  hab_abb <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  n_cores <span class="op">=</span> <span class="fl">8L</span>,</span>
+<span>  strategy <span class="op">=</span> <span class="st">"future::multicore"</span>,</span>
 <span>  env_file <span class="op">=</span> <span class="st">".env"</span>,</span>
 <span>  GPP_dist <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  use_trees <span class="op">=</span> <span class="st">"Tree"</span>,</span>
@@ -148,6 +150,7 @@ cross-validated models. See details for more information.</p>
 <span>  model_dir <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  CV_names <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  n_cores <span class="op">=</span> <span class="fl">8L</span>,</span>
+<span>  strategy <span class="op">=</span> <span class="st">"future::multicore"</span>,</span>
 <span>  env_file <span class="op">=</span> <span class="st">".env"</span>,</span>
 <span>  from_JSON <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  use_TF <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -168,6 +171,7 @@ cross-validated models. See details for more information.</p>
 <span>  model_dir <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  CV_names <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  n_cores <span class="op">=</span> <span class="fl">8L</span>,</span>
+<span>  strategy <span class="op">=</span> <span class="st">"future::multicore"</span>,</span>
 <span>  env_file <span class="op">=</span> <span class="st">".env"</span>,</span>
 <span>  use_TF <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  TF_use_single <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -196,6 +200,14 @@ values: <code>0</code>, <code>1</code>, <code>2</code>, <code>3</code>, <code>4a
 <dt id="arg-n-cores">n_cores<a class="anchor" aria-label="anchor" href="#arg-n-cores"></a></dt>
 <dd><p>Integer. Number of CPU cores to use for parallel processing.
 Default: 8.</p></dd>
+
+
+<dt id="arg-strategy">strategy<a class="anchor" aria-label="anchor" href="#arg-strategy"></a></dt>
+<dd><p>Character. The parallel processing strategy to use. Valid
+options are "future::sequential", "future::multisession",
+"future::multicore", and "future::cluster". Defaults to
+<code>"future::multicore"</code> (<code>"future::multisession"</code> on Windows). See
+<code><a href="https://future.futureverse.org/reference/plan.html" class="external-link">future::plan()</a></code> and <code><a href="https://elgabbas.github.io/ecokit/reference/set_parallel.html" class="external-link">ecokit::set_parallel()</a></code> for details.</p></dd>
 
 
 <dt id="arg-env-file">env_file<a class="anchor" aria-label="anchor" href="#arg-env-file"></a></dt>

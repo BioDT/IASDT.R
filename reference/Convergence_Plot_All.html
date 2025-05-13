@@ -65,6 +65,7 @@ model parameters.</p>
 <span>  model_dir <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  n_omega <span class="op">=</span> <span class="fl">1000L</span>,</span>
 <span>  n_cores <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  strategy <span class="op">=</span> <span class="st">"future::multicore"</span>,</span>
 <span>  margin_type <span class="op">=</span> <span class="st">"histogram"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -86,6 +87,14 @@ parameter diagnostics. Default: 1000L</p></dd>
 
 <dt id="arg-n-cores">n_cores<a class="anchor" aria-label="anchor" href="#arg-n-cores"></a></dt>
 <dd><p>Integer. Number of CPU cores to use for parallel processing.</p></dd>
+
+
+<dt id="arg-strategy">strategy<a class="anchor" aria-label="anchor" href="#arg-strategy"></a></dt>
+<dd><p>Character. The parallel processing strategy to use. Valid
+options are "future::sequential", "future::multisession",
+"future::multicore", and "future::cluster". Defaults to
+<code>"future::multicore"</code> (<code>"future::multisession"</code> on Windows). See
+<code><a href="https://future.futureverse.org/reference/plan.html" class="external-link">future::plan()</a></code> and <code><a href="https://elgabbas.github.io/ecokit/reference/set_parallel.html" class="external-link">ecokit::set_parallel()</a></code> for details.</p></dd>
 
 
 <dt id="arg-margin-type">margin_type<a class="anchor" aria-label="anchor" href="#arg-margin-type"></a></dt>

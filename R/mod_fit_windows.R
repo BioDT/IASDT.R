@@ -101,7 +101,8 @@ mod_fit_windows <- function(
       future::plan("future::sequential", gc = TRUE)
     } else {
       ecokit::set_parallel(
-        n_cores = n_cores, level = 1L, future_max_size = 800L)
+        n_cores = n_cores, level = 1L, future_max_size = 800L,
+        strategy = "future::multicore")
       withr::defer(future::plan("future::sequential", gc = TRUE))
     }
 

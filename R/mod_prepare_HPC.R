@@ -1086,7 +1086,7 @@ mod_prepare_HPC <- function(
 
     ecokit::set_parallel(
       n_cores = min(n_cores, nrow(Model_Info)), level = 1L,
-      future_max_size = 800L)
+      future_max_size = 800L, strategy = "future::multicore")
     withr::defer(future::plan("future::sequential", gc = TRUE))
 
     Model_Process <- future.apply::future_lapply(

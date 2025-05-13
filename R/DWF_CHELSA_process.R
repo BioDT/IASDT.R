@@ -164,7 +164,8 @@ CHELSA_process <- function(
     } else {
       ecokit::cat_time("Check input CHELSA files in parallel")
       ecokit::set_parallel(
-        n_cores = n_cores, level = 1L, future_max_size = 800L)
+        n_cores = n_cores, level = 1L, future_max_size = 800L,
+        strategy = "future::multicore")
       withr::defer(future::plan("future::sequential", gc = TRUE))
     }
 
@@ -227,7 +228,8 @@ CHELSA_process <- function(
   } else {
     ecokit::cat_time("Processing CHELSA maps in parallel")
     ecokit::set_parallel(
-      n_cores = n_cores, level = 1L, future_max_size = 800L)
+      n_cores = n_cores, level = 1L, future_max_size = 800L,
+      strategy = "future::multicore")
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 
@@ -363,7 +365,8 @@ CHELSA_process <- function(
     ecokit::cat_time(
       "Grouping CHELSA data by time and climate model+scenario in parallel")
     ecokit::set_parallel(
-      n_cores = n_cores, level = 1L, future_max_size = 800L)
+      n_cores = n_cores, level = 1L, future_max_size = 800L,
+      strategy = "future::multicore")
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 

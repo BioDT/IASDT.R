@@ -208,9 +208,9 @@ GBIF_process <- function(
         return_data = FALSE, overwrite = overwrite)
     },
     future.scheduling = Inf, future.seed = TRUE,
-    future.packages = c(
-      "IASDT.R", "purrr", "tibble", "terra", "tidyr", "dplyr", "readr",
-      "stringr", "bit64", "tidyselect", "fs", "sf", "ecokit"),
+    #future.packages = c(
+      #"IASDT.R", "purrr", "tibble", "terra", "tidyr", "dplyr", "readr",
+      #"stringr", "bit64", "tidyselect", "fs", "sf", "ecokit"),
     future.globals = c("env_file", "overwrite"))
 
   # GBIF_Data <- furrr::future_map(
@@ -596,7 +596,8 @@ GBIF_process <- function(
     future::plan("future::sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
-      n_cores = n_cores, level = 2L, future_max_size = 800L)
+      n_cores = n_cores, level = 2L, future_max_size = 800L,
+      strategy = "future::multicore")
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 

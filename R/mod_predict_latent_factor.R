@@ -604,7 +604,8 @@ predict_latent_factor <- function(
         ecokit::cat_time("Predicting Latent Factor in parallel", level = 1L)
 
         ecokit::set_parallel(
-          n_cores = min(LF_n_cores, nrow(LF_Data)), level = 2L)
+          n_cores = min(LF_n_cores, nrow(LF_Data)), level = 2L,
+          future_max_size = 800L, strategy = "future::multicore")
         withr::defer(future::plan("future::sequential", gc = TRUE))
 
         ecokit::cat_time("Making predictions in parallel", level = 2L)
@@ -675,7 +676,8 @@ predict_latent_factor <- function(
 
 
     ecokit::set_parallel(
-      n_cores = LF_n_cores, level = 2L, future_max_size = 800L)
+      n_cores = LF_n_cores, level = 2L, future_max_size = 800L,
+      strategy = "future::multicore")
     withr::defer(future::plan("future::sequential", gc = TRUE))
 
     ecokit::cat_time("Process results for MCMC samples in parallel", level = 2L)

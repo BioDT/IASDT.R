@@ -643,7 +643,7 @@ convergence_plot <- function(
     } else {
       ecokit::set_parallel(
         n_cores = min(n_cores, nrow(Beta_DF)), level = 2L,
-        future_max_size = 800L)
+        future_max_size = 800L, strategy = "future::multicore")
       withr::defer(future::plan("future::sequential", gc = TRUE))
     }
 
@@ -931,7 +931,7 @@ convergence_plot <- function(
   } else {
     ecokit::set_parallel(
       n_cores = nrow(BetaTracePlots_ByVar), level = 1L,
-      future_max_size = 800L)
+      future_max_size = 800L, strategy = "future::multicore")
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 
@@ -1072,7 +1072,7 @@ convergence_plot <- function(
   } else {
     ecokit::set_parallel(
       n_cores = min(n_cores, nrow(BetaTracePlots_BySp)), level = 2L,
-      future_max_size = 800L)
+      future_max_size = 800L, strategy = "future::multicore")
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##

@@ -182,7 +182,7 @@ mod_merge_chains <- function(
   } else {
     ecokit::set_parallel(
       n_cores = min(n_cores, nrow(Model_Info2)), level = 1L,
-      future_max_size = 800L)
+      future_max_size = 800L, strategy = "future::multicore")
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 
@@ -593,7 +593,8 @@ mod_merge_chains_CV <- function(
     future::plan("future::sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
-      n_cores = min(n_cores, nrow(CV_DT)), level = 1L, future_max_size = 800L)
+      n_cores = min(n_cores, nrow(CV_DT)), level = 1L, future_max_size = 800L,
+      strategy = "future::multicore")
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 

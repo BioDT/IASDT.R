@@ -1198,10 +1198,9 @@ predict_maps <- function(
   } else {
     ecokit::set_parallel(
       n_cores = min(n_cores, nrow(Prediction_Summary)), level = 1L,
-      future_max_size = 800L)
+      future_max_size = 800L, strategy = "future::multicore")
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
-
 
   # --------------------------------------------------------- #
 

@@ -208,7 +208,7 @@ GBIF_process <- function(
     },
     future.scheduling = Inf, future.seed = TRUE,
     future.packages = c(
-      "IASDT.R", "purrr", "tibble", "terra", "tidyr", "dplyr",
+      "IASDT.R", "purrr", "tibble", "terra", "tidyr", "dplyr", "readr",
       "stringr", "bit64", "tidyselect", "fs", "sf", "ecokit"),
     future.globals = c("env_file", "overwrite"))
 

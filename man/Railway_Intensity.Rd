@@ -4,7 +4,12 @@
 \alias{railway_intensity}
 \title{Calculate railway intensity based on \code{OpenStreetMap} data}
 \usage{
-railway_intensity(env_file = ".env", n_cores = 6L, delete_processed = TRUE)
+railway_intensity(
+  env_file = ".env",
+  n_cores = 6L,
+  strategy = "future::multicore",
+  delete_processed = TRUE
+)
 }
 \arguments{
 \item{env_file}{Character. Path to the environment file containing paths to
@@ -12,6 +17,12 @@ data sources. Defaults to \code{.env}.}
 
 \item{n_cores}{Integer. Number of CPU cores to use for parallel processing.
 Default: 8.}
+
+\item{strategy}{Character. The parallel processing strategy to use. Valid
+options are "future::sequential", "future::multisession",
+"future::multicore", and "future::cluster". Defaults to
+\code{"future::multicore"} (\code{"future::multisession"} on Windows). See
+\code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
 
 \item{delete_processed}{Logical indicating whether to delete the raw
 downloaded railways files after processing them. This helps to free large

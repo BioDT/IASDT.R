@@ -24,6 +24,11 @@
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 6, except for `efforts_request`, which defaults to 3 with a
 #'   maximum of 3.
+#' @param strategy Character. The parallel processing strategy to use. Valid
+#'   options are "future::sequential", "future::multisession",
+#'   "future::multicore", and "future::cluster". Defaults to
+#'   `"future::multicore"` (`"future::multisession"` on Windows). See
+#'   [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param start_year Integer. Earliest year for GBIF records (matches CHELSA
 #'   climate data). Default: `1981`.
 #' @param chunk_size Integer. Rows per chunk file. Default: `100000`.
@@ -66,8 +71,9 @@
 
 efforts_process <- function(
     env_file = ".env", r_environ = ".Renviron", request = TRUE, download = TRUE,
-    n_cores = 6L, start_year = 1981L, boundaries = c(-30, 50, 25, 75),
-    chunk_size = 100000L, delete_chunks = TRUE, delete_processed = TRUE) {
+    n_cores = 6L, strategy = "future::multicore", start_year = 1981L,
+    boundaries = c(-30, 50, 25, 75), chunk_size = 100000L,
+    delete_chunks = TRUE, delete_processed = TRUE) {
 
   # # ..................................................................... ###
 
@@ -82,7 +88,7 @@ efforts_process <- function(
 
   ecokit::check_args(
     args_all = AllArgs, args_type = "character",
-    args_to_check = c("r_environ", "env_file"))
+    args_to_check = c("r_environ", "env_file", "strategy"))
   ecokit::check_args(
     args_all = AllArgs, args_type = "logical",
     args_to_check = c("request", "download"))
@@ -110,6 +116,21 @@ efforts_process <- function(
     ecokit::stop_ctx(
       "`n_cores` must be a positive integer.", n_cores = n_cores,
       include_backtrace = TRUE)
+  }
+
+  if (strategy == "future::sequential") {
+    n_cores <- 1L
+  }
+  if (length(strategy) != 1L) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector of length 1",
+      strategy = strategy, length_strategy = length(strategy))
+  }
+  valid_strategy <- c(
+    "future::sequential", "future::multisession", "future::multicore",
+    "future::cluster")
+  if (!strategy %in% valid_strategy) {
+    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }
 
   # Validate start_year
@@ -208,7 +229,8 @@ efforts_process <- function(
   if (download) {
 
     ecokit::cat_time("Downloading efforts data")
-    IASDT.R::efforts_download(n_cores = n_cores, env_file = env_file)
+    IASDT.R::efforts_download(
+      n_cores = n_cores, strategy = strategy, env_file = env_file)
 
   } else {
 
@@ -241,8 +263,8 @@ efforts_process <- function(
 
   ecokit::cat_time("Processing efforts data")
   IASDT.R::efforts_summarize(
-    env_file = env_file, n_cores = n_cores, chunk_size = chunk_size,
-    delete_chunks = delete_chunks)
+    env_file = env_file, n_cores = n_cores, strategy = strategy,
+    chunk_size = chunk_size, delete_chunks = delete_chunks)
 
   # # ..................................................................... ###
 

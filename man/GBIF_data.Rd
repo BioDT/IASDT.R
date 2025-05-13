@@ -14,6 +14,7 @@ GBIF_process(
   env_file = ".env",
   r_environ = ".Renviron",
   n_cores = 6L,
+  strategy = "future::multicore",
   request = TRUE,
   download = TRUE,
   split_chunks = TRUE,
@@ -69,6 +70,12 @@ credentials must be in the format:
 
 \item{n_cores}{Integer. Number of CPU cores to use for parallel processing.
 Default: 6.}
+
+\item{strategy}{Character. The parallel processing strategy to use. Valid
+options are "future::sequential", "future::multisession",
+"future::multicore", and "future::cluster". Defaults to
+\code{"future::multicore"} (\code{"future::multisession"} on Windows). See
+\code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
 
 \item{request}{Logical. If \code{TRUE} (default), requests GBIF data; otherwise,
 loads from disk.}

@@ -21,6 +21,11 @@
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Defaults to 8L for all functions, except for `resp_curv_plot_species`,
 #'   in which it defaults to 20L.
+#' @param strategy Character. The parallel processing strategy to use. Valid
+#'   options are "future::sequential", "future::multisession",
+#'   "future::multicore", and "future::cluster". Defaults to
+#'   `"future::multicore"` (`"future::multisession"` on Windows). See
+#'   [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param return_data Logical. If `TRUE`, the function returns processed data as
 #'   an R object. Default: `FALSE`.
 #' @param probabilities Numeric vector. Quantiles to calculate in response curve
@@ -41,11 +46,43 @@
 #' @author Ahmed El-Gabbas
 
 resp_curv_prepare_data <- function(
-    path_model = NULL, n_grid = 50L, n_cores = 8L, return_data = FALSE,
+    path_model = NULL, n_grid = 50L, n_cores = 8L,
+    strategy = "future::multicore", return_data = FALSE,
     probabilities = c(0.025, 0.5, 0.975), use_TF = TRUE, TF_environ = NULL,
     TF_use_single = FALSE, LF_n_cores = n_cores, LF_check = FALSE,
-    LF_temp_cleanup = TRUE, LF_commands_only = FALSE,
-    temp_dir = "TEMP_Pred", temp_cleanup = TRUE, verbose = TRUE) {
+    LF_temp_cleanup = TRUE, LF_commands_only = FALSE, temp_dir = "TEMP_Pred",
+    temp_cleanup = TRUE, verbose = TRUE) {
+
+  if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
+    ecokit::stop_ctx(
+      "n_cores must be a single positive integer.", n_cores = n_cores,
+      include_backtrace = TRUE)
+  }
+  if (!is.numeric(LF_n_cores) || length(LF_n_cores) != 1 || LF_n_cores <= 0) {
+    ecokit::stop_ctx(
+      "LF_n_cores must be a single positive integer.", LF_n_cores = LF_n_cores,
+      include_backtrace = TRUE)
+  }
+
+  if (!is.character(strategy)) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector",
+      strategy = strategy, class_strategy = class(strategy))
+  }
+  if (strategy == "future::sequential") {
+    n_cores <- LF_n_cores <- 1L
+  }
+  if (length(strategy) != 1L) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector of length 1",
+      strategy = strategy, length_strategy = length(strategy))
+  }
+  valid_strategy <- c(
+    "future::sequential", "future::multisession", "future::multicore",
+    "future::cluster")
+  if (!strategy %in% valid_strategy) {
+    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
+  }
 
   # # ..................................................................... ###
 
@@ -187,7 +224,7 @@ resp_curv_prepare_data <- function(
         # Predicting probability of occurrence
         Preds <- IASDT.R::predict_hmsc(
           path_model = path_model, gradient = gradient, expected = TRUE,
-          n_cores = 1, model_name = paste0("RC_", Coords),
+          n_cores = 1, strategy = strategy, model_name = paste0("RC_", Coords),
           prediction_type = Coords, use_TF = use_TF, TF_environ = TF_environ,
           LF_inputFile = File_LF, LF_n_cores = 1, LF_check = LF_check,
           LF_temp_cleanup = LF_temp_cleanup, LF_commands_only = FALSE,
@@ -444,11 +481,11 @@ resp_curv_prepare_data <- function(
       ecokit::cat_time("Predicting LF")
       Model_LF <- IASDT.R::predict_hmsc(
         path_model = path_model, gradient = Gradient_c, expected = TRUE,
-        n_cores = n_cores, temp_dir = temp_dir, temp_cleanup = temp_cleanup,
-        model_name = "RC_c", prediction_type = "c", use_TF = use_TF,
-        TF_environ = TF_environ, LF_out_file = File_LF,
-        LF_n_cores = LF_n_cores, LF_check = LF_check, LF_return = FALSE,
-        LF_only = TRUE, LF_temp_cleanup = LF_temp_cleanup,
+        n_cores = n_cores, strategy = strategy, temp_dir = temp_dir,
+        temp_cleanup = temp_cleanup, model_name = "RC_c",
+        prediction_type = "c", use_TF = use_TF, TF_environ = TF_environ,
+        LF_out_file = File_LF, LF_n_cores = LF_n_cores, LF_check = LF_check,
+        LF_return = FALSE, LF_only = TRUE, LF_temp_cleanup = LF_temp_cleanup,
         LF_commands_only = LF_commands_only, TF_use_single = TF_use_single,
         verbose = verbose, pred_directory = temp_dir)
 
@@ -482,7 +519,7 @@ resp_curv_prepare_data <- function(
     } else {
       ecokit::set_parallel(
         n_cores = n_cores, level = 1L, future_max_size = 800L,
-        strategy = "future::multicore")
+        strategy = strategy)
       withr::defer(future::plan("future::sequential", gc = TRUE))
     }
 

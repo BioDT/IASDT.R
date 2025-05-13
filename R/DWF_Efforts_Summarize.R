@@ -9,8 +9,8 @@
 #' @export
 
 efforts_summarize <- function(
-    env_file = ".env", n_cores = 6L, chunk_size = 100000L,
-    delete_chunks = TRUE) {
+    env_file = ".env", n_cores = 6L, strategy = "future::multicore",
+    chunk_size = 100000L, delete_chunks = TRUE) {
 
   # # ..................................................................... ###
 
@@ -29,6 +29,26 @@ efforts_summarize <- function(
     ecokit::stop_ctx(
       "n_cores must be a single positive integer.", n_cores = n_cores,
       include_backtrace = TRUE)
+  }
+
+  if (!is.character(strategy)) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector",
+      strategy = strategy, class_strategy = class(strategy))
+  }
+  if (strategy == "future::sequential") {
+    n_cores <- 1L
+  }
+  if (length(strategy) != 1L) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector of length 1",
+      strategy = strategy, length_strategy = length(strategy))
+  }
+  valid_strategy <- c(
+    "future::sequential", "future::multisession", "future::multicore",
+    "future::cluster")
+  if (!strategy %in% valid_strategy) {
+    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }
 
   # # ..................................................................... ###
@@ -80,7 +100,7 @@ efforts_summarize <- function(
   } else {
     ecokit::set_parallel(
       n_cores = n_cores, level = 1L, future_max_size = 800L,
-      strategy = "future::multicore")
+      strategy = strategy)
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 

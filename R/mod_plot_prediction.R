@@ -13,16 +13,49 @@
 #'   data sources. Defaults to `.env`.
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 8.
+#' @param strategy Character. The parallel processing strategy to use. Valid
+#'   options are "future::sequential", "future::multisession",
+#'   "future::multicore", and "future::cluster". Defaults to
+#'   `"future::multicore"` (`"future::multisession"` on Windows). See
+#'   [future::plan()] and [ecokit::set_parallel()] for details.
 #' @return Saves prediction plots as JPEG files in the specified output
 #'   directory.
 #' @name plot_prediction
 #' @author Ahmed El-Gabbas
 #' @export
 
-plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
+plot_prediction <- function(
+  model_dir = NULL, env_file = ".env", n_cores = 8L,
+  strategy = "future::multicore") {
 
   # # ..................................................................... ###
   # # ..................................................................... ###
+
+  if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
+    ecokit::stop_ctx(
+      "n_cores must be a single positive integer.", n_cores = n_cores,
+      include_backtrace = TRUE)
+  }
+
+  if (!is.character(strategy)) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector",
+      strategy = strategy, class_strategy = class(strategy))
+  }
+  if (strategy == "future::sequential") {
+    n_cores <- 1L
+  }
+  if (length(strategy) != 1L) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector of length 1",
+      strategy = strategy, length_strategy = length(strategy))
+  }
+  valid_strategy <- c(
+    "future::sequential", "future::multisession", "future::multicore",
+    "future::cluster")
+  if (!strategy %in% valid_strategy) {
+    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
+  }
 
   .start_time <- lubridate::now(tzone = "CET")
 
@@ -284,6 +317,10 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
   # helper function for plotting and saving the maps
 
   PlotMaps <- function(ID) {
+
+    # Set null device for `cairo`. This is to properly render the plots using
+    # ggtext - https://github.com/wilkelab/cowplot/issues/73
+    cowplot::set_null_device("cairo")
 
     # nolint start
     SpID <- Map_summary$ias_id[[ID]]
@@ -607,37 +644,24 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
 
   ecokit::cat_time("Plotting")
 
-  ecokit::cat_time(
-    paste0("Preparing working in parallel using ", n_cores, " cores"),
-    level = 1L)
-  c1 <- parallel::makePSOCKcluster(n_cores)
-  on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
+  if (n_cores == 1) {
+    future::plan("future::sequential", gc = TRUE)
+  } else {
+    ecokit::set_parallel(
+      n_cores = n_cores, level = 1L, future_max_size = 800L,
+      strategy = strategy)
+    withr::defer(future::plan("future::sequential", gc = TRUE))
+  }
 
-  ecokit::cat_time("Exporting variables to parallel cores", level = 1L)
-  parallel::clusterExport(
-    cl = c1,
-    varlist = c(
+  Plots <- future.apply::future_lapply(
+    X = seq_len(nrow(Map_summary)), FUN = PlotMaps,
+    future.scheduling = Inf, future.seed = TRUE,
+    future.packages = c(
+      "dplyr", "terra", "ggplot2", "stringr", "cowplot", "tidyterra",
+      "purrr", "ggtext", "ragg", "paletteer", "grid", "scales"),
+    future.globals = c(
       "Map_summary", "PrepPlots", "R_SR", "Path_PA",
-      "R_habitat", "Path_Plots", "hab_name", "PlotMaps"),
-    envir = environment())
-
-  ecokit::cat_time("Loading packages at parallel cores", level = 1L)
-  invisible(parallel::clusterEvalQ(
-    cl = c1,
-    expr = {
-      sapply(
-        c("dplyr", "terra", "ggplot2", "stringr", "cowplot", "tidyterra",
-          "purrr", "ggtext", "ragg", "paletteer", "grid", "scales"),
-        library, character.only = TRUE)
-
-      # Set null device for `cairo`. This is to properly render the plots using
-      # ggtext - https://github.com/wilkelab/cowplot/issues/73
-      cowplot::set_null_device("cairo")
-    }))
-
-  ecokit::cat_time("Prepare and save plots in parallel", level = 1L)
-  Plots <- parallel::parLapply(
-    cl = c1, X = seq_len(nrow(Map_summary)), fun = PlotMaps)
+      "R_habitat", "Path_Plots", "hab_name", "PlotMaps"))
 
   rm(Plots, envir = environment())
 

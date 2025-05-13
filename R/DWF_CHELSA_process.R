@@ -10,6 +10,11 @@
 #'   data sources. Defaults to `.env`.
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 8.
+#' @param strategy Character. The parallel processing strategy to use. Valid
+#'   options are "future::sequential", "future::multisession",
+#'   "future::multicore", and "future::cluster". Defaults to
+#'   `"future::multicore"` (`"future::multisession"` on Windows). See
+#'   [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param download Logical. If `TRUE`, downloads CHELSA files. Default: `FALSE`.
 #' @param download_attempts Integer. Maximum download retries. Default: `10`.
 #' @param sleep Integer. Seconds to wait between download attempts. Default:
@@ -55,9 +60,10 @@
 #' @order 1
 
 CHELSA_process <- function(
-    env_file = ".env", n_cores = 8L, download = FALSE, overwrite = FALSE,
-    download_attempts = 10L, sleep = 5L, other_variables = "npp",
-    download_n_cores = 4, compression_level = 5, overwrite_processed = FALSE) {
+    env_file = ".env", n_cores = 8L, strategy = "future::multicore",
+    download = FALSE, overwrite = FALSE, download_attempts = 10L, sleep = 5L,
+    other_variables = "npp", download_n_cores = 4, compression_level = 5,
+    overwrite_processed = FALSE) {
 
   # # ..................................................................... ###
 
@@ -73,7 +79,7 @@ CHELSA_process <- function(
     function(x) get(x, envir = parent.env(env = environment()))) %>%
     stats::setNames(AllArgs)
 
-  CharArgs <- c("env_file", "other_variables")
+  CharArgs <- c("env_file", "other_variables", "strategy")
   ecokit::check_args(
     args_all = AllArgs, args_to_check = CharArgs, args_type = "character")
 
@@ -95,6 +101,22 @@ CHELSA_process <- function(
       n_cores = n_cores, download_n_cores = download_n_cores,
       include_backtrace = TRUE)
   }
+
+  if (strategy == "future::sequential") {
+    n_cores <- 1L
+  }
+  if (length(strategy) != 1L) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector of length 1",
+      strategy = strategy, length_strategy = length(strategy))
+  }
+  valid_strategy <- c(
+    "future::sequential", "future::multisession", "future::multicore",
+    "future::cluster")
+  if (!strategy %in% valid_strategy) {
+    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
+  }
+
 
   # # ..................................................................... ###
 
@@ -142,8 +164,9 @@ CHELSA_process <- function(
   # options
   CHELSA_Data <- IASDT.R::CHELSA_prepare(
     env_file = env_file, download = download, n_cores = download_n_cores,
-    overwrite = overwrite, other_variables = other_variables,
-    download_attempts = download_attempts, sleep = sleep)
+    strategy = strategy, overwrite = overwrite,
+    other_variables = other_variables, download_attempts = download_attempts,
+    sleep = sleep)
 
   ecokit::cat_diff(
     init_time = TimePrepare, level = 1L,
@@ -165,7 +188,7 @@ CHELSA_process <- function(
       ecokit::cat_time("Check input CHELSA files in parallel")
       ecokit::set_parallel(
         n_cores = n_cores, level = 1L, future_max_size = 800L,
-        strategy = "future::multicore")
+        strategy = strategy)
       withr::defer(future::plan("future::sequential", gc = TRUE))
     }
 
@@ -229,7 +252,7 @@ CHELSA_process <- function(
     ecokit::cat_time("Processing CHELSA maps in parallel")
     ecokit::set_parallel(
       n_cores = n_cores, level = 1L, future_max_size = 800L,
-      strategy = "future::multicore")
+      strategy = strategy)
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 
@@ -366,7 +389,7 @@ CHELSA_process <- function(
       "Grouping CHELSA data by time and climate model+scenario in parallel")
     ecokit::set_parallel(
       n_cores = n_cores, level = 1L, future_max_size = 800L,
-      strategy = "future::multicore")
+      strategy = strategy)
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 

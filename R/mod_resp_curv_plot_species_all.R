@@ -9,9 +9,36 @@
 #' @author Ahmed El-Gabbas
 
 resp_curv_plot_species_all <- function(
-    model_dir = NULL, n_cores = 8L, return_data = FALSE, plotting_alpha = 0.3) {
+    model_dir = NULL, n_cores = 8L, strategy = "future::multicore",
+    return_data = FALSE, plotting_alpha = 0.3) {
 
   # # ..................................................................... ###
+
+  if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
+    ecokit::stop_ctx(
+      "n_cores must be a single positive integer.", n_cores = n_cores,
+      include_backtrace = TRUE)
+  }
+
+  if (!is.character(strategy)) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector",
+      strategy = strategy, class_strategy = class(strategy))
+  }
+  if (strategy == "future::sequential") {
+    n_cores <- 1L
+  }
+  if (length(strategy) != 1L) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector of length 1",
+      strategy = strategy, length_strategy = length(strategy))
+  }
+  valid_strategy <- c(
+    "future::sequential", "future::multisession", "future::multicore",
+    "future::cluster")
+  if (!strategy %in% valid_strategy) {
+    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
+  }
 
   ecokit::cat_time("Plotting species response curves")
 
@@ -86,7 +113,7 @@ resp_curv_plot_species_all <- function(
   } else {
     ecokit::set_parallel(
       n_cores = min(n_cores, nrow(Sp_DT_All)), level = 1L,
-      future_max_size = 800L, strategy = "future::multicore")
+      future_max_size = 800L, strategy = strategy)
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 

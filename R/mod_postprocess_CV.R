@@ -9,7 +9,8 @@
 #' @export
 
 mod_postprocess_CV_1_CPU <- function(
-    model_dir = NULL, CV_names = NULL, n_cores = 8L, env_file = ".env",
+    model_dir = NULL, CV_names = NULL, n_cores = 8L,
+    strategy = "future::multicore", env_file = ".env",
     from_JSON = FALSE, use_TF = TRUE, TF_use_single = FALSE,
     TF_environ = NULL, LF_n_cores = n_cores, LF_only = TRUE,
     LF_temp_cleanup = TRUE, LF_check = FALSE, LF_runtime = "01:00:00",
@@ -36,7 +37,7 @@ mod_postprocess_CV_1_CPU <- function(
     args_all = AllArgs, args_type = "logical",
     args_to_check = c(
       "from_JSON", "use_TF", "TF_use_single", "LF_only", "LF_temp_cleanup",
-      "LF_check", "temp_cleanup"))
+      "LF_check", "temp_cleanup", "strategy"))
   ecokit::check_args(
     args_all = AllArgs, args_type = "character",
     args_to_check = c("model_dir", "env_file", "partition_name", "LF_runtime"))
@@ -59,6 +60,21 @@ mod_postprocess_CV_1_CPU <- function(
     ecokit::stop_ctx(
       "`LF_n_cores` must be a positive integer.", LF_n_cores = LF_n_cores,
       include_backtrace = TRUE)
+  }
+
+  if (strategy == "future::sequential") {
+    n_cores <- LF_n_cores <- 1L
+  }
+  if (length(strategy) != 1L) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector of length 1",
+      strategy = strategy, length_strategy = length(strategy))
+  }
+  valid_strategy <- c(
+    "future::sequential", "future::multisession", "future::multicore",
+    "future::cluster")
+  if (!strategy %in% valid_strategy) {
+    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }
 
   if (!file.exists(env_file)) {
@@ -128,8 +144,8 @@ mod_postprocess_CV_1_CPU <- function(
     cat_bold = TRUE, cat_timestamp = FALSE, info_lines_before = 2L)
 
   IASDT.R::mod_merge_chains_CV(
-    model_dir = model_dir, n_cores = n_cores, CV_names = CV_names,
-    from_JSON = FALSE, out_extension = "qs2")
+    model_dir = model_dir, n_cores = n_cores, strategy = strategy,
+    CV_names = CV_names, from_JSON = FALSE, out_extension = "qs2")
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -153,11 +169,12 @@ mod_postprocess_CV_1_CPU <- function(
 
           IASDT.R::predict_maps_CV(
             model_dir = model_dir, CV_name = paste0("CV_", .x),
-            CV_fold = .y, n_cores = n_cores, use_TF = use_TF,
-            TF_environ = TF_environ, TF_use_single = TF_use_single,
-            LF_n_cores = LF_n_cores, LF_check = LF_check,
-            LF_temp_cleanup = LF_temp_cleanup, LF_only = LF_only,
-            LF_commands_only = TRUE, temp_cleanup = temp_cleanup)
+            CV_fold = .y, n_cores = n_cores, strategy = strategy,
+            use_TF = use_TF, TF_environ = TF_environ,
+            TF_use_single = TF_use_single, LF_n_cores = LF_n_cores,
+            LF_check = LF_check, LF_temp_cleanup = LF_temp_cleanup,
+            LF_only = LF_only, LF_commands_only = TRUE,
+            temp_cleanup = temp_cleanup)
         }
       ))
 
@@ -347,10 +364,10 @@ mod_postprocess_CV_1_CPU <- function(
 #' @export
 
 mod_postprocess_CV_2_CPU <- function(
-    model_dir = NULL, CV_names = NULL, n_cores = 8L, env_file = ".env",
-    use_TF = TRUE, TF_use_single = FALSE, temp_cleanup = TRUE,
-    LF_temp_cleanup = TRUE, TF_environ = NULL, LF_n_cores = n_cores,
-    LF_check = FALSE) {
+    model_dir = NULL, CV_names = NULL, n_cores = 8L,
+    strategy = "future::multicore", env_file = ".env", use_TF = TRUE,
+    TF_use_single = FALSE, temp_cleanup = TRUE, LF_temp_cleanup = TRUE,
+    TF_environ = NULL, LF_n_cores = n_cores, LF_check = FALSE) {
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -379,7 +396,7 @@ mod_postprocess_CV_2_CPU <- function(
     args_to_check = c("use_TF", "TF_use_single", "LF_temp_cleanup", "LF_check"))
   ecokit::check_args(
     args_all = AllArgs, args_type = "character",
-    args_to_check = c("model_dir", "env_file"))
+    args_to_check = c("model_dir", "env_file", "strategy"))
   ecokit::check_args(
     args_all = AllArgs, args_type = "numeric",
     args_to_check = c("n_cores", "LF_n_cores"))
@@ -394,6 +411,21 @@ mod_postprocess_CV_2_CPU <- function(
     ecokit::stop_ctx(
       "`LF_n_cores` must be a positive integer.", LF_n_cores = LF_n_cores,
       include_backtrace = TRUE)
+  }
+
+  if (strategy == "future::sequential") {
+    n_cores <- LF_n_cores <- 1L
+  }
+  if (length(strategy) != 1L) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector of length 1",
+      strategy = strategy, length_strategy = length(strategy))
+  }
+  valid_strategy <- c(
+    "future::sequential", "future::multisession", "future::multicore",
+    "future::cluster")
+  if (!strategy %in% valid_strategy) {
+    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }
 
   valid_CVs <- c("CV_Dist", "CV_Large", "CV_SAC")
@@ -462,8 +494,8 @@ mod_postprocess_CV_2_CPU <- function(
 
           IASDT.R::predict_maps_CV(
             model_dir = model_dir, CV_name = paste0("CV_", .x),
-            CV_fold = .y, n_cores = n_cores, env_file = env_file,
-            use_TF = use_TF, TF_environ = TF_environ,
+            CV_fold = .y, n_cores = n_cores, strategy = strategy,
+            env_file = env_file, use_TF = use_TF, TF_environ = TF_environ,
             TF_use_single = TF_use_single, LF_n_cores = LF_n_cores,
             LF_check = LF_check, LF_temp_cleanup = LF_temp_cleanup,
             LF_only = FALSE, LF_commands_only = FALSE,

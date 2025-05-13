@@ -8,7 +8,8 @@
 #' @order 3
 #' @export
 
-efforts_download <- function(n_cores = 6L, env_file = ".env") {
+efforts_download <- function(
+    n_cores = 6L, strategy = "future::multicore", env_file = ".env") {
 
   .StartTimeDown <- lubridate::now(tzone = "CET")
 
@@ -25,6 +26,26 @@ efforts_download <- function(n_cores = 6L, env_file = ".env") {
     ecokit::stop_ctx(
       "n_cores must be a positive integer.", n_cores = n_cores,
       include_backtrace = TRUE)
+  }
+
+  if (!is.character(strategy)) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector",
+      strategy = strategy, class_strategy = class(strategy))
+  }
+  if (strategy == "future::sequential") {
+    n_cores <- 1L
+  }
+  if (length(strategy) != 1L) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector of length 1",
+      strategy = strategy, length_strategy = length(strategy))
+  }
+  valid_strategy <- c(
+    "future::sequential", "future::multisession", "future::multicore",
+    "future::cluster")
+  if (!strategy %in% valid_strategy) {
+    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }
 
   if (isFALSE(ecokit::check_system_command("unzip"))) {
@@ -65,7 +86,7 @@ efforts_download <- function(n_cores = 6L, env_file = ".env") {
   } else {
     ecokit::set_parallel(
       n_cores = n_cores, level = 1L, future_max_size = 800L,
-      strategy = "future::multicore")
+      strategy = strategy)
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 

@@ -10,9 +10,10 @@
 
 predict_maps_CV <- function(
     model_dir = NULL, CV_name = NULL, CV_fold = NULL, n_cores = 8L,
-    env_file = ".env", use_TF = TRUE, TF_environ = NULL, TF_use_single = FALSE,
-    LF_n_cores = n_cores, LF_check = FALSE, LF_temp_cleanup = TRUE,
-    LF_only = FALSE, LF_commands_only = FALSE, temp_cleanup = TRUE) {
+    strategy = "future::multicore", env_file = ".env", use_TF = TRUE,
+    TF_environ = NULL, TF_use_single = FALSE, LF_n_cores = n_cores,
+    LF_check = FALSE, LF_temp_cleanup = TRUE, LF_only = FALSE,
+    LF_commands_only = FALSE, temp_cleanup = TRUE) {
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -39,7 +40,7 @@ predict_maps_CV <- function(
 
   ecokit::check_args(
     args_all = AllArgs, args_type = "character",
-    args_to_check = c("CV_name", "model_dir", "env_file"))
+    args_to_check = c("CV_name", "model_dir", "env_file", "strategy"))
   ecokit::check_args(
     args_all = AllArgs, args_type = "logical",
     args_to_check = c(
@@ -50,6 +51,32 @@ predict_maps_CV <- function(
     args_to_check = c("n_cores", "CV_fold", "LF_n_cores"))
 
   rm(AllArgs, envir = environment())
+
+  if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
+    ecokit::stop_ctx(
+      "n_cores must be a single positive integer.", n_cores = n_cores,
+      include_backtrace = TRUE)
+  }
+  if (!is.numeric(LF_n_cores) || length(LF_n_cores) != 1 || LF_n_cores <= 0) {
+    ecokit::stop_ctx(
+      "LF_n_cores must be a single positive integer.", LF_n_cores = LF_n_cores,
+      include_backtrace = TRUE)
+  }
+
+  if (strategy == "future::sequential") {
+    n_cores <- LF_n_cores <- 1L
+  }
+  if (length(strategy) != 1L) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector of length 1",
+      strategy = strategy, length_strategy = length(strategy))
+  }
+  valid_strategy <- c(
+    "future::sequential", "future::multisession", "future::multicore",
+    "future::cluster")
+  if (!strategy %in% valid_strategy) {
+    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
+  }
 
   if (!CV_name %in% c("CV_Dist", "CV_Large", "CV_SAC")) {
     ecokit::stop_ctx(
@@ -221,7 +248,7 @@ predict_maps_CV <- function(
     # Predicting latent factor only
     Preds_LF <- IASDT.R::predict_hmsc(
       path_model = path_model, gradient = Gradient, expected = TRUE,
-      n_cores = n_cores, model_name = model_name,
+      n_cores = n_cores, strategy = strategy, model_name = model_name,
       temp_dir = temp_dir, temp_cleanup = temp_cleanup, use_TF = use_TF,
       TF_environ = TF_environ, LF_out_file = Path_Test_LF,
       TF_use_single = TF_use_single, LF_only = TRUE, LF_n_cores = LF_n_cores,
@@ -266,9 +293,9 @@ predict_maps_CV <- function(
 
     Prediction_sf <- IASDT.R::predict_hmsc(
       path_model = path_model, gradient = Gradient, expected = TRUE,
-      n_cores = n_cores, model_name = model_name, temp_dir = temp_dir,
-      temp_cleanup = temp_cleanup, use_TF = use_TF, TF_environ = TF_environ,
-      TF_use_single = TF_use_single, LF_return = TRUE,
+      n_cores = n_cores, strategy = strategy, model_name = model_name,
+      temp_dir = temp_dir, temp_cleanup = temp_cleanup, use_TF = use_TF,
+      TF_environ = TF_environ, TF_use_single = TF_use_single, LF_return = TRUE,
       LF_inputFile = Path_Test_LF, LF_n_cores = LF_n_cores, LF_check = LF_check,
       LF_temp_cleanup = LF_temp_cleanup, LF_commands_only = FALSE,
       verbose = TRUE, pred_directory = Path_Prediction, evaluate = TRUE,

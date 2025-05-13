@@ -36,12 +36,11 @@ transformation for specific parameter types: \code{rho}, \code{alpha}, \code{ome
 \code{beta}.
 }
 \examples{
-library(Hmsc)
-library(coda)
-library(dplyr)
-Coda <- Hmsc::convertToCodaObject(Hmsc::TD$m)
+ecokit::load_packages(Hmsc, coda, dplyr)
+
+coda_object <- Hmsc::convertToCodaObject(Hmsc::TD$m)
 IASDT.R::coda_to_tibble(
-   coda_object = Coda$Alpha[[1]], posterior_type = "Alpha")
+   coda_object = coda_object$Alpha[[1]], posterior_type = "Alpha")
 }
 \author{
 Ahmed El-Gabbas

@@ -9,8 +9,8 @@
 
 variance_partitioning_plot <- function(
     path_model, env_file = ".env", VP_file = "VarPar", use_TF = TRUE,
-    TF_environ = NULL, n_cores = 1L, width = 30, height = 15,
-    Axis_text = 4) {
+    TF_environ = NULL, n_cores = 1L, strategy = "future::multicore",
+    width = 30, height = 15, Axis_text = 4) {
 
   .start_time <- lubridate::now(tzone = "CET")
 
@@ -34,12 +34,33 @@ variance_partitioning_plot <- function(
     stats::setNames(AllArgs)
   ecokit::check_args(
     args_all = AllArgs, args_type = "character",
-    args_to_check = c("env_file", "path_model"))
+    args_to_check = c("env_file", "path_model", "strategy"))
   ecokit::check_args(
     args_all = AllArgs, args_type = "logical", args_to_check = "use_TF")
   ecokit::check_args(
     args_all = AllArgs, args_type = "numeric", args_to_check = "n_cores")
   rm(AllArgs, envir = environment())
+
+  if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
+    ecokit::stop_ctx(
+      "n_cores must be a single positive integer.", n_cores = n_cores,
+      include_backtrace = TRUE)
+  }
+
+  if (strategy == "future::sequential") {
+    n_cores <- 1L
+  }
+  if (length(strategy) != 1L) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector of length 1",
+      strategy = strategy, length_strategy = length(strategy))
+  }
+  valid_strategy <- c(
+    "future::sequential", "future::multisession", "future::multicore",
+    "future::cluster")
+  if (!strategy %in% valid_strategy) {
+    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
+  }
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -122,8 +143,9 @@ variance_partitioning_plot <- function(
       level = 1L)
 
     VarPar <- IASDT.R::variance_partitioning_compute(
-      path_model = path_model, n_cores = n_cores, use_TF = use_TF,
-      TF_environ = TF_environ, verbose = TRUE, VP_file = VP_file)
+      path_model = path_model, n_cores = n_cores, strategy = strategy,
+      use_TF = use_TF, TF_environ = TF_environ, verbose = TRUE,
+      VP_file = VP_file)
 
   }
 

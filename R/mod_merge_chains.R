@@ -17,6 +17,11 @@
 #'   stored under `Model_Fitting_CV/Model_Fitted`.
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Defaults to 8L.
+#' @param strategy Character. The parallel processing strategy to use. Valid
+#'   options are "future::sequential", "future::multisession",
+#'   "future::multicore", and "future::cluster". Defaults to
+#'   `"future::multicore"` (`"future::multisession"` on Windows). See
+#'   [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param model_info_name Character. Name of the file (without extension) where
 #'   updated model information is saved. If `NULL`, overwrites the existing
 #'   `Model_Info.RData` file in `model_dir` directory. If specified, creates a
@@ -59,8 +64,9 @@
 ## |------------------------------------------------------------------------| #
 
 mod_merge_chains <- function(
-    model_dir = NULL, n_cores = 8L, model_info_name = NULL,
-    print_incomplete = TRUE, from_JSON = FALSE, out_extension = "qs2") {
+    model_dir = NULL, n_cores = 8L, strategy = "future::multicore",
+    model_info_name = NULL, print_incomplete = TRUE, from_JSON = FALSE,
+    out_extension = "qs2") {
 
   # # ..................................................................... ###
 
@@ -95,7 +101,7 @@ mod_merge_chains <- function(
 
   ecokit::check_args(
     args_all = AllArgs, args_type = "character",
-    args_to_check = c("model_dir", "out_extension"))
+    args_to_check = c("model_dir", "out_extension", "strategy"))
 
   ecokit::check_args(
     args_all = AllArgs, args_to_check = "n_cores", args_type = "numeric")
@@ -105,6 +111,27 @@ mod_merge_chains <- function(
     args_to_check = c("print_incomplete", "from_JSON"))
 
   rm(AllArgs, envir = environment())
+
+  if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
+    ecokit::stop_ctx(
+      "n_cores must be a single positive integer.", n_cores = n_cores,
+      include_backtrace = TRUE)
+  }
+
+  if (strategy == "future::sequential") {
+    n_cores <- 1L
+  }
+  if (length(strategy) != 1L) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector of length 1",
+      strategy = strategy, length_strategy = length(strategy))
+  }
+  valid_strategy <- c(
+    "future::sequential", "future::multisession", "future::multicore",
+    "future::cluster")
+  if (!strategy %in% valid_strategy) {
+    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
+  }
 
   if (!dir.exists(model_dir)) {
     ecokit::stop_ctx(
@@ -182,7 +209,7 @@ mod_merge_chains <- function(
   } else {
     ecokit::set_parallel(
       n_cores = min(n_cores, nrow(Model_Info2)), level = 1L,
-      future_max_size = 800L, strategy = "future::multicore")
+      future_max_size = 800L, strategy = strategy)
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 
@@ -489,8 +516,9 @@ mod_merge_chains <- function(
 #' @author Ahmed El-Gabbas
 
 mod_merge_chains_CV <- function(
-    model_dir = NULL, n_cores = 8L, CV_names = c("CV_Dist", "CV_Large"),
-    from_JSON = FALSE, out_extension = "qs2") {
+    model_dir = NULL, n_cores = 8L, strategy = "future::multicore",
+    CV_names = c("CV_Dist", "CV_Large"), from_JSON = FALSE,
+    out_extension = "qs2") {
 
   # # ..................................................................... ###
 
@@ -525,12 +553,33 @@ mod_merge_chains_CV <- function(
 
   ecokit::check_args(
     args_all = AllArgs, args_type = "character",
-    args_to_check = c("model_dir", "out_extension"))
+    args_to_check = c("model_dir", "out_extension", "strategy"))
   ecokit::check_args(
     args_all = AllArgs, args_to_check = "n_cores", args_type = "numeric")
   ecokit::check_args(
     args_all = AllArgs, args_type = "logical", args_to_check = "from_JSON")
   rm(AllArgs, envir = environment())
+
+  if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
+    ecokit::stop_ctx(
+      "n_cores must be a single positive integer.", n_cores = n_cores,
+      include_backtrace = TRUE)
+  }
+
+  if (strategy == "future::sequential") {
+    n_cores <- 1L
+  }
+  if (length(strategy) != 1L) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector of length 1",
+      strategy = strategy, length_strategy = length(strategy))
+  }
+  valid_strategy <- c(
+    "future::sequential", "future::multisession", "future::multicore",
+    "future::cluster")
+  if (!strategy %in% valid_strategy) {
+    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
+  }
 
   if (!dir.exists(model_dir)) {
     ecokit::stop_ctx(
@@ -594,7 +643,7 @@ mod_merge_chains_CV <- function(
   } else {
     ecokit::set_parallel(
       n_cores = min(n_cores, nrow(CV_DT)), level = 1L, future_max_size = 800L,
-      strategy = "future::multicore")
+      strategy = strategy)
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 

@@ -67,6 +67,7 @@ Suggests:
     grid (>= 4.4.1),
     gridExtra (>= 2.3),
     gridtext (>= 0.1.5),
+    gt (>= 1.0.0),
     gtools (>= 3.9.5),
     htmltools (>= 0.5.8),
     httr(>= 1.4.7),

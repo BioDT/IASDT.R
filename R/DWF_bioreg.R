@@ -134,6 +134,8 @@ bioreg_process <- function(env_file = ".env") {
 
     invisible(ecokit::system_command(DownCommand))
 
+    Sys.sleep(5L)
+
     if (ecokit::check_zip(Zip_file)) {
       break
     }

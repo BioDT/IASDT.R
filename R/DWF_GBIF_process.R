@@ -26,6 +26,11 @@
 #'   climate data). Default: `1981`.
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 6.
+#' @param strategy Character. The parallel processing strategy to use. Valid
+#'   options are "future::sequential", "future::multisession",
+#'   "future::multicore", and "future::cluster". Defaults to
+#'   `"future::multicore"` (`"future::multisession"` on Windows). See
+#'   [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param delete_chunks Logical. If `TRUE` (default), deletes chunk files.
 #' @param chunk_file Character. Path of chunk file for processing.
 #'
@@ -74,10 +79,10 @@
 #' @order 1
 
 GBIF_process <- function(
-    env_file = ".env", r_environ = ".Renviron", n_cores = 6L, request = TRUE,
-    download = TRUE, split_chunks = TRUE, overwrite = FALSE,
-    delete_chunks = TRUE, chunk_size = 50000L, boundaries = c(-30, 50, 25, 75),
-    start_year = 1981L) {
+    env_file = ".env", r_environ = ".Renviron", n_cores = 6L,
+    strategy = "future::multicore", request = TRUE, download = TRUE,
+    split_chunks = TRUE, overwrite = FALSE, delete_chunks = TRUE,
+    chunk_size = 50000L, boundaries = c(-30, 50, 25, 75), start_year = 1981L) {
 
   # # ..................................................................... ###
 
@@ -92,7 +97,7 @@ GBIF_process <- function(
 
   ecokit::check_args(
     args_all = AllArgs, args_type = "character",
-    args_to_check = c("env_file", "Renviron"))
+    args_to_check = c("env_file", "Renviron", "strategy"))
   ecokit::check_args(
     args_all = AllArgs, args_type = "logical",
     args_to_check = c(
@@ -100,6 +105,32 @@ GBIF_process <- function(
   ecokit::check_args(
     args_all = AllArgs, args_type = "numeric",
     args_to_check = c("start_year", "boundaries", "chunk_size", "n_cores"))
+
+  if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
+    ecokit::stop_ctx(
+      "n_cores must be a single positive integer.", n_cores = n_cores,
+      include_backtrace = TRUE)
+  }
+
+  if (!is.character(strategy)) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector",
+      strategy = strategy, class_strategy = class(strategy))
+  }
+  if (strategy == "future::sequential") {
+    n_cores <- 1L
+  }
+  if (length(strategy) != 1L) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector of length 1",
+      strategy = strategy, length_strategy = length(strategy))
+  }
+  valid_strategy <- c(
+    "future::sequential", "future::multisession", "future::multicore",
+    "future::cluster")
+  if (!strategy %in% valid_strategy) {
+    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
+  }
 
   withr::local_options(
     future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
@@ -193,7 +224,7 @@ GBIF_process <- function(
   } else {
     ecokit::set_parallel(
       n_cores = n_cores, level = 1L, future_max_size = 800L,
-      strategy = "future::multicore")
+      strategy = strategy)
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 
@@ -209,8 +240,8 @@ GBIF_process <- function(
     },
     future.scheduling = Inf, future.seed = TRUE,
     #future.packages = c(
-      #"IASDT.R", "purrr", "tibble", "terra", "tidyr", "dplyr", "readr",
-      #"stringr", "bit64", "tidyselect", "fs", "sf", "ecokit"),
+    #"IASDT.R", "purrr", "tibble", "terra", "tidyr", "dplyr", "readr",
+    #"stringr", "bit64", "tidyselect", "fs", "sf", "ecokit"),
     future.globals = c("env_file", "overwrite"))
 
   # GBIF_Data <- furrr::future_map(
@@ -597,7 +628,7 @@ GBIF_process <- function(
   } else {
     ecokit::set_parallel(
       n_cores = n_cores, level = 2L, future_max_size = 800L,
-      strategy = "future::multicore")
+      strategy = strategy)
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 

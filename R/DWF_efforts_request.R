@@ -9,8 +9,9 @@
 #' @export
 
 efforts_request <- function(
-    env_file = ".env", n_cores = 3L, start_year = 1981L,
-    r_environ = ".Renviron", boundaries = c(-30, 50, 25, 75)) {
+    env_file = ".env", n_cores = 3L, strategy = "future::multicore",
+    start_year = 1981L, r_environ = ".Renviron",
+    boundaries = c(-30, 50, 25, 75)) {
 
   # # ..................................................................... ###
 
@@ -29,6 +30,28 @@ efforts_request <- function(
     ecokit::stop_ctx(
       "`n_cores` must be a positive integer.", n_cores = n_cores,
       include_backtrace = TRUE)
+  }
+
+
+
+  if (!is.character(strategy)) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector",
+      strategy = strategy, class_strategy = class(strategy))
+  }
+  if (strategy == "future::sequential") {
+    n_cores <- 1L
+  }
+  if (length(strategy) != 1L) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector of length 1",
+      strategy = strategy, length_strategy = length(strategy))
+  }
+  valid_strategy <- c(
+    "future::sequential", "future::multisession", "future::multicore",
+    "future::cluster")
+  if (!strategy %in% valid_strategy) {
+    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }
 
   if (!is.numeric(start_year) || start_year <= 1950) {
@@ -77,7 +100,7 @@ efforts_request <- function(
   } else {
     ecokit::set_parallel(
       n_cores = min(n_cores, 3), level = 1L, future_max_size = 800L,
-      strategy = "future::multicore")
+      strategy = strategy)
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 

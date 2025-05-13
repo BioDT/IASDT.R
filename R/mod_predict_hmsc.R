@@ -26,6 +26,11 @@
 #'   observation models or sample the values from those. Defaults to `TRUE`.
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 8.
+#' @param strategy Character. The parallel processing strategy to use. Valid
+#'   options are "future::sequential", "future::multisession",
+#'   "future::multicore", and "future::cluster". Defaults to
+#'   `"future::multicore"` (`"future::multisession"` on Windows). See
+#'   [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param temp_cleanup Logical. Whether to clean up temporary files. Defaults to
 #'   `TRUE`.
 #' @param pred_directory Character. Directory path indicating where the
@@ -65,9 +70,9 @@
 predict_hmsc <- function(
     path_model, Loff = NULL, x_data = NULL, X = NULL, XRRRData = NULL,
     XRRR = NULL, gradient = NULL, Yc = NULL, mcmcStep = 1L, expected = TRUE,
-    n_cores = 8L, model_name = "Train", temp_dir = "TEMP_Pred",
-    temp_cleanup = TRUE, prediction_type = NULL, use_TF = TRUE,
-    TF_environ = NULL, TF_use_single = FALSE, LF_out_file = NULL,
+    n_cores = 8L, strategy = "future::multicore", model_name = "Train",
+    temp_dir = "TEMP_Pred", temp_cleanup = TRUE, prediction_type = NULL,
+    use_TF = TRUE, TF_environ = NULL, TF_use_single = FALSE, LF_out_file = NULL,
     LF_return = FALSE, LF_inputFile = NULL, LF_only = FALSE,
     LF_n_cores = n_cores, LF_check = FALSE, LF_temp_cleanup = TRUE,
     LF_commands_only = FALSE, pred_directory = NULL, pred_PA = NULL,
@@ -82,6 +87,37 @@ predict_hmsc <- function(
   }
 
   .start_time <- lubridate::now(tzone = "CET")
+
+  if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
+    ecokit::stop_ctx(
+      "n_cores must be a single positive integer.", n_cores = n_cores,
+      include_backtrace = TRUE)
+  }
+  if (!is.numeric(LF_n_cores) || length(LF_n_cores) != 1 || LF_n_cores <= 0) {
+    ecokit::stop_ctx(
+      "LF_n_cores must be a single positive integer.", LF_n_cores = LF_n_cores,
+      include_backtrace = TRUE)
+  }
+
+  if (!is.character(strategy)) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector",
+      strategy = strategy, class_strategy = class(strategy))
+  }
+  if (strategy == "future::sequential") {
+    n_cores <- LF_n_cores <- 1L
+  }
+  if (length(strategy) != 1L) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector of length 1",
+      strategy = strategy, length_strategy = length(strategy))
+  }
+  valid_strategy <- c(
+    "future::sequential", "future::multisession", "future::multicore",
+    "future::cluster")
+  if (!strategy %in% valid_strategy) {
+    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
+  }
 
   # To avoid non-standard evaluation
   pred_XY <- pred_XY
@@ -394,8 +430,9 @@ predict_hmsc <- function(
         units_pred = levels(dfPiNew[, r]),
         units_model = levels(Mod_dfPi[, r]),
         postEta = postEta_file, post_alpha = post_alpha, LF_rL = rL[[r]],
-        LF_n_cores = LF_n_cores, LF_temp_cleanup = LF_temp_cleanup,
-        LF_out_file = LF_out_file, LF_return = LF_return, LF_check = LF_check,
+        LF_n_cores = LF_n_cores, strategy = strategy,
+        LF_temp_cleanup = LF_temp_cleanup, LF_out_file = LF_out_file,
+        LF_return = LF_return, LF_check = LF_check,
         LF_commands_only = LF_commands_only, temp_dir = temp_dir,
         model_name = model_name, use_TF = use_TF, TF_environ = TF_environ,
         TF_use_single = TF_use_single)
@@ -498,7 +535,7 @@ predict_hmsc <- function(
   } else {
     ecokit::set_parallel(
       n_cores = min(n_cores, length(Chunks)), level = 1L,
-      future_max_size = 800L, strategy = "future::multicore")
+      future_max_size = 800L, strategy = strategy)
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 

@@ -21,6 +21,11 @@
 #'   parameter diagnostics. Default: 1000L
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 8.
+#' @param strategy Character. The parallel processing strategy to use. Valid
+#'   options are "future::sequential", "future::multisession",
+#'   "future::multicore", and "future::cluster". Defaults to
+#'   `"future::multicore"` (`"future::multisession"` on Windows). See
+#'   [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param n_RC Numeric vector. Grid layout (rows&times;columns) for arranging
 #'   alpha parameter plots. Default: `c(2, 2)`. If `NULL`, the layout is
 #'   automatically determined based on the number of alpha levels.
@@ -58,9 +63,9 @@
 
 convergence_plot <- function(
     path_coda = NULL, path_model = NULL, env_file = ".env", title = " ",
-    n_omega = 1000L, n_cores = 8L, n_RC = c(2L, 2L), beta_n_RC = c(3L, 3L),
-    save_plotting_data = TRUE, pages_per_file = 20L, chain_colors = NULL,
-    margin_type = "histogram") {
+    n_omega = 1000L, n_cores = 8L, strategy = "future::multicore",
+    n_RC = c(2L, 2L), beta_n_RC = c(3L, 3L), save_plotting_data = TRUE,
+    pages_per_file = 20L, chain_colors = NULL, margin_type = "histogram") {
 
   # # ..................................................................... ###
 
@@ -110,11 +115,32 @@ convergence_plot <- function(
 
   ecokit::check_args(
     args_all = AllArgs, args_type = "character",
-    args_to_check = c("path_coda", "path_model"))
+    args_to_check = c("path_coda", "path_model", "strategy"))
   ecokit::check_args(
     args_all = AllArgs, args_type = "numeric",
     args_to_check = c("n_omega", "n_cores", "n_RC"))
   rm(AllArgs, envir = environment())
+
+  if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
+    ecokit::stop_ctx(
+      "n_cores must be a single positive integer.", n_cores = n_cores,
+      include_backtrace = TRUE)
+  }
+
+  if (strategy == "future::sequential") {
+    n_cores <- 1L
+  }
+  if (length(strategy) != 1L) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector of length 1",
+      strategy = strategy, length_strategy = length(strategy))
+  }
+  valid_strategy <- c(
+    "future::sequential", "future::multisession", "future::multicore",
+    "future::cluster")
+  if (!strategy %in% valid_strategy) {
+    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
+  }
 
   # # ..................................................................... ###
 
@@ -643,7 +669,7 @@ convergence_plot <- function(
     } else {
       ecokit::set_parallel(
         n_cores = min(n_cores, nrow(Beta_DF)), level = 2L,
-        future_max_size = 800L, strategy = "future::multicore")
+        future_max_size = 800L, strategy = strategy)
       withr::defer(future::plan("future::sequential", gc = TRUE))
     }
 
@@ -931,7 +957,7 @@ convergence_plot <- function(
   } else {
     ecokit::set_parallel(
       n_cores = nrow(BetaTracePlots_ByVar), level = 1L,
-      future_max_size = 800L, strategy = "future::multicore")
+      future_max_size = 800L, strategy = strategy)
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 
@@ -1072,7 +1098,7 @@ convergence_plot <- function(
   } else {
     ecokit::set_parallel(
       n_cores = min(n_cores, nrow(BetaTracePlots_BySp)), level = 2L,
-      future_max_size = 800L, strategy = "future::multicore")
+      future_max_size = 800L, strategy = strategy)
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##

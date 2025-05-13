@@ -69,6 +69,11 @@
 #'   files for initial models. Default: `TRUE`.
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 8.
+#' @param strategy Character. The parallel processing strategy to use. Valid
+#'   options are "future::sequential", "future::multisession",
+#'   "future::multicore", and "future::cluster". Defaults to
+#'   `"future::multicore"` (`"future::multisession"` on Windows). See
+#'   [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param MCMC_n_chains Integer. Number of model chains. Default: 4.
 #' @param MCMC_thin Integer vector. Thinning value(s) in MCMC sampling. If more
 #'   than one value is provided, a separate model will be fitted at each value
@@ -169,8 +174,8 @@ mod_prepare_HPC <- function(
     CV_n_folds = 4L, CV_n_grids = 20L, CV_n_rows = 2L, CV_n_columns = 2L,
     CV_plot = TRUE, CV_SAC = FALSE, use_phylo_tree = TRUE,
     no_phylo_tree = FALSE, overwrite_rds = TRUE, n_cores = 8L,
-    MCMC_n_chains = 4L, MCMC_thin = NULL, MCMC_samples = 1000L,
-    MCMC_transient_factor = 500L, MCMC_verbose = 200L,
+    strategy = "future::multicore", MCMC_n_chains = 4L, MCMC_thin = NULL,
+    MCMC_samples = 1000L, MCMC_transient_factor = 500L, MCMC_verbose = 200L,
     skip_fitted = TRUE, n_array_jobs = 210L, model_country = NULL,
     verbose_progress = TRUE, SLURM_prepare = TRUE, memory_per_cpu = "64G",
     job_runtime = NULL, job_name = NULL, path_Hmsc = NULL,
@@ -183,6 +188,32 @@ mod_prepare_HPC <- function(
   # # |||||||||||||||||||||||||||||||||||
 
   .start_time <- lubridate::now(tzone = "CET")
+
+  if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
+    ecokit::stop_ctx(
+      "n_cores must be a single positive integer.", n_cores = n_cores,
+      include_backtrace = TRUE)
+  }
+
+  if (!is.character(strategy)) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector",
+      strategy = strategy, class_strategy = class(strategy))
+  }
+  if (strategy == "future::sequential") {
+    n_cores <- 1L
+  }
+  if (length(strategy) != 1L) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector of length 1",
+      strategy = strategy, length_strategy = length(strategy))
+  }
+  valid_strategy <- c(
+    "future::sequential", "future::multisession", "future::multicore",
+    "future::cluster")
+  if (!strategy %in% valid_strategy) {
+    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
+  }
 
   CheckNULL <- c(
     "directory_name", "n_pres_per_species", "MCMC_thin", "MCMC_samples",
@@ -784,16 +815,9 @@ mod_prepare_HPC <- function(
 
     if (NCores_GPP > 1) {
 
-      ecokit::cat_time(
-        paste0("Prepare working in parallel using ", NCores_GPP, " cores"),
-        level = 2L, cat_timestamp = FALSE)
-
-      withr::local_options(
-        future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
-        future.seed = TRUE)
-      c1 <- snow::makeSOCKcluster(NCores_GPP)
-      on.exit(try(snow::stopCluster(c1), silent = TRUE), add = TRUE)
-      future::plan("future::cluster", workers = c1, gc = TRUE)
+      ecokit::set_parallel(
+        n_cores = n_cores, level = 2L, future_max_size = 800L,
+        strategy = strategy)
       withr::defer(future::plan("future::sequential", gc = TRUE))
 
       ecokit::cat_time("Prepare GPP knots", level = 2L)
@@ -810,7 +834,7 @@ mod_prepare_HPC <- function(
         stats::setNames(paste0("GPP_", GPP_dists))
 
       # Stopping cluster
-      snow::stopCluster(c1)
+      ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
       future::plan("future::sequential", gc = TRUE)
 
     } else {
@@ -1086,7 +1110,7 @@ mod_prepare_HPC <- function(
 
     ecokit::set_parallel(
       n_cores = min(n_cores, nrow(Model_Info)), level = 1L,
-      future_max_size = 800L, strategy = "future::multicore")
+      future_max_size = 800L, strategy = strategy)
     withr::defer(future::plan("future::sequential", gc = TRUE))
 
     Model_Process <- future.apply::future_lapply(

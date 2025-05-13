@@ -13,6 +13,11 @@
 #'   data sources. Defaults to `.env`.
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 8.
+#' @param strategy Character. The parallel processing strategy to use. Valid
+#'   options are "future::sequential", "future::multisession",
+#'   "future::multicore", and "future::cluster". Defaults to
+#'   `"future::multicore"` (`"future::multisession"` on Windows). See
+#'   [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param delete_processed Logical indicating whether to delete the raw
 #'   downloaded railways files after processing them. This helps to free large
 #'   unnecessary file space (> 55 GB). Defaults to `TRUE`.
@@ -23,7 +28,8 @@
 #' @author Ahmed El-Gabbas
 
 railway_intensity <- function(
-    env_file = ".env", n_cores = 6L, delete_processed = TRUE) {
+    env_file = ".env", n_cores = 6L, strategy = "future::multicore",
+    delete_processed = TRUE) {
 
   .start_time <- lubridate::now(tzone = "CET")
 
@@ -37,13 +43,35 @@ railway_intensity <- function(
     stats::setNames(AllArgs)
 
   ecokit::check_args(
-    args_all = AllArgs, args_type = "character", args_to_check = "env_file")
+    args_all = AllArgs, args_type = "character",
+    args_to_check = c("env_file", "strategy"))
   ecokit::check_args(
     args_all = AllArgs, args_type = "logical", args_to_check = "download")
   ecokit::check_args(
     args_all = AllArgs, args_type = "numeric", args_to_check = "n_cores")
 
   rm(AllArgs, envir = environment())
+
+  if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
+    ecokit::stop_ctx(
+      "n_cores must be a single positive integer.", n_cores = n_cores,
+      include_backtrace = TRUE)
+  }
+
+  if (strategy == "future::sequential") {
+    n_cores <- 1L
+  }
+  if (length(strategy) != 1L) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector of length 1",
+      strategy = strategy, length_strategy = length(strategy))
+  }
+  valid_strategy <- c(
+    "future::sequential", "future::multisession", "future::multicore",
+    "future::cluster")
+  if (!strategy %in% valid_strategy) {
+    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
+  }
 
   # # ..................................................................... ###
 
@@ -258,7 +286,7 @@ railway_intensity <- function(
   } else {
     ecokit::set_parallel(
       n_cores = n_cores, level = 1L, future_max_size = 800L,
-      strategy = "future::multicore")
+      strategy = strategy)
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 

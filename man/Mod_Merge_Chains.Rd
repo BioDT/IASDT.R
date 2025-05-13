@@ -8,6 +8,7 @@
 mod_merge_chains(
   model_dir = NULL,
   n_cores = 8L,
+  strategy = "future::multicore",
   model_info_name = NULL,
   print_incomplete = TRUE,
   from_JSON = FALSE,
@@ -17,6 +18,7 @@ mod_merge_chains(
 mod_merge_chains_CV(
   model_dir = NULL,
   n_cores = 8L,
+  strategy = "future::multicore",
   CV_names = c("CV_Dist", "CV_Large"),
   from_JSON = FALSE,
   out_extension = "qs2"
@@ -31,6 +33,12 @@ stored under \code{Model_Fitting_CV/Model_Fitted}.}
 
 \item{n_cores}{Integer. Number of CPU cores to use for parallel processing.
 Defaults to 8L.}
+
+\item{strategy}{Character. The parallel processing strategy to use. Valid
+options are "future::sequential", "future::multisession",
+"future::multicore", and "future::cluster". Defaults to
+\code{"future::multicore"} (\code{"future::multisession"} on Windows). See
+\code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
 
 \item{model_info_name}{Character. Name of the file (without extension) where
 updated model information is saved. If \code{NULL}, overwrites the existing

@@ -16,6 +16,7 @@ convergence_plot(
   title = " ",
   n_omega = 1000L,
   n_cores = 8L,
+  strategy = "future::multicore",
   n_RC = c(2L, 2L),
   beta_n_RC = c(3L, 3L),
   save_plotting_data = TRUE,
@@ -62,6 +63,12 @@ parameter diagnostics. Default: 1000L}
 
 \item{n_cores}{Integer. Number of CPU cores to use for parallel processing.
 Default: 8.}
+
+\item{strategy}{Character. The parallel processing strategy to use. Valid
+options are "future::sequential", "future::multisession",
+"future::multicore", and "future::cluster". Defaults to
+\code{"future::multicore"} (\code{"future::multisession"} on Windows). See
+\code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
 
 \item{n_RC}{Numeric vector. Grid layout (rows×columns) for arranging
 alpha parameter plots. Default: \code{c(2, 2)}. If \code{NULL}, the layout is

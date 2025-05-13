@@ -9,7 +9,8 @@
 #' @order 2
 
 CHELSA_prepare <- function(
-    env_file = ".env", download = FALSE, n_cores = 8L, overwrite = FALSE,
+    env_file = ".env", download = FALSE, n_cores = 8L,
+    strategy = "future::multicore", overwrite = FALSE,
     download_attempts = 10L, sleep = 5L, other_variables = "npp") {
 
   # # ..................................................................... ###
@@ -22,7 +23,7 @@ CHELSA_prepare <- function(
 
   ecokit::check_args(
     args_all = AllArgs, args_type = "character",
-    args_to_check = c("env_file", "other_variables"))
+    args_to_check = c("env_file", "other_variables", "strategy"))
   ecokit::check_args(
     args_all = AllArgs, args_type = "logical",
     args_to_check = c("download", "overwrite"))
@@ -36,6 +37,21 @@ CHELSA_prepare <- function(
     ecokit::stop_ctx(
       "`n_cores` must be a positive integer.", n_cores = n_cores,
       include_backtrace = TRUE)
+  }
+
+  if (strategy == "future::sequential") {
+    n_cores <- 1L
+  }
+  if (length(strategy) != 1L) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector of length 1",
+      strategy = strategy, length_strategy = length(strategy))
+  }
+  valid_strategy <- c(
+    "future::sequential", "future::multisession", "future::multicore",
+    "future::cluster")
+  if (!strategy %in% valid_strategy) {
+    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }
 
   # # ..................................................................... ###
@@ -206,7 +222,7 @@ CHELSA_prepare <- function(
     } else {
       ecokit::set_parallel(
         n_cores = n_cores, level = 1L, future_max_size = 800L,
-        strategy = "future::multicore")
+        strategy = strategy)
       withr::defer(future::plan("future::sequential", gc = TRUE))
     }
 

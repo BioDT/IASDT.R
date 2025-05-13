@@ -18,6 +18,11 @@
 #'   MCMC samples of the selected model.
 #' @param n_cores_VP Integer. Number of cores to use for variance partitioning.
 #'   Defaults to 3L.
+#' @param strategy Character. The parallel processing strategy to use. Valid
+#'   options are "future::sequential", "future::multisession",
+#'   "future::multicore", and "future::cluster". Defaults to
+#'   `"future::multicore"` (`"future::multisession"` on Windows). See
+#'   [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param n_batch_files Integer. Number of output batch files to create. Must be
 #'   less than or equal to the maximum job limit of the HPC environment.
 #' @param working_directory Character. Optionally sets the working directory in
@@ -165,7 +170,8 @@
 ## |------------------------------------------------------------------------| #
 
 mod_postprocess_1_CPU <- function(
-    model_dir = NULL, hab_abb = NULL, n_cores = 8L, env_file = ".env",
+    model_dir = NULL, hab_abb = NULL, n_cores = 8L,
+    strategy = "future::multicore", env_file = ".env",
     path_Hmsc = NULL, memory_per_cpu = "64G", job_runtime = NULL,
     from_JSON = FALSE, GPP_dist = NULL, use_trees = "Tree",
     MCMC_n_samples = 1000L, MCMC_thin = NULL, n_omega = 1000L,
@@ -193,7 +199,8 @@ mod_postprocess_1_CPU <- function(
   ecokit::check_args(
     args_all = AllArgs, args_type = "character",
     args_to_check = c(
-      "hab_abb", "env_file", "model_dir", "use_trees", "path_Hmsc"))
+      "hab_abb", "env_file", "model_dir", "use_trees", "path_Hmsc",
+      "strategy"))
 
   ecokit::check_args(
     args_all = AllArgs, args_type = "logical",
@@ -207,6 +214,37 @@ mod_postprocess_1_CPU <- function(
       "n_cores", "n_omega", "GPP_dist", "MCMC_n_samples",
       "MCMC_thin", "n_cores_VP", "LF_n_cores", "n_grid"))
   rm(AllArgs, envir = environment())
+
+  if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
+    ecokit::stop_ctx(
+      "n_cores must be a single positive integer.", n_cores = n_cores,
+      include_backtrace = TRUE)
+  }
+  if (!is.numeric(n_cores_VP) || length(n_cores_VP) != 1 || n_cores_VP <= 0) {
+    ecokit::stop_ctx(
+      "n_cores_VP must be a single positive integer.", n_cores_VP = n_cores_VP,
+      include_backtrace = TRUE)
+  }
+  if (!is.numeric(LF_n_cores) || length(LF_n_cores) != 1 || LF_n_cores <= 0) {
+    ecokit::stop_ctx(
+      "LF_n_cores must be a single positive integer.", LF_n_cores = LF_n_cores,
+      include_backtrace = TRUE)
+  }
+
+  if (strategy == "future::sequential") {
+    n_cores <- LF_n_cores <- n_cores_VP <- 1L
+  }
+  if (length(strategy) != 1L) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector of length 1",
+      strategy = strategy, length_strategy = length(strategy))
+  }
+  valid_strategy <- c(
+    "future::sequential", "future::multisession", "future::multicore",
+    "future::cluster")
+  if (!strategy %in% valid_strategy) {
+    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
+  }
 
   ValidHabAbbs <- c(as.character(0:3), "4a", "4b", "10", "12a", "12b")
   if (!(hab_abb %in% ValidHabAbbs)) {
@@ -294,7 +332,8 @@ mod_postprocess_1_CPU <- function(
     line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
   IASDT.R::mod_merge_chains(
-    model_dir = model_dir, n_cores = n_cores, from_JSON = from_JSON)
+    model_dir = model_dir, n_cores = n_cores, strategy = strategy,
+    from_JSON = from_JSON)
 
   invisible(gc())
 
@@ -306,7 +345,7 @@ mod_postprocess_1_CPU <- function(
 
   IASDT.R::convergence_plot_all(
     model_dir = model_dir, n_omega = n_omega, n_cores = n_cores,
-    margin_type = "histogram")
+    strategy = strategy, margin_type = "histogram")
 
   invisible(gc())
 
@@ -363,7 +402,7 @@ mod_postprocess_1_CPU <- function(
 
   IASDT.R::convergence_plot(
     path_coda = path_coda, path_model = path_model, env_file = env_file,
-    n_omega = n_omega, n_cores = n_cores, n_RC = c(2, 2),
+    n_omega = n_omega, n_cores = n_cores, strategy = strategy, n_RC = c(2, 2),
     beta_n_RC = c(3, 3), margin_type = "histogram")
 
   invisible(gc())
@@ -430,10 +469,11 @@ mod_postprocess_1_CPU <- function(
 
   IASDT.R::resp_curv_prepare_data(
     path_model = path_model, n_grid = n_grid, n_cores = n_cores,
-    use_TF = use_TF, TF_environ = TF_environ, TF_use_single = TF_use_single,
-    LF_n_cores = LF_n_cores, LF_temp_cleanup = LF_temp_cleanup,
-    LF_check = LF_check, temp_dir = temp_dir, temp_cleanup = temp_cleanup,
-    verbose = TRUE, LF_commands_only = TRUE)
+    strategy = strategy, use_TF = use_TF, TF_environ = TF_environ,
+    TF_use_single = TF_use_single, LF_n_cores = LF_n_cores,
+    LF_temp_cleanup = LF_temp_cleanup, LF_check = LF_check,
+    temp_dir = temp_dir, temp_cleanup = temp_cleanup, verbose = TRUE,
+    LF_commands_only = TRUE)
 
   invisible(gc())
 
@@ -448,9 +488,10 @@ mod_postprocess_1_CPU <- function(
 
   IASDT.R::predict_maps(
     path_model = path_model, hab_abb = hab_abb, env_file = env_file,
-    n_cores = n_cores, clamp_pred = clamp_pred, fix_efforts = fix_efforts,
-    fix_rivers = fix_rivers, pred_new_sites = pred_new_sites, use_TF = use_TF,
-    TF_environ = TF_environ, temp_dir = temp_dir, temp_cleanup = temp_cleanup,
+    n_cores = n_cores, strategy = strategy, clamp_pred = clamp_pred,
+    fix_efforts = fix_efforts, fix_rivers = fix_rivers,
+    pred_new_sites = pred_new_sites, use_TF = use_TF, TF_environ = TF_environ,
+    temp_dir = temp_dir, temp_cleanup = temp_cleanup,
     TF_use_single = TF_use_single, LF_n_cores = LF_n_cores, LF_check = LF_check,
     LF_temp_cleanup = LF_temp_cleanup, LF_only = TRUE, LF_commands_only = TRUE)
 
@@ -463,11 +504,10 @@ mod_postprocess_1_CPU <- function(
     cat_timestamp = FALSE)
 
   IASDT.R::variance_partitioning_compute(
-    path_model = path_model,
-    n_cores = n_cores_VP, use_TF = use_TF, TF_environ = TF_environ,
-    TF_use_single = TF_use_single, temp_cleanup = temp_cleanup,
-    chunk_size = 50L, verbose = TRUE, VP_file = "VarPar",
-    VP_commands_only = TRUE)
+    path_model = path_model, n_cores = n_cores_VP, strategy = strategy,
+    use_TF = use_TF, TF_environ = TF_environ, TF_use_single = TF_use_single,
+    temp_cleanup = temp_cleanup, chunk_size = 50L, verbose = TRUE,
+    VP_file = "VarPar", VP_commands_only = TRUE)
 
   # ****************************************************************
 
@@ -476,7 +516,6 @@ mod_postprocess_1_CPU <- function(
 
   return(invisible(NULL))
 }
-
 
 # # ========================================================================== #
 # # ========================================================================== #
@@ -849,11 +888,11 @@ mod_prepare_TF <- function(
 #' @author Ahmed El-Gabbas
 
 mod_postprocess_2_CPU <- function(
-    model_dir = NULL, hab_abb = NULL, n_cores = 8L, env_file = ".env",
-    GPP_dist = NULL, use_trees = "Tree", MCMC_n_samples = 1000L,
-    MCMC_thin = NULL, use_TF = TRUE, TF_environ = NULL, TF_use_single = FALSE,
-    LF_n_cores = n_cores, LF_check = FALSE, LF_temp_cleanup = TRUE,
-    temp_cleanup = TRUE, n_grid = 50L,
+    model_dir = NULL, hab_abb = NULL, n_cores = 8L,
+    strategy = "future::multicore", env_file = ".env", GPP_dist = NULL,
+    use_trees = "Tree", MCMC_n_samples = 1000L, MCMC_thin = NULL, use_TF = TRUE,
+    TF_environ = NULL, TF_use_single = FALSE, LF_n_cores = n_cores,
+    LF_check = FALSE, LF_temp_cleanup = TRUE, temp_cleanup = TRUE, n_grid = 50L,
     CC_models = c(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
       "MRI-ESM2-0", "UKESM1-0-LL"),
@@ -880,7 +919,8 @@ mod_postprocess_2_CPU <- function(
 
   ecokit::check_args(
     args_all = AllArgs, args_type = "character",
-    args_to_check = c("hab_abb", "env_file", "model_dir", "use_trees"))
+    args_to_check = c(
+      "hab_abb", "env_file", "model_dir", "use_trees", "strategy"))
 
   ecokit::check_args(
     args_all = AllArgs, args_type = "logical",
@@ -889,8 +929,40 @@ mod_postprocess_2_CPU <- function(
   ecokit::check_args(
     args_all = AllArgs, args_type = "numeric",
     args_to_check = c(
-      "n_cores", "GPP_dist", "MCMC_n_samples", "MCMC_thin", "n_grid"))
+      "n_cores", "GPP_dist", "MCMC_n_samples", "MCMC_thin", "n_grid",
+      "LF_n_cores", "RC_n_cores"))
   rm(AllArgs, envir = environment())
+
+  if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
+    ecokit::stop_ctx(
+      "n_cores must be a single positive integer.", n_cores = n_cores,
+      include_backtrace = TRUE)
+  }
+  if (!is.numeric(LF_n_cores) || length(LF_n_cores) != 1 || LF_n_cores <= 0) {
+    ecokit::stop_ctx(
+      "LF_n_cores must be a single positive integer.", LF_n_cores = LF_n_cores,
+      include_backtrace = TRUE)
+  }
+  if (!is.numeric(RC_n_cores) || length(RC_n_cores) != 1 || RC_n_cores <= 0) {
+    ecokit::stop_ctx(
+      "RC_n_cores must be a single positive integer.", RC_n_cores = RC_n_cores,
+      include_backtrace = TRUE)
+  }
+
+  if (strategy == "future::sequential") {
+    n_cores <- 1L
+  }
+  if (length(strategy) != 1L) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector of length 1",
+      strategy = strategy, length_strategy = length(strategy))
+  }
+  valid_strategy <- c(
+    "future::sequential", "future::multisession", "future::multicore",
+    "future::cluster")
+  if (!strategy %in% valid_strategy) {
+    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
+  }
 
   ValidHabAbbs <- c(as.character(0:3), "4a", "4b", "10", "12a", "12b")
   if (!(hab_abb %in% ValidHabAbbs)) {
@@ -1027,11 +1099,12 @@ mod_postprocess_2_CPU <- function(
 
     IASDT.R::resp_curv_prepare_data(
       path_model = path_model, n_grid = n_grid, n_cores = RC_n_cores,
-      use_TF = use_TF, TF_environ = TF_environ, TF_use_single = TF_use_single,
-      LF_n_cores = LF_n_cores, LF_temp_cleanup = LF_temp_cleanup,
-      LF_check = LF_check, temp_dir = temp_dir, temp_cleanup = temp_cleanup,
-      verbose = TRUE, LF_commands_only = FALSE,
-      return_data = FALSE, probabilities = c(0.025, 0.5, 0.975))
+      strategy = strategy, use_TF = use_TF, TF_environ = TF_environ,
+      TF_use_single = TF_use_single, LF_n_cores = LF_n_cores,
+      LF_temp_cleanup = LF_temp_cleanup, LF_check = LF_check,
+      temp_dir = temp_dir, temp_cleanup = temp_cleanup, verbose = TRUE,
+      LF_commands_only = FALSE, return_data = FALSE,
+      probabilities = c(0.025, 0.5, 0.975))
 
     invisible(gc())
   }
@@ -1049,7 +1122,8 @@ mod_postprocess_2_CPU <- function(
       cat_timestamp = FALSE)
 
     IASDT.R::resp_curv_plot_SR(
-      model_dir = model_dir, verbose = TRUE, n_cores = RC_n_cores)
+      model_dir = model_dir, verbose = TRUE, n_cores = RC_n_cores,
+      strategy = strategy)
 
     invisible(gc())
 
@@ -1062,7 +1136,8 @@ mod_postprocess_2_CPU <- function(
       cat_timestamp = FALSE)
 
     IASDT.R::resp_curv_plot_species(
-      model_dir = model_dir, n_cores = RC_n_cores, env_file = env_file)
+      model_dir = model_dir, n_cores = RC_n_cores, strategy = strategy,
+      env_file = env_file)
 
     invisible(gc())
 
@@ -1075,7 +1150,7 @@ mod_postprocess_2_CPU <- function(
       cat_timestamp = FALSE)
 
     IASDT.R::resp_curv_plot_species_all(
-      model_dir = model_dir, n_cores = RC_n_cores)
+      model_dir = model_dir, n_cores = RC_n_cores, strategy = strategy)
 
     invisible(gc())
   }
@@ -1093,8 +1168,9 @@ mod_postprocess_2_CPU <- function(
 
     IASDT.R::predict_maps(
       path_model = path_model, hab_abb = hab_abb, env_file = env_file,
-      n_cores = n_cores, clamp_pred = clamp_pred, fix_efforts = fix_efforts,
-      fix_rivers = fix_rivers, pred_new_sites = pred_new_sites, use_TF = use_TF,
+      n_cores = n_cores, strategy = strategy, clamp_pred = clamp_pred,
+      fix_efforts = fix_efforts, fix_rivers = fix_rivers,
+      pred_new_sites = pred_new_sites, use_TF = use_TF,
       TF_environ = TF_environ, TF_use_single = TF_use_single,
       LF_n_cores = LF_n_cores, LF_check = LF_check,
       LF_temp_cleanup = LF_temp_cleanup, LF_only = FALSE,
@@ -1116,11 +1192,10 @@ mod_postprocess_2_CPU <- function(
       cat_timestamp = FALSE)
 
     IASDT.R::variance_partitioning_compute(
-      path_model = path_model,
-      n_cores = n_cores, use_TF = use_TF, TF_environ = TF_environ,
-      TF_use_single = TF_use_single, temp_cleanup = temp_cleanup,
-      chunk_size = 50L, verbose = TRUE, VP_file = "VarPar",
-      VP_commands_only = FALSE)
+      path_model = path_model, n_cores = n_cores, strategy = strategy,
+      use_TF = use_TF, TF_environ = TF_environ, TF_use_single = TF_use_single,
+      temp_cleanup = temp_cleanup, chunk_size = 50L, verbose = TRUE,
+      VP_file = "VarPar", VP_commands_only = FALSE)
   }
 
   # ****************************************************************
@@ -1136,7 +1211,7 @@ mod_postprocess_2_CPU <- function(
     IASDT.R::variance_partitioning_plot(
       path_model = path_model, env_file = env_file, VP_file = "VarPar",
       use_TF = use_TF, TF_environ = TF_environ, n_cores = n_cores,
-      width = 30, height = 15)
+      strategy = strategy, width = 30, height = 15)
   }
 
   # ****************************************************************
@@ -1150,7 +1225,8 @@ mod_postprocess_2_CPU <- function(
       cat_timestamp = FALSE)
 
     IASDT.R::plot_prediction(
-      model_dir = model_dir, env_file = env_file, n_cores = n_cores)
+      model_dir = model_dir, env_file = env_file, n_cores = n_cores,
+      strategy = strategy)
   }
 
   # ****************************************************************

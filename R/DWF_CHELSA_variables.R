@@ -11,8 +11,9 @@
 #'   variable
 #'
 #' @examples
-#' library(dplyr)
-#' data(CHELSA_variables)
-#' print(CHELSA_variables, n = Inf)
+#' ecokit::load_packages(dplyr, gt)
 #'
+#' data(CHELSA_variables)
+#' gt::gt(CHELSA_variables)
+
 "CHELSA_variables"

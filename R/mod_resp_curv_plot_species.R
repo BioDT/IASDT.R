@@ -10,7 +10,8 @@
 #' @author Ahmed El-Gabbas
 
 resp_curv_plot_species <- function(
-    model_dir = NULL, n_cores = 20, env_file = ".env", return_data = FALSE) {
+    model_dir = NULL, n_cores = 20, strategy = "future::multicore",
+    env_file = ".env", return_data = FALSE) {
 
   # # ..................................................................... ###
 
@@ -45,11 +46,37 @@ resp_curv_plot_species <- function(
 
   ecokit::check_args(
     args_all = AllArgs, args_type = "character",
-    args_to_check = c("model_dir", "env_file"))
+    args_to_check = c("model_dir", "env_file", "strategy"))
 
   ecokit::check_args(
     args_all = AllArgs, args_type = "numeric", args_to_check = "n_cores")
   rm(AllArgs, envir = environment())
+
+  if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
+    ecokit::stop_ctx(
+      "n_cores must be a single positive integer.", n_cores = n_cores,
+      include_backtrace = TRUE)
+  }
+
+  if (!is.character(strategy)) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector",
+      strategy = strategy, class_strategy = class(strategy))
+  }
+  if (strategy == "future::sequential") {
+    n_cores <- 1L
+  }
+  if (length(strategy) != 1L) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector of length 1",
+      strategy = strategy, length_strategy = length(strategy))
+  }
+  valid_strategy <- c(
+    "future::sequential", "future::multisession", "future::multicore",
+    "future::cluster")
+  if (!strategy %in% valid_strategy) {
+    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
+  }
 
   # # ..................................................................... ###
 
@@ -100,25 +127,25 @@ resp_curv_plot_species <- function(
 
   ecokit::cat_time("Prepare species-specific data in parallel")
 
-  ecokit::cat_time("Prepare working in parallel", level = 1L)
-  c1 <- parallel::makePSOCKcluster(n_cores)
-  on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
+  if (n_cores == 1) {
+    future::plan("future::sequential", gc = TRUE)
+  } else {
+    ecokit::set_parallel(
+      n_cores = n_cores, level = 1L, future_max_size = 800L,
+      strategy = strategy)
+    withr::defer(future::plan("future::sequential", gc = TRUE))
+  }
 
-  ecokit::cat_time("Exporting objects to cores", level = 1L)
-  parallel::clusterExport(
-    cl = c1, varlist = "Path_RC_DT", envir = environment())
+  ecokit::cat_time("Processing in parallel", level = 1L)
 
-  ecokit::cat_time("Load packages at each core", level = 1L)
-  invisible(parallel::clusterEvalQ(
-    cl = c1, expr = sapply("IASDT.R", library, character.only = TRUE)))
-
-  ecokit::cat_time("Loading species richness data", level = 1L)
   Sp_DT_All <- fs::path(Path_RC_DT, "ResCurvDT.RData") %>%
     ecokit::load_as() %>%
     dplyr::select(tidyselect::all_of(c("Coords", "RC_Path_Prob"))) %>%
     dplyr::mutate(
-      Data = parallel::parLapplyLB(
-        cl = c1, X = RC_Path_Prob, fun = ecokit::load_as)) %>%
+      Data = furrr::future_map(
+        .x = RC_Path_Prob, .f = ecokit::load_as,
+        .options = furrr::furrr_options(
+          globals = "Path_RC_DT", packages = "ecokit"))) %>%
     tidyr::unnest(Data) %>%
     dplyr::select(-RC_Path_Prob) %>%
     tidyr::nest(
@@ -131,7 +158,11 @@ resp_curv_plot_species <- function(
       path_JPEG_free = fs::path(Path_RC_Sp, paste0(Prefix, "_Free.jpeg")),
       Path_Sp_DT = fs::path(Path_RC_Sp_DT, paste0(Prefix, ".qs2")))
 
-  snow::stopCluster(c1)
+  # stopping the cluster
+  if (n_cores > 1) {
+    ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
+    future::plan("future::sequential", gc = TRUE)
+  }
 
   ecokit::cat_time("Export species-specific data", level = 1L)
   purrr::walk(
@@ -150,30 +181,21 @@ resp_curv_plot_species <- function(
 
   ecokit::cat_time("Plotting species-specific data")
 
-  ecokit::cat_time("Prepare working in parallel", level = 1L)
-  c1 <- parallel::makePSOCKcluster(n_cores)
-  on.exit(try(parallel::stopCluster(c1), silent = TRUE), add = TRUE)
-
-  ecokit::cat_time("Exporting objects to cores", level = 1L)
-  parallel::clusterExport(
-    cl = c1, varlist = c("SpeciesNames", "Sp_DT_All"), envir = environment())
-
-  ecokit::cat_time("Load packages at each core", level = 1L)
-  invisible(parallel::clusterEvalQ(
-    cl = c1,
-    expr = {
-      sapply(
-        c(
-          "dplyr", "purrr", "tidyr", "gtools", "ggtext", "patchwork",
-          "ggplot2", "tibble", "IASDT.R", "ragg"),
-        library, character.only = TRUE)
-    }))
+  if (n_cores == 1) {
+    future::plan("future::sequential", gc = TRUE)
+  } else {
+    ecokit::set_parallel(
+      n_cores = n_cores, level = 1L, future_max_size = 800L,
+      strategy = strategy)
+    withr::defer(future::plan("future::sequential", gc = TRUE))
+  }
 
   ecokit::cat_time("Plotting in parallel", level = 1L)
-  Plots <- parallel::clusterApplyLB(
-    cl = c1,
-    x = Sp_DT_All,
-    fun = function(RC_File) {
+  Plots <- future.apply::future_lapply(
+    X = Sp_DT_All,
+    FUN = function(RC_File) {
+
+
 
       DT <- ecokit::load_as(RC_File)
 
@@ -438,10 +460,21 @@ resp_curv_plot_species <- function(
         plot_height = plot_height, plot_width = plot_width)
 
       return(OutDF)
-    }) %>%
+
+    },
+    future.scheduling = Inf, future.seed = TRUE,
+    future.packages = c(
+      "dplyr", "purrr", "tidyr", "gtools", "ggtext", "patchwork",
+      "ggplot2", "tibble", "IASDT.R", "ragg", "stringr", "scales"),
+    future.globals = c("SpeciesNames", "Sp_DT_All")) %>%
     dplyr::bind_rows()
 
-  snow::stopCluster(c1)
+
+  # stopping the cluster
+  if (n_cores > 1) {
+    ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
+    future::plan("future::sequential", gc = TRUE)
+  }
   invisible(gc())
 
   # # ..................................................................... ###

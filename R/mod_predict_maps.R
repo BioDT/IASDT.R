@@ -20,6 +20,11 @@
 #'   data sources. Defaults to `.env`.
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 8.
+#' @param strategy Character. The parallel processing strategy to use. Valid
+#'   options are "future::sequential", "future::multisession",
+#'   "future::multicore", and "future::cluster". Defaults to
+#'   `"future::multicore"` (`"future::multisession"` on Windows). See
+#'   [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param clamp_pred Logical indicating whether to clamp the sampling efforts at
 #'   a single value. If `TRUE` (default), the `fix_efforts` argument must be
 #'   provided.
@@ -80,8 +85,8 @@
 
 predict_maps <- function(
     path_model = NULL, hab_abb = NULL, env_file = ".env", n_cores = 8L,
-    clamp_pred = TRUE, fix_efforts = "q90", fix_rivers = "q90",
-    pred_new_sites = TRUE, use_TF = TRUE, TF_environ = NULL,
+    strategy = "future::multicore", clamp_pred = TRUE, fix_efforts = "q90",
+    fix_rivers = "q90", pred_new_sites = TRUE, use_TF = TRUE, TF_environ = NULL,
     TF_use_single = FALSE, LF_n_cores = n_cores, LF_check = FALSE,
     LF_temp_cleanup = TRUE, LF_only = FALSE, LF_commands_only = FALSE,
     temp_dir = "TEMP_Pred", temp_cleanup = TRUE, tar_predictions = TRUE,
@@ -89,6 +94,37 @@ predict_maps <- function(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
       "MRI-ESM2-0", "UKESM1-0-LL"),
     CC_scenario = c("ssp126", "ssp370", "ssp585")) {
+
+  if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
+    ecokit::stop_ctx(
+      "n_cores must be a single positive integer.", n_cores = n_cores,
+      include_backtrace = TRUE)
+  }
+  if (!is.numeric(LF_n_cores) || length(LF_n_cores) != 1 || LF_n_cores <= 0) {
+    ecokit::stop_ctx(
+      "LF_n_cores must be a single positive integer.", n_cores = LF_n_cores,
+      include_backtrace = TRUE)
+  }
+
+  if (!is.character(strategy)) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector",
+      strategy = strategy, class_strategy = class(strategy))
+  }
+  if (strategy == "future::sequential") {
+    n_cores <- LF_n_cores <- 1L
+  }
+  if (length(strategy) != 1L) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector of length 1",
+      strategy = strategy, length_strategy = length(strategy))
+  }
+  valid_strategy <- c(
+    "future::sequential", "future::multisession", "future::multicore",
+    "future::cluster")
+  if (!strategy %in% valid_strategy) {
+    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
+  }
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -761,12 +797,13 @@ predict_maps <- function(
     # Predicting latent factor only
     Preds_LF <- IASDT.R::predict_hmsc(
       path_model = path_model, gradient = Gradient, expected = TRUE,
-      n_cores = n_cores, model_name = paste0("LF_", hab_abb, "_Test"),
-      temp_dir = temp_dir, temp_cleanup = temp_cleanup, use_TF = use_TF,
-      TF_environ = TF_environ, LF_out_file = Path_Test_LF,
-      TF_use_single = TF_use_single, LF_only = TRUE, LF_n_cores = LF_n_cores,
-      LF_check = LF_check, LF_temp_cleanup = LF_temp_cleanup,
-      LF_commands_only = LF_commands_only, evaluate = FALSE, verbose = TRUE)
+      n_cores = n_cores, strategy = strategy,
+      model_name = paste0("LF_", hab_abb, "_Test"), temp_dir = temp_dir,
+      temp_cleanup = temp_cleanup, use_TF = use_TF, TF_environ = TF_environ,
+      LF_out_file = Path_Test_LF, TF_use_single = TF_use_single,
+      LF_only = TRUE, LF_n_cores = LF_n_cores, LF_check = LF_check,
+      LF_temp_cleanup = LF_temp_cleanup, LF_commands_only = LF_commands_only,
+      evaluate = FALSE, verbose = TRUE)
 
     rm(Gradient, Preds_LF, envir = environment())
 
@@ -951,8 +988,9 @@ predict_maps <- function(
 
           Preds_ModFitSites <- IASDT.R::predict_hmsc(
             path_model = path_model, X = Train_X, gradient = NULL,
-            expected = TRUE, n_cores = n_cores, model_name = Model_Name_Train,
-            temp_dir = temp_dir, temp_cleanup = temp_cleanup, use_TF = use_TF,
+            expected = TRUE, n_cores = n_cores, strategy = strategy,
+            model_name = Model_Name_Train, temp_dir = temp_dir,
+            temp_cleanup = temp_cleanup, use_TF = use_TF,
             TF_environ = TF_environ, TF_use_single = TF_use_single,
             LF_return = TRUE, LF_n_cores = LF_n_cores, LF_check = LF_check,
             LF_temp_cleanup = LF_temp_cleanup, LF_commands_only = FALSE,
@@ -982,8 +1020,9 @@ predict_maps <- function(
 
             Preds_NewSites <- IASDT.R::predict_hmsc(
               path_model = path_model, gradient = Gradient, expected = TRUE,
-              n_cores = n_cores, model_name = Model_Name_Test,
-              temp_dir = temp_dir, temp_cleanup = temp_cleanup, use_TF = use_TF,
+              n_cores = n_cores, strategy = strategy,
+              model_name = Model_Name_Test, temp_dir = temp_dir,
+              temp_cleanup = temp_cleanup, use_TF = use_TF,
               TF_environ = TF_environ, TF_use_single = TF_use_single,
               LF_return = TRUE, LF_inputFile = Path_Test_LF,
               LF_n_cores = LF_n_cores, LF_check = LF_check,
@@ -1198,7 +1237,7 @@ predict_maps <- function(
   } else {
     ecokit::set_parallel(
       n_cores = min(n_cores, nrow(Prediction_Summary)), level = 1L,
-      future_max_size = 800L, strategy = "future::multicore")
+      future_max_size = 800L, strategy = strategy)
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 

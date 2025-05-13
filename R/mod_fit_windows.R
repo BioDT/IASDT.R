@@ -13,6 +13,11 @@
 #' @param python_VE Character. Path to a valid Python virtual environment.
 #'   Defaults to `NULL`. This argument can not be empty.
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
+#' @param strategy Character. The parallel processing strategy to use. Valid
+#'   options are "future::sequential", "future::multisession",
+#'   "future::multicore", and "future::cluster". Defaults to
+#'   `"future::multicore"` (`"future::multisession"` on Windows). See
+#'   [future::plan()] and [ecokit::set_parallel()] for details.
 #' @name mod_fit_windows
 #' @author Ahmed El-Gabbas
 #' @return The function does not return anything but prints messages to the
@@ -20,7 +25,8 @@
 #' @export
 
 mod_fit_windows <- function(
-    path_model = NULL, python_VE = NULL, n_cores = NULL) {
+    path_model = NULL, python_VE = NULL, n_cores = NULL,
+    strategy = "future::multicore") {
 
   # exit the function if not running on Windows
   if (ecokit::os() != "Windows") {
@@ -76,10 +82,31 @@ mod_fit_windows <- function(
 
   ecokit::check_args(
     args_all = AllArgs, args_type = "character",
-    args_to_check = c("Path_Hmsc_WS", "path_model"))
+    args_to_check = c("Path_Hmsc_WS", "path_model", "strategy"))
 
   ecokit::check_args(
     args_all = AllArgs, args_to_check = "n_cores", args_type = "numeric")
+
+  if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
+    ecokit::stop_ctx(
+      "n_cores must be a single positive integer.", n_cores = n_cores,
+      include_backtrace = TRUE)
+  }
+
+  if (strategy == "future::sequential") {
+    n_cores <- 1L
+  }
+  if (length(strategy) != 1L) {
+    ecokit::stop_ctx(
+      "`strategy` must be a character vector of length 1",
+      strategy = strategy, length_strategy = length(strategy))
+  }
+  valid_strategy <- c(
+    "future::sequential", "future::multisession", "future::multicore",
+    "future::cluster")
+  if (!strategy %in% valid_strategy) {
+    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
+  }
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -102,7 +129,7 @@ mod_fit_windows <- function(
     } else {
       ecokit::set_parallel(
         n_cores = n_cores, level = 1L, future_max_size = 800L,
-        strategy = "future::multicore")
+        strategy = strategy)
       withr::defer(future::plan("future::sequential", gc = TRUE))
     }
 

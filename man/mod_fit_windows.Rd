@@ -4,7 +4,12 @@
 \alias{mod_fit_windows}
 \title{Fit Hmsc-HPC models on UFZ Windows Server}
 \usage{
-mod_fit_windows(path_model = NULL, python_VE = NULL, n_cores = NULL)
+mod_fit_windows(
+  path_model = NULL,
+  python_VE = NULL,
+  n_cores = NULL,
+  strategy = "future::multicore"
+)
 }
 \arguments{
 \item{path_model}{Character. Path to the model files. This argument can not
@@ -14,6 +19,12 @@ be empty.}
 Defaults to \code{NULL}. This argument can not be empty.}
 
 \item{n_cores}{Integer. Number of CPU cores to use for parallel processing.}
+
+\item{strategy}{Character. The parallel processing strategy to use. Valid
+options are "future::sequential", "future::multisession",
+"future::multicore", and "future::cluster". Defaults to
+\code{"future::multicore"} (\code{"future::multisession"} on Windows). See
+\code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
 }
 \value{
 The function does not return anything but prints messages to the

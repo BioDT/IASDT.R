@@ -192,39 +192,40 @@ GBIF_process <- function(
     future::plan("future::sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
-      n_cores = n_cores, level = 1L, future_max_size = 800L)
+      n_cores = n_cores, level = 1L, future_max_size = 800L,
+      strategy = "future::multicore")
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 
   ecokit::cat_time(
     "Processing chunks in parallel, save each as RData files", level = 1L)
 
-  # GBIF_Data <- future.apply::future_lapply(
-  #   X = ChunkList,
-  #   FUN = function(x) {
-  #     IASDT.R::GBIF_read_chunk(
-  #       chunk_file = x, env_file = env_file, save_RData = TRUE,
-  #       return_data = FALSE, overwrite = overwrite)
-  #   },
-  #   future.scheduling = Inf, future.seed = TRUE,
-  #   future.packages = c(
-  #     "IASDT.R", "purrr", "tibble", "terra", "tidyr", "dplyr", "readr",
-  #     "stringr", "bit64", "tidyselect", "fs", "sf", "ecokit"),
-  #   future.globals = c("env_file", "overwrite"))
-
-  GBIF_Data <- furrr::future_map_chr(
-    .x = ChunkList,
-    .f = ~{
+  GBIF_Data <- future.apply::future_lapply(
+    X = ChunkList,
+    FUN = function(x) {
       IASDT.R::GBIF_read_chunk(
-        chunk_file = .x, env_file = env_file, save_RData = TRUE,
+        chunk_file = x, env_file = env_file, save_RData = TRUE,
         return_data = FALSE, overwrite = overwrite)
     },
-    .options = furrr::furrr_options(
-      seed = TRUE, scheduling = Inf,
-      globals = c("env_file", "overwrite"),
-      packages = c(
-        "IASDT.R", "purrr", "tibble", "terra", "tidyr", "dplyr", "readr",
-        "stringr", "bit64", "tidyselect", "fs", "sf", "ecokit")))
+    future.scheduling = Inf, future.seed = TRUE,
+    future.packages = c(
+      "IASDT.R", "purrr", "tibble", "terra", "tidyr", "dplyr", "readr",
+      "stringr", "bit64", "tidyselect", "fs", "sf", "ecokit"),
+    future.globals = c("env_file", "overwrite"))
+
+  # GBIF_Data <- furrr::future_map(
+  #   .x = ChunkList,
+  #   .f = ~{
+  #     IASDT.R::GBIF_read_chunk(
+  #       chunk_file = .x, env_file = env_file, save_RData = TRUE,
+  #       return_data = FALSE, overwrite = overwrite)
+  #   },
+  #   .options = furrr::furrr_options(
+  #     seed = TRUE, scheduling = Inf,
+  #     globals = c("env_file", "overwrite"),
+  #     packages = c(
+  #       "IASDT.R", "purrr", "tibble", "terra", "tidyr", "dplyr", "readr",
+  #       "stringr", "bit64", "tidyselect", "fs", "sf", "ecokit")))
 
   ecokit::cat_diff(
     init_time = .StartTimeChunks, prefix = "Finished in ", level = 2L)

@@ -328,18 +328,24 @@ EASIN_process <- function(
         break
       }
 
+      if (strategy == "future::multicore") {
+        pkg_to_export <- NULL
+      } else {
+        pkg_to_export <- c(
+          "dplyr", "jsonlite", "purrr", "IASDT.R", "withr", "fs",
+          "stringr", "RCurl", "tibble")
+      }
+
       Down <- try(
         future.apply::future_lapply(
           X = NotProcessed, FUN = IASDT.R::EASIN_download, env_file = env_file,
           delete_chunks = delete_chunks, n_search = n_search,
           sleep_time = sleep_time,
           future.scheduling = Inf, future.seed = TRUE,
+          future.packages = pkg_to_export,
           future.globals = c(
             "Path_EASIN_Interim", "n_search", "delete_chunks", "sleep_time",
-            "env_file"),
-          future.packages = c(
-            "dplyr", "jsonlite", "purrr", "IASDT.R", "withr", "fs",
-            "stringr", "RCurl", "tibble")),
+            "env_file")),
         silent = TRUE)
 
       if (inherits(Down, "try-error")) {

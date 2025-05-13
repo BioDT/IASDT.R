@@ -125,7 +125,7 @@ bioreg_process <- function(env_file = ".env") {
   Zip_file <- fs::path(Path_Raw, zip_file_name)
   DownCommand <- stringr::str_glue(
     'curl -J --create-dirs --output-dir {Path_Raw} -o\\
-    "{zip_file_name}" -L {BioReg_URL2} --silent --max-cat_time 300')
+    "{zip_file_name}" -L {BioReg_URL2} --silent --max-time 300')
 
   attempt <- 1L
   repeat {

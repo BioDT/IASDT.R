@@ -236,6 +236,12 @@ CHELSA_prepare <- function(
 
       ecokit::cat_time("Exclude available and valid Tiff files", level = 1L)
 
+      if (strategy == "future::multicore") {
+        pkg_to_export <- NULL
+      } else {
+        pkg_to_export <- c("fs", "ecokit")
+      }
+
       Data2Down <- CHELSA_Metadata %>%
         dplyr::mutate(
           Exclude = furrr::future_map_lgl(
@@ -257,9 +263,7 @@ CHELSA_prepare <- function(
               return(Out)
             },
             .options = furrr::furrr_options(
-              seed = TRUE, packages = c("IASDT.R", "fs")),
-            .progress = FALSE)
-        ) %>%
+              seed = TRUE, packages = pkg_to_export), .progress = FALSE)) %>%
         dplyr::filter(Exclude)
     }
 
@@ -283,6 +287,8 @@ CHELSA_prepare <- function(
               PathOut, " ", URL, " --silent") %>%
               system()
 
+            Sys.sleep(5)
+
             if (file.exists(PathOut)) {
               if (ecokit::check_tiff(PathOut, warning = FALSE)) {
                 break
@@ -299,7 +305,7 @@ CHELSA_prepare <- function(
         },
         .options = furrr::furrr_options(
           seed = TRUE, globals = c("Data2Down", "sleep"),
-          packages = c("IASDT.R", "fs")))
+          packages = pkg_to_export))
     }
 
     if (n_cores > 1) {

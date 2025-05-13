@@ -42,7 +42,6 @@ efforts_split <- function(
       include_backtrace = TRUE)
   }
 
-
   # Checking required bash tools
   Commands <- c("unzip", "cut", "sed", "split")
   CommandsAvail <- purrr::map_lgl(Commands, ecokit::check_system_command)

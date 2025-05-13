@@ -642,6 +642,14 @@ predict_latent_factor <- function(
 
         ecokit::cat_time("Making predictions in parallel", level = 2L)
 
+        if (strategy == "future::multicore") {
+          pkg_to_export <- NULL
+        } else {
+          pkg_to_export <- c(
+            "Rcpp", "RcppArmadillo", "dplyr", "tidyr", "tibble", "arrow",
+            "Matrix", "Hmsc", "qs2", "fs", "purrr", "IASDT.R")
+        }
+
         etaPreds <- future.apply::future_lapply(
           X = seq_len(nrow(LF_Data)),
           FUN = function(x) {
@@ -657,16 +665,13 @@ predict_latent_factor <- function(
               return(result)
             }
           },
-          future.seed = TRUE,
+          future.seed = TRUE, future.packages = pkg_to_export,
           future.globals = c(
             "LF_Data", "Path_D11", "Path_D12", "Path_s1", "Path_s2", "indNew",
             "units_pred", "indOld", "units_model", "TF_environ", "use_TF",
             "TF_use_single", "etaPreds_F", "LF_check", "run_crossprod_solve",
             "LF_commands_only", "solve_max_attempts", "solve_chunk_size",
-            "Temp_Dir_LF"),
-          future.packages = c(
-            "Rcpp", "RcppArmadillo", "dplyr", "tidyr", "tibble", "arrow",
-            "Matrix", "Hmsc", "qs2", "fs", "purrr", "IASDT.R"))
+            "Temp_Dir_LF"))
 
         # Stop the cluster
         ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
@@ -714,6 +719,13 @@ predict_latent_factor <- function(
 
     ecokit::cat_time("Process results for MCMC samples in parallel", level = 2L)
 
+    if (strategy == "future::multicore") {
+      pkg_to_export <- NULL
+    } else {
+      pkg_to_export <- c(
+        "dplyr", "magrittr", "tibble", "ecokit", "purrr", "fs", "qs2")
+    }
+
     postEtaPred <- future.apply::future_lapply(
       X = seq_len(nrow(postEtaPred_Samp)),
       FUN = function(x) {
@@ -736,9 +748,8 @@ predict_latent_factor <- function(
         try(fs::file_delete(Path_LF), silent = TRUE)
         return(SampleDT0)
       },
-      future.seed = TRUE,
-      future.globals = c("postEtaPred_Samp", "LF_return"),
-      future.packages = c("dplyr", "magrittr", "tibble", "IASDT.R", "purrr"))
+      future.seed = TRUE, future.packages = pkg_to_export,
+      future.globals = c("postEtaPred_Samp", "LF_return"))
 
     # Stop the cluster
     ecokit::set_parallel(stop_cluster = TRUE, level = 2L)

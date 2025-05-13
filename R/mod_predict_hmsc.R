@@ -539,6 +539,15 @@ predict_hmsc <- function(
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 
+  if (strategy == "future::multicore") {
+    pkg_to_export <- NULL
+  } else {
+    pkg_to_export <- c(
+      "dplyr", "Rcpp", "RcppArmadillo", "Matrix", "float", "qs2", "Hmsc",
+      "purrr", "tibble", "Hmsc", "Rfast", "caret", "pROC", "ecospat", "sf",
+      "ecokit")
+  }
+
   ecokit::cat_time("Making predictions in parallel", level = 1L)
   pred <- future.apply::future_lapply(
     X = seq_len(length(Chunks)),
@@ -610,13 +619,9 @@ predict_hmsc <- function(
       "Model", "X", "XRRR", "Yc", "Loff", "rL", "rLPar", "PiNew",
       "dfPiNew", "nyNew", "expected", "mcmcStep", "seeds", "chunk_size",
       "Chunks", "temp_dir", "model_name", "get1prediction"),
-    future.packages = c(
-      "dplyr", "Rcpp", "RcppArmadillo", "Matrix", "float", "qs2", "Hmsc",
-      "purrr", "tibble", "Hmsc", "Rfast", "caret", "pROC", "ecospat", "sf"))
-
+    future.packages = pkg_to_export)
 
   pred <- tibble::tibble(dplyr::bind_rows(pred))
-
 
   # # ..................................................................... ###
 
@@ -625,6 +630,15 @@ predict_hmsc <- function(
   Eval_DT <- dplyr::select(pred, -Chunk) %>%
     dplyr::group_nest(Sp, IAS_ID) %>%
     dplyr::mutate(data = purrr::map(data, unlist))
+
+  if (strategy == "future::multicore") {
+    pkg_to_export <- NULL
+  } else {
+    pkg_to_export <- c(
+      "dplyr", "Rcpp", "RcppArmadillo", "Matrix", "float", "qs2", "Hmsc",
+      "purrr", "tibble", "Hmsc", "Rfast", "caret", "pROC", "ecospat", "sf",
+      "ecokit")
+  }
 
   Eval_DT <- future.apply::future_lapply(
     X = seq_len(nrow(Eval_DT)),
@@ -711,13 +725,10 @@ predict_hmsc <- function(
           RMSE = RMSE, AUC = AUC, Boyce = Boyce, TjurR2 = TjurR2))
 
     },
-    future.seed = TRUE,
+    future.seed = TRUE, future.packages = pkg_to_export,
     future.globals = c(
       "Eval_DT", "evaluate", "pred_directory", "model_name",
-      "pred_PA", "pred_XY"),
-    future.packages = c(
-      "dplyr", "Rcpp", "RcppArmadillo", "Matrix", "float", "qs2", "Hmsc",
-      "purrr", "tibble", "Hmsc", "Rfast", "caret", "pROC", "ecospat", "sf"))
+      "pred_PA", "pred_XY"))
 
   if (n_cores > 1) {
     ecokit::set_parallel(stop_cluster = TRUE, level = 1L)

@@ -529,11 +529,16 @@ resp_curv_prepare_data <- function(
 
     ecokit::cat_time("Prepare response curve data in parallel")
 
+    if (strategy == "future::multicore") {
+      pkg_to_export <- NULL
+    } else {
+      pkg_to_export <- c("dplyr", "purrr", "tidyr", "abind", "Hmsc", "parallel")
+    }
+
     ResCurvDT <- future.apply::future_lapply(
       X = seq_len(nrow(ResCurvDT)),
       FUN = PrepRCData, File_LF = File_LF, future.seed = TRUE,
-      future.packages = c(
-        "dplyr", "purrr", "tidyr", "abind", "Hmsc", "parallel"),
+      future.packages = pkg_to_export,
       future.globals = c(
         "ResCurvDT", "path_model", "PrepRCData", "n_grid", "probabilities",
         "File_LF", "use_TF", "TF_environ", "temp_dir", "LF_check",

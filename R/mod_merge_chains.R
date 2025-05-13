@@ -243,6 +243,12 @@ mod_merge_chains <- function(
 
   # Merge posteriors and save as Hmsc model / coda object
 
+  if (strategy == "future::multicore") {
+    pkg_to_export <- NULL
+  } else {
+    pkg_to_export <- c("Hmsc", "coda", "purrr", "ecokit", "dplyr", "fs")
+  }
+
   Model_Info3 <- future.apply::future_lapply(
     X = seq_len(nrow(Model_Info2)),
     FUN = function(x) {
@@ -366,10 +372,10 @@ mod_merge_chains <- function(
           Post_Aligned2 = Post_Aligned2))
     },
     future.scheduling = Inf, future.seed = TRUE,
+    future.packages = pkg_to_export,
     future.globals = c(
       "out_extension", "Model_Info2", "Path_Fitted_Models",
-      "from_JSON", "Path_Coda"),
-    future.packages = c("Hmsc", "coda", "purrr", "IASDT.R", "dplyr"))
+      "from_JSON", "Path_Coda"))
 
   if (n_cores > 1) {
     ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
@@ -684,6 +690,13 @@ mod_merge_chains_CV <- function(
   # Merge posteriors and save as Hmsc object
   ecokit::cat_time("Merge posteriors and save as Hmsc object", level = 1L)
 
+  if (strategy == "future::multicore") {
+    pkg_to_export <- NULL
+  } else {
+    pkg_to_export <- c(
+      "Hmsc", "purrr", "ecokit", "IASDT.R", "dplyr", "stringr", "fs")
+  }
+
   CV_DT2 <- future.apply::future_lapply(
     X = seq_len(nrow(CV_DT)),
     FUN = function(x) {
@@ -754,8 +767,8 @@ mod_merge_chains_CV <- function(
       return(Post_Aligned)
     },
     future.scheduling = Inf, future.seed = TRUE,
-    future.globals = c("out_extension", "CV_DT", "from_JSON"),
-    future.packages = c("Hmsc", "purrr", "IASDT.R", "dplyr", "stringr", "fs"))
+    future.packages = pkg_to_export,
+    future.globals = c("out_extension", "CV_DT", "from_JSON"))
 
   invisible(gc())
 
@@ -765,15 +778,21 @@ mod_merge_chains_CV <- function(
   ecokit::cat_time(
     "Check saved Hmsc object and extract info on model fitting", level = 1L)
 
+  # Check if both merged fitted model file exist
+  if (strategy == "future::multicore") {
+    pkg_to_export <- NULL
+  } else {
+    pkg_to_export <- "ecokit"
+  }
+
   CV_DT <- CV_DT %>%
     dplyr::mutate(
 
       Post_Aligned = unlist(CV_DT2),
 
-      # Check if both merged fitted model file exist
       Model_Finished = furrr::future_map_lgl(
         .x = Path_ModFitted, .f = ecokit::check_data, warning = FALSE,
-        .options = furrr::furrr_options(seed = TRUE, packages = "IASDT.R")),
+        .options = furrr::furrr_options(seed = TRUE, packages = pkg_to_export)),
 
       # Extract fitting time from the progress file
       FittingTime = purrr::map(

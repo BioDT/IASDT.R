@@ -116,6 +116,12 @@ efforts_request <- function(
   SelectedCols <- c(
     "class", "classKey", "order", "orderKey", "numDescendants")
 
+  if (strategy == "future::multicore") {
+    pkg_to_export <- NULL
+  } else {
+    pkg_to_export <- c("dplyr", "ecokit", "rgbif", "fs")
+  }
+
   Efforts_AllRequests <- rgbif::name_backbone("Tracheophyta") %>%
     dplyr::pull("phylumKey") %>%
     rgbif::name_lookup(rank = "ORDER", higherTaxonKey = .) %>%
@@ -171,10 +177,8 @@ efforts_request <- function(
           return(Down)
         },
         .options = furrr::furrr_options(
-          seed = TRUE, scheduling = Inf,
-          globals = c("Path_Efforts", "boundaries", "start_year"),
-          packages = c("dplyr", "IASDT.R", "rgbif"))
-      )
+          seed = TRUE, scheduling = Inf, packages = pkg_to_export,
+          globals = c("Path_Efforts", "boundaries", "start_year")))
     ) %>%
     dplyr::rowwise() %>%
     # Add columns for metadata

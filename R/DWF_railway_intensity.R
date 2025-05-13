@@ -293,6 +293,13 @@ railway_intensity <- function(
   ## Processing railway data ----
   ecokit::cat_time("Processing railway data", level = 1L)
 
+  if (strategy == "future::multicore") {
+    pkg_to_export <- NULL
+  } else {
+    pkg_to_export <- c(
+      "dplyr", "fs", "sf", "IASDT.R", "stringr", "withr", "ecokit")
+  }
+
   Railways_3035 <- future.apply::future_lapply(
     X = seq_len(nrow(Railways_Links)),
     FUN = function(ID) {
@@ -385,13 +392,13 @@ railway_intensity <- function(
           URL = URL, Country = Country, Area = Prefix, Path = Path_Temp))
     },
     future.scheduling = Inf, future.seed = TRUE,
-    future.packages = c("dplyr", "fs", "sf", "IASDT.R", "stringr"),
-    future.globals = c("Railways_Links", "RefGridSF")
-  ) %>%
+    future.packages = pkg_to_export,
+    future.globals = c("Railways_Links", "RefGridSF")) %>%
     dplyr::bind_rows() %>%
     dplyr::mutate(DT = purrr::map(Path, ecokit::load_as)) %>%
     tidyr::unnest(DT) %>%
     sf::st_as_sf()
+
 
   if (n_cores > 1) {
     ecokit::set_parallel(stop_cluster = TRUE, level = 1L)

@@ -104,7 +104,6 @@ efforts_summarize <- function(
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 
-
   # # ..................................................................... ###
 
   # Processing data from zipped archives -----
@@ -127,6 +126,16 @@ efforts_summarize <- function(
 
   Efforts_AllRequests <- ecokit::load_as(Path_Efforts_Request)
 
+
+
+  if (strategy == "future::multicore") {
+    pkg_to_export <- NULL
+  } else {
+    pkg_to_export <- c(
+      "ecokit", "stringr", "fs", "sf", "readr", "dplyr",
+      "purrr", "tibble", "R.utils", "IASDT.R")
+  }
+
   DT_Paths <- future.apply::future_lapply(
     X = seq_len(nrow(Efforts_AllRequests)),
     FUN = function(ID) {
@@ -138,8 +147,7 @@ efforts_summarize <- function(
       ClassOrder <- paste0(class, "_", order)
 
       # Output path to save the data
-      Path_DT <- fs::path(
-        Path_Efforts_Cleaned, paste0(ClassOrder, ".RData"))
+      Path_DT <- fs::path(Path_Efforts_Cleaned, paste0(ClassOrder, ".RData"))
 
       # Should Path_DT be returned as the path of the RData file containing the
       # data or NA if there are no records in the current order or no records
@@ -255,9 +263,7 @@ efforts_summarize <- function(
           class = class, order = order))
     },
     future.scheduling = Inf, future.seed = TRUE,
-    future.packages = c(
-      "IASDT.R", "stringr", "fs", "sf", "readr", "dplyr",
-      "purrr", "tibble", "R.utils"),
+    future.packages = pkg_to_export,
     future.globals = c(
       "Path_Interim", "Efforts_AllRequests", "Path_Efforts_Cleaned",
       "Grid_SF", "chunk_size", "delete_chunks")) %>%
@@ -281,6 +287,12 @@ efforts_summarize <- function(
 
   # Prepare summary maps per order ----
   ecokit::cat_time("Prepare summary maps per order", level = 1L)
+
+  if (strategy == "future::multicore") {
+    pkg_to_export <- NULL
+  } else {
+    pkg_to_export <- c("terra", "ecokit", "sf", "readr", "dplyr")
+  }
 
   SummaryMaps <- future.apply::future_lapply(
     X = seq_len(nrow(Efforts_Summary)),
@@ -370,10 +382,10 @@ efforts_summarize <- function(
           NSp_Native_R = list(NSp_Native_R)))
     },
     future.scheduling = Inf, future.seed = TRUE,
-    future.packages = c(
-      "terra", "IASDT.R", "stringr", "fs", "sf", "readr", "dplyr"),
+    future.packages = pkg_to_export,
     future.globals = c("Path_Grid_R", "Grid_SF", "IAS_List")) %>%
     dplyr::bind_rows()
+
 
   # join data with requests summary
   Efforts_Summary <- dplyr::left_join(

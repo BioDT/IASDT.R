@@ -273,14 +273,20 @@ convergence_plot_all <- function(
       withr::defer(future::plan("future::sequential", gc = TRUE))
     }
 
+    if (strategy == "future::multicore") {
+      pkg_to_export <- NULL
+    } else {
+      pkg_to_export <- c(
+        "dplyr", "sf", "Hmsc", "coda", "magrittr", "ggplot2",
+        "magrittr", "IASDT.R")
+    }
+
     Convergence_DT <- Model_Info %>%
       dplyr::mutate(
         Plots = future.apply::future_lapply(
           X = seq_len(nrow(Model_Info)), FUN = PrepConvergence,
           future.scheduling = Inf, future.seed = TRUE,
-          future.packages = c(
-            "dplyr", "sf", "Hmsc", "coda", "magrittr", "ggplot2",
-            "magrittr", "IASDT.R"),
+          future.packages = pkg_to_export,
           future.globals = c(
             "Model_Info", "Path_ConvDT", "n_omega", "PrepConvergence"))) %>%
       dplyr::select(tidyselect::all_of(c("M_Name_Fit", "Plots"))) %>%

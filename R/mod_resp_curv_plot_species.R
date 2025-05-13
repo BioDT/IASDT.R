@@ -138,6 +138,12 @@ resp_curv_plot_species <- function(
 
   ecokit::cat_time("Processing in parallel", level = 1L)
 
+  if (strategy == "future::multicore") {
+    pkg_to_export <- NULL
+  } else {
+    pkg_to_export <- "ecokit"
+  }
+
   Sp_DT_All <- fs::path(Path_RC_DT, "ResCurvDT.RData") %>%
     ecokit::load_as() %>%
     dplyr::select(tidyselect::all_of(c("Coords", "RC_Path_Prob"))) %>%
@@ -145,7 +151,7 @@ resp_curv_plot_species <- function(
       Data = furrr::future_map(
         .x = RC_Path_Prob, .f = ecokit::load_as,
         .options = furrr::furrr_options(
-          globals = "Path_RC_DT", packages = "ecokit"))) %>%
+          globals = "Path_RC_DT", packages = pkg_to_export))) %>%
     tidyr::unnest(Data) %>%
     dplyr::select(-RC_Path_Prob) %>%
     tidyr::nest(
@@ -191,11 +197,18 @@ resp_curv_plot_species <- function(
   }
 
   ecokit::cat_time("Plotting in parallel", level = 1L)
+
+  if (strategy == "future::multicore") {
+    pkg_to_export <- NULL
+  } else {
+    pkg_to_export <- c(
+      "dplyr", "purrr", "tidyr", "gtools", "ggtext", "patchwork",
+      "ggplot2", "tibble", "ecokit", "ragg", "stringr", "scales")
+  }
+
   Plots <- future.apply::future_lapply(
     X = Sp_DT_All,
     FUN = function(RC_File) {
-
-
 
       DT <- ecokit::load_as(RC_File)
 
@@ -463,12 +476,9 @@ resp_curv_plot_species <- function(
 
     },
     future.scheduling = Inf, future.seed = TRUE,
-    future.packages = c(
-      "dplyr", "purrr", "tidyr", "gtools", "ggtext", "patchwork",
-      "ggplot2", "tibble", "IASDT.R", "ragg", "stringr", "scales"),
+    future.packages = pkg_to_export,
     future.globals = c("SpeciesNames", "Sp_DT_All")) %>%
     dplyr::bind_rows()
-
 
   # stopping the cluster
   if (n_cores > 1) {

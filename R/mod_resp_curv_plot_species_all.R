@@ -117,6 +117,12 @@ resp_curv_plot_species_all <- function(
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 
+  if (strategy == "future::multicore") {
+    pkg_to_export <- NULL
+  } else {
+    pkg_to_export <- c("ecokit", "dplyr")
+  }
+
   Sp_DT_All <- Sp_DT_All %>%
     dplyr::mutate(
       Data = furrr::future_map(
@@ -125,7 +131,8 @@ resp_curv_plot_species_all <- function(
           ecokit::load_as(.x) %>%
             dplyr::select(Variable, NFV, Species, PlotData_Quant)
         },
-        .options = furrr::furrr_options(seed = TRUE, chunk_size = 1))) %>%
+        .options = furrr::furrr_options(
+          seed = TRUE, chunk_size = 1, packages = pkg_to_export))) %>%
     tidyr::unnest(Data) %>%
     dplyr::select(-RC_Path_Prob) %>%
     dplyr::slice(gtools::mixedorder(Variable)) %>%

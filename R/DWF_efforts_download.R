@@ -95,6 +95,12 @@ efforts_download <- function(
   # Downloading/checking efforts data ------
   ecokit::cat_time("Downloading & checking efforts data", level = 1L)
 
+  if (strategy == "future::multicore") {
+    pkg_to_export <- NULL
+  } else {
+    pkg_to_export <- c("dplyr", "ecokit", "rgbif", "stringr", "fs", "withr")
+  }
+
   Efforts_AllRequests <- Efforts_AllRequests %>%
     dplyr::mutate(
       # Download datasets in parallel
@@ -149,8 +155,7 @@ efforts_download <- function(
         },
         .options = furrr::furrr_options(
           seed = TRUE, scheduling = Inf,
-          globals = "Path_Raw",
-          packages = c("dplyr", "IASDT.R", "rgbif", "stringr", "fs", "withr"))))
+          globals = "Path_Raw", packages = pkg_to_export)))
 
   save(Efforts_AllRequests, file = Path_Efforts_Request)
 

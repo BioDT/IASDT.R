@@ -653,12 +653,18 @@ plot_prediction <- function(
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 
+  if (strategy == "future::multicore") {
+    pkg_to_export <- NULL
+  } else {
+    pkg_to_export <- c(
+      "dplyr", "terra", "ggplot2", "stringr", "cowplot", "tidyterra",
+      "purrr", "ggtext", "ragg", "paletteer", "grid", "scales", "ecokit")
+  }
+
   Plots <- future.apply::future_lapply(
     X = seq_len(nrow(Map_summary)), FUN = PlotMaps,
     future.scheduling = Inf, future.seed = TRUE,
-    future.packages = c(
-      "dplyr", "terra", "ggplot2", "stringr", "cowplot", "tidyterra",
-      "purrr", "ggtext", "ragg", "paletteer", "grid", "scales"),
+    future.packages = pkg_to_export,
     future.globals = c(
       "Map_summary", "PrepPlots", "R_SR", "Path_PA",
       "R_habitat", "Path_Plots", "hab_name", "PlotMaps"))

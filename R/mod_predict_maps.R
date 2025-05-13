@@ -1310,6 +1310,12 @@ predict_maps <- function(
   # Calculate ensemble predictions
   ecokit::cat_time("Calculate ensemble predictions", level = 1L)
 
+  if (strategy == "future::multicore") {
+    pkg_to_export <- NULL
+  } else {
+    pkg_to_export <- "terra"
+  }
+
   Prediction_Ensemble <- Prediction_Ensemble %>%
     dplyr::mutate(
       Ensemble_Maps = furrr::future_pmap(
@@ -1362,7 +1368,7 @@ predict_maps <- function(
           return(NULL)
         },
         .options = furrr::furrr_options(
-          seed = TRUE, scheduling = 1, packages = "terra",
+          seed = TRUE, scheduling = 1, packages = pkg_to_export,
           globals = "CurrentMean")),
       Dir_Ensemble = NULL, tifs = NULL, Ensemble_Maps = NULL)
 
@@ -1385,6 +1391,12 @@ predict_maps <- function(
       "ias_id", "Ensemble_File", "tif_path_mean", "tif_path_anomaly",
       "tif_path_sd", "tif_path_cov"))) %>%
     tidyr::nest(data = -Ensemble_File)
+
+  if (strategy == "future::multicore") {
+    pkg_to_export <- NULL
+  } else {
+    pkg_to_export <- c("terra", "dplyr", "purrr", "ecokit", "qs2")
+  }
 
   Prediction_Ensemble_R <- future.apply::future_lapply(
     X = seq_len(nrow(Prediction_Ensemble_R)),
@@ -1423,8 +1435,7 @@ predict_maps <- function(
       ecokit::save_as(object = OutMaps, out_path = OutFile)
     },
     future.scheduling = Inf, future.seed = TRUE,
-    future.globals = "Prediction_Ensemble_R",
-    future.packages = c("terra", "dplyr", "purrr", "IASDT.R", "qs2"))
+    future.packages = pkg_to_export, future.globals = "Prediction_Ensemble_R")
 
   if (n_cores > 1) {
     ecokit::set_parallel(stop_cluster = TRUE, level = 1L)

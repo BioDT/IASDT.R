@@ -103,6 +103,12 @@ resp_curv_plot_SR <- function(
 
   ecokit::cat_time("Prepare data", level = 1L)
 
+  if (strategy == "future::multicore") {
+    pkg_to_export <- NULL
+  } else {
+    pkg_to_export <- c("tibble", "dplyr", "magrittr", "ecokit", "tidyr")
+  }
+
   SR_DT_All <- SR_DT_All %>%
     dplyr::mutate(
       DT = furrr::future_map(
@@ -129,7 +135,8 @@ resp_curv_plot_SR <- function(
 
           return(list(Quant = Quant, Observed = Observed, Trend = list(Trend)))
         },
-        .options = furrr::furrr_options(seed = TRUE, chunk_size = 1))) %>%
+        .options = furrr::furrr_options(
+          seed = TRUE, chunk_size = 1, packages = pkg_to_export))) %>%
     dplyr::select(-NFV, -RC_Path_SR) %>%
     tidyr::unnest_wider(DT) %>%
     tidyr::nest(.by = c(Variable, Coords)) %>%

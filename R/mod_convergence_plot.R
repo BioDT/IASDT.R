@@ -679,6 +679,12 @@ convergence_plot <- function(
     ecokit::cat_time(
       "Split data for each of variables and species combination", level = 2L)
 
+    if (strategy == "future::multicore") {
+      pkg_to_export <- NULL
+    } else {
+      pkg_to_export <- "ecokit"
+    }
+
     Beta_DF2 <- future.apply::future_lapply(
       X = seq_len(nrow(Beta_DF)),
       FUN = function(x) {
@@ -712,7 +718,7 @@ convergence_plot <- function(
         }
       },
       future.seed = TRUE, future.globals = "Beta_DF",
-      future.packages = c("IASDT.R", "tibble", "coda", "fs", "stringr"))
+      future.packages = pkg_to_export)
 
     rm(Beta_DF2, envir = environment())
 
@@ -720,6 +726,14 @@ convergence_plot <- function(
 
     # Prepare plots
     ecokit::cat_time("Prepare plots", level = 2L)
+
+    if (strategy == "future::multicore") {
+      pkg_to_export <- NULL
+    } else {
+      pkg_to_export <- c(
+        "dplyr", "ggplot2", "ggtext", "magrittr", "stringr", "ggExtra",
+        "coda", "ecokit", "qs2", "tibble")
+    }
 
     PlotObj_Beta <- future.apply::future_lapply(
       X = seq_len(nrow(Beta_DF)),
@@ -904,12 +918,9 @@ convergence_plot <- function(
         tibble::tibble(Var_Sp = Var_Sp, Plot_File = Plot_File)
 
       },
-      future.seed = TRUE,
+      future.seed = TRUE, future.packages = pkg_to_export,
       future.globals = c(
-        "Beta_DF", "NChains", "SampleSize", "chain_colors", "margin_type"),
-      future.packages = c(
-        "dplyr", "ggplot2", "ggtext", "magrittr", "stringr", "ggExtra",
-        "coda", "IASDT.R", "qs2", "tibble"))
+        "Beta_DF", "NChains", "SampleSize", "chain_colors", "margin_type"))
 
     PlotObj_Beta <- dplyr::left_join(Beta_DF, VarsDesc, by = "Variable")
 
@@ -965,6 +976,14 @@ convergence_plot <- function(
 
   ecokit::cat_time("Save plots", level = 2L)
   VarNames <- BetaTracePlots_ByVar$Variable
+
+  if (strategy == "future::multicore") {
+    pkg_to_export <- NULL
+  } else {
+    pkg_to_export <- c(
+      "tidyr", "dplyr", "ggplot2", "purrr", "ggtext",
+      "tibble", "cowplot", "grDevices", "ecokit")
+  }
 
   BetaTracePlots_ByVar0 <- future.apply::future_lapply(
     X = VarNames,
@@ -1058,12 +1077,9 @@ convergence_plot <- function(
       invisible(gc())
       return(NULL)
     },
-    future.seed = TRUE,
+    future.seed = TRUE, future.packages = pkg_to_export,
     future.globals = c(
-      "BetaTracePlots_ByVar", "n_RC", "Path_Convergence", "HTML4"),
-    future.packages = c(
-      "tidyr", "dplyr", "ggplot2", "purrr", "ggtext",
-      "tibble", "cowplot", "grDevices", "IASDT.R"))
+      "BetaTracePlots_ByVar", "n_RC", "Path_Convergence", "HTML4"))
 
   rm(BetaTracePlots_ByVar0, BetaTracePlots_ByVar, envir = environment())
   invisible(gc())
@@ -1104,6 +1120,14 @@ convergence_plot <- function(
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
   ecokit::cat_time("Save plots", level = 2L)
+
+  if (strategy == "future::multicore") {
+    pkg_to_export <- NULL
+  } else {
+    pkg_to_export <- c(
+      "dplyr", "coda", "ggplot2", "ggExtra", "ggtext", "ecokit",
+      "stringr", "gtools", "cowplot", "purrr", "grDevices")
+  }
 
   BetaTracePlots_BySp0 <- future.apply::future_lapply(
     X = BetaTracePlots_BySp$Species,
@@ -1180,13 +1204,10 @@ convergence_plot <- function(
       rm(PlotTitle, envir = environment())
       return(invisible(NULL))
     },
-    future.seed = TRUE,
+    future.seed = TRUE, future.packages = pkg_to_export,
     future.globals = c(
       "margin_type", "BetaTracePlots_BySp", "Path_Convergence_BySp",
-      "beta_n_RC"),
-    future.packages = c(
-      "dplyr", "coda", "ggplot2", "ggExtra", "ggtext", "IASDT.R",
-      "stringr", "gtools", "cowplot", "purrr", "grDevices"))
+      "beta_n_RC"))
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 

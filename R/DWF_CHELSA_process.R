@@ -192,14 +192,20 @@ CHELSA_process <- function(
       withr::defer(future::plan("future::sequential", gc = TRUE))
     }
 
+    if (strategy == "future::multicore") {
+      pkg_to_export <- NULL
+    } else {
+      pkg_to_export <- "ecokit"
+    }
+
     CHELSA_Data_Checked <- CHELSA_Data %>%
       dplyr::select(Path_Down) %>%
       dplyr::mutate(
         InputOkay = furrr::future_map_lgl(
           .x = Path_Down,
           .f = ecokit::check_tiff, warning = FALSE,
-          .options = furrr::furrr_options(seed = TRUE, packages = "IASDT.R"))
-      ) %>%
+          .options = furrr::furrr_options(
+            seed = TRUE, packages = pkg_to_export))) %>%
       dplyr::filter(isFALSE(InputOkay))
 
     if (n_cores > 1) {
@@ -270,6 +276,12 @@ CHELSA_process <- function(
     ecokit::cat_time(
       "Exclude previously processed files (after checking)", level = 1L)
 
+    if (strategy == "future::multicore") {
+      pkg_to_export <- NULL
+    } else {
+      pkg_to_export <- "ecokit"
+    }
+
     CHELSA2Process <- CHELSA_Data %>%
       dplyr::select(Path_Down, Path_Out_NC, Path_Out_tif) %>%
       dplyr::mutate(
@@ -280,7 +292,8 @@ CHELSA_process <- function(
             Tif_Okay <- ecokit::check_tiff(.y, warning = FALSE)
             return(isFALSE(NC_Okay && Tif_Okay))
           },
-          .options = furrr::furrr_options(seed = TRUE, packages = "IASDT.R"))
+          .options = furrr::furrr_options(
+            seed = TRUE, packages = pkg_to_export))
       ) %>%
       dplyr::filter(Process) %>%
       dplyr::select(-"Process")
@@ -290,11 +303,20 @@ CHELSA_process <- function(
   ecokit::cat_time("Processing CHELSA files", level = 1L)
 
   if (nrow(CHELSA2Process) > 0) {
+
+    if (strategy == "future::multicore") {
+      pkg_to_export <- NULL
+    } else {
+      pkg_to_export <- c(
+        "dplyr", "terra", "IASDT.R", "tibble", "ncdf4", "ecokit")
+    }
+
     CHELSA2Process <- CHELSA2Process %>%
       dplyr::mutate(
         Failed = furrr::future_pmap_lgl(
           .l = list(Path_Out_NC, Path_Out_tif, Path_Down),
           .f = function(Path_Out_NC, Path_Out_tif, Down = Path_Down) {
+
             FileMetadata <- dplyr::filter(CHELSA_Data, Path_Down == Down)
 
             # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use
@@ -339,7 +361,7 @@ CHELSA_process <- function(
           },
           .options = furrr::furrr_options(
             seed = TRUE,
-            packages = c("dplyr", "terra", "IASDT.R", "tibble", "ncdf4"),
+            packages = pkg_to_export,
             globals = c("CHELSA_Data", "env_file", "compression_level"))
         )
       ) %>%
@@ -405,6 +427,12 @@ CHELSA_process <- function(
     paste(collapse = "|") %>%
     paste0("(?i)(", ., ")\\d*_")
 
+  if (strategy == "future::multicore") {
+    pkg_to_export <- NULL
+  } else {
+    pkg_to_export <- c("terra", "ecokit", "stringr")
+  }
+
   CHELSA_Processed <- CHELSA_Data %>%
     dplyr::select(TimePeriod, ClimateModel, ClimateScenario, Path_Out_tif) %>%
     dplyr::slice(gtools::mixedorder(Path_Out_tif)) %>%
@@ -447,7 +475,7 @@ CHELSA_process <- function(
 
         },
         .options = furrr::furrr_options(
-          seed = TRUE, packages = c("terra", "IASDT.R", "stringr"),
+          seed = TRUE, packages = pkg_to_export,
           globals = c("CHELSA_Data", "SelectedVars"))))
 
   if (n_cores > 1) {

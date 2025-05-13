@@ -356,6 +356,13 @@ variance_partitioning_compute <- function(
           }
 
           ecokit::cat_time("Processing beta in parallel", level = 3L)
+
+          if (strategy == "future::multicore") {
+            pkg_to_export <- NULL
+          } else {
+            pkg_to_export <- "arrow"
+          }
+
           Beta0 <- future.apply::future_lapply(
             X = seq_along(postList),
             FUN = function(x) {
@@ -367,7 +374,7 @@ variance_partitioning_compute <- function(
               return(NULL)
             },
             future.scheduling = Inf, future.seed = TRUE,
-            future.packages = "arrow",
+            future.packages = pkg_to_export,
             future.globals = c("Beta_Files", "postList"))
 
           rm(Beta0)
@@ -698,6 +705,15 @@ variance_partitioning_compute <- function(
     }
 
     ecokit::cat_time("Processing in parallel", level = 1L)
+
+    if (strategy == "future::multicore") {
+      pkg_to_export <- NULL
+    } else {
+      pkg_to_export <- c(
+        "Matrix", "dplyr", "arrow", "purrr", "IASDT.R", "qs2", "methods",
+        "stringr", "fs", "ecokit")
+    }
+
     Res <- future.apply::future_lapply(
       X = seq_len(n_postList),
       FUN = function(i) {
@@ -790,6 +806,7 @@ variance_partitioning_compute <- function(
         # for (k in seq_len(ngroups)) {
         #   fixedsplit[, k] <- fixedsplit1[, k] / rowSums(fixedsplit1)
         # }
+
         fixedsplit <- fixedsplit1 / rowSums(fixedsplit1)
 
         return(
@@ -799,8 +816,7 @@ variance_partitioning_compute <- function(
 
       },
       future.scheduling = Inf, future.seed = TRUE,
-      future.packages = c(
-        "Matrix", "dplyr", "arrow", "purrr", "IASDT.R", "qs2", "methods"),
+      future.packages = pkg_to_export,
       future.globals = c(
         "ngroups", "Files_la", "Files_lf", "Files_lmu", "path_lbeta", "nc",
         "Model", "path_postList", "poolN", "ns", "nr", "cMA", "group"))

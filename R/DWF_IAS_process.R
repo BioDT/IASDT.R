@@ -206,6 +206,16 @@ IAS_process <- function(
   ## Species-specific data in parallel ----
   ecokit::cat_time("Species-specific data in parallel", level = 1L)
 
+  if (strategy == "future::multicore") {
+    pkg_to_export <- NULL
+  } else {
+    pkg_to_export <- c(
+      "dplyr", "lubridate", "IASDT.R", "purrr", "stringr", "readr", "fs",
+      "sf", "terra", "readxl", "tidyr", "tidyselect", "ggplot2", "ggtext",
+      "grid", "tidyterra", "cowplot", "scales", "tibble", "magrittr", "ragg",
+      "grDevices")
+  }
+
   Sp_PA_Data <- future.apply::future_lapply(
     X = sort(unique(TaxaList$Species_name)),
     FUN = function(x) {
@@ -214,11 +224,7 @@ IAS_process <- function(
         overwrite = overwrite)
     },
     future.scheduling = Inf, future.seed = TRUE,
-    future.packages =   c(
-      "dplyr", "lubridate", "IASDT.R", "purrr", "stringr", "readr", "fs",
-      "sf", "terra", "readxl", "tidyr", "tidyselect", "ggplot2", "ggtext",
-      "grid", "tidyterra", "cowplot", "scales", "tibble", "magrittr", "ragg",
-      "grDevices"),
+    future.packages = pkg_to_export,
     future.globals = c("env_file", "overwrite")) %>%
     dplyr::bind_rows()
 

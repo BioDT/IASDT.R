@@ -820,6 +820,12 @@ mod_prepare_HPC <- function(
         strategy = strategy)
       withr::defer(future::plan("future::sequential", gc = TRUE))
 
+      if (strategy == "future::multicore") {
+        pkg_to_export <- NULL
+      } else {
+        pkg_to_export <- c("dplyr", "sf", "Hmsc", "jsonify", "magrittr")
+      }
+
       ecokit::cat_time("Prepare GPP knots", level = 2L)
       GPP_Knots <- future.apply::future_lapply(
         X = GPP_dists * 1000,
@@ -830,7 +836,7 @@ mod_prepare_HPC <- function(
         },
         future.scheduling = Inf, future.seed = TRUE,
         future.globals = c("DT_xy", "GPP_dists", "max_LF", "min_LF", "alphapw"),
-        future.packages = c("dplyr", "sf", "Hmsc", "jsonify", "magrittr")) %>%
+        future.packages = pkg_to_export) %>%
         stats::setNames(paste0("GPP_", GPP_dists))
 
       # Stopping cluster
@@ -1113,13 +1119,19 @@ mod_prepare_HPC <- function(
       future_max_size = 800L, strategy = strategy)
     withr::defer(future::plan("future::sequential", gc = TRUE))
 
+    if (strategy == "future::multicore") {
+      pkg_to_export <- NULL
+    } else {
+      pkg_to_export <- c("Hmsc", "jsonify", "IASDT.R")
+    }
+
     Model_Process <- future.apply::future_lapply(
       X = seq_len(nrow(Model_Info)),
       FUN = InitFitFun, future.scheduling = Inf, future.seed = TRUE,
       future.globals = c(
         "InitFitFun", "Model_Info", "overwrite_rds",
         "MCMC_verbose", "MCMC_n_chains", "to_JSON"),
-      future.packages = c("Hmsc", "jsonify", "IASDT.R"))
+      future.packages = pkg_to_export)
 
     ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
     future::plan("future::sequential", gc = TRUE)

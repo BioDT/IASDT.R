@@ -196,6 +196,9 @@ GBIF_process <- function(
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 
+  print(future::plan("list"))
+  print(future::nbrOfWorkers())
+
   ecokit::cat_time(
     "Processing chunks in parallel, save each as RData files", level = 1L)
 

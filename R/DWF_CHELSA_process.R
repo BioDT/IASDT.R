@@ -278,7 +278,7 @@ CHELSA_process <- function(
     if (strategy == "future::multicore") {
       pkg_to_export <- NULL
     } else {
-      pkg_to_export <- "ecokit"
+      pkg_to_export <- c("ecokit", "fs")
     }
 
     check_processed <- future.apply::future_lapply(
@@ -297,18 +297,15 @@ CHELSA_process <- function(
         return(need_processing)
       },
       future.scheduling = Inf, future.seed = TRUE,
-      future.packages = pkg_to_export,
-      future.globals = c("CHELSA_Data", "CHELSA2Process")) %>%
+      future.packages = pkg_to_export, future.globals = "CHELSA_Data") %>%
       unlist()
 
     CHELSA2Process <- CHELSA_Data %>%
-      dplyr::select(Path_Down, Path_Out_NC, Path_Out_tif, DownCommand) %>%
       dplyr::mutate(Process = check_processed) %>%
       dplyr::filter(Process) %>%
       dplyr::select(-"Process")
 
   }
-
 
   # Processing CHELSA files
   ecokit::cat_time("Processing CHELSA files", level = 1L)

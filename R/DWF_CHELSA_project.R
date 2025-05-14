@@ -26,6 +26,12 @@ CHELSA_project <- function(
     args_type = "numeric")
   rm(AllArgs, envir = environment())
 
+  if (is.null(metadata)) {
+    ecokit::stop_ctx(
+      "Input metadata can not be `NULL`", metadata = metadata,
+      include_backtrace = TRUE)
+  }
+
   if (!inherits(metadata, "tbl_df")) {
     ecokit::stop_ctx(
       "Input metadata has to be a tibble", class_metadata = class(metadata),
@@ -39,6 +45,18 @@ CHELSA_project <- function(
       nrow_metadata = nrow(metadata), include_backtrace = TRUE)
   }
 
+  # Check metadata columns
+  needed_columns <- c(
+    "scale", "offset", "Path_Out_tif", "ClimateModel", "ClimateScenario",
+    "Variable", "URL", "Path_Down", "Long_name", "explanation",
+    "Path_Out_NC", "unit", "TimePeriod")
+  missing_columns <- setdiff(needed_columns, names(metadata))
+  if (length(missing_columns) > 0) {
+    ecokit::stop_ctx(
+      "Input metadata is missing columns", missing_columns = missing_columns,
+      include_backtrace = TRUE)
+  }
+
   # # ..................................................................... ###
 
   # Avoid "no visible binding for global variable" message
@@ -46,12 +64,6 @@ CHELSA_project <- function(
   Path_Grid <- NULL
 
   # # ..................................................................... ###
-
-  if (is.null(metadata)) {
-    ecokit::stop_ctx(
-      "Input metadata can not be `NULL`", metadata = metadata,
-      include_backtrace = TRUE)
-  }
 
   if (!file.exists(metadata$Path_Down)) {
     ecokit::stop_ctx(

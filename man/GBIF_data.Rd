@@ -132,7 +132,7 @@ metadata, standardized by Marina Golivets (Feb 2024).
 processing, and mapping. Saves \code{RData}, Excel, and JPEG summary files.
 \item \strong{\code{GBIF_check()}}: Verifies GBIF credentials in environment or
 \code{.Renviron}. Returns \code{TRUE} if valid, else \code{FALSE}.
-\item \strong{\code{GBIF_download()}}: Requests and downloads GBIF data (if \code{download = TRUE}),  using the specified criteria (taxa, coordinates, time period, and
+\item \strong{\code{GBIF_download()}}: Requests and downloads GBIF data (if \code{download = TRUE}), using the specified criteria (taxa, coordinates, time period, and
 boundaries), splits into small chunks (if \code{split_chunks = TRUE}), and saves
 metadata. Returns \code{invisible(NULL)}.
 \item \strong{\code{GBIF_read_chunk()}}: Filters chunk data (spatial/temporal, e.g.,

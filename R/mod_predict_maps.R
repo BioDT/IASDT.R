@@ -42,7 +42,7 @@
 #'   Default: `TRUE`.
 #' @param LF_only Logical. Whether to predict only the latent factor. This is
 #'   useful for distributing processing load between GPU and CPU. When `LF_only
-#'   = TRUE`, latent factor prediction needs to be computed separately on GPU.
+#'  = TRUE`, latent factor prediction needs to be computed separately on GPU.
 #'   When computations are finished on GPU, the function can later be rerun with
 #'   `LF_only = FALSE` (default) to predict habitat suitability using the
 #'   already-computed latent factor predictions.
@@ -125,6 +125,13 @@ predict_maps <- function(
   if (!strategy %in% valid_strategy) {
     ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }
+
+  # # ..................................................................... ###
+
+  # packages to be loaded in parallel
+  pkg_to_export <- ecokit::load_packages_future(
+    packages = c("terra", "dplyr", "purrr", "ecokit", "qs2"),
+    strategy = strategy)
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -1310,12 +1317,6 @@ predict_maps <- function(
   # Calculate ensemble predictions
   ecokit::cat_time("Calculate ensemble predictions", level = 1L)
 
-  if (strategy == "future::multicore") {
-    pkg_to_export <- NULL
-  } else {
-    pkg_to_export <- "terra"
-  }
-
   Prediction_Ensemble <- Prediction_Ensemble %>%
     dplyr::mutate(
       Ensemble_Maps = furrr::future_pmap(
@@ -1391,12 +1392,6 @@ predict_maps <- function(
       "ias_id", "Ensemble_File", "tif_path_mean", "tif_path_anomaly",
       "tif_path_sd", "tif_path_cov"))) %>%
     tidyr::nest(data = -Ensemble_File)
-
-  if (strategy == "future::multicore") {
-    pkg_to_export <- NULL
-  } else {
-    pkg_to_export <- c("terra", "dplyr", "purrr", "ecokit", "qs2")
-  }
 
   Prediction_Ensemble_R <- future.apply::future_lapply(
     X = seq_len(nrow(Prediction_Ensemble_R)),

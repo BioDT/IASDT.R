@@ -281,11 +281,11 @@ IAS_plot <- function(species = NULL, env_file = ".env", overwrite = TRUE) {
   # Use `grid::grid.text` instead of `cowplot::draw_label` to avoid these
   # warnings
   #
-  # 1: In grid.Call(C_textBounds, as.graphicsAnnot(x$label),  ... :
+  # 1: In grid.Call(C_textBounds, as.graphicsAnnot(x$label), ... :
   # conversion failure on '—' in 'mbcsToSbcs': dot substituted for <e2>
-  # 2: In grid.Call(C_textBounds, as.graphicsAnnot(x$label),  ... :
+  # 2: In grid.Call(C_textBounds, as.graphicsAnnot(x$label), ... :
   # conversion failure on '—' in 'mbcsToSbcs': dot substituted for <80>
-  # 3: In grid.Call(C_textBounds, as.graphicsAnnot(x$label),  ... :
+  # 3: In grid.Call(C_textBounds, as.graphicsAnnot(x$label), ... :
   # conversion failure on '—' in 'mbcsToSbcs': dot substituted for <94>
   #
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly

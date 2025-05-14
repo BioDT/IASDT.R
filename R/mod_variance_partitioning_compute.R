@@ -96,6 +96,15 @@ variance_partitioning_compute <- function(
 
   .start_time <- lubridate::now(tzone = "CET")
 
+  # # ..................................................................... ###
+
+  # packages to be loaded in parallel
+  pkg_to_export <- ecokit::load_packages_future(
+    packages = c(
+      "Matrix", "dplyr", "arrow", "purrr", "IASDT.R", "qs2", "methods",
+      "stringr", "fs", "ecokit"),
+    strategy = strategy)
+
   # # .................................................................... ###
 
   # Check if the virtual environment and Python scripts exist
@@ -357,12 +366,6 @@ variance_partitioning_compute <- function(
 
           ecokit::cat_time("Processing beta in parallel", level = 3L)
 
-          if (strategy == "future::multicore") {
-            pkg_to_export <- NULL
-          } else {
-            pkg_to_export <- "arrow"
-          }
-
           Beta0 <- future.apply::future_lapply(
             X = seq_along(postList),
             FUN = function(x) {
@@ -429,7 +432,7 @@ variance_partitioning_compute <- function(
         } else {
 
           # Run the command using system
-          la <- system(cmd_a, wait = TRUE, intern  = TRUE)
+          la <- system(cmd_a, wait = TRUE, intern =  TRUE)
 
           # Check for errors
           if (inherits(la, "error") || la[length(la)] != "Done") {
@@ -486,7 +489,7 @@ variance_partitioning_compute <- function(
         } else {
 
           # Run the command using system
-          lf <- system(cmd_f, wait = TRUE, intern  = TRUE)
+          lf <- system(cmd_f, wait = TRUE, intern =  TRUE)
 
           # Check for errors
           if (inherits(lf, "error") || lf[length(lf)] != "Done") {
@@ -544,7 +547,7 @@ variance_partitioning_compute <- function(
         } else {
 
           # Run the command using system
-          lmu <- system(cmd_mu, wait = TRUE, intern  = TRUE)
+          lmu <- system(cmd_mu, wait = TRUE, intern =  TRUE)
 
           # Check for errors
           if (inherits(lmu, "error") || lmu[length(lmu)] != "Done") {
@@ -705,14 +708,6 @@ variance_partitioning_compute <- function(
     }
 
     ecokit::cat_time("Processing in parallel", level = 1L)
-
-    if (strategy == "future::multicore") {
-      pkg_to_export <- NULL
-    } else {
-      pkg_to_export <- c(
-        "Matrix", "dplyr", "arrow", "purrr", "IASDT.R", "qs2", "methods",
-        "stringr", "fs", "ecokit")
-    }
 
     Res <- future.apply::future_lapply(
       X = seq_len(n_postList),

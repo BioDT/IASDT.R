@@ -165,6 +165,16 @@ predict_hmsc <- function(
 
   # # ..................................................................... ###
 
+  # packages to be loaded in parallel
+  pkg_to_export <- ecokit::load_packages_future(
+    packages = c(
+      "dplyr", "Rcpp", "RcppArmadillo", "Matrix", "float", "qs2", "Hmsc",
+      "purrr", "tibble", "Rfast", "caret", "pROC", "ecospat", "sf",
+      "ecokit"),
+    strategy = strategy)
+
+  # # ..................................................................... ###
+
   # Load model if it is a character
   if (inherits(path_model, "character")) {
     ecokit::cat_time("Load model object")
@@ -539,15 +549,6 @@ predict_hmsc <- function(
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 
-  if (strategy == "future::multicore") {
-    pkg_to_export <- NULL
-  } else {
-    pkg_to_export <- c(
-      "dplyr", "Rcpp", "RcppArmadillo", "Matrix", "float", "qs2", "Hmsc",
-      "purrr", "tibble", "Hmsc", "Rfast", "caret", "pROC", "ecospat", "sf",
-      "ecokit")
-  }
-
   ecokit::cat_time("Making predictions in parallel", level = 1L)
   pred <- future.apply::future_lapply(
     X = seq_len(length(Chunks)),
@@ -630,15 +631,6 @@ predict_hmsc <- function(
   Eval_DT <- dplyr::select(pred, -Chunk) %>%
     dplyr::group_nest(Sp, IAS_ID) %>%
     dplyr::mutate(data = purrr::map(data, unlist))
-
-  if (strategy == "future::multicore") {
-    pkg_to_export <- NULL
-  } else {
-    pkg_to_export <- c(
-      "dplyr", "Rcpp", "RcppArmadillo", "Matrix", "float", "qs2", "Hmsc",
-      "purrr", "tibble", "Hmsc", "Rfast", "caret", "pROC", "ecospat", "sf",
-      "ecokit")
-  }
 
   Eval_DT <- future.apply::future_lapply(
     X = seq_len(nrow(Eval_DT)),
@@ -839,7 +831,7 @@ predict_hmsc <- function(
 
   return(
     tibble::tibble(
-      Pred_Path = Pred_File,  Eval_Path = Eval_Path, LF_Path = LF_Path))
+      Pred_Path = Pred_File, Eval_Path = Eval_Path, LF_Path = LF_Path))
 }
 
 ## ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

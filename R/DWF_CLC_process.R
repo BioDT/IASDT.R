@@ -397,7 +397,7 @@ CLC_process <- function(
     Grid_10_Land_Crop,
     file = fs::path(Path_Grid, "Grid_10_Land_Crop.RData"))
   save(
-    Grid_10_Land_sf,  file = fs::path(Path_Grid, "Grid_10_Land_sf.RData"))
+    Grid_10_Land_sf, file = fs::path(Path_Grid, "Grid_10_Land_sf.RData"))
   save(
     Grid_10_Land_Crop_sf,
     file = fs::path(Path_Grid, "Grid_10_Land_Crop_sf.RData"))

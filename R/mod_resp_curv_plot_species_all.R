@@ -85,6 +85,11 @@ resp_curv_plot_species_all <- function(
 
   # # ..................................................................... ###
 
+  # packages to be loaded in parallel
+  pkg_to_export <- ecokit::load_packages_future(
+    packages = c("ecokit", "dplyr"), strategy = strategy)
+
+  # # ..................................................................... ###
 
   Path_RC_DT <- fs::path(model_dir, "Model_Postprocessing", "RespCurv_DT")
   Path_RC_All <- fs::path(model_dir, "Model_Postprocessing", "RespCurv_All")
@@ -115,12 +120,6 @@ resp_curv_plot_species_all <- function(
       n_cores = min(n_cores, nrow(Sp_DT_All)), level = 1L,
       future_max_size = 800L, strategy = strategy)
     withr::defer(future::plan("future::sequential", gc = TRUE))
-  }
-
-  if (strategy == "future::multicore") {
-    pkg_to_export <- NULL
-  } else {
-    pkg_to_export <- c("ecokit", "dplyr")
   }
 
   Sp_DT_All <- Sp_DT_All %>%

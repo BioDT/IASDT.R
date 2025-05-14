@@ -74,6 +74,15 @@ efforts_summarize <- function(
 
   # # ..................................................................... ###
 
+  # packages to be loaded in parallel
+  pkg_to_export <- ecokit::load_packages_future(
+    packages = c(
+      "ecokit", "stringr", "fs", "sf", "readr", "dplyr", "terra",
+      "purrr", "tibble", "R.utils", "IASDT.R"),
+    strategy = strategy)
+
+  # # ..................................................................... ###
+
   Path_Grid_R <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
   Path_Grid_SF <- fs::path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
 
@@ -125,16 +134,6 @@ efforts_summarize <- function(
   }
 
   Efforts_AllRequests <- ecokit::load_as(Path_Efforts_Request)
-
-
-
-  if (strategy == "future::multicore") {
-    pkg_to_export <- NULL
-  } else {
-    pkg_to_export <- c(
-      "ecokit", "stringr", "fs", "sf", "readr", "dplyr",
-      "purrr", "tibble", "R.utils", "IASDT.R")
-  }
 
   DT_Paths <- future.apply::future_lapply(
     X = seq_len(nrow(Efforts_AllRequests)),
@@ -287,12 +286,6 @@ efforts_summarize <- function(
 
   # Prepare summary maps per order ----
   ecokit::cat_time("Prepare summary maps per order", level = 1L)
-
-  if (strategy == "future::multicore") {
-    pkg_to_export <- NULL
-  } else {
-    pkg_to_export <- c("terra", "ecokit", "sf", "readr", "dplyr")
-  }
 
   SummaryMaps <- future.apply::future_lapply(
     X = seq_len(nrow(Efforts_Summary)),

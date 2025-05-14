@@ -336,6 +336,14 @@ mod_prepare_HPC <- function(
 
   # # ..................................................................... ###
 
+  # packages to be loaded in parallel
+  pkg_to_export <- ecokit::load_packages_future(
+    packages = c(
+      "dplyr", "sf", "Hmsc", "jsonify", "magrittr", "IASDT.R", "ecokit"),
+    strategy = strategy)
+
+  # # ..................................................................... ###
+
   # # |||||||||||||||||||||||||||||||||||
   # Check input arguments ----
   # # |||||||||||||||||||||||||||||||||||
@@ -820,12 +828,6 @@ mod_prepare_HPC <- function(
         strategy = strategy)
       withr::defer(future::plan("future::sequential", gc = TRUE))
 
-      if (strategy == "future::multicore") {
-        pkg_to_export <- NULL
-      } else {
-        pkg_to_export <- c("dplyr", "sf", "Hmsc", "jsonify", "magrittr")
-      }
-
       ecokit::cat_time("Prepare GPP knots", level = 2L)
       GPP_Knots <- future.apply::future_lapply(
         X = GPP_dists * 1000,
@@ -1118,12 +1120,6 @@ mod_prepare_HPC <- function(
       n_cores = min(n_cores, nrow(Model_Info)), level = 1L,
       future_max_size = 800L, strategy = strategy)
     withr::defer(future::plan("future::sequential", gc = TRUE))
-
-    if (strategy == "future::multicore") {
-      pkg_to_export <- NULL
-    } else {
-      pkg_to_export <- c("Hmsc", "jsonify", "IASDT.R")
-    }
 
     Model_Process <- future.apply::future_lapply(
       X = seq_len(nrow(Model_Info)),

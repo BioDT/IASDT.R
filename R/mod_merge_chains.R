@@ -154,6 +154,13 @@ mod_merge_chains <- function(
 
   # # ..................................................................... ###
 
+  # packages to be loaded in parallel
+  pkg_to_export <- ecokit::load_packages_future(
+    packages = c("Hmsc", "coda", "purrr", "ecokit", "dplyr", "fs"),
+    strategy = strategy)
+
+  # # ..................................................................... ###
+
   # Creating paths -----
 
   Path_Fitted_Models <- fs::path(model_dir, "Model_Fitted")
@@ -242,12 +249,6 @@ mod_merge_chains <- function(
   # # ..................................................................... ###
 
   # Merge posteriors and save as Hmsc model / coda object
-
-  if (strategy == "future::multicore") {
-    pkg_to_export <- NULL
-  } else {
-    pkg_to_export <- c("Hmsc", "coda", "purrr", "ecokit", "dplyr", "fs")
-  }
 
   Model_Info3 <- future.apply::future_lapply(
     X = seq_len(nrow(Model_Info2)),
@@ -419,7 +420,7 @@ mod_merge_chains <- function(
 
       # Mean elapsed time
       FittingTimeMean = purrr::map2_dbl(
-        .x =  Model_Finished, .y = FittingTime,
+        .x = Model_Finished, .y = FittingTime,
         .f = ~{
           if (.x) {
             mean(.y)
@@ -454,7 +455,7 @@ mod_merge_chains <- function(
 
       # Mean memory
       FittingMemoryMean = purrr::map2_dbl(
-        .x =  Model_Finished, .y = FittingMemory,
+        .x = Model_Finished, .y = FittingMemory,
         .f = ~{
           if (.x) {
             mean(.y)
@@ -616,6 +617,14 @@ mod_merge_chains_CV <- function(
 
   # # ..................................................................... ###
 
+  # packages to be loaded in parallel
+  pkg_to_export <- ecokit::load_packages_future(
+    packages = c(
+      "Hmsc", "purrr", "ecokit", "IASDT.R", "dplyr", "stringr", "fs"),
+    strategy = strategy)
+
+  # # ..................................................................... ###
+
   # Creating paths -----
 
   Path_Fitted_Models <- fs::path(model_dir, "Model_Fitting_CV", "Model_Fitted")
@@ -689,13 +698,6 @@ mod_merge_chains_CV <- function(
 
   # Merge posteriors and save as Hmsc object
   ecokit::cat_time("Merge posteriors and save as Hmsc object", level = 1L)
-
-  if (strategy == "future::multicore") {
-    pkg_to_export <- NULL
-  } else {
-    pkg_to_export <- c(
-      "Hmsc", "purrr", "ecokit", "IASDT.R", "dplyr", "stringr", "fs")
-  }
 
   CV_DT2 <- future.apply::future_lapply(
     X = seq_len(nrow(CV_DT)),
@@ -779,12 +781,6 @@ mod_merge_chains_CV <- function(
     "Check saved Hmsc object and extract info on model fitting", level = 1L)
 
   # Check if both merged fitted model file exist
-  if (strategy == "future::multicore") {
-    pkg_to_export <- NULL
-  } else {
-    pkg_to_export <- "ecokit"
-  }
-
   CV_DT <- CV_DT %>%
     dplyr::mutate(
 
@@ -818,7 +814,7 @@ mod_merge_chains_CV <- function(
 
       # Mean elapsed time
       FittingTimeMean = purrr::map2_dbl(
-        .x =  Model_Finished, .y = FittingTime,
+        .x = Model_Finished, .y = FittingTime,
         .f = ~{
           if (.x) {
             mean(.y)
@@ -852,7 +848,7 @@ mod_merge_chains_CV <- function(
 
       # Mean memory
       FittingMemoryMean = purrr::map2_dbl(
-        .x =  Model_Finished, .y = FittingMemory,
+        .x = Model_Finished, .y = FittingMemory,
         .f = ~{
           if (.x) {
             mean(.y)

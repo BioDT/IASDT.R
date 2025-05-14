@@ -154,6 +154,15 @@ CHELSA_process <- function(
 
   # # ..................................................................... ###
 
+  # packages to be loaded in parallel
+  pkg_to_export <- ecokit::load_packages_future(
+    packages = c(
+      "ecokit", "fs", "terra", "stringr", "ncdf4", "magrittr", "dplyr",
+      "IASDT.R", "tibble", "purrr", "sf"),
+    strategy = strategy)
+
+  # # ..................................................................... ###
+
   # Prepare CHELSA metadata / download CHELSA data -----
 
   ecokit::cat_time("Prepare CHELSA metadata or download CHELSA data")
@@ -193,12 +202,6 @@ CHELSA_process <- function(
         n_cores = n_cores, level = 1L, future_max_size = 800L,
         strategy = strategy)
       withr::defer(future::plan("future::sequential", gc = TRUE))
-    }
-
-    if (strategy == "future::multicore") {
-      pkg_to_export <- NULL
-    } else {
-      pkg_to_export <- "ecokit"
     }
 
     CHELSA_Data_Checked <- CHELSA_Data %>%
@@ -279,12 +282,6 @@ CHELSA_process <- function(
     ecokit::cat_time(
       "Exclude previously processed files (after checking)", level = 1L)
 
-    if (strategy == "future::multicore") {
-      pkg_to_export <- NULL
-    } else {
-      pkg_to_export <- c("ecokit", "fs", "terra", "stringr", "ncdf4")
-    }
-
     check_processed <- future.apply::future_lapply(
       X = seq_len(nrow(CHELSA_Data)),
       FUN = function(x) {
@@ -324,14 +321,6 @@ CHELSA_process <- function(
   ecokit::cat_time("Processing CHELSA files", level = 1L)
 
   if (nrow(CHELSA2Process) > 0) {
-
-    if (strategy == "future::multicore") {
-      pkg_to_export <- "magrittr"
-    } else {
-      # https://github.com/rspatial/terra/issues/1212#issuecomment-1976800339
-      pkg_to_export <- c(
-        "dplyr", "terra", "IASDT.R", "tibble", "ncdf4", "ecokit", "sf", "purrr")
-    }
 
     # process CHELSA files and return info if processing failed
 
@@ -460,12 +449,6 @@ CHELSA_process <- function(
     # \\d+_ means one or more digits followed by an underscore
     paste(collapse = "|") %>%
     paste0("(?i)(", ., ")\\d*_")
-
-  if (strategy == "future::multicore") {
-    pkg_to_export <- NULL
-  } else {
-    pkg_to_export <- c("terra", "ecokit", "stringr")
-  }
 
   CHELSA_Processed <- CHELSA_Data %>%
     dplyr::select(TimePeriod, ClimateModel, ClimateScenario, Path_Out_tif) %>%

@@ -68,6 +68,13 @@ efforts_download <- function(
 
   # # ..................................................................... ###
 
+  # packages to be loaded in parallel
+  pkg_to_export <- ecokit::load_packages_future(
+    packages = c("dplyr", "ecokit", "rgbif", "stringr", "fs", "withr"),
+    strategy = strategy)
+
+  # # ..................................................................... ###
+
   Path_Efforts_Request <- fs::path(Path_Efforts, "Efforts_AllRequests.RData")
 
   if (!file.exists(Path_Efforts_Request)) {
@@ -94,12 +101,6 @@ efforts_download <- function(
 
   # Downloading/checking efforts data ------
   ecokit::cat_time("Downloading & checking efforts data", level = 1L)
-
-  if (strategy == "future::multicore") {
-    pkg_to_export <- NULL
-  } else {
-    pkg_to_export <- c("dplyr", "ecokit", "rgbif", "stringr", "fs", "withr")
-  }
 
   Efforts_AllRequests <- Efforts_AllRequests %>%
     dplyr::mutate(

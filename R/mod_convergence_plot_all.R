@@ -100,6 +100,15 @@ convergence_plot_all <- function(
 
   # # ..................................................................... ###
 
+  # packages to be loaded in parallel
+  pkg_to_export <- ecokit::load_packages_future(
+    packages = c(
+      "dplyr", "sf", "Hmsc", "coda", "magrittr", "ggplot2", "ecokit",
+      "magrittr", "IASDT.R"),
+    strategy = strategy)
+
+  # # ..................................................................... ###
+
   # Prepare/load convergence data ------
 
   ecokit::cat_time("Prepare or load convergence data")
@@ -271,14 +280,6 @@ convergence_plot_all <- function(
         n_cores = n_cores, level = 2L, future_max_size = 800L,
         strategy = strategy)
       withr::defer(future::plan("future::sequential", gc = TRUE))
-    }
-
-    if (strategy == "future::multicore") {
-      pkg_to_export <- NULL
-    } else {
-      pkg_to_export <- c(
-        "dplyr", "sf", "Hmsc", "coda", "magrittr", "ggplot2",
-        "magrittr", "IASDT.R")
     }
 
     Convergence_DT <- Model_Info %>%

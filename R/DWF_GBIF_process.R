@@ -55,7 +55,7 @@
 #' - **`GBIF_check()`**: Verifies GBIF credentials in environment or
 #'   `.Renviron`. Returns `TRUE` if valid, else `FALSE`.
 #' - **`GBIF_download()`**: Requests and downloads GBIF data (if `download =
-#'   TRUE`),  using the specified criteria (taxa, coordinates, time period, and
+#'   TRUE`), using the specified criteria (taxa, coordinates, time period, and
 #'   boundaries), splits into small chunks (if `split_chunks = TRUE`), and saves
 #'   metadata. Returns `invisible(NULL)`.
 #' - **`GBIF_read_chunk()`**: Filters chunk data (spatial/temporal, e.g.,
@@ -162,6 +162,17 @@ GBIF_process <- function(
   ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
+
+  # # ..................................................................... ###
+
+  # packages to be loaded in parallel
+  pkg_to_export <- ecokit::load_packages_future(
+    packages = c(
+      "IASDT.R", "purrr", "tibble", "terra", "tidyr", "dplyr", "readr",
+      "stringr", "bit64", "tidyselect", "fs", "sf", "ecokit",
+      "ggplot2", "tidyterra", "magrittr", "ragg", "cowplot", "grid"),
+    strategy = strategy)
+
   # # ..................................................................... ###
 
   # request / download GBIF data and split data into chunks -----
@@ -230,14 +241,6 @@ GBIF_process <- function(
 
   ecokit::cat_time(
     "Processing chunks in parallel, save each as RData files", level = 1L)
-
-  if (strategy == "future::multicore") {
-    pkg_to_export <- NULL
-  } else {
-    pkg_to_export <- c(
-      "IASDT.R", "purrr", "tibble", "terra", "tidyr", "dplyr", "readr",
-      "stringr", "bit64", "tidyselect", "fs", "sf", "ecokit")
-  }
 
   GBIF_Data <- future.apply::future_lapply(
     X = ChunkList,
@@ -625,14 +628,6 @@ GBIF_process <- function(
   }
 
   ecokit::cat_time("Splitting species data in parallel", level = 2L)
-
-  if (strategy == "future::multicore") {
-    pkg_to_export <- NULL
-  } else {
-    pkg_to_export <- c(
-      "dplyr", "ecokit", "cowplot", "ggplot2", "terra", "tidyterra", "fs",
-      "tibble", "magrittr", "stringr", "sf", "ragg", "cowplot", "grid")
-  }
 
   sp_data_tmp <- future.apply::future_lapply(
     X = SpList,

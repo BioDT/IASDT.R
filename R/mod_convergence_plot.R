@@ -144,6 +144,16 @@ convergence_plot <- function(
 
   # # ..................................................................... ###
 
+  # packages to be loaded in parallel
+  pkg_to_export <- ecokit::load_packages_future(
+    packages = c(
+      "dplyr", "ggplot2", "ggtext", "magrittr", "stringr", "ggExtra",
+      "coda", "ecokit", "qs2", "tibble", "tidyr", "purrr", "cowplot",
+      "gtools"),
+    strategy = strategy)
+
+  # # ..................................................................... ###
+
   # # Load species summary
   ecokit::cat_time("Load species summary")
 
@@ -679,12 +689,6 @@ convergence_plot <- function(
     ecokit::cat_time(
       "Split data for each of variables and species combination", level = 2L)
 
-    if (strategy == "future::multicore") {
-      pkg_to_export <- NULL
-    } else {
-      pkg_to_export <- "ecokit"
-    }
-
     Beta_DF2 <- future.apply::future_lapply(
       X = seq_len(nrow(Beta_DF)),
       FUN = function(x) {
@@ -726,14 +730,6 @@ convergence_plot <- function(
 
     # Prepare plots
     ecokit::cat_time("Prepare plots", level = 2L)
-
-    if (strategy == "future::multicore") {
-      pkg_to_export <- NULL
-    } else {
-      pkg_to_export <- c(
-        "dplyr", "ggplot2", "ggtext", "magrittr", "stringr", "ggExtra",
-        "coda", "ecokit", "qs2", "tibble")
-    }
 
     PlotObj_Beta <- future.apply::future_lapply(
       X = seq_len(nrow(Beta_DF)),
@@ -977,14 +973,6 @@ convergence_plot <- function(
   ecokit::cat_time("Save plots", level = 2L)
   VarNames <- BetaTracePlots_ByVar$Variable
 
-  if (strategy == "future::multicore") {
-    pkg_to_export <- NULL
-  } else {
-    pkg_to_export <- c(
-      "tidyr", "dplyr", "ggplot2", "purrr", "ggtext",
-      "tibble", "cowplot", "grDevices", "ecokit")
-  }
-
   BetaTracePlots_ByVar0 <- future.apply::future_lapply(
     X = VarNames,
     FUN = function(x) {
@@ -1120,14 +1108,6 @@ convergence_plot <- function(
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
   ecokit::cat_time("Save plots", level = 2L)
-
-  if (strategy == "future::multicore") {
-    pkg_to_export <- NULL
-  } else {
-    pkg_to_export <- c(
-      "dplyr", "coda", "ggplot2", "ggExtra", "ggtext", "ecokit",
-      "stringr", "gtools", "cowplot", "purrr", "grDevices")
-  }
 
   BetaTracePlots_BySp0 <- future.apply::future_lapply(
     X = BetaTracePlots_BySp$Species,

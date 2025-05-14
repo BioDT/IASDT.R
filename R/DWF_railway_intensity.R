@@ -131,6 +131,13 @@ railway_intensity <- function(
 
   # # ..................................................................... ###
 
+  # packages to be loaded in parallel
+  pkg_to_export <- ecokit::load_packages_future(
+    packages = c("dplyr", "fs", "sf", "IASDT.R", "stringr", "withr", "ecokit"),
+    strategy = strategy)
+
+  # # ..................................................................... ###
+
   # Scrap download links -----
   ecokit::cat_time("Scrap download links")
   .StartTimeDown <- lubridate::now(tzone = "CET")
@@ -292,13 +299,6 @@ railway_intensity <- function(
 
   ## Processing railway data ----
   ecokit::cat_time("Processing railway data", level = 1L)
-
-  if (strategy == "future::multicore") {
-    pkg_to_export <- NULL
-  } else {
-    pkg_to_export <- c(
-      "dplyr", "fs", "sf", "IASDT.R", "stringr", "withr", "ecokit")
-  }
 
   Railways_3035 <- future.apply::future_lapply(
     X = seq_len(nrow(Railways_Links)),

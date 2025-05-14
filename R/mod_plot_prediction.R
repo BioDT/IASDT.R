@@ -25,8 +25,8 @@
 #' @export
 
 plot_prediction <- function(
-  model_dir = NULL, env_file = ".env", n_cores = 8L,
-  strategy = "future::multicore") {
+    model_dir = NULL, env_file = ".env", n_cores = 8L,
+    strategy = "future::multicore") {
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -103,6 +103,14 @@ plot_prediction <- function(
     terra::unwrap()
 
   # # ..................................................................... ###
+
+  # packages to be loaded in parallel
+  pkg_to_export <- ecokit::load_packages_future(
+    packages = c(
+      "dplyr", "terra", "ggplot2", "stringr", "cowplot", "tidyterra",
+      "purrr", "ggtext", "ragg", "paletteer", "grid", "scales", "ecokit"),
+    strategy = strategy)
+
   # # ..................................................................... ###
 
   # Load summary of prediction maps ----
@@ -505,7 +513,7 @@ plot_prediction <- function(
           "text", x = Range_q1, y = Range_q2,
           angle = 90, size = 3, color = "darkgrey",
           label = "Predicted species richness", hjust = 0.5, vjust = 0.5) +
-        ggplot2::labs(title =  "Observed vs. predicted species richness") +
+        ggplot2::labs(title = "Observed vs. predicted species richness") +
         ggplot2::theme_bw() +
         ggplot2::theme(
           plot.margin = ggplot2::margin(0, 0.05, 0, 0.05, "cm"),
@@ -515,7 +523,7 @@ plot_prediction <- function(
           legend.position = "inside",
           legend.position.inside = c(0.4, 0.96),
           legend.direction = "horizontal",
-          legend.background =  ggplot2::element_rect(
+          legend.background = ggplot2::element_rect(
             fill = "transparent", colour = "transparent"),
           legend.margin = ggplot2::margin(0, 4, 0, 0),
           legend.text = ggplot2::element_text(size = 6, vjust = 0.5),
@@ -651,14 +659,6 @@ plot_prediction <- function(
       n_cores = n_cores, level = 1L, future_max_size = 800L,
       strategy = strategy)
     withr::defer(future::plan("future::sequential", gc = TRUE))
-  }
-
-  if (strategy == "future::multicore") {
-    pkg_to_export <- NULL
-  } else {
-    pkg_to_export <- c(
-      "dplyr", "terra", "ggplot2", "stringr", "cowplot", "tidyterra",
-      "purrr", "ggtext", "ragg", "paletteer", "grid", "scales", "ecokit")
   }
 
   Plots <- future.apply::future_lapply(

@@ -149,6 +149,15 @@ EASIN_process <- function(
 
   # # ..................................................................... ###
 
+  # packages to be loaded in parallel
+  pkg_to_export <- ecokit::load_packages_future(
+    packages = c(
+      "dplyr", "jsonlite", "purrr", "IASDT.R", "withr", "fs",
+      "stringr", "RCurl", "tibble", "ecokit"),
+    strategy = strategy)
+
+  # # ..................................................................... ###
+
   # # |||||||||||||||||||||||||||||||||||
   # # General input data + Paths ----
   # # |||||||||||||||||||||||||||||||||||
@@ -326,14 +335,6 @@ EASIN_process <- function(
             " EASIN taxa after ", n_download_attempts, " download attempts"),
           level = 2L)
         break
-      }
-
-      if (strategy == "future::multicore") {
-        pkg_to_export <- NULL
-      } else {
-        pkg_to_export <- c(
-          "dplyr", "jsonlite", "purrr", "IASDT.R", "withr", "fs",
-          "stringr", "RCurl", "tibble")
       }
 
       Down <- try(

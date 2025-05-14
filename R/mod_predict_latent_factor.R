@@ -132,6 +132,15 @@ predict_latent_factor <- function(
 
   # # ..................................................................... ###
 
+  # packages to be loaded in parallel
+  pkg_to_export <- ecokit::load_packages_future(
+    packages = c(
+      "Rcpp", "RcppArmadillo", "dplyr", "tidyr", "tibble", "arrow", "ecokit",
+      "Matrix", "Hmsc", "qs2", "fs", "purrr", "IASDT.R", "magrittr"),
+    strategy = strategy)
+
+  # # ..................................................................... ###
+
   # Load postEta if it is a file path
 
   if (inherits(postEta, "character")) {
@@ -641,15 +650,6 @@ predict_latent_factor <- function(
         withr::defer(future::plan("future::sequential", gc = TRUE))
 
         ecokit::cat_time("Making predictions in parallel", level = 2L)
-
-        if (strategy == "future::multicore") {
-          pkg_to_export <- NULL
-        } else {
-          pkg_to_export <- c(
-            "Rcpp", "RcppArmadillo", "dplyr", "tidyr", "tibble", "arrow",
-            "Matrix", "Hmsc", "qs2", "fs", "purrr", "IASDT.R")
-        }
-
         etaPreds <- future.apply::future_lapply(
           X = seq_len(nrow(LF_Data)),
           FUN = function(x) {
@@ -718,13 +718,6 @@ predict_latent_factor <- function(
     withr::defer(future::plan("future::sequential", gc = TRUE))
 
     ecokit::cat_time("Process results for MCMC samples in parallel", level = 2L)
-
-    if (strategy == "future::multicore") {
-      pkg_to_export <- NULL
-    } else {
-      pkg_to_export <- c(
-        "dplyr", "magrittr", "tibble", "ecokit", "purrr", "fs", "qs2")
-    }
 
     postEtaPred <- future.apply::future_lapply(
       X = seq_len(nrow(postEtaPred_Samp)),

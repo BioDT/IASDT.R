@@ -80,6 +80,15 @@ resp_curv_plot_species <- function(
 
   # # ..................................................................... ###
 
+  # packages to be loaded in parallel
+  pkg_to_export <- ecokit::load_packages_future(
+    packages = c(
+      "dplyr", "purrr", "tidyr", "gtools", "ggtext", "patchwork",
+      "ggplot2", "tibble", "ecokit", "ragg", "stringr", "scales"),
+    strategy = strategy)
+
+  # # ..................................................................... ###
+
   Path_RC_DT <- fs::path(model_dir, "Model_Postprocessing", "RespCurv_DT")
   if (!dir.exists(Path_RC_DT)) {
     ecokit::stop_ctx(
@@ -138,12 +147,6 @@ resp_curv_plot_species <- function(
 
   ecokit::cat_time("Processing in parallel", level = 1L)
 
-  if (strategy == "future::multicore") {
-    pkg_to_export <- NULL
-  } else {
-    pkg_to_export <- "ecokit"
-  }
-
   Sp_DT_All <- fs::path(Path_RC_DT, "ResCurvDT.RData") %>%
     ecokit::load_as() %>%
     dplyr::select(tidyselect::all_of(c("Coords", "RC_Path_Prob"))) %>%
@@ -197,14 +200,6 @@ resp_curv_plot_species <- function(
   }
 
   ecokit::cat_time("Plotting in parallel", level = 1L)
-
-  if (strategy == "future::multicore") {
-    pkg_to_export <- NULL
-  } else {
-    pkg_to_export <- c(
-      "dplyr", "purrr", "tidyr", "gtools", "ggtext", "patchwork",
-      "ggplot2", "tibble", "ecokit", "ragg", "stringr", "scales")
-  }
 
   Plots <- future.apply::future_lapply(
     X = Sp_DT_All,

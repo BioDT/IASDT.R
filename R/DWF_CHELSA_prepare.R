@@ -79,6 +79,12 @@ CHELSA_prepare <- function(
 
   # # ..................................................................... ###
 
+  # packages to be loaded in parallel
+  pkg_to_export <- ecokit::load_packages_future(
+    packages = c("fs", "ecokit"), strategy = strategy)
+
+  # # ..................................................................... ###
+
   fs::dir_create(c(Path_CHELSA_In, Path_CHELSA_Out))
 
   # String to be matched in the variable names
@@ -236,12 +242,6 @@ CHELSA_prepare <- function(
 
       ecokit::cat_time("Exclude available and valid Tiff files", level = 1L)
 
-      if (strategy == "future::multicore") {
-        pkg_to_export <- NULL
-      } else {
-        pkg_to_export <- c("fs", "ecokit")
-      }
-
       Data2Down <- CHELSA_Metadata %>%
         dplyr::mutate(
           Exclude = furrr::future_map_lgl(
@@ -263,7 +263,8 @@ CHELSA_prepare <- function(
               return(Out)
             },
             .options = furrr::furrr_options(
-              seed = TRUE, packages = pkg_to_export), .progress = FALSE)) %>%
+              seed = TRUE, packages = pkg_to_export),
+            .progress = FALSE)) %>%
         dplyr::filter(Exclude)
     }
 

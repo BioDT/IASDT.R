@@ -90,6 +90,12 @@ efforts_request <- function(
 
   # # ..................................................................... ###
 
+  # packages to be loaded in parallel
+  pkg_to_export <- ecokit::load_packages_future(
+    packages = c("dplyr", "ecokit", "rgbif", "fs"), strategy = strategy)
+
+  # # ..................................................................... ###
+
   # Prepare working in parallel -----
 
   # GBIF allows only 3 parallel requests. Here I wait until previous request
@@ -115,12 +121,6 @@ efforts_request <- function(
   # Extract taxonomic info for vascular plants orders
   SelectedCols <- c(
     "class", "classKey", "order", "orderKey", "numDescendants")
-
-  if (strategy == "future::multicore") {
-    pkg_to_export <- NULL
-  } else {
-    pkg_to_export <- c("dplyr", "ecokit", "rgbif", "fs")
-  }
 
   Efforts_AllRequests <- rgbif::name_backbone("Tracheophyta") %>%
     dplyr::pull("phylumKey") %>%

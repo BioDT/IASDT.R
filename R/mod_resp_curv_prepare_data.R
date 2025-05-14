@@ -144,6 +144,13 @@ resp_curv_prepare_data <- function(
 
   # # ..................................................................... ###
 
+  # packages to be loaded in parallel
+  pkg_to_export <- ecokit::load_packages_future(
+    packages = c("dplyr", "purrr", "tidyr", "abind", "Hmsc", "parallel"),
+    strategy = strategy)
+
+  # # ..................................................................... ###
+
   # Loading model object ------
 
   ecokit::cat_time("Loading model object")
@@ -528,12 +535,6 @@ resp_curv_prepare_data <- function(
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
     ecokit::cat_time("Prepare response curve data in parallel")
-
-    if (strategy == "future::multicore") {
-      pkg_to_export <- NULL
-    } else {
-      pkg_to_export <- c("dplyr", "purrr", "tidyr", "abind", "Hmsc", "parallel")
-    }
 
     ResCurvDT <- future.apply::future_lapply(
       X = seq_len(nrow(ResCurvDT)),

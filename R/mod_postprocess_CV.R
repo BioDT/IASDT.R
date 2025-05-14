@@ -14,7 +14,7 @@ mod_postprocess_CV_1_CPU <- function(
     from_JSON = FALSE, use_TF = TRUE, TF_use_single = FALSE,
     TF_environ = NULL, LF_n_cores = n_cores, LF_only = TRUE,
     LF_temp_cleanup = TRUE, LF_check = FALSE, LF_runtime = "01:00:00",
-    temp_cleanup = TRUE,  n_batch_files = 210L, working_directory = NULL,
+    temp_cleanup = TRUE, n_batch_files = 210L, working_directory = NULL,
     partition_name = "small-g") {
 
   # ****************************************************************

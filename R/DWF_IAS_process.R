@@ -119,6 +119,17 @@ IAS_process <- function(
 
   # # ..................................................................... ###
 
+  # packages to be loaded in parallel
+  pkg_to_export <- ecokit::load_packages_future(
+    packages = c(
+      "dplyr", "lubridate", "IASDT.R", "purrr", "stringr", "readr", "fs",
+      "sf", "terra", "readxl", "tidyr", "tidyselect", "ggplot2", "ggtext",
+      "grid", "tidyterra", "cowplot", "scales", "tibble", "magrittr", "ragg",
+      "grDevices", "ecokit"),
+    strategy = strategy)
+
+  # # ..................................................................... ###
+
   # Reading input data and create directories ------
 
   ecokit::cat_time("Reading input data and create directories")
@@ -205,16 +216,6 @@ IAS_process <- function(
 
   ## Species-specific data in parallel ----
   ecokit::cat_time("Species-specific data in parallel", level = 1L)
-
-  if (strategy == "future::multicore") {
-    pkg_to_export <- NULL
-  } else {
-    pkg_to_export <- c(
-      "dplyr", "lubridate", "IASDT.R", "purrr", "stringr", "readr", "fs",
-      "sf", "terra", "readxl", "tidyr", "tidyselect", "ggplot2", "ggtext",
-      "grid", "tidyterra", "cowplot", "scales", "tibble", "magrittr", "ragg",
-      "grDevices")
-  }
 
   Sp_PA_Data <- future.apply::future_lapply(
     X = sort(unique(TaxaList$Species_name)),
@@ -516,7 +517,7 @@ IAS_process <- function(
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   ragg::agg_jpeg(
     filename = fs::path(Path_PA, "IAS_NumSpecies_Masked.jpeg"),
-    width = 30, height = 15.5,  res = 600, quality = 100, units = "cm")
+    width = 30, height = 15.5, res = 600, quality = 100, units = "cm")
   print(Plot)
   grDevices::dev.off()
 
@@ -689,7 +690,7 @@ IAS_process <- function(
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   ragg::agg_jpeg(
     filename = fs::path(Path_PA, "IAS_NSp_threshold_Hab.jpeg"),
-    width = 30, height = 17,  res = 600, quality = 100, units = "cm")
+    width = 30, height = 17, res = 600, quality = 100, units = "cm")
   print(Plot)
   grDevices::dev.off()
 

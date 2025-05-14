@@ -302,7 +302,7 @@ CHELSA_process <- function(
       unlist()
 
     CHELSA2Process <- CHELSA_Data %>%
-      dplyr::select(Path_Down, Path_Out_NC, Path_Out_tif) %>%
+      dplyr::select(Path_Down, Path_Out_NC, Path_Out_tif, DownCommand) %>%
       dplyr::mutate(Process = check_processed) %>%
       dplyr::filter(Process) %>%
       dplyr::select(-"Process")

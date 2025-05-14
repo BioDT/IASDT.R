@@ -332,7 +332,7 @@ CHELSA_process <- function(
         Path_Out_NC <- CHELSA2Process$Path_Out_NC[[x]]
         Path_Out_tif <- CHELSA2Process$Path_Out_tif[[x]]
         Path_Down <- CHELSA2Process$Path_Down[[x]]
-        DownCommand <- CHELSA_Data$DownCommand[[x]]
+        DownCommand <- CHELSA2Process$DownCommand[[x]]
 
         # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use
         # official parameters (overriding the ones from GeoTIFF keys)
@@ -345,7 +345,7 @@ CHELSA_process <- function(
           Try <- try(
             expr = {
               IASDT.R::CHELSA_project(
-                metadata = dplyr::slice(CHELSA_Data, x), env_file = env_file,
+                metadata = dplyr::slice(CHELSA2Process, x), env_file = env_file,
                 compression_level = compression_level) %>%
                 # suppress known warning
                 # https://github.com/rspatial/terra/issues/1212
@@ -385,8 +385,7 @@ CHELSA_process <- function(
       },
       future.scheduling = Inf, future.seed = TRUE,
       future.packages = pkg_to_export,
-      future.globals = c(
-        "CHELSA_Data", "env_file", "compression_level", "CHELSA2Process"))
+      future.globals = c("env_file", "compression_level", "CHELSA2Process"))
 
     CHELSA2Process <- CHELSA2Process %>%
       dplyr::mutate(Failed = unlist(Failed2process)) %>%

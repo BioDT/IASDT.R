@@ -357,7 +357,6 @@ CHELSA_process <- function(
         Attempt <- 0
         repeat {
           Attempt <- Attempt + 1
-          print(Attempt)
           Try <- try(
             expr = {
               IASDT.R::CHELSA_project(

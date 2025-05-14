@@ -167,6 +167,10 @@ CHELSA_process <- function(
     other_variables = other_variables, download_attempts = download_attempts,
     sleep = sleep)
 
+  if (nrow(CHELSA_Data) == 0) {
+    ecokit::stop_ctx("No CHELSA data was found", include_backtrace = TRUE)
+  }
+
   ecokit::cat_diff(
     init_time = TimePrepare, level = 1L,
     prefix = "Prepare CHELSA metadata or download CHELSA data was finished in ")
@@ -278,30 +282,39 @@ CHELSA_process <- function(
     if (strategy == "future::multicore") {
       pkg_to_export <- NULL
     } else {
-      pkg_to_export <- c("ecokit", "fs")
+      pkg_to_export <- c("ecokit", "fs", "terra", "stringr", "ncdf4")
     }
 
     check_processed <- future.apply::future_lapply(
       X = seq_len(nrow(CHELSA_Data)),
       FUN = function(x) {
-        Path_Out_NC <- CHELSA_Data$Path_Out_NC[[x]]
-        Path_Out_tif <- CHELSA_Data$Path_Out_tif[[x]]
-        NC_Okay <- ecokit::check_tiff(Path_Out_NC, warning = FALSE)
-        Tif_Okay <- ecokit::check_tiff(Path_Out_tif, warning = FALSE)
+
+        NC_file <- CHELSA_Data$Path_Out_NC[[x]]
+        tif_file <- CHELSA_Data$Path_Out_tif[[x]]
+        NC_exists <- file.exists(NC_file)
+        tif_exists <- file.exists(tif_file)
+
+        if (!tif_exists || !NC_exists) {
+          if (NC_exists) fs::file_delete(NC_file)
+          if (tif_exists) fs::file_delete(tif_file)
+          return(FALSE)
+        }
+
+        NC_Okay <- ecokit::check_tiff(NC_file, warning = FALSE)
+        Tif_Okay <- ecokit::check_tiff(tif_file, warning = FALSE)
         need_processing <- isFALSE(NC_Okay && Tif_Okay)
 
         if (need_processing) {
-          if (fs::file_exists(Path_Out_NC)) fs::file_delete(Path_Out_NC)
-          if (fs::file_exists(Path_Out_tif)) fs::file_delete(Path_Out_tif)
+          fs::file_delete(c(NC_file, tif_file))
         }
+
         return(need_processing)
       },
       future.scheduling = Inf, future.seed = TRUE,
-      future.packages = pkg_to_export, future.globals = "CHELSA_Data") %>%
-      unlist()
+      future.packages = pkg_to_export, future.globals = "CHELSA_Data")
 
     CHELSA2Process <- CHELSA_Data %>%
-      dplyr::mutate(Process = check_processed) %>%
+      dplyr::mutate(Process = unlist(check_processed)) %>%
       dplyr::filter(Process) %>%
       dplyr::select(-"Process")
 

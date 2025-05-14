@@ -100,7 +100,7 @@ efforts_split <- function(
     --additional-suffix=.txt')
 
   Path_Chunks <- tryCatch(
-    ecokit::system_command(Command, r_object = FALSE),
+    ecokit::system_command(Command, r_object = TRUE),
     error = function(e) {
       ecokit::stop_ctx(
         paste0("Failed to execute system command: ", e$message),

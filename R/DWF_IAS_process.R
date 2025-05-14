@@ -322,7 +322,7 @@ IAS_process <- function(
     sum(na.rm = TRUE) %>%
     stats::setNames("IAS_NumSp") %>%
     # Ensure that values are read from memory
-    ecokit::set_raster_values()
+    terra::toMemory()
 
   # save as RData
   ecokit::save_as(
@@ -345,7 +345,7 @@ IAS_process <- function(
     sum(na.rm = TRUE) %>%
     stats::setNames("IAS_NumSp_Masked") %>%
     # Ensure that values are read from memory
-    ecokit::set_raster_values()
+    terra::toMemory()
 
   # save as RData
   ecokit::save_as(

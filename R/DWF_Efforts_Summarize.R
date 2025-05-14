@@ -415,7 +415,7 @@ efforts_summarize <- function(
       terra::rast() %>%
       sum(na.rm = TRUE) %>%
       ecokit::set_raster_crs(crs = "epsg:3035") %>%
-      ecokit::set_raster_values() %>%
+      terra::toMemory() %>%
       stats::setNames(Name)
   }
 
@@ -431,7 +431,7 @@ efforts_summarize <- function(
     CalcNObsNSp(Efforts_SummaryR$NSp_Native_R, "NSp_Native")) %>%
     terra::rast() %>%
     ecokit::set_raster_crs(crs = "epsg:3035") %>%
-    ecokit::set_raster_values()
+    terra::toMemory()
 
   ## Save summary maps - `RData` ----
   ecokit::cat_time("Save summary maps", level = 1L)
@@ -546,7 +546,7 @@ efforts_summarize_maps <- function(
     terra::classify(cbind(NA, 0)) %>%
     terra::mask(Grid_R) %>%
     ecokit::set_raster_crs(crs = "epsg:3035") %>%
-    ecokit::set_raster_values() %>%
+    terra::toMemory() %>%
     stats::setNames(paste0(Name, "_", ClassOrder)) %>%
     terra::wrap()
 

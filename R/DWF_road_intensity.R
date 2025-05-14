@@ -255,7 +255,7 @@ road_intensity <- function(env_file = ".env") {
     stats::setNames("All") %>%
     c(GRIP_1, GRIP_2, GRIP_3, GRIP_4, GRIP_5, .) %>%
     # Ensure that values are read from memory
-    ecokit::set_raster_values()
+    terra::toMemory()
 
   ecokit::cat_time("Save road length - tif", level = 1L)
   terra::writeRaster(
@@ -292,7 +292,7 @@ road_intensity <- function(env_file = ".env") {
         terra::mask(RefGrid) %>%
         stats::setNames(paste0("Road_Distance_", names(.x))) %>%
         # Ensure that values are read from memory
-        ecokit::set_raster_values()
+        terra::toMemory()
     }
   ) %>%
     terra::rast()

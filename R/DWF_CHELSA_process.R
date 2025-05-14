@@ -204,15 +204,17 @@ CHELSA_process <- function(
       withr::defer(future::plan("future::sequential", gc = TRUE))
     }
 
-    CHELSA_Data_Checked <- CHELSA_Data %>%
-      dplyr::select(Path_Down) %>%
-      dplyr::mutate(
-        InputOkay = furrr::future_map_lgl(
-          .x = Path_Down,
-          .f = ecokit::check_tiff, warning = FALSE,
-          .options = furrr::furrr_options(
-            seed = TRUE, packages = pkg_to_export))) %>%
-      dplyr::filter(isFALSE(InputOkay))
+    CHELSA_Data_Checked <- future.apply::future_lapply(
+      X = seq_len(nrow(CHELSA_Data)),
+      FUN = function(x) {
+        tibble::tibble(Path_Down = CHELSA_Data$Path_Down[x]) %>%
+          dplyr::mutate(
+            InputOkay = ecokit::check_tiff(Path_Down, warning = FALSE))
+      },
+      future.scheduling = Inf, future.seed = TRUE,
+      future.packages = pkg_to_export, future.globals = "CHELSA_Data") %>%
+      dplyr::bind_rows() %>%
+      dplyr::filter(InputOkay == FALSE) # nolint
 
     if (n_cores > 1) {
       ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
@@ -294,7 +296,7 @@ CHELSA_process <- function(
         if (!tif_exists || !NC_exists) {
           if (NC_exists) fs::file_delete(NC_file)
           if (tif_exists) fs::file_delete(tif_file)
-          return(FALSE)
+          return(TRUE)
         }
 
         NC_Okay <- ecokit::check_tiff(NC_file, warning = FALSE)
@@ -314,24 +316,38 @@ CHELSA_process <- function(
       dplyr::mutate(Process = unlist(check_processed)) %>%
       dplyr::filter(Process) %>%
       dplyr::select(-"Process")
-
   }
+
+  # # |||||||||||||||||||||||||||||||||||||||||||||||
+
 
   # Processing CHELSA files
   ecokit::cat_time("Processing CHELSA files", level = 1L)
 
   if (nrow(CHELSA2Process) > 0) {
 
-    # process CHELSA files and return info if processing failed
+    ecokit::cat_time(
+      paste0(
+        nrow(CHELSA2Process), " of ", nrow(CHELSA_Data),
+        " files need to be processed."),
+      level = 2L)
 
+    # process CHELSA files and return info if processing failed
     Failed2process <- future.apply::future_lapply(
       X = seq_len(nrow(CHELSA2Process)),
       FUN = function(x) {
 
-        Path_Out_NC <- CHELSA2Process$Path_Out_NC[[x]]
-        Path_Out_tif <- CHELSA2Process$Path_Out_tif[[x]]
         Path_Down <- CHELSA2Process$Path_Down[[x]]
-        DownCommand <- CHELSA2Process$DownCommand[[x]]
+        file_tif <- CHELSA2Process$Path_Out_tif[[x]]
+        file_nc <- CHELSA2Process$Path_Out_NC[[x]]
+
+        Tiffs_okay <- all(
+          ecokit::check_tiff(file_tif, warning = FALSE),
+          ecokit::check_tiff(file_nc, warning = FALSE))
+
+        if (Tiffs_okay) {
+          return(FALSE)
+        }
 
         # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use
         # official parameters (overriding the ones from GeoTIFF keys)
@@ -341,6 +357,7 @@ CHELSA_process <- function(
         Attempt <- 0
         repeat {
           Attempt <- Attempt + 1
+          print(Attempt)
           Try <- try(
             expr = {
               IASDT.R::CHELSA_project(
@@ -351,6 +368,7 @@ CHELSA_process <- function(
                 # https://github.com/rspatial/terra/issues/1832
                 # https://stackoverflow.com/questions/78098166
                 suppressWarnings()
+              "Okay"
             },
             silent = TRUE)
 
@@ -364,15 +382,16 @@ CHELSA_process <- function(
             # re-download the file if it fails to be processed and downloaded
             # file is not valid
             system(
-              command = DownCommand, ignore.stdout = TRUE, ignore.stderr = TRUE)
+              command = CHELSA2Process$DownCommand[[x]],
+              ignore.stdout = TRUE, ignore.stderr = TRUE)
           }
         }
 
-        invisible(gc())
+        Sys.sleep(1)
 
         Tiffs_okay <- all(
-          ecokit::check_tiff(Path_Out_tif, warning = FALSE),
-          ecokit::check_tiff(Path_Out_NC, warning = FALSE))
+          ecokit::check_tiff(file_tif, warning = FALSE),
+          ecokit::check_tiff(file_nc, warning = FALSE))
 
         if (inherits(Try, "try-error")) {
           return(TRUE)
@@ -481,7 +500,7 @@ CHELSA_process <- function(
             stats::setNames(MapNames) %>%
             terra::subset(gtools::mixedsort(MapNames)) %>%
             ecokit::set_raster_crs(crs = "epsg:3035") %>%
-            ecokit::set_raster_values() %>%
+            terra::toMemory() %>%
             terra::wrap()
 
           # save to disk

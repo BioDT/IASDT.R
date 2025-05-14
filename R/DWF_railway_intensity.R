@@ -474,7 +474,7 @@ railway_intensity <- function(
           terra::rasterizeGeom(y = RefGrid, fun = "length", unit = "km") %>%
           terra::mask(mask = RefGrid) %>%
           stats::setNames(Name) %>%
-          ecokit::set_raster_values()
+          terra::toMemory()
       }, .progress = FALSE
     ) %>%
     terra::rast()
@@ -520,7 +520,7 @@ railway_intensity <- function(
         terra::mask(RefGrid) %>%
         stats::setNames(paste0("Railways_Distance_", names(.x))) %>%
         # Ensure that values are read from memory
-        ecokit::set_raster_values()
+        terra::toMemory()
     }
   ) %>%
     terra::rast()

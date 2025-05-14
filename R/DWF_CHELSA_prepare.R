@@ -150,8 +150,7 @@ CHELSA_prepare <- function(
               ClimateModel = ClimateModel, ClimateScenario = ClimateScenario)
           }
           return(Out)
-        }
-      )
+        })
     ) %>%
     tidyr::unnest_wider("ModelScenario") %>%
     # Files for 2011-2040/UKESM1-0-LL/ssp126 are duplicated
@@ -176,8 +175,7 @@ CHELSA_prepare <- function(
             ) %>%
             stringr::str_remove_all(pattern = "__|___") %>%
             stringr::str_remove_all(pattern = "^_|_$")
-        }
-      )
+        })
     ) %>%
     # Process only selected variables
     dplyr::filter(stringr::str_detect(Variable, SelectedVars)) %>%
@@ -212,8 +210,8 @@ CHELSA_prepare <- function(
             stringr::str_replace(
               pattern = "1981-2010_Current_Current",
               replacement = "1981-2010_Current")
-        }
-      )) %>%
+        })
+    ) %>%
     dplyr::select(-"Folder") %>%
     dplyr::left_join(IASDT.R::CHELSA_variables, by = "Variable")
 
@@ -274,45 +272,70 @@ CHELSA_prepare <- function(
     ecokit::cat_time("Download missing CHELSA files", level = 1L)
 
     if (nrow(Data2Down) > 0) {
-      furrr::future_walk(
-        .x = seq_len(nrow(Data2Down)),
-        .f = ~ {
-          PathOut <- Data2Down$Path_Down[.x]
-          URL <- Data2Down$URL[.x]
 
+      ecokit::cat_time(
+        paste0(
+          nrow(Data2Down), " of ", nrow(CHELSA_Metadata),
+          " files need to be downloaded."),
+        level = 2L)
+
+      download_problems <- future.apply::future_lapply(
+        X = seq_len(nrow(Data2Down)),
+        FUN = function(x) {
+
+          PathOut <- Data2Down$Path_Down[x]
           Try <- 0
+
           repeat {
             Try <- Try + 1
-            Down <- paste0(
-              "curl --connect-timeout 60 --max-time 1200 -o ",
-              PathOut, " ", URL, " --silent") %>%
-              system()
-
+            Down <- system(Data2Down$DownCommand[x])
             Sys.sleep(5)
 
-            if (file.exists(PathOut)) {
-              if (ecokit::check_tiff(PathOut, warning = FALSE)) {
-                break
-              } else {
-                fs::file_delete(PathOut)
-              }
-            }
-            if (Try > download_attempts) {
+            if (ecokit::check_tiff(PathOut, warning = FALSE) ||
+                Try > download_attempts) {
+              download_problem <- FALSE
               break
+            } else {
+              try(fs::file_delete(PathOut), silent = TRUE)
+              download_problem <- TRUE
             }
-            Sys.sleep(sleep)
           }
+
           Sys.sleep(sleep)
+
+          return(download_problem)
         },
-        .options = furrr::furrr_options(
-          seed = TRUE, globals = c("Data2Down", "sleep"),
-          packages = pkg_to_export))
+        future.scheduling = Inf, future.seed = TRUE,
+        future.packages = pkg_to_export,
+        future.globals = c("Data2Down", "sleep", "download_attempts"))
+
+      download_problems <- sum(unlist(download_problems))
+
+      if (download_problems == 0) {
+        ecokit::cat_time("All Tiff files were downloaded.", level = 2L)
+      } else {
+        ecokit::cat_time(
+          paste0(download_problems, " Tiff files were not downloaded"),
+          level = 2L)
+      }
+
+      rm(download_problems, envir = environment())
+
+    } else {
+
+      ecokit::cat_time(
+        "All Tiff files were already available and valid", level = 2L)
+
     }
 
     if (n_cores > 1) {
       ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
       future::plan("future::sequential", gc = TRUE)
     }
+
+  } else {
+
+    ecokit::cat_time("CHELSA files will not be downloaded", level = 1L)
 
   }
 

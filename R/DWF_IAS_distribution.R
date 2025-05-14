@@ -265,11 +265,11 @@ IAS_distribution <- function(
       dplyr::select("Keep") %>%
       terra::rasterize(y = RefGrid, field = "Keep") %>%
       terra::as.bool() %>%
-      ecokit::set_raster_values() %>%
+      terra::toMemory() %>%
       stats::setNames("Mask_Keep")
   } else {
     Mask_Keep <- terra::as.bool(RefGrid) %>%
-      ecokit::set_raster_values() %>%
+      terra::toMemory() %>%
       stats::setNames("Mask_Keep")
   }
 
@@ -399,7 +399,7 @@ IAS_distribution <- function(
   Sp_PA$PA_Masked <- (Sp_PA$PA * Mask_Keep)
   Sp_PA <- c(GBIF_R, EASIN_R, eLTER_R, Sp_PA, Mask_Keep) %>%
     # Ensure that values are read from memory
-    ecokit::set_raster_values()
+    terra::toMemory()
 
   # number of cells with values
   PA_NCells_All <- terra::global(Sp_PA$PA == 1, sum, na.rm = TRUE) %>%

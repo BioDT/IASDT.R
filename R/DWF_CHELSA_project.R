@@ -171,7 +171,7 @@ CHELSA_project <- function(
     # mask to the reference grid
     terra::mask(GridR) %>%
     # Ensure that values are read from memory
-    ecokit::set_raster_values() %>%
+    terra::toMemory() %>%
     ecokit::set_raster_crs(crs = "epsg:3035")
 
   # # ..................................................................... ###

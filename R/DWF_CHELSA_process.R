@@ -41,7 +41,7 @@
 #'   manages optional downloads.
 #' - **`CHELSA_project()`**: Projects data to the `IASDT` reference grid with
 #'   optional transformations.
-#'
+#' @importFrom rlang !!
 #' @note
 #' - `CHELSA_prepare()` and `CHELSA_project()` are internal helpers, not for
 #' direct use.
@@ -116,7 +116,6 @@ CHELSA_process <- function(
   if (!strategy %in% valid_strategy) {
     ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }
-
 
   # # ..................................................................... ###
 
@@ -282,22 +281,34 @@ CHELSA_process <- function(
       pkg_to_export <- "ecokit"
     }
 
+    check_processed <- future.apply::future_lapply(
+      X = seq_len(nrow(CHELSA_Data)),
+      FUN = function(x) {
+        Path_Out_NC <- CHELSA_Data$Path_Out_NC[[x]]
+        Path_Out_tif <- CHELSA_Data$Path_Out_tif[[x]]
+        NC_Okay <- ecokit::check_tiff(Path_Out_NC, warning = FALSE)
+        Tif_Okay <- ecokit::check_tiff(Path_Out_tif, warning = FALSE)
+        need_processing <- isFALSE(NC_Okay && Tif_Okay)
+
+        if (need_processing) {
+          if (fs::file_exists(Path_Out_NC)) fs::file_delete(Path_Out_NC)
+          if (fs::file_exists(Path_Out_tif)) fs::file_delete(Path_Out_tif)
+        }
+        return(need_processing)
+      },
+      future.scheduling = Inf, future.seed = TRUE,
+      future.packages = pkg_to_export,
+      future.globals = c("CHELSA_Data", "CHELSA2Process")) %>%
+      unlist()
+
     CHELSA2Process <- CHELSA_Data %>%
       dplyr::select(Path_Down, Path_Out_NC, Path_Out_tif) %>%
-      dplyr::mutate(
-        Process = furrr::future_map2_lgl(
-          .x = Path_Out_NC, .y = Path_Out_tif,
-          .f = ~ {
-            NC_Okay <- ecokit::check_tiff(.x, warning = FALSE)
-            Tif_Okay <- ecokit::check_tiff(.y, warning = FALSE)
-            return(isFALSE(NC_Okay && Tif_Okay))
-          },
-          .options = furrr::furrr_options(
-            seed = TRUE, packages = pkg_to_export))
-      ) %>%
+      dplyr::mutate(Process = check_processed) %>%
       dplyr::filter(Process) %>%
       dplyr::select(-"Process")
+
   }
+
 
   # Processing CHELSA files
   ecokit::cat_time("Processing CHELSA files", level = 1L)
@@ -307,64 +318,78 @@ CHELSA_process <- function(
     if (strategy == "future::multicore") {
       pkg_to_export <- NULL
     } else {
+      # https://github.com/rspatial/terra/issues/1212#issuecomment-1976800339
       pkg_to_export <- c(
-        "dplyr", "terra", "IASDT.R", "tibble", "ncdf4", "ecokit")
+        "dplyr", "terra", "IASDT.R", "tibble", "ncdf4", "ecokit", "sf", "purrr")
     }
 
+    # process CHELSA files and return info if processing failed
+
+    Failed2process <- future.apply::future_lapply(
+      X = seq_len(nrow(CHELSA2Process)),
+      FUN = function(x) {
+
+        Path_Out_NC <- CHELSA2Process$Path_Out_NC[[x]]
+        Path_Out_tif <- CHELSA2Process$Path_Out_tif[[x]]
+        Path_Down <- CHELSA2Process$Path_Down[[x]]
+        DownCommand <- CHELSA_Data$DownCommand[[x]]
+
+        # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use
+        # official parameters (overriding the ones from GeoTIFF keys)
+        # see: https://stackoverflow.com/questions/78007307
+        terra::setGDALconfig("GTIFF_SRS_SOURCE", "EPSG")
+
+        Attempt <- 0
+        repeat {
+          Attempt <- Attempt + 1
+          Try <- try(
+            expr = {
+              IASDT.R::CHELSA_project(
+                metadata = dplyr::slice(CHELSA_Data, x), env_file = env_file,
+                compression_level = compression_level) %>%
+                # suppress known warning
+                # https://github.com/rspatial/terra/issues/1212
+                # https://github.com/rspatial/terra/issues/1832
+                # https://stackoverflow.com/questions/78098166
+                suppressWarnings()
+            },
+            silent = TRUE)
+
+          if (!inherits(Try, "try-error") || Attempt >= 5) {
+            break
+          }
+
+          if (inherits(Try, "try-error") &&
+              isFALSE(
+                ecokit::check_tiff(Path_Down, warning = FALSE))) {
+            # re-download the file if it fails to be processed and downloaded
+            # file is not valid
+            system(
+              command = DownCommand, ignore.stdout = TRUE, ignore.stderr = TRUE)
+          }
+        }
+
+        invisible(gc())
+
+        Tiffs_okay <- all(
+          ecokit::check_tiff(Path_Out_tif, warning = FALSE),
+          ecokit::check_tiff(Path_Out_NC, warning = FALSE))
+
+        if (inherits(Try, "try-error")) {
+          return(TRUE)
+        } else if (Tiffs_okay) {
+          return(FALSE)
+        } else {
+          return(TRUE)
+        }
+      },
+      future.scheduling = Inf, future.seed = TRUE,
+      future.packages = pkg_to_export,
+      future.globals = c(
+        "CHELSA_Data", "env_file", "compression_level", "CHELSA2Process"))
+
     CHELSA2Process <- CHELSA2Process %>%
-      dplyr::mutate(
-        Failed = furrr::future_pmap_lgl(
-          .l = list(Path_Out_NC, Path_Out_tif, Path_Down),
-          .f = function(Path_Out_NC, Path_Out_tif, Down = Path_Down) {
-
-            FileMetadata <- dplyr::filter(CHELSA_Data, Path_Down == Down)
-
-            # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use
-            # official parameters (overriding the ones from GeoTIFF keys)
-            # see: https://stackoverflow.com/questions/78007307
-            terra::setGDALconfig("GTIFF_SRS_SOURCE", "EPSG")
-
-            Attempt <- 0
-            repeat {
-              Attempt <- Attempt + 1
-              Try <- try(
-                IASDT.R::CHELSA_project(
-                  metadata = FileMetadata, env_file = env_file,
-                  compression_level = compression_level),
-                silent = TRUE)
-
-              if (!inherits(Try, "try-error") || Attempt >= 5) {
-                break
-              }
-
-              if (inherits(Try, "try-error")) {
-                # re-download the file if it fails to be processed
-                system(
-                  command = FileMetadata$DownCommand,
-                  ignore.stdout = TRUE, ignore.stderr = TRUE)
-              }
-            }
-
-            invisible(gc())
-
-            Tiffs_okay <- all(
-              ecokit::check_tiff(Path_Out_tif, warning = FALSE),
-              ecokit::check_tiff(Path_Out_NC, warning = FALSE))
-
-            if (inherits(Try, "try-error")) {
-              return(TRUE)
-            } else if (Tiffs_okay) {
-              return(FALSE)
-            } else {
-              return(TRUE)
-            }
-          },
-          .options = furrr::furrr_options(
-            seed = TRUE,
-            packages = pkg_to_export,
-            globals = c("CHELSA_Data", "env_file", "compression_level"))
-        )
-      ) %>%
+      dplyr::mutate(Failed = unlist(Failed2process)) %>%
       dplyr::filter(Failed)
 
     if (nrow(CHELSA2Process) > 0) {

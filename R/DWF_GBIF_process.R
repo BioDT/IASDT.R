@@ -625,15 +625,21 @@ GBIF_process <- function(
   }
 
   ecokit::cat_time("Splitting species data in parallel", level = 2L)
+
+  if (strategy == "future::multicore") {
+    pkg_to_export <- NULL
+  } else {
+    pkg_to_export <- c(
+      "dplyr", "ecokit", "cowplot", "ggplot2", "terra", "tidyterra", "fs",
+      "tibble", "magrittr", "stringr", "sf", "ragg", "cowplot", "grid")
+  }
+
   sp_data_tmp <- future.apply::future_lapply(
     X = SpList,
     FUN = IASDT.R::GBIF_species_data, env_file = env_file,
     verbose = FALSE, plot_tag = plot_tag,
     future.scheduling = Inf, future.seed = TRUE,
-    future.packages = c(
-      "dplyr", "ecokit", "cowplot", "ggplot2", "terra", "tidyterra", "fs",
-      "tibble", "magrittr", "stringr", "sf", "ragg", "cowplot", "grid"),
-    future.globals = c("env_file", "plot_tag"))
+    future.packages = pkg_to_export, future.globals = c("env_file", "plot_tag"))
   rm(sp_data_tmp, envir = environment())
 
   if (n_cores > 1) {

@@ -167,7 +167,8 @@ CHELSA_project <- function(
   # Write file to disk --- tiff -----
 
   terra::writeRaster(
-    x = Rstr, filename = metadata$Path_Out_tif, overwrite = TRUE)
+    x = Rstr, filename = metadata$Path_Out_tif, overwrite = TRUE,
+    gdal = c("COMPRESS=DEFLATE", "TILED=YES"))
 
   # # ..................................................................... ###
 

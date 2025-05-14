@@ -316,7 +316,7 @@ CHELSA_process <- function(
   if (nrow(CHELSA2Process) > 0) {
 
     if (strategy == "future::multicore") {
-      pkg_to_export <- NULL
+      pkg_to_export <- "magrittr"
     } else {
       # https://github.com/rspatial/terra/issues/1212#issuecomment-1976800339
       pkg_to_export <- c(

@@ -130,7 +130,8 @@ IAS_process <- function(
   ecokit::cat_time("Reading input data and create directories")
 
   Path_PA_JPEG <- fs::path(Path_PA, "JPEG_Maps")
-  fs::dir_create(Path_PA_JPEG)
+  Path_temp <- fs::path(Path_PA, "temp")
+  fs::dir_create(c(Path_PA_JPEG, Path_temp))
 
   # last update info
   LastUpdate <- stringr::str_glue(
@@ -233,7 +234,6 @@ IAS_process <- function(
       attempt <- 1
 
       repeat {
-
         # Run the distribution function
         Species_Data <- IASDT.R::IAS_distribution(
           species = x, env_file = env_file, verbose = FALSE)
@@ -278,12 +278,31 @@ IAS_process <- function(
         }
       }
 
-      return(Species_Data)
+      # save output to a temporary file. This to free up memory
+      file_tmp <- fs::path(Path_temp, paste0(sp_file, "_tmp.qs2"))
+      ecokit::save_as(object = Species_Data, out_path = file_tmp)
+      invisible(gc())
+
+      return(file_tmp)
     },
     future.scheduling = Inf, future.seed = TRUE,
     future.packages = pkg_to_export,
-    future.globals = c("env_file", "Path_PA", "TaxaList")) %>%
+    future.globals = c("env_file", "Path_PA", "TaxaList", "Path_temp"))
+
+
+  # load species data from temp files
+  Sp_PA_Data <- future.apply::future_lapply(
+    X = Sp_PA_Data,
+    FUN = function(x) {
+      out_obj <- ecokit::load_as(x)
+      try(fs::file_delete(x), silent = TRUE)
+      return(out_obj)
+    },
+    future.scheduling = Inf, future.seed = TRUE,
+    future.packages = pkg_to_export) %>%
     dplyr::bind_rows()
+
+  try(fs::dir_delete(Path_temp), silent = TRUE)
 
   # # .................................... ###
 

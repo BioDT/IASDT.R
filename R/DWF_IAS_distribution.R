@@ -196,7 +196,6 @@ IAS_distribution <- function(
   Grid100Empty <- dplyr::slice(Grid_100_sf, 0)
 
   rm(Grid_100_sf, envir = environment())
-  invisible(gc())
 
   # # ................................ ###
 
@@ -266,7 +265,6 @@ IAS_distribution <- function(
   }
 
   rm(Grid_10_CNT, envir = environment())
-  invisible(gc())
 
   GBIF_Keys <- paste(GBIF_Keys, collapse = "_")
 
@@ -338,7 +336,6 @@ IAS_distribution <- function(
     EASIN_Gr100 <- PA_100km(EASIN_DT)
 
     rm(EASIN_DT, envir = environment())
-    invisible(gc())
 
     EASIN_R_Out <- stats::setNames(EASIN_R, Sp_File) %>%
       terra::wrap() %>%
@@ -386,7 +383,6 @@ IAS_distribution <- function(
   }
 
   rm(eLTER_DT, Grid_100_Land, Grid100Empty, envir = environment())
-  invisible(gc())
 
   # # ..................................................................... ###
 
@@ -419,7 +415,7 @@ IAS_distribution <- function(
 
   # If there is no presence grid cell for the current species, return NULL early
   if (PA_NCells_All == 0) {
-    return(invisible(NULL))
+    return(tibble::tibble())
   }
 
   # # .................................... ###
@@ -530,7 +526,6 @@ IAS_distribution <- function(
   }
 
   rm(BioReg_R, envir = environment())
-  invisible(gc())
 
   # # .................................... ###
 
@@ -630,7 +625,6 @@ IAS_distribution <- function(
     dplyr::select(tidyselect::all_of(CountryList))
 
   rm(Grid_CNT, envir = environment())
-  invisible(gc())
 
   # # .................................... ###
 

@@ -218,7 +218,14 @@ IAS_process <- function(
     FUN = function(x) {
 
       # file name
-      sp_file <- dplyr::filter(TaxaList, Species_name == x)$Species_File
+      sp_file <- unique(dplyr::filter(TaxaList, Species_name == x)$Species_File)
+
+      if (length(sp_file) != 1 || is.na(sp_file) || !nzchar(sp_file)) {
+        ecokit::stop_ctx(
+          "Species file name not unique or empty", Species_name = x,
+          sp_file = sp_file)
+      }
+
       file_Summary <- fs::path(
         Path_PA, "SpSummary", paste0(sp_file, "_Summary.RData"))
       file_PA <- fs::path(Path_PA, "RData", paste0(sp_file, "_PA.RData"))
@@ -226,8 +233,11 @@ IAS_process <- function(
       file_tif_Masked <- fs::path(
         Path_PA, "tif", paste0(sp_file, "_Masked.tif"))
       file_jpeg <- fs::path(Path_PA, "JPEG_Maps", paste0(sp_file, ".jpeg"))
-      files_all <- c(
-        file_Summary, file_PA, file_tif_All, file_tif_Masked, file_jpeg)
+      file_tmp <- fs::path(Path_temp, paste0(sp_file, "_tmp.qs2"))
+
+      if (ecokit::check_data(file_tmp, warning = FALSE)) {
+        return(file_tmp)
+      }
 
       # Maximum attempts
       max_attempts <- 5
@@ -241,13 +251,9 @@ IAS_process <- function(
         if (!is.data.frame(Species_Data)) {
           next
         }
-        if (nrow(Species_Data) != 1) {
-          next
+        if (nrow(Species_Data) == 0 && ncol(Species_Data) == 0) {
+          break
         }
-
-        # allow some time for the files to be created
-        gc(verbose = FALSE)
-        Sys.sleep(2)
 
         # Check for the existence and validity of all files
         all_okay <- all(
@@ -261,13 +267,6 @@ IAS_process <- function(
           break
         }
 
-        # delete files for unsuccessful try
-        purrr::walk(
-          .x = files_all,
-          .f = ~ if (fs::file_exists(.x)) {
-            fs::file_delete(.x)
-          })
-
         # Increment the attempt counter
         attempt <- attempt + 1
 
@@ -276,52 +275,57 @@ IAS_process <- function(
           warning("Maximum attempts reached for species: ", x, call. = FALSE)
           break
         }
+
+        invisible(gc())
+
       }
 
-      # save output to a temporary file. This to free up memory
-      file_tmp <- fs::path(Path_temp, paste0(sp_file, "_tmp.qs2"))
-      ecokit::save_as(object = Species_Data, out_path = file_tmp)
-      invisible(gc())
-
-      return(file_tmp)
+      if (ncol(Species_Data) > 0) {
+        # save output to a temporary file. This to free up memory
+        ecokit::save_as(object = Species_Data, out_path = file_tmp)
+        return(file_tmp)
+      } else {
+        # If there is no data, return NULL
+        return(NULL)
+      }
     },
-    future.scheduling = Inf, future.seed = TRUE,
+    future.scheduling = Inf, future.conditions = NULL, future.seed = TRUE,
     future.packages = pkg_to_export,
     future.globals = c("env_file", "Path_PA", "TaxaList", "Path_temp"))
 
 
   # load species data from temp files
-  Sp_PA_Data <- future.apply::future_lapply(
-    X = Sp_PA_Data,
-    FUN = function(x) {
-      out_obj <- ecokit::load_as(x)
-      try(fs::file_delete(x), silent = TRUE)
-      return(out_obj)
-    },
-    future.scheduling = Inf, future.seed = TRUE,
-    future.packages = pkg_to_export) %>%
+  Sp_PA_Data <- Sp_PA_Data %>%
+    # remove null object from a list
+    purrr::discard(is.null) %>%
+    future.apply::future_lapply(
+      FUN = function(x) {
+        out_obj <- ecokit::load_as(x)
+        try(fs::file_delete(x), silent = TRUE)
+        return(out_obj)
+      },
+      future.scheduling = Inf, future.conditions = NULL, future.seed = TRUE,
+      future.packages = pkg_to_export) %>%
     dplyr::bind_rows()
 
   try(fs::dir_delete(Path_temp), silent = TRUE)
 
   # # .................................... ###
 
-  # Check if all species were processed
-  species_failed <- setdiff(TaxaList$Species_name, Sp_PA_Data$Species)
-  species_failed_length <- length(species_failed)
+  # Species with no data
+  sp_no_data <- setdiff(TaxaList$IAS_ID, as.integer(Sp_PA_Data$species_ID))
+  sp_no_data <- dplyr::filter(TaxaList, IAS_ID %in% sp_no_data)
 
-  if (species_failed_length > 0) {
-    # save list of failed species to disk
-    path_failed_species <- fs::path(Path_PA, "species_failed.txt") %>%
-      as.character()
-    readr::write_lines(x = species_failed, file = path_failed_species)
-
-    ecokit::stop_ctx(
+  if (nrow(sp_no_data) > 0) {
+    readr::write_tsv(
+      x = sp_no_data, file = fs::path(Path_PA, "species_no_data.csv"),
+      col_names = TRUE)
+    ecokit::cat_time(
       paste0(
-        species_failed_length, " out of ", nrow(TaxaList),
-        " species failed to process"),
-      path_failed_species = path_failed_species)
-
+        length(unique(Sp_PA_Data$species_ID)),  " species were processed; ",
+        nrow(sp_no_data), " species have no data. ",
+        "See `species_no_data.csv` for details"),
+      level = 2L)
   } else {
     ecokit::cat_time(
       paste0("All ", length(TaxaList$Species_name), " species were processed"),
@@ -378,8 +382,7 @@ IAS_process <- function(
         c(
           "IAS_ID", "taxon_name", "Species_name",
           "Species_name2", "Species_File")),
-      tidyselect::everything()
-    ) %>%
+      tidyselect::everything()) %>%
     dplyr::left_join(Sp_SynHab, by = "IAS_ID")
 
   rm(TaxaList, envir = environment())
@@ -692,8 +695,7 @@ IAS_process <- function(
         ~ tibble::tibble(
           Hab = Hab, Threshold = .x,
           NSp = sum(CurrDT$NCells_All >= .x, na.rm = TRUE)))
-    }
-  ) %>%
+    }) %>%
     dplyr::mutate(
       Hab = stringr::str_remove(Hab, "^Hab_"),
       Hab = stringr::str_replace(Hab, "_", " - "),
@@ -741,8 +743,7 @@ IAS_process <- function(
         ~ tibble::tibble(
           Hab = Hab, Threshold = .x,
           NSp = sum(CurrDT$NCells_Naturalized >= .x, na.rm = TRUE)))
-    }
-  ) %>%
+    }) %>%
     dplyr::mutate(
       Hab = stringr::str_remove(Hab, "^Hab_"),
       Hab = stringr::str_replace(Hab, "_", " - "),

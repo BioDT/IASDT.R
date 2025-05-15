@@ -238,7 +238,15 @@ IAS_process <- function(
         Species_Data <- IASDT.R::IAS_distribution(
           species = x, env_file = env_file, verbose = FALSE)
 
+        if (!is.data.frame(Species_Data)) {
+          next
+        }
+        if (nrow(Species_Data) != 1) {
+          next
+        }
+
         # allow some time for the files to be created
+        invisible(gc())
         Sys.sleep(2)
 
         # Check for the existence and validity of all files

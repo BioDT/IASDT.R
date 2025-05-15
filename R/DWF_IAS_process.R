@@ -246,7 +246,7 @@ IAS_process <- function(
         }
 
         # allow some time for the files to be created
-        invisible(gc())
+        gc(verbose = FALSE)
         Sys.sleep(2)
 
         # Check for the existence and validity of all files

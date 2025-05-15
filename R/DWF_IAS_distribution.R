@@ -40,6 +40,7 @@ IAS_distribution <- function(
     args_to_check = c("species", "env_file"))
   ecokit::check_args(
     args_all = AllArgs, args_type = "logical", args_to_check = "verbose")
+  rm(AllArgs, envir = environment())
 
   # # ..................................................................... ###
 
@@ -194,6 +195,9 @@ IAS_distribution <- function(
 
   Grid100Empty <- dplyr::slice(Grid_100_sf, 0)
 
+  rm(Grid_100_sf, envir = environment())
+  invisible(gc())
+
   # # ................................ ###
 
   ## `PA_100km` function - species distribution at 100 km ----
@@ -262,6 +266,7 @@ IAS_distribution <- function(
   }
 
   rm(Grid_10_CNT, envir = environment())
+  invisible(gc())
 
   GBIF_Keys <- paste(GBIF_Keys, collapse = "_")
 
@@ -292,6 +297,8 @@ IAS_distribution <- function(
 
     # presence 100 km grid
     GBIF_Gr100 <- PA_100km(GBIF_DT)
+
+    rm(GBIF_DT, envir = environment())
 
     # Map to export out of this function
     GBIF_R_Out <- stats::setNames(GBIF_R, Sp_File) %>%
@@ -329,6 +336,9 @@ IAS_distribution <- function(
       stats::setNames("EASIN")
 
     EASIN_Gr100 <- PA_100km(EASIN_DT)
+
+    rm(EASIN_DT, envir = environment())
+    invisible(gc())
 
     EASIN_R_Out <- stats::setNames(EASIN_R, Sp_File) %>%
       terra::wrap() %>%
@@ -375,6 +385,9 @@ IAS_distribution <- function(
     eLTER_Gr100 <- Grid100Empty
   }
 
+  rm(eLTER_DT, Grid_100_Land, Grid100Empty, envir = environment())
+  invisible(gc())
+
   # # ..................................................................... ###
 
   ## 4. Merging data from the 3 data sources -----
@@ -395,6 +408,9 @@ IAS_distribution <- function(
   PA_NCells_Naturalized <- terra::global(
     x = Sp_PA$PA_Masked == 1, sum, na.rm = TRUE) %>%
     as.integer()
+
+  rm(RefGrid, Mask_Keep, envir = environment())
+  invisible(gc())
 
   # # ..................................................................... ###
 
@@ -513,6 +529,9 @@ IAS_distribution <- function(
     BioRegsMaskSumm_N <- 0
   }
 
+  rm(BioReg_R, envir = environment())
+  invisible(gc())
+
   # # .................................... ###
 
   ## Number of presence grid cells per data provider -----
@@ -570,6 +589,9 @@ IAS_distribution <- function(
     dplyr::pull("eLTER") %>%
     sum()
 
+  rm(RVals, RVals_Masked, GBIF_R, EASIN_R, eLTER_R, envir = environment())
+  invisible(gc())
+
   # # .................................... ###
 
   ## Number of presence grid cells per country -----
@@ -607,6 +629,9 @@ IAS_distribution <- function(
     ecokit::add_missing_columns(0L, CountryList) %>%
     dplyr::select(tidyselect::all_of(CountryList))
 
+  rm(Grid_CNT, envir = environment())
+  invisible(gc())
+
   # # .................................... ###
 
   ## Number of unique iNaturalist grid cells -----
@@ -639,6 +664,9 @@ IAS_distribution <- function(
   Binary_R_Mask_Keep <- stats::setNames(Sp_PA$Mask_Keep, Sp_File) %>%
     terra::wrap() %>%
     list()
+
+  rm(Sp_PA, iNatur_DT, envir = environment())
+  invisible(gc())
 
   IntegerCols <- c(
     "NCells_All", "NCells_Naturalized",

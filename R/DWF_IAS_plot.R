@@ -91,7 +91,7 @@ IAS_plot <- function(species = NULL, env_file = ".env") {
     dplyr::select(-"speciesKey") %>%
     dplyr::distinct()
 
-  out_path <- fs::path(path_JPEG, paste0(SpInfo$Species_name2[1], ".jpeg"))
+  out_path <- fs::path(path_JPEG, paste0(SpInfo$Species_File[1], ".jpeg"))
 
   Grid_100_sf <- fs::path(Path_Grid_Ref, "Grid_100_sf.RData") %>%
     ecokit::load_as() %>%

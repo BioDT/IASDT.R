@@ -279,6 +279,30 @@ IAS_process <- function(
 
   # # .................................... ###
 
+  # Check if all species were processed
+  species_failed <- setdiff(TaxaList$Species_name, Sp_PA_Data$Species)
+  species_failed_length <- length(species_failed)
+
+  if (species_failed_length > 0) {
+    # save list of failed species to disk
+    path_failed_species <- fs::path(Path_PA, "species_failed.txt") %>%
+      as.character()
+    readr::write_lines(x = species_failed, file = path_failed_species)
+
+    ecokit::stop_ctx(
+      paste0(
+        species_failed_length, " out of ", nrow(TaxaList),
+        " species failed to process"),
+      path_failed_species = path_failed_species)
+
+  } else {
+    ecokit::cat_time(
+      paste0("All ", length(TaxaList$Species_name), " species were processed"),
+      level = 2L)
+  }
+
+  # # .................................... ###
+
   ## Stopping cluster ----
   if (n_cores > 1) {
     ecokit::set_parallel(stop_cluster = TRUE, level = 2L)

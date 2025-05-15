@@ -8,21 +8,11 @@
 \alias{IAS_plot}
 \title{Process and map Invasive Alien Species (IAS) data for the \code{IASDT}}
 \usage{
-IAS_process(
-  env_file = ".env",
-  n_cores = 6L,
-  strategy = "future::multicore",
-  overwrite = TRUE
-)
+IAS_process(env_file = ".env", n_cores = 6L, strategy = "future::multicore")
 
-IAS_distribution(
-  species = NULL,
-  env_file = ".env",
-  verbose = FALSE,
-  overwrite = TRUE
-)
+IAS_distribution(species = NULL, env_file = ".env", verbose = FALSE)
 
-IAS_plot(species = NULL, env_file = ".env", overwrite = TRUE)
+IAS_plot(species = NULL, env_file = ".env")
 }
 \arguments{
 \item{env_file}{Character. Path to the environment file containing paths to
@@ -36,9 +26,6 @@ options are "future::sequential", "future::multisession",
 "future::multicore", and "future::cluster". Defaults to
 \code{"future::multicore"} (\code{"future::multisession"} on Windows). See
 \code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
-
-\item{overwrite}{Logical. If \code{TRUE}, overwrites existing maps; otherwise,
-skips if maps exist. Default: \code{FALSE}.}
 
 \item{species}{Character. Species name for distribution mapping.}
 

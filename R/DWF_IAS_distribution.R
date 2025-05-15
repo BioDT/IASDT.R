@@ -9,7 +9,7 @@
 #' @order 2
 
 IAS_distribution <- function(
-    species = NULL, env_file = ".env", verbose = FALSE, overwrite = TRUE) {
+    species = NULL, env_file = ".env", verbose = FALSE) {
 
   # # ..................................................................... ###
 
@@ -39,8 +39,7 @@ IAS_distribution <- function(
     args_all = AllArgs, args_type = "character",
     args_to_check = c("species", "env_file"))
   ecokit::check_args(
-    args_all = AllArgs, args_type = "logical",
-    args_to_check = c("verbose", "overwrite"))
+    args_all = AllArgs, args_type = "logical", args_to_check = "verbose")
 
   # # ..................................................................... ###
 
@@ -115,18 +114,7 @@ IAS_distribution <- function(
     fs::dir_create(Path_PA_All[Missing])
   }
 
-  Out_PA <- fs::path(Path_PA_RData, paste0(Sp_File, "_PA.RData"))
-  Out_Summary <- fs::path(Path_PA_Summary, paste0(Sp_File, "_Summary.RData"))
-  Out_tif_All <- fs::path(Path_PA_tif, paste0(Sp_File, "_All.tif"))
-  Out_tif_Masked <- fs::path(Path_PA_tif, paste0(Sp_File, "_Masked.tif"))
   Out_JPEG <- fs::path(Path_PA_JPEG, paste0(Sp_File, ".jpeg"))
-  Out_Exists <- c(
-    Out_PA, Out_Summary, Out_tif_All, Out_tif_Masked, Out_JPEG) %>%
-    file.exists() %>%
-    all()
-  if (isFALSE(overwrite) && Out_Exists) {
-    return(NULL)
-  }
 
   # # ................................ ###
 
@@ -721,9 +709,8 @@ IAS_distribution <- function(
 
   # Plotting species distribution -----
   ecokit::cat_time("Plotting species distribution")
+  IASDT.R::IAS_plot(species = species, env_file = env_file)
 
-  IASDT.R::IAS_plot(
-    species = species, env_file = env_file, overwrite = overwrite)
   # # ..................................................................... ###
 
   ecokit::cat_diff(

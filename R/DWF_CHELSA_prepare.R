@@ -301,6 +301,7 @@ CHELSA_prepare <- function(
             }
           }
 
+          rm(Down, envir = environment())
           Sys.sleep(sleep)
 
           return(download_problem)

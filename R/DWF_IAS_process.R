@@ -13,8 +13,6 @@
 #'   "future::multicore", and "future::cluster". Defaults to
 #'   `"future::multicore"` (`"future::multisession"` on Windows). See
 #'   [future::plan()] and [ecokit::set_parallel()] for details.
-#' @param overwrite Logical. If `TRUE`, overwrites existing maps; otherwise,
-#'   skips if maps exist. Default: `FALSE`.
 #' @param species Character. Species name for distribution mapping.
 #' @param verbose Logical. If `TRUE`, prints progress messages. Default:
 #'   `FALSE`.
@@ -43,8 +41,7 @@
 #' @order 1
 
 IAS_process <- function(
-    env_file = ".env", n_cores = 6L, strategy = "future::multicore",
-    overwrite = TRUE) {
+    env_file = ".env", n_cores = 6L, strategy = "future::multicore") {
 
   # # ..................................................................... ###
 
@@ -60,8 +57,6 @@ IAS_process <- function(
   ecokit::check_args(
     args_all = AllArgs, args_type = "character",
     args_to_check = c("env_file", "strategy"))
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "logical", args_to_check = "overwrite")
   ecokit::check_args(
     args_all = AllArgs, args_type = "numeric", args_to_check = "n_cores")
 
@@ -125,7 +120,7 @@ IAS_process <- function(
       "dplyr", "lubridate", "IASDT.R", "purrr", "stringr", "readr", "fs",
       "sf", "terra", "readxl", "tidyr", "tidyselect", "ggplot2", "ggtext",
       "grid", "tidyterra", "cowplot", "scales", "tibble", "magrittr", "ragg",
-      "grDevices", "ecokit"),
+      "gtools", "ecokit"),
     strategy = strategy)
 
   # # ..................................................................... ###
@@ -220,13 +215,66 @@ IAS_process <- function(
   Sp_PA_Data <- future.apply::future_lapply(
     X = sort(unique(TaxaList$Species_name)),
     FUN = function(x) {
-      IASDT.R::IAS_distribution(
-        species = x, env_file = env_file, verbose = FALSE,
-        overwrite = overwrite)
+
+      # file name
+      sp_file <- dplyr::filter(TaxaList, Species_name == x)$Species_File
+      file_Summary <- fs::path(
+        Path_PA, "SpSummary", paste0(sp_file, "_Summary.RData"))
+      file_PA <- fs::path(Path_PA, "RData", paste0(sp_file, "_PA.RData"))
+      file_tif_All <- fs::path(Path_PA, "tif", paste0(sp_file, "_All.tif"))
+      file_tif_Masked <- fs::path(
+        Path_PA, "tif", paste0(sp_file, "_Masked.tif"))
+      file_jpeg <- fs::path(Path_PA, "JPEG_Maps", paste0(sp_file, ".jpeg"))
+      files_all <- c(
+        file_Summary, file_PA, file_tif_All, file_tif_Masked, file_jpeg)
+
+      # Maximum attempts
+      max_attempts <- 5
+      attempt <- 1
+
+      repeat {
+
+        # Run the distribution function
+        Species_Data <- IASDT.R::IAS_distribution(
+          species = x, env_file = env_file, verbose = FALSE)
+
+        # allow some time for the files to be created
+        Sys.sleep(2)
+
+        # Check for the existence and validity of all files
+        all_okay <- all(
+          ecokit::check_data(file_PA, warning = FALSE),
+          ecokit::check_data(file_Summary, warning = FALSE),
+          ecokit::check_tiff(file_tif_All, warning = FALSE),
+          ecokit::check_tiff(file_tif_Masked, warning = FALSE),
+          fs::file_exists(file_jpeg))
+
+        if (all_okay) {
+          break
+        }
+
+        # delete files for unsuccessful try
+        purrr::walk(
+          .x = files_all,
+          .f = ~ if (fs::file_exists(.x)) {
+            fs::file_delete(.x)
+          })
+
+        # Increment the attempt counter
+        attempt <- attempt + 1
+
+        # Exit if max attempts reached
+        if (attempt > max_attempts) {
+          warning("Maximum attempts reached for species: ", x, call. = FALSE)
+          break
+        }
+      }
+
+      return(Species_Data)
     },
     future.scheduling = Inf, future.seed = TRUE,
     future.packages = pkg_to_export,
-    future.globals = c("env_file", "overwrite")) %>%
+    future.globals = c("env_file", "Path_PA", "TaxaList")) %>%
     dplyr::bind_rows()
 
   # # .................................... ###

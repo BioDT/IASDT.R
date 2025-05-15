@@ -8,7 +8,7 @@
 #' @rdname IAS_data
 #' @order 3
 
-IAS_plot <- function(species = NULL, env_file = ".env", overwrite = TRUE) {
+IAS_plot <- function(species = NULL, env_file = ".env") {
 
   # # ..................................................................... ###
 
@@ -26,8 +26,6 @@ IAS_plot <- function(species = NULL, env_file = ".env", overwrite = TRUE) {
   ecokit::check_args(
     args_all = AllArgs, args_type = "character",
     args_to_check = c("species", "env_file"))
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "logical", args_to_check = "overwrite")
 
   # # ..................................................................... ###
 
@@ -94,9 +92,6 @@ IAS_plot <- function(species = NULL, env_file = ".env", overwrite = TRUE) {
     dplyr::distinct()
 
   out_path <- fs::path(path_JPEG, paste0(SpInfo$Species_name2[1], ".jpeg"))
-  if (file.exists(out_path) && isFALSE(overwrite)) {
-    return(invisible(NULL))
-  }
 
   Grid_100_sf <- fs::path(Path_Grid_Ref, "Grid_100_sf.RData") %>%
     ecokit::load_as() %>%

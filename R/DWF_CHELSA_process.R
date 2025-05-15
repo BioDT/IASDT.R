@@ -288,23 +288,25 @@ CHELSA_process <- function(
       X = seq_len(nrow(CHELSA_Data)),
       FUN = function(x) {
 
-        NC_file <- CHELSA_Data$Path_Out_NC[[x]]
-        tif_file <- CHELSA_Data$Path_Out_tif[[x]]
-        NC_exists <- file.exists(NC_file)
-        tif_exists <- file.exists(tif_file)
+        file_nc <- CHELSA_Data$Path_Out_NC[[x]]
+        file_tif <- CHELSA_Data$Path_Out_tif[[x]]
+        NC_exists <- file.exists(file_nc)
+        tif_exists <- file.exists(file_tif)
 
         if (!tif_exists || !NC_exists) {
-          if (NC_exists) fs::file_delete(NC_file)
-          if (tif_exists) fs::file_delete(tif_file)
+          if (NC_exists) fs::file_delete(file_nc)
+          if (tif_exists) fs::file_delete(file_tif)
           return(TRUE)
         }
 
-        NC_Okay <- ecokit::check_tiff(NC_file, warning = FALSE)
-        Tif_Okay <- ecokit::check_tiff(tif_file, warning = FALSE)
+        NC_Okay <- suppressWarnings(
+          ecokit::check_tiff(file_nc, warning = FALSE))
+        Tif_Okay <- suppressWarnings(
+          ecokit::check_tiff(file_tif, warning = FALSE))
         need_processing <- isFALSE(NC_Okay && Tif_Okay)
 
         if (need_processing) {
-          fs::file_delete(c(NC_file, tif_file))
+          fs::file_delete(c(file_nc, file_tif))
         }
 
         return(need_processing)
@@ -329,7 +331,7 @@ CHELSA_process <- function(
     ecokit::cat_time(
       paste0(
         nrow(CHELSA2Process), " of ", nrow(CHELSA_Data),
-        " files need to be processed."),
+        " files need to be processed"),
       level = 2L)
 
     # process CHELSA files and return info if processing failed
@@ -343,11 +345,15 @@ CHELSA_process <- function(
 
         Tiffs_okay <- all(
           ecokit::check_tiff(file_tif, warning = FALSE),
-          ecokit::check_tiff(file_nc, warning = FALSE))
+          ecokit::check_tiff(file_nc, warning = FALSE)) %>%
+          suppressWarnings()
 
         if (Tiffs_okay) {
           return(FALSE)
         }
+
+        if (file.exists(file_nc)) fs::file_delete(file_nc)
+        if (file.exists(file_tif)) fs::file_delete(file_tif)
 
         # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use
         # official parameters (overriding the ones from GeoTIFF keys)
@@ -371,7 +377,14 @@ CHELSA_process <- function(
             },
             silent = TRUE)
 
-          if (!inherits(Try, "try-error") || Attempt >= 5) {
+          Sys.sleep(2)
+
+          Tiffs_okay <- all(
+            ecokit::check_tiff(file_tif, warning = FALSE),
+            ecokit::check_tiff(file_nc, warning = FALSE)) %>%
+            suppressWarnings()
+
+          if ((!inherits(Try, "try-error") && Tiffs_okay) || Attempt >= 5) {
             break
           }
 
@@ -384,13 +397,9 @@ CHELSA_process <- function(
               command = CHELSA2Process$DownCommand[[x]],
               ignore.stdout = TRUE, ignore.stderr = TRUE)
           }
+          if (file.exists(file_nc)) fs::file_delete(file_nc)
+          if (file.exists(file_tif)) fs::file_delete(file_tif)
         }
-
-        Sys.sleep(1)
-
-        Tiffs_okay <- all(
-          ecokit::check_tiff(file_tif, warning = FALSE),
-          ecokit::check_tiff(file_nc, warning = FALSE))
 
         if (inherits(Try, "try-error")) {
           return(TRUE)

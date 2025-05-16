@@ -69,11 +69,11 @@ IAS_plot <- function(species = NULL, env_file = ".env") {
   SpFile <- stringr::str_replace_all(Species2, "\u00D7", "x") %>%
     stringr::str_replace_all("-", "")
 
-  SpData <- fs::path(Path_Summary, paste0(SpFile, "_Summary.RData"))
+  SpData <- fs::path(Path_Summary, paste0(SpFile, ".qs2"))
   if (!file.exists(SpData)) {
     return(invisible(NULL))
   }
-  SpData <- ecokit::load_as(SpData)
+  SpData <- ecokit::load_as(SpData, n_threads = 1)
 
   if (SpData$NCells_All == 0) {
     return(invisible(NULL))

@@ -217,7 +217,7 @@ IAS_process <- function(
     X = sort(unique(TaxaList$Species_name)),
     FUN = function(x) {
 
-      # file name
+      # species file name
       sp_file <- unique(dplyr::filter(TaxaList, Species_name == x)$Species_File)
 
       if (length(sp_file) != 1 || is.na(sp_file) || !nzchar(sp_file)) {
@@ -244,13 +244,28 @@ IAS_process <- function(
       attempt <- 1
 
       repeat {
-        # Run the distribution function
-        Species_Data <- IASDT.R::IAS_distribution(
-          species = x, env_file = env_file, verbose = FALSE)
 
-        if (!is.data.frame(Species_Data)) {
+        # Run the distribution function
+        Species_Data <- tryCatch(
+          expr = {
+            IASDT.R::IAS_distribution(
+              species = x, env_file = env_file, verbose = FALSE)
+          },
+          error = function(e) {
+            return(NULL)
+          },
+          warning = function(w) {
+            return(NULL)
+          })
+
+        if (is.null(Species_Data) || !is.data.frame(Species_Data)) {
+          attempt <- attempt + 1
+          if (attempt > max_attempts) {
+            break
+          }
           next
         }
+
         if (nrow(Species_Data) == 0 && ncol(Species_Data) == 0) {
           break
         }
@@ -267,17 +282,11 @@ IAS_process <- function(
           break
         }
 
-        # Increment the attempt counter
         attempt <- attempt + 1
-
-        # Exit if max attempts reached
         if (attempt > max_attempts) {
-          warning("Maximum attempts reached for species: ", x, call. = FALSE)
           break
         }
-
         invisible(gc())
-
       }
 
       if (ncol(Species_Data) > 0) {

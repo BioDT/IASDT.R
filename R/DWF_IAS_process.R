@@ -225,9 +225,10 @@ IAS_process <- function(
       sp_file <- Sp_taxa$Species_File[x]
       sp_Name <- Sp_taxa$Species_name[x]
 
-      if (length(sp_file) != 1 || is.na(sp_file) || !nzchar(sp_file)) {
+      if (length(sp_file) != 1 || is.na(sp_file) || !nzchar(sp_file) ||
+          length(sp_Name) != 1 || is.na(sp_Name) || !nzchar(sp_Name)) {
         ecokit::stop_ctx(
-          "Species file name not unique or empty", Species_name = sp_Name,
+          "Species file name not unique or empty", sp_Name = sp_Name,
           sp_file = sp_file)
       }
 

@@ -103,8 +103,7 @@ IAS_distribution <- function(
   Path_PA_tif <- fs::path(Path_PA, "tif")
   Path_PA_RData <- fs::path(Path_PA, "RData")
   Path_PA_JPEG <- fs::path(Path_PA, "JPEG_Maps")
-  Path_PA_All <- c(
-    Path_PA_Summary, Path_PA_tif, Path_PA_RData, Path_PA_JPEG)
+  Path_PA_All <- c(Path_PA_Summary, Path_PA_tif, Path_PA_RData, Path_PA_JPEG)
   Path_PA_Missing <- !all(dir.exists(Path_PA_All))
   if (Path_PA_Missing) {
     Missing <- which(!dir.exists(Path_PA_All))
@@ -739,7 +738,7 @@ IAS_distribution <- function(
 
   # Plotting species distribution -----
   ecokit::cat_time("Plotting species distribution")
-  IASDT.R::IAS_plot(species = species, env_file = env_file, verbose = verbose)
+  IASDT.R::IAS_plot(species = species, env_file = env_file)
 
   # # ..................................................................... ###
 

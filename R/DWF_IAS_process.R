@@ -32,7 +32,7 @@
 
 # # |------------------------------------------------------------------------| #
 # IAS_process ----
-## |------------------------------------------------------------------------| #
+# # |------------------------------------------------------------------------| #
 
 #' @export
 #' @author Ahmed El-Gabbas
@@ -292,13 +292,21 @@ IAS_process <- function(
           }
           next
         }
-
-        # species without data returns empty tibble
-        if (nrow(Species_Data) == 0 && ncol(Species_Data) == 0) {
-          break
+        
+        if (ncol(Species_Data) != 2 && nrow(Species_Data) != 1) {
+          attempt <- attempt + 1
+          if (attempt > max_attempts) {
+            break
+          }
+          next
         }
 
         Sys.sleep(0.5)
+
+        # species without data
+        if (is.na(Species_Data$PA_summary)) {
+          break
+        }
 
         # Check for the existence and validity of all files
         all_okay <- all(
@@ -319,12 +327,8 @@ IAS_process <- function(
         invisible(gc())
       }
 
-      if (ncol(Species_Data) > 0) {
-        return(file_summary)
-      } else {
-        # If there is no data, return NA
-        return(NA_character_)
-      }
+      return(Species_Data$PA_summary)
+
     },
     future.scheduling = Inf, future.conditions = NULL, future.seed = TRUE,
     future.packages = pkg_to_export,
@@ -335,7 +339,7 @@ IAS_process <- function(
   ## Merge species data into a single tibble -----
   ecokit::cat_time("Merge species data into a single tibble", level = 1L)
 
-  Sp_PA_Data <- Sp_PA_Data %>%
+  Sp_PA_Data <- unlist(Sp_PA_Data) %>%
     # remove NA object from a list
     purrr::discard(is.na) %>%
     future.apply::future_lapply(

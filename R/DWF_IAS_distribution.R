@@ -105,9 +105,9 @@ IAS_distribution <- function(
   Path_PA_tif <- fs::path(Path_PA, "PA_tif")
   Path_PA_RData <- fs::path(Path_PA, "PA_RData")
   Path_PA_JPEG <- fs::path(Path_PA, "Distribution_JPEG")
-  Paths_All <- c(
-    Path_PA_Summary, Path_PA_tif, Path_PA_RData, Path_PA_JPEG)
-  purrr::walk(Paths_All, fs::dir_create)
+
+  c(Path_PA_Summary, Path_PA_tif, Path_PA_RData, Path_PA_JPEG) %>%
+    purrr::walk(fs::dir_create)
 
   Out_JPEG <- fs::path(Path_PA_JPEG, paste0(Sp_File, ".jpeg"))
   out_qs2 <- fs::path(Path_PA_Summary, paste0(Sp_File, ".qs2"))
@@ -402,7 +402,7 @@ IAS_distribution <- function(
     # Ensure that values are read from memory
     terra::toMemory()
 
-  rm(GBIF_R, EASIN_R, eLTER_R, RefGrid, Mask_Keep, envir = environment())
+  rm(RefGrid, Mask_Keep, envir = environment())
   invisible(gc())
 
   # number of cells with values
@@ -417,9 +417,9 @@ IAS_distribution <- function(
   # Processing species data ----
   ecokit::cat_time("Processing species data", verbose = verbose)
 
-  # If there is no presence grid cell for the current species, return NULL early
+  # If there is no presence grid cell for the current species, return NA early
   if (PA_NCells_All == 0) {
-    return(tibble::tibble())
+    return(tibble::tibble(species = species, PA_summary = NA_character_))
   }
 
   # # .................................... ###
@@ -751,6 +751,6 @@ IAS_distribution <- function(
   # use n_threads = 1L to avoid parallel issues
   ecokit::save_as(object = Results, out_path = out_qs2, n_threads = 1)
 
-  return(out_qs2)
+  return(tibble::tibble(species = species, PA_summary = out_qs2))
 
 }

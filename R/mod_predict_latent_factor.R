@@ -110,14 +110,10 @@ predict_latent_factor <- function(
     ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }
 
-  if (isFALSE(verbose)) {
-    sink(file = nullfile())
-    on.exit(try(sink(), silent = TRUE), add = TRUE)
-  }
-
   .start_time <- lubridate::now(tzone = "CET")
 
-  ecokit::cat_time("Starting `predict_latent_factor` function", level = 1L)
+  ecokit::cat_time(
+    "Starting `predict_latent_factor` function", level = 1L, verbose = verbose)
 
   # # ..................................................................... ###
 
@@ -144,7 +140,7 @@ predict_latent_factor <- function(
   # Load postEta if it is a file path
 
   if (inherits(postEta, "character")) {
-    ecokit::cat_time("Load postEta", level = 1L)
+    ecokit::cat_time("Load postEta", level = 1L, verbose = verbose)
     if (!file.exists(postEta)) {
       ecokit::stop_ctx(
         "The specified path for `postEta` does not exist. ", postEta = postEta,
@@ -189,7 +185,8 @@ predict_latent_factor <- function(
   if (AllTraining) {
     # If all input sites are for training sites, use LF info from the model
     # directly
-    ecokit::cat_time("All input sites are training sites", level = 1L)
+    ecokit::cat_time(
+      "All input sites are training sites", level = 1L, verbose = verbose)
 
     postEtaPred <- purrr::map(
       .x = postEta,
@@ -201,7 +198,8 @@ predict_latent_factor <- function(
 
   } else {
 
-    ecokit::cat_time("All input sites are new sites", level = 1L)
+    ecokit::cat_time(
+      "All input sites are new sites", level = 1L, verbose = verbose)
 
     # Check TensorFlow settings
 
@@ -219,9 +217,12 @@ predict_latent_factor <- function(
       # Suppress TensorFlow warnings and disable optimizations
       Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3", TF_ENABLE_ONEDNN_OPTS = "0")
 
-      ecokit::cat_time("Computations will be made using TensorFlow", level = 1L)
+      ecokit::cat_time(
+        "Computations will be made using TensorFlow", level = 1L,
+        verbose = verbose)
     } else {
-      ecokit::cat_time("Computations will be made using R/CPP", level = 1L)
+      ecokit::cat_time(
+        "Computations will be made using R/CPP", level = 1L, verbose = verbose)
     }
 
     # # .................................................................... ###
@@ -247,7 +248,8 @@ predict_latent_factor <- function(
 
     # Calculate D11 and D12 only once
 
-    ecokit::cat_time("Calculate/save necessary matrices", level = 1L)
+    ecokit::cat_time(
+      "Calculate/save necessary matrices", level = 1L, verbose = verbose)
 
     alphapw <- LF_rL$alphapw      # nolint: object_name_linter
 
@@ -262,10 +264,13 @@ predict_latent_factor <- function(
         ecokit::check_data(Path_s2, warning = FALSE)
 
       if (s1_s2_Okay) {
-        ecokit::cat_time("s1 and s2 matrices were already saved", level = 2L)
+        ecokit::cat_time(
+          "s1 and s2 matrices were already saved",
+          level = 2L, verbose = verbose)
       } else {
 
-        ecokit::cat_time("Saving s1 and s2 matrices", level = 2L)
+        ecokit::cat_time(
+          "Saving s1 and s2 matrices", level = 2L, verbose = verbose)
 
         # s1
         s1 <- as.data.frame(LF_rL$s[units_model, , drop = FALSE])
@@ -290,7 +295,8 @@ predict_latent_factor <- function(
       if (file.exists(Path_D11) && file.exists(Path_D12)) {
 
         ecokit::cat_time(
-          "D11 and D12 distance matrices are already saved", level = 2L)
+          "D11 and D12 distance matrices are already saved",
+          level = 2L, verbose = verbose)
 
       } else {
 
@@ -321,7 +327,8 @@ predict_latent_factor <- function(
     # Convert post_alpha to tibble
 
     ecokit::cat_time(
-      "Splitting and saving `post_alpha` to small chunks", level = 1L)
+      "Splitting and saving `post_alpha` to small chunks",
+      level = 1L, verbose = verbose)
 
     # Unique combination of LF / alphapw / sample IDs
     LF_Data <- do.call(rbind, post_alpha) %>%
@@ -575,16 +582,20 @@ predict_latent_factor <- function(
 
     if (all(file.exists(LF_Data$File_etaPred))) {
       ecokit::cat_time(
-        "All LF prediction files were already created", level = 1L)
+        "All LF prediction files were already created",
+        level = 1L, verbose = verbose)
     } else {
       if (LF_n_cores == 1 || LF_commands_only) {
 
         if (LF_commands_only) {
           ecokit::cat_time(
-            "Prepare commands for predicting latent factors", level = 1L)
+            "Prepare commands for predicting latent factors",
+            level = 1L, verbose = verbose)
         } else {
           # Sequential processing
-          ecokit::cat_time("Predicting Latent Factor sequentially", level = 1L)
+          ecokit::cat_time(
+            "Predicting Latent Factor sequentially",
+            level = 1L, verbose = verbose)
         }
 
         # Making predictions sequentially
@@ -642,14 +653,16 @@ predict_latent_factor <- function(
       } else {
 
         # Parallel processing
-        ecokit::cat_time("Predicting Latent Factor in parallel", level = 1L)
+        ecokit::cat_time(
+          "Predicting Latent Factor in parallel", level = 1L, verbose = verbose)
 
         ecokit::set_parallel(
           n_cores = min(LF_n_cores, nrow(LF_Data)), level = 2L,
           future_max_size = 800L, strategy = strategy)
         withr::defer(future::plan("future::sequential", gc = TRUE))
 
-        ecokit::cat_time("Making predictions in parallel", level = 2L)
+        ecokit::cat_time(
+          "Making predictions in parallel", level = 2L, verbose = verbose)
         etaPreds <- future.apply::future_lapply(
           X = seq_len(nrow(LF_Data)),
           FUN = function(x) {
@@ -678,7 +691,8 @@ predict_latent_factor <- function(
       }
 
       # Check if all files are created
-      ecokit::cat_time("Check if all files are created", level = 1L)
+      ecokit::cat_time(
+        "Check if all files are created", level = 1L, verbose = verbose)
       AllEtaFiles <- LF_Data$File_etaPred
       AllEtaFilesExist <- all(file.exists(AllEtaFiles))
 
@@ -688,7 +702,7 @@ predict_latent_factor <- function(
           paste0(length(FailedFiles), " files are missing"),
           FailedFiles = basename(FailedFiles), include_backtrace = TRUE)
       }
-      ecokit::cat_time("All files were created", level = 2L)
+      ecokit::cat_time("All files were created", level = 2L, verbose = verbose)
 
     }
 
@@ -697,7 +711,7 @@ predict_latent_factor <- function(
     # # .................................................................... ###
 
     # Merge results
-    ecokit::cat_time("Merge results in parallel", level = 1L)
+    ecokit::cat_time("Merge results in parallel", level = 1L, verbose = verbose)
 
     postEtaPred_Samp <- etaPreds %>%
       dplyr::bind_rows() %>%
@@ -717,7 +731,9 @@ predict_latent_factor <- function(
       strategy = strategy)
     withr::defer(future::plan("future::sequential", gc = TRUE))
 
-    ecokit::cat_time("Process results for MCMC samples in parallel", level = 2L)
+    ecokit::cat_time(
+      "Process results for MCMC samples in parallel",
+      level = 2L, verbose = verbose)
 
     postEtaPred <- future.apply::future_lapply(
       X = seq_len(nrow(postEtaPred_Samp)),
@@ -756,8 +772,10 @@ predict_latent_factor <- function(
   # Save postEtaPred
 
   if (!is.null(LF_out_file)) {
-    ecokit::cat_time("Saving postEtaPred to disk", level = 1L)
-    ecokit::cat_time(LF_out_file, cat_timestamp = FALSE, level = 2L)
+    ecokit::cat_time(
+      "Saving postEtaPred to disk", level = 1L, verbose = verbose)
+    ecokit::cat_time(
+      LF_out_file, cat_timestamp = FALSE, level = 2L, verbose = verbose)
     fs::dir_create(fs::path_dir(LF_out_file))
     ecokit::save_as(
       object = postEtaPred, out_path = LF_out_file,
@@ -772,7 +790,8 @@ predict_latent_factor <- function(
   # Clean up temporary files after finishing calculations
   if (LF_temp_cleanup) {
 
-    ecokit::cat_time("Cleaning up temporary files", level = 1L)
+    ecokit::cat_time(
+      "Cleaning up temporary files", level = 1L, verbose = verbose)
 
     try(
       expr = {
@@ -814,7 +833,7 @@ predict_latent_factor <- function(
 
   ecokit::cat_diff(
     init_time = .start_time, prefix = "predict_latent_factor was finished in ",
-    level = 1L)
+    level = 1L, verbose = verbose)
 
   # # ..................................................................... ###
 

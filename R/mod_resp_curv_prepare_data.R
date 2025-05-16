@@ -86,11 +86,6 @@ resp_curv_prepare_data <- function(
 
   # # ..................................................................... ###
 
-  if (isFALSE(verbose)) {
-    sink(file = nullfile())
-    on.exit(try(sink(), silent = TRUE), add = TRUE)
-  }
-
   .start_time <- lubridate::now(tzone = "CET")
 
   if (is.null(path_model)) {
@@ -109,7 +104,7 @@ resp_curv_prepare_data <- function(
 
   # Check input arguments ------
 
-  ecokit::cat_time("Check input arguments")
+  ecokit::cat_time("Check input arguments", verbose = verbose)
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(.x = AllArgs, .f = get, envir = environment()) %>%
     stats::setNames(AllArgs)
@@ -153,7 +148,7 @@ resp_curv_prepare_data <- function(
 
   # Loading model object ------
 
-  ecokit::cat_time("Loading model object")
+  ecokit::cat_time("Loading model object", verbose = verbose)
   if (file.exists(path_model)) {
     Model <- ecokit::load_as(path_model)
     if (!inherits(Model, "Hmsc")) {
@@ -395,7 +390,7 @@ resp_curv_prepare_data <- function(
   # Extract names of the variables
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  ecokit::cat_time("Extract names of the variables")
+  ecokit::cat_time("Extract names of the variables", verbose = verbose)
   ModelVars <- stringr::str_split(
     as.character(Model$XFormula)[2], "\\+", simplify = TRUE) %>%
     stringr::str_trim()
@@ -445,7 +440,7 @@ resp_curv_prepare_data <- function(
 
     ecokit::cat_time(
       "All response curve data files were already available on disk",
-      level = 1L)
+      level = 1L, verbose = verbose)
     ResCurvDT <- purrr::map_dfr(
       .x = seq_len(nrow(ResCurvDT)), .f = PrepRCData, File_LF = File_LF)
 
@@ -456,12 +451,12 @@ resp_curv_prepare_data <- function(
         paste0(
           "Some response curve data files (", MissingRows, " of ",
           length(ResCurvDT$FileExists), ") were missing"),
-        level = 1L)
+        level = 1L, verbose = verbose)
     } else {
       ecokit::cat_time(
         paste0(
           "All response curve data (", MissingRows, ") need to be prepared"),
-        level = 1L)
+        level = 1L, verbose = verbose)
     }
 
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -472,9 +467,10 @@ resp_curv_prepare_data <- function(
 
       ecokit::info_chunk(
         message = "Get LF prediction at mean coordinates", cat_date = FALSE,
-        cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
+        cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE,
+        verbose = verbose)
 
-      ecokit::cat_time("Create gradient")
+      ecokit::cat_time("Create gradient", verbose = verbose)
       Gradient_c <- Hmsc::constructGradient(
         hM = Model, focalVariable = ResCurvDT$Variable[1],
         non.focalVariables = 1, ngrid = 20, coordinates = list(sample = "c"))
@@ -485,7 +481,7 @@ resp_curv_prepare_data <- function(
       rm(Model, envir = environment())
       invisible(gc())
 
-      ecokit::cat_time("Predicting LF")
+      ecokit::cat_time("Predicting LF", verbose = verbose)
       Model_LF <- IASDT.R::predict_hmsc(
         path_model = path_model, gradient = Gradient_c, expected = TRUE,
         n_cores = n_cores, strategy = strategy, temp_dir = temp_dir,
@@ -507,7 +503,8 @@ resp_curv_prepare_data <- function(
       ecokit::cat_time(
         paste0(
           "LF prediction will be loaded from available file: \n   >>>  ",
-          File_LF))
+          File_LF),
+        verbose = verbose)
     }
 
 
@@ -517,7 +514,7 @@ resp_curv_prepare_data <- function(
 
     ecokit::info_chunk(
       message = "Prepare response curve data", cat_date = FALSE,
-      cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
+      cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE, verbose = verbose)
 
     n_cores <- max(min(n_cores, MissingRows), 1)
 
@@ -534,7 +531,8 @@ resp_curv_prepare_data <- function(
     # Prepare response curve data in parallel
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-    ecokit::cat_time("Prepare response curve data in parallel")
+    ecokit::cat_time(
+      "Prepare response curve data in parallel", verbose = verbose)
 
     ResCurvDT <- future.apply::future_lapply(
       X = seq_len(nrow(ResCurvDT)),
@@ -556,13 +554,14 @@ resp_curv_prepare_data <- function(
 
   # # ..................................................................... ###
 
-  ecokit::cat_time("Saving data to desk")
+  ecokit::cat_time("Saving data to desk", verbose = verbose)
   save(ResCurvDT, file = fs::path(Path_RC_DT, "ResCurvDT.RData"))
 
   # # ..................................................................... ###
 
   ecokit::cat_diff(
-    init_time = .start_time, prefix = "Preparing response curve data took ")
+    init_time = .start_time, prefix = "Preparing response curve data took ",
+    verbose = verbose)
 
   if (return_data) {
     return(ResCurvDT)

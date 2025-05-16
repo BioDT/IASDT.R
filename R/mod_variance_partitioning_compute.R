@@ -89,11 +89,6 @@ variance_partitioning_compute <- function(
 
   # # .................................................................... ###
 
-  if (isFALSE(verbose)) {
-    sink(file = nullfile())
-    on.exit(sink(), add = TRUE)
-  }
-
   .start_time <- lubridate::now(tzone = "CET")
 
   # # ..................................................................... ###
@@ -156,11 +151,13 @@ variance_partitioning_compute <- function(
       if (N_GPU == 0) {
         ecokit::cat_time(
           "No GPU found; Calculations will use CPU.",
-          cat_timestamp = FALSE, cat_bold = TRUE, cat_red = TRUE)
+          cat_timestamp = FALSE, cat_bold = TRUE, cat_red = TRUE,
+          verbose = verbose)
       } else {
         ecokit::cat_time(
           paste0(N_GPU, " GPUs were found. Calculations will use GPU."),
-          cat_timestamp = FALSE, cat_bold = TRUE, cat_red = TRUE)
+          cat_timestamp = FALSE, cat_bold = TRUE, cat_red = TRUE,
+          verbose = verbose)
       }
     }
 
@@ -179,7 +176,7 @@ variance_partitioning_compute <- function(
   # # .................................................................... ###
 
   # Load model object ------
-  ecokit::cat_time("Load model object")
+  ecokit::cat_time("Load model object", verbose = verbose)
 
   if (is.null(path_model) || !file.exists(path_model)) {
     ecokit::stop_ctx(
@@ -249,7 +246,7 @@ variance_partitioning_compute <- function(
 
   # Prepare postList-----
 
-  ecokit::cat_time("Prepare postList")
+  ecokit::cat_time("Prepare postList", verbose = verbose)
   postList <- Hmsc::poolMcmcChains(Model$postList, start = start) %>%
     purrr::map(
       ~ {
@@ -305,20 +302,24 @@ variance_partitioning_compute <- function(
     if (all(c(Files_la_Exist, Files_lf_Exist, Files_lmu_Exist))) {
 
       # All feather data are already processed and available on disk
-      ecokit::cat_time("Data for `la`/`lf`/`lmu` lists were already processed")
+      ecokit::cat_time(
+        "Data for `la`/`lf`/`lmu` lists were already processed",
+        verbose = verbose)
 
     } else {
 
       ## Prepare la/lf/lmu lists using TensorFlow ----
-      ecokit::cat_time("Prepare la/lf/lmu lists using TensorFlow")
+      ecokit::cat_time(
+        "Prepare la/lf/lmu lists using TensorFlow", verbose = verbose)
 
       ### Prepare data for TensorFlow ----
-      ecokit::cat_time("Prepare data for TensorFlow", level = 1L)
+      ecokit::cat_time(
+        "Prepare data for TensorFlow", level = 1L, verbose = verbose)
 
       #### X data -----
       # needed only to calculate `geta` and `getf` functions
       if (!all(c(Files_la_Exist, Files_lf_Exist))) {
-        ecokit::cat_time("X", level = 2L)
+        ecokit::cat_time("X", level = 2L, verbose = verbose)
         Path_X <- fs::path(Path_Temp, "VP_X.feather")
         if (!file.exists(Path_X)) {
           arrow::write_feather(as.data.frame(Model$X), Path_X)
@@ -328,14 +329,14 @@ variance_partitioning_compute <- function(
       #### Tr / Gamma ------
       # needed only to calculate `geta` and `gemu` functions
       if (!all(c(Files_la_Exist, Files_lmu_Exist))) {
-        ecokit::cat_time("Tr", level = 2L)
+        ecokit::cat_time("Tr", level = 2L, verbose = verbose)
         Path_Tr <- fs::path(Path_Temp, "VP_Tr.feather")
         if (!file.exists(Path_Tr)) {
           arrow::write_feather(as.data.frame(Model$Tr), Path_Tr)
         }
 
         # Gamma - convert each list item into a column in a data frame
-        ecokit::cat_time("Gamma", level = 2L)
+        ecokit::cat_time("Gamma", level = 2L, verbose = verbose)
         Path_Gamma <- fs::path(Path_Temp, "VP_Gamma.feather")
         if (!file.exists(Path_Gamma)) {
           Gamma_data <- postList %>%
@@ -351,7 +352,7 @@ variance_partitioning_compute <- function(
       if (!Files_lf_Exist) {
         # Beta -- Each element of Beta is a matrix, so each list item is saved
         # to separate feather file
-        ecokit::cat_time("Beta", level = 2L)
+        ecokit::cat_time("Beta", level = 2L, verbose = verbose)
 
         if (!all(file.exists(Beta_Files))) {
 
@@ -364,7 +365,8 @@ variance_partitioning_compute <- function(
             withr::defer(future::plan("future::sequential", gc = TRUE))
           }
 
-          ecokit::cat_time("Processing beta in parallel", level = 3L)
+          ecokit::cat_time(
+            "Processing beta in parallel", level = 3L, verbose = verbose)
 
           Beta0 <- future.apply::future_lapply(
             X = seq_along(postList),
@@ -398,11 +400,13 @@ variance_partitioning_compute <- function(
       if (Files_la_Exist) {
 
         ecokit::cat_time(
-          "All `la` data were already available on disk", level = 1L)
+          "All `la` data were already available on disk",
+          level = 1L, verbose = verbose)
 
       } else {
 
-        ecokit::cat_time("Processing `geta` function", level = 1L)
+        ecokit::cat_time(
+          "Processing `geta` function", level = 1L, verbose = verbose)
         Path_Out_a <- fs::path(Path_Temp, "VP_A.feather") %>%
           ecokit::normalize_path()
 
@@ -456,11 +460,13 @@ variance_partitioning_compute <- function(
       if (Files_la_Exist) {
 
         ecokit::cat_time(
-          "All `lf` data were already available on disk", level = 1L)
+          "All `lf` data were already available on disk",
+          level = 1L, verbose = verbose)
 
       } else {
 
-        ecokit::cat_time("Processing `getf` function", level = 1L)
+        ecokit::cat_time(
+          "Processing `getf` function", level = 1L, verbose = verbose)
         Path_Out_f <- fs::path(Path_Temp, "VP_F.feather") %>%
           ecokit::normalize_path()
 
@@ -513,11 +519,13 @@ variance_partitioning_compute <- function(
       if (Files_lmu_Exist) {
 
         ecokit::cat_time(
-          "All `lmu` data were already available on disk", level = 1L)
+          "All `lmu` data were already available on disk",
+          level = 1L, verbose = verbose)
 
       } else {
 
-        ecokit::cat_time("Processing `gemu` function", level = 1L)
+        ecokit::cat_time(
+          "Processing `gemu` function", level = 1L, verbose = verbose)
         Path_Out_mu <- fs::path(Path_Temp, "VP_Mu.feather") %>%
           ecokit::normalize_path()
 
@@ -573,10 +581,11 @@ variance_partitioning_compute <- function(
 
     # Prepare la/lf/lmu lists using original R code -----
 
-    ecokit::cat_time("Prepare la/lf/lmu lists using original R code")
+    ecokit::cat_time(
+      "Prepare la/lf/lmu lists using original R code", verbose = verbose)
 
     ## geta -----
-    ecokit::cat_time("Running geta", level = 1L)
+    ecokit::cat_time("Running geta", level = 1L, verbose = verbose)
     geta <- function(a) {
       switch(
         class(Model$X)[1L],
@@ -600,7 +609,7 @@ variance_partitioning_compute <- function(
 
     ## getf ------
 
-    ecokit::cat_time("Running getf", level = 1L)
+    ecokit::cat_time("Running getf", level = 1L, verbose = verbose)
     getf <- function(a) {
       switch(
         class(Model$X)[1L],
@@ -622,7 +631,7 @@ variance_partitioning_compute <- function(
 
     ## gemu ------
 
-    ecokit::cat_time("Running gemu", level = 1L)
+    ecokit::cat_time("Running gemu", level = 1L, verbose = verbose)
     gemu <- function(a) {
       res <- t(Model$Tr %*% t(a$Gamma))
       return(res)
@@ -637,7 +646,7 @@ variance_partitioning_compute <- function(
   # # .................................................................... ###
 
   # Running gebeta -------
-  ecokit::cat_time("Running gebeta")
+  ecokit::cat_time("Running gebeta", verbose = verbose)
   gebeta <- function(a) {
     res <- a$Beta
     return(res)
@@ -647,7 +656,7 @@ variance_partitioning_compute <- function(
   # # .................................................................... ###
 
   # Remove Gamma from postList ------
-  ecokit::cat_time("Remove Gamma from postList")
+  ecokit::cat_time("Remove Gamma from postList", verbose = verbose)
   postList <- purrr::map(
     postList,
     ~ {
@@ -664,9 +673,11 @@ variance_partitioning_compute <- function(
 
   if (use_TF) {
 
-    ecokit::cat_time("Computing variance partitioning in parallel")
+    ecokit::cat_time(
+      "Computing variance partitioning in parallel", verbose = verbose)
 
-    ecokit::cat_time("Split `lbeta` list into small qs2 files", level = 1L)
+    ecokit::cat_time(
+      "Split `lbeta` list into small qs2 files", level = 1L, verbose = verbose)
     path_lbeta <- fs::path(Path_Temp, "lbeta")
     purrr::walk(
       .x = seq_along(lbeta),
@@ -679,7 +690,9 @@ variance_partitioning_compute <- function(
               "lbeta_", stringr::str_pad(.x, width = 4, pad = "0"), ".qs2")))
       })
 
-    ecokit::cat_time("Split `postList` list into small qs2 files", level = 1L)
+    ecokit::cat_time(
+      "Split `postList` list into small qs2 files",
+      level = 1L, verbose = verbose)
     path_postList <- fs::path(Path_Temp, "postList")
     purrr::walk(
       .x = seq_along(postList),
@@ -693,7 +706,8 @@ variance_partitioning_compute <- function(
       })
 
     ecokit::cat_time(
-      "removing `postList` and `lbeta` list objects", level = 1L)
+      "removing `postList` and `lbeta` list objects",
+      level = 1L, verbose = verbose)
     n_postList <- length(postList)
     rm(postList, lbeta, envir = environment())
     invisible(gc())
@@ -707,7 +721,7 @@ variance_partitioning_compute <- function(
       withr::defer(future::plan("future::sequential", gc = TRUE))
     }
 
-    ecokit::cat_time("Processing in parallel", level = 1L)
+    ecokit::cat_time("Processing in parallel", level = 1L, verbose = verbose)
 
     Res <- future.apply::future_lapply(
       X = seq_len(n_postList),
@@ -823,7 +837,7 @@ variance_partitioning_compute <- function(
     }
 
     # Summarise the results
-    ecokit::cat_time("Summarise the results", level = 1L)
+    ecokit::cat_time("Summarise the results", level = 1L, verbose = verbose)
     fixed <- Reduce("+", purrr::map(Res, ~ .x$fixed)) / poolN
     random <- Reduce("+", purrr::map(Res, ~ .x$random)) / poolN
     fixedsplit <- Reduce("+", purrr::map(Res, ~ .x$fixedsplit)) / poolN
@@ -832,7 +846,8 @@ variance_partitioning_compute <- function(
 
   } else {
 
-    ecokit::cat_time("Computing variance partitioning sequentially")
+    ecokit::cat_time(
+      "Computing variance partitioning sequentially", verbose = verbose)
 
     mm <- methods::getMethod("%*%", "Matrix")
 
@@ -845,7 +860,8 @@ variance_partitioning_compute <- function(
     for (i in seq_len(poolN)) {
 
       if (i %% 200 == 0) {
-        ecokit::cat_time(sprintf("Processing iteration %d of %d", i, poolN))
+        ecokit::cat_time(
+          sprintf("Processing iteration %d of %d", i, poolN), verbose = verbose)
       }
 
       DT_la <- la[[i]]
@@ -955,7 +971,7 @@ variance_partitioning_compute <- function(
   # # .................................................................... ###
 
   # Save the results
-  ecokit::cat_time("Save the variance partitioning results")
+  ecokit::cat_time("Save the variance partitioning results", verbose = verbose)
 
   File_VarPar <- fs::path(Path_VarPar, paste0(VP_file, ".RData"))
   ecokit::save_as(object = VP, object_name = VP_file, out_path = File_VarPar)
@@ -966,7 +982,7 @@ variance_partitioning_compute <- function(
 
   if (temp_cleanup) {
 
-    ecokit::cat_time("Clean up temporary files")
+    ecokit::cat_time("Clean up temporary files", verbose = verbose)
 
     if (use_TF) {
 
@@ -1011,7 +1027,7 @@ variance_partitioning_compute <- function(
 
   # # .................................................................... ###
 
-  ecokit::cat_diff(init_time = .start_time)
+  ecokit::cat_diff(init_time = .start_time, verbose = verbose)
 
   return(VP)
 }

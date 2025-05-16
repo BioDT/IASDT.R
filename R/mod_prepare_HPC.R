@@ -281,20 +281,18 @@ mod_prepare_HPC <- function(
     Path_PA <- NAME_ENGL <- NSp <- Species_File <- File <- ias_id <-
     PA <- PA_model <- PA_file <- PA_model_file <- path_model <- NULL
 
-  if (isFALSE(verbose_progress)) {
-    sink(file = nullfile())
-    on.exit(sink(), add = TRUE)
-  }
-
   Path_Python <- fs::path(path_Hmsc, "Scripts", "python.exe")
 
-  ecokit::info_chunk("Preparing data for Hmsc-HPC models", line_char = "=")
+  ecokit::info_chunk(
+    "Preparing data for Hmsc-HPC models", line_char = "=",
+    verbose = verbose_progress)
 
   # # |||||||||||||||||||||||||||||||||||
   # Load/check environment variables -----
   # # |||||||||||||||||||||||||||||||||||
 
-  ecokit::cat_time("Load and check environment variables")
+  ecokit::cat_time(
+    "Load and check environment variables", verbose = verbose_progress)
 
   EnvVars2Read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
@@ -348,7 +346,7 @@ mod_prepare_HPC <- function(
   # Check input arguments ----
   # # |||||||||||||||||||||||||||||||||||
 
-  ecokit::cat_time("Checking input arguments")
+  ecokit::cat_time("Checking input arguments", verbose = verbose_progress)
 
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(
@@ -426,7 +424,8 @@ mod_prepare_HPC <- function(
   # File paths - Creating missing paths ----
   # # |||||||||||||||||||||||||||||||||||
 
-  ecokit::cat_time("File paths - Creating missing paths")
+  ecokit::cat_time(
+    "File paths - Creating missing paths", verbose = verbose_progress)
   fs::dir_create(fs::path(path_model, "InitMod4HPC"))
   fs::dir_create(fs::path(path_model, "Model_Fitting_HPC"))
   # Also create directory for SLURM outputs
@@ -443,7 +442,7 @@ mod_prepare_HPC <- function(
   # # Prepare list of predictors -----
   # # |||||||||||||||||||||||||||||||||||
 
-  ecokit::cat_time("Prepare list of predictors")
+  ecokit::cat_time("Prepare list of predictors", verbose = verbose_progress)
 
   # Check bio_variables values
   if (isFALSE(all(bio_variables %in% IASDT.R::CHELSA_variables$Variable))) {
@@ -476,7 +475,7 @@ mod_prepare_HPC <- function(
   # # Preparing input data -----
   # # |||||||||||||||||||||||||||||||||||
 
-  ecokit::cat_time("Preparing input data")
+  ecokit::cat_time("Preparing input data", verbose = verbose_progress)
   ValidHabAbbs <- c(0:3, "4a", "4b", 10, "12a", "12b")
   if (isFALSE(as.character(hab_abb) %in% ValidHabAbbs)) {
     ecokit::stop_ctx(
@@ -492,7 +491,9 @@ mod_prepare_HPC <- function(
     "10_Wetland", "12a_Ruderal_habitats", "12b_Agricultural_habitats") %>%
     stringr::str_subset(paste0("^", as.character(hab_abb), "_"))
 
-  ecokit::info_chunk("Preparing input data using IASDT.R::mod_prepare_data")
+  ecokit::info_chunk(
+    "Preparing input data using IASDT.R::mod_prepare_data",
+    verbose = verbose_progress)
 
   DT_All <- IASDT.R::mod_prepare_data(
     hab_abb = hab_abb, directory_name = directory_name,
@@ -503,7 +504,8 @@ mod_prepare_HPC <- function(
     env_file = env_file, verbose_progress = verbose_progress)
 
   ecokit::cat_sep(
-    n_separators = 1L, sep_lines_before = 1L, sep_lines_after = 2L)
+    n_separators = 1L, sep_lines_before = 1L, sep_lines_after = 2L,
+    verbose = verbose_progress)
 
   # # ..................................................................... ###
 
@@ -511,7 +513,7 @@ mod_prepare_HPC <- function(
   # # Subsetting study area -----
   # # |||||||||||||||||||||||||||||||||||
 
-  ecokit::cat_time("Subsetting study area")
+  ecokit::cat_time("Subsetting study area", verbose = verbose_progress)
 
   if (!is.null(model_country)) {
 
@@ -527,7 +529,7 @@ mod_prepare_HPC <- function(
     ecokit::cat_time(
       paste0(
         "Subsetting data to: ", paste(sort(model_country), collapse = " & ")),
-      level = 1L)
+      level = 1L, verbose = verbose_progress)
 
     Sample_ExclSp <- dplyr::filter(DT_All, Country %in% model_country) %>%
       dplyr::summarise(
@@ -539,7 +541,8 @@ mod_prepare_HPC <- function(
       dplyr::pull(Sp)
 
     ecokit::cat_time(
-      paste0(length(Sample_ExclSp), " species are excluded"), level = 1L)
+      paste0(length(Sample_ExclSp), " species are excluded"), level = 1L,
+      verbose = verbose_progress)
     DT_All <- dplyr::filter(DT_All, Country %in% model_country) %>%
       dplyr::select(-tidyselect::all_of(Sample_ExclSp))
 
@@ -547,7 +550,8 @@ mod_prepare_HPC <- function(
     ## Plotting subsetted data -----
     # # |||||||||||||||||||||||||||||||||||
 
-    ecokit::cat_time("Plotting subsetted data", level = 1L)
+    ecokit::cat_time(
+      "Plotting subsetted data", level = 1L, verbose = verbose_progress)
 
     NSpSubset <- DT_All %>%
       dplyr::mutate(
@@ -639,7 +643,9 @@ mod_prepare_HPC <- function(
     rm(Limits, NSpPerGrid_Sub, EU_Bound_sub, envir = environment())
 
   } else {
-    ecokit::cat_time("No data subsetting was implemented", level = 1L)
+    ecokit::cat_time(
+      "No data subsetting was implemented", level = 1L,
+      verbose = verbose_progress)
   }
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -648,14 +654,16 @@ mod_prepare_HPC <- function(
   # # Exclude grid cells with low number of presences -----
   # # |||||||||||||||||||||||||||||||||||
 
-  ecokit::cat_time("Exclude grid cells with low number of presences")
+  ecokit::cat_time(
+    "Exclude grid cells with low number of presences",
+    verbose = verbose_progress)
 
   if (n_species_per_grid == 0) {
     ecokit::cat_time(
       paste0(
         "All grid cells, irrespective of number of species ",
         "presence, will be considered"),
-      level = 1L, cat_timestamp = FALSE)
+      level = 1L, cat_timestamp = FALSE, verbose = verbose_progress)
   } else {
     EmptyGridsID <- dplyr::select(DT_All, tidyselect::starts_with("Sp_")) %>%
       rowSums() %>%
@@ -668,7 +676,7 @@ mod_prepare_HPC <- function(
         paste0(
           "Excluding grid cells with < ", n_species_per_grid,
           " species presence"),
-        level = 1L)
+        level = 1L, verbose = verbose_progress)
       DT_All <- dplyr::slice(DT_All, EmptyGridsID)
     }
   }
@@ -679,7 +687,7 @@ mod_prepare_HPC <- function(
   # # Cross-validation ----
   # # |||||||||||||||||||||||||||||||||||
 
-  ecokit::cat_time("Prepare cross-validation folds")
+  ecokit::cat_time("Prepare cross-validation folds", verbose = verbose_progress)
 
   DT_All <- IASDT.R::mod_CV_prepare(
     input_data = DT_All, env_file = env_file, x_vars = XVars,
@@ -698,13 +706,16 @@ mod_prepare_HPC <- function(
   # # Response - Y matrix ----
   # # |||||||||||||||||||||||||||||||||||
 
-  ecokit::cat_time("Response - Y matrix")
+  ecokit::cat_time("Response - Y matrix", verbose = verbose_progress)
   DT_y <- dplyr::select(DT_All, tidyselect::starts_with("Sp_")) %>%
     as.data.frame()
   ecokit::cat_time(
-    paste0(ncol(DT_y), " species"), level = 1L, cat_timestamp = FALSE)
+    paste0(ncol(DT_y), " species"), level = 1L, cat_timestamp = FALSE,
+    verbose = verbose_progress)
 
-  ecokit::cat_time("Save species summary", level = 1L, cat_timestamp = FALSE)
+  ecokit::cat_time(
+    "Save species summary", level = 1L, cat_timestamp = FALSE,
+    verbose = verbose_progress)
   SpSummary <- fs::path(Path_PA, "Sp_PA_Summary_DF.RData")
   if (!file.exists(SpSummary)) {
     ecokit::stop_ctx(
@@ -730,14 +741,15 @@ mod_prepare_HPC <- function(
   # function. Setting the environment of the formula as an empty environment
   # release this unnecessary size. https://stackoverflow.com/questions/66241212
 
-  ecokit::cat_time("Xformula")
+  ecokit::cat_time("Xformula", verbose = verbose_progress)
 
   if (is.null(quadratic_variables)) {
     FormVars <- XVars
     ecokit::cat_time(
       paste0(
         "Models will be fitted using ", length(XVars), " predictors: ",
-        paste(XVars, collapse = " + ")), level = 1L, cat_timestamp = FALSE)
+        paste(XVars, collapse = " + ")), level = 1L,
+        cat_timestamp = FALSE, verbose = verbose_progress)
   } else {
     OnlyLinear <- setdiff(XVars, quadratic_variables)
     FormVars <- c(
@@ -745,20 +757,22 @@ mod_prepare_HPC <- function(
       paste0("stats::poly(", quadratic_variables, ", degree = 2, raw = TRUE)"))
 
     ecokit::cat_time(
-      "Models will be fitted using:", level = 1L, cat_timestamp = FALSE)
+      "Models will be fitted using:", level = 1L, cat_timestamp = FALSE,
+      verbose = verbose_progress)
 
     ecokit::cat_time(
       paste0(length(OnlyLinear), " linear effect: "),
-      level = 2L, cat_timestamp = FALSE)
+      level = 2L, cat_timestamp = FALSE, verbose = verbose_progress)
     ecokit::cat_time(
-      paste(OnlyLinear, collapse = " + "), level = 3L, cat_timestamp = FALSE)
+      paste(OnlyLinear, collapse = " + "), level = 3L, cat_timestamp = FALSE,
+      verbose = verbose_progress)
 
     ecokit::cat_time(
       paste0(length(quadratic_variables), " linear and quadratic effects: "),
-      level = 2L, cat_timestamp = FALSE)
+      level = 2L, cat_timestamp = FALSE, verbose = verbose_progress)
     ecokit::cat_time(
       paste(quadratic_variables, collapse = " + "),
-      level = 3L, cat_timestamp = FALSE)
+      level = 3L, cat_timestamp = FALSE, verbose = verbose_progress)
 
   }
 
@@ -775,7 +789,7 @@ mod_prepare_HPC <- function(
   # # Phylogenetic tree data -----
   # # |||||||||||||||||||||||||||||||||||
 
-  ecokit::cat_time("Phylogenetic tree data")
+  ecokit::cat_time("Phylogenetic tree data", verbose = verbose_progress)
 
   if (use_phylo_tree) {
     # Taxonomy as a proxy for phylogeny
@@ -800,7 +814,7 @@ mod_prepare_HPC <- function(
 
   ecokit::cat_time(
     paste0("Models will be fitted using ", paste(Tree, collapse = " & ")),
-    level = 1L, cat_timestamp = FALSE)
+    level = 1L, cat_timestamp = FALSE, verbose = verbose_progress)
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -810,14 +824,16 @@ mod_prepare_HPC <- function(
 
   if (GPP) {
 
-    ecokit::cat_time("Spatial info and random effect")
+    ecokit::cat_time(
+      "Spatial info and random effect", verbose = verbose_progress)
     studyDesign <- data.frame(sample = as.factor(seq_len(nrow(DT_x))))
 
     DT_xy <- as.matrix(dplyr::select(DT_All, x, y))
     rownames(DT_xy) <- studyDesign$sample
 
     # Prepare GPP knots
-    ecokit::cat_time("Preparing GPP knots", level = 1L)
+    ecokit::cat_time(
+      "Preparing GPP knots", level = 1L, verbose = verbose_progress)
 
     NCores_GPP <- length(GPP_dists)
 
@@ -828,7 +844,8 @@ mod_prepare_HPC <- function(
         strategy = strategy)
       withr::defer(future::plan("future::sequential", gc = TRUE))
 
-      ecokit::cat_time("Prepare GPP knots", level = 2L)
+      ecokit::cat_time(
+        "Prepare GPP knots", level = 2L, verbose = verbose_progress)
       GPP_Knots <- future.apply::future_lapply(
         X = GPP_dists * 1000,
         FUN = function(x) {
@@ -848,7 +865,8 @@ mod_prepare_HPC <- function(
     } else {
 
       ecokit::cat_time(
-        "Working sequentially", cat_timestamp = FALSE, level = 2L)
+        "Working sequentially", cat_timestamp = FALSE, level = 2L,
+        verbose = verbose_progress)
 
       GPP_Knots <- purrr::map(
         .x = GPP_dists * 1000,
@@ -861,7 +879,8 @@ mod_prepare_HPC <- function(
 
     ## Plotting knot location ----
     if (GPP_plot) {
-      ecokit::cat_time("Plotting GPP knots", level = 1L)
+      ecokit::cat_time(
+        "Plotting GPP knots", level = 1L, verbose = verbose_progress)
 
       GridR <- terra::unwrap(ecokit::load_as(Path_GridR))
 
@@ -927,12 +946,15 @@ mod_prepare_HPC <- function(
     }
 
     if (GPP_save) {
-      ecokit::cat_time("Saving GPP knots data", level = 1L)
+      ecokit::cat_time(
+        "Saving GPP knots data", level = 1L, verbose = verbose_progress)
       save(GPP_Knots, file = fs::path(path_model, "GPP_Knots.RData"))
     }
   } else {
 
-    ecokit::cat_time("Models will be fitted without spatial random effect")
+    ecokit::cat_time(
+      "Models will be fitted without spatial random effect",
+      verbose = verbose_progress)
     GPP_Knots <- studyDesign <- DT_xy <- NULL
   }
 
@@ -942,7 +964,7 @@ mod_prepare_HPC <- function(
   # # Define the initial models -----
   # # |||||||||||||||||||||||||||||||||||
 
-  ecokit::cat_time("Define the initial models")
+  ecokit::cat_time("Define the initial models", verbose = verbose_progress)
 
   if (GPP) {
 
@@ -1057,22 +1079,24 @@ mod_prepare_HPC <- function(
   # # Prepare and save unfitted models -----
   # # |||||||||||||||||||||||||||||||||||
 
-  ecokit::cat_time("Save unfitted models")
+  ecokit::cat_time("Save unfitted models", verbose = verbose_progress)
 
   if (overwrite_rds) {
-    ecokit::cat_time("Processing all model variants", level = 1L)
+    ecokit::cat_time(
+      "Processing all model variants", level = 1L, verbose = verbose_progress)
   } else {
 
     NMod2Export <- sum(!file.exists(Model_Info$M4HPC_Path))
 
     if (NMod2Export == 0) {
       ecokit::cat_time(
-        "All model variants were already available as RDS files", level = 1L)
+        "All model variants were already available as RDS files", level = 1L,
+        verbose = verbose_progress)
     } else {
       ecokit::cat_time(
         paste0(
           NMod2Export, " model variants need to be exported as RDS files"),
-        level = 1L)
+        level = 1L, verbose = verbose_progress)
     }
   }
 
@@ -1142,13 +1166,14 @@ mod_prepare_HPC <- function(
   Failed2Export <- dplyr::filter(Model_Info, !file.exists(M4HPC_Path))
   if (nrow(Failed2Export) == 0) {
     ecokit::cat_time(
-      "All model variants were exported as RDS files", level = 1L)
+      "All model variants were exported as RDS files", level = 1L,
+      verbose = verbose_progress)
   } else {
     ecokit::cat_time(
       paste0(
         nrow(Failed2Export),
         " model variants failed to be exported to rds files after 5 tries."),
-      level = 1L)
+      level = 1L, verbose = verbose_progress)
     save(Failed2Export, file = fs::path(path_model, "Failed2Export.RData"))
     readr::write_tsv(
       x = Failed2Export, file = fs::path(path_model, "Failed2Export.txt"))
@@ -1158,7 +1183,8 @@ mod_prepare_HPC <- function(
   # # Prepare Hmsc-HPC fitting commands -----
   # # |||||||||||||||||||||||||||||||||||
 
-  ecokit::cat_time("Prepare Hmsc-HPC fitting commands")
+  ecokit::cat_time(
+    "Prepare Hmsc-HPC fitting commands", verbose = verbose_progress)
 
   Model_Info <- Model_Info %>%
     dplyr::mutate(Chain = list(seq_len(MCMC_n_chains))) %>%
@@ -1256,7 +1282,7 @@ mod_prepare_HPC <- function(
   # # |||||||||||||||||||||||||||||||||||
 
   if (skip_fitted) {
-    ecokit::cat_time("Skip fitted models")
+    ecokit::cat_time("Skip fitted models", verbose = verbose_progress)
     Models2Fit_HPC <- dplyr::filter(Model_Info, Post_Missing) %>%
       dplyr::pull(Command_HPC) %>%
       unlist()
@@ -1272,9 +1298,12 @@ mod_prepare_HPC <- function(
   # # Save commands in a text file -----
   # # |||||||||||||||||||||||||||||||||||
 
-  ecokit::cat_time("Save model fitting commands to text file(s)")
+  ecokit::cat_time(
+    "Save model fitting commands to text file(s)", verbose = verbose_progress)
 
-  ecokit::cat_time("Save fitting commands for windows PC", level = 1L)
+  ecokit::cat_time(
+    "Save fitting commands for windows PC", level = 1L,
+    verbose = verbose_progress)
   f <- file(
     description = fs::path(path_model, "Commands_All_Windows.txt"),
     open = "wb")
@@ -1283,7 +1312,8 @@ mod_prepare_HPC <- function(
   close(f)
 
 
-  ecokit::cat_time("Save fitting commands for HPC", level = 1L)
+  ecokit::cat_time(
+    "Save fitting commands for HPC", level = 1L, verbose = verbose_progress)
   NJobs <- length(Models2Fit_HPC)
 
   if (NJobs > n_array_jobs) {
@@ -1295,7 +1325,9 @@ mod_prepare_HPC <- function(
   }
 
   # Save all fitting commands to single file
-  ecokit::cat_time("Save all fitting commands to single file", level = 1L)
+  ecokit::cat_time(
+    "Save all fitting commands to single file",
+    level = 1L, verbose = verbose_progress)
   f <- file(
     description = fs::path(path_model, "Commands_All.txt"),
     open = "wb")
@@ -1305,10 +1337,11 @@ mod_prepare_HPC <- function(
 
   # Save model fitting commands for batch SLURM jobs
   ecokit::cat_time(
-    "Save model fitting commands for batch SLURM jobs", level = 1L)
+    "Save model fitting commands for batch SLURM jobs", level = 1L,
+    verbose = verbose_progress)
   ecokit::cat_time(
     paste0("Models will be fitted in ", NSplits, " SLURM job(s)"),
-    level = 2L, cat_timestamp = FALSE)
+    level = 2L, cat_timestamp = FALSE, verbose = verbose_progress)
 
   purrr::walk(
     .x = seq_len(NSplits),
@@ -1336,7 +1369,7 @@ mod_prepare_HPC <- function(
   # # Save data to disk -----
   # # |||||||||||||||||||||||||||||||||||
 
-  ecokit::cat_time("Save data to disk")
+  ecokit::cat_time("Save data to disk", verbose = verbose_progress)
 
   SetChainName <- function(Obj, Chain) {
     if (is.null(Obj) || is.null(Chain)) {
@@ -1373,7 +1406,7 @@ mod_prepare_HPC <- function(
   # # |||||||||||||||||||||||||||||||||||
 
   if (SLURM_prepare) {
-    ecokit::cat_time("Preparing SLURM file")
+    ecokit::cat_time("Preparing SLURM file", verbose = verbose_progress)
     if (is.null(job_name)) {
       job_name <- stringr::str_remove_all(
         basename(path_model), paste0("_", HabVal))
@@ -1388,7 +1421,7 @@ mod_prepare_HPC <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Save PA maps to disk
-  ecokit::cat_time("Save PA maps to disk")
+  ecokit::cat_time("Save PA maps to disk", verbose = verbose_progress)
 
   # Mask layer for grid cells used in the models
   Model_Mask <- ecokit::load_as(Path_GridR) %>%      # nolint: object_name_linter
@@ -1397,7 +1430,9 @@ mod_prepare_HPC <- function(
   # Whether to use masked (exclude_cultivated) or full PA
   PA_Layer <- dplyr::if_else(exclude_cultivated, "PA_Masked", "PA")      # nolint: object_name_linter
 
-  ecokit::cat_time("Processing and exporting maps as tif files", level = 1L)
+  ecokit::cat_time(
+    "Processing and exporting maps as tif files", level = 1L,
+    verbose = verbose_progress)
   Mod_PA <- SpSummary %>%
     # Select only species name and ID
     dplyr::select(ias_id = IAS_ID, Species_File) %>%
@@ -1432,14 +1467,17 @@ mod_prepare_HPC <- function(
     tidyr::unnest(cols = "Map_Sp") %>%
     dplyr::select(-Species_File, -File)
 
-  ecokit::cat_time("Calculate species richness - full", level = 1L)
+  ecokit::cat_time(
+    "Calculate species richness - full", level = 1L, verbose = verbose_progress)
   SR_file <- fs::path(Path_Dist, "SR_full.tif")
   SR <- purrr::map(Mod_PA$PA, terra::unwrap) %>%
     terra::rast() %>%
     sum(na.rm = TRUE)
   terra::writeRaster(SR, SR_file, overwrite = TRUE)
 
-  ecokit::cat_time("Calculate species richness - modelling", level = 1L)
+  ecokit::cat_time(
+    "Calculate species richness - modelling", level = 1L,
+    verbose = verbose_progress)
   SR_model_file <- fs::path(Path_Dist, "SR_model.tif")
   SR_model <- purrr::map(Mod_PA$PA_model, terra::unwrap) %>%
     terra::rast() %>%
@@ -1453,18 +1491,20 @@ mod_prepare_HPC <- function(
     terra::unwrap(SR_model), SR_model_file) %>%
     dplyr::bind_rows(Mod_PA)
 
-  ecokit::cat_time("Save maps as RData", level = 1L)
+  ecokit::cat_time("Save maps as RData", level = 1L, verbose = verbose_progress)
   ecokit::save_as(
     object = Mod_PA, object_name = "PA_with_maps",
     out_path = fs::path(Path_Dist, "PA_with_maps.RData"))
 
-  ecokit::cat_time("Save maps without maps as RData", level = 1L)
+  ecokit::cat_time(
+    "Save maps without maps as RData", level = 1L, verbose = verbose_progress)
   Mod_PA <- dplyr::select(Mod_PA, -PA, -PA_model)
   ecokit::save_as(
     object = Mod_PA, object_name = "PA",
     out_path = fs::path(Path_Dist, "PA.RData"))
 
-  ecokit::cat_time("Save only paths text file", level = 1L)
+  ecokit::cat_time(
+    "Save only paths text file", level = 1L, verbose = verbose_progress)
   Mod_PA %>%
     dplyr::mutate(
       PA_file = basename(PA_file),
@@ -1475,7 +1515,8 @@ mod_prepare_HPC <- function(
       fileEncoding = "UTF-8")
 
   # Save maps as tar file
-  ecokit::cat_time("Save maps as single tar file", level = 1L)
+  ecokit::cat_time(
+    "Save maps as single tar file", level = 1L, verbose = verbose_progress)
   # Path of the tar file
   tar_file <- fs::path(Path_Dist, "PA_maps.tar")
   # list of files to tar
@@ -1508,7 +1549,8 @@ mod_prepare_HPC <- function(
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   ecokit::cat_diff(
-    init_time = .start_time, prefix = "Processing modelling data took ")
+    init_time = .start_time, prefix = "Processing modelling data took ",
+    verbose = verbose_progress)
 
   return(invisible(NULL))
 }

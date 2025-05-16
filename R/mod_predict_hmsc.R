@@ -81,11 +81,6 @@ predict_hmsc <- function(
 
   # # ..................................................................... ###
 
-  if (isFALSE(verbose)) {
-    sink(file = nullfile())
-    on.exit(try(sink(), silent = TRUE), add = TRUE)
-  }
-
   .start_time <- lubridate::now(tzone = "CET")
 
   if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
@@ -156,7 +151,7 @@ predict_hmsc <- function(
   }
 
   if (is.null(prediction_type) || prediction_type == "c") {
-    ecokit::cat_time("Creating/checking output paths")
+    ecokit::cat_time("Creating/checking output paths", verbose = verbose)
     fs::dir_create(c(temp_dir, pred_directory))
     if (evaluate) {
       fs::dir_create(evaluation_directory)
@@ -177,21 +172,21 @@ predict_hmsc <- function(
 
   # Load model if it is a character
   if (inherits(path_model, "character")) {
-    ecokit::cat_time("Load model object")
+    ecokit::cat_time("Load model object", verbose = verbose)
     Model <- ecokit::load_as(path_model)
   }
 
   # # ..................................................................... ###
 
   # Combines a list of single or several MCMC chains into a single chain
-  ecokit::cat_time("Combine list of posteriors")
+  ecokit::cat_time("Combine list of posteriors", verbose = verbose)
   post <- Hmsc::poolMcmcChains(Model$postList)
   studyDesign <- Model$studyDesign
   ranLevels <- Model$ranLevels
 
   # # ..................................................................... ###
 
-  ecokit::cat_time("Check input parameters")
+  ecokit::cat_time("Check input parameters", verbose = verbose)
 
   if (!is.null(gradient)) {
     if (!is.null(Yc)) {
@@ -338,7 +333,7 @@ predict_hmsc <- function(
   # # ..................................................................... ###
 
   # free some memory
-  ecokit::cat_time("Free some memory")
+  ecokit::cat_time("Free some memory", verbose = verbose)
   Model$postList <- Model$YScaled <- Model$X <- Model$XScaled <- NULL
 
   Mod_nr <- Model$nr
@@ -350,7 +345,7 @@ predict_hmsc <- function(
   if (!file.exists(Model_File_small)) {
     ecokit::cat_time(
       "Save smaller version of the model object to disk",
-      level = 1L)
+      level = 1L, verbose = verbose)
     ecokit::save_as(object = Model, out_path = Model_File_small)
   }
   rm(Model, envir = environment())
@@ -358,7 +353,7 @@ predict_hmsc <- function(
 
   # # ..................................................................... ###
 
-  ecokit::cat_time("Predict Latent Factor")
+  ecokit::cat_time("Predict Latent Factor", verbose = verbose)
 
   predPostEta <- vector("list", Mod_nr)
   PiNew <- matrix(NA, nrow(dfPiNew), Mod_nr)
@@ -380,7 +375,7 @@ predict_hmsc <- function(
         if (r == 1) {
           ecokit::cat_time(
             "LF prediction for response curve with infinite coordinates",
-            level = 1L)
+            level = 1L, verbose = verbose)
         }
         nLF <- length(post[[1]]$Alpha[[1]])
         predPostEta[[r]] <- replicate(
@@ -407,7 +402,7 @@ predict_hmsc <- function(
         temp_dir, paste0(model_name, "_r", r, "_postEta.qs2"))
 
       if (isFALSE(ecokit::check_data(postEta_file, warning = FALSE))) {
-        ecokit::cat_time("Save postEta to file", level = 1L)
+        ecokit::cat_time("Save postEta to file", level = 1L, verbose = verbose)
         postEta <- lapply(post, function(c) c$Eta[[r]])
         ecokit::save_as(object = postEta, out_path = postEta_file)
         rm(postEta, envir = environment())
@@ -424,7 +419,7 @@ predict_hmsc <- function(
             x$Eta <- x$Psi <- x$V <- x$Delta <- x$Gamma <- x$rho <- NULL
             x
           })
-          ecokit::cat_time("Save post to file", level = 1L)
+          ecokit::cat_time("Save post to file", level = 1L, verbose = verbose)
           ecokit::save_as(object = post, out_path = post_file)
         }
         rm(post, envir = environment())
@@ -433,7 +428,8 @@ predict_hmsc <- function(
 
       if (r == 1) {
         ecokit::cat_time(
-          "LF prediction using `predict_latent_factor`", level = 1L)
+          "LF prediction using `predict_latent_factor`",
+          level = 1L, verbose = verbose)
       }
 
       predPostEta[[r]] <- IASDT.R::predict_latent_factor(
@@ -461,8 +457,10 @@ predict_hmsc <- function(
 
     if (is.null(prediction_type) || prediction_type == "c") {   # nolint: unneeded_nesting_linter
 
-      ecokit::cat_time("Loading LF prediction from disk", level = 1L)
-      ecokit::cat_time(LF_inputFile, level = 2L, cat_timestamp = FALSE)
+      ecokit::cat_time(
+        "Loading LF prediction from disk", level = 1L, verbose = verbose)
+      ecokit::cat_time(
+        LF_inputFile, level = 2L, cat_timestamp = FALSE, verbose = verbose)
 
       for (r in seq_len(Mod_nr)) {
         predPostEta[[r]] <- ecokit::load_as(LF_inputFile[[r]])
@@ -490,10 +488,10 @@ predict_hmsc <- function(
 
   # # ..................................................................... ###
 
-  ecokit::cat_time("Predicting")
+  ecokit::cat_time("Predicting", verbose = verbose)
 
   if (!exists("post")) {
-    ecokit::cat_time("Loading post from disk", level = 1L)
+    ecokit::cat_time("Loading post from disk", level = 1L, verbose = verbose)
     post <- ecokit::load_as(post_file)
   }
 
@@ -504,7 +502,7 @@ predict_hmsc <- function(
   if (!is.null(prediction_type)) {
     ecokit::cat_time(
       "Predicting data for response curve (sequentially)",
-      level = 1L)
+      level = 1L, verbose = verbose)
 
     preds <- lapply(
       seq_len(predN),
@@ -516,12 +514,13 @@ predict_hmsc <- function(
 
     ecokit::cat_diff(
       init_time = .start_time, prefix = "Prediction was finished in ",
-      level = 1L)
+      level = 1L, verbose = verbose)
     return(preds)
   }
 
   # Save ppEta / post as small chunks
-  ecokit::cat_time("Save ppEta / post as small chunks", level = 1L)
+  ecokit::cat_time(
+    "Save ppEta / post as small chunks", level = 1L, verbose = verbose)
   chunk_size <- 25
   ChunkIDs <- ceiling(seq_along(post) / chunk_size)
   Chunks <- purrr::map_chr(
@@ -549,7 +548,8 @@ predict_hmsc <- function(
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 
-  ecokit::cat_time("Making predictions in parallel", level = 1L)
+  ecokit::cat_time(
+    "Making predictions in parallel", level = 1L, verbose = verbose)
   pred <- future.apply::future_lapply(
     X = seq_len(length(Chunks)),
     FUN = function(Chunk) {
@@ -626,7 +626,9 @@ predict_hmsc <- function(
 
   # # ..................................................................... ###
 
-  ecokit::cat_time("Summarizing prediction outputs / Evaluation", level = 1L)
+  ecokit::cat_time(
+    "Summarizing prediction outputs / Evaluation",
+    level = 1L, verbose = verbose)
 
   Eval_DT <- dplyr::select(pred, -Chunk) %>%
     dplyr::group_nest(Sp, IAS_ID) %>%
@@ -732,7 +734,8 @@ predict_hmsc <- function(
   # # ..................................................................... ###
 
   # Save predictions for all species in a single file
-  ecokit::cat_time("Save predictions for all species in a single file")
+  ecokit::cat_time(
+    "Save predictions for all species in a single file", verbose = verbose)
 
   Eval_DT <- dplyr::bind_rows(Eval_DT)
 
@@ -766,8 +769,9 @@ predict_hmsc <- function(
     try(fs::file_delete(Eval_DT$Path_pred), silent = TRUE)
   }
 
-  ecokit::cat_time("Predictions were saved", level = 1L)
-  ecokit::cat_time(Pred_File, level = 2L, cat_timestamp = FALSE)
+  ecokit::cat_time("Predictions were saved", level = 1L, verbose = verbose)
+  ecokit::cat_time(
+    Pred_File, level = 2L, cat_timestamp = FALSE, verbose = verbose)
 
   if (evaluate) {
     if (is.null(evaluation_name)) {
@@ -786,10 +790,11 @@ predict_hmsc <- function(
     Eval_DT <- dplyr::select(Eval_DT, -Path_pred)
     ecokit::save_as(object = Eval_DT, out_path = Eval_Path)
 
-    ecokit::cat_time("Evaluation results were saved", level = 1L)
+    ecokit::cat_time(
+      "Evaluation results were saved", level = 1L, verbose = verbose)
     ecokit::cat_time(
       fs::path(evaluation_directory, "Eval_DT.qs2"),
-      level = 2L, cat_timestamp = FALSE)
+      level = 2L, cat_timestamp = FALSE, verbose = verbose)
 
   } else {
     Eval_Path <- NULL
@@ -808,7 +813,8 @@ predict_hmsc <- function(
   # Clean up
   if (temp_cleanup) {
 
-    ecokit::cat_time("Cleaning up temporary files", level = 1L)
+    ecokit::cat_time(
+      "Cleaning up temporary files", level = 1L, verbose = verbose)
 
     try(
       {
@@ -827,7 +833,8 @@ predict_hmsc <- function(
   # # ..................................................................... ###
 
   ecokit::cat_diff(
-    init_time = .start_time, prefix = "Prediction was finished in ")
+    init_time = .start_time,
+    prefix = "Prediction was finished in ", verbose = verbose)
 
   return(
     tibble::tibble(

@@ -41,11 +41,6 @@ resp_curv_plot_SR <- function(
 
   .start_time <- lubridate::now(tzone = "CET")
 
-  if (isFALSE(verbose)) {
-    sink(file = nullfile())
-    on.exit(try(sink(), silent = TRUE), add = TRUE)
-  }
-
   # # ..................................................................... ###
 
   # Avoid "no visible binding for global variable" message
@@ -57,7 +52,7 @@ resp_curv_plot_SR <- function(
 
   # # ..................................................................... ###
 
-  ecokit::cat_time("Check input arguments")
+  ecokit::cat_time("Check input arguments", verbose = verbose)
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(
     AllArgs,
@@ -69,7 +64,8 @@ resp_curv_plot_SR <- function(
 
   # # ..................................................................... ###
 
-  ecokit::cat_time("Check the existence of response curve directory")
+  ecokit::cat_time(
+    "Check the existence of response curve directory", verbose = verbose)
 
   Path_RC_DT <- fs::path(model_dir, "Model_Postprocessing", "RespCurv_DT")
   Path_RC_SR <- fs::path(model_dir, "Model_Postprocessing", "RespCurv_SR")
@@ -84,7 +80,8 @@ resp_curv_plot_SR <- function(
 
   # # ..................................................................... ###
 
-  ecokit::cat_time("Create species richness response curves")
+  ecokit::cat_time(
+    "Create species richness response curves", verbose = verbose)
 
   SR_DT_All <- fs::path(Path_RC_DT, "ResCurvDT.RData") %>%
     ecokit::load_as() %>%
@@ -101,7 +98,7 @@ resp_curv_plot_SR <- function(
     withr::defer(future::plan("future::sequential", gc = TRUE))
   }
 
-  ecokit::cat_time("Prepare data", level = 1L)
+  ecokit::cat_time("Prepare data", level = 1L, verbose = verbose)
 
   if (strategy == "future::multicore") {
     pkg_to_export <- NULL
@@ -157,7 +154,8 @@ resp_curv_plot_SR <- function(
 
   # Plot species richness response curves
 
-  ecokit::cat_time("Plot species richness response curves", level = 1L)
+  ecokit::cat_time(
+    "Plot species richness response curves", level = 1L, verbose = verbose)
 
 
   VarLabel <- tibble::tribble(
@@ -199,7 +197,8 @@ resp_curv_plot_SR <- function(
         .f = function(Variable, Quant, Observed, Trend, Coords) {
 
           ecokit::cat_time(
-            paste0(Variable, " - coords = ", Coords), level = 2L)
+            paste0(Variable, " - coords = ", Coords),
+            level = 2L, verbose = verbose)
 
           # Maximum value on the y-axis
           PlotMax <- max(Observed$Pred, Quant$Q975) * 1.05
@@ -323,7 +322,7 @@ resp_curv_plot_SR <- function(
 
             ecokit::cat_time(
               paste0(Variable, " - coords = ", Coords, " - original scale"),
-              level = 2L)
+              level = 2L, verbose = verbose)
 
             Observed2 <- dplyr::mutate(Observed, XVals = 10 ^ XVals - 0.1)
             Quant2 <- dplyr::mutate(Quant, XVals = 10 ^ XVals - 0.1)
@@ -400,7 +399,8 @@ resp_curv_plot_SR <- function(
 
   ecokit::cat_diff(
     init_time = .start_time,
-    prefix = "Plotting response curves for species richness took ")
+    prefix = "Plotting response curves for species richness took ",
+    verbose = verbose)
 
   # # ..................................................................... ###
 

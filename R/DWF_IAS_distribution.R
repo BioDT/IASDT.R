@@ -20,17 +20,12 @@ IAS_distribution <- function(
       "`species` cannot be empty", species = species, include_backtrace = TRUE)
   }
 
-  if (isFALSE(verbose)) {
-    sink(file = nullfile())
-    on.exit(try(sink(), silent = TRUE), add = TRUE)
-  }
-
-  ecokit::info_chunk(species)
+  ecokit::info_chunk(species, verbose = verbose)
 
   # # ..................................................................... ###
 
   # Checking arguments ----
-  ecokit::cat_time("Checking arguments")
+  ecokit::cat_time("Checking arguments", verbose = verbose)
 
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
@@ -55,7 +50,7 @@ IAS_distribution <- function(
   # # ..................................................................... ###
 
   # Environment variables ----
-  ecokit::cat_time("Environment variables")
+  ecokit::cat_time("Environment variables", verbose = verbose)
 
   EnvVars2Read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
@@ -78,12 +73,12 @@ IAS_distribution <- function(
   # # ..................................................................... ###
 
   # Preparing input data ----
-  ecokit::cat_time("Preparing input data")
+  ecokit::cat_time("Preparing input data", verbose = verbose)
 
   # # ................................ ###
 
   ## Current species info
-  ecokit::cat_time("Current species info", level = 1L)
+  ecokit::cat_time("Current species info", level = 1L, verbose = verbose)
 
   Species2 <- ecokit::replace_space(species)
   IAS_ID <- readr::read_tsv(
@@ -100,9 +95,10 @@ IAS_distribution <- function(
   # # ................................ ###
 
   ## Check directories ----
-  ecokit::cat_time("Check directories", level = 1L)
+  ecokit::cat_time("Check directories", level = 1L, verbose = verbose)
 
-  ecokit::cat_time("Check and create directories", level = 2L)
+  ecokit::cat_time(
+    "Check and create directories", level = 2L, verbose = verbose)
   Path_PA_Summary <- fs::path(Path_PA, "SpSummary")
   Path_PA_tif <- fs::path(Path_PA, "tif")
   Path_PA_RData <- fs::path(Path_PA, "RData")
@@ -119,7 +115,8 @@ IAS_distribution <- function(
 
   # # ................................ ###
 
-  ecokit::cat_time("Check path for EASIN and GBIF data", level = 2L)
+  ecokit::cat_time(
+    "Check path for EASIN and GBIF data", level = 2L, verbose = verbose)
   Path_GBIF_DT <- fs::path(Path_GBIF, "Sp_Data")
   Path_EASIN <- fs::path(Path_EASIN, "Sp_DT")
 
@@ -137,14 +134,14 @@ IAS_distribution <- function(
 
   # # ................................ ###
 
-  ecokit::cat_time("eLTER data", level = 1L)
+  ecokit::cat_time("eLTER data", level = 1L, verbose = verbose)
   eLTER_DT <- ecokit::load_as(Path_eLTER) %>%
     dplyr::filter(Species_name == species)
 
   # # ................................ ###
 
   # Loading reference grids ----
-  ecokit::cat_time("Loading reference grids", level = 1L)
+  ecokit::cat_time("Loading reference grids", level = 1L, verbose = verbose)
   grid_100_file <- fs::path(Path_Grid_Ref, "Grid_100_sf.RData")
   if (!file.exists(grid_100_file)) {
     ecokit::stop_ctx(
@@ -169,24 +166,24 @@ IAS_distribution <- function(
   }
 
   ### sf - 100 km ----
-  ecokit::cat_time("sf - 100 km", level = 2L)
+  ecokit::cat_time("sf - 100 km", level = 2L, verbose = verbose)
   Grid_100_sf <- ecokit::load_as(grid_100_file) %>%
     magrittr::extract2("Grid_100_sf_s")
 
   ### sf - 10 km ----
-  ecokit::cat_time("sf - 10 km - CNT", level = 2L)
+  ecokit::cat_time("sf - 10 km - CNT", level = 2L, verbose = verbose)
   Grid_10_CNT <- fs::path(
     Path_Grid, "Grid_10_Land_Crop_sf_Country.RData") %>%
     ecokit::load_as()
 
   ### raster - 10 km ----
-  ecokit::cat_time("raster - 10 km", level = 2L)
+  ecokit::cat_time("raster - 10 km", level = 2L, verbose = verbose)
   RefGrid <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData") %>%
     ecokit::load_as() %>%
     terra::unwrap()
 
   ### raster - 100 km ----
-  ecokit::cat_time("raster - 100 km", level = 2L)
+  ecokit::cat_time("raster - 100 km", level = 2L, verbose = verbose)
   Grid_100_Land <- fs::path(Path_Grid, "Grid_10_Land_sf.RData") %>%
     ecokit::load_as() %>%
     sf::st_geometry() %>%
@@ -201,7 +198,8 @@ IAS_distribution <- function(
 
   ## `PA_100km` function - species distribution at 100 km ----
   ecokit::cat_time(
-    "`PA_100km` function - species distribution at 100 km", level = 1L)
+    "`PA_100km` function - species distribution at 100 km", level = 1L,
+    verbose = verbose)
   PA_100km <- function(Sp_Sf, Grid100 = Grid_100_Land) {
     sf::st_filter(x = Grid100, y = Sp_Sf, join = sf::st_within) %>%
       dplyr::select("geometry") %>%
@@ -215,7 +213,7 @@ IAS_distribution <- function(
   ## Exclude countries with only cultivated or casual observations ----
   ecokit::cat_time(
     "Exclude countries with only cultivated or casual observations",
-    level = 1L)
+    level = 1L, verbose = verbose)
 
   # List of countries to be excluded for the current species
   Countries2Exclude <- readxl::read_xlsx(path = Path_TaxaCNT, sheet = 1) %>%
@@ -240,7 +238,7 @@ IAS_distribution <- function(
 
   ecokit::cat_time(
     paste0("There are ", length(Countries2Exclude), " countries to exclude:"),
-    level = 2L, cat_timestamp = FALSE)
+    level = 2L, cat_timestamp = FALSE, verbose = verbose)
 
   # Mask grid to exclude countries - `TRUE` for grid cells to be considered as
   # presence if present in any of the data source; `FALSE` for grid cells need
@@ -249,7 +247,7 @@ IAS_distribution <- function(
 
     ecokit::cat_time(
       paste(sort(Countries2Exclude), collapse = " + "),
-      level = 3L, cat_timestamp = FALSE)
+      level = 3L, cat_timestamp = FALSE, verbose = verbose)
 
     Mask_Keep <- Grid_10_CNT %>%
       dplyr::mutate(Keep = !(Country %in% Countries2Exclude)) %>%
@@ -271,10 +269,11 @@ IAS_distribution <- function(
   # # ..................................................................... ###
 
   # Preparing species data from the 3 sources -----
-  ecokit::cat_time("Preparing species data from the 3 sources")
+  ecokit::cat_time(
+    "Preparing species data from the 3 sources", verbose = verbose)
 
   ## 1. GBIF -----
-  ecokit::cat_time("1. GBIF", level = 1L)
+  ecokit::cat_time("1. GBIF", level = 1L, verbose = verbose)
 
   # Path for the current species GBIF data
   Path_GBIF_D <- fs::path(Path_GBIF_DT, paste0(Sp_File, ".RData"))
@@ -319,7 +318,7 @@ IAS_distribution <- function(
   # # .................................... ###
 
   ## 2. EASIN -----
-  ecokit::cat_time("2. EASIN", level = 1L)
+  ecokit::cat_time("2. EASIN", level = 1L, verbose = verbose)
 
   Path_EASIN_D <- fs::path(Path_EASIN, paste0(Sp_File, "_DT.RData"))
 
@@ -357,7 +356,7 @@ IAS_distribution <- function(
   # # .................................... ###
 
   ## 3. eLTER -----
-  ecokit::cat_time("3. eLTER", level = 1L)
+  ecokit::cat_time("3. eLTER", level = 1L, verbose = verbose)
 
   if (nrow(eLTER_DT) > 0) {
     eLTER_R <- dplyr::select(eLTER_DT, "Species_name") %>%
@@ -387,7 +386,8 @@ IAS_distribution <- function(
   # # ..................................................................... ###
 
   ## 4. Merging data from the 3 data sources -----
-  ecokit::cat_time("Merging data from the 3 data sources", level = 1L)
+  ecokit::cat_time(
+    "Merging data from the 3 data sources", level = 1L, verbose = verbose)
 
   Sp_PA <- sum(GBIF_R, EASIN_R, eLTER_R) %>%
     ecokit::raster_to_pres_abs() %>%
@@ -411,7 +411,7 @@ IAS_distribution <- function(
   # # ..................................................................... ###
 
   # Processing species data ----
-  ecokit::cat_time("Processing species data")
+  ecokit::cat_time("Processing species data", verbose = verbose)
 
   # If there is no presence grid cell for the current species, return NULL early
   if (PA_NCells_All == 0) {
@@ -422,24 +422,26 @@ IAS_distribution <- function(
 
   ## Save maps ------
 
-  ecokit::cat_time("Save species data", level = 1L)
+  ecokit::cat_time("Save species data", level = 1L, verbose = verbose)
 
   ### RData -----
-  ecokit::cat_time("`.RData`", level = 2L)
+  ecokit::cat_time("`.RData`", level = 2L, verbose = verbose)
   path_RData <- fs::path(Path_PA_RData, paste0(Sp_File, "_PA.RData"))
   ecokit::save_as(
     object = terra::wrap(Sp_PA), object_name = paste0(Sp_File, "_PA"),
     out_path = path_RData)
 
   ### tif - all presence grid cells -----
-  ecokit::cat_time("`.tif` - all presence grid cells", level = 2L)
+  ecokit::cat_time(
+    "`.tif` - all presence grid cells", level = 2L, verbose = verbose)
   terra::writeRaster(
     x = Sp_PA$PA, overwrite = TRUE,
     filename = fs::path(Path_PA_tif, paste0(Sp_File, "_All.tif")))
 
   ### tif - Excluding cultivated or casual observations -----
   ecokit::cat_time(
-    "`.tif` - Excluding cultivated or casual observations", level = 2L)
+    "`.tif` - Excluding cultivated or casual observations",
+    level = 2L, verbose = verbose)
   terra::writeRaster(
     x = Sp_PA$PA_Masked, overwrite = TRUE,
     filename = fs::path(Path_PA_tif, paste0(Sp_File, "_Masked.tif")))
@@ -450,10 +452,11 @@ IAS_distribution <- function(
   # # .................................... ###
 
   ## Biogeographical regions ----
-  ecokit::cat_time("Analysis per biogeographical regions", level = 1L)
+  ecokit::cat_time(
+    "Analysis per biogeographical regions", level = 1L, verbose = verbose)
 
   ### All -----
-  ecokit::cat_time("all data", level = 2L)
+  ecokit::cat_time("all data", level = 2L, verbose = verbose)
 
   # Number of grid per each biogeographical region
   #
@@ -495,7 +498,9 @@ IAS_distribution <- function(
   BioRegsSumm_N <- sum(Sp_BiogeoRegions > 0)
 
   ### Masked -----
-  ecokit::cat_time("Excluding cultivated or casual observations", level = 2L)
+  ecokit::cat_time(
+    "Excluding cultivated or casual observations",
+    level = 2L, verbose = verbose)
 
   BioReg_Names2 <- stringr::str_replace(
     string = BioReg_Names, pattern = "BioReg_", replacement = "BioReg_Masked_")
@@ -530,7 +535,8 @@ IAS_distribution <- function(
   # # .................................... ###
 
   ## Number of presence grid cells per data provider -----
-  ecokit::cat_time("# presence grid cells per data provider", level = 1L)
+  ecokit::cat_time(
+    "# presence grid cells per data provider", level = 1L, verbose = verbose)
 
   # presence grid cells per data type
   RVals <- c(GBIF_R, EASIN_R, eLTER_R) %>%
@@ -590,7 +596,8 @@ IAS_distribution <- function(
   # # .................................... ###
 
   ## Number of presence grid cells per country -----
-  ecokit::cat_time("# presence grid cells per country", level = 1L)
+  ecokit::cat_time(
+    "# presence grid cells per country", level = 1L, verbose = verbose)
 
   CountryList <- c(
     "Albania", "Austria", "Belgium", "Bosnia and Herzegovina",
@@ -629,7 +636,8 @@ IAS_distribution <- function(
   # # .................................... ###
 
   ## Number of unique iNaturalist grid cells -----
-  ecokit::cat_time("# unique iNaturalist grid cells", level = 1L)
+  ecokit::cat_time(
+    "# unique iNaturalist grid cells", level = 1L, verbose = verbose)
 
   iNatur_DT <- fs::path(Path_GBIF, "iNaturalist_Count.RData") %>%
     ecokit::load_as() %>%
@@ -645,7 +653,7 @@ IAS_distribution <- function(
   # # ..................................................................... ###
 
   # Prepare and export species summary info -------
-  ecokit::cat_time("Prepare and export species summary info")
+  ecokit::cat_time("Prepare and export species summary info", verbose = verbose)
 
   Binary_R_Out <- stats::setNames(Sp_PA$PA, Sp_File) %>%
     terra::wrap() %>%
@@ -731,13 +739,14 @@ IAS_distribution <- function(
 
   # Plotting species distribution -----
   ecokit::cat_time("Plotting species distribution")
-  IASDT.R::IAS_plot(species = species, env_file = env_file)
+  IASDT.R::IAS_plot(species = species, env_file = env_file, verbose = verbose)
 
   # # ..................................................................... ###
 
   ecokit::cat_diff(
     init_time = .start_time,
-    prefix = "\nProcessing species data was finished in ", ... = "\n")
+    prefix = "\nProcessing species data was finished in ", ... = "\n",
+    verbose = verbose)
 
   return(dplyr::select(Results, -GBIF_Gr100, -EASIN_Gr100, -eLTER_Gr100))
 }

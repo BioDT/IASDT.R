@@ -90,7 +90,7 @@ IAS_process <- function(
   Path_PA <- Path_TaxaInfo_RData <- taxon_name <- Path_TaxaStand <-
     Path_HabAff <- Species <- PA_Map <- Species_name <- NCells_All <-
     synhab_name <- IAS_ID <- Count <- Hab <- EU_Bound <- Threshold <- NSp <-
-    taxon_name <- PA_Masked_Map <- NCells_Naturalized <- NULL
+    taxon_name <- PA_Masked_Map <- NCells_Naturalized <- Species_File <- NULL
 
   # # ..................................................................... ###
 
@@ -213,19 +213,25 @@ IAS_process <- function(
   ## Species-specific data in parallel ----
   ecokit::cat_time("Species-specific data in parallel", level = 1L)
 
+  Sp_taxa <- TaxaList %>%
+    dplyr::arrange(IAS_ID) %>%
+    dplyr::distinct(Species_name, Species_File)
+
   Sp_PA_Data <- future.apply::future_lapply(
-    X = sort(unique(TaxaList$Species_name)),
+    X = seq_len(nrow(Sp_taxa)),
     FUN = function(x) {
 
       # species file name
-      sp_file <- unique(dplyr::filter(TaxaList, Species_name == x)$Species_File)
+      sp_file <- Sp_taxa$Species_File[x]
+      sp_Name <- Sp_taxa$Species_name[x]
 
       if (length(sp_file) != 1 || is.na(sp_file) || !nzchar(sp_file)) {
         ecokit::stop_ctx(
-          "Species file name not unique or empty", Species_name = x,
+          "Species file name not unique or empty", Species_name = sp_Name,
           sp_file = sp_file)
       }
 
+      file_tmp <- fs::path(Path_temp, paste0(sp_file, "_tmp.qs2"))
       file_Summary <- fs::path(
         Path_PA, "SpSummary", paste0(sp_file, "_Summary.RData"))
       file_PA <- fs::path(Path_PA, "RData", paste0(sp_file, "_PA.RData"))
@@ -233,14 +239,21 @@ IAS_process <- function(
       file_tif_Masked <- fs::path(
         Path_PA, "tif", paste0(sp_file, "_Masked.tif"))
       file_jpeg <- fs::path(Path_PA, "JPEG_Maps", paste0(sp_file, ".jpeg"))
-      file_tmp <- fs::path(Path_temp, paste0(sp_file, "_tmp.qs2"))
 
-      if (ecokit::check_data(file_tmp, warning = FALSE)) {
+      all_okay <- all(
+        ecokit::check_data(file_tmp, warning = FALSE),
+        ecokit::check_data(file_PA, warning = FALSE),
+        ecokit::check_data(file_Summary, warning = FALSE),
+        ecokit::check_tiff(file_tif_All, warning = FALSE),
+        ecokit::check_tiff(file_tif_Masked, warning = FALSE),
+        fs::file_exists(file_jpeg))
+
+      if (all_okay) {
         return(file_tmp)
       }
 
       # Maximum attempts
-      max_attempts <- 5
+      max_attempts <- 8
       attempt <- 1
 
       repeat {
@@ -249,13 +262,13 @@ IAS_process <- function(
         Species_Data <- tryCatch(
           expr = {
             IASDT.R::IAS_distribution(
-              species = x, env_file = env_file, verbose = FALSE)
+              species = sp_Name, env_file = env_file, verbose = FALSE)
           },
           error = function(e) {
-            return(NULL)
+            NULL
           },
           warning = function(w) {
-            return(NULL)
+            NULL
           })
 
         if (is.null(Species_Data) || !is.data.frame(Species_Data)) {
@@ -266,9 +279,12 @@ IAS_process <- function(
           next
         }
 
+        # species without data returns empty tibble
         if (nrow(Species_Data) == 0 && ncol(Species_Data) == 0) {
           break
         }
+
+        Sys.sleep(0.5)
 
         # Check for the existence and validity of all files
         all_okay <- all(
@@ -277,7 +293,6 @@ IAS_process <- function(
           ecokit::check_tiff(file_tif_All, warning = FALSE),
           ecokit::check_tiff(file_tif_Masked, warning = FALSE),
           fs::file_exists(file_jpeg))
-
         if (all_okay) {
           break
         }
@@ -295,31 +310,36 @@ IAS_process <- function(
         return(file_tmp)
       } else {
         # If there is no data, return NULL
-        return(NULL)
+        return(NA_character_)
       }
     },
     future.scheduling = Inf, future.conditions = NULL, future.seed = TRUE,
     future.packages = pkg_to_export,
-    future.globals = c("env_file", "Path_PA", "TaxaList", "Path_temp"))
+    future.globals = c(
+      "env_file", "Path_PA", "TaxaList", "Path_temp", "Sp_taxa"))
 
+  # # .................................... ###
 
   # load species data from temp files
+  ecokit::cat_time(
+    "Merge species-specific data into a single tibble", level = 1L)
+
   Sp_PA_Data <- Sp_PA_Data %>%
-    # remove null object from a list
-    purrr::discard(is.null) %>%
+    # remove NA object from a list
+    purrr::discard(is.na) %>%
     future.apply::future_lapply(
-      FUN = function(x) {
-        out_obj <- ecokit::load_as(x)
-        try(fs::file_delete(x), silent = TRUE)
-        return(out_obj)
-      },
+      FUN = ecokit::load_as,
       future.scheduling = Inf, future.conditions = NULL, future.seed = TRUE,
       future.packages = pkg_to_export) %>%
     dplyr::bind_rows()
 
+  # Deleting temporary files
+  ecokit::cat_time("Deleting temporary files", level = 2L)
   try(fs::dir_delete(Path_temp), silent = TRUE)
 
   # # .................................... ###
+
+  ecokit::cat_time("Identify species with no data", level = 2L)
 
   # Species with no data
   sp_no_data <- setdiff(TaxaList$IAS_ID, as.integer(Sp_PA_Data$species_ID))
@@ -334,11 +354,11 @@ IAS_process <- function(
         length(unique(Sp_PA_Data$species_ID)),  " species were processed; ",
         nrow(sp_no_data), " species have no data. ",
         "See `species_no_data.csv` for details"),
-      level = 2L)
+      level = 3L)
   } else {
     ecokit::cat_time(
       paste0("All ", length(TaxaList$Species_name), " species were processed"),
-      level = 2L)
+      level = 3L)
   }
 
   # # .................................... ###

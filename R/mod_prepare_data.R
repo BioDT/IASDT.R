@@ -32,11 +32,6 @@ mod_prepare_data <- function(
 
   hab_abb <- as.character(hab_abb)
 
-  if (isFALSE(verbose_progress)) {
-    sink(file = nullfile())
-    on.exit(try(sink(), silent = TRUE), add = TRUE)
-  }
-
   # # ..................................................................... ###
 
   # Avoid "no visible binding for global variable" message
@@ -48,7 +43,7 @@ mod_prepare_data <- function(
 
   # # ..................................................................... ###
 
-  ecokit::cat_time("Checking input arguments")
+  ecokit::cat_time("Checking input arguments", verbose = verbose_progress)
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(
     AllArgs,
@@ -79,7 +74,8 @@ mod_prepare_data <- function(
 
   # # |||||||||||||||||||||||||||||||||||
   # Reading/checking environment variables ----
-  ecokit::cat_time("Reading/checking environment variables")
+  ecokit::cat_time(
+    "Reading/checking environment variables", verbose = verbose_progress)
 
   # # |||||||||||||||||||||||||||||||||||
 
@@ -115,10 +111,10 @@ mod_prepare_data <- function(
   # Loading data ----
   # # |||||||||||||||||||||||||||||||||||
 
-  ecokit::cat_time("Loading data")
+  ecokit::cat_time("Loading data", verbose = verbose_progress)
 
   ## Sampling efforts ----
-  ecokit::cat_time("Sampling efforts", level = 1L)
+  ecokit::cat_time("Sampling efforts", level = 1L, verbose = verbose_progress)
   R_Bias <- fs::path(Path_Bias, "Efforts_SummaryR.RData")
   if (!file.exists(R_Bias)) {
     ecokit::stop_ctx(
@@ -140,7 +136,7 @@ mod_prepare_data <- function(
 
   ## Habitat coverage -----
 
-  ecokit::cat_time("Habitat coverage", level = 1L)
+  ecokit::cat_time("Habitat coverage", level = 1L, verbose = verbose_progress)
 
   Path_Hab <- fs::path(Path_CLC, "Summary_RData", "PercCov_SynHab_Crop.RData")
   if (!file.exists(Path_Hab)) {
@@ -164,7 +160,8 @@ mod_prepare_data <- function(
     # Exclude grid cells with zero habitat coverage
     if (exclude_0_habitat) {
       ecokit::cat_time(
-        "Exclude grid cells with zero habitat coverage", level = 2L)
+        "Exclude grid cells with zero habitat coverage",
+        level = 2L, verbose = verbose_progress)
       zero_hab_grids <- (R_Hab == 0)
       # Update the efforts mask to exclude grid cells with zero habitat coverage
       EffortsMask[zero_hab_grids] <- NA
@@ -179,7 +176,8 @@ mod_prepare_data <- function(
   # # ..................................................................... ###
 
   ## Species data summary ----
-  ecokit::cat_time("Species data summary", level = 1L)
+  ecokit::cat_time(
+    "Species data summary", level = 1L, verbose = verbose_progress)
 
   # Extract the list of species for the current habitat type
   DT_Sp <- fs::path(Path_PA, "Sp_PA_Summary_DF.RData")
@@ -206,7 +204,8 @@ mod_prepare_data <- function(
   # # ..................................................................... ###
 
   ## Species presence-absence data ----
-  ecokit::cat_time("Species presence-absence data", level = 1L)
+  ecokit::cat_time(
+    "Species presence-absence data", level = 1L, verbose = verbose_progress)
 
   # Minimum number of presence grids per species
   NCellsCol <- dplyr::if_else(
@@ -262,7 +261,9 @@ mod_prepare_data <- function(
   # # ................................... ###
 
   ### Plotting number of IAS per grid cell -----
-  ecokit::cat_time("Plotting number of IAS per grid cell", level = 2L)
+  ecokit::cat_time(
+    "Plotting number of IAS per grid cell",
+    level = 2L, verbose = verbose_progress)
 
   EU_Bound <- ecokit::load_as(EU_Bound) %>%
     magrittr::extract2("Bound_sf_Eur") %>%
@@ -331,7 +332,7 @@ mod_prepare_data <- function(
 
   ## CHELSA -----
 
-  ecokit::cat_time("CHELSA", level = 1L)
+  ecokit::cat_time("CHELSA", level = 1L, verbose = verbose_progress)
   R_CHELSA <- fs::path(Path_CHELSA, "Processed", "R_Current.RData")
   if (!file.exists(R_CHELSA)) {
     ecokit::stop_ctx(
@@ -345,9 +346,10 @@ mod_prepare_data <- function(
   # # ..................................................................... ###
 
   ## Reference grid -----
-  ecokit::cat_time("Reference grid", level = 1L)
+  ecokit::cat_time("Reference grid", level = 1L, verbose = verbose_progress)
 
-  ecokit::cat_time("Reference grid - sf", level = 2L)
+  ecokit::cat_time(
+    "Reference grid - sf", level = 2L, verbose = verbose_progress)
   # Reference grid as sf
   Grid_SF <- fs::path(Path_Grid_Ref, "Grid_10_sf.RData")
   if (!file.exists(Grid_SF)) {
@@ -361,7 +363,8 @@ mod_prepare_data <- function(
   # # ||||||||||||||||||||||||||||||||||||||||||
 
   # Reference grid as sf - country names
-  ecokit::cat_time("Reference grid - country names", level = 2L)
+  ecokit::cat_time(
+    "Reference grid - country names", level = 2L, verbose = verbose_progress)
   Grid_CNT <- fs::path(Path_Grid, "Grid_10_Land_Crop_sf_Country.RData")
   if (!file.exists(Grid_CNT)) {
     ecokit::stop_ctx(
@@ -377,10 +380,11 @@ mod_prepare_data <- function(
   # # ..................................................................... ###
 
   ## Railway + road intensity ----
-  ecokit::cat_time("Railway + road intensity", level = 1L)
+  ecokit::cat_time(
+    "Railway + road intensity", level = 1L, verbose = verbose_progress)
 
   ### Road ----
-  ecokit::cat_time("Road intensity", level = 2L)
+  ecokit::cat_time("Road intensity", level = 2L, verbose = verbose_progress)
 
   # road intensity of any road type
   R_RoadInt <- fs::path(Path_Roads, "Road_Length.RData")
@@ -402,7 +406,7 @@ mod_prepare_data <- function(
   # # ||||||||||||||||||||||||||||||||||||||||||
 
   ### Railways ----
-  ecokit::cat_time("Railway intensity", level = 2L)
+  ecokit::cat_time("Railway intensity", level = 2L, verbose = verbose_progress)
 
   # Railway intensity
   R_RailInt <- fs::path(Path_Rail, "Railways_Length.RData")
@@ -424,14 +428,15 @@ mod_prepare_data <- function(
   # # ||||||||||||||||||||||||||||||||||||||||||
 
   ### Merging Road + rail ----
-  ecokit::cat_time("Merging Railway + road intensity", level = 2L)
+  ecokit::cat_time(
+    "Merging Railway + road intensity", level = 2L, verbose = verbose_progress)
   R_RoadRail <- stats::setNames((R_RoadInt + R_RailInt), "RoadRail")
   R_RoadRailLog <- stats::setNames(log10(R_RoadRail + 0.1), "RoadRailLog")
 
   # # ..................................................................... ###
 
   ## Sampling effort ----
-  ecokit::cat_time("Sampling effort", level = 1L)
+  ecokit::cat_time("Sampling effort", level = 1L, verbose = verbose_progress)
 
   R_Efforts <- ecokit::load_as(R_Bias) %>%
     terra::unwrap() %>%
@@ -444,7 +449,7 @@ mod_prepare_data <- function(
   # # ..................................................................... ###
 
   ## River length ----
-  ecokit::cat_time("River length", level = 1L)
+  ecokit::cat_time("River length", level = 1L, verbose = verbose_progress)
 
   R_Rivers <- fs::path(Path_Rivers, "River_Lengths.RData")
   if (!file.exists(R_Rivers)) {
@@ -463,7 +468,7 @@ mod_prepare_data <- function(
   # # ..................................................................... ###
 
   ## Merging data together -----
-  ecokit::cat_time("Merging data together")
+  ecokit::cat_time("Merging data together", verbose = verbose_progress)
 
   ColumnsFirst <- c("CellNum", "CellCode", "Country", "Country_Nearest")
   DT_All <- c(
@@ -485,7 +490,7 @@ mod_prepare_data <- function(
 
   # Save model data to disk -----
 
-  ecokit::cat_time("Save model data to disk")
+  ecokit::cat_time("Save model data to disk", verbose = verbose_progress)
   ecokit::save_as(
     object = DT_All, object_name = "ModDT",
     out_path = fs::path(path_model, "ModDT.RData"))

@@ -61,6 +61,7 @@ IAS_process <- function(
     args_all = AllArgs, args_type = "numeric", args_to_check = "n_cores")
 
   rm(AllArgs, envir = environment())
+  invisible(gc())
 
   if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
     ecokit::stop_ctx(
@@ -110,7 +111,9 @@ IAS_process <- function(
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
+
   rm(EnvVars2Read, envir = environment())
+  invisible(gc())
 
   # # ..................................................................... ###
 
@@ -129,16 +132,15 @@ IAS_process <- function(
 
   ecokit::cat_time("Reading input data and create directories")
 
-  Path_PA_Summary <- fs::path(Path_PA, "SpSummary")
-  Path_PA_tif <- fs::path(Path_PA, "tif")
-  Path_PA_RData <- fs::path(Path_PA, "RData")
-  Path_PA_JPEG <- fs::path(Path_PA, "JPEG_Maps")
-  Path_sp_data <- fs::path(Path_PA, "SpData")
+  Path_PA_Summary <- fs::path(Path_PA, "PA_summary")
+  Path_PA_tif <- fs::path(Path_PA, "PA_tif")
+  Path_PA_RData <- fs::path(Path_PA, "PA_RData")
+  Path_PA_JPEG <- fs::path(Path_PA, "Distribution_JPEG")
 
   # list of paths; create if not exist
   Paths_All <- list(
-    summary = Path_PA_Summary, tif = Path_PA_tif,
-    rdata = Path_PA_RData, jpeg = Path_PA_JPEG, sp_data = Path_sp_data)
+    summary = Path_PA_Summary, PA_tif = Path_PA_tif,
+    PA_RData = Path_PA_RData, jpeg = Path_PA_JPEG)
   purrr::walk(Paths_All, fs::dir_create)
 
   # last update info
@@ -198,6 +200,7 @@ IAS_process <- function(
     dplyr::arrange(IAS_ID)
 
   rm(TaxaList_Original, TaxaList_Distinct, envir = environment())
+  invisible(gc())
 
   # # ..................................................................... ###
 
@@ -246,23 +249,21 @@ IAS_process <- function(
       }
 
       # output paths
-      file_qs2 <- fs::path(Paths_All$sp_data, paste0(sp_file, ".qs2"))
-      file_PA <- fs::path(Paths_All$rdata, paste0(sp_file, "_PA.RData"))
-      file_tif_All <- fs::path(Paths_All$tif, paste0(sp_file, "_All.tif"))
-      file_tif_Masked <- fs::path(Paths_All$tif, paste0(sp_file, "_Masked.tif"))
-      file_summary <- fs::path(
-        Paths_All$summary, paste0(sp_file, "_Summary.RData"))
+      file_summary <- fs::path(Paths_All$summary, paste0(sp_file, ".qs2"))
+      file_PA <- fs::path(Paths_All$PA_RData, paste0(sp_file, "_PA.RData"))
+      file_tif_All <- fs::path(Paths_All$PA_tif, paste0(sp_file, "_All.tif"))
+      file_tif_Masked <- fs::path(
+        Paths_All$PA_tif, paste0(sp_file, "_Masked.tif"))
 
       all_okay <- all(
         # use n_threads = 1L to avoid parallel issues
-        ecokit::check_data(file_qs2, warning = FALSE, n_threads = 1L),
+        ecokit::check_data(file_summary, warning = FALSE, n_threads = 1L),
         ecokit::check_data(file_PA, warning = FALSE),
-        ecokit::check_data(file_summary, warning = FALSE),
         ecokit::check_tiff(file_tif_All, warning = FALSE),
         ecokit::check_tiff(file_tif_Masked, warning = FALSE))
 
       if (all_okay) {
-        return(file_qs2)
+        return(file_summary)
       }
 
       # Maximum attempts
@@ -302,9 +303,8 @@ IAS_process <- function(
         # Check for the existence and validity of all files
         all_okay <- all(
           # use n_threads = 1L to avoid parallel issues
-          ecokit::check_data(file_qs2, warning = FALSE, n_threads = 1L),
+          ecokit::check_data(file_summary, warning = FALSE, n_threads = 1L),
           ecokit::check_data(file_PA, warning = FALSE),
-          ecokit::check_data(file_summary, warning = FALSE),
           ecokit::check_tiff(file_tif_All, warning = FALSE),
           ecokit::check_tiff(file_tif_Masked, warning = FALSE))
 
@@ -320,7 +320,7 @@ IAS_process <- function(
       }
 
       if (ncol(Species_Data) > 0) {
-        return(file_qs2)
+        return(file_summary)
       } else {
         # If there is no data, return NA
         return(NA_character_)
@@ -700,6 +700,9 @@ IAS_process <- function(
   print(Plot)
   grDevices::dev.off()
 
+  rm(IAS_NumSp, Plot, envir = environment())
+  invisible(gc())
+
   # # +++++++++++++++++++++++++++++++++ ###
 
   Plot_Nsp_Masked <- ggplot2::ggplot() +
@@ -764,8 +767,9 @@ IAS_process <- function(
 
   rm(
     IAS_NumSp, Plot_Nsp, Plot_Nsp_log, PlottingTheme, EUBound, MapLimX,
-    MapLimY, Plot_Nsp_Masked_log, Plot_Nsp_Masked,
+    MapLimY, Plot_Nsp_Masked_log, Plot_Nsp_Masked, IAS_NumSp_Masked, Plot,
     envir = environment())
+  invisible(gc())
 
   # # .................................... ###
 
@@ -930,6 +934,9 @@ IAS_process <- function(
     width = 30, height = 17, res = 600, quality = 100, units = "cm")
   print(Plot)
   grDevices::dev.off()
+
+  rm(NSp_Hab_DT, NSp_Hab_Masked_DT, Legend, title, Plot, envir = environment())
+  invisible(gc())
 
   # # ..................................................................... ###
 

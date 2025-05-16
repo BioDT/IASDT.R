@@ -36,6 +36,7 @@ IAS_distribution <- function(
   ecokit::check_args(
     args_all = AllArgs, args_type = "logical", args_to_check = "verbose")
   rm(AllArgs, envir = environment())
+  invisible(gc())
 
   # # ..................................................................... ###
 
@@ -69,6 +70,7 @@ IAS_distribution <- function(
   ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
+  invisible(gc())
 
   # # ..................................................................... ###
 
@@ -99,17 +101,16 @@ IAS_distribution <- function(
 
   ecokit::cat_time(
     "Check and create directories", level = 2L, verbose = verbose)
-  Path_PA_Summary <- fs::path(Path_PA, "SpSummary")
-  Path_PA_tif <- fs::path(Path_PA, "tif")
-  Path_PA_RData <- fs::path(Path_PA, "RData")
-  Path_PA_JPEG <- fs::path(Path_PA, "JPEG_Maps")
-  Path_sp_data <- fs::path(Path_PA, "SpData")
+  Path_PA_Summary <- fs::path(Path_PA, "PA_summary")
+  Path_PA_tif <- fs::path(Path_PA, "PA_tif")
+  Path_PA_RData <- fs::path(Path_PA, "PA_RData")
+  Path_PA_JPEG <- fs::path(Path_PA, "Distribution_JPEG")
   Paths_All <- c(
-    Path_PA_Summary, Path_PA_tif, Path_PA_RData, Path_PA_JPEG, Path_sp_data)
+    Path_PA_Summary, Path_PA_tif, Path_PA_RData, Path_PA_JPEG)
   purrr::walk(Paths_All, fs::dir_create)
 
   Out_JPEG <- fs::path(Path_PA_JPEG, paste0(Sp_File, ".jpeg"))
-  out_qs2 <- fs::path(Path_sp_data, paste0(Sp_File, ".qs2"))
+  out_qs2 <- fs::path(Path_PA_Summary, paste0(Sp_File, ".qs2"))
 
   # # ................................ ###
 
@@ -191,6 +192,7 @@ IAS_distribution <- function(
   Grid100Empty <- dplyr::slice(Grid_100_sf, 0)
 
   rm(Grid_100_sf, envir = environment())
+  invisible(gc())
 
   # # ................................ ###
 
@@ -261,8 +263,7 @@ IAS_distribution <- function(
   }
 
   rm(Grid_10_CNT, envir = environment())
-
-  GBIF_Keys <- paste(GBIF_Keys, collapse = "_")
+  invisible(gc())
 
   # # ..................................................................... ###
 
@@ -272,6 +273,8 @@ IAS_distribution <- function(
 
   ## 1. GBIF -----
   ecokit::cat_time("1. GBIF", level = 1L, verbose = verbose)
+
+  GBIF_Keys <- paste(GBIF_Keys, collapse = "_")
 
   # Path for the current species GBIF data
   Path_GBIF_D <- fs::path(Path_GBIF_DT, paste0(Sp_File, ".RData"))
@@ -294,6 +297,7 @@ IAS_distribution <- function(
     GBIF_Gr100 <- PA_100km(GBIF_DT)
 
     rm(GBIF_DT, envir = environment())
+    invisible(gc())
 
     # Map to export out of this function
     GBIF_R_Out <- stats::setNames(GBIF_R, Sp_File) %>%
@@ -333,6 +337,7 @@ IAS_distribution <- function(
     EASIN_Gr100 <- PA_100km(EASIN_DT)
 
     rm(EASIN_DT, envir = environment())
+    invisible(gc())
 
     EASIN_R_Out <- stats::setNames(EASIN_R, Sp_File) %>%
       terra::wrap() %>%
@@ -380,6 +385,7 @@ IAS_distribution <- function(
   }
 
   rm(eLTER_DT, Grid_100_Land, Grid100Empty, envir = environment())
+  invisible(gc())
 
   # # ..................................................................... ###
 
@@ -396,15 +402,15 @@ IAS_distribution <- function(
     # Ensure that values are read from memory
     terra::toMemory()
 
+  rm(GBIF_R, EASIN_R, eLTER_R, RefGrid, Mask_Keep, envir = environment())
+  invisible(gc())
+
   # number of cells with values
   PA_NCells_All <- terra::global(Sp_PA$PA == 1, sum, na.rm = TRUE) %>%
     as.integer()
   PA_NCells_Naturalized <- terra::global(
     x = Sp_PA$PA_Masked == 1, sum, na.rm = TRUE) %>%
     as.integer()
-
-  rm(RefGrid, Mask_Keep, envir = environment())
-  invisible(gc())
 
   # # ..................................................................... ###
 
@@ -514,6 +520,10 @@ IAS_distribution <- function(
     ecokit::add_missing_columns(0L, BioReg_Names2) %>%
     dplyr::select(tidyselect::all_of(BioReg_Names2))
 
+
+  rm(BioReg_R, envir = environment())
+  invisible(gc())
+
   if (nrow(Sp_BiogeoRegions_Masked) > 0) {
     BioRegsMaskSumm_Min <- min(Sp_BiogeoRegions_Masked, na.rm = TRUE)
     BioRegsMaskSumm_Max <- max(Sp_BiogeoRegions_Masked, na.rm = TRUE)
@@ -527,8 +537,6 @@ IAS_distribution <- function(
     BioRegsMaskSumm_Mean <- 0
     BioRegsMaskSumm_N <- 0
   }
-
-  rm(BioReg_R, envir = environment())
 
   # # .................................... ###
 
@@ -630,6 +638,7 @@ IAS_distribution <- function(
     dplyr::select(tidyselect::all_of(CountryList))
 
   rm(Grid_CNT, envir = environment())
+  invisible(gc())
 
   # # .................................... ###
 
@@ -648,6 +657,9 @@ IAS_distribution <- function(
     iNatur_Unique <- iNatur_Perc <- 0
   }
 
+  rm(iNatur_DT, envir = environment())
+  invisible(gc())
+
   # # ..................................................................... ###
 
   # Prepare and export species summary info -------
@@ -665,7 +677,7 @@ IAS_distribution <- function(
     terra::wrap() %>%
     list()
 
-  rm(Sp_PA, iNatur_DT, envir = environment())
+  rm(Sp_PA, envir = environment())
   invisible(gc())
 
   IntegerCols <- c(
@@ -728,11 +740,6 @@ IAS_distribution <- function(
     path_JPEG = Out_JPEG) %>%
     dplyr::mutate_at(IntegerCols, ~ as.integer(.))
 
-  dplyr::select(Results, -GBIF_R, -EASIN_R, -eLTER_R) %>%
-    ecokit::save_as(
-      object = ., object_name = paste0(Sp_File, "_Summary"),
-      out_path = fs::path(Path_PA_Summary, paste0(Sp_File, "_Summary.RData")))
-
   # # ..................................................................... ###
 
   ecokit::cat_diff(
@@ -741,9 +748,8 @@ IAS_distribution <- function(
     verbose = verbose)
 
   # save species data
-  out_data <- dplyr::select(Results, -GBIF_Gr100, -EASIN_Gr100, -eLTER_Gr100)
   # use n_threads = 1L to avoid parallel issues
-  ecokit::save_as(object = out_data, out_path = out_qs2, n_threads = 1)
+  ecokit::save_as(object = Results, out_path = out_qs2, n_threads = 1)
 
   return(out_qs2)
 

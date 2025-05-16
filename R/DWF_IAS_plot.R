@@ -27,6 +27,9 @@ IAS_plot <- function(species = NULL, env_file = ".env") {
     args_all = AllArgs, args_type = "character",
     args_to_check = c("species", "env_file"))
 
+  rm(AllArgs, envir = environment())
+  invisible(gc())
+
   # # ..................................................................... ###
 
   # Avoid "no visible binding for global variable" message
@@ -49,13 +52,15 @@ IAS_plot <- function(species = NULL, env_file = ".env") {
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
+
   rm(EnvVars2Read, envir = environment())
+  invisible(gc())
 
   # # ..................................................................... ###
 
   # Check / create directories
-  Path_Summary <- fs::path(Path_PA, "SpSummary")
-  path_JPEG <- fs::path(Path_PA, "JPEG_Maps")
+  Path_Summary <- fs::path(Path_PA, "PA_summary")
+  path_JPEG <- fs::path(Path_PA, "Distribution_JPEG")
   if (!fs::dir_exists(path_JPEG)) {
     fs::dir_create(path_JPEG)
   }
@@ -101,7 +106,9 @@ IAS_plot <- function(species = NULL, env_file = ".env") {
   Legend_GBIF <- dplyr::filter(Grid_100_sf, CellCode == "100kmE27N45")
   Legend_EASIN <- dplyr::filter(Grid_100_sf, CellCode == "100kmE27N44")
   Legend_eLTER <- dplyr::filter(Grid_100_sf, CellCode == "100kmE27N43")
-  rm(Grid_100_sf, envir = environment())
+
+  rm(SpInfo, Grid_100_sf, envir = environment())
+  invisible(gc())
 
   # the study area as simple feature object for plotting
   Grid10_Sf <- fs::path(Path_Grid, "Grid_10_Land_Crop_sf.RData") %>%
@@ -137,6 +144,9 @@ IAS_plot <- function(species = NULL, env_file = ".env") {
     paste0(
       "   <span style='font-size: 14pt; color:blue;'><b><i>", IAS_ID,
       " \u2014 ", species, "</i></b></span>   (", ., ")")
+
+  rm(Path_TaxaInfo, envir = environment())
+  invisible(gc())
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -175,6 +185,9 @@ IAS_plot <- function(species = NULL, env_file = ".env") {
     magrittr::extract2("L_10") %>%
     dplyr::filter(NAME_ENGL %in% SpData$Countries2Exclude[[1]]) %>%
     dplyr::select("NAME_ENGL")
+
+  rm(EU_Bound, envir = environment())
+  invisible(gc())
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -268,6 +281,12 @@ IAS_plot <- function(species = NULL, env_file = ".env") {
       limits = c(1450000, 5410000)) +
     ggplot2::labs(title = MapTitle, subtitle = NGrids_All, fill = NULL) +
     PlottingTheme
+
+  rm(
+    SpData, Grid10_Sf, GBIF_Gr100, EASIN_Gr100, eLTER_Gr100,
+    PresGrid, BoundExclude, Legend_GBIF, Legend_EASIN, Legend_eLTER,
+    envir = environment())
+  invisible(gc())
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||
 

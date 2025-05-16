@@ -1438,7 +1438,7 @@ mod_prepare_HPC <- function(
     dplyr::select(ias_id = IAS_ID, Species_File) %>%
     dplyr::mutate(
       # Path storing PA maps as raster files
-      File = fs::path(Path_PA, "RData", paste0(Species_File, "_PA.RData")),
+      File = fs::path(Path_PA, "PA_RData", paste0(Species_File, "_PA.RData")),
       Map_Sp = purrr::map2(
         .x = File, .y = ias_id,
         .f = ~ {

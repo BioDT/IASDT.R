@@ -440,7 +440,7 @@ plot_prediction <- function(
         dplyr::filter(IAS_ID == SpID2) %>%
         dplyr::pull(Species_File) %>%
         paste0(c("_Masked.tif", "_All.tif")) %>%
-        fs::path(Path_PA, "tif", .)
+        fs::path(Path_PA, "PA_tif", .)
 
       # Check if observed data files exist
       if (!all(file.exists(Path_observed))) {

@@ -103,14 +103,13 @@ IAS_distribution <- function(
   Path_PA_tif <- fs::path(Path_PA, "tif")
   Path_PA_RData <- fs::path(Path_PA, "RData")
   Path_PA_JPEG <- fs::path(Path_PA, "JPEG_Maps")
-  Path_PA_All <- c(Path_PA_Summary, Path_PA_tif, Path_PA_RData, Path_PA_JPEG)
-  Path_PA_Missing <- !all(dir.exists(Path_PA_All))
-  if (Path_PA_Missing) {
-    Missing <- which(!dir.exists(Path_PA_All))
-    fs::dir_create(Path_PA_All[Missing])
-  }
+  Path_sp_data <- fs::path(Path_PA, "SpData")
+  Paths_All <- c(
+    Path_PA_Summary, Path_PA_tif, Path_PA_RData, Path_PA_JPEG, Path_sp_data)
+  purrr::walk(Paths_All, fs::dir_create)
 
   Out_JPEG <- fs::path(Path_PA_JPEG, paste0(Sp_File, ".jpeg"))
+  out_qs2 <- fs::path(Path_sp_data, paste0(Sp_File, ".qs2"))
 
   # # ................................ ###
 
@@ -736,16 +735,16 @@ IAS_distribution <- function(
 
   # # ..................................................................... ###
 
-  # Plotting species distribution -----
-  ecokit::cat_time("Plotting species distribution")
-  IASDT.R::IAS_plot(species = species, env_file = env_file)
-
-  # # ..................................................................... ###
-
   ecokit::cat_diff(
     init_time = .start_time,
     prefix = "\nProcessing species data was finished in ", ... = "\n",
     verbose = verbose)
 
-  return(dplyr::select(Results, -GBIF_Gr100, -EASIN_Gr100, -eLTER_Gr100))
+  # save species data
+  out_data <- dplyr::select(Results, -GBIF_Gr100, -EASIN_Gr100, -eLTER_Gr100)
+  # use n_threads = 1L to avoid parallel issues
+  ecokit::save_as(object = out_data, out_path = out_qs2, n_threads = 1)
+
+  return(out_qs2)
+
 }

@@ -47,8 +47,8 @@ Outputs \code{SpatRaster} distribution rasters, summary tables, and JPEG maps
 using \code{IAS_distribution()} and \code{IAS_plot()}.
 \item \strong{\code{IAS_distribution()}}: Generates presence-absence maps (\code{.RData},
 \code{.tif})  for a species, including all grid cells in the study area and a
-set excluding cultivated/casual-only countries. Returns a tibble with
-presence counts (total, by source) and summary statistics for
+set excluding cultivated/casual-only countries. Returns a file path to a
+tibble with presence counts (total, by source) and summary statistics for
 biogeographical regions
 \item \strong{\code{IAS_plot()}}: Creates JPEG distribution maps from GBIF, EASIN, and
 eLTER data using \code{ggplot2}.

@@ -24,8 +24,8 @@
 #'   using `IAS_distribution()` and `IAS_plot()`.
 #' - **`IAS_distribution()`**: Generates presence-absence maps (`.RData`,
 #'   `.tif`)  for a species, including all grid cells in the study area and a
-#'   set excluding cultivated/casual-only countries. Returns a tibble with
-#'   presence counts (total, by source) and summary statistics for
+#'   set excluding cultivated/casual-only countries. Returns a file path to a
+#'   tibble with presence counts (total, by source) and summary statistics for
 #'   biogeographical regions
 #' - **`IAS_plot()`**: Creates JPEG distribution maps from GBIF, EASIN, and
 #'   eLTER data using `ggplot2`.
@@ -87,7 +87,7 @@ IAS_process <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Path_PA <- Path_TaxaInfo_RData <- taxon_name <- Path_TaxaStand <-
+  Path_PA <- Path_TaxaInfo_RData <- taxon_name <- Path_TaxaStand <- img_valid <-
     Path_HabAff <- Species <- PA_Map <- Species_name <- NCells_All <-
     synhab_name <- IAS_ID <- Count <- Hab <- EU_Bound <- Threshold <- NSp <-
     taxon_name <- PA_Masked_Map <- NCells_Naturalized <- Species_File <- NULL
@@ -129,9 +129,17 @@ IAS_process <- function(
 
   ecokit::cat_time("Reading input data and create directories")
 
+  Path_PA_Summary <- fs::path(Path_PA, "SpSummary")
+  Path_PA_tif <- fs::path(Path_PA, "tif")
+  Path_PA_RData <- fs::path(Path_PA, "RData")
   Path_PA_JPEG <- fs::path(Path_PA, "JPEG_Maps")
-  Path_temp <- fs::path(Path_PA, "temp")
-  fs::dir_create(c(Path_PA_JPEG, Path_temp))
+  Path_sp_data <- fs::path(Path_PA, "SpData")
+
+  # list of paths; create if not exist
+  Paths_All <- list(
+    summary = Path_PA_Summary, tif = Path_PA_tif,
+    rdata = Path_PA_RData, jpeg = Path_PA_JPEG, sp_data = Path_sp_data)
+  purrr::walk(Paths_All, fs::dir_create)
 
   # last update info
   LastUpdate <- stringr::str_glue(
@@ -198,6 +206,8 @@ IAS_process <- function(
   ecokit::cat_time("Species-specific data")
   .StartTimeDist <- lubridate::now(tzone = "CET")
 
+  # # .................................... ###
+
   ## Prepare working in parallel -----
   if (n_cores == 1) {
     future::plan("future::sequential", gc = TRUE)
@@ -217,6 +227,9 @@ IAS_process <- function(
     dplyr::arrange(IAS_ID) %>%
     dplyr::distinct(Species_name, Species_File)
 
+  ecokit::cat_time(
+    paste0("There are ", nrow(Sp_taxa), " species to process"), level = 2L)
+
   Sp_PA_Data <- future.apply::future_lapply(
     X = seq_len(nrow(Sp_taxa)),
     FUN = function(x) {
@@ -232,25 +245,24 @@ IAS_process <- function(
           sp_file = sp_file)
       }
 
-      file_tmp <- fs::path(Path_temp, paste0(sp_file, "_tmp.qs2"))
-      file_Summary <- fs::path(
-        Path_PA, "SpSummary", paste0(sp_file, "_Summary.RData"))
-      file_PA <- fs::path(Path_PA, "RData", paste0(sp_file, "_PA.RData"))
-      file_tif_All <- fs::path(Path_PA, "tif", paste0(sp_file, "_All.tif"))
-      file_tif_Masked <- fs::path(
-        Path_PA, "tif", paste0(sp_file, "_Masked.tif"))
-      file_jpeg <- fs::path(Path_PA, "JPEG_Maps", paste0(sp_file, ".jpeg"))
+      # output paths
+      file_qs2 <- fs::path(Paths_All$sp_data, paste0(sp_file, ".qs2"))
+      file_PA <- fs::path(Paths_All$rdata, paste0(sp_file, "_PA.RData"))
+      file_tif_All <- fs::path(Paths_All$tif, paste0(sp_file, "_All.tif"))
+      file_tif_Masked <- fs::path(Paths_All$tif, paste0(sp_file, "_Masked.tif"))
+      file_summary <- fs::path(
+        Paths_All$summary, paste0(sp_file, "_Summary.RData"))
 
       all_okay <- all(
-        ecokit::check_data(file_tmp, warning = FALSE),
+        # use n_threads = 1L to avoid parallel issues
+        ecokit::check_data(file_qs2, warning = FALSE, n_threads = 1L),
         ecokit::check_data(file_PA, warning = FALSE),
-        ecokit::check_data(file_Summary, warning = FALSE),
+        ecokit::check_data(file_summary, warning = FALSE),
         ecokit::check_tiff(file_tif_All, warning = FALSE),
-        ecokit::check_tiff(file_tif_Masked, warning = FALSE),
-        fs::file_exists(file_jpeg))
+        ecokit::check_tiff(file_tif_Masked, warning = FALSE))
 
       if (all_okay) {
-        return(file_tmp)
+        return(file_qs2)
       }
 
       # Maximum attempts
@@ -289,11 +301,13 @@ IAS_process <- function(
 
         # Check for the existence and validity of all files
         all_okay <- all(
+          # use n_threads = 1L to avoid parallel issues
+          ecokit::check_data(file_qs2, warning = FALSE, n_threads = 1L),
           ecokit::check_data(file_PA, warning = FALSE),
-          ecokit::check_data(file_Summary, warning = FALSE),
+          ecokit::check_data(file_summary, warning = FALSE),
           ecokit::check_tiff(file_tif_All, warning = FALSE),
-          ecokit::check_tiff(file_tif_Masked, warning = FALSE),
-          fs::file_exists(file_jpeg))
+          ecokit::check_tiff(file_tif_Masked, warning = FALSE))
+
         if (all_okay) {
           break
         }
@@ -306,41 +320,43 @@ IAS_process <- function(
       }
 
       if (ncol(Species_Data) > 0) {
-        # save output to a temporary file. This to free up memory
-        ecokit::save_as(object = Species_Data, out_path = file_tmp)
-        return(file_tmp)
+        return(file_qs2)
       } else {
-        # If there is no data, return NULL
+        # If there is no data, return NA
         return(NA_character_)
       }
     },
     future.scheduling = Inf, future.conditions = NULL, future.seed = TRUE,
     future.packages = pkg_to_export,
-    future.globals = c(
-      "env_file", "Path_PA", "TaxaList", "Path_temp", "Sp_taxa"))
+    future.globals = c("env_file", "Paths_All", "Sp_taxa"))
 
   # # .................................... ###
 
-  # load species data from temp files
-  ecokit::cat_time(
-    "Merge species-specific data into a single tibble", level = 1L)
+  ## Merge species data into a single tibble -----
+  ecokit::cat_time("Merge species data into a single tibble", level = 1L)
 
   Sp_PA_Data <- Sp_PA_Data %>%
     # remove NA object from a list
     purrr::discard(is.na) %>%
     future.apply::future_lapply(
-      FUN = ecokit::load_as,
+      # use n_threads = 1L to avoid parallel issues
+      FUN = ecokit::load_as, n_threads = 1L,
       future.scheduling = Inf, future.conditions = NULL, future.seed = TRUE,
       future.packages = pkg_to_export) %>%
     dplyr::bind_rows()
 
-  # Deleting temporary files
-  ecokit::cat_time("Deleting temporary files", level = 2L)
-  try(fs::dir_delete(Path_temp), silent = TRUE)
+  # # .................................... ###
+
+  ## Stopping cluster ----
+
+  if (n_cores > 1) {
+    ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
+    future::plan("future::sequential", gc = TRUE)
+  }
 
   # # .................................... ###
 
-  ecokit::cat_time("Identify species with no data", level = 2L)
+  ecokit::cat_time("Identify species with no data", level = 1L)
 
   # Species with no data
   sp_no_data <- setdiff(TaxaList$IAS_ID, as.integer(Sp_PA_Data$species_ID))
@@ -355,24 +371,115 @@ IAS_process <- function(
         length(unique(Sp_PA_Data$species_ID)),  " species were processed; ",
         nrow(sp_no_data), " species have no data. ",
         "See `species_no_data.csv` for details"),
-      level = 3L)
+      level = 2L)
   } else {
     ecokit::cat_time(
       paste0("All ", length(TaxaList$Species_name), " species were processed"),
-      level = 3L)
-  }
-
-  # # .................................... ###
-
-  ## Stopping cluster ----
-  if (n_cores > 1) {
-    ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
-    future::plan("future::sequential", gc = TRUE)
+      level = 2L)
   }
 
   ecokit::cat_diff(
     init_time = .StartTimeDist,
     prefix = "Processing Species-specific data took ",
+    msg_n_lines = 1, level = 2L)
+
+  # # ..................................................................... ###
+
+  # Plotting species distribution -----
+  ecokit::cat_time("Plotting species distribution", level = 1L)
+  .StartTimePlot <- lubridate::now(tzone = "CET")
+
+  ## Prepare working in parallel -----
+  if (n_cores == 1) {
+    future::plan("future::sequential", gc = TRUE)
+  } else {
+    ecokit::set_parallel(
+      n_cores = n_cores, level = 1L, future_max_size = 800L,
+      strategy = strategy)
+    withr::defer(future::plan("future::sequential", gc = TRUE))
+  }
+
+  Sp_plots <- future.apply::future_lapply(
+    X = seq_len(nrow(Sp_taxa)),
+    FUN = function(x) {
+
+      file_jpeg <- fs::path(
+        Paths_All$jpeg, paste0(Sp_taxa$Species_File[x], ".jpeg"))
+
+      # Maximum attempts
+      max_attempts <- 4
+      attempt <- 1
+
+      repeat {
+        sp_plot <- tryCatch(
+          IASDT.R::IAS_plot(
+            species = Sp_taxa$Species_name[x], env_file = env_file))
+
+        if (inherits(sp_plot, "try-error")) {
+          attempt <- attempt + 1
+          if (attempt > max_attempts) {
+            break
+          }
+          next
+        }
+
+        if (file.exists(file_jpeg) && file.size(file_jpeg) > 0) {
+          break
+        }
+
+        attempt <- attempt + 1
+        if (attempt > max_attempts) {
+          break
+        }
+      }
+      tibble::tibble(
+        species = Sp_taxa, img_file = file_jpeg,
+        img_valid = ecokit::check_image(file = file_jpeg))
+    },
+    future.scheduling = Inf, future.conditions = NULL, future.seed = TRUE,
+    future.packages = pkg_to_export,
+    future.globals = c("env_file", "Paths_All", "Sp_taxa")) %>%
+    dplyr::bind_rows()
+
+  # validate that all plots were created
+  invalid_plots <- dplyr::filter(Sp_plots, !img_valid)
+  valid_plots <- dplyr::filter(Sp_plots, img_valid)
+
+  if (nrow(invalid_plots) > 0) {
+    readr::write_tsv(
+      x = invalid_plots, file = fs::path(Path_PA, "species_invalid_plots.csv"),
+      col_names = TRUE)
+
+    ecokit::cat_time(
+      paste0(
+        "Distribution maps for ", nrow(valid_plots),
+        " species were processed; ", nrow(invalid_plots),
+        " species have no data or failed to be plotted.",
+        "See `species_invalid_plots.csv` for details"),
+      level = 2L)
+  } else {
+    ecokit::cat_time(
+      paste0(
+        "Distribution maps for all ", nrow(valid_plots),
+        " species were plotted"),
+      level = 2L)
+  }
+
+  rm(Sp_plots, valid_plots, invalid_plots, envir = environment())
+
+  # # .................................... ###
+
+  ## Stopping cluster ----
+
+  if (n_cores > 1) {
+    ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
+    future::plan("future::sequential", gc = TRUE)
+  }
+  # # .................................... ###
+
+  ecokit::cat_diff(
+    init_time = .StartTimePlot,
+    prefix = "Plotting Species distribution took ",
     msg_n_lines = 1, level = 2L)
 
   # # ..................................................................... ###

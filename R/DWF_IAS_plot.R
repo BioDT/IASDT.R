@@ -73,7 +73,18 @@ IAS_plot <- function(species = NULL, env_file = ".env") {
   if (!file.exists(SpData)) {
     return(invisible(NULL))
   }
-  SpData <- ecokit::load_as(SpData, n_threads = 1)
+  selected_columns <- c(
+    "NCells_All", "GBIF_Gr100", "EASIN_Gr100", "eLTER_Gr100",
+    "BioRegsSumm_N", "BioRegsSumm_Min", "BioRegsSumm_Max", "BioRegsSumm_Mean",
+    "species_ID", "PA_Map", "Countries2Exclude",
+    "GBIF", "GBIF_Unique", "EASIN", "EASIN_Unique", "eLTER", "eLTER_Unique",
+    "NCells_Naturalized", "GBIF_Masked", "GBIF_Masked_Unique",
+    "EASIN_Masked", "EASIN_Masked_Unique", "eLTER_Masked",
+    "eLTER_Masked_Unique")
+
+  SpData <- ecokit::load_as(SpData, n_threads = 1) %>%
+    dplyr::select(tidyselect::all_of(selected_columns))
+  invisible(gc())
 
   if (SpData$NCells_All == 0) {
     return(invisible(NULL))
@@ -120,6 +131,7 @@ IAS_plot <- function(species = NULL, env_file = ".env") {
 
   SpData <- dplyr::select(
     SpData, -tidyselect::all_of(c("GBIF_Gr100", "EASIN_Gr100", "eLTER_Gr100")))
+  invisible(gc())
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -152,33 +164,37 @@ IAS_plot <- function(species = NULL, env_file = ".env") {
 
   # Plotting theme ----
 
-  PlottingTheme <- ggplot2::theme_bw() +
-    ggplot2::theme(
-      plot.margin = ggplot2::margin(0, 0, 0, 0, "cm"),
-      plot.title = ggtext::element_markdown(
-        hjust = 0.04, margin = ggplot2::margin(4, 0, 2, 0)),
-      plot.subtitle = ggtext::element_markdown(
-        hjust = 0.05, margin = ggplot2::margin(2, 0, 0, 0)),
-      strip.text = ggplot2::element_text(size = 6, face = "bold"),
-      legend.position = "none",
-      axis.title = ggplot2::element_blank(),
-      axis.text = ggplot2::element_blank(),
-      axis.ticks = ggplot2::element_blank(),
-      panel.spacing = grid::unit(0.3, "lines"),
-      panel.grid.minor = ggplot2::element_blank(),
-      panel.grid.major = ggplot2::element_blank(),
-      panel.border = ggplot2::element_blank(),
-      plot.tag.position = c(0.94, 0.011),
-      plot.tag = ggtext::element_markdown(colour = "grey", size = 4),
-      panel.ontop = TRUE, panel.background = ggplot2::element_rect(fill = NA))
+  ggplot2::theme_set(
+    ggplot2::theme_bw() +
+      ggplot2::theme(
+        plot.margin = ggplot2::margin(0, 0, 0, 0, "cm"),
+        plot.title = ggtext::element_markdown(
+          hjust = 0.04, margin = ggplot2::margin(4, 0, 2, 0)),
+        plot.subtitle = ggtext::element_markdown(
+          hjust = 0.05, margin = ggplot2::margin(2, 0, 0, 0)),
+        strip.text = ggplot2::element_text(size = 6, face = "bold"),
+        legend.position = "none",
+        axis.title = ggplot2::element_blank(),
+        axis.text = ggplot2::element_blank(),
+        axis.ticks = ggplot2::element_blank(),
+        panel.spacing = grid::unit(0.3, "lines"),
+        panel.grid.minor = ggplot2::element_blank(),
+        panel.grid.major = ggplot2::element_blank(),
+        panel.border = ggplot2::element_blank(),
+        plot.tag.position = c(0.94, 0.011),
+        plot.tag = ggtext::element_markdown(colour = "grey", size = 4),
+        panel.ontop = TRUE,
+        panel.background = ggplot2::element_rect(fill = NA)))
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||
 
   # map to be plotted ----
-
-  PresGrid <- terra::unwrap(SpData$PA_Map[[1]]) %>%
+  sp_PA <- terra::unwrap(SpData$PA_Map[[1]]) %>%
     terra::classify(cbind(0, NA)) %>%
-    terra::as.factor()
+    terra::as.factor() %>%
+    as.data.frame(xy = TRUE) %>%
+    setNames(c("x", "y", "species"))
+  SpData$PA_Map <- NULL
 
   BoundExclude <- ecokit::load_as(EU_Bound) %>%
     magrittr::extract2("Bound_sf_Eur") %>%
@@ -237,7 +253,8 @@ IAS_plot <- function(species = NULL, env_file = ".env") {
       GBIF_Gr100, mapping = ggplot2::aes(), color = "transparent",
       fill = scales::alpha("blue", 0.2), linewidth = 0.15) +
     # PA grid at 10 km resolution
-    tidyterra::geom_spatraster(data = PresGrid, maxcell = Inf) +
+    ggplot2::geom_tile(
+      data = sp_PA, mapping = ggplot2::aes(x = x, y = y, fill = species)) +
     ggplot2::scale_fill_manual(
       values = c("blue", "transparent"), na.value = "transparent") +
     ggplot2::geom_sf(
@@ -279,12 +296,11 @@ IAS_plot <- function(species = NULL, env_file = ".env") {
     ggplot2::scale_y_continuous(
       expand = ggplot2::expansion(mult = c(0, 0)),
       limits = c(1450000, 5410000)) +
-    ggplot2::labs(title = MapTitle, subtitle = NGrids_All, fill = NULL) +
-    PlottingTheme
+    ggplot2::labs(title = MapTitle, subtitle = NGrids_All, fill = NULL)
 
   rm(
     SpData, Grid10_Sf, GBIF_Gr100, EASIN_Gr100, eLTER_Gr100,
-    PresGrid, BoundExclude, Legend_GBIF, Legend_EASIN, Legend_eLTER,
+    BoundExclude, Legend_GBIF, Legend_EASIN, Legend_eLTER,
     envir = environment())
   invisible(gc())
 

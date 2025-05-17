@@ -122,7 +122,7 @@ IAS_process <- function(
     packages = c(
       "dplyr", "lubridate", "IASDT.R", "purrr", "stringr", "readr", "fs",
       "sf", "terra", "readxl", "tidyr", "tidyselect", "ggplot2", "ggtext",
-      "grid", "tidyterra", "cowplot", "scales", "tibble", "magrittr", "ragg",
+      "grid", "cowplot", "scales", "tibble", "magrittr", "ragg",
       "gtools", "ecokit"),
     strategy = strategy)
 
@@ -901,7 +901,8 @@ IAS_process <- function(
           next
         }
 
-        if (file.exists(file_jpeg) && file.size(file_jpeg) > 0) {
+        img_valid <- ecokit::check_image(file_jpeg, warning = FALSE)
+        if (img_valid) {
           break
         }
 
@@ -910,9 +911,10 @@ IAS_process <- function(
           break
         }
       }
+
       tibble::tibble(
-        species = Sp_taxa, img_file = file_jpeg,
-        img_valid = ecokit::check_image(file = file_jpeg))
+        species = Sp_taxa, img_file = file_jpeg, img_valid = img_valid)
+
     },
     future.scheduling = Inf, future.conditions = NULL, future.seed = TRUE,
     future.packages = pkg_to_export,

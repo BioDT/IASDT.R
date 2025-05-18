@@ -14,10 +14,9 @@
 #'   Defaults to `NULL`. This argument can not be empty.
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "future::sequential", "future::multisession",
-#'   "future::multicore", and "future::cluster". Defaults to
-#'   `"future::multicore"` (`"future::multisession"` on Windows). See
-#'   [future::plan()] and [ecokit::set_parallel()] for details.
+#'   options are "sequential", "multisession", and "cluster". Defaults to
+#'   `"multisession"`. See [future::plan()] and [ecokit::set_parallel()] for
+#'   details.
 #' @name mod_fit_windows
 #' @author Ahmed El-Gabbas
 #' @return The function does not return anything but prints messages to the
@@ -26,7 +25,7 @@
 
 mod_fit_windows <- function(
     path_model = NULL, python_VE = NULL, n_cores = NULL,
-    strategy = "future::multicore") {
+    strategy = "multisession") {
 
   # exit the function if not running on Windows
   if (ecokit::os() != "Windows") {
@@ -93,7 +92,7 @@ mod_fit_windows <- function(
       include_backtrace = TRUE)
   }
 
-  if (strategy == "future::sequential") {
+  if (strategy == "sequential") {
     n_cores <- 1L
   }
   if (length(strategy) != 1L) {
@@ -101,9 +100,7 @@ mod_fit_windows <- function(
       "`strategy` must be a character vector of length 1",
       strategy = strategy, length_strategy = length(strategy))
   }
-  valid_strategy <- c(
-    "future::sequential", "future::multisession", "future::multicore",
-    "future::cluster")
+  valid_strategy <- c("sequential", "multisession", "multicore", "cluster")
   if (!strategy %in% valid_strategy) {
     ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }
@@ -125,12 +122,12 @@ mod_fit_windows <- function(
       paste0("There are ", nrow(Model2Run), " model variants to be fitted."))
 
     if (n_cores == 1) {
-      future::plan("future::sequential", gc = TRUE)
+      future::plan("sequential", gc = TRUE)
     } else {
       ecokit::set_parallel(
         n_cores = n_cores, level = 1L, future_max_size = 800L,
         strategy = strategy)
-      withr::defer(future::plan("future::sequential", gc = TRUE))
+      withr::defer(future::plan("sequential", gc = TRUE))
     }
 
     RunCommands <- future.apply::future_lapply(
@@ -148,7 +145,7 @@ mod_fit_windows <- function(
 
     if (n_cores > 1) {
       ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
-      future::plan("future::sequential", gc = TRUE)
+      future::plan("sequential", gc = TRUE)
     }
 
   } else {

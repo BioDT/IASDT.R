@@ -27,9 +27,8 @@
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 8.
 #' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "future::sequential", "future::multisession",
-#'   "future::multicore", and "future::cluster". Defaults to
-#'   `"future::multicore"` (`"future::multisession"` on Windows). See
+#'   options are "sequential", "multisession", "multicore", and "cluster".
+#'   Defaults to `"multicore"` (`"multisession"` on Windows). See
 #'   [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param temp_cleanup Logical. Whether to clean up temporary files. Defaults to
 #'   `TRUE`.
@@ -70,7 +69,7 @@
 predict_hmsc <- function(
     path_model, Loff = NULL, x_data = NULL, X = NULL, XRRRData = NULL,
     XRRR = NULL, gradient = NULL, Yc = NULL, mcmcStep = 1L, expected = TRUE,
-    n_cores = 8L, strategy = "future::multicore", model_name = "Train",
+    n_cores = 8L, strategy = "multicore", model_name = "Train",
     temp_dir = "TEMP_Pred", temp_cleanup = TRUE, prediction_type = NULL,
     use_TF = TRUE, TF_environ = NULL, TF_use_single = FALSE, LF_out_file = NULL,
     LF_return = FALSE, LF_inputFile = NULL, LF_only = FALSE,
@@ -99,7 +98,7 @@ predict_hmsc <- function(
       "`strategy` must be a character vector",
       strategy = strategy, class_strategy = class(strategy))
   }
-  if (strategy == "future::sequential") {
+  if (strategy == "sequential") {
     n_cores <- LF_n_cores <- 1L
   }
   if (length(strategy) != 1L) {
@@ -107,9 +106,7 @@ predict_hmsc <- function(
       "`strategy` must be a character vector of length 1",
       strategy = strategy, length_strategy = length(strategy))
   }
-  valid_strategy <- c(
-    "future::sequential", "future::multisession", "future::multicore",
-    "future::cluster")
+  valid_strategy <- c("sequential", "multisession", "multicore", "cluster")
   if (!strategy %in% valid_strategy) {
     ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }
@@ -540,12 +537,12 @@ predict_hmsc <- function(
   seeds <- sample.int(.Machine$integer.max, predN)
 
   if (n_cores == 1) {
-    future::plan("future::sequential", gc = TRUE)
+    future::plan("sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
       n_cores = min(n_cores, length(Chunks)), level = 1L,
       future_max_size = 800L, strategy = strategy)
-    withr::defer(future::plan("future::sequential", gc = TRUE))
+    withr::defer(future::plan("sequential", gc = TRUE))
   }
 
   ecokit::cat_time(
@@ -726,7 +723,7 @@ predict_hmsc <- function(
 
   if (n_cores > 1) {
     ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
-    future::plan("future::sequential", gc = TRUE)
+    future::plan("sequential", gc = TRUE)
   }
 
   invisible(gc())

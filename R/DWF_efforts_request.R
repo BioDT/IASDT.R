@@ -9,9 +9,8 @@
 #' @export
 
 efforts_request <- function(
-    env_file = ".env", n_cores = 3L, strategy = "future::multicore",
-    start_year = 1981L, r_environ = ".Renviron",
-    boundaries = c(-30, 50, 25, 75)) {
+    env_file = ".env", n_cores = 3L, strategy = "multicore", start_year = 1981L,
+    r_environ = ".Renviron", boundaries = c(-30, 50, 25, 75)) {
 
   # # ..................................................................... ###
 
@@ -39,7 +38,7 @@ efforts_request <- function(
       "`strategy` must be a character vector",
       strategy = strategy, class_strategy = class(strategy))
   }
-  if (strategy == "future::sequential") {
+  if (strategy == "sequential") {
     n_cores <- 1L
   }
   if (length(strategy) != 1L) {
@@ -47,9 +46,7 @@ efforts_request <- function(
       "`strategy` must be a character vector of length 1",
       strategy = strategy, length_strategy = length(strategy))
   }
-  valid_strategy <- c(
-    "future::sequential", "future::multisession", "future::multicore",
-    "future::cluster")
+  valid_strategy <- c("sequential", "multisession", "multicore", "cluster")
   if (!strategy %in% valid_strategy) {
     ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }
@@ -102,12 +99,12 @@ efforts_request <- function(
   # is finished.
 
   if (n_cores == 1) {
-    future::plan("future::sequential", gc = TRUE)
+    future::plan("sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
       n_cores = min(n_cores, 3), level = 1L, future_max_size = 800L,
       strategy = strategy)
-    withr::defer(future::plan("future::sequential", gc = TRUE))
+    withr::defer(future::plan("sequential", gc = TRUE))
   }
 
   # # ..................................................................... ###
@@ -225,7 +222,7 @@ efforts_request <- function(
   # Stopping cluster ------
   if (n_cores > 1) {
     ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
-    future::plan("future::sequential", gc = TRUE)
+    future::plan("sequential", gc = TRUE)
   }
 
   # # ..................................................................... ###

@@ -28,9 +28,8 @@
 #'   partitioning using TensorFlow. This is only effective when `use_TF` is
 #'   `TRUE`. Default: `1`.
 #' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "future::sequential", "future::multisession",
-#'   "future::multicore", and "future::cluster". Defaults to
-#'   `"future::multicore"` (`"future::multisession"` on Windows). See
+#'   options are "sequential", "multisession", "multicore", and "cluster".
+#'   Defaults to `"multicore"` (`"multisession"` on Windows). See
 #'   [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param chunk_size Integer. Size of each chunk of samples to process in
 #'   parallel. Only relevant for TensorFlow. Default: `50`.
@@ -56,10 +55,9 @@
 
 variance_partitioning_compute <- function(
     path_model, group = NULL, group_names = NULL, start = 1L, na.ignore = FALSE,
-    n_cores = 8L, strategy = "future::multicore", use_TF = TRUE,
-    TF_environ = NULL, TF_use_single = FALSE, temp_cleanup = TRUE,
-    chunk_size = 50L, verbose = TRUE, VP_file = "VarPar",
-    VP_commands_only = FALSE) {
+    n_cores = 8L, strategy = "multicore", use_TF = TRUE, TF_environ = NULL,
+    TF_use_single = FALSE, temp_cleanup = TRUE, chunk_size = 50L,
+    verbose = TRUE, VP_file = "VarPar", VP_commands_only = FALSE) {
 
   if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
     ecokit::stop_ctx(
@@ -72,7 +70,7 @@ variance_partitioning_compute <- function(
       "`strategy` must be a character vector",
       strategy = strategy, class_strategy = class(strategy))
   }
-  if (strategy == "future::sequential") {
+  if (strategy == "sequential") {
     n_cores <- 1L
   }
   if (length(strategy) != 1L) {
@@ -80,9 +78,7 @@ variance_partitioning_compute <- function(
       "`strategy` must be a character vector of length 1",
       strategy = strategy, length_strategy = length(strategy))
   }
-  valid_strategy <- c(
-    "future::sequential", "future::multisession", "future::multicore",
-    "future::cluster")
+  valid_strategy <- c("sequential", "multisession", "multicore", "cluster")
   if (!strategy %in% valid_strategy) {
     ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }
@@ -357,12 +353,12 @@ variance_partitioning_compute <- function(
         if (!all(file.exists(Beta_Files))) {
 
           if (n_cores == 1) {
-            future::plan("future::sequential", gc = TRUE)
+            future::plan("sequential", gc = TRUE)
           } else {
             ecokit::set_parallel(
               n_cores = n_cores, level = 3L, future_max_size = 800L,
               strategy = strategy)
-            withr::defer(future::plan("future::sequential", gc = TRUE))
+            withr::defer(future::plan("sequential", gc = TRUE))
           }
 
           ecokit::cat_time(
@@ -387,7 +383,7 @@ variance_partitioning_compute <- function(
           # stopping the cluster
           if (n_cores > 1) {
             ecokit::set_parallel(stop_cluster = TRUE, level = 3L)
-            future::plan("future::sequential", gc = TRUE)
+            future::plan("sequential", gc = TRUE)
           }
         }
       }
@@ -713,12 +709,12 @@ variance_partitioning_compute <- function(
     invisible(gc())
 
     if (n_cores == 1) {
-      future::plan("future::sequential", gc = TRUE)
+      future::plan("sequential", gc = TRUE)
     } else {
       ecokit::set_parallel(
         n_cores = n_cores, level = 1L, future_max_size = 800L,
         strategy = strategy)
-      withr::defer(future::plan("future::sequential", gc = TRUE))
+      withr::defer(future::plan("sequential", gc = TRUE))
     }
 
     ecokit::cat_time("Processing in parallel", level = 1L, verbose = verbose)
@@ -833,7 +829,7 @@ variance_partitioning_compute <- function(
     # stopping the cluster
     if (n_cores > 1) {
       ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
-      future::plan("future::sequential", gc = TRUE)
+      future::plan("sequential", gc = TRUE)
     }
 
     # Summarise the results

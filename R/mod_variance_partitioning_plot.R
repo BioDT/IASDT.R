@@ -9,8 +9,8 @@
 
 variance_partitioning_plot <- function(
     path_model, env_file = ".env", VP_file = "VarPar", use_TF = TRUE,
-    TF_environ = NULL, n_cores = 1L, strategy = "future::multicore",
-    width = 30, height = 15, Axis_text = 4) {
+    TF_environ = NULL, n_cores = 1L, strategy = "multicore", width = 30,
+    height = 15, Axis_text = 4) {
 
   .start_time <- lubridate::now(tzone = "CET")
 
@@ -47,7 +47,7 @@ variance_partitioning_plot <- function(
       include_backtrace = TRUE)
   }
 
-  if (strategy == "future::sequential") {
+  if (strategy == "sequential") {
     n_cores <- 1L
   }
   if (length(strategy) != 1L) {
@@ -55,9 +55,7 @@ variance_partitioning_plot <- function(
       "`strategy` must be a character vector of length 1",
       strategy = strategy, length_strategy = length(strategy))
   }
-  valid_strategy <- c(
-    "future::sequential", "future::multisession", "future::multicore",
-    "future::cluster")
+  valid_strategy <- c("sequential", "multisession", "multicore", "cluster")
   if (!strategy %in% valid_strategy) {
     ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }

@@ -27,9 +27,8 @@
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 6.
 #' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "future::sequential", "future::multisession",
-#'   "future::multicore", and "future::cluster". Defaults to
-#'   `"future::multicore"` (`"future::multisession"` on Windows). See
+#'   options are "sequential", "multisession", "multicore", and "cluster".
+#'   Defaults to `"multicore"` (`"multisession"` on Windows). See
 #'   [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param delete_chunks Logical. If `TRUE` (default), deletes chunk files.
 #' @param chunk_file Character. Path of chunk file for processing.
@@ -80,7 +79,7 @@
 
 GBIF_process <- function(
     env_file = ".env", r_environ = ".Renviron", n_cores = 6L,
-    strategy = "future::multicore", request = TRUE, download = TRUE,
+    strategy = "multicore", request = TRUE, download = TRUE,
     split_chunks = TRUE, overwrite = FALSE, delete_chunks = TRUE,
     chunk_size = 50000L, boundaries = c(-30, 50, 25, 75), start_year = 1981L) {
 
@@ -117,7 +116,7 @@ GBIF_process <- function(
       "`strategy` must be a character vector",
       strategy = strategy, class_strategy = class(strategy))
   }
-  if (strategy == "future::sequential") {
+  if (strategy == "sequential") {
     n_cores <- 1L
   }
   if (length(strategy) != 1L) {
@@ -125,9 +124,7 @@ GBIF_process <- function(
       "`strategy` must be a character vector of length 1",
       strategy = strategy, length_strategy = length(strategy))
   }
-  valid_strategy <- c(
-    "future::sequential", "future::multisession", "future::multicore",
-    "future::cluster")
+  valid_strategy <- c("sequential", "multisession", "multicore", "cluster")
   if (!strategy %in% valid_strategy) {
     ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }
@@ -231,12 +228,12 @@ GBIF_process <- function(
   ChunkListRData <- stringr::str_replace_all(ChunkList, ".txt$", ".RData")
 
   if (n_cores == 1) {
-    future::plan("future::sequential", gc = TRUE)
+    future::plan("sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
       n_cores = n_cores, level = 1L, future_max_size = 800L,
       strategy = strategy)
-    withr::defer(future::plan("future::sequential", gc = TRUE))
+    withr::defer(future::plan("sequential", gc = TRUE))
   }
 
   ecokit::cat_time(
@@ -286,7 +283,7 @@ GBIF_process <- function(
 
   if (n_cores > 1) {
     ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
-    future::plan("future::sequential", gc = TRUE)
+    future::plan("sequential", gc = TRUE)
   }
 
   ecokit::cat_time("Saving `GBIF_Data` to disk", level = 1L)
@@ -619,12 +616,12 @@ GBIF_process <- function(
   ecokit::cat_time("Split species data - grid + raster + plot", level = 1L)
 
   if (n_cores == 1) {
-    future::plan("future::sequential", gc = TRUE)
+    future::plan("sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
       n_cores = n_cores, level = 2L, future_max_size = 800L,
       strategy = strategy)
-    withr::defer(future::plan("future::sequential", gc = TRUE))
+    withr::defer(future::plan("sequential", gc = TRUE))
   }
 
   ecokit::cat_time("Splitting species data in parallel", level = 2L)
@@ -639,7 +636,7 @@ GBIF_process <- function(
 
   if (n_cores > 1) {
     ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
-    future::plan("future::sequential", gc = TRUE)
+    future::plan("sequential", gc = TRUE)
   }
 
   # # ..................................................................... ###

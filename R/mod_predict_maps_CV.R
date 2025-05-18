@@ -10,7 +10,7 @@
 
 predict_maps_CV <- function(
     model_dir = NULL, CV_name = NULL, CV_fold = NULL, n_cores = 8L,
-    strategy = "future::multicore", env_file = ".env", use_TF = TRUE,
+    strategy = "multicore", env_file = ".env", use_TF = TRUE,
     TF_environ = NULL, TF_use_single = FALSE, LF_n_cores = n_cores,
     LF_check = FALSE, LF_temp_cleanup = TRUE, LF_only = FALSE,
     LF_commands_only = FALSE, temp_cleanup = TRUE) {
@@ -63,7 +63,7 @@ predict_maps_CV <- function(
       include_backtrace = TRUE)
   }
 
-  if (strategy == "future::sequential") {
+  if (strategy == "sequential") {
     n_cores <- LF_n_cores <- 1L
   }
   if (length(strategy) != 1L) {
@@ -71,9 +71,7 @@ predict_maps_CV <- function(
       "`strategy` must be a character vector of length 1",
       strategy = strategy, length_strategy = length(strategy))
   }
-  valid_strategy <- c(
-    "future::sequential", "future::multisession", "future::multicore",
-    "future::cluster")
+  valid_strategy <- c("sequential", "multisession", "multicore", "cluster")
   if (!strategy %in% valid_strategy) {
     ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }

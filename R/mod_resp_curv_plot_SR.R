@@ -9,7 +9,7 @@
 #' @author Ahmed El-Gabbas
 
 resp_curv_plot_SR <- function(
-    model_dir, verbose = TRUE, n_cores = 8L, strategy = "future::multicore") {
+    model_dir, verbose = TRUE, n_cores = 8L, strategy = "multicore") {
 
   if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
     ecokit::stop_ctx(
@@ -22,7 +22,7 @@ resp_curv_plot_SR <- function(
       "`strategy` must be a character vector",
       strategy = strategy, class_strategy = class(strategy))
   }
-  if (strategy == "future::sequential") {
+  if (strategy == "sequential") {
     n_cores <- 1L
   }
   if (length(strategy) != 1L) {
@@ -30,9 +30,7 @@ resp_curv_plot_SR <- function(
       "`strategy` must be a character vector of length 1",
       strategy = strategy, length_strategy = length(strategy))
   }
-  valid_strategy <- c(
-    "future::sequential", "future::multisession", "future::multicore",
-    "future::cluster")
+  valid_strategy <- c("sequential", "multisession", "multicore", "cluster")
   if (!strategy %in% valid_strategy) {
     ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }
@@ -90,17 +88,17 @@ resp_curv_plot_SR <- function(
   n_cores <- max(min(n_cores, nrow(SR_DT_All)), 1)
 
   if (n_cores == 1) {
-    future::plan("future::sequential", gc = TRUE)
+    future::plan("sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
       n_cores = n_cores, level = 1L, future_max_size = 800L,
       strategy = strategy)
-    withr::defer(future::plan("future::sequential", gc = TRUE))
+    withr::defer(future::plan("sequential", gc = TRUE))
   }
 
   ecokit::cat_time("Prepare data", level = 1L, verbose = verbose)
 
-  if (strategy == "future::multicore") {
+  if (strategy == "multicore") {
     pkg_to_export <- NULL
   } else {
     pkg_to_export <- c("tibble", "dplyr", "magrittr", "ecokit", "tidyr")
@@ -145,7 +143,7 @@ resp_curv_plot_SR <- function(
 
   if (n_cores > 1) {
     ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
-    future::plan("future::sequential", gc = TRUE)
+    future::plan("sequential", gc = TRUE)
   }
 
   invisible(gc())

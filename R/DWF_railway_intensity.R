@@ -14,9 +14,8 @@
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 8.
 #' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "future::sequential", "future::multisession",
-#'   "future::multicore", and "future::cluster". Defaults to
-#'   `"future::multicore"` (`"future::multisession"` on Windows). See
+#'   options are "sequential", "multisession", "multicore", and "cluster".
+#'   Defaults to `"multicore"` (`"multisession"` on Windows). See
 #'   [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param delete_processed Logical indicating whether to delete the raw
 #'   downloaded railways files after processing them. This helps to free large
@@ -28,7 +27,7 @@
 #' @author Ahmed El-Gabbas
 
 railway_intensity <- function(
-    env_file = ".env", n_cores = 6L, strategy = "future::multicore",
+    env_file = ".env", n_cores = 6L, strategy = "multicore",
     delete_processed = TRUE) {
 
   .start_time <- lubridate::now(tzone = "CET")
@@ -58,7 +57,7 @@ railway_intensity <- function(
       include_backtrace = TRUE)
   }
 
-  if (strategy == "future::sequential") {
+  if (strategy == "sequential") {
     n_cores <- 1L
   }
   if (length(strategy) != 1L) {
@@ -66,9 +65,7 @@ railway_intensity <- function(
       "`strategy` must be a character vector of length 1",
       strategy = strategy, length_strategy = length(strategy))
   }
-  valid_strategy <- c(
-    "future::sequential", "future::multisession", "future::multicore",
-    "future::cluster")
+  valid_strategy <- c("sequential", "multisession", "multicore", "cluster")
   if (!strategy %in% valid_strategy) {
     ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }
@@ -289,12 +286,12 @@ railway_intensity <- function(
 
   ## Prepare working in parallel ----
   if (n_cores == 1) {
-    future::plan("future::sequential", gc = TRUE)
+    future::plan("sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
       n_cores = n_cores, level = 1L, future_max_size = 800L,
       strategy = strategy)
-    withr::defer(future::plan("future::sequential", gc = TRUE))
+    withr::defer(future::plan("sequential", gc = TRUE))
   }
 
   ## Processing railway data ----
@@ -402,7 +399,7 @@ railway_intensity <- function(
 
   if (n_cores > 1) {
     ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
-    future::plan("future::sequential", gc = TRUE)
+    future::plan("sequential", gc = TRUE)
   }
 
   # Delete raw directory if empty

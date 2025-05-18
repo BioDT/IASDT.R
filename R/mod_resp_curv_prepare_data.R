@@ -19,12 +19,11 @@
 #'   focal variables. Higher values result in smoother curves. Default: 50. See
 #'   [Hmsc::constructGradient] for details.
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
-#'   Defaults to 8L for all functions, except for `resp_curv_plot_species`,
-#'   in which it defaults to 20L.
+#'   Defaults to 8L for all functions, except for `resp_curv_plot_species`, in
+#'   which it defaults to 20L.
 #' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "future::sequential", "future::multisession",
-#'   "future::multicore", and "future::cluster". Defaults to
-#'   `"future::multicore"` (`"future::multisession"` on Windows). See
+#'   options are "sequential", "multisession", "multicore", and "cluster".
+#'   Defaults to `"multicore"` (`"multisession"` on Windows). See
 #'   [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param return_data Logical. If `TRUE`, the function returns processed data as
 #'   an R object. Default: `FALSE`.
@@ -46,12 +45,11 @@
 #' @author Ahmed El-Gabbas
 
 resp_curv_prepare_data <- function(
-    path_model = NULL, n_grid = 50L, n_cores = 8L,
-    strategy = "future::multicore", return_data = FALSE,
-    probabilities = c(0.025, 0.5, 0.975), use_TF = TRUE, TF_environ = NULL,
-    TF_use_single = FALSE, LF_n_cores = n_cores, LF_check = FALSE,
-    LF_temp_cleanup = TRUE, LF_commands_only = FALSE, temp_dir = "TEMP_Pred",
-    temp_cleanup = TRUE, verbose = TRUE) {
+    path_model = NULL, n_grid = 50L, n_cores = 8L, strategy = "multicore",
+    return_data = FALSE, probabilities = c(0.025, 0.5, 0.975), use_TF = TRUE,
+    TF_environ = NULL, TF_use_single = FALSE, LF_n_cores = n_cores,
+    LF_check = FALSE, LF_temp_cleanup = TRUE, LF_commands_only = FALSE,
+    temp_dir = "TEMP_Pred", temp_cleanup = TRUE, verbose = TRUE) {
 
   if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
     ecokit::stop_ctx(
@@ -69,7 +67,7 @@ resp_curv_prepare_data <- function(
       "`strategy` must be a character vector",
       strategy = strategy, class_strategy = class(strategy))
   }
-  if (strategy == "future::sequential") {
+  if (strategy == "sequential") {
     n_cores <- LF_n_cores <- 1L
   }
   if (length(strategy) != 1L) {
@@ -77,9 +75,7 @@ resp_curv_prepare_data <- function(
       "`strategy` must be a character vector of length 1",
       strategy = strategy, length_strategy = length(strategy))
   }
-  valid_strategy <- c(
-    "future::sequential", "future::multisession", "future::multicore",
-    "future::cluster")
+  valid_strategy <- c("sequential", "multisession", "multicore", "cluster")
   if (!strategy %in% valid_strategy) {
     ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }
@@ -519,12 +515,12 @@ resp_curv_prepare_data <- function(
     n_cores <- max(min(n_cores, MissingRows), 1)
 
     if (n_cores == 1) {
-      future::plan("future::sequential", gc = TRUE)
+      future::plan("sequential", gc = TRUE)
     } else {
       ecokit::set_parallel(
         n_cores = n_cores, level = 1L, future_max_size = 800L,
         strategy = strategy)
-      withr::defer(future::plan("future::sequential", gc = TRUE))
+      withr::defer(future::plan("sequential", gc = TRUE))
     }
 
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -546,7 +542,7 @@ resp_curv_prepare_data <- function(
 
     if (n_cores > 1) {
       ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
-      future::plan("future::sequential", gc = TRUE)
+      future::plan("sequential", gc = TRUE)
     }
 
     invisible(gc())

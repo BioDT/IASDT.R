@@ -11,9 +11,8 @@
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 8.
 #' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "future::sequential", "future::multisession",
-#'   "future::multicore", and "future::cluster". Defaults to
-#'   `"future::multicore"` (`"future::multisession"` on Windows). See
+#'   options are "sequential", "multisession", "multicore", and "cluster".
+#'   Defaults to `"multicore"` (`"multisession"` on Windows). See
 #'   [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param download Logical. If `TRUE`, downloads CHELSA files. Default: `FALSE`.
 #' @param download_attempts Integer. Maximum download retries. Default: `10`.
@@ -60,7 +59,7 @@
 #' @order 1
 
 CHELSA_process <- function(
-    env_file = ".env", n_cores = 8L, strategy = "future::multicore",
+    env_file = ".env", n_cores = 8L, strategy = "multicore",
     download = FALSE, overwrite = FALSE, download_attempts = 10L, sleep = 5L,
     other_variables = "npp", download_n_cores = 4, compression_level = 5,
     overwrite_processed = FALSE) {
@@ -102,7 +101,7 @@ CHELSA_process <- function(
       include_backtrace = TRUE)
   }
 
-  if (strategy == "future::sequential") {
+  if (strategy == "sequential") {
     n_cores <- 1L
   }
   if (length(strategy) != 1L) {
@@ -110,9 +109,7 @@ CHELSA_process <- function(
       "`strategy` must be a character vector of length 1",
       strategy = strategy, length_strategy = length(strategy))
   }
-  valid_strategy <- c(
-    "future::sequential", "future::multisession", "future::multicore",
-    "future::cluster")
+  valid_strategy <- c("sequential", "multisession", "multicore", "cluster")
   if (!strategy %in% valid_strategy) {
     ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }
@@ -195,13 +192,13 @@ CHELSA_process <- function(
 
     if (n_cores == 1) {
       ecokit::cat_time("Check input CHELSA files sequentially")
-      future::plan("future::sequential", gc = TRUE)
+      future::plan("sequential", gc = TRUE)
     } else {
       ecokit::cat_time("Check input CHELSA files in parallel")
       ecokit::set_parallel(
         n_cores = n_cores, level = 1L, future_max_size = 800L,
         strategy = strategy)
-      withr::defer(future::plan("future::sequential", gc = TRUE))
+      withr::defer(future::plan("sequential", gc = TRUE))
     }
 
     CHELSA_Data_Checked <- future.apply::future_lapply(
@@ -218,7 +215,7 @@ CHELSA_process <- function(
 
     if (n_cores > 1) {
       ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
-      future::plan("future::sequential", gc = TRUE)
+      future::plan("sequential", gc = TRUE)
     }
 
     if (nrow(CHELSA_Data_Checked) > 0) {
@@ -261,13 +258,13 @@ CHELSA_process <- function(
 
   if (n_cores == 1) {
     ecokit::cat_time("Processing CHELSA maps sequentially")
-    future::plan("future::sequential", gc = TRUE)
+    future::plan("sequential", gc = TRUE)
   } else {
     ecokit::cat_time("Processing CHELSA maps in parallel")
     ecokit::set_parallel(
       n_cores = n_cores, level = 1L, future_max_size = 800L,
       strategy = strategy)
-    withr::defer(future::plan("future::sequential", gc = TRUE))
+    withr::defer(future::plan("sequential", gc = TRUE))
   }
 
   if (overwrite_processed) {
@@ -441,7 +438,7 @@ CHELSA_process <- function(
 
   if (n_cores > 1) {
     ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
-    future::plan("future::sequential", gc = TRUE)
+    future::plan("sequential", gc = TRUE)
   }
 
   ecokit::cat_diff(
@@ -455,14 +452,14 @@ CHELSA_process <- function(
   if (n_cores == 1) {
     ecokit::cat_time(
       "Grouping CHELSA data by time and climate model+scenario sequentially")
-    future::plan("future::sequential", gc = TRUE)
+    future::plan("sequential", gc = TRUE)
   } else {
     ecokit::cat_time(
       "Grouping CHELSA data by time and climate model+scenario in parallel")
     ecokit::set_parallel(
       n_cores = n_cores, level = 1L, future_max_size = 800L,
       strategy = strategy)
-    withr::defer(future::plan("future::sequential", gc = TRUE))
+    withr::defer(future::plan("sequential", gc = TRUE))
   }
 
   # String to be matched to extract variable names
@@ -524,7 +521,7 @@ CHELSA_process <- function(
 
   if (n_cores > 1) {
     ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
-    future::plan("future::sequential", gc = TRUE)
+    future::plan("sequential", gc = TRUE)
   }
 
   save(

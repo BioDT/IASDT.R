@@ -21,9 +21,8 @@
 #' @param LF_n_cores Integer. Number of cores to use for parallel processing of
 #'   latent factor prediction. Defaults to 8L.
 #' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "future::sequential", "future::multisession",
-#'   "future::multicore", and "future::cluster". Defaults to
-#'   `"future::multicore"` (`"future::multisession"` on Windows). See
+#'   options are "sequential", "multisession", "multicore", and "cluster".
+#'   Defaults to `"multicore"` (`"multisession"` on Windows). See
 #'   [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param temp_dir Character. Path for temporary storage of intermediate files.
 #' @param LF_temp_cleanup Logical. Whether to delete temporary files in the
@@ -76,7 +75,7 @@
 
 predict_latent_factor <- function(
     units_pred, units_model, postEta, post_alpha, LF_rL, LF_n_cores = 8L,
-    strategy = "future::multicore", temp_dir = "TEMP_Pred",
+    strategy = "multicore", temp_dir = "TEMP_Pred",
     LF_temp_cleanup = TRUE, model_name = NULL, use_TF = TRUE, TF_environ = NULL,
     TF_use_single = FALSE, LF_out_file = NULL, LF_return = FALSE,
     LF_check = FALSE, LF_commands_only = FALSE, solve_max_attempts = 5L,
@@ -95,7 +94,7 @@ predict_latent_factor <- function(
       "`strategy` must be a character vector",
       strategy = strategy, class_strategy = class(strategy))
   }
-  if (strategy == "future::sequential") {
+  if (strategy == "sequential") {
     n_cores <- 1L
   }
   if (length(strategy) != 1L) {
@@ -103,9 +102,7 @@ predict_latent_factor <- function(
       "`strategy` must be a character vector of length 1",
       strategy = strategy, length_strategy = length(strategy))
   }
-  valid_strategy <- c(
-    "future::sequential", "future::multisession", "future::multicore",
-    "future::cluster")
+  valid_strategy <- c("sequential", "multisession", "multicore", "cluster")
   if (!strategy %in% valid_strategy) {
     ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }
@@ -659,7 +656,7 @@ predict_latent_factor <- function(
         ecokit::set_parallel(
           n_cores = min(LF_n_cores, nrow(LF_Data)), level = 2L,
           future_max_size = 800L, strategy = strategy)
-        withr::defer(future::plan("future::sequential", gc = TRUE))
+        withr::defer(future::plan("sequential", gc = TRUE))
 
         ecokit::cat_time(
           "Making predictions in parallel", level = 2L, verbose = verbose)
@@ -729,7 +726,7 @@ predict_latent_factor <- function(
     ecokit::set_parallel(
       n_cores = LF_n_cores, level = 2L, future_max_size = 800L,
       strategy = strategy)
-    withr::defer(future::plan("future::sequential", gc = TRUE))
+    withr::defer(future::plan("sequential", gc = TRUE))
 
     ecokit::cat_time(
       "Process results for MCMC samples in parallel",

@@ -19,9 +19,8 @@
 #' @param n_cores_VP Integer. Number of cores to use for variance partitioning.
 #'   Defaults to 3L.
 #' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "future::sequential", "future::multisession",
-#'   "future::multicore", and "future::cluster". Defaults to
-#'   `"future::multicore"` (`"future::multisession"` on Windows). See
+#'   options are "sequential", "multisession", "multicore", and "cluster".
+#'   Defaults to `"multicore"` (`"multisession"` on Windows). See
 #'   [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param n_batch_files Integer. Number of output batch files to create. Must be
 #'   less than or equal to the maximum job limit of the HPC environment.
@@ -170,10 +169,9 @@
 ## |------------------------------------------------------------------------| #
 
 mod_postprocess_1_CPU <- function(
-    model_dir = NULL, hab_abb = NULL, n_cores = 8L,
-    strategy = "future::multicore", env_file = ".env",
-    path_Hmsc = NULL, memory_per_cpu = "64G", job_runtime = NULL,
-    from_JSON = FALSE, GPP_dist = NULL, use_trees = "Tree",
+    model_dir = NULL, hab_abb = NULL, n_cores = 8L, strategy = "multicore",
+    env_file = ".env", path_Hmsc = NULL, memory_per_cpu = "64G",
+    job_runtime = NULL, from_JSON = FALSE, GPP_dist = NULL, use_trees = "Tree",
     MCMC_n_samples = 1000L, MCMC_thin = NULL, n_omega = 1000L,
     CV_name = c("CV_Dist", "CV_Large"), n_grid = 50L, use_TF = TRUE,
     TF_use_single = FALSE, LF_n_cores = n_cores,
@@ -231,7 +229,7 @@ mod_postprocess_1_CPU <- function(
       include_backtrace = TRUE)
   }
 
-  if (strategy == "future::sequential") {
+  if (strategy == "sequential") {
     n_cores <- LF_n_cores <- n_cores_VP <- 1L
   }
   if (length(strategy) != 1L) {
@@ -239,9 +237,7 @@ mod_postprocess_1_CPU <- function(
       "`strategy` must be a character vector of length 1",
       strategy = strategy, length_strategy = length(strategy))
   }
-  valid_strategy <- c(
-    "future::sequential", "future::multisession", "future::multicore",
-    "future::cluster")
+  valid_strategy <- c("sequential", "multisession", "multicore", "cluster")
   if (!strategy %in% valid_strategy) {
     ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }
@@ -889,7 +885,7 @@ mod_prepare_TF <- function(
 
 mod_postprocess_2_CPU <- function(
     model_dir = NULL, hab_abb = NULL, n_cores = 8L,
-    strategy = "future::multicore", env_file = ".env", GPP_dist = NULL,
+    strategy = "multicore", env_file = ".env", GPP_dist = NULL,
     use_trees = "Tree", MCMC_n_samples = 1000L, MCMC_thin = NULL, use_TF = TRUE,
     TF_environ = NULL, TF_use_single = FALSE, LF_n_cores = n_cores,
     LF_check = FALSE, LF_temp_cleanup = TRUE, temp_cleanup = TRUE, n_grid = 50L,
@@ -949,7 +945,7 @@ mod_postprocess_2_CPU <- function(
       include_backtrace = TRUE)
   }
 
-  if (strategy == "future::sequential") {
+  if (strategy == "sequential") {
     n_cores <- 1L
   }
   if (length(strategy) != 1L) {
@@ -958,8 +954,8 @@ mod_postprocess_2_CPU <- function(
       strategy = strategy, length_strategy = length(strategy))
   }
   valid_strategy <- c(
-    "future::sequential", "future::multisession", "future::multicore",
-    "future::cluster")
+    "sequential", "multisession", "multicore",
+    "cluster")
   if (!strategy %in% valid_strategy) {
     ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }

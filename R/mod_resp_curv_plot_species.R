@@ -10,8 +10,8 @@
 #' @author Ahmed El-Gabbas
 
 resp_curv_plot_species <- function(
-    model_dir = NULL, n_cores = 20, strategy = "future::multicore",
-    env_file = ".env", return_data = FALSE) {
+    model_dir = NULL, n_cores = 20, strategy = "multicore", env_file = ".env",
+    return_data = FALSE) {
 
   # # ..................................................................... ###
 
@@ -63,7 +63,7 @@ resp_curv_plot_species <- function(
       "`strategy` must be a character vector",
       strategy = strategy, class_strategy = class(strategy))
   }
-  if (strategy == "future::sequential") {
+  if (strategy == "sequential") {
     n_cores <- 1L
   }
   if (length(strategy) != 1L) {
@@ -71,9 +71,7 @@ resp_curv_plot_species <- function(
       "`strategy` must be a character vector of length 1",
       strategy = strategy, length_strategy = length(strategy))
   }
-  valid_strategy <- c(
-    "future::sequential", "future::multisession", "future::multicore",
-    "future::cluster")
+  valid_strategy <- c("sequential", "multisession", "multicore", "cluster")
   if (!strategy %in% valid_strategy) {
     ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }
@@ -137,12 +135,12 @@ resp_curv_plot_species <- function(
   ecokit::cat_time("Prepare species-specific data in parallel")
 
   if (n_cores == 1) {
-    future::plan("future::sequential", gc = TRUE)
+    future::plan("sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
       n_cores = n_cores, level = 1L, future_max_size = 800L,
       strategy = strategy)
-    withr::defer(future::plan("future::sequential", gc = TRUE))
+    withr::defer(future::plan("sequential", gc = TRUE))
   }
 
   ecokit::cat_time("Processing in parallel", level = 1L)
@@ -170,7 +168,7 @@ resp_curv_plot_species <- function(
   # stopping the cluster
   if (n_cores > 1) {
     ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
-    future::plan("future::sequential", gc = TRUE)
+    future::plan("sequential", gc = TRUE)
   }
 
   ecokit::cat_time("Export species-specific data", level = 1L)
@@ -191,12 +189,12 @@ resp_curv_plot_species <- function(
   ecokit::cat_time("Plotting species-specific data")
 
   if (n_cores == 1) {
-    future::plan("future::sequential", gc = TRUE)
+    future::plan("sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
       n_cores = n_cores, level = 1L, future_max_size = 800L,
       strategy = strategy)
-    withr::defer(future::plan("future::sequential", gc = TRUE))
+    withr::defer(future::plan("sequential", gc = TRUE))
   }
 
   ecokit::cat_time("Plotting in parallel", level = 1L)
@@ -478,7 +476,7 @@ resp_curv_plot_species <- function(
   # stopping the cluster
   if (n_cores > 1) {
     ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
-    future::plan("future::sequential", gc = TRUE)
+    future::plan("sequential", gc = TRUE)
   }
   invisible(gc())
 

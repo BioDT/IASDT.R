@@ -9,9 +9,8 @@
 #' @export
 
 mod_postprocess_CV_1_CPU <- function(
-    model_dir = NULL, CV_names = NULL, n_cores = 8L,
-    strategy = "future::multicore", env_file = ".env",
-    from_JSON = FALSE, use_TF = TRUE, TF_use_single = FALSE,
+    model_dir = NULL, CV_names = NULL, n_cores = 8L, strategy = "multicore",
+    env_file = ".env", from_JSON = FALSE, use_TF = TRUE, TF_use_single = FALSE,
     TF_environ = NULL, LF_n_cores = n_cores, LF_only = TRUE,
     LF_temp_cleanup = TRUE, LF_check = FALSE, LF_runtime = "01:00:00",
     temp_cleanup = TRUE, n_batch_files = 210L, working_directory = NULL,
@@ -62,7 +61,7 @@ mod_postprocess_CV_1_CPU <- function(
       include_backtrace = TRUE)
   }
 
-  if (strategy == "future::sequential") {
+  if (strategy == "sequential") {
     n_cores <- LF_n_cores <- 1L
   }
   if (length(strategy) != 1L) {
@@ -70,9 +69,7 @@ mod_postprocess_CV_1_CPU <- function(
       "`strategy` must be a character vector of length 1",
       strategy = strategy, length_strategy = length(strategy))
   }
-  valid_strategy <- c(
-    "future::sequential", "future::multisession", "future::multicore",
-    "future::cluster")
+  valid_strategy <- c("sequential", "multisession", "multicore", "cluster")
   if (!strategy %in% valid_strategy) {
     ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }
@@ -365,7 +362,7 @@ mod_postprocess_CV_1_CPU <- function(
 
 mod_postprocess_CV_2_CPU <- function(
     model_dir = NULL, CV_names = NULL, n_cores = 8L,
-    strategy = "future::multicore", env_file = ".env", use_TF = TRUE,
+    strategy = "multicore", env_file = ".env", use_TF = TRUE,
     TF_use_single = FALSE, temp_cleanup = TRUE, LF_temp_cleanup = TRUE,
     TF_environ = NULL, LF_n_cores = n_cores, LF_check = FALSE) {
 
@@ -413,7 +410,7 @@ mod_postprocess_CV_2_CPU <- function(
       include_backtrace = TRUE)
   }
 
-  if (strategy == "future::sequential") {
+  if (strategy == "sequential") {
     n_cores <- LF_n_cores <- 1L
   }
   if (length(strategy) != 1L) {
@@ -422,8 +419,8 @@ mod_postprocess_CV_2_CPU <- function(
       strategy = strategy, length_strategy = length(strategy))
   }
   valid_strategy <- c(
-    "future::sequential", "future::multisession", "future::multicore",
-    "future::cluster")
+    "sequential", "multisession", "multicore",
+    "cluster")
   if (!strategy %in% valid_strategy) {
     ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }

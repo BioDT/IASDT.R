@@ -25,9 +25,8 @@
 #'   Default: 6, except for `efforts_request`, which defaults to 3 with a
 #'   maximum of 3.
 #' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "future::sequential", "future::multisession",
-#'   "future::multicore", and "future::cluster". Defaults to
-#'   `"future::multicore"` (`"future::multisession"` on Windows). See
+#'   options are "sequential", "multisession", "multicore", and "cluster".
+#'   Defaults to `"multicore"` (`"multisession"` on Windows). See
 #'   [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param start_year Integer. Earliest year for GBIF records (matches CHELSA
 #'   climate data). Default: `1981`.
@@ -71,7 +70,7 @@
 
 efforts_process <- function(
     env_file = ".env", r_environ = ".Renviron", request = TRUE, download = TRUE,
-    n_cores = 6L, strategy = "future::multicore", start_year = 1981L,
+    n_cores = 6L, strategy = "multicore", start_year = 1981L,
     boundaries = c(-30, 50, 25, 75), chunk_size = 100000L,
     delete_chunks = TRUE, delete_processed = TRUE) {
 
@@ -118,7 +117,7 @@ efforts_process <- function(
       include_backtrace = TRUE)
   }
 
-  if (strategy == "future::sequential") {
+  if (strategy == "sequential") {
     n_cores <- 1L
   }
   if (length(strategy) != 1L) {
@@ -126,9 +125,7 @@ efforts_process <- function(
       "`strategy` must be a character vector of length 1",
       strategy = strategy, length_strategy = length(strategy))
   }
-  valid_strategy <- c(
-    "future::sequential", "future::multisession", "future::multicore",
-    "future::cluster")
+  valid_strategy <- c("sequential", "multisession", "multicore", "cluster")
   if (!strategy %in% valid_strategy) {
     ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }

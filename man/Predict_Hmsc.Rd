@@ -16,7 +16,7 @@ predict_hmsc(
   mcmcStep = 1L,
   expected = TRUE,
   n_cores = 8L,
-  strategy = "future::multicore",
+  strategy = "multicore",
   model_name = "Train",
   temp_dir = "TEMP_Pred",
   temp_cleanup = TRUE,
@@ -75,9 +75,8 @@ observation models or sample the values from those. Defaults to \code{TRUE}.}
 Default: 8.}
 
 \item{strategy}{Character. The parallel processing strategy to use. Valid
-options are "future::sequential", "future::multisession",
-"future::multicore", and "future::cluster". Defaults to
-\code{"future::multicore"} (\code{"future::multisession"} on Windows). See
+options are "sequential", "multisession", "multicore", and "cluster".
+Defaults to \code{"multicore"} (\code{"multisession"} on Windows). See
 \code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
 
 \item{model_name}{Character. Prefix for temporary file names. Defaults to

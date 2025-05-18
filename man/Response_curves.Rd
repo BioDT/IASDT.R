@@ -14,7 +14,7 @@ resp_curv_prepare_data(
   path_model = NULL,
   n_grid = 50L,
   n_cores = 8L,
-  strategy = "future::multicore",
+  strategy = "multicore",
   return_data = FALSE,
   probabilities = c(0.025, 0.5, 0.975),
   use_TF = TRUE,
@@ -32,7 +32,7 @@ resp_curv_prepare_data(
 resp_curv_plot_species(
   model_dir = NULL,
   n_cores = 20,
-  strategy = "future::multicore",
+  strategy = "multicore",
   env_file = ".env",
   return_data = FALSE
 )
@@ -40,7 +40,7 @@ resp_curv_plot_species(
 resp_curv_plot_species_all(
   model_dir = NULL,
   n_cores = 8L,
-  strategy = "future::multicore",
+  strategy = "multicore",
   return_data = FALSE,
   plotting_alpha = 0.3
 )
@@ -49,7 +49,7 @@ resp_curv_plot_SR(
   model_dir,
   verbose = TRUE,
   n_cores = 8L,
-  strategy = "future::multicore"
+  strategy = "multicore"
 )
 }
 \arguments{
@@ -61,13 +61,12 @@ focal variables. Higher values result in smoother curves. Default: 50. See
 \link[Hmsc:constructGradient]{Hmsc::constructGradient} for details.}
 
 \item{n_cores}{Integer. Number of CPU cores to use for parallel processing.
-Defaults to 8L for all functions, except for \code{resp_curv_plot_species},
-in which it defaults to 20L.}
+Defaults to 8L for all functions, except for \code{resp_curv_plot_species}, in
+which it defaults to 20L.}
 
 \item{strategy}{Character. The parallel processing strategy to use. Valid
-options are "future::sequential", "future::multisession",
-"future::multicore", and "future::cluster". Defaults to
-\code{"future::multicore"} (\code{"future::multisession"} on Windows). See
+options are "sequential", "multisession", "multicore", and "cluster".
+Defaults to \code{"multicore"} (\code{"multisession"} on Windows). See
 \code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
 
 \item{return_data}{Logical. If \code{TRUE}, the function returns processed data as

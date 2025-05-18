@@ -18,9 +18,8 @@
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Defaults to 8L.
 #' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "future::sequential", "future::multisession",
-#'   "future::multicore", and "future::cluster". Defaults to
-#'   `"future::multicore"` (`"future::multisession"` on Windows). See
+#'   options are "sequential", "multisession", "multicore", and "cluster".
+#'   Defaults to `"multicore"` (`"multisession"` on Windows). See
 #'   [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param model_info_name Character. Name of the file (without extension) where
 #'   updated model information is saved. If `NULL`, overwrites the existing
@@ -64,7 +63,7 @@
 ## |------------------------------------------------------------------------| #
 
 mod_merge_chains <- function(
-    model_dir = NULL, n_cores = 8L, strategy = "future::multicore",
+    model_dir = NULL, n_cores = 8L, strategy = "multicore",
     model_info_name = NULL, print_incomplete = TRUE, from_JSON = FALSE,
     out_extension = "qs2") {
 
@@ -118,7 +117,7 @@ mod_merge_chains <- function(
       include_backtrace = TRUE)
   }
 
-  if (strategy == "future::sequential") {
+  if (strategy == "sequential") {
     n_cores <- 1L
   }
   if (length(strategy) != 1L) {
@@ -126,9 +125,7 @@ mod_merge_chains <- function(
       "`strategy` must be a character vector of length 1",
       strategy = strategy, length_strategy = length(strategy))
   }
-  valid_strategy <- c(
-    "future::sequential", "future::multisession", "future::multicore",
-    "future::cluster")
+  valid_strategy <- c("sequential", "multisession", "multicore", "cluster")
   if (!strategy %in% valid_strategy) {
     ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }
@@ -212,12 +209,12 @@ mod_merge_chains <- function(
 
   # Prepare working in parallel -----
   if (n_cores == 1) {
-    future::plan("future::sequential", gc = TRUE)
+    future::plan("sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
       n_cores = min(n_cores, nrow(Model_Info2)), level = 1L,
       future_max_size = 800L, strategy = strategy)
-    withr::defer(future::plan("future::sequential", gc = TRUE))
+    withr::defer(future::plan("sequential", gc = TRUE))
   }
 
   # Check if any posterior files is missing
@@ -380,7 +377,7 @@ mod_merge_chains <- function(
 
   if (n_cores > 1) {
     ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
-    future::plan("future::sequential", gc = TRUE)
+    future::plan("sequential", gc = TRUE)
   }
 
   # # ..................................................................... ###
@@ -523,7 +520,7 @@ mod_merge_chains <- function(
 #' @author Ahmed El-Gabbas
 
 mod_merge_chains_CV <- function(
-    model_dir = NULL, n_cores = 8L, strategy = "future::multicore",
+    model_dir = NULL, n_cores = 8L, strategy = "multicore",
     CV_names = c("CV_Dist", "CV_Large"), from_JSON = FALSE,
     out_extension = "qs2") {
 
@@ -573,7 +570,7 @@ mod_merge_chains_CV <- function(
       include_backtrace = TRUE)
   }
 
-  if (strategy == "future::sequential") {
+  if (strategy == "sequential") {
     n_cores <- 1L
   }
   if (length(strategy) != 1L) {
@@ -581,9 +578,7 @@ mod_merge_chains_CV <- function(
       "`strategy` must be a character vector of length 1",
       strategy = strategy, length_strategy = length(strategy))
   }
-  valid_strategy <- c(
-    "future::sequential", "future::multisession", "future::multicore",
-    "future::cluster")
+  valid_strategy <- c("sequential", "multisession", "multicore", "cluster")
   if (!strategy %in% valid_strategy) {
     ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }
@@ -654,12 +649,12 @@ mod_merge_chains_CV <- function(
 
   # Prepare working in parallel
   if (n_cores == 1) {
-    future::plan("future::sequential", gc = TRUE)
+    future::plan("sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
       n_cores = min(n_cores, nrow(CV_DT)), level = 1L, future_max_size = 800L,
       strategy = strategy)
-    withr::defer(future::plan("future::sequential", gc = TRUE))
+    withr::defer(future::plan("sequential", gc = TRUE))
   }
 
   # # ..................................................................... ###
@@ -864,7 +859,7 @@ mod_merge_chains_CV <- function(
   # stopping the cluster
   if (n_cores > 1) {
     ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
-    future::plan("future::sequential", gc = TRUE)
+    future::plan("sequential", gc = TRUE)
   }
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

@@ -12,6 +12,8 @@ IAS_plot <- function(species = NULL, env_file = ".env") {
 
   # # ..................................................................... ###
 
+  Species2 <- ecokit::replace_space(species)
+
   # Checking arguments ----
 
   if (is.null(species)) {
@@ -35,7 +37,7 @@ IAS_plot <- function(species = NULL, env_file = ".env") {
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Path_Grid_Ref <- Path_Grid <- Path_TaxaInfo_RData <- Path_PA <- NAME_ENGL <-
-    Path_TaxaInfo <- EU_Bound <- Species_name2 <- CellCode <- NULL
+    Path_TaxaInfo <- EU_Bound <- Species_name2 <- CellCode <- x <- y <- NULL
 
   # # ..................................................................... ###
 
@@ -56,6 +58,24 @@ IAS_plot <- function(species = NULL, env_file = ".env") {
   rm(EnvVars2Read, envir = environment())
   invisible(gc())
 
+  # Summary information for the current species
+  SpInfo <- ecokit::load_as(Path_TaxaInfo_RData)
+  if (nrow(SpInfo) == 0) {
+    ecokit::stop_ctx(
+      "Species information could not be found",
+      Path_TaxaInfo_RData = Path_TaxaInfo_RData,
+      SpInfo = SpInfo, nrow_SpInfo = nrow(SpInfo), include_backtrace = TRUE)
+  }
+  if (!species %in% SpInfo$Species_name) {
+    ecokit::stop_ctx(
+      "Species name not found in the list of species",
+      species = species, include_backtrace = TRUE)
+  }
+
+  SpInfo <- dplyr::filter(SpInfo, Species_name2 == Species2) %>%
+    dplyr::select(-"speciesKey") %>%
+    dplyr::distinct()
+
   # # ..................................................................... ###
 
   # Check / create directories
@@ -64,15 +84,9 @@ IAS_plot <- function(species = NULL, env_file = ".env") {
   if (!fs::dir_exists(path_JPEG)) {
     fs::dir_create(path_JPEG)
   }
+  out_path <- fs::path(path_JPEG, paste0(SpInfo$Species_File[1], ".jpeg"))
 
-  Species2 <- ecokit::replace_space(species)
-  SpFile <- stringr::str_replace_all(Species2, "\u00D7", "x") %>%
-    stringr::str_replace_all("-", "")
-
-  SpData <- fs::path(Path_Summary, paste0(SpFile, ".qs2"))
-  if (!file.exists(SpData)) {
-    return(invisible(NULL))
-  }
+  # Loading species data
   selected_columns <- c(
     "NCells_All", "GBIF_Gr100", "EASIN_Gr100", "eLTER_Gr100",
     "BioRegsSumm_N", "BioRegsSumm_Min", "BioRegsSumm_Max", "BioRegsSumm_Mean",
@@ -82,6 +96,10 @@ IAS_plot <- function(species = NULL, env_file = ".env") {
     "EASIN_Masked", "EASIN_Masked_Unique", "eLTER_Masked",
     "eLTER_Masked_Unique")
 
+  SpData <- fs::path(Path_Summary, paste0(SpInfo$Species_File[1], ".qs2"))
+  if (!file.exists(SpData)) {
+    return(invisible(NULL))
+  }
   SpData <- ecokit::load_as(SpData, n_threads = 1) %>%
     dplyr::select(tidyselect::all_of(selected_columns))
   invisible(gc())
@@ -95,19 +113,6 @@ IAS_plot <- function(species = NULL, env_file = ".env") {
     magrittr::extract2("L_10")
   LastUpdate <- paste0("Last update: ", format(Sys.Date(), "%d %B %Y"))
 
-  # Summary information for the current species
-  SpInfo <- ecokit::load_as(Path_TaxaInfo_RData)
-  if (nrow(SpInfo) == 0) {
-    ecokit::stop_ctx(
-      "Species information could not be found",
-      Path_TaxaInfo_RData = Path_TaxaInfo_RData,
-      SpInfo = SpInfo, nrow_SpInfo = nrow(SpInfo), include_backtrace = TRUE)
-  }
-  SpInfo <- dplyr::filter(SpInfo, Species_name2 == Species2) %>%
-    dplyr::select(-"speciesKey") %>%
-    dplyr::distinct()
-
-  out_path <- fs::path(path_JPEG, paste0(SpInfo$Species_File[1], ".jpeg"))
 
   Grid_100_sf <- fs::path(Path_Grid_Ref, "Grid_100_sf.RData") %>%
     ecokit::load_as() %>%
@@ -164,27 +169,26 @@ IAS_plot <- function(species = NULL, env_file = ".env") {
 
   # Plotting theme ----
 
-  ggplot2::theme_set(
-    ggplot2::theme_bw() +
-      ggplot2::theme(
-        plot.margin = ggplot2::margin(0, 0, 0, 0, "cm"),
-        plot.title = ggtext::element_markdown(
-          hjust = 0.04, margin = ggplot2::margin(4, 0, 2, 0)),
-        plot.subtitle = ggtext::element_markdown(
-          hjust = 0.05, margin = ggplot2::margin(2, 0, 0, 0)),
-        strip.text = ggplot2::element_text(size = 6, face = "bold"),
-        legend.position = "none",
-        axis.title = ggplot2::element_blank(),
-        axis.text = ggplot2::element_blank(),
-        axis.ticks = ggplot2::element_blank(),
-        panel.spacing = grid::unit(0.3, "lines"),
-        panel.grid.minor = ggplot2::element_blank(),
-        panel.grid.major = ggplot2::element_blank(),
-        panel.border = ggplot2::element_blank(),
-        plot.tag.position = c(0.94, 0.011),
-        plot.tag = ggtext::element_markdown(colour = "grey", size = 4),
-        panel.ontop = TRUE,
-        panel.background = ggplot2::element_rect(fill = NA)))
+  plot_theme <- ggplot2::theme_bw() +
+    ggplot2::theme(
+      plot.margin = ggplot2::margin(0, 0, 0, 0, "cm"),
+      plot.title = ggtext::element_markdown(
+        hjust = 0.04, margin = ggplot2::margin(4, 0, 2, 0)),
+      plot.subtitle = ggtext::element_markdown(
+        hjust = 0.05, margin = ggplot2::margin(2, 0, 0, 0)),
+      strip.text = ggplot2::element_text(size = 6, face = "bold"),
+      legend.position = "none",
+      axis.title = ggplot2::element_blank(),
+      axis.text = ggplot2::element_blank(),
+      axis.ticks = ggplot2::element_blank(),
+      panel.spacing = grid::unit(0.3, "lines"),
+      panel.grid.minor = ggplot2::element_blank(),
+      panel.grid.major = ggplot2::element_blank(),
+      panel.border = ggplot2::element_blank(),
+      plot.tag.position = c(0.94, 0.011),
+      plot.tag = ggtext::element_markdown(colour = "grey", size = 4),
+      panel.ontop = TRUE,
+      panel.background = ggplot2::element_rect(fill = NA))
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -193,7 +197,7 @@ IAS_plot <- function(species = NULL, env_file = ".env") {
     terra::classify(cbind(0, NA)) %>%
     terra::as.factor() %>%
     as.data.frame(xy = TRUE) %>%
-    setNames(c("x", "y", "species"))
+    stats::setNames(c("x", "y", "species"))
   SpData$PA_Map <- NULL
 
   BoundExclude <- ecokit::load_as(EU_Bound) %>%
@@ -243,26 +247,45 @@ IAS_plot <- function(species = NULL, env_file = ".env") {
     # the study area
     ggplot2::geom_sf(
       Grid10_Sf, mapping = ggplot2::aes(), color = "lightgrey",
-      fill = "lightgrey", linewidth = 0.15) +
-    # Countries to exclude
-    ggplot2::geom_sf(
-      BoundExclude, mapping = ggplot2::aes(), color = "grey90",
-      linewidth = 0.1, fill = scales::alpha("red", 0.2)) +
-    # presence grids at 100 km resolution
-    ggplot2::geom_sf(
+      fill = "lightgrey", linewidth = 0.15)
+
+  if (nrow(BoundExclude) > 0) {
+    Plot <- Plot +
+      # Countries to exclude
+      ggplot2::geom_sf(
+        BoundExclude, mapping = ggplot2::aes(), color = "grey90",
+        linewidth = 0.1, fill = scales::alpha("red", 0.2))
+  }
+
+  # presence grids at 100 km resolution
+  if (nrow(GBIF_Gr100) > 0) {
+    Plot <- Plot +
+      ggplot2::geom_sf(
       GBIF_Gr100, mapping = ggplot2::aes(), color = "transparent",
-      fill = scales::alpha("blue", 0.2), linewidth = 0.15) +
-    # PA grid at 10 km resolution
+      fill = scales::alpha("blue", 0.2), linewidth = 0.15)
+  }
+
+  # PA grid at 10 km resolution
+  Plot <- Plot +
     ggplot2::geom_tile(
-      data = sp_PA, mapping = ggplot2::aes(x = x, y = y, fill = species)) +
+    data = sp_PA, mapping = ggplot2::aes(x = x, y = y, fill = species)) +
     ggplot2::scale_fill_manual(
-      values = c("blue", "transparent"), na.value = "transparent") +
-    ggplot2::geom_sf(
-      EASIN_Gr100, mapping = ggplot2::aes(), color = "red",
-      fill = "transparent", linewidth = 0.65) +
-    ggplot2::geom_sf(
-      eLTER_Gr100, mapping = ggplot2::aes(), color = "darkgreen",
-      fill = "transparent", linewidth = 0.65, linetype = "dotdash") +
+      values = c("blue", "transparent"), na.value = "transparent")
+
+  if (nrow(EASIN_Gr100) > 0) {
+    Plot <- Plot +
+      ggplot2::geom_sf(
+        EASIN_Gr100, mapping = ggplot2::aes(), color = "red",
+        fill = "transparent", linewidth = 0.65)
+  }
+  if (nrow(eLTER_Gr100) > 0) {
+    Plot <- Plot +
+      ggplot2::geom_sf(
+        eLTER_Gr100, mapping = ggplot2::aes(), color = "darkgreen",
+        fill = "transparent", linewidth = 0.65, linetype = "dotdash")
+  }
+
+  Plot <- Plot +
     # country boundaries
     ggplot2::geom_sf(
       CountryBound, mapping = ggplot2::aes(), color = "black",
@@ -296,7 +319,8 @@ IAS_plot <- function(species = NULL, env_file = ".env") {
     ggplot2::scale_y_continuous(
       expand = ggplot2::expansion(mult = c(0, 0)),
       limits = c(1450000, 5410000)) +
-    ggplot2::labs(title = MapTitle, subtitle = NGrids_All, fill = NULL)
+    ggplot2::labs(title = MapTitle, subtitle = NGrids_All, fill = NULL) +
+    plot_theme
 
   rm(
     SpData, Grid10_Sf, GBIF_Gr100, EASIN_Gr100, eLTER_Gr100,
@@ -333,5 +357,5 @@ IAS_plot <- function(species = NULL, env_file = ".env") {
 
   grDevices::dev.off()
 
-  return(invisible(NULL))
+  return(out_path)
 }

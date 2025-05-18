@@ -21,9 +21,8 @@
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 8.
 #' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "future::sequential", "future::multisession",
-#'   "future::multicore", and "future::cluster". Defaults to
-#'   `"future::multicore"` (`"future::multisession"` on Windows). See
+#'   options are "sequential", "multisession", "multicore", and "cluster".
+#'   Defaults to `"multicore"` (`"multisession"` on Windows). See
 #'   [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param clamp_pred Logical indicating whether to clamp the sampling efforts at
 #'   a single value. If `TRUE` (default), the `fix_efforts` argument must be
@@ -42,7 +41,7 @@
 #'   Default: `TRUE`.
 #' @param LF_only Logical. Whether to predict only the latent factor. This is
 #'   useful for distributing processing load between GPU and CPU. When `LF_only
-#'  = TRUE`, latent factor prediction needs to be computed separately on GPU.
+#'   = TRUE`, latent factor prediction needs to be computed separately on GPU.
 #'   When computations are finished on GPU, the function can later be rerun with
 #'   `LF_only = FALSE` (default) to predict habitat suitability using the
 #'   already-computed latent factor predictions.
@@ -85,7 +84,7 @@
 
 predict_maps <- function(
     path_model = NULL, hab_abb = NULL, env_file = ".env", n_cores = 8L,
-    strategy = "future::multicore", clamp_pred = TRUE, fix_efforts = "q90",
+    strategy = "multicore", clamp_pred = TRUE, fix_efforts = "q90",
     fix_rivers = "q90", pred_new_sites = TRUE, use_TF = TRUE, TF_environ = NULL,
     TF_use_single = FALSE, LF_n_cores = n_cores, LF_check = FALSE,
     LF_temp_cleanup = TRUE, LF_only = FALSE, LF_commands_only = FALSE,
@@ -111,7 +110,7 @@ predict_maps <- function(
       "`strategy` must be a character vector",
       strategy = strategy, class_strategy = class(strategy))
   }
-  if (strategy == "future::sequential") {
+  if (strategy == "sequential") {
     n_cores <- LF_n_cores <- 1L
   }
   if (length(strategy) != 1L) {
@@ -119,9 +118,7 @@ predict_maps <- function(
       "`strategy` must be a character vector of length 1",
       strategy = strategy, length_strategy = length(strategy))
   }
-  valid_strategy <- c(
-    "future::sequential", "future::multisession", "future::multicore",
-    "future::cluster")
+  valid_strategy <- c("sequential", "multisession", "multicore", "cluster")
   if (!strategy %in% valid_strategy) {
     ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }
@@ -1240,12 +1237,12 @@ predict_maps <- function(
     line_char_rep = 70L, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
   if (n_cores == 1) {
-    future::plan("future::sequential", gc = TRUE)
+    future::plan("sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
       n_cores = min(n_cores, nrow(Prediction_Summary)), level = 1L,
       future_max_size = 800L, strategy = strategy)
-    withr::defer(future::plan("future::sequential", gc = TRUE))
+    withr::defer(future::plan("sequential", gc = TRUE))
   }
 
   # --------------------------------------------------------- #
@@ -1434,7 +1431,7 @@ predict_maps <- function(
 
   if (n_cores > 1) {
     ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
-    future::plan("future::sequential", gc = TRUE)
+    future::plan("sequential", gc = TRUE)
   }
 
   rm(Prediction_Ensemble_R, envir = environment())

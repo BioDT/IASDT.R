@@ -9,9 +9,8 @@
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 6.
 #' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "future::sequential", "future::multisession",
-#'   "future::multicore", and "future::cluster". Defaults to
-#'   `"future::multicore"` (`"future::multisession"` on Windows). See
+#'   options are "sequential", "multisession", "multicore", and "cluster".
+#'   Defaults to `"multicore"` (`"multisession"` on Windows). See
 #'   [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param species Character. Species name for distribution mapping.
 #' @param verbose Logical. If `TRUE`, prints progress messages. Default:
@@ -41,9 +40,7 @@
 #' @order 1
 
 IAS_process <- function(
-    env_file = ".env", n_cores = 6L, strategy = "future::multicore") {
-
-  # # ..................................................................... ###
+    env_file = ".env", n_cores = 6L, strategy = "multicore") {
 
   .start_time <- lubridate::now(tzone = "CET")
 
@@ -69,7 +66,7 @@ IAS_process <- function(
       include_backtrace = TRUE)
   }
 
-  if (strategy == "future::sequential") {
+  if (strategy == "sequential") {
     n_cores <- 1L
   }
   if (length(strategy) != 1L) {
@@ -77,9 +74,7 @@ IAS_process <- function(
       "`strategy` must be a character vector of length 1",
       strategy = strategy, length_strategy = length(strategy))
   }
-  valid_strategy <- c(
-    "future::sequential", "future::multisession", "future::multicore",
-    "future::cluster")
+  valid_strategy <- c("sequential", "multisession", "multicore", "cluster")
   if (!strategy %in% valid_strategy) {
     ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }
@@ -122,7 +117,7 @@ IAS_process <- function(
     packages = c(
       "dplyr", "lubridate", "IASDT.R", "purrr", "stringr", "readr", "fs",
       "sf", "terra", "readxl", "tidyr", "tidyselect", "ggplot2", "ggtext",
-      "grid", "cowplot", "scales", "tibble", "magrittr", "ragg",
+      "grid", "cowplot", "scales", "tibble", "magrittr", "ragg", "qs2",
       "gtools", "ecokit"),
     strategy = strategy)
 
@@ -202,6 +197,10 @@ IAS_process <- function(
   rm(TaxaList_Original, TaxaList_Distinct, envir = environment())
   invisible(gc())
 
+  Sp_taxa <- TaxaList %>%
+    dplyr::arrange(IAS_ID) %>%
+    dplyr::distinct(Species_name, Species_File)
+
   # # ..................................................................... ###
 
   # Species-specific data ------
@@ -213,22 +212,18 @@ IAS_process <- function(
 
   ## Prepare working in parallel -----
   if (n_cores == 1) {
-    future::plan("future::sequential", gc = TRUE)
+    future::plan("sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
       n_cores = n_cores, level = 1L, future_max_size = 800L,
       strategy = strategy)
-    withr::defer(future::plan("future::sequential", gc = TRUE))
+    withr::defer(future::plan("sequential", gc = TRUE))
   }
 
   # # .................................... ###
 
   ## Species-specific data in parallel ----
   ecokit::cat_time("Species-specific data in parallel", level = 1L)
-
-  Sp_taxa <- TaxaList %>%
-    dplyr::arrange(IAS_ID) %>%
-    dplyr::distinct(Species_name, Species_File)
 
   ecokit::cat_time(
     paste0("There are ", nrow(Sp_taxa), " species to process"), level = 2L)
@@ -338,8 +333,8 @@ IAS_process <- function(
 
   # # .................................... ###
 
-  ## Merge species data into a single tibble -----
-  ecokit::cat_time("Merge species data into a single tibble", level = 1L)
+  ## Read processed species-specific data -----
+  ecokit::cat_time("Read processed species-specific data", level = 1L)
 
   Sp_PA_Data <- unlist(Sp_PA_Data) %>%
     # remove NA object from a list; for species with no observations
@@ -357,7 +352,7 @@ IAS_process <- function(
 
   if (n_cores > 1) {
     ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
-    future::plan("future::sequential", gc = TRUE)
+    future::plan("sequential", gc = TRUE)
   }
 
   # # .................................... ###
@@ -384,6 +379,8 @@ IAS_process <- function(
       level = 2L)
   }
 
+  # # .................................... ###
+
   ecokit::cat_diff(
     init_time = .StartTimeDist,
     prefix = "Processing Species-specific data took ",
@@ -394,8 +391,8 @@ IAS_process <- function(
 
   # # ..................................................................... ###
 
-  # Merge Species-specific summary info -----
-  ecokit::cat_time("Merge Species-specific summary info")
+  # Merge species summary info -----
+  ecokit::cat_time("Merge species summary info")
 
   Sp_PA_Data <- Sp_PA_Data %>%
     # Split number of grid cell per country / biogeographical region as separate
@@ -869,20 +866,22 @@ IAS_process <- function(
 
   ## Prepare working in parallel -----
   if (n_cores == 1) {
-    future::plan("future::sequential", gc = TRUE)
+    future::plan("sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
       n_cores = n_cores, level = 1L, future_max_size = 800L,
       strategy = strategy)
-    withr::defer(future::plan("future::sequential", gc = TRUE))
+    withr::defer(future::plan("sequential", gc = TRUE))
   }
+
+  # # .................................... ###
+
+  ## Plotting species distribution in parallel ----
+  ecokit::cat_time("Plotting species distribution in parallel", level = 1L)
 
   Sp_plots <- future.apply::future_lapply(
     X = seq_len(nrow(Sp_taxa)),
     FUN = function(x) {
-
-      file_jpeg <- fs::path(
-        Paths_All$jpeg, paste0(Sp_taxa$Species_File[x], ".jpeg"))
 
       # Maximum attempts
       max_attempts <- 4
@@ -893,7 +892,8 @@ IAS_process <- function(
           IASDT.R::IAS_plot(
             species = Sp_taxa$Species_name[x], env_file = env_file))
 
-        if (inherits(sp_plot, "try-error")) {
+        if (inherits(sp_plot, "try-error") || !is.character(sp_plot) ||
+            !fs::file_exists(sp_plot)) {
           attempt <- attempt + 1
           if (attempt > max_attempts) {
             break
@@ -901,7 +901,8 @@ IAS_process <- function(
           next
         }
 
-        img_valid <- ecokit::check_image(file_jpeg, warning = FALSE)
+        img_valid <- ecokit::check_image(sp_plot, warning = FALSE)
+
         if (img_valid) {
           break
         }
@@ -913,15 +914,17 @@ IAS_process <- function(
       }
 
       tibble::tibble(
-        species = Sp_taxa, img_file = file_jpeg, img_valid = img_valid)
+        species = Sp_taxa$Species_name[x],
+        img_file = sp_plot, img_valid = img_valid)
 
     },
     future.scheduling = Inf, future.conditions = NULL, future.seed = TRUE,
     future.packages = pkg_to_export,
-    future.globals = c("env_file", "Paths_All", "Sp_taxa")) %>%
-    dplyr::bind_rows()
+    future.globals = c("env_file", "Paths_All", "Sp_taxa"))
+
 
   # validate that all plots were created
+  Sp_plots <- dplyr::bind_rows(Sp_plots)
   invalid_plots <- dplyr::filter(Sp_plots, !img_valid)
   valid_plots <- dplyr::filter(Sp_plots, img_valid)
 
@@ -953,7 +956,7 @@ IAS_process <- function(
 
   if (n_cores > 1) {
     ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
-    future::plan("future::sequential", gc = TRUE)
+    future::plan("sequential", gc = TRUE)
   }
   # # .................................... ###
 

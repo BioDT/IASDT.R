@@ -16,9 +16,8 @@
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 6. The maximum number of allowed cores are 8.
 #' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "future::sequential", "future::multisession",
-#'   "future::multicore", and "future::cluster". Defaults to
-#'   `"future::multicore"` (`"future::multisession"` on Windows). See
+#'   options are "sequential", "multisession", "multicore", and "cluster".
+#'   Defaults to `"multicore"` (`"multisession"` on Windows). See
 #'   [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param sleep_time Numeric. Seconds to wait between download attempts/chunks.
 #'   Default: `10`.
@@ -72,7 +71,7 @@
 
 EASIN_process <- function(
     extract_taxa = TRUE, extract_data = TRUE, n_download_attempts = 10L,
-    n_cores = 6L, strategy = "future::multicore", sleep_time = 10L,
+    n_cores = 6L, strategy = "multicore", sleep_time = 10L,
     n_search = 1000L, env_file = ".env", delete_chunks = TRUE,
     start_year = 1981L, plot = TRUE) {
 
@@ -104,7 +103,7 @@ EASIN_process <- function(
     n_cores <- 8
   }
 
-  if (strategy == "future::sequential") {
+  if (strategy == "sequential") {
     n_cores <- 1L
   }
   if (length(strategy) != 1L) {
@@ -112,9 +111,7 @@ EASIN_process <- function(
       "`strategy` must be a character vector of length 1",
       strategy = strategy, length_strategy = length(strategy))
   }
-  valid_strategy <- c(
-    "future::sequential", "future::multisession", "future::multicore",
-    "future::cluster")
+  valid_strategy <- c("sequential", "multisession", "multicore", "cluster")
   if (!strategy %in% valid_strategy) {
     ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }
@@ -297,12 +294,12 @@ EASIN_process <- function(
 
     ## Prepare working in parallel ----
     if (n_cores == 1) {
-      future::plan("future::sequential", gc = TRUE)
+      future::plan("sequential", gc = TRUE)
     } else {
       ecokit::set_parallel(
         n_cores = n_cores, level = 1L, future_max_size = 800L,
         strategy = strategy)
-      withr::defer(future::plan("future::sequential", gc = TRUE))
+      withr::defer(future::plan("sequential", gc = TRUE))
     }
 
     ecokit::cat_time("Processing EASIN data", level = 1L)
@@ -366,7 +363,7 @@ EASIN_process <- function(
     # Stopping cluster ----
     if (n_cores > 1) {
       ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
-      future::plan("future::sequential", gc = TRUE)
+      future::plan("sequential", gc = TRUE)
     }
   }
 

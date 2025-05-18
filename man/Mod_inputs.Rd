@@ -38,7 +38,7 @@ mod_prepare_HPC(
   no_phylo_tree = FALSE,
   overwrite_rds = TRUE,
   n_cores = 8L,
-  strategy = "future::multicore",
+  strategy = "multicore",
   MCMC_n_chains = 4L,
   MCMC_thin = NULL,
   MCMC_samples = 1000L,
@@ -192,9 +192,8 @@ files for initial models. Default: \code{TRUE}.}
 Default: 8.}
 
 \item{strategy}{Character. The parallel processing strategy to use. Valid
-options are "future::sequential", "future::multisession",
-"future::multicore", and "future::cluster". Defaults to
-\code{"future::multicore"} (\code{"future::multisession"} on Windows). See
+options are "sequential", "multisession", "multicore", and "cluster".
+Defaults to \code{"multicore"} (\code{"multisession"} on Windows). See
 \code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
 
 \item{MCMC_n_chains}{Integer. Number of model chains. Default: 4.}

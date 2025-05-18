@@ -14,7 +14,7 @@ variance_partitioning_compute(
   start = 1L,
   na.ignore = FALSE,
   n_cores = 8L,
-  strategy = "future::multicore",
+  strategy = "multicore",
   use_TF = TRUE,
   TF_environ = NULL,
   TF_use_single = FALSE,
@@ -32,7 +32,7 @@ variance_partitioning_plot(
   use_TF = TRUE,
   TF_environ = NULL,
   n_cores = 1L,
-  strategy = "future::multicore",
+  strategy = "multicore",
   width = 30,
   height = 15,
   Axis_text = 4
@@ -60,9 +60,8 @@ partitioning using TensorFlow. This is only effective when \code{use_TF} is
 \code{TRUE}. Default: \code{1}.}
 
 \item{strategy}{Character. The parallel processing strategy to use. Valid
-options are "future::sequential", "future::multisession",
-"future::multicore", and "future::cluster". Defaults to
-\code{"future::multicore"} (\code{"future::multisession"} on Windows). See
+options are "sequential", "multisession", "multicore", and "cluster".
+Defaults to \code{"multicore"} (\code{"multisession"} on Windows). See
 \code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
 
 \item{use_TF}{Logical. Whether to use TensorFlow for calculations. Defaults

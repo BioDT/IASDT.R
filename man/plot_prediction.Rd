@@ -8,7 +8,7 @@ plot_prediction(
   model_dir = NULL,
   env_file = ".env",
   n_cores = 8L,
-  strategy = "future::multicore"
+  strategy = "multicore"
 )
 }
 \arguments{
@@ -22,9 +22,8 @@ data sources. Defaults to \code{.env}.}
 Default: 8.}
 
 \item{strategy}{Character. The parallel processing strategy to use. Valid
-options are "future::sequential", "future::multisession",
-"future::multicore", and "future::cluster". Defaults to
-\code{"future::multicore"} (\code{"future::multisession"} on Windows). See
+options are "sequential", "multisession", "multicore", and "cluster".
+Defaults to \code{"multicore"} (\code{"multisession"} on Windows). See
 \code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
 }
 \value{

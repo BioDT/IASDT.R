@@ -211,7 +211,7 @@ mod_merge_chains <- function(
     future::plan("sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
-      n_cores = min(n_cores, nrow(Model_Info2)), level = 1L,
+      n_cores = min(n_cores, nrow(Model_Info2)),
       future_max_size = 800L, strategy = strategy)
     withr::defer(future::plan("sequential", gc = TRUE))
   }
@@ -375,7 +375,7 @@ mod_merge_chains <- function(
       "from_JSON", "Path_Coda"))
 
   if (n_cores > 1) {
-    ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
+    ecokit::set_parallel(stop_cluster = TRUE)
     future::plan("sequential", gc = TRUE)
   }
 

@@ -151,7 +151,7 @@ convergence_plot <- function(
     packages = c(
       "dplyr", "ggplot2", "ggtext", "magrittr", "stringr", "ggExtra",
       "coda", "ecokit", "qs2", "tibble", "tidyr", "purrr", "cowplot",
-      "gtools"),
+      "gtools", "withr"),
     strategy = strategy)
 
   # # ..................................................................... ###
@@ -735,13 +735,17 @@ convergence_plot <- function(
       FUN = function(x) {
 
         # Prevents unexpected device opening in parallel workers to avoid
-        # warnings about modified devices
+        # warnings about modified devices. The `ggtext::geom_richtext` function
+        # opens a device to render the text, which can cause issues in parallel
+        # processing. By opening a temporary null device, we ensure that no
+        # unexpected devices are opened in the parallel workers.
 
         # ‘future_lapply-*’ added, removed, or modified devices. A future
         # expression must close any opened devices and must not close devices it
         # did not open. Details: 1 devices differ: index=2, before=‘NA’,
         # after=‘pdf’
-        withr::local_options(list(device = NULL))
+        grDevices::pdf(NULL)
+        withr::defer(grDevices::dev.off())
 
         Var_Sp <- Beta_DF$Var_Sp[x]
         Species <- Beta_DF$Species[x]
@@ -985,13 +989,18 @@ convergence_plot <- function(
     X = VarNames,
     FUN = function(x) {
 
-      # Prevents unexpected device opening in parallel workers to avoid warnings
-      # about modified devices
+      # Prevents unexpected device opening in parallel workers to avoid
+      # warnings about modified devices. The `ggtext::element_markdown` function
+      # opens a device to render the text, which can cause issues in parallel
+      # processing. By opening a temporary null device, we ensure that no
+      # unexpected devices are opened in the parallel workers.
 
       # ‘future_lapply-*’ added, removed, or modified devices. A future
       # expression must close any opened devices and must not close devices it
-      # did not open. Details: 1 devices differ: index=2, before=‘NA’, after=‘’
-      withr::local_options(list(device = NULL))
+      # did not open. Details: 1 devices differ: index=2, before=‘NA’, after=
+      # ‘pdf’
+      grDevices::pdf(NULL)
+      withr::defer(grDevices::dev.off())
 
       VarDesc <- BetaTracePlots_ByVar %>%
         dplyr::filter(Variable == x) %>%

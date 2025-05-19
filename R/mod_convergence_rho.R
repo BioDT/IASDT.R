@@ -12,6 +12,18 @@ convergence_rho <- function(
     posterior = NULL, model_object = NULL, title = NULL,
     chain_colors = NULL, margin_type = "histogram") {
 
+  # Prevents unexpected device opening in parallel workers to avoid
+  # warnings about modified devices. The `ggtext::geom_richtext` function
+  # opens a device to render the text, which can cause issues in parallel
+  # processing. By opening a temporary null device, we ensure that no
+  # unexpected devices are opened in the parallel workers.
+
+  # ‘future_lapply-*’ added, removed, or modified devices. A future expression
+  # must close any opened devices and must not close devices it did not open.
+  # Details: 1 devices differ: index=2, before=‘NA’, after=‘pdf’
+  grDevices::pdf(NULL)
+  withr::defer(grDevices::dev.off())
+
   # # ..................................................................... ###
 
   if (is.null(posterior) || is.null(model_object) || is.null(title)) {

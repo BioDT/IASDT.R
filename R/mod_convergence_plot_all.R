@@ -100,7 +100,7 @@ convergence_plot_all <- function(
   pkg_to_export <- ecokit::load_packages_future(
     packages = c(
       "dplyr", "sf", "Hmsc", "coda", "magrittr", "ggplot2", "ecokit",
-      "magrittr", "IASDT.R"),
+      "magrittr", "IASDT.R", "withr", "ggtext"),
     strategy = strategy)
 
   # # ..................................................................... ###
@@ -129,12 +129,16 @@ convergence_plot_all <- function(
   PrepConvergence <- function(ID) {
 
     # Prevents unexpected device opening in parallel workers to avoid
-    # warnings about modified devices
+    # warnings about modified devices. The `ggtext::geom_richtext` function
+    # opens a device to render the text, which can cause issues in parallel
+    # processing. By opening a temporary null device, we ensure that no
+    # unexpected devices are opened in the parallel workers.
 
     # ‘future_lapply-*’ added, removed, or modified devices. A future expression
     # must close any opened devices and must not close devices it did not open.
     # Details: 1 devices differ: index=2, before=‘NA’, after=‘pdf’
-    withr::local_options(list(device = NULL))
+    grDevices::pdf(NULL)
+    withr::defer(grDevices::dev.off())
 
     path_coda <- Model_Info$Path_Coda[[ID]]
     Path_FittedMod <- Model_Info$Path_FittedMod[[ID]]

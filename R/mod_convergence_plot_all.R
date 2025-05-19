@@ -137,8 +137,12 @@ convergence_plot_all <- function(
     # ‘future_lapply-*’ added, removed, or modified devices. A future expression
     # must close any opened devices and must not close devices it did not open.
     # Details: 1 devices differ: index=2, before=‘NA’, after=‘pdf’
-    grDevices::pdf(NULL)
-    withr::defer(grDevices::dev.off())
+    temp_file <- tempfile(fileext = ".pdf")
+    grDevices::pdf(temp_file)
+    withr::defer({
+      grDevices::dev.off()
+      fs::file_delete(temp_file)
+    })
 
     path_coda <- Model_Info$Path_Coda[[ID]]
     Path_FittedMod <- Model_Info$Path_FittedMod[[ID]]
@@ -285,10 +289,12 @@ convergence_plot_all <- function(
       future::plan("sequential", gc = TRUE)
     } else {
       ecokit::set_parallel(
-        n_cores = n_cores, level = 1L, future_max_size = 800L,
+        n_cores = n_cores, level = 2L, future_max_size = 800L,
         strategy = strategy)
       withr::defer(future::plan("sequential", gc = TRUE))
     }
+    
+    ecokit::cat_time("Starting processing convergence data", level = 2L)
 
     Convergence_DT <- Model_Info %>%
       dplyr::mutate(
@@ -310,7 +316,7 @@ convergence_plot_all <- function(
       file = fs::path(Path_Convergence_All, "Convergence_DT.RData"))
 
     if (n_cores > 1) {
-      ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
+      ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
       future::plan("sequential", gc = TRUE)
     }
   }

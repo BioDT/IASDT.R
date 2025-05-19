@@ -349,6 +349,13 @@ convergence_plot <- function(
       .x = seq_len(n_omega),
       .f = function(x) {
 
+        temp_file <- tempfile(fileext = ".pdf")
+        grDevices::pdf(temp_file)
+        withr::defer({
+          grDevices::dev.off()
+          fs::file_delete(temp_file)
+        })
+        
         CombData <- dplyr::filter(OmegaDF, SpComb == SelectedCombs[x])
         CurrPost <- purrr::map(
           .x = Obj_Omega,
@@ -744,8 +751,12 @@ convergence_plot <- function(
         # expression must close any opened devices and must not close devices it
         # did not open. Details: 1 devices differ: index=2, before=‘NA’,
         # after=‘pdf’
-        grDevices::pdf(NULL)
-        withr::defer(grDevices::dev.off())
+        temp_file <- tempfile(fileext = ".pdf")
+        grDevices::pdf(temp_file)
+        withr::defer({
+          grDevices::dev.off()
+          fs::file_delete(temp_file)
+        })
 
         Var_Sp <- Beta_DF$Var_Sp[x]
         Species <- Beta_DF$Species[x]
@@ -999,8 +1010,12 @@ convergence_plot <- function(
       # expression must close any opened devices and must not close devices it
       # did not open. Details: 1 devices differ: index=2, before=‘NA’, after=
       # ‘pdf’
-      grDevices::pdf(NULL)
-      withr::defer(grDevices::dev.off())
+      temp_file <- tempfile(fileext = ".pdf")
+      grDevices::pdf(temp_file)
+      withr::defer({
+        grDevices::dev.off()
+        fs::file_delete(temp_file)
+      })
 
       VarDesc <- BetaTracePlots_ByVar %>%
         dplyr::filter(Variable == x) %>%

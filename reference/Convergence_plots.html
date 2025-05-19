@@ -71,10 +71,9 @@ on HPC environments.</p>
 <span>  title <span class="op">=</span> <span class="st">" "</span>,</span>
 <span>  n_omega <span class="op">=</span> <span class="fl">1000L</span>,</span>
 <span>  n_cores <span class="op">=</span> <span class="fl">8L</span>,</span>
-<span>  strategy <span class="op">=</span> <span class="st">"multicore"</span>,</span>
+<span>  strategy <span class="op">=</span> <span class="st">"multisession"</span>,</span>
 <span>  n_RC <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2L</span>, <span class="fl">2L</span><span class="op">)</span>,</span>
 <span>  beta_n_RC <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3L</span>, <span class="fl">3L</span><span class="op">)</span>,</span>
-<span>  save_plotting_data <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  pages_per_file <span class="op">=</span> <span class="fl">20L</span>,</span>
 <span>  chain_colors <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  margin_type <span class="op">=</span> <span class="st">"histogram"</span></span>
@@ -137,9 +136,8 @@ Default: 8.</p></dd>
 
 <dt id="arg-strategy">strategy<a class="anchor" aria-label="anchor" href="#arg-strategy"></a></dt>
 <dd><p>Character. The parallel processing strategy to use. Valid
-options are "sequential", "multisession", "multicore", and "cluster".
-Defaults to <code>"multicore"</code> (<code>"multisession"</code> on Windows). See
-<code><a href="https://future.futureverse.org/reference/plan.html" class="external-link">future::plan()</a></code> and <code><a href="https://elgabbas.github.io/ecokit/reference/set_parallel.html" class="external-link">ecokit::set_parallel()</a></code> for details.</p></dd>
+options are "sequential", "multisession" (default), "multicore", and
+"cluster". See <code><a href="https://future.futureverse.org/reference/plan.html" class="external-link">future::plan()</a></code> and <code><a href="https://elgabbas.github.io/ecokit/reference/set_parallel.html" class="external-link">ecokit::set_parallel()</a></code> for details.</p></dd>
 
 
 <dt id="arg-n-rc">n_RC<a class="anchor" aria-label="anchor" href="#arg-n-rc"></a></dt>
@@ -151,11 +149,6 @@ automatically determined based on the number of alpha levels.</p></dd>
 <dt id="arg-beta-n-rc">beta_n_RC<a class="anchor" aria-label="anchor" href="#arg-beta-n-rc"></a></dt>
 <dd><p>Numeric vector. The grid layout (rows×columns) for
 arranging beta parameter plots. Default: <code>c(3, 3)</code>.</p></dd>
-
-
-<dt id="arg-save-plotting-data">save_plotting_data<a class="anchor" aria-label="anchor" href="#arg-save-plotting-data"></a></dt>
-<dd><p>Logical. If <code>TRUE</code> (default), saves the plot data
-as <code>.RData</code> files.</p></dd>
 
 
 <dt id="arg-pages-per-file">pages_per_file<a class="anchor" aria-label="anchor" href="#arg-pages-per-file"></a></dt>

@@ -448,8 +448,6 @@ convergence_plot <- function(
         return(tibble::tibble(SpComb = CombData$SpComb, Plot = list(Plot)))
       }
     )
-    ecokit::cat_time("Plots preparation is finished", level = 2L)
-
 
     ecokit::cat_time("Save plot data", level = 1L)
     ecokit::save_as(object = PlotObj_Omega, out_path = FileConv_Omega)
@@ -722,7 +720,7 @@ convergence_plot <- function(
           attempt <- attempt + 1
         }
       },
-      future.seed = TRUE, future.globals = "Beta_DF", future.conditions = NULL,
+      future.seed = TRUE, future.globals = "Beta_DF",
       future.packages = pkg_to_export)
 
     rm(Beta_DF2, envir = environment())
@@ -756,9 +754,7 @@ convergence_plot <- function(
 
         # delete file if corrupted
         if (file.exists(Plot_File)) {
-          ecokit::system_command(
-            command = paste0("rm -f ", Plot_File), r_object = FALSE,
-            ignore.stdout = TRUE)
+          fs::file_delete(Plot_File)
         }
 
         attempt <- 1
@@ -896,14 +892,14 @@ convergence_plot <- function(
               object = list(
                 Plot = Plot, Plot_Marginal = Plot_Marginal,
                 PlotFixedY_Marginal = Plot2_Marginal),
-              out_path = Plot_File, n_threads = 1)
+              out_path = Plot_File)
 
             Sys.sleep(2)
 
           },
           silent = TRUE)
 
-          if (ecokit::check_data(Plot_File, warning = FALSE, n_threads = 1)) {
+          if (ecokit::check_data(Plot_File, warning = FALSE)) {
             break
           }
 
@@ -916,7 +912,6 @@ convergence_plot <- function(
 
       },
       future.seed = TRUE, future.packages = pkg_to_export,
-      future.conditions = NULL,
       future.globals = c(
         "Beta_DF", "NChains", "SampleSize", "chain_colors", "margin_type"))
 

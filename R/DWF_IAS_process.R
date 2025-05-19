@@ -250,8 +250,7 @@ IAS_process <- function(
         Paths_All$PA_tif, paste0(sp_file, "_Masked.tif"))
 
       all_okay <- all(
-        # use n_threads = 1L to avoid parallel issues
-        ecokit::check_data(file_summary, warning = FALSE, n_threads = 1L),
+        ecokit::check_data(file_summary, warning = FALSE),
         ecokit::check_data(file_PA, warning = FALSE),
         ecokit::check_tiff(file_tif_All, warning = FALSE),
         ecokit::check_tiff(file_tif_Masked, warning = FALSE))
@@ -304,8 +303,7 @@ IAS_process <- function(
 
         # Check for the existence and validity of all files
         all_okay <- all(
-          # use n_threads = 1L to avoid parallel issues
-          ecokit::check_data(file_summary, warning = FALSE, n_threads = 1L),
+          ecokit::check_data(file_summary, warning = FALSE),
           ecokit::check_data(file_PA, warning = FALSE),
           ecokit::check_tiff(file_tif_All, warning = FALSE),
           ecokit::check_tiff(file_tif_Masked, warning = FALSE))
@@ -324,7 +322,7 @@ IAS_process <- function(
       return(Species_Data$PA_summary)
 
     },
-    future.scheduling = Inf, future.conditions = NULL, future.seed = TRUE,
+    future.scheduling = Inf, future.seed = TRUE,
     future.packages = pkg_to_export,
     future.globals = c("env_file", "Paths_All", "Sp_taxa"))
 
@@ -339,9 +337,7 @@ IAS_process <- function(
     # remove NA object from a list; for species with no observations
     purrr::discard(is.na) %>%
     future.apply::future_lapply(
-      # use n_threads = 1L to avoid parallel issues
-      FUN = ecokit::load_as, n_threads = 1L,
-      future.scheduling = Inf, future.conditions = NULL, future.seed = TRUE,
+      FUN = ecokit::load_as, future.scheduling = Inf, future.seed = TRUE,
       future.packages = pkg_to_export) %>%
     dplyr::bind_rows()
 
@@ -918,7 +914,7 @@ IAS_process <- function(
         img_file = sp_plot, img_valid = img_valid)
 
     },
-    future.scheduling = Inf, future.conditions = NULL, future.seed = TRUE,
+    future.scheduling = Inf, future.seed = TRUE,
     future.packages = pkg_to_export,
     future.globals = c("env_file", "Paths_All", "Sp_taxa"))
 

@@ -287,7 +287,8 @@ GBIF_process <- function(
 
   ecokit::cat_time("Saving `GBIF_Data` to disk", level = 1L)
   ecokit::save_as(
-    object = GBIF_Data, out_path = fs::path(Path_GBIF, "GBIF_Data.qs2"))
+    object = GBIF_Data, out_path = fs::path(Path_GBIF, "GBIF_Data.qs2"),
+    n_threads = 5L)
 
   rm(TaxaList, envir = environment())
   invisible(gc())

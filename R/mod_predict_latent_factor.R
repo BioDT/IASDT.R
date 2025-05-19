@@ -775,7 +775,7 @@ predict_latent_factor <- function(
     fs::dir_create(fs::path_dir(LF_out_file))
     ecokit::save_as(
       object = postEtaPred, out_path = LF_out_file,
-      n_threads = 10, compress_level = 6)
+      n_threads = 5L, compress_level = 6L)
 
     LF_OutFile_Samp <- stringr::str_replace(LF_out_file, ".qs2", "_Samp.qs2")
     ecokit::save_as(object = postEtaPred_Samp, out_path = LF_OutFile_Samp)

@@ -273,7 +273,7 @@ convergence_plot_all <- function(
       future::plan("sequential", gc = TRUE)
     } else {
       ecokit::set_parallel(
-        n_cores = n_cores, level = 2L, future_max_size = 800L,
+        n_cores = n_cores, level = 1L, future_max_size = 800L,
         strategy = strategy)
       withr::defer(future::plan("sequential", gc = TRUE))
     }
@@ -298,7 +298,7 @@ convergence_plot_all <- function(
       file = fs::path(Path_Convergence_All, "Convergence_DT.RData"))
 
     if (n_cores > 1) {
-      ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
+      ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
       future::plan("sequential", gc = TRUE)
     }
   }
@@ -329,7 +329,7 @@ convergence_plot_all <- function(
   # # ..................................................................... ###
 
   # Alpha - trace plots ------
-  ecokit::cat_time("Alpha - trace plots")
+  ecokit::cat_time("Alpha - trace plots", level = 2L)
 
   grDevices::cairo_pdf(
     filename = fs::path(Path_Convergence_All, "TracePlots_Alpha.pdf"),
@@ -344,7 +344,7 @@ convergence_plot_all <- function(
   # # ..................................................................... ###
 
   # Rho - trace plots ------
-  ecokit::cat_time("Rho - trace plots")
+  ecokit::cat_time("Rho - trace plots", level = 2L)
 
   layout_matrix <- matrix(seq_len(2 * 2), nrow = 2, byrow = TRUE)
 
@@ -375,7 +375,7 @@ convergence_plot_all <- function(
   # # ..................................................................... ###
 
   # Omega - Gelman convergence ------
-  ecokit::cat_time("Omega - Gelman convergence")
+  ecokit::cat_time("Omega - Gelman convergence", level = 2L)
 
   Plot_Path <- fs::path(
     Path_Convergence_All, paste0("Convergence_Omega_Gelman.pdf"))
@@ -425,7 +425,7 @@ convergence_plot_all <- function(
   # # ..................................................................... ###
 
   # Omega - Effective sample size -----
-  ecokit::cat_time("Omega - Effective sample size")
+  ecokit::cat_time("Omega - Effective sample size", level = 2L)
 
   Plot_Path <- fs::path(
     Path_Convergence_All, paste0("Convergence_Omega_ESS.pdf"))
@@ -479,7 +479,7 @@ convergence_plot_all <- function(
   # # ..................................................................... ###
 
   # Beta - Gelman convergence ------
-  ecokit::cat_time("Beta - Gelman convergence")
+  ecokit::cat_time("Beta - Gelman convergence", level = 2L)
 
   Plot_Title <- paste0("Gelman convergence diagnostic --- Beta")
 
@@ -526,7 +526,7 @@ convergence_plot_all <- function(
   # # ..................................................................... ###
 
   # Beta - Effective sample size -----
-  ecokit::cat_time("Beta - Effective sample size")
+  ecokit::cat_time("Beta - Effective sample size", level = 2L)
 
   Plot_Path <- fs::path(
     Path_Convergence_All, paste0("Convergence_Beta_ESS.pdf"))
@@ -580,7 +580,7 @@ convergence_plot_all <- function(
   # # ..................................................................... ###
 
   ecokit::cat_diff(
-    init_time = .start_time, prefix = "\nPlotting model convergence took ")
+    init_time = .start_time, prefix = "Plotting model convergence took ")
 
   # # ..................................................................... ###
 

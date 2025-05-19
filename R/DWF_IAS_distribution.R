@@ -748,8 +748,7 @@ IAS_distribution <- function(
     verbose = verbose)
 
   # save species data
-  # use n_threads = 1L to avoid parallel issues
-  ecokit::save_as(object = Results, out_path = out_qs2, n_threads = 1)
+  ecokit::save_as(object = Results, out_path = out_qs2)
 
   return(tibble::tibble(species = species, PA_summary = out_qs2))
 

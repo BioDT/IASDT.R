@@ -123,8 +123,8 @@ mod_heatmap_beta <- function(
 
   # # ..................................................................... ###
 
-  # getPostEstimate -----
-  ecokit::cat_time("getPostEstimate")
+  # Computing posterior quantities -----
+  ecokit::cat_time("Computing posterior quantities")
 
   # Calculates mean, support and other posterior quantities for a specified
   # model parameter
@@ -160,7 +160,7 @@ mod_heatmap_beta <- function(
   # # ..................................................................... ###
 
   # Support ------
-  ecokit::cat_time("1. support")
+  ecokit::cat_time("1. support", level = 1L)
 
   Plot_SupportD <- (SupportMatrix * (2 * post$support - 1)) %>%
     t() %>%
@@ -218,7 +218,7 @@ mod_heatmap_beta <- function(
 
   # Sign ------
 
-  ecokit::cat_time("1. sign")
+  ecokit::cat_time("2. sign", level = 1L)
 
   PosSign <- '<span style="font-size: 8pt"><b>  +  </b></span>'
   NegSign <- '<span style="font-size: 8pt"><b>  \u2212  </b></span>'
@@ -268,7 +268,7 @@ mod_heatmap_beta <- function(
   # # ..................................................................... ###
 
   # Mean -----
-  ecokit::cat_time("2. mean")
+  ecokit::cat_time("3. mean", level = 1L)
 
   Plot_MeanD <- (SupportMatrix * post$mean) %>%
     t() %>%
@@ -324,7 +324,7 @@ mod_heatmap_beta <- function(
   # # ..................................................................... ###
 
   # Mean - without intercept -----
-  ecokit::cat_time("3. Mean - without intercept")
+  ecokit::cat_time("4. Mean - without intercept", level = 1L)
 
   LegendTitle <- paste0(
     '<span style="font-size: 12pt"><b>Beta</span><br>',
@@ -474,7 +474,7 @@ mod_heatmap_omega <- function(
   # # ..................................................................... ###
 
   # Sign ------
-  ecokit::cat_time("1. sign")
+  ecokit::cat_time("1. sign", level = 1L)
 
   Support <- (post$support > support_level) %>%
     magrittr::add(post$support < (1 - support_level)) %>%
@@ -533,7 +533,7 @@ mod_heatmap_omega <- function(
   # # ..................................................................... ###
 
   # Mean -----
-  ecokit::cat_time("2. mean")
+  ecokit::cat_time("2. mean", level = 1L)
 
   # Legend colours
   Palette_Positive <- grDevices::colorRampPalette(

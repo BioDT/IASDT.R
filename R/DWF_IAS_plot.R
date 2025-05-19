@@ -100,7 +100,7 @@ IAS_plot <- function(species = NULL, env_file = ".env") {
   if (!file.exists(SpData)) {
     return(invisible(NULL))
   }
-  SpData <- ecokit::load_as(SpData, n_threads = 1) %>%
+  SpData <- ecokit::load_as(SpData) %>%
     dplyr::select(tidyselect::all_of(selected_columns))
   invisible(gc())
 

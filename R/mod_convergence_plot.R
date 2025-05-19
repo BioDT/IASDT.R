@@ -734,6 +734,15 @@ convergence_plot <- function(
       X = seq_len(nrow(Beta_DF)),
       FUN = function(x) {
 
+        # Prevents unexpected device opening in parallel workers to avoid
+        # warnings about modified devices
+
+        # ‘future_lapply-*’ added, removed, or modified devices. A future
+        # expression must close any opened devices and must not close devices it
+        # did not open. Details: 1 devices differ: index=2, before=‘NA’,
+        # after=‘pdf’
+        withr::local_options(list(device = NULL))
+
         Var_Sp <- Beta_DF$Var_Sp[x]
         Species <- Beta_DF$Species[x]
         Curr_IAS <- Beta_DF$IAS_ID[x]
@@ -975,6 +984,14 @@ convergence_plot <- function(
   BetaTracePlots_ByVar0 <- future.apply::future_lapply(
     X = VarNames,
     FUN = function(x) {
+
+      # Prevents unexpected device opening in parallel workers to avoid warnings
+      # about modified devices
+
+      # ‘future_lapply-*’ added, removed, or modified devices. A future
+      # expression must close any opened devices and must not close devices it
+      # did not open. Details: 1 devices differ: index=2, before=‘NA’, after=‘’
+      withr::local_options(list(device = NULL))
 
       VarDesc <- BetaTracePlots_ByVar %>%
         dplyr::filter(Variable == x) %>%

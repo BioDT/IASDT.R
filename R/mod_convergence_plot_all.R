@@ -128,6 +128,14 @@ convergence_plot_all <- function(
 
   PrepConvergence <- function(ID) {
 
+    # Prevents unexpected device opening in parallel workers to avoid
+    # warnings about modified devices
+
+    # ‘future_lapply-*’ added, removed, or modified devices. A future expression
+    # must close any opened devices and must not close devices it did not open.
+    # Details: 1 devices differ: index=2, before=‘NA’, after=‘pdf’
+    withr::local_options(list(device = NULL))
+
     path_coda <- Model_Info$Path_Coda[[ID]]
     Path_FittedMod <- Model_Info$Path_FittedMod[[ID]]
     M_Name_Fit <- Model_Info$M_Name_Fit[[ID]]

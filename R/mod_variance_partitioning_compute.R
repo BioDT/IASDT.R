@@ -368,13 +368,15 @@ variance_partitioning_compute <- function(
             FUN = function(x) {
               Beta_File <- Beta_Files[x]
               if (!file.exists(Beta_File)) {
-                Beta <- as.data.frame(postList[[x]][["Beta"]])
+                Beta <- purrr::pluck(postList, x, "Beta") %>%
+                  as.data.frame()
                 arrow::write_feather(x = Beta, sink = Beta_File)
               }
               return(NULL)
             },
-            future.scheduling = Inf, future.seed = TRUE,
-            future.packages = pkg_to_export,
+            # Setting future.scheduling = Inf makes calculations sequential!
+            # future.scheduling = Inf,
+            future.seed = TRUE, future.packages = pkg_to_export,
             future.globals = c("Beta_Files", "postList"))
 
           rm(Beta0)

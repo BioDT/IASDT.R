@@ -17,7 +17,7 @@
 #' @param MCMC_thin,MCMC_n_samples Integer. Thinning value and the number of
 #'   MCMC samples of the selected model.
 #' @param n_cores_VP Integer. Number of cores to use for variance partitioning.
-#'   Defaults to 3L.
+#'   Defaults to 10L.
 #' @param strategy Character. The parallel processing strategy to use. Valid
 #'   options are "sequential", "multisession" (default), "multicore", and
 #'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
@@ -176,7 +176,7 @@ mod_postprocess_1_CPU <- function(
     TF_use_single = FALSE, LF_n_cores = n_cores,
     LF_temp_cleanup = TRUE, LF_check = FALSE, temp_cleanup = TRUE,
     TF_environ = NULL, clamp_pred = TRUE, fix_efforts = "q90",
-    fix_rivers = "q90", pred_new_sites = TRUE, n_cores_VP = 3L,
+    fix_rivers = "q90", pred_new_sites = TRUE, n_cores_VP = 10L,
     width_omega = 26, height_omega = 22.5, width_beta = 25, height_beta = 35) {
 
   .start_time <- lubridate::now(tzone = "CET")

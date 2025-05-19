@@ -9,7 +9,7 @@
 #' @author Ahmed El-Gabbas
 
 resp_curv_plot_SR <- function(
-    model_dir, verbose = TRUE, n_cores = 8L, strategy = "multicore") {
+    model_dir, verbose = TRUE, n_cores = 8L, strategy = "multisession") {
 
   if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
     ecokit::stop_ctx(

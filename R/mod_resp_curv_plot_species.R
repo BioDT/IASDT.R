@@ -10,8 +10,8 @@
 #' @author Ahmed El-Gabbas
 
 resp_curv_plot_species <- function(
-    model_dir = NULL, n_cores = 20, strategy = "multicore", env_file = ".env",
-    return_data = FALSE) {
+    model_dir = NULL, n_cores = 20, strategy = "multisession",
+    env_file = ".env", return_data = FALSE) {
 
   # # ..................................................................... ###
 

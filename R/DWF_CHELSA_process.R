@@ -11,9 +11,8 @@
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 8.
 #' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "sequential", "multisession", "multicore", and "cluster".
-#'   Defaults to `"multicore"` (`"multisession"` on Windows). See
-#'   [future::plan()] and [ecokit::set_parallel()] for details.
+#'   options are "sequential", "multisession" (default), "multicore", and
+#'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param download Logical. If `TRUE`, downloads CHELSA files. Default: `FALSE`.
 #' @param download_attempts Integer. Maximum download retries. Default: `10`.
 #' @param sleep Integer. Seconds to wait between download attempts. Default:
@@ -59,7 +58,7 @@
 #' @order 1
 
 CHELSA_process <- function(
-    env_file = ".env", n_cores = 8L, strategy = "multicore",
+    env_file = ".env", n_cores = 8L, strategy = "multisession",
     download = FALSE, overwrite = FALSE, download_attempts = 10L, sleep = 5L,
     other_variables = "npp", download_n_cores = 4, compression_level = 5,
     overwrite_processed = FALSE) {

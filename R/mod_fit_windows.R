@@ -14,9 +14,8 @@
 #'   Defaults to `NULL`. This argument can not be empty.
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "sequential", "multisession", and "cluster". Defaults to
-#'   `"multisession"`. See [future::plan()] and [ecokit::set_parallel()] for
-#'   details.
+#'   options are "sequential", "multisession" (default), "multicore", and
+#'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
 #' @name mod_fit_windows
 #' @author Ahmed El-Gabbas
 #' @return The function does not return anything but prints messages to the

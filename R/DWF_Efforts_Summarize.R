@@ -9,7 +9,7 @@
 #' @export
 
 efforts_summarize <- function(
-    env_file = ".env", n_cores = 6L, strategy = "multicore",
+    env_file = ".env", n_cores = 6L, strategy = "multisession",
     chunk_size = 100000L, delete_chunks = TRUE) {
 
   # # ..................................................................... ###

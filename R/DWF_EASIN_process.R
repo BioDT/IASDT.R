@@ -16,9 +16,8 @@
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 6. The maximum number of allowed cores are 8.
 #' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "sequential", "multisession", "multicore", and "cluster".
-#'   Defaults to `"multicore"` (`"multisession"` on Windows). See
-#'   [future::plan()] and [ecokit::set_parallel()] for details.
+#'   options are "sequential", "multisession" (default), "multicore", and
+#'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param sleep_time Numeric. Seconds to wait between download attempts/chunks.
 #'   Default: `10`.
 #' @param n_search Integer. Records per taxonomy or data request (max 1000).
@@ -71,7 +70,7 @@
 
 EASIN_process <- function(
     extract_taxa = TRUE, extract_data = TRUE, n_download_attempts = 10L,
-    n_cores = 6L, strategy = "multicore", sleep_time = 10L,
+    n_cores = 6L, strategy = "multisession", sleep_time = 10L,
     n_search = 1000L, env_file = ".env", delete_chunks = TRUE,
     start_year = 1981L, plot = TRUE) {
 

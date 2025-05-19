@@ -10,7 +10,7 @@
 
 CHELSA_prepare <- function(
     env_file = ".env", download = FALSE, n_cores = 8L,
-    strategy = "multicore", overwrite = FALSE,
+    strategy = "multisession", overwrite = FALSE,
     download_attempts = 10L, sleep = 5L, other_variables = "npp") {
 
   # # ..................................................................... ###

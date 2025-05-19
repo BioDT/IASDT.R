@@ -9,9 +9,8 @@
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 6.
 #' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "sequential", "multisession", "multicore", and "cluster".
-#'   Defaults to `"multicore"` (`"multisession"` on Windows). See
-#'   [future::plan()] and [ecokit::set_parallel()] for details.
+#'   options are "sequential", "multisession" (default), "multicore", and
+#'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param species Character. Species name for distribution mapping.
 #' @param verbose Logical. If `TRUE`, prints progress messages. Default:
 #'   `FALSE`.
@@ -40,7 +39,7 @@
 #' @order 1
 
 IAS_process <- function(
-    env_file = ".env", n_cores = 6L, strategy = "multicore") {
+    env_file = ".env", n_cores = 6L, strategy = "multisession") {
 
   .start_time <- lubridate::now(tzone = "CET")
 
@@ -858,6 +857,7 @@ IAS_process <- function(
     envir = environment())
   invisible(gc())
 
+  # # ..................................................................... ###
   # # ..................................................................... ###
 
   # Plotting species distribution -----

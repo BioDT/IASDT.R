@@ -8,7 +8,7 @@ convergence_plot_all(
   model_dir = NULL,
   n_omega = 1000L,
   n_cores = NULL,
-  strategy = "multicore",
+  strategy = "multisession",
   margin_type = "histogram"
 )
 }
@@ -23,9 +23,8 @@ parameter diagnostics. Default: 1000L}
 \item{n_cores}{Integer. Number of CPU cores to use for parallel processing.}
 
 \item{strategy}{Character. The parallel processing strategy to use. Valid
-options are "sequential", "multisession", "multicore", and "cluster".
-Defaults to \code{"multicore"} (\code{"multisession"} on Windows). See
-\code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
+options are "sequential", "multisession" (default), "multicore", and
+"cluster". See \code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
 
 \item{margin_type}{Character. The type of marginal plot to add to the main
 plot. Valid options are "histogram" (default) or "density".}

@@ -27,9 +27,8 @@
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 6.
 #' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "sequential", "multisession", "multicore", and "cluster".
-#'   Defaults to `"multicore"` (`"multisession"` on Windows). See
-#'   [future::plan()] and [ecokit::set_parallel()] for details.
+#'   options are "sequential", "multisession" (default), "multicore", and
+#'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param delete_chunks Logical. If `TRUE` (default), deletes chunk files.
 #' @param chunk_file Character. Path of chunk file for processing.
 #'
@@ -79,7 +78,7 @@
 
 GBIF_process <- function(
     env_file = ".env", r_environ = ".Renviron", n_cores = 6L,
-    strategy = "multicore", request = TRUE, download = TRUE,
+    strategy = "multisession", request = TRUE, download = TRUE,
     split_chunks = TRUE, overwrite = FALSE, delete_chunks = TRUE,
     chunk_size = 50000L, boundaries = c(-30, 50, 25, 75), start_year = 1981L) {
 

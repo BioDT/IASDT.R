@@ -14,9 +14,8 @@
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 8.
 #' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "sequential", "multisession", "multicore", and "cluster".
-#'   Defaults to `"multicore"` (`"multisession"` on Windows). See
-#'   [future::plan()] and [ecokit::set_parallel()] for details.
+#'   options are "sequential", "multisession" (default), "multicore", and
+#'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
 #' @return Saves prediction plots as JPEG files in the specified output
 #'   directory.
 #' @name plot_prediction
@@ -24,7 +23,8 @@
 #' @export
 
 plot_prediction <- function(
-    model_dir = NULL, env_file = ".env", n_cores = 8L, strategy = "multicore") {
+    model_dir = NULL, env_file = ".env", n_cores = 8L,
+    strategy = "multisession") {
 
   # # ..................................................................... ###
   # # ..................................................................... ###

@@ -14,7 +14,7 @@ EASIN_process(
   extract_data = TRUE,
   n_download_attempts = 10L,
   n_cores = 6L,
-  strategy = "multicore",
+  strategy = "multisession",
   sleep_time = 10L,
   n_search = 1000L,
   env_file = ".env",
@@ -58,9 +58,8 @@ EASIN_plot(env_file = ".env")
 Default: 6. The maximum number of allowed cores are 8.}
 
 \item{strategy}{Character. The parallel processing strategy to use. Valid
-options are "sequential", "multisession", "multicore", and "cluster".
-Defaults to \code{"multicore"} (\code{"multisession"} on Windows). See
-\code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
+options are "sequential", "multisession" (default), "multicore", and
+"cluster". See \code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
 
 \item{sleep_time}{Integer. Number of seconds to pause between each data
 retrieval request to prevent overloading the server. Default: 5 second.}

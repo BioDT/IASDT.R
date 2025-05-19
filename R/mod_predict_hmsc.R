@@ -27,9 +27,8 @@
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 8.
 #' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "sequential", "multisession", "multicore", and "cluster".
-#'   Defaults to `"multicore"` (`"multisession"` on Windows). See
-#'   [future::plan()] and [ecokit::set_parallel()] for details.
+#'   options are "sequential", "multisession" (default), "multicore", and
+#'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param temp_cleanup Logical. Whether to clean up temporary files. Defaults to
 #'   `TRUE`.
 #' @param pred_directory Character. Directory path indicating where the
@@ -69,7 +68,7 @@
 predict_hmsc <- function(
     path_model, Loff = NULL, x_data = NULL, X = NULL, XRRRData = NULL,
     XRRR = NULL, gradient = NULL, Yc = NULL, mcmcStep = 1L, expected = TRUE,
-    n_cores = 8L, strategy = "multicore", model_name = "Train",
+    n_cores = 8L, strategy = "multisession", model_name = "Train",
     temp_dir = "TEMP_Pred", temp_cleanup = TRUE, prediction_type = NULL,
     use_TF = TRUE, TF_environ = NULL, TF_use_single = FALSE, LF_out_file = NULL,
     LF_return = FALSE, LF_inputFile = NULL, LF_only = FALSE,

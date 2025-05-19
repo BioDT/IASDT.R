@@ -9,8 +9,9 @@
 #' @export
 
 efforts_request <- function(
-    env_file = ".env", n_cores = 3L, strategy = "multicore", start_year = 1981L,
-    r_environ = ".Renviron", boundaries = c(-30, 50, 25, 75)) {
+    env_file = ".env", n_cores = 3L, strategy = "multisession",
+    start_year = 1981L, r_environ = ".Renviron",
+    boundaries = c(-30, 50, 25, 75)) {
 
   # # ..................................................................... ###
 

@@ -21,9 +21,8 @@
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 8.
 #' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "sequential", "multisession", "multicore", and "cluster".
-#'   Defaults to `"multicore"` (`"multisession"` on Windows). See
-#'   [future::plan()] and [ecokit::set_parallel()] for details.
+#'   options are "sequential", "multisession" (default), "multicore", and
+#'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param clamp_pred Logical indicating whether to clamp the sampling efforts at
 #'   a single value. If `TRUE` (default), the `fix_efforts` argument must be
 #'   provided.
@@ -84,7 +83,7 @@
 
 predict_maps <- function(
     path_model = NULL, hab_abb = NULL, env_file = ".env", n_cores = 8L,
-    strategy = "multicore", clamp_pred = TRUE, fix_efforts = "q90",
+    strategy = "multisession", clamp_pred = TRUE, fix_efforts = "q90",
     fix_rivers = "q90", pred_new_sites = TRUE, use_TF = TRUE, TF_environ = NULL,
     TF_use_single = FALSE, LF_n_cores = n_cores, LF_check = FALSE,
     LF_temp_cleanup = TRUE, LF_only = FALSE, LF_commands_only = FALSE,
@@ -175,10 +174,9 @@ predict_maps <- function(
   ecokit::check_args(
     args_all = AllArgs, args_type = "logical",
     args_to_check = c(
-      "clamp_pred", "pred_new_sites", "use_TF", "TF_environ", "TF_use_single",
-      "LF_check", "LF_temp_cleanup", "LF_only", "LF_commands_only",
-      "temp_cleanup", "tar_predictions"
-    ))
+      "clamp_pred", "pred_new_sites", "use_TF", "TF_use_single", "LF_check",
+      "LF_temp_cleanup", "LF_only", "LF_commands_only", "temp_cleanup",
+      "tar_predictions"))
   ecokit::check_args(
     args_all = AllArgs, args_type = "numeric",
     args_to_check = c("n_cores", "LF_n_cores"))

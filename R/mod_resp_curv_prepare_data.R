@@ -22,9 +22,8 @@
 #'   Defaults to 8L for all functions, except for `resp_curv_plot_species`, in
 #'   which it defaults to 20L.
 #' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "sequential", "multisession", "multicore", and "cluster".
-#'   Defaults to `"multicore"` (`"multisession"` on Windows). See
-#'   [future::plan()] and [ecokit::set_parallel()] for details.
+#'   options are "sequential", "multisession" (default), "multicore", and
+#'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param return_data Logical. If `TRUE`, the function returns processed data as
 #'   an R object. Default: `FALSE`.
 #' @param probabilities Numeric vector. Quantiles to calculate in response curve
@@ -45,7 +44,7 @@
 #' @author Ahmed El-Gabbas
 
 resp_curv_prepare_data <- function(
-    path_model = NULL, n_grid = 50L, n_cores = 8L, strategy = "multicore",
+    path_model = NULL, n_grid = 50L, n_cores = 8L, strategy = "multisession",
     return_data = FALSE, probabilities = c(0.025, 0.5, 0.975), use_TF = TRUE,
     TF_environ = NULL, TF_use_single = FALSE, LF_n_cores = n_cores,
     LF_check = FALSE, LF_temp_cleanup = TRUE, LF_commands_only = FALSE,

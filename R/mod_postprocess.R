@@ -19,9 +19,8 @@
 #' @param n_cores_VP Integer. Number of cores to use for variance partitioning.
 #'   Defaults to 3L.
 #' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "sequential", "multisession", "multicore", and "cluster".
-#'   Defaults to `"multicore"` (`"multisession"` on Windows). See
-#'   [future::plan()] and [ecokit::set_parallel()] for details.
+#'   options are "sequential", "multisession" (default), "multicore", and
+#'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param n_batch_files Integer. Number of output batch files to create. Must be
 #'   less than or equal to the maximum job limit of the HPC environment.
 #' @param working_directory Character. Optionally sets the working directory in
@@ -169,7 +168,7 @@
 ## |------------------------------------------------------------------------| #
 
 mod_postprocess_1_CPU <- function(
-    model_dir = NULL, hab_abb = NULL, n_cores = 8L, strategy = "multicore",
+    model_dir = NULL, hab_abb = NULL, n_cores = 8L, strategy = "multisession",
     env_file = ".env", path_Hmsc = NULL, memory_per_cpu = "64G",
     job_runtime = NULL, from_JSON = FALSE, GPP_dist = NULL, use_trees = "Tree",
     MCMC_n_samples = 1000L, MCMC_thin = NULL, n_omega = 1000L,
@@ -460,7 +459,7 @@ mod_postprocess_1_CPU <- function(
   # latent factors of the response curves -------
   ecokit::info_chunk(
     "Prepare scripts for predicting latent factors of the response curves",
-    line_char = "+", line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
+    line_char = "+", line_char_rep = 90L, cat_red = TRUE, cat_bold = TRUE,
     cat_timestamp = FALSE, level = 1L)
 
   IASDT.R::resp_curv_prepare_data(
@@ -885,7 +884,7 @@ mod_prepare_TF <- function(
 
 mod_postprocess_2_CPU <- function(
     model_dir = NULL, hab_abb = NULL, n_cores = 8L,
-    strategy = "multicore", env_file = ".env", GPP_dist = NULL,
+    strategy = "multisession", env_file = ".env", GPP_dist = NULL,
     use_trees = "Tree", MCMC_n_samples = 1000L, MCMC_thin = NULL, use_TF = TRUE,
     TF_environ = NULL, TF_use_single = FALSE, LF_n_cores = n_cores,
     LF_check = FALSE, LF_temp_cleanup = TRUE, temp_cleanup = TRUE, n_grid = 50L,

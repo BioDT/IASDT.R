@@ -9,7 +9,7 @@
 
 variance_partitioning_plot <- function(
     path_model, env_file = ".env", VP_file = "VarPar", use_TF = TRUE,
-    TF_environ = NULL, n_cores = 1L, strategy = "multicore", width = 30,
+    TF_environ = NULL, n_cores = 1L, strategy = "multisession", width = 30,
     height = 15, Axis_text = 4) {
 
   .start_time <- lubridate::now(tzone = "CET")

@@ -16,10 +16,9 @@ convergence_plot(
   title = " ",
   n_omega = 1000L,
   n_cores = 8L,
-  strategy = "multicore",
+  strategy = "multisession",
   n_RC = c(2L, 2L),
   beta_n_RC = c(3L, 3L),
-  save_plotting_data = TRUE,
   pages_per_file = 20L,
   chain_colors = NULL,
   margin_type = "histogram"
@@ -65,9 +64,8 @@ parameter diagnostics. Default: 1000L}
 Default: 8.}
 
 \item{strategy}{Character. The parallel processing strategy to use. Valid
-options are "sequential", "multisession", "multicore", and "cluster".
-Defaults to \code{"multicore"} (\code{"multisession"} on Windows). See
-\code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
+options are "sequential", "multisession" (default), "multicore", and
+"cluster". See \code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
 
 \item{n_RC}{Numeric vector. Grid layout (rows×columns) for arranging
 alpha parameter plots. Default: \code{c(2, 2)}. If \code{NULL}, the layout is
@@ -75,9 +73,6 @@ automatically determined based on the number of alpha levels.}
 
 \item{beta_n_RC}{Numeric vector. The grid layout (rows×columns) for
 arranging beta parameter plots. Default: \code{c(3, 3)}.}
-
-\item{save_plotting_data}{Logical. If \code{TRUE} (default), saves the plot data
-as \code{.RData} files.}
 
 \item{pages_per_file}{Integer. Number of plots per page in the Omega
 parameter output. Default: 20L.}

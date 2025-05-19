@@ -10,7 +10,7 @@
 
 predict_maps_CV <- function(
     model_dir = NULL, CV_name = NULL, CV_fold = NULL, n_cores = 8L,
-    strategy = "multicore", env_file = ".env", use_TF = TRUE,
+    strategy = "multisession", env_file = ".env", use_TF = TRUE,
     TF_environ = NULL, TF_use_single = FALSE, LF_n_cores = n_cores,
     LF_check = FALSE, LF_temp_cleanup = TRUE, LF_only = FALSE,
     LF_commands_only = FALSE, temp_cleanup = TRUE) {

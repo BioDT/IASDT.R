@@ -21,9 +21,8 @@ Defaults to \code{NULL}. This argument can not be empty.}
 \item{n_cores}{Integer. Number of CPU cores to use for parallel processing.}
 
 \item{strategy}{Character. The parallel processing strategy to use. Valid
-options are "sequential", "multisession", and "cluster". Defaults to
-\code{"multisession"}. See \code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for
-details.}
+options are "sequential", "multisession" (default), "multicore", and
+"cluster". See \code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
 }
 \value{
 The function does not return anything but prints messages to the

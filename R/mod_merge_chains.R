@@ -18,9 +18,8 @@
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Defaults to 8L.
 #' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "sequential", "multisession", "multicore", and "cluster".
-#'   Defaults to `"multicore"` (`"multisession"` on Windows). See
-#'   [future::plan()] and [ecokit::set_parallel()] for details.
+#'   options are "sequential", "multisession" (default), "multicore", and
+#'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param model_info_name Character. Name of the file (without extension) where
 #'   updated model information is saved. If `NULL`, overwrites the existing
 #'   `Model_Info.RData` file in `model_dir` directory. If specified, creates a
@@ -63,7 +62,7 @@
 ## |------------------------------------------------------------------------| #
 
 mod_merge_chains <- function(
-    model_dir = NULL, n_cores = 8L, strategy = "multicore",
+    model_dir = NULL, n_cores = 8L, strategy = "multisession",
     model_info_name = NULL, print_incomplete = TRUE, from_JSON = FALSE,
     out_extension = "qs2") {
 
@@ -520,7 +519,7 @@ mod_merge_chains <- function(
 #' @author Ahmed El-Gabbas
 
 mod_merge_chains_CV <- function(
-    model_dir = NULL, n_cores = 8L, strategy = "multicore",
+    model_dir = NULL, n_cores = 8L, strategy = "multisession",
     CV_names = c("CV_Dist", "CV_Large"), from_JSON = FALSE,
     out_extension = "qs2") {
 

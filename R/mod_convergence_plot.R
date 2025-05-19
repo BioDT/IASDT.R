@@ -22,16 +22,13 @@
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 8.
 #' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "sequential", "multisession", "multicore", and "cluster".
-#'   Defaults to `"multicore"` (`"multisession"` on Windows). See
-#'   [future::plan()] and [ecokit::set_parallel()] for details.
+#'   options are "sequential", "multisession" (default), "multicore", and
+#'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param n_RC Numeric vector. Grid layout (rows&times;columns) for arranging
 #'   alpha parameter plots. Default: `c(2, 2)`. If `NULL`, the layout is
 #'   automatically determined based on the number of alpha levels.
 #' @param beta_n_RC Numeric vector. The grid layout (rows&times;columns) for
 #'   arranging beta parameter plots. Default: `c(3, 3)`.
-#' @param save_plotting_data Logical. If `TRUE` (default), saves the plot data
-#'   as `.RData` files.
 #' @param pages_per_file Integer. Number of plots per page in the Omega
 #'   parameter output. Default: 20L.
 #' @param chain_colors Character vector. MCMC chain colours (optional). Default:
@@ -62,19 +59,27 @@
 
 convergence_plot <- function(
     path_coda = NULL, path_model = NULL, env_file = ".env", title = " ",
-    n_omega = 1000L, n_cores = 8L, strategy = "multicore",
-    n_RC = c(2L, 2L), beta_n_RC = c(3L, 3L), save_plotting_data = TRUE,
-    pages_per_file = 20L, chain_colors = NULL, margin_type = "histogram") {
+    n_omega = 1000L, n_cores = 8L, strategy = "multisession",
+    n_RC = c(2L, 2L), beta_n_RC = c(3L, 3L), pages_per_file = 20L,
+    chain_colors = NULL, margin_type = "histogram") {
 
   # # ..................................................................... ###
 
   .start_time <- lubridate::now(tzone = "CET")
 
-  if (is.null(path_coda) || is.null(path_model) || is.null(n_cores)) {
+  if (is.null(path_coda)) {
     ecokit::stop_ctx(
-      "path_coda, path_model, and n_cores cannot be empty",
-      path_coda = path_coda, path_model = path_model, n_cores = n_cores,
-      include_backtrace = TRUE)
+      "`path_coda` cannot be empty",
+      path_coda = path_coda, include_backtrace = TRUE)
+  }
+  if (is.null(path_model)) {
+    ecokit::stop_ctx(
+      "path_model cannot be empty",
+      path_model = path_model, include_backtrace = TRUE)
+  }
+  if (is.null(n_cores)) {
+    ecokit::stop_ctx(
+      "`n_cores` cannot be empty", n_cores = n_cores, include_backtrace = TRUE)
   }
 
   if (length(margin_type) != 1) {
@@ -250,12 +255,10 @@ convergence_plot <- function(
         posterior = Coda_Obj, model_object = Model, title = title,
         chain_colors = chain_colors)
 
-      if (save_plotting_data) {
-        ecokit::cat_time("Save plotting data", level = 1L)
-        ecokit::save_as(
-          object = PlotObj_Rho, object_name = "convergence_rho",
-          out_path = FileConv_Rho)
-      }
+      ecokit::cat_time("Save plotting data", level = 1L)
+      ecokit::save_as(
+        object = PlotObj_Rho, object_name = "convergence_rho",
+        out_path = FileConv_Rho)
     }
 
     ecokit::cat_time("Save plot", level = 1L)
@@ -287,12 +290,10 @@ convergence_plot <- function(
       posterior = Coda_Obj, model_object = Model, title = title, n_RC = n_RC,
       add_footer = FALSE, add_title = FALSE, chain_colors = chain_colors)
 
-    if (save_plotting_data) {
-      ecokit::cat_time("Save plotting data", level = 1L)
-      ecokit::save_as(
-        object = PlotObj_Alpha, object_name = "convergence_alpha",
-        out_path = fs::path(Path_Convergence, "Convergence_Alpha.RData"))
-    }
+    ecokit::cat_time("Save plotting data", level = 1L)
+    ecokit::save_as(
+      object = PlotObj_Alpha, object_name = "convergence_alpha",
+      out_path = fs::path(Path_Convergence, "Convergence_Alpha.RData"))
   }
 
   ecokit::cat_time("Save plots", level = 1L)
@@ -318,9 +319,12 @@ convergence_plot <- function(
   FileConv_Omega <- fs::path(Path_Convergence, "Convergence_Omega.qs2")
 
   if (ecokit::check_data(FileConv_Omega, warning = FALSE)) {
+
     ecokit::cat_time("Loading plotting data", level = 1L)
     PlotObj_Omega <- ecokit::load_as(FileConv_Omega)
+
   } else {
+
     ecokit::cat_time("Coda to tibble", level = 1L)
     OmegaDF <- IASDT.R::coda_to_tibble(
       coda_object = Obj_Omega, posterior_type = "omega", n_omega = n_omega,
@@ -446,10 +450,10 @@ convergence_plot <- function(
     )
     ecokit::cat_time("Plots preparation is finished", level = 2L)
 
-    if (save_plotting_data) {
-      ecokit::cat_time("Save plot data", level = 1L)
-      ecokit::save_as(object = PlotObj_Omega, out_path = FileConv_Omega)
-    }
+
+    ecokit::cat_time("Save plot data", level = 1L)
+    ecokit::save_as(object = PlotObj_Omega, out_path = FileConv_Omega)
+
     rm(OmegaDF, SelectedCombs, CI, OmegaNames, envir = environment())
     invisible(gc())
   }
@@ -468,7 +472,7 @@ convergence_plot <- function(
           PlotTitle <- ggplot2::ggplot() +
             ggplot2::labs(
               title = paste0(
-                "Convergence of the omega parameter --- a sample of ",
+                "Convergence of the omega parameter ---  a sample of ",
                 n_omega, " species pairs"),
               subtitle = paste0(
                 "   File ", File, " | Page ",
@@ -718,7 +722,7 @@ convergence_plot <- function(
           attempt <- attempt + 1
         }
       },
-      future.seed = TRUE, future.globals = "Beta_DF",
+      future.seed = TRUE, future.globals = "Beta_DF", future.conditions = NULL,
       future.packages = pkg_to_export)
 
     rm(Beta_DF2, envir = environment())
@@ -892,14 +896,14 @@ convergence_plot <- function(
               object = list(
                 Plot = Plot, Plot_Marginal = Plot_Marginal,
                 PlotFixedY_Marginal = Plot2_Marginal),
-              out_path = Plot_File)
+              out_path = Plot_File, n_threads = 1)
 
             Sys.sleep(2)
 
           },
           silent = TRUE)
 
-          if (ecokit::check_data(Plot_File, warning = FALSE)) {
+          if (ecokit::check_data(Plot_File, warning = FALSE, n_threads = 1)) {
             break
           }
 
@@ -912,6 +916,7 @@ convergence_plot <- function(
 
       },
       future.seed = TRUE, future.packages = pkg_to_export,
+      future.conditions = NULL,
       future.globals = c(
         "Beta_DF", "NChains", "SampleSize", "chain_colors", "margin_type"))
 
@@ -928,17 +933,19 @@ convergence_plot <- function(
     rm(Beta_DF, BetaNames, envir = environment())
     invisible(gc())
 
-    if (save_plotting_data) {
-      ecokit::cat_time("Save trace plot data", level = 2L)
-      ecokit::save_as(
-        object = PlotObj_Beta, object_name = "Convergence_Beta",
-        out_path = FileConv_Beta)
-    }
+    ecokit::cat_time("Save trace plot data", level = 2L)
+    ecokit::save_as(
+      object = PlotObj_Beta, object_name = "Convergence_Beta",
+      out_path = FileConv_Beta)
+
   }
 
   # # ..................................................................... ###
 
   # plot minimum and max value of each beta parameter
+  ecokit::cat_time(
+    "plot minimum and max value of each beta parameter", level = 2L)
+
   IASDT.R::convergence_Beta_ranges(model_dir = dirname(path_model))
 
   # # ..................................................................... ###
@@ -1246,7 +1253,7 @@ convergence_Beta_ranges <- function(model_dir) {
 
   # Construct path to beta parameter data
   beta_data_path <- fs::path(
-    model_dir, "Model_Convergence", "Convergence_Beta.RData")
+    dirname(model_dir), "Model_Convergence", "Convergence_Beta.RData")
   # Check if the beta data file exists
   if (!file.exists(beta_data_path)) {
     ecokit::stop_ctx(
@@ -1274,8 +1281,7 @@ convergence_Beta_ranges <- function(model_dir) {
                 max = max(Post[[.x]]))
             }) %>%
             dplyr::bind_rows()
-        },
-        .progress = TRUE)) %>%
+        })) %>%
     tidyr::unnest(Range) %>%
     dplyr::select(Variable, chain, min, max)
 
@@ -1285,7 +1291,7 @@ convergence_Beta_ranges <- function(model_dir) {
 
   # Construct path for saving the plot
   plot_path <- fs::path(
-    model_dir, "Model_Postprocessing", "Beta_min_max_Habitat.jpeg")
+    dirname(model_dir), "Model_Postprocessing", "Beta_min_max_Habitat.jpeg")
   fs::dir_create(dirname(plot_path))
 
   Beta_plot <- Beta_ranges %>%

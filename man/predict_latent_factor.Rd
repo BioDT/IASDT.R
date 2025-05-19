@@ -11,7 +11,7 @@ predict_latent_factor(
   post_alpha,
   LF_rL,
   LF_n_cores = 8L,
-  strategy = "multicore",
+  strategy = "multisession",
   temp_dir = "TEMP_Pred",
   LF_temp_cleanup = TRUE,
   model_name = NULL,
@@ -47,9 +47,8 @@ structure}
 latent factor prediction. Defaults to 8L.}
 
 \item{strategy}{Character. The parallel processing strategy to use. Valid
-options are "sequential", "multisession", "multicore", and "cluster".
-Defaults to \code{"multicore"} (\code{"multisession"} on Windows). See
-\code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
+options are "sequential", "multisession" (default), "multicore", and
+"cluster". See \code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
 
 \item{temp_dir}{Character. Path for temporary storage of intermediate files.}
 

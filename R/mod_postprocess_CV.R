@@ -9,7 +9,7 @@
 #' @export
 
 mod_postprocess_CV_1_CPU <- function(
-    model_dir = NULL, CV_names = NULL, n_cores = 8L, strategy = "multicore",
+    model_dir = NULL, CV_names = NULL, n_cores = 8L, strategy = "multisession",
     env_file = ".env", from_JSON = FALSE, use_TF = TRUE, TF_use_single = FALSE,
     TF_environ = NULL, LF_n_cores = n_cores, LF_only = TRUE,
     LF_temp_cleanup = TRUE, LF_check = FALSE, LF_runtime = "01:00:00",
@@ -362,7 +362,7 @@ mod_postprocess_CV_1_CPU <- function(
 
 mod_postprocess_CV_2_CPU <- function(
     model_dir = NULL, CV_names = NULL, n_cores = 8L,
-    strategy = "multicore", env_file = ".env", use_TF = TRUE,
+    strategy = "multisession", env_file = ".env", use_TF = TRUE,
     TF_use_single = FALSE, temp_cleanup = TRUE, LF_temp_cleanup = TRUE,
     TF_environ = NULL, LF_n_cores = n_cores, LF_check = FALSE) {
 

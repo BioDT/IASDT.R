@@ -9,7 +9,7 @@
 #' @export
 
 efforts_download <- function(
-    n_cores = 6L, strategy = "multicore", env_file = ".env") {
+    n_cores = 6L, strategy = "multisession", env_file = ".env") {
 
   .StartTimeDown <- lubridate::now(tzone = "CET")
 

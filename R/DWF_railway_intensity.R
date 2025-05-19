@@ -14,9 +14,8 @@
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 8.
 #' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "sequential", "multisession", "multicore", and "cluster".
-#'   Defaults to `"multicore"` (`"multisession"` on Windows). See
-#'   [future::plan()] and [ecokit::set_parallel()] for details.
+#'   options are "sequential", "multisession" (default), "multicore", and
+#'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param delete_processed Logical indicating whether to delete the raw
 #'   downloaded railways files after processing them. This helps to free large
 #'   unnecessary file space (> 55 GB). Defaults to `TRUE`.
@@ -27,7 +26,7 @@
 #' @author Ahmed El-Gabbas
 
 railway_intensity <- function(
-    env_file = ".env", n_cores = 6L, strategy = "multicore",
+    env_file = ".env", n_cores = 6L, strategy = "multisession",
     delete_processed = TRUE) {
 
   .start_time <- lubridate::now(tzone = "CET")

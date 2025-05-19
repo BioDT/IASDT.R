@@ -13,7 +13,7 @@ mod_postprocess_1_CPU(
   model_dir = NULL,
   hab_abb = NULL,
   n_cores = 8L,
-  strategy = "multicore",
+  strategy = "multisession",
   env_file = ".env",
   path_Hmsc = NULL,
   memory_per_cpu = "64G",
@@ -58,7 +58,7 @@ mod_postprocess_2_CPU(
   model_dir = NULL,
   hab_abb = NULL,
   n_cores = 8L,
-  strategy = "multicore",
+  strategy = "multisession",
   env_file = ".env",
   GPP_dist = NULL,
   use_trees = "Tree",
@@ -95,7 +95,7 @@ mod_postprocess_CV_1_CPU(
   model_dir = NULL,
   CV_names = NULL,
   n_cores = 8L,
-  strategy = "multicore",
+  strategy = "multisession",
   env_file = ".env",
   from_JSON = FALSE,
   use_TF = TRUE,
@@ -116,7 +116,7 @@ mod_postprocess_CV_2_CPU(
   model_dir = NULL,
   CV_names = NULL,
   n_cores = 8L,
-  strategy = "multicore",
+  strategy = "multisession",
   env_file = ".env",
   use_TF = TRUE,
   TF_use_single = FALSE,
@@ -138,9 +138,8 @@ values: \code{0}, \code{1}, \code{2}, \code{3}, \verb{4a}, \verb{4b}, \code{10},
 Default: 8.}
 
 \item{strategy}{Character. The parallel processing strategy to use. Valid
-options are "sequential", "multisession", "multicore", and "cluster".
-Defaults to \code{"multicore"} (\code{"multisession"} on Windows). See
-\code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
+options are "sequential", "multisession" (default), "multicore", and
+"cluster". See \code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
 
 \item{env_file}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}

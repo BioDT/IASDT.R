@@ -70,9 +70,8 @@
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 8.
 #' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "sequential", "multisession", "multicore", and "cluster".
-#'   Defaults to `"multicore"` (`"multisession"` on Windows). See
-#'   [future::plan()] and [ecokit::set_parallel()] for details.
+#'   options are "sequential", "multisession" (default), "multicore", and
+#'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param MCMC_n_chains Integer. Number of model chains. Default: 4.
 #' @param MCMC_thin Integer vector. Thinning value(s) in MCMC sampling. If more
 #'   than one value is provided, a separate model will be fitted at each value
@@ -173,7 +172,7 @@ mod_prepare_HPC <- function(
     CV_n_folds = 4L, CV_n_grids = 20L, CV_n_rows = 2L, CV_n_columns = 2L,
     CV_plot = TRUE, CV_SAC = FALSE, use_phylo_tree = TRUE,
     no_phylo_tree = FALSE, overwrite_rds = TRUE, n_cores = 8L,
-    strategy = "multicore", MCMC_n_chains = 4L, MCMC_thin = NULL,
+    strategy = "multisession", MCMC_n_chains = 4L, MCMC_thin = NULL,
     MCMC_samples = 1000L, MCMC_transient_factor = 500L, MCMC_verbose = 200L,
     skip_fitted = TRUE, n_array_jobs = 210L, model_country = NULL,
     verbose_progress = TRUE, SLURM_prepare = TRUE, memory_per_cpu = "64G",

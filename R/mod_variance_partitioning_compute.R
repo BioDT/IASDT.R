@@ -28,9 +28,8 @@
 #'   partitioning using TensorFlow. This is only effective when `use_TF` is
 #'   `TRUE`. Default: `1`.
 #' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "sequential", "multisession", "multicore", and "cluster".
-#'   Defaults to `"multicore"` (`"multisession"` on Windows). See
-#'   [future::plan()] and [ecokit::set_parallel()] for details.
+#'   options are "sequential", "multisession" (default), "multicore", and
+#'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param chunk_size Integer. Size of each chunk of samples to process in
 #'   parallel. Only relevant for TensorFlow. Default: `50`.
 #' @param verbose Logical. Whether to print progress messages. Default: `TRUE`.
@@ -55,7 +54,7 @@
 
 variance_partitioning_compute <- function(
     path_model, group = NULL, group_names = NULL, start = 1L, na.ignore = FALSE,
-    n_cores = 8L, strategy = "multicore", use_TF = TRUE, TF_environ = NULL,
+    n_cores = 8L, strategy = "multisession", use_TF = TRUE, TF_environ = NULL,
     TF_use_single = FALSE, temp_cleanup = TRUE, chunk_size = 50L,
     verbose = TRUE, VP_file = "VarPar", VP_commands_only = FALSE) {
 

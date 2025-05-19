@@ -18,7 +18,7 @@ efforts_process(
   request = TRUE,
   download = TRUE,
   n_cores = 6L,
-  strategy = "multicore",
+  strategy = "multisession",
   start_year = 1981L,
   boundaries = c(-30, 50, 25, 75),
   chunk_size = 100000L,
@@ -29,18 +29,18 @@ efforts_process(
 efforts_request(
   env_file = ".env",
   n_cores = 3L,
-  strategy = "multicore",
+  strategy = "multisession",
   start_year = 1981L,
   r_environ = ".Renviron",
   boundaries = c(-30, 50, 25, 75)
 )
 
-efforts_download(n_cores = 6L, strategy = "multicore", env_file = ".env")
+efforts_download(n_cores = 6L, strategy = "multisession", env_file = ".env")
 
 efforts_summarize(
   env_file = ".env",
   n_cores = 6L,
-  strategy = "multicore",
+  strategy = "multisession",
   chunk_size = 100000L,
   delete_chunks = TRUE
 )
@@ -73,9 +73,8 @@ Default: 6, except for \code{efforts_request}, which defaults to 3 with a
 maximum of 3.}
 
 \item{strategy}{Character. The parallel processing strategy to use. Valid
-options are "sequential", "multisession", "multicore", and "cluster".
-Defaults to \code{"multicore"} (\code{"multisession"} on Windows). See
-\code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
+options are "sequential", "multisession" (default), "multicore", and
+"cluster". See \code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
 
 \item{start_year}{Integer. Earliest year for GBIF records (matches CHELSA
 climate data). Default: \code{1981}.}

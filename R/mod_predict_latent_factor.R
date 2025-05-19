@@ -21,9 +21,8 @@
 #' @param LF_n_cores Integer. Number of cores to use for parallel processing of
 #'   latent factor prediction. Defaults to 8L.
 #' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "sequential", "multisession", "multicore", and "cluster".
-#'   Defaults to `"multicore"` (`"multisession"` on Windows). See
-#'   [future::plan()] and [ecokit::set_parallel()] for details.
+#'   options are "sequential", "multisession" (default), "multicore", and
+#'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param temp_dir Character. Path for temporary storage of intermediate files.
 #' @param LF_temp_cleanup Logical. Whether to delete temporary files in the
 #'   `temp_dir` directory after finishing the LF predictions.
@@ -75,7 +74,7 @@
 
 predict_latent_factor <- function(
     units_pred, units_model, postEta, post_alpha, LF_rL, LF_n_cores = 8L,
-    strategy = "multicore", temp_dir = "TEMP_Pred",
+    strategy = "multisession", temp_dir = "TEMP_Pred",
     LF_temp_cleanup = TRUE, model_name = NULL, use_TF = TRUE, TF_environ = NULL,
     TF_use_single = FALSE, LF_out_file = NULL, LF_return = FALSE,
     LF_check = FALSE, LF_commands_only = FALSE, solve_max_attempts = 5L,

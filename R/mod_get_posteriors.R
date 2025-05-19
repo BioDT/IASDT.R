@@ -45,11 +45,10 @@ mod_get_posteriors <- function(path_posterior = NULL, from_JSON = FALSE) {
       magrittr::extract2(1) %>%
       jsonify::from_json() %>%
       magrittr::extract2(1)
-    return(Out)
   } else {
     Out <- readRDS(file = path_posterior) %>%
       magrittr::extract2(1) %>%
       magrittr::extract2(1)
-    return(Out)
   }
+  return(Out)
 }

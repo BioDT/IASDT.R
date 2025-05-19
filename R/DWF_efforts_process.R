@@ -25,9 +25,8 @@
 #'   Default: 6, except for `efforts_request`, which defaults to 3 with a
 #'   maximum of 3.
 #' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "sequential", "multisession", "multicore", and "cluster".
-#'   Defaults to `"multicore"` (`"multisession"` on Windows). See
-#'   [future::plan()] and [ecokit::set_parallel()] for details.
+#'   options are "sequential", "multisession" (default), "multicore", and
+#'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param start_year Integer. Earliest year for GBIF records (matches CHELSA
 #'   climate data). Default: `1981`.
 #' @param chunk_size Integer. Rows per chunk file. Default: `100000`.
@@ -70,7 +69,7 @@
 
 efforts_process <- function(
     env_file = ".env", r_environ = ".Renviron", request = TRUE, download = TRUE,
-    n_cores = 6L, strategy = "multicore", start_year = 1981L,
+    n_cores = 6L, strategy = "multisession", start_year = 1981L,
     boundaries = c(-30, 50, 25, 75), chunk_size = 100000L,
     delete_chunks = TRUE, delete_processed = TRUE) {
 

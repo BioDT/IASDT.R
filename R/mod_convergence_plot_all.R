@@ -14,9 +14,8 @@
 #'   subfolder.
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "sequential", "multisession", "multicore", and "cluster".
-#'   Defaults to `"multicore"` (`"multisession"` on Windows). See
-#'   [future::plan()] and [ecokit::set_parallel()] for details.
+#'   options are "sequential", "multisession" (default), "multicore", and
+#'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
 #' @name convergence_plot_all
 #' @inheritParams convergence_plots
 #' @author Ahmed El-Gabbas
@@ -26,7 +25,7 @@
 
 convergence_plot_all <- function(
     model_dir = NULL, n_omega = 1000L, n_cores = NULL,
-    strategy = "multicore", margin_type = "histogram") {
+    strategy = "multisession", margin_type = "histogram") {
 
   # # ..................................................................... ###
 

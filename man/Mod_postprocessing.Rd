@@ -37,7 +37,7 @@ mod_postprocess_1_CPU(
   fix_efforts = "q90",
   fix_rivers = "q90",
   pred_new_sites = TRUE,
-  n_cores_VP = 3L,
+  n_cores_VP = 10L,
   width_omega = 26,
   height_omega = 22.5,
   width_beta = 25,
@@ -216,7 +216,7 @@ fixed. Default: \code{q90}.}
 Default: \code{TRUE}.}
 
 \item{n_cores_VP}{Integer. Number of cores to use for variance partitioning.
-Defaults to 3L.}
+Defaults to 10L.}
 
 \item{width_omega, height_omega, width_beta, height_beta}{Integer. The width and
 height of the generated heatmaps of the Omega and Beta parameters in

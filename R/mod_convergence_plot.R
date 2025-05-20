@@ -1196,7 +1196,8 @@ convergence_plot <- function(
     future.seed = TRUE, future.packages = pkg_to_export,
     future.globals = c(
       "margin_type", "BetaTracePlots_BySp", "Path_Convergence_BySp",
-      "beta_n_RC"))
+      "beta_n_RC")) %>%
+    ecokit::quiet_device()
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 

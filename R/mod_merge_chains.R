@@ -212,10 +212,11 @@ mod_merge_chains <- function(
   } else {
     ecokit::set_parallel(
       n_cores = min(n_cores, nrow(Model_Info2)),
-      future_max_size = 800L, strategy = strategy)
+      future_max_size = 800L, strategy = strategy, level = 1L)
     withr::defer(future::plan("sequential", gc = TRUE))
   }
 
+  ecokit::cat_time("Check if any posterior files is missing"))
   # Check if any posterior files is missing
   Model_Info2 <- Model_Info2 %>%
     dplyr::mutate(
@@ -245,6 +246,7 @@ mod_merge_chains <- function(
   # # ..................................................................... ###
 
   # Merge posteriors and save as Hmsc model / coda object
+  ecokit::cat_time("Merge posteriors and save as Hmsc model / coda object"))
 
   Model_Info3 <- future.apply::future_lapply(
     X = seq_len(nrow(Model_Info2)),
@@ -375,11 +377,13 @@ mod_merge_chains <- function(
       "from_JSON", "Path_Coda"))
 
   if (n_cores > 1) {
-    ecokit::set_parallel(stop_cluster = TRUE)
+    ecokit::set_parallel(stop_cluster = TRUE, level = 1L))
     future::plan("sequential", gc = TRUE)
   }
 
   # # ..................................................................... ###
+
+  ecokit::cat_time("Extract information on elapsed time and memory usage"))
 
   Model_Info2 <- dplyr::mutate(Model_Info2, ModelPosts = Model_Info3) %>%
     tidyr::unnest_wider("ModelPosts") %>%

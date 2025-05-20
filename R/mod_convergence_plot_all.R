@@ -128,22 +128,6 @@ convergence_plot_all <- function(
 
   PrepConvergence <- function(ID) {
 
-    # Prevents unexpected device opening in parallel workers to avoid
-    # warnings about modified devices. The `ggtext::geom_richtext` function
-    # opens a device to render the text, which can cause issues in parallel
-    # processing. By opening a temporary null device, we ensure that no
-    # unexpected devices are opened in the parallel workers.
-
-    # ‘future_lapply-*’ added, removed, or modified devices. A future expression
-    # must close any opened devices and must not close devices it did not open.
-    # Details: 1 devices differ: index=2, before=‘NA’, after=‘pdf’
-    temp_file <- tempfile(fileext = ".pdf")
-    grDevices::pdf(temp_file)
-    withr::defer({
-      grDevices::dev.off()
-      fs::file_delete(temp_file)
-    })
-
     path_coda <- Model_Info$Path_Coda[[ID]]
     Path_FittedMod <- Model_Info$Path_FittedMod[[ID]]
     M_Name_Fit <- Model_Info$M_Name_Fit[[ID]]
@@ -293,7 +277,7 @@ convergence_plot_all <- function(
         strategy = strategy)
       withr::defer(future::plan("sequential", gc = TRUE))
     }
-    
+
     ecokit::cat_time("Starting processing convergence data", level = 2L)
 
     Convergence_DT <- Model_Info %>%
@@ -304,6 +288,9 @@ convergence_plot_all <- function(
           future.packages = pkg_to_export,
           future.globals = c(
             "Model_Info", "Path_ConvDT", "n_omega", "PrepConvergence"))) %>%
+      ecokit::quiet_device()
+
+    Convergence_DT <- Convergence_DT %>%
       dplyr::select(tidyselect::all_of(c("M_Name_Fit", "Plots"))) %>%
       tidyr::unnest_wider("Plots") %>%
       # arrange data alphanumerically by model name

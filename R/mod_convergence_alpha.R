@@ -13,24 +13,6 @@ convergence_alpha <- function(
     add_footer = TRUE, add_title = TRUE, chain_colors = NULL,
     margin_type = "histogram") {
 
-  # Prevents unexpected device opening in parallel workers to avoid
-  # warnings about modified devices. The `ggtext::geom_richtext` function
-  # opens a device to render the text, which can cause issues in parallel
-  # processing. By opening a temporary null device, we ensure that no
-  # unexpected devices are opened in the parallel workers.
-
-  # ‘future_lapply-*’ added, removed, or modified devices. A future expression
-  # must close any opened devices and must not close devices it did not open.
-  # Details: 1 devices differ: index=2, before=‘NA’, after=‘pdf’
-  temp_file <- tempfile(fileext = ".pdf")
-  grDevices::pdf(temp_file)
-  withr::defer({
-    grDevices::dev.off()
-    fs::file_delete(temp_file)
-  })
-  
-  # # ..................................................................... ###
-
   if (is.null(posterior) || is.null(model_object)) {
     ecokit::stop_ctx(
       "`posterior` and `model_object` cannot be empty",
@@ -221,11 +203,13 @@ convergence_alpha <- function(
       if (margin_type == "histogram") {
         Plot <- ggExtra::ggMarginal(
           p = Plot, type = margin_type, margins = "y", size = 6,
-          color = "steelblue4", fill = "steelblue4", bins = 100)
+          color = "steelblue4", fill = "steelblue4", bins = 100) %>%
+          ecokit::quiet_device()
       } else {
         Plot <- ggExtra::ggMarginal(
           p = Plot, type = margin_type, margins = "y", size = 6,
-          color = "steelblue4")
+          color = "steelblue4") %>%
+          ecokit::quiet_device()
       }
 
       # Making marginal background matching the plot background

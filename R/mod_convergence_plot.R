@@ -253,7 +253,8 @@ convergence_plot <- function(
       ecokit::cat_time("Prepare plot", level = 1L)
       PlotObj_Rho <- IASDT.R::convergence_rho(
         posterior = Coda_Obj, model_object = Model, title = title,
-        chain_colors = chain_colors)
+        chain_colors = chain_colors) %>%
+        ecokit::quiet_device()
 
       ecokit::cat_time("Save plotting data", level = 1L)
       ecokit::save_as(
@@ -288,7 +289,8 @@ convergence_plot <- function(
     ecokit::cat_time("Prepare plot", level = 1L)
     PlotObj_Alpha <- IASDT.R::convergence_alpha(
       posterior = Coda_Obj, model_object = Model, title = title, n_RC = n_RC,
-      add_footer = FALSE, add_title = FALSE, chain_colors = chain_colors)
+      add_footer = FALSE, add_title = FALSE, chain_colors = chain_colors) %>%
+      ecokit::quiet_device()
 
     ecokit::cat_time("Save plotting data", level = 1L)
     ecokit::save_as(
@@ -349,13 +351,6 @@ convergence_plot <- function(
       .x = seq_len(n_omega),
       .f = function(x) {
 
-        temp_file <- tempfile(fileext = ".pdf")
-        grDevices::pdf(temp_file)
-        withr::defer({
-          grDevices::dev.off()
-          fs::file_delete(temp_file)
-        })
-        
         CombData <- dplyr::filter(OmegaDF, SpComb == SelectedCombs[x])
         CurrPost <- purrr::map(
           .x = Obj_Omega,
@@ -441,11 +436,13 @@ convergence_plot <- function(
         if (margin_type == "histogram") {
           Plot <- ggExtra::ggMarginal(
             p = Plot, type = margin_type, margins = "y", size = 6,
-            color = "steelblue4", fill = "steelblue4", bins = 100)
+            color = "steelblue4", fill = "steelblue4", bins = 100) %>%
+            ecokit::quiet_device()
         } else {
           Plot <- ggExtra::ggMarginal(
             p = Plot, type = margin_type, margins = "y", size = 6,
-            color = "steelblue4")
+            color = "steelblue4") %>%
+            ecokit::quiet_device()
         }
         # Making marginal background matching the plot background
         # https://stackoverflow.com/a/78196022/3652584
@@ -741,23 +738,6 @@ convergence_plot <- function(
       X = seq_len(nrow(Beta_DF)),
       FUN = function(x) {
 
-        # Prevents unexpected device opening in parallel workers to avoid
-        # warnings about modified devices. The `ggtext::geom_richtext` function
-        # opens a device to render the text, which can cause issues in parallel
-        # processing. By opening a temporary null device, we ensure that no
-        # unexpected devices are opened in the parallel workers.
-
-        # ‘future_lapply-*’ added, removed, or modified devices. A future
-        # expression must close any opened devices and must not close devices it
-        # did not open. Details: 1 devices differ: index=2, before=‘NA’,
-        # after=‘pdf’
-        temp_file <- tempfile(fileext = ".pdf")
-        grDevices::pdf(temp_file)
-        withr::defer({
-          grDevices::dev.off()
-          fs::file_delete(temp_file)
-        })
-
         Var_Sp <- Beta_DF$Var_Sp[x]
         Species <- Beta_DF$Species[x]
         Curr_IAS <- Beta_DF$IAS_ID[x]
@@ -883,11 +863,13 @@ convergence_plot <- function(
             if (margin_type == "histogram") {
               Plot_Marginal <- ggExtra::ggMarginal(
                 p = Plot, type = margin_type, margins = "y", size = 6,
-                color = "steelblue4", fill = "steelblue4", bins = 100)
+                color = "steelblue4", fill = "steelblue4", bins = 100) %>%
+                ecokit::quiet_device()
             } else {
               Plot_Marginal <- ggExtra::ggMarginal(
                 p = Plot, type = margin_type, margins = "y", size = 6,
-                color = "steelblue4")
+                color = "steelblue4") %>%
+                ecokit::quiet_device()
             }
 
             # Making marginal background matching the plot background
@@ -899,11 +881,13 @@ convergence_plot <- function(
               if (margin_type == "histogram") {
                 Plot2_Marginal <- ggExtra::ggMarginal(
                   p = Plot2, type = margin_type, margins = "y", size = 6,
-                  color = "steelblue4", fill = "steelblue4", bins = 100)
+                  color = "steelblue4", fill = "steelblue4", bins = 100) %>%
+                  ecokit::quiet_device()
               } else {
                 Plot2_Marginal <- ggExtra::ggMarginal(
                   p = Plot2, type = margin_type, margins = "y", size = 6,
-                  color = "steelblue4")
+                  color = "steelblue4") %>%
+                  ecokit::quiet_device()
               }
             })
 
@@ -999,23 +983,6 @@ convergence_plot <- function(
   BetaTracePlots_ByVar0 <- future.apply::future_lapply(
     X = VarNames,
     FUN = function(x) {
-
-      # Prevents unexpected device opening in parallel workers to avoid
-      # warnings about modified devices. The `ggtext::element_markdown` function
-      # opens a device to render the text, which can cause issues in parallel
-      # processing. By opening a temporary null device, we ensure that no
-      # unexpected devices are opened in the parallel workers.
-
-      # ‘future_lapply-*’ added, removed, or modified devices. A future
-      # expression must close any opened devices and must not close devices it
-      # did not open. Details: 1 devices differ: index=2, before=‘NA’, after=
-      # ‘pdf’
-      temp_file <- tempfile(fileext = ".pdf")
-      grDevices::pdf(temp_file)
-      withr::defer({
-        grDevices::dev.off()
-        fs::file_delete(temp_file)
-      })
 
       VarDesc <- BetaTracePlots_ByVar %>%
         dplyr::filter(Variable == x) %>%
@@ -1183,11 +1150,13 @@ convergence_plot <- function(
               if (margin_type == "histogram") {
                 Plot <- ggExtra::ggMarginal(
                   p = Plot, type = margin_type, margins = "y", size = 6,
-                  color = "steelblue4", fill = "steelblue4", bins = 100)
+                  color = "steelblue4", fill = "steelblue4", bins = 100) %>%
+                  ecokit::quiet_device()
               } else {
                 Plot <- ggExtra::ggMarginal(
                   p = Plot, type = margin_type, margins = "y", size = 6,
-                  color = "steelblue4")
+                  color = "steelblue4") %>%
+                  ecokit::quiet_device()
               }
               Plot$layout$t[1] <- 1
               Plot$layout$r[1] <- max(Plot$layout$r)

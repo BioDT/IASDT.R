@@ -253,8 +253,7 @@ convergence_plot <- function(
       ecokit::cat_time("Prepare plot", level = 1L)
       PlotObj_Rho <- IASDT.R::convergence_rho(
         posterior = Coda_Obj, model_object = Model, title = title,
-        chain_colors = chain_colors) %>%
-        ecokit::quiet_device()
+        chain_colors = chain_colors)
 
       ecokit::cat_time("Save plotting data", level = 1L)
       ecokit::save_as(
@@ -289,8 +288,7 @@ convergence_plot <- function(
     ecokit::cat_time("Prepare plot", level = 1L)
     PlotObj_Alpha <- IASDT.R::convergence_alpha(
       posterior = Coda_Obj, model_object = Model, title = title, n_RC = n_RC,
-      add_footer = FALSE, add_title = FALSE, chain_colors = chain_colors) %>%
-      ecokit::quiet_device()
+      add_footer = FALSE, add_title = FALSE, chain_colors = chain_colors)
 
     ecokit::cat_time("Save plotting data", level = 1L)
     ecokit::save_as(
@@ -350,6 +348,9 @@ convergence_plot <- function(
     PlotObj_Omega <- purrr::map_dfr(
       .x = seq_len(n_omega),
       .f = function(x) {
+
+        grDevices::pdf(nullfile())
+        withr::defer(grDevices::dev.off())
 
         CombData <- dplyr::filter(OmegaDF, SpComb == SelectedCombs[x])
         CurrPost <- purrr::map(
@@ -436,13 +437,11 @@ convergence_plot <- function(
         if (margin_type == "histogram") {
           Plot <- ggExtra::ggMarginal(
             p = Plot, type = margin_type, margins = "y", size = 6,
-            color = "steelblue4", fill = "steelblue4", bins = 100) %>%
-            ecokit::quiet_device()
+            color = "steelblue4", fill = "steelblue4", bins = 100)
         } else {
           Plot <- ggExtra::ggMarginal(
             p = Plot, type = margin_type, margins = "y", size = 6,
-            color = "steelblue4") %>%
-            ecokit::quiet_device()
+            color = "steelblue4")
         }
         # Making marginal background matching the plot background
         # https://stackoverflow.com/a/78196022/3652584
@@ -738,6 +737,9 @@ convergence_plot <- function(
       X = seq_len(nrow(Beta_DF)),
       FUN = function(x) {
 
+        grDevices::pdf(nullfile())
+        withr::defer(grDevices::dev.off())
+
         Var_Sp <- Beta_DF$Var_Sp[x]
         Species <- Beta_DF$Species[x]
         Curr_IAS <- Beta_DF$IAS_ID[x]
@@ -863,13 +865,11 @@ convergence_plot <- function(
             if (margin_type == "histogram") {
               Plot_Marginal <- ggExtra::ggMarginal(
                 p = Plot, type = margin_type, margins = "y", size = 6,
-                color = "steelblue4", fill = "steelblue4", bins = 100) %>%
-                ecokit::quiet_device()
+                color = "steelblue4", fill = "steelblue4", bins = 100)
             } else {
               Plot_Marginal <- ggExtra::ggMarginal(
                 p = Plot, type = margin_type, margins = "y", size = 6,
-                color = "steelblue4") %>%
-                ecokit::quiet_device()
+                color = "steelblue4")
             }
 
             # Making marginal background matching the plot background
@@ -881,13 +881,11 @@ convergence_plot <- function(
               if (margin_type == "histogram") {
                 Plot2_Marginal <- ggExtra::ggMarginal(
                   p = Plot2, type = margin_type, margins = "y", size = 6,
-                  color = "steelblue4", fill = "steelblue4", bins = 100) %>%
-                  ecokit::quiet_device()
+                  color = "steelblue4", fill = "steelblue4", bins = 100)
               } else {
                 Plot2_Marginal <- ggExtra::ggMarginal(
                   p = Plot2, type = margin_type, margins = "y", size = 6,
-                  color = "steelblue4") %>%
-                  ecokit::quiet_device()
+                  color = "steelblue4")
               }
             })
 
@@ -921,7 +919,8 @@ convergence_plot <- function(
       },
       future.seed = TRUE, future.packages = pkg_to_export,
       future.globals = c(
-        "Beta_DF", "NChains", "SampleSize", "chain_colors", "margin_type"))
+        "Beta_DF", "NChains", "SampleSize", "chain_colors", "margin_type")) %>%
+      ecokit::quiet_device()
 
     PlotObj_Beta <- dplyr::left_join(Beta_DF, VarsDesc, by = "Variable")
 
@@ -1133,7 +1132,8 @@ convergence_plot <- function(
         stringr::str_subset("Intercept", negate = TRUE) %>%
         gtools::mixedsort() %>%
         c("Intercept", .)
-
+      
+      grDevices::pdf(nullfile())
       SpPlots <- SpDT$data[[1]] %>%
         dplyr::arrange(factor(Variable, levels = VarOrder)) %>%
         dplyr::mutate(
@@ -1150,19 +1150,18 @@ convergence_plot <- function(
               if (margin_type == "histogram") {
                 Plot <- ggExtra::ggMarginal(
                   p = Plot, type = margin_type, margins = "y", size = 6,
-                  color = "steelblue4", fill = "steelblue4", bins = 100) %>%
-                  ecokit::quiet_device()
+                  color = "steelblue4", fill = "steelblue4", bins = 100)
               } else {
                 Plot <- ggExtra::ggMarginal(
                   p = Plot, type = margin_type, margins = "y", size = 6,
-                  color = "steelblue4") %>%
-                  ecokit::quiet_device()
+                  color = "steelblue4")
               }
               Plot$layout$t[1] <- 1
               Plot$layout$r[1] <- max(Plot$layout$r)
               return(Plot)
             })) %>%
         dplyr::pull("Plot")
+      grDevices::dev.off()
 
       NumPages <- ceiling(length(SpPlots) / (beta_n_RC[1] * beta_n_RC[2]))
 

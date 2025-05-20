@@ -13,6 +13,9 @@ convergence_alpha <- function(
     add_footer = TRUE, add_title = TRUE, chain_colors = NULL,
     margin_type = "histogram") {
 
+  grDevices::pdf(nullfile())
+  withr::defer(grDevices::dev.off())
+
   if (is.null(posterior) || is.null(model_object)) {
     ecokit::stop_ctx(
       "`posterior` and `model_object` cannot be empty",
@@ -203,13 +206,11 @@ convergence_alpha <- function(
       if (margin_type == "histogram") {
         Plot <- ggExtra::ggMarginal(
           p = Plot, type = margin_type, margins = "y", size = 6,
-          color = "steelblue4", fill = "steelblue4", bins = 100) %>%
-          ecokit::quiet_device()
+          color = "steelblue4", fill = "steelblue4", bins = 100)
       } else {
         Plot <- ggExtra::ggMarginal(
           p = Plot, type = margin_type, margins = "y", size = 6,
-          color = "steelblue4") %>%
-          ecokit::quiet_device()
+          color = "steelblue4")
       }
 
       # Making marginal background matching the plot background

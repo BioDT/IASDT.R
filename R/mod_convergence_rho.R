@@ -12,6 +12,9 @@ convergence_rho <- function(
     posterior = NULL, model_object = NULL, title = NULL,
     chain_colors = NULL, margin_type = "histogram") {
 
+  grDevices::pdf(nullfile())
+  withr::defer(grDevices::dev.off())
+
   if (is.null(posterior) || is.null(model_object) || is.null(title)) {
     ecokit::stop_ctx(
       "`posterior`, `model_object`, and `title` cannot be empty",
@@ -143,13 +146,11 @@ convergence_rho <- function(
   if (margin_type == "histogram") {
     Plot1 <- ggExtra::ggMarginal(
       p = Plot, type = margin_type, margins = "y", size = 6,
-      color = "steelblue4", fill = "steelblue4", bins = 100) %>%
-      ecokit::quiet_device()
+      color = "steelblue4", fill = "steelblue4", bins = 100)
   } else {
     Plot1 <- ggExtra::ggMarginal(
       p = Plot, type = margin_type, margins = "y", size = 6,
-      color = "steelblue4") %>%
-      ecokit::quiet_device()
+      color = "steelblue4")
   }
 
   # Making marginal background matching the plot background

@@ -969,7 +969,7 @@ convergence_plot <- function(
     future::plan("sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
-      n_cores = nrow(BetaTracePlots_ByVar), level = 1L,
+      n_cores = nrow(BetaTracePlots_ByVar), level = 2L,
       future_max_size = 800L, strategy = strategy)
     withr::defer(future::plan("sequential", gc = TRUE))
   }
@@ -1073,7 +1073,8 @@ convergence_plot <- function(
     },
     future.seed = TRUE, future.packages = pkg_to_export,
     future.globals = c(
-      "BetaTracePlots_ByVar", "n_RC", "Path_Convergence", "HTML4"))
+      "BetaTracePlots_ByVar", "n_RC", "Path_Convergence", "HTML4")) %>%
+    ecokit::quiet_device()
 
   rm(BetaTracePlots_ByVar0, BetaTracePlots_ByVar, envir = environment())
   invisible(gc())
@@ -1132,7 +1133,7 @@ convergence_plot <- function(
         stringr::str_subset("Intercept", negate = TRUE) %>%
         gtools::mixedsort() %>%
         c("Intercept", .)
-      
+
       grDevices::pdf(nullfile())
       SpPlots <- SpDT$data[[1]] %>%
         dplyr::arrange(factor(Variable, levels = VarOrder)) %>%

@@ -130,7 +130,7 @@ convergence_plot_all <- function(
 
     grDevices::pdf(nullfile())
     withr::defer(grDevices::dev.off())
-    
+
     path_coda <- Model_Info$Path_Coda[[ID]]
     Path_FittedMod <- Model_Info$Path_FittedMod[[ID]]
     M_Name_Fit <- Model_Info$M_Name_Fit[[ID]]

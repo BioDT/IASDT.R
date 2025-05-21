@@ -350,11 +350,13 @@ convergence_plot <- function(
     } else {
       ecokit::set_parallel(
         n_cores = n_cores, level = 1L,
-        future_max_size = 800L, strategy = strategy)
+        future_max_size = 1500L, strategy = strategy)
       withr::defer(future::plan("sequential", gc = TRUE))
     }
 
-    ecokit::cat_time("Prepare plots", level = 1L)
+    # Prepare omega plots
+    ecokit::cat_time("Prepare omega plots", level = 1L)
+
     PlotObj_Omega <- future.apply::future_lapply(
       X = seq_len(n_omega),
       FUN = function(x) {
@@ -762,8 +764,8 @@ convergence_plot <- function(
 
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
-    # Prepare plots
-    ecokit::cat_time("Prepare plots", level = 2L)
+    # Prepare beta plots
+    ecokit::cat_time("Prepare beta plots", level = 2L)
 
     PlotObj_Beta <- future.apply::future_lapply(
       X = seq_len(nrow(Beta_DF)),

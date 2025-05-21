@@ -257,7 +257,7 @@ mod_prepare_data <- function(
   # zero_sp_grids <- (sum(R_Sp, na.rm = TRUE) == 0)
   # EffortsMask[zero_sp_grids] <- NA
   # R_Sp[zero_sp_grids] <- NA
-  
+
   # # ................................... ###
 
   ### Plotting number of IAS per grid cell -----

@@ -344,22 +344,12 @@ convergence_plot <- function(
     OmegaDF <- dplyr::left_join(OmegaDF, CI, by = "SpComb")
     OmegaNames <- attr(Obj_Omega[[1]], "dimnames")[[2]]
 
-    # Prepare working in parallel
-    if (n_cores == 1) {
-      future::plan("sequential", gc = TRUE)
-    } else {
-      ecokit::set_parallel(
-        n_cores = n_cores, level = 1L,
-        future_max_size = 1500L, strategy = strategy)
-      withr::defer(future::plan("sequential", gc = TRUE))
-    }
-
     # Prepare omega plots
     ecokit::cat_time("Prepare omega plots", level = 1L)
 
-    PlotObj_Omega <- future.apply::future_lapply(
-      X = seq_len(n_omega),
-      FUN = function(x) {
+    PlotObj_Omega <- purrr::map_dfr(
+      .x = seq_len(n_omega),
+      .f = function(x) {
 
         temp_file <- fs::file_temp(
           pattern = paste0("plot_", x, "_"), ext = "pdf")
@@ -443,7 +433,6 @@ convergence_plot <- function(
           ggplot2::labs(x = NULL, y = NULL) +
           ggplot2::theme_bw() +
           ggplot2::theme(
-            text = ggplot2::element_text(family = "sans"),
             axis.text = ggplot2::element_text(size = 12),
             legend.position = "none")
 
@@ -465,19 +454,8 @@ convergence_plot <- function(
         try(fs::file_delete(temp_file), silent = TRUE)
 
         return(tibble::tibble(SpComb = CombData$SpComb, Plot = list(Plot)))
-      },
-      future.seed = TRUE, future.packages = pkg_to_export,
-      future.globals = c(
-        "OmegaDF", "Obj_Omega", "SelectedCombs", "OmegaNames",
-        "SampleSize", "NChains", "chain_colors", "margin_type")) %>%
-      ecokit::quiet_device() %>%
-      dplyr::bind_rows()
-
-    # Stopping cluster
-    if (n_cores > 1) {
-      ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
-      future::plan("sequential", gc = TRUE)
-    }
+      }
+    )
 
     ecokit::cat_time("Save plot data", level = 1L)
     ecokit::save_as(object = PlotObj_Omega, out_path = FileConv_Omega)

@@ -151,7 +151,7 @@ convergence_plot <- function(
     packages = c(
       "dplyr", "ggplot2", "ggtext", "magrittr", "stringr", "ggExtra",
       "coda", "ecokit", "qs2", "tibble", "tidyr", "purrr", "cowplot",
-      "gtools", "withr"),
+      "gtools", "withr", "fs"),
     strategy = strategy)
 
   # # ..................................................................... ###
@@ -344,13 +344,24 @@ convergence_plot <- function(
     OmegaDF <- dplyr::left_join(OmegaDF, CI, by = "SpComb")
     OmegaNames <- attr(Obj_Omega[[1]], "dimnames")[[2]]
 
-    ecokit::cat_time("Prepare plots", level = 1L)
-    PlotObj_Omega <- purrr::map_dfr(
-      .x = seq_len(n_omega),
-      .f = function(x) {
+    # Prepare working in parallel
+    if (n_cores == 1) {
+      future::plan("sequential", gc = TRUE)
+    } else {
+      ecokit::set_parallel(
+        n_cores = n_cores, level = 1L,
+        future_max_size = 800L, strategy = strategy)
+      withr::defer(future::plan("sequential", gc = TRUE))
+    }
 
-        grDevices::pdf(nullfile())
-        withr::defer(grDevices::dev.off())
+    ecokit::cat_time("Prepare plots", level = 1L)
+    PlotObj_Omega <- future.apply::future_lapply(
+      X = seq_len(n_omega),
+      FUN = function(x) {
+
+        temp_file <- fs::file_temp(
+          pattern = paste0("plot_", x, "_"), ext = "pdf")
+        grDevices::cairo_pdf(temp_file)
 
         CombData <- dplyr::filter(OmegaDF, SpComb == SelectedCombs[x])
         CurrPost <- purrr::map(
@@ -427,10 +438,10 @@ convergence_plot <- function(
             mapping = ggplot2::aes(x = x, y = y, label = label),
             data = Label_ESS_CI, inherit.aes = FALSE, size = 6, hjust = 0,
             vjust = 0, lineheight = 0, fill = NA, label.color = NA) +
+          ggplot2::labs(x = NULL, y = NULL) +
           ggplot2::theme_bw() +
-          ggplot2::xlab(NULL) +
-          ggplot2::ylab(NULL) +
           ggplot2::theme(
+            text = ggplot2::element_text(family = "sans"),
             axis.text = ggplot2::element_text(size = 12),
             legend.position = "none")
 
@@ -448,9 +459,23 @@ convergence_plot <- function(
         Plot$layout$t[1] <- 1
         Plot$layout$r[1] <- max(Plot$layout$r)
 
+        grDevices::dev.off()
+        try(fs::file_delete(temp_file), silent = TRUE)
+
         return(tibble::tibble(SpComb = CombData$SpComb, Plot = list(Plot)))
-      }
-    )
+      },
+      future.seed = TRUE, future.packages = pkg_to_export,
+      future.globals = c(
+        "OmegaDF", "Obj_Omega", "SelectedCombs", "OmegaNames",
+        "SampleSize", "NChains", "chain_colors", "margin_type")) %>%
+      ecokit::quiet_device() %>%
+      dplyr::bind_rows()
+
+    # Stopping cluster
+    if (n_cores > 1) {
+      ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
+      future::plan("sequential", gc = TRUE)
+    }
 
     ecokit::cat_time("Save plot data", level = 1L)
     ecokit::save_as(object = PlotObj_Omega, out_path = FileConv_Omega)
@@ -458,6 +483,8 @@ convergence_plot <- function(
     rm(OmegaDF, SelectedCombs, CI, OmegaNames, envir = environment())
     invisible(gc())
   }
+
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
   ecokit::cat_time("Arrange plots", level = 1L)
   OmegaPlotList <- tibble::tibble(PlotID = seq_len(nrow(PlotObj_Omega))) %>%
@@ -480,6 +507,7 @@ convergence_plot <- function(
                 (Page - ((File - 1) * pages_per_file)))) +
             ggplot2::theme_minimal() +
             ggplot2::theme(
+              text = ggplot2::element_text(family = "sans"),
               plot.title = ggtext::element_markdown(
                 face = "bold", size = 20, hjust = 0.5),
               plot.subtitle = ggplot2::element_text(
@@ -493,7 +521,16 @@ convergence_plot <- function(
         }
       ))
 
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
+
   ecokit::cat_time("Save plots", level = 1L)
+  ecokit::cat_time(
+    paste0(
+      "Saving omega convergence plots for ", n_omega,
+      " species associations to ", length(unique(OmegaPlotList$File)),
+      " pdf files"),
+    level = 2L, cat_timestamp = FALSE)
+
   purrr::walk(
     .x = seq_along(unique(OmegaPlotList$File)),
     .f = ~ {
@@ -529,11 +566,9 @@ convergence_plot <- function(
 
   } else {
 
-    HTML1 <- "<span style='color:blue;'><b>"  # nolint: object_use_linter
-    HTML2 <- "</b></span>"  # nolint: object_use_linter
     Intercept <- c(
       Variable = "Intercept",
-      VarDesc = stringr::str_glue("{HTML1}Intercept{HTML2}"))
+      VarDesc = "<span style='color:blue;'><b>Intercept</b></span>")
 
     LinearTerms <- tibble::tribble(
       ~Variable, ~VarDesc,
@@ -543,14 +578,11 @@ convergence_plot <- function(
       "HabLog", "% Habitat coverage") %>%
       dplyr::mutate(
         VarDesc = stringr::str_glue(
-          "{HTML1}{stringr::str_to_sentence(VarDesc)}{HTML2}"),
+          "<span style='color:blue;'><b>\\
+          {stringr::str_to_sentence(VarDesc)}</b></span>"),
         VarDesc = paste0(VarDesc, " (log<sub>10</sub>(x + 0.1))")) %>%
       dplyr::bind_rows(Intercept, .)
 
-    HTML1 <- "<span style='color:blue;'><b>"      # nolint: object_name_linter
-    HTML2 <- "</b></span><span style='color:grey;'>"  # nolint: object_name_linter
-    HTML3 <- "</span>"      # nolint: object_name_linter
-    HTML4 <- "\n&nbsp;&mdash;&nbsp;"
     VarsDesc <- tibble::tribble(
       ~Variable, ~VarDesc,
       "bio1", "annual mean temperature",
@@ -576,12 +608,12 @@ convergence_plot <- function(
       tidyr::expand_grid(Term = c("L", "Q")) %>%
       dplyr::mutate(
         VarDesc = stringr::str_glue(
-          "{HTML1}{stringr::str_to_sentence(Variable)}\\
-        {HTML2} [{VarDesc}]{HTML3} - {Term}"),
+          "<span style='color:blue;'><b>{stringr::str_to_sentence(Variable)}\\
+        </b></span><span style='color:grey;'> [{VarDesc}]</span> - {Term}"),
         VarDesc = stringr::str_replace(
-          VarDesc, " - L$", paste0(HTML4, "Linear")),
+          VarDesc, " - L$", "\n&nbsp;&mdash;&nbsp;Linear"),
         VarDesc = stringr::str_replace(
-          VarDesc, " - Q$", paste0(HTML4, "Quadratic")),
+          VarDesc, " - Q$", "\n&nbsp;&mdash;&nbsp;Quadratic"),
         Variable = paste0(Variable, "_", Term),
         Term = NULL) %>%
       dplyr::bind_rows(LinearTerms)
@@ -737,8 +769,8 @@ convergence_plot <- function(
       X = seq_len(nrow(Beta_DF)),
       FUN = function(x) {
 
-        grDevices::pdf(nullfile())
-        withr::defer(grDevices::dev.off())
+        temp_file <- fs::file_temp(ext = "pdf")
+        grDevices::cairo_pdf(temp_file)
 
         Var_Sp <- Beta_DF$Var_Sp[x]
         Species <- Beta_DF$Species[x]
@@ -785,7 +817,6 @@ convergence_plot <- function(
 
             DT_all$Post <- NULL
             invisible(gc())
-
 
             ## Gelman convergence diagnostic
             Label_Gelman <- round(DT_all$Gelman$psrf, 3) %>%
@@ -849,10 +880,10 @@ convergence_plot <- function(
                 mapping = ggplot2::aes(x = x, y = y, label = label),
                 data = PanelTitle, inherit.aes = FALSE, hjust = 0, vjust = 1,
                 lineheight = 0, fill = NA, label.color = NA) +
+              ggplot2::labs(x = NULL, y = NULL) +
               ggplot2::theme_bw() +
-              ggplot2::xlab(NULL) +
-              ggplot2::ylab(NULL) +
               ggplot2::theme(
+                text = ggplot2::element_text(family = "sans"),
                 legend.position = "none",
                 axis.text = ggplot2::element_text(size = 12))
 
@@ -912,6 +943,9 @@ convergence_plot <- function(
           # Increment attempt counter
           attempt <- attempt + 1
         }
+
+        grDevices::dev.off()
+        try(fs::file_delete(temp_file), silent = TRUE)
 
         # Return result if successful
         tibble::tibble(Var_Sp = Var_Sp, Plot_File = Plot_File)
@@ -976,7 +1010,7 @@ convergence_plot <- function(
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
-  ecokit::cat_time("Save plots", level = 2L)
+  ecokit::cat_time("Save plots, grouped by variables", level = 2L)
   VarNames <- BetaTracePlots_ByVar$Variable
 
   BetaTracePlots_ByVar0 <- future.apply::future_lapply(
@@ -1007,10 +1041,11 @@ convergence_plot <- function(
         ggplot2::labs(title = VarDesc) +
         ggplot2::theme_minimal() +
         ggplot2::theme(
+          text = ggplot2::element_text(family = "sans"),
           plot.title = ggtext::element_markdown(
             size = 24, hjust = 0.5, margin = ggplot2::margin(t = 15, b = 15)))
 
-      if (!stringr::str_detect(VarDesc, HTML4)) {
+      if (!stringr::str_detect(VarDesc, "\n&nbsp;&mdash;&nbsp;")) {
         VarDesc <- paste0(VarDesc, " --- ")
       }
 
@@ -1019,6 +1054,7 @@ convergence_plot <- function(
           title = paste0(VarDesc, " (fixed y-axis range)")) +
         ggplot2::theme_minimal() +
         ggplot2::theme(
+          text = ggplot2::element_text(family = "sans"),
           plot.title = ggtext::element_markdown(
             size = 24, hjust = 0.5, margin = ggplot2::margin(t = 15, b = 15)))
 
@@ -1048,21 +1084,19 @@ convergence_plot <- function(
                   ncol = 1, rel_heights = c(0.035, 1))
             }))
 
-      invisible({
-        grDevices::cairo_pdf(
-          filename = fs::path(
-            Path_Convergence, paste0("Convergence_Beta_", x, "_FreeY.pdf")),
-          width = 18, height = 13, onefile = TRUE)
-        purrr::walk(BetaPlotList$Plot, grid::grid.draw, recording = FALSE)
-        grDevices::dev.off()
+      grDevices::cairo_pdf(
+        filename = fs::path(
+          Path_Convergence, paste0("Convergence_Beta_", x, "_FreeY.pdf")),
+        width = 18, height = 13, onefile = TRUE)
+      purrr::walk(BetaPlotList$Plot, grid::grid.draw, recording = FALSE)
+      grDevices::dev.off()
 
-        grDevices::cairo_pdf(
-          filename = fs::path(
-            Path_Convergence, paste0("Convergence_Beta_", x, "_FixedY.pdf")),
-          width = 18, height = 13, onefile = TRUE)
-        purrr::walk(.x = BetaPlotList$PlotFixedY, .f = grid::grid.draw)
-        grDevices::dev.off()
-      })
+      grDevices::cairo_pdf(
+        filename = fs::path(
+          Path_Convergence, paste0("Convergence_Beta_", x, "_FixedY.pdf")),
+        width = 18, height = 13, onefile = TRUE)
+      purrr::walk(.x = BetaPlotList$PlotFixedY, .f = grid::grid.draw)
+      grDevices::dev.off()
 
       rm(
         PlotTitle, PlotTitleFixed, BetaPlotsFixedY, BetaPlots, BetaPlotList,
@@ -1072,8 +1106,7 @@ convergence_plot <- function(
       return(NULL)
     },
     future.seed = TRUE, future.packages = pkg_to_export,
-    future.globals = c(
-      "BetaTracePlots_ByVar", "n_RC", "Path_Convergence", "HTML4")) %>%
+    future.globals = c("BetaTracePlots_ByVar", "n_RC", "Path_Convergence")) %>%
     ecokit::quiet_device()
 
   rm(BetaTracePlots_ByVar0, BetaTracePlots_ByVar, envir = environment())
@@ -1114,7 +1147,7 @@ convergence_plot <- function(
   }
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
-  ecokit::cat_time("Save plots", level = 2L)
+  ecokit::cat_time("Save plots, grouped by species", level = 2L)
 
   BetaTracePlots_BySp0 <- future.apply::future_lapply(
     X = BetaTracePlots_BySp$Species,
@@ -1124,6 +1157,7 @@ convergence_plot <- function(
         ggplot2::labs(title = paste0("<i>", x, "</i>")) +
         ggplot2::theme_minimal() +
         ggplot2::theme(
+          text = ggplot2::element_text(family = "sans"),
           plot.title = ggtext::element_markdown(
             face = "bold", size = 24, hjust = 0.5))
 
@@ -1134,7 +1168,9 @@ convergence_plot <- function(
         gtools::mixedsort() %>%
         c("Intercept", .)
 
-      grDevices::pdf(nullfile())
+      temp_file <- fs::file_temp(ext = "pdf")
+      grDevices::cairo_pdf(temp_file)
+
       SpPlots <- SpDT$data[[1]] %>%
         dplyr::arrange(factor(Variable, levels = VarOrder)) %>%
         dplyr::mutate(
@@ -1144,6 +1180,7 @@ convergence_plot <- function(
               Plot <- ecokit::load_as(.x)$Plot +
                 ggplot2::ggtitle(.y) +
                 ggplot2::theme(
+                  text = ggplot2::element_text(family = "sans"),
                   plot.title = ggtext::element_markdown(
                     hjust = 0.5, size = 15, colour = "red",
                     margin = ggplot2::margin(0, 0, -2.5, 0)))
@@ -1162,7 +1199,9 @@ convergence_plot <- function(
               return(Plot)
             })) %>%
         dplyr::pull("Plot")
+
       grDevices::dev.off()
+      try(fs::file_delete(temp_file), silent = TRUE)
 
       NumPages <- ceiling(length(SpPlots) / (beta_n_RC[1] * beta_n_RC[2]))
 
@@ -1178,17 +1217,15 @@ convergence_plot <- function(
                 PlotTitle, ., ncol = 1, rel_heights = c(0.03, 1))
           })
 
-      invisible({
-        grDevices::cairo_pdf(
-          filename = fs::path(
-            Path_Convergence_BySp,
-            paste0(
-              "Convergence_Beta_", SpDT$IAS_ID, "_",
-              SpDT$Species_File, ".pdf")),
-          width = 23, height = 17, onefile = TRUE)
-        purrr::walk(SpPlots2, grid::grid.draw)
-        grDevices::dev.off()
-      })
+      grDevices::cairo_pdf(
+        filename = fs::path(
+          Path_Convergence_BySp,
+          paste0(
+            "Convergence_Beta_", SpDT$IAS_ID, "_",
+            SpDT$Species_File, ".pdf")),
+        width = 23, height = 17, onefile = TRUE)
+      purrr::walk(SpPlots2, grid::grid.draw)
+      grDevices::dev.off()
 
       rm(PlotTitle, envir = environment())
       return(invisible(NULL))
@@ -1311,6 +1348,7 @@ convergence_Beta_ranges <- function(model_dir) {
       title = "Convergence of beta parameters", subtitle = plot_subtitle,
       x = "Chain", y = "minimum and maximum Beta value") +
     ggplot2::theme(
+      text = ggplot2::element_text(family = "sans"),
       plot.title = ggplot2::element_text(size = 20, face = "bold"),
       plot.subtitle = ggtext::element_markdown())
 

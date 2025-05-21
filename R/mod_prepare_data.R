@@ -250,14 +250,14 @@ mod_prepare_data <- function(
 
   # Change the efforts mask to exclude grid cells with no species
   #
-  # This is not necessary anymore. By excluding less sampled grid cells, there
+  # This is not necessary any more. By excluding less sampled grid cells, there
   # is no need to further exclude grid cells with no species as this could be
   # for an ecological reason
   #
   # zero_sp_grids <- (sum(R_Sp, na.rm = TRUE) == 0)
   # EffortsMask[zero_sp_grids] <- NA
   # R_Sp[zero_sp_grids] <- NA
-
+  
   # # ................................... ###
 
   ### Plotting number of IAS per grid cell -----

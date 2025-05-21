@@ -799,7 +799,7 @@ mod_postprocess_CV_2_CPU <- function(
   # ****************************************************************
 
   plot_gp <- grid::gpar(col = "red", fontsize = 16)
-  lab_y <- "<b>Predictive power</b> (spatia-block cross-validation)"
+  lab_y <- "<b>Predictive power</b> (spatial-block cross-validation)"
   lab_x <- "<b>Explanatory power</b> (model's internal evaluation)"
 
   plot_explained_vs_predictive <- eval_metrics %>%

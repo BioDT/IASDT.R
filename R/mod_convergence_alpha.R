@@ -13,8 +13,8 @@ convergence_alpha <- function(
     add_footer = TRUE, add_title = TRUE, chain_colors = NULL,
     margin_type = "histogram") {
 
-  grDevices::pdf(nullfile())
-  withr::defer(grDevices::dev.off())
+  temp_file <- fs::file_temp(ext = "pdf")
+  grDevices::cairo_pdf(temp_file)
 
   if (is.null(posterior) || is.null(model_object)) {
     ecokit::stop_ctx(
@@ -183,9 +183,6 @@ convergence_alpha <- function(
         ggplot2::scale_y_continuous(
           limits = c(0, max(AlphaDF$Value) * 1.05),
           expand = c(0, 0), oob = scales::squish) +
-        ggplot2::theme_bw() +
-        ggplot2::xlab(NULL) +
-        ggplot2::ylab("Distance (km)") +
         ggtext::geom_richtext(
           mapping = ggplot2::aes(x = x, y = y, label = label), data = title2,
           inherit.aes = FALSE, size = 4, hjust = 1, vjust = 1, lineheight = 0,
@@ -198,10 +195,12 @@ convergence_alpha <- function(
           mapping = ggplot2::aes(x = x, y = y, label = label),
           data = ESS_CI, inherit.aes = FALSE, size = 4,
           hjust = 0, vjust = 0, lineheight = 0, fill = NA, label.color = NA) +
+        ggplot2::labs(x = NULL, y = "Distance (km)") +
+        ggplot2::theme_bw() +
         ggplot2::theme(
+          text = ggplot2::element_text(family = "sans"),
           legend.position = "none",
           axis.text = ggplot2::element_text(size = 12))
-
 
       if (margin_type == "histogram") {
         Plot <- ggExtra::ggMarginal(
@@ -251,6 +250,9 @@ convergence_alpha <- function(
       plotlist = Plots, ncol = n_RC[2], nrow = n_RC[1],
       align = "hv", byrow = TRUE)
   }
+
+  grDevices::dev.off()
+  try(fs::file_delete(temp_file), silent = TRUE)
 
   return(Plots)
 }

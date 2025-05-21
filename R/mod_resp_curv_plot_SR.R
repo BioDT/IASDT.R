@@ -225,7 +225,7 @@ resp_curv_plot_SR <- function(
             Variable == "RiversLog" ~ "River length",
             .default = Variable)
 
-          # facetting labels
+          # faceting labels
           Label1 <- paste0(
             '<span style="font-size:8pt; color:red;"><b>non.focalVariables',
             '= 1</b></span><br><span style="font-size:6pt;">values of ',

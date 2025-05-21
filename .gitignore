@@ -17,3 +17,5 @@ IASDT.R.code-workspace
 inst/load_qs.py
 inst/VarPar2.py
 IASDT.R.Rcheck
+cspell.json
+*.code-workspace

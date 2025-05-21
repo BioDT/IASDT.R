@@ -12,8 +12,8 @@ convergence_rho <- function(
     posterior = NULL, model_object = NULL, title = NULL,
     chain_colors = NULL, margin_type = "histogram") {
 
-  grDevices::pdf(nullfile())
-  withr::defer(grDevices::dev.off())
+  temp_file <- fs::file_temp(ext = "pdf")
+  grDevices::cairo_pdf(temp_file)
 
   if (is.null(posterior) || is.null(model_object) || is.null(title)) {
     ecokit::stop_ctx(
@@ -128,9 +128,6 @@ convergence_rho <- function(
     ggplot2::scale_x_continuous(expand = c(0, 0)) +
     ggplot2::scale_y_continuous(
       expand = c(0, 0), limits = c(NA, NA), oob = scales::rescale_none) +
-    ggplot2::theme_bw() +
-    ggplot2::xlab(NULL) +
-    ggplot2::ylab(NULL) +
     ggtext::geom_richtext(
       mapping = ggplot2::aes(x = x, y = y, label = label),
       data = title2, inherit.aes = FALSE, size = 6,
@@ -139,8 +136,10 @@ convergence_rho <- function(
       mapping = ggplot2::aes(x = x, y = y, label = label),
       data = ESS_CI, inherit.aes = FALSE, size = 6,
       hjust = 0, vjust = 0, lineheight = 0, fill = NA, label.color = NA) +
+    ggplot2::labs(x = NULL, y = NULL) +
     ggplot2::theme_bw() +
     ggplot2::theme(
+      text = ggplot2::element_text(family = "sans"),
       legend.position = "none", axis.text = ggplot2::element_text(size = 14))
 
   if (margin_type == "histogram") {
@@ -157,6 +156,9 @@ convergence_rho <- function(
   # https://stackoverflow.com/a/78196022/3652584
   Plot1$layout$t[1] <- 1
   Plot1$layout$r[1] <- max(Plot1$layout$r)
+
+  grDevices::dev.off()
+  try(fs::file_delete(temp_file), silent = TRUE)
 
   return(Plot1)
 }

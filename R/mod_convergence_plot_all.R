@@ -128,8 +128,8 @@ convergence_plot_all <- function(
 
   PrepConvergence <- function(ID) {
 
-    grDevices::pdf(nullfile())
-    withr::defer(grDevices::dev.off())
+    temp_file <- fs::file_temp(ext = "pdf")
+    grDevices::cairo_pdf(temp_file)
 
     path_coda <- Model_Info$Path_Coda[[ID]]
     Path_FittedMod <- Model_Info$Path_FittedMod[[ID]]
@@ -248,6 +248,9 @@ convergence_plot_all <- function(
     }
 
     invisible(gc())
+
+    grDevices::dev.off()
+    try(fs::file_delete(temp_file), silent = TRUE)
 
     return(
       list(

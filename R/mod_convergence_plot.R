@@ -693,7 +693,7 @@ convergence_plot <- function(
     } else {
       ecokit::set_parallel(
         n_cores = min(n_cores, nrow(Beta_DF)), level = 2L,
-        future_max_size = 800L, strategy = strategy)
+        future_max_size = 1500L, strategy = strategy)
       withr::defer(future::plan("sequential", gc = TRUE))
     }
 

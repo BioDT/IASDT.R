@@ -477,6 +477,7 @@ convergence_plot <- function(
       PlotID = purrr::pmap(
         .l = list(File, Page, PlotID),
         .f = function(File, Page, PlotID) {
+
           PlotTitle <- ggplot2::ggplot() +
             ggplot2::labs(
               title = paste0(
@@ -498,6 +499,7 @@ convergence_plot <- function(
             plotlist = PlotObj_Omega$Plot[PlotID],
             ncol = n_RC[2], nrow = n_RC[1], align = "hv") %>%
             cowplot::plot_grid(PlotTitle, ., ncol = 1, rel_heights = c(0.05, 1))
+
         }
       ))
 
@@ -708,6 +710,10 @@ convergence_plot <- function(
       FUN = function(x) {
 
         Var_Sp_File <- Beta_DF$Var_Sp_File[[x]]
+
+        if (ecokit::check_data(Var_Sp_File, warning = FALSE)) {
+          return(NULL)
+        }
 
         # try saving for a max of 5 attempts using repeat loop
         attempt <- 1
@@ -1026,7 +1032,7 @@ convergence_plot <- function(
             size = 24, hjust = 0.5, margin = ggplot2::margin(t = 15, b = 15)))
 
       if (!stringr::str_detect(VarDesc, "\n&nbsp;&mdash;&nbsp;")) {
-        VarDesc <- paste0(VarDesc, " --- ")
+        VarDesc <- paste0(VarDesc, "  ---  ")
       }
 
       PlotTitleFixed <- ggplot2::ggplot() +

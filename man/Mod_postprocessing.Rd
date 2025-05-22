@@ -175,11 +175,11 @@ parameter transformation. Defaults to 100.}
 focal variables. Higher values result in smoother curves. Default: 50. See
 \link[Hmsc:constructGradient]{Hmsc::constructGradient} for details.}
 
-\item{use_TF}{Logical. Whether to use TensorFlow for calculations. Defaults
+\item{use_TF}{Logical. Whether to use \code{TensorFlow} for calculations. Defaults
 to \code{TRUE}.}
 
 \item{TF_use_single}{Logical. Whether to use single precision for the
-TensorFlow calculations. Defaults to \code{FALSE}.}
+\code{TensorFlow} calculations. Defaults to \code{FALSE}.}
 
 \item{LF_n_cores}{Integer. Number of cores to use for parallel processing of
 latent factor prediction. Defaults to 8L.}
@@ -236,7 +236,7 @@ prediction and variance partitioning processing jobs, respectively.
 Defaults are \code{01:00:00} and \code{02:00:00} respectively.}
 
 \item{model_prefix}{Character. Prefix for the model name. A directory named
-\code{model_prefix_TF} is created in the \code{model_dir} to store the TensorFlow
+\code{model_prefix_TF} is created in the \code{model_dir} to store the \code{TensorFlow}
 running commands. Defaults to \code{NULL}. This can not be \code{NULL}.}
 
 \item{CC_models}{Character vector. Climate models for future predictions.
@@ -348,7 +348,7 @@ This function is tailored for the LUMI HPC environment and assumes that the
 \code{tensorflow} module is installed and correctly configured with all required
 Python packages. On other HPC systems, users may need to modify the function
 to load a Python virtual environment or install the required dependencies for
-TensorFlow and related packages.
+\code{TensorFlow} and related packages.
 
 \if{html}{\out{<br/>}}\if{html}{\out{<br/>}}
 

@@ -50,8 +50,6 @@
 #'
 #' - **`GBIF_process()`**: Orchestrates GBIF data requests, downloads,
 #'   processing, and mapping. Saves `RData`, Excel, and JPEG summary files.
-#' - **`GBIF_check()`**: Verifies GBIF credentials in environment or
-#'   `.Renviron`. Returns `TRUE` if valid, else `FALSE`.
 #' - **`GBIF_download()`**: Requests and downloads GBIF data (if `download =
 #'   TRUE`), using the specified criteria (taxa, coordinates, time period, and
 #'   boundaries), splits into small chunks (if `split_chunks = TRUE`), and saves

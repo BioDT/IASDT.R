@@ -75,14 +75,14 @@ an R object. Default: \code{FALSE}.}
 predictions. Default: \code{c(0.025, 0.5, 0.975)}. See \link[stats:quantile]{stats::quantile} for
 details.}
 
-\item{use_TF}{Logical. Whether to use TensorFlow for calculations. Defaults
+\item{use_TF}{Logical. Whether to use \code{TensorFlow} for calculations. Defaults
 to \code{TRUE}.}
 
 \item{TF_environ}{Character. Path to the Python environment. This argument is
 required if \code{use_TF} is \code{TRUE} under Windows. Defaults to \code{NULL}.}
 
 \item{TF_use_single}{Logical. Whether to use single precision for the
-TensorFlow calculations. Defaults to \code{FALSE}.}
+\code{TensorFlow} calculations. Defaults to \code{FALSE}.}
 
 \item{LF_n_cores}{Integer. Number of cores to use for parallel processing of
 latent factor prediction. Defaults to 8L.}

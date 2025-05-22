@@ -6,7 +6,7 @@
 #' @export
 #' @name GBIF_data
 #' @rdname GBIF_data
-#' @order 5
+#' @order 4
 
 GBIF_species_data <- function(
     species = NULL, env_file = ".env", verbose = TRUE, plot_tag = NULL) {

@@ -211,8 +211,8 @@ mod_merge_chains <- function(
     future::plan("sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
-      n_cores = min(n_cores, nrow(Model_Info2)),
-      future_max_size = 800L, strategy = strategy, level = 1L)
+      n_cores = min(n_cores, nrow(Model_Info2)), cat_timestamp = FALSE,
+      future_max_size = 800L, strategy = strategy)
     withr::defer(future::plan("sequential", gc = TRUE))
   }
 
@@ -377,7 +377,7 @@ mod_merge_chains <- function(
       "from_JSON", "Path_Coda"))
 
   if (n_cores > 1) {
-    ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
+    ecokit::set_parallel(stop_cluster = TRUE, cat_timestamp = FALSE)
     future::plan("sequential", gc = TRUE)
   }
 
@@ -655,8 +655,8 @@ mod_merge_chains_CV <- function(
     future::plan("sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
-      n_cores = min(n_cores, nrow(CV_DT)), level = 1L, future_max_size = 800L,
-      strategy = strategy)
+      n_cores = min(n_cores, nrow(CV_DT)), future_max_size = 800L,
+      strategy = strategy, cat_timestamp = FALSE)
     withr::defer(future::plan("sequential", gc = TRUE))
   }
 
@@ -858,7 +858,7 @@ mod_merge_chains_CV <- function(
 
   # stopping the cluster
   if (n_cores > 1) {
-    ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
+    ecokit::set_parallel(stop_cluster = TRUE, cat_timestamp = FALSE)
     future::plan("sequential", gc = TRUE)
   }
 

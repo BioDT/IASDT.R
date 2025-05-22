@@ -56,27 +56,27 @@ the focal species is NA when computing variance-covariance matrices for
 each species.}
 
 \item{n_cores}{Integer. Number of CPU cores to use for computing variance
-partitioning using TensorFlow. This is only effective when \code{use_TF} is
+partitioning using \code{TensorFlow}. This is only effective when \code{use_TF} is
 \code{TRUE}. Default: \code{1}.}
 
 \item{strategy}{Character. The parallel processing strategy to use. Valid
 options are "sequential", "multisession" (default), "multicore", and
 "cluster". See \code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
 
-\item{use_TF}{Logical. Whether to use TensorFlow for calculations. Defaults
+\item{use_TF}{Logical. Whether to use \code{TensorFlow} for calculations. Defaults
 to \code{TRUE}.}
 
 \item{TF_environ}{Character. Path to the Python environment. This argument is
 required if \code{use_TF} is \code{TRUE} under Windows. Defaults to \code{NULL}.}
 
 \item{TF_use_single}{Logical. Whether to use single precision for the
-TensorFlow calculations. Defaults to \code{FALSE}.}
+\code{TensorFlow} calculations. Defaults to \code{FALSE}.}
 
 \item{temp_cleanup}{Logical. Whether to delete temporary files after
 processing. Default: \code{TRUE}.}
 
 \item{chunk_size}{Integer. Size of each chunk of samples to process in
-parallel. Only relevant for TensorFlow. Default: \code{50}.}
+parallel. Only relevant for \code{TensorFlow}. Default: \code{50}.}
 
 \item{verbose}{Logical. Whether to print progress messages. Default: \code{TRUE}.}
 
@@ -99,7 +99,7 @@ The \strong{\code{variance_partitioning_compute()}} function computes variance
 components with respect to given grouping of fixed effects and levels of
 random effects. This function inherits the main functionality from the
 \code{Hmsc::computeVariancePartitioning} function, but with the added
-functionality of parallel computation and using TensorFlow.\if{html}{\out{<br/>}}The
+functionality of parallel computation and using \code{TensorFlow}.\if{html}{\out{<br/>}}The
 \strong{\code{variance_partitioning_plot()}} function generates plots for variance
 partitioning as JPEG files. It allows for sorting the predictors and species;
 e.g., by the mean value per predictor; and by original species order. It also

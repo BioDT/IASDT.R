@@ -285,7 +285,8 @@ convergence_plot_all <- function(
       withr::defer(future::plan("sequential", gc = TRUE))
     }
 
-    ecokit::cat_time("Starting processing convergence data", level = 2L)
+    ecokit::cat_time(
+      "Starting processing convergence data", level = 2L, cat_timestamp = FALSE)
 
     Convergence_DT <- Model_Info %>%
       dplyr::mutate(
@@ -310,7 +311,8 @@ convergence_plot_all <- function(
       file = fs::path(Path_Convergence_All, "Convergence_DT.RData"))
 
     if (n_cores > 1) {
-      ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
+      ecokit::set_parallel(
+        stop_cluster = TRUE, level = 2L, cat_timestamp = FALSE)
       future::plan("sequential", gc = TRUE)
     }
   }

@@ -116,19 +116,19 @@ install_hmsc_windows <- function(
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  # Install TensorFlow v2.15
+  # Install `TensorFlow` v2.15
 
   # This is to avoid the following error: ImportError: This version of
   # TensorFlow Probability requires TensorFlow version >= 2.15; Detected an
   # installation of version 2.13.1. Please upgrade TensorFlow to proceed.
 
-  ecokit::info_chunk("Installing TensorFlow v2.15")
+  ecokit::info_chunk("Installing `TensorFlow` v2.15")
   system2(python, "-m pip install tensorflow==2.15")
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Checking TensorFlow
-  ecokit::info_chunk("Checking TensorFlow")
+  ecokit::info_chunk("Checking `TensorFlow`")
   system2(python, '-c "import tensorflow as tf; print(tf.constant(1))"')
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

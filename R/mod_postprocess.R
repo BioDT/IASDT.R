@@ -26,7 +26,7 @@
 #' @param working_directory Character. Optionally sets the working directory in
 #'   batch scripts to this path. If `NULL`, the directory remains unchanged.
 #' @param model_prefix Character. Prefix for the model name. A directory named
-#'   `model_prefix_TF` is created in the `model_dir` to store the TensorFlow
+#'   `model_prefix_TF` is created in the `model_dir` to store the `TensorFlow`
 #'   running commands. Defaults to `NULL`. This can not be `NULL`.
 #' @param partition_name Character. Name of the partition to submit the SLURM
 #'   jobs to. Default is `small-g`.
@@ -116,7 +116,7 @@
 #' `tensorflow` module is installed and correctly configured with all required
 #' Python packages. On other HPC systems, users may need to modify the function
 #' to load a Python virtual environment or install the required dependencies for
-#' TensorFlow and related packages.
+#' `TensorFlow` and related packages.
 #'
 #' <br/><br/>
 #'
@@ -596,9 +596,9 @@ mod_prepare_TF <- function(
   Path_VP_SLURM <- fs::path(Path_TF, "VP_SLURM.slurm")
   Path_VP_Commands <- fs::path(Path_TF, "VP_Commands.txt")
 
-  # Merge and organise TensorFlow commands for computing variance partitioning
+  # Merge and organise `TensorFlow` commands for computing variance partitioning
   ecokit::cat_time(
-    "Merge and organise TF TensorFlow for computing variance partitioning",
+    "Merge and organise `TensorFlow` for computing variance partitioning",
     level = 1L, cat_timestamp = FALSE)
 
   # Find list of files matching the pattern
@@ -674,14 +674,14 @@ mod_prepare_TF <- function(
   # so both can be run on the same time.
   n_batch_files <- n_batch_files - length(VP_InFiles)
 
-  # Merge and organise TensorFlow commands for LF predictions ----
+  # Merge and organise `TensorFlow` commands for LF predictions ----
   ecokit::cat_time(
     paste0(
-      "Merge and organise TensorFlow commands for LF predictions ",
+      "Merge and organise `TensorFlow` commands for LF predictions ",
       "into a maximum of ", n_batch_files, " files"),
     level = 1L, cat_timestamp = FALSE)
 
-  # Basic commands for TensorFlow setup
+  # Basic commands for `TensorFlow` setup
   BasicCommands <- c(
     "#!/bin/bash\n",
     "# Load TensorFlow module and configure environment",

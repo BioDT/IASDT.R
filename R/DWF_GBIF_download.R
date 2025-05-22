@@ -6,7 +6,7 @@
 #' @export
 #' @name GBIF_data
 #' @rdname GBIF_data
-#' @order 3
+#' @order 2
 
 GBIF_download <- function(
     env_file = ".env", r_environ = ".Renviron", request = TRUE, download = TRUE,
@@ -45,7 +45,7 @@ GBIF_download <- function(
 
   ecokit::cat_time(
     "Ensure that GBIF access information is available", level = 1L)
-  IASDT.R::GBIF_check(r_environ = r_environ)
+  ecokit::check_gbif(r_environ = r_environ)
 
   # # ..................................................................... ###
 

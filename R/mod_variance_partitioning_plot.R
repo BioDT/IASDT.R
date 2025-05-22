@@ -137,7 +137,7 @@ variance_partitioning_plot <- function(
     ecokit::cat_time(
       paste0(
         "Variance partitioning will be computed using ", n_cores, " cores ",
-        dplyr::if_else(use_TF, "and", "without"), " TensorFlow."),
+        dplyr::if_else(use_TF, "and", "without"), " `TensorFlow`."),
       level = 1L)
 
     VarPar <- IASDT.R::variance_partitioning_compute(

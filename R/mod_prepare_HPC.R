@@ -1227,7 +1227,7 @@ mod_prepare_HPC <- function(
           # `TF_ENABLE_ONEDNN_OPTS=0`.
           #
           # `export TF_CPP_MIN_LOG_LEVEL=3` is used to reduce debug output from
-          # Tensorflow
+          # `Tensorflow`
 
           Command_HPC <- paste0(
             # Not needed now as this now added to the `setup-env.sh` file

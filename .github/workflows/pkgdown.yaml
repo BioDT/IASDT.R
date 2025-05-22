@@ -15,6 +15,12 @@ permissions: read-all
 jobs:
   pkgdown:
 
+    # Only run this job if the repository is BioDT/IASDT.R
+    if: ${{ github.repository == 'BioDT/IASDT.R' }}
+    
+    # Only run this job if the commit message contains 'run-check'
+    # if: ${{ github.repository == 'BioDT/IASDT.R' && contains(github.event.head_commit.message, 'run-check') }}
+
     runs-on: ubuntu-latest
     # Only restrict concurrency for non-PR jobs
     concurrency:

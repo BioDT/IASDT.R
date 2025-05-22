@@ -58,14 +58,14 @@ options are "sequential", "multisession" (default), "multicore", and
 \item{model_name}{Character. Prefix for temporary file names. Defaults to
 \code{NULL}, in which case no prefix is used.}
 
-\item{use_TF}{Logical. Whether to use TensorFlow for calculations. Defaults
+\item{use_TF}{Logical. Whether to use \code{TensorFlow} for calculations. Defaults
 to \code{TRUE}.}
 
 \item{TF_environ}{Character. Path to the Python environment. This argument is
 required if \code{use_TF} is \code{TRUE} under Windows. Defaults to \code{NULL}.}
 
 \item{TF_use_single}{Logical. Whether to use single precision for the
-TensorFlow calculations. Defaults to \code{FALSE}.}
+\code{TensorFlow} calculations. Defaults to \code{FALSE}.}
 
 \item{LF_out_file}{Character. Path to save the outputs. If \code{NULL} (default),
 the predicted latent factors are not saved to a file. This should end with
@@ -94,7 +94,7 @@ execution. Default is \code{TRUE}.}
 }
 \description{
 This function is optimized for speed using parallel processing and optionally
-TensorFlow for matrix operations. This function is adapted from
+\code{TensorFlow} for matrix operations. This function is adapted from
 \link[Hmsc:predictLatentFactor]{Hmsc::predictLatentFactor} with equivalent results to the original function
 when \code{predictMean = TRUE}.
 }

@@ -201,7 +201,7 @@ collapsible_script_section(
 
 > <u><i>Computing variance partitioning:</i></u>
 
-- Variance partitioning computations are performed on GPUs using TensorFlow scripts located at <a href="https://github.com/BioDT/IASDT.R/blob/main/inst/VP_geta.py" target="_blank" class="ll">inst/VP_geta.py</a>, <a href="https://github.com/BioDT/IASDT.R/blob/main/inst/VP_getf.py" target="_blank" class="ll">inst/VP_getf.py</a>, and <a href="https://github.com/BioDT/IASDT.R/blob/main/inst/VP_gemu.py" target="_blank" class="ll">inst/VP_gemu.py</a>. These scripts implement functionality derived from `Hmsc::computeVariancePartitioning()`, specifically the internal functions `geta`, `getf`, and `gemu`.
+- Variance partitioning computations are performed on GPUs using `TensorFlow` scripts located at <a href="https://github.com/BioDT/IASDT.R/blob/main/inst/VP_geta.py" target="_blank" class="ll">inst/VP_geta.py</a>, <a href="https://github.com/BioDT/IASDT.R/blob/main/inst/VP_getf.py" target="_blank" class="ll">inst/VP_getf.py</a>, and <a href="https://github.com/BioDT/IASDT.R/blob/main/inst/VP_gemu.py" target="_blank" class="ll">inst/VP_gemu.py</a>. These scripts implement functionality derived from `Hmsc::computeVariancePartitioning()`, specifically the internal functions `geta`, `getf`, and `gemu`.
 - The `variance_partitioning_compute()` function exports the necessary files to the <ff>TEMP_VP</ff> subdirectory, including numerous `.qs2` and `.feather` files. It also generates execution commands saved as <ff>VP_A_Command.txt</ff>, <ff>VP_F_Command.txt</ff>, and <ff>VP_mu_Command.txt</ff>.
 
 <br/><br/>

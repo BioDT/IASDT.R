@@ -11,6 +11,12 @@ permissions: read-all
 
 jobs:
   R-CMD-check:
+    # Only run this job if the repository is BioDT/IASDT.R
+    if: ${{ github.repository == 'BioDT/IASDT.R'}}
+    
+    # Only run this job if the commit message contains 'run-check'
+    # if: ${{ github.repository == 'BioDT/IASDT.R' && contains(github.event.head_commit.message, 'run-check') }}
+
     runs-on: ${{ matrix.config.os }}
 
     name: ${{ matrix.config.os }} (${{ matrix.config.r }})

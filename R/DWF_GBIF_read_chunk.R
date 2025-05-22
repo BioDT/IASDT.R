@@ -6,7 +6,7 @@
 #' @export
 #' @name GBIF_data
 #' @rdname GBIF_data
-#' @order 4
+#' @order 3
 
 GBIF_read_chunk <- function(
     chunk_file, env_file = ".env", max_uncertainty = 10L, start_year = 1981L,

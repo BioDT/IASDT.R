@@ -72,7 +72,8 @@ efforts_request <- function(
     TotalRecords <- Path_Efforts <- NULL
   # # ..................................................................... ###
 
-  IASDT.R::GBIF_check(r_environ = r_environ)
+  # Ensure that GBIF access information is available
+  ecokit::check_gbif(r_environ = r_environ)
 
   # # ..................................................................... ###
 

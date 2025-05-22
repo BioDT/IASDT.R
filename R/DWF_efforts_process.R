@@ -145,7 +145,7 @@ efforts_process <- function(
   # # ..................................................................... ###
 
   ecokit::cat_time("Ensure that GBIF access information is available")
-  IASDT.R::GBIF_check(r_environ = r_environ)
+  ecokit::check_gbif(r_environ = r_environ)
 
   # # ..................................................................... ###
 

@@ -178,16 +178,16 @@ mod_postprocess_CV_1_CPU <- function(
   # # ..................................................................... ###
   # # ..................................................................... ###
 
-  # Merge TensorFlow commands into batch files -----
+  # Merge `TensorFlow` commands into batch files -----
 
   ecokit::info_chunk(
-    "Merge TensorFlow commands into batch files", line_char = "|",
+    "Merge `TensorFlow` commands into batch files", line_char = "|",
     line_char_rep = 60L, cat_red = TRUE,
     cat_bold = TRUE, info_lines_before = 2L)
 
   ecokit::cat_time(
     paste0(
-      "Merge and organise TensorFlow commands for LF predictions ",
+      "Merge and organise `TensorFlow` commands for LF predictions ",
       "into a maximum of ", n_batch_files, " files"),
     level = 1L, cat_timestamp = FALSE)
 

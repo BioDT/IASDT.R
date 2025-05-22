@@ -43,7 +43,7 @@ Default is 1000.}
 processing. Default is 2000.}
 
 \item{TF_use_single}{Logical. Whether to use single precision for the
-TensorFlow calculations. Defaults to \code{FALSE}.}
+\code{TensorFlow} calculations. Defaults to \code{FALSE}.}
 
 \item{verbose}{Logical. If \code{TRUE}, logs detailed information during
 execution. Default is \code{TRUE}.}
@@ -63,8 +63,8 @@ fail.
 }
 \description{
 Internal function to executes a Python script that performs matrix
-computations using TensorFlow with provided inputs. Retries up to three times
-if the output file validation fails.
+computations using \code{TensorFlow} with provided inputs. Retries up to three
+times if the output file validation fails.
 }
 \details{
 \itemize{

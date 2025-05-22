@@ -91,14 +91,14 @@ options are "sequential", "multisession" (default), "multicore", and
 are made for response curves at mean coordinates. If \code{i}, predictions are
 made for response curves at infinite coordinates.}
 
-\item{use_TF}{Logical. Whether to use TensorFlow for calculations. Defaults
+\item{use_TF}{Logical. Whether to use \code{TensorFlow} for calculations. Defaults
 to \code{TRUE}.}
 
 \item{TF_environ}{Character. Path to the Python environment. This argument is
 required if \code{use_TF} is \code{TRUE} under Windows. Defaults to \code{NULL}.}
 
 \item{TF_use_single}{Logical. Whether to use single precision for the
-TensorFlow calculations. Defaults to \code{FALSE}.}
+\code{TensorFlow} calculations. Defaults to \code{FALSE}.}
 
 \item{LF_out_file}{Character. Path to save the outputs. If \code{NULL} (default),
 the predicted latent factors are not saved to a file. This should end with

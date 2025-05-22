@@ -644,7 +644,7 @@ convergence_plot <- function(
 
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
-    ecokit::cat_time("Preparing data for plotting", level = 2L)
+    ecokit::cat_time("Preparing plotting data", level = 2L)
     Cols2remove <- c(
       "CI_025", "CI_975", "Var_Min", "Var_Max", "Class", "Order", "Family")
 
@@ -697,7 +697,7 @@ convergence_plot <- function(
     } else {
       ecokit::set_parallel(
         n_cores = min(n_cores, nrow(Beta_DF)), level = 2L,
-        future_max_size = 1500L, strategy = strategy)
+        strategy = strategy, cat_timestamp = FALSE, future_max_size = 1500L)
       withr::defer(future::plan("sequential", gc = TRUE))
     }
 
@@ -953,7 +953,8 @@ convergence_plot <- function(
 
     # Stopping cluster
     if (n_cores > 1) {
-      ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
+      ecokit::set_parallel(
+        stop_cluster = TRUE, level = 2L, cat_timestamp = FALSE)
       future::plan("sequential", gc = TRUE)
     }
 
@@ -995,7 +996,7 @@ convergence_plot <- function(
   } else {
     ecokit::set_parallel(
       n_cores = nrow(BetaTracePlots_ByVar), level = 2L,
-      future_max_size = 1500, strategy = strategy)
+      future_max_size = 1500, strategy = strategy, cat_timestamp = FALSE)
     withr::defer(future::plan("sequential", gc = TRUE))
   }
 
@@ -1107,7 +1108,7 @@ convergence_plot <- function(
 
   # Stopping cluster
   if (n_cores > 1) {
-    ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
+    ecokit::set_parallel(stop_cluster = TRUE, level = 2L, cat_timestamp = FALSE)
     future::plan("sequential", gc = TRUE)
   }
 
@@ -1133,7 +1134,7 @@ convergence_plot <- function(
   } else {
     ecokit::set_parallel(
       n_cores = min(n_cores, nrow(BetaTracePlots_BySp)), level = 2L,
-      future_max_size = 1500, strategy = strategy)
+      future_max_size = 1500, strategy = strategy, cat_timestamp = FALSE)
     withr::defer(future::plan("sequential", gc = TRUE))
   }
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
@@ -1231,7 +1232,7 @@ convergence_plot <- function(
 
   # Stopping cluster
   if (n_cores > 1) {
-    ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
+    ecokit::set_parallel(stop_cluster = TRUE, level = 2L, cat_timestamp = FALSE)
     future::plan("sequential", gc = TRUE)
   }
 
@@ -1307,8 +1308,8 @@ convergence_Beta_ranges <- function(model_dir) {
         .f = ~ {
           Post <- ecokit::load_as(.x)$Post
           purrr::map(
-            1:5,
-            ~ {
+            .x = 1:5,
+            .f = ~ {
               tibble::tibble(
                 chain = .x,
                 min = min(Post[[.x]]),
@@ -1320,8 +1321,8 @@ convergence_Beta_ranges <- function(model_dir) {
     dplyr::select(Variable, chain, min, max)
 
   plot_subtitle <- stringr::str_glue(
-    "Values of beta (<span style='color:red'>min</span> and <span \\
-    style='color:blue'>max</span> per species) across chains")
+    "Values of beta parameters (<span style='color:red'>minimum</span> and \\
+    <span style='color:blue'>maximum</span> per species) across chains")
 
   # Construct path for saving the plot
   plot_path <- fs::path(
@@ -1330,18 +1331,22 @@ convergence_Beta_ranges <- function(model_dir) {
 
   Beta_plot <- Beta_ranges %>%
     ggplot2::ggplot(ggplot2::aes(x = (chain - 0.125), y = min)) +
-    ggplot2::geom_point(pch = 20, colour = "red", size = 1, alpha = 0.5) +
+    ggplot2::geom_point(pch = 20, colour = "red", size = 0.8, alpha = 0.5) +
     ggplot2::geom_point(
       ggplot2::aes(x = (chain + 0.125), y = max), show.legend = FALSE,
-      pch = 20, colour = "blue", size = 1, alpha = 0.5) +
+      pch = 20, colour = "blue", size = 0.8, alpha = 0.5) +
     ggplot2::facet_wrap(~Variable, scales = "free_y", ncol = 5, nrow = 4) +
     ggplot2::labs(
       title = "Convergence of beta parameters", subtitle = plot_subtitle,
-      x = "Chain", y = "minimum and maximum Beta value") +
+      x = "Chain",
+      y = stringr::str_glue(
+      "<span style='color:red'>Minimum</span> and \\
+      <span style='color:blue'>maximum</span> beta values")) +
     ggplot2::theme(
       text = ggplot2::element_text(family = "sans"),
       plot.title = ggplot2::element_text(size = 20, face = "bold"),
-      plot.subtitle = ggtext::element_markdown())
+      plot.subtitle = ggtext::element_markdown(),
+      axis.title = ggtext::element_markdown(face = "bold"))
 
   ragg::agg_jpeg(
     filename = plot_path, width = 30, height = 20, res = 600,

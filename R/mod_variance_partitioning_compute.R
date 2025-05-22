@@ -7,7 +7,7 @@
 #' components with respect to given grouping of fixed effects and levels of
 #' random effects. This function inherits the main functionality from the
 #' `Hmsc::computeVariancePartitioning` function, but with the added
-#' functionality of parallel computation and using TensorFlow.<br/>The
+#' functionality of parallel computation and using `TensorFlow`.<br/>The
 #' **`variance_partitioning_plot()`** function generates plots for variance
 #' partitioning as JPEG files. It allows for sorting the predictors and species;
 #' e.g., by the mean value per predictor; and by original species order. It also
@@ -25,13 +25,13 @@
 #'   the focal species is NA when computing variance-covariance matrices for
 #'   each species.
 #' @param n_cores Integer. Number of CPU cores to use for computing variance
-#'   partitioning using TensorFlow. This is only effective when `use_TF` is
+#'   partitioning using `TensorFlow`. This is only effective when `use_TF` is
 #'   `TRUE`. Default: `1`.
 #' @param strategy Character. The parallel processing strategy to use. Valid
 #'   options are "sequential", "multisession" (default), "multicore", and
 #'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param chunk_size Integer. Size of each chunk of samples to process in
-#'   parallel. Only relevant for TensorFlow. Default: `50`.
+#'   parallel. Only relevant for `TensorFlow`. Default: `50`.
 #' @param verbose Logical. Whether to print progress messages. Default: `TRUE`.
 #' @param temp_cleanup Logical. Whether to delete temporary files after
 #'   processing. Default: `TRUE`.
@@ -118,9 +118,9 @@ variance_partitioning_compute <- function(
     # On Windows, the TF calculations has to be done through a valid virtual
     # environment; the path to the virtual environment must be specified in
     # `TF_environ`. On LUMI, this is not needed as the compatible python
-    # installation is loaded automatically when loading tensorflow module. When
-    # using another HPC system, the function needs to be adapted accordingly to
-    # point to a valid python virtual environment.
+    # installation is loaded automatically when loading `tensorflow` module.
+    # When using another HPC system, the function needs to be adapted
+    # accordingly to point to a valid python virtual environment.
 
     if (.Platform$OS.type == "windows") {
       python_executable <- fs::path(TF_environ, "Scripts", "python.exe")
@@ -303,13 +303,13 @@ variance_partitioning_compute <- function(
 
     } else {
 
-      ## Prepare la/lf/lmu lists using TensorFlow ----
+      ## Prepare la/lf/lmu lists using `TensorFlow` ----
       ecokit::cat_time(
-        "Prepare la/lf/lmu lists using TensorFlow", verbose = verbose)
+        "Prepare la/lf/lmu lists using `TensorFlow`", verbose = verbose)
 
-      ### Prepare data for TensorFlow ----
+      ### Prepare data for `TensorFlow` ----
       ecokit::cat_time(
-        "Prepare data for TensorFlow", level = 1L, verbose = verbose)
+        "Prepare data for `TensorFlow`", level = 1L, verbose = verbose)
 
       #### X data -----
       # needed only to calculate `geta` and `getf` functions
@@ -356,7 +356,7 @@ variance_partitioning_compute <- function(
           } else {
             ecokit::set_parallel(
               n_cores = n_cores, level = 3L, future_max_size = 800L,
-              strategy = strategy)
+              strategy = strategy, cat_timestamp = FALSE)
             withr::defer(future::plan("sequential", gc = TRUE))
           }
 
@@ -383,7 +383,8 @@ variance_partitioning_compute <- function(
 
           # stopping the cluster
           if (n_cores > 1) {
-            ecokit::set_parallel(stop_cluster = TRUE, level = 3L)
+            ecokit::set_parallel(
+              stop_cluster = TRUE, level = 3L, cat_timestamp = FALSE)
             future::plan("sequential", gc = TRUE)
           }
         }
@@ -714,7 +715,7 @@ variance_partitioning_compute <- function(
     } else {
       ecokit::set_parallel(
         n_cores = n_cores, level = 1L, future_max_size = 800L,
-        strategy = strategy)
+        strategy = strategy, cat_timestamp = FALSE)
       withr::defer(future::plan("sequential", gc = TRUE))
     }
 
@@ -829,7 +830,8 @@ variance_partitioning_compute <- function(
 
     # stopping the cluster
     if (n_cores > 1) {
-      ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
+      ecokit::set_parallel(
+        stop_cluster = TRUE, level = 2L, cat_timestamp = FALSE)
       future::plan("sequential", gc = TRUE)
     }
 

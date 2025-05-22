@@ -5,7 +5,7 @@
 #' Draws samples from the conditional predictive distribution of latent factors
 #'
 #' This function is optimized for speed using parallel processing and optionally
-#' TensorFlow for matrix operations. This function is adapted from
+#' `TensorFlow` for matrix operations. This function is adapted from
 #' [Hmsc::predictLatentFactor] with equivalent results to the original function
 #' when `predictMean = TRUE`.
 #' @param units_pred a factor vector with random level units for which
@@ -28,14 +28,14 @@
 #'   `temp_dir` directory after finishing the LF predictions.
 #' @param model_name Character. Prefix for temporary file names. Defaults to
 #'   `NULL`, in which case no prefix is used.
-#' @param use_TF Logical. Whether to use TensorFlow for calculations. Defaults
+#' @param use_TF Logical. Whether to use `TensorFlow` for calculations. Defaults
 #'   to `TRUE`.
 #' @param TF_environ Character. Path to the Python environment. This argument is
 #'   required if `use_TF` is `TRUE` under Windows. Defaults to `NULL`.
 #' @param LF_commands_only Logical. If `TRUE`, returns the command to run the
 #'   Python script. Default is `FALSE`.
 #' @param TF_use_single Logical. Whether to use single precision for the
-#'   TensorFlow calculations. Defaults to `FALSE`.
+#'   `TensorFlow` calculations. Defaults to `FALSE`.
 #' @param LF_out_file Character. Path to save the outputs. If `NULL` (default),
 #'   the predicted latent factors are not saved to a file. This should end with
 #'   either `*.qs2` or `*.RData`.
@@ -197,7 +197,7 @@ predict_latent_factor <- function(
     ecokit::cat_time(
       "All input sites are new sites", level = 1L, verbose = verbose)
 
-    # Check TensorFlow settings
+    # Check `TensorFlow` settings
 
     if (use_TF) {
 
@@ -210,11 +210,11 @@ predict_latent_factor <- function(
           PythonScript = PythonScript, include_backtrace = TRUE)
       }
 
-      # Suppress TensorFlow warnings and disable optimizations
+      # Suppress `TensorFlow` warnings and disable optimizations
       Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3", TF_ENABLE_ONEDNN_OPTS = "0")
 
       ecokit::cat_time(
-        "Computations will be made using TensorFlow", level = 1L,
+        "Computations will be made using `TensorFlow`", level = 1L,
         verbose = verbose)
     } else {
       ecokit::cat_time(
@@ -422,9 +422,9 @@ predict_latent_factor <- function(
 
           if (use_TF) {
 
-            # Use TensorFlow
+            # Use `TensorFlow`
 
-            # Suppress TensorFlow warnings and disable optimizations
+            # Suppress `TensorFlow` warnings and disable optimizations
             Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3", TF_ENABLE_ONEDNN_OPTS = "0")
 
             if (file.exists(File_etaPred_TF)) {
@@ -853,8 +853,8 @@ predict_latent_factor <- function(
 #' run_crossprod_solve
 #'
 #' Internal function to executes a Python script that performs matrix
-#' computations using TensorFlow with provided inputs. Retries up to three times
-#' if the output file validation fails.
+#' computations using `TensorFlow` with provided inputs. Retries up to three
+#' times if the output file validation fails.
 #'
 #' @param s1 Character. Path to the input file containing s1 coordinates.
 #' @param s2 Character Path to the input file containing s2 coordinates.
@@ -916,7 +916,7 @@ run_crossprod_solve <- function(
   # On Windows, the TF calculations has to be done through a valid virtual
   # environment; the path to the virtual environment must be specified in
   # `TF_environ`. On LUMI, this is not needed as the compatible Python
-  # installation is loaded automatically when loading tensorflow module. When
+  # installation is loaded automatically when loading `tensorflow` module. When
   # using another HPC system, the function needs to be adapted accordingly.
 
   if (.Platform$OS.type == "windows") {
@@ -944,7 +944,7 @@ run_crossprod_solve <- function(
 
   } else {
     # Use `python3`` directly - on LUMI, compatible Python installation is
-    # loaded automatically when loading tensorflow
+    # loaded automatically when loading `tensorflow`
     python_executable <- "/usr/bin/time -v python3"
   }
 

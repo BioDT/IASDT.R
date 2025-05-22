@@ -534,12 +534,12 @@ convergence_plot <- function(
 
   ecokit::cat_time("Beta")
 
-  FileConv_Beta <- fs::path(Path_Convergence, "Convergence_Beta.RData")
+  FileConv_Beta <- fs::path(Path_Convergence, "Convergence_Beta.qs2")
 
-  if (ecokit::check_data(FileConv_Beta, warning = FALSE)) {
+  if (ecokit::check_data(FileConv_Beta, warning = FALSE, n_threads = 5)) {
 
     ecokit::cat_time("Loading plotting data", level = 1L)
-    PlotObj_Beta <- ecokit::load_as(FileConv_Beta)
+    PlotObj_Beta <- ecokit::load_as(FileConv_Beta, n_threads = 5)
 
     rm(Obj_Beta, envir = environment())
     invisible(gc())
@@ -952,15 +952,15 @@ convergence_plot <- function(
     ecokit::cat_time("Save trace plot data", level = 2L)
     ecokit::save_as(
       object = PlotObj_Beta, object_name = "Convergence_Beta",
-      out_path = FileConv_Beta)
+      out_path = FileConv_Beta, n_threads = 5)
 
   }
 
   # # ..................................................................... ###
 
-  # plot minimum and max value of each beta parameter
+  # plot minimum and maximum value of each beta parameter
   ecokit::cat_time(
-    "plot minimum and max value of each beta parameter", level = 2L)
+    "plot minimum and maximum value of each beta parameter", level = 1L)
 
   IASDT.R::convergence_Beta_ranges(model_dir = dirname(path_model))
 
@@ -1122,7 +1122,7 @@ convergence_plot <- function(
   } else {
     ecokit::set_parallel(
       n_cores = min(n_cores, nrow(BetaTracePlots_BySp)), level = 2L,
-      future_max_size = 800L, strategy = strategy)
+      future_max_size = 1500, strategy = strategy)
     withr::defer(future::plan("sequential", gc = TRUE))
   }
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
@@ -1276,7 +1276,7 @@ convergence_Beta_ranges <- function(model_dir) {
 
   # Construct path to beta parameter data
   beta_data_path <- fs::path(
-    dirname(model_dir), "Model_Convergence", "Convergence_Beta.RData")
+    dirname(model_dir), "Model_Convergence", "Convergence_Beta.qs2")
   # Check if the beta data file exists
   if (!file.exists(beta_data_path)) {
     ecokit::stop_ctx(
@@ -1287,7 +1287,7 @@ convergence_Beta_ranges <- function(model_dir) {
   # # ..................................................................... ###
 
   # Load beta parameter information
-  Beta_ranges <- ecokit::load_as(beta_data_path) %>%
+  Beta_ranges <- ecokit::load_as(beta_data_path, n_threads = 5) %>%
     dplyr::mutate(
       Variable = forcats::fct(Variable),
       # Calculate the min and max of the beta values for each species

@@ -14,6 +14,11 @@ convergence_rho <- function(
 
   temp_file <- fs::file_temp(ext = "pdf")
   grDevices::cairo_pdf(temp_file)
+  on.exit({
+    grDevices::dev.off()
+    try(fs::file_delete(temp_file), silent = TRUE)
+  },
+  add = TRUE)
 
   if (is.null(posterior) || is.null(model_object) || is.null(title)) {
     ecokit::stop_ctx(
@@ -156,9 +161,6 @@ convergence_rho <- function(
   # https://stackoverflow.com/a/78196022/3652584
   Plot1$layout$t[1] <- 1
   Plot1$layout$r[1] <- max(Plot1$layout$r)
-
-  grDevices::dev.off()
-  try(fs::file_delete(temp_file), silent = TRUE)
 
   return(Plot1)
 }

@@ -354,6 +354,11 @@ convergence_plot <- function(
         temp_file <- fs::file_temp(
           pattern = paste0("plot_", x, "_"), ext = "pdf")
         grDevices::cairo_pdf(temp_file)
+        on.exit({
+          grDevices::dev.off()
+          try(fs::file_delete(temp_file), silent = TRUE)
+        },
+        add = TRUE)
 
         CombData <- dplyr::filter(OmegaDF, SpComb == SelectedCombs[x])
         CurrPost <- purrr::map(
@@ -449,9 +454,6 @@ convergence_plot <- function(
         # https://stackoverflow.com/a/78196022/3652584
         Plot$layout$t[1] <- 1
         Plot$layout$r[1] <- max(Plot$layout$r)
-
-        grDevices::dev.off()
-        try(fs::file_delete(temp_file), silent = TRUE)
 
         return(tibble::tibble(SpComb = CombData$SpComb, Plot = list(Plot)))
       }
@@ -755,9 +757,6 @@ convergence_plot <- function(
       X = seq_len(nrow(Beta_DF)),
       FUN = function(x) {
 
-        temp_file <- fs::file_temp(ext = "pdf")
-        grDevices::cairo_pdf(temp_file)
-
         Var_Sp <- Beta_DF$Var_Sp[x]
         Species <- Beta_DF$Species[x]
         Curr_IAS <- Beta_DF$IAS_ID[x]
@@ -780,6 +779,15 @@ convergence_plot <- function(
         if (file.exists(Plot_File)) {
           fs::file_delete(Plot_File)
         }
+
+        temp_file <- fs::file_temp(ext = "pdf")
+        grDevices::cairo_pdf(temp_file)
+
+        on.exit({
+          grDevices::dev.off()
+          try(fs::file_delete(temp_file), silent = TRUE)
+        },
+        add = TRUE)
 
         attempt <- 1
 
@@ -929,9 +937,6 @@ convergence_plot <- function(
           # Increment attempt counter
           attempt <- attempt + 1
         }
-
-        grDevices::dev.off()
-        try(fs::file_delete(temp_file), silent = TRUE)
 
         # Return result if successful
         tibble::tibble(Var_Sp = Var_Sp, Plot_File = Plot_File)

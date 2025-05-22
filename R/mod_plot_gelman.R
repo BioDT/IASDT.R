@@ -186,7 +186,7 @@ plot_gelman <- function(
 
   # Saving plots as qs2 -----
   ecokit::save_as(
-    object = PlotList, object_name = "GelmanPlots",
+    object = PlotList, object_name = "GelmanPlots", n_threads = 5L,
     out_path = fs::path(out_path, "GelmanPlots.qs2"))
 
   # # ..................................................................... ###

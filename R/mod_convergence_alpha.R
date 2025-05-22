@@ -15,6 +15,11 @@ convergence_alpha <- function(
 
   temp_file <- fs::file_temp(ext = "pdf")
   grDevices::cairo_pdf(temp_file)
+  on.exit({
+    grDevices::dev.off()
+    try(fs::file_delete(temp_file), silent = TRUE)
+  },
+  add = TRUE)
 
   if (is.null(posterior) || is.null(model_object)) {
     ecokit::stop_ctx(
@@ -250,9 +255,6 @@ convergence_alpha <- function(
       plotlist = Plots, ncol = n_RC[2], nrow = n_RC[1],
       align = "hv", byrow = TRUE)
   }
-
-  grDevices::dev.off()
-  try(fs::file_delete(temp_file), silent = TRUE)
 
   return(Plots)
 }

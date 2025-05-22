@@ -69,7 +69,7 @@ multiplied by the Tjur-R2 value)."></head><body>
 components with respect to given grouping of fixed effects and levels of
 random effects. This function inherits the main functionality from the
 <code><a href="https://rdrr.io/pkg/Hmsc/man/computeVariancePartitioning.html" class="external-link">Hmsc::computeVariancePartitioning</a></code> function, but with the added
-functionality of parallel computation and using TensorFlow.<br>The
+functionality of parallel computation and using <code>TensorFlow</code>.<br>The
 <strong><code>variance_partitioning_plot()</code></strong> function generates plots for variance
 partitioning as JPEG files. It allows for sorting the predictors and species;
 e.g., by the mean value per predictor; and by original species order. It also
@@ -143,7 +143,7 @@ each species.</p></dd>
 
 <dt id="arg-n-cores">n_cores<a class="anchor" aria-label="anchor" href="#arg-n-cores"></a></dt>
 <dd><p>Integer. Number of CPU cores to use for computing variance
-partitioning using TensorFlow. This is only effective when <code>use_TF</code> is
+partitioning using <code>TensorFlow</code>. This is only effective when <code>use_TF</code> is
 <code>TRUE</code>. Default: <code>1</code>.</p></dd>
 
 
@@ -154,7 +154,7 @@ options are "sequential", "multisession" (default), "multicore", and
 
 
 <dt id="arg-use-tf">use_TF<a class="anchor" aria-label="anchor" href="#arg-use-tf"></a></dt>
-<dd><p>Logical. Whether to use TensorFlow for calculations. Defaults
+<dd><p>Logical. Whether to use <code>TensorFlow</code> for calculations. Defaults
 to <code>TRUE</code>.</p></dd>
 
 
@@ -165,7 +165,7 @@ required if <code>use_TF</code> is <code>TRUE</code> under Windows. Defaults to 
 
 <dt id="arg-tf-use-single">TF_use_single<a class="anchor" aria-label="anchor" href="#arg-tf-use-single"></a></dt>
 <dd><p>Logical. Whether to use single precision for the
-TensorFlow calculations. Defaults to <code>FALSE</code>.</p></dd>
+<code>TensorFlow</code> calculations. Defaults to <code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-temp-cleanup">temp_cleanup<a class="anchor" aria-label="anchor" href="#arg-temp-cleanup"></a></dt>
@@ -175,7 +175,7 @@ processing. Default: <code>TRUE</code>.</p></dd>
 
 <dt id="arg-chunk-size">chunk_size<a class="anchor" aria-label="anchor" href="#arg-chunk-size"></a></dt>
 <dd><p>Integer. Size of each chunk of samples to process in
-parallel. Only relevant for TensorFlow. Default: <code>50</code>.</p></dd>
+parallel. Only relevant for <code>TensorFlow</code>. Default: <code>50</code>.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>

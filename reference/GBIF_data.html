@@ -48,7 +48,7 @@ data using helper functions."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Process GBIF occurrence data for the <code>IASDT</code></h1>
-      <small class="dont-index">Source: <a href="https://github.com/BioDT/IASDT.R/blob/main/R/DWF_GBIF_process.R" class="external-link"><code>R/DWF_GBIF_process.R</code></a>, <a href="https://github.com/BioDT/IASDT.R/blob/main/R/DWF_GBIF_check.R" class="external-link"><code>R/DWF_GBIF_check.R</code></a>, <a href="https://github.com/BioDT/IASDT.R/blob/main/R/DWF_GBIF_download.R" class="external-link"><code>R/DWF_GBIF_download.R</code></a>, and 2 more</small>
+      <small class="dont-index">Source: <a href="https://github.com/BioDT/IASDT.R/blob/main/R/DWF_GBIF_process.R" class="external-link"><code>R/DWF_GBIF_process.R</code></a>, <a href="https://github.com/BioDT/IASDT.R/blob/main/R/DWF_GBIF_download.R" class="external-link"><code>R/DWF_GBIF_download.R</code></a>, <a href="https://github.com/BioDT/IASDT.R/blob/main/R/DWF_GBIF_read_chunk.R" class="external-link"><code>R/DWF_GBIF_read_chunk.R</code></a>, and 1 more</small>
       <div class="d-none name"><code>GBIF_data.Rd</code></div>
     </div>
 
@@ -75,8 +75,6 @@ data using helper functions.</p>
 <span>  boundaries <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">30</span>, <span class="fl">50</span>, <span class="fl">25</span>, <span class="fl">75</span><span class="op">)</span>,</span>
 <span>  start_year <span class="op">=</span> <span class="fl">1981L</span></span>
 <span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu">GBIF_check</span><span class="op">(</span>r_environ <span class="op">=</span> <span class="st">".Renviron"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">GBIF_download</span><span class="op">(</span></span>
 <span>  env_file <span class="op">=</span> <span class="st">".env"</span>,</span>
@@ -215,8 +213,6 @@ metadata, standardized by Marina Golivets (Feb 2024).</p>
 
 <ul><li><p><strong><code>GBIF_process()</code></strong>: Orchestrates GBIF data requests, downloads,
 processing, and mapping. Saves <code>RData</code>, Excel, and JPEG summary files.</p></li>
-<li><p><strong><code>GBIF_check()</code></strong>: Verifies GBIF credentials in environment or
-<code>.Renviron</code>. Returns <code>TRUE</code> if valid, else <code>FALSE</code>.</p></li>
 <li><p><strong><code>GBIF_download()</code></strong>: Requests and downloads GBIF data (if <code>download = TRUE</code>), using the specified criteria (taxa, coordinates, time period, and
 boundaries), splits into small chunks (if <code>split_chunks = TRUE</code>), and saves
 metadata. Returns <code>invisible(NULL)</code>.</p></li>

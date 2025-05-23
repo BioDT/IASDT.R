@@ -261,25 +261,34 @@ variance_partitioning_compute <- function(
     "Remove unnecessary elements from the model object",
     level = 1, verbose = verbose)
 
+  Model$postList <- NULL
+  invisible(gc())
+
+  Model$YScaled <- NULL
+  invisible(gc())
+
+  Model$Y <- NULL
+  Model$XScaled <- NULL
+  Model$rL <- NULL
+  Model$ranLevels <- NULL
+  Model$XData <- NULL
+  Model$dfPi <- NULL
+  Model$studyDesign <- NULL
+  Model$Pi <- NULL
+  Model$C <- NULL
+  Model$phyloTree <- NULL
+  Model$XFormula <- NULL
+  Model$UGamma <- NULL
+  invisible(gc())
+
   Items2Delete <- c(
-    "postList", "Y", "XScaled", "rL", "ranLevels", "XData", "dfPi",
-    "studyDesign", "C", "Pi", "phyloTree", "XFormula", "XScalePar",
-    "aSigma", "bSigma", "TrScaled", "YScalePar", "call", "rhopw",
-    "distr", "V0", "UGamma", "YScaled")
-  Model <- purrr::reduce(
-    .x = Items2Delete,
-    .f = function(m, name) {
-      m[[name]] <- NULL
-      m
-    },
-    .init = Model)
-  rm(Items2Delete, envir = environment())
+    "XScalePar", "aSigma", "bSigma", "TrScaled", "YScalePar",
+    "call", "rhopw", "distr", "V0", "UGamma", "YScaled")
+  Model[Items2Delete] <- NULL
   invisible(gc())
 
   poolN <- length(postList)
   ngroups <- max(group)
-
-  invisible(gc())
 
   # # .................................................................... ###
   # # .................................................................... ###

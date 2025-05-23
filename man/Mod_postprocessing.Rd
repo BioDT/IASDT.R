@@ -217,8 +217,8 @@ fixed. Default: \code{q90}.}
 \item{pred_new_sites}{Logical. Whether to predict suitability at new sites.
 Default: \code{TRUE}.}
 
-\item{n_cores_VP}{Integer. Number of cores to use for variance partitioning.
-Defaults to 10L.}
+\item{n_cores_VP}{Integer. Number of cores to use for processing variance
+partitioning. Defaults to 10L.}
 
 \item{width_omega, height_omega, width_beta, height_beta}{Integer. The width and
 height of the generated heatmaps of the Omega and Beta parameters in

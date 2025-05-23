@@ -242,9 +242,12 @@ variance_partitioning_compute <- function(
   # Prepare postList-----
 
   ecokit::cat_time("Prepare postList", verbose = verbose)
-  postList <- Hmsc::poolMcmcChains(Model$postList, start = start) %>%
-    purrr::map(
-      ~ {
+  postList <- Hmsc::poolMcmcChains(Model$postList, start = start)
+
+  ecokit::cat_time("Remove not-needed items", level = 1, verbose = verbose)
+  postList <- purrr::map(
+      .x = postList,
+      .f = ~ {
         Items2Delete <- c(
           "Eta", "Psi", "V", "sigma", "Delta", "Alpha",
           "rho", "wRRR", "PsiRRR", "DeltaRRR")
@@ -253,6 +256,9 @@ variance_partitioning_compute <- function(
       })
 
   # Remove unnecessary elements from the model object
+  ecokit::cat_time(
+    "Remove unnecessary elements from the model object",
+    level = 1, verbose = verbose)
   names_to_remove <- c(
     "postList", "Y", "XScaled", "rL", "ranLevels", "XData", "dfPi",
     "studyDesign", "C", "Pi", "phyloTree", "XFormula", "XScalePar",
@@ -407,7 +413,7 @@ variance_partitioning_compute <- function(
 
               Beta_File <- Beta_Files[x]
 
-              if (ecokit::check_data(Beta_File)) {
+              if (ecokit::check_data(Beta_File, warning = FALSE)) {
                 return(NULL)
               }
 

@@ -19,7 +19,7 @@ variance_partitioning_compute(
   TF_environ = NULL,
   TF_use_single = FALSE,
   temp_cleanup = TRUE,
-  chunk_size = 50L,
+  chunk_size = 20L,
   verbose = TRUE,
   VP_file = "VarPar",
   VP_commands_only = FALSE
@@ -76,7 +76,7 @@ required if \code{use_TF} is \code{TRUE} under Windows. Defaults to \code{NULL}.
 processing. Default: \code{TRUE}.}
 
 \item{chunk_size}{Integer. Size of each chunk of samples to process in
-parallel. Only relevant for \code{TensorFlow}. Default: \code{50}.}
+parallel. Only relevant for \code{TensorFlow}. Default: \code{20}.}
 
 \item{verbose}{Logical. Whether to print progress messages. Default: \code{TRUE}.}
 

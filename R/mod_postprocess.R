@@ -16,8 +16,8 @@
 #'   selected model. Accepts "Tree" (default) or "NoTree".
 #' @param MCMC_thin,MCMC_n_samples Integer. Thinning value and the number of
 #'   MCMC samples of the selected model.
-#' @param n_cores_VP Integer. Number of cores to use for variance partitioning.
-#'   Defaults to 10L.
+#' @param n_cores_VP Integer. Number of cores to use for processing variance
+#'   partitioning. Defaults to 10L.
 #' @param strategy Character. The parallel processing strategy to use. Valid
 #'   options are "sequential", "multisession" (default), "multicore", and
 #'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.

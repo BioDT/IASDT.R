@@ -19,7 +19,7 @@
 #   return(res)
 # }
 # 
-#   CITATION: El-Gabbas, A. (2025). IASDT.R: Modelling the distribution of invasive alien plant species in Europe. https://doi.org/10.5281/zenodo.1483438, R package version 0.1.X; https://biodt.github.io/IASDT.R/.
+# - CITATION: El-Gabbas, A. (2025). IASDT.R: Modelling the distribution of invasive alien plant species in Europe. https://doi.org/10.5281/zenodo.1483438, R package version 0.1.X; https://biodt.github.io/IASDT.R/.
 #
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -239,7 +239,7 @@ def main():
     parser.add_argument(
         "--ncores", type=int, default=4, help="Number of CPU cores")
     parser.add_argument(
-        "--chunk_size", type=int, default=50, 
+        "--chunk_size", type=int, default=20, 
         help="Size of chunks for processing")
 
     # Parse the command-line arguments

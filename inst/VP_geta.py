@@ -242,7 +242,7 @@ def main():
     parser.add_argument(
         "--ncores", type=int, default=4, help="Number of CPU cores")
     parser.add_argument(
-        "--chunk_size", type=int, default=50, 
+        "--chunk_size", type=int, default=20, 
         help="Size of chunks for processing")
     
     args = parser.parse_args()

@@ -31,7 +31,7 @@
 #'   options are "sequential", "multisession" (default), "multicore", and
 #'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param chunk_size Integer. Size of each chunk of samples to process in
-#'   parallel. Only relevant for `TensorFlow`. Default: `50`.
+#'   parallel. Only relevant for `TensorFlow`. Default: `20`.
 #' @param verbose Logical. Whether to print progress messages. Default: `TRUE`.
 #' @param temp_cleanup Logical. Whether to delete temporary files after
 #'   processing. Default: `TRUE`.
@@ -55,7 +55,7 @@
 variance_partitioning_compute <- function(
     path_model, group = NULL, group_names = NULL, start = 1L, na.ignore = FALSE,
     n_cores = 8L, strategy = "multisession", use_TF = TRUE, TF_environ = NULL,
-    TF_use_single = FALSE, temp_cleanup = TRUE, chunk_size = 50L,
+    TF_use_single = FALSE, temp_cleanup = TRUE, chunk_size = 20L,
     verbose = TRUE, VP_file = "VarPar", VP_commands_only = FALSE) {
 
   if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
@@ -275,21 +275,49 @@ variance_partitioning_compute <- function(
     # Create the temporary directory
     Path_Temp <- fs::path(dirname(dirname(path_model)), "TEMP_VP")
     fs::dir_create(Path_Temp)
+    path_VP_input_files <- fs::path(Path_Temp, "VP_input_files.txt")
 
     FileSuffix <- stringr::str_pad(
       string = seq_len(poolN), pad = "0", width = 4)
 
+    if (n_cores == 1) {
+      future::plan("sequential", gc = TRUE)
+    } else {
+      ecokit::set_parallel(
+        n_cores = n_cores, strategy = strategy, show_log = FALSE)
+      withr::defer(future::plan("sequential", gc = TRUE))
+    }
+
     # List of feather files resulted from `geta` function
     Files_la <- fs::path(Path_Temp, paste0("VP_A_", FileSuffix, ".feather"))
-    Files_la_Exist <- all(file.exists(Files_la))
+    Files_la_Exist <- future.apply::future_lapply(
+      X = Files_la, FUN = ecokit::check_data, warning = FALSE,
+      future.seed = TRUE, future.packages = c("arrow", "ecokit")) %>%
+      unlist() %>%
+      all()
 
     # List of feather files resulted from `getf` function
     Files_lf <- fs::path(Path_Temp, paste0("VP_F_", FileSuffix, ".feather"))
-    Files_lf_Exist <- all(file.exists(Files_lf))
+    Files_lf_Exist <- future.apply::future_lapply(
+      X = Files_lf, FUN = ecokit::check_data, warning = FALSE,
+      future.seed = TRUE, future.packages = c("arrow", "ecokit")) %>%
+      unlist() %>%
+      all()
 
     # List of feather files resulted from `gemu` function
     Files_lmu <- fs::path(Path_Temp, paste0("VP_Mu_", FileSuffix, ".feather"))
-    Files_lmu_Exist <- all(file.exists(Files_lmu))
+    Files_lmu_Exist <- future.apply::future_lapply(
+      X = Files_lmu, FUN = ecokit::check_data, warning = FALSE,
+      future.seed = TRUE, future.packages = c("arrow", "ecokit")) %>%
+      unlist() %>%
+      all()
+
+    # stopping the cluster
+    if (n_cores > 1) {
+      ecokit::set_parallel(stop_cluster = TRUE, show_log = FALSE)
+      future::plan("sequential", gc = TRUE)
+    }
+
 
     Beta_Files <- fs::path(
       Path_Temp, paste0("VP_Beta_", FileSuffix, ".feather"))
@@ -302,6 +330,10 @@ variance_partitioning_compute <- function(
         verbose = verbose)
 
     } else {
+
+      # Write the contents of Files_la, Files_lf, Files_lmu to a text file
+      readr::write_lines(
+        x = c(Files_la, Files_lf, Files_lmu), file = path_VP_input_files)
 
       ## Prepare la/lf/lmu lists using `TensorFlow` ----
       ecokit::cat_time(
@@ -345,20 +377,26 @@ variance_partitioning_compute <- function(
       #### Beta -----
       # only needed for `getf` function
       if (!Files_lf_Exist) {
+
         # Beta -- Each element of Beta is a matrix, so each list item is saved
         # to separate feather file
         ecokit::cat_time("Beta", level = 2L, verbose = verbose)
 
-        if (!all(file.exists(Beta_Files))) {
+        if (n_cores == 1) {
+          future::plan("sequential", gc = TRUE)
+        } else {
+          ecokit::set_parallel(
+            n_cores = n_cores, show_log = FALSE, strategy = strategy)
+          withr::defer(future::plan("sequential", gc = TRUE))
+        }
 
-          if (n_cores == 1) {
-            future::plan("sequential", gc = TRUE)
-          } else {
-            ecokit::set_parallel(
-              n_cores = n_cores, level = 3L, future_max_size = 800L,
-              strategy = strategy, cat_timestamp = FALSE)
-            withr::defer(future::plan("sequential", gc = TRUE))
-          }
+        Beta_Files_Exist <- future.apply::future_lapply(
+          X = Beta_Files, FUN = ecokit::check_data, warning = FALSE,
+          future.seed = TRUE, future.packages = c("arrow", "ecokit")) %>%
+          unlist() %>%
+          all()
+
+        if (!Beta_Files_Exist) {
 
           ecokit::cat_time(
             "Processing beta in parallel", level = 3L, verbose = verbose)
@@ -366,11 +404,37 @@ variance_partitioning_compute <- function(
           Beta0 <- future.apply::future_lapply(
             X = seq_along(postList),
             FUN = function(x) {
+
               Beta_File <- Beta_Files[x]
-              if (!file.exists(Beta_File)) {
-                Beta <- purrr::pluck(postList, x, "Beta") %>%
-                  as.data.frame()
+
+              if (ecokit::check_data(Beta_File)) {
+                return(NULL)
+              }
+
+              if (fs::file_exists(Beta_File)) {
+                try(fs::file_delete(Beta_File), silent = TRUE)
+              }
+
+              Beta <- purrr::pluck(postList, x, "Beta") %>%
+                as.data.frame()
+
+              attempt <- 1
+              repeat {
                 arrow::write_feather(x = Beta, sink = Beta_File)
+                Sys.sleep(1)
+
+                if (ecokit::check_data(Beta_File, warning = FALSE)) {
+                  break
+                }
+
+                if (attempt >= 5) {
+                  ecokit::stop_ctx(
+                    "Failed to create Beta file after multiple attempts",
+                    Beta_File = Beta_File, attempt = attempt,
+                    include_backtrace = TRUE)
+                }
+
+                attempt <- attempt + 1
               }
               return(NULL)
             },
@@ -380,15 +444,15 @@ variance_partitioning_compute <- function(
             future.globals = c("Beta_Files", "postList"))
 
           rm(Beta0)
+        }
 
-          # stopping the cluster
-          if (n_cores > 1) {
-            ecokit::set_parallel(
-              stop_cluster = TRUE, level = 3L, cat_timestamp = FALSE)
-            future::plan("sequential", gc = TRUE)
-          }
+        # stopping the cluster
+        if (n_cores > 1) {
+          ecokit::set_parallel(stop_cluster = TRUE, show_log = FALSE)
+          future::plan("sequential", gc = TRUE)
         }
       }
+
       invisible(gc())
 
       # |||||||||||||||||||||||||||||||||||||||||||||||||||||||

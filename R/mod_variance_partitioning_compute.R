@@ -245,26 +245,36 @@ variance_partitioning_compute <- function(
   postList <- Hmsc::poolMcmcChains(Model$postList, start = start)
 
   ecokit::cat_time("Remove not-needed items", level = 1, verbose = verbose)
+  Items2Delete <- c(
+    "Eta", "Psi", "V", "sigma", "Delta", "Alpha",
+    "rho", "wRRR", "PsiRRR", "DeltaRRR")
   postList <- purrr::map(
-      .x = postList,
-      .f = ~ {
-        Items2Delete <- c(
-          "Eta", "Psi", "V", "sigma", "Delta", "Alpha",
-          "rho", "wRRR", "PsiRRR", "DeltaRRR")
-        .x[Items2Delete] <- NULL
-        return(.x)
-      })
+    .x = postList,
+    .f = ~ {
+      .x[Items2Delete] <- NULL
+      return(.x)
+    })
+  invisible(gc())
 
   # Remove unnecessary elements from the model object
   ecokit::cat_time(
     "Remove unnecessary elements from the model object",
     level = 1, verbose = verbose)
-  names_to_remove <- c(
+
+  Items2Delete <- c(
     "postList", "Y", "XScaled", "rL", "ranLevels", "XData", "dfPi",
     "studyDesign", "C", "Pi", "phyloTree", "XFormula", "XScalePar",
     "aSigma", "bSigma", "TrScaled", "YScalePar", "call", "rhopw",
     "distr", "V0", "UGamma", "YScaled")
-  Model[names_to_remove] <- NULL
+  Model <- purrr::reduce(
+    .x = Items2Delete,
+    .f = function(m, name) {
+      m[[name]] <- NULL
+      m
+    },
+    .init = Model)
+  rm(Items2Delete, envir = environment())
+  invisible(gc())
 
   poolN <- length(postList)
   ngroups <- max(group)

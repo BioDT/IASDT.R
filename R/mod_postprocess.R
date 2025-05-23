@@ -613,12 +613,14 @@ mod_prepare_TF <- function(
       level = 1L, cat_timestamp = FALSE)
 
     # Find list of files matching the pattern
-    VP_InFiles <- list.files(
-      path = path_model, pattern = "VP_.+Command.txt", recursive = TRUE,
-      full.names = TRUE) %>%
+    VP_InFiles <- fs::dir_ls(
+      path = path_model, recurse = TRUE, type = "file",
+      regexp = paste0(model_prefix, ".+/TEMP_VP/VP_.+Command.txt")) %>%
       purrr::map(readr::read_lines, progress = FALSE) %>%
       unlist() %>%
-      gtools::mixedsort()
+      gtools::mixedsort() %>%
+      unname()
+
     n_VP_InFiles <- length(VP_InFiles)
 
     # Save all VP commands to single file for batch processing
@@ -733,11 +735,14 @@ mod_prepare_TF <- function(
 
     # Find list of files matching the pattern
     # Regex pattern to match input files
-    LF_Pattern <- "^LF_NewSites_Commands_.+.txt|^LF_RC_Commands_.+txt"
-    LF_InFiles <- list.files(
-      path = path_model, pattern = LF_Pattern,
-      recursive = TRUE, full.names = TRUE) %>%
-      gtools::mixedsort()
+    LF_Pattern <- "(LF_NewSites_Commands_.+.txt|LF_RC_Commands_.+txt)"
+    LF_InFiles <- fs::dir_ls(
+      path = path_model, recurse = TRUE, type = "file",
+      regexp = paste0(model_prefix, ".+/TEMP_Pred/", LF_Pattern)) %>%
+      purrr::map(readr::read_lines, progress = FALSE) %>%
+      unlist() %>%
+      gtools::mixedsort() %>%
+      unname()
 
     if (length(LF_InFiles) == 0) {
       ecokit::stop_ctx(

@@ -414,7 +414,7 @@ variance_partitioning_compute <- function(
           "--x", ecokit::normalize_path(Path_X, must_work = TRUE),
           "--gamma", ecokit::normalize_path(Path_Gamma, must_work = TRUE),
           "--output", Path_Out_a,
-          "--ncores", min(n_cores, 3L),
+          "--ncores", 1,
           "--chunk_size", chunk_size)
 
         if (TF_use_single) {
@@ -473,7 +473,7 @@ variance_partitioning_compute <- function(
           "--x", ecokit::normalize_path(Path_X, must_work = TRUE),
           "--beta_dir", ecokit::normalize_path(Path_Temp, must_work = TRUE),
           "--output", Path_Out_f,
-          "--ncores", min(n_cores, 3L))
+          "--ncores", 1)
 
         if (TF_use_single) {
           cmd_f <- paste0(cmd_f, " --use_single")
@@ -532,7 +532,7 @@ variance_partitioning_compute <- function(
           "--tr", ecokit::normalize_path(Path_Tr, must_work = TRUE),
           "--gamma", ecokit::normalize_path(Path_Gamma, must_work = TRUE),
           "--output", Path_Out_mu,
-          "--ncores", min(n_cores, 3L),
+          "--ncores", 1,
           "--chunk_size", chunk_size)
 
         if (TF_use_single) {

@@ -452,7 +452,6 @@ mod_merge_chains <- function(
             unlist()
         }),
 
-
       # Mean memory
       FittingMemoryMean = purrr::map2_dbl(
         .x = Model_Finished, .y = FittingMemory,

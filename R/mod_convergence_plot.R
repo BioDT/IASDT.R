@@ -995,7 +995,7 @@ convergence_plot <- function(
     future::plan("sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
-      n_cores = nrow(BetaTracePlots_ByVar), level = 2L,
+      n_cores = min(n_cores, nrow(BetaTracePlots_ByVar)), level = 2L,
       future_max_size = 1500, strategy = strategy, cat_timestamp = FALSE)
     withr::defer(future::plan("sequential", gc = TRUE))
   }

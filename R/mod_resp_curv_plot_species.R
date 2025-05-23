@@ -400,8 +400,9 @@ resp_curv_plot_species <- function(
             ggplot2::theme(
               axis.text.y = ggplot2::element_text(angle = 90, hjust = 0.5))
 
-          return(tibble::tibble(
-            Plot_Fixed = list(Plot_Fixed), Plot_Free = list(Plot_Free)))
+          return(
+            tibble::tibble(
+              Plot_Fixed = list(Plot_Fixed), Plot_Free = list(Plot_Free)))
         }) %>%
         dplyr::bind_rows()
 
@@ -471,7 +472,8 @@ resp_curv_plot_species <- function(
     future.scheduling = Inf, future.seed = TRUE,
     future.packages = pkg_to_export,
     future.globals = c("SpeciesNames", "Sp_DT_All")) %>%
-    dplyr::bind_rows()
+    dplyr::bind_rows() %>%
+    ecokit::quiet_device()
 
   # stopping the cluster
   if (n_cores > 1) {

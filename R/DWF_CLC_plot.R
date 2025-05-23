@@ -83,23 +83,23 @@ CLC_plot <- function(
   Ylim <- c(1450000, 5420000)
 
 
-  LastUpdate <- paste0(
-    "Last update: ", format(Sys.Date(), "%d %B %Y"))
+  LastUpdate <- paste0("Last update: ", format(Sys.Date(), "%d %B %Y"))
 
   out_path <- paste0(
     "Summary_PercCover_", FilePrefix, "_",
     seq_len(length(split_vector)), ".jpeg") %>%
     fs::path(path_JPEG, .)
 
-  # nolint end
-
-  MAPS <- purrr::map(
+  MAPS <- purrr::map_dfr(
     .x = seq_len(length(split_vector)),
     .f = ~ {
-      purrr::map(
+
+      Plots <- purrr::map_dfr(
         .x = split_vector[[.x]],
         .f = function(YY) {
+
           CurrMap <- CLC_MapR[[YY]]
+          CurrMap_no_zero <- terra::classify(CurrMap, cbind(0, NA))
 
           ecokit::cat_time(paste0(Labels$Label[[YY]]), level = 2L)
           MapTitle <- Labels$Label[[YY]] %>%
@@ -111,22 +111,7 @@ CLC_plot <- function(
             MapTitle <- paste0(MapTitle, "\n")
           }
 
-          # create ggplot object for each layer
-          CurrMapPlot <- ggplot2::ggplot() +
-            tidyterra::geom_spatraster(data = CurrMap) +
-            paletteer::scale_fill_paletteer_c(
-              na.value = "transparent", palette = "viridis::plasma",
-              limits = c(0, 100)) +
-            ggplot2::geom_sf(
-              EU_map,
-              mapping = ggplot2::aes(), color = "grey60",
-              linewidth = 0.25, inherit.aes = TRUE,
-              fill = scales::alpha("grey80", 0.2)) +
-            ggplot2::scale_x_continuous(
-              expand = ggplot2::expansion(mult = c(0, 0)), limits = Xlim) +
-            ggplot2::scale_y_continuous(
-              expand = ggplot2::expansion(mult = c(0, 0)), limits = Ylim) +
-            ggplot2::theme_bw() +
+          plot_theme <-  ggplot2::theme_bw() +
             ggplot2::theme(
               plot.margin = ggplot2::margin(0.05, 0, 0, 0, "cm"),
               plot.title = ggplot2::element_text(
@@ -143,8 +128,41 @@ CLC_plot <- function(
               panel.grid.minor = ggplot2::element_line(linewidth = 0.125),
               panel.grid.major = ggplot2::element_line(linewidth = 0.25),
               panel.border = ggplot2::element_blank(),
-              legend.position = "none") +
-            ggplot2::labs(title = MapTitle, fill = NULL)
+              legend.position = "none")
+
+          # create ggplot object for each layer
+          CurrMapPlot <- ggplot2::ggplot() +
+            tidyterra::geom_spatraster(data = CurrMap) +
+            paletteer::scale_fill_paletteer_c(
+              na.value = "transparent", palette = "viridis::plasma",
+              limits = c(0, 100)) +
+            ggplot2::geom_sf(
+              EU_map, mapping = ggplot2::aes(), color = "grey60",
+              linewidth = 0.25, inherit.aes = TRUE,
+              fill = scales::alpha("grey80", 0.2)) +
+            ggplot2::scale_x_continuous(
+              expand = ggplot2::expansion(mult = c(0, 0)), limits = Xlim) +
+            ggplot2::scale_y_continuous(
+              expand = ggplot2::expansion(mult = c(0, 0)), limits = Ylim) +
+            ggplot2::labs(title = MapTitle, fill = NULL) +
+            plot_theme
+
+          CurrMapPlot_no_zero <- ggplot2::ggplot() +
+            tidyterra::geom_spatraster(data = CurrMap_no_zero) +
+            paletteer::scale_fill_paletteer_c(
+              na.value = "transparent", palette = "viridis::plasma",
+              limits = c(0, 100)) +
+            ggplot2::geom_sf(
+              EU_map, mapping = ggplot2::aes(), color = "grey60",
+              linewidth = 0.25, inherit.aes = TRUE,
+              fill = scales::alpha("grey80", 0.2)) +
+            ggplot2::scale_x_continuous(
+              expand = ggplot2::expansion(mult = c(0, 0)), limits = Xlim) +
+            ggplot2::scale_y_continuous(
+              expand = ggplot2::expansion(mult = c(0, 0)), limits = Ylim) +
+            ggplot2::labs(title = MapTitle, fill = NULL) +
+            plot_theme
+
 
           LevelTxt <- stringr::str_replace_all(
             string = Labels$Level[YY], pattern = "\\.", replacement = "_") %>%
@@ -155,6 +173,9 @@ CLC_plot <- function(
             Labels$Label[YY], ".jpeg") %>%
             stringr::str_replace_all("/", "_") %>%
             fs::path(path_JPEG, .)
+
+          TilePath_no_zero <- stringr::str_replace(
+            TilePath, ".jpeg", "_no_zero.jpeg")
 
           Theme2 <- ggplot2::theme_minimal() +
             ggplot2::theme(
@@ -200,25 +221,55 @@ CLC_plot <- function(
               fill = scales::alpha("grey80", 0.4)) +
             tidyterra::geom_spatraster(data = CurrMap) +
             ggplot2::geom_sf(
-              EU_map, fill = "transparent",
-              mapping = ggplot2::aes(), color = "grey60",
-              linewidth = 0.25, inherit.aes = TRUE) +
+              EU_map, fill = "transparent", mapping = ggplot2::aes(),
+              color = "grey75", linewidth = 0.25, inherit.aes = TRUE) +
             paletteer::scale_fill_paletteer_c(
-              na.value = "transparent", "viridis::plasma",
-              limits = c(0, 100)) +
+              na.value = "transparent", "viridis::plasma", limits = c(0, 100)) +
             ggplot2::scale_x_continuous(
               expand = ggplot2::expansion(mult = c(0, 0)), limits = Xlim) +
             ggplot2::scale_y_continuous(
               expand = ggplot2::expansion(mult = c(0, 0)), limits = Ylim) +
-            ggplot2::labs(title = TitleLab, fill = NULL, tag = LastUpdate) +
+            ggplot2::labs(
+              title = TitleLab, fill = "%", tag = LastUpdate,
+              x = NULL, y = NULL) +
             Theme2
-
-          # Using ggplot2::ggsave directly does not show non-ascii characters
-          # correctly
           ragg::agg_jpeg(
             filename = TilePath, width = 25, height = 23, res = 600,
             quality = 100, units = "cm")
           print(Plot)
+          grDevices::dev.off()
+
+          Plot_no_zero <- ggplot2::ggplot() +
+            ggplot2::geom_sf(
+              EU_map, mapping = ggplot2::aes(),
+              color = "grey60", linewidth = 0.25, inherit.aes = TRUE,
+              fill = scales::alpha("grey80", 0.4)) +
+            tidyterra::geom_spatraster(data = CurrMap_no_zero) +
+            ggplot2::geom_sf(
+              EU_map, fill = "transparent", mapping = ggplot2::aes(),
+              color = "grey75", linewidth = 0.25, inherit.aes = TRUE) +
+            ggtext::geom_richtext(
+              mapping = ggplot2::aes(x = x, y = y, label = label),
+              data = data.frame(
+                x = -Inf, y = Inf, stringsAsFactors = FALSE,
+                label = "Only grid cells with > 0% habitat coverage"),
+              inherit.aes = FALSE, size = 5, hjust = 0, show.legend = FALSE,
+              vjust = 0.9, lineheight = 0, fill = NA, label.color = NA,
+              colour = "darkgrey") +
+            paletteer::scale_fill_paletteer_c(
+              na.value = "transparent", "viridis::plasma", limits = c(0, 100)) +
+            ggplot2::scale_x_continuous(
+              expand = ggplot2::expansion(mult = c(0, 0)), limits = Xlim) +
+            ggplot2::scale_y_continuous(
+              expand = ggplot2::expansion(mult = c(0, 0)), limits = Ylim) +
+            ggplot2::labs(
+              title = TitleLab, fill = "%", tag = LastUpdate,
+              x = NULL, y = NULL) +
+            Theme2
+          ragg::agg_jpeg(
+            filename = TilePath_no_zero, width = 25, height = 23, res = 600,
+            quality = 100, units = "cm")
+          print(Plot_no_zero)
           grDevices::dev.off()
 
           # |||||||||||||||||||||||||||||||||||||||||||||||
@@ -227,6 +278,8 @@ CLC_plot <- function(
             "PercCover_", FilePrefix, "_", Labels$Label[YY], ".jpeg") %>%
             stringr::str_replace_all("/", "_") %>%
             fs::path(path_JPEG_free, .)
+          TilePathFree_no_zero <- stringr::str_replace(
+            TilePathFree, ".jpeg", "_no_zero.jpeg")
 
           Plot <- ggplot2::ggplot() +
             ggplot2::geom_sf(
@@ -235,62 +288,96 @@ CLC_plot <- function(
               fill = scales::alpha("grey80", 0.4)) +
             tidyterra::geom_spatraster(data = CurrMap) +
             ggplot2::geom_sf(
-              EU_map, fill = "transparent",
-              mapping = ggplot2::aes(), color = "grey60",
-              linewidth = 0.25, inherit.aes = TRUE) +
+              EU_map, fill = "transparent", mapping = ggplot2::aes(),
+              color = "grey75", linewidth = 0.25, inherit.aes = TRUE) +
             paletteer::scale_fill_paletteer_c(
               na.value = "transparent", palette = "viridis::plasma") +
             ggplot2::scale_x_continuous(
               expand = ggplot2::expansion(mult = c(0, 0)), limits = Xlim) +
             ggplot2::scale_y_continuous(
               expand = ggplot2::expansion(mult = c(0, 0)), limits = Ylim) +
-            ggplot2::labs(title = TitleLab, fill = NULL, tag = LastUpdate) +
+            ggplot2::labs(
+              title = TitleLab, fill = "%", tag = LastUpdate,
+              x = NULL, y = NULL) +
             Theme2
-
-          # Using ggplot2::ggsave directly does not show non-ascii characters
-          # correctly
           ragg::agg_jpeg(
             filename = TilePathFree, width = 25, height = 23, res = 600,
             quality = 100, units = "cm")
           print(Plot)
           grDevices::dev.off()
 
-          return(CurrMapPlot)
-        }
-      )
-    }
-  )
+          Plot_no_zero <- ggplot2::ggplot() +
+            ggplot2::geom_sf(
+              EU_map, mapping = ggplot2::aes(), color = "grey60",
+              linewidth = 0.25, inherit.aes = TRUE,
+              fill = scales::alpha("grey80", 0.4)) +
+            tidyterra::geom_spatraster(data = CurrMap) +
+            ggplot2::geom_sf(
+              EU_map, fill = "transparent", mapping = ggplot2::aes(),
+              color = "grey75", linewidth = 0.25, inherit.aes = TRUE) +
+            ggtext::geom_richtext(
+              mapping = ggplot2::aes(x = x, y = y, label = label),
+              data = data.frame(
+                x = -Inf, y = Inf, stringsAsFactors = FALSE,
+                label = "Only grid cells with > 0% habitat coverage"),
+              inherit.aes = FALSE, size = 5, hjust = 0, show.legend = FALSE,
+              vjust = 0.9, lineheight = 0, fill = NA, label.color = NA,
+              colour = "darkgrey") +
+            paletteer::scale_fill_paletteer_c(
+              na.value = "transparent", palette = "viridis::plasma") +
+            ggplot2::scale_x_continuous(
+              expand = ggplot2::expansion(mult = c(0, 0)), limits = Xlim) +
+            ggplot2::scale_y_continuous(
+              expand = ggplot2::expansion(mult = c(0, 0)), limits = Ylim) +
+            ggplot2::labs(
+              title = TitleLab, fill = "%", tag = LastUpdate,
+              x = NULL, y = NULL) +
+            Theme2
+          ragg::agg_jpeg(
+            filename = TilePathFree_no_zero, width = 25, height = 23, res = 600,
+            quality = 100, units = "cm")
+          print(Plot_no_zero)
+          grDevices::dev.off()
+
+          tibble::tibble(
+            page = .x, plot_ID = YY,
+            Plot = list(CurrMapPlot), Plot_no_zero = list(CurrMapPlot_no_zero))
+        }) %>%
+        dplyr::bind_rows()
+
+      return(Plots)
+
+    })
 
   ecokit::cat_time(paste0(Prefix, " - Multiple panels per file "), level = 1L)
 
-  # nolint start
   CommonLegend <- cowplot::get_legend(
     (ggplot2::ggplot() +
-      tidyterra::geom_spatraster(
-        data = terra::rast(CLC_MapR[[1]]), maxcell = terra::ncell(CLC_MapR)) +
-      paletteer::scale_fill_paletteer_c(
-        na.value = "transparent", palette = "viridis::plasma",
-        limits = c(0, 100)) +
-      ggplot2::theme(
-        legend.box.margin = ggplot2::margin(0, 0, 0, 0),
-        legend.key.size = grid::unit(0.4, "cm"),
-        legend.key.width = grid::unit(0.4, "cm"),
-        legend.text = ggplot2::element_text(size = 6),
-        legend.background = ggplot2::element_rect(fill = "transparent")) +
-      ggplot2::labs(fill = NULL))) %>%
+       tidyterra::geom_spatraster(
+         data = terra::rast(CLC_MapR[[1]]), maxcell = terra::ncell(CLC_MapR)) +
+       paletteer::scale_fill_paletteer_c(
+         na.value = "transparent", palette = "viridis::plasma",
+         limits = c(0, 100)) +
+       ggplot2::theme(
+         legend.box.margin = ggplot2::margin(0, 0, 0, 0),
+         legend.key.size = grid::unit(0.4, "cm"),
+         legend.key.width = grid::unit(0.4, "cm"),
+         legend.text = ggplot2::element_text(size = 6),
+         legend.background = ggplot2::element_rect(fill = "transparent")) +
+       ggplot2::labs(fill = NULL))) %>%
     suppressWarnings()
   # nolint end
 
 
   # arrange map tiles together into figures (4 columns * 2 rows)
   purrr::walk(
-    .x = seq_along(MAPS),
+    .x = seq_len(length(split_vector)),
     .f = ~ {
+
       # main title of the figure - {("\u00D7")} prints the multiplication symbol
       MainTitle <- stringr::str_glue(
         "Percent coverage of {Prefix} per 10\u00D710 km grid cell") %>%
         as.character()
-
       MainTitle <- cowplot::ggdraw() +
         cowplot::draw_label(MainTitle, fontface = "bold", hjust = 0.5) +
         cowplot::draw_label(
@@ -298,20 +385,31 @@ CLC_plot <- function(
           x = 0.935, size = 3) +
         ggplot2::theme(plot.margin = ggplot2::margin(0, 0, 0, 0))
 
-      Plot <- cowplot::plot_grid(plotlist = MAPS[[.x]], ncol = 4, nrow = 2) %>%
+      Plot <- dplyr::filter(MAPS, page == .x) %>%
+        dplyr::pull(Plot)
+      Plot <- cowplot::plot_grid(plotlist = Plot, ncol = 4, nrow = 2) %>%
         cowplot::plot_grid(CommonLegend, rel_widths = c(4, 0.2)) %>%
         cowplot::plot_grid(MainTitle, ., ncol = 1, rel_heights = c(0.05, 1))
-
-      # Using ggplot2::ggsave directly does not show non-ascii characters
-      # correctly
+      path_jpeg <- out_path[.x]
       ragg::agg_jpeg(
-        filename = out_path[.x], width = 28, height = 15, res = 600,
+        filename = path_jpeg, width = 28, height = 15, res = 600,
         quality = 100, units = "cm")
       print(Plot)
       grDevices::dev.off()
 
-    }
-  )
+      Plot_no_zero <- dplyr::filter(MAPS, page == .x) %>%
+        dplyr::pull(Plot_no_zero)
+      Plot_no_zero <- cowplot::plot_grid(
+        plotlist = Plot_no_zero, ncol = 4, nrow = 2) %>%
+        cowplot::plot_grid(CommonLegend, rel_widths = c(4, 0.2)) %>%
+        cowplot::plot_grid(MainTitle, ., ncol = 1, rel_heights = c(0.05, 1))
+      path_jpeg <- stringr::str_replace(out_path[.x], ".jpeg", "_no_zero.jpeg")
+      ragg::agg_jpeg(
+        filename = path_jpeg, width = 28, height = 15, res = 600,
+        quality = 100, units = "cm")
+      print(Plot_no_zero)
+      grDevices::dev.off()
+    })
 
   return(invisible(NULL))
 }

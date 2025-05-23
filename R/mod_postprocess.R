@@ -57,6 +57,10 @@
 #' @param plot_internal_evaluation Logical. Whether to compute and visualise
 #'   model internal evaluation (explanatory power) using [plot_evaluation].
 #'   Defaults to `TRUE`.
+#' @param process_VP Logical. Whether to prepares batch scripts for variance
+#'   partitioning GPU computations on GPUs. Defaults to `TRUE`.
+#' @param process_LF Logical. Whether to prepares batch scripts for latent
+#'   factor predictions GPU computations on GPUs. Defaults to `TRUE`.
 #' @rdname mod_postprocessing
 #' @name mod_postprocessing
 #' @order 1
@@ -526,6 +530,7 @@ mod_postprocess_1_CPU <- function(
 #' @author Ahmed El-Gabbas
 
 mod_prepare_TF <- function(
+    process_VP = TRUE, process_LF = TRUE,
     n_batch_files = 210L, env_file = ".env", working_directory = NULL,
     partition_name = "small-g", LF_runtime = "01:00:00", model_prefix = NULL,
     VP_runtime = "02:00:00") {
@@ -552,6 +557,9 @@ mod_prepare_TF <- function(
       "LF_runtime", "VP_runtime", "partition_name", "env_file", "model_prefix"))
   ecokit::check_args(
     args_all = AllArgs, args_type = "numeric", args_to_check = "n_batch_files")
+  ecokit::check_args(
+    args_all = AllArgs, args_type = "logical",
+    args_to_check = c("process_VP", "process_LF"))
   rm(AllArgs, envir = environment())
 
   if (n_batch_files <= 0) {
@@ -588,77 +596,93 @@ mod_prepare_TF <- function(
   # VARIANCE PARTITIONING ----
   # # |||||||||||||||||||||||||||||||||||||||||||||||||| # #
 
-  # Prepare post-processing data for calculating variance partitioning
-  ecokit::cat_time(
-    "Prepare post-processing data for calculating variance partitioning")
+  if (process_VP) {
 
-  # Create paths for VP SLURM script and commands
-  Path_VP_SLURM <- fs::path(Path_TF, "VP_SLURM.slurm")
-  Path_VP_Commands <- fs::path(Path_TF, "VP_Commands.txt")
+    # Prepare post-processing data for calculating variance partitioning
+    ecokit::cat_time(
+      "Prepare post-processing data for calculating variance partitioning")
 
-  # Merge and organise `TensorFlow` commands for computing variance partitioning
-  ecokit::cat_time(
-    "Merge and organise `TensorFlow` for computing variance partitioning",
-    level = 1L, cat_timestamp = FALSE)
+    # Create paths for VP SLURM script and commands
+    Path_VP_SLURM <- fs::path(Path_TF, "VP_SLURM.slurm")
+    Path_VP_Commands <- fs::path(Path_TF, "VP_Commands.txt")
 
-  # Find list of files matching the pattern
-  VP_InFiles <- list.files(
-    path = path_model, pattern = "VP_.+Command.txt", recursive = TRUE,
-    full.names = TRUE) %>%
-    purrr::map(readr::read_lines, progress = FALSE) %>%
-    unlist() %>%
-    gtools::mixedsort()
+    # Merge and organise `TensorFlow` commands for computing variance
+    # partitioning
+    ecokit::cat_time(
+      "Merge and organise `TensorFlow` for computing variance partitioning",
+      level = 1L, cat_timestamp = FALSE)
 
-  # Save all VP commands to single file for batch processing
-  readr::write_lines(x = VP_InFiles, file = Path_VP_Commands, append = FALSE)
+    # Find list of files matching the pattern
+    VP_InFiles <- list.files(
+      path = path_model, pattern = "VP_.+Command.txt", recursive = TRUE,
+      full.names = TRUE) %>%
+      purrr::map(readr::read_lines, progress = FALSE) %>%
+      unlist() %>%
+      gtools::mixedsort()
+    n_VP_InFiles <- length(VP_InFiles)
 
-  # ****************************************************************
+    # Save all VP commands to single file for batch processing
+    readr::write_lines(x = VP_InFiles, file = Path_VP_Commands, append = FALSE)
 
-  # Prepare batch files ----
-  ecokit::cat_time("Prepare batch files", level = 1L, cat_timestamp = FALSE)
+    # ****************************************************************
 
-  VP_Commands <- c(
-    "#!/bin/bash",
-    "#SBATCH --job-name=VP_TF",
-    "#SBATCH --ntasks=1",
-    "#SBATCH --ntasks-per-node=1",
-    paste0("#SBATCH --account=", ProjectID),
-    "#SBATCH --cpus-per-task=1",
-    "#SBATCH --gpus-per-node=1",
-    paste0("#SBATCH --time=", VP_runtime),
-    paste0("#SBATCH --partition=", partition_name),
-    paste0("#SBATCH --output=", fs::path(Path_Log, "%x-%A-%a.out")),
-    paste0("#SBATCH --error=", fs::path(Path_Log, "%x-%A-%a.out")),
-    paste0("#SBATCH --array=1-", length(VP_InFiles)),
-    "\n# File containing commands to be executed",
-    paste0("File=", Path_VP_Commands),
-    "\n# Load TensorFlow module and configure environment",
-    "ml use /appl/local/csc/modulefiles",
-    "ml tensorflow",
-    "export TF_CPP_MIN_LOG_LEVEL=3",
-    "export TF_ENABLE_ONEDNN_OPTS=0\n",
-    "# Verify GPU availability",
-    paste0(
-      'python3 -c "import tensorflow as tf; ',
-      'print(\\\"Num GPUs Available:\\\", ',
-      'len(tf.config.list_physical_devices(\\\"GPU\\\")))"'),
-    "\n# Run array job",
-    "head -n $SLURM_ARRAY_TASK_ID $File | tail -n 1 | bash",
-    "\necho End of program at `date`\n",
-    paste0("# ", strrep("-", 50)),
-    paste0(
-      "# This script was created on: ",
-      format(lubridate::now(tzone = "CET"), format = "%Y-%m-%d %H:%M"),
-      " CET"),
-    paste0("# ", strrep("-", 50)))
+    # Prepare batch files ----
+    ecokit::cat_time("Prepare batch files", level = 1L, cat_timestamp = FALSE)
 
-  ecokit::cat_time(
-    paste0("Writing SLURM script to: `", Path_VP_SLURM, "`"),
-    level = 2L, cat_timestamp = FALSE)
+    VP_Commands <- c(
+      "#!/bin/bash",
+      "#SBATCH --job-name=VP_TF",
+      "#SBATCH --ntasks=1",
+      "#SBATCH --ntasks-per-node=1",
+      paste0("#SBATCH --account=", ProjectID),
+      "#SBATCH --cpus-per-task=1",
+      "#SBATCH --gpus-per-node=1",
+      paste0("#SBATCH --time=", VP_runtime),
+      paste0("#SBATCH --partition=", partition_name),
+      paste0("#SBATCH --output=", fs::path(Path_Log, "%x-%A-%a.out")),
+      paste0("#SBATCH --error=", fs::path(Path_Log, "%x-%A-%a.out")),
+      paste0("#SBATCH --array=1-", length(VP_InFiles)),
+      "\n# File containing commands to be executed",
+      paste0("File=", Path_VP_Commands),
+      "\n# Load TensorFlow module and configure environment",
+      "ml use /appl/local/csc/modulefiles",
+      "ml tensorflow",
+      "export TF_CPP_MIN_LOG_LEVEL=3",
+      "export TF_ENABLE_ONEDNN_OPTS=0\n",
+      "# Verify GPU availability",
+      paste0(
+        'python3 -c "import tensorflow as tf; ',
+        'print(\\\"Num GPUs Available:\\\", ',
+        'len(tf.config.list_physical_devices(\\\"GPU\\\")))"'),
+      "\n# Run array job",
+      "head -n $SLURM_ARRAY_TASK_ID $File | tail -n 1 | bash",
+      "\necho End of program at `date`\n",
+      paste0("# ", strrep("-", 50)),
+      paste0(
+        "# This script was created on: ",
+        format(lubridate::now(tzone = "CET"), format = "%Y-%m-%d %H:%M"),
+        " CET"),
+      paste0("# ", strrep("-", 50)))
 
-  readr::write_lines(x = VP_Commands, file = Path_VP_SLURM, append = FALSE)
-  # Make the file executable
-  Sys.chmod(Path_VP_SLURM, mode = "755")
+    ecokit::cat_time(
+      paste0("Writing SLURM script to: `", Path_VP_SLURM, "`"),
+      level = 1L, cat_timestamp = FALSE)
+
+    readr::write_lines(x = VP_Commands, file = Path_VP_SLURM, append = FALSE)
+    # Make the file executable
+    Sys.chmod(Path_VP_SLURM, mode = "755")
+
+    ecokit::cat_time(
+      paste0(
+        "To submit variance partitioning SLURM script:\n\tsbatch ",
+        Path_VP_SLURM),
+      cat_timestamp = FALSE)
+
+  } else {
+
+    n_VP_InFiles <- 0L
+
+  }
 
   # ****************************************************************
   # ****************************************************************
@@ -667,201 +691,211 @@ mod_prepare_TF <- function(
   # LF PREDICTIONS ----
   # # |||||||||||||||||||||||||||||||||||||||||||||||||| # #
 
-  # Prepare post-processing data for LF predictions
-  ecokit::cat_time("\nPrepare post-processing data for LF predictions")
+  if (process_LF) {
 
-  # Ensure that the total number of simultaneous jobs (LF + VP) = n_batch_files;
-  # so both can be run on the same time.
-  n_batch_files <- n_batch_files - length(VP_InFiles)
+    # Prepare post-processing data for LF predictions
+    ecokit::cat_time("\nPrepare post-processing data for LF predictions")
 
-  # Merge and organise `TensorFlow` commands for LF predictions ----
-  ecokit::cat_time(
-    paste0(
-      "Merge and organise `TensorFlow` commands for LF predictions ",
-      "into a maximum of ", n_batch_files, " files"),
-    level = 1L, cat_timestamp = FALSE)
+    # Ensure that the total number of simultaneous jobs (LF + VP) =
+    # n_batch_files; so both can be run on the same time.
+    n_batch_files <- n_batch_files - n_VP_InFiles
 
-  # Basic commands for `TensorFlow` setup
-  BasicCommands <- c(
-    "#!/bin/bash\n",
-    "# Load TensorFlow module and configure environment",
-    "ml use /appl/local/csc/modulefiles",
-    "ml tensorflow",
-    "export TF_CPP_MIN_LOG_LEVEL=3",
-    "export TF_ENABLE_ONEDNN_OPTS=0\n",
-    "# Verify GPU availability",
-    paste0(
-      'python3 -c "import tensorflow as tf; ',
-      'print(\\\"Num GPUs Available:\\\", ',
-      'len(tf.config.list_physical_devices(\\\"GPU\\\")))"'),
-    "")
-
-  # Change working directory if specified
-  if (!is.null(working_directory)) {
-    working_directory <- ecokit::normalize_path(
-      working_directory, must_work = TRUE)
-    BasicCommands <- c(
-      BasicCommands, "# Change to working directory",
-      paste0("cd ", working_directory), "")
-  }
-
-  # Find list of files matching the pattern
-  # Regex pattern to match input files
-  LF_Pattern <- "^LF_NewSites_Commands_.+.txt|^LF_RC_Commands_.+txt"
-  LF_InFiles <- list.files(
-    path = path_model, pattern = LF_Pattern,
-    recursive = TRUE, full.names = TRUE) %>%
-    gtools::mixedsort()
-
-  if (length(LF_InFiles) == 0) {
-    ecokit::stop_ctx(
-      "No files found matching the pattern",
-      LF_Pattern = LF_Pattern, path_model = path_model,
-      include_backtrace = TRUE)
-  }
-
-  ecokit::cat_time(
-    paste0(
-      "Found ", length(LF_InFiles), " files matching the pattern `",
-      LF_Pattern, "`"),
-    level = 2L, cat_timestamp = FALSE)
-  purrr::walk(LF_InFiles, ecokit::cat_time, level = 3L, cat_timestamp = FALSE)
-
-  # Read and merge commands from input files
-  LF_commands <- purrr::map(LF_InFiles, readr::read_lines, progress = FALSE) %>%
-    unlist() %>%
-    gtools::mixedsort()
-
-  ecokit::cat_time(
-    paste0(
-      "Total number of commands to be executed: ", length(LF_commands)),
-    level = 2L, cat_timestamp = FALSE)
-
-  if (length(LF_commands) < n_batch_files) {
+    # Merge and organise `TensorFlow` commands for LF predictions ----
     ecokit::cat_time(
       paste0(
-        "Fewer commands than the requested number of files. ",
-        "Setting `n_batch_files=", n_batch_files, "`."),
-      level = 2L, cat_timestamp = FALSE)
-    n_batch_files <- length(LF_commands)
-  }
+        "Merge and organise `TensorFlow` commands for LF predictions ",
+        "into a maximum of ", n_batch_files, " files"),
+      level = 1L, cat_timestamp = FALSE)
 
-  ecokit::cat_time(
-    paste0("Splitting commands into ", n_batch_files, " files"),
-    cat_timestamp = FALSE, level = 2L)
-  LF_commands <- ecokit::split_vector(LF_commands, n_splits = n_batch_files)
+    # Basic commands for `TensorFlow` setup
+    BasicCommands <- c(
+      "#!/bin/bash\n",
+      "# Load TensorFlow module and configure environment",
+      "ml use /appl/local/csc/modulefiles",
+      "ml tensorflow",
+      "export TF_CPP_MIN_LOG_LEVEL=3",
+      "export TF_ENABLE_ONEDNN_OPTS=0\n",
+      "# Verify GPU availability",
+      paste0(
+        'python3 -c "import tensorflow as tf; ',
+        'print(\\\"Num GPUs Available:\\\", ',
+        'len(tf.config.list_physical_devices(\\\"GPU\\\")))"'),
+      "")
 
-  purrr::walk(
-    .x = seq_len(length(LF_commands)),
-    .f = ~ {
+    # Change working directory if specified
+    if (!is.null(working_directory)) {
+      working_directory <- ecokit::normalize_path(
+        working_directory, must_work = TRUE)
+      BasicCommands <- c(
+        BasicCommands, "# Change to working directory",
+        paste0("cd ", working_directory), "")
+    }
 
-      File <- fs::path(
-        Path_TF,
+    # Find list of files matching the pattern
+    # Regex pattern to match input files
+    LF_Pattern <- "^LF_NewSites_Commands_.+.txt|^LF_RC_Commands_.+txt"
+    LF_InFiles <- list.files(
+      path = path_model, pattern = LF_Pattern,
+      recursive = TRUE, full.names = TRUE) %>%
+      gtools::mixedsort()
+
+    if (length(LF_InFiles) == 0) {
+      ecokit::stop_ctx(
+        "No files found matching the pattern",
+        LF_Pattern = LF_Pattern, path_model = path_model,
+        include_backtrace = TRUE)
+    }
+
+    ecokit::cat_time(
+      paste0(
+        "Found ", length(LF_InFiles), " files matching the pattern `",
+        LF_Pattern, "`"),
+      level = 1L, cat_timestamp = FALSE)
+    purrr::walk(LF_InFiles, ecokit::cat_time, level = 2L, cat_timestamp = FALSE)
+
+    # Read and merge commands from input files
+    LF_commands <- purrr::map(.x = LF_InFiles, .f = readr::read_lines) %>%
+      unlist() %>%
+      gtools::mixedsort()
+
+    ecokit::cat_time(
+      paste0(
+        "Total number of commands to be executed: ", length(LF_commands)),
+      level = 1L, cat_timestamp = FALSE)
+
+    if (length(LF_commands) < n_batch_files) {
+      ecokit::cat_time(
         paste0(
-          "TF_Chunk_",
-          stringr::str_pad(
-            .x, pad = "0", width = nchar(n_batch_files)), ".txt"))
+          "Fewer commands than the requested number of files. ",
+          "Setting `n_batch_files=", n_batch_files, "`."),
+        level = 2L, cat_timestamp = FALSE)
+      n_batch_files <- length(LF_commands)
+    }
 
-      readr::write_lines(x = BasicCommands, file = File, append = FALSE)
-      readr::write_lines(
-        x = paste0(
-          "# ", length(LF_commands[[.x]]), " commands to be executed:"),
-        file = File, append = TRUE)
-      readr::write_lines(x = LF_commands[[.x]], file = File, append = TRUE)
-      readr::write_lines(
-        x = c(
-          paste0("\n#", strrep("_", 60)),
+    ecokit::cat_time(
+      paste0("Splitting commands into ", n_batch_files, " files"),
+      cat_timestamp = FALSE, level = 1L)
+    LF_commands <- ecokit::split_vector(LF_commands, n_splits = n_batch_files)
+
+    purrr::walk(
+      .x = seq_len(length(LF_commands)),
+      .f = ~ {
+
+        File <- fs::path(
+          Path_TF,
           paste0(
-            "# This script was created on: ",
-            format(lubridate::now(tzone = "CET"), "%Y-%m-%d %H:%M:%S")),
-          paste0("#", strrep("_", 60))),
-        file = File, append = TRUE)
+            "TF_Chunk_",
+            stringr::str_pad(
+              .x, pad = "0", width = nchar(n_batch_files)), ".txt"))
 
-      return(invisible(NULL))
-    })
+        readr::write_lines(x = BasicCommands, file = File, append = FALSE)
+        readr::write_lines(
+          x = paste0(
+            "# ", length(LF_commands[[.x]]), " commands to be executed:"),
+          file = File, append = TRUE)
+        readr::write_lines(x = LF_commands[[.x]], file = File, append = TRUE)
+        readr::write_lines(
+          x = c(
+            paste0("\n#", strrep("_", 60)),
+            paste0(
+              "# This script was created on: ",
+              format(lubridate::now(tzone = "CET"), "%Y-%m-%d %H:%M:%S")),
+            paste0("#", strrep("_", 60))),
+          file = File, append = TRUE)
 
-  # ****************************************************************
+        return(invisible(NULL))
+      })
 
-  # Prepare LF batch files ----
-  ecokit::cat_time("Prepare batch files", level = 1L, cat_timestamp = FALSE)
+    # ****************************************************************
 
-  LF_slurm_script <- c(
-    "#!/bin/bash",
-    "#SBATCH --job-name=PP_LF",
-    "#SBATCH --ntasks=1",
-    "#SBATCH --ntasks-per-node=1",
-    paste0("#SBATCH --account=", ProjectID),
-    "#SBATCH --cpus-per-task=1",
-    "#SBATCH --gpus-per-node=1",
-    paste0("#SBATCH --time=", LF_runtime),
-    paste0("#SBATCH --partition=", partition_name),
-    paste0("#SBATCH --output=", fs::path(Path_Log, "%x-%A-%a.out")),
-    paste0("#SBATCH --error=", fs::path(Path_Log, "%x-%A-%a.out")),
-    paste0("#SBATCH --array=1-", n_batch_files),
-    "",
-    "# Define directories",
-    paste0('OutputDir="', Path_TF, '"'),
-    "",
-    "# Find all the split files and sort them explicitly",
-    paste0(
-      'SplitFiles=($(find "$OutputDir" -type f ',
-      '-name "TF_Chunk_*.txt" | sort -V))'),
-    "",
-    "# Check if files were found",
-    "if [ ${#SplitFiles[@]} -eq 0 ]; then",
-    '    echo "Error: No files matching TF_Chunk_*.txt found in $OutputDir"',
-    "    exit 1",
-    "fi",
-    "",
-    paste0("# Ensure no more than `, n_batch_files, ` files are processed"),
-    paste0("MaxFiles=", n_batch_files),
-    "if [ ${#SplitFiles[@]} -gt $MaxFiles ]; then",
-    '    SplitFiles=("${SplitFiles[@]:0:$MaxFiles}")',
-    paste0(
-      '    echo "More than $MaxFiles files found, ',
-      'limiting to the first $MaxFiles files."'),
-    "fi",
-    "",
-    "# Get the index of the current task based on SLURM_ARRAY_TASK_ID",
-    "TaskIndex=$((SLURM_ARRAY_TASK_ID - 1))",
-    "",
-    "# Validate TaskIndex",
-    "if [ $TaskIndex -ge ${#SplitFiles[@]} ] || [ $TaskIndex -lt 0 ]; then",
-    paste0(
-      '    echo "Error: TaskIndex $TaskIndex is out of range. ',
-      'Valid range: 0 to $((${#SplitFiles[@]} - 1))"'),
-    "    exit 1",
-    "fi",
-    "",
-    "# Get the specific split file to process based on the job array task ID",
-    'SplitFile="${SplitFiles[$TaskIndex]}"',
-    "",
-    "# Verify the selected split file",
-    'if [ -z "$SplitFile" ] || [ ! -f "$SplitFile" ]; then',
-    '    echo "Error: File $SplitFile does not exist or is invalid."',
-    "    exit 1",
-    "fi",
-    "",
-    "# Processing file",
-    'echo "Processing file: $SplitFile"',
-    "",
-    "# Run the selected split file",
-    'bash "$SplitFile"',
-    "\necho End of program at `date`\n",
-    paste0("# ", strrep("-", 50)),
-    paste0(
-      "# This script was created on: ",
-      format(lubridate::now(tzone = "CET"), format = "%Y-%m-%d %H:%M"), " CET"),
-    paste0("# ", strrep("-", 50)))
+    # Prepare LF batch files ----
+    ecokit::cat_time("Prepare batch files", level = 1L, cat_timestamp = FALSE)
 
-  Path_LF_SLURM <- fs::path(Path_TF, "LF_SLURM.slurm")
-  ecokit::cat_time(
-    paste0("Writing SLURM script to: `", Path_LF_SLURM, "`"),
-    level = 2L, cat_timestamp = FALSE)
-  # Write the content to a file
-  readr::write_lines(LF_slurm_script, Path_LF_SLURM, append = FALSE)
-  # Make the file executable
-  Sys.chmod(Path_LF_SLURM, mode = "755")
+    LF_slurm_script <- c(
+      "#!/bin/bash",
+      "#SBATCH --job-name=PP_LF",
+      "#SBATCH --ntasks=1",
+      "#SBATCH --ntasks-per-node=1",
+      paste0("#SBATCH --account=", ProjectID),
+      "#SBATCH --cpus-per-task=1",
+      "#SBATCH --gpus-per-node=1",
+      paste0("#SBATCH --time=", LF_runtime),
+      paste0("#SBATCH --partition=", partition_name),
+      paste0("#SBATCH --output=", fs::path(Path_Log, "%x-%A-%a.out")),
+      paste0("#SBATCH --error=", fs::path(Path_Log, "%x-%A-%a.out")),
+      paste0("#SBATCH --array=1-", n_batch_files),
+      "",
+      "# Define directories",
+      paste0('OutputDir="', Path_TF, '"'),
+      "",
+      "# Find all the split files and sort them explicitly",
+      paste0(
+        'SplitFiles=($(find "$OutputDir" -type f ',
+        '-name "TF_Chunk_*.txt" | sort -V))'),
+      "",
+      "# Check if files were found",
+      "if [ ${#SplitFiles[@]} -eq 0 ]; then",
+      '    echo "Error: No files matching TF_Chunk_*.txt found in $OutputDir"',
+      "    exit 1",
+      "fi",
+      "",
+      paste0("# Ensure no more than `, n_batch_files, ` files are processed"),
+      paste0("MaxFiles=", n_batch_files),
+      "if [ ${#SplitFiles[@]} -gt $MaxFiles ]; then",
+      '    SplitFiles=("${SplitFiles[@]:0:$MaxFiles}")',
+      paste0(
+        '    echo "More than $MaxFiles files found, ',
+        'limiting to the first $MaxFiles files."'),
+      "fi",
+      "",
+      "# Get the index of the current task based on SLURM_ARRAY_TASK_ID",
+      "TaskIndex=$((SLURM_ARRAY_TASK_ID - 1))",
+      "",
+      "# Validate TaskIndex",
+      "if [ $TaskIndex -ge ${#SplitFiles[@]} ] || [ $TaskIndex -lt 0 ]; then",
+      paste0(
+        '    echo "Error: TaskIndex $TaskIndex is out of range. ',
+        'Valid range: 0 to $((${#SplitFiles[@]} - 1))"'),
+      "    exit 1",
+      "fi",
+      "",
+      "# Get the specific split file to process based on the job array task ID",
+      'SplitFile="${SplitFiles[$TaskIndex]}"',
+      "",
+      "# Verify the selected split file",
+      'if [ -z "$SplitFile" ] || [ ! -f "$SplitFile" ]; then',
+      '    echo "Error: File $SplitFile does not exist or is invalid."',
+      "    exit 1",
+      "fi",
+      "",
+      "# Processing file",
+      'echo "Processing file: $SplitFile"',
+      "",
+      "# Run the selected split file",
+      'bash "$SplitFile"',
+      "\necho End of program at `date`\n",
+      paste0("# ", strrep("-", 50)),
+      paste0(
+        "# This script was created on: ",
+        format(
+          lubridate::now(tzone = "CET"), format = "%Y-%m-%d %H:%M"), " CET"),
+      paste0("# ", strrep("-", 50)))
+
+    Path_LF_SLURM <- fs::path(Path_TF, "LF_SLURM.slurm")
+    ecokit::cat_time(
+      paste0("Writing SLURM script to: `", Path_LF_SLURM, "`"),
+      level = 1L, cat_timestamp = FALSE)
+    # Write the content to a file
+    readr::write_lines(LF_slurm_script, Path_LF_SLURM, append = FALSE)
+    # Make the file executable
+    Sys.chmod(Path_LF_SLURM, mode = "755")
+
+    ecokit::cat_time(
+      paste0(
+        "\nTo submit LF prediction SLURM script:\n\tsbatch ", Path_LF_SLURM),
+      cat_timestamp = FALSE)
+
+  }
 
   # ****************************************************************
   # ****************************************************************
@@ -1249,10 +1283,6 @@ mod_postprocess_2_CPU <- function(
 
     IASDT.R::plot_evaluation(model_dir = model_dir, env_file = env_file)
   }
-
-  # ****************************************************************
-
-  # Post-processing cross-validated models ------
 
   # ****************************************************************
 

@@ -499,8 +499,7 @@ CLC_process <- function(
         terra::writeRaster(
           x = Map, overwrite = TRUE,
           filename = fs::path(
-            Path_CLC_Summary_Tif_Crop,
-            paste0("PercCov_", names(Map), ".tif")))
+            Path_CLC_Summary_Tif_Crop, paste0("PercCov_", names(Map), ".tif")))
 
         OutObjName <- paste0("PercCov_", CLC_type, "_Crop")
         ecokit::save_as(
@@ -510,8 +509,11 @@ CLC_process <- function(
 
         return(Map)
       }
-    )
-  )
+    ))
+
+  ecokit::save_as(
+    object = PercCovMaps, object_name = "PercCovMaps",
+    out_path = fs::path(Path_CLC_Summary_RData, "PercCovMaps.RData"))
 
   # # ..................................................................... ###
 

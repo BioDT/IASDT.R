@@ -45,6 +45,8 @@ mod_postprocess_1_CPU(
 )
 
 mod_prepare_TF(
+  process_VP = TRUE,
+  process_LF = TRUE,
   n_batch_files = 210L,
   env_file = ".env",
   working_directory = NULL,
@@ -221,6 +223,12 @@ Defaults to 10L.}
 \item{width_omega, height_omega, width_beta, height_beta}{Integer. The width and
 height of the generated heatmaps of the Omega and Beta parameters in
 centimetres.}
+
+\item{process_VP}{Logical. Whether to prepares batch scripts for variance
+partitioning GPU computations on GPUs. Defaults to \code{TRUE}.}
+
+\item{process_LF}{Logical. Whether to prepares batch scripts for latent
+factor predictions GPU computations on GPUs. Defaults to \code{TRUE}.}
 
 \item{n_batch_files}{Integer. Number of output batch files to create. Must be
 less than or equal to the maximum job limit of the HPC environment.}

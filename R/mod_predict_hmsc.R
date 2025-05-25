@@ -540,7 +540,7 @@ predict_hmsc <- function(
   } else {
     ecokit::set_parallel(
       n_cores = min(n_cores, length(Chunks)), level = 1L,
-      future_max_size = 800L, strategy = strategy)
+      future_max_size = 800L, strategy = strategy, cat_timestamp = FALSE)
     withr::defer(future::plan("sequential", gc = TRUE))
   }
 
@@ -721,7 +721,7 @@ predict_hmsc <- function(
       "pred_PA", "pred_XY"))
 
   if (n_cores > 1) {
-    ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
+    ecokit::set_parallel(stop_cluster = TRUE, level = 1L, cat_timestamp = FALSE)
     future::plan("sequential", gc = TRUE)
   }
 

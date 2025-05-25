@@ -92,7 +92,7 @@ resp_curv_plot_SR <- function(
   } else {
     ecokit::set_parallel(
       n_cores = n_cores, level = 1L, future_max_size = 800L,
-      strategy = strategy)
+      strategy = strategy, cat_timestamp = FALSE)
     withr::defer(future::plan("sequential", gc = TRUE))
   }
 
@@ -139,7 +139,8 @@ resp_curv_plot_SR <- function(
     dplyr::select(-data)
 
   if (n_cores > 1) {
-    ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
+    ecokit::set_parallel(
+      stop_cluster = TRUE, level = 1L, cat_timestamp = FALSE)
     future::plan("sequential", gc = TRUE)
   }
 
@@ -151,7 +152,6 @@ resp_curv_plot_SR <- function(
 
   ecokit::cat_time(
     "Plot species richness response curves", level = 1L, verbose = verbose)
-
 
   VarLabel <- tibble::tribble(
     ~Variable1, ~Var2, ~Variable2,
@@ -193,7 +193,7 @@ resp_curv_plot_SR <- function(
 
           ecokit::cat_time(
             paste0(Variable, " - coords = ", Coords),
-            level = 2L, verbose = verbose)
+            level = 2L, verbose = verbose, cat_timestamp = FALSE)
 
           # Maximum value on the y-axis
           PlotMax <- max(Observed$Pred, Quant$Q975) * 1.05

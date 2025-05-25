@@ -93,7 +93,7 @@ variance_partitioning_compute <- function(
   pkg_to_export <- ecokit::load_packages_future(
     packages = c(
       "Matrix", "dplyr", "arrow", "purrr", "IASDT.R", "qs2", "methods",
-      "stringr", "fs", "ecokit", "magrittr"),
+      "stringr", "fs", "ecokit", "magrittr", "Hmsc"),
     strategy = strategy)
 
   # # .................................................................... ###
@@ -784,7 +784,13 @@ variance_partitioning_compute <- function(
       level = 1L, verbose = verbose)
     n_postList <- length(postList)
     rm(postList, lbeta, envir = environment())
+
+    Model <- IASDT.R::trim_hmsc(
+      model = Model, names_to_remove = setdiff(names(Model), "X"))
     invisible(gc())
+
+    # temporary for debugging
+    ecokit::all_objects_sizes(greater_than = 1L, in_function = TRUE)
 
     if (n_cores == 1) {
       future::plan("sequential", gc = TRUE)
@@ -810,6 +816,8 @@ variance_partitioning_compute <- function(
           ecokit::load_as()
         Beta <- curr_postList$Beta
         Lambdas <- curr_postList$Lambda
+        rm(curr_postList, envir = environment())
+        invisible(gc())
 
         # Suppress warnings when no trait information is used in the models
         # cor(Beta[k, ], lmu[k, ]) : the standard deviation is zero
@@ -824,6 +832,9 @@ variance_partitioning_compute <- function(
           .f = ~ {
             suppressWarnings(stats::cor(curr_lbeta[.x, ], DT_lmu[.x, ])^2)
           })
+
+        rm(curr_lbeta, DT_lmu, envir = environment())
+        invisible(gc())
 
         fixed1 <- matrix(0, nrow = ns, ncol = 1)
         fixedsplit1 <- matrix(0, nrow = ns, ncol = ngroups)
@@ -840,7 +851,6 @@ variance_partitioning_compute <- function(
         res2 <- sum((rowSums((a * a)) / (ns - 1)) *
                       (rowSums((f * f)) / (ns - 1)))
         R2T.Y <- res1 / res2
-
 
         for (j in seq_len(ns)) {
           switch(
@@ -861,8 +871,8 @@ variance_partitioning_compute <- function(
               Beta[sel, j], mm(cM[sel, sel], Beta[sel, j]))
             fixedsplit1[j, k] <- fixedsplit1[j, k] + fpart
           }
-
         }
+        rm(ftotal, fpart, envir = environment())
 
         for (level in seq_len(nr)) {
           Lambda <- Lambdas[[level]]
@@ -872,7 +882,7 @@ variance_partitioning_compute <- function(
               t(Lambda[factor, ]) * Lambda[factor, ]
           }
         }
-
+        rm(Lambda, envir = environment())
 
         if (nr > 0) {
           tot <- fixed1 + rowSums(random1)
@@ -902,7 +912,7 @@ variance_partitioning_compute <- function(
       future.packages = pkg_to_export,
       future.globals = c(
         "ngroups", "Files_la", "Files_lf", "Files_lmu", "path_lbeta", "nc",
-        "Model", "path_postList", "poolN", "ns", "nr", "cMA", "group"))
+        "Model", "path_postList", "ns", "nr", "cMA", "group"))
 
     # stopping the cluster
     if (n_cores > 1) {

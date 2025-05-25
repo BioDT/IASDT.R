@@ -139,7 +139,7 @@ resp_curv_plot_species <- function(
   } else {
     ecokit::set_parallel(
       n_cores = n_cores, level = 1L, future_max_size = 800L,
-      strategy = strategy)
+      strategy = strategy, cat_timestamp = FALSE)
     withr::defer(future::plan("sequential", gc = TRUE))
   }
 
@@ -167,7 +167,7 @@ resp_curv_plot_species <- function(
 
   # stopping the cluster
   if (n_cores > 1) {
-    ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
+    ecokit::set_parallel(stop_cluster = TRUE, level = 1L, cat_timestamp = FALSE)
     future::plan("sequential", gc = TRUE)
   }
 
@@ -193,7 +193,7 @@ resp_curv_plot_species <- function(
   } else {
     ecokit::set_parallel(
       n_cores = n_cores, level = 1L, future_max_size = 800L,
-      strategy = strategy)
+      strategy = strategy, cat_timestamp = FALSE)
     withr::defer(future::plan("sequential", gc = TRUE))
   }
 
@@ -477,7 +477,7 @@ resp_curv_plot_species <- function(
 
   # stopping the cluster
   if (n_cores > 1) {
-    ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
+    ecokit::set_parallel(stop_cluster = TRUE, level = 2L, cat_timestamp = FALSE)
     future::plan("sequential", gc = TRUE)
   }
   invisible(gc())

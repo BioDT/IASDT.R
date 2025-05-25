@@ -436,7 +436,7 @@ resp_curv_prepare_data <- function(
 
     ecokit::cat_time(
       "All response curve data files were already available on disk",
-      level = 1L, verbose = verbose)
+      level = 1L, verbose = verbose, cat_timestamp = FALSE)
     ResCurvDT <- purrr::map_dfr(
       .x = seq_len(nrow(ResCurvDT)), .f = PrepRCData, File_LF = File_LF)
 
@@ -452,7 +452,7 @@ resp_curv_prepare_data <- function(
       ecokit::cat_time(
         paste0(
           "All response curve data (", MissingRows, ") need to be prepared"),
-        level = 1L, verbose = verbose)
+        level = 1L, verbose = verbose, cat_timestamp = FALSE)
     }
 
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -518,8 +518,8 @@ resp_curv_prepare_data <- function(
       future::plan("sequential", gc = TRUE)
     } else {
       ecokit::set_parallel(
-        n_cores = n_cores, level = 1L, future_max_size = 800L,
-        strategy = strategy)
+        n_cores = n_cores, future_max_size = 800L, strategy = strategy,
+        cat_timestamp = FALSE)
       withr::defer(future::plan("sequential", gc = TRUE))
     }
 
@@ -541,7 +541,7 @@ resp_curv_prepare_data <- function(
       dplyr::bind_rows()
 
     if (n_cores > 1) {
-      ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
+      ecokit::set_parallel(stop_cluster = TRUE, cat_timestamp = FALSE)
       future::plan("sequential", gc = TRUE)
     }
 

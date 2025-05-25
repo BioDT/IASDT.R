@@ -1239,7 +1239,7 @@ predict_maps <- function(
   } else {
     ecokit::set_parallel(
       n_cores = min(n_cores, nrow(Prediction_Summary)), level = 1L,
-      future_max_size = 1500L, strategy = strategy)
+      future_max_size = 1500L, strategy = strategy, cat_timestamp = FALSE)
     withr::defer(future::plan("sequential", gc = TRUE))
   }
 
@@ -1307,68 +1307,97 @@ predict_maps <- function(
     terra::unwrap()
   CurrentMean <- terra::wrap(CurrentMean["_mean"])
 
+  if (n_cores > 1) {
+    ecokit::set_parallel(stop_cluster = TRUE, level = 1L, cat_timestamp = FALSE)
+    future::plan("sequential", gc = TRUE)
+  }
+
+  invisible(gc())
+
+  # temporary for debugging
+  ecokit::all_objects_sizes(greater_than = 1, in_function = TRUE)
+
   # --------------------------------------------------------- #
 
   # Calculate ensemble predictions
   ecokit::cat_time("Calculate ensemble predictions", level = 1L)
 
-  Prediction_Ensemble <- Prediction_Ensemble %>%
-    dplyr::mutate(
-      Ensemble_Maps = furrr::future_pmap(
-        .l = list(
-          tifs, tif_path_mean, tif_path_anomaly,
-          tif_path_sd, tif_path_cov, ias_id),
-        .f = function(tifs, tif_path_mean, tif_path_anomaly,
-                      tif_path_sd, tif_path_cov, ias_id) {
+  if (n_cores == 1) {
+    future::plan("sequential", gc = TRUE)
+  } else {
+    ecokit::set_parallel(
+      n_cores = min(n_cores, nrow(Prediction_Summary)), level = 1L,
+      future_max_size = 1500L, strategy = strategy, cat_timestamp = FALSE)
+    withr::defer(future::plan("sequential", gc = TRUE))
+  }
 
-          # load maps for future climate option
-          tiffs_R <- terra::rast(tifs)
+  Prediction_Ensemble0 <- dplyr::select(
+    Prediction_Ensemble,
+    tifs, tif_path_mean, tif_path_anomaly, tif_path_sd, tif_path_cov, ias_id)
 
-          # Mean maps
-          Ensemble_mean <- terra::app(tiffs_R, "mean", na.rm = TRUE) %>%
-            stats::setNames(paste0(ias_id, "_mean"))
-          terra::writeRaster(
-            x = Ensemble_mean, filename = tif_path_mean,
-            overwrite = TRUE, gdal = c("COMPRESS=DEFLATE", "TILED=YES"))
+  calculate_ensemble <- future.apply::future_lapply(
+    X = seq_len(nrow(Prediction_Ensemble)),
+    FUN = function(id) {
 
-          # Anomaly maps: calculate prediction anomaly for ensemble future
-          # projection
-          CurrentMean0 <- terra::unwrap(CurrentMean) %>%
-            terra::subset(paste0(ias_id, "_mean"))
-          Ensemble_anomaly <- (Ensemble_mean - CurrentMean0) %>%
-            stats::setNames(paste0(ias_id, "_anomaly"))
-          terra::writeRaster(
-            x = Ensemble_anomaly, filename = tif_path_anomaly,
-            overwrite = TRUE, gdal = c("COMPRESS=DEFLATE", "TILED=YES"))
+      tifs <- Prediction_Ensemble0$tifs[[id]]
+      tif_path_mean <- Prediction_Ensemble0$tif_path_mean[[id]]
+      tif_path_anomaly <- Prediction_Ensemble0$tif_path_anomaly[[id]]
+      tif_path_sd <- Prediction_Ensemble0$tif_path_sd[[id]]
+      tif_path_cov <- Prediction_Ensemble0$tif_path_cov[[id]]
+      ias_id <- Prediction_Ensemble0$ias_id[[id]]
 
-          rm(CurrentMean0, envir = environment())
+      # load maps for future climate option
+      tiffs_R <- terra::rast(tifs)
 
-          # Standard deviation
-          Ensemble_sd <- terra::app(tiffs_R, "sd", na.rm = TRUE) %>%
-            stats::setNames(paste0(ias_id, "_sd"))
-          terra::writeRaster(
-            x = Ensemble_sd, filename = tif_path_sd,
-            overwrite = TRUE, gdal = c("COMPRESS=DEFLATE", "TILED=YES"))
+      # Mean maps
+      Ensemble_mean <- terra::app(tiffs_R, "mean", na.rm = TRUE) %>%
+        stats::setNames(paste0(ias_id, "_mean"))
+      terra::writeRaster(
+        x = Ensemble_mean, filename = tif_path_mean,
+        overwrite = TRUE, gdal = c("COMPRESS=DEFLATE", "TILED=YES"))
 
-          # coefficient of variation
-          Ensemble_mean0 <- Ensemble_mean
-          # Replace very small mean values with reasonably small number to avoid
-          # overflow warning
-          Ensemble_mean0[Ensemble_mean0 < 1e-8] <- 1e-8
-          Ensemble_cov <- (Ensemble_sd / Ensemble_mean0) %>%
-            stats::setNames(paste0(ias_id, "_cov"))
-          terra::writeRaster(
-            x = Ensemble_cov, filename = tif_path_cov,
-            overwrite = TRUE, gdal = c("COMPRESS=DEFLATE", "TILED=YES"))
+      # Anomaly maps: calculate prediction anomaly for ensemble future
+      # projection
+      CurrentMean0 <- terra::unwrap(CurrentMean) %>%
+        terra::subset(paste0(ias_id, "_mean"))
+      Ensemble_anomaly <- (Ensemble_mean - CurrentMean0) %>%
+        stats::setNames(paste0(ias_id, "_anomaly"))
+      terra::writeRaster(
+        x = Ensemble_anomaly, filename = tif_path_anomaly,
+        overwrite = TRUE, gdal = c("COMPRESS=DEFLATE", "TILED=YES"))
 
-          return(NULL)
-        },
-        .options = furrr::furrr_options(
-          seed = TRUE, scheduling = 1, packages = pkg_to_export,
-          globals = "CurrentMean")),
-      Dir_Ensemble = NULL, tifs = NULL, Ensemble_Maps = NULL)
+      rm(CurrentMean0, Ensemble_anomaly, envir = environment())
 
-  rm(CurrentMean, envir = environment())
+      # Standard deviation
+      Ensemble_sd <- terra::app(tiffs_R, "sd", na.rm = TRUE) %>%
+        stats::setNames(paste0(ias_id, "_sd"))
+      terra::writeRaster(
+        x = Ensemble_sd, filename = tif_path_sd,
+        overwrite = TRUE, gdal = c("COMPRESS=DEFLATE", "TILED=YES"))
+
+      # coefficient of variation
+      Ensemble_mean <- Ensemble_mean
+      # Replace very small mean values with reasonably small number to avoid
+      # overflow warning
+      Ensemble_mean[Ensemble_mean < 1e-8] <- 1e-8
+      Ensemble_cov <- (Ensemble_sd / Ensemble_mean) %>%
+        stats::setNames(paste0(ias_id, "_cov"))
+      terra::writeRaster(
+        x = Ensemble_cov, filename = tif_path_cov,
+        overwrite = TRUE, gdal = c("COMPRESS=DEFLATE", "TILED=YES"))
+
+      invisible(gc())
+      return(NULL)
+
+    },
+    future.seed = TRUE,
+    future.packages = pkg_to_export,
+    future.globals = c("CurrentMean", "Prediction_Ensemble0"))
+
+  rm(
+    CurrentMean, Prediction_Ensemble0, calculate_ensemble,
+    envir = environment())
+  invisible(gc())
 
   # --------------------------------------------------------- #
 
@@ -1376,6 +1405,7 @@ predict_maps <- function(
   ecokit::cat_time("Save ensemble predictions as SpatRast", level = 1L)
 
   Prediction_Ensemble_R <- Prediction_Ensemble %>%
+    dplyr::select(-Dir_Ensemble, -tifs) %>%
     dplyr::mutate(
       Ensemble_File = fs::path(
         dplyr::if_else(
@@ -1428,7 +1458,7 @@ predict_maps <- function(
     future.packages = pkg_to_export, future.globals = "Prediction_Ensemble_R")
 
   if (n_cores > 1) {
-    ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
+    ecokit::set_parallel(stop_cluster = TRUE, level = 1L, cat_timestamp = FALSE)
     future::plan("sequential", gc = TRUE)
   }
 

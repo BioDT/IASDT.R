@@ -262,7 +262,7 @@ predict_latent_factor <- function(
       if (s1_s2_Okay) {
         ecokit::cat_time(
           "s1 and s2 matrices were already saved",
-          level = 2L, verbose = verbose)
+          level = 2L, verbose = verbose, cat_timestamp = FALSE)
       } else {
 
         ecokit::cat_time(
@@ -654,7 +654,7 @@ predict_latent_factor <- function(
 
         ecokit::set_parallel(
           n_cores = min(LF_n_cores, nrow(LF_Data)), level = 2L,
-          future_max_size = 800L, strategy = strategy)
+          future_max_size = 800L, strategy = strategy, cat_timestamp = FALSE)
         withr::defer(future::plan("sequential", gc = TRUE))
 
         ecokit::cat_time(
@@ -683,7 +683,8 @@ predict_latent_factor <- function(
             "Temp_Dir_LF"))
 
         # Stop the cluster
-        ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
+        ecokit::set_parallel(
+          stop_cluster = TRUE, level = 2L, cat_timestamp = FALSE)
       }
 
       # Check if all files are created
@@ -698,7 +699,9 @@ predict_latent_factor <- function(
           paste0(length(FailedFiles), " files are missing"),
           FailedFiles = basename(FailedFiles), include_backtrace = TRUE)
       }
-      ecokit::cat_time("All files were created", level = 2L, verbose = verbose)
+      ecokit::cat_time(
+        "All files were created", level = 2L, verbose = verbose,
+        cat_timestamp = FALSE)
 
     }
 
@@ -724,7 +727,7 @@ predict_latent_factor <- function(
 
     ecokit::set_parallel(
       n_cores = LF_n_cores, level = 2L, future_max_size = 800L,
-      strategy = strategy)
+      strategy = strategy, cat_timestamp = FALSE)
     withr::defer(future::plan("sequential", gc = TRUE))
 
     ecokit::cat_time(
@@ -757,7 +760,7 @@ predict_latent_factor <- function(
       future.globals = c("postEtaPred_Samp", "LF_return"))
 
     # Stop the cluster
-    ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
+    ecokit::set_parallel(stop_cluster = TRUE, level = 2L, cat_timestamp = FALSE)
 
     invisible(gc())
 

@@ -93,7 +93,7 @@ variance_partitioning_compute <- function(
   pkg_to_export <- ecokit::load_packages_future(
     packages = c(
       "Matrix", "dplyr", "arrow", "purrr", "IASDT.R", "qs2", "methods",
-      "stringr", "fs", "ecokit", "magrittr", "Hmsc"),
+      "stringr", "fs", "ecokit", "magrittr", "Hmsc", "stats"),
     strategy = strategy)
 
   # # .................................................................... ###

@@ -317,7 +317,7 @@ resp_curv_plot_SR <- function(
 
             ecokit::cat_time(
               paste0(Variable, " - coords = ", Coords, " - original scale"),
-              level = 2L, verbose = verbose)
+              level = 2L, verbose = verbose, cat_timestamp = FALSE)
 
             Observed2 <- dplyr::mutate(Observed, XVals = 10 ^ XVals - 0.1)
             Quant2 <- dplyr::mutate(Quant, XVals = 10 ^ XVals - 0.1)

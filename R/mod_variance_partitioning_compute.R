@@ -789,9 +789,6 @@ variance_partitioning_compute <- function(
       model = Model, names_to_remove = setdiff(names(Model), "X"))
     invisible(gc())
 
-    # temporary for debugging
-    ecokit::all_objects_sizes(greater_than = 1L, in_function = TRUE)
-
     if (n_cores == 1) {
       future::plan("sequential", gc = TRUE)
     } else {

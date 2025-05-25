@@ -126,7 +126,7 @@ predict_maps <- function(
 
   # packages to be loaded in parallel
   pkg_to_export <- ecokit::load_packages_future(
-    packages = c("terra", "dplyr", "purrr", "ecokit", "qs2", "magrittr"),
+    packages = c("terra", "dplyr", "purrr", "ecokit", "qs2", "magrittr", "fs"),
     strategy = strategy)
 
   # # ..................................................................... ###
@@ -1234,17 +1234,6 @@ predict_maps <- function(
     "\tEnsemble model predictions", n_separators = 1L, line_char = "-",
     line_char_rep = 70L, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
-  if (n_cores == 1) {
-    future::plan("sequential", gc = TRUE)
-  } else {
-    ecokit::set_parallel(
-      n_cores = min(n_cores, nrow(Prediction_Summary)), level = 1L,
-      future_max_size = 1500L, strategy = strategy, cat_timestamp = FALSE)
-    withr::defer(future::plan("sequential", gc = TRUE))
-  }
-
-  # --------------------------------------------------------- #
-
   # Prepare input data to calculate ensemble predictions
   ecokit::cat_time(
     "Prepare input data to calculate ensemble predictions", level = 1L)
@@ -1253,7 +1242,7 @@ predict_maps <- function(
     dplyr::filter(ClimateModel != "Current") %>%
     dplyr::select(-File_Pred_sf, -File_Pred_R, -Name, -ClimateModel) %>%
     dplyr::mutate(
-      Prediction2 = furrr::future_map(
+      Prediction2 = purrr::map(
         .x = File_Pred_summary,
         .f = ~ {
           if (!file.exists(.x)) {
@@ -1266,10 +1255,7 @@ predict_maps <- function(
               -tidyselect::all_of(
                 c("tif_path_sd", "tif_path_cov", "tif_path_anomaly")))
 
-        },
-        .options = furrr::furrr_options(
-          seed = TRUE, scheduling = 1,
-          packages = c("tidyselect", "dplyr", "IASDT.R")))) %>%
+        })) %>%
     dplyr::select("Prediction2", "Clamp") %>%
     tidyr::unnest("Prediction2") %>%
     dplyr::mutate(
@@ -1307,15 +1293,7 @@ predict_maps <- function(
     terra::unwrap()
   CurrentMean <- terra::wrap(CurrentMean["_mean"])
 
-  if (n_cores > 1) {
-    ecokit::set_parallel(stop_cluster = TRUE, level = 1L, cat_timestamp = FALSE)
-    future::plan("sequential", gc = TRUE)
-  }
-
   invisible(gc())
-
-  # temporary for debugging
-  ecokit::all_objects_sizes(greater_than = 1, in_function = TRUE)
 
   # --------------------------------------------------------- #
 
@@ -1331,20 +1309,23 @@ predict_maps <- function(
     withr::defer(future::plan("sequential", gc = TRUE))
   }
 
-  Prediction_Ensemble0 <- dplyr::select(
+  ecokit::cat_time("Starting calculating ensemble predictions", level = 1L)
+
+  Prediction_Ensemble_0 <- dplyr::select(
     Prediction_Ensemble,
     tifs, tif_path_mean, tif_path_anomaly, tif_path_sd, tif_path_cov, ias_id)
 
   calculate_ensemble <- future.apply::future_lapply(
-    X = seq_len(nrow(Prediction_Ensemble)),
+    X = seq_len(nrow(Prediction_Ensemble_0)),
     FUN = function(id) {
 
-      tifs <- Prediction_Ensemble0$tifs[[id]]
-      tif_path_mean <- Prediction_Ensemble0$tif_path_mean[[id]]
-      tif_path_anomaly <- Prediction_Ensemble0$tif_path_anomaly[[id]]
-      tif_path_sd <- Prediction_Ensemble0$tif_path_sd[[id]]
-      tif_path_cov <- Prediction_Ensemble0$tif_path_cov[[id]]
-      ias_id <- Prediction_Ensemble0$ias_id[[id]]
+      tifs <- as.character(Prediction_Ensemble_0$tifs[[id]])
+      tif_path_mean <- as.character(Prediction_Ensemble_0$tif_path_mean[[id]])
+      tif_path_anomaly <- as.character(
+        Prediction_Ensemble_0$tif_path_anomaly[[id]])
+      tif_path_sd <- as.character(Prediction_Ensemble_0$tif_path_sd[[id]])
+      tif_path_cov <- as.character(Prediction_Ensemble_0$tif_path_cov[[id]])
+      ias_id <- Prediction_Ensemble_0$ias_id[[id]]
 
       # load maps for future climate option
       tiffs_R <- terra::rast(tifs)
@@ -1376,7 +1357,7 @@ predict_maps <- function(
         overwrite = TRUE, gdal = c("COMPRESS=DEFLATE", "TILED=YES"))
 
       # coefficient of variation
-      Ensemble_mean <- Ensemble_mean
+      #
       # Replace very small mean values with reasonably small number to avoid
       # overflow warning
       Ensemble_mean[Ensemble_mean < 1e-8] <- 1e-8
@@ -1390,12 +1371,11 @@ predict_maps <- function(
       return(NULL)
 
     },
-    future.seed = TRUE,
-    future.packages = pkg_to_export,
-    future.globals = c("CurrentMean", "Prediction_Ensemble0"))
+    future.seed = TRUE, future.packages = pkg_to_export,
+    future.globals = c("CurrentMean", "Prediction_Ensemble_0"))
 
   rm(
-    CurrentMean, Prediction_Ensemble0, calculate_ensemble,
+    CurrentMean, Prediction_Ensemble_0, calculate_ensemble,
     envir = environment())
   invisible(gc())
 

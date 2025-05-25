@@ -135,25 +135,11 @@ resp_curv_plot_species <- function(
 
   ecokit::cat_time("Prepare species-specific data in parallel")
 
-  if (n_cores == 1) {
-    future::plan("sequential", gc = TRUE)
-  } else {
-    ecokit::set_parallel(
-      n_cores = n_cores, level = 1L, future_max_size = 800L,
-      strategy = strategy, cat_timestamp = FALSE)
-    withr::defer(future::plan("sequential", gc = TRUE))
-  }
-
-  ecokit::cat_time("Processing in parallel", level = 1L)
-
   Sp_DT_All <- fs::path(Path_RC_DT, "ResCurvDT.RData") %>%
     ecokit::load_as() %>%
     dplyr::select(tidyselect::all_of(c("Coords", "RC_Path_Prob"))) %>%
     dplyr::mutate(
-      Data = furrr::future_map(
-        .x = RC_Path_Prob, .f = ecokit::load_as,
-        .options = furrr::furrr_options(
-          globals = "Path_RC_DT", packages = pkg_to_export))) %>%
+      Data = purrr::map(.x = RC_Path_Prob, .f = ecokit::load_as)) %>%
     tidyr::unnest(Data) %>%
     dplyr::select(-RC_Path_Prob) %>%
     tidyr::nest(
@@ -166,11 +152,6 @@ resp_curv_plot_species <- function(
       path_JPEG_free = fs::path(Path_RC_Sp, paste0(Prefix, "_Free.jpeg")),
       Path_Sp_DT = fs::path(Path_RC_Sp_DT, paste0(Prefix, ".qs2")))
 
-  # stopping the cluster
-  if (n_cores > 1) {
-    ecokit::set_parallel(stop_cluster = TRUE, level = 1L, cat_timestamp = FALSE)
-    future::plan("sequential", gc = TRUE)
-  }
 
   ecokit::cat_time("Export species-specific data", level = 1L)
   purrr::walk(
@@ -470,8 +451,7 @@ resp_curv_plot_species <- function(
       return(OutDF)
 
     },
-    future.scheduling = Inf, future.seed = TRUE,
-    future.packages = pkg_to_export,
+    future.seed = TRUE, future.packages = pkg_to_export,
     future.globals = c("SpeciesNames", "Sp_DT_All")) %>%
     dplyr::bind_rows() %>%
     ecokit::quiet_device()

@@ -104,7 +104,8 @@ plot_prediction <- function(
   pkg_to_export <- ecokit::load_packages_future(
     packages = c(
       "dplyr", "terra", "ggplot2", "stringr", "cowplot", "tidyterra",
-      "purrr", "ggtext", "ragg", "paletteer", "grid", "scales", "ecokit"),
+      "purrr", "ggtext", "ragg", "paletteer", "grid", "scales", "ecokit",
+      "magrittr"),
     strategy = strategy)
 
   # # ..................................................................... ###

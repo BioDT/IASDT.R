@@ -126,7 +126,7 @@ predict_maps <- function(
 
   # packages to be loaded in parallel
   pkg_to_export <- ecokit::load_packages_future(
-    packages = c("terra", "dplyr", "purrr", "ecokit", "qs2"),
+    packages = c("terra", "dplyr", "purrr", "ecokit", "qs2", "magrittr"),
     strategy = strategy)
 
   # # ..................................................................... ###

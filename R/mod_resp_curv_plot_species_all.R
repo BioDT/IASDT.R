@@ -85,7 +85,7 @@ resp_curv_plot_species_all <- function(
 
   # packages to be loaded in parallel
   pkg_to_export <- ecokit::load_packages_future(
-    packages = c("ecokit", "dplyr"), strategy = strategy)
+    packages = c("ecokit", "dplyr", "magrittr"), strategy = strategy)
 
   # # ..................................................................... ###
 

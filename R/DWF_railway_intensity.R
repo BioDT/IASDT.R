@@ -129,7 +129,8 @@ railway_intensity <- function(
 
   # packages to be loaded in parallel
   pkg_to_export <- ecokit::load_packages_future(
-    packages = c("dplyr", "fs", "sf", "IASDT.R", "stringr", "withr", "ecokit"),
+    packages = c(
+      "dplyr", "fs", "sf", "IASDT.R", "stringr", "withr", "ecokit", "magrittr"),
     strategy = strategy)
 
   # # ..................................................................... ###

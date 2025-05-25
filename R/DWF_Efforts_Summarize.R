@@ -76,7 +76,7 @@ efforts_summarize <- function(
   pkg_to_export <- ecokit::load_packages_future(
     packages = c(
       "ecokit", "stringr", "fs", "sf", "readr", "dplyr", "terra",
-      "purrr", "tibble", "R.utils", "IASDT.R"),
+      "purrr", "tibble", "R.utils", "IASDT.R", "magrittr"),
     strategy = strategy)
 
   # # ..................................................................... ###

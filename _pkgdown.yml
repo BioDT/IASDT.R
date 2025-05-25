@@ -83,6 +83,7 @@ reference:
   desc: Postprocessing model outputs, including checking for convergence, making spatial predictions, evaluation, and plotting.
   contents:
   - coda_to_tibble
+  - trim_hmsc
   - mod_get_posteriors
   - mod_merge_chains
   - mod_summary

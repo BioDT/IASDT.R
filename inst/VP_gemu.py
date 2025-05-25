@@ -1,26 +1,34 @@
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #
-# - Authors: Ahmed El-Gabbas [ahmed.el-gabbas@ufz.de]
-# - Last updated: 27.11.2024
+# - Authors: Ahmed El-Gabbas [elgabbas[at]outlook[dot]com]
+# - Last updated: 24.05.2025
 # - Affiliation: Helmholtz Centre for Environmental Research - UFZ, Germany
 # - License: MIT License
 #
 # - Description:
 #   
-#   This Python script aids in computing variance partitioning for Hmsc models.
-#   It is designed to be called within the R function 
-#   `IASDT.R::variance_partitioning_compute`. The original functionality is 
-#   extracted from the  `Hmsc::computeVariancePartitioning` R function.
-#   The implementation is optimized for parallel matrix multiplications using 
-#   TensorFlow. This script replaces the R function `gemu`:
+#   This Python script computes variance partitioning for Hierarchical 
+#   Modelling of Species Communities (Hmsc) models. It replaces the R function 
+#   `gemu` (see below) from the `Hmsc::computeVariancePartitioning` R function 
+#   and is designed to be called within 
+#   `IASDT.R::variance_partitioning_compute` from the `IASDT.R` package, which 
+#   models the distribution of invasive alien plant species in Europe. The 
+#   script uses TensorFlow for efficient matrix multiplications and processes 
+#   data in parallel with the `loky` library, handling large datasets by 
+#   splitting the Gamma matrix into chunks. Results are saved as individual 
+#   Feather files. It includes error handling and memory management for 
+#   stability.
 #
-# gemu = function(a){
-#   res = t(hM$Tr%*%t(a$Gamma))
-#   return(res)
-# }
+#
+#   gemu = function(a){
+#     res = t(hM$Tr%*%t(a$Gamma))
+#     return(res)
+#   }
 # 
-# - CITATION: El-Gabbas, A. (2025). IASDT.R: Modelling the distribution of invasive alien plant species in Europe. https://doi.org/10.5281/zenodo.1483438, R package version 0.1.X; https://biodt.github.io/IASDT.R/.
-#
+# - CITATION: El-Gabbas, A. (2025). IASDT.R: Modelling the distribution of 
+#   invasive alien plant species in Europe. https://doi.org/10.5281/zenodo.1483438, 
+#   R package version 0.1.X; https://biodt.github.io/IASDT.R/.
+# 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 import multiprocessing
@@ -29,23 +37,28 @@ import logging
 import warnings
 import os
 import traceback
+import numpy as np
+import pandas as pd
+import pyarrow.feather as feather
+import tensorflow as tf
+import gc
+from loky import get_reusable_executor
 
-# Disable Additional Logs Set the TensorFlow logger - show only critical errors
+# ======================================================================
+# Disable Additional Logs and Configure TensorFlow
+# ======================================================================
+
+# Suppress TensorFlow logs, showing only errors
 # https://stackoverflow.com/questions/55081911/
 logging.getLogger('tensorflow').setLevel(logging.ERROR)
-
-# Set TensorFlow logging level to show only errors
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-# Disable oneDNN optimizations to prevent additional warnings
+# Disable oneDNN optimizations to reduce log noise
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
-
-# Suppress all TensorFlow warnings
+# Ignore TensorFlow user warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="tensorflow")
-
-import tensorflow as tf
-# Reset all devices before making changes
+# Clear TensorFlow session for a fresh start
 tf.keras.backend.clear_session()
-# show only errors, no warnings
+# Set TensorFlow logger to error level only
 # https://www.tensorflow.org/api_docs/python/tf/get_logger
 tf.get_logger().setLevel('ERROR')
 
@@ -53,20 +66,15 @@ tf.get_logger().setLevel('ERROR')
 # tf.compat.v1.reset_default_graph()
 # tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
-import numpy as np
-import pandas as pd
-import pyarrow.feather as feather
-from loky import get_reusable_executor
-
 # ======================================================================
 # TensorFlow and Environment Configuration
 # ======================================================================
 
+# Detect available GPUs
 gpus = tf.config.experimental.list_physical_devices('GPU')
-
 if gpus:
     try:
-        # Enable memory growth
+        # Enable dynamic memory growth for GPUs
         for gpu in gpus:
             tf.config.experimental.set_memory_growth(gpu, True)
         
@@ -80,76 +88,90 @@ if gpus:
         print(f"Error setting memory configurations: {e}")
 
 # ======================================================================
+# Function Definitions
 # ======================================================================
 
 def load_feather_tensor(file_path, dtype):
     """
-    Load a Feather file and return its data as a TensorFlow tensor.
-
+    Load a Feather file into a TensorFlow tensor.
+    
+    Reads data into a NumPy array, ensures contiguous memory, and converts it 
+    to a TensorFlow tensor with the specified data type.
+    
     Args:
         file_path (str): Path to the Feather file.
-        dtype (tf.DType): TensorFlow data type (e.g., tf.float32).
-
+        dtype (tf.DType): TensorFlow data type (e.g., tf.float32 or tf.float64).
+    
     Returns:
-        tf.Tensor: Data loaded as a TensorFlow tensor.
-
+        tf.Tensor: Loaded data as a TensorFlow tensor.
+    
     Raises:
         FileNotFoundError: If the file does not exist.
-        ValueError: If Feather data reading fails.
+        ValueError: If reading the Feather file fails.
     """
-        
+
+    # Check if the file exists
     if not os.path.exists(file_path):
-        raise FileNotFoundError(f"Error: The specified file '{file_path}' does not exist.")
+        raise FileNotFoundError(f"File not found: {file_path}")
     try:
-        feather_data = feather.read_feather(file_path).to_numpy()
-        # Ensure data is contiguous in memory
-        feather_data = np.ascontiguousarray(feather_data)
-        feather_data = tf.convert_to_tensor(feather_data, dtype=dtype)
-        return feather_data
+        # Load Feather data into a NumPy array
+        data = feather.read_feather(file_path).to_numpy()
+        # Ensure contiguous memory layout
+        data = np.ascontiguousarray(data)
+        # Convert to TensorFlow tensor
+        tensor = tf.convert_to_tensor(data, dtype=dtype)
+        # Free memory by deleting NumPy array
+        del data
+        gc.collect()
+        return tensor
     except ValueError as e:
-        raise ValueError(f"Failed to read Feather file at {file_path}: {e}")
+        raise ValueError(f"Error reading {file_path}: {e}")
 
 # ======================================================================
 # ======================================================================
 
 def process_column(tr, gamma_chunk, col_offset, file_output):
-    
     """
-    Process a column chunk of the gamma matrix.
-
+    Process a chunk of the Gamma matrix and save results.
+    
+    Computes tr %*% t(gamma) for each column in the chunk and saves the result 
+    as a Feather file. Skips processing if the output file already exists.
+    
     Args:
         tr (tf.Tensor): Transformation matrix.
-        gamma_chunk (tf.Tensor): Chunk of the gamma matrix.
-        col_offset (int): Column offset for indexing.
-        file_output (str): Output file path.
+        gamma_chunk (tf.Tensor): Chunk of the Gamma matrix.
+        col_offset (int): Offset for global column indexing.
+        file_output (str): Base path for output Feather files.
+    
+    Raises:
+        Exception: If processing fails.
     """
 
     try:
+        # Iterate over each column in the chunk
         for col in range(gamma_chunk.shape[1]):
-            
+            # Calculate global column index
             col_index = col + col_offset
-            
-            # Dynamically generate file names - create a 4-digit padded index
+            # Generate padded file index (e.g., 0001)
             file_index = f"{col_index + 1:04d}"
-            feather_file = f"{file_output.replace('.feather', f'_{file_index}.feather')}"
-
+            # Construct output file path
+            feather_file = file_output.replace('.feather', f'_{file_index}.feather')
+            # Skip if output file already exists
             if os.path.exists(feather_file):
                 continue
-                        
-            # Ensure it's a column vector
-            gamma = tf.reshape(gamma_chunk[:, col], [-1, 1])
-            
-            # Matrix multiplication: tr %*% t(gamma)
-            tr_gamma = tf.matmul(tr, gamma, transpose_b=True)
-            
-            # convert to pandas DataFrame
+            # Extract and reshape the column to a column vector
+            gamma_col = tf.reshape(gamma_chunk[:, col], [-1, 1])
+            # Compute tr %*% t(gamma_col)
+            tr_gamma = tf.matmul(tr, gamma_col, transpose_b=True)
+            # Transpose and convert to DataFrame
             res = pd.DataFrame(tf.transpose(tr_gamma).numpy())
-            
-            # Save as Feather
+            # Save to Feather file
             res.to_feather(feather_file)
-        
+            # Clean up memory
+            del gamma_col, tr_gamma, res
+            gc.collect()
     except Exception as e:
-        print(f"Job failed with exception: {e}")
+        print(f"Processing failed: {e}")
         raise
 
 # ======================================================================
@@ -157,102 +179,103 @@ def process_column(tr, gamma_chunk, col_offset, file_output):
 
 def chunkify(data, chunk_size):
     """
-    Split data into chunks of specified size.
-
+    Split a tensor into chunks along the column dimension.
+    
+    Yields chunks of the specified size and their starting indices.
+    
     Args:
-        data (tf.Tensor): Input data to be chunked.
-        chunk_size (int): Size of each chunk.
-
+        data (tf.Tensor): Input tensor to split.
+        chunk_size (int): Number of columns per chunk.
+    
     Yields:
-        tuple: Chunk of data and its start index.
+        tuple: (chunk, start_index)
     """
 
-    # Iterate over the data tensor
+    # Iterate over columns in steps of chunk_size
     for start in range(0, data.shape[1], chunk_size):
-        # Yield the chunk and its start index
+        # Extract chunk and yield with start index
         yield data[:, start:start + chunk_size], start
 
 # ======================================================================
 # ======================================================================
 
 def gemu(file_tr, file_gamma, use_single, file_output, ncores, chunk_size):
-    
     """
-    Perform parallel matrix multiplication and save results.
-
+    Perform parallel matrix operations and save results.
+    
+    Loads tr and Gamma matrices, splits Gamma into chunks, and processes each 
+    chunk in parallel using loky. Results are saved as Feather files.
+    
     Args:
-        file_tr (str): Path to the tr matrix Feather file.
-        file_gamma (str): Path to the gamma matrix Feather file.
-        use_single (bool): Whether to use single precision (float32).
-        file_output (str): Path to the output file.
-        ncores (int): Number of CPU cores for parallel processing.
-        chunk_size (int): Size of chunks for processing.
+        file_tr (str): Path to tr matrix Feather file.
+        file_gamma (str): Path to Gamma matrix Feather file.
+        use_single (bool): Use float32 if True, else float64.
+        file_output (str): Base path for output Feather files.
+        ncores (int): Number of cores for parallel processing.
+        chunk_size (int): Columns per chunk.
     """
-
+    # Validate chunk_size and ncores
     if chunk_size <= 0:
-        raise ValueError("Chunk size must be a positive integer.")
-    
+        raise ValueError("chunk_size must be positive")
     if ncores <= 0:
-        raise ValueError("Number of cores must be a positive integer.")
-
-    dtype = tf.float32 if use_single else tf.float64
+        raise ValueError("ncores must be positive")
     
-    # Load the tr and gamma matrices
+    # Set data type based on precision flag
+    dtype = tf.float32 if use_single else tf.float64
+    # Load tr and Gamma matrices
     tr = load_feather_tensor(file_tr, dtype)
     gamma = load_feather_tensor(file_gamma, dtype)
     
-    # Split the gamma matrix into chunks
+    # Create tasks by splitting Gamma into chunks
     tasks = [(tr, chunk, offset, file_output) for chunk, offset in chunkify(gamma, chunk_size)]
+    # Free memory by deleting Gamma
+    del gamma
+    gc.collect()
     
-    # Process each chunk in parallel
+    # Process tasks in parallel with loky
     with get_reusable_executor(max_workers=ncores, timeout=600) as executor:
-        futures = []
-        for args in tasks:
-            try:
-                futures.append(executor.submit(process_column, *args))
-            except Exception as e:
-                print(f"Error submitting task: {e}")
-
+        # Submit tasks to executor
+        futures = [executor.submit(process_column, *args) for args in tasks]
+        # Check results and handle errors
         for future in futures:
             try:
                 future.result()
             except Exception as e:
-                print(f"Job failed with exception: {e}")
+                print(f"Worker error: {e}")
                 traceback.print_exc()
 
 # ======================================================================
+# Main Function
 # ======================================================================
 
 def main():
+    """
+    Parse arguments and start the computation.
+    
+    Sets up command-line arguments and initiates the matrix operations.
+    """
 
-    # Create an argument parser
-    parser = argparse.ArgumentParser(description="Parallel TensorFlow-based matrix operations.")
-    parser.add_argument(
-        "--tr", required=True, help="Path to the tr Feather file")
-    parser.add_argument(
-        "--gamma", required=True, help="Path to the gamma Feather file")
-    parser.add_argument(
-        "--output", required=True, help="Output Feather file path")
-    parser.add_argument(
-        "--use_single", action="store_true", 
-        help="Use single precision for computations.")
-    parser.add_argument(
-        "--ncores", type=int, default=4, help="Number of CPU cores")
-    parser.add_argument(
-        "--chunk_size", type=int, default=20, 
-        help="Size of chunks for processing")
-
-    # Parse the command-line arguments
+    # Set up argument parser
+    parser = argparse.ArgumentParser(description="Parallel TensorFlow matrix operations")
+    parser.add_argument("--tr", required=True, help="Path to tr Feather file")
+    parser.add_argument("--gamma", required=True, help="Path to Gamma Feather file")
+    parser.add_argument("--output", required=True, help="Output file base path")
+    parser.add_argument("--use_single", action="store_true", help="Use float32")
+    parser.add_argument("--ncores", type=int, default=4, help="Number of cores")
+    parser.add_argument("--chunk_size", type=int, default=20, help="Chunk size")
+    
+    # Parse arguments
     args = parser.parse_args()
     
-    # Call the gemu function with the provided arguments
+    # Start computation
     gemu(args.tr, args.gamma, args.use_single, args.output, args.ncores, args.chunk_size)
 
 # ======================================================================
 # ======================================================================
 
 if __name__ == "__main__":
-    # Ensure this script can be run on both Windows and UNIX-based systems
+    # Set spawn method for cross-platform compatibility
     multiprocessing.set_start_method("spawn", force=True)
     print("Done")
+    # Execute main function
     main()

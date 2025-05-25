@@ -1,5 +1,6 @@
 ## |------------------------------------------------------------------------| #
 # variance_partitioning_compute ----
+## |------------------------------------------------------------------------| #
 
 #' Computes and visualise variance partitioning of Hmsc models
 #'
@@ -20,7 +21,7 @@
 #' @param group_names vector of names for each group of fixed effect. Should
 #'   match `group`. If the model was defined with `XData` and `XFormula`, the
 #'   default is to use the labels of model terms.
-#' @param start index of first MCMC sample included
+#' @param start index of first MCMC sample included. Default: `1L`.
 #' @param na.ignore Logical. If `TRUE`, covariates are ignored for sites where
 #'   the focal species is NA when computing variance-covariance matrices for
 #'   each species.
@@ -31,7 +32,7 @@
 #'   options are "sequential", "multisession" (default), "multicore", and
 #'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param chunk_size Integer. Size of each chunk of samples to process in
-#'   parallel. Only relevant for `TensorFlow`. Default: `20`.
+#'   parallel. Only relevant for `TensorFlow`. Default: `50`.
 #' @param verbose Logical. Whether to print progress messages. Default: `TRUE`.
 #' @param temp_cleanup Logical. Whether to delete temporary files after
 #'   processing. Default: `TRUE`.
@@ -55,7 +56,7 @@
 variance_partitioning_compute <- function(
     path_model, group = NULL, group_names = NULL, start = 1L, na.ignore = FALSE,
     n_cores = 8L, strategy = "multisession", use_TF = TRUE, TF_environ = NULL,
-    TF_use_single = FALSE, temp_cleanup = TRUE, chunk_size = 20L,
+    TF_use_single = FALSE, temp_cleanup = TRUE, chunk_size = 50L,
     verbose = TRUE, VP_file = "VarPar", VP_commands_only = FALSE) {
 
   if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
@@ -92,7 +93,7 @@ variance_partitioning_compute <- function(
   pkg_to_export <- ecokit::load_packages_future(
     packages = c(
       "Matrix", "dplyr", "arrow", "purrr", "IASDT.R", "qs2", "methods",
-      "stringr", "fs", "ecokit"),
+      "stringr", "fs", "ecokit", "magrittr"),
     strategy = strategy)
 
   # # .................................................................... ###
@@ -244,7 +245,8 @@ variance_partitioning_compute <- function(
   ecokit::cat_time("Prepare postList", verbose = verbose)
   postList <- Hmsc::poolMcmcChains(Model$postList, start = start)
 
-  ecokit::cat_time("Remove not-needed items", level = 1, verbose = verbose)
+  # Remove not-needed items
+
   Items2Delete <- c(
     "Eta", "Psi", "V", "sigma", "Delta", "Alpha",
     "rho", "wRRR", "PsiRRR", "DeltaRRR")
@@ -257,34 +259,18 @@ variance_partitioning_compute <- function(
   invisible(gc())
 
   # Remove unnecessary elements from the model object
-  ecokit::cat_time(
-    "Remove unnecessary elements from the model object",
-    level = 1, verbose = verbose)
-
-  Model$postList <- NULL
-  invisible(gc())
-
-  Model$YScaled <- NULL
-  invisible(gc())
-
-  Model$Y <- NULL
-  Model$XScaled <- NULL
-  Model$rL <- NULL
-  Model$ranLevels <- NULL
-  Model$XData <- NULL
-  Model$dfPi <- NULL
-  Model$studyDesign <- NULL
-  Model$Pi <- NULL
-  Model$C <- NULL
-  Model$phyloTree <- NULL
-  Model$XFormula <- NULL
-  Model$UGamma <- NULL
-  invisible(gc())
 
   Items2Delete <- c(
-    "XScalePar", "aSigma", "bSigma", "TrScaled", "YScalePar",
-    "call", "rhopw", "distr", "V0", "UGamma", "YScaled")
-  Model[Items2Delete] <- NULL
+    "postList", "Y", "XScaled", "rL", "ranLevels", "XData", "dfPi",
+    "studyDesign", "C", "Pi", "phyloTree", "XFormula", "XScalePar",
+    "aSigma", "bSigma", "TrScaled", "YScalePar", "call", "rhopw",
+    "distr", "V0", "UGamma", "YScaled")
+
+  # This takes long time in some cases (when submitted via SLURM)
+  # Model[names_to_remove] <- NULL
+
+  # `trim_hmsc` is much faster
+  Model <- IASDT.R::trim_hmsc(model = Model, names_to_remove = Items2Delete)
   invisible(gc())
 
   poolN <- length(postList)
@@ -296,6 +282,8 @@ variance_partitioning_compute <- function(
   # Prepare `la`/`lf`/`lmu` lists -----
 
   if (use_TF) {
+
+    ecokit::cat_time("Prepare VP files for `TensorFlow`", verbose = verbose)
 
     # Create the temporary directory
     Path_Temp <- fs::path(dirname(dirname(path_model)), "TEMP_VP")
@@ -315,34 +303,37 @@ variance_partitioning_compute <- function(
 
     # List of feather files resulted from `geta` function
     Files_la <- fs::path(Path_Temp, paste0("VP_A_", FileSuffix, ".feather"))
-    Files_la_Exist <- future.apply::future_lapply(
-      X = Files_la, FUN = ecokit::check_data, warning = FALSE,
-      future.seed = TRUE, future.packages = c("arrow", "ecokit")) %>%
-      unlist() %>%
-      all()
+    Files_la_Exist <- all(fs::file_exists(Files_la))
+    if (Files_la_Exist) {
+      Files_la_Exist <- future.apply::future_lapply(
+        X = Files_la,
+        FUN = ecokit::check_data, warning = FALSE,
+        future.seed = TRUE, future.packages = c("arrow", "ecokit")) %>%
+        unlist() %>%
+        all()
+    }
 
     # List of feather files resulted from `getf` function
     Files_lf <- fs::path(Path_Temp, paste0("VP_F_", FileSuffix, ".feather"))
-    Files_lf_Exist <- future.apply::future_lapply(
-      X = Files_lf, FUN = ecokit::check_data, warning = FALSE,
-      future.seed = TRUE, future.packages = c("arrow", "ecokit")) %>%
-      unlist() %>%
-      all()
+    Files_lf_Exist <- all(fs::file_exists(Files_lf))
+    if (Files_lf_Exist) {
+      Files_lf_Exist <- future.apply::future_lapply(
+        X = Files_lf, FUN = ecokit::check_data, warning = FALSE,
+        future.seed = TRUE, future.packages = c("arrow", "ecokit")) %>%
+        unlist() %>%
+        all()
+    }
 
     # List of feather files resulted from `gemu` function
     Files_lmu <- fs::path(Path_Temp, paste0("VP_Mu_", FileSuffix, ".feather"))
-    Files_lmu_Exist <- future.apply::future_lapply(
-      X = Files_lmu, FUN = ecokit::check_data, warning = FALSE,
-      future.seed = TRUE, future.packages = c("arrow", "ecokit")) %>%
-      unlist() %>%
-      all()
-
-    # stopping the cluster
-    if (n_cores > 1) {
-      ecokit::set_parallel(stop_cluster = TRUE, show_log = FALSE)
-      future::plan("sequential", gc = TRUE)
+    Files_lmu_Exist <- all(fs::file_exists(Files_lmu))
+    if (Files_lmu_Exist) {
+      Files_lmu_Exist <- future.apply::future_lapply(
+        X = Files_lmu, FUN = ecokit::check_data, warning = FALSE,
+        future.seed = TRUE, future.packages = c("arrow", "ecokit")) %>%
+        unlist() %>%
+        all()
     }
-
 
     Beta_Files <- fs::path(
       Path_Temp, paste0("VP_Beta_", FileSuffix, ".feather"))
@@ -407,19 +398,14 @@ variance_partitioning_compute <- function(
         # to separate feather file
         ecokit::cat_time("Beta", level = 2L, verbose = verbose)
 
-        if (n_cores == 1) {
-          future::plan("sequential", gc = TRUE)
-        } else {
-          ecokit::set_parallel(
-            n_cores = n_cores, show_log = FALSE, strategy = strategy)
-          withr::defer(future::plan("sequential", gc = TRUE))
+        Beta_Files_Exist <- all(fs::file_exists(Beta_Files))
+        if (Beta_Files_Exist) {
+          Beta_Files_Exist <- future.apply::future_lapply(
+            X = Beta_Files, FUN = ecokit::check_data, warning = FALSE,
+            future.seed = TRUE, future.packages = c("arrow", "ecokit")) %>%
+            unlist() %>%
+            all()
         }
-
-        Beta_Files_Exist <- future.apply::future_lapply(
-          X = Beta_Files, FUN = ecokit::check_data, warning = FALSE,
-          future.seed = TRUE, future.packages = c("arrow", "ecokit")) %>%
-          unlist() %>%
-          all()
 
         if (!Beta_Files_Exist) {
 
@@ -445,6 +431,7 @@ variance_partitioning_compute <- function(
 
               attempt <- 1
               repeat {
+
                 arrow::write_feather(x = Beta, sink = Beta_File)
                 Sys.sleep(1)
 
@@ -471,11 +458,6 @@ variance_partitioning_compute <- function(
           rm(Beta0)
         }
 
-        # stopping the cluster
-        if (n_cores > 1) {
-          ecokit::set_parallel(stop_cluster = TRUE, show_log = FALSE)
-          future::plan("sequential", gc = TRUE)
-        }
       }
 
       invisible(gc())
@@ -503,7 +485,6 @@ variance_partitioning_compute <- function(
           "--x", ecokit::normalize_path(Path_X, must_work = TRUE),
           "--gamma", ecokit::normalize_path(Path_Gamma, must_work = TRUE),
           "--output", Path_Out_a,
-          "--ncores", 1,
           "--chunk_size", chunk_size)
 
         if (TF_use_single) {
@@ -656,6 +637,12 @@ variance_partitioning_compute <- function(
           }
         }
       }
+    }
+
+    # stopping the cluster
+    if (n_cores > 1) {
+      ecokit::set_parallel(stop_cluster = TRUE, show_log = FALSE)
+      future::plan("sequential", gc = TRUE)
     }
 
     invisible(gc())

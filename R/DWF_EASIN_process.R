@@ -148,7 +148,7 @@ EASIN_process <- function(
   # packages to be loaded in parallel
   pkg_to_export <- ecokit::load_packages_future(
     packages = c(
-      "dplyr", "jsonlite", "purrr", "IASDT.R", "withr", "fs",
+      "dplyr", "jsonlite", "purrr", "IASDT.R", "withr", "fs", "magrittr",
       "stringr", "RCurl", "tibble", "ecokit"),
     strategy = strategy)
 

@@ -136,7 +136,8 @@ resp_curv_prepare_data <- function(
 
   # packages to be loaded in parallel
   pkg_to_export <- ecokit::load_packages_future(
-    packages = c("dplyr", "purrr", "tidyr", "abind", "Hmsc", "parallel"),
+    packages = c(
+      "dplyr", "purrr", "tidyr", "abind", "Hmsc", "parallel", "magrittr"),
     strategy = strategy)
 
   # # ..................................................................... ###

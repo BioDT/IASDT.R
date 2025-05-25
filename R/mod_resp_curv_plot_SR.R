@@ -97,12 +97,9 @@ resp_curv_plot_SR <- function(
   }
 
   ecokit::cat_time("Prepare data", level = 1L, verbose = verbose)
-
-  if (strategy == "multicore") {
-    pkg_to_export <- NULL
-  } else {
-    pkg_to_export <- c("tibble", "dplyr", "magrittr", "ecokit", "tidyr")
-  }
+  pkg_to_export <- ecokit::load_packages_future(
+    packages = c("tibble", "dplyr", "magrittr", "ecokit", "tidyr"),
+    strategy = strategy)
 
   SR_DT_All <- SR_DT_All %>%
     dplyr::mutate(

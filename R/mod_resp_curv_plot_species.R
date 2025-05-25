@@ -81,7 +81,7 @@ resp_curv_plot_species <- function(
   # packages to be loaded in parallel
   pkg_to_export <- ecokit::load_packages_future(
     packages = c(
-      "dplyr", "purrr", "tidyr", "gtools", "ggtext", "patchwork",
+      "dplyr", "purrr", "tidyr", "gtools", "ggtext", "patchwork", "magrittr",
       "ggplot2", "tibble", "ecokit", "ragg", "stringr", "scales"),
     strategy = strategy)
 

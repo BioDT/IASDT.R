@@ -100,7 +100,7 @@ convergence_plot_all <- function(
   pkg_to_export <- ecokit::load_packages_future(
     packages = c(
       "dplyr", "sf", "Hmsc", "coda", "magrittr", "ggplot2", "ecokit",
-      "magrittr", "IASDT.R", "withr", "ggtext"),
+      "IASDT.R", "withr", "ggtext"),
     strategy = strategy)
 
   # # ..................................................................... ###

@@ -161,7 +161,7 @@ predict_hmsc <- function(
     packages = c(
       "dplyr", "Rcpp", "RcppArmadillo", "Matrix", "float", "qs2", "Hmsc",
       "purrr", "tibble", "Rfast", "caret", "pROC", "ecospat", "sf",
-      "ecokit"),
+      "ecokit", "magrittr"),
     strategy = strategy)
 
   # # ..................................................................... ###
@@ -330,7 +330,7 @@ predict_hmsc <- function(
 
   # free some memory
   ecokit::cat_time("Free some memory", verbose = verbose)
-  Model$postList <- Model$YScaled <- Model$X <- Model$XScaled <- NULL
+  Model <- IASDT.R::trim_hmsc(Model, c("postList", "YScaled", "X", "XScaled"))
 
   Mod_nr <- Model$nr
   Mod_dfPi <- Model$dfPi

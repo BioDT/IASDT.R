@@ -19,7 +19,7 @@ variance_partitioning_compute(
   TF_environ = NULL,
   TF_use_single = FALSE,
   temp_cleanup = TRUE,
-  chunk_size = 20L,
+  chunk_size = 50L,
   verbose = TRUE,
   VP_file = "VarPar",
   VP_commands_only = FALSE
@@ -49,7 +49,7 @@ default is to use model terms.}
 match \code{group}. If the model was defined with \code{XData} and \code{XFormula}, the
 default is to use the labels of model terms.}
 
-\item{start}{index of first MCMC sample included}
+\item{start}{index of first MCMC sample included. Default: \code{1L}.}
 
 \item{na.ignore}{Logical. If \code{TRUE}, covariates are ignored for sites where
 the focal species is NA when computing variance-covariance matrices for
@@ -76,7 +76,7 @@ required if \code{use_TF} is \code{TRUE} under Windows. Defaults to \code{NULL}.
 processing. Default: \code{TRUE}.}
 
 \item{chunk_size}{Integer. Size of each chunk of samples to process in
-parallel. Only relevant for \code{TensorFlow}. Default: \code{20}.}
+parallel. Only relevant for \code{TensorFlow}. Default: \code{50}.}
 
 \item{verbose}{Logical. Whether to print progress messages. Default: \code{TRUE}.}
 

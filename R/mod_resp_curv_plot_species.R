@@ -83,7 +83,7 @@ resp_curv_plot_species <- function(
     packages = c(
       "dplyr", "purrr", "tidyr", "gtools", "ggtext", "patchwork", "magrittr",
       "ggplot2", "tibble", "ecokit", "ragg", "stringr", "scales", "stats",
-      "grDevices", "grid", "rlang", "qs2"),
+      "fs", "grDevices", "grid", "rlang", "qs2"),
     strategy = strategy)
 
   # # ..................................................................... ###

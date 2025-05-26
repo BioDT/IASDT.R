@@ -32,7 +32,6 @@ resp_curv_prepare_data(
 resp_curv_plot_species(
   model_dir = NULL,
   n_cores = 20,
-  strategy = "multisession",
   env_file = ".env",
   return_data = FALSE
 )

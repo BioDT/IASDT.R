@@ -141,9 +141,8 @@ variance_partitioning_plot <- function(
       level = 1L)
 
     VarPar <- IASDT.R::variance_partitioning_compute(
-      path_model = path_model, n_cores = n_cores, strategy = strategy,
-      use_TF = use_TF, TF_environ = TF_environ, verbose = TRUE,
-      VP_file = VP_file)
+      path_model = path_model, n_cores = n_cores, use_TF = use_TF,
+      TF_environ = TF_environ, verbose = TRUE, VP_file = VP_file)
 
   }
 

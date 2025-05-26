@@ -14,7 +14,6 @@ variance_partitioning_compute(
   start = 1L,
   na.ignore = FALSE,
   n_cores = 8L,
-  strategy = "multisession",
   use_TF = TRUE,
   TF_environ = NULL,
   TF_use_single = FALSE,
@@ -59,10 +58,6 @@ each species.}
 partitioning using \code{TensorFlow}. This is only effective when \code{use_TF} is
 \code{TRUE}. Default: \code{1}.}
 
-\item{strategy}{Character. The parallel processing strategy to use. Valid
-options are "sequential", "multisession" (default), "multicore", and
-"cluster". See \code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
-
 \item{use_TF}{Logical. Whether to use \code{TensorFlow} for calculations. Defaults
 to \code{TRUE}.}
 
@@ -88,6 +83,10 @@ Python script. Default is \code{FALSE}. Only relevant when \code{use_TF} is \cod
 
 \item{env_file}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
+
+\item{strategy}{Character. The parallel processing strategy to use. Valid
+options are "sequential", "multisession" (default), "multicore", and
+"cluster". See \code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
 
 \item{width, height}{Numeric. Width and height of the output plot in
 centimetres. Default: \code{30} and \code{15}, respectively.}

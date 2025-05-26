@@ -10,8 +10,7 @@
 #' @author Ahmed El-Gabbas
 
 resp_curv_plot_species <- function(
-    model_dir = NULL, n_cores = 20, strategy = "multisession",
-    env_file = ".env", return_data = FALSE) {
+    model_dir = NULL, n_cores = 20, env_file = ".env", return_data = FALSE) {
 
   # # ..................................................................... ###
 
@@ -24,7 +23,8 @@ resp_curv_plot_species <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Path_PA <- NCells_Naturalized <- NFV <- Coords <- Species <- Prefix <-
-    Data <- RC_Path_Prob <- Variable <- IAS_ID <- VarDesc <- VarDesc2 <- NULL
+    Data <- RC_Path_Prob <- Variable <- IAS_ID <- VarDesc <- VarDesc2 <-
+    RC_File <- NULL
 
   # # ..................................................................... ###
 
@@ -46,7 +46,7 @@ resp_curv_plot_species <- function(
 
   ecokit::check_args(
     args_all = AllArgs, args_type = "character",
-    args_to_check = c("model_dir", "env_file", "strategy"))
+    args_to_check = c("model_dir", "env_file"))
 
   ecokit::check_args(
     args_all = AllArgs, args_type = "numeric", args_to_check = "n_cores")
@@ -57,34 +57,6 @@ resp_curv_plot_species <- function(
       "n_cores must be a single positive integer.", n_cores = n_cores,
       include_backtrace = TRUE)
   }
-
-  if (!is.character(strategy)) {
-    ecokit::stop_ctx(
-      "`strategy` must be a character vector",
-      strategy = strategy, class_strategy = class(strategy))
-  }
-  if (strategy == "sequential") {
-    n_cores <- 1L
-  }
-  if (length(strategy) != 1L) {
-    ecokit::stop_ctx(
-      "`strategy` must be a character vector of length 1",
-      strategy = strategy, length_strategy = length(strategy))
-  }
-  valid_strategy <- c("sequential", "multisession", "multicore", "cluster")
-  if (!strategy %in% valid_strategy) {
-    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
-  }
-
-  # # ..................................................................... ###
-
-  # packages to be loaded in parallel
-  pkg_to_export <- ecokit::load_packages_future(
-    packages = c(
-      "dplyr", "purrr", "tidyr", "gtools", "ggtext", "patchwork", "magrittr",
-      "ggplot2", "tibble", "ecokit", "ragg", "stringr", "scales", "stats",
-      "fs", "grDevices", "grid", "rlang", "qs2"),
-    strategy = strategy)
 
   # # ..................................................................... ###
 
@@ -168,22 +140,21 @@ resp_curv_plot_species <- function(
 
   # # ..................................................................... ###
 
-  ecokit::cat_time("Plotting species-specific data")
+  ecokit::cat_time("Plotting species-specific data in parallel")
 
-  if (n_cores == 1) {
-    future::plan("sequential", gc = TRUE)
-  } else {
-    ecokit::set_parallel(
-      n_cores = n_cores, level = 1L, future_max_size = 800L,
-      strategy = strategy, cat_timestamp = FALSE)
-    withr::defer(future::plan("sequential", gc = TRUE))
-  }
+  # set up parallel processing
+  doParallel::registerDoParallel(cores = n_cores)
+  ecokit::load_packages(package_list = "foreach")
+  withr::defer(doParallel::stopImplicitCluster())
 
-  ecokit::cat_time("Plotting in parallel", level = 1L)
+  pkg_to_export <- c(
+    "dplyr", "purrr", "tidyr", "gtools", "ggtext", "patchwork", "magrittr",
+    "ggplot2", "tibble", "ecokit", "ragg", "stringr", "scales", "stats",
+    "fs", "grDevices", "grid", "rlang", "qs2")
 
-  Plots <- future.apply::future_lapply(
-    X = Sp_DT_All,
-    FUN = function(RC_File) {
+  Plots <- foreach::foreach(
+    RC_File = Sp_DT_All, .export = c("SpeciesNames", "Sp_DT_All"),
+    .packages = pkg_to_export) %dopar% {
 
       DT <- ecokit::load_as(RC_File)
 
@@ -449,18 +420,12 @@ resp_curv_plot_species <- function(
         plot_height = plot_height, plot_width = plot_width)
 
       return(OutDF)
+    }
 
-    },
-    future.seed = TRUE, future.packages = pkg_to_export,
-    future.globals = c("SpeciesNames", "Sp_DT_All")) %>%
-    dplyr::bind_rows() %>%
-    ecokit::quiet_device()
+  Plots <- dplyr::bind_rows(Plots)
 
   # stopping the cluster
-  if (n_cores > 1) {
-    ecokit::set_parallel(stop_cluster = TRUE, level = 2L, cat_timestamp = FALSE)
-    future::plan("sequential", gc = TRUE)
-  }
+  doParallel::stopImplicitCluster()
   invisible(gc())
 
   # # ..................................................................... ###

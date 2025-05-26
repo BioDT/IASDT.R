@@ -64,6 +64,7 @@
 #' @rdname mod_postprocessing
 #' @name mod_postprocessing
 #' @order 1
+#' @importFrom foreach %dopar%
 #' @inheritParams predict_maps
 #' @inheritParams mod_CV_fit
 #' @inheritParams mod_merge_chains
@@ -503,8 +504,8 @@ mod_postprocess_1_CPU <- function(
     cat_timestamp = FALSE)
 
   IASDT.R::variance_partitioning_compute(
-    path_model = path_model, n_cores = n_cores_VP, strategy = strategy,
-    use_TF = use_TF, TF_environ = TF_environ, TF_use_single = TF_use_single,
+    path_model = path_model, n_cores = n_cores_VP, use_TF = use_TF,
+    TF_environ = TF_environ, TF_use_single = TF_use_single,
     temp_cleanup = temp_cleanup, chunk_size = 50L, verbose = TRUE,
     VP_file = "VarPar", VP_commands_only = TRUE)
 
@@ -1170,8 +1171,7 @@ mod_postprocess_2_CPU <- function(
       cat_timestamp = FALSE)
 
     IASDT.R::resp_curv_plot_species(
-      model_dir = model_dir, n_cores = RC_n_cores, strategy = strategy,
-      env_file = env_file)
+      model_dir = model_dir, n_cores = RC_n_cores, env_file = env_file)
 
     invisible(gc())
 
@@ -1226,8 +1226,8 @@ mod_postprocess_2_CPU <- function(
       cat_timestamp = FALSE)
 
     IASDT.R::variance_partitioning_compute(
-      path_model = path_model, n_cores = n_cores, strategy = strategy,
-      use_TF = use_TF, TF_environ = TF_environ, TF_use_single = TF_use_single,
+      path_model = path_model, n_cores = n_cores, use_TF = use_TF,
+      TF_environ = TF_environ, TF_use_single = TF_use_single,
       temp_cleanup = temp_cleanup, chunk_size = 50L, verbose = TRUE,
       VP_file = "VarPar", VP_commands_only = FALSE)
   }

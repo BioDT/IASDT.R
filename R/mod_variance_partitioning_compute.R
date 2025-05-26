@@ -28,9 +28,6 @@
 #' @param n_cores Integer. Number of CPU cores to use for computing variance
 #'   partitioning using `TensorFlow`. This is only effective when `use_TF` is
 #'   `TRUE`. Default: `1`.
-#' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "sequential", "multisession" (default), "multicore", and
-#'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param chunk_size Integer. Size of each chunk of samples to process in
 #'   parallel. Only relevant for `TensorFlow`. Default: `50`.
 #' @param verbose Logical. Whether to print progress messages. Default: `TRUE`.
@@ -46,6 +43,7 @@
 #'   centimetres. Default: `30` and `15`, respectively.
 #' @param Axis_text Numeric. Size of the axis text. Default: `4`.
 #' @author Ahmed El-Gabbas
+#' @importFrom foreach %dopar%
 #' @inheritParams predict_hmsc
 #' @inheritParams predict_latent_factor
 #' @name variance_partitioning
@@ -55,9 +53,11 @@
 
 variance_partitioning_compute <- function(
     path_model, group = NULL, group_names = NULL, start = 1L, na.ignore = FALSE,
-    n_cores = 8L, strategy = "multisession", use_TF = TRUE, TF_environ = NULL,
-    TF_use_single = FALSE, temp_cleanup = TRUE, chunk_size = 50L,
-    verbose = TRUE, VP_file = "VarPar", VP_commands_only = FALSE) {
+    n_cores = 8L, use_TF = TRUE, TF_environ = NULL, TF_use_single = FALSE,
+    temp_cleanup = TRUE, chunk_size = 50L, verbose = TRUE, VP_file = "VarPar",
+    VP_commands_only = FALSE) {
+
+  x <- NULL
 
   if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
     ecokit::stop_ctx(
@@ -65,36 +65,14 @@ variance_partitioning_compute <- function(
       include_backtrace = TRUE)
   }
 
-  if (!is.character(strategy)) {
-    ecokit::stop_ctx(
-      "`strategy` must be a character vector",
-      strategy = strategy, class_strategy = class(strategy))
-  }
-  if (strategy == "sequential") {
-    n_cores <- 1L
-  }
-  if (length(strategy) != 1L) {
-    ecokit::stop_ctx(
-      "`strategy` must be a character vector of length 1",
-      strategy = strategy, length_strategy = length(strategy))
-  }
-  valid_strategy <- c("sequential", "multisession", "multicore", "cluster")
-  if (!strategy %in% valid_strategy) {
-    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
-  }
-
   # # .................................................................... ###
 
   .start_time <- lubridate::now(tzone = "CET")
 
-  # # ..................................................................... ###
-
-  # packages to be loaded in parallel
-  pkg_to_export <- ecokit::load_packages_future(
-    packages = c(
-      "Matrix", "dplyr", "arrow", "purrr", "IASDT.R", "qs2", "methods",
-      "stringr", "fs", "ecokit", "magrittr", "Hmsc", "stats"),
-    strategy = strategy)
+  # set up parallel processing
+  doParallel::registerDoParallel(cores = n_cores)
+  ecokit::load_packages(package_list = "foreach")
+  withr::defer(doParallel::stopImplicitCluster())
 
   # # .................................................................... ###
 
@@ -293,46 +271,56 @@ variance_partitioning_compute <- function(
     FileSuffix <- stringr::str_pad(
       string = seq_len(poolN), pad = "0", width = 4)
 
-    if (n_cores == 1) {
-      future::plan("sequential", gc = TRUE)
-    } else {
-      ecokit::set_parallel(
-        n_cores = n_cores, strategy = strategy, show_log = FALSE)
-      withr::defer(future::plan("sequential", gc = TRUE))
-    }
-
     # List of feather files resulted from `geta` function
     Files_la <- fs::path(Path_Temp, paste0("VP_A_", FileSuffix, ".feather"))
     Files_la_Exist <- all(fs::file_exists(Files_la))
+
     if (Files_la_Exist) {
-      Files_la_Exist <- future.apply::future_lapply(
-        X = Files_la,
-        FUN = ecokit::check_data, warning = FALSE,
-        future.seed = TRUE, future.packages = c("arrow", "ecokit")) %>%
-        unlist() %>%
-        all()
+      Files_la_Exist <- foreach::foreach(
+        i = Files_la, .combine = c, .multicombine = TRUE,
+        .packages = c("ecokit", "arrow")) %dopar% { # nolint: object_usage_linter
+          ecokit::check_data(i, warning = FALSE)
+        }
+      Files_la_Exist <- all(Files_la_Exist)
+    }
+    if (Files_la_Exist) {
+      ecokit::cat_time(
+        "All `VP_A*.feather` files are available",
+        verbose = verbose, level = 1L)
     }
 
     # List of feather files resulted from `getf` function
     Files_lf <- fs::path(Path_Temp, paste0("VP_F_", FileSuffix, ".feather"))
     Files_lf_Exist <- all(fs::file_exists(Files_lf))
     if (Files_lf_Exist) {
-      Files_lf_Exist <- future.apply::future_lapply(
-        X = Files_lf, FUN = ecokit::check_data, warning = FALSE,
-        future.seed = TRUE, future.packages = c("arrow", "ecokit")) %>%
-        unlist() %>%
-        all()
+      Files_lf_Exist <- foreach::foreach(
+        i = Files_lf, .combine = c, .multicombine = TRUE,
+        .packages = c("ecokit", "arrow")) %dopar% { # nolint: object_usage_linter
+          ecokit::check_data(i, warning = FALSE)
+        }
+      Files_lf_Exist <- all(Files_lf_Exist)
+    }
+    if (Files_lf_Exist) {
+      ecokit::cat_time(
+        "All `VP_F*.feather` files are available",
+        verbose = verbose, level = 1L)
     }
 
     # List of feather files resulted from `gemu` function
     Files_lmu <- fs::path(Path_Temp, paste0("VP_Mu_", FileSuffix, ".feather"))
     Files_lmu_Exist <- all(fs::file_exists(Files_lmu))
     if (Files_lmu_Exist) {
-      Files_lmu_Exist <- future.apply::future_lapply(
-        X = Files_lmu, FUN = ecokit::check_data, warning = FALSE,
-        future.seed = TRUE, future.packages = c("arrow", "ecokit")) %>%
-        unlist() %>%
-        all()
+      Files_lmu_Exist <- foreach::foreach(
+        i = Files_lmu, .combine = c, .multicombine = TRUE,
+        .packages = c("ecokit", "arrow")) %dopar% { # nolint: object_usage_linter
+          ecokit::check_data(i, warning = FALSE)
+        }
+      Files_lmu_Exist <- all(Files_lmu_Exist)
+    }
+    if (Files_lmu_Exist) {
+      ecokit::cat_time(
+        "All `VP_Mu*.feather` files are available",
+        verbose = verbose, level = 1L)
     }
 
     Beta_Files <- fs::path(
@@ -343,7 +331,7 @@ variance_partitioning_compute <- function(
       # All feather data are already processed and available on disk
       ecokit::cat_time(
         "Data for `la`/`lf`/`lmu` lists were already processed",
-        verbose = verbose)
+        verbose = verbose, level = 1L)
 
     } else {
 
@@ -400,11 +388,12 @@ variance_partitioning_compute <- function(
 
         Beta_Files_Exist <- all(fs::file_exists(Beta_Files))
         if (Beta_Files_Exist) {
-          Beta_Files_Exist <- future.apply::future_lapply(
-            X = Beta_Files, FUN = ecokit::check_data, warning = FALSE,
-            future.seed = TRUE, future.packages = c("arrow", "ecokit")) %>%
-            unlist() %>%
-            all()
+          Beta_Files_Exist <- foreach::foreach(
+            i = Beta_Files, .combine = c, .multicombine = TRUE,
+            .packages = c("ecokit", "arrow")) %dopar% { # nolint: object_usage_linter
+              ecokit::check_data(i, warning = FALSE)
+            }
+          Beta_Files_Exist <- all(Beta_Files_Exist)
         }
 
         if (!Beta_Files_Exist) {
@@ -412,9 +401,10 @@ variance_partitioning_compute <- function(
           ecokit::cat_time(
             "Processing beta in parallel", level = 3L, verbose = verbose)
 
-          Beta0 <- future.apply::future_lapply(
-            X = seq_along(postList),
-            FUN = function(x) {
+          Beta0 <- foreach::foreach(
+            x = seq_along(postList), .combine = c, .multicombine = TRUE,
+            .packages = c("ecokit", "fs", "purrr", "arrow", "magrittr"),
+            .export = c("Beta_Files", "postList")) %dopar% { # nolint: object_usage_linter
 
               Beta_File <- Beta_Files[x]
 
@@ -449,15 +439,9 @@ variance_partitioning_compute <- function(
                 attempt <- attempt + 1
               }
               return(NULL)
-            },
-            # Setting future.scheduling = Inf makes calculations sequential!
-            # future.scheduling = Inf,
-            future.seed = TRUE, future.packages = pkg_to_export,
-            future.globals = c("Beta_Files", "postList"))
-
-          rm(Beta0)
+            }
+          rm(Beta0, envir = environment())
         }
-
       }
 
       invisible(gc())
@@ -639,12 +623,6 @@ variance_partitioning_compute <- function(
       }
     }
 
-    # stopping the cluster
-    if (n_cores > 1) {
-      ecokit::set_parallel(stop_cluster = TRUE, show_log = FALSE)
-      future::plan("sequential", gc = TRUE)
-    }
-
     invisible(gc())
 
     if (VP_commands_only) {
@@ -785,24 +763,24 @@ variance_partitioning_compute <- function(
     n_postList <- length(postList)
     rm(postList, lbeta, envir = environment())
 
+    Model_x <- Model$X
     Model <- IASDT.R::trim_hmsc(
-      model = Model, names_to_remove = setdiff(names(Model), "X"))
+      model = Model,
+      names_to_remove = c("X", "covNames", "spNames", "rLNames"))
     invisible(gc())
-
-    if (n_cores == 1) {
-      future::plan("sequential", gc = TRUE)
-    } else {
-      ecokit::set_parallel(
-        n_cores = n_cores, level = 1L, future_max_size = 800L,
-        strategy = strategy, cat_timestamp = FALSE)
-      withr::defer(future::plan("sequential", gc = TRUE))
-    }
 
     ecokit::cat_time("Processing in parallel", level = 1L, verbose = verbose)
 
-    Res <- future.apply::future_lapply(
-      X = seq_len(n_postList),
-      FUN = function(i) {
+    vars_to_export <- c(
+      "ngroups", "Files_la", "Files_lf", "Files_lmu", "path_lbeta", "nc",
+      "Model_x", "path_postList", "ns", "nr", "cMA", "group")
+    packages_to_load <- c(
+      "Matrix", "dplyr", "arrow", "purrr", "qs2", "methods",
+      "stringr", "fs", "ecokit", "magrittr")
+
+    Res <- foreach::foreach(
+      i = seq_len(n_postList), .export = vars_to_export,
+      .packages = packages_to_load) %dopar% { # nolint: object_usage_linter
 
         mm <- methods::getMethod("%*%", "Matrix")
 
@@ -841,17 +819,17 @@ variance_partitioning_compute <- function(
         DT_lf <- as.matrix(arrow::read_feather(Files_lf[i]))
         # a <- DT_la - matrix(rep(rowMeans(DT_la), ns), ncol = ns)
         # f <- DT_lf - matrix(rep(rowMeans(DT_lf), ns), ncol = ns)
-        a <- DT_la - rowMeans(DT_la)
-        f <- DT_lf - rowMeans(DT_lf)
+        a <- DT_la - Matrix::rowMeans(DT_la)
+        f <- DT_lf - Matrix::rowMeans(DT_lf)
 
-        res1 <- sum((rowSums((a * f)) / (ns - 1))^2)
-        res2 <- sum((rowSums((a * a)) / (ns - 1)) *
+        res1 <- sum((Matrix::rowSums((a * f)) / (ns - 1))^2)
+        res2 <- sum((Matrix::rowSums((a * a)) / (ns - 1)) *
                       (rowSums((f * f)) / (ns - 1)))
         R2T.Y <- res1 / res2
 
         for (j in seq_len(ns)) {
           switch(
-            class(Model$X)[1L],
+            class(Model_x)[1L],
             matrix = {
               cM <- cMA
             },
@@ -882,7 +860,7 @@ variance_partitioning_compute <- function(
         rm(Lambda, envir = environment())
 
         if (nr > 0) {
-          tot <- fixed1 + rowSums(random1)
+          tot <- fixed1 + Matrix::rowSums(random1)
           fixed <- fixed1 / tot
           for (level in seq_len(nr)) {
             random <- random1[, level] / tot
@@ -894,28 +872,36 @@ variance_partitioning_compute <- function(
 
         # fixedsplit <- matrix(0, nrow = ns, ncol = ngroups)
         # for (k in seq_len(ngroups)) {
-        #   fixedsplit[, k] <- fixedsplit1[, k] / rowSums(fixedsplit1)
+        #   fixedsplit[, k] <- fixedsplit1[, k] / Matrix::rowSums(fixedsplit1)
         # }
 
-        fixedsplit <- fixedsplit1 / rowSums(fixedsplit1)
+        fixedsplit <- fixedsplit1 / Matrix::rowSums(fixedsplit1)
+
+        rm(
+          fixedsplit1, fixed1, random1, a, f, res1, res2, tot,
+          envir = environment())
 
         return(
           list(
             fixed = fixed, random = random, fixedsplit = fixedsplit,
             R2T.Y = R2T.Y, R2T.Beta = R2T.Beta))
-
-      },
-      future.scheduling = Inf, future.seed = TRUE,
-      future.packages = pkg_to_export,
-      future.globals = c(
-        "ngroups", "Files_la", "Files_lf", "Files_lmu", "path_lbeta", "nc",
-        "Model", "path_postList", "ns", "nr", "cMA", "group"))
-
-    # stopping the cluster
-    if (n_cores > 1) {
-      ecokit::set_parallel(
-        stop_cluster = TRUE, level = 2L, cat_timestamp = FALSE)
-      future::plan("sequential", gc = TRUE)
+      }
+    
+    # Check if foreach returned a flattened list
+    if (length(Res) == 5 * n_postList) {
+      # Reshape into list of n_postList elements, each with 5 items
+      Res <- lapply(
+        X = seq_len(n_postList),
+        FUN = function(i) {
+          start_idx <- (i - 1) * 5 + 1
+          list(
+            fixed = Res[[start_idx]],
+            random = Res[[start_idx + 1]],
+            fixedsplit = Res[[start_idx + 2]],
+            R2T.Y = Res[[start_idx + 3]],
+            R2T.Beta = Res[[start_idx + 4]]
+          )
+        })
     }
 
     # Summarise the results
@@ -925,6 +911,9 @@ variance_partitioning_compute <- function(
     fixedsplit <- Reduce("+", purrr::map(Res, ~ .x$fixedsplit)) / poolN
     R2T.Y <- Reduce("+", purrr::map(Res, ~ .x$R2T.Y)) / poolN
     R2T.Beta <- Reduce("+", purrr::map(Res, ~ .x$R2T.Beta)) / poolN
+
+    rm(Res, Model_x, envir = environment())
+    invisible(gc())
 
   } else {
 
@@ -1110,6 +1099,8 @@ variance_partitioning_compute <- function(
   # # .................................................................... ###
 
   ecokit::cat_diff(init_time = .start_time, verbose = verbose)
+
+  doParallel::stopImplicitCluster()
 
   return(VP)
 }

@@ -15,7 +15,7 @@ cross-validated models. See details for more information."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">IASDT.R</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.05</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.07</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -72,7 +72,7 @@ cross-validated models. See details for more information.</p>
 <span>  env_file <span class="op">=</span> <span class="st">".env"</span>,</span>
 <span>  path_Hmsc <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  memory_per_cpu <span class="op">=</span> <span class="st">"64G"</span>,</span>
-<span>  job_runtime <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  job_runtime <span class="op">=</span> <span class="st">"01:00:00"</span>,</span>
 <span>  from_JSON <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  GPP_dist <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  use_trees <span class="op">=</span> <span class="st">"Tree"</span>,</span>
@@ -225,9 +225,9 @@ data sources. Defaults to <code>.env</code>.</p></dd>
 
 
 <dt id="arg-job-runtime">job_runtime<a class="anchor" aria-label="anchor" href="#arg-job-runtime"></a></dt>
-<dd><p>Character. Maximum allowed runtime for the job. Example:
-"01:00:00" for one hour. Required — if not provided, the function throws
-an error.</p></dd>
+<dd><p>Character. Maximum allowed runtime for jobs for refitting
+the models (if needed) and cross validating models. Defaults to "01:00:00"
+for one hour. If not provided, the function throws an error.</p></dd>
 
 
 <dt id="arg-from-json">from_JSON<a class="anchor" aria-label="anchor" href="#arg-from-json"></a></dt>

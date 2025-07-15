@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">IASDT.R</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.05</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.07</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -689,10 +689,11 @@ corresponding SLURM scripts for each cross-validation strategy:</p>
 <p>To continue the post-processing of the fitted models on CPUs, two
 functions need to be executed:</p>
 <div class="section level3">
-<h3 id="mod_postprocess_1_cpu">1. <strong><code>mod_postprocess_1_CPU()</code></strong><a class="anchor" aria-label="anchor" href="#mod_postprocess_1_cpu"></a>
+<h3 id="mod_postprocess_2_cpu">1. <strong><code>mod_postprocess_2_CPU()</code></strong><a class="anchor" aria-label="anchor" href="#mod_postprocess_2_cpu"></a>
 </h3>
-<p>This function progresses the post-processing pipeline for HMSC models
-on the CPU by automating the following tasks:</p>
+<p>The <code><a href="../reference/Mod_postprocessing.html">mod_postprocess_2_CPU()</a></code> function progresses the
+post-processing pipeline for HMSC models on the CPU by automating the
+following tasks:</p>
 <table class="table table table-condensed table-hover" style="font-size: 16px; margin-left: auto; margin-right: auto;"><tbody>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
@@ -766,8 +767,9 @@ visualises the explanatory power of the model (internal evaluation).
 <div class="section level3">
 <h3 id="mod_postprocess_cv_1_cpu">2. <strong><code>mod_postprocess_CV_1_CPU()</code></strong><a class="anchor" aria-label="anchor" href="#mod_postprocess_cv_1_cpu"></a>
 </h3>
-<p>This function begins the post-processing of cross-validated models on
-the CPU by automating the following tasks:</p>
+<p>The <code><a href="../reference/Mod_postprocessing.html">mod_postprocess_CV_1_CPU()</a></code> function begins the
+post-processing of cross-validated models on the CPU by automating the
+following tasks:</p>
 <table class="table table table-condensed table-hover" style="font-size: 16px; margin-left: auto; margin-right: auto;"><tbody>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">

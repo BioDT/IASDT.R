@@ -105,18 +105,32 @@ convergence_rho <- function(
     x = -Inf, y = -Inf, label = paste0(ESS, "<br>", CI2))
 
   #  Plotting colours
+  define_chain_colors <- FALSE
+
   if (is.null(chain_colors)) {
-    chain_colors <- c(
-      "black", "grey60",
-      RColorBrewer::brewer.pal(n = NChains - 2, name = "Set1"))
+    define_chain_colors <- TRUE
   }
+
   if (length(chain_colors) != NChains) {
+    define_chain_colors <- TRUE
     warning(
       "The length of provided colours != number of chains", call. = FALSE)
-    chain_colors <- c(
-      "black", "grey60",
-      RColorBrewer::brewer.pal(n = NChains - 2, name = "Set1"))
   }
+
+  if (define_chain_colors) {
+    # minimum value of n colours in RColorBrewer::brewer.pal is 3.
+    # black and grey will be used anyway
+    if (NChains >= 4) {
+      chain_colors <- c(
+        "black", "grey60",
+        RColorBrewer::brewer.pal(n = NChains - 2, name = "Set1"))
+    } else if (NChains == 3) {
+      chain_colors <- c("black", "grey60", "red")
+    } else if (NChains == 2) {
+      chain_colors <- c("black", "grey60")
+    }
+  }
+
 
   Plot <- ggplot2::ggplot(
     data = RhoDF,

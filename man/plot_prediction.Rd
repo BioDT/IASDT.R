@@ -4,12 +4,7 @@
 \alias{plot_prediction}
 \title{Plot species and level of invasion predictions as JPEG files using \code{ggplot2}}
 \usage{
-plot_prediction(
-  model_dir = NULL,
-  env_file = ".env",
-  n_cores = 8L,
-  strategy = "multisession"
-)
+plot_prediction(model_dir = NULL, env_file = ".env", n_cores = 8L)
 }
 \arguments{
 \item{model_dir}{Character. Path to the model directory containing
@@ -20,10 +15,6 @@ data sources. Defaults to \code{.env}.}
 
 \item{n_cores}{Integer. Number of CPU cores to use for parallel processing.
 Default: 8.}
-
-\item{strategy}{Character. The parallel processing strategy to use. Valid
-options are "sequential", "multisession" (default), "multicore", and
-"cluster". See \code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
 }
 \value{
 Saves prediction plots as JPEG files in the specified output

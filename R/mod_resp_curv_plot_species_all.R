@@ -9,8 +9,7 @@
 #' @author Ahmed El-Gabbas
 
 resp_curv_plot_species_all <- function(
-    model_dir = NULL, n_cores = 8L, strategy = "multisession",
-    return_data = FALSE, plotting_alpha = 0.3) {
+    model_dir = NULL, n_cores = 8L, return_data = FALSE, plotting_alpha = 0.3) {
 
   # # ..................................................................... ###
 
@@ -18,24 +17,6 @@ resp_curv_plot_species_all <- function(
     ecokit::stop_ctx(
       "n_cores must be a single positive integer.", n_cores = n_cores,
       include_backtrace = TRUE)
-  }
-
-  if (!is.character(strategy)) {
-    ecokit::stop_ctx(
-      "`strategy` must be a character vector",
-      strategy = strategy, class_strategy = class(strategy))
-  }
-  if (strategy == "sequential") {
-    n_cores <- 1L
-  }
-  if (length(strategy) != 1L) {
-    ecokit::stop_ctx(
-      "`strategy` must be a character vector of length 1",
-      strategy = strategy, length_strategy = length(strategy))
-  }
-  valid_strategy <- c("sequential", "multisession", "multicore", "cluster")
-  if (!strategy %in% valid_strategy) {
-    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }
 
   ecokit::cat_time("Plotting species response curves")
@@ -46,7 +27,7 @@ resp_curv_plot_species_all <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Coords <- RC_Path_Prob <- NFV <- Data <- DT <- Variable <- Variable2 <-
+  Coords <- RC_Path_Prob <- NFV <- Data <- DT <- Variable <- Variable2 <- i <-
     VarDesc <- VarDesc2 <- NULL
 
   # # ..................................................................... ###
@@ -83,12 +64,6 @@ resp_curv_plot_species_all <- function(
 
   # # ..................................................................... ###
 
-  # packages to be loaded in parallel
-  pkg_to_export <- ecokit::load_packages_future(
-    packages = c("ecokit", "dplyr", "magrittr"), strategy = strategy)
-
-  # # ..................................................................... ###
-
   Path_RC_DT <- fs::path(model_dir, "Model_Postprocessing", "RespCurv_DT")
   Path_RC_All <- fs::path(model_dir, "Model_Postprocessing", "RespCurv_All")
 
@@ -111,34 +86,27 @@ resp_curv_plot_species_all <- function(
     ecokit::load_as() %>%
     dplyr::select(Coords, RC_Path_Prob)
 
-  if (n_cores == 1) {
-    future::plan("sequential", gc = TRUE)
-  } else {
-    ecokit::set_parallel(
-      n_cores = min(n_cores, nrow(Sp_DT_All)), level = 1L,
-      future_max_size = 800L, strategy = strategy, cat_timestamp = FALSE)
-    withr::defer(future::plan("sequential", gc = TRUE))
+  doParallel::registerDoParallel(cores = n_cores)
+  ecokit::load_packages(package_list = "foreach")
+  withr::defer(doParallel::stopImplicitCluster())
+
+  RC_data <- foreach::foreach(
+    i = Sp_DT_All$RC_Path_Prob, .packages = c("ecokit", "magrittr", "dplyr")
+  ) %dopar% { # nolint: object_usage_linter
+    ecokit::load_as(i) %>%
+      dplyr::select(
+        tidyselect::all_of(c("Variable", "NFV", "Species", "PlotData_Quant")))
   }
 
   Sp_DT_All <- Sp_DT_All %>%
-    dplyr::mutate(
-      Data = furrr::future_map(
-        .x = RC_Path_Prob,
-        .f = ~ {
-          ecokit::load_as(.x) %>%
-            dplyr::select(Variable, NFV, Species, PlotData_Quant)
-        },
-        .options = furrr::furrr_options(
-          seed = TRUE, chunk_size = 1, packages = pkg_to_export))) %>%
+    dplyr::mutate(Data = RC_data) %>%
     tidyr::unnest(Data) %>%
     dplyr::select(-RC_Path_Prob) %>%
     dplyr::slice(gtools::mixedorder(Variable)) %>%
     tidyr::nest(DT = -c(NFV, Coords))
 
-  if (n_cores > 1) {
-    ecokit::set_parallel(stop_cluster = TRUE, level = 1L, cat_timestamp = FALSE)
-    future::plan("sequential", gc = TRUE)
-  }
+  doParallel::stopImplicitCluster()
+
   invisible(gc())
 
   # # ..................................................................... ###

@@ -886,7 +886,7 @@ variance_partitioning_compute <- function(
             fixed = fixed, random = random, fixedsplit = fixedsplit,
             R2T.Y = R2T.Y, R2T.Beta = R2T.Beta))
       }
-    
+
     # Check if foreach returned a flattened list
     if (length(Res) == 5 * n_postList) {
       # Reshape into list of n_postList elements, each with 5 items

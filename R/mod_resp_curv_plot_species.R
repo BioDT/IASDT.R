@@ -14,11 +14,7 @@ resp_curv_plot_species <- function(
 
   # # ..................................................................... ###
 
-  ecokit::cat_time("Plotting species response curves")
-
   .start_time <- lubridate::now(tzone = "CET")
-
-  # # ..................................................................... ###
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
@@ -59,6 +55,8 @@ resp_curv_plot_species <- function(
   }
 
   # # ..................................................................... ###
+
+  ecokit::cat_time("Plotting species response curves")
 
   Path_RC_DT <- fs::path(model_dir, "Model_Postprocessing", "RespCurv_DT")
   if (!dir.exists(Path_RC_DT)) {

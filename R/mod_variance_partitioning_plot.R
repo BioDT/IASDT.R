@@ -9,8 +9,7 @@
 
 variance_partitioning_plot <- function(
     path_model, env_file = ".env", VP_file = "VarPar", use_TF = TRUE,
-    TF_environ = NULL, n_cores = 1L, strategy = "multisession", width = 30,
-    height = 15, Axis_text = 4) {
+    TF_environ = NULL, n_cores = 1L, width = 30, height = 15, Axis_text = 4) {
 
   .start_time <- lubridate::now(tzone = "CET")
 
@@ -34,7 +33,7 @@ variance_partitioning_plot <- function(
     stats::setNames(AllArgs)
   ecokit::check_args(
     args_all = AllArgs, args_type = "character",
-    args_to_check = c("env_file", "path_model", "strategy"))
+    args_to_check = c("env_file", "path_model"))
   ecokit::check_args(
     args_all = AllArgs, args_type = "logical", args_to_check = "use_TF")
   ecokit::check_args(
@@ -45,19 +44,6 @@ variance_partitioning_plot <- function(
     ecokit::stop_ctx(
       "n_cores must be a single positive integer.", n_cores = n_cores,
       include_backtrace = TRUE)
-  }
-
-  if (strategy == "sequential") {
-    n_cores <- 1L
-  }
-  if (length(strategy) != 1L) {
-    ecokit::stop_ctx(
-      "`strategy` must be a character vector of length 1",
-      strategy = strategy, length_strategy = length(strategy))
-  }
-  valid_strategy <- c("sequential", "multisession", "multicore", "cluster")
-  if (!strategy %in% valid_strategy) {
-    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
   }
 
   # # ..................................................................... ###

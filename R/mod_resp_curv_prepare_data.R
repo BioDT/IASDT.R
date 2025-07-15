@@ -40,6 +40,7 @@
 #' @inheritParams predict_hmsc
 #' @rdname response_curves
 #' @name response_curves
+#' @importFrom foreach %dopar%
 #' @order 1
 #' @author Ahmed El-Gabbas
 

@@ -292,9 +292,9 @@ sbatch datasets/processed/model_fitting/HabX/Model_Fitting_CV/CV_Bash_Fit_Large.
 To continue the post-processing of the fitted models on CPUs, two functions need to be executed:
 
 
-### 1. **`mod_postprocess_1_CPU()`**
+### 1. **`mod_postprocess_2_CPU()`**
 
-This function progresses the post-processing pipeline for HMSC models on the CPU by automating the following tasks:
+The `mod_postprocess_2_CPU()` function progresses the post-processing pipeline for HMSC models on the CPU by automating the following tasks:
 
 ```{r}
 #| echo = FALSE,
@@ -327,7 +327,7 @@ DT %>%
 
 ### 2. **`mod_postprocess_CV_1_CPU()`**
 
-This function begins the post-processing of cross-validated models on the CPU by automating the following tasks:
+The `mod_postprocess_CV_1_CPU()` function begins the post-processing of cross-validated models on the CPU by automating the following tasks:
 
 ```{r}
 #| echo = FALSE,

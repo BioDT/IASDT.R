@@ -13,18 +13,13 @@
 #'   data sources. Defaults to `.env`.
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 8.
-#' @param strategy Character. The parallel processing strategy to use. Valid
-#'   options are "sequential", "multisession" (default), "multicore", and
-#'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
 #' @return Saves prediction plots as JPEG files in the specified output
 #'   directory.
 #' @name plot_prediction
 #' @author Ahmed El-Gabbas
 #' @export
 
-plot_prediction <- function(
-    model_dir = NULL, env_file = ".env", n_cores = 8L,
-    strategy = "multisession") {
+plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -35,27 +30,9 @@ plot_prediction <- function(
       include_backtrace = TRUE)
   }
 
-  if (!is.character(strategy)) {
-    ecokit::stop_ctx(
-      "`strategy` must be a character vector",
-      strategy = strategy, class_strategy = class(strategy))
-  }
-  if (strategy == "sequential") {
-    n_cores <- 1L
-  }
-  if (length(strategy) != 1L) {
-    ecokit::stop_ctx(
-      "`strategy` must be a character vector of length 1",
-      strategy = strategy, length_strategy = length(strategy))
-  }
-  valid_strategy <- c("sequential", "multisession", "multicore", "cluster")
-  if (!strategy %in% valid_strategy) {
-    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
-  }
-
   .start_time <- lubridate::now(tzone = "CET")
 
-  tif_path_mean <- tif_path_sd <- tif_path_cov <- Path_CLC <- Path_Grid <-
+  tif_path_mean <- tif_path_sd <- tif_path_cov <- Path_CLC <- Path_Grid <- x <-
     IAS_ID <- Species_File <- Observed <- Clamp <- NoClamp <- Path_PA <- NULL
 
   # # ..................................................................... ###
@@ -97,16 +74,6 @@ plot_prediction <- function(
   }
   Gird10 <- ecokit::load_as(Gird10) %>%
     terra::unwrap()
-
-  # # ..................................................................... ###
-
-  # packages to be loaded in parallel
-  pkg_to_export <- ecokit::load_packages_future(
-    packages = c(
-      "dplyr", "terra", "ggplot2", "stringr", "cowplot", "tidyterra",
-      "purrr", "ggtext", "ragg", "paletteer", "grid", "scales", "ecokit",
-      "magrittr"),
-    strategy = strategy)
 
   # # ..................................................................... ###
 
@@ -649,24 +616,25 @@ plot_prediction <- function(
 
   ecokit::cat_time("Plotting")
 
-  if (n_cores == 1) {
-    future::plan("sequential", gc = TRUE)
-  } else {
-    ecokit::set_parallel(
-      n_cores = n_cores, level = 1L, future_max_size = 800L,
-      strategy = strategy)
-    withr::defer(future::plan("sequential", gc = TRUE))
-  }
+  # set up parallel processing
+  doParallel::registerDoParallel(cores = n_cores)
+  ecokit::load_packages(package_list = "foreach")
+  withr::defer(doParallel::stopImplicitCluster())
 
-  Plots <- future.apply::future_lapply(
-    X = seq_len(nrow(Map_summary)), FUN = PlotMaps,
-    future.scheduling = Inf, future.seed = TRUE,
-    future.packages = pkg_to_export,
-    future.globals = c(
+  Plots <- foreach::foreach(
+    x = seq_len(nrow(Map_summary)),
+    .export = c(
       "Map_summary", "PrepPlots", "R_SR", "Path_PA",
-      "R_habitat", "Path_Plots", "hab_name", "PlotMaps"))
+      "R_habitat", "Path_Plots", "hab_name", "PlotMaps"),
+    .packages = c(
+      "dplyr", "terra", "ggplot2", "stringr", "cowplot", "tidyterra",
+      "purrr", "ggtext", "ragg", "paletteer", "grid", "scales", "ecokit",
+      "magrittr")) %dopar% {
+      PlotMaps(x)
+    }
 
   rm(Plots, envir = environment())
+  doParallel::stopImplicitCluster()
 
   ecokit::cat_diff(init_time = .start_time)
 

@@ -6,7 +6,7 @@
 \alias{convergence_plot}
 \alias{convergence_alpha}
 \alias{convergence_rho}
-\alias{convergence_Beta_ranges}
+\alias{convergence_beta_ranges}
 \title{Plot model convergence of a selected model}
 \usage{
 convergence_plot(
@@ -43,7 +43,7 @@ convergence_rho(
   margin_type = "histogram"
 )
 
-convergence_Beta_ranges(model_dir)
+convergence_beta_ranges(model_dir)
 }
 \arguments{
 \item{path_coda}{Character. Path to a saved coda object containing MCMC
@@ -107,8 +107,8 @@ on HPC environments.
 }
 \details{
 \code{convergence_alpha()}, \code{convergence_rho()}, and
-\code{convergence_Beta_ranges} are internal functions and should not be called
-directly. The \code{convergence_Beta_ranges} plots the convergence range of the
+\code{convergence_beta_ranges} are internal functions and should not be called
+directly. The \code{convergence_beta_ranges} plots the convergence range of the
 each species beta parameters. It can be used to check if any of the chains
 show convergence issues; i.e., showing exceptionally high or low beta
 values.

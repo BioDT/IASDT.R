@@ -17,7 +17,7 @@ mod_postprocess_1_CPU(
   env_file = ".env",
   path_Hmsc = NULL,
   memory_per_cpu = "64G",
-  job_runtime = NULL,
+  job_runtime = "01:00:00",
   from_JSON = FALSE,
   GPP_dist = NULL,
   use_trees = "Tree",
@@ -151,9 +151,9 @@ data sources. Defaults to \code{.env}.}
 \item{memory_per_cpu}{Character. Memory allocation per CPU core. Example:
 "32G" for 32 gigabytes. Defaults to "64G".}
 
-\item{job_runtime}{Character. Maximum allowed runtime for the job. Example:
-"01:00:00" for one hour. Required --- if not provided, the function throws
-an error.}
+\item{job_runtime}{Character. Maximum allowed runtime for jobs for refitting
+the models (if needed) and cross validating models. Defaults to "01:00:00"
+for one hour. If not provided, the function throws an error.}
 
 \item{from_JSON}{Logical. Whether to convert loaded models from JSON format
 before reading. Defaults to \code{FALSE}.}

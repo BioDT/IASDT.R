@@ -39,7 +39,6 @@ resp_curv_plot_species(
 resp_curv_plot_species_all(
   model_dir = NULL,
   n_cores = 8L,
-  strategy = "multisession",
   return_data = FALSE,
   plotting_alpha = 0.3
 )

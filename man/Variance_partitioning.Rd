@@ -31,7 +31,6 @@ variance_partitioning_plot(
   use_TF = TRUE,
   TF_environ = NULL,
   n_cores = 1L,
-  strategy = "multisession",
   width = 30,
   height = 15,
   Axis_text = 4
@@ -83,10 +82,6 @@ Python script. Default is \code{FALSE}. Only relevant when \code{use_TF} is \cod
 
 \item{env_file}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
-
-\item{strategy}{Character. The parallel processing strategy to use. Valid
-options are "sequential", "multisession" (default), "multicore", and
-"cluster". See \code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
 
 \item{width, height}{Numeric. Width and height of the output plot in
 centimetres. Default: \code{30} and \code{15}, respectively.}

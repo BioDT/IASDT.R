@@ -46,8 +46,8 @@
 #'   plot. Valid options are "histogram" (default) or "density".
 #'
 #' @details `convergence_alpha()`, `convergence_rho()`, and
-#'   `convergence_Beta_ranges` are internal functions and should not be called
-#'   directly. The `convergence_Beta_ranges` plots the convergence range of the
+#'   `convergence_beta_ranges` are internal functions and should not be called
+#'   directly. The `convergence_beta_ranges` plots the convergence range of the
 #'   each species beta parameters. It can be used to check if any of the chains
 #'   show convergence issues; i.e., showing exceptionally high or low beta
 #'   values.
@@ -223,18 +223,30 @@ convergence_plot <- function(
   SampleSize <- Model$samples
 
   #  Plotting colours
+  define_chain_colors <- FALSE
+
   if (is.null(chain_colors)) {
-    chain_colors <- c(
-      "black", "grey60",
-      RColorBrewer::brewer.pal(n = NChains - 2, name = "Set1"))
+    define_chain_colors <- TRUE
   }
 
   if (length(chain_colors) != NChains) {
+    define_chain_colors <- TRUE
     warning(
       "The length of provided colours != number of chains", call. = FALSE)
-    chain_colors <- c(
-      "black", "grey60",
-      RColorBrewer::brewer.pal(n = NChains - 2, name = "Set1"))
+  }
+
+  if (define_chain_colors) {
+    # minimum value of n colours in RColorBrewer::brewer.pal is 3.
+    # black and grey will be used anyway
+    if (NChains >= 4) {
+      chain_colors <- c(
+        "black", "grey60",
+        RColorBrewer::brewer.pal(n = NChains - 2, name = "Set1"))
+    } else if (NChains == 3) {
+      chain_colors <- c("black", "grey60", "red")
+    } else if (NChains == 2) {
+      chain_colors <- c("black", "grey60")
+    }
   }
 
   # # ..................................................................... ###
@@ -974,7 +986,7 @@ convergence_plot <- function(
   ecokit::cat_time(
     "plot minimum and maximum value of each beta parameter", level = 1L)
 
-  IASDT.R::convergence_Beta_ranges(model_dir = dirname(path_model))
+  IASDT.R::convergence_beta_ranges(model_dir = dirname(path_model))
 
   # # ..................................................................... ###
 
@@ -1261,7 +1273,7 @@ convergence_plot <- function(
 #' @author Ahmed El-Gabbas
 #' @export
 
-convergence_Beta_ranges <- function(model_dir) {
+convergence_beta_ranges <- function(model_dir) {
 
   # # ..................................................................... ###
 
@@ -1289,6 +1301,7 @@ convergence_Beta_ranges <- function(model_dir) {
   # Construct path to beta parameter data
   beta_data_path <- fs::path(
     dirname(model_dir), "Model_Convergence", "Convergence_Beta.qs2")
+
   # Check if the beta data file exists
   if (!file.exists(beta_data_path)) {
     ecokit::stop_ctx(
@@ -1298,8 +1311,14 @@ convergence_Beta_ranges <- function(model_dir) {
 
   # # ..................................................................... ###
 
-  # Load beta parameter information
-  Beta_ranges <- ecokit::load_as(beta_data_path, n_threads = 5) %>%
+  # Load beta parameter information -----
+
+  Beta_ranges <- ecokit::load_as(beta_data_path, n_threads = 5)
+
+  # number of chains
+  n_chains <- length(Beta_ranges$DT[[1]]$Post) # nolint: object_length_linter
+
+  Beta_ranges <- Beta_ranges %>%
     dplyr::mutate(
       Variable = forcats::fct(Variable),
       # Calculate the min and max of the beta values for each species
@@ -1308,7 +1327,7 @@ convergence_Beta_ranges <- function(model_dir) {
         .f = ~ {
           Post <- ecokit::load_as(.x)$Post
           purrr::map(
-            .x = 1:5,
+            .x = seq_len(n_chains),
             .f = ~ {
               tibble::tibble(
                 chain = .x,
@@ -1340,7 +1359,7 @@ convergence_Beta_ranges <- function(model_dir) {
       title = "Convergence of beta parameters", subtitle = plot_subtitle,
       x = "Chain",
       y = stringr::str_glue(
-      "<span style='color:red'>Minimum</span> and \\
+        "<span style='color:red'>Minimum</span> and \\
       <span style='color:blue'>maximum</span> beta values")) +
     ggplot2::theme(
       text = ggplot2::element_text(family = "sans"),

@@ -10,6 +10,9 @@
 #' as `mod_postprocess_CV_1_CPU` and `mod_postprocess_CV_2_CPU` for
 #' cross-validated models. See details for more information.
 #' @param model_dir Character. Path to the root directory of the fitted model.
+#' @param job_runtime Character. Maximum allowed runtime for jobs for refitting
+#'   the models (if needed) and cross validating models. Defaults to "01:00:00"
+#'   for one hour. If not provided, the function throws an error.
 #' @param GPP_dist Integer. Distance in *kilometres* between knots for the
 #'   selected model.
 #' @param use_trees Character. Whether a phylogenetic tree was used in the
@@ -175,10 +178,10 @@
 mod_postprocess_1_CPU <- function(
     model_dir = NULL, hab_abb = NULL, n_cores = 8L, strategy = "multisession",
     env_file = ".env", path_Hmsc = NULL, memory_per_cpu = "64G",
-    job_runtime = NULL, from_JSON = FALSE, GPP_dist = NULL, use_trees = "Tree",
-    MCMC_n_samples = 1000L, MCMC_thin = NULL, n_omega = 1000L,
-    CV_name = c("CV_Dist", "CV_Large"), n_grid = 50L, use_TF = TRUE,
-    TF_use_single = FALSE, LF_n_cores = n_cores,
+    job_runtime = "01:00:00", from_JSON = FALSE, GPP_dist = NULL,
+    use_trees = "Tree", MCMC_n_samples = 1000L, MCMC_thin = NULL,
+    n_omega = 1000L, CV_name = c("CV_Dist", "CV_Large"), n_grid = 50L,
+    use_TF = TRUE, TF_use_single = FALSE, LF_n_cores = n_cores,
     LF_temp_cleanup = TRUE, LF_check = FALSE, temp_cleanup = TRUE,
     TF_environ = NULL, clamp_pred = TRUE, fix_efforts = "q90",
     fix_rivers = "q90", pred_new_sites = TRUE, n_cores_VP = 10L,
@@ -202,7 +205,7 @@ mod_postprocess_1_CPU <- function(
     args_all = AllArgs, args_type = "character",
     args_to_check = c(
       "hab_abb", "env_file", "model_dir", "use_trees", "path_Hmsc",
-      "strategy"))
+      "strategy", "job_runtime"))
 
   ecokit::check_args(
     args_all = AllArgs, args_type = "logical",
@@ -1184,7 +1187,7 @@ mod_postprocess_2_CPU <- function(
       cat_timestamp = FALSE)
 
     IASDT.R::resp_curv_plot_species_all(
-      model_dir = model_dir, n_cores = RC_n_cores, strategy = strategy)
+      model_dir = model_dir, n_cores = RC_n_cores)
 
     invisible(gc())
   }
@@ -1244,8 +1247,8 @@ mod_postprocess_2_CPU <- function(
 
     IASDT.R::variance_partitioning_plot(
       path_model = path_model, env_file = env_file, VP_file = "VarPar",
-      use_TF = use_TF, TF_environ = TF_environ, n_cores = n_cores,
-      strategy = strategy, width = 30, height = 15)
+      use_TF = use_TF, TF_environ = TF_environ, n_cores = n_cores, width = 30,
+      height = 15)
   }
 
   # ****************************************************************
@@ -1259,8 +1262,7 @@ mod_postprocess_2_CPU <- function(
       cat_timestamp = FALSE)
 
     IASDT.R::plot_prediction(
-      model_dir = model_dir, env_file = env_file, n_cores = n_cores,
-      strategy = strategy)
+      model_dir = model_dir, env_file = env_file, n_cores = n_cores)
   }
 
   # ****************************************************************

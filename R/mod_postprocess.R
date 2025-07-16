@@ -742,11 +742,7 @@ mod_prepare_TF <- function(
     LF_Pattern <- "(LF_NewSites_Commands_.+.txt|LF_RC_Commands_.+txt)"
     LF_InFiles <- fs::dir_ls(
       path = path_model, recurse = TRUE, type = "file",
-      regexp = paste0(model_prefix, ".+/TEMP_Pred/", LF_Pattern)) %>%
-      purrr::map(readr::read_lines, progress = FALSE) %>%
-      unlist() %>%
-      gtools::mixedsort() %>%
-      unname()
+      regexp = paste0(model_prefix, ".+/TEMP_Pred/", LF_Pattern))
 
     if (length(LF_InFiles) == 0) {
       ecokit::stop_ctx(
@@ -763,9 +759,11 @@ mod_prepare_TF <- function(
     purrr::walk(LF_InFiles, ecokit::cat_time, level = 2L, cat_timestamp = FALSE)
 
     # Read and merge commands from input files
-    LF_commands <- purrr::map(.x = LF_InFiles, .f = readr::read_lines) %>%
+    LF_commands <- purrr::map(
+      .x = LF_InFiles, .f = readr::read_lines, progress = FALSE) %>%
       unlist() %>%
-      gtools::mixedsort()
+      gtools::mixedsort() %>%
+      unname()
 
     ecokit::cat_time(
       paste0(

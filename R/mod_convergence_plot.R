@@ -227,9 +227,7 @@ convergence_plot <- function(
 
   if (is.null(chain_colors)) {
     define_chain_colors <- TRUE
-  }
-
-  if (length(chain_colors) != NChains) {
+  } else if (length(chain_colors) != NChains) {
     define_chain_colors <- TRUE
     warning(
       "The length of provided colours != number of chains", call. = FALSE)

@@ -216,7 +216,7 @@ resp_curv_plot_species <- function(
       TitleTxt <- stringr::str_glue(
         '<span style="font-size:13pt;"><b> Response curves of </b></span>\\
         <span style="color:blue; font-size:13pt;">\\
-        <b><i>{Species_name}, "</i></b></span>\\
+        <b><i>{Species_name}</i></b></span>\\
         <span style="font-size:8pt;"> (\\
         <b>Class:</b> {Class} &#8212; <b>Order:</b> {Order} &#8212; \\
         <b>Family:</b> {Family} &#8212; <b>ID:</b> {Species_ID} \\
@@ -369,8 +369,8 @@ resp_curv_plot_species <- function(
         Plots$Plot_Fixed, nrow = NR, ncol = NC) +
         patchwork::plot_annotation(
           title = stringr::str_glue(
-            "{TitleTxt}<span style = 'color:#ffffff;'>.......................\\
-            ..........</span><span style='font-size:10pt; color:grey;'>Fixed \\
+            "{TitleTxt}<span style = 'color:#ffffff;'>...........\\
+            </span><span style='font-size:10pt; color:grey;'>Fixed \\
             y-axis</span>"),
           caption = Caption, theme = PlottingTheme2) +
         patchwork::plot_layout(axes = "collect")

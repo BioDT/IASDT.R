@@ -62,9 +62,6 @@ resp_curv_plot_SR <- function(
 
   # # ..................................................................... ###
 
-  ecokit::cat_time(
-    "Check the existence of response curve directory", verbose = verbose)
-
   Path_RC_DT <- fs::path(model_dir, "Model_Postprocessing", "RespCurv_DT")
   Path_RC_SR <- fs::path(model_dir, "Model_Postprocessing", "RespCurv_SR")
 
@@ -293,7 +290,7 @@ resp_curv_plot_SR <- function(
             ggplot2::facet_grid(~NFV, labeller = FacetLabel) +
             ggplot2::scale_y_continuous(
               limits = c(-1, PlotMax), oob = scales::squish, expand = c(0, 0)) +
-            ggplot2::scale_x_continuous(expand = c(0.015, 0.015)) +
+            ggplot2::scale_x_continuous(expand = c(0.0125, 0.0125)) +
             ggplot2::xlab(Variable2) +
             ggplot2::ylab(YAxisLabel) +
             ggplot2::labs(title = TitleTxt, caption = Caption) +
@@ -363,7 +360,7 @@ resp_curv_plot_SR <- function(
                 limits = c(-1, PlotMax),
                 oob = scales::squish, expand = c(0, 0)) +
               ggplot2::scale_x_continuous(
-                expand = c(0.015, 0.015), labels = scales::comma) +
+                expand = c(0.0125, 0.0125), labels = scales::comma) +
               ggplot2::xlab(Variable2) +
               ggplot2::ylab(YAxisLabel) +
               ggplot2::labs(title = TitleTxt, caption = Caption) +

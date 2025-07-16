@@ -1026,18 +1026,22 @@ variance_partitioning_compute <- function(
   }
 
   names(R2T.Beta) <- Model$covNames
-  colnames(vals) <- Model$spNames
   leg <- group_names
   for (r in seq_len(nr)) {
     leg <- c(leg, paste0("Random: ", Model$rLNames[r]))
   }
-  rownames(vals) <- leg
 
-  VP <- list()
-  VP$vals <- vals
-  VP$R2T <- list(Beta = R2T.Beta, Y = R2T.Y)
-  VP$group <- group
-  VP$groupnames <- group_names
+  vals <- data.frame(vals) %>%
+    tibble::tibble() %>%
+    stats::setNames(Model$spNames) %>%
+    dplyr::mutate(Variable = leg, .before = 1)
+
+  VP <- list(
+    vals = vals,
+    species_names = Model$spNames,
+    R2T = list(Beta = R2T.Beta, Y = R2T.Y),
+    group = group,
+    groupnames = group_names)
 
   # # .................................................................... ###
 

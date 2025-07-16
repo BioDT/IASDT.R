@@ -172,9 +172,9 @@ variance_partitioning_plot <- function(
 
   ## Plotting data ----
 
-  VarPar_DF <- tibble::as_tibble(VarPar$vals, rownames = "Variable") %>%
-    tidyr::pivot_longer(
-      cols = -Variable, names_to = "Species", values_to = "VP_Value") %>%
+  VarPar_DF <- tidyr::pivot_longer(
+      data = VarPar$vals, cols = -Variable,
+      names_to = "Species", values_to = "VP_Value") %>%
     dplyr::left_join(SpList, by = "Species")
 
   # Calculate mean Variance partitioning per variable and prepare labels for the

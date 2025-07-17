@@ -582,9 +582,6 @@ mod_prepare_TF <- function(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
-  ecokit::record_arguments(
-    out_path = fs::path(path_model, "Args_mod_prep_TF.RData"))
-
   # ****************************************************************
 
   # Path to store TF commands

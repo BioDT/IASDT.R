@@ -88,9 +88,6 @@ cross-validated models. See details for more information.</p>
 <span>  LF_check <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  temp_cleanup <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  TF_environ <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  clamp_pred <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  fix_efforts <span class="op">=</span> <span class="st">"q90"</span>,</span>
-<span>  fix_rivers <span class="op">=</span> <span class="st">"q90"</span>,</span>
 <span>  pred_new_sites <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  n_cores_VP <span class="op">=</span> <span class="fl">10L</span>,</span>
 <span>  width_omega <span class="op">=</span> <span class="fl">26</span>,</span>
@@ -302,28 +299,6 @@ the files exist without checking their integrity. Default is <code>FALSE</code>.
 required if <code>use_TF</code> is <code>TRUE</code> under Windows. Defaults to <code>NULL</code>.</p></dd>
 
 
-<dt id="arg-clamp-pred">clamp_pred<a class="anchor" aria-label="anchor" href="#arg-clamp-pred"></a></dt>
-<dd><p>Logical indicating whether to clamp the sampling efforts at
-a single value. If <code>TRUE</code> (default), the <code>fix_efforts</code> argument must be
-provided.</p></dd>
-
-
-<dt id="arg-fix-efforts">fix_efforts<a class="anchor" aria-label="anchor" href="#arg-fix-efforts"></a></dt>
-<dd><p>Numeric or character. When <code>clamp_pred = TRUE</code>, fixes the
-sampling efforts predictor at this value during predictions. If numeric,
-uses the value directly (on log<sub>10</sub> scale). If character, must be
-one of <code>identity</code> (i.e., do not fix), <code>median</code>, <code>mean</code>, <code>max</code>, or <code>q90</code>
-(90% quantile). Using <code>max</code> may reflect extreme sampling efforts from
-highly sampled locations, while <code>q90</code> captures high sampling areas without
-extremes. Required if <code>clamp_pred = TRUE</code>.</p></dd>
-
-
-<dt id="arg-fix-rivers">fix_rivers<a class="anchor" aria-label="anchor" href="#arg-fix-rivers"></a></dt>
-<dd><p>Numeric, character, or <code>NULL</code>. Similar to <code>fix_efforts</code>,
-but for the river length predictor. If <code>NULL</code>, the river length is not
-fixed. Default: <code>q90</code>.</p></dd>
-
-
 <dt id="arg-pred-new-sites">pred_new_sites<a class="anchor" aria-label="anchor" href="#arg-pred-new-sites"></a></dt>
 <dd><p>Logical. Whether to predict suitability at new sites.
 Default: <code>TRUE</code>.</p></dd>
@@ -391,6 +366,28 @@ predictions. Available options are: <code>c("ssp126", "ssp370", "ssp585")</code>
 <dt id="arg-rc-n-cores">RC_n_cores<a class="anchor" aria-label="anchor" href="#arg-rc-n-cores"></a></dt>
 <dd><p>Integer. The number of cores to use for response curve
 prediction. Defaults to <code>8</code>.</p></dd>
+
+
+<dt id="arg-clamp-pred">clamp_pred<a class="anchor" aria-label="anchor" href="#arg-clamp-pred"></a></dt>
+<dd><p>Logical indicating whether to clamp the sampling efforts at
+a single value. If <code>TRUE</code> (default), the <code>fix_efforts</code> argument must be
+provided.</p></dd>
+
+
+<dt id="arg-fix-efforts">fix_efforts<a class="anchor" aria-label="anchor" href="#arg-fix-efforts"></a></dt>
+<dd><p>Numeric or character. When <code>clamp_pred = TRUE</code>, fixes the
+sampling efforts predictor at this value during predictions. If numeric,
+uses the value directly (on log<sub>10</sub> scale). If character, must be
+one of <code>identity</code> (i.e., do not fix), <code>median</code>, <code>mean</code>, <code>max</code>, or <code>q90</code>
+(90% quantile). Using <code>max</code> may reflect extreme sampling efforts from
+highly sampled locations, while <code>q90</code> captures high sampling areas without
+extremes. Required if <code>clamp_pred = TRUE</code>.</p></dd>
+
+
+<dt id="arg-fix-rivers">fix_rivers<a class="anchor" aria-label="anchor" href="#arg-fix-rivers"></a></dt>
+<dd><p>Numeric, character, or <code>NULL</code>. Similar to <code>fix_efforts</code>,
+but for the river length predictor. If <code>NULL</code>, the river length is not
+fixed. Default: <code>q90</code>.</p></dd>
 
 
 <dt id="arg-tar-predictions">tar_predictions<a class="anchor" aria-label="anchor" href="#arg-tar-predictions"></a></dt>

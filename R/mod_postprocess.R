@@ -183,8 +183,7 @@ mod_postprocess_1_CPU <- function(
     n_omega = 1000L, CV_name = c("CV_Dist", "CV_Large"), n_grid = 50L,
     use_TF = TRUE, TF_use_single = FALSE, LF_n_cores = n_cores,
     LF_temp_cleanup = TRUE, LF_check = FALSE, temp_cleanup = TRUE,
-    TF_environ = NULL, clamp_pred = TRUE, fix_efforts = "q90",
-    fix_rivers = "q90", pred_new_sites = TRUE, n_cores_VP = 10L,
+    TF_environ = NULL, pred_new_sites = TRUE, n_cores_VP = 10L,
     width_omega = 26, height_omega = 22.5, width_beta = 25, height_beta = 35) {
 
   .start_time <- lubridate::now(tzone = "CET")
@@ -210,7 +209,7 @@ mod_postprocess_1_CPU <- function(
   ecokit::check_args(
     args_all = AllArgs, args_type = "logical",
     args_to_check = c(
-      "from_JSON", "pred_new_sites", "clamp_pred", "temp_cleanup",
+      "from_JSON", "pred_new_sites", "temp_cleanup",
       "use_TF", "LF_check", "LF_temp_cleanup", "TF_use_single"))
 
   ecokit::check_args(
@@ -491,8 +490,7 @@ mod_postprocess_1_CPU <- function(
 
   IASDT.R::predict_maps(
     path_model = path_model, hab_abb = hab_abb, env_file = env_file,
-    n_cores = n_cores, strategy = strategy, clamp_pred = clamp_pred,
-    fix_efforts = fix_efforts, fix_rivers = fix_rivers,
+    n_cores = n_cores, strategy = strategy, clamp_pred = FALSE,
     pred_new_sites = pred_new_sites, use_TF = use_TF, TF_environ = TF_environ,
     temp_dir = temp_dir, temp_cleanup = temp_cleanup,
     TF_use_single = TF_use_single, LF_n_cores = LF_n_cores, LF_check = LF_check,

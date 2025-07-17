@@ -33,9 +33,6 @@ mod_postprocess_1_CPU(
   LF_check = FALSE,
   temp_cleanup = TRUE,
   TF_environ = NULL,
-  clamp_pred = TRUE,
-  fix_efforts = "q90",
-  fix_rivers = "q90",
   pred_new_sites = TRUE,
   n_cores_VP = 10L,
   width_omega = 26,
@@ -199,22 +196,6 @@ the files exist without checking their integrity. Default is \code{FALSE}.}
 \item{TF_environ}{Character. Path to the Python environment. This argument is
 required if \code{use_TF} is \code{TRUE} under Windows. Defaults to \code{NULL}.}
 
-\item{clamp_pred}{Logical indicating whether to clamp the sampling efforts at
-a single value. If \code{TRUE} (default), the \code{fix_efforts} argument must be
-provided.}
-
-\item{fix_efforts}{Numeric or character. When \code{clamp_pred = TRUE}, fixes the
-sampling efforts predictor at this value during predictions. If numeric,
-uses the value directly (on log\if{html}{\out{<sub>}}10\if{html}{\out{</sub>}} scale). If character, must be
-one of \code{identity} (i.e., do not fix), \code{median}, \code{mean}, \code{max}, or \code{q90}
-(90\% quantile). Using \code{max} may reflect extreme sampling efforts from
-highly sampled locations, while \code{q90} captures high sampling areas without
-extremes. Required if \code{clamp_pred = TRUE}.}
-
-\item{fix_rivers}{Numeric, character, or \code{NULL}. Similar to \code{fix_efforts},
-but for the river length predictor. If \code{NULL}, the river length is not
-fixed. Default: \code{q90}.}
-
 \item{pred_new_sites}{Logical. Whether to predict suitability at new sites.
 Default: \code{TRUE}.}
 
@@ -257,6 +238,22 @@ predictions. Available options are: \code{c("ssp126", "ssp370", "ssp585")}
 
 \item{RC_n_cores}{Integer. The number of cores to use for response curve
 prediction. Defaults to \code{8}.}
+
+\item{clamp_pred}{Logical indicating whether to clamp the sampling efforts at
+a single value. If \code{TRUE} (default), the \code{fix_efforts} argument must be
+provided.}
+
+\item{fix_efforts}{Numeric or character. When \code{clamp_pred = TRUE}, fixes the
+sampling efforts predictor at this value during predictions. If numeric,
+uses the value directly (on log\if{html}{\out{<sub>}}10\if{html}{\out{</sub>}} scale). If character, must be
+one of \code{identity} (i.e., do not fix), \code{median}, \code{mean}, \code{max}, or \code{q90}
+(90\% quantile). Using \code{max} may reflect extreme sampling efforts from
+highly sampled locations, while \code{q90} captures high sampling areas without
+extremes. Required if \code{clamp_pred = TRUE}.}
+
+\item{fix_rivers}{Numeric, character, or \code{NULL}. Similar to \code{fix_efforts},
+but for the river length predictor. If \code{NULL}, the river length is not
+fixed. Default: \code{q90}.}
 
 \item{tar_predictions}{Logical. Whether to compress the add files into a
 single \verb{*.tar} file (without compression). Default: \code{TRUE}.}

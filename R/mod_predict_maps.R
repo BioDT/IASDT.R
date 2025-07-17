@@ -29,10 +29,10 @@
 #' @param fix_efforts Numeric or character. When `clamp_pred = TRUE`, fixes the
 #'   sampling efforts predictor at this value during predictions. If numeric,
 #'   uses the value directly (on log<sub>10</sub> scale). If character, must be
-#'   one of `median`, `mean`, `max`, or `q90` (90% quantile). Using `max` may
-#'   reflect extreme sampling efforts from highly sampled locations, while `q90`
-#'   captures high sampling areas without extremes. Required if `clamp_pred =
-#'   TRUE`.
+#'   one of `identity` (i.e., do not fix), `median`, `mean`, `max`, or `q90`
+#'   (90% quantile). Using `max` may reflect extreme sampling efforts from
+#'   highly sampled locations, while `q90` captures high sampling areas without
+#'   extremes. Required if `clamp_pred = TRUE`.
 #' @param fix_rivers Numeric, character, or `NULL`. Similar to `fix_efforts`,
 #'   but for the river length predictor. If `NULL`, the river length is not
 #'   fixed. Default: `q90`.
@@ -251,21 +251,31 @@ predict_maps <- function(
   }
 
 
-  # Check fix_efforts value
   if (clamp_pred) {
 
-    # fix_efforts can not be NULL when Clamping is implemented
+    # Check if the `fix_efforts` value is valid
     if (is.null(fix_efforts)) {
       ecokit::stop_ctx(
         "`fix_efforts` can not be `NULL` when Clamping is implemented",
         fix_efforts = fix_efforts, include_backtrace = TRUE)
     }
-
-    # Check if fix_efforts is a vector or length 1
     if (length(fix_efforts) != 1) {
       ecokit::stop_ctx(
         "`fix_efforts` must be a vector or length 1.",
         fix_efforts = fix_efforts, include_backtrace = TRUE)
+    }
+
+    # Check if the `fix_rivers` value is valid
+    if (is.null(fix_rivers)) {
+      ecokit::stop_ctx(
+        "`fix_rivers` can not be `NULL` when Clamping is implemented",
+        fix_rivers = fix_rivers, include_backtrace = TRUE)
+    }
+    if (length(fix_rivers) != 1) {
+      # Check if fix_rivers is a vector or length 1
+      ecokit::stop_ctx(
+        "`fix_rivers` must be a vector or length 1.", fix_rivers = fix_rivers,
+        include_backtrace = TRUE)
     }
 
     # Create folder for clamp results only if clamp_pred == TRUE
@@ -499,10 +509,10 @@ predict_maps <- function(
           unlist() %>%
           as.vector()
 
-        InvalidVal <- isFALSE(
+        invalid_value <- isFALSE(
           dplyr::between(fix_efforts, EffortsRange[1], EffortsRange[2]))
 
-        if (InvalidVal) {
+        if (invalid_value) {
           ecokit::stop_ctx(
             "`fix_efforts` value is out of the range of observed efforts",
             fix_efforts = fix_efforts, EffortsRange = round(EffortsRange, 2),
@@ -515,20 +525,23 @@ predict_maps <- function(
       } else {
 
         # If `fix_efforts` is character, check if it is one of the valid values:
-        # median, mean, max, and q90
+        # identity, median, mean, max, and q90
         fix_efforts <- stringr::str_to_lower(fix_efforts)
-        if (!(fix_efforts %in% c("median", "mean", "max", "q90"))) {
+        if (!(fix_efforts %in% c("identity", "median", "mean", "max", "q90"))) {
           ecokit::stop_ctx(
             paste0(
               "`fix_efforts` has to be either NULL, single numeric ",
-              "value, or one of the following: 'median', 'mean', 'max', ",
-              "or `q90`."),
+              "value, or one of the following: 'identity', 'median', ",
+              "'mean', 'max', or 'q90'."),
             fix_efforts = fix_efforts, include_backtrace = TRUE)
         }
       }
 
       # Fix value
       EffortsVal <- dplyr::case_when(
+
+        # Do not fix if `fix_efforts` is "identity"
+        fix_efforts == "identity" ~ NA_real_,
 
         # Fix at 90% quantile
         fix_efforts == "q90" ~ {
@@ -564,22 +577,37 @@ predict_maps <- function(
         .default = NA_real_)
 
 
-      # Fix at single value
-      ecokit::cat_time(
-        paste0("Fixed value is ", round(EffortsVal, 2), " [log10 scale]"),
-        level = 2L, cat_timestamp = FALSE)
+      # Print fixed value
+      if (is.na(EffortsVal)) {
+        if (fix_efforts == "identity") {
+          ecokit::cat_time(
+            "Sampling efforts predictor is not fixed at a single value",
+            level = 2L, cat_timestamp = FALSE)
+        }
+        R_Efforts_Clamp <- stats::setNames(R_Efforts, "EffortsLog_Clamp")
 
-      # Set a minimum value for efforts variable to `EffortsVal`. Using upper =
-      # Inf keeps efforts values > EffortsVal as they are.
-      R_Efforts_Clamp <- terra::clamp(
-        x = R_Efforts, lower = EffortsVal, upper = Inf) %>%
-        stats::setNames("EffortsLog_Clamp")
+      } else {
+
+        ecokit::cat_time(
+          paste0("Fixed value is ", round(EffortsVal, 2), " [log10 scale]"),
+          level = 2L, cat_timestamp = FALSE)
+
+        # Set a minimum value for efforts variable to `EffortsVal`. Using
+        # upper = Inf keeps efforts values > EffortsVal as they are.
+        R_Efforts_Clamp <- terra::clamp(
+          x = R_Efforts, lower = EffortsVal, upper = Inf) %>%
+          stats::setNames("EffortsLog_Clamp")
+
+      }
 
       StaticPredictors <- c(StaticPredictors, R_Efforts, R_Efforts_Clamp)
       rm(R_Efforts, R_Efforts_Clamp, envir = environment())
 
     } else {
 
+      # Do not fix at single value
+      ecokit::cat_time(
+        "Sampling efforts is not fixed at a single value", level = 2L)
       StaticPredictors <- c(StaticPredictors, R_Efforts)
       rm(R_Efforts, envir = environment())
 
@@ -608,30 +636,10 @@ predict_maps <- function(
       log10() %>%
       stats::setNames("RiversLog")
 
+    if (clamp_pred) {
+      ecokit::cat_time("Fixing river length values", level = 2L)
 
-    if (is.null(fix_rivers)) {
-
-      # Do not fix at single value
-      ecokit::cat_time(
-        "River length predictor is not fixed at a single value",
-        level = 2L, cat_timestamp = FALSE)
-
-    } else {
-
-      ecokit::cat_time(
-        "River length predictor will be fixed at single (`fix_rivers`) value",
-        level = 2L, cat_timestamp = FALSE)
-
-
-      # Check if the fix_rivers value is valid
-
-      if (length(fix_rivers) != 1) {
-        # Check if fix_rivers is a vector or length 1
-        ecokit::stop_ctx(
-          "`fix_rivers` must be a vector or length 1.", fix_rivers = fix_rivers,
-          include_backtrace = TRUE)
-      }
-
+      # Check fix_rivers value
       if (is.numeric(fix_rivers)) {
 
         # If `fix_rivers` is numeric value, check if it is within the range of
@@ -640,10 +648,10 @@ predict_maps <- function(
           unlist() %>%
           as.vector()
 
-        InvalidVal <- isFALSE(
+        invalid_value <- isFALSE(
           dplyr::between(fix_rivers, RiversRange[1], RiversRange[2]))
 
-        if (InvalidVal) {
+        if (invalid_value) {
           ecokit::stop_ctx(
             "`fix_rivers` value is out of the range of observed river length",
             fix_rivers = fix_rivers, RiversRange = round(RiversRange, 2),
@@ -656,19 +664,22 @@ predict_maps <- function(
       } else {
 
         # If `fix_rivers` is character, check if it is one of the valid values:
-        # median, mean, max, and q90
+        # identity, median, mean, max, and q90
         fix_rivers <- stringr::str_to_lower(fix_rivers)
-        if (!(fix_rivers %in% c("median", "mean", "max", "q90"))) {
+        if (!(fix_rivers %in% c("identity", "median", "mean", "max", "q90"))) {
           ecokit::stop_ctx(
             paste0(
               "`fix_rivers` has to be either NULL, single numeric ",
-              "value, or one of the following: 'median', 'mean', 'max', ",
-              "or 'q90'."),
+              "value, or one of the following: 'identity', 'median', ",
+              "'mean', 'max', or 'q90'."),
             fix_rivers = fix_rivers, include_backtrace = TRUE)
         }
 
         # Fix value
         RiversVal <- dplyr::case_when(
+
+          # Do not fix if `fix_rivers` is "identity"
+          fix_rivers == "identity" ~ NA_real_,
 
           # Fix at 90% quantile
           fix_rivers == "q90" ~ {
@@ -704,22 +715,45 @@ predict_maps <- function(
           .default = NA_real_)
       }
 
+      # Print fixed value
+
+      if (is.na(RiversVal)) {
+
+        if (fix_rivers == "identity") {
+          ecokit::cat_time(
+            "River length predictor is not fixed at a single value",
+            level = 2L, cat_timestamp = FALSE)
+        }
+        R_Rivers_Clamp <- stats::setNames(R_Rivers, "RiversLog_Clamp")
+
+      } else {
+
+        ecokit::cat_time(
+          paste0("Fixed value is ", round(RiversVal, 2), " [log10 scale]"),
+          level = 2L, cat_timestamp = FALSE)
+
+        # Set a minimum value for river length variable to `RiversVal`. Using
+        # upper = Inf keeps  river length values > RiversVal as they are.
+        R_Rivers_Clamp <- terra::clamp(
+          x = R_Rivers, lower = RiversVal, upper = Inf) %>%
+          stats::setNames("RiversLog_Clamp")
+
+      }
+
+      StaticPredictors <- c(StaticPredictors, R_Rivers, R_Rivers_Clamp)
+      rm(R_Rivers, R_Rivers_Clamp, RiversVal, envir = environment())
+
+    } else {
+
+      # Do not fix at single value
       ecokit::cat_time(
-        paste0("Fixed value is ", round(RiversVal, 2), " [log10 scale]"),
+        "River length predictor is not fixed at a single value",
         level = 2L, cat_timestamp = FALSE)
 
-      # Set a minimum value for `RiversLog` variable to `RiversVal`. Using upper
-      # = Inf keeps RiversLog values > RiversVal as they are.
-      R_Rivers <- terra::clamp(
-        x = R_Rivers, lower = RiversVal, upper = Inf) %>%
-        stats::setNames("RiversLog")
-
-      rm(RiversVal, envir = environment())
+      StaticPredictors <- c(StaticPredictors, R_Rivers)
+      rm(R_Rivers, envir = environment())
 
     }
-
-    StaticPredictors <- c(StaticPredictors, R_Rivers)
-    rm(R_Rivers, envir = environment())
 
   }
 
@@ -862,11 +896,17 @@ predict_maps <- function(
       # Make prediction files at `Path_Prediction_Clamp`
       Path_Prediction <- Path_Prediction_Clamp
 
-      # use clamped Effort values
-      StaticPreds <- terra::subset(
-        x = StaticPredictors, subset = "EffortsLog", negate = TRUE)
-      StaticPreds$EffortsLog <- StaticPreds$EffortsLog_Clamp
-      StaticPreds$EffortsLog_Clamp <- NULL
+      if ("EffortsLog" %in% names(StaticPredictors)) {
+        # use clamped Effort values
+        StaticPreds$EffortsLog <- StaticPreds$EffortsLog_Clamp
+        StaticPreds$EffortsLog_Clamp <- NULL
+      }
+
+      if ("RiversLog" %in% names(StaticPredictors)) {
+        # use clamped rivers values
+        StaticPreds$RiversLog <- StaticPreds$RiversLog_Clamp
+        StaticPreds$RiversLog_Clamp <- NULL
+      }
 
     } else {
 
@@ -876,13 +916,17 @@ predict_maps <- function(
       # Make prediction files at `Path_Prediction_NoClamp`
       Path_Prediction <- Path_Prediction_NoClamp
 
-      # use original effort data
-      if ("EffortsLog_Clamp" %in% names(StaticPredictors)) {
+      # Remove clamped layers
+      StaticPreds <- StaticPredictors
+      if ("EffortsLog_Clamp" %in% names(StaticPreds)) {
         StaticPreds <- terra::subset(
-          x = StaticPredictors, subset = "EffortsLog_Clamp", negate = TRUE)
-      } else {
-        StaticPreds <- StaticPredictors
+          x = StaticPreds, subset = "EffortsLog_Clamp", negate = TRUE)
       }
+      if ("RiversLog_Clamp" %in% names(StaticPreds)) {
+        StaticPreds <- terra::subset(
+          x = StaticPreds, subset = "RiversLog_Clamp", negate = TRUE)
+      }
+
     }
 
     Path_Prediction_sf <- fs::path(

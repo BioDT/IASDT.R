@@ -312,9 +312,10 @@ provided.</p></dd>
 <dd><p>Numeric or character. When <code>clamp_pred = TRUE</code>, fixes the
 sampling efforts predictor at this value during predictions. If numeric,
 uses the value directly (on log<sub>10</sub> scale). If character, must be
-one of <code>median</code>, <code>mean</code>, <code>max</code>, or <code>q90</code> (90% quantile). Using <code>max</code> may
-reflect extreme sampling efforts from highly sampled locations, while <code>q90</code>
-captures high sampling areas without extremes. Required if <code>clamp_pred = TRUE</code>.</p></dd>
+one of <code>identity</code> (i.e., do not fix), <code>median</code>, <code>mean</code>, <code>max</code>, or <code>q90</code>
+(90% quantile). Using <code>max</code> may reflect extreme sampling efforts from
+highly sampled locations, while <code>q90</code> captures high sampling areas without
+extremes. Required if <code>clamp_pred = TRUE</code>.</p></dd>
 
 
 <dt id="arg-fix-rivers">fix_rivers<a class="anchor" aria-label="anchor" href="#arg-fix-rivers"></a></dt>

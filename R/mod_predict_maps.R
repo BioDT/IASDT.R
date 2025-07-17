@@ -967,8 +967,7 @@ predict_maps <- function(
         .OptionStartTime <- lubridate::now(tzone = "CET")
 
         # Extracting data at training and new sites ------
-        ecokit::cat_time(
-          "Extracting data at training and new sites", level = 1L)
+        ecokit::cat_time("Extracting data at training and new sites")
         Predict_DF <- Prediction_Options$FilePath[[ID]] %>%
           ecokit::load_as() %>%
           terra::unwrap() %>%
@@ -1013,8 +1012,8 @@ predict_maps <- function(
 
         # ______________________________________________
 
-        # Predictions at training sites ----
-        ecokit::cat_time("Predictions at training sites", level = 1L)
+        # Predicting at training sites ----
+        ecokit::cat_time("Predicting at training sites")
 
         Path_Current_Train <- fs::path(
           Path_Prediction, paste0("Prediction_", Option_Name, "_Train.qs2"))
@@ -1042,11 +1041,11 @@ predict_maps <- function(
 
         # ______________________________________________
 
-        # Predictions at new sites ----
+        # Predicting at new sites ----
 
         if (pred_new_sites) {
 
-          ecokit::cat_time("Predictions at new sites", level = 1L)
+          ecokit::cat_time("Predicting at new sites")
 
           Path_Current_Test <- fs::path(
             Path_Prediction, paste0("Prediction_", Option_Name, "_Test.qs2"))
@@ -1075,8 +1074,7 @@ predict_maps <- function(
           # ______________________________________________
 
           # Merge & save predictions - sf ------
-          ecokit::cat_time(
-            "Merge & save predictions at training and new sites", level = 1L)
+          ecokit::cat_time("Merge & save predictions at training and new sites")
 
           Prediction_sf <- dplyr::bind_rows(
             ecokit::load_as(Preds_ModFitSites$Pred_Path),

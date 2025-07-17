@@ -544,8 +544,7 @@ predict_hmsc <- function(
     withr::defer(future::plan("sequential", gc = TRUE))
   }
 
-  ecokit::cat_time(
-    "Making predictions in parallel", level = 1L, verbose = verbose)
+  ecokit::cat_time("Making predictions in parallel", level = 1L)
   pred <- future.apply::future_lapply(
     X = seq_len(length(Chunks)),
     FUN = function(Chunk) {

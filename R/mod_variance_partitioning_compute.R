@@ -261,7 +261,8 @@ variance_partitioning_compute <- function(
 
   if (use_TF) {
 
-    ecokit::cat_time("Prepare VP files for `TensorFlow`", verbose = verbose)
+    ecokit::cat_time(
+      "Prepare/check VP files for `TensorFlow`", verbose = verbose)
 
     # Create the temporary directory
     Path_Temp <- fs::path(dirname(dirname(path_model)), "TEMP_VP")
@@ -765,8 +766,7 @@ variance_partitioning_compute <- function(
 
     Model_x <- Model$X
     Model <- IASDT.R::trim_hmsc(
-      model = Model,
-      names_to_remove = c("X", "covNames", "spNames", "rLNames"))
+      model = Model, names_to_remove = c("X", "covNames"))
     invisible(gc())
 
     ecokit::cat_time("Processing in parallel", level = 1L, verbose = verbose)

@@ -581,7 +581,7 @@ predict_maps <- function(
       if (is.na(EffortsVal)) {
         if (fix_efforts == "identity") {
           ecokit::cat_time(
-            "Sampling efforts predictor is not fixed at a single value",
+            "Sampling efforts predictor is not fixed",
             level = 2L, cat_timestamp = FALSE)
         }
         R_Efforts_Clamp <- stats::setNames(R_Efforts, "EffortsLog_Clamp")
@@ -607,7 +607,7 @@ predict_maps <- function(
 
       # Do not fix at single value
       ecokit::cat_time(
-        "Sampling efforts is not fixed at a single value", level = 2L)
+        "Sampling efforts is not fixed", level = 2L, cat_timestamp = FALSE)
       StaticPredictors <- c(StaticPredictors, R_Efforts)
       rm(R_Efforts, envir = environment())
 
@@ -888,6 +888,8 @@ predict_maps <- function(
       cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE, level = 1L,
       info_lines_before = 1L)
 
+    StaticPreds <- StaticPredictors
+
     if (DoClamp) {
 
       # Do not evaluate for options with clamping
@@ -917,7 +919,6 @@ predict_maps <- function(
       Path_Prediction <- Path_Prediction_NoClamp
 
       # Remove clamped layers
-      StaticPreds <- StaticPredictors
       if ("EffortsLog_Clamp" %in% names(StaticPreds)) {
         StaticPreds <- terra::subset(
           x = StaticPreds, subset = "EffortsLog_Clamp", negate = TRUE)

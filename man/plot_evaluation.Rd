@@ -4,14 +4,11 @@
 \alias{plot_evaluation}
 \title{Generate plots for the explanatory power of Hmsc models}
 \usage{
-plot_evaluation(model_dir, env_file = ".env")
+plot_evaluation(model_dir)
 }
 \arguments{
 \item{model_dir}{Character. Path to the model directory containing
 predictions.}
-
-\item{env_file}{Character. Path to the environment file containing paths to
-data sources. Defaults to \code{.env}.}
 }
 \description{
 This function generates four diagnostic plots (RMSE, AUC, Continuous Boyce

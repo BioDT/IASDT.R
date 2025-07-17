@@ -1286,7 +1286,7 @@ mod_postprocess_2_CPU <- function(
       line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
       cat_timestamp = FALSE)
 
-    IASDT.R::plot_evaluation(model_dir = model_dir, env_file = env_file)
+    IASDT.R::plot_evaluation(model_dir = model_dir)
   }
 
   # ****************************************************************

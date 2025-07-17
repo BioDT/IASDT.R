@@ -1352,6 +1352,7 @@ convergence_beta_ranges <- function(model_dir) {
     ggplot2::geom_point(
       ggplot2::aes(x = (chain + 0.125), y = max), show.legend = FALSE,
       pch = 20, colour = "blue", size = 0.8, alpha = 0.5) +
+    ggplot2::scale_x_continuous(breaks = ecokit::integer_breaks(n_chains)) +
     ggplot2::facet_wrap(~Variable, scales = "free_y", ncol = 5, nrow = 4) +
     ggplot2::labs(
       title = "Convergence of beta parameters", subtitle = plot_subtitle,

@@ -377,19 +377,19 @@ variance_partitioning_plot <- function(
   ## Plotting data ----
 
   if (is.null(Model_Eval$TjurR2) ||
-      length(Model_Eval$TjurR2) != ncol(VarPar$vals)) {
+      length(Model_Eval$TjurR2) != ncol(VarPar$vals) - 1) {
     ecokit::stop_ctx(
       paste0(
         "Mismatch between the length of Model_Eval$TjurR2 and the number of ",
         " columns in VarPar$vals"),
       Model_Eval_TjurR2 = Model_Eval$TjurR2,
       length_Model_Eval_TjurR2 = length(Model_Eval$TjurR2),
-      ncol_VarPar_vals = ncol(VarPar$vals), include_backtrace = TRUE)
+      ncol_VarPar_vals = ncol(VarPar$vals) - 1, include_backtrace = TRUE)
   }
 
-  VarPar_DF_Raw <- tibble::as_tibble(VarPar$vals, rownames = "Variable") %>%
-    tidyr::pivot_longer(
-      cols = -Variable, names_to = "Species", values_to = "VP_Value") %>%
+  VarPar_DF_Raw <- tidyr::pivot_longer(
+      data = VarPar$vals, cols = -Variable,
+      names_to = "Species", values_to = "VP_Value") %>%
     dplyr::left_join(Model_Eval, by = "Species") %>%
     dplyr::mutate(VP_Value = VP_Value * TjurR2)
 

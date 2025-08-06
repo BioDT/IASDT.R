@@ -1555,7 +1555,8 @@ fit_predict_internal <- function(
 
 
             tibble::tibble(
-              pred_dir = pred_dir, data_path = data_path, data_okay = data_okay,
+              species_name = species_name, pred_dir = pred_dir,
+              data_path = data_path, data_okay = data_okay,
               tif_path = tif_path, tif_okay = tif_okay) %>%
               dplyr::mutate(cv_fold = cv_fold, .before = 1)
 

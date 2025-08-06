@@ -39,7 +39,7 @@ Suggests:
     arrow (>= 17.0.0.1),
     automap (>= 1.1-9),
     bit64 (>= 4.0.5),
-    blockCV (>= 3.1.4),
+    blockCV (>= 3.1.7),
     car (>= 3.1.2),
     caret (>= 6.0-94),
     colorRamps (>= 2.3.4),
@@ -128,10 +128,12 @@ LinkingTo:
 VignetteBuilder:
     knitr
 Remotes:
+    babaknaimi/sdm,
     elgabbas/ecokit,
     EmilHvitfeldt/paletteer,
     hmsc-r/HMSC,
     isciences/exactextractr,
+    rvalavi/blockCV,
     YuLab-SMU/ggtree
 Config/testthat/edition: 3
 Encoding: UTF-8

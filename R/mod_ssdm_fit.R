@@ -405,6 +405,13 @@ fit_sdm_models <- function(
     ecokit::save_as(
       object = model_results, object_name = model_results_name,
       out_path = model_results_path)
+
+    # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+    # Check model results -----
+    ecokit::cat_time("Check model results", level = 1)
+    check_model_results(model_results)
+
   }
 
   # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

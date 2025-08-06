@@ -1809,3 +1809,410 @@ summarize_predictions <- function(line_id, model_summary) {
     dplyr::mutate(species_name = species_name, .before = 1) %>%
     dplyr::arrange(climate_name, cv_fold)
 }
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++ ------
+
+# # ========================================================================= #
+# check_model_results -------
+# # ========================================================================= #
+
+#' Check Species Distribution Model Results for Issues
+#'
+#' This function examines a species distribution model (SDM) results object for
+#' potential issues. It checks for missing or `NaN` values in:
+#' - 1. Training evaluation metrics
+#' - 2. Testing evaluation metrics
+#' - 3. Variable importance data
+#' - 4. Response curves
+#' - 5. Prediction files (TIF files and data files)
+#'
+#' @param model_results A list object containing SDM results with the following
+#'   components:
+#'   - `evaluation_training`: List of tibbles with training evaluation metrics
+#'   - `evaluation_testing`: List of tibbles with testing evaluation metrics
+#'   - `variable_importance`: List of tibbles with variable importance values
+#'   - `response_curves`: List of tibbles with response curve data
+#'   - `prediction_info`: List of tibbles with prediction file information
+#'
+#' @details
+#' - The function outputs information about any identified issues to the
+#' console, including which species are affected and what specific metrics or
+#' data elements have issues.
+#' - The function is not expected to be called directly by users, but is
+#' used internally within the `IASDT.R` workflow, particularly the
+#' [fit_sdm_models()] function.
+
+#' @return Returns invisibly NULL. This function is used for its side effects
+#'   (console output).
+#' @author Ahmed El-Gabbas
+#' @noRd
+#' @keywords internal
+
+check_model_results <- function(model_results) {
+
+  data_okay <- tif_okay <- climate_name <- data_path <- cv_fold <- x_value <-
+    tif_path <- climate_model <- climate_scenario <- time_period <- na_count <-
+    prediction <- cor_test <- auc_test <- species_name <- . <-  pred_dir <-
+    variable <- min_value <- max_value <- times <- bad_vals <- NULL
+
+  n_species <- length(unique(model_results$species_name))
+
+  # Check if model_results is a data frame with at least one row
+  if (!inherits(model_results, "data.frame") || nrow(model_results) == 0) {
+    ecokit::stop_ctx(
+      "model_results must be a data frame with at least 1 row.",
+      class_model_results = class(model_results))
+  }
+
+  # Check if model_results contains the required columns
+  required_cols <- c(
+    "evaluation_training", "evaluation_testing", "variable_importance",
+    "response_curves", "prediction_info")
+  if (!all(required_cols %in% names(model_results))) {
+    missing_columns <- required_cols[!required_cols %in% names(model_results)]
+    ecokit::stop_ctx(
+      paste0(
+        "`model_results` must contain the following columns: ",
+        toString(missing_columns)),
+      names_model_results = names(model_results))
+  }
+
+  invalid_cols <- purrr::map_lgl(
+    .x = required_cols,
+    .f = ~ {
+      example_data <- model_results[[.x]][[1]]
+      inherits(example_data, "tbl_df") && nrow(example_data) > 0
+    })
+  invalid_columns <- required_cols[!invalid_cols]
+  if (length(invalid_columns) > 0) {
+    ecokit::stop_ctx(
+      paste0(
+        "model_results components must be tibbles with nrow > 0: ",
+        toString(invalid_columns)),
+      names_model_results = names(model_results))
+  }
+
+  ecokit::cat_time(
+    crayon::blue("\nChecking for possible issues in model results"),
+    cat_timestamp = FALSE, cat_bold = TRUE, ... = "\n")
+
+  # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # Evaluation data - Training -----
+  # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  check_eval_train <- model_results$evaluation_training %>%
+    dplyr::bind_rows() %>%
+    dplyr::group_by(species_name) %>%
+    dplyr::summarise(
+      dplyr::across(
+        .cols = -c("sdm_method", "cv_fold"),
+        .fns = ~ sum(is.na(.) | is.nan(.))),
+      .groups = "drop") %>%
+    dplyr::select(
+      species_name, tidyselect::where(~is.numeric(.) && sum(.) != 0)) %>%
+    dplyr::filter(dplyr::if_any(.cols = -species_name, .fns =  ~ .x > 0))
+
+  if (ncol(check_eval_train) > 1) {
+
+    issues_eval_train <- check_eval_train %>%
+      tidyr::pivot_longer(
+        -species_name,
+        names_to = "variable", values_to = "na_count") %>%
+      dplyr::filter(na_count > 0)
+
+    issues_eval_train_species <- unique(issues_eval_train$species_name)
+    issues_eval_train_n_species <- length(issues_eval_train_species)
+
+    ecokit::info_chunk(
+      paste0(
+        "!! There are issues in training evaluation data for ",
+        issues_eval_train_n_species, " / ", n_species, " species. !!"),
+      cat_timestamp = FALSE,
+      cat_date = FALSE, cat_bold = TRUE, cat_red = TRUE, line_char_rep = 70)
+
+    ecokit::cat_time(
+      "Affected species: ", cat_timestamp = FALSE, cat_bold = TRUE)
+    paste(issues_eval_train_species, collapse = "; ") %>%
+      stringr::str_wrap(width = 65) %>%
+      stringr::str_split("\n", simplify = TRUE) %>%
+      stringr::str_replace_all(" ", " ") %>%
+      paste(collapse = "\n  >>>  ") %>%
+      ecokit::cat_time(cat_timestamp = FALSE, level = 1, ... = "\n")
+
+    dplyr::select(issues_eval_train, -species_name) %>%
+      dplyr::mutate(
+        variable = stringr::str_remove_all(
+          variable, "_mss_train|_ess_train|_train"),
+        variable = stringr::str_to_lower(variable)) %>%
+      dplyr::pull(variable) %>%
+      unique() %>%
+      paste(collapse = "; ") %>%
+      stringr::str_wrap(50) %>%
+      stringr::str_replace_all("\n", "\n  >>>  ") %>%
+      paste0(
+        crayon::bold("Affected metrics: "),
+        "\n  >>>  ", ., collapse = "\n") %>%
+      ecokit::cat_time(cat_timestamp = FALSE, ... = "\n")
+  }
+
+  # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # Evaluation data - Testing -----
+  # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  check_eval_test <- model_results$evaluation_testing %>%
+    dplyr::bind_rows() %>%
+    dplyr::group_by(species_name) %>%
+    dplyr::summarise(
+      dplyr::across(
+        .cols = -c("sdm_method", "cv_fold"),
+        .fns =  ~ sum(is.na(.) | is.nan(.))),
+      .groups = "drop") %>%
+    dplyr::select(
+      species_name, tidyselect::where(~is.numeric(.) && sum(.) != 0)) %>%
+    dplyr::filter(dplyr::if_any(.cols = -species_name, .fns =  ~ .x > 0))
+
+  if (ncol(check_eval_test) > 1) {
+    issues_eval_test <- check_eval_test %>%
+      tidyr::pivot_longer(
+        -species_name, names_to = "variable", values_to = "na_count") %>%
+      dplyr::filter(na_count > 0)
+
+    issues_eval_test_species <- unique(issues_eval_test$species_name)
+    issues_eval_test_n_species <- length(issues_eval_test_species)
+
+    ecokit::info_chunk(
+      paste0(
+        "!! There are issues in testing evaluation data for ",
+        issues_eval_test_n_species, " / ", n_species, " species. !!"),
+      cat_timestamp = FALSE,
+      cat_date = FALSE, cat_bold = TRUE, cat_red = TRUE, line_char_rep = 70)
+
+    ecokit::cat_time(
+      "Affected species: ", cat_timestamp = FALSE, cat_bold = TRUE)
+    paste(issues_eval_test_species, collapse = "; ") %>%
+      stringr::str_wrap(width = 65) %>%
+      stringr::str_split("\n", simplify = TRUE) %>%
+      stringr::str_replace_all(" ", " ") %>%
+      paste(collapse = "\n  >>>  ") %>%
+      ecokit::cat_time(cat_timestamp = FALSE, level = 1, ... = "\n")
+
+    dplyr::select(issues_eval_test, -species_name) %>%
+      dplyr::mutate(
+        variable = stringr::str_remove_all(
+          variable, "_mss_test|_ess_test|_test"),
+        variable = stringr::str_to_lower(variable)) %>%
+      dplyr::pull(variable) %>%
+      unique() %>%
+      paste(collapse = "; ") %>%
+      stringr::str_wrap(50) %>%
+      stringr::str_replace_all("\n", "\n  >>>  ") %>%
+      paste0(
+        crayon::bold("Affected metrics: "),
+        "\n  >>>  ", ., collapse = "\n") %>%
+      ecokit::cat_time(cat_timestamp = FALSE, ... = "\n")
+  }
+
+  # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # Variable importance -----
+  # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  check_var_imp <- dplyr::bind_rows(model_results$variable_importance) %>%
+    dplyr::group_by(species_name, variable) %>%
+    dplyr::summarise(
+      dplyr::across(
+        .cols = c("cor_test", "auc_test"),
+        .fns =  ~ sum(is.na(.) | is.nan(.))), .groups = "drop") %>%
+    dplyr::filter(
+      dplyr::if_any(.cols = c("cor_test", "auc_test"), .fns =  ~ .x > 0))
+
+  if (nrow(check_var_imp) > 0) {
+    issues_var_imp_species <- unique(check_var_imp$species_name)
+    issues_var_imp_n_species <- length(issues_var_imp_species)
+
+    issues_var_imp <- check_var_imp %>%
+      dplyr::select(-species_name) %>%
+      dplyr::group_by(variable) %>%
+      dplyr::summarise(
+        dplyr::across(
+          .cols = c("cor_test", "auc_test"),
+          .fns =  ~ sum(.)), .groups = "drop") %>%
+      dplyr::mutate(
+        message = paste0(
+          "cor_test: ", cor_test, " sp; auc_test: ", auc_test, " sp"),
+        message = stringr::str_remove_all(message, "^; | $"),
+        message = paste0(
+          stringr::str_pad(variable, width = 12, side = "right"),
+          " --> ", message)) %>%
+      dplyr::pull(message) %>%
+      paste(collapse = "\n  >>>  ")
+
+    ecokit::info_chunk(
+      paste0(
+        "!! There are issues in variable importance data for ",
+        issues_var_imp_n_species, " / ", n_species, " species. !!"),
+      cat_timestamp = FALSE,
+      cat_date = FALSE, cat_bold = TRUE, cat_red = TRUE, line_char_rep = 70)
+
+    ecokit::cat_time(
+      "Affected species: ", cat_timestamp = FALSE, cat_bold = TRUE)
+    paste(issues_var_imp_species, collapse = "; ") %>%
+      stringr::str_wrap(width = 65) %>%
+      stringr::str_split("\n", simplify = TRUE) %>%
+      stringr::str_replace_all(" ", " ") %>%
+      paste(collapse = "\n  >>>  ") %>%
+      ecokit::cat_time(cat_timestamp = FALSE, level = 1, ... = "\n")
+
+    ecokit::cat_time(
+      issues_var_imp, cat_timestamp = FALSE, level = 1, ... = "\n")
+  }
+
+  # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # Response curves -----
+  # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  check_res_curv <- dplyr::bind_rows(model_results$response_curves) %>%
+    dplyr::group_by(species_name, variable) %>%
+    dplyr::summarise(
+      dplyr::across(
+        .cols = c("x_value", "prediction"),
+        .fns = ~ sum(is.na(.) | is.nan(.))),
+      .groups = "drop") %>%
+    dplyr::filter(
+      dplyr::if_any(.cols = c("x_value", "prediction"), .fns =  ~ .x > 0))
+
+  if (nrow(check_res_curv) > 0) {
+    issues_res_curv_species <- unique(check_res_curv$species_name)
+    issues_res_curv_n_species <- length(issues_res_curv_species)
+
+    issues_res_curv <- check_res_curv %>%
+      dplyr::select(-species_name) %>%
+      dplyr::group_by(variable) %>%
+      dplyr::summarise(
+        dplyr::across(
+          .cols = c("x_value", "prediction"),
+          .fns =  ~ sum(.)), .groups = "drop") %>%
+      dplyr::mutate(
+        message = paste0(
+          "missing x values: ", x_value, "; prediction: ", prediction),
+        message = stringr::str_remove_all(message, "^; | $"),
+        message = paste0(
+          stringr::str_pad(variable, width = 12, side = "right"),
+          " --> ", message)) %>%
+      dplyr::pull(message) %>%
+      paste(collapse = "\n  >>>  ")
+
+    ecokit::info_chunk(
+      paste0(
+        "!! There are issues in response curves data for ",
+        issues_res_curv_n_species, " / ", n_species, " species. !!"),
+      cat_timestamp = FALSE,
+      cat_date = FALSE, cat_bold = TRUE, cat_red = TRUE, line_char_rep = 70)
+
+    ecokit::cat_time(
+      "Affected species: ", cat_timestamp = FALSE, cat_bold = TRUE)
+    paste(issues_res_curv_species, collapse = "; ") %>%
+      stringr::str_wrap(width = 65) %>%
+      stringr::str_split("\n", simplify = TRUE) %>%
+      stringr::str_replace_all(" ", " ") %>%
+      paste(collapse = "\n  >>>  ") %>%
+      ecokit::cat_time(cat_timestamp = FALSE, level = 1, ... = "\n")
+
+    ecokit::cat_time(
+      issues_res_curv, cat_timestamp = FALSE, level = 1, ... = "\n")
+  }
+
+  # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  # Predictions -----
+  # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  # Check number of invalid tiff or data files
+
+  check_preds <- dplyr::bind_rows(model_results$prediction_info) %>%
+    dplyr::filter(!data_okay | !tif_okay)
+
+  if (nrow(check_preds) > 0) {
+
+    issues_preds_species <- unique(check_preds$species_name)
+    issues_preds_n_species <- length(issues_preds_species)
+
+    issues_preds <- check_preds %>%
+      dplyr::select(
+        -time_period, -climate_model, -climate_scenario,
+        -tif_path, -pred_dir, -data_path, -cv_fold) %>%
+      dplyr::group_by(climate_name) %>%
+      dplyr::summarise(
+        dplyr::across(
+          .cols = c("tif_okay", "data_okay"), .fns =  ~ sum(!.)),
+        .groups = "keep") %>%
+      dplyr::ungroup() %>%
+      dplyr::mutate(
+        message = paste0(tif_okay, " tiff files; ", data_okay, " data files"),
+        message = stringr::str_remove_all(message, "^; | $"),
+        message = paste0(
+          stringr::str_pad(climate_name, width = 35, side = "right"),
+          " --> ", message)) %>%
+      dplyr::pull(message) %>%
+      paste(collapse = "\n  >>>  ")
+    ecokit::info_chunk(
+      paste0(
+        "!! There are issues in prediction data for ",
+        issues_preds_n_species, " / ", n_species, " species. !!"),
+      cat_timestamp = FALSE,
+      cat_date = FALSE, cat_bold = TRUE, cat_red = TRUE, line_char_rep = 70)
+
+    ecokit::cat_time(
+      "Affected species: ", cat_timestamp = FALSE, cat_bold = TRUE)
+    paste(issues_preds_species, collapse = "; ") %>%
+      stringr::str_wrap(width = 65) %>%
+      stringr::str_split("\n", simplify = TRUE) %>%
+      stringr::str_replace_all(" ", " ") %>%
+      paste(collapse = "\n  >>>  ") %>%
+      ecokit::cat_time(cat_timestamp = FALSE, level = 1, ... = "\n")
+
+    ecokit::cat_time(
+      "Affected climate options: ", cat_timestamp = FALSE, cat_bold = TRUE)
+    ecokit::cat_time(
+      issues_preds, cat_timestamp = FALSE, level = 1, ... = "\n")
+  }
+
+
+  # Check if predictions are < 0 or > 1
+  pred_odd_vals <- dplyr::bind_rows(model_results$prediction_info) %>%
+    dplyr::select(climate_name, species_name, tif_path) %>%
+    dplyr::mutate(
+      min_max = purrr::map(
+        .x = tif_path,
+        .f = ~{
+          terra::global(terra::rast(.x), range, na.rm = TRUE) %>%
+            stats::setNames(c("min_value", "max_value"))
+        })) %>%
+    tidyr::unnest("min_max") %>%
+    dplyr::filter(min_value < -0.001 | max_value > 1.001)
+
+  if (nrow(pred_odd_vals) > 0) {
+    pred_odd_vals %>%
+      dplyr::group_by(climate_name, species_name) %>%
+      dplyr::tally(name = "times") %>%
+      dplyr::ungroup() %>%
+      dplyr::mutate(message = paste0(species_name, " (", times, ")")) %>%
+      dplyr::select(climate_name, message) %>%
+      tidyr::nest(bad_vals = -climate_name) %>%
+      dplyr::mutate(
+        bad_vals = purrr::map2_chr(
+          .x = bad_vals, .y = climate_name,
+          .f = ~ {
+            sp_l <- paste(unlist(.x), collapse = "; ") %>%
+              stringr::str_wrap(width = 40) %>%
+              stringr::str_split(pattern = "\n", simplify = TRUE) %>%
+              paste0("  >>>  ", ., collapse = "\n")
+            paste0(.y, ": ") %>%
+              crayon::bold() %>%
+              paste0("\n", sp_l)
+          })) %>%
+      dplyr::pull(bad_vals) %>%
+      paste(collapse = "\n") %>%
+      ecokit::cat_time(cat_timestamp = FALSE)
+  }
+
+  invisible(NULL)
+}

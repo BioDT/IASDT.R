@@ -38,11 +38,9 @@
 #'   used internally within the `IASDT.R` workflow, particularly the
 #'   [fit_sdm_models()] function.
 #'
-#' @name ssdm_fit
-#' @rdname ssdm_fit
-#' @order 1
 #' @author Ahmed El-Gabbas
-#' @export
+#' @noRd
+#' @keywords internal
 
 extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
 
@@ -75,27 +73,27 @@ extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
       "model must be a sdmModels object or a file path",
       model = model, class_model = class(model))
   }
-  if (!.hasSlot(model, "setting")) {
+  if (!methods::.hasSlot(model, "setting")) {
     ecokit::stop_ctx(
       "model does not have a 'setting' slot.",
       model = model, class_model = class(model))
   }
-  if (!.hasSlot(model@setting, "featureFrame")) {
+  if (!methods::.hasSlot(model@setting, "featureFrame")) {
     ecokit::stop_ctx(
       "model does not have a 'setting@featureFrame' slot.",
       model = model, class_model = class(model))
   }
-  if (!.hasSlot(model@setting@featureFrame, "predictors")) {
+  if (!methods::.hasSlot(model@setting@featureFrame, "predictors")) {
     ecokit::stop_ctx(
       "model does not have a 'setting@featureFrame@predictors' slot.",
       model = model, class_model = class(model))
   }
-  if (!.hasSlot(model@setting, "methods")) {
+  if (!methods::.hasSlot(model@setting, "methods")) {
     ecokit::stop_ctx(
       "model does not have a 'setting@methods' slot.",
       model = model, class_model = class(model))
   }
-  if (!.hasSlot(model, "models")) {
+  if (!methods::.hasSlot(model, "models")) {
     ecokit::stop_ctx(
       "model does not have a 'models' slot.",
       model = model, class_model = class(model))
@@ -162,7 +160,7 @@ extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
     dplyr::rename_with(~ stringr::str_replace(., "train", "test"))
 
   # Ensure that `evaluation` slot exists
-  if (.hasSlot(species_model, "evaluation")) {
+  if (methods::.hasSlot(species_model, "evaluation")) {
 
     # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
     # Evaluation - training
@@ -173,7 +171,7 @@ extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
       eval_train <- species_model@evaluation$training
 
       # `Statistics` slot
-      if (.hasSlot(eval_train, "statistics")) {
+      if (methods::.hasSlot(eval_train, "statistics")) {
         eval_train_stats <- eval_train@statistics
         if ("cBoyce" %in% names(eval_train_stats)) {
           cont_boyce_train <- eval_train_stats$cBoyce
@@ -196,7 +194,7 @@ extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
       }
 
       # `threshold_based` slot
-      if (.hasSlot(eval_train, "threshold_based")) {
+      if (methods::.hasSlot(eval_train, "threshold_based")) {
         eval_train_thr <- eval_train@threshold_based
         eval_train_thr_ess <- eval_train_thr %>%
           dplyr::filter(criteria == "sp=se") %>%
@@ -234,7 +232,7 @@ extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
       eval_test <- species_model@evaluation$test.indep
 
       # `Statistics` slot
-      if (.hasSlot(eval_test, "statistics")) {
+      if (methods::.hasSlot(eval_test, "statistics")) {
         eval_test_stats <- eval_test@statistics
         if ("cBoyce" %in% names(eval_test_stats)) {
           cont_boyce_test <- eval_test_stats$cBoyce
@@ -257,7 +255,7 @@ extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
       }
 
       # `threshold_based` slot
-      if (.hasSlot(eval_test, "threshold_based")) {
+      if (methods::.hasSlot(eval_test, "threshold_based")) {
         eval_test_thr <- eval_test@threshold_based
         eval_test_thr_ess <- eval_test_thr %>%
           dplyr::filter(criteria == "sp=se") %>%
@@ -295,18 +293,18 @@ extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
   # Variable importance
   # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  empty_var_imp <- basic_info %>%
-    dplyr::bind_cols(
-      variable = predictor_names, cor_test = NA_real_, auc_test = NA_real_)
+  empty_var_imp <- dplyr::bind_cols(
+    basic_info, variable = predictor_names,
+    cor_test = NA_real_, auc_test = NA_real_)
 
-  if (.hasSlot(species_model, "varImportance")) {
+  if (methods::.hasSlot(species_model, "varImportance")) {
 
     variable_importance <- species_model@varImportance
 
     if ("test.indep" %in% names(variable_importance)) {
       variable_importance <- variable_importance$test.indep
 
-      if (.hasSlot(variable_importance, "varImportance")) {
+      if (methods::.hasSlot(variable_importance, "varImportance")) {
         variable_importance <- variable_importance@varImportance
 
         if (is.null(variable_importance) || length(variable_importance) == 0) {
@@ -342,7 +340,8 @@ extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
     variable = predictor_names, x_value = NA_real_, prediction = NA_real_) %>%
     dplyr::bind_cols(basic_info, .)
 
-  if (.hasSlot(r_curves, "variables") && .hasSlot(r_curves, "response")) {
+  if (methods::.hasSlot(r_curves, "variables") &&
+      methods::.hasSlot(r_curves, "response")) {
     if (length(r_curves@variables) == 0 || length(r_curves@response) == 0) {
       r_curves <- empty_r_curves
     } else {
@@ -452,12 +451,10 @@ extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
 #' - `path_species_data`: Path to the saved species modelling data file.
 #' - `path_prediction_data`: Path to the saved prediction data file.
 #' - `path_prediction_options`: Path to the saved prediction options file.
-#' 
-#' @name ssdm_fit
-#' @rdname ssdm_fit
-#' @order 1
+#'
 #' @author Ahmed El-Gabbas
-#' @export
+#' @noRd
+#' @keywords internal
 
 prepare_input_data <- function(
     model_dir = NULL, cv_type = "CV_Dist", selected_species = NULL,
@@ -491,54 +488,45 @@ prepare_input_data <- function(
 
   ## future climate options ------
 
-  valid_climate_models <- c(
+  valid_models <- c(
     "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL")
   if (!is.null(climate_models)) {
     if (climate_models == "all") {
-      climate_models <- valid_climate_models
-    } else {
-      if (!all(climate_models %in% valid_climate_models)) {
-        ecokit::stop_ctx(
-          "Provided climate change models do not match valid values",
-          climate_models = climate_models,
-          valid_climate_models = valid_climate_models)
-      }
+      climate_models <- valid_models
+    } else if (!all(climate_models %in% valid_models)) {
+      ecokit::stop_ctx(
+        "Provided climate change models do not match valid values",
+        climate_models = climate_models, valid_models = valid_models)
     }
   }
 
-  valid_climate_scenarios <- c("ssp126", "ssp370", "ssp585")
+  valid_scenarios <- c("ssp126", "ssp370", "ssp585")
   if (!is.null(climate_scenarios)) {
     if (climate_scenarios == "all") {
-      climate_scenarios <- valid_climate_scenarios
-    } else {
-      if (!all(climate_scenarios %in% valid_climate_scenarios)) {
-        ecokit::stop_ctx(
-          "Provided climate change scenarios do not match valid values",
-          climate_scenarios = climate_scenarios,
-          valid_climate_scenarios = valid_climate_scenarios)
-      }
+      climate_scenarios <- valid_scenarios
+    } else if (!all(climate_scenarios %in% valid_scenarios)) {
+      ecokit::stop_ctx(
+        "Provided climate change scenarios do not match valid values",
+        climate_scenarios = climate_scenarios,
+        valid_scenarios = valid_scenarios)
     }
   }
 
-  valid_climate_periods <- c("2011-2040", "2041-2070", "2071-2100")
+  valid_periods <- c("2011-2040", "2041-2070", "2071-2100")
   if (!is.null(climate_periods)) {
     if (climate_periods == "all") {
-      climate_periods <- valid_climate_periods
-    } else {
-      if (!all(climate_periods %in% valid_climate_periods)) {
-        ecokit::stop_ctx(
-          "Provided future time periods do not match valid values",
-          climate_periods = climate_periods,
-          valid_climate_periods = valid_climate_periods)
-      }
+      climate_periods <- valid_periods
+    } else if (!all(climate_periods %in% valid_periods)) {
+      ecokit::stop_ctx(
+        "Provided future time periods do not match valid values",
+        climate_periods = climate_periods, valid_periods = valid_periods)
     }
   }
 
   ## CV type ------
-  valid_cv_types <- c("CV_Dist", "CV_Large")
-  if (!cv_type %in% valid_cv_types) {
-    ecokit::stop_ctx(
-      "Invalid CV type", cv_type = cv_type, valid_cv_types = valid_cv_types)
+  valid_cv <- c("CV_Dist", "CV_Large")
+  if (!cv_type %in% valid_cv) {
+    ecokit::stop_ctx("Invalid CV type", cv_type = cv_type, valid_cv = valid_cv)
   }
 
   ## Model dir ------
@@ -756,7 +744,7 @@ prepare_input_data <- function(
 
   # extract list of linear and quadratic terms from the model formula
   # Use terms() to robustly extract variable names from the formula
-  term_labels <- attr(terms(model_data$Form_x), "term.labels")
+  term_labels <- attr(stats::terms(model_data$Form_x), "term.labels")
   formula_vars <- purrr::map(
     term_labels,
     .f = ~{
@@ -808,7 +796,7 @@ prepare_input_data <- function(
 
               # Update model formula
               model_formula <- c(l_preds, q_preds, paste0(q_preds, "_sq")) %>%
-                paste0(collapse = " + ") %>%
+                paste(collapse = " + ") %>%
                 paste(species_name, " ~ ", .) %>%
                 stats::as.formula(env = baseenv())
             }
@@ -1271,8 +1259,8 @@ prepare_input_data <- function(
 #' @title Species Distribution Model (SDM) Model Settings
 #'
 #' @description Defines a list of default settings for various species
-#'   distribution modeling algorithms. Each element in the list corresponds to a
-#'   specific modeling method and contains its associated control parameters.
+#'   distribution modelling algorithms. Each element in the list corresponds to
+#'   a specific modelling method and contains its associated control parameters.
 #'
 #' @return A named list containing model-specific settings for use in SDM
 #'   workflows.
@@ -1280,13 +1268,8 @@ prepare_input_data <- function(
 #'   used internally within the `IASDT.R` workflow, particularly the
 #'   [fit_sdm_models()] function.
 #' @author Ahmed El-Gabbas
-#' @examples
-#' settings <- sdm_model_settings()
-#' print(settings$gbm)
-#' @name ssdm_fit
-#' @rdname ssdm_fit
-#' @order 1
-#' @export
+#' @noRd
+#' @keywords internal
 
 sdm_model_settings <- function() {
   list(
@@ -1338,11 +1321,9 @@ sdm_model_settings <- function() {
 #' @details The function is not expected to be called directly by users, but is
 #'   used internally within the `IASDT.R` workflow, particularly the
 #'   [fit_sdm_models()] function.
-#' @name ssdm_fit
-#' @rdname ssdm_fit
-#' @order 1
 #' @author Ahmed El-Gabbas
-#' @export
+#' @noRd
+#' @keywords internal
 
 reduce_sdm_formulas <- function(obj) {
 
@@ -1414,11 +1395,11 @@ reduce_sdm_formulas <- function(obj) {
 #'
 #' @param line_id Integer. Index of the row in `model_data` for the species and
 #'   cross-validation fold.
-#' @param sdm_method Character. A single species distribution modeling algorithm
-#'   to use for fitting models. Valid values: "glm", "glmpoly", "gam", "glmnet",
-#'   "mars", "gbm", "rf", "ranger", "cart", "rpart", "maxent", "mlp", "rbf",
-#'   "svm", "mda", and "fda". These correspond to selected methods supported by
-#'   the `sdm` package. For details and supported options, see
+#' @param sdm_method Character. A single species distribution modelling
+#'   algorithm to use for fitting models. Valid values: "glm", "glmpoly", "gam",
+#'   "glmnet", "mars", "gbm", "rf", "ranger", "cart", "rpart", "maxent", "mlp",
+#'   "rbf", "svm", "mda", and "fda". These correspond to selected methods
+#'   supported by the `sdm` package. For details and supported options, see
 #'   [sdm::getmethodNames()].
 #' @param model_data Data frame with model formulas, SDM data, species names,
 #'   and cross-validation folds.
@@ -1442,11 +1423,9 @@ reduce_sdm_formulas <- function(obj) {
 #' if not, fits the model and extracts information.
 #' - Makes predictions for each prediction dataset, saves rasters and data,
 #' and checks their validity.
-#' @name ssdm_fit
-#' @rdname ssdm_fit
-#' @order 1
 #' @author Ahmed El-Gabbas
-#' @export
+#' @noRd
+#' @keywords internal
 
 fit_predict_internal <- function(
     line_id, sdm_method, model_data, model_settings, model_results_dir,
@@ -1647,11 +1626,9 @@ fit_predict_internal <- function(
 #' deviation, coefficient of variation) if not already present or invalid.
 #'   - Returns a tidy data frame with paths and validity flags for all
 #' prediction and summary files.
-#' @name ssdm_fit
-#' @rdname ssdm_fit
-#' @order 1
 #' @author Ahmed El-Gabbas
-#' @export
+#' @noRd
+#' @keywords internal
 
 summarize_predictions <- function(line_id, model_summary) {
 

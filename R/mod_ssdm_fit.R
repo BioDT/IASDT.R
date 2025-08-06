@@ -3,23 +3,23 @@
 # fit_sdm_models ------
 # # ========================================================================= #
 
-#' Fit Species Distribution Models (SDMs) and Summarize Results
+#' Species Distribution Modelling Workflow for Single-Species Models
 #'
-#' This function fits species distribution models (SDMs) for invasive alien
-#' plant species in Europe at the habitat level. The function takes a set of
-#' species using a specified modeling method and cross-validation strategy. It
-#' handles input validation, parallel processing, model fitting, prediction, and
-#' summarization of evaluation metrics, variable importance, and response
-#' curves.
+#' This comprehensive workflow implements single-species species distribution
+#' models (sSDMs) for invasive alien plant species in Europe at the habitat
+#' level. It orchestrates the entire process from data preparation to model
+#' fitting, evaluation, and prediction across current and future climate
+#' scenarios. The workflow employs the `sdm` R package for model fitting and
+#' handles cross-validation, parallel processing, and various environmental
+#' predictors.
 #'
-#' @param sdm_method Character. A single species distribution modeling algorithm
-#'   to use for fitting models. Valid values: "glm", "glmpoly", "gam", "glmnet",
-#'   "mars", "gbm", "rf", "ranger", "cart", "rpart", "maxent", "mlp", "rbf",
-#'   "svm", "mda", and "fda". These correspond to selected methods supported by
-#'   the `sdm` package. For details and supported options, see
-#'   [sdm::getmethodNames()].
+#' @param sdm_method Character. A single SDM algorithm to use for fitting
+#'   models. Valid values: "glm", "glmpoly", "gam", "glmnet", "mars", "gbm",
+#'   "rf", "ranger", "cart", "rpart", "maxent", "mlp", "rbf", "svm", "mda", and
+#'   "fda". These correspond to selected methods supported by the `sdm` package.
+#'   For details and supported options, see [sdm::getmethodNames()].
 #' @param model_settings List or NULL. List of model-specific settings. If
-#'   `NULL`, defaults from [sdm_model_settings()] are used.
+#'   `NULL`, defaults to custom settings defined within the workflow.
 #' @param n_cores Integer. Number of CPU cores for parallel processing. Default
 #'   is 8.
 #' @param model_dir Character. Path to the directory containing model data and
@@ -28,9 +28,9 @@
 #' @param cv_type Character. Cross-validation type. One of `CV_Dist` (default)
 #'   or `CV_Large`. See [mod_CV_fit()] for more details.
 #' @param selected_species Character vector or NULL. Names of species to include
-#'   for modeling.
+#'   for modelling.
 #' @param excluded_species Character vector or NULL. Names of species to exclude
-#'   from modeling.
+#'   from modelling.
 #' @param env_file Character. Path to a file with environment variable
 #'   definitions for spatial datasets. Default is `".env"`.
 #' @param hab_abb Character. Abbreviation for a single SynHab habitat type.
@@ -61,24 +61,59 @@
 #'   prediction. Valid values are "2011-2040", "2041-2070", "2071-2100", or
 #'   "all" (default), or subset of supported periods.
 #'
-#' @return A tibble summarizing model results for each species, including
-#'   evaluation metrics, variable importance, response curves, and prediction
-#'   summaries. Results are also saved to disk for future use.
+#' @return A tibble summarizing model results for each species, including:
+#'   - Evaluation metrics for training and testing data (AUC, TSS, Kappa, etc.)
+#'   - Variable importance scores
+#'   - Response curves for each environmental variable
+#'   - Prediction summaries for current and future climate scenarios
+#'   - Paths to generated model files and prediction rasters
 #'
-#' @details The function performs the following steps:
-#' - Validates input arguments and environment.
-#' - Loads or prepares input data for modeling.
-#' - Sets up parallel processing as needed.
-#' - Fits models and generates predictions under current and selected future
-#'   scenarios for each species in parallel.
-#' - Summarizes evaluation metrics (training and testing), variable importance,
-#'   and response curves.
-#' - Summarizes predictions in parallel.
-#' - Saves results to disk and returns a summary tibble.
+#'   Additionally, the function saves various outputs to disk for future use:
+#'   - Fitted model objects (as .RData files)
+#'   - Extracted model information (evaluation metrics, variable importance,
+#'   etc.)
+#'   - Prediction rasters for each species, cross-validation fold, and climate
+#'   scenario
+#'   - Summary statistics across CV folds (mean, weighted mean, SD, and
+#'   coefficient of variation)
+#'   - Species richness maps for each climate scenario
 #'
-#' @name ssdm_fit
-#' @rdname ssdm_fit
-#' @order 1
+#' @details The `fit_sdm_models` function orchestrates a comprehensive workflow
+#'   that handles all aspects of single-species distribution modelling for
+#'   invasive alien plant species in Europe. The workflow integrates several
+#'   internal components that manage different stages of the modelling process:
+#'
+#'   **Overall workflow:**
+#'   - *Input validation*: Checks all parameters for validity
+#'   - *Data preparation*: Loads and processes model data
+#'   - *Parallel processing setup*: Configures computational resources
+#'   - *Model fitting and prediction*: For each species and CV fold
+#'   - *Results summarization*: Compiles metrics, variable importance, and
+#'   predictions
+#'   - *Species richness calculation*: Across all modelled species
+#'
+#'   **Core capabilities:**
+#'   - *Data preparation*: The workflow validates and prepares necessary
+#'   input data including modelling data, environmental predictors, and
+#'   prediction datasets. It handles species selection, data loading, and
+#'   preprocessing of spatial predictors (including clamping of sampling efforts
+#'   and river length when required).
+#'   - *Model parameterization*: The function provides carefully selected
+#'   default settings for various SDM algorithms, ensuring consistent
+#'   parameterization across models.
+#'   - *Model information extraction*: After fitting, the workflow
+#'   automatically extracts key information from fitted SDM objects, including
+#'   evaluation metrics, variable importance, and response curves.
+#'   - *Model optimization*: Technical improvements like optimizing SDM model
+#'   object size by setting formula environments to the base environment address
+#'   known issues in the sdm package.
+#'   - *Parallel prediction*: The workflow efficiently generates predictions
+#'   for each species and cross-validation fold, handling model fitting,
+#'   information extraction, prediction, and file saving in parallel.
+#'   - *Statistical summarization*: Summary statistics are calculated across
+#'   cross-validation folds, including mean, weighted mean (by test AUC),
+#'   standard deviation, and coefficient of variation of predictions.
+#'
 #' @author Ahmed El-Gabbas
 #' @export
 
@@ -188,7 +223,8 @@ fit_sdm_models <- function(
     warning(
       stringr::str_glue(
         "`n_cores` exceeds available cores: {n_cores}. Using all available",
-        " cores: {max_cores}"))
+        " cores: {max_cores}"),
+      call. = FALSE)
     n_cores <- max_cores
   }
 
@@ -375,8 +411,8 @@ fit_sdm_models <- function(
 
   # Summarize evaluation, response curves, and variable importance -------
 
-  "Summarize evaluation, response curves, and variable importance" %>%
-    ecokit::cat_time()
+  ecokit::cat_time(
+    "Summarize evaluation, response curves, and variable importance")
 
   model_summary <- model_results %>%
     dplyr::select(-model_formula, -sdm_data) %>%

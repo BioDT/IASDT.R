@@ -79,6 +79,7 @@ reference:
   - mod_CV_fit
   - install_hmsc_windows
   - cpp_functions
+  - fit_sdm_models
 - subtitle: Model postprocessing
   desc: Postprocessing model outputs, including checking for convergence, making spatial predictions, evaluation, and plotting.
   contents:

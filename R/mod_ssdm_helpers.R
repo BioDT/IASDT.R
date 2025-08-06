@@ -1643,7 +1643,8 @@ summarize_predictions <- function(line_id, model_summary) {
     mean_auc[n_zeros] <- 0.001
   }
 
-  exclude_cols <- c("data_path", "data_okay", "tif_okay", "cv_fold")
+  exclude_cols <- c(
+    "data_path", "data_okay", "tif_okay", "cv_fold", "species_name")
   keep_cols <- c(
     "time_period", "climate_model", "climate_scenario",
     "climate_name", "pred_dir")
@@ -1803,10 +1804,10 @@ summarize_predictions <- function(line_id, model_summary) {
 
   preds_dt <- dplyr::mutate(preds_dt, pred_summ = pred_summ) %>%
     tidyr::unnest("pred_summ") %>%
-    dplyr::select(-tiff_paths)
+    dplyr::select(-tiff_paths) %>%
+    dplyr::mutate(species_name = species_name, .before = 1)
 
   dplyr::bind_rows(preds_dt_orig, preds_dt) %>%
-    dplyr::mutate(species_name = species_name, .before = 1) %>%
     dplyr::arrange(climate_name, cv_fold)
 }
 

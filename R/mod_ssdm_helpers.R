@@ -135,7 +135,7 @@ extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
   }
 
   # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # Evaluation
+  # Evaluation ----
   # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # columns to keep in evaluation data
@@ -163,7 +163,7 @@ extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
   if (methods::.hasSlot(species_model, "evaluation")) {
 
     # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-    # Evaluation - training
+    ## Evaluation - training ------
     # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
     if ("training" %in% names(species_model@evaluation)) {
@@ -224,7 +224,7 @@ extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
     }
 
     # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-    # Evaluation - testing
+    # Evaluation - testing -----
     # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
     if ("test.indep" %in% names(species_model@evaluation)) {
@@ -290,7 +290,7 @@ extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
   }
 
   # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # Variable importance
+  # Variable importance -----
   # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   empty_var_imp <- dplyr::bind_cols(
@@ -327,7 +327,7 @@ extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
 
 
   # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-  # response curves
+  # Response curves -----
   # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Extract response curves with error handling
@@ -368,8 +368,6 @@ extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
     evaluation_testing = evaluation_testing,
     variable_importance = variable_importance, response_curves = r_curves)
 }
-
-
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++ ------
 
@@ -1562,8 +1560,8 @@ fit_predict_internal <- function(
 
           })) %>%
       dplyr::select(-pred_data) %>%
-      tidyr::unnest("prediction")
-
+      tidyr::unnest("prediction") %>%
+      dplyr::select(species_name, cv_fold, tidyselect::everything())
 
     extracted_data <- c(extracted_data, prediction_info = list(prediction_info))
 

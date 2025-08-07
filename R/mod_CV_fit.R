@@ -388,7 +388,7 @@ mod_CV_fit <- function(
 
               # Model fitting command
               Command_HPC <- paste0(
-                "/usr/bin/time -v python3 -m hmsc.run_gibbs_sampler",
+                "/usr/bin/time -v python3 -m hmsc.run_gibbs_sampler", # nolint: absolute_paths_linter
                 " --input ", ecokit::normalize_path(Path_ModInit_rds),
                 " --output ", ecokit::normalize_path(Post_File),
                 " --samples ", Model_Full$samples,

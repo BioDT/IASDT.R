@@ -110,7 +110,7 @@ variance_partitioning_compute <- function(
           python_executable = python_executable, include_backtrace = TRUE)
       }
     } else {
-      python_executable <- "/usr/bin/time -v python3"
+      python_executable <- "/usr/bin/time -v python3" # nolint: absolute_paths_linter
     }
 
     # Check GPU availability

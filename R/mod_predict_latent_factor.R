@@ -211,7 +211,7 @@ predict_latent_factor <- function(
       }
 
       # Suppress `TensorFlow` warnings and disable optimizations
-      Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3", TF_ENABLE_ONEDNN_OPTS = "0")
+      Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3", TF_ENABLE_ONEDNN_OPTS = "0") # nolint: undesirable_function_linter
 
       ecokit::cat_time(
         "Computations will be made using `TensorFlow`", level = 1L,
@@ -425,7 +425,7 @@ predict_latent_factor <- function(
             # Use `TensorFlow`
 
             # Suppress `TensorFlow` warnings and disable optimizations
-            Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3", TF_ENABLE_ONEDNN_OPTS = "0")
+            Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3", TF_ENABLE_ONEDNN_OPTS = "0") # nolint: undesirable_function_linter
 
             if (file.exists(File_etaPred_TF)) {
               eta_indNew0 <- File_etaPred_TF
@@ -889,7 +889,7 @@ run_crossprod_solve <- function(
     verbose = TRUE, solve_chunk_size = 50L, solve_max_attempts = 5L,
     LF_commands_only = FALSE) {
 
-  Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3")
+  Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3")     # nolint: undesirable_function_linter
 
   # do not use scientific notation
   withr::local_options(scipen = 99)
@@ -948,7 +948,7 @@ run_crossprod_solve <- function(
   } else {
     # Use `python3`` directly - on LUMI, compatible Python installation is
     # loaded automatically when loading `tensorflow`
-    python_executable <- "/usr/bin/time -v python3"
+    python_executable <- "/usr/bin/time -v python3" # nolint: absolute_paths_linter
   }
 
   # Construct the command to run the Python script

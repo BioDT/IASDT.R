@@ -120,7 +120,7 @@
 #' @export
 
 fit_sdm_models <- function(
-    sdm_method = NULL, model_settings = NULL, n_cores = 8,
+    sdm_method = NULL, model_settings = NULL, n_cores = 8L,
     model_dir = NULL, cv_type = "CV_Dist", selected_species = NULL,
     excluded_species = NULL, env_file = ".env", hab_abb = NULL,
     clamp_pred = TRUE, fix_efforts = "q90", fix_rivers = "q90",
@@ -138,7 +138,7 @@ fit_sdm_models <- function(
     "cross-validation type") %>%
     ecokit::info_chunk(
       cat_bold = TRUE, cat_red = TRUE, line_char_rep = 80L,
-      info_lines_before = 2)
+      info_lines_before = 2L)
 
   # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -187,7 +187,7 @@ fit_sdm_models <- function(
     "glm", "glmpoly", "gam", "glmnet", "mars", "gbm", "rf", "ranger",
     "cart", "rpart", "maxent", "mlp", "svm", "mda", "fda")
   sdm_method_valid <- any(
-    is.null(sdm_method), length(sdm_method) != 1,
+    is.null(sdm_method), length(sdm_method) != 1L,
     !is.character(sdm_method), !sdm_method %in% valid_sdm_methods)
   if (sdm_method_valid) {
     ecokit::stop_ctx(
@@ -207,15 +207,15 @@ fit_sdm_models <- function(
     model_settings <- model_settings[sdm_method]
   } else {
     ecokit::cat_time(
-      "No specific model settings found, using default settings", level = 1)
+      "No specific model settings found, using default settings", level = 1L)
     model_settings <- list()
   }
 
   # |||||||||||||||||||||||||||||||||||||||||||
 
   # n_cores
-  if (!is.numeric(n_cores) || length(n_cores) != 1 ||
-      n_cores < 1 || is.na(n_cores)) {
+  if (!is.numeric(n_cores) || length(n_cores) != 1L ||
+      n_cores < 1L || is.na(n_cores)) {
     ecokit::stop_ctx(
       "n_cores must be a positive integer of length 1",
       n_cores = n_cores, class_n_cores = class(n_cores))
@@ -237,7 +237,7 @@ fit_sdm_models <- function(
 
   model_dir_valid <- any(
     !inherits(model_dir, "character"),
-    length(model_dir) != 1, !nzchar(model_dir))
+    length(model_dir) != 1L, !nzchar(model_dir))
   if (model_dir_valid) {
     ecokit::stop_ctx(
       "model_dir must be a character string",
@@ -352,18 +352,18 @@ fit_sdm_models <- function(
     # Fit models and making predictions ------
     ecokit::cat_time("Fit models and making predictions")
 
-    if (n_cores == 1) {
+    if (n_cores == 1L) {
       future::plan("sequential", gc = TRUE)
     } else {
       ecokit::set_parallel(
         n_cores = min(n_cores, nrow(model_data)), future_max_size = 800L,
-        level = 1, cat_timestamp = FALSE)
+        level = 1L, cat_timestamp = FALSE)
       withr::defer(future::plan("sequential", gc = TRUE))
     }
 
     # Processing model fitting and predictions in parallel -------
     ecokit::cat_time(
-      "Processing model fitting and predictions in parallel", level = 1)
+      "Processing model fitting and predictions in parallel", level = 1L)
 
     pkgs_to_load <- c(
       "terra", "stringr", "ecokit", "tibble", "dplyr", "sf",
@@ -396,15 +396,14 @@ fit_sdm_models <- function(
         }
       })
 
-    ecokit::set_parallel(
-      n_cores = n_cores, level = 1, stop_cluster = TRUE, cat_timestamp = FALSE)
+    ecokit::set_parallel(level = 1L, stop_cluster = TRUE, cat_timestamp = FALSE)
     future::plan("sequential", gc = TRUE)
 
     # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
     # Merge outputs into a single tibble -----
 
-    ecokit::cat_time("Merge outputs into a single tibble", level = 1)
+    ecokit::cat_time("Merge outputs into a single tibble", level = 1L)
     model_results <- dplyr::mutate(model_data, data2 = model_data2) %>%
       tidyr::unnest("data2")
 
@@ -415,7 +414,7 @@ fit_sdm_models <- function(
     # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
     # Check model results -----
-    ecokit::cat_time("Check model results", level = 1)
+    ecokit::cat_time("Check model results", level = 1L)
     check_model_results(model_results)
 
   }
@@ -511,12 +510,12 @@ fit_sdm_models <- function(
 
   ecokit::cat_time("Summarizing predictions in parallel")
 
-  if (n_cores == 1) {
+  if (n_cores == 1L) {
     future::plan("sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
       n_cores = min(n_cores, nrow(model_summary)), future_max_size = 800L,
-      level = 1, cat_timestamp = FALSE)
+      level = 1L, cat_timestamp = FALSE)
     withr::defer(future::plan("sequential", gc = TRUE))
   }
 
@@ -524,7 +523,7 @@ fit_sdm_models <- function(
     "terra", "stringr", "ecokit", "tibble", "dplyr",
     "qs2", "tools", "purrr", "tidyr", "fs")
 
-  ecokit::cat_time("Calculate summary predictions in parallel", level = 1)
+  ecokit::cat_time("Calculate summary predictions in parallel", level = 1L)
   pred_summary <- withCallingHandlers(
     suppressPackageStartupMessages(
       future.apply::future_lapply(
@@ -544,14 +543,13 @@ fit_sdm_models <- function(
       }
     })
 
-  ecokit::set_parallel(
-    n_cores = n_cores, level = 1, stop_cluster = TRUE, cat_timestamp = FALSE)
+  ecokit::set_parallel(level = 1L, stop_cluster = TRUE, cat_timestamp = FALSE)
   future::plan("sequential", gc = TRUE)
 
   # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Prepare and save summary data ----------
-  ecokit::cat_time("Prepare and save summary data", level = 1)
+  ecokit::cat_time("Prepare and save summary data", level = 1L)
   model_summary <- model_summary %>%
     dplyr::mutate(prediction_summary = pred_summary) %>%
     dplyr::select(-summary_data)
@@ -559,12 +557,12 @@ fit_sdm_models <- function(
     object = model_summary, object_name = model_summary_name,
     out_path = model_summary_path)
 
-  ecokit::cat_time("Check for issues in summary data", level = 1)
+  ecokit::cat_time("Check for issues in summary data", level = 1L)
 
   summ_issues <- dplyr::bind_rows(model_summary$prediction_summary) %>%
     dplyr::filter(!tif_okay | !data_okay)
 
-  if (nrow(summ_issues) > 0) {
+  if (nrow(summ_issues) > 0L) {
 
     ecokit::cat_sep(
       line_char_rep = 60L, sep_lines_before = 1L,
@@ -583,7 +581,7 @@ fit_sdm_models <- function(
           .f = ~ {
             n_species <- length(unlist(.x))
             sp_list <- paste(unlist(.x), collapse = "; ") %>%
-              stringr::str_wrap(width = 60) %>%
+              stringr::str_wrap(width = 60L) %>%
               stringr::str_split(pattern = "\n", simplify = TRUE) %>%
               paste0("  >>>  ", .) %>%
               paste(collapse = "\n")
@@ -594,7 +592,7 @@ fit_sdm_models <- function(
       ecokit::cat_time(cat_timestamp = FALSE)
 
     ecokit::cat_sep(
-      line_char_rep = 60L, sep_lines_before = 1L,
+      line_char_rep = 60L, sep_lines_before = 1L, sep_lines_after = 3L,
       line_char = "=", cat_bold = TRUE, cat_red = TRUE)
 
   }
@@ -605,26 +603,26 @@ fit_sdm_models <- function(
 
   ecokit::cat_time("Calculate species richness at each climate option")
 
-  if (nrow(summ_issues) > 0) {
+  if (nrow(summ_issues) > 0L) {
     sr_options <- setdiff(
       c("mean", "weighted_mean"), unique(summ_issues$cv_fold))
-    if (length(sr_options) == 1) {
+    if (length(sr_options) == 1L) {
       ecokit::cat_time(
         paste0(
           "Calculating species richness only for: ",
           sr_options, " predictions"),
-        level = 1, cat_timestamp = FALSE)
+        level = 1L, cat_timestamp = FALSE)
 
-    } else if (length(sr_options) == 0) {
+    } else if (length(sr_options) == 0L) {
       ecokit::cat_time(
         "Species richness will not be calculated",
-        level = 1, cat_timestamp = FALSE)
+        level = 1L, cat_timestamp = FALSE)
     }
   } else {
     sr_options <- c("mean", "weighted_mean")
   }
 
-  if (length(sr_options) > 0) {
+  if (length(sr_options) > 0L) {
     cols_to_remove <- c("data_okay", "tif_path", "tif_okay", "species_name")
     richness_summary <- dplyr::bind_rows(model_summary$prediction_summary) %>%
       dplyr::filter(cv_fold %in% sr_options) %>%

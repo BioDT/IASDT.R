@@ -376,9 +376,8 @@ predict_hmsc <- function(
         nLF <- length(post[[1]]$Alpha[[1]])
         predPostEta[[r]] <- replicate(
           n = predN,
-          expr = structure(
-            rep(0, nLF), dim = c(1L, nLF),
-            dimnames = list("new_unit", NULL)),
+          expr = structure(   # nolint: undesirable_function_linter
+            rep(0, nLF), dim = c(1L, nLF), dimnames = list("new_unit", NULL)),
           simplify = FALSE)
       }
       CalcLF <- FALSE

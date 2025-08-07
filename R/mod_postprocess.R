@@ -308,7 +308,7 @@ mod_postprocess_1_CPU <- function(
       "\n  >>> n_omega: ", n_omega,
       "\n  >>> hab_abb: ", hab_abb,
       "\n  >>> .libPaths(): \n",
-      paste0("\t", .libPaths(), collapse = "\n"),
+      paste0("\t", .libPaths(), collapse = "\n"), # nolint: undesirable_function_linter
       "\n  >>> Loaded packages: \n", loaded_packages, "\n"))
 
   # ****************************************************************
@@ -1074,7 +1074,7 @@ mod_postprocess_2_CPU <- function(
       "\n  >>> use_TF: ", use_TF,
       "\n  >>> Python environment: ", TF_environ,
       "\n  >>> .libPaths(): \n",
-      paste0("\t", .libPaths(), collapse = "\n"),
+      paste0("\t", .libPaths(), collapse = "\n"), # nolint: undesirable_function_linter
       "\n  >>> Loaded packages: \n", loaded_packages, "\n"))
 
   # ****************************************************************

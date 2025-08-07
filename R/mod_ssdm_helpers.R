@@ -127,7 +127,7 @@ extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
     species_name = species_name, sdm_method = sdm_method, cv_fold)
 
   species_model <- tryCatch(
-    model@models[[1]][[1]][[1]],
+    model@models[[1L]][[1L]][[1L]],
     error = function(e) NULL)
 
   if (is.null(species_model)) {
@@ -182,8 +182,8 @@ extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
           prevalence_train = eval_train_stats$Prevalence,
           auc_train = eval_train_stats$AUC,
           boyce_train = cont_boyce_train,
-          cor_train = eval_train_stats$COR[1],
-          cor_p_train = eval_train_stats$COR[2],
+          cor_train = eval_train_stats$COR[1L],
+          cor_p_train = eval_train_stats$COR[2L],
           deviance_train = eval_train_stats$Deviance)
       } else {
         # Return empty tibble if no `statistics` slot exists
@@ -243,8 +243,8 @@ extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
           prevalence_test = eval_test_stats$Prevalence,
           auc_test = eval_test_stats$AUC,
           boyce_test = cont_boyce_test,
-          cor_test = eval_test_stats$COR[1],
-          cor_p_test = eval_test_stats$COR[2],
+          cor_test = eval_test_stats$COR[1L],
+          cor_p_test = eval_test_stats$COR[2L],
           deviance_test = eval_test_stats$Deviance)
       } else {
         # Return empty tibble if no `statistics` slot exists
@@ -307,7 +307,7 @@ extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
       if (methods::.hasSlot(variable_importance, "varImportance")) {
         variable_importance <- variable_importance@varImportance
 
-        if (is.null(variable_importance) || length(variable_importance) == 0) {
+        if (is.null(variable_importance) || length(variable_importance) == 0L) {
           variable_importance <- empty_var_imp
         } else {
           variable_importance <- tibble::tibble(variable_importance) %>%
@@ -330,11 +330,8 @@ extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
   # Response curves -----
   # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  # Extract response curves with error handling
-  r_curves <- sdm::getResponseCurve(x = model, id = 1)
-
   # Extract response curves
-  r_curves <- sdm::getResponseCurve(x = model, id = 1)
+  r_curves <- sdm::getResponseCurve(x = model, id = 1L)
 
   empty_r_curves <- tibble::tibble(
     variable = predictor_names, x_value = NA_real_, prediction = NA_real_) %>%
@@ -342,7 +339,7 @@ extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
 
   if (methods::.hasSlot(r_curves, "variables") &&
       methods::.hasSlot(r_curves, "response")) {
-    if (length(r_curves@variables) == 0 || length(r_curves@response) == 0) {
+    if (length(r_curves@variables) == 0L || length(r_curves@response) == 0L) {
       r_curves <- empty_r_curves
     } else {
       r_curves <- purrr::map_dfr(
@@ -351,7 +348,7 @@ extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
           r_curves@response[[.x]] %>%
             tibble::tibble() %>%
             stats::setNames(c("x_value", "prediction")) %>%
-            dplyr::mutate(variable = .x, .before = 1) %>%
+            dplyr::mutate(variable = .x, .before = 1L) %>%
             dplyr::bind_cols(basic_info, .)
         })
     }
@@ -529,7 +526,7 @@ prepare_input_data <- function(
 
   ## Model dir ------
   if (!inherits(model_dir, "character") ||
-      length(model_dir) != 1 || !nzchar(model_dir)) {
+      length(model_dir) != 1L || !nzchar(model_dir)) {
     ecokit::stop_ctx(
       "model_dir must be a character string",
       model_dir = model_dir, class_model_dir = class(model_dir))
@@ -587,14 +584,14 @@ prepare_input_data <- function(
   hab_abb <- tolower(as.character(hab_abb))
 
   # Check if `hab_abb` is a single character value
-  if (length(hab_abb) != 1 || !nzchar(hab_abb)) {
+  if (length(hab_abb) != 1L || !nzchar(hab_abb)) {
     ecokit::stop_ctx(
       "`hab_abb` must be a single character value",
       hab_abb = hab_abb, length_hab_abb = length(hab_abb),
       include_backtrace = TRUE)
   }
 
-  valid_hab_abbs <- c(as.character(0:3), "4a", "4b", "10", "12a", "12b")
+  valid_hab_abbs <- c(as.character(0L:3L), "4a", "4b", "10", "12a", "12b")
   if (!(hab_abb %in% valid_hab_abbs)) {
     ecokit::stop_ctx(
       paste0(
@@ -612,7 +609,7 @@ prepare_input_data <- function(
         "`fix_efforts` can not be `NULL` when Clamping is implemented",
         fix_efforts = fix_efforts, include_backtrace = TRUE)
     }
-    if (length(fix_efforts) != 1) {
+    if (length(fix_efforts) != 1L) {
       ecokit::stop_ctx(
         "`fix_efforts` must be a single value of length 1.",
         fix_efforts = fix_efforts, include_backtrace = TRUE)
@@ -624,7 +621,7 @@ prepare_input_data <- function(
         "`fix_rivers` can not be `NULL` when Clamping is implemented",
         fix_rivers = fix_rivers, include_backtrace = TRUE)
     }
-    if (length(fix_rivers) != 1) {
+    if (length(fix_rivers) != 1L) {
       # Check if fix_rivers is a single value of length 1
       ecokit::stop_ctx(
         "`fix_rivers` must be a single value of length 1.",
@@ -660,7 +657,7 @@ prepare_input_data <- function(
   predictor_names <- names(model_data$DT_x)
 
   n_cv_folds <- length(unique(dplyr::pull(model_data$DT_CV, cv_type)))
-  if (n_cv_folds < 2) {
+  if (n_cv_folds < 2L) {
     ecokit::stop_ctx(
       "Not enough CV folds found in model data",
       length_cv_folds = n_cv_folds)
@@ -688,7 +685,7 @@ prepare_input_data <- function(
 
   if (!is.null(selected_species)) {
     if (!inherits(selected_species, "character") ||
-        length(selected_species) < 1 ||
+        length(selected_species) < 1L ||
         length(selected_species) > length(names(model_data$DT_y))) {
       ecokit::stop_ctx(
         "selected_species must be a character vector of length >= 1",
@@ -707,14 +704,14 @@ prepare_input_data <- function(
     species_names <- selected_species
   }
 
-  if (length(species_names) == 0) {
+  if (length(species_names) == 0L) {
     ecokit::stop_ctx(
       "No species left after exclusions.", excluded_species = excluded_species)
   }
 
   if (!is.null(excluded_species)) {
     if (!inherits(excluded_species, "character") ||
-        length(excluded_species) < 1 ||
+        length(excluded_species) < 1L ||
         length(excluded_species) > length(names(model_data$DT_y))) {
       ecokit::stop_ctx(
         "excluded_species must be a character vector of length >= 1",
@@ -763,11 +760,11 @@ prepare_input_data <- function(
   q_preds <- dplyr::filter(formula_vars, quadratic) %>%
     dplyr::pull(variable)
 
-  if (length(q_preds) > 0) {
+  if (length(q_preds) > 0L) {
     modelling_data <- modelling_data %>%
       dplyr::mutate(
         dplyr::across(
-          tidyselect::all_of(q_preds), .fns = ~ I(.x^2), .names = "{.col}_sq"))
+          tidyselect::all_of(q_preds), .fns = ~ I(.x^2L), .names = "{.col}_sq"))
   }
 
   species_modelling_data <- tidyr::expand_grid(
@@ -781,7 +778,7 @@ prepare_input_data <- function(
           # model formula
           if (method_is_glm) {
 
-            if (length(q_preds) == 0) {
+            if (length(q_preds) == 0L) {
               # No quadratic terms, use linear predictors only
               model_formula <- paste(
                 species_name, " ~ ", paste(l_preds, collapse = " + ")) %>%
@@ -915,7 +912,7 @@ prepare_input_data <- function(
     # Models are trained and predictions are made only at grid cells with > 0 %
     # coverage. Mask layer to exclude grid cells with zero % coverage from
     # predictions.
-    r_hab_mask <- terra::classify(r_hab, cbind(0, NA), others = 1)
+    r_hab_mask <- terra::classify(r_hab, cbind(0L, NA), others = 1L)
 
     r_hab <- log10(r_hab + 0.1) %>%
       stats::setNames("HabLog")
@@ -956,12 +953,12 @@ prepare_input_data <- function(
           as.vector()
 
         invalid_value <- isFALSE(
-          dplyr::between(fix_efforts, efforts_range[1], efforts_range[2]))
+          dplyr::between(fix_efforts, efforts_range[1L], efforts_range[2L]))
 
         if (invalid_value) {
           ecokit::stop_ctx(
             "`fix_efforts` value is out of the range of observed efforts",
-            fix_efforts = fix_efforts, efforts_range = round(efforts_range, 2),
+            fix_efforts = fix_efforts, efforts_range = round(efforts_range, 2L),
             include_backtrace = TRUE)
         }
 
@@ -1074,12 +1071,12 @@ prepare_input_data <- function(
           as.vector()
 
         invalid_value <- isFALSE(
-          dplyr::between(fix_rivers, rivers_range[1], rivers_range[2]))
+          dplyr::between(fix_rivers, rivers_range[1L], rivers_range[2L]))
 
         if (invalid_value) {
           ecokit::stop_ctx(
             "`fix_rivers` value is out of the range of observed river length",
-            fix_rivers = fix_rivers, rivers_range = round(rivers_range, 2),
+            fix_rivers = fix_rivers, rivers_range = round(rivers_range, 2L),
             include_backtrace = TRUE)
         }
 
@@ -1211,12 +1208,12 @@ prepare_input_data <- function(
             terra::as.data.frame(xy = TRUE, cells = TRUE, na.rm = TRUE) %>%
             tibble::tibble()
 
-          if (length(q_preds) > 0) {
+          if (length(q_preds) > 0L) {
             pred_df0 <- pred_df0 %>%
               dplyr::mutate(
                 dplyr::across(
                   tidyselect::all_of(q_preds),
-                  .fns = ~ I(.x^2), .names = "{.col}_sq"))
+                  .fns = ~ I(.x^2L), .names = "{.col}_sq"))
           }
           pred_df0
         })) %>%
@@ -1271,14 +1268,15 @@ prepare_input_data <- function(
 
 sdm_model_settings <- function() {
   list(
-    glm = list(control = list(maxit = 50)),
-    glmpoly = list(degree = 2),
+    glm = list(control = list(maxit = 50L)),
+    glmpoly = list(degree = 2L),
     gam = list(method = "REML", select = TRUE, gamma = 1.2),
-    glmnet = list(maxit = 200000),
+    glmnet = list(maxit = 200000L),
     mars = list(pmethod = "backward"),
-    gbm = list(n.trees = 3000, interaction.depth = 2),
-    rf = list(ntree = 3000, nodesize = 5),
-    ranger = list(num.trees = 3000, importance = "impurity", min.node.size = 5),
+    gbm = list(n.trees = 3000L, interaction.depth = 2L),
+    rf = list(ntree = 3000L, nodesize = 5L),
+    ranger = list(
+      num.trees = 3000L, importance = "impurity", min.node.size = 5L),
     cart = list(),
     rpart = list(),
     maxent = list(
@@ -1292,8 +1290,8 @@ sdm_model_settings <- function() {
         "writeplotdata", "-J", "-P",
         "noremoveduplicates", "noaddsamplestobackground",
         "doclamp", "nowriteclampgrid", "outputformat=cloglog")),
-    mlp = list(maxit = 2000),
-    # rbf = list(maxit = 2000),
+    mlp = list(maxit = 2000L),
+    # rbf = list(maxit = 2000L),
     svm = list(),
     mda = list(),
     fda = list())
@@ -1468,7 +1466,7 @@ fit_predict_internal <- function(
     # copy model files from temp dir for maxent models
     if (sdm_method == "maxent" && copy_maxent_html) {
       maxent_html <- ecokit::normalize_path(
-        fitted_model@models[[1]][[1]][[1]]@object@html)
+        fitted_model@models[[1L]][[1L]][[1L]]@object@html)
 
       if (fs::file_exists(maxent_html)) {
         out_maxent_dir <- fs::path(
@@ -1484,7 +1482,7 @@ fit_predict_internal <- function(
           fs::file_delete()
 
         # Overwrite the new HTML file path in the model object
-        fitted_model@models[[1]][[1]][[1]]@object@html <-
+        fitted_model@models[[1L]][[1L]][[1L]]@object@html <-
           fs::path(out_maxent_dir, "maxent.html")
       }
     }
@@ -1524,7 +1522,7 @@ fit_predict_internal <- function(
 
     # Making predictions and extract prediction paths -----
     predictor_names <- fitted_model@setting@featureFrame@predictors
-    if (is.null(predictor_names) || length(predictor_names) == 0) {
+    if (is.null(predictor_names) || length(predictor_names) == 0L) {
       ecokit::stop_ctx("No predictor names found in fitted model.")
     }
 
@@ -1564,7 +1562,7 @@ fit_predict_internal <- function(
 
               pred_r <- tibble::tibble(pred = pred) %>%
                 dplyr::bind_cols(dplyr::select(pred_data_df, x, y)) %>%
-                sf::st_as_sf(coords = c("x", "y"), crs = 3035) %>%
+                sf::st_as_sf(coords = c("x", "y"), crs = 3035L) %>%
                 terra::rasterize(
                   y = ecokit::load_as(path_grid_r, unwrap_r = TRUE),
                   field = "pred", fun = "mean", na.rm = TRUE) %>%
@@ -1588,7 +1586,7 @@ fit_predict_internal <- function(
               species_name = species_name, pred_dir = pred_dir,
               data_path = data_path, data_okay = data_okay,
               tif_path = tif_path, tif_okay = tif_okay) %>%
-              dplyr::mutate(cv_fold = cv_fold, .before = 1)
+              dplyr::mutate(cv_fold = cv_fold, .before = 1L)
 
           })) %>%
       dplyr::select(-pred_data) %>%
@@ -1607,7 +1605,7 @@ fit_predict_internal <- function(
   # Save model results -----
   species_results <- lapply(extracted_data, list) %>%
     tibble::as_tibble() %>%
-    dplyr::mutate(model_path = model_path, .before = 1)
+    dplyr::mutate(model_path = model_path, .before = 1L)
 
   species_results
 }
@@ -1676,8 +1674,8 @@ summarize_predictions <- function(line_id, model_summary) {
     calc_w_mean <- TRUE              # nolint: object_usage_linter
 
     # avoid extreme cases when any of testing AUC is very small (= 0)
-    n_zeros <- which(mean_auc == 0)
-    if (length(n_zeros) > 0) {
+    n_zeros <- which(mean_auc == 0L)
+    if (length(n_zeros) > 0L) {
       mean_auc[n_zeros] <- 0.001
     }
   }
@@ -1863,7 +1861,7 @@ summarize_predictions <- function(line_id, model_summary) {
   preds_dt <- dplyr::mutate(preds_dt, pred_summ = pred_summ) %>%
     tidyr::unnest("pred_summ") %>%
     dplyr::select(-tiff_paths) %>%
-    dplyr::mutate(species_name = species_name, .before = 1)
+    dplyr::mutate(species_name = species_name, .before = 1L)
 
   dplyr::bind_rows(preds_dt_orig, preds_dt) %>%
     dplyr::arrange(climate_name, cv_fold)
@@ -1917,7 +1915,7 @@ check_model_results <- function(model_results) {
   n_species <- length(unique(model_results$species_name))
 
   # Check if model_results is a data frame with at least one row
-  if (!inherits(model_results, "data.frame") || nrow(model_results) == 0) {
+  if (!inherits(model_results, "data.frame") || nrow(model_results) == 0L) {
     ecokit::stop_ctx(
       "model_results must be a data frame with at least 1 row.",
       class_model_results = class(model_results))
@@ -1939,11 +1937,11 @@ check_model_results <- function(model_results) {
   invalid_cols <- purrr::map_lgl(
     .x = required_cols,
     .f = ~ {
-      example_data <- model_results[[.x]][[1]]
-      inherits(example_data, "tbl_df") && nrow(example_data) > 0
+      example_data <- model_results[[.x]][[1L]]
+      inherits(example_data, "tbl_df") && nrow(example_data) > 0L
     })
   invalid_columns <- required_cols[!invalid_cols]
-  if (length(invalid_columns) > 0) {
+  if (length(invalid_columns) > 0L) {
     ecokit::stop_ctx(
       paste0(
         "model_results components must be tibbles with nrow > 0: ",
@@ -1966,10 +1964,10 @@ check_model_results <- function(model_results) {
         .fns = ~ sum(is.na(.) | is.nan(.))),
       .groups = "drop") %>%
     dplyr::select(
-      species_name, tidyselect::where(~is.numeric(.) && sum(.) != 0)) %>%
-    dplyr::filter(dplyr::if_any(.cols = -species_name, .fns =  ~ .x > 0))
+      species_name, tidyselect::where(~is.numeric(.) && sum(.) != 0L)) %>%
+    dplyr::filter(dplyr::if_any(.cols = -species_name, .fns =  ~ .x > 0L))
 
-  if (ncol(check_eval_train) > 1) {
+  if (ncol(check_eval_train) > 1L) {
 
     if (isFALSE(issue_detected)) {
       ecokit::cat_sep(
@@ -1982,7 +1980,7 @@ check_model_results <- function(model_results) {
       tidyr::pivot_longer(
         -species_name,
         names_to = "variable", values_to = "na_count") %>%
-      dplyr::filter(na_count > 0)
+      dplyr::filter(na_count > 0L)
 
     issues_eval_train_species <- unique(issues_eval_train$species_name)
     issues_eval_train_n_species <- length(issues_eval_train_species)
@@ -1996,11 +1994,11 @@ check_model_results <- function(model_results) {
     ecokit::cat_time(
       "Affected species: ", cat_timestamp = FALSE, cat_bold = TRUE)
     paste(issues_eval_train_species, collapse = "; ") %>%
-      stringr::str_wrap(width = 65) %>%
+      stringr::str_wrap(width = 65L) %>%
       stringr::str_split("\n", simplify = TRUE) %>%
       stringr::str_replace_all(" ", " ") %>%
       paste(collapse = "\n  >>>  ") %>%
-      ecokit::cat_time(cat_timestamp = FALSE, level = 1, ... = "\n")
+      ecokit::cat_time(cat_timestamp = FALSE, level = 1L, ... = "\n")
 
     dplyr::select(issues_eval_train, -species_name) %>%
       dplyr::mutate(
@@ -2010,7 +2008,7 @@ check_model_results <- function(model_results) {
       dplyr::pull(variable) %>%
       unique() %>%
       paste(collapse = "; ") %>%
-      stringr::str_wrap(50) %>%
+      stringr::str_wrap(50L) %>%
       stringr::str_replace_all("\n", "\n  >>>  ") %>%
       paste0(
         crayon::bold("Affected metrics: "),
@@ -2031,10 +2029,10 @@ check_model_results <- function(model_results) {
         .fns =  ~ sum(is.na(.) | is.nan(.))),
       .groups = "drop") %>%
     dplyr::select(
-      species_name, tidyselect::where(~is.numeric(.) && sum(.) != 0)) %>%
-    dplyr::filter(dplyr::if_any(.cols = -species_name, .fns =  ~ .x > 0))
+      species_name, tidyselect::where(~is.numeric(.) && sum(.) != 0L)) %>%
+    dplyr::filter(dplyr::if_any(.cols = -species_name, .fns =  ~ .x > 0L))
 
-  if (ncol(check_eval_test) > 1) {
+  if (ncol(check_eval_test) > 1L) {
 
     if (isFALSE(issue_detected)) {
       ecokit::cat_sep(
@@ -2046,7 +2044,7 @@ check_model_results <- function(model_results) {
     issues_eval_test <- check_eval_test %>%
       tidyr::pivot_longer(
         -species_name, names_to = "variable", values_to = "na_count") %>%
-      dplyr::filter(na_count > 0)
+      dplyr::filter(na_count > 0L)
 
     issues_eval_test_species <- unique(issues_eval_test$species_name)
     issues_eval_test_n_species <- length(issues_eval_test_species)
@@ -2060,11 +2058,11 @@ check_model_results <- function(model_results) {
     ecokit::cat_time(
       "Affected species: ", cat_timestamp = FALSE, cat_bold = TRUE)
     paste(issues_eval_test_species, collapse = "; ") %>%
-      stringr::str_wrap(width = 65) %>%
+      stringr::str_wrap(width = 65L) %>%
       stringr::str_split("\n", simplify = TRUE) %>%
       stringr::str_replace_all(" ", " ") %>%
       paste(collapse = "\n  >>>  ") %>%
-      ecokit::cat_time(cat_timestamp = FALSE, level = 1, ... = "\n")
+      ecokit::cat_time(cat_timestamp = FALSE, level = 1L, ... = "\n")
 
     dplyr::select(issues_eval_test, -species_name) %>%
       dplyr::mutate(
@@ -2074,7 +2072,7 @@ check_model_results <- function(model_results) {
       dplyr::pull(variable) %>%
       unique() %>%
       paste(collapse = "; ") %>%
-      stringr::str_wrap(50) %>%
+      stringr::str_wrap(50L) %>%
       stringr::str_replace_all("\n", "\n  >>>  ") %>%
       paste0(
         crayon::bold("Affected metrics: "),
@@ -2093,9 +2091,9 @@ check_model_results <- function(model_results) {
         .cols = c("cor_test", "auc_test"),
         .fns =  ~ sum(is.na(.) | is.nan(.))), .groups = "drop") %>%
     dplyr::filter(
-      dplyr::if_any(.cols = c("cor_test", "auc_test"), .fns =  ~ .x > 0))
+      dplyr::if_any(.cols = c("cor_test", "auc_test"), .fns =  ~ .x > 0L))
 
-  if (nrow(check_var_imp) > 0) {
+  if (nrow(check_var_imp) > 0L) {
 
     if (isFALSE(issue_detected)) {
       ecokit::cat_sep(
@@ -2119,7 +2117,7 @@ check_model_results <- function(model_results) {
           "cor_test: ", cor_test, " sp; auc_test: ", auc_test, " sp"),
         message = stringr::str_remove_all(message, "^; | $"),
         message = paste0(
-          stringr::str_pad(variable, width = 12, side = "right"),
+          stringr::str_pad(variable, width = 12L, side = "right"),
           " --> ", message)) %>%
       dplyr::pull(message) %>%
       paste(collapse = "\n  >>>  ")
@@ -2133,14 +2131,14 @@ check_model_results <- function(model_results) {
     ecokit::cat_time(
       "Affected species: ", cat_timestamp = FALSE, cat_bold = TRUE)
     paste(issues_var_imp_species, collapse = "; ") %>%
-      stringr::str_wrap(width = 65) %>%
+      stringr::str_wrap(width = 65L) %>%
       stringr::str_split("\n", simplify = TRUE) %>%
       stringr::str_replace_all(" ", " ") %>%
       paste(collapse = "\n  >>>  ") %>%
-      ecokit::cat_time(cat_timestamp = FALSE, level = 1, ... = "\n")
+      ecokit::cat_time(cat_timestamp = FALSE, level = 1L, ... = "\n")
 
     ecokit::cat_time(
-      issues_var_imp, cat_timestamp = FALSE, level = 1, ... = "\n")
+      issues_var_imp, cat_timestamp = FALSE, level = 1L, ... = "\n")
   }
 
   # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -2155,9 +2153,9 @@ check_model_results <- function(model_results) {
         .fns = ~ sum(is.na(.) | is.nan(.))),
       .groups = "drop") %>%
     dplyr::filter(
-      dplyr::if_any(.cols = c("x_value", "prediction"), .fns =  ~ .x > 0))
+      dplyr::if_any(.cols = c("x_value", "prediction"), .fns =  ~ .x > 0L))
 
-  if (nrow(check_res_curv) > 0) {
+  if (nrow(check_res_curv) > 0L) {
 
     if (isFALSE(issue_detected)) {
       ecokit::cat_sep(
@@ -2181,7 +2179,7 @@ check_model_results <- function(model_results) {
           "missing x values: ", x_value, "; prediction: ", prediction),
         message = stringr::str_remove_all(message, "^; | $"),
         message = paste0(
-          stringr::str_pad(variable, width = 12, side = "right"),
+          stringr::str_pad(variable, width = 12L, side = "right"),
           " --> ", message)) %>%
       dplyr::pull(message) %>%
       paste(collapse = "\n  >>>  ")
@@ -2195,14 +2193,14 @@ check_model_results <- function(model_results) {
     ecokit::cat_time(
       "Affected species: ", cat_timestamp = FALSE, cat_bold = TRUE)
     paste(issues_res_curv_species, collapse = "; ") %>%
-      stringr::str_wrap(width = 65) %>%
+      stringr::str_wrap(width = 65L) %>%
       stringr::str_split("\n", simplify = TRUE) %>%
       stringr::str_replace_all(" ", " ") %>%
       paste(collapse = "\n  >>>  ") %>%
-      ecokit::cat_time(cat_timestamp = FALSE, level = 1, ... = "\n")
+      ecokit::cat_time(cat_timestamp = FALSE, level = 1L, ... = "\n")
 
     ecokit::cat_time(
-      issues_res_curv, cat_timestamp = FALSE, level = 1, ... = "\n")
+      issues_res_curv, cat_timestamp = FALSE, level = 1L, ... = "\n")
   }
 
   # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -2214,7 +2212,7 @@ check_model_results <- function(model_results) {
   check_preds <- dplyr::bind_rows(model_results$prediction_info) %>%
     dplyr::filter(!data_okay | !tif_okay)
 
-  if (nrow(check_preds) > 0) {
+  if (nrow(check_preds) > 0L) {
 
     if (isFALSE(issue_detected)) {
       ecokit::cat_sep(
@@ -2240,7 +2238,7 @@ check_model_results <- function(model_results) {
         message = paste0(tif_okay, " tiff files; ", data_okay, " data files"),
         message = stringr::str_remove_all(message, "^; | $"),
         message = paste0(
-          stringr::str_pad(climate_name, width = 35, side = "right"),
+          stringr::str_pad(climate_name, width = 35L, side = "right"),
           " --> ", message)) %>%
       dplyr::pull(message) %>%
       paste(collapse = "\n  >>>  ")
@@ -2254,16 +2252,16 @@ check_model_results <- function(model_results) {
     ecokit::cat_time(
       "Affected species: ", cat_timestamp = FALSE, cat_bold = TRUE)
     paste(issues_preds_species, collapse = "; ") %>%
-      stringr::str_wrap(width = 65) %>%
+      stringr::str_wrap(width = 65L) %>%
       stringr::str_split("\n", simplify = TRUE) %>%
       stringr::str_replace_all(" ", " ") %>%
       paste(collapse = "\n  >>>  ") %>%
-      ecokit::cat_time(cat_timestamp = FALSE, level = 1, ... = "\n")
+      ecokit::cat_time(cat_timestamp = FALSE, level = 1L, ... = "\n")
 
     ecokit::cat_time(
       "Affected climate options: ", cat_timestamp = FALSE, cat_bold = TRUE)
     ecokit::cat_time(
-      issues_preds, cat_timestamp = FALSE, level = 1, ... = "\n")
+      issues_preds, cat_timestamp = FALSE, level = 1L, ... = "\n")
   }
 
   # Check if predictions are < 0 or > 1
@@ -2279,7 +2277,7 @@ check_model_results <- function(model_results) {
     tidyr::unnest("min_max") %>%
     dplyr::filter(min_value < -0.001 | max_value > 1.001)
 
-  if (nrow(pred_odd_vals) > 0) {
+  if (nrow(pred_odd_vals) > 0L) {
 
     if (isFALSE(issue_detected)) {
       ecokit::cat_sep(
@@ -2300,7 +2298,7 @@ check_model_results <- function(model_results) {
           .x = bad_vals, .y = climate_name,
           .f = ~ {
             sp_l <- paste(unlist(.x), collapse = "; ") %>%
-              stringr::str_wrap(width = 40) %>%
+              stringr::str_wrap(width = 40L) %>%
               stringr::str_split(pattern = "\n", simplify = TRUE) %>%
               paste0("  >>>  ", ., collapse = "\n")
             paste0(.y, ": ") %>%
@@ -2314,7 +2312,7 @@ check_model_results <- function(model_results) {
 
   if (issue_detected) {
     ecokit::cat_sep(
-      line_char_rep = 60L, sep_lines_before = 1L,
+      line_char_rep = 60L, sep_lines_before = 1L, sep_lines_after = 3L,
       line_char = "=", cat_bold = TRUE, cat_red = TRUE)
   }
 

@@ -1233,7 +1233,7 @@ mod_prepare_HPC <- function(
             # Not needed now as this now added to the `setup-env.sh` file
             # "export TF_CPP_MIN_LOG_LEVEL=3; export TF_ENABLE_ONEDNN_OPTS=0; ",
 
-            "/usr/bin/time -v ",
+            "/usr/bin/time -v ", # nolint: absolute_paths_linter
 
             # Not needed as the python path is exported - check `setup-env.sh`
             # Path_Python,

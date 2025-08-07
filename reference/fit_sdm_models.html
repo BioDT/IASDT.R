@@ -85,7 +85,8 @@ predictors.</p>
 <span>  fix_rivers <span class="op">=</span> <span class="st">"q90"</span>,</span>
 <span>  climate_models <span class="op">=</span> <span class="st">"all"</span>,</span>
 <span>  climate_scenarios <span class="op">=</span> <span class="st">"all"</span>,</span>
-<span>  climate_periods <span class="op">=</span> <span class="st">"all"</span></span>
+<span>  climate_periods <span class="op">=</span> <span class="st">"all"</span>,</span>
+<span>  copy_maxent_html <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -183,6 +184,11 @@ must be a subset of the listed valid scenarios.</p></dd>
 <dd><p>Character vector or "all". Time periods for
 prediction. Valid values are "2011-2040", "2041-2070", "2071-2100", or
 "all" (default), or subset of supported periods.</p></dd>
+
+
+<dt id="arg-copy-maxent-html">copy_maxent_html<a class="anchor" aria-label="anchor" href="#arg-copy-maxent-html"></a></dt>
+<dd><p>Logical. Whether to copy the directory containing
+HTML results from Maxent to the modelling directory. Default is <code>TRUE</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

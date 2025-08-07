@@ -1951,6 +1951,8 @@ check_model_results <- function(model_results) {
       names_model_results = names(model_results))
   }
 
+  issue_detected <- FALSE
+
   # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Evaluation data - Training -----
   # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -1968,6 +1970,13 @@ check_model_results <- function(model_results) {
     dplyr::filter(dplyr::if_any(.cols = -species_name, .fns =  ~ .x > 0))
 
   if (ncol(check_eval_train) > 1) {
+
+    if (isFALSE(issue_detected)) {
+      ecokit::cat_sep(
+        line_char_rep = 60L, sep_lines_before = 1L,
+        line_char = "=", cat_bold = TRUE, cat_red = TRUE)
+      issue_detected <- TRUE
+    }
 
     issues_eval_train <- check_eval_train %>%
       tidyr::pivot_longer(
@@ -2026,6 +2035,14 @@ check_model_results <- function(model_results) {
     dplyr::filter(dplyr::if_any(.cols = -species_name, .fns =  ~ .x > 0))
 
   if (ncol(check_eval_test) > 1) {
+
+    if (isFALSE(issue_detected)) {
+      ecokit::cat_sep(
+        line_char_rep = 60L, sep_lines_before = 1L,
+        line_char = "=", cat_bold = TRUE, cat_red = TRUE)
+      issue_detected <- TRUE
+    }
+
     issues_eval_test <- check_eval_test %>%
       tidyr::pivot_longer(
         -species_name, names_to = "variable", values_to = "na_count") %>%
@@ -2079,6 +2096,14 @@ check_model_results <- function(model_results) {
       dplyr::if_any(.cols = c("cor_test", "auc_test"), .fns =  ~ .x > 0))
 
   if (nrow(check_var_imp) > 0) {
+
+    if (isFALSE(issue_detected)) {
+      ecokit::cat_sep(
+        line_char_rep = 60L, sep_lines_before = 1L,
+        line_char = "=", cat_bold = TRUE, cat_red = TRUE)
+      issue_detected <- TRUE
+    }
+
     issues_var_imp_species <- unique(check_var_imp$species_name)
     issues_var_imp_n_species <- length(issues_var_imp_species)
 
@@ -2133,6 +2158,14 @@ check_model_results <- function(model_results) {
       dplyr::if_any(.cols = c("x_value", "prediction"), .fns =  ~ .x > 0))
 
   if (nrow(check_res_curv) > 0) {
+
+    if (isFALSE(issue_detected)) {
+      ecokit::cat_sep(
+        line_char_rep = 60L, sep_lines_before = 1L,
+        line_char = "=", cat_bold = TRUE, cat_red = TRUE)
+      issue_detected <- TRUE
+    }
+
     issues_res_curv_species <- unique(check_res_curv$species_name)
     issues_res_curv_n_species <- length(issues_res_curv_species)
 
@@ -2183,6 +2216,13 @@ check_model_results <- function(model_results) {
 
   if (nrow(check_preds) > 0) {
 
+    if (isFALSE(issue_detected)) {
+      ecokit::cat_sep(
+        line_char_rep = 60L, sep_lines_before = 1L,
+        line_char = "=", cat_bold = TRUE, cat_red = TRUE)
+      issue_detected <- TRUE
+    }
+
     issues_preds_species <- unique(check_preds$species_name)
     issues_preds_n_species <- length(issues_preds_species)
 
@@ -2226,7 +2266,6 @@ check_model_results <- function(model_results) {
       issues_preds, cat_timestamp = FALSE, level = 1, ... = "\n")
   }
 
-
   # Check if predictions are < 0 or > 1
   pred_odd_vals <- dplyr::bind_rows(model_results$prediction_info) %>%
     dplyr::select(climate_name, species_name, tif_path) %>%
@@ -2241,6 +2280,14 @@ check_model_results <- function(model_results) {
     dplyr::filter(min_value < -0.001 | max_value > 1.001)
 
   if (nrow(pred_odd_vals) > 0) {
+
+    if (isFALSE(issue_detected)) {
+      ecokit::cat_sep(
+        line_char_rep = 60L, sep_lines_before = 1L,
+        line_char = "=", cat_bold = TRUE, cat_red = TRUE)
+      issue_detected <- TRUE
+    }
+
     pred_odd_vals %>%
       dplyr::group_by(climate_name, species_name) %>%
       dplyr::tally(name = "times") %>%
@@ -2263,6 +2310,12 @@ check_model_results <- function(model_results) {
       dplyr::pull(bad_vals) %>%
       paste(collapse = "\n") %>%
       ecokit::cat_time(cat_timestamp = FALSE)
+  }
+
+  if (issue_detected) {
+    ecokit::cat_sep(
+      line_char_rep = 60L, sep_lines_before = 1L,
+      line_char = "=", cat_bold = TRUE, cat_red = TRUE)
   }
 
   invisible(NULL)

@@ -129,8 +129,9 @@ fit_sdm_models <- function(
 
   .start_time <- lubridate::now(tzone = "CET")
 
-  summary_data <- model_formula <- sdm_data <- . <- method_is_glm <-
-    packages <- path_grid <- mod_method <- maps <- cv_fold <- pred_dir <- NULL
+  summary_data <- model_formula <- sdm_data <- . <- method_is_glm <- species <-
+    packages <- path_grid <- mod_method <- maps <- cv_fold <- pred_dir <-
+    species_name <- data_okay <- tif_okay <- NULL
 
   stringr::str_glue(
     "Fitting models using `{sdm_method}` method and `{cv_type}` ",
@@ -560,16 +561,20 @@ fit_sdm_models <- function(
 
   ecokit::cat_time("Check for issues in summary data", level = 1)
 
-  summary_issues <- dplyr::bind_rows(model_summary$prediction_summary) %>%
+  summ_issues <- dplyr::bind_rows(model_summary$prediction_summary) %>%
     dplyr::filter(!tif_okay | !data_okay)
 
-  if (nrow(summary_issues) > 0) {
+  if (nrow(summ_issues) > 0) {
+
+    ecokit::cat_sep(
+      line_char_rep = 60L, sep_lines_before = 1L,
+      line_char = "=", cat_bold = TRUE, cat_red = TRUE)
 
     "\n!! There are some issues in summary maps !!\n" %>%
       crayon::blue() %>%
       ecokit::cat_time(cat_bold = TRUE, cat_timestamp = FALSE)
 
-    dplyr::count(summary_issues, species_name, cv_fold) %>%
+    dplyr::count(summ_issues, species_name, cv_fold) %>%
       dplyr::select(species_name, cv_fold) %>%
       tidyr::nest(species = -cv_fold) %>%
       dplyr::mutate(
@@ -577,7 +582,7 @@ fit_sdm_models <- function(
           .x = species, .y = cv_fold,
           .f = ~ {
             n_species <- length(unlist(.x))
-            sp_list <- paste(unlist(.x), collapse = "; ")%>%
+            sp_list <- paste(unlist(.x), collapse = "; ") %>%
               stringr::str_wrap(width = 60) %>%
               stringr::str_split(pattern = "\n", simplify = TRUE) %>%
               paste0("  >>>  ", .) %>%
@@ -587,6 +592,11 @@ fit_sdm_models <- function(
       dplyr::pull(message) %>%
       paste(collapse = "\n") %>%
       ecokit::cat_time(cat_timestamp = FALSE)
+
+    ecokit::cat_sep(
+      line_char_rep = 60L, sep_lines_before = 1L,
+      line_char = "=", cat_bold = TRUE, cat_red = TRUE)
+
   }
 
   # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -594,35 +604,56 @@ fit_sdm_models <- function(
   # Calculate species richness at each climate option
 
   ecokit::cat_time("Calculate species richness at each climate option")
-  cols_to_remove <- c("data_okay", "tif_path", "tif_okay", "species_name")
 
-  richness_summary <- dplyr::bind_rows(model_summary$prediction_summary) %>%
-    dplyr::filter(cv_fold %in% c("mean", "weighted_mean")) %>%
-    dplyr::select(-tidyselect::all_of(cols_to_remove)) %>%
-    tidyr::nest(.key = "maps", .by = -"data_path") %>%
-    dplyr::mutate(
-      richness_map = purrr::pmap(
-        .l = list(maps, pred_dir, cv_fold),
-        .f = function(maps, pred_dir, cv_fold) {
+  if (nrow(summ_issues) > 0) {
+    sr_options <- setdiff(
+      c("mean", "weighted_mean"), unique(summ_issues$cv_fold))
+    if (length(sr_options) == 1) {
+      ecokit::cat_time(
+        paste0(
+          "Calculating species richness only for: ",
+          sr_options, " predictions"),
+        level = 1, cat_timestamp = FALSE)
 
-          richness_name <- paste0(sdm_method, "_species_richness_", cv_fold)
-          data_path <- fs::path(pred_dir, paste0(richness_name, ".RData"))
-          tiff_path <- fs::path(pred_dir, paste0(richness_name, ".tif"))
+    } else if (length(sr_options) == 0) {
+      ecokit::cat_time(
+        "Species richness will not be calculated",
+        level = 1, cat_timestamp = FALSE)
+    }
+  } else {
+    sr_options <- c("mean", "weighted_mean")
+  }
 
-          richness <- unlist(maps) %>%
-            purrr::map(ecokit::load_as, unwrap_r = TRUE) %>%
-            terra::rast() %>%
-            terra::app(sum, na.rm = TRUE)
+  if (length(sr_options) > 0) {
+    cols_to_remove <- c("data_okay", "tif_path", "tif_okay", "species_name")
+    richness_summary <- dplyr::bind_rows(model_summary$prediction_summary) %>%
+      dplyr::filter(cv_fold %in% sr_options) %>%
+      dplyr::select(-tidyselect::all_of(cols_to_remove)) %>%
+      tidyr::nest(.key = "maps", .by = -"data_path") %>%
+      dplyr::mutate(
+        richness_map = purrr::pmap(
+          .l = list(maps, pred_dir, cv_fold),
+          .f = function(maps, pred_dir, cv_fold) {
 
-          terra::writeRaster(
-            x = richness, overwrite = TRUE, filename = tiff_path,
-            gdal = c("COMPRESS=DEFLATE", "TILED=YES"))
-          ecokit::save_as(
-            object = terra::wrap(richness), object_name = richness_name,
-            out_path = data_path)
-        }))
+            richness_name <- paste0(sdm_method, "_species_richness_", cv_fold)
+            data_path <- fs::path(pred_dir, paste0(richness_name, ".RData"))
+            tiff_path <- fs::path(pred_dir, paste0(richness_name, ".tif"))
 
-  rm(richness_summary)
+            richness <- unlist(maps) %>%
+              purrr::map(ecokit::load_as, unwrap_r = TRUE) %>%
+              terra::rast() %>%
+              terra::app(sum, na.rm = TRUE)
+
+            terra::writeRaster(
+              x = richness, overwrite = TRUE, filename = tiff_path,
+              gdal = c("COMPRESS=DEFLATE", "TILED=YES"))
+            ecokit::save_as(
+              object = terra::wrap(richness), object_name = richness_name,
+              out_path = data_path)
+          }))
+
+    rm(richness_summary)
+  }
 
   # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

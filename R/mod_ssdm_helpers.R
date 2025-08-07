@@ -1669,10 +1669,17 @@ summarize_predictions <- function(line_id, model_summary) {
   species_name <- model_summary$species_name[[line_id]]
   mean_auc <- model_summary$evaluation_testing[[line_id]]$auc_test # nolint: object_usage_linter
 
-  # avoid extreme cases when any of testing AUC is very small (= 0)
-  n_zeros <- which(mean_auc == 0)
-  if (length(n_zeros) > 0) {
-    mean_auc[n_zeros] <- 0.001
+  # If any value of testing AUC is NA, do not calculate weighted mean
+  if (anyNA(mean_auc)) {
+    calc_w_mean <- FALSE             # nolint: object_usage_linter
+  } else {
+    calc_w_mean <- TRUE              # nolint: object_usage_linter
+
+    # avoid extreme cases when any of testing AUC is very small (= 0)
+    n_zeros <- which(mean_auc == 0)
+    if (length(n_zeros) > 0) {
+      mean_auc[n_zeros] <- 0.001
+    }
   }
 
   exclude_cols <- c(
@@ -1711,10 +1718,6 @@ summarize_predictions <- function(line_id, model_summary) {
         unique()
       path_mean_data <- stringr::str_replace_all(
         path_mean_tif, ".tif$", ".RData")
-      path_w_mean_tif <- stringr::str_replace_all(
-        path_mean_tif, "_mean", "_weighted_mean")
-      path_w_mean_data <- stringr::str_replace_all(
-        path_mean_data, "_mean", "_weighted_mean")
       path_sd_tif <- stringr::str_replace_all(
         path_mean_tif, "mean", "sd")
       path_sd_data <- stringr::str_replace_all(
@@ -1724,18 +1727,31 @@ summarize_predictions <- function(line_id, model_summary) {
       path_cov_data <- stringr::str_replace_all(
         path_mean_data, "mean", "cov")
 
-      tif_okay <- c(
-        path_mean_tif, path_sd_tif, path_cov_tif, path_w_mean_tif) %>%
-        purrr::map_lgl(ecokit::check_tiff, warning = FALSE) %>%
+      # Check if output maps already exist and valid
+      tiffs_to_check <- c(path_mean_tif, path_sd_tif, path_cov_tif)
+      data_to_check <- c(path_mean_data, path_sd_data, path_cov_data)
+      if (calc_w_mean) {
+        path_w_mean_tif <- stringr::str_replace_all(
+          path_mean_tif, "_mean", "_weighted_mean")
+        tiffs_to_check <- c(tiffs_to_check, path_w_mean_tif)
+
+        path_w_mean_data <- stringr::str_replace_all(
+          path_mean_data, "_mean", "_weighted_mean")
+        data_to_check <- c(data_to_check, path_w_mean_data)
+      } else {
+        path_w_mean_tif <- path_w_mean_data <- NA_character_
+      }
+
+      tif_okay <- purrr::map_lgl(
+        tiffs_to_check, ecokit::check_tiff, warning = FALSE) %>%
         all()
-      data_okay <- c(
-        path_mean_data, path_sd_data, path_cov_data, path_w_mean_data) %>%
-        purrr::map_lgl(ecokit::check_data, warning = FALSE) %>%
+      data_okay <- purrr::map_lgl(
+        data_to_check, ecokit::check_data, warning = FALSE) %>%
         all()
 
       check_data_tif <- function(DT, tiff) {
-        ecokit::check_tiff(tiff, warning = FALSE) &&
-          ecokit::check_data(DT, warning = FALSE)
+        ecokit::check_data(DT, warning = FALSE) &&
+          ecokit::check_tiff(tiff, warning = FALSE)
       }
 
       if (isFALSE(tif_okay && data_okay)) {
@@ -1743,9 +1759,12 @@ summarize_predictions <- function(line_id, model_summary) {
         maps <- terra::rast(tif_paths)
         gdal_options <- c("COMPRESS=DEFLATE", "TILED=YES")
 
+        # |||||||||||||||||||||||||||||||||||||||||||
+
         # mean -------
 
         if (check_data_tif(path_mean_data, path_mean_tif)) {
+          # If mean data already exists, load it
           mean_pred <- ecokit::load_as(path_mean_data, unwrap_r = TRUE)
         } else {
           mean_name <- basename(path_mean_tif) %>%
@@ -1764,20 +1783,24 @@ summarize_predictions <- function(line_id, model_summary) {
 
         # weighted mean -----
 
-        if (check_data_tif(path_w_mean_data, path_w_mean_tif)) {
-          w_mean_pred <- ecokit::load_as(path_w_mean_data, unwrap_r = TRUE)
-        } else {
-          w_mean_name <- basename(path_w_mean_tif) %>%
-            tools::file_path_sans_ext()
-          w_mean_pred <- terra::weighted.mean(
-            x = maps, w = mean_auc, na.rm = TRUE) %>%
-            stats::setNames(w_mean_name)
-          terra::writeRaster(
-            x = w_mean_pred, overwrite = TRUE, filename = path_w_mean_tif,
-            gdal = gdal_options)
-          ecokit::save_as(
-            object = terra::wrap(w_mean_pred), object_name = w_mean_name,
-            out_path = path_w_mean_data)
+        if (calc_w_mean) {
+
+          if (check_data_tif(path_w_mean_data, path_w_mean_tif)) {
+            # If weighted mean data already exists, load it
+            w_mean_pred <- ecokit::load_as(path_w_mean_data, unwrap_r = TRUE)
+          } else {
+            w_mean_name <- basename(path_w_mean_tif) %>%
+              tools::file_path_sans_ext()
+            w_mean_pred <- terra::weighted.mean(
+              x = maps, w = mean_auc, na.rm = TRUE) %>%
+              stats::setNames(w_mean_name)
+            terra::writeRaster(
+              x = w_mean_pred, overwrite = TRUE, filename = path_w_mean_tif,
+              gdal = gdal_options)
+            ecokit::save_as(
+              object = terra::wrap(w_mean_pred), object_name = w_mean_name,
+              out_path = path_w_mean_data)
+          }
         }
 
         # |||||||||||||||||||||||||||||||||||||||||||
@@ -1785,6 +1808,7 @@ summarize_predictions <- function(line_id, model_summary) {
         # sd ------
 
         if (check_data_tif(path_sd_data, path_sd_tif)) {
+          # If standard deviation data already exists, load it
           sd_pred <- ecokit::load_as(path_sd_data, unwrap_r = TRUE)
         } else {
           sd_name <- tools::file_path_sans_ext(basename(path_sd_tif))
@@ -1803,10 +1827,12 @@ summarize_predictions <- function(line_id, model_summary) {
         # cov ------
 
         if (check_data_tif(path_cov_data, path_cov_tif)) {
+          # If coefficient of variation data already exists, load it
           cov_pred <- ecokit::load_as(path_cov_data, unwrap_r = TRUE)
         } else {
           cov_name <- basename(path_cov_tif) %>%
             tools::file_path_sans_ext()
+          # Avoid division by zero
           mean_pred <- terra::clamp(mean_pred, lower = 1e-8)
           cov_pred <- sd_pred / mean_pred
           terra::writeRaster(

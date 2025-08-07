@@ -1478,6 +1478,11 @@ fit_predict_internal <- function(
         fs::dir_copy(
           fs::path_dir(maxent_html), out_maxent_dir, overwrite = TRUE)
 
+        # delete some not-needed files to save space
+        out_maxent_dir %>%
+          fs::path(c("presence", "presence", "species_explain.bat")) %>%
+          fs::file_delete()
+        
         # Overwrite the new HTML file path in the model object
         fitted_model@models[[1]][[1]][[1]]@object@html <-
           fs::path(out_maxent_dir, "maxent.html")

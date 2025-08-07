@@ -363,8 +363,8 @@ fit_sdm_models <- function(
       "Processing model fitting and predictions in parallel", level = 1)
 
     pkgs_to_load <- c(
-      "terra", "stringr", "ecokit", "tibble", "dplyr", "sf", "tidyr",
-      "fs", "sdm", "purrr", pkg_to_load)
+      "terra", "stringr", "ecokit", "tibble", "dplyr", "sf",
+      "tidyr", "qs2", "fs", "sdm", "purrr", pkg_to_load)
     future_globals <- c(
       "sdm_method", "model_data", "model_settings", "model_results_dir",
       "input_data", "output_directory", "path_grid_r", "reduce_sdm_formulas",
@@ -519,7 +519,7 @@ fit_sdm_models <- function(
 
   pkgs_to_load <- c(
     "terra", "stringr", "ecokit", "tibble", "dplyr",
-    "tools", "purrr", "tidyr", "fs")
+    "qs2", "tools", "purrr", "tidyr", "fs")
 
   ecokit::cat_time("Calculate summary predictions in parallel", level = 1)
   pred_summary <- withCallingHandlers(

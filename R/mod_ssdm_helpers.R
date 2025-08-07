@@ -1475,7 +1475,8 @@ fit_predict_internal <- function(
           fs::path_dir(model_results_dir), "maxent_html", base_model_name)
         if (fs::dir_exists(out_maxent_dir))  fs::dir_delete(out_maxent_dir)
         fs::dir_create(out_maxent_dir)
-        fs::dir_copy(fs::path_dir(maxent_html), out_maxent_dir)
+        fs::dir_copy(
+          fs::path_dir(maxent_html), out_maxent_dir, overwrite = TRUE)
 
         # Overwrite the new HTML file path in the model object
         fitted_model@models[[1]][[1]][[1]]@object@html <-

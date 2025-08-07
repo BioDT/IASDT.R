@@ -285,6 +285,8 @@ fit_sdm_models <- function(
 
   if (ecokit::check_data(model_results_path, warning = FALSE)) {
 
+    # Loading model results -----
+    ecokit::cat_time("Loading saved model results")
     model_results <- ecokit::load_as(model_results_path)
 
   } else {
@@ -555,6 +557,37 @@ fit_sdm_models <- function(
   ecokit::save_as(
     object = model_summary, object_name = model_summary_name,
     out_path = model_summary_path)
+
+  ecokit::cat_time("Check for issues in summary data", level = 1)
+
+  summary_issues <- dplyr::bind_rows(model_summary$prediction_summary) %>%
+    dplyr::filter(!tif_okay | !data_okay)
+
+  if (nrow(summary_issues) > 0) {
+
+    "\n!! There are some issues in summary maps !!\n" %>%
+      crayon::blue() %>%
+      ecokit::cat_time(cat_bold = TRUE, cat_timestamp = FALSE)
+
+    dplyr::count(summary_issues, species_name, cv_fold) %>%
+      dplyr::select(species_name, cv_fold) %>%
+      tidyr::nest(species = -cv_fold) %>%
+      dplyr::mutate(
+        message = purrr::map2_chr(
+          .x = species, .y = cv_fold,
+          .f = ~ {
+            n_species <- length(unlist(.x))
+            sp_list <- paste(unlist(.x), collapse = "; ")%>%
+              stringr::str_wrap(width = 60) %>%
+              stringr::str_split(pattern = "\n", simplify = TRUE) %>%
+              paste0("  >>>  ", .) %>%
+              paste(collapse = "\n")
+            paste0(crayon::bold(.y), ": ", n_species, " species\n", sp_list)
+          })) %>%
+      dplyr::pull(message) %>%
+      paste(collapse = "\n") %>%
+      ecokit::cat_time(cat_timestamp = FALSE)
+  }
 
   # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

@@ -7,7 +7,7 @@ articles:
   workflow_3_biotic_data: workflow_3_biotic_data.html
   workflow_4_model_fitting: workflow_4_model_fitting.html
   workflow_5_model_postprocess: workflow_5_model_postprocess.html
-last_built: 2025-08-07T15:07Z
+last_built: 2025-08-07T15:50Z
 urls:
   reference: https://biodt.github.io/IASDT.R/reference
   article: https://biodt.github.io/IASDT.R/articles

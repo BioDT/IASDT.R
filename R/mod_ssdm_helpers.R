@@ -1409,6 +1409,8 @@ reduce_sdm_formulas <- function(obj) {
 #' @param output_directory Character. Path where prediction outputs are stored.
 #' @param path_grid_r Character. Path to the reference raster grid for spatial
 #'   predictions.
+#' @param copy_maxent_html Logical. Whether to copy the directory containing
+#'   HTML results from Maxent to the modelling directory. Default is `TRUE`.
 #'
 #' @return A tibble summarizing the results for the species and cross-validation
 #'   fold, including model paths, prediction raster paths, and status flags.
@@ -1427,7 +1429,7 @@ reduce_sdm_formulas <- function(obj) {
 
 fit_predict_internal <- function(
     line_id, sdm_method, model_data, model_settings, model_results_dir,
-    input_data, output_directory, path_grid_r) {
+    input_data, output_directory, path_grid_r, copy_maxent_html = TRUE) {
 
   pred_data <- climate_name <- NULL
 
@@ -1447,20 +1449,43 @@ fit_predict_internal <- function(
   if (ecokit::check_data(model_path, warning = FALSE)) {
     fitted_model <- ecokit::load_as(model_path)
   } else {
-    fitted_model <- withCallingHandlers(
-      suppressPackageStartupMessages(
-        sdm::sdm(
+
+    withCallingHandlers(
+      suppressPackageStartupMessages({
+        fitted_model <- sdm::sdm(
           formula = model_data$model_formula[[line_id]],
           data = model_data$sdm_data[[line_id]], methods = sdm_method,
           modelSettings = model_settings)
-      ),
+      }),
       warning = function(w) {
         if (grepl(
-          "was built under R version", conditionMessage(w), fixed = TRUE)) {
+          "was built under R version|Loading required namespace",
+          conditionMessage(w), fixed = TRUE)) {
           invokeRestart("muffleWarning")
         }
       })
+
+    # copy model files from temp dir for maxent models
+    if (sdm_method == "maxent" && copy_maxent_html) {
+      maxent_html <- ecokit::normalize_path(
+        fitted_model@models[[1]][[1]][[1]]@object@html)
+
+      if (fs::file_exists(maxent_html)) {
+        out_maxent_dir <- fs::path(
+          fs::path_dir(model_results_dir), "maxent_html", base_model_name)
+        if (fs::dir_exists(out_maxent_dir))  fs::dir_delete(out_maxent_dir)
+        fs::dir_create(out_maxent_dir)
+        fs::dir_copy(fs::path_dir(maxent_html), out_maxent_dir)
+
+        # Overwrite the new HTML file path in the model object
+        fitted_model@models[[1]][[1]][[1]]@object@html <-
+          fs::path(out_maxent_dir, "maxent.html")
+      }
+    }
+
+    # Reduce models objects
     fitted_model <- reduce_sdm_formulas(obj = fitted_model)
+
     ecokit::save_as(
       object = fitted_model, object_name = model_name, out_path = model_path)
   }
@@ -1485,7 +1510,8 @@ fit_predict_internal <- function(
       ),
       warning = function(w) {
         if (grepl(
-          "was built under R version", conditionMessage(w), fixed = TRUE)) {
+          "was built under R version|Loading required namespace",
+          conditionMessage(w), fixed = TRUE)) {
           invokeRestart("muffleWarning")
         }
       })
@@ -1522,8 +1548,8 @@ fit_predict_internal <- function(
                 ),
                 warning = function(w) {
                   if (grepl(
-                    "was built under R version", conditionMessage(w),
-                    fixed = TRUE)) {
+                    "was built under R version|Loading required namespace",
+                    conditionMessage(w), fixed = TRUE)) {
                     invokeRestart("muffleWarning")
                   }
                 }) %>%
@@ -1893,10 +1919,6 @@ check_model_results <- function(model_results) {
       names_model_results = names(model_results))
   }
 
-  ecokit::cat_time(
-    crayon::blue("\nChecking for possible issues in model results"),
-    cat_timestamp = FALSE, cat_bold = TRUE, ... = "\n")
-
   # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Evaluation data - Training -----
   # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -1924,12 +1946,11 @@ check_model_results <- function(model_results) {
     issues_eval_train_species <- unique(issues_eval_train$species_name)
     issues_eval_train_n_species <- length(issues_eval_train_species)
 
-    ecokit::info_chunk(
-      paste0(
-        "!! There are issues in training evaluation data for ",
-        issues_eval_train_n_species, " / ", n_species, " species. !!"),
-      cat_timestamp = FALSE,
-      cat_date = FALSE, cat_bold = TRUE, cat_red = TRUE, line_char_rep = 70)
+    paste0(
+      "\n!! There are issues in training evaluation data for ",
+      issues_eval_train_n_species, " / ", n_species, " species. !!\n") %>%
+      crayon::blue() %>%
+      ecokit::cat_time(cat_timestamp = FALSE, cat_bold = TRUE)
 
     ecokit::cat_time(
       "Affected species: ", cat_timestamp = FALSE, cat_bold = TRUE)
@@ -1981,12 +2002,11 @@ check_model_results <- function(model_results) {
     issues_eval_test_species <- unique(issues_eval_test$species_name)
     issues_eval_test_n_species <- length(issues_eval_test_species)
 
-    ecokit::info_chunk(
-      paste0(
-        "!! There are issues in testing evaluation data for ",
-        issues_eval_test_n_species, " / ", n_species, " species. !!"),
-      cat_timestamp = FALSE,
-      cat_date = FALSE, cat_bold = TRUE, cat_red = TRUE, line_char_rep = 70)
+    paste0(
+      "\n!! There are issues in testing evaluation data for ",
+      issues_eval_test_n_species, " / ", n_species, " species. !!\n") %>%
+      crayon::blue() %>%
+      ecokit::cat_time(cat_timestamp = FALSE, cat_bold = TRUE)
 
     ecokit::cat_time(
       "Affected species: ", cat_timestamp = FALSE, cat_bold = TRUE)
@@ -2047,12 +2067,11 @@ check_model_results <- function(model_results) {
       dplyr::pull(message) %>%
       paste(collapse = "\n  >>>  ")
 
-    ecokit::info_chunk(
-      paste0(
-        "!! There are issues in variable importance data for ",
-        issues_var_imp_n_species, " / ", n_species, " species. !!"),
-      cat_timestamp = FALSE,
-      cat_date = FALSE, cat_bold = TRUE, cat_red = TRUE, line_char_rep = 70)
+    paste0(
+      "\n!! There are issues in variable importance data for ",
+      issues_var_imp_n_species, " / ", n_species, " species. !!\n") %>%
+      crayon::blue() %>%
+      ecokit::cat_time(cat_timestamp = FALSE, cat_bold = TRUE)
 
     ecokit::cat_time(
       "Affected species: ", cat_timestamp = FALSE, cat_bold = TRUE)
@@ -2102,12 +2121,11 @@ check_model_results <- function(model_results) {
       dplyr::pull(message) %>%
       paste(collapse = "\n  >>>  ")
 
-    ecokit::info_chunk(
-      paste0(
-        "!! There are issues in response curves data for ",
-        issues_res_curv_n_species, " / ", n_species, " species. !!"),
-      cat_timestamp = FALSE,
-      cat_date = FALSE, cat_bold = TRUE, cat_red = TRUE, line_char_rep = 70)
+    paste0(
+      "\n!! There are issues in response curves data for ",
+      issues_res_curv_n_species, " / ", n_species, " species. !!\n") %>%
+      crayon::blue() %>%
+      ecokit::cat_time(cat_timestamp = FALSE, cat_bold = TRUE)
 
     ecokit::cat_time(
       "Affected species: ", cat_timestamp = FALSE, cat_bold = TRUE)
@@ -2154,12 +2172,12 @@ check_model_results <- function(model_results) {
           " --> ", message)) %>%
       dplyr::pull(message) %>%
       paste(collapse = "\n  >>>  ")
-    ecokit::info_chunk(
-      paste0(
-        "!! There are issues in prediction data for ",
-        issues_preds_n_species, " / ", n_species, " species. !!"),
-      cat_timestamp = FALSE,
-      cat_date = FALSE, cat_bold = TRUE, cat_red = TRUE, line_char_rep = 70)
+
+    paste0(
+      "\n!! There are issues in prediction data for ",
+      issues_preds_n_species, " / ", n_species, " species. !!\n") %>%
+      crayon::blue() %>%
+      ecokit::cat_time(cat_timestamp = FALSE, cat_bold = TRUE)
 
     ecokit::cat_time(
       "Affected species: ", cat_timestamp = FALSE, cat_bold = TRUE)

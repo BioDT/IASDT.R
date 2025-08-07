@@ -60,6 +60,8 @@
 #' @param climate_periods Character vector or "all". Time periods for
 #'   prediction. Valid values are "2011-2040", "2041-2070", "2071-2100", or
 #'   "all" (default), or subset of supported periods.
+#' @param copy_maxent_html Logical. Whether to copy the directory containing
+#'   HTML results from Maxent to the modelling directory. Default is `TRUE`.
 #'
 #' @return A tibble summarizing model results for each species, including:
 #'   - Evaluation metrics for training and testing data (AUC, TSS, Kappa, etc.)
@@ -122,8 +124,8 @@ fit_sdm_models <- function(
     model_dir = NULL, cv_type = "CV_Dist", selected_species = NULL,
     excluded_species = NULL, env_file = ".env", hab_abb = NULL,
     clamp_pred = TRUE, fix_efforts = "q90", fix_rivers = "q90",
-    climate_models = "all", climate_scenarios = "all",
-    climate_periods = "all") {
+    climate_models = "all", climate_scenarios = "all", climate_periods = "all",
+    copy_maxent_html = TRUE) {
 
   .start_time <- lubridate::now(tzone = "CET")
 
@@ -153,9 +155,9 @@ fit_sdm_models <- function(
     args_to_check = c(
       "sdm_method", "model_dir", "cv_type", "env_file", "hab_abb"))
   ecokit::check_args(
-    args_all = AllArgs, args_type = "logical", args_to_check = "clamp_pred")
+    args_all = AllArgs, args_type = "logical",
+    args_to_check = c("clamp_pred", "copy_maxent_html"))
   rm(AllArgs, envir = environment())
-
 
   # |||||||||||||||||||||||||||||||||||||||||||
 
@@ -366,7 +368,7 @@ fit_sdm_models <- function(
     future_globals <- c(
       "sdm_method", "model_data", "model_settings", "model_results_dir",
       "input_data", "output_directory", "path_grid_r", "reduce_sdm_formulas",
-      "fit_predict_internal", "extract_sdm_info")
+      "fit_predict_internal", "extract_sdm_info", "copy_maxent_html")
 
     model_data2 <- withCallingHandlers(
       suppressPackageStartupMessages(
@@ -378,14 +380,15 @@ fit_sdm_models <- function(
               model_data = model_data, model_settings = model_settings,
               model_results_dir = model_results_dir,
               input_data = input_data, output_directory = output_directory,
-              path_grid_r = path_grid_r)
+              path_grid_r = path_grid_r, copy_maxent_html = copy_maxent_html)
           },
           future.scheduling = Inf, future.seed = TRUE,
           future.packages = pkgs_to_load, future.globals = future_globals)
       ),
       warning = function(w) {
         if (grepl(
-          "was built under R version", conditionMessage(w), fixed = TRUE)) {
+          "was built under R version|Loading required namespace",
+          conditionMessage(w), fixed = TRUE)) {
           invokeRestart("muffleWarning")
         }
       })
@@ -532,7 +535,8 @@ fit_sdm_models <- function(
     ),
     warning = function(w) {
       if (grepl(
-        "was built under R version", conditionMessage(w), fixed = TRUE)) {
+        "was built under R version|Loading required namespace",
+        conditionMessage(w), fixed = TRUE)) {
         invokeRestart("muffleWarning")
       }
     })
@@ -591,8 +595,7 @@ fit_sdm_models <- function(
 
   ecokit::cat_diff(
     init_time = .start_time, cat_bold = TRUE, cat_red = TRUE,
-    prefix = paste0("\nProcessing ", sdm_method, " models took "),
-    ... = "\n")
+    prefix = paste0("\nProcessing ", sdm_method, " models took "))
 
   model_summary
 

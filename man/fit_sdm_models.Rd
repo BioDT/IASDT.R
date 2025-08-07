@@ -19,7 +19,8 @@ fit_sdm_models(
   fix_rivers = "q90",
   climate_models = "all",
   climate_scenarios = "all",
-  climate_periods = "all"
+  climate_periods = "all",
+  copy_maxent_html = TRUE
 )
 }
 \arguments{
@@ -84,6 +85,9 @@ must be a subset of the listed valid scenarios.}
 \item{climate_periods}{Character vector or "all". Time periods for
 prediction. Valid values are "2011-2040", "2041-2070", "2071-2100", or
 "all" (default), or subset of supported periods.}
+
+\item{copy_maxent_html}{Logical. Whether to copy the directory containing
+HTML results from Maxent to the modelling directory. Default is \code{TRUE}.}
 }
 \value{
 A tibble summarizing model results for each species, including:

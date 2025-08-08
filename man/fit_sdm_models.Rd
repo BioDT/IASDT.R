@@ -7,7 +7,7 @@
 fit_sdm_models(
   sdm_method = NULL,
   model_settings = NULL,
-  n_cores = 8,
+  n_cores = 8L,
   model_dir = NULL,
   cv_type = "CV_Dist",
   selected_species = NULL,
@@ -20,7 +20,8 @@ fit_sdm_models(
   climate_models = "all",
   climate_scenarios = "all",
   climate_periods = "all",
-  copy_maxent_html = TRUE
+  copy_maxent_html = TRUE,
+  future_max_size = 2000L
 )
 }
 \arguments{
@@ -88,6 +89,12 @@ prediction. Valid values are "2011-2040", "2041-2070", "2071-2100", or
 
 \item{copy_maxent_html}{Logical. Whether to copy the directory containing
 HTML results from Maxent to the modelling directory. Default is \code{TRUE}.}
+
+\item{future_max_size}{Numeric. Maximum allowed total size (in megabytes) of
+global variables identified. See \code{\link[=set_parallel]{set_parallel()}} and
+\code{future.globals.maxSize} argument of \code{\link[future:zzz-future.options]{future::future.options()}} for more
+details. Default is 2000L for 2 GB. No upper limit is enforced by this
+function.}
 }
 \value{
 A tibble summarizing model results for each species, including:

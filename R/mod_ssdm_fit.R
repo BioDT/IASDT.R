@@ -62,6 +62,11 @@
 #'   "all" (default), or subset of supported periods.
 #' @param copy_maxent_html Logical. Whether to copy the directory containing
 #'   HTML results from Maxent to the modelling directory. Default is `TRUE`.
+#' @param future_max_size Numeric. Maximum allowed total size (in megabytes) of
+#'   global variables identified. See [set_parallel()] and
+#'   `future.globals.maxSize` argument of [future::future.options()] for more
+#'   details. Default is 2000L for 2 GB. No upper limit is enforced by this
+#'   function.
 #'
 #' @return A tibble summarizing model results for each species, including:
 #'   - Evaluation metrics for training and testing data (AUC, TSS, Kappa, etc.)
@@ -125,7 +130,7 @@ fit_sdm_models <- function(
     excluded_species = NULL, env_file = ".env", hab_abb = NULL,
     clamp_pred = TRUE, fix_efforts = "q90", fix_rivers = "q90",
     climate_models = "all", climate_scenarios = "all", climate_periods = "all",
-    copy_maxent_html = TRUE) {
+    copy_maxent_html = TRUE, future_max_size = 2000L) {
 
   .start_time <- lubridate::now(tzone = "CET")
 
@@ -158,6 +163,9 @@ fit_sdm_models <- function(
   ecokit::check_args(
     args_all = AllArgs, args_type = "logical",
     args_to_check = c("clamp_pred", "copy_maxent_html"))
+  ecokit::check_args(
+    args_all = AllArgs, args_type = "numeric",
+    args_to_check = "future_max_size")
   rm(AllArgs, envir = environment())
 
   # |||||||||||||||||||||||||||||||||||||||||||
@@ -229,6 +237,18 @@ fit_sdm_models <- function(
         " cores: {max_cores}"),
       call. = FALSE)
     n_cores <- max_cores
+  }
+
+  # |||||||||||||||||||||||||||||||||||||||||||
+
+  # future_max_size
+
+  if (is.na(future_max_size) || !is.numeric(future_max_size) ||
+      length(future_max_size) != 1L || future_max_size <= 0) {
+    ecokit::stop_ctx(
+      "future_max_size must be a positive integer of length 1",
+      future_max_size = future_max_size,
+      class_future_max_size = class(future_max_size))
   }
 
   # |||||||||||||||||||||||||||||||||||||||||||
@@ -346,6 +366,7 @@ fit_sdm_models <- function(
       ecokit::load_as(input_data$path_prediction_data)$climate_name) %>%
       fs::path(output_directory, .) %>%
       fs::dir_create()
+    invisible(gc())
 
     # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -356,8 +377,8 @@ fit_sdm_models <- function(
       future::plan("sequential", gc = TRUE)
     } else {
       ecokit::set_parallel(
-        n_cores = min(n_cores, nrow(model_data)), future_max_size = 800L,
-        level = 1L, cat_timestamp = FALSE)
+        n_cores = min(n_cores, nrow(model_data)),
+        future_max_size = future_max_size, level = 1L, cat_timestamp = FALSE)
       withr::defer(future::plan("sequential", gc = TRUE))
     }
 
@@ -398,6 +419,7 @@ fit_sdm_models <- function(
 
     ecokit::set_parallel(level = 1L, stop_cluster = TRUE, cat_timestamp = FALSE)
     future::plan("sequential", gc = TRUE)
+    invisible(gc())
 
     # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -503,6 +525,7 @@ fit_sdm_models <- function(
         })
     ) %>%
     tidyr::unnest("summary1")
+  invisible(gc())
 
   # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -514,8 +537,8 @@ fit_sdm_models <- function(
     future::plan("sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
-      n_cores = min(n_cores, nrow(model_summary)), future_max_size = 800L,
-      level = 1L, cat_timestamp = FALSE)
+      n_cores = min(n_cores, nrow(model_summary)),
+      future_max_size = future_max_size, level = 1L, cat_timestamp = FALSE)
     withr::defer(future::plan("sequential", gc = TRUE))
   }
 
@@ -545,6 +568,7 @@ fit_sdm_models <- function(
 
   ecokit::set_parallel(level = 1L, stop_cluster = TRUE, cat_timestamp = FALSE)
   future::plan("sequential", gc = TRUE)
+  invisible(gc())
 
   # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -596,6 +620,7 @@ fit_sdm_models <- function(
       line_char = "=", cat_bold = TRUE, cat_red = TRUE)
 
   }
+  invisible(gc())
 
   # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

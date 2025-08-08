@@ -458,7 +458,7 @@ prepare_input_data <- function(
     climate_models = "all", climate_scenarios = "all",
     climate_periods = "all") {
 
-  Name <- TimePeriod <- ClimScenario <- ClimateModel <- pred_df <-
+  Name <- TimePeriod <- ClimateScenario <- ClimateModel <- pred_df <-
     Processed_File <- path_rail <- path_roads <- path_clc <- path_bias <-
     path_rivers <- path_chelsa <- cv_fold <- species_name <- cv <- . <-
     method_is_glm <- pred_data <- quadratic <- variable <- climate_name <- NULL
@@ -846,10 +846,10 @@ prepare_input_data <- function(
     dplyr::select(-"File_List") %>%
     dplyr::filter(
       ClimateModel %in% c("Current", climate_models),
-      ClimScenario %in% c("Current", climate_scenarios),
+      ClimateScenario %in% c("Current", climate_scenarios),
       TimePeriod  %in% c("1981-2010", climate_periods)) %>%
     dplyr::mutate(
-      Name = paste0(TimePeriod, "_", ClimScenario, "_", ClimateModel),
+      Name = paste0(TimePeriod, "_", ClimateScenario, "_", ClimateModel),
       Name = stringr::str_replace(Name, "1981-2010_Current_Current", "Current"),
       Name = stringr::str_replace_all(Name, "-", "_"),
       clamp = clamp_pred)
@@ -1222,7 +1222,7 @@ prepare_input_data <- function(
     dplyr::select(-tidyselect::any_of(c("clamp", "Processed_Name"))) %>%
     dplyr::rename(
       time_period = TimePeriod, climate_model = ClimateModel,
-      climate_scenario = ClimScenario, climate_name = Name) %>%
+      climate_scenario = ClimateScenario, climate_name = Name) %>%
     tidyr::nest(
       pred_data = -c(
         "time_period", "climate_model",

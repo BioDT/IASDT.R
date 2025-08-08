@@ -459,7 +459,7 @@ prepare_input_data <- function(
     climate_periods = "all") {
 
   Name <- TimePeriod <- ClimateScenario <- ClimateModel <- pred_df <-
-    Processed_File <- path_rail <- path_roads <- path_clc <- path_bias <-
+    FilePath <- path_rail <- path_roads <- path_clc <- path_bias <-
     path_rivers <- path_chelsa <- cv_fold <- species_name <- cv <- . <-
     method_is_glm <- pred_data <- quadratic <- variable <- climate_name <- NULL
 
@@ -1200,7 +1200,7 @@ prepare_input_data <- function(
   prediction_data <- prediction_options %>%
     dplyr::mutate(
       pred_df = purrr::map(
-        Processed_File,
+        FilePath,
         ~ {
           pred_df0 <- ecokit::load_as(.x, unwrap_r = TRUE) %>%
             terra::subset(bio_variables) %>%
@@ -1217,7 +1217,7 @@ prepare_input_data <- function(
           }
           pred_df0
         })) %>%
-    dplyr::select(-Processed_File) %>%
+    dplyr::select(-FilePath) %>%
     tidyr::unnest(pred_df) %>%
     dplyr::select(-tidyselect::any_of(c("clamp", "Processed_Name"))) %>%
     dplyr::rename(

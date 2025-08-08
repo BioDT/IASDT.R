@@ -568,7 +568,7 @@ fit_sdm_models <- function(
       line_char_rep = 60L, sep_lines_before = 1L,
       line_char = "=", cat_bold = TRUE, cat_red = TRUE)
 
-    "\n!! There are some issues in summary maps !!\n" %>%
+    "\n!! There are issues in summary maps !!\n" %>%
       crayon::blue() %>%
       ecokit::cat_time(cat_bold = TRUE, cat_timestamp = FALSE)
 
@@ -592,7 +592,7 @@ fit_sdm_models <- function(
       ecokit::cat_time(cat_timestamp = FALSE)
 
     ecokit::cat_sep(
-      line_char_rep = 60L, sep_lines_before = 1L, sep_lines_after = 3L,
+      line_char_rep = 60L, sep_lines_before = 1L, sep_lines_after = 2L,
       line_char = "=", cat_bold = TRUE, cat_red = TRUE)
 
   }

@@ -2013,7 +2013,7 @@ check_model_results <- function(model_results) {
       paste0(
         crayon::bold("Affected metrics: "),
         "\n  >>>  ", ., collapse = "\n") %>%
-      ecokit::cat_time(cat_timestamp = FALSE, ... = "\n")
+      ecokit::cat_time(cat_timestamp = FALSE)
   }
 
   # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -2077,7 +2077,7 @@ check_model_results <- function(model_results) {
       paste0(
         crayon::bold("Affected metrics: "),
         "\n  >>>  ", ., collapse = "\n") %>%
-      ecokit::cat_time(cat_timestamp = FALSE, ... = "\n")
+      ecokit::cat_time(cat_timestamp = FALSE)
   }
 
   # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -2312,7 +2312,7 @@ check_model_results <- function(model_results) {
 
   if (issue_detected) {
     ecokit::cat_sep(
-      line_char_rep = 60L, sep_lines_before = 1L, sep_lines_after = 3L,
+      line_char_rep = 60L, sep_lines_before = 1L, sep_lines_after = 2L,
       line_char = "=", cat_bold = TRUE, cat_red = TRUE)
   }
 

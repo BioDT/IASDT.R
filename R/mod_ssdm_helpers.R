@@ -633,8 +633,12 @@ prepare_input_data <- function(
 
   # Loading model data ----
 
-  # file_full_data <- fs::path(model_dir, "ModDT.RData")
-  file_model_data <- fs::path(model_dir, "ModDT_subset.RData")
+  file_model_data <- fs::dir_ls(model_dir, regexp = "ModDT_.+subset.RData")
+  if (length(file_model_data) != 1 || !nzchar(file_model_data)) {
+    ecokit::stop_ctx(
+      "Model data file not found",
+      model_dir = model_dir, file_model_data = file_model_data)
+  }
 
   if (!ecokit::check_data(file_model_data, warning = FALSE)) {
     ecokit::stop_ctx(
@@ -644,16 +648,20 @@ prepare_input_data <- function(
   }
 
   model_data <- ecokit::load_as(file_model_data)
-  if (is.null(model_data$DT_x) ||
-      is.null(model_data$DT_y) ||
+
+  if (!all(c("DT_x", "DT_y", "DT_CV") %in% names(model_data))) {
+    ecokit::stop_ctx(
+      "Loaded model data is missing required components.",
+      file_model_data = file_model_data, names_model_data = names(model_data))
+  }
+
+  if (is.null(model_data$DT_x) || is.null(model_data$DT_y) ||
       is.null(model_data$DT_CV)) {
     ecokit::stop_ctx(
       "Loaded model data is missing required components.",
-      file_model_data = file_model_data,
-      names_file_model_data = names(model_data))
+      file_model_data = file_model_data, names_model_data = names(model_data))
   }
 
-  # full_data <- ecokit::load_as(file_full_data)
   predictor_names <- names(model_data$DT_x)
 
   n_cv_folds <- length(unique(dplyr::pull(model_data$DT_CV, cv_type)))
@@ -1581,7 +1589,6 @@ fit_predict_internal <- function(
               invisible(gc())
             }
 
-
             tibble::tibble(
               species_name = species_name, pred_dir = pred_dir,
               data_path = data_path, data_okay = data_okay,
@@ -1832,7 +1839,7 @@ summarize_predictions <- function(line_id, model_summary) {
             tools::file_path_sans_ext()
           # Avoid division by zero
           mean_pred <- terra::clamp(mean_pred, lower = 1e-8)
-          cov_pred <- sd_pred / mean_pred
+          cov_pred <- stats::setNames((sd_pred / mean_pred), cov_name)
           terra::writeRaster(
             x = cov_pred, overwrite = TRUE, filename = path_cov_tif,
             gdal = gdal_options)
@@ -1987,7 +1994,7 @@ check_model_results <- function(model_results) {
 
     paste0(
       "\n!! There are issues in training evaluation data for ",
-      issues_eval_train_n_species, " / ", n_species, " species. !!\n") %>%
+      issues_eval_train_n_species, " / ", n_species, " species !!\n") %>%
       crayon::blue() %>%
       ecokit::cat_time(cat_timestamp = FALSE, cat_bold = TRUE)
 
@@ -2051,7 +2058,7 @@ check_model_results <- function(model_results) {
 
     paste0(
       "\n!! There are issues in testing evaluation data for ",
-      issues_eval_test_n_species, " / ", n_species, " species. !!\n") %>%
+      issues_eval_test_n_species, " / ", n_species, " species !!\n") %>%
       crayon::blue() %>%
       ecokit::cat_time(cat_timestamp = FALSE, cat_bold = TRUE)
 
@@ -2124,7 +2131,7 @@ check_model_results <- function(model_results) {
 
     paste0(
       "\n!! There are issues in variable importance data for ",
-      issues_var_imp_n_species, " / ", n_species, " species. !!\n") %>%
+      issues_var_imp_n_species, " / ", n_species, " species !!\n") %>%
       crayon::blue() %>%
       ecokit::cat_time(cat_timestamp = FALSE, cat_bold = TRUE)
 
@@ -2186,7 +2193,7 @@ check_model_results <- function(model_results) {
 
     paste0(
       "\n!! There are issues in response curves data for ",
-      issues_res_curv_n_species, " / ", n_species, " species. !!\n") %>%
+      issues_res_curv_n_species, " / ", n_species, " species !!\n") %>%
       crayon::blue() %>%
       ecokit::cat_time(cat_timestamp = FALSE, cat_bold = TRUE)
 
@@ -2245,7 +2252,7 @@ check_model_results <- function(model_results) {
 
     paste0(
       "\n!! There are issues in prediction data for ",
-      issues_preds_n_species, " / ", n_species, " species. !!\n") %>%
+      issues_preds_n_species, " / ", n_species, " species !!\n") %>%
       crayon::blue() %>%
       ecokit::cat_time(cat_timestamp = FALSE, cat_bold = TRUE)
 

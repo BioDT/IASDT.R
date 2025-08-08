@@ -418,6 +418,8 @@ extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
 #' @param climate_periods Character vector or "all". Time periods for
 #'   prediction. Valid values are "2011-2040", "2041-2070", "2071-2100", or
 #'   "all" (default), or subset of supported periods.
+#' @param n_cores Integer. Number of CPU cores for parallel processing. Default
+#'   is 8.
 #'
 #' @details The function performs the following steps:
 #' - Validates all input arguments and required files/directories.
@@ -456,12 +458,12 @@ prepare_input_data <- function(
     excluded_species = NULL, env_file = ".env", hab_abb = NULL,
     clamp_pred = TRUE, fix_efforts = "q90", fix_rivers = "q90",
     climate_models = "all", climate_scenarios = "all",
-    climate_periods = "all") {
+    climate_periods = "all", n_cores = 8) {
 
   Name <- TimePeriod <- ClimateScenario <- ClimateModel <- pred_df <-
     FilePath <- path_rail <- path_roads <- path_clc <- path_bias <-
-    path_rivers <- path_chelsa <- cv_fold <- species_name <- cv <- . <-
-    method_is_glm <- pred_data <- quadratic <- variable <- climate_name <- NULL
+    path_rivers <- path_chelsa <- cv_fold <- . <- pred_data <- quadratic <-
+    variable <- climate_name <- NULL
 
   # # ..................................................................... ###
 
@@ -479,7 +481,33 @@ prepare_input_data <- function(
       "fix_efforts", "fix_rivers"))
   ecokit::check_args(
     args_all = all_args, args_type = "logical", args_to_check = "clamp_pred")
+  ecokit::check_args(
+    args_all = all_args, args_type = "numeric", args_to_check = "n_cores")
   rm(all_args, envir = environment())
+
+
+  # |||||||||||||||||||||||||||||||||||||||||||
+
+  ## n_cores ----
+
+  if (!is.numeric(n_cores) || length(n_cores) != 1L ||
+      n_cores < 1L || is.na(n_cores)) {
+    ecokit::stop_ctx(
+      "n_cores must be a positive integer of length 1",
+      n_cores = n_cores, class_n_cores = class(n_cores))
+  }
+  n_cores <- as.integer(n_cores)
+  max_cores <- parallelly::availableCores()
+  if (n_cores > max_cores) {
+    warning(
+      stringr::str_glue(
+        "`n_cores` exceeds available cores: {n_cores}. Using all available",
+        " cores: {max_cores}"),
+      call. = FALSE)
+    n_cores <- max_cores
+  }
+
+  # |||||||||||||||||||||||||||||||||||||||||||
 
   ## future climate options ------
 
@@ -538,14 +566,15 @@ prepare_input_data <- function(
 
   # path to save all models
   sdm_model_dir <- fs::path(model_dir, "sdm_models")
-  fs::dir_create(sdm_model_dir)
+  species_data_dir <- fs::path(sdm_model_dir, "species_data")
+  fs::dir_create(species_data_dir)
 
   # species modelling data
-  path_species_data <- fs::path(sdm_model_dir, "species_modelling_data.qs2")
+  path_species_data <- fs::path(species_data_dir, "species_modelling_data.qs2")
   # prediction datasets
-  path_prediction_data <- fs::path(sdm_model_dir, "prediction_data.qs2")
+  path_prediction_data <- fs::path(species_data_dir, "prediction_data.qs2")
   path_prediction_options <- fs::path(
-    sdm_model_dir, "prediction_data_options.qs2")
+    species_data_dir, "prediction_data_options.qs2")
 
   ## Check if data already exist and valid -----
   model_data_exist <- all(
@@ -633,7 +662,8 @@ prepare_input_data <- function(
 
   # Loading model data ----
 
-  file_model_data <- fs::dir_ls(model_dir, regexp = "ModDT_.+subset.RData")
+  file_model_data <- fs::dir_ls(
+    model_dir, regexp = ".*/ModDT_.*subset\\.RData$")
   if (length(file_model_data) != 1 || !nzchar(file_model_data)) {
     ecokit::stop_ctx(
       "Model data file not found",
@@ -777,11 +807,35 @@ prepare_input_data <- function(
 
   species_modelling_data <- tidyr::expand_grid(
     species_name = species_names, cv = seq_len(n_cv_folds),
-    method_is_glm = c(TRUE, FALSE)) %>%
-    dplyr::mutate(
-      model_data = purrr::pmap(
-        .l = list(species_name, cv, method_is_glm),
-        .f = function(species_name, cv, method_is_glm) {
+    method_is_glm = c(TRUE, FALSE))
+
+  if (n_cores == 1L) {
+    future::plan("sequential", gc = TRUE)
+  } else {
+    ecokit::set_parallel(
+      n_cores = min(n_cores, nrow(species_modelling_data)), show_log = FALSE)
+    withr::defer(future::plan("sequential", gc = TRUE))
+  }
+
+  species_modelling_data2 <- withCallingHandlers(
+    suppressPackageStartupMessages(
+      future.apply::future_lapply(
+        X = seq_len(nrow(species_modelling_data)),
+        FUN = function(line_id) {
+
+          species_name <- species_modelling_data$species_name[[line_id]]
+          cv <- species_modelling_data$cv[[line_id]]
+          method_is_glm <- species_modelling_data$method_is_glm[[line_id]]
+
+          species_data_name <- paste0(
+            species_name, "_cv", cv, "_",
+            dplyr::if_else(method_is_glm, "glm", "not_glm"))
+          species_data_file <- fs::path(
+            species_data_dir, paste0(species_data_name, ".qs2"))
+
+          if (ecokit::check_data(species_data_file, warning = FALSE)) {
+            return(species_data_file)
+          }
 
           # model formula
           if (method_is_glm) {
@@ -811,7 +865,6 @@ prepare_input_data <- function(
               stringr::str_remove_all(str_rem_1) %>%
               paste(species_name, .) %>%
               stats::as.formula(env = baseenv())
-
           }
 
           # Training and testing data
@@ -828,11 +881,38 @@ prepare_input_data <- function(
           sdm_data <- sdm::sdmData(
             formula = model_formula, train = training_data, test = testing_data)
 
-          tibble::tibble(
-            model_formula = list(model_formula), sdm_data = list(sdm_data))
+          species_fitting_data <- list(
+            species_name = species_name, cv = cv,
+            method_is_glm = method_is_glm, model_formula = model_formula,
+            sdm_data = sdm_data)
 
-        })) %>%
-    tidyr::unnest("model_data")
+          ecokit::save_as(
+            object = species_fitting_data, out_path = species_data_file)
+
+          species_data_file
+        },
+        future.scheduling = Inf, future.seed = TRUE,
+        future.packages = c(
+          "dplyr", "ecokit", "fs", "qs2", "stringr", "sdm", "tidyselect"),
+        future.globals = c(
+          "species_modelling_data", "species_data_dir", "q_preds", "l_preds",
+          "predictor_names", "model_data", "modelling_data"))
+    ),
+    warning = function(w) {
+      if (grepl(
+        "was built under R version|Loading required namespace",
+        conditionMessage(w), fixed = TRUE)) {
+        invokeRestart("muffleWarning")
+      }
+    })
+
+  ecokit::set_parallel(stop_cluster = TRUE, show_log = FALSE)
+  future::plan("sequential", gc = TRUE)
+  invisible(gc())
+
+
+  species_modelling_data <- dplyr::mutate(
+    species_modelling_data, data_path = species_modelling_data2)
 
   ecokit::save_as(
     object = species_modelling_data, out_path = path_species_data)
@@ -1439,11 +1519,10 @@ fit_predict_internal <- function(
 
   pred_data <- climate_name <- NULL
 
-  base_model_name <- paste0(
-    sdm_method, "_", model_data$species_name[[line_id]],
-    "_cv", model_data$cv[[line_id]])
-  species_name <- model_data$species_name[line_id] # nolint: object_usage_linter
-  cv_fold <- model_data$cv[line_id]        # nolint: object_usage_linter
+  species_name <- model_data$species_name[[line_id]]
+  cv_fold <- model_data$cv[[line_id]]
+  model_DT <- ecokit::load_as(model_data$data_path[[line_id]])
+  base_model_name <- paste0(sdm_method, "_", species_name, "_cv", cv_fold)
 
   # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -1459,9 +1538,8 @@ fit_predict_internal <- function(
     withCallingHandlers(
       suppressPackageStartupMessages({
         fitted_model <- sdm::sdm(
-          formula = model_data$model_formula[[line_id]],
-          data = model_data$sdm_data[[line_id]], methods = sdm_method,
-          modelSettings = model_settings)
+          formula = model_DT$model_formula, data = model_DT$sdm_data,
+          methods = sdm_method, modelSettings = model_settings)
       }),
       warning = function(w) {
         if (grepl(
@@ -1517,8 +1595,7 @@ fit_predict_internal <- function(
     ## Extract info from fitted model object -----
     extracted_data <- withCallingHandlers(
       suppressPackageStartupMessages(
-        extract_sdm_info(
-          model = fitted_model, cv_fold = model_data$cv[line_id])
+        extract_sdm_info(model = fitted_model, cv_fold = cv_fold)
       ),
       warning = function(w) {
         if (grepl(

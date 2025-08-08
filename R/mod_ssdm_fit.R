@@ -347,7 +347,8 @@ fit_sdm_models <- function(
       excluded_species = excluded_species, env_file = env_file,
       hab_abb = hab_abb, clamp_pred = clamp_pred, fix_efforts = fix_efforts,
       fix_rivers = fix_rivers, climate_models = climate_models,
-      climate_scenarios = climate_scenarios, climate_periods = climate_periods)
+      climate_scenarios = climate_scenarios, climate_periods = climate_periods,
+      n_cores = n_cores)
 
     # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

@@ -73,21 +73,21 @@ predictors.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">fit_sdm_models</span><span class="op">(</span></span>
 <span>  sdm_method <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  model_settings <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  n_cores <span class="op">=</span> <span class="fl">8L</span>,</span>
 <span>  model_dir <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  hab_abb <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cv_type <span class="op">=</span> <span class="st">"CV_Dist"</span>,</span>
+<span>  n_cores <span class="op">=</span> <span class="fl">8L</span>,</span>
+<span>  future_max_size <span class="op">=</span> <span class="fl">2000L</span>,</span>
 <span>  selected_species <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  excluded_species <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  env_file <span class="op">=</span> <span class="st">".env"</span>,</span>
-<span>  hab_abb <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  clamp_pred <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  fix_efforts <span class="op">=</span> <span class="st">"q90"</span>,</span>
 <span>  fix_rivers <span class="op">=</span> <span class="st">"q90"</span>,</span>
 <span>  climate_models <span class="op">=</span> <span class="st">"all"</span>,</span>
 <span>  climate_scenarios <span class="op">=</span> <span class="st">"all"</span>,</span>
 <span>  climate_periods <span class="op">=</span> <span class="st">"all"</span>,</span>
-<span>  copy_maxent_html <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  future_max_size <span class="op">=</span> <span class="fl">2000L</span></span>
+<span>  copy_maxent_html <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -108,35 +108,10 @@ For details and supported options, see <code><a href="https://rdrr.io/pkg/sdm/ma
 <code>NULL</code>, defaults to custom settings defined within the workflow.</p></dd>
 
 
-<dt id="arg-n-cores">n_cores<a class="anchor" aria-label="anchor" href="#arg-n-cores"></a></dt>
-<dd><p>Integer. Number of CPU cores for parallel processing. Default
-is 8.</p></dd>
-
-
 <dt id="arg-model-dir">model_dir<a class="anchor" aria-label="anchor" href="#arg-model-dir"></a></dt>
 <dd><p>Character. Path to the directory containing model data and
 where outputs and results will be saved. Model data are prepared using the
 <code><a href="Mod_inputs.html">mod_prepare_HPC()</a></code> and <code><a href="Mod_inputs.html">mod_prepare_data()</a></code> functions.</p></dd>
-
-
-<dt id="arg-cv-type">cv_type<a class="anchor" aria-label="anchor" href="#arg-cv-type"></a></dt>
-<dd><p>Character. Cross-validation type. One of <code>CV_Dist</code> (default)
-or <code>CV_Large</code>. See <code><a href="Mod_CV_Fit.html">mod_CV_fit()</a></code> for more details.</p></dd>
-
-
-<dt id="arg-selected-species">selected_species<a class="anchor" aria-label="anchor" href="#arg-selected-species"></a></dt>
-<dd><p>Character vector or NULL. Names of species to include
-for modelling.</p></dd>
-
-
-<dt id="arg-excluded-species">excluded_species<a class="anchor" aria-label="anchor" href="#arg-excluded-species"></a></dt>
-<dd><p>Character vector or NULL. Names of species to exclude
-from modelling.</p></dd>
-
-
-<dt id="arg-env-file">env_file<a class="anchor" aria-label="anchor" href="#arg-env-file"></a></dt>
-<dd><p>Character. Path to a file with environment variable
-definitions for spatial datasets. Default is <code>".env"</code>.</p></dd>
 
 
 <dt id="arg-hab-abb">hab_abb<a class="anchor" aria-label="anchor" href="#arg-hab-abb"></a></dt>
@@ -145,25 +120,45 @@ Valid values: "0", "1", "2", "3", "4a", "4b", "10", "12a", "12b". See
 <code><a href="Mod_inputs.html">mod_prepare_HPC()</a></code> for more details.</p></dd>
 
 
+<dt id="arg-cv-type">cv_type<a class="anchor" aria-label="anchor" href="#arg-cv-type"></a></dt>
+<dd><p>Character. Cross-validation type. One of <code>CV_Dist</code> (default)
+or <code>CV_Large</code>. See <code><a href="Mod_CV_Fit.html">mod_CV_fit()</a></code> for more details.</p></dd>
+
+
+<dt id="arg-n-cores">n_cores<a class="anchor" aria-label="anchor" href="#arg-n-cores"></a></dt>
+<dd><p>Integer. Number of CPU cores for parallel processing. Default
+is 8.</p></dd>
+
+
+<dt id="arg-future-max-size">future_max_size<a class="anchor" aria-label="anchor" href="#arg-future-max-size"></a></dt>
+<dd><p>Numeric. Maximum allowed total size (in megabytes) of
+global variables identified. See <code><a href="https://elgabbas.github.io/ecokit/reference/set_parallel.html" class="external-link">ecokit::set_parallel()</a></code> and
+<code>future.globals.maxSize</code> argument of <code><a href="https://future.futureverse.org/reference/zzz-future.options.html" class="external-link">future::future.options()</a></code> for more
+details.</p></dd>
+
+
+<dt id="arg-selected-species-excluded-species">selected_species, excluded_species<a class="anchor" aria-label="anchor" href="#arg-selected-species-excluded-species"></a></dt>
+<dd><p>Character vector or NULL. Names of
+species to include or exclude for modelling.</p></dd>
+
+
+<dt id="arg-env-file">env_file<a class="anchor" aria-label="anchor" href="#arg-env-file"></a></dt>
+<dd><p>Character. Path to a file with environment variable
+definitions for spatial datasets. Default is <code>".env"</code>.</p></dd>
+
+
 <dt id="arg-clamp-pred">clamp_pred<a class="anchor" aria-label="anchor" href="#arg-clamp-pred"></a></dt>
 <dd><p>Logical. Should clamping be applied to sampling efforts and
 river length predictors for prediction? Default is <code>TRUE</code>.</p></dd>
 
 
-<dt id="arg-fix-efforts">fix_efforts<a class="anchor" aria-label="anchor" href="#arg-fix-efforts"></a></dt>
-<dd><p>Character or numeric (length 1). Method or fixed value for
-sampling effort (log-scale) when clamping is enabled (<code>clamp_pred = TRUE</code>).
-Valid methods: "identity" (use observed, with no clamping), summary
-statistics for the sampling efforts layer ("median", "mean", "max", or
-"q90" (default; 90th percentile)), or a single numeric value within
-observed range. If using a numeric value, ensure it is within the range of
-sampling effort layer.</p></dd>
-
-
-<dt id="arg-fix-rivers">fix_rivers<a class="anchor" aria-label="anchor" href="#arg-fix-rivers"></a></dt>
-<dd><p>Character or numeric (length 1). Method or fixed value for
-river length (log-scale) when clamping is enabled (<code>clamp_pred = TRUE</code>).
-Valid values are similar to <code>fix_efforts</code>.</p></dd>
+<dt id="arg-fix-efforts-fix-rivers">fix_efforts, fix_rivers<a class="anchor" aria-label="anchor" href="#arg-fix-efforts-fix-rivers"></a></dt>
+<dd><p>Character or numeric (length 1). Method or
+fixed value for sampling effort and river length (both at log-scale) when
+clamping is enabled (<code>clamp_pred = TRUE</code>). Valid methods: "identity" (use
+observed, with no clamping), summary statistics for the sampling efforts
+layer ("median", "mean", "max", or "q90" (default; 90th percentile)), or a
+single numeric value within observed range.</p></dd>
 
 
 <dt id="arg-climate-models">climate_models<a class="anchor" aria-label="anchor" href="#arg-climate-models"></a></dt>
@@ -190,14 +185,6 @@ prediction. Valid values are "2011-2040", "2041-2070", "2071-2100", or
 <dt id="arg-copy-maxent-html">copy_maxent_html<a class="anchor" aria-label="anchor" href="#arg-copy-maxent-html"></a></dt>
 <dd><p>Logical. Whether to copy the directory containing
 HTML results from Maxent to the modelling directory. Default is <code>TRUE</code>.</p></dd>
-
-
-<dt id="arg-future-max-size">future_max_size<a class="anchor" aria-label="anchor" href="#arg-future-max-size"></a></dt>
-<dd><p>Numeric. Maximum allowed total size (in megabytes) of
-global variables identified. See <code>set_parallel()</code> and
-<code>future.globals.maxSize</code> argument of <code><a href="https://future.futureverse.org/reference/zzz-future.options.html" class="external-link">future::future.options()</a></code> for more
-details. Default is 2000L for 2 GB. No upper limit is enforced by this
-function.</p></dd>
 
 </dl></div>
     <div class="section level2">

@@ -127,9 +127,8 @@ fit_sdm_models <- function(
 
   .start_time <- lubridate::now(tzone = "CET")
 
-  summary_data <- model_formula <- sdm_data <- . <- method_is_glm <- species <-
-    packages <- path_grid <- mod_method <- maps <- cv_fold <- pred_dir <-
-    species_name <- data_okay <- tif_okay <- NULL
+  summary_data <- . <- species <- packages <- path_grid <- mod_method <- maps <-
+    cv_fold <- pred_dir <- species_name <- data_okay <- tif_okay <- NULL
 
   stringr::str_glue(
     "Fitting models using `{sdm_method}` method and `{cv_type}` ",
@@ -346,9 +345,13 @@ fit_sdm_models <- function(
     # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
     ecokit::cat_time("Loading modelling data")
-    model_data <- ecokit::load_as(input_data$path_species_data) %>%
-      dplyr::filter(method_is_glm == (sdm_method == "glm")) %>%
-      dplyr::select(-method_is_glm)
+    model_data <- ecokit::load_as(input_data$path_species_data)
+    cv_folds <- ecokit::load_as(model_data$data_path[[1]]) %>%
+      dplyr::pull(cv) %>%
+      unique()
+    model_data <- dplyr::mutate(
+      model_data, method_is_glm = (sdm_method == "glm")) %>%
+      tidyr::expand_grid(cv = cv_folds)
 
     # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -386,7 +389,7 @@ fit_sdm_models <- function(
     future_globals <- c(
       "sdm_method", "model_data", "model_settings", "model_results_dir",
       "input_data", "output_directory", "path_grid_r", "reduce_sdm_formulas",
-      "fit_predict_internal", "extract_sdm_info", "copy_maxent_html")
+      "fit_predict_internal", "extract_sdm_info", "copy_maxent_html", "quietly")
 
     model_data2 <- quietly(
       future.apply::future_lapply(
@@ -400,8 +403,7 @@ fit_sdm_models <- function(
             path_grid_r = path_grid_r, copy_maxent_html = copy_maxent_html)
         },
         future.scheduling = Inf, future.seed = TRUE,
-        future.packages = pkgs_to_load, future.globals = future_globals)
-    )
+        future.packages = pkgs_to_load, future.globals = future_globals))
 
     ecokit::set_parallel(level = 1L, stop_cluster = TRUE, cat_timestamp = FALSE)
     future::plan("sequential", gc = TRUE)
@@ -435,7 +437,7 @@ fit_sdm_models <- function(
     "Summarize evaluation, response curves, and variable importance")
 
   model_summary <- model_results %>%
-    dplyr::select(-model_formula, -sdm_data) %>%
+    dplyr::select(-tidyselect::all_of(c("model_formula", "sdm_data"))) %>%
     tidyr::nest(summary_data = -"species_name") %>%
     dplyr::mutate(
       summary1 = purrr::map(
@@ -542,7 +544,7 @@ fit_sdm_models <- function(
       },
       future.scheduling = Inf, future.seed = TRUE,
       future.packages = pkgs_to_load,
-      future.globals = c("model_summary", "summarize_predictions"))
+      future.globals = c("model_summary", "summarize_predictions", "quietly"))
   )
 
   ecokit::set_parallel(level = 1L, stop_cluster = TRUE, cat_timestamp = FALSE)

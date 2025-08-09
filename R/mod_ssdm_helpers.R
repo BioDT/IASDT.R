@@ -461,9 +461,9 @@ prepare_input_data <- function(
     climate_periods = "all", n_cores = 8) {
 
   Name <- TimePeriod <- ClimateScenario <- ClimateModel <- pred_df <-
-    FilePath <- path_rail <- path_roads <- path_clc <- path_bias <-
+    FilePath <- path_rail <- path_roads <- path_clc <- path_bias <- cv <- cvs <-
     path_rivers <- path_chelsa <- cv_fold <- . <- pred_data <- quadratic <-
-    variable <- climate_name <- NULL
+    variable <- climate_name <- is_valid_option <- species_name <- NULL
 
   # # ..................................................................... ###
 
@@ -817,105 +817,147 @@ prepare_input_data <- function(
     withr::defer(future::plan("sequential", gc = TRUE))
   }
 
-  species_modelling_data2 <- withCallingHandlers(
-    suppressPackageStartupMessages(
-      future.apply::future_lapply(
-        X = seq_len(nrow(species_modelling_data)),
-        FUN = function(line_id) {
+  pkg_to_load <- c(
+    "dplyr", "ecokit", "fs", "qs2", "stringr", "sdm", "tibble", "tidyselect")
+  future_globals <- c(
+    "species_modelling_data", "species_data_dir", "q_preds", "l_preds",
+    "predictor_names", "model_data", "modelling_data")
 
-          species_name <- species_modelling_data$species_name[[line_id]]
-          cv <- species_modelling_data$cv[[line_id]]
-          method_is_glm <- species_modelling_data$method_is_glm[[line_id]]
+  species_modelling_data2 <- quietly(
+    future.apply::future_lapply(
+      X = seq_len(nrow(species_modelling_data)),
+      FUN = function(line_id) {
 
-          species_data_name <- paste0(
-            species_name, "_cv", cv, "_",
-            dplyr::if_else(method_is_glm, "glm", "not_glm"))
-          species_data_file <- fs::path(
-            species_data_dir, paste0(species_data_name, ".qs2"))
+        species_name <- species_modelling_data$species_name[[line_id]]
+        cv <- species_modelling_data$cv[[line_id]]
+        method_is_glm <- species_modelling_data$method_is_glm[[line_id]]
 
-          if (ecokit::check_data(species_data_file, warning = FALSE)) {
-            return(species_data_file)
-          }
+        species_data_name <- paste0(
+          species_name, "_cv", cv, "_",
+          dplyr::if_else(method_is_glm, "glm", "not_glm"))
+        species_data_file <- fs::path(
+          species_data_dir, paste0(species_data_name, ".qs2"))
 
-          # model formula
-          if (method_is_glm) {
+        if (ecokit::check_data(species_data_file, warning = FALSE)) {
+          return(
+            tibble::tibble(
+              data_path = species_data_file, is_valid_option = TRUE))
+        }
 
-            if (length(q_preds) == 0L) {
-              # No quadratic terms, use linear predictors only
-              model_formula <- paste(
-                species_name, " ~ ", paste(l_preds, collapse = " + ")) %>%
-                stats::as.formula(env = baseenv())
-              predictor_names_local <- predictor_names
-            } else {
-              # Add quadratic terms as columns to the modelling data
-              predictor_names_local <- c(
-                predictor_names, paste0(q_preds, "_sq"))
+        # model formula
+        if (method_is_glm) {
 
-              # Update model formula
-              model_formula <- c(l_preds, q_preds, paste0(q_preds, "_sq")) %>%
-                paste(collapse = " + ") %>%
-                paste(species_name, " ~ ", .) %>%
-                stats::as.formula(env = baseenv())
-            }
-
-          } else {
+          if (length(q_preds) == 0L) {
+            # No quadratic terms, use linear predictors only
+            model_formula <- paste(
+              species_name, " ~ ", paste(l_preds, collapse = " + ")) %>%
+              stats::as.formula(env = baseenv())
             predictor_names_local <- predictor_names
-            str_rem_1 <- "stats::poly\\(|, degree = 2, raw = TRUE\\)"
-            model_formula <- deparse1(model_data$Form_x) %>%
-              stringr::str_remove_all(str_rem_1) %>%
-              paste(species_name, .) %>%
+          } else {
+            # Add quadratic terms as columns to the modelling data
+            predictor_names_local <- c(
+              predictor_names, paste0(q_preds, "_sq"))
+
+            # Update model formula
+            model_formula <- c(l_preds, q_preds, paste0(q_preds, "_sq")) %>%
+              paste(collapse = " + ") %>%
+              paste(species_name, " ~ ", .) %>%
               stats::as.formula(env = baseenv())
           }
 
-          # Training and testing data
-          training_data <- modelling_data %>%
-            dplyr::filter(cv_fold != cv) %>%
-            dplyr::select(
-              tidyselect::all_of(c(species_name, predictor_names_local)))
-          testing_data <- modelling_data %>%
-            dplyr::filter(cv_fold == cv) %>%
-            dplyr::select(
-              tidyselect::all_of(c(species_name, predictor_names_local)))
+        } else {
+          predictor_names_local <- predictor_names
+          str_rem_1 <- "stats::poly\\(|, degree = 2, raw = TRUE\\)"
+          model_formula <- deparse1(model_data$Form_x) %>%
+            stringr::str_remove_all(str_rem_1) %>%
+            paste(species_name, .) %>%
+            stats::as.formula(env = baseenv())
+        }
 
-          # sdm data
-          sdm_data <- sdm::sdmData(
-            formula = model_formula, train = training_data, test = testing_data)
+        # Training and testing data
+        training_data <- dplyr::filter(modelling_data, cv_fold != cv) %>%
+          dplyr::select(
+            tidyselect::all_of(c(species_name, predictor_names_local)))
+        testing_data <- dplyr::filter(modelling_data, cv_fold == cv) %>%
+          dplyr::select(
+            tidyselect::all_of(c(species_name, predictor_names_local)))
 
-          species_fitting_data <- list(
-            species_name = species_name, cv = cv,
-            method_is_glm = method_is_glm, model_formula = model_formula,
-            sdm_data = sdm_data)
+        valid_training_data <- unique(training_data[, species_name]) %>%
+          sort() %>%
+          as.integer() %>%
+          identical(c(0L, 1L))
+        valid_testing_data <- unique(testing_data[, species_name]) %>%
+          sort() %>%
+          as.integer() %>%
+          identical(c(0L, 1L))
 
-          ecokit::save_as(
-            object = species_fitting_data, out_path = species_data_file)
+        if (isFALSE(valid_training_data) || isFALSE(valid_testing_data)) {
+          return(
+            tibble::tibble(
+              data_path = NA_character_, is_valid_option = FALSE))
+        }
 
-          species_data_file
-        },
-        future.scheduling = Inf, future.seed = TRUE,
-        future.packages = c(
-          "dplyr", "ecokit", "fs", "qs2", "stringr", "sdm", "tidyselect"),
-        future.globals = c(
-          "species_modelling_data", "species_data_dir", "q_preds", "l_preds",
-          "predictor_names", "model_data", "modelling_data"))
-    ),
-    warning = function(w) {
-      if (grepl(
-        "was built under R version|Loading required namespace",
-        conditionMessage(w), fixed = TRUE)) {
-        invokeRestart("muffleWarning")
-      }
-    })
+        # sdm data
+        sdm_data <- sdm::sdmData(
+          formula = model_formula, train = training_data, test = testing_data)
+
+        species_fitting_data <- list(
+          species_name = species_name, cv = cv,
+          method_is_glm = method_is_glm, model_formula = model_formula,
+          sdm_data = sdm_data)
+
+        ecokit::save_as(
+          object = species_fitting_data, out_path = species_data_file)
+
+        tibble::tibble(data_path = species_data_file, is_valid_option = TRUE)
+
+      },
+      future.scheduling = Inf, future.seed = TRUE,
+      future.packages = pkg_to_load, future.globals = future_globals)
+  )
 
   ecokit::set_parallel(stop_cluster = TRUE, show_log = FALSE)
   future::plan("sequential", gc = TRUE)
   invisible(gc())
 
+  species_modelling_data <- dplyr::bind_cols(
+    species_modelling_data, dplyr::bind_rows(species_modelling_data2))
 
-  species_modelling_data <- dplyr::mutate(
-    species_modelling_data, data_path = species_modelling_data2)
+  invalid_species <- dplyr::filter(species_modelling_data, !is_valid_option) %>%
+    dplyr::distinct(species_name, cv)
 
-  ecokit::save_as(
-    object = species_modelling_data, out_path = path_species_data)
+  if (nrow(invalid_species) > 0) {
+
+    excluded_species <- unique(invalid_species$species_name)
+    excluded_species_n <- length(excluded_species)
+
+    paste0(
+      "\n!! There are ", excluded_species_n,
+      " invalid species that will be excluded in all model types !!") %>%
+      crayon::blue() %>%
+      ecokit::cat_time(cat_timestamp = FALSE, cat_bold = TRUE, ... = "\n")
+
+    tidyr::nest(invalid_species, cvs = cv) %>%
+      dplyr::mutate(
+        message = purrr::map2_chr(
+          .x = species_name, .y = cvs,
+          .f = ~ {
+            collapsed_cvs <- paste(sort(unlist(.y)), collapse = " & ")
+            paste0(.x, " (cv: ", collapsed_cvs, ")")
+          })) %>%
+      dplyr::pull(message) %>%
+      paste(collapse = "\n  >>>  ") %>%
+      ecokit::cat_time(cat_timestamp = FALSE, level = 1, ... = "\n")
+
+    species_modelling_data <- species_modelling_data %>%
+      dplyr::filter(!species_name %in% excluded_species) %>%
+      dplyr::select(-is_valid_option)
+
+  } else {
+    excluded_species <- NA_character_
+  }
+
+  ecokit::save_as(object = species_modelling_data, out_path = path_species_data)
 
   # # ..................................................................... ###
 
@@ -1326,7 +1368,7 @@ prepare_input_data <- function(
     object = prediction_data_options, out_path = path_prediction_options)
 
   outputs <- list(
-    path_species_data = path_species_data,
+    path_species_data = path_species_data, excluded_species = excluded_species,
     path_prediction_data = path_prediction_data,
     path_prediction_options = path_prediction_options)
   return(invisible(outputs))
@@ -1535,19 +1577,11 @@ fit_predict_internal <- function(
     fitted_model <- ecokit::load_as(model_path)
   } else {
 
-    withCallingHandlers(
-      suppressPackageStartupMessages({
-        fitted_model <- sdm::sdm(
-          formula = model_DT$model_formula, data = model_DT$sdm_data,
-          methods = sdm_method, modelSettings = model_settings)
-      }),
-      warning = function(w) {
-        if (grepl(
-          "was built under R version|Loading required namespace",
-          conditionMessage(w), fixed = TRUE)) {
-          invokeRestart("muffleWarning")
-        }
-      })
+    fitted_model <- quietly(
+      sdm::sdm(
+        formula = model_DT$model_formula, data = model_DT$sdm_data,
+        methods = sdm_method, modelSettings = model_settings)
+    )
 
     # copy model files from temp dir for maxent models
     if (sdm_method == "maxent" && copy_maxent_html) {
@@ -1593,17 +1627,9 @@ fit_predict_internal <- function(
   } else {
 
     ## Extract info from fitted model object -----
-    extracted_data <- withCallingHandlers(
-      suppressPackageStartupMessages(
-        extract_sdm_info(model = fitted_model, cv_fold = cv_fold)
-      ),
-      warning = function(w) {
-        if (grepl(
-          "was built under R version|Loading required namespace",
-          conditionMessage(w), fixed = TRUE)) {
-          invokeRestart("muffleWarning")
-        }
-      })
+    extracted_data <- quietly(
+      extract_sdm_info(model = fitted_model, cv_fold = cv_fold)
+    )
 
     # Making predictions and extract prediction paths -----
     predictor_names <- fitted_model@setting@featureFrame@predictors
@@ -1628,20 +1654,12 @@ fit_predict_internal <- function(
 
             if (isFALSE(tif_okay) || isFALSE(data_okay)) {
 
-              pred <- withCallingHandlers(
-                suppressPackageStartupMessages(
-                  predict(
-                    object = fitted_model,
-                    newdata = dplyr::select(
-                      pred_data_df, tidyselect::all_of(predictor_names)))
-                ),
-                warning = function(w) {
-                  if (grepl(
-                    "was built under R version|Loading required namespace",
-                    conditionMessage(w), fixed = TRUE)) {
-                    invokeRestart("muffleWarning")
-                  }
-                }) %>%
+              pred <- quietly(
+                predict(
+                  object = fitted_model,
+                  newdata = dplyr::select(
+                    pred_data_df, tidyselect::all_of(predictor_names)))
+              ) %>%
                 unlist() %>%
                 unname()
 
@@ -2401,4 +2419,37 @@ check_model_results <- function(model_results) {
   }
 
   invisible(NULL)
+}
+
+# ............................................... ----
+
+# # ========================================================================= #
+# quietly ------
+# # ========================================================================= #
+
+#' Quietly Evaluate an Expression
+#'
+#' Evaluates an R expression while suppressing package startup messages and
+#' selected warnings. Specifically, warnings containing "was built under R
+#' version" or "Loading required namespace" are muffled, allowing for cleaner
+#' output during package loading or function execution.
+#'
+#' @param expr An R expression to be evaluated quietly.
+#'
+#' @return The result of evaluating \code{expr}, with specified messages and
+#' warnings suppressed.
+#' @author Ahmed El-Gabbas
+#' @noRd
+#' @keywords internal
+
+quietly <- function(expr) {
+  withCallingHandlers(
+    suppressPackageStartupMessages(expr),
+    warning = function(w) {
+      if (grepl(
+        "was built under R version|Loading required namespace",
+        conditionMessage(w), fixed = TRUE)) {
+        invokeRestart("muffleWarning")
+      }
+    })
 }

@@ -20,34 +20,32 @@
 #'   For details and supported options, see [sdm::getmethodNames()].
 #' @param model_settings List or NULL. List of model-specific settings. If
 #'   `NULL`, defaults to custom settings defined within the workflow.
-#' @param n_cores Integer. Number of CPU cores for parallel processing. Default
-#'   is 8.
 #' @param model_dir Character. Path to the directory containing model data and
 #'   where outputs and results will be saved. Model data are prepared using the
 #'   [mod_prepare_HPC()] and [mod_prepare_data()] functions.
-#' @param cv_type Character. Cross-validation type. One of `CV_Dist` (default)
-#'   or `CV_Large`. See [mod_CV_fit()] for more details.
-#' @param selected_species Character vector or NULL. Names of species to include
-#'   for modelling.
-#' @param excluded_species Character vector or NULL. Names of species to exclude
-#'   from modelling.
-#' @param env_file Character. Path to a file with environment variable
-#'   definitions for spatial datasets. Default is `".env"`.
 #' @param hab_abb Character. Abbreviation for a single SynHab habitat type.
 #'   Valid values: "0", "1", "2", "3", "4a", "4b", "10", "12a", "12b". See
 #'   [mod_prepare_HPC()] for more details.
+#' @param cv_type Character. Cross-validation type. One of `CV_Dist` (default)
+#'   or `CV_Large`. See [mod_CV_fit()] for more details.
+#' @param n_cores Integer. Number of CPU cores for parallel processing. Default
+#'   is 8.
+#' @param future_max_size Numeric. Maximum allowed total size (in megabytes) of
+#'   global variables identified. See [ecokit::set_parallel()] and
+#'   `future.globals.maxSize` argument of [future::future.options()] for more
+#'   details.
+#' @param selected_species,excluded_species Character vector or NULL. Names of
+#'   species to include or exclude for modelling.
+#' @param env_file Character. Path to a file with environment variable
+#'   definitions for spatial datasets. Default is `".env"`.
 #' @param clamp_pred Logical. Should clamping be applied to sampling efforts and
 #'   river length predictors for prediction? Default is `TRUE`.
-#' @param fix_efforts Character or numeric (length 1). Method or fixed value for
-#'   sampling effort (log-scale) when clamping is enabled (`clamp_pred = TRUE`).
-#'   Valid methods: "identity" (use observed, with no clamping), summary
-#'   statistics for the sampling efforts layer ("median", "mean", "max", or
-#'   "q90" (default; 90th percentile)), or a single numeric value within
-#'   observed range. If using a numeric value, ensure it is within the range of
-#'   sampling effort layer.
-#' @param fix_rivers Character or numeric (length 1). Method or fixed value for
-#'   river length (log-scale) when clamping is enabled (`clamp_pred = TRUE`).
-#'   Valid values are similar to `fix_efforts`.
+#' @param fix_efforts,fix_rivers Character or numeric (length 1). Method or
+#'   fixed value for sampling effort and river length (both at log-scale) when
+#'   clamping is enabled (`clamp_pred = TRUE`). Valid methods: "identity" (use
+#'   observed, with no clamping), summary statistics for the sampling efforts
+#'   layer ("median", "mean", "max", or "q90" (default; 90th percentile)), or a
+#'   single numeric value within observed range.
 #' @param climate_models Character vector or "all". Which climate change models
 #'   to use for future projections. Valid values (case-sensitive): "GFDL-ESM4",
 #'   "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL", or "all"
@@ -62,11 +60,6 @@
 #'   "all" (default), or subset of supported periods.
 #' @param copy_maxent_html Logical. Whether to copy the directory containing
 #'   HTML results from Maxent to the modelling directory. Default is `TRUE`.
-#' @param future_max_size Numeric. Maximum allowed total size (in megabytes) of
-#'   global variables identified. See [set_parallel()] and
-#'   `future.globals.maxSize` argument of [future::future.options()] for more
-#'   details. Default is 2000L for 2 GB. No upper limit is enforced by this
-#'   function.
 #'
 #' @return A tibble summarizing model results for each species, including:
 #'   - Evaluation metrics for training and testing data (AUC, TSS, Kappa, etc.)
@@ -125,12 +118,12 @@
 #' @export
 
 fit_sdm_models <- function(
-    sdm_method = NULL, model_settings = NULL, n_cores = 8L,
-    model_dir = NULL, cv_type = "CV_Dist", selected_species = NULL,
-    excluded_species = NULL, env_file = ".env", hab_abb = NULL,
+    sdm_method = NULL, model_settings = NULL, model_dir = NULL,
+    hab_abb = NULL, cv_type = "CV_Dist", n_cores = 8L, future_max_size = 2000L,
+    selected_species = NULL, excluded_species = NULL, env_file = ".env",
     clamp_pred = TRUE, fix_efforts = "q90", fix_rivers = "q90",
     climate_models = "all", climate_scenarios = "all", climate_periods = "all",
-    copy_maxent_html = TRUE, future_max_size = 2000L) {
+    copy_maxent_html = TRUE) {
 
   .start_time <- lubridate::now(tzone = "CET")
 
@@ -395,28 +388,20 @@ fit_sdm_models <- function(
       "input_data", "output_directory", "path_grid_r", "reduce_sdm_formulas",
       "fit_predict_internal", "extract_sdm_info", "copy_maxent_html")
 
-    model_data2 <- withCallingHandlers(
-      suppressPackageStartupMessages(
-        future.apply::future_lapply(
-          X = seq_len(nrow(model_data)),
-          FUN = function(line_id) {
-            fit_predict_internal(
-              line_id = line_id, sdm_method = sdm_method,
-              model_data = model_data, model_settings = model_settings,
-              model_results_dir = model_results_dir,
-              input_data = input_data, output_directory = output_directory,
-              path_grid_r = path_grid_r, copy_maxent_html = copy_maxent_html)
-          },
-          future.scheduling = Inf, future.seed = TRUE,
-          future.packages = pkgs_to_load, future.globals = future_globals)
-      ),
-      warning = function(w) {
-        if (grepl(
-          "was built under R version|Loading required namespace",
-          conditionMessage(w), fixed = TRUE)) {
-          invokeRestart("muffleWarning")
-        }
-      })
+    model_data2 <- quietly(
+      future.apply::future_lapply(
+        X = seq_len(nrow(model_data)),
+        FUN = function(line_id) {
+          fit_predict_internal(
+            line_id = line_id, sdm_method = sdm_method,
+            model_data = model_data, model_settings = model_settings,
+            model_results_dir = model_results_dir,
+            input_data = input_data, output_directory = output_directory,
+            path_grid_r = path_grid_r, copy_maxent_html = copy_maxent_html)
+        },
+        future.scheduling = Inf, future.seed = TRUE,
+        future.packages = pkgs_to_load, future.globals = future_globals)
+    )
 
     ecokit::set_parallel(level = 1L, stop_cluster = TRUE, cat_timestamp = FALSE)
     future::plan("sequential", gc = TRUE)
@@ -548,24 +533,17 @@ fit_sdm_models <- function(
     "qs2", "tools", "purrr", "tidyr", "fs")
 
   ecokit::cat_time("Calculate summary predictions in parallel", level = 1L)
-  pred_summary <- withCallingHandlers(
-    suppressPackageStartupMessages(
-      future.apply::future_lapply(
-        X = seq_len(nrow(model_summary)),
-        FUN = function(line_id) {
-          summarize_predictions(line_id, model_summary)
-        },
-        future.scheduling = Inf, future.seed = TRUE,
-        future.packages = pkgs_to_load,
-        future.globals = c("model_summary", "summarize_predictions"))
-    ),
-    warning = function(w) {
-      if (grepl(
-        "was built under R version|Loading required namespace",
-        conditionMessage(w), fixed = TRUE)) {
-        invokeRestart("muffleWarning")
-      }
-    })
+
+  pred_summary <- quietly(
+    future.apply::future_lapply(
+      X = seq_len(nrow(model_summary)),
+      FUN = function(line_id) {
+        summarize_predictions(line_id, model_summary)
+      },
+      future.scheduling = Inf, future.seed = TRUE,
+      future.packages = pkgs_to_load,
+      future.globals = c("model_summary", "summarize_predictions"))
+  )
 
   ecokit::set_parallel(level = 1L, stop_cluster = TRUE, cat_timestamp = FALSE)
   future::plan("sequential", gc = TRUE)

@@ -7,21 +7,21 @@
 fit_sdm_models(
   sdm_method = NULL,
   model_settings = NULL,
-  n_cores = 8L,
   model_dir = NULL,
+  hab_abb = NULL,
   cv_type = "CV_Dist",
+  n_cores = 8L,
+  future_max_size = 2000L,
   selected_species = NULL,
   excluded_species = NULL,
   env_file = ".env",
-  hab_abb = NULL,
   clamp_pred = TRUE,
   fix_efforts = "q90",
   fix_rivers = "q90",
   climate_models = "all",
   climate_scenarios = "all",
   climate_periods = "all",
-  copy_maxent_html = TRUE,
-  future_max_size = 2000L
+  copy_maxent_html = TRUE
 )
 }
 \arguments{
@@ -34,43 +34,40 @@ For details and supported options, see \code{\link[sdm:add]{sdm::getmethodNames(
 \item{model_settings}{List or NULL. List of model-specific settings. If
 \code{NULL}, defaults to custom settings defined within the workflow.}
 
-\item{n_cores}{Integer. Number of CPU cores for parallel processing. Default
-is 8.}
-
 \item{model_dir}{Character. Path to the directory containing model data and
 where outputs and results will be saved. Model data are prepared using the
 \code{\link[=mod_prepare_HPC]{mod_prepare_HPC()}} and \code{\link[=mod_prepare_data]{mod_prepare_data()}} functions.}
-
-\item{cv_type}{Character. Cross-validation type. One of \code{CV_Dist} (default)
-or \code{CV_Large}. See \code{\link[=mod_CV_fit]{mod_CV_fit()}} for more details.}
-
-\item{selected_species}{Character vector or NULL. Names of species to include
-for modelling.}
-
-\item{excluded_species}{Character vector or NULL. Names of species to exclude
-from modelling.}
-
-\item{env_file}{Character. Path to a file with environment variable
-definitions for spatial datasets. Default is \code{".env"}.}
 
 \item{hab_abb}{Character. Abbreviation for a single SynHab habitat type.
 Valid values: "0", "1", "2", "3", "4a", "4b", "10", "12a", "12b". See
 \code{\link[=mod_prepare_HPC]{mod_prepare_HPC()}} for more details.}
 
+\item{cv_type}{Character. Cross-validation type. One of \code{CV_Dist} (default)
+or \code{CV_Large}. See \code{\link[=mod_CV_fit]{mod_CV_fit()}} for more details.}
+
+\item{n_cores}{Integer. Number of CPU cores for parallel processing. Default
+is 8.}
+
+\item{future_max_size}{Numeric. Maximum allowed total size (in megabytes) of
+global variables identified. See \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} and
+\code{future.globals.maxSize} argument of \code{\link[future:zzz-future.options]{future::future.options()}} for more
+details.}
+
+\item{selected_species, excluded_species}{Character vector or NULL. Names of
+species to include or exclude for modelling.}
+
+\item{env_file}{Character. Path to a file with environment variable
+definitions for spatial datasets. Default is \code{".env"}.}
+
 \item{clamp_pred}{Logical. Should clamping be applied to sampling efforts and
 river length predictors for prediction? Default is \code{TRUE}.}
 
-\item{fix_efforts}{Character or numeric (length 1). Method or fixed value for
-sampling effort (log-scale) when clamping is enabled (\code{clamp_pred = TRUE}).
-Valid methods: "identity" (use observed, with no clamping), summary
-statistics for the sampling efforts layer ("median", "mean", "max", or
-"q90" (default; 90th percentile)), or a single numeric value within
-observed range. If using a numeric value, ensure it is within the range of
-sampling effort layer.}
-
-\item{fix_rivers}{Character or numeric (length 1). Method or fixed value for
-river length (log-scale) when clamping is enabled (\code{clamp_pred = TRUE}).
-Valid values are similar to \code{fix_efforts}.}
+\item{fix_efforts, fix_rivers}{Character or numeric (length 1). Method or
+fixed value for sampling effort and river length (both at log-scale) when
+clamping is enabled (\code{clamp_pred = TRUE}). Valid methods: "identity" (use
+observed, with no clamping), summary statistics for the sampling efforts
+layer ("median", "mean", "max", or "q90" (default; 90th percentile)), or a
+single numeric value within observed range.}
 
 \item{climate_models}{Character vector or "all". Which climate change models
 to use for future projections. Valid values (case-sensitive): "GFDL-ESM4",
@@ -89,12 +86,6 @@ prediction. Valid values are "2011-2040", "2041-2070", "2071-2100", or
 
 \item{copy_maxent_html}{Logical. Whether to copy the directory containing
 HTML results from Maxent to the modelling directory. Default is \code{TRUE}.}
-
-\item{future_max_size}{Numeric. Maximum allowed total size (in megabytes) of
-global variables identified. See \code{\link[=set_parallel]{set_parallel()}} and
-\code{future.globals.maxSize} argument of \code{\link[future:zzz-future.options]{future::future.options()}} for more
-details. Default is 2000L for 2 GB. No upper limit is enforced by this
-function.}
 }
 \value{
 A tibble summarizing model results for each species, including:

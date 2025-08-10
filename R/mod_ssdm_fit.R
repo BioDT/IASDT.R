@@ -129,9 +129,9 @@ fit_sdm_models <- function(
 
   summary_data <- packages <- path_grid <- mod_method <- cv_fold <- preds <-
     pred_mean <- pred_w_mean <- species_name <- method_is_glm <- output_path <-
-    evaluation_testing <- auc_test <- valid_species <- data_path  <-
-    summary_prediction_path <- climate_name <- pred_mean_okay <-
-    pred_w_mean_okay <- richness_map <- pred_type <- cv <- preds_summ <- NULL
+    evaluation_testing <- auc_test <- summary_prediction_path <-
+    climate_name <- pred_mean_okay <- pred_w_mean_okay <- richness_map <-
+    pred_type <- cv <- preds_summ <- NULL
 
   stringr::str_glue(
     "Fitting models using `{sdm_method}` method and `{cv_type}` ",
@@ -421,7 +421,9 @@ fit_sdm_models <- function(
 
     # Check model results -----
     ecokit::cat_time("Check model results", level = 1L)
-    check_model_results(model_results = model_results, n_cores = n_cores)
+    check_model_results(
+      model_results = model_results, n_cores = n_cores,
+      future_max_size = future_max_size)
 
   }
 

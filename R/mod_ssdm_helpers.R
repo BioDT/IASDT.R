@@ -1888,10 +1888,10 @@ summarize_predictions <- function(
 #' @noRd
 #' @keywords internal
 
-check_model_results <- function(model_results, n_cores) {
+check_model_results <- function(model_results, n_cores, future_max_size) {
 
   climate_name <- cv_fold <- x_value <- na_count <- prediction <- cor_test <-
-    auc_test <- species_name <- . <- variable <- prediction_data <-
+    auc_test <- species_name <- . <- variable <- prediction_data <- times <-
     response_curves <- evaluation_training <- evaluation_testing <-
     variable_importance <- pred_okay <- output_path <- sdm_method <- NULL
 
@@ -2249,8 +2249,9 @@ check_model_results <- function(model_results, n_cores) {
     ecokit::cat_time(
       "Affected climate options: ", cat_timestamp = FALSE, cat_bold = TRUE)
     check_preds %>%
-      dplyr::count(climate_name) %>%
-      dplyr::mutate(message = paste0(climate_name, " (", n, ")")) %>%
+      dplyr::group_by(climate_name) %>%
+      dplyr::tally(name = "times") %>%
+      dplyr::mutate(message = paste0(climate_name, " (", times, ")")) %>%
       dplyr::pull(message) %>%
       paste(collapse = "\n  >>>  ") %>%
       ecokit::cat_time(cat_timestamp = FALSE, level = 1L, ... = "\n")

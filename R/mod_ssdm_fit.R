@@ -127,8 +127,12 @@ fit_sdm_models <- function(
 
   .start_time <- lubridate::now(tzone = "CET")
 
-  summary_data <- . <- species <- packages <- path_grid <- mod_method <- maps <-
-    cv_fold <- pred_dir <- species_name <- data_okay <- tif_okay <- NULL
+  summary_data <- packages <- path_grid <- mod_method <- cv_fold <-
+    pred_mean <- pred_w_mean <- species_name <- method_is_glm <- output_path <-
+    evaluation_testing <- auc_test <- valid_species <- data_path  <-
+    summary_prediction_path <- climate_name <- pred_mean_okay <-
+    pred_w_mean_okay <- richness_map <- pred_type <- cv <-
+    preds_summ <- mean_okay <- mean_type <- preds <- NULL
 
   stringr::str_glue(
     "Fitting models using `{sdm_method}` method and `{cv_type}` ",
@@ -261,20 +265,21 @@ fit_sdm_models <- function(
   }
 
   output_directory <- fs::path(model_dir, "sdm_models", sdm_method)
-  model_results_dir <- fs::path(output_directory, "model_results")
-  fs::dir_create(model_results_dir)
+  fs::dir_create(output_directory)
 
   model_results_name <- paste0(sdm_method, "_results")
   model_results_path <- fs::path(
     output_directory, paste0(model_results_name, ".RData"))
 
-  model_summary_name <- paste0(sdm_method, "_summary")
   model_summary_path <- fs::path(
-    output_directory, paste0(model_summary_name, ".RData"))
+    output_directory, paste0(sdm_method, "_summary.qs2"))
+  model_richness_path <- fs::path(
+    output_directory, paste0(sdm_method, "_species_richness.qs2"))
 
-  if (ecokit::check_data(model_summary_path, warning = FALSE)) {
-    ecokit::cat_time("Loading saved model results")
-    return(ecokit::load_as(model_summary_path))
+  if (ecokit::check_data(model_summary_path, warning = FALSE) &&
+      ecokit::check_data(model_richness_path, warning = FALSE)) {
+    ecokit::cat_time("Models and summary data already exist")
+    return(invisible(NULL))
   }
 
   # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -353,16 +358,6 @@ fit_sdm_models <- function(
       model_data, method_is_glm = (sdm_method == "glm")) %>%
       tidyr::expand_grid(cv = cv_folds)
 
-    # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-    # Create prediction paths -------
-
-    ecokit::cat_time("Create prediction paths")
-    paste0(
-      "pred_",
-      ecokit::load_as(input_data$path_prediction_data)$climate_name) %>%
-      fs::path(output_directory, .) %>%
-      fs::dir_create()
     invisible(gc())
 
     # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -387,7 +382,7 @@ fit_sdm_models <- function(
       "terra", "stringr", "ecokit", "tibble", "dplyr", "sf",
       "tidyr", "qs2", "fs", "sdm", "purrr", pkg_to_load)
     future_globals <- c(
-      "sdm_method", "model_data", "model_settings", "model_results_dir",
+      "sdm_method", "model_data", "model_settings",
       "input_data", "output_directory", "path_grid_r", "reduce_sdm_formulas",
       "fit_predict_internal", "extract_sdm_info", "copy_maxent_html", "quietly")
 
@@ -398,7 +393,6 @@ fit_sdm_models <- function(
           fit_predict_internal(
             line_id = line_id, sdm_method = sdm_method,
             model_data = model_data, model_settings = model_settings,
-            model_results_dir = model_results_dir,
             input_data = input_data, output_directory = output_directory,
             path_grid_r = path_grid_r, copy_maxent_html = copy_maxent_html)
         },
@@ -415,7 +409,10 @@ fit_sdm_models <- function(
 
     ecokit::cat_time("Merge outputs into a single tibble", level = 1L)
     model_results <- dplyr::mutate(model_data, data2 = model_data2) %>%
-      tidyr::unnest("data2")
+      tidyr::unnest("data2") %>%
+      dplyr::select(
+        species_name, sdm_method, cv_fold = cv, tidyselect::everything(),
+        -method_is_glm)
 
     ecokit::save_as(
       object = model_results, object_name = model_results_name,
@@ -436,139 +433,192 @@ fit_sdm_models <- function(
   ecokit::cat_time(
     "Summarize evaluation, response curves, and variable importance")
 
-  model_summary <- model_results %>%
-    dplyr::select(-tidyselect::all_of(c("model_formula", "sdm_data"))) %>%
-    tidyr::nest(summary_data = -"species_name") %>%
-    dplyr::mutate(
-      summary1 = purrr::map(
-        .x = summary_data,
-        .f = ~ {
+  if (ecokit::check_data(model_summary_path, warning = FALSE)) {
 
-          ## Evaluation - training ------
+    ecokit::cat_time("Loading summary data", level = 1)
+    model_summary <- ecokit::load_as(model_summary_path)
 
-          evaluation_training <- dplyr::bind_rows(.x$evaluation_training) %>%
-            dplyr::mutate(cv_fold = as.character(cv_fold))
-          evaluation_training <- evaluation_training %>%
-            dplyr::select(-cv_fold) %>%
-            dplyr::group_by(species_name, sdm_method) %>%
-            dplyr::summarize_all(mean, na.rm = TRUE) %>%
-            dplyr::mutate(cv_fold = "mean") %>%
-            dplyr::ungroup() %>%
-            dplyr::bind_rows(evaluation_training, .) %>%
-            dplyr::arrange(cv_fold)
-
-          # |||||||||||||||||||||||||||||||||||||||||||
-
-          # Evaluation - testing ------
-
-          evaluation_testing <- dplyr::bind_rows(.x$evaluation_testing) %>%
-            dplyr::mutate(cv_fold = as.character(cv_fold))
-          evaluation_testing <- evaluation_testing %>%
-            dplyr::select(-cv_fold) %>%
-            dplyr::group_by(species_name, sdm_method) %>%
-            dplyr::summarize_all(mean, na.rm = TRUE) %>%
-            dplyr::mutate(cv_fold = "mean") %>%
-            dplyr::ungroup() %>%
-            dplyr::bind_rows(evaluation_testing, .) %>%
-            dplyr::arrange(cv_fold)
-
-          # |||||||||||||||||||||||||||||||||||||||||||
-
-          # Variable importance ------
-
-          variable_importance <- dplyr::bind_rows(.x$variable_importance) %>%
-            dplyr::mutate(cv_fold = as.character(cv_fold))
-          variable_importance <- variable_importance %>%
-            dplyr::select(-cv_fold) %>%
-            dplyr::group_by(species_name, sdm_method, variable) %>%
-            dplyr::summarize_all(mean, na.rm = TRUE) %>%
-            dplyr::mutate(cv_fold = "mean") %>%
-            dplyr::ungroup() %>%
-            dplyr::bind_rows(variable_importance, .) %>%
-            dplyr::arrange(cv_fold, variable)
-
-          # |||||||||||||||||||||||||||||||||||||||||||
-
-          # Response curves -------
-          response_curves <- dplyr::bind_rows(.x$response_curves) %>%
-            dplyr::bind_rows() %>%
-            dplyr::mutate(cv_fold = as.character(cv_fold))
-          response_curves <- response_curves %>%
-            dplyr::select(-cv_fold) %>%
-            dplyr::group_by(species_name, sdm_method, variable, x_value) %>%
-            dplyr::summarize_all(mean, na.rm = TRUE) %>%
-            dplyr::mutate(cv_fold = "mean") %>%
-            dplyr::ungroup() %>%
-            dplyr::bind_rows(response_curves, .) %>%
-            dplyr::arrange(cv_fold, variable, x_value)
-
-          # |||||||||||||||||||||||||||||||||||||||||||
-
-          # Merge data ---------
-          tibble::tibble(
-            evaluation_training = list(evaluation_training),
-            evaluation_testing = list(evaluation_testing),
-            variable_importance = list(variable_importance),
-            response_curves = list(response_curves))
-        })
-    ) %>%
-    tidyr::unnest("summary1")
-  invisible(gc())
-
-  # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-  ### Summarizing predictions in parallel -----
-
-  ecokit::cat_time("Summarizing predictions in parallel")
-
-  if (n_cores == 1L) {
-    future::plan("sequential", gc = TRUE)
   } else {
-    ecokit::set_parallel(
-      n_cores = min(n_cores, nrow(model_summary)),
-      future_max_size = future_max_size, level = 1L, cat_timestamp = FALSE)
-    withr::defer(future::plan("sequential", gc = TRUE))
+
+    model_summary <- model_results %>%
+      dplyr::select(species_name, sdm_method, cv_fold, output_path) %>%
+      dplyr::mutate(
+        dt = purrr::map(
+          .x = output_path,
+          .f = ~ {
+            ecokit::load_as(.x) %>%
+              magrittr::extract(
+                !names(.) %in% c("fitted_model", "prediction_data")) %>%
+              lapply(list) %>%
+              tibble::as_tibble()
+          })
+      ) %>%
+      tidyr::unnest("dt") %>%
+      tidyr::nest(summary_data = -"species_name") %>%
+      dplyr::mutate(
+        summary1 = purrr::map(
+          .x = summary_data,
+          .f = ~ {
+
+            ## Evaluation - training ------
+
+            evaluation_training <- dplyr::bind_rows(.x$evaluation_training) %>%
+              dplyr::mutate(cv_fold = as.character(cv_fold))
+            evaluation_training <- evaluation_training %>%
+              dplyr::select(-cv_fold) %>%
+              dplyr::group_by(species_name, sdm_method) %>%
+              dplyr::summarize_all(mean, na.rm = TRUE) %>%
+              dplyr::mutate(cv_fold = "mean") %>%
+              dplyr::ungroup() %>%
+              dplyr::bind_rows(evaluation_training, .) %>%
+              dplyr::arrange(cv_fold)
+
+            # |||||||||||||||||||||||||||||||||||||||||||
+
+            # Evaluation - testing ------
+
+            evaluation_testing <- dplyr::bind_rows(.x$evaluation_testing) %>%
+              dplyr::mutate(cv_fold = as.character(cv_fold))
+            evaluation_testing <- evaluation_testing %>%
+              dplyr::select(-cv_fold) %>%
+              dplyr::group_by(species_name, sdm_method) %>%
+              dplyr::summarize_all(mean, na.rm = TRUE) %>%
+              dplyr::mutate(cv_fold = "mean") %>%
+              dplyr::ungroup() %>%
+              dplyr::bind_rows(evaluation_testing, .) %>%
+              dplyr::arrange(cv_fold)
+
+            # |||||||||||||||||||||||||||||||||||||||||||
+
+            # Variable importance ------
+
+            variable_importance <- dplyr::bind_rows(.x$variable_importance) %>%
+              dplyr::mutate(cv_fold = as.character(cv_fold))
+            variable_importance <- variable_importance %>%
+              dplyr::select(-cv_fold) %>%
+              dplyr::group_by(species_name, sdm_method, variable) %>%
+              dplyr::summarize_all(mean, na.rm = TRUE) %>%
+              dplyr::mutate(cv_fold = "mean") %>%
+              dplyr::ungroup() %>%
+              dplyr::bind_rows(variable_importance, .) %>%
+              dplyr::arrange(cv_fold, variable)
+
+            # |||||||||||||||||||||||||||||||||||||||||||
+
+            # Response curves -------
+            response_curves <- dplyr::bind_rows(.x$response_curves) %>%
+              dplyr::bind_rows() %>%
+              dplyr::mutate(cv_fold = as.character(cv_fold))
+            response_curves <- response_curves %>%
+              dplyr::select(-cv_fold) %>%
+              dplyr::group_by(species_name, sdm_method, variable, x_value) %>%
+              dplyr::summarize_all(mean, na.rm = TRUE) %>%
+              dplyr::mutate(cv_fold = "mean") %>%
+              dplyr::ungroup() %>%
+              dplyr::bind_rows(response_curves, .) %>%
+              dplyr::arrange(cv_fold, variable, x_value)
+
+            # |||||||||||||||||||||||||||||||||||||||||||
+
+            # Merge data ---------
+            tibble::tibble(
+              evaluation_training = list(evaluation_training),
+              evaluation_testing = list(evaluation_testing),
+              variable_importance = list(variable_importance),
+              response_curves = list(response_curves))
+          })
+      ) %>%
+      tidyr::unnest("summary1") %>%
+      dplyr::select(-"summary_data")
+
+    invisible(gc())
+
+    # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+    ### Summarizing predictions in parallel -----
+
+    ecokit::cat_time("Summarizing predictions in parallel")
+
+    dt_auc_test <- model_summary %>%
+      dplyr::mutate(auc_test = purrr::map(evaluation_testing, ~.x$auc_test)) %>%
+      dplyr::select(species_name, auc_test)
+    model_pred_results <- model_results %>%
+      dplyr::select(-valid_species, -data_path, -cv_fold) %>%
+      tidyr::nest(pred_paths = output_path) %>%
+      dplyr::left_join(dt_auc_test, by = "species_name")
+
+    if (n_cores == 1L) {
+      future::plan("sequential", gc = TRUE)
+    } else {
+      ecokit::set_parallel(
+        n_cores = min(n_cores, nrow(model_pred_results)),
+        future_max_size = future_max_size, level = 1L, cat_timestamp = FALSE)
+      withr::defer(future::plan("sequential", gc = TRUE))
+    }
+
+    pkgs_to_load <- c(
+      "terra", "stringr", "ecokit", "tibble", "dplyr",
+      "qs2", "tools", "purrr", "tidyr", "fs")
+
+    ecokit::cat_time("Calculate summary predictions in parallel", level = 1L)
+
+    pred_summary <- quietly(
+      future.apply::future_lapply(
+        X = seq_len(nrow(model_pred_results)),
+        FUN = function(line_id) {
+          summarize_predictions(
+            line_id, model_pred_results, output_directory)
+        },
+        future.scheduling = Inf, future.seed = TRUE,
+        future.packages = pkgs_to_load,
+        future.globals = c(
+          "model_pred_results", "summarize_predictions",
+          "output_directory", "quietly")))
+
+    ecokit::set_parallel(level = 1L, stop_cluster = TRUE, cat_timestamp = FALSE)
+    future::plan("sequential", gc = TRUE)
+
+    # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+    # Prepare and save summary data ----------
+    ecokit::cat_time("Prepare and save summary data", level = 1L)
+    model_summary <- dplyr::left_join(
+      model_summary, dplyr::bind_rows(pred_summary), by = "species_name")
+    ecokit::save_as(object = model_summary, out_path = model_summary_path)
+
+    invisible(gc())
+
   }
 
-  pkgs_to_load <- c(
-    "terra", "stringr", "ecokit", "tibble", "dplyr",
-    "qs2", "tools", "purrr", "tidyr", "fs")
-
-  ecokit::cat_time("Calculate summary predictions in parallel", level = 1L)
-
-  pred_summary <- quietly(
-    future.apply::future_lapply(
-      X = seq_len(nrow(model_summary)),
-      FUN = function(line_id) {
-        summarize_predictions(line_id, model_summary)
-      },
-      future.scheduling = Inf, future.seed = TRUE,
-      future.packages = pkgs_to_load,
-      future.globals = c("model_summary", "summarize_predictions", "quietly"))
-  )
-
-  ecokit::set_parallel(level = 1L, stop_cluster = TRUE, cat_timestamp = FALSE)
-  future::plan("sequential", gc = TRUE)
-  invisible(gc())
-
   # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  # Prepare and save summary data ----------
-  ecokit::cat_time("Prepare and save summary data", level = 1L)
-  model_summary <- model_summary %>%
-    dplyr::mutate(prediction_summary = pred_summary) %>%
-    dplyr::select(-summary_data)
-  ecokit::save_as(
-    object = model_summary, object_name = model_summary_name,
-    out_path = model_summary_path)
-
+  # Check for issues in summary data ------
   ecokit::cat_time("Check for issues in summary data", level = 1L)
 
-  summ_issues <- dplyr::bind_rows(model_summary$prediction_summary) %>%
-    dplyr::filter(!tif_okay | !data_okay)
+  summ_issues <- model_summary %>%
+    dplyr::select(species_name, summary_prediction_path) %>%
+    dplyr::mutate(
+      preds_summ = purrr::map(
+        .x = summary_prediction_path, .f = ecokit::load_as)) %>%
+    tidyr::unnest(preds_summ) %>%
+    dplyr::select(climate_name, pred_mean, pred_w_mean) %>%
+    dplyr::mutate(
+      pred_mean_okay = purrr::map_lgl(
+        pred_mean, inherits, "PackedSpatRaster"),
+      pred_w_mean_okay = purrr::map_lgl(
+        pred_w_mean, inherits, "PackedSpatRaster")) %>%
+    dplyr::filter(!pred_mean_okay | !pred_w_mean_okay) %>%
+    dplyr::group_by(climate_name, pred_mean_okay, pred_w_mean_okay) %>%
+    dplyr::tally(name = "n_species") %>%
+    tidyr::pivot_longer(
+      cols = c("pred_mean_okay", "pred_w_mean_okay"),
+      names_to = "mean_type", values_to = "mean_okay") %>%
+    dplyr::filter(mean_okay) %>%
+    dplyr::mutate(
+      mean_type = dplyr::if_else(
+        mean_type == "pred_mean_okay", "mean", "w_mean"))
 
   if (nrow(summ_issues) > 0L) {
-
     ecokit::cat_sep(
       line_char_rep = 60L, sep_lines_before = 1L,
       line_char = "=", cat_bold = TRUE, cat_red = TRUE)
@@ -577,41 +627,33 @@ fit_sdm_models <- function(
       crayon::blue() %>%
       ecokit::cat_time(cat_bold = TRUE, cat_timestamp = FALSE)
 
-    dplyr::count(summ_issues, species_name, cv_fold) %>%
-      dplyr::select(species_name, cv_fold) %>%
-      tidyr::nest(species = -cv_fold) %>%
+    summ_issues %>%
       dplyr::mutate(
-        message = purrr::map2_chr(
-          .x = species, .y = cv_fold,
-          .f = ~ {
-            n_species <- length(unlist(.x))
-            sp_list <- paste(unlist(.x), collapse = "; ") %>%
-              stringr::str_wrap(width = 60L) %>%
-              stringr::str_split(pattern = "\n", simplify = TRUE) %>%
-              paste0("  >>>  ", .) %>%
-              paste(collapse = "\n")
-            paste0(crayon::bold(.y), ": ", n_species, " species\n", sp_list)
-          })) %>%
+        message = paste0(mean_type, " (", n_species, " species)")) %>%
+      dplyr::select(climate_name, message) %>%
+      tidyr::nest(message = message, .by = "climate_name") %>%
+      dplyr::mutate(
+        message = purrr::map_chr(
+          message, ~ paste(unlist(.x), collapse = "; ")),
+        message = paste0(crayon::bold(climate_name), ": ", message)) %>%
       dplyr::pull(message) %>%
-      paste(collapse = "\n") %>%
-      ecokit::cat_time(cat_timestamp = FALSE)
+      paste(collapse = "\n  >>>  ") %>%
+      ecokit::cat_time(level = 1, cat_timestamp = FALSE)
 
     ecokit::cat_sep(
       line_char_rep = 60L, sep_lines_before = 1L, sep_lines_after = 2L,
       line_char = "=", cat_bold = TRUE, cat_red = TRUE)
-
   }
-  invisible(gc())
 
   # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  # Calculate species richness at each climate option
+  # Calculate species richness at each climate option -------
 
   ecokit::cat_time("Calculate species richness at each climate option")
 
+
   if (nrow(summ_issues) > 0L) {
-    sr_options <- setdiff(
-      c("mean", "weighted_mean"), unique(summ_issues$cv_fold))
+    sr_options <- setdiff(c("mean", "w_mean"), unique(summ_issues$mean_type))
     if (length(sr_options) == 1L) {
       ecokit::cat_time(
         paste0(
@@ -625,38 +667,39 @@ fit_sdm_models <- function(
         level = 1L, cat_timestamp = FALSE)
     }
   } else {
-    sr_options <- c("mean", "weighted_mean")
+    sr_options <- c("mean", "w_mean")
   }
 
+
   if (length(sr_options) > 0L) {
-    cols_to_remove <- c("data_okay", "tif_path", "tif_okay", "species_name")
-    richness_summary <- dplyr::bind_rows(model_summary$prediction_summary) %>%
-      dplyr::filter(cv_fold %in% sr_options) %>%
-      dplyr::select(-tidyselect::all_of(cols_to_remove)) %>%
-      tidyr::nest(.key = "maps", .by = -"data_path") %>%
+
+    exclude_cols <- c(
+      "pred_sd", "pred_cov", "time_period",
+      "climate_model", "climate_scenario")
+
+    species_richness_r <- model_summary$summary_prediction_path %>%
+      purrr::map_dfr(ecokit::load_as) %>%
+      dplyr::select(-tidyselect::all_of(exclude_cols)) %>%
+      tidyr::pivot_longer(
+        cols = c("pred_mean", "pred_w_mean"), names_to = "pred_type",
+        values_to = "pred_value") %>%
+      dplyr::filter(pred_type %in% paste0("pred_", sr_options)) %>%
+      tidyr::nest(
+        preds = "pred_value", .by = c("climate_name", "pred_type")) %>%
       dplyr::mutate(
-        richness_map = purrr::pmap(
-          .l = list(maps, pred_dir, cv_fold),
-          .f = function(maps, pred_dir, cv_fold) {
-
-            richness_name <- paste0(sdm_method, "_species_richness_", cv_fold)
-            data_path <- fs::path(pred_dir, paste0(richness_name, ".RData"))
-            tiff_path <- fs::path(pred_dir, paste0(richness_name, ".tif"))
-
-            richness <- unlist(maps) %>%
-              purrr::map(ecokit::load_as, unwrap_r = TRUE) %>%
+        richness_map = purrr::map(
+          .x = preds,
+          .f = ~{
+            purrr::map(unlist(.x), terra::unwrap) %>%
               terra::rast() %>%
-              terra::app(sum, na.rm = TRUE)
+              terra::app(sum, na.rm = TRUE) %>%
+              terra::wrap()
+          })) %>%
+      dplyr::select(-preds) %>%
+      tidyr::pivot_wider(names_from = "pred_type", values_from = richness_map)
 
-            terra::writeRaster(
-              x = richness, overwrite = TRUE, filename = tiff_path,
-              gdal = c("COMPRESS=DEFLATE", "TILED=YES"))
-            ecokit::save_as(
-              object = terra::wrap(richness), object_name = richness_name,
-              out_path = data_path)
-          }))
+    ecokit::save_as(object = species_richness_r, out_path = model_richness_path)
 
-    rm(richness_summary)
   }
 
   # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -665,6 +708,6 @@ fit_sdm_models <- function(
     init_time = .start_time, cat_bold = TRUE, cat_red = TRUE,
     prefix = paste0("\nProcessing ", sdm_method, " models took "))
 
-  model_summary
+  return(invisible(NULL))
 
 }

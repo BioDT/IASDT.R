@@ -1542,8 +1542,6 @@ reduce_sdm_formulas <- function(obj) {
 #'   and cross-validation folds.
 #' @param model_settings List. Model-specific settings passed to the SDM fitting
 #'   function.
-#' @param model_results_dir Character. Path to the directory for saving fitted
-#'   model outputs.
 #' @param input_data List. Contains paths and objects for prediction and input.
 #' @param output_directory Character. Path where prediction outputs are stored.
 #' @param path_grid_r Character. Path to the reference raster grid for spatial
@@ -1567,169 +1565,128 @@ reduce_sdm_formulas <- function(obj) {
 #' @keywords internal
 
 fit_predict_internal <- function(
-    line_id, sdm_method, model_data, model_settings, model_results_dir,
+    line_id, sdm_method, model_data, model_settings,
     input_data, output_directory, path_grid_r, copy_maxent_html = TRUE) {
 
-  pred_data <- climate_name <- method_is_glm <- NULL
+  pred_data <- climate_name <- method_is_glm <- cv <- NULL
 
   species_name <- model_data$species_name[[line_id]]
   cv_fold <- model_data$cv[[line_id]]
   model_DT <- ecokit::load_as(model_data$data_path[[line_id]]) %>%
     dplyr::filter(method_is_glm == (sdm_method == "glm"), cv == cv_fold)
   base_model_name <- paste0(sdm_method, "_", species_name, "_cv", cv_fold)
-  
+
   if (nrow(model_DT) != 1) {
     ecokit::stop_ctx("Modelling data should be only one row")
   }
-  
+
+  output_path <- fs::path(output_directory, paste0(base_model_name, ".qs2"))
+  if (ecokit::check_data(output_path, warning = FALSE)) {
+    return(tibble::tibble(sdm_method = sdm_method, output_path = output_path))
+  }
+
   # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Model fit -----
 
-  model_name <- paste0(base_model_name, "_model")
-  model_path <- fs::path(model_results_dir, paste0(model_name, ".RData"))
+  fitted_model <- quietly(
+    sdm::sdm(
+      formula = model_DT$model_formula[[1]], data = model_DT$sdm_data[[1]],
+      methods = sdm_method, modelSettings = model_settings))
 
-  if (ecokit::check_data(model_path, warning = FALSE)) {
-    fitted_model <- ecokit::load_as(model_path)
-  } else {
+  # copy model files from temp dir for maxent models
+  if (sdm_method == "maxent") {
 
-    fitted_model <- quietly(
-      sdm::sdm(
-        formula = model_DT$model_formula[[1]], data = model_DT$sdm_data[[1]],
-        methods = sdm_method, modelSettings = model_settings)
-    )
+    maxent_html <- ecokit::normalize_path(
+      fitted_model@models[[1L]][[1L]][[1L]]@object@html)
 
-    # copy model files from temp dir for maxent models
-    if (sdm_method == "maxent") {
+    if (fs::file_exists(maxent_html) && copy_maxent_html) {
+      out_maxent_dir <- fs::path(
+        fs::path_dir(output_directory), "maxent_html", base_model_name)
+      if (fs::dir_exists(out_maxent_dir))  fs::dir_delete(out_maxent_dir)
+      fs::dir_create(out_maxent_dir)
+      fs::dir_copy(
+        fs::path_dir(maxent_html), out_maxent_dir, overwrite = TRUE)
 
-      maxent_html <- ecokit::normalize_path(
-        fitted_model@models[[1L]][[1L]][[1L]]@object@html)
+      # delete some not-needed files to save space
+      out_maxent_dir %>%
+        fs::path(c("presence", "absence", "species_explain.bat")) %>%
+        fs::file_delete()
 
-      if (fs::file_exists(maxent_html) && copy_maxent_html) {
-        out_maxent_dir <- fs::path(
-          fs::path_dir(model_results_dir), "maxent_html", base_model_name)
-        if (fs::dir_exists(out_maxent_dir))  fs::dir_delete(out_maxent_dir)
-        fs::dir_create(out_maxent_dir)
-        fs::dir_copy(
-          fs::path_dir(maxent_html), out_maxent_dir, overwrite = TRUE)
-
-        # delete some not-needed files to save space
-        out_maxent_dir %>%
-          fs::path(c("presence", "absence", "species_explain.bat")) %>%
-          fs::file_delete()
-
-        # Overwrite the new HTML file path in the model object
-        fitted_model@models[[1L]][[1L]][[1L]]@object@html <-
-          fs::path(out_maxent_dir, "maxent.html")
-      }
-
-      # clean up temp dir containing maxent results
-      fs::dir_delete(fs::path_dir(maxent_html))
+      # Overwrite the new HTML file path in the model object
+      fitted_model@models[[1L]][[1L]][[1L]]@object@html <-
+        fs::path(out_maxent_dir, "maxent.html")
     }
 
-    # Reduce models objects
-    fitted_model <- reduce_sdm_formulas(obj = fitted_model)
-
-    ecokit::save_as(
-      object = fitted_model, object_name = model_name, out_path = model_path)
+    # clean up temp dir containing maxent results
+    fs::dir_delete(fs::path_dir(maxent_html))
   }
+
+  # Reduce models objects
+  fitted_model <- reduce_sdm_formulas(obj = fitted_model)
+
+  invisible(gc())
 
   # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  # Extract model info / predict ------
-
-  extracted_data_name <- paste0(base_model_name, "_extracted_data")
-  extracted_data_path <- fs::path(
-    model_results_dir, paste0(extracted_data_name, ".RData"))
-
-  if (ecokit::check_data(extracted_data_path, warning = FALSE)) {
-    extracted_data <- ecokit::load_as(extracted_data_path)
-  } else {
-
-    ## Extract info from fitted model object -----
-    extracted_data <- quietly(
-      extract_sdm_info(model = fitted_model, cv_fold = cv_fold)
-    )
-
-    # Making predictions and extract prediction paths -----
-    predictor_names <- fitted_model@setting@featureFrame@predictors
-    if (is.null(predictor_names) || length(predictor_names) == 0L) {
-      ecokit::stop_ctx("No predictor names found in fitted model.")
-    }
-
-    prediction_info <- ecokit::load_as(input_data$path_prediction_data) %>%
-      dplyr::mutate(
-        prediction = purrr::map2(
-          .x = climate_name,
-          .y = pred_data,
-          .f = ~{
-
-            pred_dir <- fs::path(output_directory, paste0("pred_", .x))
-            tif_path <- fs::path(pred_dir, paste0(base_model_name, ".tif"))
-            tif_okay <- ecokit::check_tiff(tif_path, warning = FALSE)
-            data_path <- fs::path(pred_dir, paste0(base_model_name, ".RData"))
-            data_okay <- ecokit::check_data(data_path, warning = FALSE)
-            pred_data_df <- as.data.frame(.y)
-            gdal_options <- c("COMPRESS=DEFLATE", "TILED=YES")
-
-            if (isFALSE(tif_okay) || isFALSE(data_okay)) {
-
-              pred <- quietly(
-                predict(
-                  object = fitted_model,
-                  newdata = dplyr::select(
-                    pred_data_df, tidyselect::all_of(predictor_names)))
-              ) %>%
-                unlist() %>%
-                unname()
-
-              pred_r <- tibble::tibble(pred = pred) %>%
-                dplyr::bind_cols(dplyr::select(pred_data_df, x, y)) %>%
-                sf::st_as_sf(coords = c("x", "y"), crs = 3035L) %>%
-                terra::rasterize(
-                  y = ecokit::load_as(path_grid_r, unwrap_r = TRUE),
-                  field = "pred", fun = "mean", na.rm = TRUE) %>%
-                stats::setNames(base_model_name)
-
-              terra::writeRaster(
-                x = pred_r, overwrite = TRUE, filename = tif_path,
-                gdal = gdal_options)
-              ecokit::save_as(
-                object = terra::wrap(pred_r), object_name = base_model_name,
-                out_path = data_path)
-
-              tif_okay <- ecokit::check_tiff(tif_path, warning = FALSE)
-              data_okay <- ecokit::check_data(data_path, warning = FALSE)
-
-              invisible(gc())
-            }
-
-            tibble::tibble(
-              species_name = species_name, pred_dir = pred_dir,
-              data_path = data_path, data_okay = data_okay,
-              tif_path = tif_path, tif_okay = tif_okay) %>%
-              dplyr::mutate(cv_fold = cv_fold, .before = 1L)
-
-          })) %>%
-      dplyr::select(-pred_data) %>%
-      tidyr::unnest("prediction") %>%
-      dplyr::select(species_name, cv_fold, tidyselect::everything())
-
-    extracted_data <- c(extracted_data, prediction_info = list(prediction_info))
-
-    ecokit::save_as(
-      object = extracted_data, object_name = extracted_data_name,
-      out_path = extracted_data_path)
-  }
+  # Extract info from fitted model object -----
+  extracted_data <- quietly(
+    extract_sdm_info(model = fitted_model, cv_fold = cv_fold))
 
   # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  # Save model results -----
-  species_results <- lapply(extracted_data, list) %>%
-    tibble::as_tibble() %>%
-    dplyr::mutate(model_path = model_path, .before = 1L)
+  # Making predictions and extract prediction paths -----
 
-  species_results
+  predictor_names <- fitted_model@setting@featureFrame@predictors
+  if (is.null(predictor_names) || length(predictor_names) == 0L) {
+    ecokit::stop_ctx("No predictor names found in fitted model.")
+  }
+
+  prediction_data <- ecokit::load_as(input_data$path_prediction_data) %>%
+    dplyr::mutate(
+      preds = purrr::map2(
+        .x = pred_data,
+        .y = climate_name,
+        .f = ~ {
+          pred2 <- unlist(quietly(
+            predict(
+              object = fitted_model,
+              newdata = dplyr::select(
+                .x, tidyselect::all_of(predictor_names))
+            )))
+
+          prediction_r <- dplyr::mutate(.x, pred = unlist(pred2)) %>%
+            dplyr::select(
+              -tidyselect::all_of(c(predictor_names, "cell"))) %>%
+            sf::st_as_sf(coords = c("x", "y"), crs = 3035L) %>%
+            terra::rasterize(
+              y = ecokit::load_as(path_grid_r, unwrap_r = TRUE),
+              field = "pred", fun = "mean", na.rm = TRUE) %>%
+            stats::setNames(paste0(base_model_name, "_", .y))
+
+          prediction_okay <- prediction_r %>%
+            terra::global(range, na.rm = TRUE) %>%
+            unlist() %>%
+            dplyr::between(-0.0000001, 1.00000001) %>%
+            all()
+
+          tibble::tibble(
+            pred = list(terra::wrap(prediction_r)), pred_okay = prediction_okay)
+
+        })) %>%
+    tidyr::unnest("preds") %>%
+    dplyr::select(-pred_data) %>%
+    dplyr::mutate(
+      species_name = species_name, sdm_method = sdm_method,
+      cv_fold = cv_fold, .before = 1)
+
+  # Merge outputs -------
+
+  c(fitted_model = fitted_model, extracted_data,
+    prediction_data = list(prediction_data)) %>%
+    ecokit::save_as(out_path = output_path)
+
+  tibble::tibble(sdm_method = sdm_method, output_path = output_path)
 }
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++ ------
@@ -1747,9 +1704,9 @@ fit_predict_internal <- function(
 #' corresponding TIFF and RData files. If summary files do not exist or are
 #' invalid, they are generated and saved.
 #'
-#' @param line_id Integer. Index (row number) in `model_summary` to process for
-#'   summary statistics.
-#' @param model_summary List. Model summary structure containing:
+#' @param line_id Integer. Index (row number) in `model_pred_results` to process
+#'   for summary statistics.
+#' @param model_pred_results List. Model summary structure containing:
 #'   - `summary_data`: List of data frames with prediction details.
 #'   - `species_name`: Character vector of species names.
 #'   - `evaluation_testing`: List of evaluation results, including test AUC.
@@ -1781,14 +1738,27 @@ fit_predict_internal <- function(
 #' @noRd
 #' @keywords internal
 
-summarize_predictions <- function(line_id, model_summary) {
+summarize_predictions <- function(
+    line_id, model_pred_results, output_directory) {
 
-  climate_name <- cv_fold <- tiff_paths <- NULL
+  climate_name <- preds <- output_path <- pred <- pred_summary <- NULL
 
-  DT <- model_summary$summary_data[[line_id]]
-  species_name <- model_summary$species_name[[line_id]]
-  mean_auc <- model_summary$evaluation_testing[[line_id]]$auc_test # nolint: object_usage_linter
+  pred_path <- fs::path(
+    output_directory,
+    paste0(
+      unique(model_pred_results$sdm_method), "_",
+      model_pred_results$species_name[[line_id]], "_summary_pred.qs2")
+  )
 
+  pred_out <- tibble::tibble(
+    species_name = model_pred_results$species_name[[line_id]],
+    summary_prediction_path = pred_path)
+
+  if (ecokit::check_data(pred_path, warning = FALSE)) {
+    return(pred_out)
+  }
+
+  mean_auc <- model_pred_results$auc_test[[line_id]]
   # If any value of testing AUC is NA, do not calculate weighted mean
   if (anyNA(mean_auc)) {
     calc_w_mean <- FALSE             # nolint: object_usage_linter
@@ -1802,191 +1772,83 @@ summarize_predictions <- function(line_id, model_summary) {
     }
   }
 
-  exclude_cols <- c(
-    "data_path", "data_okay", "tif_okay", "cv_fold", "species_name")
-  keep_cols <- c(
-    "time_period", "climate_model", "climate_scenario",
-    "climate_name", "pred_dir")
+  group_by_cols <- c(
+    "time_period", "climate_model", "climate_scenario", "climate_name")
 
-  preds_dt_orig <- dplyr::select(DT, "prediction_info") %>%
-    tidyr::unnest("prediction_info") %>%
-    dplyr::mutate(cv_fold = as.character(cv_fold))
+  pred_summ <- model_pred_results$pred_paths[[line_id]] %>%
+    dplyr::mutate(
+      preds = purrr::map(
+        .x = output_path,
+        .f = ~ {
+          ecokit::load_as(.x) %>%
+            magrittr::extract2("prediction_data")
+        })) %>%
+    tidyr::unnest("preds") %>%
+    dplyr::select(-output_path) %>%
+    dplyr::arrange(climate_name) %>%
+    dplyr::summarise(
+      preds = list(pred), .by = tidyselect::all_of(group_by_cols)) %>%
+    dplyr::mutate(
+      pred_summary = purrr::map(
+        .x = preds,
+        .f = ~ {
 
-  preds_dt <- preds_dt_orig %>%
-    dplyr::select(-tidyselect::all_of(exclude_cols)) %>%
-    tidyr::nest(
-      .by = tidyselect::all_of(keep_cols), .key = "tiff_paths")
+          cv_maps <- terra::rast(purrr::map(.x, terra::unwrap))
 
-  pred_summ <- purrr::map(
-    .x = preds_dt$tiff_paths,
-    .f = ~ {
+          # |||||||||||||||||||||||||||||||||||||||||||
 
-      tif_path <- NULL
-      tif_paths <- unname(unlist(.x))
+          # mean -------
+          name_mean <- stringr::str_replace(
+            names(cv_maps)[1], "cv[0-9]_", "mean_")
+          pred_mean <- terra::app(cv_maps, mean, na.rm = TRUE) %>%
+            stats::setNames(name_mean) %>%
+            terra::wrap()
 
-      # Check if all input tiff files are valid
-      in_tiffs_okay <- purrr::map_lgl(
-        tif_paths, ecokit::check_tiff, warning = FALSE) %>%
-        all()
-      if (isFALSE(in_tiffs_okay)) {
-        ecokit::stop_ctx(
-          "Not all input tiff files are valid", tif_paths = tif_paths)
-      }
+          # |||||||||||||||||||||||||||||||||||||||||||
 
-      path_mean_tif <- stringr::str_replace_all(
-        tif_paths, "_cv[1-9]", "_mean") %>%
-        unique()
-      path_mean_data <- stringr::str_replace_all(
-        path_mean_tif, ".tif$", ".RData")
-      path_sd_tif <- stringr::str_replace_all(
-        path_mean_tif, "mean", "sd")
-      path_sd_data <- stringr::str_replace_all(
-        path_mean_data, "mean", "sd")
-      path_cov_tif <- stringr::str_replace_all(
-        path_mean_tif, "mean", "cov")
-      path_cov_data <- stringr::str_replace_all(
-        path_mean_data, "mean", "cov")
-
-      # Check if output maps already exist and valid
-      tiffs_to_check <- c(path_mean_tif, path_sd_tif, path_cov_tif)
-      data_to_check <- c(path_mean_data, path_sd_data, path_cov_data)
-      if (calc_w_mean) {
-        path_w_mean_tif <- stringr::str_replace_all(
-          path_mean_tif, "_mean", "_weighted_mean")
-        tiffs_to_check <- c(tiffs_to_check, path_w_mean_tif)
-
-        path_w_mean_data <- stringr::str_replace_all(
-          path_mean_data, "_mean", "_weighted_mean")
-        data_to_check <- c(data_to_check, path_w_mean_data)
-      } else {
-        path_w_mean_tif <- path_w_mean_data <- NA_character_
-      }
-
-      tif_okay <- purrr::map_lgl(
-        tiffs_to_check, ecokit::check_tiff, warning = FALSE) %>%
-        all()
-      data_okay <- purrr::map_lgl(
-        data_to_check, ecokit::check_data, warning = FALSE) %>%
-        all()
-
-      check_data_tif <- function(DT, tiff) {
-        ecokit::check_data(DT, warning = FALSE) &&
-          ecokit::check_tiff(tiff, warning = FALSE)
-      }
-
-      if (isFALSE(tif_okay && data_okay)) {
-
-        maps <- terra::rast(tif_paths)
-        gdal_options <- c("COMPRESS=DEFLATE", "TILED=YES")
-
-        # |||||||||||||||||||||||||||||||||||||||||||
-
-        # mean -------
-
-        if (check_data_tif(path_mean_data, path_mean_tif)) {
-          # If mean data already exists, load it
-          mean_pred <- ecokit::load_as(path_mean_data, unwrap_r = TRUE)
-        } else {
-          mean_name <- basename(path_mean_tif) %>%
-            tools::file_path_sans_ext()
-          mean_pred <- terra::app(maps, mean, na.rm = TRUE) %>%
-            stats::setNames(mean_name)
-          terra::writeRaster(
-            x = mean_pred, overwrite = TRUE, filename = path_mean_tif,
-            gdal = gdal_options)
-          ecokit::save_as(
-            object = terra::wrap(mean_pred), object_name = mean_name,
-            out_path = path_mean_data)
-        }
-
-        # |||||||||||||||||||||||||||||||||||||||||||
-
-        # weighted mean -----
-
-        if (calc_w_mean) {
-
-          if (check_data_tif(path_w_mean_data, path_w_mean_tif)) {
-            # If weighted mean data already exists, load it
-            w_mean_pred <- ecokit::load_as(path_w_mean_data, unwrap_r = TRUE)
+          # weighted mean -----
+          if (calc_w_mean) {
+            name_w_mean <- stringr::str_replace(name_mean, "mean", "w_mean")
+            pred_w_mean <- terra::weighted.mean(
+              x = cv_maps, w = mean_auc, na.rm = TRUE) %>%
+              stats::setNames(name_w_mean) %>%
+              terra::wrap()
           } else {
-            w_mean_name <- basename(path_w_mean_tif) %>%
-              tools::file_path_sans_ext()
-            w_mean_pred <- terra::weighted.mean(
-              x = maps, w = mean_auc, na.rm = TRUE) %>%
-              stats::setNames(w_mean_name)
-            terra::writeRaster(
-              x = w_mean_pred, overwrite = TRUE, filename = path_w_mean_tif,
-              gdal = gdal_options)
-            ecokit::save_as(
-              object = terra::wrap(w_mean_pred), object_name = w_mean_name,
-              out_path = path_w_mean_data)
+            pred_w_mean <- list()
           }
-        }
 
-        # |||||||||||||||||||||||||||||||||||||||||||
+          # |||||||||||||||||||||||||||||||||||||||||||
 
-        # sd ------
+          # sd ------
+          name_sd <- stringr::str_replace(name_mean, "mean", "sd")
+          pred_sd <- terra::app(cv_maps, sd, na.rm = TRUE) %>%
+            stats::setNames(name_sd) %>%
+            terra::wrap()
 
-        if (check_data_tif(path_sd_data, path_sd_tif)) {
-          # If standard deviation data already exists, load it
-          sd_pred <- ecokit::load_as(path_sd_data, unwrap_r = TRUE)
-        } else {
-          sd_name <- tools::file_path_sans_ext(basename(path_sd_tif))
-          sd_pred <- terra::app(maps, sd, na.rm = TRUE) %>%
-            stats::setNames(sd_name)
-          terra::writeRaster(
-            x = sd_pred, overwrite = TRUE, filename = path_sd_tif,
-            gdal = gdal_options)
-          ecokit::save_as(
-            object = terra::wrap(sd_pred), object_name = sd_name,
-            out_path = path_sd_data)
-        }
+          # |||||||||||||||||||||||||||||||||||||||||||
 
-        # |||||||||||||||||||||||||||||||||||||||||||
-
-        # cov ------
-
-        if (check_data_tif(path_cov_data, path_cov_tif)) {
-          # If coefficient of variation data already exists, load it
-          cov_pred <- ecokit::load_as(path_cov_data, unwrap_r = TRUE)
-        } else {
-          cov_name <- basename(path_cov_tif) %>%
-            tools::file_path_sans_ext()
+          # cov ------
+          name_cov <- stringr::str_replace(name_mean, "mean", "cov")
           # Avoid division by zero
-          mean_pred <- terra::clamp(mean_pred, lower = 1e-8)
-          cov_pred <- stats::setNames((sd_pred / mean_pred), cov_name)
-          terra::writeRaster(
-            x = cov_pred, overwrite = TRUE, filename = path_cov_tif,
-            gdal = gdal_options)
-          ecokit::save_as(
-            object = terra::wrap(cov_pred), object_name = cov_name,
-            out_path = path_cov_data)
-        }
+          pred_mean2 <- terra::clamp(terra::unwrap(pred_mean), lower = 1e-8)
+          pred_cov <- (terra::unwrap(pred_sd) / pred_mean2) %>%
+            stats::setNames(name_cov) %>%
+            terra::wrap()
 
-      }
+          # |||||||||||||||||||||||||||||||||||||||||||
 
-      # |||||||||||||||||||||||||||||||||||||||||||
+          tibble::tibble(
+            pred_mean = list(pred_mean), pred_w_mean = list(pred_w_mean),
+            pred_sd = list(pred_sd), pred_cov = list(pred_cov))
 
-      tibble::tribble(
-        ~cv_fold, ~data_path, ~tif_path,
-        "mean", path_mean_data, path_mean_tif,
-        "weighted_mean", path_w_mean_data, path_w_mean_tif,
-        "sd", path_sd_data, path_sd_tif,
-        "cov", path_cov_data, path_cov_tif) %>%
-        dplyr::mutate(
-          data_okay = purrr::map_lgl(
-            data_path, ecokit::check_data, warning = FALSE),
-          tif_okay = purrr::map_lgl(
-            tif_path, ecokit::check_tiff, warning = FALSE))
-    })
+        })
+    ) %>%
+    dplyr::select(-preds) %>%
+    tidyr::unnest(pred_summary)
 
-  preds_dt <- dplyr::mutate(preds_dt, pred_summ = pred_summ) %>%
-    tidyr::unnest("pred_summ") %>%
-    dplyr::select(-tiff_paths) %>%
-    dplyr::mutate(species_name = species_name, .before = 1L)
+  ecokit::save_as(object = pred_summ, out_path = pred_path)
 
-  dplyr::bind_rows(preds_dt_orig, preds_dt) %>%
-    dplyr::arrange(climate_name, cv_fold)
+  pred_out
 }
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++ ------
@@ -2029,10 +1891,10 @@ summarize_predictions <- function(line_id, model_summary) {
 
 check_model_results <- function(model_results) {
 
-  data_okay <- tif_okay <- climate_name <- data_path <- cv_fold <- x_value <-
-    tif_path <- climate_model <- climate_scenario <- time_period <- na_count <-
-    prediction <- cor_test <- auc_test <- species_name <- . <-  pred_dir <-
-    variable <- min_value <- max_value <- times <- bad_vals <- NULL
+  climate_name <- cv_fold <- x_value <- na_count <- prediction <- cor_test <-
+    auc_test <- species_name <- . <- variable <- prediction_data <-
+    response_curves <- evaluation_training <- evaluation_testing <-
+    variable_importance <- pred_okay <- output_path <- sdm_method <- NULL
 
   n_species <- length(unique(model_results$species_name))
 
@@ -2043,41 +1905,27 @@ check_model_results <- function(model_results) {
       class_model_results = class(model_results))
   }
 
-  # Check if model_results contains the required columns
-  required_cols <- c(
-    "evaluation_training", "evaluation_testing", "variable_importance",
-    "response_curves", "prediction_info")
-  if (!all(required_cols %in% names(model_results))) {
-    missing_columns <- required_cols[!required_cols %in% names(model_results)]
-    ecokit::stop_ctx(
-      paste0(
-        "`model_results` must contain the following columns: ",
-        toString(missing_columns)),
-      names_model_results = names(model_results))
-  }
-
-  invalid_cols <- purrr::map_lgl(
-    .x = required_cols,
-    .f = ~ {
-      example_data <- model_results[[.x]][[1L]]
-      inherits(example_data, "tbl_df") && nrow(example_data) > 0L
-    })
-  invalid_columns <- required_cols[!invalid_cols]
-  if (length(invalid_columns) > 0L) {
-    ecokit::stop_ctx(
-      paste0(
-        "model_results components must be tibbles with nrow > 0: ",
-        toString(invalid_columns)),
-      names_model_results = names(model_results))
-  }
-
   issue_detected <- FALSE
+
+  all_model_results <- model_results %>%
+    dplyr::select(species_name, sdm_method, cv_fold, output_path) %>%
+    dplyr::mutate(
+      dt = purrr::map(
+        .x = output_path,
+        .f = ~ {
+          ecokit::load_as(.x) %>%
+            magrittr::extract(names(.) != "fitted_model") %>%
+            lapply(list) %>%
+            tibble::as_tibble()
+        })
+    ) %>%
+    tidyr::unnest("dt")
 
   # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Evaluation data - Training -----
   # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  check_eval_train <- model_results$evaluation_training %>%
+  check_eval_train <- dplyr::pull(all_model_results, evaluation_training) %>%
     dplyr::bind_rows() %>%
     dplyr::group_by(species_name) %>%
     dplyr::summarise(
@@ -2138,11 +1986,14 @@ check_model_results <- function(model_results) {
       ecokit::cat_time(cat_timestamp = FALSE)
   }
 
+  all_model_results <- dplyr::select(all_model_results, -evaluation_training)
+  invisible(gc())
+
   # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Evaluation data - Testing -----
   # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  check_eval_test <- model_results$evaluation_testing %>%
+  check_eval_test <- dplyr::pull(all_model_results, evaluation_testing) %>%
     dplyr::bind_rows() %>%
     dplyr::group_by(species_name) %>%
     dplyr::summarise(
@@ -2202,11 +2053,15 @@ check_model_results <- function(model_results) {
       ecokit::cat_time(cat_timestamp = FALSE)
   }
 
+  all_model_results <- dplyr::select(all_model_results, -evaluation_testing)
+  invisible(gc())
+
   # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Variable importance -----
   # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  check_var_imp <- dplyr::bind_rows(model_results$variable_importance) %>%
+  check_var_imp <- dplyr::pull(all_model_results, variable_importance) %>%
+    dplyr::bind_rows() %>%
     dplyr::group_by(species_name, variable) %>%
     dplyr::summarise(
       dplyr::across(
@@ -2263,11 +2118,15 @@ check_model_results <- function(model_results) {
       issues_var_imp, cat_timestamp = FALSE, level = 1L, ... = "\n")
   }
 
+  all_model_results <- dplyr::select(all_model_results, -variable_importance)
+  invisible(gc())
+
   # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Response curves -----
   # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  check_res_curv <- dplyr::bind_rows(model_results$response_curves) %>%
+  check_res_curv <- dplyr::pull(all_model_results, response_curves) %>%
+    dplyr::bind_rows() %>%
     dplyr::group_by(species_name, variable) %>%
     dplyr::summarise(
       dplyr::across(
@@ -2325,14 +2184,18 @@ check_model_results <- function(model_results) {
       issues_res_curv, cat_timestamp = FALSE, level = 1L, ... = "\n")
   }
 
+  all_model_results <- dplyr::select(all_model_results, -response_curves)
+  invisible(gc())
+
   # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Predictions -----
   # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Check number of invalid tiff or data files
 
-  check_preds <- dplyr::bind_rows(model_results$prediction_info) %>%
-    dplyr::filter(!data_okay | !tif_okay)
+  check_preds <- dplyr::pull(all_model_results, prediction_data) %>%
+    dplyr::bind_rows() %>%
+    dplyr::filter(!pred_okay)
 
   if (nrow(check_preds) > 0L) {
 
@@ -2345,25 +2208,6 @@ check_model_results <- function(model_results) {
 
     issues_preds_species <- unique(check_preds$species_name)
     issues_preds_n_species <- length(issues_preds_species)
-
-    issues_preds <- check_preds %>%
-      dplyr::select(
-        -time_period, -climate_model, -climate_scenario,
-        -tif_path, -pred_dir, -data_path, -cv_fold) %>%
-      dplyr::group_by(climate_name) %>%
-      dplyr::summarise(
-        dplyr::across(
-          .cols = c("tif_okay", "data_okay"), .fns =  ~ sum(!.)),
-        .groups = "keep") %>%
-      dplyr::ungroup() %>%
-      dplyr::mutate(
-        message = paste0(tif_okay, " tiff files; ", data_okay, " data files"),
-        message = stringr::str_remove_all(message, "^; | $"),
-        message = paste0(
-          stringr::str_pad(climate_name, width = 35L, side = "right"),
-          " --> ", message)) %>%
-      dplyr::pull(message) %>%
-      paste(collapse = "\n  >>>  ")
 
     paste0(
       "\n!! There are issues in prediction data for ",
@@ -2382,54 +2226,12 @@ check_model_results <- function(model_results) {
 
     ecokit::cat_time(
       "Affected climate options: ", cat_timestamp = FALSE, cat_bold = TRUE)
-    ecokit::cat_time(
-      issues_preds, cat_timestamp = FALSE, level = 1L, ... = "\n")
-  }
-
-  # Check if predictions are < 0 or > 1
-  pred_odd_vals <- dplyr::bind_rows(model_results$prediction_info) %>%
-    dplyr::select(climate_name, species_name, tif_path) %>%
-    dplyr::mutate(
-      min_max = purrr::map(
-        .x = tif_path,
-        .f = ~{
-          terra::global(terra::rast(.x), range, na.rm = TRUE) %>%
-            stats::setNames(c("min_value", "max_value"))
-        })) %>%
-    tidyr::unnest("min_max") %>%
-    dplyr::filter(min_value < -0.001 | max_value > 1.001)
-
-  if (nrow(pred_odd_vals) > 0L) {
-
-    if (isFALSE(issue_detected)) {
-      ecokit::cat_sep(
-        line_char_rep = 60L, sep_lines_before = 1L,
-        line_char = "=", cat_bold = TRUE, cat_red = TRUE)
-      issue_detected <- TRUE
-    }
-
-    pred_odd_vals %>%
-      dplyr::group_by(climate_name, species_name) %>%
-      dplyr::tally(name = "times") %>%
-      dplyr::ungroup() %>%
-      dplyr::mutate(message = paste0(species_name, " (", times, ")")) %>%
-      dplyr::select(climate_name, message) %>%
-      tidyr::nest(bad_vals = -climate_name) %>%
-      dplyr::mutate(
-        bad_vals = purrr::map2_chr(
-          .x = bad_vals, .y = climate_name,
-          .f = ~ {
-            sp_l <- paste(unlist(.x), collapse = "; ") %>%
-              stringr::str_wrap(width = 40L) %>%
-              stringr::str_split(pattern = "\n", simplify = TRUE) %>%
-              paste0("  >>>  ", ., collapse = "\n")
-            paste0(.y, ": ") %>%
-              crayon::bold() %>%
-              paste0("\n", sp_l)
-          })) %>%
-      dplyr::pull(bad_vals) %>%
-      paste(collapse = "\n") %>%
-      ecokit::cat_time(cat_timestamp = FALSE)
+    check_preds %>%
+      dplyr::count(climate_name) %>%
+      dplyr::mutate(message = paste0(climate_name, " (", n, ")")) %>%
+      dplyr::pull(message) %>%
+      paste(collapse = "\n  >>>  ") %>%
+      ecokit::cat_time(cat_timestamp = FALSE, level = 1L, ... = "\n")
   }
 
   if (issue_detected) {

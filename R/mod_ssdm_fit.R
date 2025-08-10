@@ -544,8 +544,7 @@ fit_sdm_models <- function(
       dplyr::mutate(auc_test = purrr::map(evaluation_testing, ~.x$auc_test)) %>%
       dplyr::select(species_name, auc_test)
     model_pred_results <- model_results %>%
-      dplyr::select(
-        -tidyselect::all_of(c("valid_species", "data_path", "cv_fold"))) %>%
+      dplyr::select(-tidyselect::all_of(c("data_path", "cv_fold"))) %>%
       tidyr::nest(pred_paths = output_path) %>%
       dplyr::left_join(dt_auc_test, by = "species_name")
 

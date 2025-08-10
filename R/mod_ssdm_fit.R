@@ -127,12 +127,11 @@ fit_sdm_models <- function(
 
   .start_time <- lubridate::now(tzone = "CET")
 
-  summary_data <- packages <- path_grid <- mod_method <- cv_fold <-
+  summary_data <- packages <- path_grid <- mod_method <- cv_fold <- preds <-
     pred_mean <- pred_w_mean <- species_name <- method_is_glm <- output_path <-
     evaluation_testing <- auc_test <- valid_species <- data_path  <-
     summary_prediction_path <- climate_name <- pred_mean_okay <-
-    pred_w_mean_okay <- richness_map <- pred_type <- cv <-
-    preds_summ <- mean_okay <- mean_type <- preds <- NULL
+    pred_w_mean_okay <- richness_map <- pred_type <- cv <- preds_summ <- NULL
 
   stringr::str_glue(
     "Fitting models using `{sdm_method}` method and `{cv_type}` ",
@@ -422,7 +421,7 @@ fit_sdm_models <- function(
 
     # Check model results -----
     ecokit::cat_time("Check model results", level = 1L)
-    check_model_results(model_results)
+    check_model_results(model_results = model_results, n_cores = n_cores)
 
   }
 
@@ -543,7 +542,8 @@ fit_sdm_models <- function(
       dplyr::mutate(auc_test = purrr::map(evaluation_testing, ~.x$auc_test)) %>%
       dplyr::select(species_name, auc_test)
     model_pred_results <- model_results %>%
-      dplyr::select(-valid_species, -data_path, -cv_fold) %>%
+      dplyr::select(
+        -tidyselect::all_of(c("valid_species", "data_path", "cv_fold"))) %>%
       tidyr::nest(pred_paths = output_path) %>%
       dplyr::left_join(dt_auc_test, by = "species_name")
 
@@ -584,16 +584,16 @@ fit_sdm_models <- function(
     ecokit::cat_time("Prepare and save summary data", level = 1L)
     model_summary <- dplyr::left_join(
       model_summary, dplyr::bind_rows(pred_summary), by = "species_name")
-    ecokit::save_as(object = model_summary, out_path = model_summary_path)
 
+    ecokit::save_as(object = model_summary, out_path = model_summary_path)
     invisible(gc())
 
   }
 
   # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  # Check for issues in summary data ------
-  ecokit::cat_time("Check for issues in summary data", level = 1L)
+  # Check for issues in summary maps ------
+  ecokit::cat_time("Check for issues in summary maps", level = 1L)
 
   summ_issues <- model_summary %>%
     dplyr::select(species_name, summary_prediction_path) %>%
@@ -601,44 +601,77 @@ fit_sdm_models <- function(
       preds_summ = purrr::map(
         .x = summary_prediction_path, .f = ecokit::load_as)) %>%
     tidyr::unnest(preds_summ) %>%
-    dplyr::select(climate_name, pred_mean, pred_w_mean) %>%
+    dplyr::select(species_name, climate_name, pred_mean, pred_w_mean) %>%
     dplyr::mutate(
       pred_mean_okay = purrr::map_lgl(
         pred_mean, inherits, "PackedSpatRaster"),
       pred_w_mean_okay = purrr::map_lgl(
         pred_w_mean, inherits, "PackedSpatRaster")) %>%
-    dplyr::filter(!pred_mean_okay | !pred_w_mean_okay) %>%
-    dplyr::group_by(climate_name, pred_mean_okay, pred_w_mean_okay) %>%
-    dplyr::tally(name = "n_species") %>%
-    tidyr::pivot_longer(
-      cols = c("pred_mean_okay", "pred_w_mean_okay"),
-      names_to = "mean_type", values_to = "mean_okay") %>%
-    dplyr::filter(mean_okay) %>%
-    dplyr::mutate(
-      mean_type = dplyr::if_else(
-        mean_type == "pred_mean_okay", "mean", "w_mean"))
+    dplyr::filter(!pred_mean_okay | !pred_w_mean_okay)
 
   if (nrow(summ_issues) > 0L) {
+    summ_issues_species <- unique(summ_issues$species_name)
+
     ecokit::cat_sep(
       line_char_rep = 60L, sep_lines_before = 1L,
       line_char = "=", cat_bold = TRUE, cat_red = TRUE)
 
-    "\n!! There are issues in summary maps !!\n" %>%
+    paste0(
+      "\n!! There are issues in summary maps (",
+      length(summ_issues_species), " species) !!\n") %>%
       crayon::blue() %>%
       ecokit::cat_time(cat_bold = TRUE, cat_timestamp = FALSE)
 
+    ecokit::cat_time(
+      "Affected species: ", cat_timestamp = FALSE, cat_bold = TRUE)
+    paste(summ_issues_species, collapse = "; ") %>%
+      stringr::str_wrap(width = 65L) %>%
+      stringr::str_split("\n", simplify = TRUE) %>%
+      stringr::str_replace_all(" ", " ") %>%
+      paste(collapse = "\n  >>>  ") %>%
+      ecokit::cat_time(cat_timestamp = FALSE, level = 1L, ... = "\n")
+
     summ_issues %>%
-      dplyr::mutate(
-        message = paste0(mean_type, " (", n_species, " species)")) %>%
-      dplyr::select(climate_name, message) %>%
-      tidyr::nest(message = message, .by = "climate_name") %>%
+      dplyr::select(-pred_mean, -pred_w_mean) %>%
+      tidyr::nest(dt = -climate_name) %>%
       dplyr::mutate(
         message = purrr::map_chr(
-          message, ~ paste(unlist(.x), collapse = "; ")),
-        message = paste0(crayon::bold(climate_name), ": ", message)) %>%
+          .x = dt,
+          .f = ~ {
+            tidyr::pivot_longer(
+              data = .x,
+              cols = c("pred_mean_okay", "pred_w_mean_okay"),
+              names_to = "mean_type", values_to = "mean_okay") %>%
+              dplyr::filter(!mean_okay) %>%
+              dplyr::mutate(
+                mean_type = dplyr::if_else(
+                  mean_type == "pred_mean_okay", "mean", "w_mean")) %>%
+              dplyr::select(-mean_okay) %>%
+              tidyr::nest(message_int = -mean_type) %>%
+              dplyr::mutate(
+                message_int = purrr::map2_chr(
+                  .x = mean_type, .y = message_int,
+                  .f = function(type, name) {
+                    mean_name <- dplyr::if_else(
+                      type == "w_mean", "weighted mean", "mean")
+                    paste0(
+                      crayon::blue(crayon::bold(mean_name)), " (",
+                      paste(unique(unlist(name)), collapse = "; "), ")")
+                  })
+              ) %>%
+              dplyr::pull(message_int) %>%
+              paste(collapse = " --- ") %>%
+              paste0("  >>>  ", .)
+          }),
+        message = purrr::map2_chr(
+          .x = climate_name, .y = message,
+          .f = ~ {
+            paste0(crayon::bold(crayon::red(.x)), "\n", .y) %>%
+              paste(collapse = "\n")
+          })) %>%
       dplyr::pull(message) %>%
-      paste(collapse = "\n  >>>  ") %>%
-      ecokit::cat_time(level = 1, cat_timestamp = FALSE)
+      paste(collapse = "\n") %>%
+      ecokit::cat_time(cat_timestamp = FALSE)
 
     ecokit::cat_sep(
       line_char_rep = 60L, sep_lines_before = 1L, sep_lines_after = 2L,
@@ -651,14 +684,15 @@ fit_sdm_models <- function(
 
   ecokit::cat_time("Calculate species richness at each climate option")
 
-
   if (nrow(summ_issues) > 0L) {
-    sr_options <- setdiff(c("mean", "w_mean"), unique(summ_issues$mean_type))
+    sr_options <- vector(mode = "character")
+    if (all(summ_issues$pred_mean_okay)) sr_options <- c(sr_options, "mean")
+    if (all(summ_issues$pred_w_mean_okay)) sr_options <- c(sr_options, "w_mean")
+
     if (length(sr_options) == 1L) {
       ecokit::cat_time(
         paste0(
-          "Calculating species richness only for: ",
-          sr_options, " predictions"),
+          "Calculating species richness only for ", sr_options, " predictions"),
         level = 1L, cat_timestamp = FALSE)
 
     } else if (length(sr_options) == 0L) {
@@ -674,8 +708,7 @@ fit_sdm_models <- function(
   if (length(sr_options) > 0L) {
 
     exclude_cols <- c(
-      "pred_sd", "pred_cov", "time_period",
-      "climate_model", "climate_scenario")
+      "pred_sd", "pred_cov", "time_period", "climate_model", "climate_scenario")
 
     species_richness_r <- model_summary$summary_prediction_path %>%
       purrr::map_dfr(ecokit::load_as) %>%
@@ -687,12 +720,13 @@ fit_sdm_models <- function(
       tidyr::nest(
         preds = "pred_value", .by = c("climate_name", "pred_type")) %>%
       dplyr::mutate(
-        richness_map = purrr::map(
-          .x = preds,
+        richness_map = purrr::map2(
+          .x = preds, .y = climate_name,
           .f = ~{
             purrr::map(unlist(.x), terra::unwrap) %>%
               terra::rast() %>%
               terra::app(sum, na.rm = TRUE) %>%
+              stats::setNames(paste0("richness_", .y)) %>%
               terra::wrap()
           })) %>%
       dplyr::select(-preds) %>%

@@ -99,9 +99,8 @@ extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
       model = model, class_model = class(model))
   }
 
-  predictor_names <- model@setting@featureFrame@predictors
   # Ensure predictor_names is a character vector
-  predictor_names <- as.character(predictor_names)
+  predictor_names <- as.character(model@setting@featureFrame@predictors)
   if (!is.character(predictor_names)) {
     ecokit::stop_ctx(
       "'model@setting@featureFrame@predictors' must be a character vector.",
@@ -115,8 +114,8 @@ extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
       ecokit::stop_ctx(
         "Failed to get model info from sdmModels object.",
         error_message = e$message)
-    }
-  )
+    })
+
   species_name <- as.character(model_info$species)
 
   # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -199,11 +198,11 @@ extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
         eval_train_thr_ess <- eval_train_thr %>%
           dplyr::filter(criteria == "sp=se") %>%
           dplyr::select(tidyselect::all_of(evaluation_sort)) %>%
-          dplyr::rename_with(~ stringr::str_c(., "_ess_train"))
+          dplyr::rename_with(~ stringr::str_c(tolower(.), "_ess_train"))
         eval_train_thr_mss <- eval_train_thr %>%
           dplyr::filter(criteria == "max(se+sp)") %>%
           dplyr::select(tidyselect::all_of(evaluation_sort)) %>%
-          dplyr::rename_with(~ stringr::str_c(., "_mss_train"))
+          dplyr::rename_with(~ stringr::str_c(tolower(.), "_mss_train"))
       } else {
         eval_train_thr_ess <- tibble::tibble(
           tss_ess_train = NA_real_, kappa_ess_train = NA_real_,
@@ -260,11 +259,11 @@ extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
         eval_test_thr_ess <- eval_test_thr %>%
           dplyr::filter(criteria == "sp=se") %>%
           dplyr::select(tidyselect::all_of(evaluation_sort)) %>%
-          dplyr::rename_with(~ stringr::str_c(., "_ess_test"))
+          dplyr::rename_with(~ stringr::str_c(tolower(.), "_ess_test"))
         eval_test_thr_mss <- eval_test_thr %>%
           dplyr::filter(criteria == "max(se+sp)") %>%
           dplyr::select(tidyselect::all_of(evaluation_sort)) %>%
-          dplyr::rename_with(~ stringr::str_c(., "_mss_test"))
+          dplyr::rename_with(~ stringr::str_c(tolower(.), "_mss_test"))
       } else {
         eval_test_thr_ess <- tibble::tibble(
           tss_ess_test = NA_real_, kappa_ess_test = NA_real_,
@@ -324,7 +323,6 @@ extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
   } else {
     variable_importance <- empty_var_imp
   }
-
 
   # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Response curves -----
@@ -962,7 +960,7 @@ prepare_input_data <- function(
 
     species_modelling_data <- species_modelling_data %>%
       dplyr::filter(!species_name %in% excluded_species) %>%
-      dplyr::select(-valid_species)
+      dplyr::select(-tidyselect::all_of(valid_species))
 
   } else {
     excluded_species <- NA_character_
@@ -1602,7 +1600,7 @@ fit_predict_internal <- function(
 
     if (fs::file_exists(maxent_html) && copy_maxent_html) {
       out_maxent_dir <- fs::path(
-        fs::path_dir(output_directory), "maxent_html", base_model_name)
+        output_directory, "maxent_html", base_model_name)
       if (fs::dir_exists(out_maxent_dir))  fs::dir_delete(out_maxent_dir)
       fs::dir_create(out_maxent_dir)
       fs::dir_copy(
@@ -1741,7 +1739,8 @@ fit_predict_internal <- function(
 summarize_predictions <- function(
     line_id, model_pred_results, output_directory) {
 
-  climate_name <- preds <- output_path <- pred <- pred_summary <- NULL
+  preds <- output_path <- pred <- pred_summary <- time_period <-
+    climate_model <- climate_scenario <- NULL
 
   pred_path <- fs::path(
     output_directory,
@@ -1785,7 +1784,7 @@ summarize_predictions <- function(
         })) %>%
     tidyr::unnest("preds") %>%
     dplyr::select(-output_path) %>%
-    dplyr::arrange(climate_name) %>%
+    dplyr::arrange(time_period, climate_model, climate_scenario) %>%
     dplyr::summarise(
       preds = list(pred), .by = tidyselect::all_of(group_by_cols)) %>%
     dplyr::mutate(
@@ -1889,7 +1888,7 @@ summarize_predictions <- function(
 #' @noRd
 #' @keywords internal
 
-check_model_results <- function(model_results) {
+check_model_results <- function(model_results, n_cores) {
 
   climate_name <- cv_fold <- x_value <- na_count <- prediction <- cor_test <-
     auc_test <- species_name <- . <- variable <- prediction_data <-
@@ -1907,19 +1906,41 @@ check_model_results <- function(model_results) {
 
   issue_detected <- FALSE
 
+  if (n_cores == 1L) {
+    future::plan("sequential", gc = TRUE)
+  } else {
+    ecokit::set_parallel(
+      n_cores = min(n_cores, nrow(model_results)),
+      future_max_size = future_max_size, show_log = FALSE)
+    withr::defer(future::plan("sequential", gc = TRUE))
+  }
+
+  all_model_results0 <- quietly(
+    future.apply::future_lapply(
+      X = seq_len(nrow(model_results)),
+      FUN = function(line_id) {
+
+        model_results$output_path[[line_id]] %>%
+          ecokit::load_as() %>%
+          magrittr::extract(names(.) != "fitted_model") %>%
+          lapply(list) %>%
+          tibble::as_tibble()
+
+      },
+      future.scheduling = Inf, future.seed = TRUE,
+      future.packages = c("tibble", "sdm", "magrittr"),
+      future.globals = "model_results"))
+
+  ecokit::set_parallel(level = 1L, show_log = FALSE)
+  future::plan("sequential", gc = TRUE)
+
+
   all_model_results <- model_results %>%
     dplyr::select(species_name, sdm_method, cv_fold, output_path) %>%
-    dplyr::mutate(
-      dt = purrr::map(
-        .x = output_path,
-        .f = ~ {
-          ecokit::load_as(.x) %>%
-            magrittr::extract(names(.) != "fitted_model") %>%
-            lapply(list) %>%
-            tibble::as_tibble()
-        })
-    ) %>%
-    tidyr::unnest("dt")
+    dplyr::bind_cols(dplyr::bind_rows(all_model_results0))
+
+  rm(all_model_results0)
+  invisible(gc())
 
   # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Evaluation data - Training -----
@@ -2091,7 +2112,8 @@ check_model_results <- function(model_results) {
           .fns =  ~ sum(.)), .groups = "drop") %>%
       dplyr::mutate(
         message = paste0(
-          "cor_test: ", cor_test, " sp; auc_test: ", auc_test, " sp"),
+          "cor_test: ", cor_test, "; auc_test: ", auc_test,
+          " sp/cv combinations"),
         message = stringr::str_remove_all(message, "^; | $"),
         message = paste0(
           stringr::str_pad(variable, width = 12L, side = "right"),

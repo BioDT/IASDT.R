@@ -383,9 +383,9 @@ fit_sdm_models <- function(
     future_globals <- c(
       "sdm_method", "model_data", "model_settings",
       "input_data", "output_directory", "path_grid_r", "reduce_sdm_formulas",
-      "fit_predict_internal", "extract_sdm_info", "copy_maxent_html", "quietly")
+      "fit_predict_internal", "extract_sdm_info", "copy_maxent_html")
 
-    model_data2 <- quietly(
+    model_data2 <- ecokit::quietly(
       future.apply::future_lapply(
         X = seq_len(nrow(model_data)),
         FUN = function(line_id) {
@@ -563,7 +563,7 @@ fit_sdm_models <- function(
 
     ecokit::cat_time("Calculate summary predictions in parallel", level = 1L)
 
-    pred_summary <- quietly(
+    pred_summary <- ecokit::quietly(
       future.apply::future_lapply(
         X = seq_len(nrow(model_pred_results)),
         FUN = function(line_id) {
@@ -573,8 +573,7 @@ fit_sdm_models <- function(
         future.scheduling = Inf, future.seed = TRUE,
         future.packages = pkgs_to_load,
         future.globals = c(
-          "model_pred_results", "summarize_predictions",
-          "output_directory", "quietly")))
+          "model_pred_results", "summarize_predictions", "output_directory")))
 
     ecokit::set_parallel(level = 1L, stop_cluster = TRUE, cat_timestamp = FALSE)
     future::plan("sequential", gc = TRUE)

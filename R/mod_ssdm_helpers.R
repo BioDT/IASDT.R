@@ -818,7 +818,7 @@ prepare_input_data <- function(
     "species_data_dir", "q_preds", "l_preds", "predictor_names", "model_data",
     "modelling_data", "n_cv_folds")
 
-  species_modelling_data2 <- quietly(
+  species_modelling_data2 <- ecokit::quietly(
     future.apply::future_lapply(
       X = species_names,
       FUN = function(species_name) {
@@ -1587,10 +1587,19 @@ fit_predict_internal <- function(
 
   # Model fit -----
 
-  fitted_model <- quietly(
+  if (sdm_method == "maxent") {
+    # Use a temp directory for Java preferences to avoid file lock issues
+    prefs_dir <- file.path(tempdir(), paste0(".java_", Sys.getpid()))
+    dir.create(prefs_dir, showWarnings = FALSE)
+    Sys.setenv(     # nolint: undesirable_function_linter
+      JAVA_TOOL_OPTIONS = paste0("-Djava.util.prefs.userRoot=", prefs_dir))
+  }
+
+  fitted_model <- ecokit::quietly(
     sdm::sdm(
       formula = model_DT$model_formula[[1]], data = model_DT$sdm_data[[1]],
       methods = sdm_method, modelSettings = model_settings))
+
 
   # copy model files from temp dir for maxent models
   if (sdm_method == "maxent") {
@@ -1628,7 +1637,7 @@ fit_predict_internal <- function(
   # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Extract info from fitted model object -----
-  extracted_data <- quietly(
+  extracted_data <- ecokit::quietly(
     extract_sdm_info(model = fitted_model, cv_fold = cv_fold))
 
   # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -1646,12 +1655,12 @@ fit_predict_internal <- function(
         .x = pred_data,
         .y = climate_name,
         .f = ~ {
-          pred2 <- unlist(quietly(
-            predict(
-              object = fitted_model,
-              newdata = dplyr::select(
-                .x, tidyselect::all_of(predictor_names))
-            )))
+          pred2 <- unlist(
+            ecokit::quietly(
+              predict(
+                object = fitted_model,
+                newdata = dplyr::select(.x, tidyselect::all_of(predictor_names))
+              )))
 
           prediction_r <- dplyr::mutate(.x, pred = unlist(pred2)) %>%
             dplyr::select(
@@ -1915,7 +1924,7 @@ check_model_results <- function(model_results, n_cores, future_max_size) {
     withr::defer(future::plan("sequential", gc = TRUE))
   }
 
-  all_model_results0 <- quietly(
+  all_model_results0 <- ecokit::quietly(
     future.apply::future_lapply(
       X = seq_len(nrow(model_results)),
       FUN = function(line_id) {
@@ -2264,41 +2273,4 @@ check_model_results <- function(model_results, n_cores, future_max_size) {
   }
 
   invisible(NULL)
-}
-
-# ............................................... ----
-
-# # ========================================================================= #
-# quietly ------
-# # ========================================================================= #
-
-#' Quietly Evaluate an Expression
-#'
-#' Evaluates an R expression while suppressing package startup messages and
-#' selected warnings. Specifically, warnings containing "was built under R
-#' version" or "Loading required namespace" are muffled, allowing for cleaner
-#' output during package loading or function execution.
-#'
-#' @param expr An R expression to be evaluated quietly.
-#'
-#' @return The result of evaluating \code{expr}, with specified messages and
-#' warnings suppressed.
-#' @author Ahmed El-Gabbas
-#' @noRd
-#' @keywords internal
-
-quietly <- function(expr) {
-  withCallingHandlers(
-    suppressPackageStartupMessages(expr),
-    warning = function(w) {
-      warnings_to_hide <- paste(
-        c("was built under R version", "Loading required namespace",
-          "Picked up JAVA_TOOL_OPTIONS", "Couldn't flush user prefs",
-          "java.util.prefs.FileSystemPreferences"),
-        collapse = "|")
-      if (grepl(warnings_to_hide, conditionMessage(w))) {
-        invokeRestart("muffleWarning")
-      }
-    }
-  )
 }

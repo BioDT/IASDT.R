@@ -2292,7 +2292,9 @@ quietly <- function(expr) {
     suppressPackageStartupMessages(expr),
     warning = function(w) {
       warnings_to_hide <- paste(
-        c("was built under R version", "Loading required namespace"),
+        c("was built under R version", "Loading required namespace",
+          "Picked up JAVA_TOOL_OPTIONS", "Couldn't flush user prefs",
+          "java.util.prefs.FileSystemPreferences"),
         collapse = "|")
       if (grepl(warnings_to_hide, conditionMessage(w))) {
         invokeRestart("muffleWarning")

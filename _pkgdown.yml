@@ -64,6 +64,8 @@ reference:
   - road_intensity
   - river_length
   - bioreg_process
+  - wetness_index_process
+  - soil_density_process
 
 - title: Modelling functions
   desc: Functions for preparing data, running the models, and postprocessing of model outputs

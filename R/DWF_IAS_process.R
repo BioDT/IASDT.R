@@ -59,24 +59,9 @@ IAS_process <- function(
   rm(AllArgs, envir = environment())
   invisible(gc())
 
-  if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
-    ecokit::stop_ctx(
-      "n_cores must be a single positive integer.", n_cores = n_cores,
-      include_backtrace = TRUE)
-  }
-
-  if (strategy == "sequential") {
-    n_cores <- 1L
-  }
-  if (length(strategy) != 1L) {
-    ecokit::stop_ctx(
-      "`strategy` must be a character vector of length 1",
-      strategy = strategy, length_strategy = length(strategy))
-  }
-  valid_strategy <- c("sequential", "multisession", "multicore", "cluster")
-  if (!strategy %in% valid_strategy) {
-    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
-  }
+  strategy <- .validate_strategy(strategy)
+  if (strategy == "sequential") n_cores <- 1L
+  n_cores <- .validate_n_cores(n_cores)
 
   # # ..................................................................... ###
 

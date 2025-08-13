@@ -18,7 +18,7 @@
 #'   data sources. Defaults to `.env`.
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 6.
-#' @return Returns invisibly the path to `RData` file containing the processed
+#' @return (Invisibly) the path to the `RData` file containing the processed
 #'   soil bulk density data.
 #' @references
 #' - SoilGrids: <https://soilgrids.org>
@@ -36,7 +36,7 @@ soil_density_process <- function(
 
   # # ..................................................................... ###
 
-  # Validate depths ----
+  # Validate inputs ----
   valid_depths <- c("0-5", "5-15", "15-30", "30-60", "60-100", "100-200")
 
   if (is.null(depths)) {
@@ -47,25 +47,8 @@ soil_density_process <- function(
       depths = depths, valid_depths = valid_depths)
   }
 
-  # # ..................................................................... ###
-
   # Validate n_cores ----
-  if (!is.numeric(n_cores) || length(n_cores) != 1L ||
-      n_cores < 1L || is.na(n_cores)) {
-    ecokit::stop_ctx(
-      "n_cores must be a positive integer of length 1",
-      n_cores = n_cores, class_n_cores = class(n_cores))
-  }
-  n_cores <- as.integer(n_cores)
-  max_cores <- parallelly::availableCores()
-  if (n_cores > max_cores) {
-    warning(
-      stringr::str_glue(
-        "`n_cores` exceeds available cores: {n_cores}. Using all available",
-        " cores: {max_cores}"),
-      call. = FALSE)
-    n_cores <- max_cores
-  }
+  n_cores <- .validate_n_cores(n_cores)
 
   # # ..................................................................... ###
 

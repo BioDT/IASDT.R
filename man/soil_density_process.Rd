@@ -19,7 +19,7 @@ data sources. Defaults to \code{.env}.}
 Default: 6.}
 }
 \value{
-Returns invisibly the path to \code{RData} file containing the processed
+(Invisibly) the path to the \code{RData} file containing the processed
 soil bulk density data.
 }
 \description{

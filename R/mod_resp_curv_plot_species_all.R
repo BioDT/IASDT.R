@@ -13,14 +13,8 @@ resp_curv_plot_species_all <- function(
 
   # # ..................................................................... ###
 
-  if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
-    ecokit::stop_ctx(
-      "n_cores must be a single positive integer.", n_cores = n_cores,
-      include_backtrace = TRUE)
-  }
-
   ecokit::cat_time("Plotting species response curves")
-
+  n_cores <- .validate_n_cores(n_cores)
   .start_time <- lubridate::now(tzone = "CET")
 
   # # ..................................................................... ###

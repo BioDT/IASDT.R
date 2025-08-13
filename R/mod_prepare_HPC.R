@@ -29,15 +29,6 @@
 #'   point. The knots are generated using the [prepare_knots] function, and this
 #'   value is used for both `knotDist` and `minKnotDist` in
 #'   [Hmsc::constructKnots].
-#' @param bio_variables Character vector. Variables from CHELSA (bioclimatic
-#'   variables (bio1-bio19) and additional predictors (e.g., Net Primary
-#'   Productivity, npp)) to be used in the model. By default, six ecologically
-#'   relevant and minimally correlated variables are selected: `c("bio3",
-#'   "bio4", "bio11", "bio18", "bio19", "npp")`.
-#' @param quadratic_variables Character vector for variables for which quadratic
-#'   terms are used. Defaults to all variables of the `bio_variables` in
-#'   addition to soil bulk density and topographic wetness index (if used). If
-#'   `quadratic_variables` is `NULL`, no quadratic terms will be used.
 #' @param efforts_as_predictor Logical. Whether to include the
 #'   (log<sub>10</sub>) sampling efforts as predictor to the model. Default:
 #'   `TRUE`.
@@ -57,6 +48,15 @@
 #' @param wetness_as_predictor Logical. Whether to include topographic wetness
 #'   index as predictor to the model. Default: `TRUE`. See
 #'   [wetness_index_process].
+#' @param bio_variables Character vector. Variables from CHELSA (bioclimatic
+#'   variables (bio1-bio19) and additional predictors (e.g., Net Primary
+#'   Productivity, npp)) to be used in the model. By default, six ecologically
+#'   relevant and minimally correlated variables are selected: `c("bio3",
+#'   "bio4", "bio11", "bio18", "bio19", "npp")`.
+#' @param quadratic_variables Character vector for variables for which quadratic
+#'   terms are used. Defaults to all variables of the `bio_variables` in
+#'   addition to soil bulk density and topographic wetness index (if used). If
+#'   `quadratic_variables` is `NULL`, no quadratic terms will be used.
 #' @param n_species_per_grid Integer. Minimum number of species required for a
 #'   grid cell to be included in the analysis. This filtering occurs after
 #'   applying `min_efforts_n_species` (sampling effort thresholds),
@@ -180,18 +180,17 @@ mod_prepare_HPC <- function(
     min_efforts_n_species = 100L, n_pres_per_species = 80L, env_file = ".env",
     GPP = TRUE, GPP_dists = NULL, min_LF = NULL, max_LF = NULL,
     alphapw = list(Prior = NULL, Min = 20, Max = 1300, Samples = 150),
+    efforts_as_predictor = TRUE, road_rail_as_predictor = TRUE,
+    habitat_as_predictor = TRUE, river_as_predictor = FALSE,
+    soil_as_predictor = TRUE, wetness_as_predictor = TRUE,
     bio_variables = c("bio3", "bio4", "bio11", "bio18", "bio19", "npp"),
     quadratic_variables = c(
       bio_variables,
       ifelse(soil_as_predictor, "soil", NULL),
       ifelse(wetness_as_predictor, "wetness", NULL)),
-    efforts_as_predictor = TRUE, road_rail_as_predictor = TRUE,
-    habitat_as_predictor = TRUE, river_as_predictor = FALSE,
-    soil_as_predictor = TRUE, wetness_as_predictor = TRUE,
     n_species_per_grid = 0L, exclude_cultivated = TRUE,
     exclude_0_habitat = TRUE, CV_n_folds = 4L, CV_n_grids = 20L,
-    CV_n_rows = 2L, CV_n_columns = 2L, CV_plot = TRUE,
-    CV_SAC = FALSE,
+    CV_n_rows = 2L, CV_n_columns = 2L, CV_SAC = FALSE,
     CV_fit = list(CV_type = NULL, CV_fold = NULL, inherit_dir = NULL),
     use_phylo_tree = TRUE, no_phylo_tree = FALSE, overwrite_rds = TRUE,
     n_cores = 8L, strategy = "multisession", MCMC_n_chains = 4L,
@@ -209,7 +208,6 @@ mod_prepare_HPC <- function(
   # # |||||||||||||||||||||||||||||||||||
 
   .start_time <- lubridate::now(tzone = "CET")
-
 
   CheckNULL <- c(
     "directory_name", "n_pres_per_species", "MCMC_thin", "MCMC_samples",
@@ -420,6 +418,12 @@ mod_prepare_HPC <- function(
       include_backtrace = TRUE)
   }
 
+  # Loading country boundary data
+  EU_Bound <- ecokit::load_as(EU_Bound) %>%
+    magrittr::extract2("Bound_sf_Eur_s") %>%
+    magrittr::extract2("L_03") %>%
+    suppressWarnings()
+
   ecokit::record_arguments(
     out_path = fs::path(path_model, "Args_mod_prepare_HPC.RData"))
 
@@ -465,6 +469,7 @@ mod_prepare_HPC <- function(
     "n_array_jobs", "n_pres_per_species", "min_efforts_n_species",
     "MCMC_transient_factor", "CV_n_folds", "CV_n_grids", "CV_n_rows",
     "CV_n_columns", "precision")
+
   if (GPP) {
     NumericArgs <- c(NumericArgs, "GPP_dists")
   }
@@ -552,7 +557,6 @@ mod_prepare_HPC <- function(
   if (river_as_predictor) XVars <- c(XVars, "RiversLog")
   if (soil_as_predictor) XVars <- c(XVars, "soil")
   if (wetness_as_predictor) XVars <- c(XVars, "wetness")
-
   if (hab_abb != "0" && habitat_as_predictor) XVars <- c(XVars, "HabLog")
 
   # # ..................................................................... ###
@@ -567,7 +571,7 @@ mod_prepare_HPC <- function(
     "0_All", "1_Forests", "2_Open_forests", "3_Scrub",
     "4a_Natural_grasslands", "4b_Human_maintained_grasslands",
     "10_Wetland", "12a_Ruderal_habitats", "12b_Agricultural_habitats") %>%
-    stringr::str_subset(paste0("^", as.character(hab_abb), "_"))
+    stringr::str_subset(paste0("^", hab_abb, "_"))
 
 
   if (is.null(CV_fit_inherit)) {
@@ -666,14 +670,11 @@ mod_prepare_HPC <- function(
         "Hab_4a_Natural_grasslands", "Hab_4b_Human_maintained_grasslands",
         "Hab_10_Wetland", "Hab_12a_Ruderal_habitats",
         "Hab_12b_Agricultural_habitats") %>%
-        stringr::str_subset(paste0("_", as.character(hab_abb), "_")) %>%
+        stringr::str_subset(paste0("_", hab_abb, "_")) %>%
         stringr::str_remove("Hab_")
     }
 
-    EU_Bound_sub <- ecokit::load_as(EU_Bound) %>%
-      magrittr::extract2("Bound_sf_Eur") %>%
-      magrittr::extract2("L_03") %>%
-      dplyr::filter(NAME_ENGL %in% model_country)
+    EU_Bound_sub <- dplyr::filter(EU_Bound, NAME_ENGL %in% model_country)
 
     Limits <- as.vector(terra::ext(NSpSubset))
     # Relative JPEG height
@@ -787,8 +788,7 @@ mod_prepare_HPC <- function(
     DT_All <- IASDT.R::mod_CV_prepare(
       input_data = DT_All, env_file = env_file, x_vars = XVars,
       CV_n_folds = CV_n_folds, CV_n_grids = CV_n_grids, CV_n_rows = CV_n_rows,
-      CV_n_columns = CV_n_columns, out_path = path_model, CV_plot = CV_plot,
-      CV_SAC = CV_SAC)
+      CV_n_columns = CV_n_columns, out_path = path_model, CV_SAC = CV_SAC)
 
   } else {
 
@@ -814,15 +814,99 @@ mod_prepare_HPC <- function(
 
   }
 
-  # Filter data if CV info is provided
+  # # |||||||||||||||||||||||||||||||||||
+  # Filter data if CV info is provided ------
+  # # |||||||||||||||||||||||||||||||||||
+
   if (filter_CV_data) {
     ecokit::cat_time(
       paste0(
         "Filtering data for testing cross-validation fold: ",
-        CV_fit_type, " -- ", CV_fit_fold),
+        CV_fit_type, "==", CV_fit_fold),
       verbose = verbose_progress)
 
+    DT_testing <- dplyr::filter(
+      DT_All, !!rlang::sym(CV_fit_type) == CV_fit_fold)
     DT_All <- dplyr::filter(DT_All, !!rlang::sym(CV_fit_type) != CV_fit_fold)
+
+    # Save cross-validation training and testing datasets for model fitting
+    ecokit::save_as(
+      object = DT_All, object_name = "ModDT_training",
+      out_path = fs::path(path_model, "ModDT_training.RData"))
+    ecokit::save_as(
+      object = DT_testing, object_name = "ModDT_testing",
+      out_path = fs::path(path_model, "ModDT_testing.RData"))
+
+    # Plot training and testing data ------
+    calculate_n_species_raster <- function(data) {
+      species_names <- stringr::str_subset(names(data), "Sp_")
+      data %>%
+        dplyr::select(x, y, tidyselect::starts_with("Sp_")) %>%
+        sf::st_as_sf(coords = c("x", "y"), crs = 3035) %>%
+        terra::rasterize(
+          ecokit::load_as(Path_GridR, unwrap_r = TRUE),
+          field = species_names) %>%
+        terra::app(sum)
+    }
+
+    n_species_all <- c(
+      stats::setNames(
+        calculate_n_species_raster(DT_testing),
+        paste0("**Testing data** --- fold ", CV_fit_fold)),
+      stats::setNames(
+        calculate_n_species_raster(DT_All),
+        paste0(
+          "**Training data** --- folds ",
+          toString(setdiff(seq_len(CV_n_folds), CV_fit_fold)))))
+
+    # cross-validation folds as sf
+    cv_blocks <- fs::path(path_model, "CV_data.RData")
+    if (!fs::file_exists(cv_blocks)) {
+      ecokit::stop_ctx(
+        "CV_blocks file does not exist", CV_blocks = cv_blocks,
+        include_backtrace = TRUE)
+    }
+    cv_blocks <- ecokit::load_as(cv_blocks) %>%
+      magrittr::extract2(CV_fit_type) %>%
+      magrittr::extract2("blocks")
+
+    n_species_plot <- ggplot2::ggplot() +
+      ggplot2::geom_sf(
+        data = EU_Bound, fill = "gray98",
+        colour = "black", linewidth = 0.15) +
+      tidyterra::geom_spatraster(data = n_species_all) +
+      ggplot2::facet_wrap(~lyr) +
+      ggplot2::geom_sf(
+        data = cv_blocks, fill = "transparent",
+        colour = "gray85", linewidth = 0.175) +
+      tidyterra::scale_fill_whitebox_c(
+        na.value = "transparent", palette = "bl_yl_rd", name = NULL) +
+      ggplot2::scale_y_continuous(
+        expand = c(0, 0), limits = c(1450000, 5420000)) +
+      ggplot2::scale_x_continuous(
+        expand = c(0, 0), limits = c(2600000, 6550000)) +
+      ggplot2::theme_minimal() +
+      ggplot2::theme(
+        panel.border = ggplot2::element_blank(),
+        panel.grid.major = ggplot2::element_blank(),
+        panel.grid.minor = ggplot2::element_blank(),
+        plot.margin = ggplot2::margin(0, 0, 0, 0, "cm"),
+        legend.position = "inside",
+        legend.position.inside = c(0.97, 0.85),
+        legend.key.size = grid::unit(0.5, "cm"),
+        strip.text = ggtext::element_markdown(size = 12),
+        axis.title = ggplot2::element_blank(),
+        axis.text = ggplot2::element_blank())
+
+    ragg::agg_jpeg(
+      filename = fs::path(path_model, "Training_testing_data.jpeg"),
+      width = 25.5, height = 13.5, res = 600, quality = 100, units = "cm")
+    print(n_species_plot)
+    grDevices::dev.off()
+
+    rm(
+      DT_testing, n_species_all, cv_blocks, n_species_plot,
+      envir = environment())
 
   } else {
 
@@ -830,6 +914,8 @@ mod_prepare_HPC <- function(
       "No cross-validation filtering was made", verbose = verbose_progress)
 
   }
+
+  invisible(gc())
 
   # cross-validation data to be saved
   DT_CV <- DT_All %>%
@@ -1033,11 +1119,6 @@ mod_prepare_HPC <- function(
       terra::rasterize(GridR) %>%
       terra::as.factor() %>%
       stats::setNames("GridR")
-
-    EU_Bound <- ecokit::load_as(EU_Bound) %>%
-      magrittr::extract2("Bound_sf_Eur_s") %>%
-      magrittr::extract2("L_03") %>%
-      suppressWarnings()
 
     Knots_Plots <- purrr::map(
       .x = GPP_dists,

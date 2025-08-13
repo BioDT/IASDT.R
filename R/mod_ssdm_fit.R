@@ -174,6 +174,11 @@ fit_sdm_models <- function(
 
   # |||||||||||||||||||||||||||||||||||||||||||
 
+  # hab_abb
+  hab_abb <- .validate_hab_abb(as.character(hab_abb))
+
+  # |||||||||||||||||||||||||||||||||||||||||||
+
   # cv_type
   valid_cv_types <- c("CV_Dist", "CV_Large")
   if (!cv_type %in% valid_cv_types) {
@@ -217,22 +222,7 @@ fit_sdm_models <- function(
   # |||||||||||||||||||||||||||||||||||||||||||
 
   # n_cores
-  if (!is.numeric(n_cores) || length(n_cores) != 1L ||
-      n_cores < 1L || is.na(n_cores)) {
-    ecokit::stop_ctx(
-      "n_cores must be a positive integer of length 1",
-      n_cores = n_cores, class_n_cores = class(n_cores))
-  }
-  n_cores <- as.integer(n_cores)
-  max_cores <- parallelly::availableCores()
-  if (n_cores > max_cores) {
-    warning(
-      stringr::str_glue(
-        "`n_cores` exceeds available cores: {n_cores}. Using all available",
-        " cores: {max_cores}"),
-      call. = FALSE)
-    n_cores <- max_cores
-  }
+  n_cores <- .validate_n_cores(n_cores)
 
   # |||||||||||||||||||||||||||||||||||||||||||
 

@@ -51,34 +51,10 @@ resp_curv_prepare_data <- function(
     LF_check = FALSE, LF_temp_cleanup = TRUE, LF_commands_only = FALSE,
     temp_dir = "TEMP_Pred", temp_cleanup = TRUE, verbose = TRUE) {
 
-  if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
-    ecokit::stop_ctx(
-      "n_cores must be a single positive integer.", n_cores = n_cores,
-      include_backtrace = TRUE)
-  }
-  if (!is.numeric(LF_n_cores) || length(LF_n_cores) != 1 || LF_n_cores <= 0) {
-    ecokit::stop_ctx(
-      "LF_n_cores must be a single positive integer.", LF_n_cores = LF_n_cores,
-      include_backtrace = TRUE)
-  }
-
-  if (!is.character(strategy)) {
-    ecokit::stop_ctx(
-      "`strategy` must be a character vector",
-      strategy = strategy, class_strategy = class(strategy))
-  }
-  if (strategy == "sequential") {
-    n_cores <- LF_n_cores <- 1L
-  }
-  if (length(strategy) != 1L) {
-    ecokit::stop_ctx(
-      "`strategy` must be a character vector of length 1",
-      strategy = strategy, length_strategy = length(strategy))
-  }
-  valid_strategy <- c("sequential", "multisession", "multicore", "cluster")
-  if (!strategy %in% valid_strategy) {
-    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
-  }
+  strategy <- .validate_strategy(strategy)
+  if (strategy == "sequential") n_cores <- LF_n_cores <- 1L
+  n_cores <- .validate_n_cores(n_cores)
+  LF_n_cores <- .validate_n_cores(LF_n_cores)
 
   # # ..................................................................... ###
 

@@ -488,23 +488,7 @@ prepare_input_data <- function(
   # |||||||||||||||||||||||||||||||||||||||||||
 
   ## n_cores ----
-
-  if (!is.numeric(n_cores) || length(n_cores) != 1L ||
-      n_cores < 1L || is.na(n_cores)) {
-    ecokit::stop_ctx(
-      "n_cores must be a positive integer of length 1",
-      n_cores = n_cores, class_n_cores = class(n_cores))
-  }
-  n_cores <- as.integer(n_cores)
-  max_cores <- parallelly::availableCores()
-  if (n_cores > max_cores) {
-    warning(
-      stringr::str_glue(
-        "`n_cores` exceeds available cores: {n_cores}. Using all available",
-        " cores: {max_cores}"),
-      call. = FALSE)
-    n_cores <- max_cores
-  }
+  n_cores <- .validate_n_cores(n_cores)
 
   # |||||||||||||||||||||||||||||||||||||||||||
 
@@ -609,24 +593,7 @@ prepare_input_data <- function(
   rm(env_vars_to_read, envir = environment())
 
   ## Habitat types -----
-  hab_abb <- tolower(as.character(hab_abb))
-
-  # Check if `hab_abb` is a single character value
-  if (length(hab_abb) != 1L || !nzchar(hab_abb)) {
-    ecokit::stop_ctx(
-      "`hab_abb` must be a single character value",
-      hab_abb = hab_abb, length_hab_abb = length(hab_abb),
-      include_backtrace = TRUE)
-  }
-
-  valid_hab_abbs <- c(as.character(0L:3L), "4a", "4b", "10", "12a", "12b")
-  if (!(hab_abb %in% valid_hab_abbs)) {
-    ecokit::stop_ctx(
-      paste0(
-        "Invalid Habitat abbreviation. Valid values are:\n >> ",
-        toString(valid_hab_abbs)),
-      hab_abb = hab_abb, include_backtrace = TRUE)
-  }
+  hab_abb <- .validate_hab_abb(as.character(hab_abb))
 
   ## clamp_pred / fix_efforts / fix_rivers -------
   if (clamp_pred) {

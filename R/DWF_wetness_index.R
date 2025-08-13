@@ -13,9 +13,6 @@
 #'
 #' @param env_file Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
-#' @param delete_zip Logical. Whether to delete the downloaded zip file after
-#'   processing. Defaults to `TRUE`.
-#'
 #' @return (Invisibly) The path to the processed wetness index `RData` file.
 #' @references
 #' - Title & Bemmels (2018): ENVIREM: an expanded set of bioclimatic and
@@ -27,7 +24,7 @@
 #' @export
 #' @author Ahmed El-Gabbas
 
-wetness_index_process <- function(env_file = ".env", delete_zip = TRUE) {
+wetness_index_process <- function(env_file = ".env") {
 
   dir_grid <- dir_wetness_raw <- dir_wetness <- NULL
 
@@ -54,19 +51,18 @@ wetness_index_process <- function(env_file = ".env", delete_zip = TRUE) {
   reference_grid <- fs::path(dir_grid, "Grid_10_Land_Crop.RData")
   if (!file.exists(reference_grid)) {
     ecokit::stop_ctx(
-      "Reference grid file does not exist",
-      reference_grid = reference_grid)
+      "Reference grid file does not exist", reference_grid = reference_grid)
   }
   reference_grid <- ecokit::load_as(reference_grid)
 
   # # ..................................................................... ###
 
   fs::dir_create(c(dir_wetness_raw, dir_wetness))
-
+  wetness_file_name <- "elev_global_current_30arcsec_geotiff.zip"
   wetness_index_tif <- fs::path(dir_wetness, "wetness_index.tif")
   wetness_index_RData <- fs::path(dir_wetness, "wetness_index.RData")
   topo_wet_file_name <- "current_30arcsec_topoWet.tif"
-  wetness_raw_file <- fs::path(dir_wetness_raw, "topo_wet.zip")
+  wetness_raw_file <- fs::path(dir_wetness_raw, wetness_file_name)
 
   # Check if topographic wetness index data already exists
   if (ecokit::check_data(wetness_index_RData, warning = FALSE) &&
@@ -81,14 +77,20 @@ wetness_index_process <- function(env_file = ".env", delete_zip = TRUE) {
 
   if (!ecokit::check_zip(wetness_raw_file, warning = FALSE)) {
 
-    if (fs::file_exists(wetness_raw_file)) fs::dir_delete(wetness_raw_file)
+    if (fs::file_exists(wetness_raw_file)) fs::file_delete(wetness_raw_file)
 
     page_url <- paste0(
       "https://deepblue.lib.umich.edu/data/", "concern/generic_works/gt54kn05f")
+
+    if (!ecokit::check_url(page_url, timeout = 10)) {
+      ecokit::stop_ctx(
+        "The source link does not exist or is not accessible",
+        page_url = page_url)
+    }
+
     x_path <- paste0(
-      "//a[contains(text(), ",
-      "'elev_global_current_30arcsec_geotiff.zip') ",
-      "or contains(@href, 'elev_global_current_30arcsec_geotiff.zip')]")
+      "//a[contains(text(), '",
+      wetness_file_name, "') or contains(@href, '", wetness_file_name, "')]")
 
     # extract zip link for topographic wetness index
     zip_link <- rvest::read_html(page_url) %>%
@@ -132,17 +134,18 @@ wetness_index_process <- function(env_file = ".env", delete_zip = TRUE) {
 
   # # ..................................................................... ###
 
-  # Extract topographic wetness index data -----
-
-  archive::archive_extract(
-    archive = wetness_raw_file, dir = dir_wetness_raw,
-    files = topo_wet_file_name)
+  # Extract topographic wetness index tiff file -----
+  suppressMessages(
+    suppressWarnings(
+      archive::archive_extract(
+        archive = wetness_raw_file, dir = dir_wetness_raw,
+        files = topo_wet_file_name)))
 
   topo_wet_file <- fs::path(dir_wetness_raw, topo_wet_file_name)
   if (!ecokit::check_tiff(topo_wet_file, warning = FALSE)) {
     ecokit::stop_ctx(
-      "The downloaded file is not a valid zip file or is corrupted",
-      wetness_raw_file = wetness_raw_file)
+      "The extracted file is not a valid TIFF file or is corrupted",
+      topo_wet_file = topo_wet_file)
   }
 
   # # ..................................................................... ###
@@ -150,8 +153,7 @@ wetness_index_process <- function(env_file = ".env", delete_zip = TRUE) {
   # Process and save data -----
 
   wetness_index <- terra::rast(topo_wet_file) %>%
-    terra::project(
-      terra::unwrap(reference_grid), method = "average", threads = TRUE) %>%
+    terra::project(terra::unwrap(reference_grid), method = "average") %>%
     terra::mask(terra::unwrap(reference_grid)) %>%
     stats::setNames("wetness_index")
 
@@ -160,10 +162,6 @@ wetness_index_process <- function(env_file = ".env", delete_zip = TRUE) {
   ecokit::save_as(
     object = terra::wrap(wetness_index), object_name = "wetness_index",
     out_path = wetness_index_RData)
-
-  if (delete_zip) {
-    fs::file_delete(wetness_raw_file)
-  }
 
   return(invisible(wetness_index_RData))
 

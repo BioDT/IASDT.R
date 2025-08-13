@@ -29,8 +29,6 @@
 #'   determine the block size. Defaults to `FALSE`,
 #' @param out_path Character. Path for directory to save the cross-validation
 #'   results. This argument is mandatory and can not be empty.
-#' @param CV_plot Logical. Indicating whether to plot the block cross-validation
-#'   folds.
 #' @name mod_CV_prepare
 #' @author Ahmed El-Gabbas
 #' @return The function returns a modified version of the input dataset with
@@ -53,7 +51,7 @@
 mod_CV_prepare <- function(
     input_data = NULL, env_file = ".env", x_vars = NULL, CV_n_folds = 4L,
     CV_n_grids = 20L, CV_n_rows = 2L, CV_n_columns = 2L, CV_SAC = FALSE,
-    out_path = NULL, CV_plot = TRUE) {
+    out_path = NULL) {
 
   # # |||||||||||||||||||||||||||||||||||
   # # Initial checking -----
@@ -236,73 +234,72 @@ mod_CV_prepare <- function(
   # # Plot cross-validation folds -----
   # # |||||||||||||||||||||||||||||||||||
 
-  if (CV_plot) {
 
-    ecokit::cat_time("Plot cross-validation folds", level = 1L)
 
-    DT_R <- sf::st_as_sf(input_data, coords = c("x", "y"), crs = 3035) %>%
-      terra::rasterize(RefGrid) %>%
-      terra::classify(cbind(1, 0)) %>%
-      terra::as.factor() %>%
-      stats::setNames("GridR")
+  ecokit::cat_time("Plot cross-validation folds", level = 1L)
 
-    if (is.null(CV_SAC)) {
-      CVTypes <- c("CV_Dist", "CV_Large")
-    } else {
-      CVTypes <- c("CV_SAC", "CV_Dist", "CV_Large")
-    }
+  DT_R <- sf::st_as_sf(input_data, coords = c("x", "y"), crs = 3035) %>%
+    terra::rasterize(RefGrid) %>%
+    terra::classify(cbind(1, 0)) %>%
+    terra::as.factor() %>%
+    stats::setNames("GridR")
 
-    EU_Bound <- ecokit::load_as(EU_Bound) %>%
-      magrittr::extract2("Bound_sf_Eur_s") %>%
-      magrittr::extract2("L_03") %>%
-      suppressWarnings()
-
-    CV_Plots <- purrr::map(
-      .x = CVTypes,
-      .f = ~{
-
-        blocks <- magrittr::extract2(CV_data, .x) %>%
-          magrittr::extract2("blocks") %>%
-          dplyr::mutate(folds = factor(folds))
-
-        Plot <- ggplot2::ggplot() +
-          ggplot2::geom_sf(
-            data = EU_Bound, fill = "gray95", colour = "darkgrey",
-            linewidth = 0.5) +
-          tidyterra::geom_spatraster(data = DT_R, inherit.aes = FALSE) +
-          ggplot2::geom_sf(
-            data = blocks, inherit.aes = FALSE, alpha = 0.35,
-            mapping = ggplot2::aes(fill = folds), linewidth = 0.3) +
-          ggplot2::geom_sf_text(
-            data = blocks, ggplot2::aes(label = folds), size = 8,
-            fontface = "bold") +
-          ggplot2::coord_sf(
-            xlim = c(2600000, 6550000), ylim = c(1450000, 5420000),
-            clip = "off") +
-          ggplot2::scale_fill_manual(
-            values = c(
-              "darkgrey", "transparent", "red", "green", "blue", "yellow"),
-            na.value = "transparent") +
-          ggplot2::scale_x_continuous(expand = c(0, 0)) +
-          ggplot2::scale_y_continuous(expand = c(0, 0)) +
-          ggplot2::labs(title = .x) +
-          ggplot2::theme_void() +
-          ggplot2::theme(
-            plot.margin = ggplot2::margin(0.25, 0.25, 0.125, 0.25, "cm"),
-            plot.title = ggplot2::element_text(
-              size = 20, face = "bold", color = "blue", hjust = 0.5,
-              margin = ggplot2::margin(0.2, 0, 0.2, 0.5, "cm")),
-            legend.position = "none")
-
-        return(Plot)
-      })
-
-    grDevices::cairo_pdf(
-      filename = fs::path(out_path, "CV_Blocks.pdf"),
-      width = 12.5, height = 13, onefile = TRUE)
-    invisible(purrr::map(CV_Plots, print))
-    grDevices::dev.off()
+  if (is.null(CV_SAC)) {
+    CVTypes <- c("CV_Dist", "CV_Large")
+  } else {
+    CVTypes <- c("CV_SAC", "CV_Dist", "CV_Large")
   }
+
+  EU_Bound <- ecokit::load_as(EU_Bound) %>%
+    magrittr::extract2("Bound_sf_Eur_s") %>%
+    magrittr::extract2("L_03") %>%
+    suppressWarnings()
+
+  CV_Plots <- purrr::map(
+    .x = CVTypes,
+    .f = ~{
+
+      blocks <- magrittr::extract2(CV_data, .x) %>%
+        magrittr::extract2("blocks") %>%
+        dplyr::mutate(folds = factor(folds))
+
+      Plot <- ggplot2::ggplot() +
+        ggplot2::geom_sf(
+          data = EU_Bound, fill = "gray95", colour = "darkgrey",
+          linewidth = 0.5) +
+        tidyterra::geom_spatraster(data = DT_R, inherit.aes = FALSE) +
+        ggplot2::geom_sf(
+          data = blocks, inherit.aes = FALSE, alpha = 0.35,
+          mapping = ggplot2::aes(fill = folds), linewidth = 0.3) +
+        ggplot2::geom_sf_text(
+          data = blocks, ggplot2::aes(label = folds), size = 8,
+          fontface = "bold") +
+        ggplot2::coord_sf(
+          xlim = c(2600000, 6550000), ylim = c(1450000, 5420000),
+          clip = "off") +
+        ggplot2::scale_fill_manual(
+          values = c(
+            "darkgrey", "transparent", "red", "green", "blue", "yellow"),
+          na.value = "transparent") +
+        ggplot2::scale_x_continuous(expand = c(0, 0)) +
+        ggplot2::scale_y_continuous(expand = c(0, 0)) +
+        ggplot2::labs(title = .x) +
+        ggplot2::theme_void() +
+        ggplot2::theme(
+          plot.margin = ggplot2::margin(0.25, 0.25, 0.125, 0.25, "cm"),
+          plot.title = ggplot2::element_text(
+            size = 20, face = "bold", color = "blue", hjust = 0.5,
+            margin = ggplot2::margin(0.2, 0, 0.2, 0.5, "cm")),
+          legend.position = "none")
+
+      return(Plot)
+    })
+
+  grDevices::cairo_pdf(
+    filename = fs::path(out_path, "CV_Blocks.pdf"),
+    width = 12.5, height = 13, onefile = TRUE)
+  invisible(purrr::map(CV_Plots, print))
+  grDevices::dev.off()
 
   # # |||||||||||||||||||||||||||||||||||
   # # Add cross-validation columns to the data -----

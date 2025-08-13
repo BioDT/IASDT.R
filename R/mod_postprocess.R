@@ -191,9 +191,6 @@ mod_postprocess_1_CPU <- function(
   # ****************************************************************
 
   # Check input arguments ----
-
-  hab_abb <- as.character(hab_abb)
-
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(
     AllArgs,
@@ -219,43 +216,15 @@ mod_postprocess_1_CPU <- function(
       "MCMC_thin", "n_cores_VP", "LF_n_cores", "n_grid"))
   rm(AllArgs, envir = environment())
 
-  if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
-    ecokit::stop_ctx(
-      "n_cores must be a single positive integer.", n_cores = n_cores,
-      include_backtrace = TRUE)
-  }
-  if (!is.numeric(n_cores_VP) || length(n_cores_VP) != 1 || n_cores_VP <= 0) {
-    ecokit::stop_ctx(
-      "n_cores_VP must be a single positive integer.", n_cores_VP = n_cores_VP,
-      include_backtrace = TRUE)
-  }
-  if (!is.numeric(LF_n_cores) || length(LF_n_cores) != 1 || LF_n_cores <= 0) {
-    ecokit::stop_ctx(
-      "LF_n_cores must be a single positive integer.", LF_n_cores = LF_n_cores,
-      include_backtrace = TRUE)
-  }
+  hab_abb <- .validate_hab_abb(as.character(hab_abb))
 
+  strategy <- .validate_strategy(strategy)
   if (strategy == "sequential") {
     n_cores <- LF_n_cores <- n_cores_VP <- 1L
   }
-  if (length(strategy) != 1L) {
-    ecokit::stop_ctx(
-      "`strategy` must be a character vector of length 1",
-      strategy = strategy, length_strategy = length(strategy))
-  }
-  valid_strategy <- c("sequential", "multisession", "multicore", "cluster")
-  if (!strategy %in% valid_strategy) {
-    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
-  }
-
-  ValidHabAbbs <- c(as.character(0:3), "4a", "4b", "10", "12a", "12b")
-  if (!(hab_abb %in% ValidHabAbbs)) {
-    ecokit::stop_ctx(
-      paste0(
-        "Invalid Habitat abbreviation. Valid values are:\n >> ",
-        toString(ValidHabAbbs)),
-      hab_abb = hab_abb, include_backtrace = TRUE)
-  }
+  n_cores <- .validate_n_cores(n_cores)
+  LF_n_cores <- .validate_n_cores(LF_n_cores)
+  n_cores_VP <- .validate_n_cores(n_cores_VP)
 
   if (!file.exists(env_file)) {
     ecokit::stop_ctx(
@@ -940,7 +909,13 @@ mod_postprocess_2_CPU <- function(
 
   # Check input arguments ----
 
-  hab_abb <- as.character(hab_abb)
+  hab_abb <- .validate_hab_abb(as.character(hab_abb))
+
+  strategy <- .validate_strategy(strategy)
+  if (strategy == "sequential") n_cores <- LF_n_cores <- RC_n_cores <- 1L
+  n_cores <- .validate_n_cores(n_cores)
+  LF_n_cores <- .validate_n_cores(LF_n_cores)
+  RC_n_cores <- .validate_n_cores(RC_n_cores)
 
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(
@@ -963,46 +938,6 @@ mod_postprocess_2_CPU <- function(
       "n_cores", "GPP_dist", "MCMC_n_samples", "MCMC_thin", "n_grid",
       "LF_n_cores", "RC_n_cores"))
   rm(AllArgs, envir = environment())
-
-  if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
-    ecokit::stop_ctx(
-      "n_cores must be a single positive integer.", n_cores = n_cores,
-      include_backtrace = TRUE)
-  }
-  if (!is.numeric(LF_n_cores) || length(LF_n_cores) != 1 || LF_n_cores <= 0) {
-    ecokit::stop_ctx(
-      "LF_n_cores must be a single positive integer.", LF_n_cores = LF_n_cores,
-      include_backtrace = TRUE)
-  }
-  if (!is.numeric(RC_n_cores) || length(RC_n_cores) != 1 || RC_n_cores <= 0) {
-    ecokit::stop_ctx(
-      "RC_n_cores must be a single positive integer.", RC_n_cores = RC_n_cores,
-      include_backtrace = TRUE)
-  }
-
-  if (strategy == "sequential") {
-    n_cores <- 1L
-  }
-  if (length(strategy) != 1L) {
-    ecokit::stop_ctx(
-      "`strategy` must be a character vector of length 1",
-      strategy = strategy, length_strategy = length(strategy))
-  }
-  valid_strategy <- c(
-    "sequential", "multisession", "multicore",
-    "cluster")
-  if (!strategy %in% valid_strategy) {
-    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
-  }
-
-  ValidHabAbbs <- c(as.character(0:3), "4a", "4b", "10", "12a", "12b")
-  if (!(hab_abb %in% ValidHabAbbs)) {
-    ecokit::stop_ctx(
-      paste0(
-        "Invalid Habitat abbreviation. Valid values are:\n >> ",
-        toString(ValidHabAbbs)),
-      hab_abb = hab_abb, include_backtrace = TRUE)
-  }
 
   if (!file.exists(env_file)) {
     ecokit::stop_ctx(

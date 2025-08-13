@@ -55,8 +55,7 @@ predict_maps_CV <- function(
   n_cores <- .validate_n_cores(n_cores)
   LF_n_cores <- .validate_n_cores(LF_n_cores)
   strategy <- .validate_strategy(strategy)
-  if (strategy == "sequential") n_cores <- 1L
-  if (strategy == "sequential") LF_n_cores <- 1L
+  if (strategy == "sequential") n_cores <- LF_n_cores <- 1L
 
   if (!CV_name %in% c("CV_Dist", "CV_Large", "CV_SAC")) {
     ecokit::stop_ctx(
@@ -120,8 +119,8 @@ predict_maps_CV <- function(
     "0_All", "1_Forests", "2_Open_forests", "3_Scrub",
     "4a_Natural_grasslands", "4b_Human_maintained_grasslands",
     "10_Wetland", "12a_Ruderal_habitats", "12b_Agricultural_habitats") %>%
-    stringr::str_subset(paste0("^", as.character(hab_abb), "_")) %>%
-    stringr::str_remove(paste0("^", as.character(hab_abb), "_")) %>%
+    stringr::str_subset(paste0("^", hab_abb, "_")) %>%
+    stringr::str_remove(paste0("^", hab_abb, "_")) %>%
     stringr::str_replace_all("_", " ")
   # model name
   model_name <- paste0(hab_abb, "_", CV_DT$ModName)

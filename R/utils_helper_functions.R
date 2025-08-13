@@ -48,9 +48,7 @@
   strategy
 }
 
-
 # # ..................................................................... ###
-
 
 #' @keywords internal
 #' @noRd
@@ -77,5 +75,5 @@
       hab_abb = hab_abb, valid_hab_abbs = valid_hab_abbs)
   }
 
-  hab_abb
+  tolower(hab_abb)
 }

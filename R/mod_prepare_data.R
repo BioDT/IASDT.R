@@ -15,33 +15,20 @@ mod_prepare_data <- function(
 
   # # ..................................................................... ###
 
+  # Avoid "no visible binding for global variable" message
+  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
+  species_ID <- Species_File <- PA <- Path_Rivers <- cell <- Path_PA <-
+    Path_Grid <- Path_Grid_Ref <- Path_CLC <- Path_Roads <- Path_Rail <-
+    Path_Bias <- Path_CHELSA <- path_model <- EU_Bound <- SpPA <- NPres <-
+    Grid_R <- IAS_ID <- Path_Soil <- Path_Wetness <- NULL
+
+  # # ..................................................................... ###
+
   # # |||||||||||||||||||||||||||||||||||
   # Check input parameters ----
   # # |||||||||||||||||||||||||||||||||||
 
-  CheckNULL <- c("hab_abb", "directory_name", "env_file")
-  IsNull <- purrr::map_lgl(CheckNULL, ~ is.null(get(.x)))
-  if (any(IsNull)) {
-    ecokit::stop_ctx(
-      paste0(
-        paste0("`", CheckNULL[which(IsNull)], "`", collapse = ", "),
-        " can not be empty"),
-      hab_abb = hab_abb, directory_name = directory_name, env_file = env_file,
-      include_backtrace = TRUE)
-  }
-  hab_abb <- .validate_hab_abb(hab_abb)
-
-  # # ..................................................................... ###
-
-  # Avoid "no visible binding for global variable" message
-  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  species_ID <- Species_name <- Species_File <- PA <- Path_Rivers <-
-    cell <- Path_PA <- Path_Grid <- Path_Grid_Ref <- Path_CLC <-
-    Path_Roads <- Path_Rail <- Path_Bias <- Path_CHELSA <- path_model <-
-    EU_Bound <- SpPA <- NPres <- Grid_R <- IAS_ID <- Path_Soil <-
-    Path_Wetness <- NULL
-
-  # # ..................................................................... ###
+  hab_abb <- .validate_hab_abb(as.character(hab_abb))
 
   ecokit::cat_time("Checking input arguments", verbose = verbose_progress)
   AllArgs <- ls(envir = environment())
@@ -183,7 +170,7 @@ mod_prepare_data <- function(
       "Hab_4a_Natural_grasslands", "Hab_4b_Human_maintained_grasslands",
       "Hab_10_Wetland", "Hab_12a_Ruderal_habitats",
       "Hab_12b_Agricultural_habitats") %>%
-      stringr::str_subset(paste0("_", as.character(hab_abb), "_"))
+      stringr::str_subset(paste0("_", hab_abb, "_"))
 
     DT_Sp <- dplyr::filter(DT_Sp, !!as.symbol(Hab_column))
   }
@@ -203,7 +190,8 @@ mod_prepare_data <- function(
     # exclusion of species with few grid cells in this pipeline, but excluding
     # this first may help to reduce processing time
     dplyr::filter(.data[[NCellsCol]] >= n_pres_per_species) %>%
-    dplyr::select(species_ID, Species_name, Species_File) %>%
+    dplyr::select(
+      tidyselect::all_of(c("species_ID", "Species_name", "Species_File"))) %>%
     # Mask each species map with the filtered grid cells
     dplyr::mutate(
       PA = purrr::map2(

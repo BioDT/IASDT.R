@@ -4,14 +4,11 @@
 \alias{wetness_index_process}
 \title{Download and Process Topographic Wetness Index Data}
 \usage{
-wetness_index_process(env_file = ".env", delete_zip = TRUE)
+wetness_index_process(env_file = ".env")
 }
 \arguments{
 \item{env_file}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
-
-\item{delete_zip}{Logical. Whether to delete the downloaded zip file after
-processing. Defaults to \code{TRUE}.}
 }
 \value{
 (Invisibly) The path to the processed wetness index \code{RData} file.

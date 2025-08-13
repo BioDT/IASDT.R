@@ -17,15 +17,15 @@ mod_prepare_HPC(
   min_LF = NULL,
   max_LF = NULL,
   alphapw = list(Prior = NULL, Min = 20, Max = 1300, Samples = 150),
-  bio_variables = c("bio3", "bio4", "bio11", "bio18", "bio19", "npp"),
-  quadratic_variables = c(bio_variables, ifelse(soil_as_predictor, "soil", NULL),
-    ifelse(wetness_as_predictor, "wetness", NULL)),
   efforts_as_predictor = TRUE,
   road_rail_as_predictor = TRUE,
   habitat_as_predictor = TRUE,
   river_as_predictor = FALSE,
   soil_as_predictor = TRUE,
   wetness_as_predictor = TRUE,
+  bio_variables = c("bio3", "bio4", "bio11", "bio18", "bio19", "npp"),
+  quadratic_variables = c(bio_variables, ifelse(soil_as_predictor, "soil", NULL),
+    ifelse(wetness_as_predictor, "wetness", NULL)),
   n_species_per_grid = 0L,
   exclude_cultivated = TRUE,
   exclude_0_habitat = TRUE,
@@ -33,7 +33,6 @@ mod_prepare_HPC(
   CV_n_grids = 20L,
   CV_n_rows = 2L,
   CV_n_columns = 2L,
-  CV_plot = TRUE,
   CV_SAC = FALSE,
   CV_fit = list(CV_type = NULL, CV_fold = NULL, inherit_dir = NULL),
   use_phylo_tree = TRUE,
@@ -117,16 +116,6 @@ used. If \code{Prior} is a matrix, it will be used as the prior. If \code{Prior 
 and \code{Max} are the minimum and maximum values of the alpha parameter (in
 kilometre). \code{Samples} is the number of samples to be used in the prior.}
 
-\item{bio_variables}{Character vector. Variables from CHELSA (bioclimatic
-variables (bio1-bio19) and additional predictors (e.g., Net Primary
-Productivity, npp)) to be used in the model. By default, six ecologically
-relevant and minimally correlated variables are selected: \code{c("bio3", "bio4", "bio11", "bio18", "bio19", "npp")}.}
-
-\item{quadratic_variables}{Character vector for variables for which quadratic
-terms are used. Defaults to all variables of the \code{bio_variables} in
-addition to soil bulk density and topographic wetness index (if used). If
-\code{quadratic_variables} is \code{NULL}, no quadratic terms will be used.}
-
 \item{efforts_as_predictor}{Logical. Whether to include the
 (log\if{html}{\out{<sub>}}10\if{html}{\out{</sub>}}) sampling efforts as predictor to the model. Default:
 \code{TRUE}.}
@@ -151,6 +140,16 @@ depth of 15-30 cm as predictor to the model. Default: \code{TRUE}. See
 \item{wetness_as_predictor}{Logical. Whether to include topographic wetness
 index as predictor to the model. Default: \code{TRUE}. See
 \link{wetness_index_process}.}
+
+\item{bio_variables}{Character vector. Variables from CHELSA (bioclimatic
+variables (bio1-bio19) and additional predictors (e.g., Net Primary
+Productivity, npp)) to be used in the model. By default, six ecologically
+relevant and minimally correlated variables are selected: \code{c("bio3", "bio4", "bio11", "bio18", "bio19", "npp")}.}
+
+\item{quadratic_variables}{Character vector for variables for which quadratic
+terms are used. Defaults to all variables of the \code{bio_variables} in
+addition to soil bulk density and topographic wetness index (if used). If
+\code{quadratic_variables} is \code{NULL}, no quadratic terms will be used.}
 
 \item{n_species_per_grid}{Integer. Minimum number of species required for a
 grid cell to be included in the analysis. This filtering occurs after
@@ -177,9 +176,6 @@ many grid cells in both directions).}
 study area is divided into large blocks given the provided \code{CV_n_rows} and
 \code{CV_n_columns} values. Both default to 2 which means to split the study
 area into four large blocks at the median latitude and longitude.}
-
-\item{CV_plot}{Logical. Indicating whether to plot the block cross-validation
-folds.}
 
 \item{CV_SAC}{Logical. Whether to use the spatial autocorrelation to
 determine the block size. Defaults to \code{FALSE},}

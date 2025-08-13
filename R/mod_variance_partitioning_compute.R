@@ -59,11 +59,7 @@ variance_partitioning_compute <- function(
 
   x <- NULL
 
-  if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
-    ecokit::stop_ctx(
-      "n_cores must be a single positive integer.", n_cores = n_cores,
-      include_backtrace = TRUE)
-  }
+  n_cores <- .validate_n_cores(n_cores)
 
   # # .................................................................... ###
 

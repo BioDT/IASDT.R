@@ -13,8 +13,7 @@ mod_CV_prepare(
   CV_n_rows = 2L,
   CV_n_columns = 2L,
   CV_SAC = FALSE,
-  out_path = NULL,
-  CV_plot = TRUE
+  out_path = NULL
 )
 }
 \arguments{
@@ -46,9 +45,6 @@ determine the block size. Defaults to \code{FALSE},}
 
 \item{out_path}{Character. Path for directory to save the cross-validation
 results. This argument is mandatory and can not be empty.}
-
-\item{CV_plot}{Logical. Indicating whether to plot the block cross-validation
-folds.}
 }
 \value{
 The function returns a modified version of the input dataset with

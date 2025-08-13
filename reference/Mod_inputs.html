@@ -105,15 +105,15 @@ to disk as an <code>*.RData</code> file.</p>
 <span>  min_LF <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  max_LF <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  alphapw <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>Prior <span class="op">=</span> <span class="cn">NULL</span>, Min <span class="op">=</span> <span class="fl">20</span>, Max <span class="op">=</span> <span class="fl">1300</span>, Samples <span class="op">=</span> <span class="fl">150</span><span class="op">)</span>,</span>
-<span>  bio_variables <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bio3"</span>, <span class="st">"bio4"</span>, <span class="st">"bio11"</span>, <span class="st">"bio18"</span>, <span class="st">"bio19"</span>, <span class="st">"npp"</span><span class="op">)</span>,</span>
-<span>  quadratic_variables <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">bio_variables</span>, <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">soil_as_predictor</span>, <span class="st">"soil"</span>, <span class="cn">NULL</span><span class="op">)</span>,</span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">wetness_as_predictor</span>, <span class="st">"wetness"</span>, <span class="cn">NULL</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  efforts_as_predictor <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  road_rail_as_predictor <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  habitat_as_predictor <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  river_as_predictor <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  soil_as_predictor <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  wetness_as_predictor <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  bio_variables <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bio3"</span>, <span class="st">"bio4"</span>, <span class="st">"bio11"</span>, <span class="st">"bio18"</span>, <span class="st">"bio19"</span>, <span class="st">"npp"</span><span class="op">)</span>,</span>
+<span>  quadratic_variables <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">bio_variables</span>, <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">soil_as_predictor</span>, <span class="st">"soil"</span>, <span class="cn">NULL</span><span class="op">)</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">wetness_as_predictor</span>, <span class="st">"wetness"</span>, <span class="cn">NULL</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  n_species_per_grid <span class="op">=</span> <span class="fl">0L</span>,</span>
 <span>  exclude_cultivated <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  exclude_0_habitat <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -121,7 +121,6 @@ to disk as an <code>*.RData</code> file.</p>
 <span>  CV_n_grids <span class="op">=</span> <span class="fl">20L</span>,</span>
 <span>  CV_n_rows <span class="op">=</span> <span class="fl">2L</span>,</span>
 <span>  CV_n_columns <span class="op">=</span> <span class="fl">2L</span>,</span>
-<span>  CV_plot <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  CV_SAC <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  CV_fit <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>CV_type <span class="op">=</span> <span class="cn">NULL</span>, CV_fold <span class="op">=</span> <span class="cn">NULL</span>, inherit_dir <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span>,</span>
 <span>  use_phylo_tree <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -227,20 +226,6 @@ and <code>Max</code> are the minimum and maximum values of the alpha parameter (
 kilometre). <code>Samples</code> is the number of samples to be used in the prior.</p></dd>
 
 
-<dt id="arg-bio-variables">bio_variables<a class="anchor" aria-label="anchor" href="#arg-bio-variables"></a></dt>
-<dd><p>Character vector. Variables from CHELSA (bioclimatic
-variables (bio1-bio19) and additional predictors (e.g., Net Primary
-Productivity, npp)) to be used in the model. By default, six ecologically
-relevant and minimally correlated variables are selected: <code>c("bio3", "bio4", "bio11", "bio18", "bio19", "npp")</code>.</p></dd>
-
-
-<dt id="arg-quadratic-variables">quadratic_variables<a class="anchor" aria-label="anchor" href="#arg-quadratic-variables"></a></dt>
-<dd><p>Character vector for variables for which quadratic
-terms are used. Defaults to all variables of the <code>bio_variables</code> in
-addition to soil bulk density and topographic wetness index (if used). If
-<code>quadratic_variables</code> is <code>NULL</code>, no quadratic terms will be used.</p></dd>
-
-
 <dt id="arg-efforts-as-predictor">efforts_as_predictor<a class="anchor" aria-label="anchor" href="#arg-efforts-as-predictor"></a></dt>
 <dd><p>Logical. Whether to include the
 (log<sub>10</sub>) sampling efforts as predictor to the model. Default:
@@ -276,6 +261,20 @@ depth of 15-30 cm as predictor to the model. Default: <code>TRUE</code>. See
 <dd><p>Logical. Whether to include topographic wetness
 index as predictor to the model. Default: <code>TRUE</code>. See
 <a href="wetness_index_process.html">wetness_index_process</a>.</p></dd>
+
+
+<dt id="arg-bio-variables">bio_variables<a class="anchor" aria-label="anchor" href="#arg-bio-variables"></a></dt>
+<dd><p>Character vector. Variables from CHELSA (bioclimatic
+variables (bio1-bio19) and additional predictors (e.g., Net Primary
+Productivity, npp)) to be used in the model. By default, six ecologically
+relevant and minimally correlated variables are selected: <code>c("bio3", "bio4", "bio11", "bio18", "bio19", "npp")</code>.</p></dd>
+
+
+<dt id="arg-quadratic-variables">quadratic_variables<a class="anchor" aria-label="anchor" href="#arg-quadratic-variables"></a></dt>
+<dd><p>Character vector for variables for which quadratic
+terms are used. Defaults to all variables of the <code>bio_variables</code> in
+addition to soil bulk density and topographic wetness index (if used). If
+<code>quadratic_variables</code> is <code>NULL</code>, no quadratic terms will be used.</p></dd>
 
 
 <dt id="arg-n-species-per-grid">n_species_per_grid<a class="anchor" aria-label="anchor" href="#arg-n-species-per-grid"></a></dt>
@@ -314,11 +313,6 @@ many grid cells in both directions).</p></dd>
 study area is divided into large blocks given the provided <code>CV_n_rows</code> and
 <code>CV_n_columns</code> values. Both default to 2 which means to split the study
 area into four large blocks at the median latitude and longitude.</p></dd>
-
-
-<dt id="arg-cv-plot">CV_plot<a class="anchor" aria-label="anchor" href="#arg-cv-plot"></a></dt>
-<dd><p>Logical. Indicating whether to plot the block cross-validation
-folds.</p></dd>
 
 
 <dt id="arg-cv-sac">CV_SAC<a class="anchor" aria-label="anchor" href="#arg-cv-sac"></a></dt>

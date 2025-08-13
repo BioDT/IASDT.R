@@ -29,16 +29,14 @@
 #'   point. The knots are generated using the [prepare_knots] function, and this
 #'   value is used for both `knotDist` and `minKnotDist` in
 #'   [Hmsc::constructKnots].
-#' @param GPP_save Logical. Whether `RData` file. Default: `TRUE`.
-#' @param GPP_plot Logical. Whether to plot the coordinates of the sampling
-#'   units and the knots in a pdf file. Default: `TRUE`.
 #' @param bio_variables Character vector. Variables from CHELSA (bioclimatic
 #'   variables (bio1-bio19) and additional predictors (e.g., Net Primary
 #'   Productivity, npp)) to be used in the model. By default, six ecologically
-#'   relevant and minimally correlated variables are selected: c("bio3", "bio4",
-#'   "bio11", "bio18", "bio19", "npp").
+#'   relevant and minimally correlated variables are selected: `c("bio3",
+#'   "bio4", "bio11", "bio18", "bio19", "npp")`.
 #' @param quadratic_variables Character vector for variables for which quadratic
-#'   terms are used. Defaults to all variables of the `bio_variables`. If
+#'   terms are used. Defaults to all variables of the `bio_variables` in
+#'   addition to soil bulk density and topographic wetness index (if used). If
 #'   `quadratic_variables` is `NULL`, no quadratic terms will be used.
 #' @param efforts_as_predictor Logical. Whether to include the
 #'   (log<sub>10</sub>) sampling efforts as predictor to the model. Default:
@@ -52,7 +50,13 @@
 #'   not equals to `0`.
 #' @param river_as_predictor Logical. Whether to include the (log<sub>10</sub>)
 #'   total length of rivers per grid cell as predictor to the model. Default:
-#'   `TRUE`. See [river_length] for more details.
+#'   `FALSE`. See [river_length] for more details.
+#' @param soil_as_predictor Logical. Whether to include soil bulk density at
+#'   depth of 15-30 cm as predictor to the model. Default: `TRUE`. See
+#'   [soil_density_process].
+#' @param wetness_as_predictor Logical. Whether to include topographic wetness
+#'   index as predictor to the model. Default: `TRUE`. See
+#'   [wetness_index_process].
 #' @param n_species_per_grid Integer. Minimum number of species required for a
 #'   grid cell to be included in the analysis. This filtering occurs after
 #'   applying `min_efforts_n_species` (sampling effort thresholds),
@@ -60,6 +64,20 @@
 #'   `exclude_0_habitat` (exclude 0% habitat coverage). Default (0): Includes
 #'   all grid cells. Positive value (>0): Includes only grid cells where at
 #'   least `n_species_per_grid` species are present.
+#' @param CV_fit A list with three elements determining if the current model is
+#'   for a specific cross-validation fold or for full dataset.
+#'   - `CV_type` (character): the type of cross-validation to use. Valid
+#'   options are "CV_Dist", "CV_Large", and "CV_SAC". Default: `NULL`, which
+#'   means fit models on the full dataset. This can not be `NULL` if `CV_fold`
+#'   is provided.
+#'  - `CV_fold` (integer): the ID of the cross-validation fold to fit.
+#'   For example, `CV_Fold = 4` means use the fourth fold for testing. Default:
+#'   `NULL` which means no cross-validation is performed. This can not be `NULL`
+#'   if `CV_type` is provided.
+#'   - `inherit_dir` (character): the name of the directory (without its
+#'   parents) to inherit (copy) species and cross-validation data from. Defaults
+#'   to `NULL`, which means that a data on species and cross-validation will be
+#'   calculated.
 #' @param use_phylo_tree,no_phylo_tree Logical. Whether to fit models with
 #'   (use_phylo_tree) or without (no_phylo_tree) phylogenetic trees. Defaults
 #'   are `use_phylo_tree = TRUE` and `no_phylo_tree = FALSE`, meaning only
@@ -114,9 +132,8 @@
 #'   saving to RDS file. Default: `FALSE`.
 #' @param check_python Logical. Whether to check if the Python executable
 #'   exists.
-#' @param precision Integer (either 32 or 64). Defines the floating-point
-#'   precision mode for `Hmsc-HPC` sampling (--fp 32 or --fp 64). The default is
-#'   64, which is the default precision in `Hmsc-HPC`.
+#' @param precision Integer. Must be either 32 or 64 (default). Defines the
+#'  floating-point precision mode for `Hmsc-HPC` sampling (--fp 32 or --fp 64).
 #' @param hab_abb Character. Abbreviation for the habitat type (based on
 #'   [SynHab](https://www.preslia.cz/article/pdf?id=11548)) for which to prepare
 #'   data. Valid values are `0`, `1`, `2`, `3`, `4a`, `4b`, `10`, `12a`, `12b`.
@@ -161,23 +178,29 @@
 mod_prepare_HPC <- function(
     hab_abb = NULL, directory_name = NULL,
     min_efforts_n_species = 100L, n_pres_per_species = 80L, env_file = ".env",
-    GPP = TRUE, GPP_dists = NULL, GPP_save = TRUE,
-    GPP_plot = TRUE, min_LF = NULL, max_LF = NULL,
-    alphapw = list(Prior = NULL, Min = 20, Max = 1200, Samples = 200),
+    GPP = TRUE, GPP_dists = NULL, min_LF = NULL, max_LF = NULL,
+    alphapw = list(Prior = NULL, Min = 20, Max = 1300, Samples = 150),
     bio_variables = c("bio3", "bio4", "bio11", "bio18", "bio19", "npp"),
-    quadratic_variables = bio_variables, efforts_as_predictor = TRUE,
-    road_rail_as_predictor = TRUE, habitat_as_predictor = TRUE,
-    river_as_predictor = TRUE, n_species_per_grid = 0L,
-    exclude_cultivated = TRUE, exclude_0_habitat = TRUE,
-    CV_n_folds = 4L, CV_n_grids = 20L, CV_n_rows = 2L, CV_n_columns = 2L,
-    CV_plot = TRUE, CV_SAC = FALSE, use_phylo_tree = TRUE,
-    no_phylo_tree = FALSE, overwrite_rds = TRUE, n_cores = 8L,
-    strategy = "multisession", MCMC_n_chains = 4L, MCMC_thin = NULL,
-    MCMC_samples = 1000L, MCMC_transient_factor = 500L, MCMC_verbose = 200L,
-    skip_fitted = TRUE, n_array_jobs = 210L, model_country = NULL,
-    verbose_progress = TRUE, SLURM_prepare = TRUE, memory_per_cpu = "64G",
-    job_runtime = NULL, job_name = NULL, path_Hmsc = NULL,
-    check_python = FALSE, to_JSON = FALSE, precision = 64L, ...) {
+    quadratic_variables = c(
+      bio_variables,
+      ifelse(soil_as_predictor, "soil", NULL),
+      ifelse(wetness_as_predictor, "wetness", NULL)),
+    efforts_as_predictor = TRUE, road_rail_as_predictor = TRUE,
+    habitat_as_predictor = TRUE, river_as_predictor = FALSE,
+    soil_as_predictor = TRUE, wetness_as_predictor = TRUE,
+    n_species_per_grid = 0L, exclude_cultivated = TRUE,
+    exclude_0_habitat = TRUE, CV_n_folds = 4L, CV_n_grids = 20L,
+    CV_n_rows = 2L, CV_n_columns = 2L, CV_plot = TRUE,
+    CV_SAC = FALSE,
+    CV_fit = list(CV_type = NULL, CV_fold = NULL, inherit_dir = NULL),
+    use_phylo_tree = TRUE, no_phylo_tree = FALSE, overwrite_rds = TRUE,
+    n_cores = 8L, strategy = "multisession", MCMC_n_chains = 4L,
+    MCMC_thin = NULL, MCMC_samples = 1000L, MCMC_transient_factor = 500L,
+    MCMC_verbose = 200L, skip_fitted = TRUE, n_array_jobs = 210L,
+    model_country = NULL, verbose_progress = TRUE, SLURM_prepare = TRUE,
+    memory_per_cpu = "64G", job_runtime = NULL, job_name = NULL,
+    path_Hmsc = NULL, check_python = FALSE, to_JSON = FALSE, precision = 64L,
+    ...) {
 
   # # ..................................................................... ###
 
@@ -187,29 +210,6 @@ mod_prepare_HPC <- function(
 
   .start_time <- lubridate::now(tzone = "CET")
 
-  if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
-    ecokit::stop_ctx(
-      "n_cores must be a single positive integer.", n_cores = n_cores,
-      include_backtrace = TRUE)
-  }
-
-  if (!is.character(strategy)) {
-    ecokit::stop_ctx(
-      "`strategy` must be a character vector",
-      strategy = strategy, class_strategy = class(strategy))
-  }
-  if (strategy == "sequential") {
-    n_cores <- 1L
-  }
-  if (length(strategy) != 1L) {
-    ecokit::stop_ctx(
-      "`strategy` must be a character vector of length 1",
-      strategy = strategy, length_strategy = length(strategy))
-  }
-  valid_strategy <- c("sequential", "multisession", "multicore", "cluster")
-  if (!strategy %in% valid_strategy) {
-    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
-  }
 
   CheckNULL <- c(
     "directory_name", "n_pres_per_species", "MCMC_thin", "MCMC_samples",
@@ -233,8 +233,10 @@ mod_prepare_HPC <- function(
       include_backtrace = TRUE)
   }
 
-  hab_abb <- as.character(hab_abb)
-
+  hab_abb <- .validate_hab_abb(as.character(hab_abb))
+  strategy <- .validate_strategy(strategy)
+  if (strategy == "sequential") n_cores <- 1L
+  n_cores <- .validate_n_cores(n_cores)
 
   if (!all(is.numeric(MCMC_samples)) || any(MCMC_samples <= 0)) {
     ecokit::stop_ctx(
@@ -310,8 +312,101 @@ mod_prepare_HPC <- function(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
+
+  # Validate structure of CV_fit list argument
+  if (!inherits(CV_fit, "list") || length(CV_fit) != 3 ||
+      !setequal(names(CV_fit), c("CV_type", "CV_fold", "inherit_dir"))) {
+    ecokit::stop_ctx(
+      paste0(
+        "`CV_fit` must be a list with exactly three elements: ",
+        "`CV_type`, `CV_fold`, and `inherit_dir` (no more, no less)"),
+      CV_fit = CV_fit, include_backtrace = TRUE)
+  }
+
+  CV_fit_type <- CV_fit$CV_type
+  CV_fit_fold <- CV_fit$CV_fold
+  CV_fit_inherit <- CV_fit$inherit_dir
+
+  if (!is.null(CV_fit_inherit)) {
+    # Validate inherited cross-validation directory name
+    if (length(CV_fit_inherit) != 1 || !is.character(CV_fit_inherit) ||
+        !nzchar(CV_fit_inherit)) {
+      ecokit::stop_ctx(
+        "Directory to inherit data from must be a non-empty character string",
+        CV_fit = CV_fit, include_backtrace = TRUE)
+    }
+
+    # Validate inherited cross-validation directory
+    CV_fit_inherit <- fs::path(path_model, CV_fit_inherit)
+    if (!fs::dir_exists(CV_fit_inherit)) {
+      ecokit::stop_ctx(
+        "Directory to inherit data from does not exist",
+        CV_fit = CV_fit, include_backtrace = TRUE)
+    }
+
+    # Validate files existence in the inherited directory
+    files_to_check <- fs::path(
+      CV_fit_inherit, c("ModDT.RData", "CV_data.RData"))
+    purrr::walk(
+      files_to_check,
+      ~ {
+        if (!ecokit::check_data(.x, warning = FALSE)) {
+          list_rdata <- list.files(CV_fit_inherit, pattern = "RData$")
+          ecokit::stop_ctx(
+            paste0("File does not exist in the inherited directory: ", .x),
+            CV_fit = CV_fit, rdata_files = list_rdata, include_backtrace = TRUE)
+        }
+      })
+  }
+
+  # CV_fit_type and CV_fit_fold must be consistent
+  if (
+    (is.null(CV_fit_type) && !is.null(CV_fit_fold)) ||
+    (!is.null(CV_fit_type) && is.null(CV_fit_fold))) {
+    missing_val <- dplyr::if_else(
+      is.null(CV_fit_type), "`CV_fit$CV_type`", "`CV_fit$CV_fold`")
+    present_val <- dplyr::if_else(
+      !is.null(CV_fit_type), "`CV_fit$CV_type`", "`CV_fit$CV_fold`")
+    ecokit::stop_ctx(
+      paste0(
+        "Both `CV_fit$CV_type` and `CV_fit$CV_fold` must be either NULL ",
+        "(both) or both non-NULL. Currently, ", missing_val,
+        " is missing and ", present_val, " is provided."),
+      CV_fit = CV_fit, include_backtrace = TRUE)
+  }
+
+  # Validate CV_fit_type and CV_fit_fold
+  if (!is.null(CV_fit_type) && !is.null(CV_fit_fold)) {
+    valid_cv_types <- c("CV_Dist", "CV_Large", "CV_SAC")
+    if (length(CV_fit_type) != 1L || !is.character(CV_fit_type) ||
+        !nzchar(CV_fit_type)) {
+      ecokit::stop_ctx(
+        "`CV_fit_type` must be a single character string",
+        CV_fit = CV_fit, include_backtrace = TRUE)
+    }
+
+    if (!CV_fit_type %in% valid_cv_types) {
+      ecokit::stop_ctx(
+        "Invalid `CV_fit_type` value",
+        CV_fit = CV_fit, valid_cv_types = valid_cv_types,
+        include_backtrace = TRUE)
+    }
+
+    if (is.null(CV_fit_fold) || !is.numeric(CV_fit_fold) ||
+        length(CV_fit_fold) != 1L || CV_fit_fold < 1L) {
+      ecokit::stop_ctx(
+        "`CV_fit_fold` must be a single positive integer",
+        CV_fit = CV_fit, include_backtrace = TRUE)
+    }
+
+    # Flag for filtering data based on this cross-validation
+    filter_CV_data <- TRUE
+  } else {
+    filter_CV_data <- FALSE
+  }
+
   path_model <- fs::path(path_model, directory_name)
-  if (fs::dir_exists(path_model)) {
+  if (fs::dir_exists(path_model) && length(fs::dir_ls(path_model)) > 0) {
     ecokit::stop_ctx(
       "Model directory already exists", path_model = path_model,
       include_backtrace = TRUE)
@@ -356,11 +451,12 @@ mod_prepare_HPC <- function(
     args_all = AllArgs, args_to_check = CharArgs, args_type = "character")
 
   LogicArgs <- c(
-    "GPP_save", "GPP_plot", "use_phylo_tree", "no_phylo_tree",
+    "use_phylo_tree", "no_phylo_tree",
     "exclude_0_habitat", "skip_fitted", "verbose_progress", "to_JSON",
     "CV_SAC", "check_python", "overwrite_rds", "SLURM_prepare",
     "exclude_cultivated", "GPP", "efforts_as_predictor",
-    "road_rail_as_predictor", "habitat_as_predictor", "river_as_predictor")
+    "road_rail_as_predictor", "habitat_as_predictor", "river_as_predictor",
+    "soil_as_predictor", "wetness_as_predictor")
   ecokit::check_args(
     args_all = AllArgs, args_to_check = LogicArgs, args_type = "logical")
 
@@ -451,19 +547,13 @@ mod_prepare_HPC <- function(
 
   XVars <- bio_variables
 
-  if (efforts_as_predictor) {
-    XVars <- c(XVars, "EffortsLog")
-  }
-  if (road_rail_as_predictor) {
-    XVars <- c(XVars, "RoadRailLog")
-  }
-  if (river_as_predictor) {
-    XVars <- c(XVars, "RiversLog")
-  }
+  if (efforts_as_predictor) XVars <- c(XVars, "EffortsLog")
+  if (road_rail_as_predictor) XVars <- c(XVars, "RoadRailLog")
+  if (river_as_predictor) XVars <- c(XVars, "RiversLog")
+  if (soil_as_predictor) XVars <- c(XVars, "soil")
+  if (wetness_as_predictor) XVars <- c(XVars, "wetness")
 
-  if (hab_abb != "0" && habitat_as_predictor) {
-    XVars <- c(XVars, "HabLog")
-  }
+  if (hab_abb != "0" && habitat_as_predictor) XVars <- c(XVars, "HabLog")
 
   # # ..................................................................... ###
 
@@ -472,14 +562,6 @@ mod_prepare_HPC <- function(
   # # |||||||||||||||||||||||||||||||||||
 
   ecokit::cat_time("Preparing input data", verbose = verbose_progress)
-  ValidHabAbbs <- c(0:3, "4a", "4b", 10, "12a", "12b")
-  if (isFALSE(as.character(hab_abb) %in% ValidHabAbbs)) {
-    ecokit::stop_ctx(
-      paste0(
-        "`hab_abb` has to be one of the following:\n >> ",
-        paste(ValidHabAbbs, collapse = " | ")),
-      hab_abb = hab_abb, include_backtrace = TRUE)
-  }
 
   HabVal <- c(
     "0_All", "1_Forests", "2_Open_forests", "3_Scrub",
@@ -487,21 +569,36 @@ mod_prepare_HPC <- function(
     "10_Wetland", "12a_Ruderal_habitats", "12b_Agricultural_habitats") %>%
     stringr::str_subset(paste0("^", as.character(hab_abb), "_"))
 
-  ecokit::info_chunk(
-    "Preparing input data using IASDT.R::mod_prepare_data",
-    verbose = verbose_progress)
 
-  DT_All <- IASDT.R::mod_prepare_data(
-    hab_abb = hab_abb, directory_name = directory_name,
-    min_efforts_n_species = min_efforts_n_species,
-    exclude_cultivated = exclude_cultivated,
-    exclude_0_habitat = exclude_0_habitat,
-    n_pres_per_species = n_pres_per_species,
-    env_file = env_file, verbose_progress = verbose_progress)
+  if (is.null(CV_fit_inherit)) {
 
-  ecokit::cat_sep(
-    n_separators = 1L, sep_lines_before = 1L, sep_lines_after = 2L,
-    verbose = verbose_progress)
+    ecokit::info_chunk(
+      "Preparing input data using IASDT.R::mod_prepare_data",
+      verbose = verbose_progress, line_char_rep = 65)
+
+    DT_All <- IASDT.R::mod_prepare_data(
+      hab_abb = hab_abb, directory_name = directory_name,
+      min_efforts_n_species = min_efforts_n_species,
+      exclude_cultivated = exclude_cultivated,
+      exclude_0_habitat = exclude_0_habitat,
+      n_pres_per_species = n_pres_per_species,
+      env_file = env_file, verbose_progress = verbose_progress)
+
+    ecokit::cat_sep(
+      n_separators = 1L, sep_lines_before = 1L, sep_lines_after = 2L,
+      verbose = verbose_progress)
+
+  } else {
+
+    ecokit::cat_time("Loading input data", verbose = verbose_progress)
+    DT_All <- ecokit::load_as(fs::path(CV_fit_inherit, "ModDT.RData"))
+
+    # copy ModDT.RData
+    fs::file_copy(
+      fs::path(CV_fit_inherit, "ModDT.RData"),
+      fs::path(path_model, "ModDT.RData"), overwrite = TRUE)
+
+  }
 
   # # ..................................................................... ###
 
@@ -558,8 +655,7 @@ mod_prepare_HPC <- function(
       dplyr::select("x", "y", "NSp") %>%
       sf::st_as_sf(coords = c("x", "y"), crs = 3035) %>%
       terra::rasterize(
-        y = terra::unwrap(ecokit::load_as(Path_GridR)),
-        field = "NSp") %>%
+        y = ecokit::load_as(Path_GridR, unwrap_r = TRUE), field = "NSp") %>%
       terra::trim()
 
     if (hab_abb == "0") {
@@ -683,13 +779,57 @@ mod_prepare_HPC <- function(
   # # Cross-validation ----
   # # |||||||||||||||||||||||||||||||||||
 
-  ecokit::cat_time("Prepare cross-validation folds", verbose = verbose_progress)
+  if (is.null(CV_fit_inherit)) {
 
-  DT_All <- IASDT.R::mod_CV_prepare(
-    input_data = DT_All, env_file = env_file, x_vars = XVars,
-    CV_n_folds = CV_n_folds, CV_n_grids = CV_n_grids, CV_n_rows = CV_n_rows,
-    CV_n_columns = CV_n_columns, out_path = path_model, CV_plot = CV_plot,
-    CV_SAC = CV_SAC)
+    ecokit::cat_time(
+      "Prepare cross-validation folds", verbose = verbose_progress)
+
+    DT_All <- IASDT.R::mod_CV_prepare(
+      input_data = DT_All, env_file = env_file, x_vars = XVars,
+      CV_n_folds = CV_n_folds, CV_n_grids = CV_n_grids, CV_n_rows = CV_n_rows,
+      CV_n_columns = CV_n_columns, out_path = path_model, CV_plot = CV_plot,
+      CV_SAC = CV_SAC)
+
+  } else {
+
+    ecokit::cat_time(
+      "Loading cross-validation data", verbose = verbose_progress)
+    CV_data <- ecokit::load_as(fs::path(CV_fit_inherit, "CV_data.RData"))
+
+    # copy CV_Blocks.pdf and CV_data.RData files
+    fs::file_copy(
+      fs::path(CV_fit_inherit, "CV_Blocks.pdf"),
+      fs::path(path_model, "CV_Blocks.pdf"), overwrite = TRUE)
+    fs::file_copy(
+      fs::path(CV_fit_inherit, "CV_data.RData"),
+      fs::path(path_model, "CV_data.RData"), overwrite = TRUE)
+
+    # Add cross-validation information
+    if (!is.null(CV_data$CV_SAC)) {
+      DT_All$CV_SAC <- magrittr::extract2(CV_data$CV_SAC, "folds_ids")
+    }
+
+    DT_All$CV_Dist <- magrittr::extract2(CV_data$CV_Dist, "folds_ids")
+    DT_All$CV_Large <- magrittr::extract2(CV_data$CV_Large, "folds_ids")
+
+  }
+
+  # Filter data if CV info is provided
+  if (filter_CV_data) {
+    ecokit::cat_time(
+      paste0(
+        "Filtering data for testing cross-validation fold: ",
+        CV_fit_type, " -- ", CV_fit_fold),
+      verbose = verbose_progress)
+
+    DT_All <- dplyr::filter(DT_All, !!rlang::sym(CV_fit_type) != CV_fit_fold)
+
+  } else {
+
+    ecokit::cat_time(
+      "No cross-validation filtering was made", verbose = verbose_progress)
+
+  }
 
   # cross-validation data to be saved
   DT_CV <- DT_All %>%
@@ -709,23 +849,34 @@ mod_prepare_HPC <- function(
     paste0(ncol(DT_y), " species"), level = 1L, cat_timestamp = FALSE,
     verbose = verbose_progress)
 
-  ecokit::cat_time(
-    "Save species summary", level = 1L, cat_timestamp = FALSE,
-    verbose = verbose_progress)
-  SpSummary <- fs::path(Path_PA, "Sp_PA_Summary_DF.RData")
-  if (!file.exists(SpSummary)) {
-    ecokit::stop_ctx(
-      "SpSummary file does not exist", SpSummary = SpSummary,
-      include_backtrace = TRUE)
-  }
-  SpSummary <- ecokit::load_as(SpSummary) %>%
-    dplyr::arrange(IAS_ID) %>%
-    dplyr::mutate(
-      IAS_ID = stringr::str_pad(IAS_ID, pad = "0", width = 4),
-      IAS_ID = paste0("Sp_", IAS_ID)) %>%
-    dplyr::filter(IAS_ID %in% names(DT_y))
+  # Prepare species info summary only if no inherited directory is used
 
-  save(SpSummary, file = fs::path(path_model, "SpSummary.RData"))
+  if (is.null(CV_fit_inherit)) {
+    ecokit::cat_time(
+      "Save species summary", level = 1L, cat_timestamp = FALSE,
+      verbose = verbose_progress)
+    SpSummary <- fs::path(Path_PA, "Sp_PA_Summary_DF.RData")
+    if (!file.exists(SpSummary)) {
+      ecokit::stop_ctx(
+        "SpSummary file does not exist", SpSummary = SpSummary,
+        include_backtrace = TRUE)
+    }
+    SpSummary <- ecokit::load_as(SpSummary) %>%
+      dplyr::arrange(IAS_ID) %>%
+      dplyr::mutate(
+        IAS_ID = stringr::str_pad(IAS_ID, pad = "0", width = 4),
+        IAS_ID = paste0("Sp_", IAS_ID)) %>%
+      dplyr::filter(IAS_ID %in% names(DT_y))
+
+    save(SpSummary, file = fs::path(path_model, "SpSummary.RData"))
+
+  } else {
+
+    fs::file_copy(
+      fs::path(CV_fit_inherit, "SpSummary.RData"),
+      fs::path(path_model, "SpSummary.RData"), overwrite = TRUE)
+
+  }
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -745,7 +896,7 @@ mod_prepare_HPC <- function(
       paste0(
         "Models will be fitted using ", length(XVars), " predictors: ",
         paste(XVars, collapse = " + ")), level = 1L,
-        cat_timestamp = FALSE, verbose = verbose_progress)
+      cat_timestamp = FALSE, verbose = verbose_progress)
   } else {
     OnlyLinear <- setdiff(XVars, quadratic_variables)
     FormVars <- c(
@@ -769,7 +920,6 @@ mod_prepare_HPC <- function(
     ecokit::cat_time(
       paste(quadratic_variables, collapse = " + "),
       level = 3L, cat_timestamp = FALSE, verbose = verbose_progress)
-
   }
 
   Form_x <- stringr::str_c(FormVars, collapse = " + ") %>%
@@ -866,86 +1016,82 @@ mod_prepare_HPC <- function(
 
       GPP_Knots <- purrr::map(
         .x = GPP_dists * 1000,
-        .f = ~IASDT.R::prepare_knots(
+        .f = ~ IASDT.R::prepare_knots(
           coordinates = DT_xy, min_distance = .x, min_LF = min_LF,
           max_LF = max_LF, alphapw = alphapw)) %>%
         stats::setNames(paste0("GPP_", GPP_dists))
     }
 
-
     ## Plotting knot location ----
-    if (GPP_plot) {
-      ecokit::cat_time(
-        "Plotting GPP knots", level = 1L, verbose = verbose_progress)
+    ecokit::cat_time(
+      "Plotting GPP knots", level = 1L, verbose = verbose_progress)
 
-      GridR <- terra::unwrap(ecokit::load_as(Path_GridR))
+    GridR <- ecokit::load_as(Path_GridR, unwrap_r = TRUE)
 
-      GridR <- sf::st_as_sf(
-        x = data.frame(DT_xy), coords = c("x", "y"), crs = 3035) %>%
-        terra::rasterize(GridR) %>%
-        terra::as.factor() %>%
-        stats::setNames("GridR")
+    GridR <- sf::st_as_sf(
+      x = data.frame(DT_xy), coords = c("x", "y"), crs = 3035) %>%
+      terra::rasterize(GridR) %>%
+      terra::as.factor() %>%
+      stats::setNames("GridR")
 
-      EU_Bound <- ecokit::load_as(EU_Bound) %>%
-        magrittr::extract2("Bound_sf_Eur_s") %>%
-        magrittr::extract2("L_03") %>%
-        suppressWarnings()
+    EU_Bound <- ecokit::load_as(EU_Bound) %>%
+      magrittr::extract2("Bound_sf_Eur_s") %>%
+      magrittr::extract2("L_03") %>%
+      suppressWarnings()
 
-      Knots_Plots <- purrr::map(
-        .x = GPP_dists,
-        .f = ~{
+    Knots_Plots <- purrr::map(
+      .x = GPP_dists,
+      .f = ~{
 
-          Knot_sf <- GPP_Knots[[paste0("GPP_", .x)]]$sKnot %>%
-            sf::st_as_sf(coords = c("Var1", "Var2"), crs = 3035)
+        Knot_sf <- GPP_Knots[[paste0("GPP_", .x)]]$sKnot %>%
+          sf::st_as_sf(coords = c("Var1", "Var2"), crs = 3035)
 
-          NKnots <- nrow(GPP_Knots[[paste0("GPP_", .x)]]$sKnot) %>%
-            formatC(format = "d", big.mark = ",")
+        NKnots <- nrow(GPP_Knots[[paste0("GPP_", .x)]]$sKnot) %>%
+          formatC(format = "d", big.mark = ",")
 
-          Plot <- ggplot2::ggplot() +
-            ggplot2::geom_sf(
-              data = EU_Bound, fill = "gray95", colour = "darkgrey",
-              linewidth = 0.4) +
-            tidyterra::geom_spatraster(data = GridR) +
-            ggplot2::scale_fill_manual(
-              values = "grey50", na.value = "transparent") +
-            ggplot2::geom_sf(
-              data = Knot_sf, colour = "blue", shape = 4,
-              size = 2.5, stroke = 2) +
-            ggplot2::scale_x_continuous(expand = c(0, 0)) +
-            ggplot2::scale_y_continuous(expand = c(0, 0)) +
-            ggplot2::coord_sf(
-              xlim = c(2600000, 6570000), ylim = c(1360000, 5480000)) +
-            ggplot2::labs(
-              title = "GPP knots",
-              subtitle = paste0(
-                "Minimum distance between knots and between knots and grid ",
-                "cells is ", .x, " km (", NKnots, " knots)")) +
-            ggplot2::theme_void() +
-            ggplot2::theme(
-              plot.margin = ggplot2::margin(0, 0, 0, 0, "cm"),
-              plot.title = ggplot2::element_text(
-                size = 20, face = "bold", color = "blue",
-                margin = ggplot2::margin(0.1, 0, 0.125, 0.5, "cm")),
-              plot.subtitle = ggplot2::element_text(
-                size = 15, color = "darkgrey",
-                margin = ggplot2::margin(0.125, 0, 0.125, 0.5, "cm")),
-              legend.position = "none")
+        Plot <- ggplot2::ggplot() +
+          ggplot2::geom_sf(
+            data = EU_Bound, fill = "gray95", colour = "darkgrey",
+            linewidth = 0.4) +
+          tidyterra::geom_spatraster(data = GridR) +
+          ggplot2::scale_fill_manual(
+            values = "grey50", na.value = "transparent") +
+          ggplot2::geom_sf(
+            data = Knot_sf, colour = "blue", shape = 4,
+            size = 2.5, stroke = 2) +
+          ggplot2::scale_x_continuous(expand = c(0, 0)) +
+          ggplot2::scale_y_continuous(expand = c(0, 0)) +
+          ggplot2::coord_sf(
+            xlim = c(2600000, 6570000), ylim = c(1360000, 5480000)) +
+          ggplot2::labs(
+            title = "GPP knots",
+            subtitle = paste0(
+              "Minimum distance between knots and between knots and grid ",
+              "cells is ", .x, " km (", NKnots, " knots)")) +
+          ggplot2::theme_void() +
+          ggplot2::theme(
+            plot.margin = ggplot2::margin(0, 0, 0, 0, "cm"),
+            plot.title = ggplot2::element_text(
+              size = 20, face = "bold", color = "blue",
+              margin = ggplot2::margin(0.1, 0, 0.125, 0.5, "cm")),
+            plot.subtitle = ggplot2::element_text(
+              size = 15, color = "darkgrey",
+              margin = ggplot2::margin(0.125, 0, 0.125, 0.5, "cm")),
+            legend.position = "none")
 
-          return(Plot)
-        })
+        return(Plot)
+      })
 
-      grDevices::cairo_pdf(
-        filename = fs::path(path_model, "knot_Locations.pdf"),
-        width = 12, height = 13.25, onefile = TRUE)
-      invisible(purrr::map(Knots_Plots, print))
-      grDevices::dev.off()
-    }
+    grDevices::cairo_pdf(
+      filename = fs::path(path_model, "knot_Locations.pdf"),
+      width = 12, height = 13.25, onefile = TRUE)
+    invisible(purrr::map(Knots_Plots, print))
+    grDevices::dev.off()
 
-    if (GPP_save) {
-      ecokit::cat_time(
-        "Saving GPP knots data", level = 1L, verbose = verbose_progress)
-      save(GPP_Knots, file = fs::path(path_model, "GPP_Knots.RData"))
-    }
+    ecokit::cat_time(
+      "Saving GPP knots data", level = 1L, verbose = verbose_progress)
+    save(GPP_Knots, file = fs::path(path_model, "GPP_Knots.RData"))
+
   } else {
 
     ecokit::cat_time(
@@ -1416,117 +1562,121 @@ mod_prepare_HPC <- function(
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  # Save PA maps to disk
-  ecokit::cat_time("Save PA maps to disk", verbose = verbose_progress)
+  # Save PA maps to disk ------
 
-  # Mask layer for grid cells used in the models
-  Model_Mask <- ecokit::load_as(Path_GridR) %>%      # nolint: object_name_linter
-    terra::unwrap() %>%
-    terra::rasterize(DT_xy, .)
-  # Whether to use masked (exclude_cultivated) or full PA
-  PA_Layer <- dplyr::if_else(exclude_cultivated, "PA_Masked", "PA")      # nolint: object_name_linter
+  if (is.null(CV_fit_inherit) && (is.null(CV_fit_fold) || CV_fit_fold == 1)) {
 
-  ecokit::cat_time(
-    "Processing and exporting maps as tif files", level = 1L,
-    verbose = verbose_progress)
-  Mod_PA <- SpSummary %>%
-    # Select only species name and ID
-    dplyr::select(ias_id = IAS_ID, Species_File) %>%
-    dplyr::mutate(
-      # Path storing PA maps as raster files
-      File = fs::path(Path_PA, "PA_RData", paste0(Species_File, "_PA.RData")),
-      Map_Sp = purrr::map2(
-        .x = File, .y = ias_id,
-        .f = ~ {
-          # Path for storing PA map - full EU extent
-          PA_file <- fs::path(Path_Dist, paste0(.y, "_full.tif"))
-          # Load PA map
-          PA <- ecokit::load_as(.x) %>%
-            terra::unwrap() %>%
-            magrittr::extract2(PA_Layer)
-          # Save PA map
-          terra::writeRaster(PA, PA_file, overwrite = TRUE)
+    ecokit::cat_time("Save PA maps to disk", verbose = verbose_progress)
 
-          # Path for storing PA map - only in modelling grid cells
-          PA_model_file <- fs::path(Path_Dist, paste0(.y, "_model.tif"))
-          # mask PA map to modelling grid cells
-          PA_model <- terra::mask(PA, Model_Mask)
-          # Save masked PA map
-          terra::writeRaster(PA_model, PA_model_file, overwrite = TRUE)
+    # Mask layer for grid cells used in the models
+    Model_Mask <- ecokit::load_as(Path_GridR, unwrap_r = TRUE) %>% # nolint: object_name_linter
+      terra::rasterize(DT_xy, .)
+    # Whether to use masked (exclude_cultivated) or full PA
+    PA_Layer <- dplyr::if_else(exclude_cultivated, "PA_Masked", "PA")      # nolint: object_name_linter
 
-          tibble::tibble(
-            PA = list(terra::wrap(PA)),
-            PA_file = PA_file,
-            PA_model = list(terra::wrap(PA_model)),
-            PA_model_file = PA_model_file)
-        })) %>%
-    tidyr::unnest(cols = "Map_Sp") %>%
-    dplyr::select(-Species_File, -File)
+    ecokit::cat_time(
+      "Processing and exporting maps as tif files", level = 1L,
+      verbose = verbose_progress)
 
-  ecokit::cat_time(
-    "Calculate species richness - full", level = 1L, verbose = verbose_progress)
-  SR_file <- fs::path(Path_Dist, "SR_full.tif")
-  SR <- purrr::map(Mod_PA$PA, terra::unwrap) %>%
-    terra::rast() %>%
-    sum(na.rm = TRUE)
-  terra::writeRaster(SR, SR_file, overwrite = TRUE)
+    Mod_PA <- SpSummary %>%
+      # Select only species name and ID
+      dplyr::select(ias_id = IAS_ID, Species_File) %>%
+      dplyr::mutate(
+        # Path storing PA maps as raster files
+        File = fs::path(Path_PA, "PA_RData", paste0(Species_File, "_PA.RData")),
+        Map_Sp = purrr::map2(
+          .x = File, .y = ias_id,
+          .f = ~ {
+            # Path for storing PA map - full EU extent
+            PA_file <- fs::path(Path_Dist, paste0(.y, "_full.tif"))
+            # Load PA map
+            PA <- ecokit::load_as(.x, unwrap_r = TRUE) %>%
+              magrittr::extract2(PA_Layer)
+            # Save PA map
+            terra::writeRaster(PA, PA_file, overwrite = TRUE)
 
-  ecokit::cat_time(
-    "Calculate species richness - modelling", level = 1L,
-    verbose = verbose_progress)
-  SR_model_file <- fs::path(Path_Dist, "SR_model.tif")
-  SR_model <- purrr::map(Mod_PA$PA_model, terra::unwrap) %>%
-    terra::rast() %>%
-    sum(na.rm = TRUE)
-  terra::writeRaster(SR_model, SR_model_file, overwrite = TRUE)
+            # Path for storing PA map - only in modelling grid cells
+            PA_model_file <- fs::path(Path_Dist, paste0(.y, "_model.tif"))
+            # mask PA map to modelling grid cells
+            PA_model <- terra::mask(PA, Model_Mask)
+            # Save masked PA map
+            terra::writeRaster(PA_model, PA_model_file, overwrite = TRUE)
 
-  # Bind SR and PA in the same tibble
-  Mod_PA <- tibble::tribble(
-    ~ias_id, ~PA, ~PA_file, ~PA_model, ~PA_model_file,
-    "SR", terra::unwrap(SR), SR_file,
-    terra::unwrap(SR_model), SR_model_file) %>%
-    dplyr::bind_rows(Mod_PA)
+            tibble::tibble(
+              PA = list(terra::wrap(PA)),
+              PA_file = PA_file,
+              PA_model = list(terra::wrap(PA_model)),
+              PA_model_file = PA_model_file)
+          })) %>%
+      tidyr::unnest(cols = "Map_Sp") %>%
+      dplyr::select(-Species_File, -File)
 
-  ecokit::cat_time("Save maps as RData", level = 1L, verbose = verbose_progress)
-  ecokit::save_as(
-    object = Mod_PA, object_name = "PA_with_maps",
-    out_path = fs::path(Path_Dist, "PA_with_maps.RData"))
+    ecokit::cat_time(
+      "Calculate species richness - full", level = 1L, verbose = verbose_progress)
+    SR_file <- fs::path(Path_Dist, "SR_full.tif")
+    SR <- purrr::map(Mod_PA$PA, terra::unwrap) %>%
+      terra::rast() %>%
+      sum(na.rm = TRUE)
+    terra::writeRaster(SR, SR_file, overwrite = TRUE)
 
-  ecokit::cat_time(
-    "Save maps without maps as RData", level = 1L, verbose = verbose_progress)
-  Mod_PA <- dplyr::select(Mod_PA, -PA, -PA_model)
-  ecokit::save_as(
-    object = Mod_PA, object_name = "PA",
-    out_path = fs::path(Path_Dist, "PA.RData"))
+    ecokit::cat_time(
+      "Calculate species richness - modelling", level = 1L,
+      verbose = verbose_progress)
+    SR_model_file <- fs::path(Path_Dist, "SR_model.tif")
+    SR_model <- purrr::map(Mod_PA$PA_model, terra::unwrap) %>%
+      terra::rast() %>%
+      sum(na.rm = TRUE)
+    terra::writeRaster(SR_model, SR_model_file, overwrite = TRUE)
 
-  ecokit::cat_time(
-    "Save only paths text file", level = 1L, verbose = verbose_progress)
-  Mod_PA %>%
-    dplyr::mutate(
-      PA_file = basename(PA_file),
-      PA_model_file = basename(PA_model_file)) %>%
-    utils::write.table(
-      sep = "\t", row.names = FALSE, col.names = TRUE,
-      file = fs::path(Path_Dist, "PA.txt"), quote = FALSE,
-      fileEncoding = "UTF-8")
+    # Bind SR and PA in the same tibble
+    Mod_PA <- tibble::tribble(
+      ~ias_id, ~PA, ~PA_file, ~PA_model, ~PA_model_file,
+      "SR", terra::unwrap(SR), SR_file,
+      terra::unwrap(SR_model), SR_model_file) %>%
+      dplyr::bind_rows(Mod_PA)
 
-  # Save maps as tar file
-  ecokit::cat_time(
-    "Save maps as single tar file", level = 1L, verbose = verbose_progress)
-  # Path of the tar file
-  tar_file <- fs::path(Path_Dist, "PA_maps.tar")
-  # list of files to tar
-  Files2Tar <- c(      # nolint: object_name_linter
-    Mod_PA$PA_file, Mod_PA$PA_model_file,
-    fs::path(Path_Dist, "PA.txt")) %>%
-    basename() %>%
-    paste(collapse = " ")
-  tar_command <- stringr::str_glue(
-    'tar -cf "{tar_file}" -C "{Path_Dist}" {Files2Tar}')
-  invisible(system(tar_command))
+    ecokit::cat_time("Save maps as RData", level = 1L, verbose = verbose_progress)
+    ecokit::save_as(
+      object = Mod_PA, object_name = "PA_with_maps",
+      out_path = fs::path(Path_Dist, "PA_with_maps.RData"))
 
-  # Change the permission of the tar file
-  Sys.chmod(tar_file, "755", use_umask = FALSE)
+    ecokit::cat_time(
+      "Save maps without maps as RData", level = 1L, verbose = verbose_progress)
+    Mod_PA <- dplyr::select(Mod_PA, -PA, -PA_model)
+    ecokit::save_as(
+      object = Mod_PA, object_name = "PA",
+      out_path = fs::path(Path_Dist, "PA.RData"))
+
+    ecokit::cat_time(
+      "Save only paths text file", level = 1L, verbose = verbose_progress)
+    Mod_PA %>%
+      dplyr::mutate(
+        PA_file = basename(PA_file),
+        PA_model_file = basename(PA_model_file)) %>%
+      utils::write.table(
+        sep = "\t", row.names = FALSE, col.names = TRUE,
+        file = fs::path(Path_Dist, "PA.txt"), quote = FALSE,
+        fileEncoding = "UTF-8")
+
+    # Save maps as tar file
+    ecokit::cat_time(
+      "Save maps as single tar file", level = 1L, verbose = verbose_progress)
+    # Path of the tar file
+    tar_file <- fs::path(Path_Dist, "PA_maps.tar")
+    # list of files to tar
+    Files2Tar <- c(      # nolint: object_name_linter
+      Mod_PA$PA_file, Mod_PA$PA_model_file,
+      fs::path(Path_Dist, "PA.txt")) %>%
+      basename() %>%
+      paste(collapse = " ")
+    tar_command <- stringr::str_glue(
+      'tar -cf "{tar_file}" -C "{Path_Dist}" {Files2Tar}')
+    invisible(system(tar_command))
+
+    # Change the permission of the tar file
+    Sys.chmod(tar_file, "755", use_umask = FALSE)
+
+  }
 
   # # |||||||||||||||||||||||||||||||||||
   # # Save small datasets prepared in the function ------

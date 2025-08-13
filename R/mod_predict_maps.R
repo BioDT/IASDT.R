@@ -93,34 +93,11 @@ predict_maps <- function(
       "MRI-ESM2-0", "UKESM1-0-LL"),
     CC_scenario = c("ssp126", "ssp370", "ssp585")) {
 
-  if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
-    ecokit::stop_ctx(
-      "n_cores must be a single positive integer.", n_cores = n_cores,
-      include_backtrace = TRUE)
-  }
-  if (!is.numeric(LF_n_cores) || length(LF_n_cores) != 1 || LF_n_cores <= 0) {
-    ecokit::stop_ctx(
-      "LF_n_cores must be a single positive integer.", n_cores = LF_n_cores,
-      include_backtrace = TRUE)
-  }
-
-  if (!is.character(strategy)) {
-    ecokit::stop_ctx(
-      "`strategy` must be a character vector",
-      strategy = strategy, class_strategy = class(strategy))
-  }
-  if (strategy == "sequential") {
-    n_cores <- LF_n_cores <- 1L
-  }
-  if (length(strategy) != 1L) {
-    ecokit::stop_ctx(
-      "`strategy` must be a character vector of length 1",
-      strategy = strategy, length_strategy = length(strategy))
-  }
-  valid_strategy <- c("sequential", "multisession", "multicore", "cluster")
-  if (!strategy %in% valid_strategy) {
-    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
-  }
+  strategy <- .validate_strategy(strategy)
+  if (strategy == "sequential") n_cores <- 1L
+  n_cores <- .validate_n_cores(n_cores)
+  LF_n_cores <- .validate_n_cores(LF_n_cores)
+  if (strategy == "sequential")  n_cores <- LF_n_cores <- 1L
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -131,14 +108,7 @@ predict_maps <- function(
   # # ..................................................................... ###
 
   hab_abb <- as.character(hab_abb)
-
-  # Check if `hab_abb` is a single character value
-  if (length(hab_abb) != 1) {
-    ecokit::stop_ctx(
-      "`hab_abb` must be a single character value",
-      hab_abb = hab_abb, length_hab_abb = length(hab_abb),
-      include_backtrace = TRUE)
-  }
+  hab_abb <- .validate_hab_abb(hab_abb)
 
   hab_name <- c(
     "0_All", "1_Forests", "2_Open_forests", "3_Scrub",
@@ -180,18 +150,6 @@ predict_maps <- function(
     ecokit::stop_ctx(
       "Error: Environment file is invalid or does not exist.",
       env_file = env_file, include_backtrace = TRUE)
-  }
-
-  # # ..................................................................... ###
-  # # ..................................................................... ###
-
-  ValidHabAbbs <- c(as.character(0:3), "4a", "4b", "10", "12a", "12b")
-  if (!(hab_abb %in% ValidHabAbbs)) {
-    ecokit::stop_ctx(
-      paste0(
-        "Invalid Habitat abbreviation. Valid values are:\n >> ",
-        toString(ValidHabAbbs)),
-      hab_abb = hab_abb, include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -416,8 +374,7 @@ predict_maps <- function(
         "Railways data does not exist", R_Railways = R_Railways,
         include_backtrace = TRUE)
     }
-    R_Railways <- ecokit::load_as(R_Railways) %>%
-      terra::unwrap() %>%
+    R_Railways <- ecokit::load_as(R_Railways, unwrap_r = TRUE) %>%
       magrittr::extract2("rail")
 
     R_Roads <- fs::path(Path_Roads, "Road_Length.RData")
@@ -426,8 +383,7 @@ predict_maps <- function(
         "Roads data does not exist", R_Roads = R_Roads,
         include_backtrace = TRUE)
     }
-    R_Roads <- ecokit::load_as(R_Roads) %>%
-      terra::unwrap() %>%
+    R_Roads <- ecokit::load_as(R_Roads, unwrap_r = TRUE) %>%
       magrittr::extract2("All")
 
     # Calculating the sum of road and railway intensity
@@ -457,8 +413,7 @@ predict_maps <- function(
         "Habitat data does not exist", R_Hab = R_Hab, include_backtrace = TRUE)
     }
 
-    R_Hab <- ecokit::load_as(R_Hab) %>%
-      terra::unwrap() %>%
+    R_Hab <- ecokit::load_as(R_Hab, unwrap_r = TRUE) %>%
       magrittr::extract2(paste0("SynHab_", hab_abb))
 
     # Models are trained and predictions are made only at grid cells with > 0 %
@@ -488,8 +443,7 @@ predict_maps <- function(
         include_backtrace = TRUE)
     }
 
-    R_Efforts <- ecokit::load_as(R_Efforts) %>%
-      terra::unwrap() %>%
+    R_Efforts <- ecokit::load_as(R_Efforts, unwrap_r = TRUE) %>%
       magrittr::extract2("NObs") %>%
       magrittr::add(0.1) %>%
       log10() %>%
@@ -629,8 +583,7 @@ predict_maps <- function(
         include_backtrace = TRUE)
     }
 
-    R_Rivers <- ecokit::load_as(R_Rivers) %>%
-      terra::unwrap() %>%
+    R_Rivers <- ecokit::load_as(R_Rivers, unwrap_r = TRUE) %>%
       magrittr::extract2("STRAHLER_5") %>%
       magrittr::add(0.1) %>%
       log10() %>%
@@ -792,8 +745,7 @@ predict_maps <- function(
       # climates will be produced. Predictions without clamping is used for
       # model evaluation.
       utils::head(1) %>%
-      ecokit::load_as() %>%
-      terra::unwrap() %>%
+      ecokit::load_as(unwrap_r = TRUE) %>%
       # Only extract predictors used in the model
       terra::subset(bio_variables) %>%
       # Combine with other static predictors
@@ -969,8 +921,7 @@ predict_maps <- function(
         # Extracting data at training and new sites ------
         ecokit::cat_time("Extracting data at training and new sites")
         Predict_DF <- Prediction_Options$FilePath[[ID]] %>%
-          ecokit::load_as() %>%
-          terra::unwrap() %>%
+          ecokit::load_as(unwrap_r = TRUE) %>%
           terra::subset(bio_variables) %>%
           c(StaticPreds) %>%
           terra::as.data.frame(xy = TRUE, cells = TRUE, na.rm = TRUE) %>%
@@ -1123,7 +1074,7 @@ predict_maps <- function(
         stringr::str_subset("^Sp_|^SR_") %>%
         gtools::mixedsort()
 
-      Grid10 <- terra::unwrap(ecokit::load_as(Path_GridR))
+      Grid10 <- ecokit::load_as(Path_GridR, unwrap_r = TRUE)
       Prediction_R <- terra::rasterize(
         Prediction_sf, Grid10, field = Fields2Raster)
 
@@ -1140,8 +1091,7 @@ predict_maps <- function(
           # clamping is used or not
           path = Path_Prediction, pattern = "Prediction_Current.*_R.qs2",
           full.names = TRUE) %>%
-          ecokit::load_as() %>%
-          terra::unwrap() %>%
+          ecokit::load_as(unwrap_r = TRUE) %>%
           terra::subset(MeanNames)
 
         # Calculate anomaly as difference in predicted value between future and
@@ -1251,7 +1201,7 @@ predict_maps <- function(
     line_char = "*", line_char_rep = 70L, cat_red = TRUE,
     cat_bold = TRUE, cat_timestamp = FALSE)
 
-  Grid10 <- terra::unwrap(ecokit::load_as(Path_GridR))
+  Grid10 <- ecokit::load_as(Path_GridR, unwrap_r = TRUE)
 
   Prediction_Summary <- purrr::map_dfr(
     .x = seq_len(nrow(Prediction_Options)), .f = Predict_Internal) %>%
@@ -1377,8 +1327,7 @@ predict_maps <- function(
     rm(tiffs_R)
 
     # Anomaly
-    CurrentMean0 <- ecokit::load_as(CurrentMean) %>%
-      terra::unwrap() %>%
+    CurrentMean0 <- ecokit::load_as(CurrentMean, unwrap_r = TRUE) %>%
       terra::subset(paste0(ias_id, "_mean"))
     Ensemble_anomaly <- Ensemble_mean - CurrentMean0
     rm(CurrentMean0)

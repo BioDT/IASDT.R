@@ -29,8 +29,7 @@ mod_prepare_data <- function(
       hab_abb = hab_abb, directory_name = directory_name, env_file = env_file,
       include_backtrace = TRUE)
   }
-
-  hab_abb <- as.character(hab_abb)
+  hab_abb <- .validate_hab_abb(hab_abb)
 
   # # ..................................................................... ###
 
@@ -39,7 +38,8 @@ mod_prepare_data <- function(
   species_ID <- Species_name <- Species_File <- PA <- Path_Rivers <-
     cell <- Path_PA <- Path_Grid <- Path_Grid_Ref <- Path_CLC <-
     Path_Roads <- Path_Rail <- Path_Bias <- Path_CHELSA <- path_model <-
-    EU_Bound <- SpPA <- NPres <- Grid_R <- IAS_ID <- NULL
+    EU_Bound <- SpPA <- NPres <- Grid_R <- IAS_ID <- Path_Soil <-
+    Path_Wetness <- NULL
 
   # # ..................................................................... ###
 
@@ -60,16 +60,6 @@ mod_prepare_data <- function(
     args_to_check = c(
       "exclude_cultivated", "exclude_0_habitat", "verbose_progress"))
 
-  # Valid habitat type values
-  ValidHabAbbs <- c(0:3, "4a", "4b", 10, "12a", "12b")
-  if (!(hab_abb %in% ValidHabAbbs)) {
-    ecokit::stop_ctx(
-      paste0(
-        "`hab_abb` has to be one of the following:\n >> ",
-        toString(ValidHabAbbs)),
-      hab_abb = hab_abb, include_backtrace = TRUE)
-  }
-
   # # ..................................................................... ###
 
   # # |||||||||||||||||||||||||||||||||||
@@ -77,10 +67,7 @@ mod_prepare_data <- function(
   ecokit::cat_time(
     "Reading/checking environment variables", verbose = verbose_progress)
 
-  # # |||||||||||||||||||||||||||||||||||
-
   # Input data paths - these are read from the .env file
-
   EnvVars2Read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
     "Path_Grid", "DP_R_Grid_processed", FALSE, FALSE,
@@ -92,6 +79,8 @@ mod_prepare_data <- function(
     "Path_Rail", "DP_R_Railways_processed", TRUE, FALSE,
     "Path_Bias", "DP_R_Efforts_processed", TRUE, FALSE,
     "Path_Rivers", "DP_R_Rivers_processed", FALSE, TRUE,
+    "Path_Wetness", "DP_R_wetness_processed", FALSE, TRUE,
+    "Path_Soil", "DP_R_soil_density", FALSE, TRUE,
     "path_model", "DP_R_Model_path", TRUE, FALSE,
     "EU_Bound", "DP_R_EUBound", FALSE, TRUE)
   # Assign environment variables and check file and paths
@@ -116,15 +105,14 @@ mod_prepare_data <- function(
   ## Sampling efforts ----
   ecokit::cat_time("Sampling efforts", level = 1L, verbose = verbose_progress)
   R_Bias <- fs::path(Path_Bias, "Efforts_SummaryR.RData")
-  if (!file.exists(R_Bias)) {
+  if (!fs::file_exists(R_Bias)) {
     ecokit::stop_ctx(
       "R_Bias file does not exist", R_Bias = R_Bias, include_backtrace = TRUE)
   }
 
   # This mask layer represents grid cells with minimum accepted efforts
   # (`min_efforts_n_species`). All subsequent maps will be masked to this layer
-  EffortsMask <- ecokit::load_as(R_Bias) %>%
-    terra::unwrap() %>%
+  EffortsMask <- ecokit::load_as(R_Bias, unwrap_r = TRUE) %>%
     magrittr::extract2("NSp") %>%
     terra::classify(
       rcl = matrix(
@@ -139,7 +127,7 @@ mod_prepare_data <- function(
   ecokit::cat_time("Habitat coverage", level = 1L, verbose = verbose_progress)
 
   Path_Hab <- fs::path(Path_CLC, "Summary_RData", "PercCov_SynHab_Crop.RData")
-  if (!file.exists(Path_Hab)) {
+  if (!fs::file_exists(Path_Hab)) {
     ecokit::stop_ctx(
       "Path_Hab file does not exist", Path_Hab = Path_Hab,
       include_backtrace = TRUE)
@@ -151,8 +139,7 @@ mod_prepare_data <- function(
     R_HabLog <- stats::setNames(Grid_R, "HabLog")
   } else {
     # Load habitat coverage data and mask by the efforts mask
-    R_Hab <- ecokit::load_as(Path_Hab) %>%
-      terra::unwrap() %>%
+    R_Hab <- ecokit::load_as(Path_Hab, unwrap_r = TRUE) %>%
       magrittr::extract2(paste0("SynHab_", hab_abb)) %>%
       terra::mask(EffortsMask) %>%
       stats::setNames("Hab")
@@ -181,7 +168,7 @@ mod_prepare_data <- function(
 
   # Extract the list of species for the current habitat type
   DT_Sp <- fs::path(Path_PA, "Sp_PA_Summary_DF.RData")
-  if (!file.exists(DT_Sp)) {
+  if (!fs::file_exists(DT_Sp)) {
     ecokit::stop_ctx(
       "DT_Sp file does not exist", DT_Sp = DT_Sp, include_backtrace = TRUE)
   }
@@ -228,8 +215,7 @@ mod_prepare_data <- function(
           # Masked raster map
           SpPA <- fs::path(
             Path_PA, "PA_RData", stringr::str_c(.x, "_PA.RData")) %>%
-            ecokit::load_as() %>%
-            terra::unwrap() %>%
+            ecokit::load_as(unwrap_r = TRUE) %>%
             magrittr::extract2(PA_Layer) %>%
             terra::mask(EffortsMask) %>%
             stats::setNames(paste0("Sp_", .y))
@@ -334,13 +320,12 @@ mod_prepare_data <- function(
 
   ecokit::cat_time("CHELSA", level = 1L, verbose = verbose_progress)
   R_CHELSA <- fs::path(Path_CHELSA, "Processed", "R_Current.RData")
-  if (!file.exists(R_CHELSA)) {
+  if (!fs::file_exists(R_CHELSA)) {
     ecokit::stop_ctx(
       "R_CHELSA file does not exist", R_CHELSA = R_CHELSA,
       include_backtrace = TRUE)
   }
-  R_CHELSA <- ecokit::load_as(R_CHELSA) %>%
-    terra::unwrap() %>%
+  R_CHELSA <- ecokit::load_as(R_CHELSA, unwrap_r = TRUE) %>%
     terra::mask(EffortsMask)
 
   # # ..................................................................... ###
@@ -352,7 +337,7 @@ mod_prepare_data <- function(
     "Reference grid - sf", level = 2L, verbose = verbose_progress)
   # Reference grid as sf
   Grid_SF <- fs::path(Path_Grid_Ref, "Grid_10_sf.RData")
-  if (!file.exists(Grid_SF)) {
+  if (!fs::file_exists(Grid_SF)) {
     ecokit::stop_ctx(
       "Grid_SF file does not exist", Grid_SF = Grid_SF,
       include_backtrace = TRUE)
@@ -366,7 +351,7 @@ mod_prepare_data <- function(
   ecokit::cat_time(
     "Reference grid - country names", level = 2L, verbose = verbose_progress)
   Grid_CNT <- fs::path(Path_Grid, "Grid_10_Land_Crop_sf_Country.RData")
-  if (!file.exists(Grid_CNT)) {
+  if (!fs::file_exists(Grid_CNT)) {
     ecokit::stop_ctx(
       "Grid_CNT file does not exist", Grid_CNT = Grid_CNT,
       include_backtrace = TRUE)
@@ -388,13 +373,12 @@ mod_prepare_data <- function(
 
   # road intensity of any road type
   R_RoadInt <- fs::path(Path_Roads, "Road_Length.RData")
-  if (!file.exists(R_RoadInt)) {
+  if (!fs::file_exists(R_RoadInt)) {
     ecokit::stop_ctx(
       "R_RoadInt file does not exist", R_RoadInt = R_RoadInt,
       include_backtrace = TRUE)
   }
-  R_RoadInt <- ecokit::load_as(R_RoadInt) %>%
-    terra::unwrap() %>%
+  R_RoadInt <- ecokit::load_as(R_RoadInt, unwrap_r = TRUE) %>%
     magrittr::extract2("All") %>%
     stats::setNames("RoadInt") %>%
     terra::mask(EffortsMask)
@@ -410,13 +394,12 @@ mod_prepare_data <- function(
 
   # Railway intensity
   R_RailInt <- fs::path(Path_Rail, "Railways_Length.RData")
-  if (!file.exists(R_RailInt)) {
+  if (!fs::file_exists(R_RailInt)) {
     ecokit::stop_ctx(
       "R_RailInt file does not exist", R_RailInt = R_RailInt,
       include_backtrace = TRUE)
   }
-  R_RailInt <- ecokit::load_as(R_RailInt) %>%
-    terra::unwrap() %>%
+  R_RailInt <- ecokit::load_as(R_RailInt, unwrap_r = TRUE) %>%
     magrittr::extract2("rail") %>%
     terra::mask(EffortsMask) %>%
     stats::setNames("RailInt")
@@ -438,8 +421,7 @@ mod_prepare_data <- function(
   ## Sampling effort ----
   ecokit::cat_time("Sampling effort", level = 1L, verbose = verbose_progress)
 
-  R_Efforts <- ecokit::load_as(R_Bias) %>%
-    terra::unwrap() %>%
+  R_Efforts <- ecokit::load_as(R_Bias, unwrap_r = TRUE) %>%
     magrittr::extract2("NObs") %>%
     terra::mask(EffortsMask) %>%
     stats::setNames("Efforts")
@@ -452,18 +434,49 @@ mod_prepare_data <- function(
   ecokit::cat_time("River length", level = 1L, verbose = verbose_progress)
 
   R_Rivers <- fs::path(Path_Rivers, "River_Lengths.RData")
-  if (!file.exists(R_Rivers)) {
+  if (!fs::file_exists(R_Rivers)) {
     ecokit::stop_ctx(
       "R_Rivers file does not exist", R_Rivers = R_Rivers,
       include_backtrace = TRUE)
   }
-  R_Rivers <- ecokit::load_as(R_Rivers) %>%
-    terra::unwrap() %>%
+  R_Rivers <- ecokit::load_as(R_Rivers, unwrap_r = TRUE) %>%
     magrittr::extract2("STRAHLER_5") %>%
     terra::mask(EffortsMask) %>%
     stats::setNames("Rivers")
   R_RiversLog <- log10(R_Rivers + 0.1) %>%
     stats::setNames("RiversLog")
+
+  # # ..................................................................... ###
+
+  ## soil bulk density ----
+  ecokit::cat_time("soil bulk density", level = 1L, verbose = verbose_progress)
+
+  R_Soil <- fs::path(Path_Soil, "soil_density.RData")
+  if (!fs::file_exists(R_Soil)) {
+    ecokit::stop_ctx(
+      "R_Soil file does not exist", R_Soil = R_Soil,
+      include_backtrace = TRUE)
+  }
+  R_Soil <- ecokit::load_as(R_Soil, unwrap_r = TRUE) %>%
+    magrittr::extract2("bdod_5_15_mean") %>%
+    terra::mask(EffortsMask) %>%
+    stats::setNames("soil")
+
+  # # ..................................................................... ###
+
+  ## Topographic Wetness Index ----
+  ecokit::cat_time(
+    "Topographic Wetness Index", level = 1L, verbose = verbose_progress)
+
+  R_wetness <- fs::path(Path_Wetness, "wetness_index.RData")
+  if (!fs::file_exists(R_wetness)) {
+    ecokit::stop_ctx(
+      "R_wetness file does not exist", R_wetness = R_wetness,
+      include_backtrace = TRUE)
+  }
+  R_wetness <- ecokit::load_as(R_wetness, unwrap_r = TRUE) %>%
+    terra::mask(EffortsMask) %>%
+    stats::setNames("wetness")
 
   # # ..................................................................... ###
 
@@ -474,7 +487,7 @@ mod_prepare_data <- function(
   DT_All <- c(
     R_CHELSA, R_Hab, R_HabLog, R_RoadInt, R_RoadIntLog,
     R_RailInt, R_RailIntLog, R_RoadRail, R_RoadRailLog,
-    R_Efforts, R_EffortsLog, R_Rivers, R_RiversLog, R_Sp) %>%
+    R_Efforts, R_EffortsLog, R_Rivers, R_RiversLog, R_Soil, R_wetness, R_Sp) %>%
     as.data.frame(na.rm = TRUE, xy = TRUE, cells = TRUE) %>%
     tibble::tibble() %>%
     # Add country name

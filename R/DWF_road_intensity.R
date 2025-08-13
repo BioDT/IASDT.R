@@ -221,14 +221,13 @@ road_intensity <- function(env_file = ".env") {
 
   ecokit::cat_time("Calculate Road length per road type", level = 1L)
 
-  RefGrid <- terra::unwrap(ecokit::load_as(RefGrid))
+  RefGrid <- ecokit::load_as(RefGrid, unwrap_r = TRUE)
 
   ExtractRoadSummary <- function(RoadType, VarName, Function = "length") {
     SummMap <- list.files(
       path = Path_Roads, full.names = TRUE,
       pattern = paste0("^Road_sf_", RoadType, "_.+RData")) %>%
-      ecokit::load_as() %>%
-      terra::unwrap() %>%
+      ecokit::load_as(unwrap_r = TRUE) %>%
       terra::rasterizeGeom(y = RefGrid, fun = Function, unit = "km") %>%
       terra::mask(mask = RefGrid) %>%
       stats::setNames(paste0(RoadType, "_", VarName))

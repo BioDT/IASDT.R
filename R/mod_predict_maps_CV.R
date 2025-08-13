@@ -52,29 +52,11 @@ predict_maps_CV <- function(
 
   rm(AllArgs, envir = environment())
 
-  if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
-    ecokit::stop_ctx(
-      "n_cores must be a single positive integer.", n_cores = n_cores,
-      include_backtrace = TRUE)
-  }
-  if (!is.numeric(LF_n_cores) || length(LF_n_cores) != 1 || LF_n_cores <= 0) {
-    ecokit::stop_ctx(
-      "LF_n_cores must be a single positive integer.", LF_n_cores = LF_n_cores,
-      include_backtrace = TRUE)
-  }
-
-  if (strategy == "sequential") {
-    n_cores <- LF_n_cores <- 1L
-  }
-  if (length(strategy) != 1L) {
-    ecokit::stop_ctx(
-      "`strategy` must be a character vector of length 1",
-      strategy = strategy, length_strategy = length(strategy))
-  }
-  valid_strategy <- c("sequential", "multisession", "multicore", "cluster")
-  if (!strategy %in% valid_strategy) {
-    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
-  }
+  n_cores <- .validate_n_cores(n_cores)
+  LF_n_cores <- .validate_n_cores(LF_n_cores)
+  strategy <- .validate_strategy(strategy)
+  if (strategy == "sequential") n_cores <- 1L
+  if (strategy == "sequential") LF_n_cores <- 1L
 
   if (!CV_name %in% c("CV_Dist", "CV_Large", "CV_SAC")) {
     ecokit::stop_ctx(
@@ -356,7 +338,7 @@ predict_maps_CV <- function(
       stringr::str_subset("^Sp_|^SR_") %>%
       gtools::mixedsort()
 
-    Grid10 <- terra::unwrap(ecokit::load_as(Path_GridR))
+    Grid10 <- ecokit::load_as(Path_GridR, unwrap_r = TRUE)
     Prediction_R <- terra::rasterize(
       Prediction_sf, Grid10, field = Fields2Raster)
 

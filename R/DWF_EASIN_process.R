@@ -479,7 +479,7 @@ EASIN_process <- function(
 
   ecokit::cat_time("Summarizing EASIN data")
 
-  GridR <- terra::unwrap(ecokit::load_as(GridR))
+  GridR <- ecokit::load_as(GridR, unwrap_r = TRUE)
 
   ## NObs ----
   ecokit::cat_time("Number of observations per grid cell", level = 1L)

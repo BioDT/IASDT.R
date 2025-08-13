@@ -97,7 +97,7 @@ CHELSA_project <- function(
       "Path for the Europe boundaries does not exist", GridR = GridR,
       include_backtrace = TRUE)
   }
-  GridR <- terra::unwrap(ecokit::load_as(GridR))
+  GridR <- ecokit::load_as(GridR, unwrap_r = TRUE)
 
   # # ..................................................................... ###
 

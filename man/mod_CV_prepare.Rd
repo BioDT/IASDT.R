@@ -10,7 +10,7 @@ mod_CV_prepare(
   x_vars = NULL,
   CV_n_folds = 4L,
   CV_n_grids = 20L,
-  CV_n_rows = 2,
+  CV_n_rows = 2L,
   CV_n_columns = 2L,
   CV_SAC = FALSE,
   out_path = NULL,

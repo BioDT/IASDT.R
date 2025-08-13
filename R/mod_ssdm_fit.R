@@ -129,7 +129,7 @@ fit_sdm_models <- function(
 
   summary_data <- packages <- path_grid <- mod_method <- cv_fold <- preds <-
     pred_mean <- pred_w_mean <- species_name <- method_is_glm <- output_path <-
-    evaluation_testing <- auc_test <- summary_prediction_path <-
+    evaluation_testing <- auc_test <- summary_prediction_path <- issues <-
     climate_name <- pred_mean_okay <- pred_w_mean_okay <- richness_map <-
     pred_type <- cv <- preds_summ <- NULL
 
@@ -444,7 +444,7 @@ fit_sdm_models <- function(
     model_summary <- model_results %>%
       dplyr::select(species_name, sdm_method, cv_fold, output_path) %>%
       dplyr::mutate(
-        dt = purrr::map(
+        summ_data = purrr::map(
           .x = output_path,
           .f = ~ {
             ecokit::load_as(.x) %>%
@@ -454,7 +454,7 @@ fit_sdm_models <- function(
               tibble::as_tibble()
           })
       ) %>%
-      tidyr::unnest("dt") %>%
+      tidyr::unnest("summ_data") %>%
       tidyr::nest(summary_data = -"species_name") %>%
       dplyr::mutate(
         summary1 = purrr::map(
@@ -633,10 +633,10 @@ fit_sdm_models <- function(
 
     summ_issues %>%
       dplyr::select(-pred_mean, -pred_w_mean) %>%
-      tidyr::nest(dt = -climate_name) %>%
+      tidyr::nest(issues = -climate_name) %>%
       dplyr::mutate(
         message = purrr::map_chr(
-          .x = dt,
+          .x = issues,
           .f = ~ {
             tidyr::pivot_longer(
               data = .x,

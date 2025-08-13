@@ -91,7 +91,7 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
       "The reference grid file does not exist", RefGrid = RefGrid,
       include_backtrace = TRUE)
   }
-  RefGrid <- terra::unwrap(ecokit::load_as(RefGrid))
+  RefGrid <- ecokit::load_as(RefGrid, unwrap_r = TRUE)
 
   # # ..................................................................... ###
 

@@ -14,17 +14,18 @@ mod_prepare_HPC(
   env_file = ".env",
   GPP = TRUE,
   GPP_dists = NULL,
-  GPP_save = TRUE,
-  GPP_plot = TRUE,
   min_LF = NULL,
   max_LF = NULL,
-  alphapw = list(Prior = NULL, Min = 20, Max = 1200, Samples = 200),
+  alphapw = list(Prior = NULL, Min = 20, Max = 1300, Samples = 150),
   bio_variables = c("bio3", "bio4", "bio11", "bio18", "bio19", "npp"),
-  quadratic_variables = bio_variables,
+  quadratic_variables = c(bio_variables, ifelse(soil_as_predictor, "soil", NULL),
+    ifelse(wetness_as_predictor, "wetness", NULL)),
   efforts_as_predictor = TRUE,
   road_rail_as_predictor = TRUE,
   habitat_as_predictor = TRUE,
-  river_as_predictor = TRUE,
+  river_as_predictor = FALSE,
+  soil_as_predictor = TRUE,
+  wetness_as_predictor = TRUE,
   n_species_per_grid = 0L,
   exclude_cultivated = TRUE,
   exclude_0_habitat = TRUE,
@@ -34,6 +35,7 @@ mod_prepare_HPC(
   CV_n_columns = 2L,
   CV_plot = TRUE,
   CV_SAC = FALSE,
+  CV_fit = list(CV_type = NULL, CV_fold = NULL, inherit_dir = NULL),
   use_phylo_tree = TRUE,
   no_phylo_tree = FALSE,
   overwrite_rds = TRUE,
@@ -104,17 +106,12 @@ point. The knots are generated using the \link{prepare_knots} function, and this
 value is used for both \code{knotDist} and \code{minKnotDist} in
 \link[Hmsc:constructKnots]{Hmsc::constructKnots}.}
 
-\item{GPP_save}{Logical. Whether \code{RData} file. Default: \code{TRUE}.}
-
-\item{GPP_plot}{Logical. Whether to plot the coordinates of the sampling
-units and the knots in a pdf file. Default: \code{TRUE}.}
-
 \item{min_LF, max_LF}{Integer. Minimum and maximum number of latent factors to
 be used. Both default to \code{NULL} which means that the number of latent
 factors will be estimated from the data. If either is provided, the
 respective values will be used as arguments to \link[Hmsc:setPriors]{Hmsc::setPriors}.}
 
-\item{alphapw}{Prior for the alpha parameter. Defaults to a list with \code{Prior = NULL}, \code{Min = 20}, \code{Max = 1200}, and \code{Samples = 200}. If \code{alphapw} is
+\item{alphapw}{Prior for the alpha parameter. Defaults to a list with \code{Prior = NULL}, \code{Min = 20}, \code{Max = 1300}, and \code{Samples = 150}. If \code{alphapw} is
 \code{NULL} or a list with all \code{NULL} list items, the default prior will be
 used. If \code{Prior} is a matrix, it will be used as the prior. If \code{Prior = NULL}, the prior will be generated using \code{Min}, \code{Max}, and \code{Samples}. \code{Min}
 and \code{Max} are the minimum and maximum values of the alpha parameter (in
@@ -123,11 +120,11 @@ kilometre). \code{Samples} is the number of samples to be used in the prior.}
 \item{bio_variables}{Character vector. Variables from CHELSA (bioclimatic
 variables (bio1-bio19) and additional predictors (e.g., Net Primary
 Productivity, npp)) to be used in the model. By default, six ecologically
-relevant and minimally correlated variables are selected: c("bio3", "bio4",
-"bio11", "bio18", "bio19", "npp").}
+relevant and minimally correlated variables are selected: \code{c("bio3", "bio4", "bio11", "bio18", "bio19", "npp")}.}
 
 \item{quadratic_variables}{Character vector for variables for which quadratic
-terms are used. Defaults to all variables of the \code{bio_variables}. If
+terms are used. Defaults to all variables of the \code{bio_variables} in
+addition to soil bulk density and topographic wetness index (if used). If
 \code{quadratic_variables} is \code{NULL}, no quadratic terms will be used.}
 
 \item{efforts_as_predictor}{Logical. Whether to include the
@@ -145,7 +142,15 @@ not equals to \code{0}.}
 
 \item{river_as_predictor}{Logical. Whether to include the (log\if{html}{\out{<sub>}}10\if{html}{\out{</sub>}})
 total length of rivers per grid cell as predictor to the model. Default:
-\code{TRUE}. See \link{river_length} for more details.}
+\code{FALSE}. See \link{river_length} for more details.}
+
+\item{soil_as_predictor}{Logical. Whether to include soil bulk density at
+depth of 15-30 cm as predictor to the model. Default: \code{TRUE}. See
+\link{soil_density_process}.}
+
+\item{wetness_as_predictor}{Logical. Whether to include topographic wetness
+index as predictor to the model. Default: \code{TRUE}. See
+\link{wetness_index_process}.}
 
 \item{n_species_per_grid}{Integer. Minimum number of species required for a
 grid cell to be included in the analysis. This filtering occurs after
@@ -178,6 +183,23 @@ folds.}
 
 \item{CV_SAC}{Logical. Whether to use the spatial autocorrelation to
 determine the block size. Defaults to \code{FALSE},}
+
+\item{CV_fit}{A list with three elements determining if the current model is
+for a specific cross-validation fold or for full dataset.
+\itemize{
+\item \code{CV_type} (character): the type of cross-validation to use. Valid
+options are "CV_Dist", "CV_Large", and "CV_SAC". Default: \code{NULL}, which
+means fit models on the full dataset. This can not be \code{NULL} if \code{CV_fold}
+is provided.
+\item \code{CV_fold} (integer): the ID of the cross-validation fold to fit.
+For example, \code{CV_Fold = 4} means use the fourth fold for testing. Default:
+\code{NULL} which means no cross-validation is performed. This can not be \code{NULL}
+if \code{CV_type} is provided.
+\item \code{inherit_dir} (character): the name of the directory (without its
+parents) to inherit (copy) species and cross-validation data from. Defaults
+to \code{NULL}, which means that a data on species and cross-validation will be
+calculated.
+}}
 
 \item{use_phylo_tree, no_phylo_tree}{Logical. Whether to fit models with
 (use_phylo_tree) or without (no_phylo_tree) phylogenetic trees. Defaults
@@ -254,9 +276,8 @@ exists.}
 \item{to_JSON}{Logical. Whether to convert unfitted models to JSON before
 saving to RDS file. Default: \code{FALSE}.}
 
-\item{precision}{Integer (either 32 or 64). Defines the floating-point
-precision mode for \code{Hmsc-HPC} sampling (--fp 32 or --fp 64). The default is
-64, which is the default precision in \code{Hmsc-HPC}.}
+\item{precision}{Integer. Must be either 32 or 64 (default). Defines the
+floating-point precision mode for \code{Hmsc-HPC} sampling (--fp 32 or --fp 64).}
 
 \item{...}{Additional parameters provided to the \link{mod_SLURM} function.}
 }

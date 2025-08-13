@@ -35,8 +35,7 @@ efforts_plot <- function(env_file = ".env") {
       "Summary maps cannot be loaded: ", File_SummaryR = File_SummaryR,
       include_backtrace = TRUE)
   }
-
-  Efforts_SummaryR <- terra::unwrap(ecokit::load_as(File_SummaryR))
+  Efforts_SummaryR <- ecokit::load_as(File_SummaryR, unwrap_r = TRUE)
 
   # # ..................................................................... ###
 

@@ -114,8 +114,7 @@ railway_intensity <- function(
       "The reference grid file does not exist", RefGrid = RefGrid,
       include_backtrace = TRUE)
   }
-  RefGrid <- terra::unwrap(ecokit::load_as(RefGrid))
-
+  RefGrid <- ecokit::load_as(RefGrid, unwrap_r = TRUE)
 
   RefGridSF <- fs::path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
   if (!file.exists(RefGridSF)) {

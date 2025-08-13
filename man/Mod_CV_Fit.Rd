@@ -74,9 +74,8 @@ an error.}
 
 \item{path_Hmsc}{Character. Path to the Hmsc-HPC installation.}
 
-\item{precision}{Integer (either 32 or 64). Defines the floating-point
-precision mode for \code{Hmsc-HPC} sampling (--fp 32 or --fp 64). The default is
-64, which is the default precision in \code{Hmsc-HPC}.}
+\item{precision}{Integer. Must be either 32 or 64 (default). Defines the
+floating-point precision mode for \code{Hmsc-HPC} sampling (--fp 32 or --fp 64).}
 
 \item{...}{Additional arguments passed to the \link{mod_SLURM} function.}
 }

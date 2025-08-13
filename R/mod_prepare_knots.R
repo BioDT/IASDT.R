@@ -10,17 +10,17 @@
 #' avoid overlap.
 #' @param coordinates Numeric matrix or data frame containing the (x, y)
 #'   coordinates of sampling units.
-#' @param min_distance Numeric. Minimum distance between knots
-#'   in meters. This distance is used for both `knotDist` and `minKnotDist`
-#'   parameters of the [Hmsc::constructKnots] function.
-#' @param jitter_distance Numeric. The jitter distance applied to
-#'   overlapping coordinates to avoid exact duplicates. Defaults to 100 meters.
+#' @param min_distance Numeric. Minimum distance between knots in meters. This
+#'   distance is used for both `knotDist` and `minKnotDist` parameters of the
+#'   [Hmsc::constructKnots] function.
+#' @param jitter_distance Numeric. The jitter distance applied to overlapping
+#'   coordinates to avoid exact duplicates. Defaults to 100 meters.
 #' @param min_LF,max_LF Integer. Minimum and maximum number of latent factors to
 #'   be used. Both default to `NULL` which means that the number of latent
 #'   factors will be estimated from the data. If either is provided, the
 #'   respective values will be used as arguments to [Hmsc::setPriors].
 #' @param alphapw Prior for the alpha parameter. Defaults to a list with `Prior
-#'  = NULL`, `Min = 20`, `Max = 1200`, and `Samples = 200`. If `alphapw` is
+#'   = NULL`, `Min = 20`, `Max = 1300`, and `Samples = 150`. If `alphapw` is
 #'   `NULL` or a list with all `NULL` list items, the default prior will be
 #'   used. If `Prior` is a matrix, it will be used as the prior. If `Prior =
 #'   NULL`, the prior will be generated using `Min`, `Max`, and `Samples`. `Min`
@@ -29,14 +29,16 @@
 #'
 #' @name prepare_knots
 #' @author Ahmed El-Gabbas
-#' @return An object suitable for specifying the random level in HMSC GPP
-#'   models. This object contains the prepared knot locations.
+#' @return An object of class `HmscRandomLevel`, suitable for specifying the
+#'   random level in HMSC GPP models. This object contains the prepared knot
+#'   locations.
 #' @export
 
 prepare_knots <- function(
     coordinates = NULL, min_distance = NULL, jitter_distance = 100,
     min_LF = NULL, max_LF = NULL,
-    alphapw = list(Prior = NULL, Min = 20, Max = 1200, Samples = 200)) {
+    alphapw = list(Prior = NULL, Min = 20, Max = 1200, Samples = 150)) {
+
   # # ..................................................................... ###
 
   # Avoid "no visible binding for global variable" message
@@ -51,6 +53,12 @@ prepare_knots <- function(
       round() %>%
       c(0, .) %>%
       cbind(c(0.5, rep(0.5 / (NSamples - 1), (NSamples - 1))))
+  }
+
+  if (ncol(coordinates) != 2L) {
+    ecokit::stop_ctx(
+      "coordinates must be a numeric matrix or data frame with 2 columns",
+      ncol_coordinates = ncol(coordinates), include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -128,9 +136,11 @@ prepare_knots <- function(
         }
 
         # Check if the sum of the second column is equal to 1
-        if (sum(Prior[, 2]) != 1) {
+        if (isFALSE(all.equal(sum(Prior[, 2]), 1))) {
           ecokit::stop_ctx(
-            "The sum of the second column is not equal to 1.",
+            paste0(
+              "The sum of the second column is not equal to 1 ",
+              "(within floating-point tolerance)."),
             sum_prior_2 = sum(Prior[, 2]), include_backtrace = TRUE)
         }
       }

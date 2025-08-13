@@ -73,7 +73,7 @@ GBIF_species_data <- function(
     ecokit::stop_ctx(
       "Reference grid file not found", GridR = GridR, include_backtrace = TRUE)
   }
-  GridR <- terra::unwrap(ecokit::load_as(GridR))
+  GridR <- ecokit::load_as(GridR, unwrap_r = TRUE)
 
   EuroBound <- ecokit::load_as(EU_Bound) %>%
     magrittr::extract2("Bound_sf_Eur_s") %>%

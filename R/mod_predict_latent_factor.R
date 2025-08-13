@@ -1070,8 +1070,7 @@ plot_latent_factor <- function(
   rm(EnvVars2Read, envir = environment())
 
   Grid10 <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData") %>%
-    ecokit::load_as() %>%
-    terra::unwrap()
+    ecokit::load_as(unwrap_r = TRUE)
 
   # # ..................................................................... ###
 

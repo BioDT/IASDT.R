@@ -93,10 +93,7 @@ EASIN_plot <- function(env_file = ".env") {
     LastUpdate <- paste0(
       "<b>Last update:</b></br><i>", format(Sys.Date(), "%d %B %Y"), "</i>")
 
-    Map <- ecokit::load_as(MapPath) %>%
-      terra::unwrap() %>%
-      log10()
-
+    Map <- log10(ecokit::load_as(MapPath, unwrap_r = TRUE))
     NCells <- terra::ncell(Map)
 
     PlottingTheme <- ggplot2::theme_bw() +
@@ -229,9 +226,7 @@ EASIN_plot <- function(env_file = ".env") {
         plot.tag = ggtext::element_markdown(colour = "grey", size = 9)
       )
 
-    Map <- ecokit::load_as(MapPath) %>%
-      terra::unwrap() %>%
-      log10()
+    Map <- log10(ecokit::load_as(MapPath, unwrap_r = TRUE))
     NCells <- terra::ncell(Map)
 
     LegLimit <- c(

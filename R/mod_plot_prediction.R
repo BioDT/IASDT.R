@@ -21,15 +21,6 @@
 
 plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
 
-  # # ..................................................................... ###
-  # # ..................................................................... ###
-
-  if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
-    ecokit::stop_ctx(
-      "n_cores must be a single positive integer.", n_cores = n_cores,
-      include_backtrace = TRUE)
-  }
-
   .start_time <- lubridate::now(tzone = "CET")
 
   tif_path_mean <- tif_path_sd <- tif_path_cov <- Path_CLC <- Path_Grid <- x <-
@@ -37,6 +28,8 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
 
   # # ..................................................................... ###
   # # ..................................................................... ###
+
+  n_cores <- .validate_n_cores(n_cores)
 
   if (is.null(model_dir) || !is.character(model_dir) || !nzchar(model_dir)) {
     ecokit::stop_ctx(
@@ -72,8 +65,7 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
       "Path for the Europe boundaries does not exist", Gird10 = Gird10,
       include_backtrace = TRUE)
   }
-  Gird10 <- ecokit::load_as(Gird10) %>%
-    terra::unwrap()
+  Gird10 <- ecokit::load_as(Gird10, unwrap_r = TRUE)
 
   # # ..................................................................... ###
 
@@ -168,8 +160,7 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
       "Path_Hab file does not exist", Path_Hab = Path_Hab,
       include_backtrace = TRUE)
   }
-  R_habitat <- ecokit::load_as(Path_Hab) %>%
-    terra::unwrap() %>%
+  R_habitat <- ecokit::load_as(Path_Hab, unwrap_r = TRUE) %>%
     terra::classify(rcl = cbind(0, NA)) %>%
     terra::subset(paste0("SynHab_", HabAbb)) %>%
     terra::wrap()
@@ -630,8 +621,8 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
       "dplyr", "terra", "ggplot2", "stringr", "cowplot", "tidyterra",
       "purrr", "ggtext", "ragg", "paletteer", "grid", "scales", "ecokit",
       "magrittr")) %dopar% {
-      PlotMaps(x)
-    }
+        PlotMaps(x)
+      }
 
   rm(Plots, envir = environment())
   doParallel::stopImplicitCluster()

@@ -92,7 +92,7 @@ GBIF_read_chunk <- function(
     ecokit::stop_ctx(
       "Reference grid file not found", GridR = GridR, include_backtrace = TRUE)
   }
-  GridR <- terra::unwrap(ecokit::load_as(GridR))
+  GridR <- ecokit::load_as(GridR, unwrap_r = TRUE)
 
   # # Grid_10_Land_Crop_sf
   GridSf <- fs::path(Path_Grid, "Grid_10_Land_Crop_sf.RData")

@@ -52,7 +52,7 @@
 
 mod_CV_prepare <- function(
     input_data = NULL, env_file = ".env", x_vars = NULL, CV_n_folds = 4L,
-    CV_n_grids = 20L, CV_n_rows = 2, CV_n_columns = 2L, CV_SAC = FALSE,
+    CV_n_grids = 20L, CV_n_rows = 2L, CV_n_columns = 2L, CV_SAC = FALSE,
     out_path = NULL, CV_plot = TRUE) {
 
   # # |||||||||||||||||||||||||||||||||||
@@ -108,7 +108,7 @@ mod_CV_prepare <- function(
       "Path for reference grid does not exist", Path_Grid = Path_Grid,
       include_backtrace = TRUE)
   }
-  RefGrid <- terra::unwrap(ecokit::load_as(Path_Grid))
+  RefGrid <- ecokit::load_as(Path_Grid, unwrap_r = TRUE)
 
   # # |||||||||||||||||||||||||||||||||||
   # # Coordinates as raster -----
@@ -127,13 +127,13 @@ mod_CV_prepare <- function(
     sf::st_as_sf(coords = c("x", "y"), crs = 3035)
 
   # # |||||||||||||||||||||||||||||||||||
-  # # data as raster stack -----
+  # # predictors as raster stack -----
   # # |||||||||||||||||||||||||||||||||||
 
   DT_R <- dplyr::select(input_data, dplyr::all_of(AllVars)) %>%
     sf::st_as_sf(coords = c("x", "y"), crs = 3035) %>%
     terra::rasterize(y = RefGrid, field = names(.)[-length(.)]) %>%
-    raster::trim()
+    terra::trim()
 
   # # |||||||||||||||||||||||||||||||||||
   # # 1. CV using large blocks -----

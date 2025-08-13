@@ -305,8 +305,7 @@ efforts_summarize <- function(
         # Number of data for native species
         ObsN_Native <- nrow(DT_Native)
       }
-
-      Grid_R <- terra::unwrap(ecokit::load_as(Path_Grid_R))
+      Grid_R <- ecokit::load_as(Path_Grid_R, unwrap_r = TRUE)
 
       # # ++++++++++++++++++++++++++++++++++ ###
 

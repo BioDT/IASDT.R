@@ -204,14 +204,14 @@ bioreg_process <- function(env_file = ".env") {
             sf::st_geometry() %>%
             sf::st_as_sf() %>%
             terra::rasterize(
-              y = terra::unwrap(ecokit::load_as(GridR)), cover = TRUE) %>%
+              y = ecokit::load_as(GridR, unwrap_r = TRUE), cover = TRUE) %>%
             terra::classify(cbind(NA, 0L))
         })) %>%
     dplyr::pull(Rast) %>%
     terra::rast() %>%
     terra::which.max() %>%
     stats::setNames("ID") %>%
-    terra::mask(terra::unwrap(ecokit::load_as(GridR)))
+    terra::mask(ecokit::load_as(GridR, unwrap_r = TRUE))
 
   rm(BioReg_DT, GridR, envir = environment())
 

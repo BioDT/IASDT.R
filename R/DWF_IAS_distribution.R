@@ -178,8 +178,7 @@ IAS_distribution <- function(
   ### raster - 10 km ----
   ecokit::cat_time("raster - 10 km", level = 2L, verbose = verbose)
   RefGrid <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData") %>%
-    ecokit::load_as() %>%
-    terra::unwrap()
+    ecokit::load_as(unwrap_r = TRUE)
 
   ### raster - 100 km ----
   ecokit::cat_time("raster - 100 km", level = 2L, verbose = verbose)
@@ -473,8 +472,7 @@ IAS_distribution <- function(
       "Required file for biogeographical regions does not exist",
       BioReg_R = BioReg_R, include_backtrace = TRUE)
   }
-
-  BioReg_R <- terra::unwrap(ecokit::load_as(BioReg_R))
+  BioReg_R <- ecokit::load_as(BioReg_R, unwrap_r = TRUE)
 
   # name of Biogeographical regions
   BioReg_Names <- c(

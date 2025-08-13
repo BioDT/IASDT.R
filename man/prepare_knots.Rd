@@ -10,34 +10,35 @@ prepare_knots(
   jitter_distance = 100,
   min_LF = NULL,
   max_LF = NULL,
-  alphapw = list(Prior = NULL, Min = 20, Max = 1200, Samples = 200)
+  alphapw = list(Prior = NULL, Min = 20, Max = 1200, Samples = 150)
 )
 }
 \arguments{
 \item{coordinates}{Numeric matrix or data frame containing the (x, y)
 coordinates of sampling units.}
 
-\item{min_distance}{Numeric. Minimum distance between knots
-in meters. This distance is used for both \code{knotDist} and \code{minKnotDist}
-parameters of the \link[Hmsc:constructKnots]{Hmsc::constructKnots} function.}
+\item{min_distance}{Numeric. Minimum distance between knots in meters. This
+distance is used for both \code{knotDist} and \code{minKnotDist} parameters of the
+\link[Hmsc:constructKnots]{Hmsc::constructKnots} function.}
 
-\item{jitter_distance}{Numeric. The jitter distance applied to
-overlapping coordinates to avoid exact duplicates. Defaults to 100 meters.}
+\item{jitter_distance}{Numeric. The jitter distance applied to overlapping
+coordinates to avoid exact duplicates. Defaults to 100 meters.}
 
 \item{min_LF, max_LF}{Integer. Minimum and maximum number of latent factors to
 be used. Both default to \code{NULL} which means that the number of latent
 factors will be estimated from the data. If either is provided, the
 respective values will be used as arguments to \link[Hmsc:setPriors]{Hmsc::setPriors}.}
 
-\item{alphapw}{Prior for the alpha parameter. Defaults to a list with \code{Prior = NULL}, \code{Min = 20}, \code{Max = 1200}, and \code{Samples = 200}. If \code{alphapw} is
+\item{alphapw}{Prior for the alpha parameter. Defaults to a list with \code{Prior = NULL}, \code{Min = 20}, \code{Max = 1300}, and \code{Samples = 150}. If \code{alphapw} is
 \code{NULL} or a list with all \code{NULL} list items, the default prior will be
 used. If \code{Prior} is a matrix, it will be used as the prior. If \code{Prior = NULL}, the prior will be generated using \code{Min}, \code{Max}, and \code{Samples}. \code{Min}
 and \code{Max} are the minimum and maximum values of the alpha parameter (in
 kilometre). \code{Samples} is the number of samples to be used in the prior.}
 }
 \value{
-An object suitable for specifying the random level in HMSC GPP
-models. This object contains the prepared knot locations.
+An object of class \code{HmscRandomLevel}, suitable for specifying the
+random level in HMSC GPP models. This object contains the prepared knot
+locations.
 }
 \description{
 Prepare the locations of knots for use in Gaussian Predictive Process (GPP)
